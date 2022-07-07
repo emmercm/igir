@@ -1,5 +1,7 @@
 import {Expose, plainToInstance, Type} from "class-transformer";
 import 'reflect-metadata';
+import path from "path";
+import {ROMFile} from "./romFile";
 
 // http://www.logiqx.com/Dats/datafile.dtd
 
@@ -57,6 +59,10 @@ export class Header {
     @Type(() => RomCenter)
     @Expose({ name: 'romcenter' })
     private romCenter?: RomCenter
+
+    getName(): string {
+        return this.name;
+    }
 }
 
 export class ROM {
@@ -68,6 +74,24 @@ export class ROM {
     private merge?: string
     private status: "baddump" | "nodump" | "good" | "verified" = "good"
     private date?: string
+
+    private romFiles: ROMFile[] = []
+
+    getExtension(): string {
+        return path.extname(this.name);
+    }
+
+    getCrc(): string {
+        return this.crc || '';
+    }
+
+    getRomFiles(): ROMFile[] {
+        return this.romFiles;
+    }
+
+    addRomFile(romFile: ROMFile) {
+        this.romFiles.push(romFile);
+    }
 }
 
 export class Disk {
@@ -112,7 +136,7 @@ export class Game {
     private sourceFile?: string
 
     @Expose({ name: 'isbios' })
-    private isBios: "yes" | "no" = "no"
+    private _isBios: "yes" | "no" = "no"
 
     @Expose({ name: 'cloneof' })
     private cloneOf?: string
@@ -163,6 +187,52 @@ export class Game {
         }
     }
 
+    getRoms(): ROM[] {
+        if (this.rom instanceof Array) {
+            return this.rom;
+        } else if (this.rom) {
+            return [this.rom];
+        } else {
+            return [];
+        }
+    }
+
+    getRomExtensions(): string[] {
+        return this.getRoms().map((rom: ROM) => rom.getExtension());
+    }
+
+    isAftermarket(): boolean {
+        return this.name.match(/\(Aftermarket[ a-zA-Z0-9.]*\)/i) !== null;
+    }
+
+    isBad(): boolean {
+        return this.name.match(/\[b\]]/i) !== null;
+    }
+
+    isBios(): boolean {
+        return this._isBios === 'yes' || this.name.indexOf('[BIOS]') !== -1;
+    }
+
+    isDemo(): boolean {
+        return this.name.match(/\(Demo[ a-zA-Z0-9.]*\)/i) !== null;
+    }
+
+    isHomebrew(): boolean {
+        return this.name.match(/\(Homebrew[ a-zA-Z0-9.]*\)/i) !== null;
+    }
+
+    isPrototype(): boolean {
+        return this.name.match(/\(Proto[ a-zA-Z0-9.]*\)/i) !== null;
+    }
+
+    isTest(): boolean {
+        return this.name.match(/\(Test[ a-zA-Z0-9.]*\)/i) !== null;
+    }
+
+    isUnlicensed(): boolean {
+        return this.name.match(/\(Unl[ a-zA-Z0-9.]*\)/i) !== null;
+    }
+
     isParent(): boolean {
         return this.getParent() === "";
     }
@@ -178,12 +248,20 @@ export class Parent {
     @Type(() => Game)
     private games!: Game[]
 
-    private regionsToGames!: Map<string, Game>
+    private releaseRegionsToGames!: Map<string, Game>
 
     constructor(name: string, parent: Game) {
         this.name = name;
         this.games = [parent];
         this.refreshRegionsToRoms();
+    }
+
+    getName(): string {
+        return this.name;
+    }
+
+    getGames(): Game[] {
+        return this.games;
     }
 
     addChild(child: Game) {
@@ -192,11 +270,11 @@ export class Parent {
     }
 
     private refreshRegionsToRoms() {
-        this.regionsToGames = new Map<string, Game>();
+        this.releaseRegionsToGames = new Map<string, Game>();
         this.games.forEach((game: Game) => {
             if (game.getReleases()) {
                 game.getReleases().forEach((release: Release) => {
-                    this.regionsToGames.set(release.getRegion(), game);
+                    this.releaseRegionsToGames.set(release.getRegion(), game);
                 });
             }
         });
@@ -212,18 +290,55 @@ export class DAT {
 
     // Post-processed
 
-    @Type(() => Parent)
-    private parents!: Map<string, Parent>
+    private gameNamesToParents!: Map<string, Parent>
+    private crcsToRoms!: Map<string, ROM>
 
     static fromObject(obj: Object) {
         return plainToInstance(DAT, obj, {
-            excludeExtraneousValues: false,
             enableImplicitConversion: true
         })
-            .generateParents();
+            .generateGameNamesToParents()
+            .generateCrcsToRoms();
     }
 
-    getGames(): Game[] {
+    private generateGameNamesToParents(): DAT {
+        // Find all parents
+        this.gameNamesToParents = new Map<string, Parent>();
+        this.getGames().forEach((game: Game) => {
+            if (game.isParent()) {
+                this.gameNamesToParents.set(game.getName(), new Parent(game.getName(), game));
+            }
+        });
+
+        // Find all clones
+        this.getGames().forEach((game: Game) => {
+            if (!game.isParent()) {
+                const parent = this.gameNamesToParents.get(game.getParent());
+                if (parent) {
+                    parent.addChild(game);
+                }
+            }
+        });
+
+        return this;
+    }
+
+    private generateCrcsToRoms(): DAT {
+        this.crcsToRoms = new Map<string, ROM>();
+        this.getGames().forEach((game: Game) => {
+            game.getRoms().forEach((rom: ROM) => {
+                this.crcsToRoms.set(rom.getCrc(), rom);
+            });
+        })
+
+        return this;
+    }
+
+    getName(): string {
+        return this.header.getName();
+    }
+
+    private getGames(): Game[] {
         if (this.game instanceof Array) {
             return this.game;
         } else if (this.game) {
@@ -233,25 +348,44 @@ export class DAT {
         }
     }
 
-    private generateParents() {
-        // Find all parents
-        this.parents = new Map<string, Parent>();
-        this.getGames().forEach((game: Game) => {
-            if (game.isParent()) {
-                this.parents.set(game.getName(), new Parent(game.getName(), game));
-            }
-        });
+    getParents(): Parent[] {
+        return [...this.gameNamesToParents.values()];
+    }
 
-        // Find all clones
-        this.getGames().forEach((game: Game) => {
-           if (!game.isParent()) {
-               const parent = this.parents.get(game.getParent());
-               if (parent) {
-                   parent.addChild(game);
-               }
-           }
-        });
+    getRomExtensions(): string[] {
+        return this.getGames()
+            .flatMap((game: Game) => game.getRomExtensions())
+            .filter((ext: string, idx: number, exts: string[]) => exts.indexOf(ext) === idx);
+    }
 
-        return this;
+    addRomFile(romFile: ROMFile) {
+        const rom = this.crcsToRoms.get(romFile.getCrc());
+        if (rom) {
+            rom.addRomFile(romFile);
+        } else {
+            console.log(`No ROM found: ${romFile.getCrc()}`);
+        }
+    }
+
+    addRomFiles(romFiles: ROMFile[]) {
+        romFiles.forEach((romFile: ROMFile) => this.addRomFile(romFile));
+    }
+}
+
+export class DATs {
+    private dats!: DAT[]
+
+    constructor(dats: DAT[]) {
+        this.dats = dats;
+    }
+
+    getDats(): DAT[] {
+        return this.dats;
+    }
+
+    getRomExtensions(): string[] {
+        return this.dats
+            .flatMap((dat: DAT) => dat.getRomExtensions())
+            .filter((ext: string, idx: number, exts: string[]) => exts.indexOf(ext) === idx);
     }
 }

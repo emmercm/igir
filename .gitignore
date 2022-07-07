@@ -108,3 +108,10 @@ dist
 build/
 *.dat
 *.dtd
+
+# ROMs
+*.gb
+*.gba
+*.gbc
+*.rom
+*.zip

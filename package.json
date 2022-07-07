@@ -5,7 +5,7 @@
   "main": "index.js",
   "scripts": {
     "build": "tsc",
-    "start": "ts-node src/index.ts",
+    "start": "ts-node index.ts",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "bin": {
@@ -23,18 +23,25 @@
   },
   "homepage": "https://github.com/emmercm/igir#readme",
   "devDependencies": {
+    "@types/adm-zip": "^0.5.0",
     "@types/figlet": "^1.5.4",
+    "@types/micromatch": "^4.0.2",
     "@types/node": "^18.0.1",
     "@types/xml2js": "^0.4.11",
+    "@types/yargs": "^17.0.10",
     "ts-node": "^10.8.2",
     "typescript": "^4.7.4"
   },
   "dependencies": {
+    "adm-zip": "^0.5.9",
     "class-transformer": "^0.5.1",
     "commander": "^9.3.0",
+    "crc": "^4.1.1",
     "fast-glob": "^3.2.11",
     "figlet": "^1.5.2",
+    "micromatch": "^4.0.5",
     "reflect-metadata": "^0.1.13",
-    "xml2js": "^0.4.23"
+    "xml2js": "^0.4.23",
+    "yargs": "^17.5.1"
   }
 }
