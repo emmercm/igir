@@ -1,23 +1,28 @@
-import {Options} from "../types/options";
-import {DAT, Parent} from "../types/dat";
-import {ROMFile} from "../types/romFile";
-import path from "path";
-import {ReleaseCandidate} from "../types/releaseCandidate";
+import path from 'path';
 
-export class CandidateFilter {
-    static filter(options: Options, candidates: Map<DAT, Map<Parent, ReleaseCandidate[]>>): Map<DAT, Map<Parent, ROMFile[]>> {
-        const output = new Map<DAT, Map<Parent, ROMFile[]>>;
+import DAT from '../types/dat/dat';
+import Parent from '../types/dat/parent';
+import Options from '../types/options';
+import ReleaseCandidate from '../types/releaseCandidate';
+import ROMFile from '../types/romFile';
 
-        candidates.forEach((parentToCandidates: Map<Parent, ReleaseCandidate[]>, dat: DAT) => {
-            const datName = dat.getName()
-                .replace(' (Parent-Clone)', '');
-            const outputDir = path.join(options.getOutput(), datName);
+export default class CandidateFilter {
+  static filter(
+    options: Options,
+    candidates: Map<DAT, Map<Parent, ReleaseCandidate[]>>,
+  ): Map<DAT, Map<Parent, ROMFile[]>> {
+    const output = new Map<DAT, Map<Parent, ROMFile[]>>();
 
-            // Pre-filter
-            // Sort
-            // Post-filter?
-        });
+    candidates.forEach((parentToCandidates: Map<Parent, ReleaseCandidate[]>, dat: DAT) => {
+      const datName = dat.getName()
+        .replace(' (Parent-Clone)', '');
+      const outputDir = path.join(options.getOutput(), datName);
 
-        return output;
-    }
+      // Pre-filter
+      // Sort
+      // Post-filter?
+    });
+
+    return output;
+  }
 }
