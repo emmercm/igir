@@ -12,17 +12,23 @@ console.log(figlet.textSync('IGIR', {
 
 const argv = yargs
     .group(['dat', 'input'], 'Input and output options')
-    .option('d', {
-        alias: 'dat',
+    .option('dat', {
+        alias: 'd',
         description: 'Path(s) to DAT files',
         demandOption: true,
         type: 'array'
     })
-    .option('i', {
-        alias: 'input',
+    .option('input', {
+        alias: 'i',
         description: 'Path(s) to ROM files',
         demandOption: true,
         type: 'array'
+    })
+    .option('output', {
+        alias: 'o',
+        description: 'Path to the ROM output directory',
+        demandOption: true,
+        type: 'string'
     })
     .version(false)
     .help(true)

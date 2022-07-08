@@ -1,34 +1,26 @@
 import {Options} from "./types/options";
-import {DATScanner} from "./scanners/datScanner";
-import {ROMScanner} from "./scanners/romScanner";
+import {DATScanner} from "./services/datScanner";
+import {ROMScanner} from "./services/romScanner";
 import {DAT, Game, Parent} from "./types/dat";
+import {ROMFile} from "./types/romFile";
+import {CandidateFilter} from "./services/candidateFilter";
+import {CandidateGenerator} from "./services/candidateGenerator";
+import {ReleaseCandidate} from "./types/releaseCandidate";
 
 export async function main(options: Options) {
-    /**
-     * - Find all DAT files (and parents)
-     * - Scan all ROMs
-     * - For every possible parent, grab the ROMs
-     */
-    const dats = await DATScanner.parse(options);
-    const roms = ROMScanner.parse(options, dats);
+    // Find all DAT files and parse them
+    const dats: DAT[] = await DATScanner.parse(options);
 
-    dats.getDats().forEach((dat: DAT) => {
-        console.log(`${dat.getName()}`);
+    // Find all ROM files and pre-process them
+    const romInputs: ROMFile[] = ROMScanner.parse(options, dats);
 
-        dat.addRomFiles(roms);
+    // For each DAT, find all ROM candidates
+    const romCandidates: Map<DAT, Map<Parent, ReleaseCandidate[]>> = CandidateGenerator.generate(options, dats, romInputs);
 
-        const parents = dat.getParents().filter((parent) => {
-            // True if: every game has roms with no rom files
-            return parent.getGames().every((game) => {
-                // True if: every rom has no rom files
-                return game.getRoms().every((rom) => {
-                    // True if: the rom has no rom files
-                    return rom.getRomFiles().length === 0;
-                })
-            })
-        });
+    // Filter all ROM candidates
+    const romOutputs: Map<DAT, Map<Parent, ROMFile[]>> = CandidateFilter.filter(options, romCandidates);
 
-        const j = 0;
-    });
-    const i = 0;
+    // TODO(cemmer): copy/move files
+
+    // TODO(cemmer): write report
 }

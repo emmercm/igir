@@ -1,13 +1,16 @@
 import {Options} from "../types/options";
-import {DATs} from "../types/dat";
 import AdmZip from "adm-zip";
 import micromatch from 'micromatch';
 import path from 'path';
 import {ROMFile} from "../types/romFile";
+import {DAT} from "../types/dat";
 
 export class ROMScanner {
-    static parse(options: Options, dats: DATs): ROMFile[] {
-        const datsRomExtensionGlob = `**/*{${dats.getRomExtensions().join(',')}}`;
+    static parse(options: Options, dats: DAT[]): ROMFile[] {
+        const datRomExtensions = dats
+            .flatMap((dat: DAT) => dat.getRomExtensions())
+            .filter((ext: string, idx: number, exts: string[]) => exts.indexOf(ext) === idx);
+        const datsRomExtensionGlob = `**/*{${datRomExtensions}}`;
         const archiveExtensionGlob = '**/*.zip';
 
         return options.getInputFiles()

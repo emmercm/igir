@@ -1,10 +1,10 @@
 import fs from 'fs';
 import xml2js from 'xml2js';
 import {Options} from "../types/options";
-import {DAT, DATs} from "../types/dat";
+import {DAT} from "../types/dat";
 
 export class DATScanner {
-    static async parse(options: Options): Promise<DATs> {
+    static async parse(options: Options): Promise<DAT[]> {
         const parsedXml = await Promise.all(
             options.getDatFiles()
                 .map((dat: string) => {
@@ -17,7 +17,6 @@ export class DATScanner {
                     });
                 })
         );
-        const dats = parsedXml.map(xmlObject => DAT.fromObject(xmlObject.datafile));
-        return new DATs(dats);
+        return parsedXml.map(xmlObject => DAT.fromObject(xmlObject.datafile));
     }
 }

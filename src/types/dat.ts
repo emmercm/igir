@@ -1,7 +1,6 @@
 import {Expose, plainToInstance, Type} from "class-transformer";
 import 'reflect-metadata';
 import path from "path";
-import {ROMFile} from "./romFile";
 
 // http://www.logiqx.com/Dats/datafile.dtd
 
@@ -75,22 +74,20 @@ export class ROM {
     private status: "baddump" | "nodump" | "good" | "verified" = "good"
     private date?: string
 
-    private romFiles: ROMFile[] = []
-
     getExtension(): string {
         return path.extname(this.name);
     }
 
     getCrc(): string {
-        return this.crc || '';
+        return this.crc ? this.crc.replace(/^0x/, '').padStart(8, '0') : '';
     }
 
-    getRomFiles(): ROMFile[] {
-        return this.romFiles;
+    getSha1(): string {
+        return this.sha1 ? this.sha1.replace(/^0x/, '').padStart(40, '0') : '';
     }
 
-    addRomFile(romFile: ROMFile) {
-        this.romFiles.push(romFile);
+    getMd5(): string {
+        return this.md5 ? this.md5.replace(/^0x/, '').padStart(32, '0') : '';
     }
 }
 
@@ -118,6 +115,7 @@ export class Release {
     private default: "yes" | "no" = "no"
 
     getRegion(): string {
+        // TODO(cemmer): when the region isn't set but it can be parsed from release name
         return this.region;
     }
 }
@@ -234,7 +232,11 @@ export class Game {
     }
 
     isParent(): boolean {
-        return this.getParent() === "";
+        return !this.isClone();
+    }
+
+    isClone(): boolean {
+        return this.getParent() !== "";
     }
 
     getParent(): string {
@@ -291,14 +293,12 @@ export class DAT {
     // Post-processed
 
     private gameNamesToParents!: Map<string, Parent>
-    private crcsToRoms!: Map<string, ROM>
 
     static fromObject(obj: Object) {
         return plainToInstance(DAT, obj, {
             enableImplicitConversion: true
         })
-            .generateGameNamesToParents()
-            .generateCrcsToRoms();
+            .generateGameNamesToParents();
     }
 
     private generateGameNamesToParents(): DAT {
@@ -319,17 +319,6 @@ export class DAT {
                 }
             }
         });
-
-        return this;
-    }
-
-    private generateCrcsToRoms(): DAT {
-        this.crcsToRoms = new Map<string, ROM>();
-        this.getGames().forEach((game: Game) => {
-            game.getRoms().forEach((rom: ROM) => {
-                this.crcsToRoms.set(rom.getCrc(), rom);
-            });
-        })
 
         return this;
     }
@@ -355,37 +344,6 @@ export class DAT {
     getRomExtensions(): string[] {
         return this.getGames()
             .flatMap((game: Game) => game.getRomExtensions())
-            .filter((ext: string, idx: number, exts: string[]) => exts.indexOf(ext) === idx);
-    }
-
-    addRomFile(romFile: ROMFile) {
-        const rom = this.crcsToRoms.get(romFile.getCrc());
-        if (rom) {
-            rom.addRomFile(romFile);
-        } else {
-            console.log(`No ROM found: ${romFile.getCrc()}`);
-        }
-    }
-
-    addRomFiles(romFiles: ROMFile[]) {
-        romFiles.forEach((romFile: ROMFile) => this.addRomFile(romFile));
-    }
-}
-
-export class DATs {
-    private dats!: DAT[]
-
-    constructor(dats: DAT[]) {
-        this.dats = dats;
-    }
-
-    getDats(): DAT[] {
-        return this.dats;
-    }
-
-    getRomExtensions(): string[] {
-        return this.dats
-            .flatMap((dat: DAT) => dat.getRomExtensions())
             .filter((ext: string, idx: number, exts: string[]) => exts.indexOf(ext) === idx);
     }
 }

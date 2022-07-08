@@ -8,6 +8,8 @@ export class Options {
     @Expose({ name: 'input' })
     private inputFiles!: string[]
 
+    private output!: string
+
     static fromObject(obj: Object) {
         return plainToInstance(Options, obj, {
             enableImplicitConversion: true
@@ -33,5 +35,9 @@ export class Options {
 
     getInputFiles(): string[] {
         return this.inputFiles;
+    }
+
+    getOutput(): string {
+        return this.output;
     }
 }
