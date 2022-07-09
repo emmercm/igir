@@ -18,4 +18,12 @@ export default class ReleaseCandidate {
     this.roms = roms;
     this.romFiles = romFiles;
   }
+
+  getRoms(): ROM[] {
+    return this.roms;
+  }
+
+  getRomFiles(): ROMFile[] {
+    return this.romFiles;
+  }
 }

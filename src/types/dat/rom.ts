@@ -3,7 +3,7 @@ import path from 'path';
 export default class ROM {
   private name!: string;
 
-  private size!: bigint;
+  private size!: number;
 
   private crc?: string;
 

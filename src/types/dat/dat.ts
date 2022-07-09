@@ -17,7 +17,7 @@ export default class DAT {
 
   private gameNamesToParents!: Map<string, Parent>;
 
-  static fromObject(obj: unknown) {
+  static fromObject(obj: object) {
     return plainToInstance(DAT, obj, {
       enableImplicitConversion: true,
     })
@@ -47,7 +47,22 @@ export default class DAT {
   }
 
   getName(): string {
-    return this.header.getName();
+    return this.header.getName()
+      .replace('Non-Redump', '')
+      .replace('(Parent-Clone)', '')
+      .replace(/^[ -]+/, '')
+      .trim();
+  }
+
+  getShortName(): string {
+    const split = this.getName().split(' - ');
+    let shortName = split[0];
+    if (split.length > 1) {
+      shortName += ` - ${split.slice(1)
+        .map((str) => str.replace(/[^A-Z]/g, ''))
+        .join(' - ')}`;
+    }
+    return shortName;
   }
 
   private getGames(): Game[] {

@@ -26,6 +26,8 @@
   "homepage": "https://github.com/emmercm/igir#readme",
   "devDependencies": {
     "@types/adm-zip": "^0.5.0",
+    "@types/async": "^3.2.15",
+    "@types/cli-progress": "^3.11.0",
     "@types/figlet": "^1.5.4",
     "@types/micromatch": "^4.0.2",
     "@types/node": "^18.0.3",
@@ -42,7 +44,9 @@
   },
   "dependencies": {
     "adm-zip": "^0.5.9",
+    "async": "^3.2.4",
     "class-transformer": "^0.5.1",
+    "cli-progress": "^3.11.2",
     "commander": "^9.3.0",
     "crc": "^4.1.1",
     "fast-glob": "^3.2.11",
