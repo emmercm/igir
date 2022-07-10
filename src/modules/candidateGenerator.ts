@@ -1,17 +1,20 @@
-import DAT from '../types/dat/dat';
-import Game from '../types/dat/game';
-import Parent from '../types/dat/parent';
-import Release from '../types/dat/release';
-import ROM from '../types/dat/rom';
-import Options from '../types/options';
-import ProgressBar from '../types/progressBar';
-import ReleaseCandidate from '../types/releaseCandidate';
-import ROMFile from '../types/romFile';
+import DAT from '../types/dat/dat.js';
+import Game from '../types/dat/game.js';
+import Parent from '../types/dat/parent.js';
+import Release from '../types/dat/release.js';
+import ROM from '../types/dat/rom.js';
+import ProgressBar from '../types/progressBar.js';
+import ReleaseCandidate from '../types/releaseCandidate.js';
+import ROMFile from '../types/romFile.js';
 
 export default class CandidateGenerator {
-  static generate(
-    options: Options,
-    progressBar: ProgressBar,
+  private readonly progressBar: ProgressBar;
+
+  constructor(progressBar: ProgressBar) {
+    this.progressBar = progressBar;
+  }
+
+  generate(
     dat: DAT,
     inputRomFiles: ROMFile[],
   ): Map<Parent, ReleaseCandidate[]> {
@@ -23,11 +26,11 @@ export default class CandidateGenerator {
 
     const parentsToCandidates = new Map<Parent, ReleaseCandidate[]>();
 
-    progressBar.reset(dat.getParents().length).setSymbol('🗳️');
+    this.progressBar.reset(dat.getParents().length).setSymbol('🗳️');
 
     // For each parent, try to generate a parent candidate
     dat.getParents().forEach((parent) => {
-      progressBar.increment();
+      this.progressBar.increment();
 
       const releaseCandidates: ReleaseCandidate[] = [];
 

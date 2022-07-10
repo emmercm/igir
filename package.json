@@ -2,11 +2,13 @@
   "name": "igir",
   "version": "1.0.0",
   "description": "",
+  "type": "module",
   "main": "index.js",
   "scripts": {
     "build": "tsc",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
+    "node": "node --loader ts-node/esm index.ts",
     "start": "ts-node index.ts",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
@@ -26,7 +28,6 @@
   "homepage": "https://github.com/emmercm/igir#readme",
   "devDependencies": {
     "@types/adm-zip": "^0.5.0",
-    "@types/async": "^3.2.15",
     "@types/cli-progress": "^3.11.0",
     "@types/figlet": "^1.5.4",
     "@types/micromatch": "^4.0.2",
@@ -34,25 +35,22 @@
     "@types/xml2js": "^0.4.11",
     "@types/yargs": "^17.0.10",
     "@typescript-eslint/eslint-plugin": "^5.30.5",
-    "@typescript-eslint/parser": "^5.30.5",
     "eslint": "^8.19.0",
+    "eslint-config-airbnb-base": "^15.0.0",
     "eslint-config-airbnb-typescript": "^17.0.0",
-    "eslint-plugin-eslint-comments": "^3.2.0",
     "eslint-plugin-simple-import-sort": "^7.0.0",
-    "ts-node": "^10.8.2",
-    "typescript": "^4.7.4"
+    "ts-node": "^10.8.2"
   },
   "dependencies": {
     "adm-zip": "^0.5.9",
-    "async": "^3.2.4",
     "class-transformer": "^0.5.1",
     "cli-progress": "^3.11.2",
-    "commander": "^9.3.0",
     "crc": "^4.1.1",
     "fast-glob": "^3.2.11",
     "figlet": "^1.5.2",
     "micromatch": "^4.0.5",
     "reflect-metadata": "^0.1.13",
+    "trash": "^8.1.0",
     "xml2js": "^0.4.23",
     "yargs": "^17.5.1"
   }

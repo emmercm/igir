@@ -1,61 +1,69 @@
+import 'reflect-metadata';
+
 import { Expose, Type } from 'class-transformer';
 
-import Archive from './archive';
-import BIOSSet from './biosSet';
-import Disk from './disk';
-import Release from './release';
-import ROM from './rom';
-import Sample from './sample';
+import Archive from './archive.js';
+import BIOSSet from './biosSet.js';
+import Disk from './disk.js';
+import Release from './release.js';
+import ROM from './rom.js';
+import Sample from './sample.js';
 
 export default class Game {
-  private name!: string;
+  private readonly name!: string;
 
-  private description!: string;
+  private readonly description!: string;
 
   @Expose({ name: 'sourcefile' })
-  private sourceFile?: string;
+  private readonly sourceFile?: string;
 
   @Expose({ name: 'isbios' })
-  private isBiosStr: 'yes' | 'no' = 'no';
+  private readonly isBiosStr: 'yes' | 'no' = 'no';
 
   @Expose({ name: 'cloneof' })
-  private cloneOf?: string;
+  private readonly cloneOf?: string;
 
   @Expose({ name: 'romof' })
-  private romOf?: string;
+  private readonly romOf?: string;
 
   @Expose({ name: 'sampleof' })
-  private sampleOf?: string;
+  private readonly sampleOf?: string;
 
-  private board?: string;
+  private readonly board?: string;
 
   @Expose({ name: 'rebuildto' })
-  private rebuildTo?: string;
+  private readonly rebuildTo?: string;
 
-  private year?: string;
+  private readonly year?: string;
 
-  private manufacturer?: string;
+  private readonly manufacturer?: string;
 
   @Type(() => Release)
-  private release!: Release | Release[];
+  private readonly release!: Release | Release[];
 
   @Type(() => BIOSSet)
-  private biosSet!: BIOSSet | BIOSSet[];
+  private readonly biosSet!: BIOSSet | BIOSSet[];
 
   @Type(() => ROM)
-  private rom!: ROM | ROM[];
+  private readonly rom!: ROM | ROM[];
 
   @Type(() => Disk)
-  private disk!: Disk | Disk[];
+  private readonly disk!: Disk | Disk[];
 
   @Type(() => Sample)
-  private sample!: Sample | Sample[];
+  private readonly sample!: Sample | Sample[];
 
   @Type(() => Archive)
-  private archive!: Archive | Archive[];
+  private readonly archive!: Archive | Archive[];
+
+  // Property getters
 
   getName(): string {
     return this.name;
+  }
+
+  isBios(): boolean {
+    return this.isBiosStr === 'yes' || this.name.indexOf('[BIOS]') !== -1;
   }
 
   getReleases(): Release[] {
@@ -76,6 +84,8 @@ export default class Game {
     return [];
   }
 
+  // Computed getters
+
   getRomExtensions(): string[] {
     return this.getRoms().map((rom: ROM) => rom.getExtension());
   }
@@ -88,8 +98,8 @@ export default class Game {
     return this.name.match(/\[b\]]/i) !== null;
   }
 
-  isBios(): boolean {
-    return this.isBiosStr === 'yes' || this.name.indexOf('[BIOS]') !== -1;
+  isBeta(): boolean {
+    return this.name.match(/\(Beta[ a-zA-Z0-9.]*\)/i) !== null;
   }
 
   isDemo(): boolean {
@@ -104,12 +114,27 @@ export default class Game {
     return this.name.match(/\(Proto[ a-zA-Z0-9.]*\)/i) !== null;
   }
 
+  isSample(): boolean {
+    return this.name.match(/\(Sample[ a-zA-Z0-9.]*\)/i) !== null;
+  }
+
   isTest(): boolean {
     return this.name.match(/\(Test[ a-zA-Z0-9.]*\)/i) !== null;
   }
 
   isUnlicensed(): boolean {
     return this.name.match(/\(Unl[ a-zA-Z0-9.]*\)/i) !== null;
+  }
+
+  isRelease(): boolean {
+    if (this.getReleases().length) {
+      return true;
+    }
+    return !this.isBeta()
+        && !this.isDemo()
+        && !this.isPrototype()
+        && !this.isSample()
+        && !this.isTest();
   }
 
   isParent(): boolean {

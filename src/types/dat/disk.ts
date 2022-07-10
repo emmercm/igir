@@ -1,11 +1,11 @@
 export default class Disk {
-  private name!: string;
+  private readonly name!: string;
 
-  private sha1?: string;
+  private readonly sha1?: string;
 
-  private md5?: string;
+  private readonly md5?: string;
 
-  private merge?: string;
+  private readonly merge?: string;
 
-  private status: 'baddump' | 'nodump' | 'good' | 'verified' = 'good';
+  private readonly status: 'baddump' | 'nodump' | 'good' | 'verified' = 'good';
 }

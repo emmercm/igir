@@ -1,36 +1,37 @@
 import { Expose, Type } from 'class-transformer';
+import _ from 'reflect-metadata';
 
-import ClrMamePro from './clrMamePro';
-import RomCenter from './romCenter';
+import ClrMamePro from './clrMamePro.js';
+import RomCenter from './romCenter.js';
 
 export default class Header {
-  private name!: string;
+  private readonly name!: string;
 
-  private description!: string;
+  private readonly description!: string;
 
-  private category?: string;
+  private readonly category?: string;
 
-  private version!: string;
+  private readonly version!: string;
 
-  private date?: string;
+  private readonly date?: string;
 
-  private author!: string;
+  private readonly author!: string;
 
-  private email?: string;
+  private readonly email?: string;
 
-  private homepage?: string;
+  private readonly homepage?: string;
 
-  private url?: string;
+  private readonly url?: string;
 
-  private comment?: string;
+  private readonly comment?: string;
 
   @Type(() => ClrMamePro)
   @Expose({ name: 'clrmamepro' })
-  private clrMamePro?: ClrMamePro;
+  private readonly clrMamePro?: ClrMamePro;
 
   @Type(() => RomCenter)
   @Expose({ name: 'romcenter' })
-  private romCenter?: RomCenter;
+  private readonly romCenter?: RomCenter;
 
   getName(): string {
     return this.name;

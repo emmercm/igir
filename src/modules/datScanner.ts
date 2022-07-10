@@ -1,13 +1,13 @@
 import fs from 'fs';
 import xml2js from 'xml2js';
 
-import Logger from '../logger';
-import DAT from '../types/dat/dat';
-import Options from '../types/options';
+import Logger from '../logger.js';
+import DAT from '../types/dat/dat.js';
+import Options from '../types/options.js';
 
 export default class DATScanner {
   static async parse(options: Options): Promise<DAT[]> {
-    Logger.out(`Parsing ${options.getDatFiles().length} DAT files ...`);
+    Logger.out(`Found ${options.getDatFiles().length} DAT files ...`);
 
     const parsedXml = await Promise.all(
       options.getDatFiles()

@@ -1,17 +1,21 @@
 import cliProgress, { MultiBar, SingleBar } from 'cli-progress';
 
-import Logger from '../logger';
+import Logger from '../logger.js';
 
 export default class ProgressBar {
   private static multiBar: MultiBar;
 
-  private singleBar: SingleBar;
+  private readonly singleBar: SingleBar;
 
-  constructor(maxNameLength: number, name: string) {
+  constructor(maxNameLength: number, name: string, symbol: string, total: number) {
     if (!ProgressBar.multiBar) {
       ProgressBar.multiBar = new cliProgress.MultiBar({
         format: (options, params, payload) => {
-          const bar = (options.barCompleteString || '').substr(0, Math.round(params.progress * (options.barsize || 0)));
+          const completeSize = Math.round(params.progress * (options.barsize || 0));
+          const incompleteSize = (options.barsize || 0) - completeSize;
+          const bar = (options.barCompleteString || '').substr(0, completeSize)
+              + options.barGlue
+              + (options.barIncompleteString || '').substr(0, incompleteSize);
 
           let line = '';
           if (payload.symbol) {
@@ -23,7 +27,12 @@ export default class ProgressBar {
               : `${payload.name} ${'·'.repeat(maxNameLength - 1 - payload.name.length)}`;
             line += `${paddedName} | `;
           }
-          line += `${bar} | ${params.value}/${params.total}`;
+          line += `${bar} | `;
+          if (payload.progressMessage) {
+            line += payload.progressMessage;
+          } else {
+            line += `${params.value}/${params.total}`;
+          }
 
           return line;
         },
@@ -33,7 +42,8 @@ export default class ProgressBar {
       }, cliProgress.Presets.shades_grey);
     }
 
-    this.singleBar = ProgressBar.multiBar.create(100, 0, {
+    this.singleBar = ProgressBar.multiBar.create(total, 0, {
+      symbol,
       name,
     });
   }
@@ -41,7 +51,7 @@ export default class ProgressBar {
   reset(total: number) {
     this.singleBar.setTotal(total);
     this.singleBar.update(0);
-    ProgressBar.multiBar.update();
+    ProgressBar.multiBar.update(); // https://github.com/npkgz/cli-progress/issues/79
     return this;
   }
 
@@ -49,14 +59,39 @@ export default class ProgressBar {
     this.singleBar.update({
       symbol,
     });
-    ProgressBar.multiBar.update();
+    ProgressBar.multiBar.update(); // https://github.com/npkgz/cli-progress/issues/79
     return this;
   }
 
   increment() {
     this.singleBar.increment();
-    ProgressBar.multiBar.update();
+    ProgressBar.multiBar.update(); // https://github.com/npkgz/cli-progress/issues/79
     return this;
+  }
+
+  done() {
+    this.singleBar.update(this.singleBar.getTotal());
+    ProgressBar.multiBar.update(); // https://github.com/npkgz/cli-progress/issues/79
+    return this;
+  }
+
+  setProgressMessage(message: string) {
+    this.singleBar.update({
+      progressMessage: message,
+    });
+    ProgressBar.multiBar.update(); // https://github.com/npkgz/cli-progress/issues/79
+    return this;
+  }
+
+  update(current: number) {
+    this.singleBar.update(current);
+    ProgressBar.multiBar.update(); // https://github.com/npkgz/cli-progress/issues/79
+    return this;
+  }
+
+  static log(message: string) {
+    ProgressBar.multiBar.log(`${message}\n`);
+    ProgressBar.multiBar.update(); // https://github.com/npkgz/cli-progress/issues/79
   }
 
   static stop() {

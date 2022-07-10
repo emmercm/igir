@@ -1,13 +1,14 @@
 import { Type } from 'class-transformer';
+import _ from 'reflect-metadata';
 
-import Game from './game';
-import Release from './release';
+import Game from './game.js';
+import Release from './release.js';
 
 export default class Parent {
   name!: string;
 
   @Type(() => Game)
-  private games!: Game[];
+  private readonly games!: Game[];
 
   private releaseRegionsToGames!: Map<string, Game>;
 

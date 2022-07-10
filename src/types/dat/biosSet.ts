@@ -1,7 +1,7 @@
 export default class BIOSSet {
-  private name!: string;
+  private readonly name!: string;
 
-  private description!: string;
+  private readonly description!: string;
 
-  private default: 'yes' | 'no' = 'no';
+  private readonly default: 'yes' | 'no' = 'no';
 }

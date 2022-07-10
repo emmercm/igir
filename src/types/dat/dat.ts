@@ -1,17 +1,16 @@
-import 'reflect-metadata';
-
 import { plainToInstance, Type } from 'class-transformer';
+import _ from 'reflect-metadata';
 
-import Game from './game';
-import Header from './header';
-import Parent from './parent';
+import Game from './game.js';
+import Header from './header.js';
+import Parent from './parent.js';
 
 export default class DAT {
   @Type(() => Header)
-  private header!: Header;
+  private readonly header!: Header;
 
   @Type(() => Game)
-  private game!: Game | Game[];
+  private readonly game!: Game | Game[];
 
   // Post-processed
 
@@ -48,9 +47,14 @@ export default class DAT {
 
   getName(): string {
     return this.header.getName()
+    // Prefixes
       .replace('Non-Redump', '')
+    // Suffixes
+      .replace('Datfile', '')
       .replace('(Parent-Clone)', '')
+    // Cleanup
       .replace(/^[ -]+/, '')
+      .replace(/[ -]+$/, '')
       .trim();
   }
 
@@ -59,7 +63,11 @@ export default class DAT {
     let shortName = split[0];
     if (split.length > 1) {
       shortName += ` - ${split.slice(1)
-        .map((str) => str.replace(/[^A-Z]/g, ''))
+        .map((str) => str
+          .replace(/[^A-Z0-9 ()]/g, '')
+          .replace(/([A-Z0-9]) +([A-Z0-9])/g, '$1$2')
+          .replace(/([A-Z0-9]) +([A-Z0-9])/g, '$1$2')
+          .trim())
         .join(' - ')}`;
     }
     return shortName;

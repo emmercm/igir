@@ -1,14 +1,15 @@
 import { Expose } from 'class-transformer';
+import _ from 'reflect-metadata';
 
 export default class ClrMamePro {
-  private header?: string;
+  private readonly header?: string;
 
   @Expose({ name: 'forcemerging' })
-  private forceMerging: 'none' | 'split' | 'full' = 'split';
+  private readonly forceMerging: 'none' | 'split' | 'full' = 'split';
 
   @Expose({ name: 'forcenodump' })
-  private forceNoDump: 'obsolete' | 'required' | 'ignore' = 'obsolete';
+  private readonly forceNoDump: 'obsolete' | 'required' | 'ignore' = 'obsolete';
 
   @Expose({ name: 'forcepacking' })
-  private forcePacking: 'zip' | 'unzip' = 'zip';
+  private readonly forcePacking: 'zip' | 'unzip' = 'zip';
 }

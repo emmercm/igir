@@ -1,3 +1,3 @@
 export default class Archive {
-  private name!: string;
+  private readonly name!: string;
 }

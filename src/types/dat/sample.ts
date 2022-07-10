@@ -1,3 +1,3 @@
 export default class Sample {
-  private name!: string;
+  private readonly name!: string;
 }

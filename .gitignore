@@ -110,8 +110,13 @@ build/
 *.dtd
 
 # ROMs
+*.7z
 *.gb
 *.gba
 *.gbc
 *.rom
 *.zip
+
+# ROM pack excess
+*.sqlite
+*.xml

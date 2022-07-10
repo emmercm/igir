@@ -11,9 +11,15 @@ export default class Logger {
   static error = this.out;
 
   static header() {
-    this.out(figlet.textSync('IGIR', {
+    const logo = figlet.textSync('IGIR', {
       font: 'Big Money-se',
-    }).trim());
-    this.out();
+    }).trim();
+
+    const logoSplit = logo.split('\n');
+    const midLine = Math.ceil(logoSplit.length / 2);
+    const maxLineLen = logoSplit.reduce((max, line) => Math.max(max, line.length), 0);
+    logoSplit[midLine] = `${logoSplit[midLine].padEnd(maxLineLen, ' ')}   ROM collection manager`;
+
+    this.out(`${logoSplit.join('\n')}\n\n`);
   }
 }

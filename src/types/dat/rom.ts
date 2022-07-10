@@ -1,21 +1,25 @@
 import path from 'path';
 
 export default class ROM {
-  private name!: string;
+  private readonly name!: string;
 
-  private size!: number;
+  private readonly size!: number;
 
-  private crc?: string;
+  private readonly crc?: string;
 
-  private sha1?: string;
+  private readonly sha1?: string;
 
-  private md5?: string;
+  private readonly md5?: string;
 
-  private merge?: string;
+  private readonly merge?: string;
 
-  private status: 'baddump' | 'nodump' | 'good' | 'verified' = 'good';
+  private readonly status: 'baddump' | 'nodump' | 'good' | 'verified' = 'good';
 
-  private date?: string;
+  private readonly date?: string;
+
+  getName(): string {
+    return this.name;
+  }
 
   getExtension(): string {
     return path.extname(this.name);

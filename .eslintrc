@@ -12,11 +12,13 @@
 
   "parser": "@typescript-eslint/parser",
   "parserOptions": {
-    "project": "./tsconfig.json"
+    "project": "./tsconfig.json",
+    "sourceType": "module"
   },
   "ignorePatterns": ["build/**"],
 
   "rules": {
+    "@typescript-eslint/prefer-readonly": "error",
     "simple-import-sort/exports": "error",
     "simple-import-sort/imports": "error"
   }

@@ -1,16 +1,26 @@
 export default class Release {
-  private name!: string;
+  private readonly name!: string;
 
-  private region!: string;
+  private readonly region!: string;
 
-  private language?: string;
+  private readonly language?: string;
 
-  private date?: string;
+  private readonly date?: string;
 
-  private default: 'yes' | 'no' = 'no';
+  private readonly default: 'yes' | 'no' = 'no';
+
+  getName(): string {
+    return this.name;
+  }
 
   getRegion(): string {
-    // TODO(cemmer): when the region isn't set but it can be parsed from release name
-    return this.region;
+    return this.region.toUpperCase();
+  }
+
+  getLanguage(): string {
+    if (this.language) {
+      return this.language.replace(/\w\S*/g, (word) => word.charAt(0).toUpperCase() + word.substring(1).toLowerCase());
+    }
+    return '';
   }
 }
