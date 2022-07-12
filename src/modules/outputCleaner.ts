@@ -30,8 +30,10 @@ export default class OutputCleaner {
       return;
     }
 
+    // TODO(cemmer): remove empty directories
+
     // If there is nothing to clean, then don't do anything
-    const filesToClean = fg.sync(`${this.options.getOutput(dat)}/**`)
+    const filesToClean = (await fg(`${this.options.getOutput(dat)}/**`))
       .filter((file) => outputRomPaths.indexOf(file) === -1);
     if (!filesToClean) {
       return;

@@ -13,9 +13,9 @@ export default class CandidateFilter {
     this.progressBar = progressBar;
   }
 
-  filter(
+  async filter(
     parentsToCandidates: Map<Parent, ReleaseCandidate[]>,
-  ): Map<Parent, ReleaseCandidate[]> {
+  ): Promise<Map<Parent, ReleaseCandidate[]>> {
     const output = new Map<Parent, ReleaseCandidate[]>();
 
     this.progressBar.reset(parentsToCandidates.size).setSymbol('⚙️️');

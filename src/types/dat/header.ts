@@ -1,5 +1,6 @@
+import 'reflect-metadata';
+
 import { Expose, Type } from 'class-transformer';
-import _ from 'reflect-metadata';
 
 import ClrMamePro from './clrMamePro.js';
 import RomCenter from './romCenter.js';

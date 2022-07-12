@@ -101,10 +101,11 @@ export default class Options {
 
   getOutput(dat: DAT, basename?: string): string {
     let output = path.join(this.output, dat.getName());
-    // TODO(cemmer): sort by first letter
+    // TODO(cemmer): don't sort by dat name by default?
     if (basename) {
       output = path.join(output, basename);
     }
+    // TODO(cemmer): sort by first letter
     return output;
   }
 

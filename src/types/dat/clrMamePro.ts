@@ -1,5 +1,6 @@
+import 'reflect-metadata';
+
 import { Expose } from 'class-transformer';
-import _ from 'reflect-metadata';
 
 export default class ClrMamePro {
   private readonly header?: string;

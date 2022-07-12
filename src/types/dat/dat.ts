@@ -1,5 +1,6 @@
+import 'reflect-metadata';
+
 import { plainToInstance, Type } from 'class-transformer';
-import _ from 'reflect-metadata';
 
 import Game from './game.js';
 import Header from './header.js';

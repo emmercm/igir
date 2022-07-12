@@ -14,10 +14,10 @@ export default class CandidateGenerator {
     this.progressBar = progressBar;
   }
 
-  generate(
+  async generate(
     dat: DAT,
     inputRomFiles: ROMFile[],
-  ): Map<Parent, ReleaseCandidate[]> {
+  ): Promise<Map<Parent, ReleaseCandidate[]>> {
     // Index the ROMFiles by CRC
     const crcToInputRomFiles = inputRomFiles.reduce((acc: Map<string, ROMFile>, val: ROMFile) => {
       acc.set(val.getCrc(), val);

@@ -1,8 +1,7 @@
+import _7z, { Result } from '7zip-min';
 import AdmZip from 'adm-zip';
-import micromatch from 'micromatch';
 import path from 'path';
 
-import DAT from '../types/dat/dat.js';
 import Options from '../types/options.js';
 import ProgressBar from '../types/progressBar.js';
 import ROMFile from '../types/romFile.js';
@@ -19,43 +18,55 @@ export default class ROMScanner {
     this.progressBar = progressBar;
   }
 
-  parse(dat: DAT): ROMFile[] {
-    const datsRomExtensionGlob = `**/*${dat.getRomExtensions().length > 1
-      ? `{${dat.getRomExtensions().join(',')}}`
-      : dat.getRomExtensions()}`;
-    const archiveExtensionGlob = '**/*.zip';
+  async parse(): Promise<ROMFile[]> {
+    const results: ROMFile[] = [];
 
-    const filteredInputFiles = this.options.getInputFiles()
-      .filter((file) => micromatch.isMatch(file, [datsRomExtensionGlob, archiveExtensionGlob]));
+    this.progressBar.reset(this.options.getInputFiles().length).setSymbol('🔎');
 
-    this.progressBar.reset(filteredInputFiles.length).setSymbol('🔎');
+    /* eslint-disable no-await-in-loop */
+    for (let i = 0; i < this.options.getInputFiles().length; i += 1) {
+      const file = this.options.getInputFiles()[i];
 
-    const results = filteredInputFiles.flatMap((file) => {
       this.progressBar.increment();
 
+      let romFiles: ROMFile[] = [new ROMFile(file)];
+
       if (ROMScanner.pathToRomFileCache.has(file)) {
-        return ROMScanner.pathToRomFileCache.get(file) as ROMFile[];
+        romFiles = ROMScanner.pathToRomFileCache.get(file) as ROMFile[];
+      } else if (path.extname(file) === '.7z') {
+        romFiles = await ROMScanner.getRomFilesIn7z(file);
+      } else if (path.extname(file) === '.zip') {
+        romFiles = ROMScanner.getRomFilesInZip(file);
       }
 
-      if (path.extname(file) === '.zip') {
-        const zip = new AdmZip(file);
-        const romFilesInZip = zip.getEntries()
-          .filter((entry) => micromatch.isMatch(entry.entryName, datsRomExtensionGlob))
-          .map((entry) => new ROMFile(
-            file,
-            entry.entryName,
-            entry.header.crc.toString(16),
-          ));
-        ROMScanner.pathToRomFileCache.set(file, romFilesInZip);
-        return romFilesInZip;
-      }
-
-      const romFiles = [new ROMFile(file)];
       ROMScanner.pathToRomFileCache.set(file, romFiles);
-      return romFiles;
-    });
+      results.push(...romFiles);
+    }
     // TODO(cemmer): de-duplicate?
 
-    return results;
+    return results.flatMap((romFiles) => romFiles);
+  }
+
+  private static async getRomFilesIn7z(file: string): Promise<ROMFile[]> {
+    const romFilesIn7z = await new Promise((resolve, reject) => {
+      _7z.list(file, (err, result) => {
+        if (err) {
+          reject(err);
+        } else {
+          resolve(result);
+        }
+      });
+    }) as Result[];
+    return romFilesIn7z.map((result) => new ROMFile(file, result.name, result.crc));
+  }
+
+  private static getRomFilesInZip(file: string): ROMFile[] {
+    const zip = new AdmZip(file);
+    return zip.getEntries()
+      .map((entry) => new ROMFile(
+        file,
+        entry.entryName,
+        entry.header.crc.toString(16),
+      ));
   }
 }

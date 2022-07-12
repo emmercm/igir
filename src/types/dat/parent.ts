@@ -1,5 +1,6 @@
+import 'reflect-metadata';
+
 import { Type } from 'class-transformer';
-import _ from 'reflect-metadata';
 
 import Game from './game.js';
 import Release from './release.js';

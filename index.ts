@@ -147,11 +147,13 @@ const { argv } = yargs(process.argv)
   .version(false)
   .help(true)
   .example([
-    ['$0 -i **/*.zip -o 1G1R/ -1 -l En -r USA,EUR', 'Produce a 1G1R set, preferring English from USA and then EUR'],
+    ['$0 -i **/*.zip -o 1G1R/ -1 -l En -r USA,EUR,JPN', 'Produce a 1G1R set, preferring English from USA>EUR>JPN'],
+    [''], // https://github.com/yargs/yargs/issues/1640
+    ['$0 -i **/*.zip -i 1G1R/ -o 1G1R/', 'Merge new ROMs into an existing ROM collection'],
+    [''], // https://github.com/yargs/yargs/issues/1640
+    ['$0 -i 1G1R/ -o 1G1R/ -m -z', 'Organize and zip an existing ROM collection'],
     [''], // https://github.com/yargs/yargs/issues/1640
     ['$0 -i **/*.zip -o bios/ --only-bios', 'Collate all BIOS files'],
-    [''], // https://github.com/yargs/yargs/issues/1640
-    ['$0 -i 1G1R/ -o 1G1R/ -m -z -m', 'Organize and zip an existing ROM collection'],
   ]);
 
 const options = Options.fromObject(argv);

@@ -2,6 +2,12 @@ import cliProgress, { MultiBar, SingleBar } from 'cli-progress';
 
 import Logger from '../logger.js';
 
+interface ProgressBarPayload {
+  symbol?: string,
+  name?: string,
+  progressMessage?: string
+}
+
 export default class ProgressBar {
   private static multiBar: MultiBar;
 
@@ -10,7 +16,7 @@ export default class ProgressBar {
   constructor(maxNameLength: number, name: string, symbol: string, total: number) {
     if (!ProgressBar.multiBar) {
       ProgressBar.multiBar = new cliProgress.MultiBar({
-        format: (options, params, payload) => {
+        format: (options, params, payload: ProgressBarPayload) => {
           const completeSize = Math.round(params.progress * (options.barsize || 0));
           const incompleteSize = (options.barsize || 0) - completeSize;
           const bar = (options.barCompleteString || '').substr(0, completeSize)
@@ -31,7 +37,7 @@ export default class ProgressBar {
           if (payload.progressMessage) {
             line += payload.progressMessage;
           } else {
-            line += `${params.value}/${params.total}`;
+            line += `${params.value}/${params.total} | ETA: {eta}`;
           }
 
           return line;
@@ -45,7 +51,7 @@ export default class ProgressBar {
     this.singleBar = ProgressBar.multiBar.create(total, 0, {
       symbol,
       name,
-    });
+    } as ProgressBarPayload);
   }
 
   reset(total: number) {
@@ -58,7 +64,7 @@ export default class ProgressBar {
   setSymbol(symbol: string) {
     this.singleBar.update({
       symbol,
-    });
+    } as ProgressBarPayload);
     ProgressBar.multiBar.update(); // https://github.com/npkgz/cli-progress/issues/79
     return this;
   }
@@ -78,7 +84,7 @@ export default class ProgressBar {
   setProgressMessage(message: string) {
     this.singleBar.update({
       progressMessage: message,
-    });
+    } as ProgressBarPayload);
     ProgressBar.multiBar.update(); // https://github.com/npkgz/cli-progress/issues/79
     return this;
   }

@@ -27,10 +27,10 @@
   },
   "homepage": "https://github.com/emmercm/igir#readme",
   "devDependencies": {
+    "@types/7zip-min": "^1.3.1",
     "@types/adm-zip": "^0.5.0",
     "@types/cli-progress": "^3.11.0",
     "@types/figlet": "^1.5.4",
-    "@types/micromatch": "^4.0.2",
     "@types/node": "^18.0.3",
     "@types/xml2js": "^0.4.11",
     "@types/yargs": "^17.0.10",
@@ -42,13 +42,13 @@
     "ts-node": "^10.8.2"
   },
   "dependencies": {
+    "7zip-min": "^1.4.3",
     "adm-zip": "^0.5.9",
     "class-transformer": "^0.5.1",
     "cli-progress": "^3.11.2",
     "crc": "^4.1.1",
     "fast-glob": "^3.2.11",
     "figlet": "^1.5.2",
-    "micromatch": "^4.0.5",
     "reflect-metadata": "^0.1.13",
     "trash": "^8.1.0",
     "xml2js": "^0.4.23",

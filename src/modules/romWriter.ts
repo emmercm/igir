@@ -1,5 +1,5 @@
 import AdmZip from 'adm-zip';
-import fs from 'fs';
+import fsPromises from 'node:fs/promises';
 import path from 'path';
 
 import DAT from '../types/dat/dat.js';
@@ -20,18 +20,27 @@ export default class ROMWriter {
     this.progressBar = progressBar;
   }
 
-  write(
+  async write(
     dat: DAT,
     parentsToCandidates: Map<Parent, ReleaseCandidate[]>,
-  ): Map<Parent, ROMFile[]> {
+  ): Promise<Map<Parent, ROMFile[]>> {
     const output = new Map<Parent, ROMFile[]>();
 
     this.progressBar.reset(parentsToCandidates.size).setSymbol(this.options.getZip() ? '🗜️' : '📂');
 
-    parentsToCandidates.forEach((releaseCandidates, parent) => {
+    const parentsToCandidatesEntries = [...parentsToCandidates.entries()];
+    for (let i = 0; i < parentsToCandidatesEntries.length; i += 1) {
+      const parent = parentsToCandidatesEntries[i][0];
+      const releaseCandidates = parentsToCandidatesEntries[i][1];
+
       this.progressBar.increment();
 
-      const outputRomFiles = releaseCandidates.flatMap((releaseCandidate) => {
+      const outputRomFiles: ROMFile[] = [];
+
+      /* eslint-disable no-await-in-loop */
+      for (let j = 0; j < releaseCandidates.length; j += 1) {
+        const releaseCandidate = releaseCandidates[j];
+
         const crcToRoms = releaseCandidate.getRomsByCrc();
 
         const inputToOutput = releaseCandidate.getRomFiles().reduce((acc, inputRomFile) => {
@@ -50,47 +59,47 @@ export default class ROMWriter {
           return acc;
         }, new Map<ROMFile, ROMFile>());
 
-        // Stop early if there is nothing to write
-        if ([...inputToOutput.entries()].every((entry) => entry[0].equals(entry[1]))) {
-          return [...inputToOutput.values()];
+        // TODO(cemmer): dry run
+
+        const writeNeeded = [...inputToOutput.entries()]
+          .some((entry) => !entry[0].equals(entry[1]));
+        if (writeNeeded) {
+          if (this.options.getZip()) {
+            await this.writeZip(inputToOutput);
+          } else {
+            await this.writeRaw(inputToOutput);
+          }
         }
 
-        if (this.options.getZip()) {
-          this.writeZip(inputToOutput);
-        } else {
-          this.writeRaw(inputToOutput);
-        }
-
-        return [...inputToOutput.values()];
-      });
+        outputRomFiles.push(...inputToOutput.values());
+      }
 
       output.set(parent, outputRomFiles);
-    });
+    }
 
     return output;
   }
 
-  private static getFileBuffer(romFile: ROMFile): Buffer {
-    if (path.extname(romFile.getFilePath()) === '.zip') {
-      const zip = new AdmZip(romFile.getFilePath());
-      return zip.getEntry(romFile.getEntryPath() as string)?.getData() as Buffer;
-    }
-
-    return fs.readFileSync(romFile.getFilePath());
-  }
-
-  private writeZip(inputToOutput: Map<ROMFile, ROMFile>) {
+  private async writeZip(inputToOutput: Map<ROMFile, ROMFile>) {
     // There is only one output file
     const outputZipPath = [...inputToOutput.values()][0].getFilePath();
     let outputZip = new AdmZip();
-    if (fs.existsSync(outputZipPath)) {
+    try {
+      await fsPromises.access(outputZipPath);
       outputZip = new AdmZip(outputZipPath);
+    } catch (e) {
+      // eslint-disable-line no-empty
     }
 
     let outputNeedsCleaning = outputZip.getEntryCount() > 0;
     let outputNeedsWriting = false;
 
-    inputToOutput.forEach((outputRomFile, inputRomFile) => {
+    /* eslint-disable no-await-in-loop */
+    const inputToOutputEntries = [...inputToOutput.entries()];
+    for (let i = 0; i < inputToOutputEntries.length; i += 1) {
+      const inputRomFile = inputToOutputEntries[i][0];
+      const outputRomFile = inputToOutputEntries[i][1];
+
       if (outputRomFile.equals(inputRomFile)) {
         return;
       }
@@ -114,41 +123,59 @@ export default class ROMWriter {
       }
 
       // Write the entry
-      outputZip.addFile(
+      const inputRomFileLocal = await inputRomFile.toLocalFile();
+      outputZip.addLocalFile(
+        inputRomFileLocal.getFilePath(),
+        '',
         outputRomFile.getEntryPath() as string,
-        ROMWriter.getFileBuffer(inputRomFile),
       );
+      await inputRomFileLocal.cleanupLocalFile();
       outputNeedsWriting = true;
-    });
+    }
 
     // Write the zip file if needed
     if (outputNeedsWriting) {
-      outputZip.writeZip(outputZipPath);
+      await outputZip.writeZipPromise(outputZipPath);
     }
 
     // If "moving", delete the input files
     if (this.options.getMove()) {
-      [...inputToOutput.keys()]
-        .map((romFile) => romFile.getFilePath())
-        .filter((filePath) => filePath !== outputZipPath)
-        .filter((romFile, idx, romFiles) => romFiles.indexOf(romFile) === idx)
-        .forEach((filePath) => fs.rmSync(filePath));
+      await Promise.all(
+        [...inputToOutput.keys()]
+          .map((romFile) => romFile.getFilePath())
+          .filter((filePath) => filePath !== outputZipPath)
+          .filter((romFile, idx, romFiles) => romFiles.indexOf(romFile) === idx)
+          .map((filePath) => fsPromises.rm(filePath)),
+      );
     }
   }
 
-  private writeRaw(inputToOutput: Map<ROMFile, ROMFile>) {
-    inputToOutput.forEach((outputRomFile, inputRomFile) => {
+  private async writeRaw(inputToOutput: Map<ROMFile, ROMFile>) {
+    /* eslint-disable no-await-in-loop */
+    const inputToOutputEntries = [...inputToOutput.entries()];
+    for (let i = 0; i < inputToOutputEntries.length; i += 1) {
+      const inputRomFile = inputToOutputEntries[i][0];
+      const outputRomFile = inputToOutputEntries[i][1];
+
       if (outputRomFile.equals(inputRomFile)) {
         return;
       }
 
-      if (this.options.getMove()) {
-        if (outputRomFile.getFilePath() !== inputRomFile.getFilePath()) {
-          fs.renameSync(inputRomFile.getFilePath(), outputRomFile.getFilePath());
-        }
-      } else {
-        fs.writeFileSync(outputRomFile.getFilePath(), ROMWriter.getFileBuffer(inputRomFile));
+      // Create the output directory
+      const outputDir = path.dirname(outputRomFile.getFilePath());
+      try {
+        await fsPromises.access(outputDir);
+      } catch (e) {
+        await fsPromises.mkdir(outputDir, { recursive: true });
       }
-    });
+
+      const inputRomFileLocal = await inputRomFile.toLocalFile();
+      if (this.options.getMove()) {
+        await fsPromises.rename(inputRomFileLocal.getFilePath(), outputRomFile.getFilePath());
+      } else {
+        await fsPromises.copyFile(inputRomFileLocal.getFilePath(), outputRomFile.getFilePath());
+      }
+      await inputRomFileLocal.cleanupLocalFile();
+    }
   }
 }
