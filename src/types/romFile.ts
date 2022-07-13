@@ -9,13 +9,13 @@ import path from 'path';
 export default class ROMFile {
   private readonly filePath!: string;
 
-  private readonly entryPath?: string;
+  private readonly archiveEntryPath?: string;
 
   private readonly crc!: string;
 
   constructor(filePath: string, entryPath?: string, crc?: string) {
     this.filePath = filePath;
-    this.entryPath = entryPath;
+    this.archiveEntryPath = entryPath;
     this.crc = (crc || crc32(fs.readFileSync(filePath)).toString(16)).toLowerCase().padStart(8, '0');
   }
 
@@ -23,8 +23,8 @@ export default class ROMFile {
     return this.filePath;
   }
 
-  getEntryPath(): string | undefined {
-    return this.entryPath;
+  getArchiveEntryPath(): string | undefined {
+    return this.archiveEntryPath;
   }
 
   getCrc(): string {
@@ -32,9 +32,9 @@ export default class ROMFile {
   }
 
   async toLocalFile(): Promise<ROMFile> {
-    if (this.entryPath) {
+    if (this.archiveEntryPath) {
       const tempDir = await fsPromises.mkdtemp(os.tmpdir());
-      const tempFile = path.join(tempDir, this.entryPath);
+      const tempFile = path.join(tempDir, this.archiveEntryPath);
 
       if (path.extname(this.filePath) === '.7z') {
         await this.extract7zToLocal(tempFile);
@@ -63,7 +63,7 @@ export default class ROMFile {
   private extractZipToLocal(tempFile: string) {
     const zip = new AdmZip(this.filePath);
     zip.extractEntryTo(
-      zip.getEntry(this.entryPath as string) as IZipEntry,
+      zip.getEntry(this.archiveEntryPath as string) as IZipEntry,
       path.dirname(tempFile),
       false,
       false,
@@ -86,7 +86,7 @@ export default class ROMFile {
       return false;
     }
     return this.getFilePath() === other.getFilePath()
-        && this.getEntryPath() === other.getEntryPath()
+        && this.getArchiveEntryPath() === other.getArchiveEntryPath()
         && this.getCrc() === other.getCrc();
   }
 }

@@ -1,5 +1,5 @@
-import DAT from '../types/dat/dat.js';
-import Parent from '../types/dat/parent.js';
+import DAT from '../types/logiqx/dat.js';
+import Parent from '../types/logiqx/parent.js';
 import Options from '../types/options.js';
 import ROMFile from '../types/romFile.js';
 

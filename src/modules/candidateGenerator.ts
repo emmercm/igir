@@ -1,8 +1,8 @@
-import DAT from '../types/dat/dat.js';
-import Game from '../types/dat/game.js';
-import Parent from '../types/dat/parent.js';
-import Release from '../types/dat/release.js';
-import ROM from '../types/dat/rom.js';
+import DAT from '../types/logiqx/dat.js';
+import Game from '../types/logiqx/game.js';
+import Parent from '../types/logiqx/parent.js';
+import Release from '../types/logiqx/release.js';
+import ROM from '../types/logiqx/rom.js';
 import ProgressBar from '../types/progressBar.js';
 import ReleaseCandidate from '../types/releaseCandidate.js';
 import ROMFile from '../types/romFile.js';
@@ -36,7 +36,8 @@ export default class CandidateGenerator {
 
       // For every game
       parent.getGames().flatMap((game: Game) => {
-        // For every release (ensuring at least one), find all release candidates
+        // For every release (ensuring at least one), find all release
+        // candidates
         const releases = game.getReleases().length ? game.getReleases() : [null];
         return releases.forEach((release: Release | null) => {
           // For each Game's ROM, find the matching ROMFile

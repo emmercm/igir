@@ -17,10 +17,10 @@ export default class Release {
     return this.region.toUpperCase();
   }
 
-  getLanguage(): string {
+  getLanguage(): string | null {
     if (this.language) {
       return this.language.replace(/\w\S*/g, (word) => word.charAt(0).toUpperCase() + word.substring(1).toLowerCase());
     }
-    return '';
+    return null;
   }
 }

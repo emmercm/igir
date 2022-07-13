@@ -1,6 +1,6 @@
-import Game from './dat/game.js';
-import Release from './dat/release.js';
-import ROM from './dat/rom.js';
+import Game from './logiqx/game.js';
+import Release from './logiqx/release.js';
+import ROM from './logiqx/rom.js';
 import ROMFile from './romFile.js';
 
 export default class ReleaseCandidate {
@@ -61,7 +61,7 @@ export default class ReleaseCandidate {
     return 0;
   }
 
-  getRegion(): string {
+  getRegion(): string | null {
     if (this.release && this.release.getRegion()) {
       return this.release.getRegion();
     }
@@ -96,9 +96,6 @@ export default class ReleaseCandidate {
       // Regions
       ['Asia', 'ASI'],
       ['Europe', 'EUR'],
-      ['World', 'EUR'],
-      // Catch-all
-      ['Unknown', 'UNK'],
     ];
     for (let i = 0; i < regexToRegion.length; i += 1) {
       const [regex, region] = regexToRegion[i];
@@ -106,13 +103,13 @@ export default class ReleaseCandidate {
         return region;
       }
     }
-    return '';
+    return null;
   }
 
   getLanguages(): string[] {
     // Get language off of the release
     if (this.release && this.release.getLanguage()) {
-      return [this.release.getLanguage().toUpperCase()];
+      return [(this.release.getLanguage() as string).toUpperCase()];
     }
 
     // Get language from languages in the game name
@@ -122,38 +119,40 @@ export default class ReleaseCandidate {
     }
 
     // Get language from the region
-    const regionLang = {
-      ARG: 'Es',
-      ASI: 'Zh',
-      AUS: 'En',
-      BRA: 'Pt',
-      CAN: 'En',
-      CHN: 'Zh',
-      DAN: 'Da',
-      EUR: 'En',
-      FRA: 'Fr',
-      FYN: 'Fi',
-      GER: 'De',
-      GRE: 'El',
-      HK: 'Zh',
-      HOL: 'Nl',
-      ITA: 'It',
-      JPN: 'Ja',
-      KOR: 'Ko',
-      MEX: 'Es',
-      NOR: 'No',
-      NZ: 'En',
-      POR: 'Pt',
-      RUS: 'Ru',
-      SPA: 'Es',
-      SWE: 'Sv',
-      TAI: 'Zh',
-      UK: 'En',
-      UNK: 'En',
-      USA: 'En',
-    }[this.getRegion().toUpperCase()];
-    if (regionLang) {
-      return [regionLang.toUpperCase()];
+    if (this.getRegion()) {
+      const regionLang = {
+        ARG: 'Es',
+        ASI: 'Zh',
+        AUS: 'En',
+        BRA: 'Pt',
+        CAN: 'En',
+        CHN: 'Zh',
+        DAN: 'Da',
+        EUR: 'En',
+        FRA: 'Fr',
+        FYN: 'Fi',
+        GER: 'De',
+        GRE: 'El',
+        HK: 'Zh',
+        HOL: 'Nl',
+        ITA: 'It',
+        JPN: 'Ja',
+        KOR: 'Ko',
+        MEX: 'Es',
+        NOR: 'No',
+        NZ: 'En',
+        POR: 'Pt',
+        RUS: 'Ru',
+        SPA: 'Es',
+        SWE: 'Sv',
+        TAI: 'Zh',
+        UK: 'En',
+        UNK: 'En',
+        USA: 'En',
+      }[(this.getRegion() as string).toUpperCase()];
+      if (regionLang) {
+        return [regionLang.toUpperCase()];
+      }
     }
 
     return [];

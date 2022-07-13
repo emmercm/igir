@@ -1,4 +1,4 @@
-import Parent from '../types/dat/parent.js';
+import Parent from '../types/logiqx/parent.js';
 import Options from '../types/options.js';
 import ProgressBar from '../types/progressBar.js';
 import ReleaseCandidate from '../types/releaseCandidate.js';
@@ -43,7 +43,8 @@ export default class CandidateFilter {
       }
     }
     if (this.options.getRegionFilter().length
-        && this.options.getRegionFilter().indexOf(releaseCandidate.getRegion()) === -1) {
+        && releaseCandidate.getRegion()
+        && this.options.getRegionFilter().indexOf(releaseCandidate.getRegion() as string) === -1) {
       return false;
     }
 
@@ -77,15 +78,20 @@ export default class CandidateFilter {
     if (this.options.getNoHomebrew() && releaseCandidate.getGame().isHomebrew()) {
       return false;
     }
+    if (this.options.getNoBad() && releaseCandidate.getGame().isBad()) {
+      return false;
+    }
 
     return true;
   }
 
   private sort(a: ReleaseCandidate, b: ReleaseCandidate): number {
     // Sort by good releases
-    const goodSort = (b.getGame().isBad() ? 0 : 1) - (a.getGame().isBad() ? 0 : 1);
-    if (goodSort !== 0) {
-      return goodSort;
+    if (this.options.getPreferGood()) {
+      const goodSort = (b.getGame().isBad() ? 0 : 1) - (a.getGame().isBad() ? 0 : 1);
+      if (goodSort !== 0) {
+        return goodSort;
+      }
     }
 
     // Sort by language
@@ -110,8 +116,12 @@ export default class CandidateFilter {
 
     // Sort by region
     if (this.options.getRegionPriority().length) {
-      const aRegionIdx = this.options.getRegionPriority().indexOf(a.getRegion());
-      const bRegionIdx = this.options.getRegionPriority().indexOf(b.getRegion());
+      const aRegionIdx = a.getRegion()
+        ? this.options.getRegionPriority().indexOf(a.getRegion() as string)
+        : -1;
+      const bRegionIdx = b.getRegion()
+        ? this.options.getRegionPriority().indexOf(b.getRegion() as string)
+        : -1;
       const regionSort = (aRegionIdx !== -1 ? aRegionIdx : Number.MAX_SAFE_INTEGER)
           - (bRegionIdx !== -1 ? bRegionIdx : Number.MAX_SAFE_INTEGER);
       if (regionSort !== 0) {
@@ -120,21 +130,30 @@ export default class CandidateFilter {
     }
 
     // Sort by revision (higher first)
-    const revisionSort = b.getRevision() - a.getRevision();
+    let revisionSort = 0;
+    if (this.options.getPreferRevisionsNewer()) {
+      revisionSort = b.getRevision() - a.getRevision();
+    } else if (this.options.getPreferRevisionsOlder()) {
+      revisionSort = a.getRevision() - b.getRevision();
+    }
     if (revisionSort !== 0) {
       return revisionSort;
     }
 
     // Prefer releases
-    const releaseSort = (a.isRelease() ? 0 : 1) - (b.isRelease() ? 0 : 1);
-    if (releaseSort !== 0) {
-      return releaseSort;
+    if (this.options.getPreferReleases()) {
+      const releaseSort = (a.isRelease() ? 0 : 1) - (b.isRelease() ? 0 : 1);
+      if (releaseSort !== 0) {
+        return releaseSort;
+      }
     }
 
     // Prefer parents
-    const parentSort = (a.getGame().isParent() ? 0 : 1) - (b.getGame().isParent() ? 0 : 1);
-    if (parentSort !== 0) {
-      return parentSort;
+    if (this.options.getPreferParents()) {
+      const parentSort = (a.getGame().isParent() ? 0 : 1) - (b.getGame().isParent() ? 0 : 1);
+      if (parentSort !== 0) {
+        return parentSort;
+      }
     }
 
     return 0;

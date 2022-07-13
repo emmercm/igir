@@ -2,6 +2,9 @@ import 'reflect-metadata';
 
 import { Expose } from 'class-transformer';
 
+/**
+ * @see http://www.logiqx.com/DatFAQs/RomCenter.php
+ */
 export default class RomCenter {
   private readonly plugin?: string;
 

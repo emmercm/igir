@@ -6,6 +6,9 @@ import Game from './game.js';
 import Header from './header.js';
 import Parent from './parent.js';
 
+/**
+ * @see http://www.logiqx.com/DatFAQs/DatCreation.php
+ */
 export default class DAT {
   @Type(() => Header)
   private readonly header!: Header;

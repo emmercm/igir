@@ -37,7 +37,7 @@ export default class ProgressBar {
           if (payload.progressMessage) {
             line += payload.progressMessage;
           } else {
-            line += `${params.value}/${params.total} | ETA: {eta}`;
+            line += `${params.value}/${params.total}`;
           }
 
           return line;

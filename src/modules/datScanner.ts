@@ -2,7 +2,7 @@ import fsPromises from 'node:fs/promises';
 import xml2js from 'xml2js';
 
 import Logger from '../logger.js';
-import DAT from '../types/dat/dat.js';
+import DAT from '../types/logiqx/dat.js';
 import Options from '../types/options.js';
 
 export default class DATScanner {

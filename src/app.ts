@@ -6,8 +6,8 @@ import OutputCleaner from './modules/outputCleaner.js';
 import ReportGenerator from './modules/reportGenerator.js';
 import ROMScanner from './modules/romScanner.js';
 import ROMWriter from './modules/romWriter.js';
-import DAT from './types/dat/dat.js';
-import Parent from './types/dat/parent.js';
+import DAT from './types/logiqx/dat.js';
+import Parent from './types/logiqx/parent.js';
 import Options from './types/options.js';
 import ProgressBar from './types/progressBar.js';
 import ROMFile from './types/romFile.js';
@@ -43,7 +43,7 @@ export default async function main(options: Options) {
   }, new Map<DAT, ProgressBar>());
 
   // Find all ROM files and pre-process them
-  const romInputs = await new ROMScanner(options, scanProgressBar).parse();
+  const romInputs = await new ROMScanner(options, scanProgressBar).scan();
   scanProgressBar
     .setSymbol('✅')
     .setProgressMessage(`${romInputs.length} ROM file${romInputs.length !== 1 ? 's' : ''} found`);

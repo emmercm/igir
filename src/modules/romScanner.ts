@@ -7,8 +7,6 @@ import ProgressBar from '../types/progressBar.js';
 import ROMFile from '../types/romFile.js';
 
 export default class ROMScanner {
-  private static readonly pathToRomFileCache = new Map<string, ROMFile[]>();
-
   private readonly options: Options;
 
   private readonly progressBar: ProgressBar;
@@ -18,7 +16,7 @@ export default class ROMScanner {
     this.progressBar = progressBar;
   }
 
-  async parse(): Promise<ROMFile[]> {
+  async scan(): Promise<ROMFile[]> {
     const results: ROMFile[] = [];
 
     this.progressBar.reset(this.options.getInputFiles().length).setSymbol('🔎');
@@ -31,15 +29,12 @@ export default class ROMScanner {
 
       let romFiles: ROMFile[] = [new ROMFile(file)];
 
-      if (ROMScanner.pathToRomFileCache.has(file)) {
-        romFiles = ROMScanner.pathToRomFileCache.get(file) as ROMFile[];
-      } else if (path.extname(file) === '.7z') {
+      if (path.extname(file) === '.7z') {
         romFiles = await ROMScanner.getRomFilesIn7z(file);
       } else if (path.extname(file) === '.zip') {
         romFiles = ROMScanner.getRomFilesInZip(file);
       }
 
-      ROMScanner.pathToRomFileCache.set(file, romFiles);
       results.push(...romFiles);
     }
     // TODO(cemmer): de-duplicate?

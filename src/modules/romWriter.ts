@@ -2,9 +2,9 @@ import AdmZip from 'adm-zip';
 import fsPromises from 'node:fs/promises';
 import path from 'path';
 
-import DAT from '../types/dat/dat.js';
-import Parent from '../types/dat/parent.js';
-import ROM from '../types/dat/rom.js';
+import DAT from '../types/logiqx/dat.js';
+import Parent from '../types/logiqx/parent.js';
+import ROM from '../types/logiqx/rom.js';
 import Options from '../types/options.js';
 import ProgressBar from '../types/progressBar.js';
 import ReleaseCandidate from '../types/releaseCandidate.js';
@@ -46,11 +46,15 @@ export default class ROMWriter {
         const inputToOutput = releaseCandidate.getRomFiles().reduce((acc, inputRomFile) => {
           const rom = crcToRoms.get(inputRomFile.getCrc()) as ROM;
 
-          let outputFilePath = this.options.getOutput(dat, rom.getName());
+          let outputFilePath = this.options.getOutput(
+            dat,
+            inputRomFile.getFilePath(),
+            rom.getName(),
+          );
           let entryPath;
 
           if (this.options.getZip()) {
-            outputFilePath = this.options.getOutput(dat, `${releaseCandidate.getName()}.zip`);
+            outputFilePath = this.options.getOutput(dat, inputRomFile.getFilePath(), `${releaseCandidate.getName()}.zip`);
             entryPath = rom.getName();
           }
 
@@ -85,7 +89,7 @@ export default class ROMWriter {
     const outputZipPath = [...inputToOutput.values()][0].getFilePath();
     let outputZip = new AdmZip();
     try {
-      await fsPromises.access(outputZipPath);
+      await fsPromises.access(outputZipPath); // throw if file doesn't exist
       outputZip = new AdmZip(outputZipPath);
     } catch (e) {
       // eslint-disable-line no-empty
@@ -109,14 +113,16 @@ export default class ROMWriter {
         return;
       }
 
-      // If the file in the output zip already exists and has the same CRC then do nothing
-      const existingOutputEntry = outputZip.getEntry(outputRomFile.getEntryPath() as string);
+      // If the file in the output zip already exists and has the same CRC then
+      // do nothing
+      const existingOutputEntry = outputZip.getEntry(outputRomFile.getArchiveEntryPath() as string);
       if (existingOutputEntry
           && existingOutputEntry.header.crc === parseInt(outputRomFile.getCrc(), 16)) {
         return;
       }
 
-      // We need to write to the zip file, delete its contents if the zip file didn't start empty
+      // We need to write to the zip file, delete its contents if the zip file
+      // didn't start empty
       if (outputNeedsCleaning) {
         outputZip.getEntries().forEach((entry) => outputZip.deleteFile(entry));
         outputNeedsCleaning = false;
@@ -127,7 +133,7 @@ export default class ROMWriter {
       outputZip.addLocalFile(
         inputRomFileLocal.getFilePath(),
         '',
-        outputRomFile.getEntryPath() as string,
+        outputRomFile.getArchiveEntryPath() as string,
       );
       await inputRomFileLocal.cleanupLocalFile();
       outputNeedsWriting = true;
@@ -156,24 +162,36 @@ export default class ROMWriter {
     for (let i = 0; i < inputToOutputEntries.length; i += 1) {
       const inputRomFile = inputToOutputEntries[i][0];
       const outputRomFile = inputToOutputEntries[i][1];
-
       if (outputRomFile.equals(inputRomFile)) {
         return;
       }
 
+      const outputFilePath = outputRomFile.getFilePath();
+
+      // If the output file already exists, do nothing
+      // TODO(cemmer): flag to allow overwriting
+      if (!this.options.getOverwrite()) {
+        try {
+          await fsPromises.access(outputFilePath);
+          return;
+        } catch (e) {
+          // eslint-disable-line no-empty
+        }
+      }
+
       // Create the output directory
-      const outputDir = path.dirname(outputRomFile.getFilePath());
+      const outputDir = path.dirname(outputFilePath);
       try {
-        await fsPromises.access(outputDir);
+        await fsPromises.access(outputDir); // throw if file doesn't exist
       } catch (e) {
         await fsPromises.mkdir(outputDir, { recursive: true });
       }
 
       const inputRomFileLocal = await inputRomFile.toLocalFile();
       if (this.options.getMove()) {
-        await fsPromises.rename(inputRomFileLocal.getFilePath(), outputRomFile.getFilePath());
+        await fsPromises.rename(inputRomFileLocal.getFilePath(), outputFilePath);
       } else {
-        await fsPromises.copyFile(inputRomFileLocal.getFilePath(), outputRomFile.getFilePath());
+        await fsPromises.copyFile(inputRomFileLocal.getFilePath(), outputFilePath);
       }
       await inputRomFileLocal.cleanupLocalFile();
     }

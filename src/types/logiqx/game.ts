@@ -9,6 +9,25 @@ import Release from './release.js';
 import ROM from './rom.js';
 import Sample from './sample.js';
 
+/**
+ * "There are two 'semi-optional' fields that can be included for each game;
+ * 'year' and 'manufacturer'. However, CMPro displays the manufacturer in the
+ * scanner window so it isn't really optional! For the sake of completeness I
+ * would recommend you include year and manufacturer."
+ *
+ * "There are two fields that relate to the merging of ROMs; 'cloneof' and
+ * 'romof'. In MAME the 'cloneof' field represents a notional link between
+ * the two games and the 'romof' field represents that the ROMs themselves
+ * can be shared. CMPro actually ignores the 'romof' field and uses the
+ * 'cloneof' value to determine how the ROMs can be shared. However, you should
+ * use the MAME meanings of 'cloneof and 'romof' both for the sake of clarity
+ * and to allow faultless conversions between CMPro and RomCenter formats.
+ * If you don't use these fields correctly then you cannot guarantee that your
+ * data file will work as expected in CMPro and RomCenter for all three merge
+ * types."
+ *
+ * @see http://www.logiqx.com/DatFAQs/CMPro.php
+ */
 export default class Game {
   private readonly name!: string;
 

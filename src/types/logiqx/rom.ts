@@ -1,5 +1,8 @@
 import path from 'path';
 
+/**
+ * @see http://www.logiqx.com/DatFAQs/CMPro.php
+ */
 export default class ROM {
   private readonly name!: string;
 

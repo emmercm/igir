@@ -6,7 +6,7 @@ import Options from './src/types/options.js';
 
 Logger.header();
 
-const groupPaths = 'Path input/output:';
+const groupInputs = 'Path inputs (supports globbing):';
 const groupOutput = 'Output options:';
 const groupPriority = 'Priority options:';
 const groupFiltering = 'Filtering options:';
@@ -17,27 +17,42 @@ const { argv } = yargs(process.argv)
   })
 
   .option('dat', {
-    group: groupPaths,
+    group: groupInputs,
     alias: 'd',
     description: 'Path(s) to DAT files',
     type: 'array',
     default: ['*.dat'],
   })
   .option('input', {
-    group: groupPaths,
+    group: groupInputs,
     alias: 'i',
     description: 'Path(s) to ROM files',
     demandOption: true,
     type: 'array',
   })
+
   .option('output', {
-    group: groupPaths,
+    group: groupOutput,
     alias: 'o',
     description: 'Path to the ROM output directory',
     demandOption: true,
     type: 'string',
   })
-
+  .option('dir-mirror', {
+    group: groupOutput,
+    description: 'Use the input subdirectory structure as the output subdirectory',
+    type: 'boolean',
+  })
+  .option('dir-datname', {
+    group: groupOutput,
+    description: 'Use the DAT name as the output subdirectory',
+    type: 'boolean',
+  })
+  .option('dir-letter', {
+    group: groupOutput,
+    description: 'Append the first letter of the ROM name as an output subdirectory',
+    type: 'boolean',
+  })
   .option('1g1r', {
     group: groupOutput,
     alias: '1',
@@ -56,6 +71,12 @@ const { argv } = yargs(process.argv)
     description: 'Move ROMs to the output directory',
     type: 'boolean',
   })
+  .option('overwrite', {
+    group: groupOutput,
+    alias: 'O',
+    description: 'Overwrite any ROMs in the output directory',
+    type: 'boolean',
+  })
   .option('clean', {
     group: groupOutput,
     alias: 'c',
@@ -63,6 +84,12 @@ const { argv } = yargs(process.argv)
     type: 'boolean',
   })
 
+  .option('prefer-good', {
+    group: groupPriority,
+    description: 'Prefer good ROM dumps over bad',
+    type: 'boolean',
+    default: true,
+  })
   .option('language-priority', {
     group: groupPriority,
     alias: 'l',
@@ -77,15 +104,39 @@ const { argv } = yargs(process.argv)
     type: 'string',
     coerce: (val: string) => val.split(','),
   })
+  .option('prefer-revisions-newer', {
+    group: groupPriority,
+    description: 'Prefer newer ROM revisions over older',
+    type: 'boolean',
+    conflicts: ['prefer-revisions-older'],
+  })
+  .option('prefer-revisions-older', {
+    group: groupPriority,
+    description: 'Prefer older ROM revisions over newer',
+    type: 'boolean',
+    conflicts: ['prefer-revisions-newer'],
+  })
+  .option('prefer-releases', {
+    group: groupPriority,
+    description: 'Prefer ROMs marked as releases',
+    type: 'boolean',
+  })
+  .option('prefer-parents', {
+    group: groupPriority,
+    description: 'Prefer parent ROMs over clones (requires parent-clone DAT files)',
+    type: 'boolean',
+  })
 
   .option('language-filter', {
     group: groupFiltering,
+    alias: 'L',
     description: 'List of comma-separated languages to limit to',
     type: 'string',
     coerce: (val: string) => val.split(','),
   })
   .option('region-filter', {
     group: groupFiltering,
+    alias: 'R',
     description: 'List of comma-separated regions to limit to',
     type: 'string',
     coerce: (val: string) => val.split(','),
@@ -142,12 +193,18 @@ const { argv } = yargs(process.argv)
     description: 'Filter out homebrew ROMs',
     type: 'boolean',
   })
+  .option('no-bad', {
+    group: groupFiltering,
+    description: 'Filter out bad ROM dumps',
+    type: 'boolean',
+    default: true,
+  })
 
   .wrap(yargs([]).terminalWidth())
   .version(false)
   .help(true)
   .example([
-    ['$0 -i **/*.zip -o 1G1R/ -1 -l En -r USA,EUR,JPN', 'Produce a 1G1R set, preferring English from USA>EUR>JPN'],
+    ['$0 -i **/*.zip -o 1G1R/ -1 -l En -r USA,EUR,JPN', 'Produce a 1G1R set per console, preferring English from USA>EUR>JPN'],
     [''], // https://github.com/yargs/yargs/issues/1640
     ['$0 -i **/*.zip -i 1G1R/ -o 1G1R/', 'Merge new ROMs into an existing ROM collection'],
     [''], // https://github.com/yargs/yargs/issues/1640
@@ -156,7 +213,7 @@ const { argv } = yargs(process.argv)
     ['$0 -i **/*.zip -o bios/ --only-bios', 'Collate all BIOS files'],
   ]);
 
-const options = Options.fromObject(argv);
-main(options).then(() => {
-  process.exit(0);
-});
+(async () => {
+  const options = await Options.fromObject(argv);
+  await main(options);
+})();
