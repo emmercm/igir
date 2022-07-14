@@ -15,6 +15,7 @@ const { argv } = yargs(process.argv)
   .parserConfiguration({
     'boolean-negation': false,
   })
+  .usage('Usage: $0 [options]')
 
   .option('dat', {
     group: groupInputs,
@@ -200,7 +201,7 @@ const { argv } = yargs(process.argv)
     default: true,
   })
 
-  .wrap(yargs([]).terminalWidth())
+  .wrap(yargs([]).terminalWidth() || 100)
   .version(false)
   .help(true)
   .example([

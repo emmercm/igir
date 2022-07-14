@@ -1,0 +1,13 @@
+#!/usr/bin/env sh
+. "$(dirname -- "$0")/_/husky.sh"
+
+README="$(dirname -- "$0")/../README.md"
+README_BEFORE=$(cat "${README}")
+awk 'BEGIN {msg=ARGV[1]; delete ARGV[1]; p=1} /^```help/ {print; print msg; p=0} /^```$/ {p=1} p' \
+  "$(ts-node ./index.ts -h 2>&1 | grep --invert-match "Missing required arguments" | sed ':a; /^[[:space:]]*$/ { $d; N; ba; }')" \
+  "${README}" > README.temp && mv -f README.temp "${README}"
+README_AFTER=$(cat "${README}")
+if [[ "${README_AFTER}" != "${README_BEFORE}" ]]; then
+  # TODO(cemmer): way to not commit the entire file when the help text changes?
+  git add "${README}"
+fi
