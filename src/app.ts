@@ -1,3 +1,5 @@
+import async from 'async';
+
 import Logger from './logger.js';
 import CandidateFilter from './modules/candidateFilter.js';
 import CandidateGenerator from './modules/candidateGenerator.js';
@@ -49,7 +51,8 @@ export default async function main(options: Options) {
     .setProgressMessage(`${romInputs.length} ROM file${romInputs.length !== 1 ? 's' : ''} found`);
 
   const datsToWrittenRoms = new Map<DAT, Map<Parent, ROMFile[]>>();
-  await Promise.all(dats.map(async (dat) => {
+
+  await async.eachLimit(dats, 3, async (dat, callback) => {
     const progressBar = datProgressBars.get(dat) as ProgressBar;
 
     // For each DAT, find all ROM candidates
@@ -61,18 +64,26 @@ export default async function main(options: Options) {
     // Write the output files
     const writtenRoms = await new ROMWriter(options, progressBar).write(dat, romOutputs);
 
-    // Clean the output directory
-    await new OutputCleaner(options, progressBar).clean(dat, writtenRoms);
+    datsToWrittenRoms.set(dat, writtenRoms);
+    callback();
+  });
 
+  // Clean the output directories
+  const allWrittenRomFiles = [...datsToWrittenRoms.values()]
+    .flatMap((parentsToRomFiles) => [...parentsToRomFiles.values()])
+    .flatMap((romFiles) => romFiles);
+  await new OutputCleaner(options, [...datProgressBars.values()]).clean(allWrittenRomFiles);
+
+  // Finish all progress bars
+  datsToWrittenRoms.forEach((writtenRoms, dat) => {
+    const progressBar = datProgressBars.get(dat) as ProgressBar;
     const parentsWithRomFiles = [...writtenRoms.values()]
       .filter((romFiles) => romFiles.length)
       .length;
     progressBar
       .setSymbol('✅')
       .setProgressMessage(`${parentsWithRomFiles} ROM${parentsWithRomFiles !== 1 ? 's' : ''} processed`);
-
-    datsToWrittenRoms.set(dat, writtenRoms);
-  }));
+  });
 
   ProgressBar.stop();
 

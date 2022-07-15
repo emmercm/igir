@@ -5,8 +5,6 @@ import path from 'path';
 import trash from 'trash';
 
 import Logger from '../logger.js';
-import DAT from '../types/logiqx/dat.js';
-import Parent from '../types/logiqx/parent.js';
 import Options from '../types/options.js';
 import ProgressBar from '../types/progressBar.js';
 import ROMFile from '../types/romFile.js';
@@ -14,27 +12,26 @@ import ROMFile from '../types/romFile.js';
 export default class OutputCleaner {
   private readonly options: Options;
 
-  private readonly progressBar: ProgressBar;
+  private readonly progressBars: ProgressBar[];
 
-  constructor(options: Options, progressBar: ProgressBar) {
+  constructor(options: Options, progressBars: ProgressBar[]) {
     this.options = options;
-    this.progressBar = progressBar;
+    this.progressBars = progressBars;
   }
 
-  async clean(dat: DAT, writtenRoms: Map<Parent, ROMFile[]>) {
+  async clean(writtenRoms: ROMFile[]) {
     if (!this.options.getClean()) {
       return;
     }
 
     // If nothing was written, then don't clean anything
-    const outputRomPaths = [...writtenRoms.values()]
-      .flatMap((romFiles) => romFiles)
+    const outputRomPaths = writtenRoms
       .map((romFile) => romFile.getFilePath());
     if (!outputRomPaths.length) {
       return;
     }
 
-    const outputDir = this.options.getOutput(dat);
+    const outputDir = this.options.getOutput();
 
     // If there is nothing to clean, then don't do anything
     const filesToClean = (await fg(`${outputDir}/**`))
@@ -43,7 +40,7 @@ export default class OutputCleaner {
       return;
     }
 
-    this.progressBar.reset(filesToClean.length).setSymbol('♻️');
+    this.progressBars.forEach((progressBar) => progressBar.reset(filesToClean.length).setSymbol('♻️'));
 
     try {
       await trash(filesToClean);
@@ -58,7 +55,7 @@ export default class OutputCleaner {
       Logger.error(`Failed to clean empty directories in ${outputDir} : ${e}`);
     }
 
-    this.progressBar.done();
+    this.progressBars.forEach((progressBar) => progressBar.done());
   }
 
   private static async getEmptyDirs(dirPath: string): Promise<string[]> {

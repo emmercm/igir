@@ -89,6 +89,16 @@ export default class ProgressBar {
     ProgressBar.multiBar.update(); // https://github.com/npkgz/cli-progress/issues/79
   }
 
+  static logWarn(message: string) {
+    ProgressBar.multiBar.log(`${Logger.warnFormatter(message)}\n`);
+    ProgressBar.multiBar.update(); // https://github.com/npkgz/cli-progress/issues/79
+  }
+
+  static logError(message: string) {
+    ProgressBar.multiBar.log(`${Logger.errorFormatter(message)}\n`);
+    ProgressBar.multiBar.update(); // https://github.com/npkgz/cli-progress/issues/79
+  }
+
   static stop() {
     this.multiBar.stop();
   }

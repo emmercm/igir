@@ -106,47 +106,47 @@ export default class Game {
   // Computed getters
 
   isAftermarket(): boolean {
-    return this.name.match(/\(Aftermarket[ a-zA-Z0-9.]*\)/i) !== null;
+    return this.name.match(/\(Aftermarket[a-zA-Z0-9. ]*\)/i) !== null;
   }
 
   isBad(): boolean {
-    return this.name.match(/\[b\]]/i) !== null;
+    return this.name.match(/\[b\]/i) !== null;
   }
 
   isBeta(): boolean {
-    return this.name.match(/\(Beta[ a-zA-Z0-9.]*\)/i) !== null;
+    return this.name.match(/\(Beta[a-zA-Z0-9. ]*\)/i) !== null;
   }
 
   isDemo(): boolean {
-    return this.name.match(/\(Demo[ a-zA-Z0-9.]*\)/i) !== null;
+    return this.name.match(/\(Demo[a-zA-Z0-9. ]*\)/i) !== null;
   }
 
   isHomebrew(): boolean {
-    return this.name.match(/\(Homebrew[ a-zA-Z0-9.]*\)/i) !== null;
+    return this.name.match(/\(Homebrew[a-zA-Z0-9. ]*\)/i) !== null;
   }
 
   isPrototype(): boolean {
-    return this.name.match(/\(Proto[ a-zA-Z0-9.]*\)/i) !== null;
+    return this.name.match(/\(Proto[a-zA-Z0-9. ]*\)/i) !== null;
   }
 
   isSample(): boolean {
-    return this.name.match(/\(Sample[ a-zA-Z0-9.]*\)/i) !== null;
+    return this.name.match(/\(Sample[a-zA-Z0-9. ]*\)/i) !== null;
   }
 
   isTest(): boolean {
-    return this.name.match(/\(Test[ a-zA-Z0-9.]*\)/i) !== null;
+    return this.name.match(/\(Test[a-zA-Z0-9. ]*\)/i) !== null;
   }
 
   isUnlicensed(): boolean {
-    return this.name.match(/\(Unl[ a-zA-Z0-9.]*\)/i) !== null;
+    return this.name.match(/\(Unl[a-zA-Z0-9. ]*\)/i) !== null;
   }
 
   isRelease(): boolean {
-    if (this.getReleases().length) {
-      return true;
-    }
-    return !this.isBeta()
+    return !this.isAftermarket()
+        && !this.isBad()
+        && !this.isBeta()
         && !this.isDemo()
+        && !this.isHomebrew()
         && !this.isPrototype()
         && !this.isSample()
         && !this.isTest();

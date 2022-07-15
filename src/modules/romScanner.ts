@@ -27,12 +27,13 @@ export default class ROMScanner {
 
       this.progressBar.increment();
 
-      let romFiles: ROMFile[] = [new ROMFile(file)];
-
+      let romFiles: ROMFile[] = [];
       if (path.extname(file) === '.7z') {
         romFiles = await ROMScanner.getRomFilesIn7z(file);
       } else if (path.extname(file) === '.zip') {
         romFiles = ROMScanner.getRomFilesInZip(file);
+      } else {
+        romFiles = [new ROMFile(file)];
       }
 
       results.push(...romFiles);

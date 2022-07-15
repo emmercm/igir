@@ -1,5 +1,4 @@
 import DAT from '../types/logiqx/dat.js';
-import Game from '../types/logiqx/game.js';
 import Parent from '../types/logiqx/parent.js';
 import Release from '../types/logiqx/release.js';
 import ProgressBar from '../types/progressBar.js';
@@ -18,8 +17,8 @@ export default class CandidateGenerator {
     inputRomFiles: ROMFile[],
   ): Promise<Map<Parent, ReleaseCandidate[]>> {
     // Index the ROMFiles by CRC
-    const crcToInputRomFiles = inputRomFiles.reduce((acc: Map<string, ROMFile>, val: ROMFile) => {
-      acc.set(val.getCrc(), val);
+    const crcToInputRomFiles = inputRomFiles.reduce((acc, romFile) => {
+      acc.set(romFile.getCrc(), romFile);
       return acc;
     }, new Map<string, ROMFile>());
 
@@ -34,9 +33,8 @@ export default class CandidateGenerator {
       const releaseCandidates: ReleaseCandidate[] = [];
 
       // For every game
-      parent.getGames().flatMap((game: Game) => {
-        // For every release (ensuring at least one), find all release
-        // candidates
+      parent.getGames().flatMap((game) => {
+        // For every release (ensuring at least one), find all release candidates
         const releases = game.getReleases().length ? game.getReleases() : [null];
         return releases.forEach((release: Release | null) => {
           // For each Game's ROM, find the matching ROMFile
@@ -45,7 +43,15 @@ export default class CandidateGenerator {
             .filter((romFile) => romFile) as ROMFile[];
 
           // Ignore the Game if not every ROMFile is present
-          if (romFiles.length !== game.getRoms().length) {
+          const missingRomFiles = game.getRoms().length - romFiles.length;
+          if (missingRomFiles > 0) {
+            if (romFiles.length > 0) {
+              let message = `Missing ${missingRomFiles} file${missingRomFiles !== 1 ? 's' : ''} for: ${game.getName()}`;
+              if (release?.getRegion()) {
+                message += ` (${release?.getRegion()})`;
+              }
+              ProgressBar.logWarn(message);
+            }
             return;
           }
 

@@ -55,14 +55,14 @@ export default class ReleaseCandidate {
 
   getRevision(): number {
     const matches = this.getName().match(/\(Rev\s*([0-9]+)\)/i);
-    if (matches && matches.length >= 2 && !Number.isNaN(matches[1])) {
+    if (matches && matches?.length >= 2 && !Number.isNaN(matches[1])) {
       return Number(matches[1]);
     }
     return 0;
   }
 
   getRegion(): string | null {
-    if (this.release && this.release.getRegion()) {
+    if (this.release?.getRegion()) {
       return this.release.getRegion();
     }
 
@@ -108,7 +108,7 @@ export default class ReleaseCandidate {
 
   getLanguages(): string[] {
     // Get language off of the release
-    if (this.release && this.release.getLanguage()) {
+    if (this.release?.getLanguage()) {
       return [(this.release.getLanguage() as string).toUpperCase()];
     }
 

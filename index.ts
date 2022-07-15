@@ -8,7 +8,8 @@ import Options from './src/types/options.js';
 
 Logger.header();
 
-const groupInputs = 'Path inputs (supports globbing):';
+const groupInputOutputPaths = 'Path options (inputs support globbing):';
+const groupPresets = 'Option presets:';
 const groupOutput = 'Output options:';
 const groupPriority = 'Priority options:';
 const groupFiltering = 'Filtering options:';
@@ -21,33 +22,54 @@ const { argv } = yargs(process.argv)
   .usage('Usage: $0 [options]')
 
   .option('dat', {
-    group: groupInputs,
+    group: groupInputOutputPaths,
     alias: 'd',
     description: 'Path(s) to DAT files',
     type: 'array',
     default: ['*.dat'],
   })
   .option('input', {
-    group: groupInputs,
+    group: groupInputOutputPaths,
     alias: 'i',
     description: 'Path(s) to ROM files, with support for .zip and .7z archives',
     demandOption: true,
     type: 'array',
   })
   .option('input-exclude', {
-    group: groupInputs,
+    group: groupInputOutputPaths,
     alias: 'I',
     description: 'Path(s) to ROM files to exclude',
     type: 'array',
   })
-
   .option('output', {
-    group: groupOutput,
+    group: groupInputOutputPaths,
     alias: 'o',
     description: 'Path to the ROM output directory',
     demandOption: true,
     type: 'string',
   })
+
+// TODO(cemmer)
+// .option('1g1r', {
+//   group: groupPresets,
+//   description: 'Build a one game, one ROM sets per DAT file',
+//   type: 'boolean',
+//   implies: [
+//     'single',
+//     'test',
+//     'clean',
+//   ],
+// })
+// .option('english', {
+//   group: groupPresets,
+//   description: 'Prefer English versions from USA>EUR>JPN',
+//   type: 'boolean',
+//   implies: [
+//     '--prefer-language En',
+//     '--prefer-region USA,EUR,JPN',
+//   ],
+// })
+
   .option('dir-mirror', {
     group: groupOutput,
     description: 'Use the input subdirectory structure as the output subdirectory',
@@ -63,10 +85,10 @@ const { argv } = yargs(process.argv)
     description: 'Append the first letter of the ROM name as an output subdirectory',
     type: 'boolean',
   })
-  .option('1g1r', {
+  .option('single', {
     group: groupOutput,
-    alias: '1',
-    description: 'Output only one game per parent (requires parent-clone DAT files)',
+    alias: 's',
+    description: 'Output only a single game per parent (requires parent-clone DAT files)',
     type: 'boolean',
   })
   .option('zip', {
@@ -105,14 +127,14 @@ const { argv } = yargs(process.argv)
     type: 'boolean',
     default: true,
   })
-  .option('language-priority', {
+  .option('prefer-language', {
     group: groupPriority,
     alias: 'l',
     description: 'List of comma-separated languages in priority order',
     type: 'string',
     coerce: (val: string) => val.split(','),
   })
-  .option('region-priority', {
+  .option('prefer-region', {
     group: groupPriority,
     alias: 'r',
     description: 'List of comma-separated regions in priority order',
@@ -215,11 +237,13 @@ const { argv } = yargs(process.argv)
     default: true,
   })
 
+// TODO(cemmer): colorize: https://github.com/yargs/yargs/issues/251
+
   .wrap(yargs([]).terminalWidth() || 100)
   .version(false)
   .help(true)
   .example([
-    ['$0 -i **/*.zip -o 1G1R/ -1 -l En -r USA,EUR,JPN', 'Produce a 1G1R set per console, preferring English from USA>EUR>JPN'],
+    ['$0 -i **/*.zip -o 1G1R/ -s -l En -r USA,EUR,JPN', 'Produce a 1G1R set per console, preferring English from USA>EUR>JPN'],
     [''], // https://github.com/yargs/yargs/issues/1640
     ['$0 -i **/*.zip -i 1G1R/ -o 1G1R/', 'Merge new ROMs into an existing ROM collection'],
     [''], // https://github.com/yargs/yargs/issues/1640

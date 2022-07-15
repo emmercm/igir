@@ -95,16 +95,16 @@ export default class CandidateFilter {
     }
 
     // Sort by language
-    if (this.options.getLanguagePriority().length) {
+    if (this.options.getPreferLanguages().length) {
       const aMinLang = a.getLanguages()
         .map((lang) => {
-          const priority = this.options.getLanguagePriority().indexOf(lang);
+          const priority = this.options.getPreferLanguages().indexOf(lang);
           return priority !== -1 ? priority : Number.MAX_SAFE_INTEGER;
         })
         .reduce((min, idx) => Math.min(min, idx), Number.MAX_SAFE_INTEGER);
       const bMinLang = b.getLanguages()
         .map((lang) => {
-          const priority = this.options.getLanguagePriority().indexOf(lang);
+          const priority = this.options.getPreferLanguages().indexOf(lang);
           return priority !== -1 ? priority : Number.MAX_SAFE_INTEGER;
         })
         .reduce((min, idx) => Math.min(min, idx), Number.MAX_SAFE_INTEGER);
@@ -115,12 +115,12 @@ export default class CandidateFilter {
     }
 
     // Sort by region
-    if (this.options.getRegionPriority().length) {
+    if (this.options.getPreferRegions().length) {
       const aRegionIdx = a.getRegion()
-        ? this.options.getRegionPriority().indexOf(a.getRegion() as string)
+        ? this.options.getPreferRegions().indexOf(a.getRegion() as string)
         : -1;
       const bRegionIdx = b.getRegion()
-        ? this.options.getRegionPriority().indexOf(b.getRegion() as string)
+        ? this.options.getPreferRegions().indexOf(b.getRegion() as string)
         : -1;
       const regionSort = (aRegionIdx !== -1 ? aRegionIdx : Number.MAX_SAFE_INTEGER)
           - (bRegionIdx !== -1 ? bRegionIdx : Number.MAX_SAFE_INTEGER);
@@ -163,7 +163,7 @@ export default class CandidateFilter {
     releaseCandidate: ReleaseCandidate,
     idx: number,
   ): boolean {
-    if (this.options.get1G1R()) {
+    if (this.options.getSingle()) {
       return idx === 0;
     }
     return true;

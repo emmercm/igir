@@ -2,12 +2,21 @@
 . "$(dirname -- "$0")/_/husky.sh"
 
 cd "$(dirname -- "$0")/.." || exit 1
+if [[ ! -x "$(command -v node)" ]]; then
+  if [[ ! -x "$(command -v nvm)" && -f ~/.nvm/nvm.sh ]]; then
+    . ~/.nvm/nvm.sh
+  fi
+  if [[ ! -x "$(command -v nvm)" ]]; then
+    nvm use || exit 1
+  fi
+fi
+node --version &> /dev/null || exit 1
 
 README="README.md"
 README_BEFORE=$(cat "${README}")
 (awk 'BEGIN {msg=ARGV[1]; delete ARGV[1]; p=1} /^```help/ {print; print msg; p=0} /^```$/ {p=1} p' \
   "$(./node_modules/.bin/ts-node ./index.ts -h 2>&1 | grep --invert-match "Missing required arguments" | sed ':a; /^[[:space:]]*$/ { $d; N; ba; }')" \
-  "${README}" > README.temp || exit 1) && mv -f README.temp "${README}"
+  "${README}" > "${README}.temp" || exit 1) && mv -f "${README}.temp" "${README}"
 README_AFTER=$(cat "${README}")
 if [[ "${README_AFTER}" != "${README_BEFORE}" ]]; then
   # TODO(cemmer): way to not commit the entire file when the help text changes?

@@ -45,5 +45,17 @@ export default class Parent {
     });
   }
 
-  // 
+  // Computed getters
+
+  isBios(): boolean {
+    return this.getGames().some((game) => game.isBios());
+  }
+
+  isRelease(): boolean {
+    return this.getGames().some((game) => game.isRelease());
+  }
+
+  isPrototype(): boolean {
+    return !this.isRelease() && this.getGames().some((game) => game.isPrototype());
+  }
 }

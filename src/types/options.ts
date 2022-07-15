@@ -1,6 +1,6 @@
 import 'reflect-metadata';
 
-import { Expose, plainToInstance } from 'class-transformer';
+import { plainToInstance } from 'class-transformer';
 import fg from 'fast-glob';
 import { isNotJunk } from 'junk';
 import fsPromises from 'node:fs/promises';
@@ -23,8 +23,7 @@ export default class Options {
 
   private readonly dirLetter!: boolean;
 
-  @Expose({ name: '1g1r' })
-  private readonly oneGameOneRom = false;
+  private readonly single = false;
 
   private readonly zip!: boolean;
 
@@ -38,9 +37,9 @@ export default class Options {
 
   private readonly preferGood!: boolean;
 
-  private readonly languagePriority: string[] = [];
+  private readonly preferLanguage: string[] = [];
 
-  private readonly regionPriority: string[] = [];
+  private readonly preferRegion: string[] = [];
 
   private readonly preferRevisionsNewer!: boolean;
 
@@ -187,8 +186,8 @@ export default class Options {
     return this.dirLetter;
   }
 
-  get1G1R(): boolean {
-    return this.oneGameOneRom;
+  getSingle(): boolean {
+    return this.single;
   }
 
   getZip(): boolean {
@@ -215,12 +214,12 @@ export default class Options {
     return this.preferGood;
   }
 
-  getLanguagePriority(): string[] {
-    return this.languagePriority.map((lang) => lang.toUpperCase());
+  getPreferLanguages(): string[] {
+    return this.preferLanguage.map((lang) => lang.toUpperCase());
   }
 
-  getRegionPriority(): string[] {
-    return this.regionPriority.map((region) => region.toUpperCase());
+  getPreferRegions(): string[] {
+    return this.preferRegion.map((region) => region.toUpperCase());
   }
 
   getLanguageFilter(): string[] {

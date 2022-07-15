@@ -119,8 +119,7 @@ export default class ROMWriter {
       // If the file in the output zip already exists and has the same CRC then
       // do nothing
       const existingOutputEntry = outputZip.getEntry(outputRomFile.getArchiveEntryPath() as string);
-      if (existingOutputEntry
-          && existingOutputEntry.header.crc === parseInt(outputRomFile.getCrc(), 16)) {
+      if (existingOutputEntry?.header.crc === parseInt(outputRomFile.getCrc(), 16)) {
         return;
       }
 
@@ -151,7 +150,7 @@ export default class ROMWriter {
     if (this.options.getTest()) {
       const zipToTest = new AdmZip(outputZipPath);
       if (!zipToTest.test()) {
-        ProgressBar.log(`Written zip is invalid: ${outputZipPath}`);
+        ProgressBar.logError(`Written zip is invalid: ${outputZipPath}`);
         return;
       }
     }
@@ -213,7 +212,7 @@ export default class ROMWriter {
     if (this.options.getTest()) {
       const romFileToTest = new ROMFile(outputFilePath);
       if (romFileToTest.getCrc() !== inputRomFile.getCrc()) {
-        ProgressBar.log(`Written file has the CRC ${romFileToTest.getCrc()}, expected ${inputRomFile.getCrc()}: ${outputFilePath}`);
+        ProgressBar.logError(`Written file has the CRC ${romFileToTest.getCrc()}, expected ${inputRomFile.getCrc()}: ${outputFilePath}`);
         return;
       }
     }

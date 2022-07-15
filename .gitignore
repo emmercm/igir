@@ -118,5 +118,8 @@ build/
 *.zip
 
 # ROM pack excess
+*.jpg
+*.png
 *.sqlite
+*.torrent
 *.xml
