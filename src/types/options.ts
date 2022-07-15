@@ -9,11 +9,11 @@ import path from 'path';
 import DAT from './logiqx/dat.js';
 
 export default class Options {
-  @Expose({ name: 'dat' })
-  private datFiles: string[] = [];
+  private dat: string[] = [];
 
-  @Expose({ name: 'input' })
-  private inputFiles: string[] = [];
+  private input: string[] = [];
+
+  private inputExclude: string[] = [];
 
   private readonly output!: string;
 
@@ -31,6 +31,8 @@ export default class Options {
   private readonly move!: boolean;
 
   private readonly overwrite!: boolean;
+
+  private readonly test!: boolean;
 
   private readonly clean!: boolean;
 
@@ -66,7 +68,7 @@ export default class Options {
 
   private readonly noPrototype!: boolean;
 
-  private readonly noTest!: boolean;
+  private readonly noTestRoms!: boolean;
 
   private readonly noAftermarket!: boolean;
 
@@ -84,8 +86,9 @@ export default class Options {
   }
 
   private async scanFileInputs() {
-    this.datFiles = await Options.scanPath(this.datFiles);
-    this.inputFiles = await Options.scanPath(this.inputFiles);
+    this.dat = await Options.scanPath(this.dat);
+    this.input = await Options.scanPath(this.input);
+    this.inputExclude = await Options.scanPath(this.inputExclude);
   }
 
   private static async scanPath(inputPaths: string[]): Promise<string[]> {
@@ -130,11 +133,20 @@ export default class Options {
   }
 
   getDatFiles(): string[] {
-    return this.datFiles;
+    return this.dat;
   }
 
-  getInputFiles(): string[] {
-    return this.inputFiles;
+  private getInputFiles(): string[] {
+    return this.input;
+  }
+
+  private getInputExcludeFiles(): string[] {
+    return this.inputExclude;
+  }
+
+  getInputFilesWithoutExclusions(): string[] {
+    return this.getInputFiles()
+      .filter((inputPath) => this.getInputExcludeFiles().indexOf(inputPath) === -1);
   }
 
   getOutput(dat?: DAT, inputRomPath?: string, romName?: string): string {
@@ -189,6 +201,10 @@ export default class Options {
 
   getOverwrite(): boolean {
     return this.overwrite;
+  }
+
+  getTest(): boolean {
+    return this.test;
   }
 
   getClean(): boolean {
@@ -259,8 +275,8 @@ export default class Options {
     return this.noPrototype;
   }
 
-  getNoTest(): boolean {
-    return this.noTest;
+  getNoTestRoms(): boolean {
+    return this.noTestRoms;
   }
 
   getNoAftermarket(): boolean {

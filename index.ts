@@ -1,3 +1,5 @@
+#!/usr/bin/env node
+
 import yargs from 'yargs';
 
 import main from './src/app.js';
@@ -15,6 +17,7 @@ const { argv } = yargs(process.argv)
   .parserConfiguration({
     'boolean-negation': false,
   })
+  .scriptName('igir')
   .usage('Usage: $0 [options]')
 
   .option('dat', {
@@ -27,8 +30,14 @@ const { argv } = yargs(process.argv)
   .option('input', {
     group: groupInputs,
     alias: 'i',
-    description: 'Path(s) to ROM files',
+    description: 'Path(s) to ROM files, with support for .zip and .7z archives',
     demandOption: true,
+    type: 'array',
+  })
+  .option('input-exclude', {
+    group: groupInputs,
+    alias: 'I',
+    description: 'Path(s) to ROM files to exclude',
     type: 'array',
   })
 
@@ -77,6 +86,11 @@ const { argv } = yargs(process.argv)
     alias: 'O',
     description: 'Overwrite any ROMs in the output directory',
     type: 'boolean',
+  })
+  .option('test', {
+    group: groupOutput,
+    alias: 't',
+    description: 'Test ROMs for accuracy after writing them',
   })
   .option('clean', {
     group: groupOutput,
@@ -179,7 +193,7 @@ const { argv } = yargs(process.argv)
     description: 'Filter out prototype ROMs',
     type: 'boolean',
   })
-  .option('no-test', {
+  .option('no-test-roms', {
     group: groupFiltering,
     description: 'Filter out test ROMs',
     type: 'boolean',

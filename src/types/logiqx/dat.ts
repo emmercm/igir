@@ -89,10 +89,4 @@ export default class DAT {
   getParents(): Parent[] {
     return [...this.gameNamesToParents.values()];
   }
-
-  getRomExtensions(): string[] {
-    return this.getGames()
-      .flatMap((game: Game) => game.getRomExtensions())
-      .filter((ext: string, idx: number, exts: string[]) => exts.indexOf(ext) === idx);
-  }
 }

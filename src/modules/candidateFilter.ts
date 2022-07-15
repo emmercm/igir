@@ -69,7 +69,7 @@ export default class CandidateFilter {
     if (this.options.getNoPrototype() && releaseCandidate.getGame().isPrototype()) {
       return false;
     }
-    if (this.options.getNoTest() && releaseCandidate.getGame().isTest()) {
+    if (this.options.getNoTestRoms() && releaseCandidate.getGame().isTest()) {
       return false;
     }
     if (this.options.getNoAftermarket() && releaseCandidate.getGame().isAftermarket()) {

@@ -19,11 +19,11 @@ export default class ROMScanner {
   async scan(): Promise<ROMFile[]> {
     const results: ROMFile[] = [];
 
-    this.progressBar.reset(this.options.getInputFiles().length).setSymbol('🔎');
+    this.progressBar.reset(this.options.getInputFilesWithoutExclusions().length).setSymbol('🔎');
 
     /* eslint-disable no-await-in-loop */
-    for (let i = 0; i < this.options.getInputFiles().length; i += 1) {
-      const file = this.options.getInputFiles()[i];
+    for (let i = 0; i < this.options.getInputFilesWithoutExclusions().length; i += 1) {
+      const file = this.options.getInputFilesWithoutExclusions()[i];
 
       this.progressBar.increment();
 

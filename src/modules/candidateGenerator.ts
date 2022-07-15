@@ -2,7 +2,6 @@ import DAT from '../types/logiqx/dat.js';
 import Game from '../types/logiqx/game.js';
 import Parent from '../types/logiqx/parent.js';
 import Release from '../types/logiqx/release.js';
-import ROM from '../types/logiqx/rom.js';
 import ProgressBar from '../types/progressBar.js';
 import ReleaseCandidate from '../types/releaseCandidate.js';
 import ROMFile from '../types/romFile.js';
@@ -41,9 +40,9 @@ export default class CandidateGenerator {
         const releases = game.getReleases().length ? game.getReleases() : [null];
         return releases.forEach((release: Release | null) => {
           // For each Game's ROM, find the matching ROMFile
-          const romFiles: ROMFile[] = game.getRoms()
-            .map((rom: ROM) => crcToInputRomFiles.get(rom.getCrc()))
-            .filter((romFile: ROMFile | undefined) => romFile) as ROMFile[];
+          const romFiles = game.getRoms()
+            .map((rom) => crcToInputRomFiles.get(rom.getCrc()))
+            .filter((romFile) => romFile) as ROMFile[];
 
           // Ignore the Game if not every ROMFile is present
           if (romFiles.length !== game.getRoms().length) {

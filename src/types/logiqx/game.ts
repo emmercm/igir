@@ -105,10 +105,6 @@ export default class Game {
 
   // Computed getters
 
-  getRomExtensions(): string[] {
-    return this.getRoms().map((rom: ROM) => rom.getExtension());
-  }
-
   isAftermarket(): boolean {
     return this.name.match(/\(Aftermarket[ a-zA-Z0-9.]*\)/i) !== null;
   }

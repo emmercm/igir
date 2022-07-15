@@ -90,6 +90,9 @@ export default class ROMWriter {
     let outputZip = new AdmZip();
     try {
       await fsPromises.access(outputZipPath); // throw if file doesn't exist
+      if (!this.options.getOverwrite()) {
+        return;
+      }
       outputZip = new AdmZip(outputZipPath);
     } catch (e) {
       // eslint-disable-line no-empty
@@ -144,6 +147,15 @@ export default class ROMWriter {
       await outputZip.writeZipPromise(outputZipPath);
     }
 
+    // Test the written file
+    if (this.options.getTest()) {
+      const zipToTest = new AdmZip(outputZipPath);
+      if (!zipToTest.test()) {
+        ProgressBar.log(`Written zip is invalid: ${outputZipPath}`);
+        return;
+      }
+    }
+
     // If "moving", delete the input files
     if (this.options.getMove()) {
       await Promise.all(
@@ -151,7 +163,7 @@ export default class ROMWriter {
           .map((romFile) => romFile.getFilePath())
           .filter((filePath) => filePath !== outputZipPath)
           .filter((romFile, idx, romFiles) => romFiles.indexOf(romFile) === idx)
-          .map((filePath) => fsPromises.rm(filePath)),
+          .map((filePath) => fsPromises.rm(filePath, { force: true })),
       );
     }
   }
@@ -162,38 +174,53 @@ export default class ROMWriter {
     for (let i = 0; i < inputToOutputEntries.length; i += 1) {
       const inputRomFile = inputToOutputEntries[i][0];
       const outputRomFile = inputToOutputEntries[i][1];
-      if (outputRomFile.equals(inputRomFile)) {
+      await this.writeRawSingle(inputRomFile, outputRomFile);
+    }
+  }
+
+  private async writeRawSingle(inputRomFile: ROMFile, outputRomFile: ROMFile) {
+    if (outputRomFile.equals(inputRomFile)) {
+      return;
+    }
+
+    const outputFilePath = outputRomFile.getFilePath();
+
+    // If the output file already exists, do nothing
+    const overwrite = this.options.getOverwrite();
+    if (!overwrite) {
+      try {
+        await fsPromises.access(outputFilePath); // throw if file doesn't exist
+        return;
+      } catch (e) {
+        // eslint-disable-line no-empty
+      }
+    }
+
+    // Create the output directory
+    const outputDir = path.dirname(outputFilePath);
+    try {
+      await fsPromises.access(outputDir); // throw if file doesn't exist
+    } catch (e) {
+      await fsPromises.mkdir(outputDir, { recursive: true });
+    }
+
+    // Write the output file
+    const inputRomFileLocal = await inputRomFile.toLocalFile();
+    await fsPromises.copyFile(inputRomFileLocal.getFilePath(), outputFilePath);
+    await inputRomFileLocal.cleanupLocalFile();
+
+    // Test the written file
+    if (this.options.getTest()) {
+      const romFileToTest = new ROMFile(outputFilePath);
+      if (romFileToTest.getCrc() !== inputRomFile.getCrc()) {
+        ProgressBar.log(`Written file has the CRC ${romFileToTest.getCrc()}, expected ${inputRomFile.getCrc()}: ${outputFilePath}`);
         return;
       }
+    }
 
-      const outputFilePath = outputRomFile.getFilePath();
-
-      // If the output file already exists, do nothing
-      // TODO(cemmer): flag to allow overwriting
-      if (!this.options.getOverwrite()) {
-        try {
-          await fsPromises.access(outputFilePath);
-          return;
-        } catch (e) {
-          // eslint-disable-line no-empty
-        }
-      }
-
-      // Create the output directory
-      const outputDir = path.dirname(outputFilePath);
-      try {
-        await fsPromises.access(outputDir); // throw if file doesn't exist
-      } catch (e) {
-        await fsPromises.mkdir(outputDir, { recursive: true });
-      }
-
-      const inputRomFileLocal = await inputRomFile.toLocalFile();
-      if (this.options.getMove()) {
-        await fsPromises.rename(inputRomFileLocal.getFilePath(), outputFilePath);
-      } else {
-        await fsPromises.copyFile(inputRomFileLocal.getFilePath(), outputFilePath);
-      }
-      await inputRomFileLocal.cleanupLocalFile();
+    // Delete the original file if we're supposed to "move" it
+    if (this.options.getMove()) {
+      await fsPromises.rm(inputRomFileLocal.getFilePath(), { force: true });
     }
   }
 }

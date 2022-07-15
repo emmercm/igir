@@ -3,7 +3,7 @@ import AdmZip, { IZipEntry } from 'adm-zip';
 import crc32 from 'crc/crc32';
 import fs from 'fs';
 import fsPromises from 'node:fs/promises';
-import * as os from 'os';
+import os from 'os';
 import path from 'path';
 
 export default class ROMFile {
@@ -50,7 +50,7 @@ export default class ROMFile {
 
   private async extract7zToLocal(tempFile: string) {
     await new Promise<void>((resolve, reject) => {
-      _7z.unpack(this.filePath, path.dirname(tempFile), (err) => {
+      _7z.unpack(this.getFilePath(), path.dirname(tempFile), (err) => {
         if (err) {
           reject(err);
         } else {
@@ -61,9 +61,13 @@ export default class ROMFile {
   }
 
   private extractZipToLocal(tempFile: string) {
-    const zip = new AdmZip(this.filePath);
+    const zip = new AdmZip(this.getFilePath());
+    const entry = zip.getEntry(this.getArchiveEntryPath() as string);
+    if (!entry) {
+      throw new Error(`Entry path ${this.getArchiveEntryPath()} does not exist in ${this.getFilePath()}`);
+    }
     zip.extractEntryTo(
-      zip.getEntry(this.archiveEntryPath as string) as IZipEntry,
+      entry as IZipEntry,
       path.dirname(tempFile),
       false,
       false,
@@ -73,8 +77,8 @@ export default class ROMFile {
   }
 
   async cleanupLocalFile() {
-    if (path.resolve(this.filePath).indexOf(os.tmpdir()) !== -1) {
-      await fsPromises.rm(path.dirname(this.filePath), { recursive: true });
+    if (path.resolve(this.getFilePath()).indexOf(os.tmpdir()) !== -1) {
+      await fsPromises.rm(path.dirname(this.getFilePath()), { force: true, recursive: true });
     }
   }
 

@@ -19,6 +19,8 @@ export default class Parent {
     this.refreshRegionsToRoms();
   }
 
+  // Property getters
+
   getName(): string {
     return this.name;
   }
@@ -42,4 +44,6 @@ export default class Parent {
       }
     });
   }
+
+  // 
 }
