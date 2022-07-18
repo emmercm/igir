@@ -27,7 +27,7 @@ export default class ROMFile {
     return this.archiveEntryPath;
   }
 
-  getCrc(): string {
+  getCrc32(): string {
     return this.crc;
   }
 
@@ -91,6 +91,6 @@ export default class ROMFile {
     }
     return this.getFilePath() === other.getFilePath()
         && this.getArchiveEntryPath() === other.getArchiveEntryPath()
-        && this.getCrc() === other.getCrc();
+        && this.getCrc32() === other.getCrc32();
   }
 }

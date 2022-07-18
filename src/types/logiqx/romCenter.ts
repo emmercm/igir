@@ -6,6 +6,7 @@ import { Expose } from 'class-transformer';
  * @see http://www.logiqx.com/DatFAQs/RomCenter.php
  */
 export default class RomCenter {
+  @Expose({ name: 'plugin' })
   private readonly plugin?: string;
 
   @Expose({ name: 'rommode' })

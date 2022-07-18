@@ -17,8 +17,8 @@ export default class CandidateGenerator {
     inputRomFiles: ROMFile[],
   ): Promise<Map<Parent, ReleaseCandidate[]>> {
     // Index the ROMFiles by CRC
-    const crcToInputRomFiles = inputRomFiles.reduce((acc, romFile) => {
-      acc.set(romFile.getCrc(), romFile);
+    const crc32ToInputRomFiles = inputRomFiles.reduce((acc, romFile) => {
+      acc.set(romFile.getCrc32(), romFile);
       return acc;
     }, new Map<string, ROMFile>());
 
@@ -39,7 +39,7 @@ export default class CandidateGenerator {
         return releases.forEach((release: Release | null) => {
           // For each Game's ROM, find the matching ROMFile
           const romFiles = game.getRoms()
-            .map((rom) => crcToInputRomFiles.get(rom.getCrc()))
+            .map((rom) => crc32ToInputRomFiles.get(rom.getCrc32()))
             .filter((romFile) => romFile) as ROMFile[];
 
           // Ignore the Game if not every ROMFile is present

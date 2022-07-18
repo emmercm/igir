@@ -6,26 +6,39 @@ import main from './src/app.js';
 import Logger from './src/logger.js';
 import Options from './src/types/options.js';
 
-Logger.header();
+const scriptName = 'igir';
+
+Logger.header(scriptName);
 
 const groupInputOutputPaths = 'Path options (inputs support globbing):';
-const groupPresets = 'Option presets:';
+const groupPresets = 'Presets for options commonly used together:';
 const groupOutput = 'Output options:';
 const groupPriority = 'Priority options:';
 const groupFiltering = 'Filtering options:';
 
-const { argv } = yargs(process.argv)
+const getLastValue = (arr: unknown[]) => {
+  if (!arr || !arr.length) {
+    return arr;
+  }
+  return arr[arr.length - 1];
+};
+
+let cliArgv = process.argv;
+
+const yargsParser = yargs([])
   .parserConfiguration({
     'boolean-negation': false,
   })
-  .scriptName('igir')
-  .usage('Usage: $0 [options]')
+  .scriptName(scriptName)
+  .usage('Usage: $0 [presets] [options]')
 
   .option('dat', {
     group: groupInputOutputPaths,
     alias: 'd',
     description: 'Path(s) to DAT files',
+    demandOption: true,
     type: 'array',
+    requiresArg: true,
     default: ['*.dat'],
   })
   .option('input', {
@@ -34,12 +47,14 @@ const { argv } = yargs(process.argv)
     description: 'Path(s) to ROM files, with support for .zip and .7z archives',
     demandOption: true,
     type: 'array',
+    requiresArg: true,
   })
   .option('input-exclude', {
     group: groupInputOutputPaths,
     alias: 'I',
     description: 'Path(s) to ROM files to exclude',
     type: 'array',
+    requiresArg: true,
   })
   .option('output', {
     group: groupInputOutputPaths,
@@ -47,84 +62,125 @@ const { argv } = yargs(process.argv)
     description: 'Path to the ROM output directory',
     demandOption: true,
     type: 'string',
-  })
+    coerce: getLastValue,
+    requiresArg: true,
+  });
 
-// TODO(cemmer)
-// .option('1g1r', {
-//   group: groupPresets,
-//   description: 'Build a one game, one ROM sets per DAT file',
-//   type: 'boolean',
-//   implies: [
-//     'single',
-//     'test',
-//     'clean',
-//   ],
-// })
-// .option('english', {
-//   group: groupPresets,
-//   description: 'Prefer English versions from USA>EUR>JPN',
-//   type: 'boolean',
-//   implies: [
-//     '--prefer-language En',
-//     '--prefer-region USA,EUR,JPN',
-//   ],
-// })
+// Configure presets
+[
+  {
+    name: 'preset-1g1r',
+    description: 'Build one game, one ROM set(s)',
+    options: ['--single', '--test', '--clean'],
+  }, {
+    name: 'preset-english',
+    description: 'Prefer English ROMs from USA>EUR>JPN',
+    options: ['--prefer-language', 'En', '--prefer-region', 'USA,EUR,JPN'],
+  }, {
+    name: 'preset-retail',
+    description: 'Exclude non-retail ROMs',
+    options: ['--no-demo', '--no-beta', '--no-sample', '--no-prototype',
+      '--no-test-roms', '--no-aftermarket', '--no-homebrew', '--no-bad'],
+  }, {
+    name: 'preset-flash-cart',
+    description: 'Copy ROMs to a flash cart',
+    options: ['--dir-letter', '--zip false', '--move false'],
+  },
+].forEach((preset) => {
+  // Add the option to help text
+  yargsParser.option(preset.name, {
+    group: groupPresets,
+    description: `${preset.description}: ${preset.options.join(' ')}`,
+    type: 'boolean',
+    coerce: getLastValue,
+  });
 
+  // Replace the preset flag with its group of flags
+  const flagIndex = cliArgv.indexOf(`--${preset.name}`);
+  if (flagIndex !== -1) {
+    cliArgv = [
+      ...cliArgv.slice(0, flagIndex - 1),
+      ...preset.options,
+      ...cliArgv.slice(flagIndex),
+    ];
+  }
+});
+
+yargsParser
   .option('dir-mirror', {
     group: groupOutput,
     description: 'Use the input subdirectory structure as the output subdirectory',
     type: 'boolean',
+    coerce: getLastValue,
   })
   .option('dir-datname', {
     group: groupOutput,
     description: 'Use the DAT name as the output subdirectory',
     type: 'boolean',
+    coerce: getLastValue,
   })
   .option('dir-letter', {
     group: groupOutput,
     description: 'Append the first letter of the ROM name as an output subdirectory',
     type: 'boolean',
+    coerce: getLastValue,
   })
   .option('single', {
     group: groupOutput,
     alias: 's',
     description: 'Output only a single game per parent (requires parent-clone DAT files)',
     type: 'boolean',
+    coerce: getLastValue,
   })
   .option('zip', {
     group: groupOutput,
     alias: 'z',
     description: 'Zip archive ROM files',
     type: 'boolean',
+    coerce: getLastValue,
+  })
+  .option('zip-exclude', {
+    group: groupOutput,
+    alias: 'Z',
+    description: 'Glob pattern of files to exclude from zipping',
+    type: 'string',
+    coerce: getLastValue,
+    requiresArg: true,
   })
   .option('move', {
     group: groupOutput,
     alias: 'm',
     description: 'Move ROMs to the output directory',
     type: 'boolean',
+    coerce: getLastValue,
   })
   .option('overwrite', {
     group: groupOutput,
     alias: 'O',
     description: 'Overwrite any ROMs in the output directory',
     type: 'boolean',
+    coerce: getLastValue,
   })
   .option('test', {
     group: groupOutput,
     alias: 't',
     description: 'Test ROMs for accuracy after writing them',
+    type: 'boolean',
+    coerce: getLastValue,
   })
   .option('clean', {
     group: groupOutput,
     alias: 'c',
     description: 'Remove unmatched files from the ROM output directory',
     type: 'boolean',
+    coerce: getLastValue,
   })
 
   .option('prefer-good', {
     group: groupPriority,
     description: 'Prefer good ROM dumps over bad',
     type: 'boolean',
+    coerce: getLastValue,
     default: true,
   })
   .option('prefer-language', {
@@ -133,6 +189,7 @@ const { argv } = yargs(process.argv)
     description: 'List of comma-separated languages in priority order',
     type: 'string',
     coerce: (val: string) => val.split(','),
+    requiresArg: true,
   })
   .option('prefer-region', {
     group: groupPriority,
@@ -140,28 +197,33 @@ const { argv } = yargs(process.argv)
     description: 'List of comma-separated regions in priority order',
     type: 'string',
     coerce: (val: string) => val.split(','),
+    requiresArg: true,
   })
   .option('prefer-revisions-newer', {
     group: groupPriority,
     description: 'Prefer newer ROM revisions over older',
     type: 'boolean',
+    coerce: getLastValue,
     conflicts: ['prefer-revisions-older'],
   })
   .option('prefer-revisions-older', {
     group: groupPriority,
     description: 'Prefer older ROM revisions over newer',
     type: 'boolean',
+    coerce: getLastValue,
     conflicts: ['prefer-revisions-newer'],
   })
   .option('prefer-releases', {
     group: groupPriority,
     description: 'Prefer ROMs marked as releases',
     type: 'boolean',
+    coerce: getLastValue,
   })
   .option('prefer-parents', {
     group: groupPriority,
     description: 'Prefer parent ROMs over clones (requires parent-clone DAT files)',
     type: 'boolean',
+    coerce: getLastValue,
   })
 
   .option('language-filter', {
@@ -170,6 +232,7 @@ const { argv } = yargs(process.argv)
     description: 'List of comma-separated languages to limit to',
     type: 'string',
     coerce: (val: string) => val.split(','),
+    requiresArg: true,
   })
   .option('region-filter', {
     group: groupFiltering,
@@ -177,82 +240,112 @@ const { argv } = yargs(process.argv)
     description: 'List of comma-separated regions to limit to',
     type: 'string',
     coerce: (val: string) => val.split(','),
+    requiresArg: true,
   })
   .option('only-bios', {
     group: groupFiltering,
     description: 'Filter to only BIOS files',
     type: 'boolean',
+    coerce: getLastValue,
     conflicts: ['no-bios'],
   })
   .option('no-bios', {
     group: groupFiltering,
     description: 'Filter out BIOS files',
     type: 'boolean',
+    coerce: getLastValue,
     conflicts: ['only-bios'],
   })
   .option('no-unlicensed', {
     group: groupFiltering,
     description: 'Filter out unlicensed ROMs',
     type: 'boolean',
+    coerce: getLastValue,
   })
   .option('no-demo', {
     group: groupFiltering,
     description: 'Filter out demo ROMs',
     type: 'boolean',
+    coerce: getLastValue,
   })
   .option('no-beta', {
     group: groupFiltering,
     description: 'Filter out beta ROMs',
     type: 'boolean',
+    coerce: getLastValue,
   })
   .option('no-sample', {
     group: groupFiltering,
     description: 'Filter out sample ROMs',
     type: 'boolean',
+    coerce: getLastValue,
   })
   .option('no-prototype', {
     group: groupFiltering,
     description: 'Filter out prototype ROMs',
     type: 'boolean',
+    coerce: getLastValue,
   })
   .option('no-test-roms', {
     group: groupFiltering,
     description: 'Filter out test ROMs',
     type: 'boolean',
+    coerce: getLastValue,
   })
   .option('no-aftermarket', {
     group: groupFiltering,
     description: 'Filter out aftermarket ROMs',
     type: 'boolean',
+    coerce: getLastValue,
   })
   .option('no-homebrew', {
     group: groupFiltering,
     description: 'Filter out homebrew ROMs',
     type: 'boolean',
+    coerce: getLastValue,
   })
   .option('no-bad', {
     group: groupFiltering,
     description: 'Filter out bad ROM dumps',
     type: 'boolean',
-    default: true,
+    coerce: getLastValue,
   })
 
-// TODO(cemmer): colorize: https://github.com/yargs/yargs/issues/251
-
-  .wrap(yargs([]).terminalWidth() || 100)
+  .wrap(Math.min(yargs([]).terminalWidth() || 100, 120))
   .version(false)
-  .help(true)
   .example([
-    ['$0 -i **/*.zip -o 1G1R/ -s -l En -r USA,EUR,JPN', 'Produce a 1G1R set per console, preferring English from USA>EUR>JPN'],
+    ['$0 -i **/*.zip -o 1G1R/ --preset-1g1r --preset-english', 'Produce a 1G1R set per console, preferring English from USA>EUR>JPN'],
     [''], // https://github.com/yargs/yargs/issues/1640
     ['$0 -i **/*.zip -i 1G1R/ -o 1G1R/', 'Merge new ROMs into an existing ROM collection'],
     [''], // https://github.com/yargs/yargs/issues/1640
     ['$0 -i 1G1R/ -o 1G1R/ -m -z', 'Organize and zip an existing ROM collection'],
     [''], // https://github.com/yargs/yargs/issues/1640
     ['$0 -i **/*.zip -o bios/ --only-bios', 'Collate all BIOS files'],
-  ]);
+  ])
+
+// Colorize help output
+  .option('help', {
+    alias: 'h',
+    description: 'Show help',
+    type: 'boolean',
+  })
+  .fail((msg, err, _yargs) => {
+    if (err) {
+      throw err;
+    }
+    Logger.colorizeYargs(`${_yargs.help()}\n`);
+    Logger.error(msg);
+    process.exit(1);
+  });
+
+const yargsArgv = yargsParser.parse(cliArgv, {}, (err, _argv, output) => {
+  if (output) {
+    Logger.colorizeYargs(output);
+    process.exit(0);
+  }
+});
 
 (async () => {
-  const options = await Options.fromObject(argv);
+  const options = await Options.fromObject(yargsArgv);
   await main(options);
 })();

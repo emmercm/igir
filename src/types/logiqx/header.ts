@@ -10,18 +10,21 @@ export default class Header {
    * "Name of the emulator without a version number. This field is used by the
    * update feature of the CMPro profiler."
    */
+  @Expose({ name: 'name' })
   private readonly name!: string;
 
   /**
    * "Name of the emulator with a version number. This is the name displayed by
    * CMPro."
    */
+  @Expose({ name: 'description' })
   private readonly description!: string;
 
   /**
    * "General comment about the emulator (e.g. the systems or game types it
    * supports)."
    */
+  @Expose({ name: 'category' })
   private readonly category?: string;
 
   /**
@@ -29,21 +32,28 @@ export default class Header {
    * date encoded version number (YYYYMMDD is preferable to DDMMYYYY as it can
    * be sorted and is unambiguous)."
    */
+  @Expose({ name: 'version' })
   private readonly version!: string;
 
+  @Expose({ name: 'date' })
   private readonly date?: string;
 
   /**
    * "Your name and e-mail/web address."
    */
+  @Expose({ name: 'author' })
   private readonly author!: string;
 
+  @Expose({ name: 'email' })
   private readonly email?: string;
 
+  @Expose({ name: 'homepage' })
   private readonly homepage?: string;
 
+  @Expose({ name: 'url' })
   private readonly url?: string;
 
+  @Expose({ name: 'comment' })
   private readonly comment?: string;
 
   @Type(() => ClrMamePro)

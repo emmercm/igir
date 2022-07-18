@@ -33,9 +33,9 @@ export default class ReleaseCandidate {
     return this.roms;
   }
 
-  getRomsByCrc(): Map<string, ROM> {
+  getRomsByCrc32(): Map<string, ROM> {
     return this.getRoms().reduce((acc, rom) => {
-      acc.set(rom.getCrc(), rom);
+      acc.set(rom.getCrc32(), rom);
       return acc;
     }, new Map<string, ROM>());
   }

@@ -7,7 +7,7 @@ import Options from '../types/options.js';
 
 export default class DATScanner {
   static async parse(options: Options): Promise<DAT[]> {
-    Logger.out(`Found ${options.getDatFiles().length} DAT file${options.getDatFiles().length !== -1 ? 's' : ''} ...`);
+    Logger.print(`Found ${options.getDatFiles().length} DAT file${options.getDatFiles().length !== -1 ? 's' : ''} ...`);
 
     const parsedXml = (await Promise.all(
       options.getDatFiles()
@@ -26,7 +26,7 @@ export default class DATScanner {
         }),
     )).filter((xmlObject) => xmlObject);
 
-    Logger.out();
+    Logger.print();
 
     return parsedXml
       .map((xmlObject) => DAT.fromObject(xmlObject.datafile))

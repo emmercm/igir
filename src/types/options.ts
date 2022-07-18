@@ -3,6 +3,7 @@ import 'reflect-metadata';
 import { plainToInstance } from 'class-transformer';
 import fg from 'fast-glob';
 import { isNotJunk } from 'junk';
+// import micromatch from 'micromatch';
 import fsPromises from 'node:fs/promises';
 import path from 'path';
 
@@ -26,6 +27,8 @@ export default class Options {
   private readonly single = false;
 
   private readonly zip!: boolean;
+
+  private readonly zipExclude!: string;
 
   private readonly move!: boolean;
 
@@ -190,8 +193,19 @@ export default class Options {
     return this.single;
   }
 
-  getZip(): boolean {
+  private getZip(): boolean {
     return this.zip;
+  }
+
+  private getZipExclude(): string {
+    return this.zipExclude;
+  }
+
+  shouldZip(filePath: string) {
+    // TODO(cemmer): install micromatch and test
+    // return this.getZip()
+    //     && (!this.getZipExclude() || !micromatch.match(filePath, this.getZipExclude()));
+    return this.getZip();
   }
 
   getMove(): boolean {

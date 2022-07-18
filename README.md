@@ -18,14 +18,22 @@ A ROM collection manager designed to make one game, one rom (1G1R) sets.
  \$$$$$$  \$$$$$$  \$$$$$$ \$$   \$$
 
 
-Usage: igir [options]
+Usage: igir [presets] [options]
 
 Path options (inputs support globbing):
-  -d, --dat            Path(s) to DAT files                             [array] [default: ["*.dat"]]
+  -d, --dat            Path(s) to DAT files                  [array] [required] [default: ["*.dat"]]
   -i, --input          Path(s) to ROM files, with support for .zip and .7z archives
                                                                                   [array] [required]
   -I, --input-exclude  Path(s) to ROM files to exclude                                       [array]
   -o, --output         Path to the ROM output directory                          [string] [required]
+
+Presets for options commonly used together:
+      --preset-1g1r        Build one game, one ROM set(s): --single --test --clean         [boolean]
+      --preset-english     Prefer English ROMs from USA>EUR>JPN: --prefer-language En --prefer-regio
+                           n USA,EUR,JPN                                                   [boolean]
+      --preset-retail      Exclude non-retail ROMs: --no-demo --no-beta --no-sample --no-prototype -
+                           -no-test-roms --no-aftermarket --no-homebrew --no-bad           [boolean]
+      --preset-flash-cart  Copy ROMs to a flash cart: --dir-letter --zip false --move false[boolean]
 
 Output options:
       --dir-mirror   Use the input subdirectory structure as the output subdirectory       [boolean]
@@ -33,9 +41,10 @@ Output options:
       --dir-letter   Append the first letter of the ROM name as an output subdirectory     [boolean]
   -s, --single       Output only a single game per parent (requires parent-clone DAT files)[boolean]
   -z, --zip          Zip archive ROM files                                                 [boolean]
+  -Z, --zip-exclude  Glob pattern of files to exclude from zipping                          [string]
   -m, --move         Move ROMs to the output directory                                     [boolean]
   -O, --overwrite    Overwrite any ROMs in the output directory                            [boolean]
-  -t, --test         Test ROMs for accuracy after writing them
+  -t, --test         Test ROMs for accuracy after writing them                             [boolean]
   -c, --clean        Remove unmatched files from the ROM output directory                  [boolean]
 
 Priority options:
@@ -61,20 +70,20 @@ Filtering options:
       --no-test-roms     Filter out test ROMs                                              [boolean]
       --no-aftermarket   Filter out aftermarket ROMs                                       [boolean]
       --no-homebrew      Filter out homebrew ROMs                                          [boolean]
-      --no-bad           Filter out bad ROM dumps                          [boolean] [default: true]
+      --no-bad           Filter out bad ROM dumps                                          [boolean]
 
 Options:
-      --help  Show help                                                                    [boolean]
+  -h, --help  Show help                                                                    [boolean]
 
 Examples:
-  igir -i **/*.zip -o 1G1R/ -s -l En -r USA,EUR,JPN  Produce a 1G1R set per console, preferring Engl
-                                                     ish from USA>EUR>JPN
+  igir -i **/*.zip -o 1G1R/ --preset-1g1r --preset-e  Produce a 1G1R set per console, preferring Eng
+  nglish                                              lish from USA>EUR>JPN
 
-  igir -i **/*.zip -i 1G1R/ -o 1G1R/                 Merge new ROMs into an existing ROM collection
+  igir -i **/*.zip -i 1G1R/ -o 1G1R/                  Merge new ROMs into an existing ROM collection
 
-  igir -i 1G1R/ -o 1G1R/ -m -z                       Organize and zip an existing ROM collection
+  igir -i 1G1R/ -o 1G1R/ -m -z                        Organize and zip an existing ROM collection
 
-  igir -i **/*.zip -o bios/ --only-bios              Collate all BIOS files
+  igir -i **/*.zip -o bios/ --only-bios               Collate all BIOS files
 ```
 
 ## Obtaining ROMs

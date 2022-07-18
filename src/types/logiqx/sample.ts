@@ -1,3 +1,5 @@
+import { Expose } from 'class-transformer';
+
 /**
  * "If an emulator uses sound samples then you can also include this
  * information in a CMPro data file. At this time it is not possible to put
@@ -7,5 +9,6 @@
  * @see http://www.logiqx.com/DatFAQs/DatCreation.php
  */
 export default class Sample {
+  @Expose({ name: 'name' })
   private readonly name!: string;
 }

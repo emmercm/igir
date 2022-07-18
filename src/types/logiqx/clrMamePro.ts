@@ -9,6 +9,7 @@ import { Expose } from 'class-transformer';
  * @see http://www.logiqx.com/DatFAQs/CMPro.php
  */
 export default class ClrMamePro {
+  @Expose({ name: 'header' })
   private readonly header?: string;
 
   /**

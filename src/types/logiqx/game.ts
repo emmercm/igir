@@ -29,8 +29,10 @@ import Sample from './sample.js';
  * @see http://www.logiqx.com/DatFAQs/CMPro.php
  */
 export default class Game {
+  @Expose({ name: 'name' })
   private readonly name!: string;
 
+  @Expose({ name: 'description' })
   private readonly description!: string;
 
   @Expose({ name: 'sourcefile' })
@@ -48,13 +50,16 @@ export default class Game {
   @Expose({ name: 'sampleof' })
   private readonly sampleOf?: string;
 
+  @Expose({ name: 'board' })
   private readonly board?: string;
 
   @Expose({ name: 'rebuildto' })
   private readonly rebuildTo?: string;
 
+  @Expose({ name: 'year' })
   private readonly year?: string;
 
+  @Expose({ name: 'manufacturer' })
   private readonly manufacturer?: string;
 
   @Type(() => Release)

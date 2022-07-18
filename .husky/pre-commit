@@ -2,6 +2,8 @@
 . "$(dirname -- "$0")/_/husky.sh"
 
 cd "$(dirname -- "$0")/.." || exit 1
+
+# Ensure node is available
 if [[ ! -x "$(command -v node)" ]]; then
   if [[ ! -x "$(command -v nvm)" && -f ~/.nvm/nvm.sh ]]; then
     . ~/.nvm/nvm.sh
@@ -12,10 +14,11 @@ if [[ ! -x "$(command -v node)" ]]; then
 fi
 node --version &> /dev/null || exit 1
 
+# Update the help text in README.md
 README="README.md"
 README_BEFORE=$(cat "${README}")
 (awk 'BEGIN {msg=ARGV[1]; delete ARGV[1]; p=1} /^```help/ {print; print msg; p=0} /^```$/ {p=1} p' \
-  "$(./node_modules/.bin/ts-node ./index.ts -h 2>&1 | grep --invert-match "Missing required arguments" | sed ':a; /^[[:space:]]*$/ { $d; N; ba; }')" \
+  "$(./node_modules/.bin/ts-node ./index.ts --help)" \
   "${README}" > "${README}.temp" || exit 1) && mv -f "${README}.temp" "${README}"
 README_AFTER=$(cat "${README}")
 if [[ "${README_AFTER}" != "${README_BEFORE}" ]]; then

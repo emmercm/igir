@@ -13,7 +13,7 @@ export default class ReportGenerator {
 
   write(writtenRoms: Map<DAT, Map<Parent, ROMFile[]>>) {
     if (writtenRoms.size) {
-      Logger.out();
+      Logger.print();
     }
 
     [...writtenRoms.entries()]
@@ -65,7 +65,7 @@ export default class ReportGenerator {
           message += `\n  ${missingPrototypes.length}/${allPrototypes.length} prototypes missing`;
           missingPrototypes.forEach((prototype) => { message += `\n    ${prototype.getName()}`; });
         }
-        Logger.out(message);
+        Logger.print(message);
       });
   }
 }
