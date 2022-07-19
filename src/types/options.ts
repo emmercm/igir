@@ -2,19 +2,21 @@ import 'reflect-metadata';
 
 import { plainToInstance } from 'class-transformer';
 import fg from 'fast-glob';
+import fs from 'fs';
 import { isNotJunk } from 'junk';
-// import micromatch from 'micromatch';
+import micromatch from 'micromatch';
 import fsPromises from 'node:fs/promises';
+import os from 'os';
 import path from 'path';
 
 import DAT from './logiqx/dat.js';
 
 export default class Options {
-  private dat: string[] = [];
+  private readonly dat: string[] = [];
 
-  private input: string[] = [];
+  private readonly input: string[] = [];
 
-  private inputExclude: string[] = [];
+  private readonly inputExclude: string[] = [];
 
   private readonly output!: string;
 
@@ -38,6 +40,8 @@ export default class Options {
 
   private readonly clean!: boolean;
 
+  private readonly dryRun!: boolean;
+
   private readonly preferGood!: boolean;
 
   private readonly preferLanguage: string[] = [];
@@ -48,9 +52,9 @@ export default class Options {
 
   private readonly preferRevisionsOlder!: boolean;
 
-  private readonly preferReleases!: boolean;
+  private readonly preferRetail!: boolean;
 
-  private readonly preferParents!: boolean;
+  private readonly preferParent!: boolean;
 
   private readonly languageFilter: string[] = [];
 
@@ -61,6 +65,8 @@ export default class Options {
   private readonly noBios!: boolean;
 
   private readonly noUnlicensed!: boolean;
+
+  private readonly onlyRetail!: boolean;
 
   private readonly noDemo!: boolean;
 
@@ -78,19 +84,46 @@ export default class Options {
 
   private readonly noBad!: boolean;
 
-  static async fromObject(obj: object) {
-    const options = plainToInstance(Options, obj, {
+  private tempDir!: string;
+
+  static fromObject(obj: object) {
+    return plainToInstance(Options, obj, {
       enableImplicitConversion: true,
-    });
-    await options.scanFileInputs();
-    options.validate();
-    return options;
+    })
+      .createTempDir()
+      .validate();
   }
 
-  private async scanFileInputs() {
-    this.dat = await Options.scanPath(this.dat);
-    this.input = await Options.scanPath(this.input);
-    this.inputExclude = await Options.scanPath(this.inputExclude);
+  private createTempDir(): Options {
+    this.tempDir = fs.mkdtempSync(os.tmpdir());
+    process.on('SIGINT', () => {
+      fs.rmSync(this.tempDir, { force: true, recursive: true });
+    });
+    return this;
+  }
+
+  private validate(): Options {
+    // TODO(cemmer): validate fields on the class
+    return this;
+  }
+
+  async scanDatFiles(): Promise<string[]> {
+    return Options.scanPath(this.dat);
+  }
+
+  private async scanInputFiles(): Promise<string[]> {
+    return Options.scanPath(this.input);
+  }
+
+  private async scanInputExcludeFiles(): Promise<string[]> {
+    return Options.scanPath(this.inputExclude);
+  }
+
+  async scanInputFilesWithoutExclusions(): Promise<string[]> {
+    const inputFiles = await this.scanInputFiles();
+    const inputExcludeFiles = await this.scanInputExcludeFiles();
+    return inputFiles
+      .filter((inputPath) => inputExcludeFiles.indexOf(inputPath) === -1);
   }
 
   private static async scanPath(inputPaths: string[]): Promise<string[]> {
@@ -129,28 +162,6 @@ export default class Options {
     );
   }
 
-  /* eslint-disable class-methods-use-this */
-  private validate() {
-    // TODO(cemmer): validate fields on the class
-  }
-
-  getDatFiles(): string[] {
-    return this.dat;
-  }
-
-  private getInputFiles(): string[] {
-    return this.input;
-  }
-
-  private getInputExcludeFiles(): string[] {
-    return this.inputExclude;
-  }
-
-  getInputFilesWithoutExclusions(): string[] {
-    return this.getInputFiles()
-      .filter((inputPath) => this.getInputExcludeFiles().indexOf(inputPath) === -1);
-  }
-
   getOutput(dat?: DAT, inputRomPath?: string, romName?: string): string {
     let { output } = this;
     if (this.getDirMirror() && inputRomPath) {
@@ -161,9 +172,11 @@ export default class Options {
         .join(path.sep);
       output = path.join(output, mirroredDir);
     }
+
     if (dat && this.getDirDatName()) {
       output = path.join(output, dat.getName());
     }
+
     if (this.getDirLetter() && romName) {
       let letter = romName[0].toUpperCase();
       if (letter.match(/[^A-Z]/)) {
@@ -171,9 +184,13 @@ export default class Options {
       }
       output = path.join(output, letter);
     }
+
+    // TODO(cemmer): if the ROM has multiple files (e.g. cue/bin) then put it in a folder
+
     if (romName) {
       output = path.join(output, romName);
     }
+
     return output;
   }
 
@@ -202,10 +219,8 @@ export default class Options {
   }
 
   shouldZip(filePath: string) {
-    // TODO(cemmer): install micromatch and test
-    // return this.getZip()
-    //     && (!this.getZipExclude() || !micromatch.match(filePath, this.getZipExclude()));
-    return this.getZip();
+    return this.getZip()
+        && (!this.getZipExclude() || !micromatch.isMatch(filePath, this.getZipExclude()));
   }
 
   getMove(): boolean {
@@ -222,6 +237,10 @@ export default class Options {
 
   getClean(): boolean {
     return this.clean;
+  }
+
+  getDryRun(): boolean {
+    return this.dryRun;
   }
 
   getPreferGood(): boolean {
@@ -248,12 +267,12 @@ export default class Options {
     return this.preferRevisionsOlder;
   }
 
-  getPreferReleases(): boolean {
-    return this.preferReleases;
+  getPreferRetail(): boolean {
+    return this.preferRetail;
   }
 
-  getPreferParents(): boolean {
-    return this.preferParents;
+  getPreferParent(): boolean {
+    return this.preferParent;
   }
 
   getRegionFilter(): string[] {
@@ -270,6 +289,10 @@ export default class Options {
 
   getNoUnlicensed(): boolean {
     return this.noUnlicensed;
+  }
+
+  getOnlyRetail(): boolean {
+    return this.onlyRetail;
   }
 
   getNoDemo(): boolean {
@@ -302,5 +325,9 @@ export default class Options {
 
   getNoBad(): boolean {
     return this.noBad;
+  }
+
+  getTempDir(): string {
+    return this.tempDir;
   }
 }

@@ -16,44 +16,30 @@ import ROMFile from './types/romFile.js';
 
 export default async function main(options: Options) {
   // Find all DAT files and parse them
-  if (!options.getDatFiles().length) {
-    Logger.error(
-      `No DAT files found! You can find DAT files at the following websites:
-
-- No-Intro (cartridge-based systems): https://datomatic.no-intro.org/
-- Redump (optical media-based systems): http://redump.org/
-- TOSEC: https://www.tosecdev.org/`,
-    );
-    return;
-  }
-  const dats = await DATScanner.parse(options);
+  // TODO(cemmer): move creation and management of progress bars to each of the modules
+  const datScanProgressBar = new ProgressBar('Scanning for DATs', '⏳', 0);
+  const dats = await new DATScanner(options, datScanProgressBar).parse();
   if (!dats.length) {
-    Logger.error('No valid DAT files found!');
-    return;
+    Logger.error('\nNo valid DAT files found!');
+    process.exit(1);
   }
-
-  // Set up the progress bars
-  const scanProgressBarName = 'Scanning for ROMs';
-  const multiBarMaxName = dats
-    .map((dat) => dat.getShortName())
-    .concat(scanProgressBarName)
-    .reduce((max, name) => Math.max(max, name.length), 0);
-  const scanProgressBar = new ProgressBar(multiBarMaxName, scanProgressBarName, '⏳', 0);
-  const datProgressBars = dats.reduce((acc, dat) => {
-    acc.set(dat, new ProgressBar(multiBarMaxName, dat.getShortName(), '⏳', dat.getParents().length));
-    return acc;
-  }, new Map<DAT, ProgressBar>());
+  datScanProgressBar
+    .setSymbol('✅')
+    .setProgressMessage(`${dats.length.toLocaleString()} DAT file${dats.length !== 1 ? 's' : ''} parsed`);
 
   // Find all ROM files and pre-process them
-  const romInputs = await new ROMScanner(options, scanProgressBar).scan();
-  scanProgressBar
+  const romScanProgressBar = new ProgressBar('Scanning for ROMs', '⏳', 0);
+  const romInputs = await new ROMScanner(options, romScanProgressBar).scan();
+  romScanProgressBar
     .setSymbol('✅')
-    .setProgressMessage(`${romInputs.length} ROM file${romInputs.length !== 1 ? 's' : ''} found`);
+    .setProgressMessage(`${romInputs.length.toLocaleString()} ROM file${romInputs.length !== 1 ? 's' : ''} found`);
 
+  const datProcessProgressBar = new ProgressBar('Processing DATs', '⚙️', dats.length);
   const datsToWrittenRoms = new Map<DAT, Map<Parent, ROMFile[]>>();
 
   await async.eachLimit(dats, 3, async (dat, callback) => {
-    const progressBar = datProgressBars.get(dat) as ProgressBar;
+    const progressBar = new ProgressBar(dat.getName(), '⏳', dat.getParents().length);
+    datProcessProgressBar.increment();
 
     // For each DAT, find all ROM candidates
     const romCandidates = await new CandidateGenerator(progressBar).generate(dat, romInputs);
@@ -64,26 +50,30 @@ export default async function main(options: Options) {
     // Write the output files
     const writtenRoms = await new ROMWriter(options, progressBar).write(dat, romOutputs);
 
-    datsToWrittenRoms.set(dat, writtenRoms);
-    callback();
-  });
-
-  // Clean the output directories
-  const allWrittenRomFiles = [...datsToWrittenRoms.values()]
-    .flatMap((parentsToRomFiles) => [...parentsToRomFiles.values()])
-    .flatMap((romFiles) => romFiles);
-  await new OutputCleaner(options, [...datProgressBars.values()]).clean(allWrittenRomFiles);
-
-  // Finish all progress bars
-  datsToWrittenRoms.forEach((writtenRoms, dat) => {
-    const progressBar = datProgressBars.get(dat) as ProgressBar;
     const parentsWithRomFiles = [...writtenRoms.values()]
       .filter((romFiles) => romFiles.length)
       .length;
     progressBar
       .setSymbol('✅')
-      .setProgressMessage(`${parentsWithRomFiles} ROM${parentsWithRomFiles !== 1 ? 's' : ''} processed`);
+      .setProgressMessage(`${parentsWithRomFiles.toLocaleString()} ROM${parentsWithRomFiles !== 1 ? 's' : ''} processed`);
+
+    datsToWrittenRoms.set(dat, writtenRoms);
+    progressBar.delete();
+    callback();
   });
+
+  datProcessProgressBar
+    .setSymbol('✅')
+    .setProgressMessage(`${dats.length.toLocaleString()} DAT${dats.length !== 1 ? 's' : ''} processed`);
+
+  // Clean the output directories
+  if (options.getClean()) {
+    const cleanerProgressBar = new ProgressBar('Cleaning output', '⏳', 0);
+    const allWrittenRomFiles = [...datsToWrittenRoms.values()]
+      .flatMap((parentsToRomFiles) => [...parentsToRomFiles.values()])
+      .flatMap((romFiles) => romFiles);
+    await new OutputCleaner(options, cleanerProgressBar).clean(allWrittenRomFiles);
+  }
 
   ProgressBar.stop();
 

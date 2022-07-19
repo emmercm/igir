@@ -122,4 +122,5 @@ build/
 *.png
 *.sqlite
 *.torrent
+*.txt
 *.xml

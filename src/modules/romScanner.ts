@@ -1,5 +1,6 @@
 import _7z, { Result } from '7zip-min';
 import AdmZip from 'adm-zip';
+import async from 'async';
 import path from 'path';
 
 import Options from '../types/options.js';
@@ -19,26 +20,26 @@ export default class ROMScanner {
   async scan(): Promise<ROMFile[]> {
     const results: ROMFile[] = [];
 
-    this.progressBar.reset(this.options.getInputFilesWithoutExclusions().length).setSymbol('🔎');
+    this.progressBar.reset(0).setSymbol('🔎');
 
-    /* eslint-disable no-await-in-loop */
-    for (let i = 0; i < this.options.getInputFilesWithoutExclusions().length; i += 1) {
-      const file = this.options.getInputFilesWithoutExclusions()[i];
+    const inputFiles = await this.options.scanInputFilesWithoutExclusions();
+    this.progressBar.reset(inputFiles.length);
 
+    await async.eachLimit(inputFiles, 5, async (inputFile, callback) => {
       this.progressBar.increment();
 
       let romFiles: ROMFile[] = [];
-      if (path.extname(file) === '.7z') {
-        romFiles = await ROMScanner.getRomFilesIn7z(file);
-      } else if (path.extname(file) === '.zip') {
-        romFiles = ROMScanner.getRomFilesInZip(file);
+      if (path.extname(inputFile) === '.7z') {
+        romFiles = await ROMScanner.getRomFilesIn7z(inputFile);
+      } else if (path.extname(inputFile) === '.zip') {
+        romFiles = ROMScanner.getRomFilesInZip(inputFile);
       } else {
-        romFiles = [new ROMFile(file)];
+        romFiles = [new ROMFile(inputFile)];
       }
 
       results.push(...romFiles);
-    }
-    // TODO(cemmer): de-duplicate?
+      callback();
+    });
 
     return results.flatMap((romFiles) => romFiles);
   }
@@ -57,12 +58,17 @@ export default class ROMScanner {
   }
 
   private static getRomFilesInZip(file: string): ROMFile[] {
-    const zip = new AdmZip(file);
-    return zip.getEntries()
-      .map((entry) => new ROMFile(
-        file,
-        entry.entryName,
-        entry.header.crc.toString(16),
-      ));
+    try {
+      const zip = new AdmZip(file);
+      return zip.getEntries()
+        .map((entry) => new ROMFile(
+          file,
+          entry.entryName,
+          entry.header.crc.toString(16),
+        ));
+    } catch (e) {
+      ProgressBar.logError(`Failed to parse zip ${file} : ${e}`);
+      return [];
+    }
   }
 }

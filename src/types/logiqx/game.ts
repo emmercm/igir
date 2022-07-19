@@ -146,7 +146,7 @@ export default class Game {
     return this.name.match(/\(Unl[a-zA-Z0-9. ]*\)/i) !== null;
   }
 
-  isRelease(): boolean {
+  isRetail(): boolean {
     return !this.isAftermarket()
         && !this.isBad()
         && !this.isBeta()

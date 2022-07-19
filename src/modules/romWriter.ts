@@ -26,6 +26,10 @@ export default class ROMWriter {
   ): Promise<Map<Parent, ROMFile[]>> {
     const output = new Map<Parent, ROMFile[]>();
 
+    if (!parentsToCandidates.size) {
+      return output;
+    }
+
     this.progressBar.reset(parentsToCandidates.size).setSymbol('📂');
 
     const parentsToCandidatesEntries = [...parentsToCandidates.entries()];
@@ -63,13 +67,13 @@ export default class ROMWriter {
           return acc;
         }, new Map<ROMFile, ROMFile>());
 
-        // TODO(cemmer): dry run
-
-        const writeNeeded = [...inputToOutput.entries()]
-          .some((entry) => !entry[0].equals(entry[1]));
-        if (writeNeeded) {
-          await this.writeZip(inputToOutput);
-          await this.writeRaw(inputToOutput);
+        if (!this.options.getDryRun()) {
+          const writeNeeded = [...inputToOutput.entries()]
+            .some((entry) => !entry[0].equals(entry[1]));
+          if (writeNeeded) {
+            await this.writeZip(inputToOutput);
+            await this.writeRaw(inputToOutput);
+          }
         }
 
         outputRomFiles.push(...inputToOutput.values());
@@ -129,27 +133,40 @@ export default class ROMWriter {
       }
 
       // Write the entry
-      const inputRomFileLocal = await inputRomFile.toLocalFile();
-      outputZip.addLocalFile(
-        inputRomFileLocal.getFilePath(),
-        '',
-        outputRomFile.getArchiveEntryPath() as string,
-      );
+      const inputRomFileLocal = await inputRomFile.toLocalFile(this.options.getTempDir());
+      try {
+        outputZip.addLocalFile(
+          inputRomFileLocal.getFilePath(),
+          '',
+          outputRomFile.getArchiveEntryPath() as string,
+        );
+      } catch (e) {
+        ProgressBar.logError(`Failed to add ${inputRomFileLocal.getFilePath()} to zip ${outputZipPath} : ${e}`);
+      }
       await inputRomFileLocal.cleanupLocalFile();
       outputNeedsWriting = true;
     }
 
     // Write the zip file if needed
     if (outputNeedsWriting) {
-      await outputZip.writeZipPromise(outputZipPath);
+      try {
+        await outputZip.writeZipPromise(outputZipPath);
+      } catch (e) {
+        ProgressBar.logError(`Failed to write zip ${outputZipPath} : ${e}`);
+        return;
+      }
     }
 
     // Test the written file
     if (this.options.getTest()) {
-      const zipToTest = new AdmZip(outputZipPath);
-      if (!zipToTest.test()) {
-        ProgressBar.logError(`Written zip is invalid: ${outputZipPath}`);
-        return;
+      try {
+        const zipToTest = new AdmZip(outputZipPath);
+        if (!zipToTest.test()) {
+          ProgressBar.logError(`Written zip is invalid: ${outputZipPath}`);
+          return;
+        }
+      } catch (e) {
+        ProgressBar.logError(`Failed to test zip ${outputZipPath} : ${e}`);
       }
     }
 
@@ -203,7 +220,7 @@ export default class ROMWriter {
     }
 
     // Write the output file
-    const inputRomFileLocal = await inputRomFile.toLocalFile();
+    const inputRomFileLocal = await inputRomFile.toLocalFile(this.options.getTempDir());
     await fsPromises.copyFile(inputRomFileLocal.getFilePath(), outputFilePath);
     await inputRomFileLocal.cleanupLocalFile();
 

@@ -52,7 +52,7 @@ export default class Parent {
   }
 
   isRelease(): boolean {
-    return this.getGames().some((game) => game.isRelease());
+    return this.getGames().some((game) => game.isRetail());
   }
 
   isPrototype(): boolean {

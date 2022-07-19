@@ -157,11 +157,4 @@ export default class ReleaseCandidate {
 
     return [];
   }
-
-  isRelease(): boolean {
-    if (this.release) {
-      return true;
-    }
-    return this.game.isRelease();
-  }
 }

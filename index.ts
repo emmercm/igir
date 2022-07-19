@@ -17,10 +17,10 @@ const groupPriority = 'Priority options:';
 const groupFiltering = 'Filtering options:';
 
 const getLastValue = (arr: unknown[]) => {
-  if (!arr || !arr.length) {
-    return arr;
+  if (Array.isArray(arr) && arr.length) {
+    return arr[arr.length - 1];
   }
-  return arr[arr.length - 1];
+  return arr;
 };
 
 let cliArgv = process.argv;
@@ -115,6 +115,7 @@ yargsParser
   })
   .option('dir-datname', {
     group: groupOutput,
+    alias: 'D',
     description: 'Use the DAT name as the output subdirectory',
     type: 'boolean',
     coerce: getLastValue,
@@ -150,7 +151,7 @@ yargsParser
   .option('move', {
     group: groupOutput,
     alias: 'm',
-    description: 'Move ROMs to the output directory',
+    description: 'Move ROMs to the output directory rather than copy',
     type: 'boolean',
     coerce: getLastValue,
   })
@@ -175,13 +176,19 @@ yargsParser
     type: 'boolean',
     coerce: getLastValue,
   })
+  .option('dry-run', {
+    group: groupOutput,
+    description: 'Don\'t write or move any ROMs',
+    type: 'boolean',
+    coerce: getLastValue,
+    conflicts: ['zip', 'move', 'overwrite', 'clean'],
+  })
 
   .option('prefer-good', {
     group: groupPriority,
     description: 'Prefer good ROM dumps over bad',
     type: 'boolean',
     coerce: getLastValue,
-    default: true,
   })
   .option('prefer-language', {
     group: groupPriority,
@@ -213,13 +220,13 @@ yargsParser
     coerce: getLastValue,
     conflicts: ['prefer-revisions-newer'],
   })
-  .option('prefer-releases', {
+  .option('prefer-retail', { // TODO(cemmer): rename to retail?
     group: groupPriority,
     description: 'Prefer ROMs marked as releases',
     type: 'boolean',
     coerce: getLastValue,
   })
-  .option('prefer-parents', {
+  .option('prefer-parent', {
     group: groupPriority,
     description: 'Prefer parent ROMs over clones (requires parent-clone DAT files)',
     type: 'boolean',
@@ -259,6 +266,12 @@ yargsParser
   .option('no-unlicensed', {
     group: groupFiltering,
     description: 'Filter out unlicensed ROMs',
+    type: 'boolean',
+    coerce: getLastValue,
+  })
+  .option('only-retail', {
+    group: groupFiltering,
+    description: 'Filter to only retail releases, enabling all the following flags',
     type: 'boolean',
     coerce: getLastValue,
   })
@@ -311,16 +324,18 @@ yargsParser
     coerce: getLastValue,
   })
 
-  .wrap(Math.min(yargs([]).terminalWidth() || 100, 120))
+  .wrap(Math.min(yargs([]).terminalWidth() || 110, 110))
   .version(false)
   .example([
-    ['$0 -i **/*.zip -o 1G1R/ --preset-1g1r --preset-english', 'Produce a 1G1R set per console, preferring English from USA>EUR>JPN'],
+    ['$0 -i **/*.zip -o 1G1R/ -s -l En -r USA,EUR,JPN', 'Produce a 1G1R set per console, preferring English from USA>EUR>JPN'],
     [''], // https://github.com/yargs/yargs/issues/1640
     ['$0 -i **/*.zip -i 1G1R/ -o 1G1R/', 'Merge new ROMs into an existing ROM collection'],
     [''], // https://github.com/yargs/yargs/issues/1640
     ['$0 -i 1G1R/ -o 1G1R/ -m -z', 'Organize and zip an existing ROM collection'],
     [''], // https://github.com/yargs/yargs/issues/1640
     ['$0 -i **/*.zip -o bios/ --only-bios', 'Collate all BIOS files'],
+    // [''], // https://github.com/yargs/yargs/issues/1640
+    // ['$0 -i 1G1R/ -o bios/ -D --dir-letter -t', 'Copy ROMs to a flash cart'],
   ])
 
 // Colorize help output
@@ -338,14 +353,16 @@ yargsParser
     process.exit(1);
   });
 
-const yargsArgv = yargsParser.parse(cliArgv, {}, (err, _argv, output) => {
-  if (output) {
-    Logger.colorizeYargs(output);
-    process.exit(0);
-  }
-});
+const yargsArgv = yargsParser
+  .strictOptions(true)
+  .parse(cliArgv, {}, (err, _argv, output) => {
+    if (output) {
+      Logger.colorizeYargs(output);
+      process.exit(0);
+    }
+  });
 
 (async () => {
-  const options = await Options.fromObject(yargsArgv);
+  const options = Options.fromObject(yargsArgv);
   await main(options);
 })();

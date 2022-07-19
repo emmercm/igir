@@ -55,26 +55,11 @@ export default class DAT {
       .replace('Non-Redump', '')
     // Suffixes
       .replace('Datfile', '')
-      .replace('(Parent-Clone)', '')
+      .replace(/\(Parent-Clone\)/g, '')
     // Cleanup
       .replace(/^[ -]+/, '')
       .replace(/[ -]+$/, '')
       .trim();
-  }
-
-  getShortName(): string {
-    const split = this.getName().split(' - ');
-    let shortName = split[0];
-    if (split.length > 1) {
-      shortName += ` - ${split.slice(1)
-        .map((str) => str
-          .replace(/[^A-Z0-9 ()]/g, '')
-          .replace(/([A-Z0-9]) +([A-Z0-9])/g, '$1$2')
-          .replace(/([A-Z0-9]) +([A-Z0-9])/g, '$1$2')
-          .trim())
-        .join(' - ')}`;
-    }
-    return shortName;
   }
 
   private getGames(): Game[] {

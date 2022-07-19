@@ -11,12 +11,12 @@ export default class ROMFile {
 
   private readonly archiveEntryPath?: string;
 
-  private readonly crc!: string;
+  private readonly crc32!: string;
 
   constructor(filePath: string, entryPath?: string, crc?: string) {
     this.filePath = filePath;
     this.archiveEntryPath = entryPath;
-    this.crc = (crc || crc32(fs.readFileSync(filePath)).toString(16)).toLowerCase().padStart(8, '0');
+    this.crc32 = (crc || crc32(fs.readFileSync(filePath)).toString(16)).toLowerCase().padStart(8, '0');
   }
 
   getFilePath(): string {
@@ -28,12 +28,11 @@ export default class ROMFile {
   }
 
   getCrc32(): string {
-    return this.crc;
+    return this.crc32;
   }
 
-  async toLocalFile(): Promise<ROMFile> {
+  async toLocalFile(tempDir: string): Promise<ROMFile> {
     if (this.archiveEntryPath) {
-      const tempDir = await fsPromises.mkdtemp(os.tmpdir());
       const tempFile = path.join(tempDir, this.archiveEntryPath);
 
       if (path.extname(this.filePath) === '.7z') {
@@ -42,7 +41,7 @@ export default class ROMFile {
         this.extractZipToLocal(tempFile);
       }
 
-      return new ROMFile(tempFile, '', this.crc);
+      return new ROMFile(tempFile, '', this.crc32);
     }
 
     return this;

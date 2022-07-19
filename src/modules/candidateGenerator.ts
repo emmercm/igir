@@ -22,7 +22,11 @@ export default class CandidateGenerator {
       return acc;
     }, new Map<string, ROMFile>());
 
-    const parentsToCandidates = new Map<Parent, ReleaseCandidate[]>();
+    const output = new Map<Parent, ReleaseCandidate[]>();
+
+    if (!inputRomFiles.length) {
+      return output;
+    }
 
     this.progressBar.reset(dat.getParents().length).setSymbol('🗳️');
 
@@ -59,9 +63,9 @@ export default class CandidateGenerator {
         });
       });
 
-      parentsToCandidates.set(parent, releaseCandidates);
+      output.set(parent, releaseCandidates);
     });
 
-    return parentsToCandidates;
+    return output;
   }
 }

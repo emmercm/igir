@@ -12,18 +12,14 @@ import ROMFile from '../types/romFile.js';
 export default class OutputCleaner {
   private readonly options: Options;
 
-  private readonly progressBars: ProgressBar[];
+  private readonly progressBar: ProgressBar;
 
-  constructor(options: Options, progressBars: ProgressBar[]) {
+  constructor(options: Options, progressBar: ProgressBar) {
     this.options = options;
-    this.progressBars = progressBars;
+    this.progressBar = progressBar;
   }
 
   async clean(writtenRoms: ROMFile[]) {
-    if (!this.options.getClean()) {
-      return;
-    }
-
     // If nothing was written, then don't clean anything
     const outputRomPaths = writtenRoms
       .map((romFile) => romFile.getFilePath());
@@ -40,7 +36,7 @@ export default class OutputCleaner {
       return;
     }
 
-    this.progressBars.forEach((progressBar) => progressBar.reset(filesToClean.length).setSymbol('♻️'));
+    this.progressBar.reset(filesToClean.length).setSymbol('♻️');
 
     try {
       await trash(filesToClean);
@@ -55,7 +51,10 @@ export default class OutputCleaner {
       Logger.error(`Failed to clean empty directories in ${outputDir} : ${e}`);
     }
 
-    this.progressBars.forEach((progressBar) => progressBar.done());
+    this.progressBar
+      .done()
+      .setSymbol('✅')
+      .setProgressMessage(`${filesToClean.length} file${filesToClean.length !== 1 ? 's' : ''} recycled`);
   }
 
   private static async getEmptyDirs(dirPath: string): Promise<string[]> {

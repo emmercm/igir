@@ -18,6 +18,10 @@ export default class CandidateFilter {
   ): Promise<Map<Parent, ReleaseCandidate[]>> {
     const output = new Map<Parent, ReleaseCandidate[]>();
 
+    if (!parentsToCandidates.size) {
+      return output;
+    }
+
     this.progressBar.reset(parentsToCandidates.size).setSymbol('⚙️️');
 
     parentsToCandidates.forEach((releaseCandidates: ReleaseCandidate[], parent: Parent) => {
@@ -55,6 +59,9 @@ export default class CandidateFilter {
       return false;
     }
     if (this.options.getNoUnlicensed() && releaseCandidate.getGame().isUnlicensed()) {
+      return false;
+    }
+    if (this.options.getOnlyRetail() && !releaseCandidate.getGame().isRetail()) {
       return false;
     }
     if (this.options.getNoDemo() && releaseCandidate.getGame().isDemo()) {
@@ -140,16 +147,16 @@ export default class CandidateFilter {
       return revisionSort;
     }
 
-    // Prefer releases
-    if (this.options.getPreferReleases()) {
-      const releaseSort = (a.isRelease() ? 0 : 1) - (b.isRelease() ? 0 : 1);
+    // Prefer retail
+    if (this.options.getPreferRetail()) {
+      const releaseSort = (a.getGame().isRetail() ? 0 : 1) - (b.getGame().isRetail() ? 0 : 1);
       if (releaseSort !== 0) {
         return releaseSort;
       }
     }
 
     // Prefer parents
-    if (this.options.getPreferParents()) {
+    if (this.options.getPreferParent()) {
       const parentSort = (a.getGame().isParent() ? 0 : 1) - (b.getGame().isParent() ? 0 : 1);
       if (parentSort !== 0) {
         return parentSort;

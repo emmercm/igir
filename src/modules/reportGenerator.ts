@@ -12,6 +12,8 @@ export default class ReportGenerator {
   }
 
   write(writtenRoms: Map<DAT, Map<Parent, ROMFile[]>>) {
+    return;
+
     if (writtenRoms.size) {
       Logger.print();
     }
