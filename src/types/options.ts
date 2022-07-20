@@ -136,7 +136,7 @@ export default class Options {
           return `${inputPath}/**`;
         }
       } catch (e) {
-        // eslint-disable-line no-empty
+        throw new Error(`Path doesn't exist : ${inputPath}`);
       }
       // Otherwise, return the original path
       return inputPath;
@@ -163,7 +163,7 @@ export default class Options {
   }
 
   getOutput(dat?: DAT, inputRomPath?: string, romName?: string): string {
-    let { output } = this;
+    let output = this.getDryRun() ? this.getTempDir() : this.output;
     if (this.getDirMirror() && inputRomPath) {
       const mirroredDir = path.dirname(inputRomPath)
         .replace(/[\\/]/g, path.sep)

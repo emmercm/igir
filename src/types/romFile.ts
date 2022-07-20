@@ -31,8 +31,9 @@ export default class ROMFile {
     return this.crc32;
   }
 
-  async toLocalFile(tempDir: string): Promise<ROMFile> {
+  async toLocalFile(globalTempDir: string): Promise<ROMFile> {
     if (this.archiveEntryPath) {
+      const tempDir = await fsPromises.mkdtemp(globalTempDir);
       const tempFile = path.join(tempDir, this.archiveEntryPath);
 
       if (path.extname(this.filePath) === '.7z') {

@@ -20,19 +20,20 @@ export default class ROMScanner {
   async scan(): Promise<ROMFile[]> {
     const results: ROMFile[] = [];
 
-    this.progressBar.reset(0).setSymbol('🔎');
+    await this.progressBar.setSymbol('🔎');
+    await this.progressBar.reset(0);
 
     const inputFiles = await this.options.scanInputFilesWithoutExclusions();
-    this.progressBar.reset(inputFiles.length);
+    await this.progressBar.reset(inputFiles.length);
 
     await async.eachLimit(inputFiles, 5, async (inputFile, callback) => {
-      this.progressBar.increment();
+      await this.progressBar.increment();
 
-      let romFiles: ROMFile[] = [];
+      let romFiles: ROMFile[];
       if (path.extname(inputFile) === '.7z') {
-        romFiles = await ROMScanner.getRomFilesIn7z(inputFile);
+        romFiles = await this.getRomFilesIn7z(inputFile);
       } else if (path.extname(inputFile) === '.zip') {
-        romFiles = ROMScanner.getRomFilesInZip(inputFile);
+        romFiles = this.getRomFilesInZip(inputFile);
       } else {
         romFiles = [new ROMFile(inputFile)];
       }
@@ -44,11 +45,13 @@ export default class ROMScanner {
     return results.flatMap((romFiles) => romFiles);
   }
 
-  private static async getRomFilesIn7z(file: string): Promise<ROMFile[]> {
-    const romFilesIn7z = await new Promise((resolve, reject) => {
+  private async getRomFilesIn7z(file: string): Promise<ROMFile[]> {
+    const romFilesIn7z = await new Promise((resolve) => {
+      // TODO(cemmer): this won't let you ctrl-c
       _7z.list(file, (err, result) => {
         if (err) {
-          reject(err);
+          this.progressBar.logError(`Failed to parse 7z ${file} : ${err}`);
+          resolve([]);
         } else {
           resolve(result);
         }
@@ -57,7 +60,7 @@ export default class ROMScanner {
     return romFilesIn7z.map((result) => new ROMFile(file, result.name, result.crc));
   }
 
-  private static getRomFilesInZip(file: string): ROMFile[] {
+  private getRomFilesInZip(file: string): ROMFile[] {
     try {
       const zip = new AdmZip(file);
       return zip.getEntries()
@@ -67,7 +70,7 @@ export default class ROMScanner {
           entry.header.crc.toString(16),
         ));
     } catch (e) {
-      ProgressBar.logError(`Failed to parse zip ${file} : ${e}`);
+      this.progressBar.logError(`Failed to parse zip ${file} : ${e}`);
       return [];
     }
   }

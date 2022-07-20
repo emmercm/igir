@@ -21,7 +21,8 @@ export default class DATScanner {
       return [];
     }
 
-    this.progressBar.reset(datFiles.length).setSymbol('🔎');
+    await this.progressBar.setSymbol('🔎');
+    await this.progressBar.reset(datFiles.length);
 
     const parsedXml = [];
 
@@ -29,7 +30,7 @@ export default class DATScanner {
     for (let i = 0; i < datFiles.length; i += 1) {
       const dat = datFiles[i];
 
-      this.progressBar.increment();
+      await this.progressBar.increment();
 
       const xmlContents = await fsPromises.readFile(dat);
 
@@ -41,7 +42,7 @@ export default class DATScanner {
         parsedXml.push(xmlObject);
       } catch (err) {
         const message = (err as Error).message.split('\n').join(', ');
-        ProgressBar.logError(`Failed to parse DAT ${dat} : ${message}`);
+        await this.progressBar.logError(`Failed to parse DAT ${dat} : ${message}`);
       }
     }
 

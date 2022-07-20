@@ -24,7 +24,8 @@ Path options (inputs support globbing):
   -d, --dat            Path(s) to DAT files                            [array] [required] [default: ["*.dat"]]
   -i, --input          Path(s) to ROM files, with support for .zip and .7z archives         [array] [required]
   -I, --input-exclude  Path(s) to ROM files to exclude                                                 [array]
-  -o, --output         Path to the ROM output directory                                    [string] [required]
+  -o, --output         Path to the ROM output directory                                               [string]
+      --dry-run        Don't write or move any ROMs                                                  [boolean]
 
 Presets for options commonly used together:
       --preset-1g1r        Build one game, one ROM set(s): --single --test --clean                   [boolean]
@@ -45,7 +46,6 @@ Output options:
   -O, --overwrite    Overwrite any ROMs in the output directory                                      [boolean]
   -t, --test         Test ROMs for accuracy after writing them                                       [boolean]
   -c, --clean        Remove unmatched files from the ROM output directory                            [boolean]
-      --dry-run      Don't write or move any ROMs                                                    [boolean]
 
 Priority options:
       --prefer-good             Prefer good ROM dumps over bad                                       [boolean]

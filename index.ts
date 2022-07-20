@@ -60,10 +60,27 @@ const yargsParser = yargs([])
     group: groupInputOutputPaths,
     alias: 'o',
     description: 'Path to the ROM output directory',
-    demandOption: true,
+    demandOption: false, // use the .check()
     type: 'string',
     coerce: getLastValue,
     requiresArg: true,
+    conflicts: ['dry-run'],
+  })
+  .option('dry-run', {
+    group: groupInputOutputPaths,
+    description: 'Don\'t write or move any ROMs',
+    type: 'boolean',
+    coerce: getLastValue,
+    conflicts: ['output', 'zip', 'move', 'overwrite', 'clean'],
+  })
+  .check((argv) => {
+    if (argv.help) {
+      return true;
+    }
+    if ((!argv.output || !argv.output.length) && !argv.dryRun) {
+      throw new Error('Missing required argument: output');
+    }
+    return true;
   });
 
 // Configure presets
@@ -175,13 +192,6 @@ yargsParser
     description: 'Remove unmatched files from the ROM output directory',
     type: 'boolean',
     coerce: getLastValue,
-  })
-  .option('dry-run', {
-    group: groupOutput,
-    description: 'Don\'t write or move any ROMs',
-    type: 'boolean',
-    coerce: getLastValue,
-    conflicts: ['zip', 'move', 'overwrite', 'clean'],
   })
 
   .option('prefer-good', {
@@ -355,7 +365,7 @@ yargsParser
 
 const yargsArgv = yargsParser
   .strictOptions(true)
-  .parse(cliArgv, {}, (err, _argv, output) => {
+  .parse(cliArgv, {}, (err, argv, output) => {
     if (output) {
       Logger.colorizeYargs(output);
       process.exit(0);

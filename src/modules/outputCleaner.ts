@@ -36,7 +36,8 @@ export default class OutputCleaner {
       return;
     }
 
-    this.progressBar.reset(filesToClean.length).setSymbol('♻️');
+    await this.progressBar.setSymbol('♻️');
+    await this.progressBar.reset(filesToClean.length);
 
     try {
       await trash(filesToClean);
@@ -51,10 +52,7 @@ export default class OutputCleaner {
       Logger.error(`Failed to clean empty directories in ${outputDir} : ${e}`);
     }
 
-    this.progressBar
-      .done()
-      .setSymbol('✅')
-      .setProgressMessage(`${filesToClean.length} file${filesToClean.length !== 1 ? 's' : ''} recycled`);
+    await this.progressBar.done(`${filesToClean.length} file${filesToClean.length !== 1 ? 's' : ''} recycled`);
   }
 
   private static async getEmptyDirs(dirPath: string): Promise<string[]> {

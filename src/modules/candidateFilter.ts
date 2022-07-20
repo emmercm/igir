@@ -22,7 +22,8 @@ export default class CandidateFilter {
       return output;
     }
 
-    this.progressBar.reset(parentsToCandidates.size).setSymbol('⚙️️');
+    await this.progressBar.setSymbol('⚙️️');
+    await this.progressBar.reset(parentsToCandidates.size);
 
     parentsToCandidates.forEach((releaseCandidates: ReleaseCandidate[], parent: Parent) => {
       this.progressBar.increment();
@@ -30,7 +31,7 @@ export default class CandidateFilter {
       const filteredReleaseCandidates = releaseCandidates
         .filter((rc) => this.preFilter(rc))
         .sort((a, b) => this.sort(a, b))
-        .filter((rc, idx) => this.postFilter(rc, idx));
+        .filter((rc, idx) => this.postFilter(idx));
       output.set(parent, filteredReleaseCandidates);
     });
 
@@ -166,10 +167,7 @@ export default class CandidateFilter {
     return 0;
   }
 
-  private postFilter(
-    releaseCandidate: ReleaseCandidate,
-    idx: number,
-  ): boolean {
+  private postFilter(idx: number): boolean {
     if (this.options.getSingle()) {
       return idx === 0;
     }

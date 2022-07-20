@@ -53,12 +53,28 @@ export default class DAT {
     return this.header.getName()
     // Prefixes
       .replace('Non-Redump', '')
+      .replace('Source Code', '')
+      .replace('Unofficial', '')
     // Suffixes
       .replace('Datfile', '')
+      .replace('(BigEndian)', '')
+      .replace('(CDN)', '')
+      .replace('(Decrypted)', '')
+      .replace('(Deprecated)', '')
+      .replace('(Digital)', '')
+      .replace('(Download Play)', '')
+      .replace('(Headered)', '')
+      .replace('(Misc)', '')
+      .replace('(Multiboot)', '')
       .replace(/\(Parent-Clone\)/g, '')
+      .replace('(PSN)', '')
+      .replace('(Split DLC)', '')
+      .replace('(WAD)', '')
+      .replace('(WIP)', '')
     // Cleanup
       .replace(/^[ -]+/, '')
       .replace(/[ -]+$/, '')
+      .replace(/  +/g, ' ')
       .trim();
   }
 

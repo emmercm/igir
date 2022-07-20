@@ -35,6 +35,7 @@
     "7zip-min": "^1.4.3",
     "adm-zip": "^0.5.9",
     "async": "^3.2.4",
+    "async-mutex": "^0.3.2",
     "chalk": "^5.0.1",
     "class-transformer": "^0.5.1",
     "cli-progress": "^3.11.2",

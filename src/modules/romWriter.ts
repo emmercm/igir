@@ -30,14 +30,17 @@ export default class ROMWriter {
       return output;
     }
 
-    this.progressBar.reset(parentsToCandidates.size).setSymbol('📂');
+    await this.progressBar.setSymbol('📂');
+    await this.progressBar.reset(parentsToCandidates.size);
 
     const parentsToCandidatesEntries = [...parentsToCandidates.entries()];
+
+    /* eslint-disable no-await-in-loop */
     for (let i = 0; i < parentsToCandidatesEntries.length; i += 1) {
       const parent = parentsToCandidatesEntries[i][0];
       const releaseCandidates = parentsToCandidatesEntries[i][1];
 
-      this.progressBar.increment();
+      await this.progressBar.increment();
 
       const outputRomFiles: ROMFile[] = [];
 
@@ -133,7 +136,13 @@ export default class ROMWriter {
       }
 
       // Write the entry
-      const inputRomFileLocal = await inputRomFile.toLocalFile(this.options.getTempDir());
+      let inputRomFileLocal;
+      try {
+        inputRomFileLocal = await inputRomFile.toLocalFile(this.options.getTempDir());
+      } catch (e) {
+        await this.progressBar.logError(`Failed to extract ${inputRomFile.getFilePath()} : ${e}`);
+        return;
+      }
       try {
         outputZip.addLocalFile(
           inputRomFileLocal.getFilePath(),
@@ -141,7 +150,8 @@ export default class ROMWriter {
           outputRomFile.getArchiveEntryPath() as string,
         );
       } catch (e) {
-        ProgressBar.logError(`Failed to add ${inputRomFileLocal.getFilePath()} to zip ${outputZipPath} : ${e}`);
+        await this.progressBar.logError(`Failed to add ${inputRomFileLocal.getFilePath()} to zip ${outputZipPath} : ${e}`);
+        return;
       }
       await inputRomFileLocal.cleanupLocalFile();
       outputNeedsWriting = true;
@@ -152,7 +162,7 @@ export default class ROMWriter {
       try {
         await outputZip.writeZipPromise(outputZipPath);
       } catch (e) {
-        ProgressBar.logError(`Failed to write zip ${outputZipPath} : ${e}`);
+        await this.progressBar.logError(`Failed to write zip ${outputZipPath} : ${e}`);
         return;
       }
     }
@@ -162,11 +172,11 @@ export default class ROMWriter {
       try {
         const zipToTest = new AdmZip(outputZipPath);
         if (!zipToTest.test()) {
-          ProgressBar.logError(`Written zip is invalid: ${outputZipPath}`);
+          await this.progressBar.logError(`Written zip is invalid: ${outputZipPath}`);
           return;
         }
       } catch (e) {
-        ProgressBar.logError(`Failed to test zip ${outputZipPath} : ${e}`);
+        await this.progressBar.logError(`Failed to test zip ${outputZipPath} : ${e}`);
       }
     }
 
@@ -228,7 +238,7 @@ export default class ROMWriter {
     if (this.options.getTest()) {
       const romFileToTest = new ROMFile(outputFilePath);
       if (romFileToTest.getCrc32() !== inputRomFile.getCrc32()) {
-        ProgressBar.logError(`Written file has the CRC ${romFileToTest.getCrc32()}, expected ${inputRomFile.getCrc32()}: ${outputFilePath}`);
+        await this.progressBar.logError(`Written file has the CRC ${romFileToTest.getCrc32()}, expected ${inputRomFile.getCrc32()}: ${outputFilePath}`);
         return;
       }
     }

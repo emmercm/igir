@@ -28,7 +28,8 @@ export default class CandidateGenerator {
       return output;
     }
 
-    this.progressBar.reset(dat.getParents().length).setSymbol('🗳️');
+    await this.progressBar.setSymbol('🗳️');
+    await this.progressBar.reset(dat.getParents().length);
 
     // For each parent, try to generate a parent candidate
     dat.getParents().forEach((parent) => {
@@ -50,11 +51,11 @@ export default class CandidateGenerator {
           const missingRomFiles = game.getRoms().length - romFiles.length;
           if (missingRomFiles > 0) {
             if (romFiles.length > 0) {
-              let message = `Missing ${missingRomFiles} file${missingRomFiles !== 1 ? 's' : ''} for: ${game.getName()}`;
+              let message = `Missing ${missingRomFiles.toLocaleString()} file${missingRomFiles !== 1 ? 's' : ''} for: ${game.getName()}`;
               if (release?.getRegion()) {
                 message += ` (${release?.getRegion()})`;
               }
-              ProgressBar.logWarn(message);
+              this.progressBar.logWarn(message);
             }
             return;
           }

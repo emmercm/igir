@@ -1,3 +1,4 @@
+import { E_CANCELED, Mutex } from 'async-mutex';
 import cliProgress, { MultiBar, SingleBar } from 'cli-progress';
 
 import Logger from '../logger.js';
@@ -5,17 +6,20 @@ import Logger from '../logger.js';
 interface ProgressBarPayload {
   symbol?: string,
   name?: string,
-  progressMessage?: string
+  finishedMessage?: string
 }
 
+/* eslint-disable class-methods-use-this */
 export default class ProgressBar {
   private static readonly etaBufferLength = 100;
+
+  private static readonly renderMutex = new Mutex();
 
   private static multiBar: MultiBar;
 
   private static progressBars: ProgressBar[] = [];
 
-  private readonly name: string;
+  private static lastRedraw = process.hrtime();
 
   private readonly singleBar: SingleBar;
 
@@ -25,16 +29,16 @@ export default class ProgressBar {
 
   private eta: number | string = '0';
 
-  constructor(name: string, symbol: string, initialTotal: number) {
+  constructor(name: string, symbol: string, initialTotal = 0) {
     if (!ProgressBar.multiBar) {
       ProgressBar.multiBar = new cliProgress.MultiBar({
         stream: Logger.stream,
-        fps: 1,
+        barsize: 25,
+        emptyOnZero: true,
         hideCursor: true,
       }, cliProgress.Presets.shades_grey);
     }
 
-    this.name = name;
     this.singleBar = ProgressBar.multiBar.create(
       initialTotal,
       0,
@@ -45,13 +49,11 @@ export default class ProgressBar {
       {
         format: (options, params, payload: ProgressBarPayload) => {
           const barSize = options.barsize || 0;
-          const completeSize = (params.total > 0 || params.value > params.total)
-            ? Math.round(params.progress * barSize)
-            : 0;
+          const completeSize = Math.round(params.progress * barSize);
           const incompleteSize = barSize - completeSize;
-          const bar = (options.barCompleteString || '').substr(0, completeSize)
+          const bar = (options.barCompleteString || '').slice(0, completeSize)
             + options.barGlue
-            + (options.barIncompleteString || '').substr(0, incompleteSize);
+            + (options.barIncompleteString || '').slice(0, incompleteSize);
 
           let line = '';
 
@@ -60,22 +62,23 @@ export default class ProgressBar {
           }
 
           if (payload.name) {
-            const maxNameLength = ProgressBar.progressBars
-              .reduce((max, progressBar) => Math.max(max, progressBar.getName().length), 0);
-            const paddedName = payload.name.length > maxNameLength - 1
-              ? payload.name.padEnd(maxNameLength, ' ')
-              : `${payload.name} ${'·'.repeat(maxNameLength - 1 - payload.name.length)}`;
-            line += `${paddedName} | `;
+            const maxNameLength = 30;
+            const payloadName = payload.name.slice(0, maxNameLength);
+            const paddedName = payloadName.length > maxNameLength - 1
+              ? payloadName.padEnd(maxNameLength, ' ')
+              : `${payloadName} ${'·'.repeat(maxNameLength - 1 - payloadName.length)}`;
+            line += paddedName;
           }
 
-          line += `${bar}`;
-
-          if (payload.progressMessage) {
-            line += ` | ${payload.progressMessage}`;
-          } else if (params.total > 0) {
-            line += ` | ${params.value.toLocaleString()}/${params.total.toLocaleString()}`;
-            if (params.value > 0 && params.value < params.total) {
-              line += ` | ETA: ${this.getEtaFormatted()}`;
+          if (payload.finishedMessage) {
+            line += ` | ${payload.finishedMessage}`;
+          } else {
+            line += ` | ${bar}`;
+            if (params.total > 0) {
+              line += ` | ${params.value.toLocaleString()}/${params.total.toLocaleString()}`;
+              if (params.value > 0 && params.value < params.total) {
+                line += ` | ETA: ${this.getEtaFormatted()}`;
+              }
             }
           }
 
@@ -98,26 +101,11 @@ export default class ProgressBar {
     });
 
     ProgressBar.progressBars.push(this);
-    ProgressBar.render();
   }
 
-  static log(message: string) {
-    ProgressBar.multiBar.log(`${message}\n`);
-    this.render();
-  }
-
-  static logWarn(message: string) {
-    ProgressBar.multiBar.log(`${Logger.warnFormatter(message)}\n`);
-    this.render();
-  }
-
-  static logError(message: string) {
-    ProgressBar.multiBar.log(`${Logger.errorFormatter(message)}\n`);
-    this.render();
-  }
-
-  static stop() {
+  static async stop() {
     this.multiBar.stop();
+    await ProgressBar.render();
   }
 
   private calculateEta(remaining: number) {
@@ -160,59 +148,97 @@ export default class ProgressBar {
   }
 
   /**
+   * Applications that are too synchronous or have a high concurrency (e.g. with async.js, p-limit,
+   * p-map, etc.) keep cli-progress from redrawing with its setTimeout(), so it might be necessary
+   * to force it. This function needs to be safe to be called concurrently because of the way
+   * cli-progress clears previous output.
+   *
    * @see https://github.com/npkgz/cli-progress/issues/79
    */
-  static render() {
-    ProgressBar.multiBar.update();
+  private static async render() {
+    try {
+      await this.renderMutex.runExclusive(() => {
+        // Limit to 200ms = 5 FPS
+        const elapsed = process.hrtime(this.lastRedraw);
+        const elapsedMs = (elapsed[0] * 1000000000 + elapsed[1]) / 1000000;
+        if (elapsedMs >= 200) {
+          this.multiBar.update();
+          this.lastRedraw = process.hrtime();
+          this.renderMutex.cancel(); // cancel all waiting locks, we just redrew
+        }
+      });
+    } catch (e) {
+      if (e !== E_CANCELED) {
+        throw e;
+      }
+    }
   }
 
-  getName(): string {
-    return this.name;
-  }
-
-  reset(total: number): ProgressBar {
+  async reset(total: number) {
     this.singleBar.setTotal(total);
     this.singleBar.update(0);
-    ProgressBar.render(); return this;
+    await ProgressBar.render();
   }
 
-  setSymbol(symbol: string): ProgressBar {
+  async setSymbol(symbol: string) {
     this.singleBar.update({
       symbol,
     } as ProgressBarPayload);
-    ProgressBar.render(); return this;
+    await ProgressBar.render();
   }
 
-  increment(): ProgressBar {
+  async increment() {
     this.singleBar.increment();
-    ProgressBar.render(); return this;
+    await ProgressBar.render();
   }
 
-  done(): ProgressBar {
+  async update(current: number) {
+    this.singleBar.update(current);
+    await ProgressBar.render();
+  }
+
+  async done(finishedMessage?: string) {
+    await this.setSymbol('✅');
+
     if (this.singleBar.getTotal() > 0) {
       this.singleBar.update(this.singleBar.getTotal());
     } else {
       this.singleBar.update(this.singleBar.getTotal() + 1);
     }
-    ProgressBar.multiBar.update(); // https://github.com/npkgz/cli-progress/issues/79
-    return this;
+
+    if (finishedMessage) {
+      this.singleBar.update({
+        finishedMessage,
+      } as ProgressBarPayload);
+    }
+
+    await ProgressBar.render();
   }
 
-  setProgressMessage(message: string): ProgressBar {
-    this.singleBar.update({
-      progressMessage: message,
-    } as ProgressBarPayload);
-    ProgressBar.render(); return this;
+  async log(message: string) {
+    ProgressBar.multiBar.log(`${message}\n`);
+    await ProgressBar.render();
   }
 
-  update(current: number): ProgressBar {
-    this.singleBar.update(current);
-    ProgressBar.render(); return this;
+  async logWarn(message: string) {
+    ProgressBar.multiBar.log(`${Logger.warnFormatter(message)}\n`);
+    await ProgressBar.render();
   }
 
-  delete() {
+  async logError(message: string) {
+    ProgressBar.multiBar.log(`${Logger.errorFormatter(message)}\n`);
+    await ProgressBar.render();
+  }
+
+  /**
+   * When the number of progress bars exceeds the height of the console, cli-progress fails to be
+   * able to clear them all reliably. It's recommended you don't have too many active progress bars
+   * at once.
+   */
+  async delete() {
     ProgressBar.multiBar.remove(this.singleBar);
     ProgressBar.progressBars = ProgressBar.progressBars
       .filter((progressBar) => progressBar !== this);
+    await ProgressBar.render();
   }
 }
