@@ -3,6 +3,7 @@ import AdmZip from 'adm-zip';
 import async from 'async';
 import path from 'path';
 
+import Constants from '../constants.js';
 import Options from '../types/options.js';
 import ProgressBar from '../types/progressBar.js';
 import ROMFile from '../types/romFile.js';
@@ -30,10 +31,10 @@ export default class ROMScanner {
       await this.progressBar.increment();
 
       let romFiles: ROMFile[];
-      if (path.extname(inputFile) === '.7z') {
-        romFiles = await this.getRomFilesIn7z(inputFile);
-      } else if (path.extname(inputFile) === '.zip') {
+      if (Constants.ZIP_EXTENSIONS.indexOf(path.extname(inputFile)) !== -1) {
         romFiles = this.getRomFilesInZip(inputFile);
+      } else if (Constants.SEVENZIP_EXTENSIONS.indexOf(path.extname(inputFile)) !== -1) {
+        romFiles = await this.getRomFilesIn7z(inputFile);
       } else {
         romFiles = [new ROMFile(inputFile)];
       }

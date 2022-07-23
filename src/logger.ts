@@ -3,6 +3,8 @@
 import chalk from 'chalk';
 import figlet from 'figlet';
 
+import Constants from './constants.js';
+
 export default class Logger {
   static readonly stream = process.stdout;
 
@@ -33,7 +35,7 @@ export default class Logger {
     this.print(
       help
         .replace(/^(Usage:.+)/, chalk.bold('$1'))
-        .replace(/ (igir) /g, ` ${chalk.blueBright('$1')} `)
+        .replace(new RegExp(` (${Constants.COMMAND_NAME}) `, 'g'), ` ${chalk.blueBright('$1')} `)
 
         .replace(/(\[options\])/g, chalk.cyan('$1'))
         .replace(/ (-[a-zA-Z0-9])/g, ` ${chalk.cyanBright('$1')}`)

@@ -1,73 +1,68 @@
-import Logger from '../logger.js';
-import DAT from '../types/logiqx/dat.js';
 import Parent from '../types/logiqx/parent.js';
 import Options from '../types/options.js';
+import ProgressBar from '../types/progressBar.js';
 import ROMFile from '../types/romFile.js';
 
 export default class ReportGenerator {
   private readonly options: Options;
 
-  constructor(options: Options) {
+  private readonly progressBar: ProgressBar;
+
+  constructor(options: Options, progressBar: ProgressBar) {
     this.options = options;
+    this.progressBar = progressBar;
   }
 
-  write(writtenRoms: Map<DAT, Map<Parent, ROMFile[]>>) {
-    return;
+  async write(parentsToRomFiles: Map<Parent, ROMFile[]>) {
+    const allRoms: Parent[] = [];
+    const foundRoms: Parent[] = [];
 
-    if (writtenRoms.size) {
-      Logger.print();
+    const allBios: Parent[] = [];
+    const foundBios: Parent[] = [];
+
+    const allReleases: Parent[] = [];
+    const foundReleases: Parent[] = [];
+
+    const allPrototypes: Parent[] = [];
+    const foundPrototypes: Parent[] = [];
+
+    parentsToRomFiles.forEach((romFiles, parent) => {
+      allRoms.push(parent);
+      if (parent.isBios()) {
+        allBios.push(parent);
+      } else if (parent.isRelease()) {
+        allReleases.push(parent);
+      } else if (parent.isPrototype()) {
+        allPrototypes.push(parent);
+      }
+
+      if (romFiles.length) {
+        foundRoms.push(parent);
+        if (parent.isBios()) {
+          foundBios.push(parent);
+        } else if (parent.isRelease()) {
+          foundReleases.push(parent);
+        } else if (parent.isPrototype()) {
+          foundPrototypes.push(parent);
+        }
+      }
+    });
+
+    let message = '';
+    if (!this.options.getSingle() && !this.options.getOnlyBios()) {
+      message += `, ${foundRoms.length}/${allRoms.length} known`;
     }
+    if (this.options.getOnlyBios() || !this.options.getNoBios()) {
+      message += `, ${foundBios.length}/${allBios.length} BIOSes`;
+    }
+    if (!this.options.getOnlyBios()) {
+      message += `, ${foundReleases.length}/${allReleases.length} releases`;
+    }
+    if (!this.options.getOnlyBios() && !this.options.getNoPrototype()) {
+      message += `, ${foundPrototypes.length}/${allPrototypes.length} prototypes`;
+    }
+    message += ' processed';
 
-    [...writtenRoms.entries()]
-      .sort((a, b) => a[0].getName().localeCompare(b[0].getName()))
-      .forEach((entry) => {
-        const dat = entry[0];
-        const parentToRomFiles = entry[1];
-
-        const allBios: Parent[] = [];
-        const missingBios: Parent[] = [];
-
-        const allReleases: Parent[] = [];
-        const missingReleases: Parent[] = [];
-
-        const allPrototypes: Parent[] = [];
-        const missingPrototypes: Parent[] = [];
-
-        parentToRomFiles.forEach((romFiles, parent) => {
-          if (parent.isBios()) {
-            allBios.push(parent);
-          } else if (parent.isRelease()) {
-            allReleases.push(parent);
-          } else if (parent.isPrototype()) {
-            allPrototypes.push(parent);
-          }
-
-          if (!romFiles.length) {
-            if (parent.isBios()) {
-              missingBios.push(parent);
-            } else if (parent.isRelease()) {
-              missingReleases.push(parent);
-            } else if (parent.isPrototype()) {
-              missingPrototypes.push(parent);
-            }
-          }
-        });
-
-        let message = `${dat.getName()}:`;
-        message += ` ${parentToRomFiles.size} parent${parentToRomFiles.size !== 1 ? 's' : ''} defined`;
-        if (this.options.getOnlyBios() || !this.options.getNoBios()) {
-          message += `\n  ${missingBios.length}/${allBios.length} BIOS missing`;
-          missingBios.forEach((bios) => { message += `\n    ${bios.getName()}`; });
-        }
-        if (!this.options.getOnlyBios()) {
-          message += `\n  ${missingReleases.length}/${allReleases.length} releases missing`;
-          missingReleases.forEach((release) => { message += `\n    ${release.getName()}`; });
-        }
-        if (!this.options.getNoPrototype()) {
-          message += `\n  ${missingPrototypes.length}/${allPrototypes.length} prototypes missing`;
-          missingPrototypes.forEach((prototype) => { message += `\n    ${prototype.getName()}`; });
-        }
-        Logger.print(message);
-      });
+    await this.progressBar.done(message.replace(/^, /, ''));
   }
 }

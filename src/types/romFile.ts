@@ -6,6 +6,8 @@ import fsPromises from 'node:fs/promises';
 import os from 'os';
 import path from 'path';
 
+import Constants from '../constants.js';
+
 export default class ROMFile {
   private readonly filePath!: string;
 
@@ -36,10 +38,10 @@ export default class ROMFile {
       const tempDir = await fsPromises.mkdtemp(globalTempDir);
       const tempFile = path.join(tempDir, this.archiveEntryPath);
 
-      if (path.extname(this.filePath) === '.7z') {
-        await this.extract7zToLocal(tempFile);
-      } else if (path.extname(this.filePath) === '.zip') {
+      if (Constants.ZIP_EXTENSIONS.indexOf(path.extname(this.filePath)) !== -1) {
         this.extractZipToLocal(tempFile);
+      } else if (Constants.SEVENZIP_EXTENSIONS.indexOf(path.extname(this.filePath)) !== -1) {
+        await this.extract7zToLocal(tempFile);
       }
 
       return new ROMFile(tempFile, '', this.crc32);

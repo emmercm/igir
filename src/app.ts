@@ -20,7 +20,7 @@ export default async function main(options: Options) {
   const datScanProgressBar = new ProgressBar('Scanning for DATs', '⏳');
   const dats = await new DATScanner(options, datScanProgressBar).parse();
   if (!dats.length) {
-    await ProgressBar.stop();
+    ProgressBar.stop();
     Logger.error('\nNo valid DAT files found!');
     process.exit(1);
   }
@@ -47,15 +47,18 @@ export default async function main(options: Options) {
     // Write the output files
     const writtenRoms = await new ROMWriter(options, progressBar).write(dat, romOutputs);
 
+    // Write the output report
+    await new ReportGenerator(options, progressBar).write(writtenRoms);
+
+    // Progress bar cleanup
     const parentsWithRomFiles = [...writtenRoms.values()]
       .filter((romFiles) => romFiles.length)
       .length;
-    await progressBar.done(`${parentsWithRomFiles.toLocaleString()} ROM${parentsWithRomFiles !== 1 ? 's' : ''} processed`);
-
-    datsToWrittenRoms.set(dat, writtenRoms);
-    if (!parentsWithRomFiles) {
+    if (parentsWithRomFiles === 0) {
       await progressBar.delete();
     }
+
+    datsToWrittenRoms.set(dat, writtenRoms);
     callback();
   });
 
@@ -70,8 +73,5 @@ export default async function main(options: Options) {
     await new OutputCleaner(options, cleanerProgressBar).clean(allWrittenRomFiles);
   }
 
-  await ProgressBar.stop();
-
-  // Write the output report
-  new ReportGenerator(options).write(datsToWrittenRoms);
+  ProgressBar.stop();
 }

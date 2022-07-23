@@ -136,7 +136,7 @@ export default class Options {
           return `${inputPath}/**`;
         }
       } catch (e) {
-        throw new Error(`Path doesn't exist : ${inputPath}`);
+        // eslint-disable-line no-empty
       }
       // Otherwise, return the original path
       return inputPath;
@@ -150,7 +150,11 @@ export default class Options {
         return [inputPath];
       } catch (e) {
         // Otherwise, process it as a glob pattern
-        return await fg(inputPath);
+        const paths = await fg(inputPath);
+        if (!paths || !paths.length) {
+          throw new Error(`Path doesn't exist: ${inputPath}`);
+        }
+        return paths;
       }
     }))).flatMap((paths) => paths);
 

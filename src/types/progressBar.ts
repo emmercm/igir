@@ -11,13 +11,13 @@ interface ProgressBarPayload {
 
 /* eslint-disable class-methods-use-this */
 export default class ProgressBar {
+  private static readonly fps = 4;
+
   private static readonly etaBufferLength = 100;
 
   private static readonly renderMutex = new Mutex();
 
   private static multiBar: MultiBar;
-
-  private static progressBars: ProgressBar[] = [];
 
   private static lastRedraw = process.hrtime();
 
@@ -32,8 +32,9 @@ export default class ProgressBar {
   constructor(name: string, symbol: string, initialTotal = 0) {
     if (!ProgressBar.multiBar) {
       ProgressBar.multiBar = new cliProgress.MultiBar({
-        stream: Logger.stream,
+        // stream: Logger.stream,
         barsize: 25,
+        fps: ProgressBar.fps,
         emptyOnZero: true,
         hideCursor: true,
       }, cliProgress.Presets.shades_grey);
@@ -99,13 +100,11 @@ export default class ProgressBar {
       this.timeBuffer.push(Date.now());
       this.calculateEta(total - value);
     });
-
-    ProgressBar.progressBars.push(this);
   }
 
-  static async stop() {
+  static stop() {
     this.multiBar.stop();
-    await ProgressBar.render();
+    // Forcing a render shouldn't be necessary
   }
 
   private calculateEta(remaining: number) {
@@ -134,17 +133,16 @@ export default class ProgressBar {
   }
 
   private getEtaFormatted(): string {
-    // cli-progress/lib/formatTime()
-    const round = (input: number): number => 5 * Math.round(input / 5);
-    const t = this.eta as number;
-    if (t >= 3600) {
-      return `${Math.floor(t / 3600)}h${round((t % 3600) / 60)}m`;
-    } if (t >= 60) {
-      return `${Math.floor(t / 60)}m${round((t % 60))}s`;
-    } if (t >= 10) {
-      return `${round(t)}s`;
+    const seconds = this.eta as number;
+    const secondsRounded = 5 * Math.round(seconds / 5);
+    if (secondsRounded >= 3600) {
+      return `${Math.floor(secondsRounded / 3600)}h${(secondsRounded % 3600) / 60}m`;
+    } if (secondsRounded >= 60) {
+      return `${Math.floor(secondsRounded / 60)}m${(secondsRounded % 60)}s`;
+    } if (seconds >= 10) {
+      return `${secondsRounded}s`;
     }
-    return `${t}s`;
+    return `${seconds}s`;
   }
 
   /**
@@ -155,13 +153,12 @@ export default class ProgressBar {
    *
    * @see https://github.com/npkgz/cli-progress/issues/79
    */
-  private static async render() {
+  private static async render(): Promise<void> {
     try {
       await this.renderMutex.runExclusive(() => {
-        // Limit to 200ms = 5 FPS
         const elapsed = process.hrtime(this.lastRedraw);
         const elapsedMs = (elapsed[0] * 1000000000 + elapsed[1]) / 1000000;
-        if (elapsedMs >= 200) {
+        if (elapsedMs >= (1000 / ProgressBar.fps)) {
           this.multiBar.update();
           this.lastRedraw = process.hrtime();
           this.renderMutex.cancel(); // cancel all waiting locks, we just redrew
@@ -235,10 +232,8 @@ export default class ProgressBar {
    * able to clear them all reliably. It's recommended you don't have too many active progress bars
    * at once.
    */
-  async delete() {
+  delete() {
     ProgressBar.multiBar.remove(this.singleBar);
-    ProgressBar.progressBars = ProgressBar.progressBars
-      .filter((progressBar) => progressBar !== this);
-    await ProgressBar.render();
+    // Forcing a render shouldn't be necessary
   }
 }

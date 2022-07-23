@@ -65,7 +65,7 @@ export default class DAT {
       .replace('(Download Play)', '')
       .replace('(Headered)', '')
       .replace('(Misc)', '')
-      .replace('(Multiboot)', '')
+      // .replace('(Multiboot)', '')
       .replace(/\(Parent-Clone\)/g, '')
       .replace('(PSN)', '')
       .replace('(Split DLC)', '')

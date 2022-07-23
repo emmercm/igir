@@ -3,12 +3,11 @@
 import yargs from 'yargs';
 
 import main from './src/app.js';
+import Constants from './src/constants.js';
 import Logger from './src/logger.js';
 import Options from './src/types/options.js';
 
-const scriptName = 'igir';
-
-Logger.header(scriptName);
+Logger.header(Constants.COMMAND_NAME);
 
 const groupInputOutputPaths = 'Path options (inputs support globbing):';
 const groupPresets = 'Presets for options commonly used together:';
@@ -29,7 +28,7 @@ const yargsParser = yargs([])
   .parserConfiguration({
     'boolean-negation': false,
   })
-  .scriptName(scriptName)
+  .scriptName(Constants.COMMAND_NAME)
   .usage('Usage: $0 [presets] [options]')
 
   .option('dat', {
@@ -334,7 +333,7 @@ yargsParser
     coerce: getLastValue,
   })
 
-  .wrap(Math.min(yargs([]).terminalWidth() || 110, 110))
+  .wrap(Math.min(yargs([]).terminalWidth() || 115, 115))
   .version(false)
   .example([
     ['$0 -i **/*.zip -o 1G1R/ -s -l En -r USA,EUR,JPN', 'Produce a 1G1R set per console, preferring English from USA>EUR>JPN'],
