@@ -16,7 +16,6 @@ import ROMFile from './types/romFile.js';
 
 export default async function main(options: Options) {
   // Find all DAT files and parse them
-  // TODO(cemmer): move creation and management of progress bars to each of the modules
   const datScanProgressBar = new ProgressBar('Scanning for DATs', '⏳');
   const dats = await new DATScanner(options, datScanProgressBar).parse();
   if (!dats.length) {

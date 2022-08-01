@@ -184,7 +184,7 @@ export default class Options {
     if (this.getDirLetter() && romName) {
       let letter = romName[0].toUpperCase();
       if (letter.match(/[^A-Z]/)) {
-        letter = '0-9';
+        letter = '#';
       }
       output = path.join(output, letter);
     }

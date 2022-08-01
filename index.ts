@@ -229,7 +229,7 @@ yargsParser
     coerce: getLastValue,
     conflicts: ['prefer-revisions-newer'],
   })
-  .option('prefer-retail', { // TODO(cemmer): rename to retail?
+  .option('prefer-retail', {
     group: groupPriority,
     description: 'Prefer ROMs marked as releases',
     type: 'boolean',
@@ -333,7 +333,7 @@ yargsParser
     coerce: getLastValue,
   })
 
-  .wrap(Math.min(yargs([]).terminalWidth() || 115, 115))
+  .wrap(Math.min(yargs([]).terminalWidth() || Number.MAX_SAFE_INTEGER, 120))
   .version(false)
   .example([
     ['$0 -i **/*.zip -o 1G1R/ -s -l En -r USA,EUR,JPN', 'Produce a 1G1R set per console, preferring English from USA>EUR>JPN'],
