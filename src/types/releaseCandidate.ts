@@ -3,7 +3,46 @@ import Release from './logiqx/release.js';
 import ROM from './logiqx/rom.js';
 import ROMFile from './romFile.js';
 
+interface RegionOptions {
+  region: string;
+  countryRegex: string;
+  language: string;
+}
+
 export default class ReleaseCandidate {
+  private static readonly regionOptions: RegionOptions[] = [
+    // Specific countries
+    { region: 'ARG', countryRegex: 'Argentina', language: 'ES' },
+    { region: 'AUS', countryRegex: 'Australia', language: 'EN' },
+    { region: 'BRA', countryRegex: 'Brazil', language: 'PT' },
+    { region: 'CAN', countryRegex: 'Canada', language: 'EN' },
+    { region: 'CHN', countryRegex: 'China', language: 'ZH' },
+    { region: 'DAN', countryRegex: 'Denmark', language: 'DA' },
+    { region: 'FRA', countryRegex: 'France', language: 'FR' },
+    { region: 'FYN', countryRegex: 'Finland', language: 'FI' },
+    { region: 'GER', countryRegex: 'Germany', language: 'DE' },
+    { region: 'GRE', countryRegex: 'Greece', language: 'EL' },
+    { region: 'HK', countryRegex: 'Hong Kong', language: 'ZH' },
+    { region: 'HOL', countryRegex: 'Netherlands', language: 'NL' },
+    { region: 'ITA', countryRegex: 'Italy', language: 'IT' },
+    { region: 'JPN', countryRegex: 'Japan', language: 'JA' },
+    { region: 'KOR', countryRegex: 'Korea', language: 'KO' },
+    { region: 'MEX', countryRegex: 'Mexico', language: 'ES' },
+    { region: 'NOR', countryRegex: 'Norway', language: 'NO' },
+    { region: 'NZ', countryRegex: 'New Zealand', language: 'EN' },
+    { region: 'POR', countryRegex: 'Portugal', language: 'PT' },
+    { region: 'RUS', countryRegex: 'Russia', language: 'RU' },
+    { region: 'SPA', countryRegex: 'Spain', language: 'ES' },
+    { region: 'SWE', countryRegex: 'Sweden', language: 'SV' },
+    { region: 'TAI', countryRegex: 'Taiwan', language: 'ZH' },
+    { region: 'UK', countryRegex: 'United Kingdom', language: 'EN' },
+    { region: 'UNK', countryRegex: '', language: 'EN' },
+    { region: 'USA', countryRegex: 'United States', language: 'EN' },
+    // Regions
+    { region: 'ASI', countryRegex: 'Asia', language: 'ZH' },
+    { region: 'EUR', countryRegex: 'Europe', language: 'EN' },
+  ];
+
   private readonly game!: Game;
 
   private readonly release!: Release | null;
@@ -17,6 +56,20 @@ export default class ReleaseCandidate {
     this.release = release;
     this.roms = roms;
     this.romFiles = romFiles;
+  }
+
+  static getRegions() {
+    return this.regionOptions
+      .map((regionOption) => regionOption.region)
+      .filter((region, idx, regions) => regions.indexOf(region) === idx)
+      .sort();
+  }
+
+  static getLanguages() {
+    return this.regionOptions
+      .map((regionOption) => regionOption.language)
+      .filter((language, idx, languages) => languages.indexOf(language) === idx)
+      .sort();
   }
 
   // Property getters
@@ -66,41 +119,12 @@ export default class ReleaseCandidate {
       return this.release.getRegion();
     }
 
-    const regexToRegion = [
-      // Specific countries
-      ['Argentina', 'ARG'],
-      ['Australia', 'AUS'],
-      ['Brazil', 'BRA'],
-      ['Canada', 'CAN'],
-      ['China', 'CHN'],
-      ['Denmark', 'DAN'],
-      ['Finland', 'FYN'],
-      ['France', 'FRA'],
-      ['Germany', 'GER'],
-      ['Greece', 'GRE'],
-      ['Hong Kong', 'HK'],
-      ['Italy', 'ITA'],
-      ['Japan', 'JPN'],
-      ['Korea', 'KOR'],
-      ['Mexico', 'MEX'],
-      ['Netherlands', 'HOL'],
-      ['New Zealand', 'NZ'],
-      ['Norway', 'NOR'],
-      ['Portugal', 'POR'],
-      ['Russia', 'RUS'],
-      ['Spain', 'SPA'],
-      ['Sweden', 'SWE'],
-      ['Taiwan', 'TAI'],
-      ['United Kingdom', 'UK'],
-      ['USA', 'USA'],
-      // Regions
-      ['Asia', 'ASI'],
-      ['Europe', 'EUR'],
-    ];
-    for (let i = 0; i < regexToRegion.length; i += 1) {
-      const [regex, region] = regexToRegion[i];
-      if (this.getName().match(new RegExp(`(${regex}(,[ a-z])*)`, 'i'))) {
-        return region;
+    for (let i = 0; i < ReleaseCandidate.regionOptions.length; i += 1) {
+      const regionOption = ReleaseCandidate.regionOptions[i];
+      if (regionOption.countryRegex) {
+        if (this.getName().match(new RegExp(`(${regionOption.countryRegex}(,[ a-z])*)`, 'i'))) {
+          return regionOption.region.toUpperCase();
+        }
       }
     }
     return null;
@@ -120,38 +144,13 @@ export default class ReleaseCandidate {
 
     // Get language from the region
     if (this.getRegion()) {
-      const regionLang = {
-        ARG: 'Es',
-        ASI: 'Zh',
-        AUS: 'En',
-        BRA: 'Pt',
-        CAN: 'En',
-        CHN: 'Zh',
-        DAN: 'Da',
-        EUR: 'En',
-        FRA: 'Fr',
-        FYN: 'Fi',
-        GER: 'De',
-        GRE: 'El',
-        HK: 'Zh',
-        HOL: 'Nl',
-        ITA: 'It',
-        JPN: 'Ja',
-        KOR: 'Ko',
-        MEX: 'Es',
-        NOR: 'No',
-        NZ: 'En',
-        POR: 'Pt',
-        RUS: 'Ru',
-        SPA: 'Es',
-        SWE: 'Sv',
-        TAI: 'Zh',
-        UK: 'En',
-        UNK: 'En',
-        USA: 'En',
-      }[(this.getRegion() as string).toUpperCase()];
-      if (regionLang) {
-        return [regionLang.toUpperCase()];
+      const region = (this.getRegion() as string).toUpperCase();
+
+      for (let i = 0; i < ReleaseCandidate.regionOptions.length; i += 1) {
+        const regionOption = ReleaseCandidate.regionOptions[i];
+        if (regionOption.region === region) {
+          return [regionOption.language.toUpperCase()];
+        }
       }
     }
 

@@ -35,18 +35,19 @@ export default class Logger {
     this.print(
       help
         .replace(/^(Usage:.+)/, chalk.bold('$1'))
-        .replace(new RegExp(` (${Constants.COMMAND_NAME}) `, 'g'), ` ${chalk.blueBright('$1')} `)
 
-        .replace(/(\[options\])/g, chalk.cyan('$1'))
+        .replace(/(\[commands\.*\])/g, chalk.magenta('$1'))
+        .replace(new RegExp(`(${Constants.COMMAND_NAME}) (( ?[a-z])+)`, 'g'), `$1 ${chalk.magenta('$2')}`)
+
+        .replace(/(\[options\.*\])/g, chalk.cyan('$1'))
         .replace(/ (-[a-zA-Z0-9])/g, ` ${chalk.cyanBright('$1')}`)
         .replace(/(--[a-zA-Z0-9-]+(\n\s+)?[a-zA-Z0-9-]+)/g, chalk.cyan('$1'))
 
-        .replace(/(\[presets\])/g, chalk.magenta('$1'))
-        .replace(/(--preset-[a-zA-Z0-9-]+(\n\s+)?[a-zA-Z0-9-]+)/g, chalk.magenta('$1'))
-
         .replace(/(\[(array|boolean|count|number|string)\])/g, chalk.grey('$1'))
         .replace(/(\[default:[^\]]+\]+)/g, chalk.green('$1'))
-        .replace(/(\[required\])/g, chalk.red('$1')),
+        .replace(/(\[required\])/g, chalk.red('$1'))
+
+        .replace(new RegExp(` (${Constants.COMMAND_NAME}) `, 'g'), ` ${chalk.blueBright('$1')} `),
     );
   }
 }

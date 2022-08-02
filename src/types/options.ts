@@ -1,6 +1,6 @@
 import 'reflect-metadata';
 
-import { plainToInstance } from 'class-transformer';
+import { Expose, plainToInstance } from 'class-transformer';
 import fg from 'fast-glob';
 import fs from 'fs';
 import { isNotJunk } from 'junk';
@@ -12,6 +12,9 @@ import path from 'path';
 import DAT from './logiqx/dat.js';
 
 export default class Options {
+  @Expose({ name: '_' })
+  private readonly commands: string[] = [];
+
   private readonly dat: string[] = [];
 
   private readonly input: string[] = [];
@@ -32,6 +35,7 @@ export default class Options {
 
   private readonly zipExclude!: string;
 
+  // TODO(cemmer): get rid of these in favor of commands
   private readonly move!: boolean;
 
   private readonly overwrite!: boolean;
@@ -105,6 +109,10 @@ export default class Options {
   private validate(): Options {
     // TODO(cemmer): validate fields on the class
     return this;
+  }
+
+  public getCommands() {
+    return this.commands;
   }
 
   async scanDatFiles(): Promise<string[]> {
