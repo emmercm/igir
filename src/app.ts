@@ -5,9 +5,9 @@ import CandidateFilter from './modules/candidateFilter.js';
 import CandidateGenerator from './modules/candidateGenerator.js';
 import DATScanner from './modules/datScanner.js';
 import OutputCleaner from './modules/outputCleaner.js';
-import ReportGenerator from './modules/reportGenerator.js';
 import ROMScanner from './modules/romScanner.js';
 import ROMWriter from './modules/romWriter.js';
+import StatusGenerator from './modules/statusGenerator.js';
 import DAT from './types/logiqx/dat.js';
 import Parent from './types/logiqx/parent.js';
 import Options from './types/options.js';
@@ -47,7 +47,7 @@ export default async function main(options: Options) {
     const writtenRoms = await new ROMWriter(options, progressBar).write(dat, romOutputs);
 
     // Write the output report
-    await new ReportGenerator(options, progressBar).write(writtenRoms);
+    await new StatusGenerator(options, progressBar).output(writtenRoms);
 
     // Progress bar cleanup
     const parentsWithRomFiles = [...writtenRoms.values()]
@@ -64,7 +64,7 @@ export default async function main(options: Options) {
   await datProcessProgressBar.done(`${dats.length.toLocaleString()} DAT${dats.length !== 1 ? 's' : ''} processed`);
 
   // Clean the output directories
-  if (options.getClean()) {
+  if (options.shouldClean()) {
     const cleanerProgressBar = new ProgressBar('Cleaning output', '⏳');
     const allWrittenRomFiles = [...datsToWrittenRoms.values()]
       .flatMap((parentsToRomFiles) => [...parentsToRomFiles.values()])

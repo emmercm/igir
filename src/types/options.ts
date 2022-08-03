@@ -25,26 +25,15 @@ export default class Options {
 
   private readonly dirMirror!: boolean;
 
-  private readonly dirDatname!: boolean;
+  private readonly dirDatName!: boolean;
 
   private readonly dirLetter!: boolean;
 
   private readonly single = false;
 
-  private readonly zip!: boolean;
-
   private readonly zipExclude!: string;
 
-  // TODO(cemmer): get rid of these in favor of commands
-  private readonly move!: boolean;
-
   private readonly overwrite!: boolean;
-
-  private readonly test!: boolean;
-
-  private readonly clean!: boolean;
-
-  private readonly dryRun!: boolean;
 
   private readonly preferGood!: boolean;
 
@@ -52,9 +41,9 @@ export default class Options {
 
   private readonly preferRegion: string[] = [];
 
-  private readonly preferRevisionsNewer!: boolean;
+  private readonly preferRevisionNewer!: boolean;
 
-  private readonly preferRevisionsOlder!: boolean;
+  private readonly preferRevisionOlder!: boolean;
 
   private readonly preferRetail!: boolean;
 
@@ -111,9 +100,42 @@ export default class Options {
     return this;
   }
 
-  public getCommands() {
-    return this.commands;
+  // Commands
+
+  private getCommands() {
+    return this.commands.map((c) => c.toLowerCase());
   }
+
+  public shouldWrite() {
+    return this.shouldCopy() || this.shouldMove();
+  }
+
+  public shouldCopy() {
+    return this.getCommands().indexOf('copy') !== -1;
+  }
+
+  public shouldMove() {
+    return this.getCommands().indexOf('move') !== -1;
+  }
+
+  public shouldZip(filePath: string) {
+    return this.getCommands().indexOf('zip') !== -1
+      && (!this.getZipExclude() || !micromatch.isMatch(filePath, this.getZipExclude()));
+  }
+
+  public shouldClean() {
+    return this.getCommands().indexOf('clean') !== -1;
+  }
+
+  public shouldTest() {
+    return this.getCommands().indexOf('test') !== -1;
+  }
+
+  public shouldReport() {
+    return this.getCommands().indexOf('report') !== -1;
+  }
+
+  // Options
 
   async scanDatFiles(): Promise<string[]> {
     return Options.scanPath(this.dat);
@@ -175,7 +197,7 @@ export default class Options {
   }
 
   getOutput(dat?: DAT, inputRomPath?: string, romName?: string): string {
-    let output = this.getDryRun() ? this.getTempDir() : this.output;
+    let output = this.shouldWrite() ? this.getTempDir() : this.output;
     if (this.getDirMirror() && inputRomPath) {
       const mirroredDir = path.dirname(inputRomPath)
         .replace(/[\\/]/g, path.sep)
@@ -211,7 +233,7 @@ export default class Options {
   }
 
   getDirDatName(): boolean {
-    return this.dirDatname;
+    return this.dirDatName;
   }
 
   getDirLetter(): boolean {
@@ -222,37 +244,12 @@ export default class Options {
     return this.single;
   }
 
-  private getZip(): boolean {
-    return this.zip;
-  }
-
   private getZipExclude(): string {
     return this.zipExclude;
   }
 
-  shouldZip(filePath: string) {
-    return this.getZip()
-        && (!this.getZipExclude() || !micromatch.isMatch(filePath, this.getZipExclude()));
-  }
-
-  getMove(): boolean {
-    return this.move;
-  }
-
   getOverwrite(): boolean {
     return this.overwrite;
-  }
-
-  getTest(): boolean {
-    return this.test;
-  }
-
-  getClean(): boolean {
-    return this.clean;
-  }
-
-  getDryRun(): boolean {
-    return this.dryRun;
   }
 
   getPreferGood(): boolean {
@@ -271,12 +268,12 @@ export default class Options {
     return this.languageFilter.map((lang) => lang.toUpperCase());
   }
 
-  getPreferRevisionsNewer(): boolean {
-    return this.preferRevisionsNewer;
+  getPreferRevisionNewer(): boolean {
+    return this.preferRevisionNewer;
   }
 
-  getPreferRevisionsOlder(): boolean {
-    return this.preferRevisionsOlder;
+  getPreferRevisionOlder(): boolean {
+    return this.preferRevisionOlder;
   }
 
   getPreferRetail(): boolean {

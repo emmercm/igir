@@ -70,7 +70,7 @@ export default class ROMWriter {
           return acc;
         }, new Map<ROMFile, ROMFile>());
 
-        if (!this.options.getDryRun()) {
+        if (!this.options.shouldWrite()) {
           const writeNeeded = [...inputToOutput.entries()]
             .some((entry) => !entry[0].equals(entry[1]));
           if (writeNeeded) {
@@ -116,7 +116,7 @@ export default class ROMWriter {
         return;
       }
 
-      if (this.options.getMove()) {
+      if (this.options.shouldMove()) {
         // TODO(cemmer)
         return;
       }
@@ -168,7 +168,7 @@ export default class ROMWriter {
     }
 
     // Test the written file
-    if (this.options.getTest()) {
+    if (this.options.shouldTest()) {
       try {
         const zipToTest = new AdmZip(outputZipPath);
         if (!zipToTest.test()) {
@@ -181,7 +181,7 @@ export default class ROMWriter {
     }
 
     // If "moving", delete the input files
-    if (this.options.getMove()) {
+    if (this.options.shouldMove()) {
       await Promise.all(
         [...inputToOutput.keys()]
           .map((romFile) => romFile.getFilePath())
@@ -235,7 +235,7 @@ export default class ROMWriter {
     await inputRomFileLocal.cleanupLocalFile();
 
     // Test the written file
-    if (this.options.getTest()) {
+    if (this.options.shouldTest()) {
       const romFileToTest = new ROMFile(outputFilePath);
       if (romFileToTest.getCrc32() !== inputRomFile.getCrc32()) {
         await this.progressBar.logError(`Written file has the CRC ${romFileToTest.getCrc32()}, expected ${inputRomFile.getCrc32()}: ${outputFilePath}`);
@@ -244,7 +244,7 @@ export default class ROMWriter {
     }
 
     // Delete the original file if we're supposed to "move" it
-    if (this.options.getMove()) {
+    if (this.options.shouldMove()) {
       await fsPromises.rm(inputRomFileLocal.getFilePath(), { force: true });
     }
   }

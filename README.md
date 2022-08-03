@@ -34,38 +34,39 @@ Here is the `igir --help` help message, which contains a number of use case exam
 Usage: igir [commands..] [options]
 
 Commands:
-  igir zip     Zip archive any output ROMs
   igir copy    Copy ROM files to a directory
   igir move    Move ROM files to a directory
+  igir zip     Create .zip archives when copying or moving ROMs
   igir clean   Remove unmatched files from the ROM output directory
   igir test    Test ROMs for accuracy after writing them
   igir report  Remove unmatched files from the ROM output directory
 
 Path options (inputs support globbing):
   -d, --dat            Path(s) to DAT files                            [array] [required] [default: ["*.dat"]]
-  -i, --input          Path(s) to ROM files, with support for .zip and .7z archives         [array] [required]
+  -i, --input          Path(s) to ROM files (including .zip and .7z), these files will not be modified
+                                                                                            [array] [required]
   -I, --input-exclude  Path(s) to ROM files to exclude                                                 [array]
   -o, --output         Path to the ROM output directory                                               [string]
 
 Output options:
-      --dir-mirror   Use the input subdirectory structure for output subdirectories                  [boolean]
-  -D, --dir-datname  Use the DAT name as the output subdirectory                                     [boolean]
-      --dir-letter   Append the first letter of the ROM name as an output subdirectory               [boolean]
-  -s, --single       Output only a single game per parent (1G1R) (requires parent-clone DAT files)   [boolean]
-  -Z, --zip-exclude  Glob pattern of files to exclude from zipping                                    [string]
-  -O, --overwrite    Overwrite any ROMs in the output directory                                      [boolean]
+      --dir-mirror    Use the input subdirectory structure for output subdirectories                 [boolean]
+  -D, --dir-dat-name  Use the DAT name as the output subdirectory                                    [boolean]
+      --dir-letter    Append the first letter of the ROM name as an output subdirectory              [boolean]
+  -s, --single        Output only a single game per parent (1G1R) (requires parent-clone DAT files)  [boolean]
+  -Z, --zip-exclude   Glob pattern of files to exclude from zipping                                   [string]
+  -O, --overwrite     Overwrite any ROMs in the output directory                                     [boolean]
 
 Priority options:
-      --prefer-good             Prefer good ROM dumps over bad                                       [boolean]
-  -l, --prefer-language         List of comma-separated languages in priority order (supported: DA, DE, EL, EN
-                                , ES, FI, FR, IT, JA, KO, NL, NO, PT, RU, SV, ZH)                     [string]
-  -r, --prefer-region           List of comma-separated regions in priority order (supported: ARG, ASI, AUS, B
-                                RA, CAN, CHN, DAN, EUR, FRA, FYN, GER, GRE, HK, HOL, ITA, JPN, KOR, MEX, NOR,
-                                NZ, POR, RUS, SPA, SWE, TAI, UK, UNK, USA)                            [string]
-      --prefer-revisions-newer  Prefer newer ROM revisions over older                                [boolean]
-      --prefer-revisions-older  Prefer older ROM revisions over newer                                [boolean]
-      --prefer-retail           Prefer retail releases (see --only-retail)                           [boolean]
-      --prefer-parent           Prefer parent ROMs over clones (requires parent-clone DAT files)     [boolean]
+      --prefer-good            Prefer good ROM dumps over bad                                        [boolean]
+  -l, --prefer-language        List of comma-separated languages in priority order (supported: DA, DE, EL, EN,
+                                ES, FI, FR, IT, JA, KO, NL, NO, PT, RU, SV, ZH)                       [string]
+  -r, --prefer-region          List of comma-separated regions in priority order (supported: ARG, ASI, AUS, BR
+                               A, CAN, CHN, DAN, EUR, FRA, FYN, GER, GRE, HK, HOL, ITA, JPN, KOR, MEX, NOR, NZ
+                               , POR, RUS, SPA, SWE, TAI, UK, UNK, USA)                               [string]
+      --prefer-revision-newer  Prefer newer ROM revisions over older                                 [boolean]
+      --prefer-revision-older  Prefer older ROM revisions over newer                                 [boolean]
+      --prefer-retail          Prefer retail releases (see --only-retail)                            [boolean]
+      --prefer-parent          Prefer parent ROMs over clones (requires parent-clone DAT files)      [boolean]
 
 Filtering options:
   -L, --language-filter  List of comma-separated languages to limit to (supported: DA, DE, EL, EN, ES, FI, FR,
@@ -95,7 +96,7 @@ Examples:
 
   igir copy -i **/*.zip -i 1G1R/ -o 1G1R/                 Merge new ROMs into an existing ROM collection
 
-  igir zip move -i 1G1R/ -o 1G1R/                         Organize and zip an existing ROM collection
+  igir move zip -i 1G1R/ -o 1G1R/                         Organize and zip an existing ROM collection
 
   igir copy -i **/*.zip -o bios/ --only-bios              Collate all BIOS files
 ```

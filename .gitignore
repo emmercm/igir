@@ -124,3 +124,6 @@ build/
 *.torrent
 *.txt
 *.xml
+
+# Always commit fixtures
+!test/fixtures/*

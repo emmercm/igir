@@ -3,7 +3,7 @@ import Options from '../types/options.js';
 import ProgressBar from '../types/progressBar.js';
 import ROMFile from '../types/romFile.js';
 
-export default class ReportGenerator {
+export default class StatusGenerator {
   private readonly options: Options;
 
   private readonly progressBar: ProgressBar;
@@ -13,7 +13,7 @@ export default class ReportGenerator {
     this.progressBar = progressBar;
   }
 
-  async write(parentsToRomFiles: Map<Parent, ROMFile[]>) {
+  async output(parentsToRomFiles: Map<Parent, ROMFile[]>) {
     const allRoms: Parent[] = [];
     const foundRoms: Parent[] = [];
 

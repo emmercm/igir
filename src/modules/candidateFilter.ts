@@ -139,9 +139,9 @@ export default class CandidateFilter {
 
     // Sort by revision (higher first)
     let revisionSort = 0;
-    if (this.options.getPreferRevisionsNewer()) {
+    if (this.options.getPreferRevisionNewer()) {
       revisionSort = b.getRevision() - a.getRevision();
-    } else if (this.options.getPreferRevisionsOlder()) {
+    } else if (this.options.getPreferRevisionOlder()) {
       revisionSort = a.getRevision() - b.getRevision();
     }
     if (revisionSort !== 0) {
