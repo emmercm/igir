@@ -77,6 +77,8 @@ export default class Options {
 
   private readonly noBad!: boolean;
 
+  private readonly help!: boolean;
+
   private tempDir!: string;
 
   static fromObject(obj: object) {
@@ -106,32 +108,32 @@ export default class Options {
     return this.commands.map((c) => c.toLowerCase());
   }
 
-  public shouldWrite() {
+  shouldWrite() {
     return this.shouldCopy() || this.shouldMove();
   }
 
-  public shouldCopy() {
+  shouldCopy() {
     return this.getCommands().indexOf('copy') !== -1;
   }
 
-  public shouldMove() {
+  shouldMove() {
     return this.getCommands().indexOf('move') !== -1;
   }
 
-  public shouldZip(filePath: string) {
+  shouldZip(filePath: string) {
     return this.getCommands().indexOf('zip') !== -1
       && (!this.getZipExclude() || !micromatch.isMatch(filePath, this.getZipExclude()));
   }
 
-  public shouldClean() {
+  shouldClean() {
     return this.getCommands().indexOf('clean') !== -1;
   }
 
-  public shouldTest() {
+  shouldTest() {
     return this.getCommands().indexOf('test') !== -1;
   }
 
-  public shouldReport() {
+  shouldReport() {
     return this.getCommands().indexOf('report') !== -1;
   }
 
@@ -173,27 +175,36 @@ export default class Options {
     }));
 
     // Process any glob patterns
-    const globbedPaths = (await Promise.all(globPatterns.map(async (inputPath) => {
-      try {
-        // If the file exists, don't process it as a glob pattern
-        await fsPromises.access(inputPath); // throw if file doesn't exist
-        return [inputPath];
-      } catch (e) {
-        // Otherwise, process it as a glob pattern
-        const paths = await fg(inputPath);
-        if (!paths || !paths.length) {
-          throw new Error(`Path doesn't exist: ${inputPath}`);
-        }
-        return paths;
-      }
-    }))).flatMap((paths) => paths);
+    const globbedPaths = (await Promise.all(
+      globPatterns
+        .filter((inputPath) => inputPath)
+        .map(async (inputPath) => {
+          try {
+            // If the file exists, don't process it as a glob pattern
+            await fsPromises.access(inputPath); // throw if file doesn't exist
+            return [inputPath];
+          } catch (e) {
+            // Otherwise, process it as a glob pattern
+            const paths = await fg(inputPath);
+            if (!paths || !paths.length) {
+              throw new Error(`Path doesn't exist: ${inputPath}`);
+            }
+            return paths;
+          }
+        }),
+    )).flatMap((paths) => paths);
 
-    // Filter to non-directories
-    return Promise.all(
-      globbedPaths
-        .filter(async (inputPath) => !(await fsPromises.lstat(inputPath)).isDirectory())
-        .filter((inputPath) => isNotJunk(inputPath)),
+    // Filter to files
+    const isFiles = await Promise.all(
+      globbedPaths.map(async (inputPath) => (await fsPromises.lstat(inputPath)).isFile()),
     );
+    const globbedFiles = globbedPaths
+      .filter((inputPath, idx) => isFiles[idx])
+      .filter((inputPath) => isNotJunk(inputPath));
+
+    // Remove duplicates
+    return globbedFiles
+      .filter((inputPath, idx, arr) => arr.indexOf(inputPath) === idx);
   }
 
   getOutput(dat?: DAT, inputRomPath?: string, romName?: string): string {
@@ -334,6 +345,10 @@ export default class Options {
 
   getNoBad(): boolean {
     return this.noBad;
+  }
+
+  getHelp(): boolean {
+    return this.help;
   }
 
   getTempDir(): string {

@@ -22,7 +22,7 @@ describe('commands', () => {
     expect(ArgumentsParser.parse(['report', ...dummyRequiredArgs]).shouldReport()).toBeTruthy();
   });
 
-  it('should parse multiple commands', ()=> {
+  it('should parse multiple commands', () => {
     const commands = ['copy', 'move', 'zip', 'clean', 'test', 'report', ...dummyRequiredArgs];
     expect(ArgumentsParser.parse(commands).shouldCopy()).toBeTruthy();
     expect(ArgumentsParser.parse(commands).shouldMove()).toBeTruthy();
@@ -52,9 +52,35 @@ describe('commands', () => {
 });
 
 describe('options', () => {
-  it('should throw on help', () => {
-    expect(() => ArgumentsParser.parse(['-h'])).toThrowError();
-    expect(() => ArgumentsParser.parse(['--help'])).toThrowError();
+  it('should have expected defaults', () => {
+    const options = ArgumentsParser.parse(dummyCommandAndRequiredArgs);
+    expect(options.getDirMirror()).toBeFalsy();
+    expect(options.getDirDatName()).toBeFalsy();
+    expect(options.getDirLetter()).toBeFalsy();
+    expect(options.getSingle()).toBeFalsy();
+    expect(options.getOverwrite()).toBeFalsy();
+    expect(options.getPreferGood()).toBeFalsy();
+    expect(options.getPreferLanguages().length).toBe(0);
+    expect(options.getPreferRegions().length).toBe(0);
+    expect(options.getLanguageFilter().length).toBe(0);
+    expect(options.getPreferRevisionNewer()).toBeFalsy();
+    expect(options.getPreferRevisionOlder()).toBeFalsy();
+    expect(options.getPreferRetail()).toBeFalsy();
+    expect(options.getPreferParent()).toBeFalsy();
+    expect(options.getRegionFilter().length).toBe(0);
+    expect(options.getOnlyBios()).toBeFalsy();
+    expect(options.getNoBios()).toBeFalsy();
+    expect(options.getNoUnlicensed()).toBeFalsy();
+    expect(options.getOnlyRetail()).toBeFalsy();
+    expect(options.getNoDemo()).toBeFalsy();
+    expect(options.getNoBeta()).toBeFalsy();
+    expect(options.getNoSample()).toBeFalsy();
+    expect(options.getNoPrototype()).toBeFalsy();
+    expect(options.getNoTestRoms()).toBeFalsy();
+    expect(options.getNoAftermarket()).toBeFalsy();
+    expect(options.getNoHomebrew()).toBeFalsy();
+    expect(options.getNoBad()).toBeFalsy();
+    expect(options.getHelp()).toBeFalsy();
   });
 
   it('should parse "dat"', () => {});
@@ -88,4 +114,9 @@ describe('options', () => {
   it('should parse "no-aftermarket"', () => {});
   it('should parse "no-homebrew"', () => {});
   it('should parse "no-bad"', () => {});
+
+  it('should parse "help"', () => {
+    expect(() => ArgumentsParser.parse(['-h']).getHelp()).toBeTruthy();
+    expect(() => ArgumentsParser.parse(['--help']).getHelp()).toBeTruthy();
+  });
 });

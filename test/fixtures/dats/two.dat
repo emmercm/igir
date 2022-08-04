@@ -1,0 +1,10 @@
+<?xml version="1.0"?>
+<!DOCTYPE datafile PUBLIC "-//Logiqx//DTD ROM Management Datafile//EN" "http://www.logiqx.com/Dats/datafile.dtd">
+<datafile>
+	<header>
+		<name>Two</name>
+		<description>Two</description>
+		<version>20220705</version>
+		<author>emmercm</author>
+	</header>
+</datafile>

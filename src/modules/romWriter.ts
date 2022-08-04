@@ -6,16 +6,16 @@ import DAT from '../types/logiqx/dat.js';
 import Parent from '../types/logiqx/parent.js';
 import ROM from '../types/logiqx/rom.js';
 import Options from '../types/options.js';
-import ProgressBar from '../types/progressBar.js';
 import ReleaseCandidate from '../types/releaseCandidate.js';
 import ROMFile from '../types/romFile.js';
+import ProgressBarCLI from './progressBar/progressBarCLI.js';
 
 export default class ROMWriter {
   private readonly options: Options;
 
-  private readonly progressBar: ProgressBar;
+  private readonly progressBar: ProgressBarCLI;
 
-  constructor(options: Options, progressBar: ProgressBar) {
+  constructor(options: Options, progressBar: ProgressBarCLI) {
     this.options = options;
     this.progressBar = progressBar;
   }

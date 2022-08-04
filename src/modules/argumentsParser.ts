@@ -315,7 +315,6 @@ export default class ArgumentsParser {
       .parse(argv, {}, (err, parsedArgv, output) => {
         if (output) {
           Logger.colorizeYargs(output);
-          throw new Error();
         }
       });
 

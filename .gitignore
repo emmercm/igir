@@ -126,4 +126,5 @@ build/
 *.xml
 
 # Always commit fixtures
-!test/fixtures/*
+!test/fixtures/dats/*
+!test/fixtures/roms/*

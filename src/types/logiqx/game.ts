@@ -80,6 +80,13 @@ export default class Game {
   @Type(() => Archive)
   private readonly archive!: Archive | Archive[];
 
+  constructor(name: string, roms: ROM[], releases?: Release[]) {
+    this.name = name;
+    this.description = name;
+    this.rom = roms;
+    this.release = releases || [];
+  }
+
   // Property getters
 
   getName(): string {

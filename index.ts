@@ -8,12 +8,14 @@ import ArgumentsParser from './src/modules/argumentsParser.js';
 (async () => {
   Logger.header(Constants.COMMAND_NAME);
 
-  let options;
   try {
-    options = ArgumentsParser.parse(process.argv.slice(2));
+    const options = ArgumentsParser.parse(process.argv.slice(2));
+    if (options.getHelp()) {
+      process.exit(0);
+    }
+
+    await main(options);
   } catch (e) {
     process.exit(1);
   }
-
-  await main(options);
 })();

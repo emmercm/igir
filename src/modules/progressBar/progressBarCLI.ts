@@ -1,7 +1,8 @@
 import { E_CANCELED, Mutex } from 'async-mutex';
 import cliProgress, { MultiBar, SingleBar } from 'cli-progress';
 
-import Logger from '../logger.js';
+import Logger from '../../logger.js';
+import ProgressBar from './progressBar.js';
 
 interface ProgressBarPayload {
   symbol?: string,
@@ -10,7 +11,7 @@ interface ProgressBarPayload {
 }
 
 /* eslint-disable class-methods-use-this */
-export default class ProgressBar {
+export default class ProgressBarCLI implements ProgressBar {
   private static readonly fps = 4;
 
   private static readonly etaBufferLength = 100;
@@ -30,17 +31,17 @@ export default class ProgressBar {
   private eta: number | string = '0';
 
   constructor(name: string, symbol: string, initialTotal = 0) {
-    if (!ProgressBar.multiBar) {
-      ProgressBar.multiBar = new cliProgress.MultiBar({
+    if (!ProgressBarCLI.multiBar) {
+      ProgressBarCLI.multiBar = new cliProgress.MultiBar({
         // stream: Logger.stream,
         barsize: 25,
-        fps: ProgressBar.fps,
+        fps: ProgressBarCLI.fps,
         emptyOnZero: true,
         hideCursor: true,
       }, cliProgress.Presets.shades_grey);
     }
 
-    this.singleBar = ProgressBar.multiBar.create(
+    this.singleBar = ProgressBarCLI.multiBar.create(
       initialTotal,
       0,
       {
@@ -110,14 +111,14 @@ export default class ProgressBar {
   private calculateEta(remaining: number) {
     // cli-progress/lib/ETA.calculate()
     const currentBufferSize = this.valueBuffer.length;
-    const buffer = Math.min(ProgressBar.etaBufferLength, currentBufferSize);
+    const buffer = Math.min(ProgressBarCLI.etaBufferLength, currentBufferSize);
     const vDiff = this.valueBuffer[currentBufferSize - 1]
         - this.valueBuffer[currentBufferSize - buffer];
     const tDiff = this.timeBuffer[currentBufferSize - 1]
         - this.timeBuffer[currentBufferSize - buffer];
     const vtRate = vDiff / tDiff;
-    this.valueBuffer = this.valueBuffer.slice(-ProgressBar.etaBufferLength);
-    this.timeBuffer = this.timeBuffer.slice(-ProgressBar.etaBufferLength);
+    this.valueBuffer = this.valueBuffer.slice(-ProgressBarCLI.etaBufferLength);
+    this.timeBuffer = this.timeBuffer.slice(-ProgressBarCLI.etaBufferLength);
     const eta = Math.ceil(remaining / vtRate / 1000);
     if (Number.isNaN(eta)) {
       this.eta = 'NULL';
@@ -158,7 +159,7 @@ export default class ProgressBar {
       await this.renderMutex.runExclusive(() => {
         const elapsed = process.hrtime(this.lastRedraw);
         const elapsedMs = (elapsed[0] * 1000000000 + elapsed[1]) / 1000000;
-        if (elapsedMs >= (1000 / ProgressBar.fps)) {
+        if (elapsedMs >= (1000 / ProgressBarCLI.fps)) {
           this.multiBar.update();
           this.lastRedraw = process.hrtime();
           this.renderMutex.cancel(); // cancel all waiting locks, we just redrew
@@ -174,24 +175,24 @@ export default class ProgressBar {
   async reset(total: number) {
     this.singleBar.setTotal(total);
     this.singleBar.update(0);
-    await ProgressBar.render();
+    await ProgressBarCLI.render();
   }
 
   async setSymbol(symbol: string) {
     this.singleBar.update({
       symbol,
     } as ProgressBarPayload);
-    await ProgressBar.render();
+    await ProgressBarCLI.render();
   }
 
   async increment() {
     this.singleBar.increment();
-    await ProgressBar.render();
+    await ProgressBarCLI.render();
   }
 
   async update(current: number) {
     this.singleBar.update(current);
-    await ProgressBar.render();
+    await ProgressBarCLI.render();
   }
 
   async done(finishedMessage?: string) {
@@ -209,22 +210,22 @@ export default class ProgressBar {
       } as ProgressBarPayload);
     }
 
-    await ProgressBar.render();
+    await ProgressBarCLI.render();
   }
 
   async log(message: string) {
-    ProgressBar.multiBar.log(`${message}\n`);
-    await ProgressBar.render();
+    ProgressBarCLI.multiBar.log(`${message}\n`);
+    await ProgressBarCLI.render();
   }
 
   async logWarn(message: string) {
-    ProgressBar.multiBar.log(`${Logger.warnFormatter(message)}\n`);
-    await ProgressBar.render();
+    ProgressBarCLI.multiBar.log(`${Logger.warnFormatter(message)}\n`);
+    await ProgressBarCLI.render();
   }
 
   async logError(message: string) {
-    ProgressBar.multiBar.log(`${Logger.errorFormatter(message)}\n`);
-    await ProgressBar.render();
+    ProgressBarCLI.multiBar.log(`${Logger.errorFormatter(message)}\n`);
+    await ProgressBarCLI.render();
   }
 
   /**
@@ -233,7 +234,7 @@ export default class ProgressBar {
    * at once.
    */
   delete() {
-    ProgressBar.multiBar.remove(this.singleBar);
+    ProgressBarCLI.multiBar.remove(this.singleBar);
     // Forcing a render shouldn't be necessary
   }
 }

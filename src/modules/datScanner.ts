@@ -3,7 +3,7 @@ import xml2js from 'xml2js';
 
 import DAT from '../types/logiqx/dat.js';
 import Options from '../types/options.js';
-import ProgressBar from '../types/progressBar.js';
+import ProgressBar from './progressBar/progressBar.js';
 
 export default class DATScanner {
   private readonly options: Options;
@@ -15,7 +15,7 @@ export default class DATScanner {
     this.progressBar = progressBar;
   }
 
-  async parse(): Promise<DAT[]> {
+  async scan(): Promise<DAT[]> {
     const datFiles = await this.options.scanDatFiles();
     if (!datFiles.length) {
       return [];
@@ -47,6 +47,7 @@ export default class DATScanner {
     }
 
     return parsedXml
+      .filter((xmlObject) => xmlObject)
       .map((xmlObject) => DAT.fromObject(xmlObject.datafile))
       .sort((a, b) => a.getName().localeCompare(b.getName()));
   }

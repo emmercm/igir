@@ -5,8 +5,8 @@ import path from 'path';
 
 import Constants from '../constants.js';
 import Options from '../types/options.js';
-import ProgressBar from '../types/progressBar.js';
 import ROMFile from '../types/romFile.js';
+import ProgressBar from './progressBar/progressBar.js';
 
 export default class ROMScanner {
   private readonly options: Options;

@@ -16,6 +16,12 @@ export default class DAT {
   @Type(() => Game)
   private readonly game!: Game | Game[];
 
+  constructor(header: Header, games: Game[]) {
+    this.header = header;
+    this.game = games;
+    this.generateGameNamesToParents();
+  }
+
   // Post-processed
 
   private gameNamesToParents!: Map<string, Parent>;

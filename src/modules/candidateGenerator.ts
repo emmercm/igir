@@ -1,9 +1,9 @@
 import DAT from '../types/logiqx/dat.js';
 import Parent from '../types/logiqx/parent.js';
 import Release from '../types/logiqx/release.js';
-import ProgressBar from '../types/progressBar.js';
 import ReleaseCandidate from '../types/releaseCandidate.js';
 import ROMFile from '../types/romFile.js';
+import ProgressBar from './progressBar/progressBar.js';
 
 export default class CandidateGenerator {
   private readonly progressBar: ProgressBar;

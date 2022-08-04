@@ -1,14 +1,14 @@
 import Parent from '../types/logiqx/parent.js';
 import Options from '../types/options.js';
-import ProgressBar from '../types/progressBar.js';
 import ROMFile from '../types/romFile.js';
+import ProgressBarCLI from './progressBar/progressBarCLI.js';
 
 export default class StatusGenerator {
   private readonly options: Options;
 
-  private readonly progressBar: ProgressBar;
+  private readonly progressBar: ProgressBarCLI;
 
-  constructor(options: Options, progressBar: ProgressBar) {
+  constructor(options: Options, progressBar: ProgressBarCLI) {
     this.options = options;
     this.progressBar = progressBar;
   }

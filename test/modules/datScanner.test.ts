@@ -1,0 +1,54 @@
+import os from 'os';
+
+import DATScanner from '../../src/modules/datScanner.js';
+import Options from '../../src/types/options.js';
+import ProgressBarFake from './progressBar/progressBarFake.js';
+
+function createDatScanner(dat: string[]): DATScanner {
+  return new DATScanner(Options.fromObject({ dat }), new ProgressBarFake());
+}
+
+describe('DatScanner', () => {
+  it('should throw on nonexistent paths', async () => {
+    await expect(createDatScanner(['/completely/invalid/path']).scan()).rejects.toThrow(/path doesn't exist/i);
+    await expect(createDatScanner(['/completely/invalid/path', os.devNull]).scan()).rejects.toThrow(/path doesn't exist/i);
+    await expect(createDatScanner(['/completely/invalid/path', 'test/fixtures/dats']).scan()).rejects.toThrow(/path doesn't exist/i);
+    await expect(createDatScanner(['test/fixtures/**/*.tmp']).scan()).rejects.toThrow(/path doesn't exist/i);
+    await expect(createDatScanner(['test/fixtures/dats/*/*']).scan()).rejects.toThrow(/path doesn't exist/i);
+  });
+
+  it('should return empty list on no results', async () => {
+    await expect(createDatScanner([]).scan()).resolves.toEqual([]);
+    await expect(createDatScanner(['']).scan()).resolves.toEqual([]);
+    await expect(createDatScanner([os.devNull]).scan()).resolves.toEqual([]);
+  });
+
+  it('should not throw on empty files', async () => {
+    await expect(createDatScanner(['test/fixtures/**/empty.*']).scan()).resolves.toHaveLength(0);
+    await expect(createDatScanner(['test/fixtures/{dats,roms}/empty.*']).scan()).resolves.toHaveLength(0);
+  });
+
+  it('should not throw on non-DATs', async () => {
+    await expect(createDatScanner(['test/fixtures/**/invalid.*']).scan()).resolves.toHaveLength(0);
+    await expect(createDatScanner(['test/fixtures/roms']).scan()).resolves.toHaveLength(0);
+    await expect(createDatScanner(['test/fixtures/roms/*']).scan()).resolves.toHaveLength(0);
+    await expect(createDatScanner(['test/fixtures/roms/*.rom']).scan()).resolves.toHaveLength(0);
+    await expect(createDatScanner(['test/fixtures/roms/invalid.*']).scan()).resolves.toHaveLength(0);
+    await expect(createDatScanner(['test/fixtures/roms/invalid.*', 'test/fixtures/roms/invalid.*']).scan()).resolves.toHaveLength(0);
+  });
+
+  it('should scan multiple files', async () => {
+    const expectedDatFiles = 2;
+    await expect(createDatScanner(['test/fixtures/dats']).scan()).resolves.toHaveLength(expectedDatFiles);
+    await expect(createDatScanner(['test/fixtures/dats/*']).scan()).resolves.toHaveLength(expectedDatFiles);
+    await expect(createDatScanner(['test/fixtures/**/*.dat']).scan()).resolves.toHaveLength(expectedDatFiles);
+    await expect(createDatScanner(['test/fixtures/**/*.dat', 'test/fixtures/**/*.dat']).scan()).resolves.toHaveLength(expectedDatFiles);
+  });
+
+  it('should scan single files', async () => {
+    await expect(createDatScanner(['test/fixtures/dats/one.*']).scan()).resolves.toHaveLength(1);
+    await expect(createDatScanner(['test/fixtures/dats/one.*']).scan()).resolves.toHaveLength(1);
+    await expect(createDatScanner(['test/fixtures/*/one.dat']).scan()).resolves.toHaveLength(1);
+    await expect(createDatScanner(['test/fixtures/dats/one.dat']).scan()).resolves.toHaveLength(1);
+  });
+});

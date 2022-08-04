@@ -16,6 +16,11 @@ export default class Release {
   @Expose({ name: 'default' })
   private readonly default: 'yes' | 'no' = 'no';
 
+  constructor(name: string, region: string) {
+    this.name = name;
+    this.region = region;
+  }
+
   getName(): string {
     return this.name;
   }

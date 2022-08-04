@@ -1,5 +1,4 @@
 import { Expose } from 'class-transformer';
-import path from 'path';
 
 /**
  * @see http://www.logiqx.com/DatFAQs/CMPro.php
@@ -29,12 +28,13 @@ export default class ROM {
   @Expose({ name: 'date' })
   private readonly date?: string;
 
-  getName(): string {
-    return this.name;
+  constructor(name: string, crc: string) {
+    this.name = name;
+    this.crc = crc;
   }
 
-  getExtension(): string {
-    return path.extname(this.name);
+  getName(): string {
+    return this.name;
   }
 
   getCrc32(): string {
