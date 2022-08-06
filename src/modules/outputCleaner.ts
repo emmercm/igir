@@ -1,6 +1,6 @@
 import fg from 'fast-glob';
+import { promises as fsPromises } from 'fs';
 import { isNotJunk } from 'junk';
-import fsPromises from 'node:fs/promises';
 import path from 'path';
 import trash from 'trash';
 

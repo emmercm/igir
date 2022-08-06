@@ -24,7 +24,7 @@ describe('ROMScanner', () => {
   });
 
   it('should return empty list when input matches inputExclude', async () => {
-
+    // TODO(cemmer)
   });
 
   it('should not throw on bad archives', async () => {

@@ -1,5 +1,5 @@
 import AdmZip from 'adm-zip';
-import fsPromises from 'node:fs/promises';
+import { promises as fsPromises } from 'fs';
 import path from 'path';
 
 import DAT from '../types/logiqx/dat.js';

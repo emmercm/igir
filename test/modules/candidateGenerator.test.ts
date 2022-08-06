@@ -22,7 +22,7 @@ describe('CandidateGenerator', () => {
   });
 
   it('should return no results with no input ROM files', async () => {
-    const game = new Game('game', []);
+    const game = new Game({ name: 'game' });
     const datWithNoGames = new DAT(new Header(), []);
     const datWithOneGame = new DAT(new Header(), [game]);
     const datWithTwoGames = new DAT(new Header(), [game, game]);
@@ -33,11 +33,14 @@ describe('CandidateGenerator', () => {
   });
 
   it('should return no results with no matching files', async () => {
-    const gameOne = new Game('one', [new ROM('one.rom', '12345678')]);
-    const gameTwo = new Game('two', [
-      new ROM('two.a', 'abcdef90'),
-      new ROM('two.b', '09876543'),
-    ]);
+    const gameOne = new Game({ name: 'one', rom: [new ROM('one.rom', '12345678')] });
+    const gameTwo = new Game({
+      name: 'two',
+      rom: [
+        new ROM('two.a', 'abcdef90'),
+        new ROM('two.b', '09876543'),
+      ],
+    });
 
     const datWithOneGame = new DAT(new Header(), [gameOne]);
     const datWithDuplicateGames = new DAT(new Header(), [gameOne, gameOne]);
@@ -79,17 +82,24 @@ describe('CandidateGenerator', () => {
   });
 
   it('should return no results with partially matching files', async () => {
-    const gameOne = new Game('game one', [
-      new ROM('one.a', '12345678'),
-      new ROM('one.b', '34567890'),
-      new ROM('one.c', '5678abcd'),
-    ]);
-    const gameTwo = new Game('game two', [
-      new ROM('two.a', 'abcdef90'),
-      new ROM('two.b', '09876543'),
-    ], [
-      new Release('game two (USA)', 'USA'),
-    ]);
+    const gameOne = new Game({
+      name: 'game one',
+      rom: [
+        new ROM('one.a', '12345678'),
+        new ROM('one.b', '34567890'),
+        new ROM('one.c', '5678abcd'),
+      ],
+    });
+    const gameTwo = new Game({
+      name: 'game two',
+      rom: [
+        new ROM('two.a', 'abcdef90'),
+        new ROM('two.b', '09876543'),
+      ],
+      release: [
+        new Release('game two (USA)', 'USA', 'EN'),
+      ],
+    });
 
     const datWithOneGame = new DAT(new Header(), [gameOne]);
     const datWithDuplicateGames = new DAT(new Header(), [gameOne, gameOne]);
@@ -127,11 +137,14 @@ describe('CandidateGenerator', () => {
   });
 
   it('should return some results with some matching files', async () => {
-    const gameOne = new Game('one', [new ROM('one.rom', '12345678')]);
-    const gameTwo = new Game('two', [
-      new ROM('two.a', 'abcdef90'),
-      new ROM('two.b', '09876543'),
-    ]);
+    const gameOne = new Game({ name: 'one', rom: [new ROM('one.rom', '12345678')] });
+    const gameTwo = new Game({
+      name: 'two',
+      rom: [
+        new ROM('two.a', 'abcdef90'),
+        new ROM('two.b', '09876543'),
+      ],
+    });
 
     const datWithOneGame = new DAT(new Header(), [gameOne]);
     const datWithDuplicateGames = new DAT(new Header(), [gameOne, gameOne]);
@@ -166,11 +179,14 @@ describe('CandidateGenerator', () => {
   });
 
   it('should return all results with all matching files', async () => {
-    const gameOne = new Game('one', [new ROM('one.rom', '12345678')]);
-    const gameTwo = new Game('two', [
-      new ROM('two.a', 'abcdef90'),
-      new ROM('two.b', '09876543'),
-    ]);
+    const gameOne = new Game({ name: 'one', rom: [new ROM('one.rom', '12345678')] });
+    const gameTwo = new Game({
+      name: 'two',
+      rom: [
+        new ROM('two.a', 'abcdef90'),
+        new ROM('two.b', '09876543'),
+      ],
+    });
 
     const datWithGameOne = new DAT(new Header(), [gameOne]);
     const datWithGameOneTwice = new DAT(new Header(), [gameOne, gameOne]);

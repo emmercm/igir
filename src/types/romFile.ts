@@ -1,8 +1,7 @@
 import _7z from '7zip-min';
 import AdmZip, { IZipEntry } from 'adm-zip';
 import crc32 from 'crc/crc32';
-import fs from 'fs';
-import fsPromises from 'node:fs/promises';
+import fs, { promises as fsPromises } from 'fs';
 import os from 'os';
 import path from 'path';
 

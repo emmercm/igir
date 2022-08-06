@@ -1,14 +1,14 @@
 import Parent from '../types/logiqx/parent.js';
 import Options from '../types/options.js';
 import ReleaseCandidate from '../types/releaseCandidate.js';
-import ProgressBarCLI from './progressBar/progressBarCLI.js';
+import ProgressBar from './progressBar/progressBar.js';
 
 export default class CandidateFilter {
   private readonly options: Options;
 
-  private readonly progressBar: ProgressBarCLI;
+  private readonly progressBar: ProgressBar;
 
-  constructor(options: Options, progressBar: ProgressBarCLI) {
+  constructor(options: Options, progressBar: ProgressBar) {
     this.options = options;
     this.progressBar = progressBar;
   }

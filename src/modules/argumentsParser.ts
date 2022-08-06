@@ -7,6 +7,7 @@ import ReleaseCandidate from '../types/releaseCandidate.js';
 
 export default class ArgumentsParser {
   private static getLastValue(arr: unknown[]): unknown {
+    // TODO(cemmer): this isn't doing anything for booleans, is it helping anything?
     if (Array.isArray(arr) && arr.length) {
       return arr[arr.length - 1];
     }
@@ -310,13 +311,19 @@ export default class ArgumentsParser {
         throw new Error(msg);
       });
 
-    const yargsArgv = yargsParser
-      .strictOptions(true)
-      .parse(argv, {}, (err, parsedArgv, output) => {
-        if (output) {
-          Logger.colorizeYargs(output);
-        }
-      });
+    let yargsArgv;
+    try {
+      yargsArgv = yargsParser
+        .strictOptions(true)
+        .parse(argv, {}, (err, parsedArgv, output) => {
+          if (output) {
+            Logger.colorizeYargs(output);
+          }
+        });
+    } catch (e) {
+      Logger.error(`Failed to parse arguments: ${e}`);
+      throw e;
+    }
 
     return Options.fromObject(yargsArgv);
   }

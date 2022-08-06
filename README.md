@@ -3,7 +3,10 @@
 A ROM collection manager designed to make one game, one rom (1G1R) sets.
 
 [![npm](https://badgen.net/npm/v/igir?icon=npm)](https://www.npmjs.com/package/igir)
-[![GitHub](https://badgen.net/badge/emmercm/metalsmith-vega/purple?icon=github)](https://github.com/emmercm/metalsmith-vega)
+[![GitHub](https://badgen.net/badge/emmercm/igir/purple?icon=github)](https://github.com/emmercm/igir)
+
+[![Test Coverage](https://badgen.net/codecov/c/github/emmercm/igir/main?icon=codecov)](https://codecov.io/gh/emmercm/igir)
+[![Maintainability](https://badgen.net/codeclimate/maintainability/emmercm/igir?icon=codeclimate)](https://codeclimate.com/github/emmercm/igir/maintainability)
 
 ## Description
 
@@ -12,7 +15,7 @@ A ROM collection manager designed to make one game, one rom (1G1R) sets.
 With ![Node.js](https://badgen.net/npm/node/igir):
 
 ```shell
-npx igir [options]
+npx igir [commands..] [options]
 ```
 
 ## Usage

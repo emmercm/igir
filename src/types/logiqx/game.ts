@@ -28,63 +28,98 @@ import Sample from './sample.js';
  *
  * @see http://www.logiqx.com/DatFAQs/CMPro.php
  */
-export default class Game {
+export interface GameProps {
+  readonly name?: string,
+  readonly description?: string,
+  readonly sourceFile?: string,
+  readonly bios?: 'yes' | 'no',
+  readonly cloneOf?: string,
+  readonly romOf?: string,
+  readonly sampleOf?: string,
+  readonly board?: string,
+  readonly rebuildTo?: string,
+  readonly year?: string,
+  readonly manufacturer?: string,
+  readonly release?: Release | Release[],
+  readonly biosSet?: BIOSSet | BIOSSet[],
+  readonly rom?: ROM | ROM[],
+  readonly disk?: Disk | Disk[],
+  readonly sample?: Sample | Sample[],
+  readonly archive?: Archive | Archive[],
+}
+
+export default class Game implements GameProps {
   @Expose({ name: 'name' })
-  private readonly name!: string;
+  readonly name!: string;
 
   @Expose({ name: 'description' })
-  private readonly description!: string;
+  readonly description!: string;
 
   @Expose({ name: 'sourcefile' })
-  private readonly sourceFile?: string;
+  readonly sourceFile?: string;
 
   @Expose({ name: 'isbios' })
-  private readonly isBiosStr: 'yes' | 'no' = 'no';
+  readonly bios: 'yes' | 'no' = 'no';
 
   @Expose({ name: 'cloneof' })
-  private readonly cloneOf?: string;
+  readonly cloneOf?: string;
 
   @Expose({ name: 'romof' })
-  private readonly romOf?: string;
+  readonly romOf?: string;
 
   @Expose({ name: 'sampleof' })
-  private readonly sampleOf?: string;
+  readonly sampleOf?: string;
 
   @Expose({ name: 'board' })
-  private readonly board?: string;
+  readonly board?: string;
 
   @Expose({ name: 'rebuildto' })
-  private readonly rebuildTo?: string;
+  readonly rebuildTo?: string;
 
   @Expose({ name: 'year' })
-  private readonly year?: string;
+  readonly year?: string;
 
   @Expose({ name: 'manufacturer' })
-  private readonly manufacturer?: string;
+  readonly manufacturer?: string;
 
   @Type(() => Release)
-  private readonly release!: Release | Release[];
+  readonly release!: Release | Release[];
 
   @Type(() => BIOSSet)
-  private readonly biosSet!: BIOSSet | BIOSSet[];
+  readonly biosSet!: BIOSSet | BIOSSet[];
 
   @Type(() => ROM)
-  private readonly rom!: ROM | ROM[];
+  readonly rom!: ROM | ROM[];
 
   @Type(() => Disk)
-  private readonly disk!: Disk | Disk[];
+  readonly disk!: Disk | Disk[];
 
   @Type(() => Sample)
-  private readonly sample!: Sample | Sample[];
+  readonly sample!: Sample | Sample[];
 
   @Type(() => Archive)
-  private readonly archive!: Archive | Archive[];
+  readonly archive!: Archive | Archive[];
 
-  constructor(name: string, roms: ROM[], releases?: Release[]) {
-    this.name = name;
-    this.description = name;
-    this.rom = roms;
-    this.release = releases || [];
+  constructor(options?: GameProps) {
+    if (options) {
+      this.name = options.name || '';
+      this.description = options.description || '';
+      this.sourceFile = options.sourceFile;
+      this.bios = options.bios || this.bios;
+      this.cloneOf = options.cloneOf;
+      this.romOf = options.romOf;
+      this.sampleOf = options.sampleOf;
+      this.board = options.board;
+      this.rebuildTo = options.rebuildTo;
+      this.year = options.year;
+      this.manufacturer = options.manufacturer;
+      this.release = options.release || [];
+      this.biosSet = options.biosSet || [];
+      this.rom = options.rom || [];
+      this.disk = options.disk || [];
+      this.sample = options.sample || [];
+      this.archive = options.archive || [];
+    }
   }
 
   // Property getters
@@ -94,7 +129,7 @@ export default class Game {
   }
 
   isBios(): boolean {
-    return this.isBiosStr === 'yes' || this.name.indexOf('[BIOS]') !== -1;
+    return this.bios === 'yes' || this.name.indexOf('[BIOS]') !== -1;
   }
 
   getReleases(): Release[] {

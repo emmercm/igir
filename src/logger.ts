@@ -1,5 +1,3 @@
-/* eslint-disable no-console */
-
 import chalk from 'chalk';
 import figlet from 'figlet';
 
@@ -8,15 +6,19 @@ import Constants from './constants.js';
 export default class Logger {
   static readonly stream = process.stdout;
 
-  static print = (message: unknown = '') => Logger.stream.write(`${message}\n`);
+  static print = (message: unknown = '') => {
+    if (process.env.NODE_ENV !== 'test') {
+      this.stream.write(`${message}\n`);
+    }
+  };
 
   static warnFormatter = (message: string): string => chalk.yellow('WARN: ') + message;
 
-  static warn = (message: unknown = '') => this.print(Logger.warnFormatter(String(message).toString()));
+  static warn = (message: unknown = '') => this.print(this.warnFormatter(String(message).toString()));
 
   static errorFormatter = (message: string) => chalk.red('ERROR: ') + message;
 
-  static error = (message: unknown = '') => this.print(Logger.errorFormatter(String(message).toString()));
+  static error = (message: unknown = '') => this.print(this.errorFormatter(String(message).toString()));
 
   static header(text: string) {
     const logo = figlet.textSync(text.toUpperCase(), {

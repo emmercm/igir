@@ -15,6 +15,9 @@ if [[ ! -x "$(command -v node)" ]]; then
 fi
 node --version &> /dev/null || exit 1
 
+# Follow the linter
+npm run lint:fix
+
 # Make sure igir is symlinked
 npm link
 

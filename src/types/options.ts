@@ -2,82 +2,117 @@ import 'reflect-metadata';
 
 import { Expose, plainToInstance } from 'class-transformer';
 import fg from 'fast-glob';
-import fs from 'fs';
+import fs, { promises as fsPromises } from 'fs';
 import { isNotJunk } from 'junk';
 import micromatch from 'micromatch';
-import fsPromises from 'node:fs/promises';
 import os from 'os';
 import path from 'path';
 
 import DAT from './logiqx/dat.js';
 
-export default class Options {
+export interface OptionsProps {
+  readonly commands?: string[],
+  readonly dat?: string[],
+  readonly input?: string[],
+  readonly inputExclude?: string[],
+  readonly output?: string,
+  readonly dirMirror?: boolean,
+  readonly dirDatName?: boolean,
+  readonly dirLetter?: boolean,
+  readonly single?: boolean,
+  readonly zipExclude?: string,
+  readonly overwrite?: boolean,
+  readonly preferGood?: boolean,
+  readonly preferLanguage?: string[],
+  readonly preferRegion?: string[],
+  readonly preferRevisionNewer?: boolean,
+  readonly preferRevisionOlder?: boolean,
+  readonly preferRetail?: boolean,
+  readonly preferParent?: boolean,
+  readonly languageFilter?: string[],
+  readonly regionFilter?: string[],
+  readonly onlyBios?: boolean,
+  readonly noBios?: boolean,
+  readonly noUnlicensed?: boolean,
+  readonly onlyRetail?: boolean,
+  readonly noDemo?: boolean,
+  readonly noBeta?: boolean,
+  readonly noSample?: boolean,
+  readonly noPrototype?: boolean,
+  readonly noTestRoms?: boolean,
+  readonly noAftermarket?: boolean,
+  readonly noHomebrew?: boolean,
+  readonly noBad?: boolean,
+  readonly help?: boolean,
+}
+
+export default class Options implements OptionsProps {
   @Expose({ name: '_' })
-  private readonly commands: string[] = [];
+  readonly commands: string[] = [];
 
-  private readonly dat: string[] = [];
+  readonly dat: string[] = [];
 
-  private readonly input: string[] = [];
+  readonly input: string[] = [];
 
-  private readonly inputExclude: string[] = [];
+  readonly inputExclude: string[] = [];
 
-  private readonly output!: string;
+  readonly output!: string;
 
-  private readonly dirMirror!: boolean;
+  readonly dirMirror!: boolean;
 
-  private readonly dirDatName!: boolean;
+  readonly dirDatName!: boolean;
 
-  private readonly dirLetter!: boolean;
+  readonly dirLetter!: boolean;
 
-  private readonly single = false;
+  readonly single = false;
 
-  private readonly zipExclude!: string;
+  readonly zipExclude!: string;
 
-  private readonly overwrite!: boolean;
+  readonly overwrite!: boolean;
 
-  private readonly preferGood!: boolean;
+  readonly preferGood!: boolean;
 
-  private readonly preferLanguage: string[] = [];
+  readonly preferLanguage: string[] = [];
 
-  private readonly preferRegion: string[] = [];
+  readonly preferRegion: string[] = [];
 
-  private readonly preferRevisionNewer!: boolean;
+  readonly preferRevisionNewer!: boolean;
 
-  private readonly preferRevisionOlder!: boolean;
+  readonly preferRevisionOlder!: boolean;
 
-  private readonly preferRetail!: boolean;
+  readonly preferRetail!: boolean;
 
-  private readonly preferParent!: boolean;
+  readonly preferParent!: boolean;
 
-  private readonly languageFilter: string[] = [];
+  readonly languageFilter: string[] = [];
 
-  private readonly regionFilter: string[] = [];
+  readonly regionFilter: string[] = [];
 
-  private readonly onlyBios!: boolean;
+  readonly onlyBios!: boolean;
 
-  private readonly noBios!: boolean;
+  readonly noBios!: boolean;
 
-  private readonly noUnlicensed!: boolean;
+  readonly noUnlicensed!: boolean;
 
-  private readonly onlyRetail!: boolean;
+  readonly onlyRetail!: boolean;
 
-  private readonly noDemo!: boolean;
+  readonly noDemo!: boolean;
 
-  private readonly noBeta!: boolean;
+  readonly noBeta!: boolean;
 
-  private readonly noSample!: boolean;
+  readonly noSample!: boolean;
 
-  private readonly noPrototype!: boolean;
+  readonly noPrototype!: boolean;
 
-  private readonly noTestRoms!: boolean;
+  readonly noTestRoms!: boolean;
 
-  private readonly noAftermarket!: boolean;
+  readonly noAftermarket!: boolean;
 
-  private readonly noHomebrew!: boolean;
+  readonly noHomebrew!: boolean;
 
-  private readonly noBad!: boolean;
+  readonly noBad!: boolean;
 
-  private readonly help!: boolean;
+  readonly help!: boolean;
 
   private tempDir!: string;
 
@@ -268,15 +303,21 @@ export default class Options {
   }
 
   getPreferLanguages(): string[] {
-    return this.preferLanguage.map((lang) => lang.toUpperCase());
+    return this.preferLanguage
+      .map((lang) => lang.toUpperCase())
+      .filter((language, idx, languages) => languages.indexOf(language) === idx);
   }
 
   getPreferRegions(): string[] {
-    return this.preferRegion.map((region) => region.toUpperCase());
+    return this.preferRegion
+      .map((region) => region.toUpperCase())
+      .filter((region, idx, regions) => regions.indexOf(region) === idx);
   }
 
   getLanguageFilter(): string[] {
-    return this.languageFilter.map((lang) => lang.toUpperCase());
+    return this.languageFilter
+      .map((lang) => lang.toUpperCase())
+      .filter((language, idx, languages) => languages.indexOf(language) === idx);
   }
 
   getPreferRevisionNewer(): boolean {
@@ -296,7 +337,9 @@ export default class Options {
   }
 
   getRegionFilter(): string[] {
-    return this.regionFilter.map((region) => region.toUpperCase());
+    return this.regionFilter
+      .map((region) => region.toUpperCase())
+      .filter((region, idx, regions) => regions.indexOf(region) === idx);
   }
 
   getOnlyBios(): boolean {

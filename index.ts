@@ -16,6 +16,7 @@ import ArgumentsParser from './src/modules/argumentsParser.js';
 
     await main(options);
   } catch (e) {
+    Logger.error(`exiting because of ${e}`); // TODO(cemmer): remove
     process.exit(1);
   }
 })();

@@ -1,4 +1,4 @@
-import fsPromises from 'node:fs/promises';
+import { promises as fsPromises } from 'fs';
 import xml2js from 'xml2js';
 
 import DAT from '../types/logiqx/dat.js';

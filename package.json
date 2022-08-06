@@ -11,7 +11,8 @@
   "author": "Christian Emmer",
   "files": [
     "build",
-    "!**/test/**"
+    "!**/test/**",
+    "!**/*.test.*"
   ],
   "main": "build/index.js",
   "bin": {
