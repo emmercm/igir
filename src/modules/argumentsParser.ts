@@ -147,6 +147,7 @@ export default class ArgumentsParser {
         description: 'Prefer good ROM dumps over bad',
         type: 'boolean',
         coerce: this.getLastValue,
+        implies: 'single',
       })
       .option('prefer-language', {
         group: groupPriority,
@@ -155,6 +156,7 @@ export default class ArgumentsParser {
         type: 'string',
         coerce: (val: string) => val.split(','),
         requiresArg: true,
+        implies: 'single',
       })
       .option('prefer-region', {
         group: groupPriority,
@@ -163,6 +165,7 @@ export default class ArgumentsParser {
         type: 'string',
         coerce: (val: string) => val.split(','),
         requiresArg: true,
+        implies: 'single',
       })
       .option('prefer-revision-newer', {
         group: groupPriority,
@@ -170,6 +173,7 @@ export default class ArgumentsParser {
         type: 'boolean',
         coerce: this.getLastValue,
         conflicts: ['prefer-revision-older'],
+        implies: 'single',
       })
       .option('prefer-revision-older', {
         group: groupPriority,
@@ -177,18 +181,21 @@ export default class ArgumentsParser {
         type: 'boolean',
         coerce: this.getLastValue,
         conflicts: ['prefer-revision-newer'],
+        implies: 'single',
       })
       .option('prefer-retail', {
         group: groupPriority,
         description: 'Prefer retail releases (see --only-retail)',
         type: 'boolean',
         coerce: this.getLastValue,
+        implies: 'single',
       })
       .option('prefer-parent', {
         group: groupPriority,
         description: 'Prefer parent ROMs over clones (requires parent-clone DAT files)',
         type: 'boolean',
         coerce: this.getLastValue,
+        implies: 'single',
       })
 
       .option('language-filter', {

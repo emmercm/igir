@@ -13,9 +13,9 @@ export default class Parent {
 
   private releaseRegionsToGames!: Map<string, Game>;
 
-  constructor(name: string, parent: Game) {
+  constructor(name: string, games: Game | Game[]) {
     this.name = name;
-    this.games = [parent];
+    this.games = Array.isArray(games) ? games : [games];
     this.refreshRegionsToRoms();
   }
 

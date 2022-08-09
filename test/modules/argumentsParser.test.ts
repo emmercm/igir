@@ -83,20 +83,46 @@ describe('options', () => {
     expect(options.getHelp()).toBeFalsy();
   });
 
-  it('should parse "dat"', () => {
-    // TODO(cemmer)
+  it('should parse "dat"', async () => {
+    const src = await ArgumentsParser.parse(['test', '--input', '/dev/null', '--dat', './src']).scanDatFiles();
+    const test = await ArgumentsParser.parse(['test', '--input', '/dev/null', '--dat', './test']).scanDatFiles();
+    const both = await ArgumentsParser.parse(['test', '--input', '/dev/null', '--dat', './src', '--dat', './test']).scanDatFiles();
+    expect(src.length).toBeGreaterThan(0);
+    expect(test.length).toBeGreaterThan(0);
+    expect(both.length).toEqual(src.length + test.length);
+    /** Note: glob patterns are tested in {@link DATScanner} */
   });
 
-  it('should parse "input"', () => {
-    // TODO(cemmer)
+  it('should parse "input"', async () => {
+    const src = await ArgumentsParser.parse(['copy', '--input', './src', '--output', '/dev/null']).scanInputFilesWithoutExclusions();
+    const test = await ArgumentsParser.parse(['copy', '--input', './test', '--output', '/dev/null']).scanInputFilesWithoutExclusions();
+    const both = await ArgumentsParser.parse(['copy', '--input', './src', '--input', './test', '--output', '/dev/null']).scanInputFilesWithoutExclusions();
+    expect(src.length).toBeGreaterThan(0);
+    expect(test.length).toBeGreaterThan(0);
+    expect(both.length).toEqual(src.length + test.length);
+    /** Note: glob patterns are tested in {@link ROMScanner} */
   });
 
-  it('should parse "input-exclude"', () => {
-    // TODO(cemmer)
+  it('should parse "input-exclude"', async () => {
+    expect((await ArgumentsParser.parse(['copy', '--input', './src', '--output', '/dev/null']).scanInputFilesWithoutExclusions()).length).toBeGreaterThan(0);
+    expect((await ArgumentsParser.parse(['copy', '--input', './src', '--output', '/dev/null', '-I', '/dev/null']).scanInputFilesWithoutExclusions()).length).toBeGreaterThan(0);
+    expect((await ArgumentsParser.parse(['copy', '--input', './src', '--output', '/dev/null', '-I', './src']).scanInputFilesWithoutExclusions()).length).toEqual(0);
+    expect((await ArgumentsParser.parse(['copy', '--input', './src', '--output', '/dev/null', '--input-exclude', './src']).scanInputFilesWithoutExclusions()).length).toEqual(0);
   });
 
   it('should parse "output"', () => {
-    // TODO(cemmer)
+    // Test requirements per command
+    expect(() => ArgumentsParser.parse(['test'])).toThrow(/missing required argument/i);
+    expect(() => ArgumentsParser.parse(['copy', '--input', '/dev/null'])).toThrow(/missing required option/i);
+    expect(() => ArgumentsParser.parse(['move', '--input', '/dev/null'])).toThrow(/missing required option/i);
+    expect(() => ArgumentsParser.parse(['zip', '--input', '/dev/null'])).toThrow(/missing required option/i);
+    expect(() => ArgumentsParser.parse(['clean', '--input', '/dev/null'])).toThrow(/missing required option/i);
+    expect(ArgumentsParser.parse(['test', '--input', '/dev/null']).getOutput()).toBeUndefined();
+    expect(ArgumentsParser.parse(['report', '--input', '/dev/null']).getOutput()).toBeUndefined();
+    // Test value
+    expect(ArgumentsParser.parse(['clean', '--input', '/dev/null', '-o', 'foo']).getOutput()).toEqual('foo');
+    expect(ArgumentsParser.parse(['clean', '--input', '/dev/null', '--output', 'foo']).getOutput()).toEqual('foo');
+    expect(ArgumentsParser.parse(['clean', '--input', '/dev/null', '--output', 'foo', '--output', 'bar']).getOutput()).toEqual('bar');
   });
 
   it('should parse "dir-mirror"', () => {
@@ -138,7 +164,12 @@ describe('options', () => {
   });
 
   it('should parse "zip-exclude"', () => {
-    // TODO(cemmer)
+    const filePath = 'roms/test.rom';
+    expect(ArgumentsParser.parse(['zip', '--input', '/dev/null', '--output', '/dev/null']).shouldZip(filePath)).toBeTruthy();
+    expect(ArgumentsParser.parse(['zip', '--input', '/dev/null', '--output', '/dev/null', '-Z', '/dev/null']).shouldZip(filePath)).toBeTruthy();
+    expect(ArgumentsParser.parse(['zip', '--input', '/dev/null', '--output', '/dev/null', '-Z', '**/*']).shouldZip(filePath)).toBeFalsy();
+    expect(ArgumentsParser.parse(['zip', '--input', '/dev/null', '--output', '/dev/null', '-Z', '**/*.rom']).shouldZip(filePath)).toBeFalsy();
+    expect(ArgumentsParser.parse(['zip', '--input', '/dev/null', '--output', '/dev/null', '--zip-exclude', '**/*.rom']).shouldZip(filePath)).toBeFalsy();
   });
 
   it('should parse "overwrite"', () => {

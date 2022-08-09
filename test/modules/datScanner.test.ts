@@ -8,7 +8,7 @@ function createDatScanner(dat: string[]): DATScanner {
   return new DATScanner(Options.fromObject({ dat }), new ProgressBarFake());
 }
 
-describe('DatScanner', () => {
+describe('DATScanner', () => {
   it('should throw on nonexistent paths', async () => {
     await expect(createDatScanner(['/completely/invalid/path']).scan()).rejects.toThrow(/path doesn't exist/i);
     await expect(createDatScanner(['/completely/invalid/path', os.devNull]).scan()).rejects.toThrow(/path doesn't exist/i);

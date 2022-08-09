@@ -18,34 +18,81 @@ async function expectFilteredCandidates(
 ) {
   const filteredParentsToCandidates = await buildCandidateFilter(options)
     .filter(new Map(parentsToCandidates));
-  expect(filteredParentsToCandidates.size).toEqual(parentsToCandidates.length);
+  expect(filteredParentsToCandidates.size).toEqual(parentsToCandidates.length); // sanity check
 
   const totalCandidates = [...filteredParentsToCandidates.values()]
     .reduce((sum, candidate) => sum + candidate.length, 0);
   expect(totalCandidates).toEqual(expectedSize);
 }
 
-function buildParentToReleaseCandidates(
-  name: string,
-  regions: string[],
-  languages: string[],
+async function expectPreferredCandidates(
+  options: OptionsProps,
+  parentsToCandidates: [Parent, ReleaseCandidate[]][],
+  expectedNames: string[],
+) {
+  const filteredParentsToCandidates = await buildCandidateFilter(options)
+    .filter(new Map(parentsToCandidates));
+  expect(filteredParentsToCandidates.size).toEqual(parentsToCandidates.length); // sanity check
+
+  const totalCandidates = [...filteredParentsToCandidates.values()]
+    .reduce((sum, candidate) => sum + candidate.length, 0);
+  expect(totalCandidates).toEqual(parentsToCandidates.length); // sanity check
+
+  const candidateNames = [...filteredParentsToCandidates.values()]
+    .flatMap((candidate) => candidate.map((c) => c.getName()));
+  expect(candidateNames).toHaveLength(parentsToCandidates.length); // sanity check
+  for (let i = 0; i < expectedNames.length; i += 1) {
+    const expectedName = expectedNames[i];
+    expect(candidateNames).toContain(expectedName);
+  }
+}
+
+function buildReleaseCandidatesWithRegionLanguage(
+  names: string | string[],
+  regions: string | string[],
+  languages: string | string[],
   gameOptions?: GameProps,
 ): [Parent, ReleaseCandidate[]] {
-  const releases = regions
-    .flatMap((region) => languages.map((language) => new Release(name, region, language)));
+  const namesArr = Array.isArray(names) ? names : [names];
+  const regionsArr = Array.isArray(regions) ? regions : [regions];
+  const languagesArr = Array.isArray(languages) ? languages : [languages];
 
-  const rom = new ROM(`${name}.rom`, '00000000');
-  const game = new Game({
-    name, rom: [rom], release: releases, ...gameOptions,
-  });
+  // Every different name+language combo is a different ROM+Game
+  const games: Game[] = [];
+  const releaseCandidates: ReleaseCandidate[] = [];
+  for (let i = 0; i < namesArr.length; i += 1) {
+    const name = namesArr[i];
 
-  const parent = new Parent(name, game);
-  const releaseCandidates = releases.map((release) => new ReleaseCandidate(
-    game,
-    release,
-    game.getRoms(),
-    game.getRoms().map((gameRom) => gameRom.toRomFile()),
-  ));
+    for (let j = 0; j < languagesArr.length; j += 1) {
+      const language = languagesArr[j];
+
+      // Every region is a different Release+ReleaseCandidate
+      const releases: Release[] = [];
+      for (let k = 0; k < regionsArr.length; k += 1) {
+        const region = regionsArr[k];
+        releases.push(new Release(`${name} (${region}) (${language})`, region, language));
+      }
+
+      const rom = new ROM(`${name}.rom`, '00000000');
+      const game = new Game({
+        name, rom: [rom], release: releases, ...gameOptions,
+      });
+      games.push(game);
+
+      /** {@see CandidateGenerator} */
+      for (let k = 0; k < releases.length; k += 1) {
+        const release = releases[k];
+        releaseCandidates.push(new ReleaseCandidate(
+          game,
+          release,
+          game.getRoms(),
+          game.getRoms().map((gameRom) => gameRom.toRomFile()),
+        ));
+      }
+    }
+  }
+
+  const parent = new Parent(namesArr[0], games);
   return [parent, releaseCandidates];
 }
 
@@ -54,12 +101,12 @@ describe('preFilter', () => {
     await expectFilteredCandidates({}, [], 0);
 
     await expectFilteredCandidates({}, [
-      buildParentToReleaseCandidates('one', ['USA'], ['EN']),
+      buildReleaseCandidatesWithRegionLanguage('one', 'USA', 'EN'),
     ], 1);
 
     await expectFilteredCandidates({}, [
-      buildParentToReleaseCandidates('one', ['USA'], ['EN']),
-      buildParentToReleaseCandidates('two', ['JPN'], ['JP']),
+      buildReleaseCandidatesWithRegionLanguage('one', 'USA', 'EN'),
+      buildReleaseCandidatesWithRegionLanguage('two', 'JPN', 'JP'),
     ], 2);
   });
 
@@ -82,15 +129,15 @@ describe('preFilter', () => {
       await expectFilteredCandidates({
         languageFilter: ['ZH'],
       }, [
-        buildParentToReleaseCandidates('one', ['USA'], ['EN']),
+        buildReleaseCandidatesWithRegionLanguage('one', 'USA', 'EN'),
       ], 0);
 
       await expectFilteredCandidates({
         languageFilter: ['ZH'],
       }, [
-        buildParentToReleaseCandidates('one', ['USA'], ['EN']),
-        buildParentToReleaseCandidates('two', ['JPN'], ['JP']),
-        buildParentToReleaseCandidates('three', ['EUR'], ['DE', 'IT', 'EN']),
+        buildReleaseCandidatesWithRegionLanguage('one', 'USA', 'EN'),
+        buildReleaseCandidatesWithRegionLanguage('two', 'JPN', 'JP'),
+        buildReleaseCandidatesWithRegionLanguage('three', 'EUR', ['DE', 'IT', 'EN']),
       ], 0);
     });
 
@@ -98,17 +145,17 @@ describe('preFilter', () => {
       await expectFilteredCandidates({
         languageFilter: ['ZH'],
       }, [
-        buildParentToReleaseCandidates('one', ['USA'], ['EN']),
-        buildParentToReleaseCandidates('two', ['CHN'], ['ZH']),
-        buildParentToReleaseCandidates('three', ['EUR'], ['DE', 'IT', 'EN']),
+        buildReleaseCandidatesWithRegionLanguage('one', 'USA', 'EN'),
+        buildReleaseCandidatesWithRegionLanguage('two', 'CHN', 'ZH'),
+        buildReleaseCandidatesWithRegionLanguage('three', 'EUR', ['DE', 'IT', 'EN']),
       ], 1);
 
       await expectFilteredCandidates({
         languageFilter: ['EN', 'ZH'],
       }, [
-        buildParentToReleaseCandidates('one', ['USA'], ['EN']),
-        buildParentToReleaseCandidates('two', ['JPN'], ['JP']),
-        buildParentToReleaseCandidates('three', ['ASI'], ['JP', 'KO', 'ZH']),
+        buildReleaseCandidatesWithRegionLanguage('one', 'USA', 'EN'),
+        buildReleaseCandidatesWithRegionLanguage('two', 'JPN', 'JP'),
+        buildReleaseCandidatesWithRegionLanguage('three', 'ASI', ['JP', 'KO', 'ZH']),
       ], 2);
     });
 
@@ -116,22 +163,22 @@ describe('preFilter', () => {
       await expectFilteredCandidates({
         languageFilter: ['EN'],
       }, [
-        buildParentToReleaseCandidates('one', ['USA'], ['EN']),
+        buildReleaseCandidatesWithRegionLanguage('one', 'USA', 'EN'),
       ], 1);
 
       await expectFilteredCandidates({
         languageFilter: ['EN', 'ZH'],
       }, [
-        buildParentToReleaseCandidates('one', ['USA'], ['EN']),
-        buildParentToReleaseCandidates('two', ['CHN'], ['ZH']),
+        buildReleaseCandidatesWithRegionLanguage('one', 'USA', 'EN'),
+        buildReleaseCandidatesWithRegionLanguage('two', 'CHN', 'ZH'),
       ], 2);
 
       await expectFilteredCandidates({
         languageFilter: ['EN', 'JP'],
       }, [
-        buildParentToReleaseCandidates('one', ['USA'], ['EN']),
-        buildParentToReleaseCandidates('two', ['JPN'], ['JP']),
-        buildParentToReleaseCandidates('three', ['ASI'], ['JP', 'KO', 'ZH']),
+        buildReleaseCandidatesWithRegionLanguage('one', 'USA', 'EN'),
+        buildReleaseCandidatesWithRegionLanguage('two', 'JPN', 'JP'),
+        buildReleaseCandidatesWithRegionLanguage('three', 'ASI', ['JP', 'KO', 'ZH']),
       ], 3);
     });
   });
@@ -141,15 +188,15 @@ describe('preFilter', () => {
       await expectFilteredCandidates({
         regionFilter: ['EUR'],
       }, [
-        buildParentToReleaseCandidates('one', ['USA'], ['EN']),
+        buildReleaseCandidatesWithRegionLanguage('one', 'USA', 'EN'),
       ], 0);
 
       await expectFilteredCandidates({
         regionFilter: ['CHN'],
       }, [
-        buildParentToReleaseCandidates('one', ['USA', 'CAN'], ['EN']),
-        buildParentToReleaseCandidates('two', ['JPN'], ['JP']),
-        buildParentToReleaseCandidates('three', ['EUR'], ['DE', 'IT', 'EN']),
+        buildReleaseCandidatesWithRegionLanguage('one', ['USA', 'CAN'], 'EN'),
+        buildReleaseCandidatesWithRegionLanguage('two', 'JPN', 'JP'),
+        buildReleaseCandidatesWithRegionLanguage('three', 'EUR', ['DE', 'IT', 'EN']),
       ], 0);
     });
 
@@ -157,17 +204,17 @@ describe('preFilter', () => {
       await expectFilteredCandidates({
         regionFilter: ['USA'],
       }, [
-        buildParentToReleaseCandidates('one', ['USA'], ['EN']),
-        buildParentToReleaseCandidates('two', ['CHN'], ['ZH']),
-        buildParentToReleaseCandidates('three', ['EUR'], ['DE', 'IT', 'EN']),
+        buildReleaseCandidatesWithRegionLanguage('one', 'USA', 'EN'),
+        buildReleaseCandidatesWithRegionLanguage('two', 'CHN', 'ZH'),
+        buildReleaseCandidatesWithRegionLanguage('three', 'EUR', ['DE', 'IT', 'EN']),
       ], 1);
 
       await expectFilteredCandidates({
         regionFilter: ['CAN', 'ASI'],
       }, [
-        buildParentToReleaseCandidates('one', ['USA', 'CAN'], ['EN']),
-        buildParentToReleaseCandidates('two', ['JPN'], ['JP']),
-        buildParentToReleaseCandidates('three', ['ASI'], ['JP', 'KO', 'ZH']),
+        buildReleaseCandidatesWithRegionLanguage('one', ['USA', 'CAN'], 'EN'),
+        buildReleaseCandidatesWithRegionLanguage('two', 'JPN', 'JP'),
+        buildReleaseCandidatesWithRegionLanguage('three', 'ASI', ['JP', 'KO', 'ZH']),
       ], 4);
     });
 
@@ -175,22 +222,22 @@ describe('preFilter', () => {
       await expectFilteredCandidates({
         regionFilter: ['USA'],
       }, [
-        buildParentToReleaseCandidates('one', ['USA'], ['EN']),
+        buildReleaseCandidatesWithRegionLanguage('one', 'USA', 'EN'),
       ], 1);
 
       await expectFilteredCandidates({
         regionFilter: ['USA', 'CHN'],
       }, [
-        buildParentToReleaseCandidates('one', ['USA'], ['EN']),
-        buildParentToReleaseCandidates('two', ['CHN'], ['ZH']),
+        buildReleaseCandidatesWithRegionLanguage('one', 'USA', 'EN'),
+        buildReleaseCandidatesWithRegionLanguage('two', 'CHN', 'ZH'),
       ], 2);
 
       await expectFilteredCandidates({
         regionFilter: ['USA', 'JPN'],
       }, [
-        buildParentToReleaseCandidates('one', ['USA'], ['EN']),
-        buildParentToReleaseCandidates('two', ['JPN'], ['JP']),
-        buildParentToReleaseCandidates('three', ['ASI', 'JPN'], ['JP', 'KO', 'ZH']),
+        buildReleaseCandidatesWithRegionLanguage('one', 'USA', 'EN'),
+        buildReleaseCandidatesWithRegionLanguage('two', 'JPN', 'JP'),
+        buildReleaseCandidatesWithRegionLanguage('three', ['ASI', 'JPN'], ['JP', 'KO', 'ZH']),
       ], 5);
     });
   });
@@ -198,31 +245,31 @@ describe('preFilter', () => {
   describe('only bios', () => {
     it('should return all candidates when option is false', async () => {
       await expectFilteredCandidates({ onlyBios: false }, [
-        buildParentToReleaseCandidates('one', ['USA'], ['EN'], { bios: 'no' }),
-        buildParentToReleaseCandidates('two', ['USA'], ['EN'], { bios: 'yes' }),
-        buildParentToReleaseCandidates('three', ['USA'], ['EN'], { bios: 'no' }),
+        buildReleaseCandidatesWithRegionLanguage('one', 'USA', 'EN', { bios: 'no' }),
+        buildReleaseCandidatesWithRegionLanguage('two', 'USA', 'EN', { bios: 'yes' }),
+        buildReleaseCandidatesWithRegionLanguage('three', 'USA', 'EN', { bios: 'no' }),
       ], 3);
     });
 
     it('should return no candidates if none matching', async () => {
       await expectFilteredCandidates({ onlyBios: true }, [
-        buildParentToReleaseCandidates('one', ['USA'], ['EN'], { bios: 'no' }),
-        buildParentToReleaseCandidates('two', ['USA'], ['EN'], { bios: 'no' }),
+        buildReleaseCandidatesWithRegionLanguage('one', 'USA', 'EN', { bios: 'no' }),
+        buildReleaseCandidatesWithRegionLanguage('two', 'USA', 'EN', { bios: 'no' }),
       ], 0);
     });
 
     it('should return some candidates if some matching', async () => {
       await expectFilteredCandidates({ onlyBios: true }, [
-        buildParentToReleaseCandidates('one', ['USA'], ['EN'], { bios: 'no' }),
-        buildParentToReleaseCandidates('two', ['USA'], ['EN'], { bios: 'yes' }),
-        buildParentToReleaseCandidates('three', ['USA'], ['EN'], { bios: 'no' }),
+        buildReleaseCandidatesWithRegionLanguage('one', 'USA', 'EN', { bios: 'no' }),
+        buildReleaseCandidatesWithRegionLanguage('two', 'USA', 'EN', { bios: 'yes' }),
+        buildReleaseCandidatesWithRegionLanguage('three', 'USA', 'EN', { bios: 'no' }),
       ], 1);
     });
 
     it('should return all candidates if all matching', async () => {
       await expectFilteredCandidates({ onlyBios: true }, [
-        buildParentToReleaseCandidates('one', ['USA'], ['EN'], { bios: 'yes' }),
-        buildParentToReleaseCandidates('two', ['USA'], ['EN'], { bios: 'yes' }),
+        buildReleaseCandidatesWithRegionLanguage('one', 'USA', 'EN', { bios: 'yes' }),
+        buildReleaseCandidatesWithRegionLanguage('two', 'USA', 'EN', { bios: 'yes' }),
       ], 2);
     });
   });
@@ -230,31 +277,31 @@ describe('preFilter', () => {
   describe('no bios', () => {
     it('should return all candidates when option is false', async () => {
       await expectFilteredCandidates({ noBios: false }, [
-        buildParentToReleaseCandidates('one', ['USA'], ['EN'], { bios: 'no' }),
-        buildParentToReleaseCandidates('two', ['USA'], ['EN'], { bios: 'yes' }),
-        buildParentToReleaseCandidates('three', ['USA'], ['EN'], { bios: 'no' }),
+        buildReleaseCandidatesWithRegionLanguage('one', 'USA', 'EN', { bios: 'no' }),
+        buildReleaseCandidatesWithRegionLanguage('two', 'USA', 'EN', { bios: 'yes' }),
+        buildReleaseCandidatesWithRegionLanguage('three', 'USA', 'EN', { bios: 'no' }),
       ], 3);
     });
 
     it('should return no candidates if none matching', async () => {
       await expectFilteredCandidates({ noBios: true }, [
-        buildParentToReleaseCandidates('one', ['USA'], ['EN'], { bios: 'yes' }),
-        buildParentToReleaseCandidates('two', ['USA'], ['EN'], { bios: 'yes' }),
+        buildReleaseCandidatesWithRegionLanguage('one', 'USA', 'EN', { bios: 'yes' }),
+        buildReleaseCandidatesWithRegionLanguage('two', 'USA', 'EN', { bios: 'yes' }),
       ], 0);
     });
 
     it('should return some candidates if some matching', async () => {
       await expectFilteredCandidates({ noBios: true }, [
-        buildParentToReleaseCandidates('one', ['USA'], ['EN'], { bios: 'no' }),
-        buildParentToReleaseCandidates('two', ['USA'], ['EN'], { bios: 'yes' }),
-        buildParentToReleaseCandidates('three', ['USA'], ['EN'], { bios: 'no' }),
+        buildReleaseCandidatesWithRegionLanguage('one', 'USA', 'EN', { bios: 'no' }),
+        buildReleaseCandidatesWithRegionLanguage('two', 'USA', 'EN', { bios: 'yes' }),
+        buildReleaseCandidatesWithRegionLanguage('three', 'USA', 'EN', { bios: 'no' }),
       ], 2);
     });
 
     it('should return all candidates if all matching', async () => {
       await expectFilteredCandidates({ noBios: true }, [
-        buildParentToReleaseCandidates('one', ['USA'], ['EN'], { bios: 'no' }),
-        buildParentToReleaseCandidates('two', ['USA'], ['EN'], { bios: 'no' }),
+        buildReleaseCandidatesWithRegionLanguage('one', 'USA', 'EN', { bios: 'no' }),
+        buildReleaseCandidatesWithRegionLanguage('two', 'USA', 'EN', { bios: 'no' }),
       ], 2);
     });
   });
@@ -262,31 +309,31 @@ describe('preFilter', () => {
   describe('no unlicensed', () => {
     it('should return all candidates when option is false', async () => {
       await expectFilteredCandidates({ noUnlicensed: false }, [
-        buildParentToReleaseCandidates('one', ['USA'], ['EN']),
-        buildParentToReleaseCandidates('two (Unl)', ['USA'], ['EN']),
-        buildParentToReleaseCandidates('three (Unlicensed)', ['USA'], ['EN']),
+        buildReleaseCandidatesWithRegionLanguage('one', 'USA', 'EN'),
+        buildReleaseCandidatesWithRegionLanguage('two (Unl)', 'USA', 'EN'),
+        buildReleaseCandidatesWithRegionLanguage('three (Unlicensed)', 'USA', 'EN'),
       ], 3);
     });
 
     it('should return no candidates if none matching', async () => {
       await expectFilteredCandidates({ noUnlicensed: true }, [
-        buildParentToReleaseCandidates('one (Unl)', ['USA'], ['EN']),
-        buildParentToReleaseCandidates('two (Unlicensed)', ['USA'], ['EN']),
+        buildReleaseCandidatesWithRegionLanguage('one (Unl)', 'USA', 'EN'),
+        buildReleaseCandidatesWithRegionLanguage('two (Unlicensed)', 'USA', 'EN'),
       ], 0);
     });
 
     it('should return some candidates if some matching', async () => {
       await expectFilteredCandidates({ noUnlicensed: true }, [
-        buildParentToReleaseCandidates('one (Unlicensed)', ['USA'], ['EN']),
-        buildParentToReleaseCandidates('two', ['USA'], ['EN']),
-        buildParentToReleaseCandidates('three (Unl)', ['USA'], ['EN']),
+        buildReleaseCandidatesWithRegionLanguage('one (Unlicensed)', 'USA', 'EN'),
+        buildReleaseCandidatesWithRegionLanguage('two', 'USA', 'EN'),
+        buildReleaseCandidatesWithRegionLanguage('three (Unl)', 'USA', 'EN'),
       ], 1);
     });
 
     it('should return all candidates if all matching', async () => {
       await expectFilteredCandidates({ noUnlicensed: true }, [
-        buildParentToReleaseCandidates('one', ['USA'], ['EN']),
-        buildParentToReleaseCandidates('two', ['USA'], ['EN']),
+        buildReleaseCandidatesWithRegionLanguage('one', 'USA', 'EN'),
+        buildReleaseCandidatesWithRegionLanguage('two', 'USA', 'EN'),
       ], 2);
     });
   });
@@ -294,50 +341,50 @@ describe('preFilter', () => {
   describe('only retail', () => {
     it('should return all candidates when option is false', async () => {
       await expectFilteredCandidates({ onlyRetail: false }, [
-        buildParentToReleaseCandidates('one', ['USA'], ['EN']),
-        buildParentToReleaseCandidates('two (Aftermarket)', ['USA'], ['EN']),
-        buildParentToReleaseCandidates('three [b]', ['USA'], ['EN']),
-        buildParentToReleaseCandidates('four (Beta)', ['USA'], ['EN']),
-        buildParentToReleaseCandidates('five (Demo)', ['USA'], ['EN']),
-        buildParentToReleaseCandidates('six (Homebrew)', ['USA'], ['EN']),
-        buildParentToReleaseCandidates('seven (Proto)', ['USA'], ['EN']),
-        buildParentToReleaseCandidates('eight (Sample)', ['USA'], ['EN']),
-        buildParentToReleaseCandidates('nine (Test)', ['USA'], ['EN']),
+        buildReleaseCandidatesWithRegionLanguage('one', 'USA', 'EN'),
+        buildReleaseCandidatesWithRegionLanguage('two (Aftermarket)', 'USA', 'EN'),
+        buildReleaseCandidatesWithRegionLanguage('three [b]', 'USA', 'EN'),
+        buildReleaseCandidatesWithRegionLanguage('four (Beta)', 'USA', 'EN'),
+        buildReleaseCandidatesWithRegionLanguage('five (Demo)', 'USA', 'EN'),
+        buildReleaseCandidatesWithRegionLanguage('six (Homebrew)', 'USA', 'EN'),
+        buildReleaseCandidatesWithRegionLanguage('seven (Proto)', 'USA', 'EN'),
+        buildReleaseCandidatesWithRegionLanguage('eight (Sample)', 'USA', 'EN'),
+        buildReleaseCandidatesWithRegionLanguage('nine (Test)', 'USA', 'EN'),
       ], 9);
     });
 
     it('should return no candidates if none matching', async () => {
       await expectFilteredCandidates({ onlyRetail: true }, [
-        buildParentToReleaseCandidates('two (Aftermarket)', ['USA'], ['EN']),
-        buildParentToReleaseCandidates('three [b]', ['USA'], ['EN']),
-        buildParentToReleaseCandidates('four (Beta)', ['USA'], ['EN']),
-        buildParentToReleaseCandidates('five (Demo)', ['USA'], ['EN']),
-        buildParentToReleaseCandidates('six (Homebrew)', ['USA'], ['EN']),
-        buildParentToReleaseCandidates('seven (Proto)', ['USA'], ['EN']),
-        buildParentToReleaseCandidates('eight (Sample)', ['USA'], ['EN']),
-        buildParentToReleaseCandidates('nine (Test)', ['USA'], ['EN']),
+        buildReleaseCandidatesWithRegionLanguage('two (Aftermarket)', 'USA', 'EN'),
+        buildReleaseCandidatesWithRegionLanguage('three [b]', 'USA', 'EN'),
+        buildReleaseCandidatesWithRegionLanguage('four (Beta)', 'USA', 'EN'),
+        buildReleaseCandidatesWithRegionLanguage('five (Demo)', 'USA', 'EN'),
+        buildReleaseCandidatesWithRegionLanguage('six (Homebrew)', 'USA', 'EN'),
+        buildReleaseCandidatesWithRegionLanguage('seven (Proto)', 'USA', 'EN'),
+        buildReleaseCandidatesWithRegionLanguage('eight (Sample)', 'USA', 'EN'),
+        buildReleaseCandidatesWithRegionLanguage('nine (Test)', 'USA', 'EN'),
       ], 0);
     });
 
     it('should return some candidates if some matching', async () => {
       await expectFilteredCandidates({ onlyRetail: true }, [
-        buildParentToReleaseCandidates('one', ['USA'], ['EN']),
-        buildParentToReleaseCandidates('two (Aftermarket)', ['USA'], ['EN']),
-        buildParentToReleaseCandidates('three [b]', ['USA'], ['EN']),
-        buildParentToReleaseCandidates('four (Beta)', ['USA'], ['EN']),
-        buildParentToReleaseCandidates('five (Demo)', ['USA'], ['EN']),
-        buildParentToReleaseCandidates('six (Homebrew)', ['USA'], ['EN']),
-        buildParentToReleaseCandidates('seven (Proto)', ['USA'], ['EN']),
-        buildParentToReleaseCandidates('eight (Sample)', ['USA'], ['EN']),
-        buildParentToReleaseCandidates('nine (Test)', ['USA'], ['EN']),
-        buildParentToReleaseCandidates('ten', ['USA'], ['EN']),
+        buildReleaseCandidatesWithRegionLanguage('one', 'USA', 'EN'),
+        buildReleaseCandidatesWithRegionLanguage('two (Aftermarket)', 'USA', 'EN'),
+        buildReleaseCandidatesWithRegionLanguage('three [b]', 'USA', 'EN'),
+        buildReleaseCandidatesWithRegionLanguage('four (Beta)', 'USA', 'EN'),
+        buildReleaseCandidatesWithRegionLanguage('five (Demo)', 'USA', 'EN'),
+        buildReleaseCandidatesWithRegionLanguage('six (Homebrew)', 'USA', 'EN'),
+        buildReleaseCandidatesWithRegionLanguage('seven (Proto)', 'USA', 'EN'),
+        buildReleaseCandidatesWithRegionLanguage('eight (Sample)', 'USA', 'EN'),
+        buildReleaseCandidatesWithRegionLanguage('nine (Test)', 'USA', 'EN'),
+        buildReleaseCandidatesWithRegionLanguage('ten', 'USA', 'EN'),
       ], 2);
     });
 
     it('should return all candidates if all matching', async () => {
       await expectFilteredCandidates({ onlyRetail: true }, [
-        buildParentToReleaseCandidates('one', ['USA'], ['EN']),
-        buildParentToReleaseCandidates('two', ['USA'], ['EN']),
+        buildReleaseCandidatesWithRegionLanguage('one', 'USA', 'EN'),
+        buildReleaseCandidatesWithRegionLanguage('two', 'USA', 'EN'),
       ], 2);
     });
   });
@@ -345,31 +392,31 @@ describe('preFilter', () => {
   describe('no demo', () => {
     it('should return all candidates when option is false', async () => {
       await expectFilteredCandidates({ noDemo: false }, [
-        buildParentToReleaseCandidates('one', ['USA'], ['EN']),
-        buildParentToReleaseCandidates('two (Demo)', ['USA'], ['EN']),
-        buildParentToReleaseCandidates('three (Demo 2000)', ['USA'], ['EN']),
+        buildReleaseCandidatesWithRegionLanguage('one', 'USA', 'EN'),
+        buildReleaseCandidatesWithRegionLanguage('two (Demo)', 'USA', 'EN'),
+        buildReleaseCandidatesWithRegionLanguage('three (Demo 2000)', 'USA', 'EN'),
       ], 3);
     });
 
     it('should return no candidates if none matching', async () => {
       await expectFilteredCandidates({ noDemo: true }, [
-        buildParentToReleaseCandidates('one (Demo)', ['USA'], ['EN']),
-        buildParentToReleaseCandidates('two (Demo 2000)', ['USA'], ['EN']),
+        buildReleaseCandidatesWithRegionLanguage('one (Demo)', 'USA', 'EN'),
+        buildReleaseCandidatesWithRegionLanguage('two (Demo 2000)', 'USA', 'EN'),
       ], 0);
     });
 
     it('should return some candidates if some matching', async () => {
       await expectFilteredCandidates({ noDemo: true }, [
-        buildParentToReleaseCandidates('one (Demo 2000)', ['USA'], ['EN']),
-        buildParentToReleaseCandidates('two', ['USA'], ['EN']),
-        buildParentToReleaseCandidates('three (Demo)', ['USA'], ['EN']),
+        buildReleaseCandidatesWithRegionLanguage('one (Demo 2000)', 'USA', 'EN'),
+        buildReleaseCandidatesWithRegionLanguage('two', 'USA', 'EN'),
+        buildReleaseCandidatesWithRegionLanguage('three (Demo)', 'USA', 'EN'),
       ], 1);
     });
 
     it('should return all candidates if all matching', async () => {
       await expectFilteredCandidates({ noDemo: true }, [
-        buildParentToReleaseCandidates('one', ['USA'], ['EN']),
-        buildParentToReleaseCandidates('two', ['USA'], ['EN']),
+        buildReleaseCandidatesWithRegionLanguage('one', 'USA', 'EN'),
+        buildReleaseCandidatesWithRegionLanguage('two', 'USA', 'EN'),
       ], 2);
     });
   });
@@ -377,31 +424,31 @@ describe('preFilter', () => {
   describe('no beta', () => {
     it('should return all candidates when option is false', async () => {
       await expectFilteredCandidates({ noBeta: false }, [
-        buildParentToReleaseCandidates('one', ['USA'], ['EN']),
-        buildParentToReleaseCandidates('two (Beta)', ['USA'], ['EN']),
-        buildParentToReleaseCandidates('three (Beta v1.0)', ['USA'], ['EN']),
+        buildReleaseCandidatesWithRegionLanguage('one', 'USA', 'EN'),
+        buildReleaseCandidatesWithRegionLanguage('two (Beta)', 'USA', 'EN'),
+        buildReleaseCandidatesWithRegionLanguage('three (Beta v1.0)', 'USA', 'EN'),
       ], 3);
     });
 
     it('should return no candidates if none matching', async () => {
       await expectFilteredCandidates({ noBeta: true }, [
-        buildParentToReleaseCandidates('one (Beta)', ['USA'], ['EN']),
-        buildParentToReleaseCandidates('two (Beta v1.0)', ['USA'], ['EN']),
+        buildReleaseCandidatesWithRegionLanguage('one (Beta)', 'USA', 'EN'),
+        buildReleaseCandidatesWithRegionLanguage('two (Beta v1.0)', 'USA', 'EN'),
       ], 0);
     });
 
     it('should return some candidates if some matching', async () => {
       await expectFilteredCandidates({ noBeta: true }, [
-        buildParentToReleaseCandidates('one (Beta v1.0)', ['USA'], ['EN']),
-        buildParentToReleaseCandidates('two', ['USA'], ['EN']),
-        buildParentToReleaseCandidates('three (Beta)', ['USA'], ['EN']),
+        buildReleaseCandidatesWithRegionLanguage('one (Beta v1.0)', 'USA', 'EN'),
+        buildReleaseCandidatesWithRegionLanguage('two', 'USA', 'EN'),
+        buildReleaseCandidatesWithRegionLanguage('three (Beta)', 'USA', 'EN'),
       ], 1);
     });
 
     it('should return all candidates if all matching', async () => {
       await expectFilteredCandidates({ noBeta: true }, [
-        buildParentToReleaseCandidates('one', ['USA'], ['EN']),
-        buildParentToReleaseCandidates('two', ['USA'], ['EN']),
+        buildReleaseCandidatesWithRegionLanguage('one', 'USA', 'EN'),
+        buildReleaseCandidatesWithRegionLanguage('two', 'USA', 'EN'),
       ], 2);
     });
   });
@@ -409,31 +456,31 @@ describe('preFilter', () => {
   describe('no sample', () => {
     it('should return all candidates when option is false', async () => {
       await expectFilteredCandidates({ noSample: false }, [
-        buildParentToReleaseCandidates('one', ['USA'], ['EN']),
-        buildParentToReleaseCandidates('two (Sample)', ['USA'], ['EN']),
-        buildParentToReleaseCandidates('three (Sample Copy)', ['USA'], ['EN']),
+        buildReleaseCandidatesWithRegionLanguage('one', 'USA', 'EN'),
+        buildReleaseCandidatesWithRegionLanguage('two (Sample)', 'USA', 'EN'),
+        buildReleaseCandidatesWithRegionLanguage('three (Sample Copy)', 'USA', 'EN'),
       ], 3);
     });
 
     it('should return no candidates if none matching', async () => {
       await expectFilteredCandidates({ noSample: true }, [
-        buildParentToReleaseCandidates('one (Sample)', ['USA'], ['EN']),
-        buildParentToReleaseCandidates('two (Sample Copy)', ['USA'], ['EN']),
+        buildReleaseCandidatesWithRegionLanguage('one (Sample)', 'USA', 'EN'),
+        buildReleaseCandidatesWithRegionLanguage('two (Sample Copy)', 'USA', 'EN'),
       ], 0);
     });
 
     it('should return some candidates if some matching', async () => {
       await expectFilteredCandidates({ noSample: true }, [
-        buildParentToReleaseCandidates('one (Sample Copy)', ['USA'], ['EN']),
-        buildParentToReleaseCandidates('two', ['USA'], ['EN']),
-        buildParentToReleaseCandidates('three (Sample)', ['USA'], ['EN']),
+        buildReleaseCandidatesWithRegionLanguage('one (Sample Copy)', 'USA', 'EN'),
+        buildReleaseCandidatesWithRegionLanguage('two', 'USA', 'EN'),
+        buildReleaseCandidatesWithRegionLanguage('three (Sample)', 'USA', 'EN'),
       ], 1);
     });
 
     it('should return all candidates if all matching', async () => {
       await expectFilteredCandidates({ noSample: true }, [
-        buildParentToReleaseCandidates('one', ['USA'], ['EN']),
-        buildParentToReleaseCandidates('two', ['USA'], ['EN']),
+        buildReleaseCandidatesWithRegionLanguage('one', 'USA', 'EN'),
+        buildReleaseCandidatesWithRegionLanguage('two', 'USA', 'EN'),
       ], 2);
     });
   });
@@ -441,31 +488,31 @@ describe('preFilter', () => {
   describe('no prototype', () => {
     it('should return all candidates when option is false', async () => {
       await expectFilteredCandidates({ noPrototype: false }, [
-        buildParentToReleaseCandidates('one', ['USA'], ['EN']),
-        buildParentToReleaseCandidates('two (Proto)', ['USA'], ['EN']),
-        buildParentToReleaseCandidates('three (Prototype)', ['USA'], ['EN']),
+        buildReleaseCandidatesWithRegionLanguage('one', 'USA', 'EN'),
+        buildReleaseCandidatesWithRegionLanguage('two (Proto)', 'USA', 'EN'),
+        buildReleaseCandidatesWithRegionLanguage('three (Prototype)', 'USA', 'EN'),
       ], 3);
     });
 
     it('should return no candidates if none matching', async () => {
       await expectFilteredCandidates({ noPrototype: true }, [
-        buildParentToReleaseCandidates('one (Proto)', ['USA'], ['EN']),
-        buildParentToReleaseCandidates('two (Prototype)', ['USA'], ['EN']),
+        buildReleaseCandidatesWithRegionLanguage('one (Proto)', 'USA', 'EN'),
+        buildReleaseCandidatesWithRegionLanguage('two (Prototype)', 'USA', 'EN'),
       ], 0);
     });
 
     it('should return some candidates if some matching', async () => {
       await expectFilteredCandidates({ noPrototype: true }, [
-        buildParentToReleaseCandidates('one (Prototype)', ['USA'], ['EN']),
-        buildParentToReleaseCandidates('two', ['USA'], ['EN']),
-        buildParentToReleaseCandidates('three (Proto)', ['USA'], ['EN']),
+        buildReleaseCandidatesWithRegionLanguage('one (Prototype)', 'USA', 'EN'),
+        buildReleaseCandidatesWithRegionLanguage('two', 'USA', 'EN'),
+        buildReleaseCandidatesWithRegionLanguage('three (Proto)', 'USA', 'EN'),
       ], 1);
     });
 
     it('should return all candidates if all matching', async () => {
       await expectFilteredCandidates({ noPrototype: true }, [
-        buildParentToReleaseCandidates('one', ['USA'], ['EN']),
-        buildParentToReleaseCandidates('two', ['USA'], ['EN']),
+        buildReleaseCandidatesWithRegionLanguage('one', 'USA', 'EN'),
+        buildReleaseCandidatesWithRegionLanguage('two', 'USA', 'EN'),
       ], 2);
     });
   });
@@ -473,31 +520,31 @@ describe('preFilter', () => {
   describe('no test roms', () => {
     it('should return all candidates when option is false', async () => {
       await expectFilteredCandidates({ noTestRoms: false }, [
-        buildParentToReleaseCandidates('one', ['USA'], ['EN']),
-        buildParentToReleaseCandidates('two (Test)', ['USA'], ['EN']),
-        buildParentToReleaseCandidates('three (Test Copy)', ['USA'], ['EN']),
+        buildReleaseCandidatesWithRegionLanguage('one', 'USA', 'EN'),
+        buildReleaseCandidatesWithRegionLanguage('two (Test)', 'USA', 'EN'),
+        buildReleaseCandidatesWithRegionLanguage('three (Test Copy)', 'USA', 'EN'),
       ], 3);
     });
 
     it('should return no candidates if none matching', async () => {
       await expectFilteredCandidates({ noTestRoms: true }, [
-        buildParentToReleaseCandidates('one (Test)', ['USA'], ['EN']),
-        buildParentToReleaseCandidates('two (Test Copy)', ['USA'], ['EN']),
+        buildReleaseCandidatesWithRegionLanguage('one (Test)', 'USA', 'EN'),
+        buildReleaseCandidatesWithRegionLanguage('two (Test Copy)', 'USA', 'EN'),
       ], 0);
     });
 
     it('should return some candidates if some matching', async () => {
       await expectFilteredCandidates({ noTestRoms: true }, [
-        buildParentToReleaseCandidates('one (Test Copy)', ['USA'], ['EN']),
-        buildParentToReleaseCandidates('two', ['USA'], ['EN']),
-        buildParentToReleaseCandidates('three (Test)', ['USA'], ['EN']),
+        buildReleaseCandidatesWithRegionLanguage('one (Test Copy)', 'USA', 'EN'),
+        buildReleaseCandidatesWithRegionLanguage('two', 'USA', 'EN'),
+        buildReleaseCandidatesWithRegionLanguage('three (Test)', 'USA', 'EN'),
       ], 1);
     });
 
     it('should return all candidates if all matching', async () => {
       await expectFilteredCandidates({ noTestRoms: true }, [
-        buildParentToReleaseCandidates('one', ['USA'], ['EN']),
-        buildParentToReleaseCandidates('two', ['USA'], ['EN']),
+        buildReleaseCandidatesWithRegionLanguage('one', 'USA', 'EN'),
+        buildReleaseCandidatesWithRegionLanguage('two', 'USA', 'EN'),
       ], 2);
     });
   });
@@ -505,31 +552,31 @@ describe('preFilter', () => {
   describe('no aftermarket', () => {
     it('should return all candidates when option is false', async () => {
       await expectFilteredCandidates({ noAftermarket: false }, [
-        buildParentToReleaseCandidates('one', ['USA'], ['EN']),
-        buildParentToReleaseCandidates('two (Aftermarket)', ['USA'], ['EN']),
-        buildParentToReleaseCandidates('three (Aftermarket Version)', ['USA'], ['EN']),
+        buildReleaseCandidatesWithRegionLanguage('one', 'USA', 'EN'),
+        buildReleaseCandidatesWithRegionLanguage('two (Aftermarket)', 'USA', 'EN'),
+        buildReleaseCandidatesWithRegionLanguage('three (Aftermarket Version)', 'USA', 'EN'),
       ], 3);
     });
 
     it('should return no candidates if none matching', async () => {
       await expectFilteredCandidates({ noAftermarket: true }, [
-        buildParentToReleaseCandidates('one (Aftermarket)', ['USA'], ['EN']),
-        buildParentToReleaseCandidates('two (Aftermarket Version)', ['USA'], ['EN']),
+        buildReleaseCandidatesWithRegionLanguage('one (Aftermarket)', 'USA', 'EN'),
+        buildReleaseCandidatesWithRegionLanguage('two (Aftermarket Version)', 'USA', 'EN'),
       ], 0);
     });
 
     it('should return some candidates if some matching', async () => {
       await expectFilteredCandidates({ noAftermarket: true }, [
-        buildParentToReleaseCandidates('one (Aftermarket Version)', ['USA'], ['EN']),
-        buildParentToReleaseCandidates('two', ['USA'], ['EN']),
-        buildParentToReleaseCandidates('three (Aftermarket)', ['USA'], ['EN']),
+        buildReleaseCandidatesWithRegionLanguage('one (Aftermarket Version)', 'USA', 'EN'),
+        buildReleaseCandidatesWithRegionLanguage('two', 'USA', 'EN'),
+        buildReleaseCandidatesWithRegionLanguage('three (Aftermarket)', 'USA', 'EN'),
       ], 1);
     });
 
     it('should return all candidates if all matching', async () => {
       await expectFilteredCandidates({ noAftermarket: true }, [
-        buildParentToReleaseCandidates('one', ['USA'], ['EN']),
-        buildParentToReleaseCandidates('two', ['USA'], ['EN']),
+        buildReleaseCandidatesWithRegionLanguage('one', 'USA', 'EN'),
+        buildReleaseCandidatesWithRegionLanguage('two', 'USA', 'EN'),
       ], 2);
     });
   });
@@ -537,31 +584,31 @@ describe('preFilter', () => {
   describe('no homebrew', () => {
     it('should return all candidates when option is false', async () => {
       await expectFilteredCandidates({ noHomebrew: false }, [
-        buildParentToReleaseCandidates('one', ['USA'], ['EN']),
-        buildParentToReleaseCandidates('two (Homebrew)', ['USA'], ['EN']),
-        buildParentToReleaseCandidates('three (Homebrew Edition)', ['USA'], ['EN']),
+        buildReleaseCandidatesWithRegionLanguage('one', 'USA', 'EN'),
+        buildReleaseCandidatesWithRegionLanguage('two (Homebrew)', 'USA', 'EN'),
+        buildReleaseCandidatesWithRegionLanguage('three (Homebrew Edition)', 'USA', 'EN'),
       ], 3);
     });
 
     it('should return no candidates if none matching', async () => {
       await expectFilteredCandidates({ noHomebrew: true }, [
-        buildParentToReleaseCandidates('one (Homebrew)', ['USA'], ['EN']),
-        buildParentToReleaseCandidates('two (Homebrew Edition)', ['USA'], ['EN']),
+        buildReleaseCandidatesWithRegionLanguage('one (Homebrew)', 'USA', 'EN'),
+        buildReleaseCandidatesWithRegionLanguage('two (Homebrew Edition)', 'USA', 'EN'),
       ], 0);
     });
 
     it('should return some candidates if some matching', async () => {
       await expectFilteredCandidates({ noHomebrew: true }, [
-        buildParentToReleaseCandidates('one (Homebrew Edition)', ['USA'], ['EN']),
-        buildParentToReleaseCandidates('two', ['USA'], ['EN']),
-        buildParentToReleaseCandidates('three (Homebrew)', ['USA'], ['EN']),
+        buildReleaseCandidatesWithRegionLanguage('one (Homebrew Edition)', 'USA', 'EN'),
+        buildReleaseCandidatesWithRegionLanguage('two', 'USA', 'EN'),
+        buildReleaseCandidatesWithRegionLanguage('three (Homebrew)', 'USA', 'EN'),
       ], 1);
     });
 
     it('should return all candidates if all matching', async () => {
       await expectFilteredCandidates({ noHomebrew: true }, [
-        buildParentToReleaseCandidates('one', ['USA'], ['EN']),
-        buildParentToReleaseCandidates('two', ['USA'], ['EN']),
+        buildReleaseCandidatesWithRegionLanguage('one', 'USA', 'EN'),
+        buildReleaseCandidatesWithRegionLanguage('two', 'USA', 'EN'),
       ], 2);
     });
   });
@@ -569,85 +616,127 @@ describe('preFilter', () => {
   describe('no bad', () => {
     it('should return all candidates when option is false', async () => {
       await expectFilteredCandidates({ noBad: false }, [
-        buildParentToReleaseCandidates('one', ['USA'], ['EN']),
-        buildParentToReleaseCandidates('two [b]', ['USA'], ['EN']),
-        buildParentToReleaseCandidates('three [b]', ['USA'], ['EN']),
+        buildReleaseCandidatesWithRegionLanguage('one', 'USA', 'EN'),
+        buildReleaseCandidatesWithRegionLanguage('two [b]', 'USA', 'EN'),
+        buildReleaseCandidatesWithRegionLanguage('three [b]', 'USA', 'EN'),
       ], 3);
     });
 
     it('should return no candidates if none matching', async () => {
       await expectFilteredCandidates({ noBad: true }, [
-        buildParentToReleaseCandidates('one [b]', ['USA'], ['EN']),
-        buildParentToReleaseCandidates('two [b]', ['USA'], ['EN']),
+        buildReleaseCandidatesWithRegionLanguage('one [b]', 'USA', 'EN'),
+        buildReleaseCandidatesWithRegionLanguage('two [b]', 'USA', 'EN'),
       ], 0);
     });
 
     it('should return some candidates if some matching', async () => {
       await expectFilteredCandidates({ noBad: true }, [
-        buildParentToReleaseCandidates('one [b]', ['USA'], ['EN']),
-        buildParentToReleaseCandidates('two', ['USA'], ['EN']),
-        buildParentToReleaseCandidates('three [b]', ['USA'], ['EN']),
+        buildReleaseCandidatesWithRegionLanguage('one [b]', 'USA', 'EN'),
+        buildReleaseCandidatesWithRegionLanguage('two', 'USA', 'EN'),
+        buildReleaseCandidatesWithRegionLanguage('three [b]', 'USA', 'EN'),
       ], 1);
     });
 
     it('should return all candidates if all matching', async () => {
       await expectFilteredCandidates({ noBad: true }, [
-        buildParentToReleaseCandidates('one', ['USA'], ['EN']),
-        buildParentToReleaseCandidates('two', ['USA'], ['EN']),
+        buildReleaseCandidatesWithRegionLanguage('one', 'USA', 'EN'),
+        buildReleaseCandidatesWithRegionLanguage('two', 'USA', 'EN'),
       ], 2);
     });
   });
 });
 
 describe('sort', () => {
-  // TODO(cemmer)
+  describe('prefer good', () => {
+    it('should return the first candidate when option is false', async () => {
+      await expectPreferredCandidates({ preferGood: false, single: true }, [
+        buildReleaseCandidatesWithRegionLanguage(['one'], 'USA', 'EN'),
+        buildReleaseCandidatesWithRegionLanguage(['two', 'two [b]'], 'USA', 'EN'),
+        buildReleaseCandidatesWithRegionLanguage(['three [b]', 'three'], 'USA', 'EN'),
+      ], ['one (USA) (EN)', 'two (USA) (EN)', 'three [b] (USA) (EN)']);
+    });
 
-  describe('prefer good', () => {});
+    it('should return the first candidate when none matching', async () => {
+      await expectPreferredCandidates({ preferGood: true, single: true }, [
+        buildReleaseCandidatesWithRegionLanguage(['one'], 'USA', 'EN'),
+        buildReleaseCandidatesWithRegionLanguage(['two', 'two two'], 'USA', 'EN'),
+        buildReleaseCandidatesWithRegionLanguage(['three', 'three three'], 'USA', 'EN'),
+      ], ['one (USA) (EN)', 'two (USA) (EN)', 'three (USA) (EN)']);
+    });
 
-  describe('prefer languages', () => {});
+    it('should return the first matching candidate when some matching', async () => {
+      await expectPreferredCandidates({ preferGood: true, single: true }, [
+        buildReleaseCandidatesWithRegionLanguage(['one'], 'USA', 'EN'),
+        buildReleaseCandidatesWithRegionLanguage(['two', 'two [b]'], 'USA', 'EN'),
+        buildReleaseCandidatesWithRegionLanguage(['three [b]', 'three'], 'USA', 'EN'),
+      ], ['one (USA) (EN)', 'two (USA) (EN)', 'three (USA) (EN)']);
+    });
 
-  describe('prefer regions', () => {});
+    it('should return the first candidate when all matching', async () => {
+      await expectPreferredCandidates({ preferGood: true, single: true }, [
+        buildReleaseCandidatesWithRegionLanguage(['one [b]'], 'USA', 'EN'),
+        buildReleaseCandidatesWithRegionLanguage(['two [b]', 'two two [b]'], 'USA', 'EN'),
+        buildReleaseCandidatesWithRegionLanguage(['three [b]', 'three three [b]'], 'USA', 'EN'),
+      ], ['one [b] (USA) (EN)', 'two [b] (USA) (EN)', 'three [b] (USA) (EN)']);
+    });
+  });
 
-  describe('prefer revision newer', () => {});
+  describe('prefer languages', () => {
+    // TODO(cemmer)
+  });
 
-  describe('prefer revision older', () => {});
+  describe('prefer regions', () => {
+    // TODO(cemmer)
+  });
 
-  describe('prefer retail', () => {});
+  describe('prefer revision newer', () => {
+    // TODO(cemmer)
+  });
 
-  describe('prefer parent', () => {});
+  describe('prefer revision older', () => {
+    // TODO(cemmer)
+  });
+
+  describe('prefer retail', () => {
+    // TODO(cemmer)
+  });
+
+  describe('prefer parent', () => {
+    // TODO(cemmer)
+  });
 });
 
 describe('postFilter', () => {
   describe('single', () => {
     it('should return all candidates when option is false', async () => {
       await expectFilteredCandidates({ single: false }, [
-        buildParentToReleaseCandidates('one', ['USA'], ['EN']),
-        buildParentToReleaseCandidates('two', ['EUR'], ['DE', 'FR', 'IT']),
-        buildParentToReleaseCandidates('three', ['CHN', 'TAI'], ['ZH']),
+        buildReleaseCandidatesWithRegionLanguage('one', 'USA', 'EN'),
+        buildReleaseCandidatesWithRegionLanguage('two', 'EUR', ['DE', 'FR', 'IT']),
+        buildReleaseCandidatesWithRegionLanguage('three', ['CHN', 'TAI'], 'ZH'),
       ], 6);
     });
 
     it('should return all candidates with only single releases', async () => {
       await expectFilteredCandidates({ single: true }, [
-        buildParentToReleaseCandidates('one', ['USA'], ['EN']),
-        buildParentToReleaseCandidates('two', ['EUR'], ['DE']),
-        buildParentToReleaseCandidates('three', ['CHN'], ['ZH']),
+        buildReleaseCandidatesWithRegionLanguage('one', 'USA', 'EN'),
+        buildReleaseCandidatesWithRegionLanguage('two', 'EUR', 'DE'),
+        buildReleaseCandidatesWithRegionLanguage('three', 'CHN', 'ZH'),
       ], 3);
     });
 
     it('should return some candidates with mixed releases', async () => {
       await expectFilteredCandidates({ single: true }, [
-        buildParentToReleaseCandidates('one', ['USA'], ['EN']),
-        buildParentToReleaseCandidates('two', ['EUR'], ['DE', 'FR', 'IT']),
-        buildParentToReleaseCandidates('three', ['CHN', 'TAI'], ['ZH']),
+        buildReleaseCandidatesWithRegionLanguage('one', 'USA', 'EN'),
+        buildReleaseCandidatesWithRegionLanguage('two', 'EUR', ['DE', 'FR', 'IT']),
+        buildReleaseCandidatesWithRegionLanguage('three', ['CHN', 'TAI'], 'ZH'),
       ], 3);
     });
 
     it('should return some candidates with multiple releases', async () => {
       await expectFilteredCandidates({ single: true }, [
-        buildParentToReleaseCandidates('one', ['USA'], ['EN', 'ES']),
-        buildParentToReleaseCandidates('two', ['EUR'], ['DE', 'FR', 'IT']),
-        buildParentToReleaseCandidates('three', ['CHN', 'TAI'], ['ZH']),
+        buildReleaseCandidatesWithRegionLanguage('one', 'USA', ['EN', 'ES']),
+        buildReleaseCandidatesWithRegionLanguage('two', 'EUR', ['DE', 'FR', 'IT']),
+        buildReleaseCandidatesWithRegionLanguage('three', ['CHN', 'TAI'], 'ZH'),
       ], 3);
     });
   });
