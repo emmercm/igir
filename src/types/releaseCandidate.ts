@@ -107,7 +107,7 @@ export default class ReleaseCandidate {
   }
 
   getRevision(): number {
-    const matches = this.getName().match(/\(Rev\s*([0-9]+)\)/i);
+    const matches = this.getName().match(/\(Rev\s*([0-9.]+)\)/i);
     if (matches && matches?.length >= 2 && !Number.isNaN(matches[1])) {
       return Number(matches[1]);
     }

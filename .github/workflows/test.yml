@@ -21,7 +21,7 @@ jobs:
           node-version: ${{ matrix.node-version }}
       - run: npm ci
 
-      - run: ./node_modules/.bin/ts-node ./index.ts --help
+      # - run: ./node_modules/.bin/ts-node ./index.ts --help
 
       - run: npm run build
       - run: ./build/index.js --help
