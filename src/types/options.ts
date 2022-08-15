@@ -125,9 +125,16 @@ export default class Options implements OptionsProps {
   }
 
   private createTempDir(): Options {
-    this.tempDir = fs.mkdtempSync(os.tmpdir());
+    try {
+      this.tempDir = fs.mkdtempSync(os.tmpdir());
+    } catch (e) {
+      this.tempDir = fs.mkdtempSync(path.join(process.cwd(), 'tmp'));
+    }
     process.on('SIGINT', () => {
-      fs.rmSync(this.tempDir, { force: true, recursive: true });
+      fs.rmSync(this.tempDir, {
+        force: true,
+        recursive: true,
+      });
     });
     return this;
   }
