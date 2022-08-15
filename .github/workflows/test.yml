@@ -7,11 +7,14 @@ on:
 
 jobs:
   test:
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.os }}
 
     strategy:
       matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
         node-version: [12.x, 14.x, 16.x]
+    env:
+      OS: ${{ matrix.os }}
 
     steps:
       - uses: actions/checkout@v3
@@ -19,11 +22,19 @@ jobs:
         uses: actions/setup-node@v3
         with:
           node-version: ${{ matrix.node-version }}
+      - run: echo "NODE_VERSION=$(node --version)" >> $GITHUB_ENV
       - run: npm ci
 
-      # - run: ./node_modules/.bin/ts-node ./index.ts --help
+      - run: ./node_modules/.bin/ts-node ./index.ts --help
 
       - run: npm run build
       - run: ./build/index.js --help
 
       - run: npm test
+
+      - uses: codecov/codecov-action@v3
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          env_vars: OS,NODE_VERSION
+          fail_ci_if_error: true
+          verbose: true
