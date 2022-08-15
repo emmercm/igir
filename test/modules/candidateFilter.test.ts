@@ -1,5 +1,7 @@
 import CandidateFilter from '../../src/modules/candidateFilter.js';
+import DAT from '../../src/types/logiqx/dat.js';
 import Game, { GameProps } from '../../src/types/logiqx/game.js';
+import Header from '../../src/types/logiqx/header.js';
 import Parent from '../../src/types/logiqx/parent.js';
 import Release from '../../src/types/logiqx/release.js';
 import ROM from '../../src/types/logiqx/rom.js';
@@ -16,8 +18,10 @@ async function expectFilteredCandidates(
   parentsToCandidates: [Parent, ReleaseCandidate[]][],
   expectedSize: number,
 ) {
-  const filteredParentsToCandidates = await buildCandidateFilter(options)
-    .filter(new Map(parentsToCandidates));
+  const dat = new DAT(new Header(), []);
+
+  const [filteredParentsToCandidates] = await Promise.all([buildCandidateFilter(options)
+    .filter(dat, new Map(parentsToCandidates))]);
   expect(filteredParentsToCandidates.size).toEqual(parentsToCandidates.length); // sanity check
 
   const totalCandidates = [...filteredParentsToCandidates.values()]
@@ -30,8 +34,10 @@ async function expectPreferredCandidates(
   parentsToCandidates: [Parent, ReleaseCandidate[]][],
   expectedNames: string[],
 ) {
+  const dat = new DAT(new Header(), []);
+
   const filteredParentsToCandidates = await buildCandidateFilter(options)
-    .filter(new Map(parentsToCandidates));
+    .filter(dat, new Map(parentsToCandidates));
   // Assert CandidateFilter doesn't affect the number of parents
   expect(filteredParentsToCandidates.size).toEqual(parentsToCandidates.length);
 
@@ -57,11 +63,15 @@ function buildReleaseCandidatesWithRegionLanguage(
   names: string | string[],
   regions: string | string[],
   languages: string | string[],
-  gameOptions?: GameProps,
+  gameOptions?: GameProps | GameProps[],
 ): [Parent, ReleaseCandidate[]] {
   const namesArr = Array.isArray(names) ? names : [names];
   const regionsArr = Array.isArray(regions) ? regions : [regions];
   const languagesArr = Array.isArray(languages) ? languages : [languages];
+  let gameOptionsArr: GameProps[] = [];
+  if (gameOptions) {
+    gameOptionsArr = Array.isArray(gameOptions) ? gameOptions : [gameOptions];
+  }
 
   // Every different name+language combo is a different ROM+Game
   const games: Game[] = [];
@@ -81,7 +91,7 @@ function buildReleaseCandidatesWithRegionLanguage(
 
       const rom = new ROM(`${name}.rom`, '00000000');
       const game = new Game({
-        name, rom: [rom], release: releases, ...gameOptions,
+        name, rom: [rom], release: releases, ...gameOptionsArr[i],
       });
       games.push(game);
 
@@ -888,11 +898,43 @@ describe('sort', () => {
   });
 
   describe('prefer parent', () => {
-    // TODO(cemmer)
-    it('should return the first candidate when option is false', async () => {});
-    it('should return the first candidate when none matching', async () => {});
-    it('should return the first matching candidate when some matching', async () => {});
-    it('should return the first candidate when all matching', async () => {});
+    it('should return the first candidate when option is false', async () => {
+      await expectPreferredCandidates({ preferParent: false, single: true }, [
+        buildReleaseCandidatesWithRegionLanguage('one', 'USA', 'EN'),
+        buildReleaseCandidatesWithRegionLanguage(['two', 'two two'], 'USA', 'EN'),
+        buildReleaseCandidatesWithRegionLanguage('three', 'USA', 'EN', { cloneOf: 'zero' }),
+        buildReleaseCandidatesWithRegionLanguage(['four (Parent)', 'four (Clone)'], 'USA', 'EN', [{}, { cloneOf: 'zero' }]),
+        buildReleaseCandidatesWithRegionLanguage(['five (Clone)', 'five (Parent)'], 'USA', 'EN', [{ cloneOf: 'zero' }, {}]),
+        buildReleaseCandidatesWithRegionLanguage(['six (Clone 1)', 'six (Clone 2)'], 'USA', 'EN', [{ cloneOf: 'zero' }, { cloneOf: 'zero' }]),
+      ], ['one (USA) (EN)', 'two (USA) (EN)', 'three (USA) (EN)', 'four (Parent) (USA) (EN)', 'five (Clone) (USA) (EN)', 'six (Clone 1) (USA) (EN)']);
+    });
+
+    it('should return the first candidate when none matching', async () => {
+      await expectPreferredCandidates({ preferParent: true, single: true }, [
+        buildReleaseCandidatesWithRegionLanguage('one', 'USA', 'EN'),
+        buildReleaseCandidatesWithRegionLanguage(['two', 'two two'], 'USA', 'EN'),
+      ], ['one (USA) (EN)', 'two (USA) (EN)']);
+    });
+
+    it('should return the first matching candidate when some matching', async () => {
+      await expectPreferredCandidates({ preferParent: true, single: true }, [
+        buildReleaseCandidatesWithRegionLanguage('one', 'USA', 'EN'),
+        buildReleaseCandidatesWithRegionLanguage(['two', 'two two'], 'USA', 'EN'),
+        buildReleaseCandidatesWithRegionLanguage('three', 'USA', 'EN', { cloneOf: 'zero' }),
+        buildReleaseCandidatesWithRegionLanguage(['four (Parent)', 'four (Clone)'], 'USA', 'EN', [{}, { cloneOf: 'zero' }]),
+        buildReleaseCandidatesWithRegionLanguage(['five (Clone)', 'five (Parent)'], 'USA', 'EN', [{ cloneOf: 'zero' }, {}]),
+        buildReleaseCandidatesWithRegionLanguage(['six (Clone 1)', 'six (Clone 2)'], 'USA', 'EN', [{ cloneOf: 'zero' }, { cloneOf: 'zero' }]),
+      ], ['one (USA) (EN)', 'two (USA) (EN)', 'three (USA) (EN)', 'four (Parent) (USA) (EN)', 'five (Parent) (USA) (EN)', 'six (Clone 1) (USA) (EN)']);
+    });
+
+    it('should return the first candidate when all matching', async () => {
+      await expectPreferredCandidates({ preferParent: true, single: true }, [
+        buildReleaseCandidatesWithRegionLanguage('one', 'USA', 'EN', { cloneOf: 'zero' }),
+        buildReleaseCandidatesWithRegionLanguage(['two (Parent)', 'two (Clone)'], 'USA', 'EN', [{}, { cloneOf: 'zero' }]),
+        buildReleaseCandidatesWithRegionLanguage(['three (Clone)', 'three (Parent)'], 'USA', 'EN', [{ cloneOf: 'zero' }, {}]),
+        buildReleaseCandidatesWithRegionLanguage(['four (Clone 1)', 'four (Clone 2)'], 'USA', 'EN', [{ cloneOf: 'zero' }, { cloneOf: 'zero' }]),
+      ], ['one (USA) (EN)', 'two (Parent) (USA) (EN)', 'three (Parent) (USA) (EN)', 'four (Clone 1) (USA) (EN)']);
+    });
   });
 });
 

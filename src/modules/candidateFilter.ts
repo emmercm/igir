@@ -1,7 +1,8 @@
+import ProgressBar from '../console/progressBar.js';
+import DAT from '../types/logiqx/dat.js';
 import Parent from '../types/logiqx/parent.js';
 import Options from '../types/options.js';
 import ReleaseCandidate from '../types/releaseCandidate.js';
-import ProgressBar from './progressBar/progressBar.js';
 
 export default class CandidateFilter {
   private readonly options: Options;
@@ -14,8 +15,10 @@ export default class CandidateFilter {
   }
 
   async filter(
+    dat: DAT,
     parentsToCandidates: Map<Parent, ReleaseCandidate[]>,
   ): Promise<Map<Parent, ReleaseCandidate[]>> {
+    await this.progressBar.logInfo(`${dat.getName()}: Filtering candidates`);
     const output = new Map<Parent, ReleaseCandidate[]>();
 
     if (!parentsToCandidates.size) {
@@ -34,6 +37,9 @@ export default class CandidateFilter {
         .filter((rc, idx) => this.postFilter(idx));
       output.set(parent, filteredReleaseCandidates);
     });
+
+    const filteredCandidates = [...output.values()].reduce((sum, rc) => sum + rc.length, 0);
+    await this.progressBar.logInfo(`${dat.getName()} | ${filteredCandidates} candidate${filteredCandidates !== 1 ? 's' : ''} after filtering`);
 
     return output;
   }

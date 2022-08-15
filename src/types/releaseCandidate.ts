@@ -78,10 +78,6 @@ export default class ReleaseCandidate {
     return this.game;
   }
 
-  getRelease(): Release | null {
-    return this.release;
-  }
-
   getRoms(): ROM[] {
     return this.roms;
   }

@@ -2,13 +2,13 @@ import AdmZip from 'adm-zip';
 import { promises as fsPromises } from 'fs';
 import path from 'path';
 
+import ProgressBarCLI from '../console/progressBarCLI.js';
 import DAT from '../types/logiqx/dat.js';
 import Parent from '../types/logiqx/parent.js';
 import ROM from '../types/logiqx/rom.js';
 import Options from '../types/options.js';
 import ReleaseCandidate from '../types/releaseCandidate.js';
 import ROMFile from '../types/romFile.js';
-import ProgressBarCLI from './progressBar/progressBarCLI.js';
 
 export default class ROMWriter {
   private readonly options: Options;
@@ -24,6 +24,7 @@ export default class ROMWriter {
     dat: DAT,
     parentsToCandidates: Map<Parent, ReleaseCandidate[]>,
   ): Promise<Map<Parent, ROMFile[]>> {
+    await this.progressBar.logInfo(`${dat.getName()}: Writing candidates`);
     const output = new Map<Parent, ROMFile[]>();
 
     if (!parentsToCandidates.size) {
@@ -70,13 +71,16 @@ export default class ROMWriter {
           return acc;
         }, new Map<ROMFile, ROMFile>());
 
-        if (!this.options.shouldWrite()) {
+        if (this.options.shouldWrite()) {
           const writeNeeded = [...inputToOutput.entries()]
             .some((entry) => !entry[0].equals(entry[1]));
+          await this.progressBar.logDebug(`${dat.getName()} | ${releaseCandidate.getName()}: ${writeNeeded ? '' : 'no '}write needed`);
           if (writeNeeded) {
             await this.writeZip(inputToOutput);
             await this.writeRaw(inputToOutput);
           }
+        } else {
+          await this.progressBar.logDebug(`${dat.getName()} | ${releaseCandidate.getName()}: not writing`);
         }
 
         outputRomFiles.push(...inputToOutput.values());
@@ -144,6 +148,7 @@ export default class ROMWriter {
         return;
       }
       try {
+        await this.progressBar.logDebug(`${outputZipPath}: adding ${inputRomFileLocal.getFilePath()}`);
         outputZip.addLocalFile(
           inputRomFileLocal.getFilePath(),
           '',
@@ -160,6 +165,7 @@ export default class ROMWriter {
     // Write the zip file if needed
     if (outputNeedsWriting) {
       try {
+        await this.progressBar.logDebug(`${outputZipPath}: writing zip`);
         await outputZip.writeZipPromise(outputZipPath);
       } catch (e) {
         await this.progressBar.logError(`Failed to write zip ${outputZipPath} : ${e}`);
@@ -182,13 +188,12 @@ export default class ROMWriter {
 
     // If "moving", delete the input files
     if (this.options.shouldMove()) {
-      await Promise.all(
-        [...inputToOutput.keys()]
-          .map((romFile) => romFile.getFilePath())
-          .filter((filePath) => filePath !== outputZipPath)
-          .filter((romFile, idx, romFiles) => romFiles.indexOf(romFile) === idx)
-          .map((filePath) => fsPromises.rm(filePath, { force: true })),
-      );
+      const filesToDelete = [...inputToOutput.keys()]
+        .map((romFile) => romFile.getFilePath())
+        .filter((filePath) => filePath !== outputZipPath)
+        .filter((romFile, idx, romFiles) => romFiles.indexOf(romFile) === idx);
+      await this.progressBar.logDebug(filesToDelete.map((f) => `${f}: deleting`).join('\n'));
+      await Promise.all(filesToDelete.map((filePath) => fsPromises.rm(filePath, { force: true })));
     }
   }
 
@@ -205,6 +210,7 @@ export default class ROMWriter {
 
   private async writeRawSingle(inputRomFile: ROMFile, outputRomFile: ROMFile) {
     if (outputRomFile.equals(inputRomFile)) {
+      await this.progressBar.logDebug(`${outputRomFile}: same file, skipping`);
       return;
     }
 
@@ -215,6 +221,7 @@ export default class ROMWriter {
     if (!overwrite) {
       try {
         await fsPromises.access(outputFilePath); // throw if file doesn't exist
+        await this.progressBar.logDebug(`${outputFilePath}: file exists, not overwriting`);
         return;
       } catch (e) {
         // eslint-disable-line no-empty
@@ -231,11 +238,13 @@ export default class ROMWriter {
 
     // Write the output file
     const inputRomFileLocal = await inputRomFile.toLocalFile(this.options.getTempDir());
+    await this.progressBar.logDebug(`${inputRomFileLocal.getFilePath()}: copying to ${outputFilePath}`);
     await fsPromises.copyFile(inputRomFileLocal.getFilePath(), outputFilePath);
     await inputRomFileLocal.cleanupLocalFile();
 
     // Test the written file
     if (this.options.shouldTest()) {
+      await this.progressBar.logDebug(`${outputFilePath}: testing`);
       const romFileToTest = new ROMFile(outputFilePath);
       if (romFileToTest.getCrc32() !== inputRomFile.getCrc32()) {
         await this.progressBar.logError(`Written file has the CRC ${romFileToTest.getCrc32()}, expected ${inputRomFile.getCrc32()}: ${outputFilePath}`);
@@ -245,6 +254,7 @@ export default class ROMWriter {
 
     // Delete the original file if we're supposed to "move" it
     if (this.options.shouldMove()) {
+      await this.progressBar.logDebug(`${inputRomFileLocal.getFilePath()}: deleting`);
       await fsPromises.rm(inputRomFileLocal.getFilePath(), { force: true });
     }
   }

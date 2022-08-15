@@ -3,10 +3,10 @@ import AdmZip from 'adm-zip';
 import async from 'async';
 import path from 'path';
 
+import ProgressBar from '../console/progressBar.js';
 import Constants from '../constants.js';
 import Options from '../types/options.js';
 import ROMFile from '../types/romFile.js';
-import ProgressBar from './progressBar/progressBar.js';
 
 export default class ROMScanner {
   private readonly options: Options;
@@ -24,8 +24,10 @@ export default class ROMScanner {
     await this.progressBar.setSymbol('🔎');
     await this.progressBar.reset(0);
 
+    await this.progressBar.logInfo('Scanning ROM files');
     const inputFiles = await this.options.scanInputFilesWithoutExclusions();
     await this.progressBar.reset(inputFiles.length);
+    await this.progressBar.logInfo(`Found ${inputFiles.length} ROM file${inputFiles.length !== 1 ? 's' : ''}`);
 
     await async.eachLimit(inputFiles, 5, async (inputFile, callback) => {
       await this.progressBar.increment();

@@ -1,6 +1,6 @@
 /* eslint-disable class-methods-use-this */
 
-import ProgressBar from '../../../src/modules/progressBar/progressBar.js';
+import ProgressBar from '../../../src/console/progressBar.js';
 
 export default class ProgressBarFake implements ProgressBar {
   delete(): void {
@@ -18,11 +18,19 @@ export default class ProgressBarFake implements ProgressBar {
     return Promise.resolve(undefined);
   }
 
-  logError(): Promise<void> {
+  logDebug(): Promise<void> {
+    return Promise.resolve(undefined);
+  }
+
+  logInfo(): Promise<void> {
     return Promise.resolve(undefined);
   }
 
   logWarn(): Promise<void> {
+    return Promise.resolve(undefined);
+  }
+
+  logError(): Promise<void> {
     return Promise.resolve(undefined);
   }
 

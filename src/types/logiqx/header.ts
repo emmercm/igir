@@ -5,6 +5,21 @@ import { Expose, Type } from 'class-transformer';
 import ClrMamePro from './clrMamePro.js';
 import RomCenter from './romCenter.js';
 
+interface HeaderOptions {
+  name?: string;
+  description?: string;
+  category?: string;
+  version?: string;
+  date?: string;
+  author?: string;
+  email?: string;
+  homepage?: string;
+  url?: string;
+  comment?: string;
+  clrMamePro?: ClrMamePro;
+  romCenter?: RomCenter;
+}
+
 export default class Header {
   /**
    * "Name of the emulator without a version number. This field is used by the
@@ -64,7 +79,36 @@ export default class Header {
   @Expose({ name: 'romcenter' })
   private readonly romCenter?: RomCenter;
 
+  constructor(options?: HeaderOptions) {
+    if (options) {
+      this.name = options.name || '';
+      this.description = options.description || '';
+      this.category = options.category;
+      this.version = options.version || '';
+      this.date = options.date;
+      this.author = options.author || '';
+      this.email = options.email;
+      this.homepage = options.homepage;
+      this.url = options.url;
+      this.comment = options.comment;
+      this.clrMamePro = options.clrMamePro;
+      this.romCenter = options.romCenter;
+    }
+  }
+
   getName(): string {
     return this.name;
+  }
+
+  getDescription(): string {
+    return this.description;
+  }
+
+  getVersion(): string {
+    return this.version;
+  }
+
+  getDate(): string | undefined {
+    return this.date;
   }
 }

@@ -6,9 +6,8 @@ on:
   push:
 
 jobs:
-  test:
+  unit-test:
     runs-on: ${{ matrix.os }}
-
     strategy:
       matrix:
         os: [ubuntu-latest, macos-latest, windows-latest]
@@ -32,6 +31,11 @@ jobs:
 
       - run: npm test
 
+  codecov:
+    runs-on: ubuntu-latest
+    needs:
+      - unit-test
+    steps:
       - uses: codecov/codecov-action@v3
         with:
           token: ${{ secrets.CODECOV_TOKEN }}

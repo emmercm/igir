@@ -1,11 +1,17 @@
 import yargs, { Argv } from 'yargs';
 
+import Logger from '../console/logger.js';
 import Constants from '../constants.js';
-import Logger from '../logger.js';
 import Options from '../types/options.js';
 import ReleaseCandidate from '../types/releaseCandidate.js';
 
 export default class ArgumentsParser {
+  private readonly logger: Logger;
+
+  constructor(logger: Logger) {
+    this.logger = logger;
+  }
+
   private static getLastValue(arr: unknown[]): unknown {
     // TODO(cemmer): this isn't doing anything for booleans, is it helping anything?
     if (Array.isArray(arr) && arr.length) {
@@ -14,11 +20,14 @@ export default class ArgumentsParser {
     return arr;
   }
 
-  static parse(argv: string[]): Options {
+  parse(argv: string[]): Options {
+    this.logger.info(`Parsing CLI arguments: ${argv}`);
+
     const groupInputOutputPaths = 'Path options (inputs support globbing):';
     const groupOutput = 'Output options:';
     const groupPriority = 'Priority options:';
     const groupFiltering = 'Filtering options:';
+    const groupDebug = 'Debug options:';
 
     // Add every command to a yargs object, recursively, resulting in the ability to specify
     // multiple commands
@@ -86,7 +95,7 @@ export default class ArgumentsParser {
         description: 'Path to the ROM output directory',
         demandOption: false, // use the .check()
         type: 'string',
-        coerce: this.getLastValue,
+        coerce: ArgumentsParser.getLastValue,
         requiresArg: true,
       })
       .check((checkArgv) => {
@@ -104,34 +113,34 @@ export default class ArgumentsParser {
         group: groupOutput,
         description: 'Use the input subdirectory structure for output subdirectories',
         type: 'boolean',
-        coerce: this.getLastValue,
+        coerce: ArgumentsParser.getLastValue,
       })
       .option('dir-dat-name', {
         group: groupOutput,
         alias: 'D',
         description: 'Use the DAT name as the output subdirectory',
         type: 'boolean',
-        coerce: this.getLastValue,
+        coerce: ArgumentsParser.getLastValue,
       })
       .option('dir-letter', {
         group: groupOutput,
         description: 'Append the first letter of the ROM name as an output subdirectory',
         type: 'boolean',
-        coerce: this.getLastValue,
+        coerce: ArgumentsParser.getLastValue,
       })
       .option('single', {
         group: groupOutput,
         alias: 's',
         description: 'Output only a single game per parent (1G1R) (requires parent-clone DAT files)',
         type: 'boolean',
-        coerce: this.getLastValue,
+        coerce: ArgumentsParser.getLastValue,
       })
       .option('zip-exclude', {
         group: groupOutput,
         alias: 'Z',
         description: 'Glob pattern of files to exclude from zipping',
         type: 'string',
-        coerce: this.getLastValue,
+        coerce: ArgumentsParser.getLastValue,
         requiresArg: true,
       })
       .option('overwrite', {
@@ -139,14 +148,14 @@ export default class ArgumentsParser {
         alias: 'O',
         description: 'Overwrite any ROMs in the output directory',
         type: 'boolean',
-        coerce: this.getLastValue,
+        coerce: ArgumentsParser.getLastValue,
       })
 
       .option('prefer-good', {
         group: groupPriority,
         description: 'Prefer good ROM dumps over bad',
         type: 'boolean',
-        coerce: this.getLastValue,
+        coerce: ArgumentsParser.getLastValue,
         implies: 'single',
       })
       .option('prefer-language', {
@@ -171,7 +180,7 @@ export default class ArgumentsParser {
         group: groupPriority,
         description: 'Prefer newer ROM revisions over older',
         type: 'boolean',
-        coerce: this.getLastValue,
+        coerce: ArgumentsParser.getLastValue,
         conflicts: ['prefer-revision-older'],
         implies: 'single',
       })
@@ -179,7 +188,7 @@ export default class ArgumentsParser {
         group: groupPriority,
         description: 'Prefer older ROM revisions over newer',
         type: 'boolean',
-        coerce: this.getLastValue,
+        coerce: ArgumentsParser.getLastValue,
         conflicts: ['prefer-revision-newer'],
         implies: 'single',
       })
@@ -187,14 +196,14 @@ export default class ArgumentsParser {
         group: groupPriority,
         description: 'Prefer retail releases (see --only-retail)',
         type: 'boolean',
-        coerce: this.getLastValue,
+        coerce: ArgumentsParser.getLastValue,
         implies: 'single',
       })
       .option('prefer-parent', {
         group: groupPriority,
         description: 'Prefer parent ROMs over clones (requires parent-clone DAT files)',
         type: 'boolean',
-        coerce: this.getLastValue,
+        coerce: ArgumentsParser.getLastValue,
         implies: 'single',
       })
 
@@ -218,75 +227,82 @@ export default class ArgumentsParser {
         group: groupFiltering,
         description: 'Filter to only BIOS files',
         type: 'boolean',
-        coerce: this.getLastValue,
+        coerce: ArgumentsParser.getLastValue,
         conflicts: ['no-bios'],
       })
       .option('no-bios', {
         group: groupFiltering,
         description: 'Filter out BIOS files',
         type: 'boolean',
-        coerce: this.getLastValue,
+        coerce: ArgumentsParser.getLastValue,
         conflicts: ['only-bios'],
       })
       .option('no-unlicensed', {
         group: groupFiltering,
         description: 'Filter out unlicensed ROMs',
         type: 'boolean',
-        coerce: this.getLastValue,
+        coerce: ArgumentsParser.getLastValue,
       })
       .option('only-retail', {
         group: groupFiltering,
         description: 'Filter to only retail releases, enabling all the following flags',
         type: 'boolean',
-        coerce: this.getLastValue,
+        coerce: ArgumentsParser.getLastValue,
       })
       .option('no-demo', {
         group: groupFiltering,
         description: 'Filter out demo ROMs',
         type: 'boolean',
-        coerce: this.getLastValue,
+        coerce: ArgumentsParser.getLastValue,
       })
       .option('no-beta', {
         group: groupFiltering,
         description: 'Filter out beta ROMs',
         type: 'boolean',
-        coerce: this.getLastValue,
+        coerce: ArgumentsParser.getLastValue,
       })
       .option('no-sample', {
         group: groupFiltering,
         description: 'Filter out sample ROMs',
         type: 'boolean',
-        coerce: this.getLastValue,
+        coerce: ArgumentsParser.getLastValue,
       })
       .option('no-prototype', {
         group: groupFiltering,
         description: 'Filter out prototype ROMs',
         type: 'boolean',
-        coerce: this.getLastValue,
+        coerce: ArgumentsParser.getLastValue,
       })
       .option('no-test-roms', {
         group: groupFiltering,
         description: 'Filter out test ROMs',
         type: 'boolean',
-        coerce: this.getLastValue,
+        coerce: ArgumentsParser.getLastValue,
       })
       .option('no-aftermarket', {
         group: groupFiltering,
         description: 'Filter out aftermarket ROMs',
         type: 'boolean',
-        coerce: this.getLastValue,
+        coerce: ArgumentsParser.getLastValue,
       })
       .option('no-homebrew', {
         group: groupFiltering,
         description: 'Filter out homebrew ROMs',
         type: 'boolean',
-        coerce: this.getLastValue,
+        coerce: ArgumentsParser.getLastValue,
       })
       .option('no-bad', {
         group: groupFiltering,
         description: 'Filter out bad ROM dumps',
         type: 'boolean',
-        coerce: this.getLastValue,
+        coerce: ArgumentsParser.getLastValue,
+      })
+
+      .option('verbose', {
+        group: groupDebug,
+        alias: 'v',
+        description: 'Enable verbose logging',
+        type: 'count',
       })
 
       .wrap(Math.min(yargs([]).terminalWidth() || Number.MAX_SAFE_INTEGER, 110))
@@ -313,8 +329,8 @@ export default class ArgumentsParser {
         if (err) {
           throw err;
         }
-        Logger.colorizeYargs(`${_yargs.help()}\n`);
-        Logger.error(msg);
+        this.logger.colorizeYargs(`${_yargs.help()}\n`);
+        this.logger.error(msg);
         throw new Error(msg);
       });
 
@@ -324,14 +340,17 @@ export default class ArgumentsParser {
         .strictOptions(true)
         .parse(argv, {}, (err, parsedArgv, output) => {
           if (output) {
-            Logger.colorizeYargs(output);
+            this.logger.colorizeYargs(output);
           }
         });
     } catch (e) {
-      Logger.error(`Failed to parse arguments: ${e}`);
+      this.logger.error(`Failed to parse arguments: ${e}`);
       throw e;
     }
 
-    return Options.fromObject(yargsArgv);
+    const options = Options.fromObject(yargsArgv);
+    this.logger.info(`Parsed options: ${options.toString()}`);
+
+    return options;
   }
 }

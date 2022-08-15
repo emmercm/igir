@@ -1,7 +1,7 @@
 import { E_CANCELED, Mutex } from 'async-mutex';
 import cliProgress, { MultiBar, SingleBar } from 'cli-progress';
 
-import Logger from '../../logger.js';
+import Logger, { LogLevel } from './logger.js';
 import ProgressBar from './progressBar.js';
 
 interface ProgressBarPayload {
@@ -22,6 +22,8 @@ export default class ProgressBarCLI implements ProgressBar {
 
   private static lastRedraw = process.hrtime();
 
+  private readonly logger: Logger;
+
   private readonly singleBar: SingleBar;
 
   private valueBuffer: number[] = [];
@@ -30,10 +32,12 @@ export default class ProgressBarCLI implements ProgressBar {
 
   private eta: number | string = '0';
 
-  constructor(name: string, symbol: string, initialTotal = 0) {
+  constructor(logger: Logger, name: string, symbol: string, initialTotal = 0) {
+    this.logger = logger;
+
     if (!ProgressBarCLI.multiBar) {
       ProgressBarCLI.multiBar = new cliProgress.MultiBar({
-        // stream: Logger.stream,
+        stream: Logger.stream,
         barsize: 25,
         fps: ProgressBarCLI.fps,
         emptyOnZero: true,
@@ -213,19 +217,32 @@ export default class ProgressBarCLI implements ProgressBar {
     await ProgressBarCLI.render();
   }
 
-  async log(message: string) {
-    ProgressBarCLI.multiBar.log(`${message}\n`);
-    await ProgressBarCLI.render();
+  async logDebug(message: string) {
+    if (this.logger.getLogLevel() <= LogLevel.DEBUG) {
+      ProgressBarCLI.multiBar.log(`${Logger.debugFormatter(message)}\n`);
+      await ProgressBarCLI.render();
+    }
+  }
+
+  async logInfo(message: string) {
+    if (this.logger.getLogLevel() <= LogLevel.INFO) {
+      ProgressBarCLI.multiBar.log(`${Logger.infoFormatter(message)}\n`);
+      await ProgressBarCLI.render();
+    }
   }
 
   async logWarn(message: string) {
-    ProgressBarCLI.multiBar.log(`${Logger.warnFormatter(message)}\n`);
-    await ProgressBarCLI.render();
+    if (this.logger.getLogLevel() <= LogLevel.WARN) {
+      ProgressBarCLI.multiBar.log(`${Logger.warnFormatter(message)}\n`);
+      await ProgressBarCLI.render();
+    }
   }
 
   async logError(message: string) {
-    ProgressBarCLI.multiBar.log(`${Logger.errorFormatter(message)}\n`);
-    await ProgressBarCLI.render();
+    if (this.logger.getLogLevel() <= LogLevel.ERROR) {
+      ProgressBarCLI.multiBar.log(`${Logger.errorFormatter(message)}\n`);
+      await ProgressBarCLI.render();
+    }
   }
 
   /**

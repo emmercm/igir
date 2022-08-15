@@ -9,7 +9,9 @@ export default abstract class ProgressBar {
 
   abstract done(finishedMessage?: string): Promise<void>;
 
-  abstract log(message: string): Promise<void>;
+  abstract logDebug(message: string): Promise<void>;
+
+  abstract logInfo(message: string): Promise<void>;
 
   abstract logWarn(message: string): Promise<void>;
 

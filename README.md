@@ -1,6 +1,6 @@
 # igir
 
-A ROM collection manager designed to make one game, one rom (1G1R) sets.
+A ROM collection manager to help sort collections and make one game, one rom (1G1R) sets.
 
 [![npm](https://badgen.net/npm/v/igir?icon=npm)](https://www.npmjs.com/package/igir)
 [![GitHub](https://badgen.net/badge/emmercm/igir/purple?icon=github)](https://github.com/emmercm/igir)
@@ -8,11 +8,20 @@ A ROM collection manager designed to make one game, one rom (1G1R) sets.
 [![Test Coverage](https://badgen.net/codecov/c/github/emmercm/igir/main?icon=codecov)](https://codecov.io/gh/emmercm/igir)
 [![Maintainability](https://badgen.net/codeclimate/maintainability/emmercm/igir?icon=codeclimate)](https://codeclimate.com/github/emmercm/igir/maintainability)
 
-## Description
+## Summary
+
+`igir`, with assistance from a collection DAT catalogs (see below), helps you manage your video game ROM collection with a number of commands:
+
+- `copy`: copy ROMs from input directories to an output directory
+- `move`: copy ROMs from input directories to an output directory
+- `zip`: create zip archives of output ROMs
+- `clean`: recycle all unknown files in an output directory
+- `test`: test all written ROMs for accuracy
+- `report`: generate a report on ROMs in an input directory
 
 ## Installation
 
-With ![Node.js](https://badgen.net/npm/node/igir):
+With [![Node.js](https://badgen.net/npm/node/igir)](https://nodejs.org/en/download/) installed:
 
 ```shell
 npx igir [commands..] [options]
@@ -20,7 +29,7 @@ npx igir [commands..] [options]
 
 ## Usage
 
-Here is the `igir --help` help message, which contains a number of use case examples:
+Here is the `igir --help` message which shows all available options and a number of common use case examples:
 
 ```help
  ______   ______   ______  _______  
@@ -90,6 +99,9 @@ Filtering options:
       --no-homebrew      Filter out homebrew ROMs                                                    [boolean]
       --no-bad           Filter out bad ROM dumps                                                    [boolean]
 
+Debug options:
+  -v, --verbose  Enable verbose logging                                                                [count]
+
 Options:
   -h, --help  Show help                                                                              [boolean]
 
@@ -104,20 +116,20 @@ Examples:
   igir copy -i **/*.zip -o bios/ --only-bios              Collate all BIOS files
 ```
 
-## Obtaining DATs
+## Obtaining DAT catalogs
 
-XML-style DAT files that catalog every ROM per system are required for `igir` to work effectively. A number of different release groups maintain these catalogs, the most popular are:
+XML-style DAT files that catalog every known ROM per system are required for `igir` to work effectively. A number of different release groups maintain these catalogs, the most popular are:
 
 - [No-Intro](https://datomatic.no-intro.org/index.php?page=download&s=64) (cartridge-based systems)
 - [Redump](http://redump.org/downloads/) (optical media-based systems)
 - [ADVANsCEne](https://www.advanscene.com/html/dats.php) (GBA, DS, 3DS, PSP)
 - [TOSEC](https://www.tosecdev.org/downloads/category/22-datfiles)
 
-## What is a ROM?
+These catalogs help `igir` distinguish known ROM files in input directories from other files and helps generate reports on ROM collections.
 
 ## Obtaining ROMs
 
-Emulators are legal, as long as they don't include copyrighted software such as a system BIOS.
+Emulators are generally legal, as long as they don't include copyrighted software such as a system BIOS.
 
 Downloading ROM files that you do not own is piracy and is illegal in many countries. Here are some ways you can legally create ROM files from games you own:
 
@@ -137,13 +149,13 @@ Downloading ROM files that you do not own is piracy and is illegal in many count
 
 ## Alternative ROM managers
 
-There a few different ROM managers that all attempt to do a lot of the same thing:
+There a few different popular ROM managers that have similar features:
 
 - [clrmamepro](https://mamedev.emulab.it/clrmamepro/)
 - [Romcenter](http://www.romcenter.com/)
 - [Romulus Rom Manager](https://romulus.cc/)
 
-Each manager has its own pros, but many share the same cons:
+Each manager has its own pros, but most share the same cons:
 
 - Windows-only (sometimes with Wine support), making management on macOS and SoC devices difficult 
 - Limited CLI support, making batching and repeatable actions difficult

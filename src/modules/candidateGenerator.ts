@@ -1,9 +1,9 @@
+import ProgressBar from '../console/progressBar.js';
 import DAT from '../types/logiqx/dat.js';
 import Parent from '../types/logiqx/parent.js';
 import Release from '../types/logiqx/release.js';
 import ReleaseCandidate from '../types/releaseCandidate.js';
 import ROMFile from '../types/romFile.js';
-import ProgressBar from './progressBar/progressBar.js';
 
 export default class CandidateGenerator {
   private readonly progressBar: ProgressBar;
@@ -16,11 +16,14 @@ export default class CandidateGenerator {
     dat: DAT,
     inputRomFiles: ROMFile[],
   ): Promise<Map<Parent, ReleaseCandidate[]>> {
+    await this.progressBar.logInfo(`${dat.getName()}: Generating candidates`);
+
     // Index the ROMFiles by CRC
     const crc32ToInputRomFiles = inputRomFiles.reduce((acc, romFile) => {
       acc.set(romFile.getCrc32(), romFile);
       return acc;
     }, new Map<string, ROMFile>());
+    await this.progressBar.logInfo(`${dat.getName()}: ${crc32ToInputRomFiles.size} unique ROM CRC32s found`);
 
     const output = new Map<Parent, ReleaseCandidate[]>();
 
@@ -66,6 +69,9 @@ export default class CandidateGenerator {
 
       output.set(parent, releaseCandidates);
     });
+
+    const totalCandidates = [...output.values()].reduce((sum, rc) => sum + rc.length, 0);
+    await this.progressBar.logInfo(`${dat.getName()}: ${totalCandidates} candidate${totalCandidates !== 1 ? 's' : ''} found`);
 
     return output;
   }

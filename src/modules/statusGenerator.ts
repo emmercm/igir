@@ -1,7 +1,7 @@
+import ProgressBarCLI from '../console/progressBarCLI.js';
 import Parent from '../types/logiqx/parent.js';
 import Options from '../types/options.js';
 import ROMFile from '../types/romFile.js';
-import ProgressBarCLI from './progressBar/progressBarCLI.js';
 
 export default class StatusGenerator {
   private readonly options: Options;
@@ -61,8 +61,10 @@ export default class StatusGenerator {
     if (!this.options.getOnlyBios() && !this.options.getNoPrototype()) {
       message += `, ${foundPrototypes.length}/${allPrototypes.length} prototypes`;
     }
-    message += ' processed';
+    message += ' found';
 
     await this.progressBar.done(message.replace(/^, /, ''));
+
+    // TODO(cemmer): have this return a "status" object so that the report generator can use it
   }
 }

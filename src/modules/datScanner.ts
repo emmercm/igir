@@ -1,9 +1,9 @@
 import { promises as fsPromises } from 'fs';
 import xml2js from 'xml2js';
 
+import ProgressBar from '../console/progressBar.js';
 import DAT from '../types/logiqx/dat.js';
 import Options from '../types/options.js';
-import ProgressBar from './progressBar/progressBar.js';
 
 export default class DATScanner {
   private readonly options: Options;
@@ -16,10 +16,13 @@ export default class DATScanner {
   }
 
   async scan(): Promise<DAT[]> {
+    await this.progressBar.logInfo('Scanning DAT files');
     const datFiles = await this.options.scanDatFiles();
     if (!datFiles.length) {
       return [];
     }
+    await this.progressBar.logInfo(datFiles.map((file) => `Found DAT file: ${file}`).join('\n'));
+    await this.progressBar.logInfo(`Found ${datFiles.length} DAT file${datFiles.length !== 1 ? 's' : ''}`);
 
     await this.progressBar.setSymbol('🔎');
     await this.progressBar.reset(datFiles.length);
@@ -29,12 +32,14 @@ export default class DATScanner {
     /* eslint-disable no-await-in-loop */
     for (let i = 0; i < datFiles.length; i += 1) {
       const dat = datFiles[i];
+      await this.progressBar.logDebug(`${dat}: Reading file`);
 
       await this.progressBar.increment();
 
       const xmlContents = await fsPromises.readFile(dat);
 
       try {
+        await this.progressBar.logDebug(`${dat}: parsing XML`);
         const xmlObject = await xml2js.parseStringPromise(xmlContents.toString(), {
           mergeAttrs: true,
           explicitArray: false,
@@ -46,9 +51,12 @@ export default class DATScanner {
       }
     }
 
-    return parsedXml
+    await this.progressBar.logInfo('Deserializing DAT XML to objects');
+    const dats = parsedXml
       .filter((xmlObject) => xmlObject)
       .map((xmlObject) => DAT.fromObject(xmlObject.datafile))
-      .sort((a, b) => a.getName().localeCompare(b.getName()));
+      .sort((a, b) => a.getNameShort().localeCompare(b.getNameShort()));
+    await this.progressBar.logInfo(dats.map((dat) => `${dat.getName()}: ${dat.getGames().length} games, ${dat.getParents().length} parents parsed`).join('\n'));
+    return dats;
   }
 }

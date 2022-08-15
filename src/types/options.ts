@@ -1,13 +1,16 @@
 import 'reflect-metadata';
 
-import { Expose, plainToInstance } from 'class-transformer';
+import { Expose, instanceToPlain, plainToInstance } from 'class-transformer';
 import fg from 'fast-glob';
 import fs, { promises as fsPromises } from 'fs';
 import { isNotJunk } from 'junk';
 import micromatch from 'micromatch';
+import moment from 'moment';
 import os from 'os';
 import path from 'path';
 
+import { LogLevel } from '../console/logger.js';
+import Constants from '../constants.js';
 import DAT from './logiqx/dat.js';
 
 export interface OptionsProps {
@@ -43,6 +46,7 @@ export interface OptionsProps {
   readonly noAftermarket?: boolean,
   readonly noHomebrew?: boolean,
   readonly noBad?: boolean,
+  readonly verbose?: number,
   readonly help?: boolean,
 }
 
@@ -64,7 +68,7 @@ export default class Options implements OptionsProps {
 
   readonly dirLetter!: boolean;
 
-  readonly single = false;
+  readonly single: boolean = false;
 
   readonly zipExclude!: string;
 
@@ -112,9 +116,52 @@ export default class Options implements OptionsProps {
 
   readonly noBad!: boolean;
 
+  readonly verbose!: number;
+
   readonly help!: boolean;
 
   private tempDir!: string;
+
+  constructor(options?: OptionsProps) {
+    if (options) {
+      this.commands = options.commands || [];
+      this.dat = options.dat || [];
+      this.input = options.input || [];
+      this.inputExclude = options.inputExclude || [];
+      this.output = options.output || '';
+      this.dirMirror = options.dirMirror || false;
+      this.dirDatName = options.dirDatName || false;
+      this.dirLetter = options.dirLetter || false;
+      this.single = options.single || false;
+      this.zipExclude = options.zipExclude || '';
+      this.overwrite = options.overwrite || false;
+      this.preferGood = options.preferGood || false;
+      this.preferLanguage = options.preferLanguage || [];
+      this.preferRegion = options.preferRegion || [];
+      this.preferRevisionNewer = options.preferRevisionNewer || false;
+      this.preferRevisionOlder = options.preferRevisionOlder || false;
+      this.preferRetail = options.preferRetail || false;
+      this.preferParent = options.preferParent || false;
+      this.languageFilter = options.languageFilter || [];
+      this.regionFilter = options.regionFilter || [];
+      this.onlyBios = options.onlyBios || false;
+      this.noBios = options.noBios || false;
+      this.noUnlicensed = options.noUnlicensed || false;
+      this.onlyRetail = options.onlyRetail || false;
+      this.noDemo = options.noDemo || false;
+      this.noBeta = options.noBeta || false;
+      this.noSample = options.noSample || false;
+      this.noPrototype = options.noPrototype || false;
+      this.noTestRoms = options.noTestRoms || false;
+      this.noAftermarket = options.noAftermarket || false;
+      this.noHomebrew = options.noHomebrew || false;
+      this.noBad = options.noBad || false;
+      this.verbose = options.verbose || 0;
+      this.help = options.help || false;
+    }
+    this.createTempDir();
+    this.validate();
+  }
 
   static fromObject(obj: object) {
     return plainToInstance(Options, obj, {
@@ -122,6 +169,10 @@ export default class Options implements OptionsProps {
     })
       .createTempDir()
       .validate();
+  }
+
+  toString(): string {
+    return JSON.stringify(instanceToPlain(this));
   }
 
   private createTempDir(): Options {
@@ -250,7 +301,7 @@ export default class Options implements OptionsProps {
   }
 
   getOutput(dat?: DAT, inputRomPath?: string, romName?: string): string {
-    let output = this.shouldWrite() ? this.getTempDir() : this.output;
+    let output = this.shouldWrite() ? this.output : this.getTempDir();
     if (this.getDirMirror() && inputRomPath) {
       const mirroredDir = path.dirname(inputRomPath)
         .replace(/[\\/]/g, path.sep)
@@ -261,7 +312,7 @@ export default class Options implements OptionsProps {
     }
 
     if (dat && this.getDirDatName()) {
-      output = path.join(output, dat.getName());
+      output = path.join(output, dat.getNameShort());
     }
 
     if (this.getDirLetter() && romName) {
@@ -279,6 +330,11 @@ export default class Options implements OptionsProps {
     }
 
     return output;
+  }
+
+  getOutputReport(): string {
+    const output = this.shouldWrite() ? this.output : process.cwd();
+    return path.join(output, `${Constants.COMMAND_NAME}_${moment().format()}.txt`);
   }
 
   getDirMirror(): boolean {
@@ -395,6 +451,15 @@ export default class Options implements OptionsProps {
 
   getNoBad(): boolean {
     return this.noBad;
+  }
+
+  getLogLevel(): LogLevel {
+    if (this.verbose === 1) {
+      return LogLevel.INFO;
+    } if (this.verbose >= 2) {
+      return LogLevel.DEBUG;
+    }
+    return LogLevel.WARN;
   }
 
   getHelp(): boolean {

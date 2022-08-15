@@ -56,7 +56,11 @@ export default class DAT {
   }
 
   getName(): string {
-    return this.header.getName()
+    return this.getHeader().getName();
+  }
+
+  getNameShort(): string {
+    return this.getName()
     // Prefixes
       .replace('Non-Redump', '')
       .replace('Source Code', '')
@@ -84,7 +88,21 @@ export default class DAT {
       .trim();
   }
 
-  private getGames(): Game[] {
+  getNameLong(): string {
+    let long = this.getName();
+    if (this.getHeader().getDate()) {
+      long += ` (${this.getHeader().getDate()})`;
+    } else if (this.getHeader().getVersion()) {
+      long += `(v${this.getHeader().getVersion()})`;
+    }
+    return long;
+  }
+
+  getHeader(): Header {
+    return this.header;
+  }
+
+  getGames(): Game[] {
     if (this.game instanceof Array) {
       return this.game;
     } if (this.game) {

@@ -4,10 +4,9 @@ import { isNotJunk } from 'junk';
 import path from 'path';
 import trash from 'trash';
 
-import Logger from '../logger.js';
+import ProgressBarCLI from '../console/progressBarCLI.js';
 import Options from '../types/options.js';
 import ROMFile from '../types/romFile.js';
-import ProgressBarCLI from './progressBar/progressBarCLI.js';
 
 export default class OutputCleaner {
   private readonly options: Options;
@@ -42,14 +41,14 @@ export default class OutputCleaner {
     try {
       await trash(filesToClean);
     } catch (e) {
-      Logger.error(`Failed to clean unmatched files in ${outputDir} : ${e}`);
+      await this.progressBar.logError(`Failed to clean unmatched files in ${outputDir} : ${e}`);
     }
 
     try {
       const emptyDirs = await OutputCleaner.getEmptyDirs(outputDir);
       await trash(emptyDirs);
     } catch (e) {
-      Logger.error(`Failed to clean empty directories in ${outputDir} : ${e}`);
+      await this.progressBar.logError(`Failed to clean empty directories in ${outputDir} : ${e}`);
     }
 
     await this.progressBar.done(`${filesToClean.length} file${filesToClean.length !== 1 ? 's' : ''} recycled`);
