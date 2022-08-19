@@ -2,7 +2,7 @@ import AdmZip from 'adm-zip';
 import { promises as fsPromises } from 'fs';
 import path from 'path';
 
-import ProgressBarCLI from '../console/progressBarCLI.js';
+import ProgressBar from '../console/progressBar.js';
 import DAT from '../types/logiqx/dat.js';
 import Parent from '../types/logiqx/parent.js';
 import ROM from '../types/logiqx/rom.js';
@@ -13,9 +13,9 @@ import ROMFile from '../types/romFile.js';
 export default class ROMWriter {
   private readonly options: Options;
 
-  private readonly progressBar: ProgressBarCLI;
+  private readonly progressBar: ProgressBar;
 
-  constructor(options: Options, progressBar: ProgressBarCLI) {
+  constructor(options: Options, progressBar: ProgressBar) {
     this.options = options;
     this.progressBar = progressBar;
   }

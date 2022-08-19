@@ -1,0 +1,21 @@
+{
+  "hooks": {
+    "after:npm:bump": "npm pack",
+    "after:git:release": "echo After git push, before github release",
+    "after:release": "echo Successfully released ${name} v${version} to ${repo.repository}."
+  },
+  "git": {
+    "commitMessage": "v${version}",
+    "tagName": "v${version}",
+    "requireCleanWorkingDir": false
+  },
+  "github": {
+    "release": true,
+    "releaseName": "${version}",
+    "tokenRef": "GITHUB_TOKEN",
+    "assets": ["igir-${version}.tgz"]
+  },
+  "npm": {
+    "publish": false
+  }
+}

@@ -20,7 +20,16 @@ export default class CandidateGenerator {
 
     // Index the ROMFiles by CRC
     const crc32ToInputRomFiles = inputRomFiles.reduce((acc, romFile) => {
-      acc.set(romFile.getCrc32(), romFile);
+      if (acc.has(romFile.getCrc32())) {
+        // Have already seen file, prefer non-archived files
+        const existing = acc.get(romFile.getCrc32()) as ROMFile;
+        if (!romFile.getArchiveEntryPath() && existing.getArchiveEntryPath()) {
+          acc.set(romFile.getCrc32(), romFile);
+        }
+      } else {
+        // Haven't seen file yet, store it
+        acc.set(romFile.getCrc32(), romFile);
+      }
       return acc;
     }, new Map<string, ROMFile>());
     await this.progressBar.logInfo(`${dat.getName()}: ${crc32ToInputRomFiles.size} unique ROM CRC32s found`);
@@ -41,10 +50,10 @@ export default class CandidateGenerator {
       const releaseCandidates: ReleaseCandidate[] = [];
 
       // For every game
-      parent.getGames().flatMap((game) => {
+      parent.getGames().forEach((game) => {
         // For every release (ensuring at least one), find all release candidates
         const releases = game.getReleases().length ? game.getReleases() : [null];
-        return releases.forEach((release: Release | null) => {
+        releases.forEach((release: Release | null) => {
           // For each Game's ROM, find the matching ROMFile
           const romFiles = game.getRoms()
             .map((rom) => crc32ToInputRomFiles.get(rom.getCrc32()))
@@ -69,6 +78,8 @@ export default class CandidateGenerator {
 
       output.set(parent, releaseCandidates);
     });
+
+    // TODO(cemmer): de-duplicate ReleaseCandidate[] ?
 
     const totalCandidates = [...output.values()].reduce((sum, rc) => sum + rc.length, 0);
     await this.progressBar.logInfo(`${dat.getName()}: ${totalCandidates} candidate${totalCandidates !== 1 ? 's' : ''} found`);

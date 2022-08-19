@@ -10,6 +10,7 @@ import ReportGenerator from './modules/reportGenerator.js';
 import ROMScanner from './modules/romScanner.js';
 import ROMWriter from './modules/romWriter.js';
 import StatusGenerator from './modules/statusGenerator.js';
+import DATStatus from './types/datStatus.js';
 import DAT from './types/logiqx/dat.js';
 import Parent from './types/logiqx/parent.js';
 import Options from './types/options.js';
@@ -33,6 +34,7 @@ export default async function main(options: Options, logger: Logger) {
 
   const datProcessProgressBar = logger.addProgressBar('Processing DATs', '⚙️', dats.length);
   const datsToWrittenRoms = new Map<DAT, Map<Parent, ROMFile[]>>();
+  const datsStatuses: DATStatus[] = [];
 
   await async.eachLimit(dats, 3, async (dat, callback) => {
     const progressBar = logger.addProgressBar(dat.getNameShort(), '⏳', dat.getParents().length);
@@ -46,19 +48,20 @@ export default async function main(options: Options, logger: Logger) {
 
     // Write the output files
     const writtenRoms = await new ROMWriter(options, progressBar).write(dat, romOutputs);
+    datsToWrittenRoms.set(dat, writtenRoms);
 
     // Write the output report
-    await new StatusGenerator(options, progressBar).output(writtenRoms);
+    const status = await new StatusGenerator(options, progressBar).output(dat, romOutputs);
+    datsStatuses.push(status);
 
     // Progress bar cleanup
     const parentsWithRomFiles = [...writtenRoms.values()]
       .filter((romFiles) => romFiles.length)
       .length;
     if (parentsWithRomFiles === 0) {
-      await progressBar.delete();
+      progressBar.delete();
     }
 
-    datsToWrittenRoms.set(dat, writtenRoms);
     callback();
   });
 
@@ -67,16 +70,16 @@ export default async function main(options: Options, logger: Logger) {
   // Generate the report
   if (options.shouldReport()) {
     const reportProgressBar = logger.addProgressBar('Generating report', '📝');
-    await new ReportGenerator(options, reportProgressBar).generate(datsToWrittenRoms);
+    await new ReportGenerator(options, reportProgressBar).generate(datsStatuses);
   }
 
   // Clean the output directories
   if (options.shouldClean()) {
     const cleanerProgressBar = logger.addProgressBar('Cleaning output', '⏳');
-    const allWrittenRomFiles = [...datsToWrittenRoms.values()]
+    const writtenRomFilesToExclude = [...datsToWrittenRoms.values()]
       .flatMap((parentsToRomFiles) => [...parentsToRomFiles.values()])
       .flatMap((romFiles) => romFiles);
-    await new OutputCleaner(options, cleanerProgressBar).clean(allWrittenRomFiles);
+    await new OutputCleaner(options, cleanerProgressBar).clean(writtenRomFilesToExclude);
   }
 
   ProgressBarCLI.stop();

@@ -188,7 +188,7 @@ describe('options', () => {
   });
 
   it('should parse "prefer-good"', () => {
-    expect(() => argumentsParser.parse([...dummyCommandAndRequiredArgs, '--prefer-good'])).toThrow(/missing dependent arguments/i);
+    expect(() => argumentsParser.parse([...dummyCommandAndRequiredArgs, '--prefer-good'])).toThrow(/dependent|implication/i);
     expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--prefer-good', '--single']).getPreferGood()).toBeTruthy();
     expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--prefer-good', 'true', '--single']).getPreferGood()).toBeTruthy();
     expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--prefer-good', 'false', '--single']).getPreferGood()).toBeFalsy();
@@ -199,7 +199,7 @@ describe('options', () => {
 
   it('should parse "prefer-language"', () => {
     expect(() => argumentsParser.parse([...dummyCommandAndRequiredArgs, '--prefer-language'])).toThrow(/not enough arguments/i);
-    expect(() => argumentsParser.parse([...dummyCommandAndRequiredArgs, '--prefer-language', 'EN'])).toThrow(/missing dependent arguments/i);
+    expect(() => argumentsParser.parse([...dummyCommandAndRequiredArgs, '--prefer-language', 'EN'])).toThrow(/dependent|implication/i);
     expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '-l', 'EN', '--single']).getPreferLanguages()).toEqual(['EN']);
     expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--prefer-language', 'EN', '--single']).getPreferLanguages()).toEqual(['EN']);
     expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--prefer-language', 'EN,it', '--single']).getPreferLanguages()).toEqual(['EN', 'IT']);
@@ -209,7 +209,7 @@ describe('options', () => {
 
   it('should parse "prefer-region"', () => {
     expect(() => argumentsParser.parse([...dummyCommandAndRequiredArgs, '--prefer-region'])).toThrow(/not enough arguments/i);
-    expect(() => argumentsParser.parse([...dummyCommandAndRequiredArgs, '--prefer-region', 'USA'])).toThrow(/missing dependent arguments/i);
+    expect(() => argumentsParser.parse([...dummyCommandAndRequiredArgs, '--prefer-region', 'USA'])).toThrow(/dependent|implication/i);
     expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '-r', 'USA', '--single']).getPreferRegions()).toEqual(['USA']);
     expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--prefer-region', 'USA', '--single']).getPreferRegions()).toEqual(['USA']);
     expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--prefer-region', 'USA,eur', '--single']).getPreferRegions()).toEqual(['USA', 'EUR']);
@@ -218,7 +218,7 @@ describe('options', () => {
   });
 
   it('should parse "prefer-revision-newer"', () => {
-    expect(() => argumentsParser.parse([...dummyCommandAndRequiredArgs, '--prefer-revision-newer'])).toThrow(/missing dependent arguments/i);
+    expect(() => argumentsParser.parse([...dummyCommandAndRequiredArgs, '--prefer-revision-newer'])).toThrow(/dependent|implication/i);
     expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--prefer-revision-newer', '--single']).getPreferRevisionNewer()).toBeTruthy();
     expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--prefer-revision-newer', 'true', '--single']).getPreferRevisionNewer()).toBeTruthy();
     expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--prefer-revision-newer', 'false', '--single']).getPreferRevisionNewer()).toBeFalsy();
@@ -229,7 +229,7 @@ describe('options', () => {
   });
 
   it('should parse "prefer-revision-older"', () => {
-    expect(() => argumentsParser.parse([...dummyCommandAndRequiredArgs, '--prefer-revision-older'])).toThrow(/missing dependent arguments/i);
+    expect(() => argumentsParser.parse([...dummyCommandAndRequiredArgs, '--prefer-revision-older'])).toThrow(/dependent|implication/i);
     expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--prefer-revision-older', '--single']).getPreferRevisionOlder()).toBeTruthy();
     expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--prefer-revision-older', 'true', '--single']).getPreferRevisionOlder()).toBeTruthy();
     expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--prefer-revision-older', 'false', '--single']).getPreferRevisionOlder()).toBeFalsy();
@@ -240,7 +240,7 @@ describe('options', () => {
   });
 
   it('should parse "prefer-retail"', () => {
-    expect(() => argumentsParser.parse([...dummyCommandAndRequiredArgs, '--prefer-retail'])).toThrow(/missing dependent arguments/i);
+    expect(() => argumentsParser.parse([...dummyCommandAndRequiredArgs, '--prefer-retail'])).toThrow(/dependent|implication/i);
     expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--prefer-retail', '--single']).getPreferRetail()).toBeTruthy();
     expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--prefer-retail', 'true', '--single']).getPreferRetail()).toBeTruthy();
     expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--prefer-retail', 'false', '--single']).getPreferRetail()).toBeFalsy();
@@ -250,7 +250,7 @@ describe('options', () => {
   });
 
   it('should parse "prefer-parent"', () => {
-    expect(() => argumentsParser.parse([...dummyCommandAndRequiredArgs, '--prefer-parent'])).toThrow(/missing dependent arguments/i);
+    expect(() => argumentsParser.parse([...dummyCommandAndRequiredArgs, '--prefer-parent'])).toThrow(/dependent|implication/i);
     expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--prefer-parent', '--single']).getPreferParent()).toBeTruthy();
     expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--prefer-parent', 'true', '--single']).getPreferParent()).toBeTruthy();
     expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--prefer-parent', 'false', '--single']).getPreferParent()).toBeFalsy();

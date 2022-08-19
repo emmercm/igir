@@ -19,7 +19,7 @@ node --version &> /dev/null || exit 1
 npm run lint:fix
 
 # Make sure igir is symlinked
-npm link
+npm link --force
 
 # Update the help text in README.md
 npm run build

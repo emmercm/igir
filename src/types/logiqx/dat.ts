@@ -16,15 +16,13 @@ export default class DAT {
   @Type(() => Game)
   private readonly game!: Game | Game[];
 
+  private gameNamesToParents!: Map<string, Parent>;
+
   constructor(header: Header, games: Game[]) {
     this.header = header;
     this.game = games;
     this.generateGameNamesToParents();
   }
-
-  // Post-processed
-
-  private gameNamesToParents!: Map<string, Parent>;
 
   static fromObject(obj: object) {
     return plainToInstance(DAT, obj, {
@@ -55,9 +53,30 @@ export default class DAT {
     return this;
   }
 
+  // Property getters
+
+  getHeader(): Header {
+    return this.header;
+  }
+
   getName(): string {
     return this.getHeader().getName();
   }
+
+  getGames(): Game[] {
+    if (this.game instanceof Array) {
+      return this.game;
+    } if (this.game) {
+      return [this.game];
+    }
+    return [];
+  }
+
+  getParents(): Parent[] {
+    return [...this.gameNamesToParents.values()];
+  }
+
+  // Computed getters
 
   getNameShort(): string {
     return this.getName()
@@ -96,22 +115,5 @@ export default class DAT {
       long += `(v${this.getHeader().getVersion()})`;
     }
     return long;
-  }
-
-  getHeader(): Header {
-    return this.header;
-  }
-
-  getGames(): Game[] {
-    if (this.game instanceof Array) {
-      return this.game;
-    } if (this.game) {
-      return [this.game];
-    }
-    return [];
-  }
-
-  getParents(): Parent[] {
-    return [...this.gameNamesToParents.values()];
   }
 }

@@ -1,44 +1,132 @@
 # https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-nodejs
+# https://hanxiao.io/2021/01/24/Speedup-CI-Workflow-in-Github-Actions-via-Strategy-Matrix/
 
 name: Node.js CI
 
 on:
   push:
+    branches: ['**']
+  pull_request:
+    branches: ['main']
 
 jobs:
-  unit-test:
+  test-lint:
+    runs-on: ubuntu-latest
+    steps:
+      # Setup and install
+      - uses: actions/checkout@v3
+      - uses: actions/setup-node@v3
+        with:
+          cache: 'npm'
+      - run: npm ci
+
+      # Lint the source files
+      - run: ./node_modules/.bin/ts-node ./index.ts --help
+      - run: npm run lint
+
+  test-unit:
+    needs:
+      - test-lint
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
         os: [ubuntu-latest, macos-latest, windows-latest]
-        node-version: [12.x, 14.x, 16.x]
+        node-version: [12.x, 14.x, 16.x, 18.x]
     env:
       OS: ${{ matrix.os }}
-
     steps:
+      # Setup and install
       - uses: actions/checkout@v3
       - name: Use Node.js ${{ matrix.node-version }}
         uses: actions/setup-node@v3
         with:
           node-version: ${{ matrix.node-version }}
-      - run: echo "NODE_VERSION=$(node --version)" >> $GITHUB_ENV
+          cache: 'npm'
       - run: npm ci
 
-      - run: ./node_modules/.bin/ts-node ./index.ts --help
+      # Test the source files
+      - run: npm run test:unit
 
-      - run: npm run build
-      - run: ./build/index.js --help
+      # Test the build
+      - run: |
+          npm run build
+          ./build/index.js --help
+          rm -rf build
 
-      - run: npm test
+  test-package:
+    needs:
+      - test-lint
+    runs-on: ubuntu-latest
+    steps:
+      # Setup and install
+      - uses: actions/checkout@v3
+      - uses: actions/setup-node@v3
+        with:
+          cache: 'npm'
+      - run: npm ci
+
+      # Test the packaging
+      - run: |
+          npm pack
+          tar –xvzf igir-*.tgz
+          cd package
+          npm ci --ignore-scripts
+          ./build/index.js --help
+          cd ..
+          rm -rf package
 
   codecov:
-    runs-on: ubuntu-latest
     needs:
-      - unit-test
+      - test-lint
+      - test-unit
+      - test-package
+    runs-on: ubuntu-latest
     steps:
+      # Setup and install
+      - uses: actions/checkout@v3
+      - uses: actions/setup-node@v3
+        with:
+          cache: 'npm'
+      - run: npm ci
+
+      # Run test coverage
+      - run: npm run test:coverage
       - uses: codecov/codecov-action@v3
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
-          env_vars: OS,NODE_VERSION
           fail_ci_if_error: true
           verbose: true
+
+#  version-check:
+#    if: github.ref_name == 'main'
+#    runs-on: ubuntu-latest
+#    steps:
+#      # Setup and install
+#      - uses: actions/checkout@v3
+#
+#      # Check if version has changed
+#      - name: Check if version has been updated
+#        id: check
+#        uses: EndBug/version-check@v1
+#      - name: Log when changed
+#        if: steps.check.outputs.changed == 'true'
+#        run: 'echo "Version change found in commit ${{ steps.check.outputs.commit }}! New version: ${{ steps.check.outputs.version }} (${{ steps.check.outputs.type }})"'
+#      - run: echo ::set-output changed=${{steps.check.outputs.changed}}
+#
+#  github-release:
+#    if: github.ref_name == 'main' && jobs.version-check.outputs.changed == 'true'
+#    needs:
+#      - codecov
+#      - test-lint
+#      - test-unit
+#      - test-package
+#      - version-check
+#    runs-on: ubuntu-latest
+#    steps:
+#      # Setup and install
+#      - uses: actions/checkout@v3
+#      - uses: actions/setup-node@v3
+#        with:
+#          cache: 'npm'
+#      - run: npm ci
+#      - run: npm run release:patch -- --ci

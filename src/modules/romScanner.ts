@@ -1,6 +1,5 @@
 import _7z, { Result } from '7zip-min';
 import AdmZip from 'adm-zip';
-import async from 'async';
 import path from 'path';
 
 import ProgressBar from '../console/progressBar.js';
@@ -19,8 +18,6 @@ export default class ROMScanner {
   }
 
   async scan(): Promise<ROMFile[]> {
-    const results: ROMFile[] = [];
-
     await this.progressBar.setSymbol('🔎');
     await this.progressBar.reset(0);
 
@@ -29,7 +26,12 @@ export default class ROMScanner {
     await this.progressBar.reset(inputFiles.length);
     await this.progressBar.logInfo(`Found ${inputFiles.length} ROM file${inputFiles.length !== 1 ? 's' : ''}`);
 
-    await async.eachLimit(inputFiles, 5, async (inputFile, callback) => {
+    const results = [];
+
+    /* eslint-disable no-await-in-loop */
+    for (let i = 0; i < inputFiles.length; i += 1) {
+      const inputFile = inputFiles[i];
+
       await this.progressBar.increment();
 
       let romFiles: ROMFile[];
@@ -42,10 +44,9 @@ export default class ROMScanner {
       }
 
       results.push(...romFiles);
-      callback();
-    });
+    }
 
-    return results.flatMap((romFiles) => romFiles);
+    return results;
   }
 
   private async getRomFilesIn7z(file: string): Promise<ROMFile[]> {
@@ -54,6 +55,11 @@ export default class ROMScanner {
       _7z.list(file, (err, result) => {
         if (err) {
           this.progressBar.logError(`Failed to parse 7z ${file} : ${err}`);
+          resolve([]);
+        } else if (!result.length) {
+          // WARN(cemmer): this seems to be able to be caused by high concurrency on the loop on
+          // the main function, so leave it single-threaded
+          this.progressBar.logWarn(`Found no files in 7z: ${file}`);
           resolve([]);
         } else {
           resolve(result);
@@ -66,12 +72,16 @@ export default class ROMScanner {
   private getRomFilesInZip(file: string): ROMFile[] {
     try {
       const zip = new AdmZip(file);
-      return zip.getEntries()
+      const romFiles = zip.getEntries()
         .map((entry) => new ROMFile(
           file,
           entry.entryName,
           entry.header.crc.toString(16),
         ));
+      if (!romFiles.length) {
+        this.progressBar.logWarn(`Found no files in zip: ${file}`);
+      }
+      return romFiles;
     } catch (e) {
       this.progressBar.logError(`Failed to parse zip ${file} : ${e}`);
       return [];
