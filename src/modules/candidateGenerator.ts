@@ -79,8 +79,6 @@ export default class CandidateGenerator {
       output.set(parent, releaseCandidates);
     });
 
-    // TODO(cemmer): de-duplicate ReleaseCandidate[] ?
-
     const totalCandidates = [...output.values()].reduce((sum, rc) => sum + rc.length, 0);
     await this.progressBar.logInfo(`${dat.getName()}: ${totalCandidates} candidate${totalCandidates !== 1 ? 's' : ''} found`);
 

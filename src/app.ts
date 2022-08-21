@@ -22,8 +22,7 @@ export default async function main(options: Options, logger: Logger) {
   const dats = await new DATScanner(options, datScanProgressBar).scan();
   if (!dats.length) {
     ProgressBarCLI.stop();
-    logger.error('\nNo valid DAT files found!');
-    throw new Error();
+    throw new Error('No valid DAT files found!');
   }
   await datScanProgressBar.done(`${dats.length.toLocaleString()} DAT${dats.length !== 1 ? 's' : ''} found`);
 

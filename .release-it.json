@@ -5,17 +5,14 @@
     "after:release": "echo Successfully released ${name} v${version} to ${repo.repository}."
   },
   "git": {
-    "commitMessage": "v${version}",
-    "tagName": "v${version}",
-    "requireCleanWorkingDir": false
+    "requireBranch": "emmercm/poc",
+    "commit": false,
+    "tagName": "v${version}"
   },
   "github": {
     "release": true,
     "releaseName": "${version}",
-    "tokenRef": "GITHUB_TOKEN",
     "assets": ["igir-${version}.tgz"]
   },
-  "npm": {
-    "publish": false
-  }
+  "npm": false
 }

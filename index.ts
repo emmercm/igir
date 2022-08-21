@@ -18,7 +18,7 @@ import ArgumentsParser from './src/modules/argumentsParser.js';
 
     await main(options, logger);
   } catch (e) {
-    logger.error(e);
+    logger.error(`\n${e}`);
     process.exit(1);
   }
 })();

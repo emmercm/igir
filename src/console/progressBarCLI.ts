@@ -1,5 +1,6 @@
 import { E_CANCELED, Mutex } from 'async-mutex';
 import cliProgress, { MultiBar, SingleBar } from 'cli-progress';
+import { PassThrough } from 'stream';
 
 import Logger, { LogLevel } from './logger.js';
 import ProgressBar from './progressBar.js';
@@ -37,7 +38,7 @@ export default class ProgressBarCLI implements ProgressBar {
 
     if (!ProgressBarCLI.multiBar) {
       ProgressBarCLI.multiBar = new cliProgress.MultiBar({
-        stream: Logger.stream,
+        stream: logger.getLogLevel() < LogLevel.OFF ? Logger.stream : new PassThrough(),
         barsize: 25,
         fps: ProgressBarCLI.fps,
         emptyOnZero: true,

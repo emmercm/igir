@@ -1,6 +1,6 @@
 {
   "name": "igir",
-  "version": "0.0.1",
+  "version": "0.0.0",
   "description": "A ROM collection manager designed to make one game, one rom (1G1R) sets.",
   "keywords": [],
   "homepage": "https://github.com/emmercm/igir#readme",
@@ -30,9 +30,7 @@
     "node": "node --loader ts-node/esm index.ts",
     "prepack": "npm run build",
     "prepare": "husky install",
-    "release": "./node_modules/.bin/release-it",
-    "release:minor": "npm run release -- minor --ci",
-    "release:patch": "npm run release -- patch --ci",
+    "release": "./node_modules/.bin/release-it --no-increment",
     "start": "ts-node index.ts",
     "test": "npm run test:unit && npm run lint",
     "test:unit": "node --experimental-vm-modules ./node_modules/jest/bin/jest.js --verbose",
