@@ -9,6 +9,7 @@
   },
   "license": "GPL-3.0-or-later",
   "author": "Christian Emmer",
+  "type": "module",
   "files": [
     "build",
     "!**/test/**",
@@ -78,5 +79,11 @@
     "ts-node": "^10.8.2",
     "typescript": "^4.7.4"
   },
-  "type": "module"
+  "//engines": [
+    "ES6 modules generally require ^12.20.0 || ^14.13.1 || >=16.0.0, though `tsc` can target ES5 or lower",
+    "But a lot of dependencies use node: prefixed imports such as node:fs which `tsc` can't get around"
+  ],
+  "engines": {
+    "node": ">=12.20.0"
+  }
 }

@@ -49,7 +49,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        node-version: [ lts/*, lts/-1, lts/-2, lts/-3 ]
+        node-version: [ lts/*, lts/-1, lts/-2 ]
     steps:
       # Setup and install
       - uses: actions/checkout@v3
@@ -68,11 +68,15 @@ jobs:
     needs:
       - test-lint
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node-version: [ lts/*, lts/-1, lts/-2 ]
     steps:
       # Setup and install
       - uses: actions/checkout@v3
       - uses: actions/setup-node@v3
         with:
+          node-version: ${{ matrix.node-version }}
           cache: 'npm'
       - run: npm ci
 
