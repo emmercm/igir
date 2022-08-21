@@ -78,7 +78,7 @@ jobs:
       # Test the packaging
       - run: |
           npm pack
-          tar –xvzf igir-*.tgz
+          tar -xvzf igir-*.tgz
           cd package
           npm ci --ignore-scripts
           ./build/index.js --help
