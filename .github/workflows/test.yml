@@ -29,8 +29,6 @@ jobs:
       matrix:
         os: [ubuntu-latest, macos-latest, windows-latest]
         node-version: [12.x, 14.x, 16.x]
-    env:
-      OS: ${{ matrix.os }}
     steps:
       # Setup and install
       - uses: actions/checkout@v3
@@ -44,11 +42,26 @@ jobs:
       # Test the source files
       - run: npm run test:unit
 
-      # Test the build
-      - run: |
-          npm run build
-          ./test/endToEndTest.sh
-          rm -rf build
+  test-e2e:
+    needs:
+      - test-lint
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node-version: [ 12.x, 14.x, 16.x ]
+    steps:
+      # Setup and install
+      - uses: actions/checkout@v3
+      - name: Use Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v3
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: 'npm'
+      - run: npm ci
+
+      # Test the built files
+      - run: npm run build
+      - run: ./test/endToEndTest.sh
 
   test-package:
     needs:
