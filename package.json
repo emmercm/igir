@@ -31,6 +31,8 @@
     "prepack": "npm run build",
     "prepare": "husky install",
     "release": "./node_modules/.bin/release-it",
+    "release:minor": "npm run release -- minor --ci",
+    "release:patch": "npm run release -- patch --ci",
     "start": "ts-node index.ts",
     "test": "npm run test:unit && npm run lint",
     "test:unit": "node --experimental-vm-modules ./node_modules/jest/bin/jest.js --verbose",

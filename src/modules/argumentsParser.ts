@@ -287,13 +287,13 @@ export default class ArgumentsParser {
       .example([
         ['$0 copy -i **/*.zip -o 1G1R/ -s -l EN -r USA,EUR,JPN', 'Produce a 1G1R set per console, preferring English from USA>EUR>JPN'],
         [''], // https://github.com/yargs/yargs/issues/1640
-        ['$0 copy -i **/*.zip -i 1G1R/ -o 1G1R/', 'Merge new ROMs into an existing ROM collection'],
+        ['$0 copy report -i **/*.zip -i ROMs/ -o ROMs/', 'Merge new ROMs into an existing ROM collection and generate a report'],
         [''], // https://github.com/yargs/yargs/issues/1640
-        ['$0 move zip -i 1G1R/ -o 1G1R/', 'Organize and zip an existing ROM collection'],
+        ['$0 move zip -i ROMs/ -o ROMs/', 'Organize and zip an existing ROM collection'],
         [''], // https://github.com/yargs/yargs/issues/1640
-        ['$0 copy -i **/*.zip -o bios/ --only-bios', 'Collate all BIOS files'],
-        // [''], // https://github.com/yargs/yargs/issues/1640
-        // ['$0 -i 1G1R/ -o bios/ -D --dir-letter -t', 'Copy ROMs to a flash cart'],
+        ['$0 copy -i **/*.zip -o BIOS/ --only-bios', 'Collate all BIOS files'],
+        [''], // https://github.com/yargs/yargs/issues/1640
+        ['$0 copy -i ROMs/ -o /media/SDCard/ROMs/ -D --dir-letter -t', 'Copy ROMs to a flash cart'],
       ])
 
     // Colorize help output
@@ -311,19 +311,13 @@ export default class ArgumentsParser {
         throw new Error(msg);
       });
 
-    let yargsArgv;
-    try {
-      yargsArgv = yargsParser
-        .strictOptions(true)
-        .parse(argv, {}, (err, parsedArgv, output) => {
-          if (output) {
-            this.logger.colorizeYargs(output);
-          }
-        });
-    } catch (e) {
-      this.logger.error(`Failed to parse arguments: ${e}`);
-      throw e;
-    }
+    const yargsArgv = yargsParser
+      .strictOptions(true)
+      .parse(argv, {}, (err, parsedArgv, output) => {
+        if (output) {
+          this.logger.colorizeYargs(output);
+        }
+      });
 
     const options = Options.fromObject(yargsArgv);
     this.logger.info(`Parsed options: ${options.toString()}`);

@@ -54,7 +54,11 @@ export default class ROMScanner {
       // TODO(cemmer): this won't let you ctrl-c
       _7z.list(file, (err, result) => {
         if (err) {
-          this.progressBar.logError(`Failed to parse 7z ${file} : ${err}`);
+          const msg = err.toString()
+            .replace(/\n\n+/g, '\n')
+            .replace(/^/gm, '   ')
+            .trim();
+          this.progressBar.logError(`Failed to parse 7z ${file} : ${msg}`);
           resolve([]);
         } else if (!result.length) {
           // WARN(cemmer): this seems to be able to be caused by high concurrency on the loop on

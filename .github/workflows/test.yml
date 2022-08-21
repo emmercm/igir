@@ -22,8 +22,6 @@ jobs:
       - run: npm run lint
 
   test-unit:
-    needs:
-      - test-lint
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
@@ -44,8 +42,6 @@ jobs:
       - run: npm run test:unit
 
   test-e2e:
-    needs:
-      - test-lint
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -65,8 +61,6 @@ jobs:
       - run: ./test/endToEndTest.sh
 
   test-package:
-    needs:
-      - test-lint
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -113,6 +107,17 @@ jobs:
           fail_ci_if_error: true
           verbose: true
 
+  status-check:
+    needs:
+      - test-lint
+      - test-unit
+      - test-e2e
+      - test-package
+      - codecov
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo ok
+
 #  version-check:
 #    if: github.ref_name == 'main'
 #    runs-on: ubuntu-latest
@@ -132,11 +137,7 @@ jobs:
 #  github-release:
 #    if: github.ref_name == 'main' && jobs.version-check.outputs.changed == 'true'
 #    needs:
-#      - codecov
-#      - test-lint
-#      - test-unit
-#      - test-package
-#      - test-e2e
+#      - status-check
 #      - version-check
 #    runs-on: ubuntu-latest
 #    steps:
