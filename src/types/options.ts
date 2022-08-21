@@ -272,6 +272,11 @@ export default class Options implements OptionsProps {
       globPatterns
         .filter((inputPath) => inputPath)
         .map(async (inputPath) => {
+          // Windows will report that \\.\nul doesn't exist
+          if (inputPath === os.devNull) {
+            return [inputPath];
+          }
+
           try {
             // If the file exists, don't process it as a glob pattern
             await fsPromises.access(inputPath); // throw if file doesn't exist
