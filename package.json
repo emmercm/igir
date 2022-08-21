@@ -32,8 +32,8 @@
     "release": "./node_modules/.bin/release-it",
     "start": "ts-node index.ts",
     "test": "npm run test:unit && npm run lint",
-    "test:unit": "node --experimental-vm-modules ./node_modules/.bin/jest --verbose",
-    "test:coverage": "node --experimental-vm-modules ./node_modules/.bin/jest --verbose --coverage"
+    "test:unit": "node --experimental-vm-modules ./node_modules/jest/bin/jest.js --verbose",
+    "test:coverage": "node --experimental-vm-modules ./node_modules/jest/bin/jest.js --verbose --coverage"
   },
   "dependencies": {
     "7zip-min": "^1.4.3",
