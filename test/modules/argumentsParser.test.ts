@@ -3,7 +3,7 @@ import os from 'os';
 import Logger, { LogLevel } from '../../src/console/logger.js';
 import ArgumentsParser from '../../src/modules/argumentsParser.js';
 
-const dummyRequiredArgs = ['--input', '/dev/null', '--output', '/dev/null'];
+const dummyRequiredArgs = ['--input', os.devNull, '--output', os.devNull];
 const dummyCommandAndRequiredArgs = ['copy', ...dummyRequiredArgs];
 
 const argumentsParser = new ArgumentsParser(new Logger(LogLevel.OFF));
@@ -89,9 +89,9 @@ describe('options', () => {
   });
 
   it('should parse "dat"', async () => {
-    const src = await argumentsParser.parse(['test', '--input', '/dev/null', '--dat', './src']).scanDatFiles();
-    const test = await argumentsParser.parse(['test', '--input', '/dev/null', '--dat', './test']).scanDatFiles();
-    const both = await argumentsParser.parse(['test', '--input', '/dev/null', '--dat', './src', '--dat', './test']).scanDatFiles();
+    const src = await argumentsParser.parse(['test', '--input', os.devNull, '--dat', './src']).scanDatFiles();
+    const test = await argumentsParser.parse(['test', '--input', os.devNull, '--dat', './test']).scanDatFiles();
+    const both = await argumentsParser.parse(['test', '--input', os.devNull, '--dat', './src', '--dat', './test']).scanDatFiles();
     expect(src.length).toBeGreaterThan(0);
     expect(test.length).toBeGreaterThan(0);
     expect(both.length).toEqual(src.length + test.length);
@@ -99,9 +99,9 @@ describe('options', () => {
   });
 
   it('should parse "input"', async () => {
-    const src = await argumentsParser.parse(['copy', '--input', './src', '--output', '/dev/null']).scanInputFilesWithoutExclusions();
-    const test = await argumentsParser.parse(['copy', '--input', './test', '--output', '/dev/null']).scanInputFilesWithoutExclusions();
-    const both = await argumentsParser.parse(['copy', '--input', './src', '--input', './test', '--output', '/dev/null']).scanInputFilesWithoutExclusions();
+    const src = await argumentsParser.parse(['copy', '--input', './src', '--output', os.devNull]).scanInputFilesWithoutExclusions();
+    const test = await argumentsParser.parse(['copy', '--input', './test', '--output', os.devNull]).scanInputFilesWithoutExclusions();
+    const both = await argumentsParser.parse(['copy', '--input', './src', '--input', './test', '--output', os.devNull]).scanInputFilesWithoutExclusions();
     expect(src.length).toBeGreaterThan(0);
     expect(test.length).toBeGreaterThan(0);
     expect(both.length).toEqual(src.length + test.length);
@@ -109,25 +109,25 @@ describe('options', () => {
   });
 
   it('should parse "input-exclude"', async () => {
-    expect((await argumentsParser.parse(['copy', '--input', './src', '--output', '/dev/null']).scanInputFilesWithoutExclusions()).length).toBeGreaterThan(0);
-    expect((await argumentsParser.parse(['copy', '--input', './src', '--output', '/dev/null', '-I', '/dev/null']).scanInputFilesWithoutExclusions()).length).toBeGreaterThan(0);
-    expect((await argumentsParser.parse(['copy', '--input', './src', '--output', '/dev/null', '-I', './src']).scanInputFilesWithoutExclusions()).length).toEqual(0);
-    expect((await argumentsParser.parse(['copy', '--input', './src', '--output', '/dev/null', '--input-exclude', './src']).scanInputFilesWithoutExclusions()).length).toEqual(0);
+    expect((await argumentsParser.parse(['copy', '--input', './src', '--output', os.devNull]).scanInputFilesWithoutExclusions()).length).toBeGreaterThan(0);
+    expect((await argumentsParser.parse(['copy', '--input', './src', '--output', os.devNull, '-I', os.devNull]).scanInputFilesWithoutExclusions()).length).toBeGreaterThan(0);
+    expect((await argumentsParser.parse(['copy', '--input', './src', '--output', os.devNull, '-I', './src']).scanInputFilesWithoutExclusions()).length).toEqual(0);
+    expect((await argumentsParser.parse(['copy', '--input', './src', '--output', os.devNull, '--input-exclude', './src']).scanInputFilesWithoutExclusions()).length).toEqual(0);
   });
 
   it('should parse "output"', () => {
     // Test requirements per command
     expect(() => argumentsParser.parse(['test'])).toThrow(/missing required argument/i);
-    expect(() => argumentsParser.parse(['copy', '--input', '/dev/null'])).toThrow(/missing required option/i);
-    expect(() => argumentsParser.parse(['move', '--input', '/dev/null'])).toThrow(/missing required option/i);
-    expect(() => argumentsParser.parse(['zip', '--input', '/dev/null'])).toThrow(/missing required option/i);
-    expect(() => argumentsParser.parse(['clean', '--input', '/dev/null'])).toThrow(/missing required option/i);
-    expect(argumentsParser.parse(['test', '--input', '/dev/null']).getOutput()).toContain(os.tmpdir());
-    expect(argumentsParser.parse(['report', '--input', '/dev/null']).getOutput()).toContain(os.tmpdir());
+    expect(() => argumentsParser.parse(['copy', '--input', os.devNull])).toThrow(/missing required option/i);
+    expect(() => argumentsParser.parse(['move', '--input', os.devNull])).toThrow(/missing required option/i);
+    expect(() => argumentsParser.parse(['zip', '--input', os.devNull])).toThrow(/missing required option/i);
+    expect(() => argumentsParser.parse(['clean', '--input', os.devNull])).toThrow(/missing required option/i);
+    expect(argumentsParser.parse(['test', '--input', os.devNull]).getOutput()).toContain(os.tmpdir());
+    expect(argumentsParser.parse(['report', '--input', os.devNull]).getOutput()).toContain(os.tmpdir());
     // Test value
-    expect(argumentsParser.parse(['copy', '--input', '/dev/null', '-o', 'foo']).getOutput()).toEqual('foo');
-    expect(argumentsParser.parse(['copy', '--input', '/dev/null', '--output', 'foo']).getOutput()).toEqual('foo');
-    expect(argumentsParser.parse(['copy', '--input', '/dev/null', '--output', 'foo', '--output', 'bar']).getOutput()).toEqual('bar');
+    expect(argumentsParser.parse(['copy', '--input', os.devNull, '-o', 'foo']).getOutput()).toEqual('foo');
+    expect(argumentsParser.parse(['copy', '--input', os.devNull, '--output', 'foo']).getOutput()).toEqual('foo');
+    expect(argumentsParser.parse(['copy', '--input', os.devNull, '--output', 'foo', '--output', 'bar']).getOutput()).toEqual('bar');
   });
 
   it('should parse "dir-mirror"', () => {
@@ -170,11 +170,11 @@ describe('options', () => {
 
   it('should parse "zip-exclude"', () => {
     const filePath = 'roms/test.rom';
-    expect(argumentsParser.parse(['zip', '--input', '/dev/null', '--output', '/dev/null']).shouldZip(filePath)).toBeTruthy();
-    expect(argumentsParser.parse(['zip', '--input', '/dev/null', '--output', '/dev/null', '-Z', '/dev/null']).shouldZip(filePath)).toBeTruthy();
-    expect(argumentsParser.parse(['zip', '--input', '/dev/null', '--output', '/dev/null', '-Z', '**/*']).shouldZip(filePath)).toBeFalsy();
-    expect(argumentsParser.parse(['zip', '--input', '/dev/null', '--output', '/dev/null', '-Z', '**/*.rom']).shouldZip(filePath)).toBeFalsy();
-    expect(argumentsParser.parse(['zip', '--input', '/dev/null', '--output', '/dev/null', '--zip-exclude', '**/*.rom']).shouldZip(filePath)).toBeFalsy();
+    expect(argumentsParser.parse(['zip', '--input', os.devNull, '--output', os.devNull]).shouldZip(filePath)).toBeTruthy();
+    expect(argumentsParser.parse(['zip', '--input', os.devNull, '--output', os.devNull, '-Z', os.devNull]).shouldZip(filePath)).toBeTruthy();
+    expect(argumentsParser.parse(['zip', '--input', os.devNull, '--output', os.devNull, '-Z', '**/*']).shouldZip(filePath)).toBeFalsy();
+    expect(argumentsParser.parse(['zip', '--input', os.devNull, '--output', os.devNull, '-Z', '**/*.rom']).shouldZip(filePath)).toBeFalsy();
+    expect(argumentsParser.parse(['zip', '--input', os.devNull, '--output', os.devNull, '--zip-exclude', '**/*.rom']).shouldZip(filePath)).toBeFalsy();
   });
 
   it('should parse "overwrite"', () => {
