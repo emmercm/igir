@@ -79,8 +79,8 @@ export default class ROMFile {
 
   cleanupLocalFile() {
     if (path.resolve(this.getFilePath()).indexOf(os.tmpdir()) !== -1) {
-      // NOTE(cemmer): fsPromises.rm() requires Node v14.14.0+
-      fs.rmSync(path.dirname(this.getFilePath()), { force: true, recursive: true });
+      // NOTE(cemmer): fs.rm*() requires Node v14.14.0+
+      fs.rmdirSync(path.dirname(this.getFilePath()), { recursive: true });
     }
   }
 

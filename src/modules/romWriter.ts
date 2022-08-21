@@ -193,8 +193,8 @@ export default class ROMWriter {
         .filter((filePath) => filePath !== outputZipPath)
         .filter((romFile, idx, romFiles) => romFiles.indexOf(romFile) === idx);
       await this.progressBar.logDebug(filesToDelete.map((f) => `${f}: deleting`).join('\n'));
-      // NOTE(cemmer): fsPromises.rm() requires Node v14.14.0
-      filesToDelete.forEach((filePath) => fs.rmSync(filePath, { force: true }));
+      // NOTE(cemmer): fs.rm*() requires Node v14.14.0
+      filesToDelete.forEach((filePath) => fs.unlinkSync(filePath));
     }
   }
 
@@ -256,8 +256,8 @@ export default class ROMWriter {
     // Delete the original file if we're supposed to "move" it
     if (this.options.shouldMove()) {
       await this.progressBar.logDebug(`${inputRomFileLocal.getFilePath()}: deleting`);
-      // NOTE(cemmer): fsPromises.rm() requires Node v14.14.0+
-      fs.rmSync(inputRomFileLocal.getFilePath(), { force: true });
+      // NOTE(cemmer): fs.rm*() requires Node v14.14.0+
+      fs.unlinkSync(inputRomFileLocal.getFilePath());
     }
   }
 }
