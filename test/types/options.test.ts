@@ -1,4 +1,5 @@
 import os from 'os';
+import path from 'path';
 
 import DAT from '../../src/types/logiqx/dat.js';
 import Header from '../../src/types/logiqx/header.js';
@@ -19,23 +20,23 @@ describe('getOutput', () => {
 
   it('should respect dir mirror', () => {
     expect(new Options({ commands: ['copy'], output: os.devNull, dirMirror: true }).getOutput()).toEqual(os.devNull);
-    expect(new Options({ commands: ['copy'], output: os.devNull, dirMirror: true }).getOutput(undefined, undefined, 'file.rom')).toEqual('/dev/null/file.rom');
-    expect(new Options({ commands: ['copy'], output: os.devNull, dirMirror: true }).getOutput(undefined, 'file.rom', 'file.rom')).toEqual('/dev/null/file.rom');
-    expect(new Options({ commands: ['copy'], output: os.devNull, dirMirror: true }).getOutput(undefined, 'roms/file.rom', 'file.rom')).toEqual('/dev/null/file.rom');
-    expect(new Options({ commands: ['copy'], output: os.devNull, dirMirror: true }).getOutput(undefined, 'roms/subdir/file.rom', 'file.rom')).toEqual('/dev/null/subdir/file.rom');
-    expect(new Options({ commands: ['copy'], output: os.devNull, dirMirror: false }).getOutput(undefined, 'roms/subdir/file.rom', 'file.rom')).toEqual('/dev/null/file.rom');
+    expect(new Options({ commands: ['copy'], output: os.devNull, dirMirror: true }).getOutput(undefined, undefined, 'file.rom')).toEqual(path.join(os.devNull, 'file.rom'));
+    expect(new Options({ commands: ['copy'], output: os.devNull, dirMirror: true }).getOutput(undefined, 'file.rom', 'file.rom')).toEqual(path.join(os.devNull, 'file.rom'));
+    expect(new Options({ commands: ['copy'], output: os.devNull, dirMirror: true }).getOutput(undefined, 'roms/file.rom', 'file.rom')).toEqual(path.join(os.devNull, 'file.rom'));
+    expect(new Options({ commands: ['copy'], output: os.devNull, dirMirror: true }).getOutput(undefined, 'roms/subdir/file.rom', 'file.rom')).toEqual(path.join(os.devNull, 'subdir', 'file.rom'));
+    expect(new Options({ commands: ['copy'], output: os.devNull, dirMirror: false }).getOutput(undefined, 'roms/subdir/file.rom', 'file.rom')).toEqual(path.join(os.devNull, 'file.rom'));
   });
 
   it('should respect dir dat name', () => {
     expect(new Options({ commands: ['copy'], output: os.devNull, dirDatName: true }).getOutput()).toEqual(os.devNull);
-    expect(new Options({ commands: ['copy'], output: os.devNull, dirDatName: true }).getOutput(new DAT(new Header({ name: 'system' }), []))).toEqual('/dev/null/system');
+    expect(new Options({ commands: ['copy'], output: os.devNull, dirDatName: true }).getOutput(new DAT(new Header({ name: 'system' }), []))).toEqual(path.join(os.devNull, 'system'));
     expect(new Options({ commands: ['copy'], output: os.devNull, dirDatName: false }).getOutput(new DAT(new Header({ name: 'system' }), []))).toEqual(os.devNull);
   });
 
   it('should respect dir letter', () => {
     expect(new Options({ commands: ['copy'], output: os.devNull, dirLetter: true }).getOutput()).toEqual(os.devNull);
-    expect(new Options({ commands: ['copy'], output: os.devNull, dirLetter: true }).getOutput(undefined, undefined, 'file.rom')).toEqual('/dev/null/F/file.rom');
-    expect(new Options({ commands: ['copy'], output: os.devNull, dirLetter: true }).getOutput(undefined, undefined, '🙂.rom')).toEqual('/dev/null/#/🙂.rom');
-    expect(new Options({ commands: ['copy'], output: os.devNull, dirLetter: false }).getOutput(undefined, undefined, '🙂.rom')).toEqual('/dev/null/🙂.rom');
+    expect(new Options({ commands: ['copy'], output: os.devNull, dirLetter: true }).getOutput(undefined, undefined, 'file.rom')).toEqual(path.join(os.devNull, 'F', 'file.rom'));
+    expect(new Options({ commands: ['copy'], output: os.devNull, dirLetter: true }).getOutput(undefined, undefined, '🙂.rom')).toEqual(path.join(os.devNull, '#', '🙂.rom'));
+    expect(new Options({ commands: ['copy'], output: os.devNull, dirLetter: false }).getOutput(undefined, undefined, '🙂.rom')).toEqual(path.join(os.devNull, '🙂.rom'));
   });
 });

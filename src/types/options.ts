@@ -272,9 +272,9 @@ export default class Options implements OptionsProps {
       globPatterns
         .filter((inputPath) => inputPath)
         .map(async (inputPath) => {
-          // Windows will report that \\.\nul doesn't exist
+          // Windows will report that \\.\nul doesn't exist, catch it explicitly
           if (inputPath === os.devNull) {
-            return [inputPath];
+            return [];
           }
 
           try {
