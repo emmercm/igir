@@ -1,5 +1,5 @@
 import AdmZip from 'adm-zip';
-import { promises as fsPromises } from 'fs';
+import fs, { promises as fsPromises } from 'fs';
 import path from 'path';
 
 import ProgressBar from '../console/progressBar.js';
@@ -158,7 +158,7 @@ export default class ROMWriter {
         await this.progressBar.logError(`Failed to add ${inputRomFileLocal.getFilePath()} to zip ${outputZipPath} : ${e}`);
         return;
       }
-      await inputRomFileLocal.cleanupLocalFile();
+      inputRomFileLocal.cleanupLocalFile();
       outputNeedsWriting = true;
     }
 
@@ -193,7 +193,8 @@ export default class ROMWriter {
         .filter((filePath) => filePath !== outputZipPath)
         .filter((romFile, idx, romFiles) => romFiles.indexOf(romFile) === idx);
       await this.progressBar.logDebug(filesToDelete.map((f) => `${f}: deleting`).join('\n'));
-      await Promise.all(filesToDelete.map((filePath) => fsPromises.rm(filePath, { force: true })));
+      // NOTE(cemmer): fsPromises.rm() requires Node v14.14.0
+      filesToDelete.forEach((filePath) => fs.rmSync(filePath, { force: true }));
     }
   }
 
@@ -240,7 +241,7 @@ export default class ROMWriter {
     const inputRomFileLocal = await inputRomFile.toLocalFile(this.options.getTempDir());
     await this.progressBar.logDebug(`${inputRomFileLocal.getFilePath()}: copying to ${outputFilePath}`);
     await fsPromises.copyFile(inputRomFileLocal.getFilePath(), outputFilePath);
-    await inputRomFileLocal.cleanupLocalFile();
+    inputRomFileLocal.cleanupLocalFile();
 
     // Test the written file
     if (this.options.shouldTest()) {
@@ -255,7 +256,8 @@ export default class ROMWriter {
     // Delete the original file if we're supposed to "move" it
     if (this.options.shouldMove()) {
       await this.progressBar.logDebug(`${inputRomFileLocal.getFilePath()}: deleting`);
-      await fsPromises.rm(inputRomFileLocal.getFilePath(), { force: true });
+      // NOTE(cemmer): fsPromises.rm() requires Node v14.14.0+
+      fs.rmSync(inputRomFileLocal.getFilePath(), { force: true });
     }
   }
 }
