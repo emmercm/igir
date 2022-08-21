@@ -106,14 +106,18 @@ Options:
   -h, --help  Show help                                                                              [boolean]
 
 Examples:
-  igir copy -i **/*.zip -o 1G1R/ -s -l EN -r USA,EUR,JPN  Produce a 1G1R set per console, preferring English f
-                                                          rom USA>EUR>JPN
+  igir copy -i **/*.zip -o 1G1R/ -s -l EN -r USA,EUR,JPN   Produce a 1G1R set per console, preferring English
+                                                           from USA>EUR>JPN
 
-  igir copy -i **/*.zip -i 1G1R/ -o 1G1R/                 Merge new ROMs into an existing ROM collection
+  igir copy report -i **/*.zip -i ROMs/ -o ROMs/           Merge new ROMs into an existing ROM collection and
+                                                           generate a report
 
-  igir move zip -i 1G1R/ -o 1G1R/                         Organize and zip an existing ROM collection
+  igir move zip -i ROMs/ -o ROMs/                          Organize and zip an existing ROM collection
 
-  igir copy -i **/*.zip -o bios/ --only-bios              Collate all BIOS files
+  igir copy -i **/*.zip -o BIOS/ --only-bios               Collate all BIOS files
+
+  igir copy -i ROMs/ -o /media/SDCard/ROMs/ -D --dir-lett  Copy ROMs to a flash cart
+  er -t
 ```
 
 ## Obtaining DAT catalogs
