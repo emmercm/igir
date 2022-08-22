@@ -1,0 +1,56 @@
+{
+  $schema: "https://docs.renovatebot.com/renovate-schema.json",
+  extends: [
+    "config:base"
+  ],
+
+  // Personal preferences
+  timezone: "America/Los_Angeles",
+  assignees: ["@emmercm"],
+  reviewers: ["@emmercm"],
+  assignAutomerge: false, // default
+
+  // Open PRs immediately for vulnerability alerts
+  // Requires "dependency graph" and "dependabot alerts" enabled for the repo
+  vulnerabilityAlerts: {
+    enabled: true, // default
+    schedule: "at any time", // default
+    prCreation: "immediate" // default
+  },
+
+  // Separate potentially breaking updates, group others
+  separateMultipleMajor: true,
+  separateMajorMinor: true, // default
+  separateMinorPatch: false, // default
+
+  // Allow auto-merging of PRs, but reduce their spam on the commit log
+  automerge: true,
+  automergeSchedule: "before 5am on monday",
+  prHourlyLimit: 0,
+
+  npm: {
+    lockFileMaintenance: {
+      enabled: true
+    },
+    transitiveRemediation: true,
+
+    stabilityDays: 3,
+
+    packageRules: [
+      {
+        matchDepTypes: ["dependencies"],
+        groupName: "Dependencies",
+        automerge: false // TODO(cemmer)
+      },
+      {
+        matchDepTypes: ["devDependencies"],
+        groupName: "Dev Dependencies",
+        rangeStrategy: "pin"
+      },
+      {
+        matchDepTypes: ["optionalDependencies", "peerDependencies", "engines", "volta"],
+        enabled: false
+      }
+    ]
+  },
+}
