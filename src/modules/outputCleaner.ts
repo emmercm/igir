@@ -29,6 +29,8 @@ export default class OutputCleaner {
     const outputDir = this.options.getOutput();
 
     // If there is nothing to clean, then don't do anything
+    console.log(outputFilePathsToExclude);
+    console.log(await fg(`${outputDir}/**`.replace(/\\/g, '/')));
     const filesToClean = (await fg(`${outputDir}/**`.replace(/\\/g, '/')))
       .filter((file) => outputFilePathsToExclude.indexOf(file) === -1);
     if (!filesToClean) {
