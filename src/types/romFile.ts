@@ -6,6 +6,7 @@ import os from 'os';
 import path from 'path';
 
 import Constants from '../constants.js';
+import fsPoly from '../polyfill/fsPoly.js';
 
 export default class ROMFile {
   private readonly filePath!: string;
@@ -79,8 +80,7 @@ export default class ROMFile {
 
   cleanupLocalFile() {
     if (path.resolve(this.getFilePath()).indexOf(os.tmpdir()) !== -1) {
-      // NOTE(cemmer): fs.rm*() requires Node v14.14.0+
-      fs.rmdirSync(path.dirname(this.getFilePath()), { recursive: true });
+      fsPoly.rmSync(path.dirname(this.getFilePath()), { recursive: true });
     }
   }
 

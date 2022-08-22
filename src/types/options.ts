@@ -2,7 +2,7 @@ import 'reflect-metadata';
 
 import { Expose, instanceToPlain, plainToInstance } from 'class-transformer';
 import fg from 'fast-glob';
-import fs, { promises as fsPromises } from 'fs';
+import { promises as fsPromises } from 'fs';
 import { isNotJunk } from 'junk';
 import micromatch from 'micromatch';
 import moment from 'moment';
@@ -11,6 +11,7 @@ import path from 'path';
 
 import { LogLevel } from '../console/logger.js';
 import Constants from '../constants.js';
+import fsPoly from '../polyfill/fsPoly.js';
 import DAT from './logiqx/dat.js';
 
 export interface OptionsProps {
@@ -176,13 +177,12 @@ export default class Options implements OptionsProps {
   }
 
   private createTempDir(): Options {
-    try {
-      this.tempDir = fs.mkdtempSync(os.tmpdir());
-    } catch (e) {
-      this.tempDir = fs.mkdtempSync(path.join(process.cwd(), 'tmp'));
-    }
+    this.tempDir = fsPoly.mkdtempSync();
     process.on('SIGINT', () => {
-      fs.rmdirSync(this.tempDir, { recursive: true });
+      fsPoly.rmSync(this.tempDir, {
+        force: true,
+        recursive: true,
+      });
     });
     return this;
   }

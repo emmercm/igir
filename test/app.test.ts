@@ -1,14 +1,14 @@
 import fs from 'fs';
-import os from 'os';
 
 import main from '../src/app.js';
 import Logger, { LogLevel } from '../src/console/logger.js';
+import fsPoly from '../src/polyfill/fsPoly.js';
 import Options, { OptionsProps } from '../src/types/options.js';
 
 const LOGGER = new Logger(LogLevel.OFF);
 
 async function expectEndToEnd(options: OptionsProps, expectedFiles: string[]) {
-  const temp = fs.mkdtempSync(os.tmpdir());
+  const temp = fsPoly.mkdtempSync();
 
   await main(new Options({
     dat: ['test/fixtures/dats/*.dat'],
@@ -26,7 +26,7 @@ async function expectEndToEnd(options: OptionsProps, expectedFiles: string[]) {
     expect(writtenRoms).toContain(expectedFile);
   }
 
-  fs.rmdirSync(temp, { recursive: true });
+  fsPoly.rmSync(temp, { recursive: true });
 }
 
 it('should throw on no dats', async () => {

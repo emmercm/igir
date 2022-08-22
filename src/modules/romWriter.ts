@@ -1,8 +1,9 @@
 import AdmZip from 'adm-zip';
-import fs, { promises as fsPromises } from 'fs';
+import { promises as fsPromises } from 'fs';
 import path from 'path';
 
 import ProgressBar from '../console/progressBar.js';
+import fsPoly from '../polyfill/fsPoly.js';
 import DAT from '../types/logiqx/dat.js';
 import Parent from '../types/logiqx/parent.js';
 import ROM from '../types/logiqx/rom.js';
@@ -193,8 +194,7 @@ export default class ROMWriter {
         .filter((filePath) => filePath !== outputZipPath)
         .filter((romFile, idx, romFiles) => romFiles.indexOf(romFile) === idx);
       await this.progressBar.logDebug(filesToDelete.map((f) => `${f}: deleting`).join('\n'));
-      // NOTE(cemmer): fs.rm*() requires Node v14.14.0
-      filesToDelete.forEach((filePath) => fs.unlinkSync(filePath));
+      await Promise.all(filesToDelete.map((filePath) => fsPoly.rm(filePath, { force: true })));
     }
   }
 
@@ -256,8 +256,7 @@ export default class ROMWriter {
     // Delete the original file if we're supposed to "move" it
     if (this.options.shouldMove()) {
       await this.progressBar.logDebug(`${inputRomFileLocal.getFilePath()}: deleting`);
-      // NOTE(cemmer): fs.rm*() requires Node v14.14.0+
-      fs.unlinkSync(inputRomFileLocal.getFilePath());
+      await fsPoly.rm(inputRomFileLocal.getFilePath(), { force: true });
     }
   }
 }
