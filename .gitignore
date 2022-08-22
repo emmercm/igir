@@ -102,3 +102,32 @@ dist
 
 # TernJS port file
 .tern-port
+
+
+# Custom
+build/
+*.dat
+*.dtd
+
+# ROMs
+*.7z
+*.gb
+*.gba
+*.gbc
+*.rom
+*.zip
+
+# ROM pack excess
+*.jpg
+*.png
+*.sqlite
+*.torrent
+*.txt
+*.xml
+
+# Always commit fixtures
+!test/fixtures/dats/*
+!test/fixtures/dats/*/*
+!test/fixtures/roms/*
+!test/fixtures/roms/*/*
+.DS_Store

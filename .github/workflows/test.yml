@@ -1,0 +1,150 @@
+# https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-nodejs
+# https://hanxiao.io/2021/01/24/Speedup-CI-Workflow-in-Github-Actions-via-Strategy-Matrix/
+
+name: Node.js CI
+
+on:
+  push:
+
+jobs:
+  test-lint:
+    runs-on: ubuntu-latest
+    steps:
+      # Setup and install
+      - uses: actions/checkout@v3
+      - uses: actions/setup-node@v3
+        with:
+          cache: 'npm'
+      - run: npm ci
+
+      # Lint the source files
+      - run: ./node_modules/.bin/ts-node ./index.ts --help
+      - run: npm run lint
+
+  test-unit:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+        # TODO(cemmer): os.devNull in tests needs v14.18.0+ or v16.3.0+, test-e2e can cover 12.x
+        node-version: [ lts/*, lts/-1 ]
+    steps:
+      # Setup and install
+      - uses: actions/checkout@v3
+      - name: Use Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v3
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: 'npm'
+      - run: npm ci
+
+      # Test the source files
+      - run: npm run test:unit
+
+  test-e2e:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node-version: [ lts/*, lts/-1, lts/-2 ]
+    steps:
+      # Setup and install
+      - uses: actions/checkout@v3
+      - name: Use Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v3
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: 'npm'
+      - run: npm ci
+
+      # Test the built files
+      - run: npm run build
+      - run: ./test/endToEndTest.sh
+
+  test-package:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node-version: [ lts/*, lts/-1, lts/-2 ]
+    steps:
+      # Setup and install
+      - uses: actions/checkout@v3
+      - uses: actions/setup-node@v3
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: 'npm'
+      - run: npm ci
+
+      # Test the packaging
+      - run: |
+          npm pack
+          tar -xvzf igir-*.tgz
+          cd package
+          npm install --ignore-scripts
+          ./build/index.js --help
+          cd ..
+          rm -rf package
+
+  codecov:
+    needs:
+      - test-lint
+      - test-unit
+      - test-e2e
+      - test-package
+    runs-on: ubuntu-latest
+    steps:
+      # Setup and install
+      - uses: actions/checkout@v3
+      - uses: actions/setup-node@v3
+        with:
+          cache: 'npm'
+      - run: npm ci
+
+      # Run test coverage
+      - run: npm run test:coverage
+      - uses: codecov/codecov-action@v3
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          fail_ci_if_error: true
+          verbose: true
+
+  status-check:
+    needs:
+      - test-lint
+      - test-unit
+      - test-e2e
+      - test-package
+      - codecov
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo ok
+
+#  version-check:
+#    if: github.ref_name == 'main'
+#    runs-on: ubuntu-latest
+#    steps:
+#      # Setup and install
+#      - uses: actions/checkout@v3
+#
+#      # Check if version has changed
+#      - name: Check if version has been updated
+#        id: check
+#        uses: EndBug/version-check@v1
+#      - name: Log when changed
+#        if: steps.check.outputs.changed == 'true'
+#        run: 'echo "Version change found in commit ${{ steps.check.outputs.commit }}! New version: ${{ steps.check.outputs.version }} (${{ steps.check.outputs.type }})"'
+#      - run: echo ::set-output changed=${{steps.check.outputs.changed}}
+#
+#  github-release:
+#    if: github.ref_name == 'main' && jobs.version-check.outputs.changed == 'true'
+#    needs:
+#      - status-check
+#      - version-check
+#    runs-on: ubuntu-latest
+#    steps:
+#      # Setup and install
+#      - uses: actions/checkout@v3
+#      - uses: actions/setup-node@v3
+#        with:
+#          cache: 'npm'
+#      - run: npm ci
+#      - run: npm run release:patch -- --ci

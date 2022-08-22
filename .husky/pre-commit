@@ -1,0 +1,35 @@
+#!/usr/bin/env sh
+. "$(dirname -- "$0")/_/husky.sh"
+
+# Change to the project's root directory
+cd "$(dirname -- "$0")/.." || exit 1
+
+# Ensure node is available
+if [[ ! -x "$(command -v node)" ]]; then
+  if [[ ! -x "$(command -v nvm)" && -f ~/.nvm/nvm.sh ]]; then
+    . ~/.nvm/nvm.sh
+  fi
+  if [[ ! -x "$(command -v nvm)" ]]; then
+    nvm use || exit 1
+  fi
+fi
+node --version &> /dev/null || exit 1
+
+# Follow the linter
+npm run lint:fix
+
+# Make sure igir is symlinked
+npm link --force
+
+# Update the help text in README.md
+npm run build
+README="README.md"
+README_BEFORE=$(cat "${README}")
+(awk 'BEGIN {msg=ARGV[1]; delete ARGV[1]; p=1} /^```help/ {print; print msg; p=0} /^```$/ {p=1} p' \
+  "$(igir --help)" \
+  "${README}" > "${README}.temp" || exit 1) && mv -f "${README}.temp" "${README}"
+README_AFTER=$(cat "${README}")
+if [[ "${README_AFTER}" != "${README_BEFORE}" ]]; then
+  # TODO(cemmer): way to not commit the entire file when the help text changes?
+  git add "${README}"
+fi
