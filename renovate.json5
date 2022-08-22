@@ -3,22 +3,40 @@
   extends: [
     "config:base"
   ],
+
   assignees: ["@emmercm"],
-  packageRules: [
-    {
-      matchDepTypes: ["dependencies"],
-      groupName: "Dependencies",
-      bumpVersion: "patch"
+  reviewers: ["@emmercm"],
+
+  separateMultipleMajor: true,
+  separateMajorMinor: true, // default
+  separateMinorPatch: false, // default
+
+  // npm package.json
+  node: {
+    "lockFileMaintenance": { // :maintainLockFilesWeekly
+      "enabled": true,
+      "extends": ["schedule:weekly"]
     },
-    {
-      matchDepTypes: ["devDependencies"],
-      groupName: "Dev Dependencies",
-      automerge: true
-    },
-    {
-      matchDepTypes: ["peerDependencies"],
-      groupName: "Peer Dependencies",
-      enabled: false
-    }
-  ]
+    transitiveRemediation: true,
+
+    // npm:unpublishSafe
+    stabilityDays: 3,
+
+    packageRules: [
+      {
+        matchDepTypes: ["dependencies"],
+        groupName: "Dependencies"
+      },
+      {
+        matchDepTypes: ["devDependencies"],
+        groupName: "Dev Dependencies",
+        rangeStrategy: "pin", // :pinDevDependencies
+        automerge: true
+      },
+      {
+        matchDepTypes: ["optionalDependencies", "peerDependencies", "engines", "volta"],
+        enabled: false
+      }
+    ]
+  }
 }
