@@ -17,36 +17,31 @@
   separateMajorMinor: true, // default
   separateMinorPatch: false, // default
 
-  // npm package.json
+  automerge: true,
 
   npm: {
     lockFileMaintenance: {
-      enabled: true,
-      groupName: "Lockfile",
-      automerge: true
+      enabled: true
     },
     transitiveRemediation: true,
 
-    stabilityDays: 3
-  },
+    stabilityDays: 3,
 
-  packageRules: [
-    {
-      matchManagers: ["npm"],
-      matchDepTypes: ["dependencies"],
-      groupName: "Dependencies"
-    },
-    {
-      matchManagers: ["npm"],
-      matchDepTypes: ["devDependencies"],
-      groupName: "Dev Dependencies",
-      rangeStrategy: "pin",
-      automerge: true
-    },
-    {
-      matchManagers: ["npm"],
-      matchDepTypes: ["optionalDependencies", "peerDependencies", "engines", "volta"],
-      enabled: false
-    }
-  ]
+    packageRules: [
+      {
+        matchDepTypes: ["dependencies"],
+        groupName: "Dependencies",
+        automerge: false // TODO(cemmer)
+      },
+      {
+        matchDepTypes: ["devDependencies"],
+        groupName: "Dev Dependencies",
+        rangeStrategy: "pin"
+      },
+      {
+        matchDepTypes: ["optionalDependencies", "peerDependencies", "engines", "volta"],
+        enabled: false
+      }
+    ]
+  },
 }
