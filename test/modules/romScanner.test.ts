@@ -2,7 +2,7 @@ import os from 'os';
 
 import ROMScanner from '../../src/modules/romScanner.js';
 import Options from '../../src/types/options.js';
-import ProgressBarFake from './progressBar/progressBarFake.js';
+import ProgressBarFake from '../console/progressBarFake.js';
 
 function createRomScanner(input: string[], inputExclude: string[] = []): ROMScanner {
   return new ROMScanner(Options.fromObject({ input, inputExclude }), new ProgressBarFake());

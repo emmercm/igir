@@ -4,16 +4,16 @@ import { isNotJunk } from 'junk';
 import path from 'path';
 import trash from 'trash';
 
-import ProgressBarCLI from '../console/progressBarCLI.js';
+import ProgressBar from '../console/progressBar.js';
 import Options from '../types/options.js';
 import ROMFile from '../types/romFile.js';
 
 export default class OutputCleaner {
   private readonly options: Options;
 
-  private readonly progressBar: ProgressBarCLI;
+  private readonly progressBar: ProgressBar;
 
-  constructor(options: Options, progressBar: ProgressBarCLI) {
+  constructor(options: Options, progressBar: ProgressBar) {
     this.options = options;
     this.progressBar = progressBar;
   }

@@ -1,6 +1,6 @@
 /* eslint-disable class-methods-use-this */
 
-import ProgressBar from '../../../src/console/progressBar.js';
+import ProgressBar from '../../src/console/progressBar.js';
 
 export default class ProgressBarFake implements ProgressBar {
   delete(): void {
