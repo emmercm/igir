@@ -12,31 +12,34 @@
   separateMinorPatch: false, // default
 
   // npm package.json
-  node: {
-    "lockFileMaintenance": { // :maintainLockFilesWeekly
-      "enabled": true,
-      "extends": ["schedule:weekly"]
+
+  npm: {
+    lockFileMaintenance: {
+      enabled: true,
+      groupName: "Lockfile"
     },
     transitiveRemediation: true,
 
-    // npm:unpublishSafe
-    stabilityDays: 3,
-
-    packageRules: [
-      {
-        matchDepTypes: ["dependencies"],
-        groupName: "Dependencies"
-      },
-      {
-        matchDepTypes: ["devDependencies"],
-        groupName: "Dev Dependencies",
-        rangeStrategy: "pin", // :pinDevDependencies
-        automerge: true
-      },
-      {
-        matchDepTypes: ["optionalDependencies", "peerDependencies", "engines", "volta"],
-        enabled: false
-      }
-    ]
-  }
+    stabilityDays: 3
+  },
+  
+  packageRules: [
+    {
+      matchManagers: ["npm"],
+      matchDepTypes: ["dependencies"],
+      groupName: "Dependencies"
+    },
+    {
+      matchManagers: ["npm"],
+      matchDepTypes: ["devDependencies"],
+      groupName: "Dev Dependencies",
+      rangeStrategy: "pin",
+      automerge: true
+    },
+    {
+      matchManagers: ["npm"],
+      matchDepTypes: ["optionalDependencies", "peerDependencies", "engines", "volta"],
+      enabled: false
+    }
+  ]
 }
