@@ -336,8 +336,13 @@ export default class Options implements OptionsProps {
 
   getOutputReport(): string {
     const output = this.shouldWrite() ? this.output : process.cwd();
-    return path.join(output, `${Constants.COMMAND_NAME}_${moment().format()}.txt`)
-      .replace(/:/g, ';');
+    return path.join(
+      output,
+      `${Constants.COMMAND_NAME}_${moment().format()}.txt`
+      // Make the filename Windows legal
+        .replace(/:/g, ';')
+        .replace(/[<>:"/\\|?*]/g, '_'),
+    );
   }
 
   getDirMirror(): boolean {
