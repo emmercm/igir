@@ -336,7 +336,8 @@ export default class Options implements OptionsProps {
 
   getOutputReport(): string {
     const output = this.shouldWrite() ? this.output : process.cwd();
-    return path.join(output, `${Constants.COMMAND_NAME}_${moment().format()}.txt`);
+    return path.join(output, `${Constants.COMMAND_NAME}_${moment().format()}.txt`)
+      .replace(/:/g, ';');
   }
 
   getDirMirror(): boolean {
