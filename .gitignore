@@ -127,4 +127,7 @@ build/
 
 # Always commit fixtures
 !test/fixtures/dats/*
+!test/fixtures/dats/*/*
 !test/fixtures/roms/*
+!test/fixtures/roms/*/*
+.DS_Store
