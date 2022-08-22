@@ -280,7 +280,7 @@ export default class Options implements OptionsProps {
             return [inputPath];
           } catch (e) {
             // Otherwise, process it as a glob pattern
-            const paths = await fg(inputPath);
+            const paths = await fg(inputPath.replace(/\\/g, '/'));
             if (!paths || !paths.length) {
               throw new Error(`Path doesn't exist: ${inputPath}`);
             }
