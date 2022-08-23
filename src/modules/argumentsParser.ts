@@ -307,7 +307,6 @@ export default class ArgumentsParser {
           throw err;
         }
         this.logger.colorizeYargs(`${_yargs.help()}\n`);
-        this.logger.error(msg);
         throw new Error(msg);
       });
 
