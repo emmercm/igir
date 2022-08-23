@@ -5,12 +5,15 @@ A ROM collection manager to help sort collections and make one game, one rom (1G
 [![npm](https://badgen.net/npm/v/igir?icon=npm)](https://www.npmjs.com/package/igir)
 [![GitHub](https://badgen.net/badge/emmercm/igir/purple?icon=github)](https://github.com/emmercm/igir)
 
+[![Known Vulnerabilities](https://badgen.net/snyk/emmercm/igir?icon=snyk)](https://snyk.io/test/npm/igir)
 [![Test Coverage](https://badgen.net/codecov/c/github/emmercm/igir/main?icon=codecov)](https://codecov.io/gh/emmercm/igir)
-[![Maintainability](https://badgen.net/codeclimate/maintainability/emmercm/igir?icon=codeclimate)](https://codeclimate.com/github/emmercm/igir/maintainability)
+[![Maintainability Score](https://badgen.net/codeclimate/maintainability/emmercm/igir?icon=codeclimate)](https://codeclimate.com/github/emmercm/igir/maintainability)
 
 ## Summary
 
-`igir`, with assistance from a collection DAT catalogs (see below), helps you manage your video game ROM collection with a number of commands:
+[![asciicast](https://asciinema.org/a/9I7P2ZWCD0Iz1xBub48shm91t.svg)](https://asciinema.org/a/9I7P2ZWCD0Iz1xBub48shm91t)
+
+`igir`, with assistance from a collection of DAT catalogs (see below), helps you manage your video game ROM collection with a number of commands:
 
 - `copy`: copy ROMs from input directories to an output directory
 - `move`: copy ROMs from input directories to an output directory
