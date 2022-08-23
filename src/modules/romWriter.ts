@@ -175,7 +175,7 @@ export default class ROMWriter {
     }
 
     // Test the written file
-    if (this.options.shouldTest()) {
+    if (outputNeedsWriting && this.options.shouldTest()) {
       try {
         const zipToTest = new AdmZip(outputZipPath);
         if (!zipToTest.test()) {
