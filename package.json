@@ -25,6 +25,8 @@
   },
   "scripts": {
     "build": "tsc && chmod +x build/index.js",
+    "bump:minor": "./node_modules/.bin/release-it minor --no-git --no-github",
+    "bump:patch": "./node_modules/.bin/release-it patch --no-git --no-github",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "node": "node --loader ts-node/esm index.ts",
