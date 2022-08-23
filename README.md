@@ -170,11 +170,11 @@ There a few different popular ROM managers that have similar features:
 
 Each manager has its own pros, but most share the same cons:
 
-- Windows-only (sometimes with Wine support), making management on macOS and SoC devices difficult 
+- Windows-only (sometimes with Wine support), making management on macOS and Linux difficult 
 - Limited CLI support, making batching and repeatable actions difficult
 - UIs that don't clearly state what actions can be or are being performed
 - Required proprietary database setup step
 - Limited or nonexistent parent/clone, region, language, version, and ROM type filtering
 - Limited or nonexistent priorities when creating a 1G1R set
 - Limited or nonexistent folder management options
-- Limited or nonexistent read-ony or dry-run modes
+- Limited or nonexistent read-only or dry-run modes
