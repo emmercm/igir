@@ -4,7 +4,7 @@
 # Change to the project's root directory
 cd "$(dirname -- "$0")/.." || exit 1
 
-# Ensure node is available
+# Ensure node is available (same as asciinema-rec.sh)
 if [[ ! -x "$(command -v node)" ]]; then
   if [[ ! -x "$(command -v nvm)" && -f ~/.nvm/nvm.sh ]]; then
     . ~/.nvm/nvm.sh
