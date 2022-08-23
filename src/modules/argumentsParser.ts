@@ -282,7 +282,7 @@ export default class ArgumentsParser {
         type: 'count',
       })
 
-      .wrap(Math.min(yargs([]).terminalWidth() || Number.MAX_SAFE_INTEGER, 110))
+      .wrap(Math.min(yargs([]).terminalWidth() || Number.MAX_SAFE_INTEGER, 90))
       .version(false)
       .example([
         ['$0 copy -i **/*.zip -o 1G1R/ -s -l EN -r USA,EUR,JPN', 'Produce a 1G1R set per console, preferring English from USA>EUR>JPN'],
