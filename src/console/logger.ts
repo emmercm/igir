@@ -35,6 +35,10 @@ export default class Logger {
     }
   };
 
+  newLine() {
+    this.print();
+  }
+
   static debugFormatter = (message: string): string => message.split('\n').map((m) => chalk.magenta('DEBUG: ') + m).join('\n');
 
   debug = (message: unknown = '') => {
