@@ -3,6 +3,7 @@ import { isNotJunk } from 'junk';
 import { PathLike, RmOptions } from 'node:fs';
 import os from 'os';
 import path from 'path';
+import semver from 'semver';
 
 export default class FsPoly {
   /**
@@ -59,8 +60,14 @@ export default class FsPoly {
 
     // Added in: v0.1.30
     if (fs.lstatSync(pathLike).isDirectory()) {
-      // Added in: v0.1.21
-      fs.rmdirSync(pathLike, options);
+      // DEP0147
+      if (semver.lt(process.version, '16.0.0')) {
+        // Added in: v0.1.21
+        fs.rmdirSync(pathLike, options);
+      } else {
+        // Added in: v14.14.0
+        fs.rmSync(pathLike, { recursive: true, force: true });
+      }
     } else {
       // Added in: v0.1.21
       fs.unlinkSync(pathLike);
