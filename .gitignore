@@ -106,6 +106,9 @@ dist
 
 # Custom
 build/
+demo-magic.sh
+
+# DATs
 *.dat
 *.dtd
 
