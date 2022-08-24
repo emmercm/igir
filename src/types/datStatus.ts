@@ -101,9 +101,11 @@ export default class DATStatus {
 
   private static getAllowedTypes(options: Options): ROMType[] {
     return [
-      !options.getSingle() && !options.getOnlyBios() ? ROMType.GAME : undefined,
-      options.getOnlyBios() || !options.getNoBios() ? ROMType.BIOS : undefined,
-      !options.getOnlyBios() ? ROMType.RETAIL : undefined,
+      !options.getSingle() && !options.getOnlyBios() && !options.getOnlyRetail()
+        ? ROMType.GAME : undefined,
+      options.getOnlyBios() || (!options.getNoBios() && !options.getOnlyRetail())
+        ? ROMType.BIOS : undefined,
+      options.getOnlyRetail() || (!options.getOnlyBios()) ? ROMType.RETAIL : undefined,
       // !options.getOnlyBios() && !options.getNoPrototype() ? ROMType.PROTOTYPE : undefined,
     ].filter((val) => val) as ROMType[];
   }

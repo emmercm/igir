@@ -165,6 +165,14 @@ export default class ROMWriter {
 
     // Write the zip file if needed
     if (outputNeedsWriting) {
+      // Create the output directory
+      const outputDir = path.dirname(outputZipPath);
+      try {
+        await fsPromises.access(outputDir); // throw if file doesn't exist
+      } catch (e) {
+        await fsPromises.mkdir(outputDir, { recursive: true });
+      }
+
       try {
         await this.progressBar.logDebug(`${outputZipPath}: writing zip`);
         await outputZip.writeZipPromise(outputZipPath);
