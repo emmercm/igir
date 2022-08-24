@@ -38,7 +38,7 @@ export default class ProgressBarCLI implements ProgressBar {
 
     if (!ProgressBarCLI.multiBar) {
       ProgressBarCLI.multiBar = new cliProgress.MultiBar({
-        stream: logger.getLogLevel() < LogLevel.OFF ? Logger.stream : new PassThrough(),
+        stream: logger.getLogLevel() < LogLevel.OFF ? logger.getStream() : new PassThrough(),
         barsize: 25,
         fps: ProgressBarCLI.fps,
         emptyOnZero: true,
