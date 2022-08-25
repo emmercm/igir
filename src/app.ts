@@ -66,12 +66,6 @@ export default async function main(options: Options, logger: Logger) {
 
   await datProcessProgressBar.done(`${dats.length.toLocaleString()} DAT${dats.length !== 1 ? 's' : ''} processed`);
 
-  // Generate the report
-  if (options.shouldReport()) {
-    const reportProgressBar = logger.addProgressBar('Generating report', '📝');
-    await new ReportGenerator(options, reportProgressBar).generate(datsStatuses);
-  }
-
   // Clean the output directories
   if (options.shouldClean()) {
     const cleanerProgressBar = logger.addProgressBar('Cleaning output', '⏳');
@@ -79,6 +73,12 @@ export default async function main(options: Options, logger: Logger) {
       .flatMap((parentsToRomFiles) => [...parentsToRomFiles.values()])
       .flatMap((romFiles) => romFiles);
     await new OutputCleaner(options, cleanerProgressBar).clean(writtenRomFilesToExclude);
+  }
+
+  // Generate the report
+  if (options.shouldReport()) {
+    const reportProgressBar = logger.addProgressBar('Generating report', '📝');
+    await new ReportGenerator(options, reportProgressBar).generate(datsStatuses);
   }
 
   ProgressBarCLI.stop();

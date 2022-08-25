@@ -2,7 +2,7 @@ import os from 'os';
 
 import ROMScanner from '../../src/modules/romScanner.js';
 import Options from '../../src/types/options.js';
-import ProgressBarFake from './progressBar/progressBarFake.js';
+import ProgressBarFake from '../console/progressBarFake.js';
 
 function createRomScanner(input: string[], inputExclude: string[] = []): ROMScanner {
   return new ROMScanner(Options.fromObject({ input, inputExclude }), new ProgressBarFake());
@@ -32,7 +32,7 @@ it('should not throw on bad archives', async () => {
 });
 
 it('should scan multiple files', async () => {
-  const expectedRomFiles = 21;
+  const expectedRomFiles = 19;
   await expect(createRomScanner(['test/fixtures/roms']).scan()).resolves.toHaveLength(expectedRomFiles);
   await expect(createRomScanner(['test/fixtures/roms/*', 'test/fixtures/**/*.{rom,zip,7z}']).scan()).resolves.toHaveLength(expectedRomFiles);
   await expect(createRomScanner(['test/fixtures/**/*.{rom,zip,7z}']).scan()).resolves.toHaveLength(expectedRomFiles);

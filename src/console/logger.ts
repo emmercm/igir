@@ -13,12 +13,13 @@ export enum LogLevel {
 }
 
 export default class Logger {
-  static readonly stream = process.stdout;
-
   private logLevel: LogLevel;
 
-  constructor(logLevel: LogLevel = LogLevel.WARN) {
+  private readonly stream: NodeJS.WritableStream;
+
+  constructor(logLevel: LogLevel = LogLevel.WARN, stream: NodeJS.WritableStream = process.stdout) {
     this.logLevel = logLevel;
+    this.stream = stream;
   }
 
   getLogLevel(): LogLevel {
@@ -29,13 +30,24 @@ export default class Logger {
     this.logLevel = logLevel;
   }
 
+  getStream(): NodeJS.WritableStream {
+    return this.stream;
+  }
+
   private readonly print = (message: unknown = '') => {
-    if (this.logLevel < LogLevel.OFF && process.env.NODE_ENV !== 'test') {
-      Logger.stream.write(`${message}\n`);
+    if (this.logLevel < LogLevel.OFF) {
+      this.stream.write(`${message}\n`);
     }
   };
 
-  static debugFormatter = (message: string): string => message.split('\n').map((m) => chalk.magenta('DEBUG: ') + m).join('\n');
+  newLine() {
+    this.print();
+  }
+
+  static debugFormatter = (message: string): string => message.trim()
+    .split('\n')
+    .map((m) => chalk.magenta('DEBUG: ') + m)
+    .join('\n');
 
   debug = (message: unknown = '') => {
     if (this.logLevel <= LogLevel.DEBUG) {
@@ -43,7 +55,10 @@ export default class Logger {
     }
   };
 
-  static infoFormatter = (message: string): string => message.split('\n').map((m) => chalk.cyan('INFO: ') + m).join('\n');
+  static infoFormatter = (message: string): string => message.trim()
+    .split('\n')
+    .map((m) => chalk.cyan('INFO: ') + m)
+    .join('\n');
 
   info = (message: unknown = '') => {
     if (this.logLevel <= LogLevel.INFO) {
@@ -51,7 +66,11 @@ export default class Logger {
     }
   };
 
-  static warnFormatter = (message: string): string => message.split('\n').map((m) => chalk.yellow('WARN: ') + m).join('\n');
+  static warnFormatter = (message: string): string => message.trim()
+    .replace(/^warn.*: /i, '')
+    .split('\n')
+    .map((m) => chalk.yellow('WARN: ') + m)
+    .join('\n');
 
   warn = (message: unknown = '') => {
     if (this.logLevel <= LogLevel.WARN) {
@@ -59,7 +78,11 @@ export default class Logger {
     }
   };
 
-  static errorFormatter = (message: string) => message.split('\n').map((m) => chalk.red('ERROR: ') + m).join('\n');
+  static errorFormatter = (message: string) => message.trim()
+    .replace(/^err.*: /i, '')
+    .split('\n')
+    .map((m) => chalk.red('ERROR: ') + m)
+    .join('\n');
 
   error = (message: unknown = '') => {
     if (this.logLevel <= LogLevel.ERROR) {
@@ -67,8 +90,8 @@ export default class Logger {
     }
   };
 
-  header(text: string) {
-    const logo = figlet.textSync(text.toUpperCase(), {
+  printHeader() {
+    const logo = figlet.textSync(Constants.COMMAND_NAME.toUpperCase(), {
       font: 'Big Money-se',
     }).trimEnd();
 

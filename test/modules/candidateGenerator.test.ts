@@ -5,7 +5,7 @@ import Header from '../../src/types/logiqx/header.js';
 import Release from '../../src/types/logiqx/release.js';
 import ROM from '../../src/types/logiqx/rom.js';
 import ROMFile from '../../src/types/romFile.js';
-import ProgressBarFake from './progressBar/progressBarFake.js';
+import ProgressBarFake from '../console/progressBarFake.js';
 
 const candidateGenerator = new CandidateGenerator(new ProgressBarFake());
 

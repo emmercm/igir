@@ -7,7 +7,7 @@ import Release from '../../src/types/logiqx/release.js';
 import ROM from '../../src/types/logiqx/rom.js';
 import Options, { OptionsProps } from '../../src/types/options.js';
 import ReleaseCandidate from '../../src/types/releaseCandidate.js';
-import ProgressBarFake from './progressBar/progressBarFake.js';
+import ProgressBarFake from '../console/progressBarFake.js';
 
 function buildCandidateFilter(options: object = {}): CandidateFilter {
   return new CandidateFilter(Options.fromObject(options), new ProgressBarFake());

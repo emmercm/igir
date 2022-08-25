@@ -4,16 +4,16 @@ import { isNotJunk } from 'junk';
 import path from 'path';
 import trash from 'trash';
 
-import ProgressBarCLI from '../console/progressBarCLI.js';
+import ProgressBar from '../console/progressBar.js';
 import Options from '../types/options.js';
 import ROMFile from '../types/romFile.js';
 
 export default class OutputCleaner {
   private readonly options: Options;
 
-  private readonly progressBar: ProgressBarCLI;
+  private readonly progressBar: ProgressBar;
 
-  constructor(options: Options, progressBar: ProgressBarCLI) {
+  constructor(options: Options, progressBar: ProgressBar) {
     this.options = options;
     this.progressBar = progressBar;
   }
@@ -29,7 +29,8 @@ export default class OutputCleaner {
     const outputDir = this.options.getOutput();
 
     // If there is nothing to clean, then don't do anything
-    const filesToClean = (await fg(`${outputDir}/**`))
+    const filesToClean = (await fg(`${outputDir}/**`.replace(/\\/g, '/')))
+      .map((pathLike) => pathLike.replace(/[\\/]/g, path.sep))
       .filter((file) => outputFilePathsToExclude.indexOf(file) === -1);
     if (!filesToClean) {
       return;
