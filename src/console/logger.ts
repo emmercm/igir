@@ -44,7 +44,10 @@ export default class Logger {
     this.print();
   }
 
-  static debugFormatter = (message: string): string => message.split('\n').map((m) => chalk.magenta('DEBUG: ') + m).join('\n');
+  static debugFormatter = (message: string): string => message.trim()
+    .split('\n')
+    .map((m) => chalk.magenta('DEBUG: ') + m)
+    .join('\n');
 
   debug = (message: unknown = '') => {
     if (this.logLevel <= LogLevel.DEBUG) {
@@ -52,7 +55,10 @@ export default class Logger {
     }
   };
 
-  static infoFormatter = (message: string): string => message.split('\n').map((m) => chalk.cyan('INFO: ') + m).join('\n');
+  static infoFormatter = (message: string): string => message.trim()
+    .split('\n')
+    .map((m) => chalk.cyan('INFO: ') + m)
+    .join('\n');
 
   info = (message: unknown = '') => {
     if (this.logLevel <= LogLevel.INFO) {
@@ -60,7 +66,11 @@ export default class Logger {
     }
   };
 
-  static warnFormatter = (message: string): string => message.split('\n').map((m) => chalk.yellow('WARN: ') + m).join('\n');
+  static warnFormatter = (message: string): string => message.trim()
+    .replace(/^warn.*: /i, '')
+    .split('\n')
+    .map((m) => chalk.yellow('WARN: ') + m)
+    .join('\n');
 
   warn = (message: unknown = '') => {
     if (this.logLevel <= LogLevel.WARN) {
@@ -68,7 +78,11 @@ export default class Logger {
     }
   };
 
-  static errorFormatter = (message: string) => message.split('\n').map((m) => chalk.red('ERROR: ') + m).join('\n');
+  static errorFormatter = (message: string) => message.trim()
+    .replace(/^err.*: /i, '')
+    .split('\n')
+    .map((m) => chalk.red('ERROR: ') + m)
+    .join('\n');
 
   error = (message: unknown = '') => {
     if (this.logLevel <= LogLevel.ERROR) {
