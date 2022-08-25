@@ -67,7 +67,7 @@ export default class Igir {
       callback();
     });
 
-    await datProcessProgressBar.done(`${dats.length.toLocaleString()} DAT${dats.length !== 1 ? 's' : ''} processed`);
+    await datProcessProgressBar.doneItems(dats.length, 'DAT', 'processed');
 
     // Clean the output directories
     await this.processOutputCleaner(datsToWrittenRoms);
@@ -79,20 +79,20 @@ export default class Igir {
   }
 
   private async processDATScanner(): Promise<DAT[]> {
-    const datScanProgressBar = this.logger.addProgressBar('Scanning for DATs', '⏳');
-    const dats = await new DATScanner(this.options, datScanProgressBar).scan();
+    const progressBar = this.logger.addProgressBar('Scanning for DATs', '⏳');
+    const dats = await new DATScanner(this.options, progressBar).scan();
     if (!dats.length) {
       ProgressBarCLI.stop();
       throw new Error('No valid DAT files found!');
     }
-    await datScanProgressBar.done(`${dats.length.toLocaleString()} DAT${dats.length !== 1 ? 's' : ''} found`);
+    await progressBar.doneItems(dats.length, 'DAT', 'found');
     return dats;
   }
 
   private async processROMScanner(): Promise<ROMFile[]> {
-    const romScanProgressBar = this.logger.addProgressBar('Scanning for ROMs', '⏳');
-    const romInputs = await new ROMScanner(this.options, romScanProgressBar).scan();
-    await romScanProgressBar.done(`${romInputs.length.toLocaleString()} ROM${romInputs.length !== 1 ? 's' : ''} found`);
+    const progressBar = this.logger.addProgressBar('Scanning for ROMs', '⏳');
+    const romInputs = await new ROMScanner(this.options, progressBar).scan();
+    await progressBar.doneItems(romInputs.length, 'ROM', 'found');
     return romInputs;
   }
 
