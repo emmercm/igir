@@ -1,8 +1,6 @@
 {
   "hooks": {
-    "after:npm:bump": "npm pack",
-    "after:git:release": "echo After git push, before github release",
-    "after:release": "echo Successfully released ${name} v${version} to ${repo.repository}."
+    "before:github:release": "npm pack"
   },
   "git": {
     "requireBranch": "main",
@@ -11,8 +9,10 @@
   },
   "github": {
     "release": true,
-    "releaseName": "${version}",
+    "releaseName": "v${version}",
     "assets": ["igir-${version}.tgz"]
   },
-  "npm": false
+  "npm": {
+    "publish": false
+  }
 }

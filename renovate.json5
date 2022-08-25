@@ -25,7 +25,7 @@
 
   // Allow auto-merging of PRs, but reduce their spam on the commit log
   automerge: true,
-  automergeSchedule: "before 5am on monday",
+  automergeSchedule: "on sunday",
   prHourlyLimit: 0,
 
   npm: {
