@@ -240,7 +240,11 @@ export default class ROMWriter {
     // Write the output file
     const inputRomFileLocal = await inputRomFile.toLocalFile(this.options.getTempDir());
     await this.progressBar.logDebug(`${inputRomFileLocal.getFilePath()}: copying to ${outputFilePath}`);
-    await fsPromises.copyFile(inputRomFileLocal.getFilePath(), outputFilePath);
+    try {
+      await fsPromises.copyFile(inputRomFileLocal.getFilePath(), outputFilePath);
+    } catch (e) {
+      await this.progressBar.logError(`Failed to copy ${inputRomFileLocal.getFilePath()} to ${outputFilePath} : ${e}`);
+    }
     inputRomFileLocal.cleanupLocalFile();
 
     // Test the written file

@@ -10,7 +10,7 @@ interface RegionOptions {
 }
 
 export default class ReleaseCandidate {
-  private static readonly regionOptions: RegionOptions[] = [
+  private static readonly REGION_OPTIONS: RegionOptions[] = [
     // Specific countries
     { region: 'ARG', countryRegex: 'Argentina', language: 'ES' },
     { region: 'AUS', countryRegex: 'Australia', language: 'EN' },
@@ -59,14 +59,14 @@ export default class ReleaseCandidate {
   }
 
   static getRegions() {
-    return this.regionOptions
+    return this.REGION_OPTIONS
       .map((regionOption) => regionOption.region)
       .filter((region, idx, regions) => regions.indexOf(region) === idx)
       .sort();
   }
 
   static getLanguages() {
-    return this.regionOptions
+    return this.REGION_OPTIONS
       .map((regionOption) => regionOption.language)
       .filter((language, idx, languages) => languages.indexOf(language) === idx)
       .sort();
@@ -115,8 +115,8 @@ export default class ReleaseCandidate {
       return this.release.getRegion();
     }
 
-    for (let i = 0; i < ReleaseCandidate.regionOptions.length; i += 1) {
-      const regionOption = ReleaseCandidate.regionOptions[i];
+    for (let i = 0; i < ReleaseCandidate.REGION_OPTIONS.length; i += 1) {
+      const regionOption = ReleaseCandidate.REGION_OPTIONS[i];
       if (regionOption.countryRegex) {
         if (this.getName().match(new RegExp(`(${regionOption.countryRegex}(,[ a-z])*)`, 'i'))) {
           return regionOption.region.toUpperCase();
@@ -142,8 +142,8 @@ export default class ReleaseCandidate {
     if (this.getRegion()) {
       const region = (this.getRegion() as string).toUpperCase();
 
-      for (let i = 0; i < ReleaseCandidate.regionOptions.length; i += 1) {
-        const regionOption = ReleaseCandidate.regionOptions[i];
+      for (let i = 0; i < ReleaseCandidate.REGION_OPTIONS.length; i += 1) {
+        const regionOption = ReleaseCandidate.REGION_OPTIONS[i];
         if (regionOption.region === region) {
           return [regionOption.language.toUpperCase()];
         }

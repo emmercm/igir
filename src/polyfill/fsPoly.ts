@@ -94,4 +94,25 @@ export default class FsPoly {
 
     return output.filter((p) => isNotJunk(path.basename(p)));
   }
+
+  /**
+   * Technically not a polyfill, but a function that should exist in the stdlib
+   */
+  static copyDirSync(src: string, dest: string): void {
+    fs.mkdirSync(dest, { recursive: true });
+    const entries = fs.readdirSync(src, { withFileTypes: true });
+
+    /* eslint-disable no-await-in-loop */
+    for (let i = 0; i < entries.length; i += 1) {
+      const entry = entries[i];
+      const srcPath = path.join(src, entry.name);
+      const destPath = path.join(dest, entry.name);
+
+      if (entry.isDirectory()) {
+        this.copyDirSync(srcPath, destPath);
+      } else {
+        fs.copyFileSync(srcPath, destPath);
+      }
+    }
+  }
 }

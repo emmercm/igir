@@ -2,12 +2,11 @@
 
 import main from './src/app.js';
 import Logger from './src/console/logger.js';
-import Constants from './src/constants.js';
 import ArgumentsParser from './src/modules/argumentsParser.js';
 
 (async () => {
   const logger = new Logger();
-  logger.header(Constants.COMMAND_NAME);
+  logger.printHeader();
 
   try {
     const options = new ArgumentsParser(logger).parse(process.argv.slice(2));

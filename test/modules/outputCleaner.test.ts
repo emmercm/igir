@@ -1,4 +1,3 @@
-import { promises as fsPromises } from 'fs';
 import path from 'path';
 
 import OutputCleaner from '../../src/modules/outputCleaner.js';
@@ -7,28 +6,10 @@ import Options from '../../src/types/options.js';
 import ROMFile from '../../src/types/romFile.js';
 import ProgressBarFake from '../console/progressBarFake.js';
 
-async function copyDir(src: string, dest: string): Promise<void> {
-  await fsPromises.mkdir(dest, { recursive: true });
-  const entries = await fsPromises.readdir(src, { withFileTypes: true });
-
-  /* eslint-disable no-await-in-loop */
-  for (let i = 0; i < entries.length; i += 1) {
-    const entry = entries[i];
-    const srcPath = path.join(src, entry.name);
-    const destPath = path.join(dest, entry.name);
-
-    if (entry.isDirectory()) {
-      await copyDir(srcPath, destPath);
-    } else {
-      await fsPromises.copyFile(srcPath, destPath);
-    }
-  }
-}
-
 async function runOutputCleaner(writtenFilePathsToExclude: string[]) {
   // Copy the fixture files to a temp directory
   const temp = fsPoly.mkdtempSync();
-  await copyDir('./test/fixtures', temp);
+  fsPoly.copyDirSync('./test/fixtures', temp);
 
   const writtenRomFilesToExclude = writtenFilePathsToExclude
     .map((filePath) => new ROMFile(path.join(temp, filePath), undefined, '00000000'));
@@ -54,7 +35,17 @@ async function runOutputCleaner(writtenFilePathsToExclude: string[]) {
 }
 
 it('should delete nothing if nothing written', async () => {
-  await expect(runOutputCleaner([])).resolves.toHaveLength(27);
+  const existingFiles = fsPoly.walkSync('./test/fixtures')
+    .map((filePath) => filePath.replace(/^test[\\/]fixtures[\\/]/, ''));
+  const filesRemaining = await runOutputCleaner([]);
+  expect(filesRemaining).toEqual(existingFiles);
+});
+
+it('should delete nothing if all match', async () => {
+  const existingFiles = fsPoly.walkSync('./test/fixtures')
+    .map((filePath) => filePath.replace(/^test[\\/]fixtures[\\/]/, ''));
+  const filesRemaining = await runOutputCleaner(existingFiles);
+  expect(filesRemaining).toEqual(existingFiles);
 });
 
 it('should delete some if some matched', async () => {

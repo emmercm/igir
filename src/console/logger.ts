@@ -76,8 +76,8 @@ export default class Logger {
     }
   };
 
-  header(text: string) {
-    const logo = figlet.textSync(text.toUpperCase(), {
+  printHeader() {
+    const logo = figlet.textSync(Constants.COMMAND_NAME.toUpperCase(), {
       font: 'Big Money-se',
     }).trimEnd();
 

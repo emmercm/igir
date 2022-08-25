@@ -13,15 +13,15 @@ interface ProgressBarPayload {
 
 /* eslint-disable class-methods-use-this */
 export default class ProgressBarCLI implements ProgressBar {
-  private static readonly fps = 4;
+  private static readonly ETA_BUFFER_LENGTH = 100;
 
-  private static readonly etaBufferLength = 100;
+  private static readonly RENDER_MUTEX = new Mutex();
 
-  private static readonly renderMutex = new Mutex();
+  private static fps = 4;
 
-  private static multiBar: MultiBar;
+  private static multiBar?: MultiBar;
 
-  private static lastRedraw = process.hrtime();
+  private static lastRedraw: [number, number] = [0, 0];
 
   private readonly logger: Logger;
 
@@ -43,6 +43,7 @@ export default class ProgressBarCLI implements ProgressBar {
         fps: ProgressBarCLI.fps,
         emptyOnZero: true,
         hideCursor: true,
+        noTTYOutput: true, /** should output for {@link PassThrough} */
       }, cliProgress.Presets.shades_grey);
     }
 
@@ -109,21 +110,22 @@ export default class ProgressBarCLI implements ProgressBar {
   }
 
   static stop() {
-    this.multiBar.stop();
+    this.multiBar?.stop();
+    this.multiBar = undefined;
     // Forcing a render shouldn't be necessary
   }
 
   private calculateEta(remaining: number) {
     // cli-progress/lib/ETA.calculate()
     const currentBufferSize = this.valueBuffer.length;
-    const buffer = Math.min(ProgressBarCLI.etaBufferLength, currentBufferSize);
+    const buffer = Math.min(ProgressBarCLI.ETA_BUFFER_LENGTH, currentBufferSize);
     const vDiff = this.valueBuffer[currentBufferSize - 1]
         - this.valueBuffer[currentBufferSize - buffer];
     const tDiff = this.timeBuffer[currentBufferSize - 1]
         - this.timeBuffer[currentBufferSize - buffer];
     const vtRate = vDiff / tDiff;
-    this.valueBuffer = this.valueBuffer.slice(-ProgressBarCLI.etaBufferLength);
-    this.timeBuffer = this.timeBuffer.slice(-ProgressBarCLI.etaBufferLength);
+    this.valueBuffer = this.valueBuffer.slice(-ProgressBarCLI.ETA_BUFFER_LENGTH);
+    this.timeBuffer = this.timeBuffer.slice(-ProgressBarCLI.ETA_BUFFER_LENGTH);
     const eta = Math.ceil(remaining / vtRate / 1000);
     if (Number.isNaN(eta)) {
       this.eta = 'NULL';
@@ -161,13 +163,13 @@ export default class ProgressBarCLI implements ProgressBar {
    */
   private static async render(): Promise<void> {
     try {
-      await this.renderMutex.runExclusive(() => {
+      await this.RENDER_MUTEX.runExclusive(() => {
         const elapsed = process.hrtime(this.lastRedraw);
         const elapsedMs = (elapsed[0] * 1000000000 + elapsed[1]) / 1000000;
         if (elapsedMs >= (1000 / ProgressBarCLI.fps)) {
-          this.multiBar.update();
+          this.multiBar?.update();
           this.lastRedraw = process.hrtime();
-          this.renderMutex.cancel(); // cancel all waiting locks, we just redrew
+          this.RENDER_MUTEX.cancel(); // cancel all waiting locks, we just redrew
         }
       });
     } catch (e) {
@@ -177,30 +179,34 @@ export default class ProgressBarCLI implements ProgressBar {
     }
   }
 
-  async reset(total: number) {
-    this.singleBar.setTotal(total);
-    this.singleBar.update(0);
-    await ProgressBarCLI.render();
+  static setFPS(fps: number): void {
+    this.fps = fps;
   }
 
-  async setSymbol(symbol: string) {
+  async reset(total: number): Promise<void> {
+    this.singleBar.setTotal(total);
+    this.singleBar.update(0);
+    return ProgressBarCLI.render();
+  }
+
+  async setSymbol(symbol: string): Promise<void> {
     this.singleBar.update({
       symbol,
     } as ProgressBarPayload);
-    await ProgressBarCLI.render();
+    return ProgressBarCLI.render();
   }
 
-  async increment() {
+  async increment(): Promise<void> {
     this.singleBar.increment();
-    await ProgressBarCLI.render();
+    return ProgressBarCLI.render();
   }
 
-  async update(current: number) {
+  async update(current: number): Promise<void> {
     this.singleBar.update(current);
-    await ProgressBarCLI.render();
+    return ProgressBarCLI.render();
   }
 
-  async done(finishedMessage?: string) {
+  async done(finishedMessage?: string): Promise<void> {
     await this.setSymbol('✅');
 
     if (this.singleBar.getTotal() > 0) {
@@ -215,33 +221,33 @@ export default class ProgressBarCLI implements ProgressBar {
       } as ProgressBarPayload);
     }
 
-    await ProgressBarCLI.render();
+    return ProgressBarCLI.render();
   }
 
-  async logDebug(message: string) {
+  async logDebug(message: string): Promise<void> {
     if (this.logger.getLogLevel() <= LogLevel.DEBUG) {
-      ProgressBarCLI.multiBar.log(`${Logger.debugFormatter(message)}\n`);
+      ProgressBarCLI.multiBar?.log(`${Logger.debugFormatter(message)}\n`);
       await ProgressBarCLI.render();
     }
   }
 
-  async logInfo(message: string) {
+  async logInfo(message: string): Promise<void> {
     if (this.logger.getLogLevel() <= LogLevel.INFO) {
-      ProgressBarCLI.multiBar.log(`${Logger.infoFormatter(message)}\n`);
+      ProgressBarCLI.multiBar?.log(`${Logger.infoFormatter(message)}\n`);
       await ProgressBarCLI.render();
     }
   }
 
-  async logWarn(message: string) {
+  async logWarn(message: string): Promise<void> {
     if (this.logger.getLogLevel() <= LogLevel.WARN) {
-      ProgressBarCLI.multiBar.log(`${Logger.warnFormatter(message)}\n`);
+      ProgressBarCLI.multiBar?.log(`${Logger.warnFormatter(message)}\n`);
       await ProgressBarCLI.render();
     }
   }
 
-  async logError(message: string) {
+  async logError(message: string): Promise<void> {
     if (this.logger.getLogLevel() <= LogLevel.ERROR) {
-      ProgressBarCLI.multiBar.log(`${Logger.errorFormatter(message)}\n`);
+      ProgressBarCLI.multiBar?.log(`${Logger.errorFormatter(message)}\n`);
       await ProgressBarCLI.render();
     }
   }
@@ -251,8 +257,8 @@ export default class ProgressBarCLI implements ProgressBar {
    * able to clear them all reliably. It's recommended you don't have too many active progress bars
    * at once.
    */
-  delete() {
-    ProgressBarCLI.multiBar.remove(this.singleBar);
+  delete(): void {
+    ProgressBarCLI.multiBar?.remove(this.singleBar);
     // Forcing a render shouldn't be necessary
   }
 }
