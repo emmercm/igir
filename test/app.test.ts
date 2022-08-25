@@ -65,9 +65,9 @@ it('should copy and zip and test', async () => {
   ]);
 });
 
-it('should copy and clean and report', async () => {
+it('should copy and clean', async () => {
   await expectEndToEnd({
-    commands: ['copy', 'clean', 'report'],
+    commands: ['copy', 'clean'],
   }, [
     'Fizzbuzz.rom',
     'Foobar.rom',
