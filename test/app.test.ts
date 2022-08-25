@@ -34,6 +34,8 @@ async function expectEndToEnd(options: OptionsProps, expectedFiles: string[]) {
   fsPoly.rmSync(tempOutput, { recursive: true });
 }
 
+jest.setTimeout(10_000);
+
 it('should throw on no dats', async () => {
   await expect(main(new Options({}), LOGGER)).rejects.toThrow(/no valid dat/i);
 });
