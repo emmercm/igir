@@ -284,7 +284,7 @@ export default class ArgumentsParser {
         type: 'count',
       })
 
-      .wrap(Math.min(terminalSize().columns || Number.MAX_SAFE_INTEGER, 95))
+      .wrap(Math.min(terminalSize().columns || Number.MAX_SAFE_INTEGER, 110))
       .version(false)
       .example([
         ['$0 copy -i **/*.zip -o 1G1R/ -s -l EN -r USA,EUR,JPN', 'Produce a 1G1R set per console, preferring English from USA>EUR>JPN'],
