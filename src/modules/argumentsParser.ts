@@ -1,3 +1,4 @@
+import terminalSize from 'term-size';
 import yargs, { Argv } from 'yargs';
 
 import Logger from '../console/logger.js';
@@ -19,6 +20,7 @@ export default class ArgumentsParser {
     return arr;
   }
 
+  // TODO(cemmer): a readme section about what is supported, like archives and archives with mutliple files in them, like https://www.npmjs.com/package/romdj has
   parse(argv: string[]): Options {
     this.logger.info(`Parsing CLI arguments: ${argv}`);
 
@@ -278,11 +280,11 @@ export default class ArgumentsParser {
       .option('verbose', {
         group: groupDebug,
         alias: 'v',
-        description: 'Enable verbose logging',
+        description: 'Enable verbose logging, can specify twice (-vv)',
         type: 'count',
       })
 
-      .wrap(Math.min(yargs([]).terminalWidth() || Number.MAX_SAFE_INTEGER, 90))
+      .wrap(Math.min(terminalSize().columns || Number.MAX_SAFE_INTEGER, 95))
       .version(false)
       .example([
         ['$0 copy -i **/*.zip -o 1G1R/ -s -l EN -r USA,EUR,JPN', 'Produce a 1G1R set per console, preferring English from USA>EUR>JPN'],
