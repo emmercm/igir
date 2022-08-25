@@ -78,25 +78,26 @@ export default class DATStatus {
   toReport(options: Options): string {
     let message = `// ${this.getDATName()}: ${this.dat.getGames().length} games, ${this.dat.getParents().length} parents defined`;
 
-    const allNames = DATStatus.getAllowedTypes(options)
-      .map((type) => this.allRoms.get(type))
-      .flatMap((names) => names)
-      .filter((name, idx, names) => names.indexOf(name) === idx)
-      .sort();
-
-    const missingNames = DATStatus.getAllowedTypes(options)
-      .map((type) => this.missingRoms.get(type))
-      .flatMap((names) => names)
-      .filter((name, idx, names) => names.indexOf(name) === idx)
-      .sort();
+    const allNames = DATStatus.getNamesForAllowedTypes(options, this.allRoms);
+    const missingNames = DATStatus.getNamesForAllowedTypes(options, this.missingRoms);
 
     message += `\n// You are missing ${missingNames.length} of ${allNames.length} known ${this.getDATName()} items (${DATStatus.getAllowedTypes(options).join(', ')})`;
-
     if (missingNames.length) {
       message += `\n${missingNames.join('\n')}`;
     }
 
     return message;
+  }
+
+  private static getNamesForAllowedTypes(
+    options: Options,
+    romTypesToNames: Map<ROMType, string[]>,
+  ): string[] {
+    return DATStatus.getAllowedTypes(options)
+      .map((type) => romTypesToNames.get(type))
+      .flatMap((names) => names)
+      .filter((name, idx, names) => names.indexOf(name) === idx)
+      .sort() as string[];
   }
 
   private static getAllowedTypes(options: Options): ROMType[] {

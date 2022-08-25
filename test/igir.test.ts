@@ -2,8 +2,8 @@ import { jest } from '@jest/globals';
 import fs from 'fs';
 import path from 'path';
 
-import main from '../src/app.js';
 import Logger, { LogLevel } from '../src/console/logger.js';
+import Igir from '../src/igir.js';
 import fsPoly from '../src/polyfill/fsPoly.js';
 import Options, { OptionsProps } from '../src/types/options.js';
 
@@ -15,13 +15,13 @@ async function expectEndToEnd(options: OptionsProps, expectedFiles: string[]) {
 
   const tempOutput = fsPoly.mkdtempSync();
 
-  await main(new Options({
+  await new Igir(new Options({
     dat: [path.join(tempInput, 'dats', '*.dat')],
     input: [path.join(tempInput, 'roms', '**', '*')],
     ...options,
     output: tempOutput,
     verbose: Number.MAX_SAFE_INTEGER,
-  }), LOGGER);
+  }), LOGGER).main();
 
   const writtenRoms = fs.readdirSync(tempOutput);
 
@@ -38,7 +38,7 @@ async function expectEndToEnd(options: OptionsProps, expectedFiles: string[]) {
 jest.setTimeout(10_000);
 
 it('should throw on no dats', async () => {
-  await expect(main(new Options({}), LOGGER)).rejects.toThrow(/no valid dat/i);
+  await expect(new Igir(new Options({}), LOGGER).main()).rejects.toThrow(/no valid dat/i);
 });
 
 it('should do nothing with no roms', async () => {
