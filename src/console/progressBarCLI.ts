@@ -2,9 +2,11 @@ import { E_CANCELED, Mutex } from 'async-mutex';
 import cliProgress, { MultiBar, SingleBar } from 'cli-progress';
 import { PassThrough } from 'stream';
 
-import Logger, { LogLevel } from './logger.js';
+import Logger from './logger.js';
+import LogLevel from './logLevel.js';
 import ProgressBar from './progressBar.js';
-import SingleBarFormatted, { ProgressBarPayload } from './singleBarFormatted.js';
+import ProgressBarPayload from './progressBarPayload.js';
+import SingleBarFormatted from './singleBarFormatted.js';
 
 export default class ProgressBarCLI extends ProgressBar {
   private static readonly RENDER_MUTEX = new Mutex();

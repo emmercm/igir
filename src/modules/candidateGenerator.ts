@@ -18,7 +18,7 @@ export default class CandidateGenerator {
   ): Promise<Map<Parent, ReleaseCandidate[]>> {
     await this.progressBar.logInfo(`${dat.getName()}: Generating candidates`);
 
-    const crc32ToInputRomFiles = CandidateGenerator.getRomFilesByCrc(inputRomFiles);
+    const crc32ToInputRomFiles = CandidateGenerator.indexRomFilesByCrc(inputRomFiles);
     await this.progressBar.logInfo(`${dat.getName()}: ${crc32ToInputRomFiles.size} unique ROM CRC32s found`);
 
     const output = new Map<Parent, ReleaseCandidate[]>();
@@ -72,7 +72,7 @@ export default class CandidateGenerator {
     return output;
   }
 
-  private static getRomFilesByCrc(inputRomFiles: ROMFile[]): Map<string, ROMFile> {
+  private static indexRomFilesByCrc(inputRomFiles: ROMFile[]): Map<string, ROMFile> {
     return inputRomFiles.reduce((acc, romFile) => {
       if (acc.has(romFile.getCrc32())) {
         // Have already seen file, prefer non-archived files

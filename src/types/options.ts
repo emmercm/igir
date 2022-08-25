@@ -9,7 +9,7 @@ import moment from 'moment';
 import os from 'os';
 import path from 'path';
 
-import { LogLevel } from '../console/logger.js';
+import LogLevel from '../console/logLevel.js';
 import Constants from '../constants.js';
 import fsPoly from '../polyfill/fsPoly.js';
 import DAT from './logiqx/dat.js';

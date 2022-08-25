@@ -2,11 +2,7 @@ import {
   MultiBar, Options, Params, SingleBar,
 } from 'cli-progress';
 
-export interface ProgressBarPayload {
-  symbol?: string,
-  name?: string,
-  finishedMessage?: string
-}
+import ProgressBarPayload from './progressBarPayload.js';
 
 export default class SingleBarFormatted {
   private static readonly ETA_BUFFER_LENGTH = 100;
@@ -27,7 +23,7 @@ export default class SingleBarFormatted {
     const singleBar = this.multiBar.create(initialTotal, 0, {
       symbol,
       name,
-    }, this.buildOptions());
+    } as ProgressBarPayload, this.buildOptions());
 
     singleBar.addListener('start', (total: number, start: number) => {
       // cli-progress/lib/GenericBar()
@@ -74,7 +70,7 @@ export default class SingleBarFormatted {
     return {
       /* eslint-disable-next-line arrow-body-style */
       format: (options, params, payload: ProgressBarPayload) => {
-        return `${SingleBarFormatted.getSymbol(payload)}${SingleBarFormatted.getName(payload)} | ${this.getProgress(options, params, payload)}`;
+        return `${SingleBarFormatted.getSymbol(payload)} ${SingleBarFormatted.getName(payload)} | ${this.getProgress(options, params, payload)}`.trim();
       },
     };
   }

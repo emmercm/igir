@@ -2,7 +2,8 @@ import { jest } from '@jest/globals';
 import fs from 'fs';
 import path from 'path';
 
-import Logger, { LogLevel } from '../src/console/logger.js';
+import Logger from '../src/console/logger.js';
+import LogLevel from '../src/console/logLevel.js';
 import Igir from '../src/igir.js';
 import fsPoly from '../src/polyfill/fsPoly.js';
 import Options, { OptionsProps } from '../src/types/options.js';

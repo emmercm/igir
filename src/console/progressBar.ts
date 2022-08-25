@@ -1,4 +1,4 @@
-import { LogLevel } from './logger.js';
+import LogLevel from './logLevel.js';
 
 export default abstract class ProgressBar {
   abstract reset(total: number): Promise<void>;

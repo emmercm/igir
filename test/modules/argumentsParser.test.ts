@@ -1,6 +1,7 @@
 import os from 'os';
 
-import Logger, { LogLevel } from '../../src/console/logger.js';
+import Logger from '../../src/console/logger.js';
+import LogLevel from '../../src/console/logLevel.js';
 import ArgumentsParser from '../../src/modules/argumentsParser.js';
 
 const dummyRequiredArgs = ['--input', os.devNull, '--output', os.devNull];
