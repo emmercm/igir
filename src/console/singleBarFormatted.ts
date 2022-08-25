@@ -72,42 +72,9 @@ export default class SingleBarFormatted {
 
   private buildOptions(): Options {
     return {
+      /* eslint-disable-next-line arrow-body-style */
       format: (options, params, payload: ProgressBarPayload) => {
-        const barSize = options.barsize || 0;
-        const completeSize = Math.round(params.progress * barSize);
-        const incompleteSize = barSize - completeSize;
-        const bar = (options.barCompleteString || '').slice(0, completeSize)
-                    + options.barGlue
-                    + (options.barIncompleteString || '').slice(0, incompleteSize);
-
-        let line = '';
-
-        if (payload.symbol) {
-          line += `${payload.symbol} `;
-        }
-
-        if (payload.name) {
-          const maxNameLength = 30;
-          const payloadName = payload.name.slice(0, maxNameLength);
-          const paddedName = payloadName.length > maxNameLength - 1
-            ? payloadName.padEnd(maxNameLength, ' ')
-            : `${payloadName} ${'·'.repeat(maxNameLength - 1 - payloadName.length)}`;
-          line += paddedName;
-        }
-
-        if (payload.finishedMessage) {
-          line += ` | ${payload.finishedMessage}`;
-        } else {
-          line += ` | ${bar}`;
-          if (params.total > 0) {
-            line += ` | ${params.value.toLocaleString()}/${params.total.toLocaleString()}`;
-            if (params.value > 0 && params.value < params.total) {
-              line += ` | ETA: ${this.getEtaFormatted()}`;
-            }
-          }
-        }
-
-        return line;
+        return `${SingleBarFormatted.getSymbol(payload)}${SingleBarFormatted.getName(payload)} | ${this.getProgress(options, params, payload)}`;
       },
     };
   }
