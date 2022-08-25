@@ -1,4 +1,6 @@
+import { jest } from '@jest/globals';
 import fs from 'fs';
+import path from 'path';
 
 import main from '../src/app.js';
 import Logger, { LogLevel } from '../src/console/logger.js';
@@ -8,17 +10,20 @@ import Options, { OptionsProps } from '../src/types/options.js';
 const LOGGER = new Logger(LogLevel.OFF);
 
 async function expectEndToEnd(options: OptionsProps, expectedFiles: string[]) {
-  const temp = fsPoly.mkdtempSync();
+  const tempInput = fsPoly.mkdtempSync();
+  fsPoly.copyDirSync('./test/fixtures', tempInput);
+
+  const tempOutput = fsPoly.mkdtempSync();
 
   await main(new Options({
-    dat: ['test/fixtures/dats/*.dat'],
-    input: ['test/fixtures/roms/**/*'],
+    dat: [path.join(tempInput, 'dats', '*.dat')],
+    input: [path.join(tempInput, 'roms', '**', '*')],
     ...options,
-    output: temp,
+    output: tempOutput,
     verbose: Number.MAX_SAFE_INTEGER,
   }), LOGGER);
 
-  const writtenRoms = fs.readdirSync(temp);
+  const writtenRoms = fs.readdirSync(tempOutput);
 
   expect(writtenRoms).toHaveLength(expectedFiles.length);
   for (let i = 0; i < expectedFiles.length; i += 1) {
@@ -26,8 +31,11 @@ async function expectEndToEnd(options: OptionsProps, expectedFiles: string[]) {
     expect(writtenRoms).toContain(expectedFile);
   }
 
-  fsPoly.rmSync(temp, { recursive: true });
+  fsPoly.rmSync(tempInput, { recursive: true });
+  fsPoly.rmSync(tempOutput, { recursive: true });
 }
+
+jest.setTimeout(10_000);
 
 it('should throw on no dats', async () => {
   await expect(main(new Options({}), LOGGER)).rejects.toThrow(/no valid dat/i);
@@ -57,6 +65,16 @@ it('should copy and zip and test', async () => {
     'Fizzbuzz.zip',
     'Foobar.zip',
     'Lorem Ipsum.zip',
+  ]);
+});
+
+it('should copy and clean', async () => {
+  await expectEndToEnd({
+    commands: ['copy', 'clean'],
+  }, [
+    'Fizzbuzz.rom',
+    'Foobar.rom',
+    'Lorem Ipsum.rom',
   ]);
 });
 

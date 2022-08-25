@@ -2,7 +2,7 @@ import os from 'os';
 
 import DATScanner from '../../src/modules/datScanner.js';
 import Options from '../../src/types/options.js';
-import ProgressBarFake from './progressBar/progressBarFake.js';
+import ProgressBarFake from '../console/progressBarFake.js';
 
 function createDatScanner(dat: string[]): DATScanner {
   return new DATScanner(Options.fromObject({ dat }), new ProgressBarFake());

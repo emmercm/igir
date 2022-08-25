@@ -2,23 +2,25 @@ import _7z from '7zip-min';
 import AdmZip, { IZipEntry } from 'adm-zip';
 import crc32 from 'crc/crc32';
 import fs, { promises as fsPromises } from 'fs';
-import os from 'os';
 import path from 'path';
 
 import Constants from '../constants.js';
 import fsPoly from '../polyfill/fsPoly.js';
 
 export default class ROMFile {
-  private readonly filePath!: string;
+  private readonly filePath: string;
 
   private readonly archiveEntryPath?: string;
 
-  private readonly crc32!: string;
+  private readonly crc32: string;
 
-  constructor(filePath: string, entryPath?: string, crc?: string) {
+  private readonly extractedTempFile: boolean;
+
+  constructor(filePath: string, entryPath?: string, crc?: string, extractedTempFile = false) {
     this.filePath = filePath;
     this.archiveEntryPath = entryPath;
     this.crc32 = (crc || crc32(fs.readFileSync(filePath)).toString(16)).toLowerCase().padStart(8, '0');
+    this.extractedTempFile = extractedTempFile;
   }
 
   getFilePath(): string {
@@ -33,6 +35,10 @@ export default class ROMFile {
     return this.crc32;
   }
 
+  private isExtractedTempFile(): boolean {
+    return this.extractedTempFile;
+  }
+
   async toLocalFile(globalTempDir: string): Promise<ROMFile> {
     if (this.archiveEntryPath) {
       const tempDir = await fsPromises.mkdtemp(globalTempDir);
@@ -44,7 +50,7 @@ export default class ROMFile {
         await this.extract7zToLocal(tempFile);
       }
 
-      return new ROMFile(tempFile, '', this.crc32);
+      return new ROMFile(tempFile, '', this.crc32, true);
     }
 
     return this;
@@ -79,7 +85,7 @@ export default class ROMFile {
   }
 
   cleanupLocalFile() {
-    if (path.resolve(this.getFilePath()).indexOf(os.tmpdir()) !== -1) {
+    if (this.isExtractedTempFile()) {
       fsPoly.rmSync(path.dirname(this.getFilePath()), { recursive: true });
     }
   }

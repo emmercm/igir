@@ -1,13 +1,15 @@
 import fs, { promises as fsPromises } from 'fs';
+import { isNotJunk } from 'junk';
 import { PathLike, RmOptions } from 'node:fs';
 import os from 'os';
 import path from 'path';
+import semver from 'semver';
 
-export default {
+export default class FsPoly {
   /**
-     * Some CI such as GitHub Actions give `EACCES: permission denied` on os.tmpdir()
-     */
-  mkdtempSync: (): string => {
+   * Some CI such as GitHub Actions give `EACCES: permission denied` on os.tmpdir()
+   */
+  static mkdtempSync(): string {
     try {
       // Added in: v5.10.0
       return fs.mkdtempSync(os.tmpdir());
@@ -15,13 +17,13 @@ export default {
       // Added in: v5.10.0
       return fs.mkdtempSync(path.join(process.cwd(), 'tmp'));
     }
-  },
+  }
 
   /**
-     * fs.rm() was added in: v14.14.0
-     * fsPromises.rm() was added in: v14.14.0
-     */
-  rm: async (pathLike: PathLike, options?: RmOptions): Promise<void> => {
+   * fs.rm() was added in: v14.14.0
+   * fsPromises.rm() was added in: v14.14.0
+   */
+  static async rm(pathLike: PathLike, options?: RmOptions): Promise<void> {
     try {
       // Added in: v10.0.0
       await fsPromises.access(pathLike); // throw if file doesn't exist
@@ -40,12 +42,12 @@ export default {
       // Added in: v10.0.0
       await fsPromises.unlink(pathLike);
     }
-  },
+  }
 
   /**
-     * fs.rmSync() was added in: v14.14.0
-     */
-  rmSync: (pathLike: PathLike, options?: RmOptions): void => {
+   * fs.rmSync() was added in: v14.14.0
+   */
+  static rmSync(pathLike: PathLike, options?: RmOptions): void {
     try {
       // Added in: v0.11.15
       fs.accessSync(pathLike); // throw if file doesn't exist
@@ -58,11 +60,59 @@ export default {
 
     // Added in: v0.1.30
     if (fs.lstatSync(pathLike).isDirectory()) {
-      // Added in: v0.1.21
-      fs.rmdirSync(pathLike, options);
+      // DEP0147
+      if (semver.lt(process.version, '16.0.0')) {
+        // Added in: v0.1.21
+        fs.rmdirSync(pathLike, options);
+      } else {
+        // Added in: v14.14.0
+        fs.rmSync(pathLike, { recursive: true, force: true });
+      }
     } else {
       // Added in: v0.1.21
       fs.unlinkSync(pathLike);
     }
-  },
-};
+  }
+
+  /**
+   * Technically not a polyfill, but a function that should exist in the stdlib
+   */
+  static walkSync(pathLike: PathLike): string[] {
+    const output = [];
+
+    const files = fs.readdirSync(pathLike);
+    /* eslint-disable no-await-in-loop */
+    for (let i = 0; i < files.length; i += 1) {
+      const file = path.join(pathLike.toString(), files[i]);
+      const stats = fs.statSync(file);
+      if (stats.isDirectory()) {
+        output.push(...this.walkSync(file));
+      } else if (stats.isFile()) {
+        output.push(file);
+      }
+    }
+
+    return output.filter((p) => isNotJunk(path.basename(p)));
+  }
+
+  /**
+   * Technically not a polyfill, but a function that should exist in the stdlib
+   */
+  static copyDirSync(src: string, dest: string): void {
+    fs.mkdirSync(dest, { recursive: true });
+    const entries = fs.readdirSync(src, { withFileTypes: true });
+
+    /* eslint-disable no-await-in-loop */
+    for (let i = 0; i < entries.length; i += 1) {
+      const entry = entries[i];
+      const srcPath = path.join(src, entry.name);
+      const destPath = path.join(dest, entry.name);
+
+      if (entry.isDirectory()) {
+        this.copyDirSync(srcPath, destPath);
+      } else {
+        fs.copyFileSync(srcPath, destPath);
+      }
+    }
+  }
+}
