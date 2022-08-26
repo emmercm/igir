@@ -49,7 +49,7 @@ it('should return no results with no matching files', async () => {
   const romFileTwo = new ROMFile('two.a', undefined, 'abcd1234');
   const romFileThree = new ROMFile('three.zip', 'three.b', '4321fedc');
 
-  const expectCandidates = async (dat: DAT, inputRomFiles: ROMFile[]) => {
+  const expectCandidates = async (dat: DAT, inputRomFiles: ROMFile[]): Promise<void> => {
     // The DAT definitely has some parents
     expect(dat.getParents().length).toBeGreaterThan(0);
 
@@ -107,7 +107,7 @@ it('should return no results with partially matching files', async () => {
   const romFileOne = new ROMFile('one.a', undefined, '12345678');
   const romFileTwo = new ROMFile('two.b', undefined, '09876543');
 
-  const expectCandidates = async (dat: DAT, inputRomFiles: ROMFile[]) => {
+  const expectCandidates = async (dat: DAT, inputRomFiles: ROMFile[]): Promise<void> => {
     // The DAT definitely has some parents
     expect(dat.getParents().length).toBeGreaterThan(0);
 
@@ -152,7 +152,7 @@ it('should return some results with some matching files', async () => {
   const romFileOne = new ROMFile('one.rom', undefined, '12345678');
   const romFileTwo = new ROMFile('three.zip', 'three.b', '4321fedc');
 
-  const expectCandidates = async (dat: DAT, inputRomFiles: ROMFile[]) => {
+  const expectCandidates = async (dat: DAT, inputRomFiles: ROMFile[]): Promise<void> => {
     // The DAT definitely has some parents
     expect(dat.getParents().length).toBeGreaterThan(0);
 
@@ -195,7 +195,7 @@ it('should return all results with all matching files', async () => {
   const romFileTwo = new ROMFile('two.zip', 'two.a', 'abcdef90');
   const romFileThree = new ROMFile('two.zip', 'two.b', '09876543');
 
-  const expectCandidates = async (dat: DAT, inputRomFiles: ROMFile[]) => {
+  const expectCandidates = async (dat: DAT, inputRomFiles: ROMFile[]): Promise<void> => {
     // The DAT definitely has some parents
     expect(dat.getParents().length).toBeGreaterThan(0);
 

@@ -27,7 +27,7 @@ export default class Igir {
     this.logger = logger;
   }
 
-  async main() {
+  async main(): Promise<void> {
     const dats = await this.processDATScanner();
     const romFiles = await this.processROMScanner();
 
@@ -110,7 +110,7 @@ export default class Igir {
     await new OutputCleaner(this.options, cleanerProgressBar).clean(writtenRomFilesToExclude);
   }
 
-  private async processReportGenerator(datsStatuses: DATStatus[]) {
+  private async processReportGenerator(datsStatuses: DATStatus[]): Promise<void> {
     if (!this.options.shouldReport()) {
       return;
     }

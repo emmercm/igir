@@ -17,7 +17,7 @@ async function expectFilteredCandidates(
   options: OptionsProps,
   parentsToCandidates: [Parent, ReleaseCandidate[]][],
   expectedSize: number,
-) {
+): Promise<void> {
   const dat = new DAT(new Header(), []);
 
   const [filteredParentsToCandidates] = await Promise.all([buildCandidateFilter(options)
@@ -33,7 +33,7 @@ async function expectPreferredCandidates(
   options: OptionsProps,
   parentsToCandidates: [Parent, ReleaseCandidate[]][],
   expectedNames: string[],
-) {
+): Promise<void> {
   const dat = new DAT(new Header(), []);
 
   const filteredParentsToCandidates = await buildCandidateFilter(options)

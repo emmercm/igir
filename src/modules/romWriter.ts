@@ -82,7 +82,7 @@ export default class ROMWriter {
     return [...inputToOutput.values()];
   }
 
-  private buildInputToOutput(dat: DAT, releaseCandidate: ReleaseCandidate) {
+  private buildInputToOutput(dat: DAT, releaseCandidate: ReleaseCandidate): Map<ROMFile, ROMFile> {
     const crcToRoms = releaseCandidate.getRomsByCrc32();
 
     return releaseCandidate.getRomFiles().reduce((acc, inputRomFile) => {
@@ -106,7 +106,7 @@ export default class ROMWriter {
     }, new Map<ROMFile, ROMFile>());
   }
 
-  private async writeZip(inputToOutput: Map<ROMFile, ROMFile>) {
+  private async writeZip(inputToOutput: Map<ROMFile, ROMFile>): Promise<void> {
     // There is only one output file
     const outputZipPath = [...inputToOutput.values()][0].getFilePath();
     let outputZip = new AdmZip();
@@ -214,7 +214,7 @@ export default class ROMWriter {
     }
   }
 
-  private async writeRaw(inputToOutput: Map<ROMFile, ROMFile>) {
+  private async writeRaw(inputToOutput: Map<ROMFile, ROMFile>): Promise<void> {
     /* eslint-disable no-await-in-loop */
     const inputToOutputEntries = [...inputToOutput.entries()]
       .filter((output) => path.extname(output[1].getFilePath()) !== '.zip');
@@ -225,7 +225,7 @@ export default class ROMWriter {
     }
   }
 
-  private async writeRawSingle(inputRomFile: ROMFile, outputRomFile: ROMFile) {
+  private async writeRawSingle(inputRomFile: ROMFile, outputRomFile: ROMFile): Promise<void> {
     if (outputRomFile.equals(inputRomFile)) {
       await this.progressBar.logDebug(`${outputRomFile}: same file, skipping`);
       return;

@@ -10,7 +10,7 @@ import Options, { OptionsProps } from '../src/types/options.js';
 
 const LOGGER = new Logger(LogLevel.OFF);
 
-async function expectEndToEnd(options: OptionsProps, expectedFiles: string[]) {
+async function expectEndToEnd(options: OptionsProps, expectedFiles: string[]): Promise<void> {
   const tempInput = fsPoly.mkdtempSync();
   fsPoly.copyDirSync('./test/fixtures', tempInput);
 

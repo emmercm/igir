@@ -163,7 +163,7 @@ export default class Options implements OptionsProps {
     this.validate();
   }
 
-  static fromObject(obj: object) {
+  static fromObject(obj: object): Options {
     return plainToInstance(Options, obj, {
       enableImplicitConversion: true,
     })
@@ -193,36 +193,36 @@ export default class Options implements OptionsProps {
 
   // Commands
 
-  private getCommands() {
+  private getCommands(): string[] {
     return this.commands.map((c) => c.toLowerCase());
   }
 
-  shouldWrite() {
+  shouldWrite(): boolean {
     return this.shouldCopy() || this.shouldMove();
   }
 
-  shouldCopy() {
+  shouldCopy(): boolean {
     return this.getCommands().indexOf('copy') !== -1;
   }
 
-  shouldMove() {
+  shouldMove(): boolean {
     return this.getCommands().indexOf('move') !== -1;
   }
 
-  shouldZip(filePath: string) {
+  shouldZip(filePath: string): boolean {
     return this.getCommands().indexOf('zip') !== -1
       && (!this.getZipExclude() || !micromatch.isMatch(filePath, this.getZipExclude()));
   }
 
-  shouldClean() {
+  shouldClean(): boolean {
     return this.getCommands().indexOf('clean') !== -1;
   }
 
-  shouldTest() {
+  shouldTest(): boolean {
     return this.getCommands().indexOf('test') !== -1;
   }
 
-  shouldReport() {
+  shouldReport(): boolean {
     return this.getCommands().indexOf('report') !== -1;
   }
 
@@ -468,7 +468,7 @@ export default class Options implements OptionsProps {
     return this.tempDir;
   }
 
-  static filterUniqueUpper(array: string[]) {
+  static filterUniqueUpper(array: string[]): string[] {
     return array
       .map((value) => value.toUpperCase())
       .filter((val, idx, arr) => arr.indexOf(val) === idx);
