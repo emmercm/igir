@@ -106,53 +106,58 @@ export default class ROMWriter {
     }, new Map<ROMFile, ROMFile>());
   }
 
+  /** ********************
+   *                     *
+   *     Zip Writing     *
+   *                     *
+   ********************* */
+
   private async writeZip(inputToOutput: Map<ROMFile, ROMFile>) {
     // There is only one output file
     const outputZipPath = [...inputToOutput.values()][0].getFilePath();
-    let outputZip = new AdmZip();
-    if (await fsPoly.exists(outputZipPath)) {
-      if (!this.options.getOverwrite()) {
-        await this.progressBar.logDebug(`${outputZipPath}: file exists, not overwriting`);
-        return;
-      }
-      outputZip = new AdmZip(outputZipPath);
+
+    const outputZip = await this.openAndCleanZipFile(outputZipPath);
+    if (!outputZip) {
+      return;
     }
 
-    // Clean the zip file of any existing entries
-    let outputNeedsWriting = outputZip.getEntryCount() > 0;
-    outputZip.getEntries()
-      .forEach((entry) => outputZip.deleteFile(entry));
+    let outputNeedsWriting = false;
 
     /* eslint-disable no-await-in-loop */
     const inputToOutputEntries = [...inputToOutput.entries()]
       .filter((output) => output[1].isZip());
     for (let i = 0; i < inputToOutputEntries.length; i += 1) {
-      const inputRomFile = inputToOutputEntries[i][0];
-      const outputRomFile = inputToOutputEntries[i][1];
-
-      outputNeedsWriting = outputNeedsWriting
-          || await this.addZipEntry(outputZipPath, outputZip, inputRomFile, outputRomFile);
+      outputNeedsWriting = outputNeedsWriting || await this.addZipEntry(
+        outputZipPath,
+        outputZip,
+        inputToOutputEntries[i][0],
+        inputToOutputEntries[i][1],
+      );
     }
 
     // Write the zip file if needed
     if (outputNeedsWriting) {
-      // Create the output directory
-      const outputDir = path.dirname(outputZipPath);
-      if (!await fsPoly.exists(outputDir)) {
-        await fsPromises.mkdir(outputDir, { recursive: true });
-      }
-
-      try {
-        await this.progressBar.logDebug(`${outputZipPath}: writing zip`);
-        await outputZip.writeZipPromise(outputZipPath);
-      } catch (e) {
-        await this.progressBar.logError(`Failed to write zip ${outputZipPath} : ${e}`);
-        return;
-      }
-
+      await this.writeZipFile(outputZipPath, outputZip);
       await this.testWrittenZip(outputZipPath);
       await this.deleteMovedZipEntries(outputZipPath, [...inputToOutput.keys()]);
     }
+  }
+
+  private async openAndCleanZipFile(outputZipPath: string): Promise<AdmZip | null> {
+    let outputZip = new AdmZip();
+    if (await fsPoly.exists(outputZipPath)) {
+      if (!this.options.getOverwrite()) {
+        await this.progressBar.logDebug(`${outputZipPath}: file exists, not overwriting`);
+        return null;
+      }
+      outputZip = new AdmZip(outputZipPath);
+    }
+
+    // Clean the zip file of any existing entries
+    outputZip.getEntries()
+      .forEach((entry) => outputZip.deleteFile(entry));
+
+    return outputZip;
   }
 
   /**
@@ -202,6 +207,22 @@ export default class ROMWriter {
     return true;
   }
 
+  private async writeZipFile(outputZipPath: string, outputZip: AdmZip) {
+    // Create the output directory
+    const outputDir = path.dirname(outputZipPath);
+    if (!await fsPoly.exists(outputDir)) {
+      await this.progressBar.logDebug(`Creating the directory: ${outputDir}`);
+      await fsPromises.mkdir(outputDir, { recursive: true });
+    }
+
+    try {
+      await this.progressBar.logDebug(`${outputZipPath}: writing zip`);
+      await outputZip.writeZipPromise(outputZipPath);
+    } catch (e) {
+      await this.progressBar.logError(`Failed to write zip ${outputZipPath} : ${e}`);
+    }
+  }
+
   private async testWrittenZip(outputZipPath: string) {
     if (!this.options.shouldTest()) {
       return;
@@ -230,6 +251,12 @@ export default class ROMWriter {
     await this.progressBar.logDebug(filesToDelete.map((f) => `${f}: deleting`).join('\n'));
     await Promise.all(filesToDelete.map((filePath) => fsPoly.rm(filePath, { force: true })));
   }
+
+  /** ********************
+   *                     *
+   *     Raw Writing     *
+   *                     *
+   ********************* */
 
   private async writeRaw(inputToOutput: Map<ROMFile, ROMFile>) {
     /* eslint-disable no-await-in-loop */
@@ -262,6 +289,7 @@ export default class ROMWriter {
     // Create the output directory
     const outputDir = path.dirname(outputFilePath);
     if (!await fsPoly.exists(outputDir)) {
+      await this.progressBar.logDebug(`Creating the directory: ${outputDir}`);
       await fsPromises.mkdir(outputDir, { recursive: true });
     }
 

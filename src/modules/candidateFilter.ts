@@ -57,22 +57,20 @@ export default class CandidateFilter {
       return false;
     }
 
-    if ((this.options.getOnlyBios() && !releaseCandidate.getGame().isBios())
-        || (this.options.getNoBios() && releaseCandidate.getGame().isBios())
-        || (this.options.getNoUnlicensed() && releaseCandidate.getGame().isUnlicensed())
-        || (this.options.getOnlyRetail() && !releaseCandidate.getGame().isRetail())
-        || (this.options.getNoDemo() && releaseCandidate.getGame().isDemo())
-        || (this.options.getNoBeta() && releaseCandidate.getGame().isBeta())
-        || (this.options.getNoSample() && releaseCandidate.getGame().isSample())
-        || (this.options.getNoPrototype() && releaseCandidate.getGame().isPrototype())
-        || (this.options.getNoTestRoms() && releaseCandidate.getGame().isTest())
-        || (this.options.getNoAftermarket() && releaseCandidate.getGame().isAftermarket())
-        || (this.options.getNoHomebrew() && releaseCandidate.getGame().isHomebrew())
-        || (this.options.getNoBad() && releaseCandidate.getGame().isBad())) {
-      return false;
-    }
-
-    return true;
+    return [
+      this.options.getOnlyBios() && !releaseCandidate.getGame().isBios(),
+      this.options.getNoBios() && releaseCandidate.getGame().isBios(),
+      this.options.getNoUnlicensed() && releaseCandidate.getGame().isUnlicensed(),
+      this.options.getOnlyRetail() && !releaseCandidate.getGame().isRetail(),
+      this.options.getNoDemo() && releaseCandidate.getGame().isDemo(),
+      this.options.getNoBeta() && releaseCandidate.getGame().isBeta(),
+      this.options.getNoSample() && releaseCandidate.getGame().isSample(),
+      this.options.getNoPrototype() && releaseCandidate.getGame().isPrototype(),
+      this.options.getNoTestRoms() && releaseCandidate.getGame().isTest(),
+      this.options.getNoAftermarket() && releaseCandidate.getGame().isAftermarket(),
+      this.options.getNoHomebrew() && releaseCandidate.getGame().isHomebrew(),
+      this.options.getNoBad() && releaseCandidate.getGame().isBad(),
+    ].filter((val) => val).length === 0;
   }
 
   private sort(a: ReleaseCandidate, b: ReleaseCandidate): number {
@@ -93,9 +91,7 @@ export default class CandidateFilter {
 
   private preferLanguagesSort(a: ReleaseCandidate, b: ReleaseCandidate): number {
     if (this.options.getPreferLanguages().length) {
-      const aMinLang = this.preferLanguageSortValue(a);
-      const bMinLang = this.preferLanguageSortValue(b);
-      return aMinLang - bMinLang;
+      return this.preferLanguageSortValue(a) - this.preferLanguageSortValue(b);
     }
     return 0;
   }
@@ -111,9 +107,7 @@ export default class CandidateFilter {
 
   private preferRegionsSort(a: ReleaseCandidate, b: ReleaseCandidate): number {
     if (this.options.getPreferRegions().length) {
-      const aRegionIdx = this.preferRegionSortValue(a);
-      const bRegionIdx = this.preferRegionSortValue(b);
-      return aRegionIdx - bRegionIdx;
+      return this.preferRegionSortValue(a) - this.preferRegionSortValue(b);
     }
     return 0;
   }
