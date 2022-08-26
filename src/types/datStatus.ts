@@ -74,7 +74,7 @@ export default class DATStatus {
       .map((type) => {
         const missing = this.missingRoms.get(type) || [];
         const all = this.allRoms.get(type) || [];
-        return `${missing.length}/${all.length} ${type}`;
+        return `${missing.length.toLocaleString()}/${all.length.toLocaleString()} ${type}`;
       })
       .join(', ')} missing`;
   }
@@ -85,7 +85,7 @@ export default class DATStatus {
     const allNames = DATStatus.getNamesForAllowedTypes(options, this.allRoms);
     const missingNames = DATStatus.getNamesForAllowedTypes(options, this.missingRoms);
 
-    message += `\n// You are missing ${missingNames.length} of ${allNames.length} known ${this.getDATName()} items (${DATStatus.getAllowedTypes(options).join(', ')})`;
+    message += `\n// You are missing ${missingNames.length.toLocaleString()} of ${allNames.length.toLocaleString()} known ${this.getDATName()} items (${DATStatus.getAllowedTypes(options).join(', ')})`;
     if (missingNames.length) {
       message += `\n${missingNames.join('\n')}`;
     }

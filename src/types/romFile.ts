@@ -35,6 +35,10 @@ export default class ROMFile {
     return this.crc32;
   }
 
+  isZip(): boolean {
+    return path.extname(this.getFilePath()).toLowerCase() === '.zip';
+  }
+
   private isExtractedTempFile(): boolean {
     return this.extractedTempFile;
   }

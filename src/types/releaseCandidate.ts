@@ -43,6 +43,16 @@ export default class ReleaseCandidate {
     { region: 'EUR', countryRegex: 'Europe', language: 'EN' },
   ];
 
+  private static readonly REGIONS = this.REGION_OPTIONS
+    .map((regionOption) => regionOption.region)
+    .filter((region, idx, regions) => regions.indexOf(region) === idx)
+    .sort();
+
+  private static readonly LANGUAGES = this.REGION_OPTIONS
+    .map((regionOption) => regionOption.language)
+    .filter((language, idx, languages) => languages.indexOf(language) === idx)
+    .sort();
+
   private readonly game!: Game;
 
   private readonly release!: Release | null;
@@ -59,17 +69,11 @@ export default class ReleaseCandidate {
   }
 
   static getRegions() {
-    return this.REGION_OPTIONS
-      .map((regionOption) => regionOption.region)
-      .filter((region, idx, regions) => regions.indexOf(region) === idx)
-      .sort();
+    return this.REGIONS;
   }
 
   static getLanguages() {
-    return this.REGION_OPTIONS
-      .map((regionOption) => regionOption.language)
-      .filter((language, idx, languages) => languages.indexOf(language) === idx)
-      .sort();
+    return this.LANGUAGES;
   }
 
   // Property getters
