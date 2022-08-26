@@ -29,15 +29,20 @@ export default class Logger {
 
   private readonly print = (logLevel: LogLevel, message: unknown = '') => {
     if (this.logLevel <= logLevel) {
-      this.stream.write(`${message}\n`);
+      this.stream.write(`${Logger.formatMessage(logLevel, String(message).toString())}\n`);
     }
   };
 
   newLine() {
-    this.print(LogLevel.ON);
+    this.print(LogLevel.ALWAYS);
   }
 
-  static formatter(logLevel: LogLevel, message: string): string {
+  static formatMessage(logLevel: LogLevel, message: string): string {
+    // Don't format "ALWAYS" or "NEVER"
+    if (logLevel >= LogLevel.ALWAYS) {
+      return message;
+    }
+
     const chalkFuncs: { [key: number]: (message: string) => string } = {
       [LogLevel.DEBUG]: chalk.magenta,
       [LogLevel.INFO]: chalk.cyan,
@@ -52,29 +57,13 @@ export default class Logger {
       .join('\n');
   }
 
-  static debugFormatter = (message: string): string => this.formatter(LogLevel.DEBUG, message);
+  debug = (message: unknown = '') => this.print(LogLevel.DEBUG, message);
 
-  debug = (message: unknown = '') => {
-    this.print(LogLevel.DEBUG, Logger.debugFormatter(String(message).toString()));
-  };
+  info = (message: unknown = '') => this.print(LogLevel.INFO, message);
 
-  static infoFormatter = (message: string): string => this.formatter(LogLevel.INFO, message);
+  warn = (message: unknown = '') => this.print(LogLevel.WARN, message);
 
-  info = (message: unknown = '') => {
-    this.print(LogLevel.INFO, Logger.infoFormatter(String(message).toString()));
-  };
-
-  static warnFormatter = (message: string): string => this.formatter(LogLevel.WARN, message);
-
-  warn = (message: unknown = '') => {
-    this.print(LogLevel.WARN, Logger.warnFormatter(String(message).toString()));
-  };
-
-  static errorFormatter = (message: string) => this.formatter(LogLevel.ERROR, message);
-
-  error = (message: unknown = '') => {
-    this.print(LogLevel.ERROR, Logger.errorFormatter(String(message).toString()));
-  };
+  error = (message: unknown = '') => this.print(LogLevel.ERROR, message);
 
   printHeader() {
     const logo = figlet.textSync(Constants.COMMAND_NAME.toUpperCase(), {
@@ -86,12 +75,12 @@ export default class Logger {
     const maxLineLen = logoSplit.reduce((max, line) => Math.max(max, line.length), 0);
     logoSplit[midLine] = `${logoSplit[midLine].padEnd(maxLineLen, ' ')}   ROM collection manager`;
 
-    this.print(LogLevel.ON, `${logoSplit.join('\n')}\n\n`);
+    this.print(LogLevel.ALWAYS, `${logoSplit.join('\n')}\n\n`);
   }
 
   colorizeYargs(help: string) {
     this.print(
-      LogLevel.ON,
+      LogLevel.ALWAYS,
       help
         .replace(/^(Usage:.+)/, chalk.bold('$1'))
 

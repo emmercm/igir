@@ -111,19 +111,17 @@ export default class CandidateFilter {
 
   private preferRegionsSort(a: ReleaseCandidate, b: ReleaseCandidate): number {
     if (this.options.getPreferRegions().length) {
-      const aRegionIdx = a.getRegion()
-        ? this.options.getPreferRegions().indexOf(a.getRegion() as string)
-        : -1;
-      const bRegionIdx = b.getRegion()
-        ? this.options.getPreferRegions().indexOf(b.getRegion() as string)
-        : -1;
-      const regionSort = (aRegionIdx !== -1 ? aRegionIdx : Number.MAX_SAFE_INTEGER)
-          - (bRegionIdx !== -1 ? bRegionIdx : Number.MAX_SAFE_INTEGER);
-      if (regionSort !== 0) {
-        return regionSort;
-      }
+      const aRegionIdx = this.preferRegionSortValue(a);
+      const bRegionIdx = this.preferRegionSortValue(b);
+      return aRegionIdx - bRegionIdx;
     }
     return 0;
+  }
+
+  private preferRegionSortValue(releaseCandidate: ReleaseCandidate): number {
+    return releaseCandidate.getRegion()
+      ? this.options.getPreferRegions().indexOf(releaseCandidate.getRegion() as string)
+      : Number.MAX_SAFE_INTEGER;
   }
 
   private preferRevisionSort(a: ReleaseCandidate, b: ReleaseCandidate): number {

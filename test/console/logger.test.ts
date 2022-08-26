@@ -62,13 +62,13 @@ describe('setLogLevel_getLogLevel', () => {
 });
 
 describe('newLine', () => {
-  testLogLevelsAbove(LogLevel.OFF - 1)('should not write %s', async (logLevel) => {
+  testLogLevelsAbove(LogLevel.NEVER - 1)('should not write %s', async (logLevel) => {
     const spy = new LoggerSpy(logLevel);
     spy.getLogger().newLine();
     await expect(spy.getOutput()).resolves.toEqual('');
   });
 
-  testLogLevelsAtOrBelow(LogLevel.OFF - 1)('should write %s', async (logLevel) => {
+  testLogLevelsAtOrBelow(LogLevel.NEVER - 1)('should write %s', async (logLevel) => {
     const spy = new LoggerSpy(logLevel);
     spy.getLogger().newLine();
     await expect(spy.getOutput()).resolves.toEqual('\n');
@@ -132,13 +132,13 @@ describe('error', () => {
 });
 
 describe('printHeader', () => {
-  testLogLevelsAbove(LogLevel.OFF - 1)('should not write %s', async (logLevel) => {
+  testLogLevelsAbove(LogLevel.NEVER - 1)('should not write %s', async (logLevel) => {
     const spy = new LoggerSpy(logLevel);
     spy.getLogger().printHeader();
     await expect(spy.getOutput()).resolves.toEqual('');
   });
 
-  testLogLevelsAtOrBelow(LogLevel.OFF - 1)('should write %s', async (logLevel) => {
+  testLogLevelsAtOrBelow(LogLevel.NEVER - 1)('should write %s', async (logLevel) => {
     const spy = new LoggerSpy(logLevel);
     spy.getLogger().printHeader();
     await expect(spy.getOutput()).resolves.not.toEqual('');

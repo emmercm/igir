@@ -8,7 +8,7 @@ import Igir from '../src/igir.js';
 import fsPoly from '../src/polyfill/fsPoly.js';
 import Options, { OptionsProps } from '../src/types/options.js';
 
-const LOGGER = new Logger(LogLevel.OFF);
+const LOGGER = new Logger(LogLevel.NEVER);
 
 async function expectEndToEnd(options: OptionsProps, expectedFiles: string[]) {
   const tempInput = fsPoly.mkdtempSync();

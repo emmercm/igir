@@ -28,7 +28,7 @@ export default class ProgressBarCLI extends ProgressBar {
 
     if (!ProgressBarCLI.multiBar) {
       ProgressBarCLI.multiBar = new cliProgress.MultiBar({
-        stream: logger.getLogLevel() < LogLevel.OFF ? logger.getStream() : new PassThrough(),
+        stream: logger.getLogLevel() < LogLevel.NEVER ? logger.getStream() : new PassThrough(),
         barsize: 25,
         fps: ProgressBarCLI.fps,
         emptyOnZero: true,
@@ -120,7 +120,7 @@ export default class ProgressBarCLI extends ProgressBar {
 
   async log(logLevel: LogLevel, message: string): Promise<void> {
     if (this.logger.getLogLevel() <= logLevel) {
-      ProgressBarCLI.multiBar?.log(`${Logger.formatter(logLevel, message)}\n`);
+      ProgressBarCLI.multiBar?.log(`${Logger.formatMessage(logLevel, message)}\n`);
       await ProgressBarCLI.render();
     }
   }
