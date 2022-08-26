@@ -8,7 +8,7 @@ trap "cd \"${here}\"" EXIT
 cd "$(dirname "$0")/.."
 
 
-cols="$(tput cols || echo "$1")"
+cols="$(tput cols || echo 80)"
 stty cols "${1:-2147483647}" || true
 
 README="README.md"
