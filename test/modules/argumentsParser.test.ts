@@ -7,7 +7,7 @@ import ArgumentsParser from '../../src/modules/argumentsParser.js';
 const dummyRequiredArgs = ['--input', os.devNull, '--output', os.devNull];
 const dummyCommandAndRequiredArgs = ['copy', ...dummyRequiredArgs];
 
-const argumentsParser = new ArgumentsParser(new Logger(LogLevel.OFF));
+const argumentsParser = new ArgumentsParser(new Logger(LogLevel.NEVER));
 
 describe('commands', () => {
   it('should throw on no commands', () => {

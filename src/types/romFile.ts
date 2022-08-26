@@ -35,6 +35,10 @@ export default class ROMFile {
     return this.crc32;
   }
 
+  isZip(): boolean {
+    return path.extname(this.getFilePath()).toLowerCase() === '.zip';
+  }
+
   private isExtractedTempFile(): boolean {
     return this.extractedTempFile;
   }
@@ -56,7 +60,7 @@ export default class ROMFile {
     return this;
   }
 
-  private async extract7zToLocal(tempFile: string) {
+  private async extract7zToLocal(tempFile: string): Promise<void> {
     await new Promise<void>((resolve, reject) => {
       _7z.unpack(this.getFilePath(), path.dirname(tempFile), (err) => {
         if (err) {
@@ -68,7 +72,7 @@ export default class ROMFile {
     });
   }
 
-  private extractZipToLocal(tempFile: string) {
+  private extractZipToLocal(tempFile: string): void {
     const zip = new AdmZip(this.getFilePath());
     const entry = zip.getEntry(this.getArchiveEntryPath() as string);
     if (!entry) {
@@ -84,7 +88,7 @@ export default class ROMFile {
     );
   }
 
-  cleanupLocalFile() {
+  cleanupLocalFile(): void {
     if (this.isExtractedTempFile()) {
       fsPoly.rmSync(path.dirname(this.getFilePath()), { recursive: true });
     }

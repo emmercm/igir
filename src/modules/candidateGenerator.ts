@@ -18,14 +18,13 @@ export default class CandidateGenerator {
   ): Promise<Map<Parent, ReleaseCandidate[]>> {
     await this.progressBar.logInfo(`${dat.getName()}: Generating candidates`);
 
-    const crc32ToInputRomFiles = CandidateGenerator.indexRomFilesByCrc(inputRomFiles);
-    await this.progressBar.logInfo(`${dat.getName()}: ${crc32ToInputRomFiles.size} unique ROM CRC32s found`);
-
     const output = new Map<Parent, ReleaseCandidate[]>();
-
     if (!inputRomFiles.length) {
       return output;
     }
+
+    const crc32ToInputRomFiles = CandidateGenerator.indexRomFilesByCrc(inputRomFiles);
+    await this.progressBar.logInfo(`${dat.getName()}: ${crc32ToInputRomFiles.size} unique ROM CRC32s found`);
 
     await this.progressBar.setSymbol(Symbols.GENERATING);
     await this.progressBar.reset(dat.getParents().length);

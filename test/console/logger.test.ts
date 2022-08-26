@@ -36,14 +36,18 @@ class LoggerSpy {
   }
 }
 
-function testLogLevelsAbove(logLevel: LogLevel) {
+function testLogLevelsAbove(
+  logLevel: LogLevel,
+): (name: string, fn: (arg0: LogLevel) => void) => void {
   const logLevels = Object.keys(LogLevel)
     .map((ll) => LogLevel[ll as keyof typeof LogLevel])
     .filter((ll) => ll > logLevel);
   return test.each(logLevels);
 }
 
-function testLogLevelsAtOrBelow(logLevel: LogLevel) {
+function testLogLevelsAtOrBelow(
+  logLevel: LogLevel,
+): (name: string, fn: (arg0: LogLevel) => void) => void {
   const logLevels = Object.keys(LogLevel)
     .map((ll) => LogLevel[ll as keyof typeof LogLevel])
     .filter((ll) => ll <= logLevel);
@@ -62,13 +66,13 @@ describe('setLogLevel_getLogLevel', () => {
 });
 
 describe('newLine', () => {
-  testLogLevelsAbove(LogLevel.OFF - 1)('should not write %s', async (logLevel) => {
+  testLogLevelsAbove(LogLevel.NEVER - 1)('should not write %s', async (logLevel) => {
     const spy = new LoggerSpy(logLevel);
     spy.getLogger().newLine();
     await expect(spy.getOutput()).resolves.toEqual('');
   });
 
-  testLogLevelsAtOrBelow(LogLevel.OFF - 1)('should write %s', async (logLevel) => {
+  testLogLevelsAtOrBelow(LogLevel.NEVER - 1)('should write %s', async (logLevel) => {
     const spy = new LoggerSpy(logLevel);
     spy.getLogger().newLine();
     await expect(spy.getOutput()).resolves.toEqual('\n');
@@ -132,13 +136,13 @@ describe('error', () => {
 });
 
 describe('printHeader', () => {
-  testLogLevelsAbove(LogLevel.OFF - 1)('should not write %s', async (logLevel) => {
+  testLogLevelsAbove(LogLevel.NEVER - 1)('should not write %s', async (logLevel) => {
     const spy = new LoggerSpy(logLevel);
     spy.getLogger().printHeader();
     await expect(spy.getOutput()).resolves.toEqual('');
   });
 
-  testLogLevelsAtOrBelow(LogLevel.OFF - 1)('should write %s', async (logLevel) => {
+  testLogLevelsAtOrBelow(LogLevel.NEVER - 1)('should write %s', async (logLevel) => {
     const spy = new LoggerSpy(logLevel);
     spy.getLogger().printHeader();
     await expect(spy.getOutput()).resolves.not.toEqual('');

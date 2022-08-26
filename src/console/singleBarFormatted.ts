@@ -42,7 +42,7 @@ export default class SingleBarFormatted {
     return singleBar;
   }
 
-  private calculateEta(remaining: number) {
+  private calculateEta(remaining: number): void {
     // cli-progress/lib/ETA.calculate()
     const currentBufferSize = this.valueBuffer.length;
     const buffer = Math.min(SingleBarFormatted.ETA_BUFFER_LENGTH, currentBufferSize);
@@ -70,7 +70,7 @@ export default class SingleBarFormatted {
   private buildOptions(): Options {
     return {
       /* eslint-disable-next-line arrow-body-style */
-      format: (options, params, payload: ProgressBarPayload) => {
+      format: (options, params, payload: ProgressBarPayload): string => {
         return `${SingleBarFormatted.getSymbol(payload)} ${SingleBarFormatted.getName(payload)} | ${this.getProgress(options, params, payload)}`.trim();
       },
     };
@@ -83,7 +83,7 @@ export default class SingleBarFormatted {
     return chalk.bold(payload.symbol);
   }
 
-  private static getName(payload: ProgressBarPayload) {
+  private static getName(payload: ProgressBarPayload): string {
     if (!payload.name) {
       return '';
     }

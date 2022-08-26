@@ -20,7 +20,7 @@ export default class Parent {
     return this.games;
   }
 
-  addChild(child: Game) {
+  addChild(child: Game): void {
     this.games.push(child);
   }
 

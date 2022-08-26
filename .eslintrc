@@ -18,6 +18,7 @@
   "ignorePatterns": ["build/**"],
 
   "rules": {
+    "@typescript-eslint/explicit-function-return-type": "error",
     "@typescript-eslint/prefer-readonly": "error",
     "simple-import-sort/exports": "error",
     "simple-import-sort/imports": "error"

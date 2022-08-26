@@ -19,7 +19,7 @@ export default class Logger {
     return this.logLevel;
   }
 
-  setLogLevel(logLevel: LogLevel) {
+  setLogLevel(logLevel: LogLevel): void {
     this.logLevel = logLevel;
   }
 
@@ -27,63 +27,45 @@ export default class Logger {
     return this.stream;
   }
 
-  private readonly print = (message: unknown = '') => {
-    if (this.logLevel < LogLevel.OFF) {
-      this.stream.write(`${message}\n`);
+  private readonly print = (logLevel: LogLevel, message: unknown = ''): void => {
+    if (this.logLevel <= logLevel) {
+      this.stream.write(`${Logger.formatMessage(logLevel, String(message).toString())}\n`);
     }
   };
 
-  newLine() {
-    this.print();
+  newLine(): void {
+    this.print(LogLevel.ALWAYS);
   }
 
-  static debugFormatter = (message: string): string => message.trim()
-    .split('\n')
-    .map((m) => chalk.magenta('DEBUG: ') + m)
-    .join('\n');
-
-  debug = (message: unknown = '') => {
-    if (this.logLevel <= LogLevel.DEBUG) {
-      this.print(Logger.debugFormatter(String(message).toString()));
+  static formatMessage(logLevel: LogLevel, message: string): string {
+    // Don't format "ALWAYS" or "NEVER"
+    if (logLevel >= LogLevel.ALWAYS) {
+      return message;
     }
-  };
 
-  static infoFormatter = (message: string): string => message.trim()
-    .split('\n')
-    .map((m) => chalk.cyan('INFO: ') + m)
-    .join('\n');
+    const chalkFuncs: { [key: number]: (message: string) => string } = {
+      [LogLevel.DEBUG]: chalk.magenta,
+      [LogLevel.INFO]: chalk.cyan,
+      [LogLevel.WARN]: chalk.yellow,
+      [LogLevel.ERROR]: chalk.red,
+    };
+    const chalkFunc = chalkFuncs[logLevel];
 
-  info = (message: unknown = '') => {
-    if (this.logLevel <= LogLevel.INFO) {
-      this.print(Logger.infoFormatter(String(message).toString()));
-    }
-  };
+    return message.trim()
+      .split('\n')
+      .map((m) => chalkFunc(`${LogLevel[logLevel]}: `) + m)
+      .join('\n');
+  }
 
-  static warnFormatter = (message: string): string => message.trim()
-    .replace(/^warn.*: /i, '')
-    .split('\n')
-    .map((m) => chalk.yellow('WARN: ') + m)
-    .join('\n');
+  debug = (message: unknown = ''): void => this.print(LogLevel.DEBUG, message);
 
-  warn = (message: unknown = '') => {
-    if (this.logLevel <= LogLevel.WARN) {
-      this.print(Logger.warnFormatter(String(message).toString()));
-    }
-  };
+  info = (message: unknown = ''): void => this.print(LogLevel.INFO, message);
 
-  static errorFormatter = (message: string) => message.trim()
-    .replace(/^err.*: /i, '')
-    .split('\n')
-    .map((m) => chalk.red('ERROR: ') + m)
-    .join('\n');
+  warn = (message: unknown = ''): void => this.print(LogLevel.WARN, message);
 
-  error = (message: unknown = '') => {
-    if (this.logLevel <= LogLevel.ERROR) {
-      this.print(Logger.errorFormatter(String(message).toString()));
-    }
-  };
+  error = (message: unknown = ''): void => this.print(LogLevel.ERROR, message);
 
-  printHeader() {
+  printHeader(): void {
     const logo = figlet.textSync(Constants.COMMAND_NAME.toUpperCase(), {
       font: 'Big Money-se',
     }).trimEnd();
@@ -93,11 +75,12 @@ export default class Logger {
     const maxLineLen = logoSplit.reduce((max, line) => Math.max(max, line.length), 0);
     logoSplit[midLine] = `${logoSplit[midLine].padEnd(maxLineLen, ' ')}   ROM collection manager`;
 
-    this.print(`${logoSplit.join('\n')}\n\n`);
+    this.print(LogLevel.ALWAYS, `${logoSplit.join('\n')}\n\n`);
   }
 
-  colorizeYargs(help: string) {
+  colorizeYargs(help: string): void {
     this.print(
+      LogLevel.ALWAYS,
       help
         .replace(/^(Usage:.+)/, chalk.bold('$1'))
 

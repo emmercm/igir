@@ -19,7 +19,7 @@ export default class DATStatus {
 
   private readonly missingRoms = new Map<ROMType, string[]>();
 
-  private static append(map: Map<ROMType, string[]>, romType: ROMType, val: string) {
+  private static append(map: Map<ROMType, string[]>, romType: ROMType, val: string): void {
     const arr = (map.has(romType) ? map.get(romType) : []) as string[];
     arr.push(val);
     map.set(romType, arr);
@@ -54,7 +54,7 @@ export default class DATStatus {
       }, new Map<string, ROM>());
   }
 
-  private static pushGameIntoMap(map: Map<ROMType, string[]>, game: Game) {
+  private static pushGameIntoMap(map: Map<ROMType, string[]>, game: Game): void {
     DATStatus.append(map, ROMType.GAME, game.getName());
     if (game.isBios()) {
       DATStatus.append(map, ROMType.BIOS, game.getName());
@@ -74,7 +74,7 @@ export default class DATStatus {
       .map((type) => {
         const missing = this.missingRoms.get(type) || [];
         const all = this.allRoms.get(type) || [];
-        return `${missing.length}/${all.length} ${type}`;
+        return `${missing.length.toLocaleString()}/${all.length.toLocaleString()} ${type}`;
       })
       .join(', ')} missing`;
   }
@@ -85,7 +85,7 @@ export default class DATStatus {
     const allNames = DATStatus.getNamesForAllowedTypes(options, this.allRoms);
     const missingNames = DATStatus.getNamesForAllowedTypes(options, this.missingRoms);
 
-    message += `\n// You are missing ${missingNames.length} of ${allNames.length} known ${this.getDATName()} items (${DATStatus.getAllowedTypes(options).join(', ')})`;
+    message += `\n// You are missing ${missingNames.length.toLocaleString()} of ${allNames.length.toLocaleString()} known ${this.getDATName()} items (${DATStatus.getAllowedTypes(options).join(', ')})`;
     if (missingNames.length) {
       message += `\n${missingNames.join('\n')}`;
     }
