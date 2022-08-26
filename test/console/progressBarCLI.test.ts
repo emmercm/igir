@@ -1,10 +1,9 @@
 import { PassThrough } from 'stream';
+import stripAnsi from 'strip-ansi';
 
 import Logger from '../../src/console/logger.js';
 import LogLevel from '../../src/console/logLevel.js';
 import ProgressBarCLI from '../../src/console/progressBarCLI.js';
-
-import stripAnsi from 'strip-ansi';
 
 class ProgressBarCLISpy {
   private readonly stream: NodeJS.WritableStream;
