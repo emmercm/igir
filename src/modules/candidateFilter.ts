@@ -104,7 +104,7 @@ export default class CandidateFilter {
 
   private preferGoodSort(a: ReleaseCandidate, b: ReleaseCandidate): number {
     if (this.options.getPreferGood()) {
-      return CandidateFilter.sortBoolTrueFirst(!a.getGame().isBad(), !b.getGame().isBad());
+      return (b.getGame().isBad() ? 0 : 1) - (a.getGame().isBad() ? 0 : 1);
     }
     return 0;
   }
@@ -153,20 +153,16 @@ export default class CandidateFilter {
 
   private preferRetailSort(a: ReleaseCandidate, b: ReleaseCandidate): number {
     if (this.options.getPreferRetail()) {
-      return CandidateFilter.sortBoolTrueFirst(a.getGame().isRetail(), b.getGame().isRetail());
+      return (a.getGame().isRetail() ? 0 : 1) - (b.getGame().isRetail() ? 0 : 1);
     }
     return 0;
   }
 
   private preferParentSort(a: ReleaseCandidate, b: ReleaseCandidate): number {
     if (this.options.getPreferParent()) {
-      return CandidateFilter.sortBoolTrueFirst(a.getGame().isParent(), b.getGame().isParent());
+      return (a.getGame().isParent() ? 0 : 1) - (b.getGame().isParent() ? 0 : 1);
     }
     return 0;
-  }
-
-  private static sortBoolTrueFirst(a: boolean, b: boolean): number {
-    return (a ? 0 : 1) - (b ? 0 : 1);
   }
 
   /** ********************
