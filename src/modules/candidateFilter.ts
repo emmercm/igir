@@ -39,25 +39,21 @@ export default class CandidateFilter {
     });
 
     const filteredCandidates = [...output.values()].reduce((sum, rc) => sum + rc.length, 0);
-    await this.progressBar.logInfo(`${dat.getName()} | ${filteredCandidates} candidate${filteredCandidates !== 1 ? 's' : ''} after filtering`);
+    await this.progressBar.logInfo(`${dat.getName()}: ${filteredCandidates} candidate${filteredCandidates !== 1 ? 's' : ''} after filtering`);
 
     return output;
   }
 
-  private preFilter(releaseCandidate: ReleaseCandidate): boolean {
-    if (this.options.getLanguageFilter().length) {
-      const langs = this.options.getLanguageFilter();
-      if (!releaseCandidate.getLanguages().some((lang) => langs.indexOf(lang) !== -1)) {
-        return false;
-      }
-    }
-    if (this.options.getRegionFilter().length
-        && releaseCandidate.getRegion()
-        && this.options.getRegionFilter().indexOf(releaseCandidate.getRegion() as string) === -1) {
-      return false;
-    }
+  /** *******************
+   *                    *
+   *     Pre Filter     *
+   *                    *
+   ******************** */
 
+  private preFilter(releaseCandidate: ReleaseCandidate): boolean {
     return [
+      this.noLanguageAllowed(releaseCandidate),
+      this.regionNotAllowed(releaseCandidate),
       this.options.getOnlyBios() && !releaseCandidate.getGame().isBios(),
       this.options.getNoBios() && releaseCandidate.getGame().isBios(),
       this.options.getNoUnlicensed() && releaseCandidate.getGame().isUnlicensed(),
@@ -72,6 +68,30 @@ export default class CandidateFilter {
       this.options.getNoBad() && releaseCandidate.getGame().isBad(),
     ].filter((val) => val).length === 0;
   }
+
+  private noLanguageAllowed(releaseCandidate: ReleaseCandidate): boolean {
+    if (this.options.getLanguageFilter().length) {
+      const langs = this.options.getLanguageFilter();
+      if (!releaseCandidate.getLanguages().some((lang) => langs.indexOf(lang) !== -1)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  private regionNotAllowed(releaseCandidate: ReleaseCandidate): boolean {
+    return this.options.getRegionFilter().length > 0
+        && (
+          !releaseCandidate.getRegion()
+            || this.options.getRegionFilter().indexOf(releaseCandidate.getRegion() as string) === -1
+        );
+  }
+
+  /** ****************
+   *                 *
+   *     Sorting     *
+   *                 *
+   ***************** */
 
   private sort(a: ReleaseCandidate, b: ReleaseCandidate): number {
     return this.preferGoodSort(a, b)
@@ -144,6 +164,12 @@ export default class CandidateFilter {
     }
     return 0;
   }
+
+  /** ********************
+   *                     *
+   *     Post Filter     *
+   *                     *
+   ********************* */
 
   private postFilter(idx: number): boolean {
     if (this.options.getSingle()) {
