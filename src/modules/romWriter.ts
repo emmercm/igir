@@ -2,7 +2,7 @@ import AdmZip from 'adm-zip';
 import { promises as fsPromises } from 'fs';
 import path from 'path';
 
-import ProgressBar from '../console/progressBar.js';
+import ProgressBar, { Symbols } from '../console/progressBar.js';
 import fsPoly from '../polyfill/fsPoly.js';
 import DAT from '../types/logiqx/dat.js';
 import Parent from '../types/logiqx/parent.js';
@@ -32,7 +32,7 @@ export default class ROMWriter {
       return output;
     }
 
-    await this.progressBar.setSymbol('📂');
+    await this.progressBar.setSymbol(Symbols.WRITING);
     await this.progressBar.reset(parentsToCandidates.size);
 
     const parentsToCandidatesEntries = [...parentsToCandidates.entries()];
