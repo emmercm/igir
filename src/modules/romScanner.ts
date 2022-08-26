@@ -2,7 +2,7 @@ import _7z, { Result } from '7zip-min';
 import AdmZip from 'adm-zip';
 import path from 'path';
 
-import ProgressBar from '../console/progressBar.js';
+import ProgressBar, { Symbols } from '../console/progressBar.js';
 import Constants from '../constants.js';
 import Options from '../types/options.js';
 import ROMFile from '../types/romFile.js';
@@ -18,7 +18,7 @@ export default class ROMScanner {
   }
 
   async scan(): Promise<ROMFile[]> {
-    await this.progressBar.setSymbol('🔎');
+    await this.progressBar.setSymbol(Symbols.SEARCHING);
     await this.progressBar.reset(0);
 
     await this.progressBar.logInfo('Scanning ROM files');
