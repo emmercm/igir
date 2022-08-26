@@ -1,3 +1,4 @@
+import chalk from 'chalk';
 import {
   MultiBar, Options, Params, SingleBar,
 } from 'cli-progress';
@@ -79,7 +80,7 @@ export default class SingleBarFormatted {
     if (!payload.symbol) {
       return '';
     }
-    return payload.symbol;
+    return chalk.bold(payload.symbol);
   }
 
   private static getName(payload: ProgressBarPayload) {

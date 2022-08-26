@@ -1,4 +1,4 @@
-import ProgressBar from '../console/progressBar.js';
+import ProgressBar, { Symbols } from '../console/progressBar.js';
 import DAT from '../types/logiqx/dat.js';
 import Parent from '../types/logiqx/parent.js';
 import Release from '../types/logiqx/release.js';
@@ -26,7 +26,7 @@ export default class CandidateGenerator {
     const crc32ToInputRomFiles = CandidateGenerator.indexRomFilesByCrc(inputRomFiles);
     await this.progressBar.logInfo(`${dat.getName()}: ${crc32ToInputRomFiles.size} unique ROM CRC32s found`);
 
-    await this.progressBar.setSymbol('🗳️');
+    await this.progressBar.setSymbol(Symbols.GENERATING);
     await this.progressBar.reset(dat.getParents().length);
 
     // For each parent, try to generate a parent candidate

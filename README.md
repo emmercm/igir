@@ -2,7 +2,7 @@
 
 A ROM collection manager to help sort collections and make one game, one rom (1G1R) sets.
 
-[![npm](https://badgen.net/npm/v/igir?icon=npm)](https://www.npmjs.com/package/igir)
+[![npm](https://badgen.net/npm/v/igir)](https://www.npmjs.com/package/igir)
 [![GitHub](https://badgen.net/badge/emmercm/igir/purple?icon=github)](https://github.com/emmercm/igir)
 
 [![Known Vulnerabilities](https://badgen.net/snyk/emmercm/igir?icon=snyk)](https://snyk.io/test/npm/igir)
