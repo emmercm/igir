@@ -18,7 +18,7 @@ export default class ReportGenerator {
 
   async generate(datsStatuses: DATStatus[]): Promise<void> {
     const report = this.options.getOutputReport();
-    const append = (message: string) => fs.appendFileSync(report, `${message.trimEnd()}\n`);
+    const append = (message: string): void => fs.appendFileSync(report, `${message.trimEnd()}\n`);
 
     append(`// ${Constants.COMMAND_NAME}, ${moment().format()}\n// ${report}`);
 

@@ -58,14 +58,14 @@ export default class ReleaseCandidate {
     this.romFiles = romFiles;
   }
 
-  static getRegions() {
+  static getRegions(): string[] {
     return this.REGION_OPTIONS
       .map((regionOption) => regionOption.region)
       .filter((region, idx, regions) => regions.indexOf(region) === idx)
       .sort();
   }
 
-  static getLanguages() {
+  static getLanguages(): string[] {
     return this.REGION_OPTIONS
       .map((regionOption) => regionOption.language)
       .filter((language, idx, languages) => languages.indexOf(language) === idx)

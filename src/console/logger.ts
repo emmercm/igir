@@ -19,7 +19,7 @@ export default class Logger {
     return this.logLevel;
   }
 
-  setLogLevel(logLevel: LogLevel) {
+  setLogLevel(logLevel: LogLevel): void {
     this.logLevel = logLevel;
   }
 
@@ -27,13 +27,13 @@ export default class Logger {
     return this.stream;
   }
 
-  private readonly print = (message: unknown = '') => {
+  private readonly print = (message: unknown = ''): void => {
     if (this.logLevel < LogLevel.OFF) {
       this.stream.write(`${message}\n`);
     }
   };
 
-  newLine() {
+  newLine(): void {
     this.print();
   }
 
@@ -42,7 +42,7 @@ export default class Logger {
     .map((m) => chalk.magenta('DEBUG: ') + m)
     .join('\n');
 
-  debug = (message: unknown = '') => {
+  debug = (message: unknown = ''): void => {
     if (this.logLevel <= LogLevel.DEBUG) {
       this.print(Logger.debugFormatter(String(message).toString()));
     }
@@ -53,7 +53,7 @@ export default class Logger {
     .map((m) => chalk.cyan('INFO: ') + m)
     .join('\n');
 
-  info = (message: unknown = '') => {
+  info = (message: unknown = ''):void => {
     if (this.logLevel <= LogLevel.INFO) {
       this.print(Logger.infoFormatter(String(message).toString()));
     }
@@ -65,25 +65,25 @@ export default class Logger {
     .map((m) => chalk.yellow('WARN: ') + m)
     .join('\n');
 
-  warn = (message: unknown = '') => {
+  warn = (message: unknown = ''): void => {
     if (this.logLevel <= LogLevel.WARN) {
       this.print(Logger.warnFormatter(String(message).toString()));
     }
   };
 
-  static errorFormatter = (message: string) => message.trim()
+  static errorFormatter = (message: string): string => message.trim()
     .replace(/^err.*: /i, '')
     .split('\n')
     .map((m) => chalk.red('ERROR: ') + m)
     .join('\n');
 
-  error = (message: unknown = '') => {
+  error = (message: unknown = ''): void => {
     if (this.logLevel <= LogLevel.ERROR) {
       this.print(Logger.errorFormatter(String(message).toString()));
     }
   };
 
-  printHeader() {
+  printHeader(): void {
     const logo = figlet.textSync(Constants.COMMAND_NAME.toUpperCase(), {
       font: 'Big Money-se',
     }).trimEnd();
@@ -96,7 +96,7 @@ export default class Logger {
     this.print(`${logoSplit.join('\n')}\n\n`);
   }
 
-  colorizeYargs(help: string) {
+  colorizeYargs(help: string): void {
     this.print(
       help
         .replace(/^(Usage:.+)/, chalk.bold('$1'))
