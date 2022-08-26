@@ -135,7 +135,9 @@ export default class ReleaseCandidate {
     // Get language from languages in the game name
     const matches = this.getName().match(/\(([a-zA-Z]{2}([,+][a-zA-Z]{2})*)\)/);
     if (matches && matches.length >= 2) {
-      return matches[1].split(',').map((lang) => lang.toUpperCase());
+      return matches[1].split(/[,+]/)
+        .map((lang) => lang.toUpperCase())
+        .filter((lang, idx, langs) => langs.indexOf(lang) === idx);
     }
 
     // Get language from the region
