@@ -82,7 +82,7 @@ export default class ROMWriter {
     return [...inputToOutput.values()];
   }
 
-  private buildInputToOutput(dat: DAT, releaseCandidate: ReleaseCandidate) {
+  private buildInputToOutput(dat: DAT, releaseCandidate: ReleaseCandidate): Map<ROMFile, ROMFile> {
     const crcToRoms = releaseCandidate.getRomsByCrc32();
 
     return releaseCandidate.getRomFiles().reduce((acc, inputRomFile) => {
@@ -112,7 +112,7 @@ export default class ROMWriter {
    *                     *
    ********************* */
 
-  private async writeZip(inputToOutput: Map<ROMFile, ROMFile>) {
+  private async writeZip(inputToOutput: Map<ROMFile, ROMFile>): Promise<void> {
     // There is only one output file
     const outputZipPath = [...inputToOutput.values()][0].getFilePath();
 
@@ -207,7 +207,7 @@ export default class ROMWriter {
     return true;
   }
 
-  private async writeZipFile(outputZipPath: string, outputZip: AdmZip) {
+  private async writeZipFile(outputZipPath: string, outputZip: AdmZip): Promise<void> {
     // Create the output directory
     const outputDir = path.dirname(outputZipPath);
     if (!await fsPoly.exists(outputDir)) {
@@ -223,7 +223,7 @@ export default class ROMWriter {
     }
   }
 
-  private async testWrittenZip(outputZipPath: string) {
+  private async testWrittenZip(outputZipPath: string): Promise<void> {
     if (!this.options.shouldTest()) {
       return;
     }
@@ -239,7 +239,10 @@ export default class ROMWriter {
     }
   }
 
-  private async deleteMovedZipEntries(outputZipPath: string, inputRomFiles: ROMFile[]) {
+  private async deleteMovedZipEntries(
+    outputZipPath: string,
+    inputRomFiles: ROMFile[],
+  ): Promise<void> {
     if (!this.options.shouldMove()) {
       return;
     }
@@ -258,7 +261,7 @@ export default class ROMWriter {
    *                     *
    ********************* */
 
-  private async writeRaw(inputToOutput: Map<ROMFile, ROMFile>) {
+  private async writeRaw(inputToOutput: Map<ROMFile, ROMFile>): Promise<void> {
     /* eslint-disable no-await-in-loop */
     const inputToOutputEntries = [...inputToOutput.entries()]
       .filter((output) => !output[1].isZip());
@@ -269,7 +272,7 @@ export default class ROMWriter {
     }
   }
 
-  private async writeRawSingle(inputRomFile: ROMFile, outputRomFile: ROMFile) {
+  private async writeRawSingle(inputRomFile: ROMFile, outputRomFile: ROMFile): Promise<void> {
     if (outputRomFile.equals(inputRomFile)) {
       await this.progressBar.logDebug(`${outputRomFile}: same file, skipping`);
       return;

@@ -19,7 +19,7 @@ export default class Logger {
     return this.logLevel;
   }
 
-  setLogLevel(logLevel: LogLevel) {
+  setLogLevel(logLevel: LogLevel): void {
     this.logLevel = logLevel;
   }
 
@@ -27,13 +27,13 @@ export default class Logger {
     return this.stream;
   }
 
-  private readonly print = (logLevel: LogLevel, message: unknown = '') => {
+  private readonly print = (logLevel: LogLevel, message: unknown = ''): void => {
     if (this.logLevel <= logLevel) {
       this.stream.write(`${Logger.formatMessage(logLevel, String(message).toString())}\n`);
     }
   };
 
-  newLine() {
+  newLine(): void {
     this.print(LogLevel.ALWAYS);
   }
 
@@ -57,15 +57,15 @@ export default class Logger {
       .join('\n');
   }
 
-  debug = (message: unknown = '') => this.print(LogLevel.DEBUG, message);
+  debug = (message: unknown = ''): void => this.print(LogLevel.DEBUG, message);
 
-  info = (message: unknown = '') => this.print(LogLevel.INFO, message);
+  info = (message: unknown = ''): void => this.print(LogLevel.INFO, message);
 
-  warn = (message: unknown = '') => this.print(LogLevel.WARN, message);
+  warn = (message: unknown = ''): void => this.print(LogLevel.WARN, message);
 
-  error = (message: unknown = '') => this.print(LogLevel.ERROR, message);
+  error = (message: unknown = ''): void => this.print(LogLevel.ERROR, message);
 
-  printHeader() {
+  printHeader(): void {
     const logo = figlet.textSync(Constants.COMMAND_NAME.toUpperCase(), {
       font: 'Big Money-se',
     }).trimEnd();
@@ -78,7 +78,7 @@ export default class Logger {
     this.print(LogLevel.ALWAYS, `${logoSplit.join('\n')}\n\n`);
   }
 
-  colorizeYargs(help: string) {
+  colorizeYargs(help: string): void {
     this.print(
       LogLevel.ALWAYS,
       help

@@ -68,11 +68,11 @@ export default class ReleaseCandidate {
     this.romFiles = romFiles;
   }
 
-  static getRegions() {
+  static getRegions(): string[] {
     return this.REGIONS;
   }
 
-  static getLanguages() {
+  static getLanguages(): string[] {
     return this.LANGUAGES;
   }
 
