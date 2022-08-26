@@ -18,20 +18,7 @@ export default class CandidateGenerator {
   ): Promise<Map<Parent, ReleaseCandidate[]>> {
     await this.progressBar.logInfo(`${dat.getName()}: Generating candidates`);
 
-    // Index the ROMFiles by CRC
-    const crc32ToInputRomFiles = inputRomFiles.reduce((acc, romFile) => {
-      if (acc.has(romFile.getCrc32())) {
-        // Have already seen file, prefer non-archived files
-        const existing = acc.get(romFile.getCrc32()) as ROMFile;
-        if (!romFile.getArchiveEntryPath() && existing.getArchiveEntryPath()) {
-          acc.set(romFile.getCrc32(), romFile);
-        }
-      } else {
-        // Haven't seen file yet, store it
-        acc.set(romFile.getCrc32(), romFile);
-      }
-      return acc;
-    }, new Map<string, ROMFile>());
+    const crc32ToInputRomFiles = CandidateGenerator.indexRomFilesByCrc(inputRomFiles);
     await this.progressBar.logInfo(`${dat.getName()}: ${crc32ToInputRomFiles.size} unique ROM CRC32s found`);
 
     const output = new Map<Parent, ReleaseCandidate[]>();
@@ -83,5 +70,21 @@ export default class CandidateGenerator {
     await this.progressBar.logInfo(`${dat.getName()}: ${totalCandidates} candidate${totalCandidates !== 1 ? 's' : ''} found`);
 
     return output;
+  }
+
+  private static indexRomFilesByCrc(inputRomFiles: ROMFile[]): Map<string, ROMFile> {
+    return inputRomFiles.reduce((acc, romFile) => {
+      if (acc.has(romFile.getCrc32())) {
+        // Have already seen file, prefer non-archived files
+        const existing = acc.get(romFile.getCrc32()) as ROMFile;
+        if (!romFile.getArchiveEntryPath() && existing.getArchiveEntryPath()) {
+          acc.set(romFile.getCrc32(), romFile);
+        }
+      } else {
+        // Haven't seen file yet, store it
+        acc.set(romFile.getCrc32(), romFile);
+      }
+      return acc;
+    }, new Map<string, ROMFile>());
   }
 }

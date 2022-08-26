@@ -50,41 +50,8 @@ export default class ROMWriter {
       for (let j = 0; j < releaseCandidates.length; j += 1) {
         const releaseCandidate = releaseCandidates[j];
 
-        const crcToRoms = releaseCandidate.getRomsByCrc32();
-
-        const inputToOutput = releaseCandidate.getRomFiles().reduce((acc, inputRomFile) => {
-          const rom = crcToRoms.get(inputRomFile.getCrc32()) as ROM;
-
-          let outputFilePath = this.options.getOutput(
-            dat,
-            inputRomFile.getFilePath(),
-            rom.getName(),
-          );
-          let entryPath;
-
-          if (this.options.shouldZip(rom.getName())) {
-            outputFilePath = this.options.getOutput(dat, inputRomFile.getFilePath(), `${releaseCandidate.getName()}.zip`);
-            entryPath = rom.getName();
-          }
-
-          const outputRomFile = new ROMFile(outputFilePath, entryPath, inputRomFile.getCrc32());
-          acc.set(inputRomFile, outputRomFile);
-          return acc;
-        }, new Map<ROMFile, ROMFile>());
-
-        if (this.options.shouldWrite()) {
-          const writeNeeded = [...inputToOutput.entries()]
-            .some((entry) => !entry[0].equals(entry[1]));
-          await this.progressBar.logDebug(`${dat.getName()} | ${releaseCandidate.getName()}: ${writeNeeded ? '' : 'no '}write needed`);
-          if (writeNeeded) {
-            await this.writeZip(inputToOutput);
-            await this.writeRaw(inputToOutput);
-          }
-        } else {
-          await this.progressBar.logDebug(`${dat.getName()} | ${releaseCandidate.getName()}: not writing`);
-        }
-
-        outputRomFiles.push(...inputToOutput.values());
+        const results = await this.writeReleaseCandidate(dat, releaseCandidate);
+        outputRomFiles.push(...results);
       }
 
       output.set(parent, outputRomFiles);
@@ -93,18 +60,61 @@ export default class ROMWriter {
     return output;
   }
 
+  private async writeReleaseCandidate(
+    dat: DAT,
+    releaseCandidate: ReleaseCandidate,
+  ): Promise<ROMFile[]> {
+    if (!this.options.shouldWrite()) {
+      await this.progressBar.logDebug(`${dat.getName()} | ${releaseCandidate.getName()}: not writing`);
+      return [];
+    }
+
+    const inputToOutput = this.buildInputToOutput(dat, releaseCandidate);
+
+    const writeNeeded = [...inputToOutput.entries()]
+      .some((entry) => !entry[0].equals(entry[1]));
+    await this.progressBar.logDebug(`${dat.getName()} | ${releaseCandidate.getName()}: ${writeNeeded ? '' : 'no '}write needed`);
+    if (writeNeeded) {
+      await this.writeZip(inputToOutput);
+      await this.writeRaw(inputToOutput);
+    }
+
+    return [...inputToOutput.values()];
+  }
+
+  private buildInputToOutput(dat: DAT, releaseCandidate: ReleaseCandidate) {
+    const crcToRoms = releaseCandidate.getRomsByCrc32();
+
+    return releaseCandidate.getRomFiles().reduce((acc, inputRomFile) => {
+      const rom = crcToRoms.get(inputRomFile.getCrc32()) as ROM;
+
+      let outputFilePath = this.options.getOutput(
+        dat,
+        inputRomFile.getFilePath(),
+        rom.getName(),
+      );
+      let entryPath;
+
+      if (this.options.shouldZip(rom.getName())) {
+        outputFilePath = this.options.getOutput(dat, inputRomFile.getFilePath(), `${releaseCandidate.getName()}.zip`);
+        entryPath = rom.getName();
+      }
+
+      const outputRomFile = new ROMFile(outputFilePath, entryPath, inputRomFile.getCrc32());
+      acc.set(inputRomFile, outputRomFile);
+      return acc;
+    }, new Map<ROMFile, ROMFile>());
+  }
+
   private async writeZip(inputToOutput: Map<ROMFile, ROMFile>) {
     // There is only one output file
     const outputZipPath = [...inputToOutput.values()][0].getFilePath();
     let outputZip = new AdmZip();
-    try {
-      await fsPromises.access(outputZipPath); // throw if file doesn't exist
+    if (await fsPoly.exists(outputZipPath)) {
       if (!this.options.getOverwrite()) {
         return;
       }
       outputZip = new AdmZip(outputZipPath);
-    } catch (e) {
-      // eslint-disable-line no-empty
     }
 
     let outputNeedsCleaning = outputZip.getEntryCount() > 0;
@@ -167,9 +177,7 @@ export default class ROMWriter {
     if (outputNeedsWriting) {
       // Create the output directory
       const outputDir = path.dirname(outputZipPath);
-      try {
-        await fsPromises.access(outputDir); // throw if file doesn't exist
-      } catch (e) {
+      if (!await fsPoly.exists(outputDir)) {
         await fsPromises.mkdir(outputDir, { recursive: true });
       }
 
@@ -228,20 +236,14 @@ export default class ROMWriter {
     // If the output file already exists, do nothing
     const overwrite = this.options.getOverwrite();
     if (!overwrite) {
-      try {
-        await fsPromises.access(outputFilePath); // throw if file doesn't exist
+      if (await fsPoly.exists(outputFilePath)) {
         await this.progressBar.logDebug(`${outputFilePath}: file exists, not overwriting`);
-        return;
-      } catch (e) {
-        // eslint-disable-line no-empty
       }
     }
 
     // Create the output directory
     const outputDir = path.dirname(outputFilePath);
-    try {
-      await fsPromises.access(outputDir); // throw if file doesn't exist
-    } catch (e) {
+    if (!await fsPoly.exists(outputDir)) {
       await fsPromises.mkdir(outputDir, { recursive: true });
     }
 

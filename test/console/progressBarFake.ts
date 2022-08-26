@@ -2,7 +2,7 @@
 
 import ProgressBar from '../../src/console/progressBar.js';
 
-export default class ProgressBarFake implements ProgressBar {
+export default class ProgressBarFake extends ProgressBar {
   delete(): void {
   }
 
@@ -15,22 +15,6 @@ export default class ProgressBarFake implements ProgressBar {
   }
 
   log(): Promise<void> {
-    return Promise.resolve(undefined);
-  }
-
-  logDebug(): Promise<void> {
-    return Promise.resolve(undefined);
-  }
-
-  logInfo(): Promise<void> {
-    return Promise.resolve(undefined);
-  }
-
-  logWarn(): Promise<void> {
-    return Promise.resolve(undefined);
-  }
-
-  logError(): Promise<void> {
     return Promise.resolve(undefined);
   }
 

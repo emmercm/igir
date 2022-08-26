@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
-import main from './src/app.js';
 import Logger from './src/console/logger.js';
+import Igir from './src/igir.js';
 import ArgumentsParser from './src/modules/argumentsParser.js';
 
 (async () => {
@@ -15,7 +15,7 @@ import ArgumentsParser from './src/modules/argumentsParser.js';
     }
     logger.setLogLevel(options.getLogLevel());
 
-    await main(options, logger);
+    await new Igir(options, logger).main();
   } catch (e) {
     logger.newLine();
     logger.error(e);

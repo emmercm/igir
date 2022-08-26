@@ -2,19 +2,13 @@ import { E_CANCELED, Mutex } from 'async-mutex';
 import cliProgress, { MultiBar, SingleBar } from 'cli-progress';
 import { PassThrough } from 'stream';
 
-import Logger, { LogLevel } from './logger.js';
+import Logger from './logger.js';
+import LogLevel from './logLevel.js';
 import ProgressBar from './progressBar.js';
+import ProgressBarPayload from './progressBarPayload.js';
+import SingleBarFormatted from './singleBarFormatted.js';
 
-interface ProgressBarPayload {
-  symbol?: string,
-  name?: string,
-  finishedMessage?: string
-}
-
-/* eslint-disable class-methods-use-this */
-export default class ProgressBarCLI implements ProgressBar {
-  private static readonly ETA_BUFFER_LENGTH = 100;
-
+export default class ProgressBarCLI extends ProgressBar {
   private static readonly RENDER_MUTEX = new Mutex();
 
   private static fps = 4;
@@ -27,13 +21,9 @@ export default class ProgressBarCLI implements ProgressBar {
 
   private readonly singleBar: SingleBar;
 
-  private valueBuffer: number[] = [];
-
-  private timeBuffer: number[] = [];
-
-  private eta: number | string = '0';
-
   constructor(logger: Logger, name: string, symbol: string, initialTotal = 0) {
+    super();
+
     this.logger = logger;
 
     if (!ProgressBarCLI.multiBar) {
@@ -47,110 +37,14 @@ export default class ProgressBarCLI implements ProgressBar {
       }, cliProgress.Presets.shades_grey);
     }
 
-    this.singleBar = ProgressBarCLI.multiBar.create(
-      initialTotal,
-      0,
-      {
-        symbol,
-        name,
-      } as ProgressBarPayload,
-      {
-        format: (options, params, payload: ProgressBarPayload) => {
-          const barSize = options.barsize || 0;
-          const completeSize = Math.round(params.progress * barSize);
-          const incompleteSize = barSize - completeSize;
-          const bar = (options.barCompleteString || '').slice(0, completeSize)
-            + options.barGlue
-            + (options.barIncompleteString || '').slice(0, incompleteSize);
-
-          let line = '';
-
-          if (payload.symbol) {
-            line += `${payload.symbol} `;
-          }
-
-          if (payload.name) {
-            const maxNameLength = 30;
-            const payloadName = payload.name.slice(0, maxNameLength);
-            const paddedName = payloadName.length > maxNameLength - 1
-              ? payloadName.padEnd(maxNameLength, ' ')
-              : `${payloadName} ${'·'.repeat(maxNameLength - 1 - payloadName.length)}`;
-            line += paddedName;
-          }
-
-          if (payload.finishedMessage) {
-            line += ` | ${payload.finishedMessage}`;
-          } else {
-            line += ` | ${bar}`;
-            if (params.total > 0) {
-              line += ` | ${params.value.toLocaleString()}/${params.total.toLocaleString()}`;
-              if (params.value > 0 && params.value < params.total) {
-                line += ` | ETA: ${this.getEtaFormatted()}`;
-              }
-            }
-          }
-
-          return line;
-        },
-      },
-    );
-
-    this.singleBar.addListener('start', (total: number, start: number) => {
-      // cli-progress/lib/GenericBar()
-      this.valueBuffer = [start || 0];
-      this.timeBuffer = [Date.now()];
-      this.eta = '0';
-    });
-    this.singleBar.addListener('update', (total: number, value: number) => {
-      // cli-progress/lib/ETA.update()
-      this.valueBuffer.push(value);
-      this.timeBuffer.push(Date.now());
-      this.calculateEta(total - value);
-    });
+    this.singleBar = new SingleBarFormatted(ProgressBarCLI.multiBar)
+      .build(name, symbol, initialTotal);
   }
 
   static stop() {
     this.multiBar?.stop();
     this.multiBar = undefined;
     // Forcing a render shouldn't be necessary
-  }
-
-  private calculateEta(remaining: number) {
-    // cli-progress/lib/ETA.calculate()
-    const currentBufferSize = this.valueBuffer.length;
-    const buffer = Math.min(ProgressBarCLI.ETA_BUFFER_LENGTH, currentBufferSize);
-    const vDiff = this.valueBuffer[currentBufferSize - 1]
-        - this.valueBuffer[currentBufferSize - buffer];
-    const tDiff = this.timeBuffer[currentBufferSize - 1]
-        - this.timeBuffer[currentBufferSize - buffer];
-    const vtRate = vDiff / tDiff;
-    this.valueBuffer = this.valueBuffer.slice(-ProgressBarCLI.ETA_BUFFER_LENGTH);
-    this.timeBuffer = this.timeBuffer.slice(-ProgressBarCLI.ETA_BUFFER_LENGTH);
-    const eta = Math.ceil(remaining / vtRate / 1000);
-    if (Number.isNaN(eta)) {
-      this.eta = 'NULL';
-    } else if (!Number.isFinite(eta)) {
-      this.eta = 'INF';
-    } else if (eta > 1e7) {
-      this.eta = 'INF';
-    } else if (eta < 0) {
-      this.eta = 0;
-    } else {
-      this.eta = eta;
-    }
-  }
-
-  private getEtaFormatted(): string {
-    const seconds = this.eta as number;
-    const secondsRounded = 5 * Math.round(seconds / 5);
-    if (secondsRounded >= 3600) {
-      return `${Math.floor(secondsRounded / 3600)}h${(secondsRounded % 3600) / 60}m`;
-    } if (secondsRounded >= 60) {
-      return `${Math.floor(secondsRounded / 60)}m${(secondsRounded % 60)}s`;
-    } if (seconds >= 10) {
-      return `${secondsRounded}s`;
-    }
-    return `${seconds}s`;
   }
 
   /**
@@ -224,30 +118,15 @@ export default class ProgressBarCLI implements ProgressBar {
     return ProgressBarCLI.render();
   }
 
-  async logDebug(message: string): Promise<void> {
-    if (this.logger.getLogLevel() <= LogLevel.DEBUG) {
-      ProgressBarCLI.multiBar?.log(`${Logger.debugFormatter(message)}\n`);
-      await ProgressBarCLI.render();
-    }
-  }
-
-  async logInfo(message: string): Promise<void> {
-    if (this.logger.getLogLevel() <= LogLevel.INFO) {
-      ProgressBarCLI.multiBar?.log(`${Logger.infoFormatter(message)}\n`);
-      await ProgressBarCLI.render();
-    }
-  }
-
-  async logWarn(message: string): Promise<void> {
-    if (this.logger.getLogLevel() <= LogLevel.WARN) {
-      ProgressBarCLI.multiBar?.log(`${Logger.warnFormatter(message)}\n`);
-      await ProgressBarCLI.render();
-    }
-  }
-
-  async logError(message: string): Promise<void> {
-    if (this.logger.getLogLevel() <= LogLevel.ERROR) {
-      ProgressBarCLI.multiBar?.log(`${Logger.errorFormatter(message)}\n`);
+  async log(logLevel: LogLevel, message: string): Promise<void> {
+    const formatters: { [key: number]: (message: string) => string } = {
+      [LogLevel.DEBUG]: Logger.debugFormatter,
+      [LogLevel.INFO]: Logger.infoFormatter,
+      [LogLevel.WARN]: Logger.warnFormatter,
+      [LogLevel.ERROR]: Logger.errorFormatter,
+    };
+    if (this.logger.getLogLevel() <= logLevel) {
+      ProgressBarCLI.multiBar?.log(`${formatters[logLevel.valueOf()](message)}\n`);
       await ProgressBarCLI.render();
     }
   }

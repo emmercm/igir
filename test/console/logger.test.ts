@@ -1,6 +1,7 @@
 import { PassThrough } from 'stream';
 
-import Logger, { LogLevel } from '../../src/console/logger.js';
+import Logger from '../../src/console/logger.js';
+import LogLevel from '../../src/console/logLevel.js';
 
 class LoggerSpy {
   private readonly stream: NodeJS.WritableStream;
