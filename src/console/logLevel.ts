@@ -3,7 +3,8 @@ enum LogLevel {
   INFO,
   WARN,
   ERROR,
-  OFF,
+  ALWAYS, // always print
+  NEVER, // never print
 }
 
 export default LogLevel;

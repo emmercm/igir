@@ -284,7 +284,12 @@ export default class ArgumentsParser {
         type: 'count',
       })
 
-      .wrap(Math.min(terminalSize().columns || Number.MAX_SAFE_INTEGER, 110))
+      .wrap(Math.min(
+        // If output is a real terminal, use the width, otherwise assume GitHub max width
+        process.stdout.isTTY ? terminalSize().columns : 95,
+        // Sane maximum
+        110,
+      ))
       .version(false)
       .example([
         ['$0 copy -i **/*.zip -o 1G1R/ -s -l EN -r USA,EUR,JPN', 'Produce a 1G1R set per console, preferring English from USA>EUR>JPN'],

@@ -37,11 +37,21 @@ export default class ReleaseCandidate {
     { region: 'TAI', countryRegex: 'Taiwan', language: 'ZH' },
     { region: 'UK', countryRegex: 'United Kingdom', language: 'EN' },
     { region: 'UNK', countryRegex: '', language: 'EN' },
-    { region: 'USA', countryRegex: 'USA', language: 'EN' },
+    { region: 'USA', countryRegex: 'United States', language: 'EN' },
     // Regions
     { region: 'ASI', countryRegex: 'Asia', language: 'ZH' },
     { region: 'EUR', countryRegex: 'Europe', language: 'EN' },
   ];
+
+  private static readonly REGIONS = this.REGION_OPTIONS
+    .map((regionOption) => regionOption.region)
+    .filter((region, idx, regions) => regions.indexOf(region) === idx)
+    .sort();
+
+  private static readonly LANGUAGES = this.REGION_OPTIONS
+    .map((regionOption) => regionOption.language)
+    .filter((language, idx, languages) => languages.indexOf(language) === idx)
+    .sort();
 
   private readonly game!: Game;
 
@@ -59,17 +69,11 @@ export default class ReleaseCandidate {
   }
 
   static getRegions(): string[] {
-    return this.REGION_OPTIONS
-      .map((regionOption) => regionOption.region)
-      .filter((region, idx, regions) => regions.indexOf(region) === idx)
-      .sort();
+    return this.REGIONS;
   }
 
   static getLanguages(): string[] {
-    return this.REGION_OPTIONS
-      .map((regionOption) => regionOption.language)
-      .filter((language, idx, languages) => languages.indexOf(language) === idx)
-      .sort();
+    return this.LANGUAGES;
   }
 
   // Property getters
@@ -118,7 +122,7 @@ export default class ReleaseCandidate {
     for (let i = 0; i < ReleaseCandidate.REGION_OPTIONS.length; i += 1) {
       const regionOption = ReleaseCandidate.REGION_OPTIONS[i];
       if (regionOption.countryRegex) {
-        if (this.getName().match(new RegExp(`\\(${regionOption.countryRegex}(,[ a-z]+)*\\)`, 'i'))) {
+        if (this.getName().match(new RegExp(`(${regionOption.countryRegex}(,[ a-z])*)`, 'i'))) {
           return regionOption.region.toUpperCase();
         }
       }
@@ -135,9 +139,7 @@ export default class ReleaseCandidate {
     // Get language from languages in the game name
     const matches = this.getName().match(/\(([a-zA-Z]{2}([,+][a-zA-Z]{2})*)\)/);
     if (matches && matches.length >= 2) {
-      return matches[1].split(/[,+]/)
-        .map((lang) => lang.toUpperCase())
-        .filter((lang, idx, langs) => langs.indexOf(lang) === idx);
+      return matches[1].split(',').map((lang) => lang.toUpperCase());
     }
 
     // Get language from the region
