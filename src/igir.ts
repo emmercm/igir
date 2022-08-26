@@ -1,6 +1,7 @@
 import async from 'async';
 
 import Logger from './console/logger.js';
+import { Symbols } from './console/progressBar.js';
 import ProgressBarCLI from './console/progressBarCLI.js';
 import CandidateFilter from './modules/candidateFilter.js';
 import CandidateGenerator from './modules/candidateGenerator.js';
@@ -30,12 +31,16 @@ export default class Igir {
     const dats = await this.processDATScanner();
     const romFiles = await this.processROMScanner();
 
-    const datProcessProgressBar = this.logger.addProgressBar('Processing DATs', '⚙️', dats.length);
+    const datProcessProgressBar = this.logger.addProgressBar('Processing DATs', Symbols.PROCESSING, dats.length);
     const datsToWrittenRoms = new Map<DAT, Map<Parent, ROMFile[]>>();
     const datsStatuses: DATStatus[] = [];
 
     await async.eachLimit(dats, 3, async (dat, callback) => {
-      const progressBar = this.logger.addProgressBar(dat.getNameShort(), '⏳', dat.getParents().length);
+      const progressBar = this.logger.addProgressBar(
+        dat.getNameShort(),
+        Symbols.WAITING,
+        dat.getParents().length,
+      );
       await datProcessProgressBar.increment();
 
       // Generate and filter ROM candidates
@@ -74,7 +79,7 @@ export default class Igir {
   }
 
   private async processDATScanner(): Promise<DAT[]> {
-    const progressBar = this.logger.addProgressBar('Scanning for DATs', '⏳');
+    const progressBar = this.logger.addProgressBar('Scanning for DATs', Symbols.WAITING);
     const dats = await new DATScanner(this.options, progressBar).scan();
     if (!dats.length) {
       ProgressBarCLI.stop();
@@ -85,7 +90,7 @@ export default class Igir {
   }
 
   private async processROMScanner(): Promise<ROMFile[]> {
-    const progressBar = this.logger.addProgressBar('Scanning for ROMs', '⏳');
+    const progressBar = this.logger.addProgressBar('Scanning for ROMs', Symbols.WAITING);
     const romInputs = await new ROMScanner(this.options, progressBar).scan();
     await progressBar.doneItems(romInputs.length, 'ROM', 'found');
     return romInputs;
@@ -98,7 +103,7 @@ export default class Igir {
       return;
     }
 
-    const cleanerProgressBar = this.logger.addProgressBar('Cleaning output', '⏳');
+    const cleanerProgressBar = this.logger.addProgressBar('Cleaning output', Symbols.WAITING);
     const writtenRomFilesToExclude = [...datsToWrittenRoms.values()]
       .flatMap((parentsToRomFiles) => [...parentsToRomFiles.values()])
       .flatMap((romFiles) => romFiles);
@@ -110,7 +115,7 @@ export default class Igir {
       return;
     }
 
-    const reportProgressBar = this.logger.addProgressBar('Generating report', '📝');
+    const reportProgressBar = this.logger.addProgressBar('Generating report', Symbols.WRITING);
     await new ReportGenerator(this.options, reportProgressBar).generate(datsStatuses);
   }
 }

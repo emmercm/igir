@@ -1,4 +1,4 @@
-import ProgressBar from '../console/progressBar.js';
+import ProgressBar, { Symbols } from '../console/progressBar.js';
 import DAT from '../types/logiqx/dat.js';
 import Parent from '../types/logiqx/parent.js';
 import Options from '../types/options.js';
@@ -25,7 +25,7 @@ export default class CandidateFilter {
       return output;
     }
 
-    await this.progressBar.setSymbol('⚙️️');
+    await this.progressBar.setSymbol(Symbols.FILTERING);
     await this.progressBar.reset(parentsToCandidates.size);
 
     parentsToCandidates.forEach((releaseCandidates: ReleaseCandidate[], parent: Parent) => {

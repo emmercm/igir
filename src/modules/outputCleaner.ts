@@ -4,7 +4,7 @@ import { isNotJunk } from 'junk';
 import path from 'path';
 import trash from 'trash';
 
-import ProgressBar from '../console/progressBar.js';
+import ProgressBar, { Symbols } from '../console/progressBar.js';
 import Options from '../types/options.js';
 import ROMFile from '../types/romFile.js';
 
@@ -36,7 +36,7 @@ export default class OutputCleaner {
       return;
     }
 
-    await this.progressBar.setSymbol('♻️');
+    await this.progressBar.setSymbol(Symbols.RECYCLING);
     await this.progressBar.reset(filesToClean.length);
 
     try {
