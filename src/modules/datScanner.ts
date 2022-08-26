@@ -1,7 +1,7 @@
 import { promises as fsPromises } from 'fs';
 import xml2js from 'xml2js';
 
-import ProgressBar from '../console/progressBar.js';
+import ProgressBar, { Symbols } from '../console/progressBar.js';
 import DAT from '../types/logiqx/dat.js';
 import Options from '../types/options.js';
 
@@ -24,7 +24,7 @@ export default class DATScanner {
     await this.progressBar.logInfo(datFiles.map((file) => `Found DAT file: ${file}`).join('\n'));
     await this.progressBar.logInfo(`Found ${datFiles.length} DAT file${datFiles.length !== 1 ? 's' : ''}`);
 
-    await this.progressBar.setSymbol('🔎');
+    await this.progressBar.setSymbol(Symbols.SEARCHING);
     await this.progressBar.reset(datFiles.length);
 
     const parsedXml = [];

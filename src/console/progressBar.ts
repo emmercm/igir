@@ -1,4 +1,17 @@
+import chalk from 'chalk';
+
 import LogLevel from './logLevel.js';
+
+export const Symbols: { [key: string]: string } = {
+  WAITING: chalk.grey('⋯'),
+  SEARCHING: chalk.magenta('↻'),
+  GENERATING: chalk.cyan('Σ'),
+  PROCESSING: chalk.cyan('⚙'),
+  FILTERING: chalk.cyan('∆'),
+  WRITING: chalk.yellow('✎'),
+  RECYCLING: chalk.blue('♻'),
+  DONE: chalk.green('✓'),
+};
 
 export default abstract class ProgressBar {
   abstract reset(total: number): Promise<void>;
