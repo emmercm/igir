@@ -24,7 +24,7 @@ export default class DAT {
     this.generateGameNamesToParents();
   }
 
-  static fromObject(obj: object) {
+  static fromObject(obj: object): DAT {
     return plainToInstance(DAT, obj, {
       enableImplicitConversion: true,
     })

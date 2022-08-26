@@ -24,7 +24,7 @@ export default abstract class ProgressBar {
 
   abstract done(finishedMessage?: string): Promise<void>;
 
-  async doneItems(count: number, noun: string, verb: string) {
+  async doneItems(count: number, noun: string, verb: string): Promise<void> {
     return this.done(`${count.toLocaleString()} ${noun}${count !== 1 ? 's' : ''} ${verb}`);
   }
 

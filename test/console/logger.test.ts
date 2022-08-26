@@ -36,14 +36,18 @@ class LoggerSpy {
   }
 }
 
-function testLogLevelsAbove(logLevel: LogLevel) {
+function testLogLevelsAbove(
+  logLevel: LogLevel,
+): (name: string, fn: (arg0: LogLevel) => void) => void {
   const logLevels = Object.keys(LogLevel)
     .map((ll) => LogLevel[ll as keyof typeof LogLevel])
     .filter((ll) => ll > logLevel);
   return test.each(logLevels);
 }
 
-function testLogLevelsAtOrBelow(logLevel: LogLevel) {
+function testLogLevelsAtOrBelow(
+  logLevel: LogLevel,
+): (name: string, fn: (arg0: LogLevel) => void) => void {
   const logLevels = Object.keys(LogLevel)
     .map((ll) => LogLevel[ll as keyof typeof LogLevel])
     .filter((ll) => ll <= logLevel);

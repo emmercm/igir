@@ -4,7 +4,7 @@ import Logger from './src/console/logger.js';
 import Igir from './src/igir.js';
 import ArgumentsParser from './src/modules/argumentsParser.js';
 
-(async () => {
+(async (): Promise<void> => {
   const logger = new Logger();
   logger.printHeader();
 

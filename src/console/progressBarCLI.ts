@@ -41,7 +41,7 @@ export default class ProgressBarCLI extends ProgressBar {
       .build(name, symbol, initialTotal);
   }
 
-  static stop() {
+  static stop(): void {
     this.multiBar?.stop();
     this.multiBar = undefined;
     // Forcing a render shouldn't be necessary

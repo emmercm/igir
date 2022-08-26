@@ -19,7 +19,7 @@ export default class DATStatus {
 
   private readonly missingRoms = new Map<ROMType, string[]>();
 
-  private static append(map: Map<ROMType, string[]>, romType: ROMType, val: string) {
+  private static append(map: Map<ROMType, string[]>, romType: ROMType, val: string): void {
     const arr = (map.has(romType) ? map.get(romType) : []) as string[];
     arr.push(val);
     map.set(romType, arr);
@@ -54,7 +54,7 @@ export default class DATStatus {
       }, new Map<string, ROM>());
   }
 
-  private static pushGameIntoMap(map: Map<ROMType, string[]>, game: Game) {
+  private static pushGameIntoMap(map: Map<ROMType, string[]>, game: Game): void {
     DATStatus.append(map, ROMType.GAME, game.getName());
     if (game.isBios()) {
       DATStatus.append(map, ROMType.BIOS, game.getName());

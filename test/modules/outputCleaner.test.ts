@@ -6,7 +6,7 @@ import Options from '../../src/types/options.js';
 import ROMFile from '../../src/types/romFile.js';
 import ProgressBarFake from '../console/progressBarFake.js';
 
-async function runOutputCleaner(writtenFilePathsToExclude: string[]) {
+async function runOutputCleaner(writtenFilePathsToExclude: string[]): Promise<string[]> {
   // Copy the fixture files to a temp directory
   const temp = fsPoly.mkdtempSync();
   fsPoly.copyDirSync('./test/fixtures', temp);

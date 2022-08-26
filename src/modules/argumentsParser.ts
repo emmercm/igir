@@ -32,7 +32,7 @@ export default class ArgumentsParser {
 
     // Add every command to a yargs object, recursively, resulting in the ability to specify
     // multiple commands
-    const addCommands = (yargsObj: Argv) => yargsObj
+    const addCommands = (yargsObj: Argv): Argv => yargsObj
       .command('copy', 'Copy ROM files to a directory', (yargsSubObj) => {
         addCommands(yargsSubObj);
       })
