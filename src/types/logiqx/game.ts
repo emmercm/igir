@@ -101,25 +101,23 @@ export default class Game implements GameProps {
   readonly archive!: Archive | Archive[];
 
   constructor(options?: GameProps) {
-    if (options) {
-      this.name = options.name || '';
-      this.description = options.description || '';
-      this.sourceFile = options.sourceFile;
-      this.bios = options.bios || this.bios;
-      this.cloneOf = options.cloneOf;
-      this.romOf = options.romOf;
-      this.sampleOf = options.sampleOf;
-      this.board = options.board;
-      this.rebuildTo = options.rebuildTo;
-      this.year = options.year;
-      this.manufacturer = options.manufacturer;
-      this.release = options.release || [];
-      this.biosSet = options.biosSet || [];
-      this.rom = options.rom || [];
-      this.disk = options.disk || [];
-      this.sample = options.sample || [];
-      this.archive = options.archive || [];
-    }
+    this.name = options?.name || '';
+    this.description = options?.description || '';
+    this.sourceFile = options?.sourceFile;
+    this.bios = options?.bios || this.bios;
+    this.cloneOf = options?.cloneOf;
+    this.romOf = options?.romOf;
+    this.sampleOf = options?.sampleOf;
+    this.board = options?.board;
+    this.rebuildTo = options?.rebuildTo;
+    this.year = options?.year;
+    this.manufacturer = options?.manufacturer;
+    this.release = options?.release || [];
+    this.biosSet = options?.biosSet || [];
+    this.rom = options?.rom || [];
+    this.disk = options?.disk || [];
+    this.sample = options?.sample || [];
+    this.archive = options?.archive || [];
   }
 
   // Property getters

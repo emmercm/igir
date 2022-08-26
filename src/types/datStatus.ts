@@ -1,4 +1,5 @@
 import DAT from './logiqx/dat.js';
+import Game from './logiqx/game.js';
 import Parent from './logiqx/parent.js';
 import ROM from './logiqx/rom.js';
 import Options from './options.js';
@@ -27,38 +28,41 @@ export default class DATStatus {
   constructor(dat: DAT, parentsToReleaseCandidates: Map<Parent, ReleaseCandidate[]>) {
     this.dat = dat;
 
-    const crc32sToRoms = [...parentsToReleaseCandidates.values()]
+    const crc32sToRoms = DATStatus.indexRomsByCrc(parentsToReleaseCandidates);
+
+    dat.getParents().forEach((parent) => {
+      parent.getGames().forEach((game) => {
+        DATStatus.pushGameIntoMap(this.allRoms, game);
+
+        const missingRoms = game.getRoms().filter((rom) => !crc32sToRoms.has(rom.getCrc32()));
+        if (missingRoms.length > 0) {
+          DATStatus.pushGameIntoMap(this.missingRoms, game);
+        }
+      });
+    });
+  }
+
+  private static indexRomsByCrc(
+    parentsToReleaseCandidates: Map<Parent, ReleaseCandidate[]>,
+  ): Map<string, ROM> {
+    return [...parentsToReleaseCandidates.values()]
       .flatMap((releaseCandidates) => releaseCandidates)
       .flatMap((releaseCandidate) => releaseCandidate.getRoms())
       .reduce((map, rom) => {
         map.set(rom.getCrc32(), rom);
         return map;
       }, new Map<string, ROM>());
+  }
 
-    dat.getParents().forEach((parent) => {
-      parent.getGames().forEach((game) => {
-        DATStatus.append(this.allRoms, ROMType.GAME, game.getName());
-        if (game.isBios()) {
-          DATStatus.append(this.allRoms, ROMType.BIOS, game.getName());
-        } else if (game.isRetail()) {
-          DATStatus.append(this.allRoms, ROMType.RETAIL, game.getName());
-        } else if (game.isPrototype()) {
-          DATStatus.append(this.allRoms, ROMType.PROTOTYPE, game.getName());
-        }
-
-        const missingRoms = game.getRoms().filter((rom) => !crc32sToRoms.has(rom.getCrc32()));
-        if (missingRoms.length > 0) {
-          DATStatus.append(this.missingRoms, ROMType.GAME, game.getName());
-          if (game.isBios()) {
-            DATStatus.append(this.missingRoms, ROMType.BIOS, game.getName());
-          } else if (game.isRetail()) {
-            DATStatus.append(this.missingRoms, ROMType.RETAIL, game.getName());
-          } else if (game.isPrototype()) {
-            DATStatus.append(this.missingRoms, ROMType.PROTOTYPE, game.getName());
-          }
-        }
-      });
-    });
+  private static pushGameIntoMap(map: Map<ROMType, string[]>, game: Game) {
+    DATStatus.append(map, ROMType.GAME, game.getName());
+    if (game.isBios()) {
+      DATStatus.append(map, ROMType.BIOS, game.getName());
+    } else if (game.isRetail()) {
+      DATStatus.append(map, ROMType.RETAIL, game.getName());
+    } else if (game.isPrototype()) {
+      DATStatus.append(map, ROMType.PROTOTYPE, game.getName());
+    }
   }
 
   getDATName(): string {
@@ -78,25 +82,26 @@ export default class DATStatus {
   toReport(options: Options): string {
     let message = `// ${this.getDATName()}: ${this.dat.getGames().length} games, ${this.dat.getParents().length} parents defined`;
 
-    const allNames = DATStatus.getAllowedTypes(options)
-      .map((type) => this.allRoms.get(type))
-      .flatMap((names) => names)
-      .filter((name, idx, names) => names.indexOf(name) === idx)
-      .sort();
-
-    const missingNames = DATStatus.getAllowedTypes(options)
-      .map((type) => this.missingRoms.get(type))
-      .flatMap((names) => names)
-      .filter((name, idx, names) => names.indexOf(name) === idx)
-      .sort();
+    const allNames = DATStatus.getNamesForAllowedTypes(options, this.allRoms);
+    const missingNames = DATStatus.getNamesForAllowedTypes(options, this.missingRoms);
 
     message += `\n// You are missing ${missingNames.length} of ${allNames.length} known ${this.getDATName()} items (${DATStatus.getAllowedTypes(options).join(', ')})`;
-
     if (missingNames.length) {
       message += `\n${missingNames.join('\n')}`;
     }
 
     return message;
+  }
+
+  private static getNamesForAllowedTypes(
+    options: Options,
+    romTypesToNames: Map<ROMType, string[]>,
+  ): string[] {
+    return DATStatus.getAllowedTypes(options)
+      .map((type) => romTypesToNames.get(type))
+      .flatMap((names) => names)
+      .filter((name, idx, names) => names.indexOf(name) === idx)
+      .sort() as string[];
   }
 
   private static getAllowedTypes(options: Options): ROMType[] {

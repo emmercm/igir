@@ -9,7 +9,7 @@ import moment from 'moment';
 import os from 'os';
 import path from 'path';
 
-import { LogLevel } from '../console/logger.js';
+import LogLevel from '../console/logLevel.js';
 import Constants from '../constants.js';
 import fsPoly from '../polyfill/fsPoly.js';
 import DAT from './logiqx/dat.js';
@@ -124,42 +124,41 @@ export default class Options implements OptionsProps {
   private tempDir!: string;
 
   constructor(options?: OptionsProps) {
-    if (options) {
-      this.commands = options.commands || [];
-      this.dat = options.dat || [];
-      this.input = options.input || [];
-      this.inputExclude = options.inputExclude || [];
-      this.output = options.output || '';
-      this.dirMirror = options.dirMirror || false;
-      this.dirDatName = options.dirDatName || false;
-      this.dirLetter = options.dirLetter || false;
-      this.single = options.single || false;
-      this.zipExclude = options.zipExclude || '';
-      this.overwrite = options.overwrite || false;
-      this.preferGood = options.preferGood || false;
-      this.preferLanguage = options.preferLanguage || [];
-      this.preferRegion = options.preferRegion || [];
-      this.preferRevisionNewer = options.preferRevisionNewer || false;
-      this.preferRevisionOlder = options.preferRevisionOlder || false;
-      this.preferRetail = options.preferRetail || false;
-      this.preferParent = options.preferParent || false;
-      this.languageFilter = options.languageFilter || [];
-      this.regionFilter = options.regionFilter || [];
-      this.onlyBios = options.onlyBios || false;
-      this.noBios = options.noBios || false;
-      this.noUnlicensed = options.noUnlicensed || false;
-      this.onlyRetail = options.onlyRetail || false;
-      this.noDemo = options.noDemo || false;
-      this.noBeta = options.noBeta || false;
-      this.noSample = options.noSample || false;
-      this.noPrototype = options.noPrototype || false;
-      this.noTestRoms = options.noTestRoms || false;
-      this.noAftermarket = options.noAftermarket || false;
-      this.noHomebrew = options.noHomebrew || false;
-      this.noBad = options.noBad || false;
-      this.verbose = options.verbose || 0;
-      this.help = options.help || false;
-    }
+    this.commands = options?.commands || [];
+    this.dat = options?.dat || [];
+    this.input = options?.input || [];
+    this.inputExclude = options?.inputExclude || [];
+    this.output = options?.output || '';
+    this.dirMirror = options?.dirMirror || false;
+    this.dirDatName = options?.dirDatName || false;
+    this.dirLetter = options?.dirLetter || false;
+    this.single = options?.single || false;
+    this.zipExclude = options?.zipExclude || '';
+    this.overwrite = options?.overwrite || false;
+    this.preferGood = options?.preferGood || false;
+    this.preferLanguage = options?.preferLanguage || [];
+    this.preferRegion = options?.preferRegion || [];
+    this.preferRevisionNewer = options?.preferRevisionNewer || false;
+    this.preferRevisionOlder = options?.preferRevisionOlder || false;
+    this.preferRetail = options?.preferRetail || false;
+    this.preferParent = options?.preferParent || false;
+    this.languageFilter = options?.languageFilter || [];
+    this.regionFilter = options?.regionFilter || [];
+    this.onlyBios = options?.onlyBios || false;
+    this.noBios = options?.noBios || false;
+    this.noUnlicensed = options?.noUnlicensed || false;
+    this.onlyRetail = options?.onlyRetail || false;
+    this.noDemo = options?.noDemo || false;
+    this.noBeta = options?.noBeta || false;
+    this.noSample = options?.noSample || false;
+    this.noPrototype = options?.noPrototype || false;
+    this.noTestRoms = options?.noTestRoms || false;
+    this.noAftermarket = options?.noAftermarket || false;
+    this.noHomebrew = options?.noHomebrew || false;
+    this.noBad = options?.noBad || false;
+    this.verbose = options?.verbose || 0;
+    this.help = options?.help || false;
+
     this.createTempDir();
     this.validate();
   }
@@ -253,7 +252,6 @@ export default class Options implements OptionsProps {
     const globPatterns = await Promise.all(inputPaths.map(async (inputPath) => {
       try {
         // If the file exists and is a directory, convert it to a glob pattern
-        await fsPromises.access(inputPath); // throw if file doesn't exist
         if ((await fsPromises.lstat(inputPath)).isDirectory()) {
           return `${inputPath}/**`;
         }
@@ -274,19 +272,18 @@ export default class Options implements OptionsProps {
             return [];
           }
 
-          try {
-            // If the file exists, don't process it as a glob pattern
-            await fsPromises.access(inputPath); // throw if file doesn't exist
+          // If the file exists, don't process it as a glob pattern
+          if (await fsPoly.exists(inputPath)) {
             return [inputPath];
-          } catch (e) {
-            // Otherwise, process it as a glob pattern
-            const paths = (await fg(inputPath.replace(/\\/g, '/')))
-              .map((pathLike) => pathLike.replace(/[\\/]/g, path.sep));
-            if (!paths || !paths.length) {
-              throw new Error(`Path doesn't exist: ${inputPath}`);
-            }
-            return paths;
           }
+
+          // Otherwise, process it as a glob pattern
+          const paths = (await fg(inputPath.replace(/\\/g, '/')))
+            .map((pathLike) => pathLike.replace(/[\\/]/g, path.sep));
+          if (!paths || !paths.length) {
+            throw new Error(`Path doesn't exist: ${inputPath}`);
+          }
+          return paths;
         }),
     )).flatMap((paths) => paths);
 
@@ -375,21 +372,15 @@ export default class Options implements OptionsProps {
   }
 
   getPreferLanguages(): string[] {
-    return this.preferLanguage
-      .map((lang) => lang.toUpperCase())
-      .filter((language, idx, languages) => languages.indexOf(language) === idx);
+    return Options.filterUniqueUpper(this.preferLanguage);
   }
 
   getPreferRegions(): string[] {
-    return this.preferRegion
-      .map((region) => region.toUpperCase())
-      .filter((region, idx, regions) => regions.indexOf(region) === idx);
+    return Options.filterUniqueUpper(this.preferRegion);
   }
 
   getLanguageFilter(): string[] {
-    return this.languageFilter
-      .map((lang) => lang.toUpperCase())
-      .filter((language, idx, languages) => languages.indexOf(language) === idx);
+    return Options.filterUniqueUpper(this.languageFilter);
   }
 
   getPreferRevisionNewer(): boolean {
@@ -409,9 +400,7 @@ export default class Options implements OptionsProps {
   }
 
   getRegionFilter(): string[] {
-    return this.regionFilter
-      .map((region) => region.toUpperCase())
-      .filter((region, idx, regions) => regions.indexOf(region) === idx);
+    return Options.filterUniqueUpper(this.regionFilter);
   }
 
   getOnlyBios(): boolean {
@@ -477,5 +466,11 @@ export default class Options implements OptionsProps {
 
   getTempDir(): string {
     return this.tempDir;
+  }
+
+  static filterUniqueUpper(array: string[]) {
+    return array
+      .map((value) => value.toUpperCase())
+      .filter((val, idx, arr) => arr.indexOf(val) === idx);
   }
 }

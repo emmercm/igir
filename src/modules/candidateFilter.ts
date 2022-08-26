@@ -110,18 +110,8 @@ export default class CandidateFilter {
 
     // Sort by language
     if (this.options.getPreferLanguages().length) {
-      const aMinLang = a.getLanguages()
-        .map((lang) => {
-          const priority = this.options.getPreferLanguages().indexOf(lang);
-          return priority !== -1 ? priority : Number.MAX_SAFE_INTEGER;
-        })
-        .reduce((min, idx) => Math.min(min, idx), Number.MAX_SAFE_INTEGER);
-      const bMinLang = b.getLanguages()
-        .map((lang) => {
-          const priority = this.options.getPreferLanguages().indexOf(lang);
-          return priority !== -1 ? priority : Number.MAX_SAFE_INTEGER;
-        })
-        .reduce((min, idx) => Math.min(min, idx), Number.MAX_SAFE_INTEGER);
+      const aMinLang = this.getPreferLanguageSort(a);
+      const bMinLang = this.getPreferLanguageSort(b);
       const languageSort = aMinLang - bMinLang;
       if (languageSort !== 0) {
         return languageSort;
@@ -171,6 +161,15 @@ export default class CandidateFilter {
     }
 
     return 0;
+  }
+
+  private getPreferLanguageSort(releaseCandidate: ReleaseCandidate): number {
+    return releaseCandidate.getLanguages()
+      .map((lang) => {
+        const priority = this.options.getPreferLanguages().indexOf(lang);
+        return priority !== -1 ? priority : Number.MAX_SAFE_INTEGER;
+      })
+      .reduce((min, idx) => Math.min(min, idx), Number.MAX_SAFE_INTEGER);
   }
 
   private postFilter(idx: number): boolean {

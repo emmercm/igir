@@ -2,15 +2,8 @@ import chalk from 'chalk';
 import figlet from 'figlet';
 
 import Constants from '../constants.js';
+import LogLevel from './logLevel.js';
 import ProgressBarCLI from './progressBarCLI.js';
-
-export enum LogLevel {
-  DEBUG,
-  INFO,
-  WARN,
-  ERROR,
-  OFF,
-}
 
 export default class Logger {
   private logLevel: LogLevel;

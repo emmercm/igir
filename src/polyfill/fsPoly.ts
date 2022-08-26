@@ -7,6 +7,18 @@ import semver from 'semver';
 
 export default class FsPoly {
   /**
+   * There is no promise version of existsSync()
+   */
+  static async exists(pathLike: PathLike): Promise<boolean> {
+    try {
+      await fsPromises.access(pathLike); // throw if file doesn't exist
+      return true;
+    } catch (e) {
+      return false;
+    }
+  }
+
+  /**
    * Some CI such as GitHub Actions give `EACCES: permission denied` on os.tmpdir()
    */
   static mkdtempSync(): string {

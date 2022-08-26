@@ -52,7 +52,7 @@ export default class OutputCleaner {
       await this.progressBar.logError(`Failed to clean empty directories in ${outputDir} : ${e}`);
     }
 
-    await this.progressBar.done(`${filesToClean.length.toLocaleString()} file${filesToClean.length !== 1 ? 's' : ''} recycled`);
+    await this.progressBar.doneItems(filesToClean.length, 'file', 'recycled');
   }
 
   private static async getEmptyDirs(dirPath: string): Promise<string[]> {
