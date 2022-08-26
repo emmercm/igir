@@ -106,6 +106,14 @@ export default class ROMWriter {
     }, new Map<ROMFile, ROMFile>());
   }
 
+  private async ensureOutputDirExists(outputFilePath: string): Promise<void> {
+    const outputDir = path.dirname(outputFilePath);
+    if (!await fsPoly.exists(outputDir)) {
+      await this.progressBar.logDebug(`Creating the directory: ${outputDir}`);
+      await fsPromises.mkdir(outputDir, { recursive: true });
+    }
+  }
+
   /** ********************
    *                     *
    *     Zip Writing     *
@@ -137,6 +145,7 @@ export default class ROMWriter {
 
     // Write the zip file if needed
     if (outputNeedsWriting) {
+      await this.ensureOutputDirExists(outputZipPath);
       await this.writeZipFile(outputZipPath, outputZip);
       await this.testWrittenZip(outputZipPath);
       await this.deleteMovedZipEntries(outputZipPath, [...inputToOutput.keys()]);
@@ -208,13 +217,6 @@ export default class ROMWriter {
   }
 
   private async writeZipFile(outputZipPath: string, outputZip: AdmZip): Promise<void> {
-    // Create the output directory
-    const outputDir = path.dirname(outputZipPath);
-    if (!await fsPoly.exists(outputDir)) {
-      await this.progressBar.logDebug(`Creating the directory: ${outputDir}`);
-      await fsPromises.mkdir(outputDir, { recursive: true });
-    }
-
     try {
       await this.progressBar.logDebug(`${outputZipPath}: writing zip`);
       await outputZip.writeZipPromise(outputZipPath);
@@ -289,37 +291,42 @@ export default class ROMWriter {
       }
     }
 
-    // Create the output directory
-    const outputDir = path.dirname(outputFilePath);
-    if (!await fsPoly.exists(outputDir)) {
-      await this.progressBar.logDebug(`Creating the directory: ${outputDir}`);
-      await fsPromises.mkdir(outputDir, { recursive: true });
-    }
+    await this.ensureOutputDirExists(outputFilePath);
+    await this.writeRawFile(inputRomFile, outputFilePath);
+    await this.testWrittenRaw(outputFilePath, inputRomFile.getCrc32());
+    await this.deleteMovedFile(inputRomFile);
+  }
 
-    // Write the output file
+  private async writeRawFile(inputRomFile: ROMFile, outputFilePath: string): Promise<void> {
     const inputRomFileLocal = await inputRomFile.toLocalFile(this.options.getTempDir());
     await this.progressBar.logDebug(`${inputRomFileLocal.getFilePath()}: copying to ${outputFilePath}`);
     try {
       await fsPromises.copyFile(inputRomFileLocal.getFilePath(), outputFilePath);
     } catch (e) {
       await this.progressBar.logError(`Failed to copy ${inputRomFileLocal.getFilePath()} to ${outputFilePath} : ${e}`);
+    } finally {
+      inputRomFileLocal.cleanupLocalFile();
     }
-    inputRomFileLocal.cleanupLocalFile();
+  }
 
-    // Test the written file
-    if (this.options.shouldTest()) {
-      await this.progressBar.logDebug(`${outputFilePath}: testing`);
-      const romFileToTest = new ROMFile(outputFilePath);
-      if (romFileToTest.getCrc32() !== inputRomFile.getCrc32()) {
-        await this.progressBar.logError(`Written file has the CRC ${romFileToTest.getCrc32()}, expected ${inputRomFile.getCrc32()}: ${outputFilePath}`);
-        return;
-      }
+  private async testWrittenRaw(outputFilePath: string, expectedCrc32: string): Promise<void> {
+    if (!this.options.shouldTest()) {
+      return;
     }
 
-    // Delete the original file if we're supposed to "move" it
-    if (this.options.shouldMove()) {
-      await this.progressBar.logDebug(`${inputRomFileLocal.getFilePath()}: deleting`);
-      await fsPoly.rm(inputRomFileLocal.getFilePath(), { force: true });
+    await this.progressBar.logDebug(`${outputFilePath}: testing`);
+    const romFileToTest = new ROMFile(outputFilePath);
+    if (romFileToTest.getCrc32() !== expectedCrc32) {
+      await this.progressBar.logError(`Written file has the CRC ${romFileToTest.getCrc32()}, expected ${expectedCrc32}: ${outputFilePath}`);
     }
+  }
+
+  private async deleteMovedFile(inputRomFile: ROMFile): Promise<void> {
+    if (!this.options.shouldMove()) {
+      return;
+    }
+
+    await this.progressBar.logDebug(`${inputRomFile.getFilePath()}: deleting`);
+    await fsPoly.rm(inputRomFile.getFilePath(), { force: true });
   }
 }
