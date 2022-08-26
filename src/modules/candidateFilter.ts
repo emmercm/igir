@@ -119,9 +119,13 @@ export default class CandidateFilter {
   }
 
   private preferRegionSortValue(releaseCandidate: ReleaseCandidate): number {
-    return releaseCandidate.getRegion()
-      ? this.options.getPreferRegions().indexOf(releaseCandidate.getRegion() as string)
-      : Number.MAX_SAFE_INTEGER;
+    if (!releaseCandidate.getRegion()) {
+      return Number.MAX_SAFE_INTEGER;
+    }
+
+    const regionIdx = this.options.getPreferRegions()
+      .indexOf(releaseCandidate.getRegion() as string);
+    return regionIdx !== -1 ? regionIdx : Number.MAX_SAFE_INTEGER;
   }
 
   private preferRevisionSort(a: ReleaseCandidate, b: ReleaseCandidate): number {
