@@ -27,11 +27,8 @@ export default class Igir {
   }
 
   async main() {
-    // Find all DAT files and parse them
     const dats = await this.processDATScanner();
-
-    // Find all ROM files and pre-process them
-    const romInputs = await this.processROMScanner();
+    const romFiles = await this.processROMScanner();
 
     const datProcessProgressBar = this.logger.addProgressBar('Processing DATs', '⚙️', dats.length);
     const datsToWrittenRoms = new Map<DAT, Map<Parent, ROMFile[]>>();
@@ -41,10 +38,8 @@ export default class Igir {
       const progressBar = this.logger.addProgressBar(dat.getNameShort(), '⏳', dat.getParents().length);
       await datProcessProgressBar.increment();
 
-      // For each DAT, find all ROM candidates
-      const romCandidates = await new CandidateGenerator(progressBar).generate(dat, romInputs);
-
-      // Filter all ROM candidates
+      // Generate and filter ROM candidates
+      const romCandidates = await new CandidateGenerator(progressBar).generate(dat, romFiles);
       const romOutputs = await new CandidateFilter(this.options, progressBar)
         .filter(dat, romCandidates);
 
@@ -58,7 +53,7 @@ export default class Igir {
 
       // Progress bar cleanup
       const parentsWithRomFiles = [...writtenRoms.values()]
-        .filter((romFiles) => romFiles.length)
+        .filter((writtenRomFiles) => writtenRomFiles.length)
         .length;
       if (parentsWithRomFiles === 0) {
         progressBar.delete();
