@@ -59,19 +59,23 @@ async function expectPreferredCandidates(
   }
 }
 
+function arrayCoerce<T>(val: T | T[] | undefined): T[] {
+  if (!val) {
+    return [];
+  }
+  return Array.isArray(val) ? val : [val];
+}
+
 function buildReleaseCandidatesWithRegionLanguage(
   names: string | string[],
-  regions: string | string[],
-  languages: string | string[] | undefined,
+  regions?: string | string[],
+  languages?: string | string[],
   gameOptions?: GameProps | GameProps[],
 ): [Parent, ReleaseCandidate[]] {
-  const namesArr = Array.isArray(names) ? names : [names];
-  const regionsArr = Array.isArray(regions) ? regions : [regions];
+  const namesArr = arrayCoerce(names);
+  const regionsArr = arrayCoerce(regions);
   const languagesArr = Array.isArray(languages) ? languages : [languages];
-  let gameOptionsArr: GameProps[] = [];
-  if (gameOptions) {
-    gameOptionsArr = Array.isArray(gameOptions) ? gameOptions : [gameOptions];
-  }
+  const gameOptionsArr = arrayCoerce(gameOptions);
 
   // Every different name+language combo is a different ROM+Game
   const games: Game[] = [];
@@ -103,8 +107,9 @@ function buildReleaseCandidatesWithRegionLanguage(
       games.push(game);
 
       /** {@see CandidateGenerator} */
-      for (let k = 0; k < releases.length; k += 1) {
-        const release = releases[k];
+      const releaseCandidateReleases = releases.length ? releases : [undefined];
+      for (let k = 0; k < releaseCandidateReleases.length; k += 1) {
+        const release = releaseCandidateReleases[k];
         releaseCandidates.push(new ReleaseCandidate(
           game,
           release,
@@ -794,14 +799,18 @@ describe('sort', () => {
         buildReleaseCandidatesWithRegionLanguage('three', ['EUR', 'USA'], 'EN'),
         buildReleaseCandidatesWithRegionLanguage('four', ['JPN', 'EUR'], 'EN'),
         buildReleaseCandidatesWithRegionLanguage('five', ['TAI', 'CHN'], 'ZH'),
-      ], ['one (USA) (EN)', 'two (USA) (ES)', 'three (EUR) (EN)', 'four (JPN) (EN)', 'five (TAI) (ZH)']);
+        buildReleaseCandidatesWithRegionLanguage('six', 'USA', undefined),
+        buildReleaseCandidatesWithRegionLanguage(['seven', 'seven seven'], undefined, undefined),
+      ], ['one (USA) (EN)', 'two (USA) (ES)', 'three (EUR) (EN)', 'four (JPN) (EN)', 'five (TAI) (ZH)', 'six (USA)', 'seven']);
     });
 
     it('should return the first candidate when none matching', async () => {
       await expectPreferredCandidates({ preferRegion: ['USA', 'EUR'], single: true }, [
         buildReleaseCandidatesWithRegionLanguage('one', 'EUR', ['DE', 'IT']),
         buildReleaseCandidatesWithRegionLanguage('two', ['TAI', 'CHN'], 'ZH'),
-      ], ['one (EUR) (DE)', 'two (TAI) (ZH)']);
+        buildReleaseCandidatesWithRegionLanguage('three (Japan)', undefined, undefined),
+        buildReleaseCandidatesWithRegionLanguage(['four', 'four four'], undefined, undefined),
+      ], ['one (EUR) (DE)', 'two (TAI) (ZH)', 'three (Japan)', 'four']);
     });
 
     it('should return the first matching candidate when some matching', async () => {
@@ -810,8 +819,10 @@ describe('sort', () => {
         buildReleaseCandidatesWithRegionLanguage('two', 'USA', ['ES', 'EN']),
         buildReleaseCandidatesWithRegionLanguage('three', ['EUR', 'USA'], 'EN'),
         buildReleaseCandidatesWithRegionLanguage('four', ['JPN', 'EUR'], 'EN'),
-        buildReleaseCandidatesWithRegionLanguage('five', ['TAI', 'CHN'], 'ZH'),
-      ], ['one (USA) (EN)', 'two (USA) (ES)', 'three (USA) (EN)', 'four (EUR) (EN)', 'five (TAI) (ZH)']);
+        buildReleaseCandidatesWithRegionLanguage(['five (Japan)', 'five (Europe)'], undefined, undefined),
+        buildReleaseCandidatesWithRegionLanguage('six', ['TAI', 'CHN'], 'ZH'),
+        buildReleaseCandidatesWithRegionLanguage(['seven (Taiwan)', 'seven (China)'], undefined, undefined),
+      ], ['one (USA) (EN)', 'two (USA) (ES)', 'three (USA) (EN)', 'four (EUR) (EN)', 'five (Europe)', 'six (TAI) (ZH)', 'seven (Taiwan)']);
     });
 
     it('should return the first candidate when all matching', async () => {
@@ -819,8 +830,8 @@ describe('sort', () => {
         buildReleaseCandidatesWithRegionLanguage('one', 'USA', 'EN'),
         buildReleaseCandidatesWithRegionLanguage('two', 'USA', ['ES', 'EN']),
         buildReleaseCandidatesWithRegionLanguage('three', ['EUR', 'USA'], 'EN'),
-        buildReleaseCandidatesWithRegionLanguage('four', ['JPN', 'EUR'], 'EN'),
-      ], ['one (USA) (EN)', 'two (USA) (ES)', 'three (USA) (EN)', 'four (EUR) (EN)']);
+        buildReleaseCandidatesWithRegionLanguage(['four (Europe)', 'four (USA)'], undefined, undefined),
+      ], ['one (USA) (EN)', 'two (USA) (ES)', 'three (USA) (EN)', 'four (USA)']);
     });
   });
 

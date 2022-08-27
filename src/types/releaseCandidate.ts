@@ -55,13 +55,13 @@ export default class ReleaseCandidate {
 
   private readonly game!: Game;
 
-  private readonly release!: Release | null;
+  private readonly release?: Release;
 
   private readonly roms!: ROM[];
 
   private readonly romFiles!: ROMFile[];
 
-  constructor(game: Game, release: Release | null, roms: ROM[], romFiles: ROMFile[]) {
+  constructor(game: Game, release: Release | undefined, roms: ROM[], romFiles: ROMFile[]) {
     this.game = game;
     this.release = release;
     this.roms = roms;

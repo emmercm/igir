@@ -57,9 +57,9 @@ export default class ROMFile {
         this.extractZipToLocal(tempFile);
       } else if (Constants.SEVENZIP_EXTENSIONS.indexOf(path.extname(this.filePath)) !== -1) {
         await this.extract7zToLocal(tempFile);
+      } else {
+        throw new Error(`Unknown archive type: ${this.filePath}`);
       }
-
-      return new ROMFile(tempFile, '', this.crc32, true);
     }
 
     return this;

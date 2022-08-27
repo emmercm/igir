@@ -32,7 +32,7 @@ export default class OutputCleaner {
     const filesToClean = (await fg(`${outputDir}/**`.replace(/\\/g, '/')))
       .map((pathLike) => pathLike.replace(/[\\/]/g, path.sep))
       .filter((file) => outputFilePathsToExclude.indexOf(file) === -1);
-    if (!filesToClean) {
+    if (!filesToClean.length) {
       return;
     }
 

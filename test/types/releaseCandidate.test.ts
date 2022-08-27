@@ -15,12 +15,12 @@ describe('getRegion', () => {
     ['Europe, Australia', 'EUR'],
     ['United Kingdom, France', 'UK'],
   ])('should return the region from game name: %s', (countryNames, expectedRegion) => {
-    const releaseCandidate = new ReleaseCandidate(new Game({ name: `game (${countryNames})` }), null, [], []);
+    const releaseCandidate = new ReleaseCandidate(new Game({ name: `game (${countryNames})` }), undefined, [], []);
     expect(releaseCandidate.getRegion()).toEqual(expectedRegion);
   });
 
   it('should return null when region can\'t be inferred', () => {
-    const releaseCandidate = new ReleaseCandidate(new Game({ name: 'game' }), null, [], []);
+    const releaseCandidate = new ReleaseCandidate(new Game({ name: 'game' }), undefined, [], []);
     expect(releaseCandidate.getRegion()).toBeNull();
   });
 });
@@ -38,7 +38,7 @@ describe('getLanguages', () => {
     ['It+En,Fr,De,Es,It,Nl,Sv,Da', ['IT', 'EN', 'FR', 'DE', 'ES', 'NL', 'SV', 'DA']],
     ['En,Fr,It+Es,It', ['EN', 'FR', 'IT', 'ES']],
   ])('should return the language from game name; %s', (languages, expectedLanguages) => {
-    const releaseCandidate = new ReleaseCandidate(new Game({ name: `game (${languages})` }), null, [], []);
+    const releaseCandidate = new ReleaseCandidate(new Game({ name: `game (${languages})` }), undefined, [], []);
     expect(releaseCandidate.getLanguages()).toEqual(expectedLanguages);
   });
 
@@ -53,7 +53,7 @@ describe('getLanguages', () => {
   });
 
   it('should return an empty list when languages can\'t be inferred', () => {
-    const releaseCandidate = new ReleaseCandidate(new Game({ name: 'game' }), null, [], []);
+    const releaseCandidate = new ReleaseCandidate(new Game({ name: 'game' }), undefined, [], []);
     expect(releaseCandidate.getLanguages()).toEqual([]);
   });
 });

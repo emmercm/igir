@@ -13,11 +13,11 @@ export default class ArgumentsParser {
     this.logger = logger;
   }
 
-  private static getLastValue(arr: unknown[]): unknown {
+  private static getLastValue<T>(arr: T | T[]): T {
     if (Array.isArray(arr) && arr.length) {
       return arr[arr.length - 1];
     }
-    return arr;
+    return arr as T;
   }
 
   // TODO(cemmer): a readme section about what is supported, like archives and archives with mutliple files in them, like https://www.npmjs.com/package/romdj has
