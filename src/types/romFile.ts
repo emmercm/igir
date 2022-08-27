@@ -16,9 +16,14 @@ export default class ROMFile {
 
   private readonly extractedTempFile: boolean;
 
-  constructor(filePath: string, entryPath?: string, crc?: string, extractedTempFile = false) {
+  constructor(
+    filePath: string,
+    archiveEntryPath?: string,
+    crc?: string,
+    extractedTempFile = false,
+  ) {
     this.filePath = filePath;
-    this.archiveEntryPath = entryPath;
+    this.archiveEntryPath = archiveEntryPath;
     this.crc32 = (crc || crc32(fs.readFileSync(filePath)).toString(16)).toLowerCase().padStart(8, '0');
     this.extractedTempFile = extractedTempFile;
   }

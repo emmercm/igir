@@ -104,7 +104,8 @@ export default class FsPoly {
       }
     }
 
-    return output.filter((p) => isNotJunk(path.basename(p)));
+    return output
+      .filter((filePath) => isNotJunk(path.basename(filePath)));
   }
 
   /**

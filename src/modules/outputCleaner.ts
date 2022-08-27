@@ -58,8 +58,8 @@ export default class OutputCleaner {
   private static async getEmptyDirs(dirPath: string): Promise<string[]> {
     // Find all subdirectories and files in the directory
     const subPaths = (await fsPromises.readdir(dirPath))
-      .filter((subPath) => isNotJunk(subPath))
-      .map((subPath) => path.join(dirPath, subPath));
+      .filter((basename) => isNotJunk(basename))
+      .map((basename) => path.join(dirPath, basename));
 
     // Categories the subdirectories and files
     const subDirs: string[] = [];
