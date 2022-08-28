@@ -38,12 +38,22 @@
 
     packageRules: [
       {
-        matchDepTypes: ["dependencies"],
-        groupName: "Dependencies",
-        automerge: false // TODO(cemmer)
+        groupName: "Dependencies"
       },
       {
         matchDepTypes: ["devDependencies"],
+        excludePackageNames: [
+          // https://github.com/renovatebot/renovate/issues/519
+          "@types/7zip-min",
+          "@types/adm-min",
+          "@types/async",
+          "@types/cli-progress",
+          "@types/figlet",
+          "@types/micromatch",
+          "@types/semver",
+          "@types/xml2js",
+          "@types/yargs",
+        ],
         groupName: "Dev Dependencies",
         rangeStrategy: "pin"
       },
