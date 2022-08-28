@@ -39,7 +39,7 @@
     packageRules: [
       {
         groupName: "Dependencies",
-        matchUpdateTypes: ["patch", "minor"],
+        matchDepTypes: ["dependencies", "devDependencies"],
         rangeStrategy: "bump"
       },
       {
