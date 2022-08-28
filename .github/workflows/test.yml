@@ -23,7 +23,7 @@ jobs:
 
       # Lint the Renovate config
       - name: Validate Renovate Config
-        uses: rinchsan/renovate-config-validator
+        uses: rinchsan/renovate-config-validator@v0.0.0
 
   test-unit:
     runs-on: ${{ matrix.os }}
