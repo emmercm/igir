@@ -21,6 +21,10 @@ jobs:
       - run: ./node_modules/.bin/ts-node ./index.ts --help
       - run: npm run lint
 
+      # Lint the Renovate config
+      - name: Validate Renovate Config
+        uses: rinchsan/renovate-config-validator
+
   test-unit:
     runs-on: ${{ matrix.os }}
     strategy:
