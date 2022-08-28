@@ -60,6 +60,8 @@ export default class ROMFile {
       } else {
         throw new Error(`Unknown archive type: ${this.filePath}`);
       }
+
+      return new ROMFile(tempFile, undefined, this.crc32, true);
     }
 
     return this;
@@ -102,9 +104,6 @@ export default class ROMFile {
   equals(other: ROMFile): boolean {
     if (this === other) {
       return true;
-    }
-    if (!other || typeof this !== typeof other) {
-      return false;
     }
     return this.getFilePath() === other.getFilePath()
         && this.getArchiveEntryPath() === other.getArchiveEntryPath()
