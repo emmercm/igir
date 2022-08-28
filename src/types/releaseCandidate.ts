@@ -37,7 +37,7 @@ export default class ReleaseCandidate {
     { region: 'TAI', countryRegex: 'Taiwan', language: 'ZH' },
     { region: 'UK', countryRegex: 'United Kingdom', language: 'EN' },
     { region: 'UNK', countryRegex: '', language: 'EN' },
-    { region: 'USA', countryRegex: 'United States', language: 'EN' },
+    { region: 'USA', countryRegex: 'USA', language: 'EN' },
     // Regions
     { region: 'ASI', countryRegex: 'Asia', language: 'ZH' },
     { region: 'EUR', countryRegex: 'Europe', language: 'EN' },
@@ -55,13 +55,13 @@ export default class ReleaseCandidate {
 
   private readonly game!: Game;
 
-  private readonly release!: Release | null;
+  private readonly release?: Release;
 
   private readonly roms!: ROM[];
 
   private readonly romFiles!: ROMFile[];
 
-  constructor(game: Game, release: Release | null, roms: ROM[], romFiles: ROMFile[]) {
+  constructor(game: Game, release: Release | undefined, roms: ROM[], romFiles: ROMFile[]) {
     this.game = game;
     this.release = release;
     this.roms = roms;
@@ -122,7 +122,7 @@ export default class ReleaseCandidate {
     for (let i = 0; i < ReleaseCandidate.REGION_OPTIONS.length; i += 1) {
       const regionOption = ReleaseCandidate.REGION_OPTIONS[i];
       if (regionOption.countryRegex) {
-        if (this.getName().match(new RegExp(`(${regionOption.countryRegex}(,[ a-z])*)`, 'i'))) {
+        if (this.getName().match(new RegExp(`\\(${regionOption.countryRegex}(,[ a-z]+)*\\)`, 'i'))) {
           return regionOption.region.toUpperCase();
         }
       }
@@ -139,7 +139,9 @@ export default class ReleaseCandidate {
     // Get language from languages in the game name
     const matches = this.getName().match(/\(([a-zA-Z]{2}([,+][a-zA-Z]{2})*)\)/);
     if (matches && matches.length >= 2) {
-      return matches[1].split(',').map((lang) => lang.toUpperCase());
+      return matches[1].split(/[,+]/)
+        .map((lang) => lang.toUpperCase())
+        .filter((lang, idx, langs) => langs.indexOf(lang) === idx);
     }
 
     // Get language from the region

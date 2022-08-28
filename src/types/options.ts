@@ -293,7 +293,7 @@ export default class Options implements OptionsProps {
     );
     const globbedFiles = globbedPaths
       .filter((inputPath, idx) => isFiles[idx])
-      .filter((inputPath) => isNotJunk(inputPath));
+      .filter((inputPath) => isNotJunk(path.basename(inputPath)));
 
     // Remove duplicates
     return globbedFiles

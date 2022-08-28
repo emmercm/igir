@@ -9,7 +9,6 @@ enum ROMType {
   GAME = 'games',
   BIOS = 'bioses',
   RETAIL = 'retail releases',
-  PROTOTYPE = 'prototypes',
 }
 
 export default class DATStatus {
@@ -60,8 +59,6 @@ export default class DATStatus {
       DATStatus.append(map, ROMType.BIOS, game.getName());
     } else if (game.isRetail()) {
       DATStatus.append(map, ROMType.RETAIL, game.getName());
-    } else if (game.isPrototype()) {
-      DATStatus.append(map, ROMType.PROTOTYPE, game.getName());
     }
   }
 
@@ -100,6 +97,7 @@ export default class DATStatus {
     return DATStatus.getAllowedTypes(options)
       .map((type) => romTypesToNames.get(type))
       .flatMap((names) => names)
+      .filter((name) => name)
       .filter((name, idx, names) => names.indexOf(name) === idx)
       .sort() as string[];
   }
@@ -111,7 +109,6 @@ export default class DATStatus {
       options.getOnlyBios() || (!options.getNoBios() && !options.getOnlyRetail())
         ? ROMType.BIOS : undefined,
       options.getOnlyRetail() || (!options.getOnlyBios()) ? ROMType.RETAIL : undefined,
-      // !options.getOnlyBios() && !options.getNoPrototype() ? ROMType.PROTOTYPE : undefined,
     ].filter((val) => val) as ROMType[];
   }
 }

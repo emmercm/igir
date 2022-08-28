@@ -58,8 +58,8 @@ export default class ProgressBarCLI extends ProgressBar {
   private static async render(): Promise<void> {
     try {
       await this.RENDER_MUTEX.runExclusive(() => {
-        const elapsed = process.hrtime(this.lastRedraw);
-        const elapsedMs = (elapsed[0] * 1000000000 + elapsed[1]) / 1000000;
+        const [elapsedSec, elapsedNano] = process.hrtime(this.lastRedraw);
+        const elapsedMs = (elapsedSec * 1000000000 + elapsedNano) / 1000000;
         if (elapsedMs >= (1000 / ProgressBarCLI.fps)) {
           this.multiBar?.update();
           this.lastRedraw = process.hrtime();

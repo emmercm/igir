@@ -2,10 +2,10 @@ import { Expose } from 'class-transformer';
 
 export default class Release {
   @Expose({ name: 'name' })
-  private readonly name!: string;
+  private readonly name: string;
 
   @Expose({ name: 'region' })
-  private readonly region!: string;
+  private readonly region: string;
 
   @Expose({ name: 'language' })
   private readonly language?: string;
@@ -16,7 +16,7 @@ export default class Release {
   @Expose({ name: 'default' })
   private readonly default: 'yes' | 'no' = 'no';
 
-  constructor(name: string, region: string, language: string) {
+  constructor(name: string, region: string, language?: string) {
     this.name = name;
     this.region = region;
     this.language = language;

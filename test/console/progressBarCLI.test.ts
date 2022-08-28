@@ -55,7 +55,17 @@ describe('reset', () => {
 });
 
 describe('setSymbol', () => {
-  it('should change the symbol', async () => {
+  it('should change the symbol to empty', async () => {
+    const spy = new ProgressBarCLISpy();
+    const progressBar = new ProgressBarCLI(spy.getLogger(), 'name', '✓');
+
+    await progressBar.setSymbol('');
+    expect(spy.getLastLine()).toMatch(/^name/);
+
+    ProgressBarCLI.stop();
+  });
+
+  it('should change the symbol to non-empty', async () => {
     const spy = new ProgressBarCLISpy();
     const progressBar = new ProgressBarCLI(spy.getLogger(), 'name', '✓');
 

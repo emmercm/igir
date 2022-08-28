@@ -16,9 +16,14 @@ export default class ROMFile {
 
   private readonly extractedTempFile: boolean;
 
-  constructor(filePath: string, entryPath?: string, crc?: string, extractedTempFile = false) {
+  constructor(
+    filePath: string,
+    archiveEntryPath?: string,
+    crc?: string,
+    extractedTempFile = false,
+  ) {
     this.filePath = filePath;
-    this.archiveEntryPath = entryPath;
+    this.archiveEntryPath = archiveEntryPath;
     this.crc32 = (crc || crc32(fs.readFileSync(filePath)).toString(16)).toLowerCase().padStart(8, '0');
     this.extractedTempFile = extractedTempFile;
   }
@@ -52,9 +57,11 @@ export default class ROMFile {
         this.extractZipToLocal(tempFile);
       } else if (Constants.SEVENZIP_EXTENSIONS.indexOf(path.extname(this.filePath)) !== -1) {
         await this.extract7zToLocal(tempFile);
+      } else {
+        throw new Error(`Unknown archive type: ${this.filePath}`);
       }
 
-      return new ROMFile(tempFile, '', this.crc32, true);
+      return new ROMFile(tempFile, undefined, this.crc32, true);
     }
 
     return this;
@@ -97,9 +104,6 @@ export default class ROMFile {
   equals(other: ROMFile): boolean {
     if (this === other) {
       return true;
-    }
-    if (!other || typeof this !== typeof other) {
-      return false;
     }
     return this.getFilePath() === other.getFilePath()
         && this.getArchiveEntryPath() === other.getArchiveEntryPath()

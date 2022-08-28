@@ -1,7 +1,6 @@
 import ProgressBar, { Symbols } from '../console/progressBar.js';
 import DAT from '../types/logiqx/dat.js';
 import Parent from '../types/logiqx/parent.js';
-import Release from '../types/logiqx/release.js';
 import ReleaseCandidate from '../types/releaseCandidate.js';
 import ROMFile from '../types/romFile.js';
 
@@ -38,8 +37,8 @@ export default class CandidateGenerator {
       // For every game
       parent.getGames().forEach((game) => {
         // For every release (ensuring at least one), find all release candidates
-        const releases = game.getReleases().length ? game.getReleases() : [null];
-        releases.forEach((release: Release | null) => {
+        const releases = game.getReleases().length ? game.getReleases() : [undefined];
+        releases.forEach((release) => {
           // For each Game's ROM, find the matching ROMFile
           const romFiles = game.getRoms()
             .map((rom) => crc32ToInputRomFiles.get(rom.getCrc32()))
