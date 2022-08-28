@@ -127,7 +127,9 @@ describe('toLocalFile', () => {
 
   it('should throw an error on unknown archives', async () => {
     const romFile = new ROMFile('image.iso', 'file.rom', '00000000');
-    await expect(romFile.toLocalFile('.')).rejects.toThrow(/unknown/i);
+    const temp = fsPoly.mkdtempSync();
+    await expect(romFile.toLocalFile(temp)).rejects.toThrow(/unknown/i);
+    fsPoly.rmSync(temp, { recursive: true });
   });
 });
 
