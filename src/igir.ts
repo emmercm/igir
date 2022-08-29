@@ -107,7 +107,9 @@ export default class Igir {
     const writtenRomFilesToExclude = [...datsToWrittenRoms.values()]
       .flatMap((parentsToRomFiles) => [...parentsToRomFiles.values()])
       .flatMap((romFiles) => romFiles);
-    await new OutputCleaner(this.options, cleanerProgressBar).clean(writtenRomFilesToExclude);
+    const filesCleaned = await new OutputCleaner(this.options, cleanerProgressBar)
+        .clean(writtenRomFilesToExclude);
+    await cleanerProgressBar.doneItems(filesCleaned, 'file', 'recycled');
   }
 
   private async processReportGenerator(datsStatuses: DATStatus[]): Promise<void> {
