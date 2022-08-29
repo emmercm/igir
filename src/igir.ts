@@ -57,10 +57,10 @@ export default class Igir {
       datsStatuses.push(status);
 
       // Progress bar cleanup
-      const parentsWithRomFiles = [...writtenRoms.values()]
-        .filter((writtenRomFiles) => writtenRomFiles.length)
+      const totalReleaseCandidates = [...romOutputs.values()]
+        .filter((releaseCandidates) => releaseCandidates.length)
         .length;
-      if (parentsWithRomFiles === 0) {
+      if (totalReleaseCandidates === 0) {
         progressBar.delete();
       }
 
