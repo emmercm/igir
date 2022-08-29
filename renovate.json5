@@ -39,11 +39,11 @@
     packageRules: [
       {
         groupName: "Dependencies",
-        matchUpdateTypes: ["patch", "minor"]
+        matchDepTypes: ["dependencies", "devDependencies"],
+        rangeStrategy: "bump"
       },
       {
         matchDepTypes: ["devDependencies"],
-        matchUpdateTypes: ["patch", "minor"],
         excludePackageNames: [
           // https://github.com/renovatebot/renovate/issues/519
           "@types/7zip-min",
