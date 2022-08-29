@@ -4,7 +4,7 @@
   },
   "git": {
     "requireBranch": "main",
-    "requireCleanWorkingDir": false,
+    "requireCleanWorkingDir": true,
     "commit": false,
     "tagName": "v${version}"
   },
