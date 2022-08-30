@@ -4,6 +4,7 @@ import { promises as fsPromises } from 'fs';
 import path from 'path';
 
 import ProgressBar, { Symbols } from '../console/progressBar.js';
+import Constants from '../constants.js';
 import fsPoly from '../polyfill/fsPoly.js';
 import DAT from '../types/logiqx/dat.js';
 import Parent from '../types/logiqx/parent.js';
@@ -11,7 +12,6 @@ import ROM from '../types/logiqx/rom.js';
 import Options from '../types/options.js';
 import ReleaseCandidate from '../types/releaseCandidate.js';
 import ROMFile from '../types/romFile.js';
-import Constants from "../constants.js";
 
 /**
  * Copy or move output ROM files, if applicable.
