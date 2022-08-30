@@ -3,6 +3,7 @@ import async from 'async';
 import Logger from './console/logger.js';
 import { Symbols } from './console/progressBar.js';
 import ProgressBarCLI from './console/progressBarCLI.js';
+import Constants from './constants.js';
 import CandidateFilter from './modules/candidateFilter.js';
 import CandidateGenerator from './modules/candidateGenerator.js';
 import DATScanner from './modules/datScanner.js';
@@ -35,7 +36,7 @@ export default class Igir {
     const datsToWrittenRoms = new Map<DAT, Map<Parent, ROMFile[]>>();
     const datsStatuses: DATStatus[] = [];
 
-    await async.eachLimit(dats, 3, async (dat, callback) => {
+    await async.eachLimit(dats, Constants.DAT_THREADS, async (dat, callback) => {
       const progressBar = this.logger.addProgressBar(
         dat.getNameShort(),
         Symbols.WAITING,
@@ -57,10 +58,10 @@ export default class Igir {
       datsStatuses.push(status);
 
       // Progress bar cleanup
-      const parentsWithRomFiles = [...writtenRoms.values()]
-        .filter((writtenRomFiles) => writtenRomFiles.length)
+      const totalReleaseCandidates = [...romOutputs.values()]
+        .filter((releaseCandidates) => releaseCandidates.length)
         .length;
-      if (parentsWithRomFiles === 0) {
+      if (totalReleaseCandidates === 0) {
         progressBar.delete();
       }
 
@@ -107,7 +108,9 @@ export default class Igir {
     const writtenRomFilesToExclude = [...datsToWrittenRoms.values()]
       .flatMap((parentsToRomFiles) => [...parentsToRomFiles.values()])
       .flatMap((romFiles) => romFiles);
-    await new OutputCleaner(this.options, cleanerProgressBar).clean(writtenRomFilesToExclude);
+    const filesCleaned = await new OutputCleaner(this.options, cleanerProgressBar)
+      .clean(writtenRomFilesToExclude);
+    await cleanerProgressBar.doneItems(filesCleaned, 'file', 'recycled');
   }
 
   private async processReportGenerator(datsStatuses: DATStatus[]): Promise<void> {

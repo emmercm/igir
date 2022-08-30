@@ -20,7 +20,7 @@ export default class ArgumentsParser {
     return arr as T;
   }
 
-  // TODO(cemmer): a readme section about what is supported, like archives and archives with mutliple files in them, like https://www.npmjs.com/package/romdj has
+  // TODO(cemmer): a readme section about what is supported, like archives and archives with multiple files in them, like https://www.npmjs.com/package/romdj has
   parse(argv: string[]): Options {
     this.logger.info(`Parsing CLI arguments: ${argv}`);
 

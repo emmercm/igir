@@ -39,6 +39,7 @@
     packageRules: [
       {
         groupName: "Dependencies",
+        matchDepTypes: ["dependencies", "devDependencies"],
         rangeStrategy: "bump"
       },
       {
@@ -61,6 +62,11 @@
       {
         matchDepTypes: ["optionalDependencies", "peerDependencies", "engines", "volta"],
         enabled: false
+      },
+      {
+        groupName: "Typescript",
+        matchPackageNames: ["typescript"],
+        rangeStrategy: "pin"
       }
     ]
   },

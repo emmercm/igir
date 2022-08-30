@@ -4,12 +4,14 @@
   },
   "git": {
     "requireBranch": "main",
+    "requireCleanWorkingDir": true,
     "commit": false,
     "tagName": "v${version}"
   },
   "github": {
     "release": true,
     "releaseName": "v${version}",
+    "releaseNotes": "./scripts/auto-changelog.sh",
     "assets": ["igir-${version}.tgz"]
   },
   "npm": {

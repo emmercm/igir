@@ -4,6 +4,12 @@ import Parent from '../types/logiqx/parent.js';
 import ReleaseCandidate from '../types/releaseCandidate.js';
 import ROMFile from '../types/romFile.js';
 
+/**
+ * For every {@link Parent} in the {@link DAT}, look for its {@link ROM}s in the scanned ROM list,
+ * and return a set of candidate files.
+ *
+ * This class may be run concurrently with other classes.
+ */
 export default class CandidateGenerator {
   private readonly progressBar: ProgressBar;
 
@@ -22,7 +28,7 @@ export default class CandidateGenerator {
       return output;
     }
 
-    const crc32ToInputRomFiles = CandidateGenerator.indexRomFilesByCrc(inputRomFiles);
+    const crc32ToInputRomFiles = await CandidateGenerator.indexRomFilesByCrc(inputRomFiles);
     await this.progressBar.logInfo(`${dat.getName()}: ${crc32ToInputRomFiles.size} unique ROM CRC32s found`);
 
     await this.progressBar.setSymbol(Symbols.GENERATING);
@@ -70,19 +76,20 @@ export default class CandidateGenerator {
     return output;
   }
 
-  private static indexRomFilesByCrc(inputRomFiles: ROMFile[]): Map<string, ROMFile> {
-    return inputRomFiles.reduce((acc, romFile) => {
-      if (acc.has(romFile.getCrc32())) {
+  private static async indexRomFilesByCrc(inputRomFiles: ROMFile[]): Promise<Map<string, ROMFile>> {
+    return inputRomFiles.reduce(async (accPromise, romFile) => {
+      const acc = await accPromise;
+      if (acc.has(await romFile.getCrc32())) {
         // Have already seen file, prefer non-archived files
-        const existing = acc.get(romFile.getCrc32()) as ROMFile;
+        const existing = acc.get(await romFile.getCrc32()) as ROMFile;
         if (!romFile.getArchiveEntryPath() && existing.getArchiveEntryPath()) {
-          acc.set(romFile.getCrc32(), romFile);
+          acc.set(await romFile.getCrc32(), romFile);
         }
       } else {
         // Haven't seen file yet, store it
-        acc.set(romFile.getCrc32(), romFile);
+        acc.set(await romFile.getCrc32(), romFile);
       }
       return acc;
-    }, new Map<string, ROMFile>());
+    }, Promise.resolve(new Map<string, ROMFile>()));
   }
 }
