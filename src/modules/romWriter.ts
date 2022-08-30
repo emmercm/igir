@@ -1,4 +1,5 @@
 import AdmZip from 'adm-zip';
+import async, { AsyncResultCallback } from 'async';
 import { promises as fsPromises } from 'fs';
 import path from 'path';
 
@@ -10,6 +11,7 @@ import ROM from '../types/logiqx/rom.js';
 import Options from '../types/options.js';
 import ReleaseCandidate from '../types/releaseCandidate.js';
 import ROMFile from '../types/romFile.js';
+import Constants from "../constants.js";
 
 /**
  * Copy or move output ROM files, if applicable.
@@ -42,27 +44,28 @@ export default class ROMWriter {
 
     const parentsToCandidatesEntries = [...parentsToCandidates.entries()];
 
-    /* eslint-disable no-await-in-loop */
-    for (let i = 0; i < parentsToCandidatesEntries.length; i += 1) {
-      const parent = parentsToCandidatesEntries[i][0];
-      const releaseCandidates = parentsToCandidatesEntries[i][1];
+    return new Map(await async.mapLimit(
+      [...parentsToCandidatesEntries.entries()],
+      Constants.ROM_WRITER_THREADS,
+      async (
+        [, [parent, releaseCandidates]],
+        callback: AsyncResultCallback<[Parent, ROMFile[]], Error>,
+      ) => {
+        await this.progressBar.increment();
 
-      await this.progressBar.increment();
+        const outputRomFiles: ROMFile[] = [];
 
-      const outputRomFiles: ROMFile[] = [];
+        /* eslint-disable no-await-in-loop */
+        for (let j = 0; j < releaseCandidates.length; j += 1) {
+          const releaseCandidate = releaseCandidates[j];
 
-      /* eslint-disable no-await-in-loop */
-      for (let j = 0; j < releaseCandidates.length; j += 1) {
-        const releaseCandidate = releaseCandidates[j];
+          const results = await this.writeReleaseCandidate(dat, releaseCandidate);
+          outputRomFiles.push(...results);
+        }
 
-        const results = await this.writeReleaseCandidate(dat, releaseCandidate);
-        outputRomFiles.push(...results);
-      }
-
-      output.set(parent, outputRomFiles);
-    }
-
-    return output;
+        callback(null, [parent, outputRomFiles]);
+      },
+    ));
   }
 
   private async writeReleaseCandidate(

@@ -38,7 +38,7 @@ export default class ROMScanner {
 
     return (await async.mapLimit(
       inputFiles,
-      Constants.ROMSCANNER_THREADS,
+      Constants.ROM_SCANNER_THREADS,
       async (inputFile, callback: AsyncResultCallback<ROMFile[], Error>) => {
         await this.progressBar.increment();
 
