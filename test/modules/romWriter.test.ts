@@ -1,3 +1,4 @@
+import { jest } from '@jest/globals';
 import AdmZip from 'adm-zip';
 import os from 'os';
 import path from 'path';
@@ -15,6 +16,8 @@ import Options, { OptionsProps } from '../../src/types/options.js';
 import ReleaseCandidate from '../../src/types/releaseCandidate.js';
 import ROMFile from '../../src/types/romFile.js';
 import ProgressBarFake from '../console/progressBarFake.js';
+
+jest.setTimeout(10_000);
 
 async function copyFixturesToTemp(
   callback: (input: string, output: string) => void | Promise<void>,
