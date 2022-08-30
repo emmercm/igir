@@ -1,0 +1,17 @@
+# Release Highlights
+
+## All changes
+
+{{#each releases}}
+    {{#if @first}}
+        {{#each merges}}
+            {{commit.niceDate}} - [`{{commit.shorthash}}`]({{commit.href}}) - {{{message}}}{{#if href}} ([#{{id}}]({{href}})){{/if}}
+        {{/each}}
+        {{#each fixes}}
+            {{commit.niceDate}} - [`{{commit.shorthash}}`]({{commit.href}}) - {{{commit.subject}}}{{#each fixes}}{{#if href}} ([#{{id}}]({{href}})){{/if}}{{/each}}
+        {{/each}}
+        {{#each commits}}
+            {{niceDate}} - [`{{shorthash}}`]({{href}}) - {{#if breaking}}**Breaking change:** {{/if}}{{{subject}}}{{#if href}} ([{{shorthash}}]({{href}})){{/if}}
+        {{/each}}
+    {{/if}}
+{{/each}}
