@@ -5,6 +5,12 @@ import ProgressBar, { Symbols } from '../console/progressBar.js';
 import DAT from '../types/logiqx/dat.js';
 import Options from '../types/options.js';
 
+/**
+ * Scan the {@link OptionsProps.dat} input directory for DAT files and return the internal model
+ * representation.
+ *
+ * This class will not be run concurrently with any other class.
+ */
 export default class DATScanner {
   private readonly options: Options;
 
