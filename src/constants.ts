@@ -7,5 +7,9 @@ export default class Constants {
 
   static readonly DAT_THREADS = 3;
 
-  static readonly ROMSCANNER_THREADS = 25;
+  static readonly ROM_SCANNER_THREADS = 25;
+
+  static readonly ROM_WRITER_THREADS = Math.ceil(
+    Constants.ROM_SCANNER_THREADS / Constants.DAT_THREADS,
+  );
 }
