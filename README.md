@@ -27,7 +27,7 @@ A ROM collection manager to help sort collections and make one game, one rom (1G
 With [![Node.js](https://badgen.net/npm/node/igir?icon=nodejs)](https://nodejs.org/en/download/) installed:
 
 ```shell
-npx igir [commands..] [options]
+npx igir@latest [commands..] [options]
 ```
 
 ## Usage

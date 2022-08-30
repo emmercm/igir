@@ -16,7 +16,8 @@ if [[ "${1:-}" == "play" ]]; then
   alias npx="npm exec -- ."
   # BEGIN PLAYBACK
 
-  pei "npx igir copy zip report --dat dats/ --input roms/ --output roms-sorted/ --only-retail"
+  # ts-node ./index.ts copy clean report -d dats/ -i GB/ -o roms/ -D
+  pei "npx igir@latest copy zip report --dat dats/ --input roms/ --output roms-sorted/ --only-retail"
 
   # END PLAYBACK
   exit 0
