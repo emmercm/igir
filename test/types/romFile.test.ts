@@ -30,9 +30,9 @@ describe('getCrc32', () => {
     ['001', '00000001'],
     ['2002', '00002002'],
     ['00000000', '00000000'],
-  ])('should return the constructor value: %s', (crc, expectedCrc) => {
+  ])('should return the constructor value: %s', async (crc, expectedCrc) => {
     const romFile = new ROMFile('/some/path', undefined, crc);
-    expect(romFile.getCrc32()).toEqual(expectedCrc);
+    await expect(romFile.getCrc32()).resolves.toEqual(expectedCrc);
   });
 
   test.each([
@@ -40,9 +40,9 @@ describe('getCrc32', () => {
     ['./test/fixtures/roms/raw/fizzbuzz.rom', '370517b5'],
     ['./test/fixtures/roms/raw/foobar.rom', 'b22c9747'],
     ['./test/fixtures/roms/raw/loremipsum.rom', '70856527'],
-  ])('should hash the file path: %s', (filePath, expectedCrc) => {
+  ])('should hash the file path: %s', async (filePath, expectedCrc) => {
     const romFile = new ROMFile(filePath);
-    expect(romFile.getCrc32()).toEqual(expectedCrc);
+    await expect(romFile.getCrc32()).resolves.toEqual(expectedCrc);
   });
 });
 
@@ -54,7 +54,7 @@ describe('isZip', () => {
     '/UPPERCASE.ZIP',
   ])('should return true when appropriate', (filePath) => {
     const romFile = new ROMFile(filePath, undefined, '00000000');
-    expect(romFile.isZip()).toBeTruthy();
+    expect(romFile.isZip()).toEqual(true);
   });
 
   test.each([
@@ -63,7 +63,7 @@ describe('isZip', () => {
     '/root.rom',
   ])('should return false when appropriate', (filePath) => {
     const romFile = new ROMFile(filePath, undefined, '00000000');
-    expect(romFile.isZip()).toBeFalsy();
+    expect(romFile.isZip()).toEqual(false);
   });
 });
 
@@ -79,7 +79,7 @@ describe('toLocalFile', () => {
     for (let i = 0; i < raws.length; i += 1) {
       const raw = raws[i];
       const localFile = await raw.toLocalFile(temp);
-      expect(fs.existsSync(localFile.getFilePath())).toBeTruthy();
+      expect(fs.existsSync(localFile.getFilePath())).toEqual(true);
       expect(localFile.getFilePath()).toEqual(raw.getFilePath());
       expect(localFile.getArchiveEntryPath()).toBeUndefined();
       expect(localFile.getCrc32()).toEqual(localFile.getCrc32());
@@ -98,7 +98,7 @@ describe('toLocalFile', () => {
     for (let i = 0; i < zips.length; i += 1) {
       const zip = zips[i];
       const localFile = await zip.toLocalFile(temp);
-      expect(fs.existsSync(localFile.getFilePath())).toBeTruthy();
+      expect(fs.existsSync(localFile.getFilePath())).toEqual(true);
       expect(localFile.getFilePath()).not.toEqual(zip.getFilePath());
       expect(localFile.getArchiveEntryPath()).toBeUndefined();
       expect(localFile.getCrc32()).toEqual(localFile.getCrc32());
@@ -117,7 +117,7 @@ describe('toLocalFile', () => {
     for (let i = 0; i < sevenZips.length; i += 1) {
       const sevenZip = sevenZips[i];
       const localFile = await sevenZip.toLocalFile(temp);
-      expect(fs.existsSync(localFile.getFilePath())).toBeTruthy();
+      expect(fs.existsSync(localFile.getFilePath())).toEqual(true);
       expect(localFile.getFilePath()).not.toEqual(sevenZip.getFilePath());
       expect(localFile.getArchiveEntryPath()).toBeUndefined();
       expect(localFile.getCrc32()).toEqual(localFile.getCrc32());
@@ -145,9 +145,9 @@ describe('cleanupLocalFile', () => {
     for (let i = 0; i < raws.length; i += 1) {
       const raw = raws[i];
       const localFile = await raw.toLocalFile(temp);
-      expect(fs.existsSync(localFile.getFilePath())).toBeTruthy();
+      expect(fs.existsSync(localFile.getFilePath())).toEqual(true);
       localFile.cleanupLocalFile();
-      expect(fs.existsSync(localFile.getFilePath())).toBeTruthy();
+      expect(fs.existsSync(localFile.getFilePath())).toEqual(true);
     }
     fsPoly.rmSync(temp, { recursive: true });
   });
@@ -163,9 +163,9 @@ describe('cleanupLocalFile', () => {
     for (let i = 0; i < zips.length; i += 1) {
       const zip = zips[i];
       const localFile = await zip.toLocalFile(temp);
-      expect(fs.existsSync(localFile.getFilePath())).toBeTruthy();
+      expect(fs.existsSync(localFile.getFilePath())).toEqual(true);
       localFile.cleanupLocalFile();
-      expect(fs.existsSync(localFile.getFilePath())).toBeFalsy();
+      expect(fs.existsSync(localFile.getFilePath())).toEqual(false);
     }
     fsPoly.rmSync(temp, { recursive: true });
   });
@@ -181,29 +181,29 @@ describe('cleanupLocalFile', () => {
     for (let i = 0; i < sevenZips.length; i += 1) {
       const sevenZip = sevenZips[i];
       const localFile = await sevenZip.toLocalFile(temp);
-      expect(fs.existsSync(localFile.getFilePath())).toBeTruthy();
+      expect(fs.existsSync(localFile.getFilePath())).toEqual(true);
       localFile.cleanupLocalFile();
-      expect(fs.existsSync(localFile.getFilePath())).toBeFalsy();
+      expect(fs.existsSync(localFile.getFilePath())).toEqual(false);
     }
     fsPoly.rmSync(temp, { recursive: true });
   });
 });
 
 describe('equals', () => {
-  it('should be equal itself', () => {
+  it('should be equal itself', async () => {
     const romFile = new ROMFile('file.rom', undefined, '00000000');
-    expect(romFile.equals(romFile)).toBeTruthy();
+    await expect(romFile.equals(romFile)).resolves.toEqual(true);
   });
 
-  it('should deep equal a raw file', () => {
+  it('should deep equal a raw file', async () => {
     const first = new ROMFile('file.rom', undefined, '00000000');
     const second = new ROMFile('file.rom', undefined, '00000000');
-    expect(first.equals(second)).toBeTruthy();
+    await expect(first.equals(second)).resolves.toEqual(true);
   });
 
-  it('should deep equal an archive file', () => {
+  it('should deep equal an archive file', async () => {
     const first = new ROMFile('file.zip', 'file.rom', '00000000');
     const second = new ROMFile('file.zip', 'file.rom', '00000000');
-    expect(first.equals(second)).toBeTruthy();
+    await expect(first.equals(second)).resolves.toEqual(true);
   });
 });

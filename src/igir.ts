@@ -3,6 +3,7 @@ import async from 'async';
 import Logger from './console/logger.js';
 import { Symbols } from './console/progressBar.js';
 import ProgressBarCLI from './console/progressBarCLI.js';
+import Constants from './constants.js';
 import CandidateFilter from './modules/candidateFilter.js';
 import CandidateGenerator from './modules/candidateGenerator.js';
 import DATScanner from './modules/datScanner.js';
@@ -35,7 +36,7 @@ export default class Igir {
     const datsToWrittenRoms = new Map<DAT, Map<Parent, ROMFile[]>>();
     const datsStatuses: DATStatus[] = [];
 
-    await async.eachLimit(dats, 3, async (dat, callback) => {
+    await async.eachLimit(dats, Constants.DAT_THREADS, async (dat, callback) => {
       const progressBar = this.logger.addProgressBar(
         dat.getNameShort(),
         Symbols.WAITING,

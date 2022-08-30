@@ -11,6 +11,11 @@ import Options from '../types/options.js';
 import ReleaseCandidate from '../types/releaseCandidate.js';
 import ROMFile from '../types/romFile.js';
 
+/**
+ * Copy or move output ROM files, if applicable.
+ *
+ * This class may be run concurrently with other classes.
+ */
 export default class ROMWriter {
   private readonly options: Options;
 
@@ -69,11 +74,13 @@ export default class ROMWriter {
       return [];
     }
 
-    const inputToOutput = this.buildInputToOutput(dat, releaseCandidate);
+    const inputToOutput = await this.buildInputToOutput(dat, releaseCandidate);
 
     // Determine if a write is needed based on the output not equaling the input
-    const writeNeeded = [...inputToOutput.entries()]
-      .some(([inputRomFile, outputRomFile]) => !inputRomFile.equals(outputRomFile));
+    const writeNeeded = (await Promise.all(
+      [...inputToOutput.entries()]
+        .map(async ([inputRomFile, outputRomFile]) => !await inputRomFile.equals(outputRomFile)),
+    )).some((notEq) => notEq);
     await this.progressBar.logDebug(`${dat.getName()} | ${releaseCandidate.getName()}: ${writeNeeded ? '' : 'no '}write needed`);
 
     if (writeNeeded) {
@@ -88,11 +95,15 @@ export default class ROMWriter {
     return [...inputToOutput.values()];
   }
 
-  private buildInputToOutput(dat: DAT, releaseCandidate: ReleaseCandidate): Map<ROMFile, ROMFile> {
+  private buildInputToOutput(
+    dat: DAT,
+    releaseCandidate: ReleaseCandidate,
+  ): Promise<Map<ROMFile, ROMFile>> {
     const crcToRoms = releaseCandidate.getRomsByCrc32();
 
-    return releaseCandidate.getRomFiles().reduce((acc, inputRomFile) => {
-      const rom = crcToRoms.get(inputRomFile.getCrc32()) as ROM;
+    return releaseCandidate.getRomFiles().reduce(async (accPromise, inputRomFile) => {
+      const acc = await accPromise;
+      const rom = crcToRoms.get(await inputRomFile.getCrc32()) as ROM;
 
       let outputFilePath = this.options.getOutput(
         dat,
@@ -106,10 +117,10 @@ export default class ROMWriter {
         entryPath = rom.getName();
       }
 
-      const outputRomFile = new ROMFile(outputFilePath, entryPath, inputRomFile.getCrc32());
+      const outputRomFile = new ROMFile(outputFilePath, entryPath, await inputRomFile.getCrc32());
       acc.set(inputRomFile, outputRomFile);
       return acc;
-    }, new Map<ROMFile, ROMFile>());
+    }, Promise.resolve(new Map<ROMFile, ROMFile>()));
   }
 
   private async ensureOutputDirExists(outputFilePath: string): Promise<void> {
@@ -193,14 +204,14 @@ export default class ROMWriter {
     outputRomFile: ROMFile,
   ): Promise<boolean> {
     // The input and output are the same, do nothing
-    if (outputRomFile.equals(inputRomFile)) {
+    if (await outputRomFile.equals(inputRomFile)) {
       await this.progressBar.logDebug(`${outputRomFile}: same file, skipping`);
       return false;
     }
 
     // If the file in the output zip already exists and has the same CRC then do nothing
     const existingOutputEntry = outputZip.getEntry(outputRomFile.getArchiveEntryPath() as string);
-    if (existingOutputEntry?.header.crc === parseInt(outputRomFile.getCrc32(), 16)) {
+    if (existingOutputEntry?.header.crc === parseInt(await outputRomFile.getCrc32(), 16)) {
       await this.progressBar.logDebug(`${outputZipPath}: ${outputRomFile.getArchiveEntryPath()} already exists`);
       return false;
     }
@@ -294,7 +305,7 @@ export default class ROMWriter {
   }
 
   private async writeRawSingle(inputRomFile: ROMFile, outputRomFile: ROMFile): Promise<boolean> {
-    if (outputRomFile.equals(inputRomFile)) {
+    if (await outputRomFile.equals(inputRomFile)) {
       await this.progressBar.logDebug(`${outputRomFile}: same file, skipping`);
       return false;
     }
@@ -312,7 +323,7 @@ export default class ROMWriter {
 
     await this.ensureOutputDirExists(outputFilePath);
     await this.writeRawFile(inputRomFile, outputFilePath);
-    await this.testWrittenRaw(outputFilePath, inputRomFile.getCrc32());
+    await this.testWrittenRaw(outputFilePath, await inputRomFile.getCrc32());
     await this.deleteMovedFile(inputRomFile);
     return true;
   }
@@ -336,8 +347,8 @@ export default class ROMWriter {
 
     await this.progressBar.logDebug(`${outputFilePath}: testing`);
     const romFileToTest = new ROMFile(outputFilePath);
-    if (romFileToTest.getCrc32() !== expectedCrc32) {
-      await this.progressBar.logError(`Written file has the CRC ${romFileToTest.getCrc32()}, expected ${expectedCrc32}: ${outputFilePath}`);
+    if (await romFileToTest.getCrc32() !== expectedCrc32) {
+      await this.progressBar.logError(`Written file has the CRC ${await romFileToTest.getCrc32()}, expected ${expectedCrc32}: ${outputFilePath}`);
     }
   }
 

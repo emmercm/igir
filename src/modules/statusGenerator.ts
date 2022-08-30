@@ -5,6 +5,11 @@ import Parent from '../types/logiqx/parent.js';
 import Options from '../types/options.js';
 import ReleaseCandidate from '../types/releaseCandidate.js';
 
+/**
+ * Generate the status for a DAT, and print a short status to the progress bar.
+ *
+ * This class may be run concurrently with other classes.
+ */
 export default class StatusGenerator {
   private readonly options: Options;
 
