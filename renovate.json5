@@ -39,6 +39,7 @@
     packageRules: [
       {
         groupName: "Dependencies",
+        matchDepTypes: ["dependencies", "devDependencies"],
         rangeStrategy: "bump"
       },
       {
