@@ -144,16 +144,17 @@ export default class ROMWriter {
     // There is only one output file
     const outputRomFile = [...inputToOutput.values()][0];
     const outputZipPath = outputRomFile.getFilePath();
+    const writtenRomFiles = [outputRomFile];
 
     const inputToOutputEntries = [...inputToOutput.entries()]
       .filter((output) => output[1].isZip());
     if (!inputToOutputEntries.length) {
-      return [];
+      return writtenRomFiles;
     }
 
     const outputZip = await this.openAndCleanZipFile(outputZipPath);
     if (!outputZip) {
-      return [];
+      return writtenRomFiles;
     }
     let outputNeedsWriting = false;
 
@@ -173,10 +174,10 @@ export default class ROMWriter {
       await this.writeZipFile(outputZipPath, outputZip);
       await this.testWrittenZip(outputZipPath);
       await this.deleteMovedZipEntries(outputZipPath, [...inputToOutput.keys()]);
-      return [outputRomFile];
+      return writtenRomFiles;
     }
 
-    return [];
+    return writtenRomFiles;
   }
 
   private async openAndCleanZipFile(outputZipPath: string): Promise<AdmZip | null> {
@@ -299,9 +300,8 @@ export default class ROMWriter {
     for (let i = 0; i < inputToOutputEntries.length; i += 1) {
       const inputRomFile = inputToOutputEntries[i][0];
       const outputRomFile = inputToOutputEntries[i][1];
-      if (await this.writeRawSingle(inputRomFile, outputRomFile)) {
-        writtenRomFiles.push(outputRomFile);
-      }
+      await this.writeRawSingle(inputRomFile, outputRomFile);
+      writtenRomFiles.push(outputRomFile);
     }
 
     return writtenRomFiles;
