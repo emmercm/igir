@@ -58,10 +58,10 @@ export default class Igir {
       datsStatuses.push(status);
 
       // Progress bar cleanup
-      const parentsWithRomFiles = [...writtenRoms.values()]
-        .filter((writtenRomFiles) => writtenRomFiles.length)
+      const totalReleaseCandidates = [...romOutputs.values()]
+        .filter((releaseCandidates) => releaseCandidates.length)
         .length;
-      if (parentsWithRomFiles === 0) {
+      if (totalReleaseCandidates === 0) {
         progressBar.delete();
       }
 
@@ -108,7 +108,9 @@ export default class Igir {
     const writtenRomFilesToExclude = [...datsToWrittenRoms.values()]
       .flatMap((parentsToRomFiles) => [...parentsToRomFiles.values()])
       .flatMap((romFiles) => romFiles);
-    await new OutputCleaner(this.options, cleanerProgressBar).clean(writtenRomFilesToExclude);
+    const filesCleaned = await new OutputCleaner(this.options, cleanerProgressBar)
+      .clean(writtenRomFilesToExclude);
+    await cleanerProgressBar.doneItems(filesCleaned, 'file', 'recycled');
   }
 
   private async processReportGenerator(datsStatuses: DATStatus[]): Promise<void> {

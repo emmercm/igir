@@ -8,6 +8,11 @@ import ProgressBar, { Symbols } from '../console/progressBar.js';
 import Options from '../types/options.js';
 import ROMFile from '../types/romFile.js';
 
+/**
+ * Recycle any unknown files in the {@link OptionsProps.output} directory, if applicable.
+ *
+ * This class will not be run concurrently with any other class.
+ */
 export default class OutputCleaner {
   private readonly options: Options;
 
@@ -18,12 +23,12 @@ export default class OutputCleaner {
     this.progressBar = progressBar;
   }
 
-  async clean(writtenRomFilesToExclude: ROMFile[]): Promise<void> {
+  async clean(writtenRomFilesToExclude: ROMFile[]): Promise<number> {
     // If nothing was written, then don't clean anything
     const outputFilePathsToExclude = writtenRomFilesToExclude
       .map((romFile) => romFile.getFilePath());
     if (!outputFilePathsToExclude.length) {
-      return;
+      return 0;
     }
 
     const outputDir = this.options.getOutput();
@@ -33,7 +38,7 @@ export default class OutputCleaner {
       .map((pathLike) => pathLike.replace(/[\\/]/g, path.sep))
       .filter((file) => outputFilePathsToExclude.indexOf(file) === -1);
     if (!filesToClean.length) {
-      return;
+      return 0;
     }
 
     await this.progressBar.setSymbol(Symbols.RECYCLING);
@@ -52,7 +57,7 @@ export default class OutputCleaner {
       await this.progressBar.logError(`Failed to clean empty directories in ${outputDir} : ${e}`);
     }
 
-    await this.progressBar.doneItems(filesToClean.length, 'file', 'recycled');
+    return filesToClean.length;
   }
 
   private static async getEmptyDirs(dirPath: string): Promise<string[]> {
