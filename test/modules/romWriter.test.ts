@@ -185,7 +185,13 @@ describe('zip', () => {
       const secondWrittenPaths = await runRomWriter(outputTemp, {
         commands: ['copy', 'zip', 'test'],
       }, parentsToCandidates);
-      expect(secondWrittenPaths).toHaveLength(0);
+      expect(secondWrittenPaths).toEqual([
+        'empty.zip',
+        'fizzbuzz.zip',
+        'foobar.zip',
+        'loremipsum.zip',
+        'unknown.zip',
+      ]);
 
       // Make sure we didn't alter the input ROMs
       expect(fsPoly.walkSync(inputTemp)).toEqual(inputFiles);
@@ -422,7 +428,13 @@ describe('raw', () => {
       const secondWrittenPaths = await runRomWriter(outputTemp, {
         commands: ['copy', 'test'],
       }, parentsToCandidates);
-      expect(secondWrittenPaths).toHaveLength(0);
+      expect(secondWrittenPaths).toEqual([
+        'empty.rom',
+        'fizzbuzz.rom',
+        'foobar.rom',
+        'loremipsum.rom',
+        'unknown.rom',
+      ]);
 
       // Make sure we didn't alter the input ROMs
       expect(fsPoly.walkSync(inputTemp)).toEqual(inputFiles);
