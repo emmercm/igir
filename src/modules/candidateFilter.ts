@@ -4,6 +4,12 @@ import Parent from '../types/logiqx/parent.js';
 import Options from '../types/options.js';
 import ReleaseCandidate from '../types/releaseCandidate.js';
 
+/**
+ * Apply any specified filter and preference options to the release candidates for each
+ * {@link Parent}.
+ *
+ * This class may be run concurrently with other classes.
+ */
 export default class CandidateFilter {
   private readonly options: Options;
 
