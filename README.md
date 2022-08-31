@@ -2,8 +2,9 @@
 
 A ROM collection manager to help sort collections and make one game, one rom (1G1R) sets.
 
-[![npm](https://badgen.net/npm/v/igir)](https://www.npmjs.com/package/igir)
-[![GitHub](https://badgen.net/badge/emmercm/igir/purple?icon=github)](https://github.com/emmercm/igir)
+![CLI:Windows,macOS,Linux](https://badgen.net/badge/icon/Windows,%20macOS,%20Linux?icon=terminal&label=CLI&color=blue)
+[![npm:igir](https://badgen.net/npm/v/igir?color=red)](https://www.npmjs.com/package/igir)
+[![GitHub:emmercm/igir](https://badgen.net/badge/emmercm/igir/purple?icon=github)](https://github.com/emmercm/igir)
 
 [![Known Vulnerabilities](https://badgen.net/snyk/emmercm/igir?icon=snyk)](https://snyk.io/test/npm/igir)
 [![Test Coverage](https://badgen.net/codecov/c/github/emmercm/igir/main?icon=codecov)](https://codecov.io/gh/emmercm/igir)
@@ -13,7 +14,12 @@ A ROM collection manager to help sort collections and make one game, one rom (1G
 
 [![asciicast](https://asciinema.org/a/9I7P2ZWCD0Iz1xBub48shm91t.svg)](https://asciinema.org/a/9I7P2ZWCD0Iz1xBub48shm91t)
 
-`igir`, with assistance from a collection of DAT catalogs (see below), helps you manage your video game ROM collection with a number of commands:
+`igir` needs two inputs:
+
+- One or more folders with **ROMs**, including ones in archives (.7z, .bz2, .cab, .gz, .lzma, .tar, .xz, .zip)
+- A folder with ROM **DAT catalogs** (see below for more information)
+
+And then it will execute one or more commands:
 
 - `copy`: copy ROMs from input directories to an output directory
 - `move`: copy ROMs from input directories to an output directory
@@ -49,12 +55,12 @@ Here is the `igir --help` message which shows all available options and a number
 Usage: igir [commands..] [options]
 
 Commands:
-  igir copy    Copy ROM files to a directory
-  igir move    Move ROM files to a directory
+  igir copy    Copy ROM files from the input to output directory
+  igir move    Move ROM files from the input to output directory
   igir zip     Create .zip archives when copying or moving ROMs
-  igir clean   Remove unmatched files from the ROM output directory
-  igir test    Test ROMs for accuracy after writing them
-  igir report  Remove unmatched files from the ROM output directory
+  igir clean   Recycle unknown files in the output directory
+  igir test    Test ROMs for accuracy after writing them to the output directory
+  igir report  Generate a report on the known ROM files found in the input directories
 
 Path options (inputs support globbing):
   -d, --dat            Path(s) to DAT files             [array] [required] [default: ["*.dat"]]

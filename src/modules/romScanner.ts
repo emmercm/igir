@@ -27,6 +27,7 @@ export default class ROMScanner {
     this.progressBar = progressBar;
   }
 
+  // TODO(cemmer): support for headered ROM files (e.g. NES)
   async scan(): Promise<ROMFile[]> {
     await this.progressBar.setSymbol(Symbols.SEARCHING);
     await this.progressBar.reset(0);
