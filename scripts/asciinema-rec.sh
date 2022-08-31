@@ -70,11 +70,13 @@ npm --version &> /dev/null || exit 1
 npm run build
 
 # Clean any previous output
-rm -rf roms-sorted
+if [[ -d roms-sorted ]]; then
+  rm -rf roms-sorted
+fi
 
 clear
 if [[ "${1:-}" == "rec" ]]; then
-  asciinema rec --command "$0 play" --cols 90 --rows 18
+  asciinema rec --command "$0 play"
 else
   $0 play
   echo ""
