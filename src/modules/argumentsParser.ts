@@ -33,22 +33,22 @@ export default class ArgumentsParser {
     // Add every command to a yargs object, recursively, resulting in the ability to specify
     // multiple commands
     const addCommands = (yargsObj: Argv): Argv => yargsObj
-      .command('copy', 'Copy ROM files to a directory', (yargsSubObj) => {
+      .command('copy', 'Copy ROM files from the input to output directory', (yargsSubObj) => {
         addCommands(yargsSubObj);
       })
-      .command('move', 'Move ROM files to a directory', (yargsSubObj) => {
+      .command('move', 'Move ROM files from the input to output directory', (yargsSubObj) => {
         addCommands(yargsSubObj);
       })
       .command('zip', 'Create .zip archives when copying or moving ROMs', (yargsSubObj) => {
         addCommands(yargsSubObj);
       })
-      .command('clean', 'Remove unmatched files from the ROM output directory', (yargsSubObj) => {
+      .command('clean', 'Recycle unknown files in the output directory', (yargsSubObj) => {
         addCommands(yargsSubObj);
       })
-      .command('test', 'Test ROMs for accuracy after writing them', (yargsSubObj) => {
+      .command('test', 'Test ROMs for accuracy after writing them to the output directory', (yargsSubObj) => {
         addCommands(yargsSubObj);
       })
-      .command('report', 'Remove unmatched files from the ROM output directory', (yargsSubObj) => {
+      .command('report', 'Generate a report on the known ROM files found in the input directories', (yargsSubObj) => {
         addCommands(yargsSubObj);
       });
 
