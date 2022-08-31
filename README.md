@@ -12,7 +12,7 @@ A ROM collection manager to help sort collections and make one game, one rom (1G
 
 ## Summary
 
-[![asciicast](https://asciinema.org/a/9I7P2ZWCD0Iz1xBub48shm91t.svg)](https://asciinema.org/a/9I7P2ZWCD0Iz1xBub48shm91t)
+[![asciicast](https://asciinema.org/a/u1jeLTaSanO3mGzBb5b1jgxCy.svg)](https://asciinema.org/a/u1jeLTaSanO3mGzBb5b1jgxCy)
 
 `igir` needs two inputs:
 
