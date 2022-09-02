@@ -37,15 +37,24 @@
     stabilityDays: 3,
 
     packageRules: [
+      // Dependencies
       {
         groupName: "Dependencies",
         matchDepTypes: ["dependencies", "devDependencies"],
         rangeStrategy: "bump"
       },
+
+      // Dev dependencies
       {
+        // Pin devDependencies versions
+        matchDepTypes: ["devDependencies"],
+        rangeStrategy: "pin"
+      },
+      {
+        // Group devDependencies together, minus type definitions for dependencies
+        // https://github.com/renovatebot/renovate/issues/519
         matchDepTypes: ["devDependencies"],
         excludePackageNames: [
-          // https://github.com/renovatebot/renovate/issues/519
           "@types/7zip-min",
           "@types/adm-min",
           "@types/async",
@@ -56,17 +65,28 @@
           "@types/xml2js",
           "@types/yargs",
         ],
-        groupName: "Dev Dependencies",
-        rangeStrategy: "pin"
+        groupName: "Dev Dependencies"
       },
+      {
+        // Group Jest together because of peerDependencies
+        matchPackageNames: [
+          "@jest/globals",
+          "@types/jest",
+          "jest",
+          "ts-jest"
+        ],
+        groupName: "Jest"
+      },
+      {
+        // Separate TypeScript because upgrades are dependent on support by other dependencies
+        matchPackageNames: ["typescript"],
+        groupName: "Typescript"
+      },
+
+      // Everything else
       {
         matchDepTypes: ["optionalDependencies", "peerDependencies", "engines", "volta"],
         enabled: false
-      },
-      {
-        groupName: "Typescript",
-        matchPackageNames: ["typescript"],
-        rangeStrategy: "pin"
       }
     ]
   },

@@ -1,13 +1,13 @@
 # https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-nodejs
 # https://hanxiao.io/2021/01/24/Speedup-CI-Workflow-in-Github-Actions-via-Strategy-Matrix/
 
-name: Node.js CI
+name: Project CI
 
 on:
   push:
 
 jobs:
-  test-lint:
+  node-lint:
     runs-on: ubuntu-latest
     steps:
       # Setup and install
@@ -21,18 +21,12 @@ jobs:
       - run: ./node_modules/.bin/ts-node ./index.ts --help
       - run: npm run lint
 
-      # Lint the Renovate config
-      - name: Validate Renovate Config
-        uses: rinchsan/renovate-config-validator@v0.0.11
-        with:
-          pattern: 'renovate.json5'
-
-  test-unit:
+  node-unit:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
         os: [ubuntu-latest, macos-latest, windows-latest]
-        # TODO(cemmer): os.devNull in tests needs v14.18.0+ or v16.3.0+, test-e2e can cover 12.x
+        # TODO(cemmer): os.devNull in tests needs v14.18.0+ or v16.3.0+, node-e2e can cover 12.x
         node-version: [ lts/*, lts/-1 ]
     steps:
       # Setup and install
@@ -47,7 +41,7 @@ jobs:
       # Test the source files
       - run: npm run test:unit
 
-  test-e2e:
+  node-e2e:
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -66,7 +60,7 @@ jobs:
       - run: npm run build
       - run: ./test/endToEndTest.sh
 
-  test-package:
+  node-package:
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -90,12 +84,27 @@ jobs:
           cd ..
           rm -rf package
 
+  renovate-lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: rinchsan/renovate-config-validator@v0.0.11
+        with:
+          pattern: 'renovate.json5'
+
+  codecov-lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: formsort/action-check-codecov-config@v1
+
+  # !!! The codecov/project check should be required by GitHub !!!
+  # See codecov.yml for the configuration that drives the check
   codecov:
     needs:
-      - test-lint
-      - test-unit
-      - test-e2e
-      - test-package
+      - node-unit
+      - node-e2e
+      - codecov-lint
     runs-on: ubuntu-latest
     steps:
       # Setup and install
@@ -113,12 +122,15 @@ jobs:
           fail_ci_if_error: true
           verbose: true
 
+  # !!! This check should be required by GitHub !!!
   status-check:
     needs:
-      - test-lint
-      - test-unit
-      - test-e2e
-      - test-package
+      - node-lint
+      - node-unit
+      - node-e2e
+      - node-package
+      - renovate-lint
+      - codecov-lint
       - codecov
     runs-on: ubuntu-latest
     steps:
