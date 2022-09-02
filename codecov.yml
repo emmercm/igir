@@ -1,0 +1,12 @@
+# Always comment on PRs, always create new comments
+comment:
+  behavior: new
+  require_changes: false
+
+# Require a minimum coverage for the codecov/project PR check
+coverage:
+  status:
+    project:
+      default:
+        target: 94%
+        threshold: 1%
