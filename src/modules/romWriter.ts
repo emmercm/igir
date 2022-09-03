@@ -6,12 +6,12 @@ import path from 'path';
 import ProgressBar, { Symbols } from '../console/progressBar.js';
 import Constants from '../constants.js';
 import fsPoly from '../polyfill/fsPoly.js';
+import File from '../types/file.js';
 import DAT from '../types/logiqx/dat.js';
 import Parent from '../types/logiqx/parent.js';
 import ROM from '../types/logiqx/rom.js';
 import Options from '../types/options.js';
 import ReleaseCandidate from '../types/releaseCandidate.js';
-import ROMFile from '../types/romFile.js';
 
 /**
  * Copy or move output ROM files, if applicable.
@@ -31,9 +31,9 @@ export default class ROMWriter {
   async write(
     dat: DAT,
     parentsToCandidates: Map<Parent, ReleaseCandidate[]>,
-  ): Promise<Map<Parent, ROMFile[]>> {
+  ): Promise<Map<Parent, File[]>> {
     await this.progressBar.logInfo(`${dat.getName()}: Writing candidates`);
-    const output = new Map<Parent, ROMFile[]>();
+    const output = new Map<Parent, File[]>();
 
     if (!parentsToCandidates.size) {
       return output;
@@ -49,11 +49,11 @@ export default class ROMWriter {
       Constants.ROM_WRITER_THREADS,
       async (
         [, [parent, releaseCandidates]],
-        callback: AsyncResultCallback<[Parent, ROMFile[]], Error>,
+        callback: AsyncResultCallback<[Parent, File[]], Error>,
       ) => {
         await this.progressBar.increment();
 
-        const outputRomFiles: ROMFile[] = [];
+        const outputRomFiles: File[] = [];
 
         /* eslint-disable no-await-in-loop */
         for (let j = 0; j < releaseCandidates.length; j += 1) {
@@ -71,7 +71,7 @@ export default class ROMWriter {
   private async writeReleaseCandidate(
     dat: DAT,
     releaseCandidate: ReleaseCandidate,
-  ): Promise<ROMFile[]> {
+  ): Promise<File[]> {
     if (!this.options.shouldWrite()) {
       await this.progressBar.logDebug(`${dat.getName()} | ${releaseCandidate.getName()}: not writing`);
       return [];
@@ -87,43 +87,43 @@ export default class ROMWriter {
     await this.progressBar.logDebug(`${dat.getName()} | ${releaseCandidate.getName()}: ${writeNeeded ? '' : 'no '}write needed`);
 
     if (writeNeeded) {
-      // Write is needed, return the ROMFiles that were written
+      // Write is needed, return the File that were written
       return [
         ...await this.writeZip(inputToOutput),
         ...await this.writeRaw(inputToOutput),
       ];
     }
 
-    // Write isn't needed, return the ROMFiles that didn't need writing
+    // Write isn't needed, return the File[] that didn't need writing
     return [...inputToOutput.values()];
   }
 
   private buildInputToOutput(
     dat: DAT,
     releaseCandidate: ReleaseCandidate,
-  ): Promise<Map<ROMFile, ROMFile>> {
+  ): Promise<Map<File, File>> {
     const crcToRoms = releaseCandidate.getRomsByCrc32();
 
-    return releaseCandidate.getRomFiles().reduce(async (accPromise, inputRomFile) => {
+    return releaseCandidate.getFiles().reduce(async (accPromise, inputFile) => {
       const acc = await accPromise;
-      const rom = crcToRoms.get(await inputRomFile.getCrc32()) as ROM;
+      const rom = crcToRoms.get(await inputFile.getCrc32()) as ROM;
 
       let outputFilePath = this.options.getOutput(
         dat,
-        inputRomFile.getFilePath(),
+        inputFile.getFilePath(),
         rom.getName(),
       );
       let entryPath;
 
       if (this.options.shouldZip(rom.getName())) {
-        outputFilePath = this.options.getOutput(dat, inputRomFile.getFilePath(), `${releaseCandidate.getName()}.zip`);
+        outputFilePath = this.options.getOutput(dat, inputFile.getFilePath(), `${releaseCandidate.getName()}.zip`);
         entryPath = rom.getName();
       }
 
-      const outputRomFile = new ROMFile(outputFilePath, entryPath, await inputRomFile.getCrc32());
-      acc.set(inputRomFile, outputRomFile);
+      const outputFile = new File(outputFilePath, entryPath, await inputFile.getCrc32());
+      acc.set(inputFile, outputFile);
       return acc;
-    }, Promise.resolve(new Map<ROMFile, ROMFile>()));
+    }, Promise.resolve(new Map<File, File>()));
   }
 
   private async ensureOutputDirExists(outputFilePath: string): Promise<void> {
@@ -140,7 +140,7 @@ export default class ROMWriter {
    *                     *
    ********************* */
 
-  private async writeZip(inputToOutput: Map<ROMFile, ROMFile>): Promise<ROMFile[]> {
+  private async writeZip(inputToOutput: Map<File, File>): Promise<File[]> {
     // There is only one output file
     const outputRomFile = [...inputToOutput.values()][0];
     const outputZipPath = outputRomFile.getFilePath();
@@ -203,8 +203,8 @@ export default class ROMWriter {
   private async addZipEntry(
     outputZipPath: string,
     outputZip: AdmZip,
-    inputRomFile: ROMFile,
-    outputRomFile: ROMFile,
+    inputRomFile: File,
+    outputRomFile: File,
   ): Promise<boolean> {
     // The input and output are the same, do nothing
     if (await outputRomFile.equals(inputRomFile)) {
@@ -220,28 +220,20 @@ export default class ROMWriter {
     }
 
     // Write the entry
-    let inputRomFileLocal;
     try {
-      inputRomFileLocal = await inputRomFile.toLocalFile(this.options.getTempDir());
+      await inputRomFile.toLocalFile(this.options.getTempDir(), async (localFile) => {
+        await this.progressBar.logDebug(`${outputZipPath}: adding ${localFile}`);
+        outputZip.addLocalFile(
+          localFile,
+          '',
+          outputRomFile.getArchiveEntryPath() as string,
+        );
+      });
+      return true;
     } catch (e) {
-      await this.progressBar.logError(`Failed to extract ${inputRomFile.getFilePath()} : ${e}`);
+      await this.progressBar.logError(`Failed to add ${inputRomFile.toString()} to zip ${outputZipPath} : ${e}`);
       return false;
     }
-    try {
-      await this.progressBar.logDebug(`${outputZipPath}: adding ${inputRomFileLocal.getFilePath()}`);
-      outputZip.addLocalFile(
-        inputRomFileLocal.getFilePath(),
-        '',
-        outputRomFile.getArchiveEntryPath() as string,
-      );
-    } catch (e) {
-      await this.progressBar.logError(`Failed to add ${inputRomFileLocal.getFilePath()} to zip ${outputZipPath} : ${e}`);
-      return false;
-    } finally {
-      inputRomFileLocal.cleanupLocalFile();
-    }
-
-    return true;
   }
 
   private async writeZipFile(outputZipPath: string, outputZip: AdmZip): Promise<void> {
@@ -271,7 +263,7 @@ export default class ROMWriter {
 
   private async deleteMovedZipEntries(
     outputZipPath: string,
-    inputRomFiles: ROMFile[],
+    inputRomFiles: File[],
   ): Promise<void> {
     if (!this.options.shouldMove()) {
       return;
@@ -291,8 +283,8 @@ export default class ROMWriter {
    *                     *
    ********************* */
 
-  private async writeRaw(inputToOutput: Map<ROMFile, ROMFile>): Promise<ROMFile[]> {
-    const writtenRomFiles: ROMFile[] = [];
+  private async writeRaw(inputToOutput: Map<File, File>): Promise<File[]> {
+    const writtenRomFiles: File[] = [];
 
     /* eslint-disable no-await-in-loop */
     const inputToOutputEntries = [...inputToOutput.entries()]
@@ -307,7 +299,7 @@ export default class ROMWriter {
     return writtenRomFiles;
   }
 
-  private async writeRawSingle(inputRomFile: ROMFile, outputRomFile: ROMFile): Promise<boolean> {
+  private async writeRawSingle(inputRomFile: File, outputRomFile: File): Promise<boolean> {
     if (await outputRomFile.equals(inputRomFile)) {
       await this.progressBar.logDebug(`${outputRomFile}: same file, skipping`);
       return false;
@@ -325,21 +317,24 @@ export default class ROMWriter {
     }
 
     await this.ensureOutputDirExists(outputFilePath);
-    await this.writeRawFile(inputRomFile, outputFilePath);
+    if (!await this.writeRawFile(inputRomFile, outputFilePath)) {
+      return false;
+    }
     await this.testWrittenRaw(outputFilePath, await inputRomFile.getCrc32());
     await this.deleteMovedFile(inputRomFile);
     return true;
   }
 
-  private async writeRawFile(inputRomFile: ROMFile, outputFilePath: string): Promise<void> {
-    const inputRomFileLocal = await inputRomFile.toLocalFile(this.options.getTempDir());
-    await this.progressBar.logDebug(`${inputRomFileLocal.getFilePath()}: copying to ${outputFilePath}`);
+  private async writeRawFile(inputRomFile: File, outputFilePath: string): Promise<boolean> {
     try {
-      await fsPromises.copyFile(inputRomFileLocal.getFilePath(), outputFilePath);
+      await inputRomFile.toLocalFile(this.options.getTempDir(), async (localFile) => {
+        await this.progressBar.logDebug(`${localFile}: copying to ${outputFilePath}`);
+        await fsPromises.copyFile(localFile, outputFilePath);
+      });
+      return true;
     } catch (e) {
-      await this.progressBar.logError(`Failed to copy ${inputRomFileLocal.getFilePath()} to ${outputFilePath} : ${e}`);
-    } finally {
-      inputRomFileLocal.cleanupLocalFile();
+      await this.progressBar.logError(`Failed to copy ${inputRomFile.toString()} to ${outputFilePath} : ${e}`);
+      return false;
     }
   }
 
@@ -349,13 +344,13 @@ export default class ROMWriter {
     }
 
     await this.progressBar.logDebug(`${outputFilePath}: testing`);
-    const romFileToTest = new ROMFile(outputFilePath);
-    if (await romFileToTest.getCrc32() !== expectedCrc32) {
-      await this.progressBar.logError(`Written file has the CRC ${await romFileToTest.getCrc32()}, expected ${expectedCrc32}: ${outputFilePath}`);
+    const fileToTest = new File(outputFilePath);
+    if (await fileToTest.getCrc32() !== expectedCrc32) {
+      await this.progressBar.logError(`Written file has the CRC ${await fileToTest.getCrc32()}, expected ${expectedCrc32}: ${outputFilePath}`);
     }
   }
 
-  private async deleteMovedFile(inputRomFile: ROMFile): Promise<void> {
+  private async deleteMovedFile(inputRomFile: File): Promise<void> {
     if (!this.options.shouldMove()) {
       return;
     }
