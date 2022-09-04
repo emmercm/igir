@@ -3,6 +3,8 @@
   extends: [
     "config:base"
   ],
+  dependencyDashboard: true,
+  configMigration: true,
 
   // Personal preferences
   timezone: "America/Los_Angeles",
@@ -18,19 +20,27 @@
     prCreation: "immediate" // default
   },
 
+  // Use pseudo semantic commit (and therefore PR title) commit messages
+  // "{{{commitMessagePrefix}}} {{{commitMessageAction}}} {{{commitMessageTopic}}} {{{commitMessageExtra}}} {{{commitMessageSuffix}}}"
+  commitMessagePrefix: "Chore:",
+  commitMessageAction: "update",
+
   // Separate potentially breaking updates, group others
   separateMultipleMajor: true,
   separateMajorMinor: true, // default
   separateMinorPatch: false, // default
 
   // Allow auto-merging of PRs, but reduce their spam on the commit log
+  schedule: "every weekday",
   automerge: true,
   automergeSchedule: "on sunday",
   prHourlyLimit: 0,
 
   npm: {
     lockFileMaintenance: {
-      enabled: true
+      enabled: true,
+      commitMessageAction: "update", // same as above
+      commitMessageTopic: "lockfile"
     },
     transitiveRemediation: true,
 
@@ -39,7 +49,7 @@
     packageRules: [
       // Dependencies
       {
-        groupName: "Dependencies",
+        groupName: "dependencies",
         matchDepTypes: ["dependencies", "devDependencies"],
         rangeStrategy: "bump"
       },
@@ -65,7 +75,7 @@
           "@types/xml2js",
           "@types/yargs",
         ],
-        groupName: "Dev Dependencies"
+        groupName: "dev dependencies"
       },
       {
         // Group Jest together because of peerDependencies
@@ -80,7 +90,7 @@
       {
         // Separate TypeScript because upgrades are dependent on support by other dependencies
         matchPackageNames: ["typescript"],
-        groupName: "Typescript"
+        groupName: "TypeScript"
       },
 
       // Everything else
