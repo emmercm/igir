@@ -1,8 +1,8 @@
 import ProgressBar, { Symbols } from '../console/progressBar.js';
+import File from '../types/file.js';
 import DAT from '../types/logiqx/dat.js';
 import Parent from '../types/logiqx/parent.js';
 import ReleaseCandidate from '../types/releaseCandidate.js';
-import ROMFile from '../types/romFile.js';
 
 /**
  * For every {@link Parent} in the {@link DAT}, look for its {@link ROM}s in the scanned ROM list,
@@ -19,7 +19,7 @@ export default class CandidateGenerator {
 
   async generate(
     dat: DAT,
-    inputRomFiles: ROMFile[],
+    inputRomFiles: File[],
   ): Promise<Map<Parent, ReleaseCandidate[]>> {
     await this.progressBar.logInfo(`${dat.getName()}: Generating candidates`);
 
@@ -28,8 +28,8 @@ export default class CandidateGenerator {
       return output;
     }
 
-    const crc32ToInputRomFiles = await CandidateGenerator.indexRomFilesByCrc(inputRomFiles);
-    await this.progressBar.logInfo(`${dat.getName()}: ${crc32ToInputRomFiles.size} unique ROM CRC32s found`);
+    const crc32ToInputFiles = await CandidateGenerator.indexFilesByCrc(inputRomFiles);
+    await this.progressBar.logInfo(`${dat.getName()}: ${crc32ToInputFiles.size} unique ROM CRC32s found`);
 
     await this.progressBar.setSymbol(Symbols.GENERATING);
     await this.progressBar.reset(dat.getParents().length);
@@ -45,12 +45,12 @@ export default class CandidateGenerator {
         // For every release (ensuring at least one), find all release candidates
         const releases = game.getReleases().length ? game.getReleases() : [undefined];
         releases.forEach((release) => {
-          // For each Game's ROM, find the matching ROMFile
+          // For each Game's ROM, find the matching File
           const romFiles = game.getRoms()
-            .map((rom) => crc32ToInputRomFiles.get(rom.getCrc32()))
-            .filter((romFile) => romFile) as ROMFile[];
+            .map((rom) => crc32ToInputFiles.get(rom.getCrc32()))
+            .filter((file) => file) as File[];
 
-          // Ignore the Game if not every ROMFile is present
+          // Ignore the Game if not every File is present
           const missingRomFiles = game.getRoms().length - romFiles.length;
           if (missingRomFiles > 0) {
             if (romFiles.length > 0) {
@@ -76,20 +76,20 @@ export default class CandidateGenerator {
     return output;
   }
 
-  private static async indexRomFilesByCrc(inputRomFiles: ROMFile[]): Promise<Map<string, ROMFile>> {
-    return inputRomFiles.reduce(async (accPromise, romFile) => {
+  private static async indexFilesByCrc(files: File[]): Promise<Map<string, File>> {
+    return files.reduce(async (accPromise, file) => {
       const acc = await accPromise;
-      if (acc.has(await romFile.getCrc32())) {
+      if (acc.has(await file.getCrc32())) {
         // Have already seen file, prefer non-archived files
-        const existing = acc.get(await romFile.getCrc32()) as ROMFile;
-        if (!romFile.getArchiveEntryPath() && existing.getArchiveEntryPath()) {
-          acc.set(await romFile.getCrc32(), romFile);
+        const existing = acc.get(await file.getCrc32()) as File;
+        if (!file.getArchiveEntryPath() && existing.getArchiveEntryPath()) {
+          acc.set(await file.getCrc32(), file);
         }
       } else {
         // Haven't seen file yet, store it
-        acc.set(await romFile.getCrc32(), romFile);
+        acc.set(await file.getCrc32(), file);
       }
       return acc;
-    }, Promise.resolve(new Map<string, ROMFile>()));
+    }, Promise.resolve(new Map<string, File>()));
   }
 }

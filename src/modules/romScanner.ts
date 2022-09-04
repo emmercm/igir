@@ -7,8 +7,8 @@ import path from 'path';
 
 import ProgressBar, { Symbols } from '../console/progressBar.js';
 import Constants from '../constants.js';
+import File from '../types/file.js';
 import Options from '../types/options.js';
-import ROMFile from '../types/romFile.js';
 
 /**
  * Scan the {@link OptionsProps.input} input directory for ROM files and return the internal model
@@ -29,7 +29,7 @@ export default class ROMScanner {
   }
 
   // TODO(cemmer): support for headered ROM files (e.g. NES)
-  async scan(): Promise<ROMFile[]> {
+  async scan(): Promise<File[]> {
     await this.progressBar.setSymbol(Symbols.SEARCHING);
     await this.progressBar.reset(0);
 
@@ -41,85 +41,85 @@ export default class ROMScanner {
     return (await async.mapLimit(
       inputFiles,
       Constants.ROM_SCANNER_THREADS,
-      async (inputFile, callback: AsyncResultCallback<ROMFile[], Error>) => {
+      async (inputFile, callback: AsyncResultCallback<File[], Error>) => {
         await this.progressBar.increment();
 
-        let romFiles: ROMFile[];
+        let files: File[];
         if (Constants.ZIP_EXTENSIONS.indexOf(path.extname(inputFile)) !== -1) {
-          romFiles = await this.getRomFilesInZip(inputFile);
+          files = await this.getFilesInZip(inputFile);
         } else if (Constants.RAR_EXTENSIONS.indexOf(path.extname(inputFile)) !== -1) {
-          romFiles = await this.getRomFilesInRar(inputFile);
+          files = await this.getFilesInRar(inputFile);
         } else if (Constants.SEVENZIP_EXTENSIONS.indexOf(path.extname(inputFile)) !== -1) {
-          romFiles = await this.getRomFilesIn7z(inputFile);
+          files = await this.getFilesIn7z(inputFile);
         } else {
-          romFiles = [await new ROMFile(inputFile).resolve()];
+          files = [await new File(inputFile).resolve()];
         }
 
-        callback(null, romFiles);
+        callback(null, files);
       },
-    )).flatMap((romFiles) => romFiles);
+    )).flatMap((files) => files);
   }
 
-  private async getRomFilesIn7z(file: string): Promise<ROMFile[]> {
+  private async getFilesIn7z(filePath: string): Promise<File[]> {
     /**
      * WARN(cemmer): {@link _7z.list} seems to have issues with any amount of real concurrency,
      * it will return no files but also no error. Try to prevent that behavior.
      */
     return ROMScanner.SEVENZIP_MUTEX.runExclusive(async () => {
-      const romFilesIn7z = await new Promise((resolve) => {
+      const filesIn7z = await new Promise((resolve) => {
         // TODO(cemmer): this won't let you ctrl-c
-        _7z.list(file, (err, result) => {
+        _7z.list(filePath, async (err, result) => {
           if (err) {
             const msg = err.toString()
               .replace(/\n\n+/g, '\n')
               .replace(/^/gm, '   ')
               .trim();
-            this.progressBar.logError(`Failed to parse archive ${file} : ${msg}`);
+            await this.progressBar.logError(`Failed to parse archive ${filePath} : ${msg}`);
             resolve([]);
           } else if (!result.length) {
-            this.progressBar.logWarn(`Found no files in archive: ${file}`);
+            await this.progressBar.logWarn(`Found no files in archive: ${filePath}`);
             resolve([]);
           } else {
             resolve(result);
           }
         });
       }) as Result[];
-      return romFilesIn7z.map((result) => new ROMFile(file, result.name, result.crc));
+      return filesIn7z.map((result) => new File(filePath, result.name, result.crc));
     });
   }
 
-  private async getRomFilesInRar(file: string): Promise<ROMFile[]> {
+  private async getFilesInRar(filePath: string): Promise<File[]> {
     try {
       const rar = await unrar.createExtractorFromFile({
-        filepath: file,
+        filepath: filePath,
       });
       const rarFiles = [...rar.getFileList().fileHeaders]
-        .map((fileHeader) => new ROMFile(file, fileHeader.name, fileHeader.crc.toString(16)));
+        .map((fileHeader) => new File(filePath, fileHeader.name, fileHeader.crc.toString(16)));
       if (!rarFiles.length) {
         await this.progressBar.logWarn(`Found no files in rar: ${rar}`);
       }
       return rarFiles;
     } catch (e) {
-      await this.progressBar.logError(`Failed to parse rar ${file} : ${e}`);
+      await this.progressBar.logError(`Failed to parse rar ${filePath} : ${e}`);
       return [];
     }
   }
 
-  private async getRomFilesInZip(file: string): Promise<ROMFile[]> {
+  private async getFilesInZip(filePath: string): Promise<File[]> {
     try {
-      const zip = new AdmZip(file);
-      const romFiles = zip.getEntries()
-        .map((entry) => new ROMFile(
-          file,
+      const zip = new AdmZip(filePath);
+      const files = zip.getEntries()
+        .map((entry) => new File(
+          filePath,
           entry.entryName,
           entry.header.crc.toString(16),
         ));
-      if (!romFiles.length) {
-        await this.progressBar.logWarn(`Found no files in zip: ${file}`);
+      if (!files.length) {
+        await this.progressBar.logWarn(`Found no files in zip: ${filePath}`);
       }
-      return romFiles;
+      return files;
     } catch (e) {
-      await this.progressBar.logError(`Failed to parse zip ${file} : ${e}`);
+      await this.progressBar.logError(`Failed to parse zip ${filePath} : ${e}`);
       return [];
     }
   }

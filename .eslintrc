@@ -7,7 +7,8 @@
   ],
   "plugins": [
     "@typescript-eslint",
-    "simple-import-sort"
+    "simple-import-sort",
+    "jest"
   ],
 
   "parser": "@typescript-eslint/parser",
@@ -16,6 +17,10 @@
     "sourceType": "module"
   },
   "ignorePatterns": ["build/**"],
+
+  "env": {
+    "jest/globals": true
+  },
 
   "rules": {
     "@typescript-eslint/explicit-function-return-type": "error",
