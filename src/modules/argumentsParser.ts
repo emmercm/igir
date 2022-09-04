@@ -20,7 +20,25 @@ export default class ArgumentsParser {
     return arr as T;
   }
 
-  // TODO(cemmer): a readme section about what is supported, like archives and archives with multiple files in them, like https://www.npmjs.com/package/romdj has
+  private static getHelpWidth(argv: string[]): number {
+    // Look for --help/-h with a numerical value
+    for (let i = 0; i < argv.length; i += 1) {
+      if (argv[i].toLowerCase() === '--help' || argv[i].toLowerCase() === '-h') {
+        const helpFlagVal = parseInt(argv[i + 1], 10);
+        if (!Number.isNaN(helpFlagVal)) {
+          return parseInt(argv[i + 1], 10);
+        }
+      }
+    }
+
+    return Math.min(
+      // Use the terminal width if it has one
+      process.stdout.isTTY ? terminalSize().columns : Number.MAX_SAFE_INTEGER,
+      // Sane maximum
+      110,
+    );
+  }
+
   parse(argv: string[]): Options {
     this.logger.info(`Parsing CLI arguments: ${argv}`);
 
@@ -284,12 +302,7 @@ export default class ArgumentsParser {
         type: 'count',
       })
 
-      .wrap(Math.min(
-        // If output is a real terminal, use the width, otherwise assume GitHub max width
-        process.stdout.isTTY ? terminalSize().columns : 95,
-        // Sane maximum
-        110,
-      ))
+      .wrap(ArgumentsParser.getHelpWidth(argv))
       .version(false)
       .example([
         ['$0 copy -i **/*.zip -o 1G1R/ -s -l EN -r USA,EUR,JPN', 'Produce a 1G1R set per console, preferring English from USA>EUR>JPN'],

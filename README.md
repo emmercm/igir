@@ -16,16 +16,16 @@ A ROM collection manager to help sort collections and make one game, one rom (1G
 
 `igir` needs two inputs:
 
-- One or more folders with **ROMs**, including ones in archives (.7z, .bz2, .cab, .gz, .lzma, .tar, .xz, .zip)
-- A folder with ROM **DAT catalogs** (see below for more information)
+1. One or more folders with **ROMs**, including ones in archives (.7z, .bz2, .cab, .gz, .lzma, .tar, .xz, .zip)
+2. A folder with ROM **DAT catalogs** (see below for more information)
 
-And then it will execute one or more commands:
+And then it will execute one or more specified commands:
 
 - `copy`: copy ROMs from input directories to an output directory
 - `move`: copy ROMs from input directories to an output directory
 - `zip`: create zip archives of output ROMs
-- `clean`: recycle all unknown files in an output directory
 - `test`: test all written ROMs for accuracy
+- `clean`: recycle all unknown files in an output directory
 - `report`: generate a report on ROMs in an input directory
 
 ## Installation
@@ -58,8 +58,8 @@ Commands:
   igir copy    Copy ROM files from the input to output directory
   igir move    Move ROM files from the input to output directory
   igir zip     Create .zip archives when copying or moving ROMs
-  igir clean   Recycle unknown files in the output directory
   igir test    Test ROMs for accuracy after writing them to the output directory
+  igir clean   Recycle unknown files in the output directory
   igir report  Generate a report on the known ROM files found in the input directories
 
 Path options (inputs support globbing):
@@ -139,8 +139,11 @@ Examples:
 
 XML-style DAT files that catalog every known ROM per system are required for `igir` to work effectively. A number of different release groups maintain these catalogs, the most popular are:
 
-- [No-Intro](https://datomatic.no-intro.org/index.php?page=download&s=64) (cartridge-based systems)
+- [No-Intro (P/C XML)](https://datomatic.no-intro.org/index.php?page=download&s=64&op=xml) (cartridge-based systems)
 - [Redump](http://redump.org/downloads/) (optical media-based systems)
+
+And some less popular release groups are:
+
 - [ADVANsCEne](https://www.advanscene.com/html/dats.php) (GBA, DS, 3DS, PSP)
 - [TOSEC](https://www.tosecdev.org/downloads/category/22-datfiles)
 
@@ -172,7 +175,8 @@ There a few different popular ROM managers that have similar features:
 
 - [clrmamepro](https://mamedev.emulab.it/clrmamepro/)
 - [Romcenter](http://www.romcenter.com/)
-- [Romulus Rom Manager](https://romulus.cc/)
+- [Romulus](https://romulus.cc/)
+- [RomVault](https://www.romvault.com/)
 
 Each manager has its own pros, but most share the same cons:
 
