@@ -118,6 +118,7 @@ demo-magic.sh
 *.gb
 *.gba
 *.gbc
+*.nes
 *.rom
 *.zip
 
