@@ -67,7 +67,7 @@ describe('toString', () => {
             game,
             game.getReleases()[0],
             [rom],
-            [rom].map((gameRom) => gameRom.toRomFile()),
+            [rom].map((gameRom) => gameRom.toFile()),
           ),
         ]);
       });
@@ -87,7 +87,7 @@ describe('toString', () => {
             game,
             game.getReleases()[0],
             game.getRoms(),
-            game.getRoms().map((gameRom) => gameRom.toRomFile()),
+            game.getRoms().map((gameRom) => gameRom.toFile()),
           ),
         ]);
       });
@@ -122,7 +122,7 @@ game with one rom and multiple releases`);
             game,
             game.getReleases()[0],
             [rom],
-            [rom].map((gameRom) => gameRom.toRomFile()),
+            [rom].map((gameRom) => gameRom.toFile()),
           ),
         ]);
       });
@@ -144,7 +144,7 @@ game with multiple roms and no releases`);
             game,
             game.getReleases()[0],
             game.getRoms(),
-            game.getRoms().map((gameRom) => gameRom.toRomFile()),
+            game.getRoms().map((gameRom) => gameRom.toFile()),
           ),
         ]);
       });

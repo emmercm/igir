@@ -1,7 +1,7 @@
+import File from './file.js';
 import Game from './logiqx/game.js';
 import Release from './logiqx/release.js';
 import ROM from './logiqx/rom.js';
-import ROMFile from './romFile.js';
 
 interface RegionOptions {
   region: string;
@@ -59,13 +59,13 @@ export default class ReleaseCandidate {
 
   private readonly roms!: ROM[];
 
-  private readonly romFiles!: ROMFile[];
+  private readonly files!: File[];
 
-  constructor(game: Game, release: Release | undefined, roms: ROM[], romFiles: ROMFile[]) {
+  constructor(game: Game, release: Release | undefined, roms: ROM[], files: File[]) {
     this.game = game;
     this.release = release;
     this.roms = roms;
-    this.romFiles = romFiles;
+    this.files = files;
   }
 
   static getRegions(): string[] {
@@ -93,8 +93,8 @@ export default class ReleaseCandidate {
     }, new Map<string, ROM>());
   }
 
-  getRomFiles(): ROMFile[] {
-    return this.romFiles;
+  getFiles(): File[] {
+    return this.files;
   }
 
   // Computed getters

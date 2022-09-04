@@ -13,10 +13,10 @@ import ROMScanner from './modules/romScanner.js';
 import ROMWriter from './modules/romWriter.js';
 import StatusGenerator from './modules/statusGenerator.js';
 import DATStatus from './types/datStatus.js';
+import File from './types/file.js';
 import DAT from './types/logiqx/dat.js';
 import Parent from './types/logiqx/parent.js';
 import Options from './types/options.js';
-import ROMFile from './types/romFile.js';
 
 export default class Igir {
   private readonly options: Options;
@@ -33,7 +33,7 @@ export default class Igir {
     const romFiles = await this.processROMScanner();
 
     const datProcessProgressBar = this.logger.addProgressBar('Processing DATs', Symbols.PROCESSING, dats.length);
-    const datsToWrittenRoms = new Map<DAT, Map<Parent, ROMFile[]>>();
+    const datsToWrittenRoms = new Map<DAT, Map<Parent, File[]>>();
     const datsStatuses: DATStatus[] = [];
 
     await async.eachLimit(dats, Constants.DAT_THREADS, async (dat, callback) => {
@@ -90,7 +90,7 @@ export default class Igir {
     return dats;
   }
 
-  private async processROMScanner(): Promise<ROMFile[]> {
+  private async processROMScanner(): Promise<File[]> {
     const progressBar = this.logger.addProgressBar('Scanning for ROMs', Symbols.WAITING);
     const romInputs = await new ROMScanner(this.options, progressBar).scan();
     // TODO(cemmer): is this reporting the right number? it might be inflated
@@ -99,18 +99,18 @@ export default class Igir {
   }
 
   private async processOutputCleaner(
-    datsToWrittenRoms: Map<DAT, Map<Parent, ROMFile[]>>,
+    datsToWrittenRoms: Map<DAT, Map<Parent, File[]>>,
   ): Promise<void> {
     if (!this.options.shouldClean()) {
       return;
     }
 
-    const cleanerProgressBar = this.logger.addProgressBar('Cleaning output', Symbols.WAITING);
-    const writtenRomFilesToExclude = [...datsToWrittenRoms.values()]
-      .flatMap((parentsToRomFiles) => [...parentsToRomFiles.values()])
-      .flatMap((romFiles) => romFiles);
+    const cleanerProgressBar = this.logger.addProgressBar('Cleaning output directory', Symbols.WAITING);
+    const writtenFilesToExclude = [...datsToWrittenRoms.values()]
+      .flatMap((parentsToFiles) => [...parentsToFiles.values()])
+      .flatMap((files) => files);
     const filesCleaned = await new OutputCleaner(this.options, cleanerProgressBar)
-      .clean(writtenRomFilesToExclude);
+      .clean(writtenFilesToExclude);
     await cleanerProgressBar.doneItems(filesCleaned, 'file', 'recycled');
   }
 

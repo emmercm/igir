@@ -114,7 +114,7 @@ function buildReleaseCandidatesWithRegionLanguage(
           game,
           release,
           game.getRoms(),
-          game.getRoms().map((gameRom) => gameRom.toRomFile()),
+          game.getRoms().map((gameRom) => gameRom.toFile()),
         ));
       }
     }

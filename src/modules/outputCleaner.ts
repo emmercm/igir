@@ -5,8 +5,8 @@ import path from 'path';
 import trash from 'trash';
 
 import ProgressBar, { Symbols } from '../console/progressBar.js';
+import File from '../types/file.js';
 import Options from '../types/options.js';
-import ROMFile from '../types/romFile.js';
 
 /**
  * Recycle any unknown files in the {@link OptionsProps.output} directory, if applicable.
@@ -23,10 +23,10 @@ export default class OutputCleaner {
     this.progressBar = progressBar;
   }
 
-  async clean(writtenRomFilesToExclude: ROMFile[]): Promise<number> {
+  async clean(writtenFilesToExclude: File[]): Promise<number> {
     // If nothing was written, then don't clean anything
-    const outputFilePathsToExclude = writtenRomFilesToExclude
-      .map((romFile) => romFile.getFilePath());
+    const outputFilePathsToExclude = writtenFilesToExclude
+      .map((file) => file.getFilePath());
     if (!outputFilePathsToExclude.length) {
       return 0;
     }
