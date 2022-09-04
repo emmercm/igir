@@ -1,9 +1,5 @@
-import async, { AsyncResultCallback } from 'async';
-
 import ProgressBar, { Symbols } from '../console/progressBar.js';
-import Constants from '../constants.js';
 import File from '../types/file.js';
-import FileHeader from '../types/fileHeader.js';
 import DAT from '../types/logiqx/dat.js';
 import Parent from '../types/logiqx/parent.js';
 import ReleaseCandidate from '../types/releaseCandidate.js';
@@ -32,28 +28,10 @@ export default class CandidateGenerator {
       return output;
     }
 
-    // If the DAT references a header file then use it for all files
-    let hashedRomFiles = inputRomFiles;
-    if (dat.getFileHeader()) {
-      await this.progressBar.setSymbol(Symbols.HASHING);
-      await this.progressBar.reset(inputRomFiles.length);
-
-      hashedRomFiles = await async.mapLimit(
-        inputRomFiles,
-        Constants.ROM_HEADER_HASHER_THREADS,
-        async (inputFile, callback: AsyncResultCallback<File, Error>) => {
-          await this.progressBar.increment();
-          const fileWithHeader = inputFile.withFileHeader(dat.getFileHeader() as FileHeader);
-          await fileWithHeader.resolve();
-          callback(null, fileWithHeader);
-        },
-      );
-    }
-
     await this.progressBar.setSymbol(Symbols.GENERATING);
     await this.progressBar.reset(dat.getParents().length);
 
-    const crc32ToInputFiles = await CandidateGenerator.indexFilesByCrc(hashedRomFiles);
+    const crc32ToInputFiles = await CandidateGenerator.indexFilesByCrc(inputRomFiles);
     await this.progressBar.logInfo(`${dat.getName()}: ${crc32ToInputFiles.size} unique ROM CRC32s found`);
 
     // For each parent, try to generate a parent candidate
