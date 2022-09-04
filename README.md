@@ -180,6 +180,7 @@ Each manager has its own pros, but most share the same cons:
 - Limited CLI support, making batching and repeatable actions difficult
 - UIs that don't clearly state what actions can, will, or are being performed
 - Required proprietary database setup step
+- Limited or nonexistent archive extraction support
 - Limited or nonexistent parent/clone, region, language, version, and ROM type filtering
 - Limited or nonexistent priorities when creating a 1G1R set
 - Limited or nonexistent folder management options
