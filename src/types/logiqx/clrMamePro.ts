@@ -9,6 +9,10 @@ import { Expose } from 'class-transformer';
  * @see http://www.logiqx.com/DatFAQs/CMPro.php
  */
 export default class ClrMamePro {
+  /**
+   * No-Intro DATs use this to indicate what file header has been added before the raw ROM data.
+   * {@link FileHeader.HEADERS}
+   */
   @Expose({ name: 'header' })
   private readonly header?: string;
 
@@ -24,4 +28,8 @@ export default class ClrMamePro {
 
   @Expose({ name: 'forcepacking' })
   private readonly forcePacking: 'zip' | 'unzip' = 'zip';
+
+  getHeader(): string | undefined {
+    return this.header;
+  }
 }

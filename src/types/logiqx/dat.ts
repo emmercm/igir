@@ -1,7 +1,9 @@
 import 'reflect-metadata';
 
 import { plainToInstance, Type } from 'class-transformer';
+import path from 'path';
 
+import FileHeader from '../fileHeader.js';
 import Game from './game.js';
 import Header from './header.js';
 import Parent from './parent.js';
@@ -59,10 +61,6 @@ export default class DAT {
     return this.header;
   }
 
-  getName(): string {
-    return this.getHeader().getName();
-  }
-
   getGames(): Game[] {
     if (this.game instanceof Array) {
       return this.game;
@@ -77,6 +75,10 @@ export default class DAT {
   }
 
   // Computed getters
+
+  getName(): string {
+    return this.getHeader().getName();
+  }
 
   getNameShort(): string {
     return this.getName()
@@ -115,5 +117,38 @@ export default class DAT {
       long += `(v${this.getHeader().getVersion()})`;
     }
     return long;
+  }
+
+  getFileHeader(): FileHeader | undefined {
+    // Look for an exact header name match from the DAT
+    const clrMameProHeader = this.getHeader().getClrMamePro()?.getHeader();
+    if (clrMameProHeader) {
+      const fileHeader = FileHeader.getByName(clrMameProHeader);
+      if (fileHeader) {
+        return fileHeader;
+      }
+    }
+
+    // If the DAT indicates the files are headered, infer a header by file extension
+    if (this.getName().match(/headered/i)) {
+      const extensionCounts = this.getGames().reduce((counts, game) => {
+        game.getRoms().forEach((rom) => {
+          const extension = path.extname(rom.getName());
+          const count = counts.has(extension) ? counts.get(extension) as number : 0;
+          counts.set(extension, count + 1);
+        });
+        return counts;
+      }, new Map<string, number>());
+
+      const topExtension = [...extensionCounts.entries()]
+        .sort((a, b) => b[1] - a[1])[0][0];
+
+      const fileHeader = FileHeader.getByExtension(topExtension);
+      if (fileHeader) {
+        return fileHeader;
+      }
+    }
+
+    return undefined;
   }
 }

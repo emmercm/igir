@@ -1,5 +1,6 @@
 import ProgressBar, { Symbols } from '../console/progressBar.js';
 import File from '../types/file.js';
+import FileHeader from '../types/fileHeader.js';
 import DAT from '../types/logiqx/dat.js';
 import Parent from '../types/logiqx/parent.js';
 import ReleaseCandidate from '../types/releaseCandidate.js';
@@ -28,11 +29,18 @@ export default class CandidateGenerator {
       return output;
     }
 
-    const crc32ToInputFiles = await CandidateGenerator.indexFilesByCrc(inputRomFiles);
-    await this.progressBar.logInfo(`${dat.getName()}: ${crc32ToInputFiles.size} unique ROM CRC32s found`);
+    // If the DAT references a header file then use it for all files
+    if (dat.getFileHeader()) {
+      // TODO(cemmer): do some CLI message here, and .resolve() all the files
+      inputRomFiles = inputRomFiles
+        .map((file) => file.withFileHeader(dat.getFileHeader() as FileHeader));
+    }
 
     await this.progressBar.setSymbol(Symbols.GENERATING);
     await this.progressBar.reset(dat.getParents().length);
+
+    const crc32ToInputFiles = await CandidateGenerator.indexFilesByCrc(inputRomFiles);
+    await this.progressBar.logInfo(`${dat.getName()}: ${crc32ToInputFiles.size} unique ROM CRC32s found`);
 
     // For each parent, try to generate a parent candidate
     dat.getParents().forEach((parent) => {

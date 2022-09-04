@@ -2,11 +2,11 @@ import _7z from '7zip-min';
 import AdmZip, { IZipEntry } from 'adm-zip';
 import crc32 from 'crc/crc32';
 import fs, { promises as fsPromises } from 'fs';
-import { PathLike } from 'node:fs';
 import path from 'path';
 
 import Constants from '../constants.js';
 import fsPoly from '../polyfill/fsPoly.js';
+import FileHeader from './fileHeader.js';
 
 export default class File {
   private readonly filePath: string;
@@ -15,45 +15,62 @@ export default class File {
 
   private readonly crc32: Promise<string>;
 
+  private readonly fileHeader?: FileHeader;
+
   constructor(
     filePath: string,
     archiveEntryPath?: string,
     crc?: string,
+    fileHeader?: FileHeader,
   ) {
     this.filePath = filePath;
     this.archiveEntryPath = archiveEntryPath;
+    this.fileHeader = fileHeader;
+
     if (crc) {
       this.crc32 = Promise.resolve(crc);
     } else {
-      this.crc32 = File.calculateCrc32(filePath);
+      this.crc32 = this.calculateCrc32();
     }
   }
 
-  private static async calculateCrc32(pathLike: PathLike): Promise<string> {
-    return new Promise((resolve, reject) => {
-      const stream = fs.createReadStream(pathLike, {
-        highWaterMark: 1024 * 1024, // 1MB
-      });
+  private async calculateCrc32(): Promise<string> {
+    return this.toLocalFile(async (localFile) => {
+      return new Promise((resolve, reject) => {
+        const stream = fs.createReadStream(localFile, {
+          start: this.fileHeader?.dataOffsetBytes || 0,
+          highWaterMark: 1024 * 1024, // 1MB
+        });
 
-      let crc: number;
-      stream.on('data', (chunk) => {
-        if (!crc) {
-          crc = crc32(chunk);
-        } else {
-          crc = crc32(chunk, crc);
-        }
-      });
-      stream.on('end', () => {
-        resolve((crc || 0).toString(16));
-      });
+        let crc: number;
+        stream.on('data', (chunk) => {
+          if (!crc) {
+            crc = crc32(chunk);
+          } else {
+            crc = crc32(chunk, crc);
+          }
+        });
+        stream.on('end', () => {
+          resolve((crc || 0).toString(16));
+        });
 
-      stream.on('error', (err) => reject(err));
+        stream.on('error', (err) => reject(err));
+      });
     });
   }
 
   async resolve(): Promise<this> {
     await this.getCrc32();
     return this;
+  }
+
+  withFileHeader(fileHeader: FileHeader): File {
+    return new File(
+      this.filePath,
+      this.archiveEntryPath,
+      undefined, // the old CRC can't be used, a header will change it
+      fileHeader,
+    );
   }
 
   /** *************************
@@ -81,18 +98,17 @@ export default class File {
    ************************* */
 
   isZip(): boolean {
-    return path.extname(this.getFilePath()).toLowerCase() === '.zip';
+    return path.extname(this.filePath).toLowerCase() === '.zip';
   }
 
-  async toLocalFile(
-    globalTempDir: string,
-    callback: (localFile: string) => void | Promise<void>,
-  ): Promise<void> {
+  async toLocalFile<T>(
+    callback: (localFile: string) => T | Promise<T>,
+  ): Promise<T> {
     let tempDir;
     let localFile = this.filePath;
 
     if (this.archiveEntryPath) {
-      tempDir = await fsPromises.mkdtemp(globalTempDir);
+      tempDir = await fsPromises.mkdtemp(Constants.GLOBAL_TEMP_DIR);
       localFile = path.join(tempDir, this.archiveEntryPath);
 
       if (Constants.ZIP_EXTENSIONS.indexOf(path.extname(this.filePath)) !== -1) {
@@ -105,7 +121,7 @@ export default class File {
     }
 
     try {
-      await callback(localFile);
+      return await callback(localFile);
     } finally {
       if (tempDir) {
         fsPoly.rmSync(tempDir, { recursive: true });
@@ -115,7 +131,7 @@ export default class File {
 
   private async extract7zToLocal(tempFile: string): Promise<void> {
     await new Promise<void>((resolve, reject) => {
-      _7z.unpack(this.getFilePath(), path.dirname(tempFile), (err) => {
+      _7z.unpack(this.filePath, path.dirname(tempFile), (err) => {
         if (err) {
           reject(err);
         } else {
@@ -126,10 +142,10 @@ export default class File {
   }
 
   private extractZipToLocal(tempFile: string): void {
-    const zip = new AdmZip(this.getFilePath());
-    const entry = zip.getEntry(this.getArchiveEntryPath() as string);
+    const zip = new AdmZip(this.filePath);
+    const entry = zip.getEntry(this.archiveEntryPath as string);
     if (!entry) {
-      throw new Error(`Entry path ${this.getArchiveEntryPath()} does not exist in ${this.getFilePath()}`);
+      throw new Error(`Entry path ${this.archiveEntryPath} does not exist in ${this.filePath}`);
     }
     zip.extractEntryTo(
       entry as IZipEntry,
@@ -159,8 +175,8 @@ export default class File {
     if (this === other) {
       return true;
     }
-    return this.getFilePath() === other.getFilePath()
-        && this.getArchiveEntryPath() === other.getArchiveEntryPath()
+    return this.filePath === other.getFilePath()
+        && this.archiveEntryPath === other.getArchiveEntryPath()
         && await this.getCrc32() === await other.getCrc32();
   }
 }

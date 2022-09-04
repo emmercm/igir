@@ -121,8 +121,6 @@ export default class Options implements OptionsProps {
 
   readonly help!: boolean;
 
-  private tempDir!: string;
-
   constructor(options?: OptionsProps) {
     this.commands = options?.commands || [];
     this.dat = options?.dat || [];
@@ -159,7 +157,6 @@ export default class Options implements OptionsProps {
     this.verbose = options?.verbose || 0;
     this.help = options?.help || false;
 
-    this.createTempDir();
     this.validate();
   }
 
@@ -167,23 +164,11 @@ export default class Options implements OptionsProps {
     return plainToInstance(Options, obj, {
       enableImplicitConversion: true,
     })
-      .createTempDir()
       .validate();
   }
 
   toString(): string {
     return JSON.stringify(instanceToPlain(this));
-  }
-
-  private createTempDir(): Options {
-    this.tempDir = fsPoly.mkdtempSync();
-    process.on('SIGINT', () => {
-      fsPoly.rmSync(this.tempDir, {
-        force: true,
-        recursive: true,
-      });
-    });
-    return this;
   }
 
   private validate(): Options {
@@ -301,7 +286,7 @@ export default class Options implements OptionsProps {
   }
 
   getOutput(dat?: DAT, inputRomPath?: string, romName?: string): string {
-    let output = this.shouldWrite() ? this.output : this.getTempDir();
+    let output = this.shouldWrite() ? this.output : Constants.GLOBAL_TEMP_DIR;
     if (this.getDirMirror() && inputRomPath) {
       const mirroredDir = path.dirname(inputRomPath)
         .replace(/[\\/]/g, path.sep)
@@ -462,10 +447,6 @@ export default class Options implements OptionsProps {
 
   getHelp(): boolean {
     return this.help;
-  }
-
-  getTempDir(): string {
-    return this.tempDir;
   }
 
   static filterUniqueUpper(array: string[]): string[] {
