@@ -2,6 +2,7 @@ import _7z, { Result } from '7zip-min';
 import AdmZip from 'adm-zip';
 import async, { AsyncResultCallback } from 'async';
 import { Mutex } from 'async-mutex';
+import unrar from 'node-unrar-js';
 import path from 'path';
 
 import ProgressBar, { Symbols } from '../console/progressBar.js';
@@ -45,7 +46,9 @@ export default class ROMScanner {
 
         let romFiles: ROMFile[];
         if (Constants.ZIP_EXTENSIONS.indexOf(path.extname(inputFile)) !== -1) {
-          romFiles = this.getRomFilesInZip(inputFile);
+          romFiles = await this.getRomFilesInZip(inputFile);
+        } else if (Constants.RAR_EXTENSIONS.indexOf(path.extname(inputFile)) !== -1) {
+          romFiles = await this.getRomFilesInRar(inputFile);
         } else if (Constants.SEVENZIP_EXTENSIONS.indexOf(path.extname(inputFile)) !== -1) {
           romFiles = await this.getRomFilesIn7z(inputFile);
         } else {
@@ -71,10 +74,10 @@ export default class ROMScanner {
               .replace(/\n\n+/g, '\n')
               .replace(/^/gm, '   ')
               .trim();
-            this.progressBar.logError(`Failed to parse 7z ${file} : ${msg}`);
+            this.progressBar.logError(`Failed to parse archive ${file} : ${msg}`);
             resolve([]);
           } else if (!result.length) {
-            this.progressBar.logWarn(`Found no files in 7z: ${file}`);
+            this.progressBar.logWarn(`Found no files in archive: ${file}`);
             resolve([]);
           } else {
             resolve(result);
@@ -85,7 +88,24 @@ export default class ROMScanner {
     });
   }
 
-  private getRomFilesInZip(file: string): ROMFile[] {
+  private async getRomFilesInRar(file: string): Promise<ROMFile[]> {
+    try {
+      const rar = await unrar.createExtractorFromFile({
+        filepath: file,
+      });
+      const rarFiles = [...rar.getFileList().fileHeaders]
+        .map((fileHeader) => new ROMFile(file, fileHeader.name, fileHeader.crc.toString(16)));
+      if (!rarFiles.length) {
+        await this.progressBar.logWarn(`Found no files in rar: ${rar}`);
+      }
+      return rarFiles;
+    } catch (e) {
+      await this.progressBar.logError(`Failed to parse rar ${file} : ${e}`);
+      return [];
+    }
+  }
+
+  private async getRomFilesInZip(file: string): Promise<ROMFile[]> {
     try {
       const zip = new AdmZip(file);
       const romFiles = zip.getEntries()
@@ -95,11 +115,11 @@ export default class ROMScanner {
           entry.header.crc.toString(16),
         ));
       if (!romFiles.length) {
-        this.progressBar.logWarn(`Found no files in zip: ${file}`);
+        await this.progressBar.logWarn(`Found no files in zip: ${file}`);
       }
       return romFiles;
     } catch (e) {
-      this.progressBar.logError(`Failed to parse zip ${file} : ${e}`);
+      await this.progressBar.logError(`Failed to parse zip ${file} : ${e}`);
       return [];
     }
   }
