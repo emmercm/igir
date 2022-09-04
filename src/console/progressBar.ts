@@ -5,6 +5,7 @@ import LogLevel from './logLevel.js';
 export const Symbols: { [key: string]: string } = {
   WAITING: chalk.grey('⋯'),
   SEARCHING: chalk.magenta('↻'),
+  HASHING: chalk.magenta('#'),
   GENERATING: chalk.cyan('Σ'),
   PROCESSING: chalk.cyan('⚙'),
   FILTERING: chalk.cyan('∆'),

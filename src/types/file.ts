@@ -36,12 +36,20 @@ export default class File {
 
   private async calculateCrc32(): Promise<string> {
     return this.toLocalFile(async (localFile) => {
+      // If we're hashing a file with a header, make sure the file actually has the header magic
+      // string before excluding it
+      let start = 0;
+      if (this.fileHeader && await this.fileHeader.fileHasHeader(localFile)) {
+        start = this.fileHeader.headerOffsetBytes;
+      }
+
       return new Promise((resolve, reject) => {
         const stream = fs.createReadStream(localFile, {
-          start: this.fileHeader?.dataOffsetBytes || 0,
-          highWaterMark: 1024 * 1024, // 1MB
+          start,
+          highWaterMark: Constants.FILE_READING_CHUNK_SIZE,
         });
 
+        // TODO(cemmer): swap this out for the 'crypto' library
         let crc: number;
         stream.on('data', (chunk) => {
           if (!crc) {

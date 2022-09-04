@@ -123,7 +123,7 @@ export default class SingleBarFormatted {
     const seconds = this.eta as number;
     const secondsRounded = 5 * Math.round(seconds / 5);
     if (secondsRounded >= 3600) {
-      return `${Math.floor(secondsRounded / 3600)}h${(secondsRounded % 3600) / 60}m`;
+      return `${Math.floor(secondsRounded / 3600)}h${Math.floor((secondsRounded % 3600) / 60)}m`;
     } if (secondsRounded >= 60) {
       return `${Math.floor(secondsRounded / 60)}m${(secondsRounded % 60)}s`;
     } if (seconds >= 10) {

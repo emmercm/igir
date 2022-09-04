@@ -1,7 +1,6 @@
 import 'reflect-metadata';
 
 import { plainToInstance, Type } from 'class-transformer';
-import path from 'path';
 
 import FileHeader from '../fileHeader.js';
 import Game from './game.js';
@@ -82,27 +81,23 @@ export default class DAT {
 
   getNameShort(): string {
     return this.getName()
-    // Prefixes
+      // Prefixes
       .replace('Non-Redump', '')
       .replace('Source Code', '')
       .replace('Unofficial', '')
-    // Suffixes
+      // Suffixes
       .replace('Datfile', '')
-      .replace('(BigEndian)', '')
       .replace('(CDN)', '')
-      .replace('(Decrypted)', '')
       .replace('(Deprecated)', '')
       .replace('(Digital)', '')
       .replace('(Download Play)', '')
-      .replace('(Headered)', '')
       .replace('(Misc)', '')
-      // .replace('(Multiboot)', '')
       .replace(/\(Parent-Clone\)/g, '')
       .replace('(PSN)', '')
       .replace('(Split DLC)', '')
       .replace('(WAD)', '')
       .replace('(WIP)', '')
-    // Cleanup
+      // Cleanup
       .replace(/^[ -]+/, '')
       .replace(/[ -]+$/, '')
       .replace(/  +/g, ' ')
@@ -124,26 +119,6 @@ export default class DAT {
     const clrMameProHeader = this.getHeader().getClrMamePro()?.getHeader();
     if (clrMameProHeader) {
       const fileHeader = FileHeader.getByName(clrMameProHeader);
-      if (fileHeader) {
-        return fileHeader;
-      }
-    }
-
-    // If the DAT indicates the files are headered, infer a header by file extension
-    if (this.getName().match(/headered/i)) {
-      const extensionCounts = this.getGames().reduce((counts, game) => {
-        game.getRoms().forEach((rom) => {
-          const extension = path.extname(rom.getName());
-          const count = counts.has(extension) ? counts.get(extension) as number : 0;
-          counts.set(extension, count + 1);
-        });
-        return counts;
-      }, new Map<string, number>());
-
-      const topExtension = [...extensionCounts.entries()]
-        .sort((a, b) => b[1] - a[1])[0][0];
-
-      const fileHeader = FileHeader.getByExtension(topExtension);
       if (fileHeader) {
         return fileHeader;
       }
