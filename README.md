@@ -16,7 +16,7 @@ A ROM collection manager to help sort collections and make one game, one rom (1G
 
 `igir` needs two inputs:
 
-- One or more folders with **ROMs**, including ones in archives (.7z, .bz2, .cab, .gz, .lzma, .tar, .xz, .zip)
+- One or more folders with **ROMs**, including ones in archives (.001, .7z, .bz2, .gz, .rar, .tar, .xz, .z, .z01, .zip, .zipx)
 - A folder with ROM **DAT catalogs** (see below for more information)
 
 And then it will execute one or more commands:
