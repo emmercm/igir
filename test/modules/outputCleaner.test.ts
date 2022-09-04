@@ -1,3 +1,4 @@
+import { jest } from '@jest/globals';
 import path from 'path';
 
 import OutputCleaner from '../../src/modules/outputCleaner.js';
@@ -5,6 +6,8 @@ import fsPoly from '../../src/polyfill/fsPoly.js';
 import File from '../../src/types/file.js';
 import Options from '../../src/types/options.js';
 import ProgressBarFake from '../console/progressBarFake.js';
+
+jest.setTimeout(10_000);
 
 async function runOutputCleaner(writtenFilePathsToExclude: string[]): Promise<string[]> {
   // Copy the fixture files to a temp directory

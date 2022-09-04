@@ -18,10 +18,10 @@ export default class File {
   private readonly fileHeader?: FileHeader;
 
   constructor(
-    filePath: string,
-    archiveEntryPath?: string,
-    crc?: string,
-    fileHeader?: FileHeader,
+      filePath: string,
+      archiveEntryPath?: string,
+      crc?: string,
+      fileHeader?: FileHeader,
   ) {
     this.filePath = filePath;
     this.archiveEntryPath = archiveEntryPath;
@@ -75,10 +75,10 @@ export default class File {
 
   withFileHeader(fileHeader: FileHeader): File {
     return new File(
-      this.filePath,
-      this.archiveEntryPath,
-      undefined, // the old CRC can't be used, a header will change it
-      fileHeader,
+        this.filePath,
+        this.archiveEntryPath,
+        undefined, // the old CRC can't be used, a header will change it
+        fileHeader,
     );
   }
 
@@ -111,7 +111,7 @@ export default class File {
   }
 
   async toLocalFile<T>(
-    callback: (localFile: string) => T | Promise<T>,
+      callback: (localFile: string) => T | Promise<T>,
   ): Promise<T> {
     let tempDir;
     let localFile = this.filePath;
@@ -157,12 +157,12 @@ export default class File {
       throw new Error(`Entry path ${this.archiveEntryPath} does not exist in ${this.filePath}`);
     }
     zip.extractEntryTo(
-      entry as IZipEntry,
-      path.dirname(tempFile),
-      false,
-      false,
-      false,
-      path.basename(tempFile),
+        entry as IZipEntry,
+        path.dirname(tempFile),
+        false,
+        false,
+        false,
+        path.basename(tempFile),
     );
   }
 
