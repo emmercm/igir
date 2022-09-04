@@ -60,10 +60,10 @@ export default class ArgumentsParser {
       .command('zip', 'Create .zip archives when copying or moving ROMs', (yargsSubObj) => {
         addCommands(yargsSubObj);
       })
-      .command('clean', 'Recycle unknown files in the output directory', (yargsSubObj) => {
+      .command('test', 'Test ROMs for accuracy after writing them to the output directory', (yargsSubObj) => {
         addCommands(yargsSubObj);
       })
-      .command('test', 'Test ROMs for accuracy after writing them to the output directory', (yargsSubObj) => {
+      .command('clean', 'Recycle unknown files in the output directory', (yargsSubObj) => {
         addCommands(yargsSubObj);
       })
       .command('report', 'Generate a report on the known ROM files found in the input directories', (yargsSubObj) => {
