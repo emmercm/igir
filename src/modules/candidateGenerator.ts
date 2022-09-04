@@ -33,12 +33,12 @@ export default class CandidateGenerator {
     }
 
     // If the DAT references a header file then use it for all files
+    let hashedRomFiles = inputRomFiles;
     if (dat.getFileHeader()) {
       await this.progressBar.setSymbol(Symbols.HASHING);
       await this.progressBar.reset(inputRomFiles.length);
 
-      // TODO(cemmer): do some CLI message here, and .resolve() all the files
-      inputRomFiles = await async.mapLimit(
+      hashedRomFiles = await async.mapLimit(
         inputRomFiles,
         Constants.ROM_HEADER_HASHER_THREADS,
         async (inputFile, callback: AsyncResultCallback<File, Error>) => {
@@ -53,7 +53,7 @@ export default class CandidateGenerator {
     await this.progressBar.setSymbol(Symbols.GENERATING);
     await this.progressBar.reset(dat.getParents().length);
 
-    const crc32ToInputFiles = await CandidateGenerator.indexFilesByCrc(inputRomFiles);
+    const crc32ToInputFiles = await CandidateGenerator.indexFilesByCrc(hashedRomFiles);
     await this.progressBar.logInfo(`${dat.getName()}: ${crc32ToInputFiles.size} unique ROM CRC32s found`);
 
     // For each parent, try to generate a parent candidate

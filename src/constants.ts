@@ -23,8 +23,8 @@ export default class Constants {
 
   // TODO(cemmer): is there a way to set a global limit with only one DAT? semaphores?
   static readonly ROM_HEADER_HASHER_THREADS = Math.ceil(
-      Constants.ROM_SCANNER_THREADS / Constants.DAT_THREADS,
-  )
+    Constants.ROM_SCANNER_THREADS / Constants.DAT_THREADS,
+  );
 
   static readonly ROM_WRITER_THREADS = Math.ceil(
     Constants.ROM_SCANNER_THREADS / Constants.DAT_THREADS,
