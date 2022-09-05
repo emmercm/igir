@@ -52,6 +52,6 @@ export default class ROM {
   }
 
   toFile(): File {
-    return new File(this.getName(), undefined, this.getCrc32());
+    return new File(this.getName(), this.getCrc32());
   }
 }

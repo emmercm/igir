@@ -15,7 +15,7 @@ async function runOutputCleaner(writtenFilePathsToExclude: string[]): Promise<st
   fsPoly.copyDirSync('./test/fixtures', tempDir);
 
   const writtenRomFilesToExclude = writtenFilePathsToExclude
-    .map((filePath) => new File(path.join(tempDir, filePath), undefined, '00000000'));
+    .map((filePath) => new File(path.join(tempDir, filePath), '00000000'));
 
   const before = fsPoly.walkSync(tempDir);
   expect(before.length).toBeGreaterThan(0);

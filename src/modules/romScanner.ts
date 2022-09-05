@@ -2,7 +2,7 @@ import async, { AsyncResultCallback } from 'async';
 
 import ProgressBar, { Symbols } from '../console/progressBar.js';
 import Constants from '../constants.js';
-import Archive from '../types/files/archive.js';
+import ArchiveFactory from '../types/files/archiveFactory.js';
 import File from '../types/files/file.js';
 import Options from '../types/options.js';
 
@@ -39,8 +39,16 @@ export default class ROMScanner {
         await this.progressBar.increment();
 
         let files: File[];
-        if (Archive.isArchive(inputFile)) {
-          files = await Archive.from(inputFile).listAllEntryPaths();
+        if (ArchiveFactory.isArchive(inputFile)) {
+          try {
+            files = await ArchiveFactory.archiveFrom(inputFile).listAllEntryPaths();
+            if (!files.length) {
+              await this.progressBar.logWarn(`Found no files in archive: ${inputFile}`);
+            }
+          } catch (e) {
+            await this.progressBar.logError(`Failed to parse archive ${inputFile} : ${e}`);
+            files = [];
+          }
         } else {
           files = [await new File(inputFile).resolve()];
         }
