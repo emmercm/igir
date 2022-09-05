@@ -74,7 +74,7 @@ describe('toLocalFile', () => {
     const raws = await new ROMScanner(new Options({
       input: ['./test/fixtures/roms/raw'],
     }), new ProgressBarFake()).scan();
-    expect(raws.length).toBeGreaterThan(0);
+    expect(raws).toHaveLength(5);
 
     const temp = fsPoly.mkdtempSync();
     /* eslint-disable no-await-in-loop */
@@ -93,7 +93,7 @@ describe('toLocalFile', () => {
     const zips = await new ROMScanner(new Options({
       input: ['./test/fixtures/roms/zip'],
     }), new ProgressBarFake()).scan();
-    expect(zips.length).toBeGreaterThan(0);
+    expect(zips).toHaveLength(4);
 
     const temp = fsPoly.mkdtempSync();
     /* eslint-disable no-await-in-loop */
@@ -112,7 +112,7 @@ describe('toLocalFile', () => {
     const rars = await new ROMScanner(new Options({
       input: ['./test/fixtures/roms/rar'],
     }), new ProgressBarFake()).scan();
-    expect(rars.length).toBeGreaterThan(0);
+    expect(rars).toHaveLength(4);
 
     const temp = fsPoly.mkdtempSync();
     /* eslint-disable no-await-in-loop */
@@ -131,7 +131,7 @@ describe('toLocalFile', () => {
     const sevenZips = await new ROMScanner(new Options({
       input: ['./test/fixtures/roms/7z'],
     }), new ProgressBarFake()).scan();
-    expect(sevenZips.length).toBeGreaterThan(0);
+    expect(sevenZips).toHaveLength(4);
 
     const temp = fsPoly.mkdtempSync();
     /* eslint-disable no-await-in-loop */
