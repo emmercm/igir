@@ -3,7 +3,7 @@ import path from 'path';
 
 import OutputCleaner from '../../src/modules/outputCleaner.js';
 import fsPoly from '../../src/polyfill/fsPoly.js';
-import File from '../../src/types/file.js';
+import File from '../../src/types/files/file.js';
 import Options from '../../src/types/options.js';
 import ProgressBarFake from '../console/progressBarFake.js';
 

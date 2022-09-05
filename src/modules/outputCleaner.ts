@@ -5,7 +5,7 @@ import path from 'path';
 import trash from 'trash';
 
 import ProgressBar, { Symbols } from '../console/progressBar.js';
-import File from '../types/file.js';
+import File from '../types/files/file.js';
 import Options from '../types/options.js';
 
 /**

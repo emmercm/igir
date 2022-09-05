@@ -1,6 +1,6 @@
 import { Expose } from 'class-transformer';
 
-import File from '../file.js';
+import File from '../files/file.js';
 
 /**
  * @see http://www.logiqx.com/DatFAQs/CMPro.php

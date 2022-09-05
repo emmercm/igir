@@ -6,7 +6,7 @@ import path from 'path';
 import ProgressBar, { Symbols } from '../console/progressBar.js';
 import Constants from '../constants.js';
 import fsPoly from '../polyfill/fsPoly.js';
-import File from '../types/file.js';
+import File from '../types/files/file.js';
 import DAT from '../types/logiqx/dat.js';
 import Parent from '../types/logiqx/parent.js';
 import ROM from '../types/logiqx/rom.js';
@@ -221,7 +221,7 @@ export default class ROMWriter {
 
     // Write the entry
     try {
-      await inputRomFile.toLocalFile(this.options.getTempDir(), async (localFile) => {
+      await inputRomFile.extract(this.options.getTempDir(), async (localFile) => {
         await this.progressBar.logDebug(`${outputZipPath}: adding ${localFile}`);
         outputZip.addLocalFile(
           localFile,
@@ -327,7 +327,7 @@ export default class ROMWriter {
 
   private async writeRawFile(inputRomFile: File, outputFilePath: string): Promise<boolean> {
     try {
-      await inputRomFile.toLocalFile(this.options.getTempDir(), async (localFile) => {
+      await inputRomFile.extract(this.options.getTempDir(), async (localFile) => {
         await this.progressBar.logDebug(`${localFile}: copying to ${outputFilePath}`);
         await fsPromises.copyFile(localFile, outputFilePath);
       });

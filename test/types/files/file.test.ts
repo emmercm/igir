@@ -1,10 +1,10 @@
 import fs from 'fs';
 
-import ROMScanner from '../../src/modules/romScanner.js';
-import fsPoly from '../../src/polyfill/fsPoly.js';
-import File from '../../src/types/file.js';
-import Options from '../../src/types/options.js';
-import ProgressBarFake from '../console/progressBarFake.js';
+import ROMScanner from '../../../src/modules/romScanner.js';
+import fsPoly from '../../../src/polyfill/fsPoly.js';
+import File from '../../../src/types/files/file.js';
+import Options from '../../../src/types/options.js';
+import ProgressBarFake from '../../console/progressBarFake.js';
 
 describe('getFilePath', () => {
   it('should return the constructor value', () => {
@@ -80,7 +80,7 @@ describe('toLocalFile', () => {
     /* eslint-disable no-await-in-loop */
     for (let i = 0; i < raws.length; i += 1) {
       const raw = raws[i];
-      await raw.toLocalFile(temp, (localFile) => {
+      await raw.extract(temp, (localFile) => {
         expect(fs.existsSync(localFile)).toEqual(true);
         expect(localFile).toEqual(raw.getFilePath());
       });
@@ -99,7 +99,7 @@ describe('toLocalFile', () => {
     /* eslint-disable no-await-in-loop */
     for (let i = 0; i < zips.length; i += 1) {
       const zip = zips[i];
-      await zip.toLocalFile(temp, (localFile) => {
+      await zip.extract(temp, (localFile) => {
         expect(fs.existsSync(localFile)).toEqual(true);
         expect(localFile).not.toEqual(zip.getFilePath());
       });
@@ -118,7 +118,7 @@ describe('toLocalFile', () => {
     /* eslint-disable no-await-in-loop */
     for (let i = 0; i < rars.length; i += 1) {
       const rar = rars[i];
-      await rar.toLocalFile(temp, (localFile) => {
+      await rar.extract(temp, (localFile) => {
         expect(fs.existsSync(localFile)).toEqual(true);
         expect(localFile).not.toEqual(rar.getFilePath());
       });
@@ -137,7 +137,7 @@ describe('toLocalFile', () => {
     /* eslint-disable no-await-in-loop */
     for (let i = 0; i < sevenZips.length; i += 1) {
       const sevenZip = sevenZips[i];
-      await sevenZip.toLocalFile(temp, (localFile) => {
+      await sevenZip.extract(temp, (localFile) => {
         expect(fs.existsSync(localFile)).toEqual(true);
         expect(localFile).not.toEqual(sevenZip.getFilePath());
       });
@@ -148,7 +148,7 @@ describe('toLocalFile', () => {
   it('should throw an error on unknown archives', async () => {
     const file = new File('image.iso', 'file.rom', '00000000');
     const temp = fsPoly.mkdtempSync();
-    await expect(file.toLocalFile(temp, () => {})).rejects.toThrow(/unknown/i);
+    await expect(file.extract(temp, () => {})).rejects.toThrow(/unknown/i);
     fsPoly.rmSync(temp, { recursive: true });
   });
 });

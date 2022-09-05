@@ -1,5 +1,5 @@
 import CandidateGenerator from '../../src/modules/candidateGenerator.js';
-import File from '../../src/types/file.js';
+import File from '../../src/types/files/file.js';
 import DAT from '../../src/types/logiqx/dat.js';
 import Game from '../../src/types/logiqx/game.js';
 import Header from '../../src/types/logiqx/header.js';

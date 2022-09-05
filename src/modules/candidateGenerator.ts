@@ -1,5 +1,5 @@
 import ProgressBar, { Symbols } from '../console/progressBar.js';
-import File from '../types/file.js';
+import File from '../types/files/file.js';
 import DAT from '../types/logiqx/dat.js';
 import Parent from '../types/logiqx/parent.js';
 import ReleaseCandidate from '../types/releaseCandidate.js';
