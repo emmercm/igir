@@ -1,8 +1,7 @@
 import crc32 from 'crc/crc32';
 import fs from 'fs';
 import { PathLike } from 'node:fs';
-
-import ArchiveEntry from './archiveEntry.js';
+import path from 'path';
 
 export default class File {
   private readonly filePath: string;
@@ -25,6 +24,10 @@ export default class File {
       this.crc32 = File.calculateCrc32(this.filePath);
     }
     return (await this.crc32).toLowerCase().padStart(8, '0');
+  }
+
+  isZip(): boolean {
+    return path.extname(this.getFilePath()).toLowerCase() === '.zip';
   }
 
   private static async calculateCrc32(pathLike: PathLike): Promise<string> {
@@ -54,10 +57,7 @@ export default class File {
     return this;
   }
 
-  async extractEntry(
-    archiveEntry: ArchiveEntry,
-    callback: (localFile: string) => (void | Promise<void>),
-  ): Promise<void> {
+  async extract(callback: (localFile: string) => (void | Promise<void>)): Promise<void> {
     await callback(this.filePath);
   }
 

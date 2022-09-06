@@ -1,4 +1,5 @@
 import CandidateGenerator from '../../src/modules/candidateGenerator.js';
+import ArchiveEntry from '../../src/types/files/archiveEntry.js';
 import File from '../../src/types/files/file.js';
 import Zip from '../../src/types/files/zip.js';
 import DAT from '../../src/types/logiqx/dat.js';
@@ -13,7 +14,7 @@ const candidateGenerator = new CandidateGenerator(new ProgressBarFake());
 it('should return no results with no games in DAT', async () => {
   const dat = new DAT(new Header(), []);
   const fileOne = new File('foo', '00000000');
-  const fileTwo = new Zip('fizz', 'buzz', 'ffffffff');
+  const fileTwo = new ArchiveEntry(new Zip('fizz'), 'buzz', 'ffffffff');
 
   await expect(candidateGenerator.generate(dat, [])).resolves.toHaveProperty('size', 0);
   await expect(candidateGenerator.generate(dat, [fileOne])).resolves.toHaveProperty('size', 0);
@@ -48,7 +49,7 @@ it('should return no results with no matching files', async () => {
 
   const fileOne = new File('one.rom', '34567890');
   const fileTwo = new File('two.a', 'abcd1234');
-  const fileThree = new Zip('three.zip', 'three.b', '4321fedc');
+  const fileThree = new ArchiveEntry(new Zip('three.zip'), 'three.b', '4321fedc');
 
   const expectCandidates = async (dat: DAT, inputRomFiles: File[]): Promise<void> => {
     // The DAT definitely has some parents
@@ -151,7 +152,7 @@ it('should return some results with some matching files', async () => {
   const datWithTwoGames = new DAT(new Header(), [gameOne, gameTwo]);
 
   const fileOne = new File('one.rom', '12345678');
-  const fileTwo = new Zip('three.zip', 'three.b', '4321fedc');
+  const fileTwo = new ArchiveEntry(new Zip('three.zip'), 'three.b', '4321fedc');
 
   const expectCandidates = async (dat: DAT, inputRomFiles: File[]): Promise<void> => {
     // The DAT definitely has some parents
@@ -193,8 +194,8 @@ it('should return all results with all matching files', async () => {
   const datWithGameTwo = new DAT(new Header(), [gameTwo]);
 
   const fileOne = new File('one.rom', '12345678');
-  const fileTwo = new Zip('two.zip', 'two.a', 'abcdef90');
-  const fileThree = new Zip('two.zip', 'two.b', '09876543');
+  const fileTwo = new ArchiveEntry(new Zip('two.zip'), 'two.a', 'abcdef90');
+  const fileThree = new ArchiveEntry(new Zip('two.zip'), 'two.b', '09876543');
 
   const expectCandidates = async (dat: DAT, inputRomFiles: File[]): Promise<void> => {
     // The DAT definitely has some parents
