@@ -16,7 +16,7 @@ A ROM collection manager to help sort collections and make one game, one rom (1G
 
 `igir` needs two inputs:
 
-- One or more folders with **ROMs**, including ones in archives (.7z, .bz2, .cab, .gz, .lzma, .tar, .xz, .zip)
+- One or more folders with **ROMs**, including ones in archives (.001, .7z, .bz2, .gz, .rar, .tar, .xz, .z, .z01, .zip, .zipx)
 - A folder with ROM **DAT catalogs** (see below for more information)
 
 And then it will execute one or more commands:
@@ -121,8 +121,8 @@ Options:
   -h, --help  Show help                                                               [boolean]
 
 Examples:
-  igir copy -i **/*.zip -o 1G1R/ -s -l EN -r USA,  Produce a 1G1R set per console, preferring E
-  EUR,JPN                                          nglish from USA>EUR>JPN
+  igir copy -i **/*.zip -o 1G1R/ -D -s -l EN -r U  Produce a 1G1R set per console, preferring E
+  SA,EUR,JPN                                       nglish from USA>EUR>JPN
 
   igir copy report -i **/*.zip -i ROMs/ -o ROMs/   Merge new ROMs into an existing ROM collecti
                                                    on and generate a report
@@ -131,7 +131,7 @@ Examples:
 
   igir copy -i **/*.zip -o BIOS/ --only-bios       Collate all BIOS files
 
-  igir copy -i ROMs/ -o /media/SDCard/ROMs/ -D --  Copy ROMs to a flash cart
+  igir copy -i ROMs/ -o /media/SDCard/ROMs/ -D --  Copy ROMs to a flash cart and test them
   dir-letter -t
 ```
 
@@ -180,6 +180,7 @@ Each manager has its own pros, but most share the same cons:
 - Limited CLI support, making batching and repeatable actions difficult
 - UIs that don't clearly state what actions can, will, or are being performed
 - Required proprietary database setup step
+- Limited or nonexistent archive extraction support
 - Limited or nonexistent parent/clone, region, language, version, and ROM type filtering
 - Limited or nonexistent priorities when creating a 1G1R set
 - Limited or nonexistent folder management options

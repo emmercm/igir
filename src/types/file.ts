@@ -3,6 +3,7 @@ import AdmZip, { IZipEntry } from 'adm-zip';
 import crc32 from 'crc/crc32';
 import fs, { promises as fsPromises } from 'fs';
 import { PathLike } from 'node:fs';
+import unrar from 'node-unrar-js';
 import path from 'path';
 
 import Constants from '../constants.js';
@@ -97,8 +98,10 @@ export default class File {
 
       if (Constants.ZIP_EXTENSIONS.indexOf(path.extname(this.filePath)) !== -1) {
         this.extractZipToLocal(localFile);
+      } else if (Constants.RAR_EXTENSIONS.indexOf(path.extname(this.filePath)) !== -1) {
+        await this.extractRarToLocal(tempDir);
       } else if (Constants.SEVENZIP_EXTENSIONS.indexOf(path.extname(this.filePath)) !== -1) {
-        await this.extract7zToLocal(localFile);
+        await this.extract7zToLocal(tempDir);
       } else {
         throw new Error(`Unknown archive type: ${this.filePath}`);
       }
@@ -111,18 +114,6 @@ export default class File {
         fsPoly.rmSync(tempDir, { recursive: true });
       }
     }
-  }
-
-  private async extract7zToLocal(tempFile: string): Promise<void> {
-    await new Promise<void>((resolve, reject) => {
-      _7z.unpack(this.getFilePath(), path.dirname(tempFile), (err) => {
-        if (err) {
-          reject(err);
-        } else {
-          resolve();
-        }
-      });
-    });
   }
 
   private extractZipToLocal(tempFile: string): void {
@@ -139,6 +130,31 @@ export default class File {
       false,
       path.basename(tempFile),
     );
+  }
+
+  private async extractRarToLocal(tempDir: string): Promise<void> {
+    const rar = await unrar.createExtractorFromFile({
+      filepath: this.getFilePath(),
+      targetPath: tempDir,
+    });
+    // For whatever reason, the library author decided to delay extraction until the file is
+    // iterated, so we have to execute this expression, but can throw away the results
+    /* eslint-disable @typescript-eslint/no-unused-expressions */
+    [...rar.extract({
+      files: [this.getArchiveEntryPath() as string],
+    }).files];
+  }
+
+  private async extract7zToLocal(tempDir: string): Promise<void> {
+    await new Promise<void>((resolve, reject) => {
+      _7z.unpack(this.getFilePath(), tempDir, (err) => {
+        if (err) {
+          reject(err);
+        } else {
+          resolve();
+        }
+      });
+    });
   }
 
   /** *************************

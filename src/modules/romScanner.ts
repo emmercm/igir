@@ -2,6 +2,7 @@ import _7z, { Result } from '7zip-min';
 import AdmZip from 'adm-zip';
 import async, { AsyncResultCallback } from 'async';
 import { Mutex } from 'async-mutex';
+import unrar from 'node-unrar-js';
 import path from 'path';
 
 import ProgressBar, { Symbols } from '../console/progressBar.js';
@@ -46,6 +47,8 @@ export default class ROMScanner {
         let files: File[];
         if (Constants.ZIP_EXTENSIONS.indexOf(path.extname(inputFile)) !== -1) {
           files = await this.getFilesInZip(inputFile);
+        } else if (Constants.RAR_EXTENSIONS.indexOf(path.extname(inputFile)) !== -1) {
+          files = await this.getFilesInRar(inputFile);
         } else if (Constants.SEVENZIP_EXTENSIONS.indexOf(path.extname(inputFile)) !== -1) {
           files = await this.getFilesIn7z(inputFile);
         } else {
@@ -65,16 +68,16 @@ export default class ROMScanner {
     return ROMScanner.SEVENZIP_MUTEX.runExclusive(async () => {
       const filesIn7z = await new Promise((resolve) => {
         // TODO(cemmer): this won't let you ctrl-c
-        _7z.list(filePath, (err, result) => {
+        _7z.list(filePath, async (err, result) => {
           if (err) {
             const msg = err.toString()
               .replace(/\n\n+/g, '\n')
               .replace(/^/gm, '   ')
               .trim();
-            this.progressBar.logError(`Failed to parse 7z ${filePath} : ${msg}`);
+            await this.progressBar.logError(`Failed to parse archive ${filePath} : ${msg}`);
             resolve([]);
           } else if (!result.length) {
-            this.progressBar.logWarn(`Found no files in 7z: ${filePath}`);
+            await this.progressBar.logWarn(`Found no files in archive: ${filePath}`);
             resolve([]);
           } else {
             resolve(result);
@@ -83,6 +86,23 @@ export default class ROMScanner {
       }) as Result[];
       return filesIn7z.map((result) => new File(filePath, result.name, result.crc));
     });
+  }
+
+  private async getFilesInRar(filePath: string): Promise<File[]> {
+    try {
+      const rar = await unrar.createExtractorFromFile({
+        filepath: filePath,
+      });
+      const rarFiles = [...rar.getFileList().fileHeaders]
+        .map((fileHeader) => new File(filePath, fileHeader.name, fileHeader.crc.toString(16)));
+      if (!rarFiles.length) {
+        await this.progressBar.logWarn(`Found no files in rar: ${rar}`);
+      }
+      return rarFiles;
+    } catch (e) {
+      await this.progressBar.logError(`Failed to parse rar ${filePath} : ${e}`);
+      return [];
+    }
   }
 
   private async getFilesInZip(filePath: string): Promise<File[]> {

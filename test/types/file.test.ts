@@ -61,6 +61,8 @@ describe('isZip', () => {
     'file.rom',
     'fizz/buzz.rom',
     '/root.rom',
+    'archive.rar',
+    'archive.7z',
   ])('should return false when appropriate', (filePath) => {
     const file = new File(filePath, undefined, '00000000');
     expect(file.isZip()).toEqual(false);
@@ -72,7 +74,7 @@ describe('toLocalFile', () => {
     const raws = await new ROMScanner(new Options({
       input: ['./test/fixtures/roms/raw'],
     }), new ProgressBarFake()).scan();
-    expect(raws.length).toBeGreaterThan(0);
+    expect(raws).toHaveLength(5);
 
     const temp = fsPoly.mkdtempSync();
     /* eslint-disable no-await-in-loop */
@@ -87,10 +89,11 @@ describe('toLocalFile', () => {
   });
 
   it('should extract zip files', async () => {
+    // Note: this will only return valid zips with at least one file
     const zips = await new ROMScanner(new Options({
       input: ['./test/fixtures/roms/zip'],
     }), new ProgressBarFake()).scan();
-    expect(zips.length).toBeGreaterThan(0);
+    expect(zips).toHaveLength(4);
 
     const temp = fsPoly.mkdtempSync();
     /* eslint-disable no-await-in-loop */
@@ -104,11 +107,31 @@ describe('toLocalFile', () => {
     fsPoly.rmSync(temp, { recursive: true });
   });
 
+  it('should extract rar files', async () => {
+    // Note: this will only return valid rars with at least one file
+    const rars = await new ROMScanner(new Options({
+      input: ['./test/fixtures/roms/rar'],
+    }), new ProgressBarFake()).scan();
+    expect(rars).toHaveLength(4);
+
+    const temp = fsPoly.mkdtempSync();
+    /* eslint-disable no-await-in-loop */
+    for (let i = 0; i < rars.length; i += 1) {
+      const rar = rars[i];
+      await rar.toLocalFile(temp, (localFile) => {
+        expect(fs.existsSync(localFile)).toEqual(true);
+        expect(localFile).not.toEqual(rar.getFilePath());
+      });
+    }
+    fsPoly.rmSync(temp, { recursive: true });
+  });
+
   it('should extract 7z files', async () => {
+    // Note: this will only return valid 7z's with at least one file
     const sevenZips = await new ROMScanner(new Options({
       input: ['./test/fixtures/roms/7z'],
     }), new ProgressBarFake()).scan();
-    expect(sevenZips.length).toBeGreaterThan(0);
+    expect(sevenZips).toHaveLength(4);
 
     const temp = fsPoly.mkdtempSync();
     /* eslint-disable no-await-in-loop */
