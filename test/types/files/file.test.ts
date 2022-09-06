@@ -47,7 +47,7 @@ describe('extract', () => {
     /* eslint-disable no-await-in-loop */
     for (let i = 0; i < raws.length; i += 1) {
       const raw = raws[i];
-      await raw.extract(temp, (localFile) => {
+      await raw.extractEntry((localFile) => {
         expect(fs.existsSync(localFile)).toEqual(true);
         expect(localFile).toEqual(raw.getFilePath());
       });

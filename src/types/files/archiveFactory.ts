@@ -6,15 +6,15 @@ import SevenZip from './sevenZip.js';
 import Zip from './zip.js';
 
 export default class ArchiveFactory {
-  static archiveFrom(filePath: string, archiveEntryPath?: string): Archive {
+  static archiveFrom(filePath: string): Archive {
     const extension = path.extname(filePath).toLowerCase();
 
     if (Zip.SUPPORTED_EXTENSIONS.indexOf(extension) !== -1) {
-      return new Zip(filePath, archiveEntryPath);
+      return new Zip(filePath);
     } if (Rar.SUPPORTED_EXTENSIONS.indexOf(extension) !== -1) {
-      return new Rar(filePath, archiveEntryPath);
+      return new Rar(filePath);
     } if (SevenZip.SUPPORTED_EXTENSIONS.indexOf(extension) !== -1) {
-      return new SevenZip(filePath, archiveEntryPath);
+      return new SevenZip(filePath);
     }
 
     throw new Error(`Unknown archive type: ${filePath}`);

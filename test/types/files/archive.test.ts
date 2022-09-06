@@ -18,7 +18,7 @@ describe('getArchiveEntryPath', () => {
     'something.rom',
     undefined,
   ])('should return the constructor value: %s', (archiveEntryPath) => {
-    const file = ArchiveFactory.archiveFrom('./test/fixtures/roms/zip/empty.zip', archiveEntryPath);
+    const file = ArchiveFactory.archiveFrom('./test/fixtures/roms/zip/empty.zip');
     expect(file.getArchiveEntryPath()).toEqual(archiveEntryPath);
   });
 });
@@ -55,9 +55,12 @@ describe('extract', () => {
     /* eslint-disable no-await-in-loop */
     for (let i = 0; i < zips.length; i += 1) {
       const zip = zips[i];
-      await zip.extract(temp, (localFile) => {
-        expect(fs.existsSync(localFile)).toEqual(true);
-        expect(localFile).not.toEqual(zip.getFilePath());
+      await zip.extractEntry((localFile) => {
+        expect(fs.existsSync(localFile))
+          .toEqual(true);
+        expect(localFile)
+          .not
+          .toEqual(zip.getFilePath());
       });
     }
     fsPoly.rmSync(temp, { recursive: true });
@@ -74,9 +77,12 @@ describe('extract', () => {
     /* eslint-disable no-await-in-loop */
     for (let i = 0; i < rars.length; i += 1) {
       const rar = rars[i];
-      await rar.extract(temp, (localFile) => {
-        expect(fs.existsSync(localFile)).toEqual(true);
-        expect(localFile).not.toEqual(rar.getFilePath());
+      await rar.extractEntry((localFile) => {
+        expect(fs.existsSync(localFile))
+          .toEqual(true);
+        expect(localFile)
+          .not
+          .toEqual(rar.getFilePath());
       });
     }
     fsPoly.rmSync(temp, { recursive: true });
@@ -93,28 +99,31 @@ describe('extract', () => {
     /* eslint-disable no-await-in-loop */
     for (let i = 0; i < sevenZips.length; i += 1) {
       const sevenZip = sevenZips[i];
-      await sevenZip.extract(temp, (localFile) => {
-        expect(fs.existsSync(localFile)).toEqual(true);
-        expect(localFile).not.toEqual(sevenZip.getFilePath());
+      await sevenZip.extractEntry((localFile) => {
+        expect(fs.existsSync(localFile))
+          .toEqual(true);
+        expect(localFile)
+          .not
+          .toEqual(sevenZip.getFilePath());
       });
     }
     fsPoly.rmSync(temp, { recursive: true });
   });
 
   it('should throw an error on unknown archives', async () => {
-    expect(() => ArchiveFactory.archiveFrom('image.iso', 'file.rom')).toThrow(/unknown/i);
+    expect(() => ArchiveFactory.archiveFrom('image.iso')).toThrow(/unknown/i);
   });
 });
 
 describe('equals', () => {
   it('should be equal itself', async () => {
-    const file = ArchiveFactory.archiveFrom('./test/fixtures/roms/zip/loremipsum.zip', undefined);
+    const file = ArchiveFactory.archiveFrom('./test/fixtures/roms/zip/loremipsum.zip');
     await expect(file.equals(file)).resolves.toEqual(true);
   });
 
   it('should deep equal a raw file', async () => {
-    const first = ArchiveFactory.archiveFrom('./test/fixtures/roms/zip/loremipsum.zip', undefined);
-    const second = ArchiveFactory.archiveFrom('./test/fixtures/roms/zip/loremipsum.zip', undefined);
+    const first = ArchiveFactory.archiveFrom('./test/fixtures/roms/zip/loremipsum.zip');
+    const second = ArchiveFactory.archiveFrom('./test/fixtures/roms/zip/loremipsum.zip');
     await expect(first.equals(second)).resolves.toEqual(true);
   });
 });

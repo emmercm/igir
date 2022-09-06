@@ -41,7 +41,7 @@ export default class ROMScanner {
         let files: File[];
         if (ArchiveFactory.isArchive(inputFile)) {
           try {
-            files = await ArchiveFactory.archiveFrom(inputFile).listAllEntryPaths();
+            files = await ArchiveFactory.archiveFrom(inputFile).getArchiveEntries();
             if (!files.length) {
               await this.progressBar.logWarn(`Found no files in archive: ${inputFile}`);
             }

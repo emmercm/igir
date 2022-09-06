@@ -3,8 +3,10 @@ import { Mutex } from 'async-mutex';
 import { promises as fsPromises } from 'fs';
 import path from 'path';
 
+import Constants from '../../constants.js';
 import fsPoly from '../../polyfill/fsPoly.js';
 import Archive from './archive.js';
+import ArchiveEntry from './archiveEntry.js';
 
 export default class SevenZip extends Archive {
   // p7zip `7za i`
@@ -29,7 +31,7 @@ export default class SevenZip extends Archive {
 
   private static readonly LIST_MUTEX = new Mutex();
 
-  async listAllEntryPaths(): Promise<Archive[]> {
+  async getArchiveEntries(): Promise<ArchiveEntry[]> {
     /**
      * WARN(cemmer): {@link _7z.list} seems to have issues with any amount of real concurrency,
      * it will return no files but also no error. Try to prevent that behavior.
@@ -48,16 +50,16 @@ export default class SevenZip extends Archive {
           }
         });
       }) as Result[];
-      return filesIn7z.map((result) => new SevenZip(this.getFilePath(), result.name, result.crc));
+      return filesIn7z.map((result) => new ArchiveEntry(this, result.name, result.crc));
     });
   }
 
-  async extract(
-    globalTempDir: string,
-    callback: (localFile: string) => void | Promise<void>,
+  async extractEntry(
+    archiveEntry: ArchiveEntry,
+    callback: (localFile: string) => (void | Promise<void>),
   ): Promise<void> {
-    const tempDir = await fsPromises.mkdtemp(globalTempDir);
-    const localFile = path.join(tempDir, this.getArchiveEntryPath() as string);
+    const tempDir = await fsPromises.mkdtemp(Constants.GLOBAL_TEMP_DIR);
+    const localFile = path.join(tempDir, archiveEntry.getEntryPath());
 
     await new Promise<void>((resolve, reject) => {
       _7z.unpack(this.getFilePath(), tempDir, (err) => {

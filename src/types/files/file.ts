@@ -2,18 +2,29 @@ import crc32 from 'crc/crc32';
 import fs from 'fs';
 import { PathLike } from 'node:fs';
 
+import ArchiveEntry from './archiveEntry.js';
+
 export default class File {
   private readonly filePath: string;
 
-  private readonly crc32: Promise<string>;
+  private crc32?: Promise<string>;
 
   constructor(filePath: string, crc?: string) {
     this.filePath = filePath;
     if (crc) {
       this.crc32 = Promise.resolve(crc);
-    } else {
-      this.crc32 = File.calculateCrc32(filePath);
     }
+  }
+
+  getFilePath(): string {
+    return this.filePath;
+  }
+
+  async getCrc32(): Promise<string> {
+    if (!this.crc32) {
+      this.crc32 = File.calculateCrc32(this.filePath);
+    }
+    return (await this.crc32).toLowerCase().padStart(8, '0');
   }
 
   private static async calculateCrc32(pathLike: PathLike): Promise<string> {
@@ -43,17 +54,9 @@ export default class File {
     return this;
   }
 
-  getFilePath(): string {
-    return this.filePath;
-  }
-
-  async getCrc32(): Promise<string> {
-    return (await this.crc32).toLowerCase().padStart(8, '0');
-  }
-
-  async extract(
-    globalTempDir: string,
-    callback: (localFile: string) => void | Promise<void>,
+  async extractEntry(
+    archiveEntry: ArchiveEntry,
+    callback: (localFile: string) => (void | Promise<void>),
   ): Promise<void> {
     await callback(this.filePath);
   }
