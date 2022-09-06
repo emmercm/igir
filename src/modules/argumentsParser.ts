@@ -305,7 +305,7 @@ export default class ArgumentsParser {
       .wrap(ArgumentsParser.getHelpWidth(argv))
       .version(false)
       .example([
-        ['$0 copy -i **/*.zip -o 1G1R/ -s -l EN -r USA,EUR,JPN', 'Produce a 1G1R set per console, preferring English from USA>EUR>JPN'],
+        ['$0 copy -i **/*.zip -o 1G1R/ -D -s -l EN -r USA,EUR,JPN', 'Produce a 1G1R set per console, preferring English from USA>EUR>JPN'],
         [''], // https://github.com/yargs/yargs/issues/1640
         ['$0 copy report -i **/*.zip -i ROMs/ -o ROMs/', 'Merge new ROMs into an existing ROM collection and generate a report'],
         [''], // https://github.com/yargs/yargs/issues/1640
@@ -313,7 +313,7 @@ export default class ArgumentsParser {
         [''], // https://github.com/yargs/yargs/issues/1640
         ['$0 copy -i **/*.zip -o BIOS/ --only-bios', 'Collate all BIOS files'],
         [''], // https://github.com/yargs/yargs/issues/1640
-        ['$0 copy -i ROMs/ -o /media/SDCard/ROMs/ -D --dir-letter -t', 'Copy ROMs to a flash cart'],
+        ['$0 copy -i ROMs/ -o /media/SDCard/ROMs/ -D --dir-letter -t', 'Copy ROMs to a flash cart and test them'],
       ])
 
     // Colorize help output
