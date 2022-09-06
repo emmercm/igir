@@ -3,34 +3,31 @@ import AdmZip, { IZipEntry } from 'adm-zip';
 import crc32 from 'crc/crc32';
 import fs, { promises as fsPromises } from 'fs';
 import { PathLike } from 'node:fs';
+import unrar from 'node-unrar-js';
 import path from 'path';
 
 import Constants from '../constants.js';
 import fsPoly from '../polyfill/fsPoly.js';
 
-export default class ROMFile {
+export default class File {
   private readonly filePath: string;
 
   private readonly archiveEntryPath?: string;
 
   private readonly crc32: Promise<string>;
 
-  private readonly extractedTempFile: boolean;
-
   constructor(
     filePath: string,
     archiveEntryPath?: string,
     crc?: string,
-    extractedTempFile = false,
   ) {
     this.filePath = filePath;
     this.archiveEntryPath = archiveEntryPath;
     if (crc) {
       this.crc32 = Promise.resolve(crc);
     } else {
-      this.crc32 = ROMFile.calculateCrc32(filePath);
+      this.crc32 = File.calculateCrc32(filePath);
     }
-    this.extractedTempFile = extractedTempFile;
   }
 
   private static async calculateCrc32(pathLike: PathLike): Promise<string> {
@@ -60,6 +57,12 @@ export default class ROMFile {
     return this;
   }
 
+  /** *************************
+   *                          *
+   *     Property Getters     *
+   *                          *
+   ************************** */
+
   getFilePath(): string {
     return this.filePath;
   }
@@ -72,43 +75,45 @@ export default class ROMFile {
     return (await this.crc32).toLowerCase().padStart(8, '0');
   }
 
+  /** ************************
+   *                         *
+   *     Other Functions     *
+   *                         *
+   ************************* */
+
   isZip(): boolean {
     return path.extname(this.getFilePath()).toLowerCase() === '.zip';
   }
 
-  private isExtractedTempFile(): boolean {
-    return this.extractedTempFile;
-  }
+  async toLocalFile(
+    globalTempDir: string,
+    callback: (localFile: string) => void | Promise<void>,
+  ): Promise<void> {
+    let tempDir;
+    let localFile = this.filePath;
 
-  async toLocalFile(globalTempDir: string): Promise<ROMFile> {
     if (this.archiveEntryPath) {
-      const tempDir = await fsPromises.mkdtemp(globalTempDir);
-      const tempFile = path.join(tempDir, this.archiveEntryPath);
+      tempDir = await fsPromises.mkdtemp(globalTempDir);
+      localFile = path.join(tempDir, this.archiveEntryPath);
 
       if (Constants.ZIP_EXTENSIONS.indexOf(path.extname(this.filePath)) !== -1) {
-        this.extractZipToLocal(tempFile);
+        this.extractZipToLocal(localFile);
+      } else if (Constants.RAR_EXTENSIONS.indexOf(path.extname(this.filePath)) !== -1) {
+        await this.extractRarToLocal(tempDir);
       } else if (Constants.SEVENZIP_EXTENSIONS.indexOf(path.extname(this.filePath)) !== -1) {
-        await this.extract7zToLocal(tempFile);
+        await this.extract7zToLocal(tempDir);
       } else {
         throw new Error(`Unknown archive type: ${this.filePath}`);
       }
-
-      return new ROMFile(tempFile, undefined, await this.getCrc32(), true);
     }
 
-    return this;
-  }
-
-  private async extract7zToLocal(tempFile: string): Promise<void> {
-    await new Promise<void>((resolve, reject) => {
-      _7z.unpack(this.getFilePath(), path.dirname(tempFile), (err) => {
-        if (err) {
-          reject(err);
-        } else {
-          resolve();
-        }
-      });
-    });
+    try {
+      await callback(localFile);
+    } finally {
+      if (tempDir) {
+        fsPoly.rmSync(tempDir, { recursive: true });
+      }
+    }
   }
 
   private extractZipToLocal(tempFile: string): void {
@@ -127,13 +132,46 @@ export default class ROMFile {
     );
   }
 
-  cleanupLocalFile(): void {
-    if (this.isExtractedTempFile()) {
-      fsPoly.rmSync(path.dirname(this.getFilePath()), { recursive: true });
-    }
+  private async extractRarToLocal(tempDir: string): Promise<void> {
+    const rar = await unrar.createExtractorFromFile({
+      filepath: this.getFilePath(),
+      targetPath: tempDir,
+    });
+    // For whatever reason, the library author decided to delay extraction until the file is
+    // iterated, so we have to execute this expression, but can throw away the results
+    /* eslint-disable @typescript-eslint/no-unused-expressions */
+    [...rar.extract({
+      files: [this.getArchiveEntryPath() as string],
+    }).files];
   }
 
-  async equals(other: ROMFile): Promise<boolean> {
+  private async extract7zToLocal(tempDir: string): Promise<void> {
+    await new Promise<void>((resolve, reject) => {
+      _7z.unpack(this.getFilePath(), tempDir, (err) => {
+        if (err) {
+          reject(err);
+        } else {
+          resolve();
+        }
+      });
+    });
+  }
+
+  /** *************************
+   *                          *
+   *     Pseudo Built-Ins     *
+   *                          *
+   ************************** */
+
+  toString(): string {
+    let message = this.filePath;
+    if (this.archiveEntryPath) {
+      message += `|${this.archiveEntryPath}`;
+    }
+    return message;
+  }
+
+  async equals(other: File): Promise<boolean> {
     if (this === other) {
       return true;
     }

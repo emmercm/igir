@@ -16,7 +16,7 @@ A ROM collection manager to help sort collections and make one game, one rom (1G
 
 `igir` needs two inputs:
 
-1. One or more folders with **ROMs**, including ones in archives (.7z, .bz2, .cab, .gz, .lzma, .tar, .xz, .zip)
+1. One or more folders with **ROMs**, including ones in archives (.001, .7z, .bz2, .gz, .rar, .tar, .xz, .z, .z01, .zip, .zipx)
 2. A folder with ROM **DAT catalogs** (see below for more information)
 
 And then it will execute one or more specified commands:
@@ -184,6 +184,7 @@ Each manager has its own pros, but most share the same cons:
 - Limited CLI support, making batching and repeatable actions difficult
 - UIs that don't clearly state what actions can, will, or are being performed
 - Required proprietary database setup step
+- Limited or nonexistent archive extraction support
 - Limited or nonexistent parent/clone, region, language, version, and ROM type filtering
 - Limited or nonexistent priorities when creating a 1G1R set
 - Limited or nonexistent folder management options

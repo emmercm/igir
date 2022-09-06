@@ -1,6 +1,6 @@
 import { Expose } from 'class-transformer';
 
-import ROMFile from '../romFile.js';
+import File from '../file.js';
 
 /**
  * @see http://www.logiqx.com/DatFAQs/CMPro.php
@@ -51,7 +51,7 @@ export default class ROM {
     return this.md5 ? this.md5.replace(/^0x/, '').padStart(32, '0') : '';
   }
 
-  toRomFile(): ROMFile {
-    return new ROMFile(this.getName(), undefined, this.getCrc32());
+  toFile(): File {
+    return new File(this.getName(), undefined, this.getCrc32());
   }
 }
