@@ -1,13 +1,9 @@
-import _7z, { Result } from '7zip-min';
-import AdmZip from 'adm-zip';
 import async, { AsyncResultCallback } from 'async';
-import { Mutex } from 'async-mutex';
-import unrar from 'node-unrar-js';
-import path from 'path';
 
 import ProgressBar, { Symbols } from '../console/progressBar.js';
 import Constants from '../constants.js';
-import File from '../types/file.js';
+import ArchiveFactory from '../types/files/archiveFactory.js';
+import File from '../types/files/file.js';
 import Options from '../types/options.js';
 
 /**
@@ -17,8 +13,6 @@ import Options from '../types/options.js';
  * This class will not be run concurrently with any other class.
  */
 export default class ROMScanner {
-  private static readonly SEVENZIP_MUTEX = new Mutex();
-
   private readonly options: Options;
 
   private readonly progressBar: ProgressBar;
@@ -45,12 +39,16 @@ export default class ROMScanner {
         await this.progressBar.increment();
 
         let files: File[];
-        if (Constants.ZIP_EXTENSIONS.indexOf(path.extname(inputFile)) !== -1) {
-          files = await this.getFilesInZip(inputFile);
-        } else if (Constants.RAR_EXTENSIONS.indexOf(path.extname(inputFile)) !== -1) {
-          files = await this.getFilesInRar(inputFile);
-        } else if (Constants.SEVENZIP_EXTENSIONS.indexOf(path.extname(inputFile)) !== -1) {
-          files = await this.getFilesIn7z(inputFile);
+        if (ArchiveFactory.isArchive(inputFile)) {
+          try {
+            files = await ArchiveFactory.archiveFrom(inputFile).getArchiveEntries();
+            if (!files.length) {
+              await this.progressBar.logWarn(`Found no files in archive: ${inputFile}`);
+            }
+          } catch (e) {
+            await this.progressBar.logError(`Failed to parse archive ${inputFile} : ${e}`);
+            files = [];
+          }
         } else {
           files = [await new File(inputFile).resolve()];
         }
@@ -58,69 +56,5 @@ export default class ROMScanner {
         callback(null, files);
       },
     )).flatMap((files) => files);
-  }
-
-  private async getFilesIn7z(filePath: string): Promise<File[]> {
-    /**
-     * WARN(cemmer): {@link _7z.list} seems to have issues with any amount of real concurrency,
-     * it will return no files but also no error. Try to prevent that behavior.
-     */
-    return ROMScanner.SEVENZIP_MUTEX.runExclusive(async () => {
-      const filesIn7z = await new Promise((resolve) => {
-        // TODO(cemmer): this won't let you ctrl-c
-        _7z.list(filePath, async (err, result) => {
-          if (err) {
-            const msg = err.toString()
-              .replace(/\n\n+/g, '\n')
-              .replace(/^/gm, '   ')
-              .trim();
-            await this.progressBar.logError(`Failed to parse archive ${filePath} : ${msg}`);
-            resolve([]);
-          } else if (!result.length) {
-            await this.progressBar.logWarn(`Found no files in archive: ${filePath}`);
-            resolve([]);
-          } else {
-            resolve(result);
-          }
-        });
-      }) as Result[];
-      return filesIn7z.map((result) => new File(filePath, result.name, result.crc));
-    });
-  }
-
-  private async getFilesInRar(filePath: string): Promise<File[]> {
-    try {
-      const rar = await unrar.createExtractorFromFile({
-        filepath: filePath,
-      });
-      const rarFiles = [...rar.getFileList().fileHeaders]
-        .map((fileHeader) => new File(filePath, fileHeader.name, fileHeader.crc.toString(16)));
-      if (!rarFiles.length) {
-        await this.progressBar.logWarn(`Found no files in rar: ${rar}`);
-      }
-      return rarFiles;
-    } catch (e) {
-      await this.progressBar.logError(`Failed to parse rar ${filePath} : ${e}`);
-      return [];
-    }
-  }
-
-  private async getFilesInZip(filePath: string): Promise<File[]> {
-    try {
-      const zip = new AdmZip(filePath);
-      const files = zip.getEntries()
-        .map((entry) => new File(
-          filePath,
-          entry.entryName,
-          entry.header.crc.toString(16),
-        ));
-      if (!files.length) {
-        await this.progressBar.logWarn(`Found no files in zip: ${filePath}`);
-      }
-      return files;
-    } catch (e) {
-      await this.progressBar.logError(`Failed to parse zip ${filePath} : ${e}`);
-      return [];
-    }
   }
 }

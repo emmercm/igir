@@ -13,7 +13,7 @@ import ROMScanner from './modules/romScanner.js';
 import ROMWriter from './modules/romWriter.js';
 import StatusGenerator from './modules/statusGenerator.js';
 import DATStatus from './types/datStatus.js';
-import File from './types/file.js';
+import File from './types/files/file.js';
 import DAT from './types/logiqx/dat.js';
 import Parent from './types/logiqx/parent.js';
 import Options from './types/options.js';

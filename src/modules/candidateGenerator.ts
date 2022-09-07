@@ -1,5 +1,6 @@
 import ProgressBar, { Symbols } from '../console/progressBar.js';
-import File from '../types/file.js';
+import ArchiveEntry from '../types/files/archiveEntry.js';
+import File from '../types/files/file.js';
 import DAT from '../types/logiqx/dat.js';
 import Game from '../types/logiqx/game.js';
 import Parent from '../types/logiqx/parent.js';
@@ -79,7 +80,7 @@ export default class CandidateGenerator {
       if (acc.has(await file.getCrc32())) {
         // Have already seen file, prefer non-archived files
         const existing = acc.get(await file.getCrc32()) as File;
-        if (!file.getArchiveEntryPath() && existing.getArchiveEntryPath()) {
+        if (!(file instanceof ArchiveEntry) && existing instanceof ArchiveEntry) {
           acc.set(await file.getCrc32(), file);
         }
       } else {

@@ -1,6 +1,6 @@
 import { Expose } from 'class-transformer';
 
-import File from '../file.js';
+import File from '../files/file.js';
 
 /**
  * @see http://www.logiqx.com/DatFAQs/CMPro.php
@@ -52,6 +52,6 @@ export default class ROM {
   }
 
   toFile(): File {
-    return new File(this.getName(), undefined, this.getCrc32());
+    return new File(this.getName(), this.getCrc32());
   }
 }

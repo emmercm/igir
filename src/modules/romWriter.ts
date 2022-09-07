@@ -6,7 +6,9 @@ import path from 'path';
 import ProgressBar, { Symbols } from '../console/progressBar.js';
 import Constants from '../constants.js';
 import fsPoly from '../polyfill/fsPoly.js';
-import File from '../types/file.js';
+import ArchiveEntry from '../types/files/archiveEntry.js';
+import File from '../types/files/file.js';
+import Zip from '../types/files/zip.js';
 import DAT from '../types/logiqx/dat.js';
 import Parent from '../types/logiqx/parent.js';
 import ROM from '../types/logiqx/rom.js';
@@ -108,19 +110,24 @@ export default class ROMWriter {
       const acc = await accPromise;
       const rom = crcToRoms.get(await inputFile.getCrc32()) as ROM;
 
-      let outputFilePath = this.options.getOutput(
-        dat,
-        inputFile.getFilePath(),
-        rom.getName(),
-      );
-      let entryPath;
-
+      let outputFile: File;
       if (this.options.shouldZip(rom.getName())) {
-        outputFilePath = this.options.getOutput(dat, inputFile.getFilePath(), `${releaseCandidate.getName()}.zip`);
-        entryPath = rom.getName();
+        const outputFilePath = this.options.getOutput(dat, inputFile.getFilePath(), `${releaseCandidate.getName()}.zip`);
+        const entryPath = rom.getName();
+        outputFile = new ArchiveEntry(
+          new Zip(outputFilePath),
+          entryPath,
+          await inputFile.getCrc32(),
+        );
+      } else {
+        const outputFilePath = this.options.getOutput(
+          dat,
+          inputFile.getFilePath(),
+          rom.getName(),
+        );
+        outputFile = new File(outputFilePath, await inputFile.getCrc32());
       }
 
-      const outputFile = new File(outputFilePath, entryPath, await inputFile.getCrc32());
       acc.set(inputFile, outputFile);
       return acc;
     }, Promise.resolve(new Map<File, File>()));
@@ -164,7 +171,7 @@ export default class ROMWriter {
         outputZipPath,
         outputZip,
         inputToOutputEntries[i][0],
-        inputToOutputEntries[i][1],
+        inputToOutputEntries[i][1] as ArchiveEntry,
       );
     }
 
@@ -204,7 +211,7 @@ export default class ROMWriter {
     outputZipPath: string,
     outputZip: AdmZip,
     inputRomFile: File,
-    outputRomFile: File,
+    outputRomFile: ArchiveEntry,
   ): Promise<boolean> {
     // The input and output are the same, do nothing
     if (await outputRomFile.equals(inputRomFile)) {
@@ -213,20 +220,20 @@ export default class ROMWriter {
     }
 
     // If the file in the output zip already exists and has the same CRC then do nothing
-    const existingOutputEntry = outputZip.getEntry(outputRomFile.getArchiveEntryPath() as string);
+    const existingOutputEntry = outputZip.getEntry(outputRomFile.getEntryPath() as string);
     if (existingOutputEntry?.header.crc === parseInt(await outputRomFile.getCrc32(), 16)) {
-      await this.progressBar.logDebug(`${outputZipPath}: ${outputRomFile.getArchiveEntryPath()} already exists`);
+      await this.progressBar.logDebug(`${outputZipPath}: ${outputRomFile.getEntryPath()} already exists`);
       return false;
     }
 
     // Write the entry
     try {
-      await inputRomFile.toLocalFile(this.options.getTempDir(), async (localFile) => {
+      await inputRomFile.extract(async (localFile) => {
         await this.progressBar.logDebug(`${outputZipPath}: adding ${localFile}`);
         outputZip.addLocalFile(
           localFile,
           '',
-          outputRomFile.getArchiveEntryPath() as string,
+          outputRomFile.getEntryPath() as string,
         );
       });
       return true;
@@ -327,7 +334,7 @@ export default class ROMWriter {
 
   private async writeRawFile(inputRomFile: File, outputFilePath: string): Promise<boolean> {
     try {
-      await inputRomFile.toLocalFile(this.options.getTempDir(), async (localFile) => {
+      await inputRomFile.extract(async (localFile) => {
         await this.progressBar.logDebug(`${localFile}: copying to ${outputFilePath}`);
         await fsPromises.copyFile(localFile, outputFilePath);
       });
