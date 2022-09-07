@@ -1,7 +1,9 @@
 import ProgressBar, { Symbols } from '../console/progressBar.js';
 import File from '../types/file.js';
 import DAT from '../types/logiqx/dat.js';
+import Game from '../types/logiqx/game.js';
 import Parent from '../types/logiqx/parent.js';
+import Release from '../types/logiqx/release.js';
 import ReleaseCandidate from '../types/releaseCandidate.js';
 
 /**
@@ -51,23 +53,13 @@ export default class CandidateGenerator {
         for (let k = 0; k < releases.length; k += 1) {
           const release = releases[k];
 
-          // For each Game's ROM, find the matching File
-          const romFiles = game.getRoms()
-            .map((rom) => crc32ToInputFiles.get(rom.getCrc32()))
-            .filter((file) => file) as File[];
-
-          // Ignore the Game if not every File is present
-          const missingRomFiles = game.getRoms().length - romFiles.length;
-          if (missingRomFiles > 0) {
-            if (romFiles.length > 0) {
-              let message = `Missing ${missingRomFiles.toLocaleString()} file${missingRomFiles !== 1 ? 's' : ''} for: ${game.getName()}`;
-              if (release?.getRegion()) {
-                message += ` (${release?.getRegion()})`;
-              }
-              await this.progressBar.logWarn(message);
-            }
-          } else {
-            releaseCandidates.push(new ReleaseCandidate(game, release, game.getRoms(), romFiles));
+          const releaseCandidate = await this.buildReleaseCandidateForRelease(
+            game,
+            release,
+            crc32ToInputFiles,
+          );
+          if (releaseCandidate) {
+            releaseCandidates.push(releaseCandidate);
           }
         }
       }
@@ -96,5 +88,31 @@ export default class CandidateGenerator {
       }
       return acc;
     }, Promise.resolve(new Map<string, File>()));
+  }
+
+  private async buildReleaseCandidateForRelease(
+    game: Game,
+    release: Release | undefined,
+    crc32ToInputFiles: Map<string, File>,
+  ): Promise<ReleaseCandidate | undefined> {
+    // For each Game's ROM, find the matching File
+    const romFiles = game.getRoms()
+      .map((rom) => crc32ToInputFiles.get(rom.getCrc32()))
+      .filter((file) => file) as File[];
+
+    // Ignore the Game if not every File is present
+    const missingRomFiles = game.getRoms().length - romFiles.length;
+    if (missingRomFiles > 0) {
+      if (romFiles.length > 0) {
+        let message = `Missing ${missingRomFiles.toLocaleString()} file${missingRomFiles !== 1 ? 's' : ''} for: ${game.getName()}`;
+        if (release?.getRegion()) {
+          message += ` (${release?.getRegion()})`;
+        }
+        await this.progressBar.logWarn(message);
+      }
+      return undefined;
+    }
+
+    return new ReleaseCandidate(game, release, game.getRoms(), romFiles);
   }
 }
