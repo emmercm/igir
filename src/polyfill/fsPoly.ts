@@ -1,6 +1,4 @@
-import { PathLike, RmOptions } from 'node:fs';
-
-import fs, { promises as fsPromises } from 'fs';
+import fs, { PathLike, promises as fsPromises, RmOptions } from 'fs';
 import { isNotJunk } from 'junk';
 import os from 'os';
 import path from 'path';
