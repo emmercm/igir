@@ -103,16 +103,33 @@ export default class CandidateGenerator {
     // Ignore the Game if not every File is present
     const missingRomFiles = game.getRoms().length - romFiles.length;
     if (missingRomFiles > 0) {
-      if (romFiles.length > 0) {
-        let message = `Missing ${missingRomFiles.toLocaleString()} file${missingRomFiles !== 1 ? 's' : ''} for: ${game.getName()}`;
-        if (release?.getRegion()) {
-          message += ` (${release?.getRegion()})`;
-        }
-        await this.progressBar.logWarn(message);
-      }
+      await this.logMissingRomFiles(game, release, romFiles);
       return undefined;
     }
 
     return new ReleaseCandidate(game, release, game.getRoms(), romFiles);
+  }
+
+  private async logMissingRomFiles(
+    game: Game,
+    release: Release | undefined,
+    existingRomFiles: File[],
+  ): Promise<void> {
+    if (!existingRomFiles.length) {
+      return;
+    }
+
+    const existingRomFileCrcs = await Promise.all(existingRomFiles.map((file) => file.getCrc32()));
+    const missingRomFiles = game.getRoms()
+      .filter((rom) => existingRomFileCrcs.indexOf(rom.getCrc32()) === -1);
+
+    let message = `Missing ${missingRomFiles.toLocaleString()} file${missingRomFiles.length !== 1 ? 's' : ''} for: ${game.getName()}`;
+    if (release?.getRegion()) {
+      message += ` (${release?.getRegion()})`;
+    }
+    missingRomFiles.forEach((rom) => {
+      message += `\n  ${rom.getName()}`;
+    });
+    await this.progressBar.logWarn(message);
   }
 }
