@@ -1,6 +1,5 @@
 import crc32 from 'crc/crc32';
-import fs from 'fs';
-import { PathLike } from 'node:fs';
+import fs, { PathLike } from 'fs';
 import path from 'path';
 
 export default class File {
