@@ -1,8 +1,7 @@
 import _7z from '7zip-min';
 import AdmZip, { IZipEntry } from 'adm-zip';
 import crc32 from 'crc/crc32';
-import fs, { promises as fsPromises } from 'fs';
-import { PathLike } from 'node:fs';
+import fs, { PathLike, promises as fsPromises } from 'fs';
 import unrar from 'node-unrar-js';
 import path from 'path';
 
