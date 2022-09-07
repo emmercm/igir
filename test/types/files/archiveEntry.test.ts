@@ -4,6 +4,8 @@ import ROMScanner from '../../../src/modules/romScanner.js';
 import fsPoly from '../../../src/polyfill/fsPoly.js';
 import ArchiveEntry from '../../../src/types/files/archiveEntry.js';
 import ArchiveFactory from '../../../src/types/files/archiveFactory.js';
+import SevenZip from '../../../src/types/files/sevenZip.js';
+import Zip from '../../../src/types/files/zip.js';
 import Options from '../../../src/types/options.js';
 import ProgressBarFake from '../../console/progressBarFake.js';
 
@@ -78,5 +80,30 @@ describe('extract', () => {
 
   it('should throw an error on unknown archives', async () => {
     expect(() => ArchiveFactory.archiveFrom('image.iso')).toThrow(/unknown/i);
+  });
+});
+
+describe('equals', () => {
+  it('should equal itself', async () => {
+    const entry = new ArchiveEntry(new Zip('file.zip'), 'entry.rom', '00000000');
+    await expect(entry.equals(entry)).resolves.toEqual(true);
+  });
+
+  it('should equal the same entry', async () => {
+    const first = new ArchiveEntry(new Zip('file.zip'), 'entry.rom', '00000000');
+    const second = new ArchiveEntry(new Zip('file.zip'), 'entry.rom', '00000000');
+    await expect(first.equals(second)).resolves.toEqual(true);
+    await expect(second.equals(first)).resolves.toEqual(true);
+  });
+
+  it('should not equal a different entry', async () => {
+    const first = new ArchiveEntry(new Zip('file.zip'), 'entry.rom', '00000000');
+    const second = new ArchiveEntry(new SevenZip('file.7z'), 'entry.rom', '00000000');
+    const third = new ArchiveEntry(new Zip('file.zip'), 'other.rom', '00000000');
+    const fourth = new ArchiveEntry(new Zip('file.zip'), 'entry.rom', '12345678');
+    await expect(first.equals(second)).resolves.toEqual(false);
+    await expect(second.equals(third)).resolves.toEqual(false);
+    await expect(third.equals(fourth)).resolves.toEqual(false);
+    await expect(fourth.equals(first)).resolves.toEqual(false);
   });
 });

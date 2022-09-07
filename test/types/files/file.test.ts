@@ -78,14 +78,24 @@ describe('extract', () => {
 });
 
 describe('equals', () => {
-  it('should be equal itself', async () => {
+  it('should equal itself', async () => {
     const file = new File('file.rom', '00000000');
     await expect(file.equals(file)).resolves.toEqual(true);
   });
 
-  it('should deep equal a raw file', async () => {
+  it('should equal the same file', async () => {
     const first = new File('file.rom', '00000000');
     const second = new File('file.rom', '00000000');
     await expect(first.equals(second)).resolves.toEqual(true);
+    await expect(second.equals(first)).resolves.toEqual(true);
+  });
+
+  it('should not equal a different file', async () => {
+    const first = new File('file.rom', '00000000');
+    const second = new File('other.rom', '00000000');
+    const third = new File('file.rom', '12345678');
+    await expect(first.equals(second)).resolves.toEqual(false);
+    await expect(second.equals(third)).resolves.toEqual(false);
+    await expect(third.equals(first)).resolves.toEqual(false);
   });
 });
