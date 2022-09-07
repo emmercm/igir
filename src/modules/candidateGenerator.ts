@@ -35,16 +35,22 @@ export default class CandidateGenerator {
     await this.progressBar.reset(dat.getParents().length);
 
     // For each parent, try to generate a parent candidate
-    dat.getParents().forEach((parent) => {
-      this.progressBar.increment();
+    /* eslint-disable no-await-in-loop */
+    for (let i = 0; i < dat.getParents().length; i += 1) {
+      const parent = dat.getParents()[i];
+      await this.progressBar.increment();
 
       const releaseCandidates: ReleaseCandidate[] = [];
 
       // For every game
-      parent.getGames().forEach((game) => {
+      for (let j = 0; j < parent.getGames().length; j += 1) {
+        const game = parent.getGames()[j];
+
         // For every release (ensuring at least one), find all release candidates
         const releases = game.getReleases().length ? game.getReleases() : [undefined];
-        releases.forEach((release) => {
+        for (let k = 0; k < releases.length; k += 1) {
+          const release = releases[k];
+
           // For each Game's ROM, find the matching File
           const romFiles = game.getRoms()
             .map((rom) => crc32ToInputFiles.get(rom.getCrc32()))
@@ -58,17 +64,16 @@ export default class CandidateGenerator {
               if (release?.getRegion()) {
                 message += ` (${release?.getRegion()})`;
               }
-              this.progressBar.logWarn(message);
+              await this.progressBar.logWarn(message);
             }
-            return;
+          } else {
+            releaseCandidates.push(new ReleaseCandidate(game, release, game.getRoms(), romFiles));
           }
-
-          releaseCandidates.push(new ReleaseCandidate(game, release, game.getRoms(), romFiles));
-        });
-      });
+        }
+      }
 
       output.set(parent, releaseCandidates);
-    });
+    }
 
     const totalCandidates = [...output.values()].reduce((sum, rc) => sum + rc.length, 0);
     await this.progressBar.logInfo(`${dat.getName()}: ${totalCandidates} candidate${totalCandidates !== 1 ? 's' : ''} found`);
