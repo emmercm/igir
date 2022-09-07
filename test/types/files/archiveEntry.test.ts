@@ -50,11 +50,8 @@ describe('extract', () => {
     for (let i = 0; i < rars.length; i += 1) {
       const rar = rars[i];
       await rar.extract((localFile) => {
-        expect(fs.existsSync(localFile))
-          .toEqual(true);
-        expect(localFile)
-          .not
-          .toEqual(rar.getFilePath());
+        expect(fs.existsSync(localFile)).toEqual(true);
+        expect(localFile).not.toEqual(rar.getFilePath());
       });
     }
     fsPoly.rmSync(temp, { recursive: true });
@@ -72,11 +69,8 @@ describe('extract', () => {
     for (let i = 0; i < sevenZips.length; i += 1) {
       const sevenZip = sevenZips[i];
       await sevenZip.extract((localFile) => {
-        expect(fs.existsSync(localFile))
-          .toEqual(true);
-        expect(localFile)
-          .not
-          .toEqual(sevenZip.getFilePath());
+        expect(fs.existsSync(localFile)).toEqual(true);
+        expect(localFile).not.toEqual(sevenZip.getFilePath());
       });
     }
     fsPoly.rmSync(temp, { recursive: true });
