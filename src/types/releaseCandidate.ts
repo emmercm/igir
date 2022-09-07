@@ -1,4 +1,4 @@
-import File from './file.js';
+import File from './files/file.js';
 import Game from './logiqx/game.js';
 import Release from './logiqx/release.js';
 import ROM from './logiqx/rom.js';

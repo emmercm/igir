@@ -3,7 +3,7 @@ import path from 'path';
 
 import OutputCleaner from '../../src/modules/outputCleaner.js';
 import fsPoly from '../../src/polyfill/fsPoly.js';
-import File from '../../src/types/file.js';
+import File from '../../src/types/files/file.js';
 import Options from '../../src/types/options.js';
 import ProgressBarFake from '../console/progressBarFake.js';
 
@@ -15,7 +15,7 @@ async function runOutputCleaner(writtenFilePathsToExclude: string[]): Promise<st
   fsPoly.copyDirSync('./test/fixtures', tempDir);
 
   const writtenRomFilesToExclude = writtenFilePathsToExclude
-    .map((filePath) => new File(path.join(tempDir, filePath), undefined, '00000000'));
+    .map((filePath) => new File(path.join(tempDir, filePath), '00000000'));
 
   const before = fsPoly.walkSync(tempDir);
   expect(before.length).toBeGreaterThan(0);
