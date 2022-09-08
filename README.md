@@ -1,6 +1,6 @@
 # igir
 
-A ROM collection manager to help sort collections and make one game, one rom (1G1R) sets.
+`igir` (pronounced "eager") is a platform-independent ROM collection manager to help sort collections and make one game, one rom (1G1R) sets.
 
 ![CLI:Windows,macOS,Linux](https://badgen.net/badge/icon/Windows,%20macOS,%20Linux?icon=terminal&label=CLI&color=grey)
 [![npm:igir](https://badgen.net/npm/v/igir?icon=npm&label&color=red)](https://www.npmjs.com/package/igir)
@@ -11,14 +11,27 @@ A ROM collection manager to help sort collections and make one game, one rom (1G
 [![Test Coverage](https://badgen.net/codecov/c/github/emmercm/igir/main?icon=codecov)](https://codecov.io/gh/emmercm/igir)
 [![Maintainability Score](https://badgen.net/codeclimate/maintainability/emmercm/igir?icon=codeclimate)](https://codeclimate.com/github/emmercm/igir/maintainability)
 
-## Summary
+## What does `igir` do?
 
 [![asciicast](https://asciinema.org/a/u1jeLTaSanO3mGzBb5b1jgxCy.svg)](https://asciinema.org/a/u1jeLTaSanO3mGzBb5b1jgxCy)
 
+With a large ROM collection it can be difficult to:
+
+- Organize ROM files by console and name
+- Delete duplicate ROMs
+- Delete ROMs for languages you don't speak
+- Consistently name ROM files
+- Consistently archive ROMs
+- Know what ROMs are missing
+
+`igir` helps solve all of these!
+
+## How does `igir` work?
+
 `igir` needs two inputs:
 
-1. One or more folders with **ROMs**, including ones in archives (.001, .7z, .bz2, .gz, .rar, .tar, .xz, .z, .z01, .zip, .zipx)
-2. A folder with ROM **DAT catalogs** (see below for more information)
+1. One or more folders with **ROMs**, including ones in archives (.001, .7z, .bz2, .gz, .rar, .tar, .xz, .z, .z01, .zip, .zipx, and more!)
+2. A folder with ROM **DAT catalogs** (see [below](#what-are-dat-catalogs) for more information)
 
 And then it will execute one or more specified commands:
 
@@ -29,17 +42,15 @@ And then it will execute one or more specified commands:
 - `clean`: recycle all unknown files in an output directory
 - `report`: generate a report on ROMs in an input directory
 
-## Installation
+## How do I run `igir`?
 
-With [![Node.js](https://badgen.net/npm/node/igir?icon=nodejs)](https://nodejs.org/en/download/) installed, from the command line:
+With [![Node.js](https://badgen.net/npm/node/igir?icon=nodejs)](https://nodejs.org/en/download/) installed, run from the command line:
 
 ```shell
 npx igir@latest [commands..] [options]
 ```
 
-## Usage
-
-Here is the `igir --help` message which shows all available options and a number of common use case examples:
+Here is the full `igir --help` message which shows all available options and a number of common use case examples:
 
 ```help
  ______   ______   ______  _______  
@@ -136,9 +147,9 @@ Examples:
   dir-letter -t
 ```
 
-## Obtaining DAT catalogs
+## What are DAT catalogs?
 
-XML-style DAT files that catalog every known ROM per system are required for `igir` to work effectively. A number of different release groups maintain these catalogs, the most popular are:
+XML-style DAT files that catalog every known ROM per system are required for `igir` to work. A number of different release groups maintain these catalogs, the most popular are:
 
 - [No-Intro (P/C XML)](https://datomatic.no-intro.org/index.php?page=download&s=64&op=xml) (cartridge-based systems)
 - [Redump](http://redump.org/downloads/) (optical media-based systems)
@@ -150,7 +161,7 @@ And some less popular release groups are:
 
 These catalogs help `igir` distinguish known ROM files in input directories from other files and helps generate reports on ROM collections.
 
-## Obtaining ROMs
+## How do I obtain ROMs?
 
 Emulators are generally legal, as long as they don't include copyrighted software such as a system BIOS.
 
@@ -170,7 +181,7 @@ Downloading ROM files that you do not own is piracy and is illegal in many count
 - Sony - Playstation 1: [ImgBurn](https://ninite.com/ImgBurn/) (with a PC)
 - Sony - Playstation 2: [ImgBurn](https://ninite.com/ImgBurn/) (with a PC)
 
-## Alternative ROM managers
+## Why choose `igir`?
 
 There a few different popular ROM managers that have similar features:
 
