@@ -122,8 +122,8 @@ Options:
   -h, --help  Show help                                                               [boolean]
 
 Examples:
-  igir copy -i **/*.zip -o 1G1R/ -s -l EN -r USA,  Produce a 1G1R set per console, preferring E
-  EUR,JPN                                          nglish from USA>EUR>JPN
+  igir copy -i **/*.zip -o 1G1R/ -D -s -l EN -r U  Produce a 1G1R set per console, preferring E
+  SA,EUR,JPN                                       nglish from USA>EUR>JPN
 
   igir copy report -i **/*.zip -i ROMs/ -o ROMs/   Merge new ROMs into an existing ROM collecti
                                                    on and generate a report
@@ -132,7 +132,7 @@ Examples:
 
   igir copy -i **/*.zip -o BIOS/ --only-bios       Collate all BIOS files
 
-  igir copy -i ROMs/ -o /media/SDCard/ROMs/ -D --  Copy ROMs to a flash cart
+  igir copy -i ROMs/ -o /media/SDCard/ROMs/ -D --  Copy ROMs to a flash cart and test them
   dir-letter -t
 ```
 
