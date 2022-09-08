@@ -36,7 +36,7 @@
     "lint:fix": "eslint . --fix",
     "node": "node --loader ts-node/esm index.ts",
     "prepack": "npm run build && ./scripts/update-readme-help.sh 70",
-    "postpack": "./scripts/update-readme-help.sh",
+    "postpack": "./scripts/update-readme-help.sh 95",
     "prepare": "husky install",
     "release": "./node_modules/.bin/release-it --no-increment",
     "start": "ts-node index.ts",

@@ -21,6 +21,9 @@ jobs:
       - run: ./node_modules/.bin/ts-node ./index.ts --help
       - run: npm run lint
 
+  # TODO(cemmer): check for deprecated dependencies
+  # https://stackoverflow.com/questions/44097267/find-packages-that-give-deprecated-warning-npm
+
   node-unit:
     runs-on: ${{ matrix.os }}
     strategy:

@@ -31,12 +31,14 @@ export default class CandidateGenerator {
       return output;
     }
 
+    // TODO(cemmer): ability to index files by some other property such as name
     const crc32ToInputFiles = await CandidateGenerator.indexFilesByCrc(inputRomFiles);
     await this.progressBar.logInfo(`${dat.getName()}: ${crc32ToInputFiles.size} unique ROM CRC32s found`);
 
     await this.progressBar.setSymbol(Symbols.GENERATING);
     await this.progressBar.reset(dat.getParents().length);
 
+    // TODO(cemmer): ability to work without DATs, generating a parent/game/release per file
     // For each parent, try to generate a parent candidate
     /* eslint-disable no-await-in-loop */
     for (let i = 0; i < dat.getParents().length; i += 1) {

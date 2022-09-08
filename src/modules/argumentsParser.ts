@@ -20,7 +20,25 @@ export default class ArgumentsParser {
     return arr as T;
   }
 
-  // TODO(cemmer): a readme section about what is supported, like archives and archives with multiple files in them, like https://www.npmjs.com/package/romdj has
+  private static getHelpWidth(argv: string[]): number {
+    // Look for --help/-h with a numerical value
+    for (let i = 0; i < argv.length; i += 1) {
+      if (argv[i].toLowerCase() === '--help' || argv[i].toLowerCase() === '-h') {
+        const helpFlagVal = parseInt(argv[i + 1], 10);
+        if (!Number.isNaN(helpFlagVal)) {
+          return parseInt(argv[i + 1], 10);
+        }
+      }
+    }
+
+    return Math.min(
+      // Use the terminal width if it has one
+      process.stdout.isTTY ? terminalSize().columns : Number.MAX_SAFE_INTEGER,
+      // Sane maximum
+      110,
+    );
+  }
+
   parse(argv: string[]): Options {
     this.logger.info(`Parsing CLI arguments: ${argv}`);
 
@@ -42,10 +60,10 @@ export default class ArgumentsParser {
       .command('zip', 'Create .zip archives when copying or moving ROMs', (yargsSubObj) => {
         addCommands(yargsSubObj);
       })
-      .command('clean', 'Recycle unknown files in the output directory', (yargsSubObj) => {
+      .command('test', 'Test ROMs for accuracy after writing them to the output directory', (yargsSubObj) => {
         addCommands(yargsSubObj);
       })
-      .command('test', 'Test ROMs for accuracy after writing them to the output directory', (yargsSubObj) => {
+      .command('clean', 'Recycle unknown files in the output directory', (yargsSubObj) => {
         addCommands(yargsSubObj);
       })
       .command('report', 'Generate a report on the known ROM files found in the input directories', (yargsSubObj) => {
@@ -120,6 +138,7 @@ export default class ArgumentsParser {
         alias: 'D',
         description: 'Use the DAT name as the output subdirectory',
         type: 'boolean',
+        implies: 'dat',
       })
       .option('dir-letter', {
         group: groupOutput,
@@ -195,7 +214,7 @@ export default class ArgumentsParser {
         group: groupPriority,
         description: 'Prefer parent ROMs over clones (requires parent-clone DAT files)',
         type: 'boolean',
-        implies: 'single',
+        implies: ['dat', 'single'],
       })
 
       .option('language-filter', {
@@ -284,15 +303,10 @@ export default class ArgumentsParser {
         type: 'count',
       })
 
-      .wrap(Math.min(
-        // If output is a real terminal, use the width, otherwise assume GitHub max width
-        process.stdout.isTTY ? terminalSize().columns : 95,
-        // Sane maximum
-        110,
-      ))
+      .wrap(ArgumentsParser.getHelpWidth(argv))
       .version(false)
       .example([
-        ['$0 copy -i **/*.zip -o 1G1R/ -s -l EN -r USA,EUR,JPN', 'Produce a 1G1R set per console, preferring English from USA>EUR>JPN'],
+        ['$0 copy -i **/*.zip -o 1G1R/ -D -s -l EN -r USA,EUR,JPN', 'Produce a 1G1R set per console, preferring English from USA>EUR>JPN'],
         [''], // https://github.com/yargs/yargs/issues/1640
         ['$0 copy report -i **/*.zip -i ROMs/ -o ROMs/', 'Merge new ROMs into an existing ROM collection and generate a report'],
         [''], // https://github.com/yargs/yargs/issues/1640
@@ -300,7 +314,7 @@ export default class ArgumentsParser {
         [''], // https://github.com/yargs/yargs/issues/1640
         ['$0 copy -i **/*.zip -o BIOS/ --only-bios', 'Collate all BIOS files'],
         [''], // https://github.com/yargs/yargs/issues/1640
-        ['$0 copy -i ROMs/ -o /media/SDCard/ROMs/ -D --dir-letter -t', 'Copy ROMs to a flash cart'],
+        ['$0 copy -i ROMs/ -o /media/SDCard/ROMs/ -D --dir-letter -t', 'Copy ROMs to a flash cart and test them'],
       ])
 
     // Colorize help output
