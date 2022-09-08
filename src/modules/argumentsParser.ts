@@ -138,6 +138,7 @@ export default class ArgumentsParser {
         alias: 'D',
         description: 'Use the DAT name as the output subdirectory',
         type: 'boolean',
+        implies: 'dat',
       })
       .option('dir-letter', {
         group: groupOutput,
@@ -213,7 +214,7 @@ export default class ArgumentsParser {
         group: groupPriority,
         description: 'Prefer parent ROMs over clones (requires parent-clone DAT files)',
         type: 'boolean',
-        implies: 'single',
+        implies: ['dat', 'single'],
       })
 
       .option('language-filter', {
