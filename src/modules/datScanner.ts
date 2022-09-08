@@ -1,9 +1,11 @@
 import { promises as fsPromises } from 'fs';
 import xml2js from 'xml2js';
 
-import ProgressBar, { Symbols } from '../console/progressBar.js';
+import { Symbols } from '../console/progressBar.js';
+import File from '../types/files/file.js';
 import DAT from '../types/logiqx/dat.js';
-import Options from '../types/options.js';
+import DataFile from '../types/logiqx/dataFile.js';
+import Scanner from './scanner.js';
 
 /**
  * Scan the {@link OptionsProps.dat} input directory for DAT files and return the internal model
@@ -11,49 +13,35 @@ import Options from '../types/options.js';
  *
  * This class will not be run concurrently with any other class.
  */
-export default class DATScanner {
-  private readonly options: Options;
-
-  private readonly progressBar: ProgressBar;
-
-  constructor(options: Options, progressBar: ProgressBar) {
-    this.options = options;
-    this.progressBar = progressBar;
-  }
-
+export default class DATScanner extends Scanner {
   async scan(): Promise<DAT[]> {
     await this.progressBar.logInfo('Scanning DAT files');
-    const datFiles = await this.options.scanDatFiles();
-    if (!datFiles.length) {
+    const datFilePaths = await this.options.scanDatFiles();
+    if (!datFilePaths.length) {
       return [];
     }
-    await this.progressBar.logInfo(datFiles.map((file) => `Found DAT file: ${file}`).join('\n'));
-    await this.progressBar.logInfo(`Found ${datFiles.length} DAT file${datFiles.length !== 1 ? 's' : ''}`);
+    await this.progressBar.logInfo(datFilePaths.map((file) => `Found DAT file: ${file}`).join('\n'));
+    await this.progressBar.logInfo(`Found ${datFilePaths.length} DAT file${datFilePaths.length !== 1 ? 's' : ''}`);
 
     await this.progressBar.setSymbol(Symbols.SEARCHING);
-    await this.progressBar.reset(datFiles.length);
+    await this.progressBar.reset(datFilePaths.length);
 
-    const parsedXml = [];
+    const parsedXml: DataFile[] = [];
 
     /* eslint-disable no-await-in-loop */
-    for (let i = 0; i < datFiles.length; i += 1) {
-      const dat = datFiles[i];
-      await this.progressBar.logDebug(`${dat}: Reading file`);
-
+    for (let i = 0; i < datFilePaths.length; i += 1) {
+      const datFilePath = datFilePaths[i];
+      await this.progressBar.logDebug(`${datFilePath}: Reading file`);
       await this.progressBar.increment();
 
-      const xmlContents = await fsPromises.readFile(dat);
+      const datFiles = await this.getFilesFromPath(datFilePath);
+      for (let j = 0; j < datFiles.length; j += 1) {
+        const datFile = datFiles[j];
 
-      try {
-        await this.progressBar.logDebug(`${dat}: parsing XML`);
-        const xmlObject = await xml2js.parseStringPromise(xmlContents.toString(), {
-          mergeAttrs: true,
-          explicitArray: false,
-        });
-        parsedXml.push(xmlObject);
-      } catch (err) {
-        const message = (err as Error).message.split('\n').join(', ');
-        await this.progressBar.logError(`Failed to parse DAT ${dat} : ${message}`);
+        const xmlObject = await this.parseDatFile(datFile);
+        if (xmlObject) {
+          parsedXml.push(xmlObject);
+        }
       }
     }
 
@@ -64,5 +52,23 @@ export default class DATScanner {
       .sort((a, b) => a.getNameShort().localeCompare(b.getNameShort()));
     await this.progressBar.logInfo(dats.map((dat) => `${dat.getName()}: ${dat.getGames().length} games, ${dat.getParents().length} parents parsed`).join('\n'));
     return dats;
+  }
+
+  private async parseDatFile(datFile: File): Promise<DataFile | undefined> {
+    return datFile.extract(async (localFile) => {
+      const xmlContents = await fsPromises.readFile(localFile);
+
+      try {
+        await this.progressBar.logDebug(`${datFile.toString()}: parsing XML`);
+        return await xml2js.parseStringPromise(xmlContents.toString(), {
+          mergeAttrs: true,
+          explicitArray: false,
+        }) as DataFile;
+      } catch (err) {
+        const message = (err as Error).message.split('\n').join(', ');
+        await this.progressBar.logError(`Failed to parse DAT ${datFile.toString()} : ${message}`);
+        return undefined;
+      }
+    });
   }
 }

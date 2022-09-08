@@ -22,10 +22,10 @@ export default class Rar extends Archive {
       ));
   }
 
-  async extractEntry(
+  async extractEntry<T>(
     archiveEntry: ArchiveEntry,
-    callback: (localFile: string) => (void | Promise<void>),
-  ): Promise<void> {
+    callback: (localFile: string) => (T | Promise<T>),
+  ): Promise<T> {
     const tempDir = await fsPromises.mkdtemp(Constants.GLOBAL_TEMP_DIR);
     const localFile = path.join(tempDir, archiveEntry.getEntryPath() as string);
 
@@ -41,7 +41,7 @@ export default class Rar extends Archive {
     }).files];
 
     try {
-      await callback(localFile);
+      return await callback(localFile);
     } finally {
       fsPoly.rmSync(tempDir, { recursive: true });
     }

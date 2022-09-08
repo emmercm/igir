@@ -16,8 +16,8 @@ export default class ArchiveEntry extends File {
     return this.entryPath;
   }
 
-  async extract(callback: (localFile: string) => (void | Promise<void>)): Promise<void> {
-    await this.archive.extractEntry(this, callback);
+  async extract<T>(callback: (localFile: string) => (T | Promise<T>)): Promise<T> {
+    return this.archive.extractEntry(this, callback);
   }
 
   async equals(other: File): Promise<boolean> {
