@@ -5,6 +5,7 @@
   ],
   dependencyDashboard: true,
   configMigration: true,
+  baseBranches: ["main", "master"],
 
   // Personal preferences
   timezone: "America/Los_Angeles",
@@ -73,7 +74,7 @@
           "@types/micromatch",
           "@types/semver",
           "@types/xml2js",
-          "@types/yargs",
+          "@types/yargs"
         ],
         groupName: "dev dependencies"
       },
@@ -99,5 +100,5 @@
         enabled: false
       }
     ]
-  },
+  }
 }

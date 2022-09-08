@@ -94,7 +94,7 @@ export default class Igir {
     const progressBar = this.logger.addProgressBar('Scanning for ROMs', Symbols.WAITING);
     const romInputs = await new ROMScanner(this.options, progressBar).scan();
     // TODO(cemmer): is this reporting the right number? it might be inflated
-    await progressBar.doneItems(romInputs.length, 'ROM', 'found');
+    await progressBar.doneItems(romInputs.length, 'file', 'found');
     return romInputs;
   }
 
