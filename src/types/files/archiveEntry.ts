@@ -20,6 +20,10 @@ export default class ArchiveEntry extends File {
     return this.archive.extractEntry(this, callback);
   }
 
+  toString(): string {
+    return `${this.getFilePath()}|${this.entryPath}`;
+  }
+
   async equals(other: File): Promise<boolean> {
     if (this === other) {
       return true;

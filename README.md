@@ -24,23 +24,25 @@ With a large ROM collection it can be difficult to:
 - Consistently archive ROMs
 - Know what ROMs are missing
 
-`igir` helps solve all of these!
+`igir` helps solve all of these problems!
 
 ## How does `igir` work?
 
-`igir` needs two inputs:
+`igir` needs two sets of files:
 
-1. One or more folders with **ROMs**, including ones in archives (.001, .7z, .bz2, .gz, .rar, .tar, .xz, .z, .z01, .zip, .zipx, and more!)
-2. A folder with ROM **DAT catalogs** (see [below](#what-are-dat-catalogs) for more information)
+1. ROMs
+2. DAT catalogs ([see below](#what-are-dat-catalogs) for where to download)
 
-And then it will execute one or more specified commands:
+Many different archive types are supported: .001, .7z, .bz2, .gz, .rar, .tar, .xz, .z, .z01, .zip, .zipx, and more!
+
+`igir` then needs one or more commands:
 
 - `copy`: copy ROMs from input directories to an output directory
-- `move`: copy ROMs from input directories to an output directory
+- `move`: move ROMs from input directories to an output directory
 - `zip`: create zip archives of output ROMs
 - `test`: test all written ROMs for accuracy
 - `clean`: recycle all unknown files in an output directory
-- `report`: generate a report on ROMs in an input directory
+- `report`: generate a report on ROMs found and processed
 
 ## How do I run `igir`?
 
@@ -75,9 +77,9 @@ Commands:
   igir report  Generate a report on the known ROM files found in the input directories
 
 Path options (inputs support globbing):
-  -d, --dat            Path(s) to DAT files             [array] [required] [default: ["*.dat"]]
-  -i, --input          Path(s) to ROM files (including .zip and .7z), these files will not be m
-                       odified                                               [array] [required]
+  -d, --dat            Path(s) to DAT files or archives [array] [required] [default: ["*.dat"]]
+  -i, --input          Path(s) to ROM files or archives, these files will not be modified
+                                                                             [array] [required]
   -I, --input-exclude  Path(s) to ROM files to exclude                                  [array]
   -o, --output         Path to the ROM output directory                                [string]
 
@@ -149,9 +151,12 @@ Examples:
 
 ## What are DAT catalogs?
 
-XML-style DAT files that catalog every known ROM per system are required for `igir` to work. A number of different release groups maintain these catalogs, the most popular are:
+DATs are catalogs of every known ROM per system. A number of different release groups maintain these catalogs, the most popular are:
 
-- [No-Intro (P/C XML)](https://datomatic.no-intro.org/index.php?page=download&s=64&op=xml) (cartridge-based systems)
+- [No-Intro P/C XML](https://datomatic.no-intro.org/index.php?page=download&s=64&op=daily) (cartridge-based systems)
+  
+    Note: you can download every console at once from the [daily page](https://datomatic.no-intro.org/index.php?page=download&s=64&op=daily), but you need to manually select "P/C XML" from the dropdown
+
 - [Redump](http://redump.org/downloads/) (optical media-based systems)
 
 And some less popular release groups are:
@@ -160,6 +165,8 @@ And some less popular release groups are:
 - [TOSEC](https://www.tosecdev.org/downloads/category/22-datfiles)
 
 These catalogs help `igir` distinguish known ROM files in input directories from other files and helps generate reports on ROM collections.
+
+`igir` can currently process DAT files in the XML format only.
 
 ## How do I obtain ROMs?
 
