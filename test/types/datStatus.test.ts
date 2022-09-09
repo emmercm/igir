@@ -53,7 +53,7 @@ describe('toString', () => {
     const parentsToReleaseCandidates = new Map<Parent, ReleaseCandidate[]>();
     const datStatus = new DATStatus(dat, parentsToReleaseCandidates);
     const options = new Options();
-    expect(datStatus.toString(options)).toEqual('3/3 games, 1/1 bioses, 2/2 retail releases missing');
+    expect(datStatus.toString(options)).toEqual('0/3 games, 0/1 bioses, 0/2 retail releases found');
   });
 
   it('should return status where every parent only has a candidate for the first rom', () => {
@@ -74,7 +74,7 @@ describe('toString', () => {
     });
     const datStatus = new DATStatus(dat, parentsToReleaseCandidates);
     const options = new Options();
-    expect(datStatus.toString(options)).toEqual('1/3 games, 0/1 bioses, 1/2 retail releases missing');
+    expect(datStatus.toString(options)).toEqual('2/3 games, 1/1 bioses, 1/2 retail releases found');
   });
 
   it('should return status where every parent has a candidate for every rom', () => {
@@ -94,7 +94,7 @@ describe('toString', () => {
     });
     const datStatus = new DATStatus(dat, parentsToReleaseCandidates);
     const options = new Options();
-    expect(datStatus.toString(options)).toEqual('0/3 games, 0/1 bioses, 0/2 retail releases missing');
+    expect(datStatus.toString(options)).toEqual('3/3 games, 1/1 bioses, 2/2 retail releases found');
   });
 });
 
