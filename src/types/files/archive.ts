@@ -4,8 +4,8 @@ import File from './file.js';
 export default abstract class Archive extends File {
   abstract getArchiveEntries(): Promise<ArchiveEntry[]>;
 
-  abstract extractEntry(
+  abstract extractEntry<T>(
     archiveEntry: ArchiveEntry,
-    callback: (localFile: string) => (void | Promise<void>),
-  ): Promise<void>;
+    callback: (localFile: string) => (T | Promise<T>),
+  ): Promise<T>;
 }

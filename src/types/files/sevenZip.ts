@@ -54,10 +54,10 @@ export default class SevenZip extends Archive {
     });
   }
 
-  async extractEntry(
+  async extractEntry<T>(
     archiveEntry: ArchiveEntry,
-    callback: (localFile: string) => (void | Promise<void>),
-  ): Promise<void> {
+    callback: (localFile: string) => (T | Promise<T>),
+  ): Promise<T> {
     const tempDir = await fsPromises.mkdtemp(Constants.GLOBAL_TEMP_DIR);
     const localFile = path.join(tempDir, archiveEntry.getEntryPath());
 
@@ -72,7 +72,7 @@ export default class SevenZip extends Archive {
     });
 
     try {
-      await callback(localFile);
+      return await callback(localFile);
     } finally {
       fsPoly.rmSync(tempDir, { recursive: true });
     }

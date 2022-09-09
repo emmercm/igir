@@ -44,12 +44,12 @@ it('should scan multiple files', async () => {
   await expect(createDatScanner(['test/fixtures/dats']).scan()).resolves.toHaveLength(expectedDatFiles);
   await expect(createDatScanner(['test/fixtures/dats/*']).scan()).resolves.toHaveLength(expectedDatFiles);
   await expect(createDatScanner(['test/fixtures/dats/*', 'test/fixtures/**/*.dat']).scan()).resolves.toHaveLength(expectedDatFiles);
-  await expect(createDatScanner(['test/fixtures/**/*.dat']).scan()).resolves.toHaveLength(expectedDatFiles);
-  await expect(createDatScanner(['test/fixtures/**/*.dat', 'test/fixtures/**/*.dat']).scan()).resolves.toHaveLength(expectedDatFiles);
+  await expect(createDatScanner(['test/fixtures/**/*.{dat,zip}']).scan()).resolves.toHaveLength(expectedDatFiles);
+  await expect(createDatScanner(['test/fixtures/**/*.{dat,zip}', 'test/fixtures/**/*.{dat,zip}']).scan()).resolves.toHaveLength(expectedDatFiles);
 });
 
 it('should scan single files', async () => {
   await expect(createDatScanner(['test/fixtures/dats/one.*']).scan()).resolves.toHaveLength(1);
-  await expect(createDatScanner(['test/fixtures/*/one.dat']).scan()).resolves.toHaveLength(1);
-  await expect(createDatScanner(['test/fixtures/dats/one.dat']).scan()).resolves.toHaveLength(1);
+  await expect(createDatScanner(['test/fixtures/*/one.zip']).scan()).resolves.toHaveLength(1);
+  await expect(createDatScanner(['test/fixtures/dats/one.zip']).scan()).resolves.toHaveLength(1);
 });
