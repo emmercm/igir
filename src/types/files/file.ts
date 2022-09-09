@@ -56,8 +56,8 @@ export default class File {
     return this;
   }
 
-  async extract(callback: (localFile: string) => (void | Promise<void>)): Promise<void> {
-    await callback(this.filePath);
+  async extract<T>(callback: (localFile: string) => (T | Promise<T>)): Promise<T> {
+    return callback(this.filePath);
   }
 
   /** *************************

@@ -85,7 +85,7 @@ export default class ArgumentsParser {
       .option('dat', {
         group: groupInputOutputPaths,
         alias: 'd',
-        description: 'Path(s) to DAT files',
+        description: 'Path(s) to DAT files or archives',
         demandOption: true,
         type: 'array',
         requiresArg: true,
@@ -96,7 +96,7 @@ export default class ArgumentsParser {
         alias: 'i',
         // TODO(cemmer): add a warning when input and output directories are the same, but also
         // have a "yes" flag
-        description: 'Path(s) to ROM files (including .zip and .7z), these files will not be modified',
+        description: 'Path(s) to ROM files or archives, these files will not be modified',
         demandOption: true,
         type: 'array',
         requiresArg: true,
