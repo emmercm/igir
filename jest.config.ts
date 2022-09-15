@@ -6,7 +6,7 @@ const jestConfig = {
   // BEGIN https://kulshekhar.github.io/ts-jest/docs/guides/esm-support
   preset: 'ts-jest/presets/default-esm-legacy',
   transform: {
-      '\\.ts$': ['ts-jest', { useESM: true }],
+    '\\.ts$': ['ts-jest', { useESM: true }],
   },
   moduleNameMapper: {
     '^(\\.{1,2}/.*)\\.js$': '$1',
@@ -15,12 +15,12 @@ const jestConfig = {
     // BEGIN https://github.com/facebook/jest/issues/12270#issuecomment-1111533936
     chalk: require.resolve('chalk'),
     '#ansi-styles': path.join(
-        require.resolve('chalk').split('chalk')[0],
-        'chalk/source/vendor/ansi-styles/index.js',
+      require.resolve('chalk').split('chalk')[0],
+      'chalk/source/vendor/ansi-styles/index.js',
     ),
     '#supports-color': path.join(
-        require.resolve('chalk').split('chalk')[0],
-        'chalk/source/vendor/supports-color/index.js',
+      require.resolve('chalk').split('chalk')[0],
+      'chalk/source/vendor/supports-color/index.js',
     ),
     // END https://github.com/facebook/jest/issues/12270#issuecomment-1111533936
   },
