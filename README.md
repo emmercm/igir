@@ -13,13 +13,15 @@
 
 ## What does `igir` do?
 
+A video of an example use case:
+
 [![asciicast](https://asciinema.org/a/u1jeLTaSanO3mGzBb5b1jgxCy.svg)](https://asciinema.org/a/u1jeLTaSanO3mGzBb5b1jgxCy)
 
 With a large ROM collection it can be difficult to:
 
 - Organize ROM files by console and name
 - Delete duplicate ROMs
-- Delete ROMs for languages you don't speak
+- Delete ROMs for languages you don't understand
 - Consistently name ROM files
 - Consistently archive ROMs
 - Know what ROMs are missing
@@ -30,10 +32,10 @@ With a large ROM collection it can be difficult to:
 
 `igir` needs two sets of files:
 
-1. ROMs
-2. DAT catalogs ([see below](#what-are-dat-catalogs) for where to download)
+1. ROMs, of course!
+2. One or more DATs ([see below](#what-are-dats) for where to download)
 
-Many different archive types are supported: .001, .7z, .bz2, .gz, .rar, .tar, .xz, .z, .z01, .zip, .zipx, and more!
+Many different input archive types are supported: .001, .7z, .bz2, .gz, .rar, .tar, .xz, .z, .z01, .zip, .zipx, and more!
 
 `igir` then needs one or more commands:
 
@@ -128,11 +130,9 @@ Filtering options:
       --no-homebrew      Filter out homebrew ROMs                                     [boolean]
       --no-bad           Filter out bad ROM dumps                                     [boolean]
 
-Debug options:
+Help options:
   -v, --verbose  Enable verbose logging, can specify twice (-vv)                        [count]
-
-Options:
-  -h, --help  Show help                                                               [boolean]
+  -h, --help     Show help                                                            [boolean]
 
 Examples:
   igir copy -i **/*.zip -o 1G1R/ -D -s -l EN -r U  Produce a 1G1R set per console, preferring E
@@ -149,14 +149,12 @@ Examples:
   dir-letter -t
 ```
 
-## What are DAT catalogs?
+## What are DATs?
 
 DATs are catalogs of every known ROM per system. A number of different release groups maintain these catalogs, the most popular are:
 
 - [No-Intro P/C XML](https://datomatic.no-intro.org/index.php?page=download&s=64&op=daily) (cartridge-based systems)
-  
-    Note: you can download every console at once from the [daily page](https://datomatic.no-intro.org/index.php?page=download&s=64&op=daily), but you need to manually select "P/C XML" from the dropdown
-
+  - Note: you can download every console at once from the [daily page](https://datomatic.no-intro.org/index.php?page=download&s=64&op=daily), but you need to manually select "P/C XML" from the dropdown
 - [Redump](http://redump.org/downloads/) (optical media-based systems)
 
 And some less popular release groups are:
