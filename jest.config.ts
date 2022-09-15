@@ -1,19 +1,18 @@
-const path = require('path');
+import path from 'path';
 
-/** @type {import('ts-jest/dist/types').InitialOptionsTsJest} */
-module.exports = {
-  preset: 'ts-jest',
+const jestConfig = {
   testEnvironment: 'node',
 
-  // https://github.com/kulshekhar/ts-jest/issues/1057#issuecomment-1068342692
-  globals: {
-    'ts-jest': {
-      useESM: true
-    }
+  // BEGIN https://kulshekhar.github.io/ts-jest/docs/guides/esm-support
+  preset: 'ts-jest/presets/default-esm-legacy',
+  transform: {
+      '\\.ts$': ['ts-jest', { useESM: true }],
   },
   moduleNameMapper: {
-    '(.+)\\.js': '$1',
-    // https://github.com/facebook/jest/issues/12270#issuecomment-1111533936
+    '^(\\.{1,2}/.*)\\.js$': '$1',
+    // END https://kulshekhar.github.io/ts-jest/docs/guides/esm-support
+
+    // BEGIN https://github.com/facebook/jest/issues/12270#issuecomment-1111533936
     chalk: require.resolve('chalk'),
     '#ansi-styles': path.join(
         require.resolve('chalk').split('chalk')[0],
@@ -23,8 +22,8 @@ module.exports = {
         require.resolve('chalk').split('chalk')[0],
         'chalk/source/vendor/supports-color/index.js',
     ),
+    // END https://github.com/facebook/jest/issues/12270#issuecomment-1111533936
   },
-  extensionsToTreatAsEsm: ['.ts'],
 
   // Don't run any compiled versions of the tests, if they exist
   modulePathIgnorePatterns: ['<rootDir>/build/'],
@@ -34,3 +33,5 @@ module.exports = {
   // Report coverage on all source files, because it won't by default...
   collectCoverageFrom: ['<rootDir>/src/**/*.{js,cjs,mjs,ts}'],
 };
+
+export default jestConfig;
