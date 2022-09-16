@@ -3,7 +3,7 @@ import fs from 'fs';
 import path from 'path';
 
 import Constants from '../../constants.js';
-import FileHeader from '../fileHeader.js';
+import FileHeader from './fileHeader.js';
 
 export default class File {
   private readonly filePath: string;
@@ -22,6 +22,10 @@ export default class File {
   }
 
   getFilePath(): string {
+    return this.filePath;
+  }
+
+  getExtractedFilePath(): string {
     return this.filePath;
   }
 

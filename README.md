@@ -85,6 +85,9 @@ Path options (inputs support globbing):
   -I, --input-exclude  Path(s) to ROM files to exclude                                  [array]
   -o, --output         Path to the ROM output directory                                [string]
 
+Input options:
+  -H, --header  Glob pattern of files to force header processing for                   [string]
+
 Output options:
       --dir-mirror    Use the input subdirectory structure for output subdirectories  [boolean]
   -D, --dir-dat-name  Use the DAT name as the output subdirectory                     [boolean]

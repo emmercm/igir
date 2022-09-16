@@ -1,24 +1,25 @@
 import async, { AsyncResultCallback } from 'async';
+import path from 'path';
 
 import ProgressBar, { Symbols } from '../console/progressBar.js';
 import Constants from '../constants.js';
-import FileHeader from '../types/fileHeader.js';
 import File from '../types/files/file.js';
+import FileHeader from '../types/files/fileHeader.js';
 import DAT from '../types/logiqx/dat.js';
+import Options from '../types/options.js';
 
 export default class HeaderProcessor {
+  private readonly options: Options;
+
   private readonly progressBar: ProgressBar;
 
-  constructor(progressBar: ProgressBar) {
+  constructor(options: Options, progressBar: ProgressBar) {
+    this.options = options;
     this.progressBar = progressBar;
   }
 
   async process(dat: DAT, inputRomFiles: File[]): Promise<File[]> {
     await this.progressBar.logInfo(`${dat.getName()}: Processing file headers`);
-
-    if (!dat.getFileHeader()) {
-      return inputRomFiles;
-    }
 
     await this.progressBar.setSymbol(Symbols.HASHING);
     await this.progressBar.reset(inputRomFiles.length);
@@ -28,9 +29,37 @@ export default class HeaderProcessor {
       Constants.ROM_HEADER_HASHER_THREADS,
       async (inputFile, callback: AsyncResultCallback<File, Error>) => {
         await this.progressBar.increment();
-        const fileWithHeader = inputFile.withFileHeader(dat.getFileHeader() as FileHeader);
-        await fileWithHeader.resolve();
-        callback(null, fileWithHeader);
+
+        // Can get FileHeader from DAT, use that
+        if (dat.getFileHeader()) {
+          const fileWithHeader = await inputFile
+            .withFileHeader(dat.getFileHeader() as FileHeader)
+            .resolve();
+          return callback(null, fileWithHeader);
+        }
+
+        // Can get FileHeader from extension, use that
+        const headerForExtension = FileHeader.getForExtension(
+          path.extname(inputFile.getExtractedFilePath()),
+        );
+        if (headerForExtension) {
+          const fileWithHeader = await inputFile.withFileHeader(headerForExtension).resolve();
+          return callback(null, fileWithHeader);
+        }
+
+        // Should get FileHeader from File, try to
+        if (this.options.shouldProcessHeader(inputFile.getExtractedFilePath())) {
+          const headerForFile = await inputFile
+            .extract(async (localFile) => FileHeader.getForFile(localFile));
+          if (headerForFile) {
+            const fileWithHeader = await inputFile.withFileHeader(headerForFile).resolve();
+            return callback(null, fileWithHeader);
+          }
+          await this.progressBar.logWarn(`Couldn't detect header for ${inputFile.toString()}`);
+        }
+
+        // Should not get FileHeader
+        return callback(null, inputFile);
       },
     );
   }

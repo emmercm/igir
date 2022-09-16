@@ -43,6 +43,7 @@ export default class ArgumentsParser {
     this.logger.info(`Parsing CLI arguments: ${argv}`);
 
     const groupInputOutputPaths = 'Path options (inputs support globbing):';
+    const groupInput = 'Input options:';
     const groupOutput = 'Output options:';
     const groupPriority = 'Priority options:';
     const groupFiltering = 'Filtering options:';
@@ -126,6 +127,15 @@ export default class ArgumentsParser {
           throw new Error(`Missing required option for commands ${needOutput.join(', ')}: output`);
         }
         return true;
+      })
+
+      .option('header', {
+        group: groupInput,
+        alias: 'H',
+        description: 'Glob pattern of files to force header processing for',
+        type: 'string',
+        coerce: ArgumentsParser.getLastValue, // don't allow string[] values
+        requiresArg: true,
       })
 
       .option('dir-mirror', {

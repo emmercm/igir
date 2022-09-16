@@ -46,7 +46,8 @@ export default class Igir {
       await datProcessProgressBar.increment();
 
       // Process ROM headers
-      const processedRomFiles = await new HeaderProcessor(progressBar).process(dat, rawRomFiles);
+      const processedRomFiles = await new HeaderProcessor(this.options, progressBar)
+        .process(dat, rawRomFiles);
 
       // Generate and filter ROM candidates
       const romCandidates = await new CandidateGenerator(progressBar)

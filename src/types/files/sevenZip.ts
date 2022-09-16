@@ -5,10 +5,10 @@ import path from 'path';
 
 import Constants from '../../constants.js';
 import fsPoly from '../../polyfill/fsPoly.js';
-import FileHeader from '../fileHeader.js';
 import Archive from './archive.js';
 import ArchiveEntry from './archiveEntry.js';
 import File from './file.js';
+import FileHeader from './fileHeader.js';
 
 export default class SevenZip extends Archive {
   // p7zip `7za i`

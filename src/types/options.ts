@@ -20,6 +20,7 @@ export interface OptionsProps {
   readonly input?: string[],
   readonly inputExclude?: string[],
   readonly output?: string,
+  readonly header?: string,
   readonly dirMirror?: boolean,
   readonly dirDatName?: boolean,
   readonly dirLetter?: boolean,
@@ -62,6 +63,8 @@ export default class Options implements OptionsProps {
   readonly inputExclude: string[] = [];
 
   readonly output!: string;
+
+  readonly header!: string;
 
   readonly dirMirror!: boolean;
 
@@ -127,6 +130,7 @@ export default class Options implements OptionsProps {
     this.input = options?.input || [];
     this.inputExclude = options?.inputExclude || [];
     this.output = options?.output || '';
+    this.header = options?.header || '';
     this.dirMirror = options?.dirMirror || false;
     this.dirDatName = options?.dirDatName || false;
     this.dirLetter = options?.dirLetter || false;
@@ -326,6 +330,14 @@ export default class Options implements OptionsProps {
         .replace(/:/g, ';')
         .replace(/[<>:"/\\|?*]/g, '_'),
     );
+  }
+
+  private getHeader(): string {
+    return this.header;
+  }
+
+  shouldProcessHeader(filePath: string): boolean {
+    return this.getHeader().length > 0 && micromatch.isMatch(filePath, this.getHeader());
   }
 
   getDirMirror(): boolean {

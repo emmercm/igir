@@ -1,6 +1,6 @@
-import FileHeader from '../fileHeader.js';
 import Archive from './archive.js';
 import File from './file.js';
+import FileHeader from './fileHeader.js';
 
 export default class ArchiveEntry extends File {
   private readonly archive: Archive;
@@ -11,6 +11,10 @@ export default class ArchiveEntry extends File {
     super(archive.getFilePath(), crc, fileHeader);
     this.archive = archive;
     this.entryPath = entryPath;
+  }
+
+  getExtractedFilePath(): string {
+    return this.entryPath;
   }
 
   getEntryPath(): string {
