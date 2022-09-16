@@ -7,9 +7,8 @@ on:
     types: [published]
 
 jobs:
-  publish:
+  node-publish:
     runs-on: ubuntu-latest
-
     steps:
       - uses: actions/checkout@v3
       # Setup .npmrc file to publish to npm

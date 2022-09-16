@@ -4,6 +4,7 @@ import Logger from './src/console/logger.js';
 import Igir from './src/igir.js';
 import ArgumentsParser from './src/modules/argumentsParser.js';
 
+/* eslint-disable-next-line @typescript-eslint/no-floating-promises */
 (async (): Promise<void> => {
   const logger = new Logger();
   logger.printHeader();

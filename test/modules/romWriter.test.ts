@@ -6,7 +6,8 @@ import path from 'path';
 import ROMScanner from '../../src/modules/romScanner.js';
 import ROMWriter from '../../src/modules/romWriter.js';
 import fsPoly from '../../src/polyfill/fsPoly.js';
-import File from '../../src/types/file.js';
+import ArchiveEntry from '../../src/types/files/archiveEntry.js';
+import File from '../../src/types/files/file.js';
 import DAT from '../../src/types/logiqx/dat.js';
 import Game from '../../src/types/logiqx/game.js';
 import Header from '../../src/types/logiqx/header.js';
@@ -70,8 +71,12 @@ async function indexFilesByName(
       const releaseCandidates = await Promise.all(romFiles
         .map(async (romFile) => {
           const release = new Release(romName, 'UNK', undefined);
+          let romFileName = romFile.getFilePath();
+          if (romFile instanceof ArchiveEntry) {
+            romFileName = (<ArchiveEntry>romFile).getEntryPath();
+          }
           const rom = new ROM(
-            path.basename(romFile.getArchiveEntryPath() || romFile.getFilePath()),
+            path.basename(romFileName),
             await romFile.getCrc32(),
           );
           return new ReleaseCandidate(game, release, [rom], [romFile]);

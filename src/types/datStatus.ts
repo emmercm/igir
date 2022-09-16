@@ -71,9 +71,9 @@ export default class DATStatus {
       .map((type) => {
         const missing = this.missingRoms.get(type) || [];
         const all = this.allRoms.get(type) || [];
-        return `${missing.length.toLocaleString()}/${all.length.toLocaleString()} ${type}`;
+        return `${(all.length - missing.length).toLocaleString()}/${all.length.toLocaleString()} ${type}`;
       })
-      .join(', ')} missing`;
+      .join(', ')} found`;
   }
 
   toReport(options: Options): string {

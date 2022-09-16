@@ -8,12 +8,8 @@ trap "cd \"${here}\"" EXIT
 cd "$(dirname "$0")/.."
 
 
-cols="$(tput cols || echo 80)"
-stty cols "${1:-2147483647}" || true
-
 README="README.md"
+HELP="$(./node_modules/.bin/ts-node ./index.ts --help "${1:-80}")"
 (awk 'BEGIN {msg=ARGV[1]; delete ARGV[1]; p=1} /^```help/ {print; print msg; p=0} /^```$/ {p=1} p' \
-  "$(./node_modules/.bin/ts-node ./index.ts --help)" \
+  "${HELP}" \
   "${README}" > "${README}.temp" || exit 1) && mv -f "${README}.temp" "${README}"
-
-stty cols "${cols}" || true

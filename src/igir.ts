@@ -14,7 +14,7 @@ import ROMScanner from './modules/romScanner.js';
 import ROMWriter from './modules/romWriter.js';
 import StatusGenerator from './modules/statusGenerator.js';
 import DATStatus from './types/datStatus.js';
-import File from './types/file.js';
+import File from './types/files/file.js';
 import DAT from './types/logiqx/dat.js';
 import Parent from './types/logiqx/parent.js';
 import Options from './types/options.js';
@@ -99,7 +99,7 @@ export default class Igir {
     const progressBar = this.logger.addProgressBar('Scanning for ROMs', Symbols.WAITING);
     const romInputs = await new ROMScanner(this.options, progressBar).scan();
     // TODO(cemmer): is this reporting the right number? it might be inflated
-    await progressBar.doneItems(romInputs.length, 'ROM', 'found');
+    await progressBar.doneItems(romInputs.length, 'file', 'found');
     return romInputs;
   }
 
