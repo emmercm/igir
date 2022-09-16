@@ -4,8 +4,10 @@ import path from 'path';
 
 import Constants from '../../constants.js';
 import fsPoly from '../../polyfill/fsPoly.js';
+import FileHeader from '../fileHeader.js';
 import Archive from './archive.js';
 import ArchiveEntry from './archiveEntry.js';
+import File from './file.js';
 
 export default class Zip extends Archive {
   static readonly SUPPORTED_EXTENSIONS = ['.zip'];
@@ -47,5 +49,13 @@ export default class Zip extends Archive {
     } finally {
       fsPoly.rmSync(tempDir, { recursive: true });
     }
+  }
+
+  withFileHeader(fileHeader: FileHeader): File {
+    return new Zip(
+      this.getFilePath(),
+      undefined, // the old CRC can't be used, a header will change it
+      fileHeader,
+    );
   }
 }

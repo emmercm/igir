@@ -77,7 +77,7 @@ export default class FsPoly {
         fs.rmdirSync(pathLike, options);
       } else {
         // Added in: v14.14.0
-        fs.rmSync(pathLike, { recursive: true, force: true });
+        fs.rmSync(pathLike, { ...options, force: true });
       }
     } else {
       // Added in: v0.1.21

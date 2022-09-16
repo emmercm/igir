@@ -2,8 +2,8 @@ import async, { AsyncResultCallback } from 'async';
 
 import ProgressBar, { Symbols } from '../console/progressBar.js';
 import Constants from '../constants.js';
-import File from '../types/file.js';
 import FileHeader from '../types/fileHeader.js';
+import File from '../types/files/file.js';
 import DAT from '../types/logiqx/dat.js';
 
 export default class HeaderProcessor {

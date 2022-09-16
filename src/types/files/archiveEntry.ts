@@ -1,3 +1,4 @@
+import FileHeader from '../fileHeader.js';
 import Archive from './archive.js';
 import File from './file.js';
 
@@ -6,8 +7,8 @@ export default class ArchiveEntry extends File {
 
   private readonly entryPath: string;
 
-  constructor(archive: Archive, entryPath: string, crc?: string) {
-    super(archive.getFilePath(), crc);
+  constructor(archive: Archive, entryPath: string, crc?: string, fileHeader?: FileHeader) {
+    super(archive.getFilePath(), crc, fileHeader);
     this.archive = archive;
     this.entryPath = entryPath;
   }
@@ -18,6 +19,15 @@ export default class ArchiveEntry extends File {
 
   async extract<T>(callback: (localFile: string) => (T | Promise<T>)): Promise<T> {
     return this.archive.extractEntry(this, callback);
+  }
+
+  withFileHeader(fileHeader: FileHeader): File {
+    return new ArchiveEntry(
+      this.archive,
+      this.entryPath,
+      undefined, // the old CRC can't be used, a header will change it
+      fileHeader,
+    );
   }
 
   toString(): string {
