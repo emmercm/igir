@@ -36,11 +36,11 @@ it('should not throw on bad archives', async () => {
 });
 
 it('should scan multiple files', async () => {
-  const expectedRomFiles = 22;
+  const expectedRomFiles = 26;
   await expect(createRomScanner(['test/fixtures/roms']).scan()).resolves.toHaveLength(expectedRomFiles);
-  await expect(createRomScanner(['test/fixtures/roms/*', 'test/fixtures/roms/**/*.{rom,zip,rar,7z}']).scan()).resolves.toHaveLength(expectedRomFiles);
-  await expect(createRomScanner(['test/fixtures/roms/**/*.{rom,zip,rar,7z}']).scan()).resolves.toHaveLength(expectedRomFiles);
-  await expect(createRomScanner(['test/fixtures/roms/**/*.{rom,zip,rar,7z}', 'test/fixtures/roms/**/*.{rom,zip,rar,7z}']).scan()).resolves.toHaveLength(expectedRomFiles);
+  await expect(createRomScanner(['test/fixtures/roms/*', 'test/fixtures/roms/**/*.{rom,nes,zip,rar,7z}']).scan()).resolves.toHaveLength(expectedRomFiles);
+  await expect(createRomScanner(['test/fixtures/roms/**/*.{rom,nes,zip,rar,7z}']).scan()).resolves.toHaveLength(expectedRomFiles);
+  await expect(createRomScanner(['test/fixtures/roms/**/*.{rom,nes,zip,rar,7z}', 'test/fixtures/roms/**/*.{rom,nes,zip,rar,7z}']).scan()).resolves.toHaveLength(expectedRomFiles);
 });
 
 it('should scan single files', async () => {

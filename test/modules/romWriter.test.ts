@@ -172,7 +172,7 @@ describe('zip', () => {
       const inputFiles = fsPoly.walkSync(inputTemp);
       expect(inputFiles.length).toBeGreaterThan(0);
 
-      const parentsToCandidates = await indexFilesByName(inputTemp, '**/*');
+      const parentsToCandidates = await indexFilesByName(inputTemp, '**/!(headered)/*');
 
       // Write once
       const firstWrittenPaths = await runRomWriter(outputTemp, {
@@ -209,7 +209,7 @@ describe('zip', () => {
       const inputFiles = fsPoly.walkSync(inputTemp);
       expect(inputFiles.length).toBeGreaterThan(0);
 
-      const parentsToCandidates = await indexFilesByName(inputTemp, '**/*');
+      const parentsToCandidates = await indexFilesByName(inputTemp, '**/!(headered)/*');
 
       // Write once
       const firstWrittenPaths = await runRomWriter(outputTemp, {
@@ -241,7 +241,7 @@ describe('zip', () => {
       const inputFiles = fsPoly.walkSync(inputTemp);
       expect(inputFiles.length).toBeGreaterThan(0);
 
-      const parentsToCandidates = await indexFilesByName(inputTemp, '**/*');
+      const parentsToCandidates = await indexFilesByName(inputTemp, '**/!(headered)/*');
 
       const existingZip = new AdmZip();
       existingZip.addFile('something.rom', Buffer.from('something'));
@@ -271,7 +271,7 @@ describe('zip', () => {
       const inputFiles = fsPoly.walkSync(inputTemp);
       expect(inputFiles.length).toBeGreaterThan(0);
 
-      const parentsToCandidates = await indexFilesByName(inputTemp, '**/*');
+      const parentsToCandidates = await indexFilesByName(inputTemp, '**/!(headered)/*');
 
       const writtenPaths = await runRomWriter(outputTemp, {
         commands: ['copy', 'zip', 'test'],
@@ -416,7 +416,7 @@ describe('raw', () => {
       const inputFiles = fsPoly.walkSync(inputTemp);
       expect(inputFiles.length).toBeGreaterThan(0);
 
-      const parentsToCandidates = await indexFilesByName(inputTemp, '**/*');
+      const parentsToCandidates = await indexFilesByName(inputTemp, '**/!(headered)/*');
 
       // Write once
       const firstWrittenPaths = await runRomWriter(outputTemp, {
@@ -453,7 +453,7 @@ describe('raw', () => {
       const inputFiles = fsPoly.walkSync(inputTemp);
       expect(inputFiles.length).toBeGreaterThan(0);
 
-      const parentsToCandidates = await indexFilesByName(inputTemp, '**/*');
+      const parentsToCandidates = await indexFilesByName(inputTemp, '**/!(headered)/*');
 
       // Write once
       const firstWrittenPaths = await runRomWriter(outputTemp, {
@@ -485,7 +485,7 @@ describe('raw', () => {
       const inputFiles = fsPoly.walkSync(inputTemp);
       expect(inputFiles.length).toBeGreaterThan(0);
 
-      const parentsToCandidates = await indexFilesByName(inputTemp, '**/*');
+      const parentsToCandidates = await indexFilesByName(inputTemp, '**/!(headered)/*');
 
       const writtenPaths = await runRomWriter(outputTemp, {
         commands: ['copy', 'test'],
