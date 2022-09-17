@@ -47,7 +47,7 @@ export default class ArgumentsParser {
     const groupOutput = 'Output options:';
     const groupPriority = 'Priority options:';
     const groupFiltering = 'Filtering options:';
-    const groupDebug = 'Debug options:';
+    const groupHelp = 'Help options:';
 
     // Add every command to a yargs object, recursively, resulting in the ability to specify
     // multiple commands
@@ -307,7 +307,7 @@ export default class ArgumentsParser {
       })
 
       .option('verbose', {
-        group: groupDebug,
+        group: groupHelp,
         alias: 'v',
         description: 'Enable verbose logging, can specify twice (-vv)',
         type: 'count',
@@ -327,8 +327,9 @@ export default class ArgumentsParser {
         ['$0 copy -i ROMs/ -o /media/SDCard/ROMs/ -D --dir-letter -t', 'Copy ROMs to a flash cart and test them'],
       ])
 
-    // Colorize help output
+      // Colorize help output
       .option('help', {
+        group: groupHelp,
         alias: 'h',
         description: 'Show help',
         type: 'boolean',

@@ -44,7 +44,6 @@ export default class File {
     return this.extract(async (localFile) => {
       // If we're hashing a file with a header, make sure the file actually has the header magic
       // string before excluding it
-      // TODO(cemmer): CLI flag for forcing header detection
       let start = 0;
       if (this.fileHeader && await this.fileHeader.fileHasHeader(localFile)) {
         start = this.fileHeader.dataOffsetBytes;

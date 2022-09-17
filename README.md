@@ -133,11 +133,9 @@ Filtering options:
       --no-homebrew      Filter out homebrew ROMs                                     [boolean]
       --no-bad           Filter out bad ROM dumps                                     [boolean]
 
-Debug options:
+Help options:
   -v, --verbose  Enable verbose logging, can specify twice (-vv)                        [count]
-
-Options:
-  -h, --help  Show help                                                               [boolean]
+  -h, --help     Show help                                                            [boolean]
 
 Examples:
   igir copy -i **/*.zip -o 1G1R/ -D -s -l EN -r U  Produce a 1G1R set per console, preferring E

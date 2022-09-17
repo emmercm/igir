@@ -19,7 +19,7 @@ describe('getArchiveEntries', () => {
     ['./test/fixtures/roms/7z/unknown.7z', 'unknown.rom', '377a7727'],
     ['./test/fixtures/roms/rar/unknown.rar', 'unknown.rom', '377a7727'],
     ['./test/fixtures/roms/zip/unknown.zip', 'unknown.rom', '377a7727'],
-  ])('should enumerate the single file archive %s', async (filePath, expectedEntryPath, expectedCrc) => {
+  ])('should enumerate the single file archive: %s', async (filePath, expectedEntryPath, expectedCrc) => {
     const archive = ArchiveFactory.archiveFrom(filePath);
 
     const entries = await archive.getArchiveEntries();

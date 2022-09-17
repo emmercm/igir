@@ -336,7 +336,7 @@ export default class Options implements OptionsProps {
     return this.header;
   }
 
-  shouldProcessHeader(filePath: string): boolean {
+  shouldReadFileForHeader(filePath: string): boolean {
     return this.getHeader().length > 0 && micromatch.isMatch(filePath, this.getHeader());
   }
 

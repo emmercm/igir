@@ -26,7 +26,7 @@ describe('getRegion', () => {
 });
 
 describe('getLanguages', () => {
-  test.each(ReleaseCandidate.getLanguages())('should return the release language; %s', (language) => {
+  test.each(ReleaseCandidate.getLanguages())('should return the release language: %s', (language) => {
     const release = new Release('release', 'UNK', language);
     const releaseCandidate = new ReleaseCandidate(new Game(), release, [], []);
     expect(releaseCandidate.getLanguages()).toEqual([language]);
@@ -37,7 +37,7 @@ describe('getLanguages', () => {
     ['En,Fr,De', ['EN', 'FR', 'DE']],
     ['It+En,Fr,De,Es,It,Nl,Sv,Da', ['IT', 'EN', 'FR', 'DE', 'ES', 'NL', 'SV', 'DA']],
     ['En,Fr,It+Es,It', ['EN', 'FR', 'IT', 'ES']],
-  ])('should return the language from game name; %s', (languages, expectedLanguages) => {
+  ])('should return the language from game name: %s', (languages, expectedLanguages) => {
     const releaseCandidate = new ReleaseCandidate(new Game({ name: `game (${languages})` }), undefined, [], []);
     expect(releaseCandidate.getLanguages()).toEqual(expectedLanguages);
   });

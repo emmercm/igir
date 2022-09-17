@@ -31,7 +31,7 @@ describe('getCrc32', () => {
     ['./test/fixtures/roms/raw/fizzbuzz.rom', '370517b5'],
     ['./test/fixtures/roms/raw/foobar.rom', 'b22c9747'],
     ['./test/fixtures/roms/raw/loremipsum.rom', '70856527'],
-  ])('should hash the file path: %s', async (filePath, expectedCrc) => {
+  ])('should hash the raw file: %s', async (filePath, expectedCrc) => {
     const file = new File(filePath);
     await expect(file.getCrc32()).resolves.toEqual(expectedCrc);
   });

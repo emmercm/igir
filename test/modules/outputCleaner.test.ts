@@ -39,14 +39,16 @@ async function runOutputCleaner(writtenFilePathsToExclude: string[]): Promise<st
 
 it('should delete nothing if nothing written', async () => {
   const existingFiles = fsPoly.walkSync('./test/fixtures')
-    .map((filePath) => filePath.replace(/^test[\\/]fixtures[\\/]/, ''));
+    .map((filePath) => filePath.replace(/^test[\\/]fixtures[\\/]/, ''))
+    .sort();
   const filesRemaining = await runOutputCleaner([]);
   expect(filesRemaining).toEqual(existingFiles);
 });
 
 it('should delete nothing if all match', async () => {
   const existingFiles = fsPoly.walkSync('./test/fixtures')
-    .map((filePath) => filePath.replace(/^test[\\/]fixtures[\\/]/, ''));
+    .map((filePath) => filePath.replace(/^test[\\/]fixtures[\\/]/, ''))
+    .sort();
   const filesRemaining = await runOutputCleaner(existingFiles);
   expect(filesRemaining).toEqual(existingFiles);
 });

@@ -31,10 +31,9 @@ export default class HeaderProcessor {
         await this.progressBar.increment();
 
         // Can get FileHeader from DAT, use that
-        if (dat.getFileHeader()) {
-          const fileWithHeader = await inputFile
-            .withFileHeader(dat.getFileHeader() as FileHeader)
-            .resolve();
+        const headerForDat = dat.getFileHeader();
+        if (headerForDat) {
+          const fileWithHeader = await inputFile.withFileHeader(headerForDat).resolve();
           return callback(null, fileWithHeader);
         }
 
@@ -48,7 +47,7 @@ export default class HeaderProcessor {
         }
 
         // Should get FileHeader from File, try to
-        if (this.options.shouldProcessHeader(inputFile.getExtractedFilePath())) {
+        if (this.options.shouldReadFileForHeader(inputFile.getExtractedFilePath())) {
           const headerForFile = await inputFile
             .extract(async (localFile) => FileHeader.getForFile(localFile));
           if (headerForFile) {
