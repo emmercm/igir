@@ -57,8 +57,8 @@ npx igir@latest [commands..] [options]
 Here is the full `igir --help` message which shows all available options and a number of common use case examples:
 
 ```help
- ______   ______   ______  _______  
-|      \ /      \ |      \|       \ 
+ ______   ______   ______  _______
+|      \ /      \ |      \|       \
  \$$$$$$|  $$$$$$\ \$$$$$$| $$$$$$$\
   | $$  | $$ __\$$  | $$  | $$__| $$
   | $$  | $$|    \  | $$  | $$    $$
