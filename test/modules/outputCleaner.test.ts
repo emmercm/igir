@@ -9,10 +9,12 @@ import ProgressBarFake from '../console/progressBarFake.js';
 
 jest.setTimeout(10_000);
 
+const romFixtures = path.join('test', 'fixtures', 'roms');
+
 async function runOutputCleaner(writtenFilePathsToExclude: string[]): Promise<string[]> {
   // Copy the fixture files to a temp directory
   const tempDir = fsPoly.mkdtempSync();
-  fsPoly.copyDirSync('./test/fixtures', tempDir);
+  fsPoly.copyDirSync(romFixtures, tempDir);
 
   const writtenRomFilesToExclude = writtenFilePathsToExclude
     .map((filePath) => new File(path.join(tempDir, filePath), '00000000'));
@@ -38,16 +40,16 @@ async function runOutputCleaner(writtenFilePathsToExclude: string[]): Promise<st
 }
 
 it('should delete nothing if nothing written', async () => {
-  const existingFiles = fsPoly.walkSync('./test/fixtures')
-    .map((filePath) => filePath.replace(/^test[\\/]fixtures[\\/]/, ''))
+  const existingFiles = fsPoly.walkSync(romFixtures)
+    .map((filePath) => filePath.replace(/^test[\\/]fixtures[\\/]roms[\\/]/, ''))
     .sort();
   const filesRemaining = await runOutputCleaner([]);
   expect(filesRemaining).toEqual(existingFiles);
 });
 
 it('should delete nothing if all match', async () => {
-  const existingFiles = fsPoly.walkSync('./test/fixtures')
-    .map((filePath) => filePath.replace(/^test[\\/]fixtures[\\/]/, ''))
+  const existingFiles = fsPoly.walkSync(romFixtures)
+    .map((filePath) => filePath.replace(/^test[\\/]fixtures[\\/]roms[\\/]/, ''))
     .sort();
   const filesRemaining = await runOutputCleaner(existingFiles);
   expect(filesRemaining).toEqual(existingFiles);
@@ -55,15 +57,15 @@ it('should delete nothing if all match', async () => {
 
 it('should delete some if some matched', async () => {
   const filesRemaining = await runOutputCleaner([
-    path.join('roms', '7z', 'empty.7z'),
-    path.join('roms', 'raw', 'fizzbuzz.nes'),
-    path.join('roms', 'zip', 'foobar.zip'),
+    path.join('7z', 'empty.7z'),
+    path.join('raw', 'fizzbuzz.nes'),
+    path.join('zip', 'foobar.zip'),
     'non-existent file',
   ]);
   expect(filesRemaining).toEqual([
-    path.join('roms', '7z', 'empty.7z'),
-    path.join('roms', 'raw', 'fizzbuzz.nes'),
-    path.join('roms', 'zip', 'foobar.zip'),
+    path.join('7z', 'empty.7z'),
+    path.join('raw', 'fizzbuzz.nes'),
+    path.join('zip', 'foobar.zip'),
   ]);
 });
 
