@@ -4,6 +4,12 @@ import Parent from '../types/logiqx/parent.js';
 import Options from '../types/options.js';
 import ReleaseCandidate from '../types/releaseCandidate.js';
 
+/**
+ * Apply any specified filter and preference options to the release candidates for each
+ * {@link Parent}.
+ *
+ * This class may be run concurrently with other classes.
+ */
 export default class CandidateFilter {
   private readonly options: Options;
 
@@ -28,15 +34,17 @@ export default class CandidateFilter {
     await this.progressBar.setSymbol(Symbols.FILTERING);
     await this.progressBar.reset(parentsToCandidates.size);
 
-    parentsToCandidates.forEach((releaseCandidates: ReleaseCandidate[], parent: Parent) => {
-      this.progressBar.increment();
+    /* eslint-disable no-await-in-loop */
+    for (let i = 0; i < [...parentsToCandidates.entries()].length; i += 1) {
+      const [parent, releaseCandidates] = [...parentsToCandidates.entries()][i];
+      await this.progressBar.increment();
 
       const filteredReleaseCandidates = releaseCandidates
         .filter((rc) => this.preFilter(rc))
         .sort((a, b) => this.sort(a, b))
         .filter((rc, idx) => this.postFilter(idx));
       output.set(parent, filteredReleaseCandidates);
-    });
+    }
 
     const filteredCandidates = [...output.values()].reduce((sum, rc) => sum + rc.length, 0);
     await this.progressBar.logInfo(`${dat.getName()}: ${filteredCandidates} candidate${filteredCandidates !== 1 ? 's' : ''} after filtering`);

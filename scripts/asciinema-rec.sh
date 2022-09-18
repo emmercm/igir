@@ -16,7 +16,8 @@ if [[ "${1:-}" == "play" ]]; then
   alias npx="npm exec -- ."
   # BEGIN PLAYBACK
 
-  pei "npx igir copy zip report --dat dats/ --input roms/ --output roms-sorted/ --only-retail"
+  # ts-node ./index.ts copy clean report -d dats/ -i GB/ -o roms/ -D
+  pei "npx igir@latest copy zip report --dat dats/ --input roms/ --output roms-sorted/ --only-retail"
 
   # END PLAYBACK
   exit 0
@@ -69,11 +70,13 @@ npm --version &> /dev/null || exit 1
 npm run build
 
 # Clean any previous output
-rm -rf roms-sorted
+if [[ -d roms-sorted ]]; then
+  rm -rf roms-sorted
+fi
 
 clear
 if [[ "${1:-}" == "rec" ]]; then
-  asciinema rec --command "$0 play" --cols 90 --rows 18
+  asciinema rec --command "$0 play"
 else
   $0 play
   echo ""

@@ -114,15 +114,22 @@ demo-magic.sh
 
 # ROMs
 *.7z
+*.bin
 *.gb
 *.gba
 *.gbc
+*.nes
 *.rom
 *.zip
 
 # ROM pack excess
+*.desktop
 *.jpg
 *.png
+*.sa1
+*.sav
+*.sg1
+*.sgm
 *.sqlite
 *.torrent
 *.txt

@@ -17,7 +17,7 @@ async function expectEndToEnd(options: OptionsProps, expectedFiles: string[]): P
   const tempOutput = fsPoly.mkdtempSync();
 
   await new Igir(new Options({
-    dat: [path.join(tempInput, 'dats', '*.dat')],
+    dat: [path.join(tempInput, 'dats', '*')],
     input: [path.join(tempInput, 'roms', '**', '*')],
     ...options,
     output: tempOutput,
@@ -80,6 +80,7 @@ it('should copy and clean', async () => {
 });
 
 it('should report without copy', async () => {
+  // TODO(cemmer): cleanup the written report
   await expectEndToEnd({
     commands: ['report'],
   }, []);

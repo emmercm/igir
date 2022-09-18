@@ -1,23 +1,25 @@
 import CandidateGenerator from '../../src/modules/candidateGenerator.js';
+import ArchiveEntry from '../../src/types/files/archiveEntry.js';
+import File from '../../src/types/files/file.js';
+import Zip from '../../src/types/files/zip.js';
 import DAT from '../../src/types/logiqx/dat.js';
 import Game from '../../src/types/logiqx/game.js';
 import Header from '../../src/types/logiqx/header.js';
 import Release from '../../src/types/logiqx/release.js';
 import ROM from '../../src/types/logiqx/rom.js';
-import ROMFile from '../../src/types/romFile.js';
 import ProgressBarFake from '../console/progressBarFake.js';
 
 const candidateGenerator = new CandidateGenerator(new ProgressBarFake());
 
 it('should return no results with no games in DAT', async () => {
   const dat = new DAT(new Header(), []);
-  const romFileOne = new ROMFile('foo', undefined, '00000000');
-  const romFileTwo = new ROMFile('fizz', 'buzz', 'ffffffff');
+  const fileOne = new File('foo', '00000000');
+  const fileTwo = new ArchiveEntry(new Zip('fizz'), 'buzz', 'ffffffff');
 
   await expect(candidateGenerator.generate(dat, [])).resolves.toHaveProperty('size', 0);
-  await expect(candidateGenerator.generate(dat, [romFileOne])).resolves.toHaveProperty('size', 0);
-  await expect(candidateGenerator.generate(dat, [romFileOne, romFileOne])).resolves.toHaveProperty('size', 0);
-  await expect(candidateGenerator.generate(dat, [romFileOne, romFileTwo])).resolves.toHaveProperty('size', 0);
+  await expect(candidateGenerator.generate(dat, [fileOne])).resolves.toHaveProperty('size', 0);
+  await expect(candidateGenerator.generate(dat, [fileOne, fileOne])).resolves.toHaveProperty('size', 0);
+  await expect(candidateGenerator.generate(dat, [fileOne, fileTwo])).resolves.toHaveProperty('size', 0);
 });
 
 it('should return no results with no input ROM files', async () => {
@@ -45,11 +47,11 @@ it('should return no results with no matching files', async () => {
   const datWithDuplicateGames = new DAT(new Header(), [gameOne, gameOne]);
   const datWithTwoGames = new DAT(new Header(), [gameOne, gameTwo]);
 
-  const romFileOne = new ROMFile('one.rom', undefined, '34567890');
-  const romFileTwo = new ROMFile('two.a', undefined, 'abcd1234');
-  const romFileThree = new ROMFile('three.zip', 'three.b', '4321fedc');
+  const fileOne = new File('one.rom', '34567890');
+  const fileTwo = new File('two.a', 'abcd1234');
+  const fileThree = new ArchiveEntry(new Zip('three.zip'), 'three.b', '4321fedc');
 
-  const expectCandidates = async (dat: DAT, inputRomFiles: ROMFile[]): Promise<void> => {
+  const expectCandidates = async (dat: DAT, inputRomFiles: File[]): Promise<void> => {
     // The DAT definitely has some parents
     expect(dat.getParents().length).toBeGreaterThan(0);
 
@@ -61,23 +63,23 @@ it('should return no results with no matching files', async () => {
     expect([...candidates.values()].flatMap((c) => c)).toHaveLength(0);
   };
 
-  await expectCandidates(datWithOneGame, [romFileOne]);
-  await expectCandidates(datWithOneGame, [romFileTwo]);
-  await expectCandidates(datWithOneGame, [romFileOne, romFileOne]);
-  await expectCandidates(datWithOneGame, [romFileOne, romFileTwo]);
-  await expectCandidates(datWithOneGame, [romFileOne, romFileTwo, romFileThree]);
+  await expectCandidates(datWithOneGame, [fileOne]);
+  await expectCandidates(datWithOneGame, [fileTwo]);
+  await expectCandidates(datWithOneGame, [fileOne, fileOne]);
+  await expectCandidates(datWithOneGame, [fileOne, fileTwo]);
+  await expectCandidates(datWithOneGame, [fileOne, fileTwo, fileThree]);
 
-  await expectCandidates(datWithDuplicateGames, [romFileOne]);
-  await expectCandidates(datWithDuplicateGames, [romFileTwo]);
-  await expectCandidates(datWithDuplicateGames, [romFileOne, romFileOne]);
-  await expectCandidates(datWithDuplicateGames, [romFileOne, romFileTwo]);
-  await expectCandidates(datWithDuplicateGames, [romFileOne, romFileTwo, romFileThree]);
+  await expectCandidates(datWithDuplicateGames, [fileOne]);
+  await expectCandidates(datWithDuplicateGames, [fileTwo]);
+  await expectCandidates(datWithDuplicateGames, [fileOne, fileOne]);
+  await expectCandidates(datWithDuplicateGames, [fileOne, fileTwo]);
+  await expectCandidates(datWithDuplicateGames, [fileOne, fileTwo, fileThree]);
 
-  await expectCandidates(datWithTwoGames, [romFileOne]);
-  await expectCandidates(datWithTwoGames, [romFileTwo]);
-  await expectCandidates(datWithTwoGames, [romFileOne, romFileOne]);
-  await expectCandidates(datWithTwoGames, [romFileOne, romFileTwo]);
-  await expectCandidates(datWithTwoGames, [romFileOne, romFileTwo, romFileThree]);
+  await expectCandidates(datWithTwoGames, [fileOne]);
+  await expectCandidates(datWithTwoGames, [fileTwo]);
+  await expectCandidates(datWithTwoGames, [fileOne, fileOne]);
+  await expectCandidates(datWithTwoGames, [fileOne, fileTwo]);
+  await expectCandidates(datWithTwoGames, [fileOne, fileTwo, fileThree]);
 });
 
 it('should return no results with partially matching files', async () => {
@@ -104,10 +106,10 @@ it('should return no results with partially matching files', async () => {
   const datWithDuplicateGames = new DAT(new Header(), [gameOne, gameOne]);
   const datWithTwoGames = new DAT(new Header(), [gameOne, gameTwo]);
 
-  const romFileOne = new ROMFile('one.a', undefined, '12345678');
-  const romFileTwo = new ROMFile('two.b', undefined, '09876543');
+  const fileOne = new File('one.a', '12345678');
+  const fileTwo = new File('two.b', '09876543');
 
-  const expectCandidates = async (dat: DAT, inputRomFiles: ROMFile[]): Promise<void> => {
+  const expectCandidates = async (dat: DAT, inputRomFiles: File[]): Promise<void> => {
     // The DAT definitely has some parents
     expect(dat.getParents().length).toBeGreaterThan(0);
 
@@ -119,20 +121,20 @@ it('should return no results with partially matching files', async () => {
     expect([...candidates.values()].flatMap((c) => c)).toHaveLength(0);
   };
 
-  await expectCandidates(datWithOneGame, [romFileOne]);
-  await expectCandidates(datWithOneGame, [romFileTwo]);
-  await expectCandidates(datWithOneGame, [romFileOne, romFileOne]);
-  await expectCandidates(datWithOneGame, [romFileOne, romFileTwo]);
+  await expectCandidates(datWithOneGame, [fileOne]);
+  await expectCandidates(datWithOneGame, [fileTwo]);
+  await expectCandidates(datWithOneGame, [fileOne, fileOne]);
+  await expectCandidates(datWithOneGame, [fileOne, fileTwo]);
 
-  await expectCandidates(datWithDuplicateGames, [romFileOne]);
-  await expectCandidates(datWithDuplicateGames, [romFileTwo]);
-  await expectCandidates(datWithDuplicateGames, [romFileOne, romFileOne]);
-  await expectCandidates(datWithDuplicateGames, [romFileOne, romFileTwo]);
+  await expectCandidates(datWithDuplicateGames, [fileOne]);
+  await expectCandidates(datWithDuplicateGames, [fileTwo]);
+  await expectCandidates(datWithDuplicateGames, [fileOne, fileOne]);
+  await expectCandidates(datWithDuplicateGames, [fileOne, fileTwo]);
 
-  await expectCandidates(datWithTwoGames, [romFileOne]);
-  await expectCandidates(datWithTwoGames, [romFileTwo]);
-  await expectCandidates(datWithTwoGames, [romFileOne, romFileOne]);
-  await expectCandidates(datWithTwoGames, [romFileOne, romFileTwo]);
+  await expectCandidates(datWithTwoGames, [fileOne]);
+  await expectCandidates(datWithTwoGames, [fileTwo]);
+  await expectCandidates(datWithTwoGames, [fileOne, fileOne]);
+  await expectCandidates(datWithTwoGames, [fileOne, fileTwo]);
 });
 
 it('should return some results with some matching files', async () => {
@@ -149,10 +151,10 @@ it('should return some results with some matching files', async () => {
   const datWithDuplicateGames = new DAT(new Header(), [gameOne, gameOne]);
   const datWithTwoGames = new DAT(new Header(), [gameOne, gameTwo]);
 
-  const romFileOne = new ROMFile('one.rom', undefined, '12345678');
-  const romFileTwo = new ROMFile('three.zip', 'three.b', '4321fedc');
+  const fileOne = new File('one.rom', '12345678');
+  const fileTwo = new ArchiveEntry(new Zip('three.zip'), 'three.b', '4321fedc');
 
-  const expectCandidates = async (dat: DAT, inputRomFiles: ROMFile[]): Promise<void> => {
+  const expectCandidates = async (dat: DAT, inputRomFiles: File[]): Promise<void> => {
     // The DAT definitely has some parents
     expect(dat.getParents().length).toBeGreaterThan(0);
 
@@ -164,17 +166,17 @@ it('should return some results with some matching files', async () => {
     expect([...candidates.values()].flatMap((c) => c)).toHaveLength(1);
   };
 
-  await expectCandidates(datWithOneGame, [romFileOne]);
-  await expectCandidates(datWithOneGame, [romFileOne, romFileOne]);
-  await expectCandidates(datWithOneGame, [romFileOne, romFileTwo]);
+  await expectCandidates(datWithOneGame, [fileOne]);
+  await expectCandidates(datWithOneGame, [fileOne, fileOne]);
+  await expectCandidates(datWithOneGame, [fileOne, fileTwo]);
 
-  await expectCandidates(datWithDuplicateGames, [romFileOne]);
-  await expectCandidates(datWithDuplicateGames, [romFileOne, romFileOne]);
-  await expectCandidates(datWithDuplicateGames, [romFileOne, romFileTwo]);
+  await expectCandidates(datWithDuplicateGames, [fileOne]);
+  await expectCandidates(datWithDuplicateGames, [fileOne, fileOne]);
+  await expectCandidates(datWithDuplicateGames, [fileOne, fileTwo]);
 
-  await expectCandidates(datWithTwoGames, [romFileOne]);
-  await expectCandidates(datWithTwoGames, [romFileOne, romFileOne]);
-  await expectCandidates(datWithTwoGames, [romFileOne, romFileTwo]);
+  await expectCandidates(datWithTwoGames, [fileOne]);
+  await expectCandidates(datWithTwoGames, [fileOne, fileOne]);
+  await expectCandidates(datWithTwoGames, [fileOne, fileTwo]);
 });
 
 it('should return all results with all matching files', async () => {
@@ -191,11 +193,11 @@ it('should return all results with all matching files', async () => {
   const datWithGameOneTwice = new DAT(new Header(), [gameOne, gameOne]);
   const datWithGameTwo = new DAT(new Header(), [gameTwo]);
 
-  const romFileOne = new ROMFile('one.rom', undefined, '12345678');
-  const romFileTwo = new ROMFile('two.zip', 'two.a', 'abcdef90');
-  const romFileThree = new ROMFile('two.zip', 'two.b', '09876543');
+  const fileOne = new File('one.rom', '12345678');
+  const fileTwo = new ArchiveEntry(new Zip('two.zip'), 'two.a', 'abcdef90');
+  const fileThree = new ArchiveEntry(new Zip('two.zip'), 'two.b', '09876543');
 
-  const expectCandidates = async (dat: DAT, inputRomFiles: ROMFile[]): Promise<void> => {
+  const expectCandidates = async (dat: DAT, inputRomFiles: File[]): Promise<void> => {
     // The DAT definitely has some parents
     expect(dat.getParents().length).toBeGreaterThan(0);
 
@@ -207,12 +209,12 @@ it('should return all results with all matching files', async () => {
     expect([...candidates.values()].flatMap((c) => c)).toHaveLength(1);
   };
 
-  await expectCandidates(datWithGameOne, [romFileOne]);
-  await expectCandidates(datWithGameOne, [romFileOne, romFileOne]);
+  await expectCandidates(datWithGameOne, [fileOne]);
+  await expectCandidates(datWithGameOne, [fileOne, fileOne]);
 
-  await expectCandidates(datWithGameOneTwice, [romFileOne]);
-  await expectCandidates(datWithGameOneTwice, [romFileOne, romFileOne]);
+  await expectCandidates(datWithGameOneTwice, [fileOne]);
+  await expectCandidates(datWithGameOneTwice, [fileOne, fileOne]);
 
-  await expectCandidates(datWithGameTwo, [romFileTwo, romFileThree]);
-  await expectCandidates(datWithGameTwo, [romFileTwo, romFileThree, romFileThree]);
+  await expectCandidates(datWithGameTwo, [fileTwo, fileThree]);
+  await expectCandidates(datWithGameTwo, [fileTwo, fileThree, fileThree]);
 });

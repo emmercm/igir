@@ -1,38 +1,60 @@
 # igir
 
-A ROM collection manager to help sort collections and make one game, one rom (1G1R) sets.
+`igir` (pronounced "eager") is a platform-independent ROM collection manager to help sort collections and make one game, one rom (1G1R) sets.
 
-[![npm](https://badgen.net/npm/v/igir)](https://www.npmjs.com/package/igir)
-[![GitHub](https://badgen.net/badge/emmercm/igir/purple?icon=github)](https://github.com/emmercm/igir)
+![CLI:Windows,macOS,Linux](https://badgen.net/badge/icon/Windows,%20macOS,%20Linux?icon=terminal&label=CLI&color=grey)
+[![npm:igir](https://badgen.net/npm/v/igir?icon=npm&label&color=red)](https://www.npmjs.com/package/igir)
+[![GitHub:emmercm/igir](https://badgen.net/badge/emmercm/igir/purple?icon=github)](https://github.com/emmercm/igir)
+[![License](https://badgen.net/github/license/emmercm/igir)](https://github.com/emmercm/igir/blob/main/LICENSE)
 
 [![Known Vulnerabilities](https://badgen.net/snyk/emmercm/igir?icon=snyk)](https://snyk.io/test/npm/igir)
 [![Test Coverage](https://badgen.net/codecov/c/github/emmercm/igir/main?icon=codecov)](https://codecov.io/gh/emmercm/igir)
 [![Maintainability Score](https://badgen.net/codeclimate/maintainability/emmercm/igir?icon=codeclimate)](https://codeclimate.com/github/emmercm/igir/maintainability)
 
-## Summary
+## What does `igir` do?
 
-[![asciicast](https://asciinema.org/a/9I7P2ZWCD0Iz1xBub48shm91t.svg)](https://asciinema.org/a/9I7P2ZWCD0Iz1xBub48shm91t)
+A video of an example use case:
 
-`igir`, with assistance from a collection of DAT catalogs (see below), helps you manage your video game ROM collection with a number of commands:
+[![asciicast](https://asciinema.org/a/u1jeLTaSanO3mGzBb5b1jgxCy.svg)](https://asciinema.org/a/u1jeLTaSanO3mGzBb5b1jgxCy)
+
+With a large ROM collection it can be difficult to:
+
+- Organize ROM files by console and name
+- Delete duplicate ROMs
+- Delete ROMs for languages you don't understand
+- Consistently name ROM files
+- Consistently archive ROMs
+- Know what ROMs are missing
+
+`igir` helps solve all of these problems!
+
+## How does `igir` work?
+
+`igir` needs two sets of files:
+
+1. ROMs, of course!
+2. One or more DATs ([see below](#what-are-dats) for where to download)
+
+Many different input archive types are supported: .001, .7z, .bz2, .gz, .rar, .tar, .xz, .z, .z01, .zip, .zipx, and more!
+
+`igir` then needs one or more commands:
 
 - `copy`: copy ROMs from input directories to an output directory
-- `move`: copy ROMs from input directories to an output directory
+- `move`: move ROMs from input directories to an output directory
 - `zip`: create zip archives of output ROMs
-- `clean`: recycle all unknown files in an output directory
 - `test`: test all written ROMs for accuracy
-- `report`: generate a report on ROMs in an input directory
+- `clean`: recycle all unknown files in an output directory
+- `report`: generate a report on ROMs found and processed
 
-## Installation
+## How do I run `igir`?
 
-With [![Node.js](https://badgen.net/npm/node/igir?icon=nodejs)](https://nodejs.org/en/download/) installed:
+With [![Node.js](https://badgen.net/npm/node/igir?icon=nodejs)](https://nodejs.org/en/download/) installed, run from the command line:
 
 ```shell
-npx igir [commands..] [options]
+npx igir@latest [commands..] [options]
 ```
 
-## Usage
-
-Here is the `igir --help` message which shows all available options and a number of common use case examples:
+Here is the full `igir --help` message which shows all available options and a number of common use case examples:
 
 ```help
  ______   ______   ______  _______  
@@ -49,17 +71,17 @@ Here is the `igir --help` message which shows all available options and a number
 Usage: igir [commands..] [options]
 
 Commands:
-  igir copy    Copy ROM files to a directory
-  igir move    Move ROM files to a directory
+  igir copy    Copy ROM files from the input to output directory
+  igir move    Move ROM files from the input to output directory
   igir zip     Create .zip archives when copying or moving ROMs
-  igir clean   Remove unmatched files from the ROM output directory
-  igir test    Test ROMs for accuracy after writing them
-  igir report  Remove unmatched files from the ROM output directory
+  igir test    Test ROMs for accuracy after writing them to the output directory
+  igir clean   Recycle unknown files in the output directory
+  igir report  Generate a report on the known ROM files found in the input directories
 
 Path options (inputs support globbing):
-  -d, --dat            Path(s) to DAT files             [array] [required] [default: ["*.dat"]]
-  -i, --input          Path(s) to ROM files (including .zip and .7z), these files will not be m
-                       odified                                               [array] [required]
+  -d, --dat            Path(s) to DAT files or archives [array] [required] [default: ["*.dat"]]
+  -i, --input          Path(s) to ROM files or archives, these files will not be modified
+                                                                             [array] [required]
   -I, --input-exclude  Path(s) to ROM files to exclude                                  [array]
   -o, --output         Path to the ROM output directory                                [string]
 
@@ -108,15 +130,13 @@ Filtering options:
       --no-homebrew      Filter out homebrew ROMs                                     [boolean]
       --no-bad           Filter out bad ROM dumps                                     [boolean]
 
-Debug options:
+Help options:
   -v, --verbose  Enable verbose logging, can specify twice (-vv)                        [count]
-
-Options:
-  -h, --help  Show help                                                               [boolean]
+  -h, --help     Show help                                                            [boolean]
 
 Examples:
-  igir copy -i **/*.zip -o 1G1R/ -s -l EN -r USA,  Produce a 1G1R set per console, preferring E
-  EUR,JPN                                          nglish from USA>EUR>JPN
+  igir copy -i **/*.zip -o 1G1R/ -D -s -l EN -r U  Produce a 1G1R set per console, preferring E
+  SA,EUR,JPN                                       nglish from USA>EUR>JPN
 
   igir copy report -i **/*.zip -i ROMs/ -o ROMs/   Merge new ROMs into an existing ROM collecti
                                                    on and generate a report
@@ -125,22 +145,28 @@ Examples:
 
   igir copy -i **/*.zip -o BIOS/ --only-bios       Collate all BIOS files
 
-  igir copy -i ROMs/ -o /media/SDCard/ROMs/ -D --  Copy ROMs to a flash cart
+  igir copy -i ROMs/ -o /media/SDCard/ROMs/ -D --  Copy ROMs to a flash cart and test them
   dir-letter -t
 ```
 
-## Obtaining DAT catalogs
+## What are DATs?
 
-XML-style DAT files that catalog every known ROM per system are required for `igir` to work effectively. A number of different release groups maintain these catalogs, the most popular are:
+DATs are catalogs of every known ROM per system. A number of different release groups maintain these catalogs, the most popular are:
 
-- [No-Intro](https://datomatic.no-intro.org/index.php?page=download&s=64) (cartridge-based systems)
+- [No-Intro P/C XML](https://datomatic.no-intro.org/index.php?page=download&s=64&op=daily) (cartridge-based systems)
+  - Note: you can download every console at once from the [daily page](https://datomatic.no-intro.org/index.php?page=download&s=64&op=daily), but you need to manually select "P/C XML" from the dropdown
 - [Redump](http://redump.org/downloads/) (optical media-based systems)
+
+And some less popular release groups are:
+
 - [ADVANsCEne](https://www.advanscene.com/html/dats.php) (GBA, DS, 3DS, PSP)
 - [TOSEC](https://www.tosecdev.org/downloads/category/22-datfiles)
 
 These catalogs help `igir` distinguish known ROM files in input directories from other files and helps generate reports on ROM collections.
 
-## Obtaining ROMs
+`igir` can currently process DAT files in the XML format only.
+
+## How do I obtain ROMs?
 
 Emulators are generally legal, as long as they don't include copyrighted software such as a system BIOS.
 
@@ -160,13 +186,14 @@ Downloading ROM files that you do not own is piracy and is illegal in many count
 - Sony - Playstation 1: [ImgBurn](https://ninite.com/ImgBurn/) (with a PC)
 - Sony - Playstation 2: [ImgBurn](https://ninite.com/ImgBurn/) (with a PC)
 
-## Alternative ROM managers
+## Why choose `igir`?
 
 There a few different popular ROM managers that have similar features:
 
 - [clrmamepro](https://mamedev.emulab.it/clrmamepro/)
 - [Romcenter](http://www.romcenter.com/)
-- [Romulus Rom Manager](https://romulus.cc/)
+- [Romulus](https://romulus.cc/)
+- [RomVault](https://www.romvault.com/)
 
 Each manager has its own pros, but most share the same cons:
 
@@ -174,6 +201,7 @@ Each manager has its own pros, but most share the same cons:
 - Limited CLI support, making batching and repeatable actions difficult
 - UIs that don't clearly state what actions can, will, or are being performed
 - Required proprietary database setup step
+- Limited or nonexistent archive extraction support
 - Limited or nonexistent parent/clone, region, language, version, and ROM type filtering
 - Limited or nonexistent priorities when creating a 1G1R set
 - Limited or nonexistent folder management options

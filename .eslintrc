@@ -7,7 +7,8 @@
   ],
   "plugins": [
     "@typescript-eslint",
-    "simple-import-sort"
+    "simple-import-sort",
+    "jest"
   ],
 
   "parser": "@typescript-eslint/parser",
@@ -17,8 +18,19 @@
   },
   "ignorePatterns": ["build/**"],
 
+  "env": {
+    "jest/globals": true
+  },
+
   "rules": {
+    "@typescript-eslint/no-restricted-imports": ["error", {
+      "patterns": [{
+        "group": ["node:*"],
+        "message": "Don't use prefixes with Node.js built-ins."
+      }]
+    }],
     "@typescript-eslint/explicit-function-return-type": "error",
+    "@typescript-eslint/no-floating-promises": ["error"],
     "@typescript-eslint/prefer-readonly": "error",
     "simple-import-sort/exports": "error",
     "simple-import-sort/imports": "error"

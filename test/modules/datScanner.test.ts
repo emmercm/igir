@@ -1,8 +1,11 @@
+import { jest } from '@jest/globals';
 import os from 'os';
 
 import DATScanner from '../../src/modules/datScanner.js';
 import Options from '../../src/types/options.js';
 import ProgressBarFake from '../console/progressBarFake.js';
+
+jest.setTimeout(10_000);
 
 function createDatScanner(dat: string[]): DATScanner {
   return new DATScanner(Options.fromObject({ dat }), new ProgressBarFake());
@@ -41,12 +44,12 @@ it('should scan multiple files', async () => {
   await expect(createDatScanner(['test/fixtures/dats']).scan()).resolves.toHaveLength(expectedDatFiles);
   await expect(createDatScanner(['test/fixtures/dats/*']).scan()).resolves.toHaveLength(expectedDatFiles);
   await expect(createDatScanner(['test/fixtures/dats/*', 'test/fixtures/**/*.dat']).scan()).resolves.toHaveLength(expectedDatFiles);
-  await expect(createDatScanner(['test/fixtures/**/*.dat']).scan()).resolves.toHaveLength(expectedDatFiles);
-  await expect(createDatScanner(['test/fixtures/**/*.dat', 'test/fixtures/**/*.dat']).scan()).resolves.toHaveLength(expectedDatFiles);
+  await expect(createDatScanner(['test/fixtures/**/*.{dat,zip}']).scan()).resolves.toHaveLength(expectedDatFiles);
+  await expect(createDatScanner(['test/fixtures/**/*.{dat,zip}', 'test/fixtures/**/*.{dat,zip}']).scan()).resolves.toHaveLength(expectedDatFiles);
 });
 
 it('should scan single files', async () => {
   await expect(createDatScanner(['test/fixtures/dats/one.*']).scan()).resolves.toHaveLength(1);
-  await expect(createDatScanner(['test/fixtures/*/one.dat']).scan()).resolves.toHaveLength(1);
-  await expect(createDatScanner(['test/fixtures/dats/one.dat']).scan()).resolves.toHaveLength(1);
+  await expect(createDatScanner(['test/fixtures/*/one.zip']).scan()).resolves.toHaveLength(1);
+  await expect(createDatScanner(['test/fixtures/dats/one.zip']).scan()).resolves.toHaveLength(1);
 });

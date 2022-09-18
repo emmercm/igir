@@ -6,6 +6,11 @@ import Constants from '../constants.js';
 import DATStatus from '../types/datStatus.js';
 import Options from '../types/options.js';
 
+/**
+ * Generate a single report file with information about every DAT processed.
+ *
+ * This class will not be run concurrently with any other class.
+ */
 export default class ReportGenerator {
   private readonly options: Options;
 

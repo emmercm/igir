@@ -3,6 +3,7 @@ import async from 'async';
 import Logger from './console/logger.js';
 import { Symbols } from './console/progressBar.js';
 import ProgressBarCLI from './console/progressBarCLI.js';
+import Constants from './constants.js';
 import CandidateFilter from './modules/candidateFilter.js';
 import CandidateGenerator from './modules/candidateGenerator.js';
 import DATScanner from './modules/datScanner.js';
@@ -12,10 +13,10 @@ import ROMScanner from './modules/romScanner.js';
 import ROMWriter from './modules/romWriter.js';
 import StatusGenerator from './modules/statusGenerator.js';
 import DATStatus from './types/datStatus.js';
+import File from './types/files/file.js';
 import DAT from './types/logiqx/dat.js';
 import Parent from './types/logiqx/parent.js';
 import Options from './types/options.js';
-import ROMFile from './types/romFile.js';
 
 export default class Igir {
   private readonly options: Options;
@@ -32,10 +33,10 @@ export default class Igir {
     const romFiles = await this.processROMScanner();
 
     const datProcessProgressBar = this.logger.addProgressBar('Processing DATs', Symbols.PROCESSING, dats.length);
-    const datsToWrittenRoms = new Map<DAT, Map<Parent, ROMFile[]>>();
+    const datsToWrittenRoms = new Map<DAT, Map<Parent, File[]>>();
     const datsStatuses: DATStatus[] = [];
 
-    await async.eachLimit(dats, 3, async (dat, callback) => {
+    await async.eachLimit(dats, Constants.DAT_THREADS, async (dat, callback) => {
       const progressBar = this.logger.addProgressBar(
         dat.getNameShort(),
         Symbols.WAITING,
@@ -57,10 +58,10 @@ export default class Igir {
       datsStatuses.push(status);
 
       // Progress bar cleanup
-      const parentsWithRomFiles = [...writtenRoms.values()]
-        .filter((writtenRomFiles) => writtenRomFiles.length)
+      const totalReleaseCandidates = [...romOutputs.values()]
+        .filter((releaseCandidates) => releaseCandidates.length)
         .length;
-      if (parentsWithRomFiles === 0) {
+      if (totalReleaseCandidates === 0) {
         progressBar.delete();
       }
 
@@ -89,25 +90,28 @@ export default class Igir {
     return dats;
   }
 
-  private async processROMScanner(): Promise<ROMFile[]> {
+  private async processROMScanner(): Promise<File[]> {
     const progressBar = this.logger.addProgressBar('Scanning for ROMs', Symbols.WAITING);
     const romInputs = await new ROMScanner(this.options, progressBar).scan();
-    await progressBar.doneItems(romInputs.length, 'ROM', 'found');
+    // TODO(cemmer): is this reporting the right number? it might be inflated
+    await progressBar.doneItems(romInputs.length, 'file', 'found');
     return romInputs;
   }
 
   private async processOutputCleaner(
-    datsToWrittenRoms: Map<DAT, Map<Parent, ROMFile[]>>,
+    datsToWrittenRoms: Map<DAT, Map<Parent, File[]>>,
   ): Promise<void> {
     if (!this.options.shouldClean()) {
       return;
     }
 
-    const cleanerProgressBar = this.logger.addProgressBar('Cleaning output', Symbols.WAITING);
-    const writtenRomFilesToExclude = [...datsToWrittenRoms.values()]
-      .flatMap((parentsToRomFiles) => [...parentsToRomFiles.values()])
-      .flatMap((romFiles) => romFiles);
-    await new OutputCleaner(this.options, cleanerProgressBar).clean(writtenRomFilesToExclude);
+    const cleanerProgressBar = this.logger.addProgressBar('Cleaning output directory', Symbols.WAITING);
+    const writtenFilesToExclude = [...datsToWrittenRoms.values()]
+      .flatMap((parentsToFiles) => [...parentsToFiles.values()])
+      .flatMap((files) => files);
+    const filesCleaned = await new OutputCleaner(this.options, cleanerProgressBar)
+      .clean(writtenFilesToExclude);
+    await cleanerProgressBar.doneItems(filesCleaned, 'file', 'recycled');
   }
 
   private async processReportGenerator(datsStatuses: DATStatus[]): Promise<void> {
