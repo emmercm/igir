@@ -1,4 +1,5 @@
 import fs from 'fs';
+import path from 'path';
 
 import Constants from '../../constants.js';
 
@@ -47,12 +48,11 @@ export default class FileHeader {
     return this.HEADERS[headerName];
   }
 
-  // TODO(cemmer): rename this to getForFileName()
-  static getForExtension(fileExtension: string): FileHeader | undefined {
+  static getForFilename(filePath: string): FileHeader | undefined {
     const headers = Object.values(this.HEADERS);
     for (let i = 0; i < headers.length; i += 1) {
       const header = headers[i];
-      if (header.fileExtension.toLowerCase() === fileExtension.toLowerCase()) {
+      if (header.fileExtension.toLowerCase() === path.extname(filePath).toLowerCase()) {
         return header;
       }
     }
@@ -80,8 +80,7 @@ export default class FileHeader {
     });
   }
 
-  // TODO(cemmer): rename this to getForFileContents()
-  static async getForFile(filePath: string): Promise<FileHeader | undefined> {
+  static async getForFileContents(filePath: string): Promise<FileHeader | undefined> {
     const fileHeader = await FileHeader.readHeader(filePath, 0, this.MAX_HEADER_LENGTH);
 
     const headers = Object.values(this.HEADERS);

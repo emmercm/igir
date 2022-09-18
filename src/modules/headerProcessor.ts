@@ -1,5 +1,4 @@
 import async, { AsyncResultCallback } from 'async';
-import path from 'path';
 
 import ProgressBar, { Symbols } from '../console/progressBar.js';
 import Constants from '../constants.js';
@@ -24,6 +23,15 @@ export default class HeaderProcessor {
     await this.progressBar.setSymbol(Symbols.HASHING);
     await this.progressBar.reset(inputRomFiles.length);
 
+    const headerNameForDat = dat.getFileHeaderName();
+    let headerForDat: FileHeader | undefined;
+    if (headerNameForDat) {
+      headerForDat = FileHeader.getForName(headerNameForDat);
+      if (!headerForDat) {
+        await this.progressBar.logWarn(`DAT has unknown ROM header name: ${headerNameForDat}`);
+      }
+    }
+
     return async.mapLimit(
       inputRomFiles,
       Constants.ROM_HEADER_HASHER_THREADS,
@@ -31,16 +39,13 @@ export default class HeaderProcessor {
         await this.progressBar.increment();
 
         // Can get FileHeader from DAT, use that
-        const headerForDat = dat.getFileHeader();
         if (headerForDat) {
           const fileWithHeader = await inputFile.withFileHeader(headerForDat).resolve();
           return callback(null, fileWithHeader);
         }
 
         // Can get FileHeader from extension, use that
-        const headerForExtension = FileHeader.getForExtension(
-          path.extname(inputFile.getExtractedFilePath()),
-        );
+        const headerForExtension = FileHeader.getForFilename(inputFile.getExtractedFilePath());
         if (headerForExtension) {
           const fileWithHeader = await inputFile.withFileHeader(headerForExtension).resolve();
           return callback(null, fileWithHeader);
@@ -49,7 +54,7 @@ export default class HeaderProcessor {
         // Should get FileHeader from File, try to
         if (this.options.shouldReadFileForHeader(inputFile.getExtractedFilePath())) {
           const headerForFile = await inputFile
-            .extract(async (localFile) => FileHeader.getForFile(localFile));
+            .extract(async (localFile) => FileHeader.getForFileContents(localFile));
           if (headerForFile) {
             const fileWithHeader = await inputFile.withFileHeader(headerForFile).resolve();
             return callback(null, fileWithHeader);

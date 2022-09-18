@@ -1,13 +1,12 @@
 import fs from 'fs';
-import path from 'path';
 
 import ROMScanner from '../../../src/modules/romScanner.js';
 import fsPoly from '../../../src/polyfill/fsPoly.js';
+import ArchiveFactory from '../../../src/types/archives/archiveFactory.js';
+import SevenZip from '../../../src/types/archives/sevenZip.js';
+import Zip from '../../../src/types/archives/zip.js';
 import ArchiveEntry from '../../../src/types/files/archiveEntry.js';
-import ArchiveFactory from '../../../src/types/files/archiveFactory.js';
 import FileHeader from '../../../src/types/files/fileHeader.js';
-import SevenZip from '../../../src/types/files/sevenZip.js';
-import Zip from '../../../src/types/files/zip.js';
 import Options from '../../../src/types/options.js';
 import ProgressBarFake from '../../console/progressBarFake.js';
 
@@ -56,9 +55,7 @@ describe('getCrc32', () => {
 
     await expect(archiveEntry.getCrc32()).resolves.not.toEqual(expectedCrc);
 
-    const fileHeader = FileHeader.getForExtension(
-      path.extname(archiveEntry.getExtractedFilePath()),
-    );
+    const fileHeader = FileHeader.getForFilename(archiveEntry.getExtractedFilePath());
     expect(fileHeader).toBeTruthy();
     const headeredArchiveEntry = archiveEntry.withFileHeader(fileHeader as FileHeader);
 

@@ -2,7 +2,6 @@ import 'reflect-metadata';
 
 import { plainToInstance, Type } from 'class-transformer';
 
-import FileHeader from '../files/fileHeader.js';
 import Game from './game.js';
 import Header from './header.js';
 import Parent from './parent.js';
@@ -114,16 +113,7 @@ export default class DAT {
     return long;
   }
 
-  getFileHeader(): FileHeader | undefined {
-    // Look for an exact header name match from the DAT
-    const clrMameProHeader = this.getHeader().getClrMamePro()?.getHeader();
-    if (clrMameProHeader) {
-      const fileHeader = FileHeader.getForName(clrMameProHeader);
-      if (fileHeader) {
-        return fileHeader;
-      }
-    }
-
-    return undefined;
+  getFileHeaderName(): string | undefined {
+    return this.getHeader().getClrMamePro()?.getHeader();
   }
 }

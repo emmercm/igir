@@ -12,7 +12,6 @@ import Scanner from './scanner.js';
  * This class will not be run concurrently with any other class.
  */
 export default class ROMScanner extends Scanner {
-  // TODO(cemmer): support for headered ROM files (e.g. NES)
   async scan(): Promise<File[]> {
     await this.progressBar.setSymbol(Symbols.SEARCHING);
     await this.progressBar.reset(0);

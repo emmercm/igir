@@ -8,7 +8,7 @@ import ProgressBarFake from '../console/progressBarFake.js';
 jest.setTimeout(10_000);
 
 function createDatScanner(dat: string[]): DATScanner {
-  return new DATScanner(Options.fromObject({ dat }), new ProgressBarFake());
+  return new DATScanner(new Options({ dat }), new ProgressBarFake());
 }
 
 it('should throw on nonexistent paths', async () => {

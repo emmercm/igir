@@ -1,4 +1,4 @@
-import Archive from './archive.js';
+import Archive from '../archives/archive.js';
 import File from './file.js';
 import FileHeader from './fileHeader.js';
 

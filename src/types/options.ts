@@ -160,24 +160,16 @@ export default class Options implements OptionsProps {
     this.noBad = options?.noBad || false;
     this.verbose = options?.verbose || 0;
     this.help = options?.help || false;
-
-    this.validate();
   }
 
   static fromObject(obj: object): Options {
     return plainToInstance(Options, obj, {
       enableImplicitConversion: true,
-    })
-      .validate();
+    });
   }
 
   toString(): string {
     return JSON.stringify(instanceToPlain(this));
-  }
-
-  private validate(): Options {
-    // TODO(cemmer): validate fields on the class
-    return this;
   }
 
   // Commands
@@ -200,7 +192,10 @@ export default class Options implements OptionsProps {
 
   shouldZip(filePath: string): boolean {
     return this.getCommands().indexOf('zip') !== -1
-      && (!this.getZipExclude() || !micromatch.isMatch(filePath, this.getZipExclude()));
+      && (!this.getZipExclude() || !micromatch.isMatch(
+        filePath.replace(/^.[\\/]/, ''),
+        this.getZipExclude(),
+      ));
   }
 
   shouldClean(): boolean {
@@ -326,7 +321,7 @@ export default class Options implements OptionsProps {
     return path.join(
       output,
       `${Constants.COMMAND_NAME}_${moment().format()}.txt`
-      // Make the filename Windows legal
+        // Make the filename Windows legal
         .replace(/:/g, ';')
         .replace(/[<>:"/\\|?*]/g, '_'),
     );
@@ -337,7 +332,10 @@ export default class Options implements OptionsProps {
   }
 
   shouldReadFileForHeader(filePath: string): boolean {
-    return this.getHeader().length > 0 && micromatch.isMatch(filePath, this.getHeader());
+    return this.getHeader().length > 0 && micromatch.isMatch(
+      filePath.replace(/^.[\\/]/, ''),
+      this.getHeader(),
+    );
   }
 
   getDirMirror(): boolean {

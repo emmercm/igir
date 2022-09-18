@@ -399,8 +399,8 @@ describe('raw', () => {
       }, parentsToCandidates);
       expect(writtenPaths).toEqual([
         'empty.rom',
-        'fizzbuzz.rom',
-        'foobar.rom',
+        'fizzbuzz.nes',
+        'foobar.lnx',
         'loremipsum.rom',
         'unknown.rom',
       ]);
@@ -424,8 +424,8 @@ describe('raw', () => {
       }, parentsToCandidates);
       expect(firstWrittenPaths).toEqual([
         'empty.rom',
-        'fizzbuzz.rom',
-        'foobar.rom',
+        'fizzbuzz.nes',
+        'foobar.lnx',
         'loremipsum.rom',
         'unknown.rom',
       ]);
@@ -436,8 +436,8 @@ describe('raw', () => {
       }, parentsToCandidates);
       expect(secondWrittenPaths).toEqual([
         'empty.rom',
-        'fizzbuzz.rom',
-        'foobar.rom',
+        'fizzbuzz.nes',
+        'foobar.lnx',
         'loremipsum.rom',
         'unknown.rom',
       ]);
@@ -461,8 +461,8 @@ describe('raw', () => {
       }, parentsToCandidates);
       expect(firstWrittenPaths).toEqual([
         'empty.rom',
-        'fizzbuzz.rom',
-        'foobar.rom',
+        'fizzbuzz.nes',
+        'foobar.lnx',
         'loremipsum.rom',
         'unknown.rom',
       ]);
@@ -492,8 +492,8 @@ describe('raw', () => {
       }, parentsToCandidates);
       expect(writtenPaths).toEqual([
         'empty.rom',
-        'fizzbuzz.rom',
-        'foobar.rom',
+        'fizzbuzz.nes',
+        'foobar.lnx',
         'loremipsum.rom',
         'unknown.rom',
       ]);
@@ -515,8 +515,8 @@ describe('raw', () => {
         commands: ['copy', 'test'],
       }, parentsToCandidates);
       expect(writtenPaths).toEqual([
-        'fizzbuzz.rom',
-        'foobar.rom',
+        'fizzbuzz.nes',
+        'foobar.lnx',
         'loremipsum.rom',
         'unknown.rom',
       ]);
@@ -539,8 +539,8 @@ describe('raw', () => {
       }, parentsToCandidates);
       expect(writtenPaths).toEqual([
         'empty.rom',
-        'fizzbuzz.rom',
-        'foobar.rom',
+        'fizzbuzz.nes',
+        'foobar.lnx',
         'loremipsum.rom',
         'unknown.rom',
       ]);
@@ -562,8 +562,8 @@ describe('raw', () => {
         commands: ['copy', 'test'],
       }, parentsToCandidates);
       expect(writtenPaths).toEqual([
-        'fizzbuzz.rom',
-        'foobar.rom',
+        'fizzbuzz.nes',
+        'foobar.lnx',
         'loremipsum.rom',
         'unknown.rom',
       ]);
@@ -587,8 +587,8 @@ describe('raw', () => {
       }, parentsToCandidates);
       expect(writtenPaths).toEqual([
         'empty.rom',
-        'fizzbuzz.rom',
-        'foobar.rom',
+        'fizzbuzz.nes',
+        'foobar.lnx',
         'loremipsum.rom',
         'unknown.rom',
       ]);

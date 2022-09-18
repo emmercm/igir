@@ -5,10 +5,8 @@ import path from 'path';
 
 import Constants from '../../constants.js';
 import fsPoly from '../../polyfill/fsPoly.js';
+import ArchiveEntry from '../files/archiveEntry.js';
 import Archive from './archive.js';
-import ArchiveEntry from './archiveEntry.js';
-import File from './file.js';
-import FileHeader from './fileHeader.js';
 
 export default class SevenZip extends Archive {
   // p7zip `7za i`
@@ -78,13 +76,5 @@ export default class SevenZip extends Archive {
     } finally {
       fsPoly.rmSync(tempDir, { recursive: true });
     }
-  }
-
-  withFileHeader(fileHeader: FileHeader): File {
-    return new SevenZip(
-      this.getFilePath(),
-      undefined, // the old CRC can't be used, a header will change it
-      fileHeader,
-    );
   }
 }

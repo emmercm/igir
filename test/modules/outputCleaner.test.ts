@@ -56,13 +56,13 @@ it('should delete nothing if all match', async () => {
 it('should delete some if some matched', async () => {
   const filesRemaining = await runOutputCleaner([
     path.join('roms', '7z', 'empty.7z'),
-    path.join('roms', 'raw', 'fizzbuzz.rom'),
+    path.join('roms', 'raw', 'fizzbuzz.nes'),
     path.join('roms', 'zip', 'foobar.zip'),
     'non-existent file',
   ]);
   expect(filesRemaining).toEqual([
     path.join('roms', '7z', 'empty.7z'),
-    path.join('roms', 'raw', 'fizzbuzz.rom'),
+    path.join('roms', 'raw', 'fizzbuzz.nes'),
     path.join('roms', 'zip', 'foobar.zip'),
   ]);
 });

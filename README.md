@@ -32,7 +32,7 @@ With a large ROM collection it can be difficult to:
 
 `igir` needs two sets of files:
 
-1. ROMs, of course!
+1. ROMs, including ones with [headers](https://no-intro.org/faq.htm)
 2. One or more DATs ([see below](#what-are-dats) for where to download)
 
 Many different input archive types are supported: .001, .7z, .bz2, .gz, .rar, .tar, .xz, .z, .z01, .zip, .zipx, and more!
@@ -200,11 +200,12 @@ There a few different popular ROM managers that have similar features:
 
 Each manager has its own pros, but most share the same cons:
 
-- Windows-only (sometimes with Wine support), making management on macOS and Linux difficult 
+- Windows-only (sometimes with Wine support), making management on macOS and Linux difficult
 - Limited CLI support, making batching and repeatable actions difficult
 - UIs that don't clearly state what actions can, will, or are being performed
 - Required proprietary database setup step
 - Limited or nonexistent archive extraction support
+- Limited or nonexistent ROM header support
 - Limited or nonexistent parent/clone, region, language, version, and ROM type filtering
 - Limited or nonexistent priorities when creating a 1G1R set
 - Limited or nonexistent folder management options

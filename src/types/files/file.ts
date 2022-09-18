@@ -14,11 +14,10 @@ export default class File {
 
   constructor(filePath: string, crc?: string, fileHeader?: FileHeader) {
     this.filePath = filePath;
-    this.fileHeader = fileHeader;
-
     if (crc) {
       this.crc32 = Promise.resolve(crc);
     }
+    this.fileHeader = fileHeader;
   }
 
   getFilePath(): string {
@@ -36,6 +35,7 @@ export default class File {
     return (await this.crc32).toLowerCase().padStart(8, '0');
   }
 
+  // TODO(cemmer): figure out how to eliminate this
   isZip(): boolean {
     return path.extname(this.getFilePath()).toLowerCase() === '.zip';
   }

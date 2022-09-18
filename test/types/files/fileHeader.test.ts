@@ -26,26 +26,24 @@ describe('getForName', () => {
 
 describe('getForExtension', () => {
   test.each([
-    '.a78',
-    '.A78',
-    '.lnx',
-    '.LnX',
-    '.nes',
-    '.nEs',
-    '.fds',
-    '.FDS',
-  ])('should get a file header for extension: %s', (extension) => {
-    const fileHeader = FileHeader.getForExtension(extension);
+    'rom.a78',
+    'rom.lnx',
+    'rom.nes',
+    'rom.fds',
+    'rom.zip.fds',
+  ])('should get a file header for extension: %s', (filePath) => {
+    const fileHeader = FileHeader.getForFilename(filePath);
     expect(fileHeader).not.toBeUndefined();
   });
 
   test.each([
     '',
     '   ',
-    '.zip',
-    '.nes.zip',
-  ])('should not get a file header for extension: %s', (extension) => {
-    const fileHeader = FileHeader.getForExtension(extension);
+    '.nes',
+    'rom.zip',
+    'rom.nes.zip',
+  ])('should not get a file header for extension: %s', (filePath) => {
+    const fileHeader = FileHeader.getForFilename(filePath);
     expect(fileHeader).toBeUndefined();
   });
 });
@@ -55,12 +53,12 @@ describe('getForFile', () => {
     const headeredRoms = await new ROMScanner(new Options({
       input: ['./test/fixtures/roms/headered'],
     }), new ProgressBarFake()).scan();
-    expect(headeredRoms).toHaveLength(4);
+    expect(headeredRoms).toHaveLength(5);
 
     /* eslint-disable no-await-in-loop */
     for (let i = 0; i < headeredRoms.length; i += 1) {
       await headeredRoms[i].extract(async (localFile) => {
-        const fileHeader = await FileHeader.getForFile(localFile);
+        const fileHeader = await FileHeader.getForFileContents(localFile);
         expect(fileHeader).not.toBeUndefined();
       });
     }
@@ -75,7 +73,7 @@ describe('getForFile', () => {
     /* eslint-disable no-await-in-loop */
     for (let i = 0; i < headeredRoms.length; i += 1) {
       await headeredRoms[i].extract(async (localFile) => {
-        const fileHeader = await FileHeader.getForFile(localFile);
+        const fileHeader = await FileHeader.getForFileContents(localFile);
         expect(fileHeader).toBeUndefined();
       });
     }

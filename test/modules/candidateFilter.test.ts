@@ -9,8 +9,8 @@ import Options, { OptionsProps } from '../../src/types/options.js';
 import ReleaseCandidate from '../../src/types/releaseCandidate.js';
 import ProgressBarFake from '../console/progressBarFake.js';
 
-function buildCandidateFilter(options: object = {}): CandidateFilter {
-  return new CandidateFilter(Options.fromObject(options), new ProgressBarFake());
+function buildCandidateFilter(options: OptionsProps = {}): CandidateFilter {
+  return new CandidateFilter(new Options(options), new ProgressBarFake());
 }
 
 async function expectFilteredCandidates(

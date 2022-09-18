@@ -2,7 +2,6 @@ import fs from 'fs';
 
 import ROMScanner from '../../../src/modules/romScanner.js';
 import fsPoly from '../../../src/polyfill/fsPoly.js';
-import ArchiveFactory from '../../../src/types/files/archiveFactory.js';
 import File from '../../../src/types/files/file.js';
 import Options from '../../../src/types/options.js';
 import ProgressBarFake from '../../console/progressBarFake.js';
@@ -28,8 +27,8 @@ describe('getCrc32', () => {
 
   test.each([
     ['./test/fixtures/roms/raw/empty.rom', '00000000'],
-    ['./test/fixtures/roms/raw/fizzbuzz.rom', '370517b5'],
-    ['./test/fixtures/roms/raw/foobar.rom', 'b22c9747'],
+    ['./test/fixtures/roms/raw/fizzbuzz.nes', '370517b5'],
+    ['./test/fixtures/roms/raw/foobar.lnx', 'b22c9747'],
     ['./test/fixtures/roms/raw/loremipsum.rom', '70856527'],
   ])('should hash the raw file: %s', async (filePath, expectedCrc) => {
     const file = new File(filePath);
@@ -42,7 +41,7 @@ describe('isZip', () => {
     './test/fixtures/roms/zip/empty.zip',
     './test/fixtures/roms/fizzbuzz.zip',
   ])('should return true when appropriate', (filePath) => {
-    const file = ArchiveFactory.archiveFrom(filePath);
+    const file = new File(filePath);
     expect(file.isZip()).toEqual(true);
   });
 
@@ -52,7 +51,7 @@ describe('isZip', () => {
     './test/fixtures/roms/rar/fizzbuzz.rar',
     './test/fixtures/roms/unknown.rar',
   ])('should return false when appropriate', (filePath) => {
-    const file = ArchiveFactory.archiveFrom(filePath);
+    const file = new File(filePath);
     expect(file.isZip()).toEqual(false);
   });
 });
