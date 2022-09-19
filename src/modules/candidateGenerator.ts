@@ -77,6 +77,7 @@ export default class CandidateGenerator {
   }
 
   private static async indexFilesByCrc(files: File[]): Promise<Map<string, File>> {
+    // TODO(cemmer): index by both "raw" and "minus header" CRCs?
     return files.reduce(async (accPromise, file) => {
       const acc = await accPromise;
       if (acc.has(await file.getCrc32())) {

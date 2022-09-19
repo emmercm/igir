@@ -1,9 +1,6 @@
 import AdmZip, { IZipEntry } from 'adm-zip';
-import { promises as fsPromises } from 'fs';
 import path from 'path';
 
-import Constants from '../../constants.js';
-import fsPoly from '../../polyfill/fsPoly.js';
 import ArchiveEntry from '../files/archiveEntry.js';
 import Archive from './archive.js';
 
@@ -23,9 +20,9 @@ export default class Zip extends Archive {
 
   async extractEntry<T>(
     archiveEntry: ArchiveEntry,
+    tempDir: string,
     callback: (localFile: string) => (T | Promise<T>),
   ): Promise<T> {
-    const tempDir = await fsPromises.mkdtemp(Constants.GLOBAL_TEMP_DIR);
     const localFile = path.join(tempDir, archiveEntry.getEntryPath());
 
     const zip = new AdmZip(this.getFilePath());
@@ -42,10 +39,6 @@ export default class Zip extends Archive {
       archiveEntry.getEntryPath(),
     );
 
-    try {
-      return await callback(localFile);
-    } finally {
-      fsPoly.rmSync(tempDir, { recursive: true });
-    }
+    return callback(localFile);
   }
 }

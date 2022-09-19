@@ -35,6 +35,10 @@ export default class File {
     return (await this.crc32).toLowerCase().padStart(8, '0');
   }
 
+  getFileHeader(): FileHeader | undefined {
+    return this.fileHeader;
+  }
+
   // TODO(cemmer): figure out how to eliminate this
   isZip(): boolean {
     return path.extname(this.getFilePath()).toLowerCase() === '.zip';

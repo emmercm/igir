@@ -1,10 +1,7 @@
 import _7z, { Result } from '7zip-min';
 import { Mutex } from 'async-mutex';
-import { promises as fsPromises } from 'fs';
 import path from 'path';
 
-import Constants from '../../constants.js';
-import fsPoly from '../../polyfill/fsPoly.js';
 import ArchiveEntry from '../files/archiveEntry.js';
 import Archive from './archive.js';
 
@@ -56,9 +53,9 @@ export default class SevenZip extends Archive {
 
   async extractEntry<T>(
     archiveEntry: ArchiveEntry,
+    tempDir: string,
     callback: (localFile: string) => (T | Promise<T>),
   ): Promise<T> {
-    const tempDir = await fsPromises.mkdtemp(Constants.GLOBAL_TEMP_DIR);
     const localFile = path.join(tempDir, archiveEntry.getEntryPath());
 
     await new Promise<void>((resolve, reject) => {
@@ -71,10 +68,6 @@ export default class SevenZip extends Archive {
       });
     });
 
-    try {
-      return await callback(localFile);
-    } finally {
-      fsPoly.rmSync(tempDir, { recursive: true });
-    }
+    return callback(localFile);
   }
 }

@@ -15,6 +15,7 @@ export default abstract class Archive {
 
   abstract extractEntry<T>(
     archiveEntry: ArchiveEntry,
+    tempDir: string,
     callback: (localFile: string) => (T | Promise<T>),
   ): Promise<T>;
 }

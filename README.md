@@ -35,7 +35,7 @@ With a large ROM collection it can be difficult to:
 1. ROMs, including ones with [headers](https://no-intro.org/faq.htm)
 2. One or more DATs ([see below](#what-are-dats) for where to download)
 
-Many different input archive types are supported: .001, .7z, .bz2, .gz, .rar, .tar, .xz, .z, .z01, .zip, .zipx, and more!
+Many different input archive types are supported for both ROMs and DATs: .001, .7z, .bz2, .gz, .rar, .tar, .tgz, .xz, .z, .z01, .zip, .zipx, and more!
 
 `igir` then needs one or more commands:
 
@@ -98,7 +98,7 @@ Output options:
   -Z, --zip-exclude   Glob pattern of files to exclude from zipping                    [string]
   -O, --overwrite     Overwrite any ROMs in the output directory                      [boolean]
 
-Priority options:
+Priority options (requires --single):
       --prefer-good            Prefer good ROM dumps over bad                         [boolean]
   -l, --prefer-language        List of comma-separated languages in priority order (supported:
                                DA, DE, EL, EN, ES, FI, FR, IT, JA, KO, NL, NO, PT, RU, SV, ZH)

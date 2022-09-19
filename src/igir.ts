@@ -30,13 +30,17 @@ export default class Igir {
   }
 
   async main(): Promise<void> {
+    // Scan and process input files
     const dats = await this.processDATScanner();
     const rawRomFiles = await this.processROMScanner();
+    const processedRomFiles = await this.processHeaderProcessor(rawRomFiles);
 
+    // Set up progress bar and input for DAT processing
     const datProcessProgressBar = this.logger.addProgressBar('Processing DATs', Symbols.PROCESSING, dats.length);
     const datsToWrittenRoms = new Map<DAT, Map<Parent, File[]>>();
     const datsStatuses: DATStatus[] = [];
 
+    // Process every DAT
     await async.eachLimit(dats, Constants.DAT_THREADS, async (dat, callback) => {
       const progressBar = this.logger.addProgressBar(
         dat.getNameShort(),
@@ -44,10 +48,6 @@ export default class Igir {
         dat.getParents().length,
       );
       await datProcessProgressBar.increment();
-
-      // Process ROM headers
-      const processedRomFiles = await new HeaderProcessor(this.options, progressBar)
-        .process(dat, rawRomFiles);
 
       // Generate and filter ROM candidates
       const romCandidates = await new CandidateGenerator(progressBar)
@@ -102,6 +102,14 @@ export default class Igir {
     // TODO(cemmer): is this reporting the right number? it might be inflated
     await progressBar.doneItems(romInputs.length, 'file', 'found');
     return romInputs;
+  }
+
+  private async processHeaderProcessor(romFiles: File[]): Promise<File[]> {
+    const headerProcessorProgressBar = this.logger.addProgressBar('Reading ROM headers', Symbols.WAITING);
+    const processedRomFiles = await new HeaderProcessor(this.options, headerProcessorProgressBar)
+      .process(romFiles);
+    await headerProcessorProgressBar.doneItems(processedRomFiles.length, 'file', 'read');
+    return processedRomFiles;
   }
 
   private async processOutputCleaner(

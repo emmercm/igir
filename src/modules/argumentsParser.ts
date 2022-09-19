@@ -45,7 +45,7 @@ export default class ArgumentsParser {
     const groupInputOutputPaths = 'Path options (inputs support globbing):';
     const groupInput = 'Input options:';
     const groupOutput = 'Output options:';
-    const groupPriority = 'Priority options:';
+    const groupPriority = 'Priority options (requires --single):';
     const groupFiltering = 'Filtering options:';
     const groupHelp = 'Help options:';
 

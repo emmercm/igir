@@ -4,9 +4,9 @@ import ProgressBar, { Symbols } from '../console/progressBar.js';
 import Constants from '../constants.js';
 import File from '../types/files/file.js';
 import FileHeader from '../types/files/fileHeader.js';
-import DAT from '../types/logiqx/dat.js';
 import Options from '../types/options.js';
 
+// TODO(cemmer): put debug statements in here
 export default class HeaderProcessor {
   private readonly options: Options;
 
@@ -17,20 +17,11 @@ export default class HeaderProcessor {
     this.progressBar = progressBar;
   }
 
-  async process(dat: DAT, inputRomFiles: File[]): Promise<File[]> {
-    await this.progressBar.logInfo(`${dat.getName()}: Processing file headers`);
+  async process(inputRomFiles: File[]): Promise<File[]> {
+    await this.progressBar.logInfo('Processing file headers');
 
     await this.progressBar.setSymbol(Symbols.HASHING);
     await this.progressBar.reset(inputRomFiles.length);
-
-    const headerNameForDat = dat.getFileHeaderName();
-    let headerForDat: FileHeader | undefined;
-    if (headerNameForDat) {
-      headerForDat = FileHeader.getForName(headerNameForDat);
-      if (!headerForDat) {
-        await this.progressBar.logWarn(`DAT has unknown ROM header name: ${headerNameForDat}`);
-      }
-    }
 
     return async.mapLimit(
       inputRomFiles,
@@ -38,10 +29,9 @@ export default class HeaderProcessor {
       async (inputFile, callback: AsyncResultCallback<File, Error>) => {
         await this.progressBar.increment();
 
-        // Can get FileHeader from DAT, use that
-        if (headerForDat) {
-          const fileWithHeader = await inputFile.withFileHeader(headerForDat).resolve();
-          return callback(null, fileWithHeader);
+        // Don't do anything if the file already has a header
+        if (inputFile.getFileHeader()) {
+          return callback(null, inputFile);
         }
 
         // Can get FileHeader from extension, use that

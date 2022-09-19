@@ -1,3 +1,7 @@
+import { promises as fsPromises } from 'fs';
+
+import Constants from '../../constants.js';
+import fsPoly from '../../polyfill/fsPoly.js';
 import Archive from '../archives/archive.js';
 import File from './file.js';
 import FileHeader from './fileHeader.js';
@@ -22,7 +26,13 @@ export default class ArchiveEntry extends File {
   }
 
   async extract<T>(callback: (localFile: string) => (T | Promise<T>)): Promise<T> {
-    return this.archive.extractEntry(this, callback);
+    const tempDir = await fsPromises.mkdtemp(Constants.GLOBAL_TEMP_DIR);
+
+    try {
+      return await this.archive.extractEntry(this, tempDir, callback);
+    } finally {
+      fsPoly.rmSync(tempDir, { recursive: true });
+    }
   }
 
   withFileHeader(fileHeader: FileHeader): File {
