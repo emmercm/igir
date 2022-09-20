@@ -103,7 +103,7 @@ export default class File {
 
   async extractToStream<T>(callback: (stream: Readable) => (Promise<T> | T)): Promise<T> {
     const stream = fs.createReadStream(this.filePath);
-    const result = callback(stream);
+    const result = await callback(stream);
     stream.destroy();
     return result;
   }

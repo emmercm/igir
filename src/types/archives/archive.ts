@@ -27,9 +27,9 @@ export default abstract class Archive {
     tempDir: string,
     callback: (stream: Readable) => (Promise<T> | T),
   ): Promise<T> {
-    return this.extractEntryToFile(archiveEntry, tempDir, (localFile) => {
+    return this.extractEntryToFile(archiveEntry, tempDir, async (localFile) => {
       const stream = fs.createReadStream(localFile);
-      const result = callback(stream);
+      const result = await callback(stream);
       stream.destroy();
       return result;
     });

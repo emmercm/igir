@@ -9,6 +9,7 @@ export default class Zip extends Archive {
   static readonly SUPPORTED_EXTENSIONS = ['.zip'];
 
   getArchiveEntries(): Promise<ArchiveEntry[]> {
+    // WARN: every constructor causes a full file read!
     const zip = new AdmZip(this.getFilePath());
     const files = zip.getEntries()
       .map((entry) => new ArchiveEntry(
@@ -26,6 +27,7 @@ export default class Zip extends Archive {
   ): Promise<T> {
     const localFile = path.join(tempDir, archiveEntry.getEntryPath());
 
+    // WARN: every constructor causes a full file read!
     const zip = new AdmZip(this.getFilePath());
     const entry = zip.getEntry(archiveEntry.getEntryPath());
     if (!entry) {
@@ -48,6 +50,7 @@ export default class Zip extends Archive {
     tempDir: string,
     callback: (stream: Readable) => (Promise<T> | T),
   ): Promise<T> {
+    // WARN: every constructor causes a full file read!
     const zip = new AdmZip(this.getFilePath());
     const entry = zip.getEntry(archiveEntry.getEntryPath());
     if (!entry) {
