@@ -55,7 +55,7 @@ export default class DATScanner extends Scanner {
   }
 
   private async parseDatFile(datFile: File): Promise<DataFile | undefined> {
-    return datFile.extract(async (localFile) => {
+    return datFile.extractToFile(async (localFile) => {
       const xmlContents = await fsPromises.readFile(localFile);
 
       try {
@@ -63,7 +63,7 @@ export default class DATScanner extends Scanner {
         return await xml2js.parseStringPromise(xmlContents.toString(), {
           mergeAttrs: true,
           explicitArray: false,
-        }) as DataFile;
+        });
       } catch (err) {
         const message = (err as Error).message.split('\n').join(', ');
         await this.progressBar.logError(`Failed to parse DAT ${datFile.toString()} : ${message}`);

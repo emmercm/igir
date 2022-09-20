@@ -19,7 +19,7 @@ export default class Rar extends Archive {
       ));
   }
 
-  async extractEntry<T>(
+  async extractEntryToFile<T>(
     archiveEntry: ArchiveEntry,
     tempDir: string,
     callback: (localFile: string) => (T | Promise<T>),

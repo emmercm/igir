@@ -57,7 +57,7 @@ describe('getForFile', () => {
 
     /* eslint-disable no-await-in-loop */
     for (let i = 0; i < headeredRoms.length; i += 1) {
-      await headeredRoms[i].extract(async (localFile) => {
+      await headeredRoms[i].extractToFile(async (localFile) => {
         const fileHeader = await FileHeader.getForFileContents(localFile);
         expect(fileHeader).not.toBeUndefined();
       });
@@ -72,7 +72,7 @@ describe('getForFile', () => {
 
     /* eslint-disable no-await-in-loop */
     for (let i = 0; i < headeredRoms.length; i += 1) {
-      await headeredRoms[i].extract(async (localFile) => {
+      await headeredRoms[i].extractToFile(async (localFile) => {
         const fileHeader = await FileHeader.getForFileContents(localFile);
         expect(fileHeader).toBeUndefined();
       });

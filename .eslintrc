@@ -33,6 +33,7 @@
     "@typescript-eslint/no-floating-promises": ["error"],
     "@typescript-eslint/prefer-readonly": "error",
     "simple-import-sort/exports": "error",
-    "simple-import-sort/imports": "error"
+    "simple-import-sort/imports": "error",
+    "no-return-await": "error"
   }
 }

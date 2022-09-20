@@ -1,6 +1,7 @@
 import crc32 from 'crc/crc32';
 import fs from 'fs';
 import path from 'path';
+import { Readable } from 'stream';
 
 import Constants from '../../constants.js';
 import FileHeader from './fileHeader.js';
@@ -58,7 +59,7 @@ export default class File {
   }
 
   private async calculateCrc32(processHeader: boolean): Promise<string> {
-    return this.extract(async (localFile) => {
+    return this.extractToFile(async (localFile) => {
       // If we're hashing a file with a header, make sure the file actually has the header magic
       // string before excluding it
       let start = 0;
@@ -96,8 +97,15 @@ export default class File {
     return this;
   }
 
-  async extract<T>(callback: (localFile: string) => (T | Promise<T>)): Promise<T> {
+  async extractToFile<T>(callback: (localFile: string) => (T | Promise<T>)): Promise<T> {
     return callback(this.filePath);
+  }
+
+  async extractToStream<T>(callback: (stream: Readable) => (Promise<T> | T)): Promise<T> {
+    const stream = fs.createReadStream(this.filePath);
+    const result = callback(stream);
+    stream.destroy();
+    return result;
   }
 
   withFileHeader(fileHeader: FileHeader): File {

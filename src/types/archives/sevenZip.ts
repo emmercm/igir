@@ -51,7 +51,7 @@ export default class SevenZip extends Archive {
     });
   }
 
-  async extractEntry<T>(
+  async extractEntryToFile<T>(
     archiveEntry: ArchiveEntry,
     tempDir: string,
     callback: (localFile: string) => (T | Promise<T>),

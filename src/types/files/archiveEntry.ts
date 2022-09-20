@@ -1,4 +1,5 @@
 import { promises as fsPromises } from 'fs';
+import { Readable } from 'stream';
 
 import Constants from '../../constants.js';
 import fsPoly from '../../polyfill/fsPoly.js';
@@ -25,11 +26,21 @@ export default class ArchiveEntry extends File {
     return this.entryPath;
   }
 
-  async extract<T>(callback: (localFile: string) => (T | Promise<T>)): Promise<T> {
+  async extractToFile<T>(callback: (localFile: string) => (T | Promise<T>)): Promise<T> {
     const tempDir = await fsPromises.mkdtemp(Constants.GLOBAL_TEMP_DIR);
 
     try {
-      return await this.archive.extractEntry(this, tempDir, callback);
+      return await this.archive.extractEntryToFile(this, tempDir, callback);
+    } finally {
+      fsPoly.rmSync(tempDir, { recursive: true });
+    }
+  }
+
+  async extractToStream<T>(callback: (stream: Readable) => (Promise<T> | T)): Promise<T> {
+    const tempDir = await fsPromises.mkdtemp(Constants.GLOBAL_TEMP_DIR);
+
+    try {
+      return await this.archive.extractEntryToStream(this, tempDir, callback);
     } finally {
       fsPoly.rmSync(tempDir, { recursive: true });
     }
@@ -39,6 +50,7 @@ export default class ArchiveEntry extends File {
     return new ArchiveEntry(
       this.archive,
       this.entryPath,
+      // TODO(cemmer): this isn't right, full file CRC won't change
       undefined, // the old CRC can't be used, a header will change it
       fileHeader,
     );

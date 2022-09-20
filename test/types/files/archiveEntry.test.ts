@@ -123,7 +123,7 @@ describe('extract', () => {
     /* eslint-disable no-await-in-loop */
     for (let i = 0; i < archiveEntries.length; i += 1) {
       const zip = archiveEntries[i];
-      await zip.extract((localFile) => {
+      await zip.extractToFile((localFile) => {
         expect(fs.existsSync(localFile)).toEqual(true);
         expect(localFile).not.toEqual(zip.getFilePath());
       });
