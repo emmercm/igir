@@ -10,6 +10,8 @@ export default class File {
 
   private crc32?: Promise<string>;
 
+  private crc32WithoutHeader?: Promise<string>;
+
   private readonly fileHeader?: FileHeader;
 
   constructor(filePath: string, crc?: string, fileHeader?: FileHeader) {
@@ -30,9 +32,20 @@ export default class File {
 
   async getCrc32(): Promise<string> {
     if (!this.crc32) {
-      this.crc32 = this.calculateCrc32();
+      this.crc32 = this.calculateCrc32(false);
     }
     return (await this.crc32).toLowerCase().padStart(8, '0');
+  }
+
+  async getCrc32WithoutHeader(): Promise<string> {
+    if (!this.fileHeader) {
+      return this.getCrc32();
+    }
+
+    if (!this.crc32WithoutHeader) {
+      this.crc32WithoutHeader = this.calculateCrc32(true);
+    }
+    return (await this.crc32WithoutHeader).toLowerCase().padStart(8, '0');
   }
 
   getFileHeader(): FileHeader | undefined {
@@ -44,12 +57,12 @@ export default class File {
     return path.extname(this.getFilePath()).toLowerCase() === '.zip';
   }
 
-  private async calculateCrc32(): Promise<string> {
+  private async calculateCrc32(processHeader: boolean): Promise<string> {
     return this.extract(async (localFile) => {
       // If we're hashing a file with a header, make sure the file actually has the header magic
       // string before excluding it
       let start = 0;
-      if (this.fileHeader && await this.fileHeader.fileHasHeader(localFile)) {
+      if (processHeader && this.fileHeader && await this.fileHeader.fileHasHeader(localFile)) {
         start = this.fileHeader.dataOffsetBytes;
       }
 
@@ -79,6 +92,7 @@ export default class File {
 
   async resolve(): Promise<this> {
     await this.getCrc32();
+    await this.getCrc32WithoutHeader();
     return this;
   }
 
@@ -109,6 +123,7 @@ export default class File {
       return true;
     }
     return this.getFilePath() === other.getFilePath()
-        && await this.getCrc32() === await other.getCrc32();
+        && await this.getCrc32() === await other.getCrc32()
+        && await this.getCrc32WithoutHeader() === await other.getCrc32WithoutHeader();
   }
 }

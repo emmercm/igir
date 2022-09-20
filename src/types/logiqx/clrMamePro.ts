@@ -42,8 +42,4 @@ export default class ClrMamePro implements ClrMameProOptions {
     this.forceNoDump = options?.forceNoDump || 'obsolete';
     this.forcePacking = options?.forcePacking || 'zip';
   }
-
-  getHeader(): string | undefined {
-    return this.header;
-  }
 }

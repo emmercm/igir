@@ -32,7 +32,10 @@ describe('getCrc32', () => {
     ['./test/fixtures/roms/7z/loremipsum.7z', '70856527'],
     ['./test/fixtures/roms/rar/loremipsum.rar', '70856527'],
     ['./test/fixtures/roms/zip/loremipsum.zip', '70856527'],
-  ])('should hash the archive entry: %s', async (filePath, expectedCrc) => {
+    ['./test/fixtures/roms/headered/diagnostic_test_cartridge.a78.7z', 'f6cc9b1c'],
+    ['./test/fixtures/roms/headered/fds_joypad_test.fds.zip', '1e58456d'],
+    ['./test/fixtures/roms/headered/LCDTestROM.lnx.rar', '2d251538'],
+  ])('should hash the full archive entry: %s', async (filePath, expectedCrc) => {
     const archive = ArchiveFactory.archiveFrom(filePath);
 
     const archiveEntries = await archive.getArchiveEntries();
@@ -41,25 +44,66 @@ describe('getCrc32', () => {
 
     await expect(archiveEntry.getCrc32()).resolves.toEqual(expectedCrc);
   });
+});
 
+describe('getCrc32WithoutHeader', () => {
   test.each([
-    ['./test/fixtures/roms/headered/diagnostic_test_cartridge.a78.7z', 'a1eaa7c1'],
-    ['./test/fixtures/roms/headered/fds_joypad_test.fds.zip', '3ecbac61'],
-    ['./test/fixtures/roms/headered/LCDTestROM.lnx.rar', '42583855'],
-  ])('should hash the headered archive entry: %s', async (filePath, expectedCrc) => {
+    ['./test/fixtures/roms/7z/fizzbuzz.7z', '370517b5'],
+    ['./test/fixtures/roms/rar/fizzbuzz.rar', '370517b5'],
+    ['./test/fixtures/roms/zip/fizzbuzz.zip', '370517b5'],
+    ['./test/fixtures/roms/7z/foobar.7z', 'b22c9747'],
+    ['./test/fixtures/roms/rar/foobar.rar', 'b22c9747'],
+    ['./test/fixtures/roms/zip/foobar.zip', 'b22c9747'],
+    ['./test/fixtures/roms/7z/loremipsum.7z', '70856527'],
+    ['./test/fixtures/roms/rar/loremipsum.rar', '70856527'],
+    ['./test/fixtures/roms/zip/loremipsum.zip', '70856527'],
+    ['./test/fixtures/roms/headered/diagnostic_test_cartridge.a78.7z', 'f6cc9b1c'],
+    ['./test/fixtures/roms/headered/fds_joypad_test.fds.zip', '1e58456d'],
+    ['./test/fixtures/roms/headered/LCDTestROM.lnx.rar', '2d251538'],
+  ])('should hash the full archive entry when no header given: %s', async (filePath, expectedCrc) => {
     const archive = ArchiveFactory.archiveFrom(filePath);
 
     const archiveEntries = await archive.getArchiveEntries();
     expect(archiveEntries).toHaveLength(1);
     const archiveEntry = archiveEntries[0];
 
+    await expect(archiveEntry.getCrc32WithoutHeader()).resolves.toEqual(expectedCrc);
+  });
+
+  test.each([
+    ['./test/fixtures/roms/7z/fizzbuzz.7z', '370517b5'],
+    ['./test/fixtures/roms/rar/fizzbuzz.rar', '370517b5'],
+    ['./test/fixtures/roms/zip/fizzbuzz.zip', '370517b5'],
+    ['./test/fixtures/roms/7z/foobar.7z', 'b22c9747'],
+    ['./test/fixtures/roms/rar/foobar.rar', 'b22c9747'],
+    ['./test/fixtures/roms/zip/foobar.zip', 'b22c9747'],
+  ])('should hash the full archive entry when header is given but not present in file: %s', async (filePath, expectedCrc) => {
+    const archive = ArchiveFactory.archiveFrom(filePath);
+
+    const archiveEntries = await archive.getArchiveEntries();
+    expect(archiveEntries).toHaveLength(1);
+    const archiveEntry = archiveEntries[0].withFileHeader(
+      FileHeader.getForFilename(archiveEntries[0].getExtractedFilePath()) as FileHeader,
+    );
+
+    await expect(archiveEntry.getCrc32WithoutHeader()).resolves.toEqual(expectedCrc);
+  });
+
+  test.each([
+    ['./test/fixtures/roms/headered/diagnostic_test_cartridge.a78.7z', 'a1eaa7c1'],
+    ['./test/fixtures/roms/headered/fds_joypad_test.fds.zip', '3ecbac61'],
+    ['./test/fixtures/roms/headered/LCDTestROM.lnx.rar', '42583855'],
+  ])('should hash the archive entry without the header when header is given and present in file: %s', async (filePath, expectedCrc) => {
+    const archive = ArchiveFactory.archiveFrom(filePath);
+
+    const archiveEntries = await archive.getArchiveEntries();
+    expect(archiveEntries).toHaveLength(1);
+    const archiveEntry = archiveEntries[0].withFileHeader(
+      FileHeader.getForFilename(archiveEntries[0].getExtractedFilePath()) as FileHeader,
+    );
+
     await expect(archiveEntry.getCrc32()).resolves.not.toEqual(expectedCrc);
-
-    const fileHeader = FileHeader.getForFilename(archiveEntry.getExtractedFilePath());
-    expect(fileHeader).toBeTruthy();
-    const headeredArchiveEntry = archiveEntry.withFileHeader(fileHeader as FileHeader);
-
-    await expect(headeredArchiveEntry.getCrc32()).resolves.toEqual(expectedCrc);
+    await expect(archiveEntry.getCrc32WithoutHeader()).resolves.toEqual(expectedCrc);
   });
 });
 

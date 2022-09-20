@@ -112,8 +112,4 @@ export default class DAT {
     }
     return long;
   }
-
-  getFileHeaderName(): string | undefined {
-    return this.getHeader().getClrMamePro()?.getHeader();
-  }
 }
