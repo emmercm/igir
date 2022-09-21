@@ -1,63 +1,110 @@
 import crc32 from 'crc/crc32';
-import fs, { PathLike } from 'fs';
+import fs from 'fs';
 import path from 'path';
+
+import Constants from '../../constants.js';
+import FileHeader from './fileHeader.js';
 
 export default class File {
   private readonly filePath: string;
 
   private crc32?: Promise<string>;
 
-  constructor(filePath: string, crc?: string) {
+  private crc32WithoutHeader?: Promise<string>;
+
+  private readonly fileHeader?: FileHeader;
+
+  constructor(filePath: string, crc?: string, fileHeader?: FileHeader) {
     this.filePath = filePath;
     if (crc) {
       this.crc32 = Promise.resolve(crc);
     }
+    this.fileHeader = fileHeader;
   }
 
   getFilePath(): string {
     return this.filePath;
   }
 
+  getExtractedFilePath(): string {
+    return this.filePath;
+  }
+
   async getCrc32(): Promise<string> {
     if (!this.crc32) {
-      this.crc32 = File.calculateCrc32(this.filePath);
+      this.crc32 = this.calculateCrc32(false);
     }
     return (await this.crc32).toLowerCase().padStart(8, '0');
   }
 
+  async getCrc32WithoutHeader(): Promise<string> {
+    if (!this.fileHeader) {
+      return this.getCrc32();
+    }
+
+    if (!this.crc32WithoutHeader) {
+      this.crc32WithoutHeader = this.calculateCrc32(true);
+    }
+    return (await this.crc32WithoutHeader).toLowerCase().padStart(8, '0');
+  }
+
+  getFileHeader(): FileHeader | undefined {
+    return this.fileHeader;
+  }
+
+  // TODO(cemmer): figure out how to eliminate this
   isZip(): boolean {
     return path.extname(this.getFilePath()).toLowerCase() === '.zip';
   }
 
-  private static async calculateCrc32(pathLike: PathLike): Promise<string> {
-    return new Promise((resolve, reject) => {
-      const stream = fs.createReadStream(pathLike, {
-        highWaterMark: 1024 * 1024, // 1MB
-      });
+  private async calculateCrc32(processHeader: boolean): Promise<string> {
+    return this.extract(async (localFile) => {
+      // If we're hashing a file with a header, make sure the file actually has the header magic
+      // string before excluding it
+      let start = 0;
+      if (processHeader && this.fileHeader && await this.fileHeader.fileHasHeader(localFile)) {
+        start = this.fileHeader.dataOffsetBytes;
+      }
 
-      let crc: number;
-      stream.on('data', (chunk) => {
-        if (!crc) {
-          crc = crc32(chunk);
-        } else {
-          crc = crc32(chunk, crc);
-        }
-      });
-      stream.on('end', () => {
-        resolve((crc || 0).toString(16));
-      });
+      return new Promise((resolve, reject) => {
+        const stream = fs.createReadStream(localFile, {
+          start,
+          highWaterMark: Constants.FILE_READING_CHUNK_SIZE,
+        });
 
-      stream.on('error', (err) => reject(err));
+        let crc: number;
+        stream.on('data', (chunk) => {
+          if (!crc) {
+            crc = crc32(chunk);
+          } else {
+            crc = crc32(chunk, crc);
+          }
+        });
+        stream.on('end', () => {
+          resolve((crc || 0).toString(16));
+        });
+
+        stream.on('error', (err) => reject(err));
+      });
     });
   }
 
   async resolve(): Promise<this> {
     await this.getCrc32();
+    await this.getCrc32WithoutHeader();
     return this;
   }
 
   async extract<T>(callback: (localFile: string) => (T | Promise<T>)): Promise<T> {
     return callback(this.filePath);
+  }
+
+  withFileHeader(fileHeader: FileHeader): File {
+    return new File(
+      this.filePath,
+      undefined, // the old CRC can't be used, a header will change it
+      fileHeader,
+    );
   }
 
   /** *************************
@@ -75,6 +122,7 @@ export default class File {
       return true;
     }
     return this.getFilePath() === other.getFilePath()
-        && await this.getCrc32() === await other.getCrc32();
+        && await this.getCrc32() === await other.getCrc32()
+        && await this.getCrc32WithoutHeader() === await other.getCrc32WithoutHeader();
   }
 }

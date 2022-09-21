@@ -23,18 +23,4 @@ export default class Parent {
   addChild(child: Game): void {
     this.games.push(child);
   }
-
-  // Computed getters
-
-  isBios(): boolean {
-    return this.getGames().some((game) => game.isBios());
-  }
-
-  isRetail(): boolean {
-    return this.getGames().some((game) => game.isRetail());
-  }
-
-  isPrototype(): boolean {
-    return !this.isRetail() && this.getGames().some((game) => game.isPrototype());
-  }
 }

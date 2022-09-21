@@ -32,10 +32,10 @@ With a large ROM collection it can be difficult to:
 
 `igir` needs two sets of files:
 
-1. ROMs, of course!
+1. ROMs, including ones with [headers](https://no-intro.org/faq.htm)
 2. One or more DATs ([see below](#what-are-dats) for where to download)
 
-Many different input archive types are supported: .001, .7z, .bz2, .gz, .rar, .tar, .xz, .z, .z01, .zip, .zipx, and more!
+Many different input archive types are supported for both ROMs and DATs: .001, .7z, .bz2, .gz, .rar, .tar, .tgz, .xz, .z, .z01, .zip, .zipx, and more!
 
 `igir` then needs one or more commands:
 
@@ -57,8 +57,8 @@ npx igir@latest [commands..] [options]
 Here is the full `igir --help` message which shows all available options and a number of common use case examples:
 
 ```help
- ______   ______   ______  _______  
-|      \ /      \ |      \|       \ 
+ ______   ______   ______  _______
+|      \ /      \ |      \|       \
  \$$$$$$|  $$$$$$\ \$$$$$$| $$$$$$$\
   | $$  | $$ __\$$  | $$  | $$__| $$
   | $$  | $$|    \  | $$  | $$    $$
@@ -85,6 +85,9 @@ Path options (inputs support globbing):
   -I, --input-exclude  Path(s) to ROM files to exclude                                  [array]
   -o, --output         Path to the ROM output directory                                [string]
 
+Input options:
+  -H, --header  Glob pattern of files to force header processing for                   [string]
+
 Output options:
       --dir-mirror    Use the input subdirectory structure for output subdirectories  [boolean]
   -D, --dir-dat-name  Use the DAT name as the output subdirectory                     [boolean]
@@ -95,7 +98,7 @@ Output options:
   -Z, --zip-exclude   Glob pattern of files to exclude from zipping                    [string]
   -O, --overwrite     Overwrite any ROMs in the output directory                      [boolean]
 
-Priority options:
+Priority options (requires --single):
       --prefer-good            Prefer good ROM dumps over bad                         [boolean]
   -l, --prefer-language        List of comma-separated languages in priority order (supported:
                                DA, DE, EL, EN, ES, FI, FR, IT, JA, KO, NL, NO, PT, RU, SV, ZH)
@@ -197,11 +200,12 @@ There a few different popular ROM managers that have similar features:
 
 Each manager has its own pros, but most share the same cons:
 
-- Windows-only (sometimes with Wine support), making management on macOS and Linux difficult 
+- Windows-only (sometimes with Wine support), making management on macOS and Linux difficult
 - Limited CLI support, making batching and repeatable actions difficult
 - UIs that don't clearly state what actions can, will, or are being performed
 - Required proprietary database setup step
 - Limited or nonexistent archive extraction support
+- Limited or nonexistent ROM header support
 - Limited or nonexistent parent/clone, region, language, version, and ROM type filtering
 - Limited or nonexistent priorities when creating a 1G1R set
 - Limited or nonexistent folder management options

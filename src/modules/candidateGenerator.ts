@@ -31,12 +31,13 @@ export default class CandidateGenerator {
       return output;
     }
 
+    await this.progressBar.setSymbol(Symbols.GENERATING);
+    await this.progressBar.reset(dat.getParents().length);
+
+    // TODO(cemmer): use filesize combined with CRC for indexing
     // TODO(cemmer): ability to index files by some other property such as name
     const crc32ToInputFiles = await CandidateGenerator.indexFilesByCrc(inputRomFiles);
     await this.progressBar.logInfo(`${dat.getName()}: ${crc32ToInputFiles.size} unique ROM CRC32s found`);
-
-    await this.progressBar.setSymbol(Symbols.GENERATING);
-    await this.progressBar.reset(dat.getParents().length);
 
     // TODO(cemmer): ability to work without DATs, generating a parent/game/release per file
     // For each parent, try to generate a parent candidate
@@ -79,18 +80,23 @@ export default class CandidateGenerator {
   private static async indexFilesByCrc(files: File[]): Promise<Map<string, File>> {
     return files.reduce(async (accPromise, file) => {
       const acc = await accPromise;
-      if (acc.has(await file.getCrc32())) {
-        // Have already seen file, prefer non-archived files
-        const existing = acc.get(await file.getCrc32()) as File;
-        if (!(file instanceof ArchiveEntry) && existing instanceof ArchiveEntry) {
-          acc.set(await file.getCrc32(), file);
-        }
-      } else {
-        // Haven't seen file yet, store it
-        acc.set(await file.getCrc32(), file);
-      }
+      this.addToIndex(acc, await file.getCrc32(), file);
+      this.addToIndex(acc, await file.getCrc32WithoutHeader(), file);
       return acc;
     }, Promise.resolve(new Map<string, File>()));
+  }
+
+  private static addToIndex(map: Map<string, File>, hash: string, file: File): void {
+    if (map.has(hash)) {
+      // Have already seen file, prefer non-archived files
+      const existing = map.get(hash) as File;
+      if (!(file instanceof ArchiveEntry) && existing instanceof ArchiveEntry) {
+        map.set(hash, file);
+      }
+    } else {
+      // Haven't seen file yet, store it
+      map.set(hash, file);
+    }
   }
 
   private async buildReleaseCandidateForRelease(

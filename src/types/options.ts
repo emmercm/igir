@@ -20,6 +20,7 @@ export interface OptionsProps {
   readonly input?: string[],
   readonly inputExclude?: string[],
   readonly output?: string,
+  readonly header?: string,
   readonly dirMirror?: boolean,
   readonly dirDatName?: boolean,
   readonly dirLetter?: boolean,
@@ -62,6 +63,8 @@ export default class Options implements OptionsProps {
   readonly inputExclude: string[] = [];
 
   readonly output!: string;
+
+  readonly header!: string;
 
   readonly dirMirror!: boolean;
 
@@ -121,14 +124,13 @@ export default class Options implements OptionsProps {
 
   readonly help!: boolean;
 
-  private tempDir!: string;
-
   constructor(options?: OptionsProps) {
     this.commands = options?.commands || [];
     this.dat = options?.dat || [];
     this.input = options?.input || [];
     this.inputExclude = options?.inputExclude || [];
     this.output = options?.output || '';
+    this.header = options?.header || '';
     this.dirMirror = options?.dirMirror || false;
     this.dirDatName = options?.dirDatName || false;
     this.dirLetter = options?.dirLetter || false;
@@ -158,37 +160,16 @@ export default class Options implements OptionsProps {
     this.noBad = options?.noBad || false;
     this.verbose = options?.verbose || 0;
     this.help = options?.help || false;
-
-    this.createTempDir();
-    this.validate();
   }
 
   static fromObject(obj: object): Options {
     return plainToInstance(Options, obj, {
       enableImplicitConversion: true,
-    })
-      .createTempDir()
-      .validate();
+    });
   }
 
   toString(): string {
     return JSON.stringify(instanceToPlain(this));
-  }
-
-  private createTempDir(): Options {
-    this.tempDir = fsPoly.mkdtempSync();
-    process.on('SIGINT', () => {
-      fsPoly.rmSync(this.tempDir, {
-        force: true,
-        recursive: true,
-      });
-    });
-    return this;
-  }
-
-  private validate(): Options {
-    // TODO(cemmer): validate fields on the class
-    return this;
   }
 
   // Commands
@@ -211,7 +192,10 @@ export default class Options implements OptionsProps {
 
   shouldZip(filePath: string): boolean {
     return this.getCommands().indexOf('zip') !== -1
-      && (!this.getZipExclude() || !micromatch.isMatch(filePath, this.getZipExclude()));
+      && (!this.getZipExclude() || !micromatch.isMatch(
+        filePath.replace(/^.[\\/]/, ''),
+        this.getZipExclude(),
+      ));
   }
 
   shouldClean(): boolean {
@@ -301,7 +285,7 @@ export default class Options implements OptionsProps {
   }
 
   getOutput(dat?: DAT, inputRomPath?: string, romName?: string): string {
-    let output = this.shouldWrite() ? this.output : this.getTempDir();
+    let output = this.shouldWrite() ? this.output : Constants.GLOBAL_TEMP_DIR;
     if (this.getDirMirror() && inputRomPath) {
       const mirroredDir = path.dirname(inputRomPath)
         .replace(/[\\/]/g, path.sep)
@@ -337,9 +321,20 @@ export default class Options implements OptionsProps {
     return path.join(
       output,
       `${Constants.COMMAND_NAME}_${moment().format()}.txt`
-      // Make the filename Windows legal
+        // Make the filename Windows legal
         .replace(/:/g, ';')
         .replace(/[<>:"/\\|?*]/g, '_'),
+    );
+  }
+
+  private getHeader(): string {
+    return this.header;
+  }
+
+  shouldReadFileForHeader(filePath: string): boolean {
+    return this.getHeader().length > 0 && micromatch.isMatch(
+      filePath.replace(/^.[\\/]/, ''),
+      this.getHeader(),
     );
   }
 
@@ -462,10 +457,6 @@ export default class Options implements OptionsProps {
 
   getHelp(): boolean {
     return this.help;
-  }
-
-  getTempDir(): string {
-    return this.tempDir;
   }
 
   static filterUniqueUpper(array: string[]): string[] {

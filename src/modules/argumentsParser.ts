@@ -43,10 +43,11 @@ export default class ArgumentsParser {
     this.logger.info(`Parsing CLI arguments: ${argv}`);
 
     const groupInputOutputPaths = 'Path options (inputs support globbing):';
+    const groupInput = 'Input options:';
     const groupOutput = 'Output options:';
-    const groupPriority = 'Priority options:';
+    const groupPriority = 'Priority options (requires --single):';
     const groupFiltering = 'Filtering options:';
-    const groupDebug = 'Debug options:';
+    const groupHelp = 'Help options:';
 
     // Add every command to a yargs object, recursively, resulting in the ability to specify
     // multiple commands
@@ -126,6 +127,15 @@ export default class ArgumentsParser {
           throw new Error(`Missing required option for commands ${needOutput.join(', ')}: output`);
         }
         return true;
+      })
+
+      .option('header', {
+        group: groupInput,
+        alias: 'H',
+        description: 'Glob pattern of files to force header processing for',
+        type: 'string',
+        coerce: ArgumentsParser.getLastValue, // don't allow string[] values
+        requiresArg: true,
       })
 
       .option('dir-mirror', {
@@ -297,7 +307,7 @@ export default class ArgumentsParser {
       })
 
       .option('verbose', {
-        group: groupDebug,
+        group: groupHelp,
         alias: 'v',
         description: 'Enable verbose logging, can specify twice (-vv)',
         type: 'count',
@@ -317,8 +327,9 @@ export default class ArgumentsParser {
         ['$0 copy -i ROMs/ -o /media/SDCard/ROMs/ -D --dir-letter -t', 'Copy ROMs to a flash cart and test them'],
       ])
 
-    // Colorize help output
+      // Colorize help output
       .option('help', {
+        group: groupHelp,
         alias: 'h',
         description: 'Show help',
         type: 'boolean',

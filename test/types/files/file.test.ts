@@ -2,8 +2,8 @@ import fs from 'fs';
 
 import ROMScanner from '../../../src/modules/romScanner.js';
 import fsPoly from '../../../src/polyfill/fsPoly.js';
-import ArchiveFactory from '../../../src/types/files/archiveFactory.js';
 import File from '../../../src/types/files/file.js';
+import FileHeader from '../../../src/types/files/fileHeader.js';
 import Options from '../../../src/types/options.js';
 import ProgressBarFake from '../../console/progressBarFake.js';
 
@@ -28,12 +28,38 @@ describe('getCrc32', () => {
 
   test.each([
     ['./test/fixtures/roms/raw/empty.rom', '00000000'],
-    ['./test/fixtures/roms/raw/fizzbuzz.rom', '370517b5'],
-    ['./test/fixtures/roms/raw/foobar.rom', 'b22c9747'],
+    ['./test/fixtures/roms/raw/fizzbuzz.nes', '370517b5'],
+    ['./test/fixtures/roms/raw/foobar.lnx', 'b22c9747'],
     ['./test/fixtures/roms/raw/loremipsum.rom', '70856527'],
-  ])('should hash the file path: %s', async (filePath, expectedCrc) => {
+  ])('should hash the full file: %s', async (filePath, expectedCrc) => {
     const file = new File(filePath);
     await expect(file.getCrc32()).resolves.toEqual(expectedCrc);
+  });
+});
+
+describe('getCrc32WithoutHeader', () => {
+  test.each([
+    ['./test/fixtures/roms/headered/allpads.nes', '9180a163'],
+  ])('should hash the full file when no header given: %s', async (filePath, expectedCrc) => {
+    const file = new File(filePath);
+    await expect(file.getCrc32WithoutHeader()).resolves.toEqual(expectedCrc);
+  });
+
+  test.each([
+    ['./test/fixtures/roms/raw/fizzbuzz.nes', '370517b5'],
+    ['./test/fixtures/roms/raw/foobar.lnx', 'b22c9747'],
+  ])('should hash the full file when header is given but not present in file: %s', async (filePath, expectedCrc) => {
+    const file = new File(filePath)
+      .withFileHeader(FileHeader.getForFilename(filePath) as FileHeader);
+    await expect(file.getCrc32WithoutHeader()).resolves.toEqual(expectedCrc);
+  });
+
+  test.each([
+    ['./test/fixtures/roms/headered/allpads.nes', '6339abe6'],
+  ])('should hash the full file when header is given and present in file: %s', async (filePath, expectedCrc) => {
+    const file = new File(filePath)
+      .withFileHeader(FileHeader.getForFilename(filePath) as FileHeader);
+    await expect(file.getCrc32WithoutHeader()).resolves.toEqual(expectedCrc);
   });
 });
 
@@ -42,7 +68,7 @@ describe('isZip', () => {
     './test/fixtures/roms/zip/empty.zip',
     './test/fixtures/roms/fizzbuzz.zip',
   ])('should return true when appropriate', (filePath) => {
-    const file = ArchiveFactory.archiveFrom(filePath);
+    const file = new File(filePath);
     expect(file.isZip()).toEqual(true);
   });
 
@@ -52,7 +78,7 @@ describe('isZip', () => {
     './test/fixtures/roms/rar/fizzbuzz.rar',
     './test/fixtures/roms/unknown.rar',
   ])('should return false when appropriate', (filePath) => {
-    const file = ArchiveFactory.archiveFrom(filePath);
+    const file = new File(filePath);
     expect(file.isZip()).toEqual(false);
   });
 });

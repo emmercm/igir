@@ -7,6 +7,7 @@ import Constants from './constants.js';
 import CandidateFilter from './modules/candidateFilter.js';
 import CandidateGenerator from './modules/candidateGenerator.js';
 import DATScanner from './modules/datScanner.js';
+import HeaderProcessor from './modules/headerProcessor.js';
 import OutputCleaner from './modules/outputCleaner.js';
 import ReportGenerator from './modules/reportGenerator.js';
 import ROMScanner from './modules/romScanner.js';
@@ -29,13 +30,17 @@ export default class Igir {
   }
 
   async main(): Promise<void> {
+    // Scan and process input files
     const dats = await this.processDATScanner();
-    const romFiles = await this.processROMScanner();
+    const rawRomFiles = await this.processROMScanner();
+    const processedRomFiles = await this.processHeaderProcessor(rawRomFiles);
 
+    // Set up progress bar and input for DAT processing
     const datProcessProgressBar = this.logger.addProgressBar('Processing DATs', Symbols.PROCESSING, dats.length);
     const datsToWrittenRoms = new Map<DAT, Map<Parent, File[]>>();
     const datsStatuses: DATStatus[] = [];
 
+    // Process every DAT
     await async.eachLimit(dats, Constants.DAT_THREADS, async (dat, callback) => {
       const progressBar = this.logger.addProgressBar(
         dat.getNameShort(),
@@ -45,7 +50,8 @@ export default class Igir {
       await datProcessProgressBar.increment();
 
       // Generate and filter ROM candidates
-      const romCandidates = await new CandidateGenerator(progressBar).generate(dat, romFiles);
+      const romCandidates = await new CandidateGenerator(progressBar)
+        .generate(dat, processedRomFiles);
       const romOutputs = await new CandidateFilter(this.options, progressBar)
         .filter(dat, romCandidates);
 
@@ -96,6 +102,14 @@ export default class Igir {
     // TODO(cemmer): is this reporting the right number? it might be inflated
     await progressBar.doneItems(romInputs.length, 'file', 'found');
     return romInputs;
+  }
+
+  private async processHeaderProcessor(romFiles: File[]): Promise<File[]> {
+    const headerProcessorProgressBar = this.logger.addProgressBar('Reading ROM headers', Symbols.WAITING);
+    const processedRomFiles = await new HeaderProcessor(this.options, headerProcessorProgressBar)
+      .process(romFiles);
+    await headerProcessorProgressBar.doneItems(processedRomFiles.length, 'file', 'read');
+    return processedRomFiles;
   }
 
   private async processOutputCleaner(

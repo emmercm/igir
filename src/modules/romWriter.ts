@@ -6,9 +6,9 @@ import path from 'path';
 import ProgressBar, { Symbols } from '../console/progressBar.js';
 import Constants from '../constants.js';
 import fsPoly from '../polyfill/fsPoly.js';
+import Zip from '../types/archives/zip.js';
 import ArchiveEntry from '../types/files/archiveEntry.js';
 import File from '../types/files/file.js';
-import Zip from '../types/files/zip.js';
 import DAT from '../types/logiqx/dat.js';
 import Parent from '../types/logiqx/parent.js';
 import ROM from '../types/logiqx/rom.js';
@@ -107,8 +107,10 @@ export default class ROMWriter {
     const crcToRoms = releaseCandidate.getRomsByCrc32();
 
     return releaseCandidate.getFiles().reduce(async (accPromise, inputFile) => {
+      // TODO(cemmer): use filesize combined with CRC for indexing
       const acc = await accPromise;
-      const rom = crcToRoms.get(await inputFile.getCrc32()) as ROM;
+      const rom = crcToRoms.get(await inputFile.getCrc32())
+               || crcToRoms.get(await inputFile.getCrc32WithoutHeader()) as ROM;
 
       let outputFile: File;
       if (this.options.shouldZip(rom.getName())) {
@@ -221,9 +223,11 @@ export default class ROMWriter {
 
     // If the file in the output zip already exists and has the same CRC then do nothing
     const existingOutputEntry = outputZip.getEntry(outputRomFile.getEntryPath() as string);
-    if (existingOutputEntry?.header.crc === parseInt(await outputRomFile.getCrc32(), 16)) {
-      await this.progressBar.logDebug(`${outputZipPath}: ${outputRomFile.getEntryPath()} already exists`);
-      return false;
+    if (existingOutputEntry) {
+      if (existingOutputEntry.header.crc === parseInt(await outputRomFile.getCrc32(), 16)) {
+        await this.progressBar.logDebug(`${outputZipPath}: ${outputRomFile.getEntryPath()} already exists`);
+        return false;
+      }
     }
 
     // Write the entry

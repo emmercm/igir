@@ -131,6 +131,13 @@ describe('options', () => {
     expect(argumentsParser.parse(['copy', '--input', os.devNull, '--output', 'foo', '--output', 'bar']).getOutput()).toEqual('bar');
   });
 
+  it('should parse "header"', () => {
+    expect(() => argumentsParser.parse([...dummyCommandAndRequiredArgs, '-H'])).toThrow(/not enough arguments/i);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '-H', '**/*']).shouldReadFileForHeader('file.rom')).toEqual(true);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--header', '**/*']).shouldReadFileForHeader('file.rom')).toEqual(true);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--header', '**/*', '--header', 'nope']).shouldReadFileForHeader('file.rom')).toEqual(false);
+  });
+
   it('should parse "dir-mirror"', () => {
     expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--dir-mirror']).getDirMirror()).toEqual(true);
     expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--dir-mirror', 'true']).getDirMirror()).toEqual(true);
@@ -391,5 +398,6 @@ describe('options', () => {
   it('should parse "help"', () => {
     expect(argumentsParser.parse(['-h']).getHelp()).toEqual(true);
     expect(argumentsParser.parse(['--help']).getHelp()).toEqual(true);
+    expect(argumentsParser.parse(['--help', '100']).getHelp()).toEqual(true);
   });
 });

@@ -6,7 +6,6 @@ import path from 'path';
 import ROMScanner from '../../src/modules/romScanner.js';
 import ROMWriter from '../../src/modules/romWriter.js';
 import fsPoly from '../../src/polyfill/fsPoly.js';
-import ArchiveEntry from '../../src/types/files/archiveEntry.js';
 import File from '../../src/types/files/file.js';
 import DAT from '../../src/types/logiqx/dat.js';
 import Game from '../../src/types/logiqx/game.js';
@@ -71,10 +70,7 @@ async function indexFilesByName(
       const releaseCandidates = await Promise.all(romFiles
         .map(async (romFile) => {
           const release = new Release(romName, 'UNK', undefined);
-          let romFileName = romFile.getFilePath();
-          if (romFile instanceof ArchiveEntry) {
-            romFileName = (<ArchiveEntry>romFile).getEntryPath();
-          }
+          const romFileName = romFile.getExtractedFilePath();
           const rom = new ROM(
             path.basename(romFileName),
             await romFile.getCrc32(),
@@ -176,7 +172,7 @@ describe('zip', () => {
       const inputFiles = fsPoly.walkSync(inputTemp);
       expect(inputFiles.length).toBeGreaterThan(0);
 
-      const parentsToCandidates = await indexFilesByName(inputTemp, '**/*');
+      const parentsToCandidates = await indexFilesByName(inputTemp, '**/!(headered)/*');
 
       // Write once
       const firstWrittenPaths = await runRomWriter(outputTemp, {
@@ -213,7 +209,7 @@ describe('zip', () => {
       const inputFiles = fsPoly.walkSync(inputTemp);
       expect(inputFiles.length).toBeGreaterThan(0);
 
-      const parentsToCandidates = await indexFilesByName(inputTemp, '**/*');
+      const parentsToCandidates = await indexFilesByName(inputTemp, '**/!(headered)/*');
 
       // Write once
       const firstWrittenPaths = await runRomWriter(outputTemp, {
@@ -245,7 +241,7 @@ describe('zip', () => {
       const inputFiles = fsPoly.walkSync(inputTemp);
       expect(inputFiles.length).toBeGreaterThan(0);
 
-      const parentsToCandidates = await indexFilesByName(inputTemp, '**/*');
+      const parentsToCandidates = await indexFilesByName(inputTemp, '**/!(headered)/*');
 
       const existingZip = new AdmZip();
       existingZip.addFile('something.rom', Buffer.from('something'));
@@ -275,7 +271,7 @@ describe('zip', () => {
       const inputFiles = fsPoly.walkSync(inputTemp);
       expect(inputFiles.length).toBeGreaterThan(0);
 
-      const parentsToCandidates = await indexFilesByName(inputTemp, '**/*');
+      const parentsToCandidates = await indexFilesByName(inputTemp, '**/!(headered)/*');
 
       const writtenPaths = await runRomWriter(outputTemp, {
         commands: ['copy', 'zip', 'test'],
@@ -403,8 +399,8 @@ describe('raw', () => {
       }, parentsToCandidates);
       expect(writtenPaths).toEqual([
         'empty.rom',
-        'fizzbuzz.rom',
-        'foobar.rom',
+        'fizzbuzz.nes',
+        'foobar.lnx',
         'loremipsum.rom',
         'unknown.rom',
       ]);
@@ -420,7 +416,7 @@ describe('raw', () => {
       const inputFiles = fsPoly.walkSync(inputTemp);
       expect(inputFiles.length).toBeGreaterThan(0);
 
-      const parentsToCandidates = await indexFilesByName(inputTemp, '**/*');
+      const parentsToCandidates = await indexFilesByName(inputTemp, '**/!(headered)/*');
 
       // Write once
       const firstWrittenPaths = await runRomWriter(outputTemp, {
@@ -428,8 +424,8 @@ describe('raw', () => {
       }, parentsToCandidates);
       expect(firstWrittenPaths).toEqual([
         'empty.rom',
-        'fizzbuzz.rom',
-        'foobar.rom',
+        'fizzbuzz.nes',
+        'foobar.lnx',
         'loremipsum.rom',
         'unknown.rom',
       ]);
@@ -440,8 +436,8 @@ describe('raw', () => {
       }, parentsToCandidates);
       expect(secondWrittenPaths).toEqual([
         'empty.rom',
-        'fizzbuzz.rom',
-        'foobar.rom',
+        'fizzbuzz.nes',
+        'foobar.lnx',
         'loremipsum.rom',
         'unknown.rom',
       ]);
@@ -457,7 +453,7 @@ describe('raw', () => {
       const inputFiles = fsPoly.walkSync(inputTemp);
       expect(inputFiles.length).toBeGreaterThan(0);
 
-      const parentsToCandidates = await indexFilesByName(inputTemp, '**/*');
+      const parentsToCandidates = await indexFilesByName(inputTemp, '**/!(headered)/*');
 
       // Write once
       const firstWrittenPaths = await runRomWriter(outputTemp, {
@@ -465,8 +461,8 @@ describe('raw', () => {
       }, parentsToCandidates);
       expect(firstWrittenPaths).toEqual([
         'empty.rom',
-        'fizzbuzz.rom',
-        'foobar.rom',
+        'fizzbuzz.nes',
+        'foobar.lnx',
         'loremipsum.rom',
         'unknown.rom',
       ]);
@@ -489,15 +485,15 @@ describe('raw', () => {
       const inputFiles = fsPoly.walkSync(inputTemp);
       expect(inputFiles.length).toBeGreaterThan(0);
 
-      const parentsToCandidates = await indexFilesByName(inputTemp, '**/*');
+      const parentsToCandidates = await indexFilesByName(inputTemp, '**/!(headered)/*');
 
       const writtenPaths = await runRomWriter(outputTemp, {
         commands: ['copy', 'test'],
       }, parentsToCandidates);
       expect(writtenPaths).toEqual([
         'empty.rom',
-        'fizzbuzz.rom',
-        'foobar.rom',
+        'fizzbuzz.nes',
+        'foobar.lnx',
         'loremipsum.rom',
         'unknown.rom',
       ]);
@@ -519,8 +515,8 @@ describe('raw', () => {
         commands: ['copy', 'test'],
       }, parentsToCandidates);
       expect(writtenPaths).toEqual([
-        'fizzbuzz.rom',
-        'foobar.rom',
+        'fizzbuzz.nes',
+        'foobar.lnx',
         'loremipsum.rom',
         'unknown.rom',
       ]);
@@ -543,8 +539,8 @@ describe('raw', () => {
       }, parentsToCandidates);
       expect(writtenPaths).toEqual([
         'empty.rom',
-        'fizzbuzz.rom',
-        'foobar.rom',
+        'fizzbuzz.nes',
+        'foobar.lnx',
         'loremipsum.rom',
         'unknown.rom',
       ]);
@@ -566,8 +562,8 @@ describe('raw', () => {
         commands: ['copy', 'test'],
       }, parentsToCandidates);
       expect(writtenPaths).toEqual([
-        'fizzbuzz.rom',
-        'foobar.rom',
+        'fizzbuzz.nes',
+        'foobar.lnx',
         'loremipsum.rom',
         'unknown.rom',
       ]);
@@ -591,8 +587,8 @@ describe('raw', () => {
       }, parentsToCandidates);
       expect(writtenPaths).toEqual([
         'empty.rom',
-        'fizzbuzz.rom',
-        'foobar.rom',
+        'fizzbuzz.nes',
+        'foobar.lnx',
         'loremipsum.rom',
         'unknown.rom',
       ]);

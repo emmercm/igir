@@ -59,10 +59,6 @@ export default class DAT {
     return this.header;
   }
 
-  getName(): string {
-    return this.getHeader().getName();
-  }
-
   getGames(): Game[] {
     if (this.game instanceof Array) {
       return this.game;
@@ -78,29 +74,29 @@ export default class DAT {
 
   // Computed getters
 
+  getName(): string {
+    return this.getHeader().getName();
+  }
+
   getNameShort(): string {
     return this.getName()
-    // Prefixes
+      // Prefixes
       .replace('Non-Redump', '')
       .replace('Source Code', '')
       .replace('Unofficial', '')
-    // Suffixes
+      // Suffixes
       .replace('Datfile', '')
-      .replace('(BigEndian)', '')
       .replace('(CDN)', '')
-      .replace('(Decrypted)', '')
       .replace('(Deprecated)', '')
       .replace('(Digital)', '')
       .replace('(Download Play)', '')
-      .replace('(Headered)', '')
       .replace('(Misc)', '')
-      // .replace('(Multiboot)', '')
       .replace(/\(Parent-Clone\)/g, '')
       .replace('(PSN)', '')
       .replace('(Split DLC)', '')
       .replace('(WAD)', '')
       .replace('(WIP)', '')
-    // Cleanup
+      // Cleanup
       .replace(/^[ -]+/, '')
       .replace(/[ -]+$/, '')
       .replace(/  +/g, ' ')

@@ -1,28 +1,31 @@
 import { jest } from '@jest/globals';
+import fg from 'fast-glob';
 import fs from 'fs';
 import path from 'path';
 
 import Logger from '../src/console/logger.js';
 import LogLevel from '../src/console/logLevel.js';
+import Constants from '../src/constants.js';
 import Igir from '../src/igir.js';
 import fsPoly from '../src/polyfill/fsPoly.js';
 import Options, { OptionsProps } from '../src/types/options.js';
 
 const LOGGER = new Logger(LogLevel.NEVER);
 
-async function expectEndToEnd(options: OptionsProps, expectedFiles: string[]): Promise<void> {
+async function expectEndToEnd(optionsProps: OptionsProps, expectedFiles: string[]): Promise<void> {
   const tempInput = fsPoly.mkdtempSync();
   fsPoly.copyDirSync('./test/fixtures', tempInput);
 
   const tempOutput = fsPoly.mkdtempSync();
 
-  await new Igir(new Options({
+  const options = new Options({
     dat: [path.join(tempInput, 'dats', '*')],
     input: [path.join(tempInput, 'roms', '**', '*')],
-    ...options,
+    ...optionsProps,
     output: tempOutput,
     verbose: Number.MAX_SAFE_INTEGER,
-  }), LOGGER).main();
+  });
+  await new Igir(options, LOGGER).main();
 
   const writtenRoms = fs.readdirSync(tempOutput);
 
@@ -34,6 +37,12 @@ async function expectEndToEnd(options: OptionsProps, expectedFiles: string[]): P
 
   fsPoly.rmSync(tempInput, { recursive: true });
   fsPoly.rmSync(tempOutput, { recursive: true });
+
+  const reports = await fg(path.join(
+    path.dirname(options.getOutputReport()),
+    `${Constants.COMMAND_NAME}_*.txt`,
+  ));
+  reports.forEach((report) => fsPoly.rmSync(report));
 }
 
 jest.setTimeout(10_000);
@@ -80,7 +89,6 @@ it('should copy and clean', async () => {
 });
 
 it('should report without copy', async () => {
-  // TODO(cemmer): cleanup the written report
   await expectEndToEnd({
     commands: ['report'],
   }, []);
