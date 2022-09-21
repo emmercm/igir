@@ -1,4 +1,4 @@
-import { promises as fsPromises } from 'fs';
+import fs, { promises as fsPromises } from 'fs';
 import { Readable } from 'stream';
 
 import Constants from '../../constants.js';
@@ -34,7 +34,6 @@ export default class ArchiveEntry extends File {
 
   async extractToFile<T>(callback: (localFile: string) => (T | Promise<T>)): Promise<T> {
     const tempDir = await fsPromises.mkdtemp(Constants.GLOBAL_TEMP_DIR);
-
     try {
       return await this.archive.extractEntryToFile(this, tempDir, callback);
     } finally {
@@ -43,8 +42,17 @@ export default class ArchiveEntry extends File {
   }
 
   async extractToStream<T>(callback: (stream: Readable) => (Promise<T> | T)): Promise<T> {
-    const tempDir = await fsPromises.mkdtemp(Constants.GLOBAL_TEMP_DIR);
+    // Don't extract to memory if this archive entry size is too large
+    if (this.getSize() > Constants.MAX_STREAM_EXTRACTION_SIZE) {
+      return this.extractToFile(async (localFile) => {
+        const stream = fs.createReadStream(localFile);
+        const result = await callback(stream);
+        stream.destroy();
+        return result;
+      });
+    }
 
+    const tempDir = await fsPromises.mkdtemp(Constants.GLOBAL_TEMP_DIR);
     try {
       return await this.archive.extractEntryToStream(this, tempDir, callback);
     } finally {
