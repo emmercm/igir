@@ -56,9 +56,15 @@ export default class Zip extends Archive {
     return this.extractEntryToStream(
       archiveEntry,
       tempDir,
-      (readStream) => new Promise((resolve) => {
+      (readStream) => new Promise((resolve, reject) => {
         const writeStream = fs.createWriteStream(localFile);
-        writeStream.on('close', () => resolve(callback(localFile)));
+        writeStream.on('close', () => {
+          try {
+            return resolve(callback(localFile));
+          } catch (callbackErr) {
+            return reject(callbackErr);
+          }
+        });
         readStream.pipe(writeStream);
       }),
     );
@@ -81,11 +87,16 @@ export default class Zip extends Archive {
         zipFile.on('entry', (entry: Entry) => {
           if (entry.fileName === archiveEntry.getEntryPath()) {
             // Found the file we're looking for
-            zipFile.openReadStream(entry, (streamErr, stream) => {
+            zipFile.openReadStream(entry, async (streamErr, stream) => {
               if (streamErr) {
                 return reject(streamErr);
               }
-              return resolve(callback(stream));
+
+              try {
+                return resolve(callback(stream));
+              } catch (callbackErr) {
+                return reject(callbackErr);
+              }
             });
           } else {
             // Continue until we find what we're looking for
