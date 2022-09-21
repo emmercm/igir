@@ -73,7 +73,6 @@ export default class File {
           highWaterMark: Constants.FILE_READING_CHUNK_SIZE,
         });
 
-        // TODO(cemmer): swap this out for the 'crypto' library
         let crc: number;
         stream.on('data', (chunk) => {
           if (!crc) {
