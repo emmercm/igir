@@ -11,7 +11,7 @@ describe('getForName', () => {
     'No-Intro_FDS.xml',
   ])('should get a file header for name: %s', (headerName) => {
     const fileHeader = FileHeader.getForName(headerName);
-    expect(fileHeader).not.toBeUndefined();
+    expect(fileHeader).toBeDefined();
   });
 
   test.each([
@@ -33,7 +33,7 @@ describe('getForExtension', () => {
     'rom.zip.fds',
   ])('should get a file header for extension: %s', (filePath) => {
     const fileHeader = FileHeader.getForFilename(filePath);
-    expect(fileHeader).not.toBeUndefined();
+    expect(fileHeader).toBeDefined();
   });
 
   test.each([
@@ -59,7 +59,7 @@ describe('getForFile', () => {
     for (let i = 0; i < headeredRoms.length; i += 1) {
       await headeredRoms[i].extractToFile(async (localFile) => {
         const fileHeader = await FileHeader.getForFileContents(localFile);
-        expect(fileHeader).not.toBeUndefined();
+        expect(fileHeader).toBeDefined();
       });
     }
   });

@@ -16,8 +16,8 @@ function givenDAT(): DAT {
     new Game({
       name: 'game with multiple roms and no releases',
       rom: [
-        new ROM('one.rom', '00000001'),
-        new ROM('two.rom', '00000002'),
+        new ROM('one.rom', 0, '00000001'),
+        new ROM('two.rom', 0, '00000002'),
       ],
     }),
     new Game({
@@ -26,7 +26,7 @@ function givenDAT(): DAT {
       release: [
         new Release('USA', 'USA', 'EN'),
       ],
-      rom: new ROM('three.rom', '00000003'),
+      rom: new ROM('three.rom', 0, '00000003'),
     }),
     new Game({
       name: 'game with one rom and multiple releases',
@@ -35,7 +35,7 @@ function givenDAT(): DAT {
         new Release('EUR', 'EUR', 'EN'),
         new Release('JPN', 'JPN', 'JA'),
       ],
-      rom: new ROM('four.rom', '00000004'),
+      rom: new ROM('four.rom', 0, '00000004'),
     }),
   ]);
 }

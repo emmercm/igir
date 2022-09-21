@@ -12,8 +12,14 @@ export default class ArchiveEntry extends File {
 
   private readonly entryPath: string;
 
-  constructor(archive: Archive, entryPath: string, crc?: string, fileHeader?: FileHeader) {
-    super(archive.getFilePath(), crc, fileHeader);
+  constructor(
+    archive: Archive,
+    entryPath: string,
+    size: number,
+    crc?: string,
+    fileHeader?: FileHeader,
+  ) {
+    super(archive.getFilePath(), size, crc, fileHeader);
     this.archive = archive;
     this.entryPath = entryPath;
   }
@@ -50,6 +56,7 @@ export default class ArchiveEntry extends File {
     return new ArchiveEntry(
       this.archive,
       this.entryPath,
+      this.getSize(),
       // TODO(cemmer): this isn't right, full file CRC won't change
       undefined, // the old CRC can't be used, a header will change it
       fileHeader,

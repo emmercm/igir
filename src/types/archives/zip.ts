@@ -15,6 +15,7 @@ export default class Zip extends Archive {
       .map((entry) => new ArchiveEntry(
         this,
         entry.entryName,
+        entry.header.size,
         entry.header.crc.toString(16),
       ));
     return Promise.resolve(files);

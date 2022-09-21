@@ -119,6 +119,7 @@ export default class ROMWriter {
         outputFile = new ArchiveEntry(
           new Zip(outputFilePath),
           entryPath,
+          inputFile.getSize(),
           await inputFile.getCrc32(),
         );
       } else {
@@ -127,7 +128,11 @@ export default class ROMWriter {
           inputFile.getFilePath(),
           rom.getName(),
         );
-        outputFile = new File(outputFilePath, await inputFile.getCrc32());
+        outputFile = new File(
+          outputFilePath,
+          inputFile.getSize(),
+          await inputFile.getCrc32(),
+        );
       }
 
       acc.set(inputFile, outputFile);

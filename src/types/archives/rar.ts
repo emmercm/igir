@@ -15,6 +15,7 @@ export default class Rar extends Archive {
       .map((fileHeader) => new ArchiveEntry(
         this,
         fileHeader.name,
+        fileHeader.unpSize,
         fileHeader.crc.toString(16),
       ));
   }

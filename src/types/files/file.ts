@@ -9,22 +9,36 @@ import FileHeader from './fileHeader.js';
 export default class File {
   private readonly filePath: string;
 
+  private readonly size: number;
+
   private crc32?: Promise<string>;
 
   private crc32WithoutHeader?: Promise<string>;
 
   private readonly fileHeader?: FileHeader;
 
-  constructor(filePath: string, crc?: string, fileHeader?: FileHeader) {
+  constructor(filePath: string, size?: number, crc?: string, fileHeader?: FileHeader) {
     this.filePath = filePath;
+
+    if (size !== undefined) {
+      this.size = size;
+    } else {
+      this.size = fs.statSync(filePath).size;
+    }
+
     if (crc) {
       this.crc32 = Promise.resolve(crc);
     }
+
     this.fileHeader = fileHeader;
   }
 
   getFilePath(): string {
     return this.filePath;
+  }
+
+  getSize(): number {
+    return this.size;
   }
 
   getExtractedFilePath(): string {
@@ -110,6 +124,8 @@ export default class File {
   withFileHeader(fileHeader: FileHeader): File {
     return new File(
       this.filePath,
+      this.size,
+      // TODO(cemmer): this isn't right, full file CRC won't change
       undefined, // the old CRC can't be used, a header will change it
       fileHeader,
     );
@@ -130,6 +146,7 @@ export default class File {
       return true;
     }
     return this.getFilePath() === other.getFilePath()
+        && this.getSize() === other.getSize()
         && await this.getCrc32() === await other.getCrc32()
         && await this.getCrc32WithoutHeader() === await other.getCrc32WithoutHeader();
   }
