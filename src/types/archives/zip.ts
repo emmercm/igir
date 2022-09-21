@@ -1,6 +1,7 @@
-import AdmZip, { IZipEntry } from 'adm-zip';
+import fs from 'fs';
 import path from 'path';
 import { Readable } from 'stream';
+import yauzl, { Entry } from 'yauzl';
 
 import ArchiveEntry from '../files/archiveEntry.js';
 import Archive from './archive.js';
@@ -9,16 +10,40 @@ export default class Zip extends Archive {
   static readonly SUPPORTED_EXTENSIONS = ['.zip'];
 
   getArchiveEntries(): Promise<ArchiveEntry[]> {
-    // WARN(cemmer): every constructor causes a full file read!
-    const zip = new AdmZip(this.getFilePath());
-    const files = zip.getEntries()
-      .map((entry) => new ArchiveEntry(
-        this,
-        entry.entryName,
-        entry.header.size,
-        entry.header.crc.toString(16),
-      ));
-    return Promise.resolve(files);
+    return new Promise((resolve, reject) => {
+      yauzl.open(this.getFilePath(), {
+        lazyEntries: true,
+      }, (fileErr, zipFile) => {
+        if (fileErr) {
+          reject(fileErr);
+          return;
+        }
+
+        const archiveEntries: ArchiveEntry[] = [];
+
+        zipFile.on('entry', (entry: Entry) => {
+          if (!entry.fileName.endsWith('/')) {
+            // Is a file
+            archiveEntries.push(new ArchiveEntry(
+              this,
+              entry.fileName,
+              entry.uncompressedSize,
+              entry.crc32.toString(16),
+            ));
+          }
+
+          // Continue
+          zipFile.readEntry();
+        });
+
+        zipFile.on('close', () => resolve(archiveEntries));
+
+        zipFile.on('error', (err) => reject(err));
+
+        // Start
+        zipFile.readEntry();
+      });
+    });
   }
 
   async extractEntryToFile<T>(
@@ -28,22 +53,15 @@ export default class Zip extends Archive {
   ): Promise<T> {
     const localFile = path.join(tempDir, archiveEntry.getEntryPath());
 
-    // WARN(cemmer): every constructor causes a full file read!
-    const zip = new AdmZip(this.getFilePath());
-    const entry = zip.getEntry(archiveEntry.getEntryPath());
-    if (!entry) {
-      throw new Error(`Entry path ${archiveEntry.getEntryPath()} does not exist in ${this.getFilePath()}`);
-    }
-
-    zip.extractEntryTo(
-      entry as IZipEntry,
+    return this.extractEntryToStream(
+      archiveEntry,
       tempDir,
-      false,
-      false,
-      false,
-      archiveEntry.getEntryPath(),
+      (readStream) => new Promise((resolve) => {
+        const writeStream = fs.createWriteStream(localFile);
+        writeStream.on('close', () => resolve(callback(localFile)));
+        readStream.pipe(writeStream);
+      }),
     );
-    return callback(localFile);
   }
 
   async extractEntryToStream<T>(
@@ -51,14 +69,35 @@ export default class Zip extends Archive {
     tempDir: string,
     callback: (stream: Readable) => (Promise<T> | T),
   ): Promise<T> {
-    // WARN(cemmer): every constructor causes a full file read!
-    const zip = new AdmZip(this.getFilePath());
-    const entry = zip.getEntry(archiveEntry.getEntryPath());
-    if (!entry) {
-      throw new Error(`Entry path ${archiveEntry.getEntryPath()} does not exist in ${this.getFilePath()}`);
-    }
+    return new Promise((resolve, reject) => {
+      yauzl.open(this.getFilePath(), {
+        lazyEntries: true,
+      }, (fileErr, zipFile) => {
+        if (fileErr) {
+          reject(fileErr);
+          return;
+        }
 
-    const stream = Readable.from(entry.getData());
-    return callback(stream);
+        zipFile.on('entry', (entry: Entry) => {
+          if (entry.fileName === archiveEntry.getEntryPath()) {
+            // Found the file we're looking for
+            zipFile.openReadStream(entry, (streamErr, stream) => {
+              if (streamErr) {
+                return reject(streamErr);
+              }
+              return resolve(callback(stream));
+            });
+          } else {
+            // Continue until we find what we're looking for
+            zipFile.readEntry();
+          }
+        });
+
+        zipFile.on('error', (err) => reject(err));
+
+        // Start
+        zipFile.readEntry();
+      });
+    });
   }
 }

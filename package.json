@@ -42,8 +42,8 @@
     "release": "./node_modules/.bin/release-it --no-increment",
     "start": "ts-node index.ts",
     "test": "npm run test:unit && npm run lint",
-    "test:unit": "node --experimental-vm-modules ./node_modules/jest/bin/jest.js --verbose",
-    "test:coverage": "node --experimental-vm-modules ./node_modules/jest/bin/jest.js --verbose --coverage"
+    "test:unit": "node --experimental-vm-modules ./node_modules/jest/bin/jest.js --verbose --detectOpenHandles",
+    "test:coverage": "node --experimental-vm-modules ./node_modules/jest/bin/jest.js --verbose --detectOpenHandles --coverage"
   },
   "dependencies": {
     "7zip-min": "^1.4.3",
@@ -65,7 +65,8 @@
     "term-size": "^3.0.2",
     "trash": "^8.1.0",
     "xml2js": "^0.4.23",
-    "yargs": "^17.5.1"
+    "yargs": "^17.5.1",
+    "yauzl": "^2.10.0"
   },
   "devDependencies": {
     "@jest/globals": "29.0.3",
@@ -80,6 +81,7 @@
     "@types/semver": "7.3.12",
     "@types/xml2js": "0.4.11",
     "@types/yargs": "17.0.12",
+    "@types/yauzl": "^2.10.0",
     "@typescript-eslint/eslint-plugin": "5.37.0",
     "@typescript-eslint/parser": "5.37.0",
     "auto-changelog": "2.4.0",
