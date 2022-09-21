@@ -121,12 +121,11 @@ export default class File {
     return result;
   }
 
-  withFileHeader(fileHeader: FileHeader): File {
+  async withFileHeader(fileHeader: FileHeader): Promise<File> {
     return new File(
       this.filePath,
       this.size,
-      // TODO(cemmer): this isn't right, full file CRC won't change
-      undefined, // the old CRC can't be used, a header will change it
+      await this.getCrc32(),
       fileHeader,
     );
   }

@@ -83,7 +83,7 @@ describe('getCrc32WithoutHeader', () => {
 
     const archiveEntries = await archive.getArchiveEntries();
     expect(archiveEntries).toHaveLength(1);
-    const archiveEntry = archiveEntries[0].withFileHeader(
+    const archiveEntry = await archiveEntries[0].withFileHeader(
       FileHeader.getForFilename(archiveEntries[0].getExtractedFilePath()) as FileHeader,
     );
 
@@ -99,7 +99,7 @@ describe('getCrc32WithoutHeader', () => {
 
     const archiveEntries = await archive.getArchiveEntries();
     expect(archiveEntries).toHaveLength(1);
-    const archiveEntry = archiveEntries[0].withFileHeader(
+    const archiveEntry = await archiveEntries[0].withFileHeader(
       FileHeader.getForFilename(archiveEntries[0].getExtractedFilePath()) as FileHeader,
     );
 

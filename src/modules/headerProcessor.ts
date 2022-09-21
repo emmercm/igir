@@ -37,7 +37,9 @@ export default class HeaderProcessor {
         // Can get FileHeader from extension, use that
         const headerForExtension = FileHeader.getForFilename(inputFile.getExtractedFilePath());
         if (headerForExtension) {
-          const fileWithHeader = await inputFile.withFileHeader(headerForExtension).resolve();
+          const fileWithHeader = await (
+            await inputFile.withFileHeader(headerForExtension)
+          ).resolve();
           return callback(null, fileWithHeader);
         }
 
@@ -46,7 +48,9 @@ export default class HeaderProcessor {
           const headerForFile = await inputFile
             .extractToFile(async (localFile) => FileHeader.getForFileContents(localFile));
           if (headerForFile) {
-            const fileWithHeader = await inputFile.withFileHeader(headerForFile).resolve();
+            const fileWithHeader = await (
+              await inputFile.withFileHeader(headerForFile)
+            ).resolve();
             return callback(null, fileWithHeader);
           }
           await this.progressBar.logWarn(`Couldn't detect header for ${inputFile.toString()}`);
