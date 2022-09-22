@@ -34,6 +34,7 @@ export default class CandidateGenerator {
     await this.progressBar.setSymbol(Symbols.GENERATING);
     await this.progressBar.reset(dat.getParents().length);
 
+    // TODO(cemmer): only do this once globally, not per DAT
     // TODO(cemmer): use filesize combined with CRC for indexing
     // TODO(cemmer): ability to index files by some other property such as name
     const crc32ToInputFiles = await CandidateGenerator.indexFilesByCrc(inputRomFiles);

@@ -1,6 +1,7 @@
 import { jest } from '@jest/globals';
 import path from 'path';
 
+import Constants from '../../src/constants.js';
 import OutputCleaner from '../../src/modules/outputCleaner.js';
 import fsPoly from '../../src/polyfill/fsPoly.js';
 import File from '../../src/types/files/file.js';
@@ -13,7 +14,7 @@ const romFixtures = path.join('test', 'fixtures', 'roms');
 
 async function runOutputCleaner(writtenFilePathsToExclude: string[]): Promise<string[]> {
   // Copy the fixture files to a temp directory
-  const tempDir = fsPoly.mkdtempSync();
+  const tempDir = fsPoly.mkdtempSync(Constants.GLOBAL_TEMP_DIR);
   fsPoly.copyDirSync(romFixtures, tempDir);
 
   const writtenRomFilesToExclude = writtenFilePathsToExclude

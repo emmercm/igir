@@ -28,7 +28,7 @@ export default class SevenZip extends Archive {
 
   private static readonly LIST_MUTEX = new Mutex();
 
-  async getArchiveEntries(): Promise<ArchiveEntry[]> {
+  async getArchiveEntries(): Promise<ArchiveEntry<SevenZip>[]> {
     /**
      * WARN(cemmer): {@link _7z.list} seems to have issues with any amount of real concurrency,
      * it will return no files but also no error. Try to prevent that behavior.
@@ -57,7 +57,7 @@ export default class SevenZip extends Archive {
   }
 
   async extractEntryToFile<T>(
-    archiveEntry: ArchiveEntry,
+    archiveEntry: ArchiveEntry<SevenZip>,
     tempDir: string,
     callback: (localFile: string) => (T | Promise<T>),
   ): Promise<T> {

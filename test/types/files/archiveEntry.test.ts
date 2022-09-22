@@ -1,5 +1,6 @@
 import fs from 'fs';
 
+import Constants from '../../../src/constants.js';
 import ROMScanner from '../../../src/modules/romScanner.js';
 import bufferPoly from '../../../src/polyfill/bufferPoly.js';
 import fsPoly from '../../../src/polyfill/fsPoly.js';
@@ -120,7 +121,7 @@ describe('extractToFile', () => {
     }), new ProgressBarFake()).scan();
     expect(archiveEntries).toHaveLength(12);
 
-    const temp = fsPoly.mkdtempSync();
+    const temp = fsPoly.mkdtempSync(Constants.GLOBAL_TEMP_DIR);
     /* eslint-disable no-await-in-loop */
     for (let i = 0; i < archiveEntries.length; i += 1) {
       const archiveEntry = archiveEntries[i];
@@ -145,7 +146,7 @@ describe('extractToStream', () => {
     }), new ProgressBarFake()).scan();
     expect(archiveEntries).toHaveLength(12);
 
-    const temp = fsPoly.mkdtempSync();
+    const temp = fsPoly.mkdtempSync(Constants.GLOBAL_TEMP_DIR);
     /* eslint-disable no-await-in-loop */
     for (let i = 0; i < archiveEntries.length; i += 1) {
       const archiveEntry = archiveEntries[i];

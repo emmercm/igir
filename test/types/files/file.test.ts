@@ -1,5 +1,6 @@
 import fs from 'fs';
 
+import Constants from '../../../src/constants.js';
 import ROMScanner from '../../../src/modules/romScanner.js';
 import bufferPoly from '../../../src/polyfill/bufferPoly.js';
 import fsPoly from '../../../src/polyfill/fsPoly.js';
@@ -64,26 +65,6 @@ describe('getCrc32WithoutHeader', () => {
   });
 });
 
-describe('isZip', () => {
-  test.each([
-    './test/fixtures/roms/zip/empty.zip',
-    './test/fixtures/roms/fizzbuzz.zip',
-  ])('should return true when appropriate', (filePath) => {
-    const file = new File(filePath);
-    expect(file.isZip()).toEqual(true);
-  });
-
-  test.each([
-    './test/fixtures/roms/7z/invalid.7z',
-    './test/fixtures/roms/loremipsum.7z',
-    './test/fixtures/roms/rar/fizzbuzz.rar',
-    './test/fixtures/roms/unknown.rar',
-  ])('should return false when appropriate', (filePath) => {
-    const file = new File(filePath);
-    expect(file.isZip()).toEqual(false);
-  });
-});
-
 describe('extractToFile', () => {
   it('should do nothing with no archive entry path', async () => {
     const raws = await new ROMScanner(new Options({
@@ -91,7 +72,7 @@ describe('extractToFile', () => {
     }), new ProgressBarFake()).scan();
     expect(raws).toHaveLength(5);
 
-    const temp = fsPoly.mkdtempSync();
+    const temp = fsPoly.mkdtempSync(Constants.GLOBAL_TEMP_DIR);
     /* eslint-disable no-await-in-loop */
     for (let i = 0; i < raws.length; i += 1) {
       const raw = raws[i];
@@ -111,7 +92,7 @@ describe('extractToStream', () => {
     }), new ProgressBarFake()).scan();
     expect(raws).toHaveLength(4);
 
-    const temp = fsPoly.mkdtempSync();
+    const temp = fsPoly.mkdtempSync(Constants.GLOBAL_TEMP_DIR);
     /* eslint-disable no-await-in-loop */
     for (let i = 0; i < raws.length; i += 1) {
       const raw = raws[i];

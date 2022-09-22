@@ -20,10 +20,10 @@ export default class FsPoly {
   /**
    * Some CI such as GitHub Actions give `EACCES: permission denied` on os.tmpdir()
    */
-  static mkdtempSync(): string {
+  static mkdtempSync(prefix = os.tmpdir()): string {
     try {
       // Added in: v5.10.0
-      return fs.mkdtempSync(os.tmpdir());
+      return fs.mkdtempSync(prefix);
     } catch (e) {
       // Added in: v5.10.0
       return fs.mkdtempSync(path.join(process.cwd(), 'tmp'));
@@ -47,8 +47,14 @@ export default class FsPoly {
 
     // Added in: v10.0.0
     if ((await fsPromises.lstat(pathLike)).isDirectory()) {
-      // Added in: v10.0.0
-      await fsPromises.rmdir(pathLike, options);
+      // DEP0147
+      if (semver.lt(process.version, '16.0.0')) {
+        // Added in: v10.0.0
+        await fsPromises.rmdir(pathLike, options);
+      } else {
+        // Added in: v14.14.0
+        await fsPromises.rm(pathLike, { ...options, force: true });
+      }
     } else {
       // Added in: v10.0.0
       await fsPromises.unlink(pathLike);

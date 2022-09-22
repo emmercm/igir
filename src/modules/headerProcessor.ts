@@ -46,7 +46,7 @@ export default class HeaderProcessor {
         // Should get FileHeader from File, try to
         if (this.options.shouldReadFileForHeader(inputFile.getExtractedFilePath())) {
           const headerForFile = await inputFile
-            .extractToFile(async (localFile) => FileHeader.getForFileContents(localFile));
+            .extractToStream((stream) => FileHeader.getForFileStream(stream));
           if (headerForFile) {
             const fileWithHeader = await (
               await inputFile.withFileHeader(headerForFile)
