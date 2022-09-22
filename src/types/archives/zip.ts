@@ -11,7 +11,7 @@ import Archive from './archive.js';
 export default class Zip extends Archive {
   static readonly SUPPORTED_EXTENSIONS = ['.zip'];
 
-  getArchiveEntries(): Promise<ArchiveEntry[]> {
+  getArchiveEntries(): Promise<ArchiveEntry<Zip>[]> {
     return new Promise((resolve, reject) => {
       yauzl.open(this.getFilePath(), {
         lazyEntries: true,
@@ -21,7 +21,7 @@ export default class Zip extends Archive {
           return;
         }
 
-        const archiveEntries: ArchiveEntry[] = [];
+        const archiveEntries: ArchiveEntry<Zip>[] = [];
 
         zipFile.on('entry', (entry: Entry) => {
           if (!entry.fileName.endsWith('/')) {
@@ -49,7 +49,7 @@ export default class Zip extends Archive {
   }
 
   async extractEntryToFile<T>(
-    archiveEntry: ArchiveEntry,
+    archiveEntry: ArchiveEntry<Zip>,
     tempDir: string,
     callback: (localFile: string) => (T | Promise<T>),
   ): Promise<T> {
@@ -73,7 +73,7 @@ export default class Zip extends Archive {
   }
 
   async extractEntryToStream<T>(
-    archiveEntry: ArchiveEntry,
+    archiveEntry: ArchiveEntry<Zip>,
     tempDir: string,
     callback: (stream: Readable) => (Promise<T> | T),
   ): Promise<T> {
@@ -114,7 +114,7 @@ export default class Zip extends Archive {
     });
   }
 
-  async archiveEntries(inputToOutput: Map<File, ArchiveEntry>): Promise<undefined> {
+  async archiveEntries(inputToOutput: Map<File, ArchiveEntry<Zip>>): Promise<undefined> {
     return new Promise((resolve, reject) => {
       const zipFile = new yazl.ZipFile();
 

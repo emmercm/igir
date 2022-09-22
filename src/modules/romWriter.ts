@@ -178,7 +178,7 @@ export default class ROMWriter {
         outputZipPath,
         outputZip,
         inputToOutputEntries[i][0],
-        inputToOutputEntries[i][1] as ArchiveEntry,
+        inputToOutputEntries[i][1] as ArchiveEntry<Zip>,
       );
     }
 
@@ -221,7 +221,7 @@ export default class ROMWriter {
     outputZipPath: string,
     outputZip: AdmZip,
     inputRomFile: File,
-    outputArchiveEntry: ArchiveEntry,
+    outputArchiveEntry: ArchiveEntry<Zip>,
   ): Promise<boolean> {
     // The input and output are the same, do nothing
     if (await outputArchiveEntry.equals(inputRomFile)) {

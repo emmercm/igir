@@ -7,13 +7,13 @@ import Archive from '../archives/archive.js';
 import File from './file.js';
 import FileHeader from './fileHeader.js';
 
-export default class ArchiveEntry extends File {
-  private readonly archive: Archive;
+export default class ArchiveEntry<A extends Archive> extends File {
+  private readonly archive: A;
 
   private readonly entryPath: string;
 
   constructor(
-    archive: Archive,
+    archive: A,
     entryPath: string,
     size: number,
     crc?: string,

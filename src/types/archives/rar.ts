@@ -7,7 +7,7 @@ import Archive from './archive.js';
 export default class Rar extends Archive {
   static readonly SUPPORTED_EXTENSIONS = ['.rar'];
 
-  async getArchiveEntries(): Promise<ArchiveEntry[]> {
+  async getArchiveEntries(): Promise<ArchiveEntry<Rar>[]> {
     const rar = await unrar.createExtractorFromFile({
       filepath: this.getFilePath(),
     });
@@ -21,7 +21,7 @@ export default class Rar extends Archive {
   }
 
   async extractEntryToFile<T>(
-    archiveEntry: ArchiveEntry,
+    archiveEntry: ArchiveEntry<Rar>,
     tempDir: string,
     callback: (localFile: string) => (T | Promise<T>),
   ): Promise<T> {
