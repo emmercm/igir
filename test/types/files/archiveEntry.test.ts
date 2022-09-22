@@ -1,6 +1,7 @@
 import fs from 'fs';
 
 import ROMScanner from '../../../src/modules/romScanner.js';
+import bufferPoly from '../../../src/polyfill/bufferPoly.js';
 import fsPoly from '../../../src/polyfill/fsPoly.js';
 import ArchiveFactory from '../../../src/types/archives/archiveFactory.js';
 import SevenZip from '../../../src/types/archives/sevenZip.js';
@@ -16,7 +17,7 @@ describe('getEntryPath', () => {
     'foo/bar.rom',
   ])('should return the constructor value: %s', (archiveEntryPath) => {
     const archive = ArchiveFactory.archiveFrom('/some/archive.zip');
-    const archiveEntry = new ArchiveEntry(archive, archiveEntryPath);
+    const archiveEntry = new ArchiveEntry(archive, archiveEntryPath, 0);
     expect(archiveEntry.getEntryPath()).toEqual(archiveEntryPath);
   });
 });
@@ -82,7 +83,7 @@ describe('getCrc32WithoutHeader', () => {
 
     const archiveEntries = await archive.getArchiveEntries();
     expect(archiveEntries).toHaveLength(1);
-    const archiveEntry = archiveEntries[0].withFileHeader(
+    const archiveEntry = await archiveEntries[0].withFileHeader(
       FileHeader.getForFilename(archiveEntries[0].getExtractedFilePath()) as FileHeader,
     );
 
@@ -98,7 +99,7 @@ describe('getCrc32WithoutHeader', () => {
 
     const archiveEntries = await archive.getArchiveEntries();
     expect(archiveEntries).toHaveLength(1);
-    const archiveEntry = archiveEntries[0].withFileHeader(
+    const archiveEntry = await archiveEntries[0].withFileHeader(
       FileHeader.getForFilename(archiveEntries[0].getExtractedFilePath()) as FileHeader,
     );
 
@@ -107,7 +108,7 @@ describe('getCrc32WithoutHeader', () => {
   });
 });
 
-describe('extract', () => {
+describe('extractToFile', () => {
   it('should extract archived files', async () => {
     // Note: this will only return valid archives with at least one file
     const archiveEntries = await new ROMScanner(new Options({
@@ -122,38 +123,59 @@ describe('extract', () => {
     const temp = fsPoly.mkdtempSync();
     /* eslint-disable no-await-in-loop */
     for (let i = 0; i < archiveEntries.length; i += 1) {
-      const zip = archiveEntries[i];
-      await zip.extract((localFile) => {
+      const archiveEntry = archiveEntries[i];
+      await archiveEntry.extractToFile((localFile) => {
         expect(fs.existsSync(localFile)).toEqual(true);
-        expect(localFile).not.toEqual(zip.getFilePath());
+        expect(localFile).not.toEqual(archiveEntry.getFilePath());
       });
     }
     fsPoly.rmSync(temp, { recursive: true });
   });
+});
 
-  it('should throw an error on unknown archives', async () => {
-    expect(() => ArchiveFactory.archiveFrom('image.iso')).toThrow(/unknown/i);
+describe('extractToStream', () => {
+  it('should extract archived files', async () => {
+    // Note: this will only return valid archives with at least one file
+    const archiveEntries = await new ROMScanner(new Options({
+      input: [
+        './test/fixtures/roms/zip',
+        './test/fixtures/roms/rar',
+        './test/fixtures/roms/7z',
+      ],
+    }), new ProgressBarFake()).scan();
+    expect(archiveEntries).toHaveLength(12);
+
+    const temp = fsPoly.mkdtempSync();
+    /* eslint-disable no-await-in-loop */
+    for (let i = 0; i < archiveEntries.length; i += 1) {
+      const archiveEntry = archiveEntries[i];
+      await archiveEntry.extractToStream(async (stream) => {
+        const contents = (await bufferPoly.fromReadable(stream)).toString();
+        expect(contents).toBeTruthy();
+      });
+    }
+    fsPoly.rmSync(temp, { recursive: true });
   });
 });
 
 describe('equals', () => {
   it('should equal itself', async () => {
-    const entry = new ArchiveEntry(new Zip('file.zip'), 'entry.rom', '00000000');
+    const entry = new ArchiveEntry(new Zip('file.zip'), 'entry.rom', 0, '00000000');
     await expect(entry.equals(entry)).resolves.toEqual(true);
   });
 
   it('should equal the same entry', async () => {
-    const first = new ArchiveEntry(new Zip('file.zip'), 'entry.rom', '00000000');
-    const second = new ArchiveEntry(new Zip('file.zip'), 'entry.rom', '00000000');
+    const first = new ArchiveEntry(new Zip('file.zip'), 'entry.rom', 0, '00000000');
+    const second = new ArchiveEntry(new Zip('file.zip'), 'entry.rom', 0, '00000000');
     await expect(first.equals(second)).resolves.toEqual(true);
     await expect(second.equals(first)).resolves.toEqual(true);
   });
 
   it('should not equal a different entry', async () => {
-    const first = new ArchiveEntry(new Zip('file.zip'), 'entry.rom', '00000000');
-    const second = new ArchiveEntry(new SevenZip('file.7z'), 'entry.rom', '00000000');
-    const third = new ArchiveEntry(new Zip('file.zip'), 'other.rom', '00000000');
-    const fourth = new ArchiveEntry(new Zip('file.zip'), 'entry.rom', '12345678');
+    const first = new ArchiveEntry(new Zip('file.zip'), 'entry.rom', 0, '00000000');
+    const second = new ArchiveEntry(new SevenZip('file.7z'), 'entry.rom', 0, '00000000');
+    const third = new ArchiveEntry(new Zip('file.zip'), 'other.rom', 0, '00000000');
+    const fourth = new ArchiveEntry(new Zip('file.zip'), 'entry.rom', 0, '12345678');
     await expect(first.equals(second)).resolves.toEqual(false);
     await expect(second.equals(third)).resolves.toEqual(false);
     await expect(third.equals(fourth)).resolves.toEqual(false);

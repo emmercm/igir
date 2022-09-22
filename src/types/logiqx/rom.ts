@@ -7,10 +7,10 @@ import File from '../files/file.js';
  */
 export default class ROM {
   @Expose({ name: 'name' })
-  private readonly name!: string;
+  private readonly name: string;
 
   @Expose({ name: 'size' })
-  private readonly size!: number;
+  private readonly size: number;
 
   @Expose({ name: 'crc' })
   private readonly crc?: string;
@@ -30,13 +30,18 @@ export default class ROM {
   @Expose({ name: 'date' })
   private readonly date?: string;
 
-  constructor(name: string, crc: string) {
+  constructor(name: string, size: number, crc: string) {
     this.name = name;
+    this.size = size;
     this.crc = crc;
   }
 
   getName(): string {
     return this.name;
+  }
+
+  getSize(): number {
+    return this.size;
   }
 
   getCrc32(): string {
@@ -52,6 +57,6 @@ export default class ROM {
   }
 
   toFile(): File {
-    return new File(this.getName(), this.getCrc32());
+    return new File(this.getName(), this.getSize(), this.getCrc32());
   }
 }

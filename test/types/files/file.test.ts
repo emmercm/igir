@@ -1,6 +1,7 @@
 import fs from 'fs';
 
 import ROMScanner from '../../../src/modules/romScanner.js';
+import bufferPoly from '../../../src/polyfill/bufferPoly.js';
 import fsPoly from '../../../src/polyfill/fsPoly.js';
 import File from '../../../src/types/files/file.js';
 import FileHeader from '../../../src/types/files/fileHeader.js';
@@ -9,7 +10,7 @@ import ProgressBarFake from '../../console/progressBarFake.js';
 
 describe('getFilePath', () => {
   it('should return the constructor value', () => {
-    const file = new File('/some/path', '00000000');
+    const file = new File('/some/path', 0, '00000000');
     expect(file.getFilePath()).toEqual('/some/path');
   });
 });
@@ -22,7 +23,7 @@ describe('getCrc32', () => {
     ['2002', '00002002'],
     ['00000000', '00000000'],
   ])('should return the constructor value: %s', async (crc, expectedCrc) => {
-    const file = new File('/some/path', crc);
+    const file = new File('/some/path', 0, crc);
     await expect(file.getCrc32()).resolves.toEqual(expectedCrc);
   });
 
@@ -49,7 +50,7 @@ describe('getCrc32WithoutHeader', () => {
     ['./test/fixtures/roms/raw/fizzbuzz.nes', '370517b5'],
     ['./test/fixtures/roms/raw/foobar.lnx', 'b22c9747'],
   ])('should hash the full file when header is given but not present in file: %s', async (filePath, expectedCrc) => {
-    const file = new File(filePath)
+    const file = await new File(filePath)
       .withFileHeader(FileHeader.getForFilename(filePath) as FileHeader);
     await expect(file.getCrc32WithoutHeader()).resolves.toEqual(expectedCrc);
   });
@@ -57,7 +58,7 @@ describe('getCrc32WithoutHeader', () => {
   test.each([
     ['./test/fixtures/roms/headered/allpads.nes', '6339abe6'],
   ])('should hash the full file when header is given and present in file: %s', async (filePath, expectedCrc) => {
-    const file = new File(filePath)
+    const file = await new File(filePath)
       .withFileHeader(FileHeader.getForFilename(filePath) as FileHeader);
     await expect(file.getCrc32WithoutHeader()).resolves.toEqual(expectedCrc);
   });
@@ -83,7 +84,7 @@ describe('isZip', () => {
   });
 });
 
-describe('extract', () => {
+describe('extractToFile', () => {
   it('should do nothing with no archive entry path', async () => {
     const raws = await new ROMScanner(new Options({
       input: ['./test/fixtures/roms/raw'],
@@ -94,7 +95,7 @@ describe('extract', () => {
     /* eslint-disable no-await-in-loop */
     for (let i = 0; i < raws.length; i += 1) {
       const raw = raws[i];
-      await raw.extract((localFile) => {
+      await raw.extractToFile((localFile) => {
         expect(fs.existsSync(localFile)).toEqual(true);
         expect(localFile).toEqual(raw.getFilePath());
       });
@@ -103,23 +104,43 @@ describe('extract', () => {
   });
 });
 
+describe('extractToStream', () => {
+  it('should do nothing with no archive entry path', async () => {
+    const raws = await new ROMScanner(new Options({
+      input: ['./test/fixtures/roms/raw/!(empty).*'],
+    }), new ProgressBarFake()).scan();
+    expect(raws).toHaveLength(4);
+
+    const temp = fsPoly.mkdtempSync();
+    /* eslint-disable no-await-in-loop */
+    for (let i = 0; i < raws.length; i += 1) {
+      const raw = raws[i];
+      await raw.extractToStream(async (stream) => {
+        const contents = (await bufferPoly.fromReadable(stream)).toString();
+        expect(contents).toBeTruthy();
+      });
+    }
+    fsPoly.rmSync(temp, { recursive: true });
+  });
+});
+
 describe('equals', () => {
   it('should equal itself', async () => {
-    const file = new File('file.rom', '00000000');
+    const file = new File('file.rom', 0, '00000000');
     await expect(file.equals(file)).resolves.toEqual(true);
   });
 
   it('should equal the same file', async () => {
-    const first = new File('file.rom', '00000000');
-    const second = new File('file.rom', '00000000');
+    const first = new File('file.rom', 0, '00000000');
+    const second = new File('file.rom', 0, '00000000');
     await expect(first.equals(second)).resolves.toEqual(true);
     await expect(second.equals(first)).resolves.toEqual(true);
   });
 
   it('should not equal a different file', async () => {
-    const first = new File('file.rom', '00000000');
-    const second = new File('other.rom', '00000000');
-    const third = new File('file.rom', '12345678');
+    const first = new File('file.rom', 0, '00000000');
+    const second = new File('other.rom', 0, '00000000');
+    const third = new File('file.rom', 0, '12345678');
     await expect(first.equals(second)).resolves.toEqual(false);
     await expect(second.equals(third)).resolves.toEqual(false);
     await expect(third.equals(first)).resolves.toEqual(false);

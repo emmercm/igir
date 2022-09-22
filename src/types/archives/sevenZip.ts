@@ -47,11 +47,16 @@ export default class SevenZip extends Archive {
           }
         });
       }) as Result[];
-      return filesIn7z.map((result) => new ArchiveEntry(this, result.name, result.crc));
+      return filesIn7z.map((result) => new ArchiveEntry(
+        this,
+        result.name,
+        parseInt(result.size, 10),
+        result.crc,
+      ));
     });
   }
 
-  async extractEntry<T>(
+  async extractEntryToFile<T>(
     archiveEntry: ArchiveEntry,
     tempDir: string,
     callback: (localFile: string) => (T | Promise<T>),
