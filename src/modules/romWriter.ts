@@ -119,6 +119,7 @@ export default class ROMWriter {
         outputFile = new ArchiveEntry(
           new Zip(outputFilePath),
           entryPath,
+          inputFile.getSize(),
           await inputFile.getCrc32(),
         );
       } else {
@@ -127,7 +128,11 @@ export default class ROMWriter {
           inputFile.getFilePath(),
           rom.getName(),
         );
-        outputFile = new File(outputFilePath, await inputFile.getCrc32());
+        outputFile = new File(
+          outputFilePath,
+          inputFile.getSize(),
+          await inputFile.getCrc32(),
+        );
       }
 
       acc.set(inputFile, outputFile);
@@ -232,7 +237,7 @@ export default class ROMWriter {
 
     // Write the entry
     try {
-      await inputRomFile.extract(async (localFile) => {
+      await inputRomFile.extractToFile(async (localFile) => {
         await this.progressBar.logDebug(`${outputZipPath}: adding ${localFile}`);
         outputZip.addLocalFile(
           localFile,
@@ -338,7 +343,7 @@ export default class ROMWriter {
 
   private async writeRawFile(inputRomFile: File, outputFilePath: string): Promise<boolean> {
     try {
-      await inputRomFile.extract(async (localFile) => {
+      await inputRomFile.extractToFile(async (localFile) => {
         await this.progressBar.logDebug(`${localFile}: copying to ${outputFilePath}`);
         await fsPromises.copyFile(localFile, outputFilePath);
       });
