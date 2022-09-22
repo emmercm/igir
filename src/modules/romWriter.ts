@@ -1,5 +1,6 @@
 import AdmZip from 'adm-zip';
 import async, { AsyncResultCallback } from 'async';
+import { Semaphore } from 'async-mutex';
 import { promises as fsPromises } from 'fs';
 import path from 'path';
 
@@ -21,6 +22,8 @@ import ReleaseCandidate from '../types/releaseCandidate.js';
  * This class may be run concurrently with other classes.
  */
 export default class ROMWriter {
+  private static readonly semaphore = new Semaphore(Constants.ROM_WRITER_THREADS);
+
   private readonly options: Options;
 
   private readonly progressBar: ProgressBar;
@@ -46,26 +49,27 @@ export default class ROMWriter {
 
     const parentsToCandidatesEntries = [...parentsToCandidates.entries()];
 
-    return new Map(await async.mapLimit(
+    return new Map(await async.map(
       [...parentsToCandidatesEntries.entries()],
-      Constants.ROM_WRITER_THREADS,
       async (
         [, [parent, releaseCandidates]],
         callback: AsyncResultCallback<[Parent, File[]], Error>,
       ) => {
-        await this.progressBar.increment();
+        await ROMWriter.semaphore.runExclusive(async () => {
+          await this.progressBar.increment();
 
-        const outputRomFiles: File[] = [];
+          const outputRomFiles: File[] = [];
 
-        /* eslint-disable no-await-in-loop */
-        for (let j = 0; j < releaseCandidates.length; j += 1) {
-          const releaseCandidate = releaseCandidates[j];
+          /* eslint-disable no-await-in-loop */
+          for (let j = 0; j < releaseCandidates.length; j += 1) {
+            const releaseCandidate = releaseCandidates[j];
 
-          const results = await this.writeReleaseCandidate(dat, releaseCandidate);
-          outputRomFiles.push(...results);
-        }
+            const results = await this.writeReleaseCandidate(dat, releaseCandidate);
+            outputRomFiles.push(...results);
+          }
 
-        callback(null, [parent, outputRomFiles]);
+          callback(null, [parent, outputRomFiles]);
+        });
       },
     ));
   }
