@@ -1,6 +1,5 @@
 import crc32 from 'crc/crc32';
 import fs from 'fs';
-import path from 'path';
 import { Readable } from 'stream';
 
 import Constants from '../../constants.js';
@@ -67,11 +66,6 @@ export default class File {
     return this.fileHeader;
   }
 
-  // TODO(cemmer): figure out how to eliminate this
-  isZip(): boolean {
-    return path.extname(this.getFilePath()).toLowerCase() === '.zip';
-  }
-
   private async calculateCrc32(processHeader: boolean): Promise<string> {
     return this.extractToFile(async (localFile) => {
       // If we're hashing a file with a header, make sure the file actually has the header magic
@@ -114,7 +108,7 @@ export default class File {
     return callback(this.filePath);
   }
 
-  async extractToStream<T>(callback: (stream: Readable) => (Promise<T> | T)): Promise<T> {
+  async extractToStream<T>(callback: (stream: Readable) => (T | Promise<T>)): Promise<T> {
     const stream = fs.createReadStream(this.filePath);
     const result = await callback(stream);
     stream.destroy();

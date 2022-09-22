@@ -40,6 +40,7 @@ export default class DATScanner extends Scanner {
   private async parseDataFiles(datFilePaths: string[]): Promise<DataFile[]> {
     const results: DataFile[] = [];
 
+    // TODO(cemmer): thread DAT parsing
     /* eslint-disable no-await-in-loop */
     for (let i = 0; i < datFilePaths.length; i += 1) {
       const datFilePath = datFilePaths[i];

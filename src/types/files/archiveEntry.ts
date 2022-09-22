@@ -7,13 +7,13 @@ import Archive from '../archives/archive.js';
 import File from './file.js';
 import FileHeader from './fileHeader.js';
 
-export default class ArchiveEntry extends File {
-  private readonly archive: Archive;
+export default class ArchiveEntry<A extends Archive> extends File {
+  private readonly archive: A;
 
   private readonly entryPath: string;
 
   constructor(
-    archive: Archive,
+    archive: A,
     entryPath: string,
     size: number,
     crc?: string,
@@ -22,6 +22,10 @@ export default class ArchiveEntry extends File {
     super(archive.getFilePath(), size, crc, fileHeader);
     this.archive = archive;
     this.entryPath = entryPath;
+  }
+
+  getArchive(): A {
+    return this.archive;
   }
 
   getExtractedFilePath(): string {
@@ -37,11 +41,11 @@ export default class ArchiveEntry extends File {
     try {
       return await this.archive.extractEntryToFile(this, tempDir, callback);
     } finally {
-      fsPoly.rmSync(tempDir, { recursive: true });
+      await fsPoly.rm(tempDir, { recursive: true });
     }
   }
 
-  async extractToStream<T>(callback: (stream: Readable) => (Promise<T> | T)): Promise<T> {
+  async extractToStream<T>(callback: (stream: Readable) => (T | Promise<T>)): Promise<T> {
     // Don't extract to memory if this archive entry size is too large
     if (this.getSize() > Constants.MAX_STREAM_EXTRACTION_SIZE) {
       return this.extractToFile(async (localFile) => {
@@ -56,7 +60,7 @@ export default class ArchiveEntry extends File {
     try {
       return await this.archive.extractEntryToStream(this, tempDir, callback);
     } finally {
-      fsPoly.rmSync(tempDir, { recursive: true });
+      await fsPoly.rm(tempDir, { recursive: true });
     }
   }
 

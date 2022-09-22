@@ -14,16 +14,16 @@ export default abstract class Archive {
     return this.filePath;
   }
 
-  abstract getArchiveEntries(): Promise<ArchiveEntry[]>;
+  abstract getArchiveEntries(): Promise<ArchiveEntry<Archive>[]>;
 
   abstract extractEntryToFile<T>(
-    archiveEntry: ArchiveEntry,
+    archiveEntry: ArchiveEntry<Archive>,
     tempDir: string,
     callback: (localFile: string) => (T | Promise<T>),
   ): Promise<T>;
 
   extractEntryToStream<T>(
-    archiveEntry: ArchiveEntry,
+    archiveEntry: ArchiveEntry<Archive>,
     tempDir: string,
     callback: (stream: Readable) => (Promise<T> | T),
   ): Promise<T> {

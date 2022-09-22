@@ -48,7 +48,7 @@ describe('getForExtension', () => {
   });
 });
 
-describe('getForFile', () => {
+describe('getForFileStream', () => {
   it('should get a file header for headered files', async () => {
     const headeredRoms = await new ROMScanner(new Options({
       input: ['./test/fixtures/roms/headered'],
@@ -57,8 +57,8 @@ describe('getForFile', () => {
 
     /* eslint-disable no-await-in-loop */
     for (let i = 0; i < headeredRoms.length; i += 1) {
-      await headeredRoms[i].extractToFile(async (localFile) => {
-        const fileHeader = await FileHeader.getForFileContents(localFile);
+      await headeredRoms[i].extractToStream(async (stream) => {
+        const fileHeader = await FileHeader.getForFileStream(stream);
         expect(fileHeader).toBeDefined();
       });
     }
@@ -72,8 +72,8 @@ describe('getForFile', () => {
 
     /* eslint-disable no-await-in-loop */
     for (let i = 0; i < headeredRoms.length; i += 1) {
-      await headeredRoms[i].extractToFile(async (localFile) => {
-        const fileHeader = await FileHeader.getForFileContents(localFile);
+      await headeredRoms[i].extractToStream(async (stream) => {
+        const fileHeader = await FileHeader.getForFileStream(stream);
         expect(fileHeader).toBeUndefined();
       });
     }
