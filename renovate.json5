@@ -67,7 +67,6 @@
         matchDepTypes: ["devDependencies"],
         excludePackageNames: [
           "@types/7zip-min",
-          "@types/adm-min",
           "@types/async",
           "@types/cli-progress",
           "@types/figlet",
