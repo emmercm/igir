@@ -24,6 +24,10 @@ export default class ArchiveEntry<A extends Archive> extends File {
     this.entryPath = entryPath;
   }
 
+  getArchive(): A {
+    return this.archive;
+  }
+
   getExtractedFilePath(): string {
     return this.entryPath;
   }
@@ -56,6 +60,7 @@ export default class ArchiveEntry<A extends Archive> extends File {
     try {
       return await this.archive.extractEntryToStream(this, tempDir, callback);
     } finally {
+      // TODO(cemmer): async this and others like it?
       fsPoly.rmSync(tempDir, { recursive: true });
     }
   }

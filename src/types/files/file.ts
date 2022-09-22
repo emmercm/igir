@@ -1,6 +1,5 @@
 import crc32 from 'crc/crc32';
 import fs from 'fs';
-import path from 'path';
 import { Readable } from 'stream';
 
 import Constants from '../../constants.js';
@@ -65,11 +64,6 @@ export default class File {
 
   getFileHeader(): FileHeader | undefined {
     return this.fileHeader;
-  }
-
-  // TODO(cemmer): figure out how to eliminate this
-  isZip(): boolean {
-    return path.extname(this.getFilePath()).toLowerCase() === '.zip';
   }
 
   private async calculateCrc32(processHeader: boolean): Promise<string> {

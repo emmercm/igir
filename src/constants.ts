@@ -1,3 +1,5 @@
+import path from 'path';
+
 import fsPoly from './polyfill/fsPoly.js';
 
 const globalTempDir = fsPoly.mkdtempSync();
@@ -11,7 +13,7 @@ process.on('SIGINT', () => {
 export default class Constants {
   static readonly COMMAND_NAME = 'igir';
 
-  static readonly GLOBAL_TEMP_DIR = globalTempDir;
+  static readonly GLOBAL_TEMP_DIR = globalTempDir + path.sep;
 
   static readonly DAT_THREADS = 3;
 

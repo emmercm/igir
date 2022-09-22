@@ -1,6 +1,7 @@
 import fs from 'fs';
 import path from 'path';
 import { Readable } from 'stream';
+import { clearInterval } from 'timers';
 import yauzl, { Entry } from 'yauzl';
 import yazl from 'yazl';
 
@@ -60,9 +61,9 @@ export default class Zip extends Archive {
       tempDir,
       (readStream) => new Promise((resolve, reject) => {
         const writeStream = fs.createWriteStream(localFile);
-        writeStream.on('close', () => {
+        writeStream.on('close', async () => {
           try {
-            return resolve(callback(localFile));
+            return resolve(await callback(localFile));
           } catch (callbackErr) {
             return reject(callbackErr);
           }
@@ -95,7 +96,7 @@ export default class Zip extends Archive {
               }
 
               try {
-                return resolve(callback(stream));
+                return resolve(await callback(stream));
               } catch (callbackErr) {
                 return reject(callbackErr);
               }
@@ -129,15 +130,39 @@ export default class Zip extends Archive {
       writeStream.on('error', (err) => reject(err));
       zipFile.outputStream.pipe(writeStream);
 
-      // Add all archive entries to the zip
-      Promise.all(
-        [...inputToOutput.entries()].map(([inputFile, outputArchiveEntry]) => inputFile
-          .extractToStream((readStream) => {
-            zipFile.addReadStream(readStream, outputArchiveEntry.getEntryPath());
-          })),
-      )
+      // Promise that resolves when we're done writing the zip
+      const zipClosed = new Promise((resolveClosed) => {
+        const interval = setInterval(() => {
+          if (!writeStream.writable) {
+            clearInterval(interval);
+            resolveClosed(undefined);
+          }
+        }, 10);
+      });
+
+      // Start writing the zip when all entries have been enqueued
+      let zipEntriesQueued = 0;
+      new Promise((resolveQueued) => {
+        const interval = setInterval(() => {
+          if (zipEntriesQueued === inputToOutput.size) {
+            clearInterval(interval);
+            resolveQueued(undefined);
+          }
+        });
+      })
         .then(() => zipFile.end())
         .catch((err) => reject(err));
+
+      // Enqueue all archive entries to the zip
+      [...inputToOutput.entries()]
+        .forEach(([inputFile, outputArchiveEntry]) => inputFile
+          .extractToStream(async (readStream) => {
+            zipFile.addReadStream(readStream, outputArchiveEntry.getEntryPath());
+            zipEntriesQueued += 1;
+
+            // Leave the stream open until we're done writing the zip
+            await zipClosed;
+          }));
     });
   }
 }

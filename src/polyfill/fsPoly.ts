@@ -20,10 +20,10 @@ export default class FsPoly {
   /**
    * Some CI such as GitHub Actions give `EACCES: permission denied` on os.tmpdir()
    */
-  static mkdtempSync(): string {
+  static mkdtempSync(prefix = os.tmpdir()): string {
     try {
       // Added in: v5.10.0
-      return fs.mkdtempSync(os.tmpdir());
+      return fs.mkdtempSync(prefix);
     } catch (e) {
       // Added in: v5.10.0
       return fs.mkdtempSync(path.join(process.cwd(), 'tmp'));
