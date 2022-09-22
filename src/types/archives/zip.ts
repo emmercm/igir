@@ -2,8 +2,10 @@ import fs from 'fs';
 import path from 'path';
 import { Readable } from 'stream';
 import yauzl, { Entry } from 'yauzl';
+import yazl from 'yazl';
 
 import ArchiveEntry from '../files/archiveEntry.js';
+import File from '../files/file.js';
 import Archive from './archive.js';
 
 export default class Zip extends Archive {
@@ -109,6 +111,33 @@ export default class Zip extends Archive {
         // Start
         zipFile.readEntry();
       });
+    });
+  }
+
+  async archiveEntries(inputToOutput: Map<File, ArchiveEntry>): Promise<undefined> {
+    return new Promise((resolve, reject) => {
+      const zipFile = new yazl.ZipFile();
+
+      // Pipe the zip contents to disk, using an intermediate temp file because we may be trying to
+      // overwrite an input zip file
+      const tempZipFile = `${this.getFilePath()}.temp`;
+      const writeStream = fs.createWriteStream(tempZipFile);
+      writeStream.on('close', () => {
+        fs.renameSync(tempZipFile, this.getFilePath()); // overwrites
+        resolve(undefined);
+      });
+      writeStream.on('error', (err) => reject(err));
+      zipFile.outputStream.pipe(writeStream);
+
+      // Add all archive entries to the zip
+      Promise.all(
+        [...inputToOutput.entries()].map(([inputFile, outputArchiveEntry]) => inputFile
+          .extractToStream((readStream) => {
+            zipFile.addReadStream(readStream, outputArchiveEntry.getEntryPath());
+          })),
+      )
+        .then(() => zipFile.end())
+        .catch((err) => reject(err));
     });
   }
 }

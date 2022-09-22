@@ -155,7 +155,7 @@ export default class ROMWriter {
    ********************* */
 
   private async writeZip(inputToOutput: Map<File, File>): Promise<File[]> {
-    // There is only one output file
+    // There should only be one output file
     const outputRomFile = [...inputToOutput.values()][0];
     const outputZipPath = outputRomFile.getFilePath();
     const writtenRomFiles = [outputRomFile];
@@ -181,6 +181,9 @@ export default class ROMWriter {
         inputToOutputEntries[i][1] as ArchiveEntry,
       );
     }
+
+    // const zip = new Zip(outputZipPath);
+    // zip.
 
     // Write the zip file if needed
     if (outputNeedsWriting) {
@@ -218,19 +221,19 @@ export default class ROMWriter {
     outputZipPath: string,
     outputZip: AdmZip,
     inputRomFile: File,
-    outputRomFile: ArchiveEntry,
+    outputArchiveEntry: ArchiveEntry,
   ): Promise<boolean> {
     // The input and output are the same, do nothing
-    if (await outputRomFile.equals(inputRomFile)) {
-      await this.progressBar.logDebug(`${outputRomFile}: same file, skipping`);
+    if (await outputArchiveEntry.equals(inputRomFile)) {
+      await this.progressBar.logDebug(`${outputArchiveEntry}: same file, skipping`);
       return false;
     }
 
     // If the file in the output zip already exists and has the same CRC then do nothing
-    const existingOutputEntry = outputZip.getEntry(outputRomFile.getEntryPath() as string);
+    const existingOutputEntry = outputZip.getEntry(outputArchiveEntry.getEntryPath() as string);
     if (existingOutputEntry) {
-      if (existingOutputEntry.header.crc === parseInt(await outputRomFile.getCrc32(), 16)) {
-        await this.progressBar.logDebug(`${outputZipPath}: ${outputRomFile.getEntryPath()} already exists`);
+      if (existingOutputEntry.header.crc === parseInt(await outputArchiveEntry.getCrc32(), 16)) {
+        await this.progressBar.logDebug(`${outputZipPath}: ${outputArchiveEntry.getEntryPath()} already exists`);
         return false;
       }
     }
@@ -242,7 +245,7 @@ export default class ROMWriter {
         outputZip.addLocalFile(
           localFile,
           '',
-          outputRomFile.getEntryPath() as string,
+          outputArchiveEntry.getEntryPath() as string,
         );
       });
       return true;
@@ -316,6 +319,7 @@ export default class ROMWriter {
   }
 
   private async writeRawSingle(inputRomFile: File, outputRomFile: File): Promise<boolean> {
+    // Input and output are the exact same, do nothing
     if (await outputRomFile.equals(inputRomFile)) {
       await this.progressBar.logDebug(`${outputRomFile}: same file, skipping`);
       return false;
@@ -323,7 +327,7 @@ export default class ROMWriter {
 
     const outputFilePath = outputRomFile.getFilePath();
 
-    // If the output file already exists, do nothing
+    // If the output file already exists and we're not overwriting, do nothing
     const overwrite = this.options.getOverwrite();
     if (!overwrite) {
       if (await fsPoly.exists(outputFilePath)) {
