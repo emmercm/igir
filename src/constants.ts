@@ -1,3 +1,7 @@
+import fs from 'fs';
+import path from 'path';
+import url from 'url';
+
 import fsPoly from './polyfill/fsPoly.js';
 
 const globalTempDir = fsPoly.mkdtempSync();
@@ -10,6 +14,14 @@ process.on('SIGINT', () => {
 
 export default class Constants {
   static readonly COMMAND_NAME = 'igir';
+
+  static readonly COMMAND_VERSION = JSON.parse(
+    fs.readFileSync(path.join(
+      url.fileURLToPath(new URL('.', import.meta.url)),
+      '..',
+      'package.json',
+    )).toString(),
+  ).version;
 
   static readonly GLOBAL_TEMP_DIR = globalTempDir;
 
