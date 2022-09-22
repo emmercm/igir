@@ -40,6 +40,7 @@ export default class ROMWriter {
       return output;
     }
 
+    // TODO(cemmer): different symbol if shouldn't write?
     await this.progressBar.setSymbol(Symbols.WRITING);
     await this.progressBar.reset(parentsToCandidates.size);
 

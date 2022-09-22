@@ -41,7 +41,7 @@ export default class ArchiveEntry<A extends Archive> extends File {
     try {
       return await this.archive.extractEntryToFile(this, tempDir, callback);
     } finally {
-      fsPoly.rmSync(tempDir, { recursive: true });
+      await fsPoly.rm(tempDir, { recursive: true });
     }
   }
 
@@ -60,8 +60,7 @@ export default class ArchiveEntry<A extends Archive> extends File {
     try {
       return await this.archive.extractEntryToStream(this, tempDir, callback);
     } finally {
-      // TODO(cemmer): async this and others like it?
-      fsPoly.rmSync(tempDir, { recursive: true });
+      await fsPoly.rm(tempDir, { recursive: true });
     }
   }
 
