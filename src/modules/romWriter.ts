@@ -55,6 +55,8 @@ export default class ROMWriter {
         [, [parent, releaseCandidates]],
         callback: AsyncResultCallback<[Parent, File[]], Error>,
       ) => {
+        // TODO(cemmer): this tends to lock so one DAT processes at a time, makes DATS with no true
+        //  candidates look like they're queued for real writes
         await ROMWriter.semaphore.runExclusive(async () => {
           await this.progressBar.increment();
 
