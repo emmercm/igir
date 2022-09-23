@@ -1,4 +1,5 @@
 import { jest } from '@jest/globals';
+import { promises as fsPromises } from 'fs';
 import os from 'os';
 import path from 'path';
 
@@ -172,6 +173,7 @@ describe('zip', () => {
       const parentsToCandidates = await indexFilesByName(inputTemp, '**/!(headered)/*');
 
       // Write once
+      expect(() => fsPoly.walkSync(outputTemp)).toThrow(/no such file/i);
       const firstWrittenPaths = await runRomWriter(outputTemp, {
         commands: ['copy', 'zip'],
       }, parentsToCandidates);
@@ -209,6 +211,7 @@ describe('zip', () => {
       const parentsToCandidates = await indexFilesByName(inputTemp, '**/!(headered)/*');
 
       // Write once
+      expect(() => fsPoly.walkSync(outputTemp)).toThrow(/no such file/i);
       const firstWrittenPaths = await runRomWriter(outputTemp, {
         commands: ['copy', 'zip'],
       }, parentsToCandidates);
@@ -240,14 +243,11 @@ describe('zip', () => {
 
       const parentsToCandidates = await indexFilesByName(inputTemp, '**/!(headered)/*');
 
-      // new Zip(path.join(outputTemp, 'fizzbuzz.zip'))
-      //   .archiveEntries(new Map<File, ArchiveEntry<Zip>>())
-      //
-      // const existingZip = new AdmZip();
-      // existingZip.addFile('something.rom', Buffer.from('something'));
-      // existingZip.writeZip(path.join(outputTemp, 'fizzbuzz.zip'));
-      // existingZip.writeZip(path.join(outputTemp, 'foobar.zip'));
+      await fsPromises.mkdir(outputTemp);
+      await fsPromises.copyFile(path.join(inputTemp, 'zip', 'loremipsum.zip'), path.join(outputTemp, 'fizzbuzz.zip'));
+      await fsPromises.copyFile(path.join(inputTemp, 'zip', 'loremipsum.zip'), path.join(outputTemp, 'foobar.zip'));
 
+      expect(fsPoly.walkSync(outputTemp)).toHaveLength(2);
       const writtenPaths = await runRomWriter(outputTemp, {
         commands: ['copy', 'zip'],
         overwrite: true,
