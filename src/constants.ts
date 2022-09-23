@@ -29,12 +29,13 @@ function scanUpPathForFile(filePath: string, fileName: string): string | undefin
 export default class Constants {
   static readonly COMMAND_NAME = 'igir';
 
-  static readonly COMMAND_VERSION = JSON.parse(
-    fs.readFileSync(scanUpPathForFile(
-      url.fileURLToPath(new URL('.', import.meta.url)),
-      'package.json',
-    ) as string).toString(),
-  ).version;
+  static readonly COMMAND_VERSION = process.env.npm_package_version
+                || JSON.parse(
+                  fs.readFileSync(scanUpPathForFile(
+                    url.fileURLToPath(new URL('.', import.meta.url)),
+                    'package.json',
+                  ) as string).toString(),
+                ).version;
 
   static readonly GLOBAL_TEMP_DIR = globalTempDir + path.sep;
 

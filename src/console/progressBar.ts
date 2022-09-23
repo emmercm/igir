@@ -2,6 +2,7 @@ import chalk from 'chalk';
 
 import LogLevel from './logLevel.js';
 
+// https://www.toptal.com/designers/htmlarrows/symbols/
 export const Symbols: { [key: string]: string } = {
   WAITING: chalk.grey('⋯'),
   SEARCHING: chalk.magenta('↻'),
