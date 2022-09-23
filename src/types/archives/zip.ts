@@ -117,7 +117,7 @@ export default class Zip extends Archive {
   }
 
   // TODO(cemmer): find a better way to do this with more async/await
-  async archiveEntries(inputToOutput: Map<File, ArchiveEntry<Zip>>): Promise<undefined> {
+  async archiveEntries(inputToOutput: Map<File, ArchiveEntry<Zip>>): Promise<void> {
     return new Promise((resolve, reject) => {
       const zipFile = new yazl.ZipFile();
 
