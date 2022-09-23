@@ -5,7 +5,7 @@ set -euo pipefail
 
 if [[ "${1:-}" == "play" ]]; then
   . demo-magic.sh
-  TYPE_SPEED=10
+  TYPE_SPEED=15
   DEMO_PROMPT="$ "
   DEMO_CMD_COLOR="\033[1;37m"
   DEMO_COMMENT_COLOR="\033[0;90m"
@@ -16,8 +16,8 @@ if [[ "${1:-}" == "play" ]]; then
   alias npx="npm exec -- ."
   # BEGIN PLAYBACK
 
-  # ts-node ./index.ts copy clean report -d dats/ -i GB/ -o roms/ -D
-  pei "npx igir@latest copy zip report --dat dats/ --input roms/ --output roms-sorted/ --only-retail"
+  # ts-node ./index.ts copy clean -d dats/ -i GB/ -o roms/ -D
+  pei "npx igir@latest copy zip report --dat dats/ --input roms/ --output roms-sorted/ --dir-dat-name --only-retail"
 
   # END PLAYBACK
   exit 0

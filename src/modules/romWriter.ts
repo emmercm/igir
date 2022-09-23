@@ -182,6 +182,7 @@ export default class ROMWriter {
       }
 
       // If the zip is already what we're expecting, do nothing
+      // TODO(cemmer): change this to a condition around the write, let it still delete moved files
       if (await ROMWriter.testZipContents(outputZipArchive, inputToOutputZipEntries)) {
         await this.progressBar.logDebug(`${outputZipArchive.getFilePath()}: same file, skipping`);
         return [new File(outputZipArchive.getFilePath())];
