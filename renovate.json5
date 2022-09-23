@@ -52,7 +52,7 @@
         groupName: "dependencies",
         matchDepTypes: ["dependencies", "devDependencies"],
         rangeStrategy: "bump",
-        commitMessageAction: "update"
+        commitMessageAction: "update" // don't use `rangeStrategy` as the action
       },
 
       // Dev dependencies
@@ -60,7 +60,7 @@
         // Pin (and update) devDependencies versions
         matchDepTypes: ["devDependencies"],
         rangeStrategy: "pin",
-        commitMessageAction: "update"
+        commitMessageAction: "update" // don't use `rangeStrategy` as the action
       },
       {
         // Group devDependencies together, minus type definitions for dependencies
