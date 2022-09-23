@@ -26,16 +26,17 @@ function scanUpPathForFile(filePath: string, fileName: string): string | undefin
   return undefined;
 }
 
-export default class Constants {
-  static readonly COMMAND_NAME = 'igir';
+const PACKAGE_JSON = JSON.parse(
+  fs.readFileSync(scanUpPathForFile(
+    url.fileURLToPath(new URL('.', import.meta.url)),
+    'package.json',
+  ) as string).toString(),
+);
 
-  static readonly COMMAND_VERSION = process.env.npm_package_version
-                || JSON.parse(
-                  fs.readFileSync(scanUpPathForFile(
-                    url.fileURLToPath(new URL('.', import.meta.url)),
-                    'package.json',
-                  ) as string).toString(),
-                ).version;
+export default class Constants {
+  static readonly COMMAND_NAME = PACKAGE_JSON.name;
+
+  static readonly COMMAND_VERSION = PACKAGE_JSON.version;
 
   static readonly GLOBAL_TEMP_DIR = globalTempDir + path.sep;
 
