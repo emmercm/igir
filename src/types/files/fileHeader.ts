@@ -1,4 +1,3 @@
-import fs from 'fs';
 import path from 'path';
 import { Readable } from 'stream';
 
@@ -108,9 +107,9 @@ export default class FileHeader {
     return undefined;
   }
 
-  async fileHasHeader(filePath: string): Promise<boolean> {
+  async fileHasHeader(stream: Readable): Promise<boolean> {
     const header = await FileHeader.readHeader(
-      fs.createReadStream(filePath),
+      stream,
       this.headerOffsetBytes,
       this.headerOffsetBytes + this.headerValue.length / 2,
     );

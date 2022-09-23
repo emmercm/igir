@@ -109,6 +109,6 @@ export default class DATStatus {
       options.getOnlyBios() || (!options.getNoBios() && !options.getOnlyRetail())
         ? ROMType.BIOS : undefined,
       options.getOnlyRetail() || (!options.getOnlyBios()) ? ROMType.RETAIL : undefined,
-    ].filter((val) => val) as ROMType[];
+    ].filter((romType) => romType) as ROMType[];
   }
 }

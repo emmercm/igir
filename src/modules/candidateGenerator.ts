@@ -1,3 +1,5 @@
+import async, { AsyncResultCallback } from 'async';
+
 import ProgressBar, { Symbols } from '../console/progressBar.js';
 import ArchiveEntry from '../types/files/archiveEntry.js';
 import File from '../types/files/file.js';
@@ -35,10 +37,9 @@ export default class CandidateGenerator {
     await this.progressBar.reset(dat.getParents().length);
 
     // TODO(cemmer): only do this once globally, not per DAT
-    // TODO(cemmer): use filesize combined with CRC for indexing
     // TODO(cemmer): ability to index files by some other property such as name
-    const crc32ToInputFiles = await CandidateGenerator.indexFilesByCrc(inputRomFiles);
-    await this.progressBar.logInfo(`${dat.getName()}: ${crc32ToInputFiles.size} unique ROM CRC32s found`);
+    const hashCodeToInputFiles = await CandidateGenerator.indexFilesByHashCode(inputRomFiles);
+    await this.progressBar.logInfo(`${dat.getName()}: ${hashCodeToInputFiles.size} unique ROM CRC32s found`);
 
     // TODO(cemmer): ability to work without DATs, generating a parent/game/release per file
     // For each parent, try to generate a parent candidate
@@ -61,7 +62,7 @@ export default class CandidateGenerator {
           const releaseCandidate = await this.buildReleaseCandidateForRelease(
             game,
             release,
-            crc32ToInputFiles,
+            hashCodeToInputFiles,
           );
           if (releaseCandidate) {
             releaseCandidates.push(releaseCandidate);
@@ -78,11 +79,11 @@ export default class CandidateGenerator {
     return output;
   }
 
-  private static async indexFilesByCrc(files: File[]): Promise<Map<string, File>> {
+  private static async indexFilesByHashCode(files: File[]): Promise<Map<string, File>> {
     return files.reduce(async (accPromise, file) => {
       const acc = await accPromise;
-      this.addToIndex(acc, await file.getCrc32(), file);
-      this.addToIndex(acc, await file.getCrc32WithoutHeader(), file);
+      (await file.getHashCodes())
+        .forEach((hashCode) => this.addToIndex(acc, hashCode, file));
       return acc;
     }, Promise.resolve(new Map<string, File>()));
   }
@@ -103,12 +104,18 @@ export default class CandidateGenerator {
   private async buildReleaseCandidateForRelease(
     game: Game,
     release: Release | undefined,
-    crc32ToInputFiles: Map<string, File>,
+    hashCodeToInputFiles: Map<string, File>,
   ): Promise<ReleaseCandidate | undefined> {
     // For each Game's ROM, find the matching File
-    const romFiles = game.getRoms()
-      .map((rom) => crc32ToInputFiles.get(rom.getCrc32()))
-      .filter((file) => file) as File[];
+    const romFiles = (await async.map(
+      game.getRoms(),
+      async (rom, callback: AsyncResultCallback<File | undefined, Error>) => {
+        const romFile = (await rom.toFile().getHashCodes())
+          .map((hashCode) => hashCodeToInputFiles.get(hashCode))
+          .filter((file) => file)[0];
+        callback(null, romFile);
+      },
+    )).filter((file) => file) as File[];
 
     // Ignore the Game if not every File is present
     const missingRomFiles = game.getRoms().length - romFiles.length;

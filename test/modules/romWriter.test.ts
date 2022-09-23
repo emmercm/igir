@@ -71,7 +71,11 @@ async function indexFilesByName(
         .map(async (romFile) => {
           const release = new Release(romName, 'UNK', undefined);
           const romFileName = romFile.getExtractedFilePath();
-          const rom = new ROM(path.basename(romFileName), 0, await romFile.getCrc32());
+          const rom = new ROM(
+            path.basename(romFileName),
+            romFile.getSize(),
+            await romFile.getCrc32(),
+          );
           return new ReleaseCandidate(game, release, [rom], [romFile]);
         }));
       acc.set(parent, releaseCandidates);
