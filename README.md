@@ -15,7 +15,7 @@
 
 A video of an example use case:
 
-[![asciicast](https://asciinema.org/a/u1jeLTaSanO3mGzBb5b1jgxCy.svg)](https://asciinema.org/a/u1jeLTaSanO3mGzBb5b1jgxCy)
+[![asciicast](https://asciinema.org/a/iTnSVX8VTLSZNcCMFtqy5T9Mo.svg)](https://asciinema.org/a/iTnSVX8VTLSZNcCMFtqy5T9Mo)
 
 With a large ROM collection it can be difficult to:
 
@@ -63,7 +63,7 @@ Here is the full `igir --help` message which shows all available options and a n
   | $$  | $$ __\$$  | $$  | $$__| $$
   | $$  | $$|    \  | $$  | $$    $$   ROM collection manager
   | $$  | $$ \$$$$  | $$  | $$$$$$$\
- _| $$_ | $$__| $$ _| $$_ | $$  | $$   v0.1.0
+ _| $$_ | $$__| $$ _| $$_ | $$  | $$   v0.2.0
 |   $$ \ \$$    $$|   $$ \| $$  | $$
  \$$$$$$  \$$$$$$  \$$$$$$ \$$   \$$
 
