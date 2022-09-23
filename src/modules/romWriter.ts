@@ -174,28 +174,37 @@ export default class ROMWriter {
     // Prep the single output file
     const outputZipArchive = [...inputToOutputZipEntries.values()][0].getArchive();
 
-    if (await fsPoly.exists(outputZipArchive.getFilePath()) && !this.options.getOverwrite()) {
-      await this.progressBar.logDebug(`${outputZipArchive.getFilePath()}: file exists, not overwriting`);
-      return [new File(outputZipArchive.getFilePath())];
+    if (await fsPoly.exists(outputZipArchive.getFilePath())) {
+      // If the output file already exists and we're not overwriting, do nothing
+      if (!this.options.getOverwrite()) {
+        await this.progressBar.logDebug(`${outputZipArchive.getFilePath()}: file exists, not overwriting`);
+        return [new File(outputZipArchive.getFilePath())];
+      }
+
+      // If the zip is already what we're expecting, do nothing
+      if (await ROMWriter.testZipContents(outputZipArchive, inputToOutputZipEntries)) {
+        await this.progressBar.logDebug(`${outputZipArchive.getFilePath()}: same file, skipping`);
+        return [new File(outputZipArchive.getFilePath())];
+      }
     }
 
     await this.ensureOutputDirExists(outputZipArchive.getFilePath());
     await outputZipArchive.archiveEntries(inputToOutputZipEntries);
-    await this.testWrittenZip(outputZipArchive, inputToOutputZipEntries);
+    if (this.options.shouldTest()) {
+      if (await ROMWriter.testZipContents(outputZipArchive, inputToOutputZipEntries)) {
+        await this.progressBar.logError(`Written zip is invalid: ${outputZipArchive.getFilePath()}`);
+      }
+    }
     await this.deleteMovedZipEntries(outputZipArchive, [...inputToOutputFiles.keys()]);
 
     // Return the single archive written
     return [new File(outputZipArchive.getFilePath())];
   }
 
-  private async testWrittenZip(
+  private static async testZipContents(
     outputZipArchive: Zip,
     inputToOutputZipEntries: Map<File, ArchiveEntry<Zip>>,
-  ): Promise<void> {
-    if (!this.options.shouldTest()) {
-      return;
-    }
-
+  ): Promise<boolean> {
     const expectedEntriesByPath = [...inputToOutputZipEntries.entries()]
       .reduce((map, [, entry]) => {
         map.set(entry.getEntryPath(), entry);
@@ -208,20 +217,28 @@ export default class ROMWriter {
         return map;
       }, new Map<string, ArchiveEntry<Zip>>());
 
+    if (actualEntriesByPath.size !== expectedEntriesByPath.size) {
+      return false;
+    }
+
     const entryPaths = [...expectedEntriesByPath.keys()];
     for (let i = 0; i < entryPaths.length; i += 1) {
       const entryPath = entryPaths[i];
       const expected = expectedEntriesByPath.get(entryPath) as ArchiveEntry<Zip>;
 
+      // Check existence
       if (!actualEntriesByPath.has(entryPath)) {
-        await this.progressBar.logError(`Zip entry wasn't written: ${entryPath}`);
+        return false;
       }
       const actual = actualEntriesByPath.get(entryPath) as ArchiveEntry<Zip>;
 
+      // Check checksum
       if (!await actual.equals(expected)) {
-        await this.progressBar.logError(`Zip entry wasn't written correctly: ${entryPath}`);
+        return false;
       }
     }
+
+    return true;
   }
 
   private async deleteMovedZipEntries(
