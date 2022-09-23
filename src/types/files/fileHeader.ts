@@ -1,7 +1,6 @@
 import fs from 'fs';
 import path from 'path';
-
-import Constants from '../../constants.js';
+import { Readable } from 'stream';
 
 export default class FileHeader {
   private static readonly HEADERS: { [key: string]:FileHeader } = {
@@ -18,7 +17,7 @@ export default class FileHeader {
     'No-Intro_FDS.xml': new FileHeader(0, '464453', 16, '.fds'),
   };
 
-  private static readonly MAX_HEADER_LENGTH = Object.values(FileHeader.HEADERS)
+  private static readonly MAX_HEADER_LENGTH_BYTES = Object.values(FileHeader.HEADERS)
     .reduce((max, fileHeader) => Math.max(
       max,
       fileHeader.headerOffsetBytes + fileHeader.headerValue.length / 2,
@@ -59,29 +58,40 @@ export default class FileHeader {
     return undefined;
   }
 
-  private static async readHeader(filePath: string, start: number, end: number): Promise<string> {
+  private static async readHeader(stream: Readable, start: number, end: number): Promise<string> {
     return new Promise((resolve, reject) => {
-      const stream = fs.createReadStream(filePath, {
-        start,
-        end,
-        highWaterMark: Constants.FILE_READING_CHUNK_SIZE,
-      });
+      stream.resume();
 
       const chunks: Buffer[] = [];
+      const resolveHeader: () => void = () => {
+        const header = Buffer.concat(chunks)
+          .subarray(start, end)
+          .toString('hex')
+          .toUpperCase();
+        resolve(header);
+      };
+
       stream.on('data', (chunk) => {
         chunks.push(Buffer.from(chunk));
+
+        // Stop reading when we got enough data, trigger a 'close' event
+        if (chunks.reduce((sum, buff) => sum + buff.length, 0) >= end) {
+          resolveHeader();
+          stream.destroy();
+        }
       });
+
       stream.on('end', () => {
-        const header = Buffer.concat(chunks).toString('hex');
-        resolve(header.toUpperCase());
+        // We read the entire file without closing, return
+        resolveHeader();
       });
 
       stream.on('error', (err) => reject(err));
     });
   }
 
-  static async getForFileContents(filePath: string): Promise<FileHeader | undefined> {
-    const fileHeader = await FileHeader.readHeader(filePath, 0, this.MAX_HEADER_LENGTH);
+  static async getForFileStream(stream: Readable): Promise<FileHeader | undefined> {
+    const fileHeader = await FileHeader.readHeader(stream, 0, this.MAX_HEADER_LENGTH_BYTES);
 
     const headers = Object.values(this.HEADERS);
     for (let i = 0; i < headers.length; i += 1) {
@@ -100,9 +110,9 @@ export default class FileHeader {
 
   async fileHasHeader(filePath: string): Promise<boolean> {
     const header = await FileHeader.readHeader(
-      filePath,
+      fs.createReadStream(filePath),
       this.headerOffsetBytes,
-      this.headerOffsetBytes + this.headerValue.length / 2 - 1,
+      this.headerOffsetBytes + this.headerValue.length / 2,
     );
     return header.toUpperCase() === this.headerValue.toUpperCase();
   }

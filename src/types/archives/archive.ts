@@ -1,3 +1,6 @@
+import fs from 'fs';
+import { Readable } from 'stream';
+
 import ArchiveEntry from '../files/archiveEntry.js';
 
 export default abstract class Archive {
@@ -11,11 +14,24 @@ export default abstract class Archive {
     return this.filePath;
   }
 
-  abstract getArchiveEntries(): Promise<ArchiveEntry[]>;
+  abstract getArchiveEntries(): Promise<ArchiveEntry<Archive>[]>;
 
-  abstract extractEntry<T>(
-    archiveEntry: ArchiveEntry,
+  abstract extractEntryToFile<T>(
+    archiveEntry: ArchiveEntry<Archive>,
     tempDir: string,
     callback: (localFile: string) => (T | Promise<T>),
   ): Promise<T>;
+
+  extractEntryToStream<T>(
+    archiveEntry: ArchiveEntry<Archive>,
+    tempDir: string,
+    callback: (stream: Readable) => (Promise<T> | T),
+  ): Promise<T> {
+    return this.extractEntryToFile(archiveEntry, tempDir, async (localFile) => {
+      const stream = fs.createReadStream(localFile);
+      const result = await callback(stream);
+      stream.destroy();
+      return result;
+    });
+  }
 }

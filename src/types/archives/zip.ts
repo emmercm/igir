@@ -1,44 +1,168 @@
-import AdmZip, { IZipEntry } from 'adm-zip';
+import fs from 'fs';
 import path from 'path';
+import { Readable } from 'stream';
+import { clearInterval } from 'timers';
+import yauzl, { Entry } from 'yauzl';
+import yazl from 'yazl';
 
 import ArchiveEntry from '../files/archiveEntry.js';
+import File from '../files/file.js';
 import Archive from './archive.js';
 
 export default class Zip extends Archive {
   static readonly SUPPORTED_EXTENSIONS = ['.zip'];
 
-  getArchiveEntries(): Promise<ArchiveEntry[]> {
-    const zip = new AdmZip(this.getFilePath());
-    const files = zip.getEntries()
-      .map((entry) => new ArchiveEntry(
-        this,
-        entry.entryName,
-        entry.header.crc.toString(16),
-      ));
-    return Promise.resolve(files);
+  getArchiveEntries(): Promise<ArchiveEntry<Zip>[]> {
+    return new Promise((resolve, reject) => {
+      yauzl.open(this.getFilePath(), {
+        lazyEntries: true,
+      }, (fileErr, zipFile) => {
+        if (fileErr) {
+          reject(fileErr);
+          return;
+        }
+
+        const archiveEntries: ArchiveEntry<Zip>[] = [];
+
+        zipFile.on('entry', (entry: Entry) => {
+          if (!entry.fileName.endsWith('/')) {
+            // Is a file
+            archiveEntries.push(new ArchiveEntry(
+              this,
+              entry.fileName,
+              entry.uncompressedSize,
+              entry.crc32.toString(16),
+            ));
+          }
+
+          // Continue
+          zipFile.readEntry();
+        });
+
+        zipFile.on('close', () => resolve(archiveEntries));
+
+        zipFile.on('error', (err) => reject(err));
+
+        // Start
+        zipFile.readEntry();
+      });
+    });
   }
 
-  async extractEntry<T>(
-    archiveEntry: ArchiveEntry,
+  async extractEntryToFile<T>(
+    archiveEntry: ArchiveEntry<Zip>,
     tempDir: string,
     callback: (localFile: string) => (T | Promise<T>),
   ): Promise<T> {
     const localFile = path.join(tempDir, archiveEntry.getEntryPath());
 
-    const zip = new AdmZip(this.getFilePath());
-    const entry = zip.getEntry(archiveEntry.getEntryPath());
-    if (!entry) {
-      throw new Error(`Entry path ${archiveEntry.getEntryPath()} does not exist in ${this.getFilePath()}`);
-    }
-    zip.extractEntryTo(
-      entry as IZipEntry,
+    return this.extractEntryToStream(
+      archiveEntry,
       tempDir,
-      false,
-      false,
-      false,
-      archiveEntry.getEntryPath(),
+      (readStream) => new Promise((resolve, reject) => {
+        const writeStream = fs.createWriteStream(localFile);
+        writeStream.on('close', async () => {
+          try {
+            return resolve(await callback(localFile));
+          } catch (callbackErr) {
+            return reject(callbackErr);
+          }
+        });
+        readStream.pipe(writeStream);
+      }),
     );
+  }
 
-    return callback(localFile);
+  async extractEntryToStream<T>(
+    archiveEntry: ArchiveEntry<Zip>,
+    tempDir: string,
+    callback: (stream: Readable) => (Promise<T> | T),
+  ): Promise<T> {
+    return new Promise((resolve, reject) => {
+      yauzl.open(this.getFilePath(), {
+        lazyEntries: true,
+      }, (fileErr, zipFile) => {
+        if (fileErr) {
+          reject(fileErr);
+          return;
+        }
+
+        zipFile.on('entry', (entry: Entry) => {
+          if (entry.fileName === archiveEntry.getEntryPath()) {
+            // Found the file we're looking for
+            zipFile.openReadStream(entry, async (streamErr, stream) => {
+              if (streamErr) {
+                return reject(streamErr);
+              }
+
+              try {
+                return resolve(await callback(stream));
+              } catch (callbackErr) {
+                return reject(callbackErr);
+              }
+            });
+          } else {
+            // Continue until we find what we're looking for
+            zipFile.readEntry();
+          }
+        });
+
+        zipFile.on('error', (err) => reject(err));
+
+        // Start
+        zipFile.readEntry();
+      });
+    });
+  }
+
+  async archiveEntries(inputToOutput: Map<File, ArchiveEntry<Zip>>): Promise<undefined> {
+    return new Promise((resolve, reject) => {
+      const zipFile = new yazl.ZipFile();
+
+      // Pipe the zip contents to disk, using an intermediate temp file because we may be trying to
+      // overwrite an input zip file
+      const tempZipFile = `${this.getFilePath()}.temp`;
+      const writeStream = fs.createWriteStream(tempZipFile);
+      writeStream.on('close', () => {
+        fs.renameSync(tempZipFile, this.getFilePath()); // overwrites
+        resolve(undefined);
+      });
+      writeStream.on('error', (err) => reject(err));
+      zipFile.outputStream.pipe(writeStream);
+
+      // Promise that resolves when we're done writing the zip
+      const zipClosed = new Promise((resolveClosed) => {
+        const interval = setInterval(() => {
+          if (!writeStream.writable) {
+            clearInterval(interval);
+            resolveClosed(undefined);
+          }
+        }, 10);
+      });
+
+      // Start writing the zip when all entries have been enqueued
+      let zipEntriesQueued = 0;
+      new Promise((resolveQueued) => {
+        const interval = setInterval(() => {
+          if (zipEntriesQueued === inputToOutput.size) {
+            clearInterval(interval);
+            resolveQueued(undefined);
+          }
+        });
+      })
+        .then(() => zipFile.end())
+        .catch((err) => reject(err));
+
+      // Enqueue all archive entries to the zip
+      [...inputToOutput.entries()]
+        .forEach(([inputFile, outputArchiveEntry]) => inputFile
+          .extractToStream(async (readStream) => {
+            zipFile.addReadStream(readStream, outputArchiveEntry.getEntryPath());
+            zipEntriesQueued += 1;
+
+            // Leave the stream open until we're done writing the zip
+            await zipClosed;
+          }));
+    });
   }
 }

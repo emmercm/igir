@@ -31,6 +31,8 @@ export default class CandidateFilter {
       return output;
     }
 
+    // TODO(cemmer): return early if there are no candidates to filter
+
     await this.progressBar.setSymbol(Symbols.FILTERING);
     await this.progressBar.reset(parentsToCandidates.size);
 

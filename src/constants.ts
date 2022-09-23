@@ -23,20 +23,20 @@ export default class Constants {
     )).toString(),
   ).version;
 
-  static readonly GLOBAL_TEMP_DIR = globalTempDir;
+  static readonly GLOBAL_TEMP_DIR = globalTempDir + path.sep;
 
   static readonly DAT_THREADS = 3;
 
   static readonly ROM_SCANNER_THREADS = 25;
 
-  // TODO(cemmer): is there a way to set a global limit with only one DAT? semaphores?
-  static readonly ROM_HEADER_HASHER_THREADS = Math.ceil(
-    Constants.ROM_SCANNER_THREADS / Constants.DAT_THREADS,
-  );
+  static readonly ROM_HEADER_HASHER_THREADS = 25;
 
+  // TODO(cemmer): is there a way to set a global limit with only one DAT? semaphores?
   static readonly ROM_WRITER_THREADS = Math.ceil(
     Constants.ROM_SCANNER_THREADS / Constants.DAT_THREADS,
   );
 
   static readonly FILE_READING_CHUNK_SIZE = 1024 * 1024; // 1MiB
+
+  static readonly MAX_STREAM_EXTRACTION_SIZE = 1024 * 1024 * 100; // 100MiB
 }

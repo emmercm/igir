@@ -10,13 +10,15 @@ import Igir from '../src/igir.js';
 import fsPoly from '../src/polyfill/fsPoly.js';
 import Options, { OptionsProps } from '../src/types/options.js';
 
+jest.setTimeout(10_000);
+
 const LOGGER = new Logger(LogLevel.NEVER);
 
 async function expectEndToEnd(optionsProps: OptionsProps, expectedFiles: string[]): Promise<void> {
-  const tempInput = fsPoly.mkdtempSync();
+  const tempInput = fsPoly.mkdtempSync(Constants.GLOBAL_TEMP_DIR);
   fsPoly.copyDirSync('./test/fixtures', tempInput);
 
-  const tempOutput = fsPoly.mkdtempSync();
+  const tempOutput = fsPoly.mkdtempSync(Constants.GLOBAL_TEMP_DIR);
 
   const options = new Options({
     dat: [path.join(tempInput, 'dats', '*')],
@@ -44,8 +46,6 @@ async function expectEndToEnd(optionsProps: OptionsProps, expectedFiles: string[
   ));
   reports.forEach((report) => fsPoly.rmSync(report));
 }
-
-jest.setTimeout(10_000);
 
 it('should throw on no dats', async () => {
   await expect(new Igir(new Options({}), LOGGER).main()).rejects.toThrow(/no valid dat/i);

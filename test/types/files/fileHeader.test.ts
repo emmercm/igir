@@ -11,7 +11,7 @@ describe('getForName', () => {
     'No-Intro_FDS.xml',
   ])('should get a file header for name: %s', (headerName) => {
     const fileHeader = FileHeader.getForName(headerName);
-    expect(fileHeader).not.toBeUndefined();
+    expect(fileHeader).toBeDefined();
   });
 
   test.each([
@@ -33,7 +33,7 @@ describe('getForExtension', () => {
     'rom.zip.fds',
   ])('should get a file header for extension: %s', (filePath) => {
     const fileHeader = FileHeader.getForFilename(filePath);
-    expect(fileHeader).not.toBeUndefined();
+    expect(fileHeader).toBeDefined();
   });
 
   test.each([
@@ -48,7 +48,7 @@ describe('getForExtension', () => {
   });
 });
 
-describe('getForFile', () => {
+describe('getForFileStream', () => {
   it('should get a file header for headered files', async () => {
     const headeredRoms = await new ROMScanner(new Options({
       input: ['./test/fixtures/roms/headered'],
@@ -57,9 +57,9 @@ describe('getForFile', () => {
 
     /* eslint-disable no-await-in-loop */
     for (let i = 0; i < headeredRoms.length; i += 1) {
-      await headeredRoms[i].extract(async (localFile) => {
-        const fileHeader = await FileHeader.getForFileContents(localFile);
-        expect(fileHeader).not.toBeUndefined();
+      await headeredRoms[i].extractToStream(async (stream) => {
+        const fileHeader = await FileHeader.getForFileStream(stream);
+        expect(fileHeader).toBeDefined();
       });
     }
   });
@@ -72,8 +72,8 @@ describe('getForFile', () => {
 
     /* eslint-disable no-await-in-loop */
     for (let i = 0; i < headeredRoms.length; i += 1) {
-      await headeredRoms[i].extract(async (localFile) => {
-        const fileHeader = await FileHeader.getForFileContents(localFile);
+      await headeredRoms[i].extractToStream(async (stream) => {
+        const fileHeader = await FileHeader.getForFileStream(stream);
         expect(fileHeader).toBeUndefined();
       });
     }
