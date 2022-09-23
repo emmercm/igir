@@ -5,6 +5,7 @@ import { clearInterval } from 'timers';
 import yauzl, { Entry } from 'yauzl';
 import yazl from 'yazl';
 
+import fsPoly from '../../polyfill/fsPoly.js';
 import ArchiveEntry from '../files/archiveEntry.js';
 import File from '../files/file.js';
 import Archive from './archive.js';
@@ -115,17 +116,22 @@ export default class Zip extends Archive {
     });
   }
 
+  // TODO(cemmer): find a better way to do this with more async/await
   async archiveEntries(inputToOutput: Map<File, ArchiveEntry<Zip>>): Promise<undefined> {
     return new Promise((resolve, reject) => {
       const zipFile = new yazl.ZipFile();
 
       // Pipe the zip contents to disk, using an intermediate temp file because we may be trying to
       // overwrite an input zip file
-      const tempZipFile = `${this.getFilePath()}.temp`;
+      const tempZipFile = fsPoly.mktempSync(this.getFilePath());
       const writeStream = fs.createWriteStream(tempZipFile);
       writeStream.on('close', () => {
-        fs.renameSync(tempZipFile, this.getFilePath()); // overwrites
-        resolve(undefined);
+        try {
+          fs.renameSync(tempZipFile, this.getFilePath()); // overwrites
+          resolve(undefined);
+        } catch (e) {
+          reject(e);
+        }
       });
       writeStream.on('error', (err) => reject(err));
       zipFile.outputStream.pipe(writeStream);

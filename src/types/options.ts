@@ -313,17 +313,14 @@ export default class Options implements OptionsProps {
       output = path.join(output, romName);
     }
 
-    return output;
+    return fsPoly.makeLegal(output);
   }
 
   getOutputReport(): string {
     const output = this.shouldWrite() ? this.output : process.cwd();
     return path.join(
       output,
-      `${Constants.COMMAND_NAME}_${moment().format()}.txt`
-        // Make the filename Windows legal
-        .replace(/:/g, ';')
-        .replace(/[<>:"/\\|?*]/g, '_'),
+      fsPoly.makeLegal(`${Constants.COMMAND_NAME}_${moment().format()}.txt`),
     );
   }
 

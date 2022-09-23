@@ -188,13 +188,21 @@ export default class ROMWriter {
       }
     }
 
-    await this.ensureOutputDirExists(outputZipArchive.getFilePath());
-    await outputZipArchive.archiveEntries(inputToOutputZipEntries);
+    try {
+      await this.ensureOutputDirExists(outputZipArchive.getFilePath());
+      await outputZipArchive.archiveEntries(inputToOutputZipEntries);
+    } catch (e) {
+      await this.progressBar.logError(`Failed to create zip ${outputZipArchive.getFilePath()} : ${e}`);
+      return [new File(outputZipArchive.getFilePath())];
+    }
+
     if (this.options.shouldTest()) {
       if (await ROMWriter.testZipContents(outputZipArchive, inputToOutputZipEntries)) {
         await this.progressBar.logError(`Written zip is invalid: ${outputZipArchive.getFilePath()}`);
+        return [new File(outputZipArchive.getFilePath())];
       }
     }
+
     await this.deleteMovedZipEntries(outputZipArchive, [...inputToOutputFiles.keys()]);
 
     // Return the single archive written
