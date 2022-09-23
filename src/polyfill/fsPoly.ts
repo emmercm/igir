@@ -1,3 +1,4 @@
+import crypto from 'crypto';
 import fs, { PathLike, promises as fsPromises, RmOptions } from 'fs';
 import { isNotJunk } from 'junk';
 import os from 'os';
@@ -14,6 +15,17 @@ export default class FsPoly {
       return true;
     } catch (e) {
       return false;
+    }
+  }
+
+  static mktempSync(prefix: string): string {
+    /* eslint-disable no-constant-condition */
+    while (true) {
+      const randomExtension = crypto.randomBytes(4).readUInt32LE(0).toString(36);
+      const filePath = `${prefix.replace(/\.+$/, '')}.${randomExtension}`;
+      if (!fs.existsSync(filePath)) {
+        return filePath;
+      }
     }
   }
 
@@ -91,9 +103,6 @@ export default class FsPoly {
     }
   }
 
-  /**
-   * Technically not a polyfill, but a function that should exist in the stdlib
-   */
   static walkSync(pathLike: PathLike): string[] {
     const output = [];
 
@@ -113,9 +122,6 @@ export default class FsPoly {
       .filter((filePath) => isNotJunk(path.basename(filePath)));
   }
 
-  /**
-   * Technically not a polyfill, but a function that should exist in the stdlib
-   */
   static copyDirSync(src: string, dest: string): void {
     fs.mkdirSync(dest, { recursive: true });
     const entries = fs.readdirSync(src, { withFileTypes: true });
@@ -132,5 +138,22 @@ export default class FsPoly {
         fs.copyFileSync(srcPath, destPath);
       }
     }
+  }
+
+  static makeLegal(filePath: string, pathSep = path.sep): string {
+    let replaced = filePath
+      // Make the filename Windows legal
+      .replace(/:/g, ';')
+      // Make the filename everything else legal
+      .replace(/[<>:"|?*]/g, '_')
+      // Normalize the path separators
+      .replace(/[\\/]/g, pathSep);
+
+    // Fix Windows drive letter
+    if (replaced.match(/^[a-z];[\\/]/i) !== null) {
+      replaced = replaced.replace(/^([a-z]);\\/i, '$1:\\');
+    }
+
+    return replaced;
   }
 }

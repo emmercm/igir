@@ -271,7 +271,7 @@ describe('zip', () => {
     ['rar/*', ['fizzbuzz.zip', 'foobar.zip', 'loremipsum.zip', 'unknown.zip']],
     ['raw/*', ['empty.zip', 'fizzbuzz.zip', 'foobar.zip', 'loremipsum.zip', 'unknown.zip']],
     ['zip/*', ['fizzbuzz.zip', 'foobar.zip', 'loremipsum.zip', 'unknown.zip']],
-  ])('should copy, zip, and test %s', async (inputGlob, expectedWrittenPaths) => {
+  ])('should copy, zip, and test: %s', async (inputGlob, expectedWrittenPaths) => {
     await copyFixturesToTemp(async (inputTemp, outputTemp) => {
       // Make sure we started with some input ROMs
       const inputFiles = fsPoly.walkSync(inputTemp);
@@ -415,7 +415,7 @@ describe('raw', () => {
     ['rar/*', ['fizzbuzz.nes', 'foobar.lnx', 'loremipsum.rom', 'unknown.rom']],
     ['raw/*', ['empty.rom', 'fizzbuzz.nes', 'foobar.lnx', 'loremipsum.rom', 'unknown.rom']],
     ['zip/*', ['fizzbuzz.nes', 'foobar.lnx', 'loremipsum.rom', 'unknown.rom']],
-  ])('should copy and test %s', async (inputGlob, expectedWrittenPaths) => {
+  ])('should copy and test: %s', async (inputGlob, expectedWrittenPaths) => {
     await copyFixturesToTemp(async (inputTemp, outputTemp) => {
       // Make sure we started with some input ROMs
       const inputFiles = fsPoly.walkSync(inputTemp);
