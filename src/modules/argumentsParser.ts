@@ -96,7 +96,7 @@ export default class ArgumentsParser {
         group: groupInputOutputPaths,
         alias: 'i',
         // TODO(cemmer): add a warning when input and output directories are the same, but also
-        // have a "yes" flag
+        //  have a "yes" flag
         description: 'Path(s) to ROM files or archives, these files will not be modified',
         demandOption: true,
         type: 'array',

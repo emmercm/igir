@@ -43,7 +43,14 @@ export default class ROMWriter {
       return output;
     }
 
-    // TODO(cemmer): different symbol if shouldn't write?
+    // Return early if we shouldn't write (are only reporting)
+    if (!this.options.shouldWrite()) {
+      return new Map(
+        [...parentsToCandidates.entries()]
+          .map(([parent]) => [parent, []]),
+      );
+    }
+
     await this.progressBar.setSymbol(Symbols.WRITING);
     await this.progressBar.reset(parentsToCandidates.size);
 
@@ -55,8 +62,6 @@ export default class ROMWriter {
         [, [parent, releaseCandidates]],
         callback: AsyncResultCallback<[Parent, File[]], Error>,
       ) => {
-        // TODO(cemmer): this tends to lock so one DAT processes at a time, makes DATS with no true
-        //  candidates look like they're queued for real writes
         await ROMWriter.semaphore.runExclusive(async () => {
           await this.progressBar.increment();
 
@@ -80,11 +85,6 @@ export default class ROMWriter {
     dat: DAT,
     releaseCandidate: ReleaseCandidate,
   ): Promise<File[]> {
-    if (!this.options.shouldWrite()) {
-      await this.progressBar.logDebug(`${dat.getName()} | ${releaseCandidate.getName()}: not writing`);
-      return [];
-    }
-
     const inputToOutput = await this.buildInputToOutput(dat, releaseCandidate);
 
     // Determine if a write is needed based on the output not equaling the input
@@ -258,8 +258,7 @@ export default class ROMWriter {
 
     /* eslint-disable no-await-in-loop */
     for (let i = 0; i < inputToOutputEntries.length; i += 1) {
-      const inputRomFile = inputToOutputEntries[i][0];
-      const outputRomFile = inputToOutputEntries[i][1];
+      const [inputRomFile, outputRomFile] = inputToOutputEntries[i];
       await this.writeRawSingle(inputRomFile, outputRomFile);
       writtenRomFiles.push(outputRomFile);
     }

@@ -31,7 +31,12 @@ export default class CandidateFilter {
       return output;
     }
 
-    // TODO(cemmer): return early if there are no candidates to filter
+    // Return early if there aren't any candidates
+    const totalReleaseCandidates = [...parentsToCandidates.values()]
+      .reduce((sum, rcs) => sum + rcs.length, 0);
+    if (!totalReleaseCandidates) {
+      return output;
+    }
 
     await this.progressBar.setSymbol(Symbols.FILTERING);
     await this.progressBar.reset(parentsToCandidates.size);
