@@ -12,15 +12,28 @@ process.on('SIGINT', () => {
   });
 });
 
+function scanUpPathForFile(filePath: string, fileName: string): string | undefined {
+  const fullPath = path.join(filePath, fileName);
+  if (fs.existsSync(fullPath)) {
+    return fullPath;
+  }
+
+  const parentPath = path.dirname(filePath);
+  if (parentPath !== filePath) {
+    return scanUpPathForFile(path.dirname(filePath), fileName);
+  }
+
+  return undefined;
+}
+
 export default class Constants {
   static readonly COMMAND_NAME = 'igir';
 
   static readonly COMMAND_VERSION = JSON.parse(
-    fs.readFileSync(path.join(
+    fs.readFileSync(scanUpPathForFile(
       url.fileURLToPath(new URL('.', import.meta.url)),
-      '..',
       'package.json',
-    )).toString(),
+    ) as string).toString(),
   ).version;
 
   static readonly GLOBAL_TEMP_DIR = globalTempDir + path.sep;
