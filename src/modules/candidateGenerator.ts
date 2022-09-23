@@ -7,6 +7,7 @@ import DAT from '../types/logiqx/dat.js';
 import Game from '../types/logiqx/game.js';
 import Parent from '../types/logiqx/parent.js';
 import Release from '../types/logiqx/release.js';
+import ROM from '../types/logiqx/rom.js';
 import ReleaseCandidate from '../types/releaseCandidate.js';
 
 /**
@@ -109,42 +110,45 @@ export default class CandidateGenerator {
     // For each Game's ROM, find the matching File
     const romFiles = (await async.map(
       game.getRoms(),
-      async (rom, callback: AsyncResultCallback<File | undefined, Error>) => {
+      async (rom, callback: AsyncResultCallback<[ROM, File | undefined], Error>) => {
         const romFile = (await rom.toFile().getHashCodes())
           .map((hashCode) => hashCodeToInputFiles.get(hashCode))
           .filter((file) => file)[0];
-        callback(null, romFile);
+        callback(null, [rom, romFile]);
       },
-    )).filter((file) => file) as File[];
+    ));
+
+    const foundRomFiles = romFiles
+      .map(([, file]) => file)
+      .filter((file) => file) as File[];
+    const missingRoms = romFiles
+      .filter(([, file]) => !file)
+      .map(([rom]) => rom);
 
     // Ignore the Game if not every File is present
-    const missingRomFiles = game.getRoms().length - romFiles.length;
+    const missingRomFiles = game.getRoms().length - foundRomFiles.length;
     if (missingRomFiles > 0) {
-      await this.logMissingRomFiles(game, release, romFiles);
+      await this.logMissingRomFiles(game, release, missingRoms);
       return undefined;
     }
 
-    return new ReleaseCandidate(game, release, game.getRoms(), romFiles);
+    return new ReleaseCandidate(game, release, game.getRoms(), foundRomFiles);
   }
 
   private async logMissingRomFiles(
     game: Game,
     release: Release | undefined,
-    existingRomFiles: File[],
+    missingRoms: ROM[],
   ): Promise<void> {
-    if (!existingRomFiles.length) {
+    if (!missingRoms.length) {
       return;
     }
 
-    const existingRomFileCrcs = await Promise.all(existingRomFiles.map((file) => file.getCrc32()));
-    const missingRomFiles = game.getRoms()
-      .filter((rom) => existingRomFileCrcs.indexOf(rom.getCrc32()) === -1);
-
-    let message = `Missing ${missingRomFiles.toLocaleString()} file${missingRomFiles.length !== 1 ? 's' : ''} for: ${game.getName()}`;
+    let message = `Missing ${missingRoms.toLocaleString()} file${missingRoms.length !== 1 ? 's' : ''} for: ${game.getName()}`;
     if (release?.getRegion()) {
       message += ` (${release?.getRegion()})`;
     }
-    missingRomFiles.forEach((rom) => {
+    missingRoms.forEach((rom) => {
       message += `\n  ${rom.getName()}`;
     });
     await this.progressBar.logWarn(message);
