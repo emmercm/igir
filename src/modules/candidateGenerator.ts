@@ -83,7 +83,7 @@ export default class CandidateGenerator {
   private static async indexFilesByHashCode(files: File[]): Promise<Map<string, File>> {
     return files.reduce(async (accPromise, file) => {
       const acc = await accPromise;
-      (await file.getHashCodes())
+      (await file.hashCodes())
         .forEach((hashCode) => this.addToIndex(acc, hashCode, file));
       return acc;
     }, Promise.resolve(new Map<string, File>()));
@@ -111,9 +111,7 @@ export default class CandidateGenerator {
     const romFiles = (await async.map(
       game.getRoms(),
       async (rom, callback: AsyncResultCallback<[ROM, File | undefined], Error>) => {
-        const romFile = (await rom.toFile().getHashCodes())
-          .map((hashCode) => hashCodeToInputFiles.get(hashCode))
-          .filter((file) => file)[0];
+        const romFile = hashCodeToInputFiles.get(rom.hashCode());
         callback(null, [rom, romFile]);
       },
     ));

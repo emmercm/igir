@@ -86,19 +86,11 @@ export default class ReleaseCandidate {
     return this.roms;
   }
 
-  async indexRomsByHashCode(): Promise<Map<string, ROM>> {
-    const map = new Map<string, ROM>();
-
-    await Promise.all(
-      this.getRoms().map(async (rom) => {
-        const hashCodes = await rom.toFile().getHashCodes();
-        hashCodes.forEach((hashCode) => {
-          map.set(hashCode, rom);
-        });
-      }),
-    );
-
-    return map;
+  indexRomsByHashCode(): Map<string, ROM> {
+    return this.getRoms().reduce((acc, rom) => {
+      acc.set(rom.hashCode(), rom);
+      return acc;
+    }, new Map<string, ROM>());
   }
 
   getFiles(): File[] {

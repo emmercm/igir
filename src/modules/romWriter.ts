@@ -110,13 +110,13 @@ export default class ROMWriter {
     dat: DAT,
     releaseCandidate: ReleaseCandidate,
   ): Promise<Map<File, File>> {
-    const hashCodeToRoms = await releaseCandidate.indexRomsByHashCode();
+    const hashCodeToRoms = releaseCandidate.indexRomsByHashCode();
 
     return releaseCandidate.getFiles().reduce(async (accPromise, inputFile) => {
       const acc = await accPromise;
 
       // Find the release candidate's File, find the matching ROM
-      const rom = (await inputFile.getHashCodes())
+      const rom = (await inputFile.hashCodes())
         .map((hashCode) => hashCodeToRoms.get(hashCode))
         .filter((r) => r)[0] as ROM;
 

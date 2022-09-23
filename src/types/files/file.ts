@@ -144,10 +144,14 @@ export default class File {
     return this.filePath;
   }
 
-  async getHashCodes(): Promise<string[]> {
+  static hashCode(crc: string, size: number): string {
+    return `${crc}|${size}`;
+  }
+
+  async hashCodes(): Promise<string[]> {
     return [
-      `${await this.getCrc32()}|${this.getSize()}`,
-      `${await this.getCrc32WithoutHeader()}|${this.getSizeWithoutHeader()}`,
+      File.hashCode(await this.getCrc32(), this.getSize()),
+      File.hashCode(await this.getCrc32WithoutHeader(), this.getSizeWithoutHeader()),
     ].filter((hash, idx, hashes) => hashes.indexOf(hash) === idx);
   }
 
