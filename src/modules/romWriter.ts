@@ -197,7 +197,7 @@ export default class ROMWriter {
     }
 
     if (this.options.shouldTest()) {
-      if (await ROMWriter.testZipContents(outputZipArchive, inputToOutputZipEntries)) {
+      if (!await ROMWriter.testZipContents(outputZipArchive, inputToOutputZipEntries)) {
         await this.progressBar.logError(`Written zip is invalid: ${outputZipArchive.getFilePath()}`);
         return [new File(outputZipArchive.getFilePath())];
       }
