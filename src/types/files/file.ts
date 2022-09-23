@@ -40,6 +40,10 @@ export default class File {
     return this.size;
   }
 
+  getSizeWithoutHeader(): number {
+    return this.size - (this.fileHeader?.dataOffsetBytes || 0);
+  }
+
   getExtractedFilePath(): string {
     return this.filePath;
   }
@@ -68,10 +72,8 @@ export default class File {
 
   private async calculateCrc32(processHeader: boolean): Promise<string> {
     return this.extractToFile(async (localFile) => {
-      // If we're hashing a file with a header, make sure the file actually has the header magic
-      // string before excluding it
       let start = 0;
-      if (processHeader && this.fileHeader && await this.fileHeader.fileHasHeader(localFile)) {
+      if (processHeader && this.fileHeader) {
         start = this.fileHeader.dataOffsetBytes;
       }
 
@@ -116,6 +118,14 @@ export default class File {
   }
 
   async withFileHeader(fileHeader: FileHeader): Promise<File> {
+    // Make sure the file actually has the header magic string
+    const hasHeader = await this.extractToStream(
+      async (stream) => fileHeader.fileHasHeader(stream),
+    );
+    if (!hasHeader) {
+      return this;
+    }
+
     return new File(
       this.filePath,
       this.size,
@@ -132,6 +142,17 @@ export default class File {
 
   toString(): string {
     return this.filePath;
+  }
+
+  static hashCode(crc: string, size: number): string {
+    return `${crc}|${size}`;
+  }
+
+  async hashCodes(): Promise<string[]> {
+    return [
+      File.hashCode(await this.getCrc32(), this.getSize()),
+      File.hashCode(await this.getCrc32WithoutHeader(), this.getSizeWithoutHeader()),
+    ].filter((hash, idx, hashes) => hashes.indexOf(hash) === idx);
   }
 
   async equals(other: File): Promise<boolean> {

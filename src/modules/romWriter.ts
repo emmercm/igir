@@ -106,17 +106,19 @@ export default class ROMWriter {
     return [...inputToOutput.values()];
   }
 
-  private buildInputToOutput(
+  private async buildInputToOutput(
     dat: DAT,
     releaseCandidate: ReleaseCandidate,
   ): Promise<Map<File, File>> {
-    const crcToRoms = releaseCandidate.getRomsByCrc32();
+    const hashCodeToRoms = releaseCandidate.indexRomsByHashCode();
 
     return releaseCandidate.getFiles().reduce(async (accPromise, inputFile) => {
-      // TODO(cemmer): use filesize combined with CRC for indexing
       const acc = await accPromise;
-      const rom = crcToRoms.get(await inputFile.getCrc32())
-               || crcToRoms.get(await inputFile.getCrc32WithoutHeader()) as ROM;
+
+      // Find the release candidate's File, find the matching ROM
+      const rom = (await inputFile.hashCodes())
+        .map((hashCode) => hashCodeToRoms.get(hashCode))
+        .filter((r) => r)[0] as ROM;
 
       let outputFile: File;
       if (this.options.shouldZip(rom.getName())) {

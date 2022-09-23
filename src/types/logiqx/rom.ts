@@ -59,4 +59,14 @@ export default class ROM {
   toFile(): File {
     return new File(this.getName(), this.getSize(), this.getCrc32());
   }
+
+  /** *************************
+   *                          *
+   *     Pseudo Built-Ins     *
+   *                          *
+   ************************** */
+
+  hashCode(): string {
+    return File.hashCode(this.getCrc32(), this.getSize());
+  }
 }

@@ -27,13 +27,15 @@ export default class DATStatus {
   constructor(dat: DAT, parentsToReleaseCandidates: Map<Parent, ReleaseCandidate[]>) {
     this.dat = dat;
 
-    const crc32sToRoms = DATStatus.indexRomsByCrc(parentsToReleaseCandidates);
+    const releaseCandidates = [...parentsToReleaseCandidates.values()]
+      .flatMap((rc) => rc);
+    const hashCodesToRoms = DATStatus.indexRomsHashCode(releaseCandidates);
 
     dat.getParents().forEach((parent) => {
       parent.getGames().forEach((game) => {
         DATStatus.pushGameIntoMap(this.allRoms, game);
 
-        const missingRoms = game.getRoms().filter((rom) => !crc32sToRoms.has(rom.getCrc32()));
+        const missingRoms = game.getRoms().filter((rom) => !hashCodesToRoms.has(rom.hashCode()));
         if (missingRoms.length > 0) {
           DATStatus.pushGameIntoMap(this.missingRoms, game);
         }
@@ -41,16 +43,14 @@ export default class DATStatus {
     });
   }
 
-  private static indexRomsByCrc(
-    parentsToReleaseCandidates: Map<Parent, ReleaseCandidate[]>,
+  private static indexRomsHashCode(
+    releaseCandidates: ReleaseCandidate[],
   ): Map<string, ROM> {
-    return [...parentsToReleaseCandidates.values()]
-      .flatMap((releaseCandidates) => releaseCandidates)
-      .flatMap((releaseCandidate) => releaseCandidate.getRoms())
-      .reduce((map, rom) => {
-        map.set(rom.getCrc32(), rom);
-        return map;
-      }, new Map<string, ROM>());
+    return releaseCandidates.reduce((acc, releaseCandidate) => {
+      [...releaseCandidate.indexRomsByHashCode().entries()]
+        .forEach(([key, val]) => acc.set(key, val));
+      return acc;
+    }, new Map<string, ROM>());
   }
 
   private static pushGameIntoMap(map: Map<ROMType, string[]>, game: Game): void {
@@ -109,6 +109,6 @@ export default class DATStatus {
       options.getOnlyBios() || (!options.getNoBios() && !options.getOnlyRetail())
         ? ROMType.BIOS : undefined,
       options.getOnlyRetail() || (!options.getOnlyBios()) ? ROMType.RETAIL : undefined,
-    ].filter((val) => val) as ROMType[];
+    ].filter((romType) => romType) as ROMType[];
   }
 }
