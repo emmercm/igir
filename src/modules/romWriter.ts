@@ -174,42 +174,36 @@ export default class ROMWriter {
     }
 
     // Prep the single output file
-    const outputZipArchive = [...inputToOutputZipEntries.values()][0].getArchive();
+    const outputZip = [...inputToOutputZipEntries.values()][0].getArchive();
 
-    if (await fsPoly.exists(outputZipArchive.getFilePath())) {
+    if (await fsPoly.exists(outputZip.getFilePath())) {
       // If the output file already exists and we're not overwriting, do nothing
       if (!this.options.getOverwrite()) {
-        await this.progressBar.logDebug(`${outputZipArchive.getFilePath()}: file exists, not overwriting`);
-        return [new File(outputZipArchive.getFilePath())];
+        await this.progressBar.logDebug(`${outputZip.getFilePath()}: file exists, not overwriting`);
+        return [new File(outputZip.getFilePath())];
       }
 
       // If the zip is already what we're expecting, do nothing
       // TODO(cemmer): change this to a condition around the write, let it still delete moved files
-      if (await ROMWriter.testZipContents(outputZipArchive, inputToOutputZipEntries)) {
-        await this.progressBar.logDebug(`${outputZipArchive.getFilePath()}: same file, skipping`);
-        return [new File(outputZipArchive.getFilePath())];
+      if (await ROMWriter.testZipContents(outputZip, inputToOutputZipEntries)) {
+        await this.progressBar.logDebug(`${outputZip.getFilePath()}: same file, skipping`);
+        return [new File(outputZip.getFilePath())];
       }
     }
 
-    try {
-      await this.ensureOutputDirExists(outputZipArchive.getFilePath());
-      await outputZipArchive.archiveEntries(inputToOutputZipEntries);
-    } catch (e) {
-      await this.progressBar.logError(`Failed to create zip ${outputZipArchive.getFilePath()} : ${e}`);
-      return [new File(outputZipArchive.getFilePath())];
-    }
+    await this.writeZipFile(outputZip, inputToOutputZipEntries);
 
     if (this.options.shouldTest()) {
-      if (!await ROMWriter.testZipContents(outputZipArchive, inputToOutputZipEntries)) {
-        await this.progressBar.logError(`Written zip is invalid: ${outputZipArchive.getFilePath()}`);
-        return [new File(outputZipArchive.getFilePath())];
+      if (!await ROMWriter.testZipContents(outputZip, inputToOutputZipEntries)) {
+        await this.progressBar.logError(`Written zip is invalid: ${outputZip.getFilePath()}`);
+        return [new File(outputZip.getFilePath())];
       }
     }
 
-    await this.deleteMovedZipEntries(outputZipArchive, [...inputToOutputFiles.keys()]);
+    await this.deleteMovedZipEntries(outputZip, [...inputToOutputFiles.keys()]);
 
     // Return the single archive written
-    return [new File(outputZipArchive.getFilePath())];
+    return [new File(outputZip.getFilePath())];
   }
 
   private static async testZipContents(
@@ -250,6 +244,26 @@ export default class ROMWriter {
     }
 
     return true;
+  }
+
+  private async writeZipFile(
+    outputZip: Zip,
+    inputToOutputZipEntries: Map<File, ArchiveEntry<Zip>>,
+  ): Promise<void> {
+    // If the zip is already what we're expecting, do nothing
+    if (await fsPoly.exists(outputZip.getFilePath())
+      && await ROMWriter.testZipContents(outputZip, inputToOutputZipEntries)
+    ) {
+      await this.progressBar.logDebug(`${outputZip.getFilePath()}: archive already matches expected entries, skipping`);
+      return;
+    }
+
+    try {
+      await this.ensureOutputDirExists(outputZip.getFilePath());
+      await outputZip.archiveEntries(inputToOutputZipEntries);
+    } catch (e) {
+      await this.progressBar.logError(`Failed to create zip ${outputZip.getFilePath()} : ${e}`);
+    }
   }
 
   private async deleteMovedZipEntries(
