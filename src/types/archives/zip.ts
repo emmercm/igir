@@ -1,4 +1,4 @@
-import fs from 'fs';
+import fs, { promises as fsPromises } from 'fs';
 import path from 'path';
 import { Readable } from 'stream';
 import { clearInterval } from 'timers';
@@ -56,6 +56,11 @@ export default class Zip extends Archive {
     callback: (localFile: string) => (T | Promise<T>),
   ): Promise<T> {
     const localFile = path.join(tempDir, archiveEntry.getEntryPath());
+
+    const localDir = path.dirname(localFile);
+    if (!await fsPoly.exists(localDir)) {
+      await fsPromises.mkdir(localDir);
+    }
 
     return this.extractEntryToStream(
       archiveEntry,
