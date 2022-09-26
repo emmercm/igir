@@ -44,18 +44,18 @@ export default class OutputCleaner {
     await this.progressBar.setSymbol(Symbols.RECYCLING);
     await this.progressBar.reset(filesToClean.length);
 
-    // try {
-    await trash(filesToClean);
-    // } catch (e) {
-    // await this.progressBar.logError(`Failed to clean unmatched files in ${outputDir} : ${e}`);
-    // }
+    try {
+      await trash(filesToClean);
+    } catch (e) {
+      await this.progressBar.logError(`Failed to clean unmatched files in ${outputDir} : ${e}`);
+    }
 
-    // try {
-    const emptyDirs = await OutputCleaner.getEmptyDirs(outputDir);
-    await trash(emptyDirs);
-    // } catch (e) {
-    // await this.progressBar.logError(`Failed to clean empty directories in ${outputDir} : ${e}`);
-    // }
+    try {
+      const emptyDirs = await OutputCleaner.getEmptyDirs(outputDir);
+      await trash(emptyDirs);
+    } catch (e) {
+      await this.progressBar.logError(`Failed to clean empty directories in ${outputDir} : ${e}`);
+    }
 
     return filesToClean.length;
   }
