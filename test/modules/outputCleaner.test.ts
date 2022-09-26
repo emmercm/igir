@@ -73,5 +73,5 @@ it('should delete some if some matched', async () => {
 it('should delete everything if all unmatched', async () => {
   await expect(runOutputCleaner([
     'non-existent file',
-  ])).resolves.toHaveLength(0);
+  ])).resolves.toEqual([]);
 });

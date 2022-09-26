@@ -26,9 +26,9 @@ it('should return empty list on no results', async () => {
 });
 
 it('should not throw on bad archives', async () => {
-  await expect(createRomScanner(['test/fixtures/roms/**/invalid.zip']).scan()).resolves.toHaveLength(0);
-  await expect(createRomScanner(['test/fixtures/roms/**/invalid.rar']).scan()).resolves.toHaveLength(0);
-  await expect(createRomScanner(['test/fixtures/roms/**/invalid.7z']).scan()).resolves.toHaveLength(0);
+  await expect(createRomScanner(['test/fixtures/roms/**/invalid.zip']).scan()).resolves.toEqual([]);
+  await expect(createRomScanner(['test/fixtures/roms/**/invalid.rar']).scan()).resolves.toEqual([]);
+  await expect(createRomScanner(['test/fixtures/roms/**/invalid.7z']).scan()).resolves.toEqual([]);
 });
 
 describe('multiple files', () => {

@@ -26,17 +26,17 @@ it('should return empty list on no results', async () => {
 });
 
 it('should not throw on empty files', async () => {
-  await expect(createDatScanner(['test/fixtures/**/empty.*']).scan()).resolves.toHaveLength(0);
-  await expect(createDatScanner(['test/fixtures/{dats,roms}/empty.*']).scan()).resolves.toHaveLength(0);
+  await expect(createDatScanner(['test/fixtures/**/empty.*']).scan()).resolves.toEqual([]);
+  await expect(createDatScanner(['test/fixtures/{dats,roms}/empty.*']).scan()).resolves.toEqual([]);
 });
 
 it('should not throw on non-DATs', async () => {
-  await expect(createDatScanner(['test/fixtures/**/invalid.*']).scan()).resolves.toHaveLength(0);
-  await expect(createDatScanner(['test/fixtures/roms']).scan()).resolves.toHaveLength(0);
-  await expect(createDatScanner(['test/fixtures/roms/*']).scan()).resolves.toHaveLength(0);
-  await expect(createDatScanner(['test/fixtures/roms/*.rom']).scan()).resolves.toHaveLength(0);
-  await expect(createDatScanner(['test/fixtures/roms/invalid.*']).scan()).resolves.toHaveLength(0);
-  await expect(createDatScanner(['test/fixtures/roms/invalid.*', 'test/fixtures/roms/invalid.*']).scan()).resolves.toHaveLength(0);
+  await expect(createDatScanner(['test/fixtures/**/invalid.*']).scan()).resolves.toEqual([]);
+  await expect(createDatScanner(['test/fixtures/roms']).scan()).resolves.toEqual([]);
+  await expect(createDatScanner(['test/fixtures/roms/*']).scan()).resolves.toEqual([]);
+  await expect(createDatScanner(['test/fixtures/roms/*.rom']).scan()).resolves.toEqual([]);
+  await expect(createDatScanner(['test/fixtures/roms/invalid.*']).scan()).resolves.toEqual([]);
+  await expect(createDatScanner(['test/fixtures/roms/invalid.*', 'test/fixtures/roms/invalid.*']).scan()).resolves.toEqual([]);
 });
 
 it('should scan multiple files', async () => {
