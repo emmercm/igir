@@ -12,6 +12,7 @@ export default class Rar extends Archive {
       filepath: this.getFilePath(),
     });
     return [...rar.getFileList().fileHeaders]
+      .filter((fileHeader) => !fileHeader.flags.directory)
       .map((fileHeader) => new ArchiveEntry(
         this,
         fileHeader.name,
