@@ -126,9 +126,10 @@ export default class CandidateGenerator {
       .map(([rom]) => rom);
 
     // Ignore the Game if not every File is present
-    const missingRomFiles = game.getRoms().length - foundRomFiles.length;
-    if (missingRomFiles > 0) {
-      await this.logMissingRomFiles(game, release, missingRoms);
+    if (missingRoms.length > 0) {
+      if (foundRomFiles.length > 0) {
+        await this.logMissingRomFiles(game, release, missingRoms);
+      }
       return undefined;
     }
 
@@ -140,11 +141,7 @@ export default class CandidateGenerator {
     release: Release | undefined,
     missingRoms: ROM[],
   ): Promise<void> {
-    if (!missingRoms.length) {
-      return;
-    }
-
-    let message = `Missing ${missingRoms.toLocaleString()} file${missingRoms.length !== 1 ? 's' : ''} for: ${game.getName()}`;
+    let message = `Missing ${missingRoms.length.toLocaleString()} file${missingRoms.length !== 1 ? 's' : ''} for: ${game.getName()}`;
     if (release?.getRegion()) {
       message += ` (${release?.getRegion()})`;
     }
