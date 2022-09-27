@@ -55,7 +55,7 @@ export default class Zip extends Archive {
     tempDir: string,
     callback: (localFile: string) => (T | Promise<T>),
   ): Promise<T> {
-    const localFile = path.join(tempDir, archiveEntry.getEntryPath());
+    const localFile = path.join(tempDir, archiveEntry.getEntryPath().replace(/[\\/]/g, '/'));
 
     const localDir = path.dirname(localFile);
     if (!await fsPoly.exists(localDir)) {
@@ -94,7 +94,7 @@ export default class Zip extends Archive {
         }
 
         zipFile.on('entry', (entry: Entry) => {
-          if (entry.fileName === archiveEntry.getEntryPath()) {
+          if (entry.fileName === archiveEntry.getEntryPath().replace(/[\\/]/g, '/')) {
             // Found the file we're looking for
             zipFile.openReadStream(entry, async (streamErr, stream) => {
               if (streamErr) {

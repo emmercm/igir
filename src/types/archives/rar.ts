@@ -26,7 +26,7 @@ export default class Rar extends Archive {
     tempDir: string,
     callback: (localFile: string) => (T | Promise<T>),
   ): Promise<T> {
-    const localFile = path.join(tempDir, archiveEntry.getEntryPath() as string);
+    const localFile = path.join(tempDir, archiveEntry.getEntryPath().replace(/[\\/]/g, '/'));
 
     const rar = await unrar.createExtractorFromFile({
       filepath: this.getFilePath(),

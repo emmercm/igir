@@ -1,4 +1,5 @@
 import fs from 'fs';
+import path from 'path';
 
 import Constants from '../../../src/constants.js';
 import ROMScanner from '../../../src/modules/romScanner.js';
@@ -11,8 +12,8 @@ import ProgressBarFake from '../../console/progressBarFake.js';
 
 describe('getFilePath', () => {
   it('should return the constructor value', () => {
-    const file = new File('/some/path', 0, '00000000');
-    expect(file.getFilePath()).toEqual('/some/path');
+    const file = new File(path.join('some', 'path'), 0, '00000000');
+    expect(file.getFilePath()).toEqual(path.join('some', 'path'));
   });
 });
 
@@ -24,7 +25,7 @@ describe('getCrc32', () => {
     ['2002', '00002002'],
     ['00000000', '00000000'],
   ])('should return the constructor value: %s', async (crc, expectedCrc) => {
-    const file = new File('/some/path', 0, crc);
+    const file = new File(path.join('some', 'path'), 0, crc);
     await expect(file.getCrc32()).resolves.toEqual(expectedCrc);
   });
 

@@ -1,4 +1,5 @@
 import fs from 'fs';
+import path from 'path';
 
 import Constants from '../../../src/constants.js';
 import ROMScanner from '../../../src/modules/romScanner.js';
@@ -15,7 +16,7 @@ import ProgressBarFake from '../../console/progressBarFake.js';
 describe('getEntryPath', () => {
   test.each([
     'something.rom',
-    'foo/bar.rom',
+    path.join('foo', 'bar.rom'),
   ])('should return the constructor value: %s', (archiveEntryPath) => {
     const archive = ArchiveFactory.archiveFrom('/some/archive.zip');
     const archiveEntry = new ArchiveEntry(archive, archiveEntryPath, 0);
