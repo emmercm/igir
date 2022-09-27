@@ -58,22 +58,22 @@ it('should delete nothing if all match', async () => {
   expect(filesRemaining).toEqual(existingFiles);
 });
 
-// it('should delete some if some matched', async () => {
-//   const filesRemaining = await runOutputCleaner([
-//     path.join('7z', 'empty.7z'),
-//     path.join('raw', 'fizzbuzz.nes'),
-//     path.join('zip', 'foobar.zip'),
-//     'non-existent file',
-//   ]);
-//   expect(filesRemaining).toEqual([
-//     path.join('7z', 'empty.7z'),
-//     path.join('raw', 'fizzbuzz.nes'),
-//     path.join('zip', 'foobar.zip'),
-//   ]);
-// });
-
-it('should delete everything if all unmatched', async () => {
-  await expect(runOutputCleaner([
+it('should delete some if some matched', async () => {
+  const filesRemaining = await runOutputCleaner([
+    path.join('7z', 'empty.7z'),
+    path.join('raw', 'fizzbuzz.nes'),
+    path.join('zip', 'foobar.zip'),
     'non-existent file',
-  ])).resolves.toEqual([]);
+  ]);
+  expect(filesRemaining).toEqual([
+    path.join('7z', 'empty.7z'),
+    path.join('raw', 'fizzbuzz.nes'),
+    path.join('zip', 'foobar.zip'),
+  ]);
 });
+
+// it('should delete everything if all unmatched', async () => {
+//   await expect(runOutputCleaner([
+//     'non-existent file',
+//   ])).resolves.toEqual([]);
+// });
