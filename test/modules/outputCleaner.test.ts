@@ -26,7 +26,6 @@ async function runOutputCleaner(writtenFilePathsToExclude: string[]): Promise<st
   await new OutputCleaner(
     new Options({
       commands: ['move', 'clean'],
-      input: [tempDir],
       output: tempDir,
     }),
     new ProgressBarFake(),
