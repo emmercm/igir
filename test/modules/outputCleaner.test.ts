@@ -19,11 +19,8 @@ async function runOutputCleaner(writtenFilePathsToExclude: string[]): Promise<st
 
   const writtenRomFilesToExclude = writtenFilePathsToExclude
     .map((filePath) => new File(path.join(tempDir, filePath), 0, '00000000'));
-  console.log(writtenRomFilesToExclude);
 
   const before = fsPoly.walkSync(tempDir);
-  console.log(tempDir);
-  console.log(before);
   expect(before.length).toBeGreaterThan(0);
 
   await new OutputCleaner(
@@ -34,7 +31,6 @@ async function runOutputCleaner(writtenFilePathsToExclude: string[]): Promise<st
     new ProgressBarFake(),
   ).clean(writtenRomFilesToExclude);
   const after = fsPoly.walkSync(tempDir);
-  console.log(after);
 
   fsPoly.rmSync(tempDir, { recursive: true });
 
@@ -59,19 +55,19 @@ it('should delete nothing if all match', async () => {
   expect(filesRemaining).toEqual(existingFiles);
 });
 
-// it('should delete some if some matched', async () => {
-//   const filesRemaining = await runOutputCleaner([
-//     path.join('7z', 'empty.7z'),
-//     path.join('raw', 'fizzbuzz.nes'),
-//     path.join('zip', 'foobar.zip'),
-//     'non-existent file',
-//   ]);
-//   expect(filesRemaining).toEqual([
-//     path.join('7z', 'empty.7z'),
-//     path.join('raw', 'fizzbuzz.nes'),
-//     path.join('zip', 'foobar.zip'),
-//   ]);
-// });
+it('should delete some if some matched', async () => {
+  const filesRemaining = await runOutputCleaner([
+    path.join('7z', 'empty.7z'),
+    path.join('raw', 'fizzbuzz.nes'),
+    path.join('zip', 'foobar.zip'),
+    'non-existent file',
+  ]);
+  expect(filesRemaining).toEqual([
+    path.join('7z', 'empty.7z'),
+    path.join('raw', 'fizzbuzz.nes'),
+    path.join('zip', 'foobar.zip'),
+  ]);
+});
 
 it('should delete everything if all unmatched', async () => {
   await expect(runOutputCleaner([
