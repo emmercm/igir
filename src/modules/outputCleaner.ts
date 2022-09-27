@@ -24,20 +24,24 @@ export default class OutputCleaner {
   }
 
   async clean(writtenFilesToExclude: File[]): Promise<number> {
+    await this.progressBar.logInfo('Cleaning files in output');
+
     // If nothing was written, then don't clean anything
-    const outputFilePathsToExclude = writtenFilesToExclude
-      .map((file) => file.getFilePath());
-    if (!outputFilePathsToExclude.length) {
+    if (!writtenFilesToExclude.length) {
+      await this.progressBar.logInfo('No files were written, not cleaning output');
       return 0;
     }
 
     const outputDir = this.options.getOutput();
+    const outputFilePathsToExclude = writtenFilesToExclude
+      .map((file) => file.getFilePath());
 
     // If there is nothing to clean, then don't do anything
     const filesToClean = (await fg(`${outputDir}/**`.replace(/\\/g, '/')))
       .map((pathLike) => pathLike.replace(/[\\/]/g, path.sep))
       .filter((file) => outputFilePathsToExclude.indexOf(file) === -1);
     if (!filesToClean.length) {
+      await this.progressBar.logInfo('No files to clean');
       return 0;
     }
 

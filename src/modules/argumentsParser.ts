@@ -6,6 +6,11 @@ import Constants from '../constants.js';
 import Options from '../types/options.js';
 import ReleaseCandidate from '../types/releaseCandidate.js';
 
+/**
+ * Parse a CLI argv string[] into {@link Options}.
+ *
+ * This class will not be run concurrently with any other class.
+ */
 export default class ArgumentsParser {
   private readonly logger: Logger;
 

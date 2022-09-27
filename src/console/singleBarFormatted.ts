@@ -43,6 +43,7 @@ export default class SingleBarFormatted {
   }
 
   private calculateEta(remaining: number): void {
+    // TODO(cemmer): find a better way to calculate rate
     // cli-progress/lib/ETA.calculate()
     const currentBufferSize = this.valueBuffer.length;
     const buffer = Math.min(SingleBarFormatted.ETA_BUFFER_LENGTH, currentBufferSize);

@@ -6,7 +6,12 @@ import File from '../types/files/file.js';
 import FileHeader from '../types/files/fileHeader.js';
 import Options from '../types/options.js';
 
-// TODO(cemmer): put debug statements in here
+/**
+ * For every input ROM file found, attempt to find a matching header and resolve its
+ * header-less checksum.
+ *
+ * This class will not be run concurrently with any other class.
+ */
 export default class HeaderProcessor {
   private readonly options: Options;
 
@@ -29,14 +34,10 @@ export default class HeaderProcessor {
       async (inputFile, callback: AsyncResultCallback<File, Error>) => {
         await this.progressBar.increment();
 
-        // Don't do anything if the file already has a header
-        if (inputFile.getFileHeader()) {
-          return callback(null, inputFile);
-        }
-
         // Can get FileHeader from extension, use that
         const headerForExtension = FileHeader.getForFilename(inputFile.getExtractedFilePath());
         if (headerForExtension) {
+          await this.progressBar.logDebug(`${inputFile.toString()}: found header by extension: ${headerForExtension}`);
           const fileWithHeader = await (
             await inputFile.withFileHeader(headerForExtension)
           ).resolve();
@@ -48,6 +49,7 @@ export default class HeaderProcessor {
           const headerForFile = await inputFile
             .extractToStream((stream) => FileHeader.getForFileStream(stream));
           if (headerForFile) {
+            await this.progressBar.logDebug(`${inputFile.toString()}: found header by contents: ${headerForExtension}`);
             const fileWithHeader = await (
               await inputFile.withFileHeader(headerForFile)
             ).resolve();
@@ -57,6 +59,7 @@ export default class HeaderProcessor {
         }
 
         // Should not get FileHeader
+        await this.progressBar.logDebug(`${inputFile.toString()}: no header found`);
         return callback(null, inputFile);
       },
     );
