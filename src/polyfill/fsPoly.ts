@@ -32,15 +32,15 @@ export default class FsPoly {
   /**
    * Some CI such as GitHub Actions give `EACCES: permission denied` on os.tmpdir()
    */
-  static mkdtempSync(parentDir = os.tmpdir()): string {
+  static mkdtempSync(prefix = os.tmpdir()): string {
     /**
      * mkdtempSync takes a string prefix rather than a file path, so we need to make sure the
      * prefix ends with the path separator in order for it to become a parent directory.
      */
-    let prefix = parentDir;
+    let prefixProcessed = prefix.replace(/[\\/]+$/, '');
     try {
-      if (fs.lstatSync(parentDir).isDirectory()) {
-        prefix = prefix.replace(/[\\/]+$/, '') + path.sep;
+      if (fs.lstatSync(prefixProcessed).isDirectory()) {
+        prefixProcessed += path.sep;
       }
     } catch (e) {
       // eslint-disable-line no-empty
@@ -48,7 +48,7 @@ export default class FsPoly {
 
     try {
       // Added in: v5.10.0
-      return fs.mkdtempSync(prefix);
+      return fs.mkdtempSync(prefixProcessed);
     } catch (e) {
       // Added in: v5.10.0
       return fs.mkdtempSync(path.join(process.cwd(), 'tmp') + path.sep);
