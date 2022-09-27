@@ -22,6 +22,8 @@ export default class ReportGenerator {
   }
 
   async generate(datsStatuses: DATStatus[]): Promise<void> {
+    await this.progressBar.logInfo('Generating report');
+
     const report = this.options.getOutputReport();
     const append = (message: string): void => fs.appendFileSync(report, `${message.trimEnd()}\n`);
 

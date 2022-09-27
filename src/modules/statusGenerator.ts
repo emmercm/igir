@@ -24,6 +24,8 @@ export default class StatusGenerator {
     dat: DAT,
     parentsToReleaseCandidates: Map<Parent, ReleaseCandidate[]>,
   ): Promise<DATStatus> {
+    await this.progressBar.logInfo('Generating report');
+
     const datStatus = new DATStatus(dat, parentsToReleaseCandidates);
 
     await this.progressBar.done(datStatus.toString(this.options));

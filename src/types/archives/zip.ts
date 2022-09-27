@@ -121,15 +121,25 @@ export default class Zip extends Archive {
     });
   }
 
-  // TODO(cemmer): find a better way to do this with more async/await
   async archiveEntries(inputToOutput: Map<File, ArchiveEntry<Zip>>): Promise<void> {
-    return new Promise((resolve, reject) => {
-      const zipFile = new yazl.ZipFile();
+    const zipFile = new yazl.ZipFile();
 
-      // Pipe the zip contents to disk, using an intermediate temp file because we may be trying to
-      // overwrite an input zip file
-      const tempZipFile = fsPoly.mktempSync(this.getFilePath());
-      const writeStream = fs.createWriteStream(tempZipFile);
+    // Pipe the zip contents to disk, using an intermediate temp file because we may be trying to
+    // overwrite an input zip file
+    const tempZipFile = fsPoly.mktempSync(this.getFilePath());
+    const writeStream = fs.createWriteStream(tempZipFile);
+
+    // Promise that resolves when we're done writing the zip
+    const zipClosed = new Promise((resolveClosed) => {
+      const interval = setInterval(() => {
+        if (!writeStream.writable) {
+          clearInterval(interval);
+          resolveClosed(undefined);
+        }
+      }, 10);
+    });
+
+    return new Promise<void>((resolve, reject) => {
       writeStream.on('close', () => {
         try {
           fs.renameSync(tempZipFile, this.getFilePath()); // overwrites
@@ -140,16 +150,6 @@ export default class Zip extends Archive {
       });
       writeStream.on('error', (err) => reject(err));
       zipFile.outputStream.pipe(writeStream);
-
-      // Promise that resolves when we're done writing the zip
-      const zipClosed = new Promise((resolveClosed) => {
-        const interval = setInterval(() => {
-          if (!writeStream.writable) {
-            clearInterval(interval);
-            resolveClosed(undefined);
-          }
-        }, 10);
-      });
 
       // Start writing the zip when all entries have been enqueued
       let zipEntriesQueued = 0;

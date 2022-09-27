@@ -28,6 +28,7 @@ export default class CandidateFilter {
     const output = new Map<Parent, ReleaseCandidate[]>();
 
     if (!parentsToCandidates.size) {
+      await this.progressBar.logDebug(`${dat.getName()}: No parents, so no candidates to filter`);
       return output;
     }
 
@@ -35,6 +36,7 @@ export default class CandidateFilter {
     const totalReleaseCandidates = [...parentsToCandidates.values()]
       .reduce((sum, rcs) => sum + rcs.length, 0);
     if (!totalReleaseCandidates) {
+      await this.progressBar.logDebug(`${dat.getName()}: No parent has candidates`);
       return output;
     }
 
@@ -45,11 +47,13 @@ export default class CandidateFilter {
     for (let i = 0; i < [...parentsToCandidates.entries()].length; i += 1) {
       const [parent, releaseCandidates] = [...parentsToCandidates.entries()][i];
       await this.progressBar.increment();
+      await this.progressBar.logDebug(`${dat.getName()}: Filtering ${parent.getName()}: ${releaseCandidates.length} candidates before`);
 
       const filteredReleaseCandidates = releaseCandidates
         .filter((rc) => this.preFilter(rc))
         .sort((a, b) => this.sort(a, b))
         .filter((rc, idx) => this.postFilter(idx));
+      await this.progressBar.logDebug(`${dat.getName()}: Filtering ${parent.getName()}: ${filteredReleaseCandidates.length} candidates after`);
       output.set(parent, filteredReleaseCandidates);
     }
 
