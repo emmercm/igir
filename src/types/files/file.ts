@@ -1,5 +1,6 @@
 import crc32 from 'crc/crc32';
 import fs from 'fs';
+import path from 'path';
 import { Readable } from 'stream';
 
 import Constants from '../../constants.js';
@@ -17,7 +18,7 @@ export default class File {
   private readonly fileHeader?: FileHeader;
 
   constructor(filePath: string, size?: number, crc?: string, fileHeader?: FileHeader) {
-    this.filePath = filePath;
+    this.filePath = filePath.replace(/[\\/]/g, path.sep);
 
     if (size !== undefined) {
       this.size = size;
