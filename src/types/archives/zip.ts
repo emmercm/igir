@@ -55,7 +55,7 @@ export default class Zip extends Archive {
     tempDir: string,
     callback: (localFile: string) => (T | Promise<T>),
   ): Promise<T> {
-    const localFile = path.join(tempDir, archiveEntry.getEntryPath().replace(/[\\/]/g, '/'));
+    const localFile = path.join(tempDir, archiveEntry.getEntryPath());
 
     const localDir = path.dirname(localFile);
     if (!await fsPoly.exists(localDir)) {
@@ -168,7 +168,7 @@ export default class Zip extends Archive {
       [...inputToOutput.entries()]
         .forEach(([inputFile, outputArchiveEntry]) => inputFile
           .extractToStream(async (readStream) => {
-            zipFile.addReadStream(readStream, outputArchiveEntry.getEntryPath());
+            zipFile.addReadStream(readStream, outputArchiveEntry.getEntryPath().replace(/[\\/]/g, '/'));
             zipEntriesQueued += 1;
 
             // Leave the stream open until we're done writing the zip

@@ -26,7 +26,7 @@ export default class Rar extends Archive {
     tempDir: string,
     callback: (localFile: string) => (T | Promise<T>),
   ): Promise<T> {
-    const localFile = path.join(tempDir, archiveEntry.getEntryPath().replace(/[\\/]/g, '/'));
+    const localFile = path.join(tempDir, archiveEntry.getEntryPath());
 
     const rar = await unrar.createExtractorFromFile({
       filepath: this.getFilePath(),
@@ -36,7 +36,7 @@ export default class Rar extends Archive {
     // iterated, so we have to execute this expression, but can throw away the results
     /* eslint-disable @typescript-eslint/no-unused-expressions */
     [...rar.extract({
-      files: [archiveEntry.getEntryPath()],
+      files: [archiveEntry.getEntryPath().replace(/[\\/]/g, '/')],
     }).files];
 
     return callback(localFile);
