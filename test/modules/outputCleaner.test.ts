@@ -69,9 +69,9 @@ it('should delete nothing if all match', async () => {
 //     path.join('zip', 'foobar.zip'),
 //   ]);
 // });
-//
-// it('should delete everything if all unmatched', async () => {
-//   await expect(runOutputCleaner([
-//     'non-existent file',
-//   ])).resolves.toEqual([]);
-// });
+
+it('should delete everything if all unmatched', async () => {
+  await expect(runOutputCleaner([
+    'non-existent file',
+  ])).resolves.toEqual([]);
+});
