@@ -75,7 +75,7 @@ export default class OutputCleaner {
       .filter((basename) => isNotJunk(basename))
       .map((basename) => path.join(dirPath, basename));
 
-    // Categories the subdirectories and files
+    // Categorize the subdirectories and files
     const subDirs: string[] = [];
     const subFiles: string[] = [];
     await Promise.all(subPaths.map(async (subPath) => {

@@ -35,7 +35,7 @@ export default class FsPoly {
   static mkdtempSync(prefix = os.tmpdir()): string {
     try {
       // Added in: v5.10.0
-      return fs.mkdtempSync(prefix);
+      return fs.mkdtempSync(prefix.replace(/[\\/]+$/, path.sep));
     } catch (e) {
       // Added in: v5.10.0
       return fs.mkdtempSync(path.join(process.cwd(), 'tmp'));
