@@ -40,6 +40,7 @@ export default class DATScanner extends Scanner {
 
   // Scan files on disk for DATs (archives may yield more than one DAT)
   private async getDatFiles(datFilePaths: string[]): Promise<File[]> {
+    await this.progressBar.logDebug('Enumerating DAT archives');
     return (await async.mapLimit(
       datFilePaths,
       Constants.DAT_SCANNER_THREADS,
@@ -53,6 +54,7 @@ export default class DATScanner extends Scanner {
 
   // Parse each file into a DAT
   private async parseDatFiles(datFiles: File[]): Promise<DAT[]> {
+    await this.progressBar.logDebug('Parsing DAT files');
     const results = (await async.mapLimit(
       datFiles,
       Constants.DAT_SCANNER_THREADS,
