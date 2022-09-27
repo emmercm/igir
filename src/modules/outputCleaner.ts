@@ -48,7 +48,9 @@ export default class OutputCleaner {
     await this.progressBar.setSymbol(Symbols.RECYCLING);
     await this.progressBar.reset(filesToClean.length);
 
+    /* eslint-disable no-console */
     // try {
+    console.log(filesToClean);
     await trash(filesToClean);
     // } catch (e) {
     // await this.progressBar.logError(`Failed to clean unmatched files in ${outputDir} : ${e}`);
@@ -56,6 +58,7 @@ export default class OutputCleaner {
 
     // try {
     const emptyDirs = await OutputCleaner.getEmptyDirs(outputDir);
+    console.log(outputDir);
     await trash(emptyDirs);
     // } catch (e) {
     // await this.progressBar.logError(`Failed to clean empty directories in ${outputDir} : ${e}`);
