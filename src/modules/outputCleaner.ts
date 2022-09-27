@@ -53,6 +53,9 @@ export default class OutputCleaner {
     } catch (e) {
       await this.progressBar.logError(`Failed to clean unmatched files in ${outputDir} : ${e}`);
     }
+    await new Promise((resolve) => {
+      setTimeout(resolve, 1000);
+    });
 
     try {
       const emptyDirs = await OutputCleaner.getEmptyDirs(outputDir);
@@ -60,6 +63,9 @@ export default class OutputCleaner {
     } catch (e) {
       await this.progressBar.logError(`Failed to clean empty directories in ${outputDir} : ${e}`);
     }
+    await new Promise((resolve) => {
+      setTimeout(resolve, 1000);
+    });
 
     return filesToClean.length;
   }
