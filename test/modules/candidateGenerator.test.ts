@@ -47,7 +47,7 @@ it('should return no results with no matching files', async () => {
   const datWithDuplicateGames = new DAT(new Header(), [gameOne, gameOne]);
   const datWithTwoGames = new DAT(new Header(), [gameOne, gameTwo]);
 
-  const fileOne = new File('one.rom', 0, '34567890');
+  const fileOne = new File('one-wrong.rom', 0, '34567890');
   const fileTwo = new File('two.a', 0, 'abcd1234');
   const fileThree = new ArchiveEntry(new Zip('three.zip'), 'three.b', 0, '4321fedc');
 
