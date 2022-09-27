@@ -141,7 +141,10 @@ export default class File {
    ************************** */
 
   toString(): string {
-    return this.filePath;
+    return JSON.stringify({
+      filePath: this.getFilePath(),
+      size: this.getSize(),
+    });
   }
 
   static hashCode(crc: string, size: number): string {

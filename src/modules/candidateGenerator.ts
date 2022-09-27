@@ -1,5 +1,6 @@
 import async, { AsyncResultCallback } from 'async';
 
+import Cache from '../cache.js';
 import ProgressBar, { Symbols } from '../console/progressBar.js';
 import ArchiveEntry from '../types/files/archiveEntry.js';
 import File from '../types/files/file.js';
@@ -37,10 +38,12 @@ export default class CandidateGenerator {
     await this.progressBar.setSymbol(Symbols.GENERATING);
     await this.progressBar.reset(dat.getParents().length);
 
-    // TODO(cemmer): only do this once globally, not per DAT
     // TODO(cemmer): ability to index files by some other property such as name
-    const hashCodeToInputFiles = await CandidateGenerator.indexFilesByHashCode(inputRomFiles);
-    await this.progressBar.logInfo(`${dat.getName()}: ${hashCodeToInputFiles.size} unique ROM CRC32s found`);
+    const hashCodeToInputFiles = await Cache.inMemory(
+      CandidateGenerator.indexFilesByHashCode.bind(CandidateGenerator),
+      inputRomFiles,
+    );
+    await this.progressBar.logInfo(`${dat.getName()}: ${hashCodeToInputFiles.size} unique ROMs found`);
 
     // TODO(cemmer): ability to work without DATs, generating a parent/game/release per file
     // For each parent, try to generate a parent candidate
