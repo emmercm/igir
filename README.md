@@ -19,12 +19,12 @@ A video of an example use case:
 
 With a large ROM collection it can be difficult to:
 
-- Organize ROM files by console and name
-- Delete duplicate ROMs
-- Delete ROMs for languages you don't understand
+- Organize ROM files by console
 - Consistently name ROM files
-- Consistently archive ROMs
-- Know what ROMs are missing
+- Consistently archive ROMs in mass
+- Filter out duplicate ROMs
+- Filter out ROMs for languages you don't understand
+- Know what ROMs are missing for each console
 
 `igir` helps solve all of these problems!
 
@@ -171,23 +171,36 @@ These catalogs help `igir` distinguish known ROM files in input directories from
 
 ## How do I obtain ROMs?
 
-Emulators are generally legal, as long as they don't include copyrighted software such as a system BIOS.
+Emulators are generally legal, as long as they don't include copyrighted software such as a system BIOS. Downloading ROM files that you do not own is piracy and is illegal in many countries.
 
-Downloading ROM files that you do not own is piracy and is illegal in many countries. Here are some ways you can legally create ROM files from games you own:
+[Dumping.Guide](https://dumping.guide/start) and  [Emulation General Wiki](https://emulation.gametechwiki.com/index.php/Ripping_games) are some of the best resources for legally creating ROM files from games you own. Here is a condensed version that isn't guaranteed to be up-to-date:
 
-- Nintendo - 3DS: [GodMode9](https://github.com/d0k3/GodMode9)
-- Nintendo - DS, DSi: [GodMode9i](https://github.com/DS-Homebrew/GodMode9i)
-- Nintendo - Game Boy, Game Boy Color, Game Boy Advance: [INLretro Dumper](https://www.infiniteneslives.com/inlretro.php), [Retrode](https://www.retrode.com/) (with an adapter), [GB Operator](https://www.epilogue.co/product/gb-operator)
-- Nintendo - Gamecube: [CleanRip](https://wiibrew.org/wiki/CleanRip) (with a Wii)
-- Nintendo - Nintendo 64: [INLretro Dumper](https://www.infiniteneslives.com/inlretro.php), [Retrode](https://www.retrode.com/) (with an adapter)
-- Nintendo - Nintendo Entertainment System, Famicom: [INLretro Dumper](https://www.infiniteneslives.com/inlretro.php)
-- Nintendo - Super Nintendo: [INLretro Dumper](https://www.infiniteneslives.com/inlretro.php), [Retrode](https://www.retrode.com/)
-- Nintendo - Wii: [CleanRip](https://wiibrew.org/wiki/CleanRip)
-- Sega - Genesis / Mega Drive: [INLretro Dumper](https://www.infiniteneslives.com/inlretro.php), [Retrode](https://www.retrode.com/)
-- Sega - Master System: [Retrode](https://www.retrode.com/) (with an adapter)
-- Sega - Saturn: [ImgBurn](https://ninite.com/ImgBurn/) (with a PC)
-- Sony - Playstation 1: [ImgBurn](https://ninite.com/ImgBurn/) (with a PC)
-- Sony - Playstation 2: [ImgBurn](https://ninite.com/ImgBurn/) (with a PC)
+| Dumpable with special hardware | [Open Source Cartridge Reader](https://github.com/sanni/cartreader)<br/>([Save the Hero Builders](https://savethehero.builders/)) | [INLretro Dumper](https://www.infiniteneslives.com/inlretro.php) | [Retrode](https://www.retrode.com/)            | Other hardware                                             |
+|--------------------------------|-----------------------------------------------------------------------------------------------------------------------------------|------------------------------------------------------------------|------------------------------------------------|------------------------------------------------------------|
+| Nintendo - GB, GBC, GBA        | ✅                                                                                                                                 | ✅                                                                | ✅ (w/ adapter)                                 | [GB Operator](https://www.epilogue.co/product/gb-operator) |
+| Nintendo - NES/Famicom         | ✅ (V3 w/ adapter)                                                                                                                 | ✅                                                                |                                                |                                                            |
+| Nintendo - Nintendo 64         | ✅ including controller pak saves (V3 w/ addon for EEPROM saves)                                                                   | ✅                                                                | ✅ including controller park saves (w/ adapter) |                                                            |
+| Nintendo - SNES/SFC            | ✅ (V3 w/ addon for some)                                                                                                          | ✅                                                                | ✅                                              |                                                            |
+| Sega - Game Gear               | ✅ (w/ Retrode Master System adapter)                                                                                              |                                                                  | ✅ (w/ Master System adapter)                   |                                                            |
+| Sega - Genesis/MD              | ✅                                                                                                                                 | ✅                                                                | ✅                                              |                                                            |
+| Sega - Master System           | ✅ (V3 w/ adapter)                                                                                                                 |                                                                  | ✅ (w/ adapter)                                 |                                                            |
+
+| Dumpable without special hardware | [Media Preservation Frontend (MPF)](https://github.com/SabreTools/MPF) (w/ PC) | With a console                                                                                                                                                                                                                  |
+|-----------------------------------|--------------------------------------------------------------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| Microsoft - Xbox, 360, One        | ✅                                                                              |                                                                                                                                                                                                                                 |
+| Nintendo - 3DS                    |                                                                                | [GodMode9](https://github.com/d0k3/GodMode9) (w/ 3DS)                                                                                                                                                                           |
+| Nintendo - DS, DSi                |                                                                                | [GodMode9](https://github.com/d0k3/GodMode9) (w/ 3DS), [GodMode9i](https://github.com/DS-Homebrew/GodMode9i) (w/ DSi), [wooddumper](https://dumping.guide/carts/nintendo/ds#method_4_-_ds_console_via_slot-2_flashcart) (w/ DS) |
+| Nintendo - Famicom Disk           |                                                                                | [FDSStick](https://3dscapture.com/fdsstick/)                                                                                                                                                                                    |
+| Nintendo - Gamecube               | ⚠️ with specific drives and workarounds                                        | [CleanRip](https://wiibrew.org/wiki/CleanRip) (w/ Wii)                                                                                                                                                                          |
+| Nintendo - Switch                 |                                                                                | [nxdumptool](https://github.com/DarkMatterCore/nxdumptool/tree/main)                                                                                                                                                            |
+| Nintendo - Wii                    | ⚠️ with specific drives and workarounds                                        | [CleanRip](https://wiibrew.org/wiki/CleanRip)                                                                                                                                                                                   |
+| Nintendo - Wii U                  | ❌                                                                              | [wudump](https://github.com/FIX94/wudump)                                                                                                                                                                                       |
+| Sega - Dreamcast                  | ⚠️ with specific drives and workarounds                                        | [SD Rip](https://hiddenpalace.org/Dreamcast_SD_Rip)                                                                                                                                                                             |
+| Sega - Saturn                     | ✅                                                                              |                                                                                                                                                                                                                                 |
+| Sony - PlayStation 1, 2           | ✅                                                                              |                                                                                                                                                                                                                                 |
+| Sony - PlayStation 3              | ❌                                                                              | [ManaGunZ](https://github.com/Zarh/ManaGunZ), [multiMAN](https://store.brewology.com/ahomebrew.php?brewid=24)                                                                                                                   |
+| Sony - PSP                        |                                                                                | [PSP Filer](http://wiki.redump.org/index.php?title=PlayStation_Portable_Dumping_Guide)                                                                                                                                          |
+| Sony - PlayStation Vita           |                                                                                | [psvgamesd](https://github.com/motoharu-gosuto/psvgamesd)                                                                                                                                                                       |
 
 ## Why choose `igir`?
 
