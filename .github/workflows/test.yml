@@ -28,7 +28,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [windows-latest]
+        os: [ubuntu-latest, macos-latest, windows-latest]
         # TODO(cemmer): os.devNull in tests needs v14.18.0+ or v16.3.0+, node-e2e can cover 12.x
         node-version: [ lts/*, lts/-1 ]
     steps:
