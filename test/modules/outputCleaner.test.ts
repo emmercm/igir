@@ -26,9 +26,7 @@ async function runOutputCleaner(writtenFilePathsToExclude: string[]): Promise<st
   const writtenRomFilesToExclude = writtenFilePathsToExclude
     .map((filePath) => new File(path.join(tempDir, filePath), 0, '00000000'));
 
-  console.log(tempDir);
   const before = fsPoly.walkSync(tempDir);
-  console.log(before);
   expect(before.length).toBeGreaterThan(0);
 
   await new OutputCleaner(
@@ -39,7 +37,6 @@ async function runOutputCleaner(writtenFilePathsToExclude: string[]): Promise<st
     new ProgressBarFake(),
   ).clean(writtenRomFilesToExclude);
   const after = fsPoly.walkSync(tempDir);
-  console.log(after);
 
   fsPoly.rmSync(tempDir, { recursive: true });
 
