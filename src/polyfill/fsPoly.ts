@@ -30,9 +30,19 @@ export default class FsPoly {
   }
 
   static mkdtempSync(prefix = os.tmpdir()): string {
+    // In case we're running under an environment that doesn't have permission to the temp folder,
+    //  create one that should be accessible.
+    const localTemp = path.join(process.cwd(), 'tmp');
+
+    let prefixProcessed = prefix.replace(/[\\/]+$/, '');
+
+    // The `trash` library seems to have issues handling Windows short paths, use the local path
+    if (process.platform === 'win32' && prefixProcessed.indexOf('~') !== -1) {
+      prefixProcessed = localTemp;
+    }
+
     // mkdtempSync takes a string prefix rather than a file path, so we need to make sure the
     //  prefix ends with the path separator in order for it to become a parent directory.
-    let prefixProcessed = prefix.replace(/[\\/]+$/, '');
     try {
       if (fs.lstatSync(prefixProcessed).isDirectory()) {
         prefixProcessed += path.sep;
@@ -46,7 +56,7 @@ export default class FsPoly {
       return fs.mkdtempSync(prefixProcessed);
     } catch (e) {
       // Added in: v5.10.0
-      return fs.mkdtempSync(path.join(process.cwd(), 'tmp') + path.sep);
+      return fs.mkdtempSync(localTemp + path.sep);
     }
   }
 
