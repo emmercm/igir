@@ -42,7 +42,7 @@
     "release": "./node_modules/.bin/release-it --no-increment",
     "start": "ts-node index.ts",
     "test": "npm run test:unit && npm run lint",
-    "test:unit": "node --experimental-vm-modules ./node_modules/jest/bin/jest.js --runInBand --verbose",
+    "test:unit": "node --experimental-vm-modules ./node_modules/jest/bin/jest.js --verbose",
     "test:coverage": "node --experimental-vm-modules ./node_modules/jest/bin/jest.js --verbose --coverage",
     "test:handles": "node --experimental-vm-modules ./node_modules/jest/bin/jest.js --verbose"
   },

@@ -10,7 +10,7 @@ import ProgressBarFake from '../console/progressBarFake.js';
 
 jest.setTimeout(10_000);
 
-const ROM_FIXTURES = path.join('test', 'fixtures', 'roms');
+const ROM_FIXTURES_DIR = path.join('test', 'fixtures', 'roms');
 
 /**
  * NOTE(cemmer): for some entirely unexplainable reason, these tests will start to fail on Windows
@@ -21,7 +21,7 @@ const ROM_FIXTURES = path.join('test', 'fixtures', 'roms');
 async function runOutputCleaner(writtenFilePathsToExclude: string[]): Promise<string[]> {
   // Copy the fixture files to a temp directory
   const tempDir = fsPoly.mkdtempSync(Constants.GLOBAL_TEMP_DIR);
-  fsPoly.copyDirSync(ROM_FIXTURES, tempDir);
+  fsPoly.copyDirSync(ROM_FIXTURES_DIR, tempDir);
 
   const writtenRomFilesToExclude = writtenFilePathsToExclude
     .map((filePath) => new File(path.join(tempDir, filePath), 0, '00000000'));
@@ -46,7 +46,7 @@ async function runOutputCleaner(writtenFilePathsToExclude: string[]): Promise<st
 }
 
 it('should delete nothing if nothing written', async () => {
-  const existingFiles = fsPoly.walkSync(ROM_FIXTURES)
+  const existingFiles = fsPoly.walkSync(ROM_FIXTURES_DIR)
     .map((filePath) => filePath.replace(/^test[\\/]fixtures[\\/]roms[\\/]/, ''))
     .sort();
   const filesRemaining = await runOutputCleaner([]);
@@ -54,7 +54,7 @@ it('should delete nothing if nothing written', async () => {
 });
 
 it('should delete nothing if all match', async () => {
-  const existingFiles = fsPoly.walkSync(ROM_FIXTURES)
+  const existingFiles = fsPoly.walkSync(ROM_FIXTURES_DIR)
     .map((filePath) => filePath.replace(/^test[\\/]fixtures[\\/]roms[\\/]/, ''))
     .sort();
   const filesRemaining = await runOutputCleaner(existingFiles);
