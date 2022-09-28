@@ -1,6 +1,7 @@
 import ArchiveFactory from '../../../src/types/archives/archiveFactory.js';
 
 describe('getArchiveEntries', () => {
+  // TODO(cemmer): fixture archives with multiple entries
   test.each([
     // fizzbuzz
     ['./test/fixtures/roms/7z/fizzbuzz.7z', 'fizzbuzz.nes', '370517b5'],
