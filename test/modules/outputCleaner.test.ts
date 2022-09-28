@@ -50,13 +50,13 @@ it('should delete nothing if nothing written', async () => {
   expect(filesRemaining).toEqual(existingFiles);
 });
 
-it('should delete nothing if all match', async () => {
-  const existingFiles = fsPoly.walkSync(ROM_FIXTURES)
-    .map((filePath) => filePath.replace(/^test[\\/]fixtures[\\/]roms[\\/]/, ''))
-    .sort();
-  const filesRemaining = await runOutputCleaner(existingFiles);
-  expect(filesRemaining).toEqual(existingFiles);
-});
+// it('should delete nothing if all match', async () => {
+//   const existingFiles = fsPoly.walkSync(ROM_FIXTURES)
+//     .map((filePath) => filePath.replace(/^test[\\/]fixtures[\\/]roms[\\/]/, ''))
+//     .sort();
+//   const filesRemaining = await runOutputCleaner(existingFiles);
+//   expect(filesRemaining).toEqual(existingFiles);
+// });
 
 it('should delete some if some matched', async () => {
   const filesRemaining = await runOutputCleaner([
