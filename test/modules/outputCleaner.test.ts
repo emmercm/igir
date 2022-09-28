@@ -8,7 +8,7 @@ import File from '../../src/types/files/file.js';
 import Options from '../../src/types/options.js';
 import ProgressBarFake from '../console/progressBarFake.js';
 
-jest.setTimeout(30_000);
+jest.setTimeout(10_000);
 
 const romFixtures = path.join('test', 'fixtures', 'roms');
 

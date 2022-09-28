@@ -1,8 +1,7 @@
 import fg from 'fast-glob';
-import fs, { promises as fsPromises } from 'fs';
+import { promises as fsPromises } from 'fs';
 import { isNotJunk } from 'junk';
 import path from 'path';
-import { clearInterval } from 'timers';
 import trash from 'trash';
 
 import ProgressBar, { Symbols } from '../console/progressBar.js';
@@ -41,7 +40,7 @@ export default class OutputCleaner {
 
     // If there is nothing to clean, then don't do anything
     const filesToClean = (await fg(`${outputDir}/**`.replace(/\\/g, '/')))
-      .map((file) => path.normalize(file))
+      .map((file) => file.replace(/[\\/]/g, path.sep))
       .filter((file) => outputFilePathsToExclude.indexOf(file) === -1);
     console.log('cleaning');
     console.log(filesToClean);
@@ -54,47 +53,19 @@ export default class OutputCleaner {
     await this.progressBar.reset(filesToClean.length);
 
     try {
-      await OutputCleaner.trashAndWait(filesToClean);
+      await trash(filesToClean);
     } catch (e) {
       await this.progressBar.logError(`Failed to clean unmatched files in ${outputDir} : ${e}`);
     }
 
     try {
       const emptyDirs = await OutputCleaner.getEmptyDirs(outputDir);
-      await OutputCleaner.trashAndWait(emptyDirs);
+      await trash(emptyDirs);
     } catch (e) {
       await this.progressBar.logError(`Failed to clean empty directories in ${outputDir} : ${e}`);
     }
 
     return filesToClean.length;
-  }
-
-  private static async trashAndWait(inputFiles: string | string[]): Promise<void> {
-    await trash(inputFiles, { glob: true });
-
-    const exists: () => (boolean) = () => {
-      if (Array.isArray(inputFiles)) {
-        return inputFiles
-          .sort(() => 0.5 - Math.random())
-          .slice(0, 10)
-          .some((inputFile) => fs.existsSync(inputFile));
-      }
-      return fs.existsSync(inputFiles);
-    };
-
-    await new Promise<void>((resolve, reject) => {
-      const interval = setInterval(() => {
-        if (!exists()) {
-          clearInterval(interval);
-          resolve();
-        }
-      }, 250);
-
-      setTimeout(() => {
-        clearInterval(interval);
-        reject();
-      }, 10_000);
-    });
   }
 
   private static async getEmptyDirs(dirPath: string): Promise<string[]> {
