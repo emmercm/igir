@@ -160,6 +160,7 @@ describe('zip', () => {
         'fizzbuzz.zip',
         'foobar.zip',
         'loremipsum.zip',
+        'onetwothree.zip',
         'unknown.zip',
       ]);
 
@@ -186,6 +187,10 @@ describe('zip', () => {
         'fizzbuzz.zip',
         'foobar.zip',
         'loremipsum.zip',
+        'one.zip',
+        'onetwothree.zip',
+        'three.zip',
+        'two.zip',
         'unknown.zip',
       ]);
 
@@ -198,6 +203,10 @@ describe('zip', () => {
         'fizzbuzz.zip',
         'foobar.zip',
         'loremipsum.zip',
+        'one.zip',
+        'onetwothree.zip',
+        'three.zip',
+        'two.zip',
         'unknown.zip',
       ]);
 
@@ -224,6 +233,10 @@ describe('zip', () => {
         'fizzbuzz.zip',
         'foobar.zip',
         'loremipsum.zip',
+        'one.zip',
+        'onetwothree.zip',
+        'three.zip',
+        'two.zip',
         'unknown.zip',
       ]);
 
@@ -261,6 +274,10 @@ describe('zip', () => {
         'fizzbuzz.zip',
         'foobar.zip',
         'loremipsum.zip',
+        'one.zip',
+        'onetwothree.zip',
+        'three.zip',
+        'two.zip',
         'unknown.zip',
       ]);
 
@@ -270,11 +287,11 @@ describe('zip', () => {
   });
 
   test.each([
-    ['**/!(headered)/*', ['empty.zip', 'fizzbuzz.zip', 'foobar.zip', 'loremipsum.zip', 'unknown.zip']],
-    ['7z/*', ['fizzbuzz.zip', 'foobar.zip', 'loremipsum.zip', 'unknown.zip']],
-    ['rar/*', ['fizzbuzz.zip', 'foobar.zip', 'loremipsum.zip', 'unknown.zip']],
-    ['raw/*', ['empty.zip', 'fizzbuzz.zip', 'foobar.zip', 'loremipsum.zip', 'unknown.zip']],
-    ['zip/*', ['fizzbuzz.zip', 'foobar.zip', 'loremipsum.zip', 'unknown.zip']],
+    ['**/!(headered)/*', ['empty.zip', 'fizzbuzz.zip', 'foobar.zip', 'loremipsum.zip', 'one.zip', 'onetwothree.zip', 'three.zip', 'two.zip', 'unknown.zip']],
+    ['7z/*', ['fizzbuzz.zip', 'foobar.zip', 'loremipsum.zip', 'onetwothree.zip', 'unknown.zip']],
+    ['rar/*', ['fizzbuzz.zip', 'foobar.zip', 'loremipsum.zip', 'onetwothree.zip', 'unknown.zip']],
+    ['raw/*', ['empty.zip', 'fizzbuzz.zip', 'foobar.zip', 'loremipsum.zip', 'one.zip', 'three.zip', 'two.zip', 'unknown.zip']],
+    ['zip/*', ['fizzbuzz.zip', 'foobar.zip', 'loremipsum.zip', 'onetwothree.zip', 'unknown.zip']],
   ])('should copy, zip, and test: %s', async (inputGlob, expectedWrittenPaths) => {
     await copyFixturesToTemp(async (inputTemp, outputTemp) => {
       // Make sure we started with some input ROMs
@@ -310,6 +327,9 @@ describe('zip', () => {
         'fizzbuzz.zip',
         'foobar.zip',
         'loremipsum.zip',
+        'one.zip',
+        'three.zip',
+        'two.zip',
         'unknown.zip',
       ]);
 
@@ -336,6 +356,9 @@ describe('raw', () => {
         'fizzbuzz.nes',
         'foobar.lnx',
         'loremipsum.rom',
+        'one.rom',
+        'three.rom',
+        'two.rom',
         'unknown.rom',
       ]);
 
@@ -361,6 +384,9 @@ describe('raw', () => {
         'fizzbuzz.nes',
         'foobar.lnx',
         'loremipsum.rom',
+        'one.rom',
+        'three.rom',
+        'two.rom',
         'unknown.rom',
       ]);
 
@@ -373,6 +399,9 @@ describe('raw', () => {
         'fizzbuzz.nes',
         'foobar.lnx',
         'loremipsum.rom',
+        'one.rom',
+        'three.rom',
+        'two.rom',
         'unknown.rom',
       ]);
 
@@ -398,6 +427,9 @@ describe('raw', () => {
         'fizzbuzz.nes',
         'foobar.lnx',
         'loremipsum.rom',
+        'one.rom',
+        'three.rom',
+        'two.rom',
         'unknown.rom',
       ]);
 
@@ -414,11 +446,11 @@ describe('raw', () => {
   });
 
   test.each([
-    ['**/!(headered)/*', ['empty.rom', 'fizzbuzz.nes', 'foobar.lnx', 'loremipsum.rom', 'unknown.rom']],
-    ['7z/*', ['fizzbuzz.nes', 'foobar.lnx', 'loremipsum.rom', 'unknown.rom']],
-    ['rar/*', ['fizzbuzz.nes', 'foobar.lnx', 'loremipsum.rom', 'unknown.rom']],
-    ['raw/*', ['empty.rom', 'fizzbuzz.nes', 'foobar.lnx', 'loremipsum.rom', 'unknown.rom']],
-    ['zip/*', ['fizzbuzz.nes', 'foobar.lnx', 'loremipsum.rom', 'unknown.rom']],
+    ['**/!(headered)/*', ['empty.rom', 'fizzbuzz.nes', 'foobar.lnx', 'loremipsum.rom', 'one.rom', 'three.rom', 'two.rom', 'unknown.rom']],
+    ['7z/*', ['fizzbuzz.nes', 'foobar.lnx', 'loremipsum.rom', 'one.rom', 'three.rom', 'two.rom', 'unknown.rom']],
+    ['rar/*', ['fizzbuzz.nes', 'foobar.lnx', 'loremipsum.rom', 'one.rom', 'three.rom', 'two.rom', 'unknown.rom']],
+    ['raw/*', ['empty.rom', 'fizzbuzz.nes', 'foobar.lnx', 'loremipsum.rom', 'one.rom', 'three.rom', 'two.rom', 'unknown.rom']],
+    ['zip/*', ['fizzbuzz.nes', 'foobar.lnx', 'loremipsum.rom', 'one.rom', 'three.rom', 'two.rom', 'unknown.rom']],
   ])('should copy and test: %s', async (inputGlob, expectedWrittenPaths) => {
     await copyFixturesToTemp(async (inputTemp, outputTemp) => {
       // Make sure we started with some input ROMs
@@ -454,6 +486,9 @@ describe('raw', () => {
         'fizzbuzz.nes',
         'foobar.lnx',
         'loremipsum.rom',
+        'one.rom',
+        'three.rom',
+        'two.rom',
         'unknown.rom',
       ]);
 

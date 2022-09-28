@@ -5,6 +5,7 @@ import path from 'path';
 import trash from 'trash';
 
 import ProgressBar, { Symbols } from '../console/progressBar.js';
+import fsPoly from '../polyfill/fsPoly.js';
 import File from '../types/files/file.js';
 import Options from '../types/options.js';
 
@@ -34,11 +35,11 @@ export default class OutputCleaner {
 
     const outputDir = this.options.getOutput();
     const outputFilePathsToExclude = writtenFilesToExclude
-      .map((file) => file.getFilePath().replace(/[\\/]/g, path.sep));
+      .map((file) => path.normalize(file.getFilePath()));
 
     // If there is nothing to clean, then don't do anything
     const filesToClean = (await fg(`${outputDir}/**`.replace(/\\/g, '/')))
-      .map((file) => file.replace(/[\\/]/g, path.sep))
+      .map((file) => path.normalize(file))
       .filter((file) => outputFilePathsToExclude.indexOf(file) === -1);
     if (!filesToClean.length) {
       await this.progressBar.logInfo('No files to clean');
@@ -49,19 +50,38 @@ export default class OutputCleaner {
     await this.progressBar.reset(filesToClean.length);
 
     try {
-      await trash(filesToClean);
+      await OutputCleaner.recycleOrDelete(filesToClean);
     } catch (e) {
       await this.progressBar.logError(`Failed to clean unmatched files in ${outputDir} : ${e}`);
     }
 
     try {
       const emptyDirs = await OutputCleaner.getEmptyDirs(outputDir);
-      await trash(emptyDirs);
+      await OutputCleaner.recycleOrDelete(emptyDirs);
     } catch (e) {
       await this.progressBar.logError(`Failed to clean empty directories in ${outputDir} : ${e}`);
     }
 
     return filesToClean.length;
+  }
+
+  private static async recycleOrDelete(filePaths: string | string[]): Promise<void> {
+    // Prefer recycling the file(s)
+    await trash(filePaths);
+
+    // But if we can't do that, delete the file(s)
+    const stillExists: string[] = [];
+    await Promise.all(
+      (Array.isArray(filePaths) ? filePaths : [filePaths])
+        .map(async (filePath) => {
+          if (await fsPoly.exists(filePath)) {
+            stillExists.push(filePath);
+          }
+        }),
+    );
+    await Promise.all(
+      stillExists.map((filePath) => fsPoly.rm(filePath)),
+    );
   }
 
   private static async getEmptyDirs(dirPath: string): Promise<string[]> {

@@ -1,4 +1,5 @@
 import fs, { promises as fsPromises } from 'fs';
+import path from 'path';
 import { Readable } from 'stream';
 
 import Constants from '../../constants.js';
@@ -21,7 +22,7 @@ export default class ArchiveEntry<A extends Archive> extends File {
   ) {
     super(archive.getFilePath(), size, crc, fileHeader);
     this.archive = archive;
-    this.entryPath = entryPath;
+    this.entryPath = path.normalize(entryPath);
   }
 
   getArchive(): A {
