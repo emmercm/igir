@@ -26,7 +26,6 @@ async function runOutputCleaner(writtenFilePathsToExclude: string[]): Promise<st
   await new OutputCleaner(
     new Options({
       commands: ['move', 'clean'],
-      input: [tempDir],
       output: tempDir,
     }),
     new ProgressBarFake(),
@@ -73,5 +72,5 @@ it('should delete some if some matched', async () => {
 it('should delete everything if all unmatched', async () => {
   await expect(runOutputCleaner([
     'non-existent file',
-  ])).resolves.toHaveLength(0);
+  ])).resolves.toEqual([]);
 });

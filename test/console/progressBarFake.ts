@@ -7,26 +7,26 @@ export default class ProgressBarFake extends ProgressBar {
   }
 
   done(): Promise<void> {
-    return Promise.resolve(undefined);
+    return Promise.resolve();
   }
 
   increment(): Promise<void> {
-    return Promise.resolve(undefined);
+    return Promise.resolve();
   }
 
   log(): Promise<void> {
-    return Promise.resolve(undefined);
+    return Promise.resolve();
   }
 
   reset(): Promise<void> {
-    return Promise.resolve(undefined);
+    return Promise.resolve();
   }
 
   setSymbol(): Promise<void> {
-    return Promise.resolve(undefined);
+    return Promise.resolve();
   }
 
   update(): Promise<void> {
-    return Promise.resolve(undefined);
+    return Promise.resolve();
   }
 }

@@ -1,4 +1,4 @@
-import fs from 'fs';
+import fs, { promises as fsPromises } from 'fs';
 import path from 'path';
 import { Readable } from 'stream';
 import { clearInterval } from 'timers';
@@ -57,6 +57,11 @@ export default class Zip extends Archive {
   ): Promise<T> {
     const localFile = path.join(tempDir, archiveEntry.getEntryPath());
 
+    const localDir = path.dirname(localFile);
+    if (!await fsPoly.exists(localDir)) {
+      await fsPromises.mkdir(localDir);
+    }
+
     return this.extractEntryToStream(
       archiveEntry,
       tempDir,
@@ -89,7 +94,7 @@ export default class Zip extends Archive {
         }
 
         zipFile.on('entry', (entry: Entry) => {
-          if (entry.fileName === archiveEntry.getEntryPath()) {
+          if (entry.fileName === archiveEntry.getEntryPath().replace(/[\\/]/g, '/')) {
             // Found the file we're looking for
             zipFile.openReadStream(entry, async (streamErr, stream) => {
               if (streamErr) {
@@ -125,11 +130,11 @@ export default class Zip extends Archive {
     const writeStream = fs.createWriteStream(tempZipFile);
 
     // Promise that resolves when we're done writing the zip
-    const zipClosed = new Promise((resolveClosed) => {
+    const zipClosed = new Promise<void>((resolveClosed) => {
       const interval = setInterval(() => {
         if (!writeStream.writable) {
           clearInterval(interval);
-          resolveClosed(undefined);
+          resolveClosed();
         }
       }, 10);
     });
@@ -138,7 +143,7 @@ export default class Zip extends Archive {
       writeStream.on('close', () => {
         try {
           fs.renameSync(tempZipFile, this.getFilePath()); // overwrites
-          resolve(undefined);
+          resolve();
         } catch (e) {
           reject(e);
         }
@@ -148,11 +153,11 @@ export default class Zip extends Archive {
 
       // Start writing the zip when all entries have been enqueued
       let zipEntriesQueued = 0;
-      new Promise((resolveQueued) => {
+      new Promise<void>((resolveQueued) => {
         const interval = setInterval(() => {
           if (zipEntriesQueued === inputToOutput.size) {
             clearInterval(interval);
-            resolveQueued(undefined);
+            resolveQueued();
           }
         });
       })

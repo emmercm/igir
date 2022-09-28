@@ -34,11 +34,11 @@ export default class OutputCleaner {
 
     const outputDir = this.options.getOutput();
     const outputFilePathsToExclude = writtenFilesToExclude
-      .map((file) => file.getFilePath());
+      .map((file) => file.getFilePath().replace(/[\\/]/g, path.sep));
 
     // If there is nothing to clean, then don't do anything
     const filesToClean = (await fg(`${outputDir}/**`.replace(/\\/g, '/')))
-      .map((pathLike) => pathLike.replace(/[\\/]/g, path.sep))
+      .map((file) => file.replace(/[\\/]/g, path.sep))
       .filter((file) => outputFilePathsToExclude.indexOf(file) === -1);
     if (!filesToClean.length) {
       await this.progressBar.logInfo('No files to clean');
@@ -70,7 +70,7 @@ export default class OutputCleaner {
       .filter((basename) => isNotJunk(basename))
       .map((basename) => path.join(dirPath, basename));
 
-    // Categories the subdirectories and files
+    // Categorize the subdirectories and files
     const subDirs: string[] = [];
     const subFiles: string[] = [];
     await Promise.all(subPaths.map(async (subPath) => {

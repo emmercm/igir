@@ -38,7 +38,7 @@ export default class Constants {
 
   static readonly COMMAND_VERSION = PACKAGE_JSON.version;
 
-  static readonly GLOBAL_TEMP_DIR = globalTempDir + path.sep;
+  static readonly GLOBAL_TEMP_DIR = globalTempDir;
 
   static readonly DAT_SCANNER_THREADS = 25;
 

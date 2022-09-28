@@ -112,7 +112,7 @@ it('shouldn\'t write anything if no parents', async () => {
   const writtenPaths = await runRomWriter(os.devNull, {
     commands: ['copy'],
   }, parentsToCandidates);
-  expect(writtenPaths).toHaveLength(0);
+  expect(writtenPaths).toEqual([]);
 });
 
 it('shouldn\'t write anything if parents have no candidates', async () => {
@@ -122,7 +122,7 @@ it('shouldn\'t write anything if parents have no candidates', async () => {
   const writtenPaths = await runRomWriter(os.devNull, {
     commands: ['copy'],
   }, parentsToCandidates);
-  expect(writtenPaths).toHaveLength(0);
+  expect(writtenPaths).toEqual([]);
 });
 
 it('shouldn\'t write anything if not copying or moving', async () => {
@@ -136,7 +136,7 @@ it('shouldn\'t write anything if not copying or moving', async () => {
     const writtenPaths = await runRomWriter(outputTemp, {
       commands: [],
     }, parentsToCandidates);
-    expect(writtenPaths).toHaveLength(0);
+    expect(writtenPaths).toEqual([]);
 
     // Make sure we didn't alter the input ROMs
     expect(fsPoly.walkSync(inputTemp)).toEqual(inputFiles);
@@ -313,7 +313,7 @@ describe('zip', () => {
         'unknown.zip',
       ]);
 
-      expect(fsPoly.walkSync(rawDir)).toHaveLength(0);
+      expect(fsPoly.walkSync(rawDir)).toEqual([]);
     });
   });
 });
@@ -457,7 +457,7 @@ describe('raw', () => {
         'unknown.rom',
       ]);
 
-      expect(fsPoly.walkSync(rawDir)).toHaveLength(0);
+      expect(fsPoly.walkSync(rawDir)).toEqual([]);
     });
   });
 });

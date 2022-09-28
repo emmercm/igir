@@ -60,7 +60,7 @@ it('should return no results with no matching files', async () => {
     expect(candidates.size).toEqual(dat.getParents().length);
 
     // No parent had any release candidates
-    expect([...candidates.values()].flatMap((c) => c)).toHaveLength(0);
+    expect([...candidates.values()].flatMap((c) => c)).toEqual([]);
   };
 
   await expectCandidates(datWithOneGame, [fileOne]);
@@ -118,7 +118,7 @@ it('should return no results with partially matching files', async () => {
     expect(candidates.size).toEqual(dat.getParents().length);
 
     // No parent had any release candidates
-    expect([...candidates.values()].flatMap((c) => c)).toHaveLength(0);
+    expect([...candidates.values()].flatMap((c) => c)).toEqual([]);
   };
 
   await expectCandidates(datWithOneGame, [fileOne]);

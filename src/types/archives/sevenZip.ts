@@ -33,8 +33,8 @@ export default class SevenZip extends Archive {
      * WARN(cemmer): {@link _7z.list} seems to have issues with any amount of real concurrency,
      * it will return no files but also no error. Try to prevent that behavior.
      */
-    return SevenZip.LIST_MUTEX.runExclusive(async () => {
-      const filesIn7z = await new Promise((resolve, reject) => {
+    const filesIn7z = await SevenZip.LIST_MUTEX.runExclusive(
+      async () => new Promise<Result[]>((resolve, reject) => {
         _7z.list(this.getFilePath(), async (err, result) => {
           if (err) {
             const msg = err.toString()
@@ -46,14 +46,16 @@ export default class SevenZip extends Archive {
             resolve(result);
           }
         });
-      }) as Result[];
-      return filesIn7z.map((result) => new ArchiveEntry(
+      }),
+    );
+    return filesIn7z
+      .filter((result) => !result.attr.startsWith('D'))
+      .map((result) => new ArchiveEntry(
         this,
         result.name,
         parseInt(result.size, 10),
         result.crc,
       ));
-    });
   }
 
   async extractEntryToFile<T>(
