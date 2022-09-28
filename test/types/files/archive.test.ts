@@ -1,3 +1,5 @@
+import path from 'path';
+
 import ArchiveFactory from '../../../src/types/archives/archiveFactory.js';
 
 describe('getArchiveEntries', () => {
@@ -43,7 +45,7 @@ describe('getArchiveEntries', () => {
     for (let i = 0; i < entries.length; i += 1) {
       const entry = entries[i];
       const expectedEntry = expectedEntries[i];
-      expect(entry.getEntryPath()).toEqual(expectedEntry[0]);
+      expect(entry.getEntryPath()).toEqual(path.normalize(expectedEntry[0]));
       await expect(entry.getCrc32()).resolves.toEqual(expectedEntry[1]);
     }
   });
