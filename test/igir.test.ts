@@ -65,8 +65,6 @@ it('should copy', async () => {
     'Fizzbuzz.rom',
     'Foobar.rom',
     'Lorem Ipsum.rom',
-    'One.rom',
-    'Three.rom',
   ]);
 });
 
@@ -77,7 +75,6 @@ it('should copy and zip and test', async () => {
     'Fizzbuzz.zip',
     'Foobar.zip',
     'Lorem Ipsum.zip',
-    'One Three.zip',
   ]);
 });
 
@@ -88,8 +85,6 @@ it('should copy and clean', async () => {
     'Fizzbuzz.rom',
     'Foobar.rom',
     'Lorem Ipsum.rom',
-    'One.rom',
-    'Three.rom',
   ]);
 });
 
