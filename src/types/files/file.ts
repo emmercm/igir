@@ -17,6 +17,7 @@ export default class File {
 
   private readonly fileHeader?: FileHeader;
 
+  // TODO(cemmer): create an async static factory method and then make this private
   constructor(filePath: string, size?: number, crc?: string, fileHeader?: FileHeader) {
     this.filePath = path.normalize(filePath);
 
