@@ -72,7 +72,7 @@ export default class DATScanner extends Scanner {
     return results.sort((a, b) => a.getNameShort().localeCompare(b.getNameShort()));
   }
 
-  private async parseDatFile(datFile: File): Promise<DataFile | undefined> {
+  private async parseDatFile(datFile: File): Promise<DataFile | void> {
     try {
       await this.progressBar.logDebug(`${datFile.toString()}: parsing XML`);
       return await datFile.extractToStream(async (stream) => {
@@ -85,7 +85,7 @@ export default class DATScanner extends Scanner {
     } catch (err) {
       const message = (err as Error).message.split('\n').join(', ');
       await this.progressBar.logError(`Failed to parse DAT ${datFile.toString()} : ${message}`);
-      return Promise.resolve(undefined);
+      return Promise.resolve();
     }
   }
 }

@@ -130,11 +130,11 @@ export default class Zip extends Archive {
     const writeStream = fs.createWriteStream(tempZipFile);
 
     // Promise that resolves when we're done writing the zip
-    const zipClosed = new Promise((resolveClosed) => {
+    const zipClosed = new Promise<void>((resolveClosed) => {
       const interval = setInterval(() => {
         if (!writeStream.writable) {
           clearInterval(interval);
-          resolveClosed(undefined);
+          resolveClosed();
         }
       }, 10);
     });
@@ -143,7 +143,7 @@ export default class Zip extends Archive {
       writeStream.on('close', () => {
         try {
           fs.renameSync(tempZipFile, this.getFilePath()); // overwrites
-          resolve(undefined);
+          resolve();
         } catch (e) {
           reject(e);
         }
@@ -153,11 +153,11 @@ export default class Zip extends Archive {
 
       // Start writing the zip when all entries have been enqueued
       let zipEntriesQueued = 0;
-      new Promise((resolveQueued) => {
+      new Promise<void>((resolveQueued) => {
         const interval = setInterval(() => {
           if (zipEntriesQueued === inputToOutput.size) {
             clearInterval(interval);
-            resolveQueued(undefined);
+            resolveQueued();
           }
         });
       })
