@@ -12,6 +12,12 @@ jest.setTimeout(10_000);
 
 const ROM_FIXTURES = path.join('test', 'fixtures', 'roms');
 
+/**
+ * NOTE(cemmer): for some entirely unexplainable reason, these tests will start to fail on Windows
+ * if there are more than three of them running. See the absolute mad head-banging commit log in
+ * https://github.com/emmercm/igir/pull/82. In a real world scenario the cleaner will only run once,
+ * so it's fine if we implement some workarounds here.
+ */
 async function runOutputCleaner(writtenFilePathsToExclude: string[]): Promise<string[]> {
   // Copy the fixture files to a temp directory
   const tempDir = fsPoly.mkdtempSync(Constants.GLOBAL_TEMP_DIR);
@@ -50,13 +56,13 @@ it('should delete nothing if nothing written', async () => {
   expect(filesRemaining).toEqual(existingFiles);
 });
 
-// it('should delete nothing if all match', async () => {
-//   const existingFiles = fsPoly.walkSync(ROM_FIXTURES)
-//     .map((filePath) => filePath.replace(/^test[\\/]fixtures[\\/]roms[\\/]/, ''))
-//     .sort();
-//   const filesRemaining = await runOutputCleaner(existingFiles);
-//   expect(filesRemaining).toEqual(existingFiles);
-// });
+it('should delete nothing if all match', async () => {
+  const existingFiles = fsPoly.walkSync(ROM_FIXTURES)
+    .map((filePath) => filePath.replace(/^test[\\/]fixtures[\\/]roms[\\/]/, ''))
+    .sort();
+  const filesRemaining = await runOutputCleaner(existingFiles);
+  expect(filesRemaining).toEqual(existingFiles);
+});
 
 it('should delete some if some matched', async () => {
   const filesRemaining = await runOutputCleaner([
