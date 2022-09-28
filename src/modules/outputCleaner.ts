@@ -1,7 +1,8 @@
 import fg from 'fast-glob';
-import { promises as fsPromises } from 'fs';
+import fs, { promises as fsPromises } from 'fs';
 import { isNotJunk } from 'junk';
 import path from 'path';
+import { clearInterval } from 'timers';
 import trash from 'trash';
 
 import ProgressBar, { Symbols } from '../console/progressBar.js';
@@ -53,25 +54,48 @@ export default class OutputCleaner {
     await this.progressBar.reset(filesToClean.length);
 
     try {
-      await trash(filesToClean, { glob: false });
+      await OutputCleaner.trashAndWait(filesToClean);
     } catch (e) {
       await this.progressBar.logError(`Failed to clean unmatched files in ${outputDir} : ${e}`);
     }
-    await new Promise((resolve) => {
-      setTimeout(resolve, 2000);
-    });
 
     try {
       const emptyDirs = await OutputCleaner.getEmptyDirs(outputDir);
-      await trash(emptyDirs, { glob: false });
+      await OutputCleaner.trashAndWait(emptyDirs);
     } catch (e) {
       await this.progressBar.logError(`Failed to clean empty directories in ${outputDir} : ${e}`);
     }
-    await new Promise((resolve) => {
-      setTimeout(resolve, 2000);
-    });
 
     return filesToClean.length;
+  }
+
+  private static async trashAndWait(inputFiles: string | string[]): Promise<void> {
+    await trash(inputFiles, { glob: false });
+
+    const exists: () => (boolean) = () => {
+      if (Array.isArray(inputFiles)) {
+        return inputFiles
+          .sort(() => 0.5 - Math.random())
+          .slice(0, 10)
+          .filter((inputFile) => fs.existsSync(inputFile))
+          .length === 0;
+      }
+      return fs.existsSync(inputFiles);
+    };
+
+    await new Promise<void>((resolve, reject) => {
+      const interval = setInterval(() => {
+        if (!exists()) {
+          clearInterval(interval);
+          resolve();
+        }
+      }, 100);
+
+      setTimeout(() => {
+        clearInterval(interval);
+        reject();
+      }, 5_000);
+    });
   }
 
   private static async getEmptyDirs(dirPath: string): Promise<string[]> {
