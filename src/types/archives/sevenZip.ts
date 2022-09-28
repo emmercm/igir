@@ -63,7 +63,7 @@ export default class SevenZip extends Archive {
     tempDir: string,
     callback: (localFile: string) => (T | Promise<T>),
   ): Promise<T> {
-    const localFile = path.join(tempDir, archiveEntry.getEntryPath().replace(/[\\/]/g, '/'));
+    const localFile = path.join(tempDir, archiveEntry.getEntryPath());
 
     await new Promise<void>((resolve, reject) => {
       _7z.unpack(this.getFilePath(), tempDir, (err) => {

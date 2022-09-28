@@ -168,7 +168,7 @@ export default class Zip extends Archive {
       [...inputToOutput.entries()]
         .forEach(([inputFile, outputArchiveEntry]) => inputFile
           .extractToStream(async (readStream) => {
-            zipFile.addReadStream(readStream, outputArchiveEntry.getEntryPath().replace(/[\\/]/g, '/'));
+            zipFile.addReadStream(readStream, outputArchiveEntry.getEntryPath());
             zipEntriesQueued += 1;
 
             // Leave the stream open until we're done writing the zip
