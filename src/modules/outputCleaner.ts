@@ -77,7 +77,7 @@ export default class OutputCleaner {
         return inputFiles
           .sort(() => 0.5 - Math.random())
           .slice(0, 10)
-          .filter((inputFile) => fs.existsSync(inputFile))
+          .filter((inputFile) => !fs.existsSync(inputFile))
           .length === 0;
       }
       return fs.existsSync(inputFiles);
