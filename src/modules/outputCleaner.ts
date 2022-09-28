@@ -1,8 +1,7 @@
 import fg from 'fast-glob';
-import fs, { promises as fsPromises } from 'fs';
+import { promises as fsPromises } from 'fs';
 import { isNotJunk } from 'junk';
 import path from 'path';
-import { clearInterval } from 'timers';
 import trash from 'trash';
 
 import ProgressBar, { Symbols } from '../console/progressBar.js';
@@ -35,7 +34,7 @@ export default class OutputCleaner {
 
     const outputDir = this.options.getOutput();
     const outputFilePathsToExclude = writtenFilesToExclude
-      .map((file) => file.getFilePath().replace(/[\\/]/g, path.sep))
+      .map((file) => file.getFilePath().replace(/[\\/]/g, path.sep));
     console.log('excluding');
     console.log(outputFilePathsToExclude);
 

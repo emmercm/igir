@@ -28,23 +28,4 @@ describe('getArchiveEntries', () => {
     expect(entry.getEntryPath()).toEqual(expectedEntryPath);
     await expect(entry.getCrc32()).resolves.toEqual(expectedCrc);
   });
-
-  test.each([
-    ['./test/fixtures/roms/7z/onetwothree.7z', [['1/one.rom', 'f817a89f'], ['2/two.rom', '96170874'], ['3/three.rom', 'ff46c5d8']]],
-    ['./test/fixtures/roms/rar/onetwothree.rar', [['1/one.rom', 'f817a89f'], ['2/two.rom', '96170874'], ['3/three.rom', 'ff46c5d8']]],
-    ['./test/fixtures/roms/zip/onetwothree.zip', [['1/one.rom', 'f817a89f'], ['2/two.rom', '96170874'], ['3/three.rom', 'ff46c5d8']]],
-  ])('should enumerate the multi file archive: %s', async (filePath, expectedEntries) => {
-    const archive = ArchiveFactory.archiveFrom(filePath);
-
-    const entries = await archive.getArchiveEntries();
-    expect(entries).toHaveLength(expectedEntries.length);
-
-    /* eslint-disable no-await-in-loop */
-    for (let i = 0; i < entries.length; i += 1) {
-      const entry = entries[i];
-      const expectedEntry = expectedEntries[i];
-      expect(entry.getEntryPath()).toEqual(expectedEntry[0]);
-      await expect(entry.getCrc32()).resolves.toEqual(expectedEntry[1]);
-    }
-  });
 });

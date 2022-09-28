@@ -71,7 +71,7 @@ describe('extractToFile', () => {
     const raws = await new ROMScanner(new Options({
       input: ['./test/fixtures/roms/raw'],
     }), new ProgressBarFake()).scan();
-    expect(raws).toHaveLength(8);
+    expect(raws).toHaveLength(5);
 
     const temp = fsPoly.mkdtempSync(Constants.GLOBAL_TEMP_DIR);
     /* eslint-disable no-await-in-loop */
@@ -91,7 +91,7 @@ describe('extractToStream', () => {
     const raws = await new ROMScanner(new Options({
       input: ['./test/fixtures/roms/raw/!(empty).*'],
     }), new ProgressBarFake()).scan();
-    expect(raws).toHaveLength(7);
+    expect(raws).toHaveLength(4);
 
     const temp = fsPoly.mkdtempSync(Constants.GLOBAL_TEMP_DIR);
     /* eslint-disable no-await-in-loop */
