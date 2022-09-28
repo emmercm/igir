@@ -263,7 +263,7 @@ export default class Options implements OptionsProps {
 
           // Otherwise, process it as a glob pattern
           const paths = (await fg(inputPath.replace(/\\/g, '/')))
-            .map((pathLike) => pathLike.replace(/[\\/]/g, path.sep));
+            .map((filePath) => path.normalize(filePath));
           if (!paths || !paths.length) {
             throw new Error(`Path doesn't exist: ${inputPath}`);
           }
