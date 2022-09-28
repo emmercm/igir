@@ -70,7 +70,7 @@ export default class OutputCleaner {
   }
 
   private static async trashAndWait(inputFiles: string | string[]): Promise<void> {
-    await trash(inputFiles, { glob: false });
+    await trash(inputFiles, { glob: true });
 
     const exists: () => (boolean) = () => {
       if (Array.isArray(inputFiles)) {
