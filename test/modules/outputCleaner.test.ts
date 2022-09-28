@@ -50,13 +50,13 @@ async function runOutputCleaner(writtenFilePathsToExclude: string[]): Promise<st
 //   expect(filesRemaining).toEqual(existingFiles);
 // });
 
-// it('should delete nothing if all match', async () => {
-//   const existingFiles = fsPoly.walkSync(romFixtures)
-//     .map((filePath) => filePath.replace(/^test[\\/]fixtures[\\/]roms[\\/]/, ''))
-//     .sort();
-//   const filesRemaining = await runOutputCleaner(existingFiles);
-//   expect(filesRemaining).toEqual(existingFiles);
-// });
+it('should delete nothing if all match', async () => {
+  const existingFiles = fsPoly.walkSync(romFixtures)
+    .map((filePath) => filePath.replace(/^test[\\/]fixtures[\\/]roms[\\/]/, ''))
+    .sort();
+  const filesRemaining = await runOutputCleaner(existingFiles);
+  expect(filesRemaining).toEqual(existingFiles);
+});
 
 it('should delete some if some matched', async () => {
   const filesRemaining = await runOutputCleaner([
