@@ -1,8 +1,8 @@
-import { Mutex } from 'async-mutex';
 import fg from 'fast-glob';
-import { promises as fsPromises } from 'fs';
+import fs, { promises as fsPromises } from 'fs';
 import { isNotJunk } from 'junk';
 import path from 'path';
+import { clearInterval } from 'timers';
 import trash from 'trash';
 
 import ProgressBar, { Symbols } from '../console/progressBar.js';
@@ -15,8 +15,6 @@ import Options from '../types/options.js';
  * This class will not be run concurrently with any other class.
  */
 export default class OutputCleaner {
-  private static readonly mutex = new Mutex();
-
   private readonly options: Options;
 
   private readonly progressBar: ProgressBar;
@@ -56,14 +54,14 @@ export default class OutputCleaner {
     await this.progressBar.reset(filesToClean.length);
 
     try {
-      await OutputCleaner.recycleFiles(filesToClean);
+      await OutputCleaner.trashAndWait(filesToClean);
     } catch (e) {
       await this.progressBar.logError(`Failed to clean unmatched files in ${outputDir} : ${e}`);
     }
 
     try {
       const emptyDirs = await OutputCleaner.getEmptyDirs(outputDir);
-      await OutputCleaner.recycleFiles(emptyDirs);
+      await OutputCleaner.trashAndWait(emptyDirs);
     } catch (e) {
       await this.progressBar.logError(`Failed to clean empty directories in ${outputDir} : ${e}`);
     }
@@ -71,9 +69,31 @@ export default class OutputCleaner {
     return filesToClean.length;
   }
 
-  private static async recycleFiles(filePaths: string | string[]): Promise<void> {
-    await this.mutex.runExclusive(async () => {
-      await trash(filePaths, { glob: false });
+  private static async trashAndWait(inputFiles: string | string[]): Promise<void> {
+    await trash(inputFiles, { glob: false });
+
+    const exists: () => (boolean) = () => {
+      if (Array.isArray(inputFiles)) {
+        return inputFiles
+          .sort(() => 0.5 - Math.random())
+          .slice(0, 10)
+          .some((inputFile) => fs.existsSync(inputFile));
+      }
+      return fs.existsSync(inputFiles);
+    };
+
+    await new Promise<void>((resolve, reject) => {
+      const interval = setInterval(() => {
+        if (!exists()) {
+          clearInterval(interval);
+          resolve();
+        }
+      }, 250);
+
+      setTimeout(() => {
+        clearInterval(interval);
+        reject();
+      }, 10_000);
     });
   }
 
