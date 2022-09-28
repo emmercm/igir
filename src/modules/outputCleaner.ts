@@ -35,7 +35,7 @@ export default class OutputCleaner {
 
     const outputDir = this.options.getOutput();
     const outputFilePathsToExclude = writtenFilesToExclude
-      .map((file) => path.normalize(file.getFilePath()));
+      .map((file) => file.getFilePath().replace(/[\\/]/g, path.sep));
     console.log('excluding');
     console.log(outputFilePathsToExclude);
 
