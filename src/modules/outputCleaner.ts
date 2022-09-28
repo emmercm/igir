@@ -35,13 +35,13 @@ export default class OutputCleaner {
 
     const outputDir = this.options.getOutput();
     const outputFilePathsToExclude = writtenFilesToExclude
-      .map((file) => path.resolve(file.getFilePath()));
+      .map((file) => fs.realpathSync(file.getFilePath()));
     console.log('excluding');
     console.log(outputFilePathsToExclude);
 
     // If there is nothing to clean, then don't do anything
     const filesToClean = (await fg(`${outputDir}/**`.replace(/\\/g, '/')))
-      .map((file) => path.resolve(file))
+      .map((file) => fs.realpathSync(file))
       .filter((file) => outputFilePathsToExclude.indexOf(file) === -1);
     console.log('cleaning');
     console.log(filesToClean);
