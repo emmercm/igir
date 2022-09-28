@@ -1,3 +1,4 @@
+import { Mutex } from 'async-mutex';
 import fg from 'fast-glob';
 import fs, { promises as fsPromises } from 'fs';
 import { isNotJunk } from 'junk';
@@ -69,16 +70,19 @@ export default class OutputCleaner {
     return filesToClean.length;
   }
 
+  private static readonly mutex = new Mutex();
+
   private static async trashAndWait(inputFiles: string | string[]): Promise<void> {
-    await trash(inputFiles, { glob: false });
+    await this.mutex.runExclusive(async () => {
+      await trash(inputFiles, { glob: false });
+    });
 
     const exists: () => (boolean) = () => {
       if (Array.isArray(inputFiles)) {
         return inputFiles
           .sort(() => 0.5 - Math.random())
           .slice(0, 10)
-          .filter((inputFile) => !fs.existsSync(inputFile))
-          .length === 0;
+          .some((inputFile) => fs.existsSync(inputFile));
       }
       return fs.existsSync(inputFiles);
     };
