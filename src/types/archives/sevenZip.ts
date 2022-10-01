@@ -49,8 +49,8 @@ export default class SevenZip extends Archive {
       }),
     );
     return filesIn7z
-      .filter((result) => !result.attr.startsWith('D'))
       .map((result) => new ArchiveEntry(
+      .filter((result) => !result.attr?.startsWith('D'))
         this,
         result.name,
         parseInt(result.size, 10),
