@@ -18,14 +18,3 @@ node --version &> /dev/null || exit 1
 
 # Follow the linter
 npm run lint:fix
-
-
-# Update the help text in README.md
-README="README.md"
-README_BEFORE=$(cat "${README}")
-./scripts/update-readme-help.sh 95
-README_AFTER=$(cat "${README}")
-if [[ "${README_AFTER}" != "${README_BEFORE}" ]]; then
-  # TODO(cemmer): way to not commit the entire file when the help text changes?
-  git add "${README}"
-fi
