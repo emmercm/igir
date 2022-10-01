@@ -13,8 +13,8 @@ const candidateGenerator = new CandidateGenerator(new ProgressBarFake());
 
 it('should return no results with no games in DAT', async () => {
   const dat = new DAT(new Header(), []);
-  const fileOne = new File('foo', 0, '00000000');
-  const fileTwo = new ArchiveEntry(new Zip('fizz'), 'buzz', 0, 'ffffffff');
+  const fileOne = await File.fileOf('foo', 0, '00000000');
+  const fileTwo = await ArchiveEntry.entryOf(new Zip('fizz'), 'buzz', 0, 'ffffffff');
 
   await expect(candidateGenerator.generate(dat, [])).resolves.toHaveProperty('size', 0);
   await expect(candidateGenerator.generate(dat, [fileOne])).resolves.toHaveProperty('size', 0);
@@ -47,9 +47,9 @@ it('should return no results with no matching files', async () => {
   const datWithDuplicateGames = new DAT(new Header(), [gameOne, gameOne]);
   const datWithTwoGames = new DAT(new Header(), [gameOne, gameTwo]);
 
-  const fileOne = new File('one.rom', 0, '34567890');
-  const fileTwo = new File('two.a', 0, 'abcd1234');
-  const fileThree = new ArchiveEntry(new Zip('three.zip'), 'three.b', 0, '4321fedc');
+  const fileOne = await File.fileOf('one.rom', 0, '34567890');
+  const fileTwo = await File.fileOf('two.a', 0, 'abcd1234');
+  const fileThree = await ArchiveEntry.entryOf(new Zip('three.zip'), 'three.b', 0, '4321fedc');
 
   const expectCandidates = async (dat: DAT, inputRomFiles: File[]): Promise<void> => {
     // The DAT definitely has some parents
@@ -106,8 +106,8 @@ it('should return no results with partially matching files', async () => {
   const datWithDuplicateGames = new DAT(new Header(), [gameOne, gameOne]);
   const datWithTwoGames = new DAT(new Header(), [gameOne, gameTwo]);
 
-  const fileOne = new File('one.a', 0, '12345678');
-  const fileTwo = new File('two.b', 0, '09876543');
+  const fileOne = await File.fileOf('one.a', 0, '12345678');
+  const fileTwo = await File.fileOf('two.b', 0, '09876543');
 
   const expectCandidates = async (dat: DAT, inputRomFiles: File[]): Promise<void> => {
     // The DAT definitely has some parents
@@ -151,8 +151,8 @@ it('should return some results with some matching files', async () => {
   const datWithDuplicateGames = new DAT(new Header(), [gameOne, gameOne]);
   const datWithTwoGames = new DAT(new Header(), [gameOne, gameTwo]);
 
-  const fileOne = new File('one.rom', 0, '12345678');
-  const fileTwo = new ArchiveEntry(new Zip('three.zip'), 'three.b', 0, '4321fedc');
+  const fileOne = await File.fileOf('one.rom', 0, '12345678');
+  const fileTwo = await ArchiveEntry.entryOf(new Zip('three.zip'), 'three.b', 0, '4321fedc');
 
   const expectCandidates = async (dat: DAT, inputRomFiles: File[]): Promise<void> => {
     // The DAT definitely has some parents
@@ -193,9 +193,9 @@ it('should return all results with all matching files', async () => {
   const datWithGameOneTwice = new DAT(new Header(), [gameOne, gameOne]);
   const datWithGameTwo = new DAT(new Header(), [gameTwo]);
 
-  const fileOne = new File('one.rom', 0, '12345678');
-  const fileTwo = new ArchiveEntry(new Zip('two.zip'), 'two.a', 0, 'abcdef90');
-  const fileThree = new ArchiveEntry(new Zip('two.zip'), 'two.b', 0, '09876543');
+  const fileOne = await File.fileOf('one.rom', 0, '12345678');
+  const fileTwo = await ArchiveEntry.entryOf(new Zip('two.zip'), 'two.a', 0, 'abcdef90');
+  const fileThree = await ArchiveEntry.entryOf(new Zip('two.zip'), 'two.b', 0, '09876543');
 
   const expectCandidates = async (dat: DAT, inputRomFiles: File[]): Promise<void> => {
     // The DAT definitely has some parents

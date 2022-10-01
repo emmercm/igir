@@ -30,7 +30,7 @@ class LoggerSpy {
     return this.logger;
   }
 
-  getOutput(): Promise<string> {
+  async getOutput(): Promise<string> {
     this.stream.end();
     return this.spy;
   }

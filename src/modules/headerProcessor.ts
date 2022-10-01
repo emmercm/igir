@@ -38,21 +38,17 @@ export default class HeaderProcessor {
         const headerForExtension = FileHeader.getForFilename(inputFile.getExtractedFilePath());
         if (headerForExtension) {
           await this.progressBar.logDebug(`${inputFile.toString()}: found header by extension: ${headerForExtension}`);
-          const fileWithHeader = await (
-            await inputFile.withFileHeader(headerForExtension)
-          ).resolve();
+          const fileWithHeader = await inputFile.withFileHeader(headerForExtension);
           return callback(null, fileWithHeader);
         }
 
         // Should get FileHeader from File, try to
         if (this.options.shouldReadFileForHeader(inputFile.getExtractedFilePath())) {
           const headerForFile = await inputFile
-            .extractToStream((stream) => FileHeader.getForFileStream(stream));
+            .extractToStream(async (stream) => FileHeader.getForFileStream(stream));
           if (headerForFile) {
             await this.progressBar.logDebug(`${inputFile.toString()}: found header by contents: ${headerForExtension}`);
-            const fileWithHeader = await (
-              await inputFile.withFileHeader(headerForFile)
-            ).resolve();
+            const fileWithHeader = await inputFile.withFileHeader(headerForFile);
             return callback(null, fileWithHeader);
           }
           await this.progressBar.logWarn(`Couldn't detect header for ${inputFile.toString()}`);

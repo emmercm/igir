@@ -6,27 +6,27 @@ export default class ProgressBarFake extends ProgressBar {
   delete(): void {
   }
 
-  done(): Promise<void> {
+  async done(): Promise<void> {
     return Promise.resolve();
   }
 
-  increment(): Promise<void> {
+  async increment(): Promise<void> {
     return Promise.resolve();
   }
 
-  log(): Promise<void> {
+  async log(): Promise<void> {
     return Promise.resolve();
   }
 
-  reset(): Promise<void> {
+  async reset(): Promise<void> {
     return Promise.resolve();
   }
 
-  setSymbol(): Promise<void> {
+  async setSymbol(): Promise<void> {
     return Promise.resolve();
   }
 
-  update(): Promise<void> {
+  async update(): Promise<void> {
     return Promise.resolve();
   }
 }

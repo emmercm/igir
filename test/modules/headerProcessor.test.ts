@@ -14,9 +14,8 @@ describe('extension has possible header', () => {
       .process(inputRomFiles);
 
     expect(processedRomFiles).toHaveLength(inputRomFiles.length);
-    /* eslint-disable no-await-in-loop */
     for (let i = 0; i < processedRomFiles.length; i += 1) {
-      await expect(inputRomFiles[i].equals(processedRomFiles[i])).resolves.toEqual(true);
+      expect(inputRomFiles[i].equals(processedRomFiles[i])).toEqual(true);
     }
   });
 
@@ -30,10 +29,9 @@ describe('extension has possible header', () => {
       .process(inputRomFiles);
 
     expect(processedRomFiles).toHaveLength(inputRomFiles.length);
-    /* eslint-disable no-await-in-loop */
     for (let i = 0; i < processedRomFiles.length; i += 1) {
       // CRC should have changed
-      await expect(inputRomFiles[i].equals(processedRomFiles[i])).resolves.toEqual(false);
+      expect(inputRomFiles[i].equals(processedRomFiles[i])).toEqual(false);
     }
   });
 });
@@ -50,9 +48,8 @@ describe('should read file for header', () => {
     }), new ProgressBarFake()).process(inputRomFiles);
 
     expect(processedRomFiles).toHaveLength(inputRomFiles.length);
-    /* eslint-disable no-await-in-loop */
     for (let i = 0; i < processedRomFiles.length; i += 1) {
-      await expect(inputRomFiles[i].equals(processedRomFiles[i])).resolves.toEqual(true);
+      expect(inputRomFiles[i].equals(processedRomFiles[i])).toEqual(true);
     }
   });
 
@@ -67,10 +64,9 @@ describe('should read file for header', () => {
     }), new ProgressBarFake()).process(inputRomFiles);
 
     expect(processedRomFiles).toHaveLength(inputRomFiles.length);
-    /* eslint-disable no-await-in-loop */
     for (let i = 0; i < processedRomFiles.length; i += 1) {
       // CRC should have changed
-      await expect(inputRomFiles[i].equals(processedRomFiles[i])).resolves.toEqual(false);
+      expect(inputRomFiles[i].equals(processedRomFiles[i])).toEqual(false);
     }
   });
 });

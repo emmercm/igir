@@ -80,7 +80,7 @@ export default class OutputCleaner {
         }),
     );
     await Promise.all(
-      stillExists.map((filePath) => fsPoly.rm(filePath)),
+      stillExists.map(async (filePath) => fsPoly.rm(filePath)),
     );
   }
 
