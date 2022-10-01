@@ -21,7 +21,7 @@ With a large ROM collection it can be difficult to:
 
 - Organize ROM files by console
 - Consistently name ROM files
-- Consistently archive ROMs in mass
+- Archive ROMs individually in mass
 - Filter out duplicate ROMs
 - Filter out ROMs for languages you don't understand
 - Know what ROMs are missing for each console
@@ -154,11 +154,11 @@ Examples:
 
 ## What are DATs?
 
-DATs are catalogs of every known ROM per system. A number of different release groups maintain these catalogs, the most popular are:
+DATs are catalogs of every known ROM per console. A number of different release groups maintain these catalogs, the most popular are:
 
-- [No-Intro P/C XML](https://datomatic.no-intro.org/index.php?page=download&s=64&op=daily) (cartridge-based systems)
+- [No-Intro P/C XML](https://datomatic.no-intro.org/index.php?page=download&s=64&op=daily) (cartridge-based consoles)
   - Note: you can download every console at once from the [daily page](https://datomatic.no-intro.org/index.php?page=download&s=64&op=daily), but you need to manually select "P/C XML" from the dropdown
-- [Redump](http://redump.org/downloads/) (optical media-based systems)
+- [Redump](http://redump.org/downloads/) (optical media-based consoles)
 
 And some less popular release groups are:
 
@@ -171,7 +171,7 @@ These catalogs help `igir` distinguish known ROM files in input directories from
 
 ## How do I obtain ROMs?
 
-Emulators are generally legal, as long as they don't include copyrighted software such as a system BIOS. Downloading ROM files that you do not own is piracy and is illegal in many countries.
+Emulators are generally legal, as long as they don't include copyrighted software such as a console BIOS. Downloading ROM files that you do not own is piracy and is illegal in many countries.
 
 [Dumping.Guide](https://dumping.guide/start) and  [Emulation General Wiki](https://emulation.gametechwiki.com/index.php/Ripping_games) are some of the best resources for legally creating ROM files from games you own. Here is a condensed version that isn't guaranteed to be up-to-date:
 
