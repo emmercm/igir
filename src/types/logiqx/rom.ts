@@ -56,8 +56,8 @@ export default class ROM {
     return this.md5 ? this.md5.replace(/^0x/, '').padStart(32, '0') : '';
   }
 
-  toFile(): File {
-    return new File(this.getName(), this.getSize(), this.getCrc32());
+  async toFile(): Promise<File> {
+    return File.fileOf(this.getName(), this.getSize(), this.getCrc32());
   }
 
   /** *************************

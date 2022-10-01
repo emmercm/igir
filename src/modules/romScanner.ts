@@ -33,5 +33,7 @@ export default class ROMScanner extends Scanner {
         callback(null, files);
       },
     )).flatMap((files) => files);
+
+    // TODO(cemmer): de-duplicate files here ahead of header parsing
   }
 }

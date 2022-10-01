@@ -11,22 +11,22 @@ export default class Rar extends Archive {
     const rar = await unrar.createExtractorFromFile({
       filepath: this.getFilePath(),
     });
-    return [...rar.getFileList().fileHeaders]
+    return Promise.all([...rar.getFileList().fileHeaders]
       .filter((fileHeader) => !fileHeader.flags.directory)
-      .map((fileHeader) => new ArchiveEntry(
+      .map(async (fileHeader) => ArchiveEntry.entryOf(
         this,
         fileHeader.name,
         fileHeader.unpSize,
         fileHeader.crc.toString(16),
-      ));
+      )));
   }
 
   async extractEntryToFile<T>(
-    archiveEntry: ArchiveEntry<Rar>,
+    entryPath: string,
     tempDir: string,
     callback: (localFile: string) => (T | Promise<T>),
   ): Promise<T> {
-    const localFile = path.join(tempDir, archiveEntry.getEntryPath());
+    const localFile = path.join(tempDir, entryPath);
 
     const rar = await unrar.createExtractorFromFile({
       filepath: this.getFilePath(),
@@ -36,7 +36,7 @@ export default class Rar extends Archive {
     // iterated, so we have to execute this expression, but can throw away the results
     /* eslint-disable @typescript-eslint/no-unused-expressions */
     [...rar.extract({
-      files: [archiveEntry.getEntryPath().replace(/[\\/]/g, '/')],
+      files: [entryPath.replace(/[\\/]/g, '/')],
     }).files];
 
     return callback(localFile);

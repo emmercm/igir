@@ -68,17 +68,16 @@ async function indexFilesByName(
 
       const game = new Game();
       const parent = new Parent(romName, game);
-      const releaseCandidates = await Promise.all(romFiles
-        .map(async (romFile) => {
-          const release = new Release(romName, 'UNK', undefined);
-          const romFileName = romFile.getExtractedFilePath();
-          const rom = new ROM(
-            path.basename(romFileName),
-            romFile.getSize(),
-            await romFile.getCrc32(),
-          );
-          return new ReleaseCandidate(game, release, [rom], [romFile]);
-        }));
+      const releaseCandidates = romFiles.map((romFile) => {
+        const release = new Release(romName, 'UNK', undefined);
+        const romFileName = romFile.getExtractedFilePath();
+        const rom = new ROM(
+          path.basename(romFileName),
+          romFile.getSize(),
+          romFile.getCrc32(),
+        );
+        return new ReleaseCandidate(game, release, [rom], [romFile]);
+      });
       acc.set(parent, releaseCandidates);
 
       return acc;

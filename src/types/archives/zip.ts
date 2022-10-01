@@ -13,7 +13,7 @@ import Archive from './archive.js';
 export default class Zip extends Archive {
   static readonly SUPPORTED_EXTENSIONS = ['.zip'];
 
-  getArchiveEntries(): Promise<ArchiveEntry<Zip>[]> {
+  async getArchiveEntries(): Promise<ArchiveEntry<Zip>[]> {
     return new Promise((resolve, reject) => {
       yauzl.open(this.getFilePath(), {
         lazyEntries: true,
@@ -25,10 +25,10 @@ export default class Zip extends Archive {
 
         const archiveEntries: ArchiveEntry<Zip>[] = [];
 
-        zipFile.on('entry', (entry: Entry) => {
+        zipFile.on('entry', async (entry: Entry) => {
           if (!entry.fileName.endsWith('/')) {
             // Is a file
-            archiveEntries.push(new ArchiveEntry(
+            archiveEntries.push(await ArchiveEntry.entryOf(
               this,
               entry.fileName,
               entry.uncompressedSize,
@@ -51,11 +51,11 @@ export default class Zip extends Archive {
   }
 
   async extractEntryToFile<T>(
-    archiveEntry: ArchiveEntry<Zip>,
+    entryPath: string,
     tempDir: string,
     callback: (localFile: string) => (T | Promise<T>),
   ): Promise<T> {
-    const localFile = path.join(tempDir, archiveEntry.getEntryPath());
+    const localFile = path.join(tempDir, entryPath);
 
     const localDir = path.dirname(localFile);
     if (!await fsPoly.exists(localDir)) {
@@ -63,9 +63,9 @@ export default class Zip extends Archive {
     }
 
     return this.extractEntryToStream(
-      archiveEntry,
+      entryPath,
       tempDir,
-      (readStream) => new Promise((resolve, reject) => {
+      async (readStream) => new Promise((resolve, reject) => {
         const writeStream = fs.createWriteStream(localFile);
         writeStream.on('close', async () => {
           try {
@@ -80,7 +80,7 @@ export default class Zip extends Archive {
   }
 
   async extractEntryToStream<T>(
-    archiveEntry: ArchiveEntry<Zip>,
+    entryPath: string,
     tempDir: string,
     callback: (stream: Readable) => (Promise<T> | T),
   ): Promise<T> {
@@ -94,7 +94,7 @@ export default class Zip extends Archive {
         }
 
         zipFile.on('entry', (entry: Entry) => {
-          if (entry.fileName === archiveEntry.getEntryPath().replace(/[\\/]/g, '/')) {
+          if (entry.fileName === entryPath.replace(/[\\/]/g, '/')) {
             // Found the file we're looking for
             zipFile.openReadStream(entry, async (streamErr, stream) => {
               if (streamErr) {
@@ -166,7 +166,7 @@ export default class Zip extends Archive {
 
       // Enqueue all archive entries to the zip
       [...inputToOutput.entries()]
-        .forEach(([inputFile, outputArchiveEntry]) => inputFile
+        .forEach(async ([inputFile, outputArchiveEntry]) => inputFile
           .extractToStream(async (readStream) => {
             zipFile.addReadStream(readStream, outputArchiveEntry.getEntryPath());
             zipEntriesQueued += 1;

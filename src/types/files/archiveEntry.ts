@@ -13,16 +13,53 @@ export default class ArchiveEntry<A extends Archive> extends File {
 
   private readonly entryPath: string;
 
-  constructor(
+  protected constructor(
+    /** {@link File} */
+    filePath: string,
+    size: number,
+    crc: string,
+    crc32WithoutHeader: string,
+    fileHeader: FileHeader | undefined,
+    /** {@link ArchiveEntry} */
+    archive: A,
+    entryPath: string,
+  ) {
+    super(
+      filePath,
+      size,
+      crc,
+      crc32WithoutHeader,
+      fileHeader,
+    );
+    this.archive = archive;
+    this.entryPath = path.normalize(entryPath);
+  }
+
+  static async entryOf<A extends Archive>(
     archive: A,
     entryPath: string,
     size: number,
-    crc?: string,
+    crc: string,
     fileHeader?: FileHeader,
-  ) {
-    super(archive.getFilePath(), size, crc, fileHeader);
-    this.archive = archive;
-    this.entryPath = path.normalize(entryPath);
+  ): Promise<ArchiveEntry<A>> {
+    let finalCrcWithoutHeader = crc;
+    if (fileHeader) {
+      finalCrcWithoutHeader = await this.extractEntryToFile(
+        archive,
+        entryPath,
+        async (localFile) => this.calculateCrc32(localFile, fileHeader),
+      );
+    }
+
+    return new ArchiveEntry<A>(
+      archive.getFilePath(),
+      size,
+      crc,
+      finalCrcWithoutHeader,
+      fileHeader,
+      archive,
+      entryPath,
+    );
   }
 
   getArchive(): A {
@@ -38,9 +75,17 @@ export default class ArchiveEntry<A extends Archive> extends File {
   }
 
   async extractToFile<T>(callback: (localFile: string) => (T | Promise<T>)): Promise<T> {
+    return ArchiveEntry.extractEntryToFile(this.getArchive(), this.getEntryPath(), callback);
+  }
+
+  private static async extractEntryToFile<T>(
+    archive: Archive,
+    entryPath: string,
+    callback: (localFile: string) => (T | Promise<T>),
+  ): Promise<T> {
     const tempDir = await fsPromises.mkdtemp(Constants.GLOBAL_TEMP_DIR);
     try {
-      return await this.archive.extractEntryToFile(this, tempDir, callback);
+      return await archive.extractEntryToFile(entryPath, tempDir, callback);
     } finally {
       await fsPoly.rm(tempDir, { recursive: true });
     }
@@ -59,7 +104,7 @@ export default class ArchiveEntry<A extends Archive> extends File {
 
     const tempDir = await fsPromises.mkdtemp(Constants.GLOBAL_TEMP_DIR);
     try {
-      return await this.archive.extractEntryToStream(this, tempDir, callback);
+      return await this.archive.extractEntryToStream(this.getEntryPath(), tempDir, callback);
     } finally {
       await fsPoly.rm(tempDir, { recursive: true });
     }
@@ -74,11 +119,11 @@ export default class ArchiveEntry<A extends Archive> extends File {
       return this;
     }
 
-    return new ArchiveEntry(
-      this.archive,
-      this.entryPath,
+    return ArchiveEntry.entryOf(
+      this.getArchive(),
+      this.getEntryPath(),
       this.getSize(),
-      await this.getCrc32(),
+      this.getCrc32(),
       fileHeader,
     );
   }
@@ -87,14 +132,14 @@ export default class ArchiveEntry<A extends Archive> extends File {
     return `${this.getFilePath()}|${this.entryPath}`;
   }
 
-  async equals(other: File): Promise<boolean> {
+  equals(other: File): boolean {
     if (this === other) {
       return true;
     }
     if (!(other instanceof ArchiveEntry)) {
       return false;
     }
-    if (!await super.equals(other)) {
+    if (!super.equals(other)) {
       return false;
     }
     return this.getEntryPath() === other.getEntryPath();
