@@ -35,7 +35,7 @@ export default class SevenZip extends Archive {
      */
     const filesIn7z = await SevenZip.LIST_MUTEX.runExclusive(
       async () => new Promise<Result[]>((resolve, reject) => {
-        _7z.list(this.getFilePath(), async (err, result) => {
+        _7z.list(this.getFilePath(), (err, result) => {
           if (err) {
             const msg = err.toString()
               .replace(/\n\n+/g, '\n')
@@ -48,22 +48,22 @@ export default class SevenZip extends Archive {
         });
       }),
     );
-    return filesIn7z
+    return Promise.all(filesIn7z
       .filter((result) => !result.attr?.startsWith('D'))
-      .map((result) => new ArchiveEntry(
+      .map(async (result) => ArchiveEntry.entryOf(
         this,
         result.name,
         parseInt(result.size, 10),
         result.crc,
-      ));
+      )));
   }
 
   async extractEntryToFile<T>(
-    archiveEntry: ArchiveEntry<SevenZip>,
+    entryPath: string,
     tempDir: string,
     callback: (localFile: string) => (T | Promise<T>),
   ): Promise<T> {
-    const localFile = path.join(tempDir, archiveEntry.getEntryPath());
+    const localFile = path.join(tempDir, entryPath);
 
     await new Promise<void>((resolve, reject) => {
       _7z.unpack(this.getFilePath(), tempDir, (err) => {

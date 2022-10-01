@@ -88,10 +88,9 @@ export default class ROMWriter {
     const inputToOutput = await this.buildInputToOutput(dat, releaseCandidate);
 
     // Determine if a write is needed based on the output not equaling the input
-    const writeNeeded = (await Promise.all(
-      [...inputToOutput.entries()]
-        .map(async ([inputRomFile, outputRomFile]) => !await inputRomFile.equals(outputRomFile)),
-    )).some((notEq) => notEq);
+    const writeNeeded = ([...inputToOutput.entries()]
+      .map(([inputRomFile, outputRomFile]) => !inputRomFile.equals(outputRomFile))
+    ).some((notEq) => notEq);
     await this.progressBar.logDebug(`${dat.getName()} | ${releaseCandidate.getName()}: ${writeNeeded ? '' : 'no '}write needed`);
 
     if (writeNeeded) {
@@ -116,7 +115,7 @@ export default class ROMWriter {
       const acc = await accPromise;
 
       // Find the release candidate's File, find the matching ROM
-      const rom = (await inputFile.hashCodes())
+      const rom = inputFile.hashCodes()
         .map((hashCode) => hashCodeToRoms.get(hashCode))
         .filter((r) => r)[0] as ROM;
 
@@ -124,11 +123,11 @@ export default class ROMWriter {
       if (this.options.shouldZip(rom.getName())) {
         const outputFilePath = this.options.getOutput(dat, inputFile.getFilePath(), `${releaseCandidate.getName()}.zip`);
         const entryPath = rom.getName();
-        outputFile = new ArchiveEntry(
+        outputFile = await ArchiveEntry.entryOf(
           new Zip(outputFilePath),
           entryPath,
           inputFile.getSize(),
-          await inputFile.getCrc32(),
+          inputFile.getCrc32(),
         );
       } else {
         const outputFilePath = this.options.getOutput(
@@ -136,10 +135,10 @@ export default class ROMWriter {
           inputFile.getFilePath(),
           rom.getName(),
         );
-        outputFile = new File(
+        outputFile = await File.fileOf(
           outputFilePath,
           inputFile.getSize(),
-          await inputFile.getCrc32(),
+          inputFile.getCrc32(),
         );
       }
 
@@ -180,14 +179,14 @@ export default class ROMWriter {
       // If the output file already exists and we're not overwriting, do nothing
       if (!this.options.getOverwrite()) {
         await this.progressBar.logDebug(`${outputZip.getFilePath()}: file exists, not overwriting`);
-        return [new File(outputZip.getFilePath())];
+        return [await File.fileOf((outputZip.getFilePath()))];
       }
 
       // If the zip is already what we're expecting, do nothing
       // TODO(cemmer): change this to a condition around the write, let it still delete moved files
       if (await ROMWriter.testZipContents(outputZip, inputToOutputZipEntries)) {
         await this.progressBar.logDebug(`${outputZip.getFilePath()}: same file, skipping`);
-        return [new File(outputZip.getFilePath())];
+        return [await File.fileOf((outputZip.getFilePath()))];
       }
     }
 
@@ -196,14 +195,14 @@ export default class ROMWriter {
     if (this.options.shouldTest()) {
       if (!await ROMWriter.testZipContents(outputZip, inputToOutputZipEntries)) {
         await this.progressBar.logError(`Written zip is invalid: ${outputZip.getFilePath()}`);
-        return [new File(outputZip.getFilePath())];
+        return [await File.fileOf((outputZip.getFilePath()))];
       }
     }
 
     await this.deleteMovedZipEntries(outputZip, [...inputToOutputFiles.keys()]);
 
     // Return the single archive written
-    return [new File(outputZip.getFilePath())];
+    return [await File.fileOf(outputZip.getFilePath())];
   }
 
   private static async testZipContents(
@@ -238,7 +237,7 @@ export default class ROMWriter {
       const actual = actualEntriesByPath.get(entryPath) as ArchiveEntry<Zip>;
 
       // Check checksum
-      if (!await actual.equals(expected)) {
+      if (!actual.equals(expected)) {
         return false;
       }
     }
@@ -279,7 +278,7 @@ export default class ROMWriter {
       .filter((filePath) => filePath !== outputZipArchive.getFilePath())
       .filter((romFile, idx, romFiles) => romFiles.indexOf(romFile) === idx);
     await this.progressBar.logDebug(filesToDelete.map((f) => `${f}: deleting`).join('\n'));
-    await Promise.all(filesToDelete.map((filePath) => fsPoly.rm(filePath, { force: true })));
+    await Promise.all(filesToDelete.map(async (filePath) => fsPoly.rm(filePath, { force: true })));
   }
 
   /** ********************
@@ -311,7 +310,7 @@ export default class ROMWriter {
 
   private async writeRawSingle(inputRomFile: File, outputRomFile: File): Promise<void> {
     // Input and output are the exact same, do nothing
-    if (await outputRomFile.equals(inputRomFile)) {
+    if (outputRomFile.equals(inputRomFile)) {
       await this.progressBar.logDebug(`${outputRomFile}: same file, skipping`);
       return;
     }
@@ -331,7 +330,7 @@ export default class ROMWriter {
     if (!await this.writeRawFile(inputRomFile, outputFilePath)) {
       return;
     }
-    await this.testWrittenRaw(outputFilePath, await inputRomFile.getCrc32());
+    await this.testWrittenRaw(outputFilePath, inputRomFile.getCrc32());
     await this.deleteMovedFile(inputRomFile);
   }
 
@@ -354,9 +353,9 @@ export default class ROMWriter {
     }
 
     await this.progressBar.logDebug(`${outputFilePath}: testing`);
-    const fileToTest = new File(outputFilePath);
-    if (await fileToTest.getCrc32() !== expectedCrc32) {
-      await this.progressBar.logError(`Written file has the CRC ${await fileToTest.getCrc32()}, expected ${expectedCrc32}: ${outputFilePath}`);
+    const fileToTest = await File.fileOf(outputFilePath);
+    if (fileToTest.getCrc32() !== expectedCrc32) {
+      await this.progressBar.logError(`Written file has the CRC ${fileToTest.getCrc32()}, expected ${expectedCrc32}: ${outputFilePath}`);
     }
   }
 

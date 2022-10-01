@@ -28,7 +28,7 @@ describe('getArchiveEntries', () => {
 
     const entry = entries[0];
     expect(entry.getEntryPath()).toEqual(expectedEntryPath);
-    await expect(entry.getCrc32()).resolves.toEqual(expectedCrc);
+    expect(entry.getCrc32()).toEqual(expectedCrc);
   });
 
   test.each([
@@ -41,12 +41,11 @@ describe('getArchiveEntries', () => {
     const entries = await archive.getArchiveEntries();
     expect(entries).toHaveLength(expectedEntries.length);
 
-    /* eslint-disable no-await-in-loop */
     for (let i = 0; i < entries.length; i += 1) {
       const entry = entries[i];
       const expectedEntry = expectedEntries[i];
       expect(entry.getEntryPath()).toEqual(path.normalize(expectedEntry[0]));
-      await expect(entry.getCrc32()).resolves.toEqual(expectedEntry[1]);
+      expect(entry.getCrc32()).toEqual(expectedEntry[1]);
     }
   });
 });

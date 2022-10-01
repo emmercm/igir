@@ -56,42 +56,42 @@ describe('toString', () => {
     expect(datStatus.toString(options)).toEqual('0/3 games, 0/1 bioses, 0/2 retail releases found');
   });
 
-  it('should return status where every parent only has a candidate for the first rom', () => {
+  it('should return status where every parent only has a candidate for the first rom', async () => {
     const dat = givenDAT();
     const parentsToReleaseCandidates = new Map<Parent, ReleaseCandidate[]>();
-    dat.getParents().forEach((parent) => {
-      parent.getGames().forEach((game) => {
+    await Promise.all(dat.getParents().map(async (parent) => {
+      await Promise.all(parent.getGames().map(async (game) => {
         const rom = game.getRoms()[0];
         parentsToReleaseCandidates.set(parent, [
           new ReleaseCandidate(
             game,
             game.getReleases()[0],
             [rom],
-            [rom].map((gameRom) => gameRom.toFile()),
+            await Promise.all([rom].map(async (gameRom) => gameRom.toFile())),
           ),
         ]);
-      });
-    });
+      }));
+    }));
     const datStatus = new DATStatus(dat, parentsToReleaseCandidates);
     const options = new Options();
     expect(datStatus.toString(options)).toEqual('2/3 games, 1/1 bioses, 1/2 retail releases found');
   });
 
-  it('should return status where every parent has a candidate for every rom', () => {
+  it('should return status where every parent has a candidate for every rom', async () => {
     const dat = givenDAT();
     const parentsToReleaseCandidates = new Map<Parent, ReleaseCandidate[]>();
-    dat.getParents().forEach((parent) => {
-      parent.getGames().forEach((game) => {
+    await Promise.all(dat.getParents().map(async (parent) => {
+      await Promise.all(parent.getGames().map(async (game) => {
         parentsToReleaseCandidates.set(parent, [
           new ReleaseCandidate(
             game,
             game.getReleases()[0],
             game.getRoms(),
-            game.getRoms().map((gameRom) => gameRom.toFile()),
+            await Promise.all(game.getRoms().map(async (gameRom) => gameRom.toFile())),
           ),
         ]);
-      });
-    });
+      }));
+    }));
     const datStatus = new DATStatus(dat, parentsToReleaseCandidates);
     const options = new Options();
     expect(datStatus.toString(options)).toEqual('3/3 games, 1/1 bioses, 2/2 retail releases found');
@@ -111,22 +111,22 @@ game with multiple roms and no releases
 game with one rom and multiple releases`);
   });
 
-  it('should return report where every parent only has a candidate for the first rom', () => {
+  it('should return report where every parent only has a candidate for the first rom', async () => {
     const dat = givenDAT();
     const parentsToReleaseCandidates = new Map<Parent, ReleaseCandidate[]>();
-    dat.getParents().forEach((parent) => {
-      parent.getGames().forEach((game) => {
+    await Promise.all(dat.getParents().map(async (parent) => {
+      await Promise.all(parent.getGames().map(async (game) => {
         const rom = game.getRoms()[0];
         parentsToReleaseCandidates.set(parent, [
           new ReleaseCandidate(
             game,
             game.getReleases()[0],
             [rom],
-            [rom].map((gameRom) => gameRom.toFile()),
+            await Promise.all([rom].map(async (gameRom) => gameRom.toFile())),
           ),
         ]);
-      });
-    });
+      }));
+    }));
     const datStatus = new DATStatus(dat, parentsToReleaseCandidates);
     const options = new Options();
     expect(datStatus.toReport(options)).toEqual(`// dat name (20220828): 3 games, 3 parents defined
@@ -134,21 +134,21 @@ game with one rom and multiple releases`);
 game with multiple roms and no releases`);
   });
 
-  it('should return report where every parent has a candidate for every rom', () => {
+  it('should return report where every parent has a candidate for every rom', async () => {
     const dat = givenDAT();
     const parentsToReleaseCandidates = new Map<Parent, ReleaseCandidate[]>();
-    dat.getParents().forEach((parent) => {
-      parent.getGames().forEach((game) => {
+    await Promise.all(dat.getParents().map(async (parent) => {
+      await Promise.all(parent.getGames().map(async (game) => {
         parentsToReleaseCandidates.set(parent, [
           new ReleaseCandidate(
             game,
             game.getReleases()[0],
             game.getRoms(),
-            game.getRoms().map((gameRom) => gameRom.toFile()),
+            await Promise.all(game.getRoms().map(async (gameRom) => gameRom.toFile())),
           ),
         ]);
-      });
-    });
+      }));
+    }));
     const datStatus = new DATStatus(dat, parentsToReleaseCandidates);
     const options = new Options();
     expect(datStatus.toReport(options)).toEqual(`// dat name (20220828): 3 games, 3 parents defined

@@ -40,7 +40,7 @@ export default class CandidateGenerator {
 
     // TODO(cemmer): only do this once globally, not per DAT
     // TODO(cemmer): ability to index files by some other property such as name
-    const hashCodeToInputFiles = await CandidateGenerator.indexFilesByHashCode(inputRomFiles);
+    const hashCodeToInputFiles = CandidateGenerator.indexFilesByHashCode(inputRomFiles);
     await this.progressBar.logInfo(`${dat.getName()}: ${hashCodeToInputFiles.size} unique ROMs found`);
 
     // TODO(cemmer): ability to work without DATs, generating a parent/game/release per file
@@ -82,13 +82,11 @@ export default class CandidateGenerator {
     return output;
   }
 
-  private static async indexFilesByHashCode(files: File[]): Promise<Map<string, File>> {
-    return files.reduce(async (accPromise, file) => {
-      const acc = await accPromise;
-      (await file.hashCodes())
-        .forEach((hashCode) => this.addToIndex(acc, hashCode, file));
+  private static indexFilesByHashCode(files: File[]): Map<string, File> {
+    return files.reduce((acc, file) => {
+      file.hashCodes().forEach((hashCode) => this.addToIndex(acc, hashCode, file));
       return acc;
-    }, Promise.resolve(new Map<string, File>()));
+    }, new Map<string, File>());
   }
 
   private static addToIndex(map: Map<string, File>, hash: string, file: File): void {
@@ -112,7 +110,7 @@ export default class CandidateGenerator {
     // For each Game's ROM, find the matching File
     const romFiles = (await async.map(
       game.getRoms(),
-      async (rom, callback: AsyncResultCallback<[ROM, File | undefined], Error>) => {
+      (rom, callback: AsyncResultCallback<[ROM, File | undefined], Error>) => {
         const romFile = hashCodeToInputFiles.get(rom.hashCode());
         callback(null, [rom, romFile]);
       },

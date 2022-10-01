@@ -26,7 +26,7 @@ export default abstract class Scanner {
         files = [];
       }
     } else {
-      files = [await new File(filePath).resolve()];
+      files = [await File.fileOf(filePath)];
     }
     return files;
   }

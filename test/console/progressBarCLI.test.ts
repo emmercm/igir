@@ -217,11 +217,11 @@ describe('logError', () => {
 });
 
 describe('delete', () => {
-  it('should delete the single bar', async () => {
+  it('should delete the single bar', () => {
     const spy = new ProgressBarCLISpy(LogLevel.ERROR + 1);
     const progressBar = new ProgressBarCLI(spy.getLogger(), 'name', '✓');
 
-    await progressBar.delete();
+    progressBar.delete();
     expect(spy.getLastLine()).toBeUndefined();
 
     ProgressBarCLI.stop();
