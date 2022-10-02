@@ -60,14 +60,13 @@ export default class Igir {
       datsToWrittenRoms.set(dat, writtenRoms);
 
       // Write the output report
-      const status = await new StatusGenerator(this.options, progressBar).output(dat, romOutputs);
-      datsStatuses.push(status);
+      const datStatus = await new StatusGenerator(this.options, progressBar)
+        .output(dat, romOutputs);
+      datsStatuses.push(datStatus);
 
       // Progress bar cleanup
-      const totalReleaseCandidates = [...romOutputs.values()]
-        .filter((releaseCandidates) => releaseCandidates.length)
-        .length;
-      if (totalReleaseCandidates === 0) {
+      // TODO(cemmer): protection against too many progress bars on screen
+      if (writtenRoms.size === 0) {
         progressBar.delete();
       }
 

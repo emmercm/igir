@@ -5,8 +5,10 @@ import Header from '../../src/types/logiqx/header.js';
 import Parent from '../../src/types/logiqx/parent.js';
 import Release from '../../src/types/logiqx/release.js';
 import ROM from '../../src/types/logiqx/rom.js';
-import Options from '../../src/types/options.js';
 import ReleaseCandidate from '../../src/types/releaseCandidate.js';
+
+// NOTE(cemmer): the majority of tests would expect to be here are covered in
+//  statusGenerator.test.ts instead in order to increase coverage
 
 function givenDAT(): DAT {
   return new DAT(new Header({
@@ -44,114 +46,5 @@ it('getDATName', () => {
   const dat = givenDAT();
   const parentsToReleaseCandidates = new Map<Parent, ReleaseCandidate[]>();
   const datStatus = new DATStatus(dat, parentsToReleaseCandidates);
-  expect(datStatus.getDATName()).toEqual('dat name (20220828)');
-});
-
-describe('toString', () => {
-  it('should return status with no candidates', () => {
-    const dat = givenDAT();
-    const parentsToReleaseCandidates = new Map<Parent, ReleaseCandidate[]>();
-    const datStatus = new DATStatus(dat, parentsToReleaseCandidates);
-    const options = new Options();
-    expect(datStatus.toString(options)).toEqual('0/3 games, 0/1 bioses, 0/2 retail releases found');
-  });
-
-  it('should return status where every parent only has a candidate for the first rom', async () => {
-    const dat = givenDAT();
-    const parentsToReleaseCandidates = new Map<Parent, ReleaseCandidate[]>();
-    await Promise.all(dat.getParents().map(async (parent) => {
-      await Promise.all(parent.getGames().map(async (game) => {
-        const rom = game.getRoms()[0];
-        parentsToReleaseCandidates.set(parent, [
-          new ReleaseCandidate(
-            game,
-            game.getReleases()[0],
-            [rom],
-            await Promise.all([rom].map(async (gameRom) => gameRom.toFile())),
-          ),
-        ]);
-      }));
-    }));
-    const datStatus = new DATStatus(dat, parentsToReleaseCandidates);
-    const options = new Options();
-    expect(datStatus.toString(options)).toEqual('2/3 games, 1/1 bioses, 1/2 retail releases found');
-  });
-
-  it('should return status where every parent has a candidate for every rom', async () => {
-    const dat = givenDAT();
-    const parentsToReleaseCandidates = new Map<Parent, ReleaseCandidate[]>();
-    await Promise.all(dat.getParents().map(async (parent) => {
-      await Promise.all(parent.getGames().map(async (game) => {
-        parentsToReleaseCandidates.set(parent, [
-          new ReleaseCandidate(
-            game,
-            game.getReleases()[0],
-            game.getRoms(),
-            await Promise.all(game.getRoms().map(async (gameRom) => gameRom.toFile())),
-          ),
-        ]);
-      }));
-    }));
-    const datStatus = new DATStatus(dat, parentsToReleaseCandidates);
-    const options = new Options();
-    expect(datStatus.toString(options)).toEqual('3/3 games, 1/1 bioses, 2/2 retail releases found');
-  });
-});
-
-describe('toReport', () => {
-  it('should return report with no candidates', () => {
-    const dat = givenDAT();
-    const parentsToReleaseCandidates = new Map<Parent, ReleaseCandidate[]>();
-    const datStatus = new DATStatus(dat, parentsToReleaseCandidates);
-    const options = new Options();
-    expect(datStatus.toReport(options)).toEqual(`// dat name (20220828): 3 games, 3 parents defined
-// You are missing 3 of 3 known dat name (20220828) items (games, bioses, retail releases)
-bios with one rom and one release
-game with multiple roms and no releases
-game with one rom and multiple releases`);
-  });
-
-  it('should return report where every parent only has a candidate for the first rom', async () => {
-    const dat = givenDAT();
-    const parentsToReleaseCandidates = new Map<Parent, ReleaseCandidate[]>();
-    await Promise.all(dat.getParents().map(async (parent) => {
-      await Promise.all(parent.getGames().map(async (game) => {
-        const rom = game.getRoms()[0];
-        parentsToReleaseCandidates.set(parent, [
-          new ReleaseCandidate(
-            game,
-            game.getReleases()[0],
-            [rom],
-            await Promise.all([rom].map(async (gameRom) => gameRom.toFile())),
-          ),
-        ]);
-      }));
-    }));
-    const datStatus = new DATStatus(dat, parentsToReleaseCandidates);
-    const options = new Options();
-    expect(datStatus.toReport(options)).toEqual(`// dat name (20220828): 3 games, 3 parents defined
-// You are missing 1 of 3 known dat name (20220828) items (games, bioses, retail releases)
-game with multiple roms and no releases`);
-  });
-
-  it('should return report where every parent has a candidate for every rom', async () => {
-    const dat = givenDAT();
-    const parentsToReleaseCandidates = new Map<Parent, ReleaseCandidate[]>();
-    await Promise.all(dat.getParents().map(async (parent) => {
-      await Promise.all(parent.getGames().map(async (game) => {
-        parentsToReleaseCandidates.set(parent, [
-          new ReleaseCandidate(
-            game,
-            game.getReleases()[0],
-            game.getRoms(),
-            await Promise.all(game.getRoms().map(async (gameRom) => gameRom.toFile())),
-          ),
-        ]);
-      }));
-    }));
-    const datStatus = new DATStatus(dat, parentsToReleaseCandidates);
-    const options = new Options();
-    expect(datStatus.toReport(options)).toEqual(`// dat name (20220828): 3 games, 3 parents defined
-// You are missing 0 of 3 known dat name (20220828) items (games, bioses, retail releases)`);
-  });
+  expect(datStatus.getDATName()).toEqual('dat name');
 });

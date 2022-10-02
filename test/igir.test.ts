@@ -42,7 +42,7 @@ async function expectEndToEnd(optionsProps: OptionsProps, expectedFiles: string[
 
   const reports = await fg(path.join(
     path.dirname(options.getOutputReport()),
-    `${Constants.COMMAND_NAME}_*.txt`,
+    `${Constants.COMMAND_NAME}_*.csv`,
   ));
   reports.forEach((report) => fsPoly.rmSync(report));
 }
