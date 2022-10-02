@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 
 import Logger from './src/console/logger.js';
+import Constants from './src/constants.js';
 import Igir from './src/igir.js';
 import ArgumentsParser from './src/modules/argumentsParser.js';
 
@@ -8,6 +9,12 @@ import ArgumentsParser from './src/modules/argumentsParser.js';
 (async (): Promise<void> => {
   const logger = new Logger();
   logger.printHeader();
+
+  // Warning: this is registered here so it's after synchronous cleanup handlers elsewhere!
+  process.once('SIGINT', () => {
+    logger.info(`Exiting ${Constants.COMMAND_NAME}`);
+    process.exit(0);
+  });
 
   try {
     const options = new ArgumentsParser(logger).parse(process.argv.slice(2));
