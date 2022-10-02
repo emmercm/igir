@@ -5,7 +5,7 @@ import url from 'url';
 import fsPoly from './polyfill/fsPoly.js';
 
 const globalTempDir = fsPoly.mkdtempSync();
-process.on('SIGINT', () => {
+process.once('SIGINT', () => {
   fsPoly.rmSync(globalTempDir, {
     force: true,
     recursive: true,
