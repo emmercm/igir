@@ -124,6 +124,7 @@ build/
 *.zip
 
 # ROM pack excess
+*.csv
 *.desktop
 *.jpg
 *.png

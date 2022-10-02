@@ -320,7 +320,7 @@ export default class Options implements OptionsProps {
     const output = this.shouldWrite() ? this.output : process.cwd();
     return path.join(
       output,
-      fsPoly.makeLegal(`${Constants.COMMAND_NAME}_${moment().format()}.txt`),
+      fsPoly.makeLegal(`${Constants.COMMAND_NAME}_${moment().format()}.csv`),
     );
   }
 

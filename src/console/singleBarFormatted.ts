@@ -79,7 +79,7 @@ export default class SingleBarFormatted {
 
     const doneTime = linearRegressionLine(linearRegression(this.valueTimeBuffer))(params.total);
     if (Number.isNaN(doneTime)) {
-      // Vertical line, we got the same value at two different times
+      // Vertical line, we got the same value at 2+ different times
       return 0;
     }
     const remaining = (doneTime - Date.now()) / 1000;
