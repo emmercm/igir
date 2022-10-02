@@ -31,21 +31,17 @@
   },
   "scripts": {
     "prepare": "husky install",
-
     "start": "ts-node index.ts",
     "build": "tsc && chmod +x build/index.js",
-
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "test": "npm run test:unit && npm run lint",
     "test:unit": "node --experimental-vm-modules ./node_modules/jest/bin/jest.js --verbose",
     "test:coverage": "node --experimental-vm-modules ./node_modules/jest/bin/jest.js --verbose --coverage",
     "test:handles": "node --experimental-vm-modules ./node_modules/jest/bin/jest.js --verbose",
-
     "bump:minor": "./node_modules/.bin/release-it minor --no-git --no-github && npm run update:readme",
     "bump:patch": "./node_modules/.bin/release-it patch --no-git --no-github && npm run update:readme",
     "update:readme": "./scripts/update-readme-help.sh",
-
     "release": "./node_modules/.bin/release-it --no-increment",
     "prepack": "npm run build && npm run update:readme -- 70",
     "postpack": "npm run update:readme"
@@ -66,6 +62,7 @@
     "node-unrar-js": "^2.0.0",
     "reflect-metadata": "^0.1.13",
     "semver": "^7.3.7",
+    "simple-statistics": "^7.7.6",
     "term-size": "^3.0.2",
     "trash": "^8.1.0",
     "xml2js": "^0.4.23",
