@@ -2,15 +2,14 @@ import chalk from 'chalk';
 import {
   MultiBar, Options, Params, SingleBar,
 } from 'cli-progress';
+import { linearRegression, linearRegressionLine } from 'simple-statistics';
 
 import ProgressBarPayload from './progressBarPayload.js';
 
 export default class SingleBarFormatted {
   private readonly multiBar: MultiBar;
 
-  private valueBuffer: number[] = [];
-
-  private timeBuffer: number[] = [];
+  private valueTimeBuffer: number[][] = [];
 
   constructor(multiBar: MultiBar) {
     this.multiBar = multiBar;
@@ -68,31 +67,26 @@ export default class SingleBarFormatted {
   }
 
   private calculateEta(params: Params): number {
-    const MAX_BUFFER_SIZE = 10;
-    this.valueBuffer = [...this.valueBuffer.slice(1 - MAX_BUFFER_SIZE), params.value];
-    this.timeBuffer = [...this.timeBuffer.slice(1 - MAX_BUFFER_SIZE), Date.now()];
+    function clamp(val: number, min: number, max: number): number {
+      return Math.min(Math.max(val, min), max);
+    }
+    const MAX_BUFFER_SIZE = clamp(Math.floor(params.total / 10), 50, 200);
 
-    // Pseudo exponential moving average
-    const vtRate = this.valueBuffer.reduce((speed, value, idx) => {
-      if (idx === 0 || value === 0) {
-        return speed;
-      }
-      const time = this.timeBuffer[idx];
+    this.valueTimeBuffer = [
+      ...this.valueTimeBuffer.slice(1 - MAX_BUFFER_SIZE),
+      [params.value, Date.now()],
+    ];
 
-      const currSpeed = Math.abs(value - this.valueBuffer[idx - 1])
-        / Math.abs(time - this.timeBuffer[idx - 1]);
-      if (!Number.isFinite(currSpeed)) {
-        return speed;
-      }
-      if (speed === 0) {
-        return currSpeed;
-      }
-
-      const ALPHA = 0.1;
-      return (speed * (1 - ALPHA)) + (currSpeed * ALPHA);
-    }, 0);
-
-    return Math.ceil((params.total - params.value) / vtRate / 1000);
+    const doneTime = linearRegressionLine(linearRegression(this.valueTimeBuffer))(params.total);
+    if (Number.isNaN(doneTime)) {
+      // Vertical line, we got the same value at two different times
+      return 0;
+    }
+    const remaining = (doneTime - Date.now()) / 1000;
+    if (!Number.isFinite(remaining) || remaining < 0) {
+      return 0;
+    }
+    return remaining;
   }
 
   private static getBar(options: Options, params: Params): string {
