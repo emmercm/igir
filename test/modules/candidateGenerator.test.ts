@@ -11,15 +11,22 @@ import ProgressBarFake from '../console/progressBarFake.js';
 
 const candidateGenerator = new CandidateGenerator(new ProgressBarFake());
 
+function buildRomMap(files: File[]): Map<string, File> {
+  return files.reduce((map, file) => {
+    file.hashCodes().forEach((hashCode) => map.set(hashCode, file));
+    return map;
+  }, new Map<string, File>());
+}
+
 it('should return no results with no games in DAT', async () => {
   const dat = new DAT(new Header(), []);
   const fileOne = await File.fileOf('foo', 0, '00000000');
   const fileTwo = await ArchiveEntry.entryOf(new Zip('fizz'), 'buzz', 0, 'ffffffff');
 
-  await expect(candidateGenerator.generate(dat, [])).resolves.toHaveProperty('size', 0);
-  await expect(candidateGenerator.generate(dat, [fileOne])).resolves.toHaveProperty('size', 0);
-  await expect(candidateGenerator.generate(dat, [fileOne, fileOne])).resolves.toHaveProperty('size', 0);
-  await expect(candidateGenerator.generate(dat, [fileOne, fileTwo])).resolves.toHaveProperty('size', 0);
+  await expect(candidateGenerator.generate(dat, new Map())).resolves.toHaveProperty('size', 0);
+  await expect(candidateGenerator.generate(dat, buildRomMap([fileOne]))).resolves.toHaveProperty('size', 0);
+  await expect(candidateGenerator.generate(dat, buildRomMap([fileOne, fileOne]))).resolves.toHaveProperty('size', 0);
+  await expect(candidateGenerator.generate(dat, buildRomMap([fileOne, fileTwo]))).resolves.toHaveProperty('size', 0);
 });
 
 it('should return no results with no input ROM files', async () => {
@@ -28,9 +35,9 @@ it('should return no results with no input ROM files', async () => {
   const datWithOneGame = new DAT(new Header(), [game]);
   const datWithTwoGames = new DAT(new Header(), [game, game]);
 
-  await expect(candidateGenerator.generate(datWithNoGames, [])).resolves.toHaveProperty('size', 0);
-  await expect(candidateGenerator.generate(datWithOneGame, [])).resolves.toHaveProperty('size', 0);
-  await expect(candidateGenerator.generate(datWithTwoGames, [])).resolves.toHaveProperty('size', 0);
+  await expect(candidateGenerator.generate(datWithNoGames, new Map())).resolves.toHaveProperty('size', 0);
+  await expect(candidateGenerator.generate(datWithOneGame, new Map())).resolves.toHaveProperty('size', 0);
+  await expect(candidateGenerator.generate(datWithTwoGames, new Map())).resolves.toHaveProperty('size', 0);
 });
 
 it('should return no results with no matching files', async () => {
@@ -56,7 +63,7 @@ it('should return no results with no matching files', async () => {
     expect(dat.getParents().length).toBeGreaterThan(0);
 
     // The number of parents returned equals the number of parents in the input
-    const candidates = await candidateGenerator.generate(dat, inputRomFiles);
+    const candidates = await candidateGenerator.generate(dat, buildRomMap(inputRomFiles));
     expect(candidates.size).toEqual(dat.getParents().length);
 
     // No parent had any release candidates
@@ -114,7 +121,7 @@ it('should return no results with partially matching files', async () => {
     expect(dat.getParents().length).toBeGreaterThan(0);
 
     // The number of parents returned equals the number of parents in the input
-    const candidates = await candidateGenerator.generate(dat, inputRomFiles);
+    const candidates = await candidateGenerator.generate(dat, buildRomMap(inputRomFiles));
     expect(candidates.size).toEqual(dat.getParents().length);
 
     // No parent had any release candidates
@@ -159,7 +166,7 @@ it('should return some results with some matching files', async () => {
     expect(dat.getParents().length).toBeGreaterThan(0);
 
     // The number of parents returned equals the number of parents in the input
-    const candidates = await candidateGenerator.generate(dat, inputRomFiles);
+    const candidates = await candidateGenerator.generate(dat, buildRomMap(inputRomFiles));
     expect(candidates.size).toEqual(dat.getParents().length);
 
     // No parent had any release candidates
@@ -202,7 +209,7 @@ it('should return all results with all matching files', async () => {
     expect(dat.getParents().length).toBeGreaterThan(0);
 
     // The number of parents returned equals the number of parents in the input
-    const candidates = await candidateGenerator.generate(dat, inputRomFiles);
+    const candidates = await candidateGenerator.generate(dat, buildRomMap(inputRomFiles));
     expect(candidates.size).toEqual(dat.getParents().length);
 
     // No parent had any release candidates
