@@ -62,67 +62,67 @@ export default class Options implements OptionsProps {
 
   readonly inputExclude: string[] = [];
 
-  readonly output!: string;
+  readonly output: string;
 
-  readonly header!: string;
+  readonly header: string;
 
-  readonly dirMirror!: boolean;
+  readonly dirMirror: boolean;
 
-  readonly dirDatName!: boolean;
+  readonly dirDatName: boolean;
 
-  readonly dirLetter!: boolean;
+  readonly dirLetter: boolean;
 
   readonly single: boolean = false;
 
-  readonly zipExclude!: string;
+  readonly zipExclude: string;
 
-  readonly overwrite!: boolean;
+  readonly overwrite: boolean;
 
-  readonly preferGood!: boolean;
+  readonly preferGood: boolean;
 
   readonly preferLanguage: string[] = [];
 
   readonly preferRegion: string[] = [];
 
-  readonly preferRevisionNewer!: boolean;
+  readonly preferRevisionNewer: boolean;
 
-  readonly preferRevisionOlder!: boolean;
+  readonly preferRevisionOlder: boolean;
 
-  readonly preferRetail!: boolean;
+  readonly preferRetail: boolean;
 
-  readonly preferParent!: boolean;
+  readonly preferParent: boolean;
 
   readonly languageFilter: string[] = [];
 
   readonly regionFilter: string[] = [];
 
-  readonly onlyBios!: boolean;
+  readonly onlyBios: boolean;
 
-  readonly noBios!: boolean;
+  readonly noBios: boolean;
 
-  readonly noUnlicensed!: boolean;
+  readonly noUnlicensed: boolean;
 
-  readonly onlyRetail!: boolean;
+  readonly onlyRetail: boolean;
 
-  readonly noDemo!: boolean;
+  readonly noDemo: boolean;
 
-  readonly noBeta!: boolean;
+  readonly noBeta: boolean;
 
-  readonly noSample!: boolean;
+  readonly noSample: boolean;
 
-  readonly noPrototype!: boolean;
+  readonly noPrototype: boolean;
 
-  readonly noTestRoms!: boolean;
+  readonly noTestRoms: boolean;
 
-  readonly noAftermarket!: boolean;
+  readonly noAftermarket: boolean;
 
-  readonly noHomebrew!: boolean;
+  readonly noHomebrew: boolean;
 
-  readonly noBad!: boolean;
+  readonly noBad: boolean;
 
-  readonly verbose!: number;
+  readonly verbose: number;
 
-  readonly help!: boolean;
+  readonly help: boolean;
 
   constructor(options?: OptionsProps) {
     this.commands = options?.commands || [];

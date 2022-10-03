@@ -11,12 +11,12 @@ import Parent from './parent.js';
  */
 export default class DAT {
   @Type(() => Header)
-  private readonly header!: Header;
+  private readonly header: Header;
 
   @Type(() => Game)
-  private readonly game!: Game | Game[];
+  private readonly game: Game | Game[];
 
-  private gameNamesToParents!: Map<string, Parent>;
+  private readonly gameNamesToParents: Map<string, Parent> = new Map();
 
   constructor(header: Header, games: Game[]) {
     this.header = header;
@@ -33,7 +33,6 @@ export default class DAT {
 
   private generateGameNamesToParents(): DAT {
     // Find all parents
-    this.gameNamesToParents = new Map<string, Parent>();
     this.getGames().forEach((game: Game) => {
       if (game.isParent()) {
         this.gameNamesToParents.set(game.getName(), new Parent(game.getName(), game));

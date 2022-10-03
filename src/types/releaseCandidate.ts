@@ -53,13 +53,13 @@ export default class ReleaseCandidate {
     .filter((language, idx, languages) => languages.indexOf(language) === idx)
     .sort();
 
-  private readonly game!: Game;
+  private readonly game: Game;
 
   private readonly release?: Release;
 
-  private readonly roms!: ROM[];
+  private readonly roms: ROM[];
 
-  private readonly files!: File[];
+  private readonly files: File[];
 
   constructor(game: Game, release: Release | undefined, roms: ROM[], files: File[]) {
     this.game = game;
