@@ -41,16 +41,13 @@ export default class DATScanner extends Scanner {
   // Scan files on disk for DATs (archives may yield more than one DAT)
   private async getDatFiles(datFilePaths: string[]): Promise<File[]> {
     await this.progressBar.logDebug('Enumerating DAT archives');
-    return (await async.mapLimit(
+    return [...(await this.scanPathsForFiles(
       datFilePaths,
       Constants.DAT_SCANNER_THREADS,
-      async (datFilePath: string, callback: AsyncResultCallback<File[], Error>) => {
+      async (datFilePath: string) => {
         await this.progressBar.logDebug(`${datFilePath}: Reading file`);
-        const datFiles = await this.getFilesFromPath(datFilePath);
-        callback(null, datFiles);
       },
-    ))
-      .flatMap((datFiles) => datFiles);
+    )).values()];
   }
 
   // Parse each file into a DAT
