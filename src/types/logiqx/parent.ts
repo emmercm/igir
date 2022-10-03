@@ -1,9 +1,9 @@
 import Game from './game.js';
 
 export default class Parent {
-  name!: string;
+  private readonly name: string;
 
-  private readonly games!: Game[];
+  private readonly games: Game[];
 
   constructor(name: string, games: Game | Game[]) {
     this.name = name;
