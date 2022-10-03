@@ -25,23 +25,18 @@ export default class CandidateGenerator {
 
   async generate(
     dat: DAT,
-    inputRomFiles: File[],
+    inputRomFiles: Map<string, File>,
   ): Promise<Map<Parent, ReleaseCandidate[]>> {
     await this.progressBar.logInfo(`${dat.getName()}: Generating candidates`);
 
     const output = new Map<Parent, ReleaseCandidate[]>();
-    if (!inputRomFiles.length) {
+    if (!inputRomFiles.size) {
       await this.progressBar.logDebug(`${dat.getName()}: No input ROMs to make candidates from`);
       return output;
     }
 
     await this.progressBar.setSymbol(Symbols.GENERATING);
     await this.progressBar.reset(dat.getParents().length);
-
-    // TODO(cemmer): only do this once globally, not per DAT
-    // TODO(cemmer): ability to index files by some other property such as name
-    const hashCodeToInputFiles = CandidateGenerator.indexFilesByHashCode(inputRomFiles);
-    await this.progressBar.logInfo(`${dat.getName()}: ${hashCodeToInputFiles.size} unique ROMs found`);
 
     // TODO(cemmer): ability to work without DATs, generating a parent/game/release per file
     // For each parent, try to generate a parent candidate
@@ -64,7 +59,7 @@ export default class CandidateGenerator {
           const releaseCandidate = await this.buildReleaseCandidateForRelease(
             game,
             release,
-            hashCodeToInputFiles,
+            inputRomFiles,
           );
           if (releaseCandidate) {
             releaseCandidates.push(releaseCandidate);

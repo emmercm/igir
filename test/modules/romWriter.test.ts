@@ -52,7 +52,7 @@ async function indexFilesByName(
   }), new ProgressBarFake()).scan();
 
   // Reduce the found File[]
-  const romFilesByName = scannedRomFiles.reduce((map, romFile) => {
+  const romFilesByName = [...scannedRomFiles.values()].reduce((map, romFile) => {
     const romName = path.parse(romFile.getFilePath()).name;
     if (map.has(romName)) {
       map.set(romName, [...map.get(romName) as File[], romFile]);
@@ -187,7 +187,6 @@ describe('zip', () => {
         'foobar.zip',
         'loremipsum.zip',
         'one.zip',
-        'onetwothree.zip',
         'three.zip',
         'two.zip',
         'unknown.zip',
@@ -203,7 +202,6 @@ describe('zip', () => {
         'foobar.zip',
         'loremipsum.zip',
         'one.zip',
-        'onetwothree.zip',
         'three.zip',
         'two.zip',
         'unknown.zip',
@@ -233,7 +231,6 @@ describe('zip', () => {
         'foobar.zip',
         'loremipsum.zip',
         'one.zip',
-        'onetwothree.zip',
         'three.zip',
         'two.zip',
         'unknown.zip',
@@ -274,7 +271,6 @@ describe('zip', () => {
         'foobar.zip',
         'loremipsum.zip',
         'one.zip',
-        'onetwothree.zip',
         'three.zip',
         'two.zip',
         'unknown.zip',
@@ -286,7 +282,7 @@ describe('zip', () => {
   });
 
   test.each([
-    ['**/!(headered)/*', ['empty.zip', 'fizzbuzz.zip', 'foobar.zip', 'loremipsum.zip', 'one.zip', 'onetwothree.zip', 'three.zip', 'two.zip', 'unknown.zip']],
+    ['**/!(headered)/*', ['empty.zip', 'fizzbuzz.zip', 'foobar.zip', 'loremipsum.zip', 'one.zip', 'three.zip', 'two.zip', 'unknown.zip']],
     ['7z/*', ['fizzbuzz.zip', 'foobar.zip', 'loremipsum.zip', 'onetwothree.zip', 'unknown.zip']],
     ['rar/*', ['fizzbuzz.zip', 'foobar.zip', 'loremipsum.zip', 'onetwothree.zip', 'unknown.zip']],
     ['raw/*', ['empty.zip', 'fizzbuzz.zip', 'foobar.zip', 'loremipsum.zip', 'one.zip', 'three.zip', 'two.zip', 'unknown.zip']],

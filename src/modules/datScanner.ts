@@ -49,7 +49,8 @@ export default class DATScanner extends Scanner {
         const datFiles = await this.getFilesFromPath(datFilePath);
         callback(null, datFiles);
       },
-    )).flatMap((datFiles) => datFiles);
+    ))
+      .flatMap((datFiles) => datFiles);
   }
 
   // Parse each file into a DAT

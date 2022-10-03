@@ -20,42 +20,42 @@ it('should throw on nonexistent paths', async () => {
 });
 
 it('should return empty list on no results', async () => {
-  await expect(createRomScanner([]).scan()).resolves.toEqual([]);
-  await expect(createRomScanner(['']).scan()).resolves.toEqual([]);
-  await expect(createRomScanner([os.devNull]).scan()).resolves.toEqual([]);
+  await expect(createRomScanner([]).scan()).resolves.toHaveProperty('size', 0);
+  await expect(createRomScanner(['']).scan()).resolves.toHaveProperty('size', 0);
+  await expect(createRomScanner([os.devNull]).scan()).resolves.toHaveProperty('size', 0);
 });
 
 it('should not throw on bad archives', async () => {
-  await expect(createRomScanner(['test/fixtures/roms/**/invalid.zip']).scan()).resolves.toEqual([]);
-  await expect(createRomScanner(['test/fixtures/roms/**/invalid.rar']).scan()).resolves.toEqual([]);
-  await expect(createRomScanner(['test/fixtures/roms/**/invalid.7z']).scan()).resolves.toEqual([]);
+  await expect(createRomScanner(['test/fixtures/roms/**/invalid.zip']).scan()).resolves.toHaveProperty('size', 0);
+  await expect(createRomScanner(['test/fixtures/roms/**/invalid.rar']).scan()).resolves.toHaveProperty('size', 0);
+  await expect(createRomScanner(['test/fixtures/roms/**/invalid.7z']).scan()).resolves.toHaveProperty('size', 0);
 });
 
 describe('multiple files', () => {
   it('no files are excluded', async () => {
-    const expectedRomFiles = 39;
-    await expect(createRomScanner(['test/fixtures/roms']).scan()).resolves.toHaveLength(expectedRomFiles);
-    await expect(createRomScanner(['test/fixtures/roms/*', 'test/fixtures/roms/**/*']).scan()).resolves.toHaveLength(expectedRomFiles);
-    await expect(createRomScanner(['test/fixtures/roms/**/*']).scan()).resolves.toHaveLength(expectedRomFiles);
-    await expect(createRomScanner(['test/fixtures/roms/**/*', 'test/fixtures/roms/**/*.{rom,zip}']).scan()).resolves.toHaveLength(expectedRomFiles);
+    const expectedRomFiles = 13;
+    await expect(createRomScanner(['test/fixtures/roms']).scan()).resolves.toHaveProperty('size', expectedRomFiles);
+    await expect(createRomScanner(['test/fixtures/roms/*', 'test/fixtures/roms/**/*']).scan()).resolves.toHaveProperty('size', expectedRomFiles);
+    await expect(createRomScanner(['test/fixtures/roms/**/*']).scan()).resolves.toHaveProperty('size', expectedRomFiles);
+    await expect(createRomScanner(['test/fixtures/roms/**/*', 'test/fixtures/roms/**/*.{rom,zip}']).scan()).resolves.toHaveProperty('size', expectedRomFiles);
   });
 
   it('some files are excluded', async () => {
-    await expect(createRomScanner(['test/fixtures/roms/**/*'], ['test/fixtures/roms/**/*.rom']).scan()).resolves.toHaveLength(32);
-    await expect(createRomScanner(['test/fixtures/roms/**/*'], ['test/fixtures/roms/**/*.rom', 'test/fixtures/roms/**/*.rom']).scan()).resolves.toHaveLength(32);
-    await expect(createRomScanner(['test/fixtures/roms/**/*'], ['test/fixtures/roms/**/*.rom', 'test/fixtures/roms/**/*.zip']).scan()).resolves.toHaveLength(23);
+    await expect(createRomScanner(['test/fixtures/roms/**/*'], ['test/fixtures/roms/**/*.rom']).scan()).resolves.toHaveProperty('size', 12);
+    await expect(createRomScanner(['test/fixtures/roms/**/*'], ['test/fixtures/roms/**/*.rom', 'test/fixtures/roms/**/*.rom']).scan()).resolves.toHaveProperty('size', 12);
+    await expect(createRomScanner(['test/fixtures/roms/**/*'], ['test/fixtures/roms/**/*.rom', 'test/fixtures/roms/**/*.zip']).scan()).resolves.toHaveProperty('size', 11);
   });
 
   it('all files are excluded', async () => {
-    await expect(createRomScanner(['test/fixtures/roms/**/*'], ['test/fixtures/roms/**/*']).scan()).resolves.toEqual([]);
-    await expect(createRomScanner(['test/fixtures/roms/**/*'], ['test/fixtures/roms/**/*', 'test/fixtures/roms/**/*']).scan()).resolves.toEqual([]);
-    await expect(createRomScanner(['test/fixtures/roms/**/*'], ['test/fixtures/roms/*', 'test/fixtures/roms/*/**/*']).scan()).resolves.toEqual([]);
-    await expect(createRomScanner(['test/fixtures/roms/**/*'], ['test/fixtures/roms/**/*.zip', 'test/fixtures/roms/**/*']).scan()).resolves.toEqual([]);
+    await expect(createRomScanner(['test/fixtures/roms/**/*'], ['test/fixtures/roms/**/*']).scan()).resolves.toHaveProperty('size', 0);
+    await expect(createRomScanner(['test/fixtures/roms/**/*'], ['test/fixtures/roms/**/*', 'test/fixtures/roms/**/*']).scan()).resolves.toHaveProperty('size', 0);
+    await expect(createRomScanner(['test/fixtures/roms/**/*'], ['test/fixtures/roms/*', 'test/fixtures/roms/*/**/*']).scan()).resolves.toHaveProperty('size', 0);
+    await expect(createRomScanner(['test/fixtures/roms/**/*'], ['test/fixtures/roms/**/*.zip', 'test/fixtures/roms/**/*']).scan()).resolves.toHaveProperty('size', 0);
   });
 });
 
 it('should scan single files', async () => {
-  await expect(createRomScanner(['test/fixtures/roms/empty.*']).scan()).resolves.toHaveLength(1);
-  await expect(createRomScanner(['test/fixtures/*/empty.rom']).scan()).resolves.toHaveLength(1);
-  await expect(createRomScanner(['test/fixtures/roms/empty.rom']).scan()).resolves.toHaveLength(1);
+  await expect(createRomScanner(['test/fixtures/roms/empty.*']).scan()).resolves.toHaveProperty('size', 1);
+  await expect(createRomScanner(['test/fixtures/*/empty.rom']).scan()).resolves.toHaveProperty('size', 1);
+  await expect(createRomScanner(['test/fixtures/roms/empty.rom']).scan()).resolves.toHaveProperty('size', 1);
 });

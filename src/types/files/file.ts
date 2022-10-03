@@ -179,6 +179,7 @@ export default class File {
   }
 
   hashCodes(): string[] {
+    // TODO(cemmer): ability to index files by some other property such as name
     return [
       File.hashCode(this.getCrc32(), this.getSize()),
       File.hashCode(this.getCrc32WithoutHeader(), this.getSizeWithoutHeader()),

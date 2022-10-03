@@ -95,19 +95,19 @@ export default class Igir {
     return dats;
   }
 
-  private async processROMScanner(): Promise<File[]> {
+  private async processROMScanner(): Promise<Map<string, File>> {
     const progressBar = this.logger.addProgressBar('Scanning for ROMs', Symbols.WAITING);
     const romInputs = await new ROMScanner(this.options, progressBar).scan();
     // TODO(cemmer): is this reporting the right number? it might be inflated
-    await progressBar.doneItems(romInputs.length, 'file', 'found');
+    await progressBar.doneItems(romInputs.size, 'file', 'found');
     return romInputs;
   }
 
-  private async processHeaderProcessor(romFiles: File[]): Promise<File[]> {
+  private async processHeaderProcessor(romFiles: Map<string, File>): Promise<Map<string, File>> {
     const headerProcessorProgressBar = this.logger.addProgressBar('Reading ROM headers', Symbols.WAITING);
     const processedRomFiles = await new HeaderProcessor(this.options, headerProcessorProgressBar)
       .process(romFiles);
-    await headerProcessorProgressBar.doneItems(processedRomFiles.length, 'file', 'read');
+    await headerProcessorProgressBar.doneItems(processedRomFiles.size, 'file', 'read');
     return processedRomFiles;
   }
 

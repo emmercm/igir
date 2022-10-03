@@ -116,14 +116,14 @@ describe('getCrc32WithoutHeader', () => {
 describe('extractToFile', () => {
   it('should extract archived files', async () => {
     // Note: this will only return valid archives with at least one file
-    const archiveEntries = await new ROMScanner(new Options({
+    const archiveEntries = [...(await new ROMScanner(new Options({
       input: [
         './test/fixtures/roms/zip',
         './test/fixtures/roms/rar',
         './test/fixtures/roms/7z',
       ],
-    }), new ProgressBarFake()).scan();
-    expect(archiveEntries).toHaveLength(21);
+    }), new ProgressBarFake()).scan()).values()];
+    expect(archiveEntries).toHaveLength(7);
 
     const temp = fsPoly.mkdtempSync(Constants.GLOBAL_TEMP_DIR);
     /* eslint-disable no-await-in-loop */
@@ -141,14 +141,14 @@ describe('extractToFile', () => {
 describe('extractToStream', () => {
   it('should extract archived files', async () => {
     // Note: this will only return valid archives with at least one file
-    const archiveEntries = await new ROMScanner(new Options({
+    const archiveEntries = [...(await new ROMScanner(new Options({
       input: [
         './test/fixtures/roms/zip',
         './test/fixtures/roms/rar',
         './test/fixtures/roms/7z',
       ],
-    }), new ProgressBarFake()).scan();
-    expect(archiveEntries).toHaveLength(21);
+    }), new ProgressBarFake()).scan()).values()];
+    expect(archiveEntries).toHaveLength(7);
 
     const temp = fsPoly.mkdtempSync(Constants.GLOBAL_TEMP_DIR);
     /* eslint-disable no-await-in-loop */

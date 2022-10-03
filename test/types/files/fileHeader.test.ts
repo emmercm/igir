@@ -50,9 +50,9 @@ describe('getForExtension', () => {
 
 describe('getForFileStream', () => {
   it('should get a file header for headered files', async () => {
-    const headeredRoms = await new ROMScanner(new Options({
+    const headeredRoms = [...(await new ROMScanner(new Options({
       input: ['./test/fixtures/roms/headered'],
-    }), new ProgressBarFake()).scan();
+    }), new ProgressBarFake()).scan()).values()];
     expect(headeredRoms).toHaveLength(5);
 
     /* eslint-disable no-await-in-loop */
@@ -65,9 +65,9 @@ describe('getForFileStream', () => {
   });
 
   it('should not get a file header for dummy files', async () => {
-    const headeredRoms = await new ROMScanner(new Options({
+    const headeredRoms = [...(await new ROMScanner(new Options({
       input: ['./test/fixtures/roms/!(headered){,/}*'],
-    }), new ProgressBarFake()).scan();
+    }), new ProgressBarFake()).scan()).values()];
     expect(headeredRoms.length).toBeGreaterThan(0);
 
     /* eslint-disable no-await-in-loop */

@@ -68,9 +68,9 @@ describe('getCrc32WithoutHeader', () => {
 
 describe('extractToFile', () => {
   it('should do nothing with no archive entry path', async () => {
-    const raws = await new ROMScanner(new Options({
+    const raws = [...(await new ROMScanner(new Options({
       input: ['./test/fixtures/roms/raw'],
-    }), new ProgressBarFake()).scan();
+    }), new ProgressBarFake()).scan()).values()];
     expect(raws).toHaveLength(8);
 
     const temp = fsPoly.mkdtempSync(Constants.GLOBAL_TEMP_DIR);
@@ -88,9 +88,9 @@ describe('extractToFile', () => {
 
 describe('extractToStream', () => {
   it('should do nothing with no archive entry path', async () => {
-    const raws = await new ROMScanner(new Options({
+    const raws = [...(await new ROMScanner(new Options({
       input: ['./test/fixtures/roms/raw/!(empty).*'],
-    }), new ProgressBarFake()).scan();
+    }), new ProgressBarFake()).scan()).values()];
     expect(raws).toHaveLength(7);
 
     const temp = fsPoly.mkdtempSync(Constants.GLOBAL_TEMP_DIR);

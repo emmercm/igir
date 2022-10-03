@@ -22,14 +22,14 @@ export default class HeaderProcessor {
     this.progressBar = progressBar;
   }
 
-  async process(inputRomFiles: File[]): Promise<File[]> {
+  async process(inputRomFiles: Map<string, File>): Promise<Map<string, File>> {
     await this.progressBar.logInfo('Processing file headers');
 
     await this.progressBar.setSymbol(Symbols.HASHING);
-    await this.progressBar.reset(inputRomFiles.length);
+    await this.progressBar.reset(inputRomFiles.size);
 
-    return async.mapLimit(
-      inputRomFiles,
+    return (await async.mapLimit(
+      [...inputRomFiles.values()],
       Constants.ROM_HEADER_HASHER_THREADS,
       async (inputFile, callback: AsyncResultCallback<File, Error>) => {
         await this.progressBar.increment();
@@ -58,6 +58,10 @@ export default class HeaderProcessor {
         await this.progressBar.logDebug(`${inputFile.toString()}: no header found`);
         return callback(null, inputFile);
       },
-    );
+    ))
+      .reduce((map, file) => {
+        file.hashCodes().forEach((hashCode) => map.set(hashCode, file));
+        return map;
+      }, new Map<string, File>());
   }
 }
