@@ -73,6 +73,8 @@ export default class File {
     );
   }
 
+  // Property getters
+
   getFilePath(): string {
     return this.filePath;
   }
@@ -100,6 +102,8 @@ export default class File {
   getFileHeader(): FileHeader | undefined {
     return this.fileHeader;
   }
+
+  // Other functions
 
   protected static async calculateCrc32(
     localFile: string,

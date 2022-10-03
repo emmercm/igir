@@ -1,6 +1,7 @@
 import async, { AsyncResultCallback } from 'async';
 
 import ProgressBar, { Symbols } from '../console/progressBar.js';
+import Zip from '../types/archives/zip.js';
 import ArchiveEntry from '../types/files/archiveEntry.js';
 import File from '../types/files/file.js';
 import DAT from '../types/logiqx/dat.js';
@@ -8,7 +9,9 @@ import Game from '../types/logiqx/game.js';
 import Parent from '../types/logiqx/parent.js';
 import Release from '../types/logiqx/release.js';
 import ROM from '../types/logiqx/rom.js';
+import Options from '../types/options.js';
 import ReleaseCandidate from '../types/releaseCandidate.js';
+import ROMWithFiles from '../types/romWithFiles.js';
 
 /**
  * For every {@link Parent} in the {@link DAT}, look for its {@link ROM}s in the scanned ROM list,
@@ -17,9 +20,12 @@ import ReleaseCandidate from '../types/releaseCandidate.js';
  * This class may be run concurrently with other classes.
  */
 export default class CandidateGenerator {
+  private readonly options: Options;
+
   private readonly progressBar: ProgressBar;
 
-  constructor(progressBar: ProgressBar) {
+  constructor(options: Options, progressBar: ProgressBar) {
+    this.options = options;
     this.progressBar = progressBar;
   }
 
@@ -56,21 +62,13 @@ export default class CandidateGenerator {
       for (let j = 0; j < parent.getGames().length; j += 1) {
         const game = parent.getGames()[j];
 
-        // TODO(cemmer): something with this
-        // const roms = game.getRoms().map((rom) => {
-        //   const romFile = inputRomFiles.get(rom.hashCode());
-        //   if (!romFile) {
-        //     return rom;
-        //   }
-        //   return rom.withFile(romFile);
-        // });
-
         // For every release (ensuring at least one), find all release candidates
         const releases = game.getReleases().length ? game.getReleases() : [undefined];
         for (let k = 0; k < releases.length; k += 1) {
           const release = releases[k];
 
           const releaseCandidate = await this.buildReleaseCandidateForRelease(
+            dat,
             game,
             release,
             hashCodeToInputFiles,
@@ -112,6 +110,7 @@ export default class CandidateGenerator {
   }
 
   private async buildReleaseCandidateForRelease(
+    dat: DAT,
     game: Game,
     release: Release | undefined,
     hashCodeToInputFiles: Map<string, File>,
@@ -119,28 +118,56 @@ export default class CandidateGenerator {
     // For each Game's ROM, find the matching File
     const romFiles = (await async.map(
       game.getRoms(),
-      (rom, callback: AsyncResultCallback<[ROM, File | undefined], Error>) => {
+      async (rom, callback: AsyncResultCallback<[ROM, ROMWithFiles | undefined], Error>) => {
         const romFile = hashCodeToInputFiles.get(rom.hashCode());
-        callback(null, [rom, romFile]);
+        if (romFile) {
+          const romWithFiles = new ROMWithFiles(
+            rom,
+            romFile,
+            await this.getOutputFile(dat, game, rom, romFile),
+          );
+          callback(null, [rom, romWithFiles]);
+        } else {
+          callback(null, [rom, undefined]);
+        }
       },
     ));
 
-    const foundRomFiles = romFiles
-      .map(([, file]) => file)
-      .filter((file) => file) as File[];
+    const foundRomsWithFiles = romFiles
+      .filter(([, romWithFiles]) => romWithFiles)
+      .map(([, romWithFiles]) => romWithFiles) as ROMWithFiles[];
     const missingRoms = romFiles
-      .filter(([, file]) => !file)
+      .filter(([, romWithFiles]) => !romWithFiles)
       .map(([rom]) => rom);
 
     // Ignore the Game if not every File is present
     if (missingRoms.length > 0) {
-      if (foundRomFiles.length > 0) {
+      if (foundRomsWithFiles.length > 0) {
         await this.logMissingRomFiles(game, release, missingRoms);
       }
       return undefined;
     }
 
-    return new ReleaseCandidate(game, release, game.getRoms(), foundRomFiles);
+    return new ReleaseCandidate(game, release, foundRomsWithFiles);
+  }
+
+  private async getOutputFile(dat: DAT, game: Game, rom: ROM, inputFile: File): Promise<File> {
+    if (this.options.shouldZip(rom.getName())) {
+      const outputFilePath = this.options.getOutput(dat, inputFile.getFilePath(), `${game.getName()}.zip`);
+      const entryPath = rom.getName();
+      return ArchiveEntry.entryOf(
+        new Zip(outputFilePath),
+        entryPath,
+        inputFile.getSize(),
+        inputFile.getCrc32(),
+      );
+    }
+    const outputFilePath = this.options.getOutput(dat, inputFile.getFilePath(), rom.getName());
+    return File.fileOf(
+      outputFilePath,
+      inputFile.getSize(),
+      inputFile.getCrc32(),
+    );
   }
 
   private async logMissingRomFiles(

@@ -30,13 +30,10 @@ export default class ROM {
   @Expose({ name: 'date' })
   private readonly date?: string;
 
-  private readonly file?: File;
-
-  constructor(name: string, size: number, crc: string, file?: File) {
+  constructor(name: string, size: number, crc: string) {
     this.name = name;
     this.size = size;
     this.crc = crc;
-    this.file = file;
   }
 
   getName(): string {
@@ -57,14 +54,6 @@ export default class ROM {
 
   getMd5(): string {
     return this.md5 ? this.md5.replace(/^0x/, '').padStart(32, '0') : '';
-  }
-
-  getFile(): File | undefined {
-    return this.file;
-  }
-
-  withFile(file: File): ROM {
-    return new ROM(this.getName(), this.getSize(), this.getCrc32(), file);
   }
 
   async toFile(): Promise<File> {

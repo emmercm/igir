@@ -50,14 +50,15 @@ export default class Igir {
       await datProcessProgressBar.increment();
 
       // Generate and filter ROM candidates
-      const romCandidates = await new CandidateGenerator(progressBar)
+      const parentsToCandidates = await new CandidateGenerator(this.options, progressBar)
         .generate(dat, processedRomFiles);
       const romOutputs = await new CandidateFilter(this.options, progressBar)
-        .filter(dat, romCandidates);
+        .filter(dat, parentsToCandidates);
 
       // Write the output files
-      const writtenRoms = await new ROMWriter(this.options, progressBar).write(dat, romOutputs);
-      datsToWrittenRoms.set(dat, writtenRoms);
+      await new ROMWriter(this.options, progressBar).write(dat, romOutputs);
+      // TODO(cemmer): next line
+      // datsToWrittenRoms.set(dat, writtenRoms);
 
       // Write the output report
       const datStatus = await new StatusGenerator(this.options, progressBar)
@@ -66,7 +67,9 @@ export default class Igir {
 
       // Progress bar cleanup
       // TODO(cemmer): protection against too many progress bars on screen
-      if (writtenRoms.size === 0) {
+      const totalReleaseCandidates = [...parentsToCandidates.values()]
+        .reduce((sum, rcs) => sum + rcs.length, 0);
+      if (totalReleaseCandidates === 0) {
         progressBar.delete();
       }
 
