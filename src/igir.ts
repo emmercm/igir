@@ -10,6 +10,7 @@ import DATScanner from './modules/datScanner.js';
 import HeaderProcessor from './modules/headerProcessor.js';
 import OutputCleaner from './modules/outputCleaner.js';
 import ReportGenerator from './modules/reportGenerator.js';
+import ROMIndexer from './modules/romIndexer.js';
 import ROMScanner from './modules/romScanner.js';
 import ROMWriter from './modules/romWriter.js';
 import StatusGenerator from './modules/statusGenerator.js';
@@ -30,10 +31,13 @@ export default class Igir {
   }
 
   async main(): Promise<void> {
-    // Scan and process input files
+    // Scan for DATS
     const dats = await this.processDATScanner();
-    const rawRomFiles = await this.processROMScanner();
-    const processedRomFiles = await this.processHeaderProcessor(rawRomFiles);
+
+    // Scan and process ROMs
+    const romFiles = await this.processROMScanner();
+    const romFilesWithHeaders = await this.processHeaderProcessor(romFiles);
+    const indexedRomFiles = ROMIndexer.index(romFilesWithHeaders);
 
     // Set up progress bar and input for DAT processing
     const datProcessProgressBar = this.logger.addProgressBar('Processing DATs', Symbols.PROCESSING, dats.length);
@@ -51,7 +55,7 @@ export default class Igir {
 
       // Generate and filter ROM candidates
       const romCandidates = await new CandidateGenerator(progressBar)
-        .generate(dat, processedRomFiles);
+        .generate(dat, indexedRomFiles);
       const romOutputs = await new CandidateFilter(this.options, progressBar)
         .filter(dat, romCandidates);
 

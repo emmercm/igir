@@ -1,7 +1,6 @@
 import async, { AsyncResultCallback } from 'async';
 
 import ProgressBar, { Symbols } from '../console/progressBar.js';
-import ArchiveEntry from '../types/files/archiveEntry.js';
 import File from '../types/files/file.js';
 import DAT from '../types/logiqx/dat.js';
 import Game from '../types/logiqx/game.js';
@@ -25,23 +24,18 @@ export default class CandidateGenerator {
 
   async generate(
     dat: DAT,
-    inputRomFiles: File[],
+    inputRomFiles: Map<string, File>,
   ): Promise<Map<Parent, ReleaseCandidate[]>> {
     await this.progressBar.logInfo(`${dat.getName()}: Generating candidates`);
 
     const output = new Map<Parent, ReleaseCandidate[]>();
-    if (!inputRomFiles.length) {
+    if (!inputRomFiles.size) {
       await this.progressBar.logDebug(`${dat.getName()}: No input ROMs to make candidates from`);
       return output;
     }
 
     await this.progressBar.setSymbol(Symbols.GENERATING);
     await this.progressBar.reset(dat.getParents().length);
-
-    // TODO(cemmer): only do this once globally, not per DAT
-    // TODO(cemmer): ability to index files by some other property such as name
-    const hashCodeToInputFiles = CandidateGenerator.indexFilesByHashCode(inputRomFiles);
-    await this.progressBar.logInfo(`${dat.getName()}: ${hashCodeToInputFiles.size} unique ROMs found`);
 
     // TODO(cemmer): ability to work without DATs, generating a parent/game/release per file
     // For each parent, try to generate a parent candidate
@@ -64,7 +58,7 @@ export default class CandidateGenerator {
           const releaseCandidate = await this.buildReleaseCandidateForRelease(
             game,
             release,
-            hashCodeToInputFiles,
+            inputRomFiles,
           );
           if (releaseCandidate) {
             releaseCandidates.push(releaseCandidate);
@@ -80,26 +74,6 @@ export default class CandidateGenerator {
     await this.progressBar.logInfo(`${dat.getName()}: ${totalCandidates} candidate${totalCandidates !== 1 ? 's' : ''} found`);
 
     return output;
-  }
-
-  private static indexFilesByHashCode(files: File[]): Map<string, File> {
-    return files.reduce((acc, file) => {
-      file.hashCodes().forEach((hashCode) => this.addToIndex(acc, hashCode, file));
-      return acc;
-    }, new Map<string, File>());
-  }
-
-  private static addToIndex(map: Map<string, File>, hash: string, file: File): void {
-    if (map.has(hash)) {
-      // Have already seen file, prefer non-archived files
-      const existing = map.get(hash) as File;
-      if (!(file instanceof ArchiveEntry) && existing instanceof ArchiveEntry) {
-        map.set(hash, file);
-      }
-    } else {
-      // Haven't seen file yet, store it
-      map.set(hash, file);
-    }
   }
 
   private async buildReleaseCandidateForRelease(
