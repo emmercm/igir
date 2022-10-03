@@ -60,7 +60,7 @@ export default class DAT {
   }
 
   getGames(): Game[] {
-    if (this.game instanceof Array) {
+    if (Array.isArray(this.game)) {
       return this.game;
     } if (this.game) {
       return [this.game];

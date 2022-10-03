@@ -56,6 +56,15 @@ export default class CandidateGenerator {
       for (let j = 0; j < parent.getGames().length; j += 1) {
         const game = parent.getGames()[j];
 
+        // TODO(cemmer): something with this
+        // const roms = game.getRoms().map((rom) => {
+        //   const romFile = inputRomFiles.get(rom.hashCode());
+        //   if (!romFile) {
+        //     return rom;
+        //   }
+        //   return rom.withFile(romFile);
+        // });
+
         // For every release (ensuring at least one), find all release candidates
         const releases = game.getReleases().length ? game.getReleases() : [undefined];
         for (let k = 0; k < releases.length; k += 1) {

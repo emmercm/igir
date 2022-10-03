@@ -131,7 +131,7 @@ export default class Game implements GameProps {
   }
 
   getReleases(): Release[] {
-    if (this.release instanceof Array) {
+    if (Array.isArray(this.release)) {
       return this.release;
     } if (this.release) {
       return [this.release];
@@ -140,7 +140,7 @@ export default class Game implements GameProps {
   }
 
   getRoms(): ROM[] {
-    if (this.rom instanceof Array) {
+    if (Array.isArray(this.rom)) {
       return this.rom;
     } if (this.rom) {
       return [this.rom];
