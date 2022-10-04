@@ -34,7 +34,7 @@ export default class DATStatus {
         DATStatus.pushGameIntoMap(this.allRomTypesToGames, game);
 
         const releaseCandidate = gameNamesToReleaseCandidates.get(game.getName());
-        if (!releaseCandidate) {
+        if (!releaseCandidate && game.getRoms().length > 0) {
           DATStatus.pushGameIntoMap(this.missingRomTypesToGames, game);
         }
       });

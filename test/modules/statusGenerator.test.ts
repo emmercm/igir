@@ -7,6 +7,7 @@ import Release from '../../src/types/logiqx/release.js';
 import ROM from '../../src/types/logiqx/rom.js';
 import Options from '../../src/types/options.js';
 import ReleaseCandidate from '../../src/types/releaseCandidate.js';
+import ROMWithFiles from '../../src/types/romWithFiles.js';
 import ProgressBarFake from '../console/progressBarFake.js';
 
 const gameNameNoRoms = 'no roms';
@@ -44,14 +45,20 @@ const dat = new DAT(new Header({
   }),
 ]);
 
-function getParentToReleaseCandidates(parentName: string): [Parent, ReleaseCandidate[]] {
+async function getParentToReleaseCandidates(
+  parentName: string,
+): Promise<[Parent, ReleaseCandidate[]]> {
   const parent = dat.getParents().filter((p) => p.getName() === parentName)[0];
-  const releaseCandidates = parent.getGames().map((game) => new ReleaseCandidate(
-    game,
-    new Release(parent.getName(), 'UNK', 'EN'),
-    game.getRoms(),
-    [],
-  ));
+  const releaseCandidates = await Promise.all(parent.getGames()
+    .map(async (game) => new ReleaseCandidate(
+      game,
+      new Release(parent.getName(), 'UNK', 'EN'),
+      await Promise.all(game.getRoms().map(async (rom) => new ROMWithFiles(
+        rom,
+        await rom.toFile(),
+        await rom.toFile(),
+      ))),
+    )));
   return [parent, releaseCandidates];
 }
 
@@ -90,7 +97,7 @@ describe('toString', () => {
     it('should return bios as found', async () => {
       const options = new Options();
       const map = new Map([
-        getParentToReleaseCandidates(gameNameBios),
+        await getParentToReleaseCandidates(gameNameBios),
       ]);
       const datStatus = await new StatusGenerator(options, new ProgressBarFake())
         .output(dat, map);
@@ -100,7 +107,7 @@ describe('toString', () => {
     it('should return prototype as found', async () => {
       const options = new Options();
       const map = new Map([
-        getParentToReleaseCandidates(gameNamePrototype),
+        await getParentToReleaseCandidates(gameNamePrototype),
       ]);
       const datStatus = await new StatusGenerator(options, new ProgressBarFake())
         .output(dat, map);
@@ -110,7 +117,7 @@ describe('toString', () => {
     it('should return game with single rom as found', async () => {
       const options = new Options();
       const map = new Map([
-        getParentToReleaseCandidates(gameNameSingleRom),
+        await getParentToReleaseCandidates(gameNameSingleRom),
       ]);
       const datStatus = await new StatusGenerator(options, new ProgressBarFake())
         .output(dat, map);
@@ -121,10 +128,10 @@ describe('toString', () => {
   it('should return none missing', async () => {
     const options = new Options();
     const map = new Map([
-      getParentToReleaseCandidates(gameNameBios),
-      getParentToReleaseCandidates(gameNamePrototype),
-      getParentToReleaseCandidates(gameNameSingleRom),
-      getParentToReleaseCandidates(gameNameMultipleRoms),
+      await getParentToReleaseCandidates(gameNameBios),
+      await getParentToReleaseCandidates(gameNamePrototype),
+      await getParentToReleaseCandidates(gameNameSingleRom),
+      await getParentToReleaseCandidates(gameNameMultipleRoms),
     ]);
     const datStatus = await new StatusGenerator(options, new ProgressBarFake())
       .output(dat, map);
@@ -182,7 +189,7 @@ dat,game with multiple roms,MISSING,false,true,false,false,false,false,false,fal
     it('should return bios as found', async () => {
       const options = new Options();
       const map = new Map([
-        getParentToReleaseCandidates(gameNameBios),
+        await getParentToReleaseCandidates(gameNameBios),
       ]);
       const datStatus = await new StatusGenerator(options, new ProgressBarFake())
         .output(dat, map);
@@ -197,7 +204,7 @@ dat,game with multiple roms,MISSING,false,true,false,false,false,false,false,fal
     it('should return prototype as found', async () => {
       const options = new Options();
       const map = new Map([
-        getParentToReleaseCandidates(gameNamePrototype),
+        await getParentToReleaseCandidates(gameNamePrototype),
       ]);
       const datStatus = await new StatusGenerator(options, new ProgressBarFake())
         .output(dat, map);
@@ -212,7 +219,7 @@ dat,game with multiple roms,MISSING,false,true,false,false,false,false,false,fal
     it('should return game with single rom as found', async () => {
       const options = new Options();
       const map = new Map([
-        getParentToReleaseCandidates(gameNameSingleRom),
+        await getParentToReleaseCandidates(gameNameSingleRom),
       ]);
       const datStatus = await new StatusGenerator(options, new ProgressBarFake())
         .output(dat, map);
@@ -228,10 +235,10 @@ dat,game with multiple roms,MISSING,false,true,false,false,false,false,false,fal
   it('should return none missing', async () => {
     const options = new Options();
     const map = new Map([
-      getParentToReleaseCandidates(gameNameBios),
-      getParentToReleaseCandidates(gameNamePrototype),
-      getParentToReleaseCandidates(gameNameSingleRom),
-      getParentToReleaseCandidates(gameNameMultipleRoms),
+      await getParentToReleaseCandidates(gameNameBios),
+      await getParentToReleaseCandidates(gameNamePrototype),
+      await getParentToReleaseCandidates(gameNameSingleRom),
+      await getParentToReleaseCandidates(gameNameMultipleRoms),
     ]);
     const datStatus = await new StatusGenerator(options, new ProgressBarFake())
       .output(dat, map);

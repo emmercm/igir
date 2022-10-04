@@ -58,10 +58,10 @@ export default class ReleaseCandidate {
 
   private readonly romsWithFiles: ROMWithFiles[];
 
-  constructor(game: Game, release: Release | undefined, roms: ROMWithFiles[]) {
+  constructor(game: Game, release: Release | undefined, romsWithFiles: ROMWithFiles[]) {
     this.game = game;
     this.release = release;
-    this.romsWithFiles = roms;
+    this.romsWithFiles = romsWithFiles;
   }
 
   static getRegions(): string[] {
