@@ -57,8 +57,15 @@ export default class Igir {
 
       // Write the output files
       await new ROMWriter(this.options, progressBar).write(dat, romOutputs);
-      // TODO(cemmer): next line
-      // datsToWrittenRoms.set(dat, writtenRoms);
+      const writtenRoms = [...romOutputs.entries()]
+        .reduce((map, [parent, releaseCandidates]) => {
+          const parentWrittenRoms = releaseCandidates
+            .flatMap((releaseCandidate) => releaseCandidate.getRomsWithFiles())
+            .map((romWithFiles) => romWithFiles.getOutputFile());
+          map.set(parent, parentWrittenRoms);
+          return map;
+        }, new Map<Parent, File[]>());
+      datsToWrittenRoms.set(dat, writtenRoms);
 
       // Write the output report
       const datStatus = await new StatusGenerator(this.options, progressBar)
@@ -101,7 +108,6 @@ export default class Igir {
   private async processROMScanner(): Promise<File[]> {
     const progressBar = this.logger.addProgressBar('Scanning for ROMs', Symbols.WAITING);
     const romInputs = await new ROMScanner(this.options, progressBar).scan();
-    // TODO(cemmer): is this reporting the right number? it might be inflated
     await progressBar.doneItems(romInputs.length, 'file', 'found');
     return romInputs;
   }

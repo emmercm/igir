@@ -1,5 +1,3 @@
-import async, { AsyncResultCallback } from 'async';
-
 import ProgressBar, { Symbols } from '../console/progressBar.js';
 import Zip from '../types/archives/zip.js';
 import ArchiveEntry from '../types/files/archiveEntry.js';
@@ -116,9 +114,8 @@ export default class CandidateGenerator {
     hashCodeToInputFiles: Map<string, File>,
   ): Promise<ReleaseCandidate | undefined> {
     // For each Game's ROM, find the matching File
-    const romFiles = (await async.map(
-      game.getRoms(),
-      async (rom, callback: AsyncResultCallback<[ROM, ROMWithFiles | undefined], Error>) => {
+    const romFiles = await Promise.all(
+      game.getRoms().map(async (rom) => {
         const romFile = hashCodeToInputFiles.get(rom.hashCode());
         if (romFile) {
           const romWithFiles = new ROMWithFiles(
@@ -126,12 +123,11 @@ export default class CandidateGenerator {
             romFile,
             await this.getOutputFile(dat, game, rom, romFile),
           );
-          callback(null, [rom, romWithFiles]);
-        } else {
-          callback(null, [rom, undefined]);
+          return [rom, romWithFiles];
         }
-      },
-    ));
+        return [rom, undefined];
+      }),
+    ) as [ROM, ROMWithFiles | undefined][];
 
     const foundRomsWithFiles = romFiles
       .filter(([, romWithFiles]) => romWithFiles)

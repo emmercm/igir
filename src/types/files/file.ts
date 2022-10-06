@@ -18,7 +18,6 @@ export default class File {
 
   private readonly fileHeader?: FileHeader;
 
-  // TODO(cemmer): create an async static factory method and then make this private
   protected constructor(
     filePath: string,
     size: number,
@@ -88,7 +87,7 @@ export default class File {
   }
 
   getExtractedFilePath(): string {
-    return this.filePath;
+    return path.basename(this.filePath);
   }
 
   getCrc32(): string {
