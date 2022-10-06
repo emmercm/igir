@@ -132,9 +132,12 @@ export default class ROMWriter {
       }
     }
 
-    await this.writeZipFile(outputZip, inputToOutputZipEntries);
+    if (!await this.writeZipFile(outputZip, inputToOutputZipEntries)) {
+      return;
+    }
 
     if (this.options.shouldTest()) {
+      await this.progressBar.logDebug(`${outputZip.getFilePath()}: testing`);
       if (!await ROMWriter.testZipContents(outputZip, inputToOutputZipEntries)) {
         await this.progressBar.logError(`Written zip is invalid: ${outputZip.getFilePath()}`);
         return;
@@ -190,20 +193,22 @@ export default class ROMWriter {
   private async writeZipFile(
     outputZip: Zip,
     inputToOutputZipEntries: Map<File, ArchiveEntry<Zip>>,
-  ): Promise<void> {
+  ): Promise<boolean> {
     // If the zip is already what we're expecting, do nothing
     if (await fsPoly.exists(outputZip.getFilePath())
       && await ROMWriter.testZipContents(outputZip, inputToOutputZipEntries)
     ) {
       await this.progressBar.logDebug(`${outputZip.getFilePath()}: archive already matches expected entries, skipping`);
-      return;
+      return true;
     }
 
     try {
       await this.ensureOutputDirExists(outputZip.getFilePath());
       await outputZip.archiveEntries(inputToOutputZipEntries);
+      return true;
     } catch (e) {
       await this.progressBar.logError(`Failed to create zip ${outputZip.getFilePath()} : ${e}`);
+      return false;
     }
   }
 
@@ -255,8 +260,7 @@ export default class ROMWriter {
     const outputFilePath = outputRomFile.getFilePath();
 
     // If the output file already exists and we're not overwriting, do nothing
-    const overwrite = this.options.getOverwrite();
-    if (!overwrite) {
+    if (!this.options.getOverwrite()) {
       if (await fsPoly.exists(outputFilePath)) {
         await this.progressBar.logDebug(`${outputFilePath}: file exists, not overwriting`);
         return;
