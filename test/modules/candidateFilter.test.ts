@@ -7,6 +7,7 @@ import Release from '../../src/types/logiqx/release.js';
 import ROM from '../../src/types/logiqx/rom.js';
 import Options, { OptionsProps } from '../../src/types/options.js';
 import ReleaseCandidate from '../../src/types/releaseCandidate.js';
+import ROMWithFiles from '../../src/types/romWithFiles.js';
 import ProgressBarFake from '../console/progressBarFake.js';
 
 function buildCandidateFilter(options: OptionsProps = {}): CandidateFilter {
@@ -114,8 +115,11 @@ async function buildReleaseCandidatesWithRegionLanguage(
         releaseCandidates.push(new ReleaseCandidate(
           game,
           release,
-          game.getRoms(),
-          await Promise.all(game.getRoms().map(async (gameRom) => gameRom.toFile())),
+          await Promise.all(game.getRoms().map(async (gameRom) => new ROMWithFiles(
+            gameRom,
+            await gameRom.toFile(),
+            await gameRom.toFile(),
+          ))),
         ));
       }
     }

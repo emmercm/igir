@@ -52,14 +52,21 @@ async function generateReleaseCandidates(
   }), new ProgressBarFake()).scan();
 
   // Generate a DAT with games for every scanned file
-  const dat = new DAT(new Header(), scannedRomFiles.map((romFile) => new Game({
-    name: path.parse(romFile.getFilePath()).name,
-    rom: [new ROM(
-      path.basename(romFile.getFilePath()),
-      romFile.getSize(),
-      romFile.getCrc32(),
-    )],
-  })));
+  const dat = new DAT(new Header(), scannedRomFiles.map((romFile) => {
+    // If we're writing zip files then get the game name from the input filename, otherwise get
+    //  the game name from the archive entry path if it exists
+    const gameName = (new Options(optionsProps)).shouldZip(romFile.getExtractedFilePath())
+      ? path.parse(romFile.getFilePath()).name
+      : path.parse(romFile.getExtractedFilePath()).name;
+    return new Game({
+      name: gameName,
+      rom: [new ROM(
+        path.basename(romFile.getExtractedFilePath()),
+        romFile.getSize(),
+        romFile.getCrc32(),
+      )],
+    });
+  }));
 
   return new CandidateGenerator(new Options(optionsProps), new ProgressBarFake())
     .generate(dat, scannedRomFiles);
@@ -115,6 +122,7 @@ it('shouldn\'t write anything if not copying or moving', async () => {
 
     const optionsProps = {
       commands: [],
+      output: outputTemp,
     };
     const parentsToCandidates = await generateReleaseCandidates(optionsProps, inputTemp, 'zip/*');
 
@@ -133,16 +141,20 @@ describe('zip', () => {
       const inputFiles = fsPoly.walkSync(inputTemp);
       expect(inputFiles.length).toBeGreaterThan(0);
 
+      const zipDir = path.join(inputTemp, 'zip');
       const optionsProps = {
         commands: ['copy', 'zip', 'test'],
+        output: zipDir,
       };
-      const zipDir = path.join(inputTemp, 'zip');
       const parentsToCandidates = await generateReleaseCandidates(optionsProps, zipDir, '*');
 
       const writtenPaths = await runRomWriter(optionsProps, zipDir, parentsToCandidates);
+      // Output dir is same as input dir, and we didn't do anything, expect all input files
       expect(writtenPaths).toEqual([
+        'empty.zip',
         'fizzbuzz.zip',
         'foobar.zip',
+        'invalid.zip',
         'loremipsum.zip',
         'onetwothree.zip',
         'unknown.zip',
@@ -161,6 +173,7 @@ describe('zip', () => {
 
       const optionsProps = {
         commands: ['copy', 'zip'],
+        output: outputTemp,
       };
       const parentsToCandidates = await generateReleaseCandidates(optionsProps, inputTemp, '**/!(headered)/*');
 
@@ -180,9 +193,7 @@ describe('zip', () => {
       ]);
 
       // Write again without overwriting
-      const secondWrittenPaths = await runRomWriter({
-        commands: ['copy', 'zip'],
-      }, outputTemp, parentsToCandidates);
+      const secondWrittenPaths = await runRomWriter(optionsProps, outputTemp, parentsToCandidates);
       expect(secondWrittenPaths).toEqual([
         'empty.zip',
         'fizzbuzz.zip',
@@ -208,6 +219,7 @@ describe('zip', () => {
 
       const optionsProps = {
         commands: ['copy', 'zip'],
+        output: outputTemp,
       };
       const parentsToCandidates = await generateReleaseCandidates(optionsProps, inputTemp, '**/!(headered)/*');
 
@@ -246,6 +258,7 @@ describe('zip', () => {
 
       const optionsProps = {
         commands: ['copy', 'zip'],
+        output: outputTemp,
         overwrite: true,
       };
       const parentsToCandidates = await generateReleaseCandidates(optionsProps, inputTemp, '**/!(headered)/*');
@@ -287,6 +300,7 @@ describe('zip', () => {
 
       const optionsProps = {
         commands: ['copy', 'zip', 'test'],
+        output: outputTemp,
       };
       const parentsToCandidates = await generateReleaseCandidates(
         optionsProps,
@@ -310,6 +324,7 @@ describe('zip', () => {
 
       const optionsProps = {
         commands: ['move', 'zip', 'test'],
+        output: outputTemp,
       };
       const rawDir = path.join(inputTemp, 'raw');
       const parentsToCandidates = await generateReleaseCandidates(optionsProps, rawDir, '*');
@@ -338,10 +353,11 @@ describe('raw', () => {
       const inputFiles = fsPoly.walkSync(inputTemp);
       expect(inputFiles.length).toBeGreaterThan(0);
 
+      const rawDir = path.join(inputTemp, 'raw');
       const optionsProps = {
         commands: ['copy'],
+        output: rawDir,
       };
-      const rawDir = path.join(inputTemp, 'raw');
       const parentsToCandidates = await generateReleaseCandidates(optionsProps, rawDir, '*');
 
       const writtenPaths = await runRomWriter(optionsProps, rawDir, parentsToCandidates);
@@ -369,6 +385,7 @@ describe('raw', () => {
 
       const optionsProps = {
         commands: ['copy'],
+        output: outputTemp,
       };
       const parentsToCandidates = await generateReleaseCandidates(optionsProps, inputTemp, '**/!(headered)/*');
 
@@ -411,6 +428,7 @@ describe('raw', () => {
 
       const optionsProps = {
         commands: ['copy'],
+        output: outputTemp,
       };
       const parentsToCandidates = await generateReleaseCandidates(optionsProps, inputTemp, '**/!(headered)/*');
 
@@ -429,7 +447,7 @@ describe('raw', () => {
 
       // Write again, overwriting
       const secondWrittenPaths = await runRomWriter({
-        commands: ['copy'],
+        ...optionsProps,
         overwrite: true,
       }, outputTemp, parentsToCandidates);
       expect(secondWrittenPaths).toEqual(firstWrittenPaths);
@@ -453,6 +471,7 @@ describe('raw', () => {
 
       const optionsProps = {
         commands: ['copy', 'test'],
+        output: outputTemp,
       };
       const parentsToCandidates = await generateReleaseCandidates(
         optionsProps,
@@ -476,6 +495,7 @@ describe('raw', () => {
 
       const optionsProps = {
         commands: ['move', 'test'],
+        output: outputTemp,
       };
       const rawDir = path.join(inputTemp, 'raw');
       const parentsToCandidates = await generateReleaseCandidates(optionsProps, rawDir, '*');
