@@ -46,15 +46,23 @@ async function walkAndStat(dirPath: string): Promise<[string, Stats][]> {
     return [];
   }
   return Promise.all(
-    fsPoly.walkSync(dirPath).map(async (filePath) => [
-      filePath.replace(path.normalize(dirPath) + path.sep, ''),
-      {
-        ...await fsPromises.stat(filePath),
-        // Hard-code properties that can change with file reads
-        atime: new Date(0),
-        atimeMs: 0,
-      },
-    ]),
+    fsPoly.walkSync(dirPath).map(async (filePath) => {
+      let stats: Stats;
+      try {
+        stats = {
+          ...await fsPromises.stat(filePath),
+          // Hard-code properties that can change with file reads
+          atime: new Date(0),
+          atimeMs: 0,
+        };
+      } catch (e) {
+        stats = new Stats();
+      }
+      return [
+        filePath.replace(path.normalize(dirPath) + path.sep, ''),
+        stats,
+      ];
+    }),
   );
 }
 
