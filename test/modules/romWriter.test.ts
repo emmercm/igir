@@ -22,13 +22,11 @@ jest.setTimeout(10_000);
 
 async function copyFixturesToTemp(
   callback: (input: string, output: string) => void | Promise<void>,
-  copyFixtures = true,
 ): Promise<void> {
   // Set up the input directory
   const inputTemp = fsPoly.mkdtempSync(Constants.GLOBAL_TEMP_DIR);
-  if (copyFixtures) {
-    fsPoly.copyDirSync('./test/fixtures/roms', inputTemp);
-  }
+  fsPoly.copyDirSync('./test/fixtures/roms', inputTemp);
+  console.log(fsPoly.walkSync(inputTemp));
 
   // Set up the output directory, but delete it so ROMWriter can make it
   const outputTemp = fsPoly.mkdtempSync(Constants.GLOBAL_TEMP_DIR);
