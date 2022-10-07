@@ -244,7 +244,7 @@ describe('zip', () => {
           expect(statsAfter).toEqual(statsBefore);
         } else {
           // File was deleted, ensure it was expected
-          expect(expectedDeletedInputPaths).toContain(inputFile);
+          expect(expectedDeletedInputPaths).toContain(path.normalize(inputFile));
         }
       });
     });
@@ -358,7 +358,7 @@ describe('raw', () => {
           expect(statsAfter).toEqual(statsBefore);
         } else {
           // File was deleted, ensure it was expected
-          expect(expectedDeletedInputPaths).toContain(inputFile);
+          expect(expectedDeletedInputPaths).toContain(path.normalize(inputFile));
         }
       });
     });
