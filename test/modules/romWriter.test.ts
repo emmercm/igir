@@ -1,5 +1,6 @@
 import { jest } from '@jest/globals';
 import { promises as fsPromises, Stats } from 'fs';
+import os from 'os';
 import path from 'path';
 
 import Constants from '../../src/constants.js';
@@ -61,11 +62,16 @@ async function walkAndStat(dirPath: string): Promise<[string, Stats][]> {
 function datScanner(gameNameToFiles: Map<string, File[]>): DAT {
   const games = [...gameNameToFiles.entries()]
     .map(([gameName, files]) => {
-      const roms = files.map((file) => new ROM(
-        file.getExtractedFilePath(),
-        file.getSize(),
-        file.getCrc32(),
-      ));
+      const roms = files
+        // De-duplicate
+        .filter((one, idx, romFiles) => romFiles
+          .findIndex((two) => two.getExtractedFilePath() === one.getExtractedFilePath()) === idx)
+        // Map
+        .map((file) => new ROM(
+          path.basename(file.getExtractedFilePath()),
+          file.getSize(),
+          file.getCrc32(),
+        ));
       return new Game({
         name: gameName,
         rom: roms,
@@ -77,24 +83,25 @@ function datScanner(gameNameToFiles: Map<string, File[]>): DAT {
 async function romScanner(
   options: Options,
   inputDir: string,
-  gameNameToFilesPaths: Map<string, string[]>,
+  inputGlob: string,
 ): Promise<Map<string, File[]>> {
-  return new Map<string, File[]>(await Promise.all(
-    [...gameNameToFilesPaths.entries()]
-      .map(async ([gameName, filePaths]) => {
-        const fullFilePaths = filePaths.map((filePath) => path.join(inputDir, filePath));
-        const scannedFiles = await new ROMScanner(new Options({
-          ...options,
-          input: fullFilePaths,
-        }), new ProgressBarFake()).scan();
-
-        // Reduce all the unique files for all games
-        const filteredFiles = scannedFiles
-          .filter((one, idx, files) => files
-            .findIndex((two) => two.getExtractedFilePath() === one.getExtractedFilePath()) === idx);
-        return [gameName, filteredFiles];
-      }) as Promise<[string, File[]]>[],
-  ));
+  return (await new ROMScanner(new Options({
+    ...options,
+    input: [path.join(inputDir, inputGlob)],
+  }), new ProgressBarFake()).scan())
+    // Reduce all the unique files for all games
+    .filter((one, idx, files) => files
+      .findIndex((two) => two.equals(one)) === idx)
+    // Map
+    .reduce((map, romFile) => {
+      const romName = path.parse(romFile.getFilePath()).name;
+      if (map.has(romName)) {
+        map.set(romName, [...map.get(romName) as File[], romFile]);
+      } else {
+        map.set(romName, [romFile]);
+      }
+      return map;
+    }, new Map<string, File[]>());
 }
 
 async function candidateGenerator(
@@ -109,8 +116,8 @@ async function candidateGenerator(
 async function romWriter(
   optionsProps: OptionsProps,
   inputTemp: string,
+  inputGlob: string,
   outputTemp: string,
-  gameNamesToFilePaths: [string, string[]][],
 ): Promise<[string, Stats][]> {
   // Given
   const options = new Options({
@@ -118,7 +125,7 @@ async function romWriter(
     input: [inputTemp],
     output: outputTemp,
   });
-  const gameNameToFiles = await romScanner(options, inputTemp, new Map(gameNamesToFilePaths));
+  const gameNameToFiles = await romScanner(options, inputTemp, inputGlob);
   const dat = datScanner(gameNameToFiles);
   const candidates = await candidateGenerator(options, dat, gameNameToFiles);
 
@@ -129,12 +136,40 @@ async function romWriter(
   return walkAndStat(outputTemp);
 }
 
-it('should not do anything if there are no parents', () => {
-  // TODO(cemmer)
+it('should not do anything if there are no parents', async () => {
+  await copyFixturesToTemp(async (inputTemp, outputTemp) => {
+    // Given
+    const options = new Options({ commands: ['copy'] });
+    const inputFilesBefore = await walkAndStat(inputTemp);
+    await expect(walkAndStat(outputTemp)).resolves.toEqual([]);
+
+    // When
+    await romWriter(options, os.devNull, '**/*', outputTemp);
+
+    // Then no files were written
+    await expect(walkAndStat(outputTemp)).resolves.toEqual([]);
+
+    // And the input files weren't touched
+    await expect(walkAndStat(inputTemp)).resolves.toEqual(inputFilesBefore);
+  });
 });
 
-it('should not do anything with no write commands', () => {
-  // TODO(cemmer)
+it('should not do anything with no write commands', async () => {
+  await copyFixturesToTemp(async (inputTemp, outputTemp) => {
+    // Given
+    const options = new Options({ commands: ['report'] });
+    const inputFilesBefore = await walkAndStat(inputTemp);
+    await expect(walkAndStat(outputTemp)).resolves.toEqual([]);
+
+    // When
+    await romWriter(options, inputTemp, '**/*', outputTemp);
+
+    // Then no files were written
+    await expect(walkAndStat(outputTemp)).resolves.toEqual([]);
+
+    // And the input files weren't touched
+    await expect(walkAndStat(inputTemp)).resolves.toEqual(inputFilesBefore);
+  });
 });
 
 describe('zip', () => {
@@ -152,28 +187,26 @@ describe('zip', () => {
 
   test.each([
     [
-      'one game with one file',
-      [['Game One', ['*/fizzbuzz.7z']]],
-      ['Game One.zip'],
+      '**/!(headered)/*',
+      ['empty.zip', 'fizzbuzz.zip', 'foobar.zip', 'loremipsum.zip', 'one.zip', 'onetwothree.zip', 'three.zip', 'two.zip', 'unknown.zip'],
     ],
     [
-      'one game with multiple files',
-      [['Game One', ['*/fizzbuzz.rar', '*/foobar.7z']]],
-      ['Game One.zip'],
+      '7z/*',
+      ['fizzbuzz.zip', 'foobar.zip', 'loremipsum.zip', 'onetwothree.zip', 'unknown.zip'],
     ],
     [
-      'multiple games with varying files',
-      [
-        ['Game One', ['*/fizzbuzz.zip']],
-        ['Game Two', ['*/foobar.rar', '*/loremipsum.7z']],
-      ],
-      ['Game One.zip', 'Game Two.zip'],
+      'rar/*',
+      ['fizzbuzz.zip', 'foobar.zip', 'loremipsum.zip', 'onetwothree.zip', 'unknown.zip'],
     ],
-  ] as [string, [string, string[]][], string[]][])('should copy, zip, and test: %s', async (
-    testName,
-    gameNamesToFilePaths,
-    expectedOutputPaths,
-  ) => {
+    [
+      'raw/*',
+      ['empty.zip', 'fizzbuzz.zip', 'foobar.zip', 'loremipsum.zip', 'one.zip', 'three.zip', 'two.zip', 'unknown.zip'],
+    ],
+    [
+      'zip/*',
+      ['fizzbuzz.zip', 'foobar.zip', 'loremipsum.zip', 'onetwothree.zip', 'unknown.zip'],
+    ],
+  ])('should copy, zip, and test: %s', async (inputGlob, expectedOutputPaths) => {
     await copyFixturesToTemp(async (inputTemp, outputTemp) => {
       // Given
       const options = new Options({ commands: ['copy', 'zip', 'test'] });
@@ -181,46 +214,44 @@ describe('zip', () => {
       await expect(walkAndStat(outputTemp)).resolves.toEqual([]);
 
       // When
-      const outputFiles = (await romWriter(options, inputTemp, outputTemp, gameNamesToFilePaths))
+      const outputFiles = (await romWriter(options, inputTemp, inputGlob, outputTemp))
         .map((pair) => pair[0]).sort();
 
       // Then the expected files were written
       expect(outputFiles).toEqual(expectedOutputPaths);
 
       // And the input files weren't touched
-      const inputFilesAfter = await walkAndStat(inputTemp);
-      expect(inputFilesAfter).toEqual(inputFilesBefore);
+      await expect(walkAndStat(inputTemp)).resolves.toEqual(inputFilesBefore);
     });
   });
 
   test.each([
     [
-      'one game with one file',
-      [['Game One', ['*/fizzbuzz.7z']]],
-      ['Game One.zip'],
-      ['7z/fizzbuzz.7z'],
+      '**/!(headered)/*',
+      ['empty.zip', 'fizzbuzz.zip', 'foobar.zip', 'loremipsum.zip', 'one.zip', 'onetwothree.zip', 'three.zip', 'two.zip', 'unknown.zip'],
+      ['raw/empty.rom', 'raw/fizzbuzz.nes', 'raw/foobar.lnx', 'raw/loremipsum.rom', 'raw/one.rom', 'raw/three.rom', 'raw/two.rom', 'raw/unknown.rom'],
     ],
     [
-      'one game with multiple files',
-      [['Game One', ['*/fizzbuzz.rar', '*/foobar.7z']]],
-      ['Game One.zip'],
-      ['rar/fizzbuzz.rar', '7z/foobar.7z'],
+      '7z/*',
+      ['fizzbuzz.zip', 'foobar.zip', 'loremipsum.zip', 'onetwothree.zip', 'unknown.zip'],
+      ['7z/fizzbuzz.7z', '7z/foobar.7z', '7z/loremipsum.7z', '7z/onetwothree.7z', '7z/unknown.7z'],
     ],
     [
-      'multiple games with varying files',
-      [
-        ['Game One', ['*/fizzbuzz.zip']],
-        ['Game Two', ['*/foobar.rar', '*/loremipsum.7z']],
-      ],
-      ['Game One.zip', 'Game Two.zip'],
-      ['zip/fizzbuzz.zip', 'rar/foobar.rar', '7z/loremipsum.7z'],
+      'rar/*',
+      ['fizzbuzz.zip', 'foobar.zip', 'loremipsum.zip', 'onetwothree.zip', 'unknown.zip'],
+      ['rar/fizzbuzz.rar', 'rar/foobar.rar', 'rar/loremipsum.rar', 'rar/onetwothree.rar', 'rar/unknown.rar'],
     ],
-  ] as [string, [string, string[]][], string[], string[]][])('should move, zip, and test: %s', async (
-    testName,
-    gameNamesToFilePaths,
-    expectedOutputPaths,
-    expectedDeletedInputPaths,
-  ) => {
+    [
+      'raw/*',
+      ['empty.zip', 'fizzbuzz.zip', 'foobar.zip', 'loremipsum.zip', 'one.zip', 'three.zip', 'two.zip', 'unknown.zip'],
+      ['raw/empty.rom', 'raw/fizzbuzz.nes', 'raw/foobar.lnx', 'raw/loremipsum.rom', 'raw/one.rom', 'raw/three.rom', 'raw/two.rom', 'raw/unknown.rom'],
+    ],
+    [
+      'zip/*',
+      ['fizzbuzz.zip', 'foobar.zip', 'loremipsum.zip', 'onetwothree.zip', 'unknown.zip'],
+      ['zip/fizzbuzz.zip', 'zip/foobar.zip', 'zip/loremipsum.zip', 'zip/onetwothree.zip', 'zip/unknown.zip'],
+    ],
+  ])('should move, zip, and test: %s', async (inputGlob, expectedOutputPaths, expectedDeletedInputPaths) => {
     await copyFixturesToTemp(async (inputTemp, outputTemp) => {
       // Given
       const options = new Options({ commands: ['move', 'zip', 'test'] });
@@ -228,7 +259,7 @@ describe('zip', () => {
       await expect(walkAndStat(outputTemp)).resolves.toEqual([]);
 
       // When
-      const outputFiles = (await romWriter(options, inputTemp, outputTemp, gameNamesToFilePaths))
+      const outputFiles = (await romWriter(options, inputTemp, inputGlob, outputTemp))
         .map((pair) => pair[0]).sort();
 
       // Then the expected files were written
@@ -266,28 +297,26 @@ describe('raw', () => {
 
   test.each([
     [
-      'one game with one file',
-      [['Game One', ['*/fizzbuzz.7z']]],
-      ['fizzbuzz.nes'],
+      '**/!(headered)/*',
+      ['empty.rom', 'fizzbuzz.nes', 'foobar.lnx', 'loremipsum.rom', 'one.rom', 'three.rom', 'two.rom', 'unknown.rom'],
     ],
     [
-      'one game with multiple files',
-      [['Game One', ['*/fizzbuzz.rar', '*/foobar.7z']]],
-      ['fizzbuzz.nes', 'foobar.lnx'],
+      '7z/*',
+      ['fizzbuzz.nes', 'foobar.lnx', 'loremipsum.rom', 'one.rom', 'three.rom', 'two.rom', 'unknown.rom'],
     ],
     [
-      'multiple games with varying files',
-      [
-        ['Game One', ['*/fizzbuzz.zip']],
-        ['Game Two', ['*/foobar.rar', '*/loremipsum.7z']],
-      ],
-      ['fizzbuzz.nes', 'foobar.lnx', 'loremipsum.rom'],
+      'rar/*',
+      ['fizzbuzz.nes', 'foobar.lnx', 'loremipsum.rom', 'one.rom', 'three.rom', 'two.rom', 'unknown.rom'],
     ],
-  ] as [string, [string, string[]][], string[]][])('should copy and test: %s', async (
-    testName,
-    gameNamesToFilePaths,
-    expectedOutputPaths,
-  ) => {
+    [
+      'raw/*',
+      ['empty.rom', 'fizzbuzz.nes', 'foobar.lnx', 'loremipsum.rom', 'one.rom', 'three.rom', 'two.rom', 'unknown.rom'],
+    ],
+    [
+      'zip/*',
+      ['fizzbuzz.nes', 'foobar.lnx', 'loremipsum.rom', 'one.rom', 'three.rom', 'two.rom', 'unknown.rom'],
+    ],
+  ])('should copy and test: %s', async (inputGlob, expectedOutputPaths) => {
     await copyFixturesToTemp(async (inputTemp, outputTemp) => {
       // Given
       const options = new Options({ commands: ['copy', 'test'] });
@@ -295,46 +324,44 @@ describe('raw', () => {
       await expect(walkAndStat(outputTemp)).resolves.toEqual([]);
 
       // When
-      const outputFiles = (await romWriter(options, inputTemp, outputTemp, gameNamesToFilePaths))
+      const outputFiles = (await romWriter(options, inputTemp, inputGlob, outputTemp))
         .map((pair) => pair[0]).sort();
 
       // Then the expected files were written
       expect(outputFiles).toEqual(expectedOutputPaths);
 
       // And the input files weren't touched
-      const inputFilesAfter = await walkAndStat(inputTemp);
-      expect(inputFilesAfter).toEqual(inputFilesBefore);
+      await expect(walkAndStat(inputTemp)).resolves.toEqual(inputFilesBefore);
     });
   });
 
   test.each([
     [
-      'one game with one file',
-      [['Game One', ['*/fizzbuzz.7z']]],
-      ['fizzbuzz.nes'],
-      ['7z/fizzbuzz.7z'],
+      '**/!(headered)/*',
+      ['empty.rom', 'fizzbuzz.nes', 'foobar.lnx', 'loremipsum.rom', 'one.rom', 'three.rom', 'two.rom', 'unknown.rom'],
+      ['raw/empty.rom', 'raw/fizzbuzz.nes', 'raw/foobar.lnx', 'raw/loremipsum.rom', 'raw/one.rom', 'raw/three.rom', 'raw/two.rom', 'raw/unknown.rom'],
     ],
     [
-      'one game with multiple files',
-      [['Game One', ['*/fizzbuzz.rar', '*/foobar.7z']]],
-      ['fizzbuzz.nes', 'foobar.lnx'],
-      ['rar/fizzbuzz.rar', '7z/foobar.7z'],
+      '7z/*',
+      ['fizzbuzz.nes', 'foobar.lnx', 'loremipsum.rom', 'one.rom', 'three.rom', 'two.rom', 'unknown.rom'],
+      ['7z/fizzbuzz.7z', '7z/foobar.7z', '7z/loremipsum.7z', '7z/onetwothree.7z', '7z/unknown.7z'],
     ],
     [
-      'multiple games with varying files',
-      [
-        ['Game One', ['*/fizzbuzz.zip']],
-        ['Game Two', ['*/foobar.rar', '*/loremipsum.7z']],
-      ],
-      ['fizzbuzz.nes', 'foobar.lnx', 'loremipsum.rom'],
-      ['zip/fizzbuzz.zip', 'rar/foobar.rar', '7z/loremipsum.7z'],
+      'rar/*',
+      ['fizzbuzz.nes', 'foobar.lnx', 'loremipsum.rom', 'one.rom', 'three.rom', 'two.rom', 'unknown.rom'],
+      ['rar/fizzbuzz.rar', 'rar/foobar.rar', 'rar/loremipsum.rar', 'rar/onetwothree.rar', 'rar/unknown.rar'],
     ],
-  ] as [string, [string, string[]][], string[], string[]][])('should move and test: %s', async (
-    testName,
-    gameNamesToFilePaths,
-    expectedOutputPaths,
-    expectedDeletedInputPaths,
-  ) => {
+    [
+      'raw/*',
+      ['empty.rom', 'fizzbuzz.nes', 'foobar.lnx', 'loremipsum.rom', 'one.rom', 'three.rom', 'two.rom', 'unknown.rom'],
+      ['raw/empty.rom', 'raw/fizzbuzz.nes', 'raw/foobar.lnx', 'raw/loremipsum.rom', 'raw/one.rom', 'raw/three.rom', 'raw/two.rom', 'raw/unknown.rom'],
+    ],
+    [
+      'zip/*',
+      ['fizzbuzz.nes', 'foobar.lnx', 'loremipsum.rom', 'one.rom', 'three.rom', 'two.rom', 'unknown.rom'],
+      ['zip/fizzbuzz.zip', 'zip/foobar.zip', 'zip/loremipsum.zip', 'zip/onetwothree.zip', 'zip/unknown.zip'],
+    ],
+  ])('should move and test: %s', async (inputGlob, expectedOutputPaths, expectedDeletedInputPaths) => {
     await copyFixturesToTemp(async (inputTemp, outputTemp) => {
       // Given
       const options = new Options({ commands: ['move', 'test'] });
@@ -342,7 +369,7 @@ describe('raw', () => {
       await expect(walkAndStat(outputTemp)).resolves.toEqual([]);
 
       // When
-      const outputFiles = (await romWriter(options, inputTemp, outputTemp, gameNamesToFilePaths))
+      const outputFiles = (await romWriter(options, inputTemp, inputGlob, outputTemp))
         .map((pair) => pair[0]).sort();
 
       // Then the expected files were written

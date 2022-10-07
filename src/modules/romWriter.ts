@@ -26,6 +26,8 @@ export default class ROMWriter {
 
   private readonly progressBar: ProgressBar;
 
+  private readonly filesQueuedForDeletion: File[] = [];
+
   constructor(options: Options, progressBar: ProgressBar) {
     this.options = options;
     this.progressBar = progressBar;
@@ -68,6 +70,9 @@ export default class ROMWriter {
         });
       },
     );
+
+    await this.progressBar.setSymbol(Symbols.WRITING);
+    await this.deleteMovedFiles();
   }
 
   private async writeReleaseCandidate(
@@ -272,7 +277,7 @@ export default class ROMWriter {
       return;
     }
     await this.testWrittenRaw(outputFilePath, inputRomFile.getCrc32());
-    await this.deleteMovedFile(inputRomFile);
+    this.enqueueFileDeletion(inputRomFile);
   }
 
   private async writeRawFile(inputRomFile: File, outputFilePath: string): Promise<boolean> {
@@ -300,12 +305,28 @@ export default class ROMWriter {
     }
   }
 
-  private async deleteMovedFile(inputRomFile: File): Promise<void> {
+  // Input files may be needed for multiple output files, such as an archive with hundreds of ROMs
+  //  in it. That means we need to "move" (delete) files at the very end.
+  private enqueueFileDeletion(inputRomFile: File): void {
     if (!this.options.shouldMove()) {
       return;
     }
+    this.filesQueuedForDeletion.push(inputRomFile);
+  }
 
-    await this.progressBar.logDebug(`${inputRomFile.getFilePath()}: deleting`);
-    await fsPoly.rm(inputRomFile.getFilePath(), { force: true });
+  private async deleteMovedFiles(): Promise<void[]> {
+    return Promise.all(
+      this.filesQueuedForDeletion
+        .map((file) => file.getFilePath())
+        .filter((filePath, idx, filePaths) => filePaths.indexOf(filePath) === idx)
+        .map(async (filePath) => {
+          await this.progressBar.logDebug(`${filePath}: deleting`);
+          try {
+            await fsPoly.rm(filePath, { force: true });
+          } catch (e) {
+            await this.progressBar.logDebug(`${filePath}: failed to delete`);
+          }
+        }),
+    );
   }
 }
