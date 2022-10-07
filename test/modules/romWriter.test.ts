@@ -26,7 +26,6 @@ async function copyFixturesToTemp(
   // Set up the input directory
   const inputTemp = fsPoly.mkdtempSync(Constants.GLOBAL_TEMP_DIR);
   fsPoly.copyDirSync('./test/fixtures/roms', inputTemp);
-  console.log(fsPoly.walkSync(inputTemp));
 
   // Set up the output directory, but delete it so ROMWriter can make it
   const outputTemp = fsPoly.mkdtempSync(Constants.GLOBAL_TEMP_DIR);
@@ -36,7 +35,9 @@ async function copyFixturesToTemp(
   await callback(inputTemp, outputTemp);
 
   // Delete the temp files
-  await fsPromises.rm(inputTemp, { recursive: true });
+  console.log(fsPoly.walkSync(inputTemp));
+  await fsPromises.rm(inputTemp, { force: true, recursive: true });
+  console.log(fsPoly.walkSync(outputTemp));
   await fsPromises.rm(outputTemp, { force: true, recursive: true });
 }
 
