@@ -118,11 +118,15 @@ export default class FsPoly {
     /* eslint-disable no-await-in-loop */
     for (let i = 0; i < files.length; i += 1) {
       const file = path.join(pathLike.toString(), files[i]);
-      const stats = fs.statSync(file);
-      if (stats.isDirectory()) {
-        output.push(...this.walkSync(file));
-      } else if (stats.isFile()) {
-        output.push(file);
+      try {
+        const stats = fs.statSync(file);
+        if (stats.isDirectory()) {
+          output.push(...this.walkSync(file));
+        } else if (stats.isFile()) {
+          output.push(file);
+        }
+      } catch (e) {
+        // Windows can give `EPERM: operation not permitted, stat` for explainable reason
       }
     }
 

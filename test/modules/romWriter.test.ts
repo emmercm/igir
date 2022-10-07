@@ -31,14 +31,14 @@ async function copyFixturesToTemp(
 
   // Set up the output directory, but delete it so ROMWriter can make it
   const outputTemp = fsPoly.mkdtempSync(Constants.GLOBAL_TEMP_DIR);
-  fsPoly.rmSync(outputTemp, { force: true, recursive: true });
+  await fsPromises.rm(outputTemp, { force: true, recursive: true });
 
   // Call the callback
   await callback(inputTemp, outputTemp);
 
   // Delete the temp files
-  fsPoly.rmSync(inputTemp, { recursive: true });
-  fsPoly.rmSync(outputTemp, { force: true, recursive: true });
+  await fsPromises.rm(inputTemp, { recursive: true });
+  await fsPromises.rm(outputTemp, { force: true, recursive: true });
 }
 
 async function walkAndStat(dirPath: string): Promise<[string, Stats][]> {
@@ -46,23 +46,15 @@ async function walkAndStat(dirPath: string): Promise<[string, Stats][]> {
     return [];
   }
   return Promise.all(
-    fsPoly.walkSync(dirPath).map(async (filePath) => {
-      let stats: Stats;
-      try {
-        stats = {
-          ...await fsPromises.stat(filePath),
-          // Hard-code properties that can change with file reads
-          atime: new Date(0),
-          atimeMs: 0,
-        };
-      } catch (e) {
-        stats = new Stats();
-      }
-      return [
-        filePath.replace(path.normalize(dirPath) + path.sep, ''),
-        stats,
-      ];
-    }),
+    fsPoly.walkSync(dirPath).map(async (filePath) => [
+      filePath.replace(path.normalize(dirPath) + path.sep, ''),
+      {
+        ...await fsPromises.stat(filePath),
+        // Hard-code properties that can change with file reads
+        atime: new Date(0),
+        atimeMs: 0,
+      },
+    ]),
   );
 }
 
