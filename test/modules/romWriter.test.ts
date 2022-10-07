@@ -185,8 +185,29 @@ describe('zip', () => {
     // TODO(cemmer)
   });
 
-  it('should not write anything if the output exists and not overwriting', () => {
-    // TODO(cemmer)
+  it('should not write anything if the output exists and not overwriting', async () => {
+    await copyFixturesToTemp(async (inputTemp, outputTemp) => {
+      // Given
+      const options = new Options({ commands: ['copy', 'zip'] });
+      const inputFilesBefore = await walkAndStat(inputTemp);
+      await expect(walkAndStat(outputTemp)).resolves.toEqual([]);
+
+      // And we've written once
+      await romWriter(options, inputTemp, '**/*', outputTemp);
+
+      // And no files were written
+      const outputFilesBefore = await walkAndStat(outputTemp);
+      expect(outputFilesBefore).not.toEqual([]);
+
+      // When we write again
+      await romWriter(options, inputTemp, '**/*', outputTemp);
+
+      // Then the output wasn't touched
+      await expect(walkAndStat(outputTemp)).resolves.toEqual(outputFilesBefore);
+
+      // And the input files weren't touched
+      await expect(walkAndStat(inputTemp)).resolves.toEqual(inputFilesBefore);
+    });
   });
 
   it('should write if the output exists and are overwriting', () => {
@@ -295,8 +316,29 @@ describe('raw', () => {
     // TODO(cemmer)
   });
 
-  it('should not write anything if the output exists and not overwriting', () => {
-    // TODO(cemmer)
+  it('should not write anything if the output exists and not overwriting', async () => {
+    await copyFixturesToTemp(async (inputTemp, outputTemp) => {
+      // Given
+      const options = new Options({ commands: ['copy'] });
+      const inputFilesBefore = await walkAndStat(inputTemp);
+      await expect(walkAndStat(outputTemp)).resolves.toEqual([]);
+
+      // And we've written once
+      await romWriter(options, inputTemp, '**/*', outputTemp);
+
+      // And no files were written
+      const outputFilesBefore = await walkAndStat(outputTemp);
+      expect(outputFilesBefore).not.toEqual([]);
+
+      // When we write again
+      await romWriter(options, inputTemp, '**/*', outputTemp);
+
+      // Then the output wasn't touched
+      await expect(walkAndStat(outputTemp)).resolves.toEqual(outputFilesBefore);
+
+      // And the input files weren't touched
+      await expect(walkAndStat(inputTemp)).resolves.toEqual(inputFilesBefore);
+    });
   });
 
   it('should write if the output exists and are overwriting', () => {
