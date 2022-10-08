@@ -35,9 +35,17 @@ async function copyFixturesToTemp(
   await callback(inputTemp, outputTemp);
 
   // Delete the temp files
-  console.log(fsPoly.walkSync(inputTemp));
+  try {
+    console.log(fsPoly.walkSync(inputTemp));
+  } catch (e) {
+    console.log(`input empty: ${e}`);
+  }
   await fsPromises.rm(inputTemp, { force: true, recursive: true });
-  console.log(fsPoly.walkSync(outputTemp));
+  try {
+    console.log(fsPoly.walkSync(outputTemp));
+  } catch (e) {
+    console.log(`output empty: ${e}`);
+  }
   await fsPromises.rm(outputTemp, { force: true, recursive: true });
 }
 
