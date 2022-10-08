@@ -29,7 +29,7 @@ async function copyFixturesToTemp(
 
   // Set up the output directory, but delete it so ROMWriter can make it
   const outputTemp = fsPoly.mkdtempSync(Constants.GLOBAL_TEMP_DIR);
-  await fsPromises.rm(outputTemp, { force: true, recursive: true });
+  await fsPoly.rm(outputTemp, { force: true, recursive: true });
 
   // Call the callback
   await callback(inputTemp, outputTemp);
@@ -41,13 +41,13 @@ async function copyFixturesToTemp(
   } catch (e) {
     console.log(`input empty: ${e}`);
   }
-  await fsPromises.rm(inputTemp, { force: true, recursive: true });
+  await fsPoly.rm(inputTemp, { force: true, recursive: true });
   try {
     console.log(fsPoly.walkSync(outputTemp));
   } catch (e) {
     console.log(`output empty: ${e}`);
   }
-  await fsPromises.rm(outputTemp, { force: true, recursive: true });
+  await fsPoly.rm(outputTemp, { force: true, recursive: true });
   console.log('after');
 }
 
