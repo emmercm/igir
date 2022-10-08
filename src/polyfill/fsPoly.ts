@@ -55,31 +55,23 @@ export default class FsPoly {
    * fsPromises.rm() was added in: v14.14.0
    */
   static async rm(pathLike: PathLike, options: RmOptions = {}): Promise<void> {
-    // DEP0147
-    const { recursive, ...optionsStripped } = { maxRetries: 2, ...options };
-
-    try {
-      // Added in: v10.0.0
-      await fsPromises.access(pathLike); // throw if file doesn't exist
-    } catch (e) {
-      if (optionsStripped?.force) {
-        return;
-      }
-      throw e;
-    }
+    const optionsWithDefaults = {
+      force: true,
+      maxRetries: 2,
+      ...options,
+    };
 
     // Added in: v10.0.0
     if ((await fsPromises.lstat(pathLike)).isDirectory()) {
-      // DEP0147
       if (semver.lt(process.version, '16.0.0')) {
+        // DEP0147
+        const { recursive, ...optionsStripped } = optionsWithDefaults;
         // Added in: v10.0.0
-        await fsPromises.rmdir(pathLike, {
-          ...optionsStripped,
-        });
+        await fsPromises.rmdir(pathLike, optionsStripped);
       } else {
         // Added in: v14.14.0
         await fsPromises.rm(pathLike, {
-          ...optionsStripped,
+          ...optionsWithDefaults,
           recursive: true,
           force: true,
         });
@@ -94,31 +86,23 @@ export default class FsPoly {
    * fs.rmSync() was added in: v14.14.0
    */
   static rmSync(pathLike: PathLike, options: RmOptions = {}): void {
-    // DEP0147
-    const { recursive, ...optionsStripped } = { maxRetries: 2, ...options };
-
-    try {
-      // Added in: v0.11.15
-      fs.accessSync(pathLike); // throw if file doesn't exist
-    } catch (e) {
-      if (optionsStripped?.force) {
-        return;
-      }
-      throw e;
-    }
+    const optionsWithDefaults = {
+      force: true,
+      maxRetries: 2,
+      ...options,
+    };
 
     // Added in: v0.1.30
     if (fs.lstatSync(pathLike).isDirectory()) {
-      // DEP0147
       if (semver.lt(process.version, '16.0.0')) {
+        // DEP0147
+        const { recursive, ...optionsStripped } = optionsWithDefaults;
         // Added in: v0.1.21
-        fs.rmdirSync(pathLike, {
-          ...optionsStripped,
-        });
+        fs.rmdirSync(pathLike, optionsStripped);
       } else {
         // Added in: v14.14.0
         fs.rmSync(pathLike, {
-          ...optionsStripped,
+          ...optionsWithDefaults,
           recursive: true,
           force: true,
         });
