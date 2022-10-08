@@ -55,17 +55,11 @@ export default class FsPoly {
    * fsPromises.rm() was added in: v14.14.0
    */
   static async rm(pathLike: PathLike, options: RmOptions = {}): Promise<void> {
-    const optionsWithDefaults = {
-      force: true,
-      maxRetries: 2,
-      ...options,
-    };
-
     try {
       // Added in: v10.0.0
       await fsPromises.access(pathLike); // throw if file doesn't exist
     } catch (e) {
-      if (optionsWithDefaults?.force) {
+      if (options?.force) {
         return;
       }
       throw e;
@@ -77,11 +71,11 @@ export default class FsPoly {
         // DEP0147
         if (semver.lt(process.version, '16.0.0')) {
           // Added in: v10.0.0
-          await fsPromises.rmdir(pathLike, optionsWithDefaults);
+          await fsPromises.rmdir(pathLike, options);
         } else {
           // Added in: v14.14.0
           await fsPromises.rm(pathLike, {
-            ...optionsWithDefaults,
+            ...options,
             recursive: true,
           });
         }
@@ -90,7 +84,7 @@ export default class FsPoly {
         await fsPromises.unlink(pathLike);
       }
     } catch (e) {
-      this.rmSync(pathLike, options);
+      this.rmSync(pathLike, { ...options, force: true });
     }
   }
 
@@ -98,17 +92,11 @@ export default class FsPoly {
    * fs.rmSync() was added in: v14.14.0
    */
   static rmSync(pathLike: PathLike, options: RmOptions = {}): void {
-    const optionsWithDefaults = {
-      force: true,
-      maxRetries: 2,
-      ...options,
-    };
-
     try {
       // Added in: v0.11.15
       fs.accessSync(pathLike); // throw if file doesn't exist
     } catch (e) {
-      if (optionsWithDefaults?.force) {
+      if (options?.force) {
         return;
       }
       throw e;
@@ -119,11 +107,11 @@ export default class FsPoly {
       // DEP0147
       if (semver.lt(process.version, '16.0.0')) {
         // Added in: v0.1.21
-        fs.rmdirSync(pathLike, optionsWithDefaults);
+        fs.rmdirSync(pathLike, options);
       } else {
         // Added in: v14.14.0
         fs.rmSync(pathLike, {
-          ...optionsWithDefaults,
+          ...options,
           recursive: true,
         });
       }
