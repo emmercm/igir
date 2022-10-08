@@ -37,8 +37,8 @@ async function expectEndToEnd(optionsProps: OptionsProps, expectedFiles: string[
     expect(writtenRoms).toContain(expectedFile);
   }
 
-  await fsPoly.rm(tempInput, { recursive: true });
-  await fsPoly.rm(tempOutput, { recursive: true });
+  fsPoly.rmSync(tempInput, { recursive: true });
+  fsPoly.rmSync(tempOutput, { recursive: true });
 
   const reports = await fg(path.join(
     path.dirname(options.getOutputReport()),
