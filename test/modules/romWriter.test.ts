@@ -35,6 +35,7 @@ async function copyFixturesToTemp(
   await callback(inputTemp, outputTemp);
 
   // Delete the temp files
+  console.log('before');
   try {
     console.log(fsPoly.walkSync(inputTemp));
   } catch (e) {
@@ -47,6 +48,7 @@ async function copyFixturesToTemp(
     console.log(`output empty: ${e}`);
   }
   await fsPromises.rm(outputTemp, { force: true, recursive: true });
+  console.log('after');
 }
 
 async function walkAndStat(dirPath: string): Promise<[string, Stats][]> {
@@ -243,6 +245,7 @@ describe('zip', () => {
       ['fizzbuzz.zip', 'foobar.zip', 'loremipsum.zip', 'onetwothree.zip', 'unknown.zip'],
     ],
   ])('should copy, zip, and test: %s', async (inputGlob, expectedOutputPaths) => {
+    console.log(inputGlob);
     await copyFixturesToTemp(async (inputTemp, outputTemp) => {
       // Given
       const options = new Options({ commands: ['copy', 'zip', 'test'] });
@@ -288,6 +291,7 @@ describe('zip', () => {
       ['zip/fizzbuzz.zip', 'zip/foobar.zip', 'zip/loremipsum.zip', 'zip/onetwothree.zip', 'zip/unknown.zip'],
     ],
   ])('should move, zip, and test: %s', async (inputGlob, expectedOutputPaths, expectedDeletedInputPaths) => {
+    console.log(inputGlob);
     await copyFixturesToTemp(async (inputTemp, outputTemp) => {
       // Given
       const options = new Options({ commands: ['move', 'zip', 'test'] });
@@ -374,6 +378,7 @@ describe('raw', () => {
       ['fizzbuzz.nes', 'foobar.lnx', 'loremipsum.rom', 'one.rom', 'three.rom', 'two.rom', 'unknown.rom'],
     ],
   ])('should copy and test: %s', async (inputGlob, expectedOutputPaths) => {
+    console.log(inputGlob);
     await copyFixturesToTemp(async (inputTemp, outputTemp) => {
       // Given
       const options = new Options({ commands: ['copy', 'test'] });
@@ -419,6 +424,7 @@ describe('raw', () => {
       ['zip/fizzbuzz.zip', 'zip/foobar.zip', 'zip/loremipsum.zip', 'zip/onetwothree.zip', 'zip/unknown.zip'],
     ],
   ])('should move and test: %s', async (inputGlob, expectedOutputPaths, expectedDeletedInputPaths) => {
+    console.log(inputGlob);
     await copyFixturesToTemp(async (inputTemp, outputTemp) => {
       // Given
       const options = new Options({ commands: ['move', 'test'] });

@@ -55,6 +55,7 @@ export default class FsPoly {
    * fsPromises.rm() was added in: v14.14.0
    */
   static async rm(pathLike: PathLike, options?: RmOptions): Promise<void> {
+    console.log(`rm: ${pathLike}`);
     try {
       // Added in: v10.0.0
       await fsPromises.access(pathLike); // throw if file doesn't exist
@@ -85,6 +86,7 @@ export default class FsPoly {
    * fs.rmSync() was added in: v14.14.0
    */
   static rmSync(pathLike: PathLike, options?: RmOptions): void {
+    console.log(`rmSync: ${pathLike}`);
     try {
       // Added in: v0.11.15
       fs.accessSync(pathLike); // throw if file doesn't exist
