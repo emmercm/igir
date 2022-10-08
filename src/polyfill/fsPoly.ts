@@ -1,5 +1,7 @@
 import crypto from 'crypto';
-import fs, { PathLike, promises as fsPromises, RmOptions } from 'fs';
+import fs, {
+  mkdtempSync, PathLike, promises as fsPromises, RmOptions,
+} from 'fs';
 import { isNotJunk } from 'junk';
 import os from 'os';
 import path from 'path';
@@ -30,6 +32,11 @@ export default class FsPoly {
   }
 
   static mkdtempSync(prefix = os.tmpdir()): string {
+    // CI, especially Windows, can have permission issues with the OS temp dir
+    if (prefix.startsWith(os.tmpdir()) && process.env.CI) {
+      return mkdtempSync(path.join(process.cwd(), 'tmp'));
+    }
+
     // mkdtempSync takes a string prefix rather than a file path, so we need to make sure the
     //  prefix ends with the path separator in order for it to become a parent directory.
     let prefixProcessed = prefix.replace(/[\\/]+$/, '');
@@ -57,10 +64,7 @@ export default class FsPoly {
   /* eslint-disable-next-line @typescript-eslint/no-unused-vars */
   static async rm(pathLike: string, options?: RmOptions): Promise<void> {
     return new Promise((resolve, reject) => {
-      rimraf(pathLike, {
-        glob: false,
-        maxBusyTries: 5,
-      }, (err) => {
+      rimraf(pathLike, { glob: false }, (err) => {
         if (err) {
           reject(err);
         } else {
@@ -75,10 +79,7 @@ export default class FsPoly {
    */
   /* eslint-disable-next-line @typescript-eslint/no-unused-vars */
   static rmSync(pathLike: string, options?: RmOptions): void {
-    rimraf.sync(pathLike, {
-      glob: false,
-      maxBusyTries: 5,
-    });
+    rimraf.sync(pathLike, { glob: false });
   }
 
   static walkSync(pathLike: PathLike): string[] {
