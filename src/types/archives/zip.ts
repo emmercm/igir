@@ -102,7 +102,10 @@ export default class Zip extends Archive {
               }
 
               try {
-                return resolve(await callback(stream));
+                const result = await callback(stream);
+                stream.destroy();
+                zipFile.close();
+                return resolve(result);
               } catch (callbackErr) {
                 return reject(callbackErr);
               }
