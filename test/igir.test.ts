@@ -38,7 +38,7 @@ async function expectEndToEnd(optionsProps: OptionsProps, expectedFiles: string[
   }
 
   await fsPoly.rm(tempInput, { recursive: true });
-  await fsPoly.rm(tempOutput, { force: true, recursive: true });
+  await fsPoly.rm(tempOutput, { recursive: true });
 
   const reports = await fg(path.join(
     path.dirname(options.getOutputReport()),
