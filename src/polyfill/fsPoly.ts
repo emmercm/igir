@@ -1,9 +1,6 @@
 import crypto from 'crypto';
-import fs, {
-  mkdtempSync, PathLike, promises as fsPromises, RmOptions,
-} from 'fs';
+import fs, { PathLike, promises as fsPromises, RmOptions } from 'fs';
 import { isNotJunk } from 'junk';
-import os from 'os';
 import path from 'path';
 import rimraf from 'rimraf';
 
@@ -31,12 +28,7 @@ export default class FsPoly {
     }
   }
 
-  static mkdtempSync(prefix = os.tmpdir()): string {
-    // CI, especially Windows, can have permission issues with the OS temp dir
-    if (prefix.startsWith(os.tmpdir()) && process.env.CI) {
-      return mkdtempSync(path.join(process.cwd(), 'tmp'));
-    }
-
+  static mkdtempSync(prefix: string): string {
     // mkdtempSync takes a string prefix rather than a file path, so we need to make sure the
     //  prefix ends with the path separator in order for it to become a parent directory.
     let prefixProcessed = prefix.replace(/[\\/]+$/, '');

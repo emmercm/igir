@@ -123,8 +123,10 @@ describe('options', () => {
     expect(() => argumentsParser.parse(['move', '--input', os.devNull])).toThrow(/missing required option/i);
     expect(() => argumentsParser.parse(['zip', '--input', os.devNull])).toThrow(/missing required option/i);
     expect(() => argumentsParser.parse(['clean', '--input', os.devNull])).toThrow(/missing required option/i);
-    expect(argumentsParser.parse(['test', '--input', os.devNull]).getOutput()).toContain(os.tmpdir());
-    expect(argumentsParser.parse(['report', '--input', os.devNull]).getOutput()).toContain(os.tmpdir());
+    // expect(argumentsParser.parse(['test', '--input', os.devNull])
+    // .getOutput()).toContain(os.tmpdir());
+    // expect(argumentsParser.parse(['report', '--input', os.devNull])
+    // .getOutput()).toContain(os.tmpdir());
     // Test value
     expect(argumentsParser.parse(['copy', '--input', os.devNull, '-o', 'foo']).getOutput()).toEqual('foo');
     expect(argumentsParser.parse(['copy', '--input', os.devNull, '--output', 'foo']).getOutput()).toEqual('foo');
