@@ -57,7 +57,10 @@ export default class FsPoly {
   /* eslint-disable-next-line @typescript-eslint/no-unused-vars */
   static async rm(pathLike: string, options?: RmOptions): Promise<void> {
     return new Promise((resolve, reject) => {
-      rimraf(pathLike, { glob: false }, (err) => {
+      rimraf(pathLike, {
+        glob: false,
+        maxBusyTries: 5,
+      }, (err) => {
         if (err) {
           reject(err);
         } else {
@@ -72,7 +75,10 @@ export default class FsPoly {
    */
   /* eslint-disable-next-line @typescript-eslint/no-unused-vars */
   static rmSync(pathLike: string, options?: RmOptions): void {
-    rimraf.sync(pathLike, { glob: false });
+    rimraf.sync(pathLike, {
+      glob: false,
+      maxBusyTries: 5,
+    });
   }
 
   static walkSync(pathLike: PathLike): string[] {
