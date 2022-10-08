@@ -61,6 +61,16 @@ export default class FsPoly {
       ...options,
     };
 
+    try {
+      // Added in: v10.0.0
+      await fsPromises.access(pathLike); // throw if file doesn't exist
+    } catch (e) {
+      if (optionsWithDefaults?.force) {
+        return;
+      }
+      throw e;
+    }
+
     // Added in: v10.0.0
     if ((await fsPromises.lstat(pathLike)).isDirectory()) {
       if (semver.lt(process.version, '16.0.0')) {
@@ -91,6 +101,16 @@ export default class FsPoly {
       maxRetries: 2,
       ...options,
     };
+
+    try {
+      // Added in: v0.11.15
+      fs.accessSync(pathLike); // throw if file doesn't exist
+    } catch (e) {
+      if (optionsWithDefaults?.force) {
+        return;
+      }
+      throw e;
+    }
 
     // Added in: v0.1.30
     if (fs.lstatSync(pathLike).isDirectory()) {
