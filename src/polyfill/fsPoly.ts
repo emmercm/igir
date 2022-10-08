@@ -54,12 +54,15 @@ export default class FsPoly {
    * fs.rm() was added in: v14.14.0
    * fsPromises.rm() was added in: v14.14.0
    */
-  static async rm(pathLike: PathLike, options?: RmOptions): Promise<void> {
+  static async rm(pathLike: PathLike, options: RmOptions = {}): Promise<void> {
+    // DEP0147
+    const { recursive, ...optionsStripped } = { maxRetries: 2, ...options };
+
     try {
       // Added in: v10.0.0
       await fsPromises.access(pathLike); // throw if file doesn't exist
     } catch (e) {
-      if (options?.force) {
+      if (optionsStripped?.force) {
         return;
       }
       throw e;
@@ -70,10 +73,16 @@ export default class FsPoly {
       // DEP0147
       if (semver.lt(process.version, '16.0.0')) {
         // Added in: v10.0.0
-        await fsPromises.rmdir(pathLike, options);
+        await fsPromises.rmdir(pathLike, {
+          ...optionsStripped,
+        });
       } else {
         // Added in: v14.14.0
-        await fsPromises.rm(pathLike, { ...options, force: true });
+        await fsPromises.rm(pathLike, {
+          ...optionsStripped,
+          recursive: true,
+          force: true,
+        });
       }
     } else {
       // Added in: v10.0.0
@@ -84,12 +93,15 @@ export default class FsPoly {
   /**
    * fs.rmSync() was added in: v14.14.0
    */
-  static rmSync(pathLike: PathLike, options?: RmOptions): void {
+  static rmSync(pathLike: PathLike, options: RmOptions = {}): void {
+    // DEP0147
+    const { recursive, ...optionsStripped } = { maxRetries: 2, ...options };
+
     try {
       // Added in: v0.11.15
       fs.accessSync(pathLike); // throw if file doesn't exist
     } catch (e) {
-      if (options?.force) {
+      if (optionsStripped?.force) {
         return;
       }
       throw e;
@@ -100,10 +112,16 @@ export default class FsPoly {
       // DEP0147
       if (semver.lt(process.version, '16.0.0')) {
         // Added in: v0.1.21
-        fs.rmdirSync(pathLike, options);
+        fs.rmdirSync(pathLike, {
+          ...optionsStripped,
+        });
       } else {
         // Added in: v14.14.0
-        fs.rmSync(pathLike, { ...options, force: true });
+        fs.rmSync(pathLike, {
+          ...optionsStripped,
+          recursive: true,
+          force: true,
+        });
       }
     } else {
       // Added in: v0.1.21
