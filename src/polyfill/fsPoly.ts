@@ -67,7 +67,10 @@ export default class FsPoly {
     // Added in: v10.0.0
     if ((await fsPromises.lstat(pathLike)).isDirectory()) {
       // Added in: v10.0.0
-      await fsPromises.rmdir(pathLike, options);
+      await fsPromises.rmdir(pathLike, {
+        maxRetries: 2,
+        ...options,
+      });
     } else {
       // Added in: v10.0.0
       await fsPromises.unlink(pathLike);
@@ -91,7 +94,10 @@ export default class FsPoly {
     // Added in: v0.1.30
     if (fs.lstatSync(pathLike).isDirectory()) {
       // Added in: v0.1.21
-      fs.rmdirSync(pathLike, options);
+      fs.rmdirSync(pathLike, {
+        maxRetries: 2,
+        ...options,
+      });
     } else {
       // Added in: v0.1.21
       fs.unlinkSync(pathLike);
