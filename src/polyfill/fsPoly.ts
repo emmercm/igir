@@ -65,26 +65,22 @@ export default class FsPoly {
       throw e;
     }
 
-    try {
-      // Added in: v10.0.0
-      if ((await fsPromises.lstat(pathLike)).isDirectory()) {
-        // DEP0147
-        if (semver.lt(process.version, '16.0.0')) {
-          // Added in: v10.0.0
-          await fsPromises.rmdir(pathLike, options);
-        } else {
-          // Added in: v14.14.0
-          await fsPromises.rm(pathLike, {
-            ...options,
-            recursive: true,
-          });
-        }
-      } else {
+    // Added in: v10.0.0
+    if ((await fsPromises.lstat(pathLike)).isDirectory()) {
+      // DEP0147
+      if (semver.lt(process.version, '16.0.0')) {
         // Added in: v10.0.0
-        await fsPromises.unlink(pathLike);
+        await fsPromises.rmdir(pathLike, options);
+      } else {
+        // Added in: v14.14.0
+        await fsPromises.rm(pathLike, {
+          ...options,
+          recursive: true,
+        });
       }
-    } catch (e) {
-      this.rmSync(pathLike, { ...options, force: true });
+    } else {
+      // Added in: v10.0.0
+      await fsPromises.unlink(pathLike);
     }
   }
 
