@@ -75,14 +75,18 @@ export default class FsPoly {
     if ((await fsPromises.lstat(pathLike)).isDirectory()) {
       // DEP0147
       if (semver.lt(process.version, '16.0.0')) {
-        // Added in: v10.0.0
-        await fsPromises.rmdir(pathLike, optionsWithDefaults);
+        if (process.platform === 'win32') {
+          // Added in: v0.1.21
+          fs.rmdirSync(pathLike, optionsWithDefaults);
+        } else {
+          // Added in: v10.0.0
+          await fsPromises.rmdir(pathLike, optionsWithDefaults);
+        }
       } else {
         // Added in: v14.14.0
         await fsPromises.rm(pathLike, {
           ...optionsWithDefaults,
           recursive: true,
-          force: true,
         });
       }
     } else {
@@ -122,7 +126,6 @@ export default class FsPoly {
         fs.rmSync(pathLike, {
           ...optionsWithDefaults,
           recursive: true,
-          force: true,
         });
       }
     } else {
