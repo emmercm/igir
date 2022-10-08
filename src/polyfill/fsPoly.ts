@@ -3,7 +3,6 @@ import fs, { PathLike, promises as fsPromises, RmOptions } from 'fs';
 import { isNotJunk } from 'junk';
 import os from 'os';
 import path from 'path';
-import semver from 'semver';
 
 export default class FsPoly {
   /**
@@ -67,14 +66,8 @@ export default class FsPoly {
 
     // Added in: v10.0.0
     if ((await fsPromises.lstat(pathLike)).isDirectory()) {
-      // DEP0147
-      if (semver.lt(process.version, '16.0.0')) {
-        // Added in: v10.0.0
-        await fsPromises.rmdir(pathLike, options);
-      } else {
-        // Added in: v14.14.0
-        await fsPromises.rm(pathLike, { ...options, force: true });
-      }
+      // Added in: v10.0.0
+      await fsPromises.rmdir(pathLike, options);
     } else {
       // Added in: v10.0.0
       await fsPromises.unlink(pathLike);
@@ -97,14 +90,8 @@ export default class FsPoly {
 
     // Added in: v0.1.30
     if (fs.lstatSync(pathLike).isDirectory()) {
-      // DEP0147
-      if (semver.lt(process.version, '16.0.0')) {
-        // Added in: v0.1.21
-        fs.rmdirSync(pathLike, options);
-      } else {
-        // Added in: v14.14.0
-        fs.rmSync(pathLike, { ...options, force: true });
-      }
+      // Added in: v0.1.21
+      fs.rmdirSync(pathLike, options);
     } else {
       // Added in: v0.1.21
       fs.unlinkSync(pathLike);
