@@ -73,11 +73,10 @@ export default class FsPoly {
 
     // Added in: v10.0.0
     if ((await fsPromises.lstat(pathLike)).isDirectory()) {
+      // DEP0147
       if (semver.lt(process.version, '16.0.0')) {
-        // DEP0147
-        const { recursive, ...optionsStripped } = optionsWithDefaults;
         // Added in: v10.0.0
-        await fsPromises.rmdir(pathLike, optionsStripped);
+        await fsPromises.rmdir(pathLike, optionsWithDefaults);
       } else {
         // Added in: v14.14.0
         await fsPromises.rm(pathLike, {
@@ -114,11 +113,10 @@ export default class FsPoly {
 
     // Added in: v0.1.30
     if (fs.lstatSync(pathLike).isDirectory()) {
+      // DEP0147
       if (semver.lt(process.version, '16.0.0')) {
-        // DEP0147
-        const { recursive, ...optionsStripped } = optionsWithDefaults;
         // Added in: v0.1.21
-        fs.rmdirSync(pathLike, optionsStripped);
+        fs.rmdirSync(pathLike, optionsWithDefaults);
       } else {
         // Added in: v14.14.0
         fs.rmSync(pathLike, {
