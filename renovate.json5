@@ -72,6 +72,7 @@
           "@types/cli-progress",
           "@types/figlet",
           "@types/micromatch",
+          "@types/semver",
           "@types/xml2js",
           "@types/yargs",
           "@types/yauzl",
