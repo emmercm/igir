@@ -18,7 +18,7 @@ import Options, { OptionsProps } from '../../src/types/options.js';
 import ReleaseCandidate from '../../src/types/releaseCandidate.js';
 import ProgressBarFake from '../console/progressBarFake.js';
 
-jest.setTimeout(10_000);
+jest.setTimeout(20_000);
 
 async function copyFixturesToTemp(
   callback: (input: string, output: string) => void | Promise<void>,
@@ -35,20 +35,8 @@ async function copyFixturesToTemp(
   await callback(inputTemp, outputTemp);
 
   // Delete the temp files
-  console.log('before');
-  try {
-    console.log(fsPoly.walkSync(inputTemp));
-  } catch (e) {
-    console.log(`input empty: ${e}`);
-  }
   await fsPoly.rm(inputTemp, { recursive: true });
-  try {
-    console.log(fsPoly.walkSync(outputTemp));
-  } catch (e) {
-    console.log(`output empty: ${e}`);
-  }
   await fsPoly.rm(outputTemp, { force: true, recursive: true });
-  console.log('after');
 }
 
 async function walkAndStat(dirPath: string): Promise<[string, Stats][]> {
@@ -245,7 +233,6 @@ describe('zip', () => {
       ['fizzbuzz.zip', 'foobar.zip', 'loremipsum.zip', 'onetwothree.zip', 'unknown.zip'],
     ],
   ])('should copy, zip, and test: %s', async (inputGlob, expectedOutputPaths) => {
-    console.log(inputGlob);
     await copyFixturesToTemp(async (inputTemp, outputTemp) => {
       // Given
       const options = new Options({ commands: ['copy', 'zip', 'test'] });
@@ -291,7 +278,6 @@ describe('zip', () => {
       ['zip/fizzbuzz.zip', 'zip/foobar.zip', 'zip/loremipsum.zip', 'zip/onetwothree.zip', 'zip/unknown.zip'],
     ],
   ])('should move, zip, and test: %s', async (inputGlob, expectedOutputPaths, expectedDeletedInputPaths) => {
-    console.log(inputGlob);
     await copyFixturesToTemp(async (inputTemp, outputTemp) => {
       // Given
       const options = new Options({ commands: ['move', 'zip', 'test'] });
@@ -378,7 +364,6 @@ describe('raw', () => {
       ['fizzbuzz.nes', 'foobar.lnx', 'loremipsum.rom', 'one.rom', 'three.rom', 'two.rom', 'unknown.rom'],
     ],
   ])('should copy and test: %s', async (inputGlob, expectedOutputPaths) => {
-    console.log(inputGlob);
     await copyFixturesToTemp(async (inputTemp, outputTemp) => {
       // Given
       const options = new Options({ commands: ['copy', 'test'] });
@@ -424,7 +409,6 @@ describe('raw', () => {
       ['zip/fizzbuzz.zip', 'zip/foobar.zip', 'zip/loremipsum.zip', 'zip/onetwothree.zip', 'zip/unknown.zip'],
     ],
   ])('should move and test: %s', async (inputGlob, expectedOutputPaths, expectedDeletedInputPaths) => {
-    console.log(inputGlob);
     await copyFixturesToTemp(async (inputTemp, outputTemp) => {
       // Given
       const options = new Options({ commands: ['move', 'test'] });

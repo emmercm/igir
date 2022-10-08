@@ -67,6 +67,7 @@
     "simple-statistics": "^7.7.6",
     "term-size": "^3.0.2",
     "trash": "^8.1.0",
+    "typescript-retry-decorator": "^2.0.6",
     "xml2js": "^0.4.23",
     "yargs": "^17.5.1",
     "yauzl": "^2.10.0",

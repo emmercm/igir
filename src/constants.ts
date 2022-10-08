@@ -1,16 +1,10 @@
 import fs from 'fs';
-import os from 'os';
 import path from 'path';
 import url from 'url';
 
 import fsPoly from './polyfill/fsPoly.js';
 
-const globalTempDir = fsPoly.mkdtempSync(
-  // CI, especially Windows, can have permission issues with the OS temp dir
-  process.env.CI
-    ? path.join(process.cwd(), 'tmp')
-    : os.tmpdir(),
-);
+const globalTempDir = fsPoly.mkdtempSync();
 process.once('SIGINT', () => {
   fsPoly.rmSync(globalTempDir, {
     force: true,
