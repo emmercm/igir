@@ -3,7 +3,7 @@ import fs, { PathLike, promises as fsPromises, RmOptions } from 'fs';
 import { isNotJunk } from 'junk';
 import os from 'os';
 import path from 'path';
-import semver from 'semver';
+import rimraf from 'rimraf';
 
 export default class FsPoly {
   /**
@@ -54,63 +54,25 @@ export default class FsPoly {
    * fs.rm() was added in: v14.14.0
    * fsPromises.rm() was added in: v14.14.0
    */
-  static async rm(pathLike: PathLike, options?: RmOptions): Promise<void> {
-    console.log(`rm: ${pathLike}`);
-    try {
-      // Added in: v10.0.0
-      await fsPromises.access(pathLike); // throw if file doesn't exist
-    } catch (e) {
-      if (options?.force) {
-        return;
-      }
-      throw e;
-    }
-
-    // Added in: v10.0.0
-    if ((await fsPromises.lstat(pathLike)).isDirectory()) {
-      // DEP0147
-      if (semver.lt(process.version, '16.0.0')) {
-        // Added in: v10.0.0
-        await fsPromises.rmdir(pathLike, options);
-      } else {
-        // Added in: v14.14.0
-        await fsPromises.rm(pathLike, { ...options, force: true });
-      }
-    } else {
-      // Added in: v10.0.0
-      await fsPromises.unlink(pathLike);
-    }
+  /* eslint-disable-next-line @typescript-eslint/no-unused-vars */
+  static async rm(pathLike: string, options?: RmOptions): Promise<void> {
+    return new Promise((resolve, reject) => {
+      rimraf(pathLike, { glob: false }, (err) => {
+        if (err) {
+          reject(err);
+        } else {
+          resolve();
+        }
+      });
+    });
   }
 
   /**
    * fs.rmSync() was added in: v14.14.0
    */
-  static rmSync(pathLike: PathLike, options?: RmOptions): void {
-    console.log(`rmSync: ${pathLike}`);
-    try {
-      // Added in: v0.11.15
-      fs.accessSync(pathLike); // throw if file doesn't exist
-    } catch (e) {
-      if (options?.force) {
-        return;
-      }
-      throw e;
-    }
-
-    // Added in: v0.1.30
-    if (fs.lstatSync(pathLike).isDirectory()) {
-      // DEP0147
-      if (semver.lt(process.version, '16.0.0')) {
-        // Added in: v0.1.21
-        fs.rmdirSync(pathLike, options);
-      } else {
-        // Added in: v14.14.0
-        fs.rmSync(pathLike, { ...options, force: true });
-      }
-    } else {
-      // Added in: v0.1.21
-      fs.unlinkSync(pathLike);
-    }
+  /* eslint-disable-next-line @typescript-eslint/no-unused-vars */
+  static rmSync(pathLike: string, options?: RmOptions): void {
+    rimraf.sync(pathLike, { glob: false });
   }
 
   static walkSync(pathLike: PathLike): string[] {

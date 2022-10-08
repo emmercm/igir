@@ -41,7 +41,7 @@ async function copyFixturesToTemp(
   } catch (e) {
     console.log(`input empty: ${e}`);
   }
-  await fsPoly.rm(inputTemp, { force: true, recursive: true });
+  await fsPoly.rm(inputTemp, { recursive: true });
   try {
     console.log(fsPoly.walkSync(outputTemp));
   } catch (e) {
