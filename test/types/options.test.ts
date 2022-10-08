@@ -1,16 +1,17 @@
 import os from 'os';
 import path from 'path';
 
+import Constants from '../../src/constants.js';
 import DAT from '../../src/types/logiqx/dat.js';
 import Header from '../../src/types/logiqx/header.js';
 import Options from '../../src/types/options.js';
 
 describe('getOutput', () => {
   it('should use temp dir for non-writing commands', () => {
-    expect(new Options({ commands: ['test'] }).getOutput()).toContain(os.tmpdir());
-    expect(new Options({ commands: ['report'] }).getOutput()).toContain(os.tmpdir());
-    expect(new Options({ commands: ['zip'] }).getOutput()).toContain(os.tmpdir());
-    expect(new Options({ commands: ['clean'] }).getOutput()).toContain(os.tmpdir());
+    expect(new Options({ commands: ['test'] }).getOutput()).toContain(Constants.GLOBAL_TEMP_DIR);
+    expect(new Options({ commands: ['report'] }).getOutput()).toContain(Constants.GLOBAL_TEMP_DIR);
+    expect(new Options({ commands: ['zip'] }).getOutput()).toContain(Constants.GLOBAL_TEMP_DIR);
+    expect(new Options({ commands: ['clean'] }).getOutput()).toContain(Constants.GLOBAL_TEMP_DIR);
   });
 
   it('should echo the option with no arguments', () => {

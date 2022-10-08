@@ -38,7 +38,7 @@ async function runOutputCleaner(writtenFilePathsToExclude: string[]): Promise<st
   ).clean(writtenRomFilesToExclude);
   const after = fsPoly.walkSync(tempDir);
 
-  fsPoly.rmSync(tempDir, { recursive: true });
+  await fsPoly.rm(tempDir, { recursive: true });
 
   return after
     .map((pathLike) => pathLike.replace(tempDir + path.sep, ''))

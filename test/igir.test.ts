@@ -37,14 +37,14 @@ async function expectEndToEnd(optionsProps: OptionsProps, expectedFiles: string[
     expect(writtenRoms).toContain(expectedFile);
   }
 
-  fsPoly.rmSync(tempInput, { recursive: true });
-  fsPoly.rmSync(tempOutput, { recursive: true });
+  await fsPoly.rm(tempInput, { recursive: true });
+  await fsPoly.rm(tempOutput, { recursive: true });
 
   const reports = await fg(path.join(
     path.dirname(options.getOutputReport()),
     `${Constants.COMMAND_NAME}_*.csv`,
   ));
-  reports.forEach((report) => fsPoly.rmSync(report));
+  await Promise.all(reports.map(async (report) => fsPoly.rm(report)));
 }
 
 it('should throw on no dats', async () => {

@@ -54,7 +54,7 @@ export default class FsPoly {
    * fs.rm() was added in: v14.14.0
    * fsPromises.rm() was added in: v14.14.0
    */
-  static async rm(pathLike: PathLike, options?: RmOptions): Promise<void> {
+  static async rm(pathLike: PathLike, options: RmOptions = {}): Promise<void> {
     try {
       // Added in: v10.0.0
       await fsPromises.access(pathLike); // throw if file doesn't exist
@@ -73,7 +73,10 @@ export default class FsPoly {
         await fsPromises.rmdir(pathLike, options);
       } else {
         // Added in: v14.14.0
-        await fsPromises.rm(pathLike, { ...options, force: true });
+        await fsPromises.rm(pathLike, {
+          ...options,
+          recursive: true,
+        });
       }
     } else {
       // Added in: v10.0.0
@@ -84,7 +87,7 @@ export default class FsPoly {
   /**
    * fs.rmSync() was added in: v14.14.0
    */
-  static rmSync(pathLike: PathLike, options?: RmOptions): void {
+  static rmSync(pathLike: PathLike, options: RmOptions = {}): void {
     try {
       // Added in: v0.11.15
       fs.accessSync(pathLike); // throw if file doesn't exist
@@ -103,7 +106,10 @@ export default class FsPoly {
         fs.rmdirSync(pathLike, options);
       } else {
         // Added in: v14.14.0
-        fs.rmSync(pathLike, { ...options, force: true });
+        fs.rmSync(pathLike, {
+          ...options,
+          recursive: true,
+        });
       }
     } else {
       // Added in: v0.1.21
