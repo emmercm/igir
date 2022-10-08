@@ -82,7 +82,7 @@ describe('extractToFile', () => {
         expect(localFile).toEqual(raw.getFilePath());
       });
     }
-    fsPoly.rmSync(temp, { recursive: true });
+    await fsPoly.rm(temp, { recursive: true });
   });
 });
 
@@ -102,7 +102,7 @@ describe('extractToStream', () => {
         expect(contents).toBeTruthy();
       });
     }
-    fsPoly.rmSync(temp, { recursive: true });
+    await fsPoly.rm(temp, { recursive: true });
   });
 });
 

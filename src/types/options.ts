@@ -252,7 +252,7 @@ export default class Options implements OptionsProps {
         .filter((inputPath) => inputPath)
         .map(async (inputPath) => {
           // Windows will report that \\.\nul doesn't exist, catch it explicitly
-          if (inputPath === os.devNull) {
+          if (inputPath === os.devNull || inputPath.startsWith(os.devNull + path.sep)) {
             return [];
           }
 
