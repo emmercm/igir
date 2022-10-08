@@ -149,10 +149,8 @@ export default class ROMWriter {
       }
     }
 
-    await this.deleteMovedZipEntries(
-      outputZip,
-      releaseCandidate.getRomsWithFiles().map((romWithFiles) => romWithFiles.getInputFile()),
-    );
+    [...inputToOutputZipEntries.keys()]
+      .forEach((inputRomFile) => this.enqueueFileDeletion(inputRomFile));
   }
 
   private static async testZipContents(
@@ -215,22 +213,6 @@ export default class ROMWriter {
       await this.progressBar.logError(`Failed to create zip ${outputZip.getFilePath()} : ${e}`);
       return false;
     }
-  }
-
-  private async deleteMovedZipEntries(
-    outputZipArchive: Zip,
-    inputRomFiles: File[],
-  ): Promise<void> {
-    if (!this.options.shouldMove()) {
-      return;
-    }
-
-    const filesToDelete = inputRomFiles
-      .map((romFile) => romFile.getFilePath())
-      .filter((filePath) => filePath !== outputZipArchive.getFilePath())
-      .filter((romFile, idx, romFiles) => romFiles.indexOf(romFile) === idx);
-    await this.progressBar.logDebug(filesToDelete.map((f) => `${f}: deleting`).join('\n'));
-    await Promise.all(filesToDelete.map(async (filePath) => fsPoly.rm(filePath, { force: true })));
   }
 
   /** ********************
