@@ -31,19 +31,22 @@
   separateMinorPatch: false, // default
 
   // Allow auto-merging of PRs, but reduce their spam on the commit log
-  schedule: "every weekday",
+  schedule: "on the 1st through 24th day of the month",
   automerge: true,
-  automergeSchedule: "on sunday",
-  prHourlyLimit: 0,
+  automergeSchedule: "on the 28th day of the month",
+  prHourlyLimit: 0, // default: disabled
 
   npm: {
     lockFileMaintenance: {
       enabled: true,
+      schedule: "on the 1st through 24th day of the month", // same as above
       commitMessageAction: "update", // same as above
       commitMessageTopic: "lockfile"
     },
     transitiveRemediation: true,
 
+    // Stability settings
+    rangeStrategy: "pin",
     stabilityDays: 3,
 
     packageRules: [
@@ -51,17 +54,9 @@
       {
         groupName: "dependencies",
         matchDepTypes: ["dependencies", "devDependencies"],
-        rangeStrategy: "bump",
-        commitMessageAction: "update" // don't use `rangeStrategy` as the action
       },
 
       // Dev dependencies
-      {
-        // Pin (and update) devDependencies versions
-        matchDepTypes: ["devDependencies"],
-        rangeStrategy: "pin",
-        commitMessageAction: "update" // don't use `rangeStrategy` as the action
-      },
       {
         // Group devDependencies together, minus type definitions for dependencies
         // https://github.com/renovatebot/renovate/issues/519
