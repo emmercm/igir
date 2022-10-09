@@ -55,11 +55,16 @@ export default class FsPoly {
    * fsPromises.rm() was added in: v14.14.0
    */
   static async rm(pathLike: PathLike, options: RmOptions = {}): Promise<void> {
+    const optionsWithRetry = {
+      maxRetries: 2,
+      ...options,
+    };
+
     try {
       // Added in: v10.0.0
       await fsPromises.access(pathLike); // throw if file doesn't exist
     } catch (e) {
-      if (options?.force) {
+      if (optionsWithRetry?.force) {
         return;
       }
       throw e;
@@ -70,11 +75,11 @@ export default class FsPoly {
       // DEP0147
       if (semver.lt(process.version, '16.0.0')) {
         // Added in: v10.0.0
-        await fsPromises.rmdir(pathLike, options);
+        await fsPromises.rmdir(pathLike, optionsWithRetry);
       } else {
         // Added in: v14.14.0
         await fsPromises.rm(pathLike, {
-          ...options,
+          ...optionsWithRetry,
           recursive: true,
         });
       }
@@ -88,11 +93,16 @@ export default class FsPoly {
    * fs.rmSync() was added in: v14.14.0
    */
   static rmSync(pathLike: PathLike, options: RmOptions = {}): void {
+    const optionsWithRetry = {
+      maxRetries: 2,
+      ...options,
+    };
+
     try {
       // Added in: v0.11.15
       fs.accessSync(pathLike); // throw if file doesn't exist
     } catch (e) {
-      if (options?.force) {
+      if (optionsWithRetry?.force) {
         return;
       }
       throw e;
@@ -103,11 +113,11 @@ export default class FsPoly {
       // DEP0147
       if (semver.lt(process.version, '16.0.0')) {
         // Added in: v0.1.21
-        fs.rmdirSync(pathLike, options);
+        fs.rmdirSync(pathLike, optionsWithRetry);
       } else {
         // Added in: v14.14.0
         fs.rmSync(pathLike, {
-          ...options,
+          ...optionsWithRetry,
           recursive: true,
         });
       }
