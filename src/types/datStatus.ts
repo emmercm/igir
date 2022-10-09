@@ -3,7 +3,6 @@ import { writeToString } from '@fast-csv/format';
 import DAT from './logiqx/dat.js';
 import Game from './logiqx/game.js';
 import Parent from './logiqx/parent.js';
-import ROM from './logiqx/rom.js';
 import Options from './options.js';
 import ReleaseCandidate from './releaseCandidate.js';
 
@@ -23,35 +22,23 @@ export default class DATStatus {
   constructor(dat: DAT, parentsToReleaseCandidates: Map<Parent, ReleaseCandidate[]>) {
     this.dat = dat;
 
-    const releaseCandidates = [...parentsToReleaseCandidates.values()].flatMap((rc) => rc);
-    const hashCodesToRoms = DATStatus.indexRomsHashCode(releaseCandidates);
+    const gameNamesToReleaseCandidates = [...parentsToReleaseCandidates.values()]
+      .flatMap((releaseCandidates) => releaseCandidates)
+      .reduce((map, releaseCandidate) => {
+        map.set(releaseCandidate.getName(), releaseCandidate);
+        return map;
+      }, new Map<string, ReleaseCandidate>());
 
     dat.getParents().forEach((parent) => {
       parent.getGames().forEach((game) => {
         DATStatus.pushGameIntoMap(this.allRomTypesToGames, game);
 
-        const missingRoms = game.getRoms().filter((rom) => !hashCodesToRoms.has(rom.hashCode()));
-        if (missingRoms.length > 0) {
+        const releaseCandidate = gameNamesToReleaseCandidates.get(game.getName());
+        if (!releaseCandidate && game.getRoms().length > 0) {
           DATStatus.pushGameIntoMap(this.missingRomTypesToGames, game);
         }
       });
     });
-  }
-
-  private static append(map: Map<ROMType, Game[]>, romType: ROMType, val: Game): void {
-    const arr = (map.has(romType) ? map.get(romType) : []) as Game[];
-    arr.push(val);
-    map.set(romType, arr);
-  }
-
-  private static indexRomsHashCode(
-    releaseCandidates: ReleaseCandidate[],
-  ): Map<string, ROM> {
-    return releaseCandidates.reduce((acc, releaseCandidate) => {
-      [...releaseCandidate.indexRomsByHashCode().entries()]
-        .forEach(([key, val]) => acc.set(key, val));
-      return acc;
-    }, new Map<string, ROM>());
   }
 
   private static pushGameIntoMap(map: Map<ROMType, Game[]>, game: Game): void {
@@ -62,6 +49,12 @@ export default class DATStatus {
     if (game.isRetail()) {
       DATStatus.append(map, ROMType.RETAIL, game);
     }
+  }
+
+  private static append(map: Map<ROMType, Game[]>, romType: ROMType, val: Game): void {
+    const arr = (map.has(romType) ? map.get(romType) : []) as Game[];
+    arr.push(val);
+    map.set(romType, arr);
   }
 
   getDATName(): string {

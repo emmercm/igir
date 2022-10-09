@@ -31,6 +31,7 @@
   },
   "scripts": {
     "prepare": "husky install",
+    "cache:clear": "npm cache clean --force && node --experimental-vm-modules ./node_modules/jest/bin/jest.js --clearCache",
     "start": "ts-node index.ts",
     "build": "tsc && chmod +x build/index.js",
     "lint": "eslint .",
