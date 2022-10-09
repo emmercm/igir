@@ -70,7 +70,7 @@ export default class SingleBarFormatted {
     function clamp(val: number, min: number, max: number): number {
       return Math.min(Math.max(val, min), max);
     }
-    const MAX_BUFFER_SIZE = clamp(Math.floor(params.total / 10), 50, 200);
+    const MAX_BUFFER_SIZE = clamp(Math.floor(params.total / 10), 25, 100);
 
     this.valueTimeBuffer = [
       ...this.valueTimeBuffer.slice(1 - MAX_BUFFER_SIZE),
