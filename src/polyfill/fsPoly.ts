@@ -117,6 +117,20 @@ export default class FsPoly {
     }
   }
 
+  static async touch(filePath: string): Promise<void> {
+    const dirname = path.dirname(filePath);
+    if (!await this.exists(dirname)) {
+      await fsPromises.mkdir(dirname, { recursive: true });
+    }
+
+    const time = new Date();
+    try {
+      await fsPromises.utimes(filePath, time, time);
+    } catch (e) {
+      await (await fsPromises.open(filePath, 'a')).close();
+    }
+  }
+
   static walkSync(pathLike: PathLike): string[] {
     const output = [];
 

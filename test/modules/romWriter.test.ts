@@ -44,23 +44,25 @@ async function walkAndStat(dirPath: string): Promise<[string, Stats][]> {
     return [];
   }
   return Promise.all(
-    fsPoly.walkSync(dirPath).map(async (filePath) => {
-      let stats: Stats;
-      try {
-        stats = {
-          ...await fsPromises.stat(filePath),
-          // Hard-code properties that can change with file reads
-          atime: new Date(0),
-          atimeMs: 0,
-        };
-      } catch (e) {
-        stats = new Stats();
-      }
-      return [
-        filePath.replace(path.normalize(dirPath) + path.sep, ''),
-        stats,
-      ];
-    }),
+    fsPoly.walkSync(dirPath)
+      .sort()
+      .map(async (filePath) => {
+        let stats: Stats;
+        try {
+          stats = {
+            ...await fsPromises.stat(filePath),
+            // Hard-code properties that can change with file reads
+            atime: new Date(0),
+            atimeMs: 0,
+          };
+        } catch (e) {
+          stats = new Stats();
+        }
+        return [
+          filePath.replace(path.normalize(dirPath) + path.sep, ''),
+          stats,
+        ];
+      }),
   );
 }
 
@@ -177,11 +179,22 @@ it('should not do anything with no write commands', async () => {
   });
 });
 
-describe('zip', () => {
-  it('should not write anything if input matches output', () => {
-    // TODO(cemmer)
-  });
+it('should not do anything if the input and output files are the same', async () => {
+  await copyFixturesToTemp(async (inputTemp) => {
+    // Given
+    const options = new Options({ commands: ['report'] });
+    const inputFilesBefore = await walkAndStat(inputTemp);
+    await expect(walkAndStat(inputTemp)).resolves.not.toEqual([]);
 
+    // When
+    await romWriter(options, inputTemp, '**/*', inputTemp);
+
+    // Then the input files weren't touched
+    await expect(walkAndStat(inputTemp)).resolves.toEqual(inputFilesBefore);
+  });
+});
+
+describe('zip', () => {
   it('should not write anything if the output exists and not overwriting', async () => {
     await copyFixturesToTemp(async (inputTemp, outputTemp) => {
       // Given
@@ -207,7 +220,7 @@ describe('zip', () => {
     });
   });
 
-  it('should write if the output exists and are overwriting', async () => {
+  it('should not write if the output is expected even if overwriting', async () => {
     await copyFixturesToTemp(async (inputTemp, outputTemp) => {
       // Given
       const options = new Options({ commands: ['copy', 'zip'] });
@@ -229,6 +242,39 @@ describe('zip', () => {
 
       // Then the output wasn't touched
       await expect(walkAndStat(outputTemp)).resolves.toEqual(outputFilesBefore);
+
+      // And the input files weren't touched
+      await expect(walkAndStat(inputTemp)).resolves.toEqual(inputFilesBefore);
+    });
+  });
+
+  it('should write if overwriting and the output is unexpected', async () => {
+    await copyFixturesToTemp(async (inputTemp, outputTemp) => {
+      // Given
+      const options = new Options({ commands: ['copy', 'zip'] });
+      const inputFilesBefore = await walkAndStat(inputTemp);
+      await expect(walkAndStat(outputTemp)).resolves.toEqual([]);
+
+      // And the output has files
+      const inputTempRaw = path.join(inputTemp, 'zip');
+      await Promise.all(inputFilesBefore.map(async ([inputFile]) => {
+        const outputFile = path.join(outputTemp, path.basename(inputFile));
+        await fsPoly.touch(outputFile);
+      }));
+      const outputFilesBefore = await walkAndStat(outputTemp);
+      expect(outputFilesBefore).not.toEqual([]);
+
+      // When
+      await romWriter({
+        ...options,
+        overwrite: true,
+      }, inputTempRaw, '**/*', outputTemp);
+
+      // Then the output was touched
+      const outputFilesAfter = await walkAndStat(outputTemp);
+      expect(outputFilesAfter.map((pair) => pair[0]))
+        .toEqual(outputFilesBefore.map((pair) => pair[0]));
+      expect(outputFilesAfter).not.toEqual(outputFilesBefore);
 
       // And the input files weren't touched
       await expect(walkAndStat(inputTemp)).resolves.toEqual(inputFilesBefore);
@@ -333,10 +379,6 @@ describe('zip', () => {
 });
 
 describe('raw', () => {
-  it('should not write anything if input matches output', () => {
-    // TODO(cemmer)
-  });
-
   it('should not write anything if the output exists and not overwriting', async () => {
     await copyFixturesToTemp(async (inputTemp, outputTemp) => {
       // Given
@@ -362,8 +404,68 @@ describe('raw', () => {
     });
   });
 
-  it('should write if the output exists and are overwriting', () => {
-    // TODO(cemmer)
+  it('should not write if the output is expected even if overwriting', async () => {
+    await copyFixturesToTemp(async (inputTemp, outputTemp) => {
+      // Given
+      const options = new Options({ commands: ['copy'] });
+      const inputFilesBefore = await walkAndStat(inputTemp);
+      await expect(walkAndStat(outputTemp)).resolves.toEqual([]);
+
+      // And we've written once
+      await romWriter(options, inputTemp, '**/*', outputTemp);
+
+      // And no files were written
+      const outputFilesBefore = await walkAndStat(outputTemp);
+      expect(outputFilesBefore).not.toEqual([]);
+
+      // When we write again
+      await romWriter({
+        ...options,
+        overwrite: true,
+      }, inputTemp, '**/*', outputTemp);
+
+      // Then the output was touched
+      const outputFilesAfter = await walkAndStat(outputTemp);
+      expect(outputFilesAfter.map((pair) => pair[0]))
+        .toEqual(outputFilesBefore.map((pair) => pair[0]));
+      expect(outputFilesAfter).not.toEqual(outputFilesBefore);
+
+      // And the input files weren't touched
+      await expect(walkAndStat(inputTemp)).resolves.toEqual(inputFilesBefore);
+    });
+  });
+
+  it('should write if overwriting and the output is unexpected', async () => {
+    await copyFixturesToTemp(async (inputTemp, outputTemp) => {
+      // Given
+      const options = new Options({ commands: ['copy'] });
+      const inputFilesBefore = await walkAndStat(inputTemp);
+      await expect(walkAndStat(outputTemp)).resolves.toEqual([]);
+
+      // And the output has files
+      const inputTempRaw = path.join(inputTemp, 'raw');
+      await Promise.all(inputFilesBefore.map(async ([inputFile]) => {
+        const outputFile = path.join(outputTemp, path.basename(inputFile));
+        await fsPoly.touch(outputFile);
+      }));
+      const outputFilesBefore = await walkAndStat(outputTemp);
+      expect(outputFilesBefore).not.toEqual([]);
+
+      // When
+      await romWriter({
+        ...options,
+        overwrite: true,
+      }, inputTempRaw, '**/*', outputTemp);
+
+      // Then the output was touched
+      const outputFilesAfter = await walkAndStat(outputTemp);
+      expect(outputFilesAfter.map((pair) => pair[0]))
+        .toEqual(outputFilesBefore.map((pair) => pair[0]));
+      expect(outputFilesAfter).not.toEqual(outputFilesBefore);
+
+      // And the input files weren't touched
+      await expect(walkAndStat(inputTemp)).resolves.toEqual(inputFilesBefore);
+    });
   });
 
   test.each([

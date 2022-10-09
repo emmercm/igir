@@ -122,19 +122,10 @@ export default class ROMWriter {
     // Prep the single output file
     const outputZip = [...inputToOutputZipEntries.values()][0].getArchive();
 
-    if (await fsPoly.exists(outputZip.getFilePath())) {
-      // If the output file already exists and we're not overwriting, do nothing
-      if (!this.options.getOverwrite()) {
-        await this.progressBar.logDebug(`${outputZip.getFilePath()}: file exists, not overwriting`);
-        return;
-      }
-
-      // If the zip is already what we're expecting, do nothing
-      // TODO(cemmer): change this to a condition around the write, let it still delete moved files
-      if (await ROMWriter.testZipContents(outputZip, inputToOutputZipEntries)) {
-        await this.progressBar.logDebug(`${outputZip.getFilePath()}: same file, skipping`);
-        return;
-      }
+    // If the output file already exists and we're not overwriting, do nothing
+    if (!this.options.getOverwrite() && await fsPoly.exists(outputZip.getFilePath())) {
+      await this.progressBar.logDebug(`${outputZip.getFilePath()}: file exists, not overwriting`);
+      return;
     }
 
     if (!await this.writeZipFile(outputZip, inputToOutputZipEntries)) {
@@ -163,7 +154,14 @@ export default class ROMWriter {
         return map;
       }, new Map<string, ArchiveEntry<Zip>>());
 
-    const actualEntriesByPath = (await outputZipArchive.getArchiveEntries())
+    let archiveEntries: ArchiveEntry<Zip>[];
+    try {
+      archiveEntries = await outputZipArchive.getArchiveEntries();
+    } catch (e) {
+      return false;
+    }
+
+    const actualEntriesByPath = archiveEntries
       .reduce((map, entry) => {
         map.set(entry.getEntryPath(), entry);
         return map;
@@ -247,11 +245,9 @@ export default class ROMWriter {
     const outputFilePath = outputRomFile.getFilePath();
 
     // If the output file already exists and we're not overwriting, do nothing
-    if (!this.options.getOverwrite()) {
-      if (await fsPoly.exists(outputFilePath)) {
-        await this.progressBar.logDebug(`${outputFilePath}: file exists, not overwriting`);
-        return;
-      }
+    if (!this.options.getOverwrite() && await fsPoly.exists(outputFilePath)) {
+      await this.progressBar.logDebug(`${outputFilePath}: file exists, not overwriting`);
+      return;
     }
 
     await this.ensureOutputDirExists(outputFilePath);
