@@ -18,7 +18,7 @@ import Options, { OptionsProps } from '../../src/types/options.js';
 import ReleaseCandidate from '../../src/types/releaseCandidate.js';
 import ProgressBarFake from '../console/progressBarFake.js';
 
-jest.setTimeout(20_000);
+jest.setTimeout(10_000);
 
 async function copyFixturesToTemp(
   callback: (input: string, output: string) => void | Promise<void>,
@@ -207,8 +207,32 @@ describe('zip', () => {
     });
   });
 
-  it('should write if the output exists and are overwriting', () => {
-    // TODO(cemmer)
+  it('should write if the output exists and are overwriting', async () => {
+    await copyFixturesToTemp(async (inputTemp, outputTemp) => {
+      // Given
+      const options = new Options({ commands: ['copy', 'zip'] });
+      const inputFilesBefore = await walkAndStat(inputTemp);
+      await expect(walkAndStat(outputTemp)).resolves.toEqual([]);
+
+      // And we've written once
+      await romWriter(options, inputTemp, '**/*', outputTemp);
+
+      // And no files were written
+      const outputFilesBefore = await walkAndStat(outputTemp);
+      expect(outputFilesBefore).not.toEqual([]);
+
+      // When we write again
+      await romWriter({
+        ...options,
+        overwrite: true,
+      }, inputTemp, '**/*', outputTemp);
+
+      // Then the output wasn't touched
+      await expect(walkAndStat(outputTemp)).resolves.toEqual(outputFilesBefore);
+
+      // And the input files weren't touched
+      await expect(walkAndStat(inputTemp)).resolves.toEqual(inputFilesBefore);
+    });
   });
 
   test.each([
