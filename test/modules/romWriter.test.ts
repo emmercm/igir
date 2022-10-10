@@ -471,15 +471,15 @@ describe('raw', () => {
   test.each([
     [
       '**/!(headered)/*',
-      ['empty.rom', 'fizzbuzz.nes', 'foobar.lnx', 'loremipsum.rom', 'one.rom', 'onetwothree/one.rom', 'onetwothree/three.rom', 'onetwothree/two.rom', 'three.rom', 'two.rom', 'unknown.rom'],
+      ['empty.rom', 'fizzbuzz.nes', 'foobar.lnx', 'loremipsum.rom', 'one.rom', path.join('onetwothree', 'one.rom'), path.join('onetwothree', 'three.rom'), path.join('onetwothree', 'two.rom'), 'three.rom', 'two.rom', 'unknown.rom'],
     ],
     [
       '7z/*',
-      ['fizzbuzz.nes', 'foobar.lnx', 'loremipsum.rom', 'onetwothree/one.rom', 'onetwothree/three.rom', 'onetwothree/two.rom', 'unknown.rom'],
+      ['fizzbuzz.nes', 'foobar.lnx', 'loremipsum.rom', path.join('onetwothree', 'one.rom'), path.join('onetwothree', 'three.rom'), path.join('onetwothree', 'two.rom'), 'unknown.rom'],
     ],
     [
       'rar/*',
-      ['fizzbuzz.nes', 'foobar.lnx', 'loremipsum.rom', 'onetwothree/one.rom', 'onetwothree/three.rom', 'onetwothree/two.rom', 'unknown.rom'],
+      ['fizzbuzz.nes', 'foobar.lnx', 'loremipsum.rom', path.join('onetwothree', 'one.rom'), path.join('onetwothree', 'three.rom'), path.join('onetwothree', 'two.rom'), 'unknown.rom'],
     ],
     [
       'raw/*',
@@ -487,7 +487,7 @@ describe('raw', () => {
     ],
     [
       'zip/*',
-      ['fizzbuzz.nes', 'foobar.lnx', 'loremipsum.rom', 'onetwothree/one.rom', 'onetwothree/three.rom', 'onetwothree/two.rom', 'unknown.rom'],
+      ['fizzbuzz.nes', 'foobar.lnx', 'loremipsum.rom', path.join('onetwothree', 'one.rom'), path.join('onetwothree', 'three.rom'), path.join('onetwothree', 'two.rom'), 'unknown.rom'],
     ],
   ])('should copy and test: %s', async (inputGlob, expectedOutputPaths) => {
     await copyFixturesToTemp(async (inputTemp, outputTemp) => {
@@ -511,17 +511,17 @@ describe('raw', () => {
   test.each([
     [
       '**/!(headered)/*',
-      ['empty.rom', 'fizzbuzz.nes', 'foobar.lnx', 'loremipsum.rom', 'one.rom', 'onetwothree/one.rom', 'onetwothree/three.rom', 'onetwothree/two.rom', 'three.rom', 'two.rom', 'unknown.rom'],
+      ['empty.rom', 'fizzbuzz.nes', 'foobar.lnx', 'loremipsum.rom', 'one.rom', path.join('onetwothree', 'one.rom'), path.join('onetwothree', 'three.rom'), path.join('onetwothree', 'two.rom'), 'three.rom', 'two.rom', 'unknown.rom'],
       ['raw/empty.rom', 'raw/fizzbuzz.nes', 'raw/foobar.lnx', 'raw/loremipsum.rom', 'raw/one.rom', 'raw/three.rom', 'raw/two.rom', 'raw/unknown.rom'],
     ],
     [
       '7z/*',
-      ['fizzbuzz.nes', 'foobar.lnx', 'loremipsum.rom', 'onetwothree/one.rom', 'onetwothree/three.rom', 'onetwothree/two.rom', 'unknown.rom'],
+      ['fizzbuzz.nes', 'foobar.lnx', 'loremipsum.rom', path.join('onetwothree', 'one.rom'), path.join('onetwothree', 'three.rom'), path.join('onetwothree', 'two.rom'), 'unknown.rom'],
       ['7z/fizzbuzz.7z', '7z/foobar.7z', '7z/loremipsum.7z', '7z/onetwothree.7z', '7z/unknown.7z'],
     ],
     [
       'rar/*',
-      ['fizzbuzz.nes', 'foobar.lnx', 'loremipsum.rom', 'onetwothree/one.rom', 'onetwothree/three.rom', 'onetwothree/two.rom', 'unknown.rom'],
+      ['fizzbuzz.nes', 'foobar.lnx', 'loremipsum.rom', path.join('onetwothree', 'one.rom'), path.join('onetwothree', 'three.rom'), path.join('onetwothree', 'two.rom'), 'unknown.rom'],
       ['rar/fizzbuzz.rar', 'rar/foobar.rar', 'rar/loremipsum.rar', 'rar/onetwothree.rar', 'rar/unknown.rar'],
     ],
     [
@@ -531,7 +531,7 @@ describe('raw', () => {
     ],
     [
       'zip/*',
-      ['fizzbuzz.nes', 'foobar.lnx', 'loremipsum.rom', 'onetwothree/one.rom', 'onetwothree/three.rom', 'onetwothree/two.rom', 'unknown.rom'],
+      ['fizzbuzz.nes', 'foobar.lnx', 'loremipsum.rom', path.join('onetwothree', 'one.rom'), path.join('onetwothree', 'three.rom'), path.join('onetwothree', 'two.rom'), 'unknown.rom'],
       ['zip/fizzbuzz.zip', 'zip/foobar.zip', 'zip/loremipsum.zip', 'zip/onetwothree.zip', 'zip/unknown.zip'],
     ],
   ])('should move and test: %s', async (inputGlob, expectedOutputPaths, expectedDeletedInputPaths) => {
