@@ -41,6 +41,7 @@ export default class DAT {
 
     // Find all clones
     this.getGames().forEach((game: Game) => {
+      // TODO(cemmer): a DAT fixture with parent/clone info
       if (!game.isParent()) {
         const parent = this.gameNamesToParents.get(game.getParent());
         if (parent) {

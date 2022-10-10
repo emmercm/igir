@@ -1,3 +1,5 @@
+import path from 'path';
+
 import fsPoly from '../../src/polyfill/fsPoly.js';
 
 describe('makeLegal', () => {
@@ -27,5 +29,23 @@ describe('makeLegal', () => {
     ])('should make the file path legal: %s', (input, expected) => {
       expect(fsPoly.makeLegal(input, '\\')).toEqual(expected);
     });
+  });
+});
+
+describe('rm', () => {
+  it('should delete an existing file', async () => {
+    const file = fsPoly.mktempSync(path.join(process.cwd(), 'temp'));
+    await fsPoly.touch(file);
+    await fsPoly.rm(file);
+    await expect(fsPoly.exists(file)).resolves.toEqual(false);
+  });
+});
+
+describe('rmSync', () => {
+  it('should delete an existing file', async () => {
+    const file = fsPoly.mktempSync(path.join(process.cwd(), 'temp'));
+    await fsPoly.touch(file);
+    fsPoly.rmSync(file);
+    await expect(fsPoly.exists(file)).resolves.toEqual(false);
   });
 });

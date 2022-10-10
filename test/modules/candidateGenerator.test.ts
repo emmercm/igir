@@ -7,9 +7,10 @@ import Game from '../../src/types/logiqx/game.js';
 import Header from '../../src/types/logiqx/header.js';
 import Release from '../../src/types/logiqx/release.js';
 import ROM from '../../src/types/logiqx/rom.js';
+import Options from '../../src/types/options.js';
 import ProgressBarFake from '../console/progressBarFake.js';
 
-const candidateGenerator = new CandidateGenerator(new ProgressBarFake());
+const candidateGenerator = new CandidateGenerator(new Options(), new ProgressBarFake());
 
 it('should return no results with no games in DAT', async () => {
   const dat = new DAT(new Header(), []);
