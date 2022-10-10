@@ -23,7 +23,6 @@ async function expectFilteredCandidates(
 
   const [filteredParentsToCandidates] = await Promise.all([buildCandidateFilter(options)
     .filter(dat, new Map(parentsToCandidates))]);
-  expect(filteredParentsToCandidates.size).toEqual(parentsToCandidates.length); // sanity check
 
   const totalCandidates = [...filteredParentsToCandidates.values()]
     .reduce((sum, candidate) => sum + candidate.length, 0);
@@ -129,10 +128,18 @@ async function buildReleaseCandidatesWithRegionLanguage(
   return [parent, releaseCandidates];
 }
 
+it('should return nothing if no parents exist', async () => {
+  await expectFilteredCandidates({}, [], 0);
+});
+
+it('should return nothing if no parent has release candidates', async () => {
+  await expectFilteredCandidates({}, [
+    await buildReleaseCandidatesWithRegionLanguage(['one', 'two', 'three'], [], []),
+  ], 0);
+});
+
 describe('preFilter', () => {
   it('should return all candidates if no filter', async () => {
-    await expectFilteredCandidates({}, [], 0);
-
     await expectFilteredCandidates({}, [
       await buildReleaseCandidatesWithRegionLanguage('one', 'USA', 'EN'),
     ], 1);
