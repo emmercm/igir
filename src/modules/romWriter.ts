@@ -11,7 +11,6 @@ import ArchiveEntry from '../types/files/archiveEntry.js';
 import File from '../types/files/file.js';
 import DAT from '../types/logiqx/dat.js';
 import Parent from '../types/logiqx/parent.js';
-import ROM from '../types/logiqx/rom.js';
 import Options from '../types/options.js';
 import ReleaseCandidate from '../types/releaseCandidate.js';
 
@@ -27,6 +26,8 @@ export default class ROMWriter {
 
   private readonly progressBar: ProgressBar;
 
+  private readonly filesQueuedForDeletion: File[] = [];
+
   constructor(options: Options, progressBar: ProgressBar) {
     this.options = options;
     this.progressBar = progressBar;
@@ -35,116 +36,59 @@ export default class ROMWriter {
   async write(
     dat: DAT,
     parentsToCandidates: Map<Parent, ReleaseCandidate[]>,
-  ): Promise<Map<Parent, File[]>> {
+  ): Promise<void> {
     await this.progressBar.logInfo(`${dat.getName()}: Writing candidates`);
-    const output = new Map<Parent, File[]>();
 
     if (!parentsToCandidates.size) {
-      return output;
+      return;
     }
 
     // Return early if we shouldn't write (are only reporting)
     if (!this.options.shouldWrite()) {
-      return new Map(
-        [...parentsToCandidates.entries()]
-          .map(([parent]) => [parent, []]),
-      );
+      return;
     }
 
     await this.progressBar.setSymbol(Symbols.WRITING);
     await this.progressBar.reset(parentsToCandidates.size);
 
-    const parentsToCandidatesEntries = [...parentsToCandidates.entries()];
-
-    return new Map(await async.map(
-      [...parentsToCandidatesEntries.entries()],
+    await async.each(
+      [...parentsToCandidates.entries()],
       async (
-        [, [parent, releaseCandidates]],
-        callback: AsyncResultCallback<[Parent, File[]], Error>,
+        [, releaseCandidates],
+        callback: AsyncResultCallback<undefined, Error>,
       ) => {
         await ROMWriter.semaphore.runExclusive(async () => {
           await this.progressBar.increment();
 
-          const outputRomFiles: File[] = [];
-
           /* eslint-disable no-await-in-loop */
           for (let j = 0; j < releaseCandidates.length; j += 1) {
             const releaseCandidate = releaseCandidates[j];
-
-            const results = await this.writeReleaseCandidate(dat, releaseCandidate);
-            outputRomFiles.push(...results);
+            await this.writeReleaseCandidate(dat, releaseCandidate);
           }
 
-          callback(null, [parent, outputRomFiles]);
+          callback();
         });
       },
-    ));
+    );
+
+    await this.progressBar.setSymbol(Symbols.WRITING);
+    await this.deleteMovedFiles();
   }
 
   private async writeReleaseCandidate(
     dat: DAT,
     releaseCandidate: ReleaseCandidate,
-  ): Promise<File[]> {
-    const inputToOutput = await this.buildInputToOutput(dat, releaseCandidate);
-
-    // Determine if a write is needed based on the output not equaling the input
-    const writeNeeded = ([...inputToOutput.entries()]
-      .map(([inputRomFile, outputRomFile]) => !inputRomFile.equals(outputRomFile))
-    ).some((notEq) => notEq);
+  ): Promise<void> {
+    const writeNeeded = releaseCandidate.getRomsWithFiles()
+      .filter((romWithFiles) => !romWithFiles.getOutputFile().equals(romWithFiles.getInputFile()))
+      .some((notEq) => notEq);
     await this.progressBar.logDebug(`${dat.getName()} | ${releaseCandidate.getName()}: ${writeNeeded ? '' : 'no '}write needed`);
 
     if (writeNeeded) {
       // Write is needed, return the File that were written
-      return [
-        ...await this.writeZip(inputToOutput),
-        ...await this.writeRaw(inputToOutput),
-      ];
+      await this.writeZip(releaseCandidate);
+      await this.writeRaw(releaseCandidate);
     }
-
-    // Write isn't needed, return the File[] that didn't need writing
-    return [...inputToOutput.values()];
-  }
-
-  private async buildInputToOutput(
-    dat: DAT,
-    releaseCandidate: ReleaseCandidate,
-  ): Promise<Map<File, File>> {
-    const hashCodeToRoms = releaseCandidate.indexRomsByHashCode();
-
-    return releaseCandidate.getFiles().reduce(async (accPromise, inputFile) => {
-      const acc = await accPromise;
-
-      // Find the release candidate's File, find the matching ROM
-      const rom = inputFile.hashCodes()
-        .map((hashCode) => hashCodeToRoms.get(hashCode))
-        .filter((r) => r)[0] as ROM;
-
-      let outputFile: File;
-      if (this.options.shouldZip(rom.getName())) {
-        const outputFilePath = this.options.getOutput(dat, inputFile.getFilePath(), `${releaseCandidate.getName()}.zip`);
-        const entryPath = rom.getName();
-        outputFile = await ArchiveEntry.entryOf(
-          new Zip(outputFilePath),
-          entryPath,
-          inputFile.getSize(),
-          inputFile.getCrc32(),
-        );
-      } else {
-        const outputFilePath = this.options.getOutput(
-          dat,
-          inputFile.getFilePath(),
-          rom.getName(),
-        );
-        outputFile = await File.fileOf(
-          outputFilePath,
-          inputFile.getSize(),
-          inputFile.getCrc32(),
-        );
-      }
-
-      acc.set(inputFile, outputFile);
-      return acc;
-    }, Promise.resolve(new Map<File, File>()));
   }
 
   private async ensureOutputDirExists(outputFilePath: string): Promise<void> {
@@ -161,48 +105,43 @@ export default class ROMWriter {
    *                     *
    ********************* */
 
-  private async writeZip(inputToOutputFiles: Map<File, File>): Promise<File[]> {
+  private async writeZip(releaseCandidate: ReleaseCandidate): Promise<void> {
     // Return no files if there are none to write
     const inputToOutputZipEntries = new Map<File, ArchiveEntry<Zip>>(
-      [...inputToOutputFiles.entries()]
-        .filter(([, output]) => output instanceof ArchiveEntry<Zip>)
-        .map(([input, output]) => [input, output as ArchiveEntry<Zip>]),
+      releaseCandidate.getRomsWithFiles()
+        .filter((romWithFiles) => romWithFiles.getOutputFile() instanceof ArchiveEntry<Zip>)
+        .map((romWithFiles) => [
+          romWithFiles.getInputFile(),
+          romWithFiles.getOutputFile() as ArchiveEntry<Zip>,
+        ]),
     );
     if (!inputToOutputZipEntries.size) {
-      return [];
+      return;
     }
 
     // Prep the single output file
     const outputZip = [...inputToOutputZipEntries.values()][0].getArchive();
 
-    if (await fsPoly.exists(outputZip.getFilePath())) {
-      // If the output file already exists and we're not overwriting, do nothing
-      if (!this.options.getOverwrite()) {
-        await this.progressBar.logDebug(`${outputZip.getFilePath()}: file exists, not overwriting`);
-        return [await File.fileOf((outputZip.getFilePath()))];
-      }
-
-      // If the zip is already what we're expecting, do nothing
-      // TODO(cemmer): change this to a condition around the write, let it still delete moved files
-      if (await ROMWriter.testZipContents(outputZip, inputToOutputZipEntries)) {
-        await this.progressBar.logDebug(`${outputZip.getFilePath()}: same file, skipping`);
-        return [await File.fileOf((outputZip.getFilePath()))];
-      }
+    // If the output file already exists and we're not overwriting, do nothing
+    if (!this.options.getOverwrite() && await fsPoly.exists(outputZip.getFilePath())) {
+      await this.progressBar.logDebug(`${outputZip.getFilePath()}: file exists, not overwriting`);
+      return;
     }
 
-    await this.writeZipFile(outputZip, inputToOutputZipEntries);
+    if (!await this.writeZipFile(outputZip, inputToOutputZipEntries)) {
+      return;
+    }
 
     if (this.options.shouldTest()) {
+      await this.progressBar.logDebug(`${outputZip.getFilePath()}: testing`);
       if (!await ROMWriter.testZipContents(outputZip, inputToOutputZipEntries)) {
         await this.progressBar.logError(`Written zip is invalid: ${outputZip.getFilePath()}`);
-        return [await File.fileOf((outputZip.getFilePath()))];
+        return;
       }
     }
 
-    await this.deleteMovedZipEntries(outputZip, [...inputToOutputFiles.keys()]);
-
-    // Return the single archive written
-    return [await File.fileOf(outputZip.getFilePath())];
+    [...inputToOutputZipEntries.keys()]
+      .forEach((inputRomFile) => this.enqueueFileDeletion(inputRomFile));
   }
 
   private static async testZipContents(
@@ -215,7 +154,14 @@ export default class ROMWriter {
         return map;
       }, new Map<string, ArchiveEntry<Zip>>());
 
-    const actualEntriesByPath = (await outputZipArchive.getArchiveEntries())
+    let archiveEntries: ArchiveEntry<Zip>[];
+    try {
+      archiveEntries = await outputZipArchive.getArchiveEntries();
+    } catch (e) {
+      return false;
+    }
+
+    const actualEntriesByPath = archiveEntries
       .reduce((map, entry) => {
         map.set(entry.getEntryPath(), entry);
         return map;
@@ -248,37 +194,23 @@ export default class ROMWriter {
   private async writeZipFile(
     outputZip: Zip,
     inputToOutputZipEntries: Map<File, ArchiveEntry<Zip>>,
-  ): Promise<void> {
+  ): Promise<boolean> {
     // If the zip is already what we're expecting, do nothing
     if (await fsPoly.exists(outputZip.getFilePath())
       && await ROMWriter.testZipContents(outputZip, inputToOutputZipEntries)
     ) {
       await this.progressBar.logDebug(`${outputZip.getFilePath()}: archive already matches expected entries, skipping`);
-      return;
+      return true;
     }
 
     try {
       await this.ensureOutputDirExists(outputZip.getFilePath());
       await outputZip.archiveEntries(inputToOutputZipEntries);
+      return true;
     } catch (e) {
       await this.progressBar.logError(`Failed to create zip ${outputZip.getFilePath()} : ${e}`);
+      return false;
     }
-  }
-
-  private async deleteMovedZipEntries(
-    outputZipArchive: Zip,
-    inputRomFiles: File[],
-  ): Promise<void> {
-    if (!this.options.shouldMove()) {
-      return;
-    }
-
-    const filesToDelete = inputRomFiles
-      .map((romFile) => romFile.getFilePath())
-      .filter((filePath) => filePath !== outputZipArchive.getFilePath())
-      .filter((romFile, idx, romFiles) => romFiles.indexOf(romFile) === idx);
-    await this.progressBar.logDebug(filesToDelete.map((f) => `${f}: deleting`).join('\n'));
-    await Promise.all(filesToDelete.map(async (filePath) => fsPoly.rm(filePath, { force: true })));
   }
 
   /** ********************
@@ -287,25 +219,20 @@ export default class ROMWriter {
    *                     *
    ********************* */
 
-  private async writeRaw(inputToOutput: Map<File, File>): Promise<File[]> {
+  private async writeRaw(releaseCandidate: ReleaseCandidate): Promise<void> {
     // Return no files if there are none to write
-    const inputToOutputEntries = [...inputToOutput.entries()]
-      .filter(([, output]) => !(output instanceof ArchiveEntry<Zip>));
+    const inputToOutputEntries = releaseCandidate.getRomsWithFiles()
+      .filter((romWithFiles) => !(romWithFiles.getOutputFile() instanceof ArchiveEntry<Zip>))
+      .map((romWithFiles) => [romWithFiles.getInputFile(), romWithFiles.getOutputFile()]);
     if (!inputToOutputEntries.length) {
-      return [];
+      return;
     }
-
-    const writtenRomFiles: File[] = [];
 
     /* eslint-disable no-await-in-loop */
     for (let i = 0; i < inputToOutputEntries.length; i += 1) {
       const [inputRomFile, outputRomFile] = inputToOutputEntries[i];
       await this.writeRawSingle(inputRomFile, outputRomFile);
-      writtenRomFiles.push(outputRomFile);
     }
-
-    // Return all files written
-    return writtenRomFiles;
   }
 
   private async writeRawSingle(inputRomFile: File, outputRomFile: File): Promise<void> {
@@ -318,12 +245,9 @@ export default class ROMWriter {
     const outputFilePath = outputRomFile.getFilePath();
 
     // If the output file already exists and we're not overwriting, do nothing
-    const overwrite = this.options.getOverwrite();
-    if (!overwrite) {
-      if (await fsPoly.exists(outputFilePath)) {
-        await this.progressBar.logDebug(`${outputFilePath}: file exists, not overwriting`);
-        return;
-      }
+    if (!this.options.getOverwrite() && await fsPoly.exists(outputFilePath)) {
+      await this.progressBar.logDebug(`${outputFilePath}: file exists, not overwriting`);
+      return;
     }
 
     await this.ensureOutputDirExists(outputFilePath);
@@ -331,7 +255,7 @@ export default class ROMWriter {
       return;
     }
     await this.testWrittenRaw(outputFilePath, inputRomFile.getCrc32());
-    await this.deleteMovedFile(inputRomFile);
+    this.enqueueFileDeletion(inputRomFile);
   }
 
   private async writeRawFile(inputRomFile: File, outputFilePath: string): Promise<boolean> {
@@ -359,12 +283,28 @@ export default class ROMWriter {
     }
   }
 
-  private async deleteMovedFile(inputRomFile: File): Promise<void> {
+  // Input files may be needed for multiple output files, such as an archive with hundreds of ROMs
+  //  in it. That means we need to "move" (delete) files at the very end.
+  private enqueueFileDeletion(inputRomFile: File): void {
     if (!this.options.shouldMove()) {
       return;
     }
+    this.filesQueuedForDeletion.push(inputRomFile);
+  }
 
-    await this.progressBar.logDebug(`${inputRomFile.getFilePath()}: deleting`);
-    await fsPoly.rm(inputRomFile.getFilePath(), { force: true });
+  private async deleteMovedFiles(): Promise<void[]> {
+    return Promise.all(
+      this.filesQueuedForDeletion
+        .map((file) => file.getFilePath())
+        .filter((filePath, idx, filePaths) => filePaths.indexOf(filePath) === idx)
+        .map(async (filePath) => {
+          await this.progressBar.logDebug(`${filePath}: deleting`);
+          try {
+            await fsPoly.rm(filePath, { force: true });
+          } catch (e) {
+            await this.progressBar.logDebug(`${filePath}: failed to delete`);
+          }
+        }),
+    );
   }
 }

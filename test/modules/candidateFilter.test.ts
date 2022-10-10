@@ -7,6 +7,7 @@ import Release from '../../src/types/logiqx/release.js';
 import ROM from '../../src/types/logiqx/rom.js';
 import Options, { OptionsProps } from '../../src/types/options.js';
 import ReleaseCandidate from '../../src/types/releaseCandidate.js';
+import ROMWithFiles from '../../src/types/romWithFiles.js';
 import ProgressBarFake from '../console/progressBarFake.js';
 
 function buildCandidateFilter(options: OptionsProps = {}): CandidateFilter {
@@ -22,7 +23,6 @@ async function expectFilteredCandidates(
 
   const [filteredParentsToCandidates] = await Promise.all([buildCandidateFilter(options)
     .filter(dat, new Map(parentsToCandidates))]);
-  expect(filteredParentsToCandidates.size).toEqual(parentsToCandidates.length); // sanity check
 
   const totalCandidates = [...filteredParentsToCandidates.values()]
     .reduce((sum, candidate) => sum + candidate.length, 0);
@@ -114,8 +114,11 @@ async function buildReleaseCandidatesWithRegionLanguage(
         releaseCandidates.push(new ReleaseCandidate(
           game,
           release,
-          game.getRoms(),
-          await Promise.all(game.getRoms().map(async (gameRom) => gameRom.toFile())),
+          await Promise.all(game.getRoms().map(async (gameRom) => new ROMWithFiles(
+            gameRom,
+            await gameRom.toFile(),
+            await gameRom.toFile(),
+          ))),
         ));
       }
     }
@@ -125,10 +128,18 @@ async function buildReleaseCandidatesWithRegionLanguage(
   return [parent, releaseCandidates];
 }
 
+it('should return nothing if no parents exist', async () => {
+  await expectFilteredCandidates({}, [], 0);
+});
+
+it('should return nothing if no parent has release candidates', async () => {
+  await expectFilteredCandidates({}, [
+    await buildReleaseCandidatesWithRegionLanguage(['one', 'two', 'three'], [], []),
+  ], 0);
+});
+
 describe('preFilter', () => {
   it('should return all candidates if no filter', async () => {
-    await expectFilteredCandidates({}, [], 0);
-
     await expectFilteredCandidates({}, [
       await buildReleaseCandidatesWithRegionLanguage('one', 'USA', 'EN'),
     ], 1);

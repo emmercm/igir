@@ -220,6 +220,7 @@ Each manager has its own pros, but most share the same cons:
 - Limited CLI support, making batching and repeatable actions difficult
 - UIs that don't clearly state what actions can, will, or are being performed
 - Required proprietary database setup step
+- Output report formats that are difficult to parse or filter
 - Limited or nonexistent archive extraction support
 - Limited or nonexistent ROM header support
 - Limited or nonexistent parent/clone, region, language, version, and ROM type filtering
