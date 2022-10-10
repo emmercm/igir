@@ -95,6 +95,12 @@ export default class DATStatus {
           this.getDATName(),
           game.getName(),
           releaseCandidate || !game.getRoms().length ? 'FOUND' : 'MISSING',
+          releaseCandidate
+            ? (releaseCandidate as ReleaseCandidate).getRomsWithFiles()
+              .map((romWithFiles) => romWithFiles.getOutputFile().getFilePath())
+              .filter((filePath, idx, filePaths) => filePaths.indexOf(filePath) === idx)
+              .join('|')
+            : '',
           game.isBios(),
           game.isRetail(),
           game.isUnlicensed(),
@@ -113,6 +119,7 @@ export default class DATStatus {
         'DAT Name',
         'Game Name',
         'Status',
+        'Output Files',
         'BIOS',
         'Retail Release',
         'Unlicensed',
