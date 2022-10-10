@@ -65,8 +65,8 @@ it('should copy', async () => {
     'Fizzbuzz.rom',
     'Foobar.rom',
     'Lorem Ipsum.rom',
-    'One Three/One.rom',
-    'One Three/Three.rom',
+    path.join('One Three', 'One.rom'),
+    path.join('One Three', 'Three.rom'),
   ]);
 });
 
@@ -88,8 +88,8 @@ it('should copy and clean', async () => {
     'Fizzbuzz.rom',
     'Foobar.rom',
     'Lorem Ipsum.rom',
-    'One Three/One.rom',
-    'One Three/Three.rom',
+    path.join('One Three', 'One.rom'),
+    path.join('One Three', 'Three.rom'),
   ]);
 });
 
