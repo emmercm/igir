@@ -47,6 +47,7 @@
 
     // Stability settings
     rangeStrategy: "pin",
+    commitMessageAction: "update", // same as above, don't use `rangeStrategy` as the action
     stabilityDays: 3,
 
     packageRules: [
