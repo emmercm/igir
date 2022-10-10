@@ -86,9 +86,9 @@ export default class DATStatus {
       this.foundRomTypesToReleaseCandidates,
     );
 
-    // TODO(cemmer): output the location of written ROMs
     const rows = DATStatus.getValuesForAllowedTypes(options, this.allRomTypesToGames)
       .filter((game, idx, games) => games.indexOf(game) === idx)
+      .sort((a, b) => a.getName().localeCompare(b.getName()))
       .map((game) => {
         const releaseCandidate = found.find((rc) => rc.getGame().equals(game));
         return [
@@ -97,7 +97,10 @@ export default class DATStatus {
           releaseCandidate || !game.getRoms().length ? 'FOUND' : 'MISSING',
           releaseCandidate
             ? (releaseCandidate as ReleaseCandidate).getRomsWithFiles()
-              .map((romWithFiles) => romWithFiles.getOutputFile().getFilePath())
+              .map((romWithFiles) => (options.shouldWrite()
+                ? romWithFiles.getOutputFile()
+                : romWithFiles.getInputFile()))
+              .map((file) => file.getFilePath())
               .filter((filePath, idx, filePaths) => filePaths.indexOf(filePath) === idx)
               .join('|')
             : '',
@@ -119,7 +122,7 @@ export default class DATStatus {
         'DAT Name',
         'Game Name',
         'Status',
-        'Output Files',
+        'ROM Files',
         'BIOS',
         'Retail Release',
         'Unlicensed',
