@@ -5,7 +5,6 @@
   ],
   dependencyDashboard: true,
   configMigration: true,
-  baseBranches: ["main", "master"],
 
   // Personal preferences
   timezone: "America/Los_Angeles",
@@ -52,14 +51,16 @@
       {
         groupName: "dependencies",
         matchDepTypes: ["dependencies", "devDependencies"],
-        rangeStrategy: "bump"
+        rangeStrategy: "bump",
+        commitMessageAction: "update" // don't use `rangeStrategy` as the action
       },
 
       // Dev dependencies
       {
-        // Pin devDependencies versions
+        // Pin (and update) devDependencies versions
         matchDepTypes: ["devDependencies"],
-        rangeStrategy: "pin"
+        rangeStrategy: "pin",
+        commitMessageAction: "update" // don't use `rangeStrategy` as the action
       },
       {
         // Group devDependencies together, minus type definitions for dependencies
@@ -67,14 +68,15 @@
         matchDepTypes: ["devDependencies"],
         excludePackageNames: [
           "@types/7zip-min",
-          "@types/adm-min",
           "@types/async",
           "@types/cli-progress",
           "@types/figlet",
           "@types/micromatch",
           "@types/semver",
           "@types/xml2js",
-          "@types/yargs"
+          "@types/yargs",
+          "@types/yauzl",
+          "@types/yazl"
         ],
         groupName: "dev dependencies"
       },

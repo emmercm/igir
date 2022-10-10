@@ -1,0 +1,118 @@
+import path from 'path';
+import { Readable } from 'stream';
+
+export default class FileHeader {
+  private static readonly HEADERS: { [key: string]:FileHeader } = {
+    // http://7800.8bitdev.org/index.php/A78_Header_Specification
+    'No-Intro_A7800.xml': new FileHeader(1, '415441524937383030', 128, '.a78'),
+
+    // https://atarigamer.com/lynx/lnxhdrgen
+    'No-Intro_LNX.xml': new FileHeader(0, '4C594E58', 64, '.lnx'),
+
+    // https://www.nesdev.org/wiki/INES
+    'No-Intro_NES.xml': new FileHeader(0, '4E4553', 16, '.nes'),
+
+    // https://www.nesdev.org/wiki/FDS_file_format
+    'No-Intro_FDS.xml': new FileHeader(0, '464453', 16, '.fds'),
+  };
+
+  private static readonly MAX_HEADER_LENGTH_BYTES = Object.values(FileHeader.HEADERS)
+    .reduce((max, fileHeader) => Math.max(
+      max,
+      fileHeader.headerOffsetBytes + fileHeader.headerValue.length / 2,
+    ), 0);
+
+  readonly headerOffsetBytes: number;
+
+  readonly headerValue: string;
+
+  readonly dataOffsetBytes: number;
+
+  readonly fileExtension: string;
+
+  private constructor(
+    headerOffsetBytes: number,
+    headerValue: string,
+    dataOffset: number,
+    fileExtension: string,
+  ) {
+    this.headerOffsetBytes = headerOffsetBytes;
+    this.headerValue = headerValue;
+    this.dataOffsetBytes = dataOffset;
+    this.fileExtension = fileExtension;
+  }
+
+  static getForName(headerName: string): FileHeader | undefined {
+    return this.HEADERS[headerName];
+  }
+
+  static getForFilename(filePath: string): FileHeader | undefined {
+    const headers = Object.values(this.HEADERS);
+    for (let i = 0; i < headers.length; i += 1) {
+      const header = headers[i];
+      if (header.fileExtension.toLowerCase() === path.extname(filePath).toLowerCase()) {
+        return header;
+      }
+    }
+    return undefined;
+  }
+
+  private static async readHeader(stream: Readable, start: number, end: number): Promise<string> {
+    return new Promise((resolve, reject) => {
+      stream.resume();
+
+      const chunks: Buffer[] = [];
+      const resolveHeader: () => void = () => {
+        const header = Buffer.concat(chunks)
+          .subarray(start, end)
+          .toString('hex')
+          .toUpperCase();
+        resolve(header);
+      };
+
+      stream.on('data', (chunk) => {
+        chunks.push(Buffer.from(chunk));
+
+        // Stop reading when we got enough data, trigger a 'close' event
+        if (chunks.reduce((sum, buff) => sum + buff.length, 0) >= end) {
+          resolveHeader();
+          stream.destroy();
+        }
+      });
+
+      stream.on('end', () => {
+        // We read the entire file without closing, return
+        resolveHeader();
+      });
+
+      stream.on('error', (err) => reject(err));
+    });
+  }
+
+  static async getForFileStream(stream: Readable): Promise<FileHeader | undefined> {
+    const fileHeader = await FileHeader.readHeader(stream, 0, this.MAX_HEADER_LENGTH_BYTES);
+
+    const headers = Object.values(this.HEADERS);
+    for (let i = 0; i < headers.length; i += 1) {
+      const header = headers[i];
+      const headerValue = fileHeader.slice(
+        header.headerOffsetBytes * 2,
+        header.headerOffsetBytes * 2 + header.headerValue.length,
+      );
+      if (headerValue === header.headerValue) {
+        return header;
+      }
+    }
+
+    return undefined;
+  }
+
+  async fileHasHeader(stream: Readable): Promise<boolean> {
+    const header = await FileHeader.readHeader(
+      stream,
+      this.headerOffsetBytes,
+      this.headerOffsetBytes + this.headerValue.length / 2,
+    );
+    return header.toUpperCase() === this.headerValue.toUpperCase();
+  }
+}

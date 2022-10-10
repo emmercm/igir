@@ -2,6 +2,7 @@ import os from 'os';
 
 import Logger from '../../src/console/logger.js';
 import LogLevel from '../../src/console/logLevel.js';
+import Constants from '../../src/constants.js';
 import ArgumentsParser from '../../src/modules/argumentsParser.js';
 
 const dummyRequiredArgs = ['--input', os.devNull, '--output', os.devNull];
@@ -123,12 +124,19 @@ describe('options', () => {
     expect(() => argumentsParser.parse(['move', '--input', os.devNull])).toThrow(/missing required option/i);
     expect(() => argumentsParser.parse(['zip', '--input', os.devNull])).toThrow(/missing required option/i);
     expect(() => argumentsParser.parse(['clean', '--input', os.devNull])).toThrow(/missing required option/i);
-    expect(argumentsParser.parse(['test', '--input', os.devNull]).getOutput()).toContain(os.tmpdir());
-    expect(argumentsParser.parse(['report', '--input', os.devNull]).getOutput()).toContain(os.tmpdir());
+    expect(argumentsParser.parse(['test', '--input', os.devNull]).getOutput()).toContain(Constants.GLOBAL_TEMP_DIR);
+    expect(argumentsParser.parse(['report', '--input', os.devNull]).getOutput()).toContain(Constants.GLOBAL_TEMP_DIR);
     // Test value
     expect(argumentsParser.parse(['copy', '--input', os.devNull, '-o', 'foo']).getOutput()).toEqual('foo');
     expect(argumentsParser.parse(['copy', '--input', os.devNull, '--output', 'foo']).getOutput()).toEqual('foo');
     expect(argumentsParser.parse(['copy', '--input', os.devNull, '--output', 'foo', '--output', 'bar']).getOutput()).toEqual('bar');
+  });
+
+  it('should parse "header"', () => {
+    expect(() => argumentsParser.parse([...dummyCommandAndRequiredArgs, '-H'])).toThrow(/not enough arguments/i);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '-H', '**/*']).shouldReadFileForHeader('file.rom')).toEqual(true);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--header', '**/*']).shouldReadFileForHeader('file.rom')).toEqual(true);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--header', '**/*', '--header', 'nope']).shouldReadFileForHeader('file.rom')).toEqual(false);
   });
 
   it('should parse "dir-mirror"', () => {
@@ -391,5 +399,6 @@ describe('options', () => {
   it('should parse "help"', () => {
     expect(argumentsParser.parse(['-h']).getHelp()).toEqual(true);
     expect(argumentsParser.parse(['--help']).getHelp()).toEqual(true);
+    expect(argumentsParser.parse(['--help', '100']).getHelp()).toEqual(true);
   });
 });

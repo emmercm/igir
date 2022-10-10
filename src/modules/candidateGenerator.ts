@@ -1,11 +1,15 @@
 import ProgressBar, { Symbols } from '../console/progressBar.js';
+import Zip from '../types/archives/zip.js';
 import ArchiveEntry from '../types/files/archiveEntry.js';
 import File from '../types/files/file.js';
 import DAT from '../types/logiqx/dat.js';
 import Game from '../types/logiqx/game.js';
 import Parent from '../types/logiqx/parent.js';
 import Release from '../types/logiqx/release.js';
+import ROM from '../types/logiqx/rom.js';
+import Options from '../types/options.js';
 import ReleaseCandidate from '../types/releaseCandidate.js';
+import ROMWithFiles from '../types/romWithFiles.js';
 
 /**
  * For every {@link Parent} in the {@link DAT}, look for its {@link ROM}s in the scanned ROM list,
@@ -14,9 +18,12 @@ import ReleaseCandidate from '../types/releaseCandidate.js';
  * This class may be run concurrently with other classes.
  */
 export default class CandidateGenerator {
+  private readonly options: Options;
+
   private readonly progressBar: ProgressBar;
 
-  constructor(progressBar: ProgressBar) {
+  constructor(options: Options, progressBar: ProgressBar) {
+    this.options = options;
     this.progressBar = progressBar;
   }
 
@@ -28,15 +35,17 @@ export default class CandidateGenerator {
 
     const output = new Map<Parent, ReleaseCandidate[]>();
     if (!inputRomFiles.length) {
+      await this.progressBar.logDebug(`${dat.getName()}: No input ROMs to make candidates from`);
       return output;
     }
 
-    // TODO(cemmer): ability to index files by some other property such as name
-    const crc32ToInputFiles = await CandidateGenerator.indexFilesByCrc(inputRomFiles);
-    await this.progressBar.logInfo(`${dat.getName()}: ${crc32ToInputFiles.size} unique ROM CRC32s found`);
-
     await this.progressBar.setSymbol(Symbols.GENERATING);
     await this.progressBar.reset(dat.getParents().length);
+
+    // TODO(cemmer): only do this once globally, not per DAT
+    // TODO(cemmer): ability to index files by some other property such as name
+    const hashCodeToInputFiles = CandidateGenerator.indexFilesByHashCode(inputRomFiles);
+    await this.progressBar.logInfo(`${dat.getName()}: ${hashCodeToInputFiles.size} unique ROMs found`);
 
     // TODO(cemmer): ability to work without DATs, generating a parent/game/release per file
     // For each parent, try to generate a parent candidate
@@ -57,9 +66,10 @@ export default class CandidateGenerator {
           const release = releases[k];
 
           const releaseCandidate = await this.buildReleaseCandidateForRelease(
+            dat,
             game,
             release,
-            crc32ToInputFiles,
+            hashCodeToInputFiles,
           );
           if (releaseCandidate) {
             releaseCandidates.push(releaseCandidate);
@@ -67,6 +77,7 @@ export default class CandidateGenerator {
         }
       }
 
+      await this.progressBar.logInfo(`${dat.getName()}: Found ${releaseCandidates.length} candidates for ${parent}`);
       output.set(parent, releaseCandidates);
     }
 
@@ -76,61 +87,95 @@ export default class CandidateGenerator {
     return output;
   }
 
-  private static async indexFilesByCrc(files: File[]): Promise<Map<string, File>> {
-    return files.reduce(async (accPromise, file) => {
-      const acc = await accPromise;
-      if (acc.has(await file.getCrc32())) {
-        // Have already seen file, prefer non-archived files
-        const existing = acc.get(await file.getCrc32()) as File;
-        if (!(file instanceof ArchiveEntry) && existing instanceof ArchiveEntry) {
-          acc.set(await file.getCrc32(), file);
-        }
-      } else {
-        // Haven't seen file yet, store it
-        acc.set(await file.getCrc32(), file);
-      }
+  private static indexFilesByHashCode(files: File[]): Map<string, File> {
+    return files.reduce((acc, file) => {
+      file.hashCodes().forEach((hashCode) => this.addToIndex(acc, hashCode, file));
       return acc;
-    }, Promise.resolve(new Map<string, File>()));
+    }, new Map<string, File>());
+  }
+
+  private static addToIndex(map: Map<string, File>, hash: string, file: File): void {
+    if (map.has(hash)) {
+      // Have already seen file, prefer non-archived files
+      const existing = map.get(hash) as File;
+      if (!(file instanceof ArchiveEntry) && existing instanceof ArchiveEntry) {
+        map.set(hash, file);
+      }
+    } else {
+      // Haven't seen file yet, store it
+      map.set(hash, file);
+    }
   }
 
   private async buildReleaseCandidateForRelease(
+    dat: DAT,
     game: Game,
     release: Release | undefined,
-    crc32ToInputFiles: Map<string, File>,
+    hashCodeToInputFiles: Map<string, File>,
   ): Promise<ReleaseCandidate | undefined> {
     // For each Game's ROM, find the matching File
-    const romFiles = game.getRoms()
-      .map((rom) => crc32ToInputFiles.get(rom.getCrc32()))
-      .filter((file) => file) as File[];
+    const romFiles = await Promise.all(
+      game.getRoms().map(async (rom) => {
+        const romFile = hashCodeToInputFiles.get(rom.hashCode());
+        if (romFile) {
+          const romWithFiles = new ROMWithFiles(
+            rom,
+            romFile,
+            await this.getOutputFile(dat, game, rom, romFile),
+          );
+          return [rom, romWithFiles];
+        }
+        return [rom, undefined];
+      }),
+    ) as [ROM, ROMWithFiles | undefined][];
+
+    const foundRomsWithFiles = romFiles
+      .filter(([, romWithFiles]) => romWithFiles)
+      .map(([, romWithFiles]) => romWithFiles) as ROMWithFiles[];
+    const missingRoms = romFiles
+      .filter(([, romWithFiles]) => !romWithFiles)
+      .map(([rom]) => rom);
 
     // Ignore the Game if not every File is present
-    const missingRomFiles = game.getRoms().length - romFiles.length;
-    if (missingRomFiles > 0) {
-      await this.logMissingRomFiles(game, release, romFiles);
+    if (missingRoms.length > 0) {
+      if (foundRomsWithFiles.length > 0) {
+        await this.logMissingRomFiles(game, release, missingRoms);
+      }
       return undefined;
     }
 
-    return new ReleaseCandidate(game, release, game.getRoms(), romFiles);
+    return new ReleaseCandidate(game, release, foundRomsWithFiles);
+  }
+
+  private async getOutputFile(dat: DAT, game: Game, rom: ROM, inputFile: File): Promise<File> {
+    if (this.options.shouldZip(rom.getName())) {
+      const outputFilePath = this.options.getOutput(dat, inputFile.getFilePath(), `${game.getName()}.zip`);
+      const entryPath = rom.getName();
+      return ArchiveEntry.entryOf(
+        new Zip(outputFilePath),
+        entryPath,
+        inputFile.getSize(),
+        inputFile.getCrc32(),
+      );
+    }
+    const outputFilePath = this.options.getOutput(dat, inputFile.getFilePath(), rom.getName());
+    return File.fileOf(
+      outputFilePath,
+      inputFile.getSize(),
+      inputFile.getCrc32(),
+    );
   }
 
   private async logMissingRomFiles(
     game: Game,
     release: Release | undefined,
-    existingRomFiles: File[],
+    missingRoms: ROM[],
   ): Promise<void> {
-    if (!existingRomFiles.length) {
-      return;
-    }
-
-    const existingRomFileCrcs = await Promise.all(existingRomFiles.map((file) => file.getCrc32()));
-    const missingRomFiles = game.getRoms()
-      .filter((rom) => existingRomFileCrcs.indexOf(rom.getCrc32()) === -1);
-
-    let message = `Missing ${missingRomFiles.toLocaleString()} file${missingRomFiles.length !== 1 ? 's' : ''} for: ${game.getName()}`;
+    let message = `Missing ${missingRoms.length.toLocaleString()} file${missingRoms.length !== 1 ? 's' : ''} for: ${game.getName()}`;
     if (release?.getRegion()) {
       message += ` (${release?.getRegion()})`;
     }
-    missingRomFiles.forEach((rom) => {
+    missingRoms.forEach((rom) => {
       message += `\n  ${rom.getName()}`;
     });
     await this.progressBar.logWarn(message);

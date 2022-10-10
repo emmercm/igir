@@ -30,7 +30,7 @@ class LoggerSpy {
     return this.logger;
   }
 
-  getOutput(): Promise<string> {
+  async getOutput(): Promise<string> {
     this.stream.end();
     return this.spy;
   }
@@ -56,7 +56,7 @@ function testLogLevelsAtOrBelow(
 
 describe('setLogLevel_getLogLevel', () => {
   const logLevels = Object.keys(LogLevel).map((ll) => LogLevel[ll as keyof typeof LogLevel]);
-  test.each(logLevels)('should reflect %s', (logLevel) => {
+  test.each(logLevels)('should reflect: %s', (logLevel) => {
     const logger = new Logger(-1, new PassThrough());
     expect(logger.getLogLevel()).not.toEqual(logLevel);
 
@@ -66,13 +66,13 @@ describe('setLogLevel_getLogLevel', () => {
 });
 
 describe('newLine', () => {
-  testLogLevelsAbove(LogLevel.NEVER - 1)('should not write %s', async (logLevel) => {
+  testLogLevelsAbove(LogLevel.NEVER - 1)('should not write: %s', async (logLevel) => {
     const spy = new LoggerSpy(logLevel);
     spy.getLogger().newLine();
     await expect(spy.getOutput()).resolves.toEqual('');
   });
 
-  testLogLevelsAtOrBelow(LogLevel.NEVER - 1)('should write %s', async (logLevel) => {
+  testLogLevelsAtOrBelow(LogLevel.NEVER - 1)('should write: %s', async (logLevel) => {
     const spy = new LoggerSpy(logLevel);
     spy.getLogger().newLine();
     await expect(spy.getOutput()).resolves.toEqual('\n');
@@ -80,13 +80,13 @@ describe('newLine', () => {
 });
 
 describe('debug', () => {
-  testLogLevelsAbove(LogLevel.DEBUG)('should not write %s', async (logLevel) => {
+  testLogLevelsAbove(LogLevel.DEBUG)('should not write: %s', async (logLevel) => {
     const spy = new LoggerSpy(logLevel);
     spy.getLogger().debug('debug message');
     await expect(spy.getOutput()).resolves.toEqual('');
   });
 
-  testLogLevelsAtOrBelow(LogLevel.DEBUG)('should write %s', async (logLevel) => {
+  testLogLevelsAtOrBelow(LogLevel.DEBUG)('should write: %s', async (logLevel) => {
     const spy = new LoggerSpy(logLevel);
     spy.getLogger().debug('debug message');
     await expect(spy.getOutput()).resolves.toContain('debug message');
@@ -94,13 +94,13 @@ describe('debug', () => {
 });
 
 describe('info', () => {
-  testLogLevelsAbove(LogLevel.INFO)('should not write %s', async (logLevel) => {
+  testLogLevelsAbove(LogLevel.INFO)('should not write: %s', async (logLevel) => {
     const spy = new LoggerSpy(logLevel);
     spy.getLogger().info('info message');
     await expect(spy.getOutput()).resolves.toEqual('');
   });
 
-  testLogLevelsAtOrBelow(LogLevel.INFO)('should write %s', async (logLevel) => {
+  testLogLevelsAtOrBelow(LogLevel.INFO)('should write: %s', async (logLevel) => {
     const spy = new LoggerSpy(logLevel);
     spy.getLogger().info('info message');
     await expect(spy.getOutput()).resolves.toContain('info message');
@@ -108,13 +108,13 @@ describe('info', () => {
 });
 
 describe('warn', () => {
-  testLogLevelsAbove(LogLevel.WARN)('should not write %s', async (logLevel) => {
+  testLogLevelsAbove(LogLevel.WARN)('should not write: %s', async (logLevel) => {
     const spy = new LoggerSpy(logLevel);
     spy.getLogger().warn('warn message');
     await expect(spy.getOutput()).resolves.toEqual('');
   });
 
-  testLogLevelsAtOrBelow(LogLevel.WARN)('should write %s', async (logLevel) => {
+  testLogLevelsAtOrBelow(LogLevel.WARN)('should write: %s', async (logLevel) => {
     const spy = new LoggerSpy(logLevel);
     spy.getLogger().warn('warn message');
     await expect(spy.getOutput()).resolves.toContain('warn message');
@@ -122,13 +122,13 @@ describe('warn', () => {
 });
 
 describe('error', () => {
-  testLogLevelsAbove(LogLevel.ERROR)('should not write %s', async (logLevel) => {
+  testLogLevelsAbove(LogLevel.ERROR)('should not write: %s', async (logLevel) => {
     const spy = new LoggerSpy(logLevel);
     spy.getLogger().error('error message');
     await expect(spy.getOutput()).resolves.toEqual('');
   });
 
-  testLogLevelsAtOrBelow(LogLevel.ERROR)('should write %s', async (logLevel) => {
+  testLogLevelsAtOrBelow(LogLevel.ERROR)('should write: %s', async (logLevel) => {
     const spy = new LoggerSpy(logLevel);
     spy.getLogger().error('error message');
     await expect(spy.getOutput()).resolves.toContain('error message');
@@ -136,13 +136,13 @@ describe('error', () => {
 });
 
 describe('printHeader', () => {
-  testLogLevelsAbove(LogLevel.NEVER - 1)('should not write %s', async (logLevel) => {
+  testLogLevelsAbove(LogLevel.NEVER - 1)('should not write: %s', async (logLevel) => {
     const spy = new LoggerSpy(logLevel);
     spy.getLogger().printHeader();
     await expect(spy.getOutput()).resolves.toEqual('');
   });
 
-  testLogLevelsAtOrBelow(LogLevel.NEVER - 1)('should write %s', async (logLevel) => {
+  testLogLevelsAtOrBelow(LogLevel.NEVER - 1)('should write: %s', async (logLevel) => {
     const spy = new LoggerSpy(logLevel);
     spy.getLogger().printHeader();
     await expect(spy.getOutput()).resolves.not.toEqual('');

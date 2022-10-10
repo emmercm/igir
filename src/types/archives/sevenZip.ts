@@ -1,12 +1,9 @@
 import _7z, { Result } from '7zip-min';
 import { Mutex } from 'async-mutex';
-import { promises as fsPromises } from 'fs';
 import path from 'path';
 
-import Constants from '../../constants.js';
-import fsPoly from '../../polyfill/fsPoly.js';
+import ArchiveEntry from '../files/archiveEntry.js';
 import Archive from './archive.js';
-import ArchiveEntry from './archiveEntry.js';
 
 export default class SevenZip extends Archive {
   // p7zip `7za i`
@@ -31,14 +28,14 @@ export default class SevenZip extends Archive {
 
   private static readonly LIST_MUTEX = new Mutex();
 
-  async getArchiveEntries(): Promise<ArchiveEntry[]> {
+  async getArchiveEntries(): Promise<ArchiveEntry<SevenZip>[]> {
     /**
      * WARN(cemmer): {@link _7z.list} seems to have issues with any amount of real concurrency,
      * it will return no files but also no error. Try to prevent that behavior.
      */
-    return SevenZip.LIST_MUTEX.runExclusive(async () => {
-      const filesIn7z = await new Promise((resolve, reject) => {
-        _7z.list(this.getFilePath(), async (err, result) => {
+    const filesIn7z = await SevenZip.LIST_MUTEX.runExclusive(
+      async () => new Promise<Result[]>((resolve, reject) => {
+        _7z.list(this.getFilePath(), (err, result) => {
           if (err) {
             const msg = err.toString()
               .replace(/\n\n+/g, '\n')
@@ -49,17 +46,24 @@ export default class SevenZip extends Archive {
             resolve(result);
           }
         });
-      }) as Result[];
-      return filesIn7z.map((result) => new ArchiveEntry(this, result.name, result.crc));
-    });
+      }),
+    );
+    return Promise.all(filesIn7z
+      .filter((result) => !result.attr?.startsWith('D'))
+      .map(async (result) => ArchiveEntry.entryOf(
+        this,
+        result.name,
+        parseInt(result.size, 10),
+        result.crc,
+      )));
   }
 
-  async extractEntry<T>(
-    archiveEntry: ArchiveEntry,
+  async extractEntryToFile<T>(
+    entryPath: string,
+    tempDir: string,
     callback: (localFile: string) => (T | Promise<T>),
   ): Promise<T> {
-    const tempDir = await fsPromises.mkdtemp(Constants.GLOBAL_TEMP_DIR);
-    const localFile = path.join(tempDir, archiveEntry.getEntryPath());
+    const localFile = path.join(tempDir, entryPath);
 
     await new Promise<void>((resolve, reject) => {
       _7z.unpack(this.getFilePath(), tempDir, (err) => {
@@ -71,10 +75,6 @@ export default class SevenZip extends Archive {
       });
     });
 
-    try {
-      return await callback(localFile);
-    } finally {
-      fsPoly.rmSync(tempDir, { recursive: true });
-    }
+    return callback(localFile);
   }
 }

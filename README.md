@@ -15,16 +15,16 @@
 
 A video of an example use case:
 
-[![asciicast](https://asciinema.org/a/u1jeLTaSanO3mGzBb5b1jgxCy.svg)](https://asciinema.org/a/u1jeLTaSanO3mGzBb5b1jgxCy)
+[![asciicast](https://asciinema.org/a/iTnSVX8VTLSZNcCMFtqy5T9Mo.svg)](https://asciinema.org/a/iTnSVX8VTLSZNcCMFtqy5T9Mo)
 
 With a large ROM collection it can be difficult to:
 
-- Organize ROM files by console and name
-- Delete duplicate ROMs
-- Delete ROMs for languages you don't understand
+- Organize ROM files by console
 - Consistently name ROM files
-- Consistently archive ROMs
-- Know what ROMs are missing
+- Archive ROMs individually in mass
+- Filter out duplicate ROMs
+- Filter out ROMs for languages you don't understand
+- Know what ROMs are missing for each console
 
 `igir` helps solve all of these problems!
 
@@ -32,10 +32,10 @@ With a large ROM collection it can be difficult to:
 
 `igir` needs two sets of files:
 
-1. ROMs, of course!
+1. ROMs, including ones with [headers](https://no-intro.org/faq.htm)
 2. One or more DATs ([see below](#what-are-dats) for where to download)
 
-Many different input archive types are supported: .001, .7z, .bz2, .gz, .rar, .tar, .xz, .z, .z01, .zip, .zipx, and more!
+Many different input archive types are supported for both ROMs and DATs: .001, .7z, .bz2, .gz, .rar, .tar, .tgz, .xz, .z, .z01, .zip, .zipx, and more!
 
 `igir` then needs one or more commands:
 
@@ -57,13 +57,13 @@ npx igir@latest [commands..] [options]
 Here is the full `igir --help` message which shows all available options and a number of common use case examples:
 
 ```help
- ______   ______   ______  _______  
-|      \ /      \ |      \|       \ 
+ ______   ______   ______  _______
+|      \ /      \ |      \|       \
  \$$$$$$|  $$$$$$\ \$$$$$$| $$$$$$$\
   | $$  | $$ __\$$  | $$  | $$__| $$
-  | $$  | $$|    \  | $$  | $$    $$
-  | $$  | $$ \$$$$  | $$  | $$$$$$$\   ROM collection manager
- _| $$_ | $$__| $$ _| $$_ | $$  | $$
+  | $$  | $$|    \  | $$  | $$    $$   ROM collection manager
+  | $$  | $$ \$$$$  | $$  | $$$$$$$\
+ _| $$_ | $$__| $$ _| $$_ | $$  | $$   v0.2.1
 |   $$ \ \$$    $$|   $$ \| $$  | $$
  \$$$$$$  \$$$$$$  \$$$$$$ \$$   \$$
 
@@ -85,6 +85,9 @@ Path options (inputs support globbing):
   -I, --input-exclude  Path(s) to ROM files to exclude                                  [array]
   -o, --output         Path to the ROM output directory                                [string]
 
+Input options:
+  -H, --header  Glob pattern of files to force header processing for                   [string]
+
 Output options:
       --dir-mirror    Use the input subdirectory structure for output subdirectories  [boolean]
   -D, --dir-dat-name  Use the DAT name as the output subdirectory                     [boolean]
@@ -95,7 +98,7 @@ Output options:
   -Z, --zip-exclude   Glob pattern of files to exclude from zipping                    [string]
   -O, --overwrite     Overwrite any ROMs in the output directory                      [boolean]
 
-Priority options:
+Priority options (requires --single):
       --prefer-good            Prefer good ROM dumps over bad                         [boolean]
   -l, --prefer-language        List of comma-separated languages in priority order (supported:
                                DA, DE, EL, EN, ES, FI, FR, IT, JA, KO, NL, NO, PT, RU, SV, ZH)
@@ -151,11 +154,11 @@ Examples:
 
 ## What are DATs?
 
-DATs are catalogs of every known ROM per system. A number of different release groups maintain these catalogs, the most popular are:
+DATs are catalogs of every known ROM per console. A number of different release groups maintain these catalogs, the most popular are:
 
-- [No-Intro P/C XML](https://datomatic.no-intro.org/index.php?page=download&s=64&op=daily) (cartridge-based systems)
+- [No-Intro P/C XML](https://datomatic.no-intro.org/index.php?page=download&s=64&op=daily) (cartridge-based consoles)
   - Note: you can download every console at once from the [daily page](https://datomatic.no-intro.org/index.php?page=download&s=64&op=daily), but you need to manually select "P/C XML" from the dropdown
-- [Redump](http://redump.org/downloads/) (optical media-based systems)
+- [Redump](http://redump.org/downloads/) (optical media-based consoles)
 
 And some less popular release groups are:
 
@@ -168,23 +171,36 @@ These catalogs help `igir` distinguish known ROM files in input directories from
 
 ## How do I obtain ROMs?
 
-Emulators are generally legal, as long as they don't include copyrighted software such as a system BIOS.
+Emulators are generally legal, as long as they don't include copyrighted software such as a console BIOS. Downloading ROM files that you do not own is piracy and is illegal in many countries.
 
-Downloading ROM files that you do not own is piracy and is illegal in many countries. Here are some ways you can legally create ROM files from games you own:
+[Dumping.Guide](https://dumping.guide/start) and  [Emulation General Wiki](https://emulation.gametechwiki.com/index.php/Ripping_games) are some of the best resources for legally creating ROM files from games you own. Here is a condensed version that isn't guaranteed to be up-to-date:
 
-- Nintendo - 3DS: [GodMode9](https://github.com/d0k3/GodMode9)
-- Nintendo - DS, DSi: [GodMode9i](https://github.com/DS-Homebrew/GodMode9i)
-- Nintendo - Game Boy, Game Boy Color, Game Boy Advance: [INLretro Dumper](https://www.infiniteneslives.com/inlretro.php), [Retrode](https://www.retrode.com/) (with an adapter), [GB Operator](https://www.epilogue.co/product/gb-operator)
-- Nintendo - Gamecube: [CleanRip](https://wiibrew.org/wiki/CleanRip) (with a Wii)
-- Nintendo - Nintendo 64: [INLretro Dumper](https://www.infiniteneslives.com/inlretro.php), [Retrode](https://www.retrode.com/) (with an adapter)
-- Nintendo - Nintendo Entertainment System, Famicom: [INLretro Dumper](https://www.infiniteneslives.com/inlretro.php)
-- Nintendo - Super Nintendo: [INLretro Dumper](https://www.infiniteneslives.com/inlretro.php), [Retrode](https://www.retrode.com/)
-- Nintendo - Wii: [CleanRip](https://wiibrew.org/wiki/CleanRip)
-- Sega - Genesis / Mega Drive: [INLretro Dumper](https://www.infiniteneslives.com/inlretro.php), [Retrode](https://www.retrode.com/)
-- Sega - Master System: [Retrode](https://www.retrode.com/) (with an adapter)
-- Sega - Saturn: [ImgBurn](https://ninite.com/ImgBurn/) (with a PC)
-- Sony - Playstation 1: [ImgBurn](https://ninite.com/ImgBurn/) (with a PC)
-- Sony - Playstation 2: [ImgBurn](https://ninite.com/ImgBurn/) (with a PC)
+| Dumpable with special hardware | [Open Source Cartridge Reader](https://github.com/sanni/cartreader)<br/>([Save the Hero Builders](https://savethehero.builders/)) | [INLretro Dumper](https://www.infiniteneslives.com/inlretro.php) | [Retrode](https://www.retrode.com/)            | Other hardware                                             |
+|--------------------------------|-----------------------------------------------------------------------------------------------------------------------------------|------------------------------------------------------------------|------------------------------------------------|------------------------------------------------------------|
+| Nintendo - GB, GBC, GBA        | ✅                                                                                                                                 | ✅                                                                | ✅ (w/ adapter)                                 | [GB Operator](https://www.epilogue.co/product/gb-operator) |
+| Nintendo - NES/Famicom         | ✅ (V3 w/ adapter)                                                                                                                 | ✅                                                                |                                                |                                                            |
+| Nintendo - Nintendo 64         | ✅ including controller pak saves (V3 w/ addon for EEPROM saves)                                                                   | ✅                                                                | ✅ including controller park saves (w/ adapter) |                                                            |
+| Nintendo - SNES/SFC            | ✅ (V3 w/ addon for some)                                                                                                          | ✅                                                                | ✅                                              |                                                            |
+| Sega - Game Gear               | ✅ (w/ Retrode Master System adapter)                                                                                              |                                                                  | ✅ (w/ Master System adapter)                   |                                                            |
+| Sega - Genesis/MD              | ✅                                                                                                                                 | ✅                                                                | ✅                                              |                                                            |
+| Sega - Master System           | ✅ (V3 w/ adapter)                                                                                                                 |                                                                  | ✅ (w/ adapter)                                 |                                                            |
+
+| Dumpable without special hardware | [Media Preservation Frontend (MPF)](https://github.com/SabreTools/MPF) (w/ PC) | With a console                                                                                                                                                                                                                  |
+|-----------------------------------|--------------------------------------------------------------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| Microsoft - Xbox, 360, One        | ✅                                                                              |                                                                                                                                                                                                                                 |
+| Nintendo - 3DS                    |                                                                                | [GodMode9](https://github.com/d0k3/GodMode9) (w/ 3DS)                                                                                                                                                                           |
+| Nintendo - DS, DSi                |                                                                                | [GodMode9](https://github.com/d0k3/GodMode9) (w/ 3DS), [GodMode9i](https://github.com/DS-Homebrew/GodMode9i) (w/ DSi), [wooddumper](https://dumping.guide/carts/nintendo/ds#method_4_-_ds_console_via_slot-2_flashcart) (w/ DS) |
+| Nintendo - Famicom Disk           |                                                                                | [FDSStick](https://3dscapture.com/fdsstick/)                                                                                                                                                                                    |
+| Nintendo - Gamecube               | ⚠️ with specific drives and workarounds                                        | [CleanRip](https://wiibrew.org/wiki/CleanRip) (w/ Wii)                                                                                                                                                                          |
+| Nintendo - Switch                 |                                                                                | [nxdumptool](https://github.com/DarkMatterCore/nxdumptool/tree/main)                                                                                                                                                            |
+| Nintendo - Wii                    | ⚠️ with specific drives and workarounds                                        | [CleanRip](https://wiibrew.org/wiki/CleanRip)                                                                                                                                                                                   |
+| Nintendo - Wii U                  | ❌                                                                              | [wudump](https://github.com/FIX94/wudump)                                                                                                                                                                                       |
+| Sega - Dreamcast                  | ⚠️ with specific drives and workarounds                                        | [SD Rip](https://hiddenpalace.org/Dreamcast_SD_Rip)                                                                                                                                                                             |
+| Sega - Saturn                     | ✅                                                                              |                                                                                                                                                                                                                                 |
+| Sony - PlayStation 1, 2           | ✅                                                                              |                                                                                                                                                                                                                                 |
+| Sony - PlayStation 3              | ❌                                                                              | [ManaGunZ](https://github.com/Zarh/ManaGunZ), [multiMAN](https://store.brewology.com/ahomebrew.php?brewid=24)                                                                                                                   |
+| Sony - PSP                        |                                                                                | [PSP Filer](http://wiki.redump.org/index.php?title=PlayStation_Portable_Dumping_Guide)                                                                                                                                          |
+| Sony - PlayStation Vita           |                                                                                | [psvgamesd](https://github.com/motoharu-gosuto/psvgamesd)                                                                                                                                                                       |
 
 ## Why choose `igir`?
 
@@ -197,11 +213,12 @@ There a few different popular ROM managers that have similar features:
 
 Each manager has its own pros, but most share the same cons:
 
-- Windows-only (sometimes with Wine support), making management on macOS and Linux difficult 
+- Windows-only (sometimes with Wine support), making management on macOS and Linux difficult
 - Limited CLI support, making batching and repeatable actions difficult
 - UIs that don't clearly state what actions can, will, or are being performed
 - Required proprietary database setup step
 - Limited or nonexistent archive extraction support
+- Limited or nonexistent ROM header support
 - Limited or nonexistent parent/clone, region, language, version, and ROM type filtering
 - Limited or nonexistent priorities when creating a 1G1R set
 - Limited or nonexistent folder management options

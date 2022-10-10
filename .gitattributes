@@ -1,2 +1,4 @@
 # Stop `core.autocrlf true`
+*.lnx binary
+*.nes binary
 *.rom binary

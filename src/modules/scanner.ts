@@ -1,5 +1,5 @@
 import ProgressBar from '../console/progressBar.js';
-import ArchiveFactory from '../types/files/archiveFactory.js';
+import ArchiveFactory from '../types/archives/archiveFactory.js';
 import File from '../types/files/file.js';
 import Options from '../types/options.js';
 
@@ -26,7 +26,7 @@ export default abstract class Scanner {
         files = [];
       }
     } else {
-      files = [await new File(filePath).resolve()];
+      files = [await File.fileOf(filePath)];
     }
     return files;
   }

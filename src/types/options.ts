@@ -20,6 +20,7 @@ export interface OptionsProps {
   readonly input?: string[],
   readonly inputExclude?: string[],
   readonly output?: string,
+  readonly header?: string,
   readonly dirMirror?: boolean,
   readonly dirDatName?: boolean,
   readonly dirLetter?: boolean,
@@ -61,67 +62,67 @@ export default class Options implements OptionsProps {
 
   readonly inputExclude: string[] = [];
 
-  readonly output!: string;
+  readonly output: string;
 
-  readonly dirMirror!: boolean;
+  readonly header: string;
 
-  readonly dirDatName!: boolean;
+  readonly dirMirror: boolean;
 
-  readonly dirLetter!: boolean;
+  readonly dirDatName: boolean;
+
+  readonly dirLetter: boolean;
 
   readonly single: boolean = false;
 
-  readonly zipExclude!: string;
+  readonly zipExclude: string;
 
-  readonly overwrite!: boolean;
+  readonly overwrite: boolean;
 
-  readonly preferGood!: boolean;
+  readonly preferGood: boolean;
 
   readonly preferLanguage: string[] = [];
 
   readonly preferRegion: string[] = [];
 
-  readonly preferRevisionNewer!: boolean;
+  readonly preferRevisionNewer: boolean;
 
-  readonly preferRevisionOlder!: boolean;
+  readonly preferRevisionOlder: boolean;
 
-  readonly preferRetail!: boolean;
+  readonly preferRetail: boolean;
 
-  readonly preferParent!: boolean;
+  readonly preferParent: boolean;
 
   readonly languageFilter: string[] = [];
 
   readonly regionFilter: string[] = [];
 
-  readonly onlyBios!: boolean;
+  readonly onlyBios: boolean;
 
-  readonly noBios!: boolean;
+  readonly noBios: boolean;
 
-  readonly noUnlicensed!: boolean;
+  readonly noUnlicensed: boolean;
 
-  readonly onlyRetail!: boolean;
+  readonly onlyRetail: boolean;
 
-  readonly noDemo!: boolean;
+  readonly noDemo: boolean;
 
-  readonly noBeta!: boolean;
+  readonly noBeta: boolean;
 
-  readonly noSample!: boolean;
+  readonly noSample: boolean;
 
-  readonly noPrototype!: boolean;
+  readonly noPrototype: boolean;
 
-  readonly noTestRoms!: boolean;
+  readonly noTestRoms: boolean;
 
-  readonly noAftermarket!: boolean;
+  readonly noAftermarket: boolean;
 
-  readonly noHomebrew!: boolean;
+  readonly noHomebrew: boolean;
 
-  readonly noBad!: boolean;
+  readonly noBad: boolean;
 
-  readonly verbose!: number;
+  readonly verbose: number;
 
-  readonly help!: boolean;
-
-  private tempDir!: string;
+  readonly help: boolean;
 
   constructor(options?: OptionsProps) {
     this.commands = options?.commands || [];
@@ -129,6 +130,7 @@ export default class Options implements OptionsProps {
     this.input = options?.input || [];
     this.inputExclude = options?.inputExclude || [];
     this.output = options?.output || '';
+    this.header = options?.header || '';
     this.dirMirror = options?.dirMirror || false;
     this.dirDatName = options?.dirDatName || false;
     this.dirLetter = options?.dirLetter || false;
@@ -158,37 +160,16 @@ export default class Options implements OptionsProps {
     this.noBad = options?.noBad || false;
     this.verbose = options?.verbose || 0;
     this.help = options?.help || false;
-
-    this.createTempDir();
-    this.validate();
   }
 
   static fromObject(obj: object): Options {
     return plainToInstance(Options, obj, {
       enableImplicitConversion: true,
-    })
-      .createTempDir()
-      .validate();
+    });
   }
 
   toString(): string {
     return JSON.stringify(instanceToPlain(this));
-  }
-
-  private createTempDir(): Options {
-    this.tempDir = fsPoly.mkdtempSync();
-    process.on('SIGINT', () => {
-      fsPoly.rmSync(this.tempDir, {
-        force: true,
-        recursive: true,
-      });
-    });
-    return this;
-  }
-
-  private validate(): Options {
-    // TODO(cemmer): validate fields on the class
-    return this;
   }
 
   // Commands
@@ -211,7 +192,10 @@ export default class Options implements OptionsProps {
 
   shouldZip(filePath: string): boolean {
     return this.getCommands().indexOf('zip') !== -1
-      && (!this.getZipExclude() || !micromatch.isMatch(filePath, this.getZipExclude()));
+      && (!this.getZipExclude() || !micromatch.isMatch(
+        filePath.replace(/^.[\\/]/, ''),
+        this.getZipExclude(),
+      ));
   }
 
   shouldClean(): boolean {
@@ -268,7 +252,7 @@ export default class Options implements OptionsProps {
         .filter((inputPath) => inputPath)
         .map(async (inputPath) => {
           // Windows will report that \\.\nul doesn't exist, catch it explicitly
-          if (inputPath === os.devNull) {
+          if (inputPath === os.devNull || inputPath.startsWith(os.devNull + path.sep)) {
             return [];
           }
 
@@ -279,7 +263,7 @@ export default class Options implements OptionsProps {
 
           // Otherwise, process it as a glob pattern
           const paths = (await fg(inputPath.replace(/\\/g, '/')))
-            .map((pathLike) => pathLike.replace(/[\\/]/g, path.sep));
+            .map((filePath) => path.normalize(filePath));
           if (!paths || !paths.length) {
             throw new Error(`Path doesn't exist: ${inputPath}`);
           }
@@ -301,7 +285,7 @@ export default class Options implements OptionsProps {
   }
 
   getOutput(dat?: DAT, inputRomPath?: string, romName?: string): string {
-    let output = this.shouldWrite() ? this.output : this.getTempDir();
+    let output = this.shouldWrite() ? this.output : Constants.GLOBAL_TEMP_DIR;
     if (this.getDirMirror() && inputRomPath) {
       const mirroredDir = path.dirname(inputRomPath)
         .replace(/[\\/]/g, path.sep)
@@ -329,17 +313,25 @@ export default class Options implements OptionsProps {
       output = path.join(output, romName);
     }
 
-    return output;
+    return fsPoly.makeLegal(output);
   }
 
   getOutputReport(): string {
     const output = this.shouldWrite() ? this.output : process.cwd();
     return path.join(
       output,
-      `${Constants.COMMAND_NAME}_${moment().format()}.txt`
-      // Make the filename Windows legal
-        .replace(/:/g, ';')
-        .replace(/[<>:"/\\|?*]/g, '_'),
+      fsPoly.makeLegal(`${Constants.COMMAND_NAME}_${moment().format()}.csv`),
+    );
+  }
+
+  private getHeader(): string {
+    return this.header;
+  }
+
+  shouldReadFileForHeader(filePath: string): boolean {
+    return this.getHeader().length > 0 && micromatch.isMatch(
+      filePath.replace(/^.[\\/]/, ''),
+      this.getHeader(),
     );
   }
 
@@ -462,10 +454,6 @@ export default class Options implements OptionsProps {
 
   getHelp(): boolean {
     return this.help;
-  }
-
-  getTempDir(): string {
-    return this.tempDir;
   }
 
   static filterUniqueUpper(array: string[]): string[] {

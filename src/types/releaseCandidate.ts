@@ -1,7 +1,6 @@
-import File from './files/file.js';
 import Game from './logiqx/game.js';
 import Release from './logiqx/release.js';
-import ROM from './logiqx/rom.js';
+import ROMWithFiles from './romWithFiles.js';
 
 interface RegionOptions {
   region: string;
@@ -53,19 +52,16 @@ export default class ReleaseCandidate {
     .filter((language, idx, languages) => languages.indexOf(language) === idx)
     .sort();
 
-  private readonly game!: Game;
+  private readonly game: Game;
 
   private readonly release?: Release;
 
-  private readonly roms!: ROM[];
+  private readonly romsWithFiles: ROMWithFiles[];
 
-  private readonly files!: File[];
-
-  constructor(game: Game, release: Release | undefined, roms: ROM[], files: File[]) {
+  constructor(game: Game, release: Release | undefined, romsWithFiles: ROMWithFiles[]) {
     this.game = game;
     this.release = release;
-    this.roms = roms;
-    this.files = files;
+    this.romsWithFiles = romsWithFiles;
   }
 
   static getRegions(): string[] {
@@ -82,19 +78,8 @@ export default class ReleaseCandidate {
     return this.game;
   }
 
-  getRoms(): ROM[] {
-    return this.roms;
-  }
-
-  getRomsByCrc32(): Map<string, ROM> {
-    return this.getRoms().reduce((acc, rom) => {
-      acc.set(rom.getCrc32(), rom);
-      return acc;
-    }, new Map<string, ROM>());
-  }
-
-  getFiles(): File[] {
-    return this.files;
+  getRomsWithFiles(): ROMWithFiles[] {
+    return this.romsWithFiles;
   }
 
   // Computed getters

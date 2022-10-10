@@ -1,18 +1,18 @@
 import { jest } from '@jest/globals';
-import AdmZip from 'adm-zip';
+import { promises as fsPromises, Stats } from 'fs';
 import os from 'os';
 import path from 'path';
 
+import Constants from '../../src/constants.js';
+import CandidateGenerator from '../../src/modules/candidateGenerator.js';
 import ROMScanner from '../../src/modules/romScanner.js';
 import ROMWriter from '../../src/modules/romWriter.js';
 import fsPoly from '../../src/polyfill/fsPoly.js';
-import ArchiveEntry from '../../src/types/files/archiveEntry.js';
 import File from '../../src/types/files/file.js';
 import DAT from '../../src/types/logiqx/dat.js';
 import Game from '../../src/types/logiqx/game.js';
 import Header from '../../src/types/logiqx/header.js';
 import Parent from '../../src/types/logiqx/parent.js';
-import Release from '../../src/types/logiqx/release.js';
 import ROM from '../../src/types/logiqx/rom.js';
 import Options, { OptionsProps } from '../../src/types/options.js';
 import ReleaseCandidate from '../../src/types/releaseCandidate.js';
@@ -22,582 +22,545 @@ jest.setTimeout(10_000);
 
 async function copyFixturesToTemp(
   callback: (input: string, output: string) => void | Promise<void>,
-  copyFixtures = true,
 ): Promise<void> {
   // Set up the input directory
-  const inputTemp = fsPoly.mkdtempSync();
-  if (copyFixtures) {
-    fsPoly.copyDirSync('./test/fixtures/roms', inputTemp);
-  }
+  const inputTemp = fsPoly.mkdtempSync(Constants.GLOBAL_TEMP_DIR);
+  fsPoly.copyDirSync('./test/fixtures/roms', inputTemp);
 
   // Set up the output directory, but delete it so ROMWriter can make it
-  const outputTemp = fsPoly.mkdtempSync();
-  fsPoly.rmSync(outputTemp, { force: true, recursive: true });
+  const outputTemp = fsPoly.mkdtempSync(Constants.GLOBAL_TEMP_DIR);
+  await fsPoly.rm(outputTemp, { force: true, recursive: true });
 
   // Call the callback
   await callback(inputTemp, outputTemp);
 
   // Delete the temp files
-  fsPoly.rmSync(inputTemp, { recursive: true });
-  fsPoly.rmSync(outputTemp, { force: true, recursive: true });
+  await fsPoly.rm(inputTemp, { recursive: true });
+  await fsPoly.rm(outputTemp, { force: true, recursive: true });
 }
 
-async function indexFilesByName(
+async function walkAndStat(dirPath: string): Promise<[string, Stats][]> {
+  if (!await fsPoly.exists(dirPath)) {
+    return [];
+  }
+  return Promise.all(
+    fsPoly.walkSync(dirPath)
+      .sort()
+      .map(async (filePath) => {
+        let stats: Stats;
+        try {
+          stats = {
+            ...await fsPromises.stat(filePath),
+            // Hard-code properties that can change with file reads
+            atime: new Date(0),
+            atimeMs: 0,
+          };
+        } catch (e) {
+          stats = new Stats();
+        }
+        return [
+          filePath.replace(path.normalize(dirPath) + path.sep, ''),
+          stats,
+        ];
+      }),
+  );
+}
+
+function datScanner(gameNameToFiles: Map<string, File[]>): DAT {
+  const games = [...gameNameToFiles.entries()]
+    .map(([gameName, files]) => {
+      const roms = files
+        // De-duplicate
+        .filter((one, idx, romFiles) => romFiles
+          .findIndex((two) => two.getExtractedFilePath() === one.getExtractedFilePath()) === idx)
+        // Map
+        .map((file) => new ROM(
+          path.basename(file.getExtractedFilePath()),
+          file.getSize(),
+          file.getCrc32(),
+        ));
+      return new Game({
+        name: gameName,
+        rom: roms,
+      });
+    });
+  return new DAT(new Header(), games);
+}
+
+async function romScanner(
+  options: Options,
   inputDir: string,
   inputGlob: string,
-): Promise<Map<Parent, ReleaseCandidate[]>> {
-  // Leverage the ROMScanner
-  const scannedRomFiles = await new ROMScanner(new Options({
+): Promise<Map<string, File[]>> {
+  return (await new ROMScanner(new Options({
+    ...options,
     input: [path.join(inputDir, inputGlob)],
-  }), new ProgressBarFake()).scan();
-
-  // Reduce the found File[]
-  const romFilesByName = scannedRomFiles.reduce((map, romFile) => {
-    const romName = path.parse(romFile.getFilePath()).name;
-    if (map.has(romName)) {
-      map.set(romName, [...map.get(romName) as File[], romFile]);
-    } else {
-      map.set(romName, [romFile]);
-    }
-    return map;
-  }, new Map<string, File[]>());
-
-  return [...romFilesByName.entries()]
-    .reduce(async (accPromise, [romName, romFiles]) => {
-      const acc = await accPromise;
-
-      const game = new Game();
-      const parent = new Parent(romName, game);
-      const releaseCandidates = await Promise.all(romFiles
-        .map(async (romFile) => {
-          const release = new Release(romName, 'UNK', undefined);
-          let romFileName = romFile.getFilePath();
-          if (romFile instanceof ArchiveEntry) {
-            romFileName = (<ArchiveEntry>romFile).getEntryPath();
-          }
-          const rom = new ROM(
-            path.basename(romFileName),
-            await romFile.getCrc32(),
-          );
-          return new ReleaseCandidate(game, release, [rom], [romFile]);
-        }));
-      acc.set(parent, releaseCandidates);
-
-      return acc;
-    }, Promise.resolve(new Map<Parent, ReleaseCandidate[]>()));
+  }), new ProgressBarFake()).scan())
+    // Reduce all the unique files for all games
+    .filter((one, idx, files) => files
+      .findIndex((two) => two.equals(one)) === idx)
+    // Map
+    .reduce((map, romFile) => {
+      const romName = path.parse(romFile.getFilePath()).name;
+      if (map.has(romName)) {
+        map.set(romName, [...map.get(romName) as File[], romFile]);
+      } else {
+        map.set(romName, [romFile]);
+      }
+      return map;
+    }, new Map<string, File[]>());
 }
 
-async function runRomWriter(
+async function candidateGenerator(
+  options: Options,
+  dat: DAT,
+  gameNameToFiles: Map<string, File[]>,
+): Promise<Map<Parent, ReleaseCandidate[]>> {
+  const romFiles = [...gameNameToFiles.values()].flatMap((files) => files);
+  return new CandidateGenerator(options, new ProgressBarFake()).generate(dat, romFiles);
+}
+
+async function romWriter(
+  optionsProps: OptionsProps,
+  inputTemp: string,
+  inputGlob: string,
   outputTemp: string,
-  optionProps: OptionsProps,
-  parentsToCandidates: Map<Parent, ReleaseCandidate[]>,
-): Promise<string[]> {
+): Promise<[string, Stats][]> {
+  // Given
   const options = new Options({
+    ...optionsProps,
+    input: [inputTemp],
     output: outputTemp,
-    ...optionProps,
   });
-  const dat = new DAT(new Header(), []);
+  const gameNameToFiles = await romScanner(options, inputTemp, inputGlob);
+  const dat = datScanner(gameNameToFiles);
+  const candidates = await candidateGenerator(options, dat, gameNameToFiles);
 
-  const writtenRoms = await new ROMWriter(options, new ProgressBarFake())
-    .write(dat, parentsToCandidates);
+  // When
+  await new ROMWriter(options, new ProgressBarFake()).write(dat, candidates);
 
-  return [...writtenRoms.values()]
-    .flatMap((romFiles) => romFiles.map((romFile) => romFile.getFilePath()))
-    .filter((filePath, idx, filePaths) => filePaths.indexOf(filePath) === idx)
-    .map((filePath) => filePath.replace(outputTemp + path.sep, ''))
-    .sort() as string[];
+  // Then
+  return walkAndStat(outputTemp);
 }
 
-it('shouldn\'t write anything if no parents', async () => {
-  const parentsToCandidates = new Map<Parent, ReleaseCandidate[]>();
-
-  const writtenPaths = await runRomWriter(os.devNull, {
-    commands: ['copy'],
-  }, parentsToCandidates);
-  expect(writtenPaths).toHaveLength(0);
-});
-
-it('shouldn\'t write anything if parents have no candidates', async () => {
-  const parentsToCandidates = new Map<Parent, ReleaseCandidate[]>();
-  parentsToCandidates.set(new Parent('none', []), []);
-
-  const writtenPaths = await runRomWriter(os.devNull, {
-    commands: ['copy'],
-  }, parentsToCandidates);
-  expect(writtenPaths).toHaveLength(0);
-});
-
-it('shouldn\'t write anything if not copying or moving', async () => {
+it('should not do anything if there are no parents', async () => {
   await copyFixturesToTemp(async (inputTemp, outputTemp) => {
-    // Make sure we started with some input ROMs
-    const inputFiles = fsPoly.walkSync(inputTemp);
-    expect(inputFiles.length).toBeGreaterThan(0);
+    // Given
+    const options = new Options({ commands: ['copy'] });
+    const inputFilesBefore = await walkAndStat(inputTemp);
+    await expect(walkAndStat(outputTemp)).resolves.toEqual([]);
 
-    const parentsToCandidates = await indexFilesByName(inputTemp, 'zip/*');
+    // When
+    await romWriter(options, os.devNull, '**/*', outputTemp);
 
-    const writtenPaths = await runRomWriter(outputTemp, {
-      commands: [],
-    }, parentsToCandidates);
-    expect(writtenPaths).toHaveLength(0);
+    // Then no files were written
+    await expect(walkAndStat(outputTemp)).resolves.toEqual([]);
 
-    // Make sure we didn't alter the input ROMs
-    expect(fsPoly.walkSync(inputTemp)).toEqual(inputFiles);
+    // And the input files weren't touched
+    await expect(walkAndStat(inputTemp)).resolves.toEqual(inputFilesBefore);
+  });
+});
+
+it('should not do anything with no write commands', async () => {
+  await copyFixturesToTemp(async (inputTemp, outputTemp) => {
+    // Given
+    const options = new Options({ commands: ['report'] });
+    const inputFilesBefore = await walkAndStat(inputTemp);
+    await expect(walkAndStat(outputTemp)).resolves.toEqual([]);
+
+    // When
+    await romWriter(options, inputTemp, '**/*', outputTemp);
+
+    // Then no files were written
+    await expect(walkAndStat(outputTemp)).resolves.toEqual([]);
+
+    // And the input files weren't touched
+    await expect(walkAndStat(inputTemp)).resolves.toEqual(inputFilesBefore);
+  });
+});
+
+it('should not do anything if the input and output files are the same', async () => {
+  await copyFixturesToTemp(async (inputTemp) => {
+    // Given
+    const options = new Options({ commands: ['report'] });
+    const inputFilesBefore = await walkAndStat(inputTemp);
+    await expect(walkAndStat(inputTemp)).resolves.not.toEqual([]);
+
+    // When
+    await romWriter(options, inputTemp, '**/*', inputTemp);
+
+    // Then the input files weren't touched
+    await expect(walkAndStat(inputTemp)).resolves.toEqual(inputFilesBefore);
   });
 });
 
 describe('zip', () => {
-  it('shouldn\'t write anything if output matches input', async () => {
-    await copyFixturesToTemp(async (inputTemp) => {
-      // Make sure we started with some input ROMs
-      const inputFiles = fsPoly.walkSync(inputTemp);
-      expect(inputFiles.length).toBeGreaterThan(0);
+  it('should not write anything if the output exists and not overwriting', async () => {
+    await copyFixturesToTemp(async (inputTemp, outputTemp) => {
+      // Given
+      const options = new Options({ commands: ['copy', 'zip'] });
+      const inputFilesBefore = await walkAndStat(inputTemp);
+      await expect(walkAndStat(outputTemp)).resolves.toEqual([]);
 
-      const zipDir = path.join(inputTemp, 'zip');
-      const parentsToCandidates = await indexFilesByName(zipDir, '*');
+      // And we've written once
+      await romWriter(options, inputTemp, '**/*', outputTemp);
 
-      const writtenPaths = await runRomWriter(zipDir, {
-        commands: ['copy', 'zip', 'test'],
-      }, parentsToCandidates);
-      expect(writtenPaths).toEqual([
-        'fizzbuzz.zip',
-        'foobar.zip',
-        'loremipsum.zip',
-        'unknown.zip',
-      ]);
+      // And no files were written
+      const outputFilesBefore = await walkAndStat(outputTemp);
+      expect(outputFilesBefore).not.toEqual([]);
 
-      // Make sure we didn't alter the input ROMs
-      expect(fsPoly.walkSync(inputTemp)).toEqual(inputFiles);
+      // When we write again
+      await romWriter(options, inputTemp, '**/*', outputTemp);
+
+      // Then the output wasn't touched
+      await expect(walkAndStat(outputTemp)).resolves.toEqual(outputFilesBefore);
+
+      // And the input files weren't touched
+      await expect(walkAndStat(inputTemp)).resolves.toEqual(inputFilesBefore);
     });
   });
 
-  it('shouldn\'t write anything if output exists and not overwriting', async () => {
+  it('should not write if the output is expected even if overwriting', async () => {
     await copyFixturesToTemp(async (inputTemp, outputTemp) => {
-      // Make sure we started with some input ROMs
-      const inputFiles = fsPoly.walkSync(inputTemp);
-      expect(inputFiles.length).toBeGreaterThan(0);
+      // Given
+      const options = new Options({ commands: ['copy', 'zip'] });
+      const inputFilesBefore = await walkAndStat(inputTemp);
+      await expect(walkAndStat(outputTemp)).resolves.toEqual([]);
 
-      const parentsToCandidates = await indexFilesByName(inputTemp, '**/*');
+      // And we've written once
+      await romWriter(options, inputTemp, '**/*', outputTemp);
 
-      // Write once
-      const firstWrittenPaths = await runRomWriter(outputTemp, {
-        commands: ['copy', 'zip', 'test'],
-      }, parentsToCandidates);
-      expect(firstWrittenPaths).toEqual([
-        'empty.zip',
-        'fizzbuzz.zip',
-        'foobar.zip',
-        'loremipsum.zip',
-        'unknown.zip',
-      ]);
+      // And no files were written
+      const outputFilesBefore = await walkAndStat(outputTemp);
+      expect(outputFilesBefore).not.toEqual([]);
 
-      // Write again without overwriting
-      const secondWrittenPaths = await runRomWriter(outputTemp, {
-        commands: ['copy', 'zip', 'test'],
-      }, parentsToCandidates);
-      expect(secondWrittenPaths).toEqual([
-        'empty.zip',
-        'fizzbuzz.zip',
-        'foobar.zip',
-        'loremipsum.zip',
-        'unknown.zip',
-      ]);
-
-      // Make sure we didn't alter the input ROMs
-      expect(fsPoly.walkSync(inputTemp)).toEqual(inputFiles);
-    });
-  });
-
-  it('should write if output exists and are overwriting', async () => {
-    await copyFixturesToTemp(async (inputTemp, outputTemp) => {
-      // Make sure we started with some input ROMs
-      const inputFiles = fsPoly.walkSync(inputTemp);
-      expect(inputFiles.length).toBeGreaterThan(0);
-
-      const parentsToCandidates = await indexFilesByName(inputTemp, '**/*');
-
-      // Write once
-      const firstWrittenPaths = await runRomWriter(outputTemp, {
-        commands: ['copy', 'zip', 'test'],
-      }, parentsToCandidates);
-      expect(firstWrittenPaths).toEqual([
-        'empty.zip',
-        'fizzbuzz.zip',
-        'foobar.zip',
-        'loremipsum.zip',
-        'unknown.zip',
-      ]);
-
-      // Write again without overwriting
-      const secondWrittenPaths = await runRomWriter(outputTemp, {
-        commands: ['copy', 'zip', 'test'],
+      // When we write again
+      await romWriter({
+        ...options,
         overwrite: true,
-      }, parentsToCandidates);
-      expect(secondWrittenPaths).toEqual(firstWrittenPaths);
+      }, inputTemp, '**/*', outputTemp);
 
-      // Make sure we didn't alter the input ROMs
-      expect(fsPoly.walkSync(inputTemp)).toEqual(inputFiles);
+      // Then the output wasn't touched
+      await expect(walkAndStat(outputTemp)).resolves.toEqual(outputFilesBefore);
+
+      // And the input files weren't touched
+      await expect(walkAndStat(inputTemp)).resolves.toEqual(inputFilesBefore);
     });
   });
 
-  it('should clean before writing if output exists, has contents, and are overwriting', async () => {
+  it('should write if overwriting and the output is unexpected', async () => {
     await copyFixturesToTemp(async (inputTemp, outputTemp) => {
-      // Make sure we started with some input ROMs
-      const inputFiles = fsPoly.walkSync(inputTemp);
-      expect(inputFiles.length).toBeGreaterThan(0);
+      // Given
+      const options = new Options({ commands: ['copy', 'zip'] });
+      const inputFilesBefore = await walkAndStat(inputTemp);
+      await expect(walkAndStat(outputTemp)).resolves.toEqual([]);
 
-      const parentsToCandidates = await indexFilesByName(inputTemp, '**/*');
+      // And the output has files
+      const inputTempRaw = path.join(inputTemp, 'zip');
+      await Promise.all(inputFilesBefore.map(async ([inputFile]) => {
+        const outputFile = path.join(outputTemp, path.basename(inputFile));
+        await fsPoly.touch(outputFile);
+      }));
+      const outputFilesBefore = await walkAndStat(outputTemp);
+      expect(outputFilesBefore).not.toEqual([]);
 
-      const existingZip = new AdmZip();
-      existingZip.addFile('something.rom', Buffer.from('something'));
-      existingZip.writeZip(path.join(outputTemp, 'fizzbuzz.zip'));
-      existingZip.writeZip(path.join(outputTemp, 'foobar.zip'));
-
-      const writtenPaths = await runRomWriter(outputTemp, {
-        commands: ['copy', 'zip', 'test'],
+      // When
+      await romWriter({
+        ...options,
         overwrite: true,
-      }, parentsToCandidates);
-      expect(writtenPaths).toEqual([
-        'empty.zip',
-        'fizzbuzz.zip',
-        'foobar.zip',
-        'loremipsum.zip',
-        'unknown.zip',
-      ]);
+      }, inputTempRaw, '**/*', outputTemp);
 
-      // Make sure we didn't alter the input ROMs
-      expect(fsPoly.walkSync(inputTemp)).toEqual(inputFiles);
+      // Then the output was touched
+      const outputFilesAfter = await walkAndStat(outputTemp);
+      expect(outputFilesAfter.map((pair) => pair[0]))
+        .toEqual(outputFilesBefore.map((pair) => pair[0]));
+      expect(outputFilesAfter).not.toEqual(outputFilesBefore);
+
+      // And the input files weren't touched
+      await expect(walkAndStat(inputTemp)).resolves.toEqual(inputFilesBefore);
     });
   });
 
-  it('should copy, zip, and test everything', async () => {
+  test.each([
+    [
+      '**/!(headered)/*',
+      ['empty.zip', 'fizzbuzz.zip', 'foobar.zip', 'loremipsum.zip', 'one.zip', 'onetwothree.zip', 'three.zip', 'two.zip', 'unknown.zip'],
+    ],
+    [
+      '7z/*',
+      ['fizzbuzz.zip', 'foobar.zip', 'loremipsum.zip', 'onetwothree.zip', 'unknown.zip'],
+    ],
+    [
+      'rar/*',
+      ['fizzbuzz.zip', 'foobar.zip', 'loremipsum.zip', 'onetwothree.zip', 'unknown.zip'],
+    ],
+    [
+      'raw/*',
+      ['empty.zip', 'fizzbuzz.zip', 'foobar.zip', 'loremipsum.zip', 'one.zip', 'three.zip', 'two.zip', 'unknown.zip'],
+    ],
+    [
+      'zip/*',
+      ['fizzbuzz.zip', 'foobar.zip', 'loremipsum.zip', 'onetwothree.zip', 'unknown.zip'],
+    ],
+  ])('should copy, zip, and test: %s', async (inputGlob, expectedOutputPaths) => {
     await copyFixturesToTemp(async (inputTemp, outputTemp) => {
-      // Make sure we started with some input ROMs
-      const inputFiles = fsPoly.walkSync(inputTemp);
-      expect(inputFiles.length).toBeGreaterThan(0);
+      // Given
+      const options = new Options({ commands: ['copy', 'zip', 'test'] });
+      const inputFilesBefore = await walkAndStat(inputTemp);
+      await expect(walkAndStat(outputTemp)).resolves.toEqual([]);
 
-      const parentsToCandidates = await indexFilesByName(inputTemp, '**/*');
+      // When
+      const outputFiles = (await romWriter(options, inputTemp, inputGlob, outputTemp))
+        .map((pair) => pair[0]).sort();
 
-      const writtenPaths = await runRomWriter(outputTemp, {
-        commands: ['copy', 'zip', 'test'],
-      }, parentsToCandidates);
-      expect(writtenPaths).toEqual([
-        'empty.zip',
-        'fizzbuzz.zip',
-        'foobar.zip',
-        'loremipsum.zip',
-        'unknown.zip',
-      ]);
+      // Then the expected files were written
+      expect(outputFiles).toEqual(expectedOutputPaths);
 
-      // Make sure we didn't alter the input ROMs
-      expect(fsPoly.walkSync(inputTemp)).toEqual(inputFiles);
+      // And the input files weren't touched
+      await expect(walkAndStat(inputTemp)).resolves.toEqual(inputFilesBefore);
     });
   });
 
-  it('should copy, zip, and test 7z inputs', async () => {
+  test.each([
+    [
+      '**/!(headered)/*',
+      ['empty.zip', 'fizzbuzz.zip', 'foobar.zip', 'loremipsum.zip', 'one.zip', 'onetwothree.zip', 'three.zip', 'two.zip', 'unknown.zip'],
+      ['raw/empty.rom', 'raw/fizzbuzz.nes', 'raw/foobar.lnx', 'raw/loremipsum.rom', 'raw/one.rom', 'raw/three.rom', 'raw/two.rom', 'raw/unknown.rom'],
+    ],
+    [
+      '7z/*',
+      ['fizzbuzz.zip', 'foobar.zip', 'loremipsum.zip', 'onetwothree.zip', 'unknown.zip'],
+      ['7z/fizzbuzz.7z', '7z/foobar.7z', '7z/loremipsum.7z', '7z/onetwothree.7z', '7z/unknown.7z'],
+    ],
+    [
+      'rar/*',
+      ['fizzbuzz.zip', 'foobar.zip', 'loremipsum.zip', 'onetwothree.zip', 'unknown.zip'],
+      ['rar/fizzbuzz.rar', 'rar/foobar.rar', 'rar/loremipsum.rar', 'rar/onetwothree.rar', 'rar/unknown.rar'],
+    ],
+    [
+      'raw/*',
+      ['empty.zip', 'fizzbuzz.zip', 'foobar.zip', 'loremipsum.zip', 'one.zip', 'three.zip', 'two.zip', 'unknown.zip'],
+      ['raw/empty.rom', 'raw/fizzbuzz.nes', 'raw/foobar.lnx', 'raw/loremipsum.rom', 'raw/one.rom', 'raw/three.rom', 'raw/two.rom', 'raw/unknown.rom'],
+    ],
+    [
+      'zip/*',
+      ['fizzbuzz.zip', 'foobar.zip', 'loremipsum.zip', 'onetwothree.zip', 'unknown.zip'],
+      ['zip/fizzbuzz.zip', 'zip/foobar.zip', 'zip/loremipsum.zip', 'zip/onetwothree.zip', 'zip/unknown.zip'],
+    ],
+  ])('should move, zip, and test: %s', async (inputGlob, expectedOutputPaths, expectedDeletedInputPaths) => {
     await copyFixturesToTemp(async (inputTemp, outputTemp) => {
-      // Make sure we started with some input ROMs
-      const inputFiles = fsPoly.walkSync(inputTemp);
-      expect(inputFiles.length).toBeGreaterThan(0);
+      // Given
+      const options = new Options({ commands: ['move', 'zip', 'test'] });
+      const inputFilesBefore = await walkAndStat(inputTemp);
+      await expect(walkAndStat(outputTemp)).resolves.toEqual([]);
 
-      const parentsToCandidates = await indexFilesByName(inputTemp, '7z/*');
+      // When
+      const outputFiles = (await romWriter(options, inputTemp, inputGlob, outputTemp))
+        .map((pair) => pair[0]).sort();
 
-      const writtenPaths = await runRomWriter(outputTemp, {
-        commands: ['copy', 'zip', 'test'],
-      }, parentsToCandidates);
-      expect(writtenPaths).toEqual([
-        'fizzbuzz.zip',
-        'foobar.zip',
-        'loremipsum.zip',
-        'unknown.zip',
-      ]);
+      // Then the expected files were written
+      expect(outputFiles).toEqual(expectedOutputPaths);
 
-      // Make sure we didn't alter the input ROMs
-      expect(fsPoly.walkSync(inputTemp)).toEqual(inputFiles);
-    });
-  });
-
-  it('should copy, zip, and test raw inputs', async () => {
-    await copyFixturesToTemp(async (inputTemp, outputTemp) => {
-      // Make sure we started with some input ROMs
-      const inputFiles = fsPoly.walkSync(inputTemp);
-      expect(inputFiles.length).toBeGreaterThan(0);
-
-      const parentsToCandidates = await indexFilesByName(inputTemp, 'raw/*');
-
-      const writtenPaths = await runRomWriter(outputTemp, {
-        commands: ['copy', 'zip', 'test'],
-      }, parentsToCandidates);
-      expect(writtenPaths).toEqual([
-        'empty.zip',
-        'fizzbuzz.zip',
-        'foobar.zip',
-        'loremipsum.zip',
-        'unknown.zip',
-      ]);
-
-      // Make sure we didn't alter the input ROMs
-      expect(fsPoly.walkSync(inputTemp)).toEqual(inputFiles);
-    });
-  });
-
-  it('should copy, zip, and test zip inputs', async () => {
-    await copyFixturesToTemp(async (inputTemp, outputTemp) => {
-      // Make sure we started with some input ROMs
-      const inputFiles = fsPoly.walkSync(inputTemp);
-      expect(inputFiles.length).toBeGreaterThan(0);
-
-      const parentsToCandidates = await indexFilesByName(inputTemp, 'zip/*');
-
-      const writtenPaths = await runRomWriter(outputTemp, {
-        commands: ['copy', 'zip', 'test'],
-      }, parentsToCandidates);
-      expect(writtenPaths).toEqual([
-        'fizzbuzz.zip',
-        'foobar.zip',
-        'loremipsum.zip',
-        'unknown.zip',
-      ]);
-
-      // Make sure we didn't alter the input ROMs
-      expect(fsPoly.walkSync(inputTemp)).toEqual(inputFiles);
-    });
-  });
-
-  it('should move, zip, and test', async () => {
-    await copyFixturesToTemp(async (inputTemp, outputTemp) => {
-      // Make sure we started with some input ROMs
-      const inputFiles = fsPoly.walkSync(inputTemp);
-      expect(inputFiles.length).toBeGreaterThan(0);
-
-      const rawDir = path.join(inputTemp, 'raw');
-      const parentsToCandidates = await indexFilesByName(rawDir, '*');
-
-      const writtenPaths = await runRomWriter(outputTemp, {
-        commands: ['move', 'zip', 'test'],
-      }, parentsToCandidates);
-      expect(writtenPaths).toEqual([
-        'empty.zip',
-        'fizzbuzz.zip',
-        'foobar.zip',
-        'loremipsum.zip',
-        'unknown.zip',
-      ]);
-
-      expect(fsPoly.walkSync(rawDir)).toHaveLength(0);
+      // And the expected files were moved (deleted)
+      const inputFilesAfter = await walkAndStat(inputTemp);
+      inputFilesBefore.forEach(([inputFile, statsBefore]) => {
+        const [, statsAfter] = inputFilesAfter
+          .filter(([inputFileAfter]) => inputFileAfter === inputFile)[0] || [];
+        if (statsAfter) {
+          // File wasn't deleted, ensure it wasn't touched
+          expect(statsAfter).toEqual(statsBefore);
+        } else {
+          // File was deleted, ensure it was expected
+          expect(expectedDeletedInputPaths).toContain(inputFile.replace(/[\\/]/g, '/'));
+        }
+      });
     });
   });
 });
 
 describe('raw', () => {
-  it('shouldn\'t write anything if output matches input', async () => {
-    await copyFixturesToTemp(async (inputTemp) => {
-      // Make sure we started with some input ROMs
-      const inputFiles = fsPoly.walkSync(inputTemp);
-      expect(inputFiles.length).toBeGreaterThan(0);
+  it('should not write anything if the output exists and not overwriting', async () => {
+    await copyFixturesToTemp(async (inputTemp, outputTemp) => {
+      // Given
+      const options = new Options({ commands: ['copy'] });
+      const inputFilesBefore = await walkAndStat(inputTemp);
+      await expect(walkAndStat(outputTemp)).resolves.toEqual([]);
 
-      const rawDir = path.join(inputTemp, 'raw');
-      const parentsToCandidates = await indexFilesByName(rawDir, '*');
+      // And we've written once
+      await romWriter(options, inputTemp, '**/*', outputTemp);
 
-      const writtenPaths = await runRomWriter(rawDir, {
-        commands: ['copy', 'test'],
-      }, parentsToCandidates);
-      expect(writtenPaths).toEqual([
-        'empty.rom',
-        'fizzbuzz.rom',
-        'foobar.rom',
-        'loremipsum.rom',
-        'unknown.rom',
-      ]);
+      // And no files were written
+      const outputFilesBefore = await walkAndStat(outputTemp);
+      expect(outputFilesBefore).not.toEqual([]);
 
-      // Make sure we didn't alter the input ROMs
-      expect(fsPoly.walkSync(inputTemp)).toEqual(inputFiles);
+      // When we write again
+      await romWriter(options, inputTemp, '**/*', outputTemp);
+
+      // Then the output wasn't touched
+      await expect(walkAndStat(outputTemp)).resolves.toEqual(outputFilesBefore);
+
+      // And the input files weren't touched
+      await expect(walkAndStat(inputTemp)).resolves.toEqual(inputFilesBefore);
     });
   });
 
-  it('shouldn\'t write anything if output exists and not overwriting', async () => {
+  it('should not write if the output is expected even if overwriting', async () => {
     await copyFixturesToTemp(async (inputTemp, outputTemp) => {
-      // Make sure we started with some input ROMs
-      const inputFiles = fsPoly.walkSync(inputTemp);
-      expect(inputFiles.length).toBeGreaterThan(0);
+      // Given
+      const options = new Options({ commands: ['copy'] });
+      const inputFilesBefore = await walkAndStat(inputTemp);
+      await expect(walkAndStat(outputTemp)).resolves.toEqual([]);
 
-      const parentsToCandidates = await indexFilesByName(inputTemp, '**/*');
+      // And we've written once
+      await romWriter(options, inputTemp, '**/*', outputTemp);
 
-      // Write once
-      const firstWrittenPaths = await runRomWriter(outputTemp, {
-        commands: ['copy', 'test'],
-      }, parentsToCandidates);
-      expect(firstWrittenPaths).toEqual([
-        'empty.rom',
-        'fizzbuzz.rom',
-        'foobar.rom',
-        'loremipsum.rom',
-        'unknown.rom',
-      ]);
+      // And no files were written
+      const outputFilesBefore = await walkAndStat(outputTemp);
+      expect(outputFilesBefore).not.toEqual([]);
 
-      // Write again without overwriting
-      const secondWrittenPaths = await runRomWriter(outputTemp, {
-        commands: ['copy', 'test'],
-      }, parentsToCandidates);
-      expect(secondWrittenPaths).toEqual([
-        'empty.rom',
-        'fizzbuzz.rom',
-        'foobar.rom',
-        'loremipsum.rom',
-        'unknown.rom',
-      ]);
-
-      // Make sure we didn't alter the input ROMs
-      expect(fsPoly.walkSync(inputTemp)).toEqual(inputFiles);
-    });
-  });
-
-  it('should write if output exists and are overwriting', async () => {
-    await copyFixturesToTemp(async (inputTemp, outputTemp) => {
-      // Make sure we started with some input ROMs
-      const inputFiles = fsPoly.walkSync(inputTemp);
-      expect(inputFiles.length).toBeGreaterThan(0);
-
-      const parentsToCandidates = await indexFilesByName(inputTemp, '**/*');
-
-      // Write once
-      const firstWrittenPaths = await runRomWriter(outputTemp, {
-        commands: ['copy', 'test'],
-      }, parentsToCandidates);
-      expect(firstWrittenPaths).toEqual([
-        'empty.rom',
-        'fizzbuzz.rom',
-        'foobar.rom',
-        'loremipsum.rom',
-        'unknown.rom',
-      ]);
-
-      // Write again without overwriting
-      const secondWrittenPaths = await runRomWriter(outputTemp, {
-        commands: ['copy', 'test'],
+      // When we write again
+      await romWriter({
+        ...options,
         overwrite: true,
-      }, parentsToCandidates);
-      expect(secondWrittenPaths).toEqual(firstWrittenPaths);
+      }, inputTemp, '**/*', outputTemp);
 
-      // Make sure we didn't alter the input ROMs
-      expect(fsPoly.walkSync(inputTemp)).toEqual(inputFiles);
+      // Then the output was touched
+      const outputFilesAfter = await walkAndStat(outputTemp);
+      expect(outputFilesAfter.map((pair) => pair[0]))
+        .toEqual(outputFilesBefore.map((pair) => pair[0]));
+      expect(outputFilesAfter).not.toEqual(outputFilesBefore);
+
+      // And the input files weren't touched
+      await expect(walkAndStat(inputTemp)).resolves.toEqual(inputFilesBefore);
     });
   });
 
-  it('should copy, zip, and test everything', async () => {
+  it('should write if overwriting and the output is unexpected', async () => {
     await copyFixturesToTemp(async (inputTemp, outputTemp) => {
-      // Make sure we started with some input ROMs
-      const inputFiles = fsPoly.walkSync(inputTemp);
-      expect(inputFiles.length).toBeGreaterThan(0);
+      // Given
+      const options = new Options({ commands: ['copy'] });
+      const inputFilesBefore = await walkAndStat(inputTemp);
+      await expect(walkAndStat(outputTemp)).resolves.toEqual([]);
 
-      const parentsToCandidates = await indexFilesByName(inputTemp, '**/*');
+      // And the output has files
+      const inputTempRaw = path.join(inputTemp, 'raw');
+      await Promise.all(inputFilesBefore.map(async ([inputFile]) => {
+        const outputFile = path.join(outputTemp, path.basename(inputFile));
+        await fsPoly.touch(outputFile);
+      }));
+      const outputFilesBefore = await walkAndStat(outputTemp);
+      expect(outputFilesBefore).not.toEqual([]);
 
-      const writtenPaths = await runRomWriter(outputTemp, {
-        commands: ['copy', 'test'],
-      }, parentsToCandidates);
-      expect(writtenPaths).toEqual([
-        'empty.rom',
-        'fizzbuzz.rom',
-        'foobar.rom',
-        'loremipsum.rom',
-        'unknown.rom',
-      ]);
+      // When
+      await romWriter({
+        ...options,
+        overwrite: true,
+      }, inputTempRaw, '**/*', outputTemp);
 
-      // Make sure we didn't alter the input ROMs
-      expect(fsPoly.walkSync(inputTemp)).toEqual(inputFiles);
+      // Then the output was touched
+      const outputFilesAfter = await walkAndStat(outputTemp);
+      expect(outputFilesAfter.map((pair) => pair[0]))
+        .toEqual(outputFilesBefore.map((pair) => pair[0]));
+      expect(outputFilesAfter).not.toEqual(outputFilesBefore);
+
+      // And the input files weren't touched
+      await expect(walkAndStat(inputTemp)).resolves.toEqual(inputFilesBefore);
     });
   });
 
-  it('should copy, zip, and test 7z inputs', async () => {
+  test.each([
+    [
+      '**/!(headered)/*',
+      ['empty.rom', 'fizzbuzz.nes', 'foobar.lnx', 'loremipsum.rom', 'one.rom', 'three.rom', 'two.rom', 'unknown.rom'],
+    ],
+    [
+      '7z/*',
+      ['fizzbuzz.nes', 'foobar.lnx', 'loremipsum.rom', 'one.rom', 'three.rom', 'two.rom', 'unknown.rom'],
+    ],
+    [
+      'rar/*',
+      ['fizzbuzz.nes', 'foobar.lnx', 'loremipsum.rom', 'one.rom', 'three.rom', 'two.rom', 'unknown.rom'],
+    ],
+    [
+      'raw/*',
+      ['empty.rom', 'fizzbuzz.nes', 'foobar.lnx', 'loremipsum.rom', 'one.rom', 'three.rom', 'two.rom', 'unknown.rom'],
+    ],
+    [
+      'zip/*',
+      ['fizzbuzz.nes', 'foobar.lnx', 'loremipsum.rom', 'one.rom', 'three.rom', 'two.rom', 'unknown.rom'],
+    ],
+  ])('should copy and test: %s', async (inputGlob, expectedOutputPaths) => {
     await copyFixturesToTemp(async (inputTemp, outputTemp) => {
-      // Make sure we started with some input ROMs
-      const inputFiles = fsPoly.walkSync(inputTemp);
-      expect(inputFiles.length).toBeGreaterThan(0);
+      // Given
+      const options = new Options({ commands: ['copy', 'test'] });
+      const inputFilesBefore = await walkAndStat(inputTemp);
+      await expect(walkAndStat(outputTemp)).resolves.toEqual([]);
 
-      const parentsToCandidates = await indexFilesByName(inputTemp, '7z/*');
+      // When
+      const outputFiles = (await romWriter(options, inputTemp, inputGlob, outputTemp))
+        .map((pair) => pair[0]).sort();
 
-      const writtenPaths = await runRomWriter(outputTemp, {
-        commands: ['copy', 'test'],
-      }, parentsToCandidates);
-      expect(writtenPaths).toEqual([
-        'fizzbuzz.rom',
-        'foobar.rom',
-        'loremipsum.rom',
-        'unknown.rom',
-      ]);
+      // Then the expected files were written
+      expect(outputFiles).toEqual(expectedOutputPaths);
 
-      // Make sure we didn't alter the input ROMs
-      expect(fsPoly.walkSync(inputTemp)).toEqual(inputFiles);
+      // And the input files weren't touched
+      await expect(walkAndStat(inputTemp)).resolves.toEqual(inputFilesBefore);
     });
   });
 
-  it('should copy, zip, and test raw inputs', async () => {
+  test.each([
+    [
+      '**/!(headered)/*',
+      ['empty.rom', 'fizzbuzz.nes', 'foobar.lnx', 'loremipsum.rom', 'one.rom', 'three.rom', 'two.rom', 'unknown.rom'],
+      ['raw/empty.rom', 'raw/fizzbuzz.nes', 'raw/foobar.lnx', 'raw/loremipsum.rom', 'raw/one.rom', 'raw/three.rom', 'raw/two.rom', 'raw/unknown.rom'],
+    ],
+    [
+      '7z/*',
+      ['fizzbuzz.nes', 'foobar.lnx', 'loremipsum.rom', 'one.rom', 'three.rom', 'two.rom', 'unknown.rom'],
+      ['7z/fizzbuzz.7z', '7z/foobar.7z', '7z/loremipsum.7z', '7z/onetwothree.7z', '7z/unknown.7z'],
+    ],
+    [
+      'rar/*',
+      ['fizzbuzz.nes', 'foobar.lnx', 'loremipsum.rom', 'one.rom', 'three.rom', 'two.rom', 'unknown.rom'],
+      ['rar/fizzbuzz.rar', 'rar/foobar.rar', 'rar/loremipsum.rar', 'rar/onetwothree.rar', 'rar/unknown.rar'],
+    ],
+    [
+      'raw/*',
+      ['empty.rom', 'fizzbuzz.nes', 'foobar.lnx', 'loremipsum.rom', 'one.rom', 'three.rom', 'two.rom', 'unknown.rom'],
+      ['raw/empty.rom', 'raw/fizzbuzz.nes', 'raw/foobar.lnx', 'raw/loremipsum.rom', 'raw/one.rom', 'raw/three.rom', 'raw/two.rom', 'raw/unknown.rom'],
+    ],
+    [
+      'zip/*',
+      ['fizzbuzz.nes', 'foobar.lnx', 'loremipsum.rom', 'one.rom', 'three.rom', 'two.rom', 'unknown.rom'],
+      ['zip/fizzbuzz.zip', 'zip/foobar.zip', 'zip/loremipsum.zip', 'zip/onetwothree.zip', 'zip/unknown.zip'],
+    ],
+  ])('should move and test: %s', async (inputGlob, expectedOutputPaths, expectedDeletedInputPaths) => {
     await copyFixturesToTemp(async (inputTemp, outputTemp) => {
-      // Make sure we started with some input ROMs
-      const inputFiles = fsPoly.walkSync(inputTemp);
-      expect(inputFiles.length).toBeGreaterThan(0);
+      // Given
+      const options = new Options({ commands: ['move', 'test'] });
+      const inputFilesBefore = await walkAndStat(inputTemp);
+      await expect(walkAndStat(outputTemp)).resolves.toEqual([]);
 
-      const parentsToCandidates = await indexFilesByName(inputTemp, 'raw/*');
+      // When
+      const outputFiles = (await romWriter(options, inputTemp, inputGlob, outputTemp))
+        .map((pair) => pair[0]).sort();
 
-      const writtenPaths = await runRomWriter(outputTemp, {
-        commands: ['copy', 'test'],
-      }, parentsToCandidates);
-      expect(writtenPaths).toEqual([
-        'empty.rom',
-        'fizzbuzz.rom',
-        'foobar.rom',
-        'loremipsum.rom',
-        'unknown.rom',
-      ]);
+      // Then the expected files were written
+      expect(outputFiles).toEqual(expectedOutputPaths);
 
-      // Make sure we didn't alter the input ROMs
-      expect(fsPoly.walkSync(inputTemp)).toEqual(inputFiles);
-    });
-  });
-
-  it('should copy, zip, and test zip inputs', async () => {
-    await copyFixturesToTemp(async (inputTemp, outputTemp) => {
-      // Make sure we started with some input ROMs
-      const inputFiles = fsPoly.walkSync(inputTemp);
-      expect(inputFiles.length).toBeGreaterThan(0);
-
-      const parentsToCandidates = await indexFilesByName(inputTemp, 'zip/*');
-
-      const writtenPaths = await runRomWriter(outputTemp, {
-        commands: ['copy', 'test'],
-      }, parentsToCandidates);
-      expect(writtenPaths).toEqual([
-        'fizzbuzz.rom',
-        'foobar.rom',
-        'loremipsum.rom',
-        'unknown.rom',
-      ]);
-
-      // Make sure we didn't alter the input ROMs
-      expect(fsPoly.walkSync(inputTemp)).toEqual(inputFiles);
-    });
-  });
-
-  it('should move, zip, and test', async () => {
-    await copyFixturesToTemp(async (inputTemp, outputTemp) => {
-      // Make sure we started with some input ROMs
-      const inputFiles = fsPoly.walkSync(inputTemp);
-      expect(inputFiles.length).toBeGreaterThan(0);
-
-      const rawDir = path.join(inputTemp, 'raw');
-      const parentsToCandidates = await indexFilesByName(rawDir, '*');
-
-      const writtenPaths = await runRomWriter(outputTemp, {
-        commands: ['move', 'test'],
-      }, parentsToCandidates);
-      expect(writtenPaths).toEqual([
-        'empty.rom',
-        'fizzbuzz.rom',
-        'foobar.rom',
-        'loremipsum.rom',
-        'unknown.rom',
-      ]);
-
-      expect(fsPoly.walkSync(rawDir)).toHaveLength(0);
+      // And the expected files were moved (deleted)
+      const inputFilesAfter = await walkAndStat(inputTemp);
+      inputFilesBefore.forEach(([inputFile, statsBefore]) => {
+        const [, statsAfter] = inputFilesAfter
+          .filter(([inputFileAfter]) => inputFileAfter === inputFile)[0] || [];
+        if (statsAfter) {
+          // File wasn't deleted, ensure it wasn't touched
+          expect(statsAfter).toEqual(statsBefore);
+        } else {
+          // File was deleted, ensure it was expected
+          expect(expectedDeletedInputPaths).toContain(inputFile.replace(/[\\/]/g, '/'));
+        }
+      });
     });
   });
 });

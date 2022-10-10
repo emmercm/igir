@@ -1,7 +1,9 @@
-import { promises as fsPromises } from 'fs';
+import async, { AsyncResultCallback } from 'async';
 import xml2js from 'xml2js';
 
 import { Symbols } from '../console/progressBar.js';
+import Constants from '../constants.js';
+import bufferPoly from '../polyfill/bufferPoly.js';
 import File from '../types/files/file.js';
 import DAT from '../types/logiqx/dat.js';
 import DataFile from '../types/logiqx/dataFile.js';
@@ -26,49 +28,64 @@ export default class DATScanner extends Scanner {
     await this.progressBar.setSymbol(Symbols.SEARCHING);
     await this.progressBar.reset(datFilePaths.length);
 
-    const parsedXml: DataFile[] = [];
-
-    /* eslint-disable no-await-in-loop */
-    for (let i = 0; i < datFilePaths.length; i += 1) {
-      const datFilePath = datFilePaths[i];
-      await this.progressBar.logDebug(`${datFilePath}: Reading file`);
-      await this.progressBar.increment();
-
-      const datFiles = await this.getFilesFromPath(datFilePath);
-      for (let j = 0; j < datFiles.length; j += 1) {
-        const datFile = datFiles[j];
-
-        const xmlObject = await this.parseDatFile(datFile);
-        if (xmlObject) {
-          parsedXml.push(xmlObject);
-        }
-      }
-    }
+    const datFiles = await this.getDatFiles(datFilePaths);
+    await this.progressBar.reset(datFiles.length);
 
     await this.progressBar.logInfo('Deserializing DAT XML to objects');
-    const dats = parsedXml
-      .filter((xmlObject) => xmlObject)
-      .map((xmlObject) => DAT.fromObject(xmlObject.datafile))
-      .sort((a, b) => a.getNameShort().localeCompare(b.getNameShort()));
+    const dats = await this.parseDatFiles(datFiles);
+
     await this.progressBar.logInfo(dats.map((dat) => `${dat.getName()}: ${dat.getGames().length} games, ${dat.getParents().length} parents parsed`).join('\n'));
     return dats;
   }
 
-  private async parseDatFile(datFile: File): Promise<DataFile | undefined> {
-    return datFile.extract(async (localFile) => {
-      const xmlContents = await fsPromises.readFile(localFile);
+  // Scan files on disk for DATs (archives may yield more than one DAT)
+  private async getDatFiles(datFilePaths: string[]): Promise<File[]> {
+    await this.progressBar.logDebug('Enumerating DAT archives');
+    return (await async.mapLimit(
+      datFilePaths,
+      Constants.DAT_SCANNER_THREADS,
+      async (datFilePath: string, callback: AsyncResultCallback<File[], Error>) => {
+        await this.progressBar.logDebug(`${datFilePath}: Reading file`);
+        const datFiles = await this.getFilesFromPath(datFilePath);
+        callback(null, datFiles);
+      },
+    )).flatMap((datFiles) => datFiles);
+  }
 
-      try {
-        await this.progressBar.logDebug(`${datFile.toString()}: parsing XML`);
-        return await xml2js.parseStringPromise(xmlContents.toString(), {
+  // Parse each file into a DAT
+  private async parseDatFiles(datFiles: File[]): Promise<DAT[]> {
+    await this.progressBar.logDebug('Parsing DAT files');
+    const results = (await async.mapLimit(
+      datFiles,
+      Constants.DAT_SCANNER_THREADS,
+      async (datFile: File, callback: AsyncResultCallback<DAT | undefined, Error>) => {
+        await this.progressBar.increment();
+        const xmlObject = await this.parseDatFile(datFile);
+        if (xmlObject) {
+          const dat = DAT.fromObject(xmlObject.datafile);
+          return callback(null, dat);
+        }
+        return callback(null, undefined);
+      },
+    )).filter((xmlObject) => xmlObject) as DAT[];
+
+    return results.sort((a, b) => a.getNameShort().localeCompare(b.getNameShort()));
+  }
+
+  private async parseDatFile(datFile: File): Promise<DataFile | void> {
+    try {
+      await this.progressBar.logDebug(`${datFile.toString()}: parsing XML`);
+      return await datFile.extractToStream(async (stream) => {
+        const xmlContents = await bufferPoly.fromReadable(stream);
+        return xml2js.parseStringPromise(xmlContents.toString(), {
           mergeAttrs: true,
           explicitArray: false,
-        }) as DataFile;
-      } catch (err) {
-        const message = (err as Error).message.split('\n').join(', ');
-        await this.progressBar.logError(`Failed to parse DAT ${datFile.toString()} : ${message}`);
-        return undefined;
-      }
-    });
+        });
+      });
+    } catch (err) {
+      const message = (err as Error).message.split('\n').join(', ');
+      await this.progressBar.logError(`Failed to parse DAT ${datFile.toString()} : ${message}`);
+      return Promise.resolve();
+    }
   }
 }

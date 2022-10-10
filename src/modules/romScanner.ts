@@ -12,12 +12,12 @@ import Scanner from './scanner.js';
  * This class will not be run concurrently with any other class.
  */
 export default class ROMScanner extends Scanner {
-  // TODO(cemmer): support for headered ROM files (e.g. NES)
   async scan(): Promise<File[]> {
+    await this.progressBar.logInfo('Scanning ROM files');
+
     await this.progressBar.setSymbol(Symbols.SEARCHING);
     await this.progressBar.reset(0);
 
-    await this.progressBar.logInfo('Scanning ROM files');
     const romFilePaths = await this.options.scanInputFilesWithoutExclusions();
     await this.progressBar.reset(romFilePaths.length);
     await this.progressBar.logInfo(`Found ${romFilePaths.length} ROM file${romFilePaths.length !== 1 ? 's' : ''}`);
@@ -32,6 +32,8 @@ export default class ROMScanner extends Scanner {
 
         callback(null, files);
       },
-    )).flatMap((files) => files);
+    ))
+      .flatMap((files) => files)
+      .filter((file, idx, files) => files.indexOf(file) === idx);
   }
 }

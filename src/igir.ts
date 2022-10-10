@@ -7,6 +7,7 @@ import Constants from './constants.js';
 import CandidateFilter from './modules/candidateFilter.js';
 import CandidateGenerator from './modules/candidateGenerator.js';
 import DATScanner from './modules/datScanner.js';
+import HeaderProcessor from './modules/headerProcessor.js';
 import OutputCleaner from './modules/outputCleaner.js';
 import ReportGenerator from './modules/reportGenerator.js';
 import ROMScanner from './modules/romScanner.js';
@@ -29,13 +30,17 @@ export default class Igir {
   }
 
   async main(): Promise<void> {
+    // Scan and process input files
     const dats = await this.processDATScanner();
-    const romFiles = await this.processROMScanner();
+    const rawRomFiles = await this.processROMScanner();
+    const processedRomFiles = await this.processHeaderProcessor(rawRomFiles);
 
+    // Set up progress bar and input for DAT processing
     const datProcessProgressBar = this.logger.addProgressBar('Processing DATs', Symbols.PROCESSING, dats.length);
     const datsToWrittenRoms = new Map<DAT, Map<Parent, File[]>>();
     const datsStatuses: DATStatus[] = [];
 
+    // Process every DAT
     await async.eachLimit(dats, Constants.DAT_THREADS, async (dat, callback) => {
       const progressBar = this.logger.addProgressBar(
         dat.getNameShort(),
@@ -45,22 +50,32 @@ export default class Igir {
       await datProcessProgressBar.increment();
 
       // Generate and filter ROM candidates
-      const romCandidates = await new CandidateGenerator(progressBar).generate(dat, romFiles);
+      const parentsToCandidates = await new CandidateGenerator(this.options, progressBar)
+        .generate(dat, processedRomFiles);
       const romOutputs = await new CandidateFilter(this.options, progressBar)
-        .filter(dat, romCandidates);
+        .filter(dat, parentsToCandidates);
 
       // Write the output files
-      const writtenRoms = await new ROMWriter(this.options, progressBar).write(dat, romOutputs);
+      await new ROMWriter(this.options, progressBar).write(dat, romOutputs);
+      const writtenRoms = [...romOutputs.entries()]
+        .reduce((map, [parent, releaseCandidates]) => {
+          const parentWrittenRoms = releaseCandidates
+            .flatMap((releaseCandidate) => releaseCandidate.getRomsWithFiles())
+            .map((romWithFiles) => romWithFiles.getOutputFile());
+          map.set(parent, parentWrittenRoms);
+          return map;
+        }, new Map<Parent, File[]>());
       datsToWrittenRoms.set(dat, writtenRoms);
 
       // Write the output report
-      const status = await new StatusGenerator(this.options, progressBar).output(dat, romOutputs);
-      datsStatuses.push(status);
+      const datStatus = await new StatusGenerator(this.options, progressBar)
+        .output(dat, romOutputs);
+      datsStatuses.push(datStatus);
 
       // Progress bar cleanup
-      const totalReleaseCandidates = [...romOutputs.values()]
-        .filter((releaseCandidates) => releaseCandidates.length)
-        .length;
+      // TODO(cemmer): protection against too many progress bars on screen
+      const totalReleaseCandidates = [...parentsToCandidates.values()]
+        .reduce((sum, rcs) => sum + rcs.length, 0);
       if (totalReleaseCandidates === 0) {
         progressBar.delete();
       }
@@ -93,9 +108,16 @@ export default class Igir {
   private async processROMScanner(): Promise<File[]> {
     const progressBar = this.logger.addProgressBar('Scanning for ROMs', Symbols.WAITING);
     const romInputs = await new ROMScanner(this.options, progressBar).scan();
-    // TODO(cemmer): is this reporting the right number? it might be inflated
     await progressBar.doneItems(romInputs.length, 'file', 'found');
     return romInputs;
+  }
+
+  private async processHeaderProcessor(romFiles: File[]): Promise<File[]> {
+    const headerProcessorProgressBar = this.logger.addProgressBar('Reading ROM headers', Symbols.WAITING);
+    const processedRomFiles = await new HeaderProcessor(this.options, headerProcessorProgressBar)
+      .process(romFiles);
+    await headerProcessorProgressBar.doneItems(processedRomFiles.length, 'file', 'read');
+    return processedRomFiles;
   }
 
   private async processOutputCleaner(

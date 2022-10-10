@@ -1,8 +1,6 @@
-import fs from 'fs';
-import moment from 'moment';
+import { promises as fsPromises } from 'fs';
 
 import ProgressBarCLI from '../console/progressBarCLI.js';
-import Constants from '../constants.js';
 import DATStatus from '../types/datStatus.js';
 import Options from '../types/options.js';
 
@@ -22,16 +20,26 @@ export default class ReportGenerator {
   }
 
   async generate(datsStatuses: DATStatus[]): Promise<void> {
+    await this.progressBar.logInfo('Generating report');
+
     const report = this.options.getOutputReport();
-    const append = (message: string): void => fs.appendFileSync(report, `${message.trimEnd()}\n`);
 
-    append(`// ${Constants.COMMAND_NAME}, ${moment().format()}\n// ${report}`);
-
-    datsStatuses
-      .sort((a, b) => a.getDATName().localeCompare(b.getDATName()))
-      .forEach((datsStatus) => {
-        append(`\n${datsStatus.toReport(this.options)}`);
-      });
+    const contents = (
+      await Promise.all(datsStatuses
+        .filter((datStatus) => datStatus.anyGamesFound(this.options))
+        .sort((a, b) => a.getDATName().localeCompare(b.getDATName()))
+        .map(async (datsStatus) => datsStatus.toCSV(this.options)))
+    )
+      .filter((csv) => csv)
+      .map((csv, idx) => {
+        // Strip the CSV header from everything except the first file
+        if (idx === 0) {
+          return csv;
+        }
+        return csv.split('\n').slice(1).join('\n');
+      })
+      .join('\n');
+    await fsPromises.writeFile(report, contents);
 
     await this.progressBar.done(report);
   }

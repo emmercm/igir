@@ -1,28 +1,33 @@
 import { jest } from '@jest/globals';
+import fg from 'fast-glob';
 import fs from 'fs';
 import path from 'path';
 
 import Logger from '../src/console/logger.js';
 import LogLevel from '../src/console/logLevel.js';
+import Constants from '../src/constants.js';
 import Igir from '../src/igir.js';
 import fsPoly from '../src/polyfill/fsPoly.js';
 import Options, { OptionsProps } from '../src/types/options.js';
 
+jest.setTimeout(10_000);
+
 const LOGGER = new Logger(LogLevel.NEVER);
 
-async function expectEndToEnd(options: OptionsProps, expectedFiles: string[]): Promise<void> {
-  const tempInput = fsPoly.mkdtempSync();
+async function expectEndToEnd(optionsProps: OptionsProps, expectedFiles: string[]): Promise<void> {
+  const tempInput = fsPoly.mkdtempSync(Constants.GLOBAL_TEMP_DIR);
   fsPoly.copyDirSync('./test/fixtures', tempInput);
 
-  const tempOutput = fsPoly.mkdtempSync();
+  const tempOutput = fsPoly.mkdtempSync(Constants.GLOBAL_TEMP_DIR);
 
-  await new Igir(new Options({
+  const options = new Options({
     dat: [path.join(tempInput, 'dats', '*')],
     input: [path.join(tempInput, 'roms', '**', '*')],
-    ...options,
+    ...optionsProps,
     output: tempOutput,
     verbose: Number.MAX_SAFE_INTEGER,
-  }), LOGGER).main();
+  });
+  await new Igir(options, LOGGER).main();
 
   const writtenRoms = fs.readdirSync(tempOutput);
 
@@ -32,11 +37,15 @@ async function expectEndToEnd(options: OptionsProps, expectedFiles: string[]): P
     expect(writtenRoms).toContain(expectedFile);
   }
 
-  fsPoly.rmSync(tempInput, { recursive: true });
-  fsPoly.rmSync(tempOutput, { recursive: true });
-}
+  await fsPoly.rm(tempInput, { recursive: true });
+  await fsPoly.rm(tempOutput, { force: true, recursive: true });
 
-jest.setTimeout(10_000);
+  const reports = await fg(path.join(
+    path.dirname(options.getOutputReport()),
+    `${Constants.COMMAND_NAME}_*.csv`,
+  ));
+  await Promise.all(reports.map(async (report) => fsPoly.rm(report)));
+}
 
 it('should throw on no dats', async () => {
   await expect(new Igir(new Options({}), LOGGER).main()).rejects.toThrow(/no valid dat/i);
@@ -56,6 +65,8 @@ it('should copy', async () => {
     'Fizzbuzz.rom',
     'Foobar.rom',
     'Lorem Ipsum.rom',
+    'One.rom',
+    'Three.rom',
   ]);
 });
 
@@ -66,6 +77,7 @@ it('should copy and zip and test', async () => {
     'Fizzbuzz.zip',
     'Foobar.zip',
     'Lorem Ipsum.zip',
+    'One Three.zip',
   ]);
 });
 
@@ -76,11 +88,12 @@ it('should copy and clean', async () => {
     'Fizzbuzz.rom',
     'Foobar.rom',
     'Lorem Ipsum.rom',
+    'One.rom',
+    'Three.rom',
   ]);
 });
 
 it('should report without copy', async () => {
-  // TODO(cemmer): cleanup the written report
   await expectEndToEnd({
     commands: ['report'],
   }, []);

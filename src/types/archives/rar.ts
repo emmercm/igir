@@ -1,33 +1,32 @@
-import { promises as fsPromises } from 'fs';
 import unrar from 'node-unrar-js';
 import path from 'path';
 
-import Constants from '../../constants.js';
-import fsPoly from '../../polyfill/fsPoly.js';
+import ArchiveEntry from '../files/archiveEntry.js';
 import Archive from './archive.js';
-import ArchiveEntry from './archiveEntry.js';
 
 export default class Rar extends Archive {
   static readonly SUPPORTED_EXTENSIONS = ['.rar'];
 
-  async getArchiveEntries(): Promise<ArchiveEntry[]> {
+  async getArchiveEntries(): Promise<ArchiveEntry<Rar>[]> {
     const rar = await unrar.createExtractorFromFile({
       filepath: this.getFilePath(),
     });
-    return [...rar.getFileList().fileHeaders]
-      .map((fileHeader) => new ArchiveEntry(
+    return Promise.all([...rar.getFileList().fileHeaders]
+      .filter((fileHeader) => !fileHeader.flags.directory)
+      .map(async (fileHeader) => ArchiveEntry.entryOf(
         this,
         fileHeader.name,
+        fileHeader.unpSize,
         fileHeader.crc.toString(16),
-      ));
+      )));
   }
 
-  async extractEntry<T>(
-    archiveEntry: ArchiveEntry,
+  async extractEntryToFile<T>(
+    entryPath: string,
+    tempDir: string,
     callback: (localFile: string) => (T | Promise<T>),
   ): Promise<T> {
-    const tempDir = await fsPromises.mkdtemp(Constants.GLOBAL_TEMP_DIR);
-    const localFile = path.join(tempDir, archiveEntry.getEntryPath() as string);
+    const localFile = path.join(tempDir, entryPath);
 
     const rar = await unrar.createExtractorFromFile({
       filepath: this.getFilePath(),
@@ -37,13 +36,9 @@ export default class Rar extends Archive {
     // iterated, so we have to execute this expression, but can throw away the results
     /* eslint-disable @typescript-eslint/no-unused-expressions */
     [...rar.extract({
-      files: [archiveEntry.getEntryPath()],
+      files: [entryPath.replace(/[\\/]/g, '/')],
     }).files];
 
-    try {
-      return await callback(localFile);
-    } finally {
-      fsPoly.rmSync(tempDir, { recursive: true });
-    }
+    return callback(localFile);
   }
 }

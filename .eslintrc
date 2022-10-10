@@ -23,16 +23,31 @@
   },
 
   "rules": {
+    // ***** Imports *****
     "@typescript-eslint/no-restricted-imports": ["error", {
       "patterns": [{
         "group": ["node:*"],
         "message": "Don't use prefixes with Node.js built-ins."
       }]
     }],
-    "@typescript-eslint/explicit-function-return-type": "error",
-    "@typescript-eslint/no-floating-promises": ["error"],
-    "@typescript-eslint/prefer-readonly": "error",
     "simple-import-sort/exports": "error",
-    "simple-import-sort/imports": "error"
+    "simple-import-sort/imports": "error",
+
+    // Require explicit return types on functions and class methods.
+    "@typescript-eslint/explicit-function-return-type": "error",
+
+    // ***** Promises *****
+    // Disallow awaiting a value that is not a Thenable.
+    "@typescript-eslint/await-thenable": "error",
+    // Disallow async functions which have no `await` expression.
+    "@typescript-eslint/require-await": "error",
+    // Enforce consistent returning of awaited values.
+    "@typescript-eslint/return-await": "error",
+    // Require Promise-like statements to be handled appropriately.
+    "@typescript-eslint/no-floating-promises": ["error"],
+    // Require any function or method that returns a Promise to be marked async.
+    "@typescript-eslint/promise-function-async": ["error"],
+
+    "@typescript-eslint/prefer-readonly": "error"
   }
 }

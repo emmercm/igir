@@ -11,12 +11,12 @@ import Parent from './parent.js';
  */
 export default class DAT {
   @Type(() => Header)
-  private readonly header!: Header;
+  private readonly header: Header;
 
   @Type(() => Game)
-  private readonly game!: Game | Game[];
+  private readonly game: Game | Game[];
 
-  private gameNamesToParents!: Map<string, Parent>;
+  private readonly gameNamesToParents: Map<string, Parent> = new Map();
 
   constructor(header: Header, games: Game[]) {
     this.header = header;
@@ -33,7 +33,6 @@ export default class DAT {
 
   private generateGameNamesToParents(): DAT {
     // Find all parents
-    this.gameNamesToParents = new Map<string, Parent>();
     this.getGames().forEach((game: Game) => {
       if (game.isParent()) {
         this.gameNamesToParents.set(game.getName(), new Parent(game.getName(), game));
@@ -59,12 +58,8 @@ export default class DAT {
     return this.header;
   }
 
-  getName(): string {
-    return this.getHeader().getName();
-  }
-
   getGames(): Game[] {
-    if (this.game instanceof Array) {
+    if (Array.isArray(this.game)) {
       return this.game;
     } if (this.game) {
       return [this.game];
@@ -78,29 +73,29 @@ export default class DAT {
 
   // Computed getters
 
+  getName(): string {
+    return this.getHeader().getName();
+  }
+
   getNameShort(): string {
     return this.getName()
-    // Prefixes
+      // Prefixes
       .replace('Non-Redump', '')
       .replace('Source Code', '')
       .replace('Unofficial', '')
-    // Suffixes
+      // Suffixes
       .replace('Datfile', '')
-      .replace('(BigEndian)', '')
       .replace('(CDN)', '')
-      .replace('(Decrypted)', '')
       .replace('(Deprecated)', '')
       .replace('(Digital)', '')
       .replace('(Download Play)', '')
-      .replace('(Headered)', '')
       .replace('(Misc)', '')
-      // .replace('(Multiboot)', '')
       .replace(/\(Parent-Clone\)/g, '')
       .replace('(PSN)', '')
       .replace('(Split DLC)', '')
       .replace('(WAD)', '')
       .replace('(WIP)', '')
-    // Cleanup
+      // Cleanup
       .replace(/^[ -]+/, '')
       .replace(/[ -]+$/, '')
       .replace(/  +/g, ' ')

@@ -50,10 +50,10 @@ export interface GameProps {
 
 export default class Game implements GameProps {
   @Expose({ name: 'name' })
-  readonly name!: string;
+  readonly name: string;
 
   @Expose({ name: 'description' })
-  readonly description!: string;
+  readonly description: string;
 
   @Expose({ name: 'sourcefile' })
   readonly sourceFile?: string;
@@ -83,22 +83,22 @@ export default class Game implements GameProps {
   readonly manufacturer?: string;
 
   @Type(() => Release)
-  readonly release!: Release | Release[];
+  readonly release: Release | Release[];
 
   @Type(() => BIOSSet)
-  readonly biosSet!: BIOSSet | BIOSSet[];
+  readonly biosSet: BIOSSet | BIOSSet[];
 
   @Type(() => ROM)
-  readonly rom!: ROM | ROM[];
+  readonly rom: ROM | ROM[];
 
   @Type(() => Disk)
-  readonly disk!: Disk | Disk[];
+  readonly disk: Disk | Disk[];
 
   @Type(() => Sample)
-  readonly sample!: Sample | Sample[];
+  readonly sample: Sample | Sample[];
 
   @Type(() => Archive)
-  readonly archive!: Archive | Archive[];
+  readonly archive: Archive | Archive[];
 
   constructor(options?: GameProps) {
     this.name = options?.name || '';
@@ -131,7 +131,7 @@ export default class Game implements GameProps {
   }
 
   getReleases(): Release[] {
-    if (this.release instanceof Array) {
+    if (Array.isArray(this.release)) {
       return this.release;
     } if (this.release) {
       return [this.release];
@@ -140,7 +140,7 @@ export default class Game implements GameProps {
   }
 
   getRoms(): ROM[] {
-    if (this.rom instanceof Array) {
+    if (Array.isArray(this.rom)) {
       return this.rom;
     } if (this.rom) {
       return [this.rom];

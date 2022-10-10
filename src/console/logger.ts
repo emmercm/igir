@@ -73,7 +73,8 @@ export default class Logger {
     const logoSplit = logo.split('\n');
     const midLine = Math.min(Math.ceil(logoSplit.length / 2), logoSplit.length - 1);
     const maxLineLen = logoSplit.reduce((max, line) => Math.max(max, line.length), 0);
-    logoSplit[midLine] = `${logoSplit[midLine].padEnd(maxLineLen, ' ')}   ROM collection manager`;
+    logoSplit[midLine - 1] = `${logoSplit[midLine - 1].padEnd(maxLineLen, ' ')}   ROM collection manager`;
+    logoSplit[midLine + 1] = `${logoSplit[midLine + 1].padEnd(maxLineLen, ' ')}   v${Constants.COMMAND_VERSION}`;
 
     this.print(LogLevel.ALWAYS, `${logoSplit.join('\n')}\n\n`);
   }

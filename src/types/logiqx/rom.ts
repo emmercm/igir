@@ -7,10 +7,10 @@ import File from '../files/file.js';
  */
 export default class ROM {
   @Expose({ name: 'name' })
-  private readonly name!: string;
+  private readonly name: string;
 
   @Expose({ name: 'size' })
-  private readonly size!: number;
+  private readonly size: number;
 
   @Expose({ name: 'crc' })
   private readonly crc?: string;
@@ -30,13 +30,18 @@ export default class ROM {
   @Expose({ name: 'date' })
   private readonly date?: string;
 
-  constructor(name: string, crc: string) {
+  constructor(name: string, size: number, crc: string) {
     this.name = name;
+    this.size = size;
     this.crc = crc;
   }
 
   getName(): string {
     return this.name;
+  }
+
+  getSize(): number {
+    return this.size;
   }
 
   getCrc32(): string {
@@ -51,7 +56,17 @@ export default class ROM {
     return this.md5 ? this.md5.replace(/^0x/, '').padStart(32, '0') : '';
   }
 
-  toFile(): File {
-    return new File(this.getName(), this.getCrc32());
+  async toFile(): Promise<File> {
+    return File.fileOf(this.getName(), this.getSize(), this.getCrc32());
+  }
+
+  /** *************************
+   *                          *
+   *     Pseudo Built-Ins     *
+   *                          *
+   ************************** */
+
+  hashCode(): string {
+    return File.hashCode(this.getCrc32(), this.getSize());
   }
 }

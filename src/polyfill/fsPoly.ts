@@ -1,3 +1,4 @@
+import crypto from 'crypto';
 import fs, { PathLike, promises as fsPromises, RmOptions } from 'fs';
 import { isNotJunk } from 'junk';
 import os from 'os';
@@ -17,16 +18,35 @@ export default class FsPoly {
     }
   }
 
-  /**
-   * Some CI such as GitHub Actions give `EACCES: permission denied` on os.tmpdir()
-   */
-  static mkdtempSync(): string {
+  static mktempSync(prefix: string): string {
+    /* eslint-disable no-constant-condition */
+    while (true) {
+      const randomExtension = crypto.randomBytes(4).readUInt32LE(0).toString(36);
+      const filePath = `${prefix.replace(/\.+$/, '')}.${randomExtension}`;
+      if (!fs.existsSync(filePath)) {
+        return filePath;
+      }
+    }
+  }
+
+  static mkdtempSync(prefix = os.tmpdir()): string {
+    // mkdtempSync takes a string prefix rather than a file path, so we need to make sure the
+    //  prefix ends with the path separator in order for it to become a parent directory.
+    let prefixProcessed = prefix.replace(/[\\/]+$/, '');
+    try {
+      if (fs.lstatSync(prefixProcessed).isDirectory()) {
+        prefixProcessed += path.sep;
+      }
+    } catch (e) {
+      // eslint-disable-line no-empty
+    }
+
     try {
       // Added in: v5.10.0
-      return fs.mkdtempSync(os.tmpdir());
+      return fs.mkdtempSync(prefixProcessed);
     } catch (e) {
       // Added in: v5.10.0
-      return fs.mkdtempSync(path.join(process.cwd(), 'tmp'));
+      return fs.mkdtempSync(path.join(process.cwd(), 'tmp') + path.sep);
     }
   }
 
@@ -34,12 +54,17 @@ export default class FsPoly {
    * fs.rm() was added in: v14.14.0
    * fsPromises.rm() was added in: v14.14.0
    */
-  static async rm(pathLike: PathLike, options?: RmOptions): Promise<void> {
+  static async rm(pathLike: PathLike, options: RmOptions = {}): Promise<void> {
+    const optionsWithRetry = {
+      maxRetries: 2,
+      ...options,
+    };
+
     try {
       // Added in: v10.0.0
       await fsPromises.access(pathLike); // throw if file doesn't exist
     } catch (e) {
-      if (options?.force) {
+      if (optionsWithRetry?.force) {
         return;
       }
       throw e;
@@ -47,8 +72,17 @@ export default class FsPoly {
 
     // Added in: v10.0.0
     if ((await fsPromises.lstat(pathLike)).isDirectory()) {
-      // Added in: v10.0.0
-      await fsPromises.rmdir(pathLike, options);
+      // DEP0147
+      if (semver.lt(process.version, '16.0.0')) {
+        // Added in: v10.0.0
+        await fsPromises.rmdir(pathLike, optionsWithRetry);
+      } else {
+        // Added in: v14.14.0
+        await fsPromises.rm(pathLike, {
+          ...optionsWithRetry,
+          recursive: true,
+        });
+      }
     } else {
       // Added in: v10.0.0
       await fsPromises.unlink(pathLike);
@@ -58,12 +92,17 @@ export default class FsPoly {
   /**
    * fs.rmSync() was added in: v14.14.0
    */
-  static rmSync(pathLike: PathLike, options?: RmOptions): void {
+  static rmSync(pathLike: PathLike, options: RmOptions = {}): void {
+    const optionsWithRetry = {
+      maxRetries: 2,
+      ...options,
+    };
+
     try {
       // Added in: v0.11.15
       fs.accessSync(pathLike); // throw if file doesn't exist
     } catch (e) {
-      if (options?.force) {
+      if (optionsWithRetry?.force) {
         return;
       }
       throw e;
@@ -74,10 +113,13 @@ export default class FsPoly {
       // DEP0147
       if (semver.lt(process.version, '16.0.0')) {
         // Added in: v0.1.21
-        fs.rmdirSync(pathLike, options);
+        fs.rmdirSync(pathLike, optionsWithRetry);
       } else {
         // Added in: v14.14.0
-        fs.rmSync(pathLike, { recursive: true, force: true });
+        fs.rmSync(pathLike, {
+          ...optionsWithRetry,
+          recursive: true,
+        });
       }
     } else {
       // Added in: v0.1.21
@@ -85,9 +127,20 @@ export default class FsPoly {
     }
   }
 
-  /**
-   * Technically not a polyfill, but a function that should exist in the stdlib
-   */
+  static async touch(filePath: string): Promise<void> {
+    const dirname = path.dirname(filePath);
+    if (!await this.exists(dirname)) {
+      await fsPromises.mkdir(dirname, { recursive: true });
+    }
+
+    const time = new Date();
+    try {
+      await fsPromises.utimes(filePath, time, time);
+    } catch (e) {
+      await (await fsPromises.open(filePath, 'a')).close();
+    }
+  }
+
   static walkSync(pathLike: PathLike): string[] {
     const output = [];
 
@@ -107,9 +160,6 @@ export default class FsPoly {
       .filter((filePath) => isNotJunk(path.basename(filePath)));
   }
 
-  /**
-   * Technically not a polyfill, but a function that should exist in the stdlib
-   */
   static copyDirSync(src: string, dest: string): void {
     fs.mkdirSync(dest, { recursive: true });
     const entries = fs.readdirSync(src, { withFileTypes: true });
@@ -126,5 +176,22 @@ export default class FsPoly {
         fs.copyFileSync(srcPath, destPath);
       }
     }
+  }
+
+  static makeLegal(filePath: string, pathSep = path.sep): string {
+    let replaced = filePath
+      // Make the filename Windows legal
+      .replace(/:/g, ';')
+      // Make the filename everything else legal
+      .replace(/[<>:"|?*]/g, '_')
+      // Normalize the path separators
+      .replace(/[\\/]/g, pathSep);
+
+    // Fix Windows drive letter
+    if (replaced.match(/^[a-z];[\\/]/i) !== null) {
+      replaced = replaced.replace(/^([a-z]);\\/i, '$1:\\');
+    }
+
+    return replaced;
   }
 }
