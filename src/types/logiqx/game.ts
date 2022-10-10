@@ -208,4 +208,13 @@ export default class Game implements GameProps {
   getParent(): string {
     return this.cloneOf || this.romOf || this.sampleOf || '';
   }
+
+  equals(other: Game): boolean {
+    if (this === other) {
+      return true;
+    }
+    return this.getName() === other.getName()
+      && this.getReleases().length === other.getReleases().length
+      && this.getRoms().length === other.getRoms().length;
+  }
 }
