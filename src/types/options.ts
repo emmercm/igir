@@ -13,6 +13,7 @@ import LogLevel from '../console/logLevel.js';
 import Constants from '../constants.js';
 import fsPoly from '../polyfill/fsPoly.js';
 import DAT from './logiqx/dat.js';
+import Game from './logiqx/game.js';
 
 export interface OptionsProps {
   readonly commands?: string[],
@@ -284,7 +285,7 @@ export default class Options implements OptionsProps {
       .filter((inputPath, idx, arr) => arr.indexOf(inputPath) === idx);
   }
 
-  getOutput(dat?: DAT, inputRomPath?: string, romName?: string): string {
+  getOutput(dat?: DAT, inputRomPath?: string, game?: Game, romName?: string): string {
     let output = this.shouldWrite() ? this.output : Constants.GLOBAL_TEMP_DIR;
     if (this.getDirMirror() && inputRomPath) {
       const mirroredDir = path.dirname(inputRomPath)
@@ -307,7 +308,9 @@ export default class Options implements OptionsProps {
       output = path.join(output, letter);
     }
 
-    // TODO(cemmer): if the ROM has multiple files (e.g. cue/bin) then put it in a folder
+    if (game && game.getRoms().length > 1) {
+      output = path.join(output, game.getName());
+    }
 
     if (romName) {
       output = path.join(output, romName);
