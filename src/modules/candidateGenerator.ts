@@ -149,7 +149,12 @@ export default class CandidateGenerator {
 
   private async getOutputFile(dat: DAT, game: Game, rom: ROM, inputFile: File): Promise<File> {
     if (this.options.shouldZip(rom.getName())) {
-      const outputFilePath = this.options.getOutput(dat, inputFile.getFilePath(), `${game.getName()}.zip`);
+      const outputFilePath = this.options.getOutput(
+        dat,
+        inputFile.getFilePath(),
+        undefined,
+        `${game.getName()}.zip`,
+      );
       const entryPath = rom.getName();
       return ArchiveEntry.entryOf(
         new Zip(outputFilePath),
@@ -158,7 +163,12 @@ export default class CandidateGenerator {
         inputFile.getCrc32(),
       );
     }
-    const outputFilePath = this.options.getOutput(dat, inputFile.getFilePath(), rom.getName());
+    const outputFilePath = this.options.getOutput(
+      dat,
+      inputFile.getFilePath(),
+      game,
+      rom.getName(),
+    );
     return File.fileOf(
       outputFilePath,
       inputFile.getSize(),
