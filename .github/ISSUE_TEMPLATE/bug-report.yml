@@ -1,0 +1,73 @@
+# https://docs.github.com/en/communities/using-templates-to-encourage-useful-issues-and-pull-requests/configuring-issue-templates-for-your-repository#creating-issue-forms
+# https://github.com/aio-libs/aiohttp/blob/master/.github/ISSUE_TEMPLATE/bug_report.yml
+name: 🐞 Bug Report
+description: Create a report to help us improve.
+labels: ["bug"]
+assignees:
+  - emmercm
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to fill out this bug report!
+
+        _Please fill out the form below with as many precise details as possible._
+
+  - type: textarea
+    attributes:
+      label: Paste the command
+      description: |
+        The exact command you ran when you experienced a bug.
+    validations:
+      required: true
+
+  - type: textarea
+    attributes:
+      label: Describe the bug
+      description: |
+        A clear and concise description of what the bug is.
+    validations:
+      required: true
+
+  - type: textarea
+    attributes:
+      label: Expected behavior
+      description: |
+        A clear and concise description of what you expected to happen.
+    validations:
+      required: true
+
+  - type: textarea
+    attributes:
+      label: Debug logs
+      description: |
+        The debug logs of the command run with the `-vv` flag.
+    validations:
+      required: true
+
+  - type: input
+    attributes:
+      label: igir version
+      description: What version of igir are you running? This visible in the output header.
+    validations:
+      required: true
+
+  - type: input
+    attributes:
+      label: Node.js version
+      description: What version of Node.js are you running? This can be seen with the `node --version` command.
+    validations:
+      required: true
+
+  - type: input
+    attributes:
+      label: Operating system
+      description: What operating system are you running?
+    validations:
+      required: true
+
+  - type: textarea
+    attributes:
+      label: Additional context
+      description: |
+        Add any other context about the problem here.
