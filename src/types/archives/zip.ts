@@ -124,7 +124,10 @@ export default class Zip extends Archive {
     });
   }
 
-  async archiveEntries(inputToOutput: Map<File, ArchiveEntry<Zip>>): Promise<void> {
+  async archiveEntries(
+    inputToOutput: Map<File, ArchiveEntry<Zip>>,
+    removeHeader: boolean,
+  ): Promise<void> {
     const zipFile = new yazl.ZipFile();
 
     // Pipe the zip contents to disk, using an intermediate temp file because we may be trying to
@@ -149,7 +152,7 @@ export default class Zip extends Archive {
 
           // Leave the stream open until we're done writing the zip
           await zipClosed;
-        }));
+        }, removeHeader));
 
     // Wait until all archive entries have been enqueued
     await new Promise<void>((resolve) => {

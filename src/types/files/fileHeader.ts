@@ -16,7 +16,7 @@ export default class FileHeader {
     'No-Intro_FDS.xml': new FileHeader(0, '464453', 16, '.fds'),
 
     // https://en.wikibooks.org/wiki/Super_NES_Programming/SNES_memory_map#The_SNES_header
-    SMC: new FileHeader(3, '00'.repeat(509), 512, '.smc'),
+    SMC: new FileHeader(3, '00'.repeat(509), 512, '.smc', '.sfc'),
   };
 
   private static readonly MAX_HEADER_LENGTH_BYTES = Object.values(FileHeader.HEADERS)
@@ -31,18 +31,22 @@ export default class FileHeader {
 
   readonly dataOffsetBytes: number;
 
-  readonly fileExtension: string;
+  readonly headeredFileExtension: string;
+
+  readonly strippedFileExtension: string;
 
   private constructor(
     headerOffsetBytes: number,
     headerValue: string,
     dataOffset: number,
-    fileExtension: string,
+    headeredFileExtension: string,
+    strippedFileExtension?: string,
   ) {
     this.headerOffsetBytes = headerOffsetBytes;
     this.headerValue = headerValue;
     this.dataOffsetBytes = dataOffset;
-    this.fileExtension = fileExtension;
+    this.headeredFileExtension = headeredFileExtension;
+    this.strippedFileExtension = strippedFileExtension || headeredFileExtension;
   }
 
   static getForName(headerName: string): FileHeader | undefined {
@@ -53,7 +57,7 @@ export default class FileHeader {
     const headers = Object.values(this.HEADERS);
     for (let i = 0; i < headers.length; i += 1) {
       const header = headers[i];
-      if (header.fileExtension.toLowerCase() === path.extname(filePath).toLowerCase()) {
+      if (header.headeredFileExtension.toLowerCase() === path.extname(filePath).toLowerCase()) {
         return header;
       }
     }

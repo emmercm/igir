@@ -91,11 +91,19 @@ export default class ArchiveEntry<A extends Archive> extends File {
     }
   }
 
-  async extractToStream<T>(callback: (stream: Readable) => (T | Promise<T>)): Promise<T> {
-    // Don't extract to memory if this archive entry size is too large
-    if (this.getSize() > Constants.MAX_STREAM_EXTRACTION_SIZE) {
+  async extractToStream<T>(
+    callback: (stream: Readable) => (T | Promise<T>),
+    removeHeader = false,
+  ): Promise<T> {
+    const start = removeHeader && this.getFileHeader()
+      ? this.getFileHeader()?.dataOffsetBytes || 0
+      : 0;
+
+    // Don't extract to memory if this archive entry size is too large, or if we need to manipulate
+    // the stream start point
+    if (this.getSize() > Constants.MAX_STREAM_EXTRACTION_SIZE || start > 0) {
       return this.extractToFile(async (localFile) => {
-        const stream = fs.createReadStream(localFile);
+        const stream = fs.createReadStream(localFile, { start });
         const result = await callback(stream);
         stream.destroy();
         return result;
