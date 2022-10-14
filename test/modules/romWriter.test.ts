@@ -5,9 +5,11 @@ import path from 'path';
 
 import Constants from '../../src/constants.js';
 import CandidateGenerator from '../../src/modules/candidateGenerator.js';
+import HeaderProcessor from '../../src/modules/headerProcessor.js';
 import ROMScanner from '../../src/modules/romScanner.js';
 import ROMWriter from '../../src/modules/romWriter.js';
 import fsPoly from '../../src/polyfill/fsPoly.js';
+import ArchiveFactory from '../../src/types/archives/archiveFactory.js';
 import File from '../../src/types/files/file.js';
 import DAT from '../../src/types/logiqx/dat.js';
 import Game from '../../src/types/logiqx/game.js';
@@ -111,6 +113,18 @@ async function romScanner(
     }, new Map<string, File[]>());
 }
 
+async function headerProcessor(
+  options: Options,
+  gameNameToFiles: Map<string, File[]>,
+): Promise<Map<string, File[]>> {
+  return new Map(await Promise.all([...gameNameToFiles.entries()]
+    .map(async ([gameName, files]): Promise<[string, File[]]> => {
+      const headeredFiles = await new HeaderProcessor(options, new ProgressBarFake())
+        .process(files);
+      return [gameName, headeredFiles];
+    })));
+}
+
 async function candidateGenerator(
   options: Options,
   dat: DAT,
@@ -134,7 +148,8 @@ async function romWriter(
   });
   const gameNameToFiles = await romScanner(options, inputTemp, inputGlob);
   const dat = datScanner(gameNameToFiles);
-  const candidates = await candidateGenerator(options, dat, gameNameToFiles);
+  const gameNamesToHeaderedFiles = await headerProcessor(options, gameNameToFiles);
+  const candidates = await candidateGenerator(options, dat, gameNamesToHeaderedFiles);
 
   // When
   await new ROMWriter(options, new ProgressBarFake()).write(dat, candidates);
@@ -282,8 +297,63 @@ describe('zip', () => {
   });
 
   test.each([
+    // Control group
+    ['raw/empty.rom', 'empty.rom', '00000000'],
+    ['raw/fizzbuzz.nes', 'fizzbuzz.nes', '370517b5'],
+    ['raw/foobar.lnx', 'foobar.lnx', 'b22c9747'],
+    ['raw/loremipsum.rom', 'loremipsum.rom', '70856527'],
+    // Headered files
+    ['headered/allpads.nes', 'allpads.nes', '9180a163'],
+    ['headered/diagnostic_test_cartridge.a78.7z', 'diagnostic_test_cartridge.a78', 'f6cc9b1c'],
+    ['headered/fds_joypad_test.fds.zip', 'fds_joypad_test.fds', '1e58456d'],
+    ['headered/LCDTestROM.lnx.rar', 'LCDTestROM.lnx', '2d251538'],
+    ['headered/speed_test_v51.smc', 'speed_test_v51.smc', '9adca6cc'],
+    ['unheadered/speed_test_v51.sfc.gz', 'speed_test_v51.sfc', '8beffd94'],
+  ])('should not remove headers if not requested: %s', async (inputGlob, expectedFileName, expectedCrc) => {
+    await copyFixturesToTemp(async (inputTemp, outputTemp) => {
+      const options = new Options({ commands: ['copy', 'zip', 'test'] });
+      const outputFiles = (await romWriter(options, inputTemp, inputGlob, outputTemp));
+      expect(outputFiles).toHaveLength(1);
+      const archive = ArchiveFactory.archiveFrom(path.join(outputTemp, outputFiles[0][0]));
+      const archiveEntries = await archive.getArchiveEntries();
+      expect(archiveEntries).toHaveLength(1);
+      expect(archiveEntries[0].getEntryPath()).toEqual(expectedFileName);
+      expect(archiveEntries[0].getCrc32()).toEqual(expectedCrc);
+    });
+  });
+
+  test.each([
+    // Control group
+    ['raw/empty.rom', 'empty.rom', '00000000'],
+    ['raw/fizzbuzz.nes', 'fizzbuzz.nes', '370517b5'],
+    ['raw/foobar.lnx', 'foobar.lnx', 'b22c9747'],
+    ['raw/loremipsum.rom', 'loremipsum.rom', '70856527'],
+    // Headered files
+    ['headered/allpads.nes', 'allpads.nes', '6339abe6'],
+    ['headered/diagnostic_test_cartridge.a78.7z', 'diagnostic_test_cartridge.a78', 'a1eaa7c1'],
+    ['headered/fds_joypad_test.fds.zip', 'fds_joypad_test.fds', '3ecbac61'],
+    ['headered/LCDTestROM.lnx.rar', 'LCDTestROM.lyx', '42583855'],
+    ['headered/speed_test_v51.smc', 'speed_test_v51.sfc', '8beffd94'],
+    ['unheadered/speed_test_v51.sfc.gz', 'speed_test_v51.sfc', '8beffd94'],
+  ])('should remove headers if requested: %s', async (inputGlob, expectedFileName, expectedCrc) => {
+    await copyFixturesToTemp(async (inputTemp, outputTemp) => {
+      const options = new Options({
+        commands: ['copy', 'zip', 'test'],
+        removeHeaders: ['.nes', '.a78', '.fds', '.lnx', '.smc'],
+      });
+      const outputFiles = (await romWriter(options, inputTemp, inputGlob, outputTemp));
+      expect(outputFiles).toHaveLength(1);
+      const archive = ArchiveFactory.archiveFrom(path.join(outputTemp, outputFiles[0][0]));
+      const archiveEntries = await archive.getArchiveEntries();
+      expect(archiveEntries).toHaveLength(1);
+      expect(archiveEntries[0].getEntryPath()).toEqual(expectedFileName);
+      expect(archiveEntries[0].getCrc32()).toEqual(expectedCrc);
+    });
+  });
+
+  test.each([
     [
-      '**/!(headered)/*',
+      '**/!(*headered)/*',
       ['empty.zip', 'fizzbuzz.zip', 'foobar.zip', 'loremipsum.zip', 'one.zip', 'onetwothree.zip', 'three.zip', 'two.zip', 'unknown.zip'],
     ],
     [
@@ -327,7 +397,7 @@ describe('zip', () => {
 
   test.each([
     [
-      '**/!(headered)/*',
+      '**/!(*headered)/*',
       ['empty.zip', 'fizzbuzz.zip', 'foobar.zip', 'loremipsum.zip', 'one.zip', 'onetwothree.zip', 'three.zip', 'two.zip', 'unknown.zip'],
       ['raw/empty.rom', 'raw/fizzbuzz.nes', 'raw/foobar.lnx', 'raw/loremipsum.rom', 'raw/one.rom', 'raw/three.rom', 'raw/two.rom', 'raw/unknown.rom'],
     ],
@@ -478,8 +548,59 @@ describe('raw', () => {
   });
 
   test.each([
+    // Control group
+    ['raw/empty.rom', 'empty.rom', '00000000'],
+    ['raw/fizzbuzz.nes', 'fizzbuzz.nes', '370517b5'],
+    ['raw/foobar.lnx', 'foobar.lnx', 'b22c9747'],
+    ['raw/loremipsum.rom', 'loremipsum.rom', '70856527'],
+    // Headered files
+    ['headered/allpads.nes', 'allpads.nes', '9180a163'],
+    ['headered/diagnostic_test_cartridge.a78.7z', 'diagnostic_test_cartridge.a78', 'f6cc9b1c'],
+    ['headered/fds_joypad_test.fds.zip', 'fds_joypad_test.fds', '1e58456d'],
+    ['headered/LCDTestROM.lnx.rar', 'LCDTestROM.lnx', '2d251538'],
+    ['headered/speed_test_v51.smc', 'speed_test_v51.smc', '9adca6cc'],
+    ['unheadered/speed_test_v51.sfc.gz', 'speed_test_v51.sfc', '8beffd94'],
+  ])('should not remove headers if not requested: %s', async (inputGlob, expectedFileName, expectedCrc) => {
+    await copyFixturesToTemp(async (inputTemp, outputTemp) => {
+      const options = new Options({ commands: ['copy', 'test'] });
+      const outputFiles = (await romWriter(options, inputTemp, inputGlob, outputTemp));
+      expect(outputFiles).toHaveLength(1);
+      expect(outputFiles[0][0]).toEqual(expectedFileName);
+      const outputFile = await File.fileOf(path.join(outputTemp, outputFiles[0][0]));
+      expect(outputFile.getCrc32()).toEqual(expectedCrc);
+    });
+  });
+
+  test.each([
+    // Control group
+    ['raw/empty.rom', 'empty.rom', '00000000'],
+    ['raw/fizzbuzz.nes', 'fizzbuzz.nes', '370517b5'],
+    ['raw/foobar.lnx', 'foobar.lnx', 'b22c9747'],
+    ['raw/loremipsum.rom', 'loremipsum.rom', '70856527'],
+    // Headered files
+    ['headered/allpads.nes', 'allpads.nes', '6339abe6'],
+    ['headered/diagnostic_test_cartridge.a78.7z', 'diagnostic_test_cartridge.a78', 'a1eaa7c1'],
+    ['headered/fds_joypad_test.fds.zip', 'fds_joypad_test.fds', '3ecbac61'],
+    ['headered/LCDTestROM.lnx.rar', 'LCDTestROM.lyx', '42583855'],
+    ['headered/speed_test_v51.smc', 'speed_test_v51.sfc', '8beffd94'],
+    ['unheadered/speed_test_v51.sfc.gz', 'speed_test_v51.sfc', '8beffd94'],
+  ])('should remove headers if requested: %s', async (inputGlob, expectedFileName, expectedCrc) => {
+    await copyFixturesToTemp(async (inputTemp, outputTemp) => {
+      const options = new Options({
+        commands: ['copy', 'test'],
+        removeHeaders: ['.nes', '.a78', '.fds', '.lnx', '.smc'],
+      });
+      const outputFiles = (await romWriter(options, inputTemp, inputGlob, outputTemp));
+      expect(outputFiles).toHaveLength(1);
+      expect(outputFiles[0][0]).toEqual(expectedFileName);
+      const outputFile = await File.fileOf(path.join(outputTemp, outputFiles[0][0]));
+      expect(outputFile.getCrc32()).toEqual(expectedCrc);
+    });
+  });
+
+  test.each([
     [
-      '**/!(headered)/*',
+      '**/!(*headered)/*',
       ['empty.rom', 'fizzbuzz.nes', 'foobar.lnx', 'loremipsum.rom', 'one.rom', path.join('onetwothree', 'one.rom'), path.join('onetwothree', 'three.rom'), path.join('onetwothree', 'two.rom'), 'three.rom', 'two.rom', 'unknown.rom'],
     ],
     [
@@ -523,7 +644,7 @@ describe('raw', () => {
 
   test.each([
     [
-      '**/!(headered)/*',
+      '**/!(*headered)/*',
       ['empty.rom', 'fizzbuzz.nes', 'foobar.lnx', 'loremipsum.rom', 'one.rom', path.join('onetwothree', 'one.rom'), path.join('onetwothree', 'three.rom'), path.join('onetwothree', 'two.rom'), 'three.rom', 'two.rom', 'unknown.rom'],
       ['raw/empty.rom', 'raw/fizzbuzz.nes', 'raw/foobar.lnx', 'raw/loremipsum.rom', 'raw/one.rom', 'raw/three.rom', 'raw/two.rom', 'raw/unknown.rom'],
     ],
