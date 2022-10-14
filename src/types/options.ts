@@ -27,7 +27,7 @@ export interface OptionsProps {
   readonly dirLetter?: boolean,
   readonly single?: boolean,
   readonly zipExclude?: string,
-  readonly removeHeader?: boolean,
+  readonly removeHeaders?: boolean,
   readonly overwrite?: boolean,
   readonly preferGood?: boolean,
   readonly preferLanguage?: string[],
@@ -78,7 +78,7 @@ export default class Options implements OptionsProps {
 
   readonly zipExclude: string;
 
-  readonly removeHeader: boolean;
+  readonly removeHeaders: boolean;
 
   readonly overwrite: boolean;
 
@@ -140,7 +140,7 @@ export default class Options implements OptionsProps {
     this.dirLetter = options?.dirLetter || false;
     this.single = options?.single || false;
     this.zipExclude = options?.zipExclude || '';
-    this.removeHeader = options?.removeHeader || false;
+    this.removeHeaders = options?.removeHeaders || false;
     this.overwrite = options?.overwrite || false;
     this.preferGood = options?.preferGood || false;
     this.preferLanguage = options?.preferLanguage || [];
@@ -362,8 +362,8 @@ export default class Options implements OptionsProps {
     return this.zipExclude;
   }
 
-  getRemoveHeader(): boolean {
-    return this.removeHeader;
+  getRemoveHeaders(): boolean {
+    return this.removeHeaders;
   }
 
   getOverwrite(): boolean {

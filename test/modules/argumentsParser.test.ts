@@ -65,7 +65,7 @@ describe('options', () => {
     expect(options.getDirDatName()).toEqual(false);
     expect(options.getDirLetter()).toEqual(false);
     expect(options.getSingle()).toEqual(false);
-    expect(options.getRemoveHeader()).toEqual(false);
+    expect(options.getRemoveHeaders()).toEqual(false);
     expect(options.getOverwrite()).toEqual(false);
     expect(options.getPreferGood()).toEqual(false);
     expect(options.getPreferLanguages().length).toBe(0);
@@ -187,13 +187,13 @@ describe('options', () => {
     expect(argumentsParser.parse(['zip', '--input', os.devNull, '--output', os.devNull, '--zip-exclude', '**/*.rom']).shouldZip(filePath)).toEqual(false);
   });
 
-  it('should parse "remove-header"', () => {
-    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--remove-header']).getRemoveHeader()).toEqual(true);
-    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--remove-header', 'true']).getRemoveHeader()).toEqual(true);
-    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--remove-header', 'false']).getRemoveHeader()).toEqual(false);
-    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--remove-header', '--remove-header']).getRemoveHeader()).toEqual(true);
-    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--remove-header', 'false', '--remove-header', 'true']).getRemoveHeader()).toEqual(true);
-    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--remove-header', 'true', '--remove-header', 'false']).getRemoveHeader()).toEqual(false);
+  it('should parse "remove-headers"', () => {
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--remove-headers']).getRemoveHeaders()).toEqual(true);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--remove-headers', 'true']).getRemoveHeaders()).toEqual(true);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--remove-headers', 'false']).getRemoveHeaders()).toEqual(false);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--remove-headers', '--remove-headers']).getRemoveHeaders()).toEqual(true);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--remove-headers', 'false', '--remove-headers', 'true']).getRemoveHeaders()).toEqual(true);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--remove-headers', 'true', '--remove-headers', 'false']).getRemoveHeaders()).toEqual(false);
   });
 
   it('should parse "overwrite"', () => {
