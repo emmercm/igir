@@ -364,14 +364,14 @@ export default class Options implements OptionsProps {
 
   canRemoveHeader(extension: string): boolean {
     if (this.removeHeaders === undefined) {
-      // Option wasn't provided, we should never remove headers
+      // Option wasn't provided, we shouldn't remove headers
       return false;
     }
     if (this.removeHeaders.length === 1 && this.removeHeaders[0] === '') {
-      // Option was provided without any extensions, we should remove all headers
+      // Option was provided without any extensions, we should remove headers from every file
       return true;
     }
-    // Option was provided with extensions, we should remove on match
+    // Option was provided with extensions, we should remove headers on name match
     return this.removeHeaders
       .some((removeHeader) => removeHeader.toLowerCase() === extension.toLowerCase());
   }
