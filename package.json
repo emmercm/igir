@@ -7,6 +7,7 @@
     "emulation",
     "logiqx",
     "no-intro",
+    "redump",
     "roms"
   ],
   "homepage": "https://github.com/emmercm/igir#readme",
@@ -44,7 +45,7 @@
     "bump:patch": "./node_modules/.bin/release-it patch --no-git --no-github && npm run update:readme",
     "update:readme": "./scripts/update-readme-help.sh",
     "release": "./node_modules/.bin/release-it --no-increment",
-    "prepack": "npm run build && npm run update:readme -- 70",
+    "prepack": "npm run build && npm run update:readme -- 72",
     "postpack": "npm run update:readme"
   },
   "dependencies": {
