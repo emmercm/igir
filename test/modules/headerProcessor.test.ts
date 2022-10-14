@@ -21,7 +21,7 @@ describe('extension has possible header', () => {
 
   it('should process headered files', async () => {
     const inputRomFiles = await new ROMScanner(new Options({
-      input: ['./test/fixtures/roms/headered/*{.a78,.lnx,.nes,.fds}*'],
+      input: ['./test/fixtures/roms/headered/*{.a78,.lnx,.nes,.fds,.smc}*'],
     }), new ProgressBarFake()).scan();
     expect(inputRomFiles.length).toBeGreaterThan(0);
 
@@ -55,7 +55,7 @@ describe('should read file for header', () => {
 
   it('should process headered files', async () => {
     const inputRomFiles = await new ROMScanner(new Options({
-      input: ['./test/fixtures/roms/headered/!(*{.a78,.lnx,.nes,.fds}*)'],
+      input: ['./test/fixtures/roms/headered/!(*{.a78,.lnx,.nes,.fds,.smc}*)'],
     }), new ProgressBarFake()).scan();
     expect(inputRomFiles.length).toBeGreaterThan(0);
 
