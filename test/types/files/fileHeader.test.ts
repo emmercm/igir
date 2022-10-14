@@ -30,6 +30,7 @@ describe('getForExtension', () => {
     'rom.lnx',
     'rom.nes',
     'rom.fds',
+    'rom.smc',
     'rom.zip.fds',
   ])('should get a file header for extension: %s', (filePath) => {
     const fileHeader = FileHeader.getForFilename(filePath);
@@ -53,7 +54,7 @@ describe('getForFileStream', () => {
     const headeredRoms = await new ROMScanner(new Options({
       input: ['./test/fixtures/roms/headered'],
     }), new ProgressBarFake()).scan();
-    expect(headeredRoms).toHaveLength(5);
+    expect(headeredRoms).toHaveLength(6);
 
     /* eslint-disable no-await-in-loop */
     for (let i = 0; i < headeredRoms.length; i += 1) {

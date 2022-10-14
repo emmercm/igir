@@ -14,6 +14,9 @@ export default class FileHeader {
 
     // https://www.nesdev.org/wiki/FDS_file_format
     'No-Intro_FDS.xml': new FileHeader(0, '464453', 16, '.fds'),
+
+    // https://en.wikibooks.org/wiki/Super_NES_Programming/SNES_memory_map#The_SNES_header
+    SMC: new FileHeader(3, '00'.repeat(509), 512, '.smc'),
   };
 
   private static readonly MAX_HEADER_LENGTH_BYTES = Object.values(FileHeader.HEADERS)

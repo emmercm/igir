@@ -121,6 +121,8 @@ build/
 *.gbc
 *.nes
 *.rom
+*.sfc
+*.smc
 *.zip
 
 # ROM pack excess
