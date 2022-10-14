@@ -7,23 +7,24 @@ import Archive from './archive.js';
 
 export default class SevenZip extends Archive {
   // p7zip `7za i`
+  // WARNING: tar+compression doesn't work, you'll be left with a tar file output
   static readonly SUPPORTED_EXTENSIONS = [
     '.7z', // 7z
-    '.bz2', '.bzip2', '.tbz2', '.tbz', // bzip2
+    '.bz2', '.bzip2', // bzip2
     '.cab', // cab
-    '.gz', '.gzip', '.tgz', '.tpz', // gzip
+    '.gz', '.gzip', // gzip
     '.lzma', // lzma
     '.lzma86', // lzma86
     '.pmd', // ppmd
     '.001', // split
     '.tar', '.ova', // tar
-    '.xz', '.txz', // xz
-    '.z', '.taz', // z
+    '.xz', // xz
+    '.z', // z
     '.zip', '.z01', '.zipx', // zip
-    '.zst', '.tzstd', // zstd
-    '.lz4', '.tlz4', // lz4
-    '.lz5', '.tlz5', // lz5
-    '.liz', '.tliz', // lizard
+    '.zst', // zstd
+    '.lz4', // lz4
+    '.lz5', // lz5
+    '.liz', // lizard
   ];
 
   private static readonly LIST_MUTEX = new Mutex();
@@ -63,8 +64,6 @@ export default class SevenZip extends Archive {
     tempDir: string,
     callback: (localFile: string) => (T | Promise<T>),
   ): Promise<T> {
-    const localFile = path.join(tempDir, entryPath);
-
     await new Promise<void>((resolve, reject) => {
       _7z.unpack(this.getFilePath(), tempDir, (err) => {
         if (err) {
@@ -75,6 +74,6 @@ export default class SevenZip extends Archive {
       });
     });
 
-    return callback(localFile);
+    return callback(path.join(tempDir, entryPath));
   }
 }
