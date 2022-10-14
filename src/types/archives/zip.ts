@@ -8,6 +8,7 @@ import yazl from 'yazl';
 import fsPoly from '../../polyfill/fsPoly.js';
 import ArchiveEntry from '../files/archiveEntry.js';
 import File from '../files/file.js';
+import Options from '../options.js';
 import Archive from './archive.js';
 
 export default class Zip extends Archive {
@@ -125,8 +126,8 @@ export default class Zip extends Archive {
   }
 
   async archiveEntries(
+    options: Options,
     inputToOutput: Map<File, ArchiveEntry<Zip>>,
-    removeHeader: boolean,
   ): Promise<void> {
     const zipFile = new yazl.ZipFile();
 
@@ -152,7 +153,7 @@ export default class Zip extends Archive {
 
           // Leave the stream open until we're done writing the zip
           await zipClosed;
-        }, removeHeader));
+        }, options.canRemoveHeader(path.extname(inputFile.getExtractedFilePath()))));
 
     // Wait until all archive entries have been enqueued
     await new Promise<void>((resolve) => {

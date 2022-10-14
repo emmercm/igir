@@ -150,13 +150,14 @@ export default class CandidateGenerator {
   }
 
   private async getOutputFile(dat: DAT, game: Game, rom: ROM, inputFile: File): Promise<File> {
-    // If we're removing headers and a certain file extension is forced, use it
     const { base, ...parsedPath } = path.parse(rom.getName());
-    if (parsedPath.ext
-      && this.options.getRemoveHeaders()
-      && inputFile.getFileHeader()?.unheaderedFileExtension
-    ) {
-      parsedPath.ext = inputFile.getFileHeader()?.unheaderedFileExtension as string;
+    if (parsedPath.ext && inputFile.getFileHeader()) {
+      // If the ROM has a header then we're going to ignore the file extension from the DAT
+      if (this.options.canRemoveHeader(parsedPath.ext)) {
+        parsedPath.ext = inputFile.getFileHeader()?.unheaderedFileExtension as string;
+      } else {
+        parsedPath.ext = inputFile.getFileHeader()?.headeredFileExtension as string;
+      }
     }
     const outputEntryPath = path.format(parsedPath);
 
