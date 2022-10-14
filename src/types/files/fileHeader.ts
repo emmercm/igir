@@ -33,20 +33,20 @@ export default class FileHeader {
 
   readonly headeredFileExtension: string;
 
-  readonly strippedFileExtension: string;
+  readonly unheaderedFileExtension?: string;
 
   private constructor(
     headerOffsetBytes: number,
     headerValue: string,
     dataOffset: number,
     headeredFileExtension: string,
-    strippedFileExtension?: string,
+    unheaderedFileExtension?: string,
   ) {
     this.headerOffsetBytes = headerOffsetBytes;
     this.headerValue = headerValue;
     this.dataOffsetBytes = dataOffset;
     this.headeredFileExtension = headeredFileExtension;
-    this.strippedFileExtension = strippedFileExtension || headeredFileExtension;
+    this.unheaderedFileExtension = unheaderedFileExtension;
   }
 
   static getForName(headerName: string): FileHeader | undefined {

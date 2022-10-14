@@ -174,6 +174,11 @@ export default class ArgumentsParser {
         coerce: ArgumentsParser.getLastValue, // don't allow string[] values
         requiresArg: true,
       })
+      .option('remove-headers', {
+        group: groupOutput,
+        description: 'Remove the header from ROM files if present',
+        type: 'boolean',
+      })
       .option('overwrite', {
         group: groupOutput,
         alias: 'O',
