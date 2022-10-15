@@ -22,7 +22,7 @@ export default abstract class Scanner {
   }
 
   protected async getFilesFromPaths(filePaths: string[], threads: number): Promise<File[]> {
-    return (await async.mapLimit(
+    const foundFiles = (await async.mapLimit(
       filePaths,
       threads,
       async (inputFile, callback: AsyncResultCallback<File[], Error>) => {
@@ -31,14 +31,18 @@ export default abstract class Scanner {
         callback(null, files);
       },
     ))
-      .flatMap((files) => files)
-      // Limit to unique files
+      .flatMap((files) => files);
+
+    // Limit to unique files
+    return [...foundFiles
       .sort(this.fileComparator.bind(this))
-      .filter((one, oneIdx, files) => files.findIndex((two) => {
-        const oneHashCodes = one.hashCodes();
-        const twoHashCodes = two.hashCodes();
-        return twoHashCodes.every((hashCode, hashIdx) => hashCode === oneHashCodes[hashIdx]);
-      }) === oneIdx);
+      .reduce((map, file) => {
+        const hashCodes = file.hashCodes().join(',');
+        if (!map.has(hashCodes)) {
+          map.set(hashCodes, file);
+        }
+        return map;
+      }, new Map<string, File>()).values()];
   }
 
   private async getFilesFromPath(filePath: string): Promise<File[]> {
