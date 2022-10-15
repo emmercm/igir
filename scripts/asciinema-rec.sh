@@ -2,6 +2,11 @@
 # @param {string=} $1 Script command: rec, play
 set -euo pipefail
 
+here="$(pwd)"
+# shellcheck disable=SC2064
+trap "cd \"${here}\"" EXIT
+cd "$(dirname "$0")/.."
+
 
 if [[ "${1:-}" == "play" ]]; then
   . demo-magic.sh
@@ -9,15 +14,15 @@ if [[ "${1:-}" == "play" ]]; then
   DEMO_PROMPT="$ "
   DEMO_CMD_COLOR="\033[1;37m"
   DEMO_COMMENT_COLOR="\033[0;90m"
-  npx() {
-    shift
-    npm exec -- . "$@"
-  }
   alias npx="npm exec -- ."
   # BEGIN PLAYBACK
 
-  # ts-node ./index.ts copy clean -d dats/ -i GB/ -o roms/ -D
+  # ts-node ./index.ts copy zip report clean -d demo/dats/ -i GB/ -i NES/ -o demo/roms/ -D
+  pei "ls -gn"
+  echo "" && sleep 1
   pei "npx igir@latest copy zip report --dat dats/ --input roms/ --output roms-sorted/ --dir-dat-name --only-retail"
+  echo "" && sleep 1
+  pei "ls -gn roms-sorted/"
 
   # END PLAYBACK
   exit 0
@@ -68,6 +73,8 @@ npm --version &> /dev/null || exit 1
 
 # Make sure we're using the latest version
 npm run build
+
+cd "demo"
 
 # Clean any previous output
 if [[ -d roms-sorted ]]; then

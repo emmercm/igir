@@ -51,7 +51,7 @@ Many different input archive types are supported for both ROMs and DATs: .001, .
 
 ## How do I run `igir`?
 
-With [![Node.js](https://badgen.net/npm/node/igir?icon=nodejs)](https://nodejs.org/en/download/) installed, run from the command line:
+With [![Node.js](https://badgen.net/npm/node/igir?icon=nodejs)](https://nodejs.org/en/download/) installed, run this from the command line:
 
 ```shell
 npx igir@latest [commands..] [options]
@@ -170,43 +170,13 @@ And some less popular release groups are:
 
 These catalogs help `igir` distinguish known ROM files in input directories from other files and helps generate reports on ROM collections.
 
-`igir` can currently process DAT files in the XML format only.
+`igir` can currently only process DAT files in the XML format.
 
 ## How do I obtain ROMs?
 
 Emulators are generally legal, as long as they don't include copyrighted software such as a console BIOS. Downloading ROM files that you do not own is piracy and is illegal in many countries.
 
-[Dumping.Guide](https://dumping.guide/start) and  [Emulation General Wiki](https://emulation.gametechwiki.com/index.php/Ripping_games) are some of the best resources for legally creating ROM files from games you own. Here is a condensed version that isn't guaranteed to be up-to-date:
-
-| Dumpable with special hardware | [Open Source Cartridge Reader](https://github.com/sanni/cartreader)<br/>([Save the Hero Builders](https://savethehero.builders/)) | [INLretro Dumper](https://www.infiniteneslives.com/inlretro.php) | [Retrode](https://www.retrode.com/)            | Other hardware                                             |
-|--------------------------------|-----------------------------------------------------------------------------------------------------------------------------------|------------------------------------------------------------------|------------------------------------------------|------------------------------------------------------------|
-| Nintendo - GB, GBC, GBA        | ✅                                                                                                                                 | ✅                                                                | ✅ (w/ adapter)                                 | [GB Operator](https://www.epilogue.co/product/gb-operator) |
-| Nintendo - NES/Famicom         | ✅ (V3 w/ adapter)                                                                                                                 | ✅                                                                | ❌                                              |                                                            |
-| Nintendo - Nintendo 64         | ✅ including controller pak saves (V3 w/ addon for EEPROM saves)                                                                   | ✅                                                                | ✅ including controller park saves (w/ adapter) |                                                            |
-| Nintendo - SNES/SFC            | ✅ (V3 w/ addon for some)                                                                                                          | ✅                                                                | ✅                                              |                                                            |
-| Sega - Game Gear               | ✅ (w/ Retrode Master System adapter)                                                                                              | ❌                                                                | ✅ (w/ Master System adapter)                   |                                                            |
-| Sega - Genesis/MD              | ✅                                                                                                                                 | ✅                                                                | ✅                                              |                                                            |
-| Sega - Master System           | ✅ (V3 w/ adapter)                                                                                                                 | ❌                                                                | ✅ (w/ adapter)                                 |                                                            |
-
-| Cartridge-based consoles | Software for native hardware                                                                                                                                                                                                    |
-|--------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| Nintendo - 3DS           | [GodMode9](https://github.com/d0k3/GodMode9)                                                                                                                                                                                    |
-| Nintendo - DS, DSi       | [GodMode9](https://github.com/d0k3/GodMode9) (w/ 3DS), [GodMode9i](https://github.com/DS-Homebrew/GodMode9i) (w/ DSi), [wooddumper](https://dumping.guide/carts/nintendo/ds#method_4_-_ds_console_via_slot-2_flashcart) (w/ DS) |
-| Nintendo - Famicom Disk  | [FDSStick](https://3dscapture.com/fdsstick/)                                                                                                                                                                                    |
-| Nintendo - Switch        | [nxdumptool](https://github.com/DarkMatterCore/nxdumptool/tree/main)                                                                                                                                                            |
-| Sony - PSP               | [PSP Filer](http://wiki.redump.org/index.php?title=PlayStation_Portable_Dumping_Guide)                                                                                                                                          |
-| Sony - PlayStation Vita  | [psvgamesd](https://github.com/motoharu-gosuto/psvgamesd)                                                                                                                                                                       |
-
-| Optical-based consoles     | [Media Preservation Frontend (MPF)](https://github.com/SabreTools/MPF) (w/ PC) | Software for native hardware                                                                                  |
-|----------------------------|--------------------------------------------------------------------------------|---------------------------------------------------------------------------------------------------------------|
-| Microsoft - Xbox, 360, One | ✅                                                                              |                                                                                                               |
-| Nintendo - Gamecube        | ⚠️ with specific drives and workarounds                                        | [CleanRip](https://wiibrew.org/wiki/CleanRip) (w/ Wii)                                                        |
-| Nintendo - Wii             | ⚠️ with specific drives and workarounds                                        | [CleanRip](https://wiibrew.org/wiki/CleanRip)                                                                 |
-| Nintendo - Wii U           | ❌                                                                              | [wudump](https://github.com/FIX94/wudump)                                                                     |
-| Sega - Dreamcast           | ⚠️ with specific drives and workarounds                                        | [SD Rip](https://hiddenpalace.org/Dreamcast_SD_Rip)                                                           |
-| Sega - Saturn              | ✅                                                                              |                                                                                                               |
-| Sony - PlayStation 1, 2    | ✅                                                                              |                                                                                                               |
-| Sony - PlayStation 3       | ❌                                                                              | [ManaGunZ](https://github.com/Zarh/ManaGunZ), [multiMAN](https://store.brewology.com/ahomebrew.php?brewid=24) |
+See the [Dumping ROMs](docs/dumping-roms.md) page for more information.
 
 ## Why choose `igir`?
 
@@ -230,3 +200,12 @@ Each manager has its own pros, but most share the same cons:
 - Limited or nonexistent priorities when creating a 1G1R set
 - Limited or nonexistent folder management options
 - Limited or nonexistent report-only modes
+
+## Feature requests, bug reports, and contributing
+
+[![Feature Requests](https://badgen.net/github/label-issues/emmercm/igir/enhancement/open?icon=github&label=Open%20Feature%20Requests)](https://github.com/emmercm/igir/issues?q=is%3Aopen+is%3Aissue+label%3Aenhancement)
+[![Bugs](https://badgen.net/github/label-issues/emmercm/igir/bug/open?icon=github&label=Open%20Bugs)](https://github.com/emmercm/igir/issues?q=is%3Aopen+is%3Aissue+label%3Abug)
+
+Feedback is a gift! Your feature requests and bug reports help improve the project for everyone. Feel free to submit an issue on GitHub using one of the templates.
+
+Even better, if you feel comfortable writing code, please feel free to submit a pull request against the project!

@@ -8,7 +8,8 @@
     "logiqx",
     "no-intro",
     "redump",
-    "roms"
+    "roms",
+    "tosec"
   ],
   "homepage": "https://github.com/emmercm/igir#readme",
   "bugs": {
