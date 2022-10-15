@@ -101,22 +101,22 @@ export default class Igir {
       ProgressBarCLI.stop();
       throw new Error('No valid DAT files found!');
     }
-    await progressBar.doneItems(dats.length, 'DAT', 'found');
+    await progressBar.doneItems(dats.length, 'unique DAT', 'found');
     return dats;
   }
 
   private async processROMScanner(): Promise<File[]> {
     const progressBar = this.logger.addProgressBar('Scanning for ROMs', Symbols.WAITING);
     const romInputs = await new ROMScanner(this.options, progressBar).scan();
-    await progressBar.doneItems(romInputs.length, 'file', 'found');
+    await progressBar.doneItems(romInputs.length, 'unique ROM', 'found');
     return romInputs;
   }
 
   private async processHeaderProcessor(romFiles: File[]): Promise<File[]> {
-    const headerProcessorProgressBar = this.logger.addProgressBar('Reading ROM headers', Symbols.WAITING);
+    const headerProcessorProgressBar = this.logger.addProgressBar('Detecting ROM headers', Symbols.WAITING);
     const processedRomFiles = await new HeaderProcessor(this.options, headerProcessorProgressBar)
       .process(romFiles);
-    await headerProcessorProgressBar.doneItems(processedRomFiles.length, 'file', 'read');
+    await headerProcessorProgressBar.doneItems(processedRomFiles.length, 'ROM', 'processed');
     return processedRomFiles;
   }
 

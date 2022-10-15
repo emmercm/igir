@@ -1,4 +1,3 @@
-import async, { AsyncResultCallback } from 'async';
 import { Semaphore } from 'async-mutex';
 import fs, { promises as fsPromises } from 'fs';
 import path from 'path';
@@ -51,25 +50,16 @@ export default class ROMWriter {
     await this.progressBar.setSymbol(Symbols.WRITING);
     await this.progressBar.reset(parentsToCandidates.size);
 
-    await async.each(
-      [...parentsToCandidates.entries()],
-      async (
-        [, releaseCandidates],
-        callback: AsyncResultCallback<undefined, Error>,
-      ) => {
-        await ROMWriter.semaphore.runExclusive(async () => {
-          await this.progressBar.increment();
+    await Promise.all([...parentsToCandidates.entries()]
+      .map(async ([, releaseCandidates]) => ROMWriter.semaphore.runExclusive(async () => {
+        await this.progressBar.increment();
 
-          /* eslint-disable no-await-in-loop */
-          for (let j = 0; j < releaseCandidates.length; j += 1) {
-            const releaseCandidate = releaseCandidates[j];
-            await this.writeReleaseCandidate(dat, releaseCandidate);
-          }
-
-          callback();
-        });
-      },
-    );
+        /* eslint-disable no-await-in-loop */
+        for (let j = 0; j < releaseCandidates.length; j += 1) {
+          const releaseCandidate = releaseCandidates[j];
+          await this.writeReleaseCandidate(dat, releaseCandidate);
+        }
+      })));
 
     await this.progressBar.setSymbol(Symbols.WRITING);
     await this.deleteMovedFiles();
