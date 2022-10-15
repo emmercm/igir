@@ -113,10 +113,10 @@ export default class Igir {
   }
 
   private async processHeaderProcessor(romFiles: File[]): Promise<File[]> {
-    const headerProcessorProgressBar = this.logger.addProgressBar('Reading ROM headers', Symbols.WAITING);
+    const headerProcessorProgressBar = this.logger.addProgressBar('Detecting ROM headers', Symbols.WAITING);
     const processedRomFiles = await new HeaderProcessor(this.options, headerProcessorProgressBar)
       .process(romFiles);
-    await headerProcessorProgressBar.doneItems(processedRomFiles.length, 'file', 'read');
+    await headerProcessorProgressBar.doneItems(processedRomFiles.length, 'ROM', 'processed');
     return processedRomFiles;
   }
 
