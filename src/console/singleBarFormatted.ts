@@ -70,7 +70,7 @@ export default class SingleBarFormatted {
     function clamp(val: number, min: number, max: number): number {
       return Math.min(Math.max(val, min), max);
     }
-    const MAX_BUFFER_SIZE = clamp(Math.floor(params.total / 10), 25, 100);
+    const MAX_BUFFER_SIZE = clamp(Math.floor(params.total / 10), 25, 50);
 
     this.valueTimeBuffer = [
       ...this.valueTimeBuffer.slice(1 - MAX_BUFFER_SIZE),
@@ -79,14 +79,14 @@ export default class SingleBarFormatted {
 
     const doneTime = linearRegressionLine(linearRegression(this.valueTimeBuffer))(params.total);
     if (Number.isNaN(doneTime)) {
-      // Vertical line, we got the same value at 2+ different times
-      return 0;
+      // Vertical line
+      return -1;
     }
     const remaining = (doneTime - Date.now()) / 1000;
-    if (!Number.isFinite(remaining) || remaining < 0) {
-      return 0;
+    if (!Number.isFinite(remaining)) {
+      return -1;
     }
-    return remaining;
+    return Math.max(remaining, 0);
   }
 
   private static getBar(options: Options, params: Params): string {
@@ -99,6 +99,10 @@ export default class SingleBarFormatted {
   }
 
   private static getEtaFormatted(eta: number): string {
+    if (eta < 0) {
+      return 'infinity';
+    }
+
     const etaInteger = Math.ceil(eta);
     const secondsRounded = 5 * Math.round(etaInteger / 5);
     if (secondsRounded >= 3600) {
