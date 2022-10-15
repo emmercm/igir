@@ -5,6 +5,9 @@ import Tar from './tar.js';
 import Zip from './zip.js';
 
 export default class ArchiveFactory {
+  /**
+   * This ordering should match {@link ROMScanner#archiveEntryPriority}
+   */
   static archiveFrom(filePath: string): Archive {
     if (Zip.SUPPORTED_EXTENSIONS.some((ext) => filePath.toLowerCase().endsWith(ext))) {
       return new Zip(filePath);

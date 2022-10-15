@@ -88,23 +88,10 @@ export default class CandidateGenerator {
   }
 
   private static indexFilesByHashCode(files: File[]): Map<string, File> {
-    return files.reduce((acc, file) => {
-      file.hashCodes().forEach((hashCode) => this.addToIndex(acc, hashCode, file));
-      return acc;
+    return files.reduce((map, file) => {
+      file.hashCodes().forEach((hashCode) => map.set(hashCode, file));
+      return map;
     }, new Map<string, File>());
-  }
-
-  private static addToIndex(map: Map<string, File>, hash: string, file: File): void {
-    if (map.has(hash)) {
-      // Have already seen file, prefer non-archived files
-      const existing = map.get(hash) as File;
-      if (!(file instanceof ArchiveEntry) && existing instanceof ArchiveEntry) {
-        map.set(hash, file);
-      }
-    } else {
-      // Haven't seen file yet, store it
-      map.set(hash, file);
-    }
   }
 
   private async buildReleaseCandidateForRelease(
