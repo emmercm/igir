@@ -108,7 +108,7 @@ export default class Igir {
   private async processROMScanner(): Promise<File[]> {
     const progressBar = this.logger.addProgressBar('Scanning for ROMs', Symbols.WAITING);
     const romInputs = await new ROMScanner(this.options, progressBar).scan();
-    await progressBar.doneItems(romInputs.length, 'unique file', 'found');
+    await progressBar.doneItems(romInputs.length, 'unique ROM', 'found');
     return romInputs;
   }
 
