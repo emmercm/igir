@@ -101,7 +101,7 @@ export default class Igir {
       ProgressBarCLI.stop();
       throw new Error('No valid DAT files found!');
     }
-    await progressBar.doneItems(dats.length, 'DAT', 'found');
+    await progressBar.doneItems(dats.length, 'unique DAT', 'found');
     return dats;
   }
 
