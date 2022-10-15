@@ -7,6 +7,8 @@ here="$(pwd)"
 trap "cd \"${here}\"" EXIT
 cd "$(dirname "$0")/.."
 
+DEMO_DIR="demo"
+
 
 if [[ "${1:-}" == "play" ]]; then
   . demo-magic.sh
@@ -14,11 +16,17 @@ if [[ "${1:-}" == "play" ]]; then
   DEMO_PROMPT="$ "
   DEMO_CMD_COLOR="\033[1;37m"
   DEMO_COMMENT_COLOR="\033[0;90m"
-  alias npx="npm exec -- ."
+  cd "${DEMO_DIR}"
+  npx() {
+    shift # discard "igir@latest"
+    node ../build/index.js "$@"
+  }
   # BEGIN PLAYBACK
 
   # ts-node ./index.ts copy zip report clean -d demo/dats/ -i GB/ -i NES/ -o demo/roms/ -D
   pei "ls -gn"
+  echo "" && sleep 1
+  pei "ls -gn dats/"
   echo "" && sleep 1
   pei "npx igir@latest copy zip report --dat dats/ --input roms/ --output roms-sorted/ --dir-dat-name --only-retail"
   echo "" && sleep 1
@@ -74,11 +82,9 @@ npm --version &> /dev/null || exit 1
 # Make sure we're using the latest version
 npm run build
 
-cd "demo"
-
 # Clean any previous output
-if [[ -d roms-sorted ]]; then
-  rm -rf roms-sorted
+if [[ -d "${DEMO_DIR}/roms-sorted" ]]; then
+  rm -rf "${DEMO_DIR}/roms-sorted"
 fi
 
 clear
