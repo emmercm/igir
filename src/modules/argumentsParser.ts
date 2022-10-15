@@ -3,6 +3,7 @@ import yargs, { Argv } from 'yargs';
 
 import Logger from '../console/logger.js';
 import Constants from '../constants.js';
+import FileHeader from '../types/files/fileHeader.js';
 import Options from '../types/options.js';
 import ReleaseCandidate from '../types/releaseCandidate.js';
 
@@ -174,6 +175,20 @@ export default class ArgumentsParser {
         coerce: ArgumentsParser.getLastValue, // don't allow string[] values
         requiresArg: true,
       })
+      .option('remove-headers', {
+        group: groupOutput,
+        description: `Remove known headers from ROMs, optionally limited to a list of comma-separated file extensions (supported: ${FileHeader.getSupportedExtensions().join(', ')})`,
+        type: 'string',
+        coerce: (vals: string) => vals
+          .split(',')
+          .map((val) => {
+            if (val === '') {
+              // Flag was provided without any extensions
+              return val;
+            }
+            return `.${val.replace(/^\.+/, '')}`;
+          }),
+      })
       .option('overwrite', {
         group: groupOutput,
         alias: 'O',
@@ -321,15 +336,18 @@ export default class ArgumentsParser {
       .wrap(ArgumentsParser.getHelpWidth(argv))
       .version(false)
       .example([
-        ['$0 copy -i **/*.zip -o 1G1R/ -D -s -l EN -r USA,EUR,JPN', 'Produce a 1G1R set per console, preferring English from USA>EUR>JPN'],
-        [''], // https://github.com/yargs/yargs/issues/1640
-        ['$0 copy report -i **/*.zip -i ROMs/ -o ROMs/', 'Merge new ROMs into an existing ROM collection and generate a report'],
-        [''], // https://github.com/yargs/yargs/issues/1640
-        ['$0 move zip -i ROMs/ -o ROMs/', 'Organize and zip an existing ROM collection'],
-        [''], // https://github.com/yargs/yargs/issues/1640
-        ['$0 copy -i **/*.zip -o BIOS/ --only-bios', 'Collate all BIOS files'],
-        [''], // https://github.com/yargs/yargs/issues/1640
-        ['$0 copy -i ROMs/ -o /media/SDCard/ROMs/ -D --dir-letter -t', 'Copy ROMs to a flash cart and test them'],
+        ['Produce a 1G1R set per console, preferring English from USA>EUR>JPN:'],
+        ['  $0 copy --input **/*.zip --output 1G1R/ --dir-dat-name --single --prefer-language EN --prefer-region USA,EUR,JPN'],
+        ['\nMerge new ROMs into an existing ROM collection and generate a report:'],
+        ['  $0 copy report --input **/*.zip --input ROMs/ --output ROMs/'],
+        ['\nOrganize and zip an existing ROM collection:'],
+        ['  $0 move zip --input ROMs/ --output ROMs/'],
+        ['\nCollate all BIOS files into one directory:'],
+        ['  $0 copy --input **/*.zip --output BIOS/ --only-bios'],
+        ['\nCopy ROMs to a flash cart and test them:'],
+        ['  $0 copy test --input ROMs/ --output /media/SDCard/ROMs/ --dir-dat-name --dir-letter'],
+        ['\nMake a copy of SNES ROMs without the SMC header that isn\'t supported by some emulators:'],
+        ['  $0 copy --input **/*.smc --output Headerless/ --dir-mirror --remove-headers .smc'],
       ])
 
       // Colorize help output

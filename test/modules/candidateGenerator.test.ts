@@ -1,3 +1,5 @@
+import path from 'path';
+
 import CandidateGenerator from '../../src/modules/candidateGenerator.js';
 import Zip from '../../src/types/archives/zip.js';
 import ArchiveEntry from '../../src/types/files/archiveEntry.js';
@@ -154,8 +156,13 @@ it('should return some results with some matching files', async () => {
 
   const fileOne = await File.fileOf('one.rom', 0, '12345678');
   const fileTwo = await ArchiveEntry.entryOf(new Zip('three.zip'), 'three.b', 0, '4321fedc');
+  // TODO(cemmer): add a third file that has a header
 
-  const expectCandidates = async (dat: DAT, inputRomFiles: File[]): Promise<void> => {
+  const expectCandidates = async (
+    dat: DAT,
+    inputRomFiles: File[],
+    expectedFileNames: string[],
+  ): Promise<void> => {
     // The DAT definitely has some parents
     expect(dat.getParents().length).toBeGreaterThan(0);
 
@@ -163,21 +170,29 @@ it('should return some results with some matching files', async () => {
     const candidates = await candidateGenerator.generate(dat, inputRomFiles);
     expect(candidates.size).toEqual(dat.getParents().length);
 
-    // No parent had any release candidates
-    expect([...candidates.values()].flatMap((c) => c)).toHaveLength(1);
+    // Only one release candidate returned
+    const releaseCandidates = [...candidates.values()].flatMap((c) => c);
+    expect(releaseCandidates).toHaveLength(1);
+
+    // Expected filenames found
+    const outputFiles = releaseCandidates
+      .flatMap((releaseCandidate) => releaseCandidate.getRomsWithFiles())
+      .map((romWithFiles) => path.basename(romWithFiles.getOutputFile().getFilePath()))
+      .sort();
+    expect(outputFiles).toEqual(expectedFileNames);
   };
 
-  await expectCandidates(datWithOneGame, [fileOne]);
-  await expectCandidates(datWithOneGame, [fileOne, fileOne]);
-  await expectCandidates(datWithOneGame, [fileOne, fileTwo]);
+  await expectCandidates(datWithOneGame, [fileOne], ['one.rom']);
+  await expectCandidates(datWithOneGame, [fileOne, fileOne], ['one.rom']);
+  await expectCandidates(datWithOneGame, [fileOne, fileTwo], ['one.rom']);
 
-  await expectCandidates(datWithDuplicateGames, [fileOne]);
-  await expectCandidates(datWithDuplicateGames, [fileOne, fileOne]);
-  await expectCandidates(datWithDuplicateGames, [fileOne, fileTwo]);
+  await expectCandidates(datWithDuplicateGames, [fileOne], ['one.rom']);
+  await expectCandidates(datWithDuplicateGames, [fileOne, fileOne], ['one.rom']);
+  await expectCandidates(datWithDuplicateGames, [fileOne, fileTwo], ['one.rom']);
 
-  await expectCandidates(datWithTwoGames, [fileOne]);
-  await expectCandidates(datWithTwoGames, [fileOne, fileOne]);
-  await expectCandidates(datWithTwoGames, [fileOne, fileTwo]);
+  await expectCandidates(datWithTwoGames, [fileOne], ['one.rom']);
+  await expectCandidates(datWithTwoGames, [fileOne, fileOne], ['one.rom']);
+  await expectCandidates(datWithTwoGames, [fileOne, fileTwo], ['one.rom']);
 });
 
 it('should return all results with all matching files', async () => {
@@ -197,8 +212,13 @@ it('should return all results with all matching files', async () => {
   const fileOne = await File.fileOf('one.rom', 0, '12345678');
   const fileTwo = await ArchiveEntry.entryOf(new Zip('two.zip'), 'two.a', 0, 'abcdef90');
   const fileThree = await ArchiveEntry.entryOf(new Zip('two.zip'), 'two.b', 0, '09876543');
+  // TODO(cemmer): add a fourth file that has a header
 
-  const expectCandidates = async (dat: DAT, inputRomFiles: File[]): Promise<void> => {
+  const expectCandidates = async (
+    dat: DAT,
+    inputRomFiles: File[],
+    expectedFileNames: string[],
+  ): Promise<void> => {
     // The DAT definitely has some parents
     expect(dat.getParents().length).toBeGreaterThan(0);
 
@@ -206,16 +226,24 @@ it('should return all results with all matching files', async () => {
     const candidates = await candidateGenerator.generate(dat, inputRomFiles);
     expect(candidates.size).toEqual(dat.getParents().length);
 
-    // No parent had any release candidates
-    expect([...candidates.values()].flatMap((c) => c)).toHaveLength(1);
+    // Only one release candidate returned
+    const releaseCandidates = [...candidates.values()].flatMap((c) => c);
+    expect(releaseCandidates).toHaveLength(1);
+
+    // Expected filenames found
+    const outputFiles = releaseCandidates
+      .flatMap((releaseCandidate) => releaseCandidate.getRomsWithFiles())
+      .map((romWithFiles) => path.basename(romWithFiles.getOutputFile().getFilePath()))
+      .sort();
+    expect(outputFiles).toEqual(expectedFileNames);
   };
 
-  await expectCandidates(datWithGameOne, [fileOne]);
-  await expectCandidates(datWithGameOne, [fileOne, fileOne]);
+  await expectCandidates(datWithGameOne, [fileOne], ['one.rom']);
+  await expectCandidates(datWithGameOne, [fileOne, fileOne], ['one.rom']);
 
-  await expectCandidates(datWithGameOneTwice, [fileOne]);
-  await expectCandidates(datWithGameOneTwice, [fileOne, fileOne]);
+  await expectCandidates(datWithGameOneTwice, [fileOne], ['one.rom']);
+  await expectCandidates(datWithGameOneTwice, [fileOne, fileOne], ['one.rom']);
 
-  await expectCandidates(datWithGameTwo, [fileTwo, fileThree]);
-  await expectCandidates(datWithGameTwo, [fileTwo, fileThree, fileThree]);
+  await expectCandidates(datWithGameTwo, [fileTwo, fileThree], ['two.a', 'two.b']);
+  await expectCandidates(datWithGameTwo, [fileTwo, fileThree, fileThree], ['two.a', 'two.b']);
 });

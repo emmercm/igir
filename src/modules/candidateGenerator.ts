@@ -1,3 +1,5 @@
+import path from 'path';
+
 import ProgressBar, { Symbols } from '../console/progressBar.js';
 import Zip from '../types/archives/zip.js';
 import ArchiveEntry from '../types/files/archiveEntry.js';
@@ -135,6 +137,17 @@ export default class CandidateGenerator {
   }
 
   private async getOutputFile(dat: DAT, game: Game, rom: ROM, inputFile: File): Promise<File> {
+    const { base, ...parsedPath } = path.parse(rom.getName());
+    if (parsedPath.ext && inputFile.getFileHeader()) {
+      // If the ROM has a header then we're going to ignore the file extension from the DAT
+      if (this.options.canRemoveHeader(parsedPath.ext)) {
+        parsedPath.ext = inputFile.getFileHeader()?.unheaderedFileExtension as string;
+      } else {
+        parsedPath.ext = inputFile.getFileHeader()?.headeredFileExtension as string;
+      }
+    }
+    const outputEntryPath = path.format(parsedPath);
+
     if (this.options.shouldZip(rom.getName())) {
       const outputFilePath = this.options.getOutput(
         dat,
@@ -142,19 +155,19 @@ export default class CandidateGenerator {
         undefined,
         `${game.getName()}.zip`,
       );
-      const entryPath = rom.getName();
       return ArchiveEntry.entryOf(
         new Zip(outputFilePath),
-        entryPath,
+        outputEntryPath,
         inputFile.getSize(),
         inputFile.getCrc32(),
       );
     }
+
     const outputFilePath = this.options.getOutput(
       dat,
       inputFile.getFilePath(),
       game,
-      rom.getName(),
+      outputEntryPath,
     );
     return File.fileOf(
       outputFilePath,

@@ -27,6 +27,7 @@ export interface OptionsProps {
   readonly dirLetter?: boolean,
   readonly single?: boolean,
   readonly zipExclude?: string,
+  readonly removeHeaders?: string[],
   readonly overwrite?: boolean,
   readonly preferGood?: boolean,
   readonly preferLanguage?: string[],
@@ -55,13 +56,13 @@ export interface OptionsProps {
 
 export default class Options implements OptionsProps {
   @Expose({ name: '_' })
-  readonly commands: string[] = [];
+  readonly commands: string[];
 
-  readonly dat: string[] = [];
+  readonly dat: string[];
 
-  readonly input: string[] = [];
+  readonly input: string[];
 
-  readonly inputExclude: string[] = [];
+  readonly inputExclude: string[];
 
   readonly output: string;
 
@@ -77,13 +78,15 @@ export default class Options implements OptionsProps {
 
   readonly zipExclude: string;
 
+  readonly removeHeaders?: string[];
+
   readonly overwrite: boolean;
 
   readonly preferGood: boolean;
 
-  readonly preferLanguage: string[] = [];
+  readonly preferLanguage: string[];
 
-  readonly preferRegion: string[] = [];
+  readonly preferRegion: string[];
 
   readonly preferRevisionNewer: boolean;
 
@@ -93,9 +96,9 @@ export default class Options implements OptionsProps {
 
   readonly preferParent: boolean;
 
-  readonly languageFilter: string[] = [];
+  readonly languageFilter: string[];
 
-  readonly regionFilter: string[] = [];
+  readonly regionFilter: string[];
 
   readonly onlyBios: boolean;
 
@@ -137,6 +140,7 @@ export default class Options implements OptionsProps {
     this.dirLetter = options?.dirLetter || false;
     this.single = options?.single || false;
     this.zipExclude = options?.zipExclude || '';
+    this.removeHeaders = options?.removeHeaders;
     this.overwrite = options?.overwrite || false;
     this.preferGood = options?.preferGood || false;
     this.preferLanguage = options?.preferLanguage || [];
@@ -358,6 +362,20 @@ export default class Options implements OptionsProps {
     return this.zipExclude;
   }
 
+  canRemoveHeader(extension: string): boolean {
+    if (this.removeHeaders === undefined) {
+      // Option wasn't provided, we shouldn't remove headers
+      return false;
+    }
+    if (this.removeHeaders.length === 1 && this.removeHeaders[0] === '') {
+      // Option was provided without any extensions, we should remove headers from every file
+      return true;
+    }
+    // Option was provided with extensions, we should remove headers on name match
+    return this.removeHeaders
+      .some((removeHeader) => removeHeader.toLowerCase() === extension.toLowerCase());
+  }
+
   getOverwrite(): boolean {
     return this.overwrite;
   }
@@ -457,6 +475,12 @@ export default class Options implements OptionsProps {
 
   getHelp(): boolean {
     return this.help;
+  }
+
+  static filterUniqueLower(array: string[]): string[] {
+    return array
+      .map((value) => value.toLowerCase())
+      .filter((val, idx, arr) => arr.indexOf(val) === idx);
   }
 
   static filterUniqueUpper(array: string[]): string[] {

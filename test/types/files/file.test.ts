@@ -43,6 +43,7 @@ describe('getCrc32', () => {
 describe('getCrc32WithoutHeader', () => {
   test.each([
     ['./test/fixtures/roms/headered/allpads.nes', '9180a163'],
+    ['./test/fixtures/roms/headered/speed_test_v51.smc', '9adca6cc'],
   ])('should hash the full file when no header given: %s', async (filePath, expectedCrc) => {
     const file = await File.fileOf(filePath);
     expect(file.getCrc32WithoutHeader()).toEqual(expectedCrc);
@@ -59,7 +60,8 @@ describe('getCrc32WithoutHeader', () => {
 
   test.each([
     ['./test/fixtures/roms/headered/allpads.nes', '6339abe6'],
-  ])('should hash the full file when header is given and present in file: %s', async (filePath, expectedCrc) => {
+    ['./test/fixtures/roms/headered/speed_test_v51.smc', '8beffd94'],
+  ])('should hash the file without the header when header is given and present in file: %s', async (filePath, expectedCrc) => {
     const file = await (await File.fileOf(filePath))
       .withFileHeader(FileHeader.getForFilename(filePath) as FileHeader);
     expect(file.getCrc32WithoutHeader()).toEqual(expectedCrc);

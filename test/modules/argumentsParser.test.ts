@@ -67,14 +67,14 @@ describe('options', () => {
     expect(options.getSingle()).toEqual(false);
     expect(options.getOverwrite()).toEqual(false);
     expect(options.getPreferGood()).toEqual(false);
-    expect(options.getPreferLanguages().length).toBe(0);
-    expect(options.getPreferRegions().length).toBe(0);
-    expect(options.getLanguageFilter().length).toBe(0);
+    expect(options.getPreferLanguages()).toHaveLength(0);
+    expect(options.getPreferRegions()).toHaveLength(0);
+    expect(options.getLanguageFilter()).toHaveLength(0);
     expect(options.getPreferRevisionNewer()).toEqual(false);
     expect(options.getPreferRevisionOlder()).toEqual(false);
     expect(options.getPreferRetail()).toEqual(false);
     expect(options.getPreferParent()).toEqual(false);
-    expect(options.getRegionFilter().length).toBe(0);
+    expect(options.getRegionFilter()).toHaveLength(0);
     expect(options.getOnlyBios()).toEqual(false);
     expect(options.getNoBios()).toEqual(false);
     expect(options.getNoUnlicensed()).toEqual(false);
@@ -184,6 +184,21 @@ describe('options', () => {
     expect(argumentsParser.parse(['zip', '--input', os.devNull, '--output', os.devNull, '-Z', '**/*']).shouldZip(filePath)).toEqual(false);
     expect(argumentsParser.parse(['zip', '--input', os.devNull, '--output', os.devNull, '-Z', '**/*.rom']).shouldZip(filePath)).toEqual(false);
     expect(argumentsParser.parse(['zip', '--input', os.devNull, '--output', os.devNull, '--zip-exclude', '**/*.rom']).shouldZip(filePath)).toEqual(false);
+  });
+
+  it('should parse "remove-headers"', () => {
+    // False
+    expect(argumentsParser.parse(dummyCommandAndRequiredArgs).canRemoveHeader('.smc')).toEqual(false);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--remove-headers', '.smc']).canRemoveHeader('.rom')).toEqual(false);
+    // True
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--remove-headers']).canRemoveHeader('')).toEqual(true);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--remove-headers']).canRemoveHeader('.rom')).toEqual(true);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--remove-headers']).canRemoveHeader('.smc')).toEqual(true);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--remove-headers', '.smc']).canRemoveHeader('filepath.smc')).toEqual(false);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--remove-headers', 'smc']).canRemoveHeader('.smc')).toEqual(true);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--remove-headers', '.smc']).canRemoveHeader('.SMC')).toEqual(true);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--remove-headers', 'LNX,.smc']).canRemoveHeader('.smc')).toEqual(true);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--remove-headers', 'lnx,.LNX']).canRemoveHeader('.LnX')).toEqual(true);
   });
 
   it('should parse "overwrite"', () => {
