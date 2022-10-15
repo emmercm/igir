@@ -66,7 +66,7 @@ Here is the full `igir --help` message which shows all available options and a n
   | $$  | $$ __\$$  | $$  | $$__| $$
   | $$  | $$|    \  | $$  | $$    $$   ROM collection manager
   | $$  | $$ \$$$$  | $$  | $$$$$$$\
- _| $$_ | $$__| $$ _| $$_ | $$  | $$   v0.2.2
+ _| $$_ | $$__| $$ _| $$_ | $$  | $$   v0.3.0
 |   $$ \ \$$    $$|   $$ \| $$  | $$
  \$$$$$$  \$$$$$$  \$$$$$$ \$$   \$$
 
@@ -79,80 +79,88 @@ Commands:
   igir zip     Create .zip archives when copying or moving ROMs
   igir test    Test ROMs for accuracy after writing them to the output directory
   igir clean   Recycle unknown files in the output directory
-  igir report  Generate a report on the known ROM files found in the input directories
+  igir report  Generate a CSV report on the known ROM files found in the input directories
 
 Path options (inputs support globbing):
-  -d, --dat            Path(s) to DAT files or archives [array] [required] [default: ["*.dat"]]
+  -d, --dat            Path(s) to DAT files or archives   [array] [required] [default: ["*.dat"]]
   -i, --input          Path(s) to ROM files or archives, these files will not be modified
-                                                                             [array] [required]
-  -I, --input-exclude  Path(s) to ROM files to exclude                                  [array]
-  -o, --output         Path to the ROM output directory                                [string]
+                                                                               [array] [required]
+  -I, --input-exclude  Path(s) to ROM files to exclude                                    [array]
+  -o, --output         Path to the ROM output directory                                  [string]
 
 Input options:
-  -H, --header  Glob pattern of files to force header processing for                   [string]
+  -H, --header  Glob pattern of files to force header processing for                     [string]
 
 Output options:
-      --dir-mirror    Use the input subdirectory structure for output subdirectories  [boolean]
-  -D, --dir-dat-name  Use the DAT name as the output subdirectory                     [boolean]
-      --dir-letter    Append the first letter of the ROM name as an output subdirectory
-                                                                                      [boolean]
-  -s, --single        Output only a single game per parent (1G1R) (requires parent-clone DAT fi
-                      les)                                                            [boolean]
-  -Z, --zip-exclude   Glob pattern of files to exclude from zipping                    [string]
-  -O, --overwrite     Overwrite any ROMs in the output directory                      [boolean]
+      --dir-mirror      Use the input subdirectory structure for output subdirectories  [boolean]
+  -D, --dir-dat-name    Use the DAT name as the output subdirectory                     [boolean]
+      --dir-letter      Append the first letter of the ROM name as an output subdirectory
+                                                                                        [boolean]
+  -s, --single          Output only a single game per parent (1G1R) (requires parent-clone DAT fi
+                        les)                                                            [boolean]
+  -Z, --zip-exclude     Glob pattern of files to exclude from zipping                    [string]
+      --remove-headers  Remove known headers from ROMs, optionally limited to a list of comma-sep
+                        arated file extensions (supported: .a78, .lnx, .nes, .fds, .smc) [string]
+  -O, --overwrite       Overwrite any ROMs in the output directory                      [boolean]
 
 Priority options (requires --single):
-      --prefer-good            Prefer good ROM dumps over bad                         [boolean]
-  -l, --prefer-language        List of comma-separated languages in priority order (supported:
-                               DA, DE, EL, EN, ES, FI, FR, IT, JA, KO, NL, NO, PT, RU, SV, ZH)
-                                                                                       [string]
-  -r, --prefer-region          List of comma-separated regions in priority order (supported: AR
-                               G, ASI, AUS, BRA, CAN, CHN, DAN, EUR, FRA, FYN, GER, GRE, HK, HO
-                               L, ITA, JPN, KOR, MEX, NOR, NZ, POR, RUS, SPA, SWE, TAI, UK, UNK
-                               , USA)                                                  [string]
-      --prefer-revision-newer  Prefer newer ROM revisions over older                  [boolean]
-      --prefer-revision-older  Prefer older ROM revisions over newer                  [boolean]
-      --prefer-retail          Prefer retail releases (see --only-retail)             [boolean]
+      --prefer-good            Prefer good ROM dumps over bad                           [boolean]
+  -l, --prefer-language        List of comma-separated languages in priority order (supported: DA
+                               , DE, EL, EN, ES, FI, FR, IT, JA, KO, NL, NO, PT, RU, SV, ZH)
+                                                                                         [string]
+  -r, --prefer-region          List of comma-separated regions in priority order (supported: ARG,
+                                ASI, AUS, BRA, CAN, CHN, DAN, EUR, FRA, FYN, GER, GRE, HK, HOL, I
+                               TA, JPN, KOR, MEX, NOR, NZ, POR, RUS, SPA, SWE, TAI, UK, UNK, USA)
+                                                                                         [string]
+      --prefer-revision-newer  Prefer newer ROM revisions over older                    [boolean]
+      --prefer-revision-older  Prefer older ROM revisions over newer                    [boolean]
+      --prefer-retail          Prefer retail releases (see --only-retail)               [boolean]
       --prefer-parent          Prefer parent ROMs over clones (requires parent-clone DAT files)
-                                                                                      [boolean]
+                                                                                        [boolean]
 
 Filtering options:
-  -L, --language-filter  List of comma-separated languages to limit to (supported: DA, DE, EL,
-                         EN, ES, FI, FR, IT, JA, KO, NL, NO, PT, RU, SV, ZH)           [string]
-  -R, --region-filter    List of comma-separated regions to limit to (supported: ARG, ASI, AUS,
-                          BRA, CAN, CHN, DAN, EUR, FRA, FYN, GER, GRE, HK, HOL, ITA, JPN, KOR,
-                         MEX, NOR, NZ, POR, RUS, SPA, SWE, TAI, UK, UNK, USA)          [string]
-      --only-bios        Filter to only BIOS files                                    [boolean]
-      --no-bios          Filter out BIOS files                                        [boolean]
-      --no-unlicensed    Filter out unlicensed ROMs                                   [boolean]
+  -L, --language-filter  List of comma-separated languages to limit to (supported: DA, DE, EL, EN
+                         , ES, FI, FR, IT, JA, KO, NL, NO, PT, RU, SV, ZH)               [string]
+  -R, --region-filter    List of comma-separated regions to limit to (supported: ARG, ASI, AUS, B
+                         RA, CAN, CHN, DAN, EUR, FRA, FYN, GER, GRE, HK, HOL, ITA, JPN, KOR, MEX,
+                          NOR, NZ, POR, RUS, SPA, SWE, TAI, UK, UNK, USA)                [string]
+      --only-bios        Filter to only BIOS files                                      [boolean]
+      --no-bios          Filter out BIOS files                                          [boolean]
+      --no-unlicensed    Filter out unlicensed ROMs                                     [boolean]
       --only-retail      Filter to only retail releases, enabling all the following flags
-                                                                                      [boolean]
-      --no-demo          Filter out demo ROMs                                         [boolean]
-      --no-beta          Filter out beta ROMs                                         [boolean]
-      --no-sample        Filter out sample ROMs                                       [boolean]
-      --no-prototype     Filter out prototype ROMs                                    [boolean]
-      --no-test-roms     Filter out test ROMs                                         [boolean]
-      --no-aftermarket   Filter out aftermarket ROMs                                  [boolean]
-      --no-homebrew      Filter out homebrew ROMs                                     [boolean]
-      --no-bad           Filter out bad ROM dumps                                     [boolean]
+                                                                                        [boolean]
+      --no-demo          Filter out demo ROMs                                           [boolean]
+      --no-beta          Filter out beta ROMs                                           [boolean]
+      --no-sample        Filter out sample ROMs                                         [boolean]
+      --no-prototype     Filter out prototype ROMs                                      [boolean]
+      --no-test-roms     Filter out test ROMs                                           [boolean]
+      --no-aftermarket   Filter out aftermarket ROMs                                    [boolean]
+      --no-homebrew      Filter out homebrew ROMs                                       [boolean]
+      --no-bad           Filter out bad ROM dumps                                       [boolean]
 
 Help options:
-  -v, --verbose  Enable verbose logging, can specify twice (-vv)                        [count]
-  -h, --help     Show help                                                            [boolean]
+  -v, --verbose  Enable verbose logging, can specify twice (-vv)                          [count]
+  -h, --help     Show help                                                              [boolean]
 
 Examples:
-  igir copy -i **/*.zip -o 1G1R/ -D -s -l EN -r U  Produce a 1G1R set per console, preferring E
-  SA,EUR,JPN                                       nglish from USA>EUR>JPN
+  Produce a 1G1R set per console, preferring English from USA>EUR>JPN:
+    igir copy --input **/*.zip --output 1G1R/ --dir-dat-name --single --prefer-language EN --pr
+  efer-region USA,EUR,JPN
 
-  igir copy report -i **/*.zip -i ROMs/ -o ROMs/   Merge new ROMs into an existing ROM collecti
-                                                   on and generate a report
+  Merge new ROMs into an existing ROM collection and generate a report:
+    igir copy report --input **/*.zip --input ROMs/ --output ROMs/
 
-  igir move zip -i ROMs/ -o ROMs/                  Organize and zip an existing ROM collection
+  Organize and zip an existing ROM collection:
+    igir move zip --input ROMs/ --output ROMs/
 
-  igir copy -i **/*.zip -o BIOS/ --only-bios       Collate all BIOS files
+  Collate all BIOS files into one directory:
+    igir copy --input **/*.zip --output BIOS/ --only-bios
 
-  igir copy -i ROMs/ -o /media/SDCard/ROMs/ -D --  Copy ROMs to a flash cart and test them
-  dir-letter -t
+  Copy ROMs to a flash cart and test them:
+    igir copy test --input ROMs/ --output /media/SDCard/ROMs/ --dir-dat-name --dir-letter
+
+  Make a copy of SNES ROMs without the SMC header that isn't supported by some emulators:
+    igir copy --input **/*.smc --output Headerless/ --dir-mirror --remove-headers .smc
 ```
 
 ## What are DATs?
