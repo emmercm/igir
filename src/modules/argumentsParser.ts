@@ -282,7 +282,7 @@ export default class ArgumentsParser {
       })
       .option('only-retail', {
         group: groupFiltering,
-        description: 'Filter to only retail releases, enabling all the following flags',
+        description: 'Filter to only retail releases, enabling all the following options',
         type: 'boolean',
       })
       .option('no-demo', {
@@ -336,18 +336,18 @@ export default class ArgumentsParser {
       .wrap(ArgumentsParser.getHelpWidth(argv))
       .version(false)
       .example([
-        ['Produce a 1G1R set per console, preferring English from USA>EUR>JPN:'],
-        ['  $0 copy --input **/*.zip --output 1G1R/ --dir-dat-name --single --prefer-language EN --prefer-region USA,EUR,JPN'],
+        ['Produce a 1G1R set per console, preferring English ROMs from USA>EUR>JPN:'],
+        ['  $0 copy --dat *.dat --input **/*.zip --output 1G1R/ --dir-dat-name --single --prefer-language EN --prefer-region USA,EUR,JPN'],
         ['\nMerge new ROMs into an existing ROM collection and generate a report:'],
-        ['  $0 copy report --input **/*.zip --input ROMs/ --output ROMs/'],
+        ['  $0 copy report --dat *.dat --input **/*.zip --input ROMs/ --output ROMs/'],
         ['\nOrganize and zip an existing ROM collection:'],
-        ['  $0 move zip --input ROMs/ --output ROMs/'],
+        ['  $0 move zip --dat *.dat --input ROMs/ --output ROMs/'],
         ['\nCollate all BIOS files into one directory:'],
-        ['  $0 copy --input **/*.zip --output BIOS/ --only-bios'],
+        ['  $0 copy --dat *.dat --input **/*.zip --output BIOS/ --only-bios'],
         ['\nCopy ROMs to a flash cart and test them:'],
-        ['  $0 copy test --input ROMs/ --output /media/SDCard/ROMs/ --dir-dat-name --dir-letter'],
+        ['  $0 copy test --dat *.dat --input ROMs/ --output /media/SDCard/ROMs/ --dir-dat-name --dir-letter'],
         ['\nMake a copy of SNES ROMs without the SMC header that isn\'t supported by some emulators:'],
-        ['  $0 copy --input **/*.smc --output Headerless/ --dir-mirror --remove-headers .smc'],
+        ['  $0 copy --dat *.dat --input **/*.smc --output Headerless/ --dir-mirror --remove-headers .smc'],
       ])
 
       // Colorize help output

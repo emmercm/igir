@@ -126,7 +126,7 @@ Filtering options:
       --only-bios        Filter to only BIOS files                                      [boolean]
       --no-bios          Filter out BIOS files                                          [boolean]
       --no-unlicensed    Filter out unlicensed ROMs                                     [boolean]
-      --only-retail      Filter to only retail releases, enabling all the following flags
+      --only-retail      Filter to only retail releases, enabling all the following options
                                                                                         [boolean]
       --no-demo          Filter out demo ROMs                                           [boolean]
       --no-beta          Filter out beta ROMs                                           [boolean]
@@ -142,24 +142,26 @@ Help options:
   -h, --help     Show help                                                              [boolean]
 
 Examples:
-  Produce a 1G1R set per console, preferring English from USA>EUR>JPN:
-    igir copy --input **/*.zip --output 1G1R/ --dir-dat-name --single --prefer-language EN --pr
-  efer-region USA,EUR,JPN
+  Produce a 1G1R set per console, preferring English ROMs from USA>EUR>JPN:
+    igir copy --dat *.dat --input **/*.zip --output 1G1R/ --dir-dat-name --single --prefer-lang
+  uage EN --prefer-region USA,EUR,JPN
 
   Merge new ROMs into an existing ROM collection and generate a report:
-    igir copy report --input **/*.zip --input ROMs/ --output ROMs/
+    igir copy report --dat *.dat --input **/*.zip --input ROMs/ --output ROMs/
 
   Organize and zip an existing ROM collection:
-    igir move zip --input ROMs/ --output ROMs/
+    igir move zip --dat *.dat --input ROMs/ --output ROMs/
 
   Collate all BIOS files into one directory:
-    igir copy --input **/*.zip --output BIOS/ --only-bios
+    igir copy --dat *.dat --input **/*.zip --output BIOS/ --only-bios
 
   Copy ROMs to a flash cart and test them:
-    igir copy test --input ROMs/ --output /media/SDCard/ROMs/ --dir-dat-name --dir-letter
+    igir copy test --dat *.dat --input ROMs/ --output /media/SDCard/ROMs/ --dir-dat-name --dir-
+  letter
 
   Make a copy of SNES ROMs without the SMC header that isn't supported by some emulators:
-    igir copy --input **/*.smc --output Headerless/ --dir-mirror --remove-headers .smc
+    igir copy --dat *.dat --input **/*.smc --output Headerless/ --dir-mirror --remove-headers .
+  smc
 ```
 
 ## What are DATs?
