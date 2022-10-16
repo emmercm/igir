@@ -7,9 +7,6 @@
 [![GitHub:emmercm/igir](https://badgen.net/badge/emmercm/igir/purple?icon=github)](https://github.com/emmercm/igir)
 [![License](https://badgen.net/github/license/emmercm/igir)](https://github.com/emmercm/igir/blob/main/LICENSE)
 
-[![Feature Requests](https://badgen.net/github/label-issues/emmercm/igir/enhancement/open?icon=github&label=Open%20Feature%20Requests)](https://github.com/emmercm/igir/issues?q=is%3Aopen+is%3Aissue+label%3Aenhancement)
-[![Bugs](https://badgen.net/github/label-issues/emmercm/igir/bug/open?icon=github&label=Open%20Bugs)](https://github.com/emmercm/igir/issues?q=is%3Aopen+is%3Aissue+label%3Abug)
-
 [![Known Vulnerabilities](https://badgen.net/snyk/emmercm/igir?icon=snyk)](https://snyk.io/test/npm/igir)
 [![Test Coverage](https://badgen.net/codecov/c/github/emmercm/igir/main?icon=codecov)](https://codecov.io/gh/emmercm/igir)
 [![Maintainability Score](https://badgen.net/codeclimate/maintainability/emmercm/igir?icon=codeclimate)](https://codeclimate.com/github/emmercm/igir/maintainability)
@@ -35,8 +32,8 @@ With a large ROM collection it can be difficult to:
 
 `igir` needs two sets of files:
 
-1. ROMs, including ones with [headers](https://no-intro.org/faq.htm)
-2. One or more DATs ([see below](#what-are-dats) for where to download)
+1. ROMs (including ones with [headers](docs/rom-headers.md))
+2. One or more [DATs](docs/dats.md)
 
 Many different input archive types are supported for both ROMs and DATs: .001, .7z, .bz2, .gz, .rar, .tar, .tgz, .xz, .z, .z01, .zip, .zipx, and more!
 
@@ -49,9 +46,11 @@ Many different input archive types are supported for both ROMs and DATs: .001, .
 - `clean`: recycle all unknown files in an output directory
 - `report`: generate a report on ROMs found and processed
 
+The `igir --help` command shown below includes examples of how to use multiple commands together.
+
 ## How do I run `igir`?
 
-With [![Node.js](https://badgen.net/npm/node/igir?icon=nodejs)](https://nodejs.org/en/download/) installed, run this from the command line:
+With [![Node.js](https://badgen.net/npm/node/igir?icon=nodejs&label=Node.js)](https://nodejs.org/en/download/) installed, run this from the command line:
 
 ```shell
 npx igir@latest [commands..] [options]
@@ -165,26 +164,15 @@ Examples:
 
 ## What are DATs?
 
-DATs are catalogs of every known ROM per console. A number of different release groups maintain these catalogs, the most popular are:
+DATs are catalogs of every known ROM that exists per console, complete with enough information to identify each file.
 
-- [No-Intro P/C XML](https://datomatic.no-intro.org/index.php?page=download&s=64&op=daily) (cartridge-based consoles)
-  - Note: you can download every console at once from the [daily page](https://datomatic.no-intro.org/index.php?page=download&s=64&op=daily), but you need to manually select "P/C XML" from the dropdown
-- [Redump](http://redump.org/downloads/) (optical media-based consoles)
-
-And some less popular release groups are:
-
-- [ADVANsCEne](https://www.advanscene.com/html/dats.php) (GBA, DS, 3DS, PSP)
-- [TOSEC](https://www.tosecdev.org/downloads/category/22-datfiles)
-
-These catalogs help `igir` distinguish known ROM files in input directories from other files and helps generate reports on ROM collections.
-
-`igir` can currently only process DAT files in the XML format.
+See the [DATs](docs/dats.md) page for a longer explanation on what DATs are, where to download them, and some "_just tell me what to do_" instructions.
 
 ## How do I obtain ROMs?
 
-Emulators are generally legal, as long as they don't include copyrighted software such as a console BIOS. Downloading ROM files that you do not own is piracy and is illegal in many countries.
+Emulators are generally _legal_, as long as they don't include copyrighted software such as a console BIOS. Downloading ROM files that you do not own is piracy which is illegal in many countries.
 
-See the [Dumping ROMs](docs/dumping-roms.md) page for more information.
+See the [Dumping ROMs](docs/rom-dumping.md) page for more information.
 
 ## Why choose `igir`?
 
@@ -195,19 +183,20 @@ There a few different popular ROM managers that have similar features:
 - [Romulus](https://romulus.cc/)
 - [RomVault](https://www.romvault.com/)
 
-Each manager has its own pros, but most share the same cons:
+Each manager has its own pros, but many have the same drawbacks or limitations:
 
 - Windows-only (sometimes with Wine support), making management on macOS and Linux difficult
 - Limited CLI support, making batching and repeatable actions difficult
 - UIs that don't clearly state what actions can, will, or are being performed
-- Required proprietary database setup step
+- Confusing required setup steps
+- No report-only modes
 - Output report formats that are difficult to parse or filter
-- Limited or nonexistent archive extraction support
-- Limited or nonexistent ROM header support
-- Limited or nonexistent parent/clone, region, language, version, and ROM type filtering
-- Limited or nonexistent priorities when creating a 1G1R set
-- Limited or nonexistent folder management options
-- Limited or nonexistent report-only modes
+- Limited archive extraction support
+- Limited folder management options
+- No ROM header support
+- No ROM header removal functionality
+- Limited parent/clone, region, language, version, and ROM type filtering
+- No ability to prioritize parent/clones when creating a 1G1R set
 
 ## Feature requests, bug reports, and contributing
 

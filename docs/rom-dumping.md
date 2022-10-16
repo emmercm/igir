@@ -1,4 +1,4 @@
-# Dumping ROMs
+# ROM Dumping
 
 [Dumping.Guide](https://dumping.guide/start) and [Emulation General Wiki](https://emulation.gametechwiki.com/index.php/Ripping_games) are some of the best resources for legally creating ROM files from games you own.
 
