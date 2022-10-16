@@ -16,7 +16,7 @@ Some these headers are used to tell the emulator information about how to emulat
 | Nintendo - Famicom Disk System | fsNES/FDS     | `.fds`    |
 | Nintendo - SNES                | SMC           | `.smc`    |
 
-Those file extensions above are the commonly accepted "correct" ones and `igir` will attempt to detect if a header is present in them automatically. If for some reason your files don't have the right extension (e.g. `.rom`) you can force header detection with a glob option:
+Those file extensions above are the commonly accepted "correct" ones and `igir` will attempt to detect if a header is present in them automatically. If for some reason your files don't have the right extension (e.g. `.rom`) you can force header detection with the `--header` glob option:
 
 ```shell
 igir [commands..] --dat <dats> --input <input> --header "*.rom"
@@ -36,7 +36,7 @@ Some emulators cannot parse ROMs with headers and instead need an "un-headered" 
 | Nintendo - Famicom Disk System | fsNES/FDS     | `.fds`                 | N/A                       |
 | Nintendo - SNES                | SMC           | `.smc`                 | `.sfc`                    |
 
-For every console that `igir` can understand the headers for, it can also remove them. This only makes sense for the consoles above with different "un-headered" extensions, so you have to specify the extensions like this:
+For every console that `igir` can understand the headers for, it can also remove them with the `--remove-headers` option. This only makes sense for the consoles above with different "un-headered" extensions, so you have to specify the extensions like this:
 
 ```shell
 igir [commands..] --dat <dats> --input <input> --remove-headers .lnx,.smc
