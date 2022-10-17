@@ -41,7 +41,7 @@ body:
     attributes:
       label: Debug logs
       description: |
-        The debug logs of the command run with the `-vv` flag.
+        The debug logs of the command run with the `-vv` option.
     validations:
       required: true
 
