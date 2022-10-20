@@ -692,6 +692,38 @@ describe('preFilter', () => {
     });
   });
 
+  describe('only verified', () => {
+    it('should return all candidates when option is false', async () => {
+      await expectFilteredCandidates({ onlyVerified: false }, [
+        await buildReleaseCandidatesWithRegionLanguage('one', [], 'EN'),
+        await buildReleaseCandidatesWithRegionLanguage('two [!]', [], 'EN'),
+        await buildReleaseCandidatesWithRegionLanguage('three [!]', [], 'EN'),
+      ], 3);
+    });
+
+    it('should return no candidates if none matching', async () => {
+      await expectFilteredCandidates({ onlyVerified: true }, [
+        await buildReleaseCandidatesWithRegionLanguage('one', [], 'EN'),
+        await buildReleaseCandidatesWithRegionLanguage('two', [], 'EN'),
+      ], 0);
+    });
+
+    it('should return some candidates if some matching', async () => {
+      await expectFilteredCandidates({ onlyVerified: true }, [
+        await buildReleaseCandidatesWithRegionLanguage('one [!]', [], 'EN'),
+        await buildReleaseCandidatesWithRegionLanguage('two', [], 'EN'),
+        await buildReleaseCandidatesWithRegionLanguage('three [!]', [], 'EN'),
+      ], 2);
+    });
+
+    it('should return all candidates if all matching', async () => {
+      await expectFilteredCandidates({ onlyVerified: true }, [
+        await buildReleaseCandidatesWithRegionLanguage('one [!]', [], 'EN'),
+        await buildReleaseCandidatesWithRegionLanguage('two [!]', [], 'EN'),
+      ], 2);
+    });
+  });
+
   describe('no bad', () => {
     it('should return all candidates when option is false', async () => {
       await expectFilteredCandidates({ noBad: false }, [
@@ -726,6 +758,40 @@ describe('preFilter', () => {
 });
 
 describe('sort', () => {
+  describe('prefer verified', () => {
+    it('should return the first candidate when option is false', async () => {
+      await expectPreferredCandidates({ preferVerified: false, single: true }, [
+        await buildReleaseCandidatesWithRegionLanguage(['one'], [], 'EN'),
+        await buildReleaseCandidatesWithRegionLanguage(['two', 'two [!]'], [], 'EN'),
+        await buildReleaseCandidatesWithRegionLanguage(['three [!]', 'three'], [], 'EN'),
+      ], ['one', 'two', 'three [!]']);
+    });
+
+    it('should return the first candidate when none matching', async () => {
+      await expectPreferredCandidates({ preferVerified: true, single: true }, [
+        await buildReleaseCandidatesWithRegionLanguage(['one'], [], 'EN'),
+        await buildReleaseCandidatesWithRegionLanguage(['two', 'two two'], [], 'EN'),
+        await buildReleaseCandidatesWithRegionLanguage(['three', 'three three'], [], 'EN'),
+      ], ['one', 'two', 'three']);
+    });
+
+    it('should return the first matching candidate when some matching', async () => {
+      await expectPreferredCandidates({ preferVerified: true, single: true }, [
+        await buildReleaseCandidatesWithRegionLanguage(['one'], [], 'EN'),
+        await buildReleaseCandidatesWithRegionLanguage(['two', 'two [!]'], [], 'EN'),
+        await buildReleaseCandidatesWithRegionLanguage(['three [!]', 'three'], [], 'EN'),
+      ], ['one', 'two [!]', 'three [!]']);
+    });
+
+    it('should return the first candidate when all matching', async () => {
+      await expectPreferredCandidates({ preferVerified: true, single: true }, [
+        await buildReleaseCandidatesWithRegionLanguage(['one [!]'], [], 'EN'),
+        await buildReleaseCandidatesWithRegionLanguage(['two [!]', 'two two [!]'], [], 'EN'),
+        await buildReleaseCandidatesWithRegionLanguage(['three [!]', 'three three [!]'], [], 'EN'),
+      ], ['one [!]', 'two [!]', 'three [!]']);
+    });
+  });
+
   describe('prefer good', () => {
     it('should return the first candidate when option is false', async () => {
       await expectPreferredCandidates({ preferGood: false, single: true }, [

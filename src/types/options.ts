@@ -29,6 +29,7 @@ export interface OptionsProps {
   readonly zipExclude?: string,
   readonly removeHeaders?: string[],
   readonly overwrite?: boolean,
+  readonly preferVerified?: boolean,
   readonly preferGood?: boolean,
   readonly preferLanguage?: string[],
   readonly preferRegion?: string[],
@@ -49,6 +50,7 @@ export interface OptionsProps {
   readonly noTestRoms?: boolean,
   readonly noAftermarket?: boolean,
   readonly noHomebrew?: boolean,
+  readonly onlyVerified?: boolean,
   readonly noBad?: boolean,
   readonly verbose?: number,
   readonly help?: boolean,
@@ -81,6 +83,8 @@ export default class Options implements OptionsProps {
   readonly removeHeaders?: string[];
 
   readonly overwrite: boolean;
+
+  readonly preferVerified: boolean;
 
   readonly preferGood: boolean;
 
@@ -122,6 +126,8 @@ export default class Options implements OptionsProps {
 
   readonly noHomebrew: boolean;
 
+  readonly onlyVerified: boolean;
+
   readonly noBad: boolean;
 
   readonly verbose: number;
@@ -142,6 +148,7 @@ export default class Options implements OptionsProps {
     this.zipExclude = options?.zipExclude || '';
     this.removeHeaders = options?.removeHeaders;
     this.overwrite = options?.overwrite || false;
+    this.preferVerified = options?.preferVerified || false;
     this.preferGood = options?.preferGood || false;
     this.preferLanguage = options?.preferLanguage || [];
     this.preferRegion = options?.preferRegion || [];
@@ -162,6 +169,7 @@ export default class Options implements OptionsProps {
     this.noTestRoms = options?.noTestRoms || false;
     this.noAftermarket = options?.noAftermarket || false;
     this.noHomebrew = options?.noHomebrew || false;
+    this.onlyVerified = options?.onlyVerified || false;
     this.noBad = options?.noBad || false;
     this.verbose = options?.verbose || 0;
     this.help = options?.help || false;
@@ -380,6 +388,10 @@ export default class Options implements OptionsProps {
     return this.overwrite;
   }
 
+  getPreferVerified(): boolean {
+    return this.preferVerified;
+  }
+
   getPreferGood(): boolean {
     return this.preferGood;
   }
@@ -458,6 +470,10 @@ export default class Options implements OptionsProps {
 
   getNoHomebrew(): boolean {
     return this.noHomebrew;
+  }
+
+  getOnlyVerified(): boolean {
+    return this.onlyVerified;
   }
 
   getNoBad(): boolean {

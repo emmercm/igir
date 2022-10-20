@@ -151,50 +151,111 @@ export default class Game implements GameProps {
   // Computed getters
 
   isAftermarket(): boolean {
-    return this.name.match(/\(Aftermarket[a-zA-Z0-9. ]*\)/i) !== null;
+    return this.name.match(/\(Aftermarket[a-z0-9. ]*\)/i) !== null;
+  }
+
+  isAlpha(): boolean {
+    return this.name.match(/\(Alpha[a-z0-9. ]*\)/i) !== null;
   }
 
   isBad(): boolean {
-    return this.name.match(/\[b\]/i) !== null;
+    if (this.name.match(/\[b[0-9]*\]/i) !== null) {
+      return true;
+    }
+    if (this.isVerified()) {
+      // Sometimes [!] can get mixed with [c], consider it not bad
+      return false;
+    }
+    return this.name.match(/\[c\]/i) !== null // "known bad checksum but good dump"
+        && this.name.match(/\[x\]/i) !== null; // "thought to have a bad checksum"
   }
 
   isBeta(): boolean {
-    return this.name.match(/\(Beta[a-zA-Z0-9. ]*\)/i) !== null;
+    return this.name.match(/\(Beta[a-z0-9. ]*\)/i) !== null;
   }
 
   isDemo(): boolean {
-    return this.name.match(/\(Demo[a-zA-Z0-9. ]*\)/i) !== null;
+    return this.name.match(/\(Demo[a-z0-9. ]*\)/i) !== null;
+  }
+
+  isFixed(): boolean {
+    return this.name.match(/\[f[0-9]*\]/i) !== null;
   }
 
   isHomebrew(): boolean {
-    return this.name.match(/\(Homebrew[a-zA-Z0-9. ]*\)/i) !== null;
+    return this.name.match(/\(Homebrew[a-z0-9. ]*\)/i) !== null;
+  }
+
+  isOverdump(): boolean {
+    return this.name.match(/\[o[0-9]*\]/i) !== null;
+  }
+
+  isPendingDump(): boolean {
+    return this.name.match(/\[!p\]/i) !== null;
+  }
+
+  isPirated(): boolean {
+    return this.name.match(/\[p[0-9]*\]/i) !== null;
   }
 
   isPrototype(): boolean {
-    return this.name.match(/\(Proto[a-zA-Z0-9. ]*\)/i) !== null;
+    return this.name.match(/\(Proto[a-z0-9. ]*\)/i) !== null;
   }
 
   isSample(): boolean {
-    return this.name.match(/\(Sample[a-zA-Z0-9. ]*\)/i) !== null;
+    return this.name.match(/\(Sample[a-z0-9. ]*\)/i) !== null;
   }
 
   isTest(): boolean {
-    return this.name.match(/\(Test[a-zA-Z0-9. ]*\)/i) !== null;
+    return this.name.match(/\(Test[a-z0-9. ]*\)/i) !== null;
+  }
+
+  isTranslated(): boolean {
+    return this.name.match(/\[T[+-][^\]]+\]/i) !== null;
   }
 
   isUnlicensed(): boolean {
-    return this.name.match(/\(Unl[a-zA-Z0-9. ]*\)/i) !== null;
+    return this.name.match(/\(Unl[a-z0-9. ]*\)/i) !== null;
+  }
+
+  isVerified(): boolean {
+    if (this.name.match(/\[!\]/i) !== null) {
+      return true;
+    }
+    // Assume verification if there are releases
+    return this.getReleases().length > 0;
+  }
+
+  hasBungFix(): boolean {
+    return this.name.match(/\[bf\]|\(Bung\)/i) !== null;
+  }
+
+  hasHack(): boolean {
+    return this.name.match(/\[h[a-z90-9+]*\]|\(Hack\)/i) !== null;
+  }
+
+  hasTrainer(): boolean {
+    return this.name.match(/\[t[0-9]*\]/i) !== null;
   }
 
   isRetail(): boolean {
     return !this.isAftermarket()
+        && !this.isAlpha()
         && !this.isBad()
         && !this.isBeta()
         && !this.isDemo()
+        && !this.isFixed()
         && !this.isHomebrew()
+        && !this.isOverdump()
+        && !this.isPendingDump()
+        && !this.isPirated()
         && !this.isPrototype()
         && !this.isSample()
-        && !this.isTest();
+        && !this.isTest()
+        && !this.isTranslated()
+        && !this.hasBungFix()
+        && !this.hasHack()
+        && !this.hasTrainer();
   }
 
   isParent(): boolean {
