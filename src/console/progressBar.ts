@@ -48,5 +48,7 @@ export default abstract class ProgressBar {
     return this.log(LogLevel.ERROR, message);
   }
 
+  abstract freeze(): Promise<void>;
+
   abstract delete(): void;
 }

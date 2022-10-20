@@ -50,7 +50,7 @@ export default class FileHeader {
   }
 
   static getSupportedExtensions(): string[] {
-    return Object.values(this.HEADERS).map((header) => header.headeredFileExtension);
+    return Object.values(this.HEADERS).map((header) => header.headeredFileExtension).sort();
   }
 
   static getForName(headerName: string): FileHeader | undefined {

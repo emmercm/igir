@@ -9,26 +9,32 @@ import ProgressBarPayload from './progressBarPayload.js';
 export default class SingleBarFormatted {
   private readonly multiBar: MultiBar;
 
+  private readonly singleBar: SingleBar;
+
+  private lastOutput = '';
+
   private valueTimeBuffer: number[][] = [];
 
-  constructor(multiBar: MultiBar) {
+  constructor(multiBar: MultiBar, name: string, symbol: string, initialTotal: number) {
     this.multiBar = multiBar;
-  }
-
-  build(name: string, symbol: string, initialTotal: number): SingleBar {
-    return this.multiBar.create(initialTotal, 0, {
+    this.singleBar = this.multiBar.create(initialTotal, 0, {
       symbol,
       name,
-    } as ProgressBarPayload, this.buildOptions());
-  }
-
-  private buildOptions(): Options {
-    return {
+    } as ProgressBarPayload, {
       /* eslint-disable-next-line arrow-body-style */
       format: (options, params, payload: ProgressBarPayload): string => {
-        return `${SingleBarFormatted.getSymbol(payload)} ${SingleBarFormatted.getName(payload)} | ${this.getProgress(options, params, payload)}`.trim();
+        this.lastOutput = `${SingleBarFormatted.getSymbol(payload)} ${SingleBarFormatted.getName(payload)} | ${this.getProgress(options, params, payload)}`.trim();
+        return this.lastOutput;
       },
-    };
+    });
+  }
+
+  getSingleBar(): SingleBar {
+    return this.singleBar;
+  }
+
+  getLastOutput(): string {
+    return this.lastOutput;
   }
 
   private static getSymbol(payload: ProgressBarPayload): string {

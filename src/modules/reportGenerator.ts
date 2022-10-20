@@ -42,5 +42,6 @@ export default class ReportGenerator {
     await fsPromises.writeFile(report, contents);
 
     await this.progressBar.done(report);
+    await this.progressBar.freeze();
   }
 }

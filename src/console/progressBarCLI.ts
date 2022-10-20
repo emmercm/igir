@@ -1,5 +1,5 @@
 import { E_CANCELED, Mutex } from 'async-mutex';
-import cliProgress, { MultiBar, SingleBar } from 'cli-progress';
+import cliProgress, { MultiBar } from 'cli-progress';
 import { PassThrough } from 'stream';
 
 import Logger from './logger.js';
@@ -19,7 +19,7 @@ export default class ProgressBarCLI extends ProgressBar {
 
   private readonly logger: Logger;
 
-  private readonly singleBar: SingleBar;
+  private readonly singleBarFormatted: SingleBarFormatted;
 
   constructor(logger: Logger, name: string, symbol: string, initialTotal = 0) {
     super();
@@ -37,8 +37,12 @@ export default class ProgressBarCLI extends ProgressBar {
       }, cliProgress.Presets.shades_grey);
     }
 
-    this.singleBar = new SingleBarFormatted(ProgressBarCLI.multiBar)
-      .build(name, symbol, initialTotal);
+    this.singleBarFormatted = new SingleBarFormatted(
+      ProgressBarCLI.multiBar,
+      name,
+      symbol,
+      initialTotal,
+    );
   }
 
   static stop(): void {
@@ -55,12 +59,12 @@ export default class ProgressBarCLI extends ProgressBar {
    *
    * @see https://github.com/npkgz/cli-progress/issues/79
    */
-  private static async render(): Promise<void> {
+  private static async render(force = false): Promise<void> {
     try {
       await this.RENDER_MUTEX.runExclusive(() => {
         const [elapsedSec, elapsedNano] = process.hrtime(this.lastRedraw);
         const elapsedMs = (elapsedSec * 1000000000 + elapsedNano) / 1000000;
-        if (elapsedMs >= (1000 / ProgressBarCLI.fps)) {
+        if (elapsedMs >= (1000 / ProgressBarCLI.fps) || force) {
           this.multiBar?.update();
           this.lastRedraw = process.hrtime();
           this.RENDER_MUTEX.cancel(); // cancel all waiting locks, we just redrew
@@ -78,39 +82,41 @@ export default class ProgressBarCLI extends ProgressBar {
   }
 
   async reset(total: number): Promise<void> {
-    this.singleBar.setTotal(total);
-    this.singleBar.update(0);
+    this.singleBarFormatted.getSingleBar().setTotal(total);
+    this.singleBarFormatted.getSingleBar().update(0);
     return ProgressBarCLI.render();
   }
 
   async setSymbol(symbol: string): Promise<void> {
-    this.singleBar.update({
+    this.singleBarFormatted.getSingleBar().update({
       symbol,
     } as ProgressBarPayload);
     return ProgressBarCLI.render();
   }
 
   async increment(): Promise<void> {
-    this.singleBar.increment();
+    this.singleBarFormatted.getSingleBar().increment();
     return ProgressBarCLI.render();
   }
 
   async update(current: number): Promise<void> {
-    this.singleBar.update(current);
+    this.singleBarFormatted.getSingleBar().update(current);
     return ProgressBarCLI.render();
   }
 
   async done(finishedMessage?: string): Promise<void> {
     await this.setSymbol(Symbols.DONE);
 
-    if (this.singleBar.getTotal() > 0) {
-      this.singleBar.update(this.singleBar.getTotal());
+    if (this.singleBarFormatted.getSingleBar().getTotal() > 0) {
+      this.singleBarFormatted.getSingleBar()
+        .update(this.singleBarFormatted.getSingleBar().getTotal());
     } else {
-      this.singleBar.update(this.singleBar.getTotal() + 1);
+      this.singleBarFormatted.getSingleBar()
+        .update(this.singleBarFormatted.getSingleBar().getTotal() + 1);
     }
 
     if (finishedMessage) {
-      this.singleBar.update({
+      this.singleBarFormatted.getSingleBar().update({
         finishedMessage,
       } as ProgressBarPayload);
     }
@@ -130,8 +136,14 @@ export default class ProgressBarCLI extends ProgressBar {
    * able to clear them all reliably. It's recommended you don't have too many active progress bars
    * at once.
    */
+  async freeze(): Promise<void> {
+    await ProgressBarCLI.render(true);
+    ProgressBarCLI.multiBar?.log(`${this.singleBarFormatted.getLastOutput()}\n`);
+    this.delete();
+  }
+
   delete(): void {
-    ProgressBarCLI.multiBar?.remove(this.singleBar);
+    ProgressBarCLI.multiBar?.remove(this.singleBarFormatted.getSingleBar());
     // Forcing a render shouldn't be necessary
   }
 }

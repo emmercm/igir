@@ -73,10 +73,11 @@ export default class Igir {
       datsStatuses.push(datStatus);
 
       // Progress bar cleanup
-      // TODO(cemmer): protection against too many progress bars on screen
       const totalReleaseCandidates = [...parentsToCandidates.values()]
         .reduce((sum, rcs) => sum + rcs.length, 0);
-      if (totalReleaseCandidates === 0) {
+      if (totalReleaseCandidates > 0) {
+        await progressBar.freeze();
+      } else {
         progressBar.delete();
       }
 
@@ -84,6 +85,7 @@ export default class Igir {
     });
 
     await datProcessProgressBar.doneItems(dats.length, 'DAT', 'processed');
+    datProcessProgressBar.delete();
 
     // Clean the output directories
     await this.processOutputCleaner(datsToWrittenRoms);
@@ -102,6 +104,7 @@ export default class Igir {
       throw new Error('No valid DAT files found!');
     }
     await progressBar.doneItems(dats.length, 'unique DAT', 'found');
+    await progressBar.freeze();
     return dats;
   }
 
@@ -109,14 +112,16 @@ export default class Igir {
     const progressBar = this.logger.addProgressBar('Scanning for ROMs', Symbols.WAITING);
     const romInputs = await new ROMScanner(this.options, progressBar).scan();
     await progressBar.doneItems(romInputs.length, 'unique ROM', 'found');
+    await progressBar.freeze();
     return romInputs;
   }
 
   private async processHeaderProcessor(romFiles: File[]): Promise<File[]> {
-    const headerProcessorProgressBar = this.logger.addProgressBar('Detecting ROM headers', Symbols.WAITING);
-    const processedRomFiles = await new HeaderProcessor(this.options, headerProcessorProgressBar)
+    const progressBar = this.logger.addProgressBar('Detecting ROM headers', Symbols.WAITING);
+    const processedRomFiles = await new HeaderProcessor(this.options, progressBar)
       .process(romFiles);
-    await headerProcessorProgressBar.doneItems(processedRomFiles.length, 'ROM', 'processed');
+    await progressBar.doneItems(processedRomFiles.length, 'ROM', 'processed');
+    await progressBar.freeze();
     return processedRomFiles;
   }
 
@@ -127,13 +132,14 @@ export default class Igir {
       return;
     }
 
-    const cleanerProgressBar = this.logger.addProgressBar('Cleaning output directory', Symbols.WAITING);
+    const progressBar = this.logger.addProgressBar('Cleaning output directory', Symbols.WAITING);
     const writtenFilesToExclude = [...datsToWrittenRoms.values()]
       .flatMap((parentsToFiles) => [...parentsToFiles.values()])
       .flatMap((files) => files);
-    const filesCleaned = await new OutputCleaner(this.options, cleanerProgressBar)
+    const filesCleaned = await new OutputCleaner(this.options, progressBar)
       .clean(writtenFilesToExclude);
-    await cleanerProgressBar.doneItems(filesCleaned, 'file', 'recycled');
+    await progressBar.doneItems(filesCleaned, 'file', 'recycled');
+    await progressBar.freeze();
   }
 
   private async processReportGenerator(datsStatuses: DATStatus[]): Promise<void> {
