@@ -159,10 +159,10 @@ export default class Game implements GameProps {
   }
 
   isBad(): boolean {
-    if (this.name.match(/\[b\]/i) !== null) {
+    if (this.name.match(/\[b[0-9]*\]/i) !== null) {
       return true;
     }
-    if (this.name.match(/\[!\]/i) !== null) {
+    if (this.isVerified()) {
       // Sometimes [!] can get mixed with [c], consider it not bad
       return false;
     }
@@ -179,11 +179,15 @@ export default class Game implements GameProps {
   }
 
   isFixed(): boolean {
-    return this.name.match(/\[f\]/i) !== null;
+    return this.name.match(/\[f[0-9]*\]/i) !== null;
   }
 
   isHomebrew(): boolean {
     return this.name.match(/\(Homebrew[a-z0-9. ]*\)/i) !== null;
+  }
+
+  isOverdump(): boolean {
+    return this.name.match(/\[o[0-9]*\]/i) !== null;
   }
 
   isPendingDump(): boolean {
@@ -191,7 +195,7 @@ export default class Game implements GameProps {
   }
 
   isPirated(): boolean {
-    return this.name.match(/\[p\]/i) !== null;
+    return this.name.match(/\[p[0-9]*\]/i) !== null;
   }
 
   isPrototype(): boolean {
@@ -207,11 +211,19 @@ export default class Game implements GameProps {
   }
 
   isTranslated(): boolean {
-    return this.name.match(/\[T[+-][a-z0-9]\]/i) !== null;
+    return this.name.match(/\[T[+-][^\]]+\]/i) !== null;
   }
 
   isUnlicensed(): boolean {
     return this.name.match(/\(Unl[a-z0-9. ]*\)/i) !== null;
+  }
+
+  isVerified(): boolean {
+    if (this.name.match(/\[!\]/i) !== null) {
+      return true;
+    }
+    // Assume verification if there are releases
+    return this.getReleases().length > 0;
   }
 
   hasBungFix(): boolean {
@@ -223,7 +235,7 @@ export default class Game implements GameProps {
   }
 
   hasTrainer(): boolean {
-    return this.name.match(/\[t\]/i) !== null;
+    return this.name.match(/\[t[0-9]*\]/i) !== null;
   }
 
   isRetail(): boolean {
@@ -234,6 +246,7 @@ export default class Game implements GameProps {
         && !this.isDemo()
         && !this.isFixed()
         && !this.isHomebrew()
+        && !this.isOverdump()
         && !this.isPendingDump()
         && !this.isPirated()
         && !this.isPrototype()

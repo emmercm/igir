@@ -162,6 +162,9 @@ export default class ReleaseCandidate {
       ) {
         return regionOption.region.toUpperCase();
       }
+      if (regionOption.regex && this.getName().match(regionOption.regex)) {
+        return regionOption.region.toUpperCase();
+      }
     }
     return null;
   }
