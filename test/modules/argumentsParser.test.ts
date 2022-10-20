@@ -66,6 +66,7 @@ describe('options', () => {
     expect(options.getDirLetter()).toEqual(false);
     expect(options.getSingle()).toEqual(false);
     expect(options.getOverwrite()).toEqual(false);
+    expect(options.getPreferVerified()).toEqual(false);
     expect(options.getPreferGood()).toEqual(false);
     expect(options.getPreferLanguages()).toHaveLength(0);
     expect(options.getPreferRegions()).toHaveLength(0);
@@ -86,6 +87,7 @@ describe('options', () => {
     expect(options.getNoTestRoms()).toEqual(false);
     expect(options.getNoAftermarket()).toEqual(false);
     expect(options.getNoHomebrew()).toEqual(false);
+    expect(options.getOnlyVerified()).toEqual(false);
     expect(options.getNoBad()).toEqual(false);
     expect(options.getHelp()).toEqual(false);
   });
@@ -209,6 +211,16 @@ describe('options', () => {
     expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--overwrite', '--overwrite']).getOverwrite()).toEqual(true);
     expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--overwrite', 'false', '--overwrite', 'true']).getOverwrite()).toEqual(true);
     expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--overwrite', 'true', '--overwrite', 'false']).getOverwrite()).toEqual(false);
+  });
+
+  it('should parse "prefer-verified"', () => {
+    expect(() => argumentsParser.parse([...dummyCommandAndRequiredArgs, '--prefer-verified'])).toThrow(/dependent|implication/i);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--prefer-verified', '--single']).getPreferVerified()).toEqual(true);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--prefer-verified', 'true', '--single']).getPreferVerified()).toEqual(true);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--prefer-verified', 'false', '--single']).getPreferVerified()).toEqual(false);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--prefer-verified', '--prefer-verified', '--single']).getPreferVerified()).toEqual(true);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--prefer-verified', 'false', '--prefer-verified', 'true', '--single']).getPreferVerified()).toEqual(true);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--prefer-verified', 'true', '--prefer-verified', 'false', '--single']).getPreferVerified()).toEqual(false);
   });
 
   it('should parse "prefer-good"', () => {
@@ -400,6 +412,15 @@ describe('options', () => {
     expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--no-homebrew', '--no-homebrew']).getNoHomebrew()).toEqual(true);
     expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--no-homebrew', 'false', '--no-homebrew', 'true']).getNoHomebrew()).toEqual(true);
     expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--no-homebrew', 'true', '--no-homebrew', 'false']).getNoHomebrew()).toEqual(false);
+  });
+
+  it('should parse "only-verified"', () => {
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--only-verified']).getOnlyVerified()).toEqual(true);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--only-verified', 'true']).getOnlyVerified()).toEqual(true);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--only-verified', 'false']).getOnlyVerified()).toEqual(false);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--only-verified', '--only-verified']).getOnlyVerified()).toEqual(true);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--only-verified', 'false', '--only-verified', 'true']).getOnlyVerified()).toEqual(true);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--only-verified', 'true', '--only-verified', 'false']).getOnlyVerified()).toEqual(false);
   });
 
   it('should parse "no-bad"', () => {

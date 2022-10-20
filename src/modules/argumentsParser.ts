@@ -196,6 +196,12 @@ export default class ArgumentsParser {
         type: 'boolean',
       })
 
+      .option('prefer-verified', {
+        group: groupPriority,
+        description: 'Prefer verified ROM dumps over not',
+        type: 'boolean',
+        implies: 'single',
+      })
       .option('prefer-good', {
         group: groupPriority,
         description: 'Prefer good ROM dumps over bad',
@@ -318,6 +324,11 @@ export default class ArgumentsParser {
       .option('no-homebrew', {
         group: groupFiltering,
         description: 'Filter out homebrew ROMs',
+        type: 'boolean',
+      })
+      .option('only-verified', {
+        group: groupFiltering,
+        description: 'Filter to only verified ROMs',
         type: 'boolean',
       })
       .option('no-bad', {
