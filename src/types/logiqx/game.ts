@@ -159,15 +159,15 @@ export default class Game implements GameProps {
   }
 
   isBad(): boolean {
-    if (this.name.match(/\[b[0-9]*\]/i) !== null) {
+    if (this.name.match(/\[b[0-9]*\]/) !== null) {
       return true;
     }
     if (this.isVerified()) {
       // Sometimes [!] can get mixed with [c], consider it not bad
       return false;
     }
-    return this.name.match(/\[c\]/i) !== null // "known bad checksum but good dump"
-        && this.name.match(/\[x\]/i) !== null; // "thought to have a bad checksum"
+    return this.name.match(/\[c\]/) !== null // "known bad checksum but good dump"
+        || this.name.match(/\[x\]/) !== null; // "thought to have a bad checksum"
   }
 
   isBeta(): boolean {
@@ -179,7 +179,7 @@ export default class Game implements GameProps {
   }
 
   isFixed(): boolean {
-    return this.name.match(/\[f[0-9]*\]/i) !== null;
+    return this.name.match(/\[f[0-9]*\]/) !== null;
   }
 
   isHomebrew(): boolean {
@@ -187,15 +187,16 @@ export default class Game implements GameProps {
   }
 
   isOverdump(): boolean {
-    return this.name.match(/\[o[0-9]*\]/i) !== null;
+    return this.name.match(/\[o[0-9]*\]/) !== null;
   }
 
   isPendingDump(): boolean {
-    return this.name.match(/\[!p\]/i) !== null;
+    return this.name.match(/\[!p\]/) !== null;
   }
 
   isPirated(): boolean {
-    return this.name.match(/\[p[0-9]*\]/i) !== null;
+    return this.name.match(/\(Pirate[a-z0-9. ]*\)/i) !== null
+        || this.name.match(/\[p[0-9]*\]/) !== null;
   }
 
   isPrototype(): boolean {
@@ -211,7 +212,7 @@ export default class Game implements GameProps {
   }
 
   isTranslated(): boolean {
-    return this.name.match(/\[T[+-][^\]]+\]/i) !== null;
+    return this.name.match(/\[T[+-][^\]]+\]/) !== null;
   }
 
   isUnlicensed(): boolean {
@@ -219,7 +220,7 @@ export default class Game implements GameProps {
   }
 
   isVerified(): boolean {
-    if (this.name.match(/\[!\]/i) !== null) {
+    if (this.name.match(/\[!\]/) !== null) {
       return true;
     }
     // Assume verification if there are releases
@@ -227,15 +228,16 @@ export default class Game implements GameProps {
   }
 
   hasBungFix(): boolean {
-    return this.name.match(/\[bf\]|\(Bung\)/i) !== null;
+    return this.name.match(/\(Bung\)|\[bf\]/i) !== null;
   }
 
   hasHack(): boolean {
-    return this.name.match(/\[h[a-z90-9+]*\]|\(Hack\)/i) !== null;
+    return this.name.match(/\(Hack\)/i) !== null
+        || this.name.match(/\[h[a-zA-Z90-9+]*\]/) !== null;
   }
 
   hasTrainer(): boolean {
-    return this.name.match(/\[t[0-9]*\]/i) !== null;
+    return this.name.match(/\[t[0-9]*\]/) !== null;
   }
 
   isRetail(): boolean {

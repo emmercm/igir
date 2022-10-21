@@ -87,6 +87,14 @@ jobs:
           cd ..
           rm -rf package
 
+  markdown-lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: nosborn/github-action-markdown-cli@v3.2.0
+        with:
+          files: '**/*.md'
+
   renovate-lint:
     runs-on: ubuntu-latest
     steps:
@@ -132,6 +140,7 @@ jobs:
       - node-unit
       - node-e2e
       - node-package
+      - markdown-lint
       - renovate-lint
       - codecov-lint
       - codecov

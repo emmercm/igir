@@ -9,6 +9,11 @@ interface RegionOptions {
   regex?: RegExp;
 }
 
+interface LanguageOptions {
+  short: string;
+  long?: string;
+}
+
 export default class ReleaseCandidate {
   /**
    * This is in priority order! Multi-country regions should be at the bottom!
@@ -93,13 +98,33 @@ export default class ReleaseCandidate {
     },
   ];
 
+  // In no particular order
+  private static readonly LANGUAGE_OPTIONS: LanguageOptions[] = [
+    { short: 'DA', long: 'DAN' },
+    { short: 'DE', long: 'GER' },
+    { short: 'EL' },
+    { short: 'EN', long: 'ENG' },
+    { short: 'ES', long: 'SPA' },
+    { short: 'FI' },
+    { short: 'FR', long: 'FRE' },
+    { short: 'IT', long: 'ITA' },
+    { short: 'JA' },
+    { short: 'KO' },
+    { short: 'NL', long: 'DUT' },
+    { short: 'NO', long: 'NOR' },
+    { short: 'PT' },
+    { short: 'RU' },
+    { short: 'SV', long: 'SWE' },
+    { short: 'ZH', long: 'CHI' },
+  ];
+
   private static readonly REGIONS = this.REGION_OPTIONS
-    .map((regionOption) => regionOption.region)
+    .map((regionOption) => regionOption.region.toUpperCase())
     .filter((region, idx, regions) => regions.indexOf(region) === idx)
     .sort();
 
   private static readonly LANGUAGES = this.REGION_OPTIONS
-    .map((regionOption) => regionOption.language)
+    .map((regionOption) => regionOption.language.toUpperCase())
     .filter((language, idx, languages) => languages.indexOf(language) === idx)
     .sort();
 
@@ -175,12 +200,30 @@ export default class ReleaseCandidate {
       return [(this.release.getLanguage() as string).toUpperCase()];
     }
 
-    // Get language from languages in the game name
-    const matches = this.getName().match(/\(([a-zA-Z]{2}([,+][a-zA-Z]{2})*)\)/);
-    if (matches && matches.length >= 2) {
-      return matches[1].split(/[,+]/)
+    // Get language from short languages in the game name
+    const twoMatches = this.getName().match(/\(([a-zA-Z]{2}([,+][a-zA-Z]{2})*)\)/);
+    if (twoMatches && twoMatches.length >= 2) {
+      const twoMatchesParsed = twoMatches[1].split(/[,+]/)
         .map((lang) => lang.toUpperCase())
+        .filter((lang) => ReleaseCandidate.LANGUAGES.indexOf(lang) !== -1) // is known
         .filter((lang, idx, langs) => langs.indexOf(lang) === idx);
+      if (twoMatchesParsed.length) {
+        return twoMatchesParsed;
+      }
+    }
+
+    // Get language from long languages in the game name
+    const threeMatches = this.getName().match(/\(([a-zA-Z]{3}(-[a-zA-Z]{3})*)\)/);
+    if (threeMatches && threeMatches.length >= 2) {
+      const threeMatchesParsed = threeMatches[1].split('-')
+        .map((lang) => lang.toUpperCase())
+        .map((lang) => ReleaseCandidate.LANGUAGE_OPTIONS
+          .filter((langOpt) => langOpt.long?.toUpperCase() === lang.toUpperCase())[0]?.short)
+        .filter((lang) => ReleaseCandidate.LANGUAGES.indexOf(lang) !== -1) // is known
+        .filter((lang, idx, langs) => langs.indexOf(lang) === idx);
+      if (threeMatchesParsed.length) {
+        return threeMatchesParsed;
+      }
     }
 
     // Get language from the region
