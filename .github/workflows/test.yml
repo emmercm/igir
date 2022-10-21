@@ -93,8 +93,7 @@ jobs:
       - uses: actions/checkout@v3
       - uses: addnab/docker-run-action@v3
         with:
-          registry: ghcr.io
-          image: igorshubovych/markdownlint-cli:latest
+          image: ghcr.io/igorshubovych/markdownlint-cli:latest
           options: -v ${{ github.workspace }}:/workdir
           run: '--disable MD013 MD033 -- "**/*.md"'
 
