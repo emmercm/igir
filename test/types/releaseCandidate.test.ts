@@ -47,12 +47,15 @@ describe('getLanguages', () => {
   });
 
   test.each([
-    ['Jp', ['JP']],
-    ['En,Fr,De', ['EN', 'FR', 'DE']],
-    ['It+En,Fr,De,Es,It,Nl,Sv,Da', ['IT', 'EN', 'FR', 'DE', 'ES', 'NL', 'SV', 'DA']],
-    ['En,Fr,It+Es,It', ['EN', 'FR', 'IT', 'ES']],
-  ])('should return the language from game name: %s', (languages, expectedLanguages) => {
-    const releaseCandidate = new ReleaseCandidate(new Game({ name: `game (${languages})` }), undefined, []);
+    ['Sa-Ga 2 - Hihou Densetsu (World) (Ja) (Rev 1) (Collection of SaGa)', ['JA']],
+    ['Smurfs, The (USA, Europe) (En,Fr,De) (Rev 1) (SGB Enhanced)', ['EN', 'FR', 'DE']],
+    ['Dr. Franken (Europe) (En,Fr,De,Es,It,Nl,Sv)', ['EN', 'FR', 'DE', 'ES', 'IT', 'NL', 'SV']],
+    ['2 Games in 1 - Disney Princesas + Hermano Oso (Spain) (Es+En,Fr,De,Es,It,Nl,Sv,Da)', ['ES', 'EN', 'FR', 'DE', 'IT', 'NL', 'SV', 'DA']],
+    ['Atlantis - The Lost Empire (E) (M3) (Eng-Spa-Ita) [C][!]', ['EN', 'ES', 'IT']],
+    ['Casper (E) (M3) (Eng-Fre-Ger) [C][!]', ['EN', 'FR', 'DE']],
+    ['Obelix (E) (M2) (Eng-Spa) [S][!]', ['EN', 'ES']],
+  ])('should return the language from game name: %s', (name, expectedLanguages) => {
+    const releaseCandidate = new ReleaseCandidate(new Game({ name }), undefined, []);
     expect(releaseCandidate.getLanguages()).toEqual(expectedLanguages);
   });
 

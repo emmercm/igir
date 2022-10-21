@@ -28,12 +28,12 @@ With a large ROM collection it can be difficult to:
 
 `igir` helps solve all of these problems!
 
-## How does `igir` work?
+## What does `igir` need?
 
 `igir` needs two sets of files:
 
-1. ROMs (including ones with [headers](docs/rom-headers.md))
-2. One or more [DATs](docs/dats.md)
+1. ROMs (including ones with headers, see [docs](docs/rom-headers.md))
+2. One or more DATs (see [docs](docs/dats.md))
 
 Many different input archive types are supported for both ROMs and DATs: .001, .7z, .bz2, .gz, .rar, .tar, .tgz, .xz, .z, .z01, .zip, .zipx, and more!
 
@@ -47,6 +47,21 @@ Many different input archive types are supported for both ROMs and DATs: .001, .
 - `report`: generate a report on ROMs found and processed
 
 The `igir --help` command shown below includes examples of how to use multiple commands together.
+
+## How does `igir` work?
+
+`igir` runs these steps in the following order:
+
+1. Scans the DAT input path for every file, parses them
+2. Scans each ROM input path for every file
+   1. Then detects headers in those files, if applicable (see [docs](docs/rom-headers.md))
+3. ROMs are matched to the DATs
+   1. Then filtering and sorting options are applied (see [docs](docs/rom-filtering.md))
+   2. Then ROMs are written to the output directory, if applicable (`copy`, `move`)
+   3. Then written ROMs are tested for accuracy, if applicable (`test`)
+   4. Then input ROMs are deleted, if applicable (`move`)
+4. Unknown files are recycled from the output directory, if applicable (`clean`)
+5. An output report is written to the output directory, if applicable (`report`)
 
 ## How do I run `igir`?
 

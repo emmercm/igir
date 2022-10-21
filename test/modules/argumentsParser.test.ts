@@ -87,7 +87,7 @@ describe('options', () => {
     expect(options.getNoTestRoms()).toEqual(false);
     expect(options.getNoAftermarket()).toEqual(false);
     expect(options.getNoHomebrew()).toEqual(false);
-    expect(options.getOnlyVerified()).toEqual(false);
+    expect(options.getNoUnverified()).toEqual(false);
     expect(options.getNoBad()).toEqual(false);
     expect(options.getHelp()).toEqual(false);
   });
@@ -135,8 +135,6 @@ describe('options', () => {
   });
 
   it('should parse "header"', () => {
-    expect(() => argumentsParser.parse([...dummyCommandAndRequiredArgs, '-H'])).toThrow(/not enough arguments/i);
-    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '-H', '**/*']).shouldReadFileForHeader('file.rom')).toEqual(true);
     expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--header', '**/*']).shouldReadFileForHeader('file.rom')).toEqual(true);
     expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--header', '**/*', '--header', 'nope']).shouldReadFileForHeader('file.rom')).toEqual(false);
   });
@@ -193,13 +191,14 @@ describe('options', () => {
     expect(argumentsParser.parse(dummyCommandAndRequiredArgs).canRemoveHeader('.smc')).toEqual(false);
     expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--remove-headers', '.smc']).canRemoveHeader('.rom')).toEqual(false);
     // True
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '-H']).canRemoveHeader('')).toEqual(true);
     expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--remove-headers']).canRemoveHeader('')).toEqual(true);
     expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--remove-headers']).canRemoveHeader('.rom')).toEqual(true);
     expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--remove-headers']).canRemoveHeader('.smc')).toEqual(true);
-    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--remove-headers', '.smc']).canRemoveHeader('filepath.smc')).toEqual(false);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '-H', '.smc']).canRemoveHeader('filepath.smc')).toEqual(false);
     expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--remove-headers', 'smc']).canRemoveHeader('.smc')).toEqual(true);
     expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--remove-headers', '.smc']).canRemoveHeader('.SMC')).toEqual(true);
-    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--remove-headers', 'LNX,.smc']).canRemoveHeader('.smc')).toEqual(true);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '-H', 'LNX,.smc']).canRemoveHeader('.smc')).toEqual(true);
     expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--remove-headers', 'lnx,.LNX']).canRemoveHeader('.LnX')).toEqual(true);
   });
 
@@ -239,7 +238,7 @@ describe('options', () => {
     expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '-l', 'EN', '--single']).getPreferLanguages()).toEqual(['EN']);
     expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--prefer-language', 'EN', '--single']).getPreferLanguages()).toEqual(['EN']);
     expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--prefer-language', 'EN,it', '--single']).getPreferLanguages()).toEqual(['EN', 'IT']);
-    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--prefer-language', 'en,IT,JP', '--single']).getPreferLanguages()).toEqual(['EN', 'IT', 'JP']);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--prefer-language', 'en,IT,JA', '--single']).getPreferLanguages()).toEqual(['EN', 'IT', 'JA']);
     expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--prefer-language', 'EN,en', '--single']).getPreferLanguages()).toEqual(['EN']);
   });
 
@@ -300,7 +299,7 @@ describe('options', () => {
     expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '-L', 'EN']).getLanguageFilter()).toEqual(['EN']);
     expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--language-filter', 'EN']).getLanguageFilter()).toEqual(['EN']);
     expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--language-filter', 'EN,it']).getLanguageFilter()).toEqual(['EN', 'IT']);
-    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--language-filter', 'en,IT,JP']).getLanguageFilter()).toEqual(['EN', 'IT', 'JP']);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--language-filter', 'en,IT,JA']).getLanguageFilter()).toEqual(['EN', 'IT', 'JA']);
     expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--language-filter', 'EN,en']).getLanguageFilter()).toEqual(['EN']);
   });
 
@@ -414,13 +413,13 @@ describe('options', () => {
     expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--no-homebrew', 'true', '--no-homebrew', 'false']).getNoHomebrew()).toEqual(false);
   });
 
-  it('should parse "only-verified"', () => {
-    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--only-verified']).getOnlyVerified()).toEqual(true);
-    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--only-verified', 'true']).getOnlyVerified()).toEqual(true);
-    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--only-verified', 'false']).getOnlyVerified()).toEqual(false);
-    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--only-verified', '--only-verified']).getOnlyVerified()).toEqual(true);
-    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--only-verified', 'false', '--only-verified', 'true']).getOnlyVerified()).toEqual(true);
-    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--only-verified', 'true', '--only-verified', 'false']).getOnlyVerified()).toEqual(false);
+  it('should parse "no-unverified"', () => {
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--no-unverified']).getNoUnverified()).toEqual(true);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--no-unverified', 'true']).getNoUnverified()).toEqual(true);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--no-unverified', 'false']).getNoUnverified()).toEqual(false);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--no-unverified', '--no-unverified']).getNoUnverified()).toEqual(true);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--no-unverified', 'false', '--no-unverified', 'true']).getNoUnverified()).toEqual(true);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--no-unverified', 'true', '--no-unverified', 'false']).getNoUnverified()).toEqual(false);
   });
 
   it('should parse "no-bad"', () => {

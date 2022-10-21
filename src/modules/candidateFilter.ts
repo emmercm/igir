@@ -84,7 +84,7 @@ export default class CandidateFilter {
       this.options.getNoTestRoms() && releaseCandidate.getGame().isTest(),
       this.options.getNoAftermarket() && releaseCandidate.getGame().isAftermarket(),
       this.options.getNoHomebrew() && releaseCandidate.getGame().isHomebrew(),
-      this.options.getOnlyVerified() && !releaseCandidate.getGame().isVerified(),
+      this.options.getNoUnverified() && !releaseCandidate.getGame().isVerified(),
       this.options.getNoBad() && releaseCandidate.getGame().isBad(),
     ].filter((val) => val).length === 0;
   }

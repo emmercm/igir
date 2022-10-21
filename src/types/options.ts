@@ -17,26 +17,21 @@ import Game from './logiqx/game.js';
 
 export interface OptionsProps {
   readonly commands?: string[],
+
   readonly dat?: string[],
   readonly input?: string[],
   readonly inputExclude?: string[],
   readonly output?: string,
+
   readonly header?: string,
+
   readonly dirMirror?: boolean,
   readonly dirDatName?: boolean,
   readonly dirLetter?: boolean,
-  readonly single?: boolean,
   readonly zipExclude?: string,
   readonly removeHeaders?: string[],
   readonly overwrite?: boolean,
-  readonly preferVerified?: boolean,
-  readonly preferGood?: boolean,
-  readonly preferLanguage?: string[],
-  readonly preferRegion?: string[],
-  readonly preferRevisionNewer?: boolean,
-  readonly preferRevisionOlder?: boolean,
-  readonly preferRetail?: boolean,
-  readonly preferParent?: boolean,
+
   readonly languageFilter?: string[],
   readonly regionFilter?: string[],
   readonly onlyBios?: boolean,
@@ -50,8 +45,19 @@ export interface OptionsProps {
   readonly noTestRoms?: boolean,
   readonly noAftermarket?: boolean,
   readonly noHomebrew?: boolean,
-  readonly onlyVerified?: boolean,
+  readonly noUnverified?: boolean,
   readonly noBad?: boolean,
+
+  readonly single?: boolean,
+  readonly preferVerified?: boolean,
+  readonly preferGood?: boolean,
+  readonly preferLanguage?: string[],
+  readonly preferRegion?: string[],
+  readonly preferRevisionNewer?: boolean,
+  readonly preferRevisionOlder?: boolean,
+  readonly preferRetail?: boolean,
+  readonly preferParent?: boolean,
+
   readonly verbose?: number,
   readonly help?: boolean,
 }
@@ -76,29 +82,11 @@ export default class Options implements OptionsProps {
 
   readonly dirLetter: boolean;
 
-  readonly single: boolean = false;
-
   readonly zipExclude: string;
 
   readonly removeHeaders?: string[];
 
   readonly overwrite: boolean;
-
-  readonly preferVerified: boolean;
-
-  readonly preferGood: boolean;
-
-  readonly preferLanguage: string[];
-
-  readonly preferRegion: string[];
-
-  readonly preferRevisionNewer: boolean;
-
-  readonly preferRevisionOlder: boolean;
-
-  readonly preferRetail: boolean;
-
-  readonly preferParent: boolean;
 
   readonly languageFilter: string[];
 
@@ -126,9 +114,27 @@ export default class Options implements OptionsProps {
 
   readonly noHomebrew: boolean;
 
-  readonly onlyVerified: boolean;
+  readonly noUnverified: boolean;
 
   readonly noBad: boolean;
+
+  readonly single: boolean = false;
+
+  readonly preferVerified: boolean;
+
+  readonly preferGood: boolean;
+
+  readonly preferLanguage: string[];
+
+  readonly preferRegion: string[];
+
+  readonly preferRevisionNewer: boolean;
+
+  readonly preferRevisionOlder: boolean;
+
+  readonly preferRetail: boolean;
+
+  readonly preferParent: boolean;
 
   readonly verbose: number;
 
@@ -136,26 +142,21 @@ export default class Options implements OptionsProps {
 
   constructor(options?: OptionsProps) {
     this.commands = options?.commands || [];
+
     this.dat = options?.dat || [];
     this.input = options?.input || [];
     this.inputExclude = options?.inputExclude || [];
     this.output = options?.output || '';
+
     this.header = options?.header || '';
+
     this.dirMirror = options?.dirMirror || false;
     this.dirDatName = options?.dirDatName || false;
     this.dirLetter = options?.dirLetter || false;
-    this.single = options?.single || false;
     this.zipExclude = options?.zipExclude || '';
     this.removeHeaders = options?.removeHeaders;
     this.overwrite = options?.overwrite || false;
-    this.preferVerified = options?.preferVerified || false;
-    this.preferGood = options?.preferGood || false;
-    this.preferLanguage = options?.preferLanguage || [];
-    this.preferRegion = options?.preferRegion || [];
-    this.preferRevisionNewer = options?.preferRevisionNewer || false;
-    this.preferRevisionOlder = options?.preferRevisionOlder || false;
-    this.preferRetail = options?.preferRetail || false;
-    this.preferParent = options?.preferParent || false;
+
     this.languageFilter = options?.languageFilter || [];
     this.regionFilter = options?.regionFilter || [];
     this.onlyBios = options?.onlyBios || false;
@@ -169,8 +170,19 @@ export default class Options implements OptionsProps {
     this.noTestRoms = options?.noTestRoms || false;
     this.noAftermarket = options?.noAftermarket || false;
     this.noHomebrew = options?.noHomebrew || false;
-    this.onlyVerified = options?.onlyVerified || false;
+    this.noUnverified = options?.noUnverified || false;
     this.noBad = options?.noBad || false;
+
+    this.single = options?.single || false;
+    this.preferVerified = options?.preferVerified || false;
+    this.preferGood = options?.preferGood || false;
+    this.preferLanguage = options?.preferLanguage || [];
+    this.preferRegion = options?.preferRegion || [];
+    this.preferRevisionNewer = options?.preferRevisionNewer || false;
+    this.preferRevisionOlder = options?.preferRevisionOlder || false;
+    this.preferRetail = options?.preferRetail || false;
+    this.preferParent = options?.preferParent || false;
+
     this.verbose = options?.verbose || 0;
     this.help = options?.help || false;
   }
@@ -362,10 +374,6 @@ export default class Options implements OptionsProps {
     return this.dirLetter;
   }
 
-  getSingle(): boolean {
-    return this.single;
-  }
-
   private getZipExclude(): string {
     return this.zipExclude;
   }
@@ -386,42 +394,6 @@ export default class Options implements OptionsProps {
 
   getOverwrite(): boolean {
     return this.overwrite;
-  }
-
-  getPreferVerified(): boolean {
-    return this.preferVerified;
-  }
-
-  getPreferGood(): boolean {
-    return this.preferGood;
-  }
-
-  getPreferLanguages(): string[] {
-    return Options.filterUniqueUpper(this.preferLanguage);
-  }
-
-  getPreferRegions(): string[] {
-    return Options.filterUniqueUpper(this.preferRegion);
-  }
-
-  getLanguageFilter(): string[] {
-    return Options.filterUniqueUpper(this.languageFilter);
-  }
-
-  getPreferRevisionNewer(): boolean {
-    return this.preferRevisionNewer;
-  }
-
-  getPreferRevisionOlder(): boolean {
-    return this.preferRevisionOlder;
-  }
-
-  getPreferRetail(): boolean {
-    return this.preferRetail;
-  }
-
-  getPreferParent(): boolean {
-    return this.preferParent;
   }
 
   getRegionFilter(): string[] {
@@ -472,12 +444,52 @@ export default class Options implements OptionsProps {
     return this.noHomebrew;
   }
 
-  getOnlyVerified(): boolean {
-    return this.onlyVerified;
+  getNoUnverified(): boolean {
+    return this.noUnverified;
   }
 
   getNoBad(): boolean {
     return this.noBad;
+  }
+
+  getSingle(): boolean {
+    return this.single;
+  }
+
+  getPreferVerified(): boolean {
+    return this.preferVerified;
+  }
+
+  getPreferGood(): boolean {
+    return this.preferGood;
+  }
+
+  getPreferLanguages(): string[] {
+    return Options.filterUniqueUpper(this.preferLanguage);
+  }
+
+  getPreferRegions(): string[] {
+    return Options.filterUniqueUpper(this.preferRegion);
+  }
+
+  getLanguageFilter(): string[] {
+    return Options.filterUniqueUpper(this.languageFilter);
+  }
+
+  getPreferRevisionNewer(): boolean {
+    return this.preferRevisionNewer;
+  }
+
+  getPreferRevisionOlder(): boolean {
+    return this.preferRevisionOlder;
+  }
+
+  getPreferRetail(): boolean {
+    return this.preferRetail;
+  }
+
+  getPreferParent(): boolean {
+    return this.preferParent;
   }
 
   getLogLevel(): LogLevel {

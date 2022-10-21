@@ -694,7 +694,7 @@ describe('preFilter', () => {
 
   describe('only verified', () => {
     it('should return all candidates when option is false', async () => {
-      await expectFilteredCandidates({ onlyVerified: false }, [
+      await expectFilteredCandidates({ noUnverified: false }, [
         await buildReleaseCandidatesWithRegionLanguage('one', [], 'EN'),
         await buildReleaseCandidatesWithRegionLanguage('two [!]', [], 'EN'),
         await buildReleaseCandidatesWithRegionLanguage('three [!]', [], 'EN'),
@@ -702,14 +702,14 @@ describe('preFilter', () => {
     });
 
     it('should return no candidates if none matching', async () => {
-      await expectFilteredCandidates({ onlyVerified: true }, [
+      await expectFilteredCandidates({ noUnverified: true }, [
         await buildReleaseCandidatesWithRegionLanguage('one', [], 'EN'),
         await buildReleaseCandidatesWithRegionLanguage('two', [], 'EN'),
       ], 0);
     });
 
     it('should return some candidates if some matching', async () => {
-      await expectFilteredCandidates({ onlyVerified: true }, [
+      await expectFilteredCandidates({ noUnverified: true }, [
         await buildReleaseCandidatesWithRegionLanguage('one [!]', [], 'EN'),
         await buildReleaseCandidatesWithRegionLanguage('two', [], 'EN'),
         await buildReleaseCandidatesWithRegionLanguage('three [!]', [], 'EN'),
@@ -717,7 +717,7 @@ describe('preFilter', () => {
     });
 
     it('should return all candidates if all matching', async () => {
-      await expectFilteredCandidates({ onlyVerified: true }, [
+      await expectFilteredCandidates({ noUnverified: true }, [
         await buildReleaseCandidatesWithRegionLanguage('one [!]', [], 'EN'),
         await buildReleaseCandidatesWithRegionLanguage('two [!]', [], 'EN'),
       ], 2);

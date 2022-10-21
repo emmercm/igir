@@ -48,11 +48,11 @@ export default class ArgumentsParser {
   parse(argv: string[]): Options {
     this.logger.info(`Parsing CLI arguments: ${argv}`);
 
-    const groupInputOutputPaths = 'Path options (inputs support globbing):';
+    const groupPaths = 'Path options (inputs support globbing):';
     const groupInput = 'Input options:';
     const groupOutput = 'Output options:';
-    const groupPriority = 'Priority options (requires --single):';
     const groupFiltering = 'Filtering options:';
+    const groupPriority = 'Priority options:';
     const groupHelp = 'Help options:';
 
     // Add every command to a yargs object, recursively, resulting in the ability to specify
@@ -90,7 +90,7 @@ export default class ArgumentsParser {
 
     yargsParser
       .option('dat', {
-        group: groupInputOutputPaths,
+        group: groupPaths,
         alias: 'd',
         description: 'Path(s) to DAT files or archives',
         demandOption: true,
@@ -99,7 +99,7 @@ export default class ArgumentsParser {
         default: ['*.dat'],
       })
       .option('input', {
-        group: groupInputOutputPaths,
+        group: groupPaths,
         alias: 'i',
         // TODO(cemmer): add a warning when input and output directories are the same, but also
         //  have a "yes" flag
@@ -109,14 +109,14 @@ export default class ArgumentsParser {
         requiresArg: true,
       })
       .option('input-exclude', {
-        group: groupInputOutputPaths,
+        group: groupPaths,
         alias: 'I',
         description: 'Path(s) to ROM files to exclude',
         type: 'array',
         requiresArg: true,
       })
       .option('output', {
-        group: groupInputOutputPaths,
+        group: groupPaths,
         alias: 'o',
         description: 'Path to the ROM output directory',
         demandOption: false, // use the .check()
@@ -137,7 +137,6 @@ export default class ArgumentsParser {
 
       .option('header', {
         group: groupInput,
-        alias: 'H',
         description: 'Glob pattern of files to force header processing for',
         type: 'string',
         coerce: ArgumentsParser.getLastValue, // don't allow string[] values
@@ -161,12 +160,6 @@ export default class ArgumentsParser {
         description: 'Append the first letter of the ROM name as an output subdirectory',
         type: 'boolean',
       })
-      .option('single', {
-        group: groupOutput,
-        alias: 's',
-        description: 'Output only a single game per parent (1G1R) (requires parent-clone DAT files)',
-        type: 'boolean',
-      })
       .option('zip-exclude', {
         group: groupOutput,
         alias: 'Z',
@@ -177,6 +170,7 @@ export default class ArgumentsParser {
       })
       .option('remove-headers', {
         group: groupOutput,
+        alias: 'H',
         description: `Remove known headers from ROMs, optionally limited to a list of comma-separated file extensions (supported: ${FileHeader.getSupportedExtensions().join(', ')})`,
         type: 'string',
         coerce: (vals: string) => vals
@@ -194,63 +188,6 @@ export default class ArgumentsParser {
         alias: 'O',
         description: 'Overwrite any ROMs in the output directory',
         type: 'boolean',
-      })
-
-      .option('prefer-verified', {
-        group: groupPriority,
-        description: 'Prefer verified ROM dumps over not',
-        type: 'boolean',
-        implies: 'single',
-      })
-      .option('prefer-good', {
-        group: groupPriority,
-        description: 'Prefer good ROM dumps over bad',
-        type: 'boolean',
-        implies: 'single',
-      })
-      .option('prefer-language', {
-        group: groupPriority,
-        alias: 'l',
-        description: `List of comma-separated languages in priority order (supported: ${ReleaseCandidate.getLanguages().join(', ')})`,
-        type: 'string',
-        coerce: (val: string) => val.split(','),
-        requiresArg: true,
-        implies: 'single',
-      })
-      .option('prefer-region', {
-        group: groupPriority,
-        alias: 'r',
-        description: `List of comma-separated regions in priority order (supported: ${ReleaseCandidate.getRegions().join(', ')})`,
-        type: 'string',
-        coerce: (val: string) => val.split(','),
-        requiresArg: true,
-        implies: 'single',
-      })
-      .option('prefer-revision-newer', {
-        group: groupPriority,
-        description: 'Prefer newer ROM revisions over older',
-        type: 'boolean',
-        conflicts: ['prefer-revision-older'],
-        implies: 'single',
-      })
-      .option('prefer-revision-older', {
-        group: groupPriority,
-        description: 'Prefer older ROM revisions over newer',
-        type: 'boolean',
-        conflicts: ['prefer-revision-newer'],
-        implies: 'single',
-      })
-      .option('prefer-retail', {
-        group: groupPriority,
-        description: 'Prefer retail releases (see --only-retail)',
-        type: 'boolean',
-        implies: 'single',
-      })
-      .option('prefer-parent', {
-        group: groupPriority,
-        description: 'Prefer parent ROMs over clones (requires parent-clone DAT files)',
-        type: 'boolean',
-        implies: ['dat', 'single'],
       })
 
       .option('language-filter', {
@@ -326,15 +263,78 @@ export default class ArgumentsParser {
         description: 'Filter out homebrew ROMs',
         type: 'boolean',
       })
-      .option('only-verified', {
+      .option('no-unverified', {
         group: groupFiltering,
-        description: 'Filter to only verified ROMs',
+        description: 'Filter out un-verified ROMs',
         type: 'boolean',
       })
       .option('no-bad', {
         group: groupFiltering,
         description: 'Filter out bad ROM dumps',
         type: 'boolean',
+      })
+
+      .option('single', {
+        group: groupPriority,
+        alias: 's',
+        description: 'Output only a single game per parent (1G1R) (required for all options below, requires parent/clone DAT files)',
+        type: 'boolean',
+      })
+      .option('prefer-verified', {
+        group: groupPriority,
+        description: 'Prefer verified ROM dumps over not',
+        type: 'boolean',
+        implies: 'single',
+      })
+      .option('prefer-good', {
+        group: groupPriority,
+        description: 'Prefer good ROM dumps over bad',
+        type: 'boolean',
+        implies: 'single',
+      })
+      .option('prefer-language', {
+        group: groupPriority,
+        alias: 'l',
+        description: `List of comma-separated languages in priority order (supported: ${ReleaseCandidate.getLanguages().join(', ')})`,
+        type: 'string',
+        coerce: (val: string) => val.split(','),
+        requiresArg: true,
+        implies: 'single',
+      })
+      .option('prefer-region', {
+        group: groupPriority,
+        alias: 'r',
+        description: `List of comma-separated regions in priority order (supported: ${ReleaseCandidate.getRegions().join(', ')})`,
+        type: 'string',
+        coerce: (val: string) => val.split(','),
+        requiresArg: true,
+        implies: 'single',
+      })
+      .option('prefer-revision-newer', {
+        group: groupPriority,
+        description: 'Prefer newer ROM revisions over older',
+        type: 'boolean',
+        conflicts: ['prefer-revision-older'],
+        implies: 'single',
+      })
+      .option('prefer-revision-older', {
+        group: groupPriority,
+        description: 'Prefer older ROM revisions over newer',
+        type: 'boolean',
+        conflicts: ['prefer-revision-newer'],
+        implies: 'single',
+      })
+      .option('prefer-retail', {
+        group: groupPriority,
+        description: 'Prefer retail releases (see --only-retail)',
+        type: 'boolean',
+        implies: 'single',
+      })
+      .option('prefer-parent', {
+        group: groupPriority,
+        description: 'Prefer parent ROMs over clones (requires parent-clone DAT files)',
+        type: 'boolean',
+        implies: ['dat', 'single'],
       })
 
       .option('verbose', {
