@@ -95,7 +95,7 @@ jobs:
         with:
           image: ghcr.io/igorshubovych/markdownlint-cli:latest
           options: -v ${{ github.workspace }}:/workdir
-          run: '--disable MD013 MD033 -- "**/*.md"'
+          run: --disable MD013 MD033 -- "**/*.md"
 
   renovate-lint:
     runs-on: ubuntu-latest
