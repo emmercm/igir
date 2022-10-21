@@ -91,11 +91,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
-      - uses: addnab/docker-run-action@v3
-        with:
-          image: ghcr.io/igorshubovych/markdownlint-cli:latest
-          options: -v ${{ github.workspace }}:/workdir
-          run: --disable MD013 MD033 -- "**/*.md"
+      - run: docker run -v $PWD:/workdir ghcr.io/igorshubovych/markdownlint-cli:latest --disable MD013 MD033 -- "**/*.md"
 
   renovate-lint:
     runs-on: ubuntu-latest
