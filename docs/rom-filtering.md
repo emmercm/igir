@@ -112,6 +112,13 @@ Games that are not any of the below options, and are not:
   Bugs Bunny - Crazy Castle 3 (J) [C][f2]
   ```
 
+- **Non-public "MIA"**: games that contain `[MIA]` in their name, e.g.:
+
+  ```text
+  [MIA] Better Dead Than Alien (Europe)
+  [MIA] Billiards Simulator (Europe) (En,Fr,De)
+  ```
+
 - **Overdumps**: games that contain `[o]` or `[o#]` in their name, e.g.:
 
   ```text
