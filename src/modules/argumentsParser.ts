@@ -93,10 +93,8 @@ export default class ArgumentsParser {
         group: groupPaths,
         alias: 'd',
         description: 'Path(s) to DAT files or archives',
-        demandOption: true,
         type: 'array',
         requiresArg: true,
-        default: ['*.dat'],
       })
       .option('input', {
         group: groupPaths,
@@ -279,6 +277,7 @@ export default class ArgumentsParser {
         alias: 's',
         description: 'Output only a single game per parent (1G1R) (required for all options below, requires parent/clone DAT files)',
         type: 'boolean',
+        implies: 'dat',
       })
       .option('prefer-verified', {
         group: groupPriority,
