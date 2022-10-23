@@ -21,7 +21,11 @@ export default abstract class Scanner {
     this.progressBar = progressBar;
   }
 
-  protected async getFilesFromPaths(filePaths: string[], threads: number): Promise<File[]> {
+  protected async getFilesFromPaths(
+    filePaths: string[],
+    threads: number,
+    filterUnique = true,
+  ): Promise<File[]> {
     const foundFiles = (await async.mapLimit(
       filePaths,
       threads,
@@ -32,6 +36,9 @@ export default abstract class Scanner {
       },
     ))
       .flatMap((files) => files);
+    if (!filterUnique) {
+      return foundFiles;
+    }
 
     // Limit to unique files
     return [...foundFiles
