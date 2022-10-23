@@ -80,7 +80,7 @@ Here is the full `igir --help` message which shows all available options and a n
   | $$  | $$ __\$$  | $$  | $$__| $$
   | $$  | $$|    \  | $$  | $$    $$   ROM collection manager
   | $$  | $$ \$$$$  | $$  | $$$$$$$\
- _| $$_ | $$__| $$ _| $$_ | $$  | $$   v0.3.0
+ _| $$_ | $$__| $$ _| $$_ | $$  | $$   v0.3.1
 |   $$ \ \$$    $$|   $$ \| $$  | $$
  \$$$$$$  \$$$$$$  \$$$$$$ \$$   \$$
 
@@ -103,34 +103,17 @@ Path options (inputs support globbing):
   -o, --output         Path to the ROM output directory                                  [string]
 
 Input options:
-  -H, --header  Glob pattern of files to force header processing for                     [string]
+      --header  Glob pattern of files to force header processing for                     [string]
 
 Output options:
       --dir-mirror      Use the input subdirectory structure for output subdirectories  [boolean]
   -D, --dir-dat-name    Use the DAT name as the output subdirectory                     [boolean]
       --dir-letter      Append the first letter of the ROM name as an output subdirectory
                                                                                         [boolean]
-  -s, --single          Output only a single game per parent (1G1R) (requires parent-clone DAT fi
-                        les)                                                            [boolean]
   -Z, --zip-exclude     Glob pattern of files to exclude from zipping                    [string]
-      --remove-headers  Remove known headers from ROMs, optionally limited to a list of comma-sep
-                        arated file extensions (supported: .a78, .lnx, .nes, .fds, .smc) [string]
+  -H, --remove-headers  Remove known headers from ROMs, optionally limited to a list of comma-sep
+                        arated file extensions (supported: .a78, .fds, .lnx, .nes, .smc) [string]
   -O, --overwrite       Overwrite any ROMs in the output directory                      [boolean]
-
-Priority options (requires --single):
-      --prefer-good            Prefer good ROM dumps over bad                           [boolean]
-  -l, --prefer-language        List of comma-separated languages in priority order (supported: DA
-                               , DE, EL, EN, ES, FI, FR, IT, JA, KO, NL, NO, PT, RU, SV, ZH)
-                                                                                         [string]
-  -r, --prefer-region          List of comma-separated regions in priority order (supported: ARG,
-                                ASI, AUS, BRA, CAN, CHN, DAN, EUR, FRA, FYN, GER, GRE, HK, HOL, I
-                               TA, JPN, KOR, MEX, NOR, NZ, POR, RUS, SPA, SWE, TAI, UK, UNK, USA)
-                                                                                         [string]
-      --prefer-revision-newer  Prefer newer ROM revisions over older                    [boolean]
-      --prefer-revision-older  Prefer older ROM revisions over newer                    [boolean]
-      --prefer-retail          Prefer retail releases (see --only-retail)               [boolean]
-      --prefer-parent          Prefer parent ROMs over clones (requires parent-clone DAT files)
-                                                                                        [boolean]
 
 Filtering options:
   -L, --language-filter  List of comma-separated languages to limit to (supported: DA, DE, EL, EN
@@ -150,7 +133,26 @@ Filtering options:
       --no-test-roms     Filter out test ROMs                                           [boolean]
       --no-aftermarket   Filter out aftermarket ROMs                                    [boolean]
       --no-homebrew      Filter out homebrew ROMs                                       [boolean]
+      --no-unverified    Filter out un-verified ROMs                                    [boolean]
       --no-bad           Filter out bad ROM dumps                                       [boolean]
+
+Priority options:
+  -s, --single                 Output only a single game per parent (1G1R) (required for all opti
+                               ons below, requires parent/clone DAT files)              [boolean]
+      --prefer-verified        Prefer verified ROM dumps over not                       [boolean]
+      --prefer-good            Prefer good ROM dumps over bad                           [boolean]
+  -l, --prefer-language        List of comma-separated languages in priority order (supported: DA
+                               , DE, EL, EN, ES, FI, FR, IT, JA, KO, NL, NO, PT, RU, SV, ZH)
+                                                                                         [string]
+  -r, --prefer-region          List of comma-separated regions in priority order (supported: ARG,
+                                ASI, AUS, BRA, CAN, CHN, DAN, EUR, FRA, FYN, GER, GRE, HK, HOL, I
+                               TA, JPN, KOR, MEX, NOR, NZ, POR, RUS, SPA, SWE, TAI, UK, UNK, USA)
+                                                                                         [string]
+      --prefer-revision-newer  Prefer newer ROM revisions over older                    [boolean]
+      --prefer-revision-older  Prefer older ROM revisions over newer                    [boolean]
+      --prefer-retail          Prefer retail releases (see --only-retail)               [boolean]
+      --prefer-parent          Prefer parent ROMs over clones (requires parent-clone DAT files)
+                                                                                        [boolean]
 
 Help options:
   -v, --verbose  Enable verbose logging, can specify twice (-vv)                          [count]
