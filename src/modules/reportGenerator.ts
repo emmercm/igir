@@ -22,7 +22,7 @@ export default class ReportGenerator {
   async generate(datsStatuses: DATStatus[]): Promise<void> {
     await this.progressBar.logInfo('Generating report');
 
-    const report = this.options.getOutputReport();
+    const report = this.options.getOutputReportPath();
 
     const contents = (
       await Promise.all(datsStatuses

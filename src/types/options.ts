@@ -343,8 +343,16 @@ export default class Options implements OptionsProps {
     return fsPoly.makeLegal(output);
   }
 
-  getOutputReport(): string {
-    const output = this.shouldWrite() ? this.output : process.cwd();
+  getOutputReportPath(): string {
+    let output = process.cwd();
+    if (this.shouldWrite()) {
+      // Write to the output dir if writing
+      output = this.output;
+    } else if (this.input.length === 1) {
+      // Write to the input dir if there is only one
+      [output] = this.input;
+    }
+
     return path.join(
       output,
       fsPoly.makeLegal(`${Constants.COMMAND_NAME}_${moment().format()}.csv`),
