@@ -79,16 +79,22 @@ export default class DATStatus {
         const all = this.allRomTypesToGames.get(type) || [];
 
         const percentage = (found.length / all.length) * 100;
-        let colorizer = chalk.red;
+        let color = chalk.reset;
         if (percentage >= 100) {
-          colorizer = chalk.green;
-        } else if (percentage >= 90) {
-          colorizer = chalk.yellow;
+          color = chalk.green;
         } else if (percentage >= 80) {
-          colorizer = chalk.rgb(255, 136, 0);
+          color = chalk.rgb(255, 255, 0);
+        } else if (percentage >= 60) {
+          color = chalk.rgb(255, 209, 0);
+        } else if (percentage >= 40) {
+          color = chalk.rgb(255, 159, 0);
+        } else if (percentage >= 20) {
+          color = chalk.rgb(255, 103, 0);
+        } else {
+          color = color.red;
         }
 
-        return `${colorizer(found.length.toLocaleString())}/${all.length.toLocaleString()} ${type}`;
+        return `${color(found.length.toLocaleString())}/${chalk.white(all.length.toLocaleString())} ${type}`;
       })
       .join(', ')} found`;
   }
