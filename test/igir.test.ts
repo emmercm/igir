@@ -47,10 +47,6 @@ async function expectEndToEnd(optionsProps: OptionsProps, expectedFiles: string[
   await Promise.all(reports.map(async (report) => fsPoly.rm(report)));
 }
 
-it('should throw on no dats', async () => {
-  await expect(new Igir(new Options({}), LOGGER).main()).rejects.toThrow(/no valid dat/i);
-});
-
 it('should do nothing with no roms', async () => {
   await expectEndToEnd({
     commands: ['copy'],

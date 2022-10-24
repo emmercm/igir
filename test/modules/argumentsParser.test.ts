@@ -93,7 +93,7 @@ describe('options', () => {
   });
 
   it('should parse "dat"', async () => {
-    expect(async () => argumentsParser.parse(['test', '--input', os.devNull, '--dat']).scanDatFiles()).toThrow(/not enough arguments/i);
+    expect(() => argumentsParser.parse(['test', '--input', os.devNull, '--dat'])).toThrow(/not enough arguments/i);
     await expect(argumentsParser.parse(['test', '--input', os.devNull]).scanDatFiles()).resolves.toHaveLength(0);
 
     const src = await argumentsParser.parse(['test', '--input', os.devNull, '-d', './src']).scanDatFiles();
