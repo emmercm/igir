@@ -1,4 +1,5 @@
 import { writeToString } from '@fast-csv/format';
+import chalk from 'chalk';
 
 import DAT from './logiqx/dat.js';
 import Game from './logiqx/game.js';
@@ -70,12 +71,24 @@ export default class DATStatus {
       }, false);
   }
 
-  toString(options: Options): string {
+  toConsole(options: Options): string {
     return `${DATStatus.getAllowedTypes(options)
+      .filter((type) => this.allRomTypesToGames.get(type)?.length)
       .map((type) => {
         const found = this.foundRomTypesToReleaseCandidates.get(type) || [];
         const all = this.allRomTypesToGames.get(type) || [];
-        return `${found.length.toLocaleString()}/${all.length.toLocaleString()} ${type}`;
+
+        const percentage = (found.length / all.length) * 100;
+        let colorizer = chalk.red;
+        if (percentage >= 100) {
+          colorizer = chalk.green;
+        } else if (percentage >= 90) {
+          colorizer = chalk.yellow;
+        } else if (percentage >= 80) {
+          colorizer = chalk.rgb(255, 136, 0);
+        }
+
+        return `${colorizer(found.length.toLocaleString())}/${all.length.toLocaleString()} ${type}`;
       })
       .join(', ')} found`;
   }

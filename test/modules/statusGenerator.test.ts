@@ -1,3 +1,5 @@
+import stripAnsi from 'strip-ansi';
+
 import StatusGenerator from '../../src/modules/statusGenerator.js';
 import DAT from '../../src/types/logiqx/dat.js';
 import Game from '../../src/types/logiqx/game.js';
@@ -62,34 +64,34 @@ async function getParentToReleaseCandidates(
   return [parent, releaseCandidates];
 }
 
-describe('toString', () => {
+describe('toConsole', () => {
   describe('no candidates', () => {
     it('should return games, bioses, and retail as missing', async () => {
       const options = new Options();
       const datStatus = await new StatusGenerator(options, new ProgressBarFake())
         .output(dat, new Map());
-      expect(datStatus.toString(options)).toEqual('1/5 games, 0/1 bioses, 1/4 retail releases found');
+      expect(stripAnsi(datStatus.toConsole(options))).toEqual('1/5 games, 0/1 bioses, 1/4 retail releases found');
     });
 
     it('should return games and retail as missing', async () => {
       const options = new Options({ noBios: true });
       const datStatus = await new StatusGenerator(options, new ProgressBarFake())
         .output(dat, new Map());
-      expect(datStatus.toString(options)).toEqual('1/5 games, 1/4 retail releases found');
+      expect(stripAnsi(datStatus.toConsole(options))).toEqual('1/5 games, 1/4 retail releases found');
     });
 
     it('should return bioses as missing', async () => {
       const options = new Options({ onlyBios: true });
       const datStatus = await new StatusGenerator(options, new ProgressBarFake())
         .output(dat, new Map());
-      expect(datStatus.toString(options)).toEqual('0/1 bioses found');
+      expect(stripAnsi(datStatus.toConsole(options))).toEqual('0/1 bioses found');
     });
 
     it('should return bioses and retail as missing', async () => {
       const options = new Options({ single: true });
       const datStatus = await new StatusGenerator(options, new ProgressBarFake())
         .output(dat, new Map());
-      expect(datStatus.toString(options)).toEqual('0/1 bioses, 1/4 retail releases found');
+      expect(stripAnsi(datStatus.toConsole(options))).toEqual('0/1 bioses, 1/4 retail releases found');
     });
   });
 
@@ -101,7 +103,7 @@ describe('toString', () => {
       ]);
       const datStatus = await new StatusGenerator(options, new ProgressBarFake())
         .output(dat, map);
-      expect(datStatus.toString(options)).toEqual('2/5 games, 1/1 bioses, 2/4 retail releases found');
+      expect(stripAnsi(datStatus.toConsole(options))).toEqual('2/5 games, 1/1 bioses, 2/4 retail releases found');
     });
 
     it('should return prototype as found', async () => {
@@ -111,7 +113,7 @@ describe('toString', () => {
       ]);
       const datStatus = await new StatusGenerator(options, new ProgressBarFake())
         .output(dat, map);
-      expect(datStatus.toString(options)).toEqual('2/5 games, 0/1 bioses, 1/4 retail releases found');
+      expect(stripAnsi(datStatus.toConsole(options))).toEqual('2/5 games, 0/1 bioses, 1/4 retail releases found');
     });
 
     it('should return game with single rom as found', async () => {
@@ -121,7 +123,7 @@ describe('toString', () => {
       ]);
       const datStatus = await new StatusGenerator(options, new ProgressBarFake())
         .output(dat, map);
-      expect(datStatus.toString(options)).toEqual('2/5 games, 0/1 bioses, 2/4 retail releases found');
+      expect(stripAnsi(datStatus.toConsole(options))).toEqual('2/5 games, 0/1 bioses, 2/4 retail releases found');
     });
   });
 
@@ -135,7 +137,7 @@ describe('toString', () => {
     ]);
     const datStatus = await new StatusGenerator(options, new ProgressBarFake())
       .output(dat, map);
-    expect(datStatus.toString(options)).toEqual('5/5 games, 1/1 bioses, 4/4 retail releases found');
+    expect(stripAnsi(datStatus.toConsole(options))).toEqual('5/5 games, 1/1 bioses, 4/4 retail releases found');
   });
 });
 
