@@ -126,10 +126,17 @@ export default class ArgumentsParser {
         if (checkArgv.help) {
           return true;
         }
+
         const needOutput = ['copy', 'move', 'zip', 'clean'].filter((command) => checkArgv._.indexOf(command) !== -1);
         if ((!checkArgv.output || !checkArgv.output.length) && needOutput.length) {
           throw new Error(`Missing required option for commands ${needOutput.join(', ')}: output`);
         }
+
+        const needDat = ['report'].filter((command) => checkArgv._.indexOf(command) !== -1);
+        if ((!checkArgv.dat || !checkArgv.dat.length) && needDat.length) {
+          throw new Error(`Missing required option for commands ${needDat.join(', ')}: dat`);
+        }
+
         return true;
       })
 

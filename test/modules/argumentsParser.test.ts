@@ -93,6 +93,7 @@ describe('options', () => {
   });
 
   it('should parse "dat"', async () => {
+    expect(() => argumentsParser.parse(['report', '--input', os.devNull])).toThrow(/missing required option/i);
     expect(() => argumentsParser.parse(['test', '--input', os.devNull, '--dat'])).toThrow(/not enough arguments/i);
     await expect(argumentsParser.parse(['test', '--input', os.devNull]).scanDatFiles()).resolves.toHaveLength(0);
 
@@ -129,8 +130,8 @@ describe('options', () => {
     expect(() => argumentsParser.parse(['move', '--input', os.devNull])).toThrow(/missing required option/i);
     expect(() => argumentsParser.parse(['zip', '--input', os.devNull])).toThrow(/missing required option/i);
     expect(() => argumentsParser.parse(['clean', '--input', os.devNull])).toThrow(/missing required option/i);
-    expect(argumentsParser.parse(['test', '--input', os.devNull]).getOutput()).toContain(Constants.GLOBAL_TEMP_DIR);
-    expect(argumentsParser.parse(['report', '--input', os.devNull]).getOutput()).toContain(Constants.GLOBAL_TEMP_DIR);
+    expect(argumentsParser.parse(['test', '--dat', os.devNull, '--input', os.devNull]).getOutput()).toContain(Constants.GLOBAL_TEMP_DIR);
+    expect(argumentsParser.parse(['report', '--dat', os.devNull, '--input', os.devNull]).getOutput()).toContain(Constants.GLOBAL_TEMP_DIR);
     // Test value
     expect(argumentsParser.parse(['copy', '--input', os.devNull, '-o', 'foo']).getOutput()).toEqual('foo');
     expect(argumentsParser.parse(['copy', '--input', os.devNull, '--output', 'foo']).getOutput()).toEqual('foo');
