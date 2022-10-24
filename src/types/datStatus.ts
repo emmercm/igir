@@ -1,4 +1,5 @@
 import { writeToString } from '@fast-csv/format';
+import chalk, { ChalkInstance } from 'chalk';
 
 import DAT from './logiqx/dat.js';
 import Game from './logiqx/game.js';
@@ -8,7 +9,7 @@ import ReleaseCandidate from './releaseCandidate.js';
 
 enum ROMType {
   GAME = 'games',
-  BIOS = 'bioses',
+  BIOS = 'BIOSes',
   RETAIL = 'retail releases',
 }
 
@@ -70,12 +71,30 @@ export default class DATStatus {
       }, false);
   }
 
-  toString(options: Options): string {
+  toConsole(options: Options): string {
     return `${DATStatus.getAllowedTypes(options)
+      .filter((type) => this.allRomTypesToGames.get(type)?.length)
       .map((type) => {
         const found = this.foundRomTypesToReleaseCandidates.get(type) || [];
         const all = this.allRomTypesToGames.get(type) || [];
-        return `${found.length.toLocaleString()}/${all.length.toLocaleString()} ${type}`;
+
+        const percentage = (found.length / all.length) * 100;
+        let color: ChalkInstance;
+        if (percentage >= 100) {
+          color = chalk.rgb(0, 166, 0); // macOS terminal green
+        } else if (percentage >= 75) {
+          color = chalk.rgb(153, 153, 0); // macOS terminal yellow
+        } else if (percentage >= 50) {
+          color = chalk.rgb(160, 124, 0);
+        } else if (percentage >= 25) {
+          color = chalk.rgb(162, 93, 0);
+        } else if (percentage > 0) {
+          color = chalk.rgb(160, 59, 0);
+        } else {
+          color = chalk.rgb(153, 0, 0); // macOS terminal red
+        }
+
+        return `${color(found.length.toLocaleString())}/${all.length.toLocaleString()} ${type}`;
       })
       .join(', ')} found`;
   }
