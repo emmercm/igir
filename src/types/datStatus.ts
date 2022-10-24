@@ -71,6 +71,7 @@ export default class DATStatus {
   }
 
   toString(options: Options): string {
+    // TODO(cemmer): only print 'games' if we're not using DATs
     return `${DATStatus.getAllowedTypes(options)
       .map((type) => {
         const found = this.foundRomTypesToReleaseCandidates.get(type) || [];
