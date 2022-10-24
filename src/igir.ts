@@ -105,7 +105,7 @@ export default class Igir {
     const dats = await new DATScanner(this.options, progressBar).scan();
     if (!dats.length) {
       progressBar.delete();
-      if (this.options.getDatCount() > 0) {
+      if (this.options.usingDats()) {
         ProgressBarCLI.stop();
         throw new Error('No valid DAT files found!');
       }

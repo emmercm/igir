@@ -237,8 +237,8 @@ export default class Options implements OptionsProps {
 
   // Options
 
-  getDatCount(): number {
-    return this.dat.length;
+  usingDats(): boolean {
+    return this.dat.length > 0;
   }
 
   async scanDatFiles(): Promise<string[]> {

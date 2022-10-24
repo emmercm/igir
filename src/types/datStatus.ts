@@ -71,7 +71,6 @@ export default class DATStatus {
   }
 
   toString(options: Options): string {
-    // TODO(cemmer): only print 'games' if we're not using DATs
     return `${DATStatus.getAllowedTypes(options)
       .map((type) => {
         const found = this.foundRomTypesToReleaseCandidates.get(type) || [];
@@ -155,8 +154,10 @@ export default class DATStatus {
     return [
       !options.getSingle() && !options.getOnlyBios() && !options.getOnlyRetail()
         ? ROMType.GAME : undefined,
-      options.getOnlyBios() || !options.getNoBios() ? ROMType.BIOS : undefined,
-      options.getOnlyRetail() || !options.getOnlyBios() ? ROMType.RETAIL : undefined,
+      options.usingDats() && (options.getOnlyBios() || !options.getNoBios())
+        ? ROMType.BIOS : undefined,
+      options.usingDats() && (options.getOnlyRetail() || !options.getOnlyBios())
+        ? ROMType.RETAIL : undefined,
     ].filter((romType) => romType) as ROMType[];
   }
 }

@@ -20,15 +20,13 @@ export default class ROMScanner extends Scanner {
     await this.progressBar.reset(romFilePaths.length);
     await this.progressBar.logInfo(`Found ${romFilePaths.length} ROM file${romFilePaths.length !== 1 ? 's' : ''}`);
 
-    const filterUnique = this.options.getDatCount() > 0;
     const files = await this.getFilesFromPaths(
       romFilePaths,
       Constants.ROM_SCANNER_THREADS,
-      filterUnique,
+      this.options.usingDats(),
     );
 
-    // TODO(cemmer): only use the word 'unique' if we're using DATs
-    await this.progressBar.doneItems(files.length, 'unique ROM', 'found');
+    await this.progressBar.doneItems(files.length, `${this.options.usingDats() ? 'unique ' : ''}ROM`, 'found');
 
     return files;
   }
