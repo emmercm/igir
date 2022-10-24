@@ -9,7 +9,7 @@ import ReleaseCandidate from './releaseCandidate.js';
 
 enum ROMType {
   GAME = 'games',
-  BIOS = 'bioses',
+  BIOS = 'BIOSes',
   RETAIL = 'retail releases',
 }
 
@@ -82,19 +82,19 @@ export default class DATStatus {
         let color = chalk.reset;
         if (percentage >= 100) {
           color = chalk.green;
-        } else if (percentage >= 80) {
-          color = chalk.rgb(255, 255, 0);
-        } else if (percentage >= 60) {
-          color = chalk.rgb(255, 209, 0);
-        } else if (percentage >= 40) {
-          color = chalk.rgb(255, 159, 0);
-        } else if (percentage >= 20) {
-          color = chalk.rgb(255, 103, 0);
+        } else if (percentage >= 75) {
+          color = chalk.rgb(153, 153, 0); // ansi yellow
+        } else if (percentage >= 50) {
+          color = chalk.rgb(160, 124, 0);
+        } else if (percentage >= 25) {
+          color = chalk.rgb(162, 93, 0);
+        } else if (percentage > 0) {
+          color = chalk.rgb(160, 59, 0);
         } else {
-          color = color.red;
+          color = chalk.rgb(153, 0, 0); // ansi red
         }
 
-        return `${color(found.length.toLocaleString())}/${chalk.white(all.length.toLocaleString())} ${type}`;
+        return `${color(found.length.toLocaleString())}/${all.length.toLocaleString()} ${type}`;
       })
       .join(', ')} found`;
   }
