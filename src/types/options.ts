@@ -2,7 +2,7 @@ import 'reflect-metadata';
 
 import { Expose, instanceToPlain, plainToInstance } from 'class-transformer';
 import fg from 'fast-glob';
-import { promises as fsPromises } from 'fs';
+import fs, { promises as fsPromises } from 'fs';
 import { isNotJunk } from 'junk';
 import micromatch from 'micromatch';
 import moment from 'moment';
@@ -343,8 +343,19 @@ export default class Options implements OptionsProps {
     return fsPoly.makeLegal(output);
   }
 
-  getOutputReport(): string {
-    const output = this.shouldWrite() ? this.output : process.cwd();
+  getOutputReportPath(): string {
+    let output = process.cwd();
+    if (this.shouldWrite()) {
+      // Write to the output dir if writing
+      output = this.output;
+    } else if (this.input.length === 1) {
+      // Write to the input dir if there is only one
+      let [input] = this.input;
+      while (!fs.existsSync(input)) {
+        input = path.dirname(input);
+      }
+    }
+
     return path.join(
       output,
       fsPoly.makeLegal(`${Constants.COMMAND_NAME}_${moment().format()}.csv`),

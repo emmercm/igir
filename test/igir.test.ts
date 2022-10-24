@@ -41,7 +41,7 @@ async function expectEndToEnd(optionsProps: OptionsProps, expectedFiles: string[
   await fsPoly.rm(tempOutput, { force: true, recursive: true });
 
   const reports = await fg(path.join(
-    path.dirname(options.getOutputReport()),
+    path.dirname(options.getOutputReportPath()),
     `${Constants.COMMAND_NAME}_*.csv`,
   ));
   await Promise.all(reports.map(async (report) => fsPoly.rm(report)));
