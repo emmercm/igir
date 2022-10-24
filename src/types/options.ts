@@ -2,7 +2,7 @@ import 'reflect-metadata';
 
 import { Expose, instanceToPlain, plainToInstance } from 'class-transformer';
 import fg from 'fast-glob';
-import { promises as fsPromises } from 'fs';
+import fs, { promises as fsPromises } from 'fs';
 import { isNotJunk } from 'junk';
 import micromatch from 'micromatch';
 import moment from 'moment';
@@ -354,7 +354,10 @@ export default class Options implements OptionsProps {
       output = this.output;
     } else if (this.input.length === 1) {
       // Write to the input dir if there is only one
-      [output] = this.input;
+      let [input] = this.input;
+      while (!fs.existsSync(input)) {
+        input = path.dirname(input);
+      }
     }
 
     return path.join(

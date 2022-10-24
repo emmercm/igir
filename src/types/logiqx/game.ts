@@ -127,7 +127,7 @@ export default class Game implements GameProps {
   }
 
   isBios(): boolean {
-    return this.bios === 'yes' || this.name.indexOf('[BIOS]') !== -1;
+    return this.bios === 'yes' || this.name.match(/\[BIOS\]/i) !== null;
   }
 
   getReleases(): Release[] {
@@ -184,6 +184,10 @@ export default class Game implements GameProps {
 
   isHomebrew(): boolean {
     return this.name.match(/\(Homebrew[a-z0-9. ]*\)/i) !== null;
+  }
+
+  isMIA(): boolean {
+    return this.name.match(/\[MIA\]/i) !== null;
   }
 
   isOverdump(): boolean {
@@ -248,6 +252,7 @@ export default class Game implements GameProps {
         && !this.isDemo()
         && !this.isFixed()
         && !this.isHomebrew()
+        && !this.isMIA()
         && !this.isOverdump()
         && !this.isPendingDump()
         && !this.isPirated()
