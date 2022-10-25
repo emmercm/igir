@@ -358,6 +358,7 @@ export default class Options implements OptionsProps {
       while (!fs.existsSync(input)) {
         input = path.dirname(input);
       }
+      output = input;
     }
 
     return path.join(
