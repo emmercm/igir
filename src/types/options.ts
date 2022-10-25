@@ -12,6 +12,7 @@ import path from 'path';
 import LogLevel from '../console/logLevel.js';
 import Constants from '../constants.js';
 import fsPoly from '../polyfill/fsPoly.js';
+import GameConsole from './gameConsole.js';
 import DAT from './logiqx/dat.js';
 import Game from './logiqx/game.js';
 
@@ -360,6 +361,30 @@ export default class Options implements OptionsProps {
         .replace('{romBasename}', outputRom.base)
         .replace('{romName}', outputRom.name)
         .replace('{romExt}', outputRom.ext);
+    }
+    result = this.replaceOutputGameConsoleTokens(result);
+    return result;
+  }
+
+  private static replaceOutputGameConsoleTokens(
+    output: string,
+    outputRomFilename?: string,
+  ): string {
+    if (!outputRomFilename) {
+      return output;
+    }
+
+    const gameConsole = GameConsole.getForFilename(outputRomFilename);
+    if (!gameConsole) {
+      return output;
+    }
+
+    let result = output;
+    if (gameConsole.getPocket()) {
+      result = result.replace('{pocket}', gameConsole.getPocket() as string);
+    }
+    if (gameConsole.getMister()) {
+      result = result.replace('{mister}', gameConsole.getMister() as string);
     }
     return result;
   }
