@@ -309,8 +309,10 @@ export default class Options implements OptionsProps {
       .filter((inputPath, idx, arr) => arr.indexOf(inputPath) === idx);
   }
 
-  getOutput(dat?: DAT, inputRomPath?: string, game?: Game, romName?: string): string {
+  getOutput(dat?: DAT, inputRomPath?: string, game?: Game, romFilename?: string): string {
     let output = this.shouldWrite() ? this.output : Constants.GLOBAL_TEMP_DIR;
+    output = Options.replaceOutputTokens(output, dat, romFilename);
+
     if (this.getDirMirror() && inputRomPath) {
       const mirroredDir = path.dirname(inputRomPath)
         .replace(/[\\/]/g, path.sep)
@@ -324,8 +326,8 @@ export default class Options implements OptionsProps {
       output = path.join(output, dat.getNameShort());
     }
 
-    if (this.getDirLetter() && romName) {
-      let letter = romName[0].toUpperCase();
+    if (this.getDirLetter() && romFilename) {
+      let letter = romFilename[0].toUpperCase();
       if (letter.match(/[^A-Z]/)) {
         letter = '#';
       }
@@ -336,11 +338,30 @@ export default class Options implements OptionsProps {
       output = path.join(output, game.getName());
     }
 
-    if (romName) {
-      output = path.join(output, romName);
+    if (romFilename) {
+      output = path.join(output, romFilename);
     }
 
     return fsPoly.makeLegal(output);
+  }
+
+  private static replaceOutputTokens(
+    output: string,
+    dat?: DAT,
+    outputRomFilename?: string,
+  ): string {
+    let result = output;
+    if (dat) {
+      result = result.replace('{datName}', dat.getName);
+    }
+    if (outputRomFilename) {
+      const outputRom = path.parse(outputRomFilename);
+      result = result
+        .replace('{romBasename}', outputRom.base)
+        .replace('{romName}', outputRom.name)
+        .replace('{romExt}', outputRom.ext);
+    }
+    return result;
   }
 
   getOutputReportPath(): string {

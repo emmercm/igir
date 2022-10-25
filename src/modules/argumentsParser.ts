@@ -145,7 +145,7 @@ export default class ArgumentsParser {
 
       .option('dir-mirror', {
         group: groupOutput,
-        description: 'Use the input subdirectory structure for output subdirectories',
+        description: 'Use the input subdirectory structure for the output directory',
         type: 'boolean',
       })
       .option('dir-dat-name', {
