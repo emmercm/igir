@@ -26,11 +26,11 @@ describe('commands', () => {
     expect(argumentsParser.parse(['zip', ...dummyRequiredArgs]).shouldZip('')).toEqual(true);
     expect(argumentsParser.parse(['clean', ...dummyRequiredArgs]).shouldClean()).toEqual(true);
     expect(argumentsParser.parse(['test', ...dummyRequiredArgs]).shouldTest()).toEqual(true);
-    expect(argumentsParser.parse(['report', ...dummyRequiredArgs]).shouldReport()).toEqual(true);
+    expect(argumentsParser.parse(['report', ...dummyRequiredArgs, '--dat', os.devNull]).shouldReport()).toEqual(true);
   });
 
   it('should parse multiple commands', () => {
-    const commands = ['copy', 'move', 'zip', 'clean', 'test', 'report', ...dummyRequiredArgs];
+    const commands = ['copy', 'move', 'zip', 'clean', 'test', 'report', ...dummyRequiredArgs, '--dat', os.devNull];
     expect(argumentsParser.parse(commands).shouldCopy()).toEqual(true);
     expect(argumentsParser.parse(commands).shouldMove()).toEqual(true);
     expect(argumentsParser.parse(commands).shouldZip('')).toEqual(true);
