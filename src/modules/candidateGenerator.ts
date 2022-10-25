@@ -49,7 +49,6 @@ export default class CandidateGenerator {
     const hashCodeToInputFiles = CandidateGenerator.indexFilesByHashCode(inputRomFiles);
     await this.progressBar.logInfo(`${dat.getName()}: ${hashCodeToInputFiles.size} unique ROMs found`);
 
-    // TODO(cemmer): ability to work without DATs, generating a parent/game/release per file
     // For each parent, try to generate a parent candidate
     /* eslint-disable no-await-in-loop */
     for (let i = 0; i < dat.getParents().length; i += 1) {
