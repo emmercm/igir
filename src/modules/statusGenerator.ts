@@ -28,7 +28,7 @@ export default class StatusGenerator {
 
     const datStatus = new DATStatus(dat, parentsToReleaseCandidates);
 
-    await this.progressBar.done(datStatus.toString(this.options));
+    await this.progressBar.done(datStatus.toConsole(this.options));
 
     return datStatus;
   }
