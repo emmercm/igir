@@ -91,12 +91,13 @@ export default class Logger {
         .replace(/(\[options\.*\])/g, chalk.cyan('$1'))
         .replace(/([^a-zA-Z0-9-])(-[a-zA-Z0-9]+)/g, `$1${chalk.cyanBright('$2')}`)
         .replace(/(--[a-zA-Z0-9-]+(\n[ \t]+)?[a-zA-Z0-9-]+)/g, chalk.cyan('$1'))
+        .replace(/(<[a-zA-Z]+>)/g, chalk.blue('$1'))
 
         .replace(/(\[(array|boolean|count|number|string)\])/g, chalk.grey('$1'))
         .replace(/(\[default:[^\]]+\]+)/g, chalk.green('$1'))
         .replace(/(\[required\])/g, chalk.red('$1'))
 
-      // TODO(cemmer): colorize tokens
+        .replace(/(\{[a-zA-Z]+\})/g, chalk.yellow('$1'))
 
         .replace(new RegExp(` (${Constants.COMMAND_NAME}) `, 'g'), ` ${chalk.blueBright('$1')} `),
     );

@@ -347,25 +347,25 @@ export default class ArgumentsParser {
       .wrap(ArgumentsParser.getHelpWidth(argv))
       .version(false)
       .example([
-        ['Produce a 1G1R set per console, preferring English ROMs from USA>EUR>JPN:'],
-        ['  $0 copy --dat *.dat --input **/*.zip --output 1G1R/ --dir-dat-name --single --prefer-language EN --prefer-region USA,EUR,JPN'],
         ['\nMerge new ROMs into an existing ROM collection and generate a report:'],
         ['  $0 copy report --dat *.dat --input **/*.zip --input ROMs/ --output ROMs/'],
         ['\nOrganize and zip an existing ROM collection:'],
         ['  $0 move zip --dat *.dat --input ROMs/ --output ROMs/'],
+        ['Produce a 1G1R set per console, preferring English ROMs from USA>EUR>JPN:'],
+        ['  $0 copy --dat *.dat --input **/*.zip --output 1G1R/ --dir-dat-name --single --prefer-language EN --prefer-region USA,EUR,JPN'],
         ['\nCollate all BIOS files into one directory:'],
         ['  $0 copy --dat *.dat --input **/*.zip --output BIOS/ --only-bios'],
-        ['\nCopy ROMs to a flash cart and test them:'],
-        ['  $0 copy test --dat *.dat --input ROMs/ --output /media/SDCard/ROMs/ --dir-dat-name --dir-letter'],
+        ['\nCopy ROMs to your Analogue Pocket and test them:'],
+        ['  $0 copy test --dat *.dat --input ROMs/ --output /Assets/{pocket}/common/ --dir-letter --remove-headers .smc'],
         ['\nMake a copy of SNES ROMs without the SMC header that isn\'t supported by some emulators:'],
         ['  $0 copy --dat *.dat --input **/*.smc --output Headerless/ --dir-mirror --remove-headers .smc'],
       ])
 
-      .epilogue(`Output (--output <path>) replaceable tokens:
+      .epilogue(`Replaceable tokens for the output (--output <path>) option:
   There are a few tokens with a special meaning that can be used in the output path:
     {datName}  The name of the DAT that contains the ROM (e.g. "Nintendo - Game Boy")
-    {pocket}   The console-specific /Assets/ folder name for the Analogue Pocket core
-    {mister}   The console-specific /games/ folder name for the MiSTer FPGA`)
+    {pocket}   The ROM's core-specific /Assets/ folder for the Analogue Pocket (e.g. "gb")
+    {mister}   The ROM's core-specific /games/ folder for the MiSTer FPGA (e.g. "Gameboy")`)
 
       // Colorize help output
       .option('help', {
