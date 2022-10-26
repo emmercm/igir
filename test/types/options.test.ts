@@ -21,7 +21,40 @@ describe('getOutput', () => {
     expect(new Options({ commands: ['move'], output: os.devNull }).getOutput()).toEqual(os.devNull);
   });
 
-  it('should respect dir mirror', () => {
+  describe('token replacement', () => {
+    it('should not replace tokens with no arguments', () => {
+      const output = '/{datName}/{pocket}/{mister}/{romBasename}/{romName}{romExt}';
+      expect(new Options({
+        commands: ['copy'],
+        output,
+      }).getOutput()).toEqual(output);
+    });
+
+    it('should replace {datName}', () => {
+      const dat = new DAT(new Header({ name: 'DAT / Name' }), []);
+      expect(new Options({ commands: ['copy'], output: '/foo/{datName}/bar' }).getOutput(dat)).toEqual('/foo/DAT _ Name/bar');
+    });
+
+    test.each([
+      ['game.a78', '/Assets/{pocket}/common/game.a78'],
+      ['game.gb', '/Assets/gb/common/game.gb'],
+      ['game.nes', '/Assets/nes/common/game.nes'],
+      ['game.sv', '/Assets/supervision/common/game.sv'],
+    ])('should replace {pocket}: %s', (outputRomFilename, expectedPath) => {
+      expect(new Options({ commands: ['copy'], output: '/Assets/{pocket}/common' }).getOutput(undefined, undefined, undefined, outputRomFilename)).toEqual(expectedPath);
+    });
+
+    test.each([
+      ['game.a78', '/games/Atari7800/game.a78'],
+      ['game.gb', '/games/Gameboy/game.gb'],
+      ['game.nes', '/games/NES/game.nes'],
+      ['game.sv', '/games/{mister}/game.sv'],
+    ])('should replace {mister}: %s', (outputRomFilename, expectedPath) => {
+      expect(new Options({ commands: ['copy'], output: '/games/{mister}' }).getOutput(undefined, undefined, undefined, outputRomFilename)).toEqual(expectedPath);
+    });
+  });
+
+  it('should respect "--dir-mirror"', () => {
     const game = new Game();
     expect(new Options({ commands: ['copy'], output: os.devNull, dirMirror: true }).getOutput()).toEqual(os.devNull);
     expect(new Options({ commands: ['copy'], output: os.devNull, dirMirror: true }).getOutput(undefined, undefined, game, 'file.rom')).toEqual(path.join(os.devNull, 'file.rom'));
@@ -31,13 +64,13 @@ describe('getOutput', () => {
     expect(new Options({ commands: ['copy'], output: os.devNull, dirMirror: false }).getOutput(undefined, 'roms/subdir/file.rom', game, 'file.rom')).toEqual(path.join(os.devNull, 'file.rom'));
   });
 
-  it('should respect dir dat name', () => {
+  it('should respect "--dir-dat-name"', () => {
     expect(new Options({ commands: ['copy'], output: os.devNull, dirDatName: true }).getOutput()).toEqual(os.devNull);
     expect(new Options({ commands: ['copy'], output: os.devNull, dirDatName: true }).getOutput(new DAT(new Header({ name: 'system' }), []))).toEqual(path.join(os.devNull, 'system'));
     expect(new Options({ commands: ['copy'], output: os.devNull, dirDatName: false }).getOutput(new DAT(new Header({ name: 'system' }), []))).toEqual(os.devNull);
   });
 
-  it('should respect dir letter', () => {
+  it('should respect "--dir-letter"', () => {
     const game = new Game();
     expect(new Options({ commands: ['copy'], output: os.devNull, dirLetter: true }).getOutput()).toEqual(os.devNull);
     expect(new Options({ commands: ['copy'], output: os.devNull, dirLetter: true }).getOutput(undefined, undefined, game, 'file.rom')).toEqual(path.join(os.devNull, 'F', 'file.rom'));

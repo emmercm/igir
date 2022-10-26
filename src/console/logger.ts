@@ -96,6 +96,8 @@ export default class Logger {
         .replace(/(\[default:[^\]]+\]+)/g, chalk.green('$1'))
         .replace(/(\[required\])/g, chalk.red('$1'))
 
+      // TODO(cemmer): colorize tokens
+
         .replace(new RegExp(` (${Constants.COMMAND_NAME}) `, 'g'), ` ${chalk.blueBright('$1')} `),
     );
   }

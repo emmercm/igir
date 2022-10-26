@@ -355,16 +355,9 @@ export default class Options implements OptionsProps {
   ): string {
     let result = output;
     if (dat) {
-      result = result.replace('{datName}', dat.getName);
+      result = result.replace('{datName}', dat.getName().replace(/[\\/]/g, '_'));
     }
-    if (outputRomFilename) {
-      const outputRom = path.parse(outputRomFilename);
-      result = result
-        .replace('{romBasename}', outputRom.base)
-        .replace('{romName}', outputRom.name)
-        .replace('{romExt}', outputRom.ext);
-    }
-    result = this.replaceOutputGameConsoleTokens(result);
+    result = this.replaceOutputGameConsoleTokens(result, outputRomFilename);
     return result;
   }
 

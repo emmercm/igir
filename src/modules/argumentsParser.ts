@@ -103,7 +103,7 @@ export default class ArgumentsParser {
         alias: 'i',
         // TODO(cemmer): add a warning when input and output directories are the same, but also
         //  have a "yes" flag
-        description: 'Path(s) to ROM files or archives, these files will not be modified',
+        description: 'Path(s) to ROM files or archives',
         demandOption: true,
         type: 'array',
         requiresArg: true,
@@ -111,14 +111,14 @@ export default class ArgumentsParser {
       .option('input-exclude', {
         group: groupPaths,
         alias: 'I',
-        description: 'Path(s) to ROM files to exclude',
+        description: 'Path(s) to ROM files or archives to exclude',
         type: 'array',
         requiresArg: true,
       })
       .option('output', {
         group: groupPaths,
         alias: 'o',
-        description: 'Path to the ROM output directory',
+        description: 'Path to the ROM output directory (supports replaceable symbols, see below)',
         demandOption: false, // use the .check()
         type: 'string',
         coerce: ArgumentsParser.getLastValue, // don't allow string[] values
@@ -360,6 +360,12 @@ export default class ArgumentsParser {
         ['\nMake a copy of SNES ROMs without the SMC header that isn\'t supported by some emulators:'],
         ['  $0 copy --dat *.dat --input **/*.smc --output Headerless/ --dir-mirror --remove-headers .smc'],
       ])
+
+      .epilogue(`Output (--output <path>) replaceable tokens:
+  There are a few tokens with a special meaning that can be used in the output path:
+    {datName}  The name of the DAT that contains the ROM (e.g. "Nintendo - Game Boy")
+    {pocket}   The console-specific /Assets/ folder name for the Analogue Pocket core
+    {mister}   The console-specific /games/ folder name for the MiSTer FPGA`)
 
       // Colorize help output
       .option('help', {
