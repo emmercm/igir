@@ -238,8 +238,16 @@ export default class Options implements OptionsProps {
 
   // Options
 
+  getDatFileCount(): number {
+    return this.dat.length;
+  }
+
   async scanDatFiles(): Promise<string[]> {
     return Options.scanPath(this.dat);
+  }
+
+  getInputFileCount(): number {
+    return this.input.length;
   }
 
   private async scanInputFiles(): Promise<string[]> {
