@@ -15,6 +15,10 @@ export default class SingleBarFormatted {
 
   private valueTimeBuffer: number[][] = [];
 
+  private lastEtaTime: [number, number] = [0, 0];
+
+  private lastEtaValue = 'infinity';
+
   constructor(multiBar: MultiBar, name: string, symbol: string, initialTotal: number) {
     this.multiBar = multiBar;
     this.singleBar = this.multiBar.create(initialTotal, 0, {
@@ -66,7 +70,7 @@ export default class SingleBarFormatted {
       progress += ` | ${params.value.toLocaleString()}/${params.total.toLocaleString()}`;
       if (params.value > 0 && params.value < params.total) {
         const eta = this.calculateEta(params);
-        progress += ` | ETA: ${SingleBarFormatted.getEtaFormatted(eta)}`;
+        progress += ` | ETA: ${this.getEtaFormatted(eta)}`;
       }
     }
     return progress;
@@ -105,28 +109,41 @@ export default class SingleBarFormatted {
             + (options.barIncompleteString || '').slice(0, incompleteSize);
   }
 
-  private static getEtaFormatted(eta: number): string {
-    if (eta < 0) {
-      return 'infinity';
+  private getEtaFormatted(etaSeconds: number): string {
+    // Rate limit how often the ETA can change
+    const [elapsedSec, elapsedNano] = process.hrtime(this.lastEtaTime);
+    const elapsedMs = (elapsedSec * 1000000000 + elapsedNano) / 1000000;
+    if (etaSeconds > 60 && elapsedMs < 5000) {
+      return this.lastEtaValue;
+    }
+    this.lastEtaTime = process.hrtime();
+
+    if (etaSeconds < 0) {
+      this.lastEtaValue = 'infinity';
+      return this.lastEtaValue;
     }
 
-    const etaInteger = Math.ceil(eta);
-    const secondsRounded = 5 * Math.round(etaInteger / 5);
+    const etaSecondsInt = Math.ceil(etaSeconds);
+    const secondsRounded = 5 * Math.round(etaSecondsInt / 5);
     if (secondsRounded >= 3600) {
       const minutes = Math.floor((secondsRounded % 3600) / 60);
       if (minutes > 0) {
-        return `${Math.floor(secondsRounded / 3600)}h${minutes}m`;
+        this.lastEtaValue = `${Math.floor(secondsRounded / 3600)}h${minutes}m`;
+      } else {
+        this.lastEtaValue = `${Math.floor(secondsRounded / 3600)}h`;
       }
-      return `${Math.floor(secondsRounded / 3600)}h`;
-    } if (secondsRounded >= 60) {
+    } else if (secondsRounded >= 60) {
       const seconds = secondsRounded % 60;
       if (seconds > 0) {
-        return `${Math.floor(secondsRounded / 60)}m${seconds}s`;
+        this.lastEtaValue = `${Math.floor(secondsRounded / 60)}m${seconds}s`;
+      } else {
+        this.lastEtaValue = `${Math.floor(secondsRounded / 60)}m`;
       }
-      return `${Math.floor(secondsRounded / 60)}m`;
-    } if (etaInteger >= 10) {
-      return `${secondsRounded}s`;
+    } else if (etaSecondsInt >= 10) {
+      this.lastEtaValue = `${secondsRounded}s`;
+    } else {
+      this.lastEtaValue = `${etaSecondsInt}s`;
     }
-    return `${etaInteger}s`;
+    return this.lastEtaValue;
   }
 }
