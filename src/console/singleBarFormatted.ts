@@ -76,7 +76,6 @@ export default class SingleBarFormatted {
     return progress;
   }
 
-  // TODO(cemmer): don't display a new ETA on every redraw
   private calculateEta(params: Params): number {
     function clamp(val: number, min: number, max: number): number {
       return Math.min(Math.max(val, min), max);
