@@ -90,7 +90,7 @@ export default class Logger {
 
         .replace(/(\[options\.*\])/g, chalk.cyan('$1'))
         .replace(/([^a-zA-Z0-9-])(-[a-zA-Z0-9]+)/g, `$1${chalk.cyanBright('$2')}`)
-        .replace(/(--[a-zA-Z0-9-]+(\n[ \t]+)?[a-zA-Z0-9-]+)/g, chalk.cyan('$1'))
+        .replace(/(--[a-zA-Z0-9][a-zA-Z0-9-]+(\n[ \t]+)?[a-zA-Z0-9-]+)/g, chalk.cyan('$1'))
         .replace(/(<[a-zA-Z]+>)/g, chalk.blue('$1'))
 
         .replace(/(\[(array|boolean|count|number|string)\])/g, chalk.grey('$1'))

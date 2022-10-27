@@ -110,7 +110,7 @@ export default class CandidateGenerator {
           const romWithFiles = new ROMWithFiles(
             rom,
             romFile,
-            await this.getOutputFile(dat, game, rom, romFile),
+            await this.getOutputFile(dat, game, release, rom, romFile),
           );
           return [rom, romWithFiles];
         }
@@ -136,7 +136,13 @@ export default class CandidateGenerator {
     return new ReleaseCandidate(game, release, foundRomsWithFiles);
   }
 
-  private async getOutputFile(dat: DAT, game: Game, rom: ROM, inputFile: File): Promise<File> {
+  private async getOutputFile(
+    dat: DAT,
+    game: Game,
+    release: Release | undefined,
+    rom: ROM,
+    inputFile: File,
+  ): Promise<File> {
     const { base, ...parsedPath } = path.parse(rom.getName());
     if (parsedPath.ext && inputFile.getFileHeader()) {
       // If the ROM has a header then we're going to ignore the file extension from the DAT
@@ -152,7 +158,8 @@ export default class CandidateGenerator {
       const outputFilePath = this.options.getOutput(
         dat,
         inputFile.getFilePath(),
-        undefined,
+        game,
+        release,
         `${game.getName()}.zip`,
       );
       return ArchiveEntry.entryOf(
@@ -167,6 +174,7 @@ export default class CandidateGenerator {
       dat,
       inputFile.getFilePath(),
       game,
+      release,
       outputEntryPath,
     );
     return File.fileOf(

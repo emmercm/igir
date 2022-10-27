@@ -81,6 +81,7 @@ export default class ArgumentsParser {
       .parserConfiguration({
         'boolean-negation': false,
       })
+      .locale('en')
       .scriptName(Constants.COMMAND_NAME)
       .usage('Usage: $0 [commands..] [options]');
 
@@ -340,32 +341,50 @@ export default class ArgumentsParser {
       .option('verbose', {
         group: groupHelp,
         alias: 'v',
-        description: 'Enable verbose logging, can specify twice (-vv)',
+        description: 'Enable verbose info logging, can specify twice for debug logging (-vv)',
         type: 'count',
       })
 
       .wrap(ArgumentsParser.getHelpWidth(argv))
       .version(false)
-      .example([
-        ['\nMerge new ROMs into an existing ROM collection and generate a report:'],
-        ['  $0 copy report --dat *.dat --input **/*.zip --input ROMs/ --output ROMs/'],
-        ['\nOrganize and zip an existing ROM collection:'],
-        ['  $0 move zip --dat *.dat --input ROMs/ --output ROMs/'],
-        ['Produce a 1G1R set per console, preferring English ROMs from USA>EUR>JPN:'],
-        ['  $0 copy --dat *.dat --input **/*.zip --output 1G1R/ --dir-dat-name --single --prefer-language EN --prefer-region USA,EUR,JPN'],
-        ['\nCollate all BIOS files into one directory:'],
-        ['  $0 copy --dat *.dat --input **/*.zip --output BIOS/ --only-bios'],
-        ['\nCopy ROMs to your Analogue Pocket and test them:'],
-        ['  $0 copy test --dat *.dat --input ROMs/ --output /Assets/{pocket}/common/ --dir-letter --remove-headers .smc'],
-        ['\nMake a copy of SNES ROMs without the SMC header that isn\'t supported by some emulators:'],
-        ['  $0 copy --dat *.dat --input **/*.smc --output Headerless/ --dir-mirror --remove-headers .smc'],
-      ])
 
-      .epilogue(`Replaceable tokens for the output (--output <path>) option:
-  There are a few tokens with a special meaning that can be used in the output path:
-    {datName}  The name of the DAT that contains the ROM (e.g. "Nintendo - Game Boy")
-    {pocket}   The ROM's core-specific /Assets/ folder for the Analogue Pocket (e.g. "gb")
-    {mister}   The ROM's core-specific /games/ folder for the MiSTer FPGA (e.g. "Gameboy")`)
+      // NOTE(cemmer): the .epilogue() renders after .example() but I want them switched
+      .epilogue(`${'-'.repeat(ArgumentsParser.getHelpWidth(argv))}
+
+Advanced usage:
+
+  Tokens that are replaced when determining the output (--output) path of a ROM:
+    {datName}             The name of the DAT that contains the ROM (e.g. "Nintendo - Game Boy")
+    {datReleaseRegion}    The region of the ROM release (e.g. "USA"), each ROM can have multiple
+    {datReleaseLanguage}  The language of the ROM release (e.g. "En"), each ROM can have multiple
+
+    {inputDirname}   The input ROM's dirname
+    {outputBasename}  Equivalent to "{outputName}.{outputExt}"
+    {outputName}      The output ROM's filename without extension
+    {outputExt}       The output ROM's extension
+
+    {pocket}  The ROM's core-specific /Assets/ folder for the Analogue Pocket (e.g. "gb")
+    {mister}  The ROM's core-specific /games/ folder for the MiSTer FPGA (e.g. "Gameboy")
+
+Example use cases:
+
+  Merge new ROMs into an existing ROM collection and generate a report:
+    $0 copy report --dat *.dat --input **/*.zip --input ROMs/ --output ROMs/
+
+  Organize and zip an existing ROM collection:
+    $0 move zip --dat *.dat --input ROMs/ --output ROMs/
+
+  Produce a 1G1R set per console, preferring English ROMs from USA>EUR>JPN:
+    $0 copy --dat *.dat --input **/*.zip --output 1G1R/ --dir-dat-name --single --prefer-language EN --prefer-region USA,EUR,JPN
+
+  Collate all BIOS files into one directory:
+    $0 copy --dat *.dat --input **/*.zip --output BIOS/ --only-bios
+
+  Copy ROMs to your Analogue Pocket and test them:
+    $0 copy test --dat *.dat --input ROMs/ --output /Assets/{pocket}/common/ --dir-letter --remove-headers .smc
+
+  Make a copy of SNES ROMs without the SMC header that isn\\'t supported by some emulators:
+    $0 copy --dat *.dat --input **/*.smc --output Headerless/ --dir-mirror --remove-headers .smc`)
 
       // Colorize help output
       .option('help', {
