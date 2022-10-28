@@ -6,6 +6,7 @@ import ProgressBarCLI from './console/progressBarCLI.js';
 import Constants from './constants.js';
 import CandidateFilter from './modules/candidateFilter.js';
 import CandidateGenerator from './modules/candidateGenerator.js';
+import DATInferrer from './modules/datInferrer.js';
 import DATScanner from './modules/datScanner.js';
 import HeaderProcessor from './modules/headerProcessor.js';
 import OutputCleaner from './modules/outputCleaner.js';
@@ -31,9 +32,12 @@ export default class Igir {
 
   async main(): Promise<void> {
     // Scan and process input files
-    const dats = await this.processDATScanner();
+    let dats = await this.processDATScanner();
     const rawRomFiles = await this.processROMScanner();
     const processedRomFiles = await this.processHeaderProcessor(rawRomFiles);
+    if (!dats.length) {
+      dats = DATInferrer.infer(processedRomFiles);
+    }
 
     // Set up progress bar and input for DAT processing
     const datProcessProgressBar = this.logger.addProgressBar('Processing DATs', Symbols.PROCESSING, dats.length);
@@ -100,9 +104,15 @@ export default class Igir {
     const progressBar = this.logger.addProgressBar('Scanning for DATs', Symbols.WAITING);
     const dats = await new DATScanner(this.options, progressBar).scan();
     if (!dats.length) {
-      ProgressBarCLI.stop();
-      throw new Error('No valid DAT files found!');
+      progressBar.delete();
+      if (this.options.usingDats()) {
+        ProgressBarCLI.stop();
+        throw new Error('No valid DAT files found!');
+      }
+      await progressBar.logWarn('No DAT files provided, consider using some for the best results!');
+      return [];
     }
+
     await progressBar.doneItems(dats.length, 'unique DAT', 'found');
     await progressBar.freeze();
     return dats;

@@ -250,6 +250,7 @@ export default class ROMWriter {
 
   private async writeRawFile(inputRomFile: File, outputFilePath: string): Promise<boolean> {
     try {
+      // TODO(cemmer): support raw->raw file moving without streams
       await inputRomFile.extractToStream(async (readStream) => {
         await this.progressBar.logDebug(`${inputRomFile.toString()}: piping to ${outputFilePath}`);
         const writeStream = readStream.pipe(fs.createWriteStream(outputFilePath));

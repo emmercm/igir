@@ -21,6 +21,7 @@ With a large ROM collection it can be difficult to:
 
 - Organize ROM files by console
 - Consistently name ROM files
+- Make sure ROMs have the right extension
 - Archive ROMs individually in mass
 - Filter out duplicate ROMs
 - Filter out ROMs for languages you don't understand
@@ -30,14 +31,15 @@ With a large ROM collection it can be difficult to:
 
 ## What does `igir` need?
 
-`igir` needs two sets of files:
+**`igir` needs an input set of ROMs, of course!**
 
-1. ROMs (including ones with headers, see [docs](docs/rom-headers.md))
-2. One or more DATs (see [docs](docs/dats.md))
+Those ROMs can be in archives (`.001`, `.7z`, `.bz2`, `.gz`, `.rar`, `.tar.gz`, `.z01`, `.zip`, `.zipx`, and more!) or on their own. They can also contain a header or not (see [docs](docs/rom-headers.md)).
 
-Many different input archive types are supported for both ROMs and DATs: .001, .7z, .bz2, .gz, .rar, .tar, .tgz, .xz, .z, .z01, .zip, .zipx, and more!
+**`igir` works best with a set of DATs as well.**
 
-`igir` then needs one or more commands:
+Though not required, DATs can provide a lot of information for ROMs such as their correct name, and which ROMs are duplicates of others. See the [docs](docs/dats.md) for more information on DATs and some "_just tell me what to do_" instructions.
+
+**`igir` then needs one or more commands:**
 
 - `copy`: copy ROMs from input directories to an output directory
 - `move`: move ROMs from input directories to an output directory
@@ -52,16 +54,16 @@ The `igir --help` command shown below includes examples of how to use multiple c
 
 `igir` runs these steps in the following order:
 
-1. Scans the DAT input path for every file, parses them
+1. Scans the DAT input path for every file and parses them, if specified
 2. Scans each ROM input path for every file
    1. Then detects headers in those files, if applicable (see [docs](docs/rom-headers.md))
 3. ROMs are matched to the DATs
    1. Then filtering and sorting options are applied (see [docs](docs/rom-filtering.md))
-   2. Then ROMs are written to the output directory, if applicable (`copy`, `move`)
-   3. Then written ROMs are tested for accuracy, if applicable (`test`)
-   4. Then input ROMs are deleted, if applicable (`move`)
-4. Unknown files are recycled from the output directory, if applicable (`clean`)
-5. An output report is written to the output directory, if applicable (`report`)
+   2. Then ROMs are written to the output directory, if specified (`copy`, `move`)
+   3. Then written ROMs are tested for accuracy, if specified (`test`)
+   4. Then input ROMs are deleted, if specified (`move`)
+4. Unknown files are recycled from the output directory, if specified (`clean`)
+5. An output report is written to the output directory, if specified (`report`)
 
 ## How do I run `igir`?
 
@@ -181,15 +183,9 @@ Examples:
   smc
 ```
 
-## What are DATs?
-
-DATs are catalogs of every known ROM that exists per console, complete with enough information to identify each file.
-
-See the [DATs](docs/dats.md) page for a longer explanation on what DATs are, where to download them, and some "_just tell me what to do_" instructions.
-
 ## How do I obtain ROMs?
 
-Emulators are generally _legal_, as long as they don't include copyrighted software such as a console BIOS. Downloading ROM files that you do not own is piracy which is illegal in many countries.
+Emulators are generally _legal_, as long as they don't include copyrighted software such as a console BIOS. Downloading ROM files that you do not own is piracy which is _illegal_ in many countries.
 
 See the [Dumping ROMs](docs/rom-dumping.md) page for more information.
 

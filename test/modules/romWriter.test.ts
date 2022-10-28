@@ -5,6 +5,7 @@ import path from 'path';
 
 import Constants from '../../src/constants.js';
 import CandidateGenerator from '../../src/modules/candidateGenerator.js';
+import DATInferrer from '../../src/modules/datInferrer.js';
 import HeaderProcessor from '../../src/modules/headerProcessor.js';
 import ROMScanner from '../../src/modules/romScanner.js';
 import ROMWriter from '../../src/modules/romWriter.js';
@@ -12,10 +13,8 @@ import fsPoly from '../../src/polyfill/fsPoly.js';
 import ArchiveFactory from '../../src/types/archives/archiveFactory.js';
 import File from '../../src/types/files/file.js';
 import DAT from '../../src/types/logiqx/dat.js';
-import Game from '../../src/types/logiqx/game.js';
 import Header from '../../src/types/logiqx/header.js';
 import Parent from '../../src/types/logiqx/parent.js';
-import ROM from '../../src/types/logiqx/rom.js';
 import Options, { OptionsProps } from '../../src/types/options.js';
 import ReleaseCandidate from '../../src/types/releaseCandidate.js';
 import ProgressBarFake from '../console/progressBarFake.js';
@@ -68,69 +67,41 @@ async function walkAndStat(dirPath: string): Promise<[string, Stats][]> {
   );
 }
 
-function datScanner(gameNameToFiles: Map<string, File[]>): DAT {
-  const games = [...gameNameToFiles.entries()]
-    .map(([gameName, files]) => {
-      const roms = files
-        // De-duplicate
-        .filter((one, idx, romFiles) => romFiles
-          .findIndex((two) => two.getExtractedFilePath() === one.getExtractedFilePath()) === idx)
-        // Map
-        .map((file) => new ROM(
-          path.basename(file.getExtractedFilePath()),
-          file.getSize(),
-          file.getCrc32(),
-        ));
-      return new Game({
-        name: gameName,
-        rom: roms,
-      });
-    });
-  return new DAT(new Header(), games);
+function datInferrer(romFiles: File[]): DAT {
+  // Run DATInferrer, but condense all DATs down to one
+  const datGames = DATInferrer.infer(romFiles)
+    .map((dat) => dat.getGames())
+    .flatMap((games) => games);
+  return new DAT(new Header(), datGames);
 }
 
 async function romScanner(
   options: Options,
   inputDir: string,
   inputGlob: string,
-): Promise<Map<string, File[]>> {
+): Promise<File[]> {
   return (await new ROMScanner(new Options({
     ...options,
+    dat: [''], // force ROMScanner to unique files
     input: [path.join(inputDir, inputGlob)],
   }), new ProgressBarFake()).scan())
     // Reduce all the unique files for all games
     .filter((one, idx, files) => files
-      .findIndex((two) => two.equals(one)) === idx)
-    // Map
-    .reduce((map, romFile) => {
-      const romName = path.parse(romFile.getFilePath()).name.replace(/\.[a-z]+$/, '');
-      if (map.has(romName)) {
-        map.set(romName, [...map.get(romName) as File[], romFile]);
-      } else {
-        map.set(romName, [romFile]);
-      }
-      return map;
-    }, new Map<string, File[]>());
+      .findIndex((two) => two.hashCodes().join() === one.hashCodes().join()) === idx);
 }
 
 async function headerProcessor(
   options: Options,
-  gameNameToFiles: Map<string, File[]>,
-): Promise<Map<string, File[]>> {
-  return new Map(await Promise.all([...gameNameToFiles.entries()]
-    .map(async ([gameName, files]): Promise<[string, File[]]> => {
-      const headeredFiles = await new HeaderProcessor(options, new ProgressBarFake())
-        .process(files);
-      return [gameName, headeredFiles];
-    })));
+  romFiles: File[],
+): Promise<File[]> {
+  return new HeaderProcessor(options, new ProgressBarFake()).process(romFiles);
 }
 
 async function candidateGenerator(
   options: Options,
   dat: DAT,
-  gameNameToFiles: Map<string, File[]>,
+  romFiles: File[],
 ): Promise<Map<Parent, ReleaseCandidate[]>> {
-  const romFiles = [...gameNameToFiles.values()].flatMap((files) => files);
   return new CandidateGenerator(options, new ProgressBarFake()).generate(dat, romFiles);
 }
 
@@ -146,9 +117,9 @@ async function romWriter(
     input: [inputTemp],
     output: outputTemp,
   });
-  const gameNameToFiles = await romScanner(options, inputTemp, inputGlob);
-  const dat = datScanner(gameNameToFiles);
-  const gameNamesToHeaderedFiles = await headerProcessor(options, gameNameToFiles);
+  const romFiles = await romScanner(options, inputTemp, inputGlob);
+  const dat = datInferrer(romFiles);
+  const gameNamesToHeaderedFiles = await headerProcessor(options, romFiles);
   const candidates = await candidateGenerator(options, dat, gameNamesToHeaderedFiles);
 
   // When

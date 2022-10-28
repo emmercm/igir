@@ -131,7 +131,7 @@ describe('extractToFile', () => {
         './test/fixtures/roms/7z',
       ],
     }), new ProgressBarFake()).scan();
-    expect(archiveEntries).toHaveLength(7);
+    expect(archiveEntries).toHaveLength(21);
 
     const temp = fsPoly.mkdtempSync(Constants.GLOBAL_TEMP_DIR);
     /* eslint-disable no-await-in-loop */
@@ -156,7 +156,7 @@ describe('extractToStream', () => {
         './test/fixtures/roms/7z',
       ],
     }), new ProgressBarFake()).scan();
-    expect(archiveEntries).toHaveLength(7);
+    expect(archiveEntries).toHaveLength(21);
 
     const temp = fsPoly.mkdtempSync(Constants.GLOBAL_TEMP_DIR);
     /* eslint-disable no-await-in-loop */

@@ -93,10 +93,8 @@ export default class ArgumentsParser {
         group: groupPaths,
         alias: 'd',
         description: 'Path(s) to DAT files or archives',
-        demandOption: true,
         type: 'array',
         requiresArg: true,
-        default: ['*.dat'],
       })
       .option('input', {
         group: groupPaths,
@@ -128,10 +126,17 @@ export default class ArgumentsParser {
         if (checkArgv.help) {
           return true;
         }
+
         const needOutput = ['copy', 'move', 'zip', 'clean'].filter((command) => checkArgv._.indexOf(command) !== -1);
         if ((!checkArgv.output || !checkArgv.output.length) && needOutput.length) {
           throw new Error(`Missing required option for commands ${needOutput.join(', ')}: output`);
         }
+
+        const needDat = ['report'].filter((command) => checkArgv._.indexOf(command) !== -1);
+        if ((!checkArgv.dat || !checkArgv.dat.length) && needDat.length) {
+          throw new Error(`Missing required option for commands ${needDat.join(', ')}: dat`);
+        }
+
         return true;
       })
 
@@ -279,6 +284,7 @@ export default class ArgumentsParser {
         alias: 's',
         description: 'Output only a single game per parent (1G1R) (required for all options below, requires parent/clone DAT files)',
         type: 'boolean',
+        implies: 'dat',
       })
       .option('prefer-verified', {
         group: groupPriority,

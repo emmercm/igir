@@ -237,6 +237,10 @@ export default class Options implements OptionsProps {
 
   // Options
 
+  usingDats(): boolean {
+    return this.dat.length > 0;
+  }
+
   getDatFileCount(): number {
     return this.dat.length;
   }
@@ -362,6 +366,7 @@ export default class Options implements OptionsProps {
       while (!fs.existsSync(input)) {
         input = path.dirname(input);
       }
+      output = input;
     }
 
     return path.join(
