@@ -10,6 +10,7 @@ if [[ ! -x "$(command -v node)" ]]; then
     . ~/.nvm/nvm.sh
   fi
   if [[ ! -x "$(command -v nvm)" ]]; then
+    nvm install || exit 1
     nvm use || exit 1
   fi
 fi
