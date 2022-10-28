@@ -62,10 +62,7 @@ async function wrapReportGenerator(
 ): Promise<void> {
   await new ReportGenerator(options, new ProgressBarFake()).generate(datStatuses);
 
-  const outputReportPath = (await fg(path.join(
-    path.dirname(options.getOutputReportPath()),
-    `${Constants.COMMAND_NAME}_*.csv`,
-  ))).slice(-1)[0];
+  const outputReportPath = (await fg(`${path.dirname(options.getOutputReportPath())}/${Constants.COMMAND_NAME}_*.csv`)).slice(-1)[0];
   const contents = (await fsPromises.readFile(outputReportPath)).toString();
 
   await callback(contents);
