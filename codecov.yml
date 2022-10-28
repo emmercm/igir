@@ -6,6 +6,7 @@ comment:
 # Require a minimum coverage for the codecov/project PR check
 coverage:
   status:
+    patch: off
     project:
       default:
         target: 94%

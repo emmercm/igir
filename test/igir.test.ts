@@ -47,7 +47,7 @@ async function expectEndToEnd(
   const reports = await fg(path.join(
     path.dirname(options.getOutputReportPath()),
     `${Constants.COMMAND_NAME}_*.csv`,
-  ));
+  ).replace(/\\/g, '/'));
   await Promise.all(reports.map(async (report) => fsPoly.rm(report)));
 }
 
