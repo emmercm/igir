@@ -1,5 +1,3 @@
-import async, { AsyncResultCallback } from 'async';
-
 import { Symbols } from '../console/progressBar.js';
 import Constants from '../constants.js';
 import File from '../types/files/file.js';
@@ -16,24 +14,12 @@ export default class ROMScanner extends Scanner {
     await this.progressBar.logInfo('Scanning ROM files');
 
     await this.progressBar.setSymbol(Symbols.SEARCHING);
-    await this.progressBar.reset(0);
+    await this.progressBar.reset(this.options.getInputFileCount());
 
     const romFilePaths = await this.options.scanInputFilesWithoutExclusions();
-    await this.progressBar.reset(romFilePaths.length);
     await this.progressBar.logInfo(`Found ${romFilePaths.length} ROM file${romFilePaths.length !== 1 ? 's' : ''}`);
+    await this.progressBar.reset(romFilePaths.length);
 
-    return (await async.mapLimit(
-      romFilePaths,
-      Constants.ROM_SCANNER_THREADS,
-      async (inputFile, callback: AsyncResultCallback<File[], Error>) => {
-        await this.progressBar.increment();
-
-        const files = await this.getFilesFromPath(inputFile);
-
-        callback(null, files);
-      },
-    ))
-      .flatMap((files) => files)
-      .filter((file, idx, files) => files.indexOf(file) === idx);
+    return this.getFilesFromPaths(romFilePaths, Constants.ROM_SCANNER_THREADS);
   }
 }

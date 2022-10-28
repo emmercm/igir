@@ -15,6 +15,11 @@ if [[ ! -x "$(command -v node)" ]]; then
 fi
 node --version &> /dev/null || exit 1
 
+# Ensure node modules are installed
+if [[ ! -d "node_modules" ]]; then
+  npm ci
+fi
+
 
 # Follow the linter
 npm run lint:fix

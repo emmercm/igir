@@ -3,6 +3,7 @@ import yargs, { Argv } from 'yargs';
 
 import Logger from '../console/logger.js';
 import Constants from '../constants.js';
+import FileHeader from '../types/files/fileHeader.js';
 import Options from '../types/options.js';
 import ReleaseCandidate from '../types/releaseCandidate.js';
 
@@ -47,11 +48,11 @@ export default class ArgumentsParser {
   parse(argv: string[]): Options {
     this.logger.info(`Parsing CLI arguments: ${argv}`);
 
-    const groupInputOutputPaths = 'Path options (inputs support globbing):';
+    const groupPaths = 'Path options (inputs support globbing):';
     const groupInput = 'Input options:';
     const groupOutput = 'Output options:';
-    const groupPriority = 'Priority options (requires --single):';
     const groupFiltering = 'Filtering options:';
+    const groupPriority = 'Priority options:';
     const groupHelp = 'Help options:';
 
     // Add every command to a yargs object, recursively, resulting in the ability to specify
@@ -72,7 +73,7 @@ export default class ArgumentsParser {
       .command('clean', 'Recycle unknown files in the output directory', (yargsSubObj) => {
         addCommands(yargsSubObj);
       })
-      .command('report', 'Generate a report on the known ROM files found in the input directories', (yargsSubObj) => {
+      .command('report', 'Generate a CSV report on the known ROM files found in the input directories', (yargsSubObj) => {
         addCommands(yargsSubObj);
       });
 
@@ -89,7 +90,7 @@ export default class ArgumentsParser {
 
     yargsParser
       .option('dat', {
-        group: groupInputOutputPaths,
+        group: groupPaths,
         alias: 'd',
         description: 'Path(s) to DAT files or archives',
         demandOption: true,
@@ -98,7 +99,7 @@ export default class ArgumentsParser {
         default: ['*.dat'],
       })
       .option('input', {
-        group: groupInputOutputPaths,
+        group: groupPaths,
         alias: 'i',
         // TODO(cemmer): add a warning when input and output directories are the same, but also
         //  have a "yes" flag
@@ -108,14 +109,14 @@ export default class ArgumentsParser {
         requiresArg: true,
       })
       .option('input-exclude', {
-        group: groupInputOutputPaths,
+        group: groupPaths,
         alias: 'I',
         description: 'Path(s) to ROM files to exclude',
         type: 'array',
         requiresArg: true,
       })
       .option('output', {
-        group: groupInputOutputPaths,
+        group: groupPaths,
         alias: 'o',
         description: 'Path to the ROM output directory',
         demandOption: false, // use the .check()
@@ -136,7 +137,6 @@ export default class ArgumentsParser {
 
       .option('header', {
         group: groupInput,
-        alias: 'H',
         description: 'Glob pattern of files to force header processing for',
         type: 'string',
         coerce: ArgumentsParser.getLastValue, // don't allow string[] values
@@ -160,12 +160,6 @@ export default class ArgumentsParser {
         description: 'Append the first letter of the ROM name as an output subdirectory',
         type: 'boolean',
       })
-      .option('single', {
-        group: groupOutput,
-        alias: 's',
-        description: 'Output only a single game per parent (1G1R) (requires parent-clone DAT files)',
-        type: 'boolean',
-      })
       .option('zip-exclude', {
         group: groupOutput,
         alias: 'Z',
@@ -174,6 +168,21 @@ export default class ArgumentsParser {
         coerce: ArgumentsParser.getLastValue, // don't allow string[] values
         requiresArg: true,
       })
+      .option('remove-headers', {
+        group: groupOutput,
+        alias: 'H',
+        description: `Remove known headers from ROMs, optionally limited to a list of comma-separated file extensions (supported: ${FileHeader.getSupportedExtensions().join(', ')})`,
+        type: 'string',
+        coerce: (vals: string) => vals
+          .split(',')
+          .map((val) => {
+            if (val === '') {
+              // Flag was provided without any extensions
+              return val;
+            }
+            return `.${val.replace(/^\.+/, '')}`;
+          }),
+      })
       .option('overwrite', {
         group: groupOutput,
         alias: 'O',
@@ -181,6 +190,102 @@ export default class ArgumentsParser {
         type: 'boolean',
       })
 
+      .option('language-filter', {
+        group: groupFiltering,
+        alias: 'L',
+        description: `List of comma-separated languages to limit to (supported: ${ReleaseCandidate.getLanguages().join(', ')})`,
+        type: 'string',
+        coerce: (val: string) => val.split(','),
+        requiresArg: true,
+      })
+      .option('region-filter', {
+        group: groupFiltering,
+        alias: 'R',
+        description: `List of comma-separated regions to limit to (supported: ${ReleaseCandidate.getRegions().join(', ')})`,
+        type: 'string',
+        coerce: (val: string) => val.split(','),
+        requiresArg: true,
+      })
+      .option('only-bios', {
+        group: groupFiltering,
+        description: 'Filter to only BIOS files',
+        type: 'boolean',
+        conflicts: ['no-bios'],
+      })
+      .option('no-bios', {
+        group: groupFiltering,
+        description: 'Filter out BIOS files',
+        type: 'boolean',
+        conflicts: ['only-bios'],
+      })
+      .option('no-unlicensed', {
+        group: groupFiltering,
+        description: 'Filter out unlicensed ROMs',
+        type: 'boolean',
+      })
+      .option('only-retail', {
+        group: groupFiltering,
+        description: 'Filter to only retail releases, enabling all the following options',
+        type: 'boolean',
+      })
+      .option('no-demo', {
+        group: groupFiltering,
+        description: 'Filter out demo ROMs',
+        type: 'boolean',
+      })
+      .option('no-beta', {
+        group: groupFiltering,
+        description: 'Filter out beta ROMs',
+        type: 'boolean',
+      })
+      .option('no-sample', {
+        group: groupFiltering,
+        description: 'Filter out sample ROMs',
+        type: 'boolean',
+      })
+      .option('no-prototype', {
+        group: groupFiltering,
+        description: 'Filter out prototype ROMs',
+        type: 'boolean',
+      })
+      .option('no-test-roms', {
+        group: groupFiltering,
+        description: 'Filter out test ROMs',
+        type: 'boolean',
+      })
+      .option('no-aftermarket', {
+        group: groupFiltering,
+        description: 'Filter out aftermarket ROMs',
+        type: 'boolean',
+      })
+      .option('no-homebrew', {
+        group: groupFiltering,
+        description: 'Filter out homebrew ROMs',
+        type: 'boolean',
+      })
+      .option('no-unverified', {
+        group: groupFiltering,
+        description: 'Filter out un-verified ROMs',
+        type: 'boolean',
+      })
+      .option('no-bad', {
+        group: groupFiltering,
+        description: 'Filter out bad ROM dumps',
+        type: 'boolean',
+      })
+
+      .option('single', {
+        group: groupPriority,
+        alias: 's',
+        description: 'Output only a single game per parent (1G1R) (required for all options below, requires parent/clone DAT files)',
+        type: 'boolean',
+      })
+      .option('prefer-verified', {
+        group: groupPriority,
+        description: 'Prefer verified ROM dumps over not',
+        type: 'boolean',
+        implies: 'single',
+      })
       .option('prefer-good', {
         group: groupPriority,
         description: 'Prefer good ROM dumps over bad',
@@ -232,85 +337,6 @@ export default class ArgumentsParser {
         implies: ['dat', 'single'],
       })
 
-      .option('language-filter', {
-        group: groupFiltering,
-        alias: 'L',
-        description: `List of comma-separated languages to limit to (supported: ${ReleaseCandidate.getLanguages().join(', ')})`,
-        type: 'string',
-        coerce: (val: string) => val.split(','),
-        requiresArg: true,
-      })
-      .option('region-filter', {
-        group: groupFiltering,
-        alias: 'R',
-        description: `List of comma-separated regions to limit to (supported: ${ReleaseCandidate.getRegions().join(', ')})`,
-        type: 'string',
-        coerce: (val: string) => val.split(','),
-        requiresArg: true,
-      })
-      .option('only-bios', {
-        group: groupFiltering,
-        description: 'Filter to only BIOS files',
-        type: 'boolean',
-        conflicts: ['no-bios'],
-      })
-      .option('no-bios', {
-        group: groupFiltering,
-        description: 'Filter out BIOS files',
-        type: 'boolean',
-        conflicts: ['only-bios'],
-      })
-      .option('no-unlicensed', {
-        group: groupFiltering,
-        description: 'Filter out unlicensed ROMs',
-        type: 'boolean',
-      })
-      .option('only-retail', {
-        group: groupFiltering,
-        description: 'Filter to only retail releases, enabling all the following flags',
-        type: 'boolean',
-      })
-      .option('no-demo', {
-        group: groupFiltering,
-        description: 'Filter out demo ROMs',
-        type: 'boolean',
-      })
-      .option('no-beta', {
-        group: groupFiltering,
-        description: 'Filter out beta ROMs',
-        type: 'boolean',
-      })
-      .option('no-sample', {
-        group: groupFiltering,
-        description: 'Filter out sample ROMs',
-        type: 'boolean',
-      })
-      .option('no-prototype', {
-        group: groupFiltering,
-        description: 'Filter out prototype ROMs',
-        type: 'boolean',
-      })
-      .option('no-test-roms', {
-        group: groupFiltering,
-        description: 'Filter out test ROMs',
-        type: 'boolean',
-      })
-      .option('no-aftermarket', {
-        group: groupFiltering,
-        description: 'Filter out aftermarket ROMs',
-        type: 'boolean',
-      })
-      .option('no-homebrew', {
-        group: groupFiltering,
-        description: 'Filter out homebrew ROMs',
-        type: 'boolean',
-      })
-      .option('no-bad', {
-        group: groupFiltering,
-        description: 'Filter out bad ROM dumps',
-        type: 'boolean',
-      })
-
       .option('verbose', {
         group: groupHelp,
         alias: 'v',
@@ -321,15 +347,18 @@ export default class ArgumentsParser {
       .wrap(ArgumentsParser.getHelpWidth(argv))
       .version(false)
       .example([
-        ['$0 copy -i **/*.zip -o 1G1R/ -D -s -l EN -r USA,EUR,JPN', 'Produce a 1G1R set per console, preferring English from USA>EUR>JPN'],
-        [''], // https://github.com/yargs/yargs/issues/1640
-        ['$0 copy report -i **/*.zip -i ROMs/ -o ROMs/', 'Merge new ROMs into an existing ROM collection and generate a report'],
-        [''], // https://github.com/yargs/yargs/issues/1640
-        ['$0 move zip -i ROMs/ -o ROMs/', 'Organize and zip an existing ROM collection'],
-        [''], // https://github.com/yargs/yargs/issues/1640
-        ['$0 copy -i **/*.zip -o BIOS/ --only-bios', 'Collate all BIOS files'],
-        [''], // https://github.com/yargs/yargs/issues/1640
-        ['$0 copy -i ROMs/ -o /media/SDCard/ROMs/ -D --dir-letter -t', 'Copy ROMs to a flash cart and test them'],
+        ['Produce a 1G1R set per console, preferring English ROMs from USA>EUR>JPN:'],
+        ['  $0 copy --dat *.dat --input **/*.zip --output 1G1R/ --dir-dat-name --single --prefer-language EN --prefer-region USA,EUR,JPN'],
+        ['\nMerge new ROMs into an existing ROM collection and generate a report:'],
+        ['  $0 copy report --dat *.dat --input **/*.zip --input ROMs/ --output ROMs/'],
+        ['\nOrganize and zip an existing ROM collection:'],
+        ['  $0 move zip --dat *.dat --input ROMs/ --output ROMs/'],
+        ['\nCollate all BIOS files into one directory:'],
+        ['  $0 copy --dat *.dat --input **/*.zip --output BIOS/ --only-bios'],
+        ['\nCopy ROMs to a flash cart and test them:'],
+        ['  $0 copy test --dat *.dat --input ROMs/ --output /media/SDCard/ROMs/ --dir-dat-name --dir-letter'],
+        ['\nMake a copy of SNES ROMs without the SMC header that isn\'t supported by some emulators:'],
+        ['  $0 copy --dat *.dat --input **/*.smc --output Headerless/ --dir-mirror --remove-headers .smc'],
       ])
 
       // Colorize help output

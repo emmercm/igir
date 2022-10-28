@@ -1,6 +1,5 @@
-import async, { AsyncResultCallback } from 'async';
 import { Semaphore } from 'async-mutex';
-import { promises as fsPromises } from 'fs';
+import fs, { promises as fsPromises } from 'fs';
 import path from 'path';
 
 import ProgressBar, { Symbols } from '../console/progressBar.js';
@@ -51,25 +50,16 @@ export default class ROMWriter {
     await this.progressBar.setSymbol(Symbols.WRITING);
     await this.progressBar.reset(parentsToCandidates.size);
 
-    await async.each(
-      [...parentsToCandidates.entries()],
-      async (
-        [, releaseCandidates],
-        callback: AsyncResultCallback<undefined, Error>,
-      ) => {
-        await ROMWriter.semaphore.runExclusive(async () => {
-          await this.progressBar.increment();
+    await Promise.all([...parentsToCandidates.entries()]
+      .map(async ([, releaseCandidates]) => ROMWriter.semaphore.runExclusive(async () => {
+        await this.progressBar.increment();
 
-          /* eslint-disable no-await-in-loop */
-          for (let j = 0; j < releaseCandidates.length; j += 1) {
-            const releaseCandidate = releaseCandidates[j];
-            await this.writeReleaseCandidate(dat, releaseCandidate);
-          }
-
-          callback();
-        });
-      },
-    );
+        /* eslint-disable no-await-in-loop */
+        for (let j = 0; j < releaseCandidates.length; j += 1) {
+          const releaseCandidate = releaseCandidates[j];
+          await this.writeReleaseCandidate(dat, releaseCandidate);
+        }
+      })));
 
     await this.progressBar.setSymbol(Symbols.WRITING);
     await this.deleteMovedFiles();
@@ -205,7 +195,7 @@ export default class ROMWriter {
 
     try {
       await this.ensureOutputDirExists(outputZip.getFilePath());
-      await outputZip.archiveEntries(inputToOutputZipEntries);
+      await outputZip.archiveEntries(this.options, inputToOutputZipEntries);
       return true;
     } catch (e) {
       await this.progressBar.logError(`Failed to create zip ${outputZip.getFilePath()} : ${e}`);
@@ -260,10 +250,14 @@ export default class ROMWriter {
 
   private async writeRawFile(inputRomFile: File, outputFilePath: string): Promise<boolean> {
     try {
-      await inputRomFile.extractToFile(async (localFile) => {
-        await this.progressBar.logDebug(`${localFile}: copying to ${outputFilePath}`);
-        await fsPromises.copyFile(localFile, outputFilePath);
-      });
+      await inputRomFile.extractToStream(async (readStream) => {
+        await this.progressBar.logDebug(`${inputRomFile.toString()}: piping to ${outputFilePath}`);
+        const writeStream = readStream.pipe(fs.createWriteStream(outputFilePath));
+        await new Promise<void>((resolve, reject) => {
+          writeStream.on('finish', () => resolve());
+          writeStream.on('error', (err) => reject(err));
+        });
+      }, this.options.canRemoveHeader(path.extname(inputRomFile.getExtractedFilePath())));
       return true;
     } catch (e) {
       await this.progressBar.logError(`Failed to copy ${inputRomFile.toString()} to ${outputFilePath} : ${e}`);

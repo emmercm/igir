@@ -31,12 +31,15 @@ describe('getCrc32', () => {
   test.each([
     ['./test/fixtures/roms/7z/fizzbuzz.7z', '370517b5'],
     ['./test/fixtures/roms/rar/fizzbuzz.rar', '370517b5'],
+    ['./test/fixtures/roms/tar/fizzbuzz.tar.gz', '370517b5'],
     ['./test/fixtures/roms/zip/fizzbuzz.zip', '370517b5'],
     ['./test/fixtures/roms/7z/foobar.7z', 'b22c9747'],
     ['./test/fixtures/roms/rar/foobar.rar', 'b22c9747'],
+    ['./test/fixtures/roms/tar/foobar.tar.gz', 'b22c9747'],
     ['./test/fixtures/roms/zip/foobar.zip', 'b22c9747'],
     ['./test/fixtures/roms/7z/loremipsum.7z', '70856527'],
     ['./test/fixtures/roms/rar/loremipsum.rar', '70856527'],
+    ['./test/fixtures/roms/tar/loremipsum.tar.gz', '70856527'],
     ['./test/fixtures/roms/zip/loremipsum.zip', '70856527'],
     ['./test/fixtures/roms/headered/diagnostic_test_cartridge.a78.7z', 'f6cc9b1c'],
     ['./test/fixtures/roms/headered/fds_joypad_test.fds.zip', '1e58456d'],
@@ -56,12 +59,15 @@ describe('getCrc32WithoutHeader', () => {
   test.each([
     ['./test/fixtures/roms/7z/fizzbuzz.7z', '370517b5'],
     ['./test/fixtures/roms/rar/fizzbuzz.rar', '370517b5'],
+    ['./test/fixtures/roms/tar/fizzbuzz.tar.gz', '370517b5'],
     ['./test/fixtures/roms/zip/fizzbuzz.zip', '370517b5'],
     ['./test/fixtures/roms/7z/foobar.7z', 'b22c9747'],
     ['./test/fixtures/roms/rar/foobar.rar', 'b22c9747'],
+    ['./test/fixtures/roms/tar/foobar.tar.gz', 'b22c9747'],
     ['./test/fixtures/roms/zip/foobar.zip', 'b22c9747'],
     ['./test/fixtures/roms/7z/loremipsum.7z', '70856527'],
     ['./test/fixtures/roms/rar/loremipsum.rar', '70856527'],
+    ['./test/fixtures/roms/tar/loremipsum.tar.gz', '70856527'],
     ['./test/fixtures/roms/zip/loremipsum.zip', '70856527'],
     ['./test/fixtures/roms/headered/diagnostic_test_cartridge.a78.7z', 'f6cc9b1c'],
     ['./test/fixtures/roms/headered/fds_joypad_test.fds.zip', '1e58456d'],
@@ -79,9 +85,11 @@ describe('getCrc32WithoutHeader', () => {
   test.each([
     ['./test/fixtures/roms/7z/fizzbuzz.7z', '370517b5'],
     ['./test/fixtures/roms/rar/fizzbuzz.rar', '370517b5'],
+    ['./test/fixtures/roms/tar/fizzbuzz.tar.gz', '370517b5'],
     ['./test/fixtures/roms/zip/fizzbuzz.zip', '370517b5'],
     ['./test/fixtures/roms/7z/foobar.7z', 'b22c9747'],
     ['./test/fixtures/roms/rar/foobar.rar', 'b22c9747'],
+    ['./test/fixtures/roms/tar/foobar.tar.gz', 'b22c9747'],
     ['./test/fixtures/roms/zip/foobar.zip', 'b22c9747'],
   ])('should hash the full archive entry when header is given but not present in file: %s', async (filePath, expectedCrc) => {
     const archive = ArchiveFactory.archiveFrom(filePath);
@@ -123,7 +131,7 @@ describe('extractToFile', () => {
         './test/fixtures/roms/7z',
       ],
     }), new ProgressBarFake()).scan();
-    expect(archiveEntries).toHaveLength(21);
+    expect(archiveEntries).toHaveLength(7);
 
     const temp = fsPoly.mkdtempSync(Constants.GLOBAL_TEMP_DIR);
     /* eslint-disable no-await-in-loop */
@@ -148,7 +156,7 @@ describe('extractToStream', () => {
         './test/fixtures/roms/7z',
       ],
     }), new ProgressBarFake()).scan();
-    expect(archiveEntries).toHaveLength(21);
+    expect(archiveEntries).toHaveLength(7);
 
     const temp = fsPoly.mkdtempSync(Constants.GLOBAL_TEMP_DIR);
     /* eslint-disable no-await-in-loop */

@@ -86,11 +86,17 @@ jobs:
           cd ..
           rm -rf package
 
+  markdown-lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - run: docker run -v $PWD:/workdir ghcr.io/igorshubovych/markdownlint-cli:latest --disable MD013 MD033 -- "**/*.md"
+
   renovate-lint:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
-      - uses: rinchsan/renovate-config-validator@v0.0.11
+      - uses: rinchsan/renovate-config-validator@v0.0.12
         with:
           pattern: 'renovate.json5'
 
@@ -131,6 +137,7 @@ jobs:
       - node-unit
       - node-e2e
       - node-package
+      - markdown-lint
       - renovate-lint
       - codecov-lint
       - codecov

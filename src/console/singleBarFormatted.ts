@@ -9,26 +9,36 @@ import ProgressBarPayload from './progressBarPayload.js';
 export default class SingleBarFormatted {
   private readonly multiBar: MultiBar;
 
+  private readonly singleBar: SingleBar;
+
+  private lastOutput = '';
+
   private valueTimeBuffer: number[][] = [];
 
-  constructor(multiBar: MultiBar) {
-    this.multiBar = multiBar;
-  }
+  private lastEtaTime: [number, number] = [0, 0];
 
-  build(name: string, symbol: string, initialTotal: number): SingleBar {
-    return this.multiBar.create(initialTotal, 0, {
+  private lastEtaValue = 'infinity';
+
+  constructor(multiBar: MultiBar, name: string, symbol: string, initialTotal: number) {
+    this.multiBar = multiBar;
+    this.singleBar = this.multiBar.create(initialTotal, 0, {
       symbol,
       name,
-    } as ProgressBarPayload, this.buildOptions());
-  }
-
-  private buildOptions(): Options {
-    return {
+    } as ProgressBarPayload, {
       /* eslint-disable-next-line arrow-body-style */
       format: (options, params, payload: ProgressBarPayload): string => {
-        return `${SingleBarFormatted.getSymbol(payload)} ${SingleBarFormatted.getName(payload)} | ${this.getProgress(options, params, payload)}`.trim();
+        this.lastOutput = `${SingleBarFormatted.getSymbol(payload)} ${SingleBarFormatted.getName(payload)} | ${this.getProgress(options, params, payload)}`.trim();
+        return this.lastOutput;
       },
-    };
+    });
+  }
+
+  getSingleBar(): SingleBar {
+    return this.singleBar;
+  }
+
+  getLastOutput(): string {
+    return this.lastOutput;
   }
 
   private static getSymbol(payload: ProgressBarPayload): string {
@@ -60,7 +70,7 @@ export default class SingleBarFormatted {
       progress += ` | ${params.value.toLocaleString()}/${params.total.toLocaleString()}`;
       if (params.value > 0 && params.value < params.total) {
         const eta = this.calculateEta(params);
-        progress += ` | ETA: ${SingleBarFormatted.getEtaFormatted(eta)}`;
+        progress += ` | ETA: ${this.getEtaFormatted(eta)}`;
       }
     }
     return progress;
@@ -70,7 +80,7 @@ export default class SingleBarFormatted {
     function clamp(val: number, min: number, max: number): number {
       return Math.min(Math.max(val, min), max);
     }
-    const MAX_BUFFER_SIZE = clamp(Math.floor(params.total / 10), 25, 100);
+    const MAX_BUFFER_SIZE = clamp(Math.floor(params.total / 10), 25, 50);
 
     this.valueTimeBuffer = [
       ...this.valueTimeBuffer.slice(1 - MAX_BUFFER_SIZE),
@@ -79,14 +89,14 @@ export default class SingleBarFormatted {
 
     const doneTime = linearRegressionLine(linearRegression(this.valueTimeBuffer))(params.total);
     if (Number.isNaN(doneTime)) {
-      // Vertical line, we got the same value at 2+ different times
-      return 0;
+      // Vertical line
+      return -1;
     }
     const remaining = (doneTime - Date.now()) / 1000;
-    if (!Number.isFinite(remaining) || remaining < 0) {
-      return 0;
+    if (!Number.isFinite(remaining)) {
+      return -1;
     }
-    return remaining;
+    return Math.max(remaining, 0);
   }
 
   private static getBar(options: Options, params: Params): string {
@@ -98,24 +108,41 @@ export default class SingleBarFormatted {
             + (options.barIncompleteString || '').slice(0, incompleteSize);
   }
 
-  private static getEtaFormatted(eta: number): string {
-    const etaInteger = Math.ceil(eta);
-    const secondsRounded = 5 * Math.round(etaInteger / 5);
+  private getEtaFormatted(etaSeconds: number): string {
+    // Rate limit how often the ETA can change
+    const [elapsedSec, elapsedNano] = process.hrtime(this.lastEtaTime);
+    const elapsedMs = (elapsedSec * 1000000000 + elapsedNano) / 1000000;
+    if (etaSeconds > 60 && elapsedMs < 5000) {
+      return this.lastEtaValue;
+    }
+    this.lastEtaTime = process.hrtime();
+
+    if (etaSeconds < 0) {
+      this.lastEtaValue = 'infinity';
+      return this.lastEtaValue;
+    }
+
+    const etaSecondsInt = Math.ceil(etaSeconds);
+    const secondsRounded = 5 * Math.round(etaSecondsInt / 5);
     if (secondsRounded >= 3600) {
       const minutes = Math.floor((secondsRounded % 3600) / 60);
       if (minutes > 0) {
-        return `${Math.floor(secondsRounded / 3600)}h${minutes}m`;
+        this.lastEtaValue = `${Math.floor(secondsRounded / 3600)}h${minutes}m`;
+      } else {
+        this.lastEtaValue = `${Math.floor(secondsRounded / 3600)}h`;
       }
-      return `${Math.floor(secondsRounded / 3600)}h`;
-    } if (secondsRounded >= 60) {
+    } else if (secondsRounded >= 60) {
       const seconds = secondsRounded % 60;
       if (seconds > 0) {
-        return `${Math.floor(secondsRounded / 60)}m${seconds}s`;
+        this.lastEtaValue = `${Math.floor(secondsRounded / 60)}m${seconds}s`;
+      } else {
+        this.lastEtaValue = `${Math.floor(secondsRounded / 60)}m`;
       }
-      return `${Math.floor(secondsRounded / 60)}m`;
-    } if (etaInteger >= 10) {
-      return `${secondsRounded}s`;
+    } else if (etaSecondsInt >= 10) {
+      this.lastEtaValue = `${secondsRounded}s`;
+    } else {
+      this.lastEtaValue = `${etaSecondsInt}s`;
     }
-    return `${etaInteger}s`;
+    return this.lastEtaValue;
   }
 }

@@ -1,6 +1,6 @@
 import { promises as fsPromises } from 'fs';
 
-import ProgressBarCLI from '../console/progressBarCLI.js';
+import ProgressBar from '../console/progressBar.js';
 import DATStatus from '../types/datStatus.js';
 import Options from '../types/options.js';
 
@@ -12,9 +12,9 @@ import Options from '../types/options.js';
 export default class ReportGenerator {
   private readonly options: Options;
 
-  private readonly progressBar: ProgressBarCLI;
+  private readonly progressBar: ProgressBar;
 
-  constructor(options: Options, progressBar: ProgressBarCLI) {
+  constructor(options: Options, progressBar: ProgressBar) {
     this.options = options;
     this.progressBar = progressBar;
   }
@@ -22,7 +22,7 @@ export default class ReportGenerator {
   async generate(datsStatuses: DATStatus[]): Promise<void> {
     await this.progressBar.logInfo('Generating report');
 
-    const report = this.options.getOutputReport();
+    const report = this.options.getOutputReportPath();
 
     const contents = (
       await Promise.all(datsStatuses
@@ -42,5 +42,6 @@ export default class ReportGenerator {
     await fsPromises.writeFile(report, contents);
 
     await this.progressBar.done(report);
+    await this.progressBar.freeze();
   }
 }

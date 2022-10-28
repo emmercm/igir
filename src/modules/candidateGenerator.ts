@@ -1,3 +1,5 @@
+import path from 'path';
+
 import ProgressBar, { Symbols } from '../console/progressBar.js';
 import Zip from '../types/archives/zip.js';
 import ArchiveEntry from '../types/files/archiveEntry.js';
@@ -88,23 +90,10 @@ export default class CandidateGenerator {
   }
 
   private static indexFilesByHashCode(files: File[]): Map<string, File> {
-    return files.reduce((acc, file) => {
-      file.hashCodes().forEach((hashCode) => this.addToIndex(acc, hashCode, file));
-      return acc;
+    return files.reduce((map, file) => {
+      file.hashCodes().forEach((hashCode) => map.set(hashCode, file));
+      return map;
     }, new Map<string, File>());
-  }
-
-  private static addToIndex(map: Map<string, File>, hash: string, file: File): void {
-    if (map.has(hash)) {
-      // Have already seen file, prefer non-archived files
-      const existing = map.get(hash) as File;
-      if (!(file instanceof ArchiveEntry) && existing instanceof ArchiveEntry) {
-        map.set(hash, file);
-      }
-    } else {
-      // Haven't seen file yet, store it
-      map.set(hash, file);
-    }
   }
 
   private async buildReleaseCandidateForRelease(
@@ -148,17 +137,38 @@ export default class CandidateGenerator {
   }
 
   private async getOutputFile(dat: DAT, game: Game, rom: ROM, inputFile: File): Promise<File> {
+    const { base, ...parsedPath } = path.parse(rom.getName());
+    if (parsedPath.ext && inputFile.getFileHeader()) {
+      // If the ROM has a header then we're going to ignore the file extension from the DAT
+      if (this.options.canRemoveHeader(parsedPath.ext)) {
+        parsedPath.ext = inputFile.getFileHeader()?.unheaderedFileExtension as string;
+      } else {
+        parsedPath.ext = inputFile.getFileHeader()?.headeredFileExtension as string;
+      }
+    }
+    const outputEntryPath = path.format(parsedPath);
+
     if (this.options.shouldZip(rom.getName())) {
-      const outputFilePath = this.options.getOutput(dat, inputFile.getFilePath(), `${game.getName()}.zip`);
-      const entryPath = rom.getName();
+      const outputFilePath = this.options.getOutput(
+        dat,
+        inputFile.getFilePath(),
+        undefined,
+        `${game.getName()}.zip`,
+      );
       return ArchiveEntry.entryOf(
         new Zip(outputFilePath),
-        entryPath,
+        outputEntryPath,
         inputFile.getSize(),
         inputFile.getCrc32(),
       );
     }
-    const outputFilePath = this.options.getOutput(dat, inputFile.getFilePath(), rom.getName());
+
+    const outputFilePath = this.options.getOutput(
+      dat,
+      inputFile.getFilePath(),
+      game,
+      outputEntryPath,
+    );
     return File.fileOf(
       outputFilePath,
       inputFile.getSize(),

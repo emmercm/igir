@@ -18,17 +18,20 @@ import Scanner from './scanner.js';
 export default class DATScanner extends Scanner {
   async scan(): Promise<DAT[]> {
     await this.progressBar.logInfo('Scanning DAT files');
+
+    await this.progressBar.setSymbol(Symbols.SEARCHING);
+    await this.progressBar.reset(this.options.getDatFileCount());
+
     const datFilePaths = await this.options.scanDatFiles();
     if (!datFilePaths.length) {
       return [];
     }
     await this.progressBar.logInfo(datFilePaths.map((file) => `Found DAT file: ${file}`).join('\n'));
     await this.progressBar.logInfo(`Found ${datFilePaths.length} DAT file${datFilePaths.length !== 1 ? 's' : ''}`);
-
-    await this.progressBar.setSymbol(Symbols.SEARCHING);
     await this.progressBar.reset(datFilePaths.length);
 
-    const datFiles = await this.getDatFiles(datFilePaths);
+    await this.progressBar.logDebug('Enumerating DAT archives');
+    const datFiles = await this.getFilesFromPaths(datFilePaths, Constants.DAT_SCANNER_THREADS);
     await this.progressBar.reset(datFiles.length);
 
     await this.progressBar.logInfo('Deserializing DAT XML to objects');
@@ -36,20 +39,6 @@ export default class DATScanner extends Scanner {
 
     await this.progressBar.logInfo(dats.map((dat) => `${dat.getName()}: ${dat.getGames().length} games, ${dat.getParents().length} parents parsed`).join('\n'));
     return dats;
-  }
-
-  // Scan files on disk for DATs (archives may yield more than one DAT)
-  private async getDatFiles(datFilePaths: string[]): Promise<File[]> {
-    await this.progressBar.logDebug('Enumerating DAT archives');
-    return (await async.mapLimit(
-      datFilePaths,
-      Constants.DAT_SCANNER_THREADS,
-      async (datFilePath: string, callback: AsyncResultCallback<File[], Error>) => {
-        await this.progressBar.logDebug(`${datFilePath}: Reading file`);
-        const datFiles = await this.getFilesFromPath(datFilePath);
-        callback(null, datFiles);
-      },
-    )).flatMap((datFiles) => datFiles);
   }
 
   // Parse each file into a DAT
@@ -62,10 +51,14 @@ export default class DATScanner extends Scanner {
         await this.progressBar.increment();
         const xmlObject = await this.parseDatFile(datFile);
         if (xmlObject) {
-          const dat = DAT.fromObject(xmlObject.datafile);
-          return callback(null, dat);
+          try {
+            const dat = DAT.fromObject(xmlObject.datafile);
+            return callback(null, dat);
+          } catch (e) {
+            await this.progressBar.logError(`Failed to parse DAT ${datFile.toString()} : ${e}`);
+          }
         }
-        return callback(null, undefined);
+        return callback(null);
       },
     )).filter((xmlObject) => xmlObject) as DAT[];
 

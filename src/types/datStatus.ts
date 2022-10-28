@@ -1,4 +1,5 @@
 import { writeToString } from '@fast-csv/format';
+import chalk, { ChalkInstance } from 'chalk';
 
 import DAT from './logiqx/dat.js';
 import Game from './logiqx/game.js';
@@ -8,7 +9,7 @@ import ReleaseCandidate from './releaseCandidate.js';
 
 enum ROMType {
   GAME = 'games',
-  BIOS = 'bioses',
+  BIOS = 'BIOSes',
   RETAIL = 'retail releases',
 }
 
@@ -17,7 +18,7 @@ export default class DATStatus {
 
   private readonly allRomTypesToGames = new Map<ROMType, Game[]>();
 
-  private readonly missingRomTypesToGames = new Map<ROMType, Game[]>();
+  private readonly foundRomTypesToReleaseCandidates = new Map<ROMType, ReleaseCandidate[]>();
 
   constructor(dat: DAT, parentsToReleaseCandidates: Map<Parent, ReleaseCandidate[]>) {
     this.dat = dat;
@@ -25,34 +26,34 @@ export default class DATStatus {
     const gameNamesToReleaseCandidates = [...parentsToReleaseCandidates.values()]
       .flatMap((releaseCandidates) => releaseCandidates)
       .reduce((map, releaseCandidate) => {
-        map.set(releaseCandidate.getName(), releaseCandidate);
+        map.set(releaseCandidate.getGame().getName(), releaseCandidate);
         return map;
       }, new Map<string, ReleaseCandidate>());
 
     dat.getParents().forEach((parent) => {
       parent.getGames().forEach((game) => {
-        DATStatus.pushGameIntoMap(this.allRomTypesToGames, game);
+        DATStatus.pushValueIntoMap(this.allRomTypesToGames, game, game);
 
         const releaseCandidate = gameNamesToReleaseCandidates.get(game.getName());
-        if (!releaseCandidate && game.getRoms().length > 0) {
-          DATStatus.pushGameIntoMap(this.missingRomTypesToGames, game);
+        if (releaseCandidate || !game.getRoms().length) {
+          DATStatus.pushValueIntoMap(this.foundRomTypesToReleaseCandidates, game, releaseCandidate);
         }
       });
     });
   }
 
-  private static pushGameIntoMap(map: Map<ROMType, Game[]>, game: Game): void {
-    DATStatus.append(map, ROMType.GAME, game);
+  private static pushValueIntoMap<T>(map: Map<ROMType, T[]>, game: Game, value: T): void {
+    DATStatus.append(map, ROMType.GAME, value);
     if (game.isBios()) {
-      DATStatus.append(map, ROMType.BIOS, game);
+      DATStatus.append(map, ROMType.BIOS, value);
     }
     if (game.isRetail()) {
-      DATStatus.append(map, ROMType.RETAIL, game);
+      DATStatus.append(map, ROMType.RETAIL, value);
     }
   }
 
-  private static append(map: Map<ROMType, Game[]>, romType: ROMType, val: Game): void {
-    const arr = (map.has(romType) ? map.get(romType) : []) as Game[];
+  private static append<T>(map: Map<ROMType, T[]>, romType: ROMType, val: T): void {
+    const arr = (map.has(romType) ? map.get(romType) : []) as T[];
     arr.push(val);
     map.set(romType, arr);
   }
@@ -64,49 +65,83 @@ export default class DATStatus {
   anyGamesFound(options: Options): boolean {
     return DATStatus.getAllowedTypes(options)
       .reduce((result, romType) => {
-        const allGames = (this.allRomTypesToGames.get(romType) as Game[] || []).length;
-        const missingGames = (this.missingRomTypesToGames.get(romType) as Game[] || []).length;
-        return result || (allGames - missingGames > 0);
+        const foundReleaseCandidates = (
+          this.foundRomTypesToReleaseCandidates.get(romType) as ReleaseCandidate[] || []).length;
+        return result || foundReleaseCandidates > 0;
       }, false);
   }
 
-  toString(options: Options): string {
+  toConsole(options: Options): string {
     return `${DATStatus.getAllowedTypes(options)
+      .filter((type) => this.allRomTypesToGames.get(type)?.length)
       .map((type) => {
-        const missing = this.missingRomTypesToGames.get(type) || [];
+        const found = this.foundRomTypesToReleaseCandidates.get(type) || [];
         const all = this.allRomTypesToGames.get(type) || [];
-        return `${(all.length - missing.length).toLocaleString()}/${all.length.toLocaleString()} ${type}`;
+
+        const percentage = (found.length / all.length) * 100;
+        let color: ChalkInstance;
+        if (percentage >= 100) {
+          color = chalk.rgb(0, 166, 0); // macOS terminal green
+        } else if (percentage >= 75) {
+          color = chalk.rgb(153, 153, 0); // macOS terminal yellow
+        } else if (percentage >= 50) {
+          color = chalk.rgb(160, 124, 0);
+        } else if (percentage >= 25) {
+          color = chalk.rgb(162, 93, 0);
+        } else if (percentage > 0) {
+          color = chalk.rgb(160, 59, 0);
+        } else {
+          color = chalk.rgb(153, 0, 0); // macOS terminal red
+        }
+
+        return `${color(found.length.toLocaleString())}/${all.length.toLocaleString()} ${type}`;
       })
       .join(', ')} found`;
   }
 
   async toCSV(options: Options): Promise<string> {
-    const missing = DATStatus.getGamesForAllowedTypes(options, this.missingRomTypesToGames);
+    const found = DATStatus.getValuesForAllowedTypes(
+      options,
+      this.foundRomTypesToReleaseCandidates,
+    );
 
-    // TODO(cemmer): output the location of written ROMs
-    const rows = DATStatus.getGamesForAllowedTypes(options, this.allRomTypesToGames)
+    const rows = DATStatus.getValuesForAllowedTypes(options, this.allRomTypesToGames)
       .filter((game, idx, games) => games.indexOf(game) === idx)
-      .map((game) => ([
-        this.getDATName(),
-        game.getName(),
-        missing.indexOf(game) !== -1 ? 'MISSING' : 'FOUND',
-        game.isBios(),
-        game.isRetail(),
-        game.isUnlicensed(),
-        game.isDemo(),
-        game.isBeta(),
-        game.isSample(),
-        game.isPrototype(),
-        game.isTest(),
-        game.isAftermarket(),
-        game.isHomebrew(),
-        game.isBad(),
-      ]));
+      .sort((a, b) => a.getName().localeCompare(b.getName()))
+      .map((game) => {
+        const releaseCandidate = found.find((rc) => rc.getGame().equals(game));
+        return [
+          this.getDATName(),
+          game.getName(),
+          releaseCandidate || !game.getRoms().length ? 'FOUND' : 'MISSING',
+          releaseCandidate
+            ? (releaseCandidate as ReleaseCandidate).getRomsWithFiles()
+              .map((romWithFiles) => (options.shouldWrite()
+                ? romWithFiles.getOutputFile()
+                : romWithFiles.getInputFile()))
+              .map((file) => file.getFilePath())
+              .filter((filePath, idx, filePaths) => filePaths.indexOf(filePath) === idx)
+              .join('|')
+            : '',
+          game.isBios(),
+          game.isRetail(),
+          game.isUnlicensed(),
+          game.isDemo(),
+          game.isBeta(),
+          game.isSample(),
+          game.isPrototype(),
+          game.isTest(),
+          game.isAftermarket(),
+          game.isHomebrew(),
+          game.isBad(),
+        ];
+      });
     return writeToString(rows, {
       headers: [
         'DAT Name',
         'Game Name',
         'Status',
+        'ROM Files',
         'BIOS',
         'Retail Release',
         'Unlicensed',
@@ -122,16 +157,16 @@ export default class DATStatus {
     });
   }
 
-  private static getGamesForAllowedTypes(
+  private static getValuesForAllowedTypes<T>(
     options: Options,
-    romTypesToGames: Map<ROMType, Game[]>,
-  ): Game[] {
+    romTypesToValues: Map<ROMType, T[]>,
+  ): T[] {
     return DATStatus.getAllowedTypes(options)
-      .map((type) => romTypesToGames.get(type))
-      .flatMap((games) => games)
-      .filter((game) => game)
-      .filter((game, idx, games) => games.indexOf(game) === idx)
-      .sort() as Game[];
+      .map((type) => romTypesToValues.get(type))
+      .flatMap((values) => values)
+      .filter((value) => value)
+      .filter((value, idx, values) => values.indexOf(value) === idx)
+      .sort() as T[];
   }
 
   private static getAllowedTypes(options: Options): ROMType[] {

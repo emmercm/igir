@@ -127,7 +127,7 @@ export default class Game implements GameProps {
   }
 
   isBios(): boolean {
-    return this.bios === 'yes' || this.name.indexOf('[BIOS]') !== -1;
+    return this.bios === 'yes' || this.name.match(/\[BIOS\]/i) !== null;
   }
 
   getReleases(): Release[] {
@@ -151,50 +151,118 @@ export default class Game implements GameProps {
   // Computed getters
 
   isAftermarket(): boolean {
-    return this.name.match(/\(Aftermarket[a-zA-Z0-9. ]*\)/i) !== null;
+    return this.name.match(/\(Aftermarket[a-z0-9. ]*\)/i) !== null;
+  }
+
+  isAlpha(): boolean {
+    return this.name.match(/\(Alpha[a-z0-9. ]*\)/i) !== null;
   }
 
   isBad(): boolean {
-    return this.name.match(/\[b\]/i) !== null;
+    if (this.name.match(/\[b[0-9]*\]/) !== null) {
+      return true;
+    }
+    if (this.isVerified()) {
+      // Sometimes [!] can get mixed with [c], consider it not bad
+      return false;
+    }
+    return this.name.match(/\[c\]/) !== null // "known bad checksum but good dump"
+        || this.name.match(/\[x\]/) !== null; // "thought to have a bad checksum"
   }
 
   isBeta(): boolean {
-    return this.name.match(/\(Beta[a-zA-Z0-9. ]*\)/i) !== null;
+    return this.name.match(/\(Beta[a-z0-9. ]*\)/i) !== null;
   }
 
   isDemo(): boolean {
-    return this.name.match(/\(Demo[a-zA-Z0-9. ]*\)/i) !== null;
+    return this.name.match(/\(Demo[a-z0-9. ]*\)/i) !== null;
+  }
+
+  isFixed(): boolean {
+    return this.name.match(/\[f[0-9]*\]/) !== null;
   }
 
   isHomebrew(): boolean {
-    return this.name.match(/\(Homebrew[a-zA-Z0-9. ]*\)/i) !== null;
+    return this.name.match(/\(Homebrew[a-z0-9. ]*\)/i) !== null;
+  }
+
+  isMIA(): boolean {
+    return this.name.match(/\[MIA\]/i) !== null;
+  }
+
+  isOverdump(): boolean {
+    return this.name.match(/\[o[0-9]*\]/) !== null;
+  }
+
+  isPendingDump(): boolean {
+    return this.name.match(/\[!p\]/) !== null;
+  }
+
+  isPirated(): boolean {
+    return this.name.match(/\(Pirate[a-z0-9. ]*\)/i) !== null
+        || this.name.match(/\[p[0-9]*\]/) !== null;
   }
 
   isPrototype(): boolean {
-    return this.name.match(/\(Proto[a-zA-Z0-9. ]*\)/i) !== null;
+    return this.name.match(/\(Proto[a-z0-9. ]*\)/i) !== null;
   }
 
   isSample(): boolean {
-    return this.name.match(/\(Sample[a-zA-Z0-9. ]*\)/i) !== null;
+    return this.name.match(/\(Sample[a-z0-9. ]*\)/i) !== null;
   }
 
   isTest(): boolean {
-    return this.name.match(/\(Test[a-zA-Z0-9. ]*\)/i) !== null;
+    return this.name.match(/\(Test[a-z0-9. ]*\)/i) !== null;
+  }
+
+  isTranslated(): boolean {
+    return this.name.match(/\[T[+-][^\]]+\]/) !== null;
   }
 
   isUnlicensed(): boolean {
-    return this.name.match(/\(Unl[a-zA-Z0-9. ]*\)/i) !== null;
+    return this.name.match(/\(Unl[a-z0-9. ]*\)/i) !== null;
+  }
+
+  isVerified(): boolean {
+    if (this.name.match(/\[!\]/) !== null) {
+      return true;
+    }
+    // Assume verification if there are releases
+    return this.getReleases().length > 0;
+  }
+
+  hasBungFix(): boolean {
+    return this.name.match(/\(Bung\)|\[bf\]/i) !== null;
+  }
+
+  hasHack(): boolean {
+    return this.name.match(/\(Hack\)/i) !== null
+        || this.name.match(/\[h[a-zA-Z90-9+]*\]/) !== null;
+  }
+
+  hasTrainer(): boolean {
+    return this.name.match(/\[t[0-9]*\]/) !== null;
   }
 
   isRetail(): boolean {
     return !this.isAftermarket()
+        && !this.isAlpha()
         && !this.isBad()
         && !this.isBeta()
         && !this.isDemo()
+        && !this.isFixed()
         && !this.isHomebrew()
+        && !this.isMIA()
+        && !this.isOverdump()
+        && !this.isPendingDump()
+        && !this.isPirated()
         && !this.isPrototype()
         && !this.isSample()
-        && !this.isTest();
+        && !this.isTest()
+        && !this.isTranslated()
+        && !this.hasBungFix()
+        && !this.hasHack()
+        && !this.hasTrainer();
   }
 
   isParent(): boolean {
@@ -207,5 +275,14 @@ export default class Game implements GameProps {
 
   getParent(): string {
     return this.cloneOf || this.romOf || this.sampleOf || '';
+  }
+
+  equals(other: Game): boolean {
+    if (this === other) {
+      return true;
+    }
+    return this.getName() === other.getName()
+      && this.getReleases().length === other.getReleases().length
+      && this.getRoms().length === other.getRoms().length;
   }
 }

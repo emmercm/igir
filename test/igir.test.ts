@@ -1,6 +1,5 @@
 import { jest } from '@jest/globals';
 import fg from 'fast-glob';
-import fs from 'fs';
 import path from 'path';
 
 import Logger from '../src/console/logger.js';
@@ -29,7 +28,8 @@ async function expectEndToEnd(optionsProps: OptionsProps, expectedFiles: string[
   });
   await new Igir(options, LOGGER).main();
 
-  const writtenRoms = fs.readdirSync(tempOutput);
+  const writtenRoms = fsPoly.walkSync(tempOutput)
+    .map((filePath) => filePath.replace(tempOutput + path.sep, ''));
 
   expect(writtenRoms).toHaveLength(expectedFiles.length);
   for (let i = 0; i < expectedFiles.length; i += 1) {
@@ -41,9 +41,9 @@ async function expectEndToEnd(optionsProps: OptionsProps, expectedFiles: string[
   await fsPoly.rm(tempOutput, { force: true, recursive: true });
 
   const reports = await fg(path.join(
-    path.dirname(options.getOutputReport()),
+    path.dirname(options.getOutputReportPath()),
     `${Constants.COMMAND_NAME}_*.csv`,
-  ));
+  ).replace(/\\/g, '/'));
   await Promise.all(reports.map(async (report) => fsPoly.rm(report)));
 }
 
@@ -65,8 +65,8 @@ it('should copy', async () => {
     'Fizzbuzz.rom',
     'Foobar.rom',
     'Lorem Ipsum.rom',
-    'One.rom',
-    'Three.rom',
+    path.join('One Three', 'One.rom'),
+    path.join('One Three', 'Three.rom'),
   ]);
 });
 
@@ -88,8 +88,8 @@ it('should copy and clean', async () => {
     'Fizzbuzz.rom',
     'Foobar.rom',
     'Lorem Ipsum.rom',
-    'One.rom',
-    'Three.rom',
+    path.join('One Three', 'One.rom'),
+    path.join('One Three', 'Three.rom'),
   ]);
 });
 

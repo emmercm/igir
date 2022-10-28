@@ -121,6 +121,8 @@ build/
 *.gbc
 *.nes
 *.rom
+*.sfc
+*.smc
 *.zip
 
 # ROM pack excess
@@ -142,4 +144,6 @@ build/
 !test/fixtures/dats/*/*
 !test/fixtures/roms/*
 !test/fixtures/roms/*/*
-.DS_Store
+
+# Always commit some WebStorm configs
+!.idea/runConfigurations/*

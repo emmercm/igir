@@ -2,7 +2,7 @@ import 'reflect-metadata';
 
 import { Expose, instanceToPlain, plainToInstance } from 'class-transformer';
 import fg from 'fast-glob';
-import { promises as fsPromises } from 'fs';
+import fs, { promises as fsPromises } from 'fs';
 import { isNotJunk } from 'junk';
 import micromatch from 'micromatch';
 import moment from 'moment';
@@ -13,27 +13,25 @@ import LogLevel from '../console/logLevel.js';
 import Constants from '../constants.js';
 import fsPoly from '../polyfill/fsPoly.js';
 import DAT from './logiqx/dat.js';
+import Game from './logiqx/game.js';
 
 export interface OptionsProps {
   readonly commands?: string[],
+
   readonly dat?: string[],
   readonly input?: string[],
   readonly inputExclude?: string[],
   readonly output?: string,
+
   readonly header?: string,
+
   readonly dirMirror?: boolean,
   readonly dirDatName?: boolean,
   readonly dirLetter?: boolean,
-  readonly single?: boolean,
   readonly zipExclude?: string,
+  readonly removeHeaders?: string[],
   readonly overwrite?: boolean,
-  readonly preferGood?: boolean,
-  readonly preferLanguage?: string[],
-  readonly preferRegion?: string[],
-  readonly preferRevisionNewer?: boolean,
-  readonly preferRevisionOlder?: boolean,
-  readonly preferRetail?: boolean,
-  readonly preferParent?: boolean,
+
   readonly languageFilter?: string[],
   readonly regionFilter?: string[],
   readonly onlyBios?: boolean,
@@ -47,20 +45,32 @@ export interface OptionsProps {
   readonly noTestRoms?: boolean,
   readonly noAftermarket?: boolean,
   readonly noHomebrew?: boolean,
+  readonly noUnverified?: boolean,
   readonly noBad?: boolean,
+
+  readonly single?: boolean,
+  readonly preferVerified?: boolean,
+  readonly preferGood?: boolean,
+  readonly preferLanguage?: string[],
+  readonly preferRegion?: string[],
+  readonly preferRevisionNewer?: boolean,
+  readonly preferRevisionOlder?: boolean,
+  readonly preferRetail?: boolean,
+  readonly preferParent?: boolean,
+
   readonly verbose?: number,
   readonly help?: boolean,
 }
 
 export default class Options implements OptionsProps {
   @Expose({ name: '_' })
-  readonly commands: string[] = [];
+  readonly commands: string[];
 
-  readonly dat: string[] = [];
+  readonly dat: string[];
 
-  readonly input: string[] = [];
+  readonly input: string[];
 
-  readonly inputExclude: string[] = [];
+  readonly inputExclude: string[];
 
   readonly output: string;
 
@@ -72,29 +82,15 @@ export default class Options implements OptionsProps {
 
   readonly dirLetter: boolean;
 
-  readonly single: boolean = false;
-
   readonly zipExclude: string;
+
+  readonly removeHeaders?: string[];
 
   readonly overwrite: boolean;
 
-  readonly preferGood: boolean;
+  readonly languageFilter: string[];
 
-  readonly preferLanguage: string[] = [];
-
-  readonly preferRegion: string[] = [];
-
-  readonly preferRevisionNewer: boolean;
-
-  readonly preferRevisionOlder: boolean;
-
-  readonly preferRetail: boolean;
-
-  readonly preferParent: boolean;
-
-  readonly languageFilter: string[] = [];
-
-  readonly regionFilter: string[] = [];
+  readonly regionFilter: string[];
 
   readonly onlyBios: boolean;
 
@@ -118,7 +114,27 @@ export default class Options implements OptionsProps {
 
   readonly noHomebrew: boolean;
 
+  readonly noUnverified: boolean;
+
   readonly noBad: boolean;
+
+  readonly single: boolean = false;
+
+  readonly preferVerified: boolean;
+
+  readonly preferGood: boolean;
+
+  readonly preferLanguage: string[];
+
+  readonly preferRegion: string[];
+
+  readonly preferRevisionNewer: boolean;
+
+  readonly preferRevisionOlder: boolean;
+
+  readonly preferRetail: boolean;
+
+  readonly preferParent: boolean;
 
   readonly verbose: number;
 
@@ -126,24 +142,21 @@ export default class Options implements OptionsProps {
 
   constructor(options?: OptionsProps) {
     this.commands = options?.commands || [];
+
     this.dat = options?.dat || [];
     this.input = options?.input || [];
     this.inputExclude = options?.inputExclude || [];
     this.output = options?.output || '';
+
     this.header = options?.header || '';
+
     this.dirMirror = options?.dirMirror || false;
     this.dirDatName = options?.dirDatName || false;
     this.dirLetter = options?.dirLetter || false;
-    this.single = options?.single || false;
     this.zipExclude = options?.zipExclude || '';
+    this.removeHeaders = options?.removeHeaders;
     this.overwrite = options?.overwrite || false;
-    this.preferGood = options?.preferGood || false;
-    this.preferLanguage = options?.preferLanguage || [];
-    this.preferRegion = options?.preferRegion || [];
-    this.preferRevisionNewer = options?.preferRevisionNewer || false;
-    this.preferRevisionOlder = options?.preferRevisionOlder || false;
-    this.preferRetail = options?.preferRetail || false;
-    this.preferParent = options?.preferParent || false;
+
     this.languageFilter = options?.languageFilter || [];
     this.regionFilter = options?.regionFilter || [];
     this.onlyBios = options?.onlyBios || false;
@@ -157,7 +170,19 @@ export default class Options implements OptionsProps {
     this.noTestRoms = options?.noTestRoms || false;
     this.noAftermarket = options?.noAftermarket || false;
     this.noHomebrew = options?.noHomebrew || false;
+    this.noUnverified = options?.noUnverified || false;
     this.noBad = options?.noBad || false;
+
+    this.single = options?.single || false;
+    this.preferVerified = options?.preferVerified || false;
+    this.preferGood = options?.preferGood || false;
+    this.preferLanguage = options?.preferLanguage || [];
+    this.preferRegion = options?.preferRegion || [];
+    this.preferRevisionNewer = options?.preferRevisionNewer || false;
+    this.preferRevisionOlder = options?.preferRevisionOlder || false;
+    this.preferRetail = options?.preferRetail || false;
+    this.preferParent = options?.preferParent || false;
+
     this.verbose = options?.verbose || 0;
     this.help = options?.help || false;
   }
@@ -212,8 +237,16 @@ export default class Options implements OptionsProps {
 
   // Options
 
+  getDatFileCount(): number {
+    return this.dat.length;
+  }
+
   async scanDatFiles(): Promise<string[]> {
     return Options.scanPath(this.dat);
+  }
+
+  getInputFileCount(): number {
+    return this.input.length;
   }
 
   private async scanInputFiles(): Promise<string[]> {
@@ -284,7 +317,7 @@ export default class Options implements OptionsProps {
       .filter((inputPath, idx, arr) => arr.indexOf(inputPath) === idx);
   }
 
-  getOutput(dat?: DAT, inputRomPath?: string, romName?: string): string {
+  getOutput(dat?: DAT, inputRomPath?: string, game?: Game, romName?: string): string {
     let output = this.shouldWrite() ? this.output : Constants.GLOBAL_TEMP_DIR;
     if (this.getDirMirror() && inputRomPath) {
       const mirroredDir = path.dirname(inputRomPath)
@@ -307,7 +340,9 @@ export default class Options implements OptionsProps {
       output = path.join(output, letter);
     }
 
-    // TODO(cemmer): if the ROM has multiple files (e.g. cue/bin) then put it in a folder
+    if (game && game.getRoms().length > 1) {
+      output = path.join(output, game.getName());
+    }
 
     if (romName) {
       output = path.join(output, romName);
@@ -316,8 +351,19 @@ export default class Options implements OptionsProps {
     return fsPoly.makeLegal(output);
   }
 
-  getOutputReport(): string {
-    const output = this.shouldWrite() ? this.output : process.cwd();
+  getOutputReportPath(): string {
+    let output = process.cwd();
+    if (this.shouldWrite()) {
+      // Write to the output dir if writing
+      output = this.output;
+    } else if (this.input.length === 1) {
+      // Write to the input dir if there is only one
+      let [input] = this.input;
+      while (!fs.existsSync(input)) {
+        input = path.dirname(input);
+      }
+    }
+
     return path.join(
       output,
       fsPoly.makeLegal(`${Constants.COMMAND_NAME}_${moment().format()}.csv`),
@@ -347,48 +393,26 @@ export default class Options implements OptionsProps {
     return this.dirLetter;
   }
 
-  getSingle(): boolean {
-    return this.single;
-  }
-
   private getZipExclude(): string {
     return this.zipExclude;
   }
 
+  canRemoveHeader(extension: string): boolean {
+    if (this.removeHeaders === undefined) {
+      // Option wasn't provided, we shouldn't remove headers
+      return false;
+    }
+    if (this.removeHeaders.length === 1 && this.removeHeaders[0] === '') {
+      // Option was provided without any extensions, we should remove headers from every file
+      return true;
+    }
+    // Option was provided with extensions, we should remove headers on name match
+    return this.removeHeaders
+      .some((removeHeader) => removeHeader.toLowerCase() === extension.toLowerCase());
+  }
+
   getOverwrite(): boolean {
     return this.overwrite;
-  }
-
-  getPreferGood(): boolean {
-    return this.preferGood;
-  }
-
-  getPreferLanguages(): string[] {
-    return Options.filterUniqueUpper(this.preferLanguage);
-  }
-
-  getPreferRegions(): string[] {
-    return Options.filterUniqueUpper(this.preferRegion);
-  }
-
-  getLanguageFilter(): string[] {
-    return Options.filterUniqueUpper(this.languageFilter);
-  }
-
-  getPreferRevisionNewer(): boolean {
-    return this.preferRevisionNewer;
-  }
-
-  getPreferRevisionOlder(): boolean {
-    return this.preferRevisionOlder;
-  }
-
-  getPreferRetail(): boolean {
-    return this.preferRetail;
-  }
-
-  getPreferParent(): boolean {
-    return this.preferParent;
   }
 
   getRegionFilter(): string[] {
@@ -439,8 +463,52 @@ export default class Options implements OptionsProps {
     return this.noHomebrew;
   }
 
+  getNoUnverified(): boolean {
+    return this.noUnverified;
+  }
+
   getNoBad(): boolean {
     return this.noBad;
+  }
+
+  getSingle(): boolean {
+    return this.single;
+  }
+
+  getPreferVerified(): boolean {
+    return this.preferVerified;
+  }
+
+  getPreferGood(): boolean {
+    return this.preferGood;
+  }
+
+  getPreferLanguages(): string[] {
+    return Options.filterUniqueUpper(this.preferLanguage);
+  }
+
+  getPreferRegions(): string[] {
+    return Options.filterUniqueUpper(this.preferRegion);
+  }
+
+  getLanguageFilter(): string[] {
+    return Options.filterUniqueUpper(this.languageFilter);
+  }
+
+  getPreferRevisionNewer(): boolean {
+    return this.preferRevisionNewer;
+  }
+
+  getPreferRevisionOlder(): boolean {
+    return this.preferRevisionOlder;
+  }
+
+  getPreferRetail(): boolean {
+    return this.preferRetail;
+  }
+
+  getPreferParent(): boolean {
+    return this.preferParent;
   }
 
   getLogLevel(): LogLevel {
@@ -454,6 +522,12 @@ export default class Options implements OptionsProps {
 
   getHelp(): boolean {
     return this.help;
+  }
+
+  static filterUniqueLower(array: string[]): string[] {
+    return array
+      .map((value) => value.toLowerCase())
+      .filter((val, idx, arr) => arr.indexOf(val) === idx);
   }
 
   static filterUniqueUpper(array: string[]): string[] {

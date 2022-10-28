@@ -84,6 +84,7 @@ export default class CandidateFilter {
       this.options.getNoTestRoms() && releaseCandidate.getGame().isTest(),
       this.options.getNoAftermarket() && releaseCandidate.getGame().isAftermarket(),
       this.options.getNoHomebrew() && releaseCandidate.getGame().isHomebrew(),
+      this.options.getNoUnverified() && !releaseCandidate.getGame().isVerified(),
       this.options.getNoBad() && releaseCandidate.getGame().isBad(),
     ].filter((val) => val).length === 0;
   }
@@ -113,12 +114,20 @@ export default class CandidateFilter {
    ***************** */
 
   private sort(a: ReleaseCandidate, b: ReleaseCandidate): number {
-    return this.preferGoodSort(a, b)
+    return this.preferVerifiedSort(a, b)
+        || this.preferGoodSort(a, b)
         || this.preferLanguagesSort(a, b)
         || this.preferRegionsSort(a, b)
         || this.preferRevisionSort(a, b)
         || this.preferRetailSort(a, b)
         || this.preferParentSort(a, b);
+  }
+
+  private preferVerifiedSort(a: ReleaseCandidate, b: ReleaseCandidate): number {
+    if (this.options.getPreferVerified()) {
+      return (a.getGame().isVerified() ? 0 : 1) - (b.getGame().isVerified() ? 0 : 1);
+    }
+    return 0;
   }
 
   private preferGoodSort(a: ReleaseCandidate, b: ReleaseCandidate): number {
