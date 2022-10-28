@@ -3,7 +3,7 @@
 `igir` (pronounced "eager") is a platform-independent ROM collection manager to help sort collections and make one game, one rom (1G1R) sets.
 
 ![CLI:Windows,macOS,Linux](https://badgen.net/badge/icon/Windows,%20macOS,%20Linux?icon=terminal&label=CLI&color=grey)
-[![npm:igir](https://badgen.net/npm/v/igir?icon=npm&label&color=red)](https://www.npmjs.com/package/igir)
+[![npm:igir](https://badgen.net/npm/v/igir?icon=npm&label=igir&color=red)](https://www.npmjs.com/package/igir)
 [![GitHub:emmercm/igir](https://badgen.net/badge/emmercm/igir/purple?icon=github)](https://github.com/emmercm/igir)
 [![License](https://badgen.net/github/license/emmercm/igir)](https://github.com/emmercm/igir/blob/main/LICENSE)
 
@@ -82,7 +82,7 @@ Here is the full `igir --help` message which shows all available options and a n
   | $$  | $$ __\$$  | $$  | $$__| $$
   | $$  | $$|    \  | $$  | $$    $$   ROM collection manager
   | $$  | $$ \$$$$  | $$  | $$$$$$$\
- _| $$_ | $$__| $$ _| $$_ | $$  | $$   v0.3.1
+ _| $$_ | $$__| $$ _| $$_ | $$  | $$   v0.4.0
 |   $$ \ \$$    $$|   $$ \| $$  | $$
  \$$$$$$  \$$$$$$  \$$$$$$ \$$   \$$
 
@@ -98,7 +98,7 @@ Commands:
   igir report  Generate a CSV report on the known ROM files found in the input directories
 
 Path options (inputs support globbing):
-  -d, --dat            Path(s) to DAT files or archives   [array] [required] [default: ["*.dat"]]
+  -d, --dat            Path(s) to DAT files or archives                                   [array]
   -i, --input          Path(s) to ROM files or archives, these files will not be modified
                                                                                [array] [required]
   -I, --input-exclude  Path(s) to ROM files to exclude                                    [array]
@@ -215,6 +215,7 @@ Each manager has its own pros, but many have the same drawbacks or limitations:
 
 ## Feature requests, bug reports, and contributing
 
+[![Contributors](https://badgen.net/github/contributors/emmercm/igir?icon=github)](https://github.com/emmercm/igir/graphs/contributors)
 [![Feature Requests](https://badgen.net/github/label-issues/emmercm/igir/enhancement/open?icon=github&label=Open%20Feature%20Requests)](https://github.com/emmercm/igir/issues?q=is%3Aopen+is%3Aissue+label%3Aenhancement)
 [![Bugs](https://badgen.net/github/label-issues/emmercm/igir/bug/open?icon=github&label=Open%20Bugs)](https://github.com/emmercm/igir/issues?q=is%3Aopen+is%3Aissue+label%3Abug)
 
