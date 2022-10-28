@@ -7,6 +7,9 @@ export default class GameConsole {
    * MiSTer ROMs go in the /games/{mister}/ directory:
    *  @link https://mister-devel.github.io/MkDocs_MiSTer/cores/console/
    *  @link https://mister-devel.github.io/MkDocs_MiSTer/cores/computer/
+   *
+   * @link https://emulation.gametechwiki.com/index.php/List_of_filetypes
+   * @link https://emulation.fandom.com/wiki/List_of_filetypes
    */
   private static readonly CONSOLES: GameConsole[] = [
     new GameConsole(['.a52'], 'Atari - 5200', undefined, 'Atari5200'),
@@ -23,18 +26,20 @@ export default class GameConsole {
     new GameConsole(['.pce'], 'NEC - PC Engine - TurboGrafx 16', 'pce', 'TGFX16'),
     new GameConsole(['.sgx'], 'NEC - PC Engine SuperGrafx', undefined, 'TGFX16'),
     new GameConsole(['.fds'], 'Nintendo - Famicom Computer Disk System', 'nes', 'NES'),
-    new GameConsole(['.gb'], 'Nintendo - Game Boy', 'gb', 'Gameboy'),
-    new GameConsole(['.gba'], 'Nintendo - Game Boy Advance', 'gba', 'GBA'),
+    new GameConsole(['.gb', '.sgb'], 'Nintendo - Game Boy', 'gb', 'Gameboy'),
+    new GameConsole(['.gba', '.srl'], 'Nintendo - Game Boy Advance', 'gba', 'GBA'),
     new GameConsole(['.gbc'], 'Nintendo - Game Boy Color', 'gbc', 'Gameboy'),
-    new GameConsole(['.nes'], 'Nintendo - Nintendo Entertainment System', 'nes', 'NES'),
+    new GameConsole(['.nes', '.nez'], 'Nintendo - Nintendo Entertainment System', 'nes', 'NES'),
     new GameConsole(['.bs'], 'Nintendo - Stellaview', undefined, 'SNES'),
     new GameConsole(['.smc', '.sfc'], 'Nintendo - Super Nintendo Entertainment System', 'snes', 'SNES'),
     // new GameConsole(['.bin'], 'Philips - Videopac+', undefined, 'Odyssey2'),
     new GameConsole(['.gg'], 'Sega - Game Gear', 'gg', 'SMS'),
     new GameConsole(['.sms'], 'Sega - Master System -  Mark III', 'sms', 'SMS'),
-    new GameConsole(['.md'], 'Sega - Mega Drive - Genesis', 'genesis', ''),
+    new GameConsole(['.gen', '.md', '.smd'], 'Sega - Mega Drive - Genesis', 'genesis', ''),
     new GameConsole(['.sc', '.sg'], 'Sega - SG-1000', 'sg1000', 'SG1000'),
-    // new GameConsole([], 'SNK Neo Geo', undefined, 'NeoGeo'),
+    // new GameConsole([], 'SNK - Neo Geo', undefined, 'NeoGeo'),
+    new GameConsole(['.ngp'], 'SNK - Neo Geo Pocket', undefined, undefined),
+    new GameConsole(['.ngc'], 'SNK - Neo Geo Pocket Color', undefined, undefined),
     new GameConsole(['.sv'], 'Watara - Supervision', 'supervision', undefined),
   ];
 
