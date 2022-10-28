@@ -178,10 +178,8 @@ export default class DATStatus {
     return [
       !options.getSingle() && !options.getOnlyBios() && !options.getOnlyRetail()
         ? ROMType.GAME : undefined,
-      options.usingDats() && (options.getOnlyBios() || !options.getNoBios())
-        ? ROMType.BIOS : undefined,
-      options.usingDats() && (options.getOnlyRetail() || !options.getOnlyBios())
-        ? ROMType.RETAIL : undefined,
+      options.getOnlyBios() || !options.getNoBios() ? ROMType.BIOS : undefined,
+      options.getOnlyRetail() || !options.getOnlyBios() ? ROMType.RETAIL : undefined,
     ].filter((romType) => romType) as ROMType[];
   }
 }
