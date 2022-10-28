@@ -7,7 +7,14 @@ import ProgressBarFake from '../console/progressBarFake.js';
 
 test.each([
   ['test/fixtures/roms/**/*', {
-    'test/fixtures/roms': 5, 'test/fixtures/roms/7z': 5, 'test/fixtures/roms/headered': 6, 'test/fixtures/roms/rar': 5, 'test/fixtures/roms/raw': 8, 'test/fixtures/roms/tar': 5, 'test/fixtures/roms/unheadered': 1, 'test/fixtures/roms/zip': 5,
+    [path.join('test', 'fixtures', 'roms')]: 5,
+    [path.join('test', 'fixtures', 'roms', '7z')]: 5,
+    [path.join('test', 'fixtures', 'roms', 'headered')]: 6,
+    [path.join('test', 'fixtures', 'roms', 'rar')]: 5,
+    [path.join('test', 'fixtures', 'roms', 'raw')]: 8,
+    [path.join('test', 'fixtures', 'roms', 'tar')]: 5,
+    [path.join('test', 'fixtures', 'roms', 'unheadered')]: 1,
+    [path.join('test', 'fixtures', 'roms', 'zip')]: 5,
   }],
   ['test/fixtures/roms/7z/*', { [path.join('test', 'fixtures', 'roms', '7z')]: 5 }],
   ['test/fixtures/roms/rar/*', { [path.join('test', 'fixtures', 'roms', 'rar')]: 5 }],
