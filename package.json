@@ -111,6 +111,6 @@
     "But a lot of dependencies use node: prefixed imports such as node:fs which `tsc` can't get around"
   ],
   "engines": {
-    "node": ">=12.20.0"
+    "node": ">=14.18.0"
   }
 }
