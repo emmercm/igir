@@ -402,6 +402,7 @@ export default class Options implements OptionsProps {
     return this.zipExclude;
   }
 
+  // TODO(cemmer): don't remove header for "headered" DATs
   canRemoveHeader(extension: string): boolean {
     if (this.removeHeaders === undefined) {
       // Option wasn't provided, we shouldn't remove headers

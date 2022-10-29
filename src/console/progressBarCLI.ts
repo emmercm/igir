@@ -31,6 +31,7 @@ export default class ProgressBarCLI extends ProgressBar {
         stream: logger.getLogLevel() < LogLevel.NEVER ? logger.getStream() : new PassThrough(),
         barsize: 25,
         fps: ProgressBarCLI.fps,
+        forceRedraw: true,
         emptyOnZero: true,
         hideCursor: true,
         noTTYOutput: true, /** should output for {@link PassThrough} */

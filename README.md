@@ -15,7 +15,7 @@
 
 A video of an example use case:
 
-[![asciicast](https://asciinema.org/a/WU2fDsdVvmStJ2I9FCv9pprQ7.svg)](https://asciinema.org/a/WU2fDsdVvmStJ2I9FCv9pprQ7)
+[![asciicast](https://asciinema.org/a/uVZpMCas3SQIA0q6sCh5rYqdI.svg)](https://asciinema.org/a/uVZpMCas3SQIA0q6sCh5rYqdI)
 
 With a large ROM collection it can be difficult to:
 
