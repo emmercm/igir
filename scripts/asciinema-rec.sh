@@ -23,12 +23,12 @@ if [[ "${1:-}" == "play" ]]; then
   }
   # BEGIN PLAYBACK
 
-  # ts-node ./index.ts copy zip report clean -d demo/dats/ -i GB/ -i NES/ -o demo/roms/ -D
+  # ts-node ./index.ts copy zip report clean -d demo/No-Intro*.zip -i GB/ -i NES/ -o demo/roms/ -D
   pei "ls -gn"
   echo "" && sleep 1
-  pei "ls -gn dats/"
+  pei "unzip -l No-Intro*.zip | head -10" || true
   echo "" && sleep 1
-  pei "npx igir@latest copy zip report --dat dats/ --input roms/ --output roms-sorted/ --dir-dat-name --only-retail"
+  pei "npx igir@latest copy zip report --dat No-Intro*.zip --input roms/ --output roms-sorted/ --dir-dat-name --only-retail"
   echo "" && sleep 1
   pei "ls -gn roms-sorted/"
 
