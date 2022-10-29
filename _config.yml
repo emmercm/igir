@@ -8,18 +8,7 @@ author:
 
 # Theme-specific
 # @link https://pages.github.com/themes/
-# @link https://github.com/jekyll/minima
+# @link https://github.com/topics/jekyll-theme
+# @link https://github.com/just-the-docs/just-the-docs
 
-theme: minima
-
-minima:
-  skin: auto
-  social_links:
-   twitter: emmercm
-   github: emmercm
-
-header_pages:
-  - docs/dats.md
-  - docs/rom-filtering.md
-  - docs/rom-headers.md
-  - docs/rom-dumping.md
+remote_theme: just-the-docs/just-the-docs
