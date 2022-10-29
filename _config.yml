@@ -10,8 +10,11 @@ minima:
   twitter: emmercm
   github: emmercm
 
+author:
+  name: Christian Emmer
+
 header_pages:
   - docs/dats.md
-  - docs/rom-dumping.md
   - docs/rom-filtering.md
   - docs/rom-headers.md
+  - docs/rom-dumping.md
