@@ -11,9 +11,4 @@ author:
 # @link https://github.com/topics/jekyll-theme
 # @link https://github.com/just-the-docs/just-the-docs
 
-remote_theme: sighingnow/jekyll-gitbook
-
-toc:
-  enabled: true
-  h_min: 1
-  h_max: 3
+remote_theme: just-the-docs/just-the-docs
