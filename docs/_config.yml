@@ -1,17 +1,22 @@
 # Jekyll
 
+plugins:
+  - jekyll-seo-tag
+
+author:
+  name: Christian Emmer
+
 # Theme-specific
+# @link https://pages.github.com/themes/
 # @link https://github.com/jekyll/minima
 
 theme: minima
 
 minima:
   skin: auto
-  twitter: emmercm
-  github: emmercm
-
-author:
-  name: Christian Emmer
+  social_links:
+   twitter: emmercm
+   github: emmercm
 
 header_pages:
   - docs/dats.md
