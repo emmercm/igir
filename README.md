@@ -213,6 +213,10 @@ Each manager has its own pros, but many have the same drawbacks or limitations:
 - Limited parent/clone, region, language, version, and ROM type filtering
 - No ability to prioritize parent/clones when creating a 1G1R set
 
+## Additional documentation
+
+See the [docs](/docs) page for more in-depth information!
+
 ## Feature requests, bug reports, and contributing
 
 [![Contributors](https://badgen.net/github/contributors/emmercm/igir?icon=github)](https://github.com/emmercm/igir/graphs/contributors)
