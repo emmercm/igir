@@ -10,7 +10,9 @@ import HeaderProcessor from '../../src/modules/headerProcessor.js';
 import ROMScanner from '../../src/modules/romScanner.js';
 import ROMWriter from '../../src/modules/romWriter.js';
 import fsPoly from '../../src/polyfill/fsPoly.js';
-import ArchiveFactory from '../../src/types/archives/archiveFactory.js';
+import Archive from '../../src/types/archives/archive.js';
+import FileFactory from '../../src/types/archives/fileFactory.js';
+import ArchiveEntry from '../../src/types/files/archiveEntry.js';
 import File from '../../src/types/files/file.js';
 import DAT from '../../src/types/logiqx/dat.js';
 import Header from '../../src/types/logiqx/header.js';
@@ -285,11 +287,11 @@ describe('zip', () => {
       const options = new Options({ commands: ['copy', 'zip', 'test'] });
       const outputFiles = (await romWriter(options, inputTemp, inputGlob, outputTemp));
       expect(outputFiles).toHaveLength(1);
-      const archive = ArchiveFactory.archiveFrom(path.join(outputTemp, outputFiles[0][0]));
-      const archiveEntries = await archive.getArchiveEntries();
+      const archiveEntries = await FileFactory.filesFrom(path.join(outputTemp, outputFiles[0][0]));
       expect(archiveEntries).toHaveLength(1);
-      expect(archiveEntries[0].getEntryPath()).toEqual(expectedFileName);
-      expect(archiveEntries[0].getCrc32()).toEqual(expectedCrc);
+      const archiveEntry = archiveEntries[0] as ArchiveEntry<Archive>;
+      expect(archiveEntry.getEntryPath()).toEqual(expectedFileName);
+      expect(archiveEntry.getCrc32()).toEqual(expectedCrc);
     });
   });
 
@@ -314,11 +316,11 @@ describe('zip', () => {
       });
       const outputFiles = (await romWriter(options, inputTemp, inputGlob, outputTemp));
       expect(outputFiles).toHaveLength(1);
-      const archive = ArchiveFactory.archiveFrom(path.join(outputTemp, outputFiles[0][0]));
-      const archiveEntries = await archive.getArchiveEntries();
+      const archiveEntries = await FileFactory.filesFrom(path.join(outputTemp, outputFiles[0][0]));
       expect(archiveEntries).toHaveLength(1);
-      expect(archiveEntries[0].getEntryPath()).toEqual(expectedFileName);
-      expect(archiveEntries[0].getCrc32()).toEqual(expectedCrc);
+      const archiveEntry = archiveEntries[0] as ArchiveEntry<Archive>;
+      expect(archiveEntry.getEntryPath()).toEqual(expectedFileName);
+      expect(archiveEntry.getCrc32()).toEqual(expectedCrc);
     });
   });
 

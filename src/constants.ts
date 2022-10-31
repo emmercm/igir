@@ -44,6 +44,8 @@ export default class Constants {
 
   static readonly ROM_SCANNER_THREADS = 25;
 
+  static readonly PATCH_SCANNER_THREADS = 25;
+
   static readonly ROM_HEADER_HASHER_THREADS = 25;
 
   static readonly DAT_THREADS = 3;
