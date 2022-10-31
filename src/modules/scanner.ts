@@ -2,7 +2,7 @@ import async, { AsyncResultCallback } from 'async';
 import path from 'path';
 
 import ProgressBar from '../console/progressBar.js';
-import ArchiveFactory from '../types/archives/archiveFactory.js';
+import FileFactory from '../types/archives/fileFactory.js';
 import Rar from '../types/archives/rar.js';
 import SevenZip from '../types/archives/sevenZip.js';
 import Tar from '../types/archives/tar.js';
@@ -53,21 +53,16 @@ export default abstract class Scanner {
   }
 
   private async getFilesFromPath(filePath: string): Promise<File[]> {
-    let files: File[];
-    if (ArchiveFactory.isArchive(filePath)) {
-      try {
-        files = await ArchiveFactory.archiveFrom(filePath).getArchiveEntries();
-        if (!files.length) {
-          await this.progressBar.logWarn(`Found no files in archive: ${filePath}`);
-        }
-      } catch (e) {
-        await this.progressBar.logError(`Failed to parse archive ${filePath} : ${e}`);
-        files = [];
+    try {
+      const files = await FileFactory.filesFrom(filePath);
+      if (!files.length) {
+        await this.progressBar.logWarn(`Found no files in path: ${filePath}`);
       }
-    } else {
-      files = [await File.fileOf(filePath)];
+      return files;
+    } catch (e) {
+      await this.progressBar.logError(`Failed to parse file ${filePath} : ${e}`);
+      return [];
     }
-    return files;
   }
 
   private fileComparator(one: File, two: File): number {
@@ -91,7 +86,7 @@ export default abstract class Scanner {
   }
 
   /**
-   * This ordering should match {@link ArchiveFactory#archiveFrom}
+   * This ordering should match {@link FileFactory#archiveFrom}
    */
   private static archiveEntryPriority(file: File): number {
     if (!(file instanceof ArchiveEntry)) {

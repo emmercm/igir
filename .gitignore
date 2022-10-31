@@ -139,9 +139,14 @@ build/
 *.txt
 *.xml
 
+# ROM patches
+*.bps
+*.ips
+
 # Always commit fixtures
 !test/fixtures/dats/*
 !test/fixtures/dats/*/*
+!test/fixtures/patches/*
 !test/fixtures/roms/*
 !test/fixtures/roms/*/*
 

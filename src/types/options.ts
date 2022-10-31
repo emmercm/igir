@@ -21,6 +21,7 @@ export interface OptionsProps {
   readonly dat?: string[],
   readonly input?: string[],
   readonly inputExclude?: string[],
+  readonly patch?: string[],
   readonly output?: string,
 
   readonly header?: string,
@@ -71,6 +72,8 @@ export default class Options implements OptionsProps {
   readonly input: string[];
 
   readonly inputExclude: string[];
+
+  readonly patch: string[];
 
   readonly output: string;
 
@@ -146,6 +149,7 @@ export default class Options implements OptionsProps {
     this.dat = options?.dat || [];
     this.input = options?.input || [];
     this.inputExclude = options?.inputExclude || [];
+    this.patch = options?.patch || [];
     this.output = options?.output || '';
 
     this.header = options?.header || '';
@@ -268,6 +272,10 @@ export default class Options implements OptionsProps {
       .filter((inputPath) => inputExcludeFiles.indexOf(inputPath) === -1);
   }
 
+  async scanPatchFiles(): Promise<string[]> {
+    return Options.scanPath(this.patch);
+  }
+
   private static async scanPath(inputPaths: string[]): Promise<string[]> {
     // Convert directory paths to glob patterns
     const globPatterns = await Promise.all(inputPaths.map(async (inputPath) => {
@@ -319,6 +327,10 @@ export default class Options implements OptionsProps {
     // Remove duplicates
     return globbedFiles
       .filter((inputPath, idx, arr) => arr.indexOf(inputPath) === idx);
+  }
+
+  getPatchFileCount(): number {
+    return this.patch.length;
   }
 
   getOutput(dat?: DAT, inputRomPath?: string, game?: Game, romName?: string): string {
