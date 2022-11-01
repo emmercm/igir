@@ -99,7 +99,9 @@ export default class IPSPatch extends Patch {
     await this.parsePatch();
 
     return file.extractToFile(async (tempFile) => {
-      const fd = await util.promisify(fs.open)(tempFile, 'a+');
+      // "On Linux, positional writes don't work when the file is opened in append mode. The kernel
+      //  ignores the position argument and always appends the data to the end of the file."
+      const fd = await util.promisify(fs.open)(tempFile, 'r+');
 
       /* eslint-disable no-await-in-loop */
       for (let i = 0; i < this.records.length; i += 1) {
