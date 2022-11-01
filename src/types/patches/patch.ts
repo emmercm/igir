@@ -25,6 +25,8 @@ export default abstract class Patch {
     return this.crcAfter;
   }
 
+  abstract getRomName(): string;
+
   abstract apply<T>(
     file: File,
     callback: (tempFile: string) => (T | Promise<T>),

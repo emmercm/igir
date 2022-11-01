@@ -5,6 +5,7 @@ import { Readable } from 'stream';
 import Constants from '../../constants.js';
 import fsPoly from '../../polyfill/fsPoly.js';
 import Archive from '../archives/archive.js';
+import Patch from '../patches/patch.js';
 import File from './file.js';
 import FileHeader from './fileHeader.js';
 
@@ -20,6 +21,7 @@ export default class ArchiveEntry<A extends Archive> extends File {
     crc: string,
     crc32WithoutHeader: string,
     fileHeader: FileHeader | undefined,
+    patch: Patch | undefined,
     /** {@link ArchiveEntry} */
     archive: A,
     entryPath: string,
@@ -30,6 +32,7 @@ export default class ArchiveEntry<A extends Archive> extends File {
       crc,
       crc32WithoutHeader,
       fileHeader,
+      patch,
     );
     this.archive = archive;
     this.entryPath = path.normalize(entryPath);
@@ -41,6 +44,7 @@ export default class ArchiveEntry<A extends Archive> extends File {
     size: number,
     crc: string,
     fileHeader?: FileHeader,
+    patch?: Patch,
   ): Promise<ArchiveEntry<A>> {
     let finalCrcWithoutHeader = crc;
     if (fileHeader) {
@@ -57,6 +61,7 @@ export default class ArchiveEntry<A extends Archive> extends File {
       crc,
       finalCrcWithoutHeader,
       fileHeader,
+      patch,
       archive,
       entryPath,
     );
@@ -118,6 +123,20 @@ export default class ArchiveEntry<A extends Archive> extends File {
     }
   }
 
+  async withFileName(fileNameWithoutExt: string): Promise<File> {
+    const { base, ...parsedEntryPath } = path.parse(this.getEntryPath());
+    parsedEntryPath.name = fileNameWithoutExt;
+    const entryPath = path.format(parsedEntryPath);
+
+    return ArchiveEntry.entryOf(
+      this.getArchive(),
+      entryPath,
+      this.getSize(),
+      this.getCrc32(),
+      this.getFileHeader(),
+    );
+  }
+
   async withFileHeader(fileHeader: FileHeader): Promise<File> {
     // Make sure the file actually has the header magic string
     const hasHeader = await this.extractToStream(
@@ -133,6 +152,22 @@ export default class ArchiveEntry<A extends Archive> extends File {
       this.getSize(),
       this.getCrc32(),
       fileHeader,
+      this.getPatch(),
+    );
+  }
+
+  async withPatch(patch: Patch): Promise<File> {
+    if (patch.getCrcBefore() !== this.getCrc32()) {
+      return this;
+    }
+
+    return ArchiveEntry.entryOf(
+      this.getArchive(),
+      this.getEntryPath(),
+      this.getSize(),
+      this.getCrc32(),
+      this.getFileHeader(),
+      patch,
     );
   }
 

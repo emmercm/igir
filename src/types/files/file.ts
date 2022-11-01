@@ -5,6 +5,7 @@ import { Readable } from 'stream';
 
 import Constants from '../../constants.js';
 import fsPoly from '../../polyfill/fsPoly.js';
+import Patch from '../patches/patch.js';
 import FileHeader from './fileHeader.js';
 
 export default class File {
@@ -18,18 +19,22 @@ export default class File {
 
   private readonly fileHeader?: FileHeader;
 
+  private readonly patch?: Patch;
+
   protected constructor(
     filePath: string,
     size: number,
     crc: string,
     crc32WithoutHeader: string,
     fileHeader?: FileHeader,
+    patch?: Patch,
   ) {
     this.filePath = path.normalize(filePath);
     this.size = size;
     this.crc32 = crc.toLowerCase().padStart(8, '0');
     this.crc32WithoutHeader = crc32WithoutHeader.toLowerCase().padStart(8, '0');
     this.fileHeader = fileHeader;
+    this.patch = patch;
   }
 
   static async fileOf(
@@ -37,6 +42,7 @@ export default class File {
     size?: number,
     crc?: string,
     fileHeader?: FileHeader,
+    patch?: Patch,
   ): Promise<File> {
     let finalSize = size;
     if (finalSize === undefined) {
@@ -63,6 +69,7 @@ export default class File {
       finalCrc,
       finalCrcWithoutHeader,
       fileHeader,
+      patch,
     );
   }
 
@@ -94,6 +101,10 @@ export default class File {
 
   getFileHeader(): FileHeader | undefined {
     return this.fileHeader;
+  }
+
+  getPatch(): Patch | undefined {
+    return this.patch;
   }
 
   // Other functions
@@ -157,6 +168,20 @@ export default class File {
     return result;
   }
 
+  async withFileName(fileNameWithoutExt: string): Promise<File> {
+    const { base, ...parsedFilePath } = path.parse(this.getFilePath());
+    parsedFilePath.name = fileNameWithoutExt;
+    const filePath = path.format(parsedFilePath);
+
+    return File.fileOf(
+      filePath,
+      this.getSize(),
+      this.getCrc32(),
+      this.getFileHeader(),
+      this.getPatch(),
+    );
+  }
+
   async withFileHeader(fileHeader: FileHeader): Promise<File> {
     // Make sure the file actually has the header magic string
     const hasHeader = await this.extractToStream(
@@ -171,6 +196,21 @@ export default class File {
       this.getSize(),
       this.getCrc32(),
       fileHeader,
+      this.getPatch(),
+    );
+  }
+
+  async withPatch(patch: Patch): Promise<File> {
+    if (patch.getCrcBefore() !== this.getCrc32()) {
+      return this;
+    }
+
+    return File.fileOf(
+      this.getFilePath(),
+      this.getSize(),
+      this.getCrc32(),
+      this.getFileHeader(),
+      patch,
     );
   }
 

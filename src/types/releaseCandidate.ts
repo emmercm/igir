@@ -154,6 +154,10 @@ export default class ReleaseCandidate {
     return this.game;
   }
 
+  getRelease(): Release | undefined {
+    return this.release;
+  }
+
   getRomsWithFiles(): ROMWithFiles[] {
     return this.romsWithFiles;
   }

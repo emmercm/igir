@@ -1,0 +1,15 @@
+<?xml version="1.0"?>
+<!DOCTYPE datafile PUBLIC "-//Logiqx//DTD ROM Management Datafile//EN" "http://www.logiqx.com/Dats/datafile.dtd">
+<datafile>
+  <header>
+    <name>Patchable</name>
+    <description>Patchable</description>
+    <version>20221101</version>
+    <author>emmercm</author>
+  </header>
+  <game name="Before">
+    <description>Before</description>
+    <rom name="Before.rom" size="7" crc="0361b321" md5="ab8d71b3fdce92efd8bdf29cffd36116" sha1="7473def7220a59a6b4146e629064e1456542242d" status="verified"/>
+    <!-- After: size="6" crc="338533db" -->
+  </game>
+</datafile>

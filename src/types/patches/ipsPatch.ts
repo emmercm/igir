@@ -27,15 +27,21 @@ export default class IPSPatch extends Patch {
 
     const beforeMatches = name.match(/^([a-f0-9]{8})[^a-z0-9]/i);
     if (beforeMatches && beforeMatches?.length >= 2) {
-      return beforeMatches[1].toUpperCase();
+      return beforeMatches[1].toLowerCase();
     }
 
     const afterMatches = name.match(/[^a-z0-9]([a-f0-9]{8})$/i);
     if (afterMatches && afterMatches?.length >= 2) {
-      return afterMatches[1].toUpperCase();
+      return afterMatches[1].toLowerCase();
     }
 
     throw new Error(`Couldn't parse base file CRC for patch: ${filePath}`);
+  }
+
+  getRomName(): string {
+    return path.parse(this.getFile().getExtractedFilePath()).name
+      .replace(new RegExp(this.getCrcBefore(), 'g'), '')
+      .trim();
   }
 
   private async parsePatch(): Promise<void> {
