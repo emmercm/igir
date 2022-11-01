@@ -62,35 +62,41 @@ describe('with explicit dats', () => {
   it('should copy', async () => {
     await expectEndToEnd('dats/*', {
       commands: ['copy'],
+      dirDatName: true,
     }, [
-      'Fizzbuzz.rom',
-      'Foobar.rom',
-      'Lorem Ipsum.rom',
-      path.join('One Three', 'One.rom'),
-      path.join('One Three', 'Three.rom'),
+      path.join('One', 'Fizzbuzz.rom'),
+      path.join('One', 'Foobar.rom'),
+      path.join('One', 'Lorem Ipsum.rom'),
+      path.join('One', 'One Three', 'One.rom'),
+      path.join('One', 'One Three', 'Three.rom'),
+      path.join('Patchable', 'Before.rom'),
     ]);
   });
 
   it('should copy and zip and test', async () => {
     await expectEndToEnd('dats/*', {
       commands: ['copy', 'zip'],
+      dirDatName: true,
     }, [
-      'Fizzbuzz.zip',
-      'Foobar.zip',
-      'Lorem Ipsum.zip',
-      'One Three.zip',
+      path.join('One', 'Fizzbuzz.zip'),
+      path.join('One', 'Foobar.zip'),
+      path.join('One', 'Lorem Ipsum.zip'),
+      path.join('One', 'One Three.zip'),
+      path.join('Patchable', 'Before.zip'),
     ]);
   });
 
   it('should copy and clean', async () => {
     await expectEndToEnd('dats/*', {
       commands: ['copy', 'clean'],
+      dirDatName: true,
     }, [
-      'Fizzbuzz.rom',
-      'Foobar.rom',
-      'Lorem Ipsum.rom',
-      path.join('One Three', 'One.rom'),
-      path.join('One Three', 'Three.rom'),
+      path.join('One', 'Fizzbuzz.rom'),
+      path.join('One', 'Foobar.rom'),
+      path.join('One', 'Lorem Ipsum.rom'),
+      path.join('One', 'One Three', 'One.rom'),
+      path.join('One', 'One Three', 'Three.rom'),
+      path.join('Patchable', 'Before.rom'),
     ]);
   });
 
@@ -115,6 +121,7 @@ describe('with inferred dats', () => {
     }, [
       'LCDTestROM.lnx',
       'allpads.nes',
+      'before.rom',
       'color_test.nintendoentertainmentsystem',
       'diagnostic_test_cartridge.a78',
       'empty.rom',
@@ -140,6 +147,7 @@ describe('with inferred dats', () => {
     }, [
       'LCDTestROM.zip',
       'allpads.zip',
+      'before.zip',
       'color_test.zip',
       'diagnostic_test_cartridge.zip',
       'empty.zip',

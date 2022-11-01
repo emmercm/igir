@@ -72,7 +72,7 @@ export default class IPSPatch extends Patch {
           .toString()}`);
       }
 
-      /* eslint-disable no-await-in-loop */
+      /* eslint-disable no-constant-condition, no-await-in-loop */
       while (true) {
         const offset = await read(3);
         if (offset === null || offset.toString() === 'EOF') {

@@ -1,20 +1,40 @@
+import ProgressBar, { Symbols } from '../console/progressBar.js';
+import DAT from '../types/logiqx/dat.js';
 import Parent from '../types/logiqx/parent.js';
 import Patch from '../types/patches/patch.js';
 import ReleaseCandidate from '../types/releaseCandidate.js';
 import ROMWithFiles from '../types/romWithFiles.js';
 
-export default class PatchedCandidateGenerator {
-  static async generate(
+export default class PatchCandidateGenerator {
+  private readonly progressBar: ProgressBar;
+
+  constructor(progressBar: ProgressBar) {
+    this.progressBar = progressBar;
+  }
+
+  async generate(
+    dat: DAT,
     parentsToCandidates: Map<Parent, ReleaseCandidate[]>,
     patches: Patch[],
   ): Promise<Map<Parent, ReleaseCandidate[]>> {
-    const crcToPatches = PatchedCandidateGenerator.indexPatchesByCrcBefore(patches);
+    await this.progressBar.logInfo(`${dat.getName()}: Generating patched candidates`);
+
+    if (!parentsToCandidates.size) {
+      await this.progressBar.logDebug(`${dat.getName()}: No parents to make patched candidates for`);
+      return parentsToCandidates;
+    }
+
+    await this.progressBar.setSymbol(Symbols.GENERATING);
+    await this.progressBar.reset(dat.getParents().length);
+
+    const crcToPatches = PatchCandidateGenerator.indexPatchesByCrcBefore(patches);
+    await this.progressBar.logInfo(`${crcToPatches.size} unique patches found`);
 
     return new Map(
       await Promise.all([...parentsToCandidates.entries()]
         .map(async ([parent, releaseCandidates]) => {
           const patchedReleaseCandidates = (await Promise.all(releaseCandidates
-            .map(async (releaseCandidate) => PatchedCandidateGenerator.buildPatchedReleaseCandidate(
+            .map(async (releaseCandidate) => PatchCandidateGenerator.buildPatchedReleaseCandidate(
               releaseCandidate,
               crcToPatches,
             )))).flatMap((rcs) => rcs);
