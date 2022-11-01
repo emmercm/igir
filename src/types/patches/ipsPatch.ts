@@ -99,7 +99,7 @@ export default class IPSPatch extends Patch {
     await this.parsePatch();
 
     return file.extractToFile(async (tempFile) => {
-      const fd = await util.promisify(fs.open)(tempFile, 'a');
+      const fd = await util.promisify(fs.open)(tempFile, 'a+');
 
       /* eslint-disable no-await-in-loop */
       for (let i = 0; i < this.records.length; i += 1) {
