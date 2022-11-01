@@ -25,5 +25,8 @@ export default abstract class Patch {
     return this.crcAfter;
   }
 
-  abstract apply(file: File): void | Promise<void>;
+  abstract apply<T>(
+    file: File,
+    callback: (tempFile: string) => (T | Promise<T>),
+  ): Promise<T>;
 }

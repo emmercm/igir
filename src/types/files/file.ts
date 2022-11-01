@@ -136,8 +136,9 @@ export default class File {
         path.basename(this.getFilePath()),
       ));
       await fsPromises.copyFile(this.getFilePath(), temp);
-      return callback(temp);
-      // TODO(cemmer): delete the temp file?
+      const result = await callback(temp);
+      await fsPoly.rm(temp);
+      return result;
     }
 
     return callback(this.getFilePath());

@@ -2,7 +2,6 @@ import fs from 'fs';
 import path from 'path';
 import util from 'util';
 
-import Constants from '../../constants.js';
 import File from '../files/file.js';
 import Patch from './patch.js';
 
@@ -11,6 +10,10 @@ interface IPSRecord {
   data: Buffer,
 }
 
+/**
+ * @link https://zerosoft.zophar.net/ips.php
+ * @link https://github.com/marcrobledo/RomPatcher.js/blob/master/js/formats/ips.js
+ */
 export default class IPSPatch extends Patch {
   private readonly records: IPSRecord[] = [];
 
@@ -35,8 +38,7 @@ export default class IPSPatch extends Patch {
     throw new Error(`Couldn't parse base file CRC for patch: ${filePath}`);
   }
 
-  // TODO(cemmer): make private
-  async parsePatch(): Promise<void> {
+  private async parsePatch(): Promise<void> {
     if (this.records.length) {
       return;
     }
@@ -45,8 +47,11 @@ export default class IPSPatch extends Patch {
       const fd = await util.promisify(fs.open)(patchFile, 'r');
 
       let readOffset = 0;
-      const buffer = Buffer.alloc(Constants.FILE_READING_CHUNK_SIZE);
+      let buffer = Buffer.alloc(1);
       const read = async (size: number): Promise<Buffer> => {
+        if (size > buffer.length) {
+          buffer = Buffer.alloc(size);
+        }
         const bytes = (await util.promisify(fs.read)(fd, buffer, 0, size, readOffset)).bytesRead;
         readOffset += size;
         // Make a copy for the return
@@ -87,10 +92,13 @@ export default class IPSPatch extends Patch {
     });
   }
 
-  async apply(file: File): Promise<void> {
+  async apply<T>(
+    file: File,
+    callback: (tempFile: string) => (T | Promise<T>),
+  ): Promise<T> {
     await this.parsePatch();
 
-    await file.extractToFile(async (tempFile) => {
+    return file.extractToFile(async (tempFile) => {
       const fd = await util.promisify(fs.open)(tempFile, 'a');
 
       /* eslint-disable no-await-in-loop */
@@ -100,6 +108,8 @@ export default class IPSPatch extends Patch {
       }
 
       await util.promisify(fs.close)(fd);
+
+      return callback(tempFile);
     }, true);
   }
 }
