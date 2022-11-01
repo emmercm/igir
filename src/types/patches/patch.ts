@@ -24,4 +24,9 @@ export default abstract class Patch {
   getCrcAfter(): string | undefined {
     return this.crcAfter;
   }
+
+  abstract apply<T>(
+    file: File,
+    callback: (tempFile: string) => (T | Promise<T>),
+  ): Promise<T>;
 }

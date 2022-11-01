@@ -49,18 +49,12 @@ export default class File {
 
     let finalCrc = crc;
     if (!finalCrc) {
-      finalCrc = await this.extractFileToFile(
-        filePath,
-        async (localFile) => this.calculateCrc32(localFile),
-      );
+      finalCrc = await this.calculateCrc32(filePath);
     }
 
     let finalCrcWithoutHeader = finalCrc;
     if (fileHeader) {
-      finalCrcWithoutHeader = await this.extractFileToFile(
-        filePath,
-        async (localFile) => this.calculateCrc32(localFile, fileHeader),
-      );
+      finalCrcWithoutHeader = await this.calculateCrc32(filePath, fileHeader);
     }
 
     return new File(
@@ -132,15 +126,22 @@ export default class File {
     });
   }
 
-  async extractToFile<T>(callback: (localFile: string) => (T | Promise<T>)): Promise<T> {
-    return File.extractFileToFile(this.filePath, callback);
-  }
-
-  private static async extractFileToFile<T>(
-    filePath: string,
+  async extractToFile<T>(
     callback: (localFile: string) => (T | Promise<T>),
+    useTempFile = false,
   ): Promise<T> {
-    return callback(filePath);
+    if (useTempFile) {
+      const temp = fsPoly.mktempSync(path.join(
+        Constants.GLOBAL_TEMP_DIR,
+        path.basename(this.getFilePath()),
+      ));
+      await fsPromises.copyFile(this.getFilePath(), temp);
+      const result = await callback(temp);
+      await fsPoly.rm(temp);
+      return result;
+    }
+
+    return callback(this.getFilePath());
   }
 
   async extractToStream<T>(
