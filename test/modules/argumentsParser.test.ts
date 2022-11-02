@@ -445,6 +445,14 @@ describe('options', () => {
     expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--no-bad', 'true', '--no-bad', 'false']).getNoBad()).toEqual(false);
   });
 
+  it('should parse "verbose"', () => {
+    expect(argumentsParser.parse(dummyCommandAndRequiredArgs).getLogLevel()).toEqual(LogLevel.WARN);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '-v']).getLogLevel()).toEqual(LogLevel.INFO);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--verbose']).getLogLevel()).toEqual(LogLevel.INFO);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '-vv']).getLogLevel()).toEqual(LogLevel.DEBUG);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '-vvv']).getLogLevel()).toEqual(LogLevel.DEBUG);
+  });
+
   it('should parse "help"', () => {
     expect(argumentsParser.parse(['-h']).getHelp()).toEqual(true);
     expect(argumentsParser.parse(['--help']).getHelp()).toEqual(true);

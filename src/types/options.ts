@@ -542,12 +542,6 @@ export default class Options implements OptionsProps {
     return this.help;
   }
 
-  static filterUniqueLower(array: string[]): string[] {
-    return array
-      .map((value) => value.toLowerCase())
-      .filter((val, idx, arr) => arr.indexOf(val) === idx);
-  }
-
   static filterUniqueUpper(array: string[]): string[] {
     return array
       .map((value) => value.toUpperCase())

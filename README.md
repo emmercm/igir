@@ -33,7 +33,7 @@ With a large ROM collection it can be difficult to:
 
 **`igir` needs an input set of ROMs, of course!**
 
-Those ROMs can be in archives (`.001`, `.7z`, `.bz2`, `.gz`, `.rar`, `.tar.gz`, `.z01`, `.zip`, `.zipx`, and more!) or on their own. They can also contain a header or not (see [docs](docs/rom-headers.md)).
+Those ROMs can be in archives (`.001`, `.7z`, `.gz`, `.rar`, `.tar.gz`, `.z01`, `.zip`, `.zipx`, and more!) or on their own. They can also contain a header or not (see [docs](docs/rom-headers.md)).
 
 **`igir` works best with a set of DATs as well.**
 
