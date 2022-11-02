@@ -19,14 +19,16 @@ describe('constructor', () => {
     Buffer.from('  '),
     Buffer.from('foobar'),
   ])('should throw on bad patch: %s', async (patchContents) => {
-    await expect(BPSPatch.patchFrom(await writeTemp('Patch', patchContents))).rejects.toThrow(/couldn't parse/i);
+    const patchFile = await writeTemp('patch.bps', patchContents);
+    await expect(BPSPatch.patchFrom(patchFile)).rejects.toThrow(/couldn't parse/i);
   });
 
   test.each([
     [Buffer.from('425053318484808962617280a865327ee9b3a2042222711f', 'hex'), '7e3265a8', '04a2b3e9'],
     [Buffer.from('425053318686808d697073758436133a6ac346dd7cfacd6672', 'hex'), '6a3a1336', '7cdd46c3'],
   ])('should find the CRC in the patch: %s', async (patchContents, expectedCrcBefore, expectedCrcAfter) => {
-    const patch = await BPSPatch.patchFrom(await writeTemp('Patch', patchContents));
+    const patchFile = await writeTemp('patch.bps', patchContents);
+    const patch = await BPSPatch.patchFrom(patchFile);
     expect(patch.getCrcBefore()).toEqual(expectedCrcBefore);
     expect(patch.getCrcAfter()).toEqual(expectedCrcAfter);
   });
@@ -39,7 +41,8 @@ describe('apply', () => {
     ['AAAAAAAAAAAAAAAAAAAA', Buffer.from('4250533194948095414243444546a48d45454545c518201d686456eb69a20342', 'hex'), 'ABCDEFAAAAAAAAAAEEEE'],
   ])('should apply the patch: %s', async (baseContents, patchContents, expectedContents) => {
     const rom = await writeTemp('ROM', baseContents);
-    const patch = await BPSPatch.patchFrom(await writeTemp('Patch', patchContents));
+    const patchFile = await writeTemp('patch.bps', patchContents);
+    const patch = await BPSPatch.patchFrom(patchFile);
 
     await patch.apply(rom, async (tempFile) => {
       const actualContents = (
