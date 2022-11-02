@@ -99,18 +99,6 @@ export default class FilePoly {
     return result;
   }
 
-  async readAll(): Promise<Buffer> {
-    const buffer = Buffer.alloc(this.size);
-    await util.promisify(fs.read)(
-      this.fd,
-      buffer,
-      0,
-      this.size,
-      0,
-    );
-    return buffer;
-  }
-
   async write(buffer: Buffer): Promise<number> {
     return (await util.promisify(fs.write)(this.fd, buffer)).bytesWritten;
   }

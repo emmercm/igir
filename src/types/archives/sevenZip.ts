@@ -10,7 +10,7 @@ export default class SevenZip extends Archive {
   // WARNING: tar+compression doesn't work, you'll be left with a tar file output
   static readonly SUPPORTED_EXTENSIONS = [
     '.7z', // 7z
-    '.bz2', '.bzip2', // bzip2
+    // '.bz2', '.bzip2', // bzip2
     '.cab', // cab
     '.gz', '.gzip', // gzip
     '.lzma', // lzma
@@ -18,7 +18,7 @@ export default class SevenZip extends Archive {
     '.pmd', // ppmd
     '.001', // split
     '.tar', '.ova', // tar
-    '.xz', // xz
+    // '.xz', // xz
     '.z', // z
     '.zip', '.z01', '.zipx', // zip
     '.zst', // zstd
