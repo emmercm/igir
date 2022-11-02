@@ -79,13 +79,20 @@ export default class FilePoly {
       this.buffer = Buffer.alloc(size);
     }
 
-    const { bytesRead } = await util.promisify(fs.read)(
-      this.fd,
-      this.buffer,
-      0,
-      size,
-      offset,
-    );
+    let bytesRead = 0;
+    try {
+      bytesRead = (await util.promisify(fs.read)(
+        this.fd,
+        this.buffer,
+        0,
+        size,
+        offset,
+      )).bytesRead;
+    } catch (e) {
+      // NOTE(cemmer): Windows will give "EINVAL: invalid argument, read" when reading out of
+      //  bounds, but other OSes don't. Swallow the error.
+      return Buffer.alloc(0);
+    }
 
     const result = Buffer.alloc(bytesRead);
     this.buffer.copy(result);
