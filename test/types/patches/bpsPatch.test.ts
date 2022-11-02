@@ -15,31 +15,20 @@ async function writeTemp(fileName: string, contents: string | Buffer): Promise<F
 
 describe('constructor', () => {
   test.each([
-    // Non-existent
-    'foo.ips',
-    'fizz/buzz.ips',
-    // Invalid
-    'ABCDEFGH Blazgo.ips',
-    'ABCD12345 Bangarang.ips',
-    'Bepzinky 1234567.ips',
-  ])('should throw if no CRC found: %s', async (filePath) => {
-    const file = await File.fileOf(filePath, 0, '00000000');
-    await expect(BPSPatch.patchFrom(file)).rejects.toThrow(/couldn't parse/i);
+    Buffer.from(''),
+    Buffer.from('  '),
+    Buffer.from('foobar'),
+  ])('should throw on bad patch: %s', async (patchContents) => {
+    await expect(BPSPatch.patchFrom(await writeTemp('Patch', patchContents))).rejects.toThrow(/couldn't parse/i);
   });
 
   test.each([
-    // Beginning
-    ['ABCD1234-Foo.ips', 'abcd1234'],
-    ['Fizz/bcde2345_Buzz.ips', 'bcde2345'],
-    ['One/Two/cdef3456 Three.ips', 'cdef3456'],
-    // End
-    ['Lorem+9876FEDC.ips', '9876fedc'],
-    ['Ipsum#8765edcb.ips', '8765edcb'],
-    ['Dolor 7654dcba.ips', '7654dcba'],
-  ])('should find the CRC in the filename: %s', async (filePath, expectedCrc) => {
-    const file = await File.fileOf(filePath, 0, '00000000');
-    const patch = await BPSPatch.patchFrom(file);
-    expect(patch.getCrcBefore()).toEqual(expectedCrc);
+    [Buffer.from('425053318484808962617280a865327ee9b3a2042222711f', 'hex'), '7e3265a8', '04a2b3e9'],
+    [Buffer.from('425053318686808d697073758436133a6ac346dd7cfacd6672', 'hex'), '6a3a1336', '7cdd46c3'],
+  ])('should find the CRC in the patch: %s', async (patchContents, expectedCrcBefore, expectedCrcAfter) => {
+    const patch = await BPSPatch.patchFrom(await writeTemp('Patch', patchContents));
+    expect(patch.getCrcBefore()).toEqual(expectedCrcBefore);
+    expect(patch.getCrcAfter()).toEqual(expectedCrcAfter);
   });
 });
 
@@ -50,7 +39,7 @@ describe('apply', () => {
     ['AAAAAAAAAAAAAAAAAAAA', Buffer.from('4250533194948095414243444546a48d45454545c518201d686456eb69a20342', 'hex'), 'ABCDEFAAAAAAAAAAEEEE'],
   ])('should apply the patch: %s', async (baseContents, patchContents, expectedContents) => {
     const rom = await writeTemp('ROM', baseContents);
-    const patch = await BPSPatch.patchFrom(await writeTemp('00000000 Patch', patchContents));
+    const patch = await BPSPatch.patchFrom(await writeTemp('Patch', patchContents));
 
     await patch.apply(rom, async (tempFile) => {
       const actualContents = (

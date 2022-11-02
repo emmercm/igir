@@ -46,6 +46,10 @@ export default class BPSPatch extends Patch {
       await fp.close();
     });
 
+    if (crcBefore.length !== 8 || crcAfter.length !== 8) {
+      throw new Error(`Couldn't parse base file CRC for patch: ${file.toString()}`);
+    }
+
     return new BPSPatch(file, crcBefore, crcAfter, targetSize);
   }
 
