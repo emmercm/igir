@@ -5,6 +5,7 @@ import path from 'path';
 import trash from 'trash';
 
 import ProgressBar, { Symbols } from '../console/progressBar.js';
+import fsPoly from '../polyfill/fsPoly.js';
 import File from '../types/files/file.js';
 import Options from '../types/options.js';
 
@@ -49,19 +50,31 @@ export default class OutputCleaner {
     await this.progressBar.reset(filesToClean.length);
 
     try {
-      await trash(filesToClean);
+      await OutputCleaner.trashOrDelete(filesToClean);
     } catch (e) {
       await this.progressBar.logError(`Failed to clean unmatched files in ${outputDir} : ${e}`);
     }
 
     try {
       const emptyDirs = await OutputCleaner.getEmptyDirs(outputDir);
-      await trash(emptyDirs);
+      await OutputCleaner.trashOrDelete(emptyDirs);
     } catch (e) {
       await this.progressBar.logError(`Failed to clean empty directories in ${outputDir} : ${e}`);
     }
 
     return filesToClean.length;
+  }
+
+  private static async trashOrDelete(filePaths: string[]): Promise<void> {
+    // Prefer recycling...
+    await trash(filePaths);
+
+    // ...but if that doesn't work, delete the leftovers
+    await Promise.all(filePaths.map(async (filePath) => {
+      if (await fsPoly.exists(filePath)) {
+        await fsPoly.rm(filePath);
+      }
+    }));
   }
 
   private static async getEmptyDirs(dirPath: string): Promise<string[]> {
