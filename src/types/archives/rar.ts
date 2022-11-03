@@ -7,6 +7,11 @@ import Archive from './archive.js';
 export default class Rar extends Archive {
   static readonly SUPPORTED_EXTENSIONS = ['.rar'];
 
+  // eslint-disable-next-line class-methods-use-this
+  protected new(filePath: string): Archive {
+    return new Rar(filePath);
+  }
+
   async getArchiveEntries(): Promise<ArchiveEntry<Rar>[]> {
     const rar = await unrar.createExtractorFromFile({
       filepath: this.getFilePath(),

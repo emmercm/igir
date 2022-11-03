@@ -14,6 +14,11 @@ import Archive from './archive.js';
 export default class Zip extends Archive {
   static readonly SUPPORTED_EXTENSIONS = ['.zip'];
 
+  // eslint-disable-next-line class-methods-use-this
+  protected new(filePath: string): Archive {
+    return new Zip(filePath);
+  }
+
   async getArchiveEntries(): Promise<ArchiveEntry<Zip>[]> {
     return new Promise((resolve, reject) => {
       yauzl.open(this.getFilePath(), {

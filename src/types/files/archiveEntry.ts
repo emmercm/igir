@@ -127,8 +127,19 @@ export default class ArchiveEntry<A extends Archive> extends File {
   }
 
   async withFileName(fileNameWithoutExt: string): Promise<File> {
+    return ArchiveEntry.entryOf(
+      this.getArchive().withFileName(fileNameWithoutExt),
+      this.getEntryPath(),
+      this.getSize(),
+      this.getCrc32(),
+      this.getFileHeader(),
+      this.getPatch(),
+    );
+  }
+
+  async withExtractedFilePath(extractedNameWithoutExt: string): Promise<File> {
     const { base, ...parsedEntryPath } = path.parse(this.getEntryPath());
-    parsedEntryPath.name = fileNameWithoutExt;
+    parsedEntryPath.name = extractedNameWithoutExt;
     const entryPath = path.format(parsedEntryPath);
 
     return ArchiveEntry.entryOf(
@@ -137,6 +148,7 @@ export default class ArchiveEntry<A extends Archive> extends File {
       this.getSize(),
       this.getCrc32(),
       this.getFileHeader(),
+      this.getPatch(),
     );
   }
 
@@ -155,7 +167,7 @@ export default class ArchiveEntry<A extends Archive> extends File {
       this.getSize(),
       this.getCrc32(),
       fileHeader,
-      this.getPatch(),
+      undefined, // don't allow a patch
     );
   }
 
