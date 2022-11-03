@@ -272,6 +272,10 @@ export default class Options implements OptionsProps {
       .filter((inputPath) => inputExcludeFiles.indexOf(inputPath) === -1);
   }
 
+  getPatchFileCount(): number {
+    return this.patch.length;
+  }
+
   async scanPatchFiles(): Promise<string[]> {
     return Options.scanPath(this.patch);
   }
@@ -327,10 +331,6 @@ export default class Options implements OptionsProps {
     // Remove duplicates
     return globbedFiles
       .filter((inputPath, idx, arr) => arr.indexOf(inputPath) === idx);
-  }
-
-  getPatchFileCount(): number {
-    return this.patch.length;
   }
 
   getOutput(dat?: DAT, inputRomPath?: string, game?: Game, romName?: string): string {

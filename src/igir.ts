@@ -107,6 +107,10 @@ export default class Igir {
   }
 
   private async processDATScanner(): Promise<DAT[]> {
+    if (!this.options.getDatFileCount()) {
+      return [];
+    }
+
     const progressBar = this.logger.addProgressBar('Scanning for DATs', Symbols.WAITING);
     const dats = await new DATScanner(this.options, progressBar).scan();
     if (!dats.length) {
@@ -133,6 +137,10 @@ export default class Igir {
   }
 
   private async processPatchScanner(): Promise<Patch[]> {
+    if (!this.options.getPatchFileCount()) {
+      return [];
+    }
+
     const progressBar = this.logger.addProgressBar('Scanning for patches', Symbols.WAITING);
     const patches = await new PatchScanner(this.options, progressBar).scan();
     await progressBar.doneItems(patches.length, 'unique patch', 'found');
