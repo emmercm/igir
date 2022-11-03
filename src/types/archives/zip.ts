@@ -173,5 +173,15 @@ export default class Zip extends Archive {
 
     await fsPoly.rm(this.getFilePath());
     await fsPromises.rename(tempZipFile, this.getFilePath());
+
+    // Wait until the file was actually renamed
+    await new Promise<void>((resolve) => {
+      const interval = setInterval(() => {
+        if (fs.existsSync(this.getFilePath())) {
+          clearInterval(interval);
+          resolve();
+        }
+      });
+    });
   }
 }
