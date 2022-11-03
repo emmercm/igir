@@ -12,8 +12,6 @@ import Options, { OptionsProps } from '../src/types/options.js';
 
 jest.setTimeout(10_000);
 
-const LOGGER = new Logger(LogLevel.NEVER);
-
 async function expectEndToEnd(
   datGlob: string | undefined,
   inputGlob: string | undefined,
@@ -32,7 +30,7 @@ async function expectEndToEnd(
     output: tempOutput,
     verbose: Number.MAX_SAFE_INTEGER,
   });
-  await new Igir(options, LOGGER).main();
+  await new Igir(options, new Logger(LogLevel.NEVER)).main();
 
   const writtenRomAndCrcs = (await Promise.all(fsPoly.walkSync(tempOutput)
     .map(async (filePath) => FileFactory.filesFrom(filePath))))
@@ -70,6 +68,7 @@ describe('with explicit dats', () => {
       [path.join('One', 'One Three', 'One.rom'), 'f817a89f'],
       [path.join('One', 'One Three', 'Three.rom'), 'ff46c5d8'],
       [path.join('Patchable', 'Before.rom'), '0361b321'],
+      [path.join('Patchable', 'Best.rom'), '1e3d78cf'],
     ]);
   });
 
@@ -84,6 +83,7 @@ describe('with explicit dats', () => {
       [`${path.join('One', 'One Three.zip')}|One.rom`, 'f817a89f'],
       [`${path.join('One', 'One Three.zip')}|Three.rom`, 'ff46c5d8'],
       [`${path.join('Patchable', 'Before.zip')}|Before.rom`, '0361b321'],
+      [`${path.join('Patchable', 'Best.zip')}|Best.rom`, '1e3d78cf'],
     ]);
   });
 
@@ -98,6 +98,7 @@ describe('with explicit dats', () => {
       [path.join('One', 'One Three', 'One.rom'), 'f817a89f'],
       [path.join('One', 'One Three', 'Three.rom'), 'ff46c5d8'],
       [path.join('Patchable', 'Before.rom'), '0361b321'],
+      [path.join('Patchable', 'Best.rom'), '1e3d78cf'],
     ]);
   });
 
