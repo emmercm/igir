@@ -50,18 +50,15 @@ export default class FsPoly {
     }
   }
 
-  static async renameOverwrite(oldPath: PathLike, newPath: PathLike, attempt = 1): Promise<void> {
+  static renameOverwriteSync(oldPath: PathLike, newPath: PathLike, attempt = 1): void {
     try {
-      await fsPromises.rename(oldPath, newPath);
+      fs.renameSync(oldPath, newPath);
     } catch (e) {
       if (attempt >= 3) {
         throw e;
       }
-      await new Promise((resolve) => {
-        setTimeout(resolve, Math.random() * (2 ** attempt * 1000));
-      });
-      await this.rm(newPath, { force: true });
-      await this.renameOverwrite(oldPath, newPath, attempt + 1);
+      this.rmSync(newPath, { force: true });
+      this.renameOverwriteSync(oldPath, newPath, attempt + 1);
     }
   }
 
