@@ -171,6 +171,7 @@ export default class Zip extends Archive {
     // Wait until we've closed the input streams
     await Promise.all(inputStreams);
 
-    await fsPromises.rename(tempZipFile, this.getFilePath()); // overwrites
+    await fsPoly.rm(this.getFilePath());
+    await fsPromises.rename(tempZipFile, this.getFilePath());
   }
 }
