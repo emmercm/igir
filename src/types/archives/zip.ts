@@ -171,16 +171,6 @@ export default class Zip extends Archive {
     // Wait until we've closed the input streams
     await Promise.all(inputStreams);
 
-    await fsPromises.rename(tempZipFile, this.getFilePath()); // overwrites
-
-    // Wait until the file was actually renamed
-    await new Promise<void>((resolve) => {
-      const interval = setInterval(() => {
-        if (fs.existsSync(this.getFilePath())) {
-          clearInterval(interval);
-          resolve();
-        }
-      });
-    });
+    await fsPoly.renameOverwrite(tempZipFile, this.getFilePath());
   }
 }

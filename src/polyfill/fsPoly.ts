@@ -50,6 +50,19 @@ export default class FsPoly {
     }
   }
 
+  static async renameOverwrite(oldPath: PathLike, newPath: PathLike, attempt = 1): Promise<void> {
+    try {
+      await fsPromises.rename(oldPath, newPath);
+    } catch (e) {
+      if (attempt >= 3) {
+        throw e;
+      }
+      await new Promise((resolve) => { setTimeout(resolve, 2 ** attempt * 1000); });
+      await this.rm(newPath, { force: true });
+      await this.renameOverwrite(oldPath, newPath, attempt + 1);
+    }
+  }
+
   /**
    * fs.rm() was added in: v14.14.0
    * fsPromises.rm() was added in: v14.14.0
