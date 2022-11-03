@@ -13,8 +13,6 @@ import Options, { OptionsProps } from '../src/types/options.js';
 jest.setTimeout(10_000);
 
 async function expectEndToEnd(
-  datGlob: string | undefined,
-  inputGlob: string | undefined,
   optionsProps: OptionsProps,
   expectedFilesAndCrcs: string[][],
 ): Promise<void> {
@@ -24,9 +22,12 @@ async function expectEndToEnd(
   const tempOutput = fsPoly.mkdtempSync(Constants.GLOBAL_TEMP_DIR);
 
   const options = new Options({
-    ...(datGlob ? { dat: [path.join(tempInput, datGlob)] } : {}),
-    input: [inputGlob ? path.join(tempInput, 'roms', inputGlob) : path.join(tempInput, 'roms', '**', '*')],
     ...optionsProps,
+    ...(optionsProps.dat ? { dat: optionsProps.dat.map((dat) => path.join(tempInput, dat)) } : {}),
+    input: (optionsProps.input ? optionsProps.input : [path.join('**', '*')])
+      .map((input) => path.join(tempInput, 'roms', input)),
+    patch: (optionsProps.patch ? optionsProps.patch : [])
+      .map((input) => path.join(tempInput, input)),
     output: tempOutput,
     verbose: Number.MAX_SAFE_INTEGER,
   });
@@ -51,15 +52,17 @@ async function expectEndToEnd(
 
 describe('with explicit dats', () => {
   it('should do nothing with no roms', async () => {
-    await expectEndToEnd('dats/*', undefined, {
+    await expectEndToEnd({
       commands: ['copy'],
       input: [],
+      dat: ['dats/*'],
     }, []);
   });
 
   it('should copy and test', async () => {
-    await expectEndToEnd('dats/*', undefined, {
+    await expectEndToEnd({
       commands: ['copy', 'test'],
+      dat: ['dats/*'],
       dirDatName: true,
     }, [
       [path.join('One', 'Fizzbuzz.rom'), '370517b5'],
@@ -73,8 +76,9 @@ describe('with explicit dats', () => {
   });
 
   it('should copy, zip, and test', async () => {
-    await expectEndToEnd('dats/*', undefined, {
+    await expectEndToEnd({
       commands: ['copy', 'zip', 'test'],
+      dat: ['dats/*'],
       dirDatName: true,
     }, [
       [`${path.join('One', 'Fizzbuzz.zip')}|Fizzbuzz.rom`, '370517b5'],
@@ -88,8 +92,9 @@ describe('with explicit dats', () => {
   });
 
   it('should copy and clean', async () => {
-    await expectEndToEnd('dats/*', undefined, {
+    await expectEndToEnd({
       commands: ['copy', 'clean'],
+      dat: ['dats/*'],
       dirDatName: true,
     }, [
       [path.join('One', 'Fizzbuzz.rom'), '370517b5'],
@@ -102,23 +107,43 @@ describe('with explicit dats', () => {
     ]);
   });
 
+  it('should copy, patch, and test', async () => {
+    await expectEndToEnd({
+      commands: ['copy', 'test'],
+      dat: ['dats/*'],
+      patch: ['patches/*'],
+      dirDatName: true,
+    }, [
+      [path.join('One', 'Fizzbuzz.rom'), '370517b5'],
+      [path.join('One', 'Foobar.rom'), 'b22c9747'],
+      [path.join('One', 'Lorem Ipsum.rom'), '70856527'],
+      [path.join('One', 'One Three', 'One.rom'), 'f817a89f'],
+      [path.join('One', 'One Three', 'Three.rom'), 'ff46c5d8'],
+      [path.join('Patchable', 'After.rom'), '338533db'],
+      [path.join('Patchable', 'Before.rom'), '0361b321'],
+      [path.join('Patchable', 'Best.rom'), '1e3d78cf'],
+      [path.join('Patchable', 'Worst.rom'), '6ff9ef96'],
+    ]);
+  });
+
   it('should report without writing', async () => {
-    await expectEndToEnd('dats/*', undefined, {
+    await expectEndToEnd({
       commands: ['report'],
+      dat: ['dats/*'],
     }, []);
   });
 });
 
 describe('with inferred dats', () => {
   it('should do nothing with no roms', async () => {
-    await expectEndToEnd(undefined, undefined, {
+    await expectEndToEnd({
       commands: ['copy'],
       input: [],
     }, []);
   });
 
   it('should copy and test', async () => {
-    await expectEndToEnd(undefined, undefined, {
+    await expectEndToEnd({
       commands: ['copy', 'test'],
     }, [
       ['allpads.nes', '9180a163'],
@@ -145,7 +170,7 @@ describe('with inferred dats', () => {
   });
 
   it('should copy, zip, and test', async () => {
-    await expectEndToEnd(undefined, undefined, {
+    await expectEndToEnd({
       commands: ['copy', 'zip', 'test'],
     }, [
       ['allpads.zip|allpads.nes', '9180a163'],
@@ -171,8 +196,9 @@ describe('with inferred dats', () => {
   });
 
   it('should remove headers', async () => {
-    await expectEndToEnd(undefined, 'headered/*', {
+    await expectEndToEnd({
       commands: ['copy'],
+      input: ['headered/*'],
       removeHeaders: [''], // all
     }, [
       ['allpads.nes', '6339abe6'],

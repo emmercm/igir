@@ -113,6 +113,13 @@ export default class ArgumentsParser {
         type: 'array',
         requiresArg: true,
       })
+      .option('patch', {
+        group: groupPaths,
+        alias: 'p',
+        description: 'Path(s) to ROM patch files or archives',
+        type: 'array',
+        requiresArg: true,
+      })
       .option('output', {
         group: groupPaths,
         alias: 'o',
