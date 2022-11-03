@@ -119,6 +119,7 @@ describe('with inferred dats', () => {
     await expectEndToEnd(undefined, {
       commands: ['copy'],
     }, [
+      'C01173E.rom',
       'LCDTestROM.lnx',
       'allpads.nes',
       'before.rom',
@@ -146,6 +147,7 @@ describe('with inferred dats', () => {
     await expectEndToEnd(undefined, {
       commands: ['copy', 'zip'],
     }, [
+      'C01173E.zip',
       'LCDTestROM.zip',
       'allpads.zip',
       'before.zip',

@@ -12,4 +12,9 @@
     <rom name="Before.rom" size="7" crc="0361b321" md5="ab8d71b3fdce92efd8bdf29cffd36116" sha1="7473def7220a59a6b4146e629064e1456542242d" status="verified"/>
     <!-- After: size="6" crc="338533db" -->
   </game>
+  <game name="C01173E">
+    <description>C01173E</description>
+    <rom name="C01173E.rom" size="1024" crc="dfaebe28" md5="c9e35aafaec606fcb16763200ce35b0f" sha1="2f185826482db2878663c0cd393d62d0c10814ae" status="verified"/>
+    <!-- After: size="1024" crc="95284ab4" -->
+  </game>
 </datafile>
