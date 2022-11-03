@@ -344,10 +344,10 @@ describe('zip', () => {
 
   test.each([
     // Control group
-    // ['raw/empty.rom', [['empty.zip|empty.rom', '00000000']]],
-    // ['raw/fizzbuzz.nes', [['fizzbuzz.zip|fizzbuzz.nes', '370517b5']]],
-    // ['raw/foobar.lnx', [['foobar.zip|foobar.lnx', 'b22c9747']]],
-    // ['raw/loremipsum.rom', [['loremipsum.zip|loremipsum.rom', '70856527']]],
+    ['raw/empty.rom', [['empty.zip|empty.rom', '00000000']]],
+    ['raw/fizzbuzz.nes', [['fizzbuzz.zip|fizzbuzz.nes', '370517b5']]],
+    ['raw/foobar.lnx', [['foobar.zip|foobar.lnx', 'b22c9747']]],
+    ['raw/loremipsum.rom', [['loremipsum.zip|loremipsum.rom', '70856527']]],
     // Patchable files
     ['patchable/before.rom', [
       ['after.zip|after.rom', '4c8e44d4'],

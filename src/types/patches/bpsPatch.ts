@@ -119,7 +119,7 @@ export default class BPSPatch extends Patch {
   async apply<T>(file: File, callback: (tempFile: string) => (Promise<T> | T)): Promise<T> {
     await this.parsePatch();
 
-    return file.extractToFile(async (sourceFilePath) => {
+    return file.extractToTempFile(async (sourceFilePath) => {
       const sourceFile = await FilePoly.fileFrom(sourceFilePath, 'r');
       let sourceRelativeOffset = 0;
 

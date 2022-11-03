@@ -88,7 +88,7 @@ export default class IPSPatch extends Patch {
   ): Promise<T> {
     await this.parsePatch();
 
-    return file.extractToFile(async (tempFile) => {
+    return file.extractToTempFile(async (tempFile) => {
       const fp = await FilePoly.fileFrom(tempFile, 'r+');
 
       /* eslint-disable no-await-in-loop */
@@ -100,6 +100,6 @@ export default class IPSPatch extends Patch {
       await fp.close();
 
       return callback(tempFile);
-    }, true);
+    });
   }
 }
