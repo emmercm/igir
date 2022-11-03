@@ -59,9 +59,9 @@ describe('with explicit dats', () => {
     }, []);
   });
 
-  it('should copy', async () => {
+  it('should copy and test', async () => {
     await expectEndToEnd('dats/*', undefined, {
-      commands: ['copy'],
+      commands: ['copy', 'test'],
       dirDatName: true,
     }, [
       [path.join('One', 'Fizzbuzz.rom'), '370517b5'],
@@ -73,9 +73,9 @@ describe('with explicit dats', () => {
     ]);
   });
 
-  it('should copy and zip and test', async () => {
+  it('should copy, zip, and test', async () => {
     await expectEndToEnd('dats/*', undefined, {
-      commands: ['copy', 'zip'],
+      commands: ['copy', 'zip', 'test'],
       dirDatName: true,
     }, [
       [`${path.join('One', 'Fizzbuzz.zip')}|Fizzbuzz.rom`, '370517b5'],
@@ -101,7 +101,7 @@ describe('with explicit dats', () => {
     ]);
   });
 
-  it('should report without copy', async () => {
+  it('should report without writing', async () => {
     await expectEndToEnd('dats/*', undefined, {
       commands: ['report'],
     }, []);
@@ -116,9 +116,9 @@ describe('with inferred dats', () => {
     }, []);
   });
 
-  it('should copy', async () => {
+  it('should copy and test', async () => {
     await expectEndToEnd(undefined, undefined, {
-      commands: ['copy'],
+      commands: ['copy', 'test'],
     }, [
       ['allpads.nes', '9180a163'],
       ['before.rom', '0361b321'],
@@ -143,23 +143,9 @@ describe('with inferred dats', () => {
     ]);
   });
 
-  it('should remove headers', async () => {
-    await expectEndToEnd(undefined, 'headered/*', {
-      commands: ['copy'],
-      removeHeaders: [''], // all
-    }, [
-      ['allpads.nes', '6339abe6'],
-      ['color_test.nintendoentertainmentsystem', 'c9c1b7aa'], // not removed
-      ['diagnostic_test_cartridge.a78', 'a1eaa7c1'],
-      ['fds_joypad_test.fds', '3ecbac61'],
-      ['LCDTestROM.lyx', '42583855'],
-      ['speed_test_v51.sfc', '8beffd94'],
-    ]);
-  });
-
-  it('should copy and zip and test', async () => {
+  it('should copy, zip, and test', async () => {
     await expectEndToEnd(undefined, undefined, {
-      commands: ['copy', 'zip'],
+      commands: ['copy', 'zip', 'test'],
     }, [
       ['allpads.zip|allpads.nes', '9180a163'],
       ['before.zip|before.rom', '0361b321'],
@@ -180,6 +166,20 @@ describe('with inferred dats', () => {
       ['three.zip|three.rom', 'ff46c5d8'],
       ['two.zip|two.rom', '96170874'],
       ['unknown.zip|unknown.rom', '377a7727'],
+    ]);
+  });
+
+  it('should remove headers', async () => {
+    await expectEndToEnd(undefined, 'headered/*', {
+      commands: ['copy'],
+      removeHeaders: [''], // all
+    }, [
+      ['allpads.nes', '6339abe6'],
+      ['color_test.nintendoentertainmentsystem', 'c9c1b7aa'], // not removed
+      ['diagnostic_test_cartridge.a78', 'a1eaa7c1'],
+      ['fds_joypad_test.fds', '3ecbac61'],
+      ['LCDTestROM.lyx', '42583855'],
+      ['speed_test_v51.sfc', '8beffd94'],
     ]);
   });
 });
