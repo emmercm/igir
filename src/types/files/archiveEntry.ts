@@ -1,4 +1,4 @@
-import fs, { promises as fsPromises } from 'fs';
+import { promises as fsPromises } from 'fs';
 import path from 'path';
 import { Readable } from 'stream';
 
@@ -104,15 +104,18 @@ export default class ArchiveEntry<A extends Archive> extends File {
       ? this.getFileHeader()?.dataOffsetBytes || 0
       : 0;
 
+    // Apply the patch if there is one
+    if (this.getPatch()) {
+      const patch = this.getPatch() as Patch;
+      return patch.apply(this, async (tempFile) => File
+        .createStreamFromFile(tempFile, start, callback));
+    }
+
     // Don't extract to memory if this archive entry size is too large, or if we need to manipulate
     // the stream start point
     if (this.getSize() > Constants.MAX_STREAM_EXTRACTION_SIZE || start > 0) {
-      return this.extractToFile(async (localFile) => {
-        const stream = fs.createReadStream(localFile, { start });
-        const result = await callback(stream);
-        stream.destroy();
-        return result;
-      });
+      return this.extractToFile(async (localFile) => File
+        .createStreamFromFile(localFile, start, callback));
     }
 
     const tempDir = await fsPromises.mkdtemp(Constants.GLOBAL_TEMP_DIR);
@@ -166,7 +169,7 @@ export default class ArchiveEntry<A extends Archive> extends File {
       this.getEntryPath(),
       this.getSize(),
       this.getCrc32(),
-      this.getFileHeader(),
+      undefined, // don't allow a file header
       patch,
     );
   }

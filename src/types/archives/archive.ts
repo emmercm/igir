@@ -1,7 +1,7 @@
-import fs from 'fs';
 import { Readable } from 'stream';
 
 import ArchiveEntry from '../files/archiveEntry.js';
+import File from '../files/file.js';
 
 export default abstract class Archive {
   private readonly filePath: string;
@@ -27,11 +27,7 @@ export default abstract class Archive {
     tempDir: string,
     callback: (stream: Readable) => (Promise<T> | T),
   ): Promise<T> {
-    return this.extractEntryToFile(entryPath, tempDir, async (localFile) => {
-      const stream = fs.createReadStream(localFile);
-      const result = await callback(stream);
-      stream.destroy();
-      return result;
-    });
+    return this.extractEntryToFile(entryPath, tempDir, async (localFile) => File
+      .createStreamFromFile(localFile, 0, callback));
   }
 }

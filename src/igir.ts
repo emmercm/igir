@@ -39,6 +39,11 @@ export default class Igir {
       dats = DATInferrer.infer(processedRomFiles);
     }
 
+    // TODO(cemmer): remove
+    // const patches = await new PatchScanner(new Options({
+    //   patch: ['test/fixtures/patches'],
+    // }), new ProgressBarFake()).scan();
+
     // Set up progress bar and input for DAT processing
     const datProcessProgressBar = this.logger.addProgressBar('Processing DATs', Symbols.PROCESSING, dats.length);
     const datsToWrittenRoms = new Map<DAT, Map<Parent, File[]>>();
@@ -56,8 +61,11 @@ export default class Igir {
       // Generate and filter ROM candidates
       const parentsToCandidates = await new CandidateGenerator(this.options, progressBar)
         .generate(dat, processedRomFiles);
+      // const parentsToCandidatesPatched = await PatchedCandidateGenerator
+      //   .generate(parentsToCandidates, patches);
+      const parentsToCandidatesPatched = parentsToCandidates;
       const romOutputs = await new CandidateFilter(this.options, progressBar)
-        .filter(dat, parentsToCandidates);
+        .filter(dat, parentsToCandidatesPatched);
 
       // Write the output files
       await new ROMWriter(this.options, progressBar).write(dat, romOutputs);
@@ -77,7 +85,7 @@ export default class Igir {
       datsStatuses.push(datStatus);
 
       // Progress bar cleanup
-      const totalReleaseCandidates = [...parentsToCandidates.values()]
+      const totalReleaseCandidates = [...parentsToCandidatesPatched.values()]
         .reduce((sum, rcs) => sum + rcs.length, 0);
       if (totalReleaseCandidates > 0) {
         await progressBar.freeze();

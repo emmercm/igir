@@ -76,12 +76,12 @@ export default class PatchCandidateGenerator {
         .map(async (romWithFiles) => {
           // Apply the new filename
           const rom = romWithFiles.getRom();
-          const inputFile = romWithFiles.getInputFile();
-          let outputFile = await romWithFiles.getOutputFile().withFileName(patchedRomName);
+          let inputFile = romWithFiles.getInputFile();
+          const outputFile = await romWithFiles.getOutputFile().withFileName(patchedRomName);
 
           // Apply the patch
           if (patch.getCrcBefore() === romWithFiles.getRom().getCrc32()) {
-            outputFile = await outputFile.withPatch(patch);
+            inputFile = await inputFile.withPatch(patch);
           }
 
           return new ROMWithFiles(rom, inputFile, outputFile);
