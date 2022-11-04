@@ -1,4 +1,3 @@
-import { promises as fsPromises } from 'fs';
 import path from 'path';
 import { Readable } from 'stream';
 
@@ -94,7 +93,7 @@ export default class ArchiveEntry<A extends Archive> extends File {
     entryPath: string,
     callback: (localFile: string) => (T | Promise<T>),
   ): Promise<T> {
-    const tempDir = await fsPromises.mkdtemp(Constants.GLOBAL_TEMP_DIR);
+    const tempDir = fsPoly.mkdtempSync(Constants.GLOBAL_TEMP_DIR);
     try {
       return await archive.extractEntryToFile(entryPath, tempDir, callback);
     } finally {
@@ -124,11 +123,11 @@ export default class ArchiveEntry<A extends Archive> extends File {
         .createStreamFromFile(localFile, start, callback));
     }
 
-    const tempDir = await fsPromises.mkdtemp(Constants.GLOBAL_TEMP_DIR);
+    const tempDir = fsPoly.mkdtempSync(Constants.GLOBAL_TEMP_DIR);
     try {
       return await this.archive.extractEntryToStream(this.getEntryPath(), tempDir, callback);
     } finally {
-      await fsPoly.rm(tempDir, { recursive: true });
+      await fsPoly.rm(tempDir, { force: true, recursive: true });
     }
   }
 

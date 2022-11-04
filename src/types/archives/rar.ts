@@ -1,3 +1,4 @@
+import { Mutex } from 'async-mutex';
 import unrar from 'node-unrar-js';
 import path from 'path';
 
@@ -6,6 +7,8 @@ import Archive from './archive.js';
 
 export default class Rar extends Archive {
   static readonly SUPPORTED_EXTENSIONS = ['.rar'];
+
+  private static readonly EXTRACT_MUTEX = new Mutex();
 
   // eslint-disable-next-line class-methods-use-this
   protected new(filePath: string): Archive {
@@ -33,16 +36,23 @@ export default class Rar extends Archive {
   ): Promise<T> {
     const localFile = path.join(tempDir, entryPath);
 
-    const rar = await unrar.createExtractorFromFile({
-      filepath: this.getFilePath(),
-      targetPath: tempDir,
+    /**
+     * WARN(cemmer): {@link unrar.extract} seems to have issues with extracting files to different
+     * directories at the same time, it will sometimes extract to the wrong directory. Try to
+     * prevent that behavior.
+     */
+    await Rar.EXTRACT_MUTEX.runExclusive(async () => {
+      const rar = await unrar.createExtractorFromFile({
+        filepath: this.getFilePath(),
+        targetPath: tempDir,
+      });
+      // For whatever reason, the library author decided to delay extraction until the file is
+      // iterated, so we have to execute this expression, but can throw away the results
+      /* eslint-disable @typescript-eslint/no-unused-expressions */
+      [...rar.extract({
+        files: [entryPath.replace(/[\\/]/g, '/')],
+      }).files];
     });
-    // For whatever reason, the library author decided to delay extraction until the file is
-    // iterated, so we have to execute this expression, but can throw away the results
-    /* eslint-disable @typescript-eslint/no-unused-expressions */
-    [...rar.extract({
-      files: [entryPath.replace(/[\\/]/g, '/')],
-    }).files];
 
     return callback(localFile);
   }
