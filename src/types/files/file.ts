@@ -180,7 +180,9 @@ export default class File {
     callback: (stream: Readable) => (Promise<T> | T),
   ): Promise<T> {
     const stream = fs.createReadStream(filePath, { start });
+    console.log(`${filePath}: stream pre-callback`);
     const result = await callback(stream);
+    console.log(`${filePath}: stream post-callback`);
     stream.destroy();
     return result;
   }

@@ -151,7 +151,9 @@ export default class BPSPatch extends Patch {
 
       console.log(`bps pre-callback: ${targetFilePath}`);
       const result = await callback(targetFilePath);
+      console.log(`bps post-callback: ${targetFilePath}`);
       await fsPoly.rm(targetFilePath);
+      console.log(`bps post-rm: ${targetFilePath}`);
       return result;
     });
   }
