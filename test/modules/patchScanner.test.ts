@@ -30,6 +30,6 @@ it('should scan multiple files', async () => {
 });
 
 it('should scan single files', async () => {
-  await expect(createPatchScanner(['test/fixtures/patches/after*.ips']).scan()).resolves.toHaveLength(1);
-  await expect(createPatchScanner(['test/fixtures/*/after*.ips']).scan()).resolves.toHaveLength(1);
+  await expect(createPatchScanner(['test/fixtures/patches/After*.ips']).scan()).resolves.toHaveLength(1);
+  await expect(createPatchScanner(['test/fixtures/*/After*.ips']).scan()).resolves.toHaveLength(1);
 });

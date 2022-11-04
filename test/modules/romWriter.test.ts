@@ -347,12 +347,12 @@ describe('zip', () => {
     ['raw/loremipsum.rom', [['loremipsum.zip|loremipsum.rom', '70856527']]],
     // Patchable files
     ['patchable/before.rom', [
-      ['after.zip|after.rom', '4c8e44d4'],
+      ['After.zip|After.rom', '4c8e44d4'],
       ['before.zip|before.rom', '0361b321'],
     ]],
     ['patchable/best.gz', [
       ['best.zip|best.rom', '1e3d78cf'],
-      ['worst.zip|worst.rom', '6ff9ef96'],
+      ['Worst.zip|Worst.rom', '6ff9ef96'],
     ]],
   ])('should patch files if appropriate: %s', async (inputGlob, expectedFilesAndCrcs) => {
     await copyFixturesToTemp(async (inputTemp, outputTemp) => {
@@ -625,12 +625,12 @@ describe('raw', () => {
     ['raw/loremipsum.rom', [['loremipsum.rom', '70856527']]],
     // Patchable files
     ['patchable/before.rom', [
-      ['after.rom', '4c8e44d4'],
+      ['After.rom', '4c8e44d4'],
       ['before.rom', '0361b321'],
     ]],
     ['patchable/best.gz', [
       ['best.rom', '1e3d78cf'],
-      ['worst.rom', '6ff9ef96'],
+      ['Worst.rom', '6ff9ef96'],
     ]],
   ])('should patch files if appropriate: %s', async (inputGlob, expectedFilesAndCrcs) => {
     await copyFixturesToTemp(async (inputTemp, outputTemp) => {

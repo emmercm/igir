@@ -1,3 +1,5 @@
+import path from 'path';
+
 import FilePoly from '../../polyfill/filePoly.js';
 import File from '../files/file.js';
 import Patch from './patch.js';
@@ -17,6 +19,12 @@ export default class PPFPatch extends Patch {
   static patchFrom(file: File): PPFPatch {
     const crcBefore = Patch.getCrcFromPath(file.getExtractedFilePath());
     return new PPFPatch(file, crcBefore);
+  }
+
+  getRomName(): string {
+    return path.parse(this.getFile().getExtractedFilePath()).name
+      .replace(new RegExp(this.getCrcBefore(), 'g'), '')
+      .trim();
   }
 
   private async parsePatch(): Promise<void> {

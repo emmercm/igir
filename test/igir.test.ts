@@ -103,6 +103,7 @@ describe('with explicit dats', () => {
       [path.join('One', 'One Three', 'Three.rom'), 'ff46c5d8'],
       [path.join('Patchable', 'Before.rom'), '0361b321'],
       [path.join('Patchable', 'Best.rom'), '1e3d78cf'],
+      [path.join('Patchable', 'C01173E.rom'), 'dfaebe28'],
     ]);
   });
 
@@ -118,9 +119,11 @@ describe('with explicit dats', () => {
       [path.join('One', 'Lorem Ipsum.rom'), '70856527'],
       [path.join('One', 'One Three', 'One.rom'), 'f817a89f'],
       [path.join('One', 'One Three', 'Three.rom'), 'ff46c5d8'],
-      [path.join('Patchable', 'After.rom'), '338533db'],
+      [path.join('Patchable', '949F2B7.rom'), '95284ab4'],
+      [path.join('Patchable', 'After.rom'), '4c8e44d4'],
       [path.join('Patchable', 'Before.rom'), '0361b321'],
       [path.join('Patchable', 'Best.rom'), '1e3d78cf'],
+      [path.join('Patchable', 'C01173E.rom'), 'dfaebe28'],
       [path.join('Patchable', 'Worst.rom'), '6ff9ef96'],
     ]);
   });
