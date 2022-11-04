@@ -119,13 +119,13 @@ export default class BPSPatch extends Patch {
   async apply<T>(file: File, callback: (tempFile: string) => (Promise<T> | T)): Promise<T> {
     await this.parsePatch();
 
-    const res = await file.extractToFile(async (sourceFilePath) => {
+    return file.extractToFile(async (sourceFilePath) => {
       const sourceFile = await FilePoly.fileFrom(sourceFilePath, 'r');
       let sourceRelativeOffset = 0;
 
       const targetFilePath = fsPoly.mktempSync(path.join(
         Constants.GLOBAL_TEMP_DIR,
-        `${path.basename(sourceFilePath)}.bps-out`,
+        `${path.basename(sourceFilePath)}.bps`,
       ));
       const targetFile = await FilePoly.fileOfSize(targetFilePath, 'r+', this.getSizeAfter() as number);
       let targetRelativeOffset = 0;
@@ -154,7 +154,5 @@ export default class BPSPatch extends Patch {
       await fsPoly.rm(targetFilePath);
       return result;
     });
-
-    return res;
   }
 }
