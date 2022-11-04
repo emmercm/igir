@@ -70,6 +70,7 @@ export default class FsPoly {
    * fsPromises.rm() was added in: v14.14.0
    */
   static async rm(pathLike: PathLike, options: RmOptions = {}): Promise<void> {
+    console.log(`rm: ${pathLike}`);
     const optionsWithRetry = {
       maxRetries: 2,
       ...options,
