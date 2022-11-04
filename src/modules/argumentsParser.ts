@@ -5,6 +5,7 @@ import Logger from '../console/logger.js';
 import Constants from '../constants.js';
 import FileHeader from '../types/files/fileHeader.js';
 import Options from '../types/options.js';
+import PatchFactory from '../types/patches/patchFactory.js';
 import ReleaseCandidate from '../types/releaseCandidate.js';
 
 /**
@@ -116,7 +117,7 @@ export default class ArgumentsParser {
       .option('patch', {
         group: groupPaths,
         alias: 'p',
-        description: 'Path(s) to ROM patch files or archives',
+        description: `Path(s) to ROM patch files or archives (supported: ${PatchFactory.getSupportedExtensions().join(', ')})`,
         type: 'array',
         requiresArg: true,
       })

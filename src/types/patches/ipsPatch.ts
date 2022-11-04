@@ -11,6 +11,8 @@ interface IPSRecord {
  * @link https://zerosoft.zophar.net/ips.php
  */
 export default class IPSPatch extends Patch {
+  static readonly SUPPORTED_EXTENSIONS = ['.ips'];
+
   private readonly records: IPSRecord[] = [];
 
   static patchFrom(file: File): IPSPatch {

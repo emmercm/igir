@@ -24,6 +24,8 @@ interface BPSRecord {
  * @link https://github.com/blakesmith/rombp/blob/master/docs/bps_spec.md
  */
 export default class BPSPatch extends Patch {
+  static readonly SUPPORTED_EXTENSIONS = ['.bps'];
+
   private readonly records: BPSRecord[] = [];
 
   static async patchFrom(file: File): Promise<BPSPatch> {

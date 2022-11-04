@@ -12,6 +12,8 @@ interface PPFRecord {
  * @link https://github.com/meunierd/ppf/blob/master/ppfdev/PPF3.txt
  */
 export default class PPFPatch extends Patch {
+  static readonly SUPPORTED_EXTENSIONS = ['.ppf'];
+
   private readonly records: PPFRecord[] = [];
 
   static patchFrom(file: File): PPFPatch {
