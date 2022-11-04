@@ -196,7 +196,7 @@ export default class Zip extends Archive {
       console.log(`${tempZipFile}: renaming`);
       await fsPoly.renameOverwrite(tempZipFile, this.getFilePath());
     } catch (e) {
-      console.log(`archiveEntries: ${e}`);
+      console.log(`archiveEntries: ${e instanceof Error ? (e as Error).stack : e}`);
       throw e;
     }
   }
