@@ -139,20 +139,21 @@ export default class File {
 
   async extractToFile<T>(
     callback: (localFile: string) => (T | Promise<T>),
-    useTempFile = false,
   ): Promise<T> {
-    if (useTempFile) {
-      const temp = fsPoly.mktempSync(path.join(
-        Constants.GLOBAL_TEMP_DIR,
-        path.basename(this.getFilePath()),
-      ));
-      await fsPromises.copyFile(this.getFilePath(), temp);
-      const result = await callback(temp);
-      await fsPoly.rm(temp);
-      return result;
-    }
-
     return callback(this.getFilePath());
+  }
+
+  async extractToTempFile<T>(
+    callback: (localFile: string) => (T | Promise<T>),
+  ): Promise<T> {
+    const temp = fsPoly.mktempSync(path.join(
+      Constants.GLOBAL_TEMP_DIR,
+      `${path.basename(this.getFilePath())}.temp`,
+    ));
+    await fsPromises.copyFile(this.getFilePath(), temp);
+    const result = await callback(temp);
+    await fsPoly.rm(temp);
+    return result;
   }
 
   async extractToStream<T>(

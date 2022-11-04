@@ -131,7 +131,7 @@ export default class Zip extends Archive {
   ): Promise<void> {
     // Pipe the zip contents to disk, using an intermediate temp file because we may be trying to
     // overwrite an input zip file
-    const tempZipFile = fsPoly.mktempSync(this.getFilePath());
+    const tempZipFile = fsPoly.mktempSync(`${this.getFilePath()}.zip-out`);
     const writeStream = fs.createWriteStream(tempZipFile);
 
     const zipFile = archiver('zip', { zlib: { level: 9 } });
