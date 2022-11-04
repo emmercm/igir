@@ -1,11 +1,8 @@
-import { jest } from '@jest/globals';
 import os from 'os';
 
 import ROMScanner from '../../src/modules/romScanner.js';
 import Options from '../../src/types/options.js';
 import ProgressBarFake from '../console/progressBarFake.js';
-
-jest.setTimeout(10_000);
 
 function createRomScanner(input: string[], inputExclude: string[] = []): ROMScanner {
   return new ROMScanner(new Options({ input, inputExclude }), new ProgressBarFake());
