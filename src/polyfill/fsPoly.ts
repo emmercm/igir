@@ -51,6 +51,7 @@ export default class FsPoly {
   }
 
   static async renameOverwrite(oldPath: PathLike, newPath: PathLike, attempt = 1): Promise<void> {
+    console.log(`move: ${oldPath} -> ${newPath}`);
     try {
       await fsPromises.rename(oldPath, newPath);
     } catch (e) {
