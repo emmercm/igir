@@ -18,10 +18,10 @@ async function expectEndToEnd(
   optionsProps: OptionsProps,
   expectedFilesAndCrcs: string[][],
 ): Promise<void> {
-  const tempInput = fsPoly.mkdtempSync(Constants.GLOBAL_TEMP_DIR);
+  const tempInput = fsPoly.mkdtempSync(path.join(Constants.GLOBAL_TEMP_DIR, 'input'));
   fsPoly.copyDirSync('./test/fixtures', tempInput);
 
-  const tempOutput = fsPoly.mkdtempSync(Constants.GLOBAL_TEMP_DIR);
+  const tempOutput = fsPoly.mkdtempSync(path.join(Constants.GLOBAL_TEMP_DIR, 'output'));
 
   const options = new Options({
     ...(datGlob ? { dat: [path.join(tempInput, datGlob)] } : {}),

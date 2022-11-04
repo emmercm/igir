@@ -30,11 +30,11 @@ async function copyFixturesToTemp(
   callback: (input: string, output: string) => void | Promise<void>,
 ): Promise<void> {
   // Set up the input directory
-  const inputTemp = fsPoly.mkdtempSync(Constants.GLOBAL_TEMP_DIR);
+  const inputTemp = fsPoly.mkdtempSync(path.join(Constants.GLOBAL_TEMP_DIR, 'input'));
   fsPoly.copyDirSync('./test/fixtures', inputTemp);
 
   // Set up the output directory, but delete it so ROMWriter can make it
-  const outputTemp = fsPoly.mkdtempSync(Constants.GLOBAL_TEMP_DIR);
+  const outputTemp = fsPoly.mkdtempSync(path.join(Constants.GLOBAL_TEMP_DIR, 'output'));
   await fsPoly.rm(outputTemp, { force: true, recursive: true });
 
   // Call the callback
