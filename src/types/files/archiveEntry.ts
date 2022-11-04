@@ -127,7 +127,7 @@ export default class ArchiveEntry<A extends Archive> extends File {
     try {
       return await this.archive.extractEntryToStream(this.getEntryPath(), tempDir, callback);
     } finally {
-      await fsPoly.rm(tempDir, { force: true, recursive: true });
+      await fsPoly.rm(tempDir, { recursive: true });
     }
   }
 
