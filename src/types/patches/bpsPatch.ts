@@ -125,7 +125,7 @@ export default class BPSPatch extends Patch {
 
       const targetFilePath = fsPoly.mktempSync(path.join(
         Constants.GLOBAL_TEMP_DIR,
-        `${path.basename(sourceFilePath)}.bps-out`,
+        `${path.basename(sourceFilePath)}.bps`,
       ));
       const targetFile = await FilePoly.fileOfSize(targetFilePath, 'r+', this.getSizeAfter() as number);
       let targetRelativeOffset = 0;
@@ -148,6 +148,7 @@ export default class BPSPatch extends Patch {
       }
 
       await targetFile.close();
+      await sourceFile.close();
 
       const result = await callback(targetFilePath);
       await fsPoly.rm(targetFilePath);

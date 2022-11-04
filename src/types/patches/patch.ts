@@ -18,11 +18,6 @@ export default abstract class Patch {
     this.sizeAfter = sizeAfter;
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  protected static patchFrom(file: File): Patch | Promise<Patch> {
-    throw new Error('You should not have gotten here!');
-  }
-
   getFile(): File {
     return this.file;
   }

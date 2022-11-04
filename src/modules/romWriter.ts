@@ -124,7 +124,7 @@ export default class ROMWriter {
 
     if (this.options.shouldTest()) {
       await this.progressBar.logDebug(`${outputZip.getFilePath()}: testing`);
-      if (!await ROMWriter.testZipContents(outputZip, inputToOutputZipEntries)) {
+      if (!await ROMWriter.testZipContents(outputZip, [...inputToOutputZipEntries.values()])) {
         await this.progressBar.logError(`Written zip is invalid: ${outputZip.getFilePath()}`);
         return;
       }
@@ -136,10 +136,10 @@ export default class ROMWriter {
 
   private static async testZipContents(
     outputZipArchive: Zip,
-    inputToOutputZipEntries: Map<File, ArchiveEntry<Zip>>,
+    expectedArchiveEntries: ArchiveEntry<Zip>[],
   ): Promise<boolean> {
-    const expectedEntriesByPath = [...inputToOutputZipEntries.entries()]
-      .reduce((map, [, entry]) => {
+    const expectedEntriesByPath = expectedArchiveEntries
+      .reduce((map, entry) => {
         map.set(entry.getEntryPath(), entry);
         return map;
       }, new Map<string, ArchiveEntry<Zip>>());
@@ -187,7 +187,7 @@ export default class ROMWriter {
   ): Promise<boolean> {
     // If the zip is already what we're expecting, do nothing
     if (await fsPoly.exists(outputZip.getFilePath())
-      && await ROMWriter.testZipContents(outputZip, inputToOutputZipEntries)
+      && await ROMWriter.testZipContents(outputZip, [...inputToOutputZipEntries.values()])
     ) {
       await this.progressBar.logDebug(`${outputZip.getFilePath()}: archive already matches expected entries, skipping`);
       return true;
@@ -240,7 +240,6 @@ export default class ROMWriter {
       return;
     }
 
-    await this.ensureOutputDirExists(outputFilePath);
     if (!await this.writeRawFile(inputRomFile, outputFilePath)) {
       return;
     }
@@ -253,6 +252,7 @@ export default class ROMWriter {
       // TODO(cemmer): support raw->raw file moving without streams
       await inputRomFile.extractToStream(async (readStream) => {
         await this.progressBar.logDebug(`${inputRomFile.toString()}: piping to ${outputFilePath}`);
+        await this.ensureOutputDirExists(outputFilePath);
         const writeStream = readStream.pipe(fs.createWriteStream(outputFilePath));
         await new Promise<void>((resolve, reject) => {
           writeStream.on('finish', () => resolve());

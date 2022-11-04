@@ -1,5 +1,5 @@
 import crc32 from 'crc/crc32';
-import fs, { promises as fsPromises } from 'fs';
+import fs, { PathLike, promises as fsPromises } from 'fs';
 import path from 'path';
 import { Readable } from 'stream';
 
@@ -163,7 +163,23 @@ export default class File {
     const start = removeHeader && this.getFileHeader()
       ? this.getFileHeader()?.dataOffsetBytes || 0
       : 0;
-    const stream = fs.createReadStream(this.filePath, { start });
+
+    // Apply the patch if there is one
+    if (this.getPatch()) {
+      const patch = this.getPatch() as Patch;
+      return patch.apply(this, async (tempFile) => File
+        .createStreamFromFile(tempFile, start, callback));
+    }
+
+    return File.createStreamFromFile(this.filePath, start, callback);
+  }
+
+  static async createStreamFromFile<T>(
+    filePath: PathLike,
+    start: number,
+    callback: (stream: Readable) => (Promise<T> | T),
+  ): Promise<T> {
+    const stream = fs.createReadStream(filePath, { start });
     const result = await callback(stream);
     stream.destroy();
     return result;
@@ -183,6 +199,10 @@ export default class File {
     );
   }
 
+  async withExtractedFilePath(extractedNameWithoutExt: string): Promise<File> {
+    return this.withFileName(extractedNameWithoutExt);
+  }
+
   async withFileHeader(fileHeader: FileHeader): Promise<File> {
     // Make sure the file actually has the header magic string
     const hasHeader = await this.extractToStream(
@@ -197,7 +217,7 @@ export default class File {
       this.getSize(),
       this.getCrc32(),
       fileHeader,
-      this.getPatch(),
+      undefined, // don't allow a patch
     );
   }
 
@@ -210,7 +230,7 @@ export default class File {
       this.getFilePath(),
       this.getSize(),
       this.getCrc32(),
-      this.getFileHeader(),
+      undefined, // don't allow a file header
       patch,
     );
   }

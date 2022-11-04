@@ -10,6 +10,11 @@ export default class Rar extends Archive {
 
   private static readonly EXTRACT_MUTEX = new Mutex();
 
+  // eslint-disable-next-line class-methods-use-this
+  protected new(filePath: string): Archive {
+    return new Rar(filePath);
+  }
+
   async getArchiveEntries(): Promise<ArchiveEntry<Rar>[]> {
     const rar = await unrar.createExtractorFromFile({
       filepath: this.getFilePath(),
