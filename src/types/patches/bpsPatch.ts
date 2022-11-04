@@ -149,7 +149,9 @@ export default class BPSPatch extends Patch {
 
       await targetFile.close();
 
-      return callback(targetFilePath);
+      const result = await callback(targetFilePath);
+      await fsPoly.rm(targetFilePath);
+      return result;
     });
   }
 }

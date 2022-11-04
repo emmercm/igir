@@ -57,7 +57,9 @@ export default class FsPoly {
       if (attempt >= 3) {
         throw e;
       }
-      await new Promise((resolve) => { setTimeout(resolve, 2 ** attempt * 1000); });
+      await new Promise((resolve) => {
+        setTimeout(resolve, Math.random() * (2 ** attempt * 1000));
+      });
       await this.rm(newPath, { force: true });
       await this.renameOverwrite(oldPath, newPath, attempt + 1);
     }

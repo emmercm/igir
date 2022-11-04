@@ -1,4 +1,4 @@
-import fs, { promises as fsPromises } from 'fs';
+import fs from 'fs';
 import path from 'path';
 import { Readable } from 'stream';
 
@@ -83,12 +83,18 @@ export default class ArchiveEntry<A extends Archive> extends File {
     return ArchiveEntry.extractEntryToFile(this.getArchive(), this.getEntryPath(), callback);
   }
 
+  async extractToTempFile<T>(
+    callback: (localFile: string) => (T | Promise<T>),
+  ): Promise<T> {
+    return ArchiveEntry.extractEntryToFile(this.getArchive(), this.getEntryPath(), callback);
+  }
+
   private static async extractEntryToFile<T>(
     archive: Archive,
     entryPath: string,
     callback: (localFile: string) => (T | Promise<T>),
   ): Promise<T> {
-    const tempDir = await fsPromises.mkdtemp(Constants.GLOBAL_TEMP_DIR);
+    const tempDir = fsPoly.mkdtempSync(Constants.GLOBAL_TEMP_DIR);
     try {
       return await archive.extractEntryToFile(entryPath, tempDir, callback);
     } finally {
@@ -115,7 +121,7 @@ export default class ArchiveEntry<A extends Archive> extends File {
       });
     }
 
-    const tempDir = await fsPromises.mkdtemp(Constants.GLOBAL_TEMP_DIR);
+    const tempDir = fsPoly.mkdtempSync(Constants.GLOBAL_TEMP_DIR);
     try {
       return await this.archive.extractEntryToStream(this.getEntryPath(), tempDir, callback);
     } finally {
