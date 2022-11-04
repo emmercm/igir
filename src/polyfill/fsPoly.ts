@@ -29,6 +29,7 @@ export default class FsPoly {
     }
   }
 
+  // TODO(cemmer): make an async version of this function
   static mkdtempSync(prefix = os.tmpdir()): string {
     // mkdtempSync takes a string prefix rather than a file path, so we need to make sure the
     //  prefix ends with the path separator in order for it to become a parent directory.

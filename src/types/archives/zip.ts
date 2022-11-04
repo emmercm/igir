@@ -171,6 +171,7 @@ export default class Zip extends Archive {
 
             // Leave the stream open until we're done writing the zip
             await zipClosed;
+            console.log(`${tempZipFile}: closed`);
           }, options.canRemoveHeader(path.extname(inputFile.getExtractedFilePath()))));
 
       // Wait until all archive entries have been enqueued
