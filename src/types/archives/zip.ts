@@ -134,6 +134,8 @@ export default class Zip extends Archive {
     options: Options,
     inputToOutput: Map<File, ArchiveEntry<Zip>>,
   ): Promise<void> {
+    console.log(`${this.getFilePath()}: ${inputToOutput}`);
+
     // Pipe the zip contents to disk, using an intermediate temp file because we may be trying to
     // overwrite an input zip file
     const tempZipFile = fsPoly.mktempSync(`${this.getFilePath()}.zip-out`);
