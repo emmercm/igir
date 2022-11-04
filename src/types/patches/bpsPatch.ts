@@ -150,6 +150,7 @@ export default class BPSPatch extends Patch {
       }
 
       await targetFile.close();
+      await sourceFile.close();
 
       console.log(`bps pre-callback: ${targetFilePath}`);
       const result = await callback(targetFilePath);
