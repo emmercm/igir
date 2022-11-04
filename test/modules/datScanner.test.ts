@@ -1,11 +1,8 @@
-import { jest } from '@jest/globals';
 import os from 'os';
 
 import DATScanner from '../../src/modules/datScanner.js';
 import Options from '../../src/types/options.js';
 import ProgressBarFake from '../console/progressBarFake.js';
-
-jest.setTimeout(10_000);
 
 function createDatScanner(dat: string[]): DATScanner {
   return new DATScanner(new Options({ dat }), new ProgressBarFake());

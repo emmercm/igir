@@ -22,12 +22,11 @@ interface BPSRecord {
 
 /**
  * @link https://github.com/blakesmith/rombp/blob/master/docs/bps_spec.md
- * @link https://github.com/marcrobledo/RomPatcher.js/blob/master/js/formats/bps.js
  */
 export default class BPSPatch extends Patch {
   private readonly records: BPSRecord[] = [];
 
-  static async patchFrom(file: File): Promise<Patch> {
+  static async patchFrom(file: File): Promise<BPSPatch> {
     let crcBefore = '';
     let crcAfter = '';
     let targetSize = 0;
@@ -125,7 +124,7 @@ export default class BPSPatch extends Patch {
 
       const targetFilePath = fsPoly.mktempSync(path.join(
         Constants.GLOBAL_TEMP_DIR,
-        path.basename(sourceFilePath),
+        `${path.basename(sourceFilePath)}.bps`,
       ));
       const targetFile = await FilePoly.fileOfSize(targetFilePath, 'r+', this.getSizeAfter() as number);
       let targetRelativeOffset = 0;
@@ -148,8 +147,11 @@ export default class BPSPatch extends Patch {
       }
 
       await targetFile.close();
+      await sourceFile.close();
 
-      return callback(targetFilePath);
+      const result = await callback(targetFilePath);
+      await fsPoly.rm(targetFilePath);
+      return result;
     });
   }
 }

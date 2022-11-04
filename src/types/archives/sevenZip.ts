@@ -29,6 +29,11 @@ export default class SevenZip extends Archive {
 
   private static readonly LIST_MUTEX = new Mutex();
 
+  // eslint-disable-next-line class-methods-use-this
+  protected new(filePath: string): Archive {
+    return new SevenZip(filePath);
+  }
+
   async getArchiveEntries(): Promise<ArchiveEntry<SevenZip>[]> {
     /**
      * WARN(cemmer): {@link _7z.list} seems to have issues with any amount of real concurrency,

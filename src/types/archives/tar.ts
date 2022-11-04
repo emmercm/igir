@@ -12,6 +12,11 @@ export default class Tar extends Archive {
     '.tar.gz', '.tgz',
   ];
 
+  // eslint-disable-next-line class-methods-use-this
+  protected new(filePath: string): Archive {
+    return new Tar(filePath);
+  }
+
   async getArchiveEntries(): Promise<ArchiveEntry<Tar>[]> {
     const archiveEntryPromises: Promise<ArchiveEntry<Tar>>[] = [];
 

@@ -18,9 +18,20 @@ export default abstract class Patch {
     this.sizeAfter = sizeAfter;
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  protected static patchFrom(file: File): Patch | Promise<Patch> {
-    throw new Error('You should not have gotten here!');
+  protected static getCrcFromPath(filePath: string): string {
+    const { name } = path.parse(filePath);
+
+    const beforeMatches = name.match(/^([a-f0-9]{8})[^a-z0-9]/i);
+    if (beforeMatches && beforeMatches?.length >= 2) {
+      return beforeMatches[1].toLowerCase();
+    }
+
+    const afterMatches = name.match(/[^a-z0-9]([a-f0-9]{8})$/i);
+    if (afterMatches && afterMatches?.length >= 2) {
+      return afterMatches[1].toLowerCase();
+    }
+
+    throw new Error(`Couldn't parse base file CRC for patch: ${filePath}`);
   }
 
   getFile(): File {
