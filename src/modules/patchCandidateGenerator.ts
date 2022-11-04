@@ -1,4 +1,5 @@
 import ProgressBar, { Symbols } from '../console/progressBar.js';
+import FileFactory from '../types/archives/fileFactory.js';
 import DAT from '../types/logiqx/dat.js';
 import Parent from '../types/logiqx/parent.js';
 import Patch from '../types/patches/patch.js';
@@ -76,12 +77,20 @@ export default class PatchCandidateGenerator {
         .map(async (romWithFiles) => {
           // Apply the new filename
           const rom = romWithFiles.getRom();
-          const inputFile = romWithFiles.getInputFile();
+          let inputFile = romWithFiles.getInputFile();
           let outputFile = await romWithFiles.getOutputFile().withFileName(patchedRomName);
 
           // Apply the patch
           if (patch.getCrcBefore() === romWithFiles.getRom().getCrc32()) {
-            outputFile = await outputFile.withPatch(patch);
+            inputFile = await inputFile.withPatch(patch);
+            outputFile = await outputFile.withFileName(patchedRomName);
+
+            if (FileFactory.isArchive(outputFile.getFilePath())
+              && unpatchedReleaseCandidate.getRomsWithFiles().length === 1
+            ) {
+              // Output is an archive of a single file, the entry path should also change
+              outputFile = await outputFile.withExtractedFilePath(patchedRomName);
+            }
           }
 
           return new ROMWithFiles(rom, inputFile, outputFile);
