@@ -174,6 +174,7 @@ export default class Zip extends Archive {
           }, options.canRemoveHeader(path.extname(inputFile.getExtractedFilePath()))));
 
       // Wait until all archive entries have been enqueued
+      console.log(`${tempZipFile}: waiting for all stream additions`);
       await new Promise<void>((resolve) => {
         const interval = setInterval(() => {
           if (zipEntriesQueued === inputToOutput.size) {
@@ -184,12 +185,15 @@ export default class Zip extends Archive {
       });
 
       // Start writing the zip file
+      console.log(`${tempZipFile}: finalizing`);
       await zipFile.finalize();
 
       // Wait until we've closed the input streams
+      console.log(`${tempZipFile}: waiting for all streams to close`);
       await Promise.all(inputStreams);
       writeStream.destroy();
 
+      console.log(`${tempZipFile}: renaming`);
       await fsPoly.renameOverwrite(tempZipFile, this.getFilePath());
     } catch (e) {
       console.log(`archiveEntries: ${e}`);
