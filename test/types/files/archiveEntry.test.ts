@@ -1,4 +1,3 @@
-import { jest } from '@jest/globals';
 import fs from 'fs';
 import path from 'path';
 
@@ -13,8 +12,6 @@ import ArchiveEntry from '../../../src/types/files/archiveEntry.js';
 import FileHeader from '../../../src/types/files/fileHeader.js';
 import Options from '../../../src/types/options.js';
 import ProgressBarFake from '../../console/progressBarFake.js';
-
-jest.setTimeout(10_000);
 
 describe('getEntryPath', () => {
   test.each([

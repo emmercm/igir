@@ -1,4 +1,3 @@
-import { jest } from '@jest/globals';
 import { promises as fsPromises, Stats } from 'fs';
 import os from 'os';
 import path from 'path';
@@ -23,8 +22,6 @@ import Options, { OptionsProps } from '../../src/types/options.js';
 import Patch from '../../src/types/patches/patch.js';
 import ReleaseCandidate from '../../src/types/releaseCandidate.js';
 import ProgressBarFake from '../console/progressBarFake.js';
-
-jest.setTimeout(10_000);
 
 async function copyFixturesToTemp(
   callback: (input: string, output: string) => void | Promise<void>,
