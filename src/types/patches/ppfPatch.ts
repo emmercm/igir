@@ -1,5 +1,3 @@
-import path from 'path';
-
 import FilePoly from '../../polyfill/filePoly.js';
 import File from '../files/file.js';
 import Patch from './patch.js';
@@ -21,12 +19,6 @@ export default class PPFPatch extends Patch {
     return new PPFPatch(file, crcBefore);
   }
 
-  getRomName(): string {
-    return path.parse(this.getFile().getExtractedFilePath()).name
-      .replace(new RegExp(this.getCrcBefore(), 'g'), '')
-      .trim();
-  }
-
   private async parsePatch(): Promise<void> {
     if (this.records.length) {
       return;
@@ -39,30 +31,30 @@ export default class PPFPatch extends Patch {
       if (!header.startsWith('PPF')) {
         throw new Error(`PPF patch header is invalid: ${this.getFile().toString()}`);
       }
-      const encoding = (await fp.readNext(1))[0];
+      const encoding = (await fp.readNext(1)).readUInt8();
       const version = encoding + 1;
       if (!header.endsWith(`${version}0`)) {
         throw new Error(`PPF patch header is invalid: ${this.getFile().toString()}`);
       }
 
-      await fp.readNext(50); // description
+      fp.skipNext(50); // description
 
       let blockCheckEnabled = false;
       let undoDataAvailable = false;
       if (version === 2) {
-        await fp.readNext(4); // size of base file
+        fp.skipNext(4); // size of base file
         blockCheckEnabled = true;
       } else if (version === 3) {
-        await fp.readNext(1); // image type
+        fp.skipNext(1); // image type
         blockCheckEnabled = (await fp.readNext(1)).readUInt8() === 0x01;
         undoDataAvailable = (await fp.readNext(1)).readUInt8() === 0x01;
-        await fp.readNext(1); // dummy
+        fp.skipNext(1); // dummy
       } else {
         throw new Error(`PPF v${version} isn't supported: ${this.getFile().toString()}`);
       }
 
       if (blockCheckEnabled) {
-        await fp.readNext(1024);
+        fp.skipNext(1024);
       }
 
       /* eslint-disable no-constant-condition, no-await-in-loop */
@@ -73,7 +65,7 @@ export default class PPFPatch extends Patch {
           break;
         }
         if (peek === '@BEGIN_FILE_ID.DIZ') {
-          // TODO(cemmer): handle
+          // TODO(cemmer): handle?
           break;
         }
 
@@ -88,7 +80,7 @@ export default class PPFPatch extends Patch {
         const bytesToChange = (await fp.readNext(1)).readUInt8();
         const data = await fp.readNext(bytesToChange);
         if (undoDataAvailable) {
-          await fp.readNext(bytesToChange);
+          fp.skipNext(bytesToChange);
         }
 
         this.records.push({ offset, data });
@@ -101,7 +93,7 @@ export default class PPFPatch extends Patch {
   async apply<T>(file: File, callback: (tempFile: string) => (Promise<T> | T)): Promise<T> {
     await this.parsePatch();
 
-    return file.extractToFile(async (tempFile) => {
+    return file.extractToTempFile(async (tempFile) => {
       const fp = await FilePoly.fileFrom(tempFile, 'r+');
 
       /* eslint-disable no-await-in-loop */

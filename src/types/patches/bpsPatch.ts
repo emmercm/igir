@@ -34,9 +34,9 @@ export default class BPSPatch extends Patch {
     await file.extractToFile(async (patchFile) => {
       const fp = await FilePoly.fileFrom(patchFile, 'r');
 
-      fp.seek(4);
-      await BPSPatch.readNumber(fp); // source size
-      targetSize = await BPSPatch.readNumber(fp); // target size
+      fp.seek(4); // header
+      await Patch.readVariableLengthNumber(fp); // source size
+      targetSize = await Patch.readVariableLengthNumber(fp); // target size
 
       fp.seek(fp.getSize() - 12);
       crcBefore = (await fp.readNext(4)).reverse().toString('hex');
@@ -61,20 +61,20 @@ export default class BPSPatch extends Patch {
       const fp = await FilePoly.fileFrom(patchFile, 'r');
 
       // Skip header info
-      const header = await fp.readNext(4);
-      if (header.toString() !== 'BPS1') {
+      const header = (await fp.readNext(4)).toString();
+      if (header !== 'BPS1') {
         throw new Error(`BPS patch header is invalid: ${this.getFile().toString()}`);
       }
-      await BPSPatch.readNumber(fp); // source size
-      await BPSPatch.readNumber(fp); // target size
-      const metadataSize = await BPSPatch.readNumber(fp);
+      await Patch.readVariableLengthNumber(fp); // source size
+      await Patch.readVariableLengthNumber(fp); // target size
+      const metadataSize = await Patch.readVariableLengthNumber(fp);
       if (metadataSize) {
-        await fp.readNext(metadataSize);
+        fp.skipNext(metadataSize);
       }
 
-      /* eslint-disable no-constant-condition, no-await-in-loop, no-bitwise */
+      /* eslint-disable no-await-in-loop, no-bitwise */
       while (fp.getPosition() < fp.getSize() - 12) {
-        const blockHeader = await BPSPatch.readNumber(fp);
+        const blockHeader = await Patch.readVariableLengthNumber(fp);
         const action = blockHeader & 3;
         const length = (blockHeader >> 2) + 1;
 
@@ -82,7 +82,7 @@ export default class BPSPatch extends Patch {
           const data = await fp.readNext(length);
           this.records.push({ action, length, data });
         } else if (action === BPSAction.SOURCE_COPY || action === BPSAction.TARGET_COPY) {
-          const offset = await BPSPatch.readNumber(fp);
+          const offset = await Patch.readVariableLengthNumber(fp);
           const relativeOffset = (offset & 1 ? -1 : +1) * (offset >> 1);
           this.records.push({ action, length, relativeOffset });
         } else {
@@ -94,41 +94,21 @@ export default class BPSPatch extends Patch {
     });
   }
 
-  private static async readNumber(fp: FilePoly): Promise<number> {
-    let data = 0;
-    let shift = 1;
-
-    /* eslint-disable no-constant-condition, no-await-in-loop, no-bitwise */
-    while (true) {
-      const x = (await fp.readNext(1))[0];
-      if (x === undefined) { // prevent EOF infinite loop
-        break;
-      }
-      data += (x & 0x7f) * shift; // drop the left-most bit
-      if (x & 0x80) { // left-most bit is telling us this is the end
-        break;
-      }
-      shift <<= 7;
-      data += shift;
-    }
-
-    return data;
-  }
-
   async apply<T>(file: File, callback: (tempFile: string) => (Promise<T> | T)): Promise<T> {
     await this.parsePatch();
 
     return file.extractToFile(async (sourceFilePath) => {
       const sourceFile = await FilePoly.fileFrom(sourceFilePath, 'r');
-      let sourceRelativeOffset = 0;
 
       const targetFilePath = fsPoly.mktempSync(path.join(
         Constants.GLOBAL_TEMP_DIR,
         `${path.basename(sourceFilePath)}.bps`,
       ));
       const targetFile = await FilePoly.fileOfSize(targetFilePath, 'r+', this.getSizeAfter() as number);
-      let targetRelativeOffset = 0;
 
+      let sourceRelativeOffset = 0;
+      let targetRelativeOffset = 0;
+      /* eslint-disable no-await-in-loop */
       for (let i = 0; i < this.records.length; i += 1) {
         const record = this.records[i];
         if (record.action === BPSAction.SOURCE_READ) {

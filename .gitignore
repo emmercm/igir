@@ -141,7 +141,10 @@ build/
 
 # ROM patches
 *.bps
+*.bsp
 *.ips
+*.ups
+*.xdelta
 
 # Always commit fixtures
 !test/fixtures/dats/*

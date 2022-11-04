@@ -19,8 +19,14 @@ export default class PatchScanner extends Scanner {
       patchFilePaths,
       Constants.PATCH_SCANNER_THREADS,
     );
-    const patches = await Promise.all(files
-      .map(async (file) => PatchFactory.patchFrom(file)));
+    const patches = (await Promise.all(files.map(async (file) => {
+      try {
+        return await PatchFactory.patchFrom(file);
+      } catch (e) {
+        await this.progressBar.logError(`Failed to parse patch ${file.toString()} : ${e}`);
+        return undefined;
+      }
+    }))).filter((file) => file) as Patch[];
 
     await this.progressBar.doneItems(patches.length, 'unique patch', 'found');
 

@@ -68,6 +68,10 @@ export default class FilePoly {
     this.readPosition = position;
   }
 
+  skipNext(size: number): void {
+    this.readPosition += size;
+  }
+
   async peekNext(size: number): Promise<Buffer> {
     return this.readAt(this.readPosition, size);
   }
