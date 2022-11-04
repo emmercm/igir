@@ -11,30 +11,13 @@ interface IPSRecord {
 
 /**
  * @link https://zerosoft.zophar.net/ips.php
- * @link https://github.com/marcrobledo/RomPatcher.js/blob/master/js/formats/ips.js
  */
 export default class IPSPatch extends Patch {
   private readonly records: IPSRecord[] = [];
 
-  static patchFrom(file: File): Patch {
-    const crcBefore = IPSPatch.getCrcFromPath(file.getExtractedFilePath());
+  static patchFrom(file: File): IPSPatch {
+    const crcBefore = Patch.getCrcFromPath(file.getExtractedFilePath());
     return new IPSPatch(file, crcBefore);
-  }
-
-  private static getCrcFromPath(filePath: string): string {
-    const { name } = path.parse(filePath);
-
-    const beforeMatches = name.match(/^([a-f0-9]{8})[^a-z0-9]/i);
-    if (beforeMatches && beforeMatches?.length >= 2) {
-      return beforeMatches[1].toLowerCase();
-    }
-
-    const afterMatches = name.match(/[^a-z0-9]([a-f0-9]{8})$/i);
-    if (afterMatches && afterMatches?.length >= 2) {
-      return afterMatches[1].toLowerCase();
-    }
-
-    throw new Error(`Couldn't parse base file CRC for patch: ${filePath}`);
   }
 
   getRomName(): string {
@@ -51,8 +34,8 @@ export default class IPSPatch extends Patch {
     await this.getFile().extractToFile(async (patchFile) => {
       const fp = await FilePoly.fileFrom(patchFile, 'r');
 
-      const header = await fp.readNext(5);
-      if (header.toString() !== 'PATCH') {
+      const header = (await fp.readNext(5)).toString();
+      if (header !== 'PATCH') {
         throw new Error(`IPS patch header is invalid: ${this.getFile().toString()}`);
       }
 

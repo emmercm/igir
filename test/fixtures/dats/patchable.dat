@@ -17,4 +17,9 @@
     <rom name="Best.rom" size="25" crc="1e3d78cf" md5="5212c8404bf1de024f9fb62289b68474" sha1="727d8db3dbfb5960057cb62e8b47d0e2842a4d55" status="verified"/>
     <!-- After: size="26" crc="6ff9ef96" -->
   </game>
+  <game name="C01173E">
+    <description>C01173E</description>
+    <rom name="C01173E.rom" size="1025" crc="dfaebe28" md5="c9e35aafaec606fcb16763200ce35b0f" sha1="2f185826482db2878663c0cd393d62d0c10814ae" status="verified"/>
+    <!-- After: size="1025" crc="95284ab4" -->
+  </game>
 </datafile>

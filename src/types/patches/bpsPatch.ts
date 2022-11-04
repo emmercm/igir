@@ -22,12 +22,11 @@ interface BPSRecord {
 
 /**
  * @link https://github.com/blakesmith/rombp/blob/master/docs/bps_spec.md
- * @link https://github.com/marcrobledo/RomPatcher.js/blob/master/js/formats/bps.js
  */
 export default class BPSPatch extends Patch {
   private readonly records: BPSRecord[] = [];
 
-  static async patchFrom(file: File): Promise<Patch> {
+  static async patchFrom(file: File): Promise<BPSPatch> {
     let crcBefore = '';
     let crcAfter = '';
     let targetSize = 0;

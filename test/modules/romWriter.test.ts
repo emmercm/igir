@@ -374,7 +374,7 @@ describe('zip', () => {
   test.each([
     [
       '**/!(*headered)/*',
-      ['before.zip', 'best.zip', 'empty.zip', 'fizzbuzz.zip', 'foobar.zip', 'loremipsum.zip', 'one.zip', 'three.zip', 'two.zip', 'unknown.zip'],
+      ['C01173E.zip', 'before.zip', 'best.zip', 'empty.zip', 'fizzbuzz.zip', 'foobar.zip', 'loremipsum.zip', 'one.zip', 'three.zip', 'two.zip', 'unknown.zip'],
     ],
     [
       '7z/*',
@@ -418,8 +418,8 @@ describe('zip', () => {
   test.each([
     [
       '**/!(*headered)/*',
-      ['before.zip', 'best.zip', 'empty.zip', 'fizzbuzz.zip', 'foobar.zip', 'loremipsum.zip', 'one.zip', 'three.zip', 'two.zip', 'unknown.zip'],
-      ['patchable/before.rom', 'patchable/best.gz', 'raw/empty.rom', 'raw/fizzbuzz.nes', 'raw/foobar.lnx', 'raw/loremipsum.rom', 'raw/one.rom', 'raw/three.rom', 'raw/two.rom', 'raw/unknown.rom'],
+      ['C01173E.zip', 'before.zip', 'best.zip', 'empty.zip', 'fizzbuzz.zip', 'foobar.zip', 'loremipsum.zip', 'one.zip', 'three.zip', 'two.zip', 'unknown.zip'],
+      ['patchable/C01173E.rom', 'patchable/before.rom', 'patchable/best.gz', 'raw/empty.rom', 'raw/fizzbuzz.nes', 'raw/foobar.lnx', 'raw/loremipsum.rom', 'raw/one.rom', 'raw/three.rom', 'raw/two.rom', 'raw/unknown.rom'],
     ],
     [
       '7z/*',
@@ -651,7 +651,7 @@ describe('raw', () => {
   test.each([
     [
       '**/!(*headered)/*',
-      ['before.rom', 'best.rom', 'empty.rom', 'fizzbuzz.nes', 'foobar.lnx', 'loremipsum.rom', 'one.rom', 'three.rom', 'two.rom', 'unknown.rom'],
+      ['C01173E.rom', 'before.rom', 'best.rom', 'empty.rom', 'fizzbuzz.nes', 'foobar.lnx', 'loremipsum.rom', 'one.rom', 'three.rom', 'two.rom', 'unknown.rom'],
     ],
     [
       '7z/*',
@@ -695,8 +695,8 @@ describe('raw', () => {
   test.each([
     [
       '**/!(*headered)/*',
-      ['before.rom', 'best.rom', 'empty.rom', 'fizzbuzz.nes', 'foobar.lnx', 'loremipsum.rom', 'one.rom', 'three.rom', 'two.rom', 'unknown.rom'],
-      ['patchable/before.rom', 'patchable/best.gz', 'raw/empty.rom', 'raw/fizzbuzz.nes', 'raw/foobar.lnx', 'raw/loremipsum.rom', 'raw/one.rom', 'raw/three.rom', 'raw/two.rom', 'raw/unknown.rom'],
+      ['C01173E.rom', 'before.rom', 'best.rom', 'empty.rom', 'fizzbuzz.nes', 'foobar.lnx', 'loremipsum.rom', 'one.rom', 'three.rom', 'two.rom', 'unknown.rom'],
+      ['patchable/C01173E.rom', 'patchable/before.rom', 'patchable/best.gz', 'raw/empty.rom', 'raw/fizzbuzz.nes', 'raw/foobar.lnx', 'raw/loremipsum.rom', 'raw/one.rom', 'raw/three.rom', 'raw/two.rom', 'raw/unknown.rom'],
     ],
     [
       '7z/*',
