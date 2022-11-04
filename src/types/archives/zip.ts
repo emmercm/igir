@@ -145,11 +145,15 @@ export default class Zip extends Archive {
     const zipClosed = new Promise<void>((resolve, reject) => {
       writeStream.on('close', () => resolve());
       writeStream.on('warning', (err) => {
+        console.log(`zip warning: ${err}`);
         if (err.code !== 'ENOENT') {
           reject(err);
         }
       });
-      writeStream.on('error', (err) => reject(err));
+      writeStream.on('error', (err) => {
+        console.log(`zip error: ${err}`);
+        reject(err);
+      });
     });
 
     zipFile.pipe(writeStream);
@@ -181,6 +185,7 @@ export default class Zip extends Archive {
 
     // Wait until we've closed the input streams
     await Promise.all(inputStreams);
+    writeStream.destroy();
 
     await fsPoly.renameOverwrite(tempZipFile, this.getFilePath());
   }
