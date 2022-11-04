@@ -133,7 +133,7 @@ export default class Zip extends Archive {
 
     // Pipe the zip contents to disk, using an intermediate temp file because we may be trying to
     // overwrite an input zip file
-    const tempZipFile = fsPoly.mktempSync(this.getFilePath());
+    const tempZipFile = fsPoly.mktempSync(`${this.getFilePath()}.zip-out`);
     const writeStream = fs.createWriteStream(tempZipFile);
     zipFile.outputStream.pipe(writeStream);
 

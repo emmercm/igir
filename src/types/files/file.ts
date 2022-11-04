@@ -148,7 +148,7 @@ export default class File {
   ): Promise<T> {
     const temp = fsPoly.mktempSync(path.join(
       Constants.GLOBAL_TEMP_DIR,
-      path.basename(this.getFilePath()),
+      `${path.basename(this.getFilePath())}.temp`,
     ));
     await fsPromises.copyFile(this.getFilePath(), temp);
     const result = await callback(temp);
