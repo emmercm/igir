@@ -1,4 +1,3 @@
-import { jest } from '@jest/globals';
 import path from 'path';
 
 import Constants from '../../src/constants.js';
@@ -7,8 +6,6 @@ import fsPoly from '../../src/polyfill/fsPoly.js';
 import File from '../../src/types/files/file.js';
 import Options from '../../src/types/options.js';
 import ProgressBarFake from '../console/progressBarFake.js';
-
-jest.setTimeout(10_000);
 
 const ROM_FIXTURES_DIR = path.join('test', 'fixtures', 'roms');
 

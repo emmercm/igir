@@ -3,6 +3,9 @@ import path from 'path';
 const jestConfig = {
   testEnvironment: 'node',
 
+  // Most tests are I/O-bound, increase the test timeout globally
+  testTimeout: 10_000,
+
   // BEGIN https://kulshekhar.github.io/ts-jest/docs/guides/esm-support
   preset: 'ts-jest/presets/default-esm-legacy',
   transform: {
