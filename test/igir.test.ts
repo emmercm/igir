@@ -69,6 +69,7 @@ describe('with explicit dats', () => {
       [path.join('One', 'One Three', 'Three.rom'), 'ff46c5d8'],
       [path.join('Patchable', 'Before.rom'), '0361b321'],
       [path.join('Patchable', 'Best.rom'), '1e3d78cf'],
+      [path.join('Patchable', 'C01173E.rom'), 'dfaebe28'],
     ]);
   });
 
@@ -84,6 +85,7 @@ describe('with explicit dats', () => {
       [`${path.join('One', 'One Three.zip')}|Three.rom`, 'ff46c5d8'],
       [`${path.join('Patchable', 'Before.zip')}|Before.rom`, '0361b321'],
       [`${path.join('Patchable', 'Best.zip')}|Best.rom`, '1e3d78cf'],
+      [`${path.join('Patchable', 'C01173E.zip')}|C01173E.rom`, 'dfaebe28'],
     ]);
   });
 
@@ -99,6 +101,7 @@ describe('with explicit dats', () => {
       [path.join('One', 'One Three', 'Three.rom'), 'ff46c5d8'],
       [path.join('Patchable', 'Before.rom'), '0361b321'],
       [path.join('Patchable', 'Best.rom'), '1e3d78cf'],
+      [path.join('Patchable', 'C01173E.rom'), 'dfaebe28'],
     ]);
   });
 
@@ -124,6 +127,7 @@ describe('with inferred dats', () => {
       ['allpads.nes', '9180a163'],
       ['before.rom', '0361b321'],
       ['best.rom', '1e3d78cf'],
+      ['C01173E.rom', 'dfaebe28'],
       ['color_test.nintendoentertainmentsystem', 'c9c1b7aa'],
       ['diagnostic_test_cartridge.a78', 'f6cc9b1c'],
       ['empty.rom', '00000000'],
@@ -151,6 +155,7 @@ describe('with inferred dats', () => {
       ['allpads.zip|allpads.nes', '9180a163'],
       ['before.zip|before.rom', '0361b321'],
       ['best.zip|best.rom', '1e3d78cf'],
+      ['C01173E.zip|C01173E.rom', 'dfaebe28'],
       ['color_test.zip|color_test.nintendoentertainmentsystem', 'c9c1b7aa'],
       ['diagnostic_test_cartridge.zip|diagnostic_test_cartridge.a78', 'f6cc9b1c'],
       ['empty.zip|empty.rom', '00000000'],

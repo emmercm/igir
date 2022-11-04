@@ -105,6 +105,6 @@ export default class PPFPatch extends Patch {
       await fp.close();
 
       return callback(tempFile);
-    }, true);
+    });
   }
 }
