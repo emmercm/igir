@@ -134,71 +134,54 @@ export default class Zip extends Archive {
     options: Options,
     inputToOutput: Map<File, ArchiveEntry<Zip>>,
   ): Promise<void> {
-    try {
-      // Pipe the zip contents to disk, using an intermediate temp file because we may be trying to
-      // overwrite an input zip file
-      const tempZipFile = fsPoly.mktempSync(`${this.getFilePath()}.zip-out`);
-      console.log(`zip: ${tempZipFile} -> ${this.getFilePath()}`);
-      const writeStream = fs.createWriteStream(tempZipFile);
+    // Pipe the zip contents to disk, using an intermediate temp file because we may be trying to
+    // overwrite an input zip file
+    const tempZipFile = fsPoly.mktempSync(`${this.getFilePath()}.zip-out`);
+    const writeStream = fs.createWriteStream(tempZipFile);
 
-      const zipFile = archiver('zip', { zlib: { level: 9 } });
+    const zipFile = archiver('zip', { zlib: { level: 9 } });
 
-      // Promise that resolves when we're done writing the zip
-      const zipClosed = new Promise<void>((resolve, reject) => {
-        writeStream.on('close', () => resolve());
-        writeStream.on('warning', (err) => {
-          console.log(`zip warning: ${err}`);
-          if (err.code !== 'ENOENT') {
-            reject(err);
-          }
-        });
-        writeStream.on('error', (err) => {
-          console.log(`zip error: ${err}`);
+    // Promise that resolves when we're done writing the zip
+    const zipClosed = new Promise<void>((resolve, reject) => {
+      writeStream.on('close', () => resolve());
+      writeStream.on('warning', (err) => {
+        if (err.code !== 'ENOENT') {
           reject(err);
-        });
+        }
       });
+      writeStream.on('error', (err) => reject(err));
+    });
 
-      zipFile.pipe(writeStream);
+    zipFile.pipe(writeStream);
 
-      // Enqueue all archive entries to the zip
-      let zipEntriesQueued = 0;
-      const inputStreams = [...inputToOutput.entries()]
-        .map(async ([inputFile, outputArchiveEntry]) => inputFile
-          .extractToStream(async (readStream) => {
-            console.log(`${tempZipFile}: ${inputFile.toString()}`);
-            zipFile.append(readStream, { name: outputArchiveEntry.getEntryPath() });
-            zipEntriesQueued += 1;
+    // Enqueue all archive entries to the zip
+    let zipEntriesQueued = 0;
+    const inputStreams = [...inputToOutput.entries()]
+      .map(async ([inputFile, outputArchiveEntry]) => inputFile
+        .extractToStream(async (readStream) => {
+          zipFile.append(readStream, { name: outputArchiveEntry.getEntryPath() });
+          zipEntriesQueued += 1;
 
-            // Leave the stream open until we're done writing the zip
-            await zipClosed;
-            console.log(`${tempZipFile}: closed`);
-          }, options.canRemoveHeader(path.extname(inputFile.getExtractedFilePath()))));
+          // Leave the stream open until we're done writing the zip
+          await zipClosed;
+        }, options.canRemoveHeader(path.extname(inputFile.getExtractedFilePath()))));
 
-      // Wait until all archive entries have been enqueued
-      console.log(`${tempZipFile}: waiting for all stream additions`);
-      await new Promise<void>((resolve) => {
-        const interval = setInterval(() => {
-          if (zipEntriesQueued === inputToOutput.size) {
-            clearInterval(interval);
-            resolve();
-          }
-        });
+    // Wait until all archive entries have been enqueued
+    await new Promise<void>((resolve) => {
+      const interval = setInterval(() => {
+        if (zipEntriesQueued === inputToOutput.size) {
+          clearInterval(interval);
+          resolve();
+        }
       });
+    });
 
-      // Start writing the zip file
-      console.log(`${tempZipFile}: finalizing`);
-      await zipFile.finalize();
+    // Start writing the zip file
+    await zipFile.finalize();
 
-      // Wait until we've closed the input streams
-      console.log(`${tempZipFile}: waiting for all streams to close`);
-      await Promise.all(inputStreams);
-      writeStream.destroy();
+    // Wait until we've closed the input streams
+    await Promise.all(inputStreams);
 
-      console.log(`${tempZipFile}: renaming`);
-      await fsPoly.renameOverwrite(tempZipFile, this.getFilePath());
-    } catch (e) {
-      console.log(`archiveEntries: ${e instanceof Error ? (e as Error).stack : e}`);
-      throw e;
-    }
+    await fsPoly.renameOverwrite(tempZipFile, this.getFilePath());
   }
 }

@@ -52,7 +52,6 @@ export default class FsPoly {
   }
 
   static async renameOverwrite(oldPath: PathLike, newPath: PathLike, attempt = 1): Promise<void> {
-    console.log(`move: ${oldPath} -> ${newPath}`);
     try {
       await fsPromises.rename(oldPath, newPath);
     } catch (e) {
@@ -72,7 +71,6 @@ export default class FsPoly {
    * fsPromises.rm() was added in: v14.14.0
    */
   static async rm(pathLike: PathLike, options: RmOptions = {}): Promise<void> {
-    console.log(`rm: ${pathLike}`);
     const optionsWithRetry = {
       maxRetries: 2,
       ...options,
@@ -160,7 +158,6 @@ export default class FsPoly {
   }
 
   static walkSync(pathLike: PathLike): string[] {
-    console.log(`walk: ${pathLike}`);
     const output = [];
 
     const files = fs.readdirSync(pathLike);

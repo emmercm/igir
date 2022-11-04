@@ -119,8 +119,6 @@ export default class BPSPatch extends Patch {
   async apply<T>(file: File, callback: (tempFile: string) => (Promise<T> | T)): Promise<T> {
     await this.parsePatch();
 
-    console.log(`bps open: ${file.toString()}`);
-
     const res = await file.extractToFile(async (sourceFilePath) => {
       const sourceFile = await FilePoly.fileFrom(sourceFilePath, 'r');
       let sourceRelativeOffset = 0;
@@ -152,15 +150,10 @@ export default class BPSPatch extends Patch {
       await targetFile.close();
       await sourceFile.close();
 
-      console.log(`bps pre-callback: ${targetFilePath}`);
       const result = await callback(targetFilePath);
-      console.log(`bps post-callback: ${targetFilePath}`);
       await fsPoly.rm(targetFilePath);
-      console.log(`bps post-rm: ${targetFilePath}`);
       return result;
     });
-
-    console.log(`bps close: ${file.toString()}`);
 
     return res;
   }

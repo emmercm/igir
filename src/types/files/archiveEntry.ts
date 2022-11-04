@@ -95,10 +95,8 @@ export default class ArchiveEntry<A extends Archive> extends File {
   ): Promise<T> {
     const tempDir = fsPoly.mkdtempSync(path.join(Constants.GLOBAL_TEMP_DIR, 'extract-file'));
     try {
-      console.log(`extracting: ${archive.getFilePath()} | ${entryPath} -> ${tempDir}`);
       return await archive.extractEntryToFile(entryPath, tempDir, callback);
     } finally {
-      console.log(`deleting extraction dir: ${tempDir}`);
       await fsPoly.rm(tempDir, { recursive: true });
     }
   }

@@ -258,7 +258,6 @@ export default class ROMWriter {
           writeStream.on('finish', () => resolve());
           writeStream.on('error', (err) => reject(err));
         });
-        writeStream.destroy();
       }, this.options.canRemoveHeader(path.extname(inputRomFile.getExtractedFilePath())));
       return true;
     } catch (e) {
