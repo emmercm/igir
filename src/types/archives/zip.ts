@@ -65,7 +65,7 @@ export default class Zip extends Archive {
 
     const localDir = path.dirname(localFile);
     if (!await fsPoly.exists(localDir)) {
-      await fsPromises.mkdir(localDir);
+      await fsPromises.mkdir(localDir, { recursive: true });
     }
 
     return this.extractEntryToStream(

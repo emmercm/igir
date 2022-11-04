@@ -159,6 +159,7 @@ export default class FsPoly {
   }
 
   static walkSync(pathLike: PathLike): string[] {
+    console.log(`walk: ${pathLike}`);
     const output = [];
 
     const files = fs.readdirSync(pathLike);
