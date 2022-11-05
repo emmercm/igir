@@ -78,7 +78,7 @@ export default class CandidateGenerator {
         }
       }
 
-      await this.progressBar.logInfo(`${dat.getName()}: Found ${releaseCandidates.length} candidates for ${parent}`);
+      await this.progressBar.logDebug(`${dat.getName()}: Found ${releaseCandidates.length} candidates for ${parent.getName()}`);
       output.set(parent, releaseCandidates);
     }
 

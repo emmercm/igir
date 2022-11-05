@@ -63,6 +63,7 @@ export default class BPSPatch extends Patch {
       // Skip header info
       const header = await fp.readNext(4);
       if (header.toString() !== 'BPS1') {
+        await fp.close();
         throw new Error(`BPS patch header is invalid: ${this.getFile().toString()}`);
       }
       await BPSPatch.readNumber(fp); // source size
