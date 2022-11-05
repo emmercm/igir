@@ -1,5 +1,3 @@
-import path from 'path';
-
 import File from '../files/file.js';
 import BPSPatch from './bpsPatch.js';
 import IPSPatch from './ipsPatch.js';

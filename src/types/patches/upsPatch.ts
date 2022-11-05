@@ -57,6 +57,7 @@ export default class UPSPatch extends Patch {
 
       const header = (await fp.readNext(4)).toString();
       if (header !== 'UPS1') {
+        await fp.close();
         throw new Error(`UPS patch header is invalid: ${this.getFile().toString()}`);
       }
       await Patch.readVariableLengthNumber(fp); // source size
