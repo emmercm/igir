@@ -100,7 +100,7 @@ export default class Logger {
     );
   }
 
-  addProgressBar(name: string, symbol: string, initialTotal = 0): ProgressBarCLI {
-    return new ProgressBarCLI(this, name, symbol, initialTotal);
+  async addProgressBar(name: string, symbol: string, initialTotal = 0): Promise<ProgressBarCLI> {
+    return ProgressBarCLI.new(this, name, symbol, initialTotal);
   }
 }
