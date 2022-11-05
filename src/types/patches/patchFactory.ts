@@ -29,16 +29,6 @@ export default class PatchFactory {
       ...BPSPatch.SUPPORTED_EXTENSIONS,
       ...IPSPatch.SUPPORTED_EXTENSIONS,
       ...PPFPatch.SUPPORTED_EXTENSIONS,
-    ]
-      .sort()
-      .filter((ext, idx, exts) => exts.indexOf(ext) === idx);
-  }
-
-  static getSupportedExtensions(): string[] {
-    return [
-      ...BPSPatch.SUPPORTED_EXTENSIONS,
-      ...IPSPatch.SUPPORTED_EXTENSIONS,
-      ...PPFPatch.SUPPORTED_EXTENSIONS,
       ...UPSPatch.SUPPORTED_EXTENSIONS,
     ]
       .sort()
