@@ -151,9 +151,11 @@ export default class File {
       `${path.basename(this.getFilePath())}.temp`,
     ));
     await fsPromises.copyFile(this.getFilePath(), temp);
-    const result = await callback(temp);
-    await fsPoly.rm(temp);
-    return result;
+    try {
+      return await callback(temp);
+    } finally {
+      await fsPoly.rm(temp);
+    }
   }
 
   async extractToStream<T>(
