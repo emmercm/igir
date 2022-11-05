@@ -151,9 +151,11 @@ export default class File {
       `${path.basename(this.getFilePath())}.temp`,
     ));
     await fsPromises.copyFile(this.getFilePath(), temp);
-    const result = await callback(temp);
-    await fsPoly.rm(temp);
-    return result;
+    try {
+      return await callback(temp);
+    } finally {
+      await fsPoly.rm(temp);
+    }
   }
 
   async extractToStream<T>(
@@ -180,9 +182,11 @@ export default class File {
     callback: (stream: Readable) => (Promise<T> | T),
   ): Promise<T> {
     const stream = fs.createReadStream(filePath, { start });
-    const result = await callback(stream);
-    stream.destroy();
-    return result;
+    try {
+      return await callback(stream);
+    } finally {
+      stream.destroy();
+    }
   }
 
   async withFileName(fileNameWithoutExt: string): Promise<File> {

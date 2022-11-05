@@ -31,12 +31,14 @@ export default class PPFPatch extends Patch {
 
       const header = (await fp.readNext(5)).toString();
       if (!header.startsWith('PPF')) {
+        await fp.close();
         throw new Error(`PPF patch header is invalid: ${this.getFile().toString()}`);
       }
       const encoding = (await fp.readNext(1)).readUInt8();
       const version = encoding + 1;
       if (!header.endsWith(`${version}0`)) {
-        throw new Error(`PPF patch header is invalid: ${this.getFile().toString()}`);
+        await fp.close();
+        throw new Error(`PPF patch header has an invalid version: ${this.getFile().toString()}`);
       }
 
       fp.skipNext(50); // description
@@ -52,6 +54,7 @@ export default class PPFPatch extends Patch {
         undoDataAvailable = (await fp.readNext(1)).readUInt8() === 0x01;
         fp.skipNext(1); // dummy
       } else {
+        await fp.close();
         throw new Error(`PPF v${version} isn't supported: ${this.getFile().toString()}`);
       }
 

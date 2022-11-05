@@ -1,3 +1,5 @@
+import path from 'path';
+
 import File from '../files/file.js';
 import BPSPatch from './bpsPatch.js';
 import IPSPatch from './ipsPatch.js';
@@ -19,7 +21,17 @@ export default class PatchFactory {
       return UPSPatch.patchFrom(file);
     }
 
-    throw new Error(`Unknown patch type: ${file.toString()}`);
+    throw new Error(`Unknown patch type: ${path.extname(filePath)}`);
+  }
+
+  static getSupportedExtensions(): string[] {
+    return [
+      ...BPSPatch.SUPPORTED_EXTENSIONS,
+      ...IPSPatch.SUPPORTED_EXTENSIONS,
+      ...PPFPatch.SUPPORTED_EXTENSIONS,
+    ]
+      .sort()
+      .filter((ext, idx, exts) => exts.indexOf(ext) === idx);
   }
 
   static getSupportedExtensions(): string[] {
