@@ -1,5 +1,5 @@
 <component name="ProjectRunConfigurationManager">
-  <configuration default="false" name="igir" type="NodeJSConfigurationType" application-parameters="copy zip report clean -d demo/No-Intro*.zip -i GB/nongoodgbx-finale -p GB/Patches/ -o demo/roms/ -D -vv" node-parameters="--loader ts-node/esm" path-to-js-file="index.ts" working-dir="$PROJECT_DIR$">
+  <configuration default="false" name="igir" type="NodeJSConfigurationType" application-parameters="copy zip report clean -d demo/dats/ -i GB/ -o demo/roms/ -D" node-parameters="--loader ts-node/esm" path-to-js-file="index.ts" working-dir="$PROJECT_DIR$">
     <method v="2" />
   </configuration>
 </component>
