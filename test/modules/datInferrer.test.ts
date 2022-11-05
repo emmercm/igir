@@ -10,7 +10,7 @@ test.each([
     [path.join('test', 'fixtures', 'roms')]: 5,
     [path.join('test', 'fixtures', 'roms', '7z')]: 5,
     [path.join('test', 'fixtures', 'roms', 'headered')]: 6,
-    [path.join('test', 'fixtures', 'roms', 'patchable')]: 3,
+    [path.join('test', 'fixtures', 'roms', 'patchable')]: 4,
     [path.join('test', 'fixtures', 'roms', 'rar')]: 5,
     [path.join('test', 'fixtures', 'roms', 'raw')]: 8,
     [path.join('test', 'fixtures', 'roms', 'tar')]: 5,

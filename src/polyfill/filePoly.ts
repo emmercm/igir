@@ -112,7 +112,9 @@ export default class FilePoly {
   }
 
   async write(buffer: Buffer): Promise<number> {
-    return (await util.promisify(fs.write)(this.fd, buffer)).bytesWritten;
+    const bytesWritten = await this.writeAt(buffer, this.readPosition);
+    this.readPosition += buffer.length;
+    return bytesWritten;
   }
 
   async writeAt(buffer: Buffer, offset: number): Promise<number> {
