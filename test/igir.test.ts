@@ -70,6 +70,7 @@ describe('with explicit dats', () => {
       [path.join('Patchable', 'Before.rom'), '0361b321'],
       [path.join('Patchable', 'Best.rom'), '1e3d78cf'],
       [path.join('Patchable', 'C01173E.rom'), 'dfaebe28'],
+      [path.join('Patchable', 'KDULVQN.rom'), 'b1c303e4'],
     ]);
   });
 
@@ -87,6 +88,7 @@ describe('with explicit dats', () => {
       [`${path.join('Patchable', 'Before.zip')}|Before.rom`, '0361b321'],
       [`${path.join('Patchable', 'Best.zip')}|Best.rom`, '1e3d78cf'],
       [`${path.join('Patchable', 'C01173E.zip')}|C01173E.rom`, 'dfaebe28'],
+      [`${path.join('Patchable', 'KDULVQN.zip')}|KDULVQN.rom`, 'b1c303e4'],
     ]);
   });
 
@@ -104,6 +106,7 @@ describe('with explicit dats', () => {
       [path.join('Patchable', 'Before.rom'), '0361b321'],
       [path.join('Patchable', 'Best.rom'), '1e3d78cf'],
       [path.join('Patchable', 'C01173E.rom'), 'dfaebe28'],
+      [path.join('Patchable', 'KDULVQN.rom'), 'b1c303e4'],
     ]);
   });
 
@@ -124,6 +127,8 @@ describe('with explicit dats', () => {
       [path.join('Patchable', 'Before.rom'), '0361b321'],
       [path.join('Patchable', 'Best.rom'), '1e3d78cf'],
       [path.join('Patchable', 'C01173E.rom'), 'dfaebe28'],
+      [path.join('Patchable', 'DDSK3AN.rom'), 'e02c6dbb'],
+      [path.join('Patchable', 'KDULVQN.rom'), 'b1c303e4'],
       [path.join('Patchable', 'Worst.rom'), '6ff9ef96'],
     ]);
   });
@@ -158,6 +163,7 @@ describe('with inferred dats', () => {
       ['fds_joypad_test.fds', '1e58456d'],
       ['fizzbuzz.nes', '370517b5'],
       ['foobar.lnx', 'b22c9747'],
+      ['KDULVQN.rom', 'b1c303e4'],
       ['LCDTestROM.lnx', '2d251538'],
       ['loremipsum.rom', '70856527'],
       ['one.rom', 'f817a89f'],
@@ -186,6 +192,7 @@ describe('with inferred dats', () => {
       ['fds_joypad_test.zip|fds_joypad_test.fds', '1e58456d'],
       ['fizzbuzz.zip|fizzbuzz.nes', '370517b5'],
       ['foobar.zip|foobar.lnx', 'b22c9747'],
+      ['KDULVQN.zip|KDULVQN.rom', 'b1c303e4'],
       ['LCDTestROM.zip|LCDTestROM.lnx', '2d251538'],
       ['loremipsum.zip|loremipsum.rom', '70856527'],
       ['one.zip|one.rom', 'f817a89f'],

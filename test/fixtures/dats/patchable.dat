@@ -22,4 +22,9 @@
     <rom name="C01173E.rom" size="1025" crc="dfaebe28" md5="c9e35aafaec606fcb16763200ce35b0f" sha1="2f185826482db2878663c0cd393d62d0c10814ae" status="verified"/>
     <!-- After: size="1025" crc="95284ab4" -->
   </game>
+  <game name="KDULVQN">
+    <description>KDULVQN</description>
+    <rom name="KDULVQN.rom" size="1025" crc="b1c303e4" md5="36109a5d2f9041b6ec00d7aea63379f3" sha1="6bc1e23ffaf5fafaf03fb10732b6be3b567b1417" status="verified"/>
+    <!-- After: size="1025" crc="e02c6dbb" -->
+  </game>
 </datafile>
