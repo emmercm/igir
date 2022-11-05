@@ -44,13 +44,13 @@ export default class Igir {
     }
 
     // Set up progress bar and input for DAT processing
-    const datProcessProgressBar = this.logger.addProgressBar('Processing DATs', Symbols.PROCESSING, dats.length);
+    const datProcessProgressBar = await this.logger.addProgressBar('Processing DATs', Symbols.PROCESSING, dats.length);
     const datsToWrittenRoms = new Map<DAT, Map<Parent, File[]>>();
     const datsStatuses: DATStatus[] = [];
 
     // Process every DAT
     await async.eachLimit(dats, Constants.DAT_THREADS, async (dat, callback) => {
-      const progressBar = this.logger.addProgressBar(
+      const progressBar = await this.logger.addProgressBar(
         dat.getNameShort(),
         Symbols.WAITING,
         dat.getParents().length,
@@ -111,7 +111,7 @@ export default class Igir {
       return [];
     }
 
-    const progressBar = this.logger.addProgressBar('Scanning for DATs', Symbols.WAITING);
+    const progressBar = await this.logger.addProgressBar('Scanning for DATs', Symbols.WAITING);
     const dats = await new DATScanner(this.options, progressBar).scan();
     if (!dats.length) {
       progressBar.delete();
@@ -129,7 +129,7 @@ export default class Igir {
   }
 
   private async processROMScanner(): Promise<File[]> {
-    const progressBar = this.logger.addProgressBar('Scanning for ROMs', Symbols.WAITING);
+    const progressBar = await this.logger.addProgressBar('Scanning for ROMs', Symbols.WAITING);
     const roms = await new ROMScanner(this.options, progressBar).scan();
     await progressBar.doneItems(roms.length, 'unique ROM', 'found');
     await progressBar.freeze();
@@ -141,7 +141,7 @@ export default class Igir {
       return [];
     }
 
-    const progressBar = this.logger.addProgressBar('Scanning for patches', Symbols.WAITING);
+    const progressBar = await this.logger.addProgressBar('Scanning for patches', Symbols.WAITING);
     const patches = await new PatchScanner(this.options, progressBar).scan();
     await progressBar.doneItems(patches.length, 'unique patch', 'found');
     await progressBar.freeze();
@@ -149,7 +149,7 @@ export default class Igir {
   }
 
   private async processHeaderProcessor(romFiles: File[]): Promise<File[]> {
-    const progressBar = this.logger.addProgressBar('Detecting ROM headers', Symbols.WAITING);
+    const progressBar = await this.logger.addProgressBar('Detecting ROM headers', Symbols.WAITING);
     const processedRomFiles = await new HeaderProcessor(this.options, progressBar)
       .process(romFiles);
     await progressBar.doneItems(processedRomFiles.length, 'ROM', 'processed');
@@ -164,7 +164,7 @@ export default class Igir {
       return;
     }
 
-    const progressBar = this.logger.addProgressBar('Cleaning output directory', Symbols.WAITING);
+    const progressBar = await this.logger.addProgressBar('Cleaning output directory', Symbols.WAITING);
     const writtenFilesToExclude = [...datsToWrittenRoms.values()]
       .flatMap((parentsToFiles) => [...parentsToFiles.values()])
       .flatMap((files) => files);
@@ -179,7 +179,7 @@ export default class Igir {
       return;
     }
 
-    const reportProgressBar = this.logger.addProgressBar('Generating report', Symbols.WRITING);
+    const reportProgressBar = await this.logger.addProgressBar('Generating report', Symbols.WRITING);
     await new ReportGenerator(this.options, reportProgressBar).generate(datsStatuses);
   }
 }
