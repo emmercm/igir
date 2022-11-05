@@ -36,6 +36,7 @@ export default class IPSPatch extends Patch {
 
       const header = (await fp.readNext(5)).toString();
       if (header !== 'PATCH') {
+        await fp.close();
         throw new Error(`IPS patch header is invalid: ${this.getFile().toString()}`);
       }
 

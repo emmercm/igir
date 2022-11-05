@@ -80,6 +80,7 @@ export default class Zip extends Archive {
             return reject(callbackErr);
           }
         });
+        writeStream.on('error', (err) => reject(err));
         readStream.pipe(writeStream);
       }),
     );

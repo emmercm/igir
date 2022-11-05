@@ -50,14 +50,16 @@ export default class OutputCleaner {
     await this.progressBar.reset(filesToClean.length);
 
     try {
-      await OutputCleaner.trashOrDelete(filesToClean);
+      await this.progressBar.logInfo(`Cleaning ${filesToClean.length.toLocaleString()} files`);
+      await this.trashOrDelete(filesToClean);
     } catch (e) {
       await this.progressBar.logError(`Failed to clean unmatched files in ${outputDir} : ${e}`);
     }
 
     try {
       const emptyDirs = await OutputCleaner.getEmptyDirs(outputDir);
-      await OutputCleaner.trashOrDelete(emptyDirs);
+      await this.progressBar.logInfo(`Cleaning ${emptyDirs.length.toLocaleString()} empty directories`);
+      await this.trashOrDelete(emptyDirs);
     } catch (e) {
       await this.progressBar.logError(`Failed to clean empty directories in ${outputDir} : ${e}`);
     }
@@ -65,9 +67,14 @@ export default class OutputCleaner {
     return filesToClean.length;
   }
 
-  private static async trashOrDelete(filePaths: string[]): Promise<void> {
+  private async trashOrDelete(filePaths: string[]): Promise<void> {
     // Prefer recycling...
-    await trash(filePaths);
+    const CHUNK_SIZE = 100;
+    /* eslint-disable no-await-in-loop */
+    for (let i = 0; i < filePaths.length; i += CHUNK_SIZE) {
+      await this.progressBar.update(i);
+      await trash(filePaths.slice(i, i + CHUNK_SIZE));
+    }
 
     // ...but if that doesn't work, delete the leftovers
     await Promise.all(filePaths.map(async (filePath) => {
