@@ -5,6 +5,7 @@ import Logger from '../console/logger.js';
 import Constants from '../constants.js';
 import FileHeader from '../types/files/fileHeader.js';
 import Options from '../types/options.js';
+import PatchFactory from '../types/patches/patchFactory.js';
 import ReleaseCandidate from '../types/releaseCandidate.js';
 
 /**
@@ -110,6 +111,13 @@ export default class ArgumentsParser {
         group: groupPaths,
         alias: 'I',
         description: 'Path(s) to ROM files to exclude',
+        type: 'array',
+        requiresArg: true,
+      })
+      .option('patch', {
+        group: groupPaths,
+        alias: 'p',
+        description: `Path(s) to ROM patch files or archives (supported: ${PatchFactory.getSupportedExtensions().join(', ')})`,
         type: 'array',
         requiresArg: true,
       })
@@ -363,8 +371,10 @@ export default class ArgumentsParser {
         ['  $0 copy --dat *.dat --input **/*.zip --output BIOS/ --only-bios'],
         ['\nCopy ROMs to a flash cart and test them:'],
         ['  $0 copy test --dat *.dat --input ROMs/ --output /media/SDCard/ROMs/ --dir-dat-name --dir-letter'],
+        ['\nCreate patched copies of ROMs in an existing collection:'],
+        ['  $0 copy --input ROMs/ --patch Patches/ --output ROMs/'],
         ['\nMake a copy of SNES ROMs without the SMC header that isn\'t supported by some emulators:'],
-        ['  $0 copy --dat *.dat --input **/*.smc --output Headerless/ --dir-mirror --remove-headers .smc'],
+        ['  $0 copy --input **/*.smc --output Headerless/ --dir-mirror --remove-headers .smc'],
       ])
 
       // Colorize help output

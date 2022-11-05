@@ -1,5 +1,6 @@
 import path from 'path';
 
+import FilePoly from '../../polyfill/filePoly.js';
 import File from '../files/file.js';
 
 export default abstract class Patch {
@@ -51,11 +52,32 @@ export default abstract class Patch {
   }
 
   getRomName(): string {
-    return path.parse(this.getFile().getExtractedFilePath()).name;
+    return path.parse(this.getFile().getExtractedFilePath()).name
+      .replace(new RegExp(this.getCrcBefore(), 'g'), '')
+      .replace(/  +/g, ' ')
+      .trim();
   }
 
   abstract apply<T>(
     file: File,
     callback: (tempFile: string) => (T | Promise<T>),
   ): Promise<T>;
+
+  protected static async readVariableLengthNumber(fp: FilePoly): Promise<number> {
+    let data = 0;
+    let shift = 1;
+
+    /* eslint-disable no-constant-condition, no-await-in-loop, no-bitwise */
+    while (!fp.isEOF()) {
+      const x = (await fp.readNext(1)).readUInt8();
+      data += (x & 0x7f) * shift; // drop the left-most bit
+      if (x & 0x80) { // left-most bit is telling us this is the end
+        break;
+      }
+      shift <<= 7;
+      data += shift;
+    }
+
+    return data;
+  }
 }

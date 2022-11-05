@@ -10,6 +10,8 @@ import DATInferrer from './modules/datInferrer.js';
 import DATScanner from './modules/datScanner.js';
 import HeaderProcessor from './modules/headerProcessor.js';
 import OutputCleaner from './modules/outputCleaner.js';
+import PatchCandidateGenerator from './modules/patchCandidateGenerator.js';
+import PatchScanner from './modules/patchScanner.js';
 import ReportGenerator from './modules/reportGenerator.js';
 import ROMScanner from './modules/romScanner.js';
 import ROMWriter from './modules/romWriter.js';
@@ -19,6 +21,7 @@ import File from './types/files/file.js';
 import DAT from './types/logiqx/dat.js';
 import Parent from './types/logiqx/parent.js';
 import Options from './types/options.js';
+import Patch from './types/patches/patch.js';
 
 export default class Igir {
   private readonly options: Options;
@@ -34,6 +37,7 @@ export default class Igir {
     // Scan and process input files
     let dats = await this.processDATScanner();
     const rawRomFiles = await this.processROMScanner();
+    const patches = await this.processPatchScanner();
     const processedRomFiles = await this.processHeaderProcessor(rawRomFiles);
     if (!dats.length) {
       dats = DATInferrer.infer(processedRomFiles);
@@ -56,8 +60,10 @@ export default class Igir {
       // Generate and filter ROM candidates
       const parentsToCandidates = await new CandidateGenerator(this.options, progressBar)
         .generate(dat, processedRomFiles);
+      const parentsToCandidatesPatched = await new PatchCandidateGenerator(progressBar)
+        .generate(dat, parentsToCandidates, patches);
       const romOutputs = await new CandidateFilter(this.options, progressBar)
-        .filter(dat, parentsToCandidates);
+        .filter(dat, parentsToCandidatesPatched);
 
       // Write the output files
       await new ROMWriter(this.options, progressBar).write(dat, romOutputs);
@@ -77,7 +83,7 @@ export default class Igir {
       datsStatuses.push(datStatus);
 
       // Progress bar cleanup
-      const totalReleaseCandidates = [...parentsToCandidates.values()]
+      const totalReleaseCandidates = [...parentsToCandidatesPatched.values()]
         .reduce((sum, rcs) => sum + rcs.length, 0);
       if (totalReleaseCandidates > 0) {
         await progressBar.freeze();
@@ -101,6 +107,10 @@ export default class Igir {
   }
 
   private async processDATScanner(): Promise<DAT[]> {
+    if (!this.options.getDatFileCount()) {
+      return [];
+    }
+
     const progressBar = this.logger.addProgressBar('Scanning for DATs', Symbols.WAITING);
     const dats = await new DATScanner(this.options, progressBar).scan();
     if (!dats.length) {
@@ -120,10 +130,22 @@ export default class Igir {
 
   private async processROMScanner(): Promise<File[]> {
     const progressBar = this.logger.addProgressBar('Scanning for ROMs', Symbols.WAITING);
-    const romInputs = await new ROMScanner(this.options, progressBar).scan();
-    await progressBar.doneItems(romInputs.length, 'unique ROM', 'found');
+    const roms = await new ROMScanner(this.options, progressBar).scan();
+    await progressBar.doneItems(roms.length, 'unique ROM', 'found');
     await progressBar.freeze();
-    return romInputs;
+    return roms;
+  }
+
+  private async processPatchScanner(): Promise<Patch[]> {
+    if (!this.options.getPatchFileCount()) {
+      return [];
+    }
+
+    const progressBar = this.logger.addProgressBar('Scanning for patches', Symbols.WAITING);
+    const patches = await new PatchScanner(this.options, progressBar).scan();
+    await progressBar.doneItems(patches.length, 'unique patch', 'found');
+    await progressBar.freeze();
+    return patches;
   }
 
   private async processHeaderProcessor(romFiles: File[]): Promise<File[]> {

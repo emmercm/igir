@@ -1,5 +1,3 @@
-import path from 'path';
-
 import FilePoly from '../../polyfill/filePoly.js';
 import File from '../files/file.js';
 import Patch from './patch.js';
@@ -13,17 +11,13 @@ interface IPSRecord {
  * @link https://zerosoft.zophar.net/ips.php
  */
 export default class IPSPatch extends Patch {
+  static readonly SUPPORTED_EXTENSIONS = ['.ips'];
+
   private readonly records: IPSRecord[] = [];
 
   static patchFrom(file: File): IPSPatch {
     const crcBefore = Patch.getCrcFromPath(file.getExtractedFilePath());
     return new IPSPatch(file, crcBefore);
-  }
-
-  getRomName(): string {
-    return path.parse(this.getFile().getExtractedFilePath()).name
-      .replace(new RegExp(this.getCrcBefore(), 'g'), '')
-      .trim();
   }
 
   private async parsePatch(): Promise<void> {
@@ -47,11 +41,11 @@ export default class IPSPatch extends Patch {
           break;
         }
 
-        const offsetInt = parseInt(offset.toString('hex'), 16);
-        const size = parseInt((await fp.readNext(2)).toString('hex'), 16);
+        const offsetInt = offset.readUintBE(0, 3);
+        const size = (await fp.readNext(2)).readUInt16BE();
         if (size === 0) {
           // Run-length encoding record
-          const rleSize = parseInt((await fp.readNext(2)).toString('hex'), 16);
+          const rleSize = (await fp.readNext(2)).readUInt16BE();
           const data = Buffer.from((await fp.readNext(1)).toString('hex')
             .repeat(rleSize), 'hex');
           this.records.push({ offset: offsetInt, data });

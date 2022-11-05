@@ -56,6 +56,10 @@ export default class FilePoly {
     return this.fileFrom(pathLike, flags);
   }
 
+  isEOF(): boolean {
+    return this.getPosition() >= this.getSize();
+  }
+
   getPosition(): number {
     return this.readPosition;
   }
@@ -66,6 +70,10 @@ export default class FilePoly {
 
   seek(position: number): void {
     this.readPosition = position;
+  }
+
+  skipNext(size: number): void {
+    this.readPosition += size;
   }
 
   async peekNext(size: number): Promise<Buffer> {

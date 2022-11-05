@@ -1,3 +1,5 @@
+import path from 'path';
+
 import File from '../files/file.js';
 import BPSPatch from './bpsPatch.js';
 import IPSPatch from './ipsPatch.js';
@@ -6,14 +8,26 @@ import PPFPatch from './ppfPatch.js';
 
 export default class PatchFactory {
   static async patchFrom(file: File): Promise<Patch> {
-    if (file.getExtractedFilePath().toLowerCase().endsWith('.bps')) {
+    const filePath = file.getExtractedFilePath();
+
+    if (BPSPatch.SUPPORTED_EXTENSIONS.some((ext) => filePath.toLowerCase().endsWith(ext))) {
       return BPSPatch.patchFrom(file);
-    } if (file.getExtractedFilePath().toLowerCase().endsWith('.ips')) {
+    } if (IPSPatch.SUPPORTED_EXTENSIONS.some((ext) => filePath.toLowerCase().endsWith(ext))) {
       return IPSPatch.patchFrom(file);
-    } if (file.getExtractedFilePath().toLowerCase().endsWith('.ppf')) {
+    } if (PPFPatch.SUPPORTED_EXTENSIONS.some((ext) => filePath.toLowerCase().endsWith(ext))) {
       return PPFPatch.patchFrom(file);
     }
 
-    throw new Error(`Unknown patch type: ${file.toString()}`);
+    throw new Error(`Unknown patch type: ${path.extname(filePath)}`);
+  }
+
+  static getSupportedExtensions(): string[] {
+    return [
+      ...BPSPatch.SUPPORTED_EXTENSIONS,
+      ...IPSPatch.SUPPORTED_EXTENSIONS,
+      ...PPFPatch.SUPPORTED_EXTENSIONS,
+    ]
+      .sort()
+      .filter((ext, idx, exts) => exts.indexOf(ext) === idx);
   }
 }
