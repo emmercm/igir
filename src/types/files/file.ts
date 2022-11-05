@@ -182,9 +182,11 @@ export default class File {
     callback: (stream: Readable) => (Promise<T> | T),
   ): Promise<T> {
     const stream = fs.createReadStream(filePath, { start });
-    const result = await callback(stream);
-    stream.destroy();
-    return result;
+    try {
+      return await callback(stream);
+    } finally {
+      stream.destroy();
+    }
   }
 
   async withFileName(fileNameWithoutExt: string): Promise<File> {
