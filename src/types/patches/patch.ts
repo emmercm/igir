@@ -68,11 +68,8 @@ export default abstract class Patch {
     let shift = 1;
 
     /* eslint-disable no-constant-condition, no-await-in-loop, no-bitwise */
-    while (true) {
+    while (!fp.isEOF()) {
       const x = (await fp.readNext(1)).readUInt8();
-      if (x === undefined) { // prevent EOF infinite loop
-        break;
-      }
       data += (x & 0x7f) * shift; // drop the left-most bit
       if (x & 0x80) { // left-most bit is telling us this is the end
         break;
