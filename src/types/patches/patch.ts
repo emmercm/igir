@@ -67,7 +67,7 @@ export default abstract class Patch {
     let data = 0;
     let shift = 1;
 
-    /* eslint-disable no-constant-condition, no-await-in-loop, no-bitwise */
+    /* eslint-disable no-await-in-loop, no-bitwise */
     while (!fp.isEOF()) {
       const x = (await fp.readNext(1)).readUInt8();
       data += (x & 0x7f) * shift; // drop the left-most bit

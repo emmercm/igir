@@ -55,7 +55,7 @@ it('should create patch candidates with relevant patches', async () => {
   }), new ProgressBarFake()).scan();
   const parentsToCandidates = await runPatchCandidateGenerator(romFiles);
 
-  expect(parentsToCandidates.size).toEqual(3);
+  expect(parentsToCandidates.size).toEqual(4);
   [...parentsToCandidates.values()]
     .forEach((releaseCandidates) => expect(releaseCandidates).toHaveLength(2));
 });
