@@ -371,8 +371,10 @@ export default class ArgumentsParser {
         ['  $0 copy --dat *.dat --input **/*.zip --output BIOS/ --only-bios'],
         ['\nCopy ROMs to a flash cart and test them:'],
         ['  $0 copy test --dat *.dat --input ROMs/ --output /media/SDCard/ROMs/ --dir-dat-name --dir-letter'],
+        ['\nCreate patched copies of ROMs in an existing collection:'],
+        ['  $0 copy --input ROMs/ --patch Patches/ --output ROMs/'],
         ['\nMake a copy of SNES ROMs without the SMC header that isn\'t supported by some emulators:'],
-        ['  $0 copy --dat *.dat --input **/*.smc --output Headerless/ --dir-mirror --remove-headers .smc'],
+        ['  $0 copy --input **/*.smc --output Headerless/ --dir-mirror --remove-headers .smc'],
       ])
 
       // Colorize help output
