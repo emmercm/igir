@@ -354,7 +354,7 @@ export default class ArgumentsParser {
       .option('verbose', {
         group: groupHelp,
         alias: 'v',
-        description: 'Enable verbose logging, can specify twice (-vv)',
+        description: 'Enable verbose logging, can specify up to three times (-vvv)',
         type: 'count',
       })
 

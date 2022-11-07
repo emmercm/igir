@@ -69,9 +69,9 @@ async function walkAndStat(dirPath: string): Promise<[string, Stats][]> {
   );
 }
 
-function datInferrer(romFiles: File[]): DAT {
+async function datInferrer(romFiles: File[]): Promise<DAT> {
   // Run DATInferrer, but condense all DATs down to one
-  const datGames = DATInferrer.infer(romFiles)
+  const datGames = (await new DATInferrer(new ProgressBarFake()).infer(romFiles))
     .map((dat) => dat.getGames())
     .flatMap((games) => games);
   return new DAT(new Header(), datGames);
@@ -132,7 +132,7 @@ async function romWriter(
     output: outputTemp,
   });
   const romFiles = await romScanner(options);
-  const dat = datInferrer(romFiles);
+  const dat = await datInferrer(romFiles);
   const gameNamesToHeaderedFiles = await headerProcessor(options, romFiles);
   let candidates = await candidateGenerator(options, dat, gameNamesToHeaderedFiles);
   if (patchGlob) {

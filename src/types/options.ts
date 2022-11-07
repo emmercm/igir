@@ -532,8 +532,10 @@ export default class Options implements OptionsProps {
   getLogLevel(): LogLevel {
     if (this.verbose === 1) {
       return LogLevel.INFO;
-    } if (this.verbose >= 2) {
+    } if (this.verbose === 2) {
       return LogLevel.DEBUG;
+    } if (this.verbose >= 3) {
+      return LogLevel.TRACE;
     }
     return LogLevel.WARN;
   }

@@ -14,6 +14,10 @@ export default class ProgressBarFake extends ProgressBar {
     return Promise.resolve();
   }
 
+  withLoggerPrefix(): ProgressBar {
+    return this;
+  }
+
   async log(): Promise<void> {
     return Promise.resolve();
   }

@@ -465,7 +465,8 @@ describe('options', () => {
     expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '-v']).getLogLevel()).toEqual(LogLevel.INFO);
     expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--verbose']).getLogLevel()).toEqual(LogLevel.INFO);
     expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '-vv']).getLogLevel()).toEqual(LogLevel.DEBUG);
-    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '-vvv']).getLogLevel()).toEqual(LogLevel.DEBUG);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '-vvv']).getLogLevel()).toEqual(LogLevel.TRACE);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '-vvvvvvvvvv']).getLogLevel()).toEqual(LogLevel.TRACE);
   });
 
   it('should parse "help"', () => {

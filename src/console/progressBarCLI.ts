@@ -135,9 +135,13 @@ export default class ProgressBarCLI extends ProgressBar {
     return ProgressBarCLI.render();
   }
 
+  withLoggerPrefix(prefix: string): ProgressBar {
+    return new ProgressBarCLI(this.logger.withLoggerPrefix(prefix), this.singleBarFormatted);
+  }
+
   async log(logLevel: LogLevel, message: string): Promise<void> {
     if (this.logger.getLogLevel() <= logLevel) {
-      ProgressBarCLI.multiBar?.log(`${Logger.formatMessage(logLevel, message)}\n`);
+      ProgressBarCLI.multiBar?.log(`${this.logger.formatMessage(logLevel, message)}\n`);
       await ProgressBarCLI.render();
     }
   }

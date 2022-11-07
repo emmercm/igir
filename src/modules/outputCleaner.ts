@@ -8,20 +8,19 @@ import ProgressBar, { Symbols } from '../console/progressBar.js';
 import fsPoly from '../polyfill/fsPoly.js';
 import File from '../types/files/file.js';
 import Options from '../types/options.js';
+import Module from './module.js';
 
 /**
  * Recycle any unknown files in the {@link OptionsProps.output} directory, if applicable.
  *
  * This class will not be run concurrently with any other class.
  */
-export default class OutputCleaner {
+export default class OutputCleaner extends Module {
   private readonly options: Options;
 
-  private readonly progressBar: ProgressBar;
-
   constructor(options: Options, progressBar: ProgressBar) {
+    super(progressBar, OutputCleaner.name);
     this.options = options;
-    this.progressBar = progressBar;
   }
 
   async clean(writtenFilesToExclude: File[]): Promise<number> {
@@ -29,7 +28,7 @@ export default class OutputCleaner {
 
     // If nothing was written, then don't clean anything
     if (!writtenFilesToExclude.length) {
-      await this.progressBar.logInfo('No files were written, not cleaning output');
+      await this.progressBar.logDebug('No files were written, not cleaning output');
       return 0;
     }
 
@@ -42,7 +41,7 @@ export default class OutputCleaner {
       .map((file) => path.normalize(file))
       .filter((file) => outputFilePathsToExclude.indexOf(file) === -1);
     if (!filesToClean.length) {
-      await this.progressBar.logInfo('No files to clean');
+      await this.progressBar.logDebug('No files to clean');
       return 0;
     }
 
@@ -50,7 +49,7 @@ export default class OutputCleaner {
     await this.progressBar.reset(filesToClean.length);
 
     try {
-      await this.progressBar.logInfo(`Cleaning ${filesToClean.length.toLocaleString()} files`);
+      await this.progressBar.logDebug(`Cleaning ${filesToClean.length.toLocaleString()} file${filesToClean.length !== 1 ? 's' : ''}`);
       await this.trashOrDelete(filesToClean);
     } catch (e) {
       await this.progressBar.logError(`Failed to clean unmatched files in ${outputDir} : ${e}`);
@@ -58,12 +57,13 @@ export default class OutputCleaner {
 
     try {
       const emptyDirs = await OutputCleaner.getEmptyDirs(outputDir);
-      await this.progressBar.logInfo(`Cleaning ${emptyDirs.length.toLocaleString()} empty directories`);
+      await this.progressBar.logDebug(`Cleaning ${emptyDirs.length.toLocaleString()} empty director${emptyDirs.length !== 1 ? 'ies' : 'y'}`);
       await this.trashOrDelete(emptyDirs);
     } catch (e) {
       await this.progressBar.logError(`Failed to clean empty directories in ${outputDir} : ${e}`);
     }
 
+    await this.progressBar.logInfo('Done cleaning files in output');
     return filesToClean.length;
   }
 
