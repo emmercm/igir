@@ -5,12 +5,11 @@ import Parent from '../types/logiqx/parent.js';
 import Patch from '../types/patches/patch.js';
 import ReleaseCandidate from '../types/releaseCandidate.js';
 import ROMWithFiles from '../types/romWithFiles.js';
+import Module from './module.js';
 
-export default class PatchCandidateGenerator {
-  private readonly progressBar: ProgressBar;
-
+export default class PatchCandidateGenerator extends Module {
   constructor(progressBar: ProgressBar) {
-    this.progressBar = progressBar;
+    super(progressBar, PatchCandidateGenerator.name);
   }
 
   async generate(
@@ -29,13 +28,14 @@ export default class PatchCandidateGenerator {
     await this.progressBar.reset(dat.getParents().length);
 
     const crcToPatches = PatchCandidateGenerator.indexPatchesByCrcBefore(patches);
-    await this.progressBar.logInfo(`${crcToPatches.size} unique patches found`);
+    await this.progressBar.logDebug(`${dat.getName()}: ${crcToPatches.size} unique patches found`);
 
-    return new Map(
+    const patchedParentsToCandidates = new Map(
       await Promise.all([...parentsToCandidates.entries()]
         .map(async ([parent, releaseCandidates]) => {
           const patchedReleaseCandidates = (await Promise.all(releaseCandidates
-            .map(async (releaseCandidate) => PatchCandidateGenerator.buildPatchedReleaseCandidate(
+            .map(async (releaseCandidate) => this.buildPatchedReleaseCandidate(
+              dat,
               releaseCandidate,
               crcToPatches,
             )))).flatMap((rcs) => rcs);
@@ -43,6 +43,9 @@ export default class PatchCandidateGenerator {
           return [parent, [...releaseCandidates, ...patchedReleaseCandidates]];
         })) as [Parent, ReleaseCandidate[]][],
     );
+
+    await this.progressBar.logInfo(`${dat.getName()}: Done generating patched candidates`);
+    return patchedParentsToCandidates;
   }
 
   private static indexPatchesByCrcBefore(patches: Patch[]): Map<string, Patch[]> {
@@ -55,7 +58,8 @@ export default class PatchCandidateGenerator {
     }, new Map<string, Patch[]>());
   }
 
-  private static async buildPatchedReleaseCandidate(
+  private async buildPatchedReleaseCandidate(
+    dat: DAT,
     unpatchedReleaseCandidate: ReleaseCandidate,
     crcToPatches: Map<string, Patch[]>,
   ): Promise<ReleaseCandidate[]> {
@@ -91,6 +95,8 @@ export default class PatchCandidateGenerator {
               // Output is an archive of a single file, the entry path should also change
               outputFile = await outputFile.withExtractedFilePath(patchedRomName);
             }
+
+            await this.progressBar.logTrace(`${dat.getName()}: ${inputFile.toString()}: patch candidate generated: ${outputFile.toString()}`);
           }
 
           return new ROMWithFiles(rom, inputFile, outputFile);

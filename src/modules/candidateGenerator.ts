@@ -12,6 +12,8 @@ import ROM from '../types/logiqx/rom.js';
 import Options from '../types/options.js';
 import ReleaseCandidate from '../types/releaseCandidate.js';
 import ROMWithFiles from '../types/romWithFiles.js';
+import CandidateFilter from './candidateFilter.js';
+import Module from './module.js';
 
 /**
  * For every {@link Parent} in the {@link DAT}, look for its {@link ROM}s in the scanned ROM list,
@@ -19,14 +21,12 @@ import ROMWithFiles from '../types/romWithFiles.js';
  *
  * This class may be run concurrently with other classes.
  */
-export default class CandidateGenerator {
+export default class CandidateGenerator extends Module {
   private readonly options: Options;
 
-  private readonly progressBar: ProgressBar;
-
   constructor(options: Options, progressBar: ProgressBar) {
+    super(progressBar, CandidateFilter.name);
     this.options = options;
-    this.progressBar = progressBar;
   }
 
   async generate(
@@ -47,7 +47,7 @@ export default class CandidateGenerator {
     // TODO(cemmer): only do this once globally, not per DAT
     // TODO(cemmer): ability to index files by some other property such as name
     const hashCodeToInputFiles = CandidateGenerator.indexFilesByHashCode(inputRomFiles);
-    await this.progressBar.logInfo(`${dat.getName()}: ${hashCodeToInputFiles.size} unique ROMs found`);
+    await this.progressBar.logDebug(`${dat.getName()}: ${hashCodeToInputFiles.size.toLocaleString()} unique ROMs found`);
 
     // For each parent, try to generate a parent candidate
     /* eslint-disable no-await-in-loop */
@@ -78,13 +78,14 @@ export default class CandidateGenerator {
         }
       }
 
-      await this.progressBar.logDebug(`${dat.getName()}: Found ${releaseCandidates.length} candidates for ${parent.getName()}`);
+      await this.progressBar.logTrace(`${dat.getName()}: ${parent.getName()}: found ${releaseCandidates.length.toLocaleString()} candidates`);
       output.set(parent, releaseCandidates);
     }
 
     const totalCandidates = [...output.values()].reduce((sum, rc) => sum + rc.length, 0);
-    await this.progressBar.logInfo(`${dat.getName()}: ${totalCandidates} candidate${totalCandidates !== 1 ? 's' : ''} found`);
+    await this.progressBar.logDebug(`${dat.getName()}: ${totalCandidates.toLocaleString()} candidate${totalCandidates !== 1 ? 's' : ''} found`);
 
+    await this.progressBar.logInfo(`${dat.getName()}: Done generating candidates`);
     return output;
   }
 
@@ -127,7 +128,7 @@ export default class CandidateGenerator {
     // Ignore the Game if not every File is present
     if (missingRoms.length > 0) {
       if (foundRomsWithFiles.length > 0) {
-        await this.logMissingRomFiles(game, release, missingRoms);
+        await this.logMissingRomFiles(dat, game, release, missingRoms);
       }
       return undefined;
     }
@@ -176,11 +177,12 @@ export default class CandidateGenerator {
   }
 
   private async logMissingRomFiles(
+    dat: DAT,
     game: Game,
     release: Release | undefined,
     missingRoms: ROM[],
   ): Promise<void> {
-    let message = `Missing ${missingRoms.length.toLocaleString()} file${missingRoms.length !== 1 ? 's' : ''} for: ${game.getName()}`;
+    let message = `${dat.getName()}: Missing ${missingRoms.length.toLocaleString()} file${missingRoms.length !== 1 ? 's' : ''} for: ${game.getName()}`;
     if (release?.getRegion()) {
       message += ` (${release?.getRegion()})`;
     }
