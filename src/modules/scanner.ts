@@ -10,15 +10,14 @@ import Zip from '../types/archives/zip.js';
 import ArchiveEntry from '../types/files/archiveEntry.js';
 import File from '../types/files/file.js';
 import Options from '../types/options.js';
+import Module from './module.js';
 
-export default abstract class Scanner {
+export default abstract class Scanner extends Module {
   protected readonly options: Options;
 
-  protected readonly progressBar: ProgressBar;
-
-  constructor(options: Options, progressBar: ProgressBar) {
+  protected constructor(options: Options, progressBar: ProgressBar, loggerPrefix: string) {
+    super(progressBar, loggerPrefix);
     this.options = options;
-    this.progressBar = progressBar;
   }
 
   protected async getFilesFromPaths(

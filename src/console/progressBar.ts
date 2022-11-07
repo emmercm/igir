@@ -37,7 +37,13 @@ export default abstract class ProgressBar {
     return this.done(`${count.toLocaleString()} ${noun.trim()}${count !== 1 ? pluralSuffix : ''} ${verb}`);
   }
 
+  abstract withLoggerPrefix(prefix: string): ProgressBar;
+
   abstract log(logLevel: LogLevel, message: string): Promise<void>;
+
+  async logTrace(message: string): Promise<void> {
+    return this.log(LogLevel.TRACE, message);
+  }
 
   async logDebug(message: string): Promise<void> {
     return this.log(LogLevel.DEBUG, message);

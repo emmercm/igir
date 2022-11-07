@@ -17,7 +17,7 @@ async function runPatchCandidateGenerator(
   romFiles: File[],
 ): Promise<Map<Parent, ReleaseCandidate[]>> {
   // Run DATInferrer, but condense all DATs down to one
-  const datGames = DATInferrer.infer(romFiles)
+  const datGames = (await new DATInferrer(new ProgressBarFake()).infer(romFiles))
     .map((dat) => dat.getGames())
     .flatMap((games) => games);
   const dat = new DAT(new Header(), datGames);
