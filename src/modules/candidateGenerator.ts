@@ -53,6 +53,7 @@ export default class CandidateGenerator extends Module {
     /* eslint-disable no-await-in-loop */
     for (let i = 0; i < dat.getParents().length; i += 1) {
       const parent = dat.getParents()[i];
+      await this.progressBar.increment();
 
       const releaseCandidates: ReleaseCandidate[] = [];
 
@@ -79,8 +80,6 @@ export default class CandidateGenerator extends Module {
 
       await this.progressBar.logTrace(`${dat.getName()}: ${parent.getName()}: found ${releaseCandidates.length.toLocaleString()} candidates`);
       output.set(parent, releaseCandidates);
-
-      await this.progressBar.increment();
     }
 
     const totalCandidates = [...output.values()].reduce((sum, rc) => sum + rc.length, 0);

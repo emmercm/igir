@@ -57,6 +57,7 @@ export default class Igir {
         Symbols.WAITING,
         dat.getParents().length,
       );
+      await datProcessProgressBar.increment();
 
       // Generate and filter ROM candidates
       const parentsToCandidates = await new CandidateGenerator(this.options, progressBar)
@@ -92,7 +93,6 @@ export default class Igir {
         progressBar.delete();
       }
 
-      await datProcessProgressBar.increment();
       callback();
     });
     await datProcessProgressBar.logInfo(`Done processing ${dats.length.toLocaleString()} DAT${dats.length !== 1 ? 's' : ''}`);

@@ -21,6 +21,8 @@ export default class ProgressBarCLI extends ProgressBar {
 
   private readonly singleBarFormatted: SingleBarFormatted;
 
+  private waitingMessageTimeout?: NodeJS.Timeout;
+
   private constructor(logger: Logger, singleBarFormatted: SingleBarFormatted) {
     super();
     this.logger = logger;
@@ -94,9 +96,8 @@ export default class ProgressBarCLI extends ProgressBar {
 
   async reset(total: number): Promise<void> {
     this.singleBarFormatted.getSingleBar().setTotal(total);
-    this.singleBarFormatted.getSingleBar().update(0, {
-      waitingMessage: undefined,
-    } as ProgressBarPayload);
+    this.singleBarFormatted.getSingleBar().update(0);
+    clearTimeout(this.waitingMessageTimeout);
     return ProgressBarCLI.render();
   }
 
@@ -107,24 +108,31 @@ export default class ProgressBarCLI extends ProgressBar {
     return ProgressBarCLI.render();
   }
 
-  async increment(): Promise<void> {
-    this.singleBarFormatted.getSingleBar().increment(1, {
-      waitingMessage: undefined,
-    } as ProgressBarPayload);
+  /**
+   * If progress hasn't been made by some timeout period, then show a waiting message to let the
+   *  user know that there is still something processing.
+   */
+  private setWaitingMessage(waitingMessage?: string): void {
+    clearTimeout(this.waitingMessageTimeout);
+    this.singleBarFormatted.getSingleBar().update({ waitingMessage: undefined });
+
+    if (waitingMessage) {
+      this.waitingMessageTimeout = setTimeout(async () => {
+        this.singleBarFormatted.getSingleBar().update({ waitingMessage });
+        await ProgressBarCLI.render();
+      }, 10_000);
+    }
+  }
+
+  async increment(waitingMessage?: string): Promise<void> {
+    this.singleBarFormatted.getSingleBar().increment();
+    this.setWaitingMessage(waitingMessage);
     return ProgressBarCLI.render();
   }
 
-  async update(current: number): Promise<void> {
-    this.singleBarFormatted.getSingleBar().update(current, {
-      waitingMessage: undefined,
-    } as ProgressBarPayload);
-    return ProgressBarCLI.render();
-  }
-
-  async waitingMessage(waitingMessage: string): Promise<void> {
-    this.singleBarFormatted.getSingleBar().update({
-      waitingMessage,
-    } as ProgressBarPayload);
+  async update(current: number, waitingMessage?: string): Promise<void> {
+    this.singleBarFormatted.getSingleBar().update(current);
+    this.setWaitingMessage(waitingMessage);
     return ProgressBarCLI.render();
   }
 
@@ -142,7 +150,6 @@ export default class ProgressBarCLI extends ProgressBar {
     if (finishedMessage) {
       this.singleBarFormatted.getSingleBar().update({
         finishedMessage,
-        waitingMessage: undefined,
       } as ProgressBarPayload);
     }
 

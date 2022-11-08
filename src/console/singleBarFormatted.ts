@@ -73,7 +73,7 @@ export default class SingleBarFormatted {
         return `${progress} | ${payload.waitingMessage}`;
       }
 
-      if (params.value > 0 && params.value < params.total) {
+      if (params.value > 0) {
         const eta = this.calculateEta(params);
         progress += ` | ETA: ${this.getEtaFormatted(eta)}`;
       }

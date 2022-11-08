@@ -37,8 +37,4 @@ export default class ProgressBarFake extends ProgressBar {
   async update(): Promise<void> {
     return Promise.resolve();
   }
-
-  async waitingMessage(): Promise<void> {
-    return Promise.resolve();
-  }
 }

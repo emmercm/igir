@@ -21,11 +21,9 @@ export default abstract class ProgressBar {
 
   abstract setSymbol(symbol: string): Promise<void>;
 
-  abstract increment(): Promise<void>;
+  abstract increment(message?: string): Promise<void>;
 
-  abstract update(current: number): Promise<void>;
-
-  abstract waitingMessage(waitingMessage: string): Promise<void>;
+  abstract update(current: number, message?: string): Promise<void>;
 
   abstract done(finishedMessage?: string): Promise<void>;
 

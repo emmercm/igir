@@ -48,15 +48,17 @@ export default class ROMWriter extends Module {
     await this.progressBar.setSymbol(Symbols.WRITING);
     await this.progressBar.reset(parentsToCandidates.size);
 
-    await Promise.all([...parentsToCandidates.entries()]
-      .map(async ([, releaseCandidates]) => ROMWriter.semaphore.runExclusive(async () => {
+    await Promise.all([...parentsToCandidates.values()]
+      .map(async (releaseCandidates) => ROMWriter.semaphore.runExclusive(async () => {
+        await this.progressBar.increment(
+          releaseCandidates.length ? releaseCandidates[0].getName() : undefined,
+        );
+
         /* eslint-disable no-await-in-loop */
         for (let j = 0; j < releaseCandidates.length; j += 1) {
           const releaseCandidate = releaseCandidates[j];
           await this.writeReleaseCandidate(dat, releaseCandidate);
         }
-
-        await this.progressBar.increment();
       })));
 
     await this.progressBar.logDebug(`${dat.getName()}: Deleting moved files`);
@@ -76,14 +78,8 @@ export default class ROMWriter extends Module {
     await this.progressBar.logTrace(`${dat.getName()}: ${releaseCandidate.getName()}: ${writeNeeded ? '' : 'no '}write needed`);
 
     if (writeNeeded) {
-      const warnTimeout = setTimeout(async () => {
-        await this.progressBar.waitingMessage(`${releaseCandidate.getName()} ...`);
-      }, 30_000);
-
       await this.writeZip(dat, releaseCandidate);
       await this.writeRaw(dat, releaseCandidate);
-
-      clearTimeout(warnTimeout);
     }
   }
 

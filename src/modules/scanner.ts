@@ -29,8 +29,8 @@ export default abstract class Scanner extends Module {
       filePaths,
       threads,
       async (inputFile, callback: AsyncResultCallback<File[], Error>) => {
-        const files = await this.getFilesFromPath(inputFile);
         await this.progressBar.increment();
+        const files = await this.getFilesFromPath(inputFile);
         callback(null, files);
       },
     ))
