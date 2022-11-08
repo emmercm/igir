@@ -68,6 +68,11 @@ export default class SingleBarFormatted {
     let progress = SingleBarFormatted.getBar(options, params);
     if (params.total > 0) {
       progress += ` | ${params.value.toLocaleString()}/${params.total.toLocaleString()}`;
+
+      if (payload.waitingMessage) {
+        return `${progress} | ${payload.waitingMessage}`;
+      }
+
       if (params.value > 0 && params.value < params.total) {
         const eta = this.calculateEta(params);
         progress += ` | ETA: ${this.getEtaFormatted(eta)}`;

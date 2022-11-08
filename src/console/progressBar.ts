@@ -3,6 +3,7 @@ import chalk from 'chalk';
 import LogLevel from './logLevel.js';
 
 // https://www.toptal.com/designers/htmlarrows/symbols/
+// https://www.htmlsymbols.xyz/
 export const Symbols: { [key: string]: string } = {
   WAITING: chalk.grey('⋯'),
   SEARCHING: chalk.magenta('↻'),
@@ -23,6 +24,8 @@ export default abstract class ProgressBar {
   abstract increment(): Promise<void>;
 
   abstract update(current: number): Promise<void>;
+
+  abstract waitingMessage(waitingMessage: string): Promise<void>;
 
   abstract done(finishedMessage?: string): Promise<void>;
 

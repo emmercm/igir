@@ -79,6 +79,20 @@ describe('newLine', () => {
   });
 });
 
+describe('trace', () => {
+  testLogLevelsAbove(LogLevel.TRACE)('should not write: %s', async (logLevel) => {
+    const spy = new LoggerSpy(logLevel);
+    spy.getLogger().trace('trace message');
+    await expect(spy.getOutput()).resolves.toEqual('');
+  });
+
+  testLogLevelsAtOrBelow(LogLevel.TRACE)('should write: %s', async (logLevel) => {
+    const spy = new LoggerSpy(logLevel);
+    spy.getLogger().trace('trace message');
+    await expect(spy.getOutput()).resolves.toContain('trace message');
+  });
+});
+
 describe('debug', () => {
   testLogLevelsAbove(LogLevel.DEBUG)('should not write: %s', async (logLevel) => {
     const spy = new LoggerSpy(logLevel);

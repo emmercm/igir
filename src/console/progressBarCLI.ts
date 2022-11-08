@@ -94,7 +94,9 @@ export default class ProgressBarCLI extends ProgressBar {
 
   async reset(total: number): Promise<void> {
     this.singleBarFormatted.getSingleBar().setTotal(total);
-    this.singleBarFormatted.getSingleBar().update(0);
+    this.singleBarFormatted.getSingleBar().update(0, {
+      waitingMessage: undefined,
+    } as ProgressBarPayload);
     return ProgressBarCLI.render();
   }
 
@@ -106,12 +108,23 @@ export default class ProgressBarCLI extends ProgressBar {
   }
 
   async increment(): Promise<void> {
-    this.singleBarFormatted.getSingleBar().increment();
+    this.singleBarFormatted.getSingleBar().increment(1, {
+      waitingMessage: undefined,
+    } as ProgressBarPayload);
     return ProgressBarCLI.render();
   }
 
   async update(current: number): Promise<void> {
-    this.singleBarFormatted.getSingleBar().update(current);
+    this.singleBarFormatted.getSingleBar().update(current, {
+      waitingMessage: undefined,
+    } as ProgressBarPayload);
+    return ProgressBarCLI.render();
+  }
+
+  async waitingMessage(waitingMessage: string): Promise<void> {
+    this.singleBarFormatted.getSingleBar().update({
+      waitingMessage,
+    } as ProgressBarPayload);
     return ProgressBarCLI.render();
   }
 
@@ -129,6 +142,7 @@ export default class ProgressBarCLI extends ProgressBar {
     if (finishedMessage) {
       this.singleBarFormatted.getSingleBar().update({
         finishedMessage,
+        waitingMessage: undefined,
       } as ProgressBarPayload);
     }
 
