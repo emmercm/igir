@@ -118,7 +118,7 @@ export default class ArchiveEntry<A extends Archive> extends File {
 
     // Don't extract to memory if this archive entry size is too large, or if we need to manipulate
     // the stream start point
-    if (this.getSize() > Constants.MAX_STREAM_EXTRACTION_SIZE || start > 0) {
+    if (this.getSize() > Constants.MAX_MEMORY_FILE_SIZE || start > 0) {
       return this.extractToFile(async (localFile) => File
         .createStreamFromFile(localFile, start, callback));
     }

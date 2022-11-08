@@ -11,15 +11,17 @@ export default class FilePoly {
 
   private readonly size: number;
 
-  private buffer: Buffer;
+  private tempBuffer: Buffer;
 
   private readPosition = 0;
+
+  private fileBuffer?: Buffer;
 
   private constructor(pathLike: PathLike, fd: number) {
     this.pathLike = pathLike;
     this.fd = fd;
     this.size = fs.statSync(pathLike).size;
-    this.buffer = Buffer.alloc(Math.min(this.size, Constants.FILE_READING_CHUNK_SIZE));
+    this.tempBuffer = Buffer.allocUnsafe(Math.min(this.size, Constants.FILE_READING_CHUNK_SIZE));
   }
 
   static async fileFrom(pathLike: PathLike, flags: OpenMode): Promise<FilePoly> {
@@ -87,15 +89,25 @@ export default class FilePoly {
   }
 
   async readAt(offset: number, size: number): Promise<Buffer> {
-    if (size > this.buffer.length) {
-      this.buffer = Buffer.alloc(size);
+    if (size > this.tempBuffer.length) {
+      this.tempBuffer = Buffer.allocUnsafe(size);
     }
 
+    // If the file is small, read the entire file to memory and "read" from there
+    if (this.size <= Constants.MAX_MEMORY_FILE_SIZE) {
+      if (!this.fileBuffer) {
+        this.tempBuffer = Buffer.alloc(0);
+        this.fileBuffer = await util.promisify(fs.readFile)(this.fd);
+      }
+      return Buffer.from(this.fileBuffer.subarray(offset, offset + size));
+    }
+
+    // If the file is large, read from the open file handle
     let bytesRead = 0;
     try {
       bytesRead = (await util.promisify(fs.read)(
         this.fd,
-        this.buffer,
+        this.tempBuffer,
         0,
         size,
         offset,
@@ -106,9 +118,7 @@ export default class FilePoly {
       return Buffer.alloc(0);
     }
 
-    const result = Buffer.alloc(bytesRead);
-    this.buffer.copy(result);
-    return result;
+    return Buffer.from(this.tempBuffer.subarray(0, bytesRead));
   }
 
   async write(buffer: Buffer): Promise<number> {
