@@ -21,8 +21,6 @@ export default class ProgressBarCLI extends ProgressBar {
 
   private readonly singleBarFormatted: SingleBarFormatted;
 
-  private waitingMessageTimeout?: NodeJS.Timeout;
-
   private constructor(logger: Logger, singleBarFormatted: SingleBarFormatted) {
     super();
     this.logger = logger;
@@ -97,7 +95,6 @@ export default class ProgressBarCLI extends ProgressBar {
   async reset(total: number): Promise<void> {
     this.singleBarFormatted.getSingleBar().setTotal(total);
     this.singleBarFormatted.getSingleBar().update(0);
-    clearTimeout(this.waitingMessageTimeout);
     return ProgressBarCLI.render();
   }
 
@@ -112,27 +109,22 @@ export default class ProgressBarCLI extends ProgressBar {
    * If progress hasn't been made by some timeout period, then show a waiting message to let the
    *  user know that there is still something processing.
    */
-  private setWaitingMessage(waitingMessage?: string): void {
-    clearTimeout(this.waitingMessageTimeout);
-    this.singleBarFormatted.getSingleBar().update({ waitingMessage: undefined });
-
-    if (waitingMessage) {
-      this.waitingMessageTimeout = setTimeout(async () => {
-        this.singleBarFormatted.getSingleBar().update({ waitingMessage });
-        await ProgressBarCLI.render();
-      }, 10_000);
-    }
+  setWaitingMessage(waitingMessage: string, timeout = 10_000): NodeJS.Timeout {
+    return setTimeout(async () => {
+      this.singleBarFormatted.getSingleBar().update({
+        waitingMessage,
+      } as ProgressBarPayload);
+      await ProgressBarCLI.render(true);
+    }, timeout);
   }
 
-  async increment(waitingMessage?: string): Promise<void> {
+  async increment(): Promise<void> {
     this.singleBarFormatted.getSingleBar().increment();
-    this.setWaitingMessage(waitingMessage);
     return ProgressBarCLI.render();
   }
 
-  async update(current: number, waitingMessage?: string): Promise<void> {
+  async update(current: number): Promise<void> {
     this.singleBarFormatted.getSingleBar().update(current);
-    this.setWaitingMessage(waitingMessage);
     return ProgressBarCLI.render();
   }
 

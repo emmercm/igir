@@ -54,7 +54,6 @@ export default class DATScanner extends Scanner {
       datFiles,
       Constants.DAT_SCANNER_THREADS,
       async (datFile: File, callback: AsyncResultCallback<DAT | undefined, Error>) => {
-        await this.progressBar.increment();
         const xmlObject = await this.parseDatFile(datFile);
         if (xmlObject) {
           try {
@@ -65,6 +64,7 @@ export default class DATScanner extends Scanner {
           }
         }
 
+        await this.progressBar.increment();
         return callback(null);
       },
     )).filter((xmlObject) => xmlObject) as DAT[];
