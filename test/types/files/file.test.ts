@@ -75,7 +75,7 @@ describe('extractToFile', () => {
     }), new ProgressBarFake()).scan();
     expect(raws).toHaveLength(8);
 
-    const temp = fsPoly.mkdtempSync(Constants.GLOBAL_TEMP_DIR);
+    const temp = await fsPoly.mkdtemp(Constants.GLOBAL_TEMP_DIR);
     /* eslint-disable no-await-in-loop */
     for (let i = 0; i < raws.length; i += 1) {
       const raw = raws[i];
@@ -95,7 +95,7 @@ describe('extractToStream', () => {
     }), new ProgressBarFake()).scan();
     expect(raws).toHaveLength(7);
 
-    const temp = fsPoly.mkdtempSync(Constants.GLOBAL_TEMP_DIR);
+    const temp = await fsPoly.mkdtemp(Constants.GLOBAL_TEMP_DIR);
     /* eslint-disable no-await-in-loop */
     for (let i = 0; i < raws.length; i += 1) {
       const raw = raws[i];

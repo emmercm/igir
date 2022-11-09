@@ -29,7 +29,27 @@ export default class FsPoly {
     }
   }
 
-  // TODO(cemmer): make an async version of this function
+  static async mkdtemp(prefix = os.tmpdir()): Promise<string> {
+    // mkdtemp takes a string prefix rather than a file path, so we need to make sure the
+    //  prefix ends with the path separator in order for it to become a parent directory.
+    let prefixProcessed = prefix.replace(/[\\/]+$/, '');
+    try {
+      if ((await fsPromises.lstat(prefixProcessed)).isDirectory()) {
+        prefixProcessed += path.sep;
+      }
+    } catch (e) {
+      // eslint-disable-line no-empty
+    }
+
+    try {
+      // Added in: v10.0.0
+      return await fsPromises.mkdtemp(prefixProcessed);
+    } catch (e) {
+      // Added in: v10.0.0
+      return await fsPromises.mkdtemp(path.join(process.cwd(), 'tmp') + path.sep);
+    }
+  }
+
   static mkdtempSync(prefix = os.tmpdir()): string {
     // mkdtempSync takes a string prefix rather than a file path, so we need to make sure the
     //  prefix ends with the path separator in order for it to become a parent directory.
