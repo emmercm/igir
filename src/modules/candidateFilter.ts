@@ -45,7 +45,6 @@ export default class CandidateFilter extends Module {
     /* eslint-disable no-await-in-loop */
     for (let i = 0; i < [...parentsToCandidates.entries()].length; i += 1) {
       const [parent, releaseCandidates] = [...parentsToCandidates.entries()][i];
-      await this.progressBar.increment();
       await this.progressBar.logTrace(`${dat.getName()}: ${parent.getName()}: ${releaseCandidates.length} candidates before filtering`);
 
       const filteredReleaseCandidates = releaseCandidates
@@ -54,6 +53,8 @@ export default class CandidateFilter extends Module {
         .filter((rc, idx) => this.postFilter(idx));
       await this.progressBar.logTrace(`${dat.getName()}: ${parent.getName()}: ${filteredReleaseCandidates.length} candidates after filtering`);
       output.set(parent, filteredReleaseCandidates);
+
+      await this.progressBar.increment();
     }
 
     const filteredCandidates = [...output.values()].reduce((sum, rc) => sum + rc.length, 0);

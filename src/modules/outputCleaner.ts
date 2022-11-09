@@ -72,8 +72,8 @@ export default class OutputCleaner extends Module {
     const CHUNK_SIZE = 100;
     /* eslint-disable no-await-in-loop */
     for (let i = 0; i < filePaths.length; i += CHUNK_SIZE) {
-      await this.progressBar.update(i);
       await trash(filePaths.slice(i, i + CHUNK_SIZE));
+      await this.progressBar.update(i);
     }
 
     // ...but if that doesn't work, delete the leftovers

@@ -105,6 +105,19 @@ export default class ProgressBarCLI extends ProgressBar {
     return ProgressBarCLI.render();
   }
 
+  /**
+   * If progress hasn't been made by some timeout period, then show a waiting message to let the
+   *  user know that there is still something processing.
+   */
+  setWaitingMessage(waitingMessage: string, timeout = 10_000): NodeJS.Timeout {
+    return setTimeout(async () => {
+      this.singleBarFormatted.getSingleBar().update({
+        waitingMessage,
+      } as ProgressBarPayload);
+      await ProgressBarCLI.render(true);
+    }, timeout);
+  }
+
   async increment(): Promise<void> {
     this.singleBarFormatted.getSingleBar().increment();
     return ProgressBarCLI.render();
