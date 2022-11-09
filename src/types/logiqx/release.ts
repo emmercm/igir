@@ -30,10 +30,10 @@ export default class Release {
     return this.region.toUpperCase();
   }
 
-  getLanguage(): string | null {
+  getLanguage(): string | undefined {
     if (this.language) {
       return this.language.replace(/\w\S*/g, (word) => word.charAt(0).toUpperCase() + word.substring(1).toLowerCase());
     }
-    return null;
+    return undefined;
   }
 }
