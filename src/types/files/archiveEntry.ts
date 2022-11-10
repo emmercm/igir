@@ -93,7 +93,7 @@ export default class ArchiveEntry<A extends Archive> extends File {
     entryPath: string,
     callback: (localFile: string) => (T | Promise<T>),
   ): Promise<T> {
-    const tempDir = fsPoly.mkdtempSync(path.join(Constants.GLOBAL_TEMP_DIR, 'xfile'));
+    const tempDir = await fsPoly.mkdtemp(path.join(Constants.GLOBAL_TEMP_DIR, 'xfile'));
     try {
       return await archive.extractEntryToFile(entryPath, tempDir, callback);
     } finally {
@@ -123,7 +123,7 @@ export default class ArchiveEntry<A extends Archive> extends File {
         .createStreamFromFile(localFile, start, callback));
     }
 
-    const tempDir = fsPoly.mkdtempSync(path.join(Constants.GLOBAL_TEMP_DIR, 'xstream'));
+    const tempDir = await fsPoly.mkdtemp(path.join(Constants.GLOBAL_TEMP_DIR, 'xstream'));
     try {
       return await this.archive.extractEntryToStream(this.getEntryPath(), tempDir, callback);
     } finally {

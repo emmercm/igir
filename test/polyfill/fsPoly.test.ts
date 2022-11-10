@@ -50,7 +50,7 @@ describe('rmSync', () => {
   });
 
   it('should delete an existing directory', async () => {
-    const dir = fsPoly.mkdtempSync(path.join(process.cwd(), 'temp'));
+    const dir = await fsPoly.mkdtemp(path.join(process.cwd(), 'temp'));
     fsPoly.rmSync(dir);
     await expect(fsPoly.exists(dir)).resolves.toEqual(false);
   });

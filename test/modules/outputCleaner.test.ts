@@ -17,7 +17,7 @@ const ROM_FIXTURES_DIR = path.join('test', 'fixtures', 'roms');
  */
 async function runOutputCleaner(writtenFilePathsToExclude: string[]): Promise<string[]> {
   // Copy the fixture files to a temp directory
-  const tempDir = fsPoly.mkdtempSync(Constants.GLOBAL_TEMP_DIR);
+  const tempDir = await fsPoly.mkdtemp(Constants.GLOBAL_TEMP_DIR);
   fsPoly.copyDirSync(ROM_FIXTURES_DIR, tempDir);
 
   const writtenRomFilesToExclude = await Promise.all(writtenFilePathsToExclude
