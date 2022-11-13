@@ -414,8 +414,17 @@ export default class Options implements OptionsProps {
     return this.zipExclude;
   }
 
-  // TODO(cemmer): don't remove header for "headered" DATs
-  canRemoveHeader(extension: string): boolean {
+  canRemoveHeader(dat: DAT, extension: string): boolean {
+    // ROMs in "headered" DATs shouldn't have their header removed
+    if (dat.isHeadered()) {
+      return false;
+    }
+
+    // ROMs in "headerless" DATs should have their header removed
+    if (dat.isHeaderless()) {
+      return true;
+    }
+
     if (this.removeHeaders === undefined) {
       // Option wasn't provided, we shouldn't remove headers
       return false;

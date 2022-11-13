@@ -92,7 +92,24 @@ export default class CandidateGenerator extends Module {
 
   private static indexFilesByHashCode(files: File[]): Map<string, File> {
     return files.reduce((map, file) => {
-      file.hashCodes().forEach((hashCode) => map.set(hashCode, file));
+      // Always set file based on full contents
+      map.set(file.hashCodeWithHeader(), file);
+
+      // If the file has a header, then add its un-headered hash code to the map
+      if (file.getFileHeader()) {
+        const hashCodeWithoutHeader = file.hashCodeWithoutHeader();
+        if (!map.has(hashCodeWithoutHeader)) {
+          map.set(hashCodeWithoutHeader, file);
+        } else {
+          const existing = map.get(hashCodeWithoutHeader) as File;
+          if (!file.getFileHeader() && existing.getFileHeader()) {
+            // If the input files contain both a headered and un-headered copy of the same ROM, use
+            //  the un-headered copy because it is more "true" to what the DAT is looking for.
+            map.set(hashCodeWithoutHeader, file);
+          }
+        }
+      }
+
       return map;
     }, new Map<string, File>());
   }
@@ -106,6 +123,9 @@ export default class CandidateGenerator extends Module {
     // For each Game's ROM, find the matching File
     const romFiles = await Promise.all(
       game.getRoms().map(async (rom) => {
+        // NOTE(cemmer): if the ROM's CRC includes a header, then this will only find headered
+        //  files. If the ROM's CRC excludes a header, this can find either a headered or non-
+        //  headered file.
         const romFile = hashCodeToInputFiles.get(rom.hashCode());
         if (romFile) {
           const romWithFiles = new ROMWithFiles(
@@ -141,7 +161,7 @@ export default class CandidateGenerator extends Module {
     const { base, ...parsedPath } = path.parse(rom.getName());
     if (parsedPath.ext && inputFile.getFileHeader()) {
       // If the ROM has a header then we're going to ignore the file extension from the DAT
-      if (this.options.canRemoveHeader(parsedPath.ext)) {
+      if (this.options.canRemoveHeader(dat, parsedPath.ext)) {
         parsedPath.ext = inputFile.getFileHeader()?.unheaderedFileExtension as string;
       } else {
         parsedPath.ext = inputFile.getFileHeader()?.headeredFileExtension as string;
