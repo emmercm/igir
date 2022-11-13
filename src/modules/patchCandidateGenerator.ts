@@ -1,7 +1,9 @@
 import ProgressBar, { Symbols } from '../console/progressBar.js';
 import FileFactory from '../types/archives/fileFactory.js';
 import DAT from '../types/logiqx/dat.js';
+import Game from '../types/logiqx/game.js';
 import Parent from '../types/logiqx/parent.js';
+import Release from '../types/logiqx/release.js';
 import Patch from '../types/patches/patch.js';
 import ReleaseCandidate from '../types/releaseCandidate.js';
 import ROMWithFiles from '../types/romWithFiles.js';
@@ -102,9 +104,24 @@ export default class PatchCandidateGenerator extends Module {
           return new ROMWithFiles(rom, inputFile, outputFile);
         }));
 
+      const patchedGame = new Game({
+        ...unpatchedReleaseCandidate.getGame(),
+        name: patchedRomName,
+      });
+
+      let patchedRelease;
+      const unpatchedRelease = unpatchedReleaseCandidate.getRelease();
+      if (unpatchedRelease) {
+        patchedRelease = new Release(
+          patchedRomName,
+          unpatchedRelease.getRegion(),
+          unpatchedRelease.getLanguage(),
+        );
+      }
+
       return new ReleaseCandidate(
-        unpatchedReleaseCandidate.getGame(),
-        unpatchedReleaseCandidate.getRelease(),
+        patchedGame,
+        patchedRelease,
         romsWithFiles,
       );
     }));
