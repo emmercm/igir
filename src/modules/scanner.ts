@@ -41,6 +41,9 @@ export default abstract class Scanner extends Module {
     }
 
     // Limit to unique files
+    // NOTE(cemmer): this should happen before parsing ROM headers, so this uniqueness will be based
+    //  on the full file contents. We will later care about how to choose ROMs based on their
+    //  header or lack thereof.
     return [...foundFiles
       .sort(this.fileComparator.bind(this))
       .reduce((map, file) => {

@@ -199,7 +199,7 @@ export default class ROMWriter extends Module {
 
     try {
       await ROMWriter.ensureOutputDirExists(outputZip.getFilePath());
-      await outputZip.archiveEntries(this.options, inputToOutputZipEntries);
+      await outputZip.archiveEntries(this.options, dat, inputToOutputZipEntries);
       return true;
     } catch (e) {
       await this.progressBar.logError(`${dat.getName()}: ${outputZip.getFilePath()}: failed to create zip : ${e}`);
@@ -266,7 +266,7 @@ export default class ROMWriter extends Module {
           writeStream.on('finish', () => resolve());
           writeStream.on('error', (err) => reject(err));
         });
-      }, this.options.canRemoveHeader(path.extname(inputRomFile.getExtractedFilePath())));
+      }, this.options.canRemoveHeader(dat, path.extname(inputRomFile.getExtractedFilePath())));
       return true;
     } catch (e) {
       await this.progressBar.logError(`${dat.getName()}: ${inputRomFile.toString()}: failed to copy to ${outputFilePath} : ${e}`);

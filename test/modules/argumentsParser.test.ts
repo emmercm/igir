@@ -4,6 +4,8 @@ import Logger from '../../src/console/logger.js';
 import LogLevel from '../../src/console/logLevel.js';
 import Constants from '../../src/constants.js';
 import ArgumentsParser from '../../src/modules/argumentsParser.js';
+import DAT from '../../src/types/logiqx/dat.js';
+import Header from '../../src/types/logiqx/header.js';
 
 const dummyRequiredArgs = ['--input', os.devNull, '--output', os.devNull];
 const dummyCommandAndRequiredArgs = ['copy', ...dummyRequiredArgs];
@@ -208,19 +210,22 @@ describe('options', () => {
   });
 
   it('should parse "remove-headers"', () => {
+    const dat = new DAT(new Header(), []);
+
     // False
-    expect(argumentsParser.parse(dummyCommandAndRequiredArgs).canRemoveHeader('.smc')).toEqual(false);
-    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--remove-headers', '.smc']).canRemoveHeader('.rom')).toEqual(false);
+    expect(argumentsParser.parse(dummyCommandAndRequiredArgs).canRemoveHeader(dat, '.smc')).toEqual(false);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--remove-headers', '.smc']).canRemoveHeader(dat, '.rom')).toEqual(false);
+
     // True
-    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '-H']).canRemoveHeader('')).toEqual(true);
-    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--remove-headers']).canRemoveHeader('')).toEqual(true);
-    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--remove-headers']).canRemoveHeader('.rom')).toEqual(true);
-    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--remove-headers']).canRemoveHeader('.smc')).toEqual(true);
-    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '-H', '.smc']).canRemoveHeader('filepath.smc')).toEqual(false);
-    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--remove-headers', 'smc']).canRemoveHeader('.smc')).toEqual(true);
-    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--remove-headers', '.smc']).canRemoveHeader('.SMC')).toEqual(true);
-    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '-H', 'LNX,.smc']).canRemoveHeader('.smc')).toEqual(true);
-    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--remove-headers', 'lnx,.LNX']).canRemoveHeader('.LnX')).toEqual(true);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '-H']).canRemoveHeader(dat, '')).toEqual(true);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--remove-headers']).canRemoveHeader(dat, '')).toEqual(true);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--remove-headers']).canRemoveHeader(dat, '.rom')).toEqual(true);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--remove-headers']).canRemoveHeader(dat, '.smc')).toEqual(true);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '-H', '.smc']).canRemoveHeader(dat, 'filepath.smc')).toEqual(false);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--remove-headers', 'smc']).canRemoveHeader(dat, '.smc')).toEqual(true);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--remove-headers', '.smc']).canRemoveHeader(dat, '.SMC')).toEqual(true);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '-H', 'LNX,.smc']).canRemoveHeader(dat, '.smc')).toEqual(true);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--remove-headers', 'lnx,.LNX']).canRemoveHeader(dat, '.LnX')).toEqual(true);
   });
 
   it('should parse "overwrite"', () => {

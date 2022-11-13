@@ -8,6 +8,7 @@ import yauzl, { Entry } from 'yauzl';
 import fsPoly from '../../polyfill/fsPoly.js';
 import ArchiveEntry from '../files/archiveEntry.js';
 import File from '../files/file.js';
+import DAT from '../logiqx/dat.js';
 import Options from '../options.js';
 import Archive from './archive.js';
 
@@ -133,6 +134,7 @@ export default class Zip extends Archive {
 
   async archiveEntries(
     options: Options,
+    dat: DAT,
     inputToOutput: Map<File, ArchiveEntry<Zip>>,
   ): Promise<void> {
     // Pipe the zip contents to disk, using an intermediate temp file because we may be trying to
@@ -165,7 +167,7 @@ export default class Zip extends Archive {
 
           // Leave the stream open until we're done writing the zip
           await zipClosed;
-        }, options.canRemoveHeader(path.extname(inputFile.getExtractedFilePath()))));
+        }, options.canRemoveHeader(dat, path.extname(inputFile.getExtractedFilePath()))));
 
     // Wait until all archive entries have been enqueued
     await new Promise<void>((resolve) => {

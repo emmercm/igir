@@ -253,10 +253,18 @@ export default class File {
     return `${crc}|${size}`;
   }
 
+  hashCodeWithHeader(): string {
+    return File.hashCode(this.getCrc32(), this.getSize());
+  }
+
+  hashCodeWithoutHeader(): string {
+    return File.hashCode(this.getCrc32WithoutHeader(), this.getSizeWithoutHeader());
+  }
+
   hashCodes(): string[] {
     return [
-      File.hashCode(this.getCrc32(), this.getSize()),
-      File.hashCode(this.getCrc32WithoutHeader(), this.getSizeWithoutHeader()),
+      this.hashCodeWithHeader(),
+      this.hashCodeWithoutHeader(),
     ].filter((hash, idx, hashes) => hashes.indexOf(hash) === idx);
   }
 
