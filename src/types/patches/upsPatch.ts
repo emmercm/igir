@@ -13,6 +13,7 @@ import Patch from './patch.js';
  *  large patches can perform tremendously poorly if they contain many small records.
  *
  * @link https://www.romhacking.net/documents/392/
+ * @link https://github.com/btimofeev/UniPatcher/wiki/UPS
  * @link https://www.gamebrew.org/wiki/Upset
  */
 export default class UPSPatch extends Patch {
