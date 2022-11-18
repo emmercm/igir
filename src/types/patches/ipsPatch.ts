@@ -7,7 +7,7 @@ import Patch from './patch.js';
  * @link https://github.com/btimofeev/UniPatcher/blob/a5a69cc607fadef43734589b311e5ef1bcde6941/app/src/main/java/org/emunix/unipatcher/patcher/IPS.java
  */
 export default class IPSPatch extends Patch {
-  static readonly SUPPORTED_EXTENSIONS = ['.ips'];
+  static readonly SUPPORTED_EXTENSIONS = ['.ips', '.ips32'];
 
   static patchFrom(file: File): IPSPatch {
     const crcBefore = Patch.getCrcFromPath(file.getExtractedFilePath());
