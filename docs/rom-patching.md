@@ -12,13 +12,13 @@ Not all patch types are created equal. Here are some tables of some existing for
 
 **Common patch types:**
 
-| Type                 | Supported         | CRC32 in patch contents | Notes                                                                                                                                                                                                |
-|----------------------|-------------------|-------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `.bps`               | ✅                 | ✅                       |                                                                                                                                                                                                      |
-| `.ips`               | ⚠️ IPS, not IPS32 | ❌                       |                                                                                                                                                                                                      |
-| `.ppf`               | ✅ 2.0, 3.0        | ❌                       |                                                                                                                                                                                                      |
-| `.ups`               | ✅                 | ✅                       | ⚠️ UPS patches read and write fies byte-by-byte, making them horribly slow and inefficient. The author, byuu, created `.ups` to replace `.ips`, but then created `.bps` as a replacement for `.ups`. |
-| `.vcdiff`, `.xdelta` | ❌                 | ❓                       |                                                                                                                                                                                                      |
+| Type                 | Supported                        | CRC32 in patch contents | Notes                                                                                                                                                                                                |
+|----------------------|----------------------------------|-------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `.bps`               | ✅                                | ✅                       |                                                                                                                                                                                                      |
+| `.ips`               | ⚠️ IPS, not IPS32                | ❌                       |                                                                                                                                                                                                      |
+| `.ppf`               | ✅ 2.0, 3.0                       | ❌                       |                                                                                                                                                                                                      |
+| `.ups`               | ✅                                | ✅                       | ⚠️ UPS patches read and write fies byte-by-byte, making them horribly slow and inefficient. The author, byuu, created `.ups` to replace `.ips`, but then created `.bps` as a replacement for `.ups`. |
+| `.vcdiff`, `.xdelta` | ⚠️ without secondary compression | ❌                       | ⚠️ the [xdelta3](https://github.com/jmacd/xdelta) makes use of LZMA secondary compression by default, many patches are unlikely to be supported                                                      |
 
 **Uncommon patch types:**
 
