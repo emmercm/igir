@@ -63,7 +63,7 @@ export default abstract class Patch {
     callback: (tempFile: string) => (T | Promise<T>),
   ): Promise<T>;
 
-  protected static async readVariableLengthNumber(fp: FilePoly): Promise<number> {
+  protected static async readUpsUint(fp: FilePoly): Promise<number> {
     let data = 0;
     let shift = 1;
 
@@ -79,5 +79,36 @@ export default abstract class Patch {
     }
 
     return data;
+  }
+
+  protected static async readVcdiffUintFromFile(fp: FilePoly): Promise<number> {
+    let num = 0;
+
+    /* eslint-disable no-await-in-loop, no-bitwise */
+    while (!fp.isEOF()) {
+      const bits = (await fp.readNext(1)).readUint8();
+      num = (num << 7) + (bits & 0x7f);
+      if (!(bits & 0x80)) { // left-most bit is telling us to keep going
+        break;
+      }
+    }
+
+    return num;
+  }
+
+  protected static readVcdiffUintFromBuffer(buffer: Buffer, offset = 0): [number, number] {
+    let num = 0;
+
+    let lastOffset = offset;
+    while (lastOffset < buffer.length) {
+      const bits = buffer.readUint8(lastOffset);
+      lastOffset += 1;
+      num = (num << 7) + (bits & 0x7f);
+      if (!(bits & 0x80)) { // left-most bit is telling us to keep going
+        break;
+      }
+    }
+
+    return [num, lastOffset];
   }
 }
