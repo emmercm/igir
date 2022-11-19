@@ -53,33 +53,10 @@ export default class CandidateGenerator extends Module {
     /* eslint-disable no-await-in-loop */
     for (let i = 0; i < dat.getParents().length; i += 1) {
       const parent = dat.getParents()[i];
-
-      const releaseCandidates: ReleaseCandidate[] = [];
-
-      // For every game
-      for (let j = 0; j < parent.getGames().length; j += 1) {
-        const game = parent.getGames()[j];
-
-        // For every release (ensuring at least one), find all release candidates
-        const releases = game.getReleases().length ? game.getReleases() : [undefined];
-        for (let k = 0; k < releases.length; k += 1) {
-          const release = releases[k];
-
-          const releaseCandidate = await this.buildReleaseCandidateForRelease(
-            dat,
-            game,
-            release,
-            hashCodeToInputFiles,
-          );
-          if (releaseCandidate) {
-            releaseCandidates.push(releaseCandidate);
-          }
-        }
-      }
-
-      await this.progressBar.logTrace(`${dat.getName()}: ${parent.getName()}: found ${releaseCandidates.length.toLocaleString()} candidates`);
-      output.set(parent, releaseCandidates);
-
+      output.set(
+        parent,
+        await this.buildReleaseCandidatesForParent(dat, parent, hashCodeToInputFiles),
+      );
       await this.progressBar.increment();
     }
 
@@ -112,6 +89,38 @@ export default class CandidateGenerator extends Module {
 
       return map;
     }, new Map<string, File>());
+  }
+
+  private async buildReleaseCandidatesForParent(
+    dat: DAT,
+    parent: Parent,
+    hashCodeToInputFiles: Map<string, File>,
+  ): Promise<ReleaseCandidate[]> {
+    const releaseCandidates: ReleaseCandidate[] = [];
+
+    // For every game
+    for (let j = 0; j < parent.getGames().length; j += 1) {
+      const game = parent.getGames()[j];
+
+      // For every release (ensuring at least one), find all release candidates
+      const releases = game.getReleases().length ? game.getReleases() : [undefined];
+      for (let k = 0; k < releases.length; k += 1) {
+        const release = releases[k];
+
+        const releaseCandidate = await this.buildReleaseCandidateForRelease(
+          dat,
+          game,
+          release,
+          hashCodeToInputFiles,
+        );
+        if (releaseCandidate) {
+          releaseCandidates.push(releaseCandidate);
+        }
+      }
+    }
+
+    await this.progressBar.logTrace(`${dat.getName()}: ${parent.getName()}: found ${releaseCandidates.length.toLocaleString()} candidates`);
+    return releaseCandidates;
   }
 
   private async buildReleaseCandidateForRelease(
@@ -170,20 +179,37 @@ export default class CandidateGenerator extends Module {
     const outputEntryPath = path.format(parsedPath);
 
     if (this.options.shouldZip(rom.getName())) {
-      const outputFilePath = this.options.getOutput(
-        dat,
-        inputFile.getFilePath(),
-        undefined,
-        `${game.getName()}.zip`,
-      );
-      return ArchiveEntry.entryOf(
-        new Zip(outputFilePath),
-        outputEntryPath,
-        inputFile.getSize(),
-        inputFile.getCrc32(),
-      );
+      return this.buildZipArchiveEntry(dat, game, inputFile, outputEntryPath);
     }
+    return this.buildFileEntry(dat, game, inputFile, outputEntryPath);
+  }
 
+  private async buildZipArchiveEntry(
+    dat: DAT,
+    game: Game,
+    inputFile: File,
+    outputEntryPath: string,
+  ): Promise<ArchiveEntry<Zip>> {
+    const outputFilePath = this.options.getOutput(
+      dat,
+      inputFile.getFilePath(),
+      undefined,
+      `${game.getName()}.zip`,
+    );
+    return ArchiveEntry.entryOf(
+      new Zip(outputFilePath),
+      outputEntryPath,
+      inputFile.getSize(),
+      inputFile.getCrc32(),
+    );
+  }
+
+  private async buildFileEntry(
+    dat: DAT,
+    game: Game,
+    inputFile: File,
+    outputEntryPath: string,
+  ): Promise<File> {
     const outputFilePath = this.options.getOutput(
       dat,
       inputFile.getFilePath(),
