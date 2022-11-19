@@ -1,10 +1,10 @@
-import fs, { promises as fsPromises } from 'fs';
 import path from 'path';
 import { Readable } from 'stream';
 
 import Constants from '../../constants.js';
 import fsPoly from '../../polyfill/fsPoly.js';
 import Archive from '../archives/archive.js';
+import Patch from '../patches/patch.js';
 import File from './file.js';
 import FileHeader from './fileHeader.js';
 
@@ -20,6 +20,7 @@ export default class ArchiveEntry<A extends Archive> extends File {
     crc: string,
     crc32WithoutHeader: string,
     fileHeader: FileHeader | undefined,
+    patch: Patch | undefined,
     /** {@link ArchiveEntry} */
     archive: A,
     entryPath: string,
@@ -30,6 +31,7 @@ export default class ArchiveEntry<A extends Archive> extends File {
       crc,
       crc32WithoutHeader,
       fileHeader,
+      patch,
     );
     this.archive = archive;
     this.entryPath = path.normalize(entryPath);
@@ -41,6 +43,7 @@ export default class ArchiveEntry<A extends Archive> extends File {
     size: number,
     crc: string,
     fileHeader?: FileHeader,
+    patch?: Patch,
   ): Promise<ArchiveEntry<A>> {
     let finalCrcWithoutHeader = crc;
     if (fileHeader) {
@@ -57,6 +60,7 @@ export default class ArchiveEntry<A extends Archive> extends File {
       crc,
       finalCrcWithoutHeader,
       fileHeader,
+      patch,
       archive,
       entryPath,
     );
@@ -78,12 +82,18 @@ export default class ArchiveEntry<A extends Archive> extends File {
     return ArchiveEntry.extractEntryToFile(this.getArchive(), this.getEntryPath(), callback);
   }
 
+  async extractToTempFile<T>(
+    callback: (localFile: string) => (T | Promise<T>),
+  ): Promise<T> {
+    return ArchiveEntry.extractEntryToFile(this.getArchive(), this.getEntryPath(), callback);
+  }
+
   private static async extractEntryToFile<T>(
     archive: Archive,
     entryPath: string,
     callback: (localFile: string) => (T | Promise<T>),
   ): Promise<T> {
-    const tempDir = await fsPromises.mkdtemp(Constants.GLOBAL_TEMP_DIR);
+    const tempDir = await fsPoly.mkdtemp(path.join(Constants.GLOBAL_TEMP_DIR, 'xfile'));
     try {
       return await archive.extractEntryToFile(entryPath, tempDir, callback);
     } finally {
@@ -99,23 +109,52 @@ export default class ArchiveEntry<A extends Archive> extends File {
       ? this.getFileHeader()?.dataOffsetBytes || 0
       : 0;
 
-    // Don't extract to memory if this archive entry size is too large, or if we need to manipulate
-    // the stream start point
-    if (this.getSize() > Constants.MAX_STREAM_EXTRACTION_SIZE || start > 0) {
-      return this.extractToFile(async (localFile) => {
-        const stream = fs.createReadStream(localFile, { start });
-        const result = await callback(stream);
-        stream.destroy();
-        return result;
-      });
+    // Apply the patch if there is one
+    if (this.getPatch()) {
+      const patch = this.getPatch() as Patch;
+      return patch.apply(this, async (tempFile) => File
+        .createStreamFromFile(tempFile, start, callback));
     }
 
-    const tempDir = await fsPromises.mkdtemp(Constants.GLOBAL_TEMP_DIR);
+    // Don't extract to memory if this archive entry size is too large, or if we need to manipulate
+    // the stream start point
+    if (this.getSize() > Constants.MAX_MEMORY_FILE_SIZE || start > 0) {
+      return this.extractToFile(async (localFile) => File
+        .createStreamFromFile(localFile, start, callback));
+    }
+
+    const tempDir = await fsPoly.mkdtemp(path.join(Constants.GLOBAL_TEMP_DIR, 'xstream'));
     try {
       return await this.archive.extractEntryToStream(this.getEntryPath(), tempDir, callback);
     } finally {
       await fsPoly.rm(tempDir, { recursive: true });
     }
+  }
+
+  async withFileName(fileNameWithoutExt: string): Promise<File> {
+    return ArchiveEntry.entryOf(
+      this.getArchive().withFileName(fileNameWithoutExt),
+      this.getEntryPath(),
+      this.getSize(),
+      this.getCrc32(),
+      this.getFileHeader(),
+      this.getPatch(),
+    );
+  }
+
+  async withExtractedFilePath(extractedNameWithoutExt: string): Promise<File> {
+    const { base, ...parsedEntryPath } = path.parse(this.getEntryPath());
+    parsedEntryPath.name = extractedNameWithoutExt;
+    const entryPath = path.format(parsedEntryPath);
+
+    return ArchiveEntry.entryOf(
+      this.getArchive(),
+      entryPath,
+      this.getSize(),
+      this.getCrc32(),
+      this.getFileHeader(),
+      this.getPatch(),
+    );
   }
 
   async withFileHeader(fileHeader: FileHeader): Promise<File> {
@@ -133,6 +172,22 @@ export default class ArchiveEntry<A extends Archive> extends File {
       this.getSize(),
       this.getCrc32(),
       fileHeader,
+      undefined, // don't allow a patch
+    );
+  }
+
+  async withPatch(patch: Patch): Promise<File> {
+    if (patch.getCrcBefore() !== this.getCrc32()) {
+      return this;
+    }
+
+    return ArchiveEntry.entryOf(
+      this.getArchive(),
+      this.getEntryPath(),
+      this.getSize(),
+      this.getCrc32(),
+      undefined, // don't allow a file header
+      patch,
     );
   }
 

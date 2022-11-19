@@ -1,36 +1,37 @@
-import { jest } from '@jest/globals';
 import { promises as fsPromises, Stats } from 'fs';
 import os from 'os';
 import path from 'path';
 
 import Constants from '../../src/constants.js';
 import CandidateGenerator from '../../src/modules/candidateGenerator.js';
+import DATInferrer from '../../src/modules/datInferrer.js';
 import HeaderProcessor from '../../src/modules/headerProcessor.js';
+import PatchCandidateGenerator from '../../src/modules/patchCandidateGenerator.js';
+import PatchScanner from '../../src/modules/patchScanner.js';
 import ROMScanner from '../../src/modules/romScanner.js';
 import ROMWriter from '../../src/modules/romWriter.js';
 import fsPoly from '../../src/polyfill/fsPoly.js';
-import ArchiveFactory from '../../src/types/archives/archiveFactory.js';
+import Archive from '../../src/types/archives/archive.js';
+import FileFactory from '../../src/types/archives/fileFactory.js';
+import ArchiveEntry from '../../src/types/files/archiveEntry.js';
 import File from '../../src/types/files/file.js';
 import DAT from '../../src/types/logiqx/dat.js';
-import Game from '../../src/types/logiqx/game.js';
 import Header from '../../src/types/logiqx/header.js';
 import Parent from '../../src/types/logiqx/parent.js';
-import ROM from '../../src/types/logiqx/rom.js';
 import Options, { OptionsProps } from '../../src/types/options.js';
+import Patch from '../../src/types/patches/patch.js';
 import ReleaseCandidate from '../../src/types/releaseCandidate.js';
 import ProgressBarFake from '../console/progressBarFake.js';
-
-jest.setTimeout(10_000);
 
 async function copyFixturesToTemp(
   callback: (input: string, output: string) => void | Promise<void>,
 ): Promise<void> {
   // Set up the input directory
-  const inputTemp = fsPoly.mkdtempSync(Constants.GLOBAL_TEMP_DIR);
-  fsPoly.copyDirSync('./test/fixtures/roms', inputTemp);
+  const inputTemp = await fsPoly.mkdtemp(path.join(Constants.GLOBAL_TEMP_DIR, 'input'));
+  fsPoly.copyDirSync('./test/fixtures', inputTemp);
 
   // Set up the output directory, but delete it so ROMWriter can make it
-  const outputTemp = fsPoly.mkdtempSync(Constants.GLOBAL_TEMP_DIR);
+  const outputTemp = await fsPoly.mkdtemp(path.join(Constants.GLOBAL_TEMP_DIR, 'output'));
   await fsPoly.rm(outputTemp, { force: true, recursive: true });
 
   // Call the callback
@@ -68,88 +69,76 @@ async function walkAndStat(dirPath: string): Promise<[string, Stats][]> {
   );
 }
 
-function datScanner(gameNameToFiles: Map<string, File[]>): DAT {
-  const games = [...gameNameToFiles.entries()]
-    .map(([gameName, files]) => {
-      const roms = files
-        // De-duplicate
-        .filter((one, idx, romFiles) => romFiles
-          .findIndex((two) => two.getExtractedFilePath() === one.getExtractedFilePath()) === idx)
-        // Map
-        .map((file) => new ROM(
-          path.basename(file.getExtractedFilePath()),
-          file.getSize(),
-          file.getCrc32(),
-        ));
-      return new Game({
-        name: gameName,
-        rom: roms,
-      });
-    });
-  return new DAT(new Header(), games);
+async function datInferrer(romFiles: File[]): Promise<DAT> {
+  // Run DATInferrer, but condense all DATs down to one
+  const datGames = (await new DATInferrer(new ProgressBarFake()).infer(romFiles))
+    .map((dat) => dat.getGames())
+    .flatMap((games) => games);
+  return new DAT(new Header(), datGames);
 }
 
-async function romScanner(
-  options: Options,
-  inputDir: string,
-  inputGlob: string,
-): Promise<Map<string, File[]>> {
+async function romScanner(options: Options): Promise<File[]> {
   return (await new ROMScanner(new Options({
     ...options,
-    input: [path.join(inputDir, inputGlob)],
+    dat: [''], // force ROMScanner to unique files
   }), new ProgressBarFake()).scan())
     // Reduce all the unique files for all games
     .filter((one, idx, files) => files
-      .findIndex((two) => two.equals(one)) === idx)
-    // Map
-    .reduce((map, romFile) => {
-      const romName = path.parse(romFile.getFilePath()).name.replace(/\.[a-z]+$/, '');
-      if (map.has(romName)) {
-        map.set(romName, [...map.get(romName) as File[], romFile]);
-      } else {
-        map.set(romName, [romFile]);
-      }
-      return map;
-    }, new Map<string, File[]>());
+      .findIndex((two) => two.hashCodes().join() === one.hashCodes().join()) === idx);
 }
 
 async function headerProcessor(
   options: Options,
-  gameNameToFiles: Map<string, File[]>,
-): Promise<Map<string, File[]>> {
-  return new Map(await Promise.all([...gameNameToFiles.entries()]
-    .map(async ([gameName, files]): Promise<[string, File[]]> => {
-      const headeredFiles = await new HeaderProcessor(options, new ProgressBarFake())
-        .process(files);
-      return [gameName, headeredFiles];
-    })));
+  romFiles: File[],
+): Promise<File[]> {
+  return new HeaderProcessor(options, new ProgressBarFake()).process(romFiles);
 }
 
 async function candidateGenerator(
   options: Options,
   dat: DAT,
-  gameNameToFiles: Map<string, File[]>,
+  romFiles: File[],
 ): Promise<Map<Parent, ReleaseCandidate[]>> {
-  const romFiles = [...gameNameToFiles.values()].flatMap((files) => files);
   return new CandidateGenerator(options, new ProgressBarFake()).generate(dat, romFiles);
+}
+
+async function patchScanner(
+  options: Options,
+): Promise<Patch[]> {
+  return new PatchScanner(options, new ProgressBarFake()).scan();
+}
+
+async function patchCandidateGenerator(
+  dat: DAT,
+  parentsToCandidates: Map<Parent, ReleaseCandidate[]>,
+  patches: Patch[],
+): Promise<Map<Parent, ReleaseCandidate[]>> {
+  return new PatchCandidateGenerator(new ProgressBarFake())
+    .generate(dat, parentsToCandidates, patches);
 }
 
 async function romWriter(
   optionsProps: OptionsProps,
   inputTemp: string,
   inputGlob: string,
+  patchGlob: string | undefined,
   outputTemp: string,
 ): Promise<[string, Stats][]> {
   // Given
   const options = new Options({
     ...optionsProps,
-    input: [inputTemp],
+    input: [path.join(inputTemp, 'roms', inputGlob)],
+    ...(patchGlob ? { patch: [path.join(inputTemp, patchGlob)] } : {}),
     output: outputTemp,
   });
-  const gameNameToFiles = await romScanner(options, inputTemp, inputGlob);
-  const dat = datScanner(gameNameToFiles);
-  const gameNamesToHeaderedFiles = await headerProcessor(options, gameNameToFiles);
-  const candidates = await candidateGenerator(options, dat, gameNamesToHeaderedFiles);
+  const romFiles = await romScanner(options);
+  const dat = await datInferrer(romFiles);
+  const gameNamesToHeaderedFiles = await headerProcessor(options, romFiles);
+  let candidates = await candidateGenerator(options, dat, gameNamesToHeaderedFiles);
+  if (patchGlob) {
+    const patches = await patchScanner(options);
+    candidates = await patchCandidateGenerator(dat, candidates, patches);
+  }
 
   // When
   await new ROMWriter(options, new ProgressBarFake()).write(dat, candidates);
@@ -166,7 +155,7 @@ it('should not do anything if there are no parents', async () => {
     await expect(walkAndStat(outputTemp)).resolves.toEqual([]);
 
     // When
-    await romWriter(options, os.devNull, '**/*', outputTemp);
+    await romWriter(options, os.devNull, '**/*', undefined, outputTemp);
 
     // Then no files were written
     await expect(walkAndStat(outputTemp)).resolves.toEqual([]);
@@ -184,7 +173,7 @@ it('should not do anything with no write commands', async () => {
     await expect(walkAndStat(outputTemp)).resolves.toEqual([]);
 
     // When
-    await romWriter(options, inputTemp, '**/*', outputTemp);
+    await romWriter(options, inputTemp, '**/*', undefined, outputTemp);
 
     // Then no files were written
     await expect(walkAndStat(outputTemp)).resolves.toEqual([]);
@@ -202,7 +191,7 @@ it('should not do anything if the input and output files are the same', async ()
     await expect(walkAndStat(inputTemp)).resolves.not.toEqual([]);
 
     // When
-    await romWriter(options, inputTemp, '**/*', inputTemp);
+    await romWriter(options, inputTemp, '**/*', undefined, inputTemp);
 
     // Then the input files weren't touched
     await expect(walkAndStat(inputTemp)).resolves.toEqual(inputFilesBefore);
@@ -218,14 +207,14 @@ describe('zip', () => {
       await expect(walkAndStat(outputTemp)).resolves.toEqual([]);
 
       // And we've written once
-      await romWriter(options, inputTemp, '**/*', outputTemp);
+      await romWriter(options, inputTemp, '**/*', undefined, outputTemp);
 
       // And no files were written
       const outputFilesBefore = await walkAndStat(outputTemp);
       expect(outputFilesBefore).not.toEqual([]);
 
       // When we write again
-      await romWriter(options, inputTemp, '**/*', outputTemp);
+      await romWriter(options, inputTemp, '**/*', undefined, outputTemp);
 
       // Then the output wasn't touched
       await expect(walkAndStat(outputTemp)).resolves.toEqual(outputFilesBefore);
@@ -243,7 +232,7 @@ describe('zip', () => {
       await expect(walkAndStat(outputTemp)).resolves.toEqual([]);
 
       // And we've written once
-      await romWriter(options, inputTemp, '**/*', outputTemp);
+      await romWriter(options, inputTemp, '**/*', undefined, outputTemp);
 
       // And no files were written
       const outputFilesBefore = await walkAndStat(outputTemp);
@@ -253,7 +242,7 @@ describe('zip', () => {
       await romWriter({
         ...options,
         overwrite: true,
-      }, inputTemp, '**/*', outputTemp);
+      }, inputTemp, '**/*', undefined, outputTemp);
 
       // Then the output wasn't touched
       await expect(walkAndStat(outputTemp)).resolves.toEqual(outputFilesBefore);
@@ -271,7 +260,6 @@ describe('zip', () => {
       await expect(walkAndStat(outputTemp)).resolves.toEqual([]);
 
       // And the output has files
-      const inputTempRaw = path.join(inputTemp, 'zip');
       await Promise.all(inputFilesBefore.map(async ([inputFile]) => {
         const outputFile = path.join(outputTemp, path.basename(inputFile));
         await fsPoly.touch(outputFile);
@@ -283,7 +271,7 @@ describe('zip', () => {
       await romWriter({
         ...options,
         overwrite: true,
-      }, inputTempRaw, '**/*', outputTemp);
+      }, inputTemp, 'zip/*', undefined, outputTemp);
 
       // Then the output was touched
       const outputFilesAfter = await walkAndStat(outputTemp);
@@ -312,13 +300,13 @@ describe('zip', () => {
   ])('should not remove headers if not requested: %s', async (inputGlob, expectedFileName, expectedCrc) => {
     await copyFixturesToTemp(async (inputTemp, outputTemp) => {
       const options = new Options({ commands: ['copy', 'zip', 'test'] });
-      const outputFiles = (await romWriter(options, inputTemp, inputGlob, outputTemp));
+      const outputFiles = (await romWriter(options, inputTemp, inputGlob, undefined, outputTemp));
       expect(outputFiles).toHaveLength(1);
-      const archive = ArchiveFactory.archiveFrom(path.join(outputTemp, outputFiles[0][0]));
-      const archiveEntries = await archive.getArchiveEntries();
+      const archiveEntries = await FileFactory.filesFrom(path.join(outputTemp, outputFiles[0][0]));
       expect(archiveEntries).toHaveLength(1);
-      expect(archiveEntries[0].getEntryPath()).toEqual(expectedFileName);
-      expect(archiveEntries[0].getCrc32()).toEqual(expectedCrc);
+      const archiveEntry = archiveEntries[0] as ArchiveEntry<Archive>;
+      expect(archiveEntry.getEntryPath()).toEqual(expectedFileName);
+      expect(archiveEntry.getCrc32()).toEqual(expectedCrc);
     });
   });
 
@@ -341,20 +329,52 @@ describe('zip', () => {
         commands: ['copy', 'zip', 'test'],
         removeHeaders: ['.nes', '.a78', '.fds', '.lnx', '.smc'],
       });
-      const outputFiles = (await romWriter(options, inputTemp, inputGlob, outputTemp));
+      const outputFiles = (await romWriter(options, inputTemp, inputGlob, undefined, outputTemp));
       expect(outputFiles).toHaveLength(1);
-      const archive = ArchiveFactory.archiveFrom(path.join(outputTemp, outputFiles[0][0]));
-      const archiveEntries = await archive.getArchiveEntries();
+      const archiveEntries = await FileFactory.filesFrom(path.join(outputTemp, outputFiles[0][0]));
       expect(archiveEntries).toHaveLength(1);
-      expect(archiveEntries[0].getEntryPath()).toEqual(expectedFileName);
-      expect(archiveEntries[0].getCrc32()).toEqual(expectedCrc);
+      const archiveEntry = archiveEntries[0] as ArchiveEntry<Archive>;
+      expect(archiveEntry.getEntryPath()).toEqual(expectedFileName);
+      expect(archiveEntry.getCrc32()).toEqual(expectedCrc);
+    });
+  });
+
+  test.each([
+    // Control group
+    ['raw/empty.rom', [['empty.zip|empty.rom', '00000000']]],
+    ['raw/fizzbuzz.nes', [['fizzbuzz.zip|fizzbuzz.nes', '370517b5']]],
+    ['raw/foobar.lnx', [['foobar.zip|foobar.lnx', 'b22c9747']]],
+    ['raw/loremipsum.rom', [['loremipsum.zip|loremipsum.rom', '70856527']]],
+    // Patchable files
+    ['patchable/before.rom', [
+      ['After.zip|After.rom', '4c8e44d4'],
+      ['before.zip|before.rom', '0361b321'],
+    ]],
+    ['patchable/best.gz', [
+      ['best.zip|best.rom', '1e3d78cf'],
+      ['Worst.zip|Worst.rom', '6ff9ef96'],
+    ]],
+  ])('should patch files if appropriate: %s', async (inputGlob, expectedFilesAndCrcs) => {
+    await copyFixturesToTemp(async (inputTemp, outputTemp) => {
+      const options = new Options({
+        commands: ['copy', 'zip', 'test'],
+      });
+      const outputFiles = (await romWriter(options, inputTemp, inputGlob, 'patches', outputTemp));
+
+      const writtenRomAndCrcs = (await Promise.all(outputFiles
+        .map(async ([outputPath]) => FileFactory.filesFrom(path.join(outputTemp, outputPath)))))
+        .flatMap((entries) => entries)
+        .map((entry) => [entry.toString().replace(outputTemp + path.sep, ''), entry.getCrc32()])
+        .sort((a, b) => a[0].localeCompare(b[0]));
+      // console.log(await walkAndStat(Constants.GLOBAL_TEMP_DIR));
+      expect(writtenRomAndCrcs).toEqual(expectedFilesAndCrcs);
     });
   });
 
   test.each([
     [
       '**/!(*headered)/*',
-      ['empty.zip', 'fizzbuzz.zip', 'foobar.zip', 'loremipsum.zip', 'one.zip', 'three.zip', 'two.zip', 'unknown.zip'],
+      ['C01173E.zip', 'KDULVQN.zip', 'before.zip', 'best.zip', 'empty.zip', 'fizzbuzz.zip', 'foobar.zip', 'loremipsum.zip', 'one.zip', 'three.zip', 'two.zip', 'unknown.zip'],
     ],
     [
       '7z/*',
@@ -384,7 +404,7 @@ describe('zip', () => {
       await expect(walkAndStat(outputTemp)).resolves.toEqual([]);
 
       // When
-      const outputFiles = (await romWriter(options, inputTemp, inputGlob, outputTemp))
+      const outputFiles = (await romWriter(options, inputTemp, inputGlob, undefined, outputTemp))
         .map((pair) => pair[0]).sort();
 
       // Then the expected files were written
@@ -398,8 +418,8 @@ describe('zip', () => {
   test.each([
     [
       '**/!(*headered)/*',
-      ['empty.zip', 'fizzbuzz.zip', 'foobar.zip', 'loremipsum.zip', 'one.zip', 'three.zip', 'two.zip', 'unknown.zip'],
-      ['raw/empty.rom', 'raw/fizzbuzz.nes', 'raw/foobar.lnx', 'raw/loremipsum.rom', 'raw/one.rom', 'raw/three.rom', 'raw/two.rom', 'raw/unknown.rom'],
+      ['C01173E.zip', 'KDULVQN.zip', 'before.zip', 'best.zip', 'empty.zip', 'fizzbuzz.zip', 'foobar.zip', 'loremipsum.zip', 'one.zip', 'three.zip', 'two.zip', 'unknown.zip'],
+      ['patchable/C01173E.rom', 'patchable/KDULVQN.rom', 'patchable/before.rom', 'patchable/best.gz', 'raw/empty.rom', 'raw/fizzbuzz.nes', 'raw/foobar.lnx', 'raw/loremipsum.rom', 'raw/one.rom', 'raw/three.rom', 'raw/two.rom', 'raw/unknown.rom'],
     ],
     [
       '7z/*',
@@ -430,20 +450,20 @@ describe('zip', () => {
     await copyFixturesToTemp(async (inputTemp, outputTemp) => {
       // Given
       const options = new Options({ commands: ['move', 'zip', 'test'] });
-      const inputFilesBefore = await walkAndStat(inputTemp);
+      const romFilesBefore = await walkAndStat(path.join(inputTemp, 'roms'));
       await expect(walkAndStat(outputTemp)).resolves.toEqual([]);
 
       // When
-      const outputFiles = (await romWriter(options, inputTemp, inputGlob, outputTemp))
+      const outputFiles = (await romWriter(options, inputTemp, inputGlob, undefined, outputTemp))
         .map((pair) => pair[0]).sort();
 
       // Then the expected files were written
       expect(outputFiles).toEqual(expectedOutputPaths);
 
       // And the expected files were moved (deleted)
-      const inputFilesAfter = await walkAndStat(inputTemp);
-      inputFilesBefore.forEach(([inputFile, statsBefore]) => {
-        const [, statsAfter] = inputFilesAfter
+      const romFilesAfter = await walkAndStat(path.join(inputTemp, 'roms'));
+      romFilesBefore.forEach(([inputFile, statsBefore]) => {
+        const [, statsAfter] = romFilesAfter
           .filter(([inputFileAfter]) => inputFileAfter === inputFile)[0] || [];
         if (statsAfter) {
           // File wasn't deleted, ensure it wasn't touched
@@ -466,14 +486,14 @@ describe('raw', () => {
       await expect(walkAndStat(outputTemp)).resolves.toEqual([]);
 
       // And we've written once
-      await romWriter(options, inputTemp, '**/*', outputTemp);
+      await romWriter(options, inputTemp, '**/*', undefined, outputTemp);
 
       // And no files were written
       const outputFilesBefore = await walkAndStat(outputTemp);
       expect(outputFilesBefore).not.toEqual([]);
 
       // When we write again
-      await romWriter(options, inputTemp, '**/*', outputTemp);
+      await romWriter(options, inputTemp, '**/*', undefined, outputTemp);
 
       // Then the output wasn't touched
       await expect(walkAndStat(outputTemp)).resolves.toEqual(outputFilesBefore);
@@ -491,7 +511,7 @@ describe('raw', () => {
       await expect(walkAndStat(outputTemp)).resolves.toEqual([]);
 
       // And we've written once
-      await romWriter(options, inputTemp, '**/*', outputTemp);
+      await romWriter(options, inputTemp, '**/*', undefined, outputTemp);
 
       // And no files were written
       const outputFilesBefore = await walkAndStat(outputTemp);
@@ -501,7 +521,7 @@ describe('raw', () => {
       await romWriter({
         ...options,
         overwrite: true,
-      }, inputTemp, '**/*', outputTemp);
+      }, inputTemp, '**/*', undefined, outputTemp);
 
       // Then the output was touched
       const outputFilesAfter = await walkAndStat(outputTemp);
@@ -522,7 +542,6 @@ describe('raw', () => {
       await expect(walkAndStat(outputTemp)).resolves.toEqual([]);
 
       // And the output has files
-      const inputTempRaw = path.join(inputTemp, 'raw');
       await Promise.all(inputFilesBefore.map(async ([inputFile]) => {
         const outputFile = path.join(outputTemp, path.basename(inputFile));
         await fsPoly.touch(outputFile);
@@ -534,7 +553,7 @@ describe('raw', () => {
       await romWriter({
         ...options,
         overwrite: true,
-      }, inputTempRaw, '**/*', outputTemp);
+      }, inputTemp, 'raw/*', undefined, outputTemp);
 
       // Then the output was touched
       const outputFilesAfter = await walkAndStat(outputTemp);
@@ -563,7 +582,7 @@ describe('raw', () => {
   ])('should not remove headers if not requested: %s', async (inputGlob, expectedFileName, expectedCrc) => {
     await copyFixturesToTemp(async (inputTemp, outputTemp) => {
       const options = new Options({ commands: ['copy', 'test'] });
-      const outputFiles = (await romWriter(options, inputTemp, inputGlob, outputTemp));
+      const outputFiles = (await romWriter(options, inputTemp, inputGlob, undefined, outputTemp));
       expect(outputFiles).toHaveLength(1);
       expect(outputFiles[0][0]).toEqual(expectedFileName);
       const outputFile = await File.fileOf(path.join(outputTemp, outputFiles[0][0]));
@@ -590,7 +609,7 @@ describe('raw', () => {
         commands: ['copy', 'test'],
         removeHeaders: ['.nes', '.a78', '.fds', '.lnx', '.smc'],
       });
-      const outputFiles = (await romWriter(options, inputTemp, inputGlob, outputTemp));
+      const outputFiles = (await romWriter(options, inputTemp, inputGlob, undefined, outputTemp));
       expect(outputFiles).toHaveLength(1);
       expect(outputFiles[0][0]).toEqual(expectedFileName);
       const outputFile = await File.fileOf(path.join(outputTemp, outputFiles[0][0]));
@@ -599,9 +618,40 @@ describe('raw', () => {
   });
 
   test.each([
+    // Control group
+    ['raw/empty.rom', [['empty.rom', '00000000']]],
+    ['raw/fizzbuzz.nes', [['fizzbuzz.nes', '370517b5']]],
+    ['raw/foobar.lnx', [['foobar.lnx', 'b22c9747']]],
+    ['raw/loremipsum.rom', [['loremipsum.rom', '70856527']]],
+    // Patchable files
+    ['patchable/before.rom', [
+      ['After.rom', '4c8e44d4'],
+      ['before.rom', '0361b321'],
+    ]],
+    ['patchable/best.gz', [
+      ['best.rom', '1e3d78cf'],
+      ['Worst.rom', '6ff9ef96'],
+    ]],
+  ])('should patch files if appropriate: %s', async (inputGlob, expectedFilesAndCrcs) => {
+    await copyFixturesToTemp(async (inputTemp, outputTemp) => {
+      const options = new Options({
+        commands: ['copy', 'test'],
+      });
+      const outputFiles = (await romWriter(options, inputTemp, inputGlob, 'patches', outputTemp));
+
+      const writtenRomAndCrcs = (await Promise.all(outputFiles
+        .map(async ([outputPath]) => FileFactory.filesFrom(path.join(outputTemp, outputPath)))))
+        .flatMap((entries) => entries)
+        .map((entry) => [entry.toString().replace(outputTemp + path.sep, ''), entry.getCrc32()])
+        .sort((a, b) => a[0].localeCompare(b[0]));
+      expect(writtenRomAndCrcs).toEqual(expectedFilesAndCrcs);
+    });
+  });
+
+  test.each([
     [
       '**/!(*headered)/*',
-      ['empty.rom', 'fizzbuzz.nes', 'foobar.lnx', 'loremipsum.rom', 'one.rom', 'three.rom', 'two.rom', 'unknown.rom'],
+      ['C01173E.rom', 'KDULVQN.rom', 'before.rom', 'best.rom', 'empty.rom', 'fizzbuzz.nes', 'foobar.lnx', 'loremipsum.rom', 'one.rom', 'three.rom', 'two.rom', 'unknown.rom'],
     ],
     [
       '7z/*',
@@ -631,7 +681,7 @@ describe('raw', () => {
       await expect(walkAndStat(outputTemp)).resolves.toEqual([]);
 
       // When
-      const outputFiles = (await romWriter(options, inputTemp, inputGlob, outputTemp))
+      const outputFiles = (await romWriter(options, inputTemp, inputGlob, undefined, outputTemp))
         .map((pair) => pair[0]).sort();
 
       // Then the expected files were written
@@ -645,8 +695,8 @@ describe('raw', () => {
   test.each([
     [
       '**/!(*headered)/*',
-      ['empty.rom', 'fizzbuzz.nes', 'foobar.lnx', 'loremipsum.rom', 'one.rom', 'three.rom', 'two.rom', 'unknown.rom'],
-      ['raw/empty.rom', 'raw/fizzbuzz.nes', 'raw/foobar.lnx', 'raw/loremipsum.rom', 'raw/one.rom', 'raw/three.rom', 'raw/two.rom', 'raw/unknown.rom'],
+      ['C01173E.rom', 'KDULVQN.rom', 'before.rom', 'best.rom', 'empty.rom', 'fizzbuzz.nes', 'foobar.lnx', 'loremipsum.rom', 'one.rom', 'three.rom', 'two.rom', 'unknown.rom'],
+      ['patchable/C01173E.rom', 'patchable/KDULVQN.rom', 'patchable/before.rom', 'patchable/best.gz', 'raw/empty.rom', 'raw/fizzbuzz.nes', 'raw/foobar.lnx', 'raw/loremipsum.rom', 'raw/one.rom', 'raw/three.rom', 'raw/two.rom', 'raw/unknown.rom'],
     ],
     [
       '7z/*',
@@ -677,20 +727,20 @@ describe('raw', () => {
     await copyFixturesToTemp(async (inputTemp, outputTemp) => {
       // Given
       const options = new Options({ commands: ['move', 'test'] });
-      const inputFilesBefore = await walkAndStat(inputTemp);
+      const romFilesBefore = await walkAndStat(path.join(inputTemp, 'roms'));
       await expect(walkAndStat(outputTemp)).resolves.toEqual([]);
 
       // When
-      const outputFiles = (await romWriter(options, inputTemp, inputGlob, outputTemp))
+      const outputFiles = (await romWriter(options, inputTemp, inputGlob, undefined, outputTemp))
         .map((pair) => pair[0]).sort();
 
       // Then the expected files were written
       expect(outputFiles).toEqual(expectedOutputPaths);
 
       // And the expected files were moved (deleted)
-      const inputFilesAfter = await walkAndStat(inputTemp);
-      inputFilesBefore.forEach(([inputFile, statsBefore]) => {
-        const [, statsAfter] = inputFilesAfter
+      const romFilesAfter = await walkAndStat(path.join(inputTemp, 'roms'));
+      romFilesBefore.forEach(([inputFile, statsBefore]) => {
+        const [, statsAfter] = romFilesAfter
           .filter(([inputFileAfter]) => inputFileAfter === inputFile)[0] || [];
         if (statsAfter) {
           // File wasn't deleted, ensure it wasn't touched

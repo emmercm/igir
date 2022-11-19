@@ -1,22 +1,21 @@
 import { promises as fsPromises } from 'fs';
 
-import ProgressBarCLI from '../console/progressBarCLI.js';
+import ProgressBar from '../console/progressBar.js';
 import DATStatus from '../types/datStatus.js';
 import Options from '../types/options.js';
+import Module from './module.js';
 
 /**
  * Generate a single report file with information about every DAT processed.
  *
  * This class will not be run concurrently with any other class.
  */
-export default class ReportGenerator {
+export default class ReportGenerator extends Module {
   private readonly options: Options;
 
-  private readonly progressBar: ProgressBarCLI;
-
-  constructor(options: Options, progressBar: ProgressBarCLI) {
+  constructor(options: Options, progressBar: ProgressBar) {
+    super(progressBar, ReportGenerator.name);
     this.options = options;
-    this.progressBar = progressBar;
   }
 
   async generate(datsStatuses: DATStatus[]): Promise<void> {
@@ -40,7 +39,9 @@ export default class ReportGenerator {
       })
       .join('\n');
     await fsPromises.writeFile(report, contents);
+    await this.progressBar.logDebug(`${report}: wrote ${datsStatuses.length.toLocaleString()} status${datsStatuses.length !== 1 ? 'es' : ''}`);
 
+    await this.progressBar.logInfo('Done generating report');
     await this.progressBar.done(report);
     await this.progressBar.freeze();
   }

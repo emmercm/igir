@@ -7,7 +7,7 @@ import Header from '../../src/types/logiqx/header.js';
 import Parent from '../../src/types/logiqx/parent.js';
 import Release from '../../src/types/logiqx/release.js';
 import ROM from '../../src/types/logiqx/rom.js';
-import Options from '../../src/types/options.js';
+import Options, { OptionsProps } from '../../src/types/options.js';
 import ReleaseCandidate from '../../src/types/releaseCandidate.js';
 import ROMWithFiles from '../../src/types/romWithFiles.js';
 import ProgressBarFake from '../console/progressBarFake.js';
@@ -17,6 +17,10 @@ const gameNameBios = 'bios';
 const gameNamePrototype = 'game prototype (proto)';
 const gameNameSingleRom = 'game with single rom';
 const gameNameMultipleRoms = 'game with multiple roms';
+
+const defaultOptions: OptionsProps = {
+  dat: [''], // force "is using DATs"
+};
 
 const dat = new DAT(new Header({
   name: 'dat',
@@ -67,28 +71,28 @@ async function getParentToReleaseCandidates(
 describe('toConsole', () => {
   describe('no candidates', () => {
     it('should return games, BIOSes, and retail as missing', async () => {
-      const options = new Options();
+      const options = new Options(defaultOptions);
       const datStatus = await new StatusGenerator(options, new ProgressBarFake())
         .output(dat, new Map());
       expect(stripAnsi(datStatus.toConsole(options))).toEqual('1/5 games, 0/1 BIOSes, 1/4 retail releases found');
     });
 
     it('should return games and retail as missing', async () => {
-      const options = new Options({ noBios: true });
+      const options = new Options({ ...defaultOptions, noBios: true });
       const datStatus = await new StatusGenerator(options, new ProgressBarFake())
         .output(dat, new Map());
       expect(stripAnsi(datStatus.toConsole(options))).toEqual('1/5 games, 1/4 retail releases found');
     });
 
     it('should return BIOSes as missing', async () => {
-      const options = new Options({ onlyBios: true });
+      const options = new Options({ ...defaultOptions, onlyBios: true });
       const datStatus = await new StatusGenerator(options, new ProgressBarFake())
         .output(dat, new Map());
       expect(stripAnsi(datStatus.toConsole(options))).toEqual('0/1 BIOSes found');
     });
 
     it('should return BIOSes and retail as missing', async () => {
-      const options = new Options({ single: true });
+      const options = new Options({ ...defaultOptions, single: true });
       const datStatus = await new StatusGenerator(options, new ProgressBarFake())
         .output(dat, new Map());
       expect(stripAnsi(datStatus.toConsole(options))).toEqual('0/1 BIOSes, 1/4 retail releases found');
@@ -97,7 +101,7 @@ describe('toConsole', () => {
 
   describe('partially missing', () => {
     it('should return bios as found', async () => {
-      const options = new Options();
+      const options = new Options(defaultOptions);
       const map = new Map([
         await getParentToReleaseCandidates(gameNameBios),
       ]);
@@ -107,7 +111,7 @@ describe('toConsole', () => {
     });
 
     it('should return prototype as found', async () => {
-      const options = new Options();
+      const options = new Options(defaultOptions);
       const map = new Map([
         await getParentToReleaseCandidates(gameNamePrototype),
       ]);
@@ -117,7 +121,7 @@ describe('toConsole', () => {
     });
 
     it('should return game with single rom as found', async () => {
-      const options = new Options();
+      const options = new Options(defaultOptions);
       const map = new Map([
         await getParentToReleaseCandidates(gameNameSingleRom),
       ]);
@@ -128,7 +132,7 @@ describe('toConsole', () => {
   });
 
   it('should return none missing', async () => {
-    const options = new Options();
+    const options = new Options(defaultOptions);
     const map = new Map([
       await getParentToReleaseCandidates(gameNameBios),
       await getParentToReleaseCandidates(gameNamePrototype),
@@ -144,7 +148,7 @@ describe('toConsole', () => {
 describe('toCSV', () => {
   describe('no candidates', () => {
     it('should return games, BIOSes, and retail as missing', async () => {
-      const options = new Options();
+      const options = new Options(defaultOptions);
       const datStatus = await new StatusGenerator(options, new ProgressBarFake())
         .output(dat, new Map());
       await expect(datStatus.toCSV(options)).resolves.toEqual(`DAT Name,Game Name,Status,ROM Files,BIOS,Retail Release,Unlicensed,Demo,Beta,Sample,Prototype,Test,Aftermarket,Homebrew,Bad
@@ -168,7 +172,7 @@ dat,no roms,FOUND,,false,true,false,false,false,false,false,false,false,false,fa
     });
 
     it('should return BIOSes as missing', async () => {
-      const options = new Options({ onlyBios: true });
+      const options = new Options({ ...defaultOptions, onlyBios: true });
       const datStatus = await new StatusGenerator(options, new ProgressBarFake())
         .output(dat, new Map());
       await expect(datStatus.toCSV(options)).resolves.toEqual(`DAT Name,Game Name,Status,ROM Files,BIOS,Retail Release,Unlicensed,Demo,Beta,Sample,Prototype,Test,Aftermarket,Homebrew,Bad
@@ -176,7 +180,7 @@ dat,bios,MISSING,,true,true,false,false,false,false,false,false,false,false,fals
     });
 
     it('should return BIOSes and retail as missing', async () => {
-      const options = new Options({ single: true });
+      const options = new Options({ ...defaultOptions, single: true });
       const datStatus = await new StatusGenerator(options, new ProgressBarFake())
         .output(dat, new Map());
       await expect(datStatus.toCSV(options)).resolves.toEqual(`DAT Name,Game Name,Status,ROM Files,BIOS,Retail Release,Unlicensed,Demo,Beta,Sample,Prototype,Test,Aftermarket,Homebrew,Bad
@@ -189,7 +193,7 @@ dat,no roms,FOUND,,false,true,false,false,false,false,false,false,false,false,fa
 
   describe('partially missing', () => {
     it('should return bios as found', async () => {
-      const options = new Options();
+      const options = new Options(defaultOptions);
       const map = new Map([
         await getParentToReleaseCandidates(gameNameBios),
       ]);
@@ -204,7 +208,7 @@ dat,no roms,FOUND,,false,true,false,false,false,false,false,false,false,false,fa
     });
 
     it('should return prototype as found', async () => {
-      const options = new Options();
+      const options = new Options(defaultOptions);
       const map = new Map([
         await getParentToReleaseCandidates(gameNamePrototype),
       ]);
@@ -219,7 +223,7 @@ dat,no roms,FOUND,,false,true,false,false,false,false,false,false,false,false,fa
     });
 
     it('should return game with single rom as found', async () => {
-      const options = new Options();
+      const options = new Options(defaultOptions);
       const map = new Map([
         await getParentToReleaseCandidates(gameNameSingleRom),
       ]);
@@ -235,7 +239,7 @@ dat,no roms,FOUND,,false,true,false,false,false,false,false,false,false,false,fa
   });
 
   it('should return none missing', async () => {
-    const options = new Options();
+    const options = new Options(defaultOptions);
     const map = new Map([
       await getParentToReleaseCandidates(gameNameBios),
       await getParentToReleaseCandidates(gameNamePrototype),

@@ -24,6 +24,7 @@ export interface OptionsProps {
   readonly dat?: string[],
   readonly input?: string[],
   readonly inputExclude?: string[],
+  readonly patch?: string[],
   readonly output?: string,
 
   readonly header?: string,
@@ -74,6 +75,8 @@ export default class Options implements OptionsProps {
   readonly input: string[];
 
   readonly inputExclude: string[];
+
+  readonly patch: string[];
 
   readonly output: string;
 
@@ -149,6 +152,7 @@ export default class Options implements OptionsProps {
     this.dat = options?.dat || [];
     this.input = options?.input || [];
     this.inputExclude = options?.inputExclude || [];
+    this.patch = options?.patch || [];
     this.output = options?.output || '';
 
     this.header = options?.header || '';
@@ -240,6 +244,10 @@ export default class Options implements OptionsProps {
 
   // Options
 
+  usingDats(): boolean {
+    return this.dat.length > 0;
+  }
+
   getDatFileCount(): number {
     return this.dat.length;
   }
@@ -265,6 +273,14 @@ export default class Options implements OptionsProps {
     const inputExcludeFiles = await this.scanInputExcludeFiles();
     return inputFiles
       .filter((inputPath) => inputExcludeFiles.indexOf(inputPath) === -1);
+  }
+
+  getPatchFileCount(): number {
+    return this.patch.length;
+  }
+
+  async scanPatchFiles(): Promise<string[]> {
+    return Options.scanPath(this.patch);
   }
 
   private static async scanPath(inputPaths: string[]): Promise<string[]> {
@@ -434,6 +450,7 @@ export default class Options implements OptionsProps {
       while (!fs.existsSync(input)) {
         input = path.dirname(input);
       }
+      output = input;
     }
 
     return path.join(
@@ -469,7 +486,17 @@ export default class Options implements OptionsProps {
     return this.zipExclude;
   }
 
-  canRemoveHeader(extension: string): boolean {
+  canRemoveHeader(dat: DAT, extension: string): boolean {
+    // ROMs in "headered" DATs shouldn't have their header removed
+    if (dat.isHeadered()) {
+      return false;
+    }
+
+    // ROMs in "headerless" DATs should have their header removed
+    if (dat.isHeaderless()) {
+      return true;
+    }
+
     if (this.removeHeaders === undefined) {
       // Option wasn't provided, we shouldn't remove headers
       return false;
@@ -586,20 +613,16 @@ export default class Options implements OptionsProps {
   getLogLevel(): LogLevel {
     if (this.verbose === 1) {
       return LogLevel.INFO;
-    } if (this.verbose >= 2) {
+    } if (this.verbose === 2) {
       return LogLevel.DEBUG;
+    } if (this.verbose >= 3) {
+      return LogLevel.TRACE;
     }
     return LogLevel.WARN;
   }
 
   getHelp(): boolean {
     return this.help;
-  }
-
-  static filterUniqueLower(array: string[]): string[] {
-    return array
-      .map((value) => value.toLowerCase())
-      .filter((val, idx, arr) => arr.indexOf(val) === idx);
   }
 
   static filterUniqueUpper(array: string[]): string[] {

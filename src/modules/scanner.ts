@@ -2,7 +2,7 @@ import async, { AsyncResultCallback } from 'async';
 import path from 'path';
 
 import ProgressBar from '../console/progressBar.js';
-import ArchiveFactory from '../types/archives/archiveFactory.js';
+import FileFactory from '../types/archives/fileFactory.js';
 import Rar from '../types/archives/rar.js';
 import SevenZip from '../types/archives/sevenZip.js';
 import Tar from '../types/archives/tar.js';
@@ -10,30 +10,40 @@ import Zip from '../types/archives/zip.js';
 import ArchiveEntry from '../types/files/archiveEntry.js';
 import File from '../types/files/file.js';
 import Options from '../types/options.js';
+import Module from './module.js';
 
-export default abstract class Scanner {
+export default abstract class Scanner extends Module {
   protected readonly options: Options;
 
-  protected readonly progressBar: ProgressBar;
-
-  constructor(options: Options, progressBar: ProgressBar) {
+  protected constructor(options: Options, progressBar: ProgressBar, loggerPrefix: string) {
+    super(progressBar, loggerPrefix);
     this.options = options;
-    this.progressBar = progressBar;
   }
 
-  protected async getFilesFromPaths(filePaths: string[], threads: number): Promise<File[]> {
+  protected async getFilesFromPaths(
+    filePaths: string[],
+    threads: number,
+    filterUnique = true,
+  ): Promise<File[]> {
     const foundFiles = (await async.mapLimit(
       filePaths,
       threads,
       async (inputFile, callback: AsyncResultCallback<File[], Error>) => {
-        await this.progressBar.increment();
         const files = await this.getFilesFromPath(inputFile);
+
+        await this.progressBar.increment();
         callback(null, files);
       },
     ))
       .flatMap((files) => files);
+    if (!filterUnique) {
+      return foundFiles;
+    }
 
     // Limit to unique files
+    // NOTE(cemmer): this should happen before parsing ROM headers, so this uniqueness will be based
+    //  on the full file contents. We will later care about how to choose ROMs based on their
+    //  header or lack thereof.
     return [...foundFiles
       .sort(this.fileComparator.bind(this))
       .reduce((map, file) => {
@@ -46,21 +56,16 @@ export default abstract class Scanner {
   }
 
   private async getFilesFromPath(filePath: string): Promise<File[]> {
-    let files: File[];
-    if (ArchiveFactory.isArchive(filePath)) {
-      try {
-        files = await ArchiveFactory.archiveFrom(filePath).getArchiveEntries();
-        if (!files.length) {
-          await this.progressBar.logWarn(`Found no files in archive: ${filePath}`);
-        }
-      } catch (e) {
-        await this.progressBar.logError(`Failed to parse archive ${filePath} : ${e}`);
-        files = [];
+    try {
+      const files = await FileFactory.filesFrom(filePath);
+      if (!files.length) {
+        await this.progressBar.logWarn(`Found no files in path: ${filePath}`);
       }
-    } else {
-      files = [await File.fileOf(filePath)];
+      return files;
+    } catch (e) {
+      await this.progressBar.logError(`Failed to parse file ${filePath} : ${e}`);
+      return [];
     }
-    return files;
   }
 
   private fileComparator(one: File, two: File): number {
@@ -84,7 +89,7 @@ export default abstract class Scanner {
   }
 
   /**
-   * This ordering should match {@link ArchiveFactory#archiveFrom}
+   * This ordering should match {@link FileFactory#archiveFrom}
    */
   private static archiveEntryPriority(file: File): number {
     if (!(file instanceof ArchiveEntry)) {

@@ -12,6 +12,8 @@ import ROM from '../types/logiqx/rom.js';
 import Options from '../types/options.js';
 import ReleaseCandidate from '../types/releaseCandidate.js';
 import ROMWithFiles from '../types/romWithFiles.js';
+import CandidateFilter from './candidateFilter.js';
+import Module from './module.js';
 
 /**
  * For every {@link Parent} in the {@link DAT}, look for its {@link ROM}s in the scanned ROM list,
@@ -19,14 +21,12 @@ import ROMWithFiles from '../types/romWithFiles.js';
  *
  * This class may be run concurrently with other classes.
  */
-export default class CandidateGenerator {
+export default class CandidateGenerator extends Module {
   private readonly options: Options;
 
-  private readonly progressBar: ProgressBar;
-
   constructor(options: Options, progressBar: ProgressBar) {
+    super(progressBar, CandidateFilter.name);
     this.options = options;
-    this.progressBar = progressBar;
   }
 
   async generate(
@@ -47,14 +47,12 @@ export default class CandidateGenerator {
     // TODO(cemmer): only do this once globally, not per DAT
     // TODO(cemmer): ability to index files by some other property such as name
     const hashCodeToInputFiles = CandidateGenerator.indexFilesByHashCode(inputRomFiles);
-    await this.progressBar.logInfo(`${dat.getName()}: ${hashCodeToInputFiles.size} unique ROMs found`);
+    await this.progressBar.logDebug(`${dat.getName()}: ${hashCodeToInputFiles.size.toLocaleString()} unique ROMs found`);
 
-    // TODO(cemmer): ability to work without DATs, generating a parent/game/release per file
     // For each parent, try to generate a parent candidate
     /* eslint-disable no-await-in-loop */
     for (let i = 0; i < dat.getParents().length; i += 1) {
       const parent = dat.getParents()[i];
-      await this.progressBar.increment();
 
       const releaseCandidates: ReleaseCandidate[] = [];
 
@@ -79,19 +77,39 @@ export default class CandidateGenerator {
         }
       }
 
-      await this.progressBar.logInfo(`${dat.getName()}: Found ${releaseCandidates.length} candidates for ${parent}`);
+      await this.progressBar.logTrace(`${dat.getName()}: ${parent.getName()}: found ${releaseCandidates.length.toLocaleString()} candidates`);
       output.set(parent, releaseCandidates);
+
+      await this.progressBar.increment();
     }
 
     const totalCandidates = [...output.values()].reduce((sum, rc) => sum + rc.length, 0);
-    await this.progressBar.logInfo(`${dat.getName()}: ${totalCandidates} candidate${totalCandidates !== 1 ? 's' : ''} found`);
+    await this.progressBar.logDebug(`${dat.getName()}: ${totalCandidates.toLocaleString()} candidate${totalCandidates !== 1 ? 's' : ''} found`);
 
+    await this.progressBar.logInfo(`${dat.getName()}: Done generating candidates`);
     return output;
   }
 
   private static indexFilesByHashCode(files: File[]): Map<string, File> {
     return files.reduce((map, file) => {
-      file.hashCodes().forEach((hashCode) => map.set(hashCode, file));
+      // Always set file based on full contents
+      map.set(file.hashCodeWithHeader(), file);
+
+      // If the file has a header, then add its un-headered hash code to the map
+      if (file.getFileHeader()) {
+        const hashCodeWithoutHeader = file.hashCodeWithoutHeader();
+        if (!map.has(hashCodeWithoutHeader)) {
+          map.set(hashCodeWithoutHeader, file);
+        } else {
+          const existing = map.get(hashCodeWithoutHeader) as File;
+          if (!file.getFileHeader() && existing.getFileHeader()) {
+            // If the input files contain both a headered and un-headered copy of the same ROM, use
+            //  the un-headered copy because it is more "true" to what the DAT is looking for.
+            map.set(hashCodeWithoutHeader, file);
+          }
+        }
+      }
+
       return map;
     }, new Map<string, File>());
   }
@@ -105,6 +123,9 @@ export default class CandidateGenerator {
     // For each Game's ROM, find the matching File
     const romFiles = await Promise.all(
       game.getRoms().map(async (rom) => {
+        // NOTE(cemmer): if the ROM's CRC includes a header, then this will only find headered
+        //  files. If the ROM's CRC excludes a header, this can find either a headered or non-
+        //  headered file.
         const romFile = hashCodeToInputFiles.get(rom.hashCode());
         if (romFile) {
           const romWithFiles = new ROMWithFiles(
@@ -146,7 +167,7 @@ export default class CandidateGenerator {
     const { base, ...parsedPath } = path.parse(rom.getName());
     if (parsedPath.ext && inputFile.getFileHeader()) {
       // If the ROM has a header then we're going to ignore the file extension from the DAT
-      if (this.options.canRemoveHeader(parsedPath.ext)) {
+      if (this.options.canRemoveHeader(dat, parsedPath.ext)) {
         parsedPath.ext = inputFile.getFileHeader()?.unheaderedFileExtension as string;
       } else {
         parsedPath.ext = inputFile.getFileHeader()?.headeredFileExtension as string;

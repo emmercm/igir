@@ -1,14 +1,22 @@
+import File from '../files/file.js';
 import Archive from './archive.js';
 import Rar from './rar.js';
 import SevenZip from './sevenZip.js';
 import Tar from './tar.js';
 import Zip from './zip.js';
 
-export default class ArchiveFactory {
+export default class FileFactory {
+  static async filesFrom(filePath: string): Promise<File[]> {
+    if (this.isArchive(filePath)) {
+      return this.archiveFrom(filePath).getArchiveEntries();
+    }
+    return [await File.fileOf(filePath)];
+  }
+
   /**
    * This ordering should match {@link ROMScanner#archiveEntryPriority}
    */
-  static archiveFrom(filePath: string): Archive {
+  private static archiveFrom(filePath: string): Archive {
     if (Zip.SUPPORTED_EXTENSIONS.some((ext) => filePath.toLowerCase().endsWith(ext))) {
       return new Zip(filePath);
     } if (Tar.SUPPORTED_EXTENSIONS.some((ext) => filePath.toLowerCase().endsWith(ext))) {

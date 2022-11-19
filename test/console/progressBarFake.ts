@@ -10,8 +10,16 @@ export default class ProgressBarFake extends ProgressBar {
     return Promise.resolve();
   }
 
+  setWaitingMessage(): NodeJS.Timeout {
+    return setTimeout(() => {});
+  }
+
   async increment(): Promise<void> {
     return Promise.resolve();
+  }
+
+  withLoggerPrefix(): ProgressBar {
+    return this;
   }
 
   async log(): Promise<void> {

@@ -21,28 +21,39 @@ export default class ProgressBarCLI extends ProgressBar {
 
   private readonly singleBarFormatted: SingleBarFormatted;
 
-  constructor(logger: Logger, name: string, symbol: string, initialTotal = 0) {
+  private constructor(logger: Logger, singleBarFormatted: SingleBarFormatted) {
     super();
-
     this.logger = logger;
+    this.singleBarFormatted = singleBarFormatted;
+  }
 
+  static async new(
+    logger: Logger,
+    name: string,
+    symbol: string,
+    initialTotal = 0,
+  ): Promise<ProgressBarCLI> {
     if (!ProgressBarCLI.multiBar) {
       ProgressBarCLI.multiBar = new cliProgress.MultiBar({
         stream: logger.getLogLevel() < LogLevel.NEVER ? logger.getStream() : new PassThrough(),
         barsize: 25,
-        fps: ProgressBarCLI.fps,
+        fps: 1 / 60, // limit the automatic redraws
+        forceRedraw: true,
         emptyOnZero: true,
         hideCursor: true,
         noTTYOutput: true, /** should output for {@link PassThrough} */
       }, cliProgress.Presets.shades_grey);
     }
 
-    this.singleBarFormatted = new SingleBarFormatted(
+    const singleBarFormatted = new SingleBarFormatted(
       ProgressBarCLI.multiBar,
       name,
       symbol,
       initialTotal,
     );
+    await this.render(true);
+
+    return new ProgressBarCLI(logger, singleBarFormatted);
   }
 
   static stop(): void {
@@ -94,6 +105,19 @@ export default class ProgressBarCLI extends ProgressBar {
     return ProgressBarCLI.render();
   }
 
+  /**
+   * If progress hasn't been made by some timeout period, then show a waiting message to let the
+   *  user know that there is still something processing.
+   */
+  setWaitingMessage(waitingMessage: string, timeout = 10_000): NodeJS.Timeout {
+    return setTimeout(async () => {
+      this.singleBarFormatted.getSingleBar().update({
+        waitingMessage,
+      } as ProgressBarPayload);
+      await ProgressBarCLI.render(true);
+    }, timeout);
+  }
+
   async increment(): Promise<void> {
     this.singleBarFormatted.getSingleBar().increment();
     return ProgressBarCLI.render();
@@ -124,9 +148,13 @@ export default class ProgressBarCLI extends ProgressBar {
     return ProgressBarCLI.render();
   }
 
+  withLoggerPrefix(prefix: string): ProgressBar {
+    return new ProgressBarCLI(this.logger.withLoggerPrefix(prefix), this.singleBarFormatted);
+  }
+
   async log(logLevel: LogLevel, message: string): Promise<void> {
     if (this.logger.getLogLevel() <= logLevel) {
-      ProgressBarCLI.multiBar?.log(`${Logger.formatMessage(logLevel, message)}\n`);
+      ProgressBarCLI.multiBar?.log(`${this.logger.formatMessage(logLevel, message)}\n`);
       await ProgressBarCLI.render();
     }
   }

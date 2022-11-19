@@ -29,6 +29,27 @@ export default class FsPoly {
     }
   }
 
+  static async mkdtemp(prefix = os.tmpdir()): Promise<string> {
+    // mkdtemp takes a string prefix rather than a file path, so we need to make sure the
+    //  prefix ends with the path separator in order for it to become a parent directory.
+    let prefixProcessed = prefix.replace(/[\\/]+$/, '');
+    try {
+      if ((await fsPromises.lstat(prefixProcessed)).isDirectory()) {
+        prefixProcessed += path.sep;
+      }
+    } catch (e) {
+      // eslint-disable-line no-empty
+    }
+
+    try {
+      // Added in: v10.0.0
+      return await fsPromises.mkdtemp(prefixProcessed);
+    } catch (e) {
+      // Added in: v10.0.0
+      return await fsPromises.mkdtemp(path.join(process.cwd(), 'tmp') + path.sep);
+    }
+  }
+
   static mkdtempSync(prefix = os.tmpdir()): string {
     // mkdtempSync takes a string prefix rather than a file path, so we need to make sure the
     //  prefix ends with the path separator in order for it to become a parent directory.
@@ -47,6 +68,21 @@ export default class FsPoly {
     } catch (e) {
       // Added in: v5.10.0
       return fs.mkdtempSync(path.join(process.cwd(), 'tmp') + path.sep);
+    }
+  }
+
+  static async renameOverwrite(oldPath: PathLike, newPath: PathLike, attempt = 1): Promise<void> {
+    try {
+      await fsPromises.rename(oldPath, newPath);
+    } catch (e) {
+      if (attempt >= 3) {
+        throw e;
+      }
+      await new Promise((resolve) => {
+        setTimeout(resolve, Math.random() * (2 ** attempt * 1000));
+      });
+      await this.rm(newPath, { force: true });
+      await this.renameOverwrite(oldPath, newPath, attempt + 1);
     }
   }
 

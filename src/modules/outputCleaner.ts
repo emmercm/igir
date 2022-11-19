@@ -5,22 +5,22 @@ import path from 'path';
 import trash from 'trash';
 
 import ProgressBar, { Symbols } from '../console/progressBar.js';
+import fsPoly from '../polyfill/fsPoly.js';
 import File from '../types/files/file.js';
 import Options from '../types/options.js';
+import Module from './module.js';
 
 /**
  * Recycle any unknown files in the {@link OptionsProps.output} directory, if applicable.
  *
  * This class will not be run concurrently with any other class.
  */
-export default class OutputCleaner {
+export default class OutputCleaner extends Module {
   private readonly options: Options;
 
-  private readonly progressBar: ProgressBar;
-
   constructor(options: Options, progressBar: ProgressBar) {
+    super(progressBar, OutputCleaner.name);
     this.options = options;
-    this.progressBar = progressBar;
   }
 
   async clean(writtenFilesToExclude: File[]): Promise<number> {
@@ -28,7 +28,7 @@ export default class OutputCleaner {
 
     // If nothing was written, then don't clean anything
     if (!writtenFilesToExclude.length) {
-      await this.progressBar.logInfo('No files were written, not cleaning output');
+      await this.progressBar.logDebug('No files were written, not cleaning output');
       return 0;
     }
 
@@ -41,7 +41,7 @@ export default class OutputCleaner {
       .map((file) => path.normalize(file))
       .filter((file) => outputFilePathsToExclude.indexOf(file) === -1);
     if (!filesToClean.length) {
-      await this.progressBar.logInfo('No files to clean');
+      await this.progressBar.logDebug('No files to clean');
       return 0;
     }
 
@@ -49,19 +49,39 @@ export default class OutputCleaner {
     await this.progressBar.reset(filesToClean.length);
 
     try {
-      await trash(filesToClean);
+      await this.progressBar.logDebug(`Cleaning ${filesToClean.length.toLocaleString()} file${filesToClean.length !== 1 ? 's' : ''}`);
+      await this.trashOrDelete(filesToClean);
     } catch (e) {
       await this.progressBar.logError(`Failed to clean unmatched files in ${outputDir} : ${e}`);
     }
 
     try {
       const emptyDirs = await OutputCleaner.getEmptyDirs(outputDir);
-      await trash(emptyDirs);
+      await this.progressBar.logDebug(`Cleaning ${emptyDirs.length.toLocaleString()} empty director${emptyDirs.length !== 1 ? 'ies' : 'y'}`);
+      await this.trashOrDelete(emptyDirs);
     } catch (e) {
       await this.progressBar.logError(`Failed to clean empty directories in ${outputDir} : ${e}`);
     }
 
+    await this.progressBar.logInfo('Done cleaning files in output');
     return filesToClean.length;
+  }
+
+  private async trashOrDelete(filePaths: string[]): Promise<void> {
+    // Prefer recycling...
+    const CHUNK_SIZE = 100;
+    /* eslint-disable no-await-in-loop */
+    for (let i = 0; i < filePaths.length; i += CHUNK_SIZE) {
+      await trash(filePaths.slice(i, i + CHUNK_SIZE));
+      await this.progressBar.update(i);
+    }
+
+    // ...but if that doesn't work, delete the leftovers
+    await Promise.all(filePaths.map(async (filePath) => {
+      if (await fsPoly.exists(filePath)) {
+        await fsPoly.rm(filePath);
+      }
+    }));
   }
 
   private static async getEmptyDirs(dirPath: string): Promise<string[]> {

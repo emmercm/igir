@@ -1,10 +1,11 @@
 import crc32 from 'crc/crc32';
-import fs, { promises as fsPromises } from 'fs';
+import fs, { PathLike, promises as fsPromises } from 'fs';
 import path from 'path';
 import { Readable } from 'stream';
 
 import Constants from '../../constants.js';
 import fsPoly from '../../polyfill/fsPoly.js';
+import Patch from '../patches/patch.js';
 import FileHeader from './fileHeader.js';
 
 export default class File {
@@ -18,18 +19,22 @@ export default class File {
 
   private readonly fileHeader?: FileHeader;
 
+  private readonly patch?: Patch;
+
   protected constructor(
     filePath: string,
     size: number,
     crc: string,
     crc32WithoutHeader: string,
     fileHeader?: FileHeader,
+    patch?: Patch,
   ) {
     this.filePath = path.normalize(filePath);
     this.size = size;
     this.crc32 = crc.toLowerCase().padStart(8, '0');
     this.crc32WithoutHeader = crc32WithoutHeader.toLowerCase().padStart(8, '0');
     this.fileHeader = fileHeader;
+    this.patch = patch;
   }
 
   static async fileOf(
@@ -37,6 +42,7 @@ export default class File {
     size?: number,
     crc?: string,
     fileHeader?: FileHeader,
+    patch?: Patch,
   ): Promise<File> {
     let finalSize = size;
     if (finalSize === undefined) {
@@ -49,18 +55,12 @@ export default class File {
 
     let finalCrc = crc;
     if (!finalCrc) {
-      finalCrc = await this.extractFileToFile(
-        filePath,
-        async (localFile) => this.calculateCrc32(localFile),
-      );
+      finalCrc = await this.calculateCrc32(filePath);
     }
 
     let finalCrcWithoutHeader = finalCrc;
     if (fileHeader) {
-      finalCrcWithoutHeader = await this.extractFileToFile(
-        filePath,
-        async (localFile) => this.calculateCrc32(localFile, fileHeader),
-      );
+      finalCrcWithoutHeader = await this.calculateCrc32(filePath, fileHeader);
     }
 
     return new File(
@@ -69,6 +69,7 @@ export default class File {
       finalCrc,
       finalCrcWithoutHeader,
       fileHeader,
+      patch,
     );
   }
 
@@ -102,6 +103,10 @@ export default class File {
     return this.fileHeader;
   }
 
+  getPatch(): Patch | undefined {
+    return this.patch;
+  }
+
   // Other functions
 
   protected static async calculateCrc32(
@@ -132,15 +137,25 @@ export default class File {
     });
   }
 
-  async extractToFile<T>(callback: (localFile: string) => (T | Promise<T>)): Promise<T> {
-    return File.extractFileToFile(this.filePath, callback);
-  }
-
-  private static async extractFileToFile<T>(
-    filePath: string,
+  async extractToFile<T>(
     callback: (localFile: string) => (T | Promise<T>),
   ): Promise<T> {
-    return callback(filePath);
+    return callback(this.getFilePath());
+  }
+
+  async extractToTempFile<T>(
+    callback: (localFile: string) => (T | Promise<T>),
+  ): Promise<T> {
+    const temp = fsPoly.mktempSync(path.join(
+      Constants.GLOBAL_TEMP_DIR,
+      `${path.basename(this.getFilePath())}.temp`,
+    ));
+    await fsPromises.copyFile(this.getFilePath(), temp);
+    try {
+      return await callback(temp);
+    } finally {
+      await fsPoly.rm(temp);
+    }
   }
 
   async extractToStream<T>(
@@ -150,10 +165,46 @@ export default class File {
     const start = removeHeader && this.getFileHeader()
       ? this.getFileHeader()?.dataOffsetBytes || 0
       : 0;
-    const stream = fs.createReadStream(this.filePath, { start });
-    const result = await callback(stream);
-    stream.destroy();
-    return result;
+
+    // Apply the patch if there is one
+    if (this.getPatch()) {
+      const patch = this.getPatch() as Patch;
+      return patch.apply(this, async (tempFile) => File
+        .createStreamFromFile(tempFile, start, callback));
+    }
+
+    return File.createStreamFromFile(this.filePath, start, callback);
+  }
+
+  static async createStreamFromFile<T>(
+    filePath: PathLike,
+    start: number,
+    callback: (stream: Readable) => (Promise<T> | T),
+  ): Promise<T> {
+    const stream = fs.createReadStream(filePath, { start });
+    try {
+      return await callback(stream);
+    } finally {
+      stream.destroy();
+    }
+  }
+
+  async withFileName(fileNameWithoutExt: string): Promise<File> {
+    const { base, ...parsedFilePath } = path.parse(this.getFilePath());
+    parsedFilePath.name = fileNameWithoutExt;
+    const filePath = path.format(parsedFilePath);
+
+    return File.fileOf(
+      filePath,
+      this.getSize(),
+      this.getCrc32(),
+      this.getFileHeader(),
+      this.getPatch(),
+    );
+  }
+
+  async withExtractedFilePath(extractedNameWithoutExt: string): Promise<File> {
+    return this.withFileName(extractedNameWithoutExt);
   }
 
   async withFileHeader(fileHeader: FileHeader): Promise<File> {
@@ -170,6 +221,21 @@ export default class File {
       this.getSize(),
       this.getCrc32(),
       fileHeader,
+      undefined, // don't allow a patch
+    );
+  }
+
+  async withPatch(patch: Patch): Promise<File> {
+    if (patch.getCrcBefore() !== this.getCrc32()) {
+      return this;
+    }
+
+    return File.fileOf(
+      this.getFilePath(),
+      this.getSize(),
+      this.getCrc32(),
+      undefined, // don't allow a file header
+      patch,
     );
   }
 
@@ -187,10 +253,18 @@ export default class File {
     return `${crc}|${size}`;
   }
 
+  hashCodeWithHeader(): string {
+    return File.hashCode(this.getCrc32(), this.getSize());
+  }
+
+  hashCodeWithoutHeader(): string {
+    return File.hashCode(this.getCrc32WithoutHeader(), this.getSizeWithoutHeader());
+  }
+
   hashCodes(): string[] {
     return [
-      File.hashCode(this.getCrc32(), this.getSize()),
-      File.hashCode(this.getCrc32WithoutHeader(), this.getSizeWithoutHeader()),
+      this.hashCodeWithHeader(),
+      this.hashCodeWithoutHeader(),
     ].filter((hash, idx, hashes) => hashes.indexOf(hash) === idx);
   }
 

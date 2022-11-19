@@ -3,6 +3,7 @@ import DAT from '../types/logiqx/dat.js';
 import Parent from '../types/logiqx/parent.js';
 import Options from '../types/options.js';
 import ReleaseCandidate from '../types/releaseCandidate.js';
+import Module from './module.js';
 
 /**
  * Apply any specified filter and preference options to the release candidates for each
@@ -10,14 +11,12 @@ import ReleaseCandidate from '../types/releaseCandidate.js';
  *
  * This class may be run concurrently with other classes.
  */
-export default class CandidateFilter {
+export default class CandidateFilter extends Module {
   private readonly options: Options;
 
-  private readonly progressBar: ProgressBar;
-
   constructor(options: Options, progressBar: ProgressBar) {
+    super(progressBar, CandidateFilter.name);
     this.options = options;
-    this.progressBar = progressBar;
   }
 
   async filter(
@@ -46,20 +45,22 @@ export default class CandidateFilter {
     /* eslint-disable no-await-in-loop */
     for (let i = 0; i < [...parentsToCandidates.entries()].length; i += 1) {
       const [parent, releaseCandidates] = [...parentsToCandidates.entries()][i];
-      await this.progressBar.increment();
-      await this.progressBar.logDebug(`${dat.getName()}: Filtering ${parent.getName()}: ${releaseCandidates.length} candidates before`);
+      await this.progressBar.logTrace(`${dat.getName()}: ${parent.getName()}: ${releaseCandidates.length} candidates before filtering`);
 
       const filteredReleaseCandidates = releaseCandidates
         .filter((rc) => this.preFilter(rc))
         .sort((a, b) => this.sort(a, b))
         .filter((rc, idx) => this.postFilter(idx));
-      await this.progressBar.logDebug(`${dat.getName()}: Filtering ${parent.getName()}: ${filteredReleaseCandidates.length} candidates after`);
+      await this.progressBar.logTrace(`${dat.getName()}: ${parent.getName()}: ${filteredReleaseCandidates.length} candidates after filtering`);
       output.set(parent, filteredReleaseCandidates);
+
+      await this.progressBar.increment();
     }
 
     const filteredCandidates = [...output.values()].reduce((sum, rc) => sum + rc.length, 0);
-    await this.progressBar.logInfo(`${dat.getName()}: ${filteredCandidates} candidate${filteredCandidates !== 1 ? 's' : ''} after filtering`);
+    await this.progressBar.logDebug(`${dat.getName()}: ${filteredCandidates.toLocaleString()} candidate${filteredCandidates !== 1 ? 's' : ''} after filtering`);
 
+    await this.progressBar.logInfo(`${dat.getName()}: Done filtering candidates`);
     return output;
   }
 

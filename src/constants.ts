@@ -44,6 +44,8 @@ export default class Constants {
 
   static readonly ROM_SCANNER_THREADS = 25;
 
+  static readonly PATCH_SCANNER_THREADS = 25;
+
   static readonly ROM_HEADER_HASHER_THREADS = 25;
 
   static readonly DAT_THREADS = 3;
@@ -52,5 +54,5 @@ export default class Constants {
 
   static readonly FILE_READING_CHUNK_SIZE = 1024 * 1024; // 1MiB
 
-  static readonly MAX_STREAM_EXTRACTION_SIZE = 1024 * 1024 * 100; // 100MiB
+  static readonly MAX_MEMORY_FILE_SIZE = 64 * 1024 * 1024; // 64MiB
 }

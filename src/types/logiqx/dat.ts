@@ -107,4 +107,30 @@ export default class DAT {
     }
     return long;
   }
+
+  /**
+   * Does a DAT explicitly contain headered ROMs. It is possible for a DAT to be both non-headered
+   *  and non-headerless.
+   */
+  isHeadered(): boolean {
+    // No-Intro "headerless" DATs have this field set
+    if (this.getHeader().getClrMamePro()?.getHeader()) {
+      return false;
+    }
+
+    return this.getName().match(/\(headered\)/i) !== null;
+  }
+
+  /**
+   * Does a DAT explicitly contain headerless ROMs. It is possible for a DAT to be both non-headered
+   *  and non-headerless.
+   */
+  isHeaderless(): boolean {
+    // No-Intro "headerless" DATs have this field set
+    if (this.getHeader().getClrMamePro()?.getHeader()) {
+      return true;
+    }
+
+    return this.getName().match(/\(headerless\)/i) !== null;
+  }
 }

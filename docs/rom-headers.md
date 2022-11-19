@@ -2,7 +2,7 @@
 
 There are a handful of consoles where it is common for their ROMs to have extra data at the beginning of the file (a "header") that wasn't present on the physical ROM chip.
 
-Some these headers are used to tell the emulator information about how to emulate the game (Atari 7800 "A78", Nintendo Entertainment System "iNES", Famicom Disk System "FDS", etc.). There are other consoles where it is somewhat common to find the ROMs without a header (Atari Lynx "LYX", Super Nintendo Entertainment System "SFC").
+Some of these headers are used to tell the emulator information about how to emulate the game (Atari 7800 "A78", NES "iNES", Famicom Disk System "FDS", etc.). There are other consoles where it is somewhat common to find the ROMs without a header (Atari Lynx "LYX", SNES "SFC").
 
 ## Header detection
 
@@ -24,9 +24,9 @@ igir [commands..] --dat <dats> --input <input> --header "*.rom"
 
 `igir` will use this detected header information to compute both "headered" and "un-headered" checksums of ROMs and use both of those to match against DAT files. Many DAT groups expressly only include the size and checksum information for the un-headered file, even if the header should not be removed.
 
-## Header removal
+## Manual header removal
 
-Some emulators cannot parse ROMs with headers and instead need an "un-headered" version. This seems to be most common with SNES. Typically, "un-headered" files will have a different file extension:
+Some emulators cannot parse ROMs with headers and instead need an "un-headered" version. This seems to be most common with SNES. Sometimes "un-headered" files will have a different file extension:
 
 | Console                        | Header        | Headered<br/>Extension | Un-headered<br/>Extension |
 |--------------------------------|---------------|------------------------|---------------------------|
@@ -42,8 +42,14 @@ For every console that `igir` can understand the headers for, it can also remove
 igir [commands..] --dat <dats> --input <input> --remove-headers .lnx,.smc
 ```
 
-But if you're absolutely sure you want to remove any known header from every single ROM file, you can omit the extensions:
+But if you're absolutely sure you want to remove any known header from every single ROM file, you can omit the extension argument:
 
 ```shell
 igir [commands..] --dat <dats> --input <input> --remove-headers
 ```
+
+## Automatic header removal
+
+Some DAT groups such as No-Intro publish "headered" and "headerless" DATs for the same console, such as NES. `igir` will treat these DATs differently, automatically removing headers (if present) for "headerless" DATs, and leaving the header intact for "headered" DATs (regardless of CLI parameters).
+
+As explained above, you almost always want the "headered" version. It's only in very specific circumstances that you would want the "headerless" version.

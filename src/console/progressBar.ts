@@ -3,6 +3,7 @@ import chalk from 'chalk';
 import LogLevel from './logLevel.js';
 
 // https://www.toptal.com/designers/htmlarrows/symbols/
+// https://www.htmlsymbols.xyz/
 export const Symbols: { [key: string]: string } = {
   WAITING: chalk.grey('⋯'),
   SEARCHING: chalk.magenta('↻'),
@@ -20,17 +21,32 @@ export default abstract class ProgressBar {
 
   abstract setSymbol(symbol: string): Promise<void>;
 
-  abstract increment(): Promise<void>;
+  abstract setWaitingMessage(waitingMessage: string, timeout?: number): NodeJS.Timeout;
 
-  abstract update(current: number): Promise<void>;
+  abstract increment(message?: string): Promise<void>;
+
+  abstract update(current: number, message?: string): Promise<void>;
 
   abstract done(finishedMessage?: string): Promise<void>;
 
   async doneItems(count: number, noun: string, verb: string): Promise<void> {
-    return this.done(`${count.toLocaleString()} ${noun}${count !== 1 ? 's' : ''} ${verb}`);
+    let pluralSuffix = 's';
+    if (noun.toLowerCase().endsWith('ch')
+      || noun.toLowerCase().endsWith('s')
+    ) {
+      pluralSuffix = 'es';
+    }
+
+    return this.done(`${count.toLocaleString()} ${noun.trim()}${count !== 1 ? pluralSuffix : ''} ${verb}`);
   }
 
+  abstract withLoggerPrefix(prefix: string): ProgressBar;
+
   abstract log(logLevel: LogLevel, message: string): Promise<void>;
+
+  async logTrace(message: string): Promise<void> {
+    return this.log(LogLevel.TRACE, message);
+  }
 
   async logDebug(message: string): Promise<void> {
     return this.log(LogLevel.DEBUG, message);

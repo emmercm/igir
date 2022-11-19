@@ -3,6 +3,7 @@ import figlet from 'figlet';
 
 import Constants from '../constants.js';
 import LogLevel from './logLevel.js';
+import { Symbols } from './progressBar.js';
 import ProgressBarCLI from './progressBarCLI.js';
 
 export default class Logger {
@@ -10,9 +11,16 @@ export default class Logger {
 
   private readonly stream: NodeJS.WritableStream;
 
-  constructor(logLevel: LogLevel = LogLevel.WARN, stream: NodeJS.WritableStream = process.stdout) {
+  private readonly loggerPrefix?: string;
+
+  constructor(
+    logLevel: LogLevel = LogLevel.WARN,
+    stream: NodeJS.WritableStream = process.stdout,
+    loggerPrefix?: string,
+  ) {
     this.logLevel = logLevel;
     this.stream = stream;
+    this.loggerPrefix = loggerPrefix;
   }
 
   getLogLevel(): LogLevel {
@@ -29,7 +37,7 @@ export default class Logger {
 
   private readonly print = (logLevel: LogLevel, message: unknown = ''): void => {
     if (this.logLevel <= logLevel) {
-      this.stream.write(`${Logger.formatMessage(logLevel, String(message).toString())}\n`);
+      this.stream.write(`${this.formatMessage(logLevel, String(message).toString())}\n`);
     }
   };
 
@@ -37,13 +45,14 @@ export default class Logger {
     this.print(LogLevel.ALWAYS);
   }
 
-  static formatMessage(logLevel: LogLevel, message: string): string {
+  formatMessage(logLevel: LogLevel, message: string): string {
     // Don't format "ALWAYS" or "NEVER"
     if (logLevel >= LogLevel.ALWAYS) {
       return message;
     }
 
     const chalkFuncs: { [key: number]: (message: string) => string } = {
+      [LogLevel.TRACE]: chalk.grey,
       [LogLevel.DEBUG]: chalk.magenta,
       [LogLevel.INFO]: chalk.cyan,
       [LogLevel.WARN]: chalk.yellow,
@@ -51,11 +60,15 @@ export default class Logger {
     };
     const chalkFunc = chalkFuncs[logLevel];
 
+    const loggerPrefix = this.logLevel <= LogLevel.INFO && this.loggerPrefix ? `${this.loggerPrefix}: ` : '';
+
     return message.trim()
       .split('\n')
-      .map((m) => chalkFunc(`${LogLevel[logLevel]}: `) + m)
+      .map((m) => chalkFunc(`${LogLevel[logLevel]}: `) + loggerPrefix + m)
       .join('\n');
   }
+
+  trace = (message: unknown = ''): void => this.print(LogLevel.TRACE, message);
 
   debug = (message: unknown = ''): void => this.print(LogLevel.DEBUG, message);
 
@@ -103,7 +116,15 @@ export default class Logger {
     );
   }
 
-  addProgressBar(name: string, symbol: string, initialTotal = 0): ProgressBarCLI {
-    return new ProgressBarCLI(this, name, symbol, initialTotal);
+  async addProgressBar(
+    name: string,
+    symbol = Symbols.WAITING,
+    initialTotal = 0,
+  ): Promise<ProgressBarCLI> {
+    return ProgressBarCLI.new(this, name, symbol, initialTotal);
+  }
+
+  withLoggerPrefix(prefix: string): Logger {
+    return new Logger(this.logLevel, this.stream, prefix);
   }
 }

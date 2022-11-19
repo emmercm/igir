@@ -1,4 +1,3 @@
-import { jest } from '@jest/globals';
 import fs from 'fs';
 import path from 'path';
 
@@ -6,7 +5,7 @@ import Constants from '../../../src/constants.js';
 import ROMScanner from '../../../src/modules/romScanner.js';
 import bufferPoly from '../../../src/polyfill/bufferPoly.js';
 import fsPoly from '../../../src/polyfill/fsPoly.js';
-import ArchiveFactory from '../../../src/types/archives/archiveFactory.js';
+import FileFactory from '../../../src/types/archives/fileFactory.js';
 import SevenZip from '../../../src/types/archives/sevenZip.js';
 import Zip from '../../../src/types/archives/zip.js';
 import ArchiveEntry from '../../../src/types/files/archiveEntry.js';
@@ -14,14 +13,12 @@ import FileHeader from '../../../src/types/files/fileHeader.js';
 import Options from '../../../src/types/options.js';
 import ProgressBarFake from '../../console/progressBarFake.js';
 
-jest.setTimeout(10_000);
-
 describe('getEntryPath', () => {
   test.each([
     'something.rom',
     path.join('foo', 'bar.rom'),
   ])('should return the constructor value: %s', async (archiveEntryPath) => {
-    const archive = ArchiveFactory.archiveFrom('/some/archive.zip');
+    const archive = new Zip('/some/archive.zip');
     const archiveEntry = await ArchiveEntry.entryOf(archive, archiveEntryPath, 0, '00000000');
     expect(archiveEntry.getEntryPath()).toEqual(archiveEntryPath);
   });
@@ -45,9 +42,7 @@ describe('getCrc32', () => {
     ['./test/fixtures/roms/headered/fds_joypad_test.fds.zip', '1e58456d'],
     ['./test/fixtures/roms/headered/LCDTestROM.lnx.rar', '2d251538'],
   ])('should hash the full archive entry: %s', async (filePath, expectedCrc) => {
-    const archive = ArchiveFactory.archiveFrom(filePath);
-
-    const archiveEntries = await archive.getArchiveEntries();
+    const archiveEntries = await FileFactory.filesFrom(filePath);
     expect(archiveEntries).toHaveLength(1);
     const archiveEntry = archiveEntries[0];
 
@@ -73,9 +68,7 @@ describe('getCrc32WithoutHeader', () => {
     ['./test/fixtures/roms/headered/fds_joypad_test.fds.zip', '1e58456d'],
     ['./test/fixtures/roms/headered/LCDTestROM.lnx.rar', '2d251538'],
   ])('should hash the full archive entry when no header given: %s', async (filePath, expectedCrc) => {
-    const archive = ArchiveFactory.archiveFrom(filePath);
-
-    const archiveEntries = await archive.getArchiveEntries();
+    const archiveEntries = await FileFactory.filesFrom(filePath);
     expect(archiveEntries).toHaveLength(1);
     const archiveEntry = archiveEntries[0];
 
@@ -92,9 +85,7 @@ describe('getCrc32WithoutHeader', () => {
     ['./test/fixtures/roms/tar/foobar.tar.gz', 'b22c9747'],
     ['./test/fixtures/roms/zip/foobar.zip', 'b22c9747'],
   ])('should hash the full archive entry when header is given but not present in file: %s', async (filePath, expectedCrc) => {
-    const archive = ArchiveFactory.archiveFrom(filePath);
-
-    const archiveEntries = await archive.getArchiveEntries();
+    const archiveEntries = await FileFactory.filesFrom(filePath);
     expect(archiveEntries).toHaveLength(1);
     const archiveEntry = await archiveEntries[0].withFileHeader(
       FileHeader.getForFilename(archiveEntries[0].getExtractedFilePath()) as FileHeader,
@@ -108,9 +99,7 @@ describe('getCrc32WithoutHeader', () => {
     ['./test/fixtures/roms/headered/fds_joypad_test.fds.zip', '3ecbac61'],
     ['./test/fixtures/roms/headered/LCDTestROM.lnx.rar', '42583855'],
   ])('should hash the archive entry without the header when header is given and present in file: %s', async (filePath, expectedCrc) => {
-    const archive = ArchiveFactory.archiveFrom(filePath);
-
-    const archiveEntries = await archive.getArchiveEntries();
+    const archiveEntries = await FileFactory.filesFrom(filePath);
     expect(archiveEntries).toHaveLength(1);
     const archiveEntry = await archiveEntries[0].withFileHeader(
       FileHeader.getForFilename(archiveEntries[0].getExtractedFilePath()) as FileHeader,
@@ -131,9 +120,9 @@ describe('extractToFile', () => {
         './test/fixtures/roms/7z',
       ],
     }), new ProgressBarFake()).scan();
-    expect(archiveEntries).toHaveLength(7);
+    expect(archiveEntries).toHaveLength(21);
 
-    const temp = fsPoly.mkdtempSync(Constants.GLOBAL_TEMP_DIR);
+    const temp = await fsPoly.mkdtemp(Constants.GLOBAL_TEMP_DIR);
     /* eslint-disable no-await-in-loop */
     for (let i = 0; i < archiveEntries.length; i += 1) {
       const archiveEntry = archiveEntries[i];
@@ -156,9 +145,9 @@ describe('extractToStream', () => {
         './test/fixtures/roms/7z',
       ],
     }), new ProgressBarFake()).scan();
-    expect(archiveEntries).toHaveLength(7);
+    expect(archiveEntries).toHaveLength(21);
 
-    const temp = fsPoly.mkdtempSync(Constants.GLOBAL_TEMP_DIR);
+    const temp = await fsPoly.mkdtemp(Constants.GLOBAL_TEMP_DIR);
     /* eslint-disable no-await-in-loop */
     for (let i = 0; i < archiveEntries.length; i += 1) {
       const archiveEntry = archiveEntries[i];

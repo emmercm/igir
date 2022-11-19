@@ -5,6 +5,7 @@ import Logger from '../console/logger.js';
 import Constants from '../constants.js';
 import FileHeader from '../types/files/fileHeader.js';
 import Options from '../types/options.js';
+import PatchFactory from '../types/patches/patchFactory.js';
 import ReleaseCandidate from '../types/releaseCandidate.js';
 
 /**
@@ -94,10 +95,8 @@ export default class ArgumentsParser {
         group: groupPaths,
         alias: 'd',
         description: 'Path(s) to DAT files or archives',
-        demandOption: true,
         type: 'array',
         requiresArg: true,
-        default: ['*.dat'],
       })
       .option('input', {
         group: groupPaths,
@@ -116,6 +115,13 @@ export default class ArgumentsParser {
         type: 'array',
         requiresArg: true,
       })
+      .option('patch', {
+        group: groupPaths,
+        alias: 'p',
+        description: `Path(s) to ROM patch files or archives (supported: ${PatchFactory.getSupportedExtensions().join(', ')})`,
+        type: 'array',
+        requiresArg: true,
+      })
       .option('output', {
         group: groupPaths,
         alias: 'o',
@@ -129,10 +135,17 @@ export default class ArgumentsParser {
         if (checkArgv.help) {
           return true;
         }
+
         const needOutput = ['copy', 'move', 'zip', 'clean'].filter((command) => checkArgv._.indexOf(command) !== -1);
         if ((!checkArgv.output || !checkArgv.output.length) && needOutput.length) {
           throw new Error(`Missing required option for commands ${needOutput.join(', ')}: output`);
         }
+
+        const needDat = ['report'].filter((command) => checkArgv._.indexOf(command) !== -1);
+        if ((!checkArgv.dat || !checkArgv.dat.length) && needDat.length) {
+          throw new Error(`Missing required option for commands ${needDat.join(', ')}: dat`);
+        }
+
         return true;
       })
 
@@ -280,6 +293,7 @@ export default class ArgumentsParser {
         alias: 's',
         description: 'Output only a single game per parent (1G1R) (required for all options below, requires parent/clone DAT files)',
         type: 'boolean',
+        implies: 'dat',
       })
       .option('prefer-verified', {
         group: groupPriority,
@@ -341,7 +355,7 @@ export default class ArgumentsParser {
       .option('verbose', {
         group: groupHelp,
         alias: 'v',
-        description: 'Enable verbose info logging, can specify twice for debug logging (-vv)',
+        description: 'Enable verbose logging, can specify up to three times (-vvv)',
         type: 'count',
       })
 
@@ -380,11 +394,11 @@ Example use cases:
   Collate all BIOS files into one directory:
     $0 copy --dat *.dat --input **/*.zip --output BIOS/ --only-bios
 
-  Copy ROMs to your Analogue Pocket and test them:
-    $0 copy test --dat *.dat --input ROMs/ --output /Assets/{pocket}/common/ --dir-letter --remove-headers .smc
+  Create patched copies of ROMs in an existing collection:
+    $0 copy --input ROMs/ --patch Patches/ --output ROMs/
 
-  Make a copy of SNES ROMs without the SMC header that isn\\'t supported by some emulators:
-    $0 copy --dat *.dat --input **/*.smc --output Headerless/ --dir-mirror --remove-headers .smc`)
+  Copy ROMs to your Analogue Pocket and test them:
+    $0 copy test --dat *.dat --input ROMs/ --output /Assets/{pocket}/common/ --dir-letter`)
 
       // Colorize help output
       .option('help', {
