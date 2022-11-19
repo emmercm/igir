@@ -12,7 +12,7 @@ import path from 'path';
 import LogLevel from '../console/logLevel.js';
 import Constants from '../constants.js';
 import fsPoly from '../polyfill/fsPoly.js';
-import ArchiveFactory from './archives/archiveFactory.js';
+import FileFactory from './archives/fileFactory.js';
 import GameConsole from './gameConsole.js';
 import DAT from './logiqx/dat.js';
 import Game from './logiqx/game.js';
@@ -371,7 +371,7 @@ export default class Options implements OptionsProps {
 
     if (game
       && game.getRoms().length > 1
-      && (!romFilenameSanitized || !ArchiveFactory.isArchive(romFilenameSanitized))
+      && (!romFilenameSanitized || !FileFactory.isArchive(romFilenameSanitized))
     ) {
       output = path.join(output, game.getName());
     }
