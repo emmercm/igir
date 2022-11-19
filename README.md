@@ -83,7 +83,7 @@ Here is the full `igir --help` message which shows all available options and a n
   | $$  | $$ __\$$  | $$  | $$__| $$
   | $$  | $$|    \  | $$  | $$    $$   ROM collection manager
   | $$  | $$ \$$$$  | $$  | $$$$$$$\
- _| $$_ | $$__| $$ _| $$_ | $$  | $$   v0.4.0
+ _| $$_ | $$__| $$ _| $$_ | $$  | $$   v0.5.0
 |   $$ \ \$$    $$|   $$ \| $$  | $$
  \$$$$$$  \$$$$$$  \$$$$$$ \$$   \$$
 
@@ -103,6 +103,8 @@ Path options (inputs support globbing):
   -i, --input          Path(s) to ROM files or archives, these files will not be modified
                                                                                [array] [required]
   -I, --input-exclude  Path(s) to ROM files to exclude                                    [array]
+  -p, --patch          Path(s) to ROM patch files or archives (supported: .bps, .ips, .ppf, .ups)
+                                                                                          [array]
   -o, --output         Path to the ROM output directory                                  [string]
 
 Input options:
@@ -158,7 +160,7 @@ Priority options:
                                                                                         [boolean]
 
 Help options:
-  -v, --verbose  Enable verbose logging, can specify twice (-vv)                          [count]
+  -v, --verbose  Enable verbose logging, can specify up to three times (-vvv)             [count]
   -h, --help     Show help                                                              [boolean]
 
 Examples:
@@ -179,9 +181,11 @@ Examples:
     igir copy test --dat *.dat --input ROMs/ --output /media/SDCard/ROMs/ --dir-dat-name --dir-
   letter
 
+  Create patched copies of ROMs in an existing collection:
+    igir copy --input ROMs/ --patch Patches/ --output ROMs/
+
   Make a copy of SNES ROMs without the SMC header that isn't supported by some emulators:
-    igir copy --dat *.dat --input **/*.smc --output Headerless/ --dir-mirror --remove-headers .
-  smc
+    igir copy --input **/*.smc --output Headerless/ --dir-mirror --remove-headers .smc
 ```
 
 ## How do I obtain ROMs?
