@@ -138,8 +138,8 @@ export default class VcdiffPatch extends Patch {
            *  - The XZ data encoded appears to be non-standard, it doesn't have a terminating set of
            *    bytes "59 5A", only the starting bytes "FD 37 7A 58 5A 00" (after the above number)
            */
-          await fp.close();
-          throw new Error(`Unsupported Vcdiff secondary decompressor ${VcdiffSecondaryCompression[secondaryDecompressorId]}: ${this.getFile().toString()}`);
+          // await fp.close();
+          // throw new Error(`Unsupported Vcdiff secondary decompressor ${VcdiffSecondaryCompression[secondaryDecompressorId]}: ${this.getFile().toString()}`);
         }
       }
       if (hdrIndicator & VcdiffHdrIndicator.CODETABLE) {
