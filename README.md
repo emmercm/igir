@@ -19,13 +19,12 @@ A video of an example use case:
 
 With a large ROM collection it can be difficult to:
 
-- Organize ROM files by console
-- Consistently name ROM files
-- Make sure ROMs have the right extension
-- Archive ROMs individually in mass
-- Filter out duplicate ROMs
-- Filter out ROMs for languages you don't understand
-- Know what ROMs are missing for each console
+- 📂 Organize ROM files by console
+- 🪄 Name ROM files consistently, including the right extension
+- 🗜️ Archive ROMs individually in mass
+- ✂️ Filter out duplicate ROMs, or ROMs in languages you don't understand
+- 🩹 Patch ROMs automatically in mass
+- 🔍 Know what ROMs are missing for each console
 
 `igir` helps solve all of these problems!
 
@@ -54,16 +53,18 @@ The `igir --help` command shown below includes examples of how to use multiple c
 
 `igir` runs these steps in the following order:
 
-1. Scans the DAT input path for every file and parses them, if specified
+1. Scans the DAT input path for every file and parses them, if provided
 2. Scans each ROM input path for every file
-   1. Then detects headers in those files, if applicable (see [docs](docs/rom-headers.md))
-3. ROMs are matched to the DATs
-   1. Then filtering and sorting options are applied (see [docs](docs/rom-filtering.md))
-   2. Then ROMs are written to the output directory, if specified (`copy`, `move`)
-   3. Then written ROMs are tested for accuracy, if specified (`test`)
-   4. Then input ROMs are deleted, if specified (`move`)
-4. Unknown files are recycled from the output directory, if specified (`clean`)
-5. An output report is written to the output directory, if specified (`report`)
+   - Then detects headers in those files, if applicable (see [docs](docs/rom-headers.md))
+3. Scans each patch input path for every file (see [docs](docs/rom-patching.md))
+4. ROMs are matched to the DATs, if provided
+   - Then ROMs are matched to any applicable patches, creating multiple versions from the same ROM
+   - Then filtering and sorting options are applied (see [docs](docs/rom-filtering.md))
+   - Then ROMs are written to the output directory, if specified (`copy`, `move`)
+   - Then written ROMs are tested for accuracy, if specified (`test`)
+   - Then input ROMs are deleted, if specified (`move`)
+5. Unknown files are recycled from the output directory, if specified (`clean`)
+6. An output report is written to the output directory, if specified (`report`)
 
 ## How do I run `igir`?
 
@@ -213,11 +214,15 @@ Each manager has its own pros, but many have the same drawbacks or limitations:
 - Limited parent/clone, region, language, version, and ROM type filtering
 - No ability to prioritize parent/clones when creating a 1G1R set
 
+## Additional documentation
+
+See the [docs](/docs) page for more in-depth information!
+
 ## Feature requests, bug reports, and contributing
 
 [![Contributors](https://badgen.net/github/contributors/emmercm/igir?icon=github)](https://github.com/emmercm/igir/graphs/contributors)
-[![Feature Requests](https://badgen.net/github/label-issues/emmercm/igir/enhancement/open?icon=github&label=Open%20Feature%20Requests)](https://github.com/emmercm/igir/issues?q=is%3Aopen+is%3Aissue+label%3Aenhancement)
-[![Bugs](https://badgen.net/github/label-issues/emmercm/igir/bug/open?icon=github&label=Open%20Bugs)](https://github.com/emmercm/igir/issues?q=is%3Aopen+is%3Aissue+label%3Abug)
+[![Feature Requests](https://badgen.net/github/label-issues/emmercm/igir/enhancement/open?icon=github&label=open%20feature%20requests)](https://github.com/emmercm/igir/issues?q=is%3Aopen+is%3Aissue+label%3Aenhancement)
+[![Bugs](https://badgen.net/github/label-issues/emmercm/igir/bug/open?icon=github&label=open%20bugs)](https://github.com/emmercm/igir/issues?q=is%3Aopen+is%3Aissue+label%3Abug)
 
 Feedback is a gift! Your feature requests and bug reports help improve the project for everyone. Feel free to submit an issue on GitHub using one of the templates.
 
