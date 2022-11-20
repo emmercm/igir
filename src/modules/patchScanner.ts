@@ -28,7 +28,7 @@ export default class PatchScanner extends Scanner {
       try {
         return await PatchFactory.patchFrom(file);
       } catch (e) {
-        await this.progressBar.logError(`Failed to parse patch ${file.toString()} : ${e}`);
+        await this.progressBar.logError(`${file.toString()}: Failed to parse patch : ${e}`);
         return undefined;
       }
     }))).filter((file) => file) as Patch[];
