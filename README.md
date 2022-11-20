@@ -22,8 +22,8 @@ With `igir` you can manage a ROM collection of any size:
 - 🔍 Scan DAT, ROM, and patch files & archives of many formats (see [docs](docs/advanced-topics.md#input-archives))
 - 📂 Organize ROM files by console (with [DATs](docs/dats.md))
 - 🪄 Name ROM files consistently, including the right extension (with [DATs](docs/dats.md))
-- 🗜️ Archive ROMs individually in mass
 - ✂️ Filter out duplicate ROMs, or ROMs in languages you don't understand (see [docs](docs/rom-filtering.md))
+- 🗜️ Archive ROMs individually in mass
 - 🩹 Patch ROMs automatically in mass (see [docs](docs/rom-patching.md))
 - 🔮 Know what ROMs are missing for each console (with [DATs](docs/dats.md))
 
@@ -149,7 +149,7 @@ Examples:
     igir copy --input **/*.smc --output Headerless/ --dir-mirror --remove-headers .smc
 ```
 
-See the [advanced topics](docs/advanced-topics.md) page for more in-depth information.
+See the [advanced examples](docs/advanced-examples.md) page for even more examples.
 
 ## Why choose `igir`?
 
