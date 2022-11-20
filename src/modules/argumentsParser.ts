@@ -203,6 +203,13 @@ export default class ArgumentsParser {
         description: 'Overwrite any ROMs in the output directory',
         type: 'boolean',
       })
+      .option('clean-exclude', {
+        group: groupOutput,
+        alias: 'C',
+        description: 'Path(s) to files to exclude from cleaning',
+        type: 'array',
+        requiresArg: true,
+      })
 
       .option('language-filter', {
         group: groupFiltering,
