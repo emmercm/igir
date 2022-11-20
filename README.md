@@ -1,6 +1,6 @@
 # igir
 
-`igir` (pronounced "eager") is a platform-independent ROM collection manager to help sort collections and make one game, one rom (1G1R) sets.
+`igir` (pronounced "eager") is a platform-independent ROM collection manager to help filter, patch, sort, and archive ROM collections.
 
 ![CLI:Windows,macOS,Linux](https://badgen.net/badge/icon/Windows,%20macOS,%20Linux?icon=terminal&label=CLI&color=grey)
 [![npm:igir](https://badgen.net/npm/v/igir?icon=npm&label=igir&color=red)](https://www.npmjs.com/package/igir)
@@ -17,54 +17,15 @@ A video of an example use case:
 
 [![asciicast](https://asciinema.org/a/uVZpMCas3SQIA0q6sCh5rYqdI.svg)](https://asciinema.org/a/uVZpMCas3SQIA0q6sCh5rYqdI)
 
-With a large ROM collection it can be difficult to:
+With `igir` you can manage a ROM collection of any size:
 
-- 📂 Organize ROM files by console
-- 🪄 Name ROM files consistently, including the right extension
+- 🔍 Scan DAT, ROM, and patch files & archives of many formats (see [docs](docs/advanced-topics.md#input-archives))
+- 📂 Organize ROM files by console (with [DATs](docs/dats.md))
+- 🪄 Name ROM files consistently, including the right extension (with [DATs](docs/dats.md))
 - 🗜️ Archive ROMs individually in mass
-- ✂️ Filter out duplicate ROMs, or ROMs in languages you don't understand
-- 🩹 Patch ROMs automatically in mass
-- 🔍 Know what ROMs are missing for each console
-
-`igir` helps solve all of these problems!
-
-## What does `igir` need?
-
-**`igir` needs an input set of ROMs, of course!**
-
-Those ROMs can be in archives (`.001`, `.7z`, `.gz`, `.rar`, `.tar.gz`, `.z01`, `.zip`, `.zipx`, and more!) or on their own. They can also contain a header or not (see [docs](docs/rom-headers.md)).
-
-**`igir` works best with a set of DATs as well.**
-
-Though not required, DATs can provide a lot of information for ROMs such as their correct name, and which ROMs are duplicates of others. See the [docs](docs/dats.md) for more information on DATs and some "_just tell me what to do_" instructions.
-
-**`igir` then needs one or more commands:**
-
-- `copy`: copy ROMs from input directories to an output directory
-- `move`: move ROMs from input directories to an output directory
-- `zip`: create zip archives of output ROMs
-- `test`: test all written ROMs for accuracy
-- `clean`: recycle all unknown files in an output directory
-- `report`: generate a report on ROMs found and processed
-
-The `igir --help` command shown below includes examples of how to use multiple commands together.
-
-## How does `igir` work?
-
-`igir` runs these steps in the following order:
-
-1. Scans the DAT input path for every file and parses them, if provided
-2. Scans each ROM input path for every file
-   - Then detects headers in those files, if applicable (see [docs](docs/rom-headers.md))
-3. Scans each patch input path for every file (see [docs](docs/rom-patching.md))
-4. ROMs are matched to the DATs, if provided
-   - Then ROMs are matched to any applicable patches, creating multiple versions from the same ROM
-   - Then filtering and sorting options are applied (see [docs](docs/rom-filtering.md))
-   - Then ROMs are written to the output directory, if specified (`copy`, `move`)
-   - Then written ROMs are tested for accuracy, if specified (`test`)
-   - Then input ROMs are deleted, if specified (`move`)
-5. Unknown files are recycled from the output directory, if specified (`clean`)
-6. An output report is written to the output directory, if specified (`report`)
+- ✂️ Filter out duplicate ROMs, or ROMs in languages you don't understand (see [docs](docs/rom-filtering.md))
+- 🩹 Patch ROMs automatically in mass (see [docs](docs/rom-patching.md))
+- 🔮 Know what ROMs are missing for each console (with [DATs](docs/dats.md))
 
 ## How do I run `igir`?
 
@@ -188,11 +149,7 @@ Examples:
     igir copy --input **/*.smc --output Headerless/ --dir-mirror --remove-headers .smc
 ```
 
-## How do I obtain ROMs?
-
-Emulators are generally _legal_, as long as they don't include copyrighted software such as a console BIOS. Downloading ROM files that you do not own is piracy which is _illegal_ in many countries.
-
-See the [Dumping ROMs](docs/rom-dumping.md) page for more information.
+See the [advanced topics](docs/advanced-topics.md) page for more in-depth information.
 
 ## Why choose `igir`?
 
@@ -215,6 +172,7 @@ Each manager has its own pros, but many have the same drawbacks or limitations:
 - Limited folder management options
 - No ROM header support
 - No ROM header removal functionality
+- No ROM patching functionality
 - Limited parent/clone, region, language, version, and ROM type filtering
 - No ability to prioritize parent/clones when creating a 1G1R set
 
