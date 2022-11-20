@@ -14,7 +14,7 @@ describe('getOutputDirRoot', () => {
     ['', '.'],
     ['.', '.'],
     ['root', 'root'],
-    ['foo/bar', 'foo/bar'],
+    ['foo/bar', path.join('foo', 'bar')],
     ['Assets/{pocket}/common/', 'Assets'],
     ['games/{mister}/', 'games'],
     ['{datName}', '.'],
