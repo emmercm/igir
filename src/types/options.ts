@@ -12,8 +12,11 @@ import path from 'path';
 import LogLevel from '../console/logLevel.js';
 import Constants from '../constants.js';
 import fsPoly from '../polyfill/fsPoly.js';
+import FileFactory from './archives/fileFactory.js';
+import GameConsole from './gameConsole.js';
 import DAT from './logiqx/dat.js';
 import Game from './logiqx/game.js';
+import Release from './logiqx/release.js';
 
 export interface OptionsProps {
   readonly commands?: string[],
@@ -333,8 +336,22 @@ export default class Options implements OptionsProps {
       .filter((inputPath, idx, arr) => arr.indexOf(inputPath) === idx);
   }
 
-  getOutput(dat?: DAT, inputRomPath?: string, game?: Game, romName?: string): string {
-    let output = this.shouldWrite() ? this.output : Constants.GLOBAL_TEMP_DIR;
+  getOutputRoot(): string {
+    return this.shouldWrite() ? this.output : Constants.GLOBAL_TEMP_DIR;
+  }
+
+  getOutput(
+    dat?: DAT,
+    inputRomPath?: string,
+    game?: Game,
+    release?: Release,
+    romFilename?: string,
+  ): string {
+    const romFilenameSanitized = romFilename?.replace(/[\\/]/g, '_');
+
+    let output = this.getOutputRoot();
+    output = Options.replaceOutputTokens(output, dat, inputRomPath, release, romFilenameSanitized);
+
     if (this.getDirMirror() && inputRomPath) {
       const mirroredDir = path.dirname(inputRomPath)
         .replace(/[\\/]/g, path.sep)
@@ -348,23 +365,90 @@ export default class Options implements OptionsProps {
       output = path.join(output, dat.getNameShort());
     }
 
-    if (this.getDirLetter() && romName) {
-      let letter = romName[0].toUpperCase();
+    if (this.getDirLetter() && romFilenameSanitized) {
+      let letter = romFilenameSanitized[0].toUpperCase();
       if (letter.match(/[^A-Z]/)) {
         letter = '#';
       }
       output = path.join(output, letter);
     }
 
-    if (game && game.getRoms().length > 1) {
+    if (game
+      && game.getRoms().length > 1
+      && (!romFilenameSanitized || !FileFactory.isArchive(romFilenameSanitized))
+    ) {
       output = path.join(output, game.getName());
     }
 
-    if (romName) {
-      output = path.join(output, romName);
+    if (romFilenameSanitized) {
+      output = path.join(output, romFilenameSanitized);
     }
 
     return fsPoly.makeLegal(output);
+  }
+
+  private static replaceOutputTokens(
+    output: string,
+    dat?: DAT,
+    inputRomPath?: string,
+    release?: Release,
+    outputRomFilename?: string,
+  ): string {
+    let result = output;
+    if (dat) {
+      result = result.replace('{datName}', dat.getName().replace(/[\\/]/g, '_'));
+    }
+    if (release) {
+      result = result.replace('{datReleaseRegion}', release.getRegion());
+      if (release.getLanguage()) {
+        result = result.replace('{datReleaseLanguage}', release.getLanguage() as string);
+      }
+    }
+    if (inputRomPath) {
+      const inputRom = path.parse(inputRomPath);
+      result = result
+        .replace('{inputDirname}', inputRom.dir);
+    }
+    if (outputRomFilename) {
+      const outputRom = path.parse(outputRomFilename);
+      result = result
+        .replace('{outputBasename}', outputRom.base)
+        .replace('{outputName}', outputRom.name)
+        .replace('{outputExt}', outputRom.ext.replace(/^\./, ''));
+    }
+    result = this.replaceOutputGameConsoleTokens(result, dat, outputRomFilename);
+
+    const leftoverTokens = result.match(/\{[a-zA-Z]+\}/g);
+    if (leftoverTokens !== null && leftoverTokens.length) {
+      throw new Error(`failed to replace output token${leftoverTokens.length !== 1 ? 's' : ''}: ${leftoverTokens.join(', ')}`);
+    }
+
+    return result;
+  }
+
+  private static replaceOutputGameConsoleTokens(
+    output: string,
+    dat?: DAT,
+    outputRomFilename?: string,
+  ): string {
+    if (!outputRomFilename) {
+      return output;
+    }
+
+    const gameConsole = GameConsole.getForFilename(outputRomFilename)
+      || GameConsole.getForConsoleName(dat?.getName() || '');
+    if (!gameConsole) {
+      return output;
+    }
+
+    let result = output;
+    if (gameConsole.getPocket()) {
+      result = result.replace('{pocket}', gameConsole.getPocket() as string);
+    }
+    if (gameConsole.getMister()) {
+      result = result.replace('{mister}', gameConsole.getMister() as string);
+    }
+    return result;
   }
 
   getOutputReportPath(): string {
