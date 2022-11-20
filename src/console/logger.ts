@@ -62,7 +62,9 @@ export default class Logger {
 
     const loggerPrefix = this.logLevel <= LogLevel.INFO && this.loggerPrefix ? `${this.loggerPrefix}: ` : '';
 
-    return message.trim()
+    return message
+      .replace(/^Error: /, '') // strip `new Error()` prefix
+      .trim()
       .split('\n')
       .map((m) => chalkFunc(`${LogLevel[logLevel]}: `) + loggerPrefix + m)
       .join('\n');
