@@ -24,7 +24,7 @@ describe('getOutput', () => {
 
   describe('token replacement', () => {
     it('should not replace tokens with no arguments', () => {
-      const output = '/{datName}/{pocket}/{mister}/{romBasename}/{romName}{romExt}';
+      const output = '{datName}/{pocket}/{mister}/{romBasename}/{romName}{romExt}';
       expect(() => new Options({
         commands: ['copy'],
         output,
@@ -32,9 +32,9 @@ describe('getOutput', () => {
     });
 
     test.each([
-      ['/foo/{datName}/bar', '/foo/DAT _ Name/bar/game.rom'],
-      ['/root/{datReleaseRegion}', '/root/USA/game.rom'],
-      ['/root/{datReleaseLanguage}', '/root/En/game.rom'],
+      ['foo/{datName}/bar', path.join('foo', 'DAT _ Name', 'bar', 'game.rom')],
+      ['root/{datReleaseRegion}', path.join('root', 'USA', 'game.rom')],
+      ['root/{datReleaseLanguage}', path.join('root', 'En', 'game.rom')],
     ])('should replace {dat*}: %s', (output, expectedPath) => {
       const dat = new DAT(new Header({ name: 'DAT / Name' }), []);
       const release = new Release('Game Name', 'USA', 'En');
@@ -42,25 +42,25 @@ describe('getOutput', () => {
     });
 
     test.each([
-      ['{inputDirname}', '/path/to/game.rom'],
+      ['{inputDirname}', path.join('path', 'to', 'game.rom')],
     ])('should replace {input*}: %s', (output, expectedPath) => {
-      expect(new Options({ commands: ['copy'], output }).getOutput(undefined, '/path/to/game.bin', undefined, undefined, 'game.rom')).toEqual(expectedPath);
+      expect(new Options({ commands: ['copy'], output }).getOutput(undefined, 'path/to/game.bin', undefined, undefined, 'game.rom')).toEqual(expectedPath);
     });
 
     test.each([
-      ['/root/{outputBasename}', '/root/game.rom/game.rom'],
-      ['/root/{outputName}.{outputExt}', '/root/game.rom/game.rom'],
+      ['root/{outputBasename}', path.join('root', 'game.rom', 'game.rom')],
+      ['root/{outputName}.{outputExt}', path.join('root', 'game.rom', 'game.rom')],
     ])('should replace {output*}: %s', (output, expectedPath) => {
-      expect(new Options({ commands: ['copy'], output }).getOutput(undefined, '/path/to/game.bin', undefined, undefined, 'game.rom')).toEqual(expectedPath);
+      expect(new Options({ commands: ['copy'], output }).getOutput(undefined, 'path/to/game.bin', undefined, undefined, 'game.rom')).toEqual(expectedPath);
     });
 
     test.each([
-      ['game.a78', '/Assets/7800/common/game.a78'],
-      ['game.gb', '/Assets/gb/common/game.gb'],
-      ['game.nes', '/Assets/nes/common/game.nes'],
-      ['game.sv', '/Assets/supervision/common/game.sv'],
+      ['game.a78', path.join('Assets', '7800', 'common', 'game.a78')],
+      ['game.gb', path.join('Assets', 'gb', 'common', 'game.gb')],
+      ['game.nes', path.join('Assets', 'nes', 'common', 'game.nes')],
+      ['game.sv', path.join('Assets', 'supervision', 'common', 'game.sv')],
     ])('should replace {pocket} for known extension: %s', (outputRomFilename, expectedPath) => {
-      expect(new Options({ commands: ['copy'], output: '/Assets/{pocket}/common' }).getOutput(undefined, undefined, undefined, undefined, outputRomFilename)).toEqual(expectedPath);
+      expect(new Options({ commands: ['copy'], output: 'Assets/{pocket}/common' }).getOutput(undefined, undefined, undefined, undefined, outputRomFilename)).toEqual(expectedPath);
     });
 
     test.each([
@@ -68,21 +68,21 @@ describe('getOutput', () => {
       'game.ngp',
       'game.rom',
     ])('should throw on {pocket} for unknown extension: %s', (outputRomFilename) => {
-      expect(() => new Options({ commands: ['copy'], output: '/Assets/{pocket}/common' }).getOutput(undefined, undefined, undefined, undefined, outputRomFilename)).toThrow(/failed to replace/);
+      expect(() => new Options({ commands: ['copy'], output: 'Assets/{pocket}/common' }).getOutput(undefined, undefined, undefined, undefined, outputRomFilename)).toThrow(/failed to replace/);
     });
 
     test.each([
       // No unique extensions defined
-      ['Bit Corporation - Gamate', '/Assets/gamate/common/game.rom'],
-      ['Emerson - Arcadia', '/Assets/arcadia/common/game.rom'],
-      ['Entex - Adventure Vision', '/Assets/avision/common/game.rom'],
+      ['Bit Corporation - Gamate', path.join('Assets', 'gamate', 'common', 'game.rom')],
+      ['Emerson - Arcadia', path.join('Assets', 'arcadia', 'common', 'game.rom')],
+      ['Entex - Adventure Vision', path.join('Assets', 'avision', 'common', 'game.rom')],
       // Unique extensions defined
-      ['Atari - 2600', '/Assets/2600/common/game.rom'],
-      ['Nintendo - Game Boy', '/Assets/gb/common/game.rom'],
-      ['Nintendo - Game Boy Advance', '/Assets/gba/common/game.rom'],
-      ['Nintendo - Game Boy Color', '/Assets/gbc/common/game.rom'],
+      ['Atari - 2600', path.join('Assets', '2600', 'common', 'game.rom')],
+      ['Nintendo - Game Boy', path.join('Assets', 'gb', 'common', 'game.rom')],
+      ['Nintendo - Game Boy Advance', path.join('Assets', 'gba', 'common', 'game.rom')],
+      ['Nintendo - Game Boy Color', path.join('Assets', 'gbc', 'common', 'game.rom')],
     ])('should replace {pocket} for known DAT name: %s', (datName, expectedPath) => {
-      expect(new Options({ commands: ['copy'], output: '/Assets/{pocket}/common' }).getOutput(
+      expect(new Options({ commands: ['copy'], output: 'Assets/{pocket}/common' }).getOutput(
         new DAT(new Header({ name: datName }), []),
         undefined,
         undefined,
@@ -92,11 +92,11 @@ describe('getOutput', () => {
     });
 
     test.each([
-      ['game.a78', '/games/Atari7800/game.a78'],
-      ['game.gb', '/games/Gameboy/game.gb'],
-      ['game.nes', '/games/NES/game.nes'],
+      ['game.a78', path.join('games', 'Atari7800', 'game.a78')],
+      ['game.gb', path.join('games', 'Gameboy', 'game.gb')],
+      ['game.nes', path.join('games', 'NES', 'game.nes')],
     ])('should replace {mister} for known extension: %s', (outputRomFilename, expectedPath) => {
-      expect(new Options({ commands: ['copy'], output: '/games/{mister}' }).getOutput(undefined, undefined, undefined, undefined, outputRomFilename)).toEqual(expectedPath);
+      expect(new Options({ commands: ['copy'], output: 'games/{mister}' }).getOutput(undefined, undefined, undefined, undefined, outputRomFilename)).toEqual(expectedPath);
     });
 
     test.each([
@@ -105,7 +105,7 @@ describe('getOutput', () => {
       'game.rom',
       'game.sv',
     ])('should throw on {mister} for unknown extension: %s', (outputRomFilename) => {
-      expect(() => new Options({ commands: ['copy'], output: '/games/{mister}' }).getOutput(undefined, undefined, undefined, undefined, outputRomFilename)).toThrow(/failed to replace/);
+      expect(() => new Options({ commands: ['copy'], output: 'games/{mister}' }).getOutput(undefined, undefined, undefined, undefined, outputRomFilename)).toThrow(/failed to replace/);
     });
   });
 
