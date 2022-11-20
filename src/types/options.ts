@@ -416,7 +416,7 @@ export default class Options implements OptionsProps {
         .replace('{outputName}', outputRom.name)
         .replace('{outputExt}', outputRom.ext.replace(/^\./, ''));
     }
-    result = this.replaceOutputGameConsoleTokens(result, outputRomFilename);
+    result = this.replaceOutputGameConsoleTokens(result, dat, outputRomFilename);
 
     const leftoverTokens = result.match(/\{[a-zA-Z]+\}/g);
     if (leftoverTokens !== null && leftoverTokens.length) {
@@ -428,13 +428,15 @@ export default class Options implements OptionsProps {
 
   private static replaceOutputGameConsoleTokens(
     output: string,
+    dat?: DAT,
     outputRomFilename?: string,
   ): string {
     if (!outputRomFilename) {
       return output;
     }
 
-    const gameConsole = GameConsole.getForFilename(outputRomFilename);
+    const gameConsole = GameConsole.getForFilename(outputRomFilename)
+      || GameConsole.getForConsoleName(dat?.getName() || '');
     if (!gameConsole) {
       return output;
     }
