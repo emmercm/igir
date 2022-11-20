@@ -4,6 +4,7 @@ import path from 'path';
 import trash from 'trash';
 
 import ProgressBar, { Symbols } from '../console/progressBar.js';
+import fsPoly from '../polyfill/fsPoly.js';
 import File from '../types/files/file.js';
 import Options from '../types/options.js';
 import Module from './module.js';
@@ -45,7 +46,7 @@ export default class OutputCleaner extends Module {
 
     try {
       await this.progressBar.logDebug(`Cleaning ${filesToClean.length.toLocaleString()} file${filesToClean.length !== 1 ? 's' : ''}`);
-      await this.trashInChunks(filesToClean);
+      await this.trashOrDelete(filesToClean);
     } catch (e) {
       await this.progressBar.logError(`Failed to clean unmatched files : ${e}`);
     }
@@ -53,7 +54,7 @@ export default class OutputCleaner extends Module {
     try {
       const emptyDirs = await OutputCleaner.getEmptyDirs(dirsToClean);
       await this.progressBar.logDebug(`Cleaning ${emptyDirs.length.toLocaleString()} empty director${emptyDirs.length !== 1 ? 'ies' : 'y'}`);
-      await this.trashInChunks(emptyDirs);
+      await this.trashOrDelete(emptyDirs);
     } catch (e) {
       await this.progressBar.logError(`Failed to clean empty directories : ${e}`);
     }
@@ -62,7 +63,7 @@ export default class OutputCleaner extends Module {
     return filesToClean.length;
   }
 
-  private async trashInChunks(filePaths: string[]): Promise<void> {
+  private async trashOrDelete(filePaths: string[]): Promise<void> {
     // Prefer recycling...
     const CHUNK_SIZE = 100;
     /* eslint-disable no-await-in-loop */
@@ -70,6 +71,13 @@ export default class OutputCleaner extends Module {
       await trash(filePaths.slice(i, i + CHUNK_SIZE));
       await this.progressBar.update(i);
     }
+
+    // ...but if that doesn't work, delete the leftovers
+    await Promise.all(filePaths.map(async (filePath) => {
+      if (await fsPoly.exists(filePath)) {
+        await fsPoly.rm(filePath);
+      }
+    }));
   }
 
   private static async getEmptyDirs(dirsToClean: string | string[]): Promise<string[]> {
