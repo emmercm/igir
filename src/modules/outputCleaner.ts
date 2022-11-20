@@ -42,10 +42,10 @@ export default class OutputCleaner extends Module {
     }
 
     await this.progressBar.setSymbol(Symbols.RECYCLING);
-    await this.progressBar.reset(filesToClean.length);
 
     try {
       await this.progressBar.logDebug(`Cleaning ${filesToClean.length.toLocaleString()} file${filesToClean.length !== 1 ? 's' : ''}`);
+      await this.progressBar.reset(filesToClean.length);
       await this.trashOrDelete(filesToClean);
     } catch (e) {
       await this.progressBar.logError(`Failed to clean unmatched files : ${e}`);
@@ -53,6 +53,7 @@ export default class OutputCleaner extends Module {
 
     try {
       const emptyDirs = await OutputCleaner.getEmptyDirs(dirsToClean);
+      await this.progressBar.reset(emptyDirs.length);
       await this.progressBar.logDebug(`Cleaning ${emptyDirs.length.toLocaleString()} empty director${emptyDirs.length !== 1 ? 'ies' : 'y'}`);
       await this.trashOrDelete(emptyDirs);
     } catch (e) {
