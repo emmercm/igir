@@ -18,6 +18,22 @@ export default class FsPoly {
     }
   }
 
+  static async isDirectory(pathLike: PathLike): Promise<boolean> {
+    try {
+      return (await fsPromises.lstat(pathLike)).isDirectory();
+    } catch (e) {
+      return false;
+    }
+  }
+
+  static isDirectorySync(pathLike: PathLike): boolean {
+    try {
+      return fs.lstatSync(pathLike).isDirectory();
+    } catch (e) {
+      return false;
+    }
+  }
+
   static mktempSync(prefix: string): string {
     /* eslint-disable no-constant-condition */
     while (true) {
@@ -33,12 +49,8 @@ export default class FsPoly {
     // mkdtemp takes a string prefix rather than a file path, so we need to make sure the
     //  prefix ends with the path separator in order for it to become a parent directory.
     let prefixProcessed = prefix.replace(/[\\/]+$/, '');
-    try {
-      if ((await fsPromises.lstat(prefixProcessed)).isDirectory()) {
-        prefixProcessed += path.sep;
-      }
-    } catch (e) {
-      // eslint-disable-line no-empty
+    if (await this.isDirectory(prefixProcessed)) {
+      prefixProcessed += path.sep;
     }
 
     try {
@@ -54,12 +66,8 @@ export default class FsPoly {
     // mkdtempSync takes a string prefix rather than a file path, so we need to make sure the
     //  prefix ends with the path separator in order for it to become a parent directory.
     let prefixProcessed = prefix.replace(/[\\/]+$/, '');
-    try {
-      if (fs.lstatSync(prefixProcessed).isDirectory()) {
-        prefixProcessed += path.sep;
-      }
-    } catch (e) {
-      // eslint-disable-line no-empty
+    if (this.isDirectorySync(prefixProcessed)) {
+      prefixProcessed += path.sep;
     }
 
     try {
@@ -107,7 +115,7 @@ export default class FsPoly {
     }
 
     // Added in: v10.0.0
-    if ((await fsPromises.lstat(pathLike)).isDirectory()) {
+    if (await this.isDirectory(pathLike)) {
       // DEP0147
       if (semver.lt(process.version, '16.0.0')) {
         // Added in: v10.0.0
@@ -145,7 +153,7 @@ export default class FsPoly {
     }
 
     // Added in: v0.1.30
-    if (fs.lstatSync(pathLike).isDirectory()) {
+    if (this.isDirectorySync(pathLike)) {
       // DEP0147
       if (semver.lt(process.version, '16.0.0')) {
         // Added in: v0.1.21
