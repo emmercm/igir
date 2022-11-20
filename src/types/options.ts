@@ -284,44 +284,40 @@ export default class Options implements OptionsProps {
   }
 
   private static async scanPath(inputPaths: string[]): Promise<string[]> {
-    // Convert directory paths to glob patterns
-    const globPatterns = await Promise.all(inputPaths.map(async (inputPath) => {
-      try {
-        // If the file exists and is a directory, convert it to a glob pattern
-        if ((await fsPromises.lstat(inputPath)).isDirectory()) {
-          return `${inputPath}/**`;
+    const globbedPaths = (await Promise.all(inputPaths
+      .filter((inputPath) => inputPath)
+      .map(async (inputPath) => {
+      // Windows will report that \\.\nul doesn't exist, catch it explicitly
+        if (inputPath === os.devNull || inputPath.startsWith(os.devNull + path.sep)) {
+          return [];
         }
-      } catch (e) {
-        // eslint-disable-line no-empty
-      }
-      // Otherwise, return the original path
-      return inputPath;
-    }));
 
-    // Process any glob patterns
-    const globbedPaths = (await Promise.all(
-      globPatterns
-        .filter((inputPath) => inputPath)
-        .map(async (inputPath) => {
-          // Windows will report that \\.\nul doesn't exist, catch it explicitly
-          if (inputPath === os.devNull || inputPath.startsWith(os.devNull + path.sep)) {
-            return [];
-          }
+        // fg only uses forward-slash path separators
+        const inputPathNormalized = inputPath.replace(/\\/g, '/');
 
-          // If the file exists, don't process it as a glob pattern
-          if (await fsPoly.exists(inputPath)) {
-            return [inputPath];
-          }
-
-          // Otherwise, process it as a glob pattern
-          const paths = (await fg(inputPath.replace(/\\/g, '/')))
+        // Glob the contents of directories
+        if (await fsPoly.isDirectory(inputPath)) {
+          const dirPaths = (await fg(`${fg.escapePath(inputPathNormalized)}/**`))
             .map((filePath) => path.normalize(filePath));
-          if (!paths || !paths.length) {
-            throw new Error(`Path doesn't exist: ${inputPath}`);
+          if (!dirPaths || !dirPaths.length) {
+            throw new Error(`${inputPath}: Path doesn't exist`);
           }
-          return paths;
-        }),
-    )).flatMap((paths) => paths);
+          return dirPaths;
+        }
+
+        // If the file exists, don't process it as a glob pattern
+        if (await fsPoly.exists(inputPath)) {
+          return [inputPath];
+        }
+
+        // Otherwise, process it as a glob pattern
+        const paths = (await fg(inputPathNormalized))
+          .map((filePath) => path.normalize(filePath));
+        if (!paths || !paths.length) {
+          throw new Error(`${inputPath}: Path doesn't exist`);
+        }
+        return paths;
+      }))).flatMap((paths) => paths);
 
     // Filter to files
     const isFiles = await Promise.all(
