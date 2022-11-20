@@ -336,6 +336,10 @@ export default class Options implements OptionsProps {
       .filter((inputPath, idx, arr) => arr.indexOf(inputPath) === idx);
   }
 
+  getOutputRoot(): string {
+    return this.shouldWrite() ? this.output : Constants.GLOBAL_TEMP_DIR;
+  }
+
   getOutput(
     dat?: DAT,
     inputRomPath?: string,
@@ -345,7 +349,7 @@ export default class Options implements OptionsProps {
   ): string {
     const romFilenameSanitized = romFilename?.replace(/[\\/]/g, '_');
 
-    let output = this.shouldWrite() ? this.output : Constants.GLOBAL_TEMP_DIR;
+    let output = this.getOutputRoot();
     output = Options.replaceOutputTokens(output, dat, inputRomPath, release, romFilenameSanitized);
 
     if (this.getDirMirror() && inputRomPath) {
@@ -413,6 +417,12 @@ export default class Options implements OptionsProps {
         .replace('{outputExt}', outputRom.ext.replace(/^\./, ''));
     }
     result = this.replaceOutputGameConsoleTokens(result, outputRomFilename);
+
+    const leftoverTokens = result.match(/\{[a-zA-Z]+\}/g);
+    if (leftoverTokens !== null && leftoverTokens.length) {
+      throw new Error(`failed to replace output token${leftoverTokens.length !== 1 ? 's' : ''}: ${leftoverTokens.join(', ')}`);
+    }
+
     return result;
   }
 

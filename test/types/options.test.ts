@@ -25,16 +25,16 @@ describe('getOutput', () => {
   describe('token replacement', () => {
     it('should not replace tokens with no arguments', () => {
       const output = '/{datName}/{pocket}/{mister}/{romBasename}/{romName}{romExt}';
-      expect(new Options({
+      expect(() => new Options({
         commands: ['copy'],
         output,
-      }).getOutput()).toEqual(output);
+      }).getOutput()).toThrow(/failed to replace/);
     });
 
     test.each([
       ['/foo/{datName}/bar', '/foo/DAT _ Name/bar/game.rom'],
-      ['/root/{datReleaseRegion}', '/root/DAT _ Name/bar/game.rom'],
-      ['/root/{datReleaseLanguage}', '/root/DAT _ Name/bar/game.rom'],
+      ['/root/{datReleaseRegion}', '/root/USA/game.rom'],
+      ['/root/{datReleaseLanguage}', '/root/En/game.rom'],
     ])('should replace {dat*}: %s', (output, expectedPath) => {
       const dat = new DAT(new Header({ name: 'DAT / Name' }), []);
       const release = new Release('Game Name', 'USA', 'En');
@@ -55,7 +55,7 @@ describe('getOutput', () => {
     });
 
     test.each([
-      ['game.a78', '/Assets/{pocket}/common/game.a78'],
+      ['game.a78', '/Assets/7800/common/game.a78'],
       ['game.gb', '/Assets/gb/common/game.gb'],
       ['game.nes', '/Assets/nes/common/game.nes'],
       ['game.sv', '/Assets/supervision/common/game.sv'],
@@ -64,12 +64,28 @@ describe('getOutput', () => {
     });
 
     test.each([
+      'game.bin',
+      'game.ngp',
+      'game.rom',
+    ])('should throw on {pocket}: %s', (outputRomFilename) => {
+      expect(() => new Options({ commands: ['copy'], output: '/Assets/{pocket}/common' }).getOutput(undefined, undefined, undefined, undefined, outputRomFilename)).toThrow(/failed to replace/);
+    });
+
+    test.each([
       ['game.a78', '/games/Atari7800/game.a78'],
       ['game.gb', '/games/Gameboy/game.gb'],
       ['game.nes', '/games/NES/game.nes'],
-      ['game.sv', '/games/{mister}/game.sv'],
     ])('should replace {mister}: %s', (outputRomFilename, expectedPath) => {
       expect(new Options({ commands: ['copy'], output: '/games/{mister}' }).getOutput(undefined, undefined, undefined, undefined, outputRomFilename)).toEqual(expectedPath);
+    });
+
+    test.each([
+      'game.arduboy',
+      'game.bin',
+      'game.rom',
+      'game.sv',
+    ])('should throw on {mister}: %s', (outputRomFilename) => {
+      expect(() => new Options({ commands: ['copy'], output: '/games/{mister}' }).getOutput(undefined, undefined, undefined, undefined, outputRomFilename)).toThrow(/failed to replace/);
     });
   });
 

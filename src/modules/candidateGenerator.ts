@@ -128,12 +128,14 @@ export default class CandidateGenerator extends Module {
         //  headered file.
         const romFile = hashCodeToInputFiles.get(rom.hashCode());
         if (romFile) {
-          const romWithFiles = new ROMWithFiles(
-            rom,
-            romFile,
-            await this.getOutputFile(dat, game, release, rom, romFile),
-          );
-          return [rom, romWithFiles];
+          try {
+            const outputFile = await this.getOutputFile(dat, game, release, rom, romFile);
+            const romWithFiles = new ROMWithFiles(rom, romFile, outputFile);
+            return [rom, romWithFiles];
+          } catch (e) {
+            await this.progressBar.logWarn(`${dat.getName()}: ${game.getName()}: ${e}`);
+            return [rom, undefined];
+          }
         }
         return [rom, undefined];
       }),

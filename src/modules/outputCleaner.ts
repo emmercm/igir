@@ -32,7 +32,8 @@ export default class OutputCleaner extends Module {
       return 0;
     }
 
-    const outputDir = this.options.getOutput();
+    // TODO(cemmer): handle tokens
+    const outputDir = this.options.getOutputRoot();
     const outputFilePathsToExclude = writtenFilesToExclude
       .map((file) => path.normalize(file.getFilePath()));
 
