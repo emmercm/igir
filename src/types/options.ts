@@ -13,6 +13,7 @@ import LogLevel from '../console/logLevel.js';
 import Constants from '../constants.js';
 import fsPoly from '../polyfill/fsPoly.js';
 import FileFactory from './archives/fileFactory.js';
+import File from './files/file.js';
 import GameConsole from './gameConsole.js';
 import DAT from './logiqx/dat.js';
 import Game from './logiqx/game.js';
@@ -35,6 +36,7 @@ export interface OptionsProps {
   readonly zipExclude?: string,
   readonly removeHeaders?: string[],
   readonly overwrite?: boolean,
+  readonly cleanExclude?: string[],
 
   readonly languageFilter?: string[],
   readonly regionFilter?: string[],
@@ -93,6 +95,8 @@ export default class Options implements OptionsProps {
   readonly removeHeaders?: string[];
 
   readonly overwrite: boolean;
+
+  readonly cleanExclude: string[];
 
   readonly languageFilter: string[];
 
@@ -163,6 +167,7 @@ export default class Options implements OptionsProps {
     this.zipExclude = options?.zipExclude || '';
     this.removeHeaders = options?.removeHeaders;
     this.overwrite = options?.overwrite || false;
+    this.cleanExclude = options?.cleanExclude || [];
 
     this.languageFilter = options?.languageFilter || [];
     this.regionFilter = options?.regionFilter || [];
@@ -336,11 +341,27 @@ export default class Options implements OptionsProps {
       .filter((inputPath, idx, arr) => arr.indexOf(inputPath) === idx);
   }
 
-  getOutputRoot(): string {
+  private getOutput(): string {
     return this.shouldWrite() ? this.output : Constants.GLOBAL_TEMP_DIR;
   }
 
-  getOutput(
+  /**
+   * Get the "root" sub-path of the output dir, the sub-path up until the first replaceable token.
+   */
+  getOutputDirRoot(): string {
+    const outputSplit = path.normalize(this.getOutput()).split(path.sep);
+    for (let i = 0; i < outputSplit.length; i += 1) {
+      if (outputSplit[i].match(/\{[a-zA-Z]+\}/g) !== null) {
+        return path.normalize(outputSplit.slice(0, i).join(path.sep));
+      }
+    }
+    return outputSplit.join(path.sep);
+  }
+
+  /**
+   * Get the output dir, only resolving any tokens.
+   */
+  getOutputDirParsed(
     dat?: DAT,
     inputRomPath?: string,
     game?: Game,
@@ -349,8 +370,25 @@ export default class Options implements OptionsProps {
   ): string {
     const romFilenameSanitized = romFilename?.replace(/[\\/]/g, '_');
 
-    let output = this.getOutputRoot();
+    let output = this.getOutput();
     output = Options.replaceOutputTokens(output, dat, inputRomPath, release, romFilenameSanitized);
+
+    return fsPoly.makeLegal(output);
+  }
+
+  /**
+   * Get the full output path for a ROM file.
+   */
+  getOutputFileParsed(
+    dat?: DAT,
+    inputRomPath?: string,
+    game?: Game,
+    release?: Release,
+    romFilename?: string,
+  ): string {
+    const romFilenameSanitized = romFilename?.replace(/[\\/]/g, '_');
+
+    let output = this.getOutputDirParsed(dat, inputRomPath, game, release, romFilename);
 
     if (this.getDirMirror() && inputRomPath) {
       const mirroredDir = path.dirname(inputRomPath)
@@ -455,7 +493,7 @@ export default class Options implements OptionsProps {
     let output = process.cwd();
     if (this.shouldWrite()) {
       // Write to the output dir if writing
-      output = this.output;
+      output = this.getOutput();
     } else if (this.input.length === 1) {
       // Write to the input dir if there is only one
       let [input] = this.input;
@@ -524,6 +562,28 @@ export default class Options implements OptionsProps {
 
   getOverwrite(): boolean {
     return this.overwrite;
+  }
+
+  private async scanCleanExcludeFiles(): Promise<string[]> {
+    return Options.scanPath(this.cleanExclude);
+  }
+
+  async scanOutputFilesWithoutCleanExclusions(
+    outputDirs: string[],
+    writtenFiles: File[],
+  ): Promise<string[]> {
+    // Written files that shouldn't be cleaned
+    const writtenFilesNormalized = writtenFiles
+      .map((file) => path.normalize(file.getFilePath()));
+
+    // Files excluded from cleaning
+    const cleanExcludedFilesNormalized = (await this.scanCleanExcludeFiles())
+      .map((filePath) => path.normalize(filePath));
+
+    return (await Options.scanPath(outputDirs))
+      .map((filePath) => path.normalize(filePath))
+      .filter((filePath) => writtenFilesNormalized.indexOf(filePath) === -1)
+      .filter((filePath) => cleanExcludedFilesNormalized.indexOf(filePath) === -1);
   }
 
   getRegionFilter(): string[] {

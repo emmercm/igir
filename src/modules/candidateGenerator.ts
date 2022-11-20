@@ -178,7 +178,7 @@ export default class CandidateGenerator extends Module {
     const outputEntryPath = path.format(parsedPath);
 
     if (this.options.shouldZip(rom.getName())) {
-      const outputFilePath = this.options.getOutput(
+      const outputFilePath = this.options.getOutputFileParsed(
         dat,
         inputFile.getFilePath(),
         game,
@@ -193,7 +193,7 @@ export default class CandidateGenerator extends Module {
       );
     }
 
-    const outputFilePath = this.options.getOutput(
+    const outputFilePath = this.options.getOutputFileParsed(
       dat,
       inputFile.getFilePath(),
       game,

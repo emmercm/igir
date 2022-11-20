@@ -15,7 +15,10 @@ const ROM_FIXTURES_DIR = path.join('test', 'fixtures', 'roms');
  * https://github.com/emmercm/igir/pull/82. In a real world scenario the cleaner will only run once,
  * so it's fine if we implement some workarounds here.
  */
-async function runOutputCleaner(writtenFilePathsToExclude: string[]): Promise<string[]> {
+async function runOutputCleaner(
+  cleanExclude: string[],
+  writtenFilePathsToExclude: string[],
+): Promise<string[]> {
   // Copy the fixture files to a temp directory
   const tempDir = await fsPoly.mkdtemp(Constants.GLOBAL_TEMP_DIR);
   fsPoly.copyDirSync(ROM_FIXTURES_DIR, tempDir);
@@ -29,12 +32,13 @@ async function runOutputCleaner(writtenFilePathsToExclude: string[]): Promise<st
   await new OutputCleaner(
     new Options({
       commands: ['move', 'clean'],
-      output: tempDir,
+      cleanExclude: cleanExclude.map((filePath) => path.join(tempDir, filePath)),
     }),
     new ProgressBarFake(),
-  ).clean(writtenRomFilesToExclude);
+  ).clean([tempDir], writtenRomFilesToExclude);
   const after = fsPoly.walkSync(tempDir);
 
+  // Test cleanup
   await fsPoly.rm(tempDir, { recursive: true });
 
   return after
@@ -46,20 +50,36 @@ it('should delete nothing if nothing written', async () => {
   const existingFiles = fsPoly.walkSync(ROM_FIXTURES_DIR)
     .map((filePath) => filePath.replace(/^test[\\/]fixtures[\\/]roms[\\/]/, ''))
     .sort();
-  const filesRemaining = await runOutputCleaner([]);
+  const filesRemaining = await runOutputCleaner([], []);
   expect(filesRemaining).toEqual(existingFiles);
 });
 
-it('should delete nothing if all match', async () => {
+it('should delete nothing if no excess files', async () => {
   const existingFiles = fsPoly.walkSync(ROM_FIXTURES_DIR)
     .map((filePath) => filePath.replace(/^test[\\/]fixtures[\\/]roms[\\/]/, ''))
     .sort();
-  const filesRemaining = await runOutputCleaner(existingFiles);
+  const filesRemaining = await runOutputCleaner([], existingFiles);
   expect(filesRemaining).toEqual(existingFiles);
 });
 
-it('should delete some if some matched', async () => {
+it('should delete some if all unmatched and some excluded', async () => {
   const filesRemaining = await runOutputCleaner([
+    path.join('**', 'foobar.*'),
+  ], [
+    'non-existent file',
+  ]);
+  expect(filesRemaining).toEqual([
+    path.join('7z', 'foobar.7z'),
+    'foobar.lnx',
+    path.join('rar', 'foobar.rar'),
+    path.join('raw', 'foobar.lnx'),
+    path.join('tar', 'foobar.tar.gz'),
+    path.join('zip', 'foobar.zip'),
+  ]);
+});
+
+it('should delete some if some matched and nothing excluded', async () => {
+  const filesRemaining = await runOutputCleaner([], [
     path.join('7z', 'empty.7z'),
     path.join('raw', 'fizzbuzz.nes'),
     path.join('zip', 'foobar.zip'),
@@ -72,8 +92,8 @@ it('should delete some if some matched', async () => {
   ]);
 });
 
-it('should delete everything if all unmatched', async () => {
-  await expect(runOutputCleaner([
+it('should delete everything if all unmatched and nothing excluded', async () => {
+  await expect(runOutputCleaner([], [
     'non-existent file',
   ])).resolves.toEqual([]);
 });

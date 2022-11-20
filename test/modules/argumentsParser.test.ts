@@ -147,12 +147,12 @@ describe('options', () => {
     expect(() => argumentsParser.parse(['move', '--input', os.devNull])).toThrow(/missing required option/i);
     expect(() => argumentsParser.parse(['zip', '--input', os.devNull])).toThrow(/missing required option/i);
     expect(() => argumentsParser.parse(['clean', '--input', os.devNull])).toThrow(/missing required option/i);
-    expect(argumentsParser.parse(['test', '--dat', os.devNull, '--input', os.devNull]).getOutput()).toContain(Constants.GLOBAL_TEMP_DIR);
-    expect(argumentsParser.parse(['report', '--dat', os.devNull, '--input', os.devNull]).getOutput()).toContain(Constants.GLOBAL_TEMP_DIR);
+    expect(argumentsParser.parse(['test', '--dat', os.devNull, '--input', os.devNull]).getOutputFileParsed()).toContain(Constants.GLOBAL_TEMP_DIR);
+    expect(argumentsParser.parse(['report', '--dat', os.devNull, '--input', os.devNull]).getOutputFileParsed()).toContain(Constants.GLOBAL_TEMP_DIR);
     // Test value
-    expect(argumentsParser.parse(['copy', '--input', os.devNull, '-o', 'foo']).getOutput()).toEqual('foo');
-    expect(argumentsParser.parse(['copy', '--input', os.devNull, '--output', 'foo']).getOutput()).toEqual('foo');
-    expect(argumentsParser.parse(['copy', '--input', os.devNull, '--output', 'foo', '--output', 'bar']).getOutput()).toEqual('bar');
+    expect(argumentsParser.parse(['copy', '--input', os.devNull, '-o', 'foo']).getOutputFileParsed()).toEqual('foo');
+    expect(argumentsParser.parse(['copy', '--input', os.devNull, '--output', 'foo']).getOutputFileParsed()).toEqual('foo');
+    expect(argumentsParser.parse(['copy', '--input', os.devNull, '--output', 'foo', '--output', 'bar']).getOutputFileParsed()).toEqual('bar');
   });
 
   it('should parse "header"', () => {
@@ -236,6 +236,16 @@ describe('options', () => {
     expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--overwrite', '--overwrite']).getOverwrite()).toEqual(true);
     expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--overwrite', 'false', '--overwrite', 'true']).getOverwrite()).toEqual(true);
     expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--overwrite', 'true', '--overwrite', 'false']).getOverwrite()).toEqual(false);
+  });
+
+  it('should parse "clean-exclude"', async () => {
+    const argv = ['copy', '--input', os.devNull, '--output', os.devNull];
+    const outputDir = './src';
+    expect((await argumentsParser.parse(argv)
+      .scanOutputFilesWithoutCleanExclusions([outputDir], [])).length).toBeGreaterThan(0);
+    expect((await argumentsParser.parse([...argv, '-C', os.devNull]).scanOutputFilesWithoutCleanExclusions([outputDir], [])).length).toBeGreaterThan(0);
+    expect((await argumentsParser.parse([...argv, '-C', outputDir]).scanOutputFilesWithoutCleanExclusions([outputDir], [])).length).toEqual(0);
+    expect((await argumentsParser.parse([...argv, '--clean-exclude', outputDir]).scanOutputFilesWithoutCleanExclusions([outputDir], [])).length).toEqual(0);
   });
 
   it('should parse "prefer-verified"', () => {
