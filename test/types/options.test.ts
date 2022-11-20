@@ -59,7 +59,7 @@ describe('getOutput', () => {
       ['game.gb', '/Assets/gb/common/game.gb'],
       ['game.nes', '/Assets/nes/common/game.nes'],
       ['game.sv', '/Assets/supervision/common/game.sv'],
-    ])('should replace {pocket}: %s', (outputRomFilename, expectedPath) => {
+    ])('should replace {pocket} for known extension: %s', (outputRomFilename, expectedPath) => {
       expect(new Options({ commands: ['copy'], output: '/Assets/{pocket}/common' }).getOutput(undefined, undefined, undefined, undefined, outputRomFilename)).toEqual(expectedPath);
     });
 
@@ -67,15 +67,35 @@ describe('getOutput', () => {
       'game.bin',
       'game.ngp',
       'game.rom',
-    ])('should throw on {pocket}: %s', (outputRomFilename) => {
+    ])('should throw on {pocket} for unknown extension: %s', (outputRomFilename) => {
       expect(() => new Options({ commands: ['copy'], output: '/Assets/{pocket}/common' }).getOutput(undefined, undefined, undefined, undefined, outputRomFilename)).toThrow(/failed to replace/);
+    });
+
+    test.each([
+      // No unique extensions defined
+      ['Bit Corporation - Gamate', '/Assets/gamate/common/game.rom'],
+      ['Emerson - Arcadia', '/Assets/arcadia/common/game.rom'],
+      ['Entex - Adventure Vision', '/Assets/avision/common/game.rom'],
+      // Unique extensions defined
+      ['Atari - 2600', '/Assets/2600/common/game.rom'],
+      ['Nintendo - Game Boy', '/Assets/gb/common/game.rom'],
+      ['Nintendo - Game Boy Advance', '/Assets/gba/common/game.rom'],
+      ['Nintendo - Game Boy Color', '/Assets/gbc/common/game.rom'],
+    ])('should replace {pocket} for known DAT name: %s', (datName, expectedPath) => {
+      expect(new Options({ commands: ['copy'], output: '/Assets/{pocket}/common' }).getOutput(
+        new DAT(new Header({ name: datName }), []),
+        undefined,
+        undefined,
+        undefined,
+        'game.rom',
+      )).toEqual(expectedPath);
     });
 
     test.each([
       ['game.a78', '/games/Atari7800/game.a78'],
       ['game.gb', '/games/Gameboy/game.gb'],
       ['game.nes', '/games/NES/game.nes'],
-    ])('should replace {mister}: %s', (outputRomFilename, expectedPath) => {
+    ])('should replace {mister} for known extension: %s', (outputRomFilename, expectedPath) => {
       expect(new Options({ commands: ['copy'], output: '/games/{mister}' }).getOutput(undefined, undefined, undefined, undefined, outputRomFilename)).toEqual(expectedPath);
     });
 
@@ -84,7 +104,7 @@ describe('getOutput', () => {
       'game.bin',
       'game.rom',
       'game.sv',
-    ])('should throw on {mister}: %s', (outputRomFilename) => {
+    ])('should throw on {mister} for unknown extension: %s', (outputRomFilename) => {
       expect(() => new Options({ commands: ['copy'], output: '/games/{mister}' }).getOutput(undefined, undefined, undefined, undefined, outputRomFilename)).toThrow(/failed to replace/);
     });
   });
