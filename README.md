@@ -1,6 +1,6 @@
 # igir
 
-`igir` (pronounced "eager") is a platform-independent ROM collection manager to help filter, patch, sort, and archive ROM collections.
+`igir` (pronounced "eager") is a platform-independent ROM collection manager to help filter, sort, patch, and archive ROM collections.
 
 ![CLI:Windows,macOS,Linux](https://badgen.net/badge/icon/Windows,%20macOS,%20Linux?icon=terminal&label=CLI&color=grey)
 [![npm:igir](https://badgen.net/npm/v/igir?icon=npm&label=igir&color=red)](https://www.npmjs.com/package/igir)
@@ -19,12 +19,12 @@ A video of an example use case:
 
 With `igir` you can manage a ROM collection of any size:
 
-- 🔍 Scan DAT, ROM, and patch files & archives of many formats (see [docs](docs/advanced-topics.md#input-archives))
+- 🔍 Scan DAT, ROM, and patch files & archives (see [archive docs](docs/advanced-topics.md#supported-archive-formats))
 - 📂 Organize ROM files by console (with [DATs](docs/dats.md))
 - 🪄 Name ROM files consistently, including the right extension (with [DATs](docs/dats.md))
-- ✂️ Filter out duplicate ROMs, or ROMs in languages you don't understand (see [docs](docs/rom-filtering.md))
+- ✂️ Filter out duplicate ROMs, or ROMs in languages you don't understand (see [filtering docs](docs/rom-filtering.md))
 - 🗜️ Archive ROMs individually in mass
-- 🩹 Patch ROMs automatically in mass (see [docs](docs/rom-patching.md))
+- 🩹 Patch ROMs automatically in mass (see [patching docs](docs/rom-patching.md))
 - 🔮 Know what ROMs are missing for each console (with [DATs](docs/dats.md))
 
 ## How do I run `igir`?
@@ -170,15 +170,14 @@ Each manager has its own pros, but many have the same drawbacks or limitations:
 - Output report formats that are difficult to parse or filter
 - Limited archive extraction support
 - Limited folder management options
-- No ROM header support
-- No ROM header removal functionality
+- No ROM header detection & removal support
 - No ROM patching functionality
 - Limited parent/clone, region, language, version, and ROM type filtering
 - No ability to prioritize parent/clones when creating a 1G1R set
 
 ## Additional documentation
 
-See the [docs](/docs) page for more in-depth information!
+See the [docs](/docs) page for in-depth information on multiple topics!
 
 ## Feature requests, bug reports, and contributing
 

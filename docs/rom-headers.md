@@ -52,4 +52,4 @@ igir [commands..] --dat <dats> --input <input> --remove-headers
 
 Some DAT groups such as No-Intro publish "headered" and "headerless" DATs for the same console, such as NES. `igir` will treat these DATs differently, automatically removing headers (if present) for "headerless" DATs, and leaving the header intact for "headered" DATs (regardless of CLI parameters).
 
-As explained above, you almost always want the "headered" version. It's only in very specific circumstances that you would want the "headerless" version.
+As explained above, you almost always want the "headered" version. It's only in very specific circumstances that you might need the "headerless" version.
