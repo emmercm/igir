@@ -44,7 +44,7 @@ Here is the full `igir --help` message which shows all available options and a n
   | $$  | $$ __\$$  | $$  | $$__| $$
   | $$  | $$|    \  | $$  | $$    $$   ROM collection manager
   | $$  | $$ \$$$$  | $$  | $$$$$$$\
- _| $$_ | $$__| $$ _| $$_ | $$  | $$   v0.5.0
+ _| $$_ | $$__| $$ _| $$_ | $$  | $$   v0.6.0
 |   $$ \ \$$    $$|   $$ \| $$  | $$
  \$$$$$$  \$$$$$$  \$$$$$$ \$$   \$$
 
@@ -57,22 +57,23 @@ Commands:
   igir zip     Create .zip archives when copying or moving ROMs
   igir test    Test ROMs for accuracy after writing them to the output directory
   igir clean   Recycle unknown files in the output directory
-  igir report  Generate a CSV report on the known ROM files found in the input directories
+  igir report  Generate a CSV report on the known ROM files found in the input directories (requi
+               res --dat)
 
 Path options (inputs support globbing):
   -d, --dat            Path(s) to DAT files or archives                                   [array]
-  -i, --input          Path(s) to ROM files or archives, these files will not be modified
-                                                                               [array] [required]
-  -I, --input-exclude  Path(s) to ROM files to exclude                                    [array]
+  -i, --input          Path(s) to ROM files or archives                        [array] [required]
+  -I, --input-exclude  Path(s) to ROM files or archives to exclude                        [array]
   -p, --patch          Path(s) to ROM patch files or archives (supported: .bps, .ips, .ppf, .ups)
                                                                                           [array]
-  -o, --output         Path to the ROM output directory                                  [string]
+  -o, --output         Path to the ROM output directory (supports replaceable symbols, see below)
+                                                                                         [string]
 
 Input options:
       --header  Glob pattern of files to force header processing for                     [string]
 
 Output options:
-      --dir-mirror      Use the input subdirectory structure for output subdirectories  [boolean]
+      --dir-mirror      Use the input subdirectory structure for the output directory   [boolean]
   -D, --dir-dat-name    Use the DAT name as the output subdirectory                     [boolean]
       --dir-letter      Append the first letter of the ROM name as an output subdirectory
                                                                                         [boolean]
@@ -80,6 +81,7 @@ Output options:
   -H, --remove-headers  Remove known headers from ROMs, optionally limited to a list of comma-sep
                         arated file extensions (supported: .a78, .fds, .lnx, .nes, .smc) [string]
   -O, --overwrite       Overwrite any ROMs in the output directory                      [boolean]
+  -C, --clean-exclude   Path(s) to files to exclude from cleaning                         [array]
 
 Filtering options:
   -L, --language-filter  List of comma-separated languages to limit to (supported: DA, DE, EL, EN
@@ -124,10 +126,24 @@ Help options:
   -v, --verbose  Enable verbose logging, can specify up to three times (-vvv)             [count]
   -h, --help     Show help                                                              [boolean]
 
-Examples:
-  Produce a 1G1R set per console, preferring English ROMs from USA>EUR>JPN:
-    igir copy --dat *.dat --input **/*.zip --output 1G1R/ --dir-dat-name --single --prefer-lang
-  uage EN --prefer-region USA,EUR,JPN
+-------------------------------------------------------------------------------------------------
+
+Advanced usage:
+
+  Tokens that are replaced when determining the output (--output) path of a ROM:
+    {datName}             The name of the DAT that contains the ROM (e.g. "Nintendo - Game Boy")
+    {datReleaseRegion}    The region of the ROM release (e.g. "USA"), each ROM can have multiple
+    {datReleaseLanguage}  The language of the ROM release (e.g. "En"), each ROM can have multiple
+
+    {inputDirname}   The input ROM's dirname
+    {outputBasename}  Equivalent to "{outputName}.{outputExt}"
+    {outputName}      The output ROM's filename without extension
+    {outputExt}       The output ROM's extension
+
+    {pocket}  The ROM's core-specific /Assets/ folder for the Analogue Pocket (e.g. "gb")
+    {mister}  The ROM's core-specific /games/ folder for the MiSTer FPGA (e.g. "Gameboy")
+
+Example use cases:
 
   Merge new ROMs into an existing ROM collection and generate a report:
     igir copy report --dat *.dat --input **/*.zip --input ROMs/ --output ROMs/
@@ -135,18 +151,18 @@ Examples:
   Organize and zip an existing ROM collection:
     igir move zip --dat *.dat --input ROMs/ --output ROMs/
 
+  Produce a 1G1R set per console, preferring English ROMs from USA>EUR>JPN:
+    igir copy --dat *.dat --input **/*.zip --output 1G1R/ --dir-dat-name --single --prefer-langua
+    ge EN --prefer-region USA,EUR,JPN
+
   Collate all BIOS files into one directory:
     igir copy --dat *.dat --input **/*.zip --output BIOS/ --only-bios
-
-  Copy ROMs to a flash cart and test them:
-    igir copy test --dat *.dat --input ROMs/ --output /media/SDCard/ROMs/ --dir-dat-name --dir-
-  letter
 
   Create patched copies of ROMs in an existing collection:
     igir copy --input ROMs/ --patch Patches/ --output ROMs/
 
-  Make a copy of SNES ROMs without the SMC header that isn't supported by some emulators:
-    igir copy --input **/*.smc --output Headerless/ --dir-mirror --remove-headers .smc
+  Copy ROMs to your Analogue Pocket and test them:
+    igir copy test --dat *.dat --input ROMs/ --output /Assets/{pocket}/common/ --dir-letter
 ```
 
 See the [advanced examples](docs/advanced-examples.md) page for even more examples.
