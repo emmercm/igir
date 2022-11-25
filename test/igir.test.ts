@@ -67,6 +67,7 @@ describe('with explicit dats', () => {
       [path.join('One', 'Lorem Ipsum.rom'), '70856527'],
       [path.join('One', 'One Three', 'One.rom'), 'f817a89f'],
       [path.join('One', 'One Three', 'Three.rom'), 'ff46c5d8'],
+      [path.join('Patchable', '0F09A40.rom'), '2f943e86'],
       [path.join('Patchable', 'Before.rom'), '0361b321'],
       [path.join('Patchable', 'Best.rom'), '1e3d78cf'],
       [path.join('Patchable', 'C01173E.rom'), 'dfaebe28'],
@@ -85,6 +86,7 @@ describe('with explicit dats', () => {
       [`${path.join('One', 'Lorem Ipsum.zip')}|Lorem Ipsum.rom`, '70856527'],
       [`${path.join('One', 'One Three.zip')}|One.rom`, 'f817a89f'],
       [`${path.join('One', 'One Three.zip')}|Three.rom`, 'ff46c5d8'],
+      [`${path.join('Patchable', '0F09A40.zip')}|0F09A40.rom`, '2f943e86'],
       [`${path.join('Patchable', 'Before.zip')}|Before.rom`, '0361b321'],
       [`${path.join('Patchable', 'Best.zip')}|Best.rom`, '1e3d78cf'],
       [`${path.join('Patchable', 'C01173E.zip')}|C01173E.rom`, 'dfaebe28'],
@@ -103,6 +105,7 @@ describe('with explicit dats', () => {
       [path.join('One', 'Lorem Ipsum.rom'), '70856527'],
       [path.join('One', 'One Three', 'One.rom'), 'f817a89f'],
       [path.join('One', 'One Three', 'Three.rom'), 'ff46c5d8'],
+      [path.join('Patchable', '0F09A40.rom'), '2f943e86'],
       [path.join('Patchable', 'Before.rom'), '0361b321'],
       [path.join('Patchable', 'Best.rom'), '1e3d78cf'],
       [path.join('Patchable', 'C01173E.rom'), 'dfaebe28'],
@@ -122,6 +125,8 @@ describe('with explicit dats', () => {
       [path.join('One', 'Lorem Ipsum.rom'), '70856527'],
       [path.join('One', 'One Three', 'One.rom'), 'f817a89f'],
       [path.join('One', 'One Three', 'Three.rom'), 'ff46c5d8'],
+      [path.join('Patchable', '0F09A40.rom'), '2f943e86'],
+      [path.join('Patchable', '4FE952A.rom'), '1fb4f81f'],
       [path.join('Patchable', '949F2B7.rom'), '95284ab4'],
       [path.join('Patchable', 'After.rom'), '4c8e44d4'],
       [path.join('Patchable', 'Before.rom'), '0361b321'],
@@ -153,6 +158,7 @@ describe('with inferred dats', () => {
     await expectEndToEnd({
       commands: ['copy', 'test'],
     }, [
+      ['0F09A40.rom', '2f943e86'],
       ['allpads.nes', '9180a163'],
       ['before.rom', '0361b321'],
       ['best.rom', '1e3d78cf'],
@@ -182,6 +188,7 @@ describe('with inferred dats', () => {
     await expectEndToEnd({
       commands: ['copy', 'zip', 'test'],
     }, [
+      ['0F09A40.zip|0F09A40.rom', '2f943e86'],
       ['allpads.zip|allpads.nes', '9180a163'],
       ['before.zip|before.rom', '0361b321'],
       ['best.zip|best.rom', '1e3d78cf'],

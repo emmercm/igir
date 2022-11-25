@@ -15,22 +15,31 @@ async function writeTemp(fileName: string, contents: string | Buffer): Promise<F
 
 describe('constructor', () => {
   test.each([
-    Buffer.from(''),
-    Buffer.from('  '),
-    Buffer.from('foobar'),
-  ])('should throw on bad patch: %s', async (patchContents) => {
-    const patchFile = await writeTemp('patch.bps', patchContents);
-    await expect(VcdiffPatch.patchFrom(patchFile)).rejects.toThrow(/couldn't parse/i);
+    // Non-existent
+    'foo.xdelta',
+    'fizz/buzz.xdelta',
+    // Invalid
+    'ABCDEFGH Blazgo.xdelta',
+    'ABCD12345 Bangarang.xdelta',
+    'Bepzinky 1234567.xdelta',
+  ])('should throw if no CRC found: %s', async (filePath) => {
+    const file = await File.fileOf(filePath, 0, '00000000');
+    expect(() => VcdiffPatch.patchFrom(file)).toThrow(/couldn't parse/i);
   });
 
   test.each([
-    [Buffer.from('55505331848480040e1d00a865327ee9b3a2041d35304d', 'hex'), '7e3265a8', '04a2b3e9'], // foo\n -> bar\n
-    [Buffer.from('55505331868680051f01100036133a6ac346dd7c01770b14', 'hex'), '6a3a1336', '7cdd46c3'], // lorem\n -> ipsum\n
-  ])('should find the CRC in the patch: %s', async (patchContents, expectedCrcBefore, expectedCrcAfter) => {
-    const patchFile = await writeTemp('patch.bps', patchContents);
-    const patch = VcdiffPatch.patchFrom(patchFile);
-    expect(patch.getCrcBefore()).toEqual(expectedCrcBefore);
-    expect(patch.getCrcAfter()).toEqual(expectedCrcAfter);
+    // Beginning
+    ['ABCD1234-Foo.xdelta', 'abcd1234'],
+    ['Fizz/bcde2345_Buzz.xdelta', 'bcde2345'],
+    ['One/Two/cdef3456 Three.xdelta', 'cdef3456'],
+    // End
+    ['Lorem+9876FEDC.xdelta', '9876fedc'],
+    ['Ipsum#8765edcb.xdelta', '8765edcb'],
+    ['Dolor 7654dcba.xdelta', '7654dcba'],
+  ])('should find the CRC in the filename: %s', async (filePath, expectedCrc) => {
+    const file = await File.fileOf(filePath, 0, '00000000');
+    const patch = VcdiffPatch.patchFrom(file);
+    expect(patch.getCrcBefore()).toEqual(expectedCrc);
   });
 });
 

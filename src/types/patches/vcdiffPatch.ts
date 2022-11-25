@@ -246,7 +246,7 @@ export default class VcdiffPatch extends Patch {
       const result = await file.extractToFile(async (sourceFilePath) => {
         const targetFilePath = fsPoly.mktempSync(path.join(
           Constants.GLOBAL_TEMP_DIR,
-          `${path.basename(sourceFilePath)}.ups`,
+          `${path.basename(sourceFilePath)}.vcdiff`,
         ));
         await fsPromises.copyFile(sourceFilePath, targetFilePath);
         const targetFile = await FilePoly.fileFrom(targetFilePath, 'r+');
