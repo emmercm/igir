@@ -59,11 +59,11 @@ export default abstract class Scanner extends Module {
     try {
       const files = await FileFactory.filesFrom(filePath);
       if (!files.length) {
-        await this.progressBar.logWarn(`Found no files in path: ${filePath}`);
+        await this.progressBar.logWarn(`${filePath}: Found no files in path`);
       }
       return files;
     } catch (e) {
-      await this.progressBar.logError(`Failed to parse file ${filePath} : ${e}`);
+      await this.progressBar.logError(`${filePath}: Failed to parse file : ${e}`);
       return [];
     }
   }

@@ -101,7 +101,7 @@ export default class DATStatus {
 
         return `${color(found.length.toLocaleString())}/${all.length.toLocaleString()} ${type}`;
       })
-      .join(', ')} found`;
+      .join(', ')} ${options.shouldWrite() ? 'written' : 'found'}`;
   }
 
   async toCSV(options: Options): Promise<string> {

@@ -74,7 +74,7 @@ export default class ArgumentsParser {
       .command('clean', 'Recycle unknown files in the output directory', (yargsSubObj) => {
         addCommands(yargsSubObj);
       })
-      .command('report', 'Generate a CSV report on the known ROM files found in the input directories', (yargsSubObj) => {
+      .command('report', 'Generate a CSV report on the known ROM files found in the input directories (requires --dat)', (yargsSubObj) => {
         addCommands(yargsSubObj);
       });
 
