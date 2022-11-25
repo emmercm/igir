@@ -81,20 +81,15 @@ export default class DAT {
   getNameShort(): string {
     return this.getName()
       // Prefixes
+      .replace('FinalBurn Neo', '')
       .replace('Non-Redump', '')
       .replace('Source Code', '')
       .replace('Unofficial', '')
       // Suffixes
       .replace('Datfile', '')
-      .replace('(CDN)', '')
+      .replace('Games', '')
       .replace('(Deprecated)', '')
-      .replace('(Digital)', '')
-      .replace('(Download Play)', '')
-      .replace('(Misc)', '')
       .replace(/\(Parent-Clone\)/g, '')
-      .replace('(PSN)', '')
-      .replace('(Split DLC)', '')
-      .replace('(WAD)', '')
       .replace('(WIP)', '')
       // Cleanup
       .replace(/^[ -]+/, '')

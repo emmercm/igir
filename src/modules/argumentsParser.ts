@@ -74,7 +74,7 @@ export default class ArgumentsParser {
       .command('clean', 'Recycle unknown files in the output directory', (yargsSubObj) => {
         addCommands(yargsSubObj);
       })
-      .command('report', 'Generate a CSV report on the known ROM files found in the input directories', (yargsSubObj) => {
+      .command('report', 'Generate a CSV report on the known ROM files found in the input directories (requires --dat)', (yargsSubObj) => {
         addCommands(yargsSubObj);
       });
 
@@ -82,6 +82,7 @@ export default class ArgumentsParser {
       .parserConfiguration({
         'boolean-negation': false,
       })
+      .locale('en')
       .scriptName(Constants.COMMAND_NAME)
       .usage('Usage: $0 [commands..] [options]');
 
@@ -102,7 +103,7 @@ export default class ArgumentsParser {
         alias: 'i',
         // TODO(cemmer): add a warning when input and output directories are the same, but also
         //  have a "yes" flag
-        description: 'Path(s) to ROM files or archives, these files will not be modified',
+        description: 'Path(s) to ROM files or archives',
         demandOption: true,
         type: 'array',
         requiresArg: true,
@@ -110,7 +111,7 @@ export default class ArgumentsParser {
       .option('input-exclude', {
         group: groupPaths,
         alias: 'I',
-        description: 'Path(s) to ROM files to exclude',
+        description: 'Path(s) to ROM files or archives to exclude',
         type: 'array',
         requiresArg: true,
       })
@@ -124,7 +125,7 @@ export default class ArgumentsParser {
       .option('output', {
         group: groupPaths,
         alias: 'o',
-        description: 'Path to the ROM output directory',
+        description: 'Path to the ROM output directory (supports replaceable symbols, see below)',
         demandOption: false, // use the .check()
         type: 'string',
         coerce: ArgumentsParser.getLastValue, // don't allow string[] values
@@ -158,7 +159,7 @@ export default class ArgumentsParser {
 
       .option('dir-mirror', {
         group: groupOutput,
-        description: 'Use the input subdirectory structure for output subdirectories',
+        description: 'Use the input subdirectory structure for the output directory',
         type: 'boolean',
       })
       .option('dir-dat-name', {
@@ -201,6 +202,13 @@ export default class ArgumentsParser {
         alias: 'O',
         description: 'Overwrite any ROMs in the output directory',
         type: 'boolean',
+      })
+      .option('clean-exclude', {
+        group: groupOutput,
+        alias: 'C',
+        description: 'Path(s) to files to exclude from cleaning',
+        type: 'array',
+        requiresArg: true,
       })
 
       .option('language-filter', {
@@ -360,22 +368,44 @@ export default class ArgumentsParser {
 
       .wrap(ArgumentsParser.getHelpWidth(argv))
       .version(false)
-      .example([
-        ['Produce a 1G1R set per console, preferring English ROMs from USA>EUR>JPN:'],
-        ['  $0 copy --dat *.dat --input **/*.zip --output 1G1R/ --dir-dat-name --single --prefer-language EN --prefer-region USA,EUR,JPN'],
-        ['\nMerge new ROMs into an existing ROM collection and generate a report:'],
-        ['  $0 copy report --dat *.dat --input **/*.zip --input ROMs/ --output ROMs/'],
-        ['\nOrganize and zip an existing ROM collection:'],
-        ['  $0 move zip --dat *.dat --input ROMs/ --output ROMs/'],
-        ['\nCollate all BIOS files into one directory:'],
-        ['  $0 copy --dat *.dat --input **/*.zip --output BIOS/ --only-bios'],
-        ['\nCopy ROMs to a flash cart and test them:'],
-        ['  $0 copy test --dat *.dat --input ROMs/ --output /media/SDCard/ROMs/ --dir-dat-name --dir-letter'],
-        ['\nCreate patched copies of ROMs in an existing collection:'],
-        ['  $0 copy --input ROMs/ --patch Patches/ --output ROMs/'],
-        ['\nMake a copy of SNES ROMs without the SMC header that isn\'t supported by some emulators:'],
-        ['  $0 copy --input **/*.smc --output Headerless/ --dir-mirror --remove-headers .smc'],
-      ])
+
+      // NOTE(cemmer): the .epilogue() renders after .example() but I want them switched
+      .epilogue(`${'-'.repeat(ArgumentsParser.getHelpWidth(argv))}
+
+Advanced usage:
+
+  Tokens that are replaced when determining the output (--output) path of a ROM:
+    {datName}             The name of the DAT that contains the ROM (e.g. "Nintendo - Game Boy")
+    {datReleaseRegion}    The region of the ROM release (e.g. "USA"), each ROM can have multiple
+    {datReleaseLanguage}  The language of the ROM release (e.g. "En"), each ROM can have multiple
+
+    {inputDirname}   The input ROM's dirname
+    {outputBasename}  Equivalent to "{outputName}.{outputExt}"
+    {outputName}      The output ROM's filename without extension
+    {outputExt}       The output ROM's extension
+
+    {pocket}  The ROM's core-specific /Assets/ folder for the Analogue Pocket (e.g. "gb")
+    {mister}  The ROM's core-specific /games/ folder for the MiSTer FPGA (e.g. "Gameboy")
+
+Example use cases:
+
+  Merge new ROMs into an existing ROM collection and generate a report:
+    $0 copy report --dat *.dat --input **/*.zip --input ROMs/ --output ROMs/
+
+  Organize and zip an existing ROM collection:
+    $0 move zip --dat *.dat --input ROMs/ --output ROMs/
+
+  Produce a 1G1R set per console, preferring English ROMs from USA>EUR>JPN:
+    $0 copy --dat *.dat --input **/*.zip --output 1G1R/ --dir-dat-name --single --prefer-language EN --prefer-region USA,EUR,JPN
+
+  Collate all BIOS files into one directory:
+    $0 copy --dat *.dat --input **/*.zip --output BIOS/ --only-bios
+
+  Create patched copies of ROMs in an existing collection:
+    $0 copy --input ROMs/ --patch Patches/ --output ROMs/
+
+  Copy ROMs to your Analogue Pocket and test them:
+    $0 copy test --dat *.dat --input ROMs/ --output /Assets/{pocket}/common/ --dir-letter`)
 
       // Colorize help output
       .option('help', {

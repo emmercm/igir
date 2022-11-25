@@ -42,6 +42,7 @@ export default class PatchCandidateGenerator extends Module {
               crcToPatches,
             )))).flatMap((rcs) => rcs);
 
+          // TODO(cemmer): decide what to do with patched ROMs in 1G1R mode
           return [parent, [...releaseCandidates, ...patchedReleaseCandidates]];
         })) as [Parent, ReleaseCandidate[]][],
     );

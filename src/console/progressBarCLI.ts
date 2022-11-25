@@ -21,6 +21,8 @@ export default class ProgressBarCLI extends ProgressBar {
 
   private readonly singleBarFormatted: SingleBarFormatted;
 
+  private waitingMessageTimeout?: NodeJS.Timeout;
+
   private constructor(logger: Logger, singleBarFormatted: SingleBarFormatted) {
     super();
     this.logger = logger;
@@ -110,12 +112,14 @@ export default class ProgressBarCLI extends ProgressBar {
    *  user know that there is still something processing.
    */
   setWaitingMessage(waitingMessage: string, timeout = 10_000): NodeJS.Timeout {
-    return setTimeout(async () => {
+    clearTimeout(this.waitingMessageTimeout);
+    this.waitingMessageTimeout = setTimeout(async () => {
       this.singleBarFormatted.getSingleBar().update({
         waitingMessage,
       } as ProgressBarPayload);
       await ProgressBarCLI.render(true);
     }, timeout);
+    return this.waitingMessageTimeout;
   }
 
   async increment(): Promise<void> {
