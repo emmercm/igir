@@ -96,7 +96,7 @@ export default abstract class Patch {
     return num;
   }
 
-  protected static readVcdiffUintFromBuffer(buffer: Buffer, offset = 0): [number, number] {
+  static readVcdiffUintFromBuffer(buffer: Buffer, offset = 0): [number, number] {
     let num = 0;
 
     let lastOffset = offset;

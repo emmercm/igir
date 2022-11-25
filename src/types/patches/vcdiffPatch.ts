@@ -1,4 +1,10 @@
+// eslint-disable-next-line max-classes-per-file
+import { promises as fsPromises } from 'fs';
+import path from 'path';
+
+import Constants from '../../constants.js';
 import FilePoly from '../../polyfill/filePoly.js';
+import fsPoly from '../../polyfill/fsPoly.js';
 import File from '../files/file.js';
 import Patch from './patch.js';
 
@@ -26,6 +32,11 @@ enum VcdiffDeltaIndicator {
   ADDRCOMP = 0x04,
 }
 
+enum VcdiffCopyAddressMode {
+  SELF = 0,
+  HERE = 1,
+}
+
 enum VcdiffInstruction {
   NOOP = 0,
   ADD,
@@ -37,6 +48,82 @@ interface VcdiffDeltaInstruction {
   type: VcdiffInstruction;
   size: number;
   mode: number;
+}
+
+class VcdiffCache {
+  private readonly sNear: number;
+
+  private readonly near: number[];
+
+  private nextSlot = 0;
+
+  private readonly sSame: number;
+
+  private readonly same: number[];
+
+  constructor(sNear = 4, sSame = 3) {
+    this.sNear = sNear;
+    this.near = new Array(sNear);
+    this.sSame = sSame;
+    this.same = new Array(sSame * 256);
+  }
+
+  reset(): void {
+    this.near.fill(0);
+    this.same.fill(0);
+    this.nextSlot = 0;
+  }
+
+  private update(addr: number): void {
+    if (this.sNear > 0) {
+      this.near[this.nextSlot] = addr;
+      this.nextSlot = (this.nextSlot + 1) % this.sNear;
+    }
+    if (this.sSame > 0) {
+      this.same[addr % (this.sSame * 256)] = addr;
+    }
+  }
+
+  decode(
+    copyAddressesData: Buffer,
+    copyAddressesOffset: number,
+    here: number,
+    mode: number,
+  ): [number, number] {
+    let addr: number;
+    let readValue: number;
+    let copyAddressesOffsetAfter = copyAddressesOffset;
+
+    if (mode === VcdiffCopyAddressMode.SELF) {
+      [readValue, copyAddressesOffsetAfter] = Patch.readVcdiffUintFromBuffer(
+        copyAddressesData,
+        copyAddressesOffset,
+      );
+      addr = readValue;
+    } else if (mode === VcdiffCopyAddressMode.HERE) {
+      [readValue, copyAddressesOffsetAfter] = Patch.readVcdiffUintFromBuffer(
+        copyAddressesData,
+        copyAddressesOffset,
+      );
+      addr = here - readValue;
+    } else if (mode >= 2 && mode <= this.sNear + 1) {
+      const m = mode - 2;
+      [readValue, copyAddressesOffsetAfter] = Patch.readVcdiffUintFromBuffer(
+        copyAddressesData,
+        copyAddressesOffset,
+      );
+      addr = this.near[m] + readValue;
+    } else {
+      const m = mode - (2 + this.sNear);
+      readValue = copyAddressesData.readUint8(copyAddressesOffset);
+      copyAddressesOffsetAfter += 1;
+      addr = this.same[m * 256 + readValue];
+    }
+
+    this.update(addr);
+
+    return [addr, copyAddressesOffsetAfter];
+  }
 }
 
 /**
@@ -117,87 +204,100 @@ export default class VcdiffPatch extends Patch {
   async apply<T>(file: File, callback: (tempFile: string) => (Promise<T> | T)): Promise<T> {
     /* eslint-disable no-bitwise */
     return this.getFile().extractToFile(async (patchFilePath) => {
-      const fp = await FilePoly.fileFrom(patchFilePath, 'r');
+      const patchFile = await FilePoly.fileFrom(patchFilePath, 'r');
 
-      const header = await fp.readNext(3);
+      const header = await patchFile.readNext(3);
       if (!header.equals(VcdiffPatch.VCDIFF_HEADER)) {
-        await fp.close();
+        await patchFile.close();
         throw new Error(`Vcdiff patch header is invalid: ${this.getFile().toString()}`);
       }
-      await fp.readNext(1); // version
+      await patchFile.readNext(1); // version
 
-      const hdrIndicator = (await fp.readNext(1)).readUint8();
+      const hdrIndicator = (await patchFile.readNext(1)).readUint8();
       let secondaryDecompressorId = 0;
       if (hdrIndicator & VcdiffHdrIndicator.DECOMPRESS) {
-        secondaryDecompressorId = (await fp.readNext(1)).readUint8();
+        secondaryDecompressorId = (await patchFile.readNext(1)).readUint8();
         if (secondaryDecompressorId) {
           /**
-           * TODO(cemmer): notes for later on LZMA (the default for the xdelta32 tool):
+           * TODO(cemmer): notes for later on LZMA (the default for the xdelta3 tool):
            *  - There appears to be a first byte (or more?), and it might be the length of the
            *    encoded data? Maybe that number is encoded like other numbers are?
            *  - The XZ data encoded appears to be non-standard, it doesn't have a terminating set of
            *    bytes "59 5A", only the starting bytes "FD 37 7A 58 5A 00" (after the above number)
            */
-          // await fp.close();
-          // throw new Error(`Unsupported Vcdiff secondary decompressor ${VcdiffSecondaryCompression[secondaryDecompressorId]}: ${this.getFile().toString()}`);
+          await patchFile.close();
+          throw new Error(`Unsupported Vcdiff secondary decompressor ${VcdiffSecondaryCompression[secondaryDecompressorId]}: ${this.getFile().toString()}`);
         }
       }
       if (hdrIndicator & VcdiffHdrIndicator.CODETABLE) {
-        const codeTableLength = await Patch.readVcdiffUintFromFile(fp);
+        const codeTableLength = await Patch.readVcdiffUintFromFile(patchFile);
         if (codeTableLength) {
-          await fp.close();
+          await patchFile.close();
           throw new Error(`Can't parse Vcdiff application-defined code table: ${this.getFile().toString()}`);
         }
       }
       if (hdrIndicator & VcdiffHdrIndicator.APPHEADER) {
-        const appHeaderLength = await Patch.readVcdiffUintFromFile(fp);
-        await fp.readNext(appHeaderLength);
+        const appHeaderLength = await Patch.readVcdiffUintFromFile(patchFile);
+        await patchFile.readNext(appHeaderLength);
       }
 
-      const result = await file.extractToTempFile(async (tempFile) => {
-        const targetFile = await FilePoly.fileFrom(tempFile, 'r+');
+      const copyCache = new VcdiffCache();
+
+      const result = await file.extractToFile(async (sourceFilePath) => {
+        const targetFilePath = fsPoly.mktempSync(path.join(
+          Constants.GLOBAL_TEMP_DIR,
+          `${path.basename(sourceFilePath)}.ups`,
+        ));
+        await fsPromises.copyFile(sourceFilePath, targetFilePath);
+        const targetFile = await FilePoly.fileFrom(targetFilePath, 'r+');
+
+        const sourceFile = await FilePoly.fileFrom(sourceFilePath, 'r');
+
         let targetWindowPosition = 0;
 
         /* eslint-disable no-await-in-loop */
-        while (!fp.isEOF()) {
-          const winIndicator = (await fp.readNext(1)).readUint8();
+        while (!patchFile.isEOF()) {
+          const winIndicator = (await patchFile.readNext(1)).readUint8();
           let sourceSegmentSize = 0;
           let sourceSegmentPosition = 0;
           if (winIndicator & (VcdiffWinIndicator.SOURCE | VcdiffWinIndicator.TARGET)) {
-            sourceSegmentSize = await Patch.readVcdiffUintFromFile(fp);
-            sourceSegmentPosition = await Patch.readVcdiffUintFromFile(fp);
+            sourceSegmentSize = await Patch.readVcdiffUintFromFile(patchFile);
+            sourceSegmentPosition = await Patch.readVcdiffUintFromFile(patchFile);
           }
 
-          const deltaEncodingLength = await Patch.readVcdiffUintFromFile(fp);
-          const deltaEncodingTargetWindowSize = await Patch.readVcdiffUintFromFile(fp);
-          const deltaEncodingIndicator = (await fp.readNext(1)).readUint8();
+          await Patch.readVcdiffUintFromFile(patchFile); // delta encoding length
+          const deltaEncodingTargetWindowSize = await Patch.readVcdiffUintFromFile(patchFile);
+          const deltaEncodingIndicator = (await patchFile.readNext(1)).readUint8();
 
-          const addsAndRunsDataLength = await Patch.readVcdiffUintFromFile(fp);
-          const instructionsAndSizesLength = await Patch.readVcdiffUintFromFile(fp);
-          const copyAddressesLength = await Patch.readVcdiffUintFromFile(fp);
+          const addsAndRunsDataLength = await Patch.readVcdiffUintFromFile(patchFile);
+          const instructionsAndSizesLength = await Patch.readVcdiffUintFromFile(patchFile);
+          const copyAddressesLength = await Patch.readVcdiffUintFromFile(patchFile);
 
           if (winIndicator & VcdiffWinIndicator.ADLER32) {
-            (await fp.readNext(4)).readUInt32BE(); // TODO(cemmer): handle
+            (await patchFile.readNext(4)).readUInt32BE(); // TODO(cemmer): handle
           }
 
           let targetWindowOffset = 0;
 
           let addsAndRunsOffset = 0;
-          const addsAndRunsData = await fp.readNext(addsAndRunsDataLength);
+          const addsAndRunsData = await patchFile.readNext(addsAndRunsDataLength);
           if (deltaEncodingIndicator & VcdiffDeltaIndicator.DATACOMP) {
             // TODO(cemmer)
           }
 
           let instructionsAndSizeOffset = 0;
-          const instructionsAndSizesData = await fp.readNext(instructionsAndSizesLength);
+          const instructionsAndSizesData = await patchFile.readNext(instructionsAndSizesLength);
           if (deltaEncodingIndicator & VcdiffDeltaIndicator.INSTCOMP) {
             // TODO(cemmer)
           }
 
-          const copyAddressesData = await fp.readNext(copyAddressesLength);
+          let copyAddressesOffset = 0;
+          const copyAddressesData = await patchFile.readNext(copyAddressesLength);
           if (deltaEncodingIndicator & VcdiffDeltaIndicator.ADDRCOMP) {
             // TODO(cemmer)
           }
+
+          copyCache.reset();
 
           while (instructionsAndSizeOffset < instructionsAndSizesData.length) {
             const instructionCodeIdx = instructionsAndSizesData
@@ -207,13 +307,16 @@ export default class VcdiffPatch extends Patch {
             for (let i = 0; i <= 1; i += 1) {
               const instruction = VcdiffPatch.VCDIFF_DEFAULT_CODE_TABLE[instructionCodeIdx][i];
               if (instruction.type === VcdiffInstruction.NOOP) {
+                // eslint-disable-next-line no-continue
                 continue;
               }
 
               let { size } = instruction;
               if (!size) {
-                [size, instructionsAndSizeOffset] = Patch
-                  .readVcdiffUintFromBuffer(instructionsAndSizesData, instructionsAndSizeOffset);
+                [size, instructionsAndSizeOffset] = Patch.readVcdiffUintFromBuffer(
+                  instructionsAndSizesData,
+                  instructionsAndSizeOffset,
+                );
               }
 
               if (instruction.type === VcdiffInstruction.ADD) {
@@ -235,7 +338,38 @@ export default class VcdiffPatch extends Patch {
                 await targetFile.writeAt(data, targetWindowPosition + targetWindowOffset);
                 targetWindowOffset += size;
               } else if (instruction.type === VcdiffInstruction.COPY) {
-                const i = 0;
+                let addr: number;
+                [addr, copyAddressesOffset] = copyCache.decode(
+                  copyAddressesData,
+                  copyAddressesOffset,
+                  targetWindowOffset,
+                  instruction.mode,
+                );
+
+                /**
+                 * NOTE(cemmer): this has to write byte-by-byte because it may read-after-write with
+                 *  the target file.
+                 */
+                for (let byteNum = 0; byteNum < size; byteNum += 1) {
+                  let byte: Buffer;
+                  if (addr < sourceSegmentSize) {
+                    if (winIndicator & VcdiffWinIndicator.SOURCE) {
+                      byte = await sourceFile.readAt(sourceSegmentPosition + addr + byteNum, 1);
+                    } else {
+                      byte = await targetFile.readAt(sourceSegmentPosition + addr + byteNum, 1);
+                    }
+                  } else {
+                    byte = await targetFile.readAt(
+                      targetWindowPosition + (addr - sourceSegmentSize) + byteNum,
+                      1,
+                    );
+                  }
+                  await targetFile.writeAt(
+                    byte,
+                    targetWindowPosition + targetWindowOffset + byteNum,
+                  );
+                }
+                targetWindowOffset += size;
               }
             }
           }
@@ -244,11 +378,14 @@ export default class VcdiffPatch extends Patch {
         }
 
         await targetFile.close();
+        await sourceFile.close();
 
-        return callback(tempFile);
+        const callbackResult = await callback(targetFilePath);
+        await fsPoly.rm(targetFilePath);
+        return callbackResult;
       });
 
-      await fp.close();
+      await patchFile.close();
 
       return result;
     });

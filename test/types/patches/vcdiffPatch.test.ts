@@ -37,15 +37,10 @@ describe('constructor', () => {
 describe('apply', () => {
   test.each([
     // Standard vcdiff with no secondary compression (xdelta3 -S -n -A ...)
-    // ['AAAAA', Buffer.from('d6c3c40000000d0a000502014142434441061504', 'hex'), 'ABCDAAAAAA'],
-    // ['AAAAAAAAAA', Buffer.from('d6c3c40000000d0a000502014142434441061504', 'hex'), 'ABCDAAAAAA'],
-    // ['AAAAAAAAAA', Buffer.from('d6c3c4000000100a000a01004142434445464748494a0b', 'hex'), 'ABCDEFGHIJ'],
-    // ['AAAAAAAAAAAAAAAAAAAA', Buffer.from('d6c3c40000001414000b0400414243444546414545454507000a05', 'hex'), 'ABCDEFAAAAAAAAAAEEEE'],
-    // Secondary compression
-    ['AAAAA', Buffer.from('d6c3c400050205422f2f412f04110a000502010e2f02914142434441061504', 'hex'), 'ABCDAAAAAA'],
-    // ['AAAAAAAAAA', Buffer.from('d6c3c400050205422f2f412f04110a000502010e2f02914142434441061504', 'hex'), 'ABCDAAAAAA'],
-    // ['AAAAAAAAAA', Buffer.from('d6c3c400050205422f2f412f04300a012601000ea602b80afd377a585a000000ff12d941020021010c0000008f98419c0100094142434445464748494a0b', 'hex'), 'ABCDEFGHIJ'],
-    // ['AAAAAAAAAAAAAAAAAAAA', Buffer.from('d6c3c400050205422f2f412f04341401270400368305340bfd377a585a000000ff12d941020021010c0000008f98419c01000a414243444546414545454507000a05', 'hex'), 'ABCDEFAAAAAAAAAAEEEE'],
+    ['AAAAA', Buffer.from('d6c3c40000000d0a000502014142434441061504', 'hex'), 'ABCDAAAAAA'],
+    ['AAAAAAAAAA', Buffer.from('d6c3c40000000d0a000502014142434441061504', 'hex'), 'ABCDAAAAAA'],
+    ['AAAAAAAAAA', Buffer.from('d6c3c4000000100a000a01004142434445464748494a0b', 'hex'), 'ABCDEFGHIJ'],
+    ['AAAAAAAAAAAAAAAAAAAA', Buffer.from('d6c3c40000001414000b0400414243444546414545454507000a05', 'hex'), 'ABCDEFAAAAAAAAAAEEEE'],
   ])('should apply the patch #%#: %s', async (baseContents, patchContents, expectedContents) => {
     const rom = await writeTemp('ROM', baseContents);
     const patchFile = await writeTemp('00000000 patch.xdelta', patchContents);
