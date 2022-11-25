@@ -8,7 +8,7 @@ Games and their ROMs are protected under copyrights, so patches are used in orde
 
 There are many, _many_ patch types that ROM hackers use to distribute their changes on the internet ([xkcd "Standards"](https://xkcd.com/927/)). Typically, a patch will only be distributed in one format, so gamers are entirely at the mercy of the ROM hacker's choice.
 
-Not all patch types are created equal. Here are some tables of some existing formats, whether `igir` supports them, and what they support.
+Not all patch types are created equal. Here are some tables of some existing formats, whether `igir` supports them, and what the patch supports.
 
 **Common patch types:**
 
@@ -38,15 +38,15 @@ Not all patch types are created equal. Here are some tables of some existing for
 | `.rup` (NINJA 2.0)  | ❌         | ❌ uses MD5              |                                                                                                                                       |
 | `.rxl`              | ❌         | ❓                       |                                                                                                                                       |
 
-If you have a choice in patch format, choose one that does contain CRC32 checksums in the patch file contents, otherwise see any notes above.
+If you have a choice in patch format, choose one that contains CRC32 checksums in the patch file contents.
 
 ## ROM checksums
 
 `igir` needs to be able to know what source ROM each patch file applies to, and it does this using CRC32 checksums.
 
-A few patch formats include the source ROM's CRC32 checksum in the patch's file contents. This is the most accurate and therefore the best way to get this information. `.bps` is a great example of an efficient and simple patch format that includes this information.
+A few patch formats include the source ROM's CRC32 checksum in the patch's file contents. This is the most accurate and therefore the best way to get source ROM information. `.bps` is a great example of an efficient and simple patch format that includes this information.
 
-Most patch formats do not include the source ROM's CRC32 checksum. `.ips` patches are some of the most likely you will come across. For those patches, you need to put the source ROM's CRC32 checksum in the patch's filename, either at the beginning or end, like this:
+Most patch formats _do not_ include the source ROM's CRC32 checksum. `.ips` patches are some of the most likely you will come across. For those patches, you need to put the source ROM's CRC32 checksum in the patch's filename, either at the beginning or end, like this:
 
 ```text
 Source ROM filename:
