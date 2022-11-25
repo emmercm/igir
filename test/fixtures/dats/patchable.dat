@@ -27,4 +27,11 @@
     <rom name="KDULVQN.rom" size="1025" crc="b1c303e4" md5="36109a5d2f9041b6ec00d7aea63379f3" sha1="6bc1e23ffaf5fafaf03fb10732b6be3b567b1417" status="verified"/>
     <!-- After: size="1025" crc="e02c6dbb" -->
   </game>
+
+  <!-- vcdiff -->
+  <game name="0F09A40">
+    <description>0F09A40</description>
+    <rom name="0F09A40.rom" size="1025" crc="2f943e86" md5="02784c56583f4d82d11aec4c57f2859c" sha1="7b5b3998062b8338324b5f69ffcdcc22087ccbd5" status="verified"/>
+    <!-- After: size="1025" crc="1fb4f81f" -->
+  </game>
 </datafile>
