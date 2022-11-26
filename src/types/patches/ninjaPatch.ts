@@ -74,7 +74,7 @@ export default class NinjaPatch extends Patch {
             }
 
             const fileNameLength = multiFile > 0
-              ? (await patchFile.readNext(multiFile)).readUintBE(0, multiFile)
+              ? (await patchFile.readNext(multiFile)).readUIntLE(0, multiFile)
               : 0;
             patchFile.skipNext(fileNameLength); // file name
             const fileType = (await patchFile.readNext(1)).readUint8();
@@ -84,10 +84,10 @@ export default class NinjaPatch extends Patch {
             }
             const sourceFileSizeLength = (await patchFile.readNext(1)).readUint8();
             const sourceFileSize = (await patchFile.readNext(sourceFileSizeLength))
-              .readUintBE(0, sourceFileSizeLength);
+              .readUIntLE(0, sourceFileSizeLength);
             const modifiedFileSizeLength = (await patchFile.readNext(1)).readUint8();
             const modifiedFileSize = (await patchFile.readNext(modifiedFileSizeLength))
-              .readUintBE(0, modifiedFileSizeLength);
+              .readUIntLE(0, modifiedFileSizeLength);
             patchFile.skipNext(16); // source MD5
             patchFile.skipNext(16); // modified MD5
 
@@ -95,7 +95,7 @@ export default class NinjaPatch extends Patch {
               patchFile.skipNext(1); // "M" or "A"
               const overflowSizeLength = (await patchFile.readNext(1)).readUint8();
               const overflowSize = overflowSizeLength > 0
-                ? (await patchFile.readNext(overflowSizeLength)).readUintBE(0, overflowSizeLength)
+                ? (await patchFile.readNext(overflowSizeLength)).readUIntLE(0, overflowSizeLength)
                 : 0;
               const overflow = overflowSize > 0
                 ? await patchFile.readNext(overflowSize)
@@ -110,18 +110,18 @@ export default class NinjaPatch extends Patch {
             }
           } else if (command === NinjaCommand.XOR) {
             const offsetLength = (await patchFile.readNext(1)).readUint8();
-            const offset = (await patchFile.readNext(offsetLength)).readUintBE(0, offsetLength);
+            const offset = (await patchFile.readNext(offsetLength)).readUIntLE(0, offsetLength);
             targetFile.seek(offset);
 
             const lengthLength = (await patchFile.readNext(1)).readUint8();
-            const length = (await patchFile.readNext(lengthLength)).readUintBE(0, lengthLength);
+            const length = (await patchFile.readNext(lengthLength)).readUIntLE(0, lengthLength);
             const sourceData = await targetFile.readNext(length);
 
             const xorData = await patchFile.readNext(length);
             const targetData = Buffer.allocUnsafe(length);
             /* eslint-disable no-bitwise */
             for (let i = 0; i < length; i += 1) {
-              targetData[i] = sourceData[i] ^ xorData[i];
+              targetData[i] = (i < sourceData.length ? sourceData[i] : 0x00) ^ xorData[i];
             }
             await targetFile.writeAt(targetData, offset);
           }
