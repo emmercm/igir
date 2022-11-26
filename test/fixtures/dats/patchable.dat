@@ -28,6 +28,13 @@
     <!-- After: size="26" crc="6ff9ef96" -->
   </game>
 
+  <!-- NINJA2 -->
+  <game name="612644F">
+    <description>612644F</description>
+    <rom name="612644F.rom" size="1025" crc="f7591b29" md5="92c62becd006bac8175304bb80dfb3aa" sha1="2bcd0216e1de4ee670ee4945d600beaf6acf8feb" status="verified"/>
+    <!-- After: size="1025" crc="922f5181" -->
+  </game>
+
   <!-- PPF -->
   <game name="C01173E">
     <description>C01173E</description>
