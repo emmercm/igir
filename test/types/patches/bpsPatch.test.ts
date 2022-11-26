@@ -40,7 +40,7 @@ describe('apply', () => {
     ['AAAAAAAAAA', Buffer.from('425053318a8a808d4142434494cfd08e47d0c41e6ef0540044', 'hex'), 'ABCDAAAAAA'],
     ['AAAAAAAAAA', Buffer.from('425053318a8a80a54142434445464748494acfd08e47056d1e3225e07029', 'hex'), 'ABCDEFGHIJ'],
     ['AAAAAAAAAAAAAAAAAAAA', Buffer.from('4250533194948095414243444546a48d45454545c518201d686456eb69a20342', 'hex'), 'ABCDEFAAAAAAAAAAEEEE'],
-  ])('should apply the patch: %s', async (baseContents, patchContents, expectedContents) => {
+  ])('should apply the patch #%#: %s', async (baseContents, patchContents, expectedContents) => {
     const rom = await writeTemp('ROM', baseContents);
     const patchFile = await writeTemp('patch.bps', patchContents);
     const patch = await BPSPatch.patchFrom(patchFile);
