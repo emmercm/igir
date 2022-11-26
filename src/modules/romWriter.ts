@@ -219,6 +219,7 @@ export default class ROMWriter extends Module {
       .filter((romWithFiles) => !(romWithFiles.getOutputFile() instanceof ArchiveEntry<Zip>))
       .map((romWithFiles) => [romWithFiles.getInputFile(), romWithFiles.getOutputFile()]);
     if (!inputToOutputEntries.length) {
+      // TODO(cemmer): test
       return;
     }
 

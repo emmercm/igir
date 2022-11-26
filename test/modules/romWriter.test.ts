@@ -199,6 +199,23 @@ it('should not do anything if the input and output files are the same', async ()
 });
 
 describe('zip', () => {
+  it('should not write if the output is the input', async () => {
+    await copyFixturesToTemp(async (inputTemp) => {
+      // Given
+      const options = new Options({ commands: ['copy', 'zip', 'test'] });
+      const inputZip = path.join(inputTemp, 'roms', 'zip');
+      const inputFilesBefore = await walkAndStat(inputZip);
+      expect(inputFilesBefore.length)
+        .toBeGreaterThan(0);
+
+      // When
+      await romWriter(options, inputTemp, 'zip/*', undefined, inputZip);
+
+      // Then the input files weren't touched
+      await expect(walkAndStat(inputZip)).resolves.toEqual(inputFilesBefore);
+    });
+  });
+
   it('should not write anything if the output exists and not overwriting', async () => {
     await copyFixturesToTemp(async (inputTemp, outputTemp) => {
       // Given
@@ -478,6 +495,23 @@ describe('zip', () => {
 });
 
 describe('raw', () => {
+  it('should not write if the output is the input', async () => {
+    await copyFixturesToTemp(async (inputTemp) => {
+      // Given
+      const options = new Options({ commands: ['copy', 'test'] });
+      const inputRaw = path.join(inputTemp, 'roms', 'raw');
+      const inputFilesBefore = await walkAndStat(inputRaw);
+      expect(inputFilesBefore.length)
+        .toBeGreaterThan(0);
+
+      // When
+      await romWriter(options, inputTemp, 'raw/*', undefined, inputRaw);
+
+      // Then the input files weren't touched
+      await expect(walkAndStat(inputRaw)).resolves.toEqual(inputFilesBefore);
+    });
+  });
+
   it('should not write anything if the output exists and not overwriting', async () => {
     await copyFixturesToTemp(async (inputTemp, outputTemp) => {
       // Given

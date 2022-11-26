@@ -18,7 +18,7 @@ export default class DAT {
 
   private readonly gameNamesToParents: Map<string, Parent> = new Map();
 
-  constructor(header: Header, games: Game[]) {
+  constructor(header: Header, games: Game | Game[]) {
     this.header = header;
     this.game = games;
     this.generateGameNamesToParents();
@@ -96,16 +96,6 @@ export default class DAT {
       .replace(/[ -]+$/, '')
       .replace(/  +/g, ' ')
       .trim();
-  }
-
-  getNameLong(): string {
-    let long = this.getName();
-    if (this.getHeader().getDate()) {
-      long += ` (${this.getHeader().getDate()})`;
-    } else if (this.getHeader().getVersion()) {
-      long += `(v${this.getHeader().getVersion()})`;
-    }
-    return long;
   }
 
   /**
