@@ -29,8 +29,8 @@ export default class BPSPatch extends Patch {
       const fp = await FilePoly.fileFrom(patchFile, 'r');
 
       fp.seek(4); // header
-      await Patch.readVariableLengthNumber(fp); // source size
-      targetSize = await Patch.readVariableLengthNumber(fp); // target size
+      await Patch.readUpsUint(fp); // source size
+      targetSize = await Patch.readUpsUint(fp); // target size
 
       fp.seek(fp.getSize() - 12);
       crcBefore = (await fp.readNext(4)).reverse().toString('hex');
@@ -56,9 +56,9 @@ export default class BPSPatch extends Patch {
         await patchFile.close();
         throw new Error(`BPS patch header is invalid: ${this.getFile().toString()}`);
       }
-      await Patch.readVariableLengthNumber(patchFile); // source size
-      await Patch.readVariableLengthNumber(patchFile); // target size
-      const metadataSize = await Patch.readVariableLengthNumber(patchFile);
+      await Patch.readUpsUint(patchFile); // source size
+      await Patch.readUpsUint(patchFile); // target size
+      const metadataSize = await Patch.readUpsUint(patchFile);
       if (metadataSize) {
         patchFile.skipNext(metadataSize);
       }
@@ -77,7 +77,7 @@ export default class BPSPatch extends Patch {
 
         /* eslint-disable no-await-in-loop, no-bitwise */
         while (patchFile.getPosition() < patchFile.getSize() - 12) {
-          const blockHeader = await Patch.readVariableLengthNumber(patchFile);
+          const blockHeader = await Patch.readUpsUint(patchFile);
           const action = blockHeader & 3;
           const length = (blockHeader >> 2) + 1;
 
@@ -87,12 +87,12 @@ export default class BPSPatch extends Patch {
             const data = await patchFile.readNext(length);
             await targetFile.write(data);
           } else if (action === BPSAction.SOURCE_COPY) {
-            const offset = await Patch.readVariableLengthNumber(patchFile);
+            const offset = await Patch.readUpsUint(patchFile);
             sourceRelativeOffset += (offset & 1 ? -1 : +1) * (offset >> 1);
             await targetFile.write(await sourceFile.readAt(sourceRelativeOffset, length));
             sourceRelativeOffset += length;
           } else {
-            const offset = await Patch.readVariableLengthNumber(patchFile);
+            const offset = await Patch.readUpsUint(patchFile);
             targetRelativeOffset += (offset & 1 ? -1 : +1) * (offset >> 1);
             await targetFile.write(await targetFile.readAt(targetRelativeOffset, length));
             targetRelativeOffset += length;

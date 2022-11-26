@@ -128,7 +128,27 @@ export default class FilePoly {
   }
 
   async writeAt(buffer: Buffer, offset: number): Promise<number> {
-    return (await util.promisify(fs.write)(this.fd, buffer, 0, buffer.length, offset)).bytesWritten;
+    const { bytesWritten } = await util.promisify(fs.write)(
+      this.fd,
+      buffer,
+      0,
+      buffer.length,
+      offset,
+    );
+
+    if (this.fileBuffer) {
+      if (offset + bytesWritten > this.fileBuffer.length) {
+        this.fileBuffer = Buffer.concat([
+          this.fileBuffer,
+          Buffer.allocUnsafe(offset + bytesWritten - this.fileBuffer.length),
+        ]);
+      }
+      for (let i = 0; i < bytesWritten; i += 1) {
+        this.fileBuffer[offset + i] = buffer[i];
+      }
+    }
+
+    return bytesWritten;
   }
 
   async close(): Promise<void> {

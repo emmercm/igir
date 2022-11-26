@@ -28,8 +28,8 @@ export default class UPSPatch extends Patch {
       const fp = await FilePoly.fileFrom(patchFile, 'r');
 
       fp.seek(4); // header
-      await Patch.readVariableLengthNumber(fp); // source size
-      targetSize = await Patch.readVariableLengthNumber(fp); // target size
+      await Patch.readUpsUint(fp); // source size
+      targetSize = await Patch.readUpsUint(fp); // target size
 
       fp.seek(fp.getSize() - 12);
       crcBefore = (await fp.readNext(4)).reverse().toString('hex');
@@ -54,8 +54,8 @@ export default class UPSPatch extends Patch {
         await patchFile.close();
         throw new Error(`UPS patch header is invalid: ${this.getFile().toString()}`);
       }
-      await Patch.readVariableLengthNumber(patchFile); // source size
-      await Patch.readVariableLengthNumber(patchFile); // target size
+      await Patch.readUpsUint(patchFile); // source size
+      await Patch.readUpsUint(patchFile); // target size
 
       const result = await file.extractToFile(async (sourceFilePath) => {
         const targetFilePath = fsPoly.mktempSync(path.join(
@@ -69,7 +69,7 @@ export default class UPSPatch extends Patch {
 
         /* eslint-disable no-await-in-loop, no-bitwise */
         while (patchFile.getPosition() < patchFile.getSize() - 12) {
-          const relativeOffset = await Patch.readVariableLengthNumber(patchFile);
+          const relativeOffset = await Patch.readUpsUint(patchFile);
           sourceFile.skipNext(relativeOffset);
           targetFile.skipNext(relativeOffset);
 
