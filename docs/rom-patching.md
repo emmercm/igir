@@ -22,21 +22,21 @@ Not all patch types are created equal. Here are some tables of some existing for
 
 **Uncommon patch types:**
 
-| Type                | Supported | CRC32 in patch contents | Notes                                                                                                                                 |
-|---------------------|-----------|-------------------------|---------------------------------------------------------------------------------------------------------------------------------------|
-| `.aps` (GBA)        | ❌         | ❌                       |                                                                                                                                       |
-| `.aps` (N64)        | ❌         | ⚠️ only type 1 patches  |                                                                                                                                       |
-| `.bdf` (BSDiff)     | ❌         | ❓                       |                                                                                                                                       |
-| `.bsp`              | ❌         | ❌                       | Binary Script Patching will probably never be supported, the implementation is [non-trivial](https://github.com/aaaaaa123456789/bsp). |
-| `.dps`              | ❌         | ❌                       |                                                                                                                                       |
-| `.ebp` (EarthBound) | ❌         | ❌                       |                                                                                                                                       |
-| `.ffp`              | ❌         | ❓                       |                                                                                                                                       |
-| `.gdiff`            | ❌         | ❓                       |                                                                                                                                       |
-| `.mod` (Star Rod)   | ❌         | ❓                       |                                                                                                                                       |
-| `.pat` (FireFlower) | ❌         | ❓                       |                                                                                                                                       |
-| `.pds`              | ❌         | ❓                       |                                                                                                                                       |
-| `.rup` (NINJA 2.0)  | ❌         | ❌ uses MD5              |                                                                                                                                       |
-| `.rxl`              | ❌         | ❓                       |                                                                                                                                       |
+| Type                | Supported                                              | CRC32 in patch contents | Notes                                                                                                                                 |
+|---------------------|--------------------------------------------------------|-------------------------|---------------------------------------------------------------------------------------------------------------------------------------|
+| `.aps` (GBA)        | ❌                                                      | ❌                       |                                                                                                                                       |
+| `.aps` (N64)        | ❌                                                      | ⚠️ only type 1 patches  |                                                                                                                                       |
+| `.bdf` (BSDiff)     | ❌                                                      | ❓                       |                                                                                                                                       |
+| `.bsp`              | ❌                                                      | ❌                       | Binary Script Patching will probably never be supported, the implementation is [non-trivial](https://github.com/aaaaaa123456789/bsp). |
+| `.dps`              | ❌                                                      | ❌                       |                                                                                                                                       |
+| `.ebp` (EarthBound) | ❌                                                      | ❌                       |                                                                                                                                       |
+| `.ffp`              | ❌                                                      | ❓                       |                                                                                                                                       |
+| `.gdiff`            | ❌                                                      | ❓                       |                                                                                                                                       |
+| `.mod` (Star Rod)   | ❌                                                      | ❓                       |                                                                                                                                       |
+| `.pat` (FireFlower) | ❌                                                      | ❓                       |                                                                                                                                       |
+| `.pds`              | ❌                                                      | ❓                       |                                                                                                                                       |
+| `.rup` (NINJA 2.0)  | ⚠️ only single file patches, only raw/binary file type | ❌ uses MD5              |                                                                                                                                       |
+| `.rxl`              | ❌                                                      | ❓                       |                                                                                                                                       |
 
 If you have a choice in patch format, choose one that contains CRC32 checksums in the patch file contents.
 
