@@ -52,8 +52,8 @@ export default class PPFPatch extends Patch {
       const result = await file.extractToTempFile(async (tempFile) => {
         const targetFile = await FilePoly.fileFrom(tempFile, 'r+');
 
-        /* eslint-disable no-constant-condition, no-await-in-loop */
-        while (true) {
+        /* eslint-disable no-await-in-loop */
+        while (!fp.isEOF()) {
           const peek = (await fp.peekNext(18)).toString();
           if (!peek) {
             // End of file

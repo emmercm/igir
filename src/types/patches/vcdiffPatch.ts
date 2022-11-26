@@ -211,7 +211,7 @@ export default class VcdiffPatch extends Patch {
         await patchFile.close();
         throw new Error(`Vcdiff patch header is invalid: ${this.getFile().toString()}`);
       }
-      await patchFile.readNext(1); // version
+      patchFile.skipNext(1); // version
 
       const hdrIndicator = (await patchFile.readNext(1)).readUint8();
       let secondaryDecompressorId = 0;
@@ -238,7 +238,7 @@ export default class VcdiffPatch extends Patch {
       }
       if (hdrIndicator & VcdiffHdrIndicator.APPHEADER) {
         const appHeaderLength = await Patch.readVcdiffUintFromFile(patchFile);
-        await patchFile.readNext(appHeaderLength);
+        patchFile.skipNext(appHeaderLength);
       }
 
       const copyCache = new VcdiffCache();
