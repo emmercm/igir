@@ -44,7 +44,7 @@ Here is the full `igir --help` message which shows all available options and a n
   | $$  | $$ __\$$  | $$  | $$__| $$
   | $$  | $$|    \  | $$  | $$    $$   ROM collection manager
   | $$  | $$ \$$$$  | $$  | $$$$$$$\
- _| $$_ | $$__| $$ _| $$_ | $$  | $$   v0.6.0
+ _| $$_ | $$__| $$ _| $$_ | $$  | $$   v0.6.1
 |   $$ \ \$$    $$|   $$ \| $$  | $$
  \$$$$$$  \$$$$$$  \$$$$$$ \$$   \$$
 
@@ -64,8 +64,8 @@ Path options (inputs support globbing):
   -d, --dat            Path(s) to DAT files or archives                                   [array]
   -i, --input          Path(s) to ROM files or archives                        [array] [required]
   -I, --input-exclude  Path(s) to ROM files or archives to exclude                        [array]
-  -p, --patch          Path(s) to ROM patch files or archives (supported: .bps, .ips, .ppf, .ups)
-                                                                                          [array]
+  -p, --patch          Path(s) to ROM patch files or archives (supported: .bps, .ips, .ips32, .pp
+                       f, .rup, .ups, .vcdiff, .xdelta)                                   [array]
   -o, --output         Path to the ROM output directory (supports replaceable symbols, see below)
                                                                                          [string]
 
