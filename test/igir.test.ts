@@ -56,6 +56,12 @@ describe('with explicit dats', () => {
     }, []);
   });
 
+  it('should throw on all invalid dats', async () => {
+    await expect(async () => new Igir(new Options({
+      dat: ['src/*'],
+    }), new Logger(LogLevel.NEVER)).main()).rejects.toThrow(/no valid dat files/i);
+  });
+
   it('should copy and test', async () => {
     await expectEndToEnd({
       commands: ['copy', 'test'],

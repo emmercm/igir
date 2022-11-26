@@ -1,4 +1,6 @@
 import Game from '../../../src/types/logiqx/game.js';
+import Release from '../../../src/types/logiqx/release.js';
+import ROM from "../../../src/types/logiqx/rom.js";
 
 describe('isBios', () => {
   test.each([
@@ -10,6 +12,26 @@ describe('isBios', () => {
 
   test.each([true, false])('option: %s', (bios) => {
     expect(new Game({ bios: bios ? 'yes' : 'no' }).isBios()).toEqual(bios);
+  });
+});
+
+describe('getReleases', () => {
+  it('should always return a list', () => {
+    const release = new Release('name', 'USA');
+
+    expect(new Game({ release: [release] }).getReleases()).toEqual([release]);
+    expect(new Game({ release }).getReleases()).toEqual([release]);
+    expect(new Game().getReleases()).toEqual([]);
+  });
+});
+
+describe('getRoms', () => {
+  it('should always return a list', () => {
+    const rom = new ROM('name', 0, '00000000');
+
+    expect(new Game({ rom: [rom] }).getRoms()).toEqual([rom]);
+    expect(new Game({ rom }).getRoms()).toEqual([rom]);
+    expect(new Game().getRoms()).toEqual([]);
   });
 });
 
