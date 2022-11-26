@@ -4,9 +4,10 @@ import Patch from './patch.js';
 
 /**
  * @link https://zerosoft.zophar.net/ips.php
+ * @link https://github.com/btimofeev/UniPatcher/blob/a5a69cc607fadef43734589b311e5ef1bcde6941/app/src/main/java/org/emunix/unipatcher/patcher/IPS.java
  */
 export default class IPSPatch extends Patch {
-  static readonly SUPPORTED_EXTENSIONS = ['.ips'];
+  static readonly SUPPORTED_EXTENSIONS = ['.ips', '.ips32'];
 
   static patchFrom(file: File): IPSPatch {
     const crcBefore = Patch.getCrcFromPath(file.getExtractedFilePath());
@@ -21,9 +22,16 @@ export default class IPSPatch extends Patch {
       const fp = await FilePoly.fileFrom(patchFilePath, 'r');
 
       const header = (await fp.readNext(5)).toString();
-      if (header !== 'PATCH') {
+      if (header !== 'PATCH' && header !== 'IPS32') {
         await fp.close();
         throw new Error(`IPS patch header is invalid: ${this.getFile().toString()}`);
+      }
+
+      let offsetSize = 3;
+      let eofString = 'EOF';
+      if (header === 'IPS32') {
+        offsetSize = 4;
+        eofString = 'EEOF';
       }
 
       const result = await file.extractToTempFile(async (tempFile) => {
@@ -31,12 +39,12 @@ export default class IPSPatch extends Patch {
 
         /* eslint-disable no-constant-condition, no-await-in-loop */
         while (true) {
-          const offsetPeek = await fp.readNext(3);
-          if (offsetPeek === null || offsetPeek.toString() === 'EOF') {
+          const offsetPeek = await fp.peekNext(eofString.length);
+          if (offsetPeek === null || offsetPeek.toString() === eofString) {
             break;
           }
 
-          const offset = offsetPeek.readUintBE(0, 3);
+          const offset = (await fp.readNext(offsetSize)).readUintBE(0, offsetSize);
           const size = (await fp.readNext(2)).readUInt16BE();
           if (size === 0) {
             // Run-length encoding record
