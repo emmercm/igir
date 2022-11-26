@@ -2,28 +2,48 @@ import 'reflect-metadata';
 
 import { Expose } from 'class-transformer';
 
+interface RomCenterOptions {
+  readonly plugin?: string;
+  readonly romMode?: 'merged' | 'split' | 'unmerged';
+  readonly biosMode?: 'merged' | 'split' | 'unmerged';
+  readonly sampleMode?: 'merged' | 'unmerged';
+  readonly lockRomMode?: 'yes' | 'no';
+  readonly lockBiosMode?: 'yes' | 'no';
+  readonly lockSampleMode?: 'yes' | 'no';
+}
+
 /**
  * @see http://www.logiqx.com/DatFAQs/RomCenter.php
  */
-export default class RomCenter {
+export default class RomCenter implements RomCenterOptions {
   @Expose({ name: 'plugin' })
-  private readonly plugin?: string;
+  readonly plugin: string;
 
   @Expose({ name: 'rommode' })
-  private readonly romMode: 'merged' | 'split' | 'unmerged' = 'split';
+  readonly romMode: 'merged' | 'split' | 'unmerged';
 
   @Expose({ name: 'biosmode' })
-  private readonly biosMode: 'merged' | 'split' | 'unmerged' = 'split';
+  readonly biosMode: 'merged' | 'split' | 'unmerged';
 
   @Expose({ name: 'samplemode' })
-  private readonly sampleMode: 'merged' | 'unmerged' = 'merged';
+  readonly sampleMode: 'merged' | 'unmerged';
 
   @Expose({ name: 'lockrommode' })
-  private readonly lockRomMode: 'yes' | 'no' = 'no';
+  readonly lockRomMode: 'yes' | 'no';
 
   @Expose({ name: 'lockbiosmode' })
-  private readonly lockBiosMode: 'yes' | 'no' = 'no';
+  readonly lockBiosMode: 'yes' | 'no';
 
   @Expose({ name: 'locksamplemode' })
-  private readonly lockSampleMode: 'yes' | 'no' = 'no';
+  readonly lockSampleMode: 'yes' | 'no';
+
+  constructor(options?: RomCenterOptions) {
+    this.plugin = options?.plugin || '';
+    this.romMode = options?.romMode || 'split';
+    this.biosMode = options?.biosMode || 'split';
+    this.sampleMode = options?.sampleMode || 'merged';
+    this.lockRomMode = options?.lockRomMode || 'no';
+    this.lockBiosMode = options?.lockBiosMode || 'no';
+    this.lockSampleMode = options?.lockSampleMode || 'no';
+  }
 }

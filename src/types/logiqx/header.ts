@@ -98,14 +98,6 @@ export default class Header implements HeaderOptions {
     return this.name;
   }
 
-  getVersion(): string {
-    return this.version;
-  }
-
-  getDate(): string | undefined {
-    return this.date;
-  }
-
   getClrMamePro(): ClrMamePro | undefined {
     return this.clrMamePro;
   }
