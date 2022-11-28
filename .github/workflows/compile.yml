@@ -14,6 +14,7 @@ jobs:
         include:
           - os: ubuntu
             build: |
+              NPM_PKG_VERSION=$(npm pkg get version | sed 's/"//g')
               BIN_OUTPUT=igir-${NPM_PKG_VERSION}-ubuntu.tar.gz
               echo "BIN_OUTPUT=${BIN_OUTPUT}" >> $GITHUB_ENV
               cp package.json build/
@@ -22,6 +23,7 @@ jobs:
               tar cvf - index.ts | gzip --best > "${BIN_OUTPUT}"
           - os: macos
             build: |
+              NPM_PKG_VERSION=$(npm pkg get version | sed 's/"//g')
               BIN_OUTPUT=igir-${NPM_PKG_VERSION}-macos.tar.gz
               echo "BIN_OUTPUT=${BIN_OUTPUT}" >> $GITHUB_ENV
               cp package.json build/
@@ -30,12 +32,15 @@ jobs:
               tar cvf - index.ts | gzip --best > "${BIN_OUTPUT}"
           - os: windows
             build: |
-              BIN_OUTPUT=igir-${NPM_PKG_VERSION}-windows.zip
-              echo "BIN_OUTPUT=${BIN_OUTPUT}" >> $GITHUB_ENV
-              copy package.json build/
-              ./node_modules/.bin/caxa --input build/ --output igir.exe -- "{{caxa}}/node_modules/.bin/node" "{{caxa}}/index.js"
-              igir.exe --help
-              powershell Compress-Archive -Path igir.exe -DestinationPath "${BIN_OUTPUT}" -CompressionLevel Optimal
+              for /F "tokens=* USEBACKQ" %%F IN (`npm pkg get version`) do set NPM_PKG_VERSION=%%F
+              set NPM_PKG_VERSION=%NPM_PKG_VERSION:"=%
+              set BIN_OUTPUT=igir-%NPM_PKG_VERSION%-windows.zip
+              echo "BIN_OUTPUT=${BIN_OUTPUT}" >> $env:$GITHUB_ENV
+              copy package.json build\
+              .\node_modules\.bin\caxa --input build\ --output igir.exe -- "{{caxa}}/node_modules/.bin/node" "{{caxa}}/index.js" & (
+                igir.exe --help
+                powershell Compress-Archive -Path igir.exe -DestinationPath "%BIN_OUTPUT%" -CompressionLevel Optimal
+              )
     steps:
       - uses: actions/checkout@v3
       - uses: actions/setup-node@v3
@@ -44,7 +49,6 @@ jobs:
           cache: 'npm'
       - run: npm ci
       - run: npm run build
-      - run: echo "NPM_PKG_VERSION=$(npm pkg get version | sed 's/"//g')" >> $GITHUB_ENV
       - run: ${{ matrix.build }}
       - uses: actions/upload-artifact@v3
         with:
