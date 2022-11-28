@@ -14,21 +14,21 @@ jobs:
         include:
           - os: ubuntu
             build: |
-              BIN_OUTPUT=igir-${{ matrix.os }}.tar.gz
+              BIN_OUTPUT=igir-${NPM_PKG_VERSION}-ubuntu.tar.gz
               echo "BIN_OUTPUT=${BIN_OUTPUT}" >> $GITHUB_ENV
               ./node_modules/.bin/caxa --input build/ --output igir -- "{{caxa}}/node_modules/.bin/node" "{{caxa}}/index.js"
               igir --help
               tar cvf - index.ts | gzip --best > "${BIN_OUTPUT}"
           - os: macos
             build: |
-              BIN_OUTPUT=igir-${{ matrix.os }}.tar.gz
+              BIN_OUTPUT=igir-${NPM_PKG_VERSION}-macos.tar.gz
               echo "BIN_OUTPUT=${BIN_OUTPUT}" >> $GITHUB_ENV
               ./node_modules/.bin/caxa --input build/ --output igir -- "{{caxa}}/node_modules/.bin/node" "{{caxa}}/index.js"
               igir --help
               tar cvf - index.ts | gzip --best > "${BIN_OUTPUT}"
           - os: windows
             build: |
-              BIN_OUTPUT=igir-${{ matrix.os }}.zip
+              BIN_OUTPUT=igir-${NPM_PKG_VERSION}-windows.zip
               echo "BIN_OUTPUT=${BIN_OUTPUT}" >> $GITHUB_ENV
               ./node_modules/.bin/caxa --input build/ --output igir.exe -- "{{caxa}}/node_modules/.bin/node" "{{caxa}}/index.js"
               igir.exe --help
@@ -41,6 +41,7 @@ jobs:
           cache: 'npm'
       - run: npm ci
       - run: npm run build
+      - run: echo "NPM_PKG_VERSION=$(npm pkg get version | sed 's/"//g')" >> $GITHUB_ENV
       - run: ${{ matrix.build }}
       - uses: actions/upload-artifact@v3
         with:
@@ -50,6 +51,8 @@ jobs:
 
   release-update:
     if: ${{ github.event_name == 'release' }}
+    needs:
+      - node-compile
     runs-on: ubuntu-latest
     steps:
       - uses: actions/download-artifact@v3
