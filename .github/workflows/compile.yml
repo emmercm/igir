@@ -48,7 +48,7 @@ jobs:
       - run: ${{ matrix.build }}
       - uses: actions/upload-artifact@v3
         with:
-          name: ${{ github.sha }}-${{ matrix.build }}
+          name: ${{ github.sha }}-${{ matrix.os }}
           path: ${{ env.BIN_OUTPUT }}
           if-no-files-found: error
 
