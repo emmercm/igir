@@ -17,14 +17,14 @@ jobs:
               BIN_OUTPUT=igir-${NPM_PKG_VERSION}-ubuntu.tar.gz
               echo "BIN_OUTPUT=${BIN_OUTPUT}" >> $GITHUB_ENV
               ./node_modules/.bin/caxa --input build/ --output igir -- "{{caxa}}/node_modules/.bin/node" "{{caxa}}/index.js"
-              igir --help
+              ./igir --help
               tar cvf - index.ts | gzip --best > "${BIN_OUTPUT}"
           - os: macos
             build: |
               BIN_OUTPUT=igir-${NPM_PKG_VERSION}-macos.tar.gz
               echo "BIN_OUTPUT=${BIN_OUTPUT}" >> $GITHUB_ENV
               ./node_modules/.bin/caxa --input build/ --output igir -- "{{caxa}}/node_modules/.bin/node" "{{caxa}}/index.js"
-              igir --help
+              ./igir --help
               tar cvf - index.ts | gzip --best > "${BIN_OUTPUT}"
           - os: windows
             build: |
