@@ -1,0 +1,57 @@
+name: Publish compiled binaries to GitHub
+
+on:
+  push:
+  release:
+    types: [published]
+
+jobs:
+  node-compile:
+    runs-on: ${{ matrix.os }}-latest
+    strategy:
+      matrix:
+        os: [ ubuntu, macos, windows ]
+        include:
+          - os: ubuntu
+            build: |
+              BIN_OUTPUT=igir-${{ matrix.os }}.tar.gz
+              echo "BIN_OUTPUT=${BIN_OUTPUT}" >> $GITHUB_ENV
+              ./node_modules/.bin/caxa --input build/ --output igir -- "{{caxa}}/node_modules/.bin/node" "{{caxa}}/index.js"
+              igir --help
+              tar cvf - index.ts | gzip --best > "${BIN_OUTPUT}"
+          - os: macos
+            build: |
+              BIN_OUTPUT=igir-${{ matrix.os }}.tar.gz
+              echo "BIN_OUTPUT=${BIN_OUTPUT}" >> $GITHUB_ENV
+              ./node_modules/.bin/caxa --input build/ --output igir -- "{{caxa}}/node_modules/.bin/node" "{{caxa}}/index.js"
+              igir --help
+              tar cvf - index.ts | gzip --best > "${BIN_OUTPUT}"
+          - os: windows
+            build: |
+              BIN_OUTPUT=igir-${{ matrix.os }}.zip
+              echo "BIN_OUTPUT=${BIN_OUTPUT}" >> $GITHUB_ENV
+              ./node_modules/.bin/caxa --input build/ --output igir.exe -- "{{caxa}}/node_modules/.bin/node" "{{caxa}}/index.js"
+              igir.exe --help
+              powershell Compress-Archive -Path igir.exe -DestinationPath "${BIN_OUTPUT}" -CompressionLevel Optimal
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-node@v3
+        with:
+          node-version-file: '.nvmrc'
+          cache: 'npm'
+      - run: npm ci
+      - run: npm run build
+      - run: ${{ matrix.build }}
+      - uses: actions/upload-artifact@v3
+        with:
+          name: ${{ github.sha }}-${{ matrix.build }}
+          path: ${{ env.BIN_OUTPUT }}
+          if-no-files-found: error
+
+  release-update:
+    if: ${{ github.event_name == 'release' }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v3
+      - name: Display structure of downloaded files
+        run: ls -R
