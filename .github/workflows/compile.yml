@@ -32,7 +32,7 @@ jobs:
               tar cvf - index.ts | gzip --best > "${BIN_OUTPUT}"
           - os: windows
             build: |
-              for /F "tokens=* USEBACKQ" %%F IN (`npm pkg get version`) do set NPM_PKG_VERSION=%%F
+              for /F "tokens=* USEBACKQ" %%F IN (`npm pkg get version`) do ( set NPM_PKG_VERSION=%%F )
               set NPM_PKG_VERSION=%NPM_PKG_VERSION:"=%
               set BIN_OUTPUT=igir-%NPM_PKG_VERSION%-windows.zip
               echo "BIN_OUTPUT=${BIN_OUTPUT}" >> $env:$GITHUB_ENV
