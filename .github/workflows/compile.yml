@@ -1,4 +1,4 @@
-name: Publish compiled binaries to GitHub
+name: Compile Node.js
 
 on:
   push:
@@ -16,6 +16,7 @@ jobs:
             build: |
               BIN_OUTPUT=igir-${NPM_PKG_VERSION}-ubuntu.tar.gz
               echo "BIN_OUTPUT=${BIN_OUTPUT}" >> $GITHUB_ENV
+              cp package.json build/
               ./node_modules/.bin/caxa --input build/ --output igir -- "{{caxa}}/node_modules/.bin/node" "{{caxa}}/index.js"
               ./igir --help
               tar cvf - index.ts | gzip --best > "${BIN_OUTPUT}"
@@ -23,6 +24,7 @@ jobs:
             build: |
               BIN_OUTPUT=igir-${NPM_PKG_VERSION}-macos.tar.gz
               echo "BIN_OUTPUT=${BIN_OUTPUT}" >> $GITHUB_ENV
+              cp package.json build/
               ./node_modules/.bin/caxa --input build/ --output igir -- "{{caxa}}/node_modules/.bin/node" "{{caxa}}/index.js"
               ./igir --help
               tar cvf - index.ts | gzip --best > "${BIN_OUTPUT}"
@@ -30,6 +32,7 @@ jobs:
             build: |
               BIN_OUTPUT=igir-${NPM_PKG_VERSION}-windows.zip
               echo "BIN_OUTPUT=${BIN_OUTPUT}" >> $GITHUB_ENV
+              copy package.json build/
               ./node_modules/.bin/caxa --input build/ --output igir.exe -- "{{caxa}}/node_modules/.bin/node" "{{caxa}}/index.js"
               igir.exe --help
               powershell Compress-Archive -Path igir.exe -DestinationPath "${BIN_OUTPUT}" -CompressionLevel Optimal
