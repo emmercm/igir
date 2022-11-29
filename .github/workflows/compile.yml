@@ -43,6 +43,7 @@ jobs:
               .\igir.exe --help
               Compress-Archive -Path igir.exe -DestinationPath "${BIN_OUTPUT}" -CompressionLevel Optimal -Force
     steps:
+      # Setup and install
       - uses: actions/checkout@v3
       - uses: actions/setup-node@v3
         with:
@@ -50,10 +51,11 @@ jobs:
           cache: 'npm'
       - run: npm ci
       - run: npm run build
+      # Compile and upload
       - run: ${{ matrix.build }}
       - uses: actions/upload-artifact@v3
         with:
-          name: ${{ github.sha }}-${{ matrix.os }}
+          name: ${{ matrix.os }}
           path: ${{ env.BIN_OUTPUT }}
           if-no-files-found: error
 
@@ -63,6 +65,20 @@ jobs:
       - node-compile
     runs-on: ubuntu-latest
     steps:
+      # Get the package version
+      - uses: actions/checkout@v3
+      - uses: actions/setup-node@v3
+        with:
+          node-version-file: '.nvmrc'
+          cache: 'npm'
+      - run: npm ci
+      - run: echo "NPM_PKG_VERSION=$(npm pkg get version | sed 's/"//g')" >> $GITHUB_ENV
+      # Download and update
       - uses: actions/download-artifact@v3
-      - name: Display structure of downloaded files
-        run: ls -R
+      - uses: softprops/action-gh-release@v1
+        with:
+          tag_name: ${{ env.NPM_PKG_VERSION }}
+          files: |
+            ubuntu/*
+            macos/*
+            windows/*
