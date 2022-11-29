@@ -60,7 +60,7 @@ jobs:
           if-no-files-found: error
 
   release-update:
-    # if: ${{ github.event_name == 'release' }}
+    if: ${{ github.event_name == 'release' }}
     needs:
       - node-compile
     runs-on: ubuntu-latest
