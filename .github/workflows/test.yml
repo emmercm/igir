@@ -131,7 +131,7 @@ jobs:
           verbose: true
 
   # !!! This check should be required by GitHub !!!
-  status-check:
+  test-status-check:
     needs:
       - node-lint
       - node-unit

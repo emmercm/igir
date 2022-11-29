@@ -82,3 +82,11 @@ jobs:
             ubuntu/*
             macos/*
             windows/*
+
+  # !!! This check should be required by GitHub !!!
+  compile-status-check:
+    needs:
+      - node-compile
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo ok
