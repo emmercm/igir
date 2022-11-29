@@ -15,7 +15,8 @@ jobs:
           - os: ubuntu
             build: |
               NPM_PKG_VERSION=$(npm pkg get version | sed 's/"//g')
-              BIN_OUTPUT=igir-${NPM_PKG_VERSION}-ubuntu.tar.gz
+              NODE_ARCH=$(node --print 'process.arch')
+              BIN_OUTPUT="igir-${NPM_PKG_VERSION}-${RUNNER_OS}-${NODE_ARCH}.tar.gz"
               echo "BIN_OUTPUT=${BIN_OUTPUT}" >> $GITHUB_ENV
               cp package.json build/
               ./node_modules/.bin/caxa --input build/ --output igir -- "{{caxa}}/node_modules/.bin/node" "{{caxa}}/index.js"
@@ -24,7 +25,8 @@ jobs:
           - os: macos
             build: |
               NPM_PKG_VERSION=$(npm pkg get version | sed 's/"//g')
-              BIN_OUTPUT=igir-${NPM_PKG_VERSION}-macos.tar.gz
+              NODE_ARCH=$(node --print 'process.arch')
+              BIN_OUTPUT="igir-${NPM_PKG_VERSION}-${RUNNER_OS}-${NODE_ARCH}.tar.gz"
               echo "BIN_OUTPUT=${BIN_OUTPUT}" >> $GITHUB_ENV
               cp package.json build/
               ./node_modules/.bin/caxa --input build/ --output igir -- "{{caxa}}/node_modules/.bin/node" "{{caxa}}/index.js"
@@ -33,7 +35,8 @@ jobs:
           - os: windows
             build: |
               $NPM_PKG_VERSION=$(npm pkg get version).replace('"','')
-              $BIN_OUTPUT="igir-$NPM_PKG_VERSION-windows.zip"
+              $NODE_ARCH=$(node --print 'process.arch')
+              $BIN_OUTPUT="igir-$NPM_PKG_VERSION-${RUNNER_OS}-${NODE_ARCH}.zip"
               echo "BIN_OUTPUT=${BIN_OUTPUT}" | Out-File -FilePath $env:GITHUB_ENV -Append # no need for -Encoding utf8
               copy package.json build\
               .\node_modules\.bin\caxa --input build\ --output igir.exe -- "{{caxa}}/node_modules/.bin/node" "{{caxa}}/index.js"
@@ -55,7 +58,7 @@ jobs:
           if-no-files-found: error
 
   release-update:
-    if: ${{ github.event_name == 'release' }}
+    # if: ${{ github.event_name == 'release' }}
     needs:
       - node-compile
     runs-on: ubuntu-latest
