@@ -24,9 +24,10 @@ import ArgumentsParser from './src/modules/argumentsParser.js';
     logger.setLogLevel(options.getLogLevel());
 
     await new Igir(options, logger).main();
-  } catch (e) {
     logger.newLine();
+  } catch (e) {
     logger.error(e);
+    logger.newLine();
     process.exit(1);
   }
 })();

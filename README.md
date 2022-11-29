@@ -29,15 +29,17 @@ With `igir` you can manage a ROM collection of any size:
 
 ## How do I run `igir`?
 
-With [![Node.js](https://badgen.net/npm/node/igir?icon=nodejs&label=Node.js)](https://nodejs.org/en/download/) installed, run this from the command line:
+Either download the latest version for your OS from the [releases page](https://github.com/emmercm/igir/releases/latest), or with <span style="vertical-align:middle;">[![Node.js](https://badgen.net/npm/node/igir?icon=nodejs&label=Node.js)](https://nodejs.org/en/download/)</span> installed you can always run the latest version from the command line:
 
 ```shell
 npx igir@latest [commands..] [options]
 ```
 
-Here is the full `igir --help` message which shows all available options and a number of common use case examples:
+Here is the full help message which shows all available options and a number of common use case examples:
 
 ```help
+$ igir --help
+
  ______   ______   ______  _______
 |      \ /      \ |      \|       \
  \$$$$$$|  $$$$$$\ \$$$$$$| $$$$$$$\

@@ -1,6 +1,6 @@
 # https://docs.github.com/en/actions/publishing-packages/publishing-nodejs-packages
 
-name: Publish Package to npmjs
+name: Publish npm
 
 on:
   release:
