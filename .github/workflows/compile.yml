@@ -21,7 +21,7 @@ jobs:
               cp package.json build/
               ./node_modules/.bin/caxa --input build/ --output igir -- "{{caxa}}/node_modules/.bin/node" "{{caxa}}/index.js"
               ./igir --help
-              tar cvf - index.ts | gzip --best > "${BIN_OUTPUT}"
+              tar cvf - igir | gzip --best > "${BIN_OUTPUT}"
           - os: macos
             build: |
               NPM_PKG_VERSION=$(npm pkg get version | sed 's/"//g')
@@ -31,7 +31,7 @@ jobs:
               cp package.json build/
               ./node_modules/.bin/caxa --input build/ --output igir -- "{{caxa}}/node_modules/.bin/node" "{{caxa}}/index.js"
               ./igir --help
-              tar cvf - index.ts | gzip --best > "${BIN_OUTPUT}"
+              tar cvf - igir | gzip --best > "${BIN_OUTPUT}"
           - os: windows
             build: |
               $NPM_PKG_VERSION=$(npm pkg get version).replace('"','')
@@ -77,7 +77,7 @@ jobs:
       - uses: actions/download-artifact@v3
       - uses: softprops/action-gh-release@v1
         with:
-          tag_name: ${{ env.NPM_PKG_VERSION }}
+          tag_name: v${{ env.NPM_PKG_VERSION }}
           files: |
             ubuntu/*
             macos/*
