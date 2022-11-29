@@ -35,9 +35,11 @@ With [![Node.js](https://badgen.net/npm/node/igir?icon=nodejs&label=Node.js)](ht
 npx igir@latest [commands..] [options]
 ```
 
-Here is the full `igir --help` message which shows all available options and a number of common use case examples:
+Here is the full help message which shows all available options and a number of common use case examples:
 
 ```help
+$ igir --help
+
  ______   ______   ______  _______
 |      \ /      \ |      \|       \
  \$$$$$$|  $$$$$$\ \$$$$$$| $$$$$$$\
