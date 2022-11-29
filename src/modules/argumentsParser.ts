@@ -418,7 +418,7 @@ Example use cases:
         if (err) {
           throw err;
         }
-        this.logger.colorizeYargs(`${_yargs.help()}\n`);
+        this.logger.colorizeYargs(`${_yargs.help().toString().trimEnd()}\n`);
         throw new Error(msg);
       });
 
@@ -426,7 +426,7 @@ Example use cases:
       .strictOptions(true)
       .parse(argv, {}, (err, parsedArgv, output) => {
         if (output) {
-          this.logger.colorizeYargs(output);
+          this.logger.colorizeYargs(`${output.trimEnd()}\n`);
         }
       });
 
