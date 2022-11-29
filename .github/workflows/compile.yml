@@ -34,7 +34,7 @@ jobs:
             build: |
               $NPM_PKG_VERSION=$(npm pkg get version).replace('"','')
               $BIN_OUTPUT="igir-$NPM_PKG_VERSION-windows.zip"
-              echo "BIN_OUTPUT=${BIN_OUTPUT}" >> $env:$GITHUB_ENV
+              echo "BIN_OUTPUT=${BIN_OUTPUT}" >> ${env}:${GITHUB_ENV}
               copy package.json build\
               .\node_modules\.bin\caxa --input build\ --output igir.exe -- "{{caxa}}/node_modules/.bin/node" "{{caxa}}/index.js"
               .\igir.exe --help
