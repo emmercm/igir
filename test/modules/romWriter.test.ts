@@ -919,7 +919,7 @@ describe('raw', () => {
   test.each([
     // Control group
     ['headered/allpads.nes', 'allpads.nes', '6339abe6'],
-    ['headered/speed_test_v51.smc', 'speed_test_v51.smc', '8beffd94'],
+    ['headered/speed_test_v51.smc', 'speed_test_v51.sfc', '8beffd94'],
     // Archives not being extracted
     ['headered/diagnostic_test_cartridge.a78.7z', 'diagnostic_test_cartridge.a78.7z', '1b55e0ff'],
     ['headered/fds_joypad_test.fds.zip', 'fds_joypad_test.fds.zip', '0b94518e'],

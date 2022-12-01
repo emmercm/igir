@@ -55,7 +55,11 @@ export default class File {
 
     let finalCrc = crc;
     if (!finalCrc) {
-      finalCrc = await this.calculateCrc32(filePath);
+      if (await fsPoly.exists(filePath)) {
+        finalCrc = await this.calculateCrc32(filePath);
+      } else {
+        finalCrc = '';
+      }
     }
 
     let finalCrcWithoutHeader = finalCrc;

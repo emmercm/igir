@@ -210,8 +210,11 @@ export default class CandidateGenerator extends Module {
       // Should extract (if needed), generate the file name from the ROM name
       outputRomFilename = outputEntryPath;
     } else {
-      // Should not zip or extract, use the input file's extension
-      outputRomFilename = game.getName() + path.extname(inputFile.getFilePath());
+      // Should not zip or extract, generate the file name from the game name, but use the input
+      //  file's extension
+      const extMatch = inputFile.getFilePath().match(/[^.]+((\.[a-zA-Z0-9]+)+)/);
+      const ext = extMatch !== null ? extMatch[1] : '';
+      outputRomFilename = game.getName() + ext;
     }
     const outputFilePath = this.options.getOutputFileParsed(
       dat,
