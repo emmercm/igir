@@ -91,27 +91,40 @@ export default class CandidateGenerator extends Module {
   }
 
   private static indexFilesByHashCode(files: File[]): Map<string, File> {
-    return files.reduce((map, file) => {
-      // Always set file based on full contents
-      map.set(file.hashCodeWithHeader(), file);
+    const filesByHashCodeWithHeader = new Map<string, File>();
+    const filesByHashCodeWithoutHeader = new Map<string, File>();
 
-      // If the file has a header, then add its un-headered hash code to the map
+    files.forEach((file) => {
+      // Index on full file contents
+      this.setFileInMap(filesByHashCodeWithHeader, file.hashCodeWithHeader(), file);
+
+      // Optionally index without a header
       if (file.getFileHeader()) {
-        const hashCodeWithoutHeader = file.hashCodeWithoutHeader();
-        if (!map.has(hashCodeWithoutHeader)) {
-          map.set(hashCodeWithoutHeader, file);
-        } else {
-          const existing = map.get(hashCodeWithoutHeader) as File;
-          if (!file.getFileHeader() && existing.getFileHeader()) {
-            // If the input files contain both a headered and un-headered copy of the same ROM, use
-            //  the un-headered copy because it is more "true" to what the DAT is looking for.
-            map.set(hashCodeWithoutHeader, file);
-          }
-        }
+        this.setFileInMap(filesByHashCodeWithoutHeader, file.hashCodeWithoutHeader(), file);
       }
+    });
 
-      return map;
-    }, new Map<string, File>());
+    // Merge the two maps, preferring files that were indexed on their full file contents
+    const filesByHashCode = filesByHashCodeWithHeader;
+    filesByHashCodeWithoutHeader.forEach((file, hashCodeWithoutHeader) => {
+      if (!filesByHashCode.has(hashCodeWithoutHeader)) {
+        filesByHashCode.set(hashCodeWithoutHeader, file);
+      }
+    });
+    return filesByHashCode;
+  }
+
+  private static setFileInMap<K>(map: Map<K, File>, key: K, file: File): void {
+    if (!map.has(key)) {
+      map.set(key, file);
+      return;
+    }
+
+    // Prefer non-archived files
+    const existing = map.get(key) as File;
+    if (existing instanceof ArchiveEntry && !(file instanceof ArchiveEntry)) {
+      map.set(key, file);
+    }
   }
 
   private async buildReleaseCandidateForRelease(
