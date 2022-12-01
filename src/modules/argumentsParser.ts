@@ -85,6 +85,9 @@ export default class ArgumentsParser {
           return true;
         }
         // TODO(cemmer): test
+        if (checkArgv._.indexOf('copy') !== -1 && checkArgv._.indexOf('move') !== -1) {
+          throw new Error('Incompatible commands: copy, move');
+        }
         if (checkArgv._.indexOf('extract') !== -1 && checkArgv._.indexOf('zip') !== -1) {
           throw new Error('Incompatible commands: extract, zip');
         }
@@ -392,13 +395,13 @@ Advanced usage:
     {datReleaseRegion}    The region of the ROM release (e.g. "USA"), each ROM can have multiple
     {datReleaseLanguage}  The language of the ROM release (e.g. "En"), each ROM can have multiple
 
-    {inputDirname}   The input ROM's dirname
+    {inputDirname}    The input ROM's dirname
     {outputBasename}  Equivalent to "{outputName}.{outputExt}"
     {outputName}      The output ROM's filename without extension
     {outputExt}       The output ROM's extension
 
-    {pocket}  The ROM's core-specific /Assets/ folder for the Analogue Pocket (e.g. "gb")
-    {mister}  The ROM's core-specific /games/ folder for the MiSTer FPGA (e.g. "Gameboy")
+    {pocket}  The ROM's core-specific /Assets/* folder for the Analogue Pocket (e.g. "gb")
+    {mister}  The ROM's core-specific /games/* folder for the MiSTer FPGA (e.g. "Gameboy")
 
 Example use cases:
 
@@ -412,13 +415,13 @@ Example use cases:
     $0 copy --dat *.dat --input **/*.zip --output 1G1R/ --dir-dat-name --single --prefer-language EN --prefer-region USA,EUR,JPN
 
   Collate all BIOS files into one directory:
-    $0 copy --dat *.dat --input **/*.zip --output BIOS/ --only-bios
+    $0 copy extract --dat *.dat --input **/*.zip --output BIOS/ --only-bios
 
   Create patched copies of ROMs in an existing collection:
-    $0 copy --input ROMs/ --patch Patches/ --output ROMs/
+    $0 copy extract --input ROMs/ --patch Patches/ --output ROMs/
 
   Copy ROMs to your Analogue Pocket and test them:
-    $0 copy test --dat *.dat --input ROMs/ --output /Assets/{pocket}/common/ --dir-letter`)
+    $0 copy extract test --dat *.dat --input ROMs/ --output /Assets/{pocket}/common/ --dir-letter`)
 
       // Colorize help output
       .option('help', {

@@ -170,6 +170,10 @@ Example use cases:
 
 See the [advanced examples](docs/advanced-examples.md) page for even more examples.
 
+## Additional documentation
+
+See the [docs](/docs) page for in-depth information on multiple topics!
+
 ## Why choose `igir`?
 
 There a few different popular ROM managers that have similar features:
@@ -193,10 +197,6 @@ Each manager has its own pros, but many have the same drawbacks or limitations:
 - No ROM patching functionality
 - Limited parent/clone, region, language, version, and ROM type filtering
 - No ability to prioritize parent/clones when creating a 1G1R set
-
-## Additional documentation
-
-See the [docs](/docs) page for in-depth information on multiple topics!
 
 ## Feature requests, bug reports, and contributing
 
