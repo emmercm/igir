@@ -2,14 +2,14 @@
 
 `igir` (pronounced "eager") is a platform-independent ROM collection manager to help filter, sort, patch, and archive ROM collections.
 
-![CLI:Windows,macOS,Linux](https://badgen.net/badge/icon/Windows,%20macOS,%20Linux?icon=terminal&label=CLI&color=grey)
-[![npm:igir](https://badgen.net/npm/v/igir?icon=npm&label=igir&color=red)](https://www.npmjs.com/package/igir)
-[![GitHub:emmercm/igir](https://badgen.net/badge/emmercm/igir/purple?icon=github)](https://github.com/emmercm/igir)
-[![License](https://badgen.net/github/license/emmercm/igir)](https://github.com/emmercm/igir/blob/main/LICENSE)
+![CLI:Windows,macOS,Linux](https://img.shields.io/badge/CLI-Windows%2C%20macOS%2C%20Linux-lightgrey?logo=windows-terminal)
+[![npm:igir](https://img.shields.io/npm/dw/igir?color=%23cc3534&logo=npm&logoColor=white)](https://www.npmjs.com/package/igir)
+[![GitHub:emmercm/igir](https://img.shields.io/github/stars/emmercm/igir?color=%236e5494&logo=github&logoColor=white)](https://github.com/emmercm/igir)
 
-[![Known Vulnerabilities](https://badgen.net/snyk/emmercm/igir?icon=snyk)](https://snyk.io/test/npm/igir)
-[![Test Coverage](https://badgen.net/codecov/c/github/emmercm/igir/main?icon=codecov)](https://codecov.io/gh/emmercm/igir)
-[![Maintainability Score](https://badgen.net/codeclimate/maintainability/emmercm/igir?icon=codeclimate)](https://codeclimate.com/github/emmercm/igir/maintainability)
+[![Known Vulnerabilities](https://img.shields.io/snyk/vulnerabilities/npm/igir?logo=snyk&logoColor=white)](https://snyk.io/test/npm/igir)
+[![Test Coverage](https://img.shields.io/codecov/c/github/emmercm/igir?logo=codecov&logoColor=white)](https://codecov.io/gh/emmercm/igir)
+[![Maintainability Score](https://img.shields.io/codeclimate/maintainability/emmercm/igir?logo=codeclimate&logoColor=white)](https://codeclimate.com/github/emmercm/igir/maintainability)
+[![License](https://img.shields.io/github/license/emmercm/igir?color=blue)](https://github.com/emmercm/igir/blob/main/LICENSE)
 
 ## What does `igir` do?
 
@@ -19,17 +19,18 @@ A video of an example use case:
 
 With `igir` you can manage a ROM collection of any size:
 
-- 🔍 Scan DAT, ROM, and patch files & archives (see [archive docs](docs/advanced-topics.md#supported-archive-formats))
-- 📂 Organize ROM files by console (with [DATs](docs/dats.md))
-- 🪄 Name ROM files consistently, including the right extension (with [DATs](docs/dats.md))
+- 🔍 Scan for DATs, ROMs, and ROM patches - including those in archives (see [archive docs](docs/advanced-topics.md#supported-archive-formats))
+- 📂 Organize ROM files by console (see [DAT docs](docs/dats.md))
+- 🪄 Name ROM files consistently, including the right extension (see [DAT docs](docs/dats.md))
 - ✂️ Filter out duplicate ROMs, or ROMs in languages you don't understand (see [filtering docs](docs/rom-filtering.md))
 - 🗜️ Archive ROMs individually in mass
 - 🩹 Patch ROMs automatically in mass (see [patching docs](docs/rom-patching.md))
-- 🔮 Know what ROMs are missing for each console (with [DATs](docs/dats.md))
+- 🎩 Parse ROMs with headers, and optionally remove them (see [header docs](docs/rom-headers.md))
+- 🔮 Know what ROMs are missing for each console (see [DAT docs](docs/dats.md))
 
 ## How do I run `igir`?
 
-Either download the latest version for your OS from the [releases page](https://github.com/emmercm/igir/releases/latest), or with <span style="vertical-align:middle;">[![Node.js](https://badgen.net/npm/node/igir?icon=nodejs&label=Node.js)](https://nodejs.org/en/download/)</span> installed you can always run the latest version from the command line:
+Either download the latest version for your OS from the [releases page](https://github.com/emmercm/igir/releases/latest), or with <span style="vertical-align:middle;">[![Node.js](https://img.shields.io/node/v/igir?label=Node.js&logo=node.js&logoColor=white)](https://nodejs.org/en/download/)</span> installed you can always run the latest version from the command line:
 
 ```shell
 npx igir@latest [commands..] [options]
@@ -199,9 +200,9 @@ See the [docs](/docs) page for in-depth information on multiple topics!
 
 ## Feature requests, bug reports, and contributing
 
-[![Contributors](https://badgen.net/github/contributors/emmercm/igir?icon=github)](https://github.com/emmercm/igir/graphs/contributors)
-[![Feature Requests](https://badgen.net/github/label-issues/emmercm/igir/enhancement/open?icon=github&label=open%20feature%20requests)](https://github.com/emmercm/igir/issues?q=is%3Aopen+is%3Aissue+label%3Aenhancement)
-[![Bugs](https://badgen.net/github/label-issues/emmercm/igir/bug/open?icon=github&label=open%20bugs)](https://github.com/emmercm/igir/issues?q=is%3Aopen+is%3Aissue+label%3Abug)
+[![Contributors](https://img.shields.io/github/contributors/emmercm/igir?logo=github&logoColor=white)](https://github.com/emmercm/igir/graphs/contributors)
+[![Feature Requests](https://img.shields.io/github/issues/emmercm/igir/enhancement?color=%234BBCBC&label=feature%20requests&logo=github&logoColor=white)](https://github.com/emmercm/igir/issues?q=is%3Aopen+is%3Aissue+label%3Aenhancement)
+[![Bugs](https://img.shields.io/github/issues/emmercm/igir/bug?color=%23d73a4a&label=bugs&logo=github&logoColor=white)](https://github.com/emmercm/igir/issues?q=is%3Aopen+is%3Aissue+label%3Abug)
 
 Feedback is a gift! Your feature requests and bug reports help improve the project for everyone. Feel free to submit an issue on GitHub using one of the templates.
 
