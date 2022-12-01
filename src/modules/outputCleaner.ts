@@ -46,6 +46,7 @@ export default class OutputCleaner extends Module {
     try {
       await this.progressBar.logDebug(`Cleaning ${filesToClean.length.toLocaleString()} file${filesToClean.length !== 1 ? 's' : ''}`);
       await this.progressBar.reset(filesToClean.length);
+      // TODO(cemmer): don't trash save files
       await this.trashOrDelete(filesToClean);
     } catch (e) {
       await this.progressBar.logError(`Failed to clean unmatched files : ${e}`);

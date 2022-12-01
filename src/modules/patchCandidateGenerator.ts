@@ -67,7 +67,7 @@ export default class PatchCandidateGenerator extends Module {
     crcToPatches: Map<string, Patch[]>,
   ): Promise<ReleaseCandidate[]> {
     const releaseCandidatePatches = unpatchedReleaseCandidate.getRomsWithFiles()
-      .map((romWithFiles) => crcToPatches.get(romWithFiles.getRom().getCrc32()))
+      .map((romWithFiles) => crcToPatches.get(romWithFiles.getInputFile().getCrc32()))
       .flatMap((patches) => patches)
       .filter((patch) => patch) as Patch[];
 
@@ -85,6 +85,7 @@ export default class PatchCandidateGenerator extends Module {
           // Apply the new filename
           const rom = romWithFiles.getRom();
           let inputFile = romWithFiles.getInputFile();
+          // TODO(cemmer): does testing patched ROMs work?
           let outputFile = await romWithFiles.getOutputFile().withFileName(patchedRomName);
 
           // Apply the patch

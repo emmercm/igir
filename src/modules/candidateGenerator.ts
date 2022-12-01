@@ -91,27 +91,40 @@ export default class CandidateGenerator extends Module {
   }
 
   private static indexFilesByHashCode(files: File[]): Map<string, File> {
-    return files.reduce((map, file) => {
-      // Always set file based on full contents
-      map.set(file.hashCodeWithHeader(), file);
+    const filesByHashCodeWithHeader = new Map<string, File>();
+    const filesByHashCodeWithoutHeader = new Map<string, File>();
 
-      // If the file has a header, then add its un-headered hash code to the map
+    files.forEach((file) => {
+      // Index on full file contents
+      this.setFileInMap(filesByHashCodeWithHeader, file.hashCodeWithHeader(), file);
+
+      // Optionally index without a header
       if (file.getFileHeader()) {
-        const hashCodeWithoutHeader = file.hashCodeWithoutHeader();
-        if (!map.has(hashCodeWithoutHeader)) {
-          map.set(hashCodeWithoutHeader, file);
-        } else {
-          const existing = map.get(hashCodeWithoutHeader) as File;
-          if (!file.getFileHeader() && existing.getFileHeader()) {
-            // If the input files contain both a headered and un-headered copy of the same ROM, use
-            //  the un-headered copy because it is more "true" to what the DAT is looking for.
-            map.set(hashCodeWithoutHeader, file);
-          }
-        }
+        this.setFileInMap(filesByHashCodeWithoutHeader, file.hashCodeWithoutHeader(), file);
       }
+    });
 
-      return map;
-    }, new Map<string, File>());
+    // Merge the two maps, preferring files that were indexed on their full file contents
+    const filesByHashCode = filesByHashCodeWithHeader;
+    filesByHashCodeWithoutHeader.forEach((file, hashCodeWithoutHeader) => {
+      if (!filesByHashCode.has(hashCodeWithoutHeader)) {
+        filesByHashCode.set(hashCodeWithoutHeader, file);
+      }
+    });
+    return filesByHashCode;
+  }
+
+  private static setFileInMap<K>(map: Map<K, File>, key: K, file: File): void {
+    if (!map.has(key)) {
+      map.set(key, file);
+      return;
+    }
+
+    // Prefer non-archived files
+    const existing = map.get(key) as File;
+    if (existing instanceof ArchiveEntry && !(file instanceof ArchiveEntry)) {
+      map.set(key, file);
+    }
   }
 
   private async buildReleaseCandidateForRelease(
@@ -126,18 +139,29 @@ export default class CandidateGenerator extends Module {
         // NOTE(cemmer): if the ROM's CRC includes a header, then this will only find headered
         //  files. If the ROM's CRC excludes a header, this can find either a headered or non-
         //  headered file.
-        const romFile = hashCodeToInputFiles.get(rom.hashCode());
-        if (romFile) {
-          try {
-            const outputFile = await this.getOutputFile(dat, game, release, rom, romFile);
-            const romWithFiles = new ROMWithFiles(rom, romFile, outputFile);
-            return [rom, romWithFiles];
-          } catch (e) {
-            await this.progressBar.logWarn(`${dat.getName()}: ${game.getName()}: ${e}`);
-            return [rom, undefined];
-          }
+        const originalInputFile = hashCodeToInputFiles.get(rom.hashCode());
+        if (!originalInputFile) {
+          return [rom, undefined];
         }
-        return [rom, undefined];
+
+        // If the matched input file is from an archive, and we're not extracting, then treat the
+        //  file as "raw" so it can be copied/moved as-is
+        let finalInputFile = originalInputFile;
+        if (originalInputFile instanceof ArchiveEntry
+          && !this.options.shouldZip(rom.getName())
+          && !this.options.shouldExtract()
+        ) {
+          finalInputFile = await originalInputFile.getArchive().asRawFile() as File;
+        }
+
+        try {
+          const outputFile = await this.getOutputFile(dat, game, release, rom, originalInputFile);
+          const romWithFiles = new ROMWithFiles(rom, finalInputFile, outputFile);
+          return [rom, romWithFiles];
+        } catch (e) {
+          await this.progressBar.logWarn(`${dat.getName()}: ${game.getName()}: ${e}`);
+          return [rom, undefined];
+        }
       }),
     ) as [ROM, ROMWithFiles | undefined][];
 
@@ -177,14 +201,29 @@ export default class CandidateGenerator extends Module {
     }
     const outputEntryPath = path.format(parsedPath);
 
+    // Determine the output path of the file
+    let outputRomFilename;
     if (this.options.shouldZip(rom.getName())) {
-      const outputFilePath = this.options.getOutputFileParsed(
-        dat,
-        inputFile.getFilePath(),
-        game,
-        release,
-        `${game.getName()}.zip`,
-      );
+      // Should zip, generate the zip name from the game name
+      outputRomFilename = `${game.getName()}.zip`;
+    } else if (!(inputFile instanceof ArchiveEntry) || this.options.shouldExtract()) {
+      // Should extract (if needed), generate the file name from the ROM name
+      outputRomFilename = outputEntryPath;
+    } else {
+      // Should not zip or extract, use the input file's extension
+      outputRomFilename = game.getName() + path.extname(inputFile.getFilePath());
+    }
+    const outputFilePath = this.options.getOutputFileParsed(
+      dat,
+      inputFile.getFilePath(),
+      game,
+      release,
+      outputRomFilename,
+    );
+
+    // Determine the output file type
+    if (this.options.shouldZip(rom.getName())) {
+      // Should zip, return an archive entry within the zip
       return ArchiveEntry.entryOf(
         new Zip(outputFilePath),
         outputEntryPath,
@@ -192,14 +231,7 @@ export default class CandidateGenerator extends Module {
         inputFile.getCrc32(),
       );
     }
-
-    const outputFilePath = this.options.getOutputFileParsed(
-      dat,
-      inputFile.getFilePath(),
-      game,
-      release,
-      outputEntryPath,
-    );
+    // Should extract, return a raw file using the ROM's size/CRC
     return File.fileOf(
       outputFilePath,
       inputFile.getSize(),

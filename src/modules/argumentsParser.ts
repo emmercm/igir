@@ -65,7 +65,10 @@ export default class ArgumentsParser {
       .command('move', 'Move ROM files from the input to output directory', (yargsSubObj) => {
         addCommands(yargsSubObj);
       })
-      .command('zip', 'Create .zip archives when copying or moving ROMs', (yargsSubObj) => {
+      .command('extract', 'Extract ROM files in archives when copying or moving', (yargsSubObj) => {
+        addCommands(yargsSubObj);
+      })
+      .command('zip', 'Create zip archives of ROMs when copying or moving', (yargsSubObj) => {
         addCommands(yargsSubObj);
       })
       .command('test', 'Test ROMs for accuracy after writing them to the output directory', (yargsSubObj) => {
@@ -76,6 +79,16 @@ export default class ArgumentsParser {
       })
       .command('report', 'Generate a CSV report on the known ROM files found in the input directories (requires --dat)', (yargsSubObj) => {
         addCommands(yargsSubObj);
+      })
+      .check((checkArgv) => {
+        if (checkArgv.help) {
+          return true;
+        }
+        // TODO(cemmer): test
+        if (checkArgv._.indexOf('extract') !== -1 && checkArgv._.indexOf('zip') !== -1) {
+          throw new Error('Incompatible commands: extract, zip');
+        }
+        return true;
       });
 
     const yargsParser = yargs([])
@@ -136,7 +149,7 @@ export default class ArgumentsParser {
           return true;
         }
 
-        const needOutput = ['copy', 'move', 'zip', 'clean'].filter((command) => checkArgv._.indexOf(command) !== -1);
+        const needOutput = ['copy', 'move', 'extract', 'zip', 'clean'].filter((command) => checkArgv._.indexOf(command) !== -1);
         if ((!checkArgv.output || !checkArgv.output.length) && needOutput.length) {
           throw new Error(`Missing required option for commands ${needOutput.join(', ')}: output`);
         }

@@ -31,6 +31,7 @@ export default class FileHeader {
 
   readonly dataOffsetBytes: number;
 
+  // TODO(cemmer): change this to getters
   readonly headeredFileExtension: string;
 
   readonly unheaderedFileExtension: string;

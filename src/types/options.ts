@@ -227,6 +227,10 @@ export default class Options implements OptionsProps {
     return this.getCommands().indexOf('move') !== -1;
   }
 
+  shouldExtract(): boolean {
+    return this.getCommands().indexOf('extract') !== -1;
+  }
+
   shouldZip(filePath: string): boolean {
     return this.getCommands().indexOf('zip') !== -1
       && (!this.getZipExclude() || !micromatch.isMatch(

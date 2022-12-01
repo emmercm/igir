@@ -22,19 +22,21 @@ describe('commands', () => {
     expect(() => argumentsParser.parse(['foo', 'bar', ...dummyRequiredArgs])).toThrow(/unknown command/i);
   });
 
-  it('should parse single commands', () => {
-    expect(argumentsParser.parse(['copy', ...dummyRequiredArgs]).shouldCopy()).toEqual(true);
-    expect(argumentsParser.parse(['move', ...dummyRequiredArgs]).shouldMove()).toEqual(true);
-    expect(argumentsParser.parse(['zip', ...dummyRequiredArgs]).shouldZip('')).toEqual(true);
-    expect(argumentsParser.parse(['clean', ...dummyRequiredArgs]).shouldClean()).toEqual(true);
-    expect(argumentsParser.parse(['test', ...dummyRequiredArgs]).shouldTest()).toEqual(true);
-    expect(argumentsParser.parse(['report', ...dummyRequiredArgs, '--dat', os.devNull]).shouldReport()).toEqual(true);
+  it('should not parse different commands', () => {
+    expect(argumentsParser.parse(['move', ...dummyRequiredArgs]).shouldCopy()).toEqual(false);
+    expect(argumentsParser.parse(['copy', ...dummyRequiredArgs]).shouldMove()).toEqual(false);
+    expect(argumentsParser.parse(['copy', ...dummyRequiredArgs]).shouldExtract()).toEqual(false);
+    expect(argumentsParser.parse(['copy', ...dummyRequiredArgs]).shouldZip('')).toEqual(false);
+    expect(argumentsParser.parse(['copy', ...dummyRequiredArgs]).shouldClean()).toEqual(false);
+    expect(argumentsParser.parse(['copy', ...dummyRequiredArgs]).shouldTest()).toEqual(false);
+    expect(argumentsParser.parse(['copy', ...dummyRequiredArgs]).shouldReport()).toEqual(false);
   });
 
   it('should parse multiple commands', () => {
-    const commands = ['copy', 'move', 'zip', 'clean', 'test', 'report', ...dummyRequiredArgs, '--dat', os.devNull];
+    const commands = ['copy', 'move', 'extract', 'zip', 'clean', 'test', 'report', ...dummyRequiredArgs, '--dat', os.devNull];
     expect(argumentsParser.parse(commands).shouldCopy()).toEqual(true);
     expect(argumentsParser.parse(commands).shouldMove()).toEqual(true);
+    expect(argumentsParser.parse(commands).shouldExtract()).toEqual(true);
     expect(argumentsParser.parse(commands).shouldZip('')).toEqual(true);
     expect(argumentsParser.parse(commands).shouldClean()).toEqual(true);
     expect(argumentsParser.parse(commands).shouldTest()).toEqual(true);
@@ -48,6 +50,7 @@ describe('commands', () => {
   it('should not parse commands not present', () => {
     expect(argumentsParser.parse(['move', ...dummyRequiredArgs]).shouldCopy()).toEqual(false);
     expect(argumentsParser.parse(['copy', ...dummyRequiredArgs]).shouldMove()).toEqual(false);
+    expect(argumentsParser.parse(['copy', ...dummyRequiredArgs]).shouldExtract()).toEqual(false);
     expect(argumentsParser.parse(['copy', ...dummyRequiredArgs]).shouldZip('')).toEqual(false);
     expect(argumentsParser.parse(['copy', ...dummyRequiredArgs]).shouldClean()).toEqual(false);
     expect(argumentsParser.parse(['copy', ...dummyRequiredArgs]).shouldTest()).toEqual(false);
