@@ -1,5 +1,3 @@
-import path from 'path';
-
 import DATInferrer from '../../src/modules/datInferrer.js';
 import ROMScanner from '../../src/modules/romScanner.js';
 import Options from '../../src/types/options.js';
@@ -7,21 +5,21 @@ import ProgressBarFake from '../console/progressBarFake.js';
 
 test.each([
   ['test/fixtures/roms/**/*', {
-    [path.join('test', 'fixtures', 'roms')]: 5,
-    [path.join('test', 'fixtures', 'roms', '7z')]: 5,
-    [path.join('test', 'fixtures', 'roms', 'headered')]: 6,
-    [path.join('test', 'fixtures', 'roms', 'patchable')]: 7,
-    [path.join('test', 'fixtures', 'roms', 'rar')]: 5,
-    [path.join('test', 'fixtures', 'roms', 'raw')]: 8,
-    [path.join('test', 'fixtures', 'roms', 'tar')]: 5,
-    [path.join('test', 'fixtures', 'roms', 'unheadered')]: 1,
-    [path.join('test', 'fixtures', 'roms', 'zip')]: 5,
+    '7z': 5,
+    headered: 6,
+    patchable: 7,
+    rar: 5,
+    raw: 8,
+    roms: 5,
+    tar: 5,
+    unheadered: 1,
+    zip: 5,
   }],
-  ['test/fixtures/roms/7z/*', { [path.join('test', 'fixtures', 'roms', '7z')]: 5 }],
-  ['test/fixtures/roms/rar/*', { [path.join('test', 'fixtures', 'roms', 'rar')]: 5 }],
-  ['test/fixtures/roms/raw/*', { [path.join('test', 'fixtures', 'roms', 'raw')]: 8 }],
-  ['test/fixtures/roms/tar/*', { [path.join('test', 'fixtures', 'roms', 'tar')]: 5 }],
-  ['test/fixtures/roms/zip/*', { [path.join('test', 'fixtures', 'roms', 'zip')]: 5 }],
+  ['test/fixtures/roms/7z/*', { '7z': 5 }],
+  ['test/fixtures/roms/rar/*', { rar: 5 }],
+  ['test/fixtures/roms/raw/*', { raw: 8 }],
+  ['test/fixtures/roms/tar/*', { tar: 5 }],
+  ['test/fixtures/roms/zip/*', { zip: 5 }],
 ])('should infer DATs: %s', async (inputGlob, expected) => {
   // Given
   const romFiles = await new ROMScanner(new Options({
