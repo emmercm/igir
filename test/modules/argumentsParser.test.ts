@@ -22,6 +22,16 @@ describe('commands', () => {
     expect(() => argumentsParser.parse(['foo', 'bar', ...dummyRequiredArgs])).toThrow(/unknown command/i);
   });
 
+  it('should throw on conflicting commands', () => {
+    expect(() => argumentsParser.parse(['copy', 'move', ...dummyRequiredArgs])).toThrow(/incompatible command/i);
+    expect(() => argumentsParser.parse(['extract', 'zip', ...dummyRequiredArgs])).toThrow(/incompatible command/i);
+  });
+
+  it('should throw on commands requiring other commands', () => {
+    expect(() => argumentsParser.parse(['extract', ...dummyRequiredArgs])).toThrow(/command requires/i);
+    expect(() => argumentsParser.parse(['zip', ...dummyRequiredArgs])).toThrow(/command requires/i);
+  });
+
   it('should not parse different commands', () => {
     expect(argumentsParser.parse(['move', ...dummyRequiredArgs]).shouldCopy()).toEqual(false);
     expect(argumentsParser.parse(['copy', ...dummyRequiredArgs]).shouldMove()).toEqual(false);
@@ -157,7 +167,7 @@ describe('options', () => {
     expect(() => argumentsParser.parse(['test'])).toThrow(/missing required argument/i);
     expect(() => argumentsParser.parse(['copy', '--input', os.devNull])).toThrow(/missing required option/i);
     expect(() => argumentsParser.parse(['move', '--input', os.devNull])).toThrow(/missing required option/i);
-    expect(() => argumentsParser.parse(['zip', '--input', os.devNull])).toThrow(/missing required option/i);
+    expect(() => argumentsParser.parse(['copy', 'zip', '--input', os.devNull])).toThrow(/missing required option/i);
     expect(() => argumentsParser.parse(['clean', '--input', os.devNull])).toThrow(/missing required option/i);
     expect(argumentsParser.parse(['test', '--dat', os.devNull, '--input', os.devNull]).getOutputFileParsed()).toContain(Constants.GLOBAL_TEMP_DIR);
     expect(argumentsParser.parse(['report', '--dat', os.devNull, '--input', os.devNull]).getOutputFileParsed()).toContain(Constants.GLOBAL_TEMP_DIR);
@@ -214,11 +224,11 @@ describe('options', () => {
 
   it('should parse "zip-exclude"', () => {
     const filePath = 'roms/test.rom';
-    expect(argumentsParser.parse(['zip', '--input', os.devNull, '--output', os.devNull]).shouldZip(filePath)).toEqual(true);
-    expect(argumentsParser.parse(['zip', '--input', os.devNull, '--output', os.devNull, '-Z', os.devNull]).shouldZip(filePath)).toEqual(true);
-    expect(argumentsParser.parse(['zip', '--input', os.devNull, '--output', os.devNull, '-Z', '**/*']).shouldZip(filePath)).toEqual(false);
-    expect(argumentsParser.parse(['zip', '--input', os.devNull, '--output', os.devNull, '-Z', '**/*.rom']).shouldZip(filePath)).toEqual(false);
-    expect(argumentsParser.parse(['zip', '--input', os.devNull, '--output', os.devNull, '--zip-exclude', '**/*.rom']).shouldZip(filePath)).toEqual(false);
+    expect(argumentsParser.parse(['copy', 'zip', '--input', os.devNull, '--output', os.devNull]).shouldZip(filePath)).toEqual(true);
+    expect(argumentsParser.parse(['copy', 'zip', '--input', os.devNull, '--output', os.devNull, '-Z', os.devNull]).shouldZip(filePath)).toEqual(true);
+    expect(argumentsParser.parse(['copy', 'zip', '--input', os.devNull, '--output', os.devNull, '-Z', '**/*']).shouldZip(filePath)).toEqual(false);
+    expect(argumentsParser.parse(['copy', 'zip', '--input', os.devNull, '--output', os.devNull, '-Z', '**/*.rom']).shouldZip(filePath)).toEqual(false);
+    expect(argumentsParser.parse(['copy', 'zip', '--input', os.devNull, '--output', os.devNull, '--zip-exclude', '**/*.rom']).shouldZip(filePath)).toEqual(false);
   });
 
   it('should parse "remove-headers"', () => {

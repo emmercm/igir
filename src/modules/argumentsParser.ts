@@ -84,13 +84,17 @@ export default class ArgumentsParser {
         if (checkArgv.help) {
           return true;
         }
-        // TODO(cemmer): test
         if (checkArgv._.indexOf('copy') !== -1 && checkArgv._.indexOf('move') !== -1) {
           throw new Error('Incompatible commands: copy, move');
         }
         if (checkArgv._.indexOf('extract') !== -1 && checkArgv._.indexOf('zip') !== -1) {
           throw new Error('Incompatible commands: extract, zip');
         }
+        ['extract', 'zip'].forEach((command) => {
+          if (checkArgv._.indexOf(command) !== -1 && checkArgv._.indexOf('copy') === -1 && checkArgv._.indexOf('move') === -1) {
+            throw new Error(`Command requires "copy" or "move": ${command}`);
+          }
+        });
         return true;
       });
 

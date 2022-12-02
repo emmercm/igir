@@ -188,7 +188,7 @@ export default class Igir {
     dirsToClean: string[],
     datsToWrittenRoms: Map<DAT, Map<Parent, File[]>>,
   ): Promise<void> {
-    if (!this.options.shouldClean()) {
+    if (!this.options.shouldWrite() || !this.options.shouldClean()) {
       return;
     }
 
