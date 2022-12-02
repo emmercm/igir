@@ -45,7 +45,7 @@ export default class ArchiveEntry<A extends Archive> extends File {
     fileHeader?: FileHeader,
     patch?: Patch,
   ): Promise<ArchiveEntry<A>> {
-    let finalCrcWithoutHeader = crc;
+    let finalCrcWithoutHeader;
     if (await fsPoly.exists(archive.getFilePath())) {
       if (fileHeader) {
         finalCrcWithoutHeader = finalCrcWithoutHeader
@@ -55,9 +55,8 @@ export default class ArchiveEntry<A extends Archive> extends File {
             async (localFile) => this.calculateCrc32(localFile, fileHeader),
           );
       }
-    } else {
-      finalCrcWithoutHeader = finalCrcWithoutHeader || '';
     }
+    finalCrcWithoutHeader = finalCrcWithoutHeader || crc;
 
     return new ArchiveEntry<A>(
       archive.getFilePath(),

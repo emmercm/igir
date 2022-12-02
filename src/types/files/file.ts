@@ -46,21 +46,19 @@ export default class File {
   ): Promise<File> {
     let finalSize = size;
     let finalCrc = crc;
-    let finalCrcWithoutHeader = crc;
+    let finalCrcWithoutHeader;
     if (await fsPoly.exists(filePath)) {
       finalSize = finalSize || (await fsPromises.stat(filePath)).size;
       finalCrc = finalCrc || await this.calculateCrc32(filePath);
       if (fileHeader) {
         finalCrcWithoutHeader = finalCrcWithoutHeader
           || await this.calculateCrc32(filePath, fileHeader);
-      } else {
-        finalCrcWithoutHeader = finalCrcWithoutHeader || '';
       }
     } else {
       finalSize = finalSize || 0;
       finalCrc = finalCrc || '';
-      finalCrcWithoutHeader = finalCrcWithoutHeader || '';
     }
+    finalCrcWithoutHeader = finalCrcWithoutHeader || finalCrc;
 
     return new File(
       filePath,

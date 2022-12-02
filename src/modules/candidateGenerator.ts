@@ -245,8 +245,8 @@ export default class CandidateGenerator extends Module {
     const inputArchiveRaw = await inputFile.getArchive().asRawFile();
     return File.fileOf(
       outputFilePath,
-      inputArchiveRaw.getCrc32(),
       inputArchiveRaw.getSize(),
+      inputArchiveRaw.getCrc32(),
     );
   }
 
