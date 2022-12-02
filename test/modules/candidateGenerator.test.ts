@@ -249,7 +249,8 @@ describe('with ROMs with headers', () => {
 
 describe('with different input files for every game ROM', () => {
   const filePromises = [
-    ArchiveEntry.entryOf(new Tar('one.tar'), 'one.rom', 1, '12345678'),
+    File.fileOf('one.rom', 1, '12345678'),
+    ArchiveEntry.entryOf(new Tar('1.tar'), '1.rom', 1, '12345678'), // duplicate
     ArchiveEntry.entryOf(new Rar('a.7z'), 'a.rom', 2, 'abcdef90'),
     ArchiveEntry.entryOf(new Rar('b.7z'), 'b.rom', 3, '09876543'),
   ];

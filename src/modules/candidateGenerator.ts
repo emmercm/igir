@@ -217,7 +217,7 @@ export default class CandidateGenerator extends Module {
     } else {
       // Should leave archived, generate the archive name from the game name, but use the input
       //  file's extension
-      const extMatch = inputFile.getFilePath().match(/[^.]+((\.[a-zA-Z0-9]+)+)/);
+      const extMatch = inputFile.getFilePath().match(/[^.]+((\.[a-zA-Z0-9]+)+)$/);
       const ext = extMatch !== null ? extMatch[1] : '';
       outputRomFilename = game.getName() + ext;
     }
@@ -272,10 +272,13 @@ export default class CandidateGenerator extends Module {
   }
 
   private async hasConflictingOutputFiles(romsWithFiles: ROMWithFiles[]): Promise<boolean> {
+    // If we're not writing then don't bother looking for conflicts
     if (!this.options.shouldWrite()) {
       return false;
     }
 
+    // For this one ROM, find all output paths that have multiple (not necessarily unique)
+    //  input paths
     const duplicateOutputPaths = romsWithFiles
       .map((romWithFiles) => romWithFiles.getOutputFile())
       .filter((outputFile) => !(outputFile instanceof ArchiveEntry))
@@ -292,6 +295,9 @@ export default class CandidateGenerator extends Module {
     let hasConflict = false;
     for (let i = 0; i < duplicateOutputPaths.length; i += 1) {
       const duplicateOutput = duplicateOutputPaths[i];
+
+      // For an output path that has multiple input paths, remove duplicates and if there are still
+      //  multiple files left over then we won't be able to resolve this at write time
       const conflictedInputFiles = romsWithFiles
         .filter((romWithFiles) => romWithFiles.getOutputFile().getFilePath() === duplicateOutput)
         .map((romWithFiles) => romWithFiles.getInputFile().toString())
