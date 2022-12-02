@@ -96,7 +96,7 @@ These games are still considered "retail" releases (below).
 
 **Only retail (`--only-retail`)**
 
-Games that are not any of the below options, and are not:
+Enables all the following `--no-*` options, as well as filtering out games that are:
 
 - **Alphas**: games that contain `(Alpha)` in their name, e.g.:
 
