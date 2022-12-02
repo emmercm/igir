@@ -210,7 +210,7 @@ export default class CandidateGenerator extends Module {
       // Should extract (if needed), generate the file name from the ROM name
       outputRomFilename = outputEntryPath;
     } else {
-      // Should not zip or extract, generate the file name from the game name, but use the input
+      // Should leave archived, generate the archive name from the game name, but use the input
       //  file's extension
       const extMatch = inputFile.getFilePath().match(/[^.]+((\.[a-zA-Z0-9]+)+)/);
       const ext = extMatch !== null ? extMatch[1] : '';
@@ -233,12 +233,20 @@ export default class CandidateGenerator extends Module {
         inputFile.getSize(),
         inputFile.getCrc32(),
       );
+    } if (!(inputFile instanceof ArchiveEntry) || this.options.shouldExtract()) {
+      // Should extract (if needed), return a raw file using the ROM's size/CRC
+      return File.fileOf(
+        outputFilePath,
+        inputFile.getSize(),
+        inputFile.getCrc32(),
+      );
     }
-    // Should extract, return a raw file using the ROM's size/CRC
+    // Should leave archived
+    const inputArchiveRaw = await inputFile.getArchive().asRawFile();
     return File.fileOf(
       outputFilePath,
-      inputFile.getSize(),
-      inputFile.getCrc32(),
+      inputArchiveRaw.getCrc32(),
+      inputArchiveRaw.getSize(),
     );
   }
 

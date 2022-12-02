@@ -45,26 +45,21 @@ export default class File {
     patch?: Patch,
   ): Promise<File> {
     let finalSize = size;
-    if (finalSize === undefined) {
-      if (await fsPoly.exists(filePath)) {
-        finalSize = (await fsPromises.stat(filePath)).size;
-      } else {
-        finalSize = 0;
-      }
-    }
-
     let finalCrc = crc;
-    if (!finalCrc) {
-      if (await fsPoly.exists(filePath)) {
-        finalCrc = await this.calculateCrc32(filePath);
+    let finalCrcWithoutHeader = crc;
+    if (await fsPoly.exists(filePath)) {
+      finalSize = finalSize || (await fsPromises.stat(filePath)).size;
+      finalCrc = finalCrc || await this.calculateCrc32(filePath);
+      if (fileHeader) {
+        finalCrcWithoutHeader = finalCrcWithoutHeader
+          || await this.calculateCrc32(filePath, fileHeader);
       } else {
-        finalCrc = '';
+        finalCrcWithoutHeader = finalCrcWithoutHeader || '';
       }
-    }
-
-    let finalCrcWithoutHeader = finalCrc;
-    if (fileHeader) {
-      finalCrcWithoutHeader = await this.calculateCrc32(filePath, fileHeader);
+    } else {
+      finalSize = finalSize || 0;
+      finalCrc = finalCrc || '';
+      finalCrcWithoutHeader = finalCrcWithoutHeader || '';
     }
 
     return new File(

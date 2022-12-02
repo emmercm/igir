@@ -46,12 +46,17 @@ export default class ArchiveEntry<A extends Archive> extends File {
     patch?: Patch,
   ): Promise<ArchiveEntry<A>> {
     let finalCrcWithoutHeader = crc;
-    if (fileHeader) {
-      finalCrcWithoutHeader = await this.extractEntryToFile(
-        archive,
-        entryPath,
-        async (localFile) => this.calculateCrc32(localFile, fileHeader),
-      );
+    if (await fsPoly.exists(archive.getFilePath())) {
+      if (fileHeader) {
+        finalCrcWithoutHeader = finalCrcWithoutHeader
+          || await this.extractEntryToFile(
+            archive,
+            entryPath,
+            async (localFile) => this.calculateCrc32(localFile, fileHeader),
+          );
+      }
+    } else {
+      finalCrcWithoutHeader = finalCrcWithoutHeader || '';
     }
 
     return new ArchiveEntry<A>(
