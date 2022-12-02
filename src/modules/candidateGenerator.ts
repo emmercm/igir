@@ -180,6 +180,11 @@ export default class CandidateGenerator extends Module {
       return undefined;
     }
 
+    // Ignore the Game with conflicting input->output files
+    if (await this.hasConflictingOutputFiles(foundRomsWithFiles)) {
+      return undefined;
+    }
+
     return new ReleaseCandidate(game, release, foundRomsWithFiles);
   }
 
@@ -264,5 +269,40 @@ export default class CandidateGenerator extends Module {
       message += `\n  ${rom.getName()}`;
     });
     await this.progressBar.logWarn(message);
+  }
+
+  private async hasConflictingOutputFiles(romsWithFiles: ROMWithFiles[]): Promise<boolean> {
+    if (!this.options.shouldWrite()) {
+      return false;
+    }
+
+    const duplicateOutputPaths = romsWithFiles
+      .map((romWithFiles) => romWithFiles.getOutputFile())
+      .filter((outputFile) => !(outputFile instanceof ArchiveEntry))
+      .map((outputFile) => outputFile.getFilePath())
+      .filter((outputPath, idx, outputPaths) => outputPaths.indexOf(outputPath) !== idx)
+      .filter((duplicatePath, idx, duplicatePaths) => duplicatePaths
+        .indexOf(duplicatePath) === idx)
+      .sort();
+    if (!duplicateOutputPaths.length) {
+      return false;
+    }
+
+    /* eslint-disable no-await-in-loop */
+    let hasConflict = false;
+    for (let i = 0; i < duplicateOutputPaths.length; i += 1) {
+      const duplicateOutput = duplicateOutputPaths[i];
+      const conflictedInputFiles = romsWithFiles
+        .filter((romWithFiles) => romWithFiles.getOutputFile().getFilePath() === duplicateOutput)
+        .map((romWithFiles) => romWithFiles.getInputFile().toString())
+        .filter((inputFile, idx, inputFiles) => inputFiles.indexOf(inputFile) === idx);
+      if (conflictedInputFiles.length > 1) {
+        hasConflict = true;
+        let message = `Cannot ${this.options.shouldCopy() ? 'copy' : 'move'} different files to: ${duplicateOutput}:`;
+        conflictedInputFiles.forEach((conflictedInputFile) => { message += `\n  ${conflictedInputFile}`; });
+        await this.progressBar.logWarn(message);
+      }
+    }
+    return hasConflict;
   }
 }

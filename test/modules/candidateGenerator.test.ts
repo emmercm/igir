@@ -1,7 +1,9 @@
 import path from 'path';
 
 import CandidateGenerator from '../../src/modules/candidateGenerator.js';
+import Rar from '../../src/types/archives/rar.js';
 import SevenZip from '../../src/types/archives/sevenZip.js';
+import Tar from '../../src/types/archives/tar.js';
 import Zip from '../../src/types/archives/zip.js';
 import ArchiveEntry from '../../src/types/files/archiveEntry.js';
 import File from '../../src/types/files/file.js';
@@ -234,16 +236,56 @@ describe('with ROMs with headers', () => {
     expect(candidateWithOneRom.getRomsWithFiles()).toHaveLength(1);
     expect(candidateWithOneRom.getRomsWithFiles()[0].getOutputFile().getFilePath()).toEqual('one.nes'); // respected un-headered extension
 
-    // TODO(cemmer)
     const candidateWithTwoRoms = candidates[2];
     expect(candidateWithTwoRoms.getRomsWithFiles()).toHaveLength(2);
     const candidateWithTwoRomsOutputOne = candidateWithTwoRoms.getRomsWithFiles()[0]
-      .getOutputFile() as ArchiveEntry<Zip>;
-    expect(candidateWithTwoRomsOutputOne.getFilePath()).toEqual('game with two ROMs.zip'); // respected DAT
-    expect(candidateWithTwoRomsOutputOne.getEntryPath()).toEqual('two.sfc'); // respected un-headered extension
+      .getOutputFile();
+    expect(candidateWithTwoRomsOutputOne.getFilePath()).toEqual('game with two ROMs.7z'); // respected DAT and input extension
     const candidateWithTwoRomsOutputTwo = candidateWithTwoRoms.getRomsWithFiles()[1]
-      .getOutputFile() as ArchiveEntry<Zip>;
-    expect(candidateWithTwoRomsOutputTwo.getFilePath()).toEqual('game with two ROMs.zip'); // respected DAT
-    expect(candidateWithTwoRomsOutputTwo.getEntryPath()).toEqual('two.b'); // respected DAT
+      .getOutputFile();
+    expect(candidateWithTwoRomsOutputTwo.getFilePath()).toEqual('game with two ROMs.7z'); // respected DAT and input extension
+  });
+});
+
+describe('with different input files for every game ROM', () => {
+  const filePromises = [
+    ArchiveEntry.entryOf(new Tar('one.tar'), 'one.rom', 1, '12345678'),
+    ArchiveEntry.entryOf(new Rar('a.7z'), 'a.rom', 2, 'abcdef90'),
+    ArchiveEntry.entryOf(new Rar('b.7z'), 'b.rom', 3, '09876543'),
+  ];
+
+  test.each(['zip', 'extract'])('%s', async (command) => {
+    // Given
+    const options = new Options({ commands: ['copy', command] });
+
+    // When
+    const parentsToCandidates = await new CandidateGenerator(options, new ProgressBarFake())
+      .generate(dat, await Promise.all(filePromises));
+
+    // Then
+    expect(parentsToCandidates.size).toEqual(3);
+    const candidates = [...parentsToCandidates.values()].flatMap((c) => c);
+    expect(candidates).toHaveLength(3);
+
+    expect(candidates[0].getRomsWithFiles()).toHaveLength(0);
+    expect(candidates[1].getRomsWithFiles()).toHaveLength(1);
+    expect(candidates[2].getRomsWithFiles()).toHaveLength(2);
+  });
+
+  test('raw', async () => {
+    // Given
+    const options = new Options({ commands: ['copy'] });
+
+    // When
+    const parentsToCandidates = await new CandidateGenerator(options, new ProgressBarFake())
+      .generate(dat, await Promise.all(filePromises));
+
+    // Then
+    expect(parentsToCandidates.size).toEqual(3);
+    const candidates = [...parentsToCandidates.values()].flatMap((c) => c);
+    expect(candidates).toHaveLength(2); // game with two ROMs has an input->output conflict
+
+    expect(candidates[0].getRomsWithFiles()).toHaveLength(0);
+    expect(candidates[1].getRomsWithFiles()).toHaveLength(1);
   });
 });
