@@ -418,13 +418,13 @@ Example use cases:
   Produce a 1G1R set per console, preferring English ROMs from USA>EUR>JPN:
     $0 copy --dat *.dat --input **/*.zip --output 1G1R/ --dir-dat-name --single --prefer-language EN --prefer-region USA,EUR,JPN
 
-  Collate all BIOS files into one directory:
+  Copy all BIOS files into one directory, extracting if necessary:
     $0 copy extract --dat *.dat --input **/*.zip --output BIOS/ --only-bios
 
-  Create patched copies of ROMs in an existing collection:
+  Create patched copies of ROMs in an existing collection, not overwriting existing files:
     $0 copy extract --input ROMs/ --patch Patches/ --output ROMs/
 
-  Copy ROMs to your Analogue Pocket and test them:
+  Copy ROMs to your Analogue Pocket and test they were written correctly:
     $0 copy extract test --dat *.dat --input ROMs/ --output /Assets/{pocket}/common/ --dir-letter`)
 
       // Colorize help output
