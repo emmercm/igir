@@ -30,7 +30,7 @@
         "message": "Don't use prefixes with Node.js built-ins."
       }, {
         "name": "fs",
-        "importNames": "promises",
+        "importNames": ["promises"],
         "message": "Use util.promisify(fs.*)() instead of fs.promises.*()."
       }]
     }],
