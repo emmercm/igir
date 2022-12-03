@@ -81,7 +81,7 @@ export default abstract class Patch {
     return data;
   }
 
-  protected static async readVcdiffUintFromFile(fp: FilePoly): Promise<number> {
+  static async readVcdiffUintFromFile(fp: FilePoly): Promise<number> {
     let num = 0;
 
     /* eslint-disable no-await-in-loop, no-bitwise */
