@@ -55,7 +55,7 @@
   "dependencies": {
     "@fast-csv/format": "4.3.5",
     "7zip-min": "1.4.3",
-    "archiver": "^5.3.1",
+    "archiver": "5.3.1",
     "async": "3.2.4",
     "async-mutex": "0.4.0",
     "chalk": "5.1.2",
@@ -64,6 +64,7 @@
     "crc": "4.1.1",
     "fast-glob": "3.2.12",
     "figlet": "1.5.2",
+    "graceful-fs": "4.2.10",
     "junk": "4.0.0",
     "micromatch": "4.0.5",
     "moment": "2.29.4",
