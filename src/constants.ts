@@ -40,17 +40,17 @@ export default class Constants {
 
   static readonly GLOBAL_TEMP_DIR = globalTempDir;
 
-  static readonly DAT_SCANNER_THREADS = 25;
+  static readonly DAT_SCANNER_THREADS = 20;
 
-  static readonly ROM_SCANNER_THREADS = 25;
+  static readonly ROM_SCANNER_THREADS = 20;
 
-  static readonly PATCH_SCANNER_THREADS = 25;
+  static readonly PATCH_SCANNER_THREADS = 20;
 
-  static readonly ROM_HEADER_HASHER_THREADS = 25;
+  static readonly ROM_HEADER_HASHER_THREADS = 20;
 
   static readonly DAT_THREADS = 3;
 
-  static readonly ROM_WRITER_THREADS = 25;
+  static readonly ROM_WRITER_THREADS = 20;
 
   static readonly FILE_READING_CHUNK_SIZE = 1024 * 1024; // 1MiB
 
