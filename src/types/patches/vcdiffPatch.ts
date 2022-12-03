@@ -1,6 +1,7 @@
 // eslint-disable-next-line max-classes-per-file
-import { promises as fsPromises } from 'fs';
+import fs from 'fs';
 import path from 'path';
+import util from 'util';
 
 import Constants from '../../constants.js';
 import FilePoly from '../../polyfill/filePoly.js';
@@ -248,7 +249,7 @@ export default class VcdiffPatch extends Patch {
           Constants.GLOBAL_TEMP_DIR,
           `${path.basename(sourceFilePath)}.vcdiff`,
         ));
-        await fsPromises.copyFile(sourceFilePath, targetFilePath);
+        await util.promisify(fs.copyFile)(sourceFilePath, targetFilePath);
         const targetFile = await FilePoly.fileFrom(targetFilePath, 'r+');
 
         const sourceFile = await FilePoly.fileFrom(sourceFilePath, 'r');
