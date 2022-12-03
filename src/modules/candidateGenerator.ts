@@ -53,10 +53,33 @@ export default class CandidateGenerator extends Module {
     /* eslint-disable no-await-in-loop */
     for (let i = 0; i < dat.getParents().length; i += 1) {
       const parent = dat.getParents()[i];
-      output.set(
-        parent,
-        await this.buildReleaseCandidatesForParent(dat, parent, hashCodeToInputFiles),
-      );
+
+      const releaseCandidates: ReleaseCandidate[] = [];
+
+      // For every game
+      for (let j = 0; j < parent.getGames().length; j += 1) {
+        const game = parent.getGames()[j];
+
+        // For every release (ensuring at least one), find all release candidates
+        const releases = game.getReleases().length ? game.getReleases() : [undefined];
+        for (let k = 0; k < releases.length; k += 1) {
+          const release = releases[k];
+
+          const releaseCandidate = await this.buildReleaseCandidateForRelease(
+            dat,
+            game,
+            release,
+            hashCodeToInputFiles,
+          );
+          if (releaseCandidate) {
+            releaseCandidates.push(releaseCandidate);
+          }
+        }
+      }
+
+      await this.progressBar.logTrace(`${dat.getName()}: ${parent.getName()}: found ${releaseCandidates.length.toLocaleString()} candidates`);
+      output.set(parent, releaseCandidates);
+
       await this.progressBar.increment();
     }
 
@@ -68,59 +91,40 @@ export default class CandidateGenerator extends Module {
   }
 
   private static indexFilesByHashCode(files: File[]): Map<string, File> {
-    return files.reduce((map, file) => {
-      // Always set file based on full contents
-      map.set(file.hashCodeWithHeader(), file);
+    const filesByHashCodeWithHeader = new Map<string, File>();
+    const filesByHashCodeWithoutHeader = new Map<string, File>();
 
-      // If the file has a header, then add its un-headered hash code to the map
+    files.forEach((file) => {
+      // Index on full file contents
+      this.setFileInMap(filesByHashCodeWithHeader, file.hashCodeWithHeader(), file);
+
+      // Optionally index without a header
       if (file.getFileHeader()) {
-        const hashCodeWithoutHeader = file.hashCodeWithoutHeader();
-        if (!map.has(hashCodeWithoutHeader)) {
-          map.set(hashCodeWithoutHeader, file);
-        } else {
-          const existing = map.get(hashCodeWithoutHeader) as File;
-          if (!file.getFileHeader() && existing.getFileHeader()) {
-            // If the input files contain both a headered and un-headered copy of the same ROM, use
-            //  the un-headered copy because it is more "true" to what the DAT is looking for.
-            map.set(hashCodeWithoutHeader, file);
-          }
-        }
+        this.setFileInMap(filesByHashCodeWithoutHeader, file.hashCodeWithoutHeader(), file);
       }
+    });
 
-      return map;
-    }, new Map<string, File>());
+    // Merge the two maps, preferring files that were indexed on their full file contents
+    const filesByHashCode = filesByHashCodeWithHeader;
+    filesByHashCodeWithoutHeader.forEach((file, hashCodeWithoutHeader) => {
+      if (!filesByHashCode.has(hashCodeWithoutHeader)) {
+        filesByHashCode.set(hashCodeWithoutHeader, file);
+      }
+    });
+    return filesByHashCode;
   }
 
-  private async buildReleaseCandidatesForParent(
-    dat: DAT,
-    parent: Parent,
-    hashCodeToInputFiles: Map<string, File>,
-  ): Promise<ReleaseCandidate[]> {
-    const releaseCandidates: ReleaseCandidate[] = [];
-
-    // For every game
-    for (let j = 0; j < parent.getGames().length; j += 1) {
-      const game = parent.getGames()[j];
-
-      // For every release (ensuring at least one), find all release candidates
-      const releases = game.getReleases().length ? game.getReleases() : [undefined];
-      for (let k = 0; k < releases.length; k += 1) {
-        const release = releases[k];
-
-        const releaseCandidate = await this.buildReleaseCandidateForRelease(
-          dat,
-          game,
-          release,
-          hashCodeToInputFiles,
-        );
-        if (releaseCandidate) {
-          releaseCandidates.push(releaseCandidate);
-        }
-      }
+  private static setFileInMap<K>(map: Map<K, File>, key: K, file: File): void {
+    if (!map.has(key)) {
+      map.set(key, file);
+      return;
     }
 
-    await this.progressBar.logTrace(`${dat.getName()}: ${parent.getName()}: found ${releaseCandidates.length.toLocaleString()} candidates`);
-    return releaseCandidates;
+    // Prefer non-archived files
+    const existing = map.get(key) as File;
+    if (existing instanceof ArchiveEntry && !(file instanceof ArchiveEntry)) {
+      map.set(key, file);
+    }
   }
 
   private async buildReleaseCandidateForRelease(
@@ -137,12 +141,14 @@ export default class CandidateGenerator extends Module {
         //  headered file.
         const romFile = hashCodeToInputFiles.get(rom.hashCode());
         if (romFile) {
-          const romWithFiles = new ROMWithFiles(
-            rom,
-            romFile,
-            await this.getOutputFile(dat, game, rom, romFile),
-          );
-          return [rom, romWithFiles];
+          try {
+            const outputFile = await this.getOutputFile(dat, game, release, rom, romFile);
+            const romWithFiles = new ROMWithFiles(rom, romFile, outputFile);
+            return [rom, romWithFiles];
+          } catch (e) {
+            await this.progressBar.logWarn(`${dat.getName()}: ${game.getName()}: ${e}`);
+            return [rom, undefined];
+          }
         }
         return [rom, undefined];
       }),
@@ -166,7 +172,13 @@ export default class CandidateGenerator extends Module {
     return new ReleaseCandidate(game, release, foundRomsWithFiles);
   }
 
-  private async getOutputFile(dat: DAT, game: Game, rom: ROM, inputFile: File): Promise<File> {
+  private async getOutputFile(
+    dat: DAT,
+    game: Game,
+    release: Release | undefined,
+    rom: ROM,
+    inputFile: File,
+  ): Promise<File> {
     const { base, ...parsedPath } = path.parse(rom.getName());
     if (parsedPath.ext && inputFile.getFileHeader()) {
       // If the ROM has a header then we're going to ignore the file extension from the DAT
@@ -179,41 +191,26 @@ export default class CandidateGenerator extends Module {
     const outputEntryPath = path.format(parsedPath);
 
     if (this.options.shouldZip(rom.getName())) {
-      return this.buildZipArchiveEntry(dat, game, inputFile, outputEntryPath);
+      const outputFilePath = this.options.getOutputFileParsed(
+        dat,
+        inputFile.getFilePath(),
+        game,
+        release,
+        `${game.getName()}.zip`,
+      );
+      return ArchiveEntry.entryOf(
+        new Zip(outputFilePath),
+        outputEntryPath,
+        inputFile.getSize(),
+        inputFile.getCrc32(),
+      );
     }
-    return this.buildFileEntry(dat, game, inputFile, outputEntryPath);
-  }
 
-  private async buildZipArchiveEntry(
-    dat: DAT,
-    game: Game,
-    inputFile: File,
-    outputEntryPath: string,
-  ): Promise<ArchiveEntry<Zip>> {
-    const outputFilePath = this.options.getOutput(
-      dat,
-      inputFile.getFilePath(),
-      undefined,
-      `${game.getName()}.zip`,
-    );
-    return ArchiveEntry.entryOf(
-      new Zip(outputFilePath),
-      outputEntryPath,
-      inputFile.getSize(),
-      inputFile.getCrc32(),
-    );
-  }
-
-  private async buildFileEntry(
-    dat: DAT,
-    game: Game,
-    inputFile: File,
-    outputEntryPath: string,
-  ): Promise<File> {
-    const outputFilePath = this.options.getOutput(
+    const outputFilePath = this.options.getOutputFileParsed(
       dat,
       inputFile.getFilePath(),
       game,
+      release,
       outputEntryPath,
     );
     return File.fileOf(

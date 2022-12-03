@@ -23,10 +23,10 @@ it('should return empty list on no results', async () => {
 });
 
 it('should scan multiple files', async () => {
-  const expectedPatchFiles = 4;
+  const expectedPatchFiles = 7;
   await expect(createPatchScanner(['test/fixtures/patches/*']).scan()).resolves.toHaveLength(expectedPatchFiles);
   await expect(createPatchScanner(['test/fixtures/patches/**/*']).scan()).resolves.toHaveLength(expectedPatchFiles);
-  await expect(createPatchScanner(['test/fixtures/*/*.{bps,ips,ppf,ups}']).scan()).resolves.toHaveLength(expectedPatchFiles);
+  await expect(createPatchScanner(['test/fixtures/*/*.{bps,ips,ips32,ppf,rup,ups,vcdiff,xdelta}']).scan()).resolves.toHaveLength(expectedPatchFiles);
 });
 
 it('should scan single files', async () => {

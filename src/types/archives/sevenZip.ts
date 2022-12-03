@@ -11,20 +11,20 @@ export default class SevenZip extends Archive {
   static readonly SUPPORTED_EXTENSIONS = [
     '.7z', // 7z
     // '.bz2', '.bzip2', // bzip2
-    '.cab', // cab
+    // '.cab', // cab
     '.gz', '.gzip', // gzip
-    '.lzma', // lzma
-    '.lzma86', // lzma86
-    '.pmd', // ppmd
-    '.001', // split
-    '.tar', '.ova', // tar
+    // '.lzma', // lzma
+    // '.lzma86', // lzma86
+    // '.pmd', // ppmd
+    '.zip.001', // split
+    // '.tar', '.ova', // tar
     // '.xz', // xz
     '.z', // z
     '.zip', '.z01', '.zipx', // zip
-    '.zst', // zstd
-    '.lz4', // lz4
-    '.lz5', // lz5
-    '.liz', // lizard
+    // '.zst', // zstd
+    // '.lz4', // lz4
+    // '.lz5', // lz5
+    // '.liz', // lizard
   ];
 
   private static readonly LIST_MUTEX = new Mutex();

@@ -27,7 +27,7 @@ igir [commands..] --dat No-Intro*.zip --input <input>
 ## Just tell me what to do
 
 1. Go to the No-Intro DAT-o-MATIC [daily download page](https://datomatic.no-intro.org/index.php?page=download&s=64&op=daily)
-2. Select the "P/C XML" option (as opposed to "standard DAT") and download the `.zip` to wherever you store your ROMs
+2. Select the "P/C XML" dropdown option (as opposed to "standard DAT") and download the `.zip` to wherever you store your ROMs
 3. Every time you run `igir`, specify the `.zip` file you downloaded with the `--dat` option:
 
   ```shell
@@ -50,8 +50,14 @@ And some less popular release groups are:
 
 ## Parent/clone (P/C)
 
-DATs that include "parent" and "clone" information help `igir` understand what game releases are actually the same game ("clones"). Frequently a game will be released in many regions or with different revisions, usually with only language translations and minor bug fixes. For example, No-Intro has 6+ "clones" of Pokémon Blue cataloged.
+DATs that include "parent" and "clone" information help `igir` understand what game releases are actually the same game ("clones"). Frequently a game will be released in many regions or with different revisions, usually with only language translations and minor bug fixes. For example, No-Intro has 6+ "clones" of Pokemon Blue cataloged.
 
 Being able to know that many releases are actually the same game gives `igir` the ability to produce "one game, one rom" (1G1R) sets with the `--single` option. 1G1R sets include only one of these "clone" releases, usually filtered to a language and region, because many people don't care about ROMs they can't understand.
 
 If you have the option to download "parent/clone" or "P/C" versions of DATs you should always choose those.
+
+## Aren't DATs primarily for MAME?
+
+That's where DATs started. The [Logiqx XML](http://www.logiqx.com/DatFAQs/) DAT format can include information in [clrmamepro](https://mamedev.emulab.it/clrmamepro/) or [Romcenter](http://www.romcenter.com/) formats on how to handle MAME-specific settings such as [merging](https://docs.mamedev.org/usingmame/aboutromsets.html#parents-clones-splitting-and-merging) (non-merged vs. merged vs. split) and packing (zip vs. not). `igir` doesn't use any of this information, but it helps paint a picture of why DATs are structured the way they are.
+
+These days, depending on what type of emulation you're interested in, non-MAME DATs such as No-Intro's may be more common than MAME DATs. See the [DAT groups](#dat-groups) section above for some of the popular DAT release groups.

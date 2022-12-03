@@ -1,6 +1,7 @@
-import { promises as fsPromises, Stats } from 'fs';
+import fs, { Stats } from 'fs';
 import os from 'os';
 import path from 'path';
+import util from 'util';
 
 import Constants from '../../src/constants.js';
 import CandidateGenerator from '../../src/modules/candidateGenerator.js';
@@ -53,7 +54,7 @@ async function walkAndStat(dirPath: string): Promise<[string, Stats][]> {
         let stats: Stats;
         try {
           stats = {
-            ...await fsPromises.stat(filePath),
+            ...await util.promisify(fs.stat)(filePath),
             // Hard-code properties that can change with file reads
             atime: new Date(0),
             atimeMs: 0,
@@ -199,6 +200,23 @@ it('should not do anything if the input and output files are the same', async ()
 });
 
 describe('zip', () => {
+  it('should not write if the output is the input', async () => {
+    await copyFixturesToTemp(async (inputTemp) => {
+      // Given
+      const options = new Options({ commands: ['copy', 'zip', 'test'] });
+      const inputZip = path.join(inputTemp, 'roms', 'zip');
+      const inputFilesBefore = await walkAndStat(inputZip);
+      expect(inputFilesBefore.length)
+        .toBeGreaterThan(0);
+
+      // When
+      await romWriter(options, inputTemp, 'zip/*', undefined, inputZip);
+
+      // Then the input files weren't touched
+      await expect(walkAndStat(inputZip)).resolves.toEqual(inputFilesBefore);
+    });
+  });
+
   it('should not write anything if the output exists and not overwriting', async () => {
     await copyFixturesToTemp(async (inputTemp, outputTemp) => {
       // Given
@@ -374,7 +392,7 @@ describe('zip', () => {
   test.each([
     [
       '**/!(*headered)/*',
-      ['C01173E.zip', 'KDULVQN.zip', 'before.zip', 'best.zip', 'empty.zip', 'fizzbuzz.zip', 'foobar.zip', 'loremipsum.zip', 'one.zip', 'three.zip', 'two.zip', 'unknown.zip'],
+      ['0F09A40.zip', '612644F.zip', '65D1206.zip', 'C01173E.zip', 'KDULVQN.zip', 'before.zip', 'best.zip', 'empty.zip', 'fizzbuzz.zip', 'foobar.zip', 'loremipsum.zip', 'one.zip', 'three.zip', 'two.zip', 'unknown.zip'],
     ],
     [
       '7z/*',
@@ -418,8 +436,8 @@ describe('zip', () => {
   test.each([
     [
       '**/!(*headered)/*',
-      ['C01173E.zip', 'KDULVQN.zip', 'before.zip', 'best.zip', 'empty.zip', 'fizzbuzz.zip', 'foobar.zip', 'loremipsum.zip', 'one.zip', 'three.zip', 'two.zip', 'unknown.zip'],
-      ['patchable/C01173E.rom', 'patchable/KDULVQN.rom', 'patchable/before.rom', 'patchable/best.gz', 'raw/empty.rom', 'raw/fizzbuzz.nes', 'raw/foobar.lnx', 'raw/loremipsum.rom', 'raw/one.rom', 'raw/three.rom', 'raw/two.rom', 'raw/unknown.rom'],
+      ['0F09A40.zip', '612644F.zip', '65D1206.zip', 'C01173E.zip', 'KDULVQN.zip', 'before.zip', 'best.zip', 'empty.zip', 'fizzbuzz.zip', 'foobar.zip', 'loremipsum.zip', 'one.zip', 'three.zip', 'two.zip', 'unknown.zip'],
+      ['patchable/0F09A40.rom', 'patchable/612644F.rom', 'patchable/65D1206.rom', 'patchable/C01173E.rom', 'patchable/KDULVQN.rom', 'patchable/before.rom', 'patchable/best.gz', 'raw/empty.rom', 'raw/fizzbuzz.nes', 'raw/foobar.lnx', 'raw/loremipsum.rom', 'raw/one.rom', 'raw/three.rom', 'raw/two.rom', 'raw/unknown.rom'],
     ],
     [
       '7z/*',
@@ -478,6 +496,23 @@ describe('zip', () => {
 });
 
 describe('raw', () => {
+  it('should not write if the output is the input', async () => {
+    await copyFixturesToTemp(async (inputTemp) => {
+      // Given
+      const options = new Options({ commands: ['copy', 'test'] });
+      const inputRaw = path.join(inputTemp, 'roms', 'raw');
+      const inputFilesBefore = await walkAndStat(inputRaw);
+      expect(inputFilesBefore.length)
+        .toBeGreaterThan(0);
+
+      // When
+      await romWriter(options, inputTemp, 'raw/*', undefined, inputRaw);
+
+      // Then the input files weren't touched
+      await expect(walkAndStat(inputRaw)).resolves.toEqual(inputFilesBefore);
+    });
+  });
+
   it('should not write anything if the output exists and not overwriting', async () => {
     await copyFixturesToTemp(async (inputTemp, outputTemp) => {
       // Given
@@ -651,7 +686,7 @@ describe('raw', () => {
   test.each([
     [
       '**/!(*headered)/*',
-      ['C01173E.rom', 'KDULVQN.rom', 'before.rom', 'best.rom', 'empty.rom', 'fizzbuzz.nes', 'foobar.lnx', 'loremipsum.rom', 'one.rom', 'three.rom', 'two.rom', 'unknown.rom'],
+      ['0F09A40.rom', '612644F.rom', '65D1206.rom', 'C01173E.rom', 'KDULVQN.rom', 'before.rom', 'best.rom', 'empty.rom', 'fizzbuzz.nes', 'foobar.lnx', 'loremipsum.rom', 'one.rom', 'three.rom', 'two.rom', 'unknown.rom'],
     ],
     [
       '7z/*',
@@ -695,8 +730,8 @@ describe('raw', () => {
   test.each([
     [
       '**/!(*headered)/*',
-      ['C01173E.rom', 'KDULVQN.rom', 'before.rom', 'best.rom', 'empty.rom', 'fizzbuzz.nes', 'foobar.lnx', 'loremipsum.rom', 'one.rom', 'three.rom', 'two.rom', 'unknown.rom'],
-      ['patchable/C01173E.rom', 'patchable/KDULVQN.rom', 'patchable/before.rom', 'patchable/best.gz', 'raw/empty.rom', 'raw/fizzbuzz.nes', 'raw/foobar.lnx', 'raw/loremipsum.rom', 'raw/one.rom', 'raw/three.rom', 'raw/two.rom', 'raw/unknown.rom'],
+      ['0F09A40.rom', '612644F.rom', '65D1206.rom', 'C01173E.rom', 'KDULVQN.rom', 'before.rom', 'best.rom', 'empty.rom', 'fizzbuzz.nes', 'foobar.lnx', 'loremipsum.rom', 'one.rom', 'three.rom', 'two.rom', 'unknown.rom'],
+      ['patchable/0F09A40.rom', 'patchable/612644F.rom', 'patchable/65D1206.rom', 'patchable/C01173E.rom', 'patchable/KDULVQN.rom', 'patchable/before.rom', 'patchable/best.gz', 'raw/empty.rom', 'raw/fizzbuzz.nes', 'raw/foobar.lnx', 'raw/loremipsum.rom', 'raw/one.rom', 'raw/three.rom', 'raw/two.rom', 'raw/unknown.rom'],
     ],
     [
       '7z/*',

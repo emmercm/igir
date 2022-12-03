@@ -1,9 +1,10 @@
 import crypto from 'crypto';
-import fs, { PathLike, promises as fsPromises, RmOptions } from 'fs';
+import fs, { PathLike, RmOptions } from 'fs';
 import { isNotJunk } from 'junk';
 import os from 'os';
 import path from 'path';
 import semver from 'semver';
+import util from 'util';
 
 export default class FsPoly {
   /**
@@ -11,8 +12,24 @@ export default class FsPoly {
    */
   static async exists(pathLike: PathLike): Promise<boolean> {
     try {
-      await fsPromises.access(pathLike); // throw if file doesn't exist
+      await util.promisify(fs.access)(pathLike); // throw if file doesn't exist
       return true;
+    } catch (e) {
+      return false;
+    }
+  }
+
+  static async isDirectory(pathLike: PathLike): Promise<boolean> {
+    try {
+      return (await util.promisify(fs.lstat)(pathLike)).isDirectory();
+    } catch (e) {
+      return false;
+    }
+  }
+
+  static isDirectorySync(pathLike: PathLike): boolean {
+    try {
+      return fs.lstatSync(pathLike).isDirectory();
     } catch (e) {
       return false;
     }
@@ -33,20 +50,16 @@ export default class FsPoly {
     // mkdtemp takes a string prefix rather than a file path, so we need to make sure the
     //  prefix ends with the path separator in order for it to become a parent directory.
     let prefixProcessed = prefix.replace(/[\\/]+$/, '');
-    try {
-      if ((await fsPromises.lstat(prefixProcessed)).isDirectory()) {
-        prefixProcessed += path.sep;
-      }
-    } catch (e) {
-      // eslint-disable-line no-empty
+    if (await this.isDirectory(prefixProcessed)) {
+      prefixProcessed += path.sep;
     }
 
     try {
       // Added in: v10.0.0
-      return await fsPromises.mkdtemp(prefixProcessed);
+      return await util.promisify(fs.mkdtemp)(prefixProcessed);
     } catch (e) {
       // Added in: v10.0.0
-      return await fsPromises.mkdtemp(path.join(process.cwd(), 'tmp') + path.sep);
+      return await util.promisify(fs.mkdtemp)(path.join(process.cwd(), 'tmp') + path.sep);
     }
   }
 
@@ -54,12 +67,8 @@ export default class FsPoly {
     // mkdtempSync takes a string prefix rather than a file path, so we need to make sure the
     //  prefix ends with the path separator in order for it to become a parent directory.
     let prefixProcessed = prefix.replace(/[\\/]+$/, '');
-    try {
-      if (fs.lstatSync(prefixProcessed).isDirectory()) {
-        prefixProcessed += path.sep;
-      }
-    } catch (e) {
-      // eslint-disable-line no-empty
+    if (this.isDirectorySync(prefixProcessed)) {
+      prefixProcessed += path.sep;
     }
 
     try {
@@ -73,7 +82,7 @@ export default class FsPoly {
 
   static async renameOverwrite(oldPath: PathLike, newPath: PathLike, attempt = 1): Promise<void> {
     try {
-      await fsPromises.rename(oldPath, newPath);
+      await util.promisify(fs.rename)(oldPath, newPath);
     } catch (e) {
       if (attempt >= 3) {
         throw e;
@@ -88,7 +97,7 @@ export default class FsPoly {
 
   /**
    * fs.rm() was added in: v14.14.0
-   * fsPromises.rm() was added in: v14.14.0
+   * util.promisify(fs.rm)() was added in: v14.14.0
    */
   static async rm(pathLike: PathLike, options: RmOptions = {}): Promise<void> {
     const optionsWithRetry = {
@@ -98,7 +107,7 @@ export default class FsPoly {
 
     try {
       // Added in: v10.0.0
-      await fsPromises.access(pathLike); // throw if file doesn't exist
+      await util.promisify(fs.access)(pathLike); // throw if file doesn't exist
     } catch (e) {
       if (optionsWithRetry?.force) {
         return;
@@ -107,21 +116,21 @@ export default class FsPoly {
     }
 
     // Added in: v10.0.0
-    if ((await fsPromises.lstat(pathLike)).isDirectory()) {
+    if (await this.isDirectory(pathLike)) {
       // DEP0147
       if (semver.lt(process.version, '16.0.0')) {
         // Added in: v10.0.0
-        await fsPromises.rmdir(pathLike, optionsWithRetry);
+        await util.promisify(fs.rmdir)(pathLike, optionsWithRetry);
       } else {
         // Added in: v14.14.0
-        await fsPromises.rm(pathLike, {
+        await util.promisify(fs.rm)(pathLike, {
           ...optionsWithRetry,
           recursive: true,
         });
       }
     } else {
       // Added in: v10.0.0
-      await fsPromises.unlink(pathLike);
+      await util.promisify(fs.unlink)(pathLike);
     }
   }
 
@@ -145,7 +154,7 @@ export default class FsPoly {
     }
 
     // Added in: v0.1.30
-    if (fs.lstatSync(pathLike).isDirectory()) {
+    if (this.isDirectorySync(pathLike)) {
       // DEP0147
       if (semver.lt(process.version, '16.0.0')) {
         // Added in: v0.1.21
@@ -166,14 +175,15 @@ export default class FsPoly {
   static async touch(filePath: string): Promise<void> {
     const dirname = path.dirname(filePath);
     if (!await this.exists(dirname)) {
-      await fsPromises.mkdir(dirname, { recursive: true });
+      await util.promisify(fs.mkdir)(dirname, { recursive: true });
     }
 
     const time = new Date();
     try {
-      await fsPromises.utimes(filePath, time, time);
+      await util.promisify(fs.utimes)(filePath, time, time);
     } catch (e) {
-      await (await fsPromises.open(filePath, 'a')).close();
+      const file = await util.promisify(fs.open)(filePath, 'a');
+      await util.promisify(fs.close)(file);
     }
   }
 

@@ -1,7 +1,4 @@
 {
-  "hooks": {
-    "before:github:release": "npm pack"
-  },
   "git": {
     "requireBranch": "main",
     "requireCleanWorkingDir": true,

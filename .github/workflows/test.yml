@@ -25,10 +25,10 @@ jobs:
   # https://stackoverflow.com/questions/44097267/find-packages-that-give-deprecated-warning-npm
 
   node-unit:
-    runs-on: ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}-latest
     strategy:
       matrix:
-        os: [ubuntu-latest, macos-latest, windows-latest]
+        os: [ ubuntu, macos, windows ]
         node-version: [ lts/*, lts/-1, 14.18.0 ]
     steps:
       # Setup and install
@@ -131,7 +131,7 @@ jobs:
           verbose: true
 
   # !!! This check should be required by GitHub !!!
-  status-check:
+  test-status-check:
     needs:
       - node-lint
       - node-unit

@@ -1,5 +1,6 @@
-import { promises as fsPromises } from 'fs';
+import fs from 'fs';
 import path from 'path';
+import util from 'util';
 
 import Constants from '../../constants.js';
 import FilePoly from '../../polyfill/filePoly.js';
@@ -28,8 +29,8 @@ export default class UPSPatch extends Patch {
       const fp = await FilePoly.fileFrom(patchFile, 'r');
 
       fp.seek(4); // header
-      await Patch.readVariableLengthNumber(fp); // source size
-      targetSize = await Patch.readVariableLengthNumber(fp); // target size
+      await Patch.readUpsUint(fp); // source size
+      targetSize = await Patch.readUpsUint(fp); // target size
 
       fp.seek(fp.getSize() - 12);
       crcBefore = (await fp.readNext(4)).reverse().toString('hex');
@@ -54,22 +55,22 @@ export default class UPSPatch extends Patch {
         await patchFile.close();
         throw new Error(`UPS patch header is invalid: ${this.getFile().toString()}`);
       }
-      await Patch.readVariableLengthNumber(patchFile); // source size
-      await Patch.readVariableLengthNumber(patchFile); // target size
+      await Patch.readUpsUint(patchFile); // source size
+      await Patch.readUpsUint(patchFile); // target size
 
       const result = await file.extractToFile(async (sourceFilePath) => {
         const targetFilePath = fsPoly.mktempSync(path.join(
           Constants.GLOBAL_TEMP_DIR,
           `${path.basename(sourceFilePath)}.ups`,
         ));
-        await fsPromises.copyFile(sourceFilePath, targetFilePath);
+        await util.promisify(fs.copyFile)(sourceFilePath, targetFilePath);
         const targetFile = await FilePoly.fileFrom(targetFilePath, 'r+');
 
         const sourceFile = await FilePoly.fileFrom(sourceFilePath, 'r');
 
         /* eslint-disable no-await-in-loop, no-bitwise */
         while (patchFile.getPosition() < patchFile.getSize() - 12) {
-          const relativeOffset = await Patch.readVariableLengthNumber(patchFile);
+          const relativeOffset = await Patch.readUpsUint(patchFile);
           sourceFile.skipNext(relativeOffset);
           targetFile.skipNext(relativeOffset);
 

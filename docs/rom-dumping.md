@@ -1,5 +1,9 @@
 # ROM Dumping
 
+⚠️ An obligatory warning about downloading ROMs:
+
+> Emulators are generally _legal_, as long as they don't include copyrighted software such as a console BIOS. Downloading ROM files that you do not own is piracy which is _illegal_ in many countries.
+
 [Dumping.Guide](https://dumping.guide/start) and [Emulation General Wiki](https://emulation.gametechwiki.com/index.php/Ripping_games) are some of the best resources for legally creating ROM files from games you own.
 
 Here is a condensed version that isn't guaranteed to be up-to-date.
@@ -27,7 +31,7 @@ Here is a condensed version that isn't guaranteed to be up-to-date.
 | Sony - PSP              | [PSP Filer](http://wiki.redump.org/index.php?title=PlayStation_Portable_Dumping_Guide)                                                                                                                                          |
 | Sony - PlayStation Vita | [psvgamesd](https://github.com/motoharu-gosuto/psvgamesd)                                                                                                                                                                       |
 
-## CD/DVD/BluRay/etc. consoles
+## Optical-based consoles
 
 | Optical-based consoles     | [Media Preservation Frontend (MPF)](https://github.com/SabreTools/MPF) (w/ PC) | Software for native hardware                                                                                  |
 |----------------------------|--------------------------------------------------------------------------------|---------------------------------------------------------------------------------------------------------------|

@@ -1,3 +1,5 @@
+import path from 'path';
+
 import File from '../files/file.js';
 import Archive from './archive.js';
 import Rar from './rar.js';
@@ -27,7 +29,7 @@ export default class FileFactory {
       return new SevenZip(filePath);
     }
 
-    throw new Error(`Unknown archive type: ${filePath}`);
+    throw new Error(`Unknown archive type: ${path.extname(filePath)}`);
   }
 
   static isArchive(filePath: string): boolean {

@@ -1,4 +1,5 @@
 import async from 'async';
+import path from 'path';
 
 import Logger from './console/logger.js';
 import { Symbols } from './console/progressBar.js';
@@ -22,6 +23,7 @@ import DAT from './types/logiqx/dat.js';
 import Parent from './types/logiqx/parent.js';
 import Options from './types/options.js';
 import Patch from './types/patches/patch.js';
+import ReleaseCandidate from './types/releaseCandidate.js';
 
 export default class Igir {
   private readonly options: Options;
@@ -46,7 +48,13 @@ export default class Igir {
       dats = await new DATInferrer(datProcessProgressBar).infer(processedRomFiles);
     }
 
+    if (this.options.getSingle() && !dats.some((dat) => dat.hasParentCloneInfo())) {
+      ProgressBarCLI.stop();
+      throw new Error('No DAT contains parent/clone information, cannot process --single');
+    }
+
     const datsToWrittenRoms = new Map<DAT, Map<Parent, File[]>>();
+    const romOutputDirs: string[] = [];
     const datsStatuses: DATStatus[] = [];
 
     // Process every DAT
@@ -63,6 +71,7 @@ export default class Igir {
         .generate(dat, processedRomFiles);
       const parentsToCandidatesPatched = await new PatchCandidateGenerator(progressBar)
         .generate(dat, parentsToCandidates, patches);
+      romOutputDirs.push(...this.getCandidateOutputDirs(dat, parentsToCandidatesPatched));
       const romOutputs = await new CandidateFilter(this.options, progressBar)
         .filter(dat, parentsToCandidatesPatched);
 
@@ -101,7 +110,7 @@ export default class Igir {
     datProcessProgressBar.delete();
 
     // Clean the output directories
-    await this.processOutputCleaner(datsToWrittenRoms);
+    await this.processOutputCleaner(romOutputDirs, datsToWrittenRoms);
 
     // Generate the report
     await this.processReportGenerator(datsStatuses);
@@ -160,7 +169,28 @@ export default class Igir {
     return processedRomFiles;
   }
 
+  /**
+   * Find all ROM output paths for a DAT and its candidates.
+   */
+  private getCandidateOutputDirs(
+    dat: DAT,
+    parentsToCandidates: Map<Parent, ReleaseCandidate[]>,
+  ): string[] {
+    return [...parentsToCandidates.values()]
+      .flatMap((releaseCandidates) => releaseCandidates
+        .flatMap((releaseCandidate) => releaseCandidate.getRomsWithFiles()
+          .flatMap((romWithFiles) => this.options.getOutputDirParsed(
+            dat,
+            romWithFiles.getInputFile().getFilePath(),
+            releaseCandidate.getGame(),
+            releaseCandidate.getRelease(),
+            path.basename(romWithFiles.getOutputFile().getFilePath()),
+          ))))
+      .filter((outputDir, idx, outputDirs) => outputDirs.indexOf(outputDir) === idx);
+  }
+
   private async processOutputCleaner(
+    dirsToClean: string[],
     datsToWrittenRoms: Map<DAT, Map<Parent, File[]>>,
   ): Promise<void> {
     if (!this.options.shouldClean()) {
@@ -172,7 +202,7 @@ export default class Igir {
       .flatMap((parentsToFiles) => [...parentsToFiles.values()])
       .flatMap((files) => files);
     const filesCleaned = await new OutputCleaner(this.options, progressBar)
-      .clean(writtenFilesToExclude);
+      .clean(dirsToClean, writtenFilesToExclude);
     await progressBar.doneItems(filesCleaned, 'file', 'recycled');
     await progressBar.freeze();
   }

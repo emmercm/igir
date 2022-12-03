@@ -18,7 +18,7 @@ export default class DAT {
 
   private readonly gameNamesToParents: Map<string, Parent> = new Map();
 
-  constructor(header: Header, games: Game[]) {
+  constructor(header: Header, games: Game | Game[]) {
     this.header = header;
     this.game = games;
     this.generateGameNamesToParents();
@@ -72,6 +72,10 @@ export default class DAT {
     return [...this.gameNamesToParents.values()];
   }
 
+  hasParentCloneInfo(): boolean {
+    return this.getGames().some((game) => game.isClone());
+  }
+
   // Computed getters
 
   getName(): string {
@@ -81,36 +85,21 @@ export default class DAT {
   getNameShort(): string {
     return this.getName()
       // Prefixes
+      .replace('FinalBurn Neo', '')
       .replace('Non-Redump', '')
       .replace('Source Code', '')
       .replace('Unofficial', '')
       // Suffixes
       .replace('Datfile', '')
-      .replace('(CDN)', '')
+      .replace('Games', '')
       .replace('(Deprecated)', '')
-      .replace('(Digital)', '')
-      .replace('(Download Play)', '')
-      .replace('(Misc)', '')
       .replace(/\(Parent-Clone\)/g, '')
-      .replace('(PSN)', '')
-      .replace('(Split DLC)', '')
-      .replace('(WAD)', '')
       .replace('(WIP)', '')
       // Cleanup
       .replace(/^[ -]+/, '')
       .replace(/[ -]+$/, '')
       .replace(/  +/g, ' ')
       .trim();
-  }
-
-  getNameLong(): string {
-    let long = this.getName();
-    if (this.getHeader().getDate()) {
-      long += ` (${this.getHeader().getDate()})`;
-    } else if (this.getHeader().getVersion()) {
-      long += `(v${this.getHeader().getVersion()})`;
-    }
-    return long;
   }
 
   /**

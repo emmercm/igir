@@ -1,5 +1,6 @@
-import fs, { promises as fsPromises } from 'fs';
+import fs from 'fs';
 import path from 'path';
+import util from 'util';
 
 import Constants from '../../../src/constants.js';
 import bufferPoly from '../../../src/polyfill/bufferPoly.js';
@@ -9,7 +10,7 @@ import UPSPatch from '../../../src/types/patches/upsPatch.js';
 
 async function writeTemp(fileName: string, contents: string | Buffer): Promise<File> {
   const temp = fsPoly.mktempSync(path.join(Constants.GLOBAL_TEMP_DIR, fileName));
-  await fsPromises.writeFile(temp, contents);
+  await util.promisify(fs.writeFile)(temp, contents);
   return File.fileOf(temp);
 }
 
@@ -40,7 +41,7 @@ describe('apply', () => {
     ['AAAAAAAAAA', Buffer.from('555053318a8a8103020500cfd08e47d0c41e6e697b65ac', 'hex'), 'ABCDAAAAAA'],
     ['AAAAAAAAAA', Buffer.from('555053318a8a8103020504070609080b00cfd08e47056d1e320b1badb2', 'hex'), 'ABCDEFGHIJ'],
     ['AAAAAAAAAAAAAAAAAAAA', Buffer.from('55505331949481030205040700890404040400c518201d686456eb1cb4af39', 'hex'), 'ABCDEFAAAAAAAAAAEEEE'],
-  ])('should apply the patch: %s', async (baseContents, patchContents, expectedContents) => {
+  ])('should apply the patch #%#: %s', async (baseContents, patchContents, expectedContents) => {
     const rom = await writeTemp('ROM', baseContents);
     const patchFile = await writeTemp('patch.bps', patchContents);
     const patch = await UPSPatch.patchFrom(patchFile);

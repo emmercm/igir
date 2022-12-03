@@ -94,7 +94,7 @@ export default class ReleaseCandidate {
       region: 'EUR', long: 'Europe', language: 'EN', regex: /\(E\)/i,
     },
     {
-      region: 'UNK', long: 'World', language: 'EN', regex: /\(W\)/i,
+      region: 'WORLD', long: 'World', language: 'EN', regex: /\(W\)/i,
     },
   ];
 
