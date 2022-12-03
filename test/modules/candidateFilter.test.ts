@@ -858,6 +858,17 @@ describe('sort', () => {
       ], ['one (USA) (EN)', 'two (USA) (EN)', 'three (JPN) (JA)', 'four (JPN) (EN)', 'five (EUR) (DE)', 'six (EUR)']);
     });
 
+    it('should treat "World" as English', async () => {
+      const gameParent = new Game({ name: 'Akumajou Special - Boku Dracula-kun (Japan)', release: new Release('Akumajou Special - Boku Dracula-kun (Japan)', 'JPN') });
+      const gameWorldJa = new Game({ name: 'Akumajou Special - Boku Dracula-kun (World) (Ja) (Castlevania Anniversary Collection)' });
+      const gameWorld = new Game({ name: 'Kid Dracula (World) (Castlevania Anniversary Collection)' });
+      const games = [gameParent, gameWorldJa, gameWorld];
+      const parent = new Parent(gameParent.getName(), games);
+      const releaseCandidates = games
+        .map((game) => new ReleaseCandidate(game, game.getReleases()[0], []));
+      await expectPreferredCandidates({ single: true, preferLanguage: ['EN'] }, [[parent, releaseCandidates]], [gameWorld.getName()]);
+    });
+
     it('should return the first candidate when all matching', async () => {
       await expectPreferredCandidates({ preferLanguage: ['EN', 'JA'], single: true }, [
         await buildReleaseCandidatesWithRegionLanguage('one', 'USA', 'EN'),
