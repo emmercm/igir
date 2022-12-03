@@ -66,18 +66,19 @@ export default class SingleBarFormatted {
     }
 
     let progress = SingleBarFormatted.getBar(options, params);
-    if (params.total > 0) {
-      progress += ` | ${params.value.toLocaleString()}/${params.total.toLocaleString()}`;
-
-      if (payload.waitingMessage) {
-        return `${progress} | ${payload.waitingMessage}`;
-      }
-
-      if (params.value > 0) {
-        const eta = this.calculateEta(params);
-        progress += ` | ETA: ${this.getEtaFormatted(eta)}`;
-      }
+    if (!params.total) {
+      return progress;
     }
+
+    progress += ` | ${params.value.toLocaleString()}/${params.total.toLocaleString()}`;
+
+    if (payload.waitingMessage) {
+      progress += ` | ${payload.waitingMessage}`;
+    } else if (params.value > 0) {
+      const eta = this.calculateEta(params);
+      progress += ` | ETA: ${this.getEtaFormatted(eta)}`;
+    }
+
     return progress;
   }
 
@@ -130,24 +131,30 @@ export default class SingleBarFormatted {
     const etaSecondsInt = Math.ceil(etaSeconds);
     const secondsRounded = 5 * Math.round(etaSecondsInt / 5);
     if (secondsRounded >= 3600) {
-      const minutes = Math.floor((secondsRounded % 3600) / 60);
-      if (minutes > 0) {
-        this.lastEtaValue = `${Math.floor(secondsRounded / 3600)}h${minutes}m`;
-      } else {
-        this.lastEtaValue = `${Math.floor(secondsRounded / 3600)}h`;
-      }
+      this.lastEtaValue = SingleBarFormatted.getEtaFormattedHours(secondsRounded);
     } else if (secondsRounded >= 60) {
-      const seconds = secondsRounded % 60;
-      if (seconds > 0) {
-        this.lastEtaValue = `${Math.floor(secondsRounded / 60)}m${seconds}s`;
-      } else {
-        this.lastEtaValue = `${Math.floor(secondsRounded / 60)}m`;
-      }
+      this.lastEtaValue = SingleBarFormatted.getEtaFormattedMinutes(secondsRounded);
     } else if (etaSecondsInt >= 10) {
       this.lastEtaValue = `${secondsRounded}s`;
     } else {
       this.lastEtaValue = `${etaSecondsInt}s`;
     }
     return this.lastEtaValue;
+  }
+
+  private static getEtaFormattedHours(secondsRounded: number): string {
+    const minutes = Math.floor((secondsRounded % 3600) / 60);
+    if (minutes > 0) {
+      return `${Math.floor(secondsRounded / 3600)}h${minutes}m`;
+    }
+    return `${Math.floor(secondsRounded / 3600)}h`;
+  }
+
+  private static getEtaFormattedMinutes(secondsRounded: number): string {
+    const seconds = secondsRounded % 60;
+    if (seconds > 0) {
+      return `${Math.floor(secondsRounded / 60)}m${seconds}s`;
+    }
+    return `${Math.floor(secondsRounded / 60)}m`;
   }
 }
