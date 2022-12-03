@@ -1,9 +1,15 @@
 #!/usr/bin/env node
 
+import realFs from 'fs';
+import gracefulFs from 'graceful-fs';
+
 import Logger from './src/console/logger.js';
 import Constants from './src/constants.js';
 import Igir from './src/igir.js';
 import ArgumentsParser from './src/modules/argumentsParser.js';
+
+// Monkey-patch 'fs' to help prevent Windows EMFILE errors
+gracefulFs.gracefulify(realFs);
 
 /* eslint-disable-next-line @typescript-eslint/no-floating-promises */
 (async (): Promise<void> => {

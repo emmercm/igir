@@ -47,7 +47,7 @@ $ igir --help
   | $$  | $$ __\$$  | $$  | $$__| $$
   | $$  | $$|    \  | $$  | $$    $$   ROM collection manager
   | $$  | $$ \$$$$  | $$  | $$$$$$$\
- _| $$_ | $$__| $$ _| $$_ | $$  | $$   v0.6.1
+ _| $$_ | $$__| $$ _| $$_ | $$  | $$   v0.6.3
 |   $$ \ \$$    $$|   $$ \| $$  | $$
  \$$$$$$  \$$$$$$  \$$$$$$ \$$   \$$
 
@@ -91,7 +91,7 @@ Filtering options:
                          , ES, FI, FR, IT, JA, KO, NL, NO, PT, RU, SV, ZH)               [string]
   -R, --region-filter    List of comma-separated regions to limit to (supported: ARG, ASI, AUS, B
                          RA, CAN, CHN, DAN, EUR, FRA, FYN, GER, GRE, HK, HOL, ITA, JPN, KOR, MEX,
-                          NOR, NZ, POR, RUS, SPA, SWE, TAI, UK, UNK, USA)                [string]
+                          NOR, NZ, POR, RUS, SPA, SWE, TAI, UK, UNK, USA, WORLD)         [string]
       --only-bios        Filter to only BIOS files                                      [boolean]
       --no-bios          Filter out BIOS files                                          [boolean]
       --no-unlicensed    Filter out unlicensed ROMs                                     [boolean]
@@ -117,8 +117,8 @@ Priority options:
                                                                                          [string]
   -r, --prefer-region          List of comma-separated regions in priority order (supported: ARG,
                                 ASI, AUS, BRA, CAN, CHN, DAN, EUR, FRA, FYN, GER, GRE, HK, HOL, I
-                               TA, JPN, KOR, MEX, NOR, NZ, POR, RUS, SPA, SWE, TAI, UK, UNK, USA)
-                                                                                         [string]
+                               TA, JPN, KOR, MEX, NOR, NZ, POR, RUS, SPA, SWE, TAI, UK, UNK, USA,
+                                WORLD)                                                   [string]
       --prefer-revision-newer  Prefer newer ROM revisions over older                    [boolean]
       --prefer-revision-older  Prefer older ROM revisions over newer                    [boolean]
       --prefer-retail          Prefer retail releases (see --only-retail)               [boolean]

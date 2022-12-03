@@ -1,8 +1,9 @@
 import archiver from 'archiver';
-import fs, { promises as fsPromises } from 'fs';
+import fs from 'fs';
 import path from 'path';
 import { Readable } from 'stream';
 import { clearInterval } from 'timers';
+import util from 'util';
 import yauzl, { Entry } from 'yauzl';
 
 import fsPoly from '../../polyfill/fsPoly.js';
@@ -66,7 +67,7 @@ export default class Zip extends Archive {
 
     const localDir = path.dirname(localFile);
     if (!await fsPoly.exists(localDir)) {
-      await fsPromises.mkdir(localDir, { recursive: true });
+      await util.promisify(fs.mkdir)(localDir, { recursive: true });
     }
 
     return this.extractEntryToStream(

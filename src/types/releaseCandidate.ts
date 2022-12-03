@@ -94,7 +94,7 @@ export default class ReleaseCandidate {
       region: 'EUR', long: 'Europe', language: 'EN', regex: /\(E\)/i,
     },
     {
-      region: 'UNK', long: 'World', language: 'EN', regex: /\(W\)/i,
+      region: 'WORLD', long: 'World', language: 'EN', regex: /\(W\)/i,
     },
   ];
 
@@ -204,7 +204,25 @@ export default class ReleaseCandidate {
       return [(this.release.getLanguage() as string).toUpperCase()];
     }
 
-    // Get language from short languages in the game name
+    const shortLanguages = this.getShortLanguagesFromName();
+    if (shortLanguages.length) {
+      return shortLanguages;
+    }
+
+    const longLanguages = this.getLongLanguagesFromName();
+    if (longLanguages.length) {
+      return longLanguages;
+    }
+
+    const regionLanguage = this.getLanguageFromRegion();
+    if (regionLanguage) {
+      return [regionLanguage];
+    }
+
+    return [];
+  }
+
+  private getShortLanguagesFromName(): string[] {
     const twoMatches = this.getName().match(/\(([a-zA-Z]{2}([,+][a-zA-Z]{2})*)\)/);
     if (twoMatches && twoMatches.length >= 2) {
       const twoMatchesParsed = twoMatches[1].split(/[,+]/)
@@ -215,7 +233,10 @@ export default class ReleaseCandidate {
         return twoMatchesParsed;
       }
     }
+    return [];
+  }
 
+  private getLongLanguagesFromName(): string[] {
     // Get language from long languages in the game name
     const threeMatches = this.getName().match(/\(([a-zA-Z]{3}(-[a-zA-Z]{3})*)\)/);
     if (threeMatches && threeMatches.length >= 2) {
@@ -229,19 +250,20 @@ export default class ReleaseCandidate {
         return threeMatchesParsed;
       }
     }
+    return [];
+  }
 
+  private getLanguageFromRegion(): string | undefined {
     // Get language from the region
     if (this.getRegion()) {
       const region = (this.getRegion() as string).toUpperCase();
-
       for (let i = 0; i < ReleaseCandidate.REGION_OPTIONS.length; i += 1) {
         const regionOption = ReleaseCandidate.REGION_OPTIONS[i];
         if (regionOption.region === region) {
-          return [regionOption.language.toUpperCase()];
+          return regionOption.language.toUpperCase();
         }
       }
     }
-
-    return [];
+    return undefined;
   }
 }

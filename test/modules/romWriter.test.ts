@@ -1,6 +1,7 @@
-import { promises as fsPromises, Stats } from 'fs';
+import fs, { Stats } from 'fs';
 import os from 'os';
 import path from 'path';
+import util from 'util';
 
 import Constants from '../../src/constants.js';
 import CandidateGenerator from '../../src/modules/candidateGenerator.js';
@@ -55,7 +56,7 @@ async function walkAndStat(dirPath: string): Promise<[string, Stats][]> {
         let stats: Stats;
         try {
           stats = {
-            ...await fsPromises.stat(filePath),
+            ...await util.promisify(fs.stat)(filePath),
             // Hard-code properties that can change with file reads
             atime: new Date(0),
             atimeMs: 0,

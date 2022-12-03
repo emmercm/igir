@@ -48,6 +48,11 @@ export default class Igir {
       dats = await new DATInferrer(datProcessProgressBar).infer(processedRomFiles);
     }
 
+    if (this.options.getSingle() && !dats.some((dat) => dat.hasParentCloneInfo())) {
+      ProgressBarCLI.stop();
+      throw new Error('No DAT contains parent/clone information, cannot process --single');
+    }
+
     const datsToWrittenRoms = new Map<DAT, Map<Parent, File[]>>();
     const romOutputDirs: string[] = [];
     const datsStatuses: DATStatus[] = [];

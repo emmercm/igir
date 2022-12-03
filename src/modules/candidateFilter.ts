@@ -24,11 +24,10 @@ export default class CandidateFilter extends Module {
     parentsToCandidates: Map<Parent, ReleaseCandidate[]>,
   ): Promise<Map<Parent, ReleaseCandidate[]>> {
     await this.progressBar.logInfo(`${dat.getName()}: Filtering candidates`);
-    const output = new Map<Parent, ReleaseCandidate[]>();
 
     if (!parentsToCandidates.size) {
       await this.progressBar.logDebug(`${dat.getName()}: No parents, so no candidates to filter`);
-      return output;
+      return new Map();
     }
 
     // Return early if there aren't any candidates
@@ -36,11 +35,26 @@ export default class CandidateFilter extends Module {
       .reduce((sum, rcs) => sum + rcs.length, 0);
     if (!totalReleaseCandidates) {
       await this.progressBar.logDebug(`${dat.getName()}: No parent has candidates`);
-      return output;
+      return new Map();
     }
 
     await this.progressBar.setSymbol(Symbols.FILTERING);
     await this.progressBar.reset(parentsToCandidates.size);
+
+    const output = await this.filterSortFilter(dat, parentsToCandidates);
+
+    const filteredCandidates = [...output.values()].reduce((sum, rc) => sum + rc.length, 0);
+    await this.progressBar.logDebug(`${dat.getName()}: ${filteredCandidates.toLocaleString()} candidate${filteredCandidates !== 1 ? 's' : ''} after filtering`);
+
+    await this.progressBar.logInfo(`${dat.getName()}: Done filtering candidates`);
+    return output;
+  }
+
+  private async filterSortFilter(
+    dat: DAT,
+    parentsToCandidates: Map<Parent, ReleaseCandidate[]>,
+  ): Promise<Map<Parent, ReleaseCandidate[]>> {
+    const output = new Map<Parent, ReleaseCandidate[]>();
 
     /* eslint-disable no-await-in-loop */
     for (let i = 0; i < [...parentsToCandidates.entries()].length; i += 1) {
@@ -57,10 +71,6 @@ export default class CandidateFilter extends Module {
       await this.progressBar.increment();
     }
 
-    const filteredCandidates = [...output.values()].reduce((sum, rc) => sum + rc.length, 0);
-    await this.progressBar.logDebug(`${dat.getName()}: ${filteredCandidates.toLocaleString()} candidate${filteredCandidates !== 1 ? 's' : ''} after filtering`);
-
-    await this.progressBar.logInfo(`${dat.getName()}: Done filtering candidates`);
     return output;
   }
 

@@ -58,6 +58,10 @@ export default class FilePoly {
     return this.fileFrom(pathLike, flags);
   }
 
+  getPathLike(): PathLike {
+    return this.pathLike;
+  }
+
   isEOF(): boolean {
     return this.getPosition() >= this.getSize();
   }

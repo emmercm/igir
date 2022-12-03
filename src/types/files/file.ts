@@ -1,7 +1,8 @@
 import crc32 from 'crc/crc32';
-import fs, { PathLike, promises as fsPromises } from 'fs';
+import fs, { PathLike } from 'fs';
 import path from 'path';
 import { Readable } from 'stream';
+import util from 'util';
 
 import Constants from '../../constants.js';
 import fsPoly from '../../polyfill/fsPoly.js';
@@ -48,7 +49,7 @@ export default class File {
     let finalCrc = crc;
     let finalCrcWithoutHeader;
     if (await fsPoly.exists(filePath)) {
-      finalSize = finalSize || (await fsPromises.stat(filePath)).size;
+      finalSize = finalSize || (await util.promisify(fs.stat)(filePath)).size;
       finalCrc = finalCrc || await this.calculateCrc32(filePath);
       if (fileHeader) {
         finalCrcWithoutHeader = finalCrcWithoutHeader
@@ -147,7 +148,7 @@ export default class File {
       Constants.GLOBAL_TEMP_DIR,
       `${path.basename(this.getFilePath())}.temp`,
     ));
-    await fsPromises.copyFile(this.getFilePath(), temp);
+    await util.promisify(fs.copyFile)(this.getFilePath(), temp);
     try {
       return await callback(temp);
     } finally {

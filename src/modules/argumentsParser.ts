@@ -157,7 +157,7 @@ export default class ArgumentsParser {
         }
 
         const needOutput = ['copy', 'move', 'extract', 'zip', 'clean'].filter((command) => checkArgv._.indexOf(command) !== -1);
-        if ((!checkArgv.output || !checkArgv.output.length) && needOutput.length) {
+        if (!checkArgv.output && needOutput.length) {
           throw new Error(`Missing required option for commands ${needOutput.join(', ')}: output`);
         }
 

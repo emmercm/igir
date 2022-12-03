@@ -2,12 +2,13 @@ import 'reflect-metadata';
 
 import { Expose, instanceToPlain, plainToInstance } from 'class-transformer';
 import fg from 'fast-glob';
-import fs, { promises as fsPromises } from 'fs';
+import fs from 'fs';
 import { isNotJunk } from 'junk';
 import micromatch from 'micromatch';
 import moment from 'moment';
 import os from 'os';
 import path from 'path';
+import util from 'util';
 
 import LogLevel from '../console/logLevel.js';
 import Constants from '../constants.js';
@@ -330,7 +331,7 @@ export default class Options implements OptionsProps {
 
     // Filter to files
     const isFiles = await Promise.all(
-      globbedPaths.map(async (inputPath) => (await fsPromises.lstat(inputPath)).isFile()),
+      globbedPaths.map(async (inputPath) => (await util.promisify(fs.lstat)(inputPath)).isFile()),
     );
     const globbedFiles = globbedPaths
       .filter((inputPath, idx) => isFiles[idx])

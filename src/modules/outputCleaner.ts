@@ -1,7 +1,8 @@
-import { promises as fsPromises } from 'fs';
+import fs from 'fs';
 import { isNotJunk } from 'junk';
 import path from 'path';
 import trash from 'trash';
+import util from 'util';
 
 import ProgressBar, { Symbols } from '../console/progressBar.js';
 import fsPoly from '../polyfill/fsPoly.js';
@@ -92,7 +93,7 @@ export default class OutputCleaner extends Module {
     }
 
     // Find all subdirectories and files in the directory
-    const subPaths = (await fsPromises.readdir(dirsToClean))
+    const subPaths = (await util.promisify(fs.readdir)(dirsToClean))
       .filter((basename) => isNotJunk(basename))
       .map((basename) => path.join(dirsToClean, basename));
 
@@ -100,7 +101,7 @@ export default class OutputCleaner extends Module {
     const subDirs: string[] = [];
     const subFiles: string[] = [];
     await Promise.all(subPaths.map(async (subPath) => {
-      if ((await fsPromises.lstat(subPath)).isDirectory()) {
+      if ((await util.promisify(fs.lstat)(subPath)).isDirectory()) {
         subDirs.push(subPath);
       } else {
         subFiles.push(subPath);
