@@ -1,9 +1,10 @@
 import crypto from 'crypto';
-import fs, { PathLike, promises as fsPromises, RmOptions } from 'fs';
+import fs, { PathLike, RmOptions } from 'fs';
 import { isNotJunk } from 'junk';
 import os from 'os';
 import path from 'path';
 import semver from 'semver';
+import util from 'util';
 
 export default class FsPoly {
   /**
@@ -11,7 +12,7 @@ export default class FsPoly {
    */
   static async exists(pathLike: PathLike): Promise<boolean> {
     try {
-      await fsPromises.access(pathLike); // throw if file doesn't exist
+      await util.promisify(fs.access)(pathLike); // throw if file doesn't exist
       return true;
     } catch (e) {
       return false;
@@ -20,7 +21,7 @@ export default class FsPoly {
 
   static async isDirectory(pathLike: PathLike): Promise<boolean> {
     try {
-      return (await fsPromises.lstat(pathLike)).isDirectory();
+      return (await util.promisify(fs.lstat)(pathLike)).isDirectory();
     } catch (e) {
       return false;
     }
@@ -55,10 +56,10 @@ export default class FsPoly {
 
     try {
       // Added in: v10.0.0
-      return await fsPromises.mkdtemp(prefixProcessed);
+      return await util.promisify(fs.mkdtemp)(prefixProcessed);
     } catch (e) {
       // Added in: v10.0.0
-      return await fsPromises.mkdtemp(path.join(process.cwd(), 'tmp') + path.sep);
+      return await util.promisify(fs.mkdtemp)(path.join(process.cwd(), 'tmp') + path.sep);
     }
   }
 
@@ -81,7 +82,7 @@ export default class FsPoly {
 
   static async renameOverwrite(oldPath: PathLike, newPath: PathLike, attempt = 1): Promise<void> {
     try {
-      await fsPromises.rename(oldPath, newPath);
+      await util.promisify(fs.rename)(oldPath, newPath);
     } catch (e) {
       if (attempt >= 3) {
         throw e;
@@ -96,7 +97,7 @@ export default class FsPoly {
 
   /**
    * fs.rm() was added in: v14.14.0
-   * fsPromises.rm() was added in: v14.14.0
+   * util.promisify(fs.rm)() was added in: v14.14.0
    */
   static async rm(pathLike: PathLike, options: RmOptions = {}): Promise<void> {
     const optionsWithRetry = {
@@ -106,7 +107,7 @@ export default class FsPoly {
 
     try {
       // Added in: v10.0.0
-      await fsPromises.access(pathLike); // throw if file doesn't exist
+      await util.promisify(fs.access)(pathLike); // throw if file doesn't exist
     } catch (e) {
       if (optionsWithRetry?.force) {
         return;
@@ -119,17 +120,17 @@ export default class FsPoly {
       // DEP0147
       if (semver.lt(process.version, '16.0.0')) {
         // Added in: v10.0.0
-        await fsPromises.rmdir(pathLike, optionsWithRetry);
+        await util.promisify(fs.rmdir)(pathLike, optionsWithRetry);
       } else {
         // Added in: v14.14.0
-        await fsPromises.rm(pathLike, {
+        await util.promisify(fs.rm)(pathLike, {
           ...optionsWithRetry,
           recursive: true,
         });
       }
     } else {
       // Added in: v10.0.0
-      await fsPromises.unlink(pathLike);
+      await util.promisify(fs.unlink)(pathLike);
     }
   }
 
@@ -174,14 +175,15 @@ export default class FsPoly {
   static async touch(filePath: string): Promise<void> {
     const dirname = path.dirname(filePath);
     if (!await this.exists(dirname)) {
-      await fsPromises.mkdir(dirname, { recursive: true });
+      await util.promisify(fs.mkdir)(dirname, { recursive: true });
     }
 
     const time = new Date();
     try {
-      await fsPromises.utimes(filePath, time, time);
+      await util.promisify(fs.utimes)(filePath, time, time);
     } catch (e) {
-      await (await fsPromises.open(filePath, 'a')).close();
+      const file = await util.promisify(fs.open)(filePath, 'a');
+      await util.promisify(fs.close)(file);
     }
   }
 

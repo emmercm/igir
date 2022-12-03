@@ -1,6 +1,7 @@
 import fg from 'fast-glob';
-import { promises as fsPromises } from 'fs';
+import fs from 'fs';
 import path from 'path';
+import util from 'util';
 
 import Constants from '../../src/constants.js';
 import ReportGenerator from '../../src/modules/reportGenerator.js';
@@ -66,7 +67,7 @@ async function wrapReportGenerator(
     path.dirname(options.getOutputReportPath()),
     `${Constants.COMMAND_NAME}_*.csv`,
   ).replace(/\\/g, '/'))).slice(-1)[0];
-  const contents = (await fsPromises.readFile(outputReportPath)).toString();
+  const contents = (await util.promisify(fs.readFile)(outputReportPath)).toString();
 
   await callback(contents);
 

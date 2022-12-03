@@ -1,4 +1,5 @@
-import { promises as fsPromises } from 'fs';
+import fs from 'fs';
+import util from 'util';
 
 import ProgressBar from '../console/progressBar.js';
 import DATStatus from '../types/datStatus.js';
@@ -38,7 +39,7 @@ export default class ReportGenerator extends Module {
         return csv.split('\n').slice(1).join('\n');
       })
       .join('\n');
-    await fsPromises.writeFile(report, contents);
+    await util.promisify(fs.writeFile)(report, contents);
     await this.progressBar.logDebug(`${report}: wrote ${datsStatuses.length.toLocaleString()} status${datsStatuses.length !== 1 ? 'es' : ''}`);
 
     await this.progressBar.logInfo('Done generating report');
