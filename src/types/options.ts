@@ -259,7 +259,7 @@ export default class Options implements OptionsProps {
   }
 
   async scanDatFiles(): Promise<string[]> {
-    return Options.scanPath(this.dat);
+    return Options.scanPaths(this.dat);
   }
 
   getInputFileCount(): number {
@@ -267,11 +267,11 @@ export default class Options implements OptionsProps {
   }
 
   private async scanInputFiles(): Promise<string[]> {
-    return Options.scanPath(this.input);
+    return Options.scanPaths(this.input);
   }
 
   private async scanInputExcludeFiles(): Promise<string[]> {
-    return Options.scanPath(this.inputExclude);
+    return Options.scanPaths(this.inputExclude);
   }
 
   async scanInputFilesWithoutExclusions(): Promise<string[]> {
@@ -286,44 +286,14 @@ export default class Options implements OptionsProps {
   }
 
   async scanPatchFiles(): Promise<string[]> {
-    return Options.scanPath(this.patch);
+    return Options.scanPaths(this.patch);
   }
 
-  private static async scanPath(inputPaths: string[]): Promise<string[]> {
+  private static async scanPaths(inputPaths: string[]): Promise<string[]> {
     const globbedPaths = (await Promise.all(inputPaths
       .filter((inputPath) => inputPath)
-      .map(async (inputPath) => {
-      // Windows will report that \\.\nul doesn't exist, catch it explicitly
-        if (inputPath === os.devNull || inputPath.startsWith(os.devNull + path.sep)) {
-          return [];
-        }
-
-        // fg only uses forward-slash path separators
-        const inputPathNormalized = inputPath.replace(/\\/g, '/');
-
-        // Glob the contents of directories
-        if (await fsPoly.isDirectory(inputPath)) {
-          const dirPaths = (await fg(`${fg.escapePath(inputPathNormalized)}/**`))
-            .map((filePath) => path.normalize(filePath));
-          if (!dirPaths || !dirPaths.length) {
-            throw new Error(`${inputPath}: Path doesn't exist`);
-          }
-          return dirPaths;
-        }
-
-        // If the file exists, don't process it as a glob pattern
-        if (await fsPoly.exists(inputPath)) {
-          return [inputPath];
-        }
-
-        // Otherwise, process it as a glob pattern
-        const paths = (await fg(inputPathNormalized))
-          .map((filePath) => path.normalize(filePath));
-        if (!paths || !paths.length) {
-          throw new Error(`${inputPath}: Path doesn't exist`);
-        }
-        return paths;
-      }))).flatMap((paths) => paths);
+      .map(this.globPath)))
+      .flatMap((paths) => paths);
 
     // Filter to files
     const isFiles = await Promise.all(
@@ -336,6 +306,39 @@ export default class Options implements OptionsProps {
     // Remove duplicates
     return globbedFiles
       .filter((inputPath, idx, arr) => arr.indexOf(inputPath) === idx);
+  }
+
+  private static async globPath(inputPath: string): Promise<string[]> {
+    // Windows will report that \\.\nul doesn't exist, catch it explicitly
+    if (inputPath === os.devNull || inputPath.startsWith(os.devNull + path.sep)) {
+      return [];
+    }
+
+    // fg only uses forward-slash path separators
+    const inputPathNormalized = inputPath.replace(/\\/g, '/');
+
+    // Glob the contents of directories
+    if (await fsPoly.isDirectory(inputPath)) {
+      const dirPaths = (await fg(`${fg.escapePath(inputPathNormalized)}/**`))
+        .map((filePath) => path.normalize(filePath));
+      if (!dirPaths || !dirPaths.length) {
+        throw new Error(`${inputPath}: Path doesn't exist`);
+      }
+      return dirPaths;
+    }
+
+    // If the file exists, don't process it as a glob pattern
+    if (await fsPoly.exists(inputPath)) {
+      return [inputPath];
+    }
+
+    // Otherwise, process it as a glob pattern
+    const paths = (await fg(inputPathNormalized))
+      .map((filePath) => path.normalize(filePath));
+    if (!paths || !paths.length) {
+      throw new Error(`${inputPath}: Path doesn't exist`);
+    }
+    return paths;
   }
 
   private getOutput(): string {
@@ -368,7 +371,13 @@ export default class Options implements OptionsProps {
     const romFilenameSanitized = romFilename?.replace(/[\\/]/g, '_');
 
     let output = this.getOutput();
-    output = Options.replaceOutputTokens(output, dat, inputRomPath, release, romFilenameSanitized);
+    output = Options.replaceTokensInOutputPath(
+      output,
+      dat,
+      inputRomPath,
+      release,
+      romFilenameSanitized,
+    );
 
     return fsPoly.makeLegal(output);
   }
@@ -422,35 +431,18 @@ export default class Options implements OptionsProps {
     return fsPoly.makeLegal(output);
   }
 
-  private static replaceOutputTokens(
-    output: string,
+  private static replaceTokensInOutputPath(
+    outputPath: string,
     dat?: DAT,
     inputRomPath?: string,
     release?: Release,
     outputRomFilename?: string,
   ): string {
-    let result = output;
-    if (dat) {
-      result = result.replace('{datName}', dat.getName().replace(/[\\/]/g, '_'));
-    }
-    if (release) {
-      result = result.replace('{datReleaseRegion}', release.getRegion());
-      if (release.getLanguage()) {
-        result = result.replace('{datReleaseLanguage}', release.getLanguage() as string);
-      }
-    }
-    if (inputRomPath) {
-      const inputRom = path.parse(inputRomPath);
-      result = result
-        .replace('{inputDirname}', inputRom.dir);
-    }
-    if (outputRomFilename) {
-      const outputRom = path.parse(outputRomFilename);
-      result = result
-        .replace('{outputBasename}', outputRom.base)
-        .replace('{outputName}', outputRom.name)
-        .replace('{outputExt}', outputRom.ext.replace(/^\./, ''));
-    }
+    let result = outputPath;
+    result = this.replaceDatTokens(result, dat);
+    result = this.replaceReleaseTokens(result, release);
+    result = this.replaceInputTokens(result, inputRomPath);
+    result = this.replaceOutputTokens(result, outputRomFilename);
     result = this.replaceOutputGameConsoleTokens(result, dat, outputRomFilename);
 
     const leftoverTokens = result.match(/\{[a-zA-Z]+\}/g);
@@ -461,29 +453,70 @@ export default class Options implements OptionsProps {
     return result;
   }
 
+  private static replaceDatTokens(input: string, dat?: DAT): string {
+    if (!dat) {
+      return input;
+    }
+
+    return input.replace('{datName}', dat.getName().replace(/[\\/]/g, '_'));
+  }
+
+  private static replaceReleaseTokens(input: string, release?: Release): string {
+    if (!release) {
+      return input;
+    }
+
+    let output = input;
+    output = output.replace('{datReleaseRegion}', release.getRegion());
+    if (release.getLanguage()) {
+      output = output.replace('{datReleaseLanguage}', release.getLanguage() as string);
+    }
+    return output;
+  }
+
+  private static replaceInputTokens(input: string, inputRomPath?: string): string {
+    if (!inputRomPath) {
+      return input;
+    }
+
+    return input.replace('{inputDirname}', path.parse(inputRomPath).dir);
+  }
+
+  private static replaceOutputTokens(input: string, outputRomFilename?: string): string {
+    if (!outputRomFilename) {
+      return input;
+    }
+
+    const outputRom = path.parse(outputRomFilename);
+    return input
+      .replace('{outputBasename}', outputRom.base)
+      .replace('{outputName}', outputRom.name)
+      .replace('{outputExt}', outputRom.ext.replace(/^\./, ''));
+  }
+
   private static replaceOutputGameConsoleTokens(
-    output: string,
+    input: string,
     dat?: DAT,
     outputRomFilename?: string,
   ): string {
     if (!outputRomFilename) {
-      return output;
+      return input;
     }
 
     const gameConsole = GameConsole.getForFilename(outputRomFilename)
       || GameConsole.getForConsoleName(dat?.getName() || '');
     if (!gameConsole) {
-      return output;
+      return input;
     }
 
-    let result = output;
+    let output = input;
     if (gameConsole.getPocket()) {
-      result = result.replace('{pocket}', gameConsole.getPocket() as string);
+      output = output.replace('{pocket}', gameConsole.getPocket() as string);
     }
     if (gameConsole.getMister()) {
-      result = result.replace('{mister}', gameConsole.getMister() as string);
+      output = output.replace('{mister}', gameConsole.getMister() as string);
     }
-    return result;
+    return output;
   }
 
   getOutputReportPath(): string {
@@ -562,7 +595,7 @@ export default class Options implements OptionsProps {
   }
 
   private async scanCleanExcludeFiles(): Promise<string[]> {
-    return Options.scanPath(this.cleanExclude);
+    return Options.scanPaths(this.cleanExclude);
   }
 
   async scanOutputFilesWithoutCleanExclusions(
@@ -577,7 +610,7 @@ export default class Options implements OptionsProps {
     const cleanExcludedFilesNormalized = (await this.scanCleanExcludeFiles())
       .map((filePath) => path.normalize(filePath));
 
-    return (await Options.scanPath(outputDirs))
+    return (await Options.scanPaths(outputDirs))
       .map((filePath) => path.normalize(filePath))
       .filter((filePath) => writtenFilesNormalized.indexOf(filePath) === -1)
       .filter((filePath) => cleanExcludedFilesNormalized.indexOf(filePath) === -1);

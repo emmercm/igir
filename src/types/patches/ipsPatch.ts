@@ -15,7 +15,7 @@ export default class IPSPatch extends Patch {
   }
 
   async apply<T>(
-    file: File,
+    inputFile: File,
     callback: (tempFile: string) => (T | Promise<T>),
   ): Promise<T> {
     return this.getFile().extractToFilePoly('r', async (patchFile) => {
@@ -32,17 +32,27 @@ export default class IPSPatch extends Patch {
         eofString = 'EEOF';
       }
 
-      return file.extractToTempFile(async (tempFile) => {
-        const targetFile = await FilePoly.fileFrom(tempFile, 'r+');
+      return IPSPatch.writeOutputFile(inputFile, callback, patchFile, offsetSize, eofString);
+    });
+  }
 
-        try {
-          await IPSPatch.applyPatch(patchFile, targetFile, offsetSize, eofString);
-        } finally {
-          await targetFile.close();
-        }
+  private static async writeOutputFile<T>(
+    inputFile: File,
+    callback: (tempFile: string) => (Promise<T> | T),
+    patchFile: FilePoly,
+    offsetSize: number,
+    eofString: string,
+  ): Promise<T> {
+    return inputFile.extractToTempFile(async (tempFile) => {
+      const targetFile = await FilePoly.fileFrom(tempFile, 'r+');
 
-        return callback(tempFile);
-      });
+      try {
+        await IPSPatch.applyPatch(patchFile, targetFile, offsetSize, eofString);
+      } finally {
+        await targetFile.close();
+      }
+
+      return callback(tempFile);
     });
   }
 

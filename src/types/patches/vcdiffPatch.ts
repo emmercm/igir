@@ -441,33 +441,43 @@ export default class VcdiffPatch extends Patch {
     return new VcdiffPatch(file, crcBefore);
   }
 
-  async apply<T>(file: File, callback: (tempFile: string) => (Promise<T> | T)): Promise<T> {
+  async apply<T>(inputFile: File, callback: (tempFile: string) => (Promise<T> | T)): Promise<T> {
     /* eslint-disable no-bitwise */
     return this.getFile().extractToFilePoly('r', async (patchFile) => {
       const copyCache = new VcdiffCache();
       const header = await VcdiffHeader.fromFilePoly(patchFile);
 
-      return file.extractToFile(async (sourceFilePath) => {
-        const targetFilePath = fsPoly.mktempSync(path.join(
-          Constants.GLOBAL_TEMP_DIR,
-          `${path.basename(sourceFilePath)}.vcdiff`,
-        ));
-        await util.promisify(fs.copyFile)(sourceFilePath, targetFilePath);
-        const targetFile = await FilePoly.fileFrom(targetFilePath, 'r+');
+      return VcdiffPatch.writeOutputFile(inputFile, callback, patchFile, header, copyCache);
+    });
+  }
 
-        const sourceFile = await FilePoly.fileFrom(sourceFilePath, 'r');
+  private static async writeOutputFile<T>(
+    inputFile: File,
+    callback: (tempFile: string) => (Promise<T> | T),
+    patchFile: FilePoly,
+    header: VcdiffHeader,
+    copyCache: VcdiffCache,
+  ): Promise<T> {
+    return inputFile.extractToFile(async (sourceFilePath) => {
+      const targetFilePath = fsPoly.mktempSync(path.join(
+        Constants.GLOBAL_TEMP_DIR,
+        `${path.basename(sourceFilePath)}.vcdiff`,
+      ));
+      await util.promisify(fs.copyFile)(sourceFilePath, targetFilePath);
+      const targetFile = await FilePoly.fileFrom(targetFilePath, 'r+');
 
-        try {
-          await VcdiffPatch.applyPatch(patchFile, sourceFile, targetFile, header, copyCache);
-        } finally {
-          await targetFile.close();
-          await sourceFile.close();
-        }
+      const sourceFile = await FilePoly.fileFrom(sourceFilePath, 'r');
 
-        const callbackResult = await callback(targetFilePath);
-        await fsPoly.rm(targetFilePath);
-        return callbackResult;
-      });
+      try {
+        await VcdiffPatch.applyPatch(patchFile, sourceFile, targetFile, header, copyCache);
+      } finally {
+        await targetFile.close();
+        await sourceFile.close();
+      }
+
+      const callbackResult = await callback(targetFilePath);
+      await fsPoly.rm(targetFilePath);
+      return callbackResult;
     });
   }
 

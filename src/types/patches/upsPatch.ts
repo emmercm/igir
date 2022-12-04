@@ -46,7 +46,7 @@ export default class UPSPatch extends Patch {
     return new UPSPatch(file, crcBefore, crcAfter, targetSize);
   }
 
-  async apply<T>(file: File, callback: (tempFile: string) => (Promise<T> | T)): Promise<T> {
+  async apply<T>(inputFile: File, callback: (tempFile: string) => (Promise<T> | T)): Promise<T> {
     return this.getFile().extractToFilePoly('r', async (patchFile) => {
       const header = (await patchFile.readNext(4)).toString();
       if (header !== 'UPS1') {
@@ -56,27 +56,35 @@ export default class UPSPatch extends Patch {
       await Patch.readUpsUint(patchFile); // source size
       await Patch.readUpsUint(patchFile); // target size
 
-      return file.extractToFile(async (sourceFilePath) => {
-        const sourceFile = await FilePoly.fileFrom(sourceFilePath, 'r');
+      return UPSPatch.writeOutputFile(inputFile, callback, patchFile);
+    });
+  }
 
-        const targetFilePath = fsPoly.mktempSync(path.join(
-          Constants.GLOBAL_TEMP_DIR,
-          `${path.basename(sourceFilePath)}.ups`,
-        ));
-        await util.promisify(fs.copyFile)(sourceFilePath, targetFilePath);
-        const targetFile = await FilePoly.fileFrom(targetFilePath, 'r+');
+  private static async writeOutputFile<T>(
+    inputFile: File,
+    callback: (tempFile: string) => (Promise<T> | T),
+    patchFile: FilePoly,
+  ): Promise<T> {
+    return inputFile.extractToFile(async (sourceFilePath) => {
+      const sourceFile = await FilePoly.fileFrom(sourceFilePath, 'r');
 
-        try {
-          await UPSPatch.applyPatch(patchFile, sourceFile, targetFile);
-        } finally {
-          await targetFile.close();
-          await sourceFile.close();
-        }
+      const targetFilePath = fsPoly.mktempSync(path.join(
+        Constants.GLOBAL_TEMP_DIR,
+        `${path.basename(sourceFilePath)}.ups`,
+      ));
+      await util.promisify(fs.copyFile)(sourceFilePath, targetFilePath);
+      const targetFile = await FilePoly.fileFrom(targetFilePath, 'r+');
 
-        const callbackResult = await callback(targetFilePath);
-        await fsPoly.rm(targetFilePath);
-        return callbackResult;
-      });
+      try {
+        await UPSPatch.applyPatch(patchFile, sourceFile, targetFile);
+      } finally {
+        await targetFile.close();
+        await sourceFile.close();
+      }
+
+      const callbackResult = await callback(targetFilePath);
+      await fsPoly.rm(targetFilePath);
+      return callbackResult;
     });
   }
 
@@ -91,21 +99,32 @@ export default class UPSPatch extends Patch {
       sourceFile.skipNext(relativeOffset);
       targetFile.skipNext(relativeOffset);
 
-      while (patchFile.getPosition() < patchFile.getSize() - 12) {
-        const xorByte = (await patchFile.readNext(1)).readUint8();
-        if (!xorByte) { // terminating byte 0x00
-          break;
-        }
-
-        const sourceByte = sourceFile.isEOF()
-          ? 0x00
-          : (await sourceFile.readNext(1)).readUint8();
-        const targetByte = sourceByte ^ xorByte;
-        await targetFile.write(Buffer.of(targetByte));
-      }
+      const data = await this.readPatchBlock(patchFile, sourceFile);
+      await targetFile.write(data);
 
       sourceFile.skipNext(1);
       targetFile.skipNext(1);
     }
+  }
+
+  private static async readPatchBlock(
+    patchFile: FilePoly,
+    sourceFile: FilePoly,
+  ): Promise<Buffer> {
+    const buffer: Buffer[] = [];
+
+    while (patchFile.getPosition() < patchFile.getSize() - 12) {
+      const xorByte = (await patchFile.readNext(1)).readUint8();
+      if (!xorByte) { // terminating byte 0x00
+        return Buffer.concat(buffer);
+      }
+
+      const sourceByte = sourceFile.isEOF()
+        ? 0x00
+        : (await sourceFile.readNext(1)).readUint8();
+      buffer.push(Buffer.of(sourceByte ^ xorByte));
+    }
+
+    throw new Error(`UPS patch failed to read 0x00 block termination: ${patchFile.getPathLike()}`);
   }
 }

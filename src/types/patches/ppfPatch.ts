@@ -61,24 +61,33 @@ export default class PPFPatch extends Patch {
     return new PPFPatch(file, crcBefore);
   }
 
-  async apply<T>(file: File, callback: (tempFile: string) => (Promise<T> | T)): Promise<T> {
+  async apply<T>(inputFile: File, callback: (tempFile: string) => (Promise<T> | T)): Promise<T> {
     return this.getFile().extractToFilePoly('r', async (patchFile) => {
       const header = await PPFHeader.fromFilePoly(patchFile);
 
-      return file.extractToTempFile(async (tempFile) => {
-        const targetFile = await FilePoly.fileFrom(tempFile, 'r+');
+      return PPFPatch.writeOutputFile(inputFile, callback, patchFile, header);
+    });
+  }
 
-        try {
-          /* eslint-disable no-await-in-loop */
-          while (!patchFile.isEOF()) {
-            await PPFPatch.applyPatch(patchFile, targetFile, header);
-          }
-        } finally {
-          await targetFile.close();
+  private static async writeOutputFile<T>(
+    inputFile: File,
+    callback: (tempFile: string) => (Promise<T> | T),
+    patchFile: FilePoly,
+    header: PPFHeader,
+  ): Promise<T> {
+    return inputFile.extractToTempFile(async (tempFile) => {
+      const targetFile = await FilePoly.fileFrom(tempFile, 'r+');
+
+      try {
+        /* eslint-disable no-await-in-loop */
+        while (!patchFile.isEOF()) {
+          await PPFPatch.applyPatch(patchFile, targetFile, header);
         }
+      } finally {
+        await targetFile.close();
+      }
 
-        return callback(tempFile);
-      });
+      return callback(tempFile);
     });
   }
 

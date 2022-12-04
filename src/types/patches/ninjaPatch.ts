@@ -32,7 +32,7 @@ export default class NinjaPatch extends Patch {
     return new NinjaPatch(file, crcBefore);
   }
 
-  async apply<T>(file: File, callback: (tempFile: string) => (Promise<T> | T)): Promise<T> {
+  async apply<T>(inputFile: File, callback: (tempFile: string) => (Promise<T> | T)): Promise<T> {
     return this.getFile().extractToFilePoly('r', async (patchFile) => {
       const header = (await patchFile.readNext(5)).toString();
       if (header !== 'NINJA') {
@@ -55,20 +55,28 @@ export default class NinjaPatch extends Patch {
       patchFile.skipNext(512); // website
       patchFile.skipNext(1074); // info
 
-      return file.extractToFile(async (tempFile) => {
-        const targetFile = await FilePoly.fileFrom(tempFile, 'r+');
+      return this.writeOutputFile(inputFile, callback, patchFile);
+    });
+  }
 
-        try {
-          /* eslint-disable no-await-in-loop */
-          while (!patchFile.isEOF()) {
-            await this.applyCommand(patchFile, targetFile);
-          }
-        } finally {
-          await targetFile.close();
+  private async writeOutputFile<T>(
+    inputFile: File,
+    callback: (tempFile: string) => (Promise<T> | T),
+    patchFile: FilePoly,
+  ): Promise<T> {
+    return inputFile.extractToFile(async (tempFile) => {
+      const targetFile = await FilePoly.fileFrom(tempFile, 'r+');
+
+      try {
+        /* eslint-disable no-await-in-loop */
+        while (!patchFile.isEOF()) {
+          await this.applyCommand(patchFile, targetFile);
         }
+      } finally {
+        await targetFile.close();
+      }
 
-        return callback(tempFile);
-      });
+      return callback(tempFile);
     });
   }
 

@@ -46,7 +46,7 @@ export default class BPSPatch extends Patch {
     return new BPSPatch(file, crcBefore, crcAfter, targetSize);
   }
 
-  async apply<T>(file: File, callback: (tempFile: string) => (Promise<T> | T)): Promise<T> {
+  async apply<T>(inputFile: File, callback: (tempFile: string) => (Promise<T> | T)): Promise<T> {
     return this.getFile().extractToFilePoly('r', async (patchFile) => {
       // Skip header info
       const header = (await patchFile.readNext(4)).toString();
@@ -61,26 +61,34 @@ export default class BPSPatch extends Patch {
         patchFile.skipNext(metadataSize);
       }
 
-      return file.extractToFile(async (sourceFilePath) => {
-        const sourceFile = await FilePoly.fileFrom(sourceFilePath, 'r');
+      return this.writeOutputFile(inputFile, callback, patchFile);
+    });
+  }
 
-        const targetFilePath = fsPoly.mktempSync(path.join(
-          Constants.GLOBAL_TEMP_DIR,
-          `${path.basename(sourceFilePath)}.bps`,
-        ));
-        const targetFile = await FilePoly.fileOfSize(targetFilePath, 'r+', this.getSizeAfter() as number);
+  private async writeOutputFile<T>(
+    inputFile: File,
+    callback: (tempFile: string) => (Promise<T> | T),
+    patchFile: FilePoly,
+  ): Promise<T> {
+    return inputFile.extractToFile(async (sourceFilePath) => {
+      const sourceFile = await FilePoly.fileFrom(sourceFilePath, 'r');
 
-        try {
-          await BPSPatch.applyPatch(patchFile, sourceFile, targetFile);
-        } finally {
-          await targetFile.close();
-          await sourceFile.close();
-        }
+      const targetFilePath = fsPoly.mktempSync(path.join(
+        Constants.GLOBAL_TEMP_DIR,
+        `${path.basename(sourceFilePath)}.bps`,
+      ));
+      const targetFile = await FilePoly.fileOfSize(targetFilePath, 'r+', this.getSizeAfter() as number);
 
-        const callbackResult = await callback(targetFilePath);
-        await fsPoly.rm(targetFilePath);
-        return callbackResult;
-      });
+      try {
+        await this.applyPatch(patchFile, sourceFile, targetFile);
+      } finally {
+        await targetFile.close();
+        await sourceFile.close();
+      }
+
+      const callbackResult = await callback(targetFilePath);
+      await fsPoly.rm(targetFilePath);
+      return callbackResult;
     });
   }
 
