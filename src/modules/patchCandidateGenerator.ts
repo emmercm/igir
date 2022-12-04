@@ -59,22 +59,38 @@ export default class PatchCandidateGenerator extends Module {
   ): Promise<Map<Parent, ReleaseCandidate[]>> {
     // For every parent
     return new Map((await Promise.all([...parentsToCandidates.entries()]
-      // For every parent's release candidates
+      // For every Parent's ReleaseCandidates
       .map(async ([parent, releaseCandidates]): Promise<[Parent, ReleaseCandidate[]][]> => {
-        // Possibly generate multiple new parents for the release candidate
-        const newParentsForReleaseCandidates = ((await Promise.all(releaseCandidates
-          .map(async (releaseCandidate) => this.buildPatchedParentsForReleaseCandidate(
+        // ReleaseCandidates exist for every Release of a Game, but we only want to create one new
+        //  ReleaseCandidate for each Game, so remember which Games we've seen for this Parent
+        const seenGames = new Map<Game, boolean>();
+
+        const parentsAndReleaseCandidates: [Parent, ReleaseCandidate[]][] = [
+          [parent, releaseCandidates],
+        ];
+
+        // Possibly generate multiple new Parents for the ReleaseCandidates
+        /* eslint-disable no-await-in-loop */
+        for (let i = 0; i < releaseCandidates.length; i += 1) {
+          const releaseCandidate = releaseCandidates[i];
+          if (seenGames.has(releaseCandidate.getGame())) {
+            // eslint-disable-next-line no-continue
+            continue;
+          }
+
+          const patchedParents = await this.buildPatchedParentsForReleaseCandidate(
             dat,
             releaseCandidate,
             crcToPatches,
-          ))))
-          .filter((newParents) => newParents) as [Parent, ReleaseCandidate[]][][])
-          .flatMap((entries) => entries);
+          );
+          seenGames.set(releaseCandidate.getGame(), true);
 
-        return [
-          [parent, releaseCandidates],
-          ...newParentsForReleaseCandidates,
-        ];
+          if (patchedParents) {
+            parentsAndReleaseCandidates.push(...patchedParents);
+          }
+        }
+
+        return parentsAndReleaseCandidates;
       })))
       .flatMap((entries) => entries));
   }
@@ -122,7 +138,7 @@ export default class PatchCandidateGenerator extends Module {
                   ? extractedFileName
                   : outputFile.getEntryPath(),
                 patch.getSizeAfter() || 0,
-                patch.getCrcAfter() || '',
+                patch.getCrcAfter() || '00000000',
                 outputFile.getFileHeader(),
                 outputFile.getPatch(),
               );
@@ -131,7 +147,7 @@ export default class PatchCandidateGenerator extends Module {
               outputFile = await File.fileOf(
                 path.join(dirName, extractedFileName),
                 patch.getSizeAfter() || 0,
-                patch.getCrcAfter() || '',
+                patch.getCrcAfter() || '00000000',
                 outputFile.getFileHeader(),
                 outputFile.getPatch(),
               );
