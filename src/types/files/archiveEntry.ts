@@ -45,14 +45,18 @@ export default class ArchiveEntry<A extends Archive> extends File {
     fileHeader?: FileHeader,
     patch?: Patch,
   ): Promise<ArchiveEntry<A>> {
-    let finalCrcWithoutHeader = crc;
-    if (fileHeader) {
-      finalCrcWithoutHeader = await this.extractEntryToFile(
-        archive,
-        entryPath,
-        async (localFile) => this.calculateCrc32(localFile, fileHeader),
-      );
+    let finalCrcWithoutHeader;
+    if (await fsPoly.exists(archive.getFilePath())) {
+      if (fileHeader) {
+        finalCrcWithoutHeader = finalCrcWithoutHeader
+          || await this.extractEntryToFile(
+            archive,
+            entryPath,
+            async (localFile) => this.calculateCrc32(localFile, fileHeader),
+          );
+      }
     }
+    finalCrcWithoutHeader = finalCrcWithoutHeader || crc;
 
     return new ArchiveEntry<A>(
       archive.getFilePath(),
@@ -129,32 +133,6 @@ export default class ArchiveEntry<A extends Archive> extends File {
     } finally {
       await fsPoly.rm(tempDir, { recursive: true });
     }
-  }
-
-  async withFileName(fileNameWithoutExt: string): Promise<File> {
-    return ArchiveEntry.entryOf(
-      this.getArchive().withFileName(fileNameWithoutExt),
-      this.getEntryPath(),
-      this.getSize(),
-      this.getCrc32(),
-      this.getFileHeader(),
-      this.getPatch(),
-    );
-  }
-
-  async withExtractedFilePath(extractedNameWithoutExt: string): Promise<File> {
-    const { base, ...parsedEntryPath } = path.parse(this.getEntryPath());
-    parsedEntryPath.name = extractedNameWithoutExt;
-    const entryPath = path.format(parsedEntryPath);
-
-    return ArchiveEntry.entryOf(
-      this.getArchive(),
-      entryPath,
-      this.getSize(),
-      this.getCrc32(),
-      this.getFileHeader(),
-      this.getPatch(),
-    );
   }
 
   async withFileHeader(fileHeader: FileHeader): Promise<File> {

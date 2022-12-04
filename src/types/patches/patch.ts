@@ -53,7 +53,7 @@ export default abstract class Patch {
 
   getRomName(): string {
     return path.parse(this.getFile().getExtractedFilePath()).name
-      .replace(new RegExp(this.getCrcBefore(), 'g'), '')
+      .replace(new RegExp(this.getCrcBefore(), 'gi'), '')
       .replace(/  +/g, ' ')
       .trim();
   }

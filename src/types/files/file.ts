@@ -47,23 +47,20 @@ export default class File {
     patch?: Patch,
   ): Promise<File> {
     let finalSize = size;
-    if (finalSize === undefined) {
-      if (await fsPoly.exists(filePath)) {
-        finalSize = (await util.promisify(fs.stat)(filePath)).size;
-      } else {
-        finalSize = 0;
-      }
-    }
-
     let finalCrc = crc;
-    if (!finalCrc) {
-      finalCrc = await this.calculateCrc32(filePath);
+    let finalCrcWithoutHeader;
+    if (await fsPoly.exists(filePath)) {
+      finalSize = finalSize || (await util.promisify(fs.stat)(filePath)).size;
+      finalCrc = finalCrc || await this.calculateCrc32(filePath);
+      if (fileHeader) {
+        finalCrcWithoutHeader = finalCrcWithoutHeader
+          || await this.calculateCrc32(filePath, fileHeader);
+      }
+    } else {
+      finalSize = finalSize || 0;
+      finalCrc = finalCrc || '';
     }
-
-    let finalCrcWithoutHeader = finalCrc;
-    if (fileHeader) {
-      finalCrcWithoutHeader = await this.calculateCrc32(filePath, fileHeader);
-    }
+    finalCrcWithoutHeader = finalCrcWithoutHeader || finalCrc;
 
     return new File(
       filePath,
@@ -203,24 +200,6 @@ export default class File {
     } finally {
       stream.destroy();
     }
-  }
-
-  async withFileName(fileNameWithoutExt: string): Promise<File> {
-    const { base, ...parsedFilePath } = path.parse(this.getFilePath());
-    parsedFilePath.name = fileNameWithoutExt;
-    const filePath = path.format(parsedFilePath);
-
-    return File.fileOf(
-      filePath,
-      this.getSize(),
-      this.getCrc32(),
-      this.getFileHeader(),
-      this.getPatch(),
-    );
-  }
-
-  async withExtractedFilePath(extractedNameWithoutExt: string): Promise<File> {
-    return this.withFileName(extractedNameWithoutExt);
   }
 
   async withFileHeader(fileHeader: FileHeader): Promise<File> {
