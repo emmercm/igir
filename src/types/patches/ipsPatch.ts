@@ -15,15 +15,13 @@ export default class IPSPatch extends Patch {
   }
 
   async apply<T>(
-    file: File,
+    inputFile: File,
     callback: (tempFile: string) => (T | Promise<T>),
   ): Promise<T> {
-    return this.getFile().extractToFile(async (patchFilePath) => {
-      const fp = await FilePoly.fileFrom(patchFilePath, 'r');
-
-      const header = (await fp.readNext(5)).toString();
+    return this.getFile().extractToFilePoly('r', async (patchFile) => {
+      const header = (await patchFile.readNext(5)).toString();
       if (header !== 'PATCH' && header !== 'IPS32') {
-        await fp.close();
+        await patchFile.close();
         throw new Error(`IPS patch header is invalid: ${this.getFile().toString()}`);
       }
 
@@ -34,39 +32,56 @@ export default class IPSPatch extends Patch {
         eofString = 'EEOF';
       }
 
-      const result = await file.extractToTempFile(async (tempFile) => {
-        const targetFile = await FilePoly.fileFrom(tempFile, 'r+');
-
-        /* eslint-disable no-constant-condition, no-await-in-loop */
-        while (true) {
-          const offsetPeek = await fp.peekNext(eofString.length);
-          if (offsetPeek === null || offsetPeek.toString() === eofString) {
-            break;
-          }
-
-          const offset = (await fp.readNext(offsetSize)).readUintBE(0, offsetSize);
-          const size = (await fp.readNext(2)).readUInt16BE();
-          if (size === 0) {
-            // Run-length encoding record
-            const rleSize = (await fp.readNext(2)).readUInt16BE();
-            const data = Buffer.from((await fp.readNext(1)).toString('hex')
-              .repeat(rleSize), 'hex');
-            await targetFile.writeAt(data, offset);
-          } else {
-            // Standard record
-            const data = await fp.readNext(size);
-            await targetFile.writeAt(data, offset);
-          }
-        }
-
-        await targetFile.close();
-
-        return callback(tempFile);
-      });
-
-      await fp.close();
-
-      return result;
+      return IPSPatch.writeOutputFile(inputFile, callback, patchFile, offsetSize, eofString);
     });
+  }
+
+  private static async writeOutputFile<T>(
+    inputFile: File,
+    callback: (tempFile: string) => (Promise<T> | T),
+    patchFile: FilePoly,
+    offsetSize: number,
+    eofString: string,
+  ): Promise<T> {
+    return inputFile.extractToTempFile(async (tempFile) => {
+      const targetFile = await FilePoly.fileFrom(tempFile, 'r+');
+
+      try {
+        await IPSPatch.applyPatch(patchFile, targetFile, offsetSize, eofString);
+      } finally {
+        await targetFile.close();
+      }
+
+      return callback(tempFile);
+    });
+  }
+
+  private static async applyPatch(
+    patchFile: FilePoly,
+    targetFile: FilePoly,
+    offsetSize: number,
+    eofString: string,
+  ): Promise<void> {
+    /* eslint-disable no-constant-condition, no-await-in-loop */
+    while (true) {
+      const offsetPeek = await patchFile.peekNext(eofString.length);
+      if (offsetPeek === null || offsetPeek.toString() === eofString) {
+        break;
+      }
+
+      const offset = (await patchFile.readNext(offsetSize)).readUintBE(0, offsetSize);
+      const size = (await patchFile.readNext(2)).readUInt16BE();
+      if (size === 0) {
+        // Run-length encoding record
+        const rleSize = (await patchFile.readNext(2)).readUInt16BE();
+        const data = Buffer.from((await patchFile.readNext(1)).toString('hex')
+          .repeat(rleSize), 'hex');
+        await targetFile.writeAt(data, offset);
+      } else {
+        // Standard record
+        const data = await patchFile.readNext(size);
+        await targetFile.writeAt(data, offset);
+      }
+    }
   }
 }

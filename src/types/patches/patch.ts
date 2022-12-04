@@ -59,7 +59,7 @@ export default abstract class Patch {
   }
 
   abstract apply<T>(
-    file: File,
+    inputFile: File,
     callback: (tempFile: string) => (T | Promise<T>),
   ): Promise<T>;
 

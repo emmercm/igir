@@ -1,10 +1,11 @@
 import crc32 from 'crc/crc32';
-import fs, { PathLike } from 'fs';
+import fs, { OpenMode, PathLike } from 'fs';
 import path from 'path';
 import { Readable } from 'stream';
 import util from 'util';
 
 import Constants from '../../constants.js';
+import FilePoly from '../../polyfill/filePoly.js';
 import fsPoly from '../../polyfill/fsPoly.js';
 import Patch from '../patches/patch.js';
 import FileHeader from './fileHeader.js';
@@ -142,6 +143,20 @@ export default class File {
     callback: (localFile: string) => (T | Promise<T>),
   ): Promise<T> {
     return callback(this.getFilePath());
+  }
+
+  async extractToFilePoly<T>(
+    flags: OpenMode,
+    callback: (filePoly: FilePoly) => (T | Promise<T>),
+  ): Promise<T> {
+    return this.extractToFile(async (localFile) => {
+      const filePoly = await FilePoly.fileFrom(localFile, flags);
+      try {
+        return await callback(filePoly);
+      } finally {
+        await filePoly.close();
+      }
+    });
   }
 
   async extractToTempFile<T>(
