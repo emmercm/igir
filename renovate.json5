@@ -39,7 +39,7 @@
 
   node: {
     groupName: "Node.js",
-    schdule: "at any time",
+    schedule: "at any time",
     prCreation: "immediate",
     automergeSchedule: "at any time"
   },
