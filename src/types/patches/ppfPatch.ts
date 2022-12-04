@@ -81,7 +81,7 @@ export default class PPFPatch extends Patch {
       try {
         /* eslint-disable no-await-in-loop */
         while (!patchFile.isEOF()) {
-          await PPFPatch.applyPatch(patchFile, targetFile, header);
+          await PPFPatch.applyPatchBlock(patchFile, targetFile, header);
         }
       } finally {
         await targetFile.close();
@@ -91,7 +91,7 @@ export default class PPFPatch extends Patch {
     });
   }
 
-  private static async applyPatch(
+  private static async applyPatchBlock(
     patchFile: FilePoly,
     targetFile: FilePoly,
     header: PPFHeader,

@@ -80,7 +80,7 @@ export default class BPSPatch extends Patch {
       const targetFile = await FilePoly.fileOfSize(targetFilePath, 'r+', this.getSizeAfter() as number);
 
       try {
-        await this.applyPatch(patchFile, sourceFile, targetFile);
+        await BPSPatch.applyPatch(patchFile, sourceFile, targetFile);
       } finally {
         await targetFile.close();
         await sourceFile.close();

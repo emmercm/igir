@@ -459,14 +459,14 @@ export default class VcdiffPatch extends Patch {
     copyCache: VcdiffCache,
   ): Promise<T> {
     return inputFile.extractToFile(async (sourceFilePath) => {
+      const sourceFile = await FilePoly.fileFrom(sourceFilePath, 'r');
+
       const targetFilePath = fsPoly.mktempSync(path.join(
         Constants.GLOBAL_TEMP_DIR,
         `${path.basename(sourceFilePath)}.vcdiff`,
       ));
       await util.promisify(fs.copyFile)(sourceFilePath, targetFilePath);
       const targetFile = await FilePoly.fileFrom(targetFilePath, 'r+');
-
-      const sourceFile = await FilePoly.fileFrom(sourceFilePath, 'r');
 
       try {
         await VcdiffPatch.applyPatch(patchFile, sourceFile, targetFile, header, copyCache);
@@ -495,39 +495,57 @@ export default class VcdiffPatch extends Patch {
       const window = await VcdiffWindow.fromFilePoly(patchFile);
       copyCache.reset();
 
-      while (!window.isEOF()) {
-        const instructionCodeIdx = window.readInstructionIndex();
-
-        for (let i = 0; i <= 1; i += 1) {
-          const instruction = header.codeTable[instructionCodeIdx][i];
-          if (instruction.type === VcdiffInstruction.NOOP) {
-            // eslint-disable-next-line no-continue
-            continue;
-          }
-
-          let { size } = instruction;
-          if (!size) {
-            size = window.readInstructionSize();
-          }
-
-          if (instruction.type === VcdiffInstruction.ADD) {
-            await window.writeAddData(targetFile, targetWindowPosition, size);
-          } else if (instruction.type === VcdiffInstruction.RUN) {
-            await window.writeRunData(targetFile, targetWindowPosition, size);
-          } else if (instruction.type === VcdiffInstruction.COPY) {
-            await window.writeCopyData(
-              sourceFile,
-              targetFile,
-              targetWindowPosition,
-              size,
-              copyCache,
-              instruction.mode,
-            );
-          }
-        }
-      }
+      await this.applyPatchWindow(
+        sourceFile,
+        targetFile,
+        header,
+        copyCache,
+        targetWindowPosition,
+        window,
+      );
 
       targetWindowPosition += window.deltaEncodingTargetWindowSize;
+    }
+  }
+
+  private static async applyPatchWindow(
+    sourceFile: FilePoly,
+    targetFile: FilePoly,
+    header: VcdiffHeader,
+    copyCache: VcdiffCache,
+    targetWindowPosition: number,
+    window: VcdiffWindow,
+  ): Promise<void> {
+    while (!window.isEOF()) {
+      const instructionCodeIdx = window.readInstructionIndex();
+
+      for (let i = 0; i <= 1; i += 1) {
+        const instruction = header.codeTable[instructionCodeIdx][i];
+        if (instruction.type === VcdiffInstruction.NOOP) {
+          // eslint-disable-next-line no-continue
+          continue;
+        }
+
+        let { size } = instruction;
+        if (!size) {
+          size = window.readInstructionSize();
+        }
+
+        if (instruction.type === VcdiffInstruction.ADD) {
+          await window.writeAddData(targetFile, targetWindowPosition, size);
+        } else if (instruction.type === VcdiffInstruction.RUN) {
+          await window.writeRunData(targetFile, targetWindowPosition, size);
+        } else if (instruction.type === VcdiffInstruction.COPY) {
+          await window.writeCopyData(
+            sourceFile,
+            targetFile,
+            targetWindowPosition,
+            size,
+            copyCache,
+            instruction.mode,
+          );
+        }
+      }
     }
   }
 }
