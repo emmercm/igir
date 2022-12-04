@@ -47,9 +47,7 @@ export default class UPSPatch extends Patch {
   }
 
   async apply<T>(file: File, callback: (tempFile: string) => (Promise<T> | T)): Promise<T> {
-    return this.getFile().extractToFile(async (patchFilePath) => {
-      const patchFile = await FilePoly.fileFrom(patchFilePath, 'r');
-
+    return this.getFile().extractToFilePoly('r', async (patchFile) => {
       const header = (await patchFile.readNext(4)).toString();
       if (header !== 'UPS1') {
         await patchFile.close();
@@ -58,7 +56,9 @@ export default class UPSPatch extends Patch {
       await Patch.readUpsUint(patchFile); // source size
       await Patch.readUpsUint(patchFile); // target size
 
-      const result = await file.extractToFile(async (sourceFilePath) => {
+      return file.extractToFile(async (sourceFilePath) => {
+        const sourceFile = await FilePoly.fileFrom(sourceFilePath, 'r');
+
         const targetFilePath = fsPoly.mktempSync(path.join(
           Constants.GLOBAL_TEMP_DIR,
           `${path.basename(sourceFilePath)}.ups`,
@@ -66,42 +66,46 @@ export default class UPSPatch extends Patch {
         await util.promisify(fs.copyFile)(sourceFilePath, targetFilePath);
         const targetFile = await FilePoly.fileFrom(targetFilePath, 'r+');
 
-        const sourceFile = await FilePoly.fileFrom(sourceFilePath, 'r');
-
-        /* eslint-disable no-await-in-loop, no-bitwise */
-        while (patchFile.getPosition() < patchFile.getSize() - 12) {
-          const relativeOffset = await Patch.readUpsUint(patchFile);
-          sourceFile.skipNext(relativeOffset);
-          targetFile.skipNext(relativeOffset);
-
-          while (patchFile.getPosition() < patchFile.getSize() - 12) {
-            const xorByte = (await patchFile.readNext(1)).readUint8();
-            if (!xorByte) { // terminating byte 0x00
-              break;
-            }
-
-            const sourceByte = sourceFile.isEOF()
-              ? 0x00
-              : (await sourceFile.readNext(1)).readUint8();
-            const targetByte = sourceByte ^ xorByte;
-            await targetFile.write(Buffer.of(targetByte));
-          }
-
-          sourceFile.skipNext(1);
-          targetFile.skipNext(1);
+        try {
+          await UPSPatch.applyPatch(patchFile, sourceFile, targetFile);
+        } finally {
+          await targetFile.close();
+          await sourceFile.close();
         }
-
-        await targetFile.close();
-        await sourceFile.close();
 
         const callbackResult = await callback(targetFilePath);
         await fsPoly.rm(targetFilePath);
         return callbackResult;
       });
-
-      await patchFile.close();
-
-      return result;
     });
+  }
+
+  private static async applyPatch(
+    patchFile: FilePoly,
+    sourceFile: FilePoly,
+    targetFile: FilePoly,
+  ): Promise<void> {
+    /* eslint-disable no-await-in-loop, no-bitwise */
+    while (patchFile.getPosition() < patchFile.getSize() - 12) {
+      const relativeOffset = await Patch.readUpsUint(patchFile);
+      sourceFile.skipNext(relativeOffset);
+      targetFile.skipNext(relativeOffset);
+
+      while (patchFile.getPosition() < patchFile.getSize() - 12) {
+        const xorByte = (await patchFile.readNext(1)).readUint8();
+        if (!xorByte) { // terminating byte 0x00
+          break;
+        }
+
+        const sourceByte = sourceFile.isEOF()
+          ? 0x00
+          : (await sourceFile.readNext(1)).readUint8();
+        const targetByte = sourceByte ^ xorByte;
+        await targetFile.write(Buffer.of(targetByte));
+      }
+
+      sourceFile.skipNext(1);
+      targetFile.skipNext(1);
+    }
   }
 }

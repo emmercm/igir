@@ -47,9 +47,7 @@ export default class BPSPatch extends Patch {
   }
 
   async apply<T>(file: File, callback: (tempFile: string) => (Promise<T> | T)): Promise<T> {
-    return this.getFile().extractToFile(async (patchFilePath) => {
-      const patchFile = await FilePoly.fileFrom(patchFilePath, 'r');
-
+    return this.getFile().extractToFilePoly('r', async (patchFile) => {
       // Skip header info
       const header = (await patchFile.readNext(4)).toString();
       if (header !== 'BPS1') {
@@ -63,7 +61,7 @@ export default class BPSPatch extends Patch {
         patchFile.skipNext(metadataSize);
       }
 
-      const result = await file.extractToFile(async (sourceFilePath) => {
+      return file.extractToFile(async (sourceFilePath) => {
         const sourceFile = await FilePoly.fileFrom(sourceFilePath, 'r');
 
         const targetFilePath = fsPoly.mktempSync(path.join(
@@ -72,44 +70,50 @@ export default class BPSPatch extends Patch {
         ));
         const targetFile = await FilePoly.fileOfSize(targetFilePath, 'r+', this.getSizeAfter() as number);
 
-        let sourceRelativeOffset = 0;
-        let targetRelativeOffset = 0;
-
-        /* eslint-disable no-await-in-loop, no-bitwise */
-        while (patchFile.getPosition() < patchFile.getSize() - 12) {
-          const blockHeader = await Patch.readUpsUint(patchFile);
-          const action = blockHeader & 3;
-          const length = (blockHeader >> 2) + 1;
-
-          if (action === BPSAction.SOURCE_READ) {
-            await targetFile.write(await sourceFile.readAt(targetFile.getPosition(), length));
-          } else if (action === BPSAction.TARGET_READ) {
-            const data = await patchFile.readNext(length);
-            await targetFile.write(data);
-          } else if (action === BPSAction.SOURCE_COPY) {
-            const offset = await Patch.readUpsUint(patchFile);
-            sourceRelativeOffset += (offset & 1 ? -1 : +1) * (offset >> 1);
-            await targetFile.write(await sourceFile.readAt(sourceRelativeOffset, length));
-            sourceRelativeOffset += length;
-          } else {
-            const offset = await Patch.readUpsUint(patchFile);
-            targetRelativeOffset += (offset & 1 ? -1 : +1) * (offset >> 1);
-            await targetFile.write(await targetFile.readAt(targetRelativeOffset, length));
-            targetRelativeOffset += length;
-          }
+        try {
+          await BPSPatch.applyPatch(patchFile, sourceFile, targetFile);
+        } finally {
+          await targetFile.close();
+          await sourceFile.close();
         }
-
-        await targetFile.close();
-        await sourceFile.close();
 
         const callbackResult = await callback(targetFilePath);
         await fsPoly.rm(targetFilePath);
         return callbackResult;
       });
-
-      await patchFile.close();
-
-      return result;
     });
+  }
+
+  private static async applyPatch(
+    patchFile: FilePoly,
+    sourceFile: FilePoly,
+    targetFile: FilePoly,
+  ): Promise<void> {
+    let sourceRelativeOffset = 0;
+    let targetRelativeOffset = 0;
+
+    /* eslint-disable no-await-in-loop, no-bitwise */
+    while (patchFile.getPosition() < patchFile.getSize() - 12) {
+      const blockHeader = await Patch.readUpsUint(patchFile);
+      const action = blockHeader & 3;
+      const length = (blockHeader >> 2) + 1;
+
+      if (action === BPSAction.SOURCE_READ) {
+        await targetFile.write(await sourceFile.readAt(targetFile.getPosition(), length));
+      } else if (action === BPSAction.TARGET_READ) {
+        const data = await patchFile.readNext(length);
+        await targetFile.write(data);
+      } else if (action === BPSAction.SOURCE_COPY) {
+        const offset = await Patch.readUpsUint(patchFile);
+        sourceRelativeOffset += (offset & 1 ? -1 : +1) * (offset >> 1);
+        await targetFile.write(await sourceFile.readAt(sourceRelativeOffset, length));
+        sourceRelativeOffset += length;
+      } else {
+        const offset = await Patch.readUpsUint(patchFile);
+        targetRelativeOffset += (offset & 1 ? -1 : +1) * (offset >> 1);
+        await targetFile.write(await targetFile.readAt(targetRelativeOffset, length));
+        targetRelativeOffset += length;
+      }
+    }
   }
 }

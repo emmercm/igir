@@ -33,9 +33,7 @@ export default class NinjaPatch extends Patch {
   }
 
   async apply<T>(file: File, callback: (tempFile: string) => (Promise<T> | T)): Promise<T> {
-    return this.getFile().extractToFile(async (patchFilePath) => {
-      const patchFile = await FilePoly.fileFrom(patchFilePath, 'r');
-
+    return this.getFile().extractToFilePoly('r', async (patchFile) => {
       const header = (await patchFile.readNext(5)).toString();
       if (header !== 'NINJA') {
         await patchFile.close();
@@ -57,7 +55,7 @@ export default class NinjaPatch extends Patch {
       patchFile.skipNext(512); // website
       patchFile.skipNext(1074); // info
 
-      const result = await file.extractToFile(async (tempFile) => {
+      return file.extractToFile(async (tempFile) => {
         const targetFile = await FilePoly.fileFrom(tempFile, 'r+');
 
         try {
@@ -71,10 +69,6 @@ export default class NinjaPatch extends Patch {
 
         return callback(tempFile);
       });
-
-      await patchFile.close();
-
-      return result;
     });
   }
 

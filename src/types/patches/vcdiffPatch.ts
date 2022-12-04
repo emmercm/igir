@@ -443,14 +443,11 @@ export default class VcdiffPatch extends Patch {
 
   async apply<T>(file: File, callback: (tempFile: string) => (Promise<T> | T)): Promise<T> {
     /* eslint-disable no-bitwise */
-    return this.getFile().extractToFile(async (patchFilePath) => {
-      const patchFile = await FilePoly.fileFrom(patchFilePath, 'r');
-
+    return this.getFile().extractToFilePoly('r', async (patchFile) => {
+      const copyCache = new VcdiffCache();
       const header = await VcdiffHeader.fromFilePoly(patchFile);
 
-      const copyCache = new VcdiffCache();
-
-      const result = await file.extractToFile(async (sourceFilePath) => {
+      return file.extractToFile(async (sourceFilePath) => {
         const targetFilePath = fsPoly.mktempSync(path.join(
           Constants.GLOBAL_TEMP_DIR,
           `${path.basename(sourceFilePath)}.vcdiff`,
@@ -460,59 +457,67 @@ export default class VcdiffPatch extends Patch {
 
         const sourceFile = await FilePoly.fileFrom(sourceFilePath, 'r');
 
-        let targetWindowPosition = 0;
-
-        /* eslint-disable no-await-in-loop */
-        while (!patchFile.isEOF()) {
-          const window = await VcdiffWindow.fromFilePoly(patchFile);
-          copyCache.reset();
-
-          while (!window.isEOF()) {
-            const instructionCodeIdx = window.readInstructionIndex();
-
-            for (let i = 0; i <= 1; i += 1) {
-              const instruction = header.codeTable[instructionCodeIdx][i];
-              if (instruction.type === VcdiffInstruction.NOOP) {
-                // eslint-disable-next-line no-continue
-                continue;
-              }
-
-              let { size } = instruction;
-              if (!size) {
-                size = window.readInstructionSize();
-              }
-
-              if (instruction.type === VcdiffInstruction.ADD) {
-                await window.writeAddData(targetFile, targetWindowPosition, size);
-              } else if (instruction.type === VcdiffInstruction.RUN) {
-                await window.writeRunData(targetFile, targetWindowPosition, size);
-              } else if (instruction.type === VcdiffInstruction.COPY) {
-                await window.writeCopyData(
-                  sourceFile,
-                  targetFile,
-                  targetWindowPosition,
-                  size,
-                  copyCache,
-                  instruction.mode,
-                );
-              }
-            }
-          }
-
-          targetWindowPosition += window.deltaEncodingTargetWindowSize;
+        try {
+          await VcdiffPatch.applyPatch(patchFile, sourceFile, targetFile, header, copyCache);
+        } finally {
+          await targetFile.close();
+          await sourceFile.close();
         }
-
-        await targetFile.close();
-        await sourceFile.close();
 
         const callbackResult = await callback(targetFilePath);
         await fsPoly.rm(targetFilePath);
         return callbackResult;
       });
-
-      await patchFile.close();
-
-      return result;
     });
+  }
+
+  private static async applyPatch(
+    patchFile: FilePoly,
+    sourceFile: FilePoly,
+    targetFile: FilePoly,
+    header: VcdiffHeader,
+    copyCache: VcdiffCache,
+  ): Promise<void> {
+    let targetWindowPosition = 0;
+
+    /* eslint-disable no-await-in-loop */
+    while (!patchFile.isEOF()) {
+      const window = await VcdiffWindow.fromFilePoly(patchFile);
+      copyCache.reset();
+
+      while (!window.isEOF()) {
+        const instructionCodeIdx = window.readInstructionIndex();
+
+        for (let i = 0; i <= 1; i += 1) {
+          const instruction = header.codeTable[instructionCodeIdx][i];
+          if (instruction.type === VcdiffInstruction.NOOP) {
+            // eslint-disable-next-line no-continue
+            continue;
+          }
+
+          let { size } = instruction;
+          if (!size) {
+            size = window.readInstructionSize();
+          }
+
+          if (instruction.type === VcdiffInstruction.ADD) {
+            await window.writeAddData(targetFile, targetWindowPosition, size);
+          } else if (instruction.type === VcdiffInstruction.RUN) {
+            await window.writeRunData(targetFile, targetWindowPosition, size);
+          } else if (instruction.type === VcdiffInstruction.COPY) {
+            await window.writeCopyData(
+              sourceFile,
+              targetFile,
+              targetWindowPosition,
+              size,
+              copyCache,
+              instruction.mode,
+            );
+          }
+        }
+      }
+
+      targetWindowPosition += window.deltaEncodingTargetWindowSize;
+    }
   }
 }
