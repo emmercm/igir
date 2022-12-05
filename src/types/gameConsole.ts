@@ -33,7 +33,7 @@ export default class GameConsole {
     // Fairchild
     new GameConsole(/Channel F/i, [/* '.bin' */], 'channel_f', 'ChannelF'),
     // Magnavox
-    new GameConsole(/Odyssey 2/i, [/* '.bin' */], 'odsyessey2', 'Odyssey2'),
+    new GameConsole(/Odyssey 2/i, [/* '.bin' */], 'odyssey2', 'Odyssey2'),
     // Mattel
     new GameConsole(/Intellivision/i, ['.int'], 'intv', 'Intellivision'),
     // NEC
