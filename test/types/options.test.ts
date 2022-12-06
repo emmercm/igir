@@ -114,10 +114,10 @@ describe('getOutputFileParsed', () => {
     });
 
     test.each([
-      'game.arduboy',
       'game.bin',
+      'game.min',
+      'game.ngp',
       'game.rom',
-      'game.sv',
     ])('should throw on {mister} for unknown extension: %s', (outputRomFilename) => {
       expect(() => new Options({ commands: ['copy'], output: 'games/{mister}' }).getOutputFileParsed(undefined, undefined, undefined, undefined, outputRomFilename)).toThrow(/failed to replace/);
     });
