@@ -162,7 +162,7 @@ export default class File {
   async extractToTempFile<T>(
     callback: (localFile: string) => (T | Promise<T>),
   ): Promise<T> {
-    const temp = fsPoly.mktempSync(path.join(
+    const temp = await fsPoly.mktemp(path.join(
       Constants.GLOBAL_TEMP_DIR,
       `${path.basename(this.getFilePath())}.temp`,
     ));
