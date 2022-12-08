@@ -25,6 +25,8 @@ export default class GameConsole {
     new GameConsole(/WonderSwan Color/i, ['.wsc'], undefined, 'WonderSwan'),
     // Bit Corporation
     new GameConsole(/Gamate/i, [/* '.bin' */], 'gamate', 'Gamate'),
+    // Commodore
+    new GameConsole(/Amiga/i, [/* '.rom' */], 'amiga', undefined),
     // Coleco
     new GameConsole(/ColecoVision/i, ['.col'], 'coleco', 'Coleco'),
     // Emerson
