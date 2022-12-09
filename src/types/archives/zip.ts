@@ -4,7 +4,7 @@ import path from 'path';
 import { Readable } from 'stream';
 import { clearInterval } from 'timers';
 import util from 'util';
-import yauzl, { Entry } from 'yauzl';
+import yauzl, { Entry, ZipFile } from 'yauzl';
 
 import fsPoly from '../../polyfill/fsPoly.js';
 import ArchiveEntry from '../files/archiveEntry.js';
@@ -23,9 +23,7 @@ export default class Zip extends Archive {
 
   async getArchiveEntries(): Promise<ArchiveEntry<Zip>[]> {
     return new Promise((resolve, reject) => {
-      yauzl.open(this.getFilePath(), {
-        lazyEntries: true,
-      }, (fileErr, zipFile) => {
+      const yauzlCallback = (fileErr: Error | null, zipFile: ZipFile): void => {
         if (fileErr) {
           reject(fileErr);
           return;
@@ -54,7 +52,15 @@ export default class Zip extends Archive {
 
         // Start
         zipFile.readEntry();
-      });
+      };
+
+      try {
+        yauzl.open(this.getFilePath(), {
+          lazyEntries: true,
+        }, yauzlCallback);
+      } catch (e) {
+        reject(e);
+      }
     });
   }
 
@@ -94,9 +100,7 @@ export default class Zip extends Archive {
     callback: (stream: Readable) => (Promise<T> | T),
   ): Promise<T> {
     return new Promise((resolve, reject) => {
-      yauzl.open(this.getFilePath(), {
-        lazyEntries: true,
-      }, (fileErr, zipFile) => {
+      const yauzlCallback = (fileErr: Error | null, zipFile: ZipFile): void => {
         if (fileErr) {
           reject(fileErr);
           return;
@@ -129,7 +133,15 @@ export default class Zip extends Archive {
 
         // Start
         zipFile.readEntry();
-      });
+      };
+
+      try {
+        yauzl.open(this.getFilePath(), {
+          lazyEntries: true,
+        }, yauzlCallback);
+      } catch (e) {
+        reject(e);
+      }
     });
   }
 
