@@ -29,7 +29,7 @@ async function copyFixturesToTemp(
 ): Promise<void> {
   // Set up the input directory
   const inputTemp = await fsPoly.mkdtemp(path.join(Constants.GLOBAL_TEMP_DIR, 'input'));
-  fsPoly.copyDirSync('./test/fixtures', inputTemp);
+  await fsPoly.copyDir('./test/fixtures', inputTemp);
 
   // Set up the output directory, but delete it so ROMWriter can make it
   const outputTemp = await fsPoly.mkdtemp(path.join(Constants.GLOBAL_TEMP_DIR, 'output'));
@@ -48,7 +48,7 @@ async function walkAndStat(dirPath: string): Promise<[string, Stats][]> {
     return [];
   }
   return Promise.all(
-    fsPoly.walkSync(dirPath)
+    (await fsPoly.walk(dirPath))
       .sort()
       .map(async (filePath) => {
         let stats: Stats;
