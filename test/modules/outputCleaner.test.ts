@@ -21,12 +21,12 @@ async function runOutputCleaner(
 ): Promise<string[]> {
   // Copy the fixture files to a temp directory
   const tempDir = await fsPoly.mkdtemp(Constants.GLOBAL_TEMP_DIR);
-  fsPoly.copyDirSync(ROM_FIXTURES_DIR, tempDir);
+  await fsPoly.copyDir(ROM_FIXTURES_DIR, tempDir);
 
   const writtenRomFilesToExclude = await Promise.all(writtenFilePathsToExclude
     .map(async (filePath) => File.fileOf(path.join(tempDir, filePath), 0, '00000000')));
 
-  const before = fsPoly.walkSync(tempDir);
+  const before = await fsPoly.walk(tempDir);
   expect(before.length).toBeGreaterThan(0);
 
   await new OutputCleaner(
@@ -36,7 +36,7 @@ async function runOutputCleaner(
     }),
     new ProgressBarFake(),
   ).clean([tempDir], writtenRomFilesToExclude);
-  const after = fsPoly.walkSync(tempDir);
+  const after = await fsPoly.walk(tempDir);
 
   // Test cleanup
   await fsPoly.rm(tempDir, { recursive: true });
@@ -47,7 +47,7 @@ async function runOutputCleaner(
 }
 
 it('should delete nothing if nothing written', async () => {
-  const existingFiles = fsPoly.walkSync(ROM_FIXTURES_DIR)
+  const existingFiles = (await fsPoly.walk(ROM_FIXTURES_DIR))
     .map((filePath) => filePath.replace(/^test[\\/]fixtures[\\/]roms[\\/]/, ''))
     .sort();
   const filesRemaining = await runOutputCleaner([], []);
@@ -55,7 +55,7 @@ it('should delete nothing if nothing written', async () => {
 });
 
 it('should delete nothing if no excess files', async () => {
-  const existingFiles = fsPoly.walkSync(ROM_FIXTURES_DIR)
+  const existingFiles = (await fsPoly.walk(ROM_FIXTURES_DIR))
     .map((filePath) => filePath.replace(/^test[\\/]fixtures[\\/]roms[\\/]/, ''))
     .sort();
   const filesRemaining = await runOutputCleaner([], existingFiles);
