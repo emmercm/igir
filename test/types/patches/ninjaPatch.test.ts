@@ -9,7 +9,7 @@ import File from '../../../src/types/files/file.js';
 import NinjaPatch from '../../../src/types/patches/ninjaPatch.js';
 
 async function writeTemp(fileName: string, contents: string | Buffer): Promise<File> {
-  const temp = fsPoly.mktempSync(path.join(Constants.GLOBAL_TEMP_DIR, fileName));
+  const temp = await fsPoly.mktemp(path.join(Constants.GLOBAL_TEMP_DIR, fileName));
   await util.promisify(fs.writeFile)(temp, contents);
   return File.fileOf(temp);
 }
