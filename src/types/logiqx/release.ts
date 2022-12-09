@@ -10,12 +10,6 @@ export default class Release {
   @Expose({ name: 'language' })
   private readonly language?: string;
 
-  @Expose({ name: 'date' })
-  private readonly date?: string;
-
-  @Expose({ name: 'default' })
-  private readonly default: 'yes' | 'no' = 'no';
-
   constructor(name: string, region: string, language?: string) {
     this.name = name;
     this.region = region;
