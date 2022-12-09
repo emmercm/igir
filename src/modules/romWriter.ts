@@ -77,12 +77,13 @@ export default class ROMWriter extends Module {
     await this.progressBar.logTrace(`${dat.getName()}: ${releaseCandidate.getName()}: ${writeNeeded ? '' : 'no '}write needed`);
 
     if (writeNeeded) {
-      const messageTimeout = this.progressBar.setWaitingMessage(`${releaseCandidate.getName()} ...`);
+      const waitingMessage = `${releaseCandidate.getName()} ...`;
+      this.progressBar.addWaitingMessage(waitingMessage);
 
       await this.writeZip(dat, releaseCandidate);
       await this.writeRaw(dat, releaseCandidate);
 
-      clearTimeout(messageTimeout);
+      await this.progressBar.removeWaitingMessage(waitingMessage);
     }
   }
 
