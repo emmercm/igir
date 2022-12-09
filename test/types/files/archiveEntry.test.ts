@@ -1,4 +1,3 @@
-import fs from 'fs';
 import path from 'path';
 
 import Constants from '../../../src/constants.js';
@@ -126,8 +125,8 @@ describe('extractToFile', () => {
     /* eslint-disable no-await-in-loop */
     for (let i = 0; i < archiveEntries.length; i += 1) {
       const archiveEntry = archiveEntries[i];
-      await archiveEntry.extractToFile((localFile) => {
-        expect(fs.existsSync(localFile)).toEqual(true);
+      await archiveEntry.extractToFile(async (localFile) => {
+        await expect(fsPoly.exists(localFile)).resolves.toEqual(true);
         expect(localFile).not.toEqual(archiveEntry.getFilePath());
       });
     }

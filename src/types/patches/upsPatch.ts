@@ -68,7 +68,7 @@ export default class UPSPatch extends Patch {
     return inputFile.extractToFile(async (sourceFilePath) => {
       const sourceFile = await FilePoly.fileFrom(sourceFilePath, 'r');
 
-      const targetFilePath = fsPoly.mktempSync(path.join(
+      const targetFilePath = await fsPoly.mktemp(path.join(
         Constants.GLOBAL_TEMP_DIR,
         `${path.basename(sourceFilePath)}.ups`,
       ));
