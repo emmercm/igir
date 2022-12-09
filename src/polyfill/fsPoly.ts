@@ -142,7 +142,7 @@ export default class FsPoly {
       // Added in: v0.11.15
       fs.accessSync(pathLike); // throw if file doesn't exist
     } catch (e) {
-      if (optionsWithRetry?.force) {
+      if (optionsWithRetry.force) {
         return;
       }
       throw e;
