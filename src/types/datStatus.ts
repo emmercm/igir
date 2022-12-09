@@ -7,10 +7,12 @@ import Parent from './logiqx/parent.js';
 import Options from './options.js';
 import ReleaseCandidate from './releaseCandidate.js';
 
+// TODO(cemmer): TypeScript v5.0.0 allows us to change the value to a tuple of singular+plural
 enum ROMType {
   GAME = 'games',
   BIOS = 'BIOSes',
   RETAIL = 'retail releases',
+  PATCHED = 'patched games',
 }
 
 export default class DATStatus {
@@ -23,23 +25,33 @@ export default class DATStatus {
   constructor(dat: DAT, parentsToReleaseCandidates: Map<Parent, ReleaseCandidate[]>) {
     this.dat = dat;
 
-    const gameNamesToReleaseCandidates = [...parentsToReleaseCandidates.values()]
+    const unpatchedGameNamesToReleaseCandidates = [...parentsToReleaseCandidates.values()]
       .flatMap((releaseCandidates) => releaseCandidates)
+      .filter((releaseCandidate) => !releaseCandidate.isPatched())
       .reduce((map, releaseCandidate) => {
         map.set(releaseCandidate.getGame().getName(), releaseCandidate);
         return map;
       }, new Map<string, ReleaseCandidate>());
-
     dat.getParents().forEach((parent) => {
       parent.getGames().forEach((game) => {
         DATStatus.pushValueIntoMap(this.allRomTypesToGames, game, game);
 
-        const releaseCandidate = gameNamesToReleaseCandidates.get(game.getName());
+        const releaseCandidate = unpatchedGameNamesToReleaseCandidates.get(game.getName());
         if (releaseCandidate || !game.getRoms().length) {
           DATStatus.pushValueIntoMap(this.foundRomTypesToReleaseCandidates, game, releaseCandidate);
         }
       });
     });
+
+    [...parentsToReleaseCandidates.values()]
+      .flatMap((releaseCandidates) => releaseCandidates)
+      .filter((releaseCandidate) => releaseCandidate.isPatched())
+      .forEach((releaseCandidate) => {
+        const game = releaseCandidate.getGame();
+
+        DATStatus.append(this.allRomTypesToGames, ROMType.PATCHED, game);
+        DATStatus.append(this.foundRomTypesToReleaseCandidates, ROMType.PATCHED, releaseCandidate);
+      });
   }
 
   private static pushValueIntoMap<T>(map: Map<ROMType, T[]>, game: Game, value: T): void {
@@ -99,8 +111,14 @@ export default class DATStatus {
           color = chalk.rgb(153, 0, 0); // macOS terminal red
         }
 
+        // Patched ROMs are always found===all
+        if (type === ROMType.PATCHED) {
+          return `${color(all.length.toLocaleString())} ${type}`;
+        }
+
         return `${color(found.length.toLocaleString())}/${all.length.toLocaleString()} ${type}`;
       })
+      .filter((str) => str)
       .join(', ')} ${options.shouldWrite() ? 'written' : 'found'}`;
   }
 
@@ -128,6 +146,7 @@ export default class DATStatus {
               .filter((filePath, idx, filePaths) => filePaths.indexOf(filePath) === idx)
               .join('|')
             : '',
+          releaseCandidate?.isPatched() || false,
           game.isBios(),
           game.isRetail(),
           game.isUnlicensed(),
@@ -147,6 +166,7 @@ export default class DATStatus {
         'Game Name',
         'Status',
         'ROM Files',
+        'Patched',
         'BIOS',
         'Retail Release',
         'Unlicensed',
@@ -180,6 +200,7 @@ export default class DATStatus {
         ? ROMType.GAME : undefined,
       options.getOnlyBios() || !options.getNoBios() ? ROMType.BIOS : undefined,
       options.getOnlyRetail() || !options.getOnlyBios() ? ROMType.RETAIL : undefined,
+      ROMType.PATCHED,
     ].filter((romType) => romType) as ROMType[];
   }
 }

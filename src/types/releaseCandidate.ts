@@ -266,4 +266,8 @@ export default class ReleaseCandidate {
     }
     return undefined;
   }
+
+  isPatched(): boolean {
+    return this.getRomsWithFiles().some((romWithFiles) => romWithFiles.getInputFile().getPatch());
+  }
 }
