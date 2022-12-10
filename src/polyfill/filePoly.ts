@@ -17,10 +17,10 @@ export default class FilePoly {
 
   private fileBuffer?: Buffer;
 
-  private constructor(pathLike: PathLike, fd: number) {
+  private constructor(pathLike: PathLike, fd: number, size: number) {
     this.pathLike = pathLike;
     this.fd = fd;
-    this.size = fs.statSync(pathLike).size;
+    this.size = size;
     this.tempBuffer = Buffer.allocUnsafe(Math.min(this.size, Constants.FILE_READING_CHUNK_SIZE));
   }
 
@@ -37,6 +37,7 @@ export default class FilePoly {
          */
         flags.toString().startsWith('a') ? 'r+' : flags,
       ),
+      (await util.promisify(fs.stat)(pathLike)).size,
     );
   }
 

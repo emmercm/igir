@@ -11,12 +11,7 @@ export default class FsPoly {
    * There is no promise version of existsSync()
    */
   static async exists(pathLike: PathLike): Promise<boolean> {
-    try {
-      await util.promisify(fs.access)(pathLike); // throw if file doesn't exist
-      return true;
-    } catch (e) {
-      return false;
-    }
+    return util.promisify(fs.exists)(pathLike);
   }
 
   static async isDirectory(pathLike: PathLike): Promise<boolean> {
@@ -35,12 +30,12 @@ export default class FsPoly {
     }
   }
 
-  static mktempSync(prefix: string): string {
-    /* eslint-disable no-constant-condition */
+  static async mktemp(prefix: string): Promise<string> {
+    /* eslint-disable no-constant-condition, no-await-in-loop */
     while (true) {
       const randomExtension = crypto.randomBytes(4).readUInt32LE(0).toString(36);
       const filePath = `${prefix.replace(/\.+$/, '')}.${randomExtension}`;
-      if (!fs.existsSync(filePath)) {
+      if (!await util.promisify(fs.exists)(filePath)) {
         return filePath;
       }
     }
@@ -147,7 +142,7 @@ export default class FsPoly {
       // Added in: v0.11.15
       fs.accessSync(pathLike); // throw if file doesn't exist
     } catch (e) {
-      if (optionsWithRetry?.force) {
+      if (optionsWithRetry.force) {
         return;
       }
       throw e;
@@ -187,16 +182,16 @@ export default class FsPoly {
     }
   }
 
-  static walkSync(pathLike: PathLike): string[] {
+  static async walk(pathLike: PathLike): Promise<string[]> {
     const output = [];
 
     const files = fs.readdirSync(pathLike);
     /* eslint-disable no-await-in-loop */
     for (let i = 0; i < files.length; i += 1) {
       const file = path.join(pathLike.toString(), files[i]);
-      const stats = fs.statSync(file);
+      const stats = await util.promisify(fs.stat)(file);
       if (stats.isDirectory()) {
-        output.push(...this.walkSync(file));
+        output.push(...await this.walk(file));
       } else if (stats.isFile()) {
         output.push(file);
       }
@@ -206,9 +201,9 @@ export default class FsPoly {
       .filter((filePath) => isNotJunk(path.basename(filePath)));
   }
 
-  static copyDirSync(src: string, dest: string): void {
-    fs.mkdirSync(dest, { recursive: true });
-    const entries = fs.readdirSync(src, { withFileTypes: true });
+  static async copyDir(src: string, dest: string): Promise<void> {
+    await util.promisify(fs.mkdir)(dest, { recursive: true });
+    const entries = await util.promisify(fs.readdir)(src, { withFileTypes: true });
 
     /* eslint-disable no-await-in-loop */
     for (let i = 0; i < entries.length; i += 1) {
@@ -217,9 +212,9 @@ export default class FsPoly {
       const destPath = path.join(dest, entry.name);
 
       if (entry.isDirectory()) {
-        this.copyDirSync(srcPath, destPath);
+        await this.copyDir(srcPath, destPath);
       } else {
-        fs.copyFileSync(srcPath, destPath);
+        await util.promisify(fs.copyFile)(srcPath, destPath);
       }
     }
   }

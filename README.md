@@ -8,7 +8,7 @@
 
 [![Known Vulnerabilities](https://img.shields.io/snyk/vulnerabilities/npm/igir?logo=snyk&logoColor=white)](https://snyk.io/test/npm/igir)
 [![Test Coverage](https://img.shields.io/codecov/c/github/emmercm/igir?logo=codecov&logoColor=white)](https://codecov.io/gh/emmercm/igir)
-[![Maintainability Score](https://img.shields.io/codeclimate/maintainability/emmercm/igir?logo=codeclimate&logoColor=white)](https://codeclimate.com/github/emmercm/igir/maintainability)
+[![Maintainability Score](https://img.shields.io/codeclimate/maintainability-percentage/emmercm/igir?logo=codeclimate&logoColor=white)](https://codeclimate.com/github/emmercm/igir/maintainability)
 [![License](https://img.shields.io/github/license/emmercm/igir?color=blue)](https://github.com/emmercm/igir/blob/main/LICENSE)
 
 ## What does `igir` do?
@@ -47,7 +47,7 @@ $ igir --help
   | $$  | $$ __\$$  | $$  | $$__| $$
   | $$  | $$|    \  | $$  | $$    $$   ROM collection manager
   | $$  | $$ \$$$$  | $$  | $$$$$$$\
- _| $$_ | $$__| $$ _| $$_ | $$  | $$   v0.6.3
+ _| $$_ | $$__| $$ _| $$_ | $$  | $$   v0.6.6
 |   $$ \ \$$    $$|   $$ \| $$  | $$
  \$$$$$$  \$$$$$$  \$$$$$$ \$$   \$$
 
