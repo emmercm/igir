@@ -77,12 +77,13 @@ export default class ROMWriter extends Module {
     await this.progressBar.logTrace(`${dat.getName()}: ${releaseCandidate.getName()}: ${writeNeeded ? '' : 'no '}write needed`);
 
     if (writeNeeded) {
-      const messageTimeout = this.progressBar.setWaitingMessage(`${releaseCandidate.getName()} ...`);
+      const waitingMessage = `${releaseCandidate.getName()} ...`;
+      this.progressBar.addWaitingMessage(waitingMessage);
 
       await this.writeZip(dat, releaseCandidate);
       await this.writeRaw(dat, releaseCandidate);
 
-      clearTimeout(messageTimeout);
+      this.progressBar.removeWaitingMessage(waitingMessage);
     }
   }
 
@@ -123,12 +124,13 @@ export default class ROMWriter extends Module {
     }
 
     if (!await this.writeZipFile(dat, outputZip, inputToOutputZipEntries)) {
+      // It's expected that an error was already logged
       return;
     }
 
     if (this.options.shouldTest()) {
       await this.progressBar.logTrace(`${dat.getName()}: ${outputZip.getFilePath()}: testing`);
-      if (!await ROMWriter.testZipContents(outputZip, [...inputToOutputZipEntries.values()])) {
+      if (!await this.testZipContents(dat, outputZip, [...inputToOutputZipEntries.values()])) {
         await this.progressBar.logError(`${dat.getName()}: ${outputZip.getFilePath()}: written zip is invalid`);
         return;
       }
@@ -138,7 +140,8 @@ export default class ROMWriter extends Module {
       .forEach((inputRomFile) => this.enqueueFileDeletion(inputRomFile));
   }
 
-  private static async testZipContents(
+  private async testZipContents(
+    dat: DAT,
     outputZipArchive: Zip,
     expectedArchiveEntries: ArchiveEntry<Zip>[],
   ): Promise<boolean> {
@@ -168,16 +171,21 @@ export default class ROMWriter extends Module {
     const entryPaths = [...expectedEntriesByPath.keys()];
     for (let i = 0; i < entryPaths.length; i += 1) {
       const entryPath = entryPaths[i];
-      const expected = expectedEntriesByPath.get(entryPath) as ArchiveEntry<Zip>;
+      const expectedFile = expectedEntriesByPath.get(entryPath) as ArchiveEntry<Zip>;
 
       // Check existence
       if (!actualEntriesByPath.has(entryPath)) {
         return false;
       }
-      const actual = actualEntriesByPath.get(entryPath) as ArchiveEntry<Zip>;
 
       // Check checksum
-      if (!actual.equals(expected)) {
+      if (expectedFile.getCrc32() === '00000000') {
+        await this.progressBar.logWarn(`${dat.getName()}: ${expectedFile.toString()}: can't test, expected CRC is unknown`);
+        // eslint-disable-next-line no-continue
+        continue;
+      }
+      const actualFile = actualEntriesByPath.get(entryPath) as ArchiveEntry<Zip>;
+      if (actualFile.getCrc32() !== expectedFile.getCrc32()) {
         return false;
       }
     }
@@ -192,7 +200,7 @@ export default class ROMWriter extends Module {
   ): Promise<boolean> {
     // If the zip is already what we're expecting, do nothing
     if (await fsPoly.exists(outputZip.getFilePath())
-      && await ROMWriter.testZipContents(outputZip, [...inputToOutputZipEntries.values()])
+      && await this.testZipContents(dat, outputZip, [...inputToOutputZipEntries.values()])
     ) {
       await this.progressBar.logTrace(`${dat.getName()}: ${outputZip.getFilePath()}: archive already matches expected entries, skipping`);
       return true;
@@ -247,9 +255,10 @@ export default class ROMWriter extends Module {
     }
 
     if (!await this.writeRawFile(dat, inputRomFile, outputFilePath)) {
+      // It's expected that an error was already logged
       return;
     }
-    await this.testWrittenRaw(dat, outputFilePath, inputRomFile.getCrc32());
+    await this.testWrittenRaw(dat, outputFilePath, outputRomFile);
     this.enqueueFileDeletion(inputRomFile);
   }
 
@@ -258,17 +267,30 @@ export default class ROMWriter extends Module {
     inputRomFile: File,
     outputFilePath: string,
   ): Promise<boolean> {
+    const removeHeader = this.options
+      .canRemoveHeader(dat, path.extname(inputRomFile.getExtractedFilePath()));
+
     try {
-      // TODO(cemmer): support raw->raw file moving without streams
+      await ROMWriter.ensureOutputDirExists(outputFilePath);
+
+      // Optimization: use OS copying if we're going raw->raw without any modifications
+      if (!(inputRomFile instanceof ArchiveEntry)
+        && !(removeHeader && inputRomFile.getFileHeader())
+        && !inputRomFile.getPatch()
+      ) {
+        await util.promisify(fs.copyFile)(inputRomFile.getFilePath(), outputFilePath);
+        return true;
+      }
+
+      // Extract the input file, apply any modifications, and pipe the stream to an output file
       await inputRomFile.extractToStream(async (readStream) => {
         await this.progressBar.logTrace(`${dat.getName()}: ${inputRomFile.toString()}: piping to ${outputFilePath}`);
-        await ROMWriter.ensureOutputDirExists(outputFilePath);
         const writeStream = readStream.pipe(fs.createWriteStream(outputFilePath));
         await new Promise<void>((resolve, reject) => {
           writeStream.on('finish', () => resolve());
           writeStream.on('error', (err) => reject(err));
         });
-      }, this.options.canRemoveHeader(dat, path.extname(inputRomFile.getExtractedFilePath())));
+      }, removeHeader);
       return true;
     } catch (e) {
       await this.progressBar.logError(`${dat.getName()}: ${inputRomFile.toString()}: failed to copy to ${outputFilePath} : ${e}`);
@@ -279,16 +301,21 @@ export default class ROMWriter extends Module {
   private async testWrittenRaw(
     dat: DAT,
     outputFilePath: string,
-    expectedCrc32: string,
+    expectedFile: File,
   ): Promise<void> {
     if (!this.options.shouldTest()) {
       return;
     }
-
     await this.progressBar.logTrace(`${outputFilePath}: testing`);
-    const fileToTest = await File.fileOf(outputFilePath);
-    if (fileToTest.getCrc32() !== expectedCrc32) {
-      await this.progressBar.logError(`${dat.getName()}: ${outputFilePath}: written file has the CRC ${fileToTest.getCrc32()}, expected ${expectedCrc32}`);
+
+    // Check checksum
+    if (expectedFile.getCrc32() === '00000000') {
+      await this.progressBar.logWarn(`${dat.getName()}: ${outputFilePath}: can't test, expected CRC is unknown`);
+      return;
+    }
+    const actualFile = await File.fileOf(outputFilePath);
+    if (actualFile.getCrc32() !== expectedFile.getCrc32()) {
+      await this.progressBar.logError(`${dat.getName()}: ${outputFilePath}: written file has the CRC ${actualFile.getCrc32()}, expected ${expectedFile.getCrc32()}`);
     }
   }
 

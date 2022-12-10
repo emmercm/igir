@@ -21,7 +21,9 @@ export default abstract class ProgressBar {
 
   abstract setSymbol(symbol: string): Promise<void>;
 
-  abstract setWaitingMessage(waitingMessage: string, timeout?: number): NodeJS.Timeout;
+  abstract addWaitingMessage(waitingMessage: string): void;
+
+  abstract removeWaitingMessage(waitingMessage: string): void;
 
   abstract increment(message?: string): Promise<void>;
 
