@@ -82,17 +82,17 @@ it('should return empty contents for an empty DAT', async () => {
 
 it('should return one row for a single game DAT', async () => {
   await wrapReportGenerator(new Options(), [datStatusSingle], (contents) => {
-    expect(contents).toEqual(`DAT Name,Game Name,Status,ROM Files,BIOS,Retail Release,Unlicensed,Demo,Beta,Sample,Prototype,Test,Aftermarket,Homebrew,Bad
-Single,One,FOUND,,false,true,false,false,false,false,false,false,false,false,false`);
+    expect(contents).toEqual(`DAT Name,Game Name,Status,ROM Files,Patched,BIOS,Retail Release,Unlicensed,Demo,Beta,Sample,Prototype,Test,Aftermarket,Homebrew,Bad
+Single,One,FOUND,,false,false,true,false,false,false,false,false,false,false,false,false`);
   });
 });
 
 it('should return multiple rows for a multiple game DAT', async () => {
   await wrapReportGenerator(new Options(), [datStatusMultiple], (contents) => {
-    expect(contents).toEqual(`DAT Name,Game Name,Status,ROM Files,BIOS,Retail Release,Unlicensed,Demo,Beta,Sample,Prototype,Test,Aftermarket,Homebrew,Bad
-Multiple,Four,FOUND,,false,true,false,false,false,false,false,false,false,false,false
-Multiple,Three,FOUND,,false,true,false,false,false,false,false,false,false,false,false
-Multiple,Two,FOUND,,false,true,false,false,false,false,false,false,false,false,false`);
+    expect(contents).toEqual(`DAT Name,Game Name,Status,ROM Files,Patched,BIOS,Retail Release,Unlicensed,Demo,Beta,Sample,Prototype,Test,Aftermarket,Homebrew,Bad
+Multiple,Four,FOUND,,false,false,true,false,false,false,false,false,false,false,false,false
+Multiple,Three,FOUND,,false,false,true,false,false,false,false,false,false,false,false,false
+Multiple,Two,FOUND,,false,false,true,false,false,false,false,false,false,false,false,false`);
   });
 });
 
@@ -100,10 +100,10 @@ it('should return multiple rows for multiple DATs', async () => {
   await wrapReportGenerator(new Options(), [
     datStatusEmpty, datStatusSingle, datStatusMultiple,
   ], (contents) => {
-    expect(contents).toEqual(`DAT Name,Game Name,Status,ROM Files,BIOS,Retail Release,Unlicensed,Demo,Beta,Sample,Prototype,Test,Aftermarket,Homebrew,Bad
-Multiple,Four,FOUND,,false,true,false,false,false,false,false,false,false,false,false
-Multiple,Three,FOUND,,false,true,false,false,false,false,false,false,false,false,false
-Multiple,Two,FOUND,,false,true,false,false,false,false,false,false,false,false,false
-Single,One,FOUND,,false,true,false,false,false,false,false,false,false,false,false`);
+    expect(contents).toEqual(`DAT Name,Game Name,Status,ROM Files,Patched,BIOS,Retail Release,Unlicensed,Demo,Beta,Sample,Prototype,Test,Aftermarket,Homebrew,Bad
+Multiple,Four,FOUND,,false,false,true,false,false,false,false,false,false,false,false,false
+Multiple,Three,FOUND,,false,false,true,false,false,false,false,false,false,false,false,false
+Multiple,Two,FOUND,,false,false,true,false,false,false,false,false,false,false,false,false
+Single,One,FOUND,,false,false,true,false,false,false,false,false,false,false,false,false`);
   });
 });

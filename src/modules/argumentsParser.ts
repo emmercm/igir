@@ -395,8 +395,8 @@ Example use cases:
   Organize and zip an existing ROM collection:
     $0 move zip --dat *.dat --input ROMs/ --output ROMs/
 
-  Produce a 1G1R set per console, preferring English ROMs from USA>EUR>JPN:
-    $0 copy --dat *.dat --input **/*.zip --output 1G1R/ --dir-dat-name --single --prefer-language EN --prefer-region USA,EUR,JPN
+  Produce a 1G1R set per console, preferring English ROMs from USA>WORLD>EUR>JPN:
+    $0 copy --dat *.dat --input **/*.zip --output 1G1R/ --dir-dat-name --single --prefer-language EN --prefer-region USA,WORLD,EUR,JPN
 
   Collate all BIOS files into one directory:
     $0 copy --dat *.dat --input **/*.zip --output BIOS/ --only-bios

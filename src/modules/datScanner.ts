@@ -60,7 +60,7 @@ export default class DATScanner extends Scanner {
             const dat = DAT.fromObject(xmlObject.datafile);
             return callback(null, dat);
           } catch (e) {
-            await this.progressBar.logError(`${datFile.toString()}: failed to parse DAT object : ${e}`);
+            await this.progressBar.logWarn(`${datFile.toString()}: failed to parse DAT object : ${e}`);
           }
         }
 
@@ -83,7 +83,7 @@ export default class DATScanner extends Scanner {
         });
       } catch (e) {
         const message = (e as Error).message.split('\n').join(', ');
-        await this.progressBar.logError(`${datFile.toString()}: failed to parse DAT XML : ${message}`);
+        await this.progressBar.logWarn(`${datFile.toString()}: failed to parse DAT XML : ${message}`);
         return undefined;
       }
     });
