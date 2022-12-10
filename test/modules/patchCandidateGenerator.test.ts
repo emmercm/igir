@@ -50,12 +50,16 @@ it('should do nothing with no relevant patches', async () => {
 });
 
 it('should create patch candidates with relevant patches', async () => {
+  // Given
   const romFiles = await new ROMScanner(new Options({
     input: [path.join('test', 'fixtures', 'roms', 'patchable')],
   }), new ProgressBarFake()).scan();
+
+  // When
   const parentsToCandidates = await runPatchCandidateGenerator(romFiles);
 
-  expect(parentsToCandidates.size).toEqual(7);
+  // Then parents have doubled
+  expect(parentsToCandidates.size).toEqual(romFiles.length * 2);
   [...parentsToCandidates.values()]
-    .forEach((releaseCandidates) => expect(releaseCandidates).toHaveLength(2));
+    .forEach((releaseCandidates) => expect(releaseCandidates).toHaveLength(1));
 });
