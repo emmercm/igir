@@ -17,7 +17,8 @@
   vulnerabilityAlerts: {
     enabled: true, // default
     schedule: "at any time", // default
-    prCreation: "immediate" // default
+    prCreation: "immediate", // default
+    automergeSchedule: "at any time"
   },
 
   // Use pseudo semantic commit (and therefore PR title) commit messages
@@ -35,6 +36,13 @@
   automerge: true,
   automergeSchedule: "on the 28th day of the month",
   prHourlyLimit: 0, // default: disabled
+
+  node: {
+    groupName: "Node.js",
+    schedule: "at any time",
+    prCreation: "immediate",
+    automergeSchedule: "at any time"
+  },
 
   npm: {
     lockFileMaintenance: {
@@ -54,7 +62,7 @@
       // Dependencies
       {
         groupName: "dependencies",
-        matchDepTypes: ["dependencies", "devDependencies"],
+        matchDepTypes: ["dependencies", "devDependencies"]
       },
 
       // Dev dependencies
@@ -64,15 +72,16 @@
         matchDepTypes: ["devDependencies"],
         excludePackageNames: [
           "@types/7zip-min",
+          "@types/archiver",
           "@types/async",
           "@types/cli-progress",
           "@types/figlet",
           "@types/micromatch",
           "@types/semver",
+          "@types/tar",
           "@types/xml2js",
           "@types/yargs",
-          "@types/yauzl",
-          "@types/yazl"
+          "@types/yauzl"
         ],
         groupName: "dev dependencies"
       },

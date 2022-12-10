@@ -1,5 +1,6 @@
-import fs, { promises as fsPromises } from 'fs';
+import fs from 'fs';
 import path from 'path';
+import util from 'util';
 
 import Constants from '../../../src/constants.js';
 import bufferPoly from '../../../src/polyfill/bufferPoly.js';
@@ -8,8 +9,8 @@ import File from '../../../src/types/files/file.js';
 import PPFPatch from '../../../src/types/patches/ppfPatch.js';
 
 async function writeTemp(fileName: string, contents: string | Buffer): Promise<File> {
-  const temp = fsPoly.mktempSync(path.join(Constants.GLOBAL_TEMP_DIR, fileName));
-  await fsPromises.writeFile(temp, contents);
+  const temp = await fsPoly.mktemp(path.join(Constants.GLOBAL_TEMP_DIR, fileName));
+  await util.promisify(fs.writeFile)(temp, contents);
   return File.fileOf(temp);
 }
 

@@ -15,21 +15,6 @@ export default class ROM {
   @Expose({ name: 'crc' })
   private readonly crc?: string;
 
-  @Expose({ name: 'sha1' })
-  private readonly sha1?: string;
-
-  @Expose({ name: 'md5' })
-  private readonly md5?: string;
-
-  @Expose({ name: 'merge' })
-  private readonly merge?: string;
-
-  @Expose({ name: 'status' })
-  private readonly status: 'baddump' | 'nodump' | 'good' | 'verified' = 'good';
-
-  @Expose({ name: 'date' })
-  private readonly date?: string;
-
   constructor(name: string, size: number, crc: string) {
     this.name = name;
     this.size = size;

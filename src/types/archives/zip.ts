@@ -1,9 +1,10 @@
 import archiver from 'archiver';
-import fs, { promises as fsPromises } from 'fs';
+import fs from 'fs';
 import path from 'path';
 import { Readable } from 'stream';
 import { clearInterval } from 'timers';
-import yauzl, { Entry } from 'yauzl';
+import util from 'util';
+import yauzl, { Entry, ZipFile } from 'yauzl';
 
 import fsPoly from '../../polyfill/fsPoly.js';
 import ArchiveEntry from '../files/archiveEntry.js';
@@ -22,9 +23,7 @@ export default class Zip extends Archive {
 
   async getArchiveEntries(): Promise<ArchiveEntry<Zip>[]> {
     return new Promise((resolve, reject) => {
-      yauzl.open(this.getFilePath(), {
-        lazyEntries: true,
-      }, (fileErr, zipFile) => {
+      const yauzlCallback = (fileErr: Error | null, zipFile: ZipFile): void => {
         if (fileErr) {
           reject(fileErr);
           return;
@@ -53,7 +52,15 @@ export default class Zip extends Archive {
 
         // Start
         zipFile.readEntry();
-      });
+      };
+
+      try {
+        yauzl.open(this.getFilePath(), {
+          lazyEntries: true,
+        }, yauzlCallback);
+      } catch (e) {
+        reject(e);
+      }
     });
   }
 
@@ -66,7 +73,7 @@ export default class Zip extends Archive {
 
     const localDir = path.dirname(localFile);
     if (!await fsPoly.exists(localDir)) {
-      await fsPromises.mkdir(localDir, { recursive: true });
+      await util.promisify(fs.mkdir)(localDir, { recursive: true });
     }
 
     return this.extractEntryToStream(
@@ -93,9 +100,7 @@ export default class Zip extends Archive {
     callback: (stream: Readable) => (Promise<T> | T),
   ): Promise<T> {
     return new Promise((resolve, reject) => {
-      yauzl.open(this.getFilePath(), {
-        lazyEntries: true,
-      }, (fileErr, zipFile) => {
+      const yauzlCallback = (fileErr: Error | null, zipFile: ZipFile): void => {
         if (fileErr) {
           reject(fileErr);
           return;
@@ -128,7 +133,15 @@ export default class Zip extends Archive {
 
         // Start
         zipFile.readEntry();
-      });
+      };
+
+      try {
+        yauzl.open(this.getFilePath(), {
+          lazyEntries: true,
+        }, yauzlCallback);
+      } catch (e) {
+        reject(e);
+      }
     });
   }
 
@@ -139,7 +152,7 @@ export default class Zip extends Archive {
   ): Promise<void> {
     // Pipe the zip contents to disk, using an intermediate temp file because we may be trying to
     // overwrite an input zip file
-    const tempZipFile = fsPoly.mktempSync(`${this.getFilePath()}.zip-out`);
+    const tempZipFile = await fsPoly.mktemp(`${this.getFilePath()}.zip-out`);
     const writeStream = fs.createWriteStream(tempZipFile);
 
     const zipFile = archiver('zip', { zlib: { level: 9 } });

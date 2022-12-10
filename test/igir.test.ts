@@ -14,7 +14,7 @@ async function expectEndToEnd(
   expectedFilesAndCrcs: string[][],
 ): Promise<void> {
   const tempInput = await fsPoly.mkdtemp(path.join(Constants.GLOBAL_TEMP_DIR, 'input'));
-  fsPoly.copyDirSync('./test/fixtures', tempInput);
+  await fsPoly.copyDir('./test/fixtures', tempInput);
 
   const tempOutput = await fsPoly.mkdtemp(path.join(Constants.GLOBAL_TEMP_DIR, 'output'));
 
@@ -30,7 +30,7 @@ async function expectEndToEnd(
   });
   await new Igir(options, new Logger(LogLevel.NEVER)).main();
 
-  const writtenRomAndCrcs = (await Promise.all(fsPoly.walkSync(tempOutput)
+  const writtenRomAndCrcs = (await Promise.all((await fsPoly.walk(tempOutput))
     .map(async (filePath) => FileFactory.filesFrom(filePath))))
     .flatMap((files) => files)
     .map((file) => ([file.toString().replace(tempOutput + path.sep, ''), file.getCrc32()]))
@@ -60,6 +60,13 @@ describe('with explicit dats', () => {
     await expect(async () => new Igir(new Options({
       dat: ['src/*'],
     }), new Logger(LogLevel.NEVER)).main()).rejects.toThrow(/no valid dat files/i);
+  });
+
+  it('should throw on DATs without parent/clone info', async () => {
+    await expect(async () => new Igir(new Options({
+      dat: ['test/fixtures/dats/*'],
+      single: true,
+    }), new Logger(LogLevel.NEVER)).main()).rejects.toThrow(/parent\/clone/i);
   });
 
   it('should copy and test', async () => {

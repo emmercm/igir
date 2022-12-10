@@ -1,4 +1,3 @@
-import fs from 'fs';
 import path from 'path';
 
 import Constants from '../../../src/constants.js';
@@ -79,8 +78,8 @@ describe('extractToFile', () => {
     /* eslint-disable no-await-in-loop */
     for (let i = 0; i < raws.length; i += 1) {
       const raw = raws[i];
-      await raw.extractToFile((localFile) => {
-        expect(fs.existsSync(localFile)).toEqual(true);
+      await raw.extractToFile(async (localFile) => {
+        await expect(fsPoly.exists(localFile)).resolves.toEqual(true);
         expect(localFile).toEqual(raw.getFilePath());
       });
     }

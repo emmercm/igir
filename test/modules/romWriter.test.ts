@@ -1,6 +1,7 @@
-import { promises as fsPromises, Stats } from 'fs';
+import fs, { Stats } from 'fs';
 import os from 'os';
 import path from 'path';
+import util from 'util';
 
 import Constants from '../../src/constants.js';
 import CandidateGenerator from '../../src/modules/candidateGenerator.js';
@@ -28,7 +29,7 @@ async function copyFixturesToTemp(
 ): Promise<void> {
   // Set up the input directory
   const inputTemp = await fsPoly.mkdtemp(path.join(Constants.GLOBAL_TEMP_DIR, 'input'));
-  fsPoly.copyDirSync('./test/fixtures', inputTemp);
+  await fsPoly.copyDir('./test/fixtures', inputTemp);
 
   // Set up the output directory, but delete it so ROMWriter can make it
   const outputTemp = await fsPoly.mkdtemp(path.join(Constants.GLOBAL_TEMP_DIR, 'output'));
@@ -47,13 +48,13 @@ async function walkAndStat(dirPath: string): Promise<[string, Stats][]> {
     return [];
   }
   return Promise.all(
-    fsPoly.walkSync(dirPath)
+    (await fsPoly.walk(dirPath))
       .sort()
       .map(async (filePath) => {
         let stats: Stats;
         try {
           stats = {
-            ...await fsPromises.stat(filePath),
+            ...await util.promisify(fs.stat)(filePath),
             // Hard-code properties that can change with file reads
             atime: new Date(0),
             atimeMs: 0,

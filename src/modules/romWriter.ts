@@ -1,6 +1,7 @@
 import { Semaphore } from 'async-mutex';
-import fs, { promises as fsPromises } from 'fs';
+import fs from 'fs';
 import path from 'path';
+import util from 'util';
 
 import ProgressBar, { Symbols } from '../console/progressBar.js';
 import Constants from '../constants.js';
@@ -76,19 +77,20 @@ export default class ROMWriter extends Module {
     await this.progressBar.logTrace(`${dat.getName()}: ${releaseCandidate.getName()}: ${writeNeeded ? '' : 'no '}write needed`);
 
     if (writeNeeded) {
-      const messageTimeout = this.progressBar.setWaitingMessage(`${releaseCandidate.getName()} ...`);
+      const waitingMessage = `${releaseCandidate.getName()} ...`;
+      this.progressBar.addWaitingMessage(waitingMessage);
 
       await this.writeZip(dat, releaseCandidate);
       await this.writeRaw(dat, releaseCandidate);
 
-      clearTimeout(messageTimeout);
+      await this.progressBar.removeWaitingMessage(waitingMessage);
     }
   }
 
   private static async ensureOutputDirExists(outputFilePath: string): Promise<void> {
     const outputDir = path.dirname(outputFilePath);
     if (!await fsPoly.exists(outputDir)) {
-      await fsPromises.mkdir(outputDir, { recursive: true });
+      await util.promisify(fs.mkdir)(outputDir, { recursive: true });
     }
   }
 

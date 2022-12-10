@@ -32,10 +32,8 @@ export default class NinjaPatch extends Patch {
     return new NinjaPatch(file, crcBefore);
   }
 
-  async apply<T>(file: File, callback: (tempFile: string) => (Promise<T> | T)): Promise<T> {
-    return this.getFile().extractToFile(async (patchFilePath) => {
-      const patchFile = await FilePoly.fileFrom(patchFilePath, 'r');
-
+  async apply<T>(inputFile: File, callback: (tempFile: string) => (Promise<T> | T)): Promise<T> {
+    return this.getFile().extractToFilePoly('r', async (patchFile) => {
       const header = (await patchFile.readNext(5)).toString();
       if (header !== 'NINJA') {
         await patchFile.close();
@@ -57,84 +55,100 @@ export default class NinjaPatch extends Patch {
       patchFile.skipNext(512); // website
       patchFile.skipNext(1074); // info
 
-      const result = await file.extractToFile(async (tempFile) => {
-        const targetFile = await FilePoly.fileFrom(tempFile, 'r+');
+      return this.writeOutputFile(inputFile, callback, patchFile);
+    });
+  }
 
+  private async writeOutputFile<T>(
+    inputFile: File,
+    callback: (tempFile: string) => (Promise<T> | T),
+    patchFile: FilePoly,
+  ): Promise<T> {
+    return inputFile.extractToFile(async (tempFile) => {
+      const targetFile = await FilePoly.fileFrom(tempFile, 'r+');
+
+      try {
         /* eslint-disable no-await-in-loop */
         while (!patchFile.isEOF()) {
-          const command = (await patchFile.readNext(1)).readUint8();
-
-          if (command === NinjaCommand.TERMINATE) {
-            break;
-          } else if (command === NinjaCommand.OPEN) {
-            const multiFile = (await patchFile.readNext(1)).readUint8();
-            if (multiFile > 0) {
-              await targetFile.close();
-              throw new Error(`Multi-file NINJA patches aren't supported: ${this.getFile().toString()}`);
-            }
-
-            const fileNameLength = multiFile > 0
-              ? (await patchFile.readNext(multiFile)).readUIntLE(0, multiFile)
-              : 0;
-            patchFile.skipNext(fileNameLength); // file name
-            const fileType = (await patchFile.readNext(1)).readUint8();
-            if (fileType > 0) {
-              await targetFile.close();
-              throw new Error(`Unsupported NINJA file type ${NinjaFileType[fileType]}: ${this.getFile().toString()}`);
-            }
-            const sourceFileSizeLength = (await patchFile.readNext(1)).readUint8();
-            const sourceFileSize = (await patchFile.readNext(sourceFileSizeLength))
-              .readUIntLE(0, sourceFileSizeLength);
-            const modifiedFileSizeLength = (await patchFile.readNext(1)).readUint8();
-            const modifiedFileSize = (await patchFile.readNext(modifiedFileSizeLength))
-              .readUIntLE(0, modifiedFileSizeLength);
-            patchFile.skipNext(16); // source MD5
-            patchFile.skipNext(16); // modified MD5
-
-            if (sourceFileSize !== modifiedFileSize) {
-              patchFile.skipNext(1); // "M" or "A"
-              const overflowSizeLength = (await patchFile.readNext(1)).readUint8();
-              const overflowSize = overflowSizeLength > 0
-                ? (await patchFile.readNext(overflowSizeLength)).readUIntLE(0, overflowSizeLength)
-                : 0;
-              const overflow = overflowSize > 0
-                ? await patchFile.readNext(overflowSize)
-                : Buffer.alloc(overflowSize);
-              /* eslint-disable no-bitwise */
-              for (let i = 0; i < overflow.length; i += 1) {
-                overflow[i] ^= 255; // NOTE(cemmer): this isn't documented anywhere
-              }
-              if (modifiedFileSize > sourceFileSize) {
-                await targetFile.writeAt(overflow, targetFile.getSize());
-              }
-            }
-          } else if (command === NinjaCommand.XOR) {
-            const offsetLength = (await patchFile.readNext(1)).readUint8();
-            const offset = (await patchFile.readNext(offsetLength)).readUIntLE(0, offsetLength);
-            targetFile.seek(offset);
-
-            const lengthLength = (await patchFile.readNext(1)).readUint8();
-            const length = (await patchFile.readNext(lengthLength)).readUIntLE(0, lengthLength);
-            const sourceData = await targetFile.readNext(length);
-
-            const xorData = await patchFile.readNext(length);
-            const targetData = Buffer.allocUnsafe(length);
-            /* eslint-disable no-bitwise */
-            for (let i = 0; i < length; i += 1) {
-              targetData[i] = (i < sourceData.length ? sourceData[i] : 0x00) ^ xorData[i];
-            }
-            await targetFile.writeAt(targetData, offset);
-          }
+          await this.applyCommand(patchFile, targetFile);
         }
-
+      } finally {
         await targetFile.close();
+      }
 
-        return callback(tempFile);
-      });
-
-      await patchFile.close();
-
-      return result;
+      return callback(tempFile);
     });
+  }
+
+  private async applyCommand(patchFile: FilePoly, targetFile: FilePoly): Promise<void> {
+    const command = (await patchFile.readNext(1)).readUint8();
+
+    if (command === NinjaCommand.TERMINATE) {
+      // Nothing
+    } else if (command === NinjaCommand.OPEN) {
+      await this.applyCommandOpen(patchFile, targetFile);
+    } else if (command === NinjaCommand.XOR) {
+      await NinjaPatch.applyCommandXor(patchFile, targetFile);
+    }
+  }
+
+  private async applyCommandOpen(patchFile: FilePoly, targetFile: FilePoly): Promise<void> {
+    const multiFile = (await patchFile.readNext(1)).readUint8();
+    if (multiFile > 0) {
+      throw new Error(`Multi-file NINJA patches aren't supported: ${this.getFile().toString()}`);
+    }
+
+    const fileNameLength = multiFile > 0
+      ? (await patchFile.readNext(multiFile)).readUIntLE(0, multiFile)
+      : 0;
+    patchFile.skipNext(fileNameLength); // file name
+    const fileType = (await patchFile.readNext(1)).readUint8();
+    if (fileType > 0) {
+      throw new Error(`Unsupported NINJA file type ${NinjaFileType[fileType]}: ${this.getFile().toString()}`);
+    }
+    const sourceFileSizeLength = (await patchFile.readNext(1)).readUint8();
+    const sourceFileSize = (await patchFile.readNext(sourceFileSizeLength))
+      .readUIntLE(0, sourceFileSizeLength);
+    const modifiedFileSizeLength = (await patchFile.readNext(1)).readUint8();
+    const modifiedFileSize = (await patchFile.readNext(modifiedFileSizeLength))
+      .readUIntLE(0, modifiedFileSizeLength);
+    patchFile.skipNext(16); // source MD5
+    patchFile.skipNext(16); // modified MD5
+
+    if (sourceFileSize !== modifiedFileSize) {
+      patchFile.skipNext(1); // "M" or "A"
+      const overflowSizeLength = (await patchFile.readNext(1)).readUint8();
+      const overflowSize = overflowSizeLength > 0
+        ? (await patchFile.readNext(overflowSizeLength)).readUIntLE(0, overflowSizeLength)
+        : 0;
+      const overflow = overflowSize > 0
+        ? await patchFile.readNext(overflowSize)
+        : Buffer.alloc(overflowSize);
+      /* eslint-disable no-bitwise */
+      for (let i = 0; i < overflow.length; i += 1) {
+        overflow[i] ^= 255; // NOTE(cemmer): this isn't documented anywhere
+      }
+      if (modifiedFileSize > sourceFileSize) {
+        await targetFile.writeAt(overflow, targetFile.getSize());
+      }
+    }
+  }
+
+  private static async applyCommandXor(patchFile: FilePoly, targetFile: FilePoly): Promise<void> {
+    const offsetLength = (await patchFile.readNext(1)).readUint8();
+    const offset = (await patchFile.readNext(offsetLength)).readUIntLE(0, offsetLength);
+    targetFile.seek(offset);
+
+    const lengthLength = (await patchFile.readNext(1)).readUint8();
+    const length = (await patchFile.readNext(lengthLength)).readUIntLE(0, lengthLength);
+    const sourceData = await targetFile.readNext(length);
+
+    const xorData = await patchFile.readNext(length);
+    const targetData = Buffer.allocUnsafe(length);
+    /* eslint-disable no-bitwise */
+    for (let i = 0; i < length; i += 1) {
+      targetData[i] = (i < sourceData.length ? sourceData[i] : 0x00) ^ xorData[i];
+    }
+    await targetFile.writeAt(targetData, offset);
   }
 }

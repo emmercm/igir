@@ -1,9 +1,11 @@
 import crc32 from 'crc/crc32';
-import fs, { PathLike, promises as fsPromises } from 'fs';
+import fs, { OpenMode, PathLike } from 'fs';
 import path from 'path';
 import { Readable } from 'stream';
+import util from 'util';
 
 import Constants from '../../constants.js';
+import FilePoly from '../../polyfill/filePoly.js';
 import fsPoly from '../../polyfill/fsPoly.js';
 import Patch from '../patches/patch.js';
 import FileHeader from './fileHeader.js';
@@ -47,7 +49,7 @@ export default class File {
     let finalSize = size;
     if (finalSize === undefined) {
       if (await fsPoly.exists(filePath)) {
-        finalSize = (await fsPromises.stat(filePath)).size;
+        finalSize = (await util.promisify(fs.stat)(filePath)).size;
       } else {
         finalSize = 0;
       }
@@ -143,14 +145,28 @@ export default class File {
     return callback(this.getFilePath());
   }
 
+  async extractToFilePoly<T>(
+    flags: OpenMode,
+    callback: (filePoly: FilePoly) => (T | Promise<T>),
+  ): Promise<T> {
+    return this.extractToFile(async (localFile) => {
+      const filePoly = await FilePoly.fileFrom(localFile, flags);
+      try {
+        return await callback(filePoly);
+      } finally {
+        await filePoly.close();
+      }
+    });
+  }
+
   async extractToTempFile<T>(
     callback: (localFile: string) => (T | Promise<T>),
   ): Promise<T> {
-    const temp = fsPoly.mktempSync(path.join(
+    const temp = await fsPoly.mktemp(path.join(
       Constants.GLOBAL_TEMP_DIR,
       `${path.basename(this.getFilePath())}.temp`,
     ));
-    await fsPromises.copyFile(this.getFilePath(), temp);
+    await util.promisify(fs.copyFile)(this.getFilePath(), temp);
     try {
       return await callback(temp);
     } finally {

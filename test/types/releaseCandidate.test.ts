@@ -27,7 +27,7 @@ describe('getRegion', () => {
     ['Bob the Builder - Fix It Fun! (Sw) (M5) [C][!]', 'SWE'],
     ['Bomberman GB (U) [S][b2]', 'USA'],
     ['Games Frenzy (E) (M3) [C][!]', 'EUR'],
-    ['Golf (W) [o3]', 'UNK'],
+    ['Golf (W) [o3]', 'WORLD'],
   ])('should return the region from game name: %s', (name, expectedRegion) => {
     const releaseCandidate = new ReleaseCandidate(new Game({ name }), undefined, []);
     expect(releaseCandidate.getRegion()).toEqual(expectedRegion);

@@ -1,6 +1,6 @@
 import 'reflect-metadata';
 
-import { plainToInstance, Type } from 'class-transformer';
+import { Expose, plainToInstance, Type } from 'class-transformer';
 
 import Game from './game.js';
 import Header from './header.js';
@@ -10,9 +10,11 @@ import Parent from './parent.js';
  * @see http://www.logiqx.com/DatFAQs/DatCreation.php
  */
 export default class DAT {
+  @Expose()
   @Type(() => Header)
   private readonly header: Header;
 
+  @Expose()
   @Type(() => Game)
   private readonly game: Game | Game[];
 
@@ -27,6 +29,7 @@ export default class DAT {
   static fromObject(obj: object): DAT {
     return plainToInstance(DAT, obj, {
       enableImplicitConversion: true,
+      excludeExtraneousValues: true,
     })
       .generateGameNamesToParents();
   }
@@ -70,6 +73,10 @@ export default class DAT {
 
   getParents(): Parent[] {
     return [...this.gameNamesToParents.values()];
+  }
+
+  hasParentCloneInfo(): boolean {
+    return this.getGames().some((game) => game.isClone());
   }
 
   // Computed getters
