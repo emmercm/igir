@@ -270,7 +270,7 @@ export default class ROMWriter extends Module {
         && !(removeHeader && inputRomFile.getFileHeader())
         && !inputRomFile.getPatch()
       ) {
-        await fsPromises.copyFile(inputRomFile.getFilePath(), outputFilePath);
+        await util.promisify(fs.copyFile)(inputRomFile.getFilePath(), outputFilePath);
         return true;
       }
 
