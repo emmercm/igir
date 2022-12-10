@@ -83,7 +83,7 @@ export default class ROMWriter extends Module {
       await this.writeZip(dat, releaseCandidate);
       await this.writeRaw(dat, releaseCandidate);
 
-      await this.progressBar.removeWaitingMessage(waitingMessage);
+      this.progressBar.removeWaitingMessage(waitingMessage);
     }
   }
 

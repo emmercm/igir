@@ -21,7 +21,9 @@ export default class ProgressBarCLI extends ProgressBar {
 
   private readonly singleBarFormatted: SingleBarFormatted;
 
-  private waitingMessages: { [key: string]: NodeJS.Timeout } = {};
+  private waitingMessageTimeout?: NodeJS.Timeout;
+
+  private waitingMessages: string[] = [];
 
   private constructor(logger: Logger, singleBarFormatted: SingleBarFormatted) {
     super();
@@ -111,32 +113,24 @@ export default class ProgressBarCLI extends ProgressBar {
    * If progress hasn't been made by some timeout period, then show a waiting message to let the
    *  user know that there is still something processing.
    */
-  addWaitingMessage(waitingMessage: string, timeout = 10_000): void {
-    // If waitingMessage has a timeout, clear it and delete it
-    if (this.waitingMessages[waitingMessage]) {
-      clearTimeout(this.waitingMessages[waitingMessage]);
-      delete this.waitingMessages[waitingMessage];
-    }
-    // Set a timer to re-render with this waiting message
-    this.waitingMessages[waitingMessage] = setTimeout(async () => {
+  addWaitingMessage(waitingMessage: string): void {
+    this.waitingMessages.push(waitingMessage);
+    this.setWaitingMessageTimeout();
+  }
+
+  removeWaitingMessage(waitingMessage: string): void {
+    this.waitingMessages = this.waitingMessages.filter((msg) => msg !== waitingMessage);
+    this.setWaitingMessageTimeout();
+  }
+
+  private setWaitingMessageTimeout(timeout = 10_000): void {
+    clearTimeout(this.waitingMessageTimeout);
+    this.waitingMessageTimeout = setTimeout(async () => {
       this.singleBarFormatted.getSingleBar().update({
-        waitingMessage,
+        waitingMessage: this.waitingMessages[0],
       } as ProgressBarPayload);
       await ProgressBarCLI.render(true);
     }, timeout);
-  }
-
-  async removeWaitingMessage(waitingMessage: string): Promise<void> {
-    // If waitingMessage has a timeout, clear it and delete it
-    if (this.waitingMessages[waitingMessage]) {
-      clearTimeout(this.waitingMessages[waitingMessage]);
-      delete this.waitingMessages[waitingMessage];
-    }
-    // Re-render using the next waiting message
-    this.singleBarFormatted.getSingleBar().update({
-      waitingMessage: Object.keys(this.waitingMessages).sort()[0],
-    } as ProgressBarPayload);
-    return ProgressBarCLI.render(true);
   }
 
   async increment(): Promise<void> {
