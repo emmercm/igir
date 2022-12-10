@@ -171,43 +171,43 @@ describe('toCSV', () => {
       const options = new Options(defaultOptions);
       const datStatus = await new StatusGenerator(options, new ProgressBarFake())
         .output(dat, new Map());
-      await expect(datStatus.toCSV(options)).resolves.toEqual(`DAT Name,Game Name,Status,ROM Files,BIOS,Retail Release,Unlicensed,Demo,Beta,Sample,Prototype,Test,Aftermarket,Homebrew,Bad
-dat,bios,MISSING,,true,true,false,false,false,false,false,false,false,false,false
-dat,game prototype (proto),MISSING,,false,false,false,false,false,false,true,false,false,false,false
-dat,game with multiple roms,MISSING,,false,true,false,false,false,false,false,false,false,false,false
-dat,game with single rom,MISSING,,false,true,false,false,false,false,false,false,false,false,false
-dat,no roms,FOUND,,false,true,false,false,false,false,false,false,false,false,false`);
+      await expect(datStatus.toCSV(options)).resolves.toEqual(`DAT Name,Game Name,Status,ROM Files,Patched,BIOS,Retail Release,Unlicensed,Demo,Beta,Sample,Prototype,Test,Aftermarket,Homebrew,Bad
+dat,bios,MISSING,,false,true,true,false,false,false,false,false,false,false,false,false
+dat,game prototype (proto),MISSING,,false,false,false,false,false,false,false,true,false,false,false,false
+dat,game with multiple roms,MISSING,,false,false,true,false,false,false,false,false,false,false,false,false
+dat,game with single rom,MISSING,,false,false,true,false,false,false,false,false,false,false,false,false
+dat,no roms,FOUND,,false,false,true,false,false,false,false,false,false,false,false,false`);
     });
 
     it('should return games and retail as missing', async () => {
       const options = new Options({ noBios: true });
       const datStatus = await new StatusGenerator(options, new ProgressBarFake())
         .output(dat, new Map());
-      await expect(datStatus.toCSV(options)).resolves.toEqual(`DAT Name,Game Name,Status,ROM Files,BIOS,Retail Release,Unlicensed,Demo,Beta,Sample,Prototype,Test,Aftermarket,Homebrew,Bad
-dat,bios,MISSING,,true,true,false,false,false,false,false,false,false,false,false
-dat,game prototype (proto),MISSING,,false,false,false,false,false,false,true,false,false,false,false
-dat,game with multiple roms,MISSING,,false,true,false,false,false,false,false,false,false,false,false
-dat,game with single rom,MISSING,,false,true,false,false,false,false,false,false,false,false,false
-dat,no roms,FOUND,,false,true,false,false,false,false,false,false,false,false,false`);
+      await expect(datStatus.toCSV(options)).resolves.toEqual(`DAT Name,Game Name,Status,ROM Files,Patched,BIOS,Retail Release,Unlicensed,Demo,Beta,Sample,Prototype,Test,Aftermarket,Homebrew,Bad
+dat,bios,MISSING,,false,true,true,false,false,false,false,false,false,false,false,false
+dat,game prototype (proto),MISSING,,false,false,false,false,false,false,false,true,false,false,false,false
+dat,game with multiple roms,MISSING,,false,false,true,false,false,false,false,false,false,false,false,false
+dat,game with single rom,MISSING,,false,false,true,false,false,false,false,false,false,false,false,false
+dat,no roms,FOUND,,false,false,true,false,false,false,false,false,false,false,false,false`);
     });
 
     it('should return BIOSes as missing', async () => {
       const options = new Options({ ...defaultOptions, onlyBios: true });
       const datStatus = await new StatusGenerator(options, new ProgressBarFake())
         .output(dat, new Map());
-      await expect(datStatus.toCSV(options)).resolves.toEqual(`DAT Name,Game Name,Status,ROM Files,BIOS,Retail Release,Unlicensed,Demo,Beta,Sample,Prototype,Test,Aftermarket,Homebrew,Bad
-dat,bios,MISSING,,true,true,false,false,false,false,false,false,false,false,false`);
+      await expect(datStatus.toCSV(options)).resolves.toEqual(`DAT Name,Game Name,Status,ROM Files,Patched,BIOS,Retail Release,Unlicensed,Demo,Beta,Sample,Prototype,Test,Aftermarket,Homebrew,Bad
+dat,bios,MISSING,,false,true,true,false,false,false,false,false,false,false,false,false`);
     });
 
     it('should return BIOSes and retail as missing', async () => {
       const options = new Options({ ...defaultOptions, single: true });
       const datStatus = await new StatusGenerator(options, new ProgressBarFake())
         .output(dat, new Map());
-      await expect(datStatus.toCSV(options)).resolves.toEqual(`DAT Name,Game Name,Status,ROM Files,BIOS,Retail Release,Unlicensed,Demo,Beta,Sample,Prototype,Test,Aftermarket,Homebrew,Bad
-dat,bios,MISSING,,true,true,false,false,false,false,false,false,false,false,false
-dat,game with multiple roms,MISSING,,false,true,false,false,false,false,false,false,false,false,false
-dat,game with single rom,MISSING,,false,true,false,false,false,false,false,false,false,false,false
-dat,no roms,FOUND,,false,true,false,false,false,false,false,false,false,false,false`);
+      await expect(datStatus.toCSV(options)).resolves.toEqual(`DAT Name,Game Name,Status,ROM Files,Patched,BIOS,Retail Release,Unlicensed,Demo,Beta,Sample,Prototype,Test,Aftermarket,Homebrew,Bad
+dat,bios,MISSING,,false,true,true,false,false,false,false,false,false,false,false,false
+dat,game with multiple roms,MISSING,,false,false,true,false,false,false,false,false,false,false,false,false
+dat,game with single rom,MISSING,,false,false,true,false,false,false,false,false,false,false,false,false
+dat,no roms,FOUND,,false,false,true,false,false,false,false,false,false,false,false,false`);
     });
   });
 
@@ -219,12 +219,12 @@ dat,no roms,FOUND,,false,true,false,false,false,false,false,false,false,false,fa
       ]);
       const datStatus = await new StatusGenerator(options, new ProgressBarFake())
         .output(dat, map);
-      await expect(datStatus.toCSV(options)).resolves.toEqual(`DAT Name,Game Name,Status,ROM Files,BIOS,Retail Release,Unlicensed,Demo,Beta,Sample,Prototype,Test,Aftermarket,Homebrew,Bad
-dat,bios,FOUND,bios.rom,true,true,false,false,false,false,false,false,false,false,false
-dat,game prototype (proto),MISSING,,false,false,false,false,false,false,true,false,false,false,false
-dat,game with multiple roms,MISSING,,false,true,false,false,false,false,false,false,false,false,false
-dat,game with single rom,MISSING,,false,true,false,false,false,false,false,false,false,false,false
-dat,no roms,FOUND,,false,true,false,false,false,false,false,false,false,false,false`);
+      await expect(datStatus.toCSV(options)).resolves.toEqual(`DAT Name,Game Name,Status,ROM Files,Patched,BIOS,Retail Release,Unlicensed,Demo,Beta,Sample,Prototype,Test,Aftermarket,Homebrew,Bad
+dat,bios,FOUND,bios.rom,false,true,true,false,false,false,false,false,false,false,false,false
+dat,game prototype (proto),MISSING,,false,false,false,false,false,false,false,true,false,false,false,false
+dat,game with multiple roms,MISSING,,false,false,true,false,false,false,false,false,false,false,false,false
+dat,game with single rom,MISSING,,false,false,true,false,false,false,false,false,false,false,false,false
+dat,no roms,FOUND,,false,false,true,false,false,false,false,false,false,false,false,false`);
     });
 
     it('should return prototype as found', async () => {
@@ -234,12 +234,12 @@ dat,no roms,FOUND,,false,true,false,false,false,false,false,false,false,false,fa
       ]);
       const datStatus = await new StatusGenerator(options, new ProgressBarFake())
         .output(dat, map);
-      await expect(datStatus.toCSV(options)).resolves.toEqual(`DAT Name,Game Name,Status,ROM Files,BIOS,Retail Release,Unlicensed,Demo,Beta,Sample,Prototype,Test,Aftermarket,Homebrew,Bad
-dat,bios,MISSING,,true,true,false,false,false,false,false,false,false,false,false
-dat,game prototype (proto),FOUND,game prototype (proto).rom,false,false,false,false,false,false,true,false,false,false,false
-dat,game with multiple roms,MISSING,,false,true,false,false,false,false,false,false,false,false,false
-dat,game with single rom,MISSING,,false,true,false,false,false,false,false,false,false,false,false
-dat,no roms,FOUND,,false,true,false,false,false,false,false,false,false,false,false`);
+      await expect(datStatus.toCSV(options)).resolves.toEqual(`DAT Name,Game Name,Status,ROM Files,Patched,BIOS,Retail Release,Unlicensed,Demo,Beta,Sample,Prototype,Test,Aftermarket,Homebrew,Bad
+dat,bios,MISSING,,false,true,true,false,false,false,false,false,false,false,false,false
+dat,game prototype (proto),FOUND,game prototype (proto).rom,false,false,false,false,false,false,false,true,false,false,false,false
+dat,game with multiple roms,MISSING,,false,false,true,false,false,false,false,false,false,false,false,false
+dat,game with single rom,MISSING,,false,false,true,false,false,false,false,false,false,false,false,false
+dat,no roms,FOUND,,false,false,true,false,false,false,false,false,false,false,false,false`);
     });
 
     it('should return game with single rom as found', async () => {
@@ -249,12 +249,12 @@ dat,no roms,FOUND,,false,true,false,false,false,false,false,false,false,false,fa
       ]);
       const datStatus = await new StatusGenerator(options, new ProgressBarFake())
         .output(dat, map);
-      await expect(datStatus.toCSV(options)).resolves.toEqual(`DAT Name,Game Name,Status,ROM Files,BIOS,Retail Release,Unlicensed,Demo,Beta,Sample,Prototype,Test,Aftermarket,Homebrew,Bad
-dat,bios,MISSING,,true,true,false,false,false,false,false,false,false,false,false
-dat,game prototype (proto),MISSING,,false,false,false,false,false,false,true,false,false,false,false
-dat,game with multiple roms,MISSING,,false,true,false,false,false,false,false,false,false,false,false
-dat,game with single rom,FOUND,game.rom,false,true,false,false,false,false,false,false,false,false,false
-dat,no roms,FOUND,,false,true,false,false,false,false,false,false,false,false,false`);
+      await expect(datStatus.toCSV(options)).resolves.toEqual(`DAT Name,Game Name,Status,ROM Files,Patched,BIOS,Retail Release,Unlicensed,Demo,Beta,Sample,Prototype,Test,Aftermarket,Homebrew,Bad
+dat,bios,MISSING,,false,true,true,false,false,false,false,false,false,false,false,false
+dat,game prototype (proto),MISSING,,false,false,false,false,false,false,false,true,false,false,false,false
+dat,game with multiple roms,MISSING,,false,false,true,false,false,false,false,false,false,false,false,false
+dat,game with single rom,FOUND,game.rom,false,false,true,false,false,false,false,false,false,false,false,false
+dat,no roms,FOUND,,false,false,true,false,false,false,false,false,false,false,false,false`);
     });
   });
 
@@ -273,13 +273,13 @@ dat,no roms,FOUND,,false,true,false,false,false,false,false,false,false,false,fa
     const options = new Options(defaultOptions);
     const datStatus = await new StatusGenerator(options, new ProgressBarFake())
       .output(dat, map);
-    await expect(datStatus.toCSV(options)).resolves.toEqual(`DAT Name,Game Name,Status,ROM Files,BIOS,Retail Release,Unlicensed,Demo,Beta,Sample,Prototype,Test,Aftermarket,Homebrew,Bad
-dat,bios,MISSING,,true,true,false,false,false,false,false,false,false,false,false
-dat,game prototype (proto),MISSING,,false,false,false,false,false,false,true,false,false,false,false
-dat,game with multiple roms,MISSING,,false,true,false,false,false,false,false,false,false,false,false
-dat,game with single rom,MISSING,,false,true,false,false,false,false,false,false,false,false,false
-dat,no roms,FOUND,,false,true,false,false,false,false,false,false,false,false,false
-dat,patched game,FOUND,patched.rom,false,true,false,false,false,false,false,false,false,false,false`);
+    await expect(datStatus.toCSV(options)).resolves.toEqual(`DAT Name,Game Name,Status,ROM Files,Patched,BIOS,Retail Release,Unlicensed,Demo,Beta,Sample,Prototype,Test,Aftermarket,Homebrew,Bad
+dat,bios,MISSING,,false,true,true,false,false,false,false,false,false,false,false,false
+dat,game prototype (proto),MISSING,,false,false,false,false,false,false,false,true,false,false,false,false
+dat,game with multiple roms,MISSING,,false,false,true,false,false,false,false,false,false,false,false,false
+dat,game with single rom,MISSING,,false,false,true,false,false,false,false,false,false,false,false,false
+dat,no roms,FOUND,,false,false,true,false,false,false,false,false,false,false,false,false
+dat,patched game,FOUND,patched.rom,true,false,true,false,false,false,false,false,false,false,false,false`);
   });
 
   it('should return none missing', async () => {
@@ -292,11 +292,11 @@ dat,patched game,FOUND,patched.rom,false,true,false,false,false,false,false,fals
     ]);
     const datStatus = await new StatusGenerator(options, new ProgressBarFake())
       .output(dat, map);
-    await expect(datStatus.toCSV(options)).resolves.toEqual(`DAT Name,Game Name,Status,ROM Files,BIOS,Retail Release,Unlicensed,Demo,Beta,Sample,Prototype,Test,Aftermarket,Homebrew,Bad
-dat,bios,FOUND,bios.rom,true,true,false,false,false,false,false,false,false,false,false
-dat,game prototype (proto),FOUND,game prototype (proto).rom,false,false,false,false,false,false,true,false,false,false,false
-dat,game with multiple roms,FOUND,"one.rom|two.rom",false,true,false,false,false,false,false,false,false,false,false
-dat,game with single rom,FOUND,game.rom,false,true,false,false,false,false,false,false,false,false,false
-dat,no roms,FOUND,,false,true,false,false,false,false,false,false,false,false,false`);
+    await expect(datStatus.toCSV(options)).resolves.toEqual(`DAT Name,Game Name,Status,ROM Files,Patched,BIOS,Retail Release,Unlicensed,Demo,Beta,Sample,Prototype,Test,Aftermarket,Homebrew,Bad
+dat,bios,FOUND,bios.rom,false,true,true,false,false,false,false,false,false,false,false,false
+dat,game prototype (proto),FOUND,game prototype (proto).rom,false,false,false,false,false,false,false,true,false,false,false,false
+dat,game with multiple roms,FOUND,"one.rom|two.rom",false,false,true,false,false,false,false,false,false,false,false,false
+dat,game with single rom,FOUND,game.rom,false,false,true,false,false,false,false,false,false,false,false,false
+dat,no roms,FOUND,,false,false,true,false,false,false,false,false,false,false,false,false`);
   });
 });
