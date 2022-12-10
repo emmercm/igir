@@ -259,17 +259,30 @@ export default class ROMWriter extends Module {
     inputRomFile: File,
     outputFilePath: string,
   ): Promise<boolean> {
+    const removeHeader = this.options
+      .canRemoveHeader(dat, path.extname(inputRomFile.getExtractedFilePath()));
+
     try {
-      // TODO(cemmer): support raw->raw file moving without streams
+      await ROMWriter.ensureOutputDirExists(outputFilePath);
+
+      // Optimization: use OS copying if we're going raw->raw without any modifications
+      if (!(inputRomFile instanceof ArchiveEntry)
+        && !(removeHeader && inputRomFile.getFileHeader())
+        && !inputRomFile.getPatch()
+      ) {
+        await util.promisify(fs.copyFile)(inputRomFile.getFilePath(), outputFilePath);
+        return true;
+      }
+
+      // Extract the input file, apply any modifications, and pipe the stream to an output file
       await inputRomFile.extractToStream(async (readStream) => {
         await this.progressBar.logTrace(`${dat.getName()}: ${inputRomFile.toString()}: piping to ${outputFilePath}`);
-        await ROMWriter.ensureOutputDirExists(outputFilePath);
         const writeStream = readStream.pipe(fs.createWriteStream(outputFilePath));
         await new Promise<void>((resolve, reject) => {
           writeStream.on('finish', () => resolve());
           writeStream.on('error', (err) => reject(err));
         });
-      }, this.options.canRemoveHeader(dat, path.extname(inputRomFile.getExtractedFilePath())));
+      }, removeHeader);
       return true;
     } catch (e) {
       await this.progressBar.logError(`${dat.getName()}: ${inputRomFile.toString()}: failed to copy to ${outputFilePath} : ${e}`);
