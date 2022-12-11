@@ -47,7 +47,7 @@ $ igir --help
   | $$  | $$ __\$$  | $$  | $$__| $$
   | $$  | $$|    \  | $$  | $$    $$   ROM collection manager
   | $$  | $$ \$$$$  | $$  | $$$$$$$\
- _| $$_ | $$__| $$ _| $$_ | $$  | $$   v0.6.6
+ _| $$_ | $$__| $$ _| $$_ | $$  | $$   v0.7.0
 |   $$ \ \$$    $$|   $$ \| $$  | $$
  \$$$$$$  \$$$$$$  \$$$$$$ \$$   \$$
 
@@ -154,9 +154,9 @@ Example use cases:
   Organize and zip an existing ROM collection:
     igir move zip --dat *.dat --input ROMs/ --output ROMs/
 
-  Produce a 1G1R set per console, preferring English ROMs from USA>EUR>JPN:
+  Produce a 1G1R set per console, preferring English ROMs from USA>WORLD>EUR>JPN:
     igir copy --dat *.dat --input **/*.zip --output 1G1R/ --dir-dat-name --single --prefer-langua
-    ge EN --prefer-region USA,EUR,JPN
+    ge EN --prefer-region USA,WORLD,EUR,JPN
 
   Collate all BIOS files into one directory:
     igir copy --dat *.dat --input **/*.zip --output BIOS/ --only-bios
