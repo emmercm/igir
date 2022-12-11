@@ -1,0 +1,41 @@
+name: Codecov
+
+on:
+  pull_request:
+    types:
+      - opened
+      - synchronize  # HEAD has changed, e.g. a push happened
+      - reopened
+  push:
+    branches:
+      - 'main'
+
+jobs:
+  codecov-lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: formsort/action-check-codecov-config@v1
+
+  # !!! The codecov/project check should be required by GitHub !!!
+  # See ../../codecov.yml for the configuration that drives the check
+  codecov:
+    needs:
+      - codecov-lint
+    runs-on: ubuntu-latest
+    steps:
+      # Setup and install
+      - uses: actions/checkout@v3
+      - uses: actions/setup-node@v3
+        with:
+          node-version-file: '.nvmrc'
+          cache: 'npm'
+      - run: npm ci
+
+      # Run test coverage
+      - run: npm run test:coverage
+      - uses: codecov/codecov-action@v3
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          fail_ci_if_error: true
+          verbose: true

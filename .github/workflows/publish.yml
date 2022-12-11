@@ -4,7 +4,8 @@ name: Publish npm
 
 on:
   release:
-    types: [published]
+    types:
+      - published
 
 jobs:
   node-publish:
