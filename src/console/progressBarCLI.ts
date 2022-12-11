@@ -99,7 +99,7 @@ export default class ProgressBarCLI extends ProgressBar {
   async reset(total: number): Promise<void> {
     this.singleBarFormatted.getSingleBar().setTotal(total);
     this.singleBarFormatted.getSingleBar().update(0);
-    return ProgressBarCLI.render();
+    return ProgressBarCLI.render(true);
   }
 
   async setSymbol(symbol: string): Promise<void> {
@@ -160,7 +160,7 @@ export default class ProgressBarCLI extends ProgressBar {
       } as ProgressBarPayload);
     }
 
-    return ProgressBarCLI.render();
+    return ProgressBarCLI.render(true);
   }
 
   withLoggerPrefix(prefix: string): ProgressBar {
