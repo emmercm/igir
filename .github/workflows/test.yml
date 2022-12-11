@@ -4,12 +4,11 @@
 name: Project CI
 
 on:
-  # When any PR (including forked) is "opened or reopened or when the head branch of the pull request is updated"
   pull_request:
-  # Pushes to branches of the root repo (not forked repos), including PR merge commits
-  push:
-    branches-ignore:
-      - 'main'
+    types:
+      - opened
+      - synchronize  # HEAD has changed, e.g. a push happened
+      - reopened
 
 jobs:
   node-lint:
