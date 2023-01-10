@@ -13,13 +13,15 @@
   assignAutomerge: false, // default
 
   // Open PRs immediately for vulnerability alerts
-  // Requires "dependency graph" and "dependabot alerts" enabled for the repo
+  // Requires "dependency graph" as well as Dependabot "alerts" and "security updates" enabled for the repo
   vulnerabilityAlerts: {
     enabled: true, // default
     schedule: "at any time", // default
     prCreation: "immediate", // default
     automergeSchedule: "at any time"
   },
+  // WARN: "When the lockfileVersion is higher than 1 in package-lock.json, remediations are only possible when changes are made to package.json."
+  transitiveRemediation: true,
 
   // Use pseudo semantic commit (and therefore PR title) commit messages
   // "{{{commitMessagePrefix}}} {{{commitMessageAction}}} {{{commitMessageTopic}}} {{{commitMessageExtra}}} {{{commitMessageSuffix}}}"
@@ -51,7 +53,6 @@
       commitMessageAction: "update", // same as above
       commitMessageTopic: "lockfile"
     },
-    transitiveRemediation: true,
 
     // Stability settings
     rangeStrategy: "pin",
