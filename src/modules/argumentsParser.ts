@@ -77,6 +77,7 @@ export default class ArgumentsParser {
       .command('report', 'Generate a CSV report on the known ROM files found in the input directories (requires --dat)', (yargsSubObj) => {
         addCommands(yargsSubObj);
       });
+    // TODO(cemmer): check on 'clean' to require one of the writing commands
 
     const yargsParser = yargs([])
       .parserConfiguration({
@@ -379,7 +380,7 @@ Advanced usage:
     {datReleaseRegion}    The region of the ROM release (e.g. "USA"), each ROM can have multiple
     {datReleaseLanguage}  The language of the ROM release (e.g. "En"), each ROM can have multiple
 
-    {inputDirname}   The input ROM's dirname
+    {inputDirname}    The input ROM's dirname
     {outputBasename}  Equivalent to "{outputName}.{outputExt}"
     {outputName}      The output ROM's filename without extension
     {outputExt}       The output ROM's extension
