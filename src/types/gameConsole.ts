@@ -21,8 +21,8 @@ export default class GameConsole {
     new GameConsole(/7800/i, ['.a78'], '7800', 'Atari7800'),
     new GameConsole(/Lynx/i, ['.lnx', '.lyx'], undefined, 'AtariLynx'),
     // Bandai
-    new GameConsole(/WonderSwan/i, ['.ws'], undefined, 'WonderSwan'),
-    new GameConsole(/WonderSwan Color/i, ['.wsc'], undefined, 'WonderSwan'),
+    new GameConsole(/WonderSwan/i, ['.ws'], 'wonderswan', 'WonderSwan'),
+    new GameConsole(/WonderSwan Color/i, ['.wsc'], 'wonderswan', 'WonderSwan'),
     // Bit Corporation
     new GameConsole(/Gamate/i, [/* '.bin' */], 'gamate', 'Gamate'),
     // Commodore
