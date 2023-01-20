@@ -168,20 +168,18 @@ export default class FsPoly {
   }
 
   static async touch(filePath: string): Promise<void> {
-    if (await this.exists(filePath)) {
-      // File already exists, just update its atime and mtime
-      const date = new Date();
-      await util.promisify(fs.lutimes)(filePath, date, date);
-      return;
-    }
-
     const dirname = path.dirname(filePath);
     if (!await this.exists(dirname)) {
       await util.promisify(fs.mkdir)(dirname, { recursive: true });
     }
 
-    // Create an empty file
+    // Create the file if it doesn't already exist
     const file = await util.promisify(fs.open)(filePath, 'a');
+
+    // Ensure the file's `atime` and `mtime` are updated
+    const date = new Date();
+    await util.promisify(fs.futimes)(file, date, date);
+
     await util.promisify(fs.close)(file);
   }
 
