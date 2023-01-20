@@ -1,6 +1,6 @@
 <h1 align="center">🕹️ igir</h1>
 
-<p align="center">**Pronounced "eager", `igir` is a platform-independent ROM collection manager to help filter, sort, patch, and archive ROM collections.**</p>
+<p align="center" style="font-weight:bold;">Pronounced "eager", `igir` is a platform-independent ROM collection manager to help filter, sort, patch, and archive ROM collections.</p>
 
 ![CLI: Windows,macOS,Linux](https://img.shields.io/badge/CLI-Windows%2C%20macOS%2C%20Linux-lightgrey?logo=windows-terminal)
 [![npm: version](https://img.shields.io/npm/v/igir?color=%23cc3534&label=version&logo=npm&logoColor=white)](https://www.npmjs.com/package/igir)
