@@ -1,20 +1,20 @@
-<p align="center">
+<span align="center">
 
-# 🕹️ igir
+  # 🕹️ igir
 
-**Pronounced "eager", `igir` is a platform-independent ROM collection manager to help filter, sort, patch, and archive ROM collections.**
+  **Pronounced "eager", `igir` is a platform-independent ROM collection manager to help filter, sort, patch, and archive ROM collections.**
 
-![CLI: Windows,macOS,Linux](https://img.shields.io/badge/CLI-Windows%2C%20macOS%2C%20Linux-lightgrey?logo=windows-terminal)
-[![npm: version](https://img.shields.io/npm/v/igir?color=%23cc3534&label=version&logo=npm&logoColor=white)](https://www.npmjs.com/package/igir)
-[![npm: downloads](https://img.shields.io/npm/dw/igir?color=%23cc3534&logo=npm&logoColor=white)](https://www.npmjs.com/package/igir)
-[![GitHub: stars](https://img.shields.io/github/stars/emmercm/igir?color=%236e5494&logo=github&logoColor=white)](https://github.com/emmercm/igir)
+  ![CLI: Windows,macOS,Linux](https://img.shields.io/badge/CLI-Windows%2C%20macOS%2C%20Linux-lightgrey?logo=windows-terminal)
+  [![npm: version](https://img.shields.io/npm/v/igir?color=%23cc3534&label=version&logo=npm&logoColor=white)](https://www.npmjs.com/package/igir)
+  [![npm: downloads](https://img.shields.io/npm/dw/igir?color=%23cc3534&logo=npm&logoColor=white)](https://www.npmjs.com/package/igir)
+  [![GitHub: stars](https://img.shields.io/github/stars/emmercm/igir?color=%236e5494&logo=github&logoColor=white)](https://github.com/emmercm/igir)
 
-[![Snyk: vulnerabilities](https://img.shields.io/snyk/vulnerabilities/npm/igir?logo=snyk&logoColor=white)](https://snyk.io/test/npm/igir)
-[![codecov: coverage](https://img.shields.io/codecov/c/github/emmercm/igir?logo=codecov&logoColor=white)](https://codecov.io/gh/emmercm/igir)
-[![Code Climate: maintainability](https://img.shields.io/codeclimate/maintainability-percentage/emmercm/igir?logo=codeclimate&logoColor=white)](https://codeclimate.com/github/emmercm/igir/maintainability)
-[![license](https://img.shields.io/github/license/emmercm/igir?color=blue)](https://github.com/emmercm/igir/blob/main/LICENSE)
+  [![Snyk: vulnerabilities](https://img.shields.io/snyk/vulnerabilities/npm/igir?logo=snyk&logoColor=white)](https://snyk.io/test/npm/igir)
+  [![codecov: coverage](https://img.shields.io/codecov/c/github/emmercm/igir?logo=codecov&logoColor=white)](https://codecov.io/gh/emmercm/igir)
+  [![Code Climate: maintainability](https://img.shields.io/codeclimate/maintainability-percentage/emmercm/igir?logo=codeclimate&logoColor=white)](https://codeclimate.com/github/emmercm/igir/maintainability)
+  [![license](https://img.shields.io/github/license/emmercm/igir?color=blue)](https://github.com/emmercm/igir/blob/main/LICENSE)
 
-</p>
+</span>
 
 ## What does `igir` do?
 
@@ -211,11 +211,11 @@ Feedback is a gift! Your feature requests and bug reports help improve the proje
 
 Even better, if you feel comfortable writing code, please feel free to submit a pull request against the project!
 
-<p align="center">
+<span align="center">
 
-[![GitHub: contributors](https://img.shields.io/github/contributors/emmercm/igir?logo=github&logoColor=white)](https://github.com/emmercm/igir/graphs/contributors)
-[![GitHub: discussions](https://img.shields.io/github/discussions/emmercm/igir?logo=github&logoColor=white)](https://github.com/emmercm/igir/discussions)
-[![GitHub: feature requests](https://img.shields.io/github/issues/emmercm/igir/enhancement?color=%234BBCBC&label=feature%20requests&logo=github&logoColor=white)](https://github.com/emmercm/igir/issues?q=is%3Aopen+is%3Aissue+label%3Aenhancement)
-[![GitHub: bugs](https://img.shields.io/github/issues/emmercm/igir/bug?color=%23d73a4a&label=bugs&logo=github&logoColor=white)](https://github.com/emmercm/igir/issues?q=is%3Aopen+is%3Aissue+label%3Abug)
+  [![GitHub: contributors](https://img.shields.io/github/contributors/emmercm/igir?logo=github&logoColor=white)](https://github.com/emmercm/igir/graphs/contributors)
+  [![GitHub: discussions](https://img.shields.io/github/discussions/emmercm/igir?logo=github&logoColor=white)](https://github.com/emmercm/igir/discussions)
+  [![GitHub: feature requests](https://img.shields.io/github/issues/emmercm/igir/enhancement?color=%234BBCBC&label=feature%20requests&logo=github&logoColor=white)](https://github.com/emmercm/igir/issues?q=is%3Aopen+is%3Aissue+label%3Aenhancement)
+  [![GitHub: bugs](https://img.shields.io/github/issues/emmercm/igir/bug?color=%23d73a4a&label=bugs&logo=github&logoColor=white)](https://github.com/emmercm/igir/issues?q=is%3Aopen+is%3Aissue+label%3Abug)
 
-</p>
+</span>
