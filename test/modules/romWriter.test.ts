@@ -540,7 +540,7 @@ describe('extract', () => {
     });
   });
 
-  it('should not write if the output is expected even if overwriting', async () => {
+  it('should write if the output is expected and overwriting', async () => {
     await copyFixturesToTemp(async (inputTemp, outputTemp) => {
       // Given
       const options = new Options({ commands: ['copy', 'extract'] });
@@ -834,7 +834,7 @@ describe('raw', () => {
     });
   });
 
-  it('should not write if the output is expected even if overwriting', async () => {
+  it('should write if the output is expected and overwriting', async () => {
     await copyFixturesToTemp(async (inputTemp, outputTemp) => {
       // Given
       const options = new Options({ commands: ['copy'] });

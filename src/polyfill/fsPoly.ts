@@ -168,18 +168,21 @@ export default class FsPoly {
   }
 
   static async touch(filePath: string): Promise<void> {
+    if (await this.exists(filePath)) {
+      // File already exists, just update its atime and mtime
+      const date = new Date();
+      await util.promisify(fs.utimes)(filePath, date, date);
+      return;
+    }
+
     const dirname = path.dirname(filePath);
     if (!await this.exists(dirname)) {
       await util.promisify(fs.mkdir)(dirname, { recursive: true });
     }
 
-    const time = new Date();
-    try {
-      await util.promisify(fs.utimes)(filePath, time, time);
-    } catch (e) {
-      const file = await util.promisify(fs.open)(filePath, 'a');
-      await util.promisify(fs.close)(file);
-    }
+    // Create an empty file
+    const file = await util.promisify(fs.open)(filePath, 'a');
+    await util.promisify(fs.close)(file);
   }
 
   static async walk(pathLike: PathLike): Promise<string[]> {

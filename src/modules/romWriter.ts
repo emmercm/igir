@@ -279,6 +279,7 @@ export default class ROMWriter extends Module {
         && !inputRomFile.getPatch()
       ) {
         await util.promisify(fs.copyFile)(inputRomFile.getFilePath(), outputFilePath);
+        await fsPoly.touch(outputFilePath); // Windows doesn't update mtime on overwrite?
         return true;
       }
 
