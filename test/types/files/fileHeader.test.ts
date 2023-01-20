@@ -5,27 +5,6 @@ import ProgressBarFake from '../../console/progressBarFake.js';
 
 describe('headerFromFilename', () => {
   test.each([
-    'No-Intro_A7800.xml',
-    'No-Intro_LNX.xml',
-    'No-Intro_NES.xml',
-    'No-Intro_FDS.xml',
-  ])('should get a file header for name: %s', (headerName) => {
-    const fileHeader = FileHeader.headerFromFilename(headerName);
-    expect(fileHeader).toBeDefined();
-  });
-
-  test.each([
-    '',
-    '   ',
-    '🤷',
-  ])('should not get a file header for name: %s', (headerName) => {
-    const fileHeader = FileHeader.headerFromFilename(headerName);
-    expect(fileHeader).toBeUndefined();
-  });
-});
-
-describe('getForExtension', () => {
-  test.each([
     'rom.a78',
     'rom.lnx',
     'rom.nes',
