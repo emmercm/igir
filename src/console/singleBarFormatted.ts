@@ -76,6 +76,7 @@ export default class SingleBarFormatted {
       progress += ` | ${payload.waitingMessage}`;
     } else if (params.value > 0) {
       const eta = this.calculateEta(params);
+      // TODO(cemmer): don't print if '0s' or 'infinity'
       progress += ` | ETA: ${this.getEtaFormatted(eta)}`;
     }
 

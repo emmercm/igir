@@ -23,17 +23,17 @@ Information about the inner workings of `igir`.
 
 `igir` supports most common archive formats:
 
-| Extension                | Includes file CRC32 | Can extract natively |
-|--------------------------|---------------------|----------------------|
-| `.7z`                    | ✅                   | ❌                    |
-| `.gz`, `.gzip`           | ❌ CRC16             | ❌                    |
-| `.rar`                   | ✅                   | ❌                    |
-| `.tar`                   | ❌                   | ✅                    |
-| `.tar.gz`, `.tgz`        | ❌                   | ✅                    |
-| `.z01`                   | ✅                   | ❌                    |
-| `.zip` (including zip64) | ✅                   | ✅                    |
-| `.zip.001`               | ✅                   | ❌                    |
-| `.zipx`                  | ✅                   | ❌                    |
+| Extension                | Contains file CRC32s | `igir` can extract natively |
+|--------------------------|----------------------|-----------------------------|
+| `.7z`                    | ✅                    | ❌                           |
+| `.gz`, `.gzip`           | ❌ CRC16              | ❌                           |
+| `.rar`                   | ✅                    | ❌                           |
+| `.tar`                   | ❌                    | ✅                           |
+| `.tar.gz`, `.tgz`        | ❌                    | ✅                           |
+| `.z01`                   | ✅                    | ❌                           |
+| `.zip` (including zip64) | ✅                    | ✅                           |
+| `.zip.001`               | ✅                    | ❌                           |
+| `.zipx`                  | ✅                    | ❌                           |
 
 **You should prefer archive formats that have CRC32 checksum information for each file.**
 

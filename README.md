@@ -20,7 +20,7 @@
 
 A video of an example use case:
 
-[![asciicast](https://asciinema.org/a/uVZpMCas3SQIA0q6sCh5rYqdI.svg)](https://asciinema.org/a/uVZpMCas3SQIA0q6sCh5rYqdI)
+[![asciicast](https://asciinema.org/a/AwESXP8AI5xrm9DCdbZGjNtYF.svg)](https://asciinema.org/a/AwESXP8AI5xrm9DCdbZGjNtYF)
 
 With `igir` you can manage a ROM collection of any size:
 
@@ -28,14 +28,14 @@ With `igir` you can manage a ROM collection of any size:
 - 📂 Organize ROM files by console (see [DAT docs](docs/dats.md))
 - 🪄 Name ROM files consistently, including the right extension (see [DAT docs](docs/dats.md))
 - ✂️ Filter out duplicate ROMs, or ROMs in languages you don't understand (see [filtering docs](docs/rom-filtering.md))
-- 🗜️ Archive ROMs individually in mass
+- 🗜️ Extract or archive ROMs in mass (see [archive docs](docs/advanced-topics.md#supported-archive-formats))
 - 🩹 Patch ROMs automatically in mass (see [patching docs](docs/rom-patching.md))
 - 🎩 Parse ROMs with headers, and optionally remove them (see [header docs](docs/rom-headers.md))
 - 🔮 Know what ROMs are missing for each console (see [DAT docs](docs/dats.md))
 
 ## How do I run `igir`?
 
-Either download the latest version for your OS from the [releases page](https://github.com/emmercm/igir/releases/latest), or with <span style="vertical-align:middle;">[![Node.js](https://img.shields.io/node/v/igir?label=Node.js&logo=node.js&logoColor=white)](https://nodejs.org/en/download/)</span> installed you can always run the latest version from the command line:
+Either download the latest version for your OS from the [releases page](https://github.com/emmercm/igir/releases/latest), or if you have <span style="vertical-align:middle;">[![Node.js](https://img.shields.io/node/v/igir?label=Node.js&logo=node.js&logoColor=white)](https://nodejs.org/en/download/)</span> installed you can use [`npx`](https://docs.npmjs.com/cli/v8/commands/npx) to always run the latest version from the command line:
 
 ```shell
 npx igir@latest [commands..] [options]
