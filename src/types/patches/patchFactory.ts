@@ -11,7 +11,7 @@ import VcdiffPatch from './vcdiffPatch.js';
 
 interface PatchParser {
   extensions: string[],
-  magicHeaders: Buffer[],
+  fileSignatures: Buffer[],
   factory: (file: File) => Promise<Patch> | Patch
 }
 
@@ -22,39 +22,39 @@ export default class PatchFactory {
   private static readonly PATCH_PARSERS: PatchParser[] = [
     {
       extensions: BPSPatch.SUPPORTED_EXTENSIONS,
-      magicHeaders: [BPSPatch.MAGIC_HEADER],
+      fileSignatures: [BPSPatch.FILE_SIGNATURE],
       factory: BPSPatch.patchFrom,
     },
     {
       extensions: IPSPatch.SUPPORTED_EXTENSIONS,
-      magicHeaders: IPSPatch.MAGIC_HEADERS,
+      fileSignatures: IPSPatch.FILE_SIGNATURES,
       factory: IPSPatch.patchFrom,
     },
     {
       extensions: NinjaPatch.SUPPORTED_EXTENSIONS,
-      magicHeaders: [NinjaPatch.MAGIC_HEADER],
+      fileSignatures: [NinjaPatch.FILE_SIGNATURE],
       factory: NinjaPatch.patchFrom,
     },
     {
       extensions: PPFPatch.SUPPORTED_EXTENSIONS,
-      magicHeaders: [PPFPatch.MAGIC_HEADER],
+      fileSignatures: [PPFPatch.FILE_SIGNATURE],
       factory: PPFPatch.patchFrom,
     },
     {
       extensions: UPSPatch.SUPPORTED_EXTENSIONS,
-      magicHeaders: [UPSPatch.MAGIC_HEADER],
+      fileSignatures: [UPSPatch.FILE_SIGNATURE],
       factory: UPSPatch.patchFrom,
     },
     {
       extensions: VcdiffPatch.SUPPORTED_EXTENSIONS,
-      magicHeaders: [VcdiffPatch.MAGIC_HEADER],
+      fileSignatures: [VcdiffPatch.FILE_SIGNATURE],
       factory: VcdiffPatch.patchFrom,
     },
   ];
 
   private static readonly MAX_HEADER_LENGTH_BYTES = Object.values(PatchFactory.PATCH_PARSERS)
-    .flatMap((parser) => parser.magicHeaders)
-    .reduce((max, magicHeader) => Math.max(max, magicHeader.length), 0);
+    .flatMap((parser) => parser.fileSignatures)
+    .reduce((max, fileSignature) => Math.max(max, fileSignature.length), 0);
 
   static getSupportedExtensions(): string[] {
     return Object.values(PatchFactory.PATCH_PARSERS)
@@ -116,7 +116,7 @@ export default class PatchFactory {
     const parsers = Object.values(this.PATCH_PARSERS);
     for (let i = 0; i < parsers.length; i += 1) {
       const parser = parsers[i];
-      if (parser.magicHeaders.some((magicHeader) => fileHeader.startsWith(magicHeader.toString('hex')))) {
+      if (parser.fileSignatures.some((fileSignature) => fileHeader.startsWith(fileSignature.toString('hex')))) {
         return parser.factory(file);
       }
     }

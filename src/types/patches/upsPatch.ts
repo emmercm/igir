@@ -20,7 +20,7 @@ import Patch from './patch.js';
 export default class UPSPatch extends Patch {
   static readonly SUPPORTED_EXTENSIONS = ['.ups'];
 
-  static readonly MAGIC_HEADER = Buffer.from('UPS1');
+  static readonly FILE_SIGNATURE = Buffer.from('UPS1');
 
   static async patchFrom(file: File): Promise<UPSPatch> {
     let crcBefore = '';
@@ -51,7 +51,7 @@ export default class UPSPatch extends Patch {
   async apply<T>(inputFile: File, callback: (tempFile: string) => (Promise<T> | T)): Promise<T> {
     return this.getFile().extractToFilePoly('r', async (patchFile) => {
       const header = await patchFile.readNext(4);
-      if (!header.equals(UPSPatch.MAGIC_HEADER)) {
+      if (!header.equals(UPSPatch.FILE_SIGNATURE)) {
         await patchFile.close();
         throw new Error(`UPS patch header is invalid: ${this.getFile().toString()}`);
       }

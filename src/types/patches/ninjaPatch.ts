@@ -27,7 +27,7 @@ enum NinjaFileType {
 export default class NinjaPatch extends Patch {
   static readonly SUPPORTED_EXTENSIONS = ['.rup'];
 
-  static readonly MAGIC_HEADER = Buffer.from('NINJA');
+  static readonly FILE_SIGNATURE = Buffer.from('NINJA');
 
   static patchFrom(file: File): NinjaPatch {
     const crcBefore = Patch.getCrcFromPath(file.getExtractedFilePath());
@@ -37,7 +37,7 @@ export default class NinjaPatch extends Patch {
   async apply<T>(inputFile: File, callback: (tempFile: string) => (Promise<T> | T)): Promise<T> {
     return this.getFile().extractToFilePoly('r', async (patchFile) => {
       const header = await patchFile.readNext(5);
-      if (!header.equals(NinjaPatch.MAGIC_HEADER)) {
+      if (!header.equals(NinjaPatch.FILE_SIGNATURE)) {
         await patchFile.close();
         throw new Error(`NINJA patch header is invalid: ${this.getFile().toString()}`);
       }

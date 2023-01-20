@@ -20,7 +20,7 @@ enum BPSAction {
 export default class BPSPatch extends Patch {
   static readonly SUPPORTED_EXTENSIONS = ['.bps'];
 
-  static readonly MAGIC_HEADER = Buffer.from('BPS1');
+  static readonly FILE_SIGNATURE = Buffer.from('BPS1');
 
   static async patchFrom(file: File): Promise<BPSPatch> {
     let crcBefore = '';
@@ -52,7 +52,7 @@ export default class BPSPatch extends Patch {
     return this.getFile().extractToFilePoly('r', async (patchFile) => {
       // Skip header info
       const header = await patchFile.readNext(4);
-      if (!header.equals(BPSPatch.MAGIC_HEADER)) {
+      if (!header.equals(BPSPatch.FILE_SIGNATURE)) {
         await patchFile.close();
         throw new Error(`BPS patch header is invalid: ${this.getFile().toString()}`);
       }

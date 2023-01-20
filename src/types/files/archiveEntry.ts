@@ -136,7 +136,7 @@ export default class ArchiveEntry<A extends Archive> extends File {
   }
 
   async withFileHeader(fileHeader: FileHeader): Promise<File> {
-    // Make sure the file actually has the header magic string
+    // Make sure the file actually has the right file signature
     const hasHeader = await this.extractToStream(
       async (stream) => fileHeader.fileHasHeader(stream),
     );

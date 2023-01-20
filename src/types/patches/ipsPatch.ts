@@ -9,7 +9,7 @@ import Patch from './patch.js';
 export default class IPSPatch extends Patch {
   static readonly SUPPORTED_EXTENSIONS = ['.ips', '.ips32'];
 
-  static readonly MAGIC_HEADERS = [Buffer.from('PATCH'), Buffer.from('IPS32')];
+  static readonly FILE_SIGNATURES = [Buffer.from('PATCH'), Buffer.from('IPS32')];
 
   static patchFrom(file: File): IPSPatch {
     const crcBefore = Patch.getCrcFromPath(file.getExtractedFilePath());
@@ -22,7 +22,7 @@ export default class IPSPatch extends Patch {
   ): Promise<T> {
     return this.getFile().extractToFilePoly('r', async (patchFile) => {
       const header = await patchFile.readNext(5);
-      if (IPSPatch.MAGIC_HEADERS.every((magicHeader) => !header.equals(magicHeader))) {
+      if (IPSPatch.FILE_SIGNATURES.every((fileSignature) => !header.equals(fileSignature))) {
         await patchFile.close();
         throw new Error(`IPS patch header is invalid: ${this.getFile().toString()}`);
       }
