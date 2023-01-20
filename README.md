@@ -1,4 +1,4 @@
-<span align="center">
+<p align="center">
 
 # 🕹️ igir
 
@@ -14,7 +14,7 @@
 [![Code Climate: maintainability](https://img.shields.io/codeclimate/maintainability-percentage/emmercm/igir?logo=codeclimate&logoColor=white)](https://codeclimate.com/github/emmercm/igir/maintainability)
 [![license](https://img.shields.io/github/license/emmercm/igir?color=blue)](https://github.com/emmercm/igir/blob/main/LICENSE)
 
-</span>
+</p>
 
 ## What does `igir` do?
 
@@ -211,11 +211,11 @@ Feedback is a gift! Your feature requests and bug reports help improve the proje
 
 Even better, if you feel comfortable writing code, please feel free to submit a pull request against the project!
 
-<span align="center">
+<p align="center">
 
 [![GitHub: contributors](https://img.shields.io/github/contributors/emmercm/igir?logo=github&logoColor=white)](https://github.com/emmercm/igir/graphs/contributors)
 [![GitHub: discussions](https://img.shields.io/github/discussions/emmercm/igir?logo=github&logoColor=white)](https://github.com/emmercm/igir/discussions)
 [![GitHub: feature requests](https://img.shields.io/github/issues/emmercm/igir/enhancement?color=%234BBCBC&label=feature%20requests&logo=github&logoColor=white)](https://github.com/emmercm/igir/issues?q=is%3Aopen+is%3Aissue+label%3Aenhancement)
 [![GitHub: bugs](https://img.shields.io/github/issues/emmercm/igir/bug?color=%23d73a4a&label=bugs&logo=github&logoColor=white)](https://github.com/emmercm/igir/issues?q=is%3Aopen+is%3Aissue+label%3Abug)
 
-</span>
+</p>
