@@ -1,15 +1,20 @@
-# igir
+<span style="text-align:center;">
 
-`igir` (pronounced "eager") is a platform-independent ROM collection manager to help filter, sort, patch, and archive ROM collections.
+# 🕹️ igir
 
-![CLI:Windows,macOS,Linux](https://img.shields.io/badge/CLI-Windows%2C%20macOS%2C%20Linux-lightgrey?logo=windows-terminal)
-[![npm:igir](https://img.shields.io/npm/dw/igir?color=%23cc3534&logo=npm&logoColor=white)](https://www.npmjs.com/package/igir)
-[![GitHub:emmercm/igir](https://img.shields.io/github/stars/emmercm/igir?color=%236e5494&logo=github&logoColor=white)](https://github.com/emmercm/igir)
+**Pronounced "eager", `igir` is a platform-independent ROM collection manager to help filter, sort, patch, and archive ROM collections.**
 
-[![Known Vulnerabilities](https://img.shields.io/snyk/vulnerabilities/npm/igir?logo=snyk&logoColor=white)](https://snyk.io/test/npm/igir)
-[![Test Coverage](https://img.shields.io/codecov/c/github/emmercm/igir?logo=codecov&logoColor=white)](https://codecov.io/gh/emmercm/igir)
-[![Maintainability Score](https://img.shields.io/codeclimate/maintainability-percentage/emmercm/igir?logo=codeclimate&logoColor=white)](https://codeclimate.com/github/emmercm/igir/maintainability)
-[![License](https://img.shields.io/github/license/emmercm/igir?color=blue)](https://github.com/emmercm/igir/blob/main/LICENSE)
+![CLI: Windows,macOS,Linux](https://img.shields.io/badge/CLI-Windows%2C%20macOS%2C%20Linux-lightgrey?logo=windows-terminal)
+[![npm: version](https://img.shields.io/npm/v/igir?color=%23cc3534&label=version&logo=npm&logoColor=white)](https://www.npmjs.com/package/igir)
+[![npm: downloads](https://img.shields.io/npm/dw/igir?color=%23cc3534&logo=npm&logoColor=white)](https://www.npmjs.com/package/igir)
+[![GitHub: stars](https://img.shields.io/github/stars/emmercm/igir?color=%236e5494&logo=github&logoColor=white)](https://github.com/emmercm/igir)
+
+[![Snyk: vulnerabilities](https://img.shields.io/snyk/vulnerabilities/npm/igir?logo=snyk&logoColor=white)](https://snyk.io/test/npm/igir)
+[![codecov: coverage](https://img.shields.io/codecov/c/github/emmercm/igir?logo=codecov&logoColor=white)](https://codecov.io/gh/emmercm/igir)
+[![Code Climate: maintainability](https://img.shields.io/codeclimate/maintainability-percentage/emmercm/igir?logo=codeclimate&logoColor=white)](https://codeclimate.com/github/emmercm/igir/maintainability)
+[![license](https://img.shields.io/github/license/emmercm/igir?color=blue)](https://github.com/emmercm/igir/blob/main/LICENSE)
+
+</span>
 
 ## What does `igir` do?
 
@@ -55,13 +60,14 @@ $ igir --help
 Usage: igir [commands..] [options]
 
 Commands:
-  igir copy    Copy ROM files from the input to output directory
-  igir move    Move ROM files from the input to output directory
-  igir zip     Create .zip archives when copying or moving ROMs
-  igir test    Test ROMs for accuracy after writing them to the output directory
-  igir clean   Recycle unknown files in the output directory
-  igir report  Generate a CSV report on the known ROM files found in the input directories (requi
-               res --dat)
+  igir copy     Copy ROM files from the input to output directory
+  igir move     Move ROM files from the input to output directory
+  igir extract  Extract ROM files in archives when copying or moving
+  igir zip      Create zip archives of ROMs when copying or moving
+  igir test     Test ROMs for accuracy after writing them to the output directory
+  igir clean    Recycle unknown files in the output directory
+  igir report   Generate a CSV report on the known ROM files found in the input directories (requ
+                ires --dat)
 
 Path options (inputs support globbing):
   -d, --dat            Path(s) to DAT files or archives                                   [array]
@@ -143,8 +149,8 @@ Advanced usage:
     {outputName}      The output ROM's filename without extension
     {outputExt}       The output ROM's extension
 
-    {pocket}  The ROM's core-specific /Assets/ folder for the Analogue Pocket (e.g. "gb")
-    {mister}  The ROM's core-specific /games/ folder for the MiSTer FPGA (e.g. "Gameboy")
+    {pocket}  The ROM's core-specific /Assets/* folder for the Analogue Pocket (e.g. "gb")
+    {mister}  The ROM's core-specific /games/* folder for the MiSTer FPGA (e.g. "Gameboy")
 
 Example use cases:
 
@@ -158,14 +164,15 @@ Example use cases:
     igir copy --dat *.dat --input **/*.zip --output 1G1R/ --dir-dat-name --single --prefer-langua
     ge EN --prefer-region USA,WORLD,EUR,JPN
 
-  Collate all BIOS files into one directory:
-    igir copy --dat *.dat --input **/*.zip --output BIOS/ --only-bios
+  Copy all BIOS files into one directory, extracting if necessary:
+    igir copy extract --dat *.dat --input **/*.zip --output BIOS/ --only-bios
 
-  Create patched copies of ROMs in an existing collection:
-    igir copy --input ROMs/ --patch Patches/ --output ROMs/
+  Create patched copies of ROMs in an existing collection, not overwriting existing files:
+    igir copy extract --input ROMs/ --patch Patches/ --output ROMs/
 
-  Copy ROMs to your Analogue Pocket and test them:
-    igir copy test --dat *.dat --input ROMs/ --output /Assets/{pocket}/common/ --dir-letter
+  Copy ROMs to your Analogue Pocket and test they were written correctly:
+    igir copy extract test --dat *.dat --input ROMs/ --output /Assets/{pocket}/common/ --dir-lett
+    er
 ```
 
 See the [advanced examples](docs/advanced-examples.md) page for even more examples.
@@ -200,10 +207,15 @@ Each manager has its own pros, but many have the same drawbacks or limitations:
 
 ## Feature requests, bug reports, and contributing
 
-[![Contributors](https://img.shields.io/github/contributors/emmercm/igir?logo=github&logoColor=white)](https://github.com/emmercm/igir/graphs/contributors)
-[![Feature Requests](https://img.shields.io/github/issues/emmercm/igir/enhancement?color=%234BBCBC&label=feature%20requests&logo=github&logoColor=white)](https://github.com/emmercm/igir/issues?q=is%3Aopen+is%3Aissue+label%3Aenhancement)
-[![Bugs](https://img.shields.io/github/issues/emmercm/igir/bug?color=%23d73a4a&label=bugs&logo=github&logoColor=white)](https://github.com/emmercm/igir/issues?q=is%3Aopen+is%3Aissue+label%3Abug)
-
 Feedback is a gift! Your feature requests and bug reports help improve the project for everyone. Feel free to submit an issue on GitHub using one of the templates.
 
 Even better, if you feel comfortable writing code, please feel free to submit a pull request against the project!
+
+<span style="text-align:center;">
+
+[![GitHub: contributors](https://img.shields.io/github/contributors/emmercm/igir?logo=github&logoColor=white)](https://github.com/emmercm/igir/graphs/contributors)
+[![GitHub: discussions](https://img.shields.io/github/discussions/emmercm/igir?logo=github&logoColor=white)](https://github.com/emmercm/igir/discussions)
+[![GitHub: feature requests](https://img.shields.io/github/issues/emmercm/igir/enhancement?color=%234BBCBC&label=feature%20requests&logo=github&logoColor=white)](https://github.com/emmercm/igir/issues?q=is%3Aopen+is%3Aissue+label%3Aenhancement)
+[![GitHub: bugs](https://img.shields.io/github/issues/emmercm/igir/bug?color=%23d73a4a&label=bugs&logo=github&logoColor=white)](https://github.com/emmercm/igir/issues?q=is%3Aopen+is%3Aissue+label%3Abug)
+
+</span>
