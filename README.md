@@ -1,4 +1,4 @@
-<span style="text-align:center;">
+<span align="center">
 
 # 🕹️ igir
 
@@ -211,7 +211,7 @@ Feedback is a gift! Your feature requests and bug reports help improve the proje
 
 Even better, if you feel comfortable writing code, please feel free to submit a pull request against the project!
 
-<span style="text-align:center;">
+<span align="center">
 
 [![GitHub: contributors](https://img.shields.io/github/contributors/emmercm/igir?logo=github&logoColor=white)](https://github.com/emmercm/igir/graphs/contributors)
 [![GitHub: discussions](https://img.shields.io/github/discussions/emmercm/igir?logo=github&logoColor=white)](https://github.com/emmercm/igir/discussions)
