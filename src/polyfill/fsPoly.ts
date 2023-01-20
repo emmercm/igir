@@ -171,7 +171,7 @@ export default class FsPoly {
     if (await this.exists(filePath)) {
       // File already exists, just update its atime and mtime
       const date = new Date();
-      await util.promisify(fs.utimes)(filePath, date, date);
+      await util.promisify(fs.lutimes)(filePath, date, date);
       return;
     }
 
