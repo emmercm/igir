@@ -14,6 +14,7 @@
   <a href="https://codeclimate.com/github/emmercm/igir/maintainability"><img alt="Code Climate: maintainability" src="https://img.shields.io/codeclimate/maintainability-percentage/emmercm/igir?logo=codeclimate&logoColor=white"></a>
   <a href="https://github.com/emmercm/igir/blob/main/LICENSE"><img alt="license" src="https://img.shields.io/github/license/emmercm/igir?color=blue"></a>
 </p>
+<br>
 
 ## What does `igir` do?
 
@@ -210,6 +211,7 @@ Feedback is a gift! Your feature requests and bug reports help improve the proje
 
 Even better, if you feel comfortable writing code, please feel free to submit a pull request against the project!
 
+<br>
 <p align="center">
   <a href="https://github.com/emmercm/igir/graphs/contributors"><img alt="GitHub: contributors" src="https://img.shields.io/github/contributors/emmercm/igir?logo=github&logoColor=white"></a>
   <a href="https://github.com/emmercm/igir/discussions"><img alt="GitHub: discussions" src="https://img.shields.io/github/discussions/emmercm/igir?logo=github&logoColor=white"></a>
