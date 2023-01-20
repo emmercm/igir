@@ -1,6 +1,6 @@
 <span align="center">
 
-  # 🕹️ igir
+  <h1>🕹️ igir</h1>
 
   **Pronounced "eager", `igir` is a platform-independent ROM collection manager to help filter, sort, patch, and archive ROM collections.**
 
