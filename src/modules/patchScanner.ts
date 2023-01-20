@@ -1,4 +1,4 @@
-import ProgressBar, { Symbols } from '../console/progressBar.js';
+import ProgressBar, { ProgressBarSymbol } from '../console/progressBar.js';
 import Constants from '../constants.js';
 import Options from '../types/options.js';
 import Patch from '../types/patches/patch.js';
@@ -13,7 +13,7 @@ export default class PatchScanner extends Scanner {
   async scan(): Promise<Patch[]> {
     await this.progressBar.logInfo('Scanning patch files');
 
-    await this.progressBar.setSymbol(Symbols.SEARCHING);
+    await this.progressBar.setSymbol(ProgressBarSymbol.SEARCHING);
     await this.progressBar.reset(this.options.getPatchFileCount());
 
     const patchFilePaths = await this.options.scanPatchFiles();

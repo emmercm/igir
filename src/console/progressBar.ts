@@ -4,8 +4,7 @@ import LogLevel from './logLevel.js';
 
 // https://www.toptal.com/designers/htmlarrows/symbols/
 // https://www.htmlsymbols.xyz/
-// TODO(cemmer): rename this to deconflict it
-export const Symbols: { [key: string]: string } = {
+export const ProgressBarSymbol: { [key: string]: string } = {
   WAITING: chalk.grey('⋯'),
   SEARCHING: chalk.magenta('↻'),
   HASHING: chalk.magenta('#'),

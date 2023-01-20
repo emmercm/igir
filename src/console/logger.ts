@@ -3,7 +3,7 @@ import figlet from 'figlet';
 
 import Constants from '../constants.js';
 import LogLevel from './logLevel.js';
-import { Symbols } from './progressBar.js';
+import { ProgressBarSymbol } from './progressBar.js';
 import ProgressBarCLI from './progressBarCLI.js';
 
 export default class Logger {
@@ -120,7 +120,7 @@ export default class Logger {
 
   async addProgressBar(
     name: string,
-    symbol = Symbols.WAITING,
+    symbol = ProgressBarSymbol.WAITING,
     initialTotal = 0,
   ): Promise<ProgressBarCLI> {
     return ProgressBarCLI.new(this, name, symbol, initialTotal);
