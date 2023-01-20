@@ -54,8 +54,8 @@ export default class Tar extends Archive {
       writeStream.on('end', () => resolve());
     });
 
-    // NOTE(cemmer): for whatever promise hell reason, if tell `tar` to be strict, the exception it
-    // throws can't be caught by the caller of this function, so we do this
+    // NOTE(cemmer): for whatever promise hell reason, if we tell `tar` to be strict, the exception
+    //  it throws can't be caught by the caller of this function, so we do this
     if (errorMessage) {
       throw new Error(errorMessage);
     }

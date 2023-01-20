@@ -139,18 +139,29 @@ export default class CandidateGenerator extends Module {
         // NOTE(cemmer): if the ROM's CRC includes a header, then this will only find headered
         //  files. If the ROM's CRC excludes a header, this can find either a headered or non-
         //  headered file.
-        const romFile = hashCodeToInputFiles.get(rom.hashCode());
-        if (romFile) {
-          try {
-            const outputFile = await this.getOutputFile(dat, game, release, rom, romFile);
-            const romWithFiles = new ROMWithFiles(rom, romFile, outputFile);
-            return [rom, romWithFiles];
-          } catch (e) {
-            await this.progressBar.logWarn(`${dat.getName()}: ${game.getName()}: ${e}`);
-            return [rom, undefined];
-          }
+        const originalInputFile = hashCodeToInputFiles.get(rom.hashCode());
+        if (!originalInputFile) {
+          return [rom, undefined];
         }
-        return [rom, undefined];
+
+        // If the matched input file is from an archive, and we're not extracting, then treat the
+        //  file as "raw" so it can be copied/moved as-is
+        let finalInputFile = originalInputFile;
+        if (originalInputFile instanceof ArchiveEntry
+          && !this.options.shouldZip(rom.getName())
+          && !this.options.shouldExtract()
+        ) {
+          finalInputFile = await originalInputFile.getArchive().asRawFile() as File;
+        }
+
+        try {
+          const outputFile = await this.getOutputFile(dat, game, release, rom, originalInputFile);
+          const romWithFiles = new ROMWithFiles(rom, finalInputFile, outputFile);
+          return [rom, romWithFiles];
+        } catch (e) {
+          await this.progressBar.logWarn(`${dat.getName()}: ${game.getName()}: ${e}`);
+          return [rom, undefined];
+        }
       }),
     ) as [ROM, ROMWithFiles | undefined][];
 
@@ -166,6 +177,11 @@ export default class CandidateGenerator extends Module {
       if (foundRomsWithFiles.length > 0) {
         await this.logMissingRomFiles(dat, game, release, missingRoms);
       }
+      return undefined;
+    }
+
+    // Ignore the Game with conflicting input->output files
+    if (await this.hasConflictingOutputFiles(foundRomsWithFiles)) {
       return undefined;
     }
 
@@ -190,33 +206,52 @@ export default class CandidateGenerator extends Module {
     }
     const outputEntryPath = path.format(parsedPath);
 
+    // Determine the output path of the file
+    let outputRomFilename;
     if (this.options.shouldZip(rom.getName())) {
-      const outputFilePath = this.options.getOutputFileParsed(
-        dat,
-        inputFile.getFilePath(),
-        game,
-        release,
-        `${game.getName()}.zip`,
-      );
+      // Should zip, generate the zip name from the game name
+      outputRomFilename = `${game.getName()}.zip`;
+    } else if (!(inputFile instanceof ArchiveEntry) || this.options.shouldExtract()) {
+      // Should extract (if needed), generate the file name from the ROM name
+      outputRomFilename = outputEntryPath;
+    } else {
+      // Should leave archived, generate the archive name from the game name, but use the input
+      //  file's extension
+      const extMatch = inputFile.getFilePath().match(/[^.]+((\.[a-zA-Z0-9]+)+)$/);
+      const ext = extMatch !== null ? extMatch[1] : '';
+      outputRomFilename = game.getName() + ext;
+    }
+    const outputFilePath = this.options.getOutputFileParsed(
+      dat,
+      inputFile.getFilePath(),
+      game,
+      release,
+      outputRomFilename,
+    );
+
+    // Determine the output file type
+    if (this.options.shouldZip(rom.getName())) {
+      // Should zip, return an archive entry within the zip
       return ArchiveEntry.entryOf(
         new Zip(outputFilePath),
         outputEntryPath,
         inputFile.getSize(),
         inputFile.getCrc32(),
       );
+    } if (!(inputFile instanceof ArchiveEntry) || this.options.shouldExtract()) {
+      // Should extract (if needed), return a raw file using the ROM's size/CRC
+      return File.fileOf(
+        outputFilePath,
+        inputFile.getSize(),
+        inputFile.getCrc32(),
+      );
     }
-
-    const outputFilePath = this.options.getOutputFileParsed(
-      dat,
-      inputFile.getFilePath(),
-      game,
-      release,
-      outputEntryPath,
-    );
+    // Should leave archived
+    const inputArchiveRaw = await inputFile.getArchive().asRawFile();
     return File.fileOf(
       outputFilePath,
-      inputFile.getSize(),
-      inputFile.getCrc32(),
+      inputArchiveRaw.getSize(),
+      inputArchiveRaw.getCrc32(),
     );
   }
 
@@ -234,5 +269,49 @@ export default class CandidateGenerator extends Module {
       message += `\n  ${rom.getName()}`;
     });
     await this.progressBar.logWarn(message);
+  }
+
+  private async hasConflictingOutputFiles(romsWithFiles: ROMWithFiles[]): Promise<boolean> {
+    // If we're not writing then don't bother looking for conflicts
+    if (!this.options.shouldWrite()) {
+      return false;
+    }
+
+    // For all the ROMs for a Game+Release, find all non-archive output files that have a duplicate
+    //  output file path. In other words, there are multiple input files that want to write to the
+    //  same output file.
+    const duplicateOutputPaths = romsWithFiles
+      .map((romWithFiles) => romWithFiles.getOutputFile())
+      .filter((outputFile) => !(outputFile instanceof ArchiveEntry))
+      .map((outputFile) => outputFile.getFilePath())
+      .filter((outputPath, idx, outputPaths) => outputPaths.indexOf(outputPath) !== idx)
+      .filter((duplicatePath, idx, duplicatePaths) => duplicatePaths
+        .indexOf(duplicatePath) === idx)
+      .sort();
+    if (!duplicateOutputPaths.length) {
+      // There are no duplicate non-archive output file paths
+      return false;
+    }
+
+    /* eslint-disable no-await-in-loop */
+    let hasConflict = false;
+    for (let i = 0; i < duplicateOutputPaths.length; i += 1) {
+      const duplicateOutput = duplicateOutputPaths[i];
+
+      // For an output path that has multiple input paths, filter to only the unique input paths,
+      //  and if there are still multiple input file paths then we won't be able to resolve this
+      //  at write time
+      const conflictedInputFiles = romsWithFiles
+        .filter((romWithFiles) => romWithFiles.getOutputFile().getFilePath() === duplicateOutput)
+        .map((romWithFiles) => romWithFiles.getInputFile().toString())
+        .filter((inputFile, idx, inputFiles) => inputFiles.indexOf(inputFile) === idx);
+      if (conflictedInputFiles.length > 1) {
+        hasConflict = true;
+        let message = `Cannot ${this.options.shouldCopy() ? 'copy' : 'move'} different files to: ${duplicateOutput}:`;
+        conflictedInputFiles.forEach((conflictedInputFile) => { message += `\n  ${conflictedInputFile}`; });
+        await this.progressBar.logWarn(message);
+      }
+    }
+    return hasConflict;
   }
 }

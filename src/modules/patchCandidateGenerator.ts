@@ -102,7 +102,7 @@ export default class PatchCandidateGenerator extends Module {
   ): Promise<[Parent, ReleaseCandidate[]][] | undefined> {
     // Get all patch files relevant to any ROM in the ReleaseCandidate
     const releaseCandidatePatches = unpatchedReleaseCandidate.getRomsWithFiles()
-      .map((romWithFiles) => crcToPatches.get(romWithFiles.getRom().getCrc32()))
+      .map((romWithFiles) => crcToPatches.get(romWithFiles.getInputFile().getCrc32()))
       .flatMap((patches) => patches)
       .filter((patch) => patch) as Patch[];
 

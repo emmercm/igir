@@ -32,6 +32,8 @@ export default class OutputCleaner extends Module {
       return 0;
     }
 
+    await this.progressBar.setSymbol(Symbols.SEARCHING);
+
     // If there is nothing to clean, then don't do anything
     // TODO(cemmer): batch this, it can be way too many files to hold in memory
     const filesToClean = await this.options.scanOutputFilesWithoutCleanExclusions(
@@ -48,6 +50,7 @@ export default class OutputCleaner extends Module {
     try {
       await this.progressBar.logDebug(`Cleaning ${filesToClean.length.toLocaleString()} file${filesToClean.length !== 1 ? 's' : ''}`);
       await this.progressBar.reset(filesToClean.length);
+      // TODO(cemmer): don't trash save files
       await this.trashOrDelete(filesToClean);
     } catch (e) {
       await this.progressBar.logError(`Failed to clean unmatched files : ${e}`);

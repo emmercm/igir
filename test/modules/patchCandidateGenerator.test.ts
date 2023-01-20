@@ -16,18 +16,21 @@ import ProgressBarFake from '../console/progressBarFake.js';
 async function runPatchCandidateGenerator(
   romFiles: File[],
 ): Promise<Map<Parent, ReleaseCandidate[]>> {
+  const options = new Options({
+    commands: ['extract'],
+    patch: [path.join('test', 'fixtures', 'patches')],
+  });
+
   // Run DATInferrer, but condense all DATs down to one
   const datGames = (await new DATInferrer(new ProgressBarFake()).infer(romFiles))
     .map((dat) => dat.getGames())
     .flatMap((games) => games);
   const dat = new DAT(new Header(), datGames);
 
-  const parentsToCandidates = await new CandidateGenerator(new Options(), new ProgressBarFake())
+  const parentsToCandidates = await new CandidateGenerator(options, new ProgressBarFake())
     .generate(dat, romFiles);
 
-  const patches = await new PatchScanner(new Options({
-    patch: [path.join('test', 'fixtures', 'patches')],
-  }), new ProgressBarFake()).scan();
+  const patches = await new PatchScanner(options, new ProgressBarFake()).scan();
 
   return new PatchCandidateGenerator(new ProgressBarFake())
     .generate(dat, parentsToCandidates, patches);

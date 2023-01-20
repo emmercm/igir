@@ -173,13 +173,14 @@ export default class FsPoly {
       await util.promisify(fs.mkdir)(dirname, { recursive: true });
     }
 
-    const time = new Date();
-    try {
-      await util.promisify(fs.utimes)(filePath, time, time);
-    } catch (e) {
-      const file = await util.promisify(fs.open)(filePath, 'a');
-      await util.promisify(fs.close)(file);
-    }
+    // Create the file if it doesn't already exist
+    const file = await util.promisify(fs.open)(filePath, 'a');
+
+    // Ensure the file's `atime` and `mtime` are updated
+    const date = new Date();
+    await util.promisify(fs.futimes)(file, date, date);
+
+    await util.promisify(fs.close)(file);
   }
 
   static async walk(pathLike: PathLike): Promise<string[]> {

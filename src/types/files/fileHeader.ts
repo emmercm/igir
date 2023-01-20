@@ -31,6 +31,7 @@ export default class FileHeader {
 
   readonly dataOffsetBytes: number;
 
+  // TODO(cemmer): change this to getters
   readonly headeredFileExtension: string;
 
   readonly unheaderedFileExtension: string;
@@ -53,6 +54,7 @@ export default class FileHeader {
     return Object.values(this.HEADERS).map((header) => header.headeredFileExtension).sort();
   }
 
+  // TODO(cemmer): remove
   static getForName(headerName: string): FileHeader | undefined {
     return this.HEADERS[headerName];
   }

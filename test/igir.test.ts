@@ -84,6 +84,27 @@ describe('with explicit dats', () => {
       [path.join('Patchable', '612644F.rom'), 'f7591b29'],
       [path.join('Patchable', '65D1206.rom'), '20323455'],
       [path.join('Patchable', 'Before.rom'), '0361b321'],
+      [path.join('Patchable', 'Best.gz|best.rom'), '1e3d78cf'],
+      [path.join('Patchable', 'C01173E.rom'), 'dfaebe28'],
+      [path.join('Patchable', 'KDULVQN.rom'), 'b1c303e4'],
+    ]);
+  });
+
+  it('should copy, extract, and test', async () => {
+    await expectEndToEnd({
+      commands: ['copy', 'extract', 'test'],
+      dat: ['dats/*'],
+      dirDatName: true,
+    }, [
+      [path.join('One', 'Fizzbuzz.rom'), '370517b5'],
+      [path.join('One', 'Foobar.rom'), 'b22c9747'],
+      [path.join('One', 'Lorem Ipsum.rom'), '70856527'],
+      [path.join('One', 'One Three', 'One.rom'), 'f817a89f'],
+      [path.join('One', 'One Three', 'Three.rom'), 'ff46c5d8'],
+      [path.join('Patchable', '0F09A40.rom'), '2f943e86'],
+      [path.join('Patchable', '612644F.rom'), 'f7591b29'],
+      [path.join('Patchable', '65D1206.rom'), '20323455'],
+      [path.join('Patchable', 'Before.rom'), '0361b321'],
       [path.join('Patchable', 'Best.rom'), '1e3d78cf'],
       [path.join('Patchable', 'C01173E.rom'), 'dfaebe28'],
       [path.join('Patchable', 'KDULVQN.rom'), 'b1c303e4'],
@@ -126,15 +147,15 @@ describe('with explicit dats', () => {
       [path.join('Patchable', '612644F.rom'), 'f7591b29'],
       [path.join('Patchable', '65D1206.rom'), '20323455'],
       [path.join('Patchable', 'Before.rom'), '0361b321'],
-      [path.join('Patchable', 'Best.rom'), '1e3d78cf'],
+      [path.join('Patchable', 'Best.gz|best.rom'), '1e3d78cf'],
       [path.join('Patchable', 'C01173E.rom'), 'dfaebe28'],
       [path.join('Patchable', 'KDULVQN.rom'), 'b1c303e4'],
     ]);
   });
 
-  it('should copy, patch, and test', async () => {
+  it('should copy, extract, patch, and test', async () => {
     await expectEndToEnd({
-      commands: ['copy', 'test'],
+      commands: ['copy', 'extract', 'test'],
       dat: ['dats/*'],
       patch: ['patches/*'],
       dirDatName: true,
@@ -180,6 +201,38 @@ describe('with inferred dats', () => {
   it('should copy and test', async () => {
     await expectEndToEnd({
       commands: ['copy', 'test'],
+    }, [
+      ['0F09A40.rom', '2f943e86'],
+      ['612644F.rom', 'f7591b29'],
+      ['65D1206.rom', '20323455'],
+      ['allpads.nes', '9180a163'],
+      ['before.rom', '0361b321'],
+      ['best.gz|best.rom', '1e3d78cf'],
+      ['C01173E.rom', 'dfaebe28'],
+      ['color_test.nintendoentertainmentsystem', 'c9c1b7aa'],
+      ['diagnostic_test_cartridge.a78.7z|diagnostic_test_cartridge.a78', 'f6cc9b1c'],
+      ['empty.rom', '00000000'],
+      ['fds_joypad_test.fds.zip|fds_joypad_test.fds', '1e58456d'],
+      ['fizzbuzz.nes', '370517b5'],
+      ['foobar.lnx', 'b22c9747'],
+      ['KDULVQN.rom', 'b1c303e4'],
+      ['LCDTestROM.lnx.rar|LCDTestROM.lnx', '2d251538'],
+      ['loremipsum.rom', '70856527'],
+      ['one.rom', 'f817a89f'],
+      [path.join('onetwothree', 'one.rom'), 'f817a89f'],
+      [path.join('onetwothree', 'three.rom'), 'ff46c5d8'],
+      [path.join('onetwothree', 'two.rom'), '96170874'],
+      ['speed_test_v51.sfc.gz|speed_test_v51.sfc', '8beffd94'],
+      ['speed_test_v51.smc', '9adca6cc'],
+      ['three.rom', 'ff46c5d8'],
+      ['two.rom', '96170874'],
+      ['unknown.rom', '377a7727'],
+    ]);
+  });
+
+  it('should copy, extract, and test', async () => {
+    await expectEndToEnd({
+      commands: ['copy', 'extract', 'test'],
     }, [
       ['0F09A40.rom', '2f943e86'],
       ['612644F.rom', 'f7591b29'],
@@ -240,9 +293,9 @@ describe('with inferred dats', () => {
     ]);
   });
 
-  it('should remove headers', async () => {
+  it('should extract and remove headers', async () => {
     await expectEndToEnd({
-      commands: ['copy'],
+      commands: ['copy', 'extract'],
       input: ['headered/*'],
       removeHeaders: [''], // all
     }, [

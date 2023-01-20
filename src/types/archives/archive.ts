@@ -13,6 +13,14 @@ export default abstract class Archive {
 
   protected abstract new(filePath: string): Archive;
 
+  /**
+   * Forget that the current file is an archive and treat it as a raw file, such that we can
+   *  compute its size and CRC.
+   */
+  async asRawFile(): Promise<File> {
+    return File.fileOf(this.getFilePath());
+  }
+
   getFilePath(): string {
     return this.filePath;
   }

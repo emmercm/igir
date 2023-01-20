@@ -65,7 +65,7 @@ set -euo pipefail
 
 SOURCE=/Volumes/WDPassport4
 
-npx igir@latest copy test clean \
+npx igir@latest copy extract test clean \
   --dat "${SOURCE}/No-Intro*.zip" \
   --input "${SOURCE}/No-Intro/" \
   --input-exclude "${SOURCE}/No-Intro/Nintendo - Game Boy Advance (e-Reader)/" \
@@ -83,4 +83,4 @@ npx igir@latest copy test clean \
   --prefer-retail
 ```
 
-That lets me create an EN+USA preferred 1G1R set for my Pocket on the fly, making sure I don't delete BIOS files needed for each core. This command will cause a lot of warning spam for the `{pocket}` output token because not every ROM of mine is playable on the Pocket, but this command will make sure every playable one is copied over.
+That lets me create an EN+USA preferred 1G1R set for my Pocket on the fly, making sure I don't delete BIOS files needed for each core. This command will cause a lot of warning spam for the `{pocket}` output token because not every ROM of mine is playable on the Pocket, but this command will make sure every playable ROM is copied over.

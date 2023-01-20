@@ -65,7 +65,10 @@ export default class ArgumentsParser {
       .command('move', 'Move ROM files from the input to output directory', (yargsSubObj) => {
         addCommands(yargsSubObj);
       })
-      .command('zip', 'Create .zip archives when copying or moving ROMs', (yargsSubObj) => {
+      .command('extract', 'Extract ROM files in archives when copying or moving', (yargsSubObj) => {
+        addCommands(yargsSubObj);
+      })
+      .command('zip', 'Create zip archives of ROMs when copying or moving', (yargsSubObj) => {
         addCommands(yargsSubObj);
       })
       .command('test', 'Test ROMs for accuracy after writing them to the output directory', (yargsSubObj) => {
@@ -76,8 +79,24 @@ export default class ArgumentsParser {
       })
       .command('report', 'Generate a CSV report on the known ROM files found in the input directories (requires --dat)', (yargsSubObj) => {
         addCommands(yargsSubObj);
+      })
+      .check((checkArgv) => {
+        if (checkArgv.help) {
+          return true;
+        }
+        if (checkArgv._.indexOf('copy') !== -1 && checkArgv._.indexOf('move') !== -1) {
+          throw new Error('Incompatible commands: copy, move');
+        }
+        if (checkArgv._.indexOf('extract') !== -1 && checkArgv._.indexOf('zip') !== -1) {
+          throw new Error('Incompatible commands: extract, zip');
+        }
+        ['extract', 'zip', 'clean'].forEach((command) => {
+          if (checkArgv._.indexOf(command) !== -1 && checkArgv._.indexOf('copy') === -1 && checkArgv._.indexOf('move') === -1) {
+            throw new Error(`Command requires "copy" or "move": ${command}`);
+          }
+        });
+        return true;
       });
-    // TODO(cemmer): check on 'clean' to require one of the writing commands
 
     const yargsParser = yargs([])
       .parserConfiguration({
@@ -137,7 +156,7 @@ export default class ArgumentsParser {
           return true;
         }
 
-        const needOutput = ['copy', 'move', 'zip', 'clean'].filter((command) => checkArgv._.indexOf(command) !== -1);
+        const needOutput = ['copy', 'move', 'extract', 'zip', 'clean'].filter((command) => checkArgv._.indexOf(command) !== -1);
         if (!checkArgv.output && needOutput.length) {
           throw new Error(`Missing required option for commands ${needOutput.join(', ')}: output`);
         }
@@ -385,8 +404,8 @@ Advanced usage:
     {outputName}      The output ROM's filename without extension
     {outputExt}       The output ROM's extension
 
-    {pocket}  The ROM's core-specific /Assets/ folder for the Analogue Pocket (e.g. "gb")
-    {mister}  The ROM's core-specific /games/ folder for the MiSTer FPGA (e.g. "Gameboy")
+    {pocket}  The ROM's core-specific /Assets/* folder for the Analogue Pocket (e.g. "gb")
+    {mister}  The ROM's core-specific /games/* folder for the MiSTer FPGA (e.g. "Gameboy")
 
 Example use cases:
 
@@ -399,14 +418,14 @@ Example use cases:
   Produce a 1G1R set per console, preferring English ROMs from USA>WORLD>EUR>JPN:
     $0 copy --dat *.dat --input **/*.zip --output 1G1R/ --dir-dat-name --single --prefer-language EN --prefer-region USA,WORLD,EUR,JPN
 
-  Collate all BIOS files into one directory:
-    $0 copy --dat *.dat --input **/*.zip --output BIOS/ --only-bios
+  Copy all BIOS files into one directory, extracting if necessary:
+    $0 copy extract --dat *.dat --input **/*.zip --output BIOS/ --only-bios
 
-  Create patched copies of ROMs in an existing collection:
-    $0 copy --input ROMs/ --patch Patches/ --output ROMs/
+  Create patched copies of ROMs in an existing collection, not overwriting existing files:
+    $0 copy extract --input ROMs/ --patch Patches/ --output ROMs/
 
-  Copy ROMs to your Analogue Pocket and test them:
-    $0 copy test --dat *.dat --input ROMs/ --output /Assets/{pocket}/common/ --dir-letter`)
+  Copy ROMs to your Analogue Pocket and test they were written correctly:
+    $0 copy extract test --dat *.dat --input ROMs/ --output /Assets/{pocket}/common/ --dir-letter`)
 
       // Colorize help output
       .option('help', {
