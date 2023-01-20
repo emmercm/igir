@@ -2,7 +2,7 @@ import async from 'async';
 import path from 'path';
 
 import Logger from './console/logger.js';
-import { Symbols } from './console/progressBar.js';
+import { ProgressBarSymbol } from './console/progressBar.js';
 import ProgressBarCLI from './console/progressBarCLI.js';
 import Constants from './constants.js';
 import CandidateFilter from './modules/candidateFilter.js';
@@ -43,7 +43,7 @@ export default class Igir {
     const processedRomFiles = await this.processHeaderProcessor(rawRomFiles);
 
     // Set up progress bar and input for DAT processing
-    const datProcessProgressBar = await this.logger.addProgressBar('Processing DATs', Symbols.PROCESSING, dats.length);
+    const datProcessProgressBar = await this.logger.addProgressBar('Processing DATs', ProgressBarSymbol.PROCESSING, dats.length);
     if (!dats.length) {
       dats = await new DATInferrer(datProcessProgressBar).infer(processedRomFiles);
     }
@@ -62,7 +62,7 @@ export default class Igir {
     await async.eachLimit(dats, Constants.DAT_THREADS, async (dat, callback) => {
       const progressBar = await this.logger.addProgressBar(
         dat.getNameShort(),
-        Symbols.WAITING,
+        ProgressBarSymbol.WAITING,
         dat.getParents().length,
       );
 
@@ -212,7 +212,7 @@ export default class Igir {
       return;
     }
 
-    const reportProgressBar = await this.logger.addProgressBar('Generating report', Symbols.WRITING);
+    const reportProgressBar = await this.logger.addProgressBar('Generating report', ProgressBarSymbol.WRITING);
     await new ReportGenerator(this.options, reportProgressBar).generate(datsStatuses);
   }
 }

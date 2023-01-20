@@ -1,4 +1,4 @@
-import ProgressBar, { Symbols } from '../console/progressBar.js';
+import ProgressBar, { ProgressBarSymbol } from '../console/progressBar.js';
 import Constants from '../constants.js';
 import File from '../types/files/file.js';
 import Options from '../types/options.js';
@@ -18,7 +18,7 @@ export default class ROMScanner extends Scanner {
   async scan(): Promise<File[]> {
     await this.progressBar.logInfo('Scanning ROM files');
 
-    await this.progressBar.setSymbol(Symbols.SEARCHING);
+    await this.progressBar.setSymbol(ProgressBarSymbol.SEARCHING);
     await this.progressBar.reset(this.options.getInputFileCount());
 
     const romFilePaths = await this.options.scanInputFilesWithoutExclusions();

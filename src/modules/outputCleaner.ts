@@ -4,7 +4,7 @@ import path from 'path';
 import trash from 'trash';
 import util from 'util';
 
-import ProgressBar, { Symbols } from '../console/progressBar.js';
+import ProgressBar, { ProgressBarSymbol } from '../console/progressBar.js';
 import fsPoly from '../polyfill/fsPoly.js';
 import File from '../types/files/file.js';
 import Options from '../types/options.js';
@@ -32,7 +32,7 @@ export default class OutputCleaner extends Module {
       return 0;
     }
 
-    await this.progressBar.setSymbol(Symbols.SEARCHING);
+    await this.progressBar.setSymbol(ProgressBarSymbol.SEARCHING);
 
     // If there is nothing to clean, then don't do anything
     // TODO(cemmer): batch this, it can be way too many files to hold in memory
@@ -45,7 +45,7 @@ export default class OutputCleaner extends Module {
       return 0;
     }
 
-    await this.progressBar.setSymbol(Symbols.RECYCLING);
+    await this.progressBar.setSymbol(ProgressBarSymbol.RECYCLING);
 
     try {
       await this.progressBar.logDebug(`Cleaning ${filesToClean.length.toLocaleString()} file${filesToClean.length !== 1 ? 's' : ''}`);
