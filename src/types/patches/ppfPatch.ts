@@ -4,6 +4,8 @@ import File from '../files/file.js';
 import Patch from './patch.js';
 
 class PPFHeader {
+  static readonly MAGIC_HEADER = Buffer.from('PPF');
+
   readonly version: number;
 
   readonly undoDataAvailable: boolean;
@@ -15,7 +17,7 @@ class PPFHeader {
 
   static async fromFilePoly(patchFile: FilePoly): Promise<PPFHeader> {
     const header = (await patchFile.readNext(5)).toString();
-    if (!header.startsWith('PPF')) {
+    if (!header.startsWith(PPFHeader.MAGIC_HEADER.toString())) {
       await patchFile.close();
       throw new Error(`PPF patch header is invalid: ${patchFile.getPathLike()}`);
     }
@@ -55,6 +57,8 @@ class PPFHeader {
  */
 export default class PPFPatch extends Patch {
   static readonly SUPPORTED_EXTENSIONS = ['.ppf'];
+
+  static readonly MAGIC_HEADER = PPFHeader.MAGIC_HEADER;
 
   static patchFrom(file: File): PPFPatch {
     const crcBefore = Patch.getCrcFromPath(file.getExtractedFilePath());

@@ -110,7 +110,7 @@ export default class ArchiveEntry<A extends Archive> extends File {
     removeHeader = false,
   ): Promise<T> {
     const start = removeHeader && this.getFileHeader()
-      ? this.getFileHeader()?.dataOffsetBytes || 0
+      ? this.getFileHeader()?.getDataOffsetBytes() || 0
       : 0;
 
     // Apply the patch if there is one

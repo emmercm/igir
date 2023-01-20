@@ -52,7 +52,7 @@ interface VcdiffDeltaInstruction {
 }
 
 class VcdiffHeader {
-  private static readonly MAGIC_STRING = Buffer.from('d6c3c4', 'hex');
+  static readonly MAGIC_HEADER = Buffer.from('d6c3c4', 'hex');
 
   private static readonly DEFAULT_CODE_TABLE = ((): VcdiffDeltaInstruction[][] => {
     const entries: VcdiffDeltaInstruction[][] = [
@@ -130,7 +130,7 @@ class VcdiffHeader {
   /* eslint-disable no-bitwise */
   static async fromFilePoly(patchFile: FilePoly): Promise<VcdiffHeader> {
     const header = await patchFile.readNext(3);
-    if (!header.equals(VcdiffHeader.MAGIC_STRING)) {
+    if (!header.equals(VcdiffHeader.MAGIC_HEADER)) {
       await patchFile.close();
       throw new Error(`Vcdiff patch header is invalid: ${patchFile.getPathLike()}`);
     }
@@ -435,6 +435,8 @@ class VcdiffCache {
  */
 export default class VcdiffPatch extends Patch {
   static readonly SUPPORTED_EXTENSIONS = ['.vcdiff', '.xdelta'];
+
+  static readonly MAGIC_HEADER = VcdiffHeader.MAGIC_HEADER;
 
   static patchFrom(file: File): VcdiffPatch {
     const crcBefore = Patch.getCrcFromPath(file.getExtractedFilePath());
