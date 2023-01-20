@@ -27,6 +27,8 @@ export default class PatchFactory {
       return VcdiffPatch.patchFrom(file);
     }
 
+    // TODO(cemmer): parse file contents for magic header, like FileHeader does
+
     throw new Error(`Unknown patch type: ${path.extname(filePath)}`);
   }
 

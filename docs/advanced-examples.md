@@ -11,21 +11,21 @@ The file tree in that hard drive looks like this:
 ```text
 /Volumes/WDPassport4
 ├── FBNeo
-│   ├── Arcade
-│   └── Neogeo
+│   ├── Arcade
+│   └── Neogeo
 ├── No-Intro
-│   ├── Nintendo - Game Boy
-│   ├── Nintendo - Game Boy Advance
-│   ├── Nintendo - Game Boy Advance (Multiboot)
-│   ├── Nintendo - Game Boy Advance (Video)
-│   ├── Nintendo - Game Boy Advance (e-Reader)
-│   ├── Nintendo - Game Boy Color
-│   └── etc...
-├── No-Intro Love Pack (PC XML) (2022-10-21).zip
+│   ├── Nintendo - Game Boy
+│   ├── Nintendo - Game Boy Advance
+│   ├── Nintendo - Game Boy Advance (Multiboot)
+│   ├── Nintendo - Game Boy Advance (Video)
+│   ├── Nintendo - Game Boy Advance (e-Reader)
+│   ├── Nintendo - Game Boy Color
+│   └── etc...
+├── No-Intro Love Pack (PC XML) (2023-01-19).zip
 ├── Patches
-│   ├── gb
-│   ├── gba
-│   └── gbc
+│   ├── gb
+│   ├── gba
+│   └── gbc
 ├── Redump (2022-10-22).zip
 ├── TOSEC - DAT Pack - Complete (3530) (TOSEC-v2022-07-10).zip
 └── igir_library_sync.sh
