@@ -32,6 +32,8 @@ export default class OutputCleaner extends Module {
       return 0;
     }
 
+    await this.progressBar.setSymbol(Symbols.SEARCHING);
+
     // If there is nothing to clean, then don't do anything
     // TODO(cemmer): batch this, it can be way too many files to hold in memory
     const filesToClean = await this.options.scanOutputFilesWithoutCleanExclusions(

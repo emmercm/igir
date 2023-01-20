@@ -169,7 +169,7 @@ describe('options', () => {
     expect(() => argumentsParser.parse(['copy', '--input', os.devNull])).toThrow(/missing required option/i);
     expect(() => argumentsParser.parse(['move', '--input', os.devNull])).toThrow(/missing required option/i);
     expect(() => argumentsParser.parse(['copy', 'zip', '--input', os.devNull])).toThrow(/missing required option/i);
-    expect(() => argumentsParser.parse(['clean', '--input', os.devNull])).toThrow(/missing required option/i);
+    expect(() => argumentsParser.parse(['copy', 'clean', '--input', os.devNull])).toThrow(/missing required option/i);
     expect(argumentsParser.parse(['test', '--dat', os.devNull, '--input', os.devNull]).getOutputFileParsed()).toContain(Constants.GLOBAL_TEMP_DIR);
     expect(argumentsParser.parse(['report', '--dat', os.devNull, '--input', os.devNull]).getOutputFileParsed()).toContain(Constants.GLOBAL_TEMP_DIR);
     // Test value
