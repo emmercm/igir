@@ -1,4 +1,4 @@
-import ProgressBar, { Symbols } from '../console/progressBar.js';
+import ProgressBar, { ProgressBarSymbol } from '../console/progressBar.js';
 import DAT from '../types/logiqx/dat.js';
 import Parent from '../types/logiqx/parent.js';
 import Options from '../types/options.js';
@@ -38,7 +38,7 @@ export default class CandidateFilter extends Module {
       return new Map();
     }
 
-    await this.progressBar.setSymbol(Symbols.FILTERING);
+    await this.progressBar.setSymbol(ProgressBarSymbol.FILTERING);
     await this.progressBar.reset(parentsToCandidates.size);
 
     const output = await this.filterSortFilter(dat, parentsToCandidates);

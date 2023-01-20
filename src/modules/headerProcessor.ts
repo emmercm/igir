@@ -1,6 +1,6 @@
 import async, { AsyncResultCallback } from 'async';
 
-import ProgressBar, { Symbols } from '../console/progressBar.js';
+import ProgressBar, { ProgressBarSymbol } from '../console/progressBar.js';
 import Constants from '../constants.js';
 import File from '../types/files/file.js';
 import FileHeader from '../types/files/fileHeader.js';
@@ -24,7 +24,7 @@ export default class HeaderProcessor extends Module {
   async process(inputRomFiles: File[]): Promise<File[]> {
     await this.progressBar.logInfo('Processing file headers');
 
-    await this.progressBar.setSymbol(Symbols.HASHING);
+    await this.progressBar.setSymbol(ProgressBarSymbol.HASHING);
     await this.progressBar.reset(inputRomFiles.length);
 
     const parsedFiles = async.mapLimit(

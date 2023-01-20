@@ -4,7 +4,7 @@ import { PassThrough } from 'stream';
 
 import Logger from './logger.js';
 import LogLevel from './logLevel.js';
-import ProgressBar, { Symbols } from './progressBar.js';
+import ProgressBar, { ProgressBarSymbol } from './progressBar.js';
 import ProgressBarPayload from './progressBarPayload.js';
 import SingleBarFormatted from './singleBarFormatted.js';
 
@@ -144,7 +144,7 @@ export default class ProgressBarCLI extends ProgressBar {
   }
 
   async done(finishedMessage?: string): Promise<void> {
-    await this.setSymbol(Symbols.DONE);
+    await this.setSymbol(ProgressBarSymbol.DONE);
 
     if (this.singleBarFormatted.getSingleBar().getTotal() > 0) {
       this.singleBarFormatted.getSingleBar()
