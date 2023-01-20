@@ -277,8 +277,9 @@ export default class CandidateGenerator extends Module {
       return false;
     }
 
-    // For this one ROM, find all output paths that have multiple (not necessarily unique)
-    //  input paths
+    // For all the ROMs for a Game+Release, find all non-archive output files that have a duplicate
+    //  output file path. In other words, there are multiple input files that want to write to the
+    //  same output file.
     const duplicateOutputPaths = romsWithFiles
       .map((romWithFiles) => romWithFiles.getOutputFile())
       .filter((outputFile) => !(outputFile instanceof ArchiveEntry))
@@ -288,6 +289,7 @@ export default class CandidateGenerator extends Module {
         .indexOf(duplicatePath) === idx)
       .sort();
     if (!duplicateOutputPaths.length) {
+      // There are no duplicate non-archive output file paths
       return false;
     }
 
@@ -296,8 +298,9 @@ export default class CandidateGenerator extends Module {
     for (let i = 0; i < duplicateOutputPaths.length; i += 1) {
       const duplicateOutput = duplicateOutputPaths[i];
 
-      // For an output path that has multiple input paths, remove duplicates and if there are still
-      //  multiple files left over then we won't be able to resolve this at write time
+      // For an output path that has multiple input paths, filter to only the unique input paths,
+      //  and if there are still multiple input file paths then we won't be able to resolve this
+      //  at write time
       const conflictedInputFiles = romsWithFiles
         .filter((romWithFiles) => romWithFiles.getOutputFile().getFilePath() === duplicateOutput)
         .map((romWithFiles) => romWithFiles.getInputFile().toString())

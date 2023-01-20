@@ -91,7 +91,7 @@ describe.each(['zip', 'extract', 'raw'])('command: %s', (command) => {
     const files = [
       await ArchiveEntry.entryOf(new Zip('one.zip'), 'one.rom', 1, '12345678'),
       await File.fileOf('1.rom', 1, '12345678'), // duplicate
-      await File.fileOf('two.a', 2, 'abcdef90'),
+      await File.fileOf('two.a', 2, 'abcdef90'), // only 1/2 ROMs were found for the game
     ];
 
     // When
@@ -263,7 +263,10 @@ describe('with different input files for every game ROM', () => {
     const parentsToCandidates = await new CandidateGenerator(options, new ProgressBarFake())
       .generate(dat, await Promise.all(filePromises));
 
-    // Then
+    // Then there should still be 3 parents, with the input -> output:
+    //  (nothing) -> game with no ROMs
+    //  one.rom -> game with one ROM
+    //  a.7z|a.rom & b.7z|b.rom -> game with two ROMs (either in a folder or a zip, together)
     expect(parentsToCandidates.size).toEqual(3);
     const candidates = [...parentsToCandidates.values()].flatMap((c) => c);
     expect(candidates).toHaveLength(3);
@@ -281,7 +284,12 @@ describe('with different input files for every game ROM', () => {
     const parentsToCandidates = await new CandidateGenerator(options, new ProgressBarFake())
       .generate(dat, await Promise.all(filePromises));
 
-    // Then
+    // Then there should still be 3 parents, with the input -> output:
+    //  (nothing) -> game with no ROMs
+    //  one.rom -> one.rom
+    //  a.7z|a.rom & b.7z|b.rom -> game with two ROMs.7z -- CONFLICT!
+    // Because we're not extracting or zipping, two different input 7z files wanted to write to the
+    //  same output file, which is a problem, so the parent resulted in no candidates
     expect(parentsToCandidates.size).toEqual(3);
     const candidates = [...parentsToCandidates.values()].flatMap((c) => c);
     expect(candidates).toHaveLength(2); // game with two ROMs has an input->output conflict

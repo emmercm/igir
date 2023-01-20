@@ -305,7 +305,7 @@ describe('zip', () => {
   });
 
   test.each([
-    // Control group
+    // Control group of un-headered files
     ['raw/empty.rom', 'empty.rom', '00000000'],
     ['raw/fizzbuzz.nes', 'fizzbuzz.nes', '370517b5'],
     ['raw/foobar.lnx', 'foobar.lnx', 'b22c9747'],
@@ -331,7 +331,7 @@ describe('zip', () => {
   });
 
   test.each([
-    // Control group
+    // Control group of un-headered files
     ['raw/empty.rom', 'empty.rom', '00000000'],
     ['raw/fizzbuzz.nes', 'fizzbuzz.nes', '370517b5'],
     ['raw/foobar.lnx', 'foobar.lnx', 'b22c9747'],
@@ -360,7 +360,7 @@ describe('zip', () => {
   });
 
   test.each([
-    // Control group
+    // Control group of files without patches
     ['raw/empty.rom', [['empty.zip|empty.rom', '00000000']]],
     ['raw/fizzbuzz.nes', [['fizzbuzz.zip|fizzbuzz.nes', '370517b5']]],
     ['raw/foobar.lnx', [['foobar.zip|foobar.lnx', 'b22c9747']]],
@@ -604,7 +604,7 @@ describe('extract', () => {
   });
 
   test.each([
-    // Control group
+    // Control group of un-headered files
     ['raw/empty.rom', 'empty.rom', '00000000'],
     ['raw/fizzbuzz.nes', 'fizzbuzz.nes', '370517b5'],
     ['raw/foobar.lnx', 'foobar.lnx', 'b22c9747'],
@@ -628,7 +628,7 @@ describe('extract', () => {
   });
 
   test.each([
-    // Control group
+    // Control group of un-headered files
     ['raw/empty.rom', 'empty.rom', '00000000'],
     ['raw/fizzbuzz.nes', 'fizzbuzz.nes', '370517b5'],
     ['raw/foobar.lnx', 'foobar.lnx', 'b22c9747'],
@@ -655,7 +655,7 @@ describe('extract', () => {
   });
 
   test.each([
-    // Control group
+    // Control group of files without patches
     ['raw/empty.rom', [['empty.rom', '00000000']]],
     ['raw/fizzbuzz.nes', [['fizzbuzz.nes', '370517b5']]],
     ['raw/foobar.lnx', [['foobar.lnx', 'b22c9747']]],
@@ -898,7 +898,7 @@ describe('raw', () => {
   });
 
   test.each([
-    // Control group
+    // Control group of headered files that can be removed
     ['headered/allpads.nes', 'allpads.nes', '9180a163'],
     ['headered/speed_test_v51.smc', 'speed_test_v51.smc', '9adca6cc'],
     // Archives not being extracted
@@ -918,7 +918,7 @@ describe('raw', () => {
   });
 
   test.each([
-    // Control group
+    // Control group of headered files that can be removed
     ['headered/allpads.nes', 'allpads.nes', '6339abe6'],
     ['headered/speed_test_v51.smc', 'speed_test_v51.sfc', '8beffd94'],
     // Archives not being extracted
@@ -941,7 +941,7 @@ describe('raw', () => {
   });
 
   test.each([
-    // Control group
+    // Control group of files without patches
     ['raw/empty.rom', [['empty.rom', '00000000']]],
     ['raw/fizzbuzz.nes', [['fizzbuzz.nes', '370517b5']]],
     ['raw/foobar.lnx', [['foobar.lnx', 'b22c9747']]],

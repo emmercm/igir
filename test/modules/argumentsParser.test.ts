@@ -30,6 +30,7 @@ describe('commands', () => {
   it('should throw on commands requiring other commands', () => {
     expect(() => argumentsParser.parse(['extract', ...dummyRequiredArgs])).toThrow(/command requires/i);
     expect(() => argumentsParser.parse(['zip', ...dummyRequiredArgs])).toThrow(/command requires/i);
+    expect(() => argumentsParser.parse(['clean', ...dummyRequiredArgs])).toThrow(/command requires/i);
   });
 
   it('should not parse different commands', () => {
