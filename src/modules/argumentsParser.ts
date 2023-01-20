@@ -121,8 +121,6 @@ export default class ArgumentsParser {
       .option('input', {
         group: groupPaths,
         alias: 'i',
-        // TODO(cemmer): add a warning when input and output directories are the same, but also
-        //  have a "yes" flag
         description: 'Path(s) to ROM files or archives',
         demandOption: true,
         type: 'array',
@@ -131,7 +129,7 @@ export default class ArgumentsParser {
       .option('input-exclude', {
         group: groupPaths,
         alias: 'I',
-        description: 'Path(s) to ROM files or archives to exclude',
+        description: 'Path(s) to ROM files or archives to exclude from processing',
         type: 'array',
         requiresArg: true,
       })
@@ -220,7 +218,7 @@ export default class ArgumentsParser {
       .option('overwrite', {
         group: groupOutput,
         alias: 'O',
-        description: 'Overwrite any ROMs in the output directory',
+        description: 'Overwrite any files in the output directory',
         type: 'boolean',
       })
       .option('clean-exclude', {
@@ -234,7 +232,7 @@ export default class ArgumentsParser {
       .option('language-filter', {
         group: groupFiltering,
         alias: 'L',
-        description: `List of comma-separated languages to limit to (supported: ${ReleaseCandidate.getLanguages().join(', ')})`,
+        description: `List of comma-separated languages to filter to (supported: ${ReleaseCandidate.getLanguages().join(', ')})`,
         type: 'string',
         coerce: (val: string) => val.split(','),
         requiresArg: true,
@@ -242,7 +240,7 @@ export default class ArgumentsParser {
       .option('region-filter', {
         group: groupFiltering,
         alias: 'R',
-        description: `List of comma-separated regions to limit to (supported: ${ReleaseCandidate.getRegions().join(', ')})`,
+        description: `List of comma-separated regions to filter to (supported: ${ReleaseCandidate.getRegions().join(', ')})`,
         type: 'string',
         coerce: (val: string) => val.split(','),
         requiresArg: true,
@@ -324,7 +322,7 @@ export default class ArgumentsParser {
       })
       .option('prefer-verified', {
         group: groupPriority,
-        description: 'Prefer verified ROM dumps over not',
+        description: 'Prefer verified ROM dumps over unverified',
         type: 'boolean',
         implies: 'single',
       })
@@ -374,7 +372,7 @@ export default class ArgumentsParser {
       })
       .option('prefer-parent', {
         group: groupPriority,
-        description: 'Prefer parent ROMs over clones (requires parent-clone DAT files)',
+        description: 'Prefer parent ROMs over clones (requires parent/clone DAT files)',
         type: 'boolean',
         implies: ['dat', 'single'],
       })
@@ -394,7 +392,7 @@ export default class ArgumentsParser {
 
 Advanced usage:
 
-  Tokens that are replaced when determining the output (--output) path of a ROM:
+  Tokens that are replaced when generating the output (--output) path of a ROM:
     {datName}             The name of the DAT that contains the ROM (e.g. "Nintendo - Game Boy")
     {datReleaseRegion}    The region of the ROM release (e.g. "USA"), each ROM can have multiple
     {datReleaseLanguage}  The language of the ROM release (e.g. "En"), each ROM can have multiple
@@ -404,13 +402,16 @@ Advanced usage:
     {outputName}      The output ROM's filename without extension
     {outputExt}       The output ROM's extension
 
-    {pocket}  The ROM's core-specific /Assets/* folder for the Analogue Pocket (e.g. "gb")
-    {mister}  The ROM's core-specific /games/* folder for the MiSTer FPGA (e.g. "Gameboy")
+    {pocket}  The ROM's core-specific /Assets/* directory for the Analogue Pocket (e.g. "gb")
+    {mister}  The ROM's core-specific /games/* directory for the MiSTer FPGA (e.g. "Gameboy")
 
 Example use cases:
 
   Merge new ROMs into an existing ROM collection and generate a report:
     $0 copy report --dat *.dat --input **/*.zip --input ROMs/ --output ROMs/
+
+  Generate a report on an existing ROM collection, without copying or moving ROMs (read only):
+    $0 report --dat *.dat --input ROMs/
 
   Organize and zip an existing ROM collection:
     $0 move zip --dat *.dat --input ROMs/ --output ROMs/
