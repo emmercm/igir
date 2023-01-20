@@ -1,6 +1,6 @@
 import path from 'path';
 
-import ProgressBar, { Symbols } from '../console/progressBar.js';
+import ProgressBar, { ProgressBarSymbol } from '../console/progressBar.js';
 import ArchiveEntry from '../types/files/archiveEntry.js';
 import File from '../types/files/file.js';
 import DAT from '../types/logiqx/dat.js';
@@ -30,7 +30,7 @@ export default class PatchCandidateGenerator extends Module {
       return parentsToCandidates;
     }
 
-    await this.progressBar.setSymbol(Symbols.GENERATING);
+    await this.progressBar.setSymbol(ProgressBarSymbol.GENERATING);
     await this.progressBar.reset(dat.getParents().length);
 
     const crcToPatches = PatchCandidateGenerator.indexPatchesByCrcBefore(patches);

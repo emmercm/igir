@@ -3,7 +3,7 @@ import fs from 'fs';
 import path from 'path';
 import util from 'util';
 
-import ProgressBar, { Symbols } from '../console/progressBar.js';
+import ProgressBar, { ProgressBarSymbol } from '../console/progressBar.js';
 import Constants from '../constants.js';
 import fsPoly from '../polyfill/fsPoly.js';
 import Zip from '../types/archives/zip.js';
@@ -46,7 +46,7 @@ export default class ROMWriter extends Module {
     }
 
     await this.progressBar.logInfo(`${dat.getName()}: Writing candidates`);
-    await this.progressBar.setSymbol(Symbols.WRITING);
+    await this.progressBar.setSymbol(ProgressBarSymbol.WRITING);
     await this.progressBar.reset(parentsToCandidates.size);
 
     await Promise.all([...parentsToCandidates.values()]
@@ -61,7 +61,7 @@ export default class ROMWriter extends Module {
       })));
 
     await this.progressBar.logDebug(`${dat.getName()}: Deleting moved files`);
-    await this.progressBar.setSymbol(Symbols.WRITING);
+    await this.progressBar.setSymbol(ProgressBarSymbol.WRITING);
     await this.deleteMovedFiles(dat);
 
     await this.progressBar.logInfo(`${dat.getName()}: Done writing candidates`);

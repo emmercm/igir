@@ -1,7 +1,7 @@
 import async, { AsyncResultCallback } from 'async';
 import xml2js from 'xml2js';
 
-import ProgressBar, { Symbols } from '../console/progressBar.js';
+import ProgressBar, { ProgressBarSymbol } from '../console/progressBar.js';
 import Constants from '../constants.js';
 import bufferPoly from '../polyfill/bufferPoly.js';
 import File from '../types/files/file.js';
@@ -24,7 +24,7 @@ export default class DATScanner extends Scanner {
   async scan(): Promise<DAT[]> {
     await this.progressBar.logInfo('Scanning DAT files');
 
-    await this.progressBar.setSymbol(Symbols.SEARCHING);
+    await this.progressBar.setSymbol(ProgressBarSymbol.SEARCHING);
     await this.progressBar.reset(this.options.getDatFileCount());
 
     const datFilePaths = await this.options.scanDatFiles();

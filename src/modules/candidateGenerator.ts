@@ -1,6 +1,6 @@
 import path from 'path';
 
-import ProgressBar, { Symbols } from '../console/progressBar.js';
+import ProgressBar, { ProgressBarSymbol } from '../console/progressBar.js';
 import Zip from '../types/archives/zip.js';
 import ArchiveEntry from '../types/files/archiveEntry.js';
 import File from '../types/files/file.js';
@@ -41,7 +41,7 @@ export default class CandidateGenerator extends Module {
       return output;
     }
 
-    await this.progressBar.setSymbol(Symbols.GENERATING);
+    await this.progressBar.setSymbol(ProgressBarSymbol.GENERATING);
     await this.progressBar.reset(dat.getParents().length);
 
     // TODO(cemmer): only do this once globally, not per DAT
