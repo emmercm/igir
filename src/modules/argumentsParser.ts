@@ -97,6 +97,7 @@ export default class ArgumentsParser {
         });
         return true;
       });
+    // TODO(cemmer): check on 'clean' to require one of the writing commands
 
     const yargsParser = yargs([])
       .parserConfiguration({
@@ -415,8 +416,8 @@ Example use cases:
   Organize and zip an existing ROM collection:
     $0 move zip --dat *.dat --input ROMs/ --output ROMs/
 
-  Produce a 1G1R set per console, preferring English ROMs from USA>EUR>JPN:
-    $0 copy --dat *.dat --input **/*.zip --output 1G1R/ --dir-dat-name --single --prefer-language EN --prefer-region USA,EUR,JPN
+  Produce a 1G1R set per console, preferring English ROMs from USA>WORLD>EUR>JPN:
+    $0 copy --dat *.dat --input **/*.zip --output 1G1R/ --dir-dat-name --single --prefer-language EN --prefer-region USA,WORLD,EUR,JPN
 
   Copy all BIOS files into one directory, extracting if necessary:
     $0 copy extract --dat *.dat --input **/*.zip --output BIOS/ --only-bios

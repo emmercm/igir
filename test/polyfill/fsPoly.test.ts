@@ -34,7 +34,7 @@ describe('makeLegal', () => {
 
 describe('rm', () => {
   it('should delete an existing file', async () => {
-    const file = fsPoly.mktempSync(path.join(process.cwd(), 'temp'));
+    const file = await fsPoly.mktemp(path.join(process.cwd(), 'temp'));
     await fsPoly.touch(file);
     await fsPoly.rm(file);
     await expect(fsPoly.exists(file)).resolves.toEqual(false);
@@ -43,7 +43,7 @@ describe('rm', () => {
 
 describe('rmSync', () => {
   it('should delete an existing file', async () => {
-    const file = fsPoly.mktempSync(path.join(process.cwd(), 'temp'));
+    const file = await fsPoly.mktemp(path.join(process.cwd(), 'temp'));
     await fsPoly.touch(file);
     fsPoly.rmSync(file);
     await expect(fsPoly.exists(file)).resolves.toEqual(false);

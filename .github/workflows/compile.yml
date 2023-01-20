@@ -1,9 +1,14 @@
 name: Compile Node.js
 
 on:
-  push:
+  pull_request:
+    types:
+      - opened
+      - synchronize  # HEAD has changed, e.g. a push happened
+      - reopened
   release:
-    types: [published]
+    types:
+      - published
 
 jobs:
   node-compile:
@@ -53,14 +58,15 @@ jobs:
       - run: npm run build
       # Compile and upload
       - run: ${{ matrix.build }}
-      - uses: actions/upload-artifact@v3
+      - if: github.event_name == 'release'
+        uses: actions/upload-artifact@v3
         with:
           name: ${{ matrix.os }}
           path: ${{ env.BIN_OUTPUT }}
           if-no-files-found: error
 
   release-update:
-    if: ${{ github.event_name == 'release' }}
+    if: github.event_name == 'release'
     needs:
       - node-compile
     runs-on: ubuntu-latest

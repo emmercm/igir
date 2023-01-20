@@ -13,12 +13,15 @@
   assignAutomerge: false, // default
 
   // Open PRs immediately for vulnerability alerts
-  // Requires "dependency graph" and "dependabot alerts" enabled for the repo
+  // Requires "dependency graph" as well as Dependabot "alerts" and "security updates" enabled for the repo
   vulnerabilityAlerts: {
     enabled: true, // default
     schedule: "at any time", // default
-    prCreation: "immediate" // default
+    prCreation: "immediate", // default
+    automergeSchedule: "at any time"
   },
+  // WARN: "When the lockfileVersion is higher than 1 in package-lock.json, remediations are only possible when changes are made to package.json."
+  transitiveRemediation: true,
 
   // Use pseudo semantic commit (and therefore PR title) commit messages
   // "{{{commitMessagePrefix}}} {{{commitMessageAction}}} {{{commitMessageTopic}}} {{{commitMessageExtra}}} {{{commitMessageSuffix}}}"
@@ -36,6 +39,13 @@
   automergeSchedule: "on the 28th day of the month",
   prHourlyLimit: 0, // default: disabled
 
+  node: {
+    groupName: "Node.js",
+    schedule: "at any time",
+    prCreation: "immediate",
+    automergeSchedule: "at any time"
+  },
+
   npm: {
     lockFileMaintenance: {
       enabled: true,
@@ -43,7 +53,6 @@
       commitMessageAction: "update", // same as above
       commitMessageTopic: "lockfile"
     },
-    transitiveRemediation: true,
 
     // Stability settings
     rangeStrategy: "pin",
@@ -54,7 +63,7 @@
       // Dependencies
       {
         groupName: "dependencies",
-        matchDepTypes: ["dependencies", "devDependencies"],
+        matchDepTypes: ["dependencies", "devDependencies"]
       },
 
       // Dev dependencies
@@ -64,15 +73,16 @@
         matchDepTypes: ["devDependencies"],
         excludePackageNames: [
           "@types/7zip-min",
+          "@types/archiver",
           "@types/async",
           "@types/cli-progress",
           "@types/figlet",
           "@types/micromatch",
           "@types/semver",
+          "@types/tar",
           "@types/xml2js",
           "@types/yargs",
-          "@types/yauzl",
-          "@types/yazl"
+          "@types/yauzl"
         ],
         groupName: "dev dependencies"
       },

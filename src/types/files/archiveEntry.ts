@@ -135,32 +135,6 @@ export default class ArchiveEntry<A extends Archive> extends File {
     }
   }
 
-  async withFileName(fileNameWithoutExt: string): Promise<File> {
-    return ArchiveEntry.entryOf(
-      this.getArchive().withFileName(fileNameWithoutExt),
-      this.getEntryPath(),
-      this.getSize(),
-      this.getCrc32(),
-      this.getFileHeader(),
-      this.getPatch(),
-    );
-  }
-
-  async withExtractedFilePath(extractedNameWithoutExt: string): Promise<File> {
-    const { base, ...parsedEntryPath } = path.parse(this.getEntryPath());
-    parsedEntryPath.name = extractedNameWithoutExt;
-    const entryPath = path.format(parsedEntryPath);
-
-    return ArchiveEntry.entryOf(
-      this.getArchive(),
-      entryPath,
-      this.getSize(),
-      this.getCrc32(),
-      this.getFileHeader(),
-      this.getPatch(),
-    );
-  }
-
   async withFileHeader(fileHeader: FileHeader): Promise<File> {
     // Make sure the file actually has the header magic string
     const hasHeader = await this.extractToStream(

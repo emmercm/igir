@@ -159,7 +159,7 @@ export default class File {
   async extractToTempFile<T>(
     callback: (localFile: string) => (T | Promise<T>),
   ): Promise<T> {
-    const temp = fsPoly.mktempSync(path.join(
+    const temp = await fsPoly.mktemp(path.join(
       Constants.GLOBAL_TEMP_DIR,
       `${path.basename(this.getFilePath())}.temp`,
     ));
@@ -200,24 +200,6 @@ export default class File {
     } finally {
       stream.destroy();
     }
-  }
-
-  async withFileName(fileNameWithoutExt: string): Promise<File> {
-    const { base, ...parsedFilePath } = path.parse(this.getFilePath());
-    parsedFilePath.name = fileNameWithoutExt;
-    const filePath = path.format(parsedFilePath);
-
-    return File.fileOf(
-      filePath,
-      this.getSize(),
-      this.getCrc32(),
-      this.getFileHeader(),
-      this.getPatch(),
-    );
-  }
-
-  async withExtractedFilePath(extractedNameWithoutExt: string): Promise<File> {
-    return this.withFileName(extractedNameWithoutExt);
   }
 
   async withFileHeader(fileHeader: FileHeader): Promise<File> {

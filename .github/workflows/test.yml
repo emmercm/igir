@@ -4,7 +4,11 @@
 name: Project CI
 
 on:
-  push:
+  pull_request:
+    types:
+      - opened
+      - synchronize  # HEAD has changed, e.g. a push happened
+      - reopened
 
 jobs:
   node-lint:
@@ -14,6 +18,7 @@ jobs:
       - uses: actions/checkout@v3
       - uses: actions/setup-node@v3
         with:
+          node-version-file: '.nvmrc'
           cache: 'npm'
       - run: npm ci
 
@@ -100,36 +105,6 @@ jobs:
         with:
           pattern: 'renovate.json5'
 
-  codecov-lint:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
-      - uses: formsort/action-check-codecov-config@v1
-
-  # !!! The codecov/project check should be required by GitHub !!!
-  # See codecov.yml for the configuration that drives the check
-  codecov:
-    needs:
-      - node-unit
-      - node-e2e
-      - codecov-lint
-    runs-on: ubuntu-latest
-    steps:
-      # Setup and install
-      - uses: actions/checkout@v3
-      - uses: actions/setup-node@v3
-        with:
-          cache: 'npm'
-      - run: npm ci
-
-      # Run test coverage
-      - run: npm run test:coverage
-      - uses: codecov/codecov-action@v3
-        with:
-          token: ${{ secrets.CODECOV_TOKEN }}
-          fail_ci_if_error: true
-          verbose: true
-
   # !!! This check should be required by GitHub !!!
   test-status-check:
     needs:
@@ -139,39 +114,6 @@ jobs:
       - node-package
       - markdown-lint
       - renovate-lint
-      - codecov-lint
-      - codecov
     runs-on: ubuntu-latest
     steps:
       - run: echo ok
-
-#  version-check:
-#    if: github.ref_name == 'main'
-#    runs-on: ubuntu-latest
-#    steps:
-#      # Setup and install
-#      - uses: actions/checkout@v3
-#
-#      # Check if version has changed
-#      - name: Check if version has been updated
-#        id: check
-#        uses: EndBug/version-check@v1
-#      - name: Log when changed
-#        if: steps.check.outputs.changed == 'true'
-#        run: 'echo "Version change found in commit ${{ steps.check.outputs.commit }}! New version: ${{ steps.check.outputs.version }} (${{ steps.check.outputs.type }})"'
-#      - run: echo ::set-output changed=${{steps.check.outputs.changed}}
-#
-#  github-release:
-#    if: github.ref_name == 'main' && jobs.version-check.outputs.changed == 'true'
-#    needs:
-#      - status-check
-#      - version-check
-#    runs-on: ubuntu-latest
-#    steps:
-#      # Setup and install
-#      - uses: actions/checkout@v3
-#      - uses: actions/setup-node@v3
-#        with:
-#          cache: 'npm'
-#      - run: npm ci
-#      - run: npm run release:patch -- --ci

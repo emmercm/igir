@@ -10,8 +10,10 @@ export default class ProgressBarFake extends ProgressBar {
     return Promise.resolve();
   }
 
-  setWaitingMessage(): NodeJS.Timeout {
-    return setTimeout(() => {});
+  addWaitingMessage(): void {}
+
+  async removeWaitingMessage(): Promise<void> {
+    return Promise.resolve();
   }
 
   async increment(): Promise<void> {

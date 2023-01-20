@@ -55,9 +55,6 @@ export default class Game implements GameProps {
   @Expose({ name: 'description' })
   readonly description: string;
 
-  @Expose({ name: 'sourcefile' })
-  readonly sourceFile?: string;
-
   @Expose({ name: 'isbios' })
   readonly bios: 'yes' | 'no' = 'no';
 
@@ -70,54 +67,23 @@ export default class Game implements GameProps {
   @Expose({ name: 'sampleof' })
   readonly sampleOf?: string;
 
-  @Expose({ name: 'board' })
-  readonly board?: string;
-
-  @Expose({ name: 'rebuildto' })
-  readonly rebuildTo?: string;
-
-  @Expose({ name: 'year' })
-  readonly year?: string;
-
-  @Expose({ name: 'manufacturer' })
-  readonly manufacturer?: string;
-
+  @Expose()
   @Type(() => Release)
   readonly release: Release | Release[];
 
-  @Type(() => BIOSSet)
-  readonly biosSet: BIOSSet | BIOSSet[];
-
+  @Expose()
   @Type(() => ROM)
   readonly rom: ROM | ROM[];
-
-  @Type(() => Disk)
-  readonly disk: Disk | Disk[];
-
-  @Type(() => Sample)
-  readonly sample: Sample | Sample[];
-
-  @Type(() => Archive)
-  readonly archive: Archive | Archive[];
 
   constructor(options?: GameProps) {
     this.name = options?.name || '';
     this.description = options?.description || '';
-    this.sourceFile = options?.sourceFile;
     this.bios = options?.bios || this.bios;
     this.cloneOf = options?.cloneOf;
     this.romOf = options?.romOf;
     this.sampleOf = options?.sampleOf;
-    this.board = options?.board;
-    this.rebuildTo = options?.rebuildTo;
-    this.year = options?.year;
-    this.manufacturer = options?.manufacturer;
     this.release = options?.release || [];
-    this.biosSet = options?.biosSet || [];
     this.rom = options?.rom || [];
-    this.disk = options?.disk || [];
-    this.sample = options?.sample || [];
-    this.archive = options?.archive || [];
   }
 
   // Property getters

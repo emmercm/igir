@@ -14,7 +14,7 @@ async function expectEndToEnd(
   expectedFilesAndCrcs: string[][],
 ): Promise<void> {
   const tempInput = await fsPoly.mkdtemp(path.join(Constants.GLOBAL_TEMP_DIR, 'input'));
-  fsPoly.copyDirSync('./test/fixtures', tempInput);
+  await fsPoly.copyDir('./test/fixtures', tempInput);
 
   const tempOutput = await fsPoly.mkdtemp(path.join(Constants.GLOBAL_TEMP_DIR, 'output'));
 
@@ -30,7 +30,7 @@ async function expectEndToEnd(
   });
   await new Igir(options, new Logger(LogLevel.NEVER)).main();
 
-  const writtenRomAndCrcs = (await Promise.all(fsPoly.walkSync(tempOutput)
+  const writtenRomAndCrcs = (await Promise.all((await fsPoly.walk(tempOutput))
     .map(async (filePath) => FileFactory.filesFrom(filePath))))
     .flatMap((files) => files)
     .map((file) => ([file.toString().replace(tempOutput + path.sep, ''), file.getCrc32()]))

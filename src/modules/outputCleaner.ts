@@ -33,6 +33,7 @@ export default class OutputCleaner extends Module {
     }
 
     // If there is nothing to clean, then don't do anything
+    // TODO(cemmer): batch this, it can be way too many files to hold in memory
     const filesToClean = await this.options.scanOutputFilesWithoutCleanExclusions(
       dirsToClean,
       writtenFilesToExclude,
