@@ -182,8 +182,10 @@ export default class File {
     // Apply the patch if there is one
     if (this.getPatch()) {
       const patch = this.getPatch() as Patch;
-      return patch.apply(this, async (tempFile) => File
-        .createStreamFromFile(tempFile, start, callback));
+      return patch.apply(
+        this,
+        async (tempFile) => File.createStreamFromFile(tempFile, start, callback),
+      );
     }
 
     return File.createStreamFromFile(this.filePath, start, callback);

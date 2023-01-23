@@ -116,15 +116,18 @@ export default class ArchiveEntry<A extends Archive> extends File {
     // Apply the patch if there is one
     if (this.getPatch()) {
       const patch = this.getPatch() as Patch;
-      return patch.apply(this, async (tempFile) => File
-        .createStreamFromFile(tempFile, start, callback));
+      return patch.apply(
+        this,
+        async (tempFile) => File.createStreamFromFile(tempFile, start, callback),
+      );
     }
 
     // Don't extract to memory if this archive entry size is too large, or if we need to manipulate
     // the stream start point
     if (this.getSize() > Constants.MAX_MEMORY_FILE_SIZE || start > 0) {
-      return this.extractToFile(async (localFile) => File
-        .createStreamFromFile(localFile, start, callback));
+      return this.extractToFile(
+        async (localFile) => File.createStreamFromFile(localFile, start, callback),
+      );
     }
 
     const tempDir = await fsPoly.mkdtemp(path.join(Constants.GLOBAL_TEMP_DIR, 'xstream'));
