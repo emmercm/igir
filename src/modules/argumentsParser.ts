@@ -207,6 +207,11 @@ export default class ArgumentsParser {
         coerce: ArgumentsParser.getLastValue, // don't allow string[] values
         requiresArg: true,
       })
+      .option('zip-dat', {
+        group: groupArchive,
+        description: 'Group all ROMs from the same DAT into the same zip archive',
+        type: 'boolean',
+      })
 
       .option('header', {
         group: groupHeader,

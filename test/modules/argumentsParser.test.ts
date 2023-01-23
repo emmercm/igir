@@ -247,6 +247,15 @@ describe('options', () => {
     expect(argumentsParser.parse(['copy', 'zip', '--input', os.devNull, '--output', os.devNull, '--zip-exclude', '**/*.rom']).shouldZip(filePath)).toEqual(false);
   });
 
+  it('should parse "zip-dat"', () => {
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--zip-dat']).getZipDat()).toEqual(true);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--zip-dat', 'true']).getZipDat()).toEqual(true);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--zip-dat', 'false']).getZipDat()).toEqual(false);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--zip-dat', '--zip-dat']).getZipDat()).toEqual(true);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--zip-dat', 'false', '--zip-dat', 'true']).getZipDat()).toEqual(true);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--zip-dat', 'true', '--zip-dat', 'false']).getZipDat()).toEqual(false);
+  });
+
   it('should parse "header"', () => {
     expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--header', '**/*']).shouldReadFileForHeader('file.rom')).toEqual(true);
     expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--header', '**/*', '--header', 'nope']).shouldReadFileForHeader('file.rom')).toEqual(false);
