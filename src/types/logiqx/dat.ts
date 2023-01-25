@@ -5,6 +5,7 @@ import { Expose, plainToInstance, Type } from 'class-transformer';
 import Game from './game.js';
 import Header from './header.js';
 import Parent from './parent.js';
+import ROM from './rom.js';
 
 /**
  * @see http://www.logiqx.com/DatFAQs/DatCreation.php
@@ -129,5 +130,25 @@ export default class DAT {
     }
 
     return this.getName().match(/\(headerless\)/i) !== null;
+  }
+
+  buildParentWithAllRoms(): Parent {
+    const name = this.getNameShort();
+
+    const roms = [...this.getGames()
+      .flatMap((game) => game.getRoms())
+      .reduce((map, rom) => {
+        if (!map.has(rom.hashCode())) {
+          map.set(rom.hashCode(), rom);
+        }
+        return map;
+      }, new Map<string, ROM>()).values()];
+
+    const game = new Game({
+      name,
+      rom: roms,
+    });
+
+    return new Parent(name, [game]);
   }
 }

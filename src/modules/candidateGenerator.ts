@@ -41,18 +41,25 @@ export default class CandidateGenerator extends Module {
       return output;
     }
 
-    await this.progressBar.setSymbol(ProgressBarSymbol.GENERATING);
-    await this.progressBar.reset(dat.getParents().length);
+    await this.progressBar.setSymbol(ProgressBarSymbol.HASHING);
+    await this.progressBar.reset(inputRomFiles.length);
 
     // TODO(cemmer): only do this once globally, not per DAT
     // TODO(cemmer): ability to index files by some other property such as name
     const hashCodeToInputFiles = CandidateGenerator.indexFilesByHashCode(inputRomFiles);
     await this.progressBar.logDebug(`${dat.getName()}: ${hashCodeToInputFiles.size.toLocaleString()} unique ROMs found`);
 
+    const parents = this.options.getZipDat()
+      ? [dat.buildParentWithAllRoms()]
+      : dat.getParents();
+
+    await this.progressBar.setSymbol(ProgressBarSymbol.GENERATING);
+    await this.progressBar.reset(parents.length);
+
     // For each parent, try to generate a parent candidate
     /* eslint-disable no-await-in-loop */
-    for (let i = 0; i < dat.getParents().length; i += 1) {
-      const parent = dat.getParents()[i];
+    for (let i = 0; i < parents.length; i += 1) {
+      const parent = parents[i];
 
       const releaseCandidates: ReleaseCandidate[] = [];
 
@@ -209,13 +216,8 @@ export default class CandidateGenerator extends Module {
     // Determine the output path of the file
     let outputRomFilename;
     if (this.options.shouldZip(rom.getName())) {
-      if (this.options.getZipDat()) {
-        // Should zip, generate the zip name from the DAT name
-        outputRomFilename = `${dat.getNameShort()}.zip`;
-      } else {
-        // Should zip, generate the zip name from the game name
-        outputRomFilename = `${game.getName()}.zip`;
-      }
+      // Should zip, generate the zip name from the game name
+      outputRomFilename = `${game.getName()}.zip`;
     } else if (!(inputFile instanceof ArchiveEntry) || this.options.shouldExtract()) {
       // Should extract (if needed), generate the file name from the ROM name
       outputRomFilename = outputEntryPath;

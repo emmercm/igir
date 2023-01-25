@@ -30,7 +30,10 @@ const gameWithTwoRoms = new Game({
     new ROM('two.b', 3, '09876543'),
   ],
 });
-const dat = new DAT(new Header(), [gameWithNoRoms, gameWithOneRom, gameWithTwoRoms]);
+const dat = new DAT(
+  new Header({ name: 'CandidateGenerator Test' }),
+  [gameWithNoRoms, gameWithOneRom, gameWithTwoRoms],
+);
 
 describe.each(['zip', 'extract', 'raw'])('command: %s', (command) => {
   const options = new Options({
@@ -255,7 +258,7 @@ describe('with different input files for every game ROM', () => {
     ArchiveEntry.entryOf(new Rar('b.7z'), 'b.rom', 3, '09876543'),
   ];
 
-  test.each(['zip', 'extract'])('%s', async (command) => {
+  test.each(['zip', 'extract'])('should return all candidates: %s', async (command) => {
     // Given
     const options = new Options({ commands: ['copy', command] });
 
@@ -276,7 +279,7 @@ describe('with different input files for every game ROM', () => {
     expect(candidates[2].getRomsWithFiles()).toHaveLength(2);
   });
 
-  test('raw', async () => {
+  test('should return some candidates: raw', async () => {
     // Given
     const options = new Options({ commands: ['copy'] });
 
@@ -296,5 +299,25 @@ describe('with different input files for every game ROM', () => {
 
     expect(candidates[0].getRomsWithFiles()).toHaveLength(0);
     expect(candidates[1].getRomsWithFiles()).toHaveLength(1);
+  });
+
+  test('should generate one parent with all ROMs for zip-dat', async () => {
+    // Given
+    const options = new Options({ commands: ['zip'], zipDat: true });
+
+    // When
+    const parentsToCandidates = await new CandidateGenerator(options, new ProgressBarFake())
+      .generate(dat, await Promise.all(filePromises));
+
+    // Then
+    expect(parentsToCandidates.size).toEqual(1);
+    const candidates = [...parentsToCandidates.values()][0];
+    expect(candidates).toHaveLength(1);
+
+    expect(candidates[0].getRomsWithFiles()).toHaveLength(3);
+    const outputFilePaths = candidates[0].getRomsWithFiles()
+      .map((romWithFiles) => romWithFiles.getOutputFile().getFilePath())
+      .filter((filePath, idx, filePaths) => filePaths.indexOf(filePath) === idx);
+    expect(outputFilePaths).toHaveLength(1);
   });
 });
