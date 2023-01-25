@@ -2,6 +2,7 @@ import 'reflect-metadata';
 
 import { Expose, plainToInstance, Type } from 'class-transformer';
 
+import fsPoly from '../../polyfill/fsPoly.js';
 import Game from './game.js';
 import Header from './header.js';
 import Parent from './parent.js';
@@ -135,18 +136,30 @@ export default class DAT {
   buildParentWithAllRoms(): Parent {
     const name = this.getNameShort();
 
-    const roms = [...this.getGames()
-      .flatMap((game) => game.getRoms())
-      .reduce((map, rom) => {
-        if (!map.has(rom.hashCode())) {
-          map.set(rom.hashCode(), rom);
+    const roms = this.getGames()
+      .flatMap((game) => {
+        if (game.getRoms().length <= 1) {
+          return game.getRoms();
         }
-        return map;
-      }, new Map<string, ROM>()).values()];
+        // If the game has multiple ROMs, then re-generate them with foldered names
+        return game.getRoms().map((rom) => new ROM(
+          // NOTE(cemmer): this is intentionally '/' and not path.sep
+          `${fsPoly.makeLegal(game.getName())}/${rom.getName()}`,
+          rom.getSize(),
+          rom.getCrc32(),
+        ));
+      });
+    const uniqueRoms = [...roms.reduce((map, rom) => {
+      const key = rom.getName();
+      if (!map.has(key)) {
+        map.set(key, rom);
+      }
+      return map;
+    }, new Map<string, ROM>()).values()];
 
     const game = new Game({
       name,
-      rom: roms,
+      rom: uniqueRoms,
     });
 
     return new Parent(name, [game]);

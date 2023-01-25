@@ -309,15 +309,23 @@ describe('with different input files for every game ROM', () => {
     const parentsToCandidates = await new CandidateGenerator(options, new ProgressBarFake())
       .generate(dat, await Promise.all(filePromises));
 
-    // Then
+    // Then there is only one parent
     expect(parentsToCandidates.size).toEqual(1);
     const candidates = [...parentsToCandidates.values()][0];
     expect(candidates).toHaveLength(1);
 
+    // And the parent has three ROMs
     expect(candidates[0].getRomsWithFiles()).toHaveLength(3);
-    const outputFilePaths = candidates[0].getRomsWithFiles()
-      .map((romWithFiles) => romWithFiles.getOutputFile().getFilePath())
-      .filter((filePath, idx, filePaths) => filePaths.indexOf(filePath) === idx);
-    expect(outputFilePaths).toHaveLength(1);
+
+    // And all ROMs are being written to different paths within the same archive
+    const outputEntryPaths = candidates[0].getRomsWithFiles()
+      .map((romWithFiles) => romWithFiles.getOutputFile())
+      .map((entry) => entry.toString().replace(/(.+[\\/])?([^\\/|]+\|.+)/, '$2'))
+      .sort();
+    expect(outputEntryPaths).toEqual([
+      'CandidateGenerator Test.zip|game with two ROMs/two.a',
+      'CandidateGenerator Test.zip|game with two ROMs/two.b',
+      'CandidateGenerator Test.zip|one.rom',
+    ]);
   });
 });

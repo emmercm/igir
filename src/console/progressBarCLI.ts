@@ -126,6 +126,10 @@ export default class ProgressBarCLI extends ProgressBar {
   private setWaitingMessageTimeout(timeout = 10_000): void {
     clearTimeout(this.waitingMessageTimeout);
     this.waitingMessageTimeout = setTimeout(async () => {
+      if (this.singleBarFormatted.getSingleBar().getTotal() <= 1) {
+        return;
+      }
+
       this.singleBarFormatted.getSingleBar().update({
         waitingMessage: this.waitingMessages[0],
       } as ProgressBarPayload);
