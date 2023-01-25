@@ -212,6 +212,18 @@ export default class ArgumentsParser {
         description: 'Group all ROMs from the same DAT into the same zip archive, if not excluded from zipping',
         type: 'boolean',
       })
+      .check((checkArgv) => {
+        if (checkArgv.help) {
+          return true;
+        }
+
+        const needZip = ['zip-exclude', 'zip-dat'].filter((option) => checkArgv[option]);
+        if (checkArgv._.indexOf('zip') === -1 && needZip.length) {
+          throw new Error(`Missing required command for options ${needZip.join(', ')}: zip`);
+        }
+
+        return true;
+      })
 
       .option('header', {
         group: groupHeader,

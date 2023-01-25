@@ -248,12 +248,13 @@ describe('options', () => {
   });
 
   it('should parse "zip-dat"', () => {
-    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--zip-dat']).getZipDat()).toEqual(true);
-    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--zip-dat', 'true']).getZipDat()).toEqual(true);
-    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--zip-dat', 'false']).getZipDat()).toEqual(false);
-    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--zip-dat', '--zip-dat']).getZipDat()).toEqual(true);
-    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--zip-dat', 'false', '--zip-dat', 'true']).getZipDat()).toEqual(true);
-    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--zip-dat', 'true', '--zip-dat', 'false']).getZipDat()).toEqual(false);
+    expect(() => argumentsParser.parse([...dummyCommandAndRequiredArgs, '--zip-dat'])).toThrow(/missing required command/i);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, 'zip', '--zip-dat']).getZipDat()).toEqual(true);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, 'zip', '--zip-dat', 'true']).getZipDat()).toEqual(true);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, 'zip', '--zip-dat', 'false']).getZipDat()).toEqual(false);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, 'zip', '--zip-dat', '--zip-dat']).getZipDat()).toEqual(true);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, 'zip', '--zip-dat', 'false', '--zip-dat', 'true']).getZipDat()).toEqual(true);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, 'zip', '--zip-dat', 'true', '--zip-dat', 'false']).getZipDat()).toEqual(false);
   });
 
   it('should parse "header"', () => {
