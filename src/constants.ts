@@ -1,16 +1,9 @@
 import fs from 'fs';
+import os from 'os';
 import path from 'path';
 import url from 'url';
 
 import fsPoly from './polyfill/fsPoly.js';
-
-const globalTempDir = fsPoly.mkdtempSync();
-process.once('SIGINT', () => {
-  fsPoly.rmSync(globalTempDir, {
-    force: true,
-    recursive: true,
-  });
-});
 
 function scanUpPathForFile(filePath: string, fileName: string): string | undefined {
   const fullPath = path.join(filePath, fileName);
@@ -32,13 +25,22 @@ const PACKAGE_JSON = JSON.parse(
     'package.json',
   ) as string).toString(),
 );
+const COMMAND_NAME = PACKAGE_JSON.name;
+
+const GLOBAL_TEMP_DIR = fsPoly.mkdtempSync(path.join(os.tmpdir(), COMMAND_NAME));
+process.once('SIGINT', () => {
+  fsPoly.rmSync(GLOBAL_TEMP_DIR, {
+    force: true,
+    recursive: true,
+  });
+});
 
 export default class Constants {
-  static readonly COMMAND_NAME = PACKAGE_JSON.name;
+  static readonly COMMAND_NAME = COMMAND_NAME;
 
   static readonly COMMAND_VERSION = PACKAGE_JSON.version;
 
-  static readonly GLOBAL_TEMP_DIR = globalTempDir;
+  static readonly GLOBAL_TEMP_DIR = GLOBAL_TEMP_DIR;
 
   static readonly DAT_SCANNER_THREADS = 20;
 
