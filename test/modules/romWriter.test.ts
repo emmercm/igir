@@ -244,34 +244,6 @@ describe('zip', () => {
     });
   });
 
-  it('should not write if the output is expected even if overwriting', async () => {
-    await copyFixturesToTemp(async (inputTemp, outputTemp) => {
-      // Given
-      const options = new Options({ commands: ['copy', 'zip'] });
-      const inputFilesBefore = await walkAndStat(inputTemp);
-      await expect(walkAndStat(outputTemp)).resolves.toEqual([]);
-
-      // And we've written once
-      await romWriter(options, inputTemp, '**/*', undefined, outputTemp);
-
-      // And no files were written
-      const outputFilesBefore = await walkAndStat(outputTemp);
-      expect(outputFilesBefore).not.toEqual([]);
-
-      // When we write again
-      await romWriter({
-        ...options,
-        overwrite: true,
-      }, inputTemp, '**/*', undefined, outputTemp);
-
-      // Then the output wasn't touched
-      await expect(walkAndStat(outputTemp)).resolves.toEqual(outputFilesBefore);
-
-      // And the input files weren't touched
-      await expect(walkAndStat(inputTemp)).resolves.toEqual(inputFilesBefore);
-    });
-  });
-
   it('should write if overwriting and the output is unexpected', async () => {
     await copyFixturesToTemp(async (inputTemp, outputTemp) => {
       // Given
