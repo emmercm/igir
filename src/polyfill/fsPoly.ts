@@ -83,7 +83,13 @@ export default class FsPoly {
   }
 
   static async rename(oldPath: PathLike, newPath: PathLike): Promise<void> {
-    return util.promisify(fs.rename)(oldPath, newPath);
+    try {
+      await util.promisify(fs.rename)(oldPath, newPath);
+    } catch (e) {
+      // Attempt to resolve Windows' "EBUSY: resource busy or locked"
+      await this.rm(newPath, { force: true });
+      await this.rename(oldPath, newPath);
+    }
   }
 
   /**
