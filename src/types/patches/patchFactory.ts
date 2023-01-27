@@ -1,4 +1,4 @@
-import path from 'path';
+import { Readable } from 'stream';
 
 import File from '../files/file.js';
 import BPSPatch from './bpsPatch.js';
@@ -9,39 +9,117 @@ import PPFPatch from './ppfPatch.js';
 import UPSPatch from './upsPatch.js';
 import VcdiffPatch from './vcdiffPatch.js';
 
+interface PatchParser {
+  extensions: string[],
+  fileSignatures: Buffer[],
+  factory: (file: File) => Promise<Patch> | Patch
+}
+
+/**
+ * NOTE(cemmer): this file exists to prevent circular dependencies between Patch and its children.
+ */
 export default class PatchFactory {
-  static async patchFrom(file: File): Promise<Patch> {
-    const filePath = file.getExtractedFilePath();
+  private static readonly PATCH_PARSERS: PatchParser[] = [
+    {
+      extensions: BPSPatch.SUPPORTED_EXTENSIONS,
+      fileSignatures: [BPSPatch.FILE_SIGNATURE],
+      factory: BPSPatch.patchFrom,
+    },
+    {
+      extensions: IPSPatch.SUPPORTED_EXTENSIONS,
+      fileSignatures: IPSPatch.FILE_SIGNATURES,
+      factory: IPSPatch.patchFrom,
+    },
+    {
+      extensions: NinjaPatch.SUPPORTED_EXTENSIONS,
+      fileSignatures: [NinjaPatch.FILE_SIGNATURE],
+      factory: NinjaPatch.patchFrom,
+    },
+    {
+      extensions: PPFPatch.SUPPORTED_EXTENSIONS,
+      fileSignatures: [PPFPatch.FILE_SIGNATURE],
+      factory: PPFPatch.patchFrom,
+    },
+    {
+      extensions: UPSPatch.SUPPORTED_EXTENSIONS,
+      fileSignatures: [UPSPatch.FILE_SIGNATURE],
+      factory: UPSPatch.patchFrom,
+    },
+    {
+      extensions: VcdiffPatch.SUPPORTED_EXTENSIONS,
+      fileSignatures: [VcdiffPatch.FILE_SIGNATURE],
+      factory: VcdiffPatch.patchFrom,
+    },
+  ];
 
-    if (BPSPatch.SUPPORTED_EXTENSIONS.some((ext) => filePath.toLowerCase().endsWith(ext))) {
-      return BPSPatch.patchFrom(file);
-    } if (IPSPatch.SUPPORTED_EXTENSIONS.some((ext) => filePath.toLowerCase().endsWith(ext))) {
-      return IPSPatch.patchFrom(file);
-    } if (NinjaPatch.SUPPORTED_EXTENSIONS.some((ext) => filePath.toLowerCase().endsWith(ext))) {
-      return NinjaPatch.patchFrom(file);
-    } if (PPFPatch.SUPPORTED_EXTENSIONS.some((ext) => filePath.toLowerCase().endsWith(ext))) {
-      return PPFPatch.patchFrom(file);
-    } if (UPSPatch.SUPPORTED_EXTENSIONS.some((ext) => filePath.toLowerCase().endsWith(ext))) {
-      return UPSPatch.patchFrom(file);
-    } if (VcdiffPatch.SUPPORTED_EXTENSIONS.some((ext) => filePath.toLowerCase().endsWith(ext))) {
-      return VcdiffPatch.patchFrom(file);
-    }
-
-    // TODO(cemmer): parse file contents for magic header, like FileHeader does
-
-    throw new Error(`Unknown patch type: ${path.extname(filePath)}`);
-  }
+  private static readonly MAX_HEADER_LENGTH_BYTES = Object.values(PatchFactory.PATCH_PARSERS)
+    .flatMap((parser) => parser.fileSignatures)
+    .reduce((max, fileSignature) => Math.max(max, fileSignature.length), 0);
 
   static getSupportedExtensions(): string[] {
-    return [
-      ...BPSPatch.SUPPORTED_EXTENSIONS,
-      ...IPSPatch.SUPPORTED_EXTENSIONS,
-      ...NinjaPatch.SUPPORTED_EXTENSIONS,
-      ...PPFPatch.SUPPORTED_EXTENSIONS,
-      ...UPSPatch.SUPPORTED_EXTENSIONS,
-      ...VcdiffPatch.SUPPORTED_EXTENSIONS,
-    ]
-      .sort()
-      .filter((ext, idx, exts) => exts.indexOf(ext) === idx);
+    return Object.values(PatchFactory.PATCH_PARSERS)
+      .flatMap((parser) => parser.extensions)
+      .filter((ext, idx, exts) => exts.indexOf(ext) === idx)
+      .sort();
+  }
+
+  static async patchFromFilename(file: File): Promise<Patch | undefined> {
+    const filePath = file.getExtractedFilePath();
+
+    const parsers = Object.values(this.PATCH_PARSERS);
+    for (let i = 0; i < parsers.length; i += 1) {
+      const parser = parsers[i];
+      if (parser.extensions.some((ext) => filePath.toLowerCase().endsWith(ext))) {
+        return parser.factory(file);
+      }
+    }
+    return undefined;
+  }
+
+  private static async readHeaderHex(stream: Readable, length: number): Promise<string> {
+    return new Promise((resolve, reject) => {
+      stream.resume();
+
+      const chunks: Buffer[] = [];
+      const resolveHeader: () => void = () => {
+        const header = Buffer.concat(chunks)
+          .subarray(0, length)
+          .toString('hex')
+          .toLowerCase();
+        resolve(header);
+      };
+
+      stream.on('data', (chunk) => {
+        chunks.push(Buffer.from(chunk));
+
+        // Stop reading when we get enough data, trigger a 'close' event
+        if (chunks.reduce((sum, buff) => sum + buff.length, 0) >= length) {
+          resolveHeader();
+          stream.destroy();
+        }
+      });
+
+      stream.on('end', () => {
+        // We read the entire file without closing prematurely, return
+        resolveHeader();
+      });
+
+      stream.on('error', (err) => reject(err));
+    });
+  }
+
+  static async patchFromFileContents(file: File): Promise<Patch | undefined> {
+    const fileHeader = await file.extractToStream(
+      async (stream) => PatchFactory.readHeaderHex(stream, this.MAX_HEADER_LENGTH_BYTES),
+    );
+
+    const parsers = Object.values(this.PATCH_PARSERS);
+    for (let i = 0; i < parsers.length; i += 1) {
+      const parser = parsers[i];
+      if (parser.fileSignatures.some((fileSignature) => fileHeader.startsWith(fileSignature.toString('hex')))) {
+        return parser.factory(file);
+      }
+    }
+    return undefined;
   }
 }

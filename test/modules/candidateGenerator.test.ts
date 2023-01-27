@@ -148,9 +148,9 @@ describe.each(['zip', 'extract', 'raw'])('command: %s', (command) => {
 describe('with ROMs with headers', () => {
   const filePromises = [
     // Extension doesn't change with header removal
-    File.fileOf('one.rom', 1, '12345678', FileHeader.getForFilename('dummy.nes')),
+    File.fileOf('one.rom', 1, '12345678', FileHeader.headerFromFilename('dummy.nes')),
     // Extension does change with header removal
-    ArchiveEntry.entryOf(new SevenZip('two.7z'), 'a.rom', 2, 'abcdef90', FileHeader.getForFilename('dummy.smc')),
+    ArchiveEntry.entryOf(new SevenZip('two.7z'), 'a.rom', 2, 'abcdef90', FileHeader.headerFromFilename('dummy.smc')),
     // Doesn't have a header
     ArchiveEntry.entryOf(new SevenZip('two.7z'), 'b.rom', 3, '09876543'),
   ];

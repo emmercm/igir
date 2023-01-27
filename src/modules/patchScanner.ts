@@ -1,5 +1,8 @@
+import async, { AsyncResultCallback } from 'async';
+
 import ProgressBar, { ProgressBarSymbol } from '../console/progressBar.js';
 import Constants from '../constants.js';
+import File from '../types/files/file.js';
 import Options from '../types/options.js';
 import Patch from '../types/patches/patch.js';
 import PatchFactory from '../types/patches/patchFactory.js';
@@ -24,18 +27,42 @@ export default class PatchScanner extends Scanner {
       patchFilePaths,
       Constants.PATCH_SCANNER_THREADS,
     );
-    const patches = (await Promise.all(files.map(async (file) => {
-      try {
-        return await PatchFactory.patchFrom(file);
-      } catch (e) {
-        await this.progressBar.logWarn(`${file.toString()}: Failed to parse patch : ${e}`);
-        return undefined;
-      }
-    }))).filter((file) => file) as Patch[];
+
+    const patches = (await async.mapLimit(
+      files,
+      Constants.PATCH_SCANNER_THREADS,
+      async (file, callback: AsyncResultCallback<Patch, Error>) => {
+        await this.progressBar.increment();
+
+        try {
+          const patch = await this.patchFromFile(file);
+          return callback(null, patch);
+        } catch (e) {
+          await this.progressBar.logWarn(`${file.toString()}: Failed to parse patch : ${e}`);
+        }
+        return callback(null, undefined);
+      },
+    )).filter((patch) => patch);
 
     await this.progressBar.doneItems(patches.length, 'unique patch', 'found');
 
     await this.progressBar.logInfo('Done scanning patch files');
     return patches;
+  }
+
+  private async patchFromFile(file: File): Promise<Patch | undefined> {
+    const patchForFilename = await PatchFactory.patchFromFilename(file);
+    if (patchForFilename) {
+      await this.progressBar.logTrace(`${file.toString()}: found patch by extension: ${typeof patchForFilename}`);
+      return patchForFilename;
+    }
+
+    const patchForFileContents = await PatchFactory.patchFromFileContents(file);
+    if (patchForFileContents) {
+      await this.progressBar.logTrace(`${file.toString()}: found patch by contents: ${typeof patchForFileContents}`);
+      return patchForFileContents;
+    }
+
+    return undefined;
   }
 }

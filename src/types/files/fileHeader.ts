@@ -25,16 +25,15 @@ export default class FileHeader {
       fileHeader.headerOffsetBytes + fileHeader.headerValue.length / 2,
     ), 0);
 
-  readonly headerOffsetBytes: number;
+  private readonly headerOffsetBytes: number;
 
-  readonly headerValue: string;
+  private readonly headerValue: string;
 
-  readonly dataOffsetBytes: number;
+  private readonly dataOffsetBytes: number;
 
-  // TODO(cemmer): change this to getters
-  readonly headeredFileExtension: string;
+  private readonly headeredFileExtension: string;
 
-  readonly unheaderedFileExtension: string;
+  private readonly unheaderedFileExtension: string;
 
   private constructor(
     headerOffsetBytes: number,
@@ -54,12 +53,7 @@ export default class FileHeader {
     return Object.values(this.HEADERS).map((header) => header.headeredFileExtension).sort();
   }
 
-  // TODO(cemmer): remove
-  static getForName(headerName: string): FileHeader | undefined {
-    return this.HEADERS[headerName];
-  }
-
-  static getForFilename(filePath: string): FileHeader | undefined {
+  static headerFromFilename(filePath: string): FileHeader | undefined {
     const headers = Object.values(this.HEADERS);
     for (let i = 0; i < headers.length; i += 1) {
       const header = headers[i];
@@ -72,7 +66,11 @@ export default class FileHeader {
     return undefined;
   }
 
-  private static async readHeader(stream: Readable, start: number, end: number): Promise<string> {
+  private static async readHeaderHex(
+    stream: Readable,
+    start: number,
+    end: number,
+  ): Promise<string> {
     return new Promise((resolve, reject) => {
       stream.resume();
 
@@ -88,7 +86,7 @@ export default class FileHeader {
       stream.on('data', (chunk) => {
         chunks.push(Buffer.from(chunk));
 
-        // Stop reading when we got enough data, trigger a 'close' event
+        // Stop reading when we get enough data, trigger a 'close' event
         if (chunks.reduce((sum, buff) => sum + buff.length, 0) >= end) {
           resolveHeader();
           stream.destroy();
@@ -96,7 +94,7 @@ export default class FileHeader {
       });
 
       stream.on('end', () => {
-        // We read the entire file without closing, return
+        // We read the entire file without closing prematurely, return
         resolveHeader();
       });
 
@@ -104,8 +102,8 @@ export default class FileHeader {
     });
   }
 
-  static async getForFileStream(stream: Readable): Promise<FileHeader | undefined> {
-    const fileHeader = await FileHeader.readHeader(stream, 0, this.MAX_HEADER_LENGTH_BYTES);
+  static async headerFromFileStream(stream: Readable): Promise<FileHeader | undefined> {
+    const fileHeader = await FileHeader.readHeaderHex(stream, 0, this.MAX_HEADER_LENGTH_BYTES);
 
     const headers = Object.values(this.HEADERS);
     for (let i = 0; i < headers.length; i += 1) {
@@ -122,8 +120,20 @@ export default class FileHeader {
     return undefined;
   }
 
+  getDataOffsetBytes(): number {
+    return this.dataOffsetBytes;
+  }
+
+  getHeaderedFileExtension(): string {
+    return this.headeredFileExtension;
+  }
+
+  getUnheaderedFileExtension(): string {
+    return this.unheaderedFileExtension;
+  }
+
   async fileHasHeader(stream: Readable): Promise<boolean> {
-    const header = await FileHeader.readHeader(
+    const header = await FileHeader.readHeaderHex(
       stream,
       this.headerOffsetBytes,
       this.headerOffsetBytes + this.headerValue.length / 2,
