@@ -25,20 +25,30 @@ export default class DATStatus {
   constructor(dat: DAT, parentsToReleaseCandidates: Map<Parent, ReleaseCandidate[]>) {
     this.dat = dat;
 
-    const unpatchedGameNamesToReleaseCandidates = [...parentsToReleaseCandidates.values()]
+    const unpatchedHashCodesToRomsWithInputFiles = [...parentsToReleaseCandidates.values()]
       .flatMap((releaseCandidates) => releaseCandidates)
       .filter((releaseCandidate) => !releaseCandidate.isPatched())
       .reduce((map, releaseCandidate) => {
-        map.set(releaseCandidate.getGame().getName(), releaseCandidate);
+        const romsWithFiles = releaseCandidate.getRomsWithFiles();
+        for (let i = 0; i < romsWithFiles.length; i += 1) {
+          map.set(romsWithFiles[i].getRom().hashCode(), releaseCandidate);
+        }
         return map;
       }, new Map<string, ReleaseCandidate>());
     dat.getParents().forEach((parent) => {
       parent.getGames().forEach((game) => {
         DATStatus.pushValueIntoMap(this.allRomTypesToGames, game, game);
 
-        const releaseCandidate = unpatchedGameNamesToReleaseCandidates.get(game.getName());
-        if (releaseCandidate || !game.getRoms().length) {
-          DATStatus.pushValueIntoMap(this.foundRomTypesToReleaseCandidates, game, releaseCandidate);
+        const releaseCandidates = game.getRoms()
+          .map((rom) => unpatchedHashCodesToRomsWithInputFiles.get(rom.hashCode()))
+          .filter((releaseCandidate) => releaseCandidate);
+        if (releaseCandidates.length === game.getRoms().length) {
+          DATStatus.pushValueIntoMap(
+            this.foundRomTypesToReleaseCandidates,
+            game,
+            // Assume all ROMs had the same ReleaseCandidate
+            releaseCandidates[0],
+          );
         }
       });
     });
