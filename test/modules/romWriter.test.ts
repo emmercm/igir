@@ -5,6 +5,7 @@ import util from 'util';
 
 import Constants from '../../src/constants.js';
 import CandidateGenerator from '../../src/modules/candidateGenerator.js';
+import CombinedCandidateGenerator from '../../src/modules/combinedCandidateGenerator.js';
 import DATInferrer from '../../src/modules/datInferrer.js';
 import HeaderProcessor from '../../src/modules/headerProcessor.js';
 import PatchCandidateGenerator from '../../src/modules/patchCandidateGenerator.js';
@@ -120,6 +121,15 @@ async function patchCandidateGenerator(
     .generate(dat, parentsToCandidates, patches);
 }
 
+async function combinedCandidateGenerator(
+  options: Options,
+  dat: DAT,
+  parentsToCandidates: Map<Parent, ReleaseCandidate[]>,
+): Promise<Map<Parent, ReleaseCandidate[]>> {
+  return new CombinedCandidateGenerator(options, new ProgressBarFake())
+    .generate(dat, parentsToCandidates);
+}
+
 async function romWriter(
   optionsProps: OptionsProps,
   inputTemp: string,
@@ -142,6 +152,7 @@ async function romWriter(
     const patches = await patchScanner(options);
     candidates = await patchCandidateGenerator(dat, candidates, patches);
   }
+  candidates = await combinedCandidateGenerator(options, dat, candidates);
 
   // When
   await new ROMWriter(options, new ProgressBarFake()).write(dat, candidates);
