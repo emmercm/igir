@@ -1,4 +1,7 @@
+import path from 'path';
+
 import ProgressBar, { ProgressBarSymbol } from '../console/progressBar.js';
+import ArchiveEntry from '../types/files/archiveEntry.js';
 import DAT from '../types/logiqx/dat.js';
 import Game from '../types/logiqx/game.js';
 import Parent from '../types/logiqx/parent.js';
@@ -36,7 +39,8 @@ export default class CombinedCandidateGenerator extends Module {
 
     const game = CombinedCandidateGenerator.buildGame(dat, parentsToCandidates);
     const parent = new Parent(game.getName(), [game]);
-    const releaseCandidate = CombinedCandidateGenerator.buildReleaseCandidate(
+    const releaseCandidate = await CombinedCandidateGenerator.buildReleaseCandidate(
+      dat,
       game,
       parentsToCandidates,
     );
@@ -67,24 +71,39 @@ export default class CombinedCandidateGenerator extends Module {
     });
   }
 
-  private static buildReleaseCandidate(
+  private static async buildReleaseCandidate(
+    dat: DAT,
     game: Game,
     parentsToCandidates: Map<Parent, ReleaseCandidate[]>,
-  ): ReleaseCandidate {
-    const romsWithFiles = [...parentsToCandidates.values()]
+  ): Promise<ReleaseCandidate> {
+    const romsWithFiles = await Promise.all([...parentsToCandidates.values()]
       .flatMap((releaseCandidates) => releaseCandidates)
-      .flatMap((releaseCandidate) => {
-        if (releaseCandidate.getGame().getRoms().length <= 1) {
-          return releaseCandidate.getRomsWithFiles();
-        }
+      .flatMap((releaseCandidate) => releaseCandidate.getRomsWithFiles()
+        .map(async (romWithFiles) => {
+          // If the output isn't an archive then it must have been excluded (e.g. --zip-exclude),
+          //  don't manipulate it.
+          const outputFile = romWithFiles.getOutputFile();
+          if (!(outputFile instanceof ArchiveEntry)) {
+            return romWithFiles;
+          }
 
-        // If the game has multiple ROMs, then re-generate them with foldered names
-        return releaseCandidate.getRomsWithFiles().map((romWithFiles) => new ROMWithFiles(
-          romWithFiles.getRom(),
-          romWithFiles.getInputFile(),
-          romWithFiles.getOutputFile(), // TODO(cemmer)
-        ));
-      });
+          // Combine all output ArchiveEntry to a single archive of the DAT name
+          let outputEntry = await outputFile.withArchiveFileName(dat.getNameShort());
+
+          // If the game has multiple ROMs, then group them in a folder in the archive
+          if (releaseCandidate.getGame().getRoms().length > 1) {
+            outputEntry = await outputEntry.withEntryPath(path.join(
+              releaseCandidate.getGame().getName(),
+              outputEntry.getEntryPath(),
+            ));
+          }
+
+          return new ROMWithFiles(
+            romWithFiles.getRom(),
+            romWithFiles.getInputFile(),
+            outputEntry,
+          );
+        })));
 
     return new ReleaseCandidate(game, undefined, romsWithFiles);
   }

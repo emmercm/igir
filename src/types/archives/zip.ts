@@ -175,7 +175,9 @@ export default class Zip extends Archive {
     const inputStreams = [...inputToOutput.entries()]
       .map(async ([inputFile, outputArchiveEntry]) => inputFile
         .extractToStream(async (readStream) => {
-          zipFile.append(readStream, { name: outputArchiveEntry.getEntryPath() });
+          zipFile.append(readStream, {
+            name: outputArchiveEntry.getEntryPath().replace(/[\\/]/g, '/'),
+          });
           zipEntriesQueued += 1;
 
           // Leave the stream open until we're done writing the zip
