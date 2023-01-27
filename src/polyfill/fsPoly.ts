@@ -1,7 +1,6 @@
 import crypto from 'crypto';
 import fs, { PathLike, RmOptions } from 'fs';
 import { isNotJunk } from 'junk';
-import os from 'os';
 import path from 'path';
 import semver from 'semver';
 import util from 'util';
@@ -41,52 +40,55 @@ export default class FsPoly {
     }
   }
 
-  static async mkdtemp(prefix = os.tmpdir()): Promise<string> {
-    // mkdtemp takes a string prefix rather than a file path, so we need to make sure the
-    //  prefix ends with the path separator in order for it to become a parent directory.
-    let prefixProcessed = prefix.replace(/[\\/]+$/, '');
-    if (await this.isDirectory(prefixProcessed)) {
-      prefixProcessed += path.sep;
-    }
+  /**
+   * mkdtemp() takes a path "prefix" that's concatenated with random characters. Ignore that
+   * behavior and instead assume we always want to specify a root temp directory.
+   */
+  static async mkdtemp(rootDir: string): Promise<string> {
+    const rootDirProcessed = rootDir.replace(/[\\/]+$/, '') + path.sep;
 
     try {
+      await util.promisify(fs.mkdir)(rootDirProcessed, { recursive: true });
+
       // Added in: v10.0.0
-      return await util.promisify(fs.mkdtemp)(prefixProcessed);
+      return await util.promisify(fs.mkdtemp)(rootDirProcessed);
     } catch (e) {
+      const backupDir = path.join(process.cwd(), 'tmp') + path.sep;
+      await util.promisify(fs.mkdir)(backupDir, { recursive: true });
+
       // Added in: v10.0.0
-      return await util.promisify(fs.mkdtemp)(path.join(process.cwd(), 'tmp') + path.sep);
+      return await util.promisify(fs.mkdtemp)(backupDir);
     }
   }
 
-  static mkdtempSync(prefix = os.tmpdir()): string {
-    // mkdtempSync takes a string prefix rather than a file path, so we need to make sure the
-    //  prefix ends with the path separator in order for it to become a parent directory.
-    let prefixProcessed = prefix.replace(/[\\/]+$/, '');
-    if (this.isDirectorySync(prefixProcessed)) {
-      prefixProcessed += path.sep;
-    }
+  /**
+   * mkdtempSync() takes a path "prefix" that's concatenated with random characters. Ignore that
+   * behavior and instead assume we always want to specify a root temp directory.
+   */
+  static mkdtempSync(rootDir: string): string {
+    const rootDirProcessed = rootDir.replace(/[\\/]+$/, '') + path.sep;
 
     try {
+      fs.mkdirSync(rootDirProcessed, { recursive: true });
+
       // Added in: v5.10.0
-      return fs.mkdtempSync(prefixProcessed);
+      return fs.mkdtempSync(rootDirProcessed);
     } catch (e) {
+      const backupDir = path.join(process.cwd(), 'tmp') + path.sep;
+      fs.mkdirSync(backupDir, { recursive: true });
+
       // Added in: v5.10.0
-      return fs.mkdtempSync(path.join(process.cwd(), 'tmp') + path.sep);
+      return fs.mkdtempSync(backupDir);
     }
   }
 
-  static async renameOverwrite(oldPath: PathLike, newPath: PathLike, attempt = 1): Promise<void> {
+  static async rename(oldPath: PathLike, newPath: PathLike): Promise<void> {
     try {
       await util.promisify(fs.rename)(oldPath, newPath);
     } catch (e) {
-      if (attempt >= 3) {
-        throw e;
-      }
-      await new Promise((resolve) => {
-        setTimeout(resolve, Math.random() * (2 ** attempt * 1000));
-      });
+      // Attempt to resolve Windows' "EBUSY: resource busy or locked"
       await this.rm(newPath, { force: true });
-      await this.renameOverwrite(oldPath, newPath, attempt + 1);
+      await this.rename(oldPath, newPath);
     }
   }
 
