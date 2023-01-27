@@ -138,6 +138,17 @@ export default class ArchiveEntry<A extends Archive> extends File {
     }
   }
 
+  async withExtractedFilePath(filePath: string): Promise<File> {
+    return ArchiveEntry.entryOf(
+      this.getArchive(),
+      filePath.replace(/[\\/]/g, '/'),
+      this.getSize(),
+      this.getCrc32(),
+      this.getFileHeader(),
+      this.getPatch(),
+    );
+  }
+
   async withFileHeader(fileHeader: FileHeader): Promise<File> {
     // Make sure the file actually has the header magic string
     const hasHeader = await this.extractToStream(

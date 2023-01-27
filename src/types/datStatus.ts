@@ -4,10 +4,8 @@ import chalk, { ChalkInstance } from 'chalk';
 import DAT from './logiqx/dat.js';
 import Game from './logiqx/game.js';
 import Parent from './logiqx/parent.js';
-import ROM from './logiqx/rom.js';
 import Options from './options.js';
 import ReleaseCandidate from './releaseCandidate.js';
-import ROMWithFiles from './romWithFiles.js';
 
 // TODO(cemmer): TypeScript v5.0.0 allows us to change the value to a tuple of singular+plural
 enum ROMType {
@@ -27,21 +25,19 @@ export default class DATStatus {
   constructor(dat: DAT, parentsToReleaseCandidates: Map<Parent, ReleaseCandidate[]>) {
     this.dat = dat;
 
-    const unpatchedHashCodesToRomsWithInputFiles = [...parentsToReleaseCandidates.values()]
+    const unpatchedGameNamesToReleaseCandidates = [...parentsToReleaseCandidates.values()]
       .flatMap((releaseCandidates) => releaseCandidates)
       .filter((releaseCandidate) => !releaseCandidate.isPatched())
-      .flatMap((releaseCandidate) => releaseCandidate.getRomsWithFiles())
-      .reduce((map, romWithFiles) => {
-        map.set(romWithFiles.getRom().hashCode(), romWithFiles);
+      .reduce((map, releaseCandidate) => {
+        map.set(releaseCandidate.getGame().getName(), releaseCandidate);
         return map;
-      }, new Map<string, ROMWithFiles>());
+      }, new Map<string, ReleaseCandidate>());
     dat.getParents().forEach((parent) => {
       parent.getGames().forEach((game) => {
         DATStatus.pushValueIntoMap(this.allRomTypesToGames, game, game);
 
-        const allRomsWritten = game.getRoms()
-          .every((rom) => unpatchedHashCodesToRomsWithInputFiles.has(rom.hashCode()));
-        if (allRomsWritten) {
+        const releaseCandidate = unpatchedGameNamesToReleaseCandidates.get(game.getName());
+        if (releaseCandidate || !game.getRoms().length) {
           DATStatus.pushValueIntoMap(this.foundRomTypesToReleaseCandidates, game, releaseCandidate);
         }
       });

@@ -49,10 +49,7 @@ export default class CandidateGenerator extends Module {
     const hashCodeToInputFiles = CandidateGenerator.indexFilesByHashCode(inputRomFiles);
     await this.progressBar.logDebug(`${dat.getName()}: ${hashCodeToInputFiles.size.toLocaleString()} unique ROMs found`);
 
-    const parents = this.options.getZipDat()
-      ? [dat.buildParentWithAllRoms()]
-      : dat.getParents();
-
+    const parents = dat.getParents();
     await this.progressBar.setSymbol(ProgressBarSymbol.GENERATING);
     await this.progressBar.reset(parents.length);
 

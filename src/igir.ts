@@ -7,6 +7,7 @@ import ProgressBarCLI from './console/progressBarCLI.js';
 import Constants from './constants.js';
 import CandidateFilter from './modules/candidateFilter.js';
 import CandidateGenerator from './modules/candidateGenerator.js';
+import CombinedCandidateGenerator from './modules/combinedCandidateGenerator.js';
 import DATInferrer from './modules/datInferrer.js';
 import DATScanner from './modules/datScanner.js';
 import HeaderProcessor from './modules/headerProcessor.js';
@@ -69,15 +70,20 @@ export default class Igir {
       // Generate and filter ROM candidates
       const parentsToCandidates = await new CandidateGenerator(this.options, progressBar)
         .generate(dat, processedRomFiles);
-      const parentsToCandidatesPatched = await new PatchCandidateGenerator(progressBar)
+      const parentsToPatchedCandidates = await new PatchCandidateGenerator(progressBar)
         .generate(dat, parentsToCandidates, patches);
-      romOutputDirs.push(...this.getCandidateOutputDirs(dat, parentsToCandidatesPatched));
-      const romOutputs = await new CandidateFilter(this.options, progressBar)
-        .filter(dat, parentsToCandidatesPatched);
+      // TODO(cemmer): move down?
+      romOutputDirs.push(...this.getCandidateOutputDirs(dat, parentsToPatchedCandidates));
+      const parentsToFilteredCandidates = await new CandidateFilter(this.options, progressBar)
+        .filter(dat, parentsToPatchedCandidates);
+      const parentsToCombinedCandidates = await new CombinedCandidateGenerator(
+        this.options,
+        progressBar,
+      ).generate(dat, parentsToFilteredCandidates);
 
       // Write the output files
-      await new ROMWriter(this.options, progressBar).write(dat, romOutputs);
-      const writtenRoms = [...romOutputs.entries()]
+      await new ROMWriter(this.options, progressBar).write(dat, parentsToCombinedCandidates);
+      const writtenRoms = [...parentsToCombinedCandidates.entries()]
         .reduce((map, [parent, releaseCandidates]) => {
           const parentWrittenRoms = releaseCandidates
             .flatMap((releaseCandidate) => releaseCandidate.getRomsWithFiles())
@@ -89,11 +95,11 @@ export default class Igir {
 
       // Write the output report
       const datStatus = await new StatusGenerator(this.options, progressBar)
-        .output(dat, romOutputs);
+        .output(dat, parentsToCombinedCandidates);
       datsStatuses.push(datStatus);
 
       // Progress bar cleanup
-      const totalReleaseCandidates = [...parentsToCandidatesPatched.values()]
+      const totalReleaseCandidates = [...parentsToCombinedCandidates.values()]
         .reduce((sum, rcs) => sum + rcs.length, 0);
       if (totalReleaseCandidates > 0) {
         await progressBar.freeze();

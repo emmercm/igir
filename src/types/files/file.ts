@@ -204,6 +204,16 @@ export default class File {
     }
   }
 
+  async withExtractedFilePath(filePath: string): Promise<File> {
+    return File.fileOf(
+      path.join(path.dirname(this.getFilePath()), filePath),
+      this.getSize(),
+      this.getCrc32(),
+      this.getFileHeader(),
+      this.getPatch(),
+    );
+  }
+
   async withFileHeader(fileHeader: FileHeader): Promise<File> {
     // Make sure the file actually has the header magic string
     const hasHeader = await this.extractToStream(
