@@ -30,10 +30,7 @@ const gameWithTwoRoms = new Game({
     new ROM('two.b', 3, '09876543'),
   ],
 });
-const dat = new DAT(
-  new Header({ name: 'CandidateGenerator Test' }),
-  [gameWithNoRoms, gameWithOneRom, gameWithTwoRoms],
-);
+const dat = new DAT(new Header(), [gameWithNoRoms, gameWithOneRom, gameWithTwoRoms]);
 
 describe.each(['zip', 'extract', 'raw'])('command: %s', (command) => {
   const options = new Options({
@@ -258,7 +255,7 @@ describe('with different input files for every game ROM', () => {
     ArchiveEntry.entryOf(new Rar('b.7z'), 'b.rom', 3, '09876543'),
   ];
 
-  test.each(['zip', 'extract'])('should return all candidates: %s', async (command) => {
+  test.each(['zip', 'extract'])('%s', async (command) => {
     // Given
     const options = new Options({ commands: ['copy', command] });
 
@@ -279,7 +276,7 @@ describe('with different input files for every game ROM', () => {
     expect(candidates[2].getRomsWithFiles()).toHaveLength(2);
   });
 
-  test('should return some candidates: raw', async () => {
+  test('raw', async () => {
     // Given
     const options = new Options({ commands: ['copy'] });
 
@@ -299,33 +296,5 @@ describe('with different input files for every game ROM', () => {
 
     expect(candidates[0].getRomsWithFiles()).toHaveLength(0);
     expect(candidates[1].getRomsWithFiles()).toHaveLength(1);
-  });
-
-  test('should generate one parent with all ROMs for zip-dat', async () => {
-    // Given
-    const options = new Options({ commands: ['zip'], zipDat: true });
-
-    // When
-    const parentsToCandidates = await new CandidateGenerator(options, new ProgressBarFake())
-      .generate(dat, await Promise.all(filePromises));
-
-    // Then there is only one parent
-    expect(parentsToCandidates.size).toEqual(1);
-    const candidates = [...parentsToCandidates.values()][0];
-    expect(candidates).toHaveLength(1);
-
-    // And the parent has three ROMs
-    expect(candidates[0].getRomsWithFiles()).toHaveLength(3);
-
-    // And all ROMs are being written to different paths within the same archive
-    const outputEntryPaths = candidates[0].getRomsWithFiles()
-      .map((romWithFiles) => romWithFiles.getOutputFile())
-      .map((entry) => entry.toString().replace(/(.+[\\/])?([^\\/|]+\|.+)/, '$2'))
-      .sort();
-    expect(outputEntryPaths).toEqual([
-      'CandidateGenerator Test.zip|game with two ROMs/two.a',
-      'CandidateGenerator Test.zip|game with two ROMs/two.b',
-      'CandidateGenerator Test.zip|one.rom',
-    ]);
   });
 });

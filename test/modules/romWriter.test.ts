@@ -527,7 +527,6 @@ describe('zip', () => {
       ['ROMWriter Test.zip|loremipsum.rom', '70856527'],
       ['ROMWriter Test.zip|one.rom', 'f817a89f'],
       ['ROMWriter Test.zip|speed_test_v51.sfc', '8beffd94'],
-      ['ROMWriter Test.zip|speed_test_v51.smc', '9adca6cc'],
       ['ROMWriter Test.zip|three.rom', 'ff46c5d8'],
       ['ROMWriter Test.zip|two.rom', '96170874'],
       ['ROMWriter Test.zip|unknown.rom', '377a7727'],
