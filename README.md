@@ -3,7 +3,7 @@
 <p align="center"><b>Pronounced "eager," <code>igir</code> is a platform-independent ROM collection manager to help filter, sort, patch, and archive ROM collections.</b></p>
 
 <p align="center">
-  <img alt="CLI: Windows,macOS,Linux" src="https://img.shields.io/badge/CLI-Windows%2C%20macOS%2C%20Linux-lightgrey?logo=windows-terminal">
+  <a href="https://github.com/emmercm/igir#readme"><img alt="CLI: Windows,macOS,Linux" src="https://img.shields.io/badge/CLI-Windows%2C%20macOS%2C%20Linux-lightgrey?logo=windows-terminal"></a>
   <a href="https://www.npmjs.com/package/igir"><img alt="npm: version" src="https://img.shields.io/npm/v/igir?color=%23cc3534&label=version&logo=npm&logoColor=white"></a>
   <a href="https://www.npmjs.com/package/igir"><img alt="npm: downloads" src="https://img.shields.io/npm/dt/igir?color=%23cc3534&logo=npm&logoColor=white"></a>
   <a href="https://github.com/emmercm/igir"><img alt="GitHub: stars" src="https://img.shields.io/github/stars/emmercm/igir?color=%236e5494&logo=github&logoColor=white"></a>
@@ -52,7 +52,7 @@ $ igir --help
   | $$  | $$ __\$$  | $$  | $$__| $$
   | $$  | $$|    \  | $$  | $$    $$   ROM collection manager
   | $$  | $$ \$$$$  | $$  | $$$$$$$\
- _| $$_ | $$__| $$ _| $$_ | $$  | $$   v1.0.0
+ _| $$_ | $$__| $$ _| $$_ | $$  | $$   v1.0.1
 |   $$ \ \$$    $$|   $$ \| $$  | $$
  \$$$$$$  \$$$$$$  \$$$$$$ \$$   \$$
 
@@ -72,7 +72,7 @@ Commands:
 Path options (inputs support globbing):
   -d, --dat            Path(s) to DAT files or archives                                   [array]
   -i, --input          Path(s) to ROM files or archives                        [array] [required]
-  -I, --input-exclude  Path(s) to ROM files or archives to exclude                        [array]
+  -I, --input-exclude  Path(s) to ROM files or archives to exclude from processing        [array]
   -p, --patch          Path(s) to ROM patch files or archives (supported: .bps, .ips, .ips32, .pp
                        f, .rup, .ups, .vcdiff, .xdelta)                                   [array]
   -o, --output         Path to the ROM output directory (supports replaceable symbols, see below)
@@ -89,15 +89,15 @@ Output options:
   -Z, --zip-exclude     Glob pattern of files to exclude from zipping                    [string]
   -H, --remove-headers  Remove known headers from ROMs, optionally limited to a list of comma-sep
                         arated file extensions (supported: .a78, .fds, .lnx, .nes, .smc) [string]
-  -O, --overwrite       Overwrite any ROMs in the output directory                      [boolean]
+  -O, --overwrite       Overwrite any files in the output directory                     [boolean]
   -C, --clean-exclude   Path(s) to files to exclude from cleaning                         [array]
 
 Filtering options:
-  -L, --language-filter  List of comma-separated languages to limit to (supported: DA, DE, EL, EN
-                         , ES, FI, FR, IT, JA, KO, NL, NO, PT, RU, SV, ZH)               [string]
-  -R, --region-filter    List of comma-separated regions to limit to (supported: ARG, ASI, AUS, B
-                         RA, CAN, CHN, DAN, EUR, FRA, FYN, GER, GRE, HK, HOL, ITA, JPN, KOR, MEX,
-                          NOR, NZ, POR, RUS, SPA, SWE, TAI, UK, UNK, USA, WORLD)         [string]
+  -L, --language-filter  List of comma-separated languages to filter to (supported: DA, DE, EL, E
+                         N, ES, FI, FR, IT, JA, KO, NL, NO, PT, RU, SV, ZH)              [string]
+  -R, --region-filter    List of comma-separated regions to filter to (supported: ARG, ASI, AUS,
+                         BRA, CAN, CHN, DAN, EUR, FRA, FYN, GER, GRE, HK, HOL, ITA, JPN, KOR, MEX
+                         , NOR, NZ, POR, RUS, SPA, SWE, TAI, UK, UNK, USA, WORLD)        [string]
       --only-bios        Filter to only BIOS files                                      [boolean]
       --no-bios          Filter out BIOS files                                          [boolean]
       --no-unlicensed    Filter out unlicensed ROMs                                     [boolean]
@@ -116,7 +116,7 @@ Filtering options:
 Priority options:
   -s, --single                 Output only a single game per parent (1G1R) (required for all opti
                                ons below, requires parent/clone DAT files)              [boolean]
-      --prefer-verified        Prefer verified ROM dumps over not                       [boolean]
+      --prefer-verified        Prefer verified ROM dumps over unverified                [boolean]
       --prefer-good            Prefer good ROM dumps over bad                           [boolean]
   -l, --prefer-language        List of comma-separated languages in priority order (supported: DA
                                , DE, EL, EN, ES, FI, FR, IT, JA, KO, NL, NO, PT, RU, SV, ZH)
@@ -128,7 +128,7 @@ Priority options:
       --prefer-revision-newer  Prefer newer ROM revisions over older                    [boolean]
       --prefer-revision-older  Prefer older ROM revisions over newer                    [boolean]
       --prefer-retail          Prefer retail releases (see --only-retail)               [boolean]
-      --prefer-parent          Prefer parent ROMs over clones (requires parent-clone DAT files)
+      --prefer-parent          Prefer parent ROMs over clones (requires parent/clone DAT files)
                                                                                         [boolean]
 
 Help options:
@@ -139,7 +139,7 @@ Help options:
 
 Advanced usage:
 
-  Tokens that are replaced when determining the output (--output) path of a ROM:
+  Tokens that are replaced when generating the output (--output) path of a ROM:
     {datName}             The name of the DAT that contains the ROM (e.g. "Nintendo - Game Boy")
     {datReleaseRegion}    The region of the ROM release (e.g. "USA"), each ROM can have multiple
     {datReleaseLanguage}  The language of the ROM release (e.g. "En"), each ROM can have multiple
@@ -149,13 +149,16 @@ Advanced usage:
     {outputName}      The output ROM's filename without extension
     {outputExt}       The output ROM's extension
 
-    {pocket}  The ROM's core-specific /Assets/* folder for the Analogue Pocket (e.g. "gb")
-    {mister}  The ROM's core-specific /games/* folder for the MiSTer FPGA (e.g. "Gameboy")
+    {pocket}  The ROM's core-specific /Assets/* directory for the Analogue Pocket (e.g. "gb")
+    {mister}  The ROM's core-specific /games/* directory for the MiSTer FPGA (e.g. "Gameboy")
 
 Example use cases:
 
   Merge new ROMs into an existing ROM collection and generate a report:
     igir copy report --dat *.dat --input **/*.zip --input ROMs/ --output ROMs/
+
+  Generate a report on an existing ROM collection, without copying or moving ROMs (read only):
+    igir report --dat *.dat --input ROMs/
 
   Organize and zip an existing ROM collection:
     igir move zip --dat *.dat --input ROMs/ --output ROMs/
