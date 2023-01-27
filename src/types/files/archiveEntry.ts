@@ -110,7 +110,7 @@ export default class ArchiveEntry<A extends Archive> extends File {
     removeHeader = false,
   ): Promise<T> {
     const start = removeHeader && this.getFileHeader()
-      ? this.getFileHeader()?.dataOffsetBytes || 0
+      ? this.getFileHeader()?.getDataOffsetBytes() || 0
       : 0;
 
     // Apply the patch if there is one
@@ -150,7 +150,7 @@ export default class ArchiveEntry<A extends Archive> extends File {
   }
 
   async withFileHeader(fileHeader: FileHeader): Promise<File> {
-    // Make sure the file actually has the header magic string
+    // Make sure the file actually has the right file signature
     const hasHeader = await this.extractToStream(
       async (stream) => fileHeader.fileHasHeader(stream),
     );

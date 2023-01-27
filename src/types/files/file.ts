@@ -83,7 +83,7 @@ export default class File {
   }
 
   getSizeWithoutHeader(): number {
-    return this.size - (this.fileHeader?.dataOffsetBytes || 0);
+    return this.size - (this.fileHeader?.getDataOffsetBytes() || 0);
   }
 
   getExtractedFilePath(): string {
@@ -112,7 +112,7 @@ export default class File {
     localFile: string,
     fileHeader?: FileHeader,
   ): Promise<string> {
-    const start = fileHeader?.dataOffsetBytes || 0;
+    const start = fileHeader?.getDataOffsetBytes() || 0;
 
     return new Promise((resolve, reject) => {
       const stream = fs.createReadStream(localFile, {
@@ -176,7 +176,7 @@ export default class File {
     removeHeader = false,
   ): Promise<T> {
     const start = removeHeader && this.getFileHeader()
-      ? this.getFileHeader()?.dataOffsetBytes || 0
+      ? this.getFileHeader()?.getDataOffsetBytes() || 0
       : 0;
 
     // Apply the patch if there is one
@@ -215,7 +215,7 @@ export default class File {
   }
 
   async withFileHeader(fileHeader: FileHeader): Promise<File> {
-    // Make sure the file actually has the header magic string
+    // Make sure the file actually has the right file signature
     const hasHeader = await this.extractToStream(
       async (stream) => fileHeader.fileHasHeader(stream),
     );

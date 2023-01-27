@@ -87,7 +87,7 @@ describe('getCrc32WithoutHeader', () => {
     const archiveEntries = await FileFactory.filesFrom(filePath);
     expect(archiveEntries).toHaveLength(1);
     const archiveEntry = await archiveEntries[0].withFileHeader(
-      FileHeader.getForFilename(archiveEntries[0].getExtractedFilePath()) as FileHeader,
+      FileHeader.headerFromFilename(archiveEntries[0].getExtractedFilePath()) as FileHeader,
     );
 
     expect(archiveEntry.getCrc32WithoutHeader()).toEqual(expectedCrc);
@@ -101,7 +101,7 @@ describe('getCrc32WithoutHeader', () => {
     const archiveEntries = await FileFactory.filesFrom(filePath);
     expect(archiveEntries).toHaveLength(1);
     const archiveEntry = await archiveEntries[0].withFileHeader(
-      FileHeader.getForFilename(archiveEntries[0].getExtractedFilePath()) as FileHeader,
+      FileHeader.headerFromFilename(archiveEntries[0].getExtractedFilePath()) as FileHeader,
     );
 
     expect(archiveEntry.getCrc32()).not.toEqual(expectedCrc);

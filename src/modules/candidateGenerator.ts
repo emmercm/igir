@@ -203,9 +203,9 @@ export default class CandidateGenerator extends Module {
     if (parsedPath.ext && inputFile.getFileHeader()) {
       // If the ROM has a header then we're going to ignore the file extension from the DAT
       if (this.options.canRemoveHeader(dat, parsedPath.ext)) {
-        parsedPath.ext = inputFile.getFileHeader()?.unheaderedFileExtension as string;
+        parsedPath.ext = inputFile.getFileHeader()?.getUnheaderedFileExtension() as string;
       } else {
-        parsedPath.ext = inputFile.getFileHeader()?.headeredFileExtension as string;
+        parsedPath.ext = inputFile.getFileHeader()?.getHeaderedFileExtension() as string;
       }
     }
     const outputEntryPath = path.format(parsedPath);
