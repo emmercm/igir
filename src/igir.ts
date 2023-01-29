@@ -198,11 +198,12 @@ export default class Igir {
     }
 
     const progressBar = await this.logger.addProgressBar('Cleaning output directory');
+    const uniqueDirsToClean = dirsToClean.filter((dir, idx, dirs) => dirs.indexOf(dir) === idx);
     const writtenFilesToExclude = [...datsToWrittenRoms.values()]
       .flatMap((parentsToFiles) => [...parentsToFiles.values()])
       .flatMap((files) => files);
     const filesCleaned = await new OutputCleaner(this.options, progressBar)
-      .clean(dirsToClean, writtenFilesToExclude);
+      .clean(uniqueDirsToClean, writtenFilesToExclude);
     await progressBar.doneItems(filesCleaned, 'file', 'recycled');
     await progressBar.freeze();
   }

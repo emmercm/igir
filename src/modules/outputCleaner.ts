@@ -5,6 +5,7 @@ import trash from 'trash';
 import util from 'util';
 
 import ProgressBar, { ProgressBarSymbol } from '../console/progressBar.js';
+import Constants from '../constants.js';
 import fsPoly from '../polyfill/fsPoly.js';
 import File from '../types/files/file.js';
 import Options from '../types/options.js';
@@ -33,9 +34,9 @@ export default class OutputCleaner extends Module {
     }
 
     await this.progressBar.setSymbol(ProgressBarSymbol.SEARCHING);
+    await this.progressBar.reset(dirsToClean.length);
 
     // If there is nothing to clean, then don't do anything
-    // TODO(cemmer): batch this, it can be way too many files to hold in memory
     const filesToClean = await this.options.scanOutputFilesWithoutCleanExclusions(
       dirsToClean,
       writtenFilesToExclude,
@@ -71,10 +72,9 @@ export default class OutputCleaner extends Module {
 
   private async trashOrDelete(filePaths: string[]): Promise<void> {
     // Prefer recycling...
-    const CHUNK_SIZE = 100;
     /* eslint-disable no-await-in-loop */
-    for (let i = 0; i < filePaths.length; i += CHUNK_SIZE) {
-      await trash(filePaths.slice(i, i + CHUNK_SIZE));
+    for (let i = 0; i < filePaths.length; i += Constants.OUTPUT_CLEANER_BATCH_SIZE) {
+      await trash(filePaths.slice(i, i + Constants.OUTPUT_CLEANER_BATCH_SIZE));
       await this.progressBar.update(i);
     }
 

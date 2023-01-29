@@ -1,5 +1,6 @@
 import 'reflect-metadata';
 
+import async, { AsyncResultCallback } from 'async';
 import { Expose, instanceToPlain, plainToInstance } from 'class-transformer';
 import fg from 'fast-glob';
 import fs from 'fs';
@@ -293,15 +294,29 @@ export default class Options implements OptionsProps {
     return Options.scanPaths(this.patch);
   }
 
-  private static async scanPaths(inputPaths: string[]): Promise<string[]> {
-    const globbedPaths = (await Promise.all(inputPaths
-      .filter((inputPath) => inputPath)
-      .map(this.globPath)))
-      .flatMap((paths) => paths);
+  private static async scanPaths(globPatterns: string[]): Promise<string[]> {
+    // Limit to scanning one glob pattern at a time to keep memory in check
+    const uniqueGlobPatterns = globPatterns
+      .filter((pattern) => pattern)
+      .filter((pattern, idx, patterns) => patterns.indexOf(pattern) === idx);
+    const globbedPaths = [];
+    /* eslint-disable no-await-in-loop */
+    for (let i = 0; i < uniqueGlobPatterns.length; i += 1) {
+      globbedPaths.push(...(await this.globPath(uniqueGlobPatterns[i])));
+    }
 
     // Filter to files
-    const isFiles = await Promise.all(
-      globbedPaths.map(async (inputPath) => (await util.promisify(fs.lstat)(inputPath)).isFile()),
+    const isFiles = await async.mapLimit(
+      globbedPaths,
+      Constants.MAX_FS_THREADS,
+      async (file, callback: AsyncResultCallback<boolean, Error>) => {
+        try {
+          callback(null, (await util.promisify(fs.lstat)(file)).isFile());
+        } catch (e) {
+          // Assume errors mean the path doesn't exist
+          callback(null, false);
+        }
+      },
     );
     const globbedFiles = globbedPaths
       .filter((inputPath, idx) => isFiles[idx])
