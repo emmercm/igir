@@ -541,10 +541,10 @@ describe('zip', () => {
       ['ROMWriter Test.zip|two.rom', '96170874'],
       ['ROMWriter Test.zip|unknown.rom', '377a7727'],
     ]],
-  ])('should write one zip with all ROMs for zip-dat: %s', async (inputGlob, expectedFilesAndCrcs) => {
+  ])('should write one zip with all ROMs for zip-dat-name: %s', async (inputGlob, expectedFilesAndCrcs) => {
     await copyFixturesToTemp(async (inputTemp, outputTemp) => {
       // Given
-      const options = new Options({ commands: ['copy', 'zip'], zipDat: true });
+      const options = new Options({ commands: ['copy', 'zip'], zipDatName: true });
       await expect(walkAndStat(outputTemp)).resolves.toEqual([]);
 
       // When

@@ -247,14 +247,14 @@ describe('options', () => {
     expect(argumentsParser.parse(['copy', 'zip', '--input', os.devNull, '--output', os.devNull, '--zip-exclude', '**/*.rom']).shouldZip(filePath)).toEqual(false);
   });
 
-  it('should parse "zip-dat"', () => {
-    expect(() => argumentsParser.parse([...dummyCommandAndRequiredArgs, '--zip-dat'])).toThrow(/missing required command/i);
-    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, 'zip', '--zip-dat']).getZipDat()).toEqual(true);
-    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, 'zip', '--zip-dat', 'true']).getZipDat()).toEqual(true);
-    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, 'zip', '--zip-dat', 'false']).getZipDat()).toEqual(false);
-    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, 'zip', '--zip-dat', '--zip-dat']).getZipDat()).toEqual(true);
-    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, 'zip', '--zip-dat', 'false', '--zip-dat', 'true']).getZipDat()).toEqual(true);
-    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, 'zip', '--zip-dat', 'true', '--zip-dat', 'false']).getZipDat()).toEqual(false);
+  it('should parse "zip-dat-name"', () => {
+    expect(() => argumentsParser.parse([...dummyCommandAndRequiredArgs, '--zip-dat-name'])).toThrow(/missing required command/i);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, 'zip', '--zip-dat-name']).getZipDatName()).toEqual(true);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, 'zip', '--zip-dat-name', 'true']).getZipDatName()).toEqual(true);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, 'zip', '--zip-dat-name', 'false']).getZipDatName()).toEqual(false);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, 'zip', '--zip-dat-name', '--zip-dat-name']).getZipDatName()).toEqual(true);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, 'zip', '--zip-dat-name', 'false', '--zip-dat-name', 'true']).getZipDatName()).toEqual(true);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, 'zip', '--zip-dat-name', 'true', '--zip-dat-name', 'false']).getZipDatName()).toEqual(false);
   });
 
   it('should parse "header"', () => {

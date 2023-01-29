@@ -72,7 +72,6 @@ export default class Igir {
         .generate(dat, processedRomFiles);
       const parentsToPatchedCandidates = await new PatchCandidateGenerator(progressBar)
         .generate(dat, parentsToCandidates, patches);
-      // TODO(cemmer): move down?
       romOutputDirs.push(...this.getCandidateOutputDirs(dat, parentsToPatchedCandidates));
       const parentsToFilteredCandidates = await new CandidateFilter(this.options, progressBar)
         .filter(dat, parentsToPatchedCandidates);

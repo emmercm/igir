@@ -207,7 +207,7 @@ export default class ArgumentsParser {
         coerce: ArgumentsParser.getLastValue, // don't allow string[] values
         requiresArg: true,
       })
-      .option('zip-dat', {
+      .option('zip-dat-name', {
         group: groupArchive,
         description: 'Group all ROMs from the same DAT into the same zip archive, if not excluded from zipping',
         type: 'boolean',
@@ -217,7 +217,7 @@ export default class ArgumentsParser {
           return true;
         }
 
-        const needZip = ['zip-exclude', 'zip-dat'].filter((option) => checkArgv[option]);
+        const needZip = ['zip-exclude', 'zip-dat-name'].filter((option) => checkArgv[option]);
         if (checkArgv._.indexOf('zip') === -1 && needZip.length) {
           throw new Error(`Missing required command for options ${needZip.join(', ')}: zip`);
         }

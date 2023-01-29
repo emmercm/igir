@@ -23,7 +23,7 @@ export default class CombinedCandidateGenerator extends Module {
     dat: DAT,
     parentsToCandidates: Map<Parent, ReleaseCandidate[]>,
   ): Promise<Map<Parent, ReleaseCandidate[]>> {
-    if (!this.options.getZipDat()) {
+    if (!this.options.getZipDatName()) {
       return parentsToCandidates;
     }
 

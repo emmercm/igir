@@ -36,7 +36,7 @@ export interface OptionsProps {
   readonly overwrite?: boolean,
 
   readonly zipExclude?: string,
-  readonly zipDat?: boolean,
+  readonly zipDatName?: boolean,
 
   readonly header?: string,
   readonly removeHeaders?: string[],
@@ -97,7 +97,7 @@ export default class Options implements OptionsProps {
 
   readonly zipExclude: string;
 
-  readonly zipDat: boolean;
+  readonly zipDatName: boolean;
 
   readonly header: string;
 
@@ -174,7 +174,7 @@ export default class Options implements OptionsProps {
     this.overwrite = options?.overwrite || false;
 
     this.zipExclude = options?.zipExclude || '';
-    this.zipDat = options?.zipDat || false;
+    this.zipDatName = options?.zipDatName || false;
 
     this.languageFilter = options?.languageFilter || [];
     this.regionFilter = options?.regionFilter || [];
@@ -591,8 +591,8 @@ export default class Options implements OptionsProps {
     return this.zipExclude;
   }
 
-  getZipDat(): boolean {
-    return this.zipDat;
+  getZipDatName(): boolean {
+    return this.zipDatName;
   }
 
   private getHeader(): string {
