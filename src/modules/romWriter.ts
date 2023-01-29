@@ -198,8 +198,9 @@ export default class ROMWriter extends Module {
     outputZip: Zip,
     inputToOutputZipEntries: Map<File, ArchiveEntry<Zip>>,
   ): Promise<boolean> {
-    // If the zip is already what we're expecting, do nothing
-    if (await fsPoly.exists(outputZip.getFilePath())
+    // If we're not overwriting, and the zip is already what we're expecting, then do nothing
+    if (!this.options.getOverwrite()
+      && await fsPoly.exists(outputZip.getFilePath())
       && await this.testZipContents(dat, outputZip, [...inputToOutputZipEntries.values()])
     ) {
       await this.progressBar.logTrace(`${dat.getName()}: ${outputZip.getFilePath()}: archive already matches expected entries, skipping`);
