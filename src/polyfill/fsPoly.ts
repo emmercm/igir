@@ -6,6 +6,24 @@ import semver from 'semver';
 import util from 'util';
 
 export default class FsPoly {
+  static async copyDir(src: string, dest: string): Promise<void> {
+    await util.promisify(fs.mkdir)(dest, { recursive: true });
+    const entries = await util.promisify(fs.readdir)(src, { withFileTypes: true });
+
+    /* eslint-disable no-await-in-loop */
+    for (let i = 0; i < entries.length; i += 1) {
+      const entry = entries[i];
+      const srcPath = path.join(src, entry.name);
+      const destPath = path.join(dest, entry.name);
+
+      if (entry.isDirectory()) {
+        await this.copyDir(srcPath, destPath);
+      } else {
+        await util.promisify(fs.copyFile)(srcPath, destPath);
+      }
+    }
+  }
+
   /**
    * There is no promise version of existsSync()
    */
@@ -29,15 +47,21 @@ export default class FsPoly {
     }
   }
 
-  static async mktemp(prefix: string): Promise<string> {
-    /* eslint-disable no-constant-condition, no-await-in-loop */
-    while (true) {
-      const randomExtension = crypto.randomBytes(4).readUInt32LE(0).toString(36);
-      const filePath = `${prefix.replace(/\.+$/, '')}.${randomExtension}`;
-      if (!await util.promisify(fs.exists)(filePath)) {
-        return filePath;
-      }
+  static makeLegal(filePath: string, pathSep = path.sep): string {
+    let replaced = filePath
+      // Make the filename Windows legal
+      .replace(/:/g, ';')
+      // Make the filename everything else legal
+      .replace(/[<>:"|?*]/g, '_')
+      // Normalize the path separators
+      .replace(/[\\/]/g, pathSep);
+
+    // Fix Windows drive letter
+    if (replaced.match(/^[a-z];[\\/]/i) !== null) {
+      replaced = replaced.replace(/^([a-z]);\\/i, '$1:\\');
     }
+
+    return replaced;
   }
 
   /**
@@ -79,6 +103,17 @@ export default class FsPoly {
 
       // Added in: v5.10.0
       return fs.mkdtempSync(backupDir);
+    }
+  }
+
+  static async mktemp(prefix: string): Promise<string> {
+    /* eslint-disable no-constant-condition, no-await-in-loop */
+    while (true) {
+      const randomExtension = crypto.randomBytes(4).readUInt32LE(0).toString(36);
+      const filePath = `${prefix.replace(/\.+$/, '')}.${randomExtension}`;
+      if (!await util.promisify(fs.exists)(filePath)) {
+        return filePath;
+      }
     }
   }
 
@@ -188,7 +223,7 @@ export default class FsPoly {
   static async walk(pathLike: PathLike): Promise<string[]> {
     const output = [];
 
-    const files = fs.readdirSync(pathLike);
+    const files = await util.promisify(fs.readdir)(pathLike);
     /* eslint-disable no-await-in-loop */
     for (let i = 0; i < files.length; i += 1) {
       const file = path.join(pathLike.toString(), files[i]);
@@ -202,40 +237,5 @@ export default class FsPoly {
 
     return output
       .filter((filePath) => isNotJunk(path.basename(filePath)));
-  }
-
-  static async copyDir(src: string, dest: string): Promise<void> {
-    await util.promisify(fs.mkdir)(dest, { recursive: true });
-    const entries = await util.promisify(fs.readdir)(src, { withFileTypes: true });
-
-    /* eslint-disable no-await-in-loop */
-    for (let i = 0; i < entries.length; i += 1) {
-      const entry = entries[i];
-      const srcPath = path.join(src, entry.name);
-      const destPath = path.join(dest, entry.name);
-
-      if (entry.isDirectory()) {
-        await this.copyDir(srcPath, destPath);
-      } else {
-        await util.promisify(fs.copyFile)(srcPath, destPath);
-      }
-    }
-  }
-
-  static makeLegal(filePath: string, pathSep = path.sep): string {
-    let replaced = filePath
-      // Make the filename Windows legal
-      .replace(/:/g, ';')
-      // Make the filename everything else legal
-      .replace(/[<>:"|?*]/g, '_')
-      // Normalize the path separators
-      .replace(/[\\/]/g, pathSep);
-
-    // Fix Windows drive letter
-    if (replaced.match(/^[a-z];[\\/]/i) !== null) {
-      replaced = replaced.replace(/^([a-z]);\\/i, '$1:\\');
-    }
-
-    return replaced;
   }
 }
