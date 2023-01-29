@@ -381,6 +381,8 @@ export default class ArgumentsParser {
         group: groupHelpDebug,
         description: 'Number of DATs to process in parallel',
         type: 'number',
+        coerce: (val: number) => Math.max(val, 1),
+        requiresArg: true,
         default: Constants.DAT_THREADS,
       })
       .option('verbose', {
