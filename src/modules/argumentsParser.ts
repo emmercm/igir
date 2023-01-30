@@ -209,7 +209,7 @@ export default class ArgumentsParser {
       })
       .option('zip-dat-name', {
         group: groupArchive,
-        description: 'Group all ROMs from the same DAT into the same zip archive, if not excluded from zipping',
+        description: 'Group all ROMs from the same DAT into the same zip archive, if not excluded from zipping (automatically sets --dat-threads 1)',
         type: 'boolean',
       })
       .check((checkArgv) => {
@@ -403,6 +403,12 @@ export default class ArgumentsParser {
         coerce: (val: number) => Math.max(val, 1),
         requiresArg: true,
         default: Constants.DAT_THREADS,
+      })
+      .middleware((middlewareArgv) => {
+        /* eslint-disable no-param-reassign */
+        if (middlewareArgv.zipDatName) {
+          middlewareArgv.datThreads = 1;
+        }
       })
       .option('verbose', {
         group: groupHelpDebug,
