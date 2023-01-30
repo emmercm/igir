@@ -4,7 +4,6 @@ import path from 'path';
 import Logger from './console/logger.js';
 import { ProgressBarSymbol } from './console/progressBar.js';
 import ProgressBarCLI from './console/progressBarCLI.js';
-import Constants from './constants.js';
 import CandidateFilter from './modules/candidateFilter.js';
 import CandidateGenerator from './modules/candidateGenerator.js';
 import DATInferrer from './modules/datInferrer.js';
@@ -59,7 +58,7 @@ export default class Igir {
 
     // Process every DAT
     await datProcessProgressBar.logInfo(`Processing ${dats.length.toLocaleString()} DAT${dats.length !== 1 ? 's' : ''}`);
-    await async.eachLimit(dats, Constants.DAT_THREADS, async (dat, callback) => {
+    await async.eachLimit(dats, this.options.getDatThreads(), async (dat, callback) => {
       const progressBar = await this.logger.addProgressBar(
         dat.getNameShort(),
         ProgressBarSymbol.WAITING,

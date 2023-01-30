@@ -54,7 +54,7 @@ export default class ArgumentsParser {
     const groupOutput = 'Output options:';
     const groupFiltering = 'Filtering options:';
     const groupPriority = 'Priority options:';
-    const groupHelp = 'Help options:';
+    const groupHelpDebug = 'Help & debug options:';
 
     // Add every command to a yargs object, recursively, resulting in the ability to specify
     // multiple commands
@@ -377,8 +377,16 @@ export default class ArgumentsParser {
         implies: ['dat', 'single'],
       })
 
+      .option('dat-threads', {
+        group: groupHelpDebug,
+        description: 'Number of DATs to process in parallel',
+        type: 'number',
+        coerce: (val: number) => Math.max(val, 1),
+        requiresArg: true,
+        default: Constants.DAT_THREADS,
+      })
       .option('verbose', {
-        group: groupHelp,
+        group: groupHelpDebug,
         alias: 'v',
         description: 'Enable verbose logging, can specify up to three times (-vvv)',
         type: 'count',
@@ -430,7 +438,7 @@ Example use cases:
 
       // Colorize help output
       .option('help', {
-        group: groupHelp,
+        group: groupHelpDebug,
         alias: 'h',
         description: 'Show help',
         type: 'boolean',
