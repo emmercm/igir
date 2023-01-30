@@ -3,6 +3,7 @@ import fs from 'fs';
 import path from 'path';
 import tar from 'tar';
 
+import Constants from '../../constants.js';
 import ArchiveEntry from '../files/archiveEntry.js';
 import Archive from './archive.js';
 
@@ -28,7 +29,9 @@ export default class Tar extends Archive {
         errorMessage = `${code}: ${message}`;
       },
     });
-    fs.createReadStream(this.getFilePath()).pipe(writeStream);
+    fs.createReadStream(this.getFilePath(), {
+      highWaterMark: Constants.FILE_READING_CHUNK_SIZE,
+    }).pipe(writeStream);
 
     writeStream.on('entry', (entry) => {
       let crc: number;
