@@ -155,7 +155,13 @@ export default class Zip extends Archive {
     const tempZipFile = await fsPoly.mktemp(this.getFilePath());
     const writeStream = fs.createWriteStream(tempZipFile);
 
-    const zipFile = archiver('zip', { zlib: { level: 9 } });
+    const zipFile = archiver('zip', {
+      zlib: {
+        chunkSize: 256 * 1024, // buffer to/from zlib, defaults to 16KiB
+        level: 9,
+        memLevel: 9, // history buffer size, max, defaults to 8
+      },
+    });
 
     // Promise that resolves when we're done writing the zip
     const zipClosed = new Promise<void>((resolve, reject) => {
