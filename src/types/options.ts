@@ -68,6 +68,7 @@ export interface OptionsProps {
   readonly preferRetail?: boolean,
   readonly preferParent?: boolean,
 
+  readonly datThreads?: number,
   readonly verbose?: number,
   readonly help?: boolean,
 }
@@ -152,6 +153,8 @@ export default class Options implements OptionsProps {
 
   readonly preferParent: boolean;
 
+  readonly datThreads: number;
+
   readonly verbose: number;
 
   readonly help: boolean;
@@ -203,6 +206,7 @@ export default class Options implements OptionsProps {
     this.preferRetail = options?.preferRetail || false;
     this.preferParent = options?.preferParent || false;
 
+    this.datThreads = Math.max(options?.datThreads || 0, 1);
     this.verbose = options?.verbose || 0;
     this.help = options?.help || false;
   }
@@ -739,6 +743,10 @@ export default class Options implements OptionsProps {
 
   getPreferParent(): boolean {
     return this.preferParent;
+  }
+
+  getDatThreads(): number {
+    return this.datThreads;
   }
 
   getLogLevel(): LogLevel {
