@@ -209,7 +209,7 @@ export default class ArgumentsParser {
       })
       .option('zip-dat-name', {
         group: groupArchive,
-        description: 'Group all ROMs from the same DAT into the same zip archive, if not excluded from zipping (automatically sets --dat-threads 1)',
+        description: 'Group all ROMs from the same DAT into the same zip archive, if not excluded from zipping (enforces --dat-threads 1)',
         type: 'boolean',
       })
       .check((checkArgv) => {

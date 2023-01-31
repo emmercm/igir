@@ -21,6 +21,7 @@ import Module from './module.js';
  * This class may be run concurrently with other classes.
  */
 export default class ROMWriter extends Module {
+  // TODO(cemmer): limit files being written based on total file size, rather than threads
   private static readonly semaphore = new Semaphore(Constants.ROM_WRITER_THREADS);
 
   private readonly options: Options;
@@ -117,7 +118,7 @@ export default class ROMWriter extends Module {
     // Prep the single output file
     const outputZip = [...inputToOutputZipEntries.values()][0].getArchive();
 
-    // If the output file already exists and we're not overwriting, do nothing
+    // If the output file already exists, and we're not overwriting, then do nothing
     if (!this.options.getOverwrite() && await fsPoly.exists(outputZip.getFilePath())) {
       await this.progressBar.logTrace(`${dat.getName()}: ${outputZip.getFilePath()}: file exists, not overwriting`);
       return;
@@ -206,6 +207,8 @@ export default class ROMWriter extends Module {
       await this.progressBar.logTrace(`${dat.getName()}: ${outputZip.getFilePath()}: archive already matches expected entries, skipping`);
       return true;
     }
+
+    await this.progressBar.logTrace(`${dat.getName()}: ${outputZip.getFilePath()}: writing ${inputToOutputZipEntries.size.toLocaleString()} archive entries`);
 
     try {
       await ROMWriter.ensureOutputDirExists(outputZip.getFilePath());
