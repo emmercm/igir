@@ -3,8 +3,8 @@ import fs from 'fs';
 import path from 'path';
 import { Readable } from 'stream';
 import { clearInterval } from 'timers';
+import unzipper from 'unzipper';
 import util from 'util';
-import yauzl, { Entry, ZipFile } from 'yauzl';
 
 import fsPoly from '../../polyfill/fsPoly.js';
 import ArchiveEntry from '../files/archiveEntry.js';
@@ -22,46 +22,16 @@ export default class Zip extends Archive {
   }
 
   async getArchiveEntries(): Promise<ArchiveEntry<Zip>[]> {
-    return new Promise((resolve, reject) => {
-      const yauzlCallback = (fileErr: Error | null, zipFile: ZipFile): void => {
-        if (fileErr) {
-          reject(fileErr);
-          return;
-        }
+    const archive = await unzipper.Open.file(this.getFilePath());
 
-        const archiveEntries: ArchiveEntry<Zip>[] = [];
-
-        zipFile.on('entry', async (entry: Entry) => {
-          if (!entry.fileName.endsWith('/')) {
-            // Is a file
-            archiveEntries.push(await ArchiveEntry.entryOf(
-              this,
-              entry.fileName,
-              entry.uncompressedSize,
-              entry.crc32.toString(16),
-            ));
-          }
-
-          // Continue
-          zipFile.readEntry();
-        });
-
-        zipFile.on('close', () => resolve(archiveEntries));
-
-        zipFile.on('error', (err) => reject(err));
-
-        // Start
-        zipFile.readEntry();
-      };
-
-      try {
-        yauzl.open(this.getFilePath(), {
-          lazyEntries: true,
-        }, yauzlCallback);
-      } catch (e) {
-        reject(e);
-      }
-    });
+    return Promise.all(archive.files
+      .filter((entryFile) => entryFile.type === 'File')
+      .map(async (entryFile) => ArchiveEntry.entryOf(
+        this,
+        entryFile.path,
+        entryFile.uncompressedSize,
+        entryFile.crc32.toString(16),
+      )));
   }
 
   async extractEntryToFile<T>(
@@ -99,50 +69,16 @@ export default class Zip extends Archive {
     tempDir: string,
     callback: (stream: Readable) => (Promise<T> | T),
   ): Promise<T> {
-    return new Promise((resolve, reject) => {
-      const yauzlCallback = (fileErr: Error | null, zipFile: ZipFile): void => {
-        if (fileErr) {
-          reject(fileErr);
-          return;
-        }
+    const archive = await unzipper.Open.file(this.getFilePath());
 
-        zipFile.on('entry', (entry: Entry) => {
-          if (entry.fileName === entryPath.replace(/[\\/]/g, '/')) {
-            // Found the file we're looking for
-            zipFile.openReadStream(entry, async (streamErr, stream) => {
-              if (streamErr) {
-                return reject(streamErr);
-              }
+    const entry = archive.files
+      .filter((entryFile) => entryFile.type === 'File')
+      .filter((entryFile) => entryFile.path === entryPath.replace(/[\\/]/g, '/'))[0];
+    if (!entry) {
+      throw new Error(`Didn't find entry '${entryPath}'`);
+    }
 
-              try {
-                const result = await callback(stream);
-                stream.destroy();
-                zipFile.close();
-                return resolve(result);
-              } catch (callbackErr) {
-                return reject(callbackErr);
-              }
-            });
-          } else {
-            // Continue until we find what we're looking for
-            zipFile.readEntry();
-          }
-        });
-
-        zipFile.on('error', (err) => reject(err));
-
-        // Start
-        zipFile.readEntry();
-      };
-
-      try {
-        yauzl.open(this.getFilePath(), {
-          lazyEntries: true,
-        }, yauzlCallback);
-      } catch (e) {
-        reject(e);
-      }
-    });
+    return callback(entry.stream());
   }
 
   async archiveEntries(
