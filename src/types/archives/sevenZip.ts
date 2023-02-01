@@ -49,7 +49,8 @@ export default class SevenZip extends Archive {
               .trim();
             reject(msg);
           } else {
-            resolve(result);
+            // https://github.com/onikienko/7zip-min/issues/70
+            resolve(result.filter((entry) => entry.name));
           }
         });
       }),
