@@ -34,10 +34,10 @@ export default class SevenZip extends Archive {
     return new SevenZip(filePath);
   }
 
-  async getArchiveEntries(): Promise<ArchiveEntry<SevenZip>[]> {
+  async getArchiveEntries(attempt = 1): Promise<ArchiveEntry<SevenZip>[]> {
     /**
      * WARN(cemmer): {@link _7z.list} seems to have issues with any amount of real concurrency,
-     * it will return no files but also no error. Try to prevent that behavior.
+     *  it will return no files but also no error. Try to prevent that behavior.
      */
     const filesIn7z = await SevenZip.LIST_MUTEX.runExclusive(
       async () => new Promise<Result[]>((resolve, reject) => {
@@ -55,6 +55,19 @@ export default class SevenZip extends Archive {
         });
       }),
     );
+
+    /**
+     * WARN(cemmer): even with the above mutex, {@link _7z.list} will still sometimes return no
+     *  entries. Most archives contain at least one file, so assume this is wrong and attempt
+     *  again up to 3 times total.
+     */
+    if (!filesIn7z.length && attempt < 3) {
+      await new Promise((resolve) => {
+        setTimeout(resolve, Math.random() * (2 ** (attempt - 1) * 100));
+      });
+      return this.getArchiveEntries(attempt + 1);
+    }
+
     return Promise.all(filesIn7z
       .filter((result) => !result.attr?.startsWith('D'))
       .map(async (result) => ArchiveEntry.entryOf(
