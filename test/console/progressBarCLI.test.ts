@@ -51,10 +51,10 @@ describe('reset', () => {
     const progressBar = await ProgressBarCLI.new(spy.getLogger(), 'name', stripAnsi(ProgressBarSymbol.DONE), 100);
 
     await progressBar.increment();
-    expect(spy.getLastLine()).toMatch(/^✓ +name .* 1\/100/);
+    expect(spy.getLastLine()).toMatch(new RegExp(`${stripAnsi(ProgressBarSymbol.DONE)} +name .* 1/100`));
 
     await progressBar.reset(20);
-    expect(spy.getLastLine()).toMatch(/^✓ +name .* 0\/20/);
+    expect(spy.getLastLine()).toMatch(new RegExp(`${stripAnsi(ProgressBarSymbol.DONE)} +name .* 0/20`));
 
     ProgressBarCLI.stop();
   });
@@ -88,10 +88,10 @@ describe('increment', () => {
     const progressBar = await ProgressBarCLI.new(spy.getLogger(), 'name', stripAnsi(ProgressBarSymbol.DONE), 100);
 
     await progressBar.increment();
-    expect(spy.getLastLine()).toMatch(/^✓ +name .* 1\/100/);
+    expect(spy.getLastLine()).toMatch(new RegExp(`${stripAnsi(ProgressBarSymbol.DONE)} +name .* 1/100`));
 
     await progressBar.increment();
-    expect(spy.getLastLine()).toMatch(/^✓ +name .* 2\/100/);
+    expect(spy.getLastLine()).toMatch(new RegExp(`${stripAnsi(ProgressBarSymbol.DONE)} +name .* 2/100`));
 
     ProgressBarCLI.stop();
   });
@@ -105,11 +105,11 @@ describe('update', () => {
 
     await progressBar.update(8);
     expect(spy.getLineCount()).toEqual(2);
-    expect(spy.getLastLine()).toMatch(/^✓ +name .* 8\/100/);
+    expect(spy.getLastLine()).toMatch(new RegExp(`${stripAnsi(ProgressBarSymbol.DONE)} +name .* 8/100`));
 
     await progressBar.update(32);
     expect(spy.getLineCount()).toEqual(3);
-    expect(spy.getLastLine()).toMatch(/^✓ +name .* 32\/100/);
+    expect(spy.getLastLine()).toMatch(new RegExp(`${stripAnsi(ProgressBarSymbol.DONE)} +name .* 32/100`));
 
     ProgressBarCLI.stop();
   });
@@ -123,7 +123,7 @@ describe('done', () => {
 
     await progressBar.done();
     expect(spy.getLineCount()).toEqual(3);
-    expect(spy.getLastLine()).toMatch(/^✓ +name/);
+    expect(spy.getLastLine()).toMatch(new RegExp(`${stripAnsi(ProgressBarSymbol.DONE)} +name`));
 
     ProgressBarCLI.stop();
   });
@@ -135,7 +135,7 @@ describe('done', () => {
 
     await progressBar.done('done message');
     expect(spy.getLineCount()).toEqual(3);
-    expect(spy.getLastLine()).toMatch(/^✓ +name .* done message$/);
+    expect(spy.getLastLine()).toMatch(new RegExp(`${stripAnsi(ProgressBarSymbol.DONE)} +name .* done message$`));
 
     ProgressBarCLI.stop();
   });
