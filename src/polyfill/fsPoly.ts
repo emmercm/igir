@@ -214,10 +214,6 @@ export default class FsPoly {
     return `${parseFloat((bytes / k ** i).toFixed(decimals))}${sizes[i]}`;
   }
 
-  static async symlink(file: PathLike, link: PathLike): Promise<void> {
-    return util.promisify(fs.symlink)(file, link);
-  }
-
   static async touch(filePath: string): Promise<void> {
     const dirname = path.dirname(filePath);
     if (!await this.exists(dirname)) {
