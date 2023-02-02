@@ -76,8 +76,9 @@ export default class SingleBarFormatted {
       progress += ` | ${payload.waitingMessage}`;
     } else if (params.value > 0) {
       const eta = this.calculateEta(params);
-      // TODO(cemmer): don't print if '0s' or 'infinity'
-      progress += ` | ETA: ${this.getEtaFormatted(eta)}`;
+      if (eta > 0) {
+        progress += ` | ETA: ${this.getEtaFormatted(eta)}`;
+      }
     }
 
     return progress;
@@ -117,6 +118,7 @@ export default class SingleBarFormatted {
 
   private getEtaFormatted(etaSeconds: number): string {
     // Rate limit how often the ETA can change
+    //  Update only every 5s if the ETA is >60s
     const [elapsedSec, elapsedNano] = process.hrtime(this.lastEtaTime);
     const elapsedMs = (elapsedSec * 1000000000 + elapsedNano) / 1000000;
     if (etaSeconds > 60 && elapsedMs < 5000) {
