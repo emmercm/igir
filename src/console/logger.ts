@@ -66,7 +66,7 @@ export default class Logger {
       .replace(/^Error: /, '') // strip `new Error()` prefix
       .trim()
       .split('\n')
-      .map((m) => chalkFunc(`${LogLevel[logLevel]}: `) + loggerPrefix + m)
+      .map((m) => chalkFunc(`${LogLevel[logLevel]}:${' '.repeat(5 - LogLevel[logLevel].length)} `) + loggerPrefix + m)
       .join('\n');
   }
 

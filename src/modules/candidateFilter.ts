@@ -1,4 +1,5 @@
 import ProgressBar, { ProgressBarSymbol } from '../console/progressBar.js';
+import fsPoly from '../polyfill/fsPoly.js';
 import DAT from '../types/logiqx/dat.js';
 import Parent from '../types/logiqx/parent.js';
 import Options from '../types/options.js';
@@ -43,8 +44,12 @@ export default class CandidateFilter extends Module {
 
     const output = await this.filterSortFilter(dat, parentsToCandidates);
 
+    const size = [...output.values()]
+      .flatMap((releaseCandidates) => releaseCandidates)
+      .flatMap((releaseCandidate) => releaseCandidate.getRomsWithFiles())
+      .reduce((sum, romWithFiles) => sum + romWithFiles.getRom().getSize(), 0);
     const filteredCandidates = [...output.values()].reduce((sum, rc) => sum + rc.length, 0);
-    await this.progressBar.logDebug(`${dat.getName()}: ${filteredCandidates.toLocaleString()} candidate${filteredCandidates !== 1 ? 's' : ''} after filtering`);
+    await this.progressBar.logDebug(`${dat.getName()}: filtered to ${fsPoly.sizeReadable(size)} of ${filteredCandidates.toLocaleString()} candidate${filteredCandidates !== 1 ? 's' : ''} for ${output.size.toLocaleString()} parent${output.size !== 1 ? 's' : ''}`);
 
     await this.progressBar.logInfo(`${dat.getName()}: Done filtering candidates`);
     return output;

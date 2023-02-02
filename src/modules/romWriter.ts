@@ -60,9 +60,11 @@ export default class ROMWriter extends Module {
         await this.progressBar.increment();
       })));
 
-    await this.progressBar.logDebug(`${dat.getName()}: Deleting moved files`);
-    await this.progressBar.setSymbol(ProgressBarSymbol.WRITING);
-    await this.deleteMovedFiles(dat);
+    if (this.filesQueuedForDeletion.length) {
+      await this.progressBar.logDebug(`${dat.getName()}: Deleting moved files`);
+      await this.progressBar.setSymbol(ProgressBarSymbol.WRITING);
+      await this.deleteMovedFiles(dat);
+    }
 
     await this.progressBar.logInfo(`${dat.getName()}: Done writing candidates`);
   }
@@ -74,7 +76,6 @@ export default class ROMWriter extends Module {
     const writeNeeded = releaseCandidate.getRomsWithFiles()
       .filter((romWithFiles) => !romWithFiles.getOutputFile().equals(romWithFiles.getInputFile()))
       .some((notEq) => notEq);
-    await this.progressBar.logTrace(`${dat.getName()}: ${releaseCandidate.getName()}: ${writeNeeded ? '' : 'no '}write needed`);
 
     if (writeNeeded) {
       const waitingMessage = `${releaseCandidate.getName()} ...`;

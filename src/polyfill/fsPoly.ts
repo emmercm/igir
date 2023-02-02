@@ -204,6 +204,20 @@ export default class FsPoly {
     }
   }
 
+  /**
+   * @link https://gist.github.com/zentala/1e6f72438796d74531803cc3833c039c
+   */
+  static sizeReadable(bytes: number, decimals = 1): string {
+    const k = 1024;
+    const sizes = ['B', 'KiB', 'MiB', 'GiB', 'TiB', 'PiB', 'EiB', 'ZiB', 'YiB'];
+    const i = bytes === 0 ? 0 : Math.floor(Math.log(bytes) / Math.log(k));
+    return `${parseFloat((bytes / k ** i).toFixed(decimals))}${sizes[i]}`;
+  }
+
+  static async symlink(file: PathLike, link: PathLike): Promise<void> {
+    return util.promisify(fs.symlink)(file, link);
+  }
+
   static async touch(filePath: string): Promise<void> {
     const dirname = path.dirname(filePath);
     if (!await this.exists(dirname)) {
