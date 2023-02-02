@@ -1,4 +1,5 @@
 import archiver from 'archiver';
+import async from 'async';
 import fs from 'fs';
 import path from 'path';
 import { Readable } from 'stream';
@@ -6,6 +7,7 @@ import { clearInterval } from 'timers';
 import unzipper from 'unzipper';
 import util from 'util';
 
+import Constants from '../../constants.js';
 import fsPoly from '../../polyfill/fsPoly.js';
 import ArchiveEntry from '../files/archiveEntry.js';
 import File from '../files/file.js';
@@ -91,48 +93,66 @@ export default class Zip extends Archive {
     const tempZipFile = await fsPoly.mktemp(this.getFilePath());
     const writeStream = fs.createWriteStream(tempZipFile);
 
-    const zipFile = archiver('zip', { zlib: { level: 9 } });
+    const zipFile = archiver('zip', {
+      highWaterMark: Constants.FILE_READING_CHUNK_SIZE,
+      zlib: {
+        chunkSize: 256 * 1024, // buffer to/from zlib, defaults to 16KiB
+        level: 9,
+        memLevel: 9, // history buffer size, max, defaults to 8
+      },
+    });
+    zipFile.on('error', (err) => {
+      zipFile.abort();
+      throw err;
+    });
 
-    // Promise that resolves when we're done writing the zip
-    const zipClosed = new Promise<void>((resolve, reject) => {
-      writeStream.on('close', () => resolve());
-      writeStream.on('warning', (err) => {
-        if (err.code !== 'ENOENT') {
-          reject(err);
-        }
-      });
-      writeStream.on('error', (err) => reject(err));
+    // Keep track of what entries have been written to the temp file on disk
+    const writtenEntries = new Map<string, boolean>();
+    zipFile.on('entry', (entry) => {
+      writtenEntries.set(entry.name, true);
     });
 
     zipFile.pipe(writeStream);
 
-    // Enqueue all archive entries to the zip
-    let zipEntriesQueued = 0;
-    const inputStreams = [...inputToOutput.entries()]
-      .map(async ([inputFile, outputArchiveEntry]) => inputFile
-        .extractToStream(async (readStream) => {
-          zipFile.append(readStream, { name: outputArchiveEntry.getEntryPath() });
-          zipEntriesQueued += 1;
+    console.log(`${tempZipFile}: enqueuing`);
 
-          // Leave the stream open until we're done writing the zip
-          await zipClosed;
-        }, options.canRemoveHeader(dat, path.extname(inputFile.getExtractedFilePath()))));
+    // Write all archive entries to the zip
+    await async.eachLimit(
+      [...inputToOutput.entries()],
+      /**
+       * {@link archiver} uses a sequential, async queue internally:
+       * @link https://github.com/archiverjs/node-archiver/blob/b5cc14cc97cc64bdca32c0cbe9d660b5b979be7c/lib/core.js#L52
+       * Because of that, we should/can limit the number of open input file handles open. But we
+       *  also want to make sure the queue processing stays busy.
+       */
+      3,
+      async ([inputFile, outputArchiveEntry], callback) => {
+        console.log(`${inputFile.toString()}: extracting`);
+        return inputFile
+          .extractToStream(async (readStream) => {
+            console.log(`${outputArchiveEntry.toString()}: compressing`);
 
-    // Wait until all archive entries have been enqueued
-    await new Promise<void>((resolve) => {
-      const interval = setInterval(() => {
-        if (zipEntriesQueued === inputToOutput.size) {
-          clearInterval(interval);
-          resolve();
-        }
-      });
-    });
+            const entryName = outputArchiveEntry.getEntryPath().replace(/[\\/]/g, '/');
+            zipFile.append(readStream, {
+              name: entryName,
+            });
 
-    // Start writing the zip file
+            // Leave the input stream open until we're done writing it
+            await new Promise<void>((resolve) => {
+              const interval = setInterval(() => {
+                if (writtenEntries.has(entryName)) {
+                  clearInterval(interval);
+                  resolve();
+                }
+              }, 10);
+            });
+            callback();
+          }, options.canRemoveHeader(dat, path.extname(inputFile.getExtractedFilePath())));
+      },
+    );
+
+    // Finalize writing the zip file
     await zipFile.finalize();
-
-    // Wait until we've closed the input streams
-    await Promise.all(inputStreams);
 
     await fsPoly.rename(tempZipFile, this.getFilePath());
   }
