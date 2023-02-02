@@ -149,6 +149,11 @@ export default class CandidateGenerator extends Module {
           return [rom, undefined];
         }
 
+        // If we're not writing (report only) then just use the input file for the output file
+        if (!this.options.shouldWrite()) {
+          return [rom, new ROMWithFiles(rom, originalInputFile, originalInputFile)];
+        }
+
         // If the matched input file is from an archive, and we're not extracting, then treat the
         //  file as "raw" so it can be copied/moved as-is
         let finalInputFile = originalInputFile;

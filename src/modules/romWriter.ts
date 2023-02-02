@@ -118,9 +118,23 @@ export default class ROMWriter extends Module {
     // Prep the single output file
     const outputZip = [...inputToOutputZipEntries.values()][0].getArchive();
 
-    // If the output file already exists and we're not overwriting, do nothing
+    // If the output file already exists, and we're not overwriting, do nothing
     if (!this.options.getOverwrite() && await fsPoly.exists(outputZip.getFilePath())) {
-      await this.progressBar.logTrace(`${dat.getName()}: ${outputZip.getFilePath()}: file exists, not overwriting`);
+      // But if we're testing, test the file we're not overwriting
+      if (this.options.shouldTest()) {
+        const existingTest = await this.testZipContents(
+          dat,
+          outputZip,
+          [...inputToOutputZipEntries.values()],
+        );
+        if (existingTest) {
+          await this.progressBar.logWarn(`${dat.getName()}: ${outputZip.getFilePath()}: not overwriting existing zip, but existing zip ${existingTest}`);
+          return;
+        }
+        await this.progressBar.logTrace(`${dat.getName()}: ${outputZip.getFilePath()}: not overwriting existing zip, but existing zip has the expected contents`);
+        return;
+      }
+      await this.progressBar.logTrace(`${dat.getName()}: ${outputZip.getFilePath()}: not overwriting existing zip`);
       return;
     }
 
@@ -130,9 +144,13 @@ export default class ROMWriter extends Module {
     }
 
     if (this.options.shouldTest()) {
-      await this.progressBar.logTrace(`${dat.getName()}: ${outputZip.getFilePath()}: testing`);
-      if (!await this.testZipContents(dat, outputZip, [...inputToOutputZipEntries.values()])) {
-        await this.progressBar.logError(`${dat.getName()}: ${outputZip.getFilePath()}: written zip is invalid`);
+      const writtenTest = await this.testZipContents(
+        dat,
+        outputZip,
+        [...inputToOutputZipEntries.values()],
+      );
+      if (writtenTest) {
+        await this.progressBar.logError(`${dat.getName()}: ${outputZip.getFilePath()}: written zip ${writtenTest}`);
         return;
       }
     }
@@ -143,9 +161,11 @@ export default class ROMWriter extends Module {
 
   private async testZipContents(
     dat: DAT,
-    outputZipArchive: Zip,
+    outputZip: Zip,
     expectedArchiveEntries: ArchiveEntry<Zip>[],
-  ): Promise<boolean> {
+  ): Promise<string | undefined> {
+    await this.progressBar.logTrace(`${dat.getName()}: ${outputZip.getFilePath()}: testing`);
+
     const expectedEntriesByPath = expectedArchiveEntries
       .reduce((map, entry) => {
         map.set(entry.getEntryPath(), entry);
@@ -154,9 +174,9 @@ export default class ROMWriter extends Module {
 
     let archiveEntries: ArchiveEntry<Zip>[];
     try {
-      archiveEntries = await outputZipArchive.getArchiveEntries();
+      archiveEntries = await outputZip.getArchiveEntries();
     } catch (e) {
-      return false;
+      return `failed to get archive contents: ${e}`;
     }
 
     const actualEntriesByPath = archiveEntries
@@ -166,7 +186,7 @@ export default class ROMWriter extends Module {
       }, new Map<string, ArchiveEntry<Zip>>());
 
     if (actualEntriesByPath.size !== expectedEntriesByPath.size) {
-      return false;
+      return `has ${actualEntriesByPath.size.toLocaleString()} files, expected ${expectedEntriesByPath.size.toLocaleString()}`;
     }
 
     const entryPaths = [...expectedEntriesByPath.keys()];
@@ -176,7 +196,7 @@ export default class ROMWriter extends Module {
 
       // Check existence
       if (!actualEntriesByPath.has(entryPath)) {
-        return false;
+        return `is missing the file ${entryPath}`;
       }
 
       // Check checksum
@@ -187,11 +207,11 @@ export default class ROMWriter extends Module {
       }
       const actualFile = actualEntriesByPath.get(entryPath) as ArchiveEntry<Zip>;
       if (actualFile.getCrc32() !== expectedFile.getCrc32()) {
-        return false;
+        return `has the file ${entryPath} with the CRC ${actualFile.getCrc32()}, expected ${expectedFile.getCrc32()}`;
       }
     }
 
-    return true;
+    return undefined;
   }
 
   private async writeZipFile(
@@ -199,14 +219,7 @@ export default class ROMWriter extends Module {
     outputZip: Zip,
     inputToOutputZipEntries: Map<File, ArchiveEntry<Zip>>,
   ): Promise<boolean> {
-    // If we're not overwriting, and the zip is already what we're expecting, then do nothing
-    if (!this.options.getOverwrite()
-      && await fsPoly.exists(outputZip.getFilePath())
-      && await this.testZipContents(dat, outputZip, [...inputToOutputZipEntries.values()])
-    ) {
-      await this.progressBar.logTrace(`${dat.getName()}: ${outputZip.getFilePath()}: archive already matches expected entries, skipping`);
-      return true;
-    }
+    await this.progressBar.logTrace(`${dat.getName()}: ${outputZip.getFilePath()}: writing ${inputToOutputZipEntries.size.toLocaleString()} archive entries`);
 
     try {
       await ROMWriter.ensureOutputDirExists(outputZip.getFilePath());
@@ -250,9 +263,18 @@ export default class ROMWriter extends Module {
 
     const outputFilePath = outputRomFile.getFilePath();
 
-    // If the output file already exists and we're not overwriting, do nothing
+    // If the output file already exists, and we're not overwriting, do nothing
     if (!this.options.getOverwrite() && await fsPoly.exists(outputFilePath)) {
-      await this.progressBar.logTrace(`${dat.getName()}: ${outputFilePath}: file exists, not overwriting`);
+      if (this.options.shouldTest()) {
+        const existingTest = await this.testWrittenRaw(dat, outputFilePath, outputRomFile);
+        if (existingTest) {
+          await this.progressBar.logWarn(`${dat.getName()}: ${outputFilePath}: not overwriting existing file, but existing file ${existingTest}`);
+          return;
+        }
+        await this.progressBar.logTrace(`${dat.getName()}: ${outputFilePath}: not overwriting existing file, but existing file is what was expected`);
+        return;
+      }
+      await this.progressBar.logTrace(`${dat.getName()}: ${outputFilePath}: not overwriting existing file`);
       return;
     }
 
@@ -260,7 +282,12 @@ export default class ROMWriter extends Module {
       // It's expected that an error was already logged
       return;
     }
-    await this.testWrittenRaw(dat, outputFilePath, outputRomFile);
+    if (this.options.shouldTest()) {
+      const writtenTest = await this.testWrittenRaw(dat, outputFilePath, outputRomFile);
+      if (writtenTest) {
+        await this.progressBar.logError(`${dat.getName()}: ${outputFilePath}: written file ${writtenTest}`);
+      }
+    }
     this.enqueueFileDeletion(inputRomFile);
   }
 
@@ -305,21 +332,20 @@ export default class ROMWriter extends Module {
     dat: DAT,
     outputFilePath: string,
     expectedFile: File,
-  ): Promise<void> {
-    if (!this.options.shouldTest()) {
-      return;
-    }
+  ): Promise<string | undefined> {
     await this.progressBar.logTrace(`${outputFilePath}: testing`);
 
     // Check checksum
     if (expectedFile.getCrc32() === '00000000') {
       await this.progressBar.logWarn(`${dat.getName()}: ${outputFilePath}: can't test, expected CRC is unknown`);
-      return;
+      return undefined;
     }
     const actualFile = await File.fileOf(outputFilePath);
     if (actualFile.getCrc32() !== expectedFile.getCrc32()) {
-      await this.progressBar.logError(`${dat.getName()}: ${outputFilePath}: written file has the CRC ${actualFile.getCrc32()}, expected ${expectedFile.getCrc32()}`);
+      return `has the CRC ${actualFile.getCrc32()}, expected ${expectedFile.getCrc32()}`;
     }
+
+    return undefined;
   }
 
   // Input files may be needed for multiple output files, such as an archive with hundreds of ROMs
