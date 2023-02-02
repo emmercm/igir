@@ -117,7 +117,7 @@ export default class ROMWriter extends Module {
     // Prep the single output file
     const outputZip = [...inputToOutputZipEntries.values()][0].getArchive();
 
-    // If the output file already exists and we're not overwriting, do nothing
+    // If the output file already exists, and we're not overwriting, do nothing
     if (!this.options.getOverwrite() && await fsPoly.exists(outputZip.getFilePath())) {
       // But if we're testing, test the file we're not overwriting
       if (this.options.shouldTest()) {
@@ -218,15 +218,6 @@ export default class ROMWriter extends Module {
     outputZip: Zip,
     inputToOutputZipEntries: Map<File, ArchiveEntry<Zip>>,
   ): Promise<boolean> {
-    // If we're not overwriting, and the zip is already what we're expecting, then do nothing
-    if (!this.options.getOverwrite()
-      && await fsPoly.exists(outputZip.getFilePath())
-      && await this.testZipContents(dat, outputZip, [...inputToOutputZipEntries.values()])
-    ) {
-      await this.progressBar.logTrace(`${dat.getName()}: ${outputZip.getFilePath()}: archive already matches expected entries, skipping`);
-      return true;
-    }
-
     await this.progressBar.logTrace(`${dat.getName()}: ${outputZip.getFilePath()}: writing ${inputToOutputZipEntries.size.toLocaleString()} archive entries`);
 
     try {
