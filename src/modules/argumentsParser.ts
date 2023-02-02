@@ -98,10 +98,15 @@ export default class ArgumentsParser {
           throw new Error(`Incompatible commands: ${archiveCommands.join(', ')}`);
         }
 
-        // TODO(cemmer): symlink+clean
-        ['extract', 'zip', 'test', 'clean'].forEach((command) => {
-          if (checkArgv._.indexOf(command) !== -1 && checkArgv._.indexOf('copy') === -1 && checkArgv._.indexOf('move') === -1) {
-            throw new Error(`Command requires "copy" or "move": ${command}`);
+        ['extract', 'zip'].forEach((command) => {
+          if (checkArgv._.indexOf(command) !== -1 && ['copy', 'move'].every((write) => checkArgv._.indexOf(write) === -1)) {
+            throw new Error(`Command "${command}" also requires the commands copy or move`);
+          }
+        });
+
+        ['test', 'clean'].forEach((command) => {
+          if (checkArgv._.indexOf(command) !== -1 && ['copy', 'move', 'symlink'].every((write) => checkArgv._.indexOf(write) === -1)) {
+            throw new Error(`Command "${command}" requires one of the commands: copy, move, or symlink`);
           }
         });
 
