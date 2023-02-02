@@ -222,7 +222,7 @@ export default class Options implements OptionsProps {
   }
 
   shouldWrite(): boolean {
-    return this.shouldCopy() || this.shouldMove();
+    return this.shouldCopy() || this.shouldMove() || this.shouldSymlink();
   }
 
   shouldCopy(): boolean {
@@ -231,6 +231,10 @@ export default class Options implements OptionsProps {
 
   shouldMove(): boolean {
     return this.getCommands().indexOf('move') !== -1;
+  }
+
+  shouldSymlink(): boolean {
+    return this.getCommands().indexOf('symlink') !== -1;
   }
 
   shouldExtract(): boolean {

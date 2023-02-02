@@ -80,8 +80,12 @@ export default class ROMWriter extends Module {
       const waitingMessage = `${releaseCandidate.getName()} ...`;
       this.progressBar.addWaitingMessage(waitingMessage);
 
-      await this.writeZip(dat, releaseCandidate);
-      await this.writeRaw(dat, releaseCandidate);
+      if (this.options.shouldSymlink()) {
+        await this.writeSymlink(dat, releaseCandidate);
+      } else {
+        await this.writeZip(dat, releaseCandidate);
+        await this.writeRaw(dat, releaseCandidate);
+      }
 
       this.progressBar.removeWaitingMessage(waitingMessage);
     }
@@ -344,5 +348,54 @@ export default class ROMWriter extends Module {
           }
         }),
     );
+  }
+
+  /** ************************
+   *                         *
+   *     Symlink Writing     *
+   *                         *
+   ************************* */
+
+  private async writeSymlink(dat: DAT, releaseCandidate: ReleaseCandidate): Promise<void> {
+    const inputToOutputEntries = releaseCandidate.getRomsWithFiles();
+
+    /* eslint-disable no-await-in-loop */
+    for (let i = 0; i < inputToOutputEntries.length; i += 1) {
+      const inputRomFile = inputToOutputEntries[i].getInputFile();
+      const outputRomFile = inputToOutputEntries[i].getOutputFile();
+      await this.writeSymlinkSingle(dat, inputRomFile, outputRomFile);
+    }
+  }
+
+  private async writeSymlinkSingle(
+    dat: DAT,
+    inputRomFile: File,
+    outputRomFile: File,
+  ): Promise<void> {
+    // Input and output are the exact same, do nothing
+    if (outputRomFile.equals(inputRomFile)) {
+      await this.progressBar.logTrace(`${dat.getName()}: ${outputRomFile}: same file, skipping`);
+      return;
+    }
+
+    if (await fsPoly.exists(outputRomFile.getFilePath())) {
+      // If the output file already exists, and we're not overwriting, do nothing
+      if (!this.options.getOverwrite()) {
+        // TODO(cemmer): test before
+        await this.progressBar.logTrace(`${dat.getName()}: ${outputRomFile.getFilePath()}: not overwriting existing file`);
+        return;
+      }
+
+      await fsPoly.rm(outputRomFile.getFilePath());
+    }
+
+    try {
+      await ROMWriter.ensureOutputDirExists(outputRomFile.getFilePath());
+      await fsPoly.symlink(inputRomFile.getFilePath(), outputRomFile.getFilePath());
+    } catch (e) {
+      await this.progressBar.logError(`${dat.getName()}: ${inputRomFile.toString()}: failed to symlink ${inputRomFile.getFilePath()} to ${outputRomFile.getFilePath()} : ${e}`);
+    }
+
+    // TODO(cemmer): test after
   }
 }
