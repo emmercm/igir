@@ -38,7 +38,7 @@ export default class Zip extends Archive {
 
   async extractEntryToFile<T>(
     entryPath: string,
-    tempDir: string,
+    extractedFilePath: string,
     callback: (localFile: string) => (T | Promise<T>),
   ): Promise<T> {
     const localFile = path.join(tempDir, entryPath);
@@ -48,6 +48,7 @@ export default class Zip extends Archive {
       await util.promisify(fs.mkdir)(localDir, { recursive: true });
     }
 
+    // TODO(cemmer): don't do this? Zip.extractEntryToStream doesn't actually need a tempDir
     return this.extractEntryToStream(
       entryPath,
       tempDir,

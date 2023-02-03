@@ -4,6 +4,8 @@ import path from 'path';
 
 import ArchiveEntry from '../files/archiveEntry.js';
 import Archive from './archive.js';
+import fsPoly from "../../polyfill/fsPoly.js";
+import Constants from "../../constants.js";
 
 export default class SevenZip extends Archive {
   // p7zip `7za i`
@@ -80,9 +82,12 @@ export default class SevenZip extends Archive {
 
   async extractEntryToFile<T>(
     entryPath: string,
-    tempDir: string,
+    extractedFilePath: string,
     callback: (localFile: string) => (T | Promise<T>),
   ): Promise<T> {
+    const tempDir = await fsPoly.mkdtemp(path.join(Constants.GLOBAL_TEMP_DIR, '7z')); // TODO(cemmer): cleanup
+    const tempFile = path.join(tempDir, entryPath);
+
     await new Promise<void>((resolve, reject) => {
       _7z.unpack(this.getFilePath(), tempDir, (err) => {
         if (err) {
@@ -93,6 +98,9 @@ export default class SevenZip extends Archive {
       });
     });
 
-    return callback(path.join(tempDir, entryPath));
+    // https://github.com/onikienko/7zip-min/issues/71
+    await fsPoly.rename(tempFile, extractedFilePath);
+
+    return callback(extractedFilePath);
   }
 }

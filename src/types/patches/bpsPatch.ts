@@ -27,9 +27,7 @@ export default class BPSPatch extends Patch {
     let crcAfter = '';
     let targetSize = 0;
 
-    await file.extractToFile(async (patchFile) => {
-      const fp = await FilePoly.fileFrom(patchFile, 'r');
-
+    await file.extractToFilePoly('r', async (fp) => {
       fp.seek(4); // header
       await Patch.readUpsUint(fp); // source size
       targetSize = await Patch.readUpsUint(fp); // target size
@@ -37,8 +35,6 @@ export default class BPSPatch extends Patch {
       fp.seek(fp.getSize() - 12);
       crcBefore = (await fp.readNext(4)).reverse().toString('hex');
       crcAfter = (await fp.readNext(4)).reverse().toString('hex');
-
-      await fp.close();
     });
 
     if (crcBefore.length !== 8 || crcAfter.length !== 8) {
@@ -72,12 +68,10 @@ export default class BPSPatch extends Patch {
     callback: (tempFile: string) => (Promise<T> | T),
     patchFile: FilePoly,
   ): Promise<T> {
-    return inputFile.extractToFile(async (sourceFilePath) => {
-      const sourceFile = await FilePoly.fileFrom(sourceFilePath, 'r');
-
+    return inputFile.extractToFilePoly('r', async (sourceFile) => {
       const targetFilePath = await fsPoly.mktemp(path.join(
         Constants.GLOBAL_TEMP_DIR,
-        `${path.basename(sourceFilePath)}.bps`,
+        `${path.basename(sourceFile.getPathLike().toString())}.bps`,
       ));
       const targetFile = await FilePoly.fileOfSize(targetFilePath, 'r+', this.getSizeAfter() as number);
 
@@ -85,7 +79,6 @@ export default class BPSPatch extends Patch {
         await BPSPatch.applyPatch(patchFile, sourceFile, targetFile);
       } finally {
         await targetFile.close();
-        await sourceFile.close();
       }
 
       const callbackResult = await callback(targetFilePath);

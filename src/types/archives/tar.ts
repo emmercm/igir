@@ -5,6 +5,8 @@ import tar from 'tar';
 
 import ArchiveEntry from '../files/archiveEntry.js';
 import Archive from './archive.js';
+import fsPoly from "../../polyfill/fsPoly.js";
+import Constants from "../../constants.js";
 
 export default class Tar extends Archive {
   static readonly SUPPORTED_EXTENSIONS = [
@@ -65,16 +67,21 @@ export default class Tar extends Archive {
 
   async extractEntryToFile<T>(
     entryPath: string,
-    tempDir: string,
+    extractedFilePath: string,
     callback: (localFile: string) => (Promise<T> | T),
   ): Promise<T> {
+    const tempDir = await fsPoly.mkdtemp(path.join(Constants.GLOBAL_TEMP_DIR, 'tar')); // TODO(cemmer): cleanup
+    const tempFile = path.join(tempDir, entryPath);
+
     await tar.extract({
       file: this.getFilePath(),
       cwd: tempDir,
-      filter: (tarPath) => path.normalize(tarPath) === path.normalize(entryPath),
       strict: true,
-    });
+    }, [entryPath.replace(/[\\/]/g, '/')]);
 
-    return callback(path.join(tempDir, entryPath));
+    // TODO(cemmer): create issue
+    await fsPoly.rename(tempFile, extractedFilePath);
+
+    return callback(extractedFilePath);
   }
 }

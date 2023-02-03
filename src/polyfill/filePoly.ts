@@ -24,6 +24,7 @@ export default class FilePoly {
     this.tempBuffer = Buffer.allocUnsafe(Math.min(this.size, Constants.FILE_READING_CHUNK_SIZE));
   }
 
+  // TODO(cemmer): does this actually need to be PathLike?
   static async fileFrom(pathLike: PathLike, flags: OpenMode): Promise<FilePoly> {
     return new FilePoly(
       pathLike,

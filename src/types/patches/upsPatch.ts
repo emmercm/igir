@@ -25,9 +25,7 @@ export default class UPSPatch extends Patch {
     let crcAfter = '';
     let targetSize = 0;
 
-    await file.extractToFile(async (patchFile) => {
-      const fp = await FilePoly.fileFrom(patchFile, 'r');
-
+    await file.extractToFilePoly('r', async (fp) => {
       fp.seek(4); // header
       await Patch.readUpsUint(fp); // source size
       targetSize = await Patch.readUpsUint(fp); // target size
@@ -35,8 +33,6 @@ export default class UPSPatch extends Patch {
       fp.seek(fp.getSize() - 12);
       crcBefore = (await fp.readNext(4)).reverse().toString('hex');
       crcAfter = (await fp.readNext(4)).reverse().toString('hex');
-
-      await fp.close();
     });
 
     if (crcBefore.length !== 8 || crcAfter.length !== 8) {

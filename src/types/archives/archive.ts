@@ -29,16 +29,16 @@ export default abstract class Archive {
 
   abstract extractEntryToFile<T>(
     entryPath: string,
-    tempDir: string,
+    extractedFilePath: string,
     callback: (localFile: string) => (T | Promise<T>),
   ): Promise<T>;
 
   async extractEntryToStream<T>(
     entryPath: string,
-    tempDir: string,
+    extractedFilePath: string,
     callback: (stream: Readable) => (Promise<T> | T),
   ): Promise<T> {
-    return this.extractEntryToFile(entryPath, tempDir, async (localFile) => File
+    return this.extractEntryToFile(entryPath, extractedFilePath, async (localFile) => File
       .createStreamFromFile(localFile, 0, callback));
   }
 

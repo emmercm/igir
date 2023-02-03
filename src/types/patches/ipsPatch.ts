@@ -45,8 +45,9 @@ export default class IPSPatch extends Patch {
     offsetSize: number,
     eofString: string,
   ): Promise<T> {
-    return inputFile.extractToTempFile(async (tempFile) => {
-      const targetFile = await FilePoly.fileFrom(tempFile, 'r+');
+    return inputFile.extractToTempFile(async (sourceFilePath) => {
+      // TODO(cemmer): it's not safe to modify this file
+      const targetFile = await FilePoly.fileFrom(sourceFilePath, 'r+');
 
       try {
         await IPSPatch.applyPatch(patchFile, targetFile, offsetSize, eofString);
@@ -54,7 +55,7 @@ export default class IPSPatch extends Patch {
         await targetFile.close();
       }
 
-      return callback(tempFile);
+      return callback(sourceFilePath);
     });
   }
 

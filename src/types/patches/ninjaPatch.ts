@@ -66,8 +66,9 @@ export default class NinjaPatch extends Patch {
     callback: (tempFile: string) => (Promise<T> | T),
     patchFile: FilePoly,
   ): Promise<T> {
-    return inputFile.extractToFile(async (tempFile) => {
-      const targetFile = await FilePoly.fileFrom(tempFile, 'r+');
+    return inputFile.extractToFile(async (sourceFilePath) => {
+      // TODO(cemmer): it's not safe to modify this file
+      const targetFile = await FilePoly.fileFrom(sourceFilePath, 'r+');
 
       try {
         /* eslint-disable no-await-in-loop */
@@ -78,7 +79,7 @@ export default class NinjaPatch extends Patch {
         await targetFile.close();
       }
 
-      return callback(tempFile);
+      return callback(sourceFilePath);
     });
   }
 

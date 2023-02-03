@@ -48,12 +48,11 @@ export default class ArchiveEntry<A extends Archive> extends File {
     let finalCrcWithoutHeader;
     if (await fsPoly.exists(archive.getFilePath())) {
       if (fileHeader) {
-        finalCrcWithoutHeader = finalCrcWithoutHeader
-          || await this.extractEntryToFile(
-            archive,
-            entryPath,
-            async (localFile) => this.calculateCrc32(localFile, fileHeader),
-          );
+        finalCrcWithoutHeader = finalCrcWithoutHeader || await this.extractSelfToFile(
+          archive,
+          entryPath,
+          async (localFile) => this.calculateCrc32(localFile, fileHeader),
+        );
       }
     }
     finalCrcWithoutHeader = finalCrcWithoutHeader || crc;
@@ -82,27 +81,35 @@ export default class ArchiveEntry<A extends Archive> extends File {
     return this.entryPath;
   }
 
-  async extractToFile<T>(callback: (localFile: string) => (T | Promise<T>)): Promise<T> {
-    return ArchiveEntry.extractEntryToFile(this.getArchive(), this.getEntryPath(), callback);
-  }
-
-  async extractToTempFile<T>(
+  async extractToFile<T>(
     callback: (localFile: string) => (T | Promise<T>),
   ): Promise<T> {
-    return ArchiveEntry.extractEntryToFile(this.getArchive(), this.getEntryPath(), callback);
+    return ArchiveEntry.extractSelfToFile(this.getArchive(), this.getEntryPath(), callback);
   }
 
-  private static async extractEntryToFile<T>(
+  async extractToNewFile<T>(
+    callback: (newFile: string) => (T | Promise<T>),
+    extractedFilePath?: string,
+  ): Promise<T> {
+    return ArchiveEntry.extractSelfToFile(
+      this.getArchive(),
+      this.getEntryPath(),
+      callback,
+      extractedFilePath,
+    );
+  }
+
+  private static async extractSelfToFile<T>(
     archive: Archive,
     entryPath: string,
     callback: (localFile: string) => (T | Promise<T>),
+    extractedFilePath?: string,
   ): Promise<T> {
-    const tempDir = await fsPoly.mkdtemp(path.join(Constants.GLOBAL_TEMP_DIR, 'xfile'));
-    try {
-      return await archive.extractEntryToFile(entryPath, tempDir, callback);
-    } finally {
-      await fsPoly.rm(tempDir, { recursive: true });
-    }
+    const extractedFilePathFinal = extractedFilePath || await fsPoly.mktemp(path.join(
+      Constants.GLOBAL_TEMP_DIR,
+      path.basename(entryPath),
+    ));
+    return archive.extractEntryToFile(entryPath, extractedFilePathFinal, callback);
   }
 
   async extractToStream<T>(

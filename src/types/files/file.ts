@@ -142,6 +142,17 @@ export default class File {
     return callback(this.getFilePath());
   }
 
+  async extractToNewFile<T>(
+    callback: (newFile: string) => (T | Promise<T>),
+    extractedFilePath?: string,
+  ): Promise<T> {
+    const extractedFilePathFinal = extractedFilePath || await fsPoly.mktemp(path.join(
+      Constants.GLOBAL_TEMP_DIR,
+      path.basename(this.getFilePath()),
+    ));
+    return callback(extractedFilePathFinal);
+  }
+
   async extractToFilePoly<T>(
     flags: OpenMode,
     callback: (filePoly: FilePoly) => (T | Promise<T>),
