@@ -136,29 +136,37 @@ export default class File {
     });
   }
 
-  async extractToFile<T>(
-    callback: (localFile: string) => (T | Promise<T>),
+  async copyToFile<T>(
+    extractedFilePath: string,
+    callback: (extractedFilePath: string) => (T | Promise<T>),
   ): Promise<T> {
-    return callback(this.getFilePath());
+    await fsPoly.copyFile(this.getFilePath(), extractedFilePath);
+    return callback(extractedFilePath);
   }
 
-  async extractToNewFile<T>(
-    callback: (newFile: string) => (T | Promise<T>),
-    extractedFilePath?: string,
+  async copyToTempFile<T>(
+    callback: (tempFile: string) => (T | Promise<T>),
   ): Promise<T> {
-    const extractedFilePathFinal = extractedFilePath || await fsPoly.mktemp(path.join(
+    const tempFile = await fsPoly.mktemp(path.join(
       Constants.GLOBAL_TEMP_DIR,
-      path.basename(this.getFilePath()),
+      `${path.basename(this.getFilePath())}`,
     ));
-    return callback(extractedFilePathFinal);
+    await fsPoly.copyFile(this.getFilePath(), tempFile);
+
+    try {
+      return await callback(tempFile);
+    } finally {
+      await fsPoly.rm(tempFile, { force: true });
+    }
   }
 
   async extractToFilePoly<T>(
     flags: OpenMode,
     callback: (filePoly: FilePoly) => (T | Promise<T>),
   ): Promise<T> {
-    return this.extractToFile(async (localFile) => {
-      const filePoly = await FilePoly.fileFrom(localFile, flags);
+    // TODO(cemmer): optimization: it doesn't need to be a temp file if we're only reading
+    return this.copyToTempFile(async (tempFile) => {
+      const filePoly = await FilePoly.fileFrom(tempFile, flags);
       try {
         return await callback(filePoly);
       } finally {
@@ -167,22 +175,7 @@ export default class File {
     });
   }
 
-  async extractToTempFile<T>(
-    callback: (localFile: string) => (T | Promise<T>),
-  ): Promise<T> {
-    const temp = await fsPoly.mktemp(path.join(
-      Constants.GLOBAL_TEMP_DIR,
-      `${path.basename(this.getFilePath())}.temp`,
-    ));
-    await fsPoly.copyFile(this.getFilePath(), temp);
-    try {
-      return await callback(temp);
-    } finally {
-      await fsPoly.rm(temp);
-    }
-  }
-
-  async extractToStream<T>(
+  async createReadStream<T>(
     callback: (stream: Readable) => (T | Promise<T>),
     removeHeader = false,
   ): Promise<T> {
@@ -193,8 +186,10 @@ export default class File {
     // Apply the patch if there is one
     if (this.getPatch()) {
       const patch = this.getPatch() as Patch;
-      return patch.apply(this, async (tempFile) => File
-        .createStreamFromFile(tempFile, start, callback));
+      return patch.applyToTempFile(
+        this,
+        async (tempFile) => File.createStreamFromFile(tempFile, start, callback),
+      );
     }
 
     return File.createStreamFromFile(this.filePath, start, callback);
@@ -215,7 +210,7 @@ export default class File {
 
   async withFileHeader(fileHeader: FileHeader): Promise<File> {
     // Make sure the file actually has the right file signature
-    const hasHeader = await this.extractToStream(
+    const hasHeader = await this.createReadStream(
       async (stream) => fileHeader.fileHasHeader(stream),
     );
     if (!hasHeader) {

@@ -441,31 +441,34 @@ export default class VcdiffPatch extends Patch {
     return new VcdiffPatch(file, crcBefore);
   }
 
-  async apply<T>(inputFile: File, callback: (tempFile: string) => (Promise<T> | T)): Promise<T> {
+  async applyToTempFile<T>(
+    inputRomFile: File,
+    callback: (tempFile: string) => (Promise<T> | T),
+  ): Promise<T> {
     /* eslint-disable no-bitwise */
     return this.getFile().extractToFilePoly('r', async (patchFile) => {
       const copyCache = new VcdiffCache();
       const header = await VcdiffHeader.fromFilePoly(patchFile);
 
-      return VcdiffPatch.writeOutputFile(inputFile, callback, patchFile, header, copyCache);
+      return VcdiffPatch.writeOutputFile(inputRomFile, patchFile, header, copyCache, callback);
     });
   }
 
   private static async writeOutputFile<T>(
-    inputFile: File,
-    callback: (tempFile: string) => (Promise<T> | T),
+    inputRomFile: File,
     patchFile: FilePoly,
     header: VcdiffHeader,
     copyCache: VcdiffCache,
+    callback: (tempFile: string) => (Promise<T> | T),
   ): Promise<T> {
-    return inputFile.extractToFile(async (sourceFilePath) => {
-      const sourceFile = await FilePoly.fileFrom(sourceFilePath, 'r');
+    return inputRomFile.copyToTempFile(async (tempRomFile) => {
+      const sourceFile = await FilePoly.fileFrom(tempRomFile, 'r');
 
       const targetFilePath = await fsPoly.mktemp(path.join(
         Constants.GLOBAL_TEMP_DIR,
-        `${path.basename(sourceFilePath)}.vcdiff`,
+        `${path.basename(tempRomFile)}.vcdiff`,
       ));
-      await fsPoly.copyFile(sourceFilePath, targetFilePath);
+      await fsPoly.copyFile(tempRomFile, targetFilePath);
       const targetFile = await FilePoly.fileFrom(targetFilePath, 'r+');
 
       try {
@@ -476,7 +479,7 @@ export default class VcdiffPatch extends Patch {
       }
 
       const callbackResult = await callback(targetFilePath);
-      await fsPoly.rm(targetFilePath);
+      await fsPoly.rm(targetFilePath, { force: true });
       return callbackResult;
     });
   }

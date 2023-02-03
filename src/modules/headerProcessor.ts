@@ -51,8 +51,9 @@ export default class HeaderProcessor extends Module {
 
     // Should get FileHeader from File, try to
     if (this.options.shouldReadFileForHeader(inputFile.getExtractedFilePath())) {
-      const headerForFileStream = await inputFile
-        .extractToStream(async (stream) => FileHeader.headerFromFileStream(stream));
+      const headerForFileStream = await inputFile.createReadStream(
+        async (stream) => FileHeader.headerFromFileStream(stream),
+      );
       if (headerForFileStream) {
         await this.progressBar.logTrace(`${inputFile.toString()}: found header by contents: ${headerForFilename}`);
         return inputFile.withFileHeader(headerForFileStream);

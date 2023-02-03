@@ -1,6 +1,8 @@
 import path from 'path';
 import { Readable } from 'stream';
 
+import Constants from '../../constants.js';
+import fsPoly from '../../polyfill/fsPoly.js';
 import ArchiveEntry from '../files/archiveEntry.js';
 import File from '../files/file.js';
 
@@ -30,16 +32,37 @@ export default abstract class Archive {
   abstract extractEntryToFile<T>(
     entryPath: string,
     extractedFilePath: string,
-    callback: (localFile: string) => (T | Promise<T>),
+    callback: (extractedFilePath: string) => (T | Promise<T>),
   ): Promise<T>;
 
+  async extractEntryToTempFile<T>(
+    entryPath: string,
+    callback: (tempFile: string) => (T | Promise<T>),
+  ): Promise<T> {
+    const tempFile = await fsPoly.mktemp(path.join(
+      Constants.GLOBAL_TEMP_DIR,
+      path.basename(entryPath),
+    ));
+
+    try {
+      return await this.extractEntryToFile(entryPath, tempFile, callback);
+    } finally {
+      await fsPoly.rm(tempFile, { force: true });
+    }
+  }
+
+  /**
+   * Most archive libraries don't provide a way to read a specific entry's stream, extract the entry
+   * to a temp file and then create a stream by default.
+   */
   async extractEntryToStream<T>(
     entryPath: string,
-    extractedFilePath: string,
     callback: (stream: Readable) => (Promise<T> | T),
   ): Promise<T> {
-    return this.extractEntryToFile(entryPath, extractedFilePath, async (localFile) => File
-      .createStreamFromFile(localFile, 0, callback));
+    return this.extractEntryToTempFile(
+      entryPath,
+      async (tempFile) => File.createStreamFromFile(tempFile, 0, callback),
+    );
   }
 
   withFileName(fileNameWithoutExt: string): Archive {

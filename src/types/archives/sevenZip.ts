@@ -2,10 +2,10 @@ import _7z, { Result } from '7zip-min';
 import { Mutex } from 'async-mutex';
 import path from 'path';
 
+import Constants from '../../constants.js';
+import fsPoly from '../../polyfill/fsPoly.js';
 import ArchiveEntry from '../files/archiveEntry.js';
 import Archive from './archive.js';
-import fsPoly from "../../polyfill/fsPoly.js";
-import Constants from "../../constants.js";
 
 export default class SevenZip extends Archive {
   // p7zip `7za i`
@@ -83,23 +83,27 @@ export default class SevenZip extends Archive {
   async extractEntryToFile<T>(
     entryPath: string,
     extractedFilePath: string,
-    callback: (localFile: string) => (T | Promise<T>),
+    callback: (extractedFilePath: string) => (T | Promise<T>),
   ): Promise<T> {
-    const tempDir = await fsPoly.mkdtemp(path.join(Constants.GLOBAL_TEMP_DIR, '7z')); // TODO(cemmer): cleanup
-    const tempFile = path.join(tempDir, entryPath);
+    const tempDir = await fsPoly.mkdtemp(path.join(Constants.GLOBAL_TEMP_DIR, '7z'));
+    try {
+      // https://github.com/onikienko/7zip-min/issues/71
+      const tempFile = path.join(tempDir, entryPath);
 
-    await new Promise<void>((resolve, reject) => {
-      _7z.unpack(this.getFilePath(), tempDir, (err) => {
-        if (err) {
-          reject(err);
-        } else {
-          resolve();
-        }
+      await new Promise<void>((resolve, reject) => {
+        _7z.unpack(this.getFilePath(), tempDir, (err) => {
+          if (err) {
+            reject(err);
+          } else {
+            resolve();
+          }
+        });
       });
-    });
 
-    // https://github.com/onikienko/7zip-min/issues/71
-    await fsPoly.rename(tempFile, extractedFilePath);
+      await fsPoly.rename(tempFile, extractedFilePath);
+    } finally {
+      await fsPoly.rm(tempDir, { recursive: true });
+    }
 
     return callback(extractedFilePath);
   }

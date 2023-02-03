@@ -3,10 +3,10 @@ import fs from 'fs';
 import path from 'path';
 import tar from 'tar';
 
+import Constants from '../../constants.js';
+import fsPoly from '../../polyfill/fsPoly.js';
 import ArchiveEntry from '../files/archiveEntry.js';
 import Archive from './archive.js';
-import fsPoly from "../../polyfill/fsPoly.js";
-import Constants from "../../constants.js";
 
 export default class Tar extends Archive {
   static readonly SUPPORTED_EXTENSIONS = [
@@ -68,19 +68,23 @@ export default class Tar extends Archive {
   async extractEntryToFile<T>(
     entryPath: string,
     extractedFilePath: string,
-    callback: (localFile: string) => (Promise<T> | T),
+    callback: (extractedFilePath: string) => (Promise<T> | T),
   ): Promise<T> {
-    const tempDir = await fsPoly.mkdtemp(path.join(Constants.GLOBAL_TEMP_DIR, 'tar')); // TODO(cemmer): cleanup
-    const tempFile = path.join(tempDir, entryPath);
+    const tempDir = await fsPoly.mkdtemp(path.join(Constants.GLOBAL_TEMP_DIR, 'tar'));
+    try {
+      // https://github.com/isaacs/node-tar/issues/357
+      const tempFile = path.join(tempDir, entryPath);
 
-    await tar.extract({
-      file: this.getFilePath(),
-      cwd: tempDir,
-      strict: true,
-    }, [entryPath.replace(/[\\/]/g, '/')]);
+      await tar.extract({
+        file: this.getFilePath(),
+        cwd: tempDir,
+        strict: true,
+      }, [entryPath.replace(/[\\/]/g, '/')]);
 
-    // TODO(cemmer): create issue
-    await fsPoly.rename(tempFile, extractedFilePath);
+      await fsPoly.rename(tempFile, extractedFilePath);
+    } finally {
+      await fsPoly.rm(tempDir, { recursive: true });
+    }
 
     return callback(extractedFilePath);
   }

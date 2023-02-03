@@ -65,23 +65,25 @@ export default class PPFPatch extends Patch {
     return new PPFPatch(file, crcBefore);
   }
 
-  async apply<T>(inputFile: File, callback: (tempFile: string) => (Promise<T> | T)): Promise<T> {
+  async applyToTempFile<T>(
+    inputRomFile: File,
+    callback: (tempFile: string) => (Promise<T> | T),
+  ): Promise<T> {
     return this.getFile().extractToFilePoly('r', async (patchFile) => {
       const header = await PPFHeader.fromFilePoly(patchFile);
 
-      return PPFPatch.writeOutputFile(inputFile, callback, patchFile, header);
+      return PPFPatch.writeOutputFile(inputRomFile, patchFile, header, callback);
     });
   }
 
   private static async writeOutputFile<T>(
-    inputFile: File,
-    callback: (tempFile: string) => (Promise<T> | T),
+    inputRomFile: File,
     patchFile: FilePoly,
     header: PPFHeader,
+    callback: (tempFile: string) => (Promise<T> | T),
   ): Promise<T> {
-    return inputFile.extractToTempFile(async (sourceFilePath) => {
-      // TODO(cemmer): it's not safe to modify this file
-      const targetFile = await FilePoly.fileFrom(sourceFilePath, 'r+');
+    return inputRomFile.copyToTempFile(async (tempRomFile) => {
+      const targetFile = await FilePoly.fileFrom(tempRomFile, 'r+');
 
       try {
         /* eslint-disable no-await-in-loop */
@@ -92,7 +94,7 @@ export default class PPFPatch extends Patch {
         await targetFile.close();
       }
 
-      return callback(sourceFilePath);
+      return callback(tempRomFile);
     });
   }
 

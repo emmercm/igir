@@ -109,7 +109,7 @@ export default class PatchFactory {
   }
 
   static async patchFromFileContents(file: File): Promise<Patch | undefined> {
-    const fileHeader = await file.extractToStream(
+    const fileHeader = await file.createReadStream(
       async (stream) => PatchFactory.readHeaderHex(stream, this.MAX_HEADER_LENGTH_BYTES),
     );
 

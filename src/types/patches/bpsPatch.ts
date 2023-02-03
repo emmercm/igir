@@ -27,14 +27,14 @@ export default class BPSPatch extends Patch {
     let crcAfter = '';
     let targetSize = 0;
 
-    await file.extractToFilePoly('r', async (fp) => {
-      fp.seek(4); // header
-      await Patch.readUpsUint(fp); // source size
-      targetSize = await Patch.readUpsUint(fp); // target size
+    await file.extractToFilePoly('r', async (patchFile) => {
+      patchFile.seek(4); // header
+      await Patch.readUpsUint(patchFile); // source size
+      targetSize = await Patch.readUpsUint(patchFile); // target size
 
-      fp.seek(fp.getSize() - 12);
-      crcBefore = (await fp.readNext(4)).reverse().toString('hex');
-      crcAfter = (await fp.readNext(4)).reverse().toString('hex');
+      patchFile.seek(patchFile.getSize() - 12);
+      crcBefore = (await patchFile.readNext(4)).reverse().toString('hex');
+      crcAfter = (await patchFile.readNext(4)).reverse().toString('hex');
     });
 
     if (crcBefore.length !== 8 || crcAfter.length !== 8) {
@@ -44,7 +44,10 @@ export default class BPSPatch extends Patch {
     return new BPSPatch(file, crcBefore, crcAfter, targetSize);
   }
 
-  async apply<T>(inputFile: File, callback: (tempFile: string) => (Promise<T> | T)): Promise<T> {
+  async applyToTempFile<T>(
+    inputRomFile: File,
+    callback: (tempFile: string) => (Promise<T> | T),
+  ): Promise<T> {
     return this.getFile().extractToFilePoly('r', async (patchFile) => {
       // Skip header info
       const header = await patchFile.readNext(4);
@@ -59,30 +62,30 @@ export default class BPSPatch extends Patch {
         patchFile.skipNext(metadataSize);
       }
 
-      return this.writeOutputFile(inputFile, callback, patchFile);
+      return this.writeOutputFile(inputRomFile, patchFile, callback);
     });
   }
 
   private async writeOutputFile<T>(
-    inputFile: File,
-    callback: (tempFile: string) => (Promise<T> | T),
+    inputRomFile: File,
     patchFile: FilePoly,
+    callback: (tempFile: string) => (Promise<T> | T),
   ): Promise<T> {
-    return inputFile.extractToFilePoly('r', async (sourceFile) => {
+    return inputRomFile.extractToFilePoly('r', async (inputRomFilePoly) => {
       const targetFilePath = await fsPoly.mktemp(path.join(
         Constants.GLOBAL_TEMP_DIR,
-        `${path.basename(sourceFile.getPathLike().toString())}.bps`,
+        `${path.basename(inputRomFilePoly.getPathLike().toString())}.bps`,
       ));
       const targetFile = await FilePoly.fileOfSize(targetFilePath, 'r+', this.getSizeAfter() as number);
 
       try {
-        await BPSPatch.applyPatch(patchFile, sourceFile, targetFile);
+        await BPSPatch.applyPatch(patchFile, inputRomFilePoly, targetFile);
       } finally {
         await targetFile.close();
       }
 
       const callbackResult = await callback(targetFilePath);
-      await fsPoly.rm(targetFilePath);
+      await fsPoly.rm(targetFilePath, { force: true });
       return callbackResult;
     });
   }

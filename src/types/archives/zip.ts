@@ -39,24 +39,20 @@ export default class Zip extends Archive {
   async extractEntryToFile<T>(
     entryPath: string,
     extractedFilePath: string,
-    callback: (localFile: string) => (T | Promise<T>),
+    callback: (extractedFilePath: string) => (T | Promise<T>),
   ): Promise<T> {
-    const localFile = path.join(tempDir, entryPath);
-
-    const localDir = path.dirname(localFile);
+    const localDir = path.dirname(extractedFilePath);
     if (!await fsPoly.exists(localDir)) {
       await util.promisify(fs.mkdir)(localDir, { recursive: true });
     }
 
-    // TODO(cemmer): don't do this? Zip.extractEntryToStream doesn't actually need a tempDir
     return this.extractEntryToStream(
       entryPath,
-      tempDir,
       async (readStream) => new Promise((resolve, reject) => {
-        const writeStream = fs.createWriteStream(localFile);
+        const writeStream = fs.createWriteStream(extractedFilePath);
         writeStream.on('close', async () => {
           try {
-            return resolve(await callback(localFile));
+            return resolve(await callback(extractedFilePath));
           } catch (callbackErr) {
             return reject(callbackErr);
           }
@@ -69,7 +65,6 @@ export default class Zip extends Archive {
 
   async extractEntryToStream<T>(
     entryPath: string,
-    tempDir: string,
     callback: (stream: Readable) => (Promise<T> | T),
   ): Promise<T> {
     const archive = await unzipper.Open.file(this.getFilePath());
@@ -126,7 +121,7 @@ export default class Zip extends Archive {
        */
       3,
       async ([inputFile, outputArchiveEntry], callback) => inputFile
-        .extractToStream(async (readStream) => {
+        .createReadStream(async (readStream) => {
           const entryName = outputArchiveEntry.getEntryPath().replace(/[\\/]/g, '/');
           zipFile.append(readStream, {
             name: entryName,

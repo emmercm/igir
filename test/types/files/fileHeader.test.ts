@@ -37,7 +37,7 @@ describe('headerFromFileStream', () => {
 
     /* eslint-disable no-await-in-loop */
     for (let i = 0; i < headeredRoms.length; i += 1) {
-      await headeredRoms[i].extractToStream(async (stream) => {
+      await headeredRoms[i].createReadStream(async (stream) => {
         const fileHeader = await FileHeader.headerFromFileStream(stream);
         expect(fileHeader).toBeDefined();
       });
@@ -52,7 +52,7 @@ describe('headerFromFileStream', () => {
 
     /* eslint-disable no-await-in-loop */
     for (let i = 0; i < headeredRoms.length; i += 1) {
-      await headeredRoms[i].extractToStream(async (stream) => {
+      await headeredRoms[i].createReadStream(async (stream) => {
         const fileHeader = await FileHeader.headerFromFileStream(stream);
         expect(fileHeader).toBeUndefined();
       });
