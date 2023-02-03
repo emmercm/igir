@@ -120,7 +120,7 @@ export default class FsPoly {
     while (true) {
       const randomExtension = crypto.randomBytes(4).readUInt32LE(0).toString(36);
       const filePath = `${prefix.replace(/\.+$/, '')}.${randomExtension}`;
-      if (!await util.promisify(fs.exists)(filePath)) {
+      if (!await this.exists(filePath)) {
         return filePath;
       }
     }

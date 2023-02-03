@@ -34,11 +34,8 @@ export default class NinjaPatch extends Patch {
     return new NinjaPatch(file, crcBefore);
   }
 
-  async applyToTempFile<T>(
-    inputRomFile: File,
-    callback: (tempFile: string) => (Promise<T> | T),
-  ): Promise<T> {
-    return this.getFile().extractToFilePoly('r', async (patchFile) => {
+  async createPatchedFile(inputRomFile: File, outputRomPath: string): Promise<void> {
+    return this.getFile().extractToTempFilePoly('r', async (patchFile) => {
       const header = await patchFile.readNext(5);
       if (!header.equals(NinjaPatch.FILE_SIGNATURE)) {
         await patchFile.close();
@@ -60,29 +57,26 @@ export default class NinjaPatch extends Patch {
       patchFile.skipNext(512); // website
       patchFile.skipNext(1074); // info
 
-      return this.writeOutputFile(inputRomFile, patchFile, callback);
+      return this.writeOutputFile(inputRomFile, outputRomPath, patchFile);
     });
   }
 
-  private async writeOutputFile<T>(
+  private async writeOutputFile(
     inputRomFile: File,
+    outputRomPath: string,
     patchFile: FilePoly,
-    callback: (tempFile: string) => (Promise<T> | T),
-  ): Promise<T> {
-    return inputRomFile.copyToTempFile(async (tempRomFile) => {
-      const targetFile = await FilePoly.fileFrom(tempRomFile, 'r+');
+  ): Promise<void> {
+    await inputRomFile.extractToFile(outputRomPath);
+    const targetFile = await FilePoly.fileFrom(outputRomPath, 'r+');
 
-      try {
-        /* eslint-disable no-await-in-loop */
-        while (!patchFile.isEOF()) {
-          await this.applyCommand(patchFile, targetFile);
-        }
-      } finally {
-        await targetFile.close();
+    try {
+      /* eslint-disable no-await-in-loop */
+      while (!patchFile.isEOF()) {
+        await this.applyCommand(patchFile, targetFile);
       }
-
-      return callback(tempRomFile);
-    });
+    } finally {
+      await targetFile.close();
+    }
   }
 
   private async applyCommand(patchFile: FilePoly, targetFile: FilePoly): Promise<void> {

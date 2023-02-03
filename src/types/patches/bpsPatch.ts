@@ -1,8 +1,4 @@
-import path from 'path';
-
-import Constants from '../../constants.js';
 import FilePoly from '../../polyfill/filePoly.js';
-import fsPoly from '../../polyfill/fsPoly.js';
 import File from '../files/file.js';
 import Patch from './patch.js';
 
@@ -27,7 +23,7 @@ export default class BPSPatch extends Patch {
     let crcAfter = '';
     let targetSize = 0;
 
-    await file.extractToFilePoly('r', async (patchFile) => {
+    await file.extractToTempFilePoly('r', async (patchFile) => {
       patchFile.seek(4); // header
       await Patch.readUpsUint(patchFile); // source size
       targetSize = await Patch.readUpsUint(patchFile); // target size
@@ -44,11 +40,8 @@ export default class BPSPatch extends Patch {
     return new BPSPatch(file, crcBefore, crcAfter, targetSize);
   }
 
-  async applyToTempFile<T>(
-    inputRomFile: File,
-    callback: (tempFile: string) => (Promise<T> | T),
-  ): Promise<T> {
-    return this.getFile().extractToFilePoly('r', async (patchFile) => {
+  async createPatchedFile(inputRomFile: File, outputRomPath: string): Promise<void> {
+    return this.getFile().extractToTempFilePoly('r', async (patchFile) => {
       // Skip header info
       const header = await patchFile.readNext(4);
       if (!header.equals(BPSPatch.FILE_SIGNATURE)) {
@@ -62,31 +55,23 @@ export default class BPSPatch extends Patch {
         patchFile.skipNext(metadataSize);
       }
 
-      return this.writeOutputFile(inputRomFile, patchFile, callback);
+      return this.writeOutputFile(inputRomFile, outputRomPath, patchFile);
     });
   }
 
-  private async writeOutputFile<T>(
+  private async writeOutputFile(
     inputRomFile: File,
+    outputRomPath: string,
     patchFile: FilePoly,
-    callback: (tempFile: string) => (Promise<T> | T),
-  ): Promise<T> {
-    return inputRomFile.extractToFilePoly('r', async (inputRomFilePoly) => {
-      const targetFilePath = await fsPoly.mktemp(path.join(
-        Constants.GLOBAL_TEMP_DIR,
-        `${path.basename(inputRomFilePoly.getPathLike().toString())}.bps`,
-      ));
-      const targetFile = await FilePoly.fileOfSize(targetFilePath, 'r+', this.getSizeAfter() as number);
+  ): Promise<void> {
+    return inputRomFile.extractToTempFilePoly('r', async (inputRomFilePoly) => {
+      const targetFile = await FilePoly.fileOfSize(outputRomPath, 'r+', this.getSizeAfter() as number);
 
       try {
         await BPSPatch.applyPatch(patchFile, inputRomFilePoly, targetFile);
       } finally {
         await targetFile.close();
       }
-
-      const callbackResult = await callback(targetFilePath);
-      await fsPoly.rm(targetFilePath, { force: true });
-      return callbackResult;
     });
   }
 
