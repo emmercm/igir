@@ -93,12 +93,8 @@ export default class FileHeader {
         }
       });
 
-      stream.on('end', () => {
-        // We read the entire file without closing prematurely, return
-        resolveHeader();
-      });
-
-      stream.on('error', (err) => reject(err));
+      stream.on('end', resolveHeader);
+      stream.on('error', reject);
     });
   }
 

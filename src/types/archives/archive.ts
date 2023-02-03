@@ -29,11 +29,10 @@ export default abstract class Archive {
 
   abstract getArchiveEntries(): Promise<ArchiveEntry<Archive>[]>;
 
-  abstract extractEntryToFile<T>(
+  abstract extractEntryToFile(
     entryPath: string,
     extractedFilePath: string,
-    callback: (extractedFilePath: string) => (T | Promise<T>),
-  ): Promise<T>;
+  ): Promise<void>;
 
   async extractEntryToTempFile<T>(
     entryPath: string,
@@ -45,7 +44,8 @@ export default abstract class Archive {
     ));
 
     try {
-      return await this.extractEntryToFile(entryPath, tempFile, callback);
+      await this.extractEntryToFile(entryPath, tempFile);
+      return await callback(tempFile);
     } finally {
       await fsPoly.rm(tempFile, { force: true });
     }

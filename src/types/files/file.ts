@@ -132,16 +132,14 @@ export default class File {
         resolve((crc || 0).toString(16));
       });
 
-      stream.on('error', (err) => reject(err));
+      stream.on('error', reject);
     });
   }
 
-  async copyToFile<T>(
-    extractedFilePath: string,
-    callback: (extractedFilePath: string) => (T | Promise<T>),
-  ): Promise<T> {
-    await fsPoly.copyFile(this.getFilePath(), extractedFilePath);
-    return callback(extractedFilePath);
+  async copyToFile(
+    destinationPath: string,
+  ): Promise<void> {
+    await fsPoly.copyFile(this.getFilePath(), destinationPath);
   }
 
   async copyToTempFile<T>(

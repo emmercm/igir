@@ -80,11 +80,10 @@ export default class SevenZip extends Archive {
       )));
   }
 
-  async extractEntryToFile<T>(
+  async extractEntryToFile(
     entryPath: string,
     extractedFilePath: string,
-    callback: (extractedFilePath: string) => (T | Promise<T>),
-  ): Promise<T> {
+  ): Promise<void> {
     const tempDir = await fsPoly.mkdtemp(path.join(Constants.GLOBAL_TEMP_DIR, '7z'));
     try {
       // https://github.com/onikienko/7zip-min/issues/71
@@ -104,7 +103,5 @@ export default class SevenZip extends Archive {
     } finally {
       await fsPoly.rm(tempDir, { recursive: true });
     }
-
-    return callback(extractedFilePath);
   }
 }

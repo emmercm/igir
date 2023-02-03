@@ -36,11 +36,10 @@ export default class Zip extends Archive {
       )));
   }
 
-  async extractEntryToFile<T>(
+  async extractEntryToFile(
     entryPath: string,
     extractedFilePath: string,
-    callback: (extractedFilePath: string) => (T | Promise<T>),
-  ): Promise<T> {
+  ): Promise<void> {
     const localDir = path.dirname(extractedFilePath);
     if (!await fsPoly.exists(localDir)) {
       await util.promisify(fs.mkdir)(localDir, { recursive: true });
@@ -50,14 +49,8 @@ export default class Zip extends Archive {
       entryPath,
       async (readStream) => new Promise((resolve, reject) => {
         const writeStream = fs.createWriteStream(extractedFilePath);
-        writeStream.on('close', async () => {
-          try {
-            return resolve(await callback(extractedFilePath));
-          } catch (callbackErr) {
-            return reject(callbackErr);
-          }
-        });
-        writeStream.on('error', (err) => reject(err));
+        writeStream.on('close', resolve);
+        writeStream.on('error', reject);
         readStream.pipe(writeStream);
       }),
     );

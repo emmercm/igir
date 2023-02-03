@@ -81,25 +81,22 @@ export default class ArchiveEntry<A extends Archive> extends File {
     return this.entryPath;
   }
 
-  async copyToFile<T>(
+  async copyToFile(
     extractedFilePath: string,
-    callback: (extractedFilePath: string) => (T | Promise<T>),
-  ): Promise<T> {
+  ): Promise<void> {
     return ArchiveEntry.extractEntryToFile(
       this.getArchive(),
       this.getEntryPath(),
       extractedFilePath,
-      callback,
     );
   }
 
-  private static async extractEntryToFile<T>(
+  private static async extractEntryToFile(
     archive: Archive,
     entryPath: string,
     extractedFilePath: string,
-    callback: (extractedFilePath: string) => (Promise<T> | T),
-  ): Promise<T> {
-    return archive.extractEntryToFile(entryPath, extractedFilePath, callback);
+  ): Promise<void> {
+    return archive.extractEntryToFile(entryPath, extractedFilePath);
   }
 
   async copyToTempFile<T>(

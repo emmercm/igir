@@ -29,11 +29,10 @@ export default class Rar extends Archive {
       )));
   }
 
-  async extractEntryToFile<T>(
+  async extractEntryToFile(
     entryPath: string,
     extractedFilePath: string,
-    callback: (extractedFilePath: string) => (T | Promise<T>),
-  ): Promise<T> {
+  ): Promise<void> {
     /**
      * WARN(cemmer): {@link unrar.extract} seems to have issues with extracting files to different
      * directories at the same time, it will sometimes extract to the wrong directory. Try to
@@ -52,7 +51,5 @@ export default class Rar extends Archive {
         files: [entryPath.replace(/[\\/]/g, '/')],
       }).files];
     });
-
-    return callback(extractedFilePath);
   }
 }

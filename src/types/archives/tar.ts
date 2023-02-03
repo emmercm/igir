@@ -53,7 +53,7 @@ export default class Tar extends Archive {
 
     // Wait for the tar file to be closed
     await new Promise<void>((resolve) => {
-      writeStream.on('end', () => resolve());
+      writeStream.on('end', resolve);
     });
 
     // NOTE(cemmer): for whatever promise hell reason, if we tell `tar` to be strict, the exception
@@ -65,11 +65,10 @@ export default class Tar extends Archive {
     return Promise.all(archiveEntryPromises);
   }
 
-  async extractEntryToFile<T>(
+  async extractEntryToFile(
     entryPath: string,
     extractedFilePath: string,
-    callback: (extractedFilePath: string) => (Promise<T> | T),
-  ): Promise<T> {
+  ): Promise<void> {
     const tempDir = await fsPoly.mkdtemp(path.join(Constants.GLOBAL_TEMP_DIR, 'tar'));
     try {
       // https://github.com/isaacs/node-tar/issues/357
@@ -85,7 +84,5 @@ export default class Tar extends Archive {
     } finally {
       await fsPoly.rm(tempDir, { recursive: true });
     }
-
-    return callback(extractedFilePath);
   }
 }
