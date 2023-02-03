@@ -58,9 +58,9 @@ export default abstract class Patch {
       .trim();
   }
 
-  abstract apply<T>(
-    inputFile: File,
-    callback: (tempFile: string) => (T | Promise<T>),
+  abstract applyToTempFile<T>(
+    inputRomFile: File,
+    callback: (tempFile: string) => (Promise<T> | T),
   ): Promise<T>;
 
   protected static async readUpsUint(fp: FilePoly): Promise<number> {

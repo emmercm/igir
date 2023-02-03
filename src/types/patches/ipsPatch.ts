@@ -16,9 +16,9 @@ export default class IPSPatch extends Patch {
     return new IPSPatch(file, crcBefore);
   }
 
-  async apply<T>(
-    inputFile: File,
-    callback: (tempFile: string) => (T | Promise<T>),
+  async applyToTempFile<T>(
+    inputRomFile: File,
+    callback: (tempFile: string) => (Promise<T> | T),
   ): Promise<T> {
     return this.getFile().extractToFilePoly('r', async (patchFile) => {
       const header = await patchFile.readNext(5);
@@ -34,19 +34,19 @@ export default class IPSPatch extends Patch {
         eofString = 'EEOF';
       }
 
-      return IPSPatch.writeOutputFile(inputFile, callback, patchFile, offsetSize, eofString);
+      return IPSPatch.writeOutputFile(inputRomFile, patchFile, offsetSize, eofString, callback);
     });
   }
 
   private static async writeOutputFile<T>(
-    inputFile: File,
-    callback: (tempFile: string) => (Promise<T> | T),
+    inputRomFile: File,
     patchFile: FilePoly,
     offsetSize: number,
     eofString: string,
+    callback: (tempFile: string) => (Promise<T> | T),
   ): Promise<T> {
-    return inputFile.extractToTempFile(async (tempFile) => {
-      const targetFile = await FilePoly.fileFrom(tempFile, 'r+');
+    return inputRomFile.copyToTempFile(async (tempRomFile) => {
+      const targetFile = await FilePoly.fileFrom(tempRomFile, 'r+');
 
       try {
         await IPSPatch.applyPatch(patchFile, targetFile, offsetSize, eofString);
@@ -54,7 +54,7 @@ export default class IPSPatch extends Patch {
         await targetFile.close();
       }
 
-      return callback(tempFile);
+      return callback(tempRomFile);
     });
   }
 

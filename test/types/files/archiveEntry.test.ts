@@ -109,7 +109,7 @@ describe('getCrc32WithoutHeader', () => {
   });
 });
 
-describe('extractToFile', () => {
+describe('copyToTempFile', () => {
   it('should extract archived files', async () => {
     // Note: this will only return valid archives with at least one file
     const archiveEntries = await new ROMScanner(new Options({
@@ -125,16 +125,16 @@ describe('extractToFile', () => {
     /* eslint-disable no-await-in-loop */
     for (let i = 0; i < archiveEntries.length; i += 1) {
       const archiveEntry = archiveEntries[i];
-      await archiveEntry.extractToFile(async (localFile) => {
-        await expect(fsPoly.exists(localFile)).resolves.toEqual(true);
-        expect(localFile).not.toEqual(archiveEntry.getFilePath());
+      await archiveEntry.copyToTempFile(async (tempFile) => {
+        await expect(fsPoly.exists(tempFile)).resolves.toEqual(true);
+        expect(tempFile).not.toEqual(archiveEntry.getFilePath());
       });
     }
     await fsPoly.rm(temp, { recursive: true });
   });
 });
 
-describe('extractToStream', () => {
+describe('createReadStream', () => {
   it('should extract archived files', async () => {
     // Note: this will only return valid archives with at least one file
     const archiveEntries = await new ROMScanner(new Options({
@@ -150,7 +150,7 @@ describe('extractToStream', () => {
     /* eslint-disable no-await-in-loop */
     for (let i = 0; i < archiveEntries.length; i += 1) {
       const archiveEntry = archiveEntries[i];
-      await archiveEntry.extractToStream(async (stream) => {
+      await archiveEntry.createReadStream(async (stream) => {
         const contents = (await bufferPoly.fromReadable(stream)).toString();
         expect(contents).toBeTruthy();
       });

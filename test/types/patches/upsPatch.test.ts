@@ -46,7 +46,7 @@ describe('apply', () => {
     const patchFile = await writeTemp('patch.bps', patchContents);
     const patch = await UPSPatch.patchFrom(patchFile);
 
-    await patch.apply(rom, async (tempFile) => {
+    await patch.applyToTempFile(rom, async (tempFile) => {
       const actualContents = (
         await bufferPoly.fromReadable(fs.createReadStream(tempFile))
       ).toString();

@@ -3,6 +3,8 @@ import fs from 'fs';
 import path from 'path';
 import tar from 'tar';
 
+import Constants from '../../constants.js';
+import fsPoly from '../../polyfill/fsPoly.js';
 import ArchiveEntry from '../files/archiveEntry.js';
 import Archive from './archive.js';
 
@@ -51,7 +53,7 @@ export default class Tar extends Archive {
 
     // Wait for the tar file to be closed
     await new Promise<void>((resolve) => {
-      writeStream.on('end', () => resolve());
+      writeStream.on('end', resolve);
     });
 
     // NOTE(cemmer): for whatever promise hell reason, if we tell `tar` to be strict, the exception
@@ -63,18 +65,24 @@ export default class Tar extends Archive {
     return Promise.all(archiveEntryPromises);
   }
 
-  async extractEntryToFile<T>(
+  async extractEntryToFile(
     entryPath: string,
-    tempDir: string,
-    callback: (localFile: string) => (Promise<T> | T),
-  ): Promise<T> {
-    await tar.extract({
-      file: this.getFilePath(),
-      cwd: tempDir,
-      filter: (tarPath) => path.normalize(tarPath) === path.normalize(entryPath),
-      strict: true,
-    });
+    extractedFilePath: string,
+  ): Promise<void> {
+    const tempDir = await fsPoly.mkdtemp(path.join(Constants.GLOBAL_TEMP_DIR, 'tar'));
+    try {
+      // https://github.com/isaacs/node-tar/issues/357
+      const tempFile = path.join(tempDir, entryPath);
 
-    return callback(path.join(tempDir, entryPath));
+      await tar.extract({
+        file: this.getFilePath(),
+        cwd: tempDir,
+        strict: true,
+      }, [entryPath.replace(/[\\/]/g, '/')]);
+
+      await fsPoly.rename(tempFile, extractedFilePath);
+    } finally {
+      await fsPoly.rm(tempDir, { recursive: true });
+    }
   }
 }

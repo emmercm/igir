@@ -314,12 +314,12 @@ export default class ROMWriter extends Module {
       }
 
       // Extract the input file, apply any modifications, and pipe the stream to an output file
-      await inputRomFile.extractToStream(async (readStream) => {
+      await inputRomFile.createReadStream(async (readStream) => {
         await this.progressBar.logTrace(`${dat.getName()}: ${inputRomFile.toString()}: piping to ${tempRawFile}`);
         const writeStream = readStream.pipe(fs.createWriteStream(tempRawFile));
         await new Promise<void>((resolve, reject) => {
-          writeStream.on('finish', () => resolve());
-          writeStream.on('error', (err) => reject(err));
+          writeStream.on('finish', resolve);
+          writeStream.on('error', reject);
         });
       }, removeHeader);
       await fsPoly.rename(tempRawFile, outputFilePath);

@@ -67,7 +67,7 @@ describe('getCrc32WithoutHeader', () => {
   });
 });
 
-describe('extractToFile', () => {
+describe('copyToTempFile', () => {
   it('should do nothing with no archive entry path', async () => {
     const raws = await new ROMScanner(new Options({
       input: ['./test/fixtures/roms/raw'],
@@ -78,16 +78,16 @@ describe('extractToFile', () => {
     /* eslint-disable no-await-in-loop */
     for (let i = 0; i < raws.length; i += 1) {
       const raw = raws[i];
-      await raw.extractToFile(async (localFile) => {
-        await expect(fsPoly.exists(localFile)).resolves.toEqual(true);
-        expect(localFile).toEqual(raw.getFilePath());
+      await raw.copyToTempFile(async (tempFile) => {
+        await expect(fsPoly.exists(tempFile)).resolves.toEqual(true);
+        expect(tempFile).not.toEqual(raw.getFilePath());
       });
     }
     await fsPoly.rm(temp, { recursive: true });
   });
 });
 
-describe('extractToStream', () => {
+describe('createReadStream', () => {
   it('should do nothing with no archive entry path', async () => {
     const raws = await new ROMScanner(new Options({
       input: ['./test/fixtures/roms/raw/!(empty).*'],
@@ -98,7 +98,7 @@ describe('extractToStream', () => {
     /* eslint-disable no-await-in-loop */
     for (let i = 0; i < raws.length; i += 1) {
       const raw = raws[i];
-      await raw.extractToStream(async (stream) => {
+      await raw.createReadStream(async (stream) => {
         const contents = (await bufferPoly.fromReadable(stream)).toString();
         expect(contents).toBeTruthy();
       });

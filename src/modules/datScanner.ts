@@ -80,7 +80,7 @@ export default class DATScanner extends Scanner {
 
   private async parseDatFile(datFile: File): Promise<DataFile | undefined> {
     await this.progressBar.logTrace(`${datFile.toString()}: parsing XML`);
-    return datFile.extractToStream(async (stream) => {
+    return datFile.createReadStream(async (stream) => {
       try {
         const xmlContents = await bufferPoly.fromReadable(stream);
         return await xml2js.parseStringPromise(xmlContents.toString(), {

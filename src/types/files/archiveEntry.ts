@@ -48,12 +48,11 @@ export default class ArchiveEntry<A extends Archive> extends File {
     let finalCrcWithoutHeader;
     if (await fsPoly.exists(archive.getFilePath())) {
       if (fileHeader) {
-        finalCrcWithoutHeader = finalCrcWithoutHeader
-          || await this.extractEntryToFile(
-            archive,
-            entryPath,
-            async (localFile) => this.calculateCrc32(localFile, fileHeader),
-          );
+        finalCrcWithoutHeader = finalCrcWithoutHeader || await this.extractEntryToTempFile(
+          archive,
+          entryPath,
+          async (localFile) => this.calculateCrc32(localFile, fileHeader),
+        );
       }
     }
     finalCrcWithoutHeader = finalCrcWithoutHeader || crc;
@@ -82,30 +81,39 @@ export default class ArchiveEntry<A extends Archive> extends File {
     return this.entryPath;
   }
 
-  async extractToFile<T>(callback: (localFile: string) => (T | Promise<T>)): Promise<T> {
-    return ArchiveEntry.extractEntryToFile(this.getArchive(), this.getEntryPath(), callback);
+  async copyToFile(
+    extractedFilePath: string,
+  ): Promise<void> {
+    return ArchiveEntry.extractEntryToFile(
+      this.getArchive(),
+      this.getEntryPath(),
+      extractedFilePath,
+    );
   }
 
-  async extractToTempFile<T>(
-    callback: (localFile: string) => (T | Promise<T>),
-  ): Promise<T> {
-    return ArchiveEntry.extractEntryToFile(this.getArchive(), this.getEntryPath(), callback);
-  }
-
-  private static async extractEntryToFile<T>(
+  private static async extractEntryToFile(
     archive: Archive,
     entryPath: string,
-    callback: (localFile: string) => (T | Promise<T>),
-  ): Promise<T> {
-    const tempDir = await fsPoly.mkdtemp(path.join(Constants.GLOBAL_TEMP_DIR, 'xfile'));
-    try {
-      return await archive.extractEntryToFile(entryPath, tempDir, callback);
-    } finally {
-      await fsPoly.rm(tempDir, { recursive: true });
-    }
+    extractedFilePath: string,
+  ): Promise<void> {
+    return archive.extractEntryToFile(entryPath, extractedFilePath);
   }
 
-  async extractToStream<T>(
+  async copyToTempFile<T>(
+    callback: (tempFile: string) => (T | Promise<T>),
+  ): Promise<T> {
+    return ArchiveEntry.extractEntryToTempFile(this.getArchive(), this.getEntryPath(), callback);
+  }
+
+  private static async extractEntryToTempFile<T>(
+    archive: Archive,
+    entryPath: string,
+    callback: (tempFile: string) => (T | Promise<T>),
+  ): Promise<T> {
+    return archive.extractEntryToTempFile(entryPath, callback);
+  }
+
+  async createReadStream<T>(
     callback: (stream: Readable) => (T | Promise<T>),
     removeHeader = false,
   ): Promise<T> {
@@ -116,20 +124,21 @@ export default class ArchiveEntry<A extends Archive> extends File {
     // Apply the patch if there is one
     if (this.getPatch()) {
       const patch = this.getPatch() as Patch;
-      return patch.apply(this, async (tempFile) => File
+      return patch.applyToTempFile(this, async (tempFile) => File
         .createStreamFromFile(tempFile, start, callback));
     }
 
     // Don't extract to memory if this archive entry size is too large, or if we need to manipulate
     // the stream start point
     if (this.getSize() > Constants.MAX_MEMORY_FILE_SIZE || start > 0) {
-      return this.extractToFile(async (localFile) => File
-        .createStreamFromFile(localFile, start, callback));
+      return this.copyToTempFile(
+        async (tempFile) => File.createStreamFromFile(tempFile, start, callback),
+      );
     }
 
     const tempDir = await fsPoly.mkdtemp(path.join(Constants.GLOBAL_TEMP_DIR, 'xstream'));
     try {
-      return await this.archive.extractEntryToStream(this.getEntryPath(), tempDir, callback);
+      return await this.archive.extractEntryToStream(this.getEntryPath(), callback);
     } finally {
       await fsPoly.rm(tempDir, { recursive: true });
     }
@@ -137,7 +146,7 @@ export default class ArchiveEntry<A extends Archive> extends File {
 
   async withFileHeader(fileHeader: FileHeader): Promise<File> {
     // Make sure the file actually has the right file signature
-    const hasHeader = await this.extractToStream(
+    const hasHeader = await this.createReadStream(
       async (stream) => fileHeader.fileHasHeader(stream),
     );
     if (!hasHeader) {

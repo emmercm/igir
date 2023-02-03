@@ -14,7 +14,7 @@ export default class BufferPoly {
         resolve(Buffer.concat(chunks));
       });
 
-      readable.on('error', (err) => reject(err));
+      readable.on('error', reject);
     });
   }
 }

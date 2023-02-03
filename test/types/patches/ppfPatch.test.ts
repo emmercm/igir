@@ -53,7 +53,7 @@ describe('apply', () => {
     const rom = await writeTemp('ROM', baseContents);
     const patch = PPFPatch.patchFrom(await writeTemp('00000000 patch.ppf', patchContents));
 
-    await patch.apply(rom, async (tempFile) => {
+    await patch.applyToTempFile(rom, async (tempFile) => {
       const actualContents = (
         await bufferPoly.fromReadable(fs.createReadStream(tempFile))
       ).toString();

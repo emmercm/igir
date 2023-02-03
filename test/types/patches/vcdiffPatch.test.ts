@@ -56,7 +56,7 @@ describe('apply', () => {
     const patchFile = await writeTemp('00000000 patch.xdelta', patchContents);
     const patch = VcdiffPatch.patchFrom(patchFile);
 
-    await patch.apply(rom, async (tempFile) => {
+    await patch.applyToTempFile(rom, async (tempFile) => {
       const actualContents = (
         await bufferPoly.fromReadable(fs.createReadStream(tempFile))
       ).toString();
