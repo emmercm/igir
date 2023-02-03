@@ -163,7 +163,7 @@ export default class File {
       Constants.GLOBAL_TEMP_DIR,
       `${path.basename(this.getFilePath())}.temp`,
     ));
-    await util.promisify(fs.copyFile)(this.getFilePath(), temp);
+    await fsPoly.copyFile(this.getFilePath(), temp);
     try {
       return await callback(temp);
     } finally {

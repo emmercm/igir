@@ -357,7 +357,6 @@ describe('zip', () => {
         .flatMap((entries) => entries)
         .map((entry) => [entry.toString().replace(outputTemp + path.sep, ''), entry.getCrc32()])
         .sort((a, b) => a[0].localeCompare(b[0]));
-      // console.log(await walkAndStat(Constants.GLOBAL_TEMP_DIR));
       expect(writtenRomAndCrcs).toEqual(expectedFilesAndCrcs);
     });
   });

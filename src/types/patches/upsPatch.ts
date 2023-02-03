@@ -1,6 +1,4 @@
-import fs from 'fs';
 import path from 'path';
-import util from 'util';
 
 import Constants from '../../constants.js';
 import FilePoly from '../../polyfill/filePoly.js';
@@ -74,7 +72,7 @@ export default class UPSPatch extends Patch {
         Constants.GLOBAL_TEMP_DIR,
         `${path.basename(sourceFilePath)}.ups`,
       ));
-      await util.promisify(fs.copyFile)(sourceFilePath, targetFilePath);
+      await fsPoly.copyFile(sourceFilePath, targetFilePath);
       const targetFile = await FilePoly.fileFrom(targetFilePath, 'r+');
 
       try {
