@@ -301,26 +301,28 @@ export default class ROMWriter extends Module {
 
     try {
       await ROMWriter.ensureOutputDirExists(outputFilePath);
+      const tempRawFile = await fsPoly.mktemp(outputFilePath);
 
       // Optimization: use OS copying if we're going raw->raw without any modifications
       if (!(inputRomFile instanceof ArchiveEntry)
         && !(removeHeader && inputRomFile.getFileHeader())
         && !inputRomFile.getPatch()
       ) {
-        await util.promisify(fs.copyFile)(inputRomFile.getFilePath(), outputFilePath);
-        await fsPoly.touch(outputFilePath); // Windows doesn't update mtime on overwrite?
+        await fsPoly.copyFile(inputRomFile.getFilePath(), tempRawFile);
+        await fsPoly.rename(tempRawFile, outputFilePath);
         return true;
       }
 
       // Extract the input file, apply any modifications, and pipe the stream to an output file
       await inputRomFile.extractToStream(async (readStream) => {
-        await this.progressBar.logTrace(`${dat.getName()}: ${inputRomFile.toString()}: piping to ${outputFilePath}`);
-        const writeStream = readStream.pipe(fs.createWriteStream(outputFilePath));
+        await this.progressBar.logTrace(`${dat.getName()}: ${inputRomFile.toString()}: piping to ${tempRawFile}`);
+        const writeStream = readStream.pipe(fs.createWriteStream(tempRawFile));
         await new Promise<void>((resolve, reject) => {
           writeStream.on('finish', () => resolve());
           writeStream.on('error', (err) => reject(err));
         });
       }, removeHeader);
+      await fsPoly.rename(tempRawFile, outputFilePath);
       return true;
     } catch (e) {
       await this.progressBar.logError(`${dat.getName()}: ${inputRomFile.toString()}: failed to copy to ${outputFilePath} : ${e}`);

@@ -114,8 +114,6 @@ export default class Zip extends Archive {
 
     zipFile.pipe(writeStream);
 
-    console.log(`${tempZipFile}: enqueuing`);
-
     // Write all archive entries to the zip
     await async.eachLimit(
       [...inputToOutput.entries()],
@@ -126,29 +124,24 @@ export default class Zip extends Archive {
        *  also want to make sure the queue processing stays busy.
        */
       3,
-      async ([inputFile, outputArchiveEntry], callback) => {
-        console.log(`${inputFile.toString()}: extracting`);
-        return inputFile
-          .extractToStream(async (readStream) => {
-            console.log(`${outputArchiveEntry.toString()}: compressing`);
+      async ([inputFile, outputArchiveEntry], callback) => inputFile
+        .extractToStream(async (readStream) => {
+          const entryName = outputArchiveEntry.getEntryPath().replace(/[\\/]/g, '/');
+          zipFile.append(readStream, {
+            name: entryName,
+          });
 
-            const entryName = outputArchiveEntry.getEntryPath().replace(/[\\/]/g, '/');
-            zipFile.append(readStream, {
-              name: entryName,
-            });
-
-            // Leave the input stream open until we're done writing it
-            await new Promise<void>((resolve) => {
-              const interval = setInterval(() => {
-                if (writtenEntries.has(entryName)) {
-                  clearInterval(interval);
-                  resolve();
-                }
-              }, 10);
-            });
-            callback();
-          }, options.canRemoveHeader(dat, path.extname(inputFile.getExtractedFilePath())));
-      },
+          // Leave the input stream open until we're done writing it
+          await new Promise<void>((resolve) => {
+            const interval = setInterval(() => {
+              if (writtenEntries.has(entryName)) {
+                clearInterval(interval);
+                resolve();
+              }
+            }, 10);
+          });
+          callback();
+        }, options.canRemoveHeader(dat, path.extname(inputFile.getExtractedFilePath()))),
     );
 
     // Finalize writing the zip file

@@ -19,8 +19,17 @@ export default class FsPoly {
       if (entry.isDirectory()) {
         await this.copyDir(srcPath, destPath);
       } else {
-        await util.promisify(fs.copyFile)(srcPath, destPath);
+        await this.copyFile(srcPath, destPath);
       }
+    }
+  }
+
+  static async copyFile(src: string, dest: string): Promise<void> {
+    const previouslyExisted = await this.exists(src);
+    await util.promisify(fs.copyFile)(src, dest);
+    if (previouslyExisted) {
+      // Windows doesn't update mtime on overwrite?
+      await this.touch(dest);
     }
   }
 
