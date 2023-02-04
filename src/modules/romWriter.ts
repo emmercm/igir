@@ -304,26 +304,7 @@ export default class ROMWriter extends Module {
     try {
       await ROMWriter.ensureOutputDirExists(outputFilePath);
       const tempRawFile = await fsPoly.mktemp(outputFilePath);
-
-      // Optimization: use OS copying if we're going raw->raw without any modifications
-      if (!(inputRomFile instanceof ArchiveEntry)
-        && !(removeHeader && inputRomFile.getFileHeader())
-        && !inputRomFile.getPatch()
-      ) {
-        await fsPoly.copyFile(inputRomFile.getFilePath(), tempRawFile);
-        await fsPoly.rename(tempRawFile, outputFilePath);
-        return true;
-      }
-
-      // Extract the input file, apply any modifications, and pipe the stream to an output file
-      await inputRomFile.createPatchedReadStream(removeHeader, async (stream) => {
-        await this.progressBar.logTrace(`${dat.getName()}: ${inputRomFile.toString()}: piping to ${tempRawFile}`);
-        const writeStream = stream.pipe(fs.createWriteStream(tempRawFile));
-        await new Promise<void>((resolve, reject) => {
-          writeStream.on('finish', resolve);
-          writeStream.on('error', reject);
-        });
-      });
+      await inputRomFile.extractAndPatchToFile(tempRawFile, removeHeader);
       await fsPoly.rename(tempRawFile, outputFilePath);
       return true;
     } catch (e) {
