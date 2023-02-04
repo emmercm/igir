@@ -213,6 +213,10 @@ export default class FsPoly {
     }
   }
 
+  static async size(pathLike: PathLike): Promise<number> {
+    return (await util.promisify(fs.stat)(pathLike)).size;
+  }
+
   /**
    * @link https://gist.github.com/zentala/1e6f72438796d74531803cc3833c039c
    */
