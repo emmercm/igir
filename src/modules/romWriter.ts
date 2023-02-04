@@ -296,8 +296,10 @@ export default class ROMWriter extends Module {
     inputRomFile: File,
     outputFilePath: string,
   ): Promise<boolean> {
-    const removeHeader = this.options
-      .canRemoveHeader(dat, path.extname(inputRomFile.getExtractedFilePath()));
+    const removeHeader = this.options.canRemoveHeader(
+      dat,
+      path.extname(inputRomFile.getExtractedFilePath()),
+    );
 
     try {
       await ROMWriter.ensureOutputDirExists(outputFilePath);
@@ -314,14 +316,14 @@ export default class ROMWriter extends Module {
       }
 
       // Extract the input file, apply any modifications, and pipe the stream to an output file
-      await inputRomFile.createReadStream(async (readStream) => {
+      await inputRomFile.createPatchedReadStream(removeHeader, async (stream) => {
         await this.progressBar.logTrace(`${dat.getName()}: ${inputRomFile.toString()}: piping to ${tempRawFile}`);
-        const writeStream = readStream.pipe(fs.createWriteStream(tempRawFile));
+        const writeStream = stream.pipe(fs.createWriteStream(tempRawFile));
         await new Promise<void>((resolve, reject) => {
           writeStream.on('finish', resolve);
           writeStream.on('error', reject);
         });
-      }, removeHeader);
+      });
       await fsPoly.rename(tempRawFile, outputFilePath);
       return true;
     } catch (e) {

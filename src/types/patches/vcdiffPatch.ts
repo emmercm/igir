@@ -1,7 +1,4 @@
 // eslint-disable-next-line max-classes-per-file
-import path from 'path';
-
-import Constants from '../../constants.js';
 import FilePoly from '../../polyfill/filePoly.js';
 import fsPoly from '../../polyfill/fsPoly.js';
 import File from '../files/file.js';
@@ -441,35 +438,34 @@ export default class VcdiffPatch extends Patch {
     return new VcdiffPatch(file, crcBefore);
   }
 
-  async applyToTempFile<T>(
-    inputRomFile: File,
-    callback: (tempFile: string) => (Promise<T> | T),
-  ): Promise<T> {
+  async createPatchedFile(inputRomFile: File, outputRomPath: string): Promise<void> {
     /* eslint-disable no-bitwise */
-    return this.getFile().extractToFilePoly('r', async (patchFile) => {
+    return this.getFile().extractToTempFilePoly('r', async (patchFile) => {
       const copyCache = new VcdiffCache();
       const header = await VcdiffHeader.fromFilePoly(patchFile);
 
-      return VcdiffPatch.writeOutputFile(inputRomFile, patchFile, header, copyCache, callback);
+      return VcdiffPatch.writeOutputFile(
+        inputRomFile,
+        outputRomPath,
+        patchFile,
+        header,
+        copyCache,
+      );
     });
   }
 
-  private static async writeOutputFile<T>(
+  private static async writeOutputFile(
     inputRomFile: File,
+    outputRomPath: string,
     patchFile: FilePoly,
     header: VcdiffHeader,
     copyCache: VcdiffCache,
-    callback: (tempFile: string) => (Promise<T> | T),
-  ): Promise<T> {
-    return inputRomFile.copyToTempFile(async (tempRomFile) => {
+  ): Promise<void> {
+    return inputRomFile.extractToTempFile(async (tempRomFile) => {
       const sourceFile = await FilePoly.fileFrom(tempRomFile, 'r');
 
-      const targetFilePath = await fsPoly.mktemp(path.join(
-        Constants.GLOBAL_TEMP_DIR,
-        `${path.basename(tempRomFile)}.vcdiff`,
-      ));
-      await fsPoly.copyFile(tempRomFile, targetFilePath);
-      const targetFile = await FilePoly.fileFrom(targetFilePath, 'r+');
+      await fsPoly.copyFile(tempRomFile, outputRomPath);
+      const targetFile = await FilePoly.fileFrom(outputRomPath, 'r+');
 
       try {
         await VcdiffPatch.applyPatch(patchFile, sourceFile, targetFile, header, copyCache);
@@ -477,10 +473,6 @@ export default class VcdiffPatch extends Patch {
         await targetFile.close();
         await sourceFile.close();
       }
-
-      const callbackResult = await callback(targetFilePath);
-      await fsPoly.rm(targetFilePath, { force: true });
-      return callbackResult;
     });
   }
 

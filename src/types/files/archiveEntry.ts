@@ -81,7 +81,7 @@ export default class ArchiveEntry<A extends Archive> extends File {
     return this.entryPath;
   }
 
-  async copyToFile(
+  async extractToFile(
     extractedFilePath: string,
   ): Promise<void> {
     return ArchiveEntry.extractEntryToFile(
@@ -99,7 +99,7 @@ export default class ArchiveEntry<A extends Archive> extends File {
     return archive.extractEntryToFile(entryPath, extractedFilePath);
   }
 
-  async copyToTempFile<T>(
+  async extractToTempFile<T>(
     callback: (tempFile: string) => (T | Promise<T>),
   ): Promise<T> {
     return ArchiveEntry.extractEntryToTempFile(this.getArchive(), this.getEntryPath(), callback);
@@ -115,33 +115,17 @@ export default class ArchiveEntry<A extends Archive> extends File {
 
   async createReadStream<T>(
     callback: (stream: Readable) => (T | Promise<T>),
-    removeHeader = false,
+    start = 0,
   ): Promise<T> {
-    const start = removeHeader && this.getFileHeader()
-      ? this.getFileHeader()?.getDataOffsetBytes() || 0
-      : 0;
-
-    // Apply the patch if there is one
-    if (this.getPatch()) {
-      const patch = this.getPatch() as Patch;
-      return patch.applyToTempFile(this, async (tempFile) => File
-        .createStreamFromFile(tempFile, start, callback));
-    }
-
     // Don't extract to memory if this archive entry size is too large, or if we need to manipulate
     // the stream start point
     if (this.getSize() > Constants.MAX_MEMORY_FILE_SIZE || start > 0) {
-      return this.copyToTempFile(
+      return this.extractToTempFile(
         async (tempFile) => File.createStreamFromFile(tempFile, start, callback),
       );
     }
 
-    const tempDir = await fsPoly.mkdtemp(path.join(Constants.GLOBAL_TEMP_DIR, 'xstream'));
-    try {
-      return await this.archive.extractEntryToStream(this.getEntryPath(), callback);
-    } finally {
-      await fsPoly.rm(tempDir, { recursive: true });
-    }
+    return this.archive.extractEntryToStream(this.getEntryPath(), callback);
   }
 
   async withFileHeader(fileHeader: FileHeader): Promise<File> {

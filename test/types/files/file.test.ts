@@ -78,7 +78,7 @@ describe('copyToTempFile', () => {
     /* eslint-disable no-await-in-loop */
     for (let i = 0; i < raws.length; i += 1) {
       const raw = raws[i];
-      await raw.copyToTempFile(async (tempFile) => {
+      await raw.extractToTempFile(async (tempFile) => {
         await expect(fsPoly.exists(tempFile)).resolves.toEqual(true);
         expect(tempFile).not.toEqual(raw.getFilePath());
       });

@@ -125,7 +125,7 @@ describe('copyToTempFile', () => {
     /* eslint-disable no-await-in-loop */
     for (let i = 0; i < archiveEntries.length; i += 1) {
       const archiveEntry = archiveEntries[i];
-      await archiveEntry.copyToTempFile(async (tempFile) => {
+      await archiveEntry.extractToTempFile(async (tempFile) => {
         await expect(fsPoly.exists(tempFile)).resolves.toEqual(true);
         expect(tempFile).not.toEqual(archiveEntry.getFilePath());
       });

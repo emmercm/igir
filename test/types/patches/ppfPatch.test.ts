@@ -50,17 +50,21 @@ describe('apply', () => {
     ['AAAAAAAAAA', Buffer.from('5050463330025061746368206465736372697074696f6e0000000000000000000000000000000000000000000000000000000000000000000000000001000000000000000942434445464748494a', 'hex'), 'ABCDEFGHIJ'],
     ['AAAAAAAAAAAAAAAAAAAA', Buffer.from('5050463330025061746368206465736372697074696f6e00000000000000000000000000000000000000000000000000000000000000000000000000010000000000000005424344454610000000000000000445454545', 'hex'), 'ABCDEFAAAAAAAAAAEEEE'],
   ])('should apply the patch #%#: %s', async (baseContents, patchContents, expectedContents) => {
-    const rom = await writeTemp('ROM', baseContents);
-    const patch = PPFPatch.patchFrom(await writeTemp('00000000 patch.ppf', patchContents));
+    const inputRom = await writeTemp('ROM', baseContents);
+    const outputRom = await fsPoly.mktemp('ROM');
+    const patchFile = await writeTemp('00000000 patch.ppf', patchContents);
 
-    await patch.applyToTempFile(rom, async (tempFile) => {
+    try {
+      const patch = PPFPatch.patchFrom(patchFile);
+      await patch.createPatchedFile(inputRom, outputRom);
       const actualContents = (
-        await bufferPoly.fromReadable(fs.createReadStream(tempFile))
+        await bufferPoly.fromReadable(fs.createReadStream(outputRom))
       ).toString();
       expect(actualContents).toEqual(expectedContents);
-    });
-
-    await fsPoly.rm(rom.getFilePath());
-    await fsPoly.rm(patch.getFile().getFilePath());
+    } finally {
+      await fsPoly.rm(inputRom.getFilePath());
+      await fsPoly.rm(outputRom);
+      await fsPoly.rm(patchFile.getFilePath());
+    }
   });
 });

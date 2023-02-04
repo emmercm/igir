@@ -47,11 +47,11 @@ export default class Zip extends Archive {
 
     return this.extractEntryToStream(
       entryPath,
-      async (readStream) => new Promise((resolve, reject) => {
+      async (stream) => new Promise((resolve, reject) => {
         const writeStream = fs.createWriteStream(extractedFilePath);
         writeStream.on('close', resolve);
         writeStream.on('error', reject);
-        readStream.pipe(writeStream);
+        stream.pipe(writeStream);
       }),
     );
   }
@@ -113,10 +113,15 @@ export default class Zip extends Archive {
        *  also want to make sure the queue processing stays busy.
        */
       3,
-      async ([inputFile, outputArchiveEntry], callback) => inputFile
-        .createReadStream(async (readStream) => {
+      async ([inputFile, outputArchiveEntry], callback) => {
+        const removeHeader = options.canRemoveHeader(
+          dat,
+          path.extname(inputFile.getExtractedFilePath()),
+        );
+
+        return inputFile.createPatchedReadStream(removeHeader, async (stream) => {
           const entryName = outputArchiveEntry.getEntryPath().replace(/[\\/]/g, '/');
-          zipFile.append(readStream, {
+          zipFile.append(stream, {
             name: entryName,
           });
 
@@ -130,7 +135,8 @@ export default class Zip extends Archive {
             }, 10);
           });
           callback();
-        }, options.canRemoveHeader(dat, path.extname(inputFile.getExtractedFilePath()))),
+        });
+      },
     );
 
     // Finalize writing the zip file
