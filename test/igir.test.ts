@@ -79,7 +79,7 @@ describe('with explicit dats', () => {
       [path.join('Headered', 'color_test.nes'), 'c9c1b7aa'],
       [path.join('Headered', 'diagnostic_test_cartridge.a78.7z|diagnostic_test_cartridge.a78'), 'f6cc9b1c'],
       [path.join('Headered', 'fds_joypad_test.fds.zip|fds_joypad_test.fds'), '1e58456d'],
-      [path.join('Headered', 'LCDTestROM.lnx.rar|LCDTestROM.lnx'), '2d251538'], // TODO(cemmer): why?
+      [path.join('Headered', 'LCDTestROM.lnx.rar|LCDTestROM.lnx'), '2d251538'],
       [path.join('Headered', 'speed_test_v51.smc'), '9adca6cc'],
       [path.join('One', 'Fizzbuzz.rom'), '370517b5'],
       [path.join('One', 'Foobar.rom'), 'b22c9747'],
