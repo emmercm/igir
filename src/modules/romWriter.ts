@@ -1,4 +1,3 @@
-import async from 'async';
 import { Semaphore } from 'async-mutex';
 import fs from 'fs';
 import path from 'path';
@@ -22,11 +21,15 @@ import Module from './module.js';
  * This class may be run concurrently with other classes.
  */
 export default class ROMWriter extends Module {
-  private static SEMAPHORE_SIZE_KILOBYTES = Constants.ROM_WRITER_MAX_CONCURRENT_KILOBYTES;
+  private static readonly THREAD_SEMAPHORE = new Semaphore(Constants.ROM_WRITER_THREADS);
+
+  private static FILESIZE_SEMAPHORE_KILOBYTES = Constants.ROM_WRITER_MAX_CONCURRENT_KILOBYTES;
 
   // WARN(cemmer): there is an undocumented semaphore max value that can be used, the full
   //  4,700,372,992 bytes of a DVD+R will cause runExclusive() to never run or return.
-  private static readonly SEMAPHORE = new Semaphore(ROMWriter.SEMAPHORE_SIZE_KILOBYTES);
+  private static readonly FILESIZE_SEMAPHORE = new Semaphore(
+    ROMWriter.FILESIZE_SEMAPHORE_KILOBYTES,
+  );
 
   private readonly options: Options;
 
@@ -54,10 +57,8 @@ export default class ROMWriter extends Module {
     await this.progressBar.setSymbol(ProgressBarSymbol.WRITING);
     await this.progressBar.reset(parentsToCandidates.size);
 
-    await async.eachLimit(
-      [...parentsToCandidates.entries()],
-      Constants.ROM_WRITER_THREADS_PER_DAT,
-      async ([parent, releaseCandidates], callback) => {
+    await Promise.all([...parentsToCandidates.entries()].map(
+      async ([parent, releaseCandidates]) => ROMWriter.THREAD_SEMAPHORE.runExclusive(async () => {
         await this.progressBar.logTrace(`${dat.getName()}: ${parent.getName()}: writing ${releaseCandidates.length.toLocaleString()} candidate${releaseCandidates.length !== 1 ? 's' : ''}`);
 
         /* eslint-disable no-await-in-loop */
@@ -67,9 +68,8 @@ export default class ROMWriter extends Module {
         }
 
         await this.progressBar.increment();
-        callback();
-      },
-    );
+      }),
+    ));
 
     if (this.filesQueuedForDeletion.length) {
       await this.progressBar.logDebug(`${dat.getName()}: Deleting moved files`);
@@ -93,14 +93,14 @@ export default class ROMWriter extends Module {
 
     const totalKilobytes = Math.max(1, Math.round(releaseCandidate.getRomsWithFiles()
       .reduce((sum, romWithFiles) => sum + romWithFiles.getInputFile().getSize(), 0) / 1024));
-    if (totalKilobytes > ROMWriter.SEMAPHORE_SIZE_KILOBYTES) {
-      const increase = totalKilobytes - ROMWriter.SEMAPHORE_SIZE_KILOBYTES;
-      await this.progressBar.logInfo(`Increasing max filesize from ${fsPoly.sizeReadable(ROMWriter.SEMAPHORE_SIZE_KILOBYTES * 1024)} to ${(ROMWriter.SEMAPHORE_SIZE_KILOBYTES + increase) * 1024}`);
-      ROMWriter.SEMAPHORE.setValue(ROMWriter.SEMAPHORE.getValue() + increase);
-      ROMWriter.SEMAPHORE_SIZE_KILOBYTES += increase;
+    if (totalKilobytes > ROMWriter.FILESIZE_SEMAPHORE_KILOBYTES) {
+      const increase = totalKilobytes - ROMWriter.FILESIZE_SEMAPHORE_KILOBYTES;
+      await this.progressBar.logInfo(`Increasing max filesize from ${fsPoly.sizeReadable(ROMWriter.FILESIZE_SEMAPHORE_KILOBYTES * 1024)} to ${(ROMWriter.FILESIZE_SEMAPHORE_KILOBYTES + increase) * 1024}`);
+      ROMWriter.FILESIZE_SEMAPHORE.setValue(ROMWriter.FILESIZE_SEMAPHORE.getValue() + increase);
+      ROMWriter.FILESIZE_SEMAPHORE_KILOBYTES += increase;
     }
 
-    await ROMWriter.SEMAPHORE.runExclusive(async () => {
+    await ROMWriter.FILESIZE_SEMAPHORE.runExclusive(async () => {
       const waitingMessage = `${releaseCandidate.getName()} ...`;
       this.progressBar.addWaitingMessage(waitingMessage);
 
@@ -187,7 +187,7 @@ export default class ROMWriter extends Module {
     outputZip: Zip,
     expectedArchiveEntries: ArchiveEntry<Zip>[],
   ): Promise<string | undefined> {
-    await this.progressBar.logTrace(`${dat.getName()}: ${outputZip.getFilePath()}: testing`);
+    await this.progressBar.logTrace(`${dat.getName()}: ${outputZip.getFilePath()}: testing zip`);
 
     const expectedEntriesByPath = expectedArchiveEntries
       .reduce((map, entry) => {
@@ -343,7 +343,7 @@ export default class ROMWriter extends Module {
     outputFilePath: string,
     expectedFile: File,
   ): Promise<string | undefined> {
-    await this.progressBar.logTrace(`${dat.getName()}: ${outputFilePath}: testing`);
+    await this.progressBar.logTrace(`${dat.getName()}: ${outputFilePath}: testing raw`);
 
     // Check checksum
     if (expectedFile.getCrc32() === '00000000') {

@@ -260,7 +260,10 @@ export default class File {
     start: number,
     callback: (stream: Readable) => (Promise<T> | T),
   ): Promise<T> {
-    const stream = fs.createReadStream(filePath, { start });
+    const stream = fs.createReadStream(filePath, {
+      start,
+      highWaterMark: Constants.FILE_READING_CHUNK_SIZE,
+    });
     try {
       return await callback(stream);
     } finally {
