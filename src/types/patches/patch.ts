@@ -19,20 +19,13 @@ export default abstract class Patch {
     this.sizeAfter = sizeAfter;
   }
 
-  protected static getCrcFromPath(filePath: string): string {
-    const { name } = path.parse(filePath);
-
-    const beforeMatches = name.match(/^([a-f0-9]{8})[^a-z0-9]/i);
-    if (beforeMatches && beforeMatches?.length >= 2) {
-      return beforeMatches[1].toLowerCase();
+  protected static getCrcFromPath(fileBasename: string): string {
+    const matches = fileBasename.match(/(^|[^a-z0-9])([a-f0-9]{8})([^a-z0-9]|$)/i);
+    if (matches && matches?.length >= 3) {
+      return matches[2].toLowerCase();
     }
 
-    const afterMatches = name.match(/[^a-z0-9]([a-f0-9]{8})$/i);
-    if (afterMatches && afterMatches?.length >= 2) {
-      return afterMatches[1].toLowerCase();
-    }
-
-    throw new Error(`Couldn't parse base file CRC for patch: ${filePath}`);
+    throw new Error(`Couldn't parse base file CRC for patch: ${fileBasename}`);
   }
 
   getFile(): File {

@@ -118,20 +118,16 @@ export default class Igir {
   }
 
   private async processDATScanner(): Promise<DAT[]> {
-    if (!this.options.getDatFileCount()) {
+    if (!this.options.usingDats()) {
+      this.logger.warn('No DAT files provided, consider using some for the best results!');
       return [];
     }
 
     const progressBar = await this.logger.addProgressBar('Scanning for DATs');
     const dats = await new DATScanner(this.options, progressBar).scan();
     if (!dats.length) {
-      progressBar.delete();
-      if (this.options.usingDats()) {
-        ProgressBarCLI.stop();
-        throw new Error('No valid DAT files found!');
-      }
-      await progressBar.logWarn('No DAT files provided, consider using some for the best results!');
-      return [];
+      ProgressBarCLI.stop();
+      throw new Error('No valid DAT files found!');
     }
 
     await progressBar.doneItems(dats.length, 'unique DAT', 'found');
