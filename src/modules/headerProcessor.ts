@@ -29,7 +29,7 @@ export default class HeaderProcessor extends Module {
 
     const parsedFiles = async.mapLimit(
       inputRomFiles,
-      Constants.ROM_HEADER_HASHER_THREADS,
+      Constants.ROM_HEADER_PROCESSOR_THREADS,
       async (inputFile, callback: AsyncResultCallback<File, Error>) => {
         await this.progressBar.increment();
 
