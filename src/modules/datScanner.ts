@@ -120,7 +120,7 @@ export default class DATScanner extends Scanner {
      * Sanity check that this might be a CMPro file, otherwise {@link robloachDatfile} has a chance
      * to throw fatal errors.
      */
-    if (fileContents.match(/^(clrmamepro|game|resource) \(\n(\t.+\n)+\)$/m) === null) {
+    if (fileContents.match(/^(clrmamepro|game|resource) \(\r?\n(\t.+\n)+\)$/m) === null) {
       return undefined;
     }
 
