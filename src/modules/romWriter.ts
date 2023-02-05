@@ -234,6 +234,7 @@ export default class ROMWriter extends Module {
       }
     }
 
+    await this.progressBar.logTrace(`${dat.getName()}: ${outputZip.getFilePath()}: test passed`);
     return undefined;
   }
 
@@ -357,6 +358,7 @@ export default class ROMWriter extends Module {
       return `has the CRC ${actualFile.getCrc32()}, expected ${expectedFile.getCrc32()}`;
     }
 
+    await this.progressBar.logTrace(`${dat.getName()}: ${outputFilePath}: test passed`);
     return undefined;
   }
 
