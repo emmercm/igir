@@ -78,10 +78,7 @@ export default class Constants {
    * A sane max number of ROM release candidates to write at once. This will be the limiting factor
    * for consoles with many small ROMs.
    */
-  static readonly ROM_WRITER_THREADS = process.env.NODE_ENV === 'test'
-    || process.env.CI
-    || process.env.JEST_WORKER_ID ? 1_000_000
-    : 20;
+  static readonly ROM_WRITER_THREADS_PER_DAT = 20;
 
   /**
    * Default max filesize of ROM release candidates to write at once. This will be the limiting
