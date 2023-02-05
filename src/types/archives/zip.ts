@@ -142,6 +142,6 @@ export default class Zip extends Archive {
     // Finalize writing the zip file
     await zipFile.finalize();
 
-    await fsPoly.rename(tempZipFile, this.getFilePath());
+    await fsPoly.mv(tempZipFile, this.getFilePath());
   }
 }

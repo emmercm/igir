@@ -94,7 +94,7 @@ export default class Constants {
   /**
    * Max {@link fs} highWaterMark chunk size to read and write at a time.
    */
-  static readonly FILE_READING_CHUNK_SIZE = 1024 * 1024; // 1MiB
+  static readonly FILE_READING_CHUNK_SIZE = fsPoly.FILE_READING_CHUNK_SIZE;
 
   /**
    * Max size of file contents to store in memory vs. temp files.
