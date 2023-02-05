@@ -42,8 +42,9 @@ export default class CandidateGenerator extends Module {
       return output;
     }
 
+    const parents = dat.getParents();
     await this.progressBar.setSymbol(ProgressBarSymbol.GENERATING);
-    await this.progressBar.reset(dat.getParents().length);
+    await this.progressBar.reset(parents.length);
 
     // TODO(cemmer): only do this once globally, not per DAT
     // TODO(cemmer): ability to index files by some other property such as name
@@ -52,8 +53,8 @@ export default class CandidateGenerator extends Module {
 
     // For each parent, try to generate a parent candidate
     /* eslint-disable no-await-in-loop */
-    for (let i = 0; i < dat.getParents().length; i += 1) {
-      const parent = dat.getParents()[i];
+    for (let i = 0; i < parents.length; i += 1) {
+      const parent = parents[i];
 
       const releaseCandidates: ReleaseCandidate[] = [];
 
