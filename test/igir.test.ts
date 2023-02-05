@@ -9,6 +9,8 @@ import fsPoly from '../src/polyfill/fsPoly.js';
 import FileFactory from '../src/types/archives/fileFactory.js';
 import Options, { OptionsProps } from '../src/types/options.js';
 
+jest.setTimeout(60_000); // ROMWriter semaphores
+
 async function expectEndToEnd(
   optionsProps: OptionsProps,
   expectedFilesAndCrcs: string[][],

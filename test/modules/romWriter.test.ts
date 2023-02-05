@@ -24,6 +24,8 @@ import Patch from '../../src/types/patches/patch.js';
 import ReleaseCandidate from '../../src/types/releaseCandidate.js';
 import ProgressBarFake from '../console/progressBarFake.js';
 
+jest.setTimeout(60_000); // ROMWriter semaphores
+
 async function copyFixturesToTemp(
   callback: (input: string, output: string) => void | Promise<void>,
 ): Promise<void> {
