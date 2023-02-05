@@ -1,3 +1,4 @@
+import { jest } from '@jest/globals';
 import fg from 'fast-glob';
 import path from 'path';
 
