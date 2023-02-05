@@ -21,6 +21,8 @@ import Module from './module.js';
  * This class may be run concurrently with other classes.
  */
 export default class ROMWriter extends Module {
+  private static readonly THREAD_SEMAPHORE = new Semaphore(Constants.ROM_WRITER_THREADS);
+
   private static FILESIZE_SEMAPHORE_KILOBYTES = Constants.ROM_WRITER_MAX_CONCURRENT_KILOBYTES;
 
   // WARN(cemmer): there is an undocumented semaphore max value that can be used, the full
@@ -55,9 +57,8 @@ export default class ROMWriter extends Module {
     await this.progressBar.setSymbol(ProgressBarSymbol.WRITING);
     await this.progressBar.reset(parentsToCandidates.size);
 
-    const threadSemaphore = new Semaphore(Constants.ROM_WRITER_THREADS_PER_DAT);
     await Promise.all([...parentsToCandidates.entries()].map(
-      async ([parent, releaseCandidates]) => threadSemaphore.runExclusive(async () => {
+      async ([parent, releaseCandidates]) => ROMWriter.THREAD_SEMAPHORE.runExclusive(async () => {
         await this.progressBar.logTrace(`${dat.getName()}: ${parent.getName()}: writing ${releaseCandidates.length.toLocaleString()} candidate${releaseCandidates.length !== 1 ? 's' : ''}`);
 
         /* eslint-disable no-await-in-loop */
