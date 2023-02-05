@@ -330,7 +330,7 @@ export default class ROMWriter extends Module {
       await ROMWriter.ensureOutputDirExists(outputFilePath);
       const tempRawFile = await fsPoly.mktemp(outputFilePath);
       await inputRomFile.extractAndPatchToFile(tempRawFile, removeHeader);
-      await fsPoly.rename(tempRawFile, outputFilePath);
+      await fsPoly.mv(tempRawFile, outputFilePath);
       return true;
     } catch (e) {
       await this.progressBar.logError(`${dat.getName()}: ${inputRomFile.toString()}: failed to copy to ${outputFilePath} : ${e}`);
