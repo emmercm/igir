@@ -1,35 +1,42 @@
-<?xml version="1.0"?>
-<!DOCTYPE datafile PUBLIC "-//Logiqx//DTD ROM Management Datafile//EN" "http://www.logiqx.com/Dats/datafile.dtd">
-<datafile>
-  <header>
-    <name>Headered</name>
-    <description>Headered</description>
-    <version>20221101</version>
-    <author>emmercm</author>
-  </header>
+clrmamepro (
+	name "Headered"
+	description "Headered"
+	version 20230203
+	author emmercm
+)
 
-  <game name="allpads">
-    <description>allpads</description>
-    <rom name="allpads.nes" size="32784" crc="9180a163" md5="dd0b01b99083da35b096da7818223802" sha1="65c4981c2d5e9b5c6735a8b42f520fb95ee160f6"/>
-  </game>
-  <game name="color_test">
-    <description>color_test</description>
-    <rom name="color_test.nes" size="40976" crc="c9c1b7aa" md5="0c09743a41d469c1da119316a23f15ba" sha1="7f5a5f590c17b8178350f79883caa18d8df305a1"/>
-  </game>
-  <game name="diagnostic_test_cartridge">
-    <description>diagnostic_test_cartridge</description>
-    <rom name="diagnostic_test_cartridge.a78" size="32896" crc="f6cc9b1c" md5="8df5c10517da1c001072fd5526e4a683" sha1="f1da35db85f99db8803ae088499cb9dc148fe0c6"/>
-  </game>
-  <game name="fds_joypad_test">
-    <description>fds_joypad_test</description>
-    <rom name="fds_joypad_test.fds" size="65500" crc="1e58456d" md5="74362ca7d47e67e2d3e62f6283ecf879" sha1="f7b31cc2b6ef841cc51df1711462c07b0994db98"/>
-  </game>
-  <game name="LCDTestROM">
-    <description>LCDTestROM</description>
-    <rom name="LCDTestROM.lnx" size="5366" crc="2d251538" md5="1ea102719a2fc3b767df0d2d367a8371" sha1="3882fcc1c94579a47a213224c572c006d62867f0"/>
-  </game>
-  <game name="speed_test_v51">
-    <description>speed_test_v51</description>
-    <rom name="speed_test_v51.smc" size="66048" crc="9adca6cc" md5="472f75cef1da864a0b8839ea887eeebc" sha1="df36a2352229317a9f51d97f75b7a443563b78d4"/>
-  </game>
-</datafile>
+game (
+	name "allpads"
+	description "allpads"
+	rom ( name allpads.nes size 32784 crc 9180a163 md5 dd0b01b99083da35b096da7818223802 sha1 65c4981c2d5e9b5c6735a8b42f520fb95ee160f6 )
+)
+
+game (
+	name "color_test"
+	description "color_test"
+	rom ( name color_test.nes size 40976 crc c9c1b7aa md5 0c09743a41d469c1da119316a23f15ba sha1 7f5a5f590c17b8178350f79883caa18d8df305a1 )
+)
+
+game (
+	name "diagnostic_test_cartridge"
+	description "diagnostic_test_cartridge"
+	rom ( name diagnostic_test_cartridge.a78 size 32896 crc f6cc9b1c md5 8df5c10517da1c001072fd5526e4a683 sha1 f1da35db85f99db8803ae088499cb9dc148fe0c6 )
+)
+
+game (
+	name "fds_joypad_test"
+	description "fds_joypad_test"
+	rom ( name fds_joypad_test.fds size 65500 crc 1e58456d md5 74362ca7d47e67e2d3e62f6283ecf879 sha1 f7b31cc2b6ef841cc51df1711462c07b0994db98 )
+)
+
+game (
+	name "LCDTestROM"
+	description "LCDTestROM"
+	rom ( name LCDTestROM.lnx size 5366 crc 2d251538 md5 1ea102719a2fc3b767df0d2d367a8371 sha1 3882fcc1c94579a47a213224c572c006d62867f0 )
+)
+
+game (
+	name "speed_test_v51"
+	description "speed_test_v51"
+	rom ( name speed_test_v51.smc size 66048 crc 9adca6cc md5 472f75cef1da864a0b8839ea887eeebc sha1 df36a2352229317a9f51d97f75b7a443563b78d4 )
+)

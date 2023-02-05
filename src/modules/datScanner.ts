@@ -1,4 +1,5 @@
 import async, { AsyncResultCallback } from 'async';
+import robloachDatfile from 'robloach-datfile';
 import xml2js from 'xml2js';
 
 import ProgressBar, { ProgressBarSymbol } from '../console/progressBar.js';
@@ -8,6 +9,9 @@ import fsPoly from '../polyfill/fsPoly.js';
 import File from '../types/files/file.js';
 import DAT from '../types/logiqx/dat.js';
 import DataFile from '../types/logiqx/dataFile.js';
+import Game from '../types/logiqx/game.js';
+import Header from '../types/logiqx/header.js';
+import ROM from '../types/logiqx/rom.js';
 import Options from '../types/options.js';
 import Scanner from './scanner.js';
 
@@ -47,7 +51,7 @@ export default class DATScanner extends Scanner {
       const size = dat.getGames()
         .flatMap((game) => game.getRoms())
         .reduce((sum, rom) => sum + rom.getSize(), 0);
-      return `${dat.getName()}: ${fsPoly.sizeReadable(size)} of ROMs, ${dat.getGames().length.toLocaleString()} game${dat.getGames().length !== 1 ? 's' : ''}, ${dat.getParents().length.toLocaleString()} parent${dat.getParents().length !== 1 ? 's' : ''} parsed`;
+      return `${dat.getName()}: ${fsPoly.sizeReadable(size)} of ${dat.getGames().length.toLocaleString()} game${dat.getGames().length !== 1 ? 's' : ''}, ${dat.getParents().length.toLocaleString()} parent${dat.getParents().length !== 1 ? 's' : ''} parsed`;
     }).join('\n'));
     await this.progressBar.logInfo('Done scanning DAT files');
     return dats;
@@ -60,38 +64,93 @@ export default class DATScanner extends Scanner {
       datFiles,
       Constants.DAT_SCANNER_THREADS,
       async (datFile: File, callback: AsyncResultCallback<DAT | undefined, Error>) => {
-        const xmlObject = await this.parseDatFile(datFile);
-        if (xmlObject) {
-          try {
-            const dat = DAT.fromObject(xmlObject.datafile);
-            return callback(null, dat);
-          } catch (e) {
-            await this.progressBar.logWarn(`${datFile.toString()}: failed to parse DAT object : ${e}`);
-          }
-        }
-
+        const dat = await this.parseDatFile(datFile);
         await this.progressBar.increment();
-        return callback(null);
+        return callback(null, dat);
       },
     )).filter((xmlObject) => xmlObject) as DAT[];
 
     return results.sort((a, b) => a.getNameShort().localeCompare(b.getNameShort()));
   }
 
-  private async parseDatFile(datFile: File): Promise<DataFile | undefined> {
-    await this.progressBar.logTrace(`${datFile.toString()}: parsing XML`);
+  private async parseDatFile(datFile: File): Promise<DAT | undefined> {
     return datFile.createReadStream(async (stream) => {
-      try {
-        const xmlContents = await bufferPoly.fromReadable(stream);
-        return await xml2js.parseStringPromise(xmlContents.toString(), {
-          mergeAttrs: true,
-          explicitArray: false,
-        });
-      } catch (e) {
-        const message = (e as Error).message.split('\n').join(', ');
-        await this.progressBar.logWarn(`${datFile.toString()}: failed to parse DAT XML : ${message}`);
-        return undefined;
+      const fileContents = (await bufferPoly.fromReadable(stream)).toString();
+
+      const xmlDat = await this.parseXmlDat(datFile, fileContents);
+      if (xmlDat) {
+        return xmlDat;
       }
+
+      const cmproDatParsed = await this.parseCmproDat(datFile, fileContents);
+      if (cmproDatParsed) {
+        return cmproDatParsed;
+      }
+
+      await this.progressBar.logDebug(`${datFile.toString()}: failed to parse DAT file`);
+      return undefined;
     });
+  }
+
+  private async parseXmlDat(datFile: File, fileContents: string): Promise<DAT | undefined> {
+    await this.progressBar.logTrace(`${datFile.toString()}: parsing XML`);
+
+    let xmlObject: DataFile;
+    try {
+      xmlObject = await xml2js.parseStringPromise(fileContents, {
+        mergeAttrs: true,
+        explicitArray: false,
+      });
+    } catch (e) {
+      const message = (e as Error).message.split('\n').join(', ');
+      await this.progressBar.logDebug(`${datFile.toString()}: failed to parse XML : ${message}`);
+      return undefined;
+    }
+
+    try {
+      return DAT.fromObject(xmlObject.datafile);
+    } catch (e) {
+      await this.progressBar.logDebug(`${datFile.toString()}: failed to parse DAT object : ${e}`);
+      return undefined;
+    }
+  }
+
+  private async parseCmproDat(datFile: File, fileContents: string): Promise<DAT | undefined> {
+    /**
+     * Sanity check that this might be a CMPro file, otherwise {@link robloachDatfile} has a chance
+     * to throw fatal errors.
+     */
+    if (fileContents.match(/^(clrmamepro|game|resource) \(\n(\t.+\n)+\)$/m) === null) {
+      return undefined;
+    }
+
+    try {
+      const datfile = await robloachDatfile.parse(fileContents);
+      if (!datfile.length) {
+        throw new Error('TODO(cemmer)');
+      }
+
+      const header = new Header(datfile[0]);
+
+      const games = datfile.slice(1).map((obj) => {
+        const game = obj as DatfileGame;
+        const roms = game.entries
+          .filter((rom) => rom.name) // we need ROM filenames
+          .map((entry) => new ROM(
+            entry.name || '',
+            parseInt(entry.size || '0', 10),
+            entry.crc || '',
+          ));
+        return new Game({
+          ...game,
+          rom: roms,
+        });
+      });
+
+      return new DAT(header, games);
+    } catch (e) {
+      await this.progressBar.logDebug(`${datFile.toString()}: failed to parse CMPro : ${e}`);
+      return undefined;
+    }
   }
 }
