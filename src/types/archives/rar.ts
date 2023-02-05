@@ -29,13 +29,10 @@ export default class Rar extends Archive {
       )));
   }
 
-  async extractEntryToFile<T>(
+  async extractEntryToFile(
     entryPath: string,
-    tempDir: string,
-    callback: (localFile: string) => (T | Promise<T>),
-  ): Promise<T> {
-    const localFile = path.join(tempDir, entryPath);
-
+    extractedFilePath: string,
+  ): Promise<void> {
     /**
      * WARN(cemmer): {@link unrar.extract} seems to have issues with extracting files to different
      * directories at the same time, it will sometimes extract to the wrong directory. Try to
@@ -44,7 +41,8 @@ export default class Rar extends Archive {
     await Rar.EXTRACT_MUTEX.runExclusive(async () => {
       const rar = await unrar.createExtractorFromFile({
         filepath: this.getFilePath(),
-        targetPath: tempDir,
+        targetPath: path.dirname(extractedFilePath),
+        filenameTransform: () => path.basename(extractedFilePath),
       });
       // For whatever reason, the library author decided to delay extraction until the file is
       // iterated, so we have to execute this expression, but can throw away the results
@@ -53,7 +51,5 @@ export default class Rar extends Archive {
         files: [entryPath.replace(/[\\/]/g, '/')],
       }).files];
     });
-
-    return callback(localFile);
   }
 }

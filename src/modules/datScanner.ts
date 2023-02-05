@@ -4,6 +4,7 @@ import xml2js from 'xml2js';
 import ProgressBar, { ProgressBarSymbol } from '../console/progressBar.js';
 import Constants from '../constants.js';
 import bufferPoly from '../polyfill/bufferPoly.js';
+import fsPoly from '../polyfill/fsPoly.js';
 import File from '../types/files/file.js';
 import DAT from '../types/logiqx/dat.js';
 import DataFile from '../types/logiqx/dataFile.js';
@@ -42,7 +43,12 @@ export default class DATScanner extends Scanner {
     await this.progressBar.logDebug('Deserializing DAT XML to objects');
     const dats = await this.parseDatFiles(datFiles);
 
-    await this.progressBar.logTrace(dats.map((dat) => `${dat.getName()}: ${dat.getGames().length.toLocaleString()} games, ${dat.getParents().length.toLocaleString()} parents parsed`).join('\n'));
+    await this.progressBar.logTrace(dats.map((dat) => {
+      const size = dat.getGames()
+        .flatMap((game) => game.getRoms())
+        .reduce((sum, rom) => sum + rom.getSize(), 0);
+      return `${dat.getName()}: ${fsPoly.sizeReadable(size)} of ROMs, ${dat.getGames().length.toLocaleString()} game${dat.getGames().length !== 1 ? 's' : ''}, ${dat.getParents().length.toLocaleString()} parent${dat.getParents().length !== 1 ? 's' : ''} parsed`;
+    }).join('\n'));
     await this.progressBar.logInfo('Done scanning DAT files');
     return dats;
   }
@@ -74,7 +80,7 @@ export default class DATScanner extends Scanner {
 
   private async parseDatFile(datFile: File): Promise<DataFile | undefined> {
     await this.progressBar.logTrace(`${datFile.toString()}: parsing XML`);
-    return datFile.extractToStream(async (stream) => {
+    return datFile.createReadStream(async (stream) => {
       try {
         const xmlContents = await bufferPoly.fromReadable(stream);
         return await xml2js.parseStringPromise(xmlContents.toString(), {

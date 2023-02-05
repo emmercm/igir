@@ -1,5 +1,6 @@
 import path from 'path';
 
+import Constants from '../../src/constants.js';
 import fsPoly from '../../src/polyfill/fsPoly.js';
 
 describe('makeLegal', () => {
@@ -33,25 +34,52 @@ describe('makeLegal', () => {
 });
 
 describe('rm', () => {
+  it('should throw on missing file', async () => {
+    const tempFile = await fsPoly.mktemp(path.join(Constants.GLOBAL_TEMP_DIR, 'temp'));
+    await expect(fsPoly.exists(tempFile)).resolves.toEqual(false);
+    await expect(fsPoly.rm(tempFile)).rejects.toThrow();
+  });
+
+  it('should not throw on forcing missing file', async () => {
+    const tempFile = await fsPoly.mktemp(path.join(Constants.GLOBAL_TEMP_DIR, 'temp'));
+    await expect(fsPoly.exists(tempFile)).resolves.toEqual(false);
+    await expect(fsPoly.rm(tempFile, { force: true })).resolves.not.toThrow();
+  });
+
   it('should delete an existing file', async () => {
-    const file = await fsPoly.mktemp(path.join(process.cwd(), 'temp'));
-    await fsPoly.touch(file);
-    await fsPoly.rm(file);
-    await expect(fsPoly.exists(file)).resolves.toEqual(false);
+    const tempFile = await fsPoly.mktemp(path.join(Constants.GLOBAL_TEMP_DIR, 'temp'));
+    await fsPoly.touch(tempFile);
+    await expect(fsPoly.exists(tempFile)).resolves.toEqual(true);
+    await fsPoly.rm(tempFile);
+    await expect(fsPoly.exists(tempFile)).resolves.toEqual(false);
   });
 });
 
 describe('rmSync', () => {
+  it('should throw on missing file', async () => {
+    const tempFile = await fsPoly.mktemp(path.join(Constants.GLOBAL_TEMP_DIR, 'temp'));
+    await expect(fsPoly.exists(tempFile)).resolves.toEqual(false);
+    expect(() => fsPoly.rmSync(tempFile)).toThrow();
+  });
+
+  it('should not throw on missing file', async () => {
+    const tempFile = await fsPoly.mktemp(path.join(Constants.GLOBAL_TEMP_DIR, 'temp'));
+    await expect(fsPoly.exists(tempFile)).resolves.toEqual(false);
+    expect(() => fsPoly.rmSync(tempFile, { force: true })).not.toThrow();
+  });
+
   it('should delete an existing file', async () => {
-    const file = await fsPoly.mktemp(path.join(process.cwd(), 'temp'));
-    await fsPoly.touch(file);
-    fsPoly.rmSync(file);
-    await expect(fsPoly.exists(file)).resolves.toEqual(false);
+    const tempFile = await fsPoly.mktemp(path.join(Constants.GLOBAL_TEMP_DIR, 'temp'));
+    await fsPoly.touch(tempFile);
+    await expect(fsPoly.exists(tempFile)).resolves.toEqual(true);
+    fsPoly.rmSync(tempFile);
+    await expect(fsPoly.exists(tempFile)).resolves.toEqual(false);
   });
 
   it('should delete an existing directory', async () => {
-    const dir = await fsPoly.mkdtemp(path.join(process.cwd(), 'temp'));
-    fsPoly.rmSync(dir);
-    await expect(fsPoly.exists(dir)).resolves.toEqual(false);
+    const tempDir = await fsPoly.mkdtemp(path.join(Constants.GLOBAL_TEMP_DIR, 'temp'));
+    await expect(fsPoly.exists(tempDir)).resolves.toEqual(true);
+    fsPoly.rmSync(tempDir);
+    await expect(fsPoly.exists(tempDir)).resolves.toEqual(false);
   });
 });

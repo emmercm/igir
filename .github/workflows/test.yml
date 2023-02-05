@@ -3,6 +3,8 @@
 
 name: Project CI
 
+# TODO(cemmer): test README help message
+
 on:
   pull_request:
     types:

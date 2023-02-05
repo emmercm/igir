@@ -1,6 +1,7 @@
 import path from 'path';
 
 import ProgressBar, { ProgressBarSymbol } from '../console/progressBar.js';
+import fsPoly from '../polyfill/fsPoly.js';
 import Zip from '../types/archives/zip.js';
 import ArchiveEntry from '../types/files/archiveEntry.js';
 import File from '../types/files/file.js';
@@ -87,8 +88,12 @@ export default class CandidateGenerator extends Module {
       await this.progressBar.increment();
     }
 
+    const size = [...output.values()]
+      .flatMap((releaseCandidates) => releaseCandidates)
+      .flatMap((releaseCandidate) => releaseCandidate.getRomsWithFiles())
+      .reduce((sum, romWithFiles) => sum + romWithFiles.getRom().getSize(), 0);
     const totalCandidates = [...output.values()].reduce((sum, rc) => sum + rc.length, 0);
-    await this.progressBar.logDebug(`${dat.getName()}: ${totalCandidates.toLocaleString()} candidate${totalCandidates !== 1 ? 's' : ''} found`);
+    await this.progressBar.logDebug(`${dat.getName()}: generated ${fsPoly.sizeReadable(size)} of ${totalCandidates.toLocaleString()} candidate${totalCandidates !== 1 ? 's' : ''} for ${output.size.toLocaleString()} parent${output.size !== 1 ? 's' : ''}`);
 
     await this.progressBar.logInfo(`${dat.getName()}: Done generating candidates`);
     return output;
@@ -146,6 +151,11 @@ export default class CandidateGenerator extends Module {
         const originalInputFile = hashCodeToInputFiles.get(rom.hashCode());
         if (!originalInputFile) {
           return [rom, undefined];
+        }
+
+        // If we're not writing (report only) then just use the input file for the output file
+        if (!this.options.shouldWrite()) {
+          return [rom, new ROMWithFiles(rom, originalInputFile, originalInputFile)];
         }
 
         // If the matched input file is from an archive, and we're not extracting, then treat the

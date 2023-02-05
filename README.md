@@ -52,7 +52,7 @@ $ igir --help
   | $$  | $$ __\$$  | $$  | $$__| $$
   | $$  | $$|    \  | $$  | $$    $$   ROM collection manager
   | $$  | $$ \$$$$  | $$  | $$$$$$$\
- _| $$_ | $$__| $$ _| $$_ | $$  | $$   v1.0.2
+ _| $$_ | $$__| $$ _| $$_ | $$  | $$   v1.1.0
 |   $$ \ \$$    $$|   $$ \| $$  | $$
  \$$$$$$  \$$$$$$  \$$$$$$ \$$   \$$
 
@@ -131,9 +131,10 @@ Priority options:
       --prefer-parent          Prefer parent ROMs over clones (requires parent/clone DAT files)
                                                                                         [boolean]
 
-Help options:
-  -v, --verbose  Enable verbose logging, can specify up to three times (-vvv)             [count]
-  -h, --help     Show help                                                              [boolean]
+Help & debug options:
+      --dat-threads  Number of DATs to process in parallel                  [number] [default: 3]
+  -v, --verbose      Enable verbose logging, can specify up to three times (-vvv)         [count]
+  -h, --help         Show help                                                          [boolean]
 
 -------------------------------------------------------------------------------------------------
 

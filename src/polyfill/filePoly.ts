@@ -43,7 +43,7 @@ export default class FilePoly {
 
   static async fileOfSize(pathLike: PathLike, flags: OpenMode, size: number): Promise<FilePoly> {
     if (await fsPoly.exists(pathLike)) {
-      await fsPoly.rm(pathLike);
+      await fsPoly.rm(pathLike, { force: true });
     }
 
     const write = await this.fileFrom(pathLike, 'wx');

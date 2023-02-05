@@ -1,11 +1,19 @@
 import crypto from 'crypto';
 import fs, { PathLike, RmOptions } from 'fs';
 import { isNotJunk } from 'junk';
+import nodeDiskInfo from 'node-disk-info';
 import path from 'path';
 import semver from 'semver';
 import util from 'util';
 
 export default class FsPoly {
+  static readonly FILE_READING_CHUNK_SIZE = 1024 * 1024; // 1MiB
+
+  // Assume that all drives we're reading from or writing to were already mounted at startup
+  private static readonly DRIVE_MOUNTS = nodeDiskInfo.getDiskInfoSync()
+    .map((info) => info.mounted)
+    .sort((a, b) => b.split(/[\\/]/).length - a.split(/[\\/]/).length);
+
   static async copyDir(src: string, dest: string): Promise<void> {
     await util.promisify(fs.mkdir)(dest, { recursive: true });
     const entries = await util.promisify(fs.readdir)(src, { withFileTypes: true });
@@ -19,8 +27,17 @@ export default class FsPoly {
       if (entry.isDirectory()) {
         await this.copyDir(srcPath, destPath);
       } else {
-        await util.promisify(fs.copyFile)(srcPath, destPath);
+        await this.copyFile(srcPath, destPath);
       }
+    }
+  }
+
+  static async copyFile(src: string, dest: string): Promise<void> {
+    const previouslyExisted = await this.exists(src);
+    await util.promisify(fs.copyFile)(src, dest);
+    if (previouslyExisted) {
+      // Windows doesn't update mtime on overwrite?
+      await this.touch(dest);
     }
   }
 
@@ -111,20 +128,47 @@ export default class FsPoly {
     while (true) {
       const randomExtension = crypto.randomBytes(4).readUInt32LE(0).toString(36);
       const filePath = `${prefix.replace(/\.+$/, '')}.${randomExtension}`;
-      if (!await util.promisify(fs.exists)(filePath)) {
+      if (!await this.exists(filePath)) {
         return filePath;
       }
     }
   }
 
-  static async rename(oldPath: PathLike, newPath: PathLike): Promise<void> {
+  static async mv(oldPath: string, newPath: string): Promise<void> {
+    /**
+     * WARN(cemmer): {@link fs.rename} appears to be VERY memory intensive when copying across
+     * drives! Instead, we'll use stream piping to keep memory usage low.
+     */
+    if (this.onDifferentDrives(oldPath, newPath)) {
+      const read = fs.createReadStream(oldPath, {
+        highWaterMark: this.FILE_READING_CHUNK_SIZE,
+      });
+      await new Promise((resolve, reject) => {
+        const write = fs.createWriteStream(newPath);
+        write.on('close', resolve);
+        write.on('error', reject);
+        read.pipe(write);
+      });
+      return this.rm(oldPath, { force: true });
+    }
+
     try {
-      await util.promisify(fs.rename)(oldPath, newPath);
+      return await util.promisify(fs.rename)(oldPath, newPath);
     } catch (e) {
       // Attempt to resolve Windows' "EBUSY: resource busy or locked"
       await this.rm(newPath, { force: true });
-      await this.rename(oldPath, newPath);
+      return await this.mv(oldPath, newPath);
     }
+  }
+
+  private static onDifferentDrives(one: string, two: string): boolean {
+    const oneResolved = path.resolve(one);
+    const twoResolved = path.resolve(two);
+    if (path.dirname(oneResolved) === path.dirname(twoResolved)) {
+      return false;
+    }
+    return FsPoly.DRIVE_MOUNTS.find((mount) => oneResolved.startsWith(mount))
+      !== FsPoly.DRIVE_MOUNTS.find((mount) => twoResolved.startsWith(mount));
   }
 
   /**
@@ -202,6 +246,20 @@ export default class FsPoly {
       // Added in: v0.1.21
       fs.unlinkSync(pathLike);
     }
+  }
+
+  static async size(pathLike: PathLike): Promise<number> {
+    return (await util.promisify(fs.stat)(pathLike)).size;
+  }
+
+  /**
+   * @link https://gist.github.com/zentala/1e6f72438796d74531803cc3833c039c
+   */
+  static sizeReadable(bytes: number, decimals = 1): string {
+    const k = 1024;
+    const sizes = ['B', 'KiB', 'MiB', 'GiB', 'TiB', 'PiB', 'EiB', 'ZiB', 'YiB'];
+    const i = bytes === 0 ? 0 : Math.floor(Math.log(bytes) / Math.log(k));
+    return `${parseFloat((bytes / k ** i).toFixed(decimals))}${sizes[i]}`;
   }
 
   static async touch(filePath: string): Promise<void> {

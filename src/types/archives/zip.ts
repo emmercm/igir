@@ -36,39 +36,28 @@ export default class Zip extends Archive {
       )));
   }
 
-  async extractEntryToFile<T>(
+  async extractEntryToFile(
     entryPath: string,
-    tempDir: string,
-    callback: (localFile: string) => (T | Promise<T>),
-  ): Promise<T> {
-    const localFile = path.join(tempDir, entryPath);
-
-    const localDir = path.dirname(localFile);
+    extractedFilePath: string,
+  ): Promise<void> {
+    const localDir = path.dirname(extractedFilePath);
     if (!await fsPoly.exists(localDir)) {
       await util.promisify(fs.mkdir)(localDir, { recursive: true });
     }
 
     return this.extractEntryToStream(
       entryPath,
-      tempDir,
-      async (readStream) => new Promise((resolve, reject) => {
-        const writeStream = fs.createWriteStream(localFile);
-        writeStream.on('close', async () => {
-          try {
-            return resolve(await callback(localFile));
-          } catch (callbackErr) {
-            return reject(callbackErr);
-          }
-        });
-        writeStream.on('error', (err) => reject(err));
-        readStream.pipe(writeStream);
+      async (stream) => new Promise((resolve, reject) => {
+        const writeStream = fs.createWriteStream(extractedFilePath);
+        writeStream.on('close', resolve);
+        writeStream.on('error', reject);
+        stream.pipe(writeStream);
       }),
     );
   }
 
   async extractEntryToStream<T>(
     entryPath: string,
-    tempDir: string,
     callback: (stream: Readable) => (Promise<T> | T),
   ): Promise<T> {
     const archive = await unzipper.Open.file(this.getFilePath());
@@ -114,8 +103,6 @@ export default class Zip extends Archive {
 
     zipFile.pipe(writeStream);
 
-    console.log(`${tempZipFile}: enqueuing`);
-
     // Write all archive entries to the zip
     await async.eachLimit(
       [...inputToOutput.entries()],
@@ -127,35 +114,34 @@ export default class Zip extends Archive {
        */
       3,
       async ([inputFile, outputArchiveEntry], callback) => {
-        console.log(`${inputFile.toString()}: extracting`);
-        return inputFile
-          .extractToStream(async (readStream) => {
-            console.log(`${outputArchiveEntry.toString()}: compressing`);
+        const removeHeader = options.canRemoveHeader(
+          dat,
+          path.extname(inputFile.getExtractedFilePath()),
+        );
 
-            const entryName = outputArchiveEntry.getEntryPath().replace(/[\\/]/g, '/');
-            zipFile.append(readStream, {
-              name: entryName,
-            });
+        return inputFile.createPatchedReadStream(removeHeader, async (stream) => {
+          const entryName = outputArchiveEntry.getEntryPath().replace(/[\\/]/g, '/');
+          zipFile.append(stream, {
+            name: entryName,
+          });
 
-            // Leave the input stream open until we're done writing it
-            await new Promise<void>((resolve) => {
-              const interval = setInterval(() => {
-                if (writtenEntries.has(entryName)) {
-                  clearInterval(interval);
-                  resolve();
-                }
-              }, 10);
-            });
-            callback();
-          }, options.canRemoveHeader(dat, path.extname(inputFile.getExtractedFilePath())));
+          // Leave the input stream open until we're done writing it
+          await new Promise<void>((resolve) => {
+            const interval = setInterval(() => {
+              if (writtenEntries.has(entryName)) {
+                clearInterval(interval);
+                resolve();
+              }
+            }, 10);
+          });
+          callback();
+        });
       },
     );
 
     // Finalize writing the zip file
     await zipFile.finalize();
 
-    // TODO(cemmer): something?
-
-    await fsPoly.rename(tempZipFile, this.getFilePath());
+    await fsPoly.mv(tempZipFile, this.getFilePath());
   }
 }

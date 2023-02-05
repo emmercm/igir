@@ -1,8 +1,4 @@
-import path from 'path';
-
-import Constants from '../../constants.js';
 import FilePoly from '../../polyfill/filePoly.js';
-import fsPoly from '../../polyfill/fsPoly.js';
 import File from '../files/file.js';
 import Patch from './patch.js';
 
@@ -27,18 +23,14 @@ export default class BPSPatch extends Patch {
     let crcAfter = '';
     let targetSize = 0;
 
-    await file.extractToFile(async (patchFile) => {
-      const fp = await FilePoly.fileFrom(patchFile, 'r');
+    await file.extractToTempFilePoly('r', async (patchFile) => {
+      patchFile.seek(4); // header
+      await Patch.readUpsUint(patchFile); // source size
+      targetSize = await Patch.readUpsUint(patchFile); // target size
 
-      fp.seek(4); // header
-      await Patch.readUpsUint(fp); // source size
-      targetSize = await Patch.readUpsUint(fp); // target size
-
-      fp.seek(fp.getSize() - 12);
-      crcBefore = (await fp.readNext(4)).reverse().toString('hex');
-      crcAfter = (await fp.readNext(4)).reverse().toString('hex');
-
-      await fp.close();
+      patchFile.seek(patchFile.getSize() - 12);
+      crcBefore = (await patchFile.readNext(4)).reverse().toString('hex');
+      crcAfter = (await patchFile.readNext(4)).reverse().toString('hex');
     });
 
     if (crcBefore.length !== 8 || crcAfter.length !== 8) {
@@ -48,8 +40,8 @@ export default class BPSPatch extends Patch {
     return new BPSPatch(file, crcBefore, crcAfter, targetSize);
   }
 
-  async apply<T>(inputFile: File, callback: (tempFile: string) => (Promise<T> | T)): Promise<T> {
-    return this.getFile().extractToFilePoly('r', async (patchFile) => {
+  async createPatchedFile(inputRomFile: File, outputRomPath: string): Promise<void> {
+    return this.getFile().extractToTempFilePoly('r', async (patchFile) => {
       // Skip header info
       const header = await patchFile.readNext(4);
       if (!header.equals(BPSPatch.FILE_SIGNATURE)) {
@@ -63,34 +55,23 @@ export default class BPSPatch extends Patch {
         patchFile.skipNext(metadataSize);
       }
 
-      return this.writeOutputFile(inputFile, callback, patchFile);
+      return this.writeOutputFile(inputRomFile, outputRomPath, patchFile);
     });
   }
 
-  private async writeOutputFile<T>(
-    inputFile: File,
-    callback: (tempFile: string) => (Promise<T> | T),
+  private async writeOutputFile(
+    inputRomFile: File,
+    outputRomPath: string,
     patchFile: FilePoly,
-  ): Promise<T> {
-    return inputFile.extractToFile(async (sourceFilePath) => {
-      const sourceFile = await FilePoly.fileFrom(sourceFilePath, 'r');
-
-      const targetFilePath = await fsPoly.mktemp(path.join(
-        Constants.GLOBAL_TEMP_DIR,
-        `${path.basename(sourceFilePath)}.bps`,
-      ));
-      const targetFile = await FilePoly.fileOfSize(targetFilePath, 'r+', this.getSizeAfter() as number);
+  ): Promise<void> {
+    return inputRomFile.extractToTempFilePoly('r', async (inputRomFilePoly) => {
+      const targetFile = await FilePoly.fileOfSize(outputRomPath, 'r+', this.getSizeAfter() as number);
 
       try {
-        await BPSPatch.applyPatch(patchFile, sourceFile, targetFile);
+        await BPSPatch.applyPatch(patchFile, inputRomFilePoly, targetFile);
       } finally {
         await targetFile.close();
-        await sourceFile.close();
       }
-
-      const callbackResult = await callback(targetFilePath);
-      await fsPoly.rm(targetFilePath);
-      return callbackResult;
     });
   }
 

@@ -2,18 +2,21 @@ import chalk from 'chalk';
 
 import LogLevel from './logLevel.js';
 
-// https://www.toptal.com/designers/htmlarrows/symbols/
-// https://www.htmlsymbols.xyz/
+/**
+ * @link https://www.toptal.com/designers/htmlarrows/symbols/
+ * @link https://www.htmlsymbols.xyz/
+ * @link https://github.com/mochajs/mocha/pull/641/files (win32)
+ */
 export const ProgressBarSymbol: { [key: string]: string } = {
-  WAITING: chalk.grey('⋯'),
-  SEARCHING: chalk.magenta('↻'),
+  WAITING: chalk.grey(process.platform === 'win32' ? '…' : '⋯'),
+  SEARCHING: chalk.magenta(process.platform === 'win32' ? '҉' : '↻'),
   HASHING: chalk.magenta('#'),
   GENERATING: chalk.cyan('Σ'),
-  PROCESSING: chalk.cyan('⚙'),
+  PROCESSING: chalk.cyan(process.platform === 'win32' ? '¤' : '⚙'),
   FILTERING: chalk.cyan('∆'),
-  WRITING: chalk.yellow('✎'),
-  RECYCLING: chalk.blue('♻'),
-  DONE: chalk.green('✓'),
+  WRITING: chalk.yellow(process.platform === 'win32' ? '»' : '✎'),
+  RECYCLING: chalk.blue(process.platform === 'win32' ? '≠' : '♻'),
+  DONE: chalk.green(process.platform === 'win32' ? '√' : '✓'),
 };
 
 export default abstract class ProgressBar {

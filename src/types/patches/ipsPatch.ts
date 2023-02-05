@@ -16,11 +16,8 @@ export default class IPSPatch extends Patch {
     return new IPSPatch(file, crcBefore);
   }
 
-  async apply<T>(
-    inputFile: File,
-    callback: (tempFile: string) => (T | Promise<T>),
-  ): Promise<T> {
-    return this.getFile().extractToFilePoly('r', async (patchFile) => {
+  async createPatchedFile(inputRomFile: File, outputRomPath: string): Promise<void> {
+    return this.getFile().extractToTempFilePoly('r', async (patchFile) => {
       const header = await patchFile.readNext(5);
       if (IPSPatch.FILE_SIGNATURES.every((fileSignature) => !header.equals(fileSignature))) {
         await patchFile.close();
@@ -34,28 +31,31 @@ export default class IPSPatch extends Patch {
         eofString = 'EEOF';
       }
 
-      return IPSPatch.writeOutputFile(inputFile, callback, patchFile, offsetSize, eofString);
+      return IPSPatch.writeOutputFile(
+        inputRomFile,
+        outputRomPath,
+        patchFile,
+        offsetSize,
+        eofString,
+      );
     });
   }
 
-  private static async writeOutputFile<T>(
-    inputFile: File,
-    callback: (tempFile: string) => (Promise<T> | T),
+  private static async writeOutputFile(
+    inputRomFile: File,
+    outputRomPath: string,
     patchFile: FilePoly,
     offsetSize: number,
     eofString: string,
-  ): Promise<T> {
-    return inputFile.extractToTempFile(async (tempFile) => {
-      const targetFile = await FilePoly.fileFrom(tempFile, 'r+');
+  ): Promise<void> {
+    await inputRomFile.extractToFile(outputRomPath);
+    const targetFile = await FilePoly.fileFrom(outputRomPath, 'r+');
 
-      try {
-        await IPSPatch.applyPatch(patchFile, targetFile, offsetSize, eofString);
-      } finally {
-        await targetFile.close();
-      }
-
-      return callback(tempFile);
-    });
+    try {
+      await IPSPatch.applyPatch(patchFile, targetFile, offsetSize, eofString);
+    } finally {
+      await targetFile.close();
+    }
   }
 
   private static async applyPatch(

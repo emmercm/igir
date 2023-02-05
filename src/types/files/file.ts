@@ -132,22 +132,36 @@ export default class File {
         resolve((crc || 0).toString(16));
       });
 
-      stream.on('error', (err) => reject(err));
+      stream.on('error', reject);
     });
   }
 
-  async extractToFile<T>(
-    callback: (localFile: string) => (T | Promise<T>),
-  ): Promise<T> {
-    return callback(this.getFilePath());
+  async extractToFile(destinationPath: string): Promise<void> {
+    await fsPoly.copyFile(this.getFilePath(), destinationPath);
   }
 
-  async extractToFilePoly<T>(
+  async extractToTempFile<T>(
+    callback: (tempFile: string) => (T | Promise<T>),
+  ): Promise<T> {
+    const tempFile = await fsPoly.mktemp(path.join(
+      Constants.GLOBAL_TEMP_DIR,
+      path.basename(this.getFilePath()),
+    ));
+    await fsPoly.copyFile(this.getFilePath(), tempFile);
+
+    try {
+      return await callback(tempFile);
+    } finally {
+      await fsPoly.rm(tempFile, { force: true });
+    }
+  }
+
+  async extractToTempFilePoly<T>(
     flags: OpenMode,
     callback: (filePoly: FilePoly) => (T | Promise<T>),
   ): Promise<T> {
-    return this.extractToFile(async (localFile) => {
-      const filePoly = await FilePoly.fileFrom(localFile, flags);
+    return this.extractToTempFile(async (tempFile) => {
+      const filePoly = await FilePoly.fileFrom(tempFile, flags);
       try {
         return await callback(filePoly);
       } finally {
@@ -156,39 +170,89 @@ export default class File {
     });
   }
 
-  async extractToTempFile<T>(
-    callback: (localFile: string) => (T | Promise<T>),
-  ): Promise<T> {
-    const temp = await fsPoly.mktemp(path.join(
-      Constants.GLOBAL_TEMP_DIR,
-      `${path.basename(this.getFilePath())}.temp`,
-    ));
-    await util.promisify(fs.copyFile)(this.getFilePath(), temp);
-    try {
-      return await callback(temp);
-    } finally {
-      await fsPoly.rm(temp);
+  async extractAndPatchToFile(
+    destinationPath: string,
+    removeHeader: boolean,
+  ): Promise<void> {
+    const start = removeHeader && this.getFileHeader()
+      ? this.getFileHeader()?.getDataOffsetBytes() || 0
+      : 0;
+    const patch = this.getPatch();
+
+    // Simple case: create a file without removing its header
+    if (start <= 0) {
+      if (patch) {
+        // Patch the file and don't remove its header
+        return patch.createPatchedFile(this, destinationPath);
+      }
+      // Copy the file and don't remove its header
+      return this.extractToFile(destinationPath);
     }
+
+    // Complex case: create a temp file with the header removed
+    const tempFile = await fsPoly.mktemp(path.join(
+      Constants.GLOBAL_TEMP_DIR,
+      path.basename(this.getExtractedFilePath()),
+    ));
+    if (patch) {
+      // Create a patched temp file, then copy it without removing its header
+      await patch.createPatchedFile(this, tempFile);
+      try {
+        return await File.createStreamFromFile(
+          tempFile,
+          start,
+          async (stream) => new Promise((resolve, reject) => {
+            const writeStream = fs.createWriteStream(destinationPath);
+            writeStream.on('close', resolve);
+            writeStream.on('error', reject);
+            stream.pipe(writeStream);
+          }),
+        );
+      } finally {
+        await fsPoly.rm(tempFile, { force: true });
+      }
+    }
+    // Extract this file removing its header
+    return this.createReadStream(async (stream) => new Promise((resolve, reject) => {
+      const writeStream = fs.createWriteStream(destinationPath);
+      writeStream.on('close', resolve);
+      writeStream.on('error', reject);
+      stream.pipe(writeStream);
+    }), start);
   }
 
-  async extractToStream<T>(
+  async createReadStream<T>(
     callback: (stream: Readable) => (T | Promise<T>),
-    removeHeader = false,
+    start = 0,
+  ): Promise<T> {
+    return File.createStreamFromFile(this.getFilePath(), start, callback);
+  }
+
+  async createPatchedReadStream<T>(
+    removeHeader: boolean,
+    callback: (stream: Readable) => (T | Promise<T>),
   ): Promise<T> {
     const start = removeHeader && this.getFileHeader()
       ? this.getFileHeader()?.getDataOffsetBytes() || 0
       : 0;
+    const patch = this.getPatch();
 
-    // Apply the patch if there is one
-    if (this.getPatch()) {
-      const patch = this.getPatch() as Patch;
-      return patch.apply(
-        this,
-        async (tempFile) => File.createStreamFromFile(tempFile, start, callback),
-      );
+    // Simple case: create a read stream at an offset
+    if (!patch) {
+      return this.createReadStream(callback, start);
     }
 
-    return File.createStreamFromFile(this.filePath, start, callback);
+    // Complex case: create a temp patched file and then create read stream at an offset
+    const tempFile = await fsPoly.mktemp(path.join(
+      Constants.GLOBAL_TEMP_DIR,
+      path.basename(this.getExtractedFilePath()),
+    ));
+    try {
+      await patch.createPatchedFile(this, tempFile);
+      return await File.createStreamFromFile(tempFile, start, callback);
+    } finally {
+      await fsPoly.rm(tempFile, { force: true });
+    }
   }
 
   static async createStreamFromFile<T>(
@@ -209,7 +273,7 @@ export default class File {
 
   async withFileHeader(fileHeader: FileHeader): Promise<File> {
     // Make sure the file actually has the right file signature
-    const hasHeader = await this.extractToStream(
+    const hasHeader = await this.createReadStream(
       async (stream) => fileHeader.fileHasHeader(stream),
     );
     if (!hasHeader) {
