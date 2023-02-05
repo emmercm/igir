@@ -30,7 +30,9 @@ export default class Tar extends Archive {
         errorMessage = `${code}: ${message}`;
       },
     });
-    fs.createReadStream(this.getFilePath()).pipe(writeStream);
+    fs.createReadStream(this.getFilePath(), {
+      highWaterMark: Constants.FILE_READING_CHUNK_SIZE,
+    }).pipe(writeStream);
 
     writeStream.on('entry', (entry) => {
       let crc: number;
