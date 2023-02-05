@@ -99,7 +99,7 @@ export default class SevenZip extends Archive {
         });
       });
 
-      await fsPoly.rename(tempFile, extractedFilePath);
+      await fsPoly.mv(tempFile, extractedFilePath);
     } finally {
       await fsPoly.rm(tempDir, { recursive: true });
     }

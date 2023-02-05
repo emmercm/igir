@@ -82,7 +82,7 @@ export default class Tar extends Archive {
         strict: true,
       }, [entryPath.replace(/[\\/]/g, '/')]);
 
-      await fsPoly.rename(tempFile, extractedFilePath);
+      await fsPoly.mv(tempFile, extractedFilePath);
     } finally {
       await fsPoly.rm(tempDir, { recursive: true });
     }
