@@ -1,6 +1,7 @@
 import path from 'path';
 
 import ProgressBar, { ProgressBarSymbol } from '../console/progressBar.js';
+import fsPoly from '../polyfill/fsPoly.js';
 import Zip from '../types/archives/zip.js';
 import ArchiveEntry from '../types/files/archiveEntry.js';
 import File from '../types/files/file.js';
@@ -41,8 +42,9 @@ export default class CandidateGenerator extends Module {
       return output;
     }
 
+    const parents = dat.getParents();
     await this.progressBar.setSymbol(ProgressBarSymbol.GENERATING);
-    await this.progressBar.reset(dat.getParents().length);
+    await this.progressBar.reset(parents.length);
 
     // TODO(cemmer): only do this once globally, not per DAT
     // TODO(cemmer): ability to index files by some other property such as name
@@ -51,8 +53,8 @@ export default class CandidateGenerator extends Module {
 
     // For each parent, try to generate a parent candidate
     /* eslint-disable no-await-in-loop */
-    for (let i = 0; i < dat.getParents().length; i += 1) {
-      const parent = dat.getParents()[i];
+    for (let i = 0; i < parents.length; i += 1) {
+      const parent = parents[i];
 
       const releaseCandidates: ReleaseCandidate[] = [];
 
@@ -83,8 +85,12 @@ export default class CandidateGenerator extends Module {
       await this.progressBar.increment();
     }
 
+    const size = [...output.values()]
+      .flatMap((releaseCandidates) => releaseCandidates)
+      .flatMap((releaseCandidate) => releaseCandidate.getRomsWithFiles())
+      .reduce((sum, romWithFiles) => sum + romWithFiles.getRom().getSize(), 0);
     const totalCandidates = [...output.values()].reduce((sum, rc) => sum + rc.length, 0);
-    await this.progressBar.logDebug(`${dat.getName()}: ${totalCandidates.toLocaleString()} candidate${totalCandidates !== 1 ? 's' : ''} found`);
+    await this.progressBar.logDebug(`${dat.getName()}: generated ${fsPoly.sizeReadable(size)} of ${totalCandidates.toLocaleString()} candidate${totalCandidates !== 1 ? 's' : ''} for ${output.size.toLocaleString()} parent${output.size !== 1 ? 's' : ''}`);
 
     await this.progressBar.logInfo(`${dat.getName()}: Done generating candidates`);
     return output;
@@ -142,6 +148,11 @@ export default class CandidateGenerator extends Module {
         const originalInputFile = hashCodeToInputFiles.get(rom.hashCode());
         if (!originalInputFile) {
           return [rom, undefined];
+        }
+
+        // If we're not writing (report only) then just use the input file for the output file
+        if (!this.options.shouldWrite()) {
+          return [rom, new ROMWithFiles(rom, originalInputFile, originalInputFile)];
         }
 
         // If the matched input file is from an archive, and we're not extracting, then treat the

@@ -1,3 +1,4 @@
+import { jest } from '@jest/globals';
 import fs, { Stats } from 'fs';
 import os from 'os';
 import path from 'path';
@@ -23,6 +24,8 @@ import Options, { OptionsProps } from '../../src/types/options.js';
 import Patch from '../../src/types/patches/patch.js';
 import ReleaseCandidate from '../../src/types/releaseCandidate.js';
 import ProgressBarFake from '../console/progressBarFake.js';
+
+jest.setTimeout(60_000); // ROMWriter semaphores
 
 async function copyFixturesToTemp(
   callback: (input: string, output: string) => void | Promise<void>,
@@ -357,7 +360,6 @@ describe('zip', () => {
         .flatMap((entries) => entries)
         .map((entry) => [entry.toString().replace(outputTemp + path.sep, ''), entry.getCrc32()])
         .sort((a, b) => a[0].localeCompare(b[0]));
-      // console.log(await walkAndStat(Constants.GLOBAL_TEMP_DIR));
       expect(writtenRomAndCrcs).toEqual(expectedFilesAndCrcs);
     });
   });

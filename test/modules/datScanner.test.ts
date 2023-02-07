@@ -37,7 +37,7 @@ it('should not throw on non-DATs', async () => {
 });
 
 it('should scan multiple files', async () => {
-  const expectedDatFiles = 3;
+  const expectedDatFiles = 4;
   await expect(createDatScanner(['test/fixtures/dats']).scan()).resolves.toHaveLength(expectedDatFiles);
   await expect(createDatScanner(['test/fixtures/dats/*']).scan()).resolves.toHaveLength(expectedDatFiles);
   await expect(createDatScanner(['test/fixtures/dats/*', 'test/fixtures/**/*.dat']).scan()).resolves.toHaveLength(expectedDatFiles);

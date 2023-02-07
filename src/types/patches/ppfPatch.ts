@@ -65,34 +65,31 @@ export default class PPFPatch extends Patch {
     return new PPFPatch(file, crcBefore);
   }
 
-  async apply<T>(inputFile: File, callback: (tempFile: string) => (Promise<T> | T)): Promise<T> {
-    return this.getFile().extractToFilePoly('r', async (patchFile) => {
+  async createPatchedFile(inputRomFile: File, outputRomPath: string): Promise<void> {
+    return this.getFile().extractToTempFilePoly('r', async (patchFile) => {
       const header = await PPFHeader.fromFilePoly(patchFile);
 
-      return PPFPatch.writeOutputFile(inputFile, callback, patchFile, header);
+      return PPFPatch.writeOutputFile(inputRomFile, outputRomPath, patchFile, header);
     });
   }
 
-  private static async writeOutputFile<T>(
-    inputFile: File,
-    callback: (tempFile: string) => (Promise<T> | T),
+  private static async writeOutputFile(
+    inputRomFile: File,
+    outputRomPath: string,
     patchFile: FilePoly,
     header: PPFHeader,
-  ): Promise<T> {
-    return inputFile.extractToTempFile(async (tempFile) => {
-      const targetFile = await FilePoly.fileFrom(tempFile, 'r+');
+  ): Promise<void> {
+    await inputRomFile.extractToFile(outputRomPath);
+    const targetFile = await FilePoly.fileFrom(outputRomPath, 'r+');
 
-      try {
-        /* eslint-disable no-await-in-loop */
-        while (!patchFile.isEOF()) {
-          await PPFPatch.applyPatchBlock(patchFile, targetFile, header);
-        }
-      } finally {
-        await targetFile.close();
+    try {
+      /* eslint-disable no-await-in-loop */
+      while (!patchFile.isEOF()) {
+        await PPFPatch.applyPatchBlock(patchFile, targetFile, header);
       }
-
-      return callback(tempFile);
-    });
+    } finally {
+      await targetFile.close();
+    }
   }
 
   private static async applyPatchBlock(

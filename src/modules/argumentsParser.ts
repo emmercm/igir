@@ -398,7 +398,7 @@ export default class ArgumentsParser {
         type: 'number',
         coerce: (val: number) => Math.max(val, 1),
         requiresArg: true,
-        default: Constants.DAT_THREADS,
+        default: Constants.DAT_DEFAULT_THREADS,
       })
       .option('verbose', {
         group: groupHelpDebug,

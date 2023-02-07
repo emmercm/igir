@@ -29,7 +29,7 @@ export default class HeaderProcessor extends Module {
 
     const parsedFiles = async.mapLimit(
       inputRomFiles,
-      Constants.ROM_HEADER_HASHER_THREADS,
+      Constants.ROM_HEADER_PROCESSOR_THREADS,
       async (inputFile, callback: AsyncResultCallback<File, Error>) => {
         await this.progressBar.increment();
 
@@ -45,16 +45,17 @@ export default class HeaderProcessor extends Module {
     // Can get FileHeader from extension, use that
     const headerForFilename = FileHeader.headerFromFilename(inputFile.getExtractedFilePath());
     if (headerForFilename) {
-      await this.progressBar.logTrace(`${inputFile.toString()}: found header by filename: ${headerForFilename}`);
+      await this.progressBar.logTrace(`${inputFile.toString()}: found header by filename: ${headerForFilename.getHeaderedFileExtension()}`);
       return inputFile.withFileHeader(headerForFilename);
     }
 
     // Should get FileHeader from File, try to
     if (this.options.shouldReadFileForHeader(inputFile.getExtractedFilePath())) {
-      const headerForFileStream = await inputFile
-        .extractToStream(async (stream) => FileHeader.headerFromFileStream(stream));
+      const headerForFileStream = await inputFile.createReadStream(
+        async (stream) => FileHeader.headerFromFileStream(stream),
+      );
       if (headerForFileStream) {
-        await this.progressBar.logTrace(`${inputFile.toString()}: found header by contents: ${headerForFilename}`);
+        await this.progressBar.logTrace(`${inputFile.toString()}: found header by contents: ${headerForFileStream.getHeaderedFileExtension()}`);
         return inputFile.withFileHeader(headerForFileStream);
       }
       await this.progressBar.logWarn(`${inputFile.toString()}: couldn't detect header`);

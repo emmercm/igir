@@ -99,17 +99,13 @@ export default class PatchFactory {
         }
       });
 
-      stream.on('end', () => {
-        // We read the entire file without closing prematurely, return
-        resolveHeader();
-      });
-
-      stream.on('error', (err) => reject(err));
+      stream.on('end', resolveHeader);
+      stream.on('error', reject);
     });
   }
 
   static async patchFromFileContents(file: File): Promise<Patch | undefined> {
-    const fileHeader = await file.extractToStream(
+    const fileHeader = await file.createReadStream(
       async (stream) => PatchFactory.readHeaderHex(stream, this.MAX_HEADER_LENGTH_BYTES),
     );
 

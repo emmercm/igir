@@ -48,12 +48,11 @@ export default class ArchiveEntry<A extends Archive> extends File {
     let finalCrcWithoutHeader;
     if (await fsPoly.exists(archive.getFilePath())) {
       if (fileHeader) {
-        finalCrcWithoutHeader = finalCrcWithoutHeader
-          || await this.extractEntryToFile(
-            archive,
-            entryPath,
-            async (localFile) => this.calculateCrc32(localFile, fileHeader),
-          );
+        finalCrcWithoutHeader = finalCrcWithoutHeader || await this.extractEntryToTempFile(
+          archive,
+          entryPath,
+          async (localFile) => this.calculateCrc32(localFile, fileHeader),
+        );
       }
     }
     finalCrcWithoutHeader = finalCrcWithoutHeader || crc;
@@ -82,62 +81,56 @@ export default class ArchiveEntry<A extends Archive> extends File {
     return this.entryPath;
   }
 
-  async extractToFile<T>(callback: (localFile: string) => (T | Promise<T>)): Promise<T> {
-    return ArchiveEntry.extractEntryToFile(this.getArchive(), this.getEntryPath(), callback);
+  async extractToFile(
+    extractedFilePath: string,
+  ): Promise<void> {
+    return ArchiveEntry.extractEntryToFile(
+      this.getArchive(),
+      this.getEntryPath(),
+      extractedFilePath,
+    );
+  }
+
+  private static async extractEntryToFile(
+    archive: Archive,
+    entryPath: string,
+    extractedFilePath: string,
+  ): Promise<void> {
+    return archive.extractEntryToFile(entryPath, extractedFilePath);
   }
 
   async extractToTempFile<T>(
-    callback: (localFile: string) => (T | Promise<T>),
+    callback: (tempFile: string) => (T | Promise<T>),
   ): Promise<T> {
-    return ArchiveEntry.extractEntryToFile(this.getArchive(), this.getEntryPath(), callback);
+    return ArchiveEntry.extractEntryToTempFile(this.getArchive(), this.getEntryPath(), callback);
   }
 
-  private static async extractEntryToFile<T>(
+  private static async extractEntryToTempFile<T>(
     archive: Archive,
     entryPath: string,
-    callback: (localFile: string) => (T | Promise<T>),
+    callback: (tempFile: string) => (T | Promise<T>),
   ): Promise<T> {
-    const tempDir = await fsPoly.mkdtemp(path.join(Constants.GLOBAL_TEMP_DIR, 'xfile'));
-    try {
-      return await archive.extractEntryToFile(entryPath, tempDir, callback);
-    } finally {
-      await fsPoly.rm(tempDir, { recursive: true });
-    }
+    return archive.extractEntryToTempFile(entryPath, callback);
   }
 
-  async extractToStream<T>(
+  async createReadStream<T>(
     callback: (stream: Readable) => (T | Promise<T>),
-    removeHeader = false,
+    start = 0,
   ): Promise<T> {
-    const start = removeHeader && this.getFileHeader()
-      ? this.getFileHeader()?.getDataOffsetBytes() || 0
-      : 0;
-
-    // Apply the patch if there is one
-    if (this.getPatch()) {
-      const patch = this.getPatch() as Patch;
-      return patch.apply(this, async (tempFile) => File
-        .createStreamFromFile(tempFile, start, callback));
-    }
-
     // Don't extract to memory if this archive entry size is too large, or if we need to manipulate
     // the stream start point
     if (this.getSize() > Constants.MAX_MEMORY_FILE_SIZE || start > 0) {
-      return this.extractToFile(async (localFile) => File
-        .createStreamFromFile(localFile, start, callback));
+      return this.extractToTempFile(
+        async (tempFile) => File.createStreamFromFile(tempFile, start, callback),
+      );
     }
 
-    const tempDir = await fsPoly.mkdtemp(path.join(Constants.GLOBAL_TEMP_DIR, 'xstream'));
-    try {
-      return await this.archive.extractEntryToStream(this.getEntryPath(), tempDir, callback);
-    } finally {
-      await fsPoly.rm(tempDir, { recursive: true });
-    }
+    return this.archive.extractEntryToStream(this.getEntryPath(), callback);
   }
 
   async withFileHeader(fileHeader: FileHeader): Promise<File> {
     // Make sure the file actually has the right file signature
-    const hasHeader = await this.extractToStream(
+    const hasHeader = await this.createReadStream(
       async (stream) => fileHeader.fileHasHeader(stream),
     );
     if (!hasHeader) {

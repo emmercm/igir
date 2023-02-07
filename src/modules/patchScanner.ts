@@ -36,11 +36,11 @@ export default class PatchScanner extends Scanner {
 
         try {
           const patch = await this.patchFromFile(file);
-          return callback(null, patch);
+          callback(null, patch);
         } catch (e) {
           await this.progressBar.logWarn(`${file.toString()}: Failed to parse patch : ${e}`);
+          callback(null, undefined);
         }
-        return callback(null, undefined);
       },
     )).filter((patch) => patch);
 

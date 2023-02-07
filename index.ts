@@ -16,7 +16,7 @@ gracefulFs.gracefulify(realFs);
   const logger = new Logger();
   logger.printHeader();
 
-  // Warning: this is registered here so it's after synchronous cleanup handlers elsewhere!
+  // Warning: this is registered here, so it's after synchronous cleanup handlers elsewhere!
   process.once('SIGINT', () => {
     logger.info(`Exiting ${Constants.COMMAND_NAME}`);
     process.exit(0);

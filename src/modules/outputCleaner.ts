@@ -80,9 +80,7 @@ export default class OutputCleaner extends Module {
 
     // ...but if that doesn't work, delete the leftovers
     await Promise.all(filePaths.map(async (filePath) => {
-      if (await fsPoly.exists(filePath)) {
-        await fsPoly.rm(filePath);
-      }
+      await fsPoly.rm(filePath, { force: true });
     }));
   }
 
