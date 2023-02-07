@@ -377,7 +377,7 @@ export default class ROMWriter extends Module {
         .map((file) => file.getFilePath())
         .filter((filePath, idx, filePaths) => filePaths.indexOf(filePath) === idx)
         .map(async (filePath) => {
-          await this.progressBar.logTrace(`${dat.getName()}: ${filePath}: deleting`);
+          await this.progressBar.logTrace(`${dat.getName()}: ${filePath}: deleting moved file`);
           try {
             await fsPoly.rm(filePath, { force: true });
           } catch (e) {

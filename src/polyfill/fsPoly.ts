@@ -253,7 +253,7 @@ export default class FsPoly {
   }
 
   /**
-   * @link https://gist.github.com/zentala/1e6f72438796d74531803cc3833c039c
+   * @see https://gist.github.com/zentala/1e6f72438796d74531803cc3833c039c
    */
   static sizeReadable(bytes: number, decimals = 1): string {
     const k = 1024;

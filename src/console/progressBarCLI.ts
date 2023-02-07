@@ -189,6 +189,8 @@ export default class ProgressBarCLI extends ProgressBar {
    * When the number of progress bars exceeds the height of the console, cli-progress fails to be
    * able to clear them all reliably. It's recommended you don't have too many active progress bars
    * at once.
+   *
+   * @see https://github.com/npkgz/cli-progress/issues/59
    */
   async freeze(): Promise<void> {
     await ProgressBarCLI.render(true);

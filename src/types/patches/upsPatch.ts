@@ -8,9 +8,9 @@ import Patch from './patch.js';
  *  length identifier, which forces patchers to read both the UPS file and ROM file byte-by-byte,
  *  large patches can perform tremendously poorly if they contain many small records.
  *
- * @link https://www.romhacking.net/documents/392/
- * @link https://github.com/btimofeev/UniPatcher/wiki/UPS
- * @link https://www.gamebrew.org/wiki/Upset
+ * @see https://www.romhacking.net/documents/392/
+ * @see https://github.com/btimofeev/UniPatcher/wiki/UPS
+ * @see https://www.gamebrew.org/wiki/Upset
  */
 export default class UPSPatch extends Patch {
   static readonly SUPPORTED_EXTENSIONS = ['.ups'];

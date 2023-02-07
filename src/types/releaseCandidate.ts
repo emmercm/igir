@@ -18,7 +18,7 @@ export default class ReleaseCandidate {
   /**
    * This is in priority order! Multi-country regions should be at the bottom!
    *
-   * @link https://emulation.gametechwiki.com/index.php/GoodTools#Good_codes
+   * @see https://emulation.gametechwiki.com/index.php/GoodTools#Good_codes
    */
   private static readonly REGION_OPTIONS: RegionOptions[] = [
     // Specific countries
