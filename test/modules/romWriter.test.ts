@@ -1086,7 +1086,7 @@ describe('symlink', () => {
       for (let i = 0; i < outputFilesBefore.length; i += 1) {
         const [outputPath, stats] = outputFilesBefore[i];
         expect(stats.isSymbolicLink()).toEqual(true);
-        await expect(fsPoly.readlink(path.join(outputTemp, outputPath))).resolves.toMatch(new RegExp(`^${inputTemp.replace(/\\/g, '\\')}`));
+        await expect(fsPoly.readlink(path.join(outputTemp, outputPath))).resolves.toMatch(new RegExp(`^${inputTemp.replace(/\\/g, '\\\\')}`));
       }
 
       // When we write again
@@ -1117,7 +1117,7 @@ describe('symlink', () => {
       for (let i = 0; i < outputFilesBefore.length; i += 1) {
         const [outputPath, stats] = outputFilesBefore[i];
         expect(stats.isSymbolicLink()).toEqual(true);
-        await expect(fsPoly.readlink(path.join(outputTemp, outputPath))).resolves.toMatch(new RegExp(`^${inputTemp.replace(/\\/g, '\\')}`));
+        await expect(fsPoly.readlink(path.join(outputTemp, outputPath))).resolves.toMatch(new RegExp(`^${inputTemp.replace(/\\/g, '\\\\')}`));
       }
 
       // When we write again
