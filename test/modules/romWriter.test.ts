@@ -6,6 +6,7 @@ import util from 'util';
 
 import Constants from '../../src/constants.js';
 import CandidateGenerator from '../../src/modules/candidateGenerator.js';
+import CombinedCandidateGenerator from '../../src/modules/combinedCandidateGenerator.js';
 import DATInferrer from '../../src/modules/datInferrer.js';
 import HeaderProcessor from '../../src/modules/headerProcessor.js';
 import PatchCandidateGenerator from '../../src/modules/patchCandidateGenerator.js';
@@ -78,7 +79,7 @@ async function datInferrer(romFiles: File[]): Promise<DAT> {
   const datGames = (await new DATInferrer(new ProgressBarFake()).infer(romFiles))
     .map((dat) => dat.getGames())
     .flatMap((games) => games);
-  return new DAT(new Header(), datGames);
+  return new DAT(new Header({ name: 'ROMWriter Test' }), datGames);
 }
 
 async function romScanner(options: Options): Promise<File[]> {
@@ -121,6 +122,15 @@ async function patchCandidateGenerator(
     .generate(dat, parentsToCandidates, patches);
 }
 
+async function combinedCandidateGenerator(
+  options: Options,
+  dat: DAT,
+  parentsToCandidates: Map<Parent, ReleaseCandidate[]>,
+): Promise<Map<Parent, ReleaseCandidate[]>> {
+  return new CombinedCandidateGenerator(options, new ProgressBarFake())
+    .generate(dat, parentsToCandidates);
+}
+
 async function romWriter(
   optionsProps: OptionsProps,
   inputTemp: string,
@@ -143,6 +153,7 @@ async function romWriter(
     const patches = await patchScanner(options);
     candidates = await patchCandidateGenerator(dat, candidates, patches);
   }
+  candidates = await combinedCandidateGenerator(options, dat, candidates);
 
   // When
   await new ROMWriter(options, new ProgressBarFake()).write(dat, candidates);
@@ -321,7 +332,7 @@ describe('zip', () => {
     await copyFixturesToTemp(async (inputTemp, outputTemp) => {
       const options = new Options({
         commands: ['copy', 'zip', 'test'],
-        removeHeaders: ['.nes', '.a78', '.fds', '.lnx', '.smc'],
+        removeHeaders: [''], // all
       });
       const outputFiles = (await romWriter(options, inputTemp, inputGlob, undefined, outputTemp));
       expect(outputFiles).toHaveLength(1);
@@ -355,12 +366,12 @@ describe('zip', () => {
       });
       const outputFiles = (await romWriter(options, inputTemp, inputGlob, 'patches', outputTemp));
 
-      const writtenRomAndCrcs = (await Promise.all(outputFiles
+      const writtenRomsAndCrcs = (await Promise.all(outputFiles
         .map(async ([outputPath]) => FileFactory.filesFrom(path.join(outputTemp, outputPath)))))
         .flatMap((entries) => entries)
         .map((entry) => [entry.toString().replace(outputTemp + path.sep, ''), entry.getCrc32()])
         .sort((a, b) => a[0].localeCompare(b[0]));
-      expect(writtenRomAndCrcs).toEqual(expectedFilesAndCrcs);
+      expect(writtenRomsAndCrcs).toEqual(expectedFilesAndCrcs);
     });
   });
 
@@ -466,6 +477,59 @@ describe('zip', () => {
           expect(expectedDeletedInputPaths).toContain(inputFile.replace(/[\\/]/g, '/'));
         }
       });
+    });
+  });
+
+  test.each([
+    ['**/*', [
+      ['ROMWriter Test.zip|0F09A40.rom', '2f943e86'],
+      ['ROMWriter Test.zip|612644F.rom', 'f7591b29'],
+      ['ROMWriter Test.zip|65D1206.rom', '20323455'],
+      ['ROMWriter Test.zip|allpads.nes', '9180a163'],
+      ['ROMWriter Test.zip|before.rom', '0361b321'],
+      ['ROMWriter Test.zip|best.rom', '1e3d78cf'],
+      ['ROMWriter Test.zip|C01173E.rom', 'dfaebe28'],
+      ['ROMWriter Test.zip|color_test.nintendoentertainmentsystem', 'c9c1b7aa'],
+      ['ROMWriter Test.zip|diagnostic_test_cartridge.a78', 'f6cc9b1c'],
+      ['ROMWriter Test.zip|empty.rom', '00000000'],
+      ['ROMWriter Test.zip|fds_joypad_test.fds', '1e58456d'],
+      ['ROMWriter Test.zip|fizzbuzz.nes', '370517b5'],
+      ['ROMWriter Test.zip|foobar.lnx', 'b22c9747'],
+      ['ROMWriter Test.zip|KDULVQN.rom', 'b1c303e4'],
+      ['ROMWriter Test.zip|LCDTestROM.lnx', '2d251538'],
+      ['ROMWriter Test.zip|loremipsum.rom', '70856527'],
+      ['ROMWriter Test.zip|one.rom', 'f817a89f'],
+      ['ROMWriter Test.zip|speed_test_v51.sfc', '8beffd94'],
+      ['ROMWriter Test.zip|three.rom', 'ff46c5d8'],
+      ['ROMWriter Test.zip|two.rom', '96170874'],
+      ['ROMWriter Test.zip|unknown.rom', '377a7727'],
+    ]],
+    ['raw/*', [
+      ['ROMWriter Test.zip|empty.rom', '00000000'],
+      ['ROMWriter Test.zip|fizzbuzz.nes', '370517b5'],
+      ['ROMWriter Test.zip|foobar.lnx', 'b22c9747'],
+      ['ROMWriter Test.zip|loremipsum.rom', '70856527'],
+      ['ROMWriter Test.zip|one.rom', 'f817a89f'],
+      ['ROMWriter Test.zip|three.rom', 'ff46c5d8'],
+      ['ROMWriter Test.zip|two.rom', '96170874'],
+      ['ROMWriter Test.zip|unknown.rom', '377a7727'],
+    ]],
+  ])('should write one zip with all ROMs for zip-dat-name: %s', async (inputGlob, expectedFilesAndCrcs) => {
+    await copyFixturesToTemp(async (inputTemp, outputTemp) => {
+      // Given
+      const options = new Options({ commands: ['copy', 'zip'], zipDatName: true });
+      await expect(walkAndStat(outputTemp)).resolves.toEqual([]);
+
+      // When
+      const outputFiles = await romWriter(options, inputTemp, inputGlob, undefined, outputTemp);
+
+      // Then
+      expect(outputFiles).toHaveLength(1);
+      const outputFile = path.join(outputTemp, outputFiles[0][0]);
+      const writtenRomsAndCrcs = (await FileFactory.filesFrom(outputFile))
+        .map((entry) => [entry.toString().replace(outputTemp + path.sep, ''), entry.getCrc32()])
+        .sort((a, b) => a[0].localeCompare(b[0]));
+      expect(writtenRomsAndCrcs).toEqual(expectedFilesAndCrcs);
     });
   });
 });
@@ -587,7 +651,7 @@ describe('extract', () => {
     await copyFixturesToTemp(async (inputTemp, outputTemp) => {
       const options = new Options({
         commands: ['copy', 'extract', 'test'],
-        removeHeaders: ['.nes', '.a78', '.fds', '.lnx', '.smc'],
+        removeHeaders: [''], // all
       });
       const outputFiles = (await romWriter(options, inputTemp, inputGlob, undefined, outputTemp));
       expect(outputFiles).toHaveLength(1);
@@ -619,12 +683,12 @@ describe('extract', () => {
       });
       const outputFiles = (await romWriter(options, inputTemp, inputGlob, 'patches', outputTemp));
 
-      const writtenRomAndCrcs = (await Promise.all(outputFiles
+      const writtenRomsAndCrcs = (await Promise.all(outputFiles
         .map(async ([outputPath]) => FileFactory.filesFrom(path.join(outputTemp, outputPath)))))
         .flatMap((entries) => entries)
         .map((entry) => [entry.toString().replace(outputTemp + path.sep, ''), entry.getCrc32()])
         .sort((a, b) => a[0].localeCompare(b[0]));
-      expect(writtenRomAndCrcs).toEqual(expectedFilesAndCrcs);
+      expect(writtenRomsAndCrcs).toEqual(expectedFilesAndCrcs);
     });
   });
 
@@ -843,7 +907,7 @@ describe('raw', () => {
     await copyFixturesToTemp(async (inputTemp, outputTemp) => {
       const options = new Options({
         commands: ['copy', 'test'],
-        removeHeaders: ['.nes', '.a78', '.fds', '.lnx', '.smc'],
+        removeHeaders: [''], // all
       });
       const outputFiles = (await romWriter(options, inputTemp, inputGlob, undefined, outputTemp));
       expect(outputFiles).toHaveLength(1);
@@ -870,14 +934,14 @@ describe('raw', () => {
       const options = new Options({
         commands: ['copy', 'test'],
       });
-      const outputFiles = (await romWriter(options, inputTemp, inputGlob, 'patches', outputTemp));
+      const outputFiles = await romWriter(options, inputTemp, inputGlob, 'patches', outputTemp);
 
-      const writtenRomAndCrcs = (await Promise.all(outputFiles
+      const writtenRomsAndCrcs = (await Promise.all(outputFiles
         .map(async ([outputPath]) => FileFactory.filesFrom(path.join(outputTemp, outputPath)))))
         .flatMap((entries) => entries)
         .map((entry) => [entry.toString().replace(outputTemp + path.sep, ''), entry.getCrc32()])
         .sort((a, b) => a[0].localeCompare(b[0]));
-      expect(writtenRomAndCrcs).toEqual(expectedFilesAndCrcs);
+      expect(writtenRomsAndCrcs).toEqual(expectedFilesAndCrcs);
     });
   });
 

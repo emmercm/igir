@@ -131,6 +131,10 @@ export default class ProgressBarCLI extends ProgressBar {
   private setWaitingMessageTimeout(timeout = 10_000): void {
     clearTimeout(this.waitingMessageTimeout);
     this.waitingMessageTimeout = setTimeout(async () => {
+      if (this.singleBarFormatted.getSingleBar().getTotal() <= 1) {
+        return;
+      }
+
       this.singleBarFormatted.getSingleBar().update({
         waitingMessage: this.waitingMessages[0],
       } as ProgressBarPayload);
@@ -185,6 +189,8 @@ export default class ProgressBarCLI extends ProgressBar {
    * When the number of progress bars exceeds the height of the console, cli-progress fails to be
    * able to clear them all reliably. It's recommended you don't have too many active progress bars
    * at once.
+   *
+   * @see https://github.com/npkgz/cli-progress/issues/59
    */
   async freeze(): Promise<void> {
     await ProgressBarCLI.render(true);

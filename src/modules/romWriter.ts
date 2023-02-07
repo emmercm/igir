@@ -145,7 +145,7 @@ export default class ROMWriter extends Module {
     // Prep the single output file
     const outputZip = [...inputToOutputZipEntries.values()][0].getArchive();
 
-    // If the output file already exists, and we're not overwriting, do nothing
+    // If the output file already exists, and we're not overwriting, then do nothing
     if (!this.options.getOverwrite() && await fsPoly.exists(outputZip.getFilePath())) {
       // But if we're testing, test the file we're not overwriting
       if (this.options.shouldTest()) {
@@ -238,6 +238,7 @@ export default class ROMWriter extends Module {
       }
     }
 
+    await this.progressBar.logTrace(`${dat.getName()}: ${outputZip.getFilePath()}: test passed`);
     return undefined;
   }
 
@@ -246,6 +247,8 @@ export default class ROMWriter extends Module {
     outputZip: Zip,
     inputToOutputZipEntries: Map<File, ArchiveEntry<Zip>>,
   ): Promise<boolean> {
+    await this.progressBar.logTrace(`${dat.getName()}: ${outputZip.getFilePath()}: writing ${inputToOutputZipEntries.size.toLocaleString()} archive entries`);
+
     await this.progressBar.logTrace(`${dat.getName()}: ${outputZip.getFilePath()}: writing ${inputToOutputZipEntries.size.toLocaleString()} archive entries`);
 
     try {
@@ -359,6 +362,7 @@ export default class ROMWriter extends Module {
       return `has the CRC ${actualFile.getCrc32()}, expected ${expectedFile.getCrc32()}`;
     }
 
+    await this.progressBar.logTrace(`${dat.getName()}: ${outputFilePath}: test passed`);
     return undefined;
   }
 
@@ -377,7 +381,7 @@ export default class ROMWriter extends Module {
         .map((file) => file.getFilePath())
         .filter((filePath, idx, filePaths) => filePaths.indexOf(filePath) === idx)
         .map(async (filePath) => {
-          await this.progressBar.logTrace(`${dat.getName()}: ${filePath}: deleting`);
+          await this.progressBar.logTrace(`${dat.getName()}: ${filePath}: deleting moved file`);
           try {
             await fsPoly.rm(filePath, { force: true });
           } catch (e) {

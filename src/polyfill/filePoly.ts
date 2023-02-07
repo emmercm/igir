@@ -33,7 +33,7 @@ export default class FilePoly {
          * "On Linux, positional writes don't work when the file is opened in append mode. The
          *  kernel ignores the position argument and always appends the data to the end of the
          *  file."
-         * @link https://nodejs.org/api/fs.html#file-system-flags
+         * @see https://nodejs.org/api/fs.html#file-system-flags
          */
         flags.toString().startsWith('a') ? 'r+' : flags,
       ),

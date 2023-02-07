@@ -42,14 +42,17 @@ export default class CandidateGenerator extends Module {
       return output;
     }
 
-    const parents = dat.getParents();
-    await this.progressBar.setSymbol(ProgressBarSymbol.GENERATING);
-    await this.progressBar.reset(parents.length);
+    await this.progressBar.setSymbol(ProgressBarSymbol.HASHING);
+    await this.progressBar.reset(inputRomFiles.length);
 
     // TODO(cemmer): only do this once globally, not per DAT
     // TODO(cemmer): ability to index files by some other property such as name
     const hashCodeToInputFiles = CandidateGenerator.indexFilesByHashCode(inputRomFiles);
     await this.progressBar.logDebug(`${dat.getName()}: ${hashCodeToInputFiles.size.toLocaleString()} unique ROMs found`);
+
+    const parents = dat.getParents();
+    await this.progressBar.setSymbol(ProgressBarSymbol.GENERATING);
+    await this.progressBar.reset(parents.length);
 
     // For each parent, try to generate a parent candidate
     /* eslint-disable no-await-in-loop */

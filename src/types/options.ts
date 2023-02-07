@@ -29,16 +29,18 @@ export interface OptionsProps {
   readonly inputExclude?: string[],
   readonly patch?: string[],
   readonly output?: string,
-
-  readonly header?: string,
+  readonly cleanExclude?: string[],
 
   readonly dirMirror?: boolean,
   readonly dirDatName?: boolean,
   readonly dirLetter?: boolean,
-  readonly zipExclude?: string,
-  readonly removeHeaders?: string[],
   readonly overwrite?: boolean,
-  readonly cleanExclude?: string[],
+
+  readonly zipExclude?: string,
+  readonly zipDatName?: boolean,
+
+  readonly header?: string,
+  readonly removeHeaders?: string[],
 
   readonly languageFilter?: string[],
   readonly regionFilter?: string[],
@@ -85,7 +87,7 @@ export default class Options implements OptionsProps {
 
   readonly output: string;
 
-  readonly header: string;
+  readonly cleanExclude: string[];
 
   readonly dirMirror: boolean;
 
@@ -93,13 +95,15 @@ export default class Options implements OptionsProps {
 
   readonly dirLetter: boolean;
 
-  readonly zipExclude: string;
-
-  readonly removeHeaders?: string[];
-
   readonly overwrite: boolean;
 
-  readonly cleanExclude: string[];
+  readonly zipExclude: string;
+
+  readonly zipDatName: boolean;
+
+  readonly header: string;
+
+  readonly removeHeaders?: string[];
 
   readonly languageFilter: string[];
 
@@ -163,16 +167,18 @@ export default class Options implements OptionsProps {
     this.inputExclude = options?.inputExclude || [];
     this.patch = options?.patch || [];
     this.output = options?.output || '';
+    this.cleanExclude = options?.cleanExclude || [];
 
     this.header = options?.header || '';
 
     this.dirMirror = options?.dirMirror || false;
     this.dirDatName = options?.dirDatName || false;
     this.dirLetter = options?.dirLetter || false;
-    this.zipExclude = options?.zipExclude || '';
     this.removeHeaders = options?.removeHeaders;
     this.overwrite = options?.overwrite || false;
-    this.cleanExclude = options?.cleanExclude || [];
+
+    this.zipExclude = options?.zipExclude || '';
+    this.zipDatName = options?.zipDatName || false;
 
     this.languageFilter = options?.languageFilter || [];
     this.regionFilter = options?.regionFilter || [];
@@ -566,15 +572,26 @@ export default class Options implements OptionsProps {
     );
   }
 
-  private getHeader(): string {
-    return this.header;
+  private async scanCleanExcludeFiles(): Promise<string[]> {
+    return Options.scanPaths(this.cleanExclude);
   }
 
-  shouldReadFileForHeader(filePath: string): boolean {
-    return this.getHeader().length > 0 && micromatch.isMatch(
-      filePath.replace(/^.[\\/]/, ''),
-      this.getHeader(),
-    );
+  async scanOutputFilesWithoutCleanExclusions(
+    outputDirs: string[],
+    writtenFiles: File[],
+  ): Promise<string[]> {
+    // Written files that shouldn't be cleaned
+    const writtenFilesNormalized = writtenFiles
+      .map((file) => path.normalize(file.getFilePath()));
+
+    // Files excluded from cleaning
+    const cleanExcludedFilesNormalized = (await this.scanCleanExcludeFiles())
+      .map((filePath) => path.normalize(filePath));
+
+    return (await Options.scanPaths(outputDirs))
+      .map((filePath) => path.normalize(filePath))
+      .filter((filePath) => writtenFilesNormalized.indexOf(filePath) === -1)
+      .filter((filePath) => cleanExcludedFilesNormalized.indexOf(filePath) === -1);
   }
 
   getDirMirror(): boolean {
@@ -589,8 +606,27 @@ export default class Options implements OptionsProps {
     return this.dirLetter;
   }
 
+  getOverwrite(): boolean {
+    return this.overwrite;
+  }
+
   private getZipExclude(): string {
     return this.zipExclude;
+  }
+
+  getZipDatName(): boolean {
+    return this.zipDatName;
+  }
+
+  private getHeader(): string {
+    return this.header;
+  }
+
+  shouldReadFileForHeader(filePath: string): boolean {
+    return this.getHeader().length > 0 && micromatch.isMatch(
+      filePath.replace(/^.[\\/]/, ''),
+      this.getHeader(),
+    );
   }
 
   canRemoveHeader(dat: DAT, extension: string): boolean {
@@ -615,32 +651,6 @@ export default class Options implements OptionsProps {
     // Option was provided with extensions, we should remove headers on name match
     return this.removeHeaders
       .some((removeHeader) => removeHeader.toLowerCase() === extension.toLowerCase());
-  }
-
-  getOverwrite(): boolean {
-    return this.overwrite;
-  }
-
-  private async scanCleanExcludeFiles(): Promise<string[]> {
-    return Options.scanPaths(this.cleanExclude);
-  }
-
-  async scanOutputFilesWithoutCleanExclusions(
-    outputDirs: string[],
-    writtenFiles: File[],
-  ): Promise<string[]> {
-    // Written files that shouldn't be cleaned
-    const writtenFilesNormalized = writtenFiles
-      .map((file) => path.normalize(file.getFilePath()));
-
-    // Files excluded from cleaning
-    const cleanExcludedFilesNormalized = (await this.scanCleanExcludeFiles())
-      .map((filePath) => path.normalize(filePath));
-
-    return (await Options.scanPaths(outputDirs))
-      .map((filePath) => path.normalize(filePath))
-      .filter((filePath) => writtenFilesNormalized.indexOf(filePath) === -1)
-      .filter((filePath) => cleanExcludedFilesNormalized.indexOf(filePath) === -1);
   }
 
   getRegionFilter(): string[] {

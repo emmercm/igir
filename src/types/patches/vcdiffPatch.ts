@@ -425,8 +425,8 @@ class VcdiffCache {
 }
 
 /**
- * @link https://www.rfc-editor.org/rfc/rfc3284
- * @link https://github.com/jmacd/xdelta
+ * @see https://www.rfc-editor.org/rfc/rfc3284
+ * @see https://github.com/jmacd/xdelta
  */
 export default class VcdiffPatch extends Patch {
   static readonly SUPPORTED_EXTENSIONS = ['.vcdiff', '.xdelta'];

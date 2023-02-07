@@ -5,12 +5,12 @@ export default class GameConsole {
    * Analogue Pocket ROMs go in the /Assets/{pocket}/common/ directory
    *
    * MiSTer ROMs go in the /games/{mister}/ directory:
-   *  @link https://mister-devel.github.io/MkDocs_MiSTer/developer/corenames/
-   *  @link https://mister-devel.github.io/MkDocs_MiSTer/cores/console/
-   *  @link https://mister-devel.github.io/MkDocs_MiSTer/cores/computer/
+   *  @see https://mister-devel.github.io/MkDocs_MiSTer/developer/corenames/
+   *  @see https://mister-devel.github.io/MkDocs_MiSTer/cores/console/
+   *  @see https://mister-devel.github.io/MkDocs_MiSTer/cores/computer/
    *
-   * @link https://emulation.gametechwiki.com/index.php/List_of_filetypes
-   * @link https://emulation.fandom.com/wiki/List_of_filetypes
+   * @see https://emulation.gametechwiki.com/index.php/List_of_filetypes
+   * @see https://emulation.fandom.com/wiki/List_of_filetypes
    */
   private static readonly CONSOLES: GameConsole[] = [
     // Arduboy

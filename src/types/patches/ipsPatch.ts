@@ -3,8 +3,8 @@ import File from '../files/file.js';
 import Patch from './patch.js';
 
 /**
- * @link https://zerosoft.zophar.net/ips.php
- * @link https://github.com/btimofeev/UniPatcher/blob/a5a69cc607fadef43734589b311e5ef1bcde6941/app/src/main/java/org/emunix/unipatcher/patcher/IPS.java
+ * @see https://zerosoft.zophar.net/ips.php
+ * @see https://github.com/btimofeev/UniPatcher/blob/a5a69cc607fadef43734589b311e5ef1bcde6941/app/src/main/java/org/emunix/unipatcher/patcher/IPS.java
  */
 export default class IPSPatch extends Patch {
   static readonly SUPPORTED_EXTENSIONS = ['.ips', '.ips32'];
