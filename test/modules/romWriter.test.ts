@@ -1135,7 +1135,7 @@ describe('symlink', () => {
       for (let i = 0; i < outputFilesAfter.length; i += 1) {
         const [outputPath, stats] = outputFilesAfter[i];
         expect(stats.isSymbolicLink()).toEqual(true);
-        await expect(fsPoly.readlink(path.join(outputTemp, outputPath))).resolves.toMatch(new RegExp(`^${inputTemp}`));
+        await expect(fsPoly.readlink(path.join(outputTemp, outputPath))).resolves.toMatch(new RegExp(`^${inputTemp.replace(/\\/g, '\\\\')}`));
       }
 
       // And the input files weren't touched
