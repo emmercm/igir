@@ -128,7 +128,29 @@ export default class ArchiveEntry<A extends Archive> extends File {
     return this.archive.extractEntryToStream(this.getEntryPath(), callback);
   }
 
-  async withFileHeader(fileHeader: FileHeader): Promise<File> {
+  async withArchiveFileName(fileNameWithoutExt: string): Promise<ArchiveEntry<Archive>> {
+    return ArchiveEntry.entryOf(
+      this.getArchive().withFileName(fileNameWithoutExt),
+      this.getEntryPath(),
+      this.getSize(),
+      this.getCrc32(),
+      this.getFileHeader(),
+      this.getPatch(),
+    );
+  }
+
+  async withEntryPath(entryPath: string): Promise<ArchiveEntry<A>> {
+    return ArchiveEntry.entryOf(
+      this.getArchive(),
+      entryPath,
+      this.getSize(),
+      this.getCrc32(),
+      this.getFileHeader(),
+      this.getPatch(),
+    );
+  }
+
+  async withFileHeader(fileHeader: FileHeader): Promise<ArchiveEntry<A>> {
     // Make sure the file actually has the right file signature
     const hasHeader = await this.createReadStream(
       async (stream) => fileHeader.fileHasHeader(stream),
@@ -147,7 +169,7 @@ export default class ArchiveEntry<A extends Archive> extends File {
     );
   }
 
-  async withPatch(patch: Patch): Promise<File> {
+  async withPatch(patch: Patch): Promise<ArchiveEntry<A>> {
     if (patch.getCrcBefore() !== this.getCrc32()) {
       return this;
     }

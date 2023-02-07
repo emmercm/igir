@@ -22,7 +22,7 @@ enum NinjaFileType {
 }
 
 /**
- * @link https://www.romhacking.net/utilities/329/
+ * @see https://www.romhacking.net/utilities/329/
  */
 export default class NinjaPatch extends Patch {
   static readonly SUPPORTED_EXTENSIONS = ['.rup'];

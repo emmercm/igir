@@ -3,9 +3,9 @@ import chalk from 'chalk';
 import LogLevel from './logLevel.js';
 
 /**
- * @link https://www.toptal.com/designers/htmlarrows/symbols/
- * @link https://www.htmlsymbols.xyz/
- * @link https://github.com/mochajs/mocha/pull/641/files (win32)
+ * @see https://www.toptal.com/designers/htmlarrows/symbols/
+ * @see https://www.htmlsymbols.xyz/
+ * @see https://github.com/mochajs/mocha/pull/641/files (win32)
  */
 export const ProgressBarSymbol: { [key: string]: string } = {
   WAITING: chalk.grey(process.platform === 'win32' ? '…' : '⋯'),

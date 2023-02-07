@@ -108,7 +108,7 @@ export default class Zip extends Archive {
       [...inputToOutput.entries()],
       /**
        * {@link archiver} uses a sequential, async queue internally:
-       * @link https://github.com/archiverjs/node-archiver/blob/b5cc14cc97cc64bdca32c0cbe9d660b5b979be7c/lib/core.js#L52
+       * @see https://github.com/archiverjs/node-archiver/blob/b5cc14cc97cc64bdca32c0cbe9d660b5b979be7c/lib/core.js#L52
        * Because of that, we should/can limit the number of open input file handles open. But we
        *  also want to make sure the queue processing stays busy.
        */
