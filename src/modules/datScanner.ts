@@ -124,33 +124,34 @@ export default class DATScanner extends Scanner {
       return undefined;
     }
 
+    let datfile;
     try {
-      const datfile = await robloachDatfile.parse(fileContents);
-      if (!datfile.length) {
-        throw new Error('TODO(cemmer)');
-      }
-
-      const header = new Header(datfile[0]);
-
-      const games = datfile.slice(1).map((obj) => {
-        const game = obj as DatfileGame;
-        const roms = game.entries
-          .filter((rom) => rom.name) // we need ROM filenames
-          .map((entry) => new ROM(
-            entry.name || '',
-            parseInt(entry.size || '0', 10),
-            entry.crc || '',
-          ));
-        return new Game({
-          ...game,
-          rom: roms,
-        });
-      });
-
-      return new DAT(header, games);
+      datfile = await robloachDatfile.parse(fileContents);
     } catch (e) {
       await this.progressBar.logDebug(`${datFile.toString()}: failed to parse CMPro : ${e}`);
       return undefined;
     }
+    if (!datfile.length) {
+      throw new Error('invalid file');
+    }
+
+    const header = new Header(datfile[0]);
+
+    const games = datfile.slice(1).map((obj) => {
+      const game = obj as DatfileGame;
+      const roms = game.entries
+        .filter((rom) => rom.name) // we need ROM filenames
+        .map((entry) => new ROM(
+          entry.name || '',
+          parseInt(entry.size || '0', 10),
+          entry.crc || '',
+        ));
+      return new Game({
+        ...game,
+        rom: roms,
+      });
+    });
+
+    return new DAT(header, games);
   }
 }
