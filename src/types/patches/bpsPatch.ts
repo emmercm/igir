@@ -10,8 +10,8 @@ enum BPSAction {
 }
 
 /**
- * @link https://github.com/blakesmith/rombp/blob/master/docs/bps_spec.md
- * @link https://github.com/btimofeev/UniPatcher/wiki/BPS
+ * @see https://github.com/blakesmith/rombp/blob/master/docs/bps_spec.md
+ * @see https://github.com/btimofeev/UniPatcher/wiki/BPS
  */
 export default class BPSPatch extends Patch {
   static readonly SUPPORTED_EXTENSIONS = ['.bps'];

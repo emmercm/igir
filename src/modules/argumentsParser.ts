@@ -50,9 +50,10 @@ export default class ArgumentsParser {
     this.logger.info(`Parsing CLI arguments: ${argv}`);
 
     const groupPaths = 'Path options (inputs support globbing):';
-    const groupInput = 'Input options:';
     const groupOutput = 'Output options:';
+    const groupArchive = 'Archive options:';
     const groupFiltering = 'Filtering options:';
+    const groupHeader = 'Header options:';
     const groupPriority = 'Priority options:';
     const groupHelpDebug = 'Help & debug options:';
 
@@ -149,6 +150,13 @@ export default class ArgumentsParser {
         coerce: ArgumentsParser.getLastValue, // don't allow string[] values
         requiresArg: true,
       })
+      .option('clean-exclude', {
+        group: groupPaths,
+        alias: 'C',
+        description: 'Path(s) to files to exclude from cleaning',
+        type: 'array',
+        requiresArg: true,
+      })
       .check((checkArgv) => {
         if (checkArgv.help) {
           return true;
@@ -165,14 +173,6 @@ export default class ArgumentsParser {
         }
 
         return true;
-      })
-
-      .option('header', {
-        group: groupInput,
-        description: 'Glob pattern of files to force header processing for',
-        type: 'string',
-        coerce: ArgumentsParser.getLastValue, // don't allow string[] values
-        requiresArg: true,
       })
 
       .option('dir-mirror', {
@@ -192,16 +192,48 @@ export default class ArgumentsParser {
         description: 'Append the first letter of the ROM name as an output subdirectory',
         type: 'boolean',
       })
-      .option('zip-exclude', {
+      .option('overwrite', {
         group: groupOutput,
+        alias: 'O',
+        description: 'Overwrite any files in the output directory',
+        type: 'boolean',
+      })
+
+      .option('zip-exclude', {
+        group: groupArchive,
         alias: 'Z',
         description: 'Glob pattern of files to exclude from zipping',
         type: 'string',
         coerce: ArgumentsParser.getLastValue, // don't allow string[] values
         requiresArg: true,
       })
+      .option('zip-dat-name', {
+        group: groupArchive,
+        description: 'Group all ROMs from the same DAT into the same zip archive, if not excluded from zipping (enforces --dat-threads 1)',
+        type: 'boolean',
+      })
+      .check((checkArgv) => {
+        if (checkArgv.help) {
+          return true;
+        }
+
+        const needZip = ['zip-exclude', 'zip-dat-name'].filter((option) => checkArgv[option]);
+        if (checkArgv._.indexOf('zip') === -1 && needZip.length) {
+          throw new Error(`Missing required command for options ${needZip.join(', ')}: zip`);
+        }
+
+        return true;
+      })
+
+      .option('header', {
+        group: groupHeader,
+        description: 'Glob pattern of files to force header processing for',
+        type: 'string',
+        coerce: ArgumentsParser.getLastValue, // don't allow string[] values
+        requiresArg: true,
+      })
       .option('remove-headers', {
-        group: groupOutput,
+        group: groupHeader,
         alias: 'H',
         description: `Remove known headers from ROMs, optionally limited to a list of comma-separated file extensions (supported: ${FileHeader.getSupportedExtensions().join(', ')})`,
         type: 'string',
@@ -214,19 +246,6 @@ export default class ArgumentsParser {
             }
             return `.${val.replace(/^\.+/, '')}`;
           }),
-      })
-      .option('overwrite', {
-        group: groupOutput,
-        alias: 'O',
-        description: 'Overwrite any files in the output directory',
-        type: 'boolean',
-      })
-      .option('clean-exclude', {
-        group: groupOutput,
-        alias: 'C',
-        description: 'Path(s) to files to exclude from cleaning',
-        type: 'array',
-        requiresArg: true,
       })
 
       .option('language-filter', {
@@ -384,6 +403,12 @@ export default class ArgumentsParser {
         coerce: (val: number) => Math.max(val, 1),
         requiresArg: true,
         default: Constants.DAT_DEFAULT_THREADS,
+      })
+      .middleware((middlewareArgv) => {
+        /* eslint-disable no-param-reassign */
+        if (middlewareArgv.zipDatName) {
+          middlewareArgv.datThreads = 1;
+        }
       })
       .option('verbose', {
         group: groupHelpDebug,

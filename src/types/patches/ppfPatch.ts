@@ -52,8 +52,8 @@ class PPFHeader {
 }
 
 /**
- * @link https://winningeleven-games.com/thread-9609-post-29416.html#pid29416
- * @link https://github.com/meunierd/ppf/blob/master/ppfdev/PPF3.txt
+ * @see https://winningeleven-games.com/thread-9609-post-29416.html#pid29416
+ * @see https://github.com/meunierd/ppf/blob/master/ppfdev/PPF3.txt
  */
 export default class PPFPatch extends Patch {
   static readonly SUPPORTED_EXTENSIONS = ['.ppf'];
