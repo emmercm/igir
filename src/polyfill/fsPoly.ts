@@ -171,6 +171,11 @@ export default class FsPoly {
       !== FsPoly.DRIVE_MOUNTS.find((mount) => twoResolved.startsWith(mount));
   }
 
+  static async readlink(pathLike: PathLike): Promise<string> {
+    // Added in: v10.0.0
+    return util.promisify(fs.readlink)(pathLike);
+  }
+
   /**
    * fs.rm() was added in: v14.14.0
    * util.promisify(fs.rm)() was added in: v14.14.0
@@ -249,7 +254,7 @@ export default class FsPoly {
   }
 
   static async size(pathLike: PathLike): Promise<number> {
-    return (await util.promisify(fs.stat)(pathLike)).size;
+    return (await util.promisify(fs.lstat)(pathLike)).size;
   }
 
   /**
@@ -289,10 +294,10 @@ export default class FsPoly {
     /* eslint-disable no-await-in-loop */
     for (let i = 0; i < files.length; i += 1) {
       const file = path.join(pathLike.toString(), files[i]);
-      const stats = await util.promisify(fs.stat)(file);
+      const stats = await util.promisify(fs.lstat)(file);
       if (stats.isDirectory()) {
         output.push(...await this.walk(file));
-      } else if (stats.isFile()) {
+      } else {
         output.push(file);
       }
     }

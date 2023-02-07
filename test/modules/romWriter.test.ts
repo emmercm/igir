@@ -991,7 +991,7 @@ describe('symlink', () => {
   it('should not write if the output is the input', async () => {
     await copyFixturesToTemp(async (inputTemp) => {
       // Given
-      const options = new Options({ commands: ['copy', 'symlink', 'test'] });
+      const options = new Options({ commands: ['symlink', 'test'] });
       const inputRaw = path.join(inputTemp, 'roms', 'raw');
       const inputFilesBefore = await walkAndStat(inputRaw);
       expect(inputFilesBefore.length)
@@ -1008,7 +1008,7 @@ describe('symlink', () => {
   it('should not write anything if the output exists and not overwriting', async () => {
     await copyFixturesToTemp(async (inputTemp, outputTemp) => {
       // Given
-      const options = new Options({ commands: ['copy', 'symlink'] });
+      const options = new Options({ commands: ['symlink', 'test'] });
       const inputFilesBefore = await walkAndStat(inputTemp);
       await expect(walkAndStat(outputTemp)).resolves.toEqual([]);
 
@@ -1018,7 +1018,12 @@ describe('symlink', () => {
       // And files were written
       const outputFilesBefore = await walkAndStat(outputTemp);
       expect(outputFilesBefore).not.toEqual([]);
-      expect(outputFilesBefore.every(([, stats]) => stats.isSymbolicLink())).toEqual(true);
+      /* eslint-disable no-await-in-loop */
+      for (let i = 0; i < outputFilesBefore.length; i += 1) {
+        const [outputPath, stats] = outputFilesBefore[i];
+        expect(stats.isSymbolicLink()).toEqual(true);
+        await expect(fsPoly.readlink(path.join(outputTemp, outputPath))).resolves.toMatch(new RegExp(`^${inputTemp}`));
+      }
 
       // When we write again
       await romWriter(options, inputTemp, '**/*', undefined, outputTemp);
@@ -1034,7 +1039,7 @@ describe('symlink', () => {
   it('should write if the output is expected and overwriting', async () => {
     await copyFixturesToTemp(async (inputTemp, outputTemp) => {
       // Given
-      const options = new Options({ commands: ['copy', 'symlink'] });
+      const options = new Options({ commands: ['symlink', 'test'] });
       const inputFilesBefore = await walkAndStat(inputTemp);
       await expect(walkAndStat(outputTemp)).resolves.toEqual([]);
 
@@ -1044,7 +1049,12 @@ describe('symlink', () => {
       // And files were written
       const outputFilesBefore = await walkAndStat(outputTemp);
       expect(outputFilesBefore).not.toEqual([]);
-      expect(outputFilesBefore.every(([, stats]) => stats.isSymbolicLink())).toEqual(true);
+      /* eslint-disable no-await-in-loop */
+      for (let i = 0; i < outputFilesBefore.length; i += 1) {
+        const [outputPath, stats] = outputFilesBefore[i];
+        expect(stats.isSymbolicLink()).toEqual(true);
+        await expect(fsPoly.readlink(path.join(outputTemp, outputPath))).resolves.toMatch(new RegExp(`^${inputTemp}`));
+      }
 
       // When we write again
       await romWriter({
@@ -1057,6 +1067,12 @@ describe('symlink', () => {
       expect(outputFilesAfter.map((pair) => pair[0]))
         .toEqual(outputFilesBefore.map((pair) => pair[0]));
       expect(outputFilesAfter).not.toEqual(outputFilesBefore);
+      /* eslint-disable no-await-in-loop */
+      for (let i = 0; i < outputFilesAfter.length; i += 1) {
+        const [outputPath, stats] = outputFilesAfter[i];
+        expect(stats.isSymbolicLink()).toEqual(true);
+        await expect(fsPoly.readlink(path.join(outputTemp, outputPath))).resolves.toMatch(new RegExp(`^${inputTemp}`));
+      }
 
       // And the input files weren't touched
       await expect(walkAndStat(inputTemp)).resolves.toEqual(inputFilesBefore);

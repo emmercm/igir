@@ -415,24 +415,52 @@ export default class ROMWriter extends Module {
       return;
     }
 
-    if (await fsPoly.exists(outputRomFile.getFilePath())) {
+    const targetPath = outputRomFile.getFilePath();
+    const sourcePath = inputRomFile.getFilePath();
+
+    if (await fsPoly.exists(targetPath)) {
       // If the output file already exists, and we're not overwriting, do nothing
       if (!this.options.getOverwrite()) {
-        // TODO(cemmer): test before
-        await this.progressBar.logTrace(`${dat.getName()}: ${outputRomFile.getFilePath()}: not overwriting existing file`);
+        if (this.options.shouldTest()) {
+          const existingTest = await ROMWriter.testWrittenSymlink(targetPath, sourcePath);
+          if (existingTest) {
+            await this.progressBar.logWarn(`${dat.getName()}: ${targetPath}: not overwriting existing symlink, but existing symlink ${existingTest}`);
+            return;
+          }
+          await this.progressBar.logTrace(`${dat.getName()}: ${targetPath}: not overwriting existing symlink, but existing symlink is what was expected`);
+          return;
+        }
+        await this.progressBar.logTrace(`${dat.getName()}: ${targetPath}: not overwriting existing file`);
         return;
       }
 
-      await fsPoly.rm(outputRomFile.getFilePath());
+      await fsPoly.rm(targetPath);
     }
 
     try {
-      await ROMWriter.ensureOutputDirExists(outputRomFile.getFilePath());
-      await fsPoly.symlink(inputRomFile.getFilePath(), outputRomFile.getFilePath());
+      await ROMWriter.ensureOutputDirExists(targetPath);
+      await fsPoly.symlink(sourcePath, targetPath);
     } catch (e) {
-      await this.progressBar.logError(`${dat.getName()}: ${inputRomFile.toString()}: failed to symlink ${inputRomFile.getFilePath()} to ${outputRomFile.getFilePath()} : ${e}`);
+      await this.progressBar.logError(`${dat.getName()}: ${inputRomFile.toString()}: failed to symlink ${sourcePath} to ${targetPath} : ${e}`);
     }
 
-    // TODO(cemmer): test after
+    if (this.options.shouldTest()) {
+      const writtenTest = await ROMWriter.testWrittenSymlink(targetPath, sourcePath);
+      if (writtenTest) {
+        await this.progressBar.logError(`${dat.getName()}: ${targetPath}: written symlink ${writtenTest}`);
+      }
+    }
+  }
+
+  private static async testWrittenSymlink(
+    targetPath: string,
+    expectedSourcePath: string,
+  ): Promise<string | undefined> {
+    const existingSourcePath = await fsPoly.readlink(targetPath);
+    if (path.normalize(existingSourcePath) !== path.normalize(expectedSourcePath)) {
+      return `has the source path '${existingSourcePath}', expected '${expectedSourcePath}`;
+    }
+
+    return undefined;
   }
 }

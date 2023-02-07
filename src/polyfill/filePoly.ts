@@ -37,7 +37,7 @@ export default class FilePoly {
          */
         flags.toString().startsWith('a') ? 'r+' : flags,
       ),
-      (await util.promisify(fs.stat)(pathLike)).size,
+      (await util.promisify(fs.lstat)(pathLike)).size,
     );
   }
 

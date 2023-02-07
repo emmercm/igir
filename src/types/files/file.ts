@@ -19,6 +19,8 @@ export default class File {
 
   private readonly crc32WithoutHeader: string;
 
+  private readonly symlinkSource?: string;
+
   private readonly fileHeader?: FileHeader;
 
   private readonly patch?: Patch;
@@ -28,6 +30,7 @@ export default class File {
     size: number,
     crc: string,
     crc32WithoutHeader: string,
+    symlinkSource?: string,
     fileHeader?: FileHeader,
     patch?: Patch,
   ) {
@@ -35,6 +38,7 @@ export default class File {
     this.size = size;
     this.crc32 = crc.toLowerCase().padStart(8, '0');
     this.crc32WithoutHeader = crc32WithoutHeader.toLowerCase().padStart(8, '0');
+    this.symlinkSource = symlinkSource;
     this.fileHeader = fileHeader;
     this.patch = patch;
   }
@@ -49,9 +53,14 @@ export default class File {
     let finalSize = size;
     let finalCrc = crc;
     let finalCrcWithoutHeader;
+    let finalSymlinkSource;
     if (await fsPoly.exists(filePath)) {
-      finalSize = finalSize || (await util.promisify(fs.stat)(filePath)).size;
+      const lstat = await util.promisify(fs.lstat)(filePath);
+      finalSize = finalSize || lstat.size;
       finalCrc = finalCrc || await this.calculateCrc32(filePath);
+      if (lstat.isSymbolicLink()) {
+        finalSymlinkSource = await fsPoly.readlink(filePath);
+      }
       if (fileHeader) {
         finalCrcWithoutHeader = finalCrcWithoutHeader
           || await this.calculateCrc32(filePath, fileHeader);
@@ -67,6 +76,7 @@ export default class File {
       finalSize,
       finalCrc,
       finalCrcWithoutHeader,
+      finalSymlinkSource,
       fileHeader,
       patch,
     );
@@ -96,6 +106,10 @@ export default class File {
 
   getCrc32WithoutHeader(): string {
     return this.crc32WithoutHeader;
+  }
+
+  protected getSymlinkSource(): string | undefined {
+    return this.symlinkSource;
   }
 
   getFileHeader(): FileHeader | undefined {
@@ -310,7 +324,10 @@ export default class File {
    ************************** */
 
   toString(): string {
-    return this.filePath;
+    if (this.getSymlinkSource()) {
+      return `${this.getFilePath()} -> ${this.getSymlinkSource()}`;
+    }
+    return this.getFilePath();
   }
 
   static hashCode(crc: string, size: number): string {
