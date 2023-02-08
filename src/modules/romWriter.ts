@@ -420,7 +420,10 @@ export default class ROMWriter extends Module {
     }
 
     const targetPath = outputRomFile.getFilePath();
-    const sourcePath = path.resolve(inputRomFile.getFilePath());
+    let sourcePath = path.resolve(inputRomFile.getFilePath());
+    if (this.options.getSymlinkRelative()) {
+      sourcePath = path.relative(path.dirname(targetPath), sourcePath);
+    }
 
     if (await fsPoly.exists(targetPath)) {
       // If the output file already exists, and we're not overwriting, do nothing

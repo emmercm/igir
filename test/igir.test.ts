@@ -1,4 +1,3 @@
-import { jest } from '@jest/globals';
 import fg from 'fast-glob';
 import path from 'path';
 
@@ -39,7 +38,9 @@ async function expectEndToEnd(
     .map((file) => ([
       file.toString()
         .replace(tempInput + path.sep, '')
-        .replace(tempOutput + path.sep, ''),
+        .replace(path.basename(tempInput), '<input>')
+        .replace(tempOutput + path.sep, '')
+        .replace(path.basename(tempOutput), '<output>'),
       file.getCrc32(),
     ]))
     .sort((a, b) => a[0].localeCompare(b[0]));
@@ -332,9 +333,10 @@ describe('with inferred dats', () => {
     ]);
   });
 
-  it('should symlink, test, and clean', async () => {
+  it('should relative symlink, test, and clean', async () => {
     await expectEndToEnd({
       commands: ['symlink', 'test', 'clean'],
+      symlinkRelative: true,
     }, [
       [`0F09A40.rom -> ${path.join('roms', 'patchable', '0F09A40.rom')}`, '2f943e86'],
       [`612644F.rom -> ${path.join('roms', 'patchable', '612644F.rom')}`, 'f7591b29'],
