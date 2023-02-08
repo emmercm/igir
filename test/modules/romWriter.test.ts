@@ -1,3 +1,4 @@
+import { jest } from '@jest/globals';
 import fs, { Stats } from 'fs';
 import os from 'os';
 import path from 'path';
