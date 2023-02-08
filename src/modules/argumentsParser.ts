@@ -66,6 +66,9 @@ export default class ArgumentsParser {
       .command('move', 'Move ROM files from the input to output directory', (yargsSubObj) => {
         addCommands(yargsSubObj);
       })
+      .command('symlink', 'Create symlinks in the output directory to ROM files in the input directory', (yargsSubObj) => {
+        addCommands(yargsSubObj);
+      })
       .command('extract', 'Extract ROM files in archives when copying or moving', (yargsSubObj) => {
         addCommands(yargsSubObj);
       })
@@ -85,17 +88,29 @@ export default class ArgumentsParser {
         if (checkArgv.help) {
           return true;
         }
-        if (checkArgv._.indexOf('copy') !== -1 && checkArgv._.indexOf('move') !== -1) {
-          throw new Error('Incompatible commands: copy, move');
+
+        const writeCommands = ['copy', 'move', 'symlink'].filter((command) => checkArgv._.indexOf(command) !== -1);
+        if (writeCommands.length > 1) {
+          throw new Error(`Incompatible commands: ${writeCommands.join(', ')}`);
         }
-        if (checkArgv._.indexOf('extract') !== -1 && checkArgv._.indexOf('zip') !== -1) {
-          throw new Error('Incompatible commands: extract, zip');
+
+        const archiveCommands = ['symlink', 'extract', 'zip'].filter((command) => checkArgv._.indexOf(command) !== -1);
+        if (archiveCommands.length > 1) {
+          throw new Error(`Incompatible commands: ${archiveCommands.join(', ')}`);
         }
-        ['extract', 'zip', 'clean'].forEach((command) => {
-          if (checkArgv._.indexOf(command) !== -1 && checkArgv._.indexOf('copy') === -1 && checkArgv._.indexOf('move') === -1) {
-            throw new Error(`Command requires "copy" or "move": ${command}`);
+
+        ['extract', 'zip'].forEach((command) => {
+          if (checkArgv._.indexOf(command) !== -1 && ['copy', 'move'].every((write) => checkArgv._.indexOf(write) === -1)) {
+            throw new Error(`Command "${command}" also requires the commands copy or move`);
           }
         });
+
+        ['test', 'clean'].forEach((command) => {
+          if (checkArgv._.indexOf(command) !== -1 && ['copy', 'move', 'symlink'].every((write) => checkArgv._.indexOf(write) === -1)) {
+            throw new Error(`Command "${command}" requires one of the commands: copy, move, or symlink`);
+          }
+        });
+
         return true;
       });
 

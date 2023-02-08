@@ -59,12 +59,10 @@ async function walkAndStat(dirPath: string): Promise<[string, Stats][]> {
       .map(async (filePath) => {
         let stats: Stats;
         try {
-          stats = {
-            ...await util.promisify(fs.stat)(filePath),
-            // Hard-code properties that can change with file reads
-            atime: new Date(0),
-            atimeMs: 0,
-          };
+          stats = await util.promisify(fs.lstat)(filePath);
+          // Hard-code properties that can change with file reads
+          stats.atime = new Date(0);
+          stats.atimeMs = 0;
         } catch (e) {
           stats = new Stats();
         }
@@ -246,6 +244,7 @@ describe('zip', () => {
       // And files were written
       const outputFilesBefore = await walkAndStat(outputTemp);
       expect(outputFilesBefore).not.toEqual([]);
+      expect(outputFilesBefore.some(([, stats]) => stats.isSymbolicLink())).toEqual(false);
 
       // When we write again
       await romWriter(options, inputTemp, '**/*', undefined, outputTemp);
@@ -271,6 +270,7 @@ describe('zip', () => {
       // And files were written
       const outputFilesBefore = await walkAndStat(outputTemp);
       expect(outputFilesBefore).not.toEqual([]);
+      expect(outputFilesBefore.some(([, stats]) => stats.isSymbolicLink())).toEqual(false);
 
       // When we write again
       await romWriter({
@@ -565,6 +565,7 @@ describe('extract', () => {
       // And files were written
       const outputFilesBefore = await walkAndStat(outputTemp);
       expect(outputFilesBefore).not.toEqual([]);
+      expect(outputFilesBefore.some(([, stats]) => stats.isSymbolicLink())).toEqual(false);
 
       // When we write again
       await romWriter(options, inputTemp, '**/*', undefined, outputTemp);
@@ -590,6 +591,7 @@ describe('extract', () => {
       // And files were written
       const outputFilesBefore = await walkAndStat(outputTemp);
       expect(outputFilesBefore).not.toEqual([]);
+      expect(outputFilesBefore.some(([, stats]) => stats.isSymbolicLink())).toEqual(false);
 
       // When we write again
       await romWriter({
@@ -827,6 +829,7 @@ describe('raw', () => {
       // And files were written
       const outputFilesBefore = await walkAndStat(outputTemp);
       expect(outputFilesBefore).not.toEqual([]);
+      expect(outputFilesBefore.some(([, stats]) => stats.isSymbolicLink())).toEqual(false);
 
       // When we write again
       await romWriter(options, inputTemp, '**/*', undefined, outputTemp);
@@ -852,6 +855,7 @@ describe('raw', () => {
       // And files were written
       const outputFilesBefore = await walkAndStat(outputTemp);
       expect(outputFilesBefore).not.toEqual([]);
+      expect(outputFilesBefore.some(([, stats]) => stats.isSymbolicLink())).toEqual(false);
 
       // When we write again
       await romWriter({
@@ -1043,6 +1047,99 @@ describe('raw', () => {
           expect(expectedDeletedInputPaths).toContain(inputFile.replace(/[\\/]/g, '/'));
         }
       });
+    });
+  });
+});
+
+describe('symlink', () => {
+  it('should not write if the output is the input', async () => {
+    await copyFixturesToTemp(async (inputTemp) => {
+      // Given
+      const options = new Options({ commands: ['symlink', 'test'] });
+      const inputRaw = path.join(inputTemp, 'roms', 'raw');
+      const inputFilesBefore = await walkAndStat(inputRaw);
+      expect(inputFilesBefore.length)
+        .toBeGreaterThan(0);
+
+      // When
+      await romWriter(options, inputTemp, 'raw/*', undefined, inputRaw);
+
+      // Then the input files weren't touched
+      await expect(walkAndStat(inputRaw)).resolves.toEqual(inputFilesBefore);
+    });
+  });
+
+  it('should not write anything if the output exists and not overwriting', async () => {
+    await copyFixturesToTemp(async (inputTemp, outputTemp) => {
+      // Given
+      const options = new Options({ commands: ['symlink', 'test'] });
+      const inputFilesBefore = await walkAndStat(inputTemp);
+      await expect(walkAndStat(outputTemp)).resolves.toEqual([]);
+
+      // And we've written once
+      await romWriter(options, inputTemp, '**/*', undefined, outputTemp);
+
+      // And files were written
+      const outputFilesBefore = await walkAndStat(outputTemp);
+      expect(outputFilesBefore).not.toEqual([]);
+      /* eslint-disable no-await-in-loop */
+      for (let i = 0; i < outputFilesBefore.length; i += 1) {
+        const [outputPath, stats] = outputFilesBefore[i];
+        expect(stats.isSymbolicLink()).toEqual(true);
+        await expect(fsPoly.readlink(path.join(outputTemp, outputPath))).resolves.toMatch(new RegExp(`^${inputTemp.replace(/\\/g, '\\\\')}`));
+      }
+
+      // When we write again
+      await romWriter(options, inputTemp, '**/*', undefined, outputTemp);
+
+      // Then the output wasn't touched
+      await expect(walkAndStat(outputTemp)).resolves.toEqual(outputFilesBefore);
+
+      // And the input files weren't touched
+      await expect(walkAndStat(inputTemp)).resolves.toEqual(inputFilesBefore);
+    });
+  });
+
+  it('should write if the output is expected and overwriting', async () => {
+    await copyFixturesToTemp(async (inputTemp, outputTemp) => {
+      // Given
+      const options = new Options({ commands: ['symlink', 'test'] });
+      const inputFilesBefore = await walkAndStat(inputTemp);
+      await expect(walkAndStat(outputTemp)).resolves.toEqual([]);
+
+      // And we've written once
+      await romWriter(options, inputTemp, '**/*', undefined, outputTemp);
+
+      // And files were written
+      const outputFilesBefore = await walkAndStat(outputTemp);
+      expect(outputFilesBefore).not.toEqual([]);
+      /* eslint-disable no-await-in-loop */
+      for (let i = 0; i < outputFilesBefore.length; i += 1) {
+        const [outputPath, stats] = outputFilesBefore[i];
+        expect(stats.isSymbolicLink()).toEqual(true);
+        await expect(fsPoly.readlink(path.join(outputTemp, outputPath))).resolves.toMatch(new RegExp(`^${inputTemp.replace(/\\/g, '\\\\')}`));
+      }
+
+      // When we write again
+      await romWriter({
+        ...options,
+        overwrite: true,
+      }, inputTemp, '**/*', undefined, outputTemp);
+
+      // Then the output was touched
+      const outputFilesAfter = await walkAndStat(outputTemp);
+      expect(outputFilesAfter.map((pair) => pair[0]))
+        .toEqual(outputFilesBefore.map((pair) => pair[0]));
+      expect(outputFilesAfter).not.toEqual(outputFilesBefore);
+      /* eslint-disable no-await-in-loop */
+      for (let i = 0; i < outputFilesAfter.length; i += 1) {
+        const [outputPath, stats] = outputFilesAfter[i];
+        expect(stats.isSymbolicLink()).toEqual(true);
+        await expect(fsPoly.readlink(path.join(outputTemp, outputPath))).resolves.toMatch(new RegExp(`^${inputTemp.replace(/\\/g, '\\\\')}`));
+      }
+
+      // And the input files weren't touched
+      await expect(walkAndStat(inputTemp)).resolves.toEqual(inputFilesBefore);
     });
   });
 });

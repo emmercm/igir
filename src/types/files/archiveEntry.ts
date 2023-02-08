@@ -1,5 +1,7 @@
+import fs from 'fs';
 import path from 'path';
 import { Readable } from 'stream';
+import util from 'util';
 
 import Constants from '../../constants.js';
 import fsPoly from '../../polyfill/fsPoly.js';
@@ -19,6 +21,7 @@ export default class ArchiveEntry<A extends Archive> extends File {
     size: number,
     crc: string,
     crc32WithoutHeader: string,
+    symlinkSource: string | undefined,
     fileHeader: FileHeader | undefined,
     patch: Patch | undefined,
     /** {@link ArchiveEntry} */
@@ -30,6 +33,7 @@ export default class ArchiveEntry<A extends Archive> extends File {
       size,
       crc,
       crc32WithoutHeader,
+      symlinkSource,
       fileHeader,
       patch,
     );
@@ -46,7 +50,12 @@ export default class ArchiveEntry<A extends Archive> extends File {
     patch?: Patch,
   ): Promise<ArchiveEntry<A>> {
     let finalCrcWithoutHeader;
+    let finalSymlinkSource;
     if (await fsPoly.exists(archive.getFilePath())) {
+      const lstat = await util.promisify(fs.lstat)(archive.getFilePath());
+      if (lstat.isSymbolicLink()) {
+        finalSymlinkSource = await fsPoly.readlink(archive.getFilePath());
+      }
       if (fileHeader) {
         finalCrcWithoutHeader = finalCrcWithoutHeader || await this.extractEntryToTempFile(
           archive,
@@ -62,6 +71,7 @@ export default class ArchiveEntry<A extends Archive> extends File {
       size,
       crc,
       finalCrcWithoutHeader,
+      finalSymlinkSource,
       fileHeader,
       patch,
       archive,
@@ -185,7 +195,10 @@ export default class ArchiveEntry<A extends Archive> extends File {
   }
 
   toString(): string {
-    return `${this.getFilePath()}|${this.entryPath}`;
+    if (this.getSymlinkSource()) {
+      return `${this.getFilePath()}|${this.getEntryPath()} -> ${this.getSymlinkSource()}|${this.getEntryPath()}`;
+    }
+    return `${this.getFilePath()}|${this.getEntryPath()}`;
   }
 
   equals(other: File): boolean {

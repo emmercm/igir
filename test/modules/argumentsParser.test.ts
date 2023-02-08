@@ -24,13 +24,19 @@ describe('commands', () => {
 
   it('should throw on conflicting commands', () => {
     expect(() => argumentsParser.parse(['copy', 'move', ...dummyRequiredArgs])).toThrow(/incompatible command/i);
+    expect(() => argumentsParser.parse(['copy', 'symlink', ...dummyRequiredArgs])).toThrow(/incompatible command/i);
+    expect(() => argumentsParser.parse(['move', 'symlink', ...dummyRequiredArgs])).toThrow(/incompatible command/i);
+
     expect(() => argumentsParser.parse(['extract', 'zip', ...dummyRequiredArgs])).toThrow(/incompatible command/i);
+    expect(() => argumentsParser.parse(['extract', 'symlink', ...dummyRequiredArgs])).toThrow(/incompatible command/i);
+    expect(() => argumentsParser.parse(['zip', 'symlink', ...dummyRequiredArgs])).toThrow(/incompatible command/i);
   });
 
   it('should throw on commands requiring other commands', () => {
-    expect(() => argumentsParser.parse(['extract', ...dummyRequiredArgs])).toThrow(/command requires/i);
-    expect(() => argumentsParser.parse(['zip', ...dummyRequiredArgs])).toThrow(/command requires/i);
-    expect(() => argumentsParser.parse(['clean', ...dummyRequiredArgs])).toThrow(/command requires/i);
+    expect(() => argumentsParser.parse(['extract', ...dummyRequiredArgs])).toThrow(/command.+requires/i);
+    expect(() => argumentsParser.parse(['zip', ...dummyRequiredArgs])).toThrow(/command.+requires/i);
+    expect(() => argumentsParser.parse(['test', ...dummyRequiredArgs])).toThrow(/command.+requires/i);
+    expect(() => argumentsParser.parse(['clean', ...dummyRequiredArgs])).toThrow(/command.+requires/i);
   });
 
   it('should not parse different commands', () => {
@@ -119,13 +125,14 @@ describe('options', () => {
 
   it('should parse "dat"', async () => {
     expect(() => argumentsParser.parse(['report', '--input', os.devNull])).toThrow(/missing required option/i);
-    expect(() => argumentsParser.parse(['test', '--input', os.devNull, '--dat'])).toThrow(/not enough arguments/i);
-    await expect(argumentsParser.parse(['test', '--input', os.devNull]).scanDatFiles()).resolves.toHaveLength(0);
-    await expect(argumentsParser.parse(['test', '--input', os.devNull, '--dat', os.devNull]).scanDatFiles()).resolves.toHaveLength(0);
+    expect(() => argumentsParser.parse([...dummyCommandAndRequiredArgs, '--dat'])).toThrow(/not enough arguments/i);
+    await expect(argumentsParser.parse(dummyCommandAndRequiredArgs).scanDatFiles())
+      .resolves.toHaveLength(0);
+    await expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--dat', os.devNull]).scanDatFiles()).resolves.toHaveLength(0);
 
-    const src = await argumentsParser.parse(['test', '--input', os.devNull, '-d', './src']).scanDatFiles();
-    const test = await argumentsParser.parse(['test', '--input', os.devNull, '--dat', './test']).scanDatFiles();
-    const both = await argumentsParser.parse(['test', '--input', os.devNull, '--dat', './src', '-d', './test']).scanDatFiles();
+    const src = await argumentsParser.parse([...dummyCommandAndRequiredArgs, '-d', './src']).scanDatFiles();
+    const test = await argumentsParser.parse([...dummyCommandAndRequiredArgs, '--dat', './test']).scanDatFiles();
+    const both = await argumentsParser.parse([...dummyCommandAndRequiredArgs, '--dat', './src', '-d', './test']).scanDatFiles();
     expect(src.length).toBeGreaterThan(0);
     expect(test.length).toBeGreaterThan(0);
     expect(both.length).toEqual(src.length + test.length);
@@ -170,7 +177,6 @@ describe('options', () => {
     expect(() => argumentsParser.parse(['move', '--input', os.devNull])).toThrow(/missing required option/i);
     expect(() => argumentsParser.parse(['copy', 'zip', '--input', os.devNull])).toThrow(/missing required option/i);
     expect(() => argumentsParser.parse(['copy', 'clean', '--input', os.devNull])).toThrow(/missing required option/i);
-    expect(argumentsParser.parse(['test', '--dat', os.devNull, '--input', os.devNull]).getOutputFileParsed()).toContain(Constants.GLOBAL_TEMP_DIR);
     expect(argumentsParser.parse(['report', '--dat', os.devNull, '--input', os.devNull]).getOutputFileParsed()).toContain(Constants.GLOBAL_TEMP_DIR);
     // Test value
     expect(argumentsParser.parse(['copy', '--input', os.devNull, '-o', 'foo']).getOutputFileParsed()).toEqual('foo');

@@ -104,8 +104,12 @@ export default class ROMWriter extends Module {
       const waitingMessage = `${releaseCandidate.getName()} ...`;
       this.progressBar.addWaitingMessage(waitingMessage);
 
-      await this.writeZip(dat, releaseCandidate);
-      await this.writeRaw(dat, releaseCandidate);
+      if (this.options.shouldSymlink()) {
+        await this.writeSymlink(dat, releaseCandidate);
+      } else {
+        await this.writeZip(dat, releaseCandidate);
+        await this.writeRaw(dat, releaseCandidate);
+      }
 
       this.progressBar.removeWaitingMessage(waitingMessage);
     }, totalKilobytes);
@@ -385,5 +389,82 @@ export default class ROMWriter extends Module {
           }
         }),
     );
+  }
+
+  /** ************************
+   *                         *
+   *     Symlink Writing     *
+   *                         *
+   ************************* */
+
+  private async writeSymlink(dat: DAT, releaseCandidate: ReleaseCandidate): Promise<void> {
+    const inputToOutputEntries = releaseCandidate.getRomsWithFiles();
+
+    /* eslint-disable no-await-in-loop */
+    for (let i = 0; i < inputToOutputEntries.length; i += 1) {
+      const inputRomFile = inputToOutputEntries[i].getInputFile();
+      const outputRomFile = inputToOutputEntries[i].getOutputFile();
+      await this.writeSymlinkSingle(dat, inputRomFile, outputRomFile);
+    }
+  }
+
+  private async writeSymlinkSingle(
+    dat: DAT,
+    inputRomFile: File,
+    outputRomFile: File,
+  ): Promise<void> {
+    // Input and output are the exact same, do nothing
+    if (outputRomFile.equals(inputRomFile)) {
+      await this.progressBar.logTrace(`${dat.getName()}: ${outputRomFile}: same file, skipping`);
+      return;
+    }
+
+    const targetPath = outputRomFile.getFilePath();
+    const sourcePath = path.resolve(inputRomFile.getFilePath());
+
+    if (await fsPoly.exists(targetPath)) {
+      // If the output file already exists, and we're not overwriting, do nothing
+      if (!this.options.getOverwrite()) {
+        if (this.options.shouldTest()) {
+          const existingTest = await ROMWriter.testWrittenSymlink(targetPath, sourcePath);
+          if (existingTest) {
+            await this.progressBar.logWarn(`${dat.getName()}: ${targetPath}: not overwriting existing symlink, but existing symlink ${existingTest}`);
+            return;
+          }
+          await this.progressBar.logTrace(`${dat.getName()}: ${targetPath}: not overwriting existing symlink, but existing symlink is what was expected`);
+          return;
+        }
+        await this.progressBar.logTrace(`${dat.getName()}: ${targetPath}: not overwriting existing file`);
+        return;
+      }
+
+      await fsPoly.rm(targetPath);
+    }
+
+    try {
+      await ROMWriter.ensureOutputDirExists(targetPath);
+      await fsPoly.symlink(sourcePath, targetPath);
+    } catch (e) {
+      await this.progressBar.logError(`${dat.getName()}: ${inputRomFile.toString()}: failed to symlink ${sourcePath} to ${targetPath} : ${e}`);
+    }
+
+    if (this.options.shouldTest()) {
+      const writtenTest = await ROMWriter.testWrittenSymlink(targetPath, sourcePath);
+      if (writtenTest) {
+        await this.progressBar.logError(`${dat.getName()}: ${targetPath}: written symlink ${writtenTest}`);
+      }
+    }
+  }
+
+  private static async testWrittenSymlink(
+    targetPath: string,
+    expectedSourcePath: string,
+  ): Promise<string | undefined> {
+    const existingSourcePath = await fsPoly.readlink(targetPath);
+    if (path.normalize(existingSourcePath) !== path.normalize(expectedSourcePath)) {
+      return `has the source path '${existingSourcePath}', expected '${expectedSourcePath}`;
+    }
+
+    return undefined;
   }
 }
