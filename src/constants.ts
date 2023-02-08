@@ -50,6 +50,12 @@ export default class Constants {
   static readonly MAX_FS_THREADS = 1_000;
 
   /**
+   * Default max semaphore filesize of files to read (and checksum) and write (and test) at once.
+   * This will be the limiting factor for consoles with large ROMs. 4.7GiB DVD+R.
+   */
+  static readonly MAX_READ_WRITE_CONCURRENT_KILOBYTES = Math.ceil(4_700_372_992 / 1024);
+
+  /**
    * Max number of DAT files to parse at once during scanning.
    */
   static readonly DAT_SCANNER_THREADS = 20;
@@ -79,12 +85,6 @@ export default class Constants {
    * for consoles with many small ROMs.
    */
   static readonly ROM_WRITER_THREADS = 20;
-
-  /**
-   * Default max filesize of ROM release candidates to write at once. This will be the limiting
-   * factor for consoles with large ROMs. 4.7GiB DVD+R
-   */
-  static readonly ROM_WRITER_MAX_CONCURRENT_KILOBYTES = Math.ceil(4_700_372_992 / 1024);
 
   /**
    * Max number of files to recycle/delete at once.
