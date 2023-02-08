@@ -1,4 +1,3 @@
-import { jest } from '@jest/globals';
 import fg from 'fast-glob';
 import path from 'path';
 
@@ -9,8 +8,6 @@ import Igir from '../src/igir.js';
 import fsPoly from '../src/polyfill/fsPoly.js';
 import FileFactory from '../src/types/archives/fileFactory.js';
 import Options, { OptionsProps } from '../src/types/options.js';
-
-jest.setTimeout(60_000); // ROMWriter semaphores
 
 async function expectEndToEnd(
   optionsProps: OptionsProps,
