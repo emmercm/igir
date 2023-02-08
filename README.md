@@ -52,7 +52,7 @@ $ igir --help
   | $$  | $$ __\$$  | $$  | $$__| $$
   | $$  | $$|    \  | $$  | $$    $$   ROM collection manager
   | $$  | $$ \$$$$  | $$  | $$$$$$$\
- _| $$_ | $$__| $$ _| $$_ | $$  | $$   v1.1.0
+ _| $$_ | $$__| $$ _| $$_ | $$  | $$   v1.2.0
 |   $$ \ \$$    $$|   $$ \| $$  | $$
  \$$$$$$  \$$$$$$  \$$$$$$ \$$   \$$
 
@@ -62,6 +62,7 @@ Usage: igir [commands..] [options]
 Commands:
   igir copy     Copy ROM files from the input to output directory
   igir move     Move ROM files from the input to output directory
+  igir symlink  Create symlinks in the output directory to ROM files in the input directory
   igir extract  Extract ROM files in archives when copying or moving
   igir zip      Create zip archives of ROMs when copying or moving
   igir test     Test ROMs for accuracy after writing them to the output directory
@@ -77,20 +78,27 @@ Path options (inputs support globbing):
                        f, .rup, .ups, .vcdiff, .xdelta)                                   [array]
   -o, --output         Path to the ROM output directory (supports replaceable symbols, see below)
                                                                                          [string]
-
-Input options:
-      --header  Glob pattern of files to force header processing for                     [string]
+  -C, --clean-exclude  Path(s) to files to exclude from cleaning                          [array]
 
 Output options:
-      --dir-mirror      Use the input subdirectory structure for the output directory   [boolean]
-  -D, --dir-dat-name    Use the DAT name as the output subdirectory                     [boolean]
-      --dir-letter      Append the first letter of the ROM name as an output subdirectory
+      --dir-mirror    Use the input subdirectory structure for the output directory     [boolean]
+  -D, --dir-dat-name  Use the DAT name as the output subdirectory                       [boolean]
+      --dir-letter    Append the first letter of the ROM name as an output subdirectory [boolean]
+  -O, --overwrite     Overwrite any files in the output directory                       [boolean]
+
+Archive options:
+  -Z, --zip-exclude   Glob pattern of files to exclude from zipping                      [string]
+      --zip-dat-name  Group all ROMs from the same DAT into the same zip archive, if not excluded
+                       from zipping (enforces --dat-threads 1)                          [boolean]
+
+Symlink options:
+      --symlink-relative  Create symlinks as relative to the target path, as opposed to absolute
                                                                                         [boolean]
-  -Z, --zip-exclude     Glob pattern of files to exclude from zipping                    [string]
+
+Header options:
+      --header          Glob pattern of files to force header processing for             [string]
   -H, --remove-headers  Remove known headers from ROMs, optionally limited to a list of comma-sep
                         arated file extensions (supported: .a78, .fds, .lnx, .nes, .smc) [string]
-  -O, --overwrite       Overwrite any files in the output directory                     [boolean]
-  -C, --clean-exclude   Path(s) to files to exclude from cleaning                         [array]
 
 Filtering options:
   -L, --language-filter  List of comma-separated languages to filter to (supported: DA, DE, EL, E
