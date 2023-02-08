@@ -5,6 +5,7 @@ import util from 'util';
 
 import ProgressBar, { ProgressBarSymbol } from '../console/progressBar.js';
 import Constants from '../constants.js';
+import ElasticSemaphore from '../elasticSemaphore.js';
 import fsPoly from '../polyfill/fsPoly.js';
 import Zip from '../types/archives/zip.js';
 import ArchiveEntry from '../types/files/archiveEntry.js';
@@ -23,12 +24,10 @@ import Module from './module.js';
 export default class ROMWriter extends Module {
   private static readonly THREAD_SEMAPHORE = new Semaphore(Constants.ROM_WRITER_THREADS);
 
-  private static FILESIZE_SEMAPHORE_KILOBYTES = Constants.ROM_WRITER_MAX_CONCURRENT_KILOBYTES;
-
   // WARN(cemmer): there is an undocumented semaphore max value that can be used, the full
   //  4,700,372,992 bytes of a DVD+R will cause runExclusive() to never run or return.
-  private static readonly FILESIZE_SEMAPHORE = new Semaphore(
-    ROMWriter.FILESIZE_SEMAPHORE_KILOBYTES,
+  private static readonly FILESIZE_SEMAPHORE = new ElasticSemaphore(
+    Constants.MAX_READ_WRITE_CONCURRENT_KILOBYTES,
   );
 
   private readonly options: Options;
@@ -91,15 +90,8 @@ export default class ROMWriter extends Module {
       return;
     }
 
-    const totalKilobytes = Math.max(1, Math.round(releaseCandidate.getRomsWithFiles()
-      .reduce((sum, romWithFiles) => sum + romWithFiles.getInputFile().getSize(), 0) / 1024));
-    if (totalKilobytes > ROMWriter.FILESIZE_SEMAPHORE_KILOBYTES) {
-      const increase = totalKilobytes - ROMWriter.FILESIZE_SEMAPHORE_KILOBYTES;
-      await this.progressBar.logInfo(`Increasing max filesize from ${fsPoly.sizeReadable(ROMWriter.FILESIZE_SEMAPHORE_KILOBYTES * 1024)} to ${(ROMWriter.FILESIZE_SEMAPHORE_KILOBYTES + increase) * 1024}`);
-      ROMWriter.FILESIZE_SEMAPHORE.setValue(ROMWriter.FILESIZE_SEMAPHORE.getValue() + increase);
-      ROMWriter.FILESIZE_SEMAPHORE_KILOBYTES += increase;
-    }
-
+    const totalKilobytes = releaseCandidate.getRomsWithFiles()
+      .reduce((sum, romWithFiles) => sum + romWithFiles.getInputFile().getSize(), 0) / 1024;
     await ROMWriter.FILESIZE_SEMAPHORE.runExclusive(async () => {
       const waitingMessage = `${releaseCandidate.getName()} ...`;
       this.progressBar.addWaitingMessage(waitingMessage);
