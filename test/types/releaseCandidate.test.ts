@@ -71,6 +71,6 @@ describe('getLanguages', () => {
 
   it('should return an empty list when languages can\'t be inferred', () => {
     const releaseCandidate = new ReleaseCandidate(new Game({ name: 'game' }), undefined, []);
-    expect(releaseCandidate.getLanguages()).toEqual([]);
+    expect(releaseCandidate.getLanguages()).toHaveLength(0);
   });
 });

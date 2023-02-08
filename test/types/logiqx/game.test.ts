@@ -21,7 +21,7 @@ describe('getReleases', () => {
 
     expect(new Game({ release: [release] }).getReleases()).toEqual([release]);
     expect(new Game({ release }).getReleases()).toEqual([release]);
-    expect(new Game().getReleases()).toEqual([]);
+    expect(new Game().getReleases()).toHaveLength(0);
   });
 });
 
@@ -31,7 +31,7 @@ describe('getRoms', () => {
 
     expect(new Game({ rom: [rom] }).getRoms()).toEqual([rom]);
     expect(new Game({ rom }).getRoms()).toEqual([rom]);
-    expect(new Game().getRoms()).toEqual([]);
+    expect(new Game().getRoms()).toHaveLength(0);
   });
 });
 
