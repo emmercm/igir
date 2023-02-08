@@ -39,6 +39,8 @@ export interface OptionsProps {
   readonly zipExclude?: string,
   readonly zipDatName?: boolean,
 
+  readonly symlinkRelative?: boolean,
+
   readonly header?: string,
   readonly removeHeaders?: string[],
 
@@ -100,6 +102,8 @@ export default class Options implements OptionsProps {
   readonly zipExclude: string;
 
   readonly zipDatName: boolean;
+
+  readonly symlinkRelative: boolean;
 
   readonly header: string;
 
@@ -179,6 +183,8 @@ export default class Options implements OptionsProps {
 
     this.zipExclude = options?.zipExclude || '';
     this.zipDatName = options?.zipDatName || false;
+
+    this.symlinkRelative = options?.symlinkRelative || false;
 
     this.languageFilter = options?.languageFilter || [];
     this.regionFilter = options?.regionFilter || [];
@@ -616,6 +622,10 @@ export default class Options implements OptionsProps {
 
   getZipDatName(): boolean {
     return this.zipDatName;
+  }
+
+  getSymlinkRelative(): boolean {
+    return this.symlinkRelative;
   }
 
   private getHeader(): string {

@@ -52,6 +52,7 @@ export default class ArgumentsParser {
     const groupPaths = 'Path options (inputs support globbing):';
     const groupOutput = 'Output options:';
     const groupArchive = 'Archive options:';
+    const groupSymlink = 'Symlink options:';
     const groupFiltering = 'Filtering options:';
     const groupHeader = 'Header options:';
     const groupPriority = 'Priority options:';
@@ -231,12 +232,26 @@ export default class ArgumentsParser {
         if (checkArgv.help) {
           return true;
         }
-
         const needZip = ['zip-exclude', 'zip-dat-name'].filter((option) => checkArgv[option]);
         if (checkArgv._.indexOf('zip') === -1 && needZip.length) {
           throw new Error(`Missing required command for options ${needZip.join(', ')}: zip`);
         }
+        return true;
+      })
 
+      .option('symlink-relative', {
+        group: groupSymlink,
+        description: 'Create symlinks as relative to the target path, as opposed to absolute',
+        type: 'boolean',
+      })
+      .check((checkArgv) => {
+        if (checkArgv.help) {
+          return true;
+        }
+        const needSymlink = ['symlink-relative'].filter((option) => checkArgv[option]);
+        if (checkArgv._.indexOf('symlink') === -1 && needSymlink.length) {
+          throw new Error(`Missing required command for options ${needSymlink.join(', ')}: symlink`);
+        }
         return true;
       })
 

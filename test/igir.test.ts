@@ -36,7 +36,9 @@ async function expectEndToEnd(
     .map((file) => ([
       file.toString()
         .replace(tempInput + path.sep, '')
-        .replace(tempOutput + path.sep, ''),
+        .replace(path.basename(tempInput), '<input>')
+        .replace(tempOutput + path.sep, '')
+        .replace(path.basename(tempOutput), '<output>'),
       file.getCrc32(),
     ]))
     .sort((a, b) => a[0].localeCompare(b[0]));
@@ -329,35 +331,36 @@ describe('with inferred dats', () => {
     ]);
   });
 
-  it('should symlink, test, and clean', async () => {
+  it('should relative symlink, test, and clean', async () => {
     await expectEndToEnd({
       commands: ['symlink', 'test', 'clean'],
+      symlinkRelative: true,
     }, [
-      [`0F09A40.rom -> ${path.join('roms', 'patchable', '0F09A40.rom')}`, '2f943e86'],
-      [`612644F.rom -> ${path.join('roms', 'patchable', '612644F.rom')}`, 'f7591b29'],
-      [`65D1206.rom -> ${path.join('roms', 'patchable', '65D1206.rom')}`, '20323455'],
-      [`allpads.nes -> ${path.join('roms', 'headered', 'allpads.nes')}`, '9180a163'],
-      [`before.rom -> ${path.join('roms', 'patchable', 'before.rom')}`, '0361b321'],
-      [`best.gz|best.rom -> ${path.join('roms', 'patchable', 'best.gz|best.rom')}`, '1e3d78cf'],
-      [`C01173E.rom -> ${path.join('roms', 'patchable', 'C01173E.rom')}`, 'dfaebe28'],
-      [`color_test.nintendoentertainmentsystem -> ${path.join('roms', 'headered', 'color_test.nintendoentertainmentsystem')}`, 'c9c1b7aa'],
-      [`diagnostic_test_cartridge.a78.7z|diagnostic_test_cartridge.a78 -> ${path.join('roms', 'headered', 'diagnostic_test_cartridge.a78.7z|diagnostic_test_cartridge.a78')}`, 'f6cc9b1c'],
-      [`empty.rom -> ${path.join('roms', 'empty.rom')}`, '00000000'],
-      [`fds_joypad_test.fds.zip|fds_joypad_test.fds -> ${path.join('roms', 'headered', 'fds_joypad_test.fds.zip|fds_joypad_test.fds')}`, '1e58456d'],
-      [`fizzbuzz.nes -> ${path.join('roms', 'raw', 'fizzbuzz.nes')}`, '370517b5'],
-      [`foobar.lnx -> ${path.join('roms', 'foobar.lnx')}`, 'b22c9747'],
-      [`KDULVQN.rom -> ${path.join('roms', 'patchable', 'KDULVQN.rom')}`, 'b1c303e4'],
-      [`LCDTestROM.lnx.rar|LCDTestROM.lnx -> ${path.join('roms', 'headered', 'LCDTestROM.lnx.rar|LCDTestROM.lnx')}`, '2d251538'],
-      [`loremipsum.rom -> ${path.join('roms', 'raw', 'loremipsum.rom')}`, '70856527'],
-      [`one.rom -> ${path.join('roms', 'raw', 'one.rom')}`, 'f817a89f'],
-      [`${path.join('onetwothree', 'one.rom')} -> ${path.join('roms', 'raw', 'one.rom')}`, 'f817a89f'],
-      [`${path.join('onetwothree', 'three.rom')} -> ${path.join('roms', 'raw', 'three.rom')}`, 'ff46c5d8'],
-      [`${path.join('onetwothree', 'two.rom')} -> ${path.join('roms', 'raw', 'two.rom')}`, '96170874'],
-      [`speed_test_v51.sfc.gz|speed_test_v51.sfc -> ${path.join('roms', 'unheadered', 'speed_test_v51.sfc.gz|speed_test_v51.sfc')}`, '8beffd94'],
-      [`speed_test_v51.smc -> ${path.join('roms', 'headered', 'speed_test_v51.smc')}`, '9adca6cc'],
-      [`three.rom -> ${path.join('roms', 'raw', 'three.rom')}`, 'ff46c5d8'],
-      [`two.rom -> ${path.join('roms', 'raw', 'two.rom')}`, '96170874'],
-      [`unknown.rom -> ${path.join('roms', 'raw', 'unknown.rom')}`, '377a7727'],
+      [`0F09A40.rom -> ${path.join('..', '..', 'input', '<input>', 'roms', 'patchable', '0F09A40.rom')}`, '2f943e86'],
+      [`612644F.rom -> ${path.join('..', '..', 'input', '<input>', 'roms', 'patchable', '612644F.rom')}`, 'f7591b29'],
+      [`65D1206.rom -> ${path.join('..', '..', 'input', '<input>', 'roms', 'patchable', '65D1206.rom')}`, '20323455'],
+      [`allpads.nes -> ${path.join('..', '..', 'input', '<input>', 'roms', 'headered', 'allpads.nes')}`, '9180a163'],
+      [`before.rom -> ${path.join('..', '..', 'input', '<input>', 'roms', 'patchable', 'before.rom')}`, '0361b321'],
+      [`best.gz|best.rom -> ${path.join('..', '..', 'input', '<input>', 'roms', 'patchable', 'best.gz|best.rom')}`, '1e3d78cf'],
+      [`C01173E.rom -> ${path.join('..', '..', 'input', '<input>', 'roms', 'patchable', 'C01173E.rom')}`, 'dfaebe28'],
+      [`color_test.nintendoentertainmentsystem -> ${path.join('..', '..', 'input', '<input>', 'roms', 'headered', 'color_test.nintendoentertainmentsystem')}`, 'c9c1b7aa'],
+      [`diagnostic_test_cartridge.a78.7z|diagnostic_test_cartridge.a78 -> ${path.join('..', '..', 'input', '<input>', 'roms', 'headered', 'diagnostic_test_cartridge.a78.7z|diagnostic_test_cartridge.a78')}`, 'f6cc9b1c'],
+      [`empty.rom -> ${path.join('..', '..', 'input', '<input>', 'roms', 'empty.rom')}`, '00000000'],
+      [`fds_joypad_test.fds.zip|fds_joypad_test.fds -> ${path.join('..', '..', 'input', '<input>', 'roms', 'headered', 'fds_joypad_test.fds.zip|fds_joypad_test.fds')}`, '1e58456d'],
+      [`fizzbuzz.nes -> ${path.join('..', '..', 'input', '<input>', 'roms', 'raw', 'fizzbuzz.nes')}`, '370517b5'],
+      [`foobar.lnx -> ${path.join('..', '..', 'input', '<input>', 'roms', 'foobar.lnx')}`, 'b22c9747'],
+      [`KDULVQN.rom -> ${path.join('..', '..', 'input', '<input>', 'roms', 'patchable', 'KDULVQN.rom')}`, 'b1c303e4'],
+      [`LCDTestROM.lnx.rar|LCDTestROM.lnx -> ${path.join('..', '..', 'input', '<input>', 'roms', 'headered', 'LCDTestROM.lnx.rar|LCDTestROM.lnx')}`, '2d251538'],
+      [`loremipsum.rom -> ${path.join('..', '..', 'input', '<input>', 'roms', 'raw', 'loremipsum.rom')}`, '70856527'],
+      [`one.rom -> ${path.join('..', '..', 'input', '<input>', 'roms', 'raw', 'one.rom')}`, 'f817a89f'],
+      [`${path.join('onetwothree', 'one.rom')} -> ${path.join('..', '..', '..', 'input', '<input>', 'roms', 'raw', 'one.rom')}`, 'f817a89f'],
+      [`${path.join('onetwothree', 'three.rom')} -> ${path.join('..', '..', '..', 'input', '<input>', 'roms', 'raw', 'three.rom')}`, 'ff46c5d8'],
+      [`${path.join('onetwothree', 'two.rom')} -> ${path.join('..', '..', '..', 'input', '<input>', 'roms', 'raw', 'two.rom')}`, '96170874'],
+      [`speed_test_v51.sfc.gz|speed_test_v51.sfc -> ${path.join('..', '..', 'input', '<input>', 'roms', 'unheadered', 'speed_test_v51.sfc.gz|speed_test_v51.sfc')}`, '8beffd94'],
+      [`speed_test_v51.smc -> ${path.join('..', '..', 'input', '<input>', 'roms', 'headered', 'speed_test_v51.smc')}`, '9adca6cc'],
+      [`three.rom -> ${path.join('..', '..', 'input', '<input>', 'roms', 'raw', 'three.rom')}`, 'ff46c5d8'],
+      [`two.rom -> ${path.join('..', '..', 'input', '<input>', 'roms', 'raw', 'two.rom')}`, '96170874'],
+      [`unknown.rom -> ${path.join('..', '..', 'input', '<input>', 'roms', 'raw', 'unknown.rom')}`, '377a7727'],
     ]);
   });
 

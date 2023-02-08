@@ -263,6 +263,16 @@ describe('options', () => {
     expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, 'zip', '--zip-dat-name', 'true', '--zip-dat-name', 'false']).getZipDatName()).toEqual(false);
   });
 
+  it('should parse "symlink-relative"', () => {
+    expect(() => argumentsParser.parse([...dummyCommandAndRequiredArgs, '--symlink-relative'])).toThrow(/missing required command/i);
+    expect(argumentsParser.parse(['symlink', ...dummyRequiredArgs, '--symlink-relative']).getSymlinkRelative()).toEqual(true);
+    expect(argumentsParser.parse(['symlink', ...dummyRequiredArgs, '--symlink-relative', 'true']).getSymlinkRelative()).toEqual(true);
+    expect(argumentsParser.parse(['symlink', ...dummyRequiredArgs, '--symlink-relative', 'false']).getSymlinkRelative()).toEqual(false);
+    expect(argumentsParser.parse(['symlink', ...dummyRequiredArgs, '--symlink-relative', '--symlink-relative']).getSymlinkRelative()).toEqual(true);
+    expect(argumentsParser.parse(['symlink', ...dummyRequiredArgs, '--symlink-relative', 'false', '--symlink-relative', 'true']).getSymlinkRelative()).toEqual(true);
+    expect(argumentsParser.parse(['symlink', ...dummyRequiredArgs, '--symlink-relative', 'true', '--symlink-relative', 'false']).getSymlinkRelative()).toEqual(false);
+  });
+
   it('should parse "header"', () => {
     expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--header', '**/*']).shouldReadFileForHeader('file.rom')).toEqual(true);
     expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--header', '**/*', '--header', 'nope']).shouldReadFileForHeader('file.rom')).toEqual(false);

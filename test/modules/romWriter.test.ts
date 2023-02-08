@@ -1139,4 +1139,31 @@ describe('symlink', () => {
       await expect(walkAndStat(inputTemp)).resolves.toEqual(inputFilesBefore);
     });
   });
+
+  it('should write relative symlinks', async () => {
+    await copyFixturesToTemp(async (inputTemp, outputTemp) => {
+      // Given
+      const options = new Options({ commands: ['symlink', 'test'], symlinkRelative: true });
+      await expect(walkAndStat(outputTemp)).resolves.toEqual([]);
+
+      // When we write
+      await romWriter(options, inputTemp, '**/*', undefined, outputTemp);
+
+      // Then files were written
+      const outputFilesBefore = await walkAndStat(outputTemp);
+      expect(outputFilesBefore).not.toEqual([]);
+      /* eslint-disable no-await-in-loop */
+      for (let i = 0; i < outputFilesBefore.length; i += 1) {
+        const [outputPath, stats] = outputFilesBefore[i];
+        expect(stats.isSymbolicLink()).toEqual(true);
+        const outputPathAbsolute = path.resolve(path.join(outputTemp, outputPath));
+        const outputPathResolved = path.resolve(
+          path.dirname(outputPathAbsolute),
+          await fsPoly.readlink(outputPathAbsolute),
+        );
+        await expect(fsPoly.exists(outputPathResolved)).resolves.toEqual(true);
+        expect(outputPathResolved.startsWith(inputTemp)).toEqual(true);
+      }
+    });
+  });
 });
