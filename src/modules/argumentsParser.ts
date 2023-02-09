@@ -169,12 +169,14 @@ export default class ArgumentsParser {
         group: groupDat,
         description: 'Regular expression of DAT names to process',
         type: 'string',
+        coerce: ArgumentsParser.getLastValue, // don't allow string[] values
         requiresArg: true,
       })
       .option('dat-regex-exclude', {
         group: groupDat,
         description: 'Regular expression of DAT names to exclude from processing',
         type: 'string',
+        coerce: ArgumentsParser.getLastValue, // don't allow string[] values
         requiresArg: true,
       })
       .check((checkArgv) => {
@@ -183,7 +185,7 @@ export default class ArgumentsParser {
         }
         const needDat = ['report'].filter((command) => checkArgv._.indexOf(command) !== -1);
         if ((!checkArgv.dat || !checkArgv.dat.length) && needDat.length) {
-          throw new Error(`Missing required option for commands ${needDat.join(', ')}: dat`);
+          throw new Error(`Missing required option for commands ${needDat.join(', ')}: --dat`);
         }
         return true;
       })
@@ -192,7 +194,6 @@ export default class ArgumentsParser {
         group: groupOutput,
         alias: 'o',
         description: 'Path to the ROM output directory (supports replaceable symbols, see below)',
-        demandOption: false, // use the .check()
         type: 'string',
         coerce: ArgumentsParser.getLastValue, // don't allow string[] values
         requiresArg: true,
@@ -233,7 +234,7 @@ export default class ArgumentsParser {
         }
         const needOutput = ['copy', 'move', 'extract', 'zip', 'clean'].filter((command) => checkArgv._.indexOf(command) !== -1);
         if (!checkArgv.output && needOutput.length) {
-          throw new Error(`Missing required option for commands ${needOutput.join(', ')}: output`);
+          throw new Error(`Missing required option for command${needOutput.length !== 1 ? 's' : ''} ${needOutput.join(', ')}: --output`);
         }
         return true;
       })
@@ -257,7 +258,7 @@ export default class ArgumentsParser {
         }
         const needZip = ['zip-exclude', 'zip-dat-name'].filter((option) => checkArgv[option]);
         if (checkArgv._.indexOf('zip') === -1 && needZip.length) {
-          throw new Error(`Missing required command for options ${needZip.join(', ')}: zip`);
+          throw new Error(`Missing required command for option${needZip.length !== 1 ? 's' : ''} ${needZip.join(', ')}: zip`);
         }
         return true;
       })
@@ -273,7 +274,7 @@ export default class ArgumentsParser {
         }
         const needSymlink = ['symlink-relative'].filter((option) => checkArgv[option]);
         if (checkArgv._.indexOf('symlink') === -1 && needSymlink.length) {
-          throw new Error(`Missing required command for options ${needSymlink.join(', ')}: symlink`);
+          throw new Error(`Missing required command for option${needSymlink.length !== 1 ? 's' : ''} ${needSymlink.join(', ')}: symlink`);
         }
         return true;
       })
@@ -299,6 +300,16 @@ export default class ArgumentsParser {
             }
             return `.${val.replace(/^\.+/, '')}`;
           }),
+      })
+      .check((checkArgv) => {
+        if (checkArgv.help) {
+          return true;
+        }
+        const needExtractOrZip = ['header', 'remove-headers'].filter((option) => checkArgv[option]);
+        if (checkArgv._.indexOf('extract') === -1 && checkArgv._.indexOf('zip') === -1 && needExtractOrZip.length) {
+          throw new Error(`Missing required command for options ${needExtractOrZip.join(', ')}: extract or zip`);
+        }
+        return true;
       })
 
       .option('language-filter', {

@@ -165,6 +165,14 @@ export default class CandidateGenerator extends Module {
           && !this.options.shouldZip(rom.getName())
           && !this.options.shouldExtract()
         ) {
+          // No automatic header removal will be performed when raw-copying an archive, so return no
+          //  match if we wanted a headerless ROM but got a headered one.
+          if (rom.hashCode() !== originalInputFile.hashCodeWithHeader()
+            && rom.hashCode() === originalInputFile.hashCodeWithoutHeader()
+          ) {
+            return [rom, undefined];
+          }
+
           finalInputFile = await originalInputFile.getArchive().asRawFile() as File;
         }
 
@@ -321,7 +329,7 @@ export default class CandidateGenerator extends Module {
         .filter((inputFile, idx, inputFiles) => inputFiles.indexOf(inputFile) === idx);
       if (conflictedInputFiles.length > 1) {
         hasConflict = true;
-        let message = `Cannot ${this.options.shouldCopy() ? 'copy' : 'move'} different files to: ${duplicateOutput}:`;
+        let message = `Cannot ${this.options.writeString()} different files to: ${duplicateOutput}:`;
         conflictedInputFiles.forEach((conflictedInputFile) => { message += `\n  ${conflictedInputFile}`; });
         await this.progressBar.logWarn(message);
       }

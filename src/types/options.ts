@@ -248,7 +248,11 @@ export default class Options implements OptionsProps {
   }
 
   shouldWrite(): boolean {
-    return this.shouldCopy() || this.shouldMove() || this.shouldSymlink();
+    return this.writeString() !== undefined;
+  }
+
+  writeString(): string | undefined {
+    return ['copy', 'move', 'symlink'].find((command) => this.getCommands().indexOf(command) !== -1);
   }
 
   shouldCopy(): boolean {
