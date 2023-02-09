@@ -21,9 +21,9 @@ it('should throw on nonexistent paths', async () => {
 });
 
 it('should return empty list on no results', async () => {
-  await expect(createPatchScanner([]).scan()).resolves.toEqual([]);
-  await expect(createPatchScanner(['']).scan()).resolves.toEqual([]);
-  await expect(createPatchScanner([os.devNull]).scan()).resolves.toEqual([]);
+  await expect(createPatchScanner([]).scan()).resolves.toHaveLength(0);
+  await expect(createPatchScanner(['']).scan()).resolves.toHaveLength(0);
+  await expect(createPatchScanner([os.devNull]).scan()).resolves.toHaveLength(0);
 });
 
 it('should return empty list on non-patches', async () => {

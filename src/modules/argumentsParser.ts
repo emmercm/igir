@@ -49,13 +49,14 @@ export default class ArgumentsParser {
   parse(argv: string[]): Options {
     this.logger.info(`Parsing CLI arguments: ${argv}`);
 
-    const groupPaths = 'Path options (inputs support globbing):';
-    const groupOutput = 'Output options:';
-    const groupArchive = 'Archive options:';
-    const groupSymlink = 'Symlink options:';
-    const groupFiltering = 'Filtering options:';
-    const groupHeader = 'Header options:';
-    const groupPriority = 'Priority options:';
+    const groupInput = 'Input options (supports globbing):';
+    const groupDat = 'DAT input options:';
+    const groupOutput = 'ROM output options:';
+    const groupArchive = 'Zip command options:';
+    const groupSymlink = 'Symlink command options:';
+    const groupHeader = 'ROM header options:';
+    const groupFiltering = 'ROM filtering options:';
+    const groupPriority = 'ROM priority options:';
     const groupHelpDebug = 'Help & debug options:';
 
     // Add every command to a yargs object, recursively, resulting in the ability to specify
@@ -128,15 +129,8 @@ export default class ArgumentsParser {
       .strictCommands(true);
 
     yargsParser
-      .option('dat', {
-        group: groupPaths,
-        alias: 'd',
-        description: 'Path(s) to DAT files or archives',
-        type: 'array',
-        requiresArg: true,
-      })
       .option('input', {
-        group: groupPaths,
+        group: groupInput,
         alias: 'i',
         description: 'Path(s) to ROM files or archives',
         demandOption: true,
@@ -144,21 +138,58 @@ export default class ArgumentsParser {
         requiresArg: true,
       })
       .option('input-exclude', {
-        group: groupPaths,
+        group: groupInput,
         alias: 'I',
         description: 'Path(s) to ROM files or archives to exclude from processing',
         type: 'array',
         requiresArg: true,
       })
       .option('patch', {
-        group: groupPaths,
+        group: groupInput,
         alias: 'p',
         description: `Path(s) to ROM patch files or archives (supported: ${PatchFactory.getSupportedExtensions().join(', ')})`,
         type: 'array',
         requiresArg: true,
       })
+
+      .option('dat', {
+        group: groupDat,
+        alias: 'd',
+        description: 'Path(s) to DAT files or archives (supports globbing)',
+        type: 'array',
+        requiresArg: true,
+      })
+      .option('dat-exclude', {
+        group: groupDat,
+        description: 'Path(s) to DAT files or archives to exclude from processing (supports globbing)',
+        type: 'array',
+        requiresArg: true,
+      })
+      .option('dat-regex', {
+        group: groupDat,
+        description: 'Regular expression of DAT names to process',
+        type: 'string',
+        requiresArg: true,
+      })
+      .option('dat-regex-exclude', {
+        group: groupDat,
+        description: 'Regular expression of DAT names to exclude from processing',
+        type: 'string',
+        requiresArg: true,
+      })
+      .check((checkArgv) => {
+        if (checkArgv.help) {
+          return true;
+        }
+        const needDat = ['report'].filter((command) => checkArgv._.indexOf(command) !== -1);
+        if ((!checkArgv.dat || !checkArgv.dat.length) && needDat.length) {
+          throw new Error(`Missing required option for commands ${needDat.join(', ')}: dat`);
+        }
+        return true;
+      })
+
       .option('output', {
-        group: groupPaths,
+        group: groupOutput,
         alias: 'o',
         description: 'Path to the ROM output directory (supports replaceable symbols, see below)',
         demandOption: false, // use the .check()
@@ -166,31 +197,6 @@ export default class ArgumentsParser {
         coerce: ArgumentsParser.getLastValue, // don't allow string[] values
         requiresArg: true,
       })
-      .option('clean-exclude', {
-        group: groupPaths,
-        alias: 'C',
-        description: 'Path(s) to files to exclude from cleaning',
-        type: 'array',
-        requiresArg: true,
-      })
-      .check((checkArgv) => {
-        if (checkArgv.help) {
-          return true;
-        }
-
-        const needOutput = ['copy', 'move', 'extract', 'zip', 'clean'].filter((command) => checkArgv._.indexOf(command) !== -1);
-        if (!checkArgv.output && needOutput.length) {
-          throw new Error(`Missing required option for commands ${needOutput.join(', ')}: output`);
-        }
-
-        const needDat = ['report'].filter((command) => checkArgv._.indexOf(command) !== -1);
-        if ((!checkArgv.dat || !checkArgv.dat.length) && needDat.length) {
-          throw new Error(`Missing required option for commands ${needDat.join(', ')}: dat`);
-        }
-
-        return true;
-      })
-
       .option('dir-mirror', {
         group: groupOutput,
         description: 'Use the input subdirectory structure for the output directory',
@@ -213,6 +219,23 @@ export default class ArgumentsParser {
         alias: 'O',
         description: 'Overwrite any files in the output directory',
         type: 'boolean',
+      })
+      .option('clean-exclude', {
+        group: groupOutput,
+        alias: 'C',
+        description: 'Path(s) to files to exclude from cleaning (supports globbing)',
+        type: 'array',
+        requiresArg: true,
+      })
+      .check((checkArgv) => {
+        if (checkArgv.help) {
+          return true;
+        }
+        const needOutput = ['copy', 'move', 'extract', 'zip', 'clean'].filter((command) => checkArgv._.indexOf(command) !== -1);
+        if (!checkArgv.output && needOutput.length) {
+          throw new Error(`Missing required option for commands ${needOutput.join(', ')}: output`);
+        }
+        return true;
       })
 
       .option('zip-exclude', {

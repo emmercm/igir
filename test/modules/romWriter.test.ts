@@ -164,13 +164,13 @@ it('should not do anything if there are no parents', async () => {
     // Given
     const options = new Options({ commands: ['copy'] });
     const inputFilesBefore = await walkAndStat(inputTemp);
-    await expect(walkAndStat(outputTemp)).resolves.toEqual([]);
+    await expect(walkAndStat(outputTemp)).resolves.toHaveLength(0);
 
     // When
     await romWriter(options, os.devNull, '**/*', undefined, outputTemp);
 
     // Then no files were written
-    await expect(walkAndStat(outputTemp)).resolves.toEqual([]);
+    await expect(walkAndStat(outputTemp)).resolves.toHaveLength(0);
 
     // And the input files weren't touched
     await expect(walkAndStat(inputTemp)).resolves.toEqual(inputFilesBefore);
@@ -182,13 +182,13 @@ it('should not do anything with no write commands', async () => {
     // Given
     const options = new Options({ commands: ['report'] });
     const inputFilesBefore = await walkAndStat(inputTemp);
-    await expect(walkAndStat(outputTemp)).resolves.toEqual([]);
+    await expect(walkAndStat(outputTemp)).resolves.toHaveLength(0);
 
     // When
     await romWriter(options, inputTemp, '**/*', undefined, outputTemp);
 
     // Then no files were written
-    await expect(walkAndStat(outputTemp)).resolves.toEqual([]);
+    await expect(walkAndStat(outputTemp)).resolves.toHaveLength(0);
 
     // And the input files weren't touched
     await expect(walkAndStat(inputTemp)).resolves.toEqual(inputFilesBefore);
@@ -200,7 +200,7 @@ it('should not do anything if the input and output files are the same', async ()
     // Given
     const options = new Options({ commands: ['report'] });
     const inputFilesBefore = await walkAndStat(inputTemp);
-    await expect(walkAndStat(inputTemp)).resolves.not.toEqual([]);
+    await expect(walkAndStat(inputTemp)).resolves.not.toHaveLength(0);
 
     // When
     await romWriter(options, inputTemp, '**/*', undefined, inputTemp);
@@ -233,14 +233,14 @@ describe('zip', () => {
       // Given
       const options = new Options({ commands: ['copy', 'zip'] });
       const inputFilesBefore = await walkAndStat(inputTemp);
-      await expect(walkAndStat(outputTemp)).resolves.toEqual([]);
+      await expect(walkAndStat(outputTemp)).resolves.toHaveLength(0);
 
       // And we've written once
       await romWriter(options, inputTemp, '**/*', undefined, outputTemp);
 
       // And files were written
       const outputFilesBefore = await walkAndStat(outputTemp);
-      expect(outputFilesBefore).not.toEqual([]);
+      expect(outputFilesBefore).not.toHaveLength(0);
       expect(outputFilesBefore.some(([, stats]) => stats.isSymbolicLink())).toEqual(false);
 
       // When we write again
@@ -259,14 +259,14 @@ describe('zip', () => {
       // Given
       const options = new Options({ commands: ['copy', 'zip'] });
       const inputFilesBefore = await walkAndStat(inputTemp);
-      await expect(walkAndStat(outputTemp)).resolves.toEqual([]);
+      await expect(walkAndStat(outputTemp)).resolves.toHaveLength(0);
 
       // And we've written once
       await romWriter(options, inputTemp, '**/*', undefined, outputTemp);
 
       // And files were written
       const outputFilesBefore = await walkAndStat(outputTemp);
-      expect(outputFilesBefore).not.toEqual([]);
+      expect(outputFilesBefore).not.toHaveLength(0);
       expect(outputFilesBefore.some(([, stats]) => stats.isSymbolicLink())).toEqual(false);
 
       // When we write again
@@ -402,7 +402,7 @@ describe('zip', () => {
       // Given
       const options = new Options({ commands: ['copy', 'zip', 'test'] });
       const inputFilesBefore = await walkAndStat(inputTemp);
-      await expect(walkAndStat(outputTemp)).resolves.toEqual([]);
+      await expect(walkAndStat(outputTemp)).resolves.toHaveLength(0);
 
       // When
       const outputFiles = (await romWriter(options, inputTemp, inputGlob, undefined, outputTemp))
@@ -452,7 +452,7 @@ describe('zip', () => {
       // Given
       const options = new Options({ commands: ['move', 'zip', 'test'] });
       const romFilesBefore = await walkAndStat(path.join(inputTemp, 'roms'));
-      await expect(walkAndStat(outputTemp)).resolves.toEqual([]);
+      await expect(walkAndStat(outputTemp)).resolves.toHaveLength(0);
 
       // When
       const outputFiles = (await romWriter(options, inputTemp, inputGlob, undefined, outputTemp))
@@ -515,7 +515,7 @@ describe('zip', () => {
     await copyFixturesToTemp(async (inputTemp, outputTemp) => {
       // Given
       const options = new Options({ commands: ['copy', 'zip'], zipDatName: true });
-      await expect(walkAndStat(outputTemp)).resolves.toEqual([]);
+      await expect(walkAndStat(outputTemp)).resolves.toHaveLength(0);
 
       // When
       const outputFiles = await romWriter(options, inputTemp, inputGlob, undefined, outputTemp);
@@ -554,14 +554,14 @@ describe('extract', () => {
       // Given
       const options = new Options({ commands: ['copy', 'extract'] });
       const inputFilesBefore = await walkAndStat(inputTemp);
-      await expect(walkAndStat(outputTemp)).resolves.toEqual([]);
+      await expect(walkAndStat(outputTemp)).resolves.toHaveLength(0);
 
       // And we've written once
       await romWriter(options, inputTemp, '**/*', undefined, outputTemp);
 
       // And files were written
       const outputFilesBefore = await walkAndStat(outputTemp);
-      expect(outputFilesBefore).not.toEqual([]);
+      expect(outputFilesBefore).not.toHaveLength(0);
       expect(outputFilesBefore.some(([, stats]) => stats.isSymbolicLink())).toEqual(false);
 
       // When we write again
@@ -580,14 +580,14 @@ describe('extract', () => {
       // Given
       const options = new Options({ commands: ['copy', 'extract'] });
       const inputFilesBefore = await walkAndStat(inputTemp);
-      await expect(walkAndStat(outputTemp)).resolves.toEqual([]);
+      await expect(walkAndStat(outputTemp)).resolves.toHaveLength(0);
 
       // And we've written once
       await romWriter(options, inputTemp, '**/*', undefined, outputTemp);
 
       // And files were written
       const outputFilesBefore = await walkAndStat(outputTemp);
-      expect(outputFilesBefore).not.toEqual([]);
+      expect(outputFilesBefore).not.toHaveLength(0);
       expect(outputFilesBefore.some(([, stats]) => stats.isSymbolicLink())).toEqual(false);
 
       // When we write again
@@ -719,7 +719,7 @@ describe('extract', () => {
       // Given
       const options = new Options({ commands: ['copy', 'extract', 'test'] });
       const inputFilesBefore = await walkAndStat(inputTemp);
-      await expect(walkAndStat(outputTemp)).resolves.toEqual([]);
+      await expect(walkAndStat(outputTemp)).resolves.toHaveLength(0);
 
       // When
       const outputFiles = (await romWriter(options, inputTemp, inputGlob, undefined, outputTemp))
@@ -769,7 +769,7 @@ describe('extract', () => {
       // Given
       const options = new Options({ commands: ['move', 'extract', 'test'] });
       const romFilesBefore = await walkAndStat(path.join(inputTemp, 'roms'));
-      await expect(walkAndStat(outputTemp)).resolves.toEqual([]);
+      await expect(walkAndStat(outputTemp)).resolves.toHaveLength(0);
 
       // When
       const outputFiles = (await romWriter(options, inputTemp, inputGlob, undefined, outputTemp))
@@ -818,14 +818,14 @@ describe('raw', () => {
       // Given
       const options = new Options({ commands: ['copy'] });
       const inputFilesBefore = await walkAndStat(inputTemp);
-      await expect(walkAndStat(outputTemp)).resolves.toEqual([]);
+      await expect(walkAndStat(outputTemp)).resolves.toHaveLength(0);
 
       // And we've written once
       await romWriter(options, inputTemp, '**/*', undefined, outputTemp);
 
       // And files were written
       const outputFilesBefore = await walkAndStat(outputTemp);
-      expect(outputFilesBefore).not.toEqual([]);
+      expect(outputFilesBefore).not.toHaveLength(0);
       expect(outputFilesBefore.some(([, stats]) => stats.isSymbolicLink())).toEqual(false);
 
       // When we write again
@@ -844,14 +844,14 @@ describe('raw', () => {
       // Given
       const options = new Options({ commands: ['copy'] });
       const inputFilesBefore = await walkAndStat(inputTemp);
-      await expect(walkAndStat(outputTemp)).resolves.toEqual([]);
+      await expect(walkAndStat(outputTemp)).resolves.toHaveLength(0);
 
       // And we've written once
       await romWriter(options, inputTemp, '**/*', undefined, outputTemp);
 
       // And files were written
       const outputFilesBefore = await walkAndStat(outputTemp);
-      expect(outputFilesBefore).not.toEqual([]);
+      expect(outputFilesBefore).not.toHaveLength(0);
       expect(outputFilesBefore.some(([, stats]) => stats.isSymbolicLink())).toEqual(false);
 
       // When we write again
@@ -972,7 +972,7 @@ describe('raw', () => {
       // Given
       const options = new Options({ commands: ['copy', 'test'] });
       const inputFilesBefore = await walkAndStat(inputTemp);
-      await expect(walkAndStat(outputTemp)).resolves.toEqual([]);
+      await expect(walkAndStat(outputTemp)).resolves.toHaveLength(0);
 
       // When
       const outputFiles = (await romWriter(options, inputTemp, inputGlob, undefined, outputTemp))
@@ -1022,7 +1022,7 @@ describe('raw', () => {
       // Given
       const options = new Options({ commands: ['move', 'test'] });
       const romFilesBefore = await walkAndStat(path.join(inputTemp, 'roms'));
-      await expect(walkAndStat(outputTemp)).resolves.toEqual([]);
+      await expect(walkAndStat(outputTemp)).resolves.toHaveLength(0);
 
       // When
       const outputFiles = (await romWriter(options, inputTemp, inputGlob, undefined, outputTemp))
@@ -1071,14 +1071,14 @@ describe('symlink', () => {
       // Given
       const options = new Options({ commands: ['symlink', 'test'] });
       const inputFilesBefore = await walkAndStat(inputTemp);
-      await expect(walkAndStat(outputTemp)).resolves.toEqual([]);
+      await expect(walkAndStat(outputTemp)).resolves.toHaveLength(0);
 
       // And we've written once
       await romWriter(options, inputTemp, '**/*', undefined, outputTemp);
 
       // And files were written
       const outputFilesBefore = await walkAndStat(outputTemp);
-      expect(outputFilesBefore).not.toEqual([]);
+      expect(outputFilesBefore).not.toHaveLength(0);
       /* eslint-disable no-await-in-loop */
       for (let i = 0; i < outputFilesBefore.length; i += 1) {
         const [outputPath, stats] = outputFilesBefore[i];
@@ -1102,14 +1102,14 @@ describe('symlink', () => {
       // Given
       const options = new Options({ commands: ['symlink', 'test'] });
       const inputFilesBefore = await walkAndStat(inputTemp);
-      await expect(walkAndStat(outputTemp)).resolves.toEqual([]);
+      await expect(walkAndStat(outputTemp)).resolves.toHaveLength(0);
 
       // And we've written once
       await romWriter(options, inputTemp, '**/*', undefined, outputTemp);
 
       // And files were written
       const outputFilesBefore = await walkAndStat(outputTemp);
-      expect(outputFilesBefore).not.toEqual([]);
+      expect(outputFilesBefore).not.toHaveLength(0);
       /* eslint-disable no-await-in-loop */
       for (let i = 0; i < outputFilesBefore.length; i += 1) {
         const [outputPath, stats] = outputFilesBefore[i];
@@ -1144,14 +1144,14 @@ describe('symlink', () => {
     await copyFixturesToTemp(async (inputTemp, outputTemp) => {
       // Given
       const options = new Options({ commands: ['symlink', 'test'], symlinkRelative: true });
-      await expect(walkAndStat(outputTemp)).resolves.toEqual([]);
+      await expect(walkAndStat(outputTemp)).resolves.toHaveLength(0);
 
       // When we write
       await romWriter(options, inputTemp, '**/*', undefined, outputTemp);
 
       // Then files were written
       const outputFilesBefore = await walkAndStat(outputTemp);
-      expect(outputFilesBefore).not.toEqual([]);
+      expect(outputFilesBefore).not.toHaveLength(0);
       /* eslint-disable no-await-in-loop */
       for (let i = 0; i < outputFilesBefore.length; i += 1) {
         const [outputPath, stats] = outputFilesBefore[i];

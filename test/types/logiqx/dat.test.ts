@@ -9,7 +9,7 @@ describe('getGames', () => {
 
     expect(new DAT(new Header(), [game]).getGames()).toEqual([game]);
     expect(new DAT(new Header(), game).getGames()).toEqual([game]);
-    expect(new DAT(new Header(), []).getGames()).toEqual([]);
+    expect(new DAT(new Header(), []).getGames()).toHaveLength(0);
   });
 });
 

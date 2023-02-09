@@ -32,7 +32,7 @@ export default class DATScanner extends Scanner {
     await this.progressBar.setSymbol(ProgressBarSymbol.SEARCHING);
     await this.progressBar.reset(this.options.getDatFileCount());
 
-    const datFilePaths = await this.options.scanDatFiles();
+    const datFilePaths = await this.options.scanDatFilesWithoutExclusions();
     if (!datFilePaths.length) {
       return [];
     }
@@ -70,7 +70,16 @@ export default class DATScanner extends Scanner {
       },
     )).filter((xmlObject) => xmlObject) as DAT[];
 
-    return results.sort((a, b) => a.getNameShort().localeCompare(b.getNameShort()));
+    return results
+      .filter((dat) => {
+        const datRegex = this.options.getDatRegex();
+        return !datRegex || dat.getName().match(datRegex) !== null;
+      })
+      .filter((dat) => {
+        const datRegexExclude = this.options.getDatRegexExclude();
+        return !datRegexExclude || dat.getName().match(datRegexExclude) === null;
+      })
+      .sort((a, b) => a.getNameShort().localeCompare(b.getNameShort()));
   }
 
   private async parseDatFile(datFile: File): Promise<DAT | undefined> {

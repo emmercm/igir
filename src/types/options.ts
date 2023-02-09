@@ -24,17 +24,21 @@ import Release from './logiqx/release.js';
 export interface OptionsProps {
   readonly commands?: string[],
 
-  readonly dat?: string[],
   readonly input?: string[],
   readonly inputExclude?: string[],
   readonly patch?: string[],
-  readonly output?: string,
-  readonly cleanExclude?: string[],
 
+  readonly dat?: string[],
+  readonly datExclude?: string[],
+  readonly datRegex?: string,
+  readonly datRegexExclude?: string,
+
+  readonly output?: string,
   readonly dirMirror?: boolean,
   readonly dirDatName?: boolean,
   readonly dirLetter?: boolean,
   readonly overwrite?: boolean,
+  readonly cleanExclude?: string[],
 
   readonly zipExclude?: string,
   readonly zipDatName?: boolean,
@@ -79,17 +83,21 @@ export default class Options implements OptionsProps {
   @Expose({ name: '_' })
   readonly commands: string[];
 
-  readonly dat: string[];
-
   readonly input: string[];
 
   readonly inputExclude: string[];
 
   readonly patch: string[];
 
-  readonly output: string;
+  readonly dat: string[];
 
-  readonly cleanExclude: string[];
+  readonly datExclude: string[];
+
+  readonly datRegex: string;
+
+  readonly datRegexExclude: string;
+
+  readonly output: string;
 
   readonly dirMirror: boolean;
 
@@ -98,6 +106,8 @@ export default class Options implements OptionsProps {
   readonly dirLetter: boolean;
 
   readonly overwrite: boolean;
+
+  readonly cleanExclude: string[];
 
   readonly zipExclude: string;
 
@@ -166,25 +176,29 @@ export default class Options implements OptionsProps {
   constructor(options?: OptionsProps) {
     this.commands = options?.commands || [];
 
-    this.dat = options?.dat || [];
     this.input = options?.input || [];
     this.inputExclude = options?.inputExclude || [];
     this.patch = options?.patch || [];
+
+    this.dat = options?.dat || [];
+    this.datExclude = options?.datExclude || [];
+    this.datRegex = options?.datRegex || '';
+    this.datRegexExclude = options?.datRegexExclude || '';
+
     this.output = options?.output || '';
-    this.cleanExclude = options?.cleanExclude || [];
-
-    this.header = options?.header || '';
-
     this.dirMirror = options?.dirMirror || false;
     this.dirDatName = options?.dirDatName || false;
     this.dirLetter = options?.dirLetter || false;
-    this.removeHeaders = options?.removeHeaders;
     this.overwrite = options?.overwrite || false;
+    this.cleanExclude = options?.cleanExclude || [];
 
     this.zipExclude = options?.zipExclude || '';
     this.zipDatName = options?.zipDatName || false;
 
     this.symlinkRelative = options?.symlinkRelative || false;
+
+    this.header = options?.header || '';
+    this.removeHeaders = options?.removeHeaders;
 
     this.languageFilter = options?.languageFilter || [];
     this.regionFilter = options?.regionFilter || [];
@@ -274,18 +288,6 @@ export default class Options implements OptionsProps {
   }
 
   // Options
-
-  usingDats(): boolean {
-    return this.dat.length > 0;
-  }
-
-  getDatFileCount(): number {
-    return this.dat.length;
-  }
-
-  async scanDatFiles(): Promise<string[]> {
-    return Options.scanPaths(this.dat);
-  }
 
   getInputFileCount(): number {
     return this.input.length;
@@ -378,6 +380,55 @@ export default class Options implements OptionsProps {
       throw new Error(`${inputPath}: Path doesn't exist`);
     }
     return paths;
+  }
+
+  usingDats(): boolean {
+    return this.dat.length > 0;
+  }
+
+  getDatFileCount(): number {
+    return this.dat.length;
+  }
+
+  private async scanDatFiles(): Promise<string[]> {
+    return Options.scanPaths(this.dat);
+  }
+
+  private async scanDatExcludeFiles(): Promise<string[]> {
+    return Options.scanPaths(this.datExclude);
+  }
+
+  async scanDatFilesWithoutExclusions(): Promise<string[]> {
+    const datFiles = await this.scanDatFiles();
+    const datExcludeFiles = await this.scanDatExcludeFiles();
+    return datFiles
+      .filter((inputPath) => datExcludeFiles.indexOf(inputPath) === -1);
+  }
+
+  getDatRegex(): RegExp | undefined {
+    if (!this.datRegex.trim()) {
+      return undefined;
+    }
+
+    const flagsMatch = this.datRegex.match(/^\/(.+)\/([a-z]*)$/);
+    if (flagsMatch !== null) {
+      return new RegExp(flagsMatch[1], flagsMatch[2]);
+    }
+
+    return new RegExp(this.datRegex);
+  }
+
+  getDatRegexExclude(): RegExp | undefined {
+    if (!this.datRegexExclude.trim()) {
+      return undefined;
+    }
+
+    const flagsMatch = this.datRegexExclude.match(/^\/(.+)\/([a-z]*)$/);
+    if (flagsMatch !== null) {
+      return new RegExp(flagsMatch[1], flagsMatch[2]);
+    }
+
+    return new RegExp(this.datRegexExclude);
   }
 
   private getOutput(): string {
@@ -578,6 +629,22 @@ export default class Options implements OptionsProps {
     );
   }
 
+  getDirMirror(): boolean {
+    return this.dirMirror;
+  }
+
+  getDirDatName(): boolean {
+    return this.dirDatName;
+  }
+
+  getDirLetter(): boolean {
+    return this.dirLetter;
+  }
+
+  getOverwrite(): boolean {
+    return this.overwrite;
+  }
+
   private async scanCleanExcludeFiles(): Promise<string[]> {
     return Options.scanPaths(this.cleanExclude);
   }
@@ -598,22 +665,6 @@ export default class Options implements OptionsProps {
       .map((filePath) => path.normalize(filePath))
       .filter((filePath) => writtenFilesNormalized.indexOf(filePath) === -1)
       .filter((filePath) => cleanExcludedFilesNormalized.indexOf(filePath) === -1);
-  }
-
-  getDirMirror(): boolean {
-    return this.dirMirror;
-  }
-
-  getDirDatName(): boolean {
-    return this.dirDatName;
-  }
-
-  getDirLetter(): boolean {
-    return this.dirLetter;
-  }
-
-  getOverwrite(): boolean {
-    return this.overwrite;
   }
 
   private getZipExclude(): string {
