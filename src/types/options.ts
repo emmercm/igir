@@ -406,11 +406,29 @@ export default class Options implements OptionsProps {
   }
 
   getDatRegex(): RegExp | undefined {
-    return this.datRegex ? new RegExp(this.datRegex, 'i') : undefined;
+    if (!this.datRegex.trim()) {
+      return undefined;
+    }
+
+    const flagsMatch = this.datRegex.match(/^\/(.+)\/([a-z]*)$/);
+    if (flagsMatch !== null) {
+      return new RegExp(flagsMatch[1], flagsMatch[2]);
+    }
+
+    return new RegExp(this.datRegex);
   }
 
   getDatRegexExclude(): RegExp | undefined {
-    return this.datRegexExclude ? new RegExp(this.datRegexExclude, 'i') : undefined;
+    if (!this.datRegexExclude.trim()) {
+      return undefined;
+    }
+
+    const flagsMatch = this.datRegexExclude.match(/^\/(.+)\/([a-z]*)$/);
+    if (flagsMatch !== null) {
+      return new RegExp(flagsMatch[1], flagsMatch[2]);
+    }
+
+    return new RegExp(this.datRegexExclude);
   }
 
   private getOutput(): string {

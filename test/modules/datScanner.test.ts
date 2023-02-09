@@ -71,15 +71,15 @@ describe('multiple files', () => {
   });
 
   it('some files are regex filtered', async () => {
-    await expect(createDatScanner(['test/fixtures/dats'], [], 'abcdefg').scan()).resolves.toHaveLength(0);
-    await expect(createDatScanner(['test/fixtures/dats'], [], '(one|two)').scan()).resolves.toHaveLength(2);
+    await expect(createDatScanner(['test/fixtures/dats'], [], '/abcdefg/').scan()).resolves.toHaveLength(0);
+    await expect(createDatScanner(['test/fixtures/dats'], [], '/(one|two)/i').scan()).resolves.toHaveLength(2);
     await expect(createDatScanner(['test/fixtures/dats'], [], '[aeiou]').scan()).resolves.toHaveLength(totalDatFiles);
   });
 
   it('some files are regex excluded', async () => {
     await expect(createDatScanner(['test/fixtures/dats'], [], '', '[aeiou]').scan()).resolves.toHaveLength(0);
-    await expect(createDatScanner(['test/fixtures/dats'], [], '', '(one|two)').scan()).resolves.toHaveLength(totalDatFiles - 2);
-    await expect(createDatScanner(['test/fixtures/dats'], [], '', 'abcdefg').scan()).resolves.toHaveLength(totalDatFiles);
+    await expect(createDatScanner(['test/fixtures/dats'], [], '', '/(one|two)/i').scan()).resolves.toHaveLength(totalDatFiles - 2);
+    await expect(createDatScanner(['test/fixtures/dats'], [], '', '/abcdefg/').scan()).resolves.toHaveLength(totalDatFiles);
   });
 });
 

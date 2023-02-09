@@ -167,13 +167,13 @@ export default class ArgumentsParser {
       })
       .option('dat-regex', {
         group: groupDat,
-        description: 'Regular expression of DAT names to process (case-insensitive)',
+        description: 'Regular expression of DAT names to process',
         type: 'string',
         requiresArg: true,
       })
       .option('dat-regex-exclude', {
         group: groupDat,
-        description: 'Regular expression of DAT names to exclude from processing (case-insensitive)',
+        description: 'Regular expression of DAT names to exclude from processing',
         type: 'string',
         requiresArg: true,
       })
