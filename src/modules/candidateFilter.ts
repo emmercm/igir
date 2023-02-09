@@ -86,22 +86,28 @@ export default class CandidateFilter extends Module {
    ******************** */
 
   private preFilter(releaseCandidate: ReleaseCandidate): boolean {
+    const game = releaseCandidate.getGame();
+    // If any condition evaluates to 'true' then the candidate will be excluded
     return [
+      this.options.getFilterRegex()
+        && !this.options.getFilterRegex()?.test(game.getName()),
+      this.options.getFilterRegexExclude()
+        && this.options.getFilterRegexExclude()?.test(game.getName()),
       this.noLanguageAllowed(releaseCandidate),
       this.regionNotAllowed(releaseCandidate),
-      this.options.getOnlyBios() && !releaseCandidate.getGame().isBios(),
-      this.options.getNoBios() && releaseCandidate.getGame().isBios(),
-      this.options.getOnlyRetail() && !releaseCandidate.getGame().isRetail(),
-      this.options.getNoUnlicensed() && releaseCandidate.getGame().isUnlicensed(),
-      this.options.getNoDemo() && releaseCandidate.getGame().isDemo(),
-      this.options.getNoBeta() && releaseCandidate.getGame().isBeta(),
-      this.options.getNoSample() && releaseCandidate.getGame().isSample(),
-      this.options.getNoPrototype() && releaseCandidate.getGame().isPrototype(),
-      this.options.getNoTestRoms() && releaseCandidate.getGame().isTest(),
-      this.options.getNoAftermarket() && releaseCandidate.getGame().isAftermarket(),
-      this.options.getNoHomebrew() && releaseCandidate.getGame().isHomebrew(),
-      this.options.getNoUnverified() && !releaseCandidate.getGame().isVerified(),
-      this.options.getNoBad() && releaseCandidate.getGame().isBad(),
+      this.options.getOnlyBios() && !game.isBios(),
+      this.options.getNoBios() && game.isBios(),
+      this.options.getOnlyRetail() && !game.isRetail(),
+      this.options.getNoUnlicensed() && game.isUnlicensed(),
+      this.options.getNoDemo() && game.isDemo(),
+      this.options.getNoBeta() && game.isBeta(),
+      this.options.getNoSample() && game.isSample(),
+      this.options.getNoPrototype() && game.isPrototype(),
+      this.options.getNoTestRoms() && game.isTest(),
+      this.options.getNoAftermarket() && game.isAftermarket(),
+      this.options.getNoHomebrew() && game.isHomebrew(),
+      this.options.getNoUnverified() && !game.isVerified(),
+      this.options.getNoBad() && game.isBad(),
     ].filter((val) => val).length === 0;
   }
 

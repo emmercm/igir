@@ -169,12 +169,14 @@ export default class ArgumentsParser {
         group: groupDat,
         description: 'Regular expression of DAT names to process',
         type: 'string',
+        coerce: ArgumentsParser.getLastValue, // don't allow string[] values
         requiresArg: true,
       })
       .option('dat-regex-exclude', {
         group: groupDat,
         description: 'Regular expression of DAT names to exclude from processing',
         type: 'string',
+        coerce: ArgumentsParser.getLastValue, // don't allow string[] values
         requiresArg: true,
       })
       .check((checkArgv) => {
@@ -301,6 +303,22 @@ export default class ArgumentsParser {
           }),
       })
 
+      .option('filter-regex', {
+        group: groupFiltering,
+        alias: 'x',
+        description: 'Regular expression of game names to filter to',
+        type: 'string',
+        coerce: ArgumentsParser.getLastValue, // don't allow string[] values
+        requiresArg: true,
+      })
+      .option('filter-regex-exclude', {
+        group: groupFiltering,
+        alias: 'x',
+        description: 'Regular expression of game names to exclude',
+        type: 'string',
+        coerce: ArgumentsParser.getLastValue, // don't allow string[] values
+        requiresArg: true,
+      })
       .option('language-filter', {
         group: groupFiltering,
         alias: 'L',
