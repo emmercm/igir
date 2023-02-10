@@ -2,6 +2,7 @@ import async, { AsyncResultCallback } from 'async';
 
 import ProgressBar, { ProgressBarSymbol } from '../console/progressBar.js';
 import Constants from '../constants.js';
+import ArchiveEntry from '../types/files/archiveEntry.js';
 import File from '../types/files/file.js';
 import FileHeader from '../types/files/fileHeader.js';
 import Options from '../types/options.js';
@@ -22,6 +23,10 @@ export default class HeaderProcessor extends Module {
   }
 
   async process(inputRomFiles: File[]): Promise<File[]> {
+    if (!inputRomFiles.length) {
+      return inputRomFiles;
+    }
+
     await this.progressBar.logInfo('Processing file headers');
 
     await this.progressBar.setSymbol(ProgressBarSymbol.HASHING);
@@ -42,6 +47,18 @@ export default class HeaderProcessor extends Module {
   }
 
   private async getFileWithHeader(inputFile: File): Promise<File> {
+    /**
+     * If the input file is from an archive, and we're not zipping or extracting, then we have no
+     * chance to remove the header, so we shouldn't bother detecting one.
+     * Matches {@link CandidateGenerator.buildReleaseCandidateForRelease}
+     */
+    if (inputFile instanceof ArchiveEntry
+      && !this.options.canZip()
+      && !this.options.shouldExtract()
+    ) {
+      return inputFile;
+    }
+
     // Can get FileHeader from extension, use that
     const headerForFilename = FileHeader.headerFromFilename(inputFile.getExtractedFilePath());
     if (headerForFilename) {
