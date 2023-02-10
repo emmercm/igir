@@ -67,6 +67,44 @@ describe('getCrc32WithoutHeader', () => {
   });
 });
 
+describe('getSymlinkSourceResolved', () => {
+  it('should resolve absolute symlinks', async () => {
+    const tempDir = await fsPoly.mkdtemp(Constants.GLOBAL_TEMP_DIR);
+    try {
+      const tempFile = path.resolve(await fsPoly.mktemp(path.join(tempDir, 'dir1', 'file')));
+      await fsPoly.mkdir(path.dirname(tempFile), { recursive: true });
+      await fsPoly.touch(tempFile);
+
+      const tempLink = await fsPoly.mktemp(path.join(tempDir, 'dir2', 'link'));
+      await fsPoly.mkdir(path.dirname(tempLink), { recursive: true });
+      await fsPoly.symlink(path.resolve(tempFile), tempLink);
+      const fileLink = await File.fileOf(tempLink);
+
+      expect(fileLink.getSymlinkSourceResolved()).toEqual(tempFile);
+    } finally {
+      await fsPoly.rm(tempDir, { recursive: true });
+    }
+  });
+
+  it('should resolve relative symlinks', async () => {
+    const tempDir = await fsPoly.mkdtemp(Constants.GLOBAL_TEMP_DIR);
+    try {
+      const tempFile = path.resolve(await fsPoly.mktemp(path.join(tempDir, 'dir1', 'file')));
+      await fsPoly.mkdir(path.dirname(tempFile), { recursive: true });
+      await fsPoly.touch(tempFile);
+
+      const tempLink = await fsPoly.mktemp(path.join(tempDir, 'dir2', 'link'));
+      await fsPoly.mkdir(path.dirname(tempLink), { recursive: true });
+      await fsPoly.symlink(path.relative(path.dirname(tempLink), tempFile), tempLink);
+      const fileLink = await File.fileOf(tempLink);
+
+      expect(fileLink.getSymlinkSourceResolved()).toEqual(tempFile);
+    } finally {
+      await fsPoly.rm(tempDir, { recursive: true });
+    }
+  });
+});
+
 describe('copyToTempFile', () => {
   it('should do nothing with no archive entry path', async () => {
     const raws = await new ROMScanner(new Options({

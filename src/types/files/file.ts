@@ -112,6 +112,13 @@ export default class File {
     return this.symlinkSource;
   }
 
+  getSymlinkSourceResolved(): string | undefined {
+    if (!this.symlinkSource) {
+      return undefined;
+    }
+    return path.resolve(path.dirname(this.getFilePath()), this.symlinkSource);
+  }
+
   getFileHeader(): FileHeader | undefined {
     return this.fileHeader;
   }
