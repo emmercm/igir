@@ -296,27 +296,29 @@ describe('options', () => {
   });
 
   it('should parse "header"', () => {
-    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--header', '**/*']).shouldReadFileForHeader('file.rom')).toEqual(true);
-    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--header', '**/*', '--header', 'nope']).shouldReadFileForHeader('file.rom')).toEqual(false);
+    expect(() => argumentsParser.parse([...dummyCommandAndRequiredArgs, '--header', '**/*'])).toThrow(/missing required command/i);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, 'extract', '--header', '**/*']).shouldReadFileForHeader('file.rom')).toEqual(true);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, 'zip', '--header', '**/*', '--header', 'nope']).shouldReadFileForHeader('file.rom')).toEqual(false);
   });
 
   it('should parse "remove-headers"', () => {
     const dat = new DAT(new Header(), []);
+    expect(() => argumentsParser.parse([...dummyCommandAndRequiredArgs, '--remove-headers', '.smc'])).toThrow(/missing required command/i);
 
     // False
     expect(argumentsParser.parse(dummyCommandAndRequiredArgs).canRemoveHeader(dat, '.smc')).toEqual(false);
-    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--remove-headers', '.smc']).canRemoveHeader(dat, '.rom')).toEqual(false);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, 'extract', '--remove-headers', '.smc']).canRemoveHeader(dat, '.rom')).toEqual(false);
 
     // True
-    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '-H']).canRemoveHeader(dat, '')).toEqual(true);
-    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--remove-headers']).canRemoveHeader(dat, '')).toEqual(true);
-    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--remove-headers']).canRemoveHeader(dat, '.rom')).toEqual(true);
-    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--remove-headers']).canRemoveHeader(dat, '.smc')).toEqual(true);
-    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '-H', '.smc']).canRemoveHeader(dat, 'filepath.smc')).toEqual(false);
-    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--remove-headers', 'smc']).canRemoveHeader(dat, '.smc')).toEqual(true);
-    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--remove-headers', '.smc']).canRemoveHeader(dat, '.SMC')).toEqual(true);
-    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '-H', 'LNX,.smc']).canRemoveHeader(dat, '.smc')).toEqual(true);
-    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--remove-headers', 'lnx,.LNX']).canRemoveHeader(dat, '.LnX')).toEqual(true);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, 'extract', '-H']).canRemoveHeader(dat, '')).toEqual(true);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, 'extract', '--remove-headers']).canRemoveHeader(dat, '')).toEqual(true);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, 'extract', '--remove-headers']).canRemoveHeader(dat, '.rom')).toEqual(true);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, 'extract', '--remove-headers']).canRemoveHeader(dat, '.smc')).toEqual(true);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, 'extract', '-H', '.smc']).canRemoveHeader(dat, 'filepath.smc')).toEqual(false);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, 'zip', '--remove-headers', 'smc']).canRemoveHeader(dat, '.smc')).toEqual(true);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, 'zip', '--remove-headers', '.smc']).canRemoveHeader(dat, '.SMC')).toEqual(true);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, 'zip', '-H', 'LNX,.smc']).canRemoveHeader(dat, '.smc')).toEqual(true);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, 'zip', '--remove-headers', 'lnx,.LNX']).canRemoveHeader(dat, '.LnX')).toEqual(true);
   });
 
   it('should parse "prefer-verified"', () => {
