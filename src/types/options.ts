@@ -363,7 +363,7 @@ export default class Options implements OptionsProps {
       const dirPaths = (await fg(`${fg.escapePath(inputPathNormalized)}/**`))
         .map((filePath) => path.normalize(filePath));
       if (!dirPaths || !dirPaths.length) {
-        throw new Error(`${inputPath}: Path doesn't exist`);
+        throw new Error(`${inputPath}: directory doesn't contain any files`);
       }
       return dirPaths;
     }
@@ -377,7 +377,7 @@ export default class Options implements OptionsProps {
     const paths = (await fg(inputPathNormalized))
       .map((filePath) => path.normalize(filePath));
     if (!paths || !paths.length) {
-      throw new Error(`${inputPath}: Path doesn't exist`);
+      throw new Error(`${inputPath}: no files found`);
     }
     return paths;
   }
