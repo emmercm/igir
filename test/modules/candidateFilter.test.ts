@@ -164,6 +164,80 @@ describe('preFilter', () => {
     }, [], 0);
   });
 
+  describe('filter regex', () => {
+    test.each([
+      'ONE',
+      'four',
+      '[xyz]',
+    ])('should return no candidates if none matching: %s', async (filterRegex) => {
+      await expectFilteredCandidates({ filterRegex }, [
+        await buildReleaseCandidatesWithRegionLanguage('one'),
+        await buildReleaseCandidatesWithRegionLanguage('two'),
+        await buildReleaseCandidatesWithRegionLanguage('three'),
+      ], 0);
+    });
+
+    test.each([
+      '/ONE/i',
+      'two',
+      'o$',
+    ])('should return one candidate if one matching: %s', async (filterRegex) => {
+      await expectFilteredCandidates({ filterRegex }, [
+        await buildReleaseCandidatesWithRegionLanguage('one'),
+        await buildReleaseCandidatesWithRegionLanguage('two'),
+        await buildReleaseCandidatesWithRegionLanguage('three'),
+      ], 1);
+    });
+
+    test.each([
+      '(one|two|three)',
+      '[aeiou]',
+    ])('should return all candidates if all matching: %s', async (filterRegex) => {
+      await expectFilteredCandidates({ filterRegex }, [
+        await buildReleaseCandidatesWithRegionLanguage('one'),
+        await buildReleaseCandidatesWithRegionLanguage('two'),
+        await buildReleaseCandidatesWithRegionLanguage('three'),
+      ], 3);
+    });
+  });
+
+  describe('filter regex exclude', () => {
+    test.each([
+      '(one|two|three)',
+      '[aeiou]',
+    ])('should return no candidates if all matching: %s', async (filterRegexExclude) => {
+      await expectFilteredCandidates({ filterRegexExclude }, [
+        await buildReleaseCandidatesWithRegionLanguage('one'),
+        await buildReleaseCandidatesWithRegionLanguage('two'),
+        await buildReleaseCandidatesWithRegionLanguage('three'),
+      ], 0);
+    });
+
+    test.each([
+      '(two|three)',
+      't',
+      '/E/i',
+    ])('should return one candidate if two matching: %s', async (filterRegexExclude) => {
+      await expectFilteredCandidates({ filterRegexExclude }, [
+        await buildReleaseCandidatesWithRegionLanguage('one'),
+        await buildReleaseCandidatesWithRegionLanguage('two'),
+        await buildReleaseCandidatesWithRegionLanguage('three'),
+      ], 1);
+    });
+
+    test.each([
+      'ONE',
+      'four',
+      '[xyz]',
+    ])('should return all candidates if none matching: %s', async (filterRegexExclude) => {
+      await expectFilteredCandidates({ filterRegexExclude }, [
+        await buildReleaseCandidatesWithRegionLanguage('one'),
+        await buildReleaseCandidatesWithRegionLanguage('two'),
+        await buildReleaseCandidatesWithRegionLanguage('three'),
+      ], 3);
+    });
+  });
+
   describe('language filter', () => {
     it('should return no candidates if none matching', async () => {
       await expectFilteredCandidates({
