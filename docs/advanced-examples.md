@@ -4,6 +4,8 @@
 
 `igir` has many options available to fit almost any use case, but the number of options can be overwhelming. So that begs a question: _how do I, the author of `igir`, use `igir` in the real world?_
 
+### Primary ROM library
+
 I have a 4TiB external hard drive that I use as my source of truth where I store all of my DATs, ROMs, and patches. In general, I'm more interested in cartridge-based consoles. Optical-based ROMs can take up a significant amount of space.
 
 The file tree in that hard drive looks like this:
@@ -56,6 +58,8 @@ npx igir@latest move zip test clean report \
 ```
 
 I then copy ROMs to other devices from this source of truth.
+
+### Analogue Pocket
 
 For example, I have this script `igir_pocket_sync.sh` at the root of my [Analogue Pocket](https://www.analogue.co/pocket)'s SD card:
 

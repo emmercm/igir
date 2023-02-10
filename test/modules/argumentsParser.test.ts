@@ -176,6 +176,22 @@ describe('options', () => {
     expect((await argumentsParser.parse([...dummyCommandAndRequiredArgs, '--dat', './src', '--dat-exclude', './src']).scanDatFilesWithoutExclusions()).length).toEqual(0);
   });
 
+  it('should parse "dat-regex"', () => {
+    expect(argumentsParser.parse(dummyCommandAndRequiredArgs).getDatRegex()).toBeUndefined();
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--dat-regex', '[a-z]']).getDatRegex()?.test('lower')).toEqual(true);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--dat-regex', '[a-z]']).getDatRegex()?.test('UPPER')).toEqual(false);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--dat-regex', '/[a-z]/i']).getDatRegex()?.test('UPPER')).toEqual(true);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--dat-regex', '/[a-z]/i', '--dat-regex', '[0-9]']).getDatRegex()?.test('UPPER')).toEqual(false);
+  });
+
+  it('should parse "dat-regex-exclude"', () => {
+    expect(argumentsParser.parse(dummyCommandAndRequiredArgs).getDatRegexExclude()).toBeUndefined();
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--dat-regex-exclude', '[a-z]']).getDatRegexExclude()?.test('lower')).toEqual(true);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--dat-regex-exclude', '[a-z]']).getDatRegexExclude()?.test('UPPER')).toEqual(false);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--dat-regex-exclude', '/[a-z]/i']).getDatRegexExclude()?.test('UPPER')).toEqual(true);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--dat-regex-exclude', '/[a-z]/i', '--dat-regex-exclude', '[0-9]']).getDatRegexExclude()?.test('UPPER')).toEqual(false);
+  });
+
   it('should parse "output"', () => {
     // Test requirements per command
     expect(() => argumentsParser.parse(['test'])).toThrow(/missing required argument/i);
@@ -280,27 +296,29 @@ describe('options', () => {
   });
 
   it('should parse "header"', () => {
-    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--header', '**/*']).shouldReadFileForHeader('file.rom')).toEqual(true);
-    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--header', '**/*', '--header', 'nope']).shouldReadFileForHeader('file.rom')).toEqual(false);
+    expect(() => argumentsParser.parse([...dummyCommandAndRequiredArgs, '--header', '**/*'])).toThrow(/missing required command/i);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, 'extract', '--header', '**/*']).shouldReadFileForHeader('file.rom')).toEqual(true);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, 'zip', '--header', '**/*', '--header', 'nope']).shouldReadFileForHeader('file.rom')).toEqual(false);
   });
 
   it('should parse "remove-headers"', () => {
     const dat = new DAT(new Header(), []);
+    expect(() => argumentsParser.parse([...dummyCommandAndRequiredArgs, '--remove-headers', '.smc'])).toThrow(/missing required command/i);
 
     // False
     expect(argumentsParser.parse(dummyCommandAndRequiredArgs).canRemoveHeader(dat, '.smc')).toEqual(false);
-    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--remove-headers', '.smc']).canRemoveHeader(dat, '.rom')).toEqual(false);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, 'extract', '--remove-headers', '.smc']).canRemoveHeader(dat, '.rom')).toEqual(false);
 
     // True
-    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '-H']).canRemoveHeader(dat, '')).toEqual(true);
-    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--remove-headers']).canRemoveHeader(dat, '')).toEqual(true);
-    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--remove-headers']).canRemoveHeader(dat, '.rom')).toEqual(true);
-    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--remove-headers']).canRemoveHeader(dat, '.smc')).toEqual(true);
-    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '-H', '.smc']).canRemoveHeader(dat, 'filepath.smc')).toEqual(false);
-    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--remove-headers', 'smc']).canRemoveHeader(dat, '.smc')).toEqual(true);
-    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--remove-headers', '.smc']).canRemoveHeader(dat, '.SMC')).toEqual(true);
-    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '-H', 'LNX,.smc']).canRemoveHeader(dat, '.smc')).toEqual(true);
-    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--remove-headers', 'lnx,.LNX']).canRemoveHeader(dat, '.LnX')).toEqual(true);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, 'extract', '-H']).canRemoveHeader(dat, '')).toEqual(true);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, 'extract', '--remove-headers']).canRemoveHeader(dat, '')).toEqual(true);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, 'extract', '--remove-headers']).canRemoveHeader(dat, '.rom')).toEqual(true);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, 'extract', '--remove-headers']).canRemoveHeader(dat, '.smc')).toEqual(true);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, 'extract', '-H', '.smc']).canRemoveHeader(dat, 'filepath.smc')).toEqual(false);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, 'zip', '--remove-headers', 'smc']).canRemoveHeader(dat, '.smc')).toEqual(true);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, 'zip', '--remove-headers', '.smc']).canRemoveHeader(dat, '.SMC')).toEqual(true);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, 'zip', '-H', 'LNX,.smc']).canRemoveHeader(dat, '.smc')).toEqual(true);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, 'zip', '--remove-headers', 'lnx,.LNX']).canRemoveHeader(dat, '.LnX')).toEqual(true);
   });
 
   it('should parse "prefer-verified"', () => {
@@ -391,6 +409,23 @@ describe('options', () => {
     expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--dat', os.devNull, '--prefer-parent', '--prefer-parent', '--single']).getPreferParent()).toEqual(true);
     expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--dat', os.devNull, '--prefer-parent', 'false', '--prefer-parent', 'true', '--single']).getPreferParent()).toEqual(true);
     expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--dat', os.devNull, '--prefer-parent', 'true', '--prefer-parent', 'false', '--single']).getPreferParent()).toEqual(false);
+  });
+
+  it('should parse "filter-regex"', () => {
+    expect(argumentsParser.parse(dummyCommandAndRequiredArgs).getFilterRegex()).toBeUndefined();
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--filter-regex', '[a-z]']).getFilterRegex()?.test('lower')).toEqual(true);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--filter-regex', '[a-z]']).getFilterRegex()?.test('UPPER')).toEqual(false);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--filter-regex', '/[a-z]/i']).getFilterRegex()?.test('UPPER')).toEqual(true);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--filter-regex', '/[a-z]/i', '--filter-regex', '[0-9]']).getFilterRegex()?.test('UPPER')).toEqual(false);
+  });
+
+  it('should parse "filter-regex-exclude"', () => {
+    expect(argumentsParser.parse(dummyCommandAndRequiredArgs).getFilterRegexExclude())
+      .toBeUndefined();
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--filter-regex-exclude', '[a-z]']).getFilterRegexExclude()?.test('lower')).toEqual(true);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--filter-regex-exclude', '[a-z]']).getFilterRegexExclude()?.test('UPPER')).toEqual(false);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--filter-regex-exclude', '/[a-z]/i']).getFilterRegexExclude()?.test('UPPER')).toEqual(true);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--filter-regex-exclude', '/[a-z]/i', '--filter-regex-exclude', '[0-9]']).getFilterRegexExclude()?.test('UPPER')).toEqual(false);
   });
 
   it('should parse "language-filter"', () => {
