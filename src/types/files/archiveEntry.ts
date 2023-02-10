@@ -1,7 +1,5 @@
-import fs from 'fs';
 import path from 'path';
 import { Readable } from 'stream';
-import util from 'util';
 
 import Constants from '../../constants.js';
 import fsPoly from '../../polyfill/fsPoly.js';
@@ -52,8 +50,7 @@ export default class ArchiveEntry<A extends Archive> extends File {
     let finalCrcWithoutHeader;
     let finalSymlinkSource;
     if (await fsPoly.exists(archive.getFilePath())) {
-      const lstat = await util.promisify(fs.lstat)(archive.getFilePath());
-      if (lstat.isSymbolicLink()) {
+      if (await fsPoly.isSymlink(archive.getFilePath())) {
         finalSymlinkSource = await fsPoly.readlink(archive.getFilePath());
       }
       if (fileHeader) {

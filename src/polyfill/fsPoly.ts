@@ -64,6 +64,10 @@ export default class FsPoly {
     }
   }
 
+  static async isSymlink(pathLike: PathLike): Promise<boolean> {
+    return (await util.promisify(fs.lstat)(pathLike)).isSymbolicLink();
+  }
+
   static makeLegal(filePath: string, pathSep = path.sep): string {
     let replaced = filePath
       // Make the filename Windows legal
