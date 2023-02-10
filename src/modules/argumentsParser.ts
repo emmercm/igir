@@ -530,10 +530,7 @@ Example use cases:
     $0 copy extract --input ROMs/ --patch Patches/ --output ROMs/
 
   Copy ROMs to an Analogue Pocket and test they were written correctly:
-    $0 copy extract test --dat *.dat --input ROMs/ --output /Assets/{pocket}/common/ --dir-letter
-
-  Symlink Super Game Boy enhanced ROMs to an Analogue Pocket SGB folder:
-    $0 symlink --input "/Assets/gb?(c)/common/**" --output /Assets/sgb/common/ --dir-letter --filter-regex "/SGB Enhanced/i"`)
+    $0 copy extract test --dat *.dat --input ROMs/ --output /Assets/{pocket}/common/ --dir-letter`)
 
       // Colorize help output
       .option('help', {
