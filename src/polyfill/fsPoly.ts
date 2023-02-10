@@ -1,5 +1,5 @@
 import crypto from 'crypto';
-import fs, { PathLike, RmOptions } from 'fs';
+import fs, { MakeDirectoryOptions, PathLike, RmOptions } from 'fs';
 import { isNotJunk } from 'junk';
 import nodeDiskInfo from 'node-disk-info';
 import path from 'path';
