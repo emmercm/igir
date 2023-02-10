@@ -97,3 +97,29 @@ it('should delete everything if all unmatched and nothing excluded', async () =>
     'non-existent file',
   ])).resolves.toHaveLength(0);
 });
+
+it('should delete symlinks', async () => {
+  const tempDir = await fsPoly.mkdtemp(Constants.GLOBAL_TEMP_DIR);
+  try {
+    const tempFileOne = await fsPoly.mktemp(path.join(tempDir, 'one'));
+    await fsPoly.touch(tempFileOne);
+
+    const tempFileTwo = await fsPoly.mktemp(path.join(tempDir, 'two'));
+    await fsPoly.touch(tempFileTwo);
+
+    const tempLink = await fsPoly.mktemp(path.join(tempDir, 'link'));
+    await fsPoly.symlink(tempFileOne, tempLink);
+
+    await new OutputCleaner(
+      new Options({
+        commands: ['move', 'clean'],
+      }),
+      new ProgressBarFake(),
+    ).clean([tempDir], [await File.fileOf(tempFileOne)]);
+
+    const filesRemaining = await fsPoly.walk(tempDir);
+    expect(filesRemaining).toEqual([tempFileOne]);
+  } finally {
+    await fsPoly.rm(tempDir, { recursive: true });
+  }
+});
