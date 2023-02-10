@@ -3,7 +3,6 @@ import path from 'path';
 
 import Logger from './console/logger.js';
 import { ProgressBarSymbol } from './console/progressBar.js';
-import ProgressBarCLI from './console/progressBarCLI.js';
 import CandidateFilter from './modules/candidateFilter.js';
 import CandidateGenerator from './modules/candidateGenerator.js';
 import CombinedCandidateGenerator from './modules/combinedCandidateGenerator.js';
@@ -49,7 +48,6 @@ export default class Igir {
     }
 
     if (this.options.getSingle() && !dats.some((dat) => dat.hasParentCloneInfo())) {
-      ProgressBarCLI.stop();
       throw new Error('No DAT contains parent/clone information, cannot process --single');
     }
 
@@ -118,8 +116,6 @@ export default class Igir {
 
     // Generate the report
     await this.processReportGenerator(datsStatuses);
-
-    ProgressBarCLI.stop();
   }
 
   private async processDATScanner(): Promise<DAT[]> {
@@ -131,7 +127,6 @@ export default class Igir {
     const progressBar = await this.logger.addProgressBar('Scanning for DATs');
     const dats = await new DATScanner(this.options, progressBar).scan();
     if (!dats.length) {
-      ProgressBarCLI.stop();
       throw new Error('No valid DAT files found!');
     }
 
