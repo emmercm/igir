@@ -48,6 +48,8 @@ export interface OptionsProps {
   readonly header?: string,
   readonly removeHeaders?: string[],
 
+  readonly filterRegex?: string,
+  readonly filterRegexExclude?: string,
   readonly languageFilter?: string[],
   readonly regionFilter?: string[],
   readonly onlyBios?: boolean,
@@ -118,6 +120,10 @@ export default class Options implements OptionsProps {
   readonly header: string;
 
   readonly removeHeaders?: string[];
+
+  readonly filterRegex: string;
+
+  readonly filterRegexExclude: string;
 
   readonly languageFilter: string[];
 
@@ -200,6 +206,8 @@ export default class Options implements OptionsProps {
     this.header = options?.header || '';
     this.removeHeaders = options?.removeHeaders;
 
+    this.filterRegex = options?.filterRegex || '';
+    this.filterRegexExclude = options?.filterRegexExclude || '';
     this.languageFilter = options?.languageFilter || [];
     this.regionFilter = options?.regionFilter || [];
     this.onlyBios = options?.onlyBios || false;
@@ -239,6 +247,21 @@ export default class Options implements OptionsProps {
 
   toString(): string {
     return JSON.stringify(instanceToPlain(this));
+  }
+
+  // Helpers
+
+  private static getRegex(pattern: string): RegExp | undefined {
+    if (!pattern.trim()) {
+      return undefined;
+    }
+
+    const flagsMatch = pattern.match(/^\/(.+)\/([a-z]*)$/);
+    if (flagsMatch !== null) {
+      return new RegExp(flagsMatch[1], flagsMatch[2]);
+    }
+
+    return new RegExp(pattern);
   }
 
   // Commands
@@ -414,29 +437,11 @@ export default class Options implements OptionsProps {
   }
 
   getDatRegex(): RegExp | undefined {
-    if (!this.datRegex.trim()) {
-      return undefined;
-    }
-
-    const flagsMatch = this.datRegex.match(/^\/(.+)\/([a-z]*)$/);
-    if (flagsMatch !== null) {
-      return new RegExp(flagsMatch[1], flagsMatch[2]);
-    }
-
-    return new RegExp(this.datRegex);
+    return Options.getRegex(this.datRegex);
   }
 
   getDatRegexExclude(): RegExp | undefined {
-    if (!this.datRegexExclude.trim()) {
-      return undefined;
-    }
-
-    const flagsMatch = this.datRegexExclude.match(/^\/(.+)\/([a-z]*)$/);
-    if (flagsMatch !== null) {
-      return new RegExp(flagsMatch[1], flagsMatch[2]);
-    }
-
-    return new RegExp(this.datRegexExclude);
+    return Options.getRegex(this.datRegexExclude);
   }
 
   private getOutput(): string {
@@ -722,6 +727,18 @@ export default class Options implements OptionsProps {
       .some((removeHeader) => removeHeader.toLowerCase() === extension.toLowerCase());
   }
 
+  getFilterRegex(): RegExp | undefined {
+    return Options.getRegex(this.filterRegex);
+  }
+
+  getFilterRegexExclude(): RegExp | undefined {
+    return Options.getRegex(this.filterRegexExclude);
+  }
+
+  getLanguageFilter(): string[] {
+    return Options.filterUniqueUpper(this.languageFilter);
+  }
+
   getRegionFilter(): string[] {
     return Options.filterUniqueUpper(this.regionFilter);
   }
@@ -796,10 +813,6 @@ export default class Options implements OptionsProps {
 
   getPreferRegions(): string[] {
     return Options.filterUniqueUpper(this.preferRegion);
-  }
-
-  getLanguageFilter(): string[] {
-    return Options.filterUniqueUpper(this.languageFilter);
   }
 
   getPreferRevisionNewer(): boolean {

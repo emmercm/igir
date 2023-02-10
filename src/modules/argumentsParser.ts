@@ -312,6 +312,22 @@ export default class ArgumentsParser {
         return true;
       })
 
+      .option('filter-regex', {
+        group: groupFiltering,
+        alias: 'x',
+        description: 'Regular expression of game names to filter to',
+        type: 'string',
+        coerce: ArgumentsParser.getLastValue, // don't allow string[] values
+        requiresArg: true,
+      })
+      .option('filter-regex-exclude', {
+        group: groupFiltering,
+        alias: 'X',
+        description: 'Regular expression of game names to exclude',
+        type: 'string',
+        coerce: ArgumentsParser.getLastValue, // don't allow string[] values
+        requiresArg: true,
+      })
       .option('language-filter', {
         group: groupFiltering,
         alias: 'L',
@@ -522,7 +538,7 @@ Example use cases:
   Create patched copies of ROMs in an existing collection, not overwriting existing files:
     $0 copy extract --input ROMs/ --patch Patches/ --output ROMs/
 
-  Copy ROMs to your Analogue Pocket and test they were written correctly:
+  Copy ROMs to an Analogue Pocket and test they were written correctly:
     $0 copy extract test --dat *.dat --input ROMs/ --output /Assets/{pocket}/common/ --dir-letter`)
 
       // Colorize help output
