@@ -158,8 +158,11 @@ export default class CandidateGenerator extends Module {
           return [rom, new ROMWithFiles(rom, originalInputFile, originalInputFile)];
         }
 
-        // If the matched input file is from an archive, and we're not extracting, then treat the
-        //  file as "raw" so it can be copied/moved as-is
+        /**
+         * If the matched input file is from an archive, and we're not zipping or extracting, then
+         * treat the file as "raw" so it can be copied/moved as-is.
+         * Matches {@link HeaderProcessor.getFileWithHeader}
+         */
         let finalInputFile = originalInputFile;
         if (originalInputFile instanceof ArchiveEntry
           && !this.options.shouldZip(rom.getName())
