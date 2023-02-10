@@ -1,7 +1,5 @@
 import { Semaphore } from 'async-mutex';
-import fs from 'fs';
 import path from 'path';
-import util from 'util';
 
 import ProgressBar, { ProgressBarSymbol } from '../console/progressBar.js';
 import Constants from '../constants.js';
@@ -110,7 +108,7 @@ export default class ROMWriter extends Module {
   private static async ensureOutputDirExists(outputFilePath: string): Promise<void> {
     const outputDir = path.dirname(outputFilePath);
     if (!await fsPoly.exists(outputDir)) {
-      await util.promisify(fs.mkdir)(outputDir, { recursive: true });
+      await fsPoly.mkdir(outputDir, { recursive: true });
     }
   }
 
