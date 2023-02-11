@@ -4,6 +4,7 @@ import realFs from 'fs';
 import gracefulFs from 'graceful-fs';
 
 import Logger from './src/console/logger.js';
+import ProgressBarCLI from './src/console/progressBarCLI.js';
 import Constants from './src/constants.js';
 import Igir from './src/igir.js';
 import ArgumentsParser from './src/modules/argumentsParser.js';
@@ -30,7 +31,9 @@ gracefulFs.gracefulify(realFs);
     logger.setLogLevel(options.getLogLevel());
 
     await new Igir(options, logger).main();
+    ProgressBarCLI.stop();
   } catch (e) {
+    ProgressBarCLI.stop();
     logger.error(e);
     logger.newLine();
     process.exit(1);

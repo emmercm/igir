@@ -358,13 +358,13 @@ export default class Options implements OptionsProps {
       globbedPaths.push(...(await this.globPath(uniqueGlobPatterns[i])));
     }
 
-    // Filter to files
-    const isFiles = await async.mapLimit(
+    // Filter to non-directories
+    const nonDirectories = await async.mapLimit(
       globbedPaths,
       Constants.MAX_FS_THREADS,
       async (file, callback: AsyncResultCallback<boolean, Error>) => {
         try {
-          callback(null, (await util.promisify(fs.lstat)(file)).isFile());
+          callback(null, !(await util.promisify(fs.lstat)(file)).isDirectory());
         } catch (e) {
           // Assume errors mean the path doesn't exist
           callback(null, false);
@@ -372,7 +372,7 @@ export default class Options implements OptionsProps {
       },
     );
     const globbedFiles = globbedPaths
-      .filter((inputPath, idx) => isFiles[idx])
+      .filter((inputPath, idx) => nonDirectories[idx])
       .filter((inputPath) => isNotJunk(path.basename(inputPath)));
 
     // Remove duplicates
@@ -394,7 +394,7 @@ export default class Options implements OptionsProps {
       const dirPaths = (await fg(`${fg.escapePath(inputPathNormalized)}/**`))
         .map((filePath) => path.normalize(filePath));
       if (!dirPaths || !dirPaths.length) {
-        throw new Error(`${inputPath}: Path doesn't exist`);
+        throw new Error(`${inputPath}: directory doesn't contain any files`);
       }
       return dirPaths;
     }
@@ -408,7 +408,7 @@ export default class Options implements OptionsProps {
     const paths = (await fg(inputPathNormalized))
       .map((filePath) => path.normalize(filePath));
     if (!paths || !paths.length) {
-      throw new Error(`${inputPath}: Path doesn't exist`);
+      throw new Error(`${inputPath}: no files found`);
     }
     return paths;
   }

@@ -19,11 +19,11 @@ function createDatScanner(
 }
 
 it('should throw on nonexistent paths', async () => {
-  await expect(createDatScanner(['/completely/invalid/path']).scan()).rejects.toThrow(/path doesn't exist/i);
-  await expect(createDatScanner(['/completely/invalid/path', os.devNull]).scan()).rejects.toThrow(/path doesn't exist/i);
-  await expect(createDatScanner(['/completely/invalid/path', 'test/fixtures/dats']).scan()).rejects.toThrow(/path doesn't exist/i);
-  await expect(createDatScanner(['test/fixtures/**/*.tmp']).scan()).rejects.toThrow(/path doesn't exist/i);
-  await expect(createDatScanner(['test/fixtures/dats/*foo*/*bar*']).scan()).rejects.toThrow(/path doesn't exist/i);
+  await expect(createDatScanner(['/completely/invalid/path']).scan()).rejects.toThrow(/no files found/i);
+  await expect(createDatScanner(['/completely/invalid/path', os.devNull]).scan()).rejects.toThrow(/no files found/i);
+  await expect(createDatScanner(['/completely/invalid/path', 'test/fixtures/dats']).scan()).rejects.toThrow(/no files found/i);
+  await expect(createDatScanner(['test/fixtures/**/*.tmp']).scan()).rejects.toThrow(/no files found/i);
+  await expect(createDatScanner(['test/fixtures/dats/*foo*/*bar*']).scan()).rejects.toThrow(/no files found/i);
 });
 
 it('should return empty list on no results', async () => {

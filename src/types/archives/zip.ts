@@ -5,7 +5,6 @@ import path from 'path';
 import { Readable } from 'stream';
 import { clearInterval } from 'timers';
 import unzipper from 'unzipper';
-import util from 'util';
 
 import Constants from '../../constants.js';
 import fsPoly from '../../polyfill/fsPoly.js';
@@ -42,7 +41,7 @@ export default class Zip extends Archive {
   ): Promise<void> {
     const localDir = path.dirname(extractedFilePath);
     if (!await fsPoly.exists(localDir)) {
-      await util.promisify(fs.mkdir)(localDir, { recursive: true });
+      await fsPoly.mkdir(localDir, { recursive: true });
     }
 
     return this.extractEntryToStream(

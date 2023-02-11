@@ -53,6 +53,24 @@ describe('rm', () => {
     await fsPoly.rm(tempFile);
     await expect(fsPoly.exists(tempFile)).resolves.toEqual(false);
   });
+
+  it('should delete an existing directory', async () => {
+    const tempDir = await fsPoly.mkdtemp(path.join(Constants.GLOBAL_TEMP_DIR, 'temp'));
+    await expect(fsPoly.exists(tempDir)).resolves.toEqual(true);
+    await fsPoly.rm(tempDir);
+    await expect(fsPoly.exists(tempDir)).resolves.toEqual(false);
+  });
+
+  it('should not delete a symlink\'s target', async () => {
+    const tempFile = await fsPoly.mktemp(path.join(Constants.GLOBAL_TEMP_DIR, 'temp'));
+    await fsPoly.touch(tempFile);
+    const tempLink = await fsPoly.mktemp(path.join(Constants.GLOBAL_TEMP_DIR, 'link'));
+    await fsPoly.symlink(tempFile, tempLink);
+    await expect(fsPoly.exists(tempLink)).resolves.toEqual(true);
+    await fsPoly.rm(tempLink);
+    await expect(fsPoly.exists(tempLink)).resolves.toEqual(false);
+    await expect(fsPoly.exists(tempFile)).resolves.toEqual(true);
+  });
 });
 
 describe('rmSync', () => {
@@ -81,5 +99,16 @@ describe('rmSync', () => {
     await expect(fsPoly.exists(tempDir)).resolves.toEqual(true);
     fsPoly.rmSync(tempDir);
     await expect(fsPoly.exists(tempDir)).resolves.toEqual(false);
+  });
+
+  it('should not delete a symlink\'s target', async () => {
+    const tempFile = await fsPoly.mktemp(path.join(Constants.GLOBAL_TEMP_DIR, 'temp'));
+    await fsPoly.touch(tempFile);
+    const tempLink = await fsPoly.mktemp(path.join(Constants.GLOBAL_TEMP_DIR, 'link'));
+    await fsPoly.symlink(tempFile, tempLink);
+    await expect(fsPoly.exists(tempLink)).resolves.toEqual(true);
+    fsPoly.rmSync(tempLink);
+    await expect(fsPoly.exists(tempLink)).resolves.toEqual(false);
+    await expect(fsPoly.exists(tempFile)).resolves.toEqual(true);
   });
 });

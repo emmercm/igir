@@ -55,10 +55,10 @@ export default class File {
     let finalCrcWithoutHeader;
     let finalSymlinkSource;
     if (await fsPoly.exists(filePath)) {
-      const lstat = await util.promisify(fs.lstat)(filePath);
-      finalSize = finalSize || lstat.size;
+      const stat = await util.promisify(fs.stat)(filePath);
+      finalSize = finalSize || stat.size;
       finalCrc = finalCrc || await this.calculateCrc32(filePath);
-      if (lstat.isSymbolicLink()) {
+      if (await fsPoly.isSymlink(filePath)) {
         finalSymlinkSource = await fsPoly.readlink(filePath);
       }
       if (fileHeader) {
@@ -110,6 +110,13 @@ export default class File {
 
   protected getSymlinkSource(): string | undefined {
     return this.symlinkSource;
+  }
+
+  getSymlinkSourceResolved(): string | undefined {
+    if (!this.symlinkSource) {
+      return undefined;
+    }
+    return path.resolve(path.dirname(this.getFilePath()), this.symlinkSource);
   }
 
   getFileHeader(): FileHeader | undefined {

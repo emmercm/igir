@@ -489,7 +489,7 @@ export default class ArgumentsParser {
         if (middlewareArgv.zipDatName) {
           middlewareArgv.datThreads = 1;
         }
-      })
+      }, true)
       .option('verbose', {
         group: groupHelpDebug,
         alias: 'v',

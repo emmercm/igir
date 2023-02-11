@@ -1,5 +1,5 @@
 import crypto from 'crypto';
-import fs, { PathLike, RmOptions } from 'fs';
+import fs, { MakeDirectoryOptions, PathLike, RmOptions } from 'fs';
 import { isNotJunk } from 'junk';
 import nodeDiskInfo from 'node-disk-info';
 import path from 'path';
@@ -15,7 +15,7 @@ export default class FsPoly {
     .sort((a, b) => b.split(/[\\/]/).length - a.split(/[\\/]/).length);
 
   static async copyDir(src: string, dest: string): Promise<void> {
-    await util.promisify(fs.mkdir)(dest, { recursive: true });
+    await this.mkdir(dest, { recursive: true });
     const entries = await util.promisify(fs.readdir)(src, { withFileTypes: true });
 
     /* eslint-disable no-await-in-loop */
@@ -64,6 +64,10 @@ export default class FsPoly {
     }
   }
 
+  static async isSymlink(pathLike: PathLike): Promise<boolean> {
+    return (await util.promisify(fs.lstat)(pathLike)).isSymbolicLink();
+  }
+
   static makeLegal(filePath: string, pathSep = path.sep): string {
     let replaced = filePath
       // Make the filename Windows legal
@@ -81,6 +85,10 @@ export default class FsPoly {
     return replaced;
   }
 
+  static async mkdir(pathLike: PathLike, options: MakeDirectoryOptions): Promise<void> {
+    await util.promisify(fs.mkdir)(pathLike, options);
+  }
+
   /**
    * mkdtemp() takes a path "prefix" that's concatenated with random characters. Ignore that
    * behavior and instead assume we always want to specify a root temp directory.
@@ -89,13 +97,13 @@ export default class FsPoly {
     const rootDirProcessed = rootDir.replace(/[\\/]+$/, '') + path.sep;
 
     try {
-      await util.promisify(fs.mkdir)(rootDirProcessed, { recursive: true });
+      await this.mkdir(rootDirProcessed, { recursive: true });
 
       // Added in: v10.0.0
       return await util.promisify(fs.mkdtemp)(rootDirProcessed);
     } catch (e) {
       const backupDir = path.join(process.cwd(), 'tmp') + path.sep;
-      await util.promisify(fs.mkdir)(backupDir, { recursive: true });
+      await this.mkdir(backupDir, { recursive: true });
 
       // Added in: v10.0.0
       return await util.promisify(fs.mkdtemp)(backupDir);
@@ -274,7 +282,7 @@ export default class FsPoly {
   static async touch(filePath: string): Promise<void> {
     const dirname = path.dirname(filePath);
     if (!await this.exists(dirname)) {
-      await util.promisify(fs.mkdir)(dirname, { recursive: true });
+      await this.mkdir(dirname, { recursive: true });
     }
 
     // Create the file if it doesn't already exist

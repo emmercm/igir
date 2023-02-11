@@ -49,7 +49,6 @@ export default class Igir {
     }
 
     if (this.options.getSingle() && !dats.some((dat) => dat.hasParentCloneInfo())) {
-      ProgressBarCLI.stop();
       throw new Error('No DAT contains parent/clone information, cannot process --single');
     }
 
@@ -131,7 +130,6 @@ export default class Igir {
     const progressBar = await this.logger.addProgressBar('Scanning for DATs');
     const dats = await new DATScanner(this.options, progressBar).scan();
     if (!dats.length) {
-      ProgressBarCLI.stop();
       throw new Error('No valid DAT files found!');
     }
 
