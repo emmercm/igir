@@ -3,6 +3,7 @@ import path from 'path';
 
 import Logger from './console/logger.js';
 import { ProgressBarSymbol } from './console/progressBar.js';
+import ProgressBarCLI from './console/progressBarCLI.js';
 import CandidateFilter from './modules/candidateFilter.js';
 import CandidateGenerator from './modules/candidateGenerator.js';
 import CombinedCandidateGenerator from './modules/combinedCandidateGenerator.js';
@@ -116,6 +117,8 @@ export default class Igir {
 
     // Generate the report
     await this.processReportGenerator(datsStatuses);
+
+    ProgressBarCLI.stop();
   }
 
   private async processDATScanner(): Promise<DAT[]> {
