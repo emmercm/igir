@@ -52,7 +52,7 @@ $ igir --help
   | $$  | $$ __\$$  | $$  | $$__| $$
   | $$  | $$|    \  | $$  | $$    $$   ROM collection manager
   | $$  | $$ \$$$$  | $$  | $$$$$$$\
- _| $$_ | $$__| $$ _| $$_ | $$  | $$   v1.2.0
+ _| $$_ | $$__| $$ _| $$_ | $$  | $$   v1.2.1
 |   $$ \ \$$    $$|   $$ \| $$  | $$
  \$$$$$$  \$$$$$$  \$$$$$$ \$$   \$$
 
@@ -70,58 +70,67 @@ Commands:
   igir report   Generate a CSV report on the known ROM files found in the input directories (requ
                 ires --dat)
 
-Path options (inputs support globbing):
-  -d, --dat            Path(s) to DAT files or archives                                   [array]
+Input options (supports globbing):
   -i, --input          Path(s) to ROM files or archives                        [array] [required]
   -I, --input-exclude  Path(s) to ROM files or archives to exclude from processing        [array]
   -p, --patch          Path(s) to ROM patch files or archives (supported: .bps, .ips, .ips32, .pp
                        f, .rup, .ups, .vcdiff, .xdelta)                                   [array]
+
+DAT input options:
+  -d, --dat                Path(s) to DAT files or archives (supports globbing)           [array]
+      --dat-exclude        Path(s) to DAT files or archives to exclude from processing (supports
+                           globbing)                                                      [array]
+      --dat-regex          Regular expression of DAT names to process                    [string]
+      --dat-regex-exclude  Regular expression of DAT names to exclude from processing    [string]
+
+ROM output options:
   -o, --output         Path to the ROM output directory (supports replaceable symbols, see below)
                                                                                          [string]
-  -C, --clean-exclude  Path(s) to files to exclude from cleaning                          [array]
+      --dir-mirror     Use the input subdirectory structure for the output directory    [boolean]
+  -D, --dir-dat-name   Use the DAT name as the output subdirectory                      [boolean]
+      --dir-letter     Append the first letter of the ROM name as an output subdirectory[boolean]
+  -O, --overwrite      Overwrite any files in the output directory                      [boolean]
+  -C, --clean-exclude  Path(s) to files to exclude from cleaning (supports globbing)      [array]
 
-Output options:
-      --dir-mirror    Use the input subdirectory structure for the output directory     [boolean]
-  -D, --dir-dat-name  Use the DAT name as the output subdirectory                       [boolean]
-      --dir-letter    Append the first letter of the ROM name as an output subdirectory [boolean]
-  -O, --overwrite     Overwrite any files in the output directory                       [boolean]
-
-Archive options:
+Zip command options:
   -Z, --zip-exclude   Glob pattern of files to exclude from zipping                      [string]
       --zip-dat-name  Group all ROMs from the same DAT into the same zip archive, if not excluded
                        from zipping (enforces --dat-threads 1)                          [boolean]
 
-Symlink options:
+Symlink command options:
       --symlink-relative  Create symlinks as relative to the target path, as opposed to absolute
                                                                                         [boolean]
 
-Header options:
+ROM header options:
       --header          Glob pattern of files to force header processing for             [string]
   -H, --remove-headers  Remove known headers from ROMs, optionally limited to a list of comma-sep
                         arated file extensions (supported: .a78, .fds, .lnx, .nes, .smc) [string]
 
-Filtering options:
-  -L, --language-filter  List of comma-separated languages to filter to (supported: DA, DE, EL, E
-                         N, ES, FI, FR, IT, JA, KO, NL, NO, PT, RU, SV, ZH)              [string]
-  -R, --region-filter    List of comma-separated regions to filter to (supported: ARG, ASI, AUS,
-                         BRA, CAN, CHN, DAN, EUR, FRA, FYN, GER, GRE, HK, HOL, ITA, JPN, KOR, MEX
-                         , NOR, NZ, POR, RUS, SPA, SWE, TAI, UK, UNK, USA, WORLD)        [string]
-      --only-bios        Filter to only BIOS files                                      [boolean]
-      --no-bios          Filter out BIOS files                                          [boolean]
-      --no-unlicensed    Filter out unlicensed ROMs                                     [boolean]
-      --only-retail      Filter to only retail releases, enabling all the following options
+ROM filtering options:
+  -x, --filter-regex          Regular expression of game names to filter to              [string]
+  -X, --filter-regex-exclude  Regular expression of game names to exclude                [string]
+  -L, --language-filter       List of comma-separated languages to filter to (supported: DA, DE,
+                              EL, EN, ES, FI, FR, IT, JA, KO, NL, NO, PT, RU, SV, ZH)    [string]
+  -R, --region-filter         List of comma-separated regions to filter to (supported: ARG, ASI,
+                              AUS, BRA, CAN, CHN, DAN, EUR, FRA, FYN, GER, GRE, HK, HOL, ITA, JPN
+                              , KOR, MEX, NOR, NZ, POR, RUS, SPA, SWE, TAI, UK, UNK, USA, WORLD)
+                                                                                         [string]
+      --only-bios             Filter to only BIOS files                                 [boolean]
+      --no-bios               Filter out BIOS files                                     [boolean]
+      --no-unlicensed         Filter out unlicensed ROMs                                [boolean]
+      --only-retail           Filter to only retail releases, enabling all the following options
                                                                                         [boolean]
-      --no-demo          Filter out demo ROMs                                           [boolean]
-      --no-beta          Filter out beta ROMs                                           [boolean]
-      --no-sample        Filter out sample ROMs                                         [boolean]
-      --no-prototype     Filter out prototype ROMs                                      [boolean]
-      --no-test-roms     Filter out test ROMs                                           [boolean]
-      --no-aftermarket   Filter out aftermarket ROMs                                    [boolean]
-      --no-homebrew      Filter out homebrew ROMs                                       [boolean]
-      --no-unverified    Filter out un-verified ROMs                                    [boolean]
-      --no-bad           Filter out bad ROM dumps                                       [boolean]
+      --no-demo               Filter out demo ROMs                                      [boolean]
+      --no-beta               Filter out beta ROMs                                      [boolean]
+      --no-sample             Filter out sample ROMs                                    [boolean]
+      --no-prototype          Filter out prototype ROMs                                 [boolean]
+      --no-test-roms          Filter out test ROMs                                      [boolean]
+      --no-aftermarket        Filter out aftermarket ROMs                               [boolean]
+      --no-homebrew           Filter out homebrew ROMs                                  [boolean]
+      --no-unverified         Filter out un-verified ROMs                               [boolean]
+      --no-bad                Filter out bad ROM dumps                                  [boolean]
 
-Priority options:
+ROM priority options:
   -s, --single                 Output only a single game per parent (1G1R) (required for all opti
                                ons below, requires parent/clone DAT files)              [boolean]
       --prefer-verified        Prefer verified ROM dumps over unverified                [boolean]
@@ -182,7 +191,7 @@ Example use cases:
   Create patched copies of ROMs in an existing collection, not overwriting existing files:
     igir copy extract --input ROMs/ --patch Patches/ --output ROMs/
 
-  Copy ROMs to your Analogue Pocket and test they were written correctly:
+  Copy ROMs to an Analogue Pocket and test they were written correctly:
     igir copy extract test --dat *.dat --input ROMs/ --output /Assets/{pocket}/common/ --dir-lett
     er
 ```
