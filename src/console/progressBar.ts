@@ -5,11 +5,11 @@ import LogLevel from './logLevel.js';
 /**
  * @see https://www.toptal.com/designers/htmlarrows/symbols/
  * @see https://www.htmlsymbols.xyz/
- * @see https://github.com/mochajs/mocha/pull/641/files (win32)
+ * @see https://www.fileformat.info/info/unicode/font/lucida_console/grid.htm (win32)
  */
 export const ProgressBarSymbol: { [key: string]: string } = {
   WAITING: chalk.grey(process.platform === 'win32' ? '…' : '⋯'),
-  SEARCHING: chalk.magenta(process.platform === 'win32' ? '҉' : '↻'),
+  SEARCHING: chalk.magenta(process.platform === 'win32' ? '○' : '↻'),
   HASHING: chalk.magenta('#'),
   GENERATING: chalk.cyan('Σ'),
   PROCESSING: chalk.cyan(process.platform === 'win32' ? '¤' : '⚙'),
