@@ -301,16 +301,6 @@ export default class ArgumentsParser {
             return `.${val.replace(/^\.+/, '')}`;
           }),
       })
-      .check((checkArgv) => {
-        if (checkArgv.help) {
-          return true;
-        }
-        const needExtractOrZip = ['header', 'remove-headers'].filter((option) => checkArgv[option]);
-        if (checkArgv._.indexOf('extract') === -1 && checkArgv._.indexOf('zip') === -1 && needExtractOrZip.length) {
-          throw new Error(`Missing required command for options ${needExtractOrZip.join(', ')}: extract or zip`);
-        }
-        return true;
-      })
 
       .option('filter-regex', {
         group: groupFiltering,
