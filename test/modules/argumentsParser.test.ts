@@ -296,14 +296,12 @@ describe('options', () => {
   });
 
   it('should parse "header"', () => {
-    expect(() => argumentsParser.parse([...dummyCommandAndRequiredArgs, '--header', '**/*'])).toThrow(/missing required command/i);
     expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, 'extract', '--header', '**/*']).shouldReadFileForHeader('file.rom')).toEqual(true);
     expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, 'zip', '--header', '**/*', '--header', 'nope']).shouldReadFileForHeader('file.rom')).toEqual(false);
   });
 
   it('should parse "remove-headers"', () => {
     const dat = new DAT(new Header(), []);
-    expect(() => argumentsParser.parse([...dummyCommandAndRequiredArgs, '--remove-headers', '.smc'])).toThrow(/missing required command/i);
 
     // False
     expect(argumentsParser.parse(dummyCommandAndRequiredArgs).canRemoveHeader(dat, '.smc')).toEqual(false);
