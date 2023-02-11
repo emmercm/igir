@@ -1,4 +1,5 @@
 import os from 'os';
+import path from 'path';
 
 import DATScanner from '../../src/modules/datScanner.js';
 import Options from '../../src/types/options.js';
@@ -50,9 +51,11 @@ describe('multiple files', () => {
   const totalDatFiles = 4;
 
   it('no files are path excluded', async () => {
+    await expect(createDatScanner([path.join(path.resolve(), 'test', 'fixtures', 'dats')]).scan()).resolves.toHaveLength(totalDatFiles);
     await expect(createDatScanner(['test/fixtures/dats']).scan()).resolves.toHaveLength(totalDatFiles);
     await expect(createDatScanner(['test/fixtures/dats/*']).scan()).resolves.toHaveLength(totalDatFiles);
     await expect(createDatScanner(['test/fixtures/dats/*', 'test/fixtures/**/*.dat']).scan()).resolves.toHaveLength(totalDatFiles);
+    await expect(createDatScanner([path.join(path.resolve(), 'test', 'fixtures', '**', '*.{dat,zip}')]).scan()).resolves.toHaveLength(totalDatFiles);
     await expect(createDatScanner(['test/fixtures/**/*.{dat,zip}']).scan()).resolves.toHaveLength(totalDatFiles);
     await expect(createDatScanner(['test/fixtures/**/*.{dat,zip}', 'test/fixtures/**/*.{dat,zip}']).scan()).resolves.toHaveLength(totalDatFiles);
   });
@@ -84,6 +87,7 @@ describe('multiple files', () => {
 });
 
 it('should scan single files', async () => {
+  await expect(createDatScanner([path.join(path.resolve(), 'test', 'fixtures', 'dats', 'one.*')]).scan()).resolves.toHaveLength(1);
   await expect(createDatScanner(['test/fixtures/dats/one.*']).scan()).resolves.toHaveLength(1);
   await expect(createDatScanner(['test/fixtures/*/one.zip']).scan()).resolves.toHaveLength(1);
   await expect(createDatScanner(['test/fixtures/dats/one.zip']).scan()).resolves.toHaveLength(1);
