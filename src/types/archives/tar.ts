@@ -1,4 +1,4 @@
-import crc32 from 'crc/crc32';
+import { crc32 } from '@node-rs/crc32';
 import fs from 'fs';
 import path from 'path';
 import tar from 'tar';
