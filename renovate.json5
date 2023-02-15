@@ -55,9 +55,16 @@
     },
 
     // Stability settings
-    rangeStrategy: "pin",
     commitMessageAction: "update", // same as above, don't use `rangeStrategy` as the action
     stabilityDays: 3,
+    rangeStrategy: "pin",
+    pin: {
+      commitMessageAction: "pin",
+      groupName: "dependency ranges",
+      schedule: "at any time",
+      prCreation: "immediate",
+      automergeSchedule: "at any time"
+    },
 
     packageRules: [
       // Dependencies
