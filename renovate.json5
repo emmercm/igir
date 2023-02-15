@@ -55,22 +55,14 @@
     },
 
     // Stability settings
+    rangeStrategy: "pin",
     commitMessageAction: "update", // same as above, don't use `rangeStrategy` as the action
     stabilityDays: 3,
-    rangeStrategy: "pin",
-    pin: {
-      commitMessageAction: "pin",
-      groupName: "dependency ranges",
-      schedule: "at any time",
-      prCreation: "immediate",
-      automergeSchedule: "at any time"
-    },
 
     packageRules: [
       // Dependencies
       {
         groupName: "dependencies",
-        matchUpdateTypes: ["major", "minor", "patch"], // not "pin"
         matchDepTypes: ["dependencies", "devDependencies"]
       },
 
@@ -108,6 +100,16 @@
         // Separate TypeScript because upgrades are dependent on support by other dependencies
         matchPackageNames: ["typescript"],
         groupName: "TypeScript"
+      },
+
+      // Group/separate all dependency pinning, perform it immediately
+      {
+        matchUpdateTypes: ["pin"],
+        commitMessageAction: "pin",
+        groupName: "dependency ranges",
+        schedule: "at any time",
+        prCreation: "immediate",
+        automergeSchedule: "at any time"
       },
 
       // Everything else
