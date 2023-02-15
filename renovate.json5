@@ -63,6 +63,7 @@
       // Dependencies
       {
         groupName: "dependencies",
+        matchUpdateTypes: ["major", "minor", "patch"], // not "pin"
         matchDepTypes: ["dependencies", "devDependencies"]
       },
 
