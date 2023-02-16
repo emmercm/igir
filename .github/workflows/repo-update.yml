@@ -13,11 +13,14 @@ on:
 jobs:
   repo-update:
     runs-on: ubuntu-latest
+    permissions:
+      repository-projects: write
     steps:
       - uses: actions/checkout@v3
       - run: |
           DATA=$(jq --raw-output --compact-output '{description: .description, homepage: .homepage}' package.json)
           curl \
+            --fail \
             -X PATCH \
             -H "Accept: application/vnd.github+json" \
             -H "Authorization: Bearer ${GITHUB_TOKEN}" \
@@ -29,6 +32,7 @@ jobs:
       - run: |
           DATA=$(jq --raw-output --compact-output '{names: .keywords}' package.json)
           curl \
+            --fail \
             -X PUT \
             -H "Accept: application/vnd.github+json" \
             -H "Authorization: Bearer ${GITHUB_TOKEN}" \
