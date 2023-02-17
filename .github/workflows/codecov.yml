@@ -1,3 +1,5 @@
+# Requires repo secret: CODECOV_TOKEN ("repository upload token")
+
 name: Codecov
 
 on:

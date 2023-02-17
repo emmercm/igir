@@ -1,7 +1,7 @@
 {
   "name": "igir",
   "version": "1.2.1",
-  "description": "A ROM collection manager designed to make one game, one rom (1G1R) sets.",
+  "description": "🕹 A platform-independent ROM collection manager to help filter, sort, patch, and archive ROM collections.",
   "keywords": [
     "1g1r",
     "analogue-pocket",

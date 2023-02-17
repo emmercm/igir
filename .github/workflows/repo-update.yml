@@ -1,0 +1,40 @@
+# Requires repo secret: PERSONAL_ACCESS_TOKEN (with the "repository > administration" permission)
+
+name: Repository Update
+
+on:
+  push:
+    branches:
+      - 'main'
+
+jobs:
+  repo-update:
+    runs-on: ubuntu-latest
+    permissions:
+      repository-projects: write
+    steps:
+      - uses: actions/checkout@v3
+      - run: |
+          DATA=$(jq --raw-output --compact-output '{description: .description, homepage: .homepage}' package.json)
+          curl \
+            --fail-with-body \
+            -X PATCH \
+            -H "Accept: application/vnd.github+json" \
+            -H "Authorization: Bearer ${PERSONAL_ACCESS_TOKEN}" \
+            -H "X-GitHub-Api-Version: 2022-11-28" \
+            "https://api.github.com/repos/${GITHUB_REPOSITORY}" \
+            -d "${DATA}"
+        env:
+          PERSONAL_ACCESS_TOKEN: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
+      - run: |
+          DATA=$(jq --raw-output --compact-output '{names: .keywords}' package.json)
+          curl \
+            --fail-with-body \
+            -X PUT \
+            -H "Accept: application/vnd.github+json" \
+            -H "Authorization: Bearer ${PERSONAL_ACCESS_TOKEN}" \
+            -H "X-GitHub-Api-Version: 2022-11-28" \
+            "https://api.github.com/repos/${GITHUB_REPOSITORY}/topics" \
+            -d "${DATA}"
+        env:
+          PERSONAL_ACCESS_TOKEN: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
