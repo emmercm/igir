@@ -1,3 +1,5 @@
+# Requires repo secret: PERSONAL_ACCESS_TOKEN (with the "repository > administration" permission)
+
 name: Repository Update
 
 on:
