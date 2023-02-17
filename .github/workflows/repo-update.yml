@@ -20,7 +20,7 @@ jobs:
       - run: |
           DATA=$(jq --raw-output --compact-output '{description: .description, homepage: .homepage}' package.json)
           curl \
-            --fail \
+            --fail-with-body \
             -X PATCH \
             -H "Accept: application/vnd.github+json" \
             -H "Authorization: Bearer ${GITHUB_TOKEN}" \
@@ -32,7 +32,7 @@ jobs:
       - run: |
           DATA=$(jq --raw-output --compact-output '{names: .keywords}' package.json)
           curl \
-            --fail \
+            --fail-with-body \
             -X PUT \
             -H "Accept: application/vnd.github+json" \
             -H "Authorization: Bearer ${GITHUB_TOKEN}" \
