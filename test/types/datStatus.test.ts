@@ -16,14 +16,14 @@ function givenDAT(): DAT {
     date: '20220828',
   }), [
     new Game({
-      name: 'game with multiple roms and no releases',
+      name: 'game with multiple ROMs and no releases',
       rom: [
         new ROM('one.rom', 0, '00000001'),
         new ROM('two.rom', 0, '00000002'),
       ],
     }),
     new Game({
-      name: 'bios with one rom and one release',
+      name: 'bios with one ROM and one release',
       bios: 'yes',
       release: [
         new Release('USA', 'USA', 'EN'),
@@ -31,7 +31,7 @@ function givenDAT(): DAT {
       rom: new ROM('three.rom', 0, '00000003'),
     }),
     new Game({
-      name: 'game with one rom and multiple releases',
+      name: 'game with one ROM and multiple releases',
       release: [
         new Release('USA', 'USA', 'EN'),
         new Release('EUR', 'EUR', 'EN'),
