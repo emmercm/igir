@@ -1,5 +1,6 @@
 // eslint-disable-next-line max-classes-per-file
 import FilePoly from '../../polyfill/filePoly.js';
+import fsPoly from '../../polyfill/fsPoly.js';
 import File from '../files/file.js';
 import Patch from './patch.js';
 
@@ -15,16 +16,14 @@ class PPFHeader {
     this.undoDataAvailable = undoDataAvailable;
   }
 
-  static async fromFilePoly(patchFile: FilePoly): Promise<PPFHeader> {
+  static async fromFilePoly(inputRomFile: File, patchFile: FilePoly): Promise<PPFHeader> {
     const header = (await patchFile.readNext(5)).toString();
     if (!header.startsWith(PPFHeader.FILE_SIGNATURE.toString())) {
-      await patchFile.close();
       throw new Error(`PPF patch header is invalid: ${patchFile.getPathLike()}`);
     }
     const encoding = (await patchFile.readNext(1)).readUInt8();
     const version = encoding + 1;
     if (!header.endsWith(`${version}0`)) {
-      await patchFile.close();
       throw new Error(`PPF patch header has an invalid version: ${patchFile.getPathLike()}`);
     }
     patchFile.skipNext(50); // description
@@ -32,7 +31,10 @@ class PPFHeader {
     let blockCheckEnabled = false;
     let undoDataAvailable = false;
     if (version === 2) {
-      patchFile.skipNext(4); // size of base file
+      const sourceSize = (await patchFile.readNext(4)).readUInt32LE();
+      if (inputRomFile.getSize() !== sourceSize) {
+        throw new Error(`PPF patch expected ROM size of ${fsPoly.sizeReadable(sourceSize)}: ${patchFile.getPathLike()}`);
+      }
       blockCheckEnabled = true;
     } else if (version === 3) {
       patchFile.skipNext(1); // image type
@@ -40,7 +42,6 @@ class PPFHeader {
       undoDataAvailable = (await patchFile.readNext(1)).readUInt8() === 0x01;
       patchFile.skipNext(1); // dummy
     } else {
-      await patchFile.close();
       throw new Error(`PPF v${version} isn't supported: ${patchFile.getPathLike()}`);
     }
     if (blockCheckEnabled) {
@@ -67,7 +68,7 @@ export default class PPFPatch extends Patch {
 
   async createPatchedFile(inputRomFile: File, outputRomPath: string): Promise<void> {
     return this.getFile().extractToTempFilePoly('r', async (patchFile) => {
-      const header = await PPFHeader.fromFilePoly(patchFile);
+      const header = await PPFHeader.fromFilePoly(inputRomFile, patchFile);
 
       return PPFPatch.writeOutputFile(inputRomFile, outputRomPath, patchFile, header);
     });

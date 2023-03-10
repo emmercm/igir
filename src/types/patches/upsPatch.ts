@@ -45,7 +45,11 @@ export default class UPSPatch extends Patch {
       if (!header.equals(UPSPatch.FILE_SIGNATURE)) {
         throw new Error(`UPS patch header is invalid: ${this.getFile().toString()}`);
       }
-      await Patch.readUpsUint(patchFile); // source size
+
+      const sourceSize = await Patch.readUpsUint(patchFile);
+      if (inputRomFile.getSize() !== sourceSize) {
+        throw new Error(`UPS patch expected ROM size of ${fsPoly.sizeReadable(sourceSize)}: ${patchFile.getPathLike()}`);
+      }
       await Patch.readUpsUint(patchFile); // target size
 
       return UPSPatch.writeOutputFile(inputRomFile, outputRomPath, patchFile);

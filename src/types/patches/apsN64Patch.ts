@@ -92,6 +92,7 @@ export default class APSN64Patch extends Patch {
     while (patchFile.getPosition() < patchFile.getSize()) {
       const offset = (await patchFile.readNext(4)).readUInt32LE();
       const size = (await patchFile.readNext(1)).readUInt8();
+
       let data: Buffer;
       if (size === 0) {
         // Run-length encoding record
@@ -102,6 +103,7 @@ export default class APSN64Patch extends Patch {
         // Standard record
         data = await patchFile.readNext(size);
       }
+
       await targetFile.writeAt(data, offset);
     }
   }

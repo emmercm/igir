@@ -30,7 +30,11 @@ export default class APSGBAPatch extends Patch {
         throw new Error(`APS (GBA) patch header is invalid: ${this.getFile().toString()}`);
       }
 
-      patchFile.skipNext(4); // original size
+      const originalSize = (await patchFile.readNext(4)).readUInt32LE();
+      if (inputRomFile.getSize() !== originalSize) {
+        throw new Error(`APS (GBA) patch expected ROM size of ${fsPoly.sizeReadable(originalSize)}: ${this.getFile().toString()}`);
+      }
+
       patchFile.skipNext(4); // patched size
 
       return APSGBAPatch.writeOutputFile(inputRomFile, outputRomPath, patchFile);
