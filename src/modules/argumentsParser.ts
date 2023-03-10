@@ -122,8 +122,10 @@ export default class ArgumentsParser {
       })
       .locale('en')
       .scriptName(Constants.COMMAND_NAME)
-      .usage('Usage: $0 [commands..] [options]');
-
+      .usage('Usage: $0 [commands..] [options]')
+      .updateStrings({
+        'Commands:': 'Commands (can specify multiple):',
+      });
     addCommands(yargsParser)
       .demandCommand(1, 'You must specify at least one command')
       .strictCommands(true);
@@ -521,6 +523,9 @@ Example use cases:
 
   Produce a 1G1R set per console, preferring English ROMs from USA>WORLD>EUR>JPN:
     $0 copy --dat *.dat --input **/*.zip --output 1G1R/ --dir-dat-name --single --prefer-language EN --prefer-region USA,WORLD,EUR,JPN
+
+  Copy all Mario, Metroid, and Zelda games to one directory:
+    $0 copy --input ROMs/ --output Nintendo/ --filter-regex "/(Mario|Metroid|Zelda)/i"
 
   Copy all BIOS files into one directory, extracting if necessary:
     $0 copy extract --dat *.dat --input **/*.zip --output BIOS/ --only-bios

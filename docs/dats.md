@@ -52,7 +52,7 @@ And some less popular release groups are:
 
 DATs that include "parent" and "clone" information help `igir` understand what game releases are actually the same game ("clones"). Frequently a game will be released in many regions or with different revisions, usually with only language translations and minor bug fixes. For example, No-Intro has 6+ "clones" of Pokemon Blue cataloged.
 
-Being able to know that many releases are actually the same game gives `igir` the ability to produce "one game, one rom" (1G1R) sets with the `--single` option. 1G1R sets include only one of these "clone" releases, usually filtered to a language and region, because many people don't care about ROMs they can't understand.
+Being able to know that many releases are actually the same game gives `igir` the ability to produce "one game, one ROM" (1G1R) sets with the `--single` option. 1G1R sets include only one of these "clone" releases, usually filtered to a language and region, because many people don't care about ROMs they can't understand.
 
 If you have the option to download "parent/clone" or "P/C" versions of DATs you should always choose those.
 

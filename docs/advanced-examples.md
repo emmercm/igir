@@ -23,12 +23,19 @@ The file tree in that hard drive looks like this:
 │   ├── Nintendo - Game Boy Advance (e-Reader)
 │   ├── Nintendo - Game Boy Color
 │   └── etc...
-├── No-Intro Love Pack (PC XML) (2023-01-19).zip
+├── No-Intro Love Pack (PC XML) (2023-01-29).zip
 ├── Patches
 │   ├── gb
 │   ├── gba
-│   └── gbc
-├── Redump (2022-10-22).zip
+│   ├── gbc
+│   ├── genesis
+│   └── snes
+├── Redump
+│   ├── Microsoft - Xbox - BIOS Images
+│   ├── Nintendo - GameCube
+│   ├── Sony - PlayStation - BIOS Images
+│   └── Sony - PlayStation 2 - BIOS Images
+├── Redump (2023-01-29).zip
 ├── TOSEC - DAT Pack - Complete (3530) (TOSEC-v2022-07-10).zip
 └── igir_library_sync.sh
 ```
@@ -55,13 +62,20 @@ npx igir@latest move zip test clean report \
   --patch "./Patches/" \
   --output "./No-Intro/" \
   --dir-dat-name
+
+npx igir@latest move extract test report \
+  --dat "./Redump*.zip" \
+  --input "./Redump/" \
+  "${INPUTS[@]}" \
+  --output "./Redump/" \
+  --dir-dat-name
 ```
 
 I then copy ROMs to other devices from this source of truth.
 
 ### Analogue Pocket
 
-For example, I have this script `igir_pocket_sync.sh` at the root of my [Analogue Pocket](https://www.analogue.co/pocket)'s SD card:
+I have this script `igir_pocket_sync.sh` at the root of my [Analogue Pocket](https://www.analogue.co/pocket)'s SD card:
 
 ```bash
 #!/usr/bin/env bash
@@ -88,3 +102,24 @@ npx igir@latest copy extract test clean \
 ```
 
 That lets me create an EN+USA preferred 1G1R set for my Pocket on the fly, making sure I don't delete BIOS files needed for each core. This command will cause a lot of warning spam for the `{pocket}` output token because not every ROM of mine is playable on the Pocket, but this command will make sure every playable ROM is copied over.
+
+### GameCube
+
+I have this script `sd2sp2_pocket_sync.sh` at the root of my GameCube [SD2SP2](https://github.com/citrus3000psi/SD2SP2) SD card:
+
+```bash
+#!/usr/bin/env bash
+set -euo pipefail
+
+SOURCE=/Volumes/WDPassport4
+
+npx igir@latest copy extract test clean \
+  --input "${SOURCE}/Redump/Nintendo - GameCube" \
+  --output "./ISOs/" \
+  --dir-letter \
+  --no-bios \
+  --no-bad \
+  --filter-regex-exclude "/(Baseball|FIFA|MLB|NBA|NCAA|NFL|NHL|PGA)/i"
+```
+
+It doesn't use DATs because I have the ISOs in a trimmed NKit format (see [Swiss](https://github.com/emukidid/swiss-gc)), so they won't match the checksums in DATs. I also exclude some games due to limited SD card size.
