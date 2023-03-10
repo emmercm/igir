@@ -20,7 +20,6 @@ export default class IPSPatch extends Patch {
     return this.getFile().extractToTempFilePoly('r', async (patchFile) => {
       const header = await patchFile.readNext(5);
       if (IPSPatch.FILE_SIGNATURES.every((fileSignature) => !header.equals(fileSignature))) {
-        await patchFile.close();
         throw new Error(`IPS patch header is invalid: ${this.getFile().toString()}`);
       }
 
@@ -71,19 +70,18 @@ export default class IPSPatch extends Patch {
         break;
       }
 
-      const offset = (await patchFile.readNext(offsetSize)).readUintBE(0, offsetSize);
+      const offset = (await patchFile.readNext(offsetSize)).readUIntBE(0, offsetSize);
       const size = (await patchFile.readNext(2)).readUInt16BE();
+      let data: Buffer;
       if (size === 0) {
         // Run-length encoding record
         const rleSize = (await patchFile.readNext(2)).readUInt16BE();
-        const data = Buffer.from((await patchFile.readNext(1)).toString('hex')
-          .repeat(rleSize), 'hex');
-        await targetFile.writeAt(data, offset);
+        data = Buffer.from((await patchFile.readNext(1)).toString('hex').repeat(rleSize), 'hex');
       } else {
         // Standard record
-        const data = await patchFile.readNext(size);
-        await targetFile.writeAt(data, offset);
+        data = await patchFile.readNext(size);
       }
+      await targetFile.writeAt(data, offset);
     }
   }
 }

@@ -23,7 +23,7 @@ export default class UPSPatch extends Patch {
     let targetSize = 0;
 
     await file.extractToTempFilePoly('r', async (patchFile) => {
-      patchFile.seek(4); // header
+      patchFile.seek(UPSPatch.FILE_SIGNATURE.length);
       await Patch.readUpsUint(patchFile); // source size
       targetSize = await Patch.readUpsUint(patchFile); // target size
 
@@ -43,7 +43,6 @@ export default class UPSPatch extends Patch {
     return this.getFile().extractToTempFilePoly('r', async (patchFile) => {
       const header = await patchFile.readNext(4);
       if (!header.equals(UPSPatch.FILE_SIGNATURE)) {
-        await patchFile.close();
         throw new Error(`UPS patch header is invalid: ${this.getFile().toString()}`);
       }
       await Patch.readUpsUint(patchFile); // source size
@@ -99,14 +98,14 @@ export default class UPSPatch extends Patch {
     const buffer: Buffer[] = [];
 
     while (patchFile.getPosition() < patchFile.getSize() - 12) {
-      const xorByte = (await patchFile.readNext(1)).readUint8();
+      const xorByte = (await patchFile.readNext(1)).readUInt8();
       if (!xorByte) { // terminating byte 0x00
         return Buffer.concat(buffer);
       }
 
       const sourceByte = sourceFile.isEOF()
         ? 0x00
-        : (await sourceFile.readNext(1)).readUint8();
+        : (await sourceFile.readNext(1)).readUInt8();
       buffer.push(Buffer.of(sourceByte ^ xorByte));
     }
 

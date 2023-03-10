@@ -1,6 +1,7 @@
 import { Readable } from 'stream';
 
 import File from '../files/file.js';
+import APSPatch from './apsPatch.js';
 import BPSPatch from './bpsPatch.js';
 import IPSPatch from './ipsPatch.js';
 import NinjaPatch from './ninjaPatch.js';
@@ -20,6 +21,11 @@ interface PatchParser {
  */
 export default class PatchFactory {
   private static readonly PATCH_PARSERS: PatchParser[] = [
+    {
+      extensions: APSPatch.SUPPORTED_EXTENSIONS,
+      fileSignatures: [APSPatch.FILE_SIGNATURE],
+      factory: APSPatch.patchFrom,
+    },
     {
       extensions: BPSPatch.SUPPORTED_EXTENSIONS,
       fileSignatures: [BPSPatch.FILE_SIGNATURE],

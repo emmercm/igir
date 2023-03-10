@@ -131,10 +131,10 @@ class VcdiffHeader {
     }
     patchFile.skipNext(1); // version
 
-    const hdrIndicator = (await patchFile.readNext(1)).readUint8();
+    const hdrIndicator = (await patchFile.readNext(1)).readUInt8();
     let secondaryDecompressorId = 0;
     if (hdrIndicator & VcdiffHdrIndicator.DECOMPRESS) {
-      secondaryDecompressorId = (await patchFile.readNext(1)).readUint8();
+      secondaryDecompressorId = (await patchFile.readNext(1)).readUInt8();
       if (secondaryDecompressorId) {
         /**
          * TODO(cemmer): notes for later on LZMA (the default for the xdelta3 tool):
@@ -208,7 +208,7 @@ class VcdiffWindow {
 
   /* eslint-disable no-bitwise */
   static async fromFilePoly(patchFile: FilePoly): Promise<VcdiffWindow> {
-    const winIndicator = (await patchFile.readNext(1)).readUint8();
+    const winIndicator = (await patchFile.readNext(1)).readUInt8();
     let sourceSegmentSize = 0;
     let sourceSegmentPosition = 0;
     if (winIndicator & (VcdiffWinIndicator.SOURCE | VcdiffWinIndicator.TARGET)) {
@@ -218,7 +218,7 @@ class VcdiffWindow {
 
     await Patch.readVcdiffUintFromFile(patchFile); // delta encoding length
     const deltaEncodingTargetWindowSize = await Patch.readVcdiffUintFromFile(patchFile);
-    const deltaEncodingIndicator = (await patchFile.readNext(1)).readUint8();
+    const deltaEncodingIndicator = (await patchFile.readNext(1)).readUInt8();
 
     const addsAndRunsDataLength = await Patch.readVcdiffUintFromFile(patchFile);
     const instructionsAndSizesLength = await Patch.readVcdiffUintFromFile(patchFile);
@@ -260,7 +260,7 @@ class VcdiffWindow {
 
   readInstructionIndex(): number {
     const instructionCodeIdx = this.instructionsAndSizesData
-      .readUint8(this.instructionsAndSizeOffset);
+      .readUInt8(this.instructionsAndSizeOffset);
     this.instructionsAndSizeOffset += 1;
     return instructionCodeIdx;
   }
@@ -413,7 +413,7 @@ class VcdiffCache {
       addr = this.near[m] + readValue;
     } else {
       const m = mode - (2 + this.sNear);
-      readValue = copyAddressesData.readUint8(copyAddressesOffset);
+      readValue = copyAddressesData.readUInt8(copyAddressesOffset);
       copyAddressesOffsetAfter += 1;
       addr = this.same[m * 256 + readValue];
     }
