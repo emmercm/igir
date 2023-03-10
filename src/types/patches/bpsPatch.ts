@@ -43,7 +43,6 @@ export default class BPSPatch extends Patch {
 
   async createPatchedFile(inputRomFile: File, outputRomPath: string): Promise<void> {
     return this.getFile().extractToTempFilePoly('r', async (patchFile) => {
-      // Skip header info
       const header = await patchFile.readNext(4);
       if (!header.equals(BPSPatch.FILE_SIGNATURE)) {
         throw new Error(`BPS patch header is invalid: ${this.getFile().toString()}`);
