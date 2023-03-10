@@ -2,7 +2,7 @@
 # @param {number=} $1 Terminal width to generate the README at
 set -euo pipefail
 
-here="$(pwd)"
+here="${PWD}"
 # shellcheck disable=SC2064
 trap "cd \"${here}\"" EXIT
 cd "$(dirname "$0")/.."

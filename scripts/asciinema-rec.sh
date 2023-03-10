@@ -2,7 +2,7 @@
 # @param {string=} $1 Script command: rec, play
 set -euo pipefail
 
-here="$(pwd)"
+here="${PWD}"
 # shellcheck disable=SC2064
 trap "cd \"${here}\"" EXIT
 cd "$(dirname "$0")/.."
