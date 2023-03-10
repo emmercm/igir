@@ -7,7 +7,7 @@ test.each([
   ['test/fixtures/roms/**/*', {
     '7z': 5,
     headered: 6,
-    patchable: 7,
+    patchable: 9,
     rar: 5,
     raw: 8,
     roms: 5,

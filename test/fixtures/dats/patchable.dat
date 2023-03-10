@@ -8,6 +8,19 @@
     <author>emmercm</author>
   </header>
 
+  <!-- APS (GBA) -->
+  <game name="92C85C9">
+    <description>92C85C9</description>
+    <rom name="92C85C9.rom" size="65536" crc="06692159" md5="8e0caf88ba437cb7109c5642e06cfdb2" sha1="8335c4505380035c2fa94e2a1b9e69517e746905" status="verified"/>
+    <!-- After: size="65536" crc="b13eb478" -->
+  </game>
+  <!-- APS (N64 SIMPLE) -->
+  <game name="3708F2C">
+    <description>3708F2C</description>
+    <rom name="3708F2C.rom" size="1025" crc="20891c9f" md5="b191e2d913681475ef6a579d4b40bb1f" sha1="181e0713260060fa7d6c64292902023ca7c88a06" status="verified"/>
+    <!-- After: size="1025" crc="caaaf550" -->
+  </game>
+
   <!-- IPS -->
   <game name="Before">
     <description>Before</description>

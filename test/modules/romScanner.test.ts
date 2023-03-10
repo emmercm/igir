@@ -33,7 +33,7 @@ it('should not throw on bad archives', async () => {
 
 describe('multiple files', () => {
   it('no files are path excluded', async () => {
-    const expectedRomFiles = 55;
+    const expectedRomFiles = 57;
     await expect(createRomScanner(['test/fixtures/roms']).scan()).resolves.toHaveLength(expectedRomFiles);
     await expect(createRomScanner(['test/fixtures/roms/*', 'test/fixtures/roms/**/*']).scan()).resolves.toHaveLength(expectedRomFiles);
     await expect(createRomScanner(['test/fixtures/roms/**/*']).scan()).resolves.toHaveLength(expectedRomFiles);
