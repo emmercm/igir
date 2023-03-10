@@ -37,10 +37,10 @@ it('should scan single files', async () => {
 });
 
 it('should scan multiple files', async () => {
-  const expectedPatchFiles = 7;
+  const expectedPatchFiles = 9;
   await expect(createPatchScanner(['test/fixtures/patches/*']).scan()).resolves.toHaveLength(expectedPatchFiles);
   await expect(createPatchScanner(['test/fixtures/patches/**/*']).scan()).resolves.toHaveLength(expectedPatchFiles);
-  await expect(createPatchScanner(['test/fixtures/*/*.{bps,ips,ips32,ppf,rup,ups,vcdiff,xdelta}']).scan()).resolves.toHaveLength(expectedPatchFiles);
+  await expect(createPatchScanner(['test/fixtures/*/*.{aps,bps,ips,ips32,ppf,rup,ups,vcdiff,xdelta}']).scan()).resolves.toHaveLength(expectedPatchFiles);
 });
 
 it('should scan multiple files of incorrect extensions', async () => {

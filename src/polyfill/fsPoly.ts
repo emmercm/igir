@@ -134,7 +134,7 @@ export default class FsPoly {
   static async mktemp(prefix: string): Promise<string> {
     /* eslint-disable no-constant-condition, no-await-in-loop */
     while (true) {
-      const randomExtension = crypto.randomBytes(4).readUInt32LE(0).toString(36);
+      const randomExtension = crypto.randomBytes(4).readUInt32LE().toString(36);
       const filePath = `${prefix.replace(/\.+$/, '')}.${randomExtension}`;
       if (!await this.exists(filePath)) {
         return filePath;

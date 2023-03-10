@@ -76,7 +76,7 @@ export default abstract class Patch {
 
     /* eslint-disable no-await-in-loop, no-bitwise */
     while (!fp.isEOF()) {
-      const bits = (await fp.readNext(1)).readUint8();
+      const bits = (await fp.readNext(1)).readUInt8();
       num = (num << 7) + (bits & 0x7f);
       if (!(bits & 0x80)) { // left-most bit is telling us to keep going
         break;
@@ -91,7 +91,7 @@ export default abstract class Patch {
 
     let lastOffset = offset;
     while (lastOffset < buffer.length) {
-      const bits = buffer.readUint8(lastOffset);
+      const bits = buffer.readUInt8(lastOffset);
       lastOffset += 1;
       num = (num << 7) + (bits & 0x7f);
       if (!(bits & 0x80)) { // left-most bit is telling us to keep going

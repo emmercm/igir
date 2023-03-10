@@ -24,7 +24,7 @@ export default class BPSPatch extends Patch {
     let targetSize = 0;
 
     await file.extractToTempFilePoly('r', async (patchFile) => {
-      patchFile.seek(4); // header
+      patchFile.seek(BPSPatch.FILE_SIGNATURE.length);
       await Patch.readUpsUint(patchFile); // source size
       targetSize = await Patch.readUpsUint(patchFile); // target size
 
@@ -45,7 +45,6 @@ export default class BPSPatch extends Patch {
       // Skip header info
       const header = await patchFile.readNext(4);
       if (!header.equals(BPSPatch.FILE_SIGNATURE)) {
-        await patchFile.close();
         throw new Error(`BPS patch header is invalid: ${this.getFile().toString()}`);
       }
       await Patch.readUpsUint(patchFile); // source size

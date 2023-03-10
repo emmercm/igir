@@ -38,12 +38,10 @@ export default class NinjaPatch extends Patch {
     return this.getFile().extractToTempFilePoly('r', async (patchFile) => {
       const header = await patchFile.readNext(5);
       if (!header.equals(NinjaPatch.FILE_SIGNATURE)) {
-        await patchFile.close();
         throw new Error(`NINJA patch header is invalid: ${this.getFile().toString()}`);
       }
       const version = parseInt((await patchFile.readNext(1)).toString(), 10);
       if (version !== 2) {
-        await patchFile.close();
         throw new Error(`NINJA v${version} isn't supported: ${this.getFile().toString()}`);
       }
 
@@ -80,7 +78,7 @@ export default class NinjaPatch extends Patch {
   }
 
   private async applyCommand(patchFile: FilePoly, targetFile: FilePoly): Promise<void> {
-    const command = (await patchFile.readNext(1)).readUint8();
+    const command = (await patchFile.readNext(1)).readUInt8();
 
     if (command === NinjaCommand.TERMINATE) {
       // Nothing
@@ -92,7 +90,7 @@ export default class NinjaPatch extends Patch {
   }
 
   private async applyCommandOpen(patchFile: FilePoly, targetFile: FilePoly): Promise<void> {
-    const multiFile = (await patchFile.readNext(1)).readUint8();
+    const multiFile = (await patchFile.readNext(1)).readUInt8();
     if (multiFile > 0) {
       throw new Error(`Multi-file NINJA patches aren't supported: ${this.getFile().toString()}`);
     }
@@ -101,14 +99,14 @@ export default class NinjaPatch extends Patch {
       ? (await patchFile.readNext(multiFile)).readUIntLE(0, multiFile)
       : 0;
     patchFile.skipNext(fileNameLength); // file name
-    const fileType = (await patchFile.readNext(1)).readUint8();
+    const fileType = (await patchFile.readNext(1)).readUInt8();
     if (fileType > 0) {
       throw new Error(`Unsupported NINJA file type ${NinjaFileType[fileType]}: ${this.getFile().toString()}`);
     }
-    const sourceFileSizeLength = (await patchFile.readNext(1)).readUint8();
+    const sourceFileSizeLength = (await patchFile.readNext(1)).readUInt8();
     const sourceFileSize = (await patchFile.readNext(sourceFileSizeLength))
       .readUIntLE(0, sourceFileSizeLength);
-    const modifiedFileSizeLength = (await patchFile.readNext(1)).readUint8();
+    const modifiedFileSizeLength = (await patchFile.readNext(1)).readUInt8();
     const modifiedFileSize = (await patchFile.readNext(modifiedFileSizeLength))
       .readUIntLE(0, modifiedFileSizeLength);
     patchFile.skipNext(16); // source MD5
@@ -116,7 +114,7 @@ export default class NinjaPatch extends Patch {
 
     if (sourceFileSize !== modifiedFileSize) {
       patchFile.skipNext(1); // "M" or "A"
-      const overflowSizeLength = (await patchFile.readNext(1)).readUint8();
+      const overflowSizeLength = (await patchFile.readNext(1)).readUInt8();
       const overflowSize = overflowSizeLength > 0
         ? (await patchFile.readNext(overflowSizeLength)).readUIntLE(0, overflowSizeLength)
         : 0;
@@ -134,17 +132,16 @@ export default class NinjaPatch extends Patch {
   }
 
   private static async applyCommandXor(patchFile: FilePoly, targetFile: FilePoly): Promise<void> {
-    const offsetLength = (await patchFile.readNext(1)).readUint8();
+    const offsetLength = (await patchFile.readNext(1)).readUInt8();
     const offset = (await patchFile.readNext(offsetLength)).readUIntLE(0, offsetLength);
     targetFile.seek(offset);
 
-    const lengthLength = (await patchFile.readNext(1)).readUint8();
+    const lengthLength = (await patchFile.readNext(1)).readUInt8();
     const length = (await patchFile.readNext(lengthLength)).readUIntLE(0, lengthLength);
     const sourceData = await targetFile.readNext(length);
 
     const xorData = await patchFile.readNext(length);
     const targetData = Buffer.allocUnsafe(length);
-    /* eslint-disable no-bitwise */
     for (let i = 0; i < length; i += 1) {
       targetData[i] = (i < sourceData.length ? sourceData[i] : 0x00) ^ xorData[i];
     }
