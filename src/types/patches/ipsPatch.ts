@@ -5,6 +5,7 @@ import Patch from './patch.js';
 /**
  * @see https://zerosoft.zophar.net/ips.php
  * @see https://github.com/btimofeev/UniPatcher/blob/a5a69cc607fadef43734589b311e5ef1bcde6941/app/src/main/java/org/emunix/unipatcher/patcher/IPS.java
+ * @see https://github.com/Lyrositor/EBPatcher/blob/f722878c60f476e4f8e92322aaefa579807bd58f/EBPPatch.py
  */
 export default class IPSPatch extends Patch {
   static readonly SUPPORTED_EXTENSIONS = ['.ips', '.ips32'];
@@ -63,8 +64,8 @@ export default class IPSPatch extends Patch {
     offsetSize: number,
     eofString: string,
   ): Promise<void> {
-    /* eslint-disable no-constant-condition, no-await-in-loop */
-    while (true) {
+    /* eslint-disable no-await-in-loop */
+    while (!patchFile.isEOF()) {
       const offsetPeek = await patchFile.peekNext(eofString.length);
       if (offsetPeek === null || offsetPeek.toString() === eofString) {
         break;
