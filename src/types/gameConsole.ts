@@ -41,6 +41,7 @@ export default class GameConsole {
     new GameConsole(/Intellivision/i, ['.int'], 'intv', 'Intellivision'),
     // NEC
     new GameConsole(/PC Engine|TurboGrafx/i, ['.pce'], 'pce', 'TGFX16'),
+    new GameConsole(/(PC Engine|TurboGrafx) CD/i, [/* '.bin', '.cue' */], 'pcecd', 'TGFX16'),
     new GameConsole(/SuperGrafx/i, ['.sgx'], 'pce', 'TGFX16'),
     // Nintendo
     new GameConsole(/FDS|Famicom Computer Disk System/i, ['.fds'], 'nes', 'NES'),
