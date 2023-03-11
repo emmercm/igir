@@ -8,7 +8,7 @@ import Patch from './patch.js';
  * @see https://github.com/Lyrositor/EBPatcher/blob/f722878c60f476e4f8e92322aaefa579807bd58f/EBPPatch.py
  */
 export default class IPSPatch extends Patch {
-  static readonly SUPPORTED_EXTENSIONS = ['.ips', '.ips32'];
+  static readonly SUPPORTED_EXTENSIONS = ['.ips', '.ips32', '.ebp'];
 
   static readonly FILE_SIGNATURES = [Buffer.from('PATCH'), Buffer.from('IPS32')];
 
