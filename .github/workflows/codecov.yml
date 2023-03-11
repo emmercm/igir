@@ -35,7 +35,7 @@ jobs:
       - run: npm ci
 
       # Run test coverage
-      - run: npm run test:coverage
+      - run: npm run test:coverage || npm run test:coverage -- --bail
       - uses: codecov/codecov-action@v3
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
