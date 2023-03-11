@@ -52,14 +52,14 @@ $ igir --help
   | $$  | $$ __\$$  | $$  | $$__| $$
   | $$  | $$|    \  | $$  | $$    $$   ROM collection manager
   | $$  | $$ \$$$$  | $$  | $$$$$$$\
- _| $$_ | $$__| $$ _| $$_ | $$  | $$   v1.2.1
+ _| $$_ | $$__| $$ _| $$_ | $$  | $$   v1.3.0
 |   $$ \ \$$    $$|   $$ \| $$  | $$
  \$$$$$$  \$$$$$$  \$$$$$$ \$$   \$$
 
 
 Usage: igir [commands..] [options]
 
-Commands:
+Commands (can specify multiple):
   igir copy     Copy ROM files from the input to output directory
   igir move     Move ROM files from the input to output directory
   igir symlink  Create symlinks in the output directory to ROM files in the input directory
@@ -73,8 +73,8 @@ Commands:
 Input options (supports globbing):
   -i, --input          Path(s) to ROM files or archives                        [array] [required]
   -I, --input-exclude  Path(s) to ROM files or archives to exclude from processing        [array]
-  -p, --patch          Path(s) to ROM patch files or archives (supported: .bps, .ips, .ips32, .pp
-                       f, .rup, .ups, .vcdiff, .xdelta)                                   [array]
+  -p, --patch          Path(s) to ROM patch files or archives (supported: .aps, .bps, .dps, .ebp,
+                        .ips, .ips32, .ppf, .rup, .ups, .vcdiff, .xdelta)                 [array]
 
 DAT input options:
   -d, --dat                Path(s) to DAT files or archives (supports globbing)           [array]
@@ -184,6 +184,9 @@ Example use cases:
   Produce a 1G1R set per console, preferring English ROMs from USA>WORLD>EUR>JPN:
     igir copy --dat *.dat --input **/*.zip --output 1G1R/ --dir-dat-name --single --prefer-langua
     ge EN --prefer-region USA,WORLD,EUR,JPN
+
+  Copy all Mario, Metroid, and Zelda games to one directory:
+    igir copy --input ROMs/ --output Nintendo/ --filter-regex "/(Mario|Metroid|Zelda)/i"
 
   Copy all BIOS files into one directory, extracting if necessary:
     igir copy extract --dat *.dat --input **/*.zip --output BIOS/ --only-bios
