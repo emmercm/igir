@@ -3,6 +3,7 @@ import { Readable } from 'stream';
 import File from '../files/file.js';
 import APSPatch from './apsPatch.js';
 import BPSPatch from './bpsPatch.js';
+import DPSPatch from './dpsPatch.js';
 import IPSPatch from './ipsPatch.js';
 import NinjaPatch from './ninjaPatch.js';
 import Patch from './patch.js';
@@ -30,6 +31,11 @@ export default class PatchFactory {
       extensions: BPSPatch.SUPPORTED_EXTENSIONS,
       fileSignatures: [BPSPatch.FILE_SIGNATURE],
       factory: BPSPatch.patchFrom,
+    },
+    {
+      extensions: DPSPatch.SUPPORTED_EXTENSIONS,
+      fileSignatures: [],
+      factory: DPSPatch.patchFrom,
     },
     {
       extensions: IPSPatch.SUPPORTED_EXTENSIONS,

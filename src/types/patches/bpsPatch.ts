@@ -1,4 +1,5 @@
 import FilePoly from '../../polyfill/filePoly.js';
+import fsPoly from '../../polyfill/fsPoly.js';
 import File from '../files/file.js';
 import Patch from './patch.js';
 
@@ -42,13 +43,17 @@ export default class BPSPatch extends Patch {
 
   async createPatchedFile(inputRomFile: File, outputRomPath: string): Promise<void> {
     return this.getFile().extractToTempFilePoly('r', async (patchFile) => {
-      // Skip header info
       const header = await patchFile.readNext(4);
       if (!header.equals(BPSPatch.FILE_SIGNATURE)) {
         throw new Error(`BPS patch header is invalid: ${this.getFile().toString()}`);
       }
-      await Patch.readUpsUint(patchFile); // source size
+
+      const sourceSize = await Patch.readUpsUint(patchFile);
+      if (inputRomFile.getSize() !== sourceSize) {
+        throw new Error(`BPS patch expected ROM size of ${fsPoly.sizeReadable(sourceSize)}: ${this.getFile().toString()}`);
+      }
       await Patch.readUpsUint(patchFile); // target size
+
       const metadataSize = await Patch.readUpsUint(patchFile);
       if (metadataSize) {
         patchFile.skipNext(metadataSize);
