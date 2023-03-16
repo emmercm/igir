@@ -1,25 +1,25 @@
 import path from 'path';
 import { Readable } from 'stream';
 
-export default class FileHeader {
-  private static readonly HEADERS: { [key: string]:FileHeader } = {
+export default class ROMHeader {
+  private static readonly HEADERS: { [key: string]:ROMHeader } = {
     // http://7800.8bitdev.org/index.php/A78_Header_Specification
-    'No-Intro_A7800.xml': new FileHeader(1, '415441524937383030', 128, '.a78'),
+    'No-Intro_A7800.xml': new ROMHeader(1, '415441524937383030', 128, '.a78'),
 
     // https://atarigamer.com/lynx/lnxhdrgen
-    'No-Intro_LNX.xml': new FileHeader(0, '4C594E58', 64, '.lnx', '.lyx'),
+    'No-Intro_LNX.xml': new ROMHeader(0, '4C594E58', 64, '.lnx', '.lyx'),
 
     // https://www.nesdev.org/wiki/INES
-    'No-Intro_NES.xml': new FileHeader(0, '4E4553', 16, '.nes'),
+    'No-Intro_NES.xml': new ROMHeader(0, '4E4553', 16, '.nes'),
 
     // https://www.nesdev.org/wiki/FDS_file_format
-    'No-Intro_FDS.xml': new FileHeader(0, '464453', 16, '.fds'),
+    'No-Intro_FDS.xml': new ROMHeader(0, '464453', 16, '.fds'),
 
     // https://en.wikibooks.org/wiki/Super_NES_Programming/SNES_memory_map#The_SNES_header
-    SMC: new FileHeader(3, '00'.repeat(509), 512, '.smc', '.sfc'),
+    SMC: new ROMHeader(3, '00'.repeat(509), 512, '.smc', '.sfc'),
   };
 
-  private static readonly MAX_HEADER_LENGTH_BYTES = Object.values(FileHeader.HEADERS)
+  private static readonly MAX_HEADER_LENGTH_BYTES = Object.values(ROMHeader.HEADERS)
     .reduce((max, fileHeader) => Math.max(
       max,
       fileHeader.headerOffsetBytes + fileHeader.headerValue.length / 2,
@@ -53,7 +53,7 @@ export default class FileHeader {
     return Object.values(this.HEADERS).map((header) => header.headeredFileExtension).sort();
   }
 
-  static headerFromFilename(filePath: string): FileHeader | undefined {
+  static headerFromFilename(filePath: string): ROMHeader | undefined {
     const headers = Object.values(this.HEADERS);
     for (let i = 0; i < headers.length; i += 1) {
       const header = headers[i];
@@ -98,8 +98,8 @@ export default class FileHeader {
     });
   }
 
-  static async headerFromFileStream(stream: Readable): Promise<FileHeader | undefined> {
-    const fileHeader = await FileHeader.readHeaderHex(stream, 0, this.MAX_HEADER_LENGTH_BYTES);
+  static async headerFromFileStream(stream: Readable): Promise<ROMHeader | undefined> {
+    const fileHeader = await ROMHeader.readHeaderHex(stream, 0, this.MAX_HEADER_LENGTH_BYTES);
 
     const headers = Object.values(this.HEADERS);
     for (let i = 0; i < headers.length; i += 1) {
@@ -129,7 +129,7 @@ export default class FileHeader {
   }
 
   async fileHasHeader(stream: Readable): Promise<boolean> {
-    const header = await FileHeader.readHeaderHex(
+    const header = await ROMHeader.readHeaderHex(
       stream,
       this.headerOffsetBytes,
       this.headerOffsetBytes + this.headerValue.length / 2,

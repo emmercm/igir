@@ -1,5 +1,5 @@
 import ROMScanner from '../../../src/modules/romScanner.js';
-import FileHeader from '../../../src/types/files/fileHeader.js';
+import ROMHeader from '../../../src/types/files/romHeader.js';
 import Options from '../../../src/types/options.js';
 import ProgressBarFake from '../../console/progressBarFake.js';
 
@@ -12,7 +12,7 @@ describe('headerFromFilename', () => {
     'rom.smc',
     'rom.zip.fds',
   ])('should get a file header for extension: %s', (filePath) => {
-    const fileHeader = FileHeader.headerFromFilename(filePath);
+    const fileHeader = ROMHeader.headerFromFilename(filePath);
     expect(fileHeader).toBeDefined();
   });
 
@@ -23,7 +23,7 @@ describe('headerFromFilename', () => {
     'rom.zip',
     'rom.nes.zip',
   ])('should not get a file header for extension: %s', (filePath) => {
-    const fileHeader = FileHeader.headerFromFilename(filePath);
+    const fileHeader = ROMHeader.headerFromFilename(filePath);
     expect(fileHeader).toBeUndefined();
   });
 });
@@ -38,7 +38,7 @@ describe('headerFromFileStream', () => {
     /* eslint-disable no-await-in-loop */
     for (let i = 0; i < headeredRoms.length; i += 1) {
       await headeredRoms[i].createReadStream(async (stream) => {
-        const fileHeader = await FileHeader.headerFromFileStream(stream);
+        const fileHeader = await ROMHeader.headerFromFileStream(stream);
         expect(fileHeader).toBeDefined();
       });
     }
@@ -53,7 +53,7 @@ describe('headerFromFileStream', () => {
     /* eslint-disable no-await-in-loop */
     for (let i = 0; i < headeredRoms.length; i += 1) {
       await headeredRoms[i].createReadStream(async (stream) => {
-        const fileHeader = await FileHeader.headerFromFileStream(stream);
+        const fileHeader = await ROMHeader.headerFromFileStream(stream);
         expect(fileHeader).toBeUndefined();
       });
     }

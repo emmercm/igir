@@ -4,11 +4,11 @@ import Constants from '../../../src/constants.js';
 import ROMScanner from '../../../src/modules/romScanner.js';
 import bufferPoly from '../../../src/polyfill/bufferPoly.js';
 import fsPoly from '../../../src/polyfill/fsPoly.js';
-import FileFactory from '../../../src/types/archives/fileFactory.js';
-import SevenZip from '../../../src/types/archives/sevenZip.js';
-import Zip from '../../../src/types/archives/zip.js';
-import ArchiveEntry from '../../../src/types/files/archiveEntry.js';
-import FileHeader from '../../../src/types/files/fileHeader.js';
+import ArchiveEntry from '../../../src/types/files/archives/archiveEntry.js';
+import SevenZip from '../../../src/types/files/archives/sevenZip.js';
+import Zip from '../../../src/types/files/archives/zip.js';
+import FileFactory from '../../../src/types/files/fileFactory.js';
+import ROMHeader from '../../../src/types/files/romHeader.js';
 import Options from '../../../src/types/options.js';
 import ProgressBarFake from '../../console/progressBarFake.js';
 
@@ -87,7 +87,7 @@ describe('getCrc32WithoutHeader', () => {
     const archiveEntries = await FileFactory.filesFrom(filePath);
     expect(archiveEntries).toHaveLength(1);
     const archiveEntry = await archiveEntries[0].withFileHeader(
-      FileHeader.headerFromFilename(archiveEntries[0].getExtractedFilePath()) as FileHeader,
+      ROMHeader.headerFromFilename(archiveEntries[0].getExtractedFilePath()) as ROMHeader,
     );
 
     expect(archiveEntry.getCrc32WithoutHeader()).toEqual(expectedCrc);
@@ -101,7 +101,7 @@ describe('getCrc32WithoutHeader', () => {
     const archiveEntries = await FileFactory.filesFrom(filePath);
     expect(archiveEntries).toHaveLength(1);
     const archiveEntry = await archiveEntries[0].withFileHeader(
-      FileHeader.headerFromFilename(archiveEntries[0].getExtractedFilePath()) as FileHeader,
+      ROMHeader.headerFromFilename(archiveEntries[0].getExtractedFilePath()) as ROMHeader,
     );
 
     expect(archiveEntry.getCrc32()).not.toEqual(expectedCrc);

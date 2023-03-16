@@ -1,10 +1,10 @@
 import path from 'path';
 import { Readable } from 'stream';
 
-import Constants from '../../constants.js';
-import fsPoly from '../../polyfill/fsPoly.js';
-import ArchiveEntry from '../files/archiveEntry.js';
-import File from '../files/file.js';
+import Constants from '../../../constants.js';
+import fsPoly from '../../../polyfill/fsPoly.js';
+import File from '../file.js';
+import ArchiveEntry from './archiveEntry.js';
 
 export default abstract class Archive {
   private readonly filePath: string;

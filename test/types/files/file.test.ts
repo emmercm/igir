@@ -5,7 +5,7 @@ import ROMScanner from '../../../src/modules/romScanner.js';
 import bufferPoly from '../../../src/polyfill/bufferPoly.js';
 import fsPoly from '../../../src/polyfill/fsPoly.js';
 import File from '../../../src/types/files/file.js';
-import FileHeader from '../../../src/types/files/fileHeader.js';
+import ROMHeader from '../../../src/types/files/romHeader.js';
 import Options from '../../../src/types/options.js';
 import ProgressBarFake from '../../console/progressBarFake.js';
 
@@ -53,7 +53,7 @@ describe('getCrc32WithoutHeader', () => {
     ['./test/fixtures/roms/raw/foobar.lnx', 'b22c9747'],
   ])('should hash the full file when header is given but not present in file: %s', async (filePath, expectedCrc) => {
     const file = await (await File.fileOf(filePath))
-      .withFileHeader(FileHeader.headerFromFilename(filePath) as FileHeader);
+      .withFileHeader(ROMHeader.headerFromFilename(filePath) as ROMHeader);
     expect(file.getCrc32WithoutHeader()).toEqual(expectedCrc);
   });
 
@@ -62,7 +62,7 @@ describe('getCrc32WithoutHeader', () => {
     ['./test/fixtures/roms/headered/speed_test_v51.smc', '8beffd94'],
   ])('should hash the file without the header when header is given and present in file: %s', async (filePath, expectedCrc) => {
     const file = await (await File.fileOf(filePath))
-      .withFileHeader(FileHeader.headerFromFilename(filePath) as FileHeader);
+      .withFileHeader(ROMHeader.headerFromFilename(filePath) as ROMHeader);
     expect(file.getCrc32WithoutHeader()).toEqual(expectedCrc);
   });
 });

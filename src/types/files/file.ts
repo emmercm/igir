@@ -8,7 +8,7 @@ import Constants from '../../constants.js';
 import FilePoly from '../../polyfill/filePoly.js';
 import fsPoly from '../../polyfill/fsPoly.js';
 import Patch from '../patches/patch.js';
-import FileHeader from './fileHeader.js';
+import ROMHeader from './romHeader.js';
 
 export default class File {
   private readonly filePath: string;
@@ -21,7 +21,7 @@ export default class File {
 
   private readonly symlinkSource?: string;
 
-  private readonly fileHeader?: FileHeader;
+  private readonly fileHeader?: ROMHeader;
 
   private readonly patch?: Patch;
 
@@ -31,7 +31,7 @@ export default class File {
     crc: string,
     crc32WithoutHeader: string,
     symlinkSource?: string,
-    fileHeader?: FileHeader,
+    fileHeader?: ROMHeader,
     patch?: Patch,
   ) {
     this.filePath = path.normalize(filePath);
@@ -47,7 +47,7 @@ export default class File {
     filePath: string,
     size?: number,
     crc?: string,
-    fileHeader?: FileHeader,
+    fileHeader?: ROMHeader,
     patch?: Patch,
   ): Promise<File> {
     let finalSize = size;
@@ -119,7 +119,7 @@ export default class File {
     return path.resolve(path.dirname(this.getFilePath()), this.symlinkSource);
   }
 
-  getFileHeader(): FileHeader | undefined {
+  getFileHeader(): ROMHeader | undefined {
     return this.fileHeader;
   }
 
@@ -131,7 +131,7 @@ export default class File {
 
   protected static async calculateCrc32(
     localFile: string,
-    fileHeader?: FileHeader,
+    fileHeader?: ROMHeader,
   ): Promise<string> {
     const start = fileHeader?.getDataOffsetBytes() || 0;
 
@@ -292,7 +292,7 @@ export default class File {
     }
   }
 
-  async withFileHeader(fileHeader: FileHeader): Promise<File> {
+  async withFileHeader(fileHeader: ROMHeader): Promise<File> {
     // Make sure the file actually has the right file signature
     const hasHeader = await this.createReadStream(
       async (stream) => fileHeader.fileHasHeader(stream),

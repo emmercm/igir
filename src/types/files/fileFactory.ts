@@ -1,11 +1,11 @@
 import path from 'path';
 
-import File from '../files/file.js';
-import Archive from './archive.js';
-import Rar from './rar.js';
-import SevenZip from './sevenZip.js';
-import Tar from './tar.js';
-import Zip from './zip.js';
+import Archive from './archives/archive.js';
+import Rar from './archives/rar.js';
+import SevenZip from './archives/sevenZip.js';
+import Tar from './archives/tar.js';
+import Zip from './archives/zip.js';
+import File from './file.js';
 
 export default class FileFactory {
   static async filesFrom(filePath: string): Promise<File[]> {

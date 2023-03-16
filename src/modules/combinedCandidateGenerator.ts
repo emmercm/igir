@@ -1,7 +1,7 @@
 import path from 'path';
 
 import ProgressBar, { ProgressBarSymbol } from '../console/progressBar.js';
-import ArchiveEntry from '../types/files/archiveEntry.js';
+import ArchiveEntry from '../types/files/archives/archiveEntry.js';
 import DAT from '../types/logiqx/dat.js';
 import Game from '../types/logiqx/game.js';
 import Parent from '../types/logiqx/parent.js';
