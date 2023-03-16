@@ -13,7 +13,6 @@ import ReleaseCandidate from '../../src/types/releaseCandidate.js';
 function givenDAT(): DAT {
   return new DAT(new Header({
     name: 'dat name',
-    date: '20220828',
   }), [
     new Game({
       name: 'game with multiple ROMs and no releases',

@@ -1,4 +1,6 @@
+import { parse } from '@fast-csv/parse';
 import async, { AsyncResultCallback } from 'async';
+import path from 'path';
 import robloachDatfile from 'robloach-datfile';
 import xml2js from 'xml2js';
 
@@ -96,6 +98,11 @@ export default class DATScanner extends Scanner {
         return cmproDatParsed;
       }
 
+      const smdbParsed = await this.parseSourceMaterialDatabase(datFile, fileContents);
+      if (smdbParsed) {
+        return smdbParsed;
+      }
+
       await this.progressBar.logDebug(`${datFile.toString()}: failed to parse DAT file`);
       return undefined;
     });
@@ -162,5 +169,66 @@ export default class DATScanner extends Scanner {
     });
 
     return new DAT(header, games);
+  }
+
+  /**
+   * @see https://github.com/frederic-mahe/Hardware-Target-Game-Database
+   */
+  private async parseSourceMaterialDatabase(
+    datFile: File,
+    fileContents: string,
+  ): Promise<DAT | undefined> {
+    return new Promise((resolve) => {
+      const games: Game[] = [];
+
+      const stream = parse({
+        delimiter: '\t',
+        quote: null,
+        headers: ['sha256', 'name', 'sha1', 'md5', 'crc', 'size'],
+      })
+        .on('error', async (err) => {
+          await this.progressBar.logDebug(`${datFile.toString()}: failed to parse CMPro : ${err}`);
+          resolve(undefined);
+        })
+        .on('data', async (row) => {
+          if (!row.name
+            || !row.crc
+            || row.crc.length !== 8
+            || (row.size && Number.isNaN(parseInt(row.size, 10)))
+          ) {
+            // Not a TSV
+            return resolve(undefined);
+          }
+          if (!row.size) {
+            // SMDB doesn't have file sizes
+            await this.progressBar.logWarn(`${datFile.toString()}: SMDB doesn't specify ROM file sizes, can't use`);
+            return resolve(undefined);
+          }
+
+          const rom = new ROM(row.name, parseInt(row.size, 10), row.crc);
+          const gameName = row.name.replace(/\.[^\\/]+$/, '');
+          const game = new Game({
+            name: gameName,
+            description: gameName,
+            rom,
+          });
+          games.push(game);
+          return undefined;
+        })
+        .on('end', () => {
+          if (!games.length) {
+            // Empty file
+            return resolve(undefined);
+          }
+
+          const dat = new DAT(new Header({
+            name: path.parse(datFile.getExtractedFilePath()).name,
+            romNamesContainDirectories: true,
+          }), games);
+          return resolve(dat);
+        });
+      stream.write(fileContents);
+      stream.end();
+    });
   }
 }
