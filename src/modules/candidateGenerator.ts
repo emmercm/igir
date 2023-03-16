@@ -184,7 +184,7 @@ export default class CandidateGenerator extends Module {
           const romWithFiles = new ROMWithFiles(rom, finalInputFile, outputFile);
           return [rom, romWithFiles];
         } catch (e) {
-          await this.progressBar.logWarn(`${dat.getName()}: ${game.getName()}: ${e}`);
+          await this.progressBar.logInfo(`${dat.getName()}: ${game.getName()}: ${e}`);
           return [rom, undefined];
         }
       }),
