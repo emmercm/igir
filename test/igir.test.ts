@@ -88,8 +88,8 @@ describe('with explicit dats', () => {
       [path.join('Headered', 'fds_joypad_test.fds.zip|fds_joypad_test.fds'), '1e58456d'],
       [path.join('Headered', 'LCDTestROM.lnx.rar|LCDTestROM.lnx'), '2d251538'],
       [path.join('Headered', 'speed_test_v51.smc'), '9adca6cc'],
-      [path.join('One', 'Fizzbuzz.rom'), '370517b5'],
-      [path.join('One', 'Foobar.rom'), 'b22c9747'],
+      [path.join('One', 'Fizzbuzz.nes'), '370517b5'],
+      [path.join('One', 'Foobar.lnx'), 'b22c9747'],
       [path.join('One', 'Lorem Ipsum.rom'), '70856527'],
       [path.join('One', 'One Three', 'One.rom'), 'f817a89f'],
       [path.join('One', 'One Three', 'Three.rom'), 'ff46c5d8'],
@@ -102,6 +102,12 @@ describe('with explicit dats', () => {
       [path.join('Patchable', 'Best.gz|best.rom'), '1e3d78cf'],
       [path.join('Patchable', 'C01173E.rom'), 'dfaebe28'],
       [path.join('Patchable', 'KDULVQN.rom'), 'b1c303e4'],
+      [path.join('smdb', 'Hardware Target Game Database', 'Dummy', 'Fizzbuzz.nes'), '370517b5'],
+      [path.join('smdb', 'Hardware Target Game Database', 'Dummy', 'Foobar.lnx'), 'b22c9747'],
+      [path.join('smdb', 'Hardware Target Game Database', 'Dummy', 'Lorem Ipsum.rom'), '70856527'],
+      [path.join('smdb', 'Hardware Target Game Database', 'Patchable', '3708F2C.rom'), '20891c9f'],
+      [path.join('smdb', 'Hardware Target Game Database', 'Patchable', '65D1206.rom'), '20323455'],
+      [path.join('smdb', 'Hardware Target Game Database', 'Patchable', 'C01173E.rom'), 'dfaebe28'],
     ]);
   });
 
@@ -117,8 +123,8 @@ describe('with explicit dats', () => {
       [path.join('Headered', 'fds_joypad_test.fds'), '1e58456d'],
       [path.join('Headered', 'LCDTestROM.lnx'), '2d251538'],
       [path.join('Headered', 'speed_test_v51.smc'), '9adca6cc'],
-      [path.join('One', 'Fizzbuzz.rom'), '370517b5'],
-      [path.join('One', 'Foobar.rom'), 'b22c9747'],
+      [path.join('One', 'Fizzbuzz.nes'), '370517b5'],
+      [path.join('One', 'Foobar.lnx'), 'b22c9747'],
       [path.join('One', 'Lorem Ipsum.rom'), '70856527'],
       [path.join('One', 'One Three', 'One.rom'), 'f817a89f'],
       [path.join('One', 'One Three', 'Three.rom'), 'ff46c5d8'],
@@ -131,6 +137,12 @@ describe('with explicit dats', () => {
       [path.join('Patchable', 'Best.rom'), '1e3d78cf'],
       [path.join('Patchable', 'C01173E.rom'), 'dfaebe28'],
       [path.join('Patchable', 'KDULVQN.rom'), 'b1c303e4'],
+      [path.join('smdb', 'Hardware Target Game Database', 'Dummy', 'Fizzbuzz.nes'), '370517b5'],
+      [path.join('smdb', 'Hardware Target Game Database', 'Dummy', 'Foobar.lnx'), 'b22c9747'],
+      [path.join('smdb', 'Hardware Target Game Database', 'Dummy', 'Lorem Ipsum.rom'), '70856527'],
+      [path.join('smdb', 'Hardware Target Game Database', 'Patchable', '3708F2C.rom'), '20891c9f'],
+      [path.join('smdb', 'Hardware Target Game Database', 'Patchable', '65D1206.rom'), '20323455'],
+      [path.join('smdb', 'Hardware Target Game Database', 'Patchable', 'C01173E.rom'), 'dfaebe28'],
     ]);
   });
 
@@ -146,8 +158,8 @@ describe('with explicit dats', () => {
       [path.join('Headered', 'fds_joypad_test.zip|fds_joypad_test.fds'), '1e58456d'],
       [path.join('Headered', 'LCDTestROM.zip|LCDTestROM.lnx'), '2d251538'],
       [path.join('Headered', 'speed_test_v51.zip|speed_test_v51.smc'), '9adca6cc'],
-      [path.join('One', 'Fizzbuzz.zip|Fizzbuzz.rom'), '370517b5'],
-      [path.join('One', 'Foobar.zip|Foobar.rom'), 'b22c9747'],
+      [path.join('One', 'Fizzbuzz.zip|Fizzbuzz.nes'), '370517b5'],
+      [path.join('One', 'Foobar.zip|Foobar.lnx'), 'b22c9747'],
       [path.join('One', 'Lorem Ipsum.zip|Lorem Ipsum.rom'), '70856527'],
       [path.join('One', 'One Three.zip|One.rom'), 'f817a89f'],
       [path.join('One', 'One Three.zip|Three.rom'), 'ff46c5d8'],
@@ -160,6 +172,12 @@ describe('with explicit dats', () => {
       [path.join('Patchable', 'Best.zip|Best.rom'), '1e3d78cf'],
       [path.join('Patchable', 'C01173E.zip|C01173E.rom'), 'dfaebe28'],
       [path.join('Patchable', 'KDULVQN.zip|KDULVQN.rom'), 'b1c303e4'],
+      [path.join('smdb', 'Hardware Target Game Database', 'Dummy', 'Fizzbuzz.zip|Fizzbuzz.nes'), '370517b5'],
+      [path.join('smdb', 'Hardware Target Game Database', 'Dummy', 'Foobar.zip|Foobar.lnx'), 'b22c9747'],
+      [path.join('smdb', 'Hardware Target Game Database', 'Dummy', 'Lorem Ipsum.zip|Lorem Ipsum.rom'), '70856527'],
+      [path.join('smdb', 'Hardware Target Game Database', 'Patchable', '3708F2C.zip|3708F2C.rom'), '20891c9f'],
+      [path.join('smdb', 'Hardware Target Game Database', 'Patchable', '65D1206.zip|65D1206.rom'), '20323455'],
+      [path.join('smdb', 'Hardware Target Game Database', 'Patchable', 'C01173E.zip|C01173E.rom'), 'dfaebe28'],
     ]);
   });
 
@@ -175,8 +193,8 @@ describe('with explicit dats', () => {
       [`${path.join('Headered', 'fds_joypad_test.fds.zip|fds_joypad_test.fds')} -> ${path.join('roms', 'headered', 'fds_joypad_test.fds.zip|fds_joypad_test.fds')}`, '1e58456d'],
       [`${path.join('Headered', 'LCDTestROM.lnx.rar|LCDTestROM.lnx')} -> ${path.join('roms', 'headered', 'LCDTestROM.lnx.rar|LCDTestROM.lnx')}`, '2d251538'],
       [`${path.join('Headered', 'speed_test_v51.smc')} -> ${path.join('roms', 'headered', 'speed_test_v51.smc')}`, '9adca6cc'],
-      [`${path.join('One', 'Fizzbuzz.rom')} -> ${path.join('roms', 'raw', 'fizzbuzz.nes')}`, '370517b5'],
-      [`${path.join('One', 'Foobar.rom')} -> ${path.join('roms', 'foobar.lnx')}`, 'b22c9747'],
+      [`${path.join('One', 'Fizzbuzz.nes')} -> ${path.join('roms', 'raw', 'fizzbuzz.nes')}`, '370517b5'],
+      [`${path.join('One', 'Foobar.lnx')} -> ${path.join('roms', 'foobar.lnx')}`, 'b22c9747'],
       [`${path.join('One', 'Lorem Ipsum.rom')} -> ${path.join('roms', 'raw', 'loremipsum.rom')}`, '70856527'],
       [`${path.join('One', 'One Three', 'One.rom')} -> ${path.join('roms', 'raw', 'one.rom')}`, 'f817a89f'],
       [`${path.join('One', 'One Three', 'Three.rom')} -> ${path.join('roms', 'raw', 'three.rom')}`, 'ff46c5d8'],
@@ -189,6 +207,12 @@ describe('with explicit dats', () => {
       [`${path.join('Patchable', 'Best.gz|best.rom')} -> ${path.join('roms', 'patchable', 'best.gz|best.rom')}`, '1e3d78cf'],
       [`${path.join('Patchable', 'C01173E.rom')} -> ${path.join('roms', 'patchable', 'C01173E.rom')}`, 'dfaebe28'],
       [`${path.join('Patchable', 'KDULVQN.rom')} -> ${path.join('roms', 'patchable', 'KDULVQN.rom')}`, 'b1c303e4'],
+      [`${path.join('smdb', 'Hardware Target Game Database', 'Dummy', 'Fizzbuzz.nes')} -> roms/raw/fizzbuzz.nes`, '370517b5'],
+      [`${path.join('smdb', 'Hardware Target Game Database', 'Dummy', 'Foobar.lnx')} -> roms/foobar.lnx`, 'b22c9747'],
+      [`${path.join('smdb', 'Hardware Target Game Database', 'Dummy', 'Lorem Ipsum.rom')} -> roms/raw/loremipsum.rom`, '70856527'],
+      [`${path.join('smdb', 'Hardware Target Game Database', 'Patchable', '3708F2C.rom')} -> roms/patchable/3708F2C.rom`, '20891c9f'],
+      [`${path.join('smdb', 'Hardware Target Game Database', 'Patchable', '65D1206.rom')} -> roms/patchable/65D1206.rom`, '20323455'],
+      [`${path.join('smdb', 'Hardware Target Game Database', 'Patchable', 'C01173E.rom')} -> roms/patchable/C01173E.rom`, 'dfaebe28'],
     ]);
   });
 
@@ -206,8 +230,8 @@ describe('with explicit dats', () => {
       [path.join('Headered', 'fds_joypad_test.fds'), '3ecbac61'],
       [path.join('Headered', 'LCDTestROM.lyx'), '42583855'],
       [path.join('Headered', 'speed_test_v51.sfc'), '8beffd94'],
-      [path.join('One', 'Fizzbuzz.rom'), '370517b5'],
-      [path.join('One', 'Foobar.rom'), 'b22c9747'],
+      [path.join('One', 'Fizzbuzz.nes'), '370517b5'],
+      [path.join('One', 'Foobar.lnx'), 'b22c9747'],
       [path.join('One', 'Lorem Ipsum.rom'), '70856527'],
       [path.join('One', 'One Three', 'One.rom'), 'f817a89f'],
       [path.join('One', 'One Three', 'Three.rom'), 'ff46c5d8'],
@@ -229,6 +253,15 @@ describe('with explicit dats', () => {
       [path.join('Patchable', 'DFF7872-N64-SIMPLE.rom'), 'caaaf550'],
       [path.join('Patchable', 'KDULVQN.rom'), 'b1c303e4'],
       [path.join('Patchable', 'Worst.rom'), '6ff9ef96'],
+      [path.join('smdb', 'Hardware Target Game Database', 'Dummy', 'Fizzbuzz.nes'), '370517b5'],
+      [path.join('smdb', 'Hardware Target Game Database', 'Dummy', 'Foobar.lnx'), 'b22c9747'],
+      [path.join('smdb', 'Hardware Target Game Database', 'Dummy', 'Lorem Ipsum.rom'), '70856527'],
+      [path.join('smdb', 'Hardware Target Game Database', 'Patchable', '3708F2C.rom'), '20891c9f'],
+      [path.join('smdb', 'Hardware Target Game Database', 'Patchable', '65D1206.rom'), '20323455'],
+      [path.join('smdb', 'Hardware Target Game Database', 'Patchable', '949F2B7.rom'), '95284ab4'],
+      [path.join('smdb', 'Hardware Target Game Database', 'Patchable', '9E66269.rom'), '8bb5cc63'],
+      [path.join('smdb', 'Hardware Target Game Database', 'Patchable', 'C01173E.rom'), 'dfaebe28'],
+      [path.join('smdb', 'Hardware Target Game Database', 'Patchable', 'DFF7872-N64-SIMPLE.rom'), 'caaaf550'],
     ]);
   });
 

@@ -3,7 +3,6 @@ import 'reflect-metadata';
 import { Expose, Type } from 'class-transformer';
 
 import ClrMamePro from './clrMamePro.js';
-import RomCenter from './romCenter.js';
 
 interface HeaderOptions {
   /**
@@ -16,32 +15,37 @@ interface HeaderOptions {
    * "Name of the emulator with a version number. This is the name displayed by
    * CMPro."
    */
-  readonly description?: string;
+  // readonly description?: string;
 
   /**
    * "General comment about the emulator (e.g. the systems or game types it
    * supports)."
    */
-  readonly category?: string;
+  // readonly category?: string;
 
   /**
    * "Version number of the data file. I would recommend using something like a
    * date encoded version number (YYYYMMDD is preferable to DDMMYYYY as it can
    * be sorted and is unambiguous)."
    */
-  readonly version?: string;
-  readonly date?: string;
+  // readonly version?: string;
+  // readonly date?: string;
 
   /**
    * "Your name and e-mail/web address."
    */
-  readonly author?: string;
-  readonly email?: string;
-  readonly homepage?: string;
-  readonly url?: string;
-  readonly comment?: string;
+  // readonly author?: string;
+  // readonly email?: string;
+  // readonly homepage?: string;
+  // readonly url?: string;
+  // readonly comment?: string;
   readonly clrMamePro?: ClrMamePro;
-  readonly romCenter?: RomCenter;
+  // readonly romCenter?: RomCenter;
+
+  /**
+   * igir-custom properties.
+   */
+  readonly romNamesContainDirectories?: boolean;
 }
 
 export default class Header implements HeaderOptions {
@@ -52,9 +56,14 @@ export default class Header implements HeaderOptions {
   @Expose({ name: 'clrmamepro' })
   readonly clrMamePro?: ClrMamePro;
 
+  readonly romNamesContainDirectories: boolean = true;
+
   constructor(options?: HeaderOptions) {
     this.name = options?.name || '';
     this.clrMamePro = options?.clrMamePro;
+    this.romNamesContainDirectories = options?.romNamesContainDirectories !== undefined
+      ? options?.romNamesContainDirectories
+      : false;
   }
 
   getName(): string {
@@ -63,5 +72,9 @@ export default class Header implements HeaderOptions {
 
   getClrMamePro(): ClrMamePro | undefined {
     return this.clrMamePro;
+  }
+
+  getRomNamesContainDirectories(): boolean {
+    return this.romNamesContainDirectories;
   }
 }
