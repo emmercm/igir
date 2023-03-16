@@ -495,7 +495,13 @@ export default class Options implements OptionsProps {
     release?: Release,
     romFilename?: string,
   ): string {
-    const romFilenameSanitized = romFilename?.replace(/[\\/]/g, '_');
+    let romFilenameSanitized: string | undefined;
+    if (romFilename) {
+      romFilenameSanitized = romFilename.replace(/[\\/]/g, path.sep);
+      if (!dat?.getHeader().getRomNamesContainDirectories()) {
+        romFilenameSanitized = romFilenameSanitized.replace(/[\\/]/g, '_');
+      }
+    }
 
     let output = this.getOutputDirParsed(dat, inputRomPath, game, release, romFilename);
 

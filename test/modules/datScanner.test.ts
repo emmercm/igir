@@ -48,39 +48,39 @@ it('should not throw on non-DATs', async () => {
 });
 
 describe('multiple files', () => {
-  const totalDatFiles = 4;
+  const totalDatFiles = 5;
 
   it('no files are path excluded', async () => {
     await expect(createDatScanner([path.join(path.resolve(), 'test', 'fixtures', 'dats')]).scan()).resolves.toHaveLength(totalDatFiles);
     await expect(createDatScanner(['test/fixtures/dats']).scan()).resolves.toHaveLength(totalDatFiles);
     await expect(createDatScanner(['test/fixtures/dats/*']).scan()).resolves.toHaveLength(totalDatFiles);
     await expect(createDatScanner(['test/fixtures/dats/*', 'test/fixtures/**/*.dat']).scan()).resolves.toHaveLength(totalDatFiles);
-    await expect(createDatScanner([path.join(path.resolve(), 'test', 'fixtures', '**', '*.{dat,zip}')]).scan()).resolves.toHaveLength(totalDatFiles);
-    await expect(createDatScanner(['test/fixtures/**/*.{dat,zip}']).scan()).resolves.toHaveLength(totalDatFiles);
-    await expect(createDatScanner(['test/fixtures/**/*.{dat,zip}', 'test/fixtures/**/*.{dat,zip}']).scan()).resolves.toHaveLength(totalDatFiles);
+    await expect(createDatScanner([path.join(path.resolve(), 'test', 'fixtures', '**', '*.{dat,txt,zip}')]).scan()).resolves.toHaveLength(totalDatFiles);
+    await expect(createDatScanner(['test/fixtures/**/*.{dat,txt,zip}']).scan()).resolves.toHaveLength(totalDatFiles);
+    await expect(createDatScanner(['test/fixtures/**/*.{dat,txt,zip}', 'test/fixtures/**/*.{dat,txt,zip}']).scan()).resolves.toHaveLength(totalDatFiles);
   });
 
   it('some files are path excluded', async () => {
-    await expect(createDatScanner(['test/fixtures/dats'], ['test/fixtures/**/*.dat']).scan()).resolves.toHaveLength(1);
-    await expect(createDatScanner(['test/fixtures/dats'], ['test/fixtures/**/*.zip']).scan()).resolves.toHaveLength(3);
+    await expect(createDatScanner(['test/fixtures/dats'], ['test/fixtures/**/*.dat']).scan()).resolves.toHaveLength(2);
+    await expect(createDatScanner(['test/fixtures/dats'], ['test/fixtures/**/*.zip']).scan()).resolves.toHaveLength(4);
   });
 
   it('all files are path excluded', async () => {
     await expect(createDatScanner(['test/fixtures/dats'], ['test/fixtures/dats']).scan()).resolves.toHaveLength(0);
     await expect(createDatScanner(['test/fixtures/dats'], ['test/fixtures/dats/*']).scan()).resolves.toHaveLength(0);
     await expect(createDatScanner(['test/fixtures/dats'], ['test/fixtures/dats/*', 'test/fixtures/**/*.dat']).scan()).resolves.toHaveLength(0);
-    await expect(createDatScanner(['test/fixtures/dats'], ['test/fixtures/**/*.{dat,zip}']).scan()).resolves.toHaveLength(0);
-    await expect(createDatScanner(['test/fixtures/dats'], ['test/fixtures/**/*.{dat,zip}', 'test/fixtures/**/*.{dat,zip}']).scan()).resolves.toHaveLength(0);
+    await expect(createDatScanner(['test/fixtures/dats'], ['test/fixtures/**/*.{dat,txt,zip}']).scan()).resolves.toHaveLength(0);
+    await expect(createDatScanner(['test/fixtures/dats'], ['test/fixtures/**/*.{dat,txt,zip}', 'test/fixtures/**/*.{dat,txt,zip}']).scan()).resolves.toHaveLength(0);
   });
 
   it('some files are regex filtered', async () => {
     await expect(createDatScanner(['test/fixtures/dats'], [], '/abcdefg/').scan()).resolves.toHaveLength(0);
     await expect(createDatScanner(['test/fixtures/dats'], [], '/(one|two)/i').scan()).resolves.toHaveLength(2);
-    await expect(createDatScanner(['test/fixtures/dats'], [], '[aeiou]').scan()).resolves.toHaveLength(totalDatFiles);
+    await expect(createDatScanner(['test/fixtures/dats'], [], '[a-z]').scan()).resolves.toHaveLength(totalDatFiles);
   });
 
   it('some files are regex excluded', async () => {
-    await expect(createDatScanner(['test/fixtures/dats'], [], '', '[aeiou]').scan()).resolves.toHaveLength(0);
+    await expect(createDatScanner(['test/fixtures/dats'], [], '', '[a-z]').scan()).resolves.toHaveLength(0);
     await expect(createDatScanner(['test/fixtures/dats'], [], '', '/(one|two)/i').scan()).resolves.toHaveLength(totalDatFiles - 2);
     await expect(createDatScanner(['test/fixtures/dats'], [], '', '/abcdefg/').scan()).resolves.toHaveLength(totalDatFiles);
   });

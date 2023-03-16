@@ -229,13 +229,14 @@ export default class CandidateGenerator extends Module {
         parsedPath.ext = inputFile.getFileHeader()?.getHeaderedFileExtension() as string;
       }
     }
-    const outputEntryPath = path.format(parsedPath);
+    let outputEntryPath = path.format(parsedPath);
 
     // Determine the output path of the file
     let outputRomFilename;
     if (this.options.shouldZip(rom.getName())) {
       // Should zip, generate the zip name from the game name
       outputRomFilename = `${game.getName()}.zip`;
+      outputEntryPath = path.basename(outputEntryPath);
     } else if (!(inputFile instanceof ArchiveEntry) || this.options.shouldExtract()) {
       // Should extract (if needed), generate the file name from the ROM name
       outputRomFilename = outputEntryPath;
