@@ -207,12 +207,12 @@ describe('with explicit dats', () => {
       [`${path.join('Patchable', 'Best.gz|best.rom')} -> ${path.join('roms', 'patchable', 'best.gz|best.rom')}`, '1e3d78cf'],
       [`${path.join('Patchable', 'C01173E.rom')} -> ${path.join('roms', 'patchable', 'C01173E.rom')}`, 'dfaebe28'],
       [`${path.join('Patchable', 'KDULVQN.rom')} -> ${path.join('roms', 'patchable', 'KDULVQN.rom')}`, 'b1c303e4'],
-      [`${path.join('smdb', 'Hardware Target Game Database', 'Dummy', 'Fizzbuzz.nes')} -> roms/raw/fizzbuzz.nes`, '370517b5'],
-      [`${path.join('smdb', 'Hardware Target Game Database', 'Dummy', 'Foobar.lnx')} -> roms/foobar.lnx`, 'b22c9747'],
-      [`${path.join('smdb', 'Hardware Target Game Database', 'Dummy', 'Lorem Ipsum.rom')} -> roms/raw/loremipsum.rom`, '70856527'],
-      [`${path.join('smdb', 'Hardware Target Game Database', 'Patchable', '3708F2C.rom')} -> roms/patchable/3708F2C.rom`, '20891c9f'],
-      [`${path.join('smdb', 'Hardware Target Game Database', 'Patchable', '65D1206.rom')} -> roms/patchable/65D1206.rom`, '20323455'],
-      [`${path.join('smdb', 'Hardware Target Game Database', 'Patchable', 'C01173E.rom')} -> roms/patchable/C01173E.rom`, 'dfaebe28'],
+      [`${path.join('smdb', 'Hardware Target Game Database', 'Dummy', 'Fizzbuzz.nes')} -> ${path.join('roms', 'raw', 'fizzbuzz.nes')}`, '370517b5'],
+      [`${path.join('smdb', 'Hardware Target Game Database', 'Dummy', 'Foobar.lnx')} -> ${path.join('roms', 'foobar.lnx')}`, 'b22c9747'],
+      [`${path.join('smdb', 'Hardware Target Game Database', 'Dummy', 'Lorem Ipsum.rom')} -> ${path.join('roms', 'raw', 'loremipsum.rom')}`, '70856527'],
+      [`${path.join('smdb', 'Hardware Target Game Database', 'Patchable', '3708F2C.rom')} -> ${path.join('roms', 'patchable', '3708F2C.rom')}`, '20891c9f'],
+      [`${path.join('smdb', 'Hardware Target Game Database', 'Patchable', '65D1206.rom')} -> ${path.join('roms', 'patchable', '65D1206.rom')}`, '20323455'],
+      [`${path.join('smdb', 'Hardware Target Game Database', 'Patchable', 'C01173E.rom')} -> ${path.join('roms', 'patchable', 'C01173E.rom')}`, 'dfaebe28'],
     ]);
   });
 
