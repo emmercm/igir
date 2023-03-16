@@ -329,7 +329,7 @@ export default class Options implements OptionsProps {
   }
 
   private async scanInputExcludeFiles(): Promise<string[]> {
-    return Options.scanPaths(this.inputExclude);
+    return Options.scanPaths(this.inputExclude, false);
   }
 
   async scanInputFilesWithoutExclusions(): Promise<string[]> {
@@ -347,7 +347,7 @@ export default class Options implements OptionsProps {
     return Options.scanPaths(this.patch);
   }
 
-  private static async scanPaths(globPatterns: string[]): Promise<string[]> {
+  private static async scanPaths(globPatterns: string[], requireFiles = true): Promise<string[]> {
     // Limit to scanning one glob pattern at a time to keep memory in check
     const uniqueGlobPatterns = globPatterns
       .filter((pattern) => pattern)
@@ -355,7 +355,7 @@ export default class Options implements OptionsProps {
     const globbedPaths = [];
     /* eslint-disable no-await-in-loop */
     for (let i = 0; i < uniqueGlobPatterns.length; i += 1) {
-      globbedPaths.push(...(await this.globPath(uniqueGlobPatterns[i])));
+      globbedPaths.push(...(await this.globPath(uniqueGlobPatterns[i], requireFiles)));
     }
 
     // Filter to non-directories
@@ -380,7 +380,7 @@ export default class Options implements OptionsProps {
       .filter((inputPath, idx, arr) => arr.indexOf(inputPath) === idx);
   }
 
-  private static async globPath(inputPath: string): Promise<string[]> {
+  private static async globPath(inputPath: string, requireFiles: boolean): Promise<string[]> {
     // Windows will report that \\.\nul doesn't exist, catch it explicitly
     if (inputPath === os.devNull || inputPath.startsWith(os.devNull + path.sep)) {
       return [];
@@ -394,6 +394,9 @@ export default class Options implements OptionsProps {
       const dirPaths = (await fg(`${fg.escapePath(inputPathNormalized)}/**`))
         .map((filePath) => path.normalize(filePath));
       if (!dirPaths || !dirPaths.length) {
+        if (!requireFiles) {
+          return [];
+        }
         throw new Error(`${inputPath}: directory doesn't contain any files`);
       }
       return dirPaths;
@@ -408,6 +411,9 @@ export default class Options implements OptionsProps {
     const paths = (await fg(inputPathNormalized))
       .map((filePath) => path.normalize(filePath));
     if (!paths || !paths.length) {
+      if (!requireFiles) {
+        return [];
+      }
       throw new Error(`${inputPath}: no files found`);
     }
     return paths;
@@ -426,7 +432,7 @@ export default class Options implements OptionsProps {
   }
 
   private async scanDatExcludeFiles(): Promise<string[]> {
-    return Options.scanPaths(this.datExclude);
+    return Options.scanPaths(this.datExclude, false);
   }
 
   async scanDatFilesWithoutExclusions(): Promise<string[]> {
@@ -659,7 +665,7 @@ export default class Options implements OptionsProps {
   }
 
   private async scanCleanExcludeFiles(): Promise<string[]> {
-    return Options.scanPaths(this.cleanExclude);
+    return Options.scanPaths(this.cleanExclude, false);
   }
 
   async scanOutputFilesWithoutCleanExclusions(
