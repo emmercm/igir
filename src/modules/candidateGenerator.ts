@@ -2,8 +2,8 @@ import path from 'path';
 
 import ProgressBar, { ProgressBarSymbol } from '../console/progressBar.js';
 import fsPoly from '../polyfill/fsPoly.js';
-import Zip from '../types/archives/zip.js';
-import ArchiveEntry from '../types/files/archiveEntry.js';
+import ArchiveEntry from '../types/files/archives/archiveEntry.js';
+import Zip from '../types/files/archives/zip.js';
 import File from '../types/files/file.js';
 import DAT from '../types/logiqx/dat.js';
 import Game from '../types/logiqx/game.js';

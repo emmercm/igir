@@ -3,7 +3,7 @@ import yargs, { Argv } from 'yargs';
 
 import Logger from '../console/logger.js';
 import Constants from '../constants.js';
-import FileHeader from '../types/files/fileHeader.js';
+import ROMHeader from '../types/files/romHeader.js';
 import Options from '../types/options.js';
 import PatchFactory from '../types/patches/patchFactory.js';
 import ReleaseCandidate from '../types/releaseCandidate.js';
@@ -291,7 +291,7 @@ export default class ArgumentsParser {
       .option('remove-headers', {
         group: groupHeader,
         alias: 'H',
-        description: `Remove known headers from ROMs, optionally limited to a list of comma-separated file extensions (supported: ${FileHeader.getSupportedExtensions().join(', ')})`,
+        description: `Remove known headers from ROMs, optionally limited to a list of comma-separated file extensions (supported: ${ROMHeader.getSupportedExtensions().join(', ')})`,
         type: 'string',
         coerce: (vals: string) => vals
           .split(',')

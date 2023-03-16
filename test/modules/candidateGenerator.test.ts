@@ -1,13 +1,13 @@
 import path from 'path';
 
 import CandidateGenerator from '../../src/modules/candidateGenerator.js';
-import Rar from '../../src/types/archives/rar.js';
-import SevenZip from '../../src/types/archives/sevenZip.js';
-import Tar from '../../src/types/archives/tar.js';
-import Zip from '../../src/types/archives/zip.js';
-import ArchiveEntry from '../../src/types/files/archiveEntry.js';
+import ArchiveEntry from '../../src/types/files/archives/archiveEntry.js';
+import Rar from '../../src/types/files/archives/rar.js';
+import SevenZip from '../../src/types/files/archives/sevenZip.js';
+import Tar from '../../src/types/files/archives/tar.js';
+import Zip from '../../src/types/files/archives/zip.js';
 import File from '../../src/types/files/file.js';
-import FileHeader from '../../src/types/files/fileHeader.js';
+import ROMHeader from '../../src/types/files/romHeader.js';
 import DAT from '../../src/types/logiqx/dat.js';
 import Game from '../../src/types/logiqx/game.js';
 import Header from '../../src/types/logiqx/header.js';
@@ -170,9 +170,9 @@ describe.each(['zip', 'extract', 'raw'])('command: %s', (command) => {
 describe('with ROMs with headers', () => {
   const filePromises = [
     // Extension doesn't change with header removal
-    File.fileOf('one.rom', 1, '12345678', FileHeader.headerFromFilename('dummy.nes')),
+    File.fileOf('one.rom', 1, '12345678', ROMHeader.headerFromFilename('dummy.nes')),
     // Extension does change with header removal
-    ArchiveEntry.entryOf(new SevenZip('two.7z'), 'a.rom', 2, 'abcdef90', FileHeader.headerFromFilename('dummy.smc')),
+    ArchiveEntry.entryOf(new SevenZip('two.7z'), 'a.rom', 2, 'abcdef90', ROMHeader.headerFromFilename('dummy.smc')),
     // Doesn't have a header
     ArchiveEntry.entryOf(new SevenZip('two.7z'), 'b.rom', 3, '09876543'),
   ];

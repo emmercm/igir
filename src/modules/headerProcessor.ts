@@ -2,9 +2,9 @@ import async, { AsyncResultCallback } from 'async';
 
 import ProgressBar, { ProgressBarSymbol } from '../console/progressBar.js';
 import Constants from '../constants.js';
-import ArchiveEntry from '../types/files/archiveEntry.js';
+import ArchiveEntry from '../types/files/archives/archiveEntry.js';
 import File from '../types/files/file.js';
-import FileHeader from '../types/files/fileHeader.js';
+import ROMHeader from '../types/files/romHeader.js';
 import Options from '../types/options.js';
 import Module from './module.js';
 
@@ -60,7 +60,7 @@ export default class HeaderProcessor extends Module {
     }
 
     // Can get FileHeader from extension, use that
-    const headerForFilename = FileHeader.headerFromFilename(inputFile.getExtractedFilePath());
+    const headerForFilename = ROMHeader.headerFromFilename(inputFile.getExtractedFilePath());
     if (headerForFilename) {
       await this.progressBar.logTrace(`${inputFile.toString()}: found header by filename: ${headerForFilename.getHeaderedFileExtension()}`);
       return inputFile.withFileHeader(headerForFilename);
@@ -69,7 +69,7 @@ export default class HeaderProcessor extends Module {
     // Should get FileHeader from File, try to
     if (this.options.shouldReadFileForHeader(inputFile.getExtractedFilePath())) {
       const headerForFileStream = await inputFile.createReadStream(
-        async (stream) => FileHeader.headerFromFileStream(stream),
+        async (stream) => ROMHeader.headerFromFileStream(stream),
       );
       if (headerForFileStream) {
         await this.progressBar.logTrace(`${inputFile.toString()}: found header by contents: ${headerForFileStream.getHeaderedFileExtension()}`);

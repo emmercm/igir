@@ -4,7 +4,7 @@ import path from 'path';
 import Constants from '../../src/constants.js';
 import PatchScanner from '../../src/modules/patchScanner.js';
 import fsPoly from '../../src/polyfill/fsPoly.js';
-import FileFactory from '../../src/types/archives/fileFactory.js';
+import FileFactory from '../../src/types/files/fileFactory.js';
 import Options from '../../src/types/options.js';
 import ProgressBarFake from '../console/progressBarFake.js';
 

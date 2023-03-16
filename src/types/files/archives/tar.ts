@@ -3,10 +3,10 @@ import fs from 'fs';
 import path from 'path';
 import tar from 'tar';
 
-import Constants from '../../constants.js';
-import fsPoly from '../../polyfill/fsPoly.js';
-import ArchiveEntry from '../files/archiveEntry.js';
+import Constants from '../../../constants.js';
+import fsPoly from '../../../polyfill/fsPoly.js';
 import Archive from './archive.js';
+import ArchiveEntry from './archiveEntry.js';
 
 export default class Tar extends Archive {
   static readonly SUPPORTED_EXTENSIONS = [

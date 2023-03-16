@@ -2,10 +2,10 @@ import _7z, { Result } from '7zip-min';
 import { Mutex } from 'async-mutex';
 import path from 'path';
 
-import Constants from '../../constants.js';
-import fsPoly from '../../polyfill/fsPoly.js';
-import ArchiveEntry from '../files/archiveEntry.js';
+import Constants from '../../../constants.js';
+import fsPoly from '../../../polyfill/fsPoly.js';
 import Archive from './archive.js';
+import ArchiveEntry from './archiveEntry.js';
 
 export default class SevenZip extends Archive {
   // p7zip `7za i`

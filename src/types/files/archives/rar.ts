@@ -2,8 +2,8 @@ import { Mutex } from 'async-mutex';
 import unrar from 'node-unrar-js';
 import path from 'path';
 
-import ArchiveEntry from '../files/archiveEntry.js';
 import Archive from './archive.js';
+import ArchiveEntry from './archiveEntry.js';
 
 export default class Rar extends Archive {
   static readonly SUPPORTED_EXTENSIONS = ['.rar'];

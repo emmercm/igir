@@ -6,13 +6,13 @@ import { Readable } from 'stream';
 import { clearInterval } from 'timers';
 import unzipper from 'unzipper';
 
-import Constants from '../../constants.js';
-import fsPoly from '../../polyfill/fsPoly.js';
-import ArchiveEntry from '../files/archiveEntry.js';
-import File from '../files/file.js';
-import DAT from '../logiqx/dat.js';
-import Options from '../options.js';
+import Constants from '../../../constants.js';
+import fsPoly from '../../../polyfill/fsPoly.js';
+import DAT from '../../logiqx/dat.js';
+import Options from '../../options.js';
+import File from '../file.js';
 import Archive from './archive.js';
+import ArchiveEntry from './archiveEntry.js';
 
 export default class Zip extends Archive {
   static readonly SUPPORTED_EXTENSIONS = ['.zip'];
