@@ -124,7 +124,8 @@ describe('options', () => {
   });
 
   it('should parse "input"', async () => {
-    expect((await argumentsParser.parse(['copy', '--input', os.devNull, '--output', os.devNull]).scanInputFilesWithoutExclusions()).length).toEqual(0);
+    await expect(argumentsParser.parse(['copy', '--input', 'nonexistentfile', '--output', os.devNull]).scanInputFilesWithoutExclusions()).rejects.toThrow(/no files found/i);
+    await expect(argumentsParser.parse(['copy', '--input', os.devNull, '--output', os.devNull]).scanInputFilesWithoutExclusions()).resolves.toHaveLength(0);
 
     const src = await argumentsParser.parse(['copy', '--input', './src', '--output', os.devNull]).scanInputFilesWithoutExclusions();
     const test = await argumentsParser.parse(['copy', '--input', './test', '--output', os.devNull]).scanInputFilesWithoutExclusions();
@@ -138,12 +139,14 @@ describe('options', () => {
   it('should parse "input-exclude"', async () => {
     expect((await argumentsParser.parse(['copy', '--input', './src', '--output', os.devNull]).scanInputFilesWithoutExclusions()).length).toBeGreaterThan(0);
     expect((await argumentsParser.parse(['copy', '--input', './src', '--output', os.devNull, '-I', os.devNull]).scanInputFilesWithoutExclusions()).length).toBeGreaterThan(0);
-    expect((await argumentsParser.parse(['copy', '--input', './src', '--output', os.devNull, '-I', './src']).scanInputFilesWithoutExclusions()).length).toEqual(0);
+    expect((await argumentsParser.parse(['copy', '--input', './src', '--output', os.devNull, '-I', 'nonexistentfile']).scanInputFilesWithoutExclusions()).length).toBeGreaterThan(0);
+    expect((await argumentsParser.parse(['copy', '--input', './src', '--output', os.devNull, '--input-exclude', './src']).scanInputFilesWithoutExclusions()).length).toEqual(0);
     expect((await argumentsParser.parse(['copy', '--input', './src', '--output', os.devNull, '--input-exclude', './src']).scanInputFilesWithoutExclusions()).length).toEqual(0);
   });
 
   it('should parse "patch"', async () => {
-    expect((await argumentsParser.parse(['copy', '--input', os.devNull, '--patch', os.devNull, '--output', os.devNull]).scanInputFilesWithoutExclusions()).length).toEqual(0);
+    await expect(argumentsParser.parse(['copy', '--input', os.devNull, '--patch', 'nonexistentfile', '--output', os.devNull]).scanPatchFiles()).rejects.toThrow(/no files found/i);
+    await expect(argumentsParser.parse(['copy', '--input', os.devNull, '--patch', os.devNull, '--output', os.devNull]).scanPatchFiles()).resolves.toHaveLength(0);
 
     const src = await argumentsParser.parse(['copy', '--input', os.devNull, '--patch', './src', '--output', os.devNull]).scanPatchFiles();
     const test = await argumentsParser.parse(['copy', '--input', os.devNull, '--patch', './test', '--output', os.devNull]).scanPatchFiles();
@@ -159,6 +162,7 @@ describe('options', () => {
     expect(() => argumentsParser.parse([...dummyCommandAndRequiredArgs, '--dat'])).toThrow(/not enough arguments/i);
     await expect(argumentsParser.parse(dummyCommandAndRequiredArgs).scanDatFilesWithoutExclusions())
       .resolves.toHaveLength(0);
+    await expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--dat', 'nonexistentfile']).scanDatFilesWithoutExclusions()).rejects.toThrow(/no files found/i);
     await expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--dat', os.devNull]).scanDatFilesWithoutExclusions()).resolves.toHaveLength(0);
 
     const src = await argumentsParser.parse([...dummyCommandAndRequiredArgs, '-d', './src']).scanDatFilesWithoutExclusions();
@@ -173,6 +177,7 @@ describe('options', () => {
   it('should parse "dat-exclude"', async () => {
     expect((await argumentsParser.parse([...dummyCommandAndRequiredArgs, '--dat', './src']).scanDatFilesWithoutExclusions()).length).toBeGreaterThan(0);
     expect((await argumentsParser.parse([...dummyCommandAndRequiredArgs, '--dat', './src', '--dat-exclude', os.devNull]).scanDatFilesWithoutExclusions()).length).toBeGreaterThan(0);
+    expect((await argumentsParser.parse([...dummyCommandAndRequiredArgs, '--dat', './src', '--dat-exclude', 'nonexistentfile']).scanDatFilesWithoutExclusions()).length).toBeGreaterThan(0);
     expect((await argumentsParser.parse([...dummyCommandAndRequiredArgs, '--dat', './src', '--dat-exclude', './src']).scanDatFilesWithoutExclusions()).length).toEqual(0);
   });
 
@@ -262,7 +267,8 @@ describe('options', () => {
     expect((await argumentsParser.parse(argv)
       .scanOutputFilesWithoutCleanExclusions([outputDir], [])).length).toBeGreaterThan(0);
     expect((await argumentsParser.parse([...argv, '-C', os.devNull]).scanOutputFilesWithoutCleanExclusions([outputDir], [])).length).toBeGreaterThan(0);
-    expect((await argumentsParser.parse([...argv, '-C', outputDir]).scanOutputFilesWithoutCleanExclusions([outputDir], [])).length).toEqual(0);
+    expect((await argumentsParser.parse([...argv, '-C', 'nonexistentfile']).scanOutputFilesWithoutCleanExclusions([outputDir], [])).length).toBeGreaterThan(0);
+    expect((await argumentsParser.parse([...argv, '--clean-exclude', outputDir]).scanOutputFilesWithoutCleanExclusions([outputDir], [])).length).toEqual(0);
     expect((await argumentsParser.parse([...argv, '--clean-exclude', outputDir]).scanOutputFilesWithoutCleanExclusions([outputDir], [])).length).toEqual(0);
   });
 
