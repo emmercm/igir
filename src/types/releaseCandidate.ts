@@ -223,9 +223,11 @@ export default class ReleaseCandidate {
   }
 
   private getShortLanguagesFromName(): string[] {
-    const twoMatches = this.getName().match(/\(([a-zA-Z]{2}([,+][a-zA-Z]{2})*)\)/);
+    const twoMatches = this.getName().match(/\(([a-zA-Z]{2}([,+-][a-zA-Z]{2})*)\)/);
     if (twoMatches && twoMatches.length >= 2) {
-      const twoMatchesParsed = twoMatches[1].split(/[,+]/)
+      const twoMatchesParsed = twoMatches[1]
+        .replace(/-[a-zA-Z]+$/, '') // chop off country
+        .split(/[,+]/)
         .map((lang) => lang.toUpperCase())
         .filter((lang) => ReleaseCandidate.LANGUAGES.indexOf(lang) !== -1) // is known
         .filter((lang, idx, langs) => langs.indexOf(lang) === idx);
