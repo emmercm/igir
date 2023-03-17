@@ -1,4 +1,4 @@
-import archiver from 'archiver';
+import archiver, { ArchiverError } from 'archiver';
 import async from 'async';
 import fs from 'fs';
 import path from 'path';
@@ -84,14 +84,16 @@ export default class Zip extends Archive {
     const zipFile = archiver('zip', {
       highWaterMark: Constants.FILE_READING_CHUNK_SIZE,
       zlib: {
-        chunkSize: 256 * 1024, // buffer to/from zlib, defaults to 16KiB
+        chunkSize: 256 * 1024, // 256KiB buffer to/from zlib, defaults to 16KiB
         level: 9,
         memLevel: 9, // history buffer size, max, defaults to 8
       },
     });
+
+    let zipFileError: ArchiverError | undefined;
     zipFile.on('error', (err) => {
       zipFile.abort();
-      throw err;
+      zipFileError = err;
     });
 
     // Keep track of what entries have been written to the temp file on disk
@@ -127,7 +129,7 @@ export default class Zip extends Archive {
           // Leave the input stream open until we're done writing it
           await new Promise<void>((resolve) => {
             const interval = setInterval(() => {
-              if (writtenEntries.has(entryName)) {
+              if (writtenEntries.has(entryName) || zipFileError) {
                 clearInterval(interval);
                 resolve();
               }
@@ -137,6 +139,11 @@ export default class Zip extends Archive {
         });
       },
     );
+
+    // Throw any exceptions caught along the way
+    if (zipFileError) {
+      throw zipFileError;
+    }
 
     // Finalize writing the zip file
     await zipFile.finalize();
