@@ -27,10 +27,10 @@ export default class CombinedCandidateGenerator extends Module {
       return parentsToCandidates;
     }
 
-    await this.progressBar.logInfo(`${dat.getName()}: Generating consolidated candidate`);
+    await this.progressBar.logInfo(`${dat.getNameShort()}: Generating consolidated candidate`);
 
     if (!parentsToCandidates.size) {
-      await this.progressBar.logDebug(`${dat.getName()}: No parents to make patched candidates for`);
+      await this.progressBar.logDebug(`${dat.getNameShort()}: No parents to make patched candidates for`);
       return parentsToCandidates;
     }
 

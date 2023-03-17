@@ -53,7 +53,7 @@ export default class DATScanner extends Scanner {
       const size = dat.getGames()
         .flatMap((game) => game.getRoms())
         .reduce((sum, rom) => sum + rom.getSize(), 0);
-      return `${dat.getName()}: ${fsPoly.sizeReadable(size)} of ${dat.getGames().length.toLocaleString()} game${dat.getGames().length !== 1 ? 's' : ''}, ${dat.getParents().length.toLocaleString()} parent${dat.getParents().length !== 1 ? 's' : ''} parsed`;
+      return `${dat.getNameShort()}: ${fsPoly.sizeReadable(size)} of ${dat.getGames().length.toLocaleString()} game${dat.getGames().length !== 1 ? 's' : ''}, ${dat.getParents().length.toLocaleString()} parent${dat.getParents().length !== 1 ? 's' : ''} parsed`;
     }).join('\n'));
     await this.progressBar.logInfo('Done scanning DAT files');
     return dats;
@@ -140,6 +140,8 @@ export default class DATScanner extends Scanner {
       return undefined;
     }
 
+    await this.progressBar.logTrace(`${datFile.toString()}: parsing CMPro`);
+
     let datfile;
     try {
       datfile = await robloachDatfile.parse(fileContents);
@@ -178,6 +180,10 @@ export default class DATScanner extends Scanner {
     datFile: File,
     fileContents: string,
   ): Promise<DAT | undefined> {
+    await this.progressBar.logTrace(`${datFile.toString()}: parsing SMDB`);
+
+    // TODO(cemmer): when encountering an "error," when we resolve() we still get listeners per
+    //  row. Switch this to two steps: CSV parse, and then validation & DAT construction.
     return new Promise((resolve) => {
       const games: Game[] = [];
 
@@ -196,7 +202,8 @@ export default class DATScanner extends Scanner {
             || row.crc.length !== 8
             || (row.size && Number.isNaN(parseInt(row.size, 10)))
           ) {
-            // Not a TSV
+            // Not an SMDB
+            await this.progressBar.logDebug(`${datFile.toString()}: not an SMDB`);
             return resolve(undefined);
           }
           if (!row.size) {
@@ -215,9 +222,10 @@ export default class DATScanner extends Scanner {
           games.push(game);
           return undefined;
         })
-        .on('end', () => {
+        .on('end', async () => {
           if (!games.length) {
             // Empty file
+            await this.progressBar.logDebug(`${datFile.toString()}: file is empty`);
             return resolve(undefined);
           }
 

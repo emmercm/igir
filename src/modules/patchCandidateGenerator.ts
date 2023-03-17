@@ -23,10 +23,10 @@ export default class PatchCandidateGenerator extends Module {
     parentsToCandidates: Map<Parent, ReleaseCandidate[]>,
     patches: Patch[],
   ): Promise<Map<Parent, ReleaseCandidate[]>> {
-    await this.progressBar.logInfo(`${dat.getName()}: Generating patched candidates`);
+    await this.progressBar.logInfo(`${dat.getNameShort()}: Generating patched candidates`);
 
     if (!parentsToCandidates.size) {
-      await this.progressBar.logDebug(`${dat.getName()}: No parents to make patched candidates for`);
+      await this.progressBar.logDebug(`${dat.getNameShort()}: No parents to make patched candidates for`);
       return parentsToCandidates;
     }
 
@@ -34,10 +34,10 @@ export default class PatchCandidateGenerator extends Module {
     await this.progressBar.reset(dat.getParents().length);
 
     const crcToPatches = PatchCandidateGenerator.indexPatchesByCrcBefore(patches);
-    await this.progressBar.logDebug(`${dat.getName()}: ${crcToPatches.size} unique patches found`);
+    await this.progressBar.logDebug(`${dat.getNameShort()}: ${crcToPatches.size} unique patches found`);
 
     const patchedParentsToCandidates = this.build(dat, parentsToCandidates, crcToPatches);
-    await this.progressBar.logInfo(`${dat.getName()}: Done generating patched candidates`);
+    await this.progressBar.logInfo(`${dat.getNameShort()}: Done generating patched candidates`);
 
     return patchedParentsToCandidates;
   }
@@ -160,7 +160,7 @@ export default class PatchCandidateGenerator extends Module {
               outputFile.getCrc32(),
             );
 
-            await this.progressBar.logTrace(`${dat.getName()}: ${inputFile.toString()}: patch candidate generated: ${outputFile.toString()}`);
+            await this.progressBar.logTrace(`${dat.getNameShort()}: ${inputFile.toString()}: patch candidate generated: ${outputFile.toString()}`);
           }
 
           return new ROMWithFiles(rom, inputFile, outputFile);

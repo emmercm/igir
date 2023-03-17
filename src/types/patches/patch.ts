@@ -25,7 +25,7 @@ export default abstract class Patch {
       return matches[2].toLowerCase();
     }
 
-    throw new Error(`Couldn't parse base file CRC for patch: ${fileBasename}`);
+    throw new Error(`couldn't parse base file CRC for patch: ${fileBasename}`);
   }
 
   getFile(): File {

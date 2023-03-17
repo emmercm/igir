@@ -144,7 +144,7 @@ class VcdiffHeader {
          *    bytes "59 5A", only the starting bytes "FD 37 7A 58 5A 00" (after the above number)
          */
         await patchFile.close();
-        throw new Error(`Unsupported Vcdiff secondary decompressor ${VcdiffSecondaryCompression[secondaryDecompressorId]}: ${patchFile.getPathLike()}`);
+        throw new Error(`unsupported Vcdiff secondary decompressor ${VcdiffSecondaryCompression[secondaryDecompressorId]}: ${patchFile.getPathLike()}`);
       }
     }
 
@@ -153,7 +153,7 @@ class VcdiffHeader {
       const codeTableLength = await Patch.readVcdiffUintFromFile(patchFile);
       if (codeTableLength) {
         await patchFile.close();
-        throw new Error(`Can't parse Vcdiff application-defined code table: ${patchFile.getPathLike()}`);
+        throw new Error(`can't parse Vcdiff application-defined code table: ${patchFile.getPathLike()}`);
       }
     }
 

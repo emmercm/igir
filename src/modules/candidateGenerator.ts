@@ -34,11 +34,11 @@ export default class CandidateGenerator extends Module {
     dat: DAT,
     inputRomFiles: File[],
   ): Promise<Map<Parent, ReleaseCandidate[]>> {
-    await this.progressBar.logInfo(`${dat.getName()}: Generating candidates`);
+    await this.progressBar.logInfo(`${dat.getNameShort()}: Generating candidates`);
 
     const output = new Map<Parent, ReleaseCandidate[]>();
     if (!inputRomFiles.length) {
-      await this.progressBar.logDebug(`${dat.getName()}: No input ROMs to make candidates from`);
+      await this.progressBar.logDebug(`${dat.getNameShort()}: No input ROMs to make candidates from`);
       return output;
     }
 
@@ -48,7 +48,7 @@ export default class CandidateGenerator extends Module {
     // TODO(cemmer): only do this once globally, not per DAT
     // TODO(cemmer): ability to index files by some other property such as name
     const hashCodeToInputFiles = CandidateGenerator.indexFilesByHashCode(inputRomFiles);
-    await this.progressBar.logDebug(`${dat.getName()}: ${hashCodeToInputFiles.size.toLocaleString()} unique ROMs found`);
+    await this.progressBar.logDebug(`${dat.getNameShort()}: ${hashCodeToInputFiles.size.toLocaleString()} unique ROMs found`);
 
     const parents = dat.getParents();
     await this.progressBar.setSymbol(ProgressBarSymbol.GENERATING);
@@ -82,7 +82,7 @@ export default class CandidateGenerator extends Module {
         }
       }
 
-      await this.progressBar.logTrace(`${dat.getName()}: ${parent.getName()}: found ${releaseCandidates.length.toLocaleString()} candidates`);
+      await this.progressBar.logTrace(`${dat.getNameShort()}: ${parent.getName()}: found ${releaseCandidates.length.toLocaleString()} candidates`);
       output.set(parent, releaseCandidates);
 
       await this.progressBar.increment();
@@ -93,9 +93,9 @@ export default class CandidateGenerator extends Module {
       .flatMap((releaseCandidate) => releaseCandidate.getRomsWithFiles())
       .reduce((sum, romWithFiles) => sum + romWithFiles.getRom().getSize(), 0);
     const totalCandidates = [...output.values()].reduce((sum, rc) => sum + rc.length, 0);
-    await this.progressBar.logDebug(`${dat.getName()}: generated ${fsPoly.sizeReadable(size)} of ${totalCandidates.toLocaleString()} candidate${totalCandidates !== 1 ? 's' : ''} for ${output.size.toLocaleString()} parent${output.size !== 1 ? 's' : ''}`);
+    await this.progressBar.logDebug(`${dat.getNameShort()}: generated ${fsPoly.sizeReadable(size)} of ${totalCandidates.toLocaleString()} candidate${totalCandidates !== 1 ? 's' : ''} for ${output.size.toLocaleString()} parent${output.size !== 1 ? 's' : ''}`);
 
-    await this.progressBar.logInfo(`${dat.getName()}: Done generating candidates`);
+    await this.progressBar.logInfo(`${dat.getNameShort()}: Done generating candidates`);
     return output;
   }
 
@@ -184,7 +184,7 @@ export default class CandidateGenerator extends Module {
           const romWithFiles = new ROMWithFiles(rom, finalInputFile, outputFile);
           return [rom, romWithFiles];
         } catch (e) {
-          await this.progressBar.logInfo(`${dat.getName()}: ${game.getName()}: ${e}`);
+          await this.progressBar.logInfo(`${dat.getNameShort()}: ${game.getName()}: ${e}`);
           return [rom, undefined];
         }
       }),
@@ -287,7 +287,7 @@ export default class CandidateGenerator extends Module {
     release: Release | undefined,
     missingRoms: ROM[],
   ): Promise<void> {
-    let message = `${dat.getName()}: Missing ${missingRoms.length.toLocaleString()} file${missingRoms.length !== 1 ? 's' : ''} for: ${game.getName()}`;
+    let message = `${dat.getNameShort()}: Missing ${missingRoms.length.toLocaleString()} file${missingRoms.length !== 1 ? 's' : ''} for: ${game.getName()}`;
     if (release?.getRegion()) {
       message += ` (${release?.getRegion()})`;
     }

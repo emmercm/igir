@@ -29,7 +29,7 @@ export default class FileFactory {
       return new SevenZip(filePath);
     }
 
-    throw new Error(`Unknown archive type: ${path.extname(filePath)}`);
+    throw new Error(`unknown archive type: ${path.extname(filePath)}`);
   }
 
   static isArchive(filePath: string): boolean {
