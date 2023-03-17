@@ -15,6 +15,12 @@ enum ROMType {
   PATCHED = 'patched games',
 }
 
+export enum Status {
+  MISSING,
+  FOUND,
+  UNMATCHED,
+}
+
 export default class DATStatus {
   private readonly dat: DAT;
 
@@ -25,6 +31,7 @@ export default class DATStatus {
   constructor(dat: DAT, parentsToReleaseCandidates: Map<Parent, ReleaseCandidate[]>) {
     this.dat = dat;
 
+    // Un-patched ROMs
     const unpatchedHashCodesToRomsWithInputFiles = [...parentsToReleaseCandidates.values()]
       .flatMap((releaseCandidates) => releaseCandidates)
       .filter((releaseCandidate) => !releaseCandidate.isPatched())
@@ -53,6 +60,7 @@ export default class DATStatus {
       });
     });
 
+    // Patched ROMs
     [...parentsToReleaseCandidates.values()]
       .flatMap((releaseCandidates) => releaseCandidates)
       .filter((releaseCandidate) => releaseCandidate.isPatched())
@@ -82,6 +90,11 @@ export default class DATStatus {
 
   getDATName(): string {
     return this.dat.getNameShort();
+  }
+
+  getReleaseCandidates(): ReleaseCandidate[] {
+    return [...this.foundRomTypesToReleaseCandidates.values()]
+      .flatMap((releaseCandidates) => releaseCandidates);
   }
 
   anyGamesFound(options: Options): boolean {
@@ -132,7 +145,7 @@ export default class DATStatus {
       .join(', ')} ${options.shouldWrite() ? 'written' : 'found'}`;
   }
 
-  async toCSV(options: Options): Promise<string> {
+  async toCsv(options: Options): Promise<string> {
     const found = DATStatus.getValuesForAllowedTypes(
       options,
       this.foundRomTypesToReleaseCandidates,
@@ -143,10 +156,10 @@ export default class DATStatus {
       .sort((a, b) => a.getName().localeCompare(b.getName()))
       .map((game) => {
         const releaseCandidate = found.find((rc) => rc.getGame().equals(game));
-        return [
+        return DATStatus.buildCsvRow(
           this.getDATName(),
           game.getName(),
-          releaseCandidate || !game.getRoms().length ? 'FOUND' : 'MISSING',
+          releaseCandidate || !game.getRoms().length ? Status.FOUND : Status.MISSING,
           releaseCandidate
             ? (releaseCandidate as ReleaseCandidate).getRomsWithFiles()
               .map((romWithFiles) => (options.shouldWrite()
@@ -154,8 +167,7 @@ export default class DATStatus {
                 : romWithFiles.getInputFile()))
               .map((file) => file.getFilePath())
               .filter((filePath, idx, filePaths) => filePaths.indexOf(filePath) === idx)
-              .join('|')
-            : '',
+            : [],
           releaseCandidate?.isPatched() || false,
           game.isBios(),
           game.isRetail(),
@@ -168,7 +180,7 @@ export default class DATStatus {
           game.isAftermarket(),
           game.isHomebrew(),
           game.isBad(),
-        ];
+        );
       });
     return writeToString(rows, {
       headers: [
@@ -190,6 +202,48 @@ export default class DATStatus {
         'Bad',
       ],
     });
+  }
+
+  static async unmatchedFilesToCsv(filePaths: string[]): Promise<string> {
+    return writeToString(filePaths.map((filePath) => this.buildCsvRow('', '', Status.UNMATCHED, [filePath])));
+  }
+
+  private static buildCsvRow(
+    datName: string,
+    gameName: string,
+    status: Status,
+    filePaths: string[] = [],
+    patched = false,
+    bios = false,
+    retail = false,
+    unlicensed = false,
+    demo = false,
+    beta = false,
+    sample = false,
+    prototype = false,
+    test = false,
+    aftermarket = false,
+    homebrew = false,
+    bad = false,
+  ): string[] {
+    return [
+      datName,
+      gameName,
+      Status[status],
+      filePaths.join('|'),
+      String(patched),
+      String(bios),
+      String(retail),
+      String(unlicensed),
+      String(demo),
+      String(beta),
+      String(sample),
+      String(prototype),
+      String(test),
+      String(aftermarket),
+      String(homebrew),
+      String(bad),
+    ];
   }
 
   private static getValuesForAllowedTypes<T>(
