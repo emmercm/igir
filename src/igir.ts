@@ -116,7 +116,7 @@ export default class Igir {
     await this.processOutputCleaner(romOutputDirs, datsToWrittenRoms);
 
     // Generate the report
-    await this.processReportGenerator(datsStatuses);
+    await this.processReportGenerator(rawRomFiles, datsStatuses);
 
     ProgressBarCLI.stop();
   }
@@ -206,12 +206,16 @@ export default class Igir {
     await progressBar.freeze();
   }
 
-  private async processReportGenerator(datsStatuses: DATStatus[]): Promise<void> {
+  private async processReportGenerator(
+    scannedRomFiles: File[],
+    datsStatuses: DATStatus[],
+  ): Promise<void> {
     if (!this.options.shouldReport()) {
       return;
     }
 
     const reportProgressBar = await this.logger.addProgressBar('Generating report', ProgressBarSymbol.WRITING);
-    await new ReportGenerator(this.options, reportProgressBar).generate(datsStatuses);
+    await new ReportGenerator(this.options, reportProgressBar)
+      .generate(scannedRomFiles, datsStatuses);
   }
 }
