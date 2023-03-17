@@ -65,7 +65,7 @@ export default class Zip extends Archive {
       .filter((entryFile) => entryFile.type === 'File')
       .filter((entryFile) => entryFile.path === entryPath.replace(/[\\/]/g, '/'))[0];
     if (!entry) {
-      throw new Error(`Didn't find entry '${entryPath}'`);
+      throw new Error(`didn't find entry '${entryPath}'`);
     }
 
     return callback(entry.stream());

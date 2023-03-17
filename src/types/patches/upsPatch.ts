@@ -33,7 +33,7 @@ export default class UPSPatch extends Patch {
     });
 
     if (crcBefore.length !== 8 || crcAfter.length !== 8) {
-      throw new Error(`Couldn't parse base file CRC for patch: ${file.toString()}`);
+      throw new Error(`couldn't parse base file CRC for patch: ${file.toString()}`);
     }
 
     return new UPSPatch(file, crcBefore, crcAfter, targetSize);

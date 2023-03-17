@@ -24,10 +24,10 @@ export default class CandidateFilter extends Module {
     dat: DAT,
     parentsToCandidates: Map<Parent, ReleaseCandidate[]>,
   ): Promise<Map<Parent, ReleaseCandidate[]>> {
-    await this.progressBar.logInfo(`${dat.getName()}: Filtering candidates`);
+    await this.progressBar.logInfo(`${dat.getNameShort()}: Filtering candidates`);
 
     if (!parentsToCandidates.size) {
-      await this.progressBar.logDebug(`${dat.getName()}: No parents, so no candidates to filter`);
+      await this.progressBar.logDebug(`${dat.getNameShort()}: No parents, so no candidates to filter`);
       return new Map();
     }
 
@@ -35,7 +35,7 @@ export default class CandidateFilter extends Module {
     const totalReleaseCandidates = [...parentsToCandidates.values()]
       .reduce((sum, rcs) => sum + rcs.length, 0);
     if (!totalReleaseCandidates) {
-      await this.progressBar.logDebug(`${dat.getName()}: No parent has candidates`);
+      await this.progressBar.logDebug(`${dat.getNameShort()}: No parent has candidates`);
       return new Map();
     }
 
@@ -49,9 +49,9 @@ export default class CandidateFilter extends Module {
       .flatMap((releaseCandidate) => releaseCandidate.getRomsWithFiles())
       .reduce((sum, romWithFiles) => sum + romWithFiles.getRom().getSize(), 0);
     const filteredCandidates = [...output.values()].reduce((sum, rc) => sum + rc.length, 0);
-    await this.progressBar.logDebug(`${dat.getName()}: filtered to ${fsPoly.sizeReadable(size)} of ${filteredCandidates.toLocaleString()} candidate${filteredCandidates !== 1 ? 's' : ''} for ${output.size.toLocaleString()} parent${output.size !== 1 ? 's' : ''}`);
+    await this.progressBar.logDebug(`${dat.getNameShort()}: filtered to ${fsPoly.sizeReadable(size)} of ${filteredCandidates.toLocaleString()} candidate${filteredCandidates !== 1 ? 's' : ''} for ${output.size.toLocaleString()} parent${output.size !== 1 ? 's' : ''}`);
 
-    await this.progressBar.logInfo(`${dat.getName()}: Done filtering candidates`);
+    await this.progressBar.logInfo(`${dat.getNameShort()}: Done filtering candidates`);
     return output;
   }
 
@@ -64,13 +64,13 @@ export default class CandidateFilter extends Module {
     /* eslint-disable no-await-in-loop */
     for (let i = 0; i < [...parentsToCandidates.entries()].length; i += 1) {
       const [parent, releaseCandidates] = [...parentsToCandidates.entries()][i];
-      await this.progressBar.logTrace(`${dat.getName()}: ${parent.getName()}: ${releaseCandidates.length} candidates before filtering`);
+      await this.progressBar.logTrace(`${dat.getNameShort()}: ${parent.getName()}: ${releaseCandidates.length} candidates before filtering`);
 
       const filteredReleaseCandidates = releaseCandidates
         .filter((rc) => this.preFilter(rc))
         .sort((a, b) => this.sort(a, b))
         .filter((rc, idx) => this.postFilter(idx));
-      await this.progressBar.logTrace(`${dat.getName()}: ${parent.getName()}: ${filteredReleaseCandidates.length} candidates after filtering`);
+      await this.progressBar.logTrace(`${dat.getNameShort()}: ${parent.getName()}: ${filteredReleaseCandidates.length} candidates after filtering`);
       output.set(parent, filteredReleaseCandidates);
 
       await this.progressBar.increment();

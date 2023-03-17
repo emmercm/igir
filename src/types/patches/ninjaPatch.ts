@@ -101,7 +101,7 @@ export default class NinjaPatch extends Patch {
     patchFile.skipNext(fileNameLength); // file name
     const fileType = (await patchFile.readNext(1)).readUInt8();
     if (fileType > 0) {
-      throw new Error(`Unsupported NINJA file type ${NinjaFileType[fileType]}: ${this.getFile().toString()}`);
+      throw new Error(`unsupported NINJA file type ${NinjaFileType[fileType]}: ${this.getFile().toString()}`);
     }
     const sourceFileSizeLength = (await patchFile.readNext(1)).readUInt8();
     const sourceFileSize = (await patchFile.readNext(sourceFileSizeLength))
