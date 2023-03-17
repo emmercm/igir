@@ -65,7 +65,11 @@ export default class FsPoly {
   }
 
   static async isSymlink(pathLike: PathLike): Promise<boolean> {
-    return (await util.promisify(fs.lstat)(pathLike)).isSymbolicLink();
+    try {
+      return (await util.promisify(fs.lstat)(pathLike)).isSymbolicLink();
+    } catch (e) {
+      return false;
+    }
   }
 
   static makeLegal(filePath: string, pathSep = path.sep): string {
@@ -262,7 +266,11 @@ export default class FsPoly {
   }
 
   static async size(pathLike: PathLike): Promise<number> {
-    return (await util.promisify(fs.lstat)(pathLike)).size;
+    try {
+      return (await util.promisify(fs.lstat)(pathLike)).size;
+    } catch (e) {
+      return 0;
+    }
   }
 
   /**
@@ -302,8 +310,7 @@ export default class FsPoly {
     /* eslint-disable no-await-in-loop */
     for (let i = 0; i < files.length; i += 1) {
       const file = path.join(pathLike.toString(), files[i]);
-      const stats = await util.promisify(fs.lstat)(file);
-      if (stats.isDirectory()) {
+      if (await this.isDirectory(file)) {
         output.push(...await this.walk(file));
       } else {
         output.push(file);
