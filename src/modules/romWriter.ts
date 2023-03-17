@@ -85,6 +85,7 @@ export default class ROMWriter extends Module {
       .filter((romWithFiles) => !romWithFiles.getOutputFile().equals(romWithFiles.getInputFile()))
       .some((notEq) => notEq);
     if (!writeNeeded) {
+      await this.progressBar.logTrace(`${dat.getNameShort()}: ${releaseCandidate.getName()}: input and output files are the same, skipping`);
       return;
     }
 
@@ -129,6 +130,7 @@ export default class ROMWriter extends Module {
         ]),
     );
     if (!inputToOutputZipEntries.size) {
+      await this.progressBar.logTrace(`${dat.getNameShort()}: ${releaseCandidate.getName()}: no zip archives to write`);
       return;
     }
 
@@ -264,6 +266,7 @@ export default class ROMWriter extends Module {
       .map((romWithFiles) => [romWithFiles.getInputFile(), romWithFiles.getOutputFile()]);
     if (!inputToOutputEntries.length) {
       // TODO(cemmer): unit test
+      await this.progressBar.logTrace(`${dat.getNameShort()}: ${releaseCandidate.getName()}: no raw files to write`);
       return;
     }
 
