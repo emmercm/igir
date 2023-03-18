@@ -107,7 +107,7 @@ export default class PatchFactory {
         // Stop reading when we get enough data, trigger a 'close' event
         if (chunks.reduce((sum, buff) => sum + buff.length, 0) >= length) {
           resolveHeader();
-          stream.destroy();
+          // WARN(cemmer): whatever created the stream may need to drain it!
         }
       });
 

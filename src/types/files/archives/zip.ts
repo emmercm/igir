@@ -68,7 +68,17 @@ export default class Zip extends Archive {
       throw new Error(`didn't find entry '${entryPath}'`);
     }
 
-    return callback(entry.stream());
+    const stream = entry.stream();
+    try {
+      return await callback(stream);
+    } finally {
+      /**
+       * In the case the callback doesn't read the entire stream, {@link unzipper} will leave the
+       * file handle open. Drain the stream so the file handle can be released. The stream cannot
+       * be destroyed by the callback, or this will never resolve!
+       */
+      await new Promise((resolve) => { stream.end(resolve); });
+    }
   }
 
   async archiveEntries(
