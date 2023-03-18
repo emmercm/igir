@@ -199,6 +199,11 @@ export default class DATScanner extends Scanner {
       return undefined;
     }
 
+    if (!rows.length) {
+      await this.progressBar.logDebug(`${datFile.toString()}: SMDB file has no rows`);
+      return undefined;
+    }
+
     if (rows.some((row) => !row.size)) {
       await this.progressBar.logWarn(`${datFile.toString()}: SMDB doesn't specify ROM file sizes, can't use`);
       return undefined;
