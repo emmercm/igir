@@ -17,6 +17,15 @@ import ROM from '../types/logiqx/rom.js';
 import Options from '../types/options.js';
 import Scanner from './scanner.js';
 
+type SmdbRow = {
+  sha256: string;
+  name: string;
+  sha1: string;
+  md5: string;
+  crc: string;
+  size?: string;
+};
+
 /**
  * Scan the {@link OptionsProps.dat} input directory for DAT files and return the internal model
  * representation.
@@ -182,59 +191,58 @@ export default class DATScanner extends Scanner {
   ): Promise<DAT | undefined> {
     await this.progressBar.logTrace(`${datFile.toString()}: parsing SMDB`);
 
-    // TODO(cemmer): when encountering an "error," when we resolve() we still get listeners per
-    //  row. Switch this to two steps: CSV parse, and then validation & DAT construction.
-    return new Promise((resolve) => {
-      const games: Game[] = [];
+    let rows: SmdbRow[] = [];
+    try {
+      rows = await DATScanner.parseSourceMaterialTsv(fileContents);
+    } catch (e) {
+      await this.progressBar.logDebug(`${datFile.toString()}: not an SMDB`);
+      return undefined;
+    }
 
-      const stream = parse({
+    if (!rows.length) {
+      await this.progressBar.logDebug(`${datFile.toString()}: SMDB file has no rows`);
+      return undefined;
+    }
+
+    if (rows.some((row) => !row.size)) {
+      await this.progressBar.logWarn(`${datFile.toString()}: SMDB doesn't specify ROM file sizes, can't use`);
+      return undefined;
+    }
+
+    const games = rows.map((row) => {
+      const rom = new ROM(row.name, parseInt(row.size || '', 10), row.crc);
+      const gameName = row.name.replace(/\.[^\\/]+$/, '');
+      return new Game({
+        name: gameName,
+        description: gameName,
+        rom,
+      });
+    });
+
+    return new DAT(new Header({
+      name: path.parse(datFile.getExtractedFilePath()).name,
+      romNamesContainDirectories: true,
+    }), games);
+  }
+
+  private static async parseSourceMaterialTsv(fileContents: string): Promise<SmdbRow[]> {
+    return new Promise((resolve, reject) => {
+      const rows: SmdbRow[] = [];
+
+      const stream = parse<SmdbRow, SmdbRow>({
         delimiter: '\t',
         quote: null,
         headers: ['sha256', 'name', 'sha1', 'md5', 'crc', 'size'],
       })
-        .on('error', async (err) => {
-          await this.progressBar.logDebug(`${datFile.toString()}: failed to parse CMPro : ${err}`);
-          resolve(undefined);
+        .validate((row: SmdbRow) => row.name
+          && row.crc
+          && row.crc.length === 8
+          && (!row.size || Number.isInteger(parseInt(row.size, 10))))
+        .on('error', reject)
+        .on('data', (row) => {
+          rows.push(row);
         })
-        .on('data', async (row) => {
-          if (!row.name
-            || !row.crc
-            || row.crc.length !== 8
-            || (row.size && Number.isNaN(parseInt(row.size, 10)))
-          ) {
-            // Not an SMDB
-            await this.progressBar.logDebug(`${datFile.toString()}: not an SMDB`);
-            return resolve(undefined);
-          }
-          if (!row.size) {
-            // SMDB doesn't have file sizes
-            await this.progressBar.logWarn(`${datFile.toString()}: SMDB doesn't specify ROM file sizes, can't use`);
-            return resolve(undefined);
-          }
-
-          const rom = new ROM(row.name, parseInt(row.size, 10), row.crc);
-          const gameName = row.name.replace(/\.[^\\/]+$/, '');
-          const game = new Game({
-            name: gameName,
-            description: gameName,
-            rom,
-          });
-          games.push(game);
-          return undefined;
-        })
-        .on('end', async () => {
-          if (!games.length) {
-            // Empty file
-            await this.progressBar.logDebug(`${datFile.toString()}: file is empty`);
-            return resolve(undefined);
-          }
-
-          const dat = new DAT(new Header({
-            name: path.parse(datFile.getExtractedFilePath()).name,
-            romNamesContainDirectories: true,
-          }), games);
-          return resolve(dat);
-        });
+        .on('end', () => resolve(rows));
       stream.write(fileContents);
       stream.end();
     });
