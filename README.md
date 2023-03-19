@@ -52,7 +52,7 @@ $ igir --help
   | $$  | $$ __\$$  | $$  | $$__| $$
   | $$  | $$|    \  | $$  | $$    $$   ROM collection manager
   | $$  | $$ \$$$$  | $$  | $$$$$$$\
- _| $$_ | $$__| $$ _| $$_ | $$  | $$   v1.3.0
+ _| $$_ | $$__| $$ _| $$_ | $$  | $$   v1.4.0
 |   $$ \ \$$    $$|   $$ \| $$  | $$
  \$$$$$$  \$$$$$$  \$$$$$$ \$$   \$$
 
@@ -67,8 +67,8 @@ Commands (can specify multiple):
   igir zip      Create zip archives of ROMs when copying or moving
   igir test     Test ROMs for accuracy after writing them to the output directory
   igir clean    Recycle unknown files in the output directory
-  igir report   Generate a CSV report on the known ROM files found in the input directories (requ
-                ires --dat)
+  igir report   Generate a CSV report on the known & unknown ROM files found in the input directo
+                ries (requires --dat)
 
 Input options (supports globbing):
   -i, --input          Path(s) to ROM files or archives                        [array] [required]
