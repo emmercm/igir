@@ -434,7 +434,7 @@ export default class ROMWriter extends Module {
         return;
       }
 
-      await fsPoly.rm(targetPath);
+      await fsPoly.rm(targetPath, { force: true });
     }
 
     try {

@@ -101,7 +101,7 @@ export default class SevenZip extends Archive {
 
       await fsPoly.mv(tempFile, extractedFilePath);
     } finally {
-      await fsPoly.rm(tempDir, { recursive: true });
+      await fsPoly.rm(tempDir, { recursive: true, force: true });
     }
   }
 }

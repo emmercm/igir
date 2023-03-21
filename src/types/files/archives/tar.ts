@@ -84,7 +84,7 @@ export default class Tar extends Archive {
 
       await fsPoly.mv(tempFile, extractedFilePath);
     } finally {
-      await fsPoly.rm(tempDir, { recursive: true });
+      await fsPoly.rm(tempDir, { recursive: true, force: true });
     }
   }
 }
