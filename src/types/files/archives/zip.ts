@@ -124,7 +124,9 @@ export default class Zip extends Archive {
        *  also want to make sure the queue processing stays busy.
        */
       3,
-      async ([inputFile, outputArchiveEntry], callback) => {
+      async.asyncify(async (
+        [inputFile, outputArchiveEntry]: [File, ArchiveEntry<Zip>],
+      ): Promise<void> => {
         const removeHeader = options.canRemoveHeader(
           dat,
           path.extname(inputFile.getExtractedFilePath()),
@@ -145,9 +147,8 @@ export default class Zip extends Archive {
               }
             }, 10);
           });
-          callback();
         });
-      },
+      }),
     );
 
     // Throw any exceptions caught along the way
