@@ -137,24 +137,24 @@ export default class ROMWriter extends Module {
     // Prep the single output file
     const outputZip = [...inputToOutputZipEntries.values()][0].getArchive();
 
-    // If the output file already exists, and we're not overwriting, then do nothing
-    if (!this.options.getOverwrite() && await fsPoly.exists(outputZip.getFilePath())) {
-      // But if we're testing, test the file we're not overwriting
-      if (this.options.shouldTest()) {
+    // If the output file already exists, see if we need to do anything
+    if (await fsPoly.exists(outputZip.getFilePath())) {
+      if (!this.options.getOverwrite() && !this.options.getOverwriteInvalid()) {
+        await this.progressBar.logTrace(`${dat.getNameShort()}: ${outputZip.getFilePath()}: not overwriting existing zip`);
+        return;
+      }
+
+      if (this.options.getOverwriteInvalid()) {
         const existingTest = await this.testZipContents(
           dat,
           outputZip,
           [...inputToOutputZipEntries.values()],
         );
-        if (existingTest) {
-          await this.progressBar.logWarn(`${dat.getNameShort()}: ${outputZip.getFilePath()}: not overwriting existing zip, but existing zip ${existingTest}`);
+        if (!existingTest) {
+          await this.progressBar.logTrace(`${dat.getNameShort()}: ${outputZip.getFilePath()}: not overwriting existing zip, existing zip has the expected contents`);
           return;
         }
-        await this.progressBar.logTrace(`${dat.getNameShort()}: ${outputZip.getFilePath()}: not overwriting existing zip, but existing zip has the expected contents`);
-        return;
       }
-      await this.progressBar.logTrace(`${dat.getNameShort()}: ${outputZip.getFilePath()}: not overwriting existing zip`);
-      return;
     }
 
     if (!await this.writeZipFile(dat, outputZip, inputToOutputZipEntries)) {
@@ -286,19 +286,20 @@ export default class ROMWriter extends Module {
 
     const outputFilePath = outputRomFile.getFilePath();
 
-    // If the output file already exists, and we're not overwriting, do nothing
+    // If the output file already exists, see if we need to do anything
     if (!this.options.getOverwrite() && await fsPoly.exists(outputFilePath)) {
-      if (this.options.shouldTest()) {
-        const existingTest = await this.testWrittenRaw(dat, outputFilePath, outputRomFile);
-        if (existingTest) {
-          await this.progressBar.logWarn(`${dat.getNameShort()}: ${outputFilePath}: not overwriting existing file, but existing file ${existingTest}`);
-          return;
-        }
-        await this.progressBar.logTrace(`${dat.getNameShort()}: ${outputFilePath}: not overwriting existing file, but existing file is what was expected`);
+      if (!this.options.getOverwrite() && !this.options.getOverwriteInvalid()) {
+        await this.progressBar.logTrace(`${dat.getNameShort()}: ${outputFilePath}: not overwriting existing file`);
         return;
       }
-      await this.progressBar.logTrace(`${dat.getNameShort()}: ${outputFilePath}: not overwriting existing file`);
-      return;
+
+      if (this.options.getOverwriteInvalid()) {
+        const existingTest = await this.testWrittenRaw(dat, outputFilePath, outputRomFile);
+        if (!existingTest) {
+          await this.progressBar.logTrace(`${dat.getNameShort()}: ${outputFilePath}: not overwriting existing file, existing file is what was expected`);
+          return;
+        }
+      }
     }
 
     if (!await this.writeRawFile(dat, inputRomFile, outputFilePath)) {
@@ -418,20 +419,19 @@ export default class ROMWriter extends Module {
       sourcePath = path.relative(path.dirname(targetPath), sourcePath);
     }
 
+    // If the output file already exists, see if we need to do anything
     if (await fsPoly.exists(targetPath)) {
-      // If the output file already exists, and we're not overwriting, do nothing
-      if (!this.options.getOverwrite()) {
-        if (this.options.shouldTest()) {
-          const existingTest = await ROMWriter.testWrittenSymlink(targetPath, sourcePath);
-          if (existingTest) {
-            await this.progressBar.logWarn(`${dat.getNameShort()}: ${targetPath}: not overwriting existing symlink, but existing symlink ${existingTest}`);
-            return;
-          }
-          await this.progressBar.logTrace(`${dat.getNameShort()}: ${targetPath}: not overwriting existing symlink, but existing symlink is what was expected`);
-          return;
-        }
+      if (!this.options.getOverwrite() && !this.options.getOverwriteInvalid()) {
         await this.progressBar.logTrace(`${dat.getNameShort()}: ${targetPath}: not overwriting existing file`);
         return;
+      }
+
+      if (this.options.getOverwriteInvalid()) {
+        const existingTest = await ROMWriter.testWrittenSymlink(targetPath, sourcePath);
+        if (!existingTest) {
+          await this.progressBar.logTrace(`${dat.getNameShort()}: ${targetPath}: not overwriting existing symlink, existing symlink is what was expected`);
+          return;
+        }
       }
 
       await fsPoly.rm(targetPath, { force: true });
