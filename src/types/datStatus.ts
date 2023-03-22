@@ -19,6 +19,7 @@ export enum Status {
   MISSING,
   FOUND,
   UNMATCHED,
+  DELETED,
 }
 
 export default class DATStatus {
@@ -204,8 +205,8 @@ export default class DATStatus {
     });
   }
 
-  static async unmatchedFilesToCsv(filePaths: string[]): Promise<string> {
-    return writeToString(filePaths.map((filePath) => this.buildCsvRow('', '', Status.UNMATCHED, [filePath])));
+  static async filesToCsv(filePaths: string[], status: Status): Promise<string> {
+    return writeToString(filePaths.map((filePath) => this.buildCsvRow('', '', status, [filePath])));
   }
 
   private static buildCsvRow(
