@@ -113,10 +113,10 @@ export default class Igir {
     datProcessProgressBar.delete();
 
     // Clean the output directories
-    await this.processOutputCleaner(romOutputDirs, datsToWrittenRoms);
+    const cleanedOutputFiles = await this.processOutputCleaner(romOutputDirs, datsToWrittenRoms);
 
     // Generate the report
-    await this.processReportGenerator(rawRomFiles, datsStatuses);
+    await this.processReportGenerator(rawRomFiles, cleanedOutputFiles, datsStatuses);
 
     ProgressBarCLI.stop();
   }
@@ -190,9 +190,9 @@ export default class Igir {
   private async processOutputCleaner(
     dirsToClean: string[],
     datsToWrittenRoms: Map<DAT, Map<Parent, File[]>>,
-  ): Promise<void> {
+  ): Promise<string[]> {
     if (!this.options.shouldWrite() || !this.options.shouldClean()) {
-      return;
+      return [];
     }
 
     const progressBar = await this.logger.addProgressBar('Cleaning output directory');
@@ -202,12 +202,14 @@ export default class Igir {
       .flatMap((files) => files);
     const filesCleaned = await new OutputCleaner(this.options, progressBar)
       .clean(uniqueDirsToClean, writtenFilesToExclude);
-    await progressBar.doneItems(filesCleaned, 'file', 'recycled');
+    await progressBar.doneItems(filesCleaned.length, 'file', 'recycled');
     await progressBar.freeze();
+    return filesCleaned;
   }
 
   private async processReportGenerator(
     scannedRomFiles: File[],
+    cleanedOutputFiles: string[],
     datsStatuses: DATStatus[],
   ): Promise<void> {
     if (!this.options.shouldReport()) {
@@ -215,7 +217,10 @@ export default class Igir {
     }
 
     const reportProgressBar = await this.logger.addProgressBar('Generating report', ProgressBarSymbol.WRITING);
-    await new ReportGenerator(this.options, reportProgressBar)
-      .generate(scannedRomFiles, datsStatuses);
+    await new ReportGenerator(this.options, reportProgressBar).generate(
+      scannedRomFiles.map((file) => file.getFilePath()),
+      cleanedOutputFiles,
+      datsStatuses,
+    );
   }
 }

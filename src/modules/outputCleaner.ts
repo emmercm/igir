@@ -24,13 +24,13 @@ export default class OutputCleaner extends Module {
     this.options = options;
   }
 
-  async clean(dirsToClean: string[], writtenFilesToExclude: File[]): Promise<number> {
     await this.progressBar.logInfo('Cleaning files in output');
+  async clean(dirsToClean: string[], writtenFilesToExclude: File[]): Promise<string[]> {
 
     // If nothing was written, then don't clean anything
     if (!writtenFilesToExclude.length) {
       await this.progressBar.logDebug('No files were written, not cleaning output');
-      return 0;
+      return [];
     }
 
     await this.progressBar.setSymbol(ProgressBarSymbol.SEARCHING);
@@ -43,7 +43,7 @@ export default class OutputCleaner extends Module {
     );
     if (!filesToClean.length) {
       await this.progressBar.logDebug('No files to clean');
-      return 0;
+      return [];
     }
 
     await this.progressBar.setSymbol(ProgressBarSymbol.RECYCLING);
@@ -67,7 +67,7 @@ export default class OutputCleaner extends Module {
     }
 
     await this.progressBar.logInfo('Done cleaning files in output');
-    return filesToClean.length;
+    return filesToClean.sort();
   }
 
   private async trashOrDelete(filePaths: string[]): Promise<void> {
