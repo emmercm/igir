@@ -24,12 +24,12 @@ export default class OutputCleaner extends Module {
     this.options = options;
   }
 
-    await this.progressBar.logInfo('Cleaning files in output');
   async clean(dirsToClean: string[], writtenFilesToExclude: File[]): Promise<string[]> {
+    await this.progressBar.logInfo('cleaning files in output');
 
     // If nothing was written, then don't clean anything
     if (!writtenFilesToExclude.length) {
-      await this.progressBar.logDebug('No files were written, not cleaning output');
+      await this.progressBar.logDebug('no files were written, not cleaning output');
       return [];
     }
 
@@ -42,19 +42,19 @@ export default class OutputCleaner extends Module {
       writtenFilesToExclude,
     );
     if (!filesToClean.length) {
-      await this.progressBar.logDebug('No files to clean');
+      await this.progressBar.logDebug('no files to clean');
       return [];
     }
 
     await this.progressBar.setSymbol(ProgressBarSymbol.RECYCLING);
 
     try {
-      await this.progressBar.logDebug(`Cleaning ${filesToClean.length.toLocaleString()} file${filesToClean.length !== 1 ? 's' : ''}`);
+      await this.progressBar.logDebug(`cleaning ${filesToClean.length.toLocaleString()} file${filesToClean.length !== 1 ? 's' : ''}`);
       await this.progressBar.reset(filesToClean.length);
       // TODO(cemmer): don't trash save files
       await this.trashOrDelete(filesToClean);
     } catch (e) {
-      await this.progressBar.logError(`Failed to clean unmatched files : ${e}`);
+      await this.progressBar.logError(`failed to clean unmatched files : ${e}`);
     }
 
     try {
@@ -63,10 +63,10 @@ export default class OutputCleaner extends Module {
       await this.progressBar.logDebug(`Cleaning ${emptyDirs.length.toLocaleString()} empty director${emptyDirs.length !== 1 ? 'ies' : 'y'}`);
       await this.trashOrDelete(emptyDirs);
     } catch (e) {
-      await this.progressBar.logError(`Failed to clean empty directories : ${e}`);
+      await this.progressBar.logError(`failed to clean empty directories: ${e}`);
     }
 
-    await this.progressBar.logInfo('Done cleaning files in output');
+    await this.progressBar.logInfo('done cleaning files in output');
     return filesToClean.sort();
   }
 

@@ -61,7 +61,7 @@ export default class ReportGenerator extends Module {
 
     const rows = [...matchedFileCsvs, unmatchedCsv, cleanedCsv].filter((csv) => csv);
     await util.promisify(fs.writeFile)(report, rows.join('\n'));
-    await this.progressBar.logDebug(`${report}: wrote ${datStatuses.length.toLocaleString()} status${datStatuses.length !== 1 ? 'es' : ''}`);
+    await this.progressBar.logDebug(`${report}: wrote ${datStatuses.length.toLocaleString()} CSV row${datStatuses.length !== 1 ? 's' : ''}`);
 
     await this.progressBar.logInfo('Done generating report');
     await this.progressBar.done(report);
