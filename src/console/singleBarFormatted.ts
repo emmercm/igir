@@ -24,7 +24,7 @@ export default class SingleBarFormatted {
     this.singleBar = this.multiBar.create(initialTotal, 0, {
       symbol,
       name,
-    } as ProgressBarPayload, {
+    } satisfies ProgressBarPayload, {
       /* eslint-disable-next-line arrow-body-style */
       format: (options, params, payload: ProgressBarPayload): string => {
         this.lastOutput = `${SingleBarFormatted.getSymbol(payload)} ${SingleBarFormatted.getName(payload)} | ${this.getProgress(options, params, payload)}`.trim();
