@@ -261,6 +261,15 @@ describe('options', () => {
     expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--overwrite', 'true', '--overwrite', 'false']).getOverwrite()).toEqual(false);
   });
 
+  it('should parse "overwrite-invalid"', () => {
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--overwrite-invalid']).getOverwriteInvalid()).toEqual(true);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--overwrite-invalid', 'true']).getOverwriteInvalid()).toEqual(true);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--overwrite-invalid', 'false']).getOverwriteInvalid()).toEqual(false);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--overwrite-invalid', '--overwrite-invalid']).getOverwriteInvalid()).toEqual(true);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--overwrite-invalid', 'false', '--overwrite-invalid', 'true']).getOverwriteInvalid()).toEqual(true);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--overwrite-invalid', 'true', '--overwrite-invalid', 'false']).getOverwriteInvalid()).toEqual(false);
+  });
+
   it('should parse "clean-exclude"', async () => {
     const argv = ['copy', '--input', os.devNull, '--output', os.devNull];
     const outputDir = './src';

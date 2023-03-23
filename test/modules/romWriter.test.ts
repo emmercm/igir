@@ -286,6 +286,74 @@ describe('zip', () => {
     });
   });
 
+  it('should not write anything if the output is expected and overwriting invalid', async () => {
+    await copyFixturesToTemp(async (inputTemp, outputTemp) => {
+      // Given
+      const options = new Options({ commands: ['copy', 'zip'] });
+      const inputFilesBefore = await walkAndStat(inputTemp);
+      await expect(walkAndStat(outputTemp)).resolves.toHaveLength(0);
+
+      // And we've written once
+      await romWriter(options, inputTemp, '**/*', undefined, outputTemp);
+
+      // And files were written
+      const outputFilesBefore = await walkAndStat(outputTemp);
+      expect(outputFilesBefore).not.toHaveLength(0);
+      expect(outputFilesBefore.some(([, stats]) => stats.isSymbolicLink())).toEqual(false);
+
+      // When we write again
+      await romWriter({
+        ...options,
+        overwriteInvalid: true,
+      }, inputTemp, '**/*', undefined, outputTemp);
+
+      // Then the output wasn't touched
+      await expect(walkAndStat(outputTemp)).resolves.toEqual(outputFilesBefore);
+
+      // And the input files weren't touched
+      await expect(walkAndStat(inputTemp)).resolves.toEqual(inputFilesBefore);
+    });
+  });
+
+  it('should write if the output is not expected and overwriting invalid', async () => {
+    await copyFixturesToTemp(async (inputTemp, outputTemp) => {
+      // Given
+      const options = new Options({ commands: ['copy', 'zip'] });
+      const inputFilesBefore = await walkAndStat(inputTemp);
+      await expect(walkAndStat(outputTemp)).resolves.toHaveLength(0);
+
+      // And we've written once
+      await romWriter(options, inputTemp, '**/*', undefined, outputTemp);
+
+      // And files were written
+      const outputFilesBefore = await walkAndStat(outputTemp);
+      expect(outputFilesBefore).not.toHaveLength(0);
+      expect(outputFilesBefore.some(([, stats]) => stats.isSymbolicLink())).toEqual(false);
+
+      // And the files are made invalid
+      await Promise.all(outputFilesBefore.map(async ([filePath]) => {
+        const resolvedPath = path.join(outputTemp, filePath);
+        await fsPoly.rm(resolvedPath);
+        await fsPoly.touch(resolvedPath);
+      }));
+
+      // When we write again
+      await romWriter({
+        ...options,
+        overwriteInvalid: true,
+      }, inputTemp, '**/*', undefined, outputTemp);
+
+      // Then the output was touched
+      const outputFilesAfter = await walkAndStat(outputTemp);
+      expect(outputFilesAfter.map((pair) => pair[0]))
+        .toEqual(outputFilesBefore.map((pair) => pair[0]));
+      expect(outputFilesAfter).not.toEqual(outputFilesBefore);
+
+      // And the input files weren't touched
+      await expect(walkAndStat(inputTemp)).resolves.toEqual(inputFilesBefore);
+    });
+  });
+
   test.each([
     // Control group of un-headered files
     ['raw/empty.rom', 'empty.rom', '00000000'],
@@ -609,6 +677,74 @@ describe('extract', () => {
     });
   });
 
+  it('should not write anything if the output is expected and overwriting invalid', async () => {
+    await copyFixturesToTemp(async (inputTemp, outputTemp) => {
+      // Given
+      const options = new Options({ commands: ['copy', 'extract'] });
+      const inputFilesBefore = await walkAndStat(inputTemp);
+      await expect(walkAndStat(outputTemp)).resolves.toHaveLength(0);
+
+      // And we've written once
+      await romWriter(options, inputTemp, '**/*', undefined, outputTemp);
+
+      // And files were written
+      const outputFilesBefore = await walkAndStat(outputTemp);
+      expect(outputFilesBefore).not.toHaveLength(0);
+      expect(outputFilesBefore.some(([, stats]) => stats.isSymbolicLink())).toEqual(false);
+
+      // When we write again
+      await romWriter({
+        ...options,
+        overwriteInvalid: true,
+      }, inputTemp, '**/*', undefined, outputTemp);
+
+      // Then the output wasn't touched
+      await expect(walkAndStat(outputTemp)).resolves.toEqual(outputFilesBefore);
+
+      // And the input files weren't touched
+      await expect(walkAndStat(inputTemp)).resolves.toEqual(inputFilesBefore);
+    });
+  });
+
+  it('should write if the output is not expected and overwriting invalid', async () => {
+    await copyFixturesToTemp(async (inputTemp, outputTemp) => {
+      // Given
+      const options = new Options({ commands: ['copy', 'extract'] });
+      const inputFilesBefore = await walkAndStat(inputTemp);
+      await expect(walkAndStat(outputTemp)).resolves.toHaveLength(0);
+
+      // And we've written once
+      await romWriter(options, inputTemp, '**/*', undefined, outputTemp);
+
+      // And files were written
+      const outputFilesBefore = await walkAndStat(outputTemp);
+      expect(outputFilesBefore).not.toHaveLength(0);
+      expect(outputFilesBefore.some(([, stats]) => stats.isSymbolicLink())).toEqual(false);
+
+      // And the files are made invalid
+      await Promise.all(outputFilesBefore.map(async ([filePath]) => {
+        const resolvedPath = path.join(outputTemp, filePath);
+        await fsPoly.rm(resolvedPath);
+        await fsPoly.touch(resolvedPath);
+      }));
+
+      // When we write again
+      await romWriter({
+        ...options,
+        overwriteInvalid: true,
+      }, inputTemp, '**/*', undefined, outputTemp);
+
+      // Then the output was touched
+      const outputFilesAfter = await walkAndStat(outputTemp);
+      expect(outputFilesAfter.map((pair) => pair[0]))
+        .toEqual(outputFilesBefore.map((pair) => pair[0]));
+      expect(outputFilesAfter).not.toEqual(outputFilesBefore);
+
+      // And the input files weren't touched
+      await expect(walkAndStat(inputTemp)).resolves.toEqual(inputFilesBefore);
+    });
+  });
+
   test.each([
     // Control group of un-headered files
     ['raw/empty.rom', 'empty.rom', '00000000'],
@@ -860,6 +996,74 @@ describe('raw', () => {
       await romWriter({
         ...options,
         overwrite: true,
+      }, inputTemp, '**/*', undefined, outputTemp);
+
+      // Then the output was touched
+      const outputFilesAfter = await walkAndStat(outputTemp);
+      expect(outputFilesAfter.map((pair) => pair[0]))
+        .toEqual(outputFilesBefore.map((pair) => pair[0]));
+      expect(outputFilesAfter).not.toEqual(outputFilesBefore);
+
+      // And the input files weren't touched
+      await expect(walkAndStat(inputTemp)).resolves.toEqual(inputFilesBefore);
+    });
+  });
+
+  it('should not write anything if the output is expected and overwriting invlaid', async () => {
+    await copyFixturesToTemp(async (inputTemp, outputTemp) => {
+      // Given
+      const options = new Options({ commands: ['copy'] });
+      const inputFilesBefore = await walkAndStat(inputTemp);
+      await expect(walkAndStat(outputTemp)).resolves.toHaveLength(0);
+
+      // And we've written once
+      await romWriter(options, inputTemp, '**/*', undefined, outputTemp);
+
+      // And files were written
+      const outputFilesBefore = await walkAndStat(outputTemp);
+      expect(outputFilesBefore).not.toHaveLength(0);
+      expect(outputFilesBefore.some(([, stats]) => stats.isSymbolicLink())).toEqual(false);
+
+      // When we write again
+      await romWriter({
+        ...options,
+        overwriteInvalid: true,
+      }, inputTemp, '**/*', undefined, outputTemp);
+
+      // Then the output wasn't touched
+      await expect(walkAndStat(outputTemp)).resolves.toEqual(outputFilesBefore);
+
+      // And the input files weren't touched
+      await expect(walkAndStat(inputTemp)).resolves.toEqual(inputFilesBefore);
+    });
+  });
+
+  it('should write if the output is not expected and overwriting invalid', async () => {
+    await copyFixturesToTemp(async (inputTemp, outputTemp) => {
+      // Given
+      const options = new Options({ commands: ['copy'] });
+      const inputFilesBefore = await walkAndStat(inputTemp);
+      await expect(walkAndStat(outputTemp)).resolves.toHaveLength(0);
+
+      // And we've written once
+      await romWriter(options, inputTemp, '**/*', undefined, outputTemp);
+
+      // And files were written
+      const outputFilesBefore = await walkAndStat(outputTemp);
+      expect(outputFilesBefore).not.toHaveLength(0);
+      expect(outputFilesBefore.some(([, stats]) => stats.isSymbolicLink())).toEqual(false);
+
+      // And the files are made invalid
+      await Promise.all(outputFilesBefore.map(async ([filePath]) => {
+        const resolvedPath = path.join(outputTemp, filePath);
+        await fsPoly.rm(resolvedPath);
+        await fsPoly.touch(resolvedPath);
+      }));
+
+      // When we write again
+      await romWriter({
+        ...options,
+        overwriteInvalid: true,
       }, inputTemp, '**/*', undefined, outputTemp);
 
       // Then the output was touched

@@ -223,6 +223,11 @@ export default class ArgumentsParser {
         description: 'Overwrite any files in the output directory',
         type: 'boolean',
       })
+      .option('overwrite-invalid', {
+        group: groupOutput,
+        description: 'Overwrite files in the output directory that are the wrong filesize, checksum, or zip contents',
+        type: 'boolean',
+      })
       .option('clean-exclude', {
         group: groupOutput,
         alias: 'C',

@@ -38,6 +38,7 @@ export interface OptionsProps {
   readonly dirDatName?: boolean,
   readonly dirLetter?: boolean,
   readonly overwrite?: boolean,
+  readonly overwriteInvalid?: boolean,
   readonly cleanExclude?: string[],
 
   readonly zipExclude?: string,
@@ -108,6 +109,8 @@ export default class Options implements OptionsProps {
   readonly dirLetter: boolean;
 
   readonly overwrite: boolean;
+
+  readonly overwriteInvalid: boolean;
 
   readonly cleanExclude: string[];
 
@@ -196,6 +199,7 @@ export default class Options implements OptionsProps {
     this.dirDatName = options?.dirDatName || false;
     this.dirLetter = options?.dirLetter || false;
     this.overwrite = options?.overwrite || false;
+    this.overwriteInvalid = options?.overwriteInvalid || false;
     this.cleanExclude = options?.cleanExclude || [];
 
     this.zipExclude = options?.zipExclude || '';
@@ -668,6 +672,10 @@ export default class Options implements OptionsProps {
 
   getOverwrite(): boolean {
     return this.overwrite;
+  }
+
+  getOverwriteInvalid(): boolean {
+    return this.overwriteInvalid;
   }
 
   private async scanCleanExcludeFiles(): Promise<string[]> {
