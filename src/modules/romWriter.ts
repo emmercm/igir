@@ -50,7 +50,8 @@ export default class ROMWriter extends Module {
       return;
     }
 
-    await this.progressBar.logInfo(`${dat.getNameShort()}: Writing candidates`);
+    const totalCandidates = [...parentsToCandidates.values()].flatMap((c) => c).length;
+    await this.progressBar.logInfo(`${dat.getNameShort()}: writing ${totalCandidates.toLocaleString()} candidate${totalCandidates !== 1 ? 's' : ''}`);
     await this.progressBar.setSymbol(ProgressBarSymbol.WRITING);
     await this.progressBar.reset(parentsToCandidates.size);
 
@@ -69,12 +70,11 @@ export default class ROMWriter extends Module {
     ));
 
     if (this.filesQueuedForDeletion.length) {
-      await this.progressBar.logDebug(`${dat.getNameShort()}: Deleting moved files`);
       await this.progressBar.setSymbol(ProgressBarSymbol.WRITING);
       await this.deleteMovedFiles(dat);
     }
 
-    await this.progressBar.logInfo(`${dat.getNameShort()}: Done writing candidates`);
+    await this.progressBar.logInfo(`${dat.getNameShort()}: done writing ${totalCandidates.toLocaleString()} candidate${totalCandidates !== 1 ? 's' : ''}`);
   }
 
   private async writeReleaseCandidate(
@@ -370,19 +370,20 @@ export default class ROMWriter extends Module {
   }
 
   private async deleteMovedFiles(dat: DAT): Promise<void[]> {
-    return Promise.all(
-      this.filesQueuedForDeletion
-        .map((file) => file.getFilePath())
-        .filter((filePath, idx, filePaths) => filePaths.indexOf(filePath) === idx)
-        .map(async (filePath) => {
-          await this.progressBar.logTrace(`${dat.getNameShort()}: ${filePath}: deleting moved file`);
-          try {
-            await fsPoly.rm(filePath, { force: true });
-          } catch (e) {
-            await this.progressBar.logError(`${dat.getNameShort()}: ${filePath}: failed to delete`);
-          }
-        }),
-    );
+    const uniqueFiles = this.filesQueuedForDeletion
+      .map((file) => file.getFilePath())
+      .filter((filePath, idx, filePaths) => filePaths.indexOf(filePath) === idx);
+
+    await this.progressBar.logDebug(`${dat.getNameShort()}: deleting  ${uniqueFiles.length.toLocaleString()} moved file${uniqueFiles.length !== 1 ? 's' : ''}`);
+
+    return Promise.all(uniqueFiles.map(async (filePath) => {
+      await this.progressBar.logTrace(`${dat.getNameShort()}: ${filePath}: deleting moved file`);
+      try {
+        await fsPoly.rm(filePath, { force: true });
+      } catch (e) {
+        await this.progressBar.logError(`${dat.getNameShort()}: ${filePath}: failed to delete`);
+      }
+    }));
   }
 
   /** ************************

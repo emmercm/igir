@@ -2,8 +2,7 @@ import fs from 'fs';
 import util from 'util';
 
 import ProgressBar from '../console/progressBar.js';
-import DATStatus from '../types/datStatus.js';
-import File from '../types/files/file.js';
+import DATStatus, { Status } from '../types/datStatus.js';
 import Options from '../types/options.js';
 import Module from './module.js';
 
@@ -20,7 +19,11 @@ export default class ReportGenerator extends Module {
     this.options = options;
   }
 
-  async generate(scannedRomFiles: File[], datStatuses: DATStatus[]): Promise<void> {
+  async generate(
+    scannedRomFiles: string[],
+    cleanedOutputFiles: string[],
+    datStatuses: DATStatus[],
+  ): Promise<void> {
     await this.progressBar.logInfo('Generating report');
 
     const report = this.options.getOutputReportPath();
@@ -49,15 +52,16 @@ export default class ReportGenerator extends Module {
         return map;
       }, new Map<string, boolean>());
     const unmatchedFiles = scannedRomFiles
-      .map((romFile) => romFile.getFilePath())
       .filter((filePath, idx, filePaths) => filePaths.indexOf(filePath) === idx)
       .filter((inputFile) => !matchedFiles.has(inputFile))
       .sort();
-    const unmatchedCsv = await DATStatus.unmatchedFilesToCsv(unmatchedFiles);
+    const unmatchedCsv = await DATStatus.filesToCsv(unmatchedFiles, Status.UNMATCHED);
 
-    const rows = [...matchedFileCsvs, unmatchedCsv].filter((csv) => csv);
+    const cleanedCsv = await DATStatus.filesToCsv(cleanedOutputFiles, Status.DELETED);
+
+    const rows = [...matchedFileCsvs, unmatchedCsv, cleanedCsv].filter((csv) => csv);
     await util.promisify(fs.writeFile)(report, rows.join('\n'));
-    await this.progressBar.logDebug(`${report}: wrote ${datStatuses.length.toLocaleString()} status${datStatuses.length !== 1 ? 'es' : ''}`);
+    await this.progressBar.logDebug(`${report}: wrote ${datStatuses.length.toLocaleString()} CSV row${datStatuses.length !== 1 ? 's' : ''}`);
 
     await this.progressBar.logInfo('Done generating report');
     await this.progressBar.done(report);
