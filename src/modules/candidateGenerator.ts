@@ -176,7 +176,7 @@ export default class CandidateGenerator extends Module {
             return [rom, undefined];
           }
 
-          finalInputFile = await originalInputFile.getArchive().asRawFile() as File;
+          finalInputFile = await originalInputFile.getArchive().asRawFile();
         }
 
         try {
@@ -221,12 +221,13 @@ export default class CandidateGenerator extends Module {
     inputFile: File,
   ): Promise<File> {
     const { base, ...parsedPath } = path.parse(rom.getName());
-    if (parsedPath.ext && inputFile.getFileHeader()) {
+    const fileHeader = inputFile.getFileHeader();
+    if (parsedPath.ext && fileHeader) {
       // If the ROM has a header then we're going to ignore the file extension from the DAT
       if (this.options.canRemoveHeader(dat, parsedPath.ext)) {
-        parsedPath.ext = inputFile.getFileHeader()?.getUnheaderedFileExtension() as string;
+        parsedPath.ext = fileHeader.getUnheaderedFileExtension();
       } else {
-        parsedPath.ext = inputFile.getFileHeader()?.getHeaderedFileExtension() as string;
+        parsedPath.ext = fileHeader.getHeaderedFileExtension();
       }
     }
     let outputEntryPath = path.format(parsedPath);

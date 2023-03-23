@@ -110,7 +110,7 @@ export default class ProgressBarCLI extends ProgressBar {
   async setSymbol(symbol: string): Promise<void> {
     this.singleBarFormatted.getSingleBar().update({
       symbol,
-    } as ProgressBarPayload);
+    } satisfies ProgressBarPayload);
     return ProgressBarCLI.render();
   }
 
@@ -137,7 +137,7 @@ export default class ProgressBarCLI extends ProgressBar {
 
       this.singleBarFormatted.getSingleBar().update({
         waitingMessage: this.waitingMessages[0],
-      } as ProgressBarPayload);
+      } satisfies ProgressBarPayload);
       await ProgressBarCLI.render(true);
     }, timeout);
   }
@@ -166,7 +166,7 @@ export default class ProgressBarCLI extends ProgressBar {
     if (finishedMessage) {
       this.singleBarFormatted.getSingleBar().update({
         finishedMessage,
-      } as ProgressBarPayload);
+      } satisfies ProgressBarPayload);
     }
 
     return ProgressBarCLI.render(true);

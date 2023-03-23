@@ -122,11 +122,9 @@ export default class CandidateFilter extends Module {
   }
 
   private regionNotAllowed(releaseCandidate: ReleaseCandidate): boolean {
+    const region = releaseCandidate.getRegion();
     return this.options.getRegionFilter().length > 0
-        && (
-          !releaseCandidate.getRegion()
-            || this.options.getRegionFilter().indexOf(releaseCandidate.getRegion() as string) === -1
-        );
+        && (!region || this.options.getRegionFilter().indexOf(region) === -1);
   }
 
   /** ****************
@@ -183,12 +181,12 @@ export default class CandidateFilter extends Module {
   }
 
   private preferRegionSortValue(releaseCandidate: ReleaseCandidate): number {
-    if (!releaseCandidate.getRegion()) {
+    const region = releaseCandidate.getRegion();
+    if (!region) {
       return Number.MAX_SAFE_INTEGER;
     }
 
-    const regionIdx = this.options.getPreferRegions()
-      .indexOf(releaseCandidate.getRegion() as string);
+    const regionIdx = this.options.getPreferRegions().indexOf(region);
     return regionIdx !== -1 ? regionIdx : Number.MAX_SAFE_INTEGER;
   }
 

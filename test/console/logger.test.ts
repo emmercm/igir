@@ -57,9 +57,7 @@ function testLogLevelsAtOrBelow(
 describe('setLogLevel_getLogLevel', () => {
   const logLevels = Object.keys(LogLevel).map((ll) => LogLevel[ll as keyof typeof LogLevel]);
   test.each(logLevels)('should reflect: %s', (logLevel) => {
-    const logger = new Logger(-1, new PassThrough());
-    expect(logger.getLogLevel()).not.toEqual(logLevel);
-
+    const logger = new Logger(LogLevel.TRACE, new PassThrough());
     logger.setLogLevel(logLevel);
     expect(logger.getLogLevel()).toEqual(logLevel);
   });
