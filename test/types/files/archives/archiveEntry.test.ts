@@ -1,16 +1,16 @@
 import path from 'path';
 
-import Constants from '../../../src/constants.js';
-import ROMScanner from '../../../src/modules/romScanner.js';
-import bufferPoly from '../../../src/polyfill/bufferPoly.js';
-import fsPoly from '../../../src/polyfill/fsPoly.js';
-import ArchiveEntry from '../../../src/types/files/archives/archiveEntry.js';
-import SevenZip from '../../../src/types/files/archives/sevenZip.js';
-import Zip from '../../../src/types/files/archives/zip.js';
-import FileFactory from '../../../src/types/files/fileFactory.js';
-import ROMHeader from '../../../src/types/files/romHeader.js';
-import Options from '../../../src/types/options.js';
-import ProgressBarFake from '../../console/progressBarFake.js';
+import Constants from '../../../../src/constants.js';
+import ROMScanner from '../../../../src/modules/romScanner.js';
+import bufferPoly from '../../../../src/polyfill/bufferPoly.js';
+import fsPoly from '../../../../src/polyfill/fsPoly.js';
+import ArchiveEntry from '../../../../src/types/files/archives/archiveEntry.js';
+import SevenZip from '../../../../src/types/files/archives/sevenZip.js';
+import Zip from '../../../../src/types/files/archives/zip.js';
+import FileFactory from '../../../../src/types/files/fileFactory.js';
+import ROMHeader from '../../../../src/types/files/romHeader.js';
+import Options from '../../../../src/types/options.js';
+import ProgressBarFake from '../../../console/progressBarFake.js';
 
 describe('getEntryPath', () => {
   test.each([
