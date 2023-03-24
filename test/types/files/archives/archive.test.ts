@@ -1,8 +1,8 @@
 import path from 'path';
 
-import Archive from '../../../src/types/files/archives/archive.js';
-import ArchiveEntry from '../../../src/types/files/archives/archiveEntry.js';
-import FileFactory from '../../../src/types/files/fileFactory.js';
+import Archive from '../../../../src/types/files/archives/archive.js';
+import ArchiveEntry from '../../../../src/types/files/archives/archiveEntry.js';
+import FileFactory from '../../../../src/types/files/fileFactory.js';
 
 describe('getArchiveEntries', () => {
   test.each([
