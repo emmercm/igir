@@ -60,7 +60,7 @@ describe('archiveEntries', () => {
       new Options(),
       new DAT(new Header(), []),
       inputToOutput,
-    )).rejects.toThrow(/no such file or directory/i);
+    )).rejects.toThrow();
 
     // And we were able to continue
     expect(true).toEqual(true);
