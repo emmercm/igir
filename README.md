@@ -31,7 +31,7 @@ With `igir` you can manage a ROM collection of any size:
 - 🗜️ Extract or archive ROMs in mass (see [archive docs](docs/archives.md))
 - 🩹 Patch ROMs automatically in mass (see [patching docs](docs/rom-patching.md))
 - 🎩 Parse ROMs with headers, and optionally remove them (see [header docs](docs/rom-headers.md))
-- 🔮 Know what ROMs are missing for each console (see [DAT docs](docs/dats.md))
+- 🔮 Know what ROMs are missing for each console (see [reporting docs](docs/reporting.md))
 
 ## How do I run `igir`?
 
