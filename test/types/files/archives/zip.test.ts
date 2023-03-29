@@ -18,7 +18,7 @@ async function findRoms(input: string): Promise<File[]> {
   }), new ProgressBarFake()).scan();
 }
 
-describe('archiveEntries', () => {
+describe('createArchive', () => {
   test.each([
     './test/fixtures/roms/**/*.rom',
     './test/fixtures/roms/**/*.7z',
@@ -56,7 +56,7 @@ describe('archiveEntries', () => {
     // When the file is being zipped
     // Then any underlying exception will be re-thrown
     const zip = [...inputToOutput.values()][0].getArchive();
-    await expect(zip.archiveEntries(
+    await expect(zip.createArchive(
       new Options(),
       new DAT(new Header(), []),
       inputToOutput,
