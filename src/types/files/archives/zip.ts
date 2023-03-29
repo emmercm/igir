@@ -1,4 +1,4 @@
-import archiver, { ArchiverError } from 'archiver';
+import archiver, { Archiver, ArchiverError } from 'archiver';
 import async from 'async';
 import fs from 'fs';
 import path from 'path';
@@ -81,7 +81,7 @@ export default class Zip extends Archive {
     }
   }
 
-  async archiveEntries(
+  async createArchive(
     options: Options,
     dat: DAT,
     inputToOutput: Map<File, ArchiveEntry<Zip>>,
@@ -91,6 +91,7 @@ export default class Zip extends Archive {
     const tempZipFile = await fsPoly.mktemp(this.getFilePath());
     const writeStream = fs.createWriteStream(tempZipFile);
 
+    // Start writing the zip file
     const zipFile = archiver('zip', {
       highWaterMark: Constants.FILE_READING_CHUNK_SIZE,
       zlib: {
@@ -99,20 +100,43 @@ export default class Zip extends Archive {
         memLevel: 9, // history buffer size, max, defaults to 8
       },
     });
+    zipFile.pipe(writeStream);
 
-    let zipFileError: ArchiverError | undefined;
-    zipFile.on('error', (err) => {
+    // Write each entry
+    try {
+      await Zip.addArchiveEntries(zipFile, options, dat, inputToOutput);
+    } catch (e) {
       zipFile.abort();
-      zipFileError = err;
+      await fsPoly.rm(tempZipFile, { force: true });
+      throw e;
+    }
+
+    // Finalize writing the zip file
+    await zipFile.finalize();
+    await new Promise((resolve) => {
+      writeStream.on('close', resolve);
     });
+
+    await fsPoly.mv(tempZipFile, this.getFilePath());
+  }
+
+  private static async addArchiveEntries(
+    zipFile: Archiver,
+    options: Options,
+    dat: DAT,
+    inputToOutput: Map<File, ArchiveEntry<Zip>>,
+  ): Promise<void> {
+    let zipFileError: ArchiverError | undefined;
+    const catchError = (err: ArchiverError): void => {
+      zipFileError = err;
+    };
+    zipFile.on('error', catchError);
 
     // Keep track of what entries have been written to the temp file on disk
     const writtenEntries = new Map<string, boolean>();
     zipFile.on('entry', (entry) => {
       writtenEntries.set(entry.name, true);
     });
-
-    zipFile.pipe(writeStream);
 
     // Write all archive entries to the zip
     await async.eachLimit(
@@ -121,7 +145,7 @@ export default class Zip extends Archive {
        * {@link archiver} uses a sequential, async queue internally:
        * @see https://github.com/archiverjs/node-archiver/blob/b5cc14cc97cc64bdca32c0cbe9d660b5b979be7c/lib/core.js#L52
        * Because of that, we should/can limit the number of open input file handles open. But we
-       *  also want to make sure the queue processing stays busy.
+       *  also want to make sure the queue processing stays busy. Use 3 as a middle-ground.
        */
       3,
       async.asyncify(async (
@@ -151,14 +175,8 @@ export default class Zip extends Archive {
       }),
     );
 
-    // Throw any exceptions caught along the way
     if (zipFileError) {
       throw zipFileError;
     }
-
-    // Finalize writing the zip file
-    await zipFile.finalize();
-
-    await fsPoly.mv(tempZipFile, this.getFilePath());
   }
 }
