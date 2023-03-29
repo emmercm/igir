@@ -243,7 +243,7 @@ export default class ROMWriter extends Module {
 
     try {
       await ROMWriter.ensureOutputDirExists(outputZip.getFilePath());
-      await outputZip.archiveEntries(this.options, dat, inputToOutputZipEntries);
+      await outputZip.createArchive(this.options, dat, inputToOutputZipEntries);
     } catch (e) {
       await this.progressBar.logError(`${dat.getNameShort()}: ${outputZip.getFilePath()}: failed to create zip : ${e}`);
       return false;
@@ -374,7 +374,7 @@ export default class ROMWriter extends Module {
       .map((file) => file.getFilePath())
       .filter((filePath, idx, filePaths) => filePaths.indexOf(filePath) === idx);
 
-    await this.progressBar.logDebug(`${dat.getNameShort()}: deleting  ${uniqueFiles.length.toLocaleString()} moved file${uniqueFiles.length !== 1 ? 's' : ''}`);
+    await this.progressBar.logDebug(`${dat.getNameShort()}: deleting ${uniqueFiles.length.toLocaleString()} moved file${uniqueFiles.length !== 1 ? 's' : ''}`);
 
     return Promise.all(uniqueFiles.map(async (filePath) => {
       await this.progressBar.logTrace(`${dat.getNameShort()}: ${filePath}: deleting moved file`);
