@@ -6,6 +6,7 @@
   <a href="https://github.com/emmercm/igir#readme"><img alt="CLI: Windows,macOS,Linux" src="https://img.shields.io/badge/CLI-Windows%2C%20macOS%2C%20Linux-lightgrey?logo=windows-terminal"></a>
   <a href="https://www.npmjs.com/package/igir"><img alt="npm: version" src="https://img.shields.io/npm/v/igir?color=%23cc3534&label=version&logo=npm&logoColor=white"></a>
   <a href="https://www.npmjs.com/package/igir"><img alt="npm: downloads" src="https://img.shields.io/npm/dt/igir?color=%23cc3534&logo=npm&logoColor=white"></a>
+  <a href="https://github.com/emmercm/igir"><img alt="GitHub: downloads" src="https://img.shields.io/github/downloads/emmercm/igir/total?color=%236e5494&logo=github&logoColor=white"></a>
   <a href="https://github.com/emmercm/igir"><img alt="GitHub: stars" src="https://img.shields.io/github/stars/emmercm/igir?color=%236e5494&logo=github&logoColor=white"></a>
 </p>
 <p align="center">
@@ -24,12 +25,12 @@ A video of an example use case:
 
 With `igir` you can manage a ROM collection of any size:
 
-- 🔍 Scan for DATs, ROMs, and ROM patches - including those in archives (see [archive docs](docs/archives.md))
+- 🔍 Scan for DATs, ROMs, and ROM patches - including those in archives (see [scanning](docs/file-scanning.md), [archive docs](docs/archives.md))
 - 📂 Organize ROM files by console (see [DAT docs](docs/dats.md))
 - 🪄 Name ROM files consistently, including the right extension (see [DAT docs](docs/dats.md))
 - ✂️ Filter out duplicate ROMs, or ROMs in languages you don't understand (see [filtering docs](docs/rom-filtering.md))
 - 🗜️ Extract or archive ROMs in mass (see [archive docs](docs/archives.md))
-- 🩹 Patch ROMs automatically in mass (see [patching docs](docs/rom-patching.md))
+- 🩹 Patch ROMs automatically in mass (see [scanning](docs/file-scanning.md), [patching docs](docs/rom-patching.md))
 - 🎩 Parse ROMs with headers, and optionally remove them (see [header docs](docs/rom-headers.md))
 - 🔮 Know what ROMs are missing for each console (see [reporting docs](docs/reporting.md))
 
