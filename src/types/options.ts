@@ -27,6 +27,7 @@ export interface OptionsProps {
   readonly input?: string[],
   readonly inputExclude?: string[],
   readonly patch?: string[],
+  readonly patchExclude?: string[],
 
   readonly dat?: string[],
   readonly datExclude?: string[],
@@ -91,6 +92,8 @@ export default class Options implements OptionsProps {
   readonly inputExclude: string[];
 
   readonly patch: string[];
+
+  readonly patchExclude: string[];
 
   readonly dat: string[];
 
@@ -188,6 +191,7 @@ export default class Options implements OptionsProps {
     this.input = options?.input || [];
     this.inputExclude = options?.inputExclude || [];
     this.patch = options?.patch || [];
+    this.patchExclude = options?.patchExclude || [];
 
     this.dat = options?.dat || [];
     this.datExclude = options?.datExclude || [];
@@ -347,8 +351,19 @@ export default class Options implements OptionsProps {
     return this.patch.length;
   }
 
-  async scanPatchFiles(): Promise<string[]> {
+  async scanPatchFilesWithoutExclusions(): Promise<string[]> {
+    const patchFiles = await this.scanPatchFiles();
+    const patchExcludeFiles = await this.scanPatchExcludeFiles();
+    return patchFiles
+      .filter((patchPath) => patchExcludeFiles.indexOf(patchPath) === -1);
+  }
+
+  private async scanPatchFiles(): Promise<string[]> {
     return Options.scanPaths(this.patch);
+  }
+
+  private async scanPatchExcludeFiles(): Promise<string[]> {
+    return Options.scanPaths(this.patchExclude, false);
   }
 
   private static async scanPaths(globPatterns: string[], requireFiles = true): Promise<string[]> {
