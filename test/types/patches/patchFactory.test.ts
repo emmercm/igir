@@ -6,7 +6,7 @@ describe('patchFromFilename', () => {
   it('should do nothing if extension not found', async () => {
     const inputPatchFilePaths = await new Options({
       patch: ['./test/fixtures/roms'],
-    }).scanPatchFiles();
+    }).scanPatchFilesWithoutExclusions();
 
     /* eslint-disable no-await-in-loop */
     for (let i = 0; i < inputPatchFilePaths.length; i += 1) {
@@ -19,7 +19,7 @@ describe('patchFromFilename', () => {
   it('should process patch files', async () => {
     const inputPatchFilePaths = await new Options({
       patch: ['./test/fixtures/patches'],
-    }).scanPatchFiles();
+    }).scanPatchFilesWithoutExclusions();
 
     /* eslint-disable no-await-in-loop */
     for (let i = 0; i < inputPatchFilePaths.length; i += 1) {
@@ -34,7 +34,7 @@ describe('patchFromFileContents', () => {
   it('should do nothing if header not recognized', async () => {
     const inputPatchFilePaths = await new Options({
       patch: ['./test/fixtures/roms'],
-    }).scanPatchFiles();
+    }).scanPatchFilesWithoutExclusions();
 
     /* eslint-disable no-await-in-loop */
     for (let i = 0; i < inputPatchFilePaths.length; i += 1) {
@@ -47,7 +47,7 @@ describe('patchFromFileContents', () => {
   it('should process patch files', async () => {
     const inputPatchFilePaths = await new Options({
       patch: ['./test/fixtures/patches'],
-    }).scanPatchFiles();
+    }).scanPatchFilesWithoutExclusions();
 
     /* eslint-disable no-await-in-loop */
     for (let i = 0; i < inputPatchFilePaths.length; i += 1) {
