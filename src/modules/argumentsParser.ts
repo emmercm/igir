@@ -153,6 +153,13 @@ export default class ArgumentsParser {
         type: 'array',
         requiresArg: true,
       })
+      .option('patch-exclude', {
+        group: groupInput,
+        alias: 'P',
+        description: 'Path(s) to ROM patch files or archives to exclude from processing',
+        type: 'array',
+        requiresArg: true,
+      })
 
       .option('dat', {
         group: groupDat,

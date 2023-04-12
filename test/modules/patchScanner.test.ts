@@ -8,8 +8,8 @@ import FileFactory from '../../src/types/files/fileFactory.js';
 import Options from '../../src/types/options.js';
 import ProgressBarFake from '../console/progressBarFake.js';
 
-function createPatchScanner(patch: string[]): PatchScanner {
-  return new PatchScanner(new Options({ patch }), new ProgressBarFake());
+function createPatchScanner(patch: string[], patchExclude: string[] = []): PatchScanner {
+  return new PatchScanner(new Options({ patch, patchExclude }), new ProgressBarFake());
 }
 
 it('should throw on nonexistent paths', async () => {
@@ -36,27 +36,39 @@ it('should scan single files', async () => {
   await expect(createPatchScanner(['test/fixtures/*/After*.ips']).scan()).resolves.toHaveLength(1);
 });
 
-it('should scan multiple files', async () => {
-  const expectedPatchFiles = 9;
-  await expect(createPatchScanner(['test/fixtures/patches/*']).scan()).resolves.toHaveLength(expectedPatchFiles);
-  await expect(createPatchScanner(['test/fixtures/patches/**/*']).scan()).resolves.toHaveLength(expectedPatchFiles);
-  await expect(createPatchScanner(['test/fixtures/*/*.{aps,bps,ips,ips32,ppf,rup,ups,vcdiff,xdelta}']).scan()).resolves.toHaveLength(expectedPatchFiles);
-});
+describe('multiple files', () => {
+  it('should scan multiple files with no exclusions', async () => {
+    const expectedPatchFiles = 9;
+    await expect(createPatchScanner(['test/fixtures/patches/*']).scan()).resolves.toHaveLength(expectedPatchFiles);
+    await expect(createPatchScanner(['test/fixtures/patches/**/*']).scan()).resolves.toHaveLength(expectedPatchFiles);
+    await expect(createPatchScanner(['test/fixtures/*/*.{aps,bps,ips,ips32,ppf,rup,ups,vcdiff,xdelta}']).scan()).resolves.toHaveLength(expectedPatchFiles);
+  });
 
-it('should scan multiple files of incorrect extensions', async () => {
-  const patchFiles = (await new Options({ patch: ['test/fixtures/patches/*'] }).scanPatchFiles())
-    .filter((filePath) => !FileFactory.isArchive(filePath));
+  it('should scan multiple files with some exclusions', async () => {
+    await expect(createPatchScanner(['test/fixtures/patches/*'], ['test/fixtures/patches/**/*.ips*']).scan()).resolves.toHaveLength(7);
+    await expect(createPatchScanner(['test/fixtures/patches/*'], ['test/fixtures/patches/**/*.ips*', 'test/fixtures/patches/**/*.ips*']).scan()).resolves.toHaveLength(7);
+  });
 
-  const tempDir = await fsPoly.mkdtemp(Constants.GLOBAL_TEMP_DIR);
-  try {
-    const tempFiles = await Promise.all(patchFiles.map(async (patchFile) => {
-      const tempFile = path.join(tempDir, `${path.basename(patchFile)}.txt`);
-      await fsPoly.copyFile(patchFile, tempFile);
-      return tempFile;
-    }));
-    expect(tempFiles.length).toBeGreaterThan(0);
-    await expect(createPatchScanner(tempFiles).scan()).resolves.toHaveLength(tempFiles.length);
-  } finally {
-    await fsPoly.rm(tempDir, { recursive: true });
-  }
+  it('should scan multiple files with every file excluded', async () => {
+    await expect(createPatchScanner(['test/fixtures/patches/*'], ['test/fixtures/patches/*']).scan()).resolves.toHaveLength(0);
+    await expect(createPatchScanner(['test/fixtures/patches/*'], ['test/fixtures/patches/*', 'test/fixtures/patches/*']).scan()).resolves.toHaveLength(0);
+  });
+
+  it('should scan multiple files of incorrect extensions', async () => {
+    const patchFiles = (await new Options({ patch: ['test/fixtures/patches/*'] }).scanPatchFilesWithoutExclusions())
+      .filter((filePath) => !FileFactory.isArchive(filePath));
+
+    const tempDir = await fsPoly.mkdtemp(Constants.GLOBAL_TEMP_DIR);
+    try {
+      const tempFiles = await Promise.all(patchFiles.map(async (patchFile) => {
+        const tempFile = path.join(tempDir, `${path.basename(patchFile)}.txt`);
+        await fsPoly.copyFile(patchFile, tempFile);
+        return tempFile;
+      }));
+      expect(tempFiles.length).toBeGreaterThan(0);
+      await expect(createPatchScanner(tempFiles).scan()).resolves.toHaveLength(tempFiles.length);
+    } finally {
+      await fsPoly.rm(tempDir, { recursive: true });
+    }
+  });
 });
