@@ -6,7 +6,7 @@
   <a href="https://github.com/emmercm/igir#readme"><img alt="CLI: Windows,macOS,Linux" src="https://img.shields.io/badge/CLI-Windows%2C%20macOS%2C%20Linux-lightgrey?logo=windows-terminal"></a>
   <a href="https://www.npmjs.com/package/igir"><img alt="npm: version" src="https://img.shields.io/npm/v/igir?color=%23cc3534&label=version&logo=npm&logoColor=white"></a>
   <a href="https://www.npmjs.com/package/igir"><img alt="npm: downloads" src="https://img.shields.io/npm/dt/igir?color=%23cc3534&logo=npm&logoColor=white"></a>
-  <a href="https://github.com/emmercm/igir"><img alt="GitHub: downloads" src="https://img.shields.io/github/downloads/emmercm/igir/total?color=%236e5494&logo=github&logoColor=white"></a>
+  <a href="https://github.com/emmercm/igir/releases"><img alt="GitHub: downloads" src="https://img.shields.io/github/downloads/emmercm/igir/total?color=%236e5494&logo=github&logoColor=white"></a>
   <a href="https://github.com/emmercm/igir"><img alt="GitHub: stars" src="https://img.shields.io/github/stars/emmercm/igir?color=%236e5494&logo=github&logoColor=white"></a>
 </p>
 <p align="center">
@@ -53,7 +53,7 @@ $ igir --help
   | $$  | $$ __\$$  | $$  | $$__| $$
   | $$  | $$|    \  | $$  | $$    $$   ROM collection manager
   | $$  | $$ \$$$$  | $$  | $$$$$$$\
- _| $$_ | $$__| $$ _| $$_ | $$  | $$   v1.4.1
+ _| $$_ | $$__| $$ _| $$_ | $$  | $$   v1.5.0
 |   $$ \ \$$    $$|   $$ \| $$  | $$
  \$$$$$$  \$$$$$$  \$$$$$$ \$$   \$$
 
@@ -76,6 +76,7 @@ Input options (supports globbing):
   -I, --input-exclude  Path(s) to ROM files or archives to exclude from processing        [array]
   -p, --patch          Path(s) to ROM patch files or archives (supported: .aps, .bps, .dps, .ebp,
                         .ips, .ips32, .ppf, .rup, .ups, .vcdiff, .xdelta)                 [array]
+  -P, --patch-exclude  Path(s) to ROM patch files or archives to exclude from processing  [array]
 
 DAT input options:
   -d, --dat                Path(s) to DAT files or archives (supports globbing)           [array]
@@ -85,13 +86,16 @@ DAT input options:
       --dat-regex-exclude  Regular expression of DAT names to exclude from processing    [string]
 
 ROM output options:
-  -o, --output         Path to the ROM output directory (supports replaceable symbols, see below)
-                                                                                         [string]
-      --dir-mirror     Use the input subdirectory structure for the output directory    [boolean]
-  -D, --dir-dat-name   Use the DAT name as the output subdirectory                      [boolean]
-      --dir-letter     Append the first letter of the ROM name as an output subdirectory[boolean]
-  -O, --overwrite      Overwrite any files in the output directory                      [boolean]
-  -C, --clean-exclude  Path(s) to files to exclude from cleaning (supports globbing)      [array]
+  -o, --output             Path to the ROM output directory (supports replaceable symbols, see be
+                           low)                                                          [string]
+      --dir-mirror         Use the input subdirectory structure for the output directory[boolean]
+  -D, --dir-dat-name       Use the DAT name as the output subdirectory                  [boolean]
+      --dir-letter         Append the first letter of the ROM name as an output subdirectory
+                                                                                        [boolean]
+  -O, --overwrite          Overwrite any files in the output directory                  [boolean]
+      --overwrite-invalid  Overwrite files in the output directory that are the wrong filesize, c
+                           hecksum, or zip contents                                     [boolean]
+  -C, --clean-exclude      Path(s) to files to exclude from cleaning (supports globbing)  [array]
 
 Zip command options:
   -Z, --zip-exclude   Glob pattern of files to exclude from zipping                      [string]
