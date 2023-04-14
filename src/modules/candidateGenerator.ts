@@ -221,6 +221,14 @@ export default class CandidateGenerator extends Module {
     inputFile: File,
   ): Promise<File> {
     const { base, ...parsedPath } = path.parse(rom.getName());
+
+    // Determine the output CRC of the file
+    let outputFileCrc = inputFile.getCrc32();
+    if (inputFile.getFileHeader() && this.options.canRemoveHeader(dat, parsedPath.ext)) {
+      outputFileCrc = inputFile.getCrc32WithoutHeader();
+    }
+
+    // Determine the output extension of the file
     const fileHeader = inputFile.getFileHeader();
     if (parsedPath.ext && fileHeader) {
       // If the ROM has a header then we're going to ignore the file extension from the DAT
@@ -263,14 +271,14 @@ export default class CandidateGenerator extends Module {
         new Zip(outputFilePath),
         outputEntryPath,
         inputFile.getSize(),
-        inputFile.getCrc32(),
+        outputFileCrc,
       );
     } if (!(inputFile instanceof ArchiveEntry) || this.options.shouldExtract()) {
       // Should extract (if needed), return a raw file using the ROM's size/CRC
       return File.fileOf(
         outputFilePath,
         inputFile.getSize(),
-        inputFile.getCrc32(),
+        outputFileCrc,
       );
     }
     // Should leave archived
