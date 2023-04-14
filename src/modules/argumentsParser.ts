@@ -1,3 +1,4 @@
+import moment from 'moment';
 import terminalSize from 'term-size';
 import yargs, { Argv } from 'yargs';
 
@@ -7,7 +8,6 @@ import ROMHeader from '../types/files/romHeader.js';
 import Options from '../types/options.js';
 import PatchFactory from '../types/patches/patchFactory.js';
 import ReleaseCandidate from '../types/releaseCandidate.js';
-import moment from "moment";
 
 /**
  * Parse a CLI argv string[] into {@link Options}.
