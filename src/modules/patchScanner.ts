@@ -14,13 +14,13 @@ export default class PatchScanner extends Scanner {
   }
 
   async scan(): Promise<Patch[]> {
-    await this.progressBar.logInfo('Scanning patch files');
+    await this.progressBar.logInfo('scanning patch files');
 
     await this.progressBar.setSymbol(ProgressBarSymbol.SEARCHING);
     await this.progressBar.reset(this.options.getPatchFileCount());
 
     const patchFilePaths = await this.options.scanPatchFilesWithoutExclusions();
-    await this.progressBar.logDebug(`Found ${patchFilePaths.length} patch file${patchFilePaths.length !== 1 ? 's' : ''}`);
+    await this.progressBar.logDebug(`found ${patchFilePaths.length.toLocaleString()} patch file${patchFilePaths.length !== 1 ? 's' : ''}`);
     await this.progressBar.reset(patchFilePaths.length);
 
     const files = await this.getFilesFromPaths(
@@ -38,7 +38,7 @@ export default class PatchScanner extends Scanner {
           const patch = await this.patchFromFile(file);
           callback(null, patch);
         } catch (e) {
-          await this.progressBar.logWarn(`${file.toString()}: Failed to parse patch : ${e}`);
+          await this.progressBar.logWarn(`${file.toString()}: failed to parse patch: ${e}`);
           callback(null, undefined);
         }
       },
@@ -46,7 +46,7 @@ export default class PatchScanner extends Scanner {
 
     await this.progressBar.doneItems(patches.length, 'unique patch', 'found');
 
-    await this.progressBar.logInfo('Done scanning patch files');
+    await this.progressBar.logInfo('done scanning patch files');
     return patches;
   }
 

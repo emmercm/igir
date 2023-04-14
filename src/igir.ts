@@ -57,7 +57,7 @@ export default class Igir {
     const datsStatuses: DATStatus[] = [];
 
     // Process every DAT
-    await datProcessProgressBar.logInfo(`Processing ${dats.length.toLocaleString()} DAT${dats.length !== 1 ? 's' : ''}`);
+    await datProcessProgressBar.logInfo(`processing ${dats.length.toLocaleString()} DAT${dats.length !== 1 ? 's' : ''}`);
     await async.eachLimit(dats, this.options.getDatThreads(), async (dat, callback) => {
       const progressBar = await this.logger.addProgressBar(
         dat.getNameShort(),
@@ -107,7 +107,7 @@ export default class Igir {
       await datProcessProgressBar.increment();
       callback();
     });
-    await datProcessProgressBar.logInfo(`Done processing ${dats.length.toLocaleString()} DAT${dats.length !== 1 ? 's' : ''}`);
+    await datProcessProgressBar.logInfo(`done processing ${dats.length.toLocaleString()} DAT${dats.length !== 1 ? 's' : ''}`);
 
     await datProcessProgressBar.doneItems(dats.length, 'DAT', 'processed');
     datProcessProgressBar.delete();

@@ -54,13 +54,13 @@ export default class OutputCleaner extends Module {
       // TODO(cemmer): don't trash save files
       await this.trashOrDelete(filesToClean);
     } catch (e) {
-      await this.progressBar.logError(`failed to clean unmatched files : ${e}`);
+      await this.progressBar.logError(`failed to clean unmatched files: ${e}`);
     }
 
     try {
       const emptyDirs = await OutputCleaner.getEmptyDirs(dirsToClean);
       await this.progressBar.reset(emptyDirs.length);
-      await this.progressBar.logDebug(`Cleaning ${emptyDirs.length.toLocaleString()} empty director${emptyDirs.length !== 1 ? 'ies' : 'y'}`);
+      await this.progressBar.logDebug(`cleaning ${emptyDirs.length.toLocaleString()} empty director${emptyDirs.length !== 1 ? 'ies' : 'y'}`);
       await this.trashOrDelete(emptyDirs);
     } catch (e) {
       await this.progressBar.logError(`failed to clean empty directories: ${e}`);
