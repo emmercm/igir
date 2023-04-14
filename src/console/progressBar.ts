@@ -7,7 +7,7 @@ import LogLevel from './logLevel.js';
  * @see https://www.htmlsymbols.xyz/
  * @see https://www.fileformat.info/info/unicode/font/lucida_console/grid.htm (win32)
  */
-export const ProgressBarSymbol: { [key: string]: string } = {
+export const ProgressBarSymbol = {
   WAITING: chalk.grey(process.platform === 'win32' ? '…' : '⋯'),
   SEARCHING: chalk.magenta(process.platform === 'win32' ? '○' : '↻'),
   HASHING: chalk.magenta('#'),
@@ -16,6 +16,7 @@ export const ProgressBarSymbol: { [key: string]: string } = {
   FILTERING: chalk.cyan('∆'),
   WRITING: chalk.yellow(process.platform === 'win32' ? '»' : '✎'),
   RECYCLING: chalk.blue(process.platform === 'win32' ? '≠' : '♻'),
+  DELETING: chalk.red(process.platform === 'win32' ? 'X' : '✕'),
   DONE: chalk.green(process.platform === 'win32' ? '√' : '✓'),
 };
 
