@@ -15,11 +15,35 @@ export default class ROM {
   @Expose({ name: 'crc' })
   private readonly crc?: string;
 
+  @Expose({ name: 'md5' })
+  private readonly md5?: string;
+
+  @Expose({ name: 'sha1' })
+  private readonly sha1?: string;
+
+  @Expose({ name: 'status' })
+  private readonly status?: string;
+
   constructor(name: string, size: number, crc: string) {
     this.name = name;
     this.size = size;
     this.crc = crc;
   }
+
+  toXmlDatObj(): object {
+    return {
+      $: {
+        name: this.name,
+        size: this.size,
+        crc: this.crc,
+        md5: this.md5,
+        sha1: this.sha1,
+        status: this.status,
+      },
+    };
+  }
+
+  // Property getters
 
   getName(): string {
     return this.name.replace(/[\\/]/g, '/');

@@ -86,6 +86,20 @@ export default class Game implements GameProps {
     this.rom = options?.rom || [];
   }
 
+  toXmlDatObj(): object {
+    return {
+      $: {
+        name: this.name,
+        // NOTE(cemmer): explicitly not including `cloneof`
+      },
+      description: {
+        _: this.description,
+      },
+      release: this.getReleases().map((release) => release.toXmlDatObj()),
+      rom: this.getRoms().map((rom) => rom.toXmlDatObj()),
+    };
+  }
+
   // Property getters
 
   getName(): string {

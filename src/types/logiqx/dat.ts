@@ -1,6 +1,7 @@
 import 'reflect-metadata';
 
 import { Expose, plainToInstance, Type } from 'class-transformer';
+import xml2js from 'xml2js';
 
 import Game from './game.js';
 import Header from './header.js';
@@ -54,6 +55,26 @@ export default class DAT {
     });
 
     return this;
+  }
+
+  toXmlDat(): string {
+    return new xml2js.Builder({
+      renderOpts: { pretty: true, indent: '\t', newline: '\n' },
+      xmldec: { version: '1.0' },
+      doctype: {
+        pubID: '-//Logiqx//DTD ROM Management Datafile//EN',
+        sysID: 'http://www.logiqx.com/Dats/datafile.dtd',
+      },
+    }).buildObject(this.toXmlDatObj());
+  }
+
+  private toXmlDatObj(): object {
+    return {
+      datafile: {
+        header: this.header.toXmlDatObj(),
+        game: this.getGames().map((game) => game.toXmlDatObj()),
+      },
+    };
   }
 
   // Property getters
