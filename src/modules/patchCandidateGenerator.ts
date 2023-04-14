@@ -23,10 +23,10 @@ export default class PatchCandidateGenerator extends Module {
     parentsToCandidates: Map<Parent, ReleaseCandidate[]>,
     patches: Patch[],
   ): Promise<Map<Parent, ReleaseCandidate[]>> {
-    await this.progressBar.logInfo(`${dat.getNameShort()}: Generating patched candidates`);
+    await this.progressBar.logInfo(`${dat.getNameShort()}: generating patched candidates`);
 
     if (!parentsToCandidates.size) {
-      await this.progressBar.logDebug(`${dat.getNameShort()}: No parents to make patched candidates for`);
+      await this.progressBar.logDebug(`${dat.getNameShort()}: no parents to make patched candidates for`);
       return parentsToCandidates;
     }
 
@@ -37,7 +37,7 @@ export default class PatchCandidateGenerator extends Module {
     await this.progressBar.logDebug(`${dat.getNameShort()}: ${crcToPatches.size} unique patches found`);
 
     const patchedParentsToCandidates = this.build(dat, parentsToCandidates, crcToPatches);
-    await this.progressBar.logInfo(`${dat.getNameShort()}: Done generating patched candidates`);
+    await this.progressBar.logInfo(`${dat.getNameShort()}: done generating patched candidates`);
 
     return patchedParentsToCandidates;
   }

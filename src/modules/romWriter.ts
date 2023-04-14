@@ -50,8 +50,8 @@ export default class ROMWriter extends Module {
       return;
     }
 
-    const totalCandidates = [...parentsToCandidates.values()].flatMap((c) => c).length;
-    await this.progressBar.logInfo(`${dat.getNameShort()}: writing ${totalCandidates.toLocaleString()} candidate${totalCandidates !== 1 ? 's' : ''}`);
+    const totalCandidateCount = [...parentsToCandidates.values()].flatMap((c) => c).length;
+    await this.progressBar.logInfo(`${dat.getNameShort()}: writing ${totalCandidateCount.toLocaleString()} candidate${totalCandidateCount !== 1 ? 's' : ''}`);
     await this.progressBar.setSymbol(ProgressBarSymbol.WRITING);
     await this.progressBar.reset(parentsToCandidates.size);
 
@@ -74,7 +74,7 @@ export default class ROMWriter extends Module {
       await this.deleteMovedFiles(dat);
     }
 
-    await this.progressBar.logInfo(`${dat.getNameShort()}: done writing ${totalCandidates.toLocaleString()} candidate${totalCandidates !== 1 ? 's' : ''}`);
+    await this.progressBar.logInfo(`${dat.getNameShort()}: done writing ${totalCandidateCount.toLocaleString()} candidate${totalCandidateCount !== 1 ? 's' : ''}`);
   }
 
   private async writeReleaseCandidate(
@@ -245,7 +245,7 @@ export default class ROMWriter extends Module {
       await ROMWriter.ensureOutputDirExists(outputZip.getFilePath());
       await outputZip.createArchive(this.options, dat, inputToOutputZipEntries);
     } catch (e) {
-      await this.progressBar.logError(`${dat.getNameShort()}: ${outputZip.getFilePath()}: failed to create zip : ${e}`);
+      await this.progressBar.logError(`${dat.getNameShort()}: ${outputZip.getFilePath()}: failed to create zip: ${e}`);
       return false;
     }
 
@@ -334,7 +334,7 @@ export default class ROMWriter extends Module {
       await fsPoly.mv(tempRawFile, outputFilePath);
       return true;
     } catch (e) {
-      await this.progressBar.logError(`${dat.getNameShort()}: ${inputRomFile.toString()}: failed to copy to ${outputFilePath} : ${e}`);
+      await this.progressBar.logError(`${dat.getNameShort()}: ${inputRomFile.toString()}: failed to copy to ${outputFilePath}: ${e}`);
       return false;
     }
   }
@@ -442,7 +442,7 @@ export default class ROMWriter extends Module {
       await ROMWriter.ensureOutputDirExists(targetPath);
       await fsPoly.symlink(sourcePath, targetPath);
     } catch (e) {
-      await this.progressBar.logError(`${dat.getNameShort()}: ${inputRomFile.toString()}: failed to symlink ${sourcePath} to ${targetPath} : ${e}`);
+      await this.progressBar.logError(`${dat.getNameShort()}: ${inputRomFile.toString()}: failed to symlink ${sourcePath} to ${targetPath}: ${e}`);
     }
 
     if (this.options.shouldTest()) {

@@ -34,11 +34,11 @@ export default class CandidateGenerator extends Module {
     dat: DAT,
     inputRomFiles: File[],
   ): Promise<Map<Parent, ReleaseCandidate[]>> {
-    await this.progressBar.logInfo(`${dat.getNameShort()}: Generating candidates`);
+    await this.progressBar.logInfo(`${dat.getNameShort()}: generating candidates`);
 
     const output = new Map<Parent, ReleaseCandidate[]>();
     if (!inputRomFiles.length) {
-      await this.progressBar.logDebug(`${dat.getNameShort()}: No input ROMs to make candidates from`);
+      await this.progressBar.logDebug(`${dat.getNameShort()}: no input ROMs to make candidates from`);
       return output;
     }
 
@@ -95,7 +95,7 @@ export default class CandidateGenerator extends Module {
     const totalCandidates = [...output.values()].reduce((sum, rc) => sum + rc.length, 0);
     await this.progressBar.logDebug(`${dat.getNameShort()}: generated ${fsPoly.sizeReadable(size)} of ${totalCandidates.toLocaleString()} candidate${totalCandidates !== 1 ? 's' : ''} for ${output.size.toLocaleString()} parent${output.size !== 1 ? 's' : ''}`);
 
-    await this.progressBar.logInfo(`${dat.getNameShort()}: Done generating candidates`);
+    await this.progressBar.logInfo(`${dat.getNameShort()}: done generating candidates`);
     return output;
   }
 
@@ -221,6 +221,14 @@ export default class CandidateGenerator extends Module {
     inputFile: File,
   ): Promise<File> {
     const { base, ...parsedPath } = path.parse(rom.getName());
+
+    // Determine the output CRC of the file
+    let outputFileCrc = inputFile.getCrc32();
+    if (inputFile.getFileHeader() && this.options.canRemoveHeader(dat, parsedPath.ext)) {
+      outputFileCrc = inputFile.getCrc32WithoutHeader();
+    }
+
+    // Determine the output extension of the file
     const fileHeader = inputFile.getFileHeader();
     if (parsedPath.ext && fileHeader) {
       // If the ROM has a header then we're going to ignore the file extension from the DAT
@@ -263,14 +271,14 @@ export default class CandidateGenerator extends Module {
         new Zip(outputFilePath),
         outputEntryPath,
         inputFile.getSize(),
-        inputFile.getCrc32(),
+        outputFileCrc,
       );
     } if (!(inputFile instanceof ArchiveEntry) || this.options.shouldExtract()) {
       // Should extract (if needed), return a raw file using the ROM's size/CRC
       return File.fileOf(
         outputFilePath,
         inputFile.getSize(),
-        inputFile.getCrc32(),
+        outputFileCrc,
       );
     }
     // Should leave archived
@@ -288,7 +296,7 @@ export default class CandidateGenerator extends Module {
     release: Release | undefined,
     missingRoms: ROM[],
   ): Promise<void> {
-    let message = `${dat.getNameShort()}: Missing ${missingRoms.length.toLocaleString()} file${missingRoms.length !== 1 ? 's' : ''} for: ${game.getName()}`;
+    let message = `${dat.getNameShort()}: missing ${missingRoms.length.toLocaleString()} file${missingRoms.length !== 1 ? 's' : ''} for: ${game.getName()}`;
     if (release?.getRegion()) {
       message += ` (${release?.getRegion()})`;
     }
