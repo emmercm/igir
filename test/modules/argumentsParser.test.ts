@@ -586,6 +586,10 @@ describe('options', () => {
     expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--no-bad', 'true', '--no-bad', 'false']).getNoBad()).toEqual(false);
   });
 
+  it('should parse "report-output"', () => {
+    // TODO(cemmer)
+  });
+
   it('should parse "dat-threads"', () => {
     expect(argumentsParser.parse(dummyCommandAndRequiredArgs).getDatThreads()).toEqual(3);
     expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--dat-threads', '-1']).getDatThreads()).toEqual(1);

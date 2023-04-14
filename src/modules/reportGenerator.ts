@@ -26,7 +26,7 @@ export default class ReportGenerator extends Module {
   ): Promise<void> {
     await this.progressBar.logInfo('Generating report');
 
-    const report = this.options.getOutputReportPath();
+    const report = this.options.getReportOutput();
 
     const matchedFileCsvs = (await Promise.all(
       datStatuses

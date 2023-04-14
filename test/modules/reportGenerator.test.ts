@@ -101,7 +101,7 @@ async function wrapReportGenerator(
     .generate(romFiles, cleanedOutputFiles, datStatuses);
 
   const outputReportPath = (await fg(path.join(
-    path.dirname(options.getOutputReportPath()),
+    path.dirname(options.getReportOutput()),
     `${Constants.COMMAND_NAME}_*.csv`,
   ).replace(/\\/g, '/'))).slice(-1)[0];
   const contents = (await util.promisify(fs.readFile)(outputReportPath)).toString();

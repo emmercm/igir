@@ -78,6 +78,8 @@ export interface OptionsProps {
   readonly preferRetail?: boolean,
   readonly preferParent?: boolean,
 
+  readonly reportOutput?: string,
+
   readonly datThreads?: number,
   readonly verbose?: number,
   readonly help?: boolean,
@@ -179,6 +181,8 @@ export default class Options implements OptionsProps {
 
   readonly preferParent: boolean;
 
+  readonly reportOutput: string;
+
   readonly datThreads: number;
 
   readonly verbose: number;
@@ -241,6 +245,8 @@ export default class Options implements OptionsProps {
     this.preferRevisionOlder = options?.preferRevisionOlder || false;
     this.preferRetail = options?.preferRetail || false;
     this.preferParent = options?.preferParent || false;
+
+    this.reportOutput = options?.reportOutput || '';
 
     this.datThreads = Math.max(options?.datThreads || 0, 1);
     this.verbose = options?.verbose || 0;
@@ -653,26 +659,6 @@ export default class Options implements OptionsProps {
     return output;
   }
 
-  getOutputReportPath(): string {
-    let output = process.cwd();
-    if (this.shouldWrite()) {
-      // Write to the output dir if writing
-      output = this.getOutput();
-    } else if (this.input.length === 1) {
-      // Write to the input dir if there is only one
-      let [input] = this.input;
-      while (!fs.existsSync(input)) {
-        input = path.dirname(input);
-      }
-      output = input;
-    }
-
-    return path.join(
-      output,
-      fsPoly.makeLegal(`${Constants.COMMAND_NAME}_${moment().format()}.csv`),
-    );
-  }
-
   getDirMirror(): boolean {
     return this.dirMirror;
   }
@@ -864,6 +850,10 @@ export default class Options implements OptionsProps {
 
   getPreferParent(): boolean {
     return this.preferParent;
+  }
+
+  getReportOutput(): string {
+    return fsPoly.makeLegal(moment().format(this.reportOutput));
   }
 
   getDatThreads(): number {

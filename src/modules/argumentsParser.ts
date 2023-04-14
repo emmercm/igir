@@ -7,6 +7,7 @@ import ROMHeader from '../types/files/romHeader.js';
 import Options from '../types/options.js';
 import PatchFactory from '../types/patches/patchFactory.js';
 import ReleaseCandidate from '../types/releaseCandidate.js';
+import moment from "moment";
 
 /**
  * Parse a CLI argv string[] into {@link Options}.
@@ -57,6 +58,7 @@ export default class ArgumentsParser {
     const groupRomHeader = 'ROM header options:';
     const groupRomFiltering = 'ROM filtering options:';
     const groupRomPriority = 'ROM one game, one ROM (1G1R) options:';
+    const groupReport = 'Report options:';
     const groupHelpDebug = 'Help & debug options:';
 
     // Add every command to a yargs object, recursively, resulting in the ability to specify
@@ -478,6 +480,14 @@ export default class ArgumentsParser {
         description: 'Prefer parent ROMs over clones',
         type: 'boolean',
         implies: ['dat', 'single'],
+      })
+
+      .option('report-output', {
+        group: groupReport,
+        description: 'Report output location (formatted with moment.js)',
+        type: 'string',
+        requiresArg: true,
+        default: `./[${Constants.COMMAND_NAME}]_${moment.defaultFormat}.csv`,
       })
 
       .option('dat-threads', {
