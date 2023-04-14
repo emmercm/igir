@@ -20,9 +20,11 @@ Or you can specify archives that can contain multiple DATs (such as No-Intro's [
 
 ```shell
 igir [commands..] --dat No-Intro*.zip --input <input>
-```
+``
 
-`igir` can process DAT files in [XML](https://github.com/SabreTools/SabreTools/wiki/DatFile-Formats#logiqx-xml-format) and [CMPro](http://www.logiqx.com/DatFAQs/CMPro.php) formats, as well as [Hardware Target Game Database](https://github.com/frederic-mahe/Hardware-Target-Game-Database) SMDBs that contain file sizes.
+**`igir` can process DAT files in [XML](https://github.com/SabreTools/SabreTools/wiki/DatFile-Formats#logiqx-xml-format) and [CMPro](http://www.logiqx.com/DatFAQs/CMPro.php) formats, as well as [Hardware Target Game Database](https://github.com/frederic-mahe/Hardware-Target-Game-Database) SMDBs that contain file sizes.**
+
+See the [file scanning docs](file-scanning.md) for more information on specify files with the `--dat` option.
 
 ## Just tell me what to do
 
@@ -43,10 +45,11 @@ A number of different release groups maintain these catalogs, the most popular a
 
 And some less popular release groups are:
 
+- [TOSEC](https://www.tosecdev.org/downloads/category/22-datfiles)
 - [ADVANsCEne](https://www.advanscene.com/html/dats.php) (GBA, DS, 3DS, PSP)
 - [FinalBurn NEO](https://github.com/libretro/FBNeo/tree/master/dats) (arcade, gen 1-4 consoles)
-- [MAME](https://www.progettosnaps.net/dats/MAME/) (arcade)
-- [TOSEC](https://www.tosecdev.org/downloads/category/22-datfiles)
+- [progetto-SNAPS](https://www.progettosnaps.net/dats/MAME/) (MAME)
+- [pleasuredome](https://pleasuredome.github.io/pleasuredome/mame/) (MAME)
 
 ## Parent/clone (P/C)
 
