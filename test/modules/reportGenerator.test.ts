@@ -1,4 +1,3 @@
-import fg from 'fast-glob';
 import fs from 'fs';
 import path from 'path';
 import util from 'util';
@@ -13,7 +12,7 @@ import Game from '../../src/types/logiqx/game.js';
 import Header from '../../src/types/logiqx/header.js';
 import Parent from '../../src/types/logiqx/parent.js';
 import ROM from '../../src/types/logiqx/rom.js';
-import Options from '../../src/types/options.js';
+import Options, { OptionsProps } from '../../src/types/options.js';
 import ReleaseCandidate from '../../src/types/releaseCandidate.js';
 import ROMWithFiles from '../../src/types/romWithFiles.js';
 import ProgressBarFake from '../console/progressBarFake.js';
@@ -91,24 +90,25 @@ async function buildDatStatusMultiple(): Promise<DATStatus> {
 }
 
 async function wrapReportGenerator(
-  options: Options,
+  optionsProps: OptionsProps,
   romFiles: string[],
   cleanedOutputFiles: string[],
   datStatuses: DATStatus[],
   callback: (contents: string) => void | Promise<void>,
 ): Promise<void> {
+  const reportOutput = await fsPoly.mktemp(path.join(Constants.GLOBAL_TEMP_DIR, 'report.csv'));
+  const options = new Options({
+    ...optionsProps,
+    reportOutput,
+  });
+
   await new ReportGenerator(options, new ProgressBarFake())
     .generate(romFiles, cleanedOutputFiles, datStatuses);
 
-  const outputReportPath = (await fg(path.join(
-    path.dirname(options.getOutputReportPath()),
-    `${Constants.COMMAND_NAME}_*.csv`,
-  ).replace(/\\/g, '/'))).slice(-1)[0];
-  const contents = (await util.promisify(fs.readFile)(outputReportPath)).toString();
-
+  const contents = (await util.promisify(fs.readFile)(reportOutput)).toString();
   await callback(contents);
 
-  await fsPoly.rm(outputReportPath);
+  await fsPoly.rm(reportOutput);
 }
 
 it('should return empty contents for an empty DAT', async () => {
