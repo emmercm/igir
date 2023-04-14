@@ -586,6 +586,12 @@ describe('options', () => {
     expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--no-bad', 'true', '--no-bad', 'false']).getNoBad()).toEqual(false);
   });
 
+  it('should parse "report-output"', () => {
+    expect(argumentsParser.parse(['report', '--input', os.devNull, '--dat', os.devNull]).getReportOutput()).toMatch(/igir_[0-9]{4}-[0-9]{2}-[0-9]{2}/);
+    expect(argumentsParser.parse(['report', '--input', os.devNull, '--dat', os.devNull, '--report-output', 'report.csv']).getReportOutput()).toEqual('report.csv');
+    expect(argumentsParser.parse(['report', '--input', os.devNull, '--dat', os.devNull, '--report-output', '%dddd, %MMMM %Do %YYYY, %h:%mm:%ss %a.csv']).getReportOutput()).toMatch(/^[A-Z][a-z]+, [A-Z][a-z]+ [0-9]{1,2}[a-z]{2} [0-9]{4},/);
+  });
+
   it('should parse "dat-threads"', () => {
     expect(argumentsParser.parse(dummyCommandAndRequiredArgs).getDatThreads()).toEqual(3);
     expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--dat-threads', '-1']).getDatThreads()).toEqual(1);

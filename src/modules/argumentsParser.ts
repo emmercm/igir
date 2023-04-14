@@ -50,13 +50,14 @@ export default class ArgumentsParser {
     this.logger.info(`Parsing CLI arguments: ${argv}`);
 
     const groupInput = 'Input options (supports globbing):';
-    const groupDat = 'DAT input options:';
-    const groupOutput = 'ROM output options:';
-    const groupArchive = 'Zip command options:';
-    const groupSymlink = 'Symlink command options:';
-    const groupHeader = 'ROM header options:';
-    const groupFiltering = 'ROM filtering options:';
-    const groupPriority = 'ROM priority options:';
+    const groupDatInput = 'DAT input options:';
+    const groupRomOutput = 'ROM output options:';
+    const groupRomZip = 'ROM zip command options:';
+    const groupRomSymlink = 'ROM symlink command options:';
+    const groupRomHeader = 'ROM header options:';
+    const groupRomFiltering = 'ROM filtering options:';
+    const groupRomPriority = 'ROM one game, one ROM (1G1R) options:';
+    const groupReport = 'Report options:';
     const groupHelpDebug = 'Help & debug options:';
 
     // Add every command to a yargs object, recursively, resulting in the ability to specify
@@ -162,27 +163,27 @@ export default class ArgumentsParser {
       })
 
       .option('dat', {
-        group: groupDat,
+        group: groupDatInput,
         alias: 'd',
         description: 'Path(s) to DAT files or archives (supports globbing)',
         type: 'array',
         requiresArg: true,
       })
       .option('dat-exclude', {
-        group: groupDat,
+        group: groupDatInput,
         description: 'Path(s) to DAT files or archives to exclude from processing (supports globbing)',
         type: 'array',
         requiresArg: true,
       })
       .option('dat-regex', {
-        group: groupDat,
+        group: groupDatInput,
         description: 'Regular expression of DAT names to process',
         type: 'string',
         coerce: ArgumentsParser.getLastValue, // don't allow string[] values
         requiresArg: true,
       })
       .option('dat-regex-exclude', {
-        group: groupDat,
+        group: groupDatInput,
         description: 'Regular expression of DAT names to exclude from processing',
         type: 'string',
         coerce: ArgumentsParser.getLastValue, // don't allow string[] values
@@ -200,7 +201,7 @@ export default class ArgumentsParser {
       })
 
       .option('output', {
-        group: groupOutput,
+        group: groupRomOutput,
         alias: 'o',
         description: 'Path to the ROM output directory (supports replaceable symbols, see below)',
         type: 'string',
@@ -208,35 +209,35 @@ export default class ArgumentsParser {
         requiresArg: true,
       })
       .option('dir-mirror', {
-        group: groupOutput,
+        group: groupRomOutput,
         description: 'Use the input subdirectory structure for the output directory',
         type: 'boolean',
       })
       .option('dir-dat-name', {
-        group: groupOutput,
+        group: groupRomOutput,
         alias: 'D',
         description: 'Use the DAT name as the output subdirectory',
         type: 'boolean',
         implies: 'dat',
       })
       .option('dir-letter', {
-        group: groupOutput,
+        group: groupRomOutput,
         description: 'Append the first letter of the ROM name as an output subdirectory',
         type: 'boolean',
       })
       .option('overwrite', {
-        group: groupOutput,
+        group: groupRomOutput,
         alias: 'O',
         description: 'Overwrite any files in the output directory',
         type: 'boolean',
       })
       .option('overwrite-invalid', {
-        group: groupOutput,
+        group: groupRomOutput,
         description: 'Overwrite files in the output directory that are the wrong filesize, checksum, or zip contents',
         type: 'boolean',
       })
       .option('clean-exclude', {
-        group: groupOutput,
+        group: groupRomOutput,
         alias: 'C',
         description: 'Path(s) to files to exclude from cleaning (supports globbing)',
         type: 'array',
@@ -254,7 +255,7 @@ export default class ArgumentsParser {
       })
 
       .option('zip-exclude', {
-        group: groupArchive,
+        group: groupRomZip,
         alias: 'Z',
         description: 'Glob pattern of files to exclude from zipping',
         type: 'string',
@@ -262,7 +263,7 @@ export default class ArgumentsParser {
         requiresArg: true,
       })
       .option('zip-dat-name', {
-        group: groupArchive,
+        group: groupRomZip,
         description: 'Group all ROMs from the same DAT into the same zip archive, if not excluded from zipping (enforces --dat-threads 1)',
         type: 'boolean',
       })
@@ -278,7 +279,7 @@ export default class ArgumentsParser {
       })
 
       .option('symlink-relative', {
-        group: groupSymlink,
+        group: groupRomSymlink,
         description: 'Create symlinks as relative to the target path, as opposed to absolute',
         type: 'boolean',
       })
@@ -294,14 +295,14 @@ export default class ArgumentsParser {
       })
 
       .option('header', {
-        group: groupHeader,
+        group: groupRomHeader,
         description: 'Glob pattern of files to force header processing for',
         type: 'string',
         coerce: ArgumentsParser.getLastValue, // don't allow string[] values
         requiresArg: true,
       })
       .option('remove-headers', {
-        group: groupHeader,
+        group: groupRomHeader,
         alias: 'H',
         description: `Remove known headers from ROMs, optionally limited to a list of comma-separated file extensions (supported: ${ROMHeader.getSupportedExtensions().join(', ')})`,
         type: 'string',
@@ -317,7 +318,7 @@ export default class ArgumentsParser {
       })
 
       .option('filter-regex', {
-        group: groupFiltering,
+        group: groupRomFiltering,
         alias: 'x',
         description: 'Regular expression of game names to filter to',
         type: 'string',
@@ -325,7 +326,7 @@ export default class ArgumentsParser {
         requiresArg: true,
       })
       .option('filter-regex-exclude', {
-        group: groupFiltering,
+        group: groupRomFiltering,
         alias: 'X',
         description: 'Regular expression of game names to exclude',
         type: 'string',
@@ -333,7 +334,7 @@ export default class ArgumentsParser {
         requiresArg: true,
       })
       .option('language-filter', {
-        group: groupFiltering,
+        group: groupRomFiltering,
         alias: 'L',
         description: `List of comma-separated languages to filter to (supported: ${ReleaseCandidate.getLanguages().join(', ')})`,
         type: 'string',
@@ -341,7 +342,7 @@ export default class ArgumentsParser {
         requiresArg: true,
       })
       .option('region-filter', {
-        group: groupFiltering,
+        group: groupRomFiltering,
         alias: 'R',
         description: `List of comma-separated regions to filter to (supported: ${ReleaseCandidate.getRegions().join(', ')})`,
         type: 'string',
@@ -349,94 +350,94 @@ export default class ArgumentsParser {
         requiresArg: true,
       })
       .option('only-bios', {
-        group: groupFiltering,
+        group: groupRomFiltering,
         description: 'Filter to only BIOS files',
         type: 'boolean',
         conflicts: ['no-bios'],
       })
       .option('no-bios', {
-        group: groupFiltering,
+        group: groupRomFiltering,
         description: 'Filter out BIOS files',
         type: 'boolean',
         conflicts: ['only-bios'],
       })
       .option('no-unlicensed', {
-        group: groupFiltering,
+        group: groupRomFiltering,
         description: 'Filter out unlicensed ROMs',
         type: 'boolean',
       })
       .option('only-retail', {
-        group: groupFiltering,
+        group: groupRomFiltering,
         description: 'Filter to only retail releases, enabling all the following options',
         type: 'boolean',
       })
       .option('no-demo', {
-        group: groupFiltering,
+        group: groupRomFiltering,
         description: 'Filter out demo ROMs',
         type: 'boolean',
       })
       .option('no-beta', {
-        group: groupFiltering,
+        group: groupRomFiltering,
         description: 'Filter out beta ROMs',
         type: 'boolean',
       })
       .option('no-sample', {
-        group: groupFiltering,
+        group: groupRomFiltering,
         description: 'Filter out sample ROMs',
         type: 'boolean',
       })
       .option('no-prototype', {
-        group: groupFiltering,
+        group: groupRomFiltering,
         description: 'Filter out prototype ROMs',
         type: 'boolean',
       })
       .option('no-test-roms', {
-        group: groupFiltering,
+        group: groupRomFiltering,
         description: 'Filter out test ROMs',
         type: 'boolean',
       })
       .option('no-aftermarket', {
-        group: groupFiltering,
+        group: groupRomFiltering,
         description: 'Filter out aftermarket ROMs',
         type: 'boolean',
       })
       .option('no-homebrew', {
-        group: groupFiltering,
+        group: groupRomFiltering,
         description: 'Filter out homebrew ROMs',
         type: 'boolean',
       })
       .option('no-unverified', {
-        group: groupFiltering,
+        group: groupRomFiltering,
         description: 'Filter out un-verified ROMs',
         type: 'boolean',
       })
       .option('no-bad', {
-        group: groupFiltering,
+        group: groupRomFiltering,
         description: 'Filter out bad ROM dumps',
         type: 'boolean',
       })
 
       .option('single', {
-        group: groupPriority,
+        group: groupRomPriority,
         alias: 's',
-        description: 'Output only a single game per parent (1G1R) (required for all options below, requires parent/clone DAT files)',
+        description: 'Output only a single game per parent (1G1R) (required for all options below, requires --dat with parent/clone information)',
         type: 'boolean',
         implies: 'dat',
       })
       .option('prefer-verified', {
-        group: groupPriority,
+        group: groupRomPriority,
         description: 'Prefer verified ROM dumps over unverified',
         type: 'boolean',
         implies: 'single',
       })
       .option('prefer-good', {
-        group: groupPriority,
+        group: groupRomPriority,
         description: 'Prefer good ROM dumps over bad',
         type: 'boolean',
         implies: 'single',
       })
       .option('prefer-language', {
-        group: groupPriority,
+        group: groupRomPriority,
         alias: 'l',
         description: `List of comma-separated languages in priority order (supported: ${ReleaseCandidate.getLanguages().join(', ')})`,
         type: 'string',
@@ -445,7 +446,7 @@ export default class ArgumentsParser {
         implies: 'single',
       })
       .option('prefer-region', {
-        group: groupPriority,
+        group: groupRomPriority,
         alias: 'r',
         description: `List of comma-separated regions in priority order (supported: ${ReleaseCandidate.getRegions().join(', ')})`,
         type: 'string',
@@ -454,30 +455,38 @@ export default class ArgumentsParser {
         implies: 'single',
       })
       .option('prefer-revision-newer', {
-        group: groupPriority,
+        group: groupRomPriority,
         description: 'Prefer newer ROM revisions over older',
         type: 'boolean',
         conflicts: ['prefer-revision-older'],
         implies: 'single',
       })
       .option('prefer-revision-older', {
-        group: groupPriority,
+        group: groupRomPriority,
         description: 'Prefer older ROM revisions over newer',
         type: 'boolean',
         conflicts: ['prefer-revision-newer'],
         implies: 'single',
       })
       .option('prefer-retail', {
-        group: groupPriority,
+        group: groupRomPriority,
         description: 'Prefer retail releases (see --only-retail)',
         type: 'boolean',
         implies: 'single',
       })
       .option('prefer-parent', {
-        group: groupPriority,
-        description: 'Prefer parent ROMs over clones (requires parent/clone DAT files)',
+        group: groupRomPriority,
+        description: 'Prefer parent ROMs over clones',
         type: 'boolean',
         implies: ['dat', 'single'],
+      })
+
+      .option('report-output', {
+        group: groupReport,
+        description: 'Report output location (formatted with moment.js)',
+        type: 'string',
+        requiresArg: true,
+        default: `./${Constants.COMMAND_NAME}_%YYYY-%MM-%DDT%HH:%mm:%ss.csv`,
       })
 
       .option('dat-threads', {

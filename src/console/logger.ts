@@ -109,7 +109,7 @@ export default class Logger {
         .replace(/(<[a-zA-Z]+>)/g, chalk.blue('$1'))
 
         .replace(/(\[(array|boolean|count|number|string)\])/g, chalk.grey('$1'))
-        .replace(/(\[default:[^\]]+\]+)/g, chalk.green('$1'))
+        .replace(/(\[default: ([^[\]]+(\[[^\]]+\])?)*\])/g, chalk.green('$1'))
         .replace(/(\[required\])/g, chalk.red('$1'))
 
         .replace(/(\{[a-zA-Z]+\})/g, chalk.yellow('$1'))
