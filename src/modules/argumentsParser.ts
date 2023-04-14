@@ -51,6 +51,7 @@ export default class ArgumentsParser {
 
     const groupInput = 'Input options (supports globbing):';
     const groupDat = 'DAT input options:';
+    const groupDatOutput = 'DAT output options:';
     const groupOutput = 'ROM output options:';
     const groupArchive = 'Zip command options:';
     const groupSymlink = 'Symlink command options:';
@@ -197,6 +198,13 @@ export default class ArgumentsParser {
           throw new Error(`Missing required option for commands ${needDat.join(', ')}: --dat`);
         }
         return true;
+      })
+
+      .option('fixdat', {
+        group: groupDatOutput,
+        description: 'Generate a fixdat of any missing games for every DAT processed (requires --dat)',
+        type: 'boolean',
+        implies: 'dat',
       })
 
       .option('output', {

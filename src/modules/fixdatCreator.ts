@@ -12,18 +12,22 @@ import Options from '../types/options.js';
 import ReleaseCandidate from '../types/releaseCandidate.js';
 import Module from './module.js';
 
-export default class FixDATCreator extends Module {
+export default class FixdatCreator extends Module {
   private readonly options: Options;
 
   constructor(options: Options, progressBar: ProgressBar) {
-    super(progressBar, FixDATCreator.name);
+    super(progressBar, FixdatCreator.name);
     this.options = options;
   }
 
   async write(
     originalDat: DAT,
     parentsToCandidates: Map<Parent, ReleaseCandidate[]>,
-  ): Promise<void> {
+  ): Promise<string | undefined> {
+    if (!this.options.getFixdat()) {
+      return undefined;
+    }
+
     await this.progressBar.logInfo(`${originalDat.getNameShort()}: generating a fixdat`);
     await this.progressBar.setSymbol(ProgressBarSymbol.WRITING);
     await this.progressBar.reset(1);
@@ -42,7 +46,7 @@ export default class FixDATCreator extends Module {
       .filter((game) => !game.getRoms().every((rom) => writtenRomHashCodes.has(rom.hashCode())));
     if (!gamesWithMissingRoms.length) {
       await this.progressBar.logDebug(`${originalDat.getNameShort()}: no missing games`);
-      return;
+      return undefined;
     }
 
     // Construct a new DAT header
@@ -72,5 +76,7 @@ export default class FixDATCreator extends Module {
     await util.promisify(fs.writeFile)(fixdatPath, fixdatContents);
 
     await this.progressBar.logInfo(`${originalDat.getNameShort()}: done generating a fixdat`);
+
+    return fixdatPath;
   }
 }

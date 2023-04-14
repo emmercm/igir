@@ -34,6 +34,8 @@ export interface OptionsProps {
   readonly datRegex?: string,
   readonly datRegexExclude?: string,
 
+  readonly fixdat?: boolean;
+
   readonly output?: string,
   readonly dirMirror?: boolean,
   readonly dirDatName?: boolean,
@@ -102,6 +104,8 @@ export default class Options implements OptionsProps {
   readonly datRegex: string;
 
   readonly datRegexExclude: string;
+
+  readonly fixdat: boolean;
 
   readonly output: string;
 
@@ -197,6 +201,8 @@ export default class Options implements OptionsProps {
     this.datExclude = options?.datExclude || [];
     this.datRegex = options?.datRegex || '';
     this.datRegexExclude = options?.datRegexExclude || '';
+
+    this.fixdat = options?.fixdat || false;
 
     this.output = options?.output || '';
     this.dirMirror = options?.dirMirror || false;
@@ -327,6 +333,10 @@ export default class Options implements OptionsProps {
   }
 
   // Options
+
+  getInputPaths(): string[] {
+    return this.input;
+  }
 
   getInputFileCount(): number {
     return this.input.length;
@@ -467,6 +477,10 @@ export default class Options implements OptionsProps {
 
   getDatRegexExclude(): RegExp | undefined {
     return Options.getRegex(this.datRegexExclude);
+  }
+
+  getFixdat(): boolean {
+    return this.fixdat;
   }
 
   private getOutput(): string {
