@@ -9,6 +9,7 @@ import CandidateGenerator from './modules/candidateGenerator.js';
 import CombinedCandidateGenerator from './modules/combinedCandidateGenerator.js';
 import DATInferrer from './modules/datInferrer.js';
 import DATScanner from './modules/datScanner.js';
+import FixDATCreator from './modules/fixDatCreator.js';
 import HeaderProcessor from './modules/headerProcessor.js';
 import OutputCleaner from './modules/outputCleaner.js';
 import PatchCandidateGenerator from './modules/patchCandidateGenerator.js';
@@ -24,7 +25,6 @@ import Parent from './types/logiqx/parent.js';
 import Options from './types/options.js';
 import Patch from './types/patches/patch.js';
 import ReleaseCandidate from './types/releaseCandidate.js';
-import FixDATCreator from "./modules/fixDatCreator.js";
 
 export default class Igir {
   private readonly options: Options;
