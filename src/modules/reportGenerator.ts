@@ -24,7 +24,7 @@ export default class ReportGenerator extends Module {
     cleanedOutputFiles: string[],
     datStatuses: DATStatus[],
   ): Promise<void> {
-    await this.progressBar.logInfo('Generating report');
+    await this.progressBar.logInfo('generating report');
 
     const report = this.options.getOutputReportPath();
 
@@ -63,7 +63,7 @@ export default class ReportGenerator extends Module {
     await util.promisify(fs.writeFile)(report, rows.join('\n'));
     await this.progressBar.logDebug(`${report}: wrote ${datStatuses.length.toLocaleString()} CSV row${datStatuses.length !== 1 ? 's' : ''}`);
 
-    await this.progressBar.logInfo('Done generating report');
+    await this.progressBar.logInfo('done generating report');
     await this.progressBar.done(report);
     await this.progressBar.freeze();
   }

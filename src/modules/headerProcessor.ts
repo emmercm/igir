@@ -27,12 +27,12 @@ export default class HeaderProcessor extends Module {
       return inputRomFiles;
     }
 
-    await this.progressBar.logInfo('Processing file headers');
+    await this.progressBar.logInfo('processing file headers');
 
     await this.progressBar.setSymbol(ProgressBarSymbol.HASHING);
     await this.progressBar.reset(inputRomFiles.length);
 
-    const parsedFiles = async.mapLimit(
+    const parsedFiles = await async.mapLimit(
       inputRomFiles,
       Constants.ROM_HEADER_PROCESSOR_THREADS,
       async (inputFile, callback: AsyncResultCallback<File, Error>) => {
@@ -42,7 +42,10 @@ export default class HeaderProcessor extends Module {
       },
     );
 
-    await this.progressBar.logInfo('Done processing file headers');
+    const headeredRomsCount = parsedFiles.filter((romFile) => romFile.getFileHeader()).length;
+    await this.progressBar.logDebug(`found headers in ${headeredRomsCount.toLocaleString()} ROM${headeredRomsCount !== 1 ? 's' : ''}`);
+
+    await this.progressBar.logInfo('done processing file headers');
     return parsedFiles;
   }
 
@@ -62,8 +65,13 @@ export default class HeaderProcessor extends Module {
     // Can get FileHeader from extension, use that
     const headerForFilename = ROMHeader.headerFromFilename(inputFile.getExtractedFilePath());
     if (headerForFilename) {
-      await this.progressBar.logTrace(`${inputFile.toString()}: found header by filename: ${headerForFilename.getHeaderedFileExtension()}`);
-      return inputFile.withFileHeader(headerForFilename);
+      const fileWithHeader = await inputFile.withFileHeader(headerForFilename);
+      if (fileWithHeader.getFileHeader()) {
+        await this.progressBar.logTrace(`${inputFile.toString()}: found header by filename: ${headerForFilename.getHeaderedFileExtension()}`);
+      } else {
+        await this.progressBar.logTrace(`${inputFile.toString()}: didn't find header by filename: ${headerForFilename.getHeaderedFileExtension()}`);
+      }
+      return fileWithHeader;
     }
 
     // Should get FileHeader from File, try to
@@ -72,10 +80,10 @@ export default class HeaderProcessor extends Module {
         async (stream) => ROMHeader.headerFromFileStream(stream),
       );
       if (headerForFileStream) {
-        await this.progressBar.logTrace(`${inputFile.toString()}: found header by contents: ${headerForFileStream.getHeaderedFileExtension()}`);
+        await this.progressBar.logTrace(`${inputFile.toString()}: found header by file contents: ${headerForFileStream.getHeaderedFileExtension()}`);
         return inputFile.withFileHeader(headerForFileStream);
       }
-      await this.progressBar.logWarn(`${inputFile.toString()}: couldn't detect header`);
+      await this.progressBar.logWarn(`${inputFile.toString()}: didn't find header by file contents`);
     }
 
     // Should not get FileHeader

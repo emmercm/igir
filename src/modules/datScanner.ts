@@ -38,7 +38,7 @@ export default class DATScanner extends Scanner {
   }
 
   async scan(): Promise<DAT[]> {
-    await this.progressBar.logInfo('Scanning DAT files');
+    await this.progressBar.logInfo('scanning DAT files');
 
     await this.progressBar.setSymbol(ProgressBarSymbol.SEARCHING);
     await this.progressBar.reset(this.options.getDatFileCount());
@@ -47,15 +47,15 @@ export default class DATScanner extends Scanner {
     if (!datFilePaths.length) {
       return [];
     }
-    await this.progressBar.logTrace(datFilePaths.map((file) => `Found DAT file: ${file}`).join('\n'));
-    await this.progressBar.logDebug(`Found ${datFilePaths.length} DAT file${datFilePaths.length !== 1 ? 's' : ''}`);
+    await this.progressBar.logTrace(datFilePaths.map((file) => `found DAT file: ${file}`).join('\n'));
+    await this.progressBar.logDebug(`found ${datFilePaths.length.toLocaleString()} DAT file${datFilePaths.length !== 1 ? 's' : ''}`);
     await this.progressBar.reset(datFilePaths.length);
 
-    await this.progressBar.logDebug('Enumerating DAT archives');
+    await this.progressBar.logDebug('enumerating DAT archives');
     const datFiles = await this.getFilesFromPaths(datFilePaths, Constants.DAT_SCANNER_THREADS);
     await this.progressBar.reset(datFiles.length);
 
-    await this.progressBar.logDebug('Deserializing DAT XML to objects');
+    await this.progressBar.logDebug('deserializing DAT XML to objects');
     const dats = await this.parseDatFiles(datFiles);
 
     await this.progressBar.logTrace(dats.map((dat) => {
@@ -64,13 +64,13 @@ export default class DATScanner extends Scanner {
         .reduce((sum, rom) => sum + rom.getSize(), 0);
       return `${dat.getNameShort()}: ${fsPoly.sizeReadable(size)} of ${dat.getGames().length.toLocaleString()} game${dat.getGames().length !== 1 ? 's' : ''}, ${dat.getParents().length.toLocaleString()} parent${dat.getParents().length !== 1 ? 's' : ''} parsed`;
     }).join('\n'));
-    await this.progressBar.logInfo('Done scanning DAT files');
+    await this.progressBar.logInfo('done scanning DAT files');
     return dats;
   }
 
   // Parse each file into a DAT
   private async parseDatFiles(datFiles: File[]): Promise<DAT[]> {
-    await this.progressBar.logDebug('Parsing DAT files');
+    await this.progressBar.logDebug('parsing DAT files');
     const results = (await async.mapLimit(
       datFiles,
       Constants.DAT_SCANNER_THREADS,
@@ -128,14 +128,14 @@ export default class DATScanner extends Scanner {
       });
     } catch (e) {
       const message = (e as Error).message.split('\n').join(', ');
-      await this.progressBar.logDebug(`${datFile.toString()}: failed to parse XML : ${message}`);
+      await this.progressBar.logDebug(`${datFile.toString()}: failed to parse XML: ${message}`);
       return undefined;
     }
 
     try {
       return DAT.fromObject(xmlObject.datafile);
     } catch (e) {
-      await this.progressBar.logDebug(`${datFile.toString()}: failed to parse DAT object : ${e}`);
+      await this.progressBar.logDebug(`${datFile.toString()}: failed to parse DAT object: ${e}`);
       return undefined;
     }
   }
@@ -149,13 +149,13 @@ export default class DATScanner extends Scanner {
       return undefined;
     }
 
-    await this.progressBar.logTrace(`${datFile.toString()}: parsing CMPro`);
+    await this.progressBar.logTrace(`${datFile.toString()}: parsing CMPro DAT`);
 
     let datfile;
     try {
       datfile = await robloachDatfile.parse(fileContents);
     } catch (e) {
-      await this.progressBar.logDebug(`${datFile.toString()}: failed to parse CMPro : ${e}`);
+      await this.progressBar.logDebug(`${datFile.toString()}: failed to parse CMPro DAT: ${e}`);
       return undefined;
     }
     if (!datfile.length) {
