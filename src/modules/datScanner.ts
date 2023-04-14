@@ -172,6 +172,8 @@ export default class DATScanner extends Scanner {
           entry.name || '',
           parseInt(entry.size || '0', 10),
           entry.crc || '',
+          entry.md5,
+          entry.sha1,
         ));
       return new Game({
         ...game,
@@ -210,7 +212,13 @@ export default class DATScanner extends Scanner {
     }
 
     const games = rows.map((row) => {
-      const rom = new ROM(row.name, parseInt(row.size || '', 10), row.crc);
+      const rom = new ROM(
+        row.name,
+        parseInt(row.size || '', 10),
+        row.crc,
+        row.md5,
+        row.sha1,
+      );
       const gameName = row.name.replace(/\.[^\\/]+$/, '');
       return new Game({
         name: gameName,

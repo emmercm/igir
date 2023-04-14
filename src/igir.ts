@@ -24,6 +24,7 @@ import Parent from './types/logiqx/parent.js';
 import Options from './types/options.js';
 import Patch from './types/patches/patch.js';
 import ReleaseCandidate from './types/releaseCandidate.js';
+import FixDATCreator from "./modules/fixDatCreator.js";
 
 export default class Igir {
   private readonly options: Options;
@@ -89,6 +90,9 @@ export default class Igir {
           return map;
         }, new Map<Parent, File[]>());
       datsToWrittenRoms.set(dat, writtenRoms);
+
+      // Write a fixdat
+      await new FixDATCreator(this.options, progressBar).write(dat, parentsToCombinedCandidates);
 
       // Write the output report
       const datStatus = await new StatusGenerator(this.options, progressBar)

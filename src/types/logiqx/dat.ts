@@ -65,6 +65,7 @@ export default class DAT {
         pubID: '-//Logiqx//DTD ROM Management Datafile//EN',
         sysID: 'http://www.logiqx.com/Dats/datafile.dtd',
       },
+      cdata: true,
     }).buildObject(this.toXmlDatObj());
   }
 
@@ -127,6 +128,18 @@ export default class DAT {
   }
 
   /**
+   * Get a No-Intro style filename.
+   */
+  getFilename(): string {
+    let filename = this.getName();
+    if (this.getHeader().getVersion()) {
+      filename += ` (${this.getHeader().getVersion()})`;
+    }
+    filename += '.dat';
+    return filename;
+  }
+
+  /**
    * Does a DAT explicitly contain headered ROMs. It is possible for a DAT to be both non-headered
    *  and non-headerless.
    */
@@ -150,5 +163,9 @@ export default class DAT {
     }
 
     return this.getName().match(/\(headerless\)/i) !== null;
+  }
+
+  toString(): string {
+    return `{"header": ${this.header.toString()}, "games": ${this.getGames().length}}`;
   }
 }

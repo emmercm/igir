@@ -78,7 +78,14 @@ export default class Header implements HeaderOptions {
 
   constructor(options?: HeaderOptions) {
     this.name = options?.name || '';
+    this.description = options?.description;
+    this.version = options?.version;
+    this.date = options?.date;
+    this.author = options?.author;
+    this.url = options?.url;
+    this.comment = options?.comment;
     this.clrMamePro = options?.clrMamePro;
+
     this.romNamesContainDirectories = options?.romNamesContainDirectories !== undefined
       ? options?.romNamesContainDirectories
       : false;
@@ -106,11 +113,22 @@ export default class Header implements HeaderOptions {
     return this.description;
   }
 
+  getVersion(): string | undefined {
+    return this.version;
+  }
+
   getClrMamePro(): ClrMamePro | undefined {
     return this.clrMamePro;
   }
 
   getRomNamesContainDirectories(): boolean {
     return this.romNamesContainDirectories;
+  }
+
+  // Computed getters
+
+  toString(): string {
+    return JSON.stringify(this, null, '  ')
+      .replace(/\n +/g, ' ');
   }
 }

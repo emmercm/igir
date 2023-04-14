@@ -24,10 +24,12 @@ export default class ROM {
   @Expose({ name: 'status' })
   private readonly status?: string;
 
-  constructor(name: string, size: number, crc: string) {
+  constructor(name: string, size: number, crc: string, md5?: string, sha1?: string) {
     this.name = name;
     this.size = size;
     this.crc = crc;
+    this.md5 = md5;
+    this.sha1 = sha1;
   }
 
   toXmlDatObj(): object {
