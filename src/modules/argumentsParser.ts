@@ -1,4 +1,3 @@
-import moment from 'moment';
 import terminalSize from 'term-size';
 import yargs, { Argv } from 'yargs';
 
@@ -487,7 +486,7 @@ export default class ArgumentsParser {
         description: 'Report output location (formatted with moment.js)',
         type: 'string',
         requiresArg: true,
-        default: `./[${Constants.COMMAND_NAME}]_${moment.defaultFormat}.csv`,
+        default: `./${Constants.COMMAND_NAME}_%YYYY-%MM-%DDT%HH:%mm:%ss.csv`,
       })
 
       .option('dat-threads', {
