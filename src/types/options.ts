@@ -853,7 +853,20 @@ export default class Options implements OptionsProps {
   }
 
   getReportOutput(): string {
-    return fsPoly.makeLegal(moment().format(this.reportOutput));
+    let { reportOutput } = this;
+
+    // Replace date & time tokens
+    const symbolMatches = reportOutput.match(/%([a-zA-Z])(\1|o)*/g);
+    if (symbolMatches) {
+      symbolMatches
+        .filter((match, idx, matches) => matches.indexOf(match) === idx)
+        .forEach((match) => {
+          const val = moment().format(match.replace(/^%/, ''));
+          reportOutput = reportOutput.replace(match, val);
+        });
+    }
+
+    return fsPoly.makeLegal(reportOutput);
   }
 
   getDatThreads(): number {

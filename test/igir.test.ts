@@ -269,6 +269,7 @@ describe('with explicit dats', () => {
     await expectEndToEnd({
       commands: ['report'],
       dat: ['dats/*'],
+      reportOutput: 'report.csv',
     }, []);
   });
 });

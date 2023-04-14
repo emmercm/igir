@@ -99,7 +99,7 @@ async function wrapReportGenerator(
   const reportOutput = await fsPoly.mktemp(path.join(Constants.GLOBAL_TEMP_DIR, 'report.csv'));
   const options = new Options({
     ...optionsProps,
-    reportOutput: `[${reportOutput}]`,
+    reportOutput,
   });
 
   await new ReportGenerator(options, new ProgressBarFake())
