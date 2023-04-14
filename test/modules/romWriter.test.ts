@@ -1009,7 +1009,7 @@ describe('raw', () => {
     });
   });
 
-  it('should not write anything if the output is expected and overwriting invlaid', async () => {
+  it('should not write anything if the output is expected and overwriting invalid', async () => {
     await copyFixturesToTemp(async (inputTemp, outputTemp) => {
       // Given
       const options = new Options({ commands: ['copy'] });

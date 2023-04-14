@@ -286,7 +286,7 @@ export default class CandidateGenerator extends Module {
     return File.fileOf(
       outputFilePath,
       inputArchiveRaw.getSize(),
-      outputFileCrc,
+      inputArchiveRaw.getCrc32(),
     );
   }
 
