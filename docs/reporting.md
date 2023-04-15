@@ -28,20 +28,20 @@ To perform this filtering, most spreadsheet applications have a button or menu i
 
 ## Output location
 
-When writing to an output directory (i.e. the `igir copy`, `igir move`, and `igir symlink` commands), `igir` will write the report to the root of that directory, e.g.:
+The `--report-output` options is provided to configure where the `igir report` report is written. See the `igir --help` message for the report's default location.
+
+The report output filename supports a version of [Moment.js symbols](https://momentjs.com/docs/#/displaying/) for date and time. To make it clearer what is a replaceable symbol, `%` is prepended to symbols. This is _non-standard_ for Moment.js! But the `%` format should feel more familiar to more people as it resembles [Python's `date.strftime()`](https://docs.python.org/3/library/datetime.html#datetime.date.strftime), [PHP's `strftime()`](https://www.php.net/manual/en/function.strftime.php), [C++'s `strftime()`](https://cplusplus.com/reference/ctime/strftime/), and more.
+
+_See the [Moment.js docs](https://momentjs.com/docs/#/displaying/) for a complete list of tokens you can use._
+
+Here are some example usages:
 
 ```shell
-$ igir copy extract report --dat *.dat --input ROMs-Unsorted/ --output ROMs-Sorted/
+$ igir report --dat *.dat --input ROMs/ --report-output "./report.csv"
 
-$ ls ROMs-Sorted/*.csv
-ROMs-Sorted/igir_2023-03-29T18;26;00-04;00.csv
-```
+$ igir report --dat *.dat --input ROMs/ --report-output "./report %dddd, %MMMM %Do %YYYY, %h:%mm:%ss %a.csv"
+# ./report Friday, April 14th 2023, 4:28:26 pm.csv
 
-When not writing anything (i.e. `igir report` without any other commands), `igir` will write the report to the root of the first input directory, e.g.:
-
-```shell
-$ igir report --dat *.dat --input ROMs/
-
-$ ls ROMs/*.csv
-ROMs/igir_2023-03-29T18;26;00-04;00.csv
+$ igir report --dat *.dat --input ROMs/ --report-output "/igir/%X.csv"
+# /igir/1681515048.csv
 ```
