@@ -139,7 +139,7 @@ ROM filtering options:
       --no-unverified         Filter out un-verified ROMs                               [boolean]
       --no-bad                Filter out bad ROM dumps                                  [boolean]
 
-ROM one game, one ROM (1G1R) options:
+One game, one ROM (1G1R) options:
   -s, --single                 Output only a single game per parent (1G1R) (required for all opti
                                ons below, requires --dat with parent/clone information) [boolean]
       --prefer-verified        Prefer verified ROM dumps over unverified                [boolean]

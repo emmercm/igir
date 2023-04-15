@@ -57,7 +57,7 @@ export default class ArgumentsParser {
     const groupRomSymlink = 'ROM symlink command options:';
     const groupRomHeader = 'ROM header options:';
     const groupRomFiltering = 'ROM filtering options:';
-    const groupRomPriority = 'ROM one game, one ROM (1G1R) options:';
+    const groupRomPriority = 'One game, one ROM (1G1R) options:';
     const groupReport = 'Report options:';
     const groupHelpDebug = 'Help & debug options:';
 
