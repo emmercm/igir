@@ -82,7 +82,7 @@ export default class CandidateGenerator extends Module {
         }
       }
 
-      await this.progressBar.logTrace(`${dat.getNameShort()}: ${parent.getName()}: found ${releaseCandidates.length.toLocaleString()} candidates`);
+      await this.progressBar.logTrace(`${dat.getNameShort()}: ${parent.getName()}: found ${releaseCandidates.length.toLocaleString()} candidate${releaseCandidates.length !== 1 ? 's' : ''}`);
       output.set(parent, releaseCandidates);
 
       await this.progressBar.increment();
