@@ -16,6 +16,18 @@ export default class Release {
     this.language = language;
   }
 
+  toXmlDatObj(): object {
+    return {
+      $: {
+        name: this.name,
+        region: this.region,
+        language: this.language,
+      },
+    };
+  }
+
+  // Property getters
+
   getName(): string {
     return this.name;
   }

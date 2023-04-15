@@ -38,6 +38,10 @@ process.once('SIGINT', () => {
 export default class Constants {
   static readonly COMMAND_NAME = COMMAND_NAME;
 
+  static readonly AUTHOR = PACKAGE_JSON.author;
+
+  static readonly HOMEPAGE = PACKAGE_JSON.homepage;
+
   static readonly COMMAND_VERSION = PACKAGE_JSON.version;
 
   static readonly GLOBAL_TEMP_DIR = GLOBAL_TEMP_DIR;

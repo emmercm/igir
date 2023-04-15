@@ -1,6 +1,7 @@
 import 'reflect-metadata';
 
 import { Expose, plainToInstance, Type } from 'class-transformer';
+import xml2js from 'xml2js';
 
 import Game from './game.js';
 import Header from './header.js';
@@ -56,6 +57,27 @@ export default class DAT {
     return this;
   }
 
+  toXmlDat(): string {
+    return new xml2js.Builder({
+      renderOpts: { pretty: true, indent: '\t', newline: '\n' },
+      xmldec: { version: '1.0' },
+      doctype: {
+        pubID: '-//Logiqx//DTD ROM Management Datafile//EN',
+        sysID: 'http://www.logiqx.com/Dats/datafile.dtd',
+      },
+      cdata: true,
+    }).buildObject(this.toXmlDatObj());
+  }
+
+  private toXmlDatObj(): object {
+    return {
+      datafile: {
+        header: this.header.toXmlDatObj(),
+        game: this.getGames().map((game) => game.toXmlDatObj()),
+      },
+    };
+  }
+
   // Property getters
 
   getHeader(): Header {
@@ -106,6 +128,18 @@ export default class DAT {
   }
 
   /**
+   * Get a No-Intro style filename.
+   */
+  getFilename(): string {
+    let filename = this.getName();
+    if (this.getHeader().getVersion()) {
+      filename += ` (${this.getHeader().getVersion()})`;
+    }
+    filename += '.dat';
+    return filename;
+  }
+
+  /**
    * Does a DAT explicitly contain headered ROMs. It is possible for a DAT to be both non-headered
    *  and non-headerless.
    */
@@ -129,5 +163,9 @@ export default class DAT {
     }
 
     return this.getName().match(/\(headerless\)/i) !== null;
+  }
+
+  toString(): string {
+    return `{"header": ${this.header.toString()}, "games": ${this.getGames().length}}`;
   }
 }

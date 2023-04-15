@@ -33,6 +33,7 @@ export default class DATStatus {
     this.dat = dat;
 
     // Un-patched ROMs
+    // Index ReleaseCandidates by their ROM's hash code
     const unpatchedHashCodesToRomsWithInputFiles = [...parentsToReleaseCandidates.values()]
       .flatMap((releaseCandidates) => releaseCandidates)
       .filter((releaseCandidate) => !releaseCandidate.isPatched())
@@ -43,6 +44,8 @@ export default class DATStatus {
         }
         return map;
       }, new Map<string, ReleaseCandidate>());
+    // For every game in every parent in the DAT:
+    //  Remember the game as "found" if all the Game's ROMs have matching ReleaseCandidates
     dat.getParents().forEach((parent) => {
       parent.getGames().forEach((game) => {
         DATStatus.pushValueIntoMap(this.allRomTypesToGames, game, game);

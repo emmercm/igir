@@ -1,4 +1,3 @@
-import fg from 'fast-glob';
 import path from 'path';
 
 import Logger from '../src/console/logger.js';
@@ -9,10 +8,7 @@ import fsPoly from '../src/polyfill/fsPoly.js';
 import FileFactory from '../src/types/files/fileFactory.js';
 import Options, { OptionsProps } from '../src/types/options.js';
 
-async function expectEndToEnd(
-  optionsProps: OptionsProps,
-  expectedFilesAndCrcs: string[][],
-): Promise<void> {
+async function runIgir(optionsProps: OptionsProps): Promise<string[][]> {
   const tempInput = await fsPoly.mkdtemp(path.join(Constants.GLOBAL_TEMP_DIR, 'input'));
   await fsPoly.copyDir('./test/fixtures', tempInput);
 
@@ -42,16 +38,19 @@ async function expectEndToEnd(
       file.getCrc32(),
     ]))
     .sort((a, b) => a[0].localeCompare(b[0]));
-  expect(writtenRomAndCrcs).toEqual(expectedFilesAndCrcs);
 
   await fsPoly.rm(tempInput, { recursive: true });
   await fsPoly.rm(tempOutput, { force: true, recursive: true });
 
-  const reports = await fg(path.join(
-    path.dirname(options.getReportOutput()),
-    `${Constants.COMMAND_NAME}_*.csv`,
-  ).replace(/\\/g, '/'));
-  await Promise.all(reports.map(async (report) => fsPoly.rm(report)));
+  return writtenRomAndCrcs;
+}
+
+async function expectEndToEnd(
+  optionsProps: OptionsProps,
+  expectedFilesAndCrcs: string[][],
+): Promise<void> {
+  const writtenRomAndCrcs = await runIgir(optionsProps);
+  expect(writtenRomAndCrcs).toEqual(expectedFilesAndCrcs);
 }
 
 describe('with explicit dats', () => {
@@ -271,6 +270,21 @@ describe('with explicit dats', () => {
       dat: ['dats/*'],
       reportOutput: 'report.csv',
     }, []);
+  });
+
+  it('should generate a fixdat', async () => {
+    const writtenFixdats = (await runIgir({
+      commands: ['copy', 'extract', 'test'],
+      dat: ['dats/*'],
+      fixdat: true,
+      dirDatName: true,
+    }))
+      .map(([filePath]) => filePath)
+      .filter((filePath) => filePath.endsWith('.dat'));
+
+    // Only the "One" DAT should have missing ROMs (Missing.rom)
+    expect(writtenFixdats).toHaveLength(1);
+    expect(writtenFixdats[0]).toMatch(/^One fixdat \([0-9]{8}-[0-9]{6}\)\.dat$/);
   });
 });
 

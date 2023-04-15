@@ -128,7 +128,7 @@ export default class DATScanner extends Scanner {
       });
     } catch (e) {
       const message = (e as Error).message.split('\n').join(', ');
-      await this.progressBar.logDebug(`${datFile.toString()}: failed to parse XML: ${message}`);
+      await this.progressBar.logDebug(`${datFile.toString()}: failed to parse DAT XML: ${message}`);
       return undefined;
     }
 
@@ -172,6 +172,8 @@ export default class DATScanner extends Scanner {
           entry.name || '',
           parseInt(entry.size || '0', 10),
           entry.crc || '',
+          entry.md5,
+          entry.sha1,
         ));
       return new Game({
         ...game,
@@ -195,12 +197,12 @@ export default class DATScanner extends Scanner {
     try {
       rows = await DATScanner.parseSourceMaterialTsv(fileContents);
     } catch (e) {
-      await this.progressBar.logDebug(`${datFile.toString()}: not an SMDB`);
+      await this.progressBar.logDebug(`${datFile.toString()}: failed to parse SMDB: ${e}`);
       return undefined;
     }
 
     if (!rows.length) {
-      await this.progressBar.logDebug(`${datFile.toString()}: SMDB file has no rows`);
+      await this.progressBar.logTrace(`${datFile.toString()}: failed to parse SMDB, file has no rows`);
       return undefined;
     }
 
@@ -210,7 +212,13 @@ export default class DATScanner extends Scanner {
     }
 
     const games = rows.map((row) => {
-      const rom = new ROM(row.name, parseInt(row.size || '', 10), row.crc);
+      const rom = new ROM(
+        row.name,
+        parseInt(row.size || '', 10),
+        row.crc,
+        row.md5,
+        row.sha1,
+      );
       const gameName = row.name.replace(/\.[^\\/]+$/, '');
       return new Game({
         name: gameName,

@@ -9,6 +9,7 @@ import CandidateGenerator from './modules/candidateGenerator.js';
 import CombinedCandidateGenerator from './modules/combinedCandidateGenerator.js';
 import DATInferrer from './modules/datInferrer.js';
 import DATScanner from './modules/datScanner.js';
+import FixdatCreator from './modules/fixdatCreator.js';
 import HeaderProcessor from './modules/headerProcessor.js';
 import OutputCleaner from './modules/outputCleaner.js';
 import PatchCandidateGenerator from './modules/patchCandidateGenerator.js';
@@ -94,6 +95,9 @@ export default class Igir {
           return map;
         }, new Map<Parent, File[]>());
       datsToWrittenRoms.set(dat, writtenRoms);
+
+      // Write a fixdat
+      await new FixdatCreator(this.options, progressBar).write(dat, parentsToCombinedCandidates);
 
       // Write the output report
       const datStatus = await new StatusGenerator(this.options, progressBar)

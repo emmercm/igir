@@ -4,6 +4,10 @@ Patches contain a set of changes that can be applied to a file, turning that fil
 
 Games and their ROMs are protected under copyrights, so patches are used in order to not share copyrighted code online. A person needs the original ROM file plus a patch file in order to get the resulting patched ROM that will be played with an emulator.
 
+## Specifying patch files
+
+Patch files can be specified with the `--patch` option. See the [file scanning docs](file-scanning.md) for more information.
+
 ## Patch types
 
 There are many, _many_ patch types that ROM hackers use to distribute their changes on the internet ([xkcd "Standards"](https://xkcd.com/927/)). Typically, a patch will only be distributed in one format, so gamers are entirely at the mercy of the ROM hacker's choice.
