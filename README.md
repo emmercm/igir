@@ -53,7 +53,7 @@ $ igir --help
   | $$  | $$ __\$$  | $$  | $$__| $$
   | $$  | $$|    \  | $$  | $$    $$   ROM collection manager
   | $$  | $$ \$$$$  | $$  | $$$$$$$\
- _| $$_ | $$__| $$ _| $$_ | $$  | $$   v1.5.0
+ _| $$_ | $$__| $$ _| $$_ | $$  | $$   v1.6.0
 |   $$ \ \$$    $$|   $$ \| $$  | $$
  \$$$$$$  \$$$$$$  \$$$$$$ \$$   \$$
 
@@ -85,6 +85,10 @@ DAT input options:
       --dat-regex          Regular expression of DAT names to process                    [string]
       --dat-regex-exclude  Regular expression of DAT names to exclude from processing    [string]
 
+DAT output options:
+      --fixdat  Generate a fixdat of any missing games for every DAT processed (requires --dat)
+                                                                                        [boolean]
+
 ROM output options:
   -o, --output             Path to the ROM output directory (supports replaceable symbols, see be
                            low)                                                          [string]
@@ -97,12 +101,12 @@ ROM output options:
                            hecksum, or zip contents                                     [boolean]
   -C, --clean-exclude      Path(s) to files to exclude from cleaning (supports globbing)  [array]
 
-Zip command options:
+ROM zip command options:
   -Z, --zip-exclude   Glob pattern of files to exclude from zipping                      [string]
       --zip-dat-name  Group all ROMs from the same DAT into the same zip archive, if not excluded
                        from zipping (enforces --dat-threads 1)                          [boolean]
 
-Symlink command options:
+ROM symlink command options:
       --symlink-relative  Create symlinks as relative to the target path, as opposed to absolute
                                                                                         [boolean]
 
@@ -135,9 +139,9 @@ ROM filtering options:
       --no-unverified         Filter out un-verified ROMs                               [boolean]
       --no-bad                Filter out bad ROM dumps                                  [boolean]
 
-ROM priority options:
+One game, one ROM (1G1R) options:
   -s, --single                 Output only a single game per parent (1G1R) (required for all opti
-                               ons below, requires parent/clone DAT files)              [boolean]
+                               ons below, requires --dat with parent/clone information) [boolean]
       --prefer-verified        Prefer verified ROM dumps over unverified                [boolean]
       --prefer-good            Prefer good ROM dumps over bad                           [boolean]
   -l, --prefer-language        List of comma-separated languages in priority order (supported: DA
@@ -150,8 +154,11 @@ ROM priority options:
       --prefer-revision-newer  Prefer newer ROM revisions over older                    [boolean]
       --prefer-revision-older  Prefer older ROM revisions over newer                    [boolean]
       --prefer-retail          Prefer retail releases (see --only-retail)               [boolean]
-      --prefer-parent          Prefer parent ROMs over clones (requires parent/clone DAT files)
-                                                                                        [boolean]
+      --prefer-parent          Prefer parent ROMs over clones                           [boolean]
+
+Report options:
+      --report-output  Report output location (formatted with moment.js)
+                                       [string] [default: "./igir_%YYYY-%MM-%DDT%HH:%mm:%ss.csv"]
 
 Help & debug options:
       --dat-threads  Number of DATs to process in parallel                  [number] [default: 3]
