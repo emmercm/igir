@@ -40,14 +40,14 @@ export default class ROMWriter extends Module {
   async write(
     dat: DAT,
     parentsToCandidates: Map<Parent, ReleaseCandidate[]>,
-  ): Promise<void> {
+  ): Promise<File[]> {
     if (!parentsToCandidates.size) {
-      return;
+      return [];
     }
 
     // Return early if we shouldn't write (are only reporting)
     if (!this.options.shouldWrite()) {
-      return;
+      return [];
     }
 
     const totalCandidateCount = [...parentsToCandidates.values()].flatMap((c) => c).length;
@@ -69,12 +69,9 @@ export default class ROMWriter extends Module {
       }),
     ));
 
-    if (this.filesQueuedForDeletion.length) {
-      await this.progressBar.setSymbol(ProgressBarSymbol.WRITING);
-      await this.deleteMovedFiles(dat);
-    }
-
     await this.progressBar.logInfo(`${dat.getNameShort()}: done writing ${totalCandidateCount.toLocaleString()} candidate${totalCandidateCount !== 1 ? 's' : ''}`);
+
+    return this.filesQueuedForDeletion;
   }
 
   private async writeReleaseCandidate(
@@ -361,29 +358,13 @@ export default class ROMWriter extends Module {
   }
 
   // Input files may be needed for multiple output files, such as an archive with hundreds of ROMs
-  //  in it. That means we need to "move" (delete) files at the very end.
+  //  in it. That means we need to "move" (delete) files at the very end after all DATs have
+  //  finished writing.
   private enqueueFileDeletion(inputRomFile: File): void {
     if (!this.options.shouldMove()) {
       return;
     }
     this.filesQueuedForDeletion.push(inputRomFile);
-  }
-
-  private async deleteMovedFiles(dat: DAT): Promise<void[]> {
-    const uniqueFiles = this.filesQueuedForDeletion
-      .map((file) => file.getFilePath())
-      .filter((filePath, idx, filePaths) => filePaths.indexOf(filePath) === idx);
-
-    await this.progressBar.logDebug(`${dat.getNameShort()}: deleting ${uniqueFiles.length.toLocaleString()} moved file${uniqueFiles.length !== 1 ? 's' : ''}`);
-
-    return Promise.all(uniqueFiles.map(async (filePath) => {
-      await this.progressBar.logTrace(`${dat.getNameShort()}: ${filePath}: deleting moved file`);
-      try {
-        await fsPoly.rm(filePath, { force: true });
-      } catch (e) {
-        await this.progressBar.logError(`${dat.getNameShort()}: ${filePath}: failed to delete`);
-      }
-    }));
   }
 
   /** ************************

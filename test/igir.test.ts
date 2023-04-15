@@ -111,9 +111,9 @@ describe('with explicit dats', () => {
     ]);
   });
 
-  it('should copy, extract, test, and clean', async () => {
+  it('should move, extract, test, and clean', async () => {
     await expectEndToEnd({
-      commands: ['copy', 'extract', 'test', 'clean'],
+      commands: ['move', 'extract', 'test', 'clean'],
       dat: ['dats/*'],
       dirDatName: true,
     }, [
@@ -316,9 +316,9 @@ describe('with inferred dats', () => {
     ]);
   });
 
-  it('should copy, extract, test, and clean', async () => {
+  it('should move, extract, test, and clean', async () => {
     await expectEndToEnd({
-      commands: ['copy', 'extract', 'test', 'clean'],
+      commands: ['move', 'extract', 'test', 'clean'],
     }, [
       ['0F09A40.rom', '2f943e86'],
       ['3708F2C.rom', '20891c9f'],
