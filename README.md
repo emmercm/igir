@@ -213,34 +213,6 @@ Example use cases:
 
 See the [advanced examples](/docs/advanced-examples.md) page for even more examples.
 
-## Additional documentation
-
-See the [docs](/docs) page for in-depth information on multiple topics!
-
-## Why choose `igir`?
-
-There a few different popular ROM managers that have similar features:
-
-- [clrmamepro](https://mamedev.emulab.it/clrmamepro/)
-- [Romcenter](http://www.romcenter.com/)
-- [Romulus](https://romulus.cc/)
-- [RomVault](https://www.romvault.com/)
-
-Each manager has its own pros, but many have the same drawbacks or limitations:
-
-- Windows-only (sometimes with Wine support), making management on macOS and Linux difficult
-- Limited CLI support, making batching and repeatable actions difficult
-- UIs that don't clearly state what actions can, will, or are being performed
-- Confusing required setup steps
-- No report-only modes
-- Output report formats that are difficult to parse or filter
-- Limited archive extraction support
-- Limited folder management options
-- No ROM header detection & removal support
-- No ROM patching functionality
-- Limited parent/clone, region, language, version, and ROM type filtering
-- No ability to prioritize parent/clones when creating a 1G1R set
-
 ## Feature requests, bug reports, and contributing
 
 Feedback is a gift! Your feature requests and bug reports help improve the project for everyone. Feel free to submit an issue on GitHub using one of the templates.

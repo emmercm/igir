@@ -20,7 +20,7 @@ Or you can specify archives that can contain multiple DATs (such as No-Intro's [
 
 ```shell
 igir [commands..] --dat No-Intro*.zip --input <input>
-``
+```
 
 **`igir` can process DAT files in [XML](https://github.com/SabreTools/SabreTools/wiki/DatFile-Formats#logiqx-xml-format) and [CMPro](http://www.logiqx.com/DatFAQs/CMPro.php) formats, as well as [Hardware Target Game Database](https://github.com/frederic-mahe/Hardware-Target-Game-Database) SMDBs that contain file sizes.**
 
