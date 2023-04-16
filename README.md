@@ -15,7 +15,8 @@
   <a href="https://codeclimate.com/github/emmercm/igir/maintainability"><img alt="Code Climate: maintainability" src="https://img.shields.io/codeclimate/maintainability-percentage/emmercm/igir?logo=codeclimate&logoColor=white"></a>
   <a href="https://github.com/emmercm/igir/blob/main/LICENSE"><img alt="license" src="https://img.shields.io/github/license/emmercm/igir?color=blue"></a>
 </p>
-<br>
+
+<p align="center"><i>See the <a href="https://emmercm.github.io/igir/">documentation website</a> for complete usage and examples!</i></p>
 
 ## What does `igir` do?
 
@@ -25,18 +26,18 @@ A video of an example use case:
 
 With `igir` you can manage a ROM collection of any size:
 
-- 🔍 Scan for DATs, ROMs, and ROM patches - including those in archives (see [scanning](/docs/file-scanning.md) & [archive docs](/docs/archives.md))
-- 📂 Organize ROM files by console (see [DAT docs](/docs/dats.md))
-- 🪄 Name ROM files consistently, including the right extension (see [DAT docs](/docs/dats.md))
-- ✂️ Filter out duplicate ROMs, or ROMs in languages you don't understand (see [filtering docs](/docs/rom-filtering.md))
-- 🗜️ Extract or archive ROMs in mass (see [archive docs](/docs/archives.md))
-- 🩹 Patch ROMs automatically in mass (see [scanning](/docs/file-scanning.md) & [patching docs](/docs/rom-patching.md))
-- 🎩 Parse ROMs with headers, and optionally remove them (see [header docs](/docs/rom-headers.md))
-- 🔮 Report on what ROMs are present or missing for each console, and create fixdats for missing ROMs (see [reporting](/docs/reporting.md) & [DAT docs](/docs/dats.md))
+- 🔍 Scan for DATs, ROMs, and ROM patches - including those in archives (see [scanning](https://emmercm.github.io/igir/file-scanning) & [archive docs](https://emmercm.github.io/igir/archives))
+- 📂 Organize ROM files by console (see [DAT docs](https://emmercm.github.io/igir/dats))
+- 🪄 Name ROM files consistently, including the right extension (see [DAT docs](https://emmercm.github.io/igir/dats))
+- ✂️ Filter out duplicate ROMs, or ROMs in languages you don't understand (see [filtering docs](https://emmercm.github.io/igir/rom-filtering))
+- 🗜️ Extract or archive ROMs in mass (see [archive docs](https://emmercm.github.io/igir/archives))
+- 🩹 Patch ROMs automatically in mass (see [scanning](https://emmercm.github.io/igir/file-scanning) & [patching docs](https://emmercm.github.io/igir/rom-patching))
+- 🎩 Parse ROMs with headers, and optionally remove them (see [header docs](https://emmercm.github.io/igir/rom-headers))
+- 🔮 Report on what ROMs are present or missing for each console, and create fixdats for missing ROMs (see [reporting](https://emmercm.github.io/igir/reporting) & [DAT docs](https://emmercm.github.io/igir/dats))
 
 ## How do I run `igir`?
 
-Either download the latest version for your OS from the [releases page](https://github.com/emmercm/igir/releases/latest), or if you have <span style="vertical-align:middle;">[![Node.js](https://img.shields.io/node/v/igir?label=Node.js&logo=node.js&logoColor=white)](https://nodejs.org/en/download/)</span> installed you can use [`npx`](https://docs.npmjs.com/cli/v8/commands/npx) to always run the latest version from the command line:
+Either download the latest version for your OS from the [releases page](https://github.com/emmercm/igir/releases/latest), or if you have Node.js installed you can use [`npx`](https://docs.npmjs.com/cli/v8/commands/npx) to always run the latest version from the command line:
 
 ```shell
 npx igir@latest [commands..] [options]
@@ -210,8 +211,6 @@ Example use cases:
     igir copy extract test --dat *.dat --input ROMs/ --output /Assets/{pocket}/common/ --dir-lett
     er
 ```
-
-See the [advanced examples](/docs/advanced-examples.md) page for even more examples.
 
 ## Feature requests, bug reports, and contributing
 
