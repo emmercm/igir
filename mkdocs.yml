@@ -7,6 +7,8 @@ repo_name: emmercm/igir
 repo_url: https://github.com/emmercm/igir
 edit_uri: edit/main/docs/
 
+remote_branch: gh-pages
+
 theme:
   name: material
 
@@ -45,6 +47,7 @@ plugins:
   # - social
   - git-revision-date-localized:
       enable_creation_date: true
+  - htmlproofer
 
 nav:
   - Home: index.md
