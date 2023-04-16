@@ -53,8 +53,9 @@ plugins:
 
 nav:
   - Home: index.md
-  - installation.md
   - overview.md
+  - installation.md
+  - example-usage.md
   - alternatives.md
   - File Inputs:
       - file-scanning.md
@@ -67,7 +68,6 @@ nav:
   - File Outputs:
       - reporting.md
   - Advanced:
-      - advanced-examples.md
-      - advanced-topics.md
+      - internals.md
   - Misc:
       - rom-dumping.md

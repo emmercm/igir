@@ -1,4 +1,4 @@
-# Alternatives
+# Alternative Managers
 
 There a few different popular ROM managers that have similar features:
 
