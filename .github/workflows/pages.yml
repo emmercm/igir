@@ -1,0 +1,48 @@
+# Requires GitHub Pages publishing branch to be `gh-pages`
+
+name: GitHub Pages
+
+on:
+  pull_request:
+    types:
+      - opened
+      - synchronize  # HEAD has changed, e.g. a push happened
+      - reopened
+  push:
+    branches:
+      - 'main'
+
+jobs:
+  test:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-python@v4
+        with:
+          python-version: 3.x
+      - uses: actions/cache@v2
+        with:
+          key: ${{ github.ref }}
+          path: .cache
+      - run: pip install mkdocs-material
+      - run: pip install mkdocs-git-revision-date-localized-plugin mkdocs-htmlproofer-plugin
+      - run: mkdocs build --strict --verbose
+
+  deploy:
+    if: github.event_name == 'push'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-python@v4
+        with:
+          python-version: 3.x
+      - uses: actions/cache@v2
+        with:
+          key: ${{ github.ref }}
+          path: .cache
+      - run: pip install mkdocs-material
+      - run: pip install mkdocs-git-revision-date-localized-plugin mkdocs-htmlproofer-plugin
+      - run: mkdocs gh-deploy --strict --verbose --force

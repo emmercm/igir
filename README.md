@@ -25,14 +25,14 @@ A video of an example use case:
 
 With `igir` you can manage a ROM collection of any size:
 
-- 🔍 Scan for DATs, ROMs, and ROM patches - including those in archives (see [scanning](docs/file-scanning.md) & [archive docs](docs/archives.md))
-- 📂 Organize ROM files by console (see [DAT docs](docs/dats.md))
-- 🪄 Name ROM files consistently, including the right extension (see [DAT docs](docs/dats.md))
-- ✂️ Filter out duplicate ROMs, or ROMs in languages you don't understand (see [filtering docs](docs/rom-filtering.md))
-- 🗜️ Extract or archive ROMs in mass (see [archive docs](docs/archives.md))
-- 🩹 Patch ROMs automatically in mass (see [scanning](docs/file-scanning.md) & [patching docs](docs/rom-patching.md))
-- 🎩 Parse ROMs with headers, and optionally remove them (see [header docs](docs/rom-headers.md))
-- 🔮 Report on what ROMs are present or missing for each console, and create fixdats for missing ROMs (see [reporting](docs/reporting.md) & [DAT docs](docs/dats.md))
+- 🔍 Scan for DATs, ROMs, and ROM patches - including those in archives (see [scanning](/docs/file-scanning.md) & [archive docs](/docs/archives.md))
+- 📂 Organize ROM files by console (see [DAT docs](/docs/dats.md))
+- 🪄 Name ROM files consistently, including the right extension (see [DAT docs](/docs/dats.md))
+- ✂️ Filter out duplicate ROMs, or ROMs in languages you don't understand (see [filtering docs](/docs/rom-filtering.md))
+- 🗜️ Extract or archive ROMs in mass (see [archive docs](/docs/archives.md))
+- 🩹 Patch ROMs automatically in mass (see [scanning](/docs/file-scanning.md) & [patching docs](/docs/rom-patching.md))
+- 🎩 Parse ROMs with headers, and optionally remove them (see [header docs](/docs/rom-headers.md))
+- 🔮 Report on what ROMs are present or missing for each console, and create fixdats for missing ROMs (see [reporting](/docs/reporting.md) & [DAT docs](/docs/dats.md))
 
 ## How do I run `igir`?
 
@@ -211,7 +211,7 @@ Example use cases:
     er
 ```
 
-See the [advanced examples](docs/advanced-examples.md) page for even more examples.
+See the [advanced examples](/docs/advanced-examples.md) page for even more examples.
 
 ## Additional documentation
 
@@ -250,7 +250,7 @@ Even better, if you feel comfortable writing code, please feel free to submit a 
 <br>
 <p align="center">
   <a href="https://github.com/emmercm/igir/graphs/contributors"><img alt="GitHub: contributors" src="https://img.shields.io/github/contributors/emmercm/igir?logo=github&logoColor=white"></a>
-  <a href="https://github.com/emmercm/igir/discussions"><img alt="GitHub: discussions" src="https://img.shields.io/github/discussions/emmercm/igir?logo=github&logoColor=white"></a>
-  <a href="https://github.com/emmercm/igir/issues?q=is%3Aopen+is%3Aissue+label%3Aenhancement"><img alt="GitHub: feature requests" src="https://img.shields.io/github/issues/emmercm/igir/enhancement?color=%234BBCBC&label=feature%20requests&logo=github&logoColor=white"></a>
   <a href="https://github.com/emmercm/igir/issues?q=is%3Aopen+is%3Aissue+label%3Abug"><img alt="GitHub: bugs" src="https://img.shields.io/github/issues/emmercm/igir/bug?color=%23d73a4a&label=bugs&logo=github&logoColor=white"></a>
+  <a href="https://github.com/emmercm/igir/issues?q=is%3Aopen+is%3Aissue+label%3Aenhancement"><img alt="GitHub: feature requests" src="https://img.shields.io/github/issues/emmercm/igir/enhancement?color=%234BBCBC&label=feature%20requests&logo=github&logoColor=white"></a>
+  <a href="https://github.com/emmercm/igir/discussions"><img alt="GitHub: discussions" src="https://img.shields.io/github/discussions/emmercm/igir?logo=github&logoColor=white"></a>
 </p>

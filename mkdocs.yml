@@ -1,0 +1,68 @@
+site_name: igir
+# site_url: https://emmercm.github.com/igir
+site_author: Christian Emmer
+# site_description: TODO
+
+repo_name: emmercm/igir
+repo_url: https://github.com/emmercm/igir
+edit_uri: edit/main/docs/
+
+remote_branch: gh-pages
+
+theme:
+  name: material
+
+  palette:
+    # Palette toggle for dark mode
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: black
+      toggle:
+        icon: material/brightness-4
+        name: Switch to light mode
+    # Palette toggle for light mode
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: black
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+
+  icon:
+    repo: fontawesome/brands/github
+
+  features:
+    - search.suggest
+    - search.highlight
+    - navigation.indexes
+    - navigation.sections
+    - navigation.expand
+    - navigation.instant
+    - toc.follow
+    - toc.integrate
+    - content.action.edit
+
+plugins:
+  - search
+  # - social
+  - git-revision-date-localized:
+      enable_creation_date: true
+  - htmlproofer
+
+nav:
+  - Home: index.md
+  - File Inputs:
+      - file-scanning.md
+      - dats.md
+      - archives.md
+  - ROM Processing:
+      - rom-filtering.md
+      - rom-headers.md
+      - rom-patching.md
+  - File Outputs:
+      - reporting.md
+  - Advanced:
+      - advanced-examples.md
+      - advanced-topics.md
+  - Misc:
+      - rom-dumping.md
