@@ -18,6 +18,8 @@
 
 <p align="center"><i>See the <a href="https://emmercm.github.io/igir/">documentation website</a> for complete usage and examples!</i></p>
 
+<br>
+
 ## What does `igir` do?
 
 A video of an example use case:

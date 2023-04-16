@@ -14,7 +14,7 @@ on:
 
 jobs:
   # !!! This check should be required by GitHub !!!
-  test:
+  pages-status-check:
     if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest
     steps:
