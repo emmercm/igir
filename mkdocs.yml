@@ -47,7 +47,9 @@ plugins:
   # - social
   - git-revision-date-localized:
       enable_creation_date: true
-  - htmlproofer
+  - htmlproofer:
+      raise_error_excludes:
+        '-1': [ 'http://www.logiqx.com' ]
 
 nav:
   - Home: index.md
