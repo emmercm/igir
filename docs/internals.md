@@ -1,4 +1,4 @@
-# Advanced Topics
+# Internals
 
 Information about the inner workings of `igir`.
 

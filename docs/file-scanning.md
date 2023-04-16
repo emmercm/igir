@@ -3,8 +3,8 @@
 `igir` has a few options to specify input files, as well as files to exclude:
 
 - ROMs: `--input` (required), `--input-exclude`
-- DATs: `--dat`, `--dat-exclude` ([docs](dats.md))
-- ROM patches: `--patch`, `--patch-exclude` ([docs](rom-patching.md))
+- [DATs](dats.md): `--dat`, `--dat-exclude`
+- [ROM patches](rom-patching.md): `--patch`, `--patch-exclude`
 
 ## Glob patterns
 

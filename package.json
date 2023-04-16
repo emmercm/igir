@@ -1,7 +1,7 @@
 {
   "name": "igir",
   "version": "1.6.0",
-  "description": "🕹 A platform-independent ROM collection manager to help filter, sort, patch, and archive ROM collections.",
+  "description": "🕹 A ROM collection manager to help filter, sort, patch, and archive ROM collections on any OS.",
   "keywords": [
     "1g1r",
     "analogue-pocket",
@@ -14,7 +14,7 @@
     "roms",
     "tosec"
   ],
-  "homepage": "https://github.com/emmercm/igir#readme",
+  "homepage": "https://emmercm.github.io/igir/",
   "bugs": {
     "url": "https://github.com/emmercm/igir/issues"
   },
