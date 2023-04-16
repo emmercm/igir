@@ -56,7 +56,7 @@ nav:
   - Home: index.md
   - overview.md
   - installation.md
-  - example-usage.md
+  - examples.md
   - alternatives.md
   - File Inputs:
       - file-scanning.md
