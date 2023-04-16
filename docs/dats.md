@@ -6,7 +6,7 @@ From the [RetroPie docs](https://retropie.org.uk/docs/Validating%2C-Rebuilding%2
 >
 > DATs describe the ROM contents including filenames, file sizes, and checksums to verify contents are not incorrect or corrupt. DATs are usually maintained either by emulator developers (such as with MAME or FinalBurn Neo) or digital preservation organizations like TOSEC and No-Intro.
 
-DATs are catalogs of every known ROM that exists per console, complete with enough information to identify each file.
+DATs are catalogs of every known ROM that exists per game system, complete with enough information to identify each file.
 
 These DATs help `igir` distinguish known ROM files in input directories from other files. Because DATs typically contain the complete catalog for a console, `igir` also uses them to generate reports for you on what ROMs were found and which are missing.
 

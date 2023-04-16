@@ -54,6 +54,7 @@ plugins:
 nav:
   - Home: index.md
   - installation.md
+  - overview.md
   - alternatives.md
   - File Inputs:
       - file-scanning.md
