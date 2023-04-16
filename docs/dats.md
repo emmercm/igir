@@ -57,7 +57,7 @@ DATs that include "parent" and "clone" information help `igir` understand what g
 
 Being able to know that many releases are actually the same game gives `igir` the ability to produce "one game, one ROM" (1G1R) sets with the `--single` option. 1G1R sets include only one of these "clone" releases, usually filtered to a language and region, because many people don't care about ROMs they can't understand.
 
-If you have the option to download "parent/clone" or "P/C" versions of DATs you should always choose those.
+If you have the option to download "parent/clone" or "P/C" versions of DATs, you should always choose those.
 
 ## Aren't DATs primarily for MAME?
 
@@ -69,7 +69,7 @@ These days, depending on what type of emulation you're interested in, non-MAME D
 
 "Fixdats" are DATs that contain only ROMs that are missing from your collection. Fixdats are derived from some other DAT (see above for obtaining DATs), containing only a subset of the ROMs. Fixdats are specific to the state of each person's ROM collection, they aren't necessarily meaningful to other people.
 
-Fixdats help you find files missing from your collection, and they can be used to generate a collection of those files once you have found them. This sub-collection of files can then be merged back into your main collection.
+Fixdats help you find files missing from your collection, and they can be used to generate a collection of those files once you've found them. This sub-collection of files can then be merged back into your main collection.
 
 The `--fixdat` option create a [Logiqx XML](http://www.logiqx.com/DatFAQs/) DAT in the output directory for every input DAT (`--dat`) that is missing ROMs. For example:
 

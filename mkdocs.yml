@@ -50,6 +50,7 @@ plugins:
   - htmlproofer:
       raise_error_excludes:
         '-1': [ 'http://www.logiqx.com' ]
+        429: https://romulus.cc/
 
 nav:
   - Home: index.md
