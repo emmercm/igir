@@ -72,3 +72,8 @@ nav:
       - internals.md
   - Misc:
       - rom-dumping.md
+
+extra:
+  analytics:
+    provider: google
+    property: G-GX1E7CQ1L7
