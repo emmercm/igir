@@ -1,122 +1,111 @@
 {
-  $schema: "https://docs.renovatebot.com/renovate-schema.json",
+  $schema: 'https://docs.renovatebot.com/renovate-schema.json',
   extends: [
-    "config:base"
+    'config:base',
   ],
   dependencyDashboard: true,
   configMigration: true,
-
-  // Personal preferences
-  timezone: "America/Los_Angeles",
-  assignees: ["@emmercm"],
-  reviewers: ["@emmercm"],
-  assignAutomerge: false, // default
-
-  // Open PRs immediately for vulnerability alerts
-  // Requires "dependency graph" as well as Dependabot "alerts" and "security updates" enabled for the repo
+  timezone: 'America/Los_Angeles',
+  assignees: [
+    '@emmercm',
+  ],
+  reviewers: [
+    '@emmercm',
+  ],
+  assignAutomerge: false,
   vulnerabilityAlerts: {
-    enabled: true, // default
-    schedule: "at any time", // default
-    prCreation: "immediate", // default
-    automergeSchedule: "at any time"
+    enabled: true,
+    schedule: 'at any time',
+    prCreation: 'immediate',
+    automergeSchedule: 'at any time',
   },
-  // WARN: "When the lockfileVersion is higher than 1 in package-lock.json, remediations are only possible when changes are made to package.json."
   transitiveRemediation: true,
-
-  // Use pseudo semantic commit (and therefore PR title) commit messages
-  // "{{{commitMessagePrefix}}} {{{commitMessageAction}}} {{{commitMessageTopic}}} {{{commitMessageExtra}}} {{{commitMessageSuffix}}}"
-  commitMessagePrefix: "Chore:",
-  commitMessageAction: "update",
-
-  // Separate potentially breaking updates, group others
+  commitMessagePrefix: 'Chore:',
+  commitMessageAction: 'update',
   separateMultipleMajor: true,
-  separateMajorMinor: true, // default
-  separateMinorPatch: false, // default
-
-  // Allow auto-merging of PRs, but reduce their spam on the commit log
-  schedule: "on the 1st through 24th day of the month",
+  separateMajorMinor: true,
+  separateMinorPatch: false,
+  schedule: 'on the 1st through 24th day of the month',
   automerge: true,
-  automergeSchedule: "on the 28th day of the month",
-  prHourlyLimit: 0, // default: disabled
-
+  automergeSchedule: 'on the 28th day of the month',
+  prHourlyLimit: 0,
   node: {
-    groupName: "Node.js",
-    schedule: "at any time",
-    prCreation: "immediate",
-    automergeSchedule: "at any time"
+    groupName: 'Node.js',
+    schedule: 'at any time',
+    prCreation: 'immediate',
+    automergeSchedule: 'at any time',
   },
-
   npm: {
     lockFileMaintenance: {
       enabled: true,
-      schedule: "on the 1st through 24th day of the month", // same as above
-      commitMessageAction: "update", // same as above
-      commitMessageTopic: "lockfile"
+      schedule: 'on the 1st through 24th day of the month',
+      commitMessageAction: 'update',
+      commitMessageTopic: 'lockfile',
     },
-
-    // Stability settings
-    rangeStrategy: "pin",
-    commitMessageAction: "update", // same as above, don't use `rangeStrategy` as the action
-    stabilityDays: 3,
-
+    rangeStrategy: 'pin',
+    commitMessageAction: 'update',
+    minimumReleaseAge: '3 days',
     packageRules: [
-      // Dependencies
       {
-        groupName: "dependencies",
-        matchDepTypes: ["dependencies", "devDependencies"]
+        groupName: 'dependencies',
+        matchDepTypes: [
+          'dependencies',
+          'devDependencies',
+        ],
       },
-
-      // Dev dependencies
       {
-        // Group devDependencies together, minus type definitions for dependencies
-        // https://github.com/renovatebot/renovate/issues/519
-        matchDepTypes: ["devDependencies"],
+        matchDepTypes: [
+          'devDependencies',
+        ],
         excludePackageNames: [
-          "@types/7zip-min",
-          "@types/archiver",
-          "@types/async",
-          "@types/cli-progress",
-          "@types/figlet",
-          "@types/micromatch",
-          "@types/semver",
-          "@types/tar",
-          "@types/unzipper",
-          "@types/xml2js",
-          "@types/yargs",
+          '@types/7zip-min',
+          '@types/archiver',
+          '@types/async',
+          '@types/cli-progress',
+          '@types/figlet',
+          '@types/micromatch',
+          '@types/semver',
+          '@types/tar',
+          '@types/unzipper',
+          '@types/xml2js',
+          '@types/yargs',
         ],
-        groupName: "dev dependencies"
+        groupName: 'dev dependencies',
       },
       {
-        // Group Jest together because of peerDependencies
         matchPackageNames: [
-          "@jest/globals",
-          "@types/jest",
-          "jest",
-          "ts-jest"
+          '@jest/globals',
+          '@types/jest',
+          'jest',
+          'ts-jest',
         ],
-        groupName: "Jest"
+        groupName: 'Jest',
       },
       {
-        // Separate TypeScript because upgrades are dependent on support by other dependencies
-        matchPackageNames: ["typescript"],
-        groupName: "TypeScript"
+        matchPackageNames: [
+          'typescript',
+        ],
+        groupName: 'TypeScript',
       },
-
-      // Group/separate all dependency pinning, perform it immediately
       {
-        matchUpdateTypes: ["pin"],
-        commitMessageAction: "pin",
-        groupName: "dependency ranges",
-        schedule: "at any time",
-        prCreation: "immediate",
-        automergeSchedule: "at any time"
+        matchUpdateTypes: [
+          'pin',
+        ],
+        commitMessageAction: 'pin',
+        groupName: 'dependency ranges',
+        schedule: 'at any time',
+        prCreation: 'immediate',
+        automergeSchedule: 'at any time',
       },
-
-      // Everything else
       {
-        matchDepTypes: ["optionalDependencies", "peerDependencies", "engines", "volta"],
-        enabled: false
-      }
-    ]
-  }
+        matchDepTypes: [
+          'optionalDependencies',
+          'peerDependencies',
+          'engines',
+          'volta',
+        ],
+        enabled: false,
+      },
+    ],
+  },
 }
