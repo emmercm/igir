@@ -2,7 +2,9 @@
 
 _See the `igir --help` message for a few common examples._
 
-## First time collection sort
+## Example scenario
+
+### First time collection sort
 
 First, you need to download a set of [DATs](dats.md). For these examples I'll assume you downloaded a No-Intro daily P/C XML `.zip`.
 
@@ -33,7 +35,7 @@ ROMs-Sorted
     └── Pokemon Pinball (USA, Australia) (Rumble Version) (SGB Enhanced) (GB Compatible).zip
 ```
 
-## Subsequent collection sorts
+### Subsequent collection sorts
 
 Let's say that we've done the above first time sort and were happy with the results. We can now consider the `ROMs-Sorted/` directory to be our primary collection, every file in there has been matched to a DAT.
 
@@ -67,7 +69,7 @@ ROMs-Sorted
     └── Pokemon Pinball (USA, Australia) (Rumble Version) (SGB Enhanced) (GB Compatible).zip
 ```
 
-## Flash cart 1G1R
+### Flash cart 1G1R
 
 Let's say we've done the above sorting we want to copy some ROMs from `ROMs-Sorted/` to a flash cart.
 
@@ -93,6 +95,30 @@ igir copy extract test clean \
     ├── Pokemon - Blue Version (USA, Europe) (SGB Enhanced).gb
     ├── Pokemon - Red Version (USA, Europe) (SGB Enhanced).gb
     └── Pokemon - Yellow Version - Special Pikachu Edition (USA, Europe) (CGB+SGB Enhanced).gb
+```
+
+## Specific consoles & hardware
+
+### EverDrive flash carts
+
+Because flash carts are specific to a specific console, you can provide specific input directories & DATs when you run `igir`. For example:
+
+```shell
+igir copy extract test clean \
+  --dat "Nintendo - Game Boy.dat" \
+  --input "ROMs-Sorted/Nintendo - Game Boy" \
+  --output /Volumes/EverDrive/
+```
+
+you can then add some other output options such as `--dir-letter`, if desired.
+
+Alternatively, `igir` supports [Hardware Target Game Database SMDB files](https://github.com/frederic-mahe/Hardware-Target-Game-Database/tree/master/EverDrive%20Pack%20SMDBs) as [DATs](dats.md). Unlike typical DATs, Hardware Target Game Database SMDBs typically have an opinionated directory structure to help sort ROMs by language, category, genre, and more. Example usage:
+
+```shell
+igir copy extract test clean \
+  --dat "EverDrive GB SMDB.txt" \
+  --input "ROMs-Sorted/Nintendo - Game Boy" \
+  --output /Volumes/EverDrive/
 ```
 
 ## Personal usage

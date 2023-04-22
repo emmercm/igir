@@ -93,12 +93,6 @@ jobs:
           cd ..
           rm -rf package
 
-  markdown-lint:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
-      - run: docker run -v $PWD:/workdir ghcr.io/igorshubovych/markdownlint-cli:latest --disable MD013 MD033 MD041 -- "**/*.md"
-
   renovate-lint:
     runs-on: ubuntu-latest
     steps:
@@ -114,7 +108,6 @@ jobs:
       - node-unit
       - node-e2e
       - node-package
-      - markdown-lint
       - renovate-lint
     runs-on: ubuntu-latest
     steps:

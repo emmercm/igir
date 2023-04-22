@@ -74,7 +74,7 @@ Fixdats help you find files missing from your collection, and they can be used t
 The `--fixdat` option create a [Logiqx XML](http://www.logiqx.com/DatFAQs/) DAT in the output directory for every input DAT (`--dat`) that is missing ROMs. For example:
 
 ```shell
-igir copy --dat "Nintendo - Game Boy.dat" \
+igir copy zip --dat "Nintendo - Game Boy.dat" \
   --dat "Nintendo - Game Boy Advance.dat" \
   --dat "Nintendo - Game Boy Color.dat" \
   --input ROMs/
