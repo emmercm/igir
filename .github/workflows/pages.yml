@@ -13,8 +13,13 @@ on:
       - 'main'
 
 jobs:
-  # !!! This check should be required by GitHub !!!
-  pages-status-check:
+  markdown-lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - run: docker run -v $PWD:/workdir ghcr.io/igorshubovych/markdownlint-cli:latest --disable MD013 MD033 -- "**/*.md"
+
+  mkdocs-build:
     if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest
     steps:
@@ -29,6 +34,15 @@ jobs:
       - run: pip install mkdocs-material
       - run: pip install mkdocs-git-revision-date-localized-plugin mkdocs-htmlproofer-plugin
       - run: mkdocs build --strict --verbose
+
+  # !!! This check should be required by GitHub !!!
+  pages-status-check:
+    needs:
+      - markdown-lint
+      - mkdocs-build
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo ok
 
   deploy:
     if: github.event_name == 'push'
