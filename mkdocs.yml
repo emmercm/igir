@@ -34,6 +34,8 @@ theme:
   features:
     - search.suggest
     - search.highlight
+    - navigation.tabs
+    - navigation.tabs.sticky
     - navigation.indexes
     - navigation.sections
     - navigation.expand
@@ -54,24 +56,28 @@ plugins:
 
 nav:
   - Home: index.md
-  - overview.md
-  - installation.md
-  - examples.md
-  - alternatives.md
-  - File Inputs:
-      - file-scanning.md
-      - dats.md
-      - archives.md
-  - ROM Processing:
-      - rom-filtering.md
-      - rom-headers.md
-      - rom-patching.md
-  - File Outputs:
-      - reporting.md
-  - Advanced:
-      - internals.md
-  - Misc:
-      - rom-dumping.md
+  - Documentation:
+    - overview.md
+    - installation.md
+    - examples.md
+    - alternatives.md
+    - File Inputs:
+        - file-scanning.md
+        - dats.md
+        - archives.md
+    - ROM Processing:
+        - rom-filtering.md
+        - rom-headers.md
+        - rom-patching.md
+    - File Outputs:
+        - reporting.md
+    - Advanced:
+        - internals.md
+    - Misc:
+        - rom-dumping.md
+  # https://github.com/squidfunk/mkdocs-material/issues/889#issuecomment-582297142
+  - Download ↗: https://github.com/emmercm/igir/releases/latest" target="_blank
+  - Discuss ↗: https://github.com/emmercm/igir/discussions" target="_blank
 
 extra:
   analytics:
