@@ -122,7 +122,7 @@ export default class Igir {
     datProcessProgressBar.delete();
 
     // Delete moved ROMs
-    await this.deleteMovedRoms(movedRomsToDelete);
+    await this.deleteMovedRoms(movedRomsToDelete, datsToWrittenRoms);
 
     // Clean the output directories
     const cleanedOutputFiles = await this.processOutputCleaner(romOutputDirs, datsToWrittenRoms);
@@ -199,14 +199,29 @@ export default class Igir {
       .filter((outputDir, idx, outputDirs) => outputDirs.indexOf(outputDir) === idx);
   }
 
-  private async deleteMovedRoms(movedRomsToDelete: File[]): Promise<void> {
+  private async deleteMovedRoms(
+    movedRomsToDelete: File[],
+    datsToWrittenRoms: Map<DAT, Map<Parent, File[]>>,
+  ): Promise<void> {
     if (!movedRomsToDelete.length) {
       return;
     }
 
+    // Create a fast lookup of ROM files we've written, to exclude from deletion in case the output
+    //  directory is also an input directory.
+    const writtenFilePaths = [...datsToWrittenRoms.values()]
+      .flatMap((parentsToFiles) => [...parentsToFiles.values()])
+      .flatMap((files) => files)
+      .reduce((map, file) => {
+        map.set(file.getFilePath(), true);
+        return map;
+      }, new Map<string, boolean>());
+
+    // Create a unique list of ROM files to be deleted
     const uniqueRomFiles = movedRomsToDelete
       .map((romFile) => romFile.getFilePath())
-      .filter((romFile, idx, romFiles) => romFiles.indexOf(romFile) === idx);
+      .filter((filePath) => !writtenFilePaths.has(filePath))
+      .filter((filePath, idx, filePaths) => filePaths.indexOf(filePath) === idx);
 
     const progressBar = await this.logger.addProgressBar('Deleting moved files', ProgressBarSymbol.DELETING, uniqueRomFiles.length);
     await progressBar.logDebug(`deleting ${uniqueRomFiles.length.toLocaleString()} moved file${uniqueRomFiles.length !== 1 ? 's' : ''}`);
