@@ -304,7 +304,9 @@ export default class File {
     }
 
     return new Promise((resolve, reject) => {
-      https.get(this.getFilePath(), (res) => {
+      https.get(this.getFilePath(), {
+        timeout: 30_000,
+      }, (res) => {
         const writeStream = fs.createWriteStream(filePath);
         res.pipe(writeStream);
         writeStream.on('finish', async () => {
@@ -312,7 +314,8 @@ export default class File {
           resolve(await File.fileOf(filePath));
         });
       })
-        .on('error', reject);
+        .on('error', reject)
+        .on('timeout', reject);
     });
   }
 
