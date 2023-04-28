@@ -1,4 +1,5 @@
 import os from 'os';
+import path from 'path';
 
 import Logger from '../../src/console/logger.js';
 import LogLevel from '../../src/console/logLevel.js';
@@ -597,8 +598,8 @@ describe('options', () => {
 
   it('should parse "report-output"', () => {
     expect(argumentsParser.parse(['report', '--input', os.devNull, '--dat', os.devNull]).getReportOutput()).toMatch(/igir_[0-9]{4}-[0-9]{2}-[0-9]{2}/);
-    expect(argumentsParser.parse(['report', '--input', os.devNull, '--dat', os.devNull, '--report-output', 'report.csv']).getReportOutput()).toEqual('report.csv');
-    expect(argumentsParser.parse(['report', '--input', os.devNull, '--dat', os.devNull, '--report-output', '%dddd, %MMMM %Do %YYYY, %h:%mm:%ss %a.csv']).getReportOutput()).toMatch(/^[A-Z][a-z]+, [A-Z][a-z]+ [0-9]{1,2}[a-z]{2} [0-9]{4},/);
+    expect(argumentsParser.parse(['report', '--input', os.devNull, '--dat', os.devNull, '--report-output', 'report.csv']).getReportOutput()).toEqual(path.resolve('report.csv'));
+    expect(argumentsParser.parse(['report', '--input', os.devNull, '--dat', os.devNull, '--report-output', '%dddd, %MMMM %Do %YYYY, %h:%mm:%ss %a.csv']).getReportOutput()).toMatch(/[A-Z][a-z]+, [A-Z][a-z]+ [0-9]{1,2}[a-z]{2} [0-9]{4},/);
   });
 
   it('should parse "dat-threads"', () => {
