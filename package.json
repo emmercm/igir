@@ -51,7 +51,8 @@
     "update:readme": "./scripts/update-readme-help.sh",
     "release": "./node_modules/.bin/release-it --no-increment",
     "prepack": "npm run build && npm run update:readme -- 72",
-    "postpack": "npm run update:readme"
+    "postpack": "npm run update:readme",
+    "docs:serve": "mkdocs serve"
   },
   "dependencies": {
     "7zip-min": "1.4.4",
