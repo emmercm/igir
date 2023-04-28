@@ -1,14 +1,16 @@
 # ROM Dumping
 
-⚠️ An obligatory warning about downloading ROMs:
+!!! danger
 
-Emulators are generally _legal_, as long as they don't include copyrighted software such as a console BIOS. Downloading ROM files that you do not own is piracy which is _illegal_ in many countries.
+    An obligatory warning about downloading ROMs:
 
-[Dumping.Guide](https://dumping.guide/start) and [Emulation General Wiki](https://emulation.gametechwiki.com/index.php/Ripping_games) are some of the best resources for legally creating ROM files from games you own.
+    Emulators are generally _legal_, as long as they don't include copyrighted software such as a console BIOS. Downloading ROM files that you do not own is piracy which is _illegal_ in many countries.
+
+    [Dumping.Guide](https://dumping.guide/start) and [Emulation General Wiki](https://emulation.gametechwiki.com/index.php/Ripping_games) are some of the best resources for legally creating ROM files from games you own.
 
 Here is a condensed version that isn't guaranteed to be up-to-date.
 
-## Gen 1-5 cartridge-based consoles
+## Generation 1-5 cartridge-based consoles
 
 | Dumpable with special hardware | [Open Source Cartridge Reader](https://github.com/sanni/cartreader)<br/>([Save the Hero Builders](https://savethehero.builders/)) | [INLretro Dumper](https://www.infiniteneslives.com/inlretro.php) | [Retrode](https://www.retrode.com/)            | Other hardware                                             |
 |--------------------------------|-----------------------------------------------------------------------------------------------------------------------------------|------------------------------------------------------------------|------------------------------------------------|------------------------------------------------------------|
@@ -20,7 +22,7 @@ Here is a condensed version that isn't guaranteed to be up-to-date.
 | Sega - Genesis/MD              | ✅                                                                                                                                 | ✅                                                                | ✅                                              |                                                            |
 | Sega - Master System           | ✅ (V3 w/ adapter)                                                                                                                 | ❌                                                                | ✅ (w/ adapter)                                 |                                                            |
 
-## Gen 6+ and disk-based consoles
+## Generation 6+ and disk-based consoles
 
 | Dumpable with software  | Software for native hardware                                                                                                                                                                                                    |
 |-------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|

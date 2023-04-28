@@ -39,6 +39,8 @@ docker run --interactive --tty \
   npx igir@latest copy zip --dat "*.dat" --input ROMs/ --output ROMs-Sorted/ --dir-dat-name
 ```
 
-Make sure to quote all of your [file globs](file-scanning.md)!
+!!! warning
+
+    Make sure to quote all of your [file globs](file-scanning.md)!
 
 [![asciicast](https://asciinema.org/a/5OAVbSXXoosTr0WyBvjQGBqRp.svg)](https://asciinema.org/a/5OAVbSXXoosTr0WyBvjQGBqRp)

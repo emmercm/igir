@@ -17,9 +17,13 @@ if [[ "${1:-}" == "play" ]]; then
   DEMO_CMD_COLOR="\033[1;37m"
   DEMO_COMMENT_COLOR="\033[0;90m"
   cd "${DEMO_DIR}"
+  # NOTE(cemmer): these have to be functions, `pei` won't pick up on aliases
   npx() {
     shift # discard "igir@latest"
     node ../build/index.js "$@"
+  }
+  tree() {
+    command tree -N -I *.rsl* "$@"
   }
   # BEGIN PLAYBACK
 

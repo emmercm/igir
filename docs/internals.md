@@ -1,4 +1,4 @@
-# Internals
+# igir Internals
 
 Information about the inner workings of `igir`.
 

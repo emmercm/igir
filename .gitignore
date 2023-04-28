@@ -106,6 +106,7 @@ dist
 
 # Custom
 build/
+site/
 *.bat
 *.sh
 

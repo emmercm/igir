@@ -1,6 +1,8 @@
 # Example Usage
 
-_See the `igir --help` message for a few common examples._
+!!! info
+
+    See the `igir --help` message for a few common examples.
 
 ## Example scenario
 
@@ -35,6 +37,8 @@ ROMs-Sorted
     └── Pokemon Pinball (USA, Australia) (Rumble Version) (SGB Enhanced) (GB Compatible).zip
 ```
 
+[![asciicast](https://asciinema.org/a/rOWJwgbbODaXuQeQY4B6uWc4i.svg)](https://asciinema.org/a/rOWJwgbbODaXuQeQY4B6uWc4i)
+
 ### Subsequent collection sorts
 
 Let's say that we've done the above first time sort and were happy with the results. We can now consider the `ROMs-Sorted/` directory to be our primary collection, every file in there has been matched to a DAT.
@@ -44,7 +48,7 @@ Now we have new ROMs that we want to merge into our collection, and we want to g
 ```shell
 igir move zip test clean report \
   --dat "No-Intro*.zip" \
-  --input ~/Downloads/ \
+  --input ROMs-New/ \
   --input ROMs-Sorted/ \
   --output ROMs-Sorted/ \
   --dir-dat-name
@@ -68,6 +72,8 @@ ROMs-Sorted
     ├── Pokemon - Crystal Version (USA, Europe) (Rev 1).zip
     └── Pokemon Pinball (USA, Australia) (Rumble Version) (SGB Enhanced) (GB Compatible).zip
 ```
+
+[![asciicast](https://asciinema.org/a/PWAfBcvCikzJ7wObLcdFGtZbI.svg)](https://asciinema.org/a/PWAfBcvCikzJ7wObLcdFGtZbI)
 
 ### Flash cart 1G1R
 
@@ -96,6 +102,8 @@ igir copy extract test clean \
     ├── Pokemon - Red Version (USA, Europe) (SGB Enhanced).gb
     └── Pokemon - Yellow Version - Special Pikachu Edition (USA, Europe) (CGB+SGB Enhanced).gb
 ```
+
+TODO(cemmer): asciicast
 
 ## Specific consoles & hardware
 

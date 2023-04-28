@@ -24,7 +24,9 @@ igir [commands..] --dat No-Intro*.zip --input <input>
 
 **`igir` can process DAT files in [XML](https://github.com/SabreTools/SabreTools/wiki/DatFile-Formats#logiqx-xml-format) and [CMPro](http://www.logiqx.com/DatFAQs/CMPro.php) formats, as well as [Hardware Target Game Database](https://github.com/frederic-mahe/Hardware-Target-Game-Database) SMDBs that contain file sizes.**
 
-See the [file scanning docs](file-scanning.md) for more information on specify files with the `--dat` option.
+!!! info
+
+    See the [file scanning docs](file-scanning.md) for more information on specify files with the `--dat` option.
 
 ## Just tell me what to do
 
@@ -40,14 +42,18 @@ See the [file scanning docs](file-scanning.md) for more information on specify f
 
 A number of different release groups maintain these catalogs, the most popular are:
 
-- [No-Intro P/C XML](https://datomatic.no-intro.org/index.php?page=download&s=64&op=daily) (cartridge-based consoles)
+- [No-Intro](https://datomatic.no-intro.org/index.php?page=download&s=64&op=daily) (cartridge-based consoles)
 - [Redump](http://redump.org/downloads/) (optical media-based consoles)
 
 And some less popular release groups are:
 
 - [TOSEC](https://www.tosecdev.org/downloads/category/22-datfiles)
+- [EmulationArchive (trurip)](http://database.trurip.org/)
+- [libretro](https://www.libretro.com/):
+  - [Custom DATs](https://github.com/libretro/libretro-database/tree/master/dat) (specific games, some optical media-based consoles)
+  - [DAT Mirrors](https://github.com/libretro/libretro-database/tree/master/metadat) (No-Intro and Redump/trurip/TOSEC DATs)
+  - [FinalBurn NEO](https://github.com/libretro/FBNeo/tree/master/dats) (arcade, gen 1-4 consoles)
 - [ADVANsCEne](https://www.advanscene.com/html/dats.php) (GBA, DS, 3DS, PSP)
-- [FinalBurn NEO](https://github.com/libretro/FBNeo/tree/master/dats) (arcade, gen 1-4 consoles)
 - [progetto-SNAPS](https://www.progettosnaps.net/dats/MAME/) (MAME)
 - [pleasuredome](https://pleasuredome.github.io/pleasuredome/mame/) (MAME)
 
@@ -57,7 +63,9 @@ DATs that include "parent" and "clone" information help `igir` understand what g
 
 Being able to know that many releases are actually the same game gives `igir` the ability to produce "one game, one ROM" (1G1R) sets with the `--single` option. 1G1R sets include only one of these "clone" releases, usually filtered to a language and region, because many people don't care about ROMs they can't understand.
 
-If you have the option to download "parent/clone" or "P/C" versions of DATs, you should always choose those.
+!!! note
+
+    If you have the option to download "parent/clone" or "P/C" versions of DATs, you should always choose those.
 
 ## Aren't DATs primarily for MAME?
 
