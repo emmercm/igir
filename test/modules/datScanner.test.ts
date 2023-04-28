@@ -31,6 +31,8 @@ it('should return empty list on no results', async () => {
   await expect(createDatScanner([]).scan()).resolves.toHaveLength(0);
   await expect(createDatScanner(['']).scan()).resolves.toHaveLength(0);
   await expect(createDatScanner([os.devNull]).scan()).resolves.toHaveLength(0);
+  await expect(createDatScanner(['http://completelybadurl']).scan()).resolves.toHaveLength(0);
+  await expect(createDatScanner(['https://completelybadurl']).scan()).resolves.toHaveLength(0);
 });
 
 it('should not throw on empty files', async () => {

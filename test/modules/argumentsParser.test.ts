@@ -181,6 +181,8 @@ describe('options', () => {
     expect(test.length).toBeGreaterThan(0);
     expect(both.length).toEqual(src.length + test.length);
     /** Note: glob patterns are tested in {@link DATScanner} */
+
+    await expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--dat', 'https://www.google.com/']).scanDatFilesWithoutExclusions()).resolves.toEqual(['https://www.google.com/']);
   });
 
   it('should parse "dat-exclude"', async () => {
