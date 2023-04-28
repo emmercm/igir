@@ -24,6 +24,14 @@ igir [commands..] --dat No-Intro*.zip --input <input>
 
 **`igir` can process DAT files in [XML](https://github.com/SabreTools/SabreTools/wiki/DatFile-Formats#logiqx-xml-format) and [CMPro](http://www.logiqx.com/DatFAQs/CMPro.php) formats, as well as [Hardware Target Game Database](https://github.com/frederic-mahe/Hardware-Target-Game-Database) SMDBs that contain file sizes.**
 
+!!! tip
+
+    `igir` supports URLs to DAT files and archives! This is helpful to make sure you're always using the most up-to-date version of a DAT hosted on sites such as GitHub.
+
+    Example: `igir [commands..] --dat "https://raw.githubusercontent.com/libretro/libretro-database/master/dat/DOOM.dat" --input <input>`
+
+    Because of the way DAT-o-MATIC serves downloads, you can't use this method for official No-Intro DATs.
+
 !!! info
 
     See the [file scanning docs](file-scanning.md) for more information on specify files with the `--dat` option.
@@ -35,7 +43,7 @@ igir [commands..] --dat No-Intro*.zip --input <input>
 3. Every time you run `igir`, specify the `.zip` file you downloaded with the `--dat` option:
 
   ```shell
-  igir [commands..] --dat No-Intro*.zip --input <input>
+  igir [commands..] --dat "No-Intro*.zip" --input <input>
   ```
 
 ## DAT groups
@@ -49,9 +57,9 @@ And some less popular release groups are:
 
 - [TOSEC](https://www.tosecdev.org/downloads/category/22-datfiles)
 - [EmulationArchive (trurip)](http://database.trurip.org/)
-- [libretro](https://www.libretro.com/):
+- [libretro (RetroArch)](https://www.libretro.com/):
   - [Custom DATs](https://github.com/libretro/libretro-database/tree/master/dat) (specific games, some optical media-based consoles)
-  - [DAT Mirrors](https://github.com/libretro/libretro-database/tree/master/metadat) (No-Intro and Redump/trurip/TOSEC DATs)
+  - [Mirrored DATs](https://github.com/libretro/libretro-database/tree/master/metadat) (No-Intro and Redump/trurip/TOSEC DATs)
   - [FinalBurn NEO](https://github.com/libretro/FBNeo/tree/master/dats) (arcade, gen 1-4 consoles)
 - [ADVANsCEne](https://www.advanscene.com/html/dats.php) (GBA, DS, 3DS, PSP)
 - [progetto-SNAPS](https://www.progettosnaps.net/dats/MAME/) (MAME)
