@@ -81,10 +81,9 @@ Let's say we've done the above sorting we want to copy some ROMs from `ROMs-Sort
 
 We would prefer having only one copy of every game (1G1R), so there is less to scroll through to find what we want, and because we have a preferred language. Our flash cart can't read `.zip` files, so we'll need to extract our ROMs during copying.
 
-We also don't need any DATs in order to perform this copy as the ROMs in `ROMs-Sorted/` were already sorted using DATs. We can just copy & extract our files as-is.
-
 ```shell
 igir copy extract test clean \
+  --dat "No-Intro*.zip" \
   --input "ROMs-Sorted/Nintendo - Game Boy" \
   --output /Volumes/FlashCart/ \
   --dir-letter \
@@ -103,7 +102,67 @@ igir copy extract test clean \
     └── Pokemon - Yellow Version - Special Pikachu Edition (USA, Europe) (CGB+SGB Enhanced).gb
 ```
 
-TODO(cemmer): asciicast
+[![asciicast](https://asciinema.org/a/K8ROFbX8c4NJfUue3lwbe7d8V.svg)](https://asciinema.org/a/K8ROFbX8c4NJfUue3lwbe7d8V)
+
+!!! info
+
+    See the [ROM filtering](rom-filtering.md) page for other ways that you can filter your collection.
+
+## Specific emulator frontends
+
+### RetroArch
+
+!!! info
+
+    [RetroArch](https://www.retroarch.com/) is a frontend UI for the [Libretro API](https://www.libretro.com/).
+
+First, RetroArch needs a number of [BIOS files](https://docs.libretro.com/library/bios/). Thankfully, the libretro team maintains a DAT of these "system" files, so we don't have to guess at the correct filenames.
+
+With `igir`'s support for [DAT URLs](dats.md) we don't even have to download it! Locate your "System/BIOS" directory as configured in RetroArch and use it as your output directory:
+
+```shell
+igir copy extract test clean \
+  --dat "https://raw.githubusercontent.com/libretro/libretro-database/master/dat/System.dat" \
+  --input BIOS/ \
+  --output ~/Documents/RetroArch/system/
+```
+
+RetroArch is less opinionated about where your ROMs can live, you have to specify "content" directories during setup.
+
+!!! note
+
+    If you want store your ROMs in the RetroArch folder, you could co-locate them near your BIOS files:
+
+    ```shell
+    igir copy zip test \
+      --dat "No-Intro*.zip" \
+      --input ROMs/ \
+      --output ~/Documents/RetroArch/roms \
+      --dir-dat-name
+    ```
+
+From there, all you should have to do is "[import content](https://docs.libretro.com/guides/import-content/)."
+
+### EmulationStation Desktop Edition (ES-DE)
+
+!!! info
+
+    [EmulationStation Desktop Edition](https://es-de.org) is a frontend for [RetroArch](https://www.retroarch.com/), so the instructions are the same as RetroArch.
+
+### RetroPie
+
+!!! info
+
+    [RetroPie](https://retropie.org.uk/) is an installer for [EmulationStation](https://emulationstation.org/) & [RetroArch](https://www.retroarch.com/) on single-board computers (SBCs).
+
+Because RetroPie uses RetroArch under the hood, the instructions are generally the same. By default, the RetroPie BIOS directory is `/home/pi/RetroPie/BIOS`:
+
+```shell
+igir copy extract test clean \
+  --dat "https://raw.githubusercontent.com/libretro/libretro-database/master/dat/System.dat" \
+  --input BIOS/ \
+  --output /home/pi/RetroPie/BIOS
+```
 
 ## Specific consoles & hardware
 

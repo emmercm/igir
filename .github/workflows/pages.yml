@@ -32,7 +32,7 @@ jobs:
           key: ${{ github.ref }}
           path: .cache
       - run: pip install mkdocs-material
-      - run: pip install mkdocs-git-revision-date-localized-plugin mkdocs-htmlproofer-plugin
+      - run: pip install mkdocs-git-revision-date-localized-plugin mkdocs-htmlproofer-plugin mdx_truly_sane_lists
       - run: |
           pip install pillow cairosvg
           sudo apt-get install libcairo2-dev libfreetype6-dev libffi-dev libjpeg-dev libpng-dev libz-dev
@@ -62,7 +62,7 @@ jobs:
           key: ${{ github.ref }}
           path: .cache
       - run: pip install mkdocs-material
-      - run: pip install mkdocs-git-revision-date-localized-plugin mkdocs-htmlproofer-plugin
+      - run: pip install mkdocs-git-revision-date-localized-plugin mkdocs-htmlproofer-plugin mdx_truly_sane_lists
       - run: |
           pip install pillow cairosvg
           sudo apt-get install libcairo2-dev libfreetype6-dev libffi-dev libjpeg-dev libpng-dev libz-dev
