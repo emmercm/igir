@@ -16,7 +16,7 @@
   <a href="https://github.com/emmercm/igir/blob/main/LICENSE"><img alt="license" src="https://img.shields.io/github/license/emmercm/igir?color=blue"></a>
 </p>
 
-<p align="center"><i>See the <a href="https://emmercm.github.io/igir/">documentation website</a> for complete usage and examples!</i></p>
+<p align="center"><i>See the <a href="https://igir.io/">documentation website</a> for complete usage and examples!</i></p>
 
 <br>
 
@@ -28,14 +28,14 @@ A video of an example use case:
 
 With `igir` you can manage a ROM collection of any size:
 
-- 🔍 Scan for DATs, ROMs, and ROM patches - including those in archives (see [scanning](https://emmercm.github.io/igir/file-scanning) & [archive docs](https://emmercm.github.io/igir/archives))
-- 📂 Organize ROM files by console (see [DAT docs](https://emmercm.github.io/igir/dats))
-- 🪄 Name ROM files consistently, including the right extension (see [DAT docs](https://emmercm.github.io/igir/dats))
-- ✂️ Filter out duplicate ROMs, or ROMs in languages you don't understand (see [filtering docs](https://emmercm.github.io/igir/rom-filtering))
-- 🗜️ Extract or archive ROMs in mass (see [archive docs](https://emmercm.github.io/igir/archives))
-- 🩹 Patch ROMs automatically in mass (see [scanning](https://emmercm.github.io/igir/file-scanning) & [patching docs](https://emmercm.github.io/igir/rom-patching))
-- 🎩 Parse ROMs with headers, and optionally remove them (see [header docs](https://emmercm.github.io/igir/rom-headers))
-- 🔮 Report on what ROMs are present or missing for each console, and create fixdats for missing ROMs (see [reporting](https://emmercm.github.io/igir/reporting) & [DAT docs](https://emmercm.github.io/igir/dats))
+- 🔍 Scan for DATs, ROMs, and ROM patches - including those in archives (see [scanning](https://igir.io/file-scanning) & [archive docs](https://igir.io/archives))
+- 📂 Organize ROM files by console (see [DAT docs](https://igir.io/dats))
+- 🪄 Name ROM files consistently, including the right extension (see [DAT docs](https://igir.io/dats))
+- ✂️ Filter out duplicate ROMs, or ROMs in languages you don't understand (see [filtering docs](https://igir.io/rom-filtering))
+- 🗜️ Extract or archive ROMs in mass (see [archive docs](https://igir.io/archives))
+- 🩹 Patch ROMs automatically in mass (see [scanning](https://igir.io/file-scanning) & [patching docs](https://igir.io/rom-patching))
+- 🎩 Parse ROMs with headers, and optionally remove them (see [header docs](https://igir.io/rom-headers))
+- 🔮 Report on what ROMs are present or missing for each console, and create fixdats for missing ROMs (see [reporting](https://igir.io/reporting) & [DAT docs](https://igir.io/dats))
 
 ## How do I run `igir`?
 

@@ -1,6 +1,6 @@
 site_name: igir
 # https://github.com/mkdocs/mkdocs/issues/1783: site_url required for sitemap.xml
-site_url: https://emmercm.github.com/igir
+site_url: https://igir.io
 site_author: Christian Emmer
 # site_description: TODO
 
@@ -75,7 +75,7 @@ nav:
 
 plugins:
   - search
-  #- social
+  - social
   - git-revision-date-localized:
       enable_creation_date: true
   #- htmlproofer:
