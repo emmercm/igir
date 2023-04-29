@@ -96,6 +96,8 @@ markdown_extensions:
   - pymdownx.inlinehilite
   - pymdownx.snippets
   - pymdownx.superfences
+  # https://github.com/mkdocs/mkdocs/issues/545: allow two-space indented lists
+  - mdx_truly_sane_lists
 
 extra:
   analytics:
