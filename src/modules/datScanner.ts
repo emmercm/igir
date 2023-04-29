@@ -9,6 +9,7 @@ import Constants from '../constants.js';
 import bufferPoly from '../polyfill/bufferPoly.js';
 import fsPoly from '../polyfill/fsPoly.js';
 import File from '../types/files/file.js';
+import FileFactory from '../types/files/fileFactory.js';
 import DAT from '../types/logiqx/dat.js';
 import DataFile from '../types/logiqx/dataFile.js';
 import Game from '../types/logiqx/game.js';
@@ -55,22 +56,43 @@ export default class DATScanner extends Scanner {
     const datFiles = await this.getFilesFromPaths(datFilePaths, Constants.DAT_SCANNER_THREADS);
     await this.progressBar.reset(datFiles.length);
 
-    await this.progressBar.logDebug('deserializing DAT XML to objects');
-    const dats = await this.parseDatFiles(datFiles);
+    const downloadedDats = await this.downloadDats(datFiles);
+    const parsedDats = await this.parseDatFiles(downloadedDats);
 
-    await this.progressBar.logTrace(dats.map((dat) => {
+    await this.progressBar.logTrace(parsedDats.map((dat) => {
       const size = dat.getGames()
         .flatMap((game) => game.getRoms())
         .reduce((sum, rom) => sum + rom.getSize(), 0);
       return `${dat.getNameShort()}: ${fsPoly.sizeReadable(size)} of ${dat.getGames().length.toLocaleString()} game${dat.getGames().length !== 1 ? 's' : ''}, ${dat.getParents().length.toLocaleString()} parent${dat.getParents().length !== 1 ? 's' : ''} parsed`;
     }).join('\n'));
     await this.progressBar.logInfo('done scanning DAT files');
-    return dats;
+    return parsedDats;
+  }
+
+  private async downloadDats(datFiles: File[]): Promise<File[]> {
+    await this.progressBar.logDebug('downloading DATs from URLs');
+
+    return (await Promise.all(datFiles.map(async (datFile) => {
+      if (!datFile.isURL()) {
+        return datFile;
+      }
+
+      try {
+        await this.progressBar.logTrace(`${datFile.toString()}: downloading`);
+        const downloadedDatFile = await datFile.downloadToTempPath('dat');
+        await this.progressBar.logTrace(`${datFile.toString()}: downloaded to ${downloadedDatFile.toString()}`);
+        return await FileFactory.filesFrom(downloadedDatFile.getFilePath());
+      } catch (e) {
+        await this.progressBar.logWarn(`${datFile.toString()}: failed to download: ${e}`);
+        return [];
+      }
+    }))).flatMap((d) => d);
   }
 
   // Parse each file into a DAT
   private async parseDatFiles(datFiles: File[]): Promise<DAT[]> {
     await this.progressBar.logDebug('parsing DAT files');
+
     const results = (await async.mapLimit(
       datFiles,
       Constants.DAT_SCANNER_THREADS,
@@ -151,20 +173,21 @@ export default class DATScanner extends Scanner {
 
     await this.progressBar.logTrace(`${datFile.toString()}: parsing CMPro DAT`);
 
-    let datfile;
+    let cmproDat;
     try {
-      datfile = await robloachDatfile.parse(fileContents);
+      cmproDat = await robloachDatfile.parse(fileContents);
     } catch (e) {
       await this.progressBar.logDebug(`${datFile.toString()}: failed to parse CMPro DAT: ${e}`);
       return undefined;
     }
-    if (!datfile.length) {
+    if (!cmproDat.length) {
       throw new Error('invalid file');
     }
 
-    const header = new Header(datfile[0]);
+    const header = new Header(cmproDat[0]);
 
-    const games = datfile.slice(1).map((obj) => {
+    const cmproGames = cmproDat.slice(1);
+    const games = cmproGames.flatMap((obj) => {
       const game = obj as DatfileGame;
       const roms = game.entries
         .filter((rom) => rom.name) // we need ROM filenames
@@ -175,6 +198,21 @@ export default class DATScanner extends Scanner {
           entry.md5,
           entry.sha1,
         ));
+
+      // Special case: if the DAT has only one game but a large number of ROMs, assume each of those
+      //  ROMs should be a separate game. This is to help parse the libretro BIOS System.dat file
+      //  which only has one game for every BIOS file, even though there are 90+ consoles.
+      if (cmproGames.length === 1 && roms.length > 10) {
+        return roms.map((rom) => {
+          const name = rom.getName().replace(/\.+/, '');
+          return new Game({
+            ...game,
+            name,
+            rom: [rom],
+          });
+        });
+      }
+
       return new Game({
         ...game,
         rom: roms,
