@@ -35,7 +35,7 @@ jobs:
       - run: pip install mkdocs-git-revision-date-localized-plugin mkdocs-htmlproofer-plugin
       - run: |
           pip install pillow cairosvg
-          apt-get install libcairo2-dev libfreetype6-dev libffi-dev libjpeg-dev libpng-dev libz-dev
+          sudo apt-get install libcairo2-dev libfreetype6-dev libffi-dev libjpeg-dev libpng-dev libz-dev
       - run: mkdocs build --strict --verbose
 
   # !!! This check should be required by GitHub !!!
@@ -65,5 +65,5 @@ jobs:
       - run: pip install mkdocs-git-revision-date-localized-plugin mkdocs-htmlproofer-plugin
       - run: |
           pip install pillow cairosvg
-          apt-get install libcairo2-dev libfreetype6-dev libffi-dev libjpeg-dev libpng-dev libz-dev
+          sudo apt-get install libcairo2-dev libfreetype6-dev libffi-dev libjpeg-dev libpng-dev libz-dev
       - run: mkdocs gh-deploy --strict --verbose --force
