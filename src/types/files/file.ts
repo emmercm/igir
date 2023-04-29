@@ -1,5 +1,6 @@
 import { crc32 } from '@node-rs/crc32';
 import fs, { OpenMode, PathLike } from 'fs';
+import https from 'https';
 import path from 'path';
 import { Readable } from 'stream';
 import util from 'util';
@@ -7,6 +8,7 @@ import util from 'util';
 import Constants from '../../constants.js';
 import FilePoly from '../../polyfill/filePoly.js';
 import fsPoly from '../../polyfill/fsPoly.js';
+import URLPoly from '../../polyfill/urlPoly.js';
 import Patch from '../patches/patch.js';
 import ROMHeader from './romHeader.js';
 
@@ -125,6 +127,10 @@ export default class File {
 
   getPatch(): Patch | undefined {
     return this.patch;
+  }
+
+  isURL(): boolean {
+    return URLPoly.canParse(this.getFilePath());
   }
 
   // Other functions
@@ -290,6 +296,36 @@ export default class File {
     } finally {
       stream.destroy();
     }
+  }
+
+  async downloadToPath(filePath: string): Promise<File> {
+    if (await fsPoly.exists(this.getFilePath())) {
+      return this;
+    }
+
+    return new Promise((resolve, reject) => {
+      https.get(this.getFilePath(), {
+        timeout: 30_000,
+      }, (res) => {
+        const writeStream = fs.createWriteStream(filePath);
+        res.pipe(writeStream);
+        writeStream.on('finish', async () => {
+          writeStream.close();
+          resolve(await File.fileOf(filePath));
+        });
+      })
+        .on('error', reject)
+        .on('timeout', reject);
+    });
+  }
+
+  async downloadToTempPath(tempPrefix: string): Promise<File> {
+    if (await fsPoly.exists(this.getFilePath())) {
+      return this;
+    }
+
+    const filePath = await fsPoly.mktemp(path.join(Constants.GLOBAL_TEMP_DIR, tempPrefix));
+    return this.downloadToPath(filePath);
   }
 
   async withFileHeader(fileHeader: ROMHeader): Promise<File> {

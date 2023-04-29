@@ -14,6 +14,7 @@ import util from 'util';
 import LogLevel from '../console/logLevel.js';
 import Constants from '../constants.js';
 import fsPoly from '../polyfill/fsPoly.js';
+import URLPoly from '../polyfill/urlPoly.js';
 import File from './files/file.js';
 import FileFactory from './files/fileFactory.js';
 import GameConsole from './gameConsole.js';
@@ -394,10 +395,15 @@ export default class Options implements OptionsProps {
     }
 
     // Filter to non-directories
-    const nonDirectories = await async.mapLimit(
+    const isNonDirectory = await async.mapLimit(
       globbedPaths,
       Constants.MAX_FS_THREADS,
       async (file, callback: AsyncResultCallback<boolean, Error>) => {
+        if (!await fsPoly.exists(file) && URLPoly.canParse(file)) {
+          callback(null, true);
+          return;
+        }
+
         try {
           callback(null, !(await util.promisify(fs.lstat)(file)).isDirectory());
         } catch (e) {
@@ -407,7 +413,7 @@ export default class Options implements OptionsProps {
       },
     );
     const globbedFiles = globbedPaths
-      .filter((inputPath, idx) => nonDirectories[idx])
+      .filter((inputPath, idx) => isNonDirectory[idx])
       .filter((inputPath) => isNotJunk(path.basename(inputPath)));
 
     // Remove duplicates
@@ -446,6 +452,11 @@ export default class Options implements OptionsProps {
     const paths = (await fg(inputPathNormalized))
       .map((filePath) => path.normalize(filePath));
     if (!paths || !paths.length) {
+      if (URLPoly.canParse(inputPath)) {
+        // Allow URLs, let the scanner modules deal with them
+        return [inputPath];
+      }
+
       if (!requireFiles) {
         return [];
       }
@@ -880,7 +891,7 @@ export default class Options implements OptionsProps {
         });
     }
 
-    return fsPoly.makeLegal(reportOutput);
+    return fsPoly.makeLegal(path.resolve(reportOutput));
   }
 
   getDatThreads(): number {

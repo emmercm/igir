@@ -9,6 +9,7 @@ import Constants from '../constants.js';
 import bufferPoly from '../polyfill/bufferPoly.js';
 import fsPoly from '../polyfill/fsPoly.js';
 import File from '../types/files/file.js';
+import FileFactory from '../types/files/fileFactory.js';
 import DAT from '../types/logiqx/dat.js';
 import DataFile from '../types/logiqx/dataFile.js';
 import Game from '../types/logiqx/game.js';
@@ -55,22 +56,43 @@ export default class DATScanner extends Scanner {
     const datFiles = await this.getFilesFromPaths(datFilePaths, Constants.DAT_SCANNER_THREADS);
     await this.progressBar.reset(datFiles.length);
 
-    await this.progressBar.logDebug('deserializing DAT XML to objects');
-    const dats = await this.parseDatFiles(datFiles);
+    const downloadedDats = await this.downloadDats(datFiles);
+    const parsedDats = await this.parseDatFiles(downloadedDats);
 
-    await this.progressBar.logTrace(dats.map((dat) => {
+    await this.progressBar.logTrace(parsedDats.map((dat) => {
       const size = dat.getGames()
         .flatMap((game) => game.getRoms())
         .reduce((sum, rom) => sum + rom.getSize(), 0);
       return `${dat.getNameShort()}: ${fsPoly.sizeReadable(size)} of ${dat.getGames().length.toLocaleString()} game${dat.getGames().length !== 1 ? 's' : ''}, ${dat.getParents().length.toLocaleString()} parent${dat.getParents().length !== 1 ? 's' : ''} parsed`;
     }).join('\n'));
     await this.progressBar.logInfo('done scanning DAT files');
-    return dats;
+    return parsedDats;
+  }
+
+  private async downloadDats(datFiles: File[]): Promise<File[]> {
+    await this.progressBar.logDebug('downloading DATs from URLs');
+
+    return (await Promise.all(datFiles.map(async (datFile) => {
+      if (!datFile.isURL()) {
+        return datFile;
+      }
+
+      try {
+        await this.progressBar.logTrace(`${datFile.toString()}: downloading`);
+        const downloadedDatFile = await datFile.downloadToTempPath('dat');
+        await this.progressBar.logTrace(`${datFile.toString()}: downloaded to ${downloadedDatFile.toString()}`);
+        return await FileFactory.filesFrom(downloadedDatFile.getFilePath());
+      } catch (e) {
+        await this.progressBar.logWarn(`${datFile.toString()}: failed to download: ${e}`);
+        return [];
+      }
+    }))).flatMap((d) => d);
   }
 
   // Parse each file into a DAT
   private async parseDatFiles(datFiles: File[]): Promise<DAT[]> {
     await this.progressBar.logDebug('parsing DAT files');
+
     const results = (await async.mapLimit(
       datFiles,
       Constants.DAT_SCANNER_THREADS,
