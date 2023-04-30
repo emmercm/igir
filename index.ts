@@ -2,6 +2,7 @@
 
 import realFs from 'fs';
 import gracefulFs from 'graceful-fs';
+import semver from 'semver';
 
 import Logger from './src/console/logger.js';
 import ProgressBarCLI from './src/console/progressBarCLI.js';
@@ -16,6 +17,11 @@ gracefulFs.gracefulify(realFs);
 (async (): Promise<void> => {
   const logger = new Logger();
   logger.printHeader();
+
+  if (!semver.satisfies(process.version, Constants.ENGINES_NODE)) {
+    logger.error(`${Constants.COMMAND_NAME} requires a Node.js version of ${Constants.ENGINES_NODE}`);
+    process.exit(1);
+  }
 
   process.once('SIGINT', () => {
     logger.newLine();
