@@ -131,6 +131,7 @@ export default class Igir {
     await this.processReportGenerator(rawRomFiles, cleanedOutputFiles, datsStatuses);
 
     ProgressBarCLI.stop();
+    this.logger.info('done');
   }
 
   private async processDATScanner(): Promise<DAT[]> {

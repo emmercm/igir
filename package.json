@@ -120,7 +120,8 @@
   },
   "//engines": [
     "ES6 modules generally require ^12.20.0 || ^14.13.1 || >=16.0.0, though `tsc` can target ES5 or lower",
-    "But a lot of dependencies use node: prefixed imports such as node:fs which `tsc` can't get around"
+    "But a lot of dependencies use node: prefixed imports such as node:fs which `tsc` can't get around",
+    "And support for require('node:...') was added in Node.js v14.18.0"
   ],
   "engines": {
     "node": ">=14.18.0"
