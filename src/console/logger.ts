@@ -1,5 +1,6 @@
 import chalk from 'chalk';
 import figlet from 'figlet';
+import moment from 'moment';
 
 import Constants from '../constants.js';
 import LogLevel from './logLevel.js';
@@ -60,13 +61,15 @@ export default class Logger {
     };
     const chalkFunc = chalkFuncs[logLevel];
 
+    const loggerTime = this.logLevel <= LogLevel.TRACE ? `[${moment().format('HH:mm:ss.SSS')}] ` : '';
+    const levelPrefix = chalkFunc(`${LogLevel[logLevel]}:${' '.repeat(5 - LogLevel[logLevel].length)} `);
     const loggerPrefix = this.logLevel <= LogLevel.INFO && this.loggerPrefix ? `${this.loggerPrefix}: ` : '';
 
     return message
       .replace(/Error: /, '') // strip `new Error()` prefix
       .trim()
       .split('\n')
-      .map((m) => chalkFunc(`${LogLevel[logLevel]}:${' '.repeat(5 - LogLevel[logLevel].length)} `) + loggerPrefix + m)
+      .map((m) => loggerTime + levelPrefix + loggerPrefix + m)
       .join('\n');
   }
 
