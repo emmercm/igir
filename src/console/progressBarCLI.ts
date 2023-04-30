@@ -1,7 +1,9 @@
 import { E_CANCELED, Mutex } from 'async-mutex';
 import cliProgress, { MultiBar } from 'cli-progress';
 import { PassThrough } from 'stream';
+import wrapAnsi from 'wrap-ansi';
 
+import ConsolePoly from '../polyfill/consolePoly.js';
 import Logger from './logger.js';
 import LogLevel from './logLevel.js';
 import ProgressBar, { ProgressBarSymbol } from './progressBar.js';
@@ -181,7 +183,12 @@ export default class ProgressBarCLI extends ProgressBar {
       return;
     }
 
-    ProgressBarCLI.multiBar?.log(`${this.logger.formatMessage(logLevel, message)}\n`);
+    const formattedMessage = this.logger.formatMessage(logLevel, message);
+
+    // https://github.com/npkgz/cli-progress/issues/142
+    const messageWrapped = wrapAnsi(formattedMessage, ConsolePoly.consoleWidth());
+
+    ProgressBarCLI.multiBar?.log(`${messageWrapped}\n`);
     await ProgressBarCLI.render();
   }
 
