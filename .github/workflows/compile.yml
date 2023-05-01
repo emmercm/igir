@@ -48,13 +48,14 @@ jobs:
               Compress-Archive -Path igir.exe -DestinationPath "${BIN_OUTPUT}" -CompressionLevel Optimal -Force
           # https://github.com/leafac/caxa/issues/24#issuecomment-999018669
           - os: ubuntu
+            platform: arm/v7
             build: |
               NPM_PKG_VERSION=$(npm pkg get version | sed 's/"//g')
-              NODE_ARCH=armv7
+              NODE_ARCH=$(echo "${{ matrix.platform }}" | sed 's#/##g')
               BIN_OUTPUT="igir-${NPM_PKG_VERSION}-${RUNNER_OS}-${NODE_ARCH}.tar.gz"
               echo "BIN_OUTPUT=${BIN_OUTPUT}" >> $GITHUB_ENV
               cp package.json build/
-              docker run --rm --platform linux/arm/v7 --volume "$(pwd):/app" --workdir "/app" --user 1000:1000 \
+              docker run --rm --platform "linux/${{ matrix.platform }}" --volume "$(pwd):/app" --workdir "/app" --user 1000:1000 \
                 node:lts sh -c \
                 "./node_modules/.bin/caxa --input build/ --output /app/igir -- \"{{caxa}}/node_modules/.bin/node\" \"{{caxa}}/index.js\" && ./igir --help"
               tar cvf - igir | gzip --best > "${BIN_OUTPUT}"
