@@ -46,6 +46,7 @@ theme:
     - toc.integrate
     - content.action.edit
     - content.code.copy
+    - content.tabs.link
 
 nav:
   - Home: index.md
@@ -96,6 +97,10 @@ markdown_extensions:
   - pymdownx.inlinehilite
   - pymdownx.snippets
   - pymdownx.superfences
+  # https://squidfunk.github.io/mkdocs-material/reference/content-tabs/
+  - pymdownx.superfences
+  - pymdownx.tabbed:
+      alternate_style: true
   # https://github.com/mkdocs/mkdocs/issues/545: allow two-space indented lists
   - mdx_truly_sane_lists
 
