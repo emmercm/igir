@@ -50,7 +50,29 @@ jobs:
           - os: ubuntu
             build: |
               NPM_PKG_VERSION=$(npm pkg get version | sed 's/"//g')
+              NODE_ARCH=arm/v6
+              BIN_OUTPUT="igir-${NPM_PKG_VERSION}-${RUNNER_OS}-${NODE_ARCH/\//}.tar.gz"
+              echo "BIN_OUTPUT=${BIN_OUTPUT}" >> $GITHUB_ENV
+              cp package.json build/
+              docker run --rm --platform "linux/${NODE_ARCH}" --volume "$(pwd):/app" --workdir "/app" \
+                node:lts sh -c \
+                "./node_modules/.bin/caxa --input build/ --output igir -- \"{{caxa}}/node_modules/.bin/node\" \"{{caxa}}/index.js\" && ./igir --help"
+              tar cvf - igir | gzip --best > "${BIN_OUTPUT}"
+          - os: ubuntu
+            build: |
+              NPM_PKG_VERSION=$(npm pkg get version | sed 's/"//g')
               NODE_ARCH=arm/v7
+              BIN_OUTPUT="igir-${NPM_PKG_VERSION}-${RUNNER_OS}-${NODE_ARCH/\//}.tar.gz"
+              echo "BIN_OUTPUT=${BIN_OUTPUT}" >> $GITHUB_ENV
+              cp package.json build/
+              docker run --rm --platform "linux/${NODE_ARCH}" --volume "$(pwd):/app" --workdir "/app" \
+                node:lts sh -c \
+                "./node_modules/.bin/caxa --input build/ --output igir -- \"{{caxa}}/node_modules/.bin/node\" \"{{caxa}}/index.js\" && ./igir --help"
+              tar cvf - igir | gzip --best > "${BIN_OUTPUT}"
+          - os: ubuntu
+            build: |
+              NPM_PKG_VERSION=$(npm pkg get version | sed 's/"//g')
+              NODE_ARCH=arm64
               BIN_OUTPUT="igir-${NPM_PKG_VERSION}-${RUNNER_OS}-${NODE_ARCH/\//}.tar.gz"
               echo "BIN_OUTPUT=${BIN_OUTPUT}" >> $GITHUB_ENV
               cp package.json build/
@@ -71,6 +93,7 @@ jobs:
       - run: npm run build
       # Compile and upload
       - run: ${{ matrix.build }}
+      - run: echo ${{ env.BIN_OUTPUT }}
       - if: github.event_name == 'release'
         uses: actions/upload-artifact@v3
         with:
