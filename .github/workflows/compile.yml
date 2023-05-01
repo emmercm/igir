@@ -56,7 +56,7 @@ jobs:
               cp package.json build/
               docker run --rm --platform linux/arm/v7 --volume "$(pwd):/app" --workdir "/app" --user 1000:1000 \
                 node:lts sh -c \
-                "./node_modules/.bin/caxa --input build/ --output igir -- \"{{caxa}}/node_modules/.bin/node\" \"{{caxa}}/index.js\" && ./igir --help"
+                "./node_modules/.bin/caxa --input build/ --output ./igir -- \"{{caxa}}/node_modules/.bin/node\" \"{{caxa}}/index.js\" && ./igir --help"
               tar cvf - igir | gzip --best > "${BIN_OUTPUT}"
     steps:
       # Setup and install
