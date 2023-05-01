@@ -8,9 +8,15 @@ import fsPoly from '../src/polyfill/fsPoly.js';
 import FileFactory from '../src/types/files/fileFactory.js';
 import Options, { OptionsProps } from '../src/types/options.js';
 
-async function runIgir(optionsProps: OptionsProps): Promise<string[][]> {
+interface TestOutput {
+  writtenFilesAndCrcs: string[][],
+  deletedFiles: string[],
+}
+
+async function runIgir(optionsProps: OptionsProps): Promise<TestOutput> {
   const tempInput = await fsPoly.mkdtemp(path.join(Constants.GLOBAL_TEMP_DIR, 'input'));
   await fsPoly.copyDir('./test/fixtures', tempInput);
+  const inputFilesBefore = await fsPoly.walk(tempInput);
 
   const tempOutput = await fsPoly.mkdtemp(path.join(Constants.GLOBAL_TEMP_DIR, 'output'));
 
@@ -26,7 +32,7 @@ async function runIgir(optionsProps: OptionsProps): Promise<string[][]> {
   });
   await new Igir(options, new Logger(LogLevel.NEVER)).main();
 
-  const writtenRomAndCrcs = (await Promise.all((await fsPoly.walk(tempOutput))
+  const writtenFilesAndCrcs = (await Promise.all((await fsPoly.walk(tempOutput))
     .map(async (filePath) => FileFactory.filesFrom(filePath))))
     .flatMap((files) => files)
     .map((file) => ([
@@ -39,18 +45,26 @@ async function runIgir(optionsProps: OptionsProps): Promise<string[][]> {
     ]))
     .sort((a, b) => a[0].localeCompare(b[0]));
 
+  const inputFilesAfter = await fsPoly.walk(tempInput);
+  const deletedFiles = inputFilesBefore
+    .filter((filePath) => inputFilesAfter.indexOf(filePath) === -1)
+    .map((filePath) => filePath.replace(tempInput + path.sep, ''))
+    .sort();
+
   await fsPoly.rm(tempInput, { recursive: true });
   await fsPoly.rm(tempOutput, { force: true, recursive: true });
 
-  return writtenRomAndCrcs;
+  return { writtenFilesAndCrcs, deletedFiles };
 }
 
 async function expectEndToEnd(
   optionsProps: OptionsProps,
-  expectedFilesAndCrcs: string[][],
+  expectedWrittenFilesAndCrcs: string[][],
+  expectedDeletedFiles: string[] = [],
 ): Promise<void> {
-  const writtenRomAndCrcs = await runIgir(optionsProps);
-  expect(writtenRomAndCrcs).toEqual(expectedFilesAndCrcs);
+  const testOutput = await runIgir(optionsProps);
+  expect(testOutput.writtenFilesAndCrcs).toEqual(expectedWrittenFilesAndCrcs);
+  expect(testOutput.deletedFiles).toEqual(expectedDeletedFiles);
 }
 
 describe('with explicit dats', () => {
@@ -142,6 +156,52 @@ describe('with explicit dats', () => {
       [path.join('smdb', 'Hardware Target Game Database', 'Patchable', '3708F2C.rom'), '20891c9f'],
       [path.join('smdb', 'Hardware Target Game Database', 'Patchable', '65D1206.rom'), '20323455'],
       [path.join('smdb', 'Hardware Target Game Database', 'Patchable', 'C01173E.rom'), 'dfaebe28'],
+    ], [
+      path.join('roms', 'foobar.lnx'),
+      path.join('roms', 'headered', 'LCDTestROM.lnx.rar'),
+      path.join('roms', 'headered', 'allpads.nes'),
+      path.join('roms', 'headered', 'color_test.nintendoentertainmentsystem'),
+      path.join('roms', 'headered', 'diagnostic_test_cartridge.a78.7z'),
+      path.join('roms', 'headered', 'fds_joypad_test.fds.zip'),
+      path.join('roms', 'headered', 'speed_test_v51.smc'),
+      path.join('roms', 'patchable', '0F09A40.rom'),
+      path.join('roms', 'patchable', '3708F2C.rom'),
+      path.join('roms', 'patchable', '612644F.rom'),
+      path.join('roms', 'patchable', '65D1206.rom'),
+      path.join('roms', 'patchable', '92C85C9.rom'),
+      path.join('roms', 'patchable', 'C01173E.rom'),
+      path.join('roms', 'patchable', 'KDULVQN.rom'),
+      path.join('roms', 'patchable', 'before.rom'),
+      path.join('roms', 'patchable', 'best.gz'),
+      path.join('roms', 'raw', 'fizzbuzz.nes'),
+      path.join('roms', 'raw', 'loremipsum.rom'),
+      path.join('roms', 'raw', 'one.rom'),
+      path.join('roms', 'raw', 'three.rom'),
+    ]);
+  });
+
+  it('should move and extract zipped files', async () => {
+    await expectEndToEnd({
+      commands: ['move', 'extract'],
+      dat: ['dats/*'],
+      input: ['**/*.zip'],
+      dirDatName: true,
+    }, [
+      [path.join('Headered', 'fds_joypad_test.fds'), '1e58456d'],
+      [path.join('One', 'Fizzbuzz.nes'), '370517b5'],
+      [path.join('One', 'Foobar.lnx'), 'b22c9747'],
+      [path.join('One', 'Lorem Ipsum.rom'), '70856527'],
+      [path.join('One', 'One Three', 'One.rom'), 'f817a89f'],
+      [path.join('One', 'One Three', 'Three.rom'), 'ff46c5d8'],
+      [path.join('smdb', 'Hardware Target Game Database', 'Dummy', 'Fizzbuzz.nes'), '370517b5'],
+      [path.join('smdb', 'Hardware Target Game Database', 'Dummy', 'Foobar.lnx'), 'b22c9747'],
+      [path.join('smdb', 'Hardware Target Game Database', 'Dummy', 'Lorem Ipsum.rom'), '70856527'],
+    ], [
+      path.join('roms', 'fizzbuzz.zip'),
+      path.join('roms', 'headered', 'fds_joypad_test.fds.zip'),
+      path.join('roms', 'zip', 'foobar.zip'),
+      path.join('roms', 'zip', 'loremipsum.zip'),
+      // onetwothree.zip is explicitly not deleted! only one.rom and three.rom were matched
     ]);
   });
 
@@ -278,7 +338,7 @@ describe('with explicit dats', () => {
       dat: ['dats/*'],
       fixdat: true,
       dirDatName: true,
-    }))
+    })).writtenFilesAndCrcs
       .map(([filePath]) => filePath)
       .filter((filePath) => filePath.endsWith('.dat'));
 
@@ -361,6 +421,31 @@ describe('with inferred dats', () => {
       ['three.rom', 'ff46c5d8'],
       ['two.rom', '96170874'],
       ['unknown.rom', '377a7727'],
+    ], [
+      path.join('roms', 'empty.rom'),
+      path.join('roms', 'foobar.lnx'),
+      path.join('roms', 'headered', 'LCDTestROM.lnx.rar'),
+      path.join('roms', 'headered', 'allpads.nes'),
+      path.join('roms', 'headered', 'color_test.nintendoentertainmentsystem'),
+      path.join('roms', 'headered', 'diagnostic_test_cartridge.a78.7z'),
+      path.join('roms', 'headered', 'fds_joypad_test.fds.zip'),
+      path.join('roms', 'headered', 'speed_test_v51.smc'),
+      path.join('roms', 'patchable', '0F09A40.rom'),
+      path.join('roms', 'patchable', '3708F2C.rom'),
+      path.join('roms', 'patchable', '612644F.rom'),
+      path.join('roms', 'patchable', '65D1206.rom'),
+      path.join('roms', 'patchable', '92C85C9.rom'),
+      path.join('roms', 'patchable', 'C01173E.rom'),
+      path.join('roms', 'patchable', 'KDULVQN.rom'),
+      path.join('roms', 'patchable', 'before.rom'),
+      path.join('roms', 'patchable', 'best.gz'),
+      path.join('roms', 'raw', 'fizzbuzz.nes'),
+      path.join('roms', 'raw', 'loremipsum.rom'),
+      path.join('roms', 'raw', 'one.rom'),
+      path.join('roms', 'raw', 'three.rom'),
+      path.join('roms', 'raw', 'two.rom'),
+      path.join('roms', 'raw', 'unknown.rom'),
+      path.join('roms', 'unheadered', 'speed_test_v51.sfc.gz'),
     ]);
   });
 
