@@ -50,7 +50,7 @@ jobs:
           - os: ubuntu
             build: |
               NPM_PKG_VERSION=$(npm pkg get version | sed 's/"//g')
-              NODE_ARCH=arm32v6
+              NODE_ARCH=arm/v6
               BIN_OUTPUT="igir-${NPM_PKG_VERSION}-${RUNNER_OS}-${NODE_ARCH/\//}.tar.gz"
               echo "BIN_OUTPUT=${BIN_OUTPUT}" >> $GITHUB_ENV
               cp package.json build/
@@ -61,23 +61,23 @@ jobs:
           - os: ubuntu
             build: |
               NPM_PKG_VERSION=$(npm pkg get version | sed 's/"//g')
-              NODE_ARCH=arm32v7
+              NODE_ARCH=arm/v7
               BIN_OUTPUT="igir-${NPM_PKG_VERSION}-${RUNNER_OS}-${NODE_ARCH/\//}.tar.gz"
               echo "BIN_OUTPUT=${BIN_OUTPUT}" >> $GITHUB_ENV
               cp package.json build/
               docker run --rm --platform "linux/${NODE_ARCH}" --volume "$(pwd):/app" --workdir "/app" \
-                node:lts sh -c \
+                node:lts-alpine sh -c \
                 "node --print 'process' && ./node_modules/.bin/caxa --input build/ --output igir -- \"{{caxa}}/node_modules/.bin/node\" \"{{caxa}}/index.js\" && ./igir --help"
               tar cvf - igir | gzip --best > "${BIN_OUTPUT}"
           - os: ubuntu
             build: |
               NPM_PKG_VERSION=$(npm pkg get version | sed 's/"//g')
-              NODE_ARCH=arm64v8
+              NODE_ARCH=arm64/v8
               BIN_OUTPUT="igir-${NPM_PKG_VERSION}-${RUNNER_OS}-${NODE_ARCH/\//}.tar.gz"
               echo "BIN_OUTPUT=${BIN_OUTPUT}" >> $GITHUB_ENV
               cp package.json build/
               docker run --rm --platform "linux/${NODE_ARCH}" --volume "$(pwd):/app" --workdir "/app" \
-                node:lts sh -c \
+                node:lts-alpine sh -c \
                 "node --print 'process' && ./node_modules/.bin/caxa --input build/ --output igir -- \"{{caxa}}/node_modules/.bin/node\" \"{{caxa}}/index.js\" && ./igir --help"
               tar cvf - igir | gzip --best > "${BIN_OUTPUT}"
     steps:
