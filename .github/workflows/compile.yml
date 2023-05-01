@@ -56,7 +56,7 @@ jobs:
               cp package.json build/
               docker run --rm --platform "linux/${NODE_ARCH}" --volume "$(pwd):/app" --workdir "/app" \
                 node:lts-alpine sh -c \
-                "node --print 'process' && ./node_modules/.bin/caxa --input build/ --output igir -- \"{{caxa}}/node_modules/.bin/node\" \"{{caxa}}/index.js\" && ./igir --help"
+                "apk --update add --no-cache libc6-compat && ./node_modules/.bin/caxa --input build/ --output igir -- \"{{caxa}}/node_modules/.bin/node\" \"{{caxa}}/index.js\" && ./igir --help"
               tar cvf - igir | gzip --best > "${BIN_OUTPUT}"
           - os: ubuntu
             build: |
@@ -67,7 +67,7 @@ jobs:
               cp package.json build/
               docker run --rm --platform "linux/${NODE_ARCH}" --volume "$(pwd):/app" --workdir "/app" \
                 node:lts-alpine sh -c \
-                "node --print 'process' && ./node_modules/.bin/caxa --input build/ --output igir -- \"{{caxa}}/node_modules/.bin/node\" \"{{caxa}}/index.js\" && ./igir --help"
+                "apk --update add --no-cache libc6-compat && ./node_modules/.bin/caxa --input build/ --output igir -- \"{{caxa}}/node_modules/.bin/node\" \"{{caxa}}/index.js\" && ./igir --help"
               tar cvf - igir | gzip --best > "${BIN_OUTPUT}"
           - os: ubuntu
             build: |
@@ -78,7 +78,7 @@ jobs:
               cp package.json build/
               docker run --rm --platform "linux/${NODE_ARCH}" --volume "$(pwd):/app" --workdir "/app" \
                 node:lts-alpine sh -c \
-                "node --print 'process' && ./node_modules/.bin/caxa --input build/ --output igir -- \"{{caxa}}/node_modules/.bin/node\" \"{{caxa}}/index.js\" && ./igir --help"
+                "apk --update add --no-cache libc6-compat && ./node_modules/.bin/caxa --input build/ --output igir -- \"{{caxa}}/node_modules/.bin/node\" \"{{caxa}}/index.js\" && ./igir --help"
               tar cvf - igir | gzip --best > "${BIN_OUTPUT}"
     steps:
       # Setup and install
