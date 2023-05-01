@@ -205,6 +205,10 @@ export default class Igir {
     movedRomsToDelete: File[],
     datsToWrittenRoms: Map<DAT, Map<Parent, File[]>>,
   ): Promise<void> {
+    if (!movedRomsToDelete.length) {
+      return;
+    }
+
     const progressBar = await this.logger.addProgressBar('Deleting moved files');
 
     await new MovedROMDeleter(progressBar)
