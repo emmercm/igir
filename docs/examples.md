@@ -120,12 +120,36 @@ First, RetroArch needs a number of [BIOS files](https://docs.libretro.com/librar
 
 With `igir`'s support for [DAT URLs](dats.md) we don't even have to download it! Locate your "System/BIOS" directory as configured in RetroArch and use it as your output directory:
 
-```shell
-igir copy extract test clean \
-  --dat "https://raw.githubusercontent.com/libretro/libretro-database/master/dat/System.dat" \
-  --input BIOS/ \
-  --output ~/Documents/RetroArch/system/
-```
+=== "Windows (64-bit)"
+
+    The root directory is based on where you installed RetroArch, but by default it is:
+
+    ```batch
+    igir.exe copy extract test clean ^
+      --dat "https://raw.githubusercontent.com/libretro/libretro-database/master/dat/System.dat" ^
+      --input BIOS/ ^
+      --output C:\RetroArch-Win64\system
+    ```
+
+=== "Windows (32-bit)"
+
+    The root directory is based on where you installed RetroArch, but by default it is:
+
+    ```batch
+    igir.exe copy extract test clean ^
+      --dat "https://raw.githubusercontent.com/libretro/libretro-database/master/dat/System.dat" ^
+      --input BIOS/ ^
+      --output C:\RetroArch-Win32\system
+    ```
+
+=== "macOS"
+
+    ```shell
+    igir copy extract test clean \
+      --dat "https://raw.githubusercontent.com/libretro/libretro-database/master/dat/System.dat" \
+      --input BIOS/ \
+      --output ~/Documents/RetroArch/system/
+    ```
 
 RetroArch is less opinionated about where your ROMs can live, you have to specify "content" directories during setup.
 
@@ -133,13 +157,39 @@ RetroArch is less opinionated about where your ROMs can live, you have to specif
 
     If you want store your ROMs in the RetroArch folder, you could co-locate them near your BIOS files:
 
-    ```shell
-    igir copy zip test \
-      --dat "No-Intro*.zip" \
-      --input ROMs/ \
-      --output ~/Documents/RetroArch/roms \
-      --dir-dat-name
-    ```
+    === "Windows (64-bit)"
+
+        The root directory is based on where you installed RetroArch, but by default it is:
+
+        ```batch
+        igir.exe copy zip test ^
+          --dat "No-Intro*.zip" ^
+          --input ROMs/ ^
+          --output C:\RetroArch-Win64\roms ^
+          --dir-dat-name
+        ```
+
+    === "Windows (32-bit)"
+
+        The root directory is based on where you installed RetroArch, but by default it is:
+
+        ```batch
+        igir.exe copy zip test ^
+          --dat "No-Intro*.zip" ^
+          --input ROMs/ ^
+          --output C:\RetroArch-Win32\roms ^
+          --dir-dat-name
+        ```
+
+    === "macOS"
+
+        ```shell
+        igir copy zip test \
+          --dat "No-Intro*.zip" \
+          --input ROMs/ \
+          --output ~/Documents/RetroArch/roms \
+          --dir-dat-name
+        ```
 
 From there, all you should have to do is "[import content](https://docs.libretro.com/guides/import-content/)."
 
