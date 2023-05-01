@@ -48,10 +48,10 @@ jobs:
               .\igir.exe --help
               Compress-Archive -Path igir.exe -DestinationPath "${BIN_OUTPUT}" -CompressionLevel Optimal -Force
           # https://github.com/leafac/caxa/issues/24#issuecomment-999018669
-          - os: armv7
+          - os: ubuntu
             build: |
               NPM_PKG_VERSION=$(npm pkg get version | sed 's/"//g')
-              NODE_ARCH=$(node --print 'process.arch')
+              NODE_ARCH=armv7
               BIN_OUTPUT="igir-${NPM_PKG_VERSION}-${RUNNER_OS}-${NODE_ARCH}.tar.gz"
               echo "BIN_OUTPUT=${BIN_OUTPUT}" >> $GITHUB_ENV
               cp package.json build/
@@ -62,7 +62,8 @@ jobs:
     steps:
       # Setup and install
       - uses: actions/checkout@v3
-      - uses: docker/setup-qemu-action@v2
+      - if: matrix.os == 'ubuntu-latest'
+        uses: docker/setup-qemu-action@v2
       - uses: actions/setup-node@v3
         with:
           node-version-file: '.nvmrc'
