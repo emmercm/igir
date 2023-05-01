@@ -46,18 +46,7 @@ jobs:
               .\node_modules\.bin\caxa --input build\ --output igir.exe -- "{{caxa}}/node_modules/.bin/node" "{{caxa}}/index.js"
               .\igir.exe --help
               Compress-Archive -Path igir.exe -DestinationPath "${BIN_OUTPUT}" -CompressionLevel Optimal -Force
-          # https://github.com/leafac/caxa/issues/24#issuecomment-999018669
-          - os: ubuntu
-            build: |
-              NPM_PKG_VERSION=$(npm pkg get version | sed 's/"//g')
-              NODE_ARCH=arm/v6
-              BIN_OUTPUT="igir-${NPM_PKG_VERSION}-${RUNNER_OS}-${NODE_ARCH/\//}.tar.gz"
-              echo "BIN_OUTPUT=${BIN_OUTPUT}" >> $GITHUB_ENV
-              cp package.json build/
-              docker run --rm --platform "linux/${NODE_ARCH}" --volume "$(pwd):/app" --workdir "/app" \
-                node:lts-alpine sh -c \
-                "apk --update add --no-cache libc6-compat && ./node_modules/.bin/caxa --input build/ --output igir -- \"{{caxa}}/node_modules/.bin/node\" \"{{caxa}}/index.js\" && ./igir --help"
-              tar cvf - igir | gzip --best > "${BIN_OUTPUT}"
+          # ARM
           - os: ubuntu
             build: |
               NPM_PKG_VERSION=$(npm pkg get version | sed 's/"//g')
@@ -66,8 +55,8 @@ jobs:
               echo "BIN_OUTPUT=${BIN_OUTPUT}" >> $GITHUB_ENV
               cp package.json build/
               docker run --rm --platform "linux/${NODE_ARCH}" --volume "$(pwd):/app" --workdir "/app" \
-                node:lts-alpine sh -c \
-                "apk --update add --no-cache libc6-compat && ./node_modules/.bin/caxa --input build/ --output igir -- \"{{caxa}}/node_modules/.bin/node\" \"{{caxa}}/index.js\" && ./igir --help"
+                "node:$(cat .nvmrc)" sh -c \
+                "./node_modules/.bin/caxa --input build/ --output igir -- \"{{caxa}}/node_modules/.bin/node\" \"{{caxa}}/index.js\" && ./igir --help"
               tar cvf - igir | gzip --best > "${BIN_OUTPUT}"
           - os: ubuntu
             build: |
@@ -77,8 +66,8 @@ jobs:
               echo "BIN_OUTPUT=${BIN_OUTPUT}" >> $GITHUB_ENV
               cp package.json build/
               docker run --rm --platform "linux/${NODE_ARCH}" --volume "$(pwd):/app" --workdir "/app" \
-                node:lts-alpine sh -c \
-                "apk --update add --no-cache libc6-compat && ./node_modules/.bin/caxa --input build/ --output igir -- \"{{caxa}}/node_modules/.bin/node\" \"{{caxa}}/index.js\" && ./igir --help"
+                "node:$(cat .nvmrc)" sh -c \
+                "./node_modules/.bin/caxa --input build/ --output igir -- \"{{caxa}}/node_modules/.bin/node\" \"{{caxa}}/index.js\" && ./igir --help"
               tar cvf - igir | gzip --best > "${BIN_OUTPUT}"
     steps:
       # Setup and install
