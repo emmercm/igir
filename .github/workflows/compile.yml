@@ -54,9 +54,9 @@ jobs:
               BIN_OUTPUT="igir-${NPM_PKG_VERSION}-${RUNNER_OS}-${NODE_ARCH/\//}.tar.gz"
               echo "BIN_OUTPUT=${BIN_OUTPUT}" >> $GITHUB_ENV
               cp package.json build/
-              docker run --rm --platform "linux/${NODE_ARCH}" --volume "$(pwd):/app" --workdir "/app" --user 1000:1000 \
+              docker run --rm --platform "linux/${NODE_ARCH}" --volume "$(pwd):/app" --workdir "/app" \
                 node:lts sh -c \
-                "./node_modules/.bin/caxa --input build/ --output /app/igir -- \"{{caxa}}/node_modules/.bin/node\" \"{{caxa}}/index.js\" && ./igir --help"
+                "./node_modules/.bin/caxa --input build/ --output igir -- \"{{caxa}}/node_modules/.bin/node\" \"{{caxa}}/index.js\" && ./igir --help"
               tar cvf - igir | gzip --best > "${BIN_OUTPUT}"
     steps:
       # Setup and install
