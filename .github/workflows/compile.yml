@@ -47,9 +47,22 @@ jobs:
               .\node_modules\.bin\caxa --input build\ --output igir.exe -- "{{caxa}}/node_modules/.bin/node" "{{caxa}}/index.js"
               .\igir.exe --help
               Compress-Archive -Path igir.exe -DestinationPath "${BIN_OUTPUT}" -CompressionLevel Optimal -Force
+          # https://github.com/leafac/caxa/issues/24#issuecomment-999018669
+          - os: armv7
+            build: |
+              NPM_PKG_VERSION=$(npm pkg get version | sed 's/"//g')
+              NODE_ARCH=$(node --print 'process.arch')
+              BIN_OUTPUT="igir-${NPM_PKG_VERSION}-${RUNNER_OS}-${NODE_ARCH}.tar.gz"
+              echo "BIN_OUTPUT=${BIN_OUTPUT}" >> $GITHUB_ENV
+              cp package.json build/
+              docker run --rm --platform linux/arm/v7 --volume "$(pwd):/app" --workdir "/app" --user 1000:1000 \
+                node:lts sh -c \
+                "./node_modules/.bin/caxa --input build/ --output igir -- \"{{caxa}}/node_modules/.bin/node\" \"{{caxa}}/index.js\" && ./igir --help"
+              tar cvf - igir | gzip --best > "${BIN_OUTPUT}"
     steps:
       # Setup and install
       - uses: actions/checkout@v3
+      - uses: docker/setup-qemu-action@v2
       - uses: actions/setup-node@v3
         with:
           node-version-file: '.nvmrc'
