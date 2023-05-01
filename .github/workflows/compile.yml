@@ -19,34 +19,14 @@ jobs:
           - os: ubuntu
             build: |
               NPM_PKG_VERSION=$(npm pkg get version | sed 's/"//g')
-              NODE_ARCH=$(node --print 'process.arch')
-              BIN_OUTPUT="igir-${NPM_PKG_VERSION}-${RUNNER_OS}-${NODE_ARCH}.tar.gz"
+              NODE_ARCH=amd64
+              BIN_OUTPUT="igir-${NPM_PKG_VERSION}-${RUNNER_OS}-${NODE_ARCH/\//}.tar.gz"
               echo "BIN_OUTPUT=${BIN_OUTPUT}" >> $GITHUB_ENV
               cp package.json build/
-              ./node_modules/.bin/caxa --input build/ --output igir -- "{{caxa}}/node_modules/.bin/node" "{{caxa}}/index.js"
-              ./igir --help
+              docker run --rm --platform "linux/${NODE_ARCH}" --volume "$(pwd):/app" --workdir "/app" \
+                "node:$(cat .nvmrc)" sh -c \
+                "./node_modules/.bin/caxa --input build/ --output igir -- \"{{caxa}}/node_modules/.bin/node\" \"{{caxa}}/index.js\" && ./igir --help"
               tar cvf - igir | gzip --best > "${BIN_OUTPUT}"
-          - os: macos
-            build: |
-              NPM_PKG_VERSION=$(npm pkg get version | sed 's/"//g')
-              NODE_ARCH=$(node --print 'process.arch')
-              BIN_OUTPUT="igir-${NPM_PKG_VERSION}-${RUNNER_OS}-${NODE_ARCH}.tar.gz"
-              echo "BIN_OUTPUT=${BIN_OUTPUT}" >> $GITHUB_ENV
-              cp package.json build/
-              ./node_modules/.bin/caxa --input build/ --output igir -- "{{caxa}}/node_modules/.bin/node" "{{caxa}}/index.js"
-              ./igir --help
-              tar cvf - igir | gzip --best > "${BIN_OUTPUT}"
-          - os: windows
-            build: |
-              $NPM_PKG_VERSION=$(npm pkg get version).replace('"','')
-              $NODE_ARCH=$(node --print 'process.arch')
-              $BIN_OUTPUT="igir-$NPM_PKG_VERSION-${env:RUNNER_OS}-${NODE_ARCH}.zip"
-              echo "BIN_OUTPUT=${BIN_OUTPUT}" | Out-File -FilePath $env:GITHUB_ENV -Append # no need for -Encoding utf8
-              copy package.json build\
-              .\node_modules\.bin\caxa --input build\ --output igir.exe -- "{{caxa}}/node_modules/.bin/node" "{{caxa}}/index.js"
-              .\igir.exe --help
-              Compress-Archive -Path igir.exe -DestinationPath "${BIN_OUTPUT}" -CompressionLevel Optimal -Force
-          # ARM
           - os: ubuntu
             build: |
               NPM_PKG_VERSION=$(npm pkg get version | sed 's/"//g')
@@ -69,6 +49,26 @@ jobs:
                 "node:$(cat .nvmrc)" sh -c \
                 "./node_modules/.bin/caxa --input build/ --output igir -- \"{{caxa}}/node_modules/.bin/node\" \"{{caxa}}/index.js\" && ./igir --help"
               tar cvf - igir | gzip --best > "${BIN_OUTPUT}"
+          - os: macos
+            build: |
+              NPM_PKG_VERSION=$(npm pkg get version | sed 's/"//g')
+              NODE_ARCH=$(node --print 'process.arch')
+              BIN_OUTPUT="igir-${NPM_PKG_VERSION}-${RUNNER_OS}-${NODE_ARCH}.tar.gz"
+              echo "BIN_OUTPUT=${BIN_OUTPUT}" >> $GITHUB_ENV
+              cp package.json build/
+              ./node_modules/.bin/caxa --input build/ --output igir -- "{{caxa}}/node_modules/.bin/node" "{{caxa}}/index.js"
+              ./igir --help
+              tar cvf - igir | gzip --best > "${BIN_OUTPUT}"
+          - os: windows
+            build: |
+              $NPM_PKG_VERSION=$(npm pkg get version).replace('"','')
+              $NODE_ARCH=$(node --print 'process.arch')
+              $BIN_OUTPUT="igir-$NPM_PKG_VERSION-${env:RUNNER_OS}-${NODE_ARCH}.zip"
+              echo "BIN_OUTPUT=${BIN_OUTPUT}" | Out-File -FilePath $env:GITHUB_ENV -Append # no need for -Encoding utf8
+              copy package.json build\
+              .\node_modules\.bin\caxa --input build\ --output igir.exe -- "{{caxa}}/node_modules/.bin/node" "{{caxa}}/index.js"
+              .\igir.exe --help
+              Compress-Archive -Path igir.exe -DestinationPath "${BIN_OUTPUT}" -CompressionLevel Optimal -Force
     steps:
       # Setup and install
       - uses: actions/checkout@v3
