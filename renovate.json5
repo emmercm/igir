@@ -34,7 +34,7 @@
   separateMinorPatch: false, // default
 
   // Allow auto-merging of PRs, but reduce their spam on the commit log
-  schedule: 'on the 1st through 24th day of the month',
+  schedule: 'on the 24th day of the month',
   automerge: true,
   automergeSchedule: 'on the 28th day of the month',
   prHourlyLimit: 0, // default: disabled
