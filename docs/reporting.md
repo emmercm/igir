@@ -1,5 +1,7 @@
 # Reporting
 
+## Overview
+
 When using DATs (the `--dat` option), the `igir report` command can report on:
 
 - What ROMs were found, and where the files are
