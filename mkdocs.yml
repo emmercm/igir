@@ -1,5 +1,6 @@
 site_name: igir
-# site_url: https://emmercm.github.com/igir
+# https://github.com/mkdocs/mkdocs/issues/1783: site_url required for sitemap.xml
+site_url: https://igir.io
 site_author: Christian Emmer
 # site_description: TODO
 
@@ -34,46 +35,84 @@ theme:
   features:
     - search.suggest
     - search.highlight
+    - navigation.tabs
+    - navigation.tabs.sticky
     - navigation.indexes
     - navigation.sections
     - navigation.expand
     - navigation.instant
+    - navigation.footer
     - toc.follow
     - toc.integrate
     - content.action.edit
-
-plugins:
-  - search
-  # - social
-  - git-revision-date-localized:
-      enable_creation_date: true
-  - htmlproofer:
-      raise_error_excludes:
-        '-1': [ 'http://www.logiqx.com' ]
-        429: https://romulus.cc/
+    - content.code.copy
+    - content.tabs.link
 
 nav:
   - Home: index.md
-  - overview.md
-  - installation.md
-  - examples.md
-  - alternatives.md
-  - File Inputs:
-      - file-scanning.md
-      - dats.md
-      - archives.md
-  - ROM Processing:
-      - rom-filtering.md
-      - rom-headers.md
-      - rom-patching.md
-  - File Outputs:
-      - reporting.md
-  - Advanced:
-      - internals.md
-  - Misc:
-      - rom-dumping.md
+  - Documentation:
+      - overview.md
+      - installation.md
+      - examples.md
+      - alternatives.md
+      - File Inputs:
+          - file-scanning.md
+          - dats.md
+          - archives.md
+      - ROM Processing:
+          - rom-filtering.md
+          - rom-headers.md
+          - rom-patching.md
+      - File Outputs:
+          - reporting.md
+      - Advanced:
+          - internals.md
+      - Misc:
+          - rom-dumping.md
+  # https://github.com/squidfunk/mkdocs-material/issues/889#issuecomment-582297142: how-to open nav links in new tabs
+  - Download ↗: https://github.com/emmercm/igir/releases/latest" target="_blank
+  - Issues ↗: https://github.com/emmercm/igir/issues?q=is%3Aopen+is%3Aissue+label%3Abug" target="_blank
+  - Discuss ↗: https://github.com/emmercm/igir/discussions" target="_blank
+
+plugins:
+  - search
+  - social
+  - git-revision-date-localized:
+      enable_creation_date: true
+  #- htmlproofer:
+  #    raise_error_excludes:
+  #      '-1': [ 'http://www.logiqx.com' ]
+  #      429: https://romulus.cc/
+
+markdown_extensions:
+  # https://squidfunk.github.io/mkdocs-material/reference/admonitions/
+  - admonition
+  - pymdownx.details
+  - pymdownx.superfences
+  # https://squidfunk.github.io/mkdocs-material/reference/code-blocks/
+  - pymdownx.highlight:
+      anchor_linenums: true
+      line_spans: __span
+      pygments_lang_class: true
+  - pymdownx.inlinehilite
+  - pymdownx.snippets
+  - pymdownx.superfences
+  # https://squidfunk.github.io/mkdocs-material/reference/content-tabs/
+  - pymdownx.superfences
+  - pymdownx.tabbed:
+      alternate_style: true
+  # https://github.com/mkdocs/mkdocs/issues/545: allow two-space indented lists
+  - mdx_truly_sane_lists
 
 extra:
   analytics:
     provider: google
     property: G-GX1E7CQ1L7
+
+  social:
+    - icon: simple/github
+      link: https://github.com/emmercm/igir
+    - icon: simple/npm
+      link: https://www.npmjs.com/package/igir
+    - icon: simple/twitter
+      link: https://twitter.com/emmercm

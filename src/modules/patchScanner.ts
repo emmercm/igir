@@ -32,7 +32,8 @@ export default class PatchScanner extends Scanner {
       files,
       Constants.PATCH_SCANNER_THREADS,
       async (file, callback: AsyncResultCallback<Patch, Error>) => {
-        await this.progressBar.increment();
+        const waitingMessage = `${file.toString()} ...`;
+        this.progressBar.addWaitingMessage(waitingMessage);
 
         try {
           const patch = await this.patchFromFile(file);
@@ -40,6 +41,9 @@ export default class PatchScanner extends Scanner {
         } catch (e) {
           await this.progressBar.logWarn(`${file.toString()}: failed to parse patch: ${e}`);
           callback(null, undefined);
+        } finally {
+          await this.progressBar.increment();
+          this.progressBar.removeWaitingMessage(waitingMessage);
         }
       },
     )).filter((patch) => patch);

@@ -67,3 +67,7 @@ NBA Jam - Tournament Edition (USA) (Track 1).bin
 Patch filename:
 a8f1adf5 NBA Jam 22 v1.4.ppf
 ```
+
+## Creating ROM patches
+
+Marc Robledo's [Rom Patcher JS](https://www.marcrobledo.com/RomPatcher.js/) site is a great resource for creating ROM patches in a number of common formats without the need to download any tools.

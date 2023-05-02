@@ -15,17 +15,39 @@ jobs:
     runs-on: ${{ matrix.os }}-latest
     strategy:
       matrix:
-        os: [ ubuntu, macos, windows ]
         include:
           - os: ubuntu
             build: |
               NPM_PKG_VERSION=$(npm pkg get version | sed 's/"//g')
-              NODE_ARCH=$(node --print 'process.arch')
-              BIN_OUTPUT="igir-${NPM_PKG_VERSION}-${RUNNER_OS}-${NODE_ARCH}.tar.gz"
+              NODE_ARCH=amd64
+              BIN_OUTPUT="igir-${NPM_PKG_VERSION}-${RUNNER_OS}-${NODE_ARCH/\//}.tar.gz"
               echo "BIN_OUTPUT=${BIN_OUTPUT}" >> $GITHUB_ENV
               cp package.json build/
-              ./node_modules/.bin/caxa --input build/ --output igir -- "{{caxa}}/node_modules/.bin/node" "{{caxa}}/index.js"
-              ./igir --help
+              docker run --rm --platform "linux/${NODE_ARCH}" --volume "$(pwd):/app" --workdir "/app" \
+                "node:$(cat .nvmrc)" sh -c \
+                "./node_modules/.bin/caxa --input build/ --output igir -- \"{{caxa}}/node_modules/.bin/node\" \"{{caxa}}/index.js\" && ./igir --help"
+              tar cvf - igir | gzip --best > "${BIN_OUTPUT}"
+          - os: ubuntu
+            build: |
+              NPM_PKG_VERSION=$(npm pkg get version | sed 's/"//g')
+              NODE_ARCH=arm/v7
+              BIN_OUTPUT="igir-${NPM_PKG_VERSION}-${RUNNER_OS}-${NODE_ARCH/\//}.tar.gz"
+              echo "BIN_OUTPUT=${BIN_OUTPUT}" >> $GITHUB_ENV
+              cp package.json build/
+              docker run --rm --platform "linux/${NODE_ARCH}" --volume "$(pwd):/app" --workdir "/app" \
+                "node:$(cat .nvmrc)" sh -c \
+                "./node_modules/.bin/caxa --input build/ --output igir -- \"{{caxa}}/node_modules/.bin/node\" \"{{caxa}}/index.js\" && ./igir --help"
+              tar cvf - igir | gzip --best > "${BIN_OUTPUT}"
+          - os: ubuntu
+            build: |
+              NPM_PKG_VERSION=$(npm pkg get version | sed 's/"//g')
+              NODE_ARCH=arm64/v8
+              BIN_OUTPUT="igir-${NPM_PKG_VERSION}-${RUNNER_OS}-${NODE_ARCH/\//}.tar.gz"
+              echo "BIN_OUTPUT=${BIN_OUTPUT}" >> $GITHUB_ENV
+              cp package.json build/
+              docker run --rm --platform "linux/${NODE_ARCH}" --volume "$(pwd):/app" --workdir "/app" \
+                "node:$(cat .nvmrc)" sh -c \
+                "./node_modules/.bin/caxa --input build/ --output igir -- \"{{caxa}}/node_modules/.bin/node\" \"{{caxa}}/index.js\" && ./igir --help"
               tar cvf - igir | gzip --best > "${BIN_OUTPUT}"
           - os: macos
             build: |
@@ -50,6 +72,8 @@ jobs:
     steps:
       # Setup and install
       - uses: actions/checkout@v3
+      - if: matrix.os == 'ubuntu'
+        uses: docker/setup-qemu-action@v2
       - uses: actions/setup-node@v3
         with:
           node-version-file: '.nvmrc'
@@ -58,6 +82,7 @@ jobs:
       - run: npm run build
       # Compile and upload
       - run: ${{ matrix.build }}
+      - run: echo ${{ env.BIN_OUTPUT }}
       - if: github.event_name == 'release'
         uses: actions/upload-artifact@v3
         with:

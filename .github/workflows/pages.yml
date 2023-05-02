@@ -13,8 +13,13 @@ on:
       - 'main'
 
 jobs:
-  # !!! This check should be required by GitHub !!!
-  pages-status-check:
+  markdown-lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - run: docker run -v $PWD:/workdir ghcr.io/igorshubovych/markdownlint-cli:latest --disable MD013 MD033 MD046 -- "**/*.md"
+
+  mkdocs-build:
     if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest
     steps:
@@ -22,13 +27,25 @@ jobs:
       - uses: actions/setup-python@v4
         with:
           python-version: 3.x
-      - uses: actions/cache@v2
+      - uses: actions/cache@v3
         with:
           key: ${{ github.ref }}
           path: .cache
       - run: pip install mkdocs-material
-      - run: pip install mkdocs-git-revision-date-localized-plugin mkdocs-htmlproofer-plugin
+      - run: pip install mkdocs-git-revision-date-localized-plugin mkdocs-htmlproofer-plugin mdx_truly_sane_lists
+      - run: |
+          pip install pillow cairosvg
+          sudo apt-get install libcairo2-dev libfreetype6-dev libffi-dev libjpeg-dev libpng-dev libz-dev
       - run: mkdocs build --strict --verbose
+
+  # !!! This check should be required by GitHub !!!
+  pages-status-check:
+    needs:
+      - markdown-lint
+      - mkdocs-build
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo ok
 
   deploy:
     if: github.event_name == 'push'
@@ -40,10 +57,13 @@ jobs:
       - uses: actions/setup-python@v4
         with:
           python-version: 3.x
-      - uses: actions/cache@v2
+      - uses: actions/cache@v3
         with:
           key: ${{ github.ref }}
           path: .cache
       - run: pip install mkdocs-material
-      - run: pip install mkdocs-git-revision-date-localized-plugin mkdocs-htmlproofer-plugin
+      - run: pip install mkdocs-git-revision-date-localized-plugin mkdocs-htmlproofer-plugin mdx_truly_sane_lists
+      - run: |
+          pip install pillow cairosvg
+          sudo apt-get install libcairo2-dev libfreetype6-dev libffi-dev libjpeg-dev libpng-dev libz-dev
       - run: mkdocs gh-deploy --strict --verbose --force

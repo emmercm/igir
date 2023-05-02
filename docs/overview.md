@@ -31,7 +31,9 @@ Most ROM managers are only built for Windows, and some offer workarounds for run
 
 In addition, `igir` has features that aren't found in any other ROM managers, such as [ROM patching](rom-patching.md).
 
-_See the [alternative managers](alternatives.md) page for a feature comparison between `igir` and other ROM managers._
+!!! info
+
+    See the [alternative managers](alternatives.md) page for a feature comparison between `igir` and other ROM managers.
 
 ## Next steps
 

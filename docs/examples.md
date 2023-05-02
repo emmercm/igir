@@ -1,8 +1,12 @@
 # Example Usage
 
-_See the `igir --help` message for a few common examples._
+!!! info
 
-## First time collection sort
+    See the `igir --help` message for a few common examples.
+
+## Example scenario
+
+### First time collection sort
 
 First, you need to download a set of [DATs](dats.md). For these examples I'll assume you downloaded a No-Intro daily P/C XML `.zip`.
 
@@ -33,7 +37,9 @@ ROMs-Sorted
     └── Pokemon Pinball (USA, Australia) (Rumble Version) (SGB Enhanced) (GB Compatible).zip
 ```
 
-## Subsequent collection sorts
+[![asciicast](https://asciinema.org/a/rOWJwgbbODaXuQeQY4B6uWc4i.svg)](https://asciinema.org/a/rOWJwgbbODaXuQeQY4B6uWc4i)
+
+### Subsequent collection sorts
 
 Let's say that we've done the above first time sort and were happy with the results. We can now consider the `ROMs-Sorted/` directory to be our primary collection, every file in there has been matched to a DAT.
 
@@ -42,7 +48,7 @@ Now we have new ROMs that we want to merge into our collection, and we want to g
 ```shell
 igir move zip test clean report \
   --dat "No-Intro*.zip" \
-  --input ~/Downloads/ \
+  --input ROMs-New/ \
   --input ROMs-Sorted/ \
   --output ROMs-Sorted/ \
   --dir-dat-name
@@ -67,16 +73,17 @@ ROMs-Sorted
     └── Pokemon Pinball (USA, Australia) (Rumble Version) (SGB Enhanced) (GB Compatible).zip
 ```
 
-## Flash cart 1G1R
+[![asciicast](https://asciinema.org/a/PWAfBcvCikzJ7wObLcdFGtZbI.svg)](https://asciinema.org/a/PWAfBcvCikzJ7wObLcdFGtZbI)
+
+### Flash cart 1G1R
 
 Let's say we've done the above sorting we want to copy some ROMs from `ROMs-Sorted/` to a flash cart.
 
 We would prefer having only one copy of every game (1G1R), so there is less to scroll through to find what we want, and because we have a preferred language. Our flash cart can't read `.zip` files, so we'll need to extract our ROMs during copying.
 
-We also don't need any DATs in order to perform this copy as the ROMs in `ROMs-Sorted/` were already sorted using DATs. We can just copy & extract our files as-is.
-
 ```shell
 igir copy extract test clean \
+  --dat "No-Intro*.zip" \
   --input "ROMs-Sorted/Nintendo - Game Boy" \
   --output /Volumes/FlashCart/ \
   --dir-letter \
@@ -93,6 +100,142 @@ igir copy extract test clean \
     ├── Pokemon - Blue Version (USA, Europe) (SGB Enhanced).gb
     ├── Pokemon - Red Version (USA, Europe) (SGB Enhanced).gb
     └── Pokemon - Yellow Version - Special Pikachu Edition (USA, Europe) (CGB+SGB Enhanced).gb
+```
+
+[![asciicast](https://asciinema.org/a/K8ROFbX8c4NJfUue3lwbe7d8V.svg)](https://asciinema.org/a/K8ROFbX8c4NJfUue3lwbe7d8V)
+
+!!! info
+
+    See the [ROM filtering](rom-filtering.md) page for other ways that you can filter your collection.
+
+## Specific emulator frontends
+
+### RetroArch
+
+!!! info
+
+    [RetroArch](https://www.retroarch.com/) is a frontend UI for the [Libretro API](https://www.libretro.com/).
+
+First, RetroArch needs a number of [BIOS files](https://docs.libretro.com/library/bios/). Thankfully, the libretro team maintains a DAT of these "system" files, so we don't have to guess at the correct filenames.
+
+With `igir`'s support for [DAT URLs](dats.md) we don't even have to download it! Locate your "System/BIOS" directory as configured in RetroArch and use it as your output directory:
+
+=== "Windows (64-bit)"
+
+    The root directory is based on where you installed RetroArch, but by default it is:
+
+    ```batch
+    igir.exe copy extract test clean ^
+      --dat "https://raw.githubusercontent.com/libretro/libretro-database/master/dat/System.dat" ^
+      --input BIOS/ ^
+      --output C:\RetroArch-Win64\system
+    ```
+
+=== "Windows (32-bit)"
+
+    The root directory is based on where you installed RetroArch, but by default it is:
+
+    ```batch
+    igir.exe copy extract test clean ^
+      --dat "https://raw.githubusercontent.com/libretro/libretro-database/master/dat/System.dat" ^
+      --input BIOS/ ^
+      --output C:\RetroArch-Win32\system
+    ```
+
+=== "macOS"
+
+    ```shell
+    igir copy extract test clean \
+      --dat "https://raw.githubusercontent.com/libretro/libretro-database/master/dat/System.dat" \
+      --input BIOS/ \
+      --output ~/Documents/RetroArch/system/
+    ```
+
+RetroArch is less opinionated about where your ROMs can live, you have to specify "content" directories during setup.
+
+!!! note
+
+    If you want store your ROMs in the RetroArch folder, you could co-locate them near your BIOS files:
+
+    === "Windows (64-bit)"
+
+        The root directory is based on where you installed RetroArch, but by default it is:
+
+        ```batch
+        igir.exe copy zip test ^
+          --dat "No-Intro*.zip" ^
+          --input ROMs/ ^
+          --output C:\RetroArch-Win64\roms ^
+          --dir-dat-name
+        ```
+
+    === "Windows (32-bit)"
+
+        The root directory is based on where you installed RetroArch, but by default it is:
+
+        ```batch
+        igir.exe copy zip test ^
+          --dat "No-Intro*.zip" ^
+          --input ROMs/ ^
+          --output C:\RetroArch-Win32\roms ^
+          --dir-dat-name
+        ```
+
+    === "macOS"
+
+        ```shell
+        igir copy zip test \
+          --dat "No-Intro*.zip" \
+          --input ROMs/ \
+          --output ~/Documents/RetroArch/roms \
+          --dir-dat-name
+        ```
+
+From there, all you should have to do is "[import content](https://docs.libretro.com/guides/import-content/)."
+
+### EmulationStation Desktop Edition (ES-DE)
+
+!!! info
+
+    [EmulationStation Desktop Edition](https://es-de.org) is a frontend for [RetroArch](https://www.retroarch.com/), so the instructions are the same as RetroArch.
+
+### RetroPie
+
+!!! info
+
+    [RetroPie](https://retropie.org.uk/) is an installer for [EmulationStation](https://emulationstation.org/) & [RetroArch](https://www.retroarch.com/) on single-board computers (SBCs).
+
+Because RetroPie uses RetroArch under the hood, the instructions are generally the same. By default, the RetroPie BIOS directory is `/home/pi/RetroPie/BIOS`:
+
+```shell
+igir copy extract test clean \
+  --dat "https://raw.githubusercontent.com/libretro/libretro-database/master/dat/System.dat" \
+  --input BIOS/ \
+  --output /home/pi/RetroPie/BIOS
+```
+
+## Specific consoles & hardware
+
+### EverDrive flash carts
+
+Because flash carts are specific to a specific console, you can provide specific input directories & DATs when you run `igir`. For example:
+
+```shell
+igir copy extract test clean \
+  --dat "Nintendo - Game Boy.dat" \
+  --input "ROMs-Sorted/Nintendo - Game Boy" \
+  --output /Volumes/EverDrive/
+```
+
+you can then add some other output options such as `--dir-letter`, if desired.
+
+Alternatively, `igir` supports [Hardware Target Game Database SMDB files](https://github.com/frederic-mahe/Hardware-Target-Game-Database/tree/master/EverDrive%20Pack%20SMDBs) as [DATs](dats.md). Unlike typical DATs, Hardware Target Game Database SMDBs typically have an opinionated directory structure to help sort ROMs by language, category, genre, and more. Example usage:
+
+```shell
+igir copy extract test clean \
+  --dat "EverDrive GB SMDB.txt" \
+  --input "ROMs-Sorted/Nintendo - Game Boy" \
+  --output /Volumes/EverDrive/
 ```
 
 ## Personal usage

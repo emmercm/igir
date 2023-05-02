@@ -11,6 +11,7 @@ import DATInferrer from './modules/datInferrer.js';
 import DATScanner from './modules/datScanner.js';
 import FixdatCreator from './modules/fixdatCreator.js';
 import HeaderProcessor from './modules/headerProcessor.js';
+import MovedROMDeleter from './modules/movedRomDeleter.js';
 import OutputCleaner from './modules/outputCleaner.js';
 import PatchCandidateGenerator from './modules/patchCandidateGenerator.js';
 import PatchScanner from './modules/patchScanner.js';
@@ -18,7 +19,6 @@ import ReportGenerator from './modules/reportGenerator.js';
 import ROMScanner from './modules/romScanner.js';
 import ROMWriter from './modules/romWriter.js';
 import StatusGenerator from './modules/statusGenerator.js';
-import fsPoly from './polyfill/fsPoly.js';
 import DATStatus from './types/datStatus.js';
 import File from './types/files/file.js';
 import DAT from './types/logiqx/dat.js';
@@ -122,7 +122,7 @@ export default class Igir {
     datProcessProgressBar.delete();
 
     // Delete moved ROMs
-    await this.deleteMovedRoms(movedRomsToDelete);
+    await this.deleteMovedRoms(rawRomFiles, movedRomsToDelete, datsToWrittenRoms);
 
     // Clean the output directories
     const cleanedOutputFiles = await this.processOutputCleaner(romOutputDirs, datsToWrittenRoms);
@@ -131,6 +131,7 @@ export default class Igir {
     await this.processReportGenerator(rawRomFiles, cleanedOutputFiles, datsStatuses);
 
     ProgressBarCLI.stop();
+    this.logger.info('done');
   }
 
   private async processDATScanner(): Promise<DAT[]> {
@@ -199,28 +200,20 @@ export default class Igir {
       .filter((outputDir, idx, outputDirs) => outputDirs.indexOf(outputDir) === idx);
   }
 
-  private async deleteMovedRoms(movedRomsToDelete: File[]): Promise<void> {
+  private async deleteMovedRoms(
+    rawRomFiles: File[],
+    movedRomsToDelete: File[],
+    datsToWrittenRoms: Map<DAT, Map<Parent, File[]>>,
+  ): Promise<void> {
     if (!movedRomsToDelete.length) {
       return;
     }
 
-    const uniqueRomFiles = movedRomsToDelete
-      .map((romFile) => romFile.getFilePath())
-      .filter((romFile, idx, romFiles) => romFiles.indexOf(romFile) === idx);
+    const progressBar = await this.logger.addProgressBar('Deleting moved files');
 
-    const progressBar = await this.logger.addProgressBar('Deleting moved files', ProgressBarSymbol.DELETING, uniqueRomFiles.length);
-    await progressBar.logDebug(`deleting ${uniqueRomFiles.length.toLocaleString()} moved file${uniqueRomFiles.length !== 1 ? 's' : ''}`);
+    await new MovedROMDeleter(progressBar)
+      .delete(rawRomFiles, movedRomsToDelete, datsToWrittenRoms);
 
-    await Promise.all(uniqueRomFiles.map(async (filePath) => {
-      await progressBar.logTrace(`${filePath}: deleting moved file`);
-      try {
-        await fsPoly.rm(filePath, { force: true });
-      } catch (e) {
-        await progressBar.logError(`${filePath}: failed to delete`);
-      }
-    }));
-
-    await progressBar.doneItems(uniqueRomFiles.length, 'moved file', 'deleted');
     await progressBar.freeze();
   }
 

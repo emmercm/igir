@@ -50,12 +50,18 @@ export default class ROMWriter extends Module {
       return [];
     }
 
-    const totalCandidateCount = [...parentsToCandidates.values()].flatMap((c) => c).length;
+    // Filter to only the parents that actually have candidates (and therefore output)
+    const parentsToWritableCandidates = new Map(
+      [...parentsToCandidates.entries()]
+        .filter(([, candidates]) => candidates.length),
+    );
+
+    const totalCandidateCount = [...parentsToWritableCandidates.values()].flatMap((c) => c).length;
     await this.progressBar.logInfo(`${dat.getNameShort()}: writing ${totalCandidateCount.toLocaleString()} candidate${totalCandidateCount !== 1 ? 's' : ''}`);
     await this.progressBar.setSymbol(ProgressBarSymbol.WRITING);
-    await this.progressBar.reset(parentsToCandidates.size);
+    await this.progressBar.reset(parentsToWritableCandidates.size);
 
-    await Promise.all([...parentsToCandidates.entries()].map(
+    await Promise.all([...parentsToWritableCandidates.entries()].map(
       async ([parent, releaseCandidates]) => ROMWriter.THREAD_SEMAPHORE.runExclusive(async () => {
         await this.progressBar.logTrace(`${dat.getNameShort()}: ${parent.getName()}: writing ${releaseCandidates.length.toLocaleString()} candidate${releaseCandidates.length !== 1 ? 's' : ''}`);
 

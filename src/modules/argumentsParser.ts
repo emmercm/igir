@@ -1,8 +1,8 @@
-import terminalSize from 'term-size';
 import yargs, { Argv } from 'yargs';
 
 import Logger from '../console/logger.js';
 import Constants from '../constants.js';
+import ConsolePoly from '../polyfill/consolePoly.js';
 import ROMHeader from '../types/files/romHeader.js';
 import Options from '../types/options.js';
 import PatchFactory from '../types/patches/patchFactory.js';
@@ -40,7 +40,7 @@ export default class ArgumentsParser {
 
     return Math.min(
       // Use the terminal width if it has one
-      process.stdout.isTTY ? terminalSize().columns : Number.MAX_SAFE_INTEGER,
+      ConsolePoly.consoleWidth(),
       // Sane maximum
       110,
     );
