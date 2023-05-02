@@ -30,8 +30,8 @@
 
   // Separate potentially breaking updates, group others
   separateMultipleMajor: true,
-  separateMajorMinor: true,
-  separateMinorPatch: false,
+  separateMajorMinor: true, // default
+  separateMinorPatch: false, // default
 
   // Allow auto-merging of PRs, but reduce their spam on the commit log
   schedule: 'on the 1st through 24th day of the month',
