@@ -87,7 +87,7 @@ export default class GameConsole {
     new GameConsole(/SG-?1000/i, ['.sc', '.sg'], 'sg1000', 'SG1000', 'SEGASGONE'),
     // Sharp
     new GameConsole(/X1/i, ['.2d', '.2hd', '.dx1', '.tfd'], undefined, undefined, 'XONE'),
-    new GameConsole(/X86000/i, [], undefined, undefined, 'X68000'),
+    new GameConsole(/X68000/i, [], undefined, undefined, 'X68000'),
     // Sinclair
     new GameConsole(/ZX Spectrum/i, ['.scl', '.szx', '.z80'], undefined, undefined, 'ZXS'),
     // TODO(cemmer): ZX-81
