@@ -16,7 +16,7 @@
   <a href="https://github.com/emmercm/igir/blob/main/LICENSE"><img alt="license" src="https://img.shields.io/github/license/emmercm/igir?color=blue"></a>
 </p>
 
-<p align="center"><i>See the <a href="https://igir.io/">documentation website</a> for complete usage and examples!</i></p>
+<p align="center"><i>See the <a href="https://igir.io/">project website</a> for complete documentation, installation & usage instructions, and examples!</i></p>
 
 <br>
 
