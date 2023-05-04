@@ -681,6 +681,9 @@ export default class Options implements OptionsProps {
     if (gameConsole.getMister()) {
       output = output.replace('{mister}', gameConsole.getMister() as string);
     }
+    if (gameConsole.getOnion()) {
+      output = output.replace('{onion}', gameConsole.getOnion() as string);
+    }
     return output;
   }
 

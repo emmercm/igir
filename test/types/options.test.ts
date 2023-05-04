@@ -17,6 +17,7 @@ describe('getOutputDirRoot', () => {
     ['foo/bar', path.join('foo', 'bar')],
     ['Assets/{pocket}/common/', 'Assets'],
     ['games/{mister}/', 'games'],
+    ['Roms/{onion}/', 'Roms'],
     ['{datName}', '.'],
   ])('should find the root dir: %s', (output, expectedPath) => {
     expect(new Options({ commands: ['copy'], output }).getOutputDirRoot()).toEqual(expectedPath);
@@ -37,8 +38,15 @@ describe('getOutputFileParsed', () => {
   });
 
   describe('token replacement', () => {
-    it('should not replace tokens with no arguments', () => {
-      const output = '{datName}/{pocket}/{mister}/{romBasename}/{romName}{romExt}';
+    test.each([
+      '{datName}',
+      'Assets/{pocket}/common',
+      'games/{mister}',
+      'Roms/{onion}',
+      '{romBasename}',
+      '{romName}',
+      '{romExt}',
+    ])('should not replace tokens with no arguments: %s', (output) => {
       expect(() => new Options({
         commands: ['copy'],
         output,
@@ -120,6 +128,22 @@ describe('getOutputFileParsed', () => {
       'game.rom',
     ])('should throw on {mister} for unknown extension: %s', (outputRomFilename) => {
       expect(() => new Options({ commands: ['copy'], output: 'games/{mister}' }).getOutputFileParsed(undefined, undefined, undefined, undefined, outputRomFilename)).toThrow(/failed to replace/);
+    });
+
+    test.each([
+      ['game.a78', path.join('Roms', 'SEVENTYEIGHTHUNDRED', 'game.a78')],
+      ['game.gb', path.join('Roms', 'GB', 'game.gb')],
+      ['game.nes', path.join('Roms', 'FC', 'game.nes')],
+    ])('should replace {onion} for known extension: %s', (outputRomFilename, expectedPath) => {
+      expect(new Options({ commands: ['copy'], output: 'Roms/{onion}' }).getOutputFileParsed(undefined, undefined, undefined, undefined, outputRomFilename)).toEqual(expectedPath);
+    });
+
+    test.each([
+      'game.arduboy',
+      'game.bin',
+      'game.rom',
+    ])('should throw on {onion} for unknown extension: %s', (outputRomFilename) => {
+      expect(() => new Options({ commands: ['copy'], output: 'Roms/{onion}' }).getOutputFileParsed(undefined, undefined, undefined, undefined, outputRomFilename)).toThrow(/failed to replace/);
     });
   });
 
