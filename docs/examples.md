@@ -116,6 +116,7 @@ We would prefer having only one copy of every game (1G1R), so there is less to s
       --input "ROMs-Sorted/Nintendo - Game Boy" ^
       --output E:\ ^
       --dir-letter ^
+      --no-bios ^
       --single ^
       --prefer-language EN ^
       --prefer-region USA,WORLD,EUR,JPN
@@ -131,6 +132,7 @@ We would prefer having only one copy of every game (1G1R), so there is less to s
       --input "ROMs-Sorted/Nintendo - Game Boy" \
       --output /Volumes/FlashCart/ \
       --dir-letter \
+      --no-bios \
       --single \
       --prefer-language EN \
       --prefer-region USA,WORLD,EUR,JPN
@@ -210,7 +212,8 @@ RetroArch is less opinionated about where your ROMs can live, you have to specif
           --dat "No-Intro*.zip" ^
           --input ROMs/ ^
           --output C:\RetroArch-Win64\roms ^
-          --dir-dat-name
+          --dir-dat-name ^
+          --no-bios
         ```
 
     === "Windows (32-bit)"
@@ -222,7 +225,8 @@ RetroArch is less opinionated about where your ROMs can live, you have to specif
           --dat "No-Intro*.zip" ^
           --input ROMs/ ^
           --output C:\RetroArch-Win32\roms ^
-          --dir-dat-name
+          --dir-dat-name \
+          --no-bios
         ```
 
     === "macOS"
@@ -232,7 +236,8 @@ RetroArch is less opinionated about where your ROMs can live, you have to specif
           --dat "No-Intro*.zip" \
           --input ROMs/ \
           --output ~/Documents/RetroArch/roms \
-          --dir-dat-name
+          --dir-dat-name \
+          --no-bios
         ```
 
 From there, all you should have to do is "[import content](https://docs.libretro.com/guides/import-content/)."
@@ -303,7 +308,8 @@ OnionOS uses its own proprietary [ROM folder structure](https://github.com/Onion
       --dat "No-Intro*.zip" ^
       --input ROMs/ ^
       --output E:\Roms\{onion} ^
-      --dir-letter
+      --dir-letter ^
+      --no-bios
     ```
 
 === "macOS"
@@ -315,7 +321,8 @@ OnionOS uses its own proprietary [ROM folder structure](https://github.com/Onion
       --dat "No-Intro*.zip" \
       --input ROMs/ \
       --output /Volumes/OnionOS/Roms/{onion} \
-      --dir-letter
+      --dir-letter \
+      --no-bios
     ```
 
 ### EverDrive flash carts
@@ -330,7 +337,8 @@ Because flash carts are specific to a specific console, you can provide specific
     igir.exe copy extract test clean ^
       --dat "Nintendo - Game Boy.dat" ^
       --input "ROMs-Sorted/Nintendo - Game Boy" ^
-      --output E:\
+      --output E:\ ^
+      --no-bios
     ```
 
 === "macOS"
@@ -341,7 +349,8 @@ Because flash carts are specific to a specific console, you can provide specific
     igir copy extract test clean \
       --dat "Nintendo - Game Boy.dat" \
       --input "ROMs-Sorted/Nintendo - Game Boy" \
-      --output /Volumes/EverDrive/
+      --output /Volumes/EverDrive/ \
+      --no-bios
     ```
 
 you can then add some other output options such as `--dir-letter`, if desired.
