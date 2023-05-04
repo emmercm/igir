@@ -554,7 +554,7 @@ export default class Options implements OptionsProps {
     let romFilenameSanitized: string | undefined;
     if (romFilename) {
       romFilenameSanitized = romFilename.replace(/[\\/]/g, path.sep);
-      if (!dat?.getHeader().getRomNamesContainDirectories()) {
+      if (!dat?.getRomNamesContainDirectories()) {
         romFilenameSanitized = romFilenameSanitized.replace(/[\\/]/g, '_');
       }
     }
