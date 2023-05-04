@@ -123,7 +123,7 @@ describe('getOutputFileParsed', () => {
 
     test.each([
       'game.bin',
-      'game.min',
+      'game.ngc',
       'game.ngp',
       'game.rom',
     ])('should throw on {mister} for unknown extension: %s', (outputRomFilename) => {
