@@ -17,17 +17,19 @@ export default class GameConsole {
    */
   private static readonly CONSOLES: GameConsole[] = [
     // Amstrad
-    new GameConsole(/CPC/i, [], undefined, undefined, 'CPC'),
+    new GameConsole(/CPC/i, [], undefined, 'Amstrad', 'CPC'),
     // Arduboy
     new GameConsole(/Arduboy/i, ['.arduboy', '.hex'], 'arduboy', 'Arduboy', undefined),
     // Atari
-    new GameConsole(/800|8-bit Family/, ['.atr', '.atx'], undefined, undefined, 'EIGHTHUNDRED'),
+    new GameConsole(/800|8-bit Family/, ['.atr', '.atx'], undefined, 'ATARI800', 'EIGHTHUNDRED'),
     new GameConsole(/2600/, ['.a26', '.act', '.pb', '.tv', '.tvr', '.mn', '.cv', '.eb', '.ef', '.efr', '.ua', '.x07', '.sb'], '2600', 'Atari2600', 'ATARI'),
     new GameConsole(/5200/, ['.a52'], undefined, 'Atari5200', 'FIFTYTWOHUNDRED'),
     new GameConsole(/7800/, ['.a78'], '7800', 'Atari7800', 'SEVENTYEIGHTHUNDRED'),
     new GameConsole(/Jaguar/i, ['.j64'], undefined, undefined, 'JAGUAR'),
     new GameConsole(/Lynx/i, ['.lnx', '.lyx'], undefined, 'AtariLynx', 'LYNX'),
-    new GameConsole(/Atari (- )?ST/i, ['.msa', '.stx'], undefined, undefined, 'ATARIST'),
+    new GameConsole(/Atari (- )?ST/i, ['.msa', '.stx'], undefined, 'AtariST', 'ATARIST'),
+    // Bally
+    new GameConsole(/Astrocade/i, [/* '.bin' */], undefined, 'Astrocade', undefined),
     // Bandai
     new GameConsole(/WonderSwan/i, ['.ws'], 'wonderswan', 'WonderSwan', 'WS'),
     new GameConsole(/WonderSwan Color/i, ['.wsc'], 'wonderswan', 'WonderSwan', 'WS'),
@@ -35,9 +37,11 @@ export default class GameConsole {
     new GameConsole(/Gamate/i, [/* '.bin' */], 'gamate', 'Gamate', undefined),
     // Capcom
     // TODO(cemmer): CPS1, CPS2, CPS3
+    // Casio
+    new GameConsole(/PV-?1000/i, [/* '.bin' */], undefined, 'Casio_PV-1000', undefined),
     // Commodore
-    new GameConsole(/Amiga/i, [], 'amiga', undefined, 'AMIGA'),
-    new GameConsole(/Commodore 64/i, ['.crt', '.d64', '.t64'], undefined, undefined, 'COMMODORE'),
+    new GameConsole(/Amiga/i, [], 'amiga', 'Amiga', 'AMIGA'),
+    new GameConsole(/Commodore 64/i, ['.crt', '.d64', '.t64'], undefined, 'C64', 'COMMODORE'),
     // Coleco
     new GameConsole(/ColecoVision/i, ['.col'], 'coleco', 'Coleco', 'COLECO'),
     // Emerson
@@ -47,27 +51,31 @@ export default class GameConsole {
     // Fairchild
     new GameConsole(/Channel F/i, [/* '.bin' */], 'channel_f', 'ChannelF', 'FAIRCHILD'),
     // GCE
-    new GameConsole(/Vectrex/i, ['.vec'], undefined, undefined, 'VECTREX'),
+    new GameConsole(/Vectrex/i, ['.vec'], undefined, 'Vectrex', 'VECTREX'),
+    // Interton
+    new GameConsole(/VC ?4000/i, [/* '.bin' */], undefined, 'VC4000', undefined),
     // Magnavox
     new GameConsole(/Odyssey 2/i, [/* '.bin' */], 'odyssey2', 'Odyssey2', 'ODYSSEY'),
     // Mattel
     new GameConsole(/Intellivision/i, ['.int'], 'intv', 'Intellivision', 'INTELLIVISION'),
     // Microsoft
-    new GameConsole(/MSX/i, [], undefined, undefined, 'MSX'),
+    new GameConsole(/MSX/i, [], undefined, 'MSX', 'MSX'),
+    // Nichibutsu
+    new GameConsole(/My Vision/i, [], undefined, 'MyVision', undefined),
     // NEC
     new GameConsole(/PC Engine|TurboGrafx/i, ['.pce'], 'pce', 'TGFX16', 'PCE'),
     new GameConsole(/(PC Engine|TurboGrafx) CD/i, [/* '.bin', '.cue' */], 'pcecd', 'TGFX16', 'PCECD'),
     new GameConsole(/SuperGrafx/i, ['.sgx'], 'pce', 'TGFX16', 'SGFX'),
-    new GameConsole(/PC-88/i, ['.d88'], undefined, undefined, 'PCEIGHTYEIGHT'),
+    new GameConsole(/PC-88/i, ['.d88'], undefined, 'PC8801', 'PCEIGHTYEIGHT'),
     new GameConsole(/PC-98/i, ['.d98'], undefined, undefined, 'PCNINETYEIGHT'),
     // Nintendo
     new GameConsole(/FDS|Famicom Computer Disk System/i, ['.fds'], 'nes', 'NES', 'FDS'),
-    new GameConsole(/Game (and|&) Watch/i, ['.mgw'], undefined, undefined, 'GW'),
+    new GameConsole(/Game (and|&) Watch/i, ['.mgw'], undefined, 'GameNWatch', 'GW'),
     new GameConsole(/GB|Game ?Boy/i, ['.gb', '.sgb'], 'gb', 'Gameboy', 'GB'), // pocket:sgb for spiritualized1997
     new GameConsole(/GBA|Game ?Boy Advance/i, ['.gba', '.srl'], 'gba', 'GBA', 'GBA'),
     new GameConsole(/GBC|Game ?Boy Color/i, ['.gbc'], 'gbc', 'Gameboy', 'GBC'),
     new GameConsole(/(\W|^)NES(\W|$)|Nintendo Entertainment System/i, ['.nes', '.nez'], 'nes', 'NES', 'FC'),
-    new GameConsole(/Pokemon Mini/i, ['.min'], 'poke_mini', undefined, 'POKE'),
+    new GameConsole(/Pokemon Mini/i, ['.min'], 'poke_mini', 'PokemonMini', 'POKE'),
     new GameConsole(/Satellaview/i, ['.bs'], 'snes', 'SNES', 'SATELLAVIEW'),
     new GameConsole(/Sufami/i, [], undefined, undefined, 'SUFAMI'),
     new GameConsole(/(\W|^)SNES(\W|$)|Super Nintendo Entertainment System/i, ['.sfc'], 'snes', 'SNES', 'SFC'),
@@ -79,17 +87,17 @@ export default class GameConsole {
     // RCA
     new GameConsole(/Studio (2|II)/i, [/* '.bin' */], 'studio2', undefined, undefined),
     // Sega
-    new GameConsole(/32X/i, ['.32x'], undefined, undefined, 'THIRTYTWOX'),
+    new GameConsole(/32X/i, ['.32x'], undefined, 'S32X', 'THIRTYTWOX'),
     new GameConsole(/Game Gear/i, ['.gg'], 'gg', 'SMS', 'GG'),
     new GameConsole(/Master System/i, ['.sms'], 'sms', 'SMS', 'MS'),
-    new GameConsole(/(Mega|Sega) CD/i, [/* '.bin', '.cue' */], undefined, undefined, 'SEGACD'),
+    new GameConsole(/(Mega|Sega) CD/i, [/* '.bin', '.cue' */], undefined, 'MegaCD', 'SEGACD'),
     new GameConsole(/Mega Drive|Genesis/i, ['.gen', '.md', '.mdx', '.sgd', '.smd'], 'genesis', 'Genesis', 'MD'),
     new GameConsole(/SG-?1000/i, ['.sc', '.sg'], 'sg1000', 'SG1000', 'SEGASGONE'),
     // Sharp
     new GameConsole(/X1/i, ['.2d', '.2hd', '.dx1', '.tfd'], undefined, undefined, 'XONE'),
-    new GameConsole(/X68000/i, [], undefined, undefined, 'X68000'),
+    new GameConsole(/X68000/i, [], undefined, 'X68000', 'X68000'),
     // Sinclair
-    new GameConsole(/ZX Spectrum/i, ['.scl', '.szx', '.z80'], undefined, undefined, 'ZXS'),
+    new GameConsole(/ZX Spectrum/i, ['.scl', '.szx', '.z80'], undefined, 'Spectrum', 'ZXS'),
     // TODO(cemmer): ZX-81
     // SNK
     new GameConsole(/Neo ?Geo/i, [], 'ng', 'NeoGeo', 'NEOGEO'),
@@ -97,12 +105,12 @@ export default class GameConsole {
     new GameConsole(/Neo ?Geo Pocket/i, ['.ngp'], undefined, undefined, 'NGP'),
     new GameConsole(/Neo ?Geo Pocket Color/i, ['.ngc'], undefined, undefined, 'NGP'),
     // Sony
-    new GameConsole(/PlayStation/i, [/* '.bin', '.cue' */], undefined, undefined, 'PS'),
+    new GameConsole(/PlayStation/i, [/* '.bin', '.cue' */], undefined, 'PSX', 'PS'),
     new GameConsole(/PlayStation [2-9]/i, [/* '.bin', '.cue' */], undefined, undefined, undefined),
     // Timetop
     new GameConsole(/GameKing/i, [/* '.bin' */], 'game_king', undefined, undefined),
     // VTech
-    new GameConsole(/CreatiVision/i, [/* '.rom' */], 'creativision', undefined, undefined),
+    new GameConsole(/CreatiVision/i, [/* '.rom' */], 'creativision', 'CreatiVision', undefined),
     // Watara
     new GameConsole(/Supervision/i, ['.sv'], 'supervision', 'SuperVision', 'SUPERVISION'),
     // Wellback
