@@ -32,7 +32,7 @@ To perform this filtering, most spreadsheet applications have a button or menu i
 
 The `--report-output` options is provided to configure where the `igir report` report is written. See the `igir --help` message for the report's default location.
 
-The report output filename supports a version of [Moment.js symbols](https://momentjs.com/docs/#/displaying/) for date and time. To make it clearer what is a replaceable symbol, `%` is prepended to symbols. This is _non-standard_ for Moment.js! But the `%` format should feel more familiar to more people as it resembles [Python's `date.strftime()`](https://docs.python.org/3/library/datetime.html#datetime.date.strftime), [PHP's `strftime()`](https://www.php.net/manual/en/function.strftime.php), [C++'s `strftime()`](https://cplusplus.com/reference/ctime/strftime/), and more.
+The report output filename supports a version of [Moment.js symbols](https://momentjs.com/docs/#/displaying/) for date and time. To make it clearer what is a replaceable symbol, `%` is prepended to symbols. This is _non-standard_ for Moment.js - but the `%` format should feel more familiar to more people as it resembles [Python's `date.strftime()`](https://docs.python.org/3/library/datetime.html#datetime.date.strftime), [PHP's `strftime()`](https://www.php.net/manual/en/function.strftime.php), [C++'s `strftime()`](https://cplusplus.com/reference/ctime/strftime/), and more.
 
 !!! info
 
