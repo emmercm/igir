@@ -12,7 +12,11 @@ They are processed in this order:
 
 `igir` supports the following filters:
 
-### Language filter (`--language-filter [languages..]`)
+### Language filter
+
+```text
+--language-filter [languages..]
+```
 
 Languages are two-letter codes, and you can specify multiple languages with commas between them. See the `--help` message for the full list of understood languages.
 
@@ -40,7 +44,11 @@ Spanish:
 
 A game can have many languages, and all of them are considered during filtering.
 
-### Region filter (`--region-filter [regions..]`)
+### Region filter
+
+```text
+--region-filter [regions..]
+```
 
 Regions are two or three-letter codes, and you can specify multiple regions with commas between them. See the `--help` message for the full list of understood regions.
 
@@ -68,7 +76,11 @@ Spain:
 
 A game can only have one primary region. The first region detected is what is used.
 
-### Only BIOS (`--only-bios`)
+### Only BIOS
+
+```text
+--only-bios
+```
 
 Games that are marked `bios="yes"` in the DAT, or contain `[BIOS]` in their name, e.g.:
 
@@ -79,11 +91,19 @@ Games that are marked `bios="yes"` in the DAT, or contain `[BIOS]` in their name
 
 This option is best used for collating all BIOS files across all consoles to one directory.
 
-### No BIOS (`--no-bios`)
+### No BIOS
+
+```text
+--no-bios
+```
 
 Opposite of the above. This will filter out files that are not games.
 
-### No unlicensed (`--no-unlicensed`)
+### No unlicensed
+
+```text
+--no-unlicensed
+```
 
 Filters out games that contain `(Unl)` or `(Unlicensed)` in their name, e.g.:
 
@@ -94,7 +114,11 @@ Caihong Zhanshi - Rainbow Prince (Taiwan) (Unl)
 
 These games are still considered "retail" releases (below).
 
-### Only retail (`--only-retail`)
+### Only retail
+
+```text
+--only-retail
+```
 
 Enables all the following `--no-*` options, as well as filtering out games that are:
 
@@ -162,7 +186,11 @@ Enables all the following `--no-*` options, as well as filtering out games that 
   R-Type DX (U) [C][t2]
   ```
 
-### No demos (`--no-demo`)
+### No demos
+
+```text
+--no-demo
+```
 
 Filters out games that contain `(Demo)` in their name, e.g.:
 
@@ -171,7 +199,11 @@ Coria and the Sunken City (Unknown) (Demo)
 Two Hearts (Japan) (Demo) (Unl)
 ```
 
-### No betas (`--no-beta`)
+### No betas
+
+```text
+--no-beta
+```
 
 Filters out games that contain `(Beta)` in their name, e.g.:
 
@@ -180,7 +212,11 @@ Cosmo Tank (Japan) (Beta)
 F-15 Strike Eagle II (USA, Europe) (Beta) (July, 1992)
 ```
 
-### No samples (`--no-sample`)
+### No samples
+
+```text
+--no-sample
+```
 
 Filters out games that contain `(Sample)` in their name, e.g.:
 
@@ -189,7 +225,11 @@ Mega Man III (USA) (Sample)
 Shin Nihon Pro Wrestling - Toukon Sanjuushi (Japan) (Sample)
 ```
 
-### No prototypes (`--no-prototype`)
+### No prototypes
+
+```text
+--no-prototype
+```
 
 Filters out games that contain `(Proto)` or `(Prototype)` in their name, e.g.:
 
@@ -198,7 +238,11 @@ Philip & Marlowe in Bloomland (USA) (Proto)
 Sword of Hope, The (Europe) (Proto)
 ```
 
-### No test ROMs (`--no-test-roms`)
+### No test ROMs
+
+```text
+--no-test-roms
+```
 
 Filters out games that contain `(Test)` in their name, e.g.:
 
@@ -207,7 +251,11 @@ Filters out games that contain `(Test)` in their name, e.g.:
 Game Boy Test Cartridge (USA, Europe) (Proto) (Test Program)
 ```
 
-### No homebrew (`--no-homebrew`)
+### No homebrew
+
+```text
+--no-homebrew
+```
 
 Filters out games that contain `(Homebrew)` in their name, e.g.:
 
@@ -216,7 +264,11 @@ Game Boy Camera Gallery 2022, The (World) (Aftermarket) (Homebrew)
 GB-Wordyl (World) (Aftermarket) (Homebrew)
 ```
 
-### No unverified dumps (`--no-unverified`)
+### No unverified dumps
+
+```text
+--no-unverified
+```
 
 Filters out games that do _not_ contain `[!]` in their name, e.g.:
 
@@ -229,7 +281,11 @@ Grand Theft Auto (E) (M5) [C][t1]
 
 Note that this is a [GoodTools](https://emulation.gametechwiki.com/index.php/GoodTools#Good_codes) naming convention, other groups such as [No-Intro](https://no-intro.org/) never include `[!]` in their names!
 
-### No bad dumps (`--no-bad`)
+### No bad dumps
+
+```text
+--no-bad
+```
 
 Filters out games that contain `[b]` or `[b#]` in their name, e.g.:
 

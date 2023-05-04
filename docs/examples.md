@@ -162,6 +162,10 @@ Your flash cart might then look something like this:
 
     [RetroArch](https://www.retroarch.com/) is a frontend UI for the [Libretro API](https://www.libretro.com/).
 
+!!! note
+
+    RetroArch is available for a number of devices, including smartphones and consoles. These instructions will only work on desktop OSes, but once your files are organized you can copy them over to your other device.
+
 First, RetroArch needs a number of [BIOS files](https://docs.libretro.com/library/bios/). Thankfully, the libretro team maintains a DAT of these "system" files, so we don't have to guess at the correct filenames.
 
 With `igir`'s support for [DAT URLs](dats.md) we don't even have to download it! Locate your "System/BIOS" directory as configured in RetroArch and use it as your output directory:

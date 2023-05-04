@@ -1,5 +1,7 @@
 # DATs
 
+## Overview
+
 From the [RetroPie docs](https://retropie.org.uk/docs/Validating%2C-Rebuilding%2C-and-Filtering-ROM-Collections/#dat-files-the-cornerstone):
 
 > Once you begin working with software tools to help validate, rebuild, or filter your ROM collection, you will quickly encounter the need for "DAT" files, so named because they usually (but not always!) have the file extension `.dat`.
@@ -26,11 +28,13 @@ igir [commands..] --dat No-Intro*.zip --input <input>
 
 !!! tip
 
-    `igir` supports URLs to DAT files and archives! This is helpful to make sure you're always using the most up-to-date version of a DAT hosted on sites such as GitHub.
+    `igir` supports URLs to DAT files and archives! This is helpful to make sure you're always using the most up-to-date version of a DAT hosted on sites such as GitHub. For example:
 
-    Example: `igir [commands..] --dat "https://raw.githubusercontent.com/libretro/libretro-database/master/dat/DOOM.dat" --input <input>`
+    ```shell
+    igir [commands..] --dat "https://raw.githubusercontent.com/libretro/libretro-database/master/dat/DOOM.dat" --input <input>
+    ```
 
-    Because of the way DAT-o-MATIC serves downloads, you can't use this method for official No-Intro DATs.
+    Because of the way [DAT-o-MATIC](https://datomatic.no-intro.org/index.php) prepares & serves downloads, you can't use this method for official No-Intro DATs.
 
 !!! info
 
@@ -48,7 +52,7 @@ igir [commands..] --dat No-Intro*.zip --input <input>
 
 ## DAT groups
 
-A number of different release groups maintain these catalogs, the most popular are:
+A number of different release groups maintain sets of DATs, the most popular are:
 
 - [No-Intro](https://datomatic.no-intro.org/index.php?page=download&s=64&op=daily) (cartridge-based consoles)
 - [Redump](http://redump.org/downloads/) (optical media-based consoles)
@@ -61,11 +65,11 @@ And some less popular release groups are:
   - [Custom DATs](https://github.com/libretro/libretro-database/tree/master/dat) (specific games, some optical media-based consoles)
   - [Mirrored DATs](https://github.com/libretro/libretro-database/tree/master/metadat) (No-Intro and Redump/trurip/TOSEC DATs)
   - [FinalBurn NEO](https://github.com/libretro/FBNeo/tree/master/dats) (arcade, gen 1-4 consoles)
-- [ADVANsCEne](https://www.advanscene.com/html/dats.php) (GBA, DS, 3DS, PSP)
+- [ADVANsCEne](https://www.advanscene.com/html/dats.php) (GBA, DS, 3DS, PSP, PS Vita)
 - [progetto-SNAPS](https://www.progettosnaps.net/dats/MAME/) (MAME)
 - [pleasuredome](https://pleasuredome.github.io/pleasuredome/mame/) (MAME)
 
-## Parent/clone (P/C)
+## Parent/clone (P/C) DATs
 
 DATs that include "parent" and "clone" information help `igir` understand what game releases are actually the same game ("clones"). Frequently a game will be released in many regions or with different revisions, usually with only language translations and minor bug fixes. For example, No-Intro has 6+ "clones" of Pokémon Blue cataloged.
 
@@ -83,7 +87,7 @@ These days, depending on what type of emulation you're interested in, non-MAME D
 
 ## Fixdats
 
-"Fixdats" are DATs that contain only ROMs that are missing from your collection. Fixdats are derived from some other DAT (see above for obtaining DATs), containing only a subset of the ROMs. Fixdats are specific to the state of each person's ROM collection, they aren't necessarily meaningful to other people.
+"Fixdats" are DATs that contain only ROMs that are missing from your collection. Fixdats are derived from some other DAT (see above for obtaining DATs), containing only a subset of the ROMs. Fixdats are specific to the state of each person's ROM collection, so they aren't necessarily meaningful to other people.
 
 Fixdats help you find files missing from your collection, and they can be used to generate a collection of those files once you've found them. This sub-collection of files can then be merged back into your main collection.
 
@@ -93,8 +97,8 @@ The `--fixdat` option create a [Logiqx XML](http://www.logiqx.com/DatFAQs/) DAT 
 igir copy zip --dat "Nintendo - Game Boy.dat" \
   --dat "Nintendo - Game Boy Advance.dat" \
   --dat "Nintendo - Game Boy Color.dat" \
-  --input ROMs/
-  --output ROMs-Sorted/
+  --input ROMs/ \
+  --output ROMs-Sorted/ \
   --fixdat
 ```
 

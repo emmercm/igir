@@ -49,7 +49,7 @@
   npm: {
     lockFileMaintenance: {
       enabled: true,
-      schedule: 'on the 1st through 24th day of the month', // same as above
+      schedule: 'on the 24th day of the month', // same as above
       commitMessageAction: 'update', // same as above
       commitMessageTopic: 'lockfile',
     },

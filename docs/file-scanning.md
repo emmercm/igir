@@ -6,6 +6,10 @@
 - [DATs](dats.md): `--dat`, `--dat-exclude`
 - [ROM patches](rom-patching.md): `--patch`, `--patch-exclude`
 
+## Archive files
+
+`igir` can scan archives for DATs, ROMs, and patches. See the [archives](archives.md) page for more information on supported formats.
+
 ## Glob patterns
 
 All input options support [glob patterns](https://en.wikipedia.org/wiki/Glob_(programming)). These patterns help you specify file paths using simple wildcards (e.g. `ROMs/*.rom`) as well as more complex patterns (e.g. `ROMs/!(GBA)/**/*.rom`).
