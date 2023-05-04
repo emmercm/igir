@@ -78,7 +78,7 @@ export default class GameConsole {
     new GameConsole(/Pokemon Mini/i, ['.min'], 'poke_mini', 'PokemonMini', 'POKE'),
     new GameConsole(/Satellaview/i, ['.bs'], 'snes', 'SNES', 'SATELLAVIEW'),
     new GameConsole(/Sufami/i, [], undefined, undefined, 'SUFAMI'),
-    new GameConsole(/(\W|^)SNES(\W|$)|Super Nintendo Entertainment System/i, ['.smc', '.sfc'], 'snes', 'SNES', 'SFC'),
+    new GameConsole(/(\W|^)SNES(\W|$)|Super Nintendo Entertainment System/i, ['.sfc'], 'snes', 'SNES', 'SFC'),
     new GameConsole(/Virtual Boy/i, ['.vb', '.vboy'], undefined, undefined, 'VB'),
     // Panasonic
     new GameConsole(/3DO/i, [/* '.bin', '.cue' */], undefined, undefined, 'PANASONIC'),
