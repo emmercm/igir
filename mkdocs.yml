@@ -53,8 +53,18 @@ nav:
   - Documentation:
       - overview.md
       - installation.md
-      - examples.md
       - alternatives.md
+      - Usage:
+          - usage/collection-sorting.md
+          - Desktop Frontends:
+              - usage/desktop/emulationstation.md
+              - usage/desktop/retroarch.md
+              - usage/desktop/retropie.md
+          - Handheld Frontends:
+              - usage/handheld/onionos.md
+          - Specific Hardware:
+              - usage/hardware/everdrive.md
+          - usage/personal.md
       - File Inputs:
           - file-scanning.md
           - dats.md
