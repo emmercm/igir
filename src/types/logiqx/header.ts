@@ -117,6 +117,10 @@ export default class Header implements HeaderOptions {
     return this.version;
   }
 
+  getComment(): string | undefined {
+    return this.comment;
+  }
+
   getClrMamePro(): ClrMamePro | undefined {
     return this.clrMamePro;
   }
