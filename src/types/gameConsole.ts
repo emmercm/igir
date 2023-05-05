@@ -27,7 +27,7 @@ export default class GameConsole {
     new GameConsole(/7800/, ['.a78'], '7800', 'Atari7800', 'SEVENTYEIGHTHUNDRED'),
     new GameConsole(/Jaguar/i, ['.j64'], undefined, undefined, 'JAGUAR'),
     new GameConsole(/Lynx/i, ['.lnx', '.lyx'], undefined, 'AtariLynx', 'LYNX'),
-    new GameConsole(/Atari (- )?ST/i, ['.msa', '.stx'], undefined, 'AtariST', 'ATARIST'),
+    new GameConsole(/Atari (- )?ST/i, ['.msa', '.st', '.stx'], undefined, 'AtariST', 'ATARIST'),
     // Bally
     new GameConsole(/Astrocade/i, [/* '.bin' */], undefined, 'Astrocade', undefined),
     // Bandai
@@ -78,7 +78,7 @@ export default class GameConsole {
     new GameConsole(/Pokemon Mini/i, ['.min'], 'poke_mini', 'PokemonMini', 'POKE'),
     new GameConsole(/Satellaview/i, ['.bs'], 'snes', 'SNES', 'SATELLAVIEW'),
     new GameConsole(/Sufami/i, [], undefined, undefined, 'SUFAMI'),
-    new GameConsole(/(\W|^)SNES(\W|$)|Super Nintendo Entertainment System/i, ['.sfc'], 'snes', 'SNES', 'SFC'),
+    new GameConsole(/(\W|^)SNES(\W|$)|Super Nintendo Entertainment System/i, ['.sfc', '.smc'], 'snes', 'SNES', 'SFC'),
     new GameConsole(/Virtual Boy/i, ['.vb', '.vboy'], undefined, undefined, 'VB'),
     // Panasonic
     new GameConsole(/3DO/i, [/* '.bin', '.cue' */], undefined, undefined, 'PANASONIC'),
