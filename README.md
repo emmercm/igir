@@ -56,7 +56,7 @@ $ igir --help
   | $$  | $$ __\$$  | $$  | $$__| $$
   | $$  | $$|    \  | $$  | $$    $$   ROM collection manager
   | $$  | $$ \$$$$  | $$  | $$$$$$$\
- _| $$_ | $$__| $$ _| $$_ | $$  | $$   v1.6.1
+ _| $$_ | $$__| $$ _| $$_ | $$  | $$   v1.6.2
 |   $$ \ \$$    $$|   $$ \| $$  | $$
  \$$$$$$  \$$$$$$  \$$$$$$ \$$   \$$
 
@@ -184,6 +184,7 @@ Advanced usage:
 
     {pocket}  The ROM's core-specific /Assets/* directory for the Analogue Pocket (e.g. "gb")
     {mister}  The ROM's core-specific /games/* directory for the MiSTer FPGA (e.g. "Gameboy")
+    {onion}   The ROM's emulator-specific /Roms/* directory for OnionOS/GarlicOS (e.g. "GB")
 
 Example use cases:
 
