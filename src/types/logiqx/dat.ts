@@ -127,6 +127,11 @@ export default class DAT {
       .trim();
   }
 
+  getRomNamesContainDirectories(): boolean {
+    return this.getHeader().getRomNamesContainDirectories()
+      || this.isBiosDat();
+  }
+
   /**
    * Get a No-Intro style filename.
    */
@@ -137,6 +142,14 @@ export default class DAT {
     }
     filename += '.dat';
     return filename;
+  }
+
+  isBiosDat(): boolean {
+    return this.getGames().every((game) => game.isBios())
+      // Redump-style DAT names
+      || this.getName().match(/(\W|^)BIOS(\W|$)/i) !== null
+      // libretro-style DAT comments
+      || (this.getHeader().getComment() || '').match(/(\W|^)BIOS(\W|$)/i) !== null;
   }
 
   /**
