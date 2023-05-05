@@ -668,8 +668,8 @@ export default class Options implements OptionsProps {
       return input;
     }
 
-    const gameConsole = GameConsole.getForFilename(outputRomFilename)
-      || GameConsole.getForConsoleName(dat?.getName() || '');
+    const gameConsole = GameConsole.getForConsoleName(dat?.getName() || '')
+      || GameConsole.getForFilename(outputRomFilename);
     if (!gameConsole) {
       return input;
     }
