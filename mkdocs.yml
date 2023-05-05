@@ -62,8 +62,8 @@ nav:
               - usage/desktop/retropie.md
           - Handheld Frontends:
               - usage/handheld/onionos.md
-          - Flash Carts:
-              - usage/flashcarts/everdrive.md
+          - Specific Hardware:
+              - usage/hardware/everdrive.md
           - usage/personal.md
       - File Inputs:
           - file-scanning.md
