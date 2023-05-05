@@ -89,6 +89,9 @@ plugins:
   - social
   - git-revision-date-localized:
       enable_creation_date: true
+  - redirects:
+      redirect_maps:
+        'examples.md': 'usage/collection-sorting.md'
   #- htmlproofer:
   #    raise_error_excludes:
   #      '-1': [ 'http://www.logiqx.com' ]
