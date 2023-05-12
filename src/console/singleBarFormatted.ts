@@ -19,12 +19,9 @@ export default class SingleBarFormatted {
 
   private lastEtaValue = 'infinity';
 
-  constructor(multiBar: MultiBar, name: string, symbol: string, initialTotal: number) {
+  constructor(multiBar: MultiBar, initialTotal: number, initialPayload: ProgressBarPayload) {
     this.multiBar = multiBar;
-    this.singleBar = this.multiBar.create(initialTotal, 0, {
-      symbol,
-      name,
-    } satisfies ProgressBarPayload, {
+    this.singleBar = this.multiBar.create(initialTotal, 0, initialPayload, {
       /* eslint-disable-next-line arrow-body-style */
       format: (options, params, payload: ProgressBarPayload): string => {
         this.lastOutput = `${SingleBarFormatted.getSymbol(payload)} ${SingleBarFormatted.getName(payload)} | ${this.getProgress(options, params, payload)}`.trim();

@@ -13,7 +13,7 @@ class ProgressBarCLISpy {
 
   private readonly logger: Logger;
 
-  constructor(logLevel = LogLevel.DEBUG) {
+  constructor(logLevel = LogLevel.ALWAYS) {
     this.stream = new PassThrough();
     this.stream.on('data', (line) => {
       if (line.toString() === '\n') {
