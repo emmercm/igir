@@ -21,15 +21,22 @@ export default class ProgressBarCLI extends ProgressBar {
 
   private readonly logger: Logger;
 
+  private readonly payload: ProgressBarPayload;
+
   private readonly singleBarFormatted?: SingleBarFormatted;
 
   private waitingMessageTimeout?: NodeJS.Timeout;
 
   private waitingMessages: string[] = [];
 
-  private constructor(logger: Logger, singleBarFormatted?: SingleBarFormatted) {
+  private constructor(
+    logger: Logger,
+    payload: ProgressBarPayload,
+    singleBarFormatted?: SingleBarFormatted,
+  ) {
     super();
     this.logger = logger;
+    this.payload = payload;
     this.singleBarFormatted = singleBarFormatted;
   }
 
@@ -50,19 +57,24 @@ export default class ProgressBarCLI extends ProgressBar {
       }, cliProgress.Presets.shades_grey);
     }
 
+    const initialPayload: ProgressBarPayload = {
+      symbol,
+      name,
+    };
+
     if (!logger.isTTY()) {
       // Only create progress bars for TTY consoles
-      return new ProgressBarCLI(logger);
+      return new ProgressBarCLI(logger, initialPayload).logPayload();
     }
 
     const singleBarFormatted = new SingleBarFormatted(
       ProgressBarCLI.multiBar,
-      name,
-      symbol,
       initialTotal,
+      initialPayload,
     );
-    await this.render(true);
-    return new ProgressBarCLI(logger, singleBarFormatted);
+    const progressBarCLI = new ProgressBarCLI(logger, initialPayload, singleBarFormatted);
+    await progressBarCLI.renderPayload();
+    return progressBarCLI;
   }
 
   static stop(): void {
@@ -112,11 +124,23 @@ export default class ProgressBarCLI extends ProgressBar {
     return ProgressBarCLI.render(true);
   }
 
+  private async renderPayload(): Promise<ProgressBarCLI> {
+    this.singleBarFormatted?.getSingleBar().update(this.payload);
+    await ProgressBarCLI.render(true);
+    return this;
+  }
+
+  private async logPayload(): Promise<ProgressBarCLI> {
+    if (this.singleBarFormatted) {
+      return this;
+    }
+    await this.log(LogLevel.ALWAYS, `${this.payload.name} ... ${this.payload.finishedMessage || ''}`.trim());
+    return this;
+  }
+
   async setSymbol(symbol: string): Promise<void> {
-    this.singleBarFormatted?.getSingleBar().update({
-      symbol,
-    } satisfies ProgressBarPayload);
-    return ProgressBarCLI.render();
+    this.payload.symbol = symbol;
+    await this.renderPayload();
   }
 
   /**
@@ -141,10 +165,9 @@ export default class ProgressBarCLI extends ProgressBar {
         return;
       }
 
-      this.singleBarFormatted?.getSingleBar().update({
-        waitingMessage: this.waitingMessages[0],
-      } satisfies ProgressBarPayload);
-      await ProgressBarCLI.render(true);
+      // eslint-disable-next-line prefer-destructuring
+      this.payload.waitingMessage = this.waitingMessages[0];
+      await this.renderPayload();
     }, timeout);
   }
 
@@ -169,16 +192,19 @@ export default class ProgressBarCLI extends ProgressBar {
     }
 
     if (finishedMessage) {
-      this.singleBarFormatted?.getSingleBar().update({
-        finishedMessage,
-      } satisfies ProgressBarPayload);
+      this.payload.finishedMessage = finishedMessage;
     }
 
-    return ProgressBarCLI.render(true);
+    await this.renderPayload();
+    await this.logPayload();
   }
 
   withLoggerPrefix(prefix: string): ProgressBar {
-    return new ProgressBarCLI(this.logger.withLoggerPrefix(prefix), this.singleBarFormatted);
+    return new ProgressBarCLI(
+      this.logger.withLoggerPrefix(prefix),
+      this.payload,
+      this.singleBarFormatted,
+    );
   }
 
   async log(logLevel: LogLevel, message: string): Promise<void> {

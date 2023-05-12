@@ -5,7 +5,6 @@ import gracefulFs from 'graceful-fs';
 import semver from 'semver';
 
 import Logger from './src/console/logger.js';
-import LogLevel from './src/console/logLevel.js';
 import ProgressBarCLI from './src/console/progressBarCLI.js';
 import Constants from './src/constants.js';
 import Igir from './src/igir.js';
@@ -35,13 +34,7 @@ gracefulFs.gracefulify(realFs);
     if (options.getHelp()) {
       process.exit(0);
     }
-    let logLevel = options.getLogLevel();
-    if (!logger.isTTY()) {
-      // If stdout isn't a TTY console, then progress bars won't be enabled, so we should log at
-      // least something
-      logLevel = Math.min(logLevel, LogLevel.INFO);
-    }
-    logger.setLogLevel(logLevel);
+    logger.setLogLevel(options.getLogLevel());
 
     await new Igir(options, logger).main();
     ProgressBarCLI.stop();
