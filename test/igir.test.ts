@@ -217,28 +217,32 @@ describe('with explicit dats', () => {
     ]);
   });
 
-  it('should move and extract zipped files', async () => {
+  it('should move zipped files', async () => {
     await expectEndToEnd({
-      commands: ['move', 'extract'],
+      commands: ['move'],
       dat: ['dats/*'],
-      input: ['**/*.zip'],
+      input: ['zip/*'],
       dirDatName: true,
     }, [
-      [path.join('Headered', 'fds_joypad_test.fds'), '1e58456d'],
-      [path.join('One', 'Fizzbuzz.nes'), '370517b5'],
-      [path.join('One', 'Foobar.lnx'), 'b22c9747'],
-      [path.join('One', 'Lorem Ipsum.rom'), '70856527'],
-      [path.join('One', 'One Three', 'One.rom'), 'f817a89f'],
-      [path.join('One', 'One Three', 'Three.rom'), 'ff46c5d8'],
-      [path.join('smdb', 'Hardware Target Game Database', 'Dummy', 'Fizzbuzz.nes'), '370517b5'],
-      [path.join('smdb', 'Hardware Target Game Database', 'Dummy', 'Foobar.lnx'), 'b22c9747'],
-      [path.join('smdb', 'Hardware Target Game Database', 'Dummy', 'Lorem Ipsum.rom'), '70856527'],
+      [path.join('One', 'Fizzbuzz.zip|fizzbuzz.nes'), '370517b5'],
+      [path.join('One', 'Foobar.zip|foobar.lnx'), 'b22c9747'],
+      // NOTE(cemmer): 'One Three.zip' explicitly contains 'two.rom' because the entire file was
+      //  moved, including any extra entries in the input archive.
+      [path.join('One', 'Lorem Ipsum.zip|loremipsum.rom'), '70856527'],
+      [path.join('One', 'One Three.zip|1/one.rom'), 'f817a89f'],
+      [path.join('One', 'One Three.zip|2/two.rom'), '96170874'],
+      [path.join('One', 'One Three.zip|3/three.rom'), 'ff46c5d8'],
+      // NOTE(cemmer): 'Three Four Five.zip' is explicitly missing, because not all ROMs can be
+      //  found in one archive.
+      [path.join('smdb', 'Hardware Target Game Database', 'Dummy', 'Fizzbuzz.zip|fizzbuzz.nes'), '370517b5'],
+      [path.join('smdb', 'Hardware Target Game Database', 'Dummy', 'Foobar.zip|foobar.lnx'), 'b22c9747'],
+      [path.join('smdb', 'Hardware Target Game Database', 'Dummy', 'Lorem Ipsum.zip|loremipsum.rom'), '70856527'],
     ], [
-      path.join('roms', 'fizzbuzz.zip'),
-      path.join('roms', 'headered', 'fds_joypad_test.fds.zip'),
+      path.join('roms', 'zip', 'fizzbuzz.zip'),
       path.join('roms', 'zip', 'foobar.zip'),
+      // NOTE(cemmer): 'fourfive.zip' is explicitly not deleted
       path.join('roms', 'zip', 'loremipsum.zip'),
-      // onetwothree.zip is explicitly not deleted! only one.rom and three.rom were matched
+      path.join('roms', 'zip', 'onetwothree.zip'), // explicitly deleted!
     ]);
   });
 

@@ -1,5 +1,6 @@
 import ProgressBar, { ProgressBarSymbol } from '../console/progressBar.js';
 import fsPoly from '../polyfill/fsPoly.js';
+import ArchiveEntry from '../types/files/archives/archiveEntry.js';
 import File from '../types/files/file.js';
 import DAT from '../types/logiqx/dat.js';
 import Parent from '../types/logiqx/parent.js';
@@ -60,9 +61,22 @@ export default class MovedROMDeleter extends Module {
 
     return (await Promise.all(
       [...groupedMovedRoms.entries()].map(async ([filePath, movedEntries]) => {
+        const movedEntriesStrings = movedEntries.map((entry) => entry.toString());
         const inputEntries = groupedInputRoms.get(filePath) || [];
 
-        const unmovedEntries = inputEntries.filter((entry) => movedEntries.indexOf(entry) === -1);
+        const unmovedEntries = inputEntries.filter((entry) => {
+          if (entry instanceof ArchiveEntry
+            && movedEntries.length === 1
+            && !(movedEntries[0] instanceof ArchiveEntry)
+            && movedEntries[0].getFilePath() === entry.getFilePath()
+          ) {
+            // If the input archive entry was written as a raw archive, then consider it moved
+            return false;
+          }
+
+          // Otherwise, the entry needs to have been explicitly moved
+          return movedEntriesStrings.indexOf(entry.toString()) === -1;
+        });
         if (unmovedEntries.length) {
           await this.progressBar.logWarn(`${filePath}: not deleting moved file, ${unmovedEntries.length.toLocaleString()} archive entr${unmovedEntries.length !== 1 ? 'ies were' : 'y was'} unmatched:${unmovedEntries.sort().map((entry) => `\n  ${entry}`)}`);
           return undefined;
@@ -73,18 +87,19 @@ export default class MovedROMDeleter extends Module {
     )).filter((filePath) => filePath) as string[];
   }
 
-  private static groupFilesByFilePath(files: File[]): Map<string, string[]> {
+  private static groupFilesByFilePath(files: File[]): Map<string, File[]> {
     return files.reduce((map, file) => {
       const key = file.getFilePath();
-      const extractedPaths = map.get(key) || [];
+      const filesForKey = map.get(key) || [];
 
-      extractedPaths.push(file.getExtractedFilePath());
-      const uniqueExtractedPaths = extractedPaths
-        .filter((path, idx, paths) => paths.indexOf(path) === idx);
+      filesForKey.push(file);
+      const fileStrings = filesForKey.map((fileForKey) => fileForKey.toString());
+      const uniqueFilesForKey = filesForKey
+        .filter((_, idx) => fileStrings.indexOf(fileStrings[idx]) === idx);
 
-      map.set(key, uniqueExtractedPaths);
+      map.set(key, uniqueFilesForKey);
       return map;
-    }, new Map<string, string[]>());
+    }, new Map<string, File[]>());
   }
 
   /**
