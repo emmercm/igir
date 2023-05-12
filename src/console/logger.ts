@@ -1,6 +1,7 @@
 import chalk from 'chalk';
 import figlet from 'figlet';
 import moment from 'moment';
+import { WriteStream } from 'tty';
 
 import Constants from '../constants.js';
 import LogLevel from './logLevel.js';
@@ -34,6 +35,13 @@ export default class Logger {
 
   getStream(): NodeJS.WritableStream {
     return this.stream;
+  }
+
+  isTTY(): boolean {
+    if (this.stream instanceof WriteStream) {
+      return (this.stream as WriteStream).isTTY;
+    }
+    return false;
   }
 
   private readonly print = (logLevel: LogLevel, message: unknown = ''): void => {
