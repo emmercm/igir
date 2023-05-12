@@ -38,6 +38,8 @@ export default class Igir {
   }
 
   async main(): Promise<void> {
+    this.logger.info('running');
+
     // Scan and process input files
     let dats = await this.processDATScanner();
     const rawRomFiles = await this.processROMScanner();
