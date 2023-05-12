@@ -91,10 +91,13 @@ These days, depending on what type of emulation you're interested in, non-MAME D
 
 Fixdats help you find files missing from your collection, and they can be used to generate a collection of those files once you've found them. This sub-collection of files can then be merged back into your main collection.
 
-The `--fixdat` option create a [Logiqx XML](http://www.logiqx.com/DatFAQs/) DAT in the output directory for every input DAT (`--dat`) that is missing ROMs. For example:
+The `--fixdat` option creates a [Logiqx XML](http://www.logiqx.com/DatFAQs/) DAT for every input DAT (`--dat`) that is missing ROMs. When writing (`copy`, `move`, and `symlink` commands), the fixdat will be written to the output directory, otherwise it will be written to the working directory.
+
+For example:
 
 ```shell
-igir copy zip --dat "Nintendo - Game Boy.dat" \
+igir copy zip \
+  --dat "Nintendo - Game Boy.dat" \
   --dat "Nintendo - Game Boy Advance.dat" \
   --dat "Nintendo - Game Boy Color.dat" \
   --input ROMs/ \
