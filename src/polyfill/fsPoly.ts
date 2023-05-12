@@ -306,7 +306,13 @@ export default class FsPoly {
   static async walk(pathLike: PathLike): Promise<string[]> {
     const output = [];
 
-    const files = await util.promisify(fs.readdir)(pathLike);
+    let files: string[];
+    try {
+      files = await util.promisify(fs.readdir)(pathLike);
+    } catch (e) {
+      return [];
+    }
+
     /* eslint-disable no-await-in-loop */
     for (let i = 0; i < files.length; i += 1) {
       const file = path.join(pathLike.toString(), files[i]);
