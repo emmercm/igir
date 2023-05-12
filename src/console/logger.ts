@@ -1,6 +1,8 @@
 import chalk from 'chalk';
 import figlet from 'figlet';
 import moment from 'moment';
+import { PassThrough } from 'stream';
+import { WriteStream } from 'tty';
 
 import Constants from '../constants.js';
 import LogLevel from './logLevel.js';
@@ -36,10 +38,22 @@ export default class Logger {
     return this.stream;
   }
 
-  private readonly print = (logLevel: LogLevel, message: unknown = ''): void => {
-    if (this.logLevel <= logLevel) {
-      this.stream.write(`${this.formatMessage(logLevel, String(message).toString())}\n`);
+  isTTY(): boolean {
+    if (this.stream instanceof WriteStream) {
+      return (this.stream as WriteStream).isTTY;
     }
+    if (this.stream instanceof PassThrough) {
+      // Testing streams should be treated as TTY
+      return true;
+    }
+    return false;
+  }
+
+  private readonly print = (logLevel: LogLevel, message: unknown = ''): void => {
+    if (this.logLevel > logLevel) {
+      return;
+    }
+    this.stream.write(`${this.formatMessage(logLevel, String(message).toString())}\n`);
   };
 
   newLine(): void {

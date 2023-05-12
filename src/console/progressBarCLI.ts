@@ -21,15 +21,22 @@ export default class ProgressBarCLI extends ProgressBar {
 
   private readonly logger: Logger;
 
-  private readonly singleBarFormatted: SingleBarFormatted;
+  private readonly payload: ProgressBarPayload;
+
+  private readonly singleBarFormatted?: SingleBarFormatted;
 
   private waitingMessageTimeout?: NodeJS.Timeout;
 
   private waitingMessages: string[] = [];
 
-  private constructor(logger: Logger, singleBarFormatted: SingleBarFormatted) {
+  private constructor(
+    logger: Logger,
+    payload: ProgressBarPayload,
+    singleBarFormatted?: SingleBarFormatted,
+  ) {
     super();
     this.logger = logger;
+    this.payload = payload;
     this.singleBarFormatted = singleBarFormatted;
   }
 
@@ -47,19 +54,27 @@ export default class ProgressBarCLI extends ProgressBar {
         forceRedraw: true,
         emptyOnZero: true,
         hideCursor: true,
-        noTTYOutput: true, /** should output for {@link PassThrough} */
       }, cliProgress.Presets.shades_grey);
+    }
+
+    const initialPayload: ProgressBarPayload = {
+      symbol,
+      name,
+    };
+
+    if (!logger.isTTY()) {
+      // Only create progress bars for TTY consoles
+      return new ProgressBarCLI(logger, initialPayload).logPayload();
     }
 
     const singleBarFormatted = new SingleBarFormatted(
       ProgressBarCLI.multiBar,
-      name,
-      symbol,
       initialTotal,
+      initialPayload,
     );
-    await this.render(true);
-
-    return new ProgressBarCLI(logger, singleBarFormatted);
+    const progressBarCLI = new ProgressBarCLI(logger, initialPayload, singleBarFormatted);
+    await progressBarCLI.render(true);
+    return progressBarCLI;
   }
 
   static stop(): void {
@@ -76,10 +91,12 @@ export default class ProgressBarCLI extends ProgressBar {
    *
    * @see https://github.com/npkgz/cli-progress/issues/79
    */
-  private static async render(force = false): Promise<void> {
+  private async render(force = false): Promise<void> {
+    this.singleBarFormatted?.getSingleBar().update(this.payload);
+
     if (!force) {
       // Limit the frequency of redrawing
-      const [elapsedSec, elapsedNano] = process.hrtime(this.lastRedraw);
+      const [elapsedSec, elapsedNano] = process.hrtime(ProgressBarCLI.lastRedraw);
       const elapsedMs = (elapsedSec * 1000000000 + elapsedNano) / 1000000;
       if (elapsedMs < (1000 / ProgressBarCLI.fps)) {
         return;
@@ -87,10 +104,10 @@ export default class ProgressBarCLI extends ProgressBar {
     }
 
     try {
-      await this.RENDER_MUTEX.runExclusive(() => {
-        this.multiBar?.update();
-        this.lastRedraw = process.hrtime();
-        this.RENDER_MUTEX.cancel(); // cancel all waiting locks, we just redrew
+      await ProgressBarCLI.RENDER_MUTEX.runExclusive(() => {
+        ProgressBarCLI.multiBar?.update();
+        ProgressBarCLI.lastRedraw = process.hrtime();
+        ProgressBarCLI.RENDER_MUTEX.cancel(); // cancel all waiting locks, we just redrew
       });
     } catch (e) {
       if (e !== E_CANCELED) {
@@ -104,16 +121,26 @@ export default class ProgressBarCLI extends ProgressBar {
   }
 
   async reset(total: number): Promise<void> {
-    this.singleBarFormatted.getSingleBar().setTotal(total);
-    this.singleBarFormatted.getSingleBar().update(0);
-    return ProgressBarCLI.render(true);
+    this.singleBarFormatted?.getSingleBar().setTotal(total);
+    this.singleBarFormatted?.getSingleBar().update(0);
+    return this.render(true);
+  }
+
+  private async logPayload(): Promise<ProgressBarCLI> {
+    if (this.singleBarFormatted) {
+      return this;
+    }
+    await this.log(
+      LogLevel.ALWAYS,
+      `${this.payload.name} ... ${this.payload.finishedMessage || ''}`.trim(),
+      true,
+    );
+    return this;
   }
 
   async setSymbol(symbol: string): Promise<void> {
-    this.singleBarFormatted.getSingleBar().update({
-      symbol,
-    } satisfies ProgressBarPayload);
-    return ProgressBarCLI.render();
+    this.payload.symbol = symbol;
+    await this.render(true);
   }
 
   /**
@@ -133,52 +160,54 @@ export default class ProgressBarCLI extends ProgressBar {
   private setWaitingMessageTimeout(timeout = 10_000): void {
     clearTimeout(this.waitingMessageTimeout);
     this.waitingMessageTimeout = setTimeout(async () => {
-      if (this.singleBarFormatted.getSingleBar().getTotal() <= 1) {
+      const total = this.singleBarFormatted?.getSingleBar().getTotal() || 0;
+      if (total <= 1) {
         return;
       }
 
-      this.singleBarFormatted.getSingleBar().update({
-        waitingMessage: this.waitingMessages[0],
-      } satisfies ProgressBarPayload);
-      await ProgressBarCLI.render(true);
+      // eslint-disable-next-line prefer-destructuring
+      this.payload.waitingMessage = this.waitingMessages[0];
+      await this.render(true);
     }, timeout);
   }
 
   async increment(): Promise<void> {
-    this.singleBarFormatted.getSingleBar().increment();
-    return ProgressBarCLI.render();
+    this.singleBarFormatted?.getSingleBar().increment();
+    return this.render();
   }
 
   async update(current: number): Promise<void> {
-    this.singleBarFormatted.getSingleBar().update(current);
-    return ProgressBarCLI.render();
+    this.singleBarFormatted?.getSingleBar().update(current);
+    return this.render();
   }
 
   async done(finishedMessage?: string): Promise<void> {
     await this.setSymbol(ProgressBarSymbol.DONE);
 
-    if (this.singleBarFormatted.getSingleBar().getTotal() > 0) {
-      this.singleBarFormatted.getSingleBar()
-        .update(this.singleBarFormatted.getSingleBar().getTotal());
+    const total = this.singleBarFormatted?.getSingleBar().getTotal() || 0;
+    if (total > 0) {
+      this.singleBarFormatted?.getSingleBar().update(total);
     } else {
-      this.singleBarFormatted.getSingleBar()
-        .update(this.singleBarFormatted.getSingleBar().getTotal() + 1);
+      this.singleBarFormatted?.getSingleBar().update(total + 1);
     }
 
     if (finishedMessage) {
-      this.singleBarFormatted.getSingleBar().update({
-        finishedMessage,
-      } satisfies ProgressBarPayload);
+      this.payload.finishedMessage = finishedMessage;
     }
 
-    return ProgressBarCLI.render(true);
+    await this.render(true);
+    await this.logPayload();
   }
 
   withLoggerPrefix(prefix: string): ProgressBar {
-    return new ProgressBarCLI(this.logger.withLoggerPrefix(prefix), this.singleBarFormatted);
+    return new ProgressBarCLI(
+      this.logger.withLoggerPrefix(prefix),
+      this.payload,
+      this.singleBarFormatted,
+    );
   }
 
-  async log(logLevel: LogLevel, message: string): Promise<void> {
+  async log(logLevel: LogLevel, message: string, forceRender = false): Promise<void> {
     if (this.logger.getLogLevel() > logLevel) {
       return;
     }
@@ -189,7 +218,7 @@ export default class ProgressBarCLI extends ProgressBar {
     const messageWrapped = wrapAnsi(formattedMessage, ConsolePoly.consoleWidth());
 
     ProgressBarCLI.multiBar?.log(`${messageWrapped}\n`);
-    await ProgressBarCLI.render();
+    await this.render(forceRender);
   }
 
   /**
@@ -200,12 +229,20 @@ export default class ProgressBarCLI extends ProgressBar {
    * @see https://github.com/npkgz/cli-progress/issues/59
    */
   async freeze(): Promise<void> {
-    await ProgressBarCLI.render(true);
-    ProgressBarCLI.multiBar?.log(`${this.singleBarFormatted.getLastOutput()}\n`);
+    if (!this.singleBarFormatted) {
+      return;
+    }
+
+    await this.render(true);
+    ProgressBarCLI.multiBar?.log(`${this.singleBarFormatted?.getLastOutput()}\n`);
     this.delete();
   }
 
   delete(): void {
+    if (!this.singleBarFormatted) {
+      return;
+    }
+
     ProgressBarCLI.multiBar?.remove(this.singleBarFormatted.getSingleBar());
     // Forcing a render shouldn't be necessary
   }
