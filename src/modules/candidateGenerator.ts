@@ -58,6 +58,8 @@ export default class CandidateGenerator extends Module {
     /* eslint-disable no-await-in-loop */
     for (let i = 0; i < parents.length; i += 1) {
       const parent = parents[i];
+      const waitingMessage = `${parent.getName()} ...`;
+      this.progressBar.addWaitingMessage(waitingMessage);
 
       const releaseCandidates: ReleaseCandidate[] = [];
 
@@ -85,6 +87,7 @@ export default class CandidateGenerator extends Module {
       await this.progressBar.logTrace(`${dat.getNameShort()}: ${parent.getName()}: found ${releaseCandidates.length.toLocaleString()} candidate${releaseCandidates.length !== 1 ? 's' : ''}`);
       output.set(parent, releaseCandidates);
 
+      this.progressBar.removeWaitingMessage(waitingMessage);
       await this.progressBar.increment();
     }
 
