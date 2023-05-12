@@ -1,6 +1,7 @@
 import chalk from 'chalk';
 import figlet from 'figlet';
 import moment from 'moment';
+import { PassThrough } from 'stream';
 import { WriteStream } from 'tty';
 
 import Constants from '../constants.js';
@@ -40,6 +41,10 @@ export default class Logger {
   isTTY(): boolean {
     if (this.stream instanceof WriteStream) {
       return (this.stream as WriteStream).isTTY;
+    }
+    if (this.stream instanceof PassThrough) {
+      // Testing streams should be treated as TTY
+      return true;
     }
     return false;
   }
