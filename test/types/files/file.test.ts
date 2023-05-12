@@ -110,7 +110,7 @@ describe('copyToTempFile', () => {
     const raws = await new ROMScanner(new Options({
       input: ['./test/fixtures/roms/raw'],
     }), new ProgressBarFake()).scan();
-    expect(raws).toHaveLength(8);
+    expect(raws).toHaveLength(10);
 
     const temp = await fsPoly.mkdtemp(Constants.GLOBAL_TEMP_DIR);
     /* eslint-disable no-await-in-loop */
@@ -130,7 +130,7 @@ describe('createReadStream', () => {
     const raws = await new ROMScanner(new Options({
       input: ['./test/fixtures/roms/raw/!(empty).*'],
     }), new ProgressBarFake()).scan();
-    expect(raws).toHaveLength(7);
+    expect(raws).toHaveLength(9);
 
     const temp = await fsPoly.mkdtemp(Constants.GLOBAL_TEMP_DIR);
     /* eslint-disable no-await-in-loop */

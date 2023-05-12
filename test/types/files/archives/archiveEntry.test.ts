@@ -119,7 +119,7 @@ describe('copyToTempFile', () => {
         './test/fixtures/roms/7z',
       ],
     }), new ProgressBarFake()).scan();
-    expect(archiveEntries).toHaveLength(21);
+    expect(archiveEntries).toHaveLength(23);
 
     const temp = await fsPoly.mkdtemp(Constants.GLOBAL_TEMP_DIR);
     /* eslint-disable no-await-in-loop */
@@ -144,7 +144,7 @@ describe('createReadStream', () => {
         './test/fixtures/roms/7z',
       ],
     }), new ProgressBarFake()).scan();
-    expect(archiveEntries).toHaveLength(21);
+    expect(archiveEntries).toHaveLength(23);
 
     const temp = await fsPoly.mkdtemp(Constants.GLOBAL_TEMP_DIR);
     /* eslint-disable no-await-in-loop */

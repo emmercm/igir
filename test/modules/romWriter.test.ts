@@ -443,7 +443,7 @@ describe('zip', () => {
   test.each([
     [
       '**/!(*headered)/*',
-      ['0F09A40.zip', '3708F2C.zip', '612644F.zip', '65D1206.zip', '92C85C9.zip', 'C01173E.zip', 'KDULVQN.zip', 'before.zip', 'best.zip', 'empty.zip', 'fizzbuzz.zip', 'foobar.zip', 'loremipsum.zip', 'one.zip', 'three.zip', 'two.zip', 'unknown.zip'],
+      ['0F09A40.zip', '3708F2C.zip', '612644F.zip', '65D1206.zip', '92C85C9.zip', 'C01173E.zip', 'KDULVQN.zip', 'before.zip', 'best.zip', 'empty.zip', 'five.zip', 'fizzbuzz.zip', 'foobar.zip', 'four.zip', 'loremipsum.zip', 'one.zip', 'three.zip', 'two.zip', 'unknown.zip'],
     ],
     [
       '7z/*',
@@ -455,7 +455,7 @@ describe('zip', () => {
     ],
     [
       'raw/*',
-      ['empty.zip', 'fizzbuzz.zip', 'foobar.zip', 'loremipsum.zip', 'one.zip', 'three.zip', 'two.zip', 'unknown.zip'],
+      ['empty.zip', 'five.zip', 'fizzbuzz.zip', 'foobar.zip', 'four.zip', 'loremipsum.zip', 'one.zip', 'three.zip', 'two.zip', 'unknown.zip'],
     ],
     [
       'tar/*',
@@ -463,7 +463,7 @@ describe('zip', () => {
     ],
     [
       'zip/*',
-      ['fizzbuzz.zip', 'foobar.zip', 'loremipsum.zip', 'onetwothree.zip', 'unknown.zip'],
+      ['fizzbuzz.zip', 'foobar.zip', 'fourfive.zip', 'loremipsum.zip', 'onetwothree.zip', 'unknown.zip'],
     ],
   ])('should copy, zip, and test: %s', async (inputGlob, expectedOutputPaths) => {
     await copyFixturesToTemp(async (inputTemp, outputTemp) => {
@@ -487,7 +487,7 @@ describe('zip', () => {
   test.each([
     [
       '**/!(*headered)/*',
-      ['0F09A40.zip', '3708F2C.zip', '612644F.zip', '65D1206.zip', '92C85C9.zip', 'C01173E.zip', 'KDULVQN.zip', 'before.zip', 'best.zip', 'empty.zip', 'fizzbuzz.zip', 'foobar.zip', 'loremipsum.zip', 'one.zip', 'three.zip', 'two.zip', 'unknown.zip'],
+      ['0F09A40.zip', '3708F2C.zip', '612644F.zip', '65D1206.zip', '92C85C9.zip', 'C01173E.zip', 'KDULVQN.zip', 'before.zip', 'best.zip', 'empty.zip', 'five.zip', 'fizzbuzz.zip', 'foobar.zip', 'four.zip', 'loremipsum.zip', 'one.zip', 'three.zip', 'two.zip', 'unknown.zip'],
       ['patchable/0F09A40.rom', 'patchable/3708F2C.rom', 'patchable/612644F.rom', 'patchable/65D1206.rom', 'patchable/92C85C9.rom', 'patchable/C01173E.rom', 'patchable/KDULVQN.rom', 'patchable/before.rom', 'patchable/best.gz', 'raw/empty.rom', 'raw/fizzbuzz.nes', 'raw/foobar.lnx', 'raw/loremipsum.rom', 'raw/one.rom', 'raw/three.rom', 'raw/two.rom', 'raw/unknown.rom'],
     ],
     [
@@ -502,7 +502,7 @@ describe('zip', () => {
     ],
     [
       'raw/*',
-      ['empty.zip', 'fizzbuzz.zip', 'foobar.zip', 'loremipsum.zip', 'one.zip', 'three.zip', 'two.zip', 'unknown.zip'],
+      ['empty.zip', 'five.zip', 'fizzbuzz.zip', 'foobar.zip', 'four.zip', 'loremipsum.zip', 'one.zip', 'three.zip', 'two.zip', 'unknown.zip'],
       ['raw/empty.rom', 'raw/fizzbuzz.nes', 'raw/foobar.lnx', 'raw/loremipsum.rom', 'raw/one.rom', 'raw/three.rom', 'raw/two.rom', 'raw/unknown.rom'],
     ],
     [
@@ -512,7 +512,7 @@ describe('zip', () => {
     ],
     [
       'zip/*',
-      ['fizzbuzz.zip', 'foobar.zip', 'loremipsum.zip', 'onetwothree.zip', 'unknown.zip'],
+      ['fizzbuzz.zip', 'foobar.zip', 'fourfive.zip', 'loremipsum.zip', 'onetwothree.zip', 'unknown.zip'],
       ['zip/fizzbuzz.zip', 'zip/foobar.zip', 'zip/loremipsum.zip', 'zip/onetwothree.zip', 'zip/unknown.zip'],
     ],
   ])('should move, zip, and test: %s', async (inputGlob, expectedOutputPaths, expectedDeletedInputPaths) => {
@@ -560,8 +560,10 @@ describe('zip', () => {
       ['ROMWriter Test.zip|diagnostic_test_cartridge.a78', 'f6cc9b1c'],
       ['ROMWriter Test.zip|empty.rom', '00000000'],
       ['ROMWriter Test.zip|fds_joypad_test.fds', '1e58456d'],
+      ['ROMWriter Test.zip|five.rom', '3e5daf67'],
       ['ROMWriter Test.zip|fizzbuzz.nes', '370517b5'],
       ['ROMWriter Test.zip|foobar.lnx', 'b22c9747'],
+      ['ROMWriter Test.zip|four.rom', '1cf3ca74'],
       ['ROMWriter Test.zip|KDULVQN.rom', 'b1c303e4'],
       ['ROMWriter Test.zip|LCDTestROM.lnx', '2d251538'],
       ['ROMWriter Test.zip|loremipsum.rom', '70856527'],
@@ -573,8 +575,10 @@ describe('zip', () => {
     ]],
     ['raw/*', [
       ['ROMWriter Test.zip|empty.rom', '00000000'],
+      ['ROMWriter Test.zip|five.rom', '3e5daf67'],
       ['ROMWriter Test.zip|fizzbuzz.nes', '370517b5'],
       ['ROMWriter Test.zip|foobar.lnx', 'b22c9747'],
+      ['ROMWriter Test.zip|four.rom', '1cf3ca74'],
       ['ROMWriter Test.zip|loremipsum.rom', '70856527'],
       ['ROMWriter Test.zip|one.rom', 'f817a89f'],
       ['ROMWriter Test.zip|three.rom', 'ff46c5d8'],
@@ -830,7 +834,7 @@ describe('extract', () => {
   test.each([
     [
       '**/!(*headered)/*',
-      ['0F09A40.rom', '3708F2C.rom', '612644F.rom', '65D1206.rom', '92C85C9.rom', 'C01173E.rom', 'KDULVQN.rom', 'before.rom', 'best.rom', 'empty.rom', 'fizzbuzz.nes', 'foobar.lnx', 'loremipsum.rom', 'one.rom', 'three.rom', 'two.rom', 'unknown.rom'],
+      ['0F09A40.rom', '3708F2C.rom', '612644F.rom', '65D1206.rom', '92C85C9.rom', 'C01173E.rom', 'KDULVQN.rom', 'before.rom', 'best.rom', 'empty.rom', 'five.rom', 'fizzbuzz.nes', 'foobar.lnx', 'four.rom', 'loremipsum.rom', 'one.rom', 'three.rom', 'two.rom', 'unknown.rom'],
     ],
     [
       '7z/*',
@@ -842,7 +846,7 @@ describe('extract', () => {
     ],
     [
       'raw/*',
-      ['empty.rom', 'fizzbuzz.nes', 'foobar.lnx', 'loremipsum.rom', 'one.rom', 'three.rom', 'two.rom', 'unknown.rom'],
+      ['empty.rom', 'five.rom', 'fizzbuzz.nes', 'foobar.lnx', 'four.rom', 'loremipsum.rom', 'one.rom', 'three.rom', 'two.rom', 'unknown.rom'],
     ],
     [
       'tar/*',
@@ -850,7 +854,7 @@ describe('extract', () => {
     ],
     [
       'zip/*',
-      ['fizzbuzz.nes', 'foobar.lnx', 'loremipsum.rom', path.join('onetwothree', 'one.rom'), path.join('onetwothree', 'three.rom'), path.join('onetwothree', 'two.rom'), 'unknown.rom'],
+      ['fizzbuzz.nes', 'foobar.lnx', path.join('fourfive', 'five.rom'), path.join('fourfive', 'four.rom'), 'loremipsum.rom', path.join('onetwothree', 'one.rom'), path.join('onetwothree', 'three.rom'), path.join('onetwothree', 'two.rom'), 'unknown.rom'],
     ],
   ])('should copy, extract, and test: %s', async (inputGlob, expectedOutputPaths) => {
     await copyFixturesToTemp(async (inputTemp, outputTemp) => {
@@ -874,7 +878,7 @@ describe('extract', () => {
   test.each([
     [
       '**/!(*headered)/*',
-      ['0F09A40.rom', '3708F2C.rom', '612644F.rom', '65D1206.rom', '92C85C9.rom', 'C01173E.rom', 'KDULVQN.rom', 'before.rom', 'best.rom', 'empty.rom', 'fizzbuzz.nes', 'foobar.lnx', 'loremipsum.rom', 'one.rom', 'three.rom', 'two.rom', 'unknown.rom'],
+      ['0F09A40.rom', '3708F2C.rom', '612644F.rom', '65D1206.rom', '92C85C9.rom', 'C01173E.rom', 'KDULVQN.rom', 'before.rom', 'best.rom', 'empty.rom', 'five.rom', 'fizzbuzz.nes', 'foobar.lnx', 'four.rom', 'loremipsum.rom', 'one.rom', 'three.rom', 'two.rom', 'unknown.rom'],
       ['patchable/0F09A40.rom', 'patchable/3708F2C.rom', 'patchable/612644F.rom', 'patchable/65D1206.rom', 'patchable/92C85C9.rom', 'patchable/C01173E.rom', 'patchable/KDULVQN.rom', 'patchable/before.rom', 'patchable/best.gz', 'raw/empty.rom', 'raw/fizzbuzz.nes', 'raw/foobar.lnx', 'raw/loremipsum.rom', 'raw/one.rom', 'raw/three.rom', 'raw/two.rom', 'raw/unknown.rom'],
     ],
     [
@@ -889,7 +893,7 @@ describe('extract', () => {
     ],
     [
       'raw/*',
-      ['empty.rom', 'fizzbuzz.nes', 'foobar.lnx', 'loremipsum.rom', 'one.rom', 'three.rom', 'two.rom', 'unknown.rom'],
+      ['empty.rom', 'five.rom', 'fizzbuzz.nes', 'foobar.lnx', 'four.rom', 'loremipsum.rom', 'one.rom', 'three.rom', 'two.rom', 'unknown.rom'],
       ['raw/empty.rom', 'raw/fizzbuzz.nes', 'raw/foobar.lnx', 'raw/loremipsum.rom', 'raw/one.rom', 'raw/three.rom', 'raw/two.rom', 'raw/unknown.rom'],
     ],
     [
@@ -899,7 +903,7 @@ describe('extract', () => {
     ],
     [
       'zip/*',
-      ['fizzbuzz.nes', 'foobar.lnx', 'loremipsum.rom', path.join('onetwothree', 'one.rom'), path.join('onetwothree', 'three.rom'), path.join('onetwothree', 'two.rom'), 'unknown.rom'],
+      ['fizzbuzz.nes', 'foobar.lnx', path.join('fourfive', 'five.rom'), path.join('fourfive', 'four.rom'), 'loremipsum.rom', path.join('onetwothree', 'one.rom'), path.join('onetwothree', 'three.rom'), path.join('onetwothree', 'two.rom'), 'unknown.rom'],
       ['zip/fizzbuzz.zip', 'zip/foobar.zip', 'zip/loremipsum.zip', 'zip/onetwothree.zip', 'zip/unknown.zip'],
     ],
   ])('should move, extract, and test: %s', async (inputGlob, expectedOutputPaths, expectedDeletedInputPaths) => {
@@ -1151,7 +1155,7 @@ describe('raw', () => {
   test.each([
     [
       '**/!(*headered)/*',
-      ['0F09A40.rom', '3708F2C.rom', '612644F.rom', '65D1206.rom', '92C85C9.rom', 'C01173E.rom', 'KDULVQN.rom', 'before.rom', 'best.gz', 'empty.rom', 'fizzbuzz.nes', 'foobar.lnx', 'loremipsum.rom', 'one.rom', 'three.rom', 'two.rom', 'unknown.rom'],
+      ['0F09A40.rom', '3708F2C.rom', '612644F.rom', '65D1206.rom', '92C85C9.rom', 'C01173E.rom', 'KDULVQN.rom', 'before.rom', 'best.gz', 'empty.rom', 'five.rom', 'fizzbuzz.nes', 'foobar.lnx', 'four.rom', 'loremipsum.rom', 'one.rom', 'three.rom', 'two.rom', 'unknown.rom'],
     ],
     [
       '7z/*',
@@ -1163,7 +1167,7 @@ describe('raw', () => {
     ],
     [
       'raw/*',
-      ['empty.rom', 'fizzbuzz.nes', 'foobar.lnx', 'loremipsum.rom', 'one.rom', 'three.rom', 'two.rom', 'unknown.rom'],
+      ['empty.rom', 'five.rom', 'fizzbuzz.nes', 'foobar.lnx', 'four.rom', 'loremipsum.rom', 'one.rom', 'three.rom', 'two.rom', 'unknown.rom'],
     ],
     [
       'tar/*',
@@ -1171,7 +1175,7 @@ describe('raw', () => {
     ],
     [
       'zip/*',
-      ['fizzbuzz.zip', 'foobar.zip', 'loremipsum.zip', 'onetwothree.zip', 'unknown.zip'],
+      ['fizzbuzz.zip', 'foobar.zip', 'fourfive.zip', 'loremipsum.zip', 'onetwothree.zip', 'unknown.zip'],
     ],
   ])('should copy raw and test: %s', async (inputGlob, expectedOutputPaths) => {
     await copyFixturesToTemp(async (inputTemp, outputTemp) => {
@@ -1195,7 +1199,7 @@ describe('raw', () => {
   test.each([
     [
       '**/!(*headered)/*',
-      ['0F09A40.rom', '3708F2C.rom', '612644F.rom', '65D1206.rom', '92C85C9.rom', 'C01173E.rom', 'KDULVQN.rom', 'before.rom', 'best.gz', 'empty.rom', 'fizzbuzz.nes', 'foobar.lnx', 'loremipsum.rom', 'one.rom', 'three.rom', 'two.rom', 'unknown.rom'],
+      ['0F09A40.rom', '3708F2C.rom', '612644F.rom', '65D1206.rom', '92C85C9.rom', 'C01173E.rom', 'KDULVQN.rom', 'before.rom', 'best.gz', 'empty.rom', 'five.rom', 'fizzbuzz.nes', 'foobar.lnx', 'four.rom', 'loremipsum.rom', 'one.rom', 'three.rom', 'two.rom', 'unknown.rom'],
       ['patchable/0F09A40.rom', 'patchable/3708F2C.rom', 'patchable/612644F.rom', 'patchable/65D1206.rom', 'patchable/92C85C9.rom', 'patchable/C01173E.rom', 'patchable/KDULVQN.rom', 'patchable/before.rom', 'patchable/best.gz', 'raw/empty.rom', 'raw/fizzbuzz.nes', 'raw/foobar.lnx', 'raw/loremipsum.rom', 'raw/one.rom', 'raw/three.rom', 'raw/two.rom', 'raw/unknown.rom'],
     ],
     [
@@ -1210,7 +1214,7 @@ describe('raw', () => {
     ],
     [
       'raw/*',
-      ['empty.rom', 'fizzbuzz.nes', 'foobar.lnx', 'loremipsum.rom', 'one.rom', 'three.rom', 'two.rom', 'unknown.rom'],
+      ['empty.rom', 'five.rom', 'fizzbuzz.nes', 'foobar.lnx', 'four.rom', 'loremipsum.rom', 'one.rom', 'three.rom', 'two.rom', 'unknown.rom'],
       ['raw/empty.rom', 'raw/fizzbuzz.nes', 'raw/foobar.lnx', 'raw/loremipsum.rom', 'raw/one.rom', 'raw/three.rom', 'raw/two.rom', 'raw/unknown.rom'],
     ],
     [
@@ -1220,7 +1224,7 @@ describe('raw', () => {
     ],
     [
       'zip/*',
-      ['fizzbuzz.zip', 'foobar.zip', 'loremipsum.zip', 'onetwothree.zip', 'unknown.zip'],
+      ['fizzbuzz.zip', 'foobar.zip', 'fourfive.zip', 'loremipsum.zip', 'onetwothree.zip', 'unknown.zip'],
       ['zip/fizzbuzz.zip', 'zip/foobar.zip', 'zip/loremipsum.zip', 'zip/onetwothree.zip', 'zip/unknown.zip'],
     ],
   ])('should move and test: %s', async (inputGlob, expectedOutputPaths, expectedDeletedInputPaths) => {
