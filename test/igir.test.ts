@@ -9,52 +9,81 @@ import FileFactory from '../src/types/files/fileFactory.js';
 import Options, { OptionsProps } from '../src/types/options.js';
 
 interface TestOutput {
-  writtenFilesAndCrcs: string[][],
+  outputFilesAndCrcs: string[][],
+  cwdFilesAndCrcs: string[][],
   deletedFiles: string[],
 }
 
-async function runIgir(optionsProps: OptionsProps): Promise<TestOutput> {
-  const tempInput = await fsPoly.mkdtemp(path.join(Constants.GLOBAL_TEMP_DIR, 'input'));
-  await fsPoly.copyDir('./test/fixtures', tempInput);
-  const inputFilesBefore = await fsPoly.walk(tempInput);
+async function chdir<T>(dir: string, runnable: () => (T | Promise<T>)): Promise<T> {
+  const cwd = process.cwd();
 
-  const tempOutput = await fsPoly.mkdtemp(path.join(Constants.GLOBAL_TEMP_DIR, 'output'));
+  if (!await fsPoly.exists(dir)) {
+    await fsPoly.mkdir(dir, { recursive: true });
+  }
+  process.chdir(dir);
 
-  const options = new Options({
-    ...optionsProps,
-    ...(optionsProps.dat ? { dat: optionsProps.dat.map((dat) => path.join(tempInput, dat)) } : {}),
-    input: (optionsProps.input ? optionsProps.input : [path.join('**', '*')])
-      .map((input) => path.join(tempInput, 'roms', input)),
-    patch: (optionsProps.patch ? optionsProps.patch : [])
-      .map((input) => path.join(tempInput, input)),
-    output: tempOutput,
-    verbose: Number.MAX_SAFE_INTEGER,
-  });
-  await new Igir(options, new Logger(LogLevel.NEVER)).main();
+  try {
+    return await runnable();
+  } finally {
+    process.chdir(cwd);
+  }
+}
 
-  const writtenFilesAndCrcs = (await Promise.all((await fsPoly.walk(tempOutput))
-    .map(async (filePath) => FileFactory.filesFrom(filePath))))
+async function walkWithCrc(inputDir: string, outputDir: string): Promise<string[][]> {
+  return (
+    await Promise.all((await fsPoly.walk(outputDir))
+      .map(async (filePath) => FileFactory.filesFrom(filePath)))
+  )
     .flatMap((files) => files)
     .map((file) => ([
       file.toString()
-        .replace(tempInput + path.sep, '')
-        .replace(path.basename(tempInput), '<input>')
-        .replace(tempOutput + path.sep, '')
-        .replace(path.basename(tempOutput), '<output>'),
+        .replace(inputDir, '<input>')
+        .replace(outputDir + path.sep, ''),
       file.getCrc32(),
     ]))
     .sort((a, b) => a[0].localeCompare(b[0]));
+}
 
-  const inputFilesAfter = await fsPoly.walk(tempInput);
-  const deletedFiles = inputFilesBefore
-    .filter((filePath) => inputFilesAfter.indexOf(filePath) === -1)
-    .map((filePath) => filePath.replace(tempInput + path.sep, ''))
-    .sort();
+async function runIgir(optionsProps: OptionsProps): Promise<TestOutput> {
+  const fixtures = path.resolve('./test/fixtures');
+  const temp = await fsPoly.mkdtemp(path.join(Constants.GLOBAL_TEMP_DIR));
 
-  await fsPoly.rm(tempInput, { recursive: true });
-  await fsPoly.rm(tempOutput, { force: true, recursive: true });
+  const tempCwd = path.join(temp, 'cwd');
+  return chdir(tempCwd, async () => {
+    const tempInput = path.join(temp, 'input');
+    await fsPoly.copyDir(fixtures, tempInput);
+    const inputFilesBefore = await fsPoly.walk(tempInput);
 
-  return { writtenFilesAndCrcs, deletedFiles };
+    const tempOutput = path.join(temp, 'output');
+
+    const options = new Options({
+      ...optionsProps,
+      ...(optionsProps.dat
+        ? { dat: optionsProps.dat.map((dat) => path.join(tempInput, dat)) }
+        : {}),
+      input: (optionsProps.input || [path.join('**', '*')])
+        .map((input) => path.join(tempInput, 'roms', input)),
+      patch: (optionsProps.patch || [])
+        .map((input) => path.join(tempInput, input)),
+      reportOutput: (optionsProps.reportOutput || './report.csv'),
+      output: tempOutput,
+      verbose: Number.MAX_SAFE_INTEGER,
+    });
+    await new Igir(options, new Logger(LogLevel.NEVER)).main();
+
+    const outputFilesAndCrcs = await walkWithCrc(tempInput, tempOutput);
+    const cwdFilesAndCrcs = await walkWithCrc(tempInput, process.cwd());
+
+    const inputFilesAfter = await fsPoly.walk(tempInput);
+    const deletedFiles = inputFilesBefore
+      .filter((filePath) => inputFilesAfter.indexOf(filePath) === -1)
+      .map((filePath) => filePath.replace(tempInput + path.sep, ''))
+      .sort();
+
+    return { outputFilesAndCrcs, cwdFilesAndCrcs, deletedFiles };
+  });
+
+  await fsPoly.rm(temp, { force: true, recursive: true });
 }
 
 async function expectEndToEnd(
@@ -63,7 +92,7 @@ async function expectEndToEnd(
   expectedDeletedFiles: string[] = [],
 ): Promise<void> {
   const testOutput = await runIgir(optionsProps);
-  expect(testOutput.writtenFilesAndCrcs).toEqual(expectedWrittenFilesAndCrcs);
+  expect(testOutput.outputFilesAndCrcs).toEqual(expectedWrittenFilesAndCrcs);
   expect(testOutput.deletedFiles).toEqual(expectedDeletedFiles);
 }
 
@@ -246,32 +275,32 @@ describe('with explicit dats', () => {
       dat: ['dats/*'],
       dirDatName: true,
     }, [
-      [`${path.join('Headered', 'allpads.nes')} -> ${path.join('roms', 'headered', 'allpads.nes')}`, '9180a163'],
-      [`${path.join('Headered', 'color_test.nes')} -> ${path.join('roms', 'headered', 'color_test.nintendoentertainmentsystem')}`, 'c9c1b7aa'],
-      [`${path.join('Headered', 'diagnostic_test_cartridge.a78.7z|diagnostic_test_cartridge.a78')} -> ${path.join('roms', 'headered', 'diagnostic_test_cartridge.a78.7z|diagnostic_test_cartridge.a78')}`, 'f6cc9b1c'],
-      [`${path.join('Headered', 'fds_joypad_test.fds.zip|fds_joypad_test.fds')} -> ${path.join('roms', 'headered', 'fds_joypad_test.fds.zip|fds_joypad_test.fds')}`, '1e58456d'],
-      [`${path.join('Headered', 'LCDTestROM.lnx.rar|LCDTestROM.lnx')} -> ${path.join('roms', 'headered', 'LCDTestROM.lnx.rar|LCDTestROM.lnx')}`, '2d251538'],
-      [`${path.join('Headered', 'speed_test_v51.smc')} -> ${path.join('roms', 'headered', 'speed_test_v51.smc')}`, '9adca6cc'],
-      [`${path.join('One', 'Fizzbuzz.nes')} -> ${path.join('roms', 'raw', 'fizzbuzz.nes')}`, '370517b5'],
-      [`${path.join('One', 'Foobar.lnx')} -> ${path.join('roms', 'foobar.lnx')}`, 'b22c9747'],
-      [`${path.join('One', 'Lorem Ipsum.rom')} -> ${path.join('roms', 'raw', 'loremipsum.rom')}`, '70856527'],
-      [`${path.join('One', 'One Three', 'One.rom')} -> ${path.join('roms', 'raw', 'one.rom')}`, 'f817a89f'],
-      [`${path.join('One', 'One Three', 'Three.rom')} -> ${path.join('roms', 'raw', 'three.rom')}`, 'ff46c5d8'],
-      [`${path.join('Patchable', '0F09A40.rom')} -> ${path.join('roms', 'patchable', '0F09A40.rom')}`, '2f943e86'],
-      [`${path.join('Patchable', '3708F2C.rom')} -> ${path.join('roms', 'patchable', '3708F2C.rom')}`, '20891c9f'],
-      [`${path.join('Patchable', '612644F.rom')} -> ${path.join('roms', 'patchable', '612644F.rom')}`, 'f7591b29'],
-      [`${path.join('Patchable', '65D1206.rom')} -> ${path.join('roms', 'patchable', '65D1206.rom')}`, '20323455'],
-      [`${path.join('Patchable', '92C85C9.rom')} -> ${path.join('roms', 'patchable', '92C85C9.rom')}`, '06692159'],
-      [`${path.join('Patchable', 'Before.rom')} -> ${path.join('roms', 'patchable', 'before.rom')}`, '0361b321'],
-      [`${path.join('Patchable', 'Best.gz|best.rom')} -> ${path.join('roms', 'patchable', 'best.gz|best.rom')}`, '1e3d78cf'],
-      [`${path.join('Patchable', 'C01173E.rom')} -> ${path.join('roms', 'patchable', 'C01173E.rom')}`, 'dfaebe28'],
-      [`${path.join('Patchable', 'KDULVQN.rom')} -> ${path.join('roms', 'patchable', 'KDULVQN.rom')}`, 'b1c303e4'],
-      [`${path.join('smdb', 'Hardware Target Game Database', 'Dummy', 'Fizzbuzz.nes')} -> ${path.join('roms', 'raw', 'fizzbuzz.nes')}`, '370517b5'],
-      [`${path.join('smdb', 'Hardware Target Game Database', 'Dummy', 'Foobar.lnx')} -> ${path.join('roms', 'foobar.lnx')}`, 'b22c9747'],
-      [`${path.join('smdb', 'Hardware Target Game Database', 'Dummy', 'Lorem Ipsum.rom')} -> ${path.join('roms', 'raw', 'loremipsum.rom')}`, '70856527'],
-      [`${path.join('smdb', 'Hardware Target Game Database', 'Patchable', '3708F2C.rom')} -> ${path.join('roms', 'patchable', '3708F2C.rom')}`, '20891c9f'],
-      [`${path.join('smdb', 'Hardware Target Game Database', 'Patchable', '65D1206.rom')} -> ${path.join('roms', 'patchable', '65D1206.rom')}`, '20323455'],
-      [`${path.join('smdb', 'Hardware Target Game Database', 'Patchable', 'C01173E.rom')} -> ${path.join('roms', 'patchable', 'C01173E.rom')}`, 'dfaebe28'],
+      [`${path.join('Headered', 'allpads.nes')} -> ${path.join('<input>', 'roms', 'headered', 'allpads.nes')}`, '9180a163'],
+      [`${path.join('Headered', 'color_test.nes')} -> ${path.join('<input>', 'roms', 'headered', 'color_test.nintendoentertainmentsystem')}`, 'c9c1b7aa'],
+      [`${path.join('Headered', 'diagnostic_test_cartridge.a78.7z|diagnostic_test_cartridge.a78')} -> ${path.join('<input>', 'roms', 'headered', 'diagnostic_test_cartridge.a78.7z|diagnostic_test_cartridge.a78')}`, 'f6cc9b1c'],
+      [`${path.join('Headered', 'fds_joypad_test.fds.zip|fds_joypad_test.fds')} -> ${path.join('<input>', 'roms', 'headered', 'fds_joypad_test.fds.zip|fds_joypad_test.fds')}`, '1e58456d'],
+      [`${path.join('Headered', 'LCDTestROM.lnx.rar|LCDTestROM.lnx')} -> ${path.join('<input>', 'roms', 'headered', 'LCDTestROM.lnx.rar|LCDTestROM.lnx')}`, '2d251538'],
+      [`${path.join('Headered', 'speed_test_v51.smc')} -> ${path.join('<input>', 'roms', 'headered', 'speed_test_v51.smc')}`, '9adca6cc'],
+      [`${path.join('One', 'Fizzbuzz.nes')} -> ${path.join('<input>', 'roms', 'raw', 'fizzbuzz.nes')}`, '370517b5'],
+      [`${path.join('One', 'Foobar.lnx')} -> ${path.join('<input>', 'roms', 'foobar.lnx')}`, 'b22c9747'],
+      [`${path.join('One', 'Lorem Ipsum.rom')} -> ${path.join('<input>', 'roms', 'raw', 'loremipsum.rom')}`, '70856527'],
+      [`${path.join('One', 'One Three', 'One.rom')} -> ${path.join('<input>', 'roms', 'raw', 'one.rom')}`, 'f817a89f'],
+      [`${path.join('One', 'One Three', 'Three.rom')} -> ${path.join('<input>', 'roms', 'raw', 'three.rom')}`, 'ff46c5d8'],
+      [`${path.join('Patchable', '0F09A40.rom')} -> ${path.join('<input>', 'roms', 'patchable', '0F09A40.rom')}`, '2f943e86'],
+      [`${path.join('Patchable', '3708F2C.rom')} -> ${path.join('<input>', 'roms', 'patchable', '3708F2C.rom')}`, '20891c9f'],
+      [`${path.join('Patchable', '612644F.rom')} -> ${path.join('<input>', 'roms', 'patchable', '612644F.rom')}`, 'f7591b29'],
+      [`${path.join('Patchable', '65D1206.rom')} -> ${path.join('<input>', 'roms', 'patchable', '65D1206.rom')}`, '20323455'],
+      [`${path.join('Patchable', '92C85C9.rom')} -> ${path.join('<input>', 'roms', 'patchable', '92C85C9.rom')}`, '06692159'],
+      [`${path.join('Patchable', 'Before.rom')} -> ${path.join('<input>', 'roms', 'patchable', 'before.rom')}`, '0361b321'],
+      [`${path.join('Patchable', 'Best.gz|best.rom')} -> ${path.join('<input>', 'roms', 'patchable', 'best.gz|best.rom')}`, '1e3d78cf'],
+      [`${path.join('Patchable', 'C01173E.rom')} -> ${path.join('<input>', 'roms', 'patchable', 'C01173E.rom')}`, 'dfaebe28'],
+      [`${path.join('Patchable', 'KDULVQN.rom')} -> ${path.join('<input>', 'roms', 'patchable', 'KDULVQN.rom')}`, 'b1c303e4'],
+      [`${path.join('smdb', 'Hardware Target Game Database', 'Dummy', 'Fizzbuzz.nes')} -> ${path.join('<input>', 'roms', 'raw', 'fizzbuzz.nes')}`, '370517b5'],
+      [`${path.join('smdb', 'Hardware Target Game Database', 'Dummy', 'Foobar.lnx')} -> ${path.join('<input>', 'roms', 'foobar.lnx')}`, 'b22c9747'],
+      [`${path.join('smdb', 'Hardware Target Game Database', 'Dummy', 'Lorem Ipsum.rom')} -> ${path.join('<input>', 'roms', 'raw', 'loremipsum.rom')}`, '70856527'],
+      [`${path.join('smdb', 'Hardware Target Game Database', 'Patchable', '3708F2C.rom')} -> ${path.join('<input>', 'roms', 'patchable', '3708F2C.rom')}`, '20891c9f'],
+      [`${path.join('smdb', 'Hardware Target Game Database', 'Patchable', '65D1206.rom')} -> ${path.join('<input>', 'roms', 'patchable', '65D1206.rom')}`, '20323455'],
+      [`${path.join('smdb', 'Hardware Target Game Database', 'Patchable', 'C01173E.rom')} -> ${path.join('<input>', 'roms', 'patchable', 'C01173E.rom')}`, 'dfaebe28'],
     ]);
   });
 
@@ -332,13 +361,32 @@ describe('with explicit dats', () => {
     }, []);
   });
 
-  it('should generate a fixdat', async () => {
+  test.each([
+    'copy',
+    'move',
+    'symlink',
+  ])('should generate a fixdat when writing: %s', async (command) => {
     const writtenFixdats = (await runIgir({
-      commands: ['copy', 'extract', 'test'],
+      commands: [command],
       dat: ['dats/*'],
       fixdat: true,
       dirDatName: true,
-    })).writtenFilesAndCrcs
+    })).outputFilesAndCrcs
+      .map(([filePath]) => filePath)
+      .filter((filePath) => filePath.endsWith('.dat'));
+
+    // Only the "One" DAT should have missing ROMs (Missing.rom)
+    expect(writtenFixdats).toHaveLength(1);
+    expect(writtenFixdats[0]).toMatch(/^One fixdat \([0-9]{8}-[0-9]{6}\)\.dat$/);
+  });
+
+  it('should generate a fixdat when not writing', async () => {
+    const writtenFixdats = (await runIgir({
+      commands: ['report'],
+      dat: ['dats/*'],
+      fixdat: true,
+      dirDatName: true,
+    })).cwdFilesAndCrcs
       .map(([filePath]) => filePath)
       .filter((filePath) => filePath.endsWith('.dat'));
 
@@ -487,33 +535,33 @@ describe('with inferred dats', () => {
       commands: ['symlink', 'test', 'clean'],
       symlinkRelative: true,
     }, [
-      [`0F09A40.rom -> ${path.join('..', '..', 'input', '<input>', 'roms', 'patchable', '0F09A40.rom')}`, '2f943e86'],
-      [`3708F2C.rom -> ${path.join('..', '..', 'input', '<input>', 'roms', 'patchable', '3708F2C.rom')}`, '20891c9f'],
-      [`612644F.rom -> ${path.join('..', '..', 'input', '<input>', 'roms', 'patchable', '612644F.rom')}`, 'f7591b29'],
-      [`65D1206.rom -> ${path.join('..', '..', 'input', '<input>', 'roms', 'patchable', '65D1206.rom')}`, '20323455'],
-      [`92C85C9.rom -> ${path.join('..', '..', 'input', '<input>', 'roms', 'patchable', '92C85C9.rom')}`, '06692159'],
-      [`allpads.nes -> ${path.join('..', '..', 'input', '<input>', 'roms', 'headered', 'allpads.nes')}`, '9180a163'],
-      [`before.rom -> ${path.join('..', '..', 'input', '<input>', 'roms', 'patchable', 'before.rom')}`, '0361b321'],
-      [`best.gz|best.rom -> ${path.join('..', '..', 'input', '<input>', 'roms', 'patchable', 'best.gz|best.rom')}`, '1e3d78cf'],
-      [`C01173E.rom -> ${path.join('..', '..', 'input', '<input>', 'roms', 'patchable', 'C01173E.rom')}`, 'dfaebe28'],
-      [`color_test.nintendoentertainmentsystem -> ${path.join('..', '..', 'input', '<input>', 'roms', 'headered', 'color_test.nintendoentertainmentsystem')}`, 'c9c1b7aa'],
-      [`diagnostic_test_cartridge.a78.7z|diagnostic_test_cartridge.a78 -> ${path.join('..', '..', 'input', '<input>', 'roms', 'headered', 'diagnostic_test_cartridge.a78.7z|diagnostic_test_cartridge.a78')}`, 'f6cc9b1c'],
-      [`empty.rom -> ${path.join('..', '..', 'input', '<input>', 'roms', 'empty.rom')}`, '00000000'],
-      [`fds_joypad_test.fds.zip|fds_joypad_test.fds -> ${path.join('..', '..', 'input', '<input>', 'roms', 'headered', 'fds_joypad_test.fds.zip|fds_joypad_test.fds')}`, '1e58456d'],
-      [`fizzbuzz.nes -> ${path.join('..', '..', 'input', '<input>', 'roms', 'raw', 'fizzbuzz.nes')}`, '370517b5'],
-      [`foobar.lnx -> ${path.join('..', '..', 'input', '<input>', 'roms', 'foobar.lnx')}`, 'b22c9747'],
-      [`KDULVQN.rom -> ${path.join('..', '..', 'input', '<input>', 'roms', 'patchable', 'KDULVQN.rom')}`, 'b1c303e4'],
-      [`LCDTestROM.lnx.rar|LCDTestROM.lnx -> ${path.join('..', '..', 'input', '<input>', 'roms', 'headered', 'LCDTestROM.lnx.rar|LCDTestROM.lnx')}`, '2d251538'],
-      [`loremipsum.rom -> ${path.join('..', '..', 'input', '<input>', 'roms', 'raw', 'loremipsum.rom')}`, '70856527'],
-      [`one.rom -> ${path.join('..', '..', 'input', '<input>', 'roms', 'raw', 'one.rom')}`, 'f817a89f'],
-      [`${path.join('onetwothree', 'one.rom')} -> ${path.join('..', '..', '..', 'input', '<input>', 'roms', 'raw', 'one.rom')}`, 'f817a89f'],
-      [`${path.join('onetwothree', 'three.rom')} -> ${path.join('..', '..', '..', 'input', '<input>', 'roms', 'raw', 'three.rom')}`, 'ff46c5d8'],
-      [`${path.join('onetwothree', 'two.rom')} -> ${path.join('..', '..', '..', 'input', '<input>', 'roms', 'raw', 'two.rom')}`, '96170874'],
-      [`speed_test_v51.sfc.gz|speed_test_v51.sfc -> ${path.join('..', '..', 'input', '<input>', 'roms', 'unheadered', 'speed_test_v51.sfc.gz|speed_test_v51.sfc')}`, '8beffd94'],
-      [`speed_test_v51.smc -> ${path.join('..', '..', 'input', '<input>', 'roms', 'headered', 'speed_test_v51.smc')}`, '9adca6cc'],
-      [`three.rom -> ${path.join('..', '..', 'input', '<input>', 'roms', 'raw', 'three.rom')}`, 'ff46c5d8'],
-      [`two.rom -> ${path.join('..', '..', 'input', '<input>', 'roms', 'raw', 'two.rom')}`, '96170874'],
-      [`unknown.rom -> ${path.join('..', '..', 'input', '<input>', 'roms', 'raw', 'unknown.rom')}`, '377a7727'],
+      [`0F09A40.rom -> ${path.join('..', 'input', 'roms', 'patchable', '0F09A40.rom')}`, '2f943e86'],
+      [`3708F2C.rom -> ${path.join('..', 'input', 'roms', 'patchable', '3708F2C.rom')}`, '20891c9f'],
+      [`612644F.rom -> ${path.join('..', 'input', 'roms', 'patchable', '612644F.rom')}`, 'f7591b29'],
+      [`65D1206.rom -> ${path.join('..', 'input', 'roms', 'patchable', '65D1206.rom')}`, '20323455'],
+      [`92C85C9.rom -> ${path.join('..', 'input', 'roms', 'patchable', '92C85C9.rom')}`, '06692159'],
+      [`allpads.nes -> ${path.join('..', 'input', 'roms', 'headered', 'allpads.nes')}`, '9180a163'],
+      [`before.rom -> ${path.join('..', 'input', 'roms', 'patchable', 'before.rom')}`, '0361b321'],
+      [`best.gz|best.rom -> ${path.join('..', 'input', 'roms', 'patchable', 'best.gz|best.rom')}`, '1e3d78cf'],
+      [`C01173E.rom -> ${path.join('..', 'input', 'roms', 'patchable', 'C01173E.rom')}`, 'dfaebe28'],
+      [`color_test.nintendoentertainmentsystem -> ${path.join('..', 'input', 'roms', 'headered', 'color_test.nintendoentertainmentsystem')}`, 'c9c1b7aa'],
+      [`diagnostic_test_cartridge.a78.7z|diagnostic_test_cartridge.a78 -> ${path.join('..', 'input', 'roms', 'headered', 'diagnostic_test_cartridge.a78.7z|diagnostic_test_cartridge.a78')}`, 'f6cc9b1c'],
+      [`empty.rom -> ${path.join('..', 'input', 'roms', 'empty.rom')}`, '00000000'],
+      [`fds_joypad_test.fds.zip|fds_joypad_test.fds -> ${path.join('..', 'input', 'roms', 'headered', 'fds_joypad_test.fds.zip|fds_joypad_test.fds')}`, '1e58456d'],
+      [`fizzbuzz.nes -> ${path.join('..', 'input', 'roms', 'raw', 'fizzbuzz.nes')}`, '370517b5'],
+      [`foobar.lnx -> ${path.join('..', 'input', 'roms', 'foobar.lnx')}`, 'b22c9747'],
+      [`KDULVQN.rom -> ${path.join('..', 'input', 'roms', 'patchable', 'KDULVQN.rom')}`, 'b1c303e4'],
+      [`LCDTestROM.lnx.rar|LCDTestROM.lnx -> ${path.join('..', 'input', 'roms', 'headered', 'LCDTestROM.lnx.rar|LCDTestROM.lnx')}`, '2d251538'],
+      [`loremipsum.rom -> ${path.join('..', 'input', 'roms', 'raw', 'loremipsum.rom')}`, '70856527'],
+      [`one.rom -> ${path.join('..', 'input', 'roms', 'raw', 'one.rom')}`, 'f817a89f'],
+      [`${path.join('onetwothree', 'one.rom')} -> ${path.join('..', '..', 'input', 'roms', 'raw', 'one.rom')}`, 'f817a89f'],
+      [`${path.join('onetwothree', 'three.rom')} -> ${path.join('..', '..', 'input', 'roms', 'raw', 'three.rom')}`, 'ff46c5d8'],
+      [`${path.join('onetwothree', 'two.rom')} -> ${path.join('..', '..', 'input', 'roms', 'raw', 'two.rom')}`, '96170874'],
+      [`speed_test_v51.sfc.gz|speed_test_v51.sfc -> ${path.join('..', 'input', 'roms', 'unheadered', 'speed_test_v51.sfc.gz|speed_test_v51.sfc')}`, '8beffd94'],
+      [`speed_test_v51.smc -> ${path.join('..', 'input', 'roms', 'headered', 'speed_test_v51.smc')}`, '9adca6cc'],
+      [`three.rom -> ${path.join('..', 'input', 'roms', 'raw', 'three.rom')}`, 'ff46c5d8'],
+      [`two.rom -> ${path.join('..', 'input', 'roms', 'raw', 'two.rom')}`, '96170874'],
+      [`unknown.rom -> ${path.join('..', 'input', 'roms', 'raw', 'unknown.rom')}`, '377a7727'],
     ]);
   });
 
