@@ -263,19 +263,27 @@ export default class ROMWriter extends Module {
    ********************* */
 
   private async writeRaw(dat: DAT, releaseCandidate: ReleaseCandidate): Promise<void> {
-    // Return no files if there are none to write
     const inputToOutputEntries = releaseCandidate.getRomsWithFiles()
       .filter((romWithFiles) => !(romWithFiles.getOutputFile() instanceof ArchiveEntry<Zip>))
       .map((romWithFiles) => [romWithFiles.getInputFile(), romWithFiles.getOutputFile()]);
+
+    // Return no files if there are none to write
     if (!inputToOutputEntries.length) {
       // TODO(cemmer): unit test
       await this.progressBar.logTrace(`${dat.getNameShort()}: ${releaseCandidate.getName()}: no raw files to write`);
       return;
     }
 
+    // De-duplicate based on the output file. Raw copying archives will produce the same
+    //  input->output for every ROM.
+    const outputRomFiles = inputToOutputEntries
+      .map(([, outputRomFile]) => outputRomFile.toString());
+    const uniqueInputToOutputEntries = inputToOutputEntries
+      .filter((_, idx) => outputRomFiles.indexOf(outputRomFiles[idx]) === idx);
+
     /* eslint-disable no-await-in-loop */
-    for (let i = 0; i < inputToOutputEntries.length; i += 1) {
-      const [inputRomFile, outputRomFile] = inputToOutputEntries[i];
+    for (let i = 0; i < uniqueInputToOutputEntries.length; i += 1) {
+      const [inputRomFile, outputRomFile] = uniqueInputToOutputEntries[i];
       await this.writeRawSingle(dat, inputRomFile, outputRomFile);
     }
   }
