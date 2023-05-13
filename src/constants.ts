@@ -98,6 +98,11 @@ export default class Constants {
   static readonly OUTPUT_CLEANER_BATCH_SIZE = 100;
 
   /**
+   * Number of file checksums to cache in memory at once.
+   */
+  static readonly FILE_CHECKSUM_CACHE_SIZE = 128;
+
+  /**
    * Max {@link fs} highWaterMark chunk size to read and write at a time.
    */
   static readonly FILE_READING_CHUNK_SIZE = fsPoly.FILE_READING_CHUNK_SIZE;

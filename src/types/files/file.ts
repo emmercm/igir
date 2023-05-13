@@ -9,10 +9,15 @@ import Constants from '../../constants.js';
 import FilePoly from '../../polyfill/filePoly.js';
 import fsPoly from '../../polyfill/fsPoly.js';
 import URLPoly from '../../polyfill/urlPoly.js';
+import Cache from '../cache.js';
 import Patch from '../patches/patch.js';
 import ROMHeader from './romHeader.js';
 
 export default class File {
+  private static readonly crc32Cache = new Cache<string, string>(
+    Constants.FILE_CHECKSUM_CACHE_SIZE,
+  );
+
   private readonly filePath: string;
 
   private readonly size: number;
@@ -141,7 +146,8 @@ export default class File {
   ): Promise<string> {
     const start = fileHeader?.getDataOffsetBytes() || 0;
 
-    return new Promise((resolve, reject) => {
+    const cacheKey = `${localFile}|${start}`;
+    return File.crc32Cache.getOrCompute(cacheKey, async () => new Promise((resolve, reject) => {
       const stream = fs.createReadStream(localFile, {
         start,
         highWaterMark: Constants.FILE_READING_CHUNK_SIZE,
@@ -160,7 +166,7 @@ export default class File {
       });
 
       stream.on('error', reject);
-    });
+    }));
   }
 
   async extractToFile(destinationPath: string): Promise<void> {
