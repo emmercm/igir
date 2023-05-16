@@ -52,6 +52,7 @@ export default class SevenZip extends Archive {
             reject(msg);
           } else {
             // https://github.com/onikienko/7zip-min/issues/70
+            // If `7zip-min.list()` failed to parse the entry name then ignore it
             resolve(result.filter((entry) => entry.name));
           }
         });
@@ -87,7 +88,8 @@ export default class SevenZip extends Archive {
     const tempDir = await fsPoly.mkdtemp(path.join(Constants.GLOBAL_TEMP_DIR, '7z'));
     try {
       // https://github.com/onikienko/7zip-min/issues/71
-      const tempFile = path.join(tempDir, entryPath);
+      // Work around `7zip-min.unpack()` not being able to extract a single file at a time
+      let tempFile = path.join(tempDir, entryPath);
 
       await new Promise<void>((resolve, reject) => {
         _7z.unpack(this.getFilePath(), tempDir, (err) => {
@@ -98,6 +100,31 @@ export default class SevenZip extends Archive {
           }
         });
       });
+
+      // https://github.com/onikienko/7zip-min/issues/86
+      // Fix `7zip-min.list()` returning unicode entry names as � on Windows
+      // This is really only an issue until https://github.com/onikienko/7zip-min/issues/71 (above)
+      //  is addressed
+      if (process.platform === 'win32' && !await fsPoly.exists(tempFile)) {
+        const files = await fsPoly.walk(tempDir);
+        if (!files.length) {
+          throw new Error('failed to extract any files');
+        }
+        const actualTempFile = files.find((file) => {
+          const pattern = file
+            .replace(tempDir + path.sep, '')
+            // Convert all non-ASCII characters into single character matches
+            .replace(/\./g, '\\.')
+            // eslint-disable-next-line no-control-regex
+            .replace(/[^\x00-\x7F]/g, '.');
+          const regex = new RegExp(`^${pattern}$`);
+          return entryPath.match(regex) !== null;
+        });
+        if (!actualTempFile) {
+          throw new Error('failed to find the extracted file');
+        }
+        tempFile = actualTempFile;
+      }
 
       await fsPoly.mv(tempFile, extractedFilePath);
     } finally {
