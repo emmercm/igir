@@ -146,7 +146,7 @@ export default class FsPoly {
     }
   }
 
-  static async mv(oldPath: string, newPath: string): Promise<void> {
+  static async mv(oldPath: string, newPath: string, attempt = 1): Promise<void> {
     /**
      * WARN(cemmer): {@link fs.rename} appears to be VERY memory intensive when copying across
      * drives! Instead, we'll use stream piping to keep memory usage low.
@@ -167,12 +167,22 @@ export default class FsPoly {
     try {
       return await util.promisify(fs.rename)(oldPath, newPath);
     } catch (e) {
+      // These are the same error codes that `graceful-fs` catches
       if (['EACCES', 'EPERM', 'EBUSY'].indexOf((e as NodeJS.ErrnoException).code || '') === -1) {
         throw e;
       }
+
+      // Backoff with jitter
+      if (attempt >= 3) {
+        throw e;
+      }
+      await new Promise((resolve) => {
+        setTimeout(resolve, Math.random() * (2 ** (attempt - 1) * 100));
+      });
+
       // Attempt to resolve Windows' "EBUSY: resource busy or locked"
       await this.rm(newPath, { force: true });
-      return await this.mv(oldPath, newPath);
+      return await this.mv(oldPath, newPath, attempt + 1);
     }
   }
 
