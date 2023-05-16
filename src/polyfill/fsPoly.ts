@@ -167,6 +167,9 @@ export default class FsPoly {
     try {
       return await util.promisify(fs.rename)(oldPath, newPath);
     } catch (e) {
+      if (['EACCES', 'EPERM', 'EBUSY'].indexOf((e as NodeJS.ErrnoException).code || '') === -1) {
+        throw e;
+      }
       // Attempt to resolve Windows' "EBUSY: resource busy or locked"
       await this.rm(newPath, { force: true });
       return await this.mv(oldPath, newPath);
