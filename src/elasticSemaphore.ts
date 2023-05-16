@@ -8,7 +8,7 @@ export default class ElasticSemaphore {
   private readonly semaphore: Semaphore;
 
   constructor(value: number) {
-    this.value = value;
+    this.value = Math.ceil(value);
     this.semaphore = new Semaphore(this.value);
   }
 
@@ -25,6 +25,10 @@ export default class ElasticSemaphore {
     if (weightNormalized > this.value) {
       await this.valueMutex.runExclusive(() => {
         const increase = weightNormalized - this.value;
+        if (increase <= 0) {
+          // A competing runnable already increased this semaphore's value
+          return;
+        }
         this.semaphore.setValue(this.semaphore.getValue() + increase);
         this.value += increase;
       });
