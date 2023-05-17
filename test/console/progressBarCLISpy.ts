@@ -1,0 +1,42 @@
+import { PassThrough } from 'stream';
+import stripAnsi from 'strip-ansi';
+
+import Logger from '../../src/console/logger.js';
+import LogLevel from '../../src/console/logLevel.js';
+
+export default class ProgressBarCLISpy {
+  private readonly stream: NodeJS.WritableStream;
+
+  private readonly outputLines: string[] = [];
+
+  private readonly logger: Logger;
+
+  constructor(logLevel = LogLevel.ALWAYS) {
+    this.stream = new PassThrough();
+    this.stream.on('data', (line) => {
+      if (line.toString() === '\n') {
+        return;
+      }
+      this.outputLines.push(stripAnsi(line.toString()));
+    });
+
+    this.logger = new Logger(logLevel, this.stream);
+  }
+
+  getLogger(): Logger {
+    return this.logger;
+  }
+
+  getLineCount(): number {
+    return this.outputLines.length;
+  }
+
+  getLastLine(): string {
+    return this.outputLines[this.outputLines.length - 1];
+  }
+
+  getLogLine(): string {
+    return this.outputLines
+      .filter((line) => line.match(/^[A-Z]+.+/) !== null)[0];
+  }
+}

@@ -25,7 +25,7 @@ gracefulFs.gracefulify(realFs);
 
   process.once('SIGINT', () => {
     logger.newLine();
-    logger.info(`exiting ${Constants.COMMAND_NAME}`);
+    logger.warn(`Exiting ${Constants.COMMAND_NAME} prematurely`);
     process.exit(0);
   });
 

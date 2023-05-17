@@ -1,48 +1,11 @@
-import { PassThrough } from 'stream';
 import stripAnsi from 'strip-ansi';
 
-import Logger from '../../src/console/logger.js';
 import LogLevel from '../../src/console/logLevel.js';
 import { ProgressBarSymbol } from '../../src/console/progressBar.js';
 import ProgressBarCLI from '../../src/console/progressBarCLI.js';
+import ProgressBarCLISpy from './progressBarCLISpy.js';
 
-class ProgressBarCLISpy {
-  private readonly stream: NodeJS.WritableStream;
-
-  private readonly outputLines: string[] = [];
-
-  private readonly logger: Logger;
-
-  constructor(logLevel = LogLevel.ALWAYS) {
-    this.stream = new PassThrough();
-    this.stream.on('data', (line) => {
-      if (line.toString() === '\n') {
-        return;
-      }
-      this.outputLines.push(stripAnsi(line.toString()));
-    });
-
-    this.logger = new Logger(logLevel, this.stream);
-  }
-
-  getLogger(): Logger {
-    return this.logger;
-  }
-
-  getLineCount(): number {
-    return this.outputLines.length;
-  }
-
-  getLastLine(): string {
-    return this.outputLines[this.outputLines.length - 1];
-  }
-
-  getLogLine(): string {
-    return this.outputLines
-      .filter((line) => line.match(/^[A-Z]+.+/) !== null)[0];
-  }
-}
-
+// Redraw every time
 ProgressBarCLI.setFPS(Number.MAX_SAFE_INTEGER);
 
 describe('reset', () => {
@@ -71,12 +34,14 @@ describe('setSymbol', () => {
     ProgressBarCLI.stop();
   });
 
-  it('should change the symbol to non-empty', async () => {
+  test.each(
+    Object.keys(ProgressBarSymbol),
+  )('should change the symbol to non-empty; %s', async (symbol) => {
     const spy = new ProgressBarCLISpy();
     const progressBar = await ProgressBarCLI.new(spy.getLogger(), 'name', stripAnsi(ProgressBarSymbol.DONE));
 
-    await progressBar.setSymbol('✗');
-    expect(spy.getLastLine()).toMatch(/^✗ +name/);
+    await progressBar.setSymbol(symbol);
+    expect(spy.getLastLine()).toMatch(new RegExp(`^${symbol} +name`));
 
     ProgressBarCLI.stop();
   });
@@ -245,10 +210,23 @@ describe('logError', () => {
   });
 });
 
+describe('freeze', () => {
+  it('should freeze the single bar', async () => {
+    const spy = new ProgressBarCLISpy();
+    const progressBar = await ProgressBarCLI.new(spy.getLogger(), '', stripAnsi(ProgressBarSymbol.DONE));
+    expect(spy.getLineCount()).toEqual(1);
+
+    await progressBar.freeze();
+    expect(spy.getLineCount()).toEqual(3); // one final render, and then a log of the render
+
+    ProgressBarCLI.stop();
+  });
+});
+
 describe('delete', () => {
   it('should delete the single bar', async () => {
-    const spy = new ProgressBarCLISpy(LogLevel.ERROR + 1);
-    const progressBar = await ProgressBarCLI.new(spy.getLogger(), 'name', stripAnsi(ProgressBarSymbol.DONE));
+    const spy = new ProgressBarCLISpy();
+    const progressBar = await ProgressBarCLI.new(spy.getLogger(), '', stripAnsi(ProgressBarSymbol.DONE));
     expect(spy.getLineCount()).toEqual(1);
 
     progressBar.delete();
