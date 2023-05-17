@@ -71,12 +71,14 @@ describe('setSymbol', () => {
     ProgressBarCLI.stop();
   });
 
-  it('should change the symbol to non-empty', async () => {
+  test.each(
+    Object.keys(ProgressBarSymbol),
+  )('should change the symbol to non-empty; %s', async (symbol) => {
     const spy = new ProgressBarCLISpy();
     const progressBar = await ProgressBarCLI.new(spy.getLogger(), 'name', stripAnsi(ProgressBarSymbol.DONE));
 
-    await progressBar.setSymbol('✗');
-    expect(spy.getLastLine()).toMatch(/^✗ +name/);
+    await progressBar.setSymbol(symbol);
+    expect(spy.getLastLine()).toMatch(new RegExp(`^${symbol} +name`));
 
     ProgressBarCLI.stop();
   });
