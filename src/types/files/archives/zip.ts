@@ -23,6 +23,10 @@ export default class Zip extends Archive {
   }
 
   async getArchiveEntries(): Promise<ArchiveEntry<Zip>[]> {
+    // https://github.com/ZJONSSON/node-unzipper/issues/280
+    // UTF-8 entry names are not decoded correctly
+    // But this is mitigated by `extractEntryToStream()` and therefore `extractEntryToFile()` both
+    //  using `unzipper.Open.file()` as well, so mangled filenames here will still extract fine
     const archive = await unzipper.Open.file(this.getFilePath());
 
     return Promise.all(archive.files

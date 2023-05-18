@@ -36,9 +36,15 @@ export default class HeaderProcessor extends Module {
       inputRomFiles,
       Constants.ROM_HEADER_PROCESSOR_THREADS,
       async (inputFile, callback: AsyncResultCallback<File, Error>) => {
+        const waitingMessage = `${inputFile.toString()} ...`;
+        this.progressBar.addWaitingMessage(waitingMessage);
+
+        const fileWithHeader = await this.getFileWithHeader(inputFile);
+
+        this.progressBar.removeWaitingMessage(waitingMessage);
         await this.progressBar.increment();
 
-        return callback(null, await this.getFileWithHeader(inputFile));
+        return callback(null, fileWithHeader);
       },
     );
 
@@ -65,17 +71,19 @@ export default class HeaderProcessor extends Module {
     // Can get FileHeader from extension, use that
     const headerForFilename = ROMHeader.headerFromFilename(inputFile.getExtractedFilePath());
     if (headerForFilename) {
+      await this.progressBar.logTrace(`${inputFile.toString()}: reading potentially headered file by filename: ${headerForFilename.getHeaderedFileExtension()}`);
       const fileWithHeader = await inputFile.withFileHeader(headerForFilename);
       if (fileWithHeader.getFileHeader()) {
         await this.progressBar.logTrace(`${inputFile.toString()}: found header by filename: ${headerForFilename.getHeaderedFileExtension()}`);
       } else {
-        await this.progressBar.logTrace(`${inputFile.toString()}: didn't find header by filename: ${headerForFilename.getHeaderedFileExtension()}`);
+        await this.progressBar.logTrace(`${inputFile.toString()}: found non-applicable header by filename: ${headerForFilename.getHeaderedFileExtension()}`);
       }
       return fileWithHeader;
     }
 
     // Should get FileHeader from File, try to
     if (this.options.shouldReadFileForHeader(inputFile.getExtractedFilePath())) {
+      await this.progressBar.logTrace(`${inputFile.toString()}: reading potentially headered file by file contents`);
       const headerForFileStream = await inputFile.createReadStream(
         async (stream) => ROMHeader.headerFromFileStream(stream),
       );
