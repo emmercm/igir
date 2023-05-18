@@ -1,4 +1,4 @@
-import { PassThrough } from 'stream';
+import { PassThrough, Writable } from 'stream';
 
 import Logger from '../../src/console/logger.js';
 import LogLevel from '../../src/console/logLevel.js';
@@ -60,6 +60,18 @@ describe('setLogLevel_getLogLevel', () => {
     const logger = new Logger(LogLevel.TRACE, new PassThrough());
     logger.setLogLevel(logLevel);
     expect(logger.getLogLevel()).toEqual(logLevel);
+  });
+});
+
+describe('isTTY', () => {
+  test.each([
+    [process.stdout, false], // Jest hijacks stdout, but under normal execution this is "true"
+    // [new WriteStream(process.stdout.fd), true], // workaround Jest, test the real stdout
+    [new PassThrough(), true],
+    [new Writable(), false],
+  ])('should return the right value: %#', (stream, expected) => {
+    const logger = new Logger(LogLevel.ALWAYS, stream);
+    expect(logger.isTTY()).toEqual(expected);
   });
 });
 

@@ -66,11 +66,12 @@ export default class ROMWriter extends Module {
         await this.progressBar.logTrace(`${dat.getNameShort()}: ${parent.getName()}: writing ${releaseCandidates.length.toLocaleString()} candidate${releaseCandidates.length !== 1 ? 's' : ''}`);
 
         /* eslint-disable no-await-in-loop */
-        for (let j = 0; j < releaseCandidates.length; j += 1) {
-          const releaseCandidate = releaseCandidates[j];
+        for (let i = 0; i < releaseCandidates.length; i += 1) {
+          const releaseCandidate = releaseCandidates[i];
           await this.writeReleaseCandidate(dat, releaseCandidate);
         }
 
+        await this.progressBar.logTrace(`${dat.getNameShort()}: ${parent.getName()}: done writing ${releaseCandidates.length.toLocaleString()} candidate${releaseCandidates.length !== 1 ? 's' : ''}`);
         await this.progressBar.increment();
       }),
     ));
@@ -280,6 +281,11 @@ export default class ROMWriter extends Module {
       .map(([, outputRomFile]) => outputRomFile.toString());
     const uniqueInputToOutputEntries = inputToOutputEntries
       .filter((_, idx) => outputRomFiles.indexOf(outputRomFiles[idx]) === idx);
+
+    const totalBytes = [...uniqueInputToOutputEntries.values()]
+      .flatMap((files) => files)
+      .reduce((sum, file) => sum + file.getSize(), 0);
+    await this.progressBar.logTrace(`${dat.getNameShort()}: ${releaseCandidate.getName()}: writing ${fsPoly.sizeReadable(totalBytes)} of ${uniqueInputToOutputEntries.length.toLocaleString()} file${uniqueInputToOutputEntries.length !== 1 ? 's' : ''}`);
 
     /* eslint-disable no-await-in-loop */
     for (let i = 0; i < uniqueInputToOutputEntries.length; i += 1) {
