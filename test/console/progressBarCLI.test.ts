@@ -13,7 +13,7 @@ describe('reset', () => {
     const spy = new ProgressBarCLISpy();
     const progressBar = await ProgressBarCLI.new(spy.getLogger(), 'name', stripAnsi(ProgressBarSymbol.DONE), 100);
 
-    await progressBar.increment();
+    await progressBar.incrementDone();
     expect(spy.getLastLine()).toMatch(new RegExp(`${stripAnsi(ProgressBarSymbol.DONE)} +name .* 1/100`));
 
     await progressBar.reset(20);
@@ -52,10 +52,10 @@ describe('increment', () => {
     const spy = new ProgressBarCLISpy();
     const progressBar = await ProgressBarCLI.new(spy.getLogger(), 'name', stripAnsi(ProgressBarSymbol.DONE), 100);
 
-    await progressBar.increment();
+    await progressBar.incrementDone();
     expect(spy.getLastLine()).toMatch(new RegExp(`${stripAnsi(ProgressBarSymbol.DONE)} +name .* 1/100`));
 
-    await progressBar.increment();
+    await progressBar.incrementDone();
     expect(spy.getLastLine()).toMatch(new RegExp(`${stripAnsi(ProgressBarSymbol.DONE)} +name .* 2/100`));
 
     ProgressBarCLI.stop();

@@ -63,6 +63,7 @@ export default class ROMWriter extends Module {
 
     await Promise.all([...parentsToWritableCandidates.entries()].map(
       async ([parent, releaseCandidates]) => ROMWriter.THREAD_SEMAPHORE.runExclusive(async () => {
+        await this.progressBar.incrementProgress();
         await this.progressBar.logTrace(`${dat.getNameShort()}: ${parent.getName()}: writing ${releaseCandidates.length.toLocaleString()} candidate${releaseCandidates.length !== 1 ? 's' : ''}`);
 
         /* eslint-disable no-await-in-loop */
@@ -72,7 +73,7 @@ export default class ROMWriter extends Module {
         }
 
         await this.progressBar.logTrace(`${dat.getNameShort()}: ${parent.getName()}: done writing ${releaseCandidates.length.toLocaleString()} candidate${releaseCandidates.length !== 1 ? 's' : ''}`);
-        await this.progressBar.increment();
+        await this.progressBar.incrementDone();
       }),
     ));
 
