@@ -40,16 +40,16 @@ describe('getLastOutput', () => {
 
     singleBarFormatted.getSingleBar().render();
 
-    expect(singleBarFormatted.getLastOutput()).toEqual('| ---------------------------------------- | 0/100');
+    expect(singleBarFormatted.getLastOutput()).toEqual('| ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░ | 0/100');
   });
 });
 
 describe('format', () => {
   test.each([
-    [{}, '| ---------------------------------------- | 1/100'],
-    [{ symbol: '@' }, '@ | ---------------------------------------- | 1/100'],
-    [{ symbol: '@', name: 'name' }, '@ name ························· | ---------------------------------------- | 1/100'],
-    [{ name: 'name' }, 'name ························· | ---------------------------------------- | 1/100'],
+    [{}, '| ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░ | 1/100'],
+    [{ symbol: '@' }, '@ | ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░ | 1/100'],
+    [{ symbol: '@', name: 'name' }, '@ name ························· | ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░ | 1/100'],
+    [{ name: 'name' }, 'name ························· | ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░ | 1/100'],
     [{ name: 'name', finishedMessage: 'done' }, 'name ························· | done'],
     [{ name: 'name', finishedMessage: 'done', waitingMessage: 'waiting' }, 'name ························· | done'],
   ] satisfies [ProgressBarPayload, string][])('should: %s', (payload, expected) => {
