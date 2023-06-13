@@ -53,7 +53,7 @@ for INPUT in "$@"; do
   INPUTS+=(--input "${INPUT}")
 done
 
-npx igir@latest move zip test clean report \
+npx --yes igir@latest move zip test clean report \
   --dat "./No-Intro*.zip" \
   --input "./No-Intro/" \
   "${INPUTS[@]}" \
@@ -61,7 +61,7 @@ npx igir@latest move zip test clean report \
   --output "./No-Intro/" \
   --dir-dat-name
 
-npx igir@latest move extract test report \
+npx --yes igir@latest move extract test report \
   --dat "./Redump*.zip" \
   --input "./Redump/" \
   "${INPUTS[@]}" \
@@ -111,13 +111,18 @@ set -euo pipefail
 
 SOURCE=/Volumes/WDPassport4
 
-npx igir@latest copy extract test clean \
+npx --yes igir@latest copy extract test clean \
   --input "${SOURCE}/Redump/Nintendo - GameCube" \
   --output "./ISOs/" \
   --dir-letter \
   --no-bios \
-  --no-bad \
-  --filter-regex-exclude "/(Baseball|FIFA|MLB|NBA|NCAA|NFL|NHL|PGA)/i"
+  --only-retail \
+  --filter-regex-exclude "/(Baseball|Cabela|F1|FIFA|Football|Golf|Madden|MLB|NASCAR|NBA|NCAA|NFL|NHL|PGA|Soccer|Tennis|UFC|WWE)/i" \
+  --writer-threads 1
 ```
 
 It doesn't use DATs because I have the ISOs in a trimmed NKit format (see [Swiss](https://github.com/emukidid/swiss-gc)), so they won't match the checksums in DATs. I also exclude some games due to limited SD card size.
+
+!!! note
+
+    This uses the `--writer-threads` debug option because Swiss is sensitive to files being fragmented on the SD card ([swiss-gc#763](https://github.com/emukidid/swiss-gc/issues/763), [swiss-gc#122](https://github.com/emukidid/swiss-gc/issues/122), etc.). From experience, if you write too many files to an SD card at once, you may get an ambiguous error message mentioning fragmentation when loading an ISO.

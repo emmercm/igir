@@ -20,7 +20,7 @@ import Module from './module.js';
  * This class may be run concurrently with other classes.
  */
 export default class ROMWriter extends Module {
-  private static readonly THREAD_SEMAPHORE = new Semaphore(Constants.ROM_WRITER_THREADS);
+  private static readonly THREAD_SEMAPHORE = new Semaphore(1);
 
   // WARN(cemmer): there is an undocumented semaphore max value that can be used, the full
   //  4,700,372,992 bytes of a DVD+R will cause runExclusive() to never run or return.
@@ -35,6 +35,11 @@ export default class ROMWriter extends Module {
   constructor(options: Options, progressBar: ProgressBar) {
     super(progressBar, ROMWriter.name);
     this.options = options;
+
+    // This will be the same value globally, but we can't know the value at file import time
+    if (ROMWriter.THREAD_SEMAPHORE.getValue() !== options.getWriterThreads()) {
+      ROMWriter.THREAD_SEMAPHORE.setValue(options.getWriterThreads());
+    }
   }
 
   async write(

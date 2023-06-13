@@ -90,7 +90,7 @@ export default class Constants {
    * A sane max number of ROM release candidates to write at once. This will be the limiting factor
    * for consoles with many small ROMs.
    */
-  static readonly ROM_WRITER_THREADS = 20;
+  static readonly ROM_WRITER_DEFAULT_THREADS = 20;
 
   /**
    * Max number of files to recycle/delete at once.
