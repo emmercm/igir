@@ -117,9 +117,8 @@ export default class DATStatus {
         const found = this.foundRomTypesToReleaseCandidates.get(type) || [];
         const all = this.allRomTypesToGames.get(type) || [];
 
-        // If we're not using a DAT then found===all
         if (!options.usingDats()) {
-          return `${all.length.toLocaleString()} ${type}`;
+          return `${found.length.toLocaleString()} ${type}`;
         }
 
         const percentage = (found.length / all.length) * 100;
