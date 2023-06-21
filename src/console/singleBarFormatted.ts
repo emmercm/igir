@@ -7,11 +7,11 @@ import { linearRegression, linearRegressionLine } from 'simple-statistics';
 import ProgressBarPayload from './progressBarPayload.js';
 
 export default class SingleBarFormatted {
-  private static readonly BAR_COMPLETE_CHAR = '\u2588';
+  public static readonly BAR_COMPLETE_CHAR = '\u2588';
 
-  private static readonly BAR_IN_PROGRESS_CHAR = '\u2592';
+  public static readonly BAR_IN_PROGRESS_CHAR = '\u2592';
 
-  private static readonly BAR_INCOMPLETE_CHAR = '\u2591';
+  public static readonly BAR_INCOMPLETE_CHAR = '\u2591';
 
   private readonly multiBar: MultiBar;
 

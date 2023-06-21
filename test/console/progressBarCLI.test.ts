@@ -4,6 +4,7 @@ import LogLevel from '../../src/console/logLevel.js';
 import { ProgressBarSymbol } from '../../src/console/progressBar.js';
 import ProgressBarCLI from '../../src/console/progressBarCLI.js';
 import ProgressBarCLISpy from './progressBarCLISpy.js';
+import SingleBarFormatted from "../../src/console/singleBarFormatted.js";
 
 // Redraw every time
 ProgressBarCLI.setFPS(Number.MAX_SAFE_INTEGER);
@@ -47,7 +48,40 @@ describe('setSymbol', () => {
   });
 });
 
-describe('increment', () => {
+describe('incrementProgress', () => {
+  it('should increment once each time', async () => {
+    const spy = new ProgressBarCLISpy();
+    const progressBar = await ProgressBarCLI.new(spy.getLogger(), 'name', stripAnsi(ProgressBarSymbol.DONE), 100);
+    expect(spy.getLastLine()).toMatch(new RegExp(`${stripAnsi(ProgressBarSymbol.DONE)} +name .* \\| ${SingleBarFormatted.BAR_INCOMPLETE_CHAR}+ \\| 0/100`));
+
+    await progressBar.incrementProgress();
+    expect(spy.getLastLine()).toMatch(new RegExp(`${stripAnsi(ProgressBarSymbol.DONE)} +name .* \\| ${SingleBarFormatted.BAR_IN_PROGRESS_CHAR}.* \\| 0/100`));
+
+    await progressBar.incrementProgress();
+    expect(spy.getLastLine()).toMatch(new RegExp(`${stripAnsi(ProgressBarSymbol.DONE)} +name .* \\| ${SingleBarFormatted.BAR_IN_PROGRESS_CHAR}.* \\| 0/100`));
+
+    ProgressBarCLI.stop();
+  });
+
+  it('should work with incrementDone', async () => {
+    const spy = new ProgressBarCLISpy();
+    const progressBar = await ProgressBarCLI.new(spy.getLogger(), 'name', stripAnsi(ProgressBarSymbol.DONE), 100);
+    expect(spy.getLastLine()).toMatch(new RegExp(`${stripAnsi(ProgressBarSymbol.DONE)} +name .* \\| ${SingleBarFormatted.BAR_INCOMPLETE_CHAR}+ \\| 0/100`));
+
+    await progressBar.incrementProgress();
+    expect(spy.getLastLine()).toMatch(new RegExp(`${stripAnsi(ProgressBarSymbol.DONE)} +name .* \\| ${SingleBarFormatted.BAR_IN_PROGRESS_CHAR}.* \\| 0/100`));
+
+    await progressBar.incrementDone();
+    expect(spy.getLastLine()).toMatch(new RegExp(`${stripAnsi(ProgressBarSymbol.DONE)} +name .* \\| [^${SingleBarFormatted.BAR_IN_PROGRESS_CHAR}].* \\| 1/100`));
+
+    await progressBar.incrementProgress();
+    expect(spy.getLastLine()).toMatch(new RegExp(`${stripAnsi(ProgressBarSymbol.DONE)} +name .* \\| ${SingleBarFormatted.BAR_IN_PROGRESS_CHAR}.* \\| 1/100`));
+
+    ProgressBarCLI.stop();
+  });
+});
+
+describe('incrementDone', () => {
   it('should increment once each time', async () => {
     const spy = new ProgressBarCLISpy();
     const progressBar = await ProgressBarCLI.new(spy.getLogger(), 'name', stripAnsi(ProgressBarSymbol.DONE), 100);

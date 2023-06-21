@@ -179,7 +179,7 @@ export default class ProgressBarCLI extends ProgressBar {
 
   async incrementProgress(): Promise<void> {
     this.payload.inProgress = (this.payload.inProgress || 0) + 1;
-    await this.render();
+    return this.render();
   }
 
   async incrementDone(): Promise<void> {
