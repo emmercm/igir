@@ -1,0 +1,50 @@
+name: GitHub Labeler
+
+on:
+  pull_request:
+    types:
+      - opened
+      - synchronize  # HEAD has changed, e.g. a push happened
+      - reopened
+#    paths:
+#      - .github/labels.yml
+
+  push:
+    branches:
+      - 'main'
+    paths:
+      - .github/labels.yml
+
+jobs:
+  dry-run:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - id: labeler
+        uses: b4b4r07/github-labeler@master
+        with:
+          dryrun: 'true'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Post github-labeler command result to GitHub comment
+        uses: b4b4r07/action-github-comment@master
+        if: steps.labeler.outputs.result
+        with:
+          body: |
+            ## github-labeler result
+            ```
+            ${{ steps.labeler.outputs.result }}
+            ```
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          LOG: trace
+
+  sync:
+    if: github.event_name == 'push'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: b4b4r07/github-labeler@master
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
