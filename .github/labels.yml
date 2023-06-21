@@ -33,6 +33,9 @@
 #  color: 'ffffff'
 
 # https://github.com/temporalio/temporal/labels
+#- name: feature-request
+#  color: '4c2e9c'
+#  alias: ['enhancement']
 - name: potential-bug
   color: '66b9cc'
 - name: security
