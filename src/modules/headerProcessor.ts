@@ -36,13 +36,14 @@ export default class HeaderProcessor extends Module {
       inputRomFiles,
       Constants.ROM_HEADER_PROCESSOR_THREADS,
       async (inputFile, callback: AsyncResultCallback<File, Error>) => {
+        await this.progressBar.incrementProgress();
         const waitingMessage = `${inputFile.toString()} ...`;
         this.progressBar.addWaitingMessage(waitingMessage);
 
         const fileWithHeader = await this.getFileWithHeader(inputFile);
 
         this.progressBar.removeWaitingMessage(waitingMessage);
-        await this.progressBar.increment();
+        await this.progressBar.incrementDone();
 
         return callback(null, fileWithHeader);
       },

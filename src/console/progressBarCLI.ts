@@ -60,6 +60,7 @@ export default class ProgressBarCLI extends ProgressBar {
     const initialPayload: ProgressBarPayload = {
       symbol,
       name,
+      inProgress: 0,
     };
 
     if (!logger.isTTY()) {
@@ -154,7 +155,11 @@ export default class ProgressBarCLI extends ProgressBar {
 
   removeWaitingMessage(waitingMessage: string): void {
     this.waitingMessages = this.waitingMessages.filter((msg) => msg !== waitingMessage);
-    this.setWaitingMessageTimeout();
+
+    if (this.payload.waitingMessage) {
+      // Render immediately if the output could change
+      this.setWaitingMessageTimeout(0);
+    }
   }
 
   private setWaitingMessageTimeout(timeout = 10_000): void {
@@ -172,7 +177,13 @@ export default class ProgressBarCLI extends ProgressBar {
     }, timeout);
   }
 
-  async increment(): Promise<void> {
+  async incrementProgress(): Promise<void> {
+    this.payload.inProgress = (this.payload.inProgress || 0) + 1;
+    return this.render();
+  }
+
+  async incrementDone(): Promise<void> {
+    this.payload.inProgress = Math.max((this.payload.inProgress || 0) - 1, 0);
     this.singleBarFormatted?.getSingleBar().increment();
     return this.render();
   }

@@ -16,7 +16,11 @@ export default class ProgressBarFake extends ProgressBar {
     return Promise.resolve();
   }
 
-  async increment(): Promise<void> {
+  async incrementProgress(): Promise<void> {
+    return Promise.resolve();
+  }
+
+  async incrementDone(): Promise<void> {
     return Promise.resolve();
   }
 
