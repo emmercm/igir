@@ -90,12 +90,13 @@ export default class DATScanner extends Scanner {
       datFiles,
       Constants.DAT_SCANNER_THREADS,
       async (datFile: File, callback: AsyncResultCallback<DAT | undefined, Error>) => {
+        await this.progressBar.incrementProgress();
         const waitingMessage = `${datFile.toString()} ...`;
         this.progressBar.addWaitingMessage(waitingMessage);
 
         const dat = await this.parseDatFile(datFile);
 
-        await this.progressBar.increment();
+        await this.progressBar.incrementDone();
         this.progressBar.removeWaitingMessage(waitingMessage);
         return callback(null, dat);
       },
