@@ -3,8 +3,8 @@ import stripAnsi from 'strip-ansi';
 import LogLevel from '../../src/console/logLevel.js';
 import { ProgressBarSymbol } from '../../src/console/progressBar.js';
 import ProgressBarCLI from '../../src/console/progressBarCLI.js';
+import SingleBarFormatted from '../../src/console/singleBarFormatted.js';
 import ProgressBarCLISpy from './progressBarCLISpy.js';
-import SingleBarFormatted from "../../src/console/singleBarFormatted.js";
 
 // Redraw every time
 ProgressBarCLI.setFPS(Number.MAX_SAFE_INTEGER);
