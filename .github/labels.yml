@@ -31,3 +31,9 @@
 #- name: wontfix
 #  description: This will not be worked on
 #  color: 'ffffff'
+
+# https://github.com/temporalio/temporal/labels
+- name: potential-bug
+  color: '66b9cc'
+- name: security
+  color: 'f72e32'
