@@ -34,6 +34,9 @@ export default class ElasticSemaphore {
       });
     }
 
+    // NOTE(cemmer): this semaphore can take a measurable amount of time to actually call the
+    //  callback. This is particularly noticeable when using single threads (e.g. via Async.js).
+    //  Try to only use semaphores to traffic cop multiple concurrent threads.
     return this.semaphore.runExclusive(callback, weightNormalized);
   }
 }

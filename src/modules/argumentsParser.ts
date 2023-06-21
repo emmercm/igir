@@ -505,6 +505,14 @@ export default class ArgumentsParser {
         requiresArg: true,
         default: Constants.DAT_DEFAULT_THREADS,
       })
+      .option('writer-threads', {
+        group: groupHelpDebug,
+        description: 'Maximum number of ROMs to write in parallel',
+        type: 'number',
+        coerce: (val: number) => Math.max(val, 1),
+        requiresArg: true,
+        default: Constants.ROM_WRITER_DEFAULT_THREADS,
+      })
       .middleware((middlewareArgv) => {
         /* eslint-disable no-param-reassign */
         if (middlewareArgv.zipDatName) {
