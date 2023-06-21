@@ -21,24 +21,11 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
-      - id: labeler
-        uses: b4b4r07/github-labeler@master
+      - uses: EndBug/label-sync@v2
         with:
-          dryrun: 'true'
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      - name: Post github-labeler command result to GitHub comment
-        uses: b4b4r07/action-github-comment@master
-        if: steps.labeler.outputs.result
-        with:
-          body: |
-            ## github-labeler result
-            ```
-            ${{ steps.labeler.outputs.result }}
-            ```
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          LOG: trace
+          config-file: .github/labels.yml
+          dry-run: true
+          token: ${{ secrets.GITHUB_TOKEN }}
 
   sync:
     if: github.event_name == 'push'
