@@ -64,6 +64,7 @@ nav:
           - Handheld Frontends:
               - usage/handheld/onionos.md
           - Specific Hardware:
+              - usage/hardware/analogue-pocket.md
               - usage/hardware/everdrive.md
           - usage/personal.md
       - File Inputs:
