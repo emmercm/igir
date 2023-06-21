@@ -6,6 +6,8 @@
 
 [OnionOS](https://github.com/OnionUI/Onion) is a popular "OS overhaul" for the Miyoo Mini, and [GarlicOS](https://www.patreon.com/posts/76561333) is a similar overhaul for the Anbernic RG35XX.
 
+## BIOS
+
 OnionOS has its BIOS folder at the root of the SD card at `/BIOS`, and it uses the [RetroArch filenames](https://github.com/OnionUI/Onion/wiki/Installation#step-3-copy-over-your-bios-and-rom-files):
 
 === "Windows"
@@ -30,7 +32,9 @@ OnionOS has its BIOS folder at the root of the SD card at `/BIOS`, and it uses t
       --output /Volumes/OnionOS/BIOS
     ```
 
-OnionOS uses its own proprietary [ROM folder structure](https://github.com/OnionUI/Onion/wiki/Emulators#rom-folders---quick-reference), so `igir` has a replaceable `{onion}` token to sort ROMs into the right place.
+## ROMs
+
+OnionOS uses its own proprietary [ROM folder structure](https://github.com/OnionUI/Onion/wiki/Emulators#rom-folders---quick-reference), so `igir` has a replaceable `{onion}` token to sort ROMs into the right place. See the [replaceable tokens page](../../tokens.md) for more information.
 
 === "Windows"
 

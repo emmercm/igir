@@ -53,6 +53,7 @@ nav:
   - Documentation:
       - overview.md
       - installation.md
+      - commands.md
       - alternatives.md
       - Usage:
           - usage/collection-sorting.md

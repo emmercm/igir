@@ -11,7 +11,7 @@ When using DATs (the `--dat` option), the `igir report` command can report on:
 
 At least one DAT is required for the `igir report` command to work, otherwise `igir` has no way to understand what input files are known ROMs and which aren't. See the [DAT docs](dats.md) for more information about DATs.
 
-The `igir report` can be specified on its own without any writing command in order to report on an existing collection, e.g.:
+The `igir report` can be specified on its own without any [writing command](commands.md) in order to report on an existing collection, e.g.:
 
 ```shell
 $ igir report --dat *.dat --input ROMs/
