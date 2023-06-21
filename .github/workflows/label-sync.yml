@@ -1,4 +1,4 @@
-name: GitHub Labeler
+name: GitHub Label Sync
 
 on:
   pull_request:
