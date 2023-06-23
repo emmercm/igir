@@ -35,19 +35,15 @@ ROMs-Sorted/
 
 !!! note
 
-    Tokens can resolve multiple values for each ROM. For example, a ROM may have multiple regions or languages. This will result in the same ROM being written to multiple locations.
-
-!!! tip
-
-    See the `igir --help` message for the list of all replaceable tokens.
+    Tokens can resolve to multiple values for each ROM. For example, a ROM may have multiple regions or languages. This will result in the same ROM being written to multiple locations.
 
 ## DAT information
 
 When using [DATs](../dats.md), you can make use of console & game information contained in them:
 
-- `{datName}` will get replaced with the matching DAT's name, similar to how the `--dir-dat-name` option works
-- `{datReleaseLanguage}` will be replaced with each of the ROM's languages (e.g. `EN`, `ES`, `JA`)
-- `{datReleaseRegion}` will be replaced with each of the ROM's regions (e.g. `USA`, `EUR`, `JPN`)
+- `{datName}` the matching DAT's name, similar to how the `--dir-dat-name` option works
+- `{datReleaseLanguage}` each of the ROM's language(s) (e.g. `EN`, `ES`, `JA`)
+- `{datReleaseRegion}` each of the ROM's region(s) (e.g. `USA`, `EUR`, `JPN`, `WORLD`)
 
 ## File information
 
@@ -65,3 +61,7 @@ To help sort ROMs into unique file structures for popular frontends & hardware, 
 - `{pocket}` the [Analogue Pocket](../usage/hardware/analogue-pocket.md) core's directory for the ROM
 - `{mister}` the [MiSTer FPGA](../usage/hardware/mister.md) core's directory for the ROM
 - `{onion}` the [OnionOS / GarlicOS](../usage/handheld/onionos.md) emulator's directory for the ROM
+
+!!! tip
+
+    See the `igir --help` message for the list of all replaceable tokens.
