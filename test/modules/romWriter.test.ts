@@ -74,17 +74,8 @@ async function datInferrer(romFiles: File[]): Promise<DAT> {
   const datGames = (await new DATInferrer(new ProgressBarFake()).infer(romFiles))
     .map((dat) => dat.getGames())
     .flatMap((games) => games);
+  // TODO(cemmer): unique games
   return new DAT(new Header({ name: 'ROMWriter Test' }), datGames);
-}
-
-async function romScanner(options: Options): Promise<File[]> {
-  return (await new ROMScanner(new Options({
-    ...options,
-    dat: [''], // force ROMScanner to unique files
-  }), new ProgressBarFake()).scan())
-    // Reduce all the unique files for all games
-    .filter((one, idx, files) => files
-      .findIndex((two) => two.hashCodes().join() === one.hashCodes().join()) === idx);
 }
 
 async function romWriter(
@@ -101,11 +92,12 @@ async function romWriter(
     ...(patchGlob ? { patch: [path.join(inputTemp, patchGlob)] } : {}),
     output: outputTemp,
   });
-  const romFiles = await romScanner(options);
+  const romFiles = await new ROMScanner(options, new ProgressBarFake()).scan();
   const dat = await datInferrer(romFiles);
   const romFilesWithHeaders = await new HeaderProcessor(options, new ProgressBarFake())
     .process(romFiles);
-  const indexedRomFiles = await new FileIndexer(new ProgressBarFake()).index(romFilesWithHeaders);
+  const indexedRomFiles = await new FileIndexer(options, new ProgressBarFake())
+    .index(romFilesWithHeaders);
   let candidates = await new CandidateGenerator(options, new ProgressBarFake())
     .generate(dat, indexedRomFiles);
   if (patchGlob) {
@@ -407,7 +399,7 @@ describe('zip', () => {
   test.each([
     [
       '**/!(*headered)/*',
-      ['0F09A40.zip', '3708F2C.zip', '612644F.zip', '65D1206.zip', '92C85C9.zip', 'C01173E.zip', 'KDULVQN.zip', 'before.zip', 'best.zip', 'empty.zip', 'five.zip', 'fizzbuzz.zip', 'foobar.zip', 'four.zip', 'loremipsum.zip', 'one.zip', 'three.zip', 'two.zip', 'unknown.zip'],
+      ['0F09A40.zip', '3708F2C.zip', '612644F.zip', '65D1206.zip', '92C85C9.zip', 'C01173E.zip', 'KDULVQN.zip', 'before.zip', 'best.zip', 'empty.zip', 'five.zip', 'fizzbuzz.zip', 'foobar.zip', 'four.zip', 'fourfive.zip', 'loremipsum.zip', 'one.zip', 'onetwothree.zip', 'three.zip', 'two.zip', 'unknown.zip'],
     ],
     [
       '7z/*',
@@ -451,7 +443,7 @@ describe('zip', () => {
   test.each([
     [
       '**/!(*headered)/*',
-      ['0F09A40.zip', '3708F2C.zip', '612644F.zip', '65D1206.zip', '92C85C9.zip', 'C01173E.zip', 'KDULVQN.zip', 'before.zip', 'best.zip', 'empty.zip', 'five.zip', 'fizzbuzz.zip', 'foobar.zip', 'four.zip', 'loremipsum.zip', 'one.zip', 'three.zip', 'two.zip', 'unknown.zip'],
+      ['0F09A40.zip', '3708F2C.zip', '612644F.zip', '65D1206.zip', '92C85C9.zip', 'C01173E.zip', 'KDULVQN.zip', 'before.zip', 'best.zip', 'empty.zip', 'five.zip', 'fizzbuzz.zip', 'foobar.zip', 'four.zip', 'fourfive.zip', 'loremipsum.zip', 'one.zip', 'onetwothree.zip', 'three.zip', 'two.zip', 'unknown.zip'],
       ['patchable/0F09A40.rom', 'patchable/3708F2C.rom', 'patchable/612644F.rom', 'patchable/65D1206.rom', 'patchable/92C85C9.rom', 'patchable/C01173E.rom', 'patchable/KDULVQN.rom', 'patchable/before.rom', 'patchable/best.gz', 'raw/empty.rom', 'raw/fizzbuzz.nes', 'raw/foobar.lnx', 'raw/loremipsum.rom', 'raw/one.rom', 'raw/three.rom', 'raw/two.rom', 'raw/unknown.rom'],
     ],
     [
@@ -524,10 +516,10 @@ describe('zip', () => {
       ['ROMWriter Test.zip|diagnostic_test_cartridge.a78', 'f6cc9b1c'],
       ['ROMWriter Test.zip|empty.rom', '00000000'],
       ['ROMWriter Test.zip|fds_joypad_test.fds', '1e58456d'],
-      ['ROMWriter Test.zip|five.rom', '3e5daf67'],
       ['ROMWriter Test.zip|fizzbuzz.nes', '370517b5'],
       ['ROMWriter Test.zip|foobar.lnx', 'b22c9747'],
-      ['ROMWriter Test.zip|four.rom', '1cf3ca74'],
+      ['ROMWriter Test.zip|fourfive/five.rom', '3e5daf67'],
+      ['ROMWriter Test.zip|fourfive/four.rom', '1cf3ca74'],
       ['ROMWriter Test.zip|KDULVQN.rom', 'b1c303e4'],
       ['ROMWriter Test.zip|LCDTestROM.lnx', '2d251538'],
       ['ROMWriter Test.zip|loremipsum.rom', '70856527'],
@@ -798,7 +790,7 @@ describe('extract', () => {
   test.each([
     [
       '**/!(*headered)/*',
-      ['0F09A40.rom', '3708F2C.rom', '612644F.rom', '65D1206.rom', '92C85C9.rom', 'C01173E.rom', 'KDULVQN.rom', 'before.rom', 'best.rom', 'empty.rom', 'five.rom', 'fizzbuzz.nes', 'foobar.lnx', 'four.rom', 'loremipsum.rom', 'one.rom', 'three.rom', 'two.rom', 'unknown.rom'],
+      ['0F09A40.rom', '3708F2C.rom', '612644F.rom', '65D1206.rom', '92C85C9.rom', 'C01173E.rom', 'KDULVQN.rom', 'before.rom', 'best.rom', 'empty.rom', 'five.rom', 'fizzbuzz.nes', 'foobar.lnx', 'four.rom', path.join('fourfive', 'five.rom'), path.join('fourfive', 'four.rom'), 'loremipsum.rom', 'one.rom', path.join('onetwothree', 'one.rom'), path.join('onetwothree', 'three.rom'), path.join('onetwothree', 'two.rom'), 'three.rom', 'two.rom', 'unknown.rom'],
     ],
     [
       '7z/*',
@@ -842,7 +834,7 @@ describe('extract', () => {
   test.each([
     [
       '**/!(*headered)/*',
-      ['0F09A40.rom', '3708F2C.rom', '612644F.rom', '65D1206.rom', '92C85C9.rom', 'C01173E.rom', 'KDULVQN.rom', 'before.rom', 'best.rom', 'empty.rom', 'five.rom', 'fizzbuzz.nes', 'foobar.lnx', 'four.rom', 'loremipsum.rom', 'one.rom', 'three.rom', 'two.rom', 'unknown.rom'],
+      ['0F09A40.rom', '3708F2C.rom', '612644F.rom', '65D1206.rom', '92C85C9.rom', 'C01173E.rom', 'KDULVQN.rom', 'before.rom', 'best.rom', 'empty.rom', 'five.rom', 'fizzbuzz.nes', 'foobar.lnx', 'four.rom', path.join('fourfive', 'five.rom'), path.join('fourfive', 'four.rom'), 'loremipsum.rom', 'one.rom', path.join('onetwothree', 'one.rom'), path.join('onetwothree', 'three.rom'), path.join('onetwothree', 'two.rom'), 'three.rom', 'two.rom', 'unknown.rom'],
       ['patchable/0F09A40.rom', 'patchable/3708F2C.rom', 'patchable/612644F.rom', 'patchable/65D1206.rom', 'patchable/92C85C9.rom', 'patchable/C01173E.rom', 'patchable/KDULVQN.rom', 'patchable/before.rom', 'patchable/best.gz', 'raw/empty.rom', 'raw/fizzbuzz.nes', 'raw/foobar.lnx', 'raw/loremipsum.rom', 'raw/one.rom', 'raw/three.rom', 'raw/two.rom', 'raw/unknown.rom'],
     ],
     [
@@ -1119,7 +1111,7 @@ describe('raw', () => {
   test.each([
     [
       '**/!(*headered)/*',
-      ['0F09A40.rom', '3708F2C.rom', '612644F.rom', '65D1206.rom', '92C85C9.rom', 'C01173E.rom', 'KDULVQN.rom', 'before.rom', 'best.gz', 'empty.rom', 'five.rom', 'fizzbuzz.nes', 'foobar.lnx', 'four.rom', 'loremipsum.rom', 'one.rom', 'three.rom', 'two.rom', 'unknown.rom'],
+      ['0F09A40.rom', '3708F2C.rom', '612644F.rom', '65D1206.rom', '92C85C9.rom', 'C01173E.rom', 'KDULVQN.rom', 'before.rom', 'best.gz', 'empty.rom', 'five.rom', 'fizzbuzz.nes', 'foobar.lnx', 'four.rom', path.join('fourfive', 'five.rom'), path.join('fourfive', 'four.rom'), 'loremipsum.rom', 'one.rom', path.join('onetwothree', 'one.rom'), path.join('onetwothree', 'three.rom'), path.join('onetwothree', 'two.rom'), 'three.rom', 'two.rom', 'unknown.rom'],
     ],
     [
       '7z/*',
@@ -1163,7 +1155,7 @@ describe('raw', () => {
   test.each([
     [
       '**/!(*headered)/*',
-      ['0F09A40.rom', '3708F2C.rom', '612644F.rom', '65D1206.rom', '92C85C9.rom', 'C01173E.rom', 'KDULVQN.rom', 'before.rom', 'best.gz', 'empty.rom', 'five.rom', 'fizzbuzz.nes', 'foobar.lnx', 'four.rom', 'loremipsum.rom', 'one.rom', 'three.rom', 'two.rom', 'unknown.rom'],
+      ['0F09A40.rom', '3708F2C.rom', '612644F.rom', '65D1206.rom', '92C85C9.rom', 'C01173E.rom', 'KDULVQN.rom', 'before.rom', 'best.gz', 'empty.rom', 'five.rom', 'fizzbuzz.nes', 'foobar.lnx', 'four.rom', path.join('fourfive', 'five.rom'), path.join('fourfive', 'four.rom'), 'loremipsum.rom', 'one.rom', path.join('onetwothree', 'one.rom'), path.join('onetwothree', 'three.rom'), path.join('onetwothree', 'two.rom'), 'three.rom', 'two.rom', 'unknown.rom'],
       ['patchable/0F09A40.rom', 'patchable/3708F2C.rom', 'patchable/612644F.rom', 'patchable/65D1206.rom', 'patchable/92C85C9.rom', 'patchable/C01173E.rom', 'patchable/KDULVQN.rom', 'patchable/before.rom', 'patchable/best.gz', 'raw/empty.rom', 'raw/fizzbuzz.nes', 'raw/foobar.lnx', 'raw/loremipsum.rom', 'raw/one.rom', 'raw/three.rom', 'raw/two.rom', 'raw/unknown.rom'],
     ],
     [
