@@ -71,7 +71,7 @@ If you want to store your ROMs in the RetroArch folder, you could co-locate them
       --dat "No-Intro*.zip" ^
       --input ROMs/ ^
       --output C:\RetroArch-Win32\roms ^
-      --dir-dat-name \
+      --dir-dat-name ^
       --no-bios
     ```
 
