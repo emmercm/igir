@@ -66,6 +66,7 @@ nav:
           - Specific Hardware:
               - usage/hardware/analogue-pocket.md
               - usage/hardware/everdrive.md
+              - usage/hardware/mister.md
           - usage/personal.md
       - File Inputs:
           - file-scanning.md
