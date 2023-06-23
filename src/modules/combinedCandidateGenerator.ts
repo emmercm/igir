@@ -55,8 +55,21 @@ export default class CombinedCandidateGenerator extends Module {
 
     const roms = [...parentsToCandidates.values()]
       .flatMap((releaseCandidates) => releaseCandidates)
-      .flatMap((releaseCandidate) => releaseCandidate.getRomsWithFiles())
-      .map((romWithFiles) => romWithFiles.getRom());
+      .flatMap((releaseCandidate) => {
+        const romsWithFiles = releaseCandidate.getRomsWithFiles();
+        if (romsWithFiles.length <= 1) {
+          return romsWithFiles.map((romWithFiles) => romWithFiles.getRom());
+        }
+
+        // If the candidate consists of multiple ROMs, then put the ROMs in a folder
+        return romsWithFiles
+          .map((romWithFiles) => romWithFiles.getRom())
+          .map((rom) => new ROM(
+            path.join(releaseCandidate.getName(), rom.getName()),
+            rom.getSize(),
+            rom.getCrc32(),
+          ));
+      });
     const uniqueRoms = [...roms.reduce((map, rom) => {
       const key = rom.getName();
       if (!map.has(key)) {
@@ -80,7 +93,7 @@ export default class CombinedCandidateGenerator extends Module {
       .flatMap((releaseCandidates) => releaseCandidates)
       .flatMap((releaseCandidate) => releaseCandidate.getRomsWithFiles()
         .map(async (romWithFiles) => {
-          // If the output isn't an archive then it must have been excluded (e.g. --zip-exclude),
+          // If the output isn't an archive, then it must have been excluded (e.g. --zip-exclude),
           //  don't manipulate it.
           const outputFile = romWithFiles.getOutputFile();
           if (!(outputFile instanceof ArchiveEntry)) {
