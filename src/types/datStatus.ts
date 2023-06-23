@@ -7,7 +7,6 @@ import Parent from './logiqx/parent.js';
 import Options from './options.js';
 import ReleaseCandidate from './releaseCandidate.js';
 
-// TODO(cemmer): TypeScript v5.0.0 allows us to change the value to a tuple of singular+plural
 enum ROMType {
   GAME = 'games',
   BIOS = 'BIOSes',
