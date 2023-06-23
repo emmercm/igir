@@ -539,10 +539,10 @@ Advanced usage:
     {datReleaseRegion}    The region of the ROM release (e.g. "USA"), each ROM can have multiple
     {datReleaseLanguage}  The language of the ROM release (e.g. "En"), each ROM can have multiple
 
-    {inputDirname}    The input ROM's dirname
+    {inputDirname}    The input file's dirname
     {outputBasename}  Equivalent to "{outputName}.{outputExt}"
-    {outputName}      The output ROM's filename without extension
-    {outputExt}       The output ROM's extension
+    {outputName}      The output file's filename without extension
+    {outputExt}       The output file's extension
 
     {pocket}  The ROM's core-specific /Assets/* directory for the Analogue Pocket (e.g. "gb")
     {mister}  The ROM's core-specific /games/* directory for the MiSTer FPGA (e.g. "Gameboy")
