@@ -143,7 +143,7 @@ export default class ROMWriter extends Module {
     }
 
     // Prep the single output file
-    const outputZip = inputToOutputZipEntries.map((entry) => entry[1])[0].getArchive();
+    const outputZip = inputToOutputZipEntries[0][1].getArchive();
 
     // If the output file already exists, see if we need to do anything
     if (await fsPoly.exists(outputZip.getFilePath())) {
@@ -182,8 +182,7 @@ export default class ROMWriter extends Module {
       }
     }
 
-    inputToOutputZipEntries.map((entry) => entry[1])
-      .forEach((inputRomFile) => this.enqueueFileDeletion(inputRomFile));
+    inputToOutputZipEntries.forEach(([inputRomFile]) => this.enqueueFileDeletion(inputRomFile));
   }
 
   private async testZipContents(

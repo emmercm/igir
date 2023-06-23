@@ -37,25 +37,24 @@ describe('createArchive', () => {
 
     // And a candidate is partially generated for that file
     const tempFiles = await FileFactory.filesFrom(tempFilePath);
-    const inputToOutput = new Map<File, ArchiveEntry<Zip>>();
-    await Promise.all(tempFiles.map(async (tempFile) => {
+    const inputToOutput = await Promise.all(tempFiles.map(async (tempFile) => {
       const archiveEntry = await ArchiveEntry.entryOf(
         new Zip(`${tempFile.getExtractedFilePath()}.zip`),
         tempFile.getExtractedFilePath(),
         tempFile.getSize(),
         tempFile.getCrc32(),
       );
-      inputToOutput.set(tempFile, archiveEntry);
+      return [tempFile, archiveEntry] as [File, ArchiveEntry<Zip>];
     }));
 
     // And the input files have been deleted
-    await Promise.all([...inputToOutput.keys()].map(async (tempFile) => {
-      await fsPoly.rm(tempFile.getFilePath(), { force: true });
+    await Promise.all(inputToOutput.map(async ([tempInputFile]) => {
+      await fsPoly.rm(tempInputFile.getFilePath(), { force: true });
     }));
 
     // When the file is being zipped
     // Then any underlying exception will be re-thrown
-    const zip = [...inputToOutput.values()][0].getArchive();
+    const zip = inputToOutput[0][1].getArchive();
     await expect(zip.createArchive(
       new Options(),
       new DAT(new Header(), []),
