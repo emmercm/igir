@@ -7,6 +7,7 @@ import Constants from '../../src/constants.js';
 import CandidateGenerator from '../../src/modules/candidateGenerator.js';
 import CombinedCandidateGenerator from '../../src/modules/combinedCandidateGenerator.js';
 import DATInferrer from '../../src/modules/datInferrer.js';
+import FileIndexer from '../../src/modules/fileIndexer.js';
 import HeaderProcessor from '../../src/modules/headerProcessor.js';
 import PatchCandidateGenerator from '../../src/modules/patchCandidateGenerator.js';
 import PatchScanner from '../../src/modules/patchScanner.js';
@@ -19,10 +20,7 @@ import File from '../../src/types/files/file.js';
 import FileFactory from '../../src/types/files/fileFactory.js';
 import DAT from '../../src/types/logiqx/dat.js';
 import Header from '../../src/types/logiqx/header.js';
-import Parent from '../../src/types/logiqx/parent.js';
 import Options, { OptionsProps } from '../../src/types/options.js';
-import Patch from '../../src/types/patches/patch.js';
-import ReleaseCandidate from '../../src/types/releaseCandidate.js';
 import ProgressBarFake from '../console/progressBarFake.js';
 
 async function copyFixturesToTemp(
@@ -89,45 +87,6 @@ async function romScanner(options: Options): Promise<File[]> {
       .findIndex((two) => two.hashCodes().join() === one.hashCodes().join()) === idx);
 }
 
-async function headerProcessor(
-  options: Options,
-  romFiles: File[],
-): Promise<File[]> {
-  return new HeaderProcessor(options, new ProgressBarFake()).process(romFiles);
-}
-
-async function candidateGenerator(
-  options: Options,
-  dat: DAT,
-  romFiles: File[],
-): Promise<Map<Parent, ReleaseCandidate[]>> {
-  return new CandidateGenerator(options, new ProgressBarFake()).generate(dat, romFiles);
-}
-
-async function patchScanner(
-  options: Options,
-): Promise<Patch[]> {
-  return new PatchScanner(options, new ProgressBarFake()).scan();
-}
-
-async function patchCandidateGenerator(
-  dat: DAT,
-  parentsToCandidates: Map<Parent, ReleaseCandidate[]>,
-  patches: Patch[],
-): Promise<Map<Parent, ReleaseCandidate[]>> {
-  return new PatchCandidateGenerator(new ProgressBarFake())
-    .generate(dat, parentsToCandidates, patches);
-}
-
-async function combinedCandidateGenerator(
-  options: Options,
-  dat: DAT,
-  parentsToCandidates: Map<Parent, ReleaseCandidate[]>,
-): Promise<Map<Parent, ReleaseCandidate[]>> {
-  return new CombinedCandidateGenerator(options, new ProgressBarFake())
-    .generate(dat, parentsToCandidates);
-}
-
 async function romWriter(
   optionsProps: OptionsProps,
   inputTemp: string,
@@ -144,13 +103,18 @@ async function romWriter(
   });
   const romFiles = await romScanner(options);
   const dat = await datInferrer(romFiles);
-  const gameNamesToHeaderedFiles = await headerProcessor(options, romFiles);
-  let candidates = await candidateGenerator(options, dat, gameNamesToHeaderedFiles);
+  const romFilesWithHeaders = await new HeaderProcessor(options, new ProgressBarFake())
+    .process(romFiles);
+  const indexedRomFiles = await new FileIndexer(new ProgressBarFake()).index(romFilesWithHeaders);
+  let candidates = await new CandidateGenerator(options, new ProgressBarFake())
+    .generate(dat, indexedRomFiles);
   if (patchGlob) {
-    const patches = await patchScanner(options);
-    candidates = await patchCandidateGenerator(dat, candidates, patches);
+    const patches = await new PatchScanner(options, new ProgressBarFake()).scan();
+    candidates = await new PatchCandidateGenerator(new ProgressBarFake())
+      .generate(dat, candidates, patches);
   }
-  candidates = await combinedCandidateGenerator(options, dat, candidates);
+  candidates = await new CombinedCandidateGenerator(options, new ProgressBarFake())
+    .generate(dat, candidates);
 
   // When
   await new ROMWriter(options, new ProgressBarFake()).write(dat, candidates);

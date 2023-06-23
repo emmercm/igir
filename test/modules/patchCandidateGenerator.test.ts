@@ -2,6 +2,7 @@ import path from 'path';
 
 import CandidateGenerator from '../../src/modules/candidateGenerator.js';
 import DATInferrer from '../../src/modules/datInferrer.js';
+import FileIndexer from '../../src/modules/fileIndexer.js';
 import PatchCandidateGenerator from '../../src/modules/patchCandidateGenerator.js';
 import PatchScanner from '../../src/modules/patchScanner.js';
 import ROMScanner from '../../src/modules/romScanner.js';
@@ -27,8 +28,9 @@ async function runPatchCandidateGenerator(
     .flatMap((games) => games);
   const dat = new DAT(new Header(), datGames);
 
+  const indexedRomFiles = await new FileIndexer(new ProgressBarFake()).index(romFiles);
   const parentsToCandidates = await new CandidateGenerator(options, new ProgressBarFake())
-    .generate(dat, romFiles);
+    .generate(dat, indexedRomFiles);
 
   const patches = await new PatchScanner(options, new ProgressBarFake()).scan();
 

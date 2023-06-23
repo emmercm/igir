@@ -49,8 +49,6 @@ export default class PatchScanner extends Scanner {
       },
     )).filter((patch) => patch);
 
-    await this.progressBar.doneItems(patches.length, 'unique patch', 'found');
-
     await this.progressBar.logInfo('done scanning patch files');
     return patches;
   }
