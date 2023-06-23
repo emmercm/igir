@@ -55,7 +55,7 @@ ROMs-Sorted
 
 Let's say that we've done the above first time sort and were happy with the results. We can now consider the `ROMs-Sorted/` directory to be our primary collection, every file in there has been matched to a DAT.
 
-Now we have new ROMs that we want to merge into our collection, and we want to generate a [report](../reporting.md) of what ROMs are still missing. We also want to delete any unknown files that may have made their way into our collection.
+Now we have new ROMs that we want to merge into our collection, and we want to generate a [report](../output/reporting.md) of what ROMs are still missing. We also want to delete any unknown files that may have made their way into our collection.
 
 === "Windows"
 

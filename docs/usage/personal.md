@@ -73,7 +73,11 @@ I then copy ROMs to other devices from this source of truth.
 
 ## Analogue Pocket
 
-I have this script `igir_pocket_sync.sh` at the root of my [Analogue Pocket](https://www.analogue.co/pocket)'s SD card:
+!!! note
+
+    See the full [Analogue Pocket](hardware/analogue-pocket.md) page for more detailed information.
+
+I have this script `igir_pocket_sync.sh` at the root of my Analogue Pocket's SD card:
 
 ```bash
 #!/usr/bin/env bash
