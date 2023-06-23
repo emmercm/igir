@@ -44,12 +44,17 @@ export default class Igir {
     // Scan and process input files
     let dats = await this.processDATScanner();
 
-    const romProgressBar = await this.logger.addProgressBar('Scanning for ROMs');
+    const romScannerProgressBarName = 'Scanning for ROMs';
+    const romProgressBar = await this.logger.addProgressBar(romScannerProgressBarName);
     const rawRomFiles = await new ROMScanner(this.options, romProgressBar).scan();
+    await romProgressBar.setName('Detecting ROM headers');
     const romFilesWithHeaders = await new HeaderProcessor(this.options, romProgressBar)
       .process(rawRomFiles);
+    await romProgressBar.setName('Indexing ROMs');
     const indexedRomFiles = await new FileIndexer(romProgressBar).index(romFilesWithHeaders);
+    await romProgressBar.setName(romScannerProgressBarName); // reset
     await romProgressBar.doneItems(rawRomFiles.length, 'file', 'found');
+    await romProgressBar.freeze();
 
     const patches = await this.processPatchScanner();
 

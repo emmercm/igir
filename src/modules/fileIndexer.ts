@@ -15,7 +15,7 @@ export default class FileIndexer extends Module {
 
     await this.progressBar.logInfo(`indexing ${files.length.toLocaleString()} file${files.length !== 1 ? 's' : ''}`);
 
-    await this.progressBar.setSymbol(ProgressBarSymbol.HASHING);
+    await this.progressBar.setSymbol(ProgressBarSymbol.INDEXING);
     // await this.progressBar.reset(files.length);
 
     const results = new Map<string, File[]>();

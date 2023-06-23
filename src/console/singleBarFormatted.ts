@@ -114,9 +114,9 @@ export default class SingleBarFormatted {
 
   private static getBar(options: Options, params: Params, payload: ProgressBarPayload): string {
     const barSize = options.barsize || 0;
-    const completeSize = Math.floor(params.progress * barSize);
+    const completeSize = Math.floor(Math.max(params.progress, 0) * barSize);
     const inProgressSize = params.total > 0
-      ? Math.ceil((payload.inProgress || 0) / params.total)
+      ? Math.ceil(Math.max(payload.inProgress || 0, 0) / params.total)
       : 0;
     const incompleteSize = barSize - inProgressSize - completeSize;
 
