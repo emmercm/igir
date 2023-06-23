@@ -15,9 +15,9 @@ export default class MovedROMDeleter extends Module {
     inputRoms: File[],
     movedRoms: File[],
     datsToWrittenRoms: Map<DAT, Map<Parent, File[]>>,
-  ): Promise<void> {
+  ): Promise<string[]> {
     if (!movedRoms.length) {
-      return;
+      return [];
     }
 
     await this.progressBar.logInfo('deleting moved ROMs');
@@ -26,16 +26,16 @@ export default class MovedROMDeleter extends Module {
 
     const fullyConsumedFiles = await this.filterOutPartiallyConsumedArchives(inputRoms, movedRoms);
 
-    const filesToDelete = MovedROMDeleter.filterOutWrittenFiles(
+    const filePathsToDelete = MovedROMDeleter.filterOutWrittenFiles(
       fullyConsumedFiles,
       datsToWrittenRoms,
     );
 
     await this.progressBar.setSymbol(ProgressBarSymbol.DELETING);
-    await this.progressBar.reset(filesToDelete.length);
-    await this.progressBar.logDebug(`deleting ${filesToDelete.length.toLocaleString()} moved file${filesToDelete.length !== 1 ? 's' : ''}`);
+    await this.progressBar.reset(filePathsToDelete.length);
+    await this.progressBar.logDebug(`deleting ${filePathsToDelete.length.toLocaleString()} moved file${filePathsToDelete.length !== 1 ? 's' : ''}`);
 
-    await Promise.all(filesToDelete.map(async (filePath) => {
+    await Promise.all(filePathsToDelete.map(async (filePath) => {
       await this.progressBar.logTrace(`${filePath}: deleting moved file`);
       try {
         await fsPoly.rm(filePath, { force: true });
@@ -44,8 +44,8 @@ export default class MovedROMDeleter extends Module {
       }
     }));
 
-    await this.progressBar.doneItems(filesToDelete.length, 'moved file', 'deleted');
     await this.progressBar.logInfo('done deleting moved ROMs');
+    return filePathsToDelete;
   }
 
   /**
