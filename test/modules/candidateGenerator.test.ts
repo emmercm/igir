@@ -47,7 +47,7 @@ async function candidateGenerator(
   files: (File | Promise<File>)[],
 ): Promise<Map<Parent, ReleaseCandidate[]>> {
   const resolvedFiles = await Promise.all(files);
-  const indexedFiles = await new FileIndexer(new ProgressBarFake()).index(resolvedFiles);
+  const indexedFiles = await new FileIndexer(options, new ProgressBarFake()).index(resolvedFiles);
   return new CandidateGenerator(options, new ProgressBarFake()).generate(dat, indexedFiles);
 }
 
