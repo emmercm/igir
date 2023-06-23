@@ -18,6 +18,7 @@
     enabled: true, // default
     schedule: 'at any time', // default
     prCreation: 'immediate', // default
+    labels: ['security'],
     automergeSchedule: 'at any time',
   },
   // WARN: "When the lockfileVersion is higher than 1 in package-lock.json, remediations are only possible when changes are made to package.json."
