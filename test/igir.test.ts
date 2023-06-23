@@ -49,7 +49,7 @@ async function runIgir(optionsProps: OptionsProps): Promise<TestOutput> {
   const temp = await fsPoly.mkdtemp(path.join(Constants.GLOBAL_TEMP_DIR));
 
   const tempCwd = path.join(temp, 'cwd');
-  return chdir(tempCwd, async () => {
+  const result = await chdir(tempCwd, async () => {
     const tempInput = path.join(temp, 'input');
     await fsPoly.copyDir(fixtures, tempInput);
     const inputFilesBefore = await fsPoly.walk(tempInput);
@@ -84,6 +84,8 @@ async function runIgir(optionsProps: OptionsProps): Promise<TestOutput> {
   });
 
   await fsPoly.rm(temp, { force: true, recursive: true });
+
+  return result;
 }
 
 async function expectEndToEnd(
