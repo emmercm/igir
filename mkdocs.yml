@@ -76,7 +76,8 @@ nav:
           - rom-headers.md
           - rom-patching.md
       - File Outputs:
-          - reporting.md
+          - output/tokens.md
+          - output/reporting.md
       - Advanced:
           - internals.md
       - Misc:
@@ -94,6 +95,7 @@ plugins:
   - redirects:
       redirect_maps:
         'examples.md': 'usage/collection-sorting.md'
+        'reporting.md': 'output/reporting.md'
   #- htmlproofer:
   #    raise_error_excludes:
   #      '-1': [ 'http://www.logiqx.com' ]

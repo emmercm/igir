@@ -34,7 +34,7 @@ OnionOS has its BIOS folder at the root of the SD card at `/BIOS`, and it uses t
 
 ## ROMs
 
-OnionOS uses its own proprietary [ROM folder structure](https://github.com/OnionUI/Onion/wiki/Emulators#rom-folders---quick-reference), so `igir` has a replaceable `{onion}` token to sort ROMs into the right place. See the [replaceable tokens page](../../tokens.md) for more information.
+OnionOS uses its own proprietary [ROM folder structure](https://github.com/OnionUI/Onion/wiki/Emulators#rom-folders---quick-reference), so `igir` has a replaceable `{onion}` token to sort ROMs into the right place. See the [replaceable tokens page](../../output/tokens.md) for more information.
 
 === "Windows"
 

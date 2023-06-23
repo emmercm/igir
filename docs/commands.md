@@ -71,4 +71,4 @@ Files in the output directory that do not match any ROM in any [DAT](dats.md) wi
 
 A report will be generated of what input files were matched by what DAT, and what games in what [DATs](dats.md) have missing ROMs.
 
-See the [reporting page](reporting.md) for more information.
+See the [reporting page](output/reporting.md) for more information.
