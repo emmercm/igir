@@ -176,6 +176,7 @@ export default class PatchCandidateGenerator extends Module {
       let patchedRelease;
       const unpatchedRelease = unpatchedReleaseCandidate.getRelease();
       if (unpatchedRelease) {
+        // If the original ROM has release info, continue to use that
         patchedRelease = new Release(
           patchedRomName,
           unpatchedRelease.getRegion(),
