@@ -13,6 +13,7 @@ function buildSingleBarFormatted(
   const multiBar = new cliProgress.MultiBar({
     stream: spy.getLogger().getStream(),
     fps: Number.MAX_SAFE_INTEGER,
+    noTTYOutput: true,
   });
   return new SingleBarFormatted(multiBar, initialTotal, initialPayload);
 }
@@ -36,7 +37,7 @@ describe('getLastOutput', () => {
 
   it('should be non-empty after render', () => {
     const spy = new ProgressBarCLISpy();
-    const singleBarFormatted = buildSingleBarFormatted(spy);
+    const singleBarFormatted = buildSingleBarFormatted(spy, 100);
 
     singleBarFormatted.getSingleBar().render();
 
@@ -50,11 +51,12 @@ describe('format', () => {
     [{ symbol: '@' }, '@ | ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░ | 1/100'],
     [{ symbol: '@', name: 'name' }, '@ name ························· | ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░ | 1/100'],
     [{ name: 'name' }, 'name ························· | ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░ | 1/100'],
+    [{ name: 'name', waitingMessage: 'waiting' }, 'name ························· | ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░ | 1/100 | waiting'],
     [{ name: 'name', finishedMessage: 'done' }, 'name ························· | done'],
     [{ name: 'name', finishedMessage: 'done', waitingMessage: 'waiting' }, 'name ························· | done'],
   ] satisfies [ProgressBarPayload, string][])('should: %s', (payload, expected) => {
     const spy = new ProgressBarCLISpy();
-    const singleBarFormatted = buildSingleBarFormatted(spy);
+    const singleBarFormatted = buildSingleBarFormatted(spy, 100);
 
     singleBarFormatted.getSingleBar().increment();
     singleBarFormatted.getSingleBar().update(payload);
