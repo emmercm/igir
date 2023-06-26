@@ -5,6 +5,7 @@ import xml2js from 'xml2js';
 
 import Game from './game.js';
 import Header from './header.js';
+import Machine from './machine.js';
 import Parent from './parent.js';
 
 /**
@@ -19,11 +20,17 @@ export default class DAT {
   @Type(() => Game)
   private readonly game: Game | Game[];
 
+  // NOTE(cemmer): this is not Logiqx DTD-compliant, but it's what MAME XML DATs use
+  @Expose()
+  @Type(() => Machine)
+  private readonly machine: Machine | Machine[];
+
   private readonly gameNamesToParents: Map<string, Parent> = new Map();
 
   constructor(header: Header, games: Game | Game[]) {
     this.header = header;
     this.game = games;
+    this.machine = [];
     this.generateGameNamesToParents();
   }
 
@@ -90,6 +97,13 @@ export default class DAT {
     } if (this.game) {
       return [this.game];
     }
+
+    if (Array.isArray(this.machine)) {
+      return this.machine;
+    } if (this.machine) {
+      return [this.machine];
+    }
+
     return [];
   }
 
