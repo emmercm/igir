@@ -31,6 +31,7 @@ const gameWithOneRom = new Game({
 });
 const gameWithTwoRoms = new Game({
   name: 'game with two ROMs',
+  release: new Release('game with two ROMs', 'WORLD'),
   rom: [
     new ROM('two.a', 2, 'abcdef90'),
     new ROM('two.b', 3, '09876543'),
