@@ -131,21 +131,19 @@ export default class ROMWriter extends Module {
 
   private async writeZip(dat: DAT, releaseCandidate: ReleaseCandidate): Promise<void> {
     // Return no files if there are none to write
-    const inputToOutputZipEntries = new Map<File, ArchiveEntry<Zip>>(
-      releaseCandidate.getRomsWithFiles()
-        .filter((romWithFiles) => romWithFiles.getOutputFile() instanceof ArchiveEntry)
-        .map((romWithFiles) => [
-          romWithFiles.getInputFile(),
-          romWithFiles.getOutputFile() as ArchiveEntry<Zip>,
-        ]),
-    );
-    if (!inputToOutputZipEntries.size) {
+    const inputToOutputZipEntries = releaseCandidate.getRomsWithFiles()
+      .filter((romWithFiles) => romWithFiles.getOutputFile() instanceof ArchiveEntry)
+      .map((romWithFiles) => [
+        romWithFiles.getInputFile(),
+        romWithFiles.getOutputFile() as ArchiveEntry<Zip>,
+      ]) as [File, ArchiveEntry<Zip>][];
+    if (!inputToOutputZipEntries.length) {
       await this.progressBar.logTrace(`${dat.getNameShort()}: ${releaseCandidate.getName()}: no zip archives to write`);
       return;
     }
 
     // Prep the single output file
-    const outputZip = [...inputToOutputZipEntries.values()][0].getArchive();
+    const outputZip = inputToOutputZipEntries[0][1].getArchive();
 
     // If the output file already exists, see if we need to do anything
     if (await fsPoly.exists(outputZip.getFilePath())) {
@@ -158,7 +156,7 @@ export default class ROMWriter extends Module {
         const existingTest = await this.testZipContents(
           dat,
           outputZip,
-          [...inputToOutputZipEntries.values()],
+          inputToOutputZipEntries.map((entry) => entry[1]),
         );
         if (!existingTest) {
           await this.progressBar.logTrace(`${dat.getNameShort()}: ${outputZip.getFilePath()}: not overwriting existing zip, existing zip has the expected contents`);
@@ -176,7 +174,7 @@ export default class ROMWriter extends Module {
       const writtenTest = await this.testZipContents(
         dat,
         outputZip,
-        [...inputToOutputZipEntries.values()],
+        inputToOutputZipEntries.map((entry) => entry[1]),
       );
       if (writtenTest) {
         await this.progressBar.logError(`${dat.getNameShort()}: ${outputZip.getFilePath()}: written zip ${writtenTest}`);
@@ -184,8 +182,7 @@ export default class ROMWriter extends Module {
       }
     }
 
-    [...inputToOutputZipEntries.keys()]
-      .forEach((inputRomFile) => this.enqueueFileDeletion(inputRomFile));
+    inputToOutputZipEntries.forEach(([inputRomFile]) => this.enqueueFileDeletion(inputRomFile));
   }
 
   private async testZipContents(
@@ -247,9 +244,9 @@ export default class ROMWriter extends Module {
   private async writeZipFile(
     dat: DAT,
     outputZip: Zip,
-    inputToOutputZipEntries: Map<File, ArchiveEntry<Zip>>,
+    inputToOutputZipEntries: [File, ArchiveEntry<Zip>][],
   ): Promise<boolean> {
-    await this.progressBar.logTrace(`${dat.getNameShort()}: ${outputZip.getFilePath()}: writing ${inputToOutputZipEntries.size.toLocaleString()} archive entr${inputToOutputZipEntries.size !== 1 ? 'ies' : 'y'} ...`);
+    await this.progressBar.logTrace(`${dat.getNameShort()}: ${outputZip.getFilePath()}: writing ${inputToOutputZipEntries.length.toLocaleString()} archive entr${inputToOutputZipEntries.length !== 1 ? 'ies' : 'y'} ...`);
 
     try {
       await ROMWriter.ensureOutputDirExists(outputZip.getFilePath());
@@ -259,7 +256,7 @@ export default class ROMWriter extends Module {
       return false;
     }
 
-    await this.progressBar.logTrace(`${dat.getNameShort()}: ${outputZip.getFilePath()}: wrote ${inputToOutputZipEntries.size.toLocaleString()} archive entr${inputToOutputZipEntries.size !== 1 ? 'ies' : 'y'}`);
+    await this.progressBar.logTrace(`${dat.getNameShort()}: ${outputZip.getFilePath()}: wrote ${inputToOutputZipEntries.length.toLocaleString()} archive entr${inputToOutputZipEntries.length !== 1 ? 'ies' : 'y'}`);
     return true;
   }
 
