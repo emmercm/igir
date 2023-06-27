@@ -74,7 +74,7 @@ async function datInferrer(romFiles: File[]): Promise<DAT> {
   const datGames = (await new DATInferrer(new ProgressBarFake()).infer(romFiles))
     .map((dat) => dat.getGames())
     .flatMap((games) => games);
-  // TODO(cemmer): unique games
+  // TODO(cemmer): filter to unique games / remove duplicates
   return new DAT(new Header({ name: 'ROMWriter Test' }), datGames);
 }
 
