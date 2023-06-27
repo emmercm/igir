@@ -13,7 +13,9 @@ describe('fileOfSize', () => {
     await expect(fsPoly.exists(tempFile)).resolves.toEqual(true);
 
     try {
-      await (await filePoly.fileOfSize(tempFile, 'r', size)).close();
+      const file = await filePoly.fileOfSize(tempFile, 'r', size);
+      await file.close();
+      expect(file.getPathLike()).toEqual(tempFile);
       await expect(fsPoly.size(tempFile)).resolves.toEqual(size);
     } finally {
       await fsPoly.rm(tempFile);
@@ -25,7 +27,9 @@ describe('fileOfSize', () => {
     await expect(fsPoly.exists(tempFile)).resolves.toEqual(false);
 
     try {
-      await (await filePoly.fileOfSize(tempFile, 'r', size)).close();
+      const file = await filePoly.fileOfSize(tempFile, 'r', size);
+      await file.close();
+      expect(file.getPathLike()).toEqual(tempFile);
       await expect(fsPoly.size(tempFile)).resolves.toEqual(size);
     } finally {
       await fsPoly.rm(tempFile);
