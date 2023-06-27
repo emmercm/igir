@@ -1,11 +1,21 @@
+import path from 'path';
+
 import ProgressBar, { ProgressBarSymbol } from '../console/progressBar.js';
 import ArchiveEntry from '../types/files/archives/archiveEntry.js';
+import Rar from '../types/files/archives/rar.js';
+import SevenZip from '../types/files/archives/sevenZip.js';
+import Tar from '../types/files/archives/tar.js';
+import Zip from '../types/files/archives/zip.js';
 import File from '../types/files/file.js';
+import Options from '../types/options.js';
 import Module from './module.js';
 
 export default class FileIndexer extends Module {
-  constructor(progressBar: ProgressBar) {
+  protected readonly options: Options;
+
+  constructor(options: Options, progressBar: ProgressBar) {
     super(progressBar, FileIndexer.name);
+    this.options = options;
   }
 
   async index(files: File[]): Promise<Map<string, File[]>> {
@@ -34,7 +44,7 @@ export default class FileIndexer extends Module {
     // Sort the file arrays
     [...results.entries()]
       .forEach(([hashCode, filesForHash]) => filesForHash.sort((fileOne, fileTwo) => {
-        // First, prefer files with their header
+        // First, prefer "raw" files (files with their header)
         const fileOneHeadered = fileOne.getFileHeader()
           && fileOne.hashCodeWithoutHeader() === hashCode ? 1 : 0;
         const fileTwoHeadered = fileTwo.getFileHeader()
@@ -43,10 +53,23 @@ export default class FileIndexer extends Module {
           return fileOneHeadered - fileTwoHeadered;
         }
 
-        // Second, prefer un-archived files
-        const fileOneArchived = fileOne instanceof ArchiveEntry ? 1 : 0;
-        const fileTwoArchived = fileTwo instanceof ArchiveEntry ? 1 : 0;
-        return fileOneArchived - fileTwoArchived;
+        // Then, prefer un-archived files
+        const fileOneArchived = FileIndexer.archiveEntryPriority(fileOne);
+        const fileTwoArchived = FileIndexer.archiveEntryPriority(fileTwo);
+        if (fileOneArchived !== fileTwoArchived) {
+          return fileOneArchived - fileTwoArchived;
+        }
+
+        // Then, prefer files that are already in the output directory
+        const outputDir = path.resolve(this.options.getOutputDirRoot());
+        const fileOneInOutput = path.resolve(fileOne.getFilePath()).startsWith(outputDir) ? 0 : 1;
+        const fileTwoInOutput = path.resolve(fileTwo.getFilePath()).startsWith(outputDir) ? 0 : 1;
+        if (fileOneInOutput !== fileTwoInOutput) {
+          return fileOneInOutput - fileTwoInOutput;
+        }
+
+        // Otherwise, be deterministic
+        return fileOne.getFilePath().localeCompare(fileTwo.getFilePath());
       }));
 
     await this.progressBar.logDebug(`found ${results.size} unique file${results.size !== 1 ? 's' : ''}`);
@@ -63,5 +86,23 @@ export default class FileIndexer extends Module {
 
     const existing = map.get(key) as File[];
     map.set(key, [...existing, file]);
+  }
+
+  /**
+   * This ordering should match {@link FileFactory#archiveFrom}
+   */
+  private static archiveEntryPriority(file: File): number {
+    if (!(file instanceof ArchiveEntry)) {
+      return 0;
+    } if (file.getArchive() instanceof Zip) {
+      return 1;
+    } if (file.getArchive() instanceof Tar) {
+      return 2;
+    } if (file.getArchive() instanceof Rar) {
+      return 3;
+    } if (file.getArchive() instanceof SevenZip) {
+      return 4;
+    }
+    return 99;
   }
 }

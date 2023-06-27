@@ -1,0 +1,44 @@
+name: GitHub Label Sync
+
+on:
+  pull_request:
+    types:
+      - opened
+      - synchronize  # HEAD has changed, e.g. a push happened
+      - reopened
+
+  push:
+    branches:
+      - 'main'
+
+jobs:
+  dry-run:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: EndBug/label-sync@v2
+        with:
+          config-file: .github/labels.yml
+          delete-other-labels: true
+          dry-run: true
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+  # !!! This check should be required by GitHub !!!
+  labels-status-check:
+    needs:
+      - dry-run
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo ok
+
+  sync:
+    if: github.event_name == 'push'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: EndBug/label-sync@v2
+        with:
+          config-file: .github/labels.yml
+          delete-other-labels: true
+          token: ${{ secrets.GITHUB_TOKEN }}

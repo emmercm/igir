@@ -34,6 +34,7 @@ const gameWithOneRom = new Game({
 });
 const gameWithTwoRoms = new Game({
   name: 'game with two ROMs',
+  release: new Release('game with two ROMs', 'WORLD'),
   rom: [
     new ROM('two.a', 2, 'abcdef90'),
     new ROM('two.b', 3, '09876543'),
@@ -47,7 +48,7 @@ async function candidateGenerator(
   files: (File | Promise<File>)[],
 ): Promise<Map<Parent, ReleaseCandidate[]>> {
   const resolvedFiles = await Promise.all(files);
-  const indexedFiles = await new FileIndexer(new ProgressBarFake()).index(resolvedFiles);
+  const indexedFiles = await new FileIndexer(options, new ProgressBarFake()).index(resolvedFiles);
   return new CandidateGenerator(options, new ProgressBarFake()).generate(dat, indexedFiles);
 }
 
