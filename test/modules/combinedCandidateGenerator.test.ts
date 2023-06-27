@@ -23,7 +23,7 @@ async function runCombinedCandidateGenerator(
     .flatMap((games) => games);
   const dat = new DAT(new Header(), datGames);
 
-  const indexedRomFiles = await new FileIndexer(new ProgressBarFake()).index(romFiles);
+  const indexedRomFiles = await new FileIndexer(options, new ProgressBarFake()).index(romFiles);
   const parentsToCandidates = await new CandidateGenerator(options, new ProgressBarFake())
     .generate(dat, indexedRomFiles);
 

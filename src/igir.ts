@@ -51,7 +51,8 @@ export default class Igir {
     const romFilesWithHeaders = await new HeaderProcessor(this.options, romProgressBar)
       .process(rawRomFiles);
     await romProgressBar.setName('Indexing ROMs');
-    const indexedRomFiles = await new FileIndexer(romProgressBar).index(romFilesWithHeaders);
+    const indexedRomFiles = await new FileIndexer(this.options, romProgressBar)
+      .index(romFilesWithHeaders);
     await romProgressBar.setName(romScannerProgressBarName); // reset
     await romProgressBar.doneItems(rawRomFiles.length, 'file', 'found');
     await romProgressBar.freeze();
