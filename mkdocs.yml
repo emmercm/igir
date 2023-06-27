@@ -53,6 +53,7 @@ nav:
   - Documentation:
       - overview.md
       - installation.md
+      - commands.md
       - alternatives.md
       - Usage:
           - usage/collection-sorting.md
@@ -63,7 +64,9 @@ nav:
           - Handheld Frontends:
               - usage/handheld/onionos.md
           - Specific Hardware:
+              - usage/hardware/analogue-pocket.md
               - usage/hardware/everdrive.md
+              - usage/hardware/mister.md
           - usage/personal.md
       - File Inputs:
           - file-scanning.md
@@ -74,7 +77,8 @@ nav:
           - rom-headers.md
           - rom-patching.md
       - File Outputs:
-          - reporting.md
+          - output/tokens.md
+          - output/reporting.md
       - Advanced:
           - internals.md
       - Misc:
@@ -92,6 +96,7 @@ plugins:
   - redirects:
       redirect_maps:
         'examples.md': 'usage/collection-sorting.md'
+        'reporting.md': 'output/reporting.md'
   #- htmlproofer:
   #    raise_error_excludes:
   #      '-1': [ 'http://www.logiqx.com' ]

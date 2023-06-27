@@ -12,6 +12,10 @@ on:
       - synchronize  # HEAD has changed, e.g. a push happened
       - reopened
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   node-lint:
     runs-on: ubuntu-latest

@@ -21,6 +21,14 @@ npx igir@latest copy extract --dat *.dat --input ROMs/ --output ROMs-Sorted/ --d
 
 [![asciicast](https://asciinema.org/a/hjMOlN3DwSgo9NGHzPtncOoq9.svg)](https://asciinema.org/a/hjMOlN3DwSgo9NGHzPtncOoq9)
 
+!!! tip
+
+    You can alias the `npx` command in your macOS or Linux [dotfiles](https://missing.csail.mit.edu/2019/dotfiles/) like this:
+
+    ```bash
+    alias igir="npx igir@latest"
+    ```
+
 ## Via downloaded executable
 
 [![GitHub: release](https://img.shields.io/github/v/release/emmercm/igir?color=%236e5494&logo=github&logoColor=white)](https://github.com/emmercm/igir/releases/latest)

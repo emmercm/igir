@@ -2,7 +2,7 @@
 # https://github.com/aio-libs/aiohttp/blob/master/.github/ISSUE_TEMPLATE/bug_report.yml
 name: 🐞 Bug Report
 description: Create a report to help us improve.
-labels: ["bug"]
+labels: ["potential-bug"]
 assignees:
   - emmercm
 body:

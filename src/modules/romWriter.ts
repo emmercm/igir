@@ -133,7 +133,7 @@ export default class ROMWriter extends Module {
     // Return no files if there are none to write
     const inputToOutputZipEntries = new Map<File, ArchiveEntry<Zip>>(
       releaseCandidate.getRomsWithFiles()
-        .filter((romWithFiles) => romWithFiles.getOutputFile() instanceof ArchiveEntry<Zip>)
+        .filter((romWithFiles) => romWithFiles.getOutputFile() instanceof ArchiveEntry)
         .map((romWithFiles) => [
           romWithFiles.getInputFile(),
           romWithFiles.getOutputFile() as ArchiveEntry<Zip>,
@@ -271,7 +271,7 @@ export default class ROMWriter extends Module {
 
   private async writeRaw(dat: DAT, releaseCandidate: ReleaseCandidate): Promise<void> {
     const inputToOutputEntries = releaseCandidate.getRomsWithFiles()
-      .filter((romWithFiles) => !(romWithFiles.getOutputFile() instanceof ArchiveEntry<Zip>))
+      .filter((romWithFiles) => !(romWithFiles.getOutputFile() instanceof ArchiveEntry))
       .map((romWithFiles) => [romWithFiles.getInputFile(), romWithFiles.getOutputFile()]);
 
     // Return no files if there are none to write

@@ -1,5 +1,7 @@
 # EverDrive
 
+## ROMs
+
 Because flash carts are specific to a specific console, you can provide specific input directories & [DATs](../../dats.md) when you run `igir`. For example:
 
 === "Windows"
