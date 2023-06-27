@@ -139,9 +139,14 @@ export default class ProgressBarCLI extends ProgressBar {
     return this;
   }
 
+  async setName(name: string): Promise<void> {
+    this.payload.name = name;
+    return this.render(true);
+  }
+
   async setSymbol(symbol: string): Promise<void> {
     this.payload.symbol = symbol;
-    await this.render(true);
+    return this.render(true);
   }
 
   /**

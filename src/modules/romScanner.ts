@@ -32,8 +32,6 @@ export default class ROMScanner extends Scanner {
       filterUnique,
     );
 
-    await this.progressBar.doneItems(files.length, `${filterUnique ? 'unique ' : ''}file`, 'found');
-
     await this.progressBar.logInfo('done scanning ROM files');
     return files;
   }

@@ -1,6 +1,7 @@
 import path from 'path';
 
 import CandidateGenerator from '../../src/modules/candidateGenerator.js';
+import FileIndexer from '../../src/modules/fileIndexer.js';
 import ArchiveEntry from '../../src/types/files/archives/archiveEntry.js';
 import Rar from '../../src/types/files/archives/rar.js';
 import SevenZip from '../../src/types/files/archives/sevenZip.js';
@@ -11,9 +12,11 @@ import ROMHeader from '../../src/types/files/romHeader.js';
 import DAT from '../../src/types/logiqx/dat.js';
 import Game from '../../src/types/logiqx/game.js';
 import Header from '../../src/types/logiqx/header.js';
+import Parent from '../../src/types/logiqx/parent.js';
 import Release from '../../src/types/logiqx/release.js';
 import ROM from '../../src/types/logiqx/rom.js';
 import Options from '../../src/types/options.js';
+import ReleaseCandidate from '../../src/types/releaseCandidate.js';
 import ProgressBarFake from '../console/progressBarFake.js';
 
 // TODO(cemmer): test parent/clone behavior
@@ -37,7 +40,17 @@ const gameWithTwoRoms = new Game({
     new ROM('two.b', 3, '09876543'),
   ],
 });
-const dat = new DAT(new Header(), [gameWithNoRoms, gameWithOneRom, gameWithTwoRoms]);
+const datWithThreeGames = new DAT(new Header(), [gameWithNoRoms, gameWithOneRom, gameWithTwoRoms]);
+
+async function candidateGenerator(
+  options: Options,
+  dat: DAT,
+  files: (File | Promise<File>)[],
+): Promise<Map<Parent, ReleaseCandidate[]>> {
+  const resolvedFiles = await Promise.all(files);
+  const indexedFiles = await new FileIndexer(new ProgressBarFake()).index(resolvedFiles);
+  return new CandidateGenerator(options, new ProgressBarFake()).generate(dat, indexedFiles);
+}
 
 describe.each(['zip', 'extract', 'raw'])('command: %s', (command) => {
   const options = new Options({
@@ -49,8 +62,7 @@ describe.each(['zip', 'extract', 'raw'])('command: %s', (command) => {
     const datWithoutParents = new DAT(new Header(), []);
 
     // When
-    const parentsToCandidates = await new CandidateGenerator(options, new ProgressBarFake())
-      .generate(datWithoutParents, []);
+    const parentsToCandidates = await candidateGenerator(options, datWithoutParents, []);
 
     // Then
     expect(parentsToCandidates.size).toEqual(0);
@@ -61,8 +73,7 @@ describe.each(['zip', 'extract', 'raw'])('command: %s', (command) => {
     const datWithGamesWithNoRoms = new DAT(new Header(), [gameWithNoRoms]);
 
     // When
-    const parentsToCandidates = await new CandidateGenerator(options, new ProgressBarFake())
-      .generate(datWithGamesWithNoRoms, []);
+    const parentsToCandidates = await candidateGenerator(options, datWithGamesWithNoRoms, []);
 
     // Then
     expect(parentsToCandidates.size).toEqual(0);
@@ -82,8 +93,7 @@ describe.each(['zip', 'extract', 'raw'])('command: %s', (command) => {
     const files = await Promise.all(filePromises);
 
     // When
-    const parentsToCandidates = await new CandidateGenerator(options, new ProgressBarFake())
-      .generate(dat, files);
+    const parentsToCandidates = await candidateGenerator(options, datWithThreeGames, files);
 
     // Then
     expect(parentsToCandidates.size).toEqual(3);
@@ -102,8 +112,7 @@ describe.each(['zip', 'extract', 'raw'])('command: %s', (command) => {
     ];
 
     // When
-    const parentsToCandidates = await new CandidateGenerator(options, new ProgressBarFake())
-      .generate(dat, files);
+    const parentsToCandidates = await candidateGenerator(options, datWithThreeGames, files);
 
     // Then
     expect(parentsToCandidates.size).toEqual(3);
@@ -139,8 +148,7 @@ describe.each(['zip', 'extract', 'raw'])('command: %s', (command) => {
     ];
 
     // When
-    const parentsToCandidates = await new CandidateGenerator(options, new ProgressBarFake())
-      .generate(dat, files);
+    const parentsToCandidates = await candidateGenerator(options, datWithThreeGames, files);
 
     // Then
     expect(parentsToCandidates.size).toEqual(3);
@@ -186,8 +194,7 @@ describe('with ROMs with headers', () => {
     });
 
     // When
-    const parentsToCandidates = await new CandidateGenerator(options, new ProgressBarFake())
-      .generate(dat, await Promise.all(filePromises));
+    const parentsToCandidates = await candidateGenerator(options, datWithThreeGames, filePromises);
 
     // Then
     expect(parentsToCandidates.size).toEqual(3);
@@ -226,8 +233,7 @@ describe('with ROMs with headers', () => {
     });
 
     // When
-    const parentsToCandidates = await new CandidateGenerator(options, new ProgressBarFake())
-      .generate(dat, await Promise.all(filePromises));
+    const parentsToCandidates = await candidateGenerator(options, datWithThreeGames, filePromises);
 
     // Then
     expect(parentsToCandidates.size).toEqual(3);
@@ -257,8 +263,7 @@ describe('with ROMs with headers', () => {
     });
 
     // When
-    const parentsToCandidates = await new CandidateGenerator(options, new ProgressBarFake())
-      .generate(dat, await Promise.all(filePromises));
+    const parentsToCandidates = await candidateGenerator(options, datWithThreeGames, filePromises);
 
     // Then
     expect(parentsToCandidates.size).toEqual(3);
@@ -296,8 +301,7 @@ describe('with different input files for every game ROM', () => {
     const options = new Options({ commands: ['copy', command] });
 
     // When
-    const parentsToCandidates = await new CandidateGenerator(options, new ProgressBarFake())
-      .generate(dat, await Promise.all(filePromises));
+    const parentsToCandidates = await candidateGenerator(options, datWithThreeGames, filePromises);
 
     // Then there should still be 3 parents, with the input -> output:
     //  (nothing) -> game with no ROMs
@@ -327,8 +331,7 @@ describe('with different input files for every game ROM', () => {
     const options = new Options({ commands: ['copy'] });
 
     // When
-    const parentsToCandidates = await new CandidateGenerator(options, new ProgressBarFake())
-      .generate(dat, await Promise.all(filePromises));
+    const parentsToCandidates = await candidateGenerator(options, datWithThreeGames, filePromises);
 
     // Then there should still be 3 parents, with the input -> output:
     //  (nothing) -> game with no ROMs

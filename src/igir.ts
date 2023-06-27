@@ -9,6 +9,7 @@ import CandidateGenerator from './modules/candidateGenerator.js';
 import CombinedCandidateGenerator from './modules/combinedCandidateGenerator.js';
 import DATInferrer from './modules/datInferrer.js';
 import DATScanner from './modules/datScanner.js';
+import FileIndexer from './modules/fileIndexer.js';
 import FixdatCreator from './modules/fixdatCreator.js';
 import HeaderProcessor from './modules/headerProcessor.js';
 import MovedROMDeleter from './modules/movedRomDeleter.js';
@@ -42,14 +43,25 @@ export default class Igir {
 
     // Scan and process input files
     let dats = await this.processDATScanner();
-    const rawRomFiles = await this.processROMScanner();
+
+    const romScannerProgressBarName = 'Scanning for ROMs';
+    const romProgressBar = await this.logger.addProgressBar(romScannerProgressBarName);
+    const rawRomFiles = await new ROMScanner(this.options, romProgressBar).scan();
+    await romProgressBar.setName('Detecting ROM headers');
+    const romFilesWithHeaders = await new HeaderProcessor(this.options, romProgressBar)
+      .process(rawRomFiles);
+    await romProgressBar.setName('Indexing ROMs');
+    const indexedRomFiles = await new FileIndexer(romProgressBar).index(romFilesWithHeaders);
+    await romProgressBar.setName(romScannerProgressBarName); // reset
+    await romProgressBar.doneItems(rawRomFiles.length, 'file', 'found');
+    await romProgressBar.freeze();
+
     const patches = await this.processPatchScanner();
-    const processedRomFiles = await this.processHeaderProcessor(rawRomFiles);
 
     // Set up progress bar and input for DAT processing
     const datProcessProgressBar = await this.logger.addProgressBar('Processing DATs', ProgressBarSymbol.PROCESSING, dats.length);
     if (!dats.length) {
-      dats = await new DATInferrer(datProcessProgressBar).infer(processedRomFiles);
+      dats = await new DATInferrer(datProcessProgressBar).infer(romFilesWithHeaders);
     }
 
     if (this.options.getSingle() && !dats.some((dat) => dat.hasParentCloneInfo())) {
@@ -74,7 +86,7 @@ export default class Igir {
 
       // Generate and filter ROM candidates
       const parentsToCandidates = await new CandidateGenerator(this.options, progressBar)
-        .generate(dat, processedRomFiles);
+        .generate(dat, indexedRomFiles);
       const parentsToPatchedCandidates = await new PatchCandidateGenerator(progressBar)
         .generate(dat, parentsToCandidates, patches);
       romOutputDirs.push(...this.getCandidateOutputDirs(dat, parentsToPatchedCandidates));
@@ -155,14 +167,6 @@ export default class Igir {
     return dats;
   }
 
-  private async processROMScanner(): Promise<File[]> {
-    const progressBar = await this.logger.addProgressBar('Scanning for ROMs');
-    const roms = await new ROMScanner(this.options, progressBar).scan();
-    await progressBar.doneItems(roms.length, 'unique ROM', 'found');
-    await progressBar.freeze();
-    return roms;
-  }
-
   private async processPatchScanner(): Promise<Patch[]> {
     if (!this.options.getPatchFileCount()) {
       return [];
@@ -173,15 +177,6 @@ export default class Igir {
     await progressBar.doneItems(patches.length, 'unique patch', 'found');
     await progressBar.freeze();
     return patches;
-  }
-
-  private async processHeaderProcessor(romFiles: File[]): Promise<File[]> {
-    const progressBar = await this.logger.addProgressBar('Detecting ROM headers');
-    const processedRomFiles = await new HeaderProcessor(this.options, progressBar)
-      .process(romFiles);
-    await progressBar.doneItems(processedRomFiles.length, 'ROM', 'processed');
-    await progressBar.freeze();
-    return processedRomFiles;
   }
 
   /**
@@ -214,10 +209,9 @@ export default class Igir {
     }
 
     const progressBar = await this.logger.addProgressBar('Deleting moved files');
-
-    await new MovedROMDeleter(progressBar)
+    const deletedFilePaths = await new MovedROMDeleter(progressBar)
       .delete(rawRomFiles, movedRomsToDelete, datsToWrittenRoms);
-
+    await progressBar.doneItems(deletedFilePaths.length, 'moved file', 'deleted');
     await progressBar.freeze();
   }
 

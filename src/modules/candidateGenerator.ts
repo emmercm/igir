@@ -32,23 +32,15 @@ export default class CandidateGenerator extends Module {
 
   async generate(
     dat: DAT,
-    inputRomFiles: File[],
+    hashCodeToInputFiles: Map<string, File[]>,
   ): Promise<Map<Parent, ReleaseCandidate[]>> {
     await this.progressBar.logInfo(`${dat.getNameShort()}: generating candidates`);
 
     const output = new Map<Parent, ReleaseCandidate[]>();
-    if (!inputRomFiles.length) {
+    if (!hashCodeToInputFiles.size) {
       await this.progressBar.logDebug(`${dat.getNameShort()}: no input ROMs to make candidates from`);
       return output;
     }
-
-    await this.progressBar.setSymbol(ProgressBarSymbol.HASHING);
-    await this.progressBar.reset(inputRomFiles.length);
-
-    // TODO(cemmer): only do this once globally, not per DAT
-    // TODO(cemmer): ability to index files by some other property such as name
-    const hashCodeToInputFiles = CandidateGenerator.indexFilesByHashCode(inputRomFiles);
-    await this.progressBar.logDebug(`${dat.getNameShort()}: ${hashCodeToInputFiles.size.toLocaleString()} unique ROMs found`);
 
     const parents = dat.getParents();
     await this.progressBar.setSymbol(ProgressBarSymbol.GENERATING);
@@ -103,48 +95,11 @@ export default class CandidateGenerator extends Module {
     return output;
   }
 
-  private static indexFilesByHashCode(files: File[]): Map<string, File> {
-    const filesByHashCodeWithHeader = new Map<string, File>();
-    const filesByHashCodeWithoutHeader = new Map<string, File>();
-
-    files.forEach((file) => {
-      // Index on full file contents
-      this.setFileInMap(filesByHashCodeWithHeader, file.hashCodeWithHeader(), file);
-
-      // Optionally index without a header
-      if (file.getFileHeader()) {
-        this.setFileInMap(filesByHashCodeWithoutHeader, file.hashCodeWithoutHeader(), file);
-      }
-    });
-
-    // Merge the two maps, preferring files that were indexed on their full file contents
-    const filesByHashCode = filesByHashCodeWithHeader;
-    filesByHashCodeWithoutHeader.forEach((file, hashCodeWithoutHeader) => {
-      if (!filesByHashCode.has(hashCodeWithoutHeader)) {
-        filesByHashCode.set(hashCodeWithoutHeader, file);
-      }
-    });
-    return filesByHashCode;
-  }
-
-  private static setFileInMap<K>(map: Map<K, File>, key: K, file: File): void {
-    if (!map.has(key)) {
-      map.set(key, file);
-      return;
-    }
-
-    // Prefer non-archived files
-    const existing = map.get(key) as File;
-    if (existing instanceof ArchiveEntry && !(file instanceof ArchiveEntry)) {
-      map.set(key, file);
-    }
-  }
-
   private async buildReleaseCandidateForRelease(
     dat: DAT,
     game: Game,
     release: Release | undefined,
-    hashCodeToInputFiles: Map<string, File>,
+    hashCodeToInputFiles: Map<string, File[]>,
   ): Promise<ReleaseCandidate | undefined> {
     // For each Game's ROM, find the matching File
     const romFiles = await Promise.all(
@@ -152,7 +107,7 @@ export default class CandidateGenerator extends Module {
         // NOTE(cemmer): if the ROM's CRC includes a header, then this will only find headered
         //  files. If the ROM's CRC excludes a header, this can find either a headered or non-
         //  headered file.
-        const originalInputFile = hashCodeToInputFiles.get(rom.hashCode());
+        const originalInputFile = (hashCodeToInputFiles.get(rom.hashCode()) || [])[0];
         if (!originalInputFile) {
           return [rom, undefined];
         }

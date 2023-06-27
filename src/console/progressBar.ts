@@ -11,6 +11,7 @@ export const ProgressBarSymbol = {
   WAITING: chalk.grey(process.platform === 'win32' ? '…' : '⋯'),
   SEARCHING: chalk.magenta(process.platform === 'win32' ? '○' : '↻'),
   HASHING: chalk.magenta('#'),
+  INDEXING: chalk.magenta('#'),
   GENERATING: chalk.cyan('Σ'),
   PROCESSING: chalk.cyan(process.platform === 'win32' ? '¤' : '⚙'),
   FILTERING: chalk.cyan('∆'),
@@ -22,6 +23,8 @@ export const ProgressBarSymbol = {
 
 export default abstract class ProgressBar {
   abstract reset(total: number): Promise<void>;
+
+  abstract setName(name: string): Promise<void>;
 
   abstract setSymbol(symbol: string): Promise<void>;
 

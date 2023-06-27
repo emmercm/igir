@@ -36,6 +36,10 @@ export default class ProgressBarFake extends ProgressBar {
     return Promise.resolve();
   }
 
+  async setName(): Promise<void> {
+    return Promise.resolve();
+  }
+
   async setSymbol(): Promise<void> {
     return Promise.resolve();
   }

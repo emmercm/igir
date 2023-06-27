@@ -3,6 +3,7 @@ import path from 'path';
 import CandidateGenerator from '../../src/modules/candidateGenerator.js';
 import CombinedCandidateGenerator from '../../src/modules/combinedCandidateGenerator.js';
 import DATInferrer from '../../src/modules/datInferrer.js';
+import FileIndexer from '../../src/modules/fileIndexer.js';
 import ROMScanner from '../../src/modules/romScanner.js';
 import File from '../../src/types/files/file.js';
 import DAT from '../../src/types/logiqx/dat.js';
@@ -22,8 +23,9 @@ async function runCombinedCandidateGenerator(
     .flatMap((games) => games);
   const dat = new DAT(new Header(), datGames);
 
+  const indexedRomFiles = await new FileIndexer(new ProgressBarFake()).index(romFiles);
   const parentsToCandidates = await new CandidateGenerator(options, new ProgressBarFake())
-    .generate(dat, romFiles);
+    .generate(dat, indexedRomFiles);
 
   return new CombinedCandidateGenerator(options, new ProgressBarFake())
     .generate(dat, parentsToCandidates);
