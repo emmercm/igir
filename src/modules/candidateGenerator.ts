@@ -101,13 +101,15 @@ export default class CandidateGenerator extends Module {
     release: Release | undefined,
     hashCodeToInputFiles: Map<string, File[]>,
   ): Promise<ReleaseCandidate | undefined> {
+    const romsToInputFiles = CandidateGenerator.getInputFilesForGame(game, hashCodeToInputFiles);
+
     // For each Game's ROM, find the matching File
     const romFiles = await Promise.all(
       game.getRoms().map(async (rom) => {
         // NOTE(cemmer): if the ROM's CRC includes a header, then this will only find headered
         //  files. If the ROM's CRC excludes a header, this can find either a headered or non-
         //  headered file.
-        const originalInputFile = (hashCodeToInputFiles.get(rom.hashCode()) || [])[0];
+        const originalInputFile = romsToInputFiles.get(rom);
         if (!originalInputFile) {
           return [rom, undefined];
         }
@@ -170,6 +172,17 @@ export default class CandidateGenerator extends Module {
     }
 
     return new ReleaseCandidate(game, release, foundRomsWithFiles);
+  }
+
+  private static getInputFilesForGame(
+    game: Game,
+    hashCodeToInputFiles: Map<string, File[]>,
+  ): Map<ROM, File> {
+    const entries = game.getRoms().map((rom) => ([
+      rom,
+      (hashCodeToInputFiles.get(rom.hashCode()) || [])[0],
+    ])) as [ROM, File][];
+    return new Map(entries);
   }
 
   private async getOutputFile(
