@@ -2,6 +2,7 @@ import path from 'path';
 
 import ProgressBar, { ProgressBarSymbol } from '../console/progressBar.js';
 import fsPoly from '../polyfill/fsPoly.js';
+import Archive from '../types/files/archives/archive.js';
 import ArchiveEntry from '../types/files/archives/archiveEntry.js';
 import Zip from '../types/files/archives/zip.js';
 import File from '../types/files/file.js';
@@ -178,11 +179,61 @@ export default class CandidateGenerator extends Module {
     game: Game,
     hashCodeToInputFiles: Map<string, File[]>,
   ): Map<ROM, File> {
-    const entries = game.getRoms().map((rom) => ([
+    let romsAndInputFiles = game.getRoms().map((rom) => ([
       rom,
-      (hashCodeToInputFiles.get(rom.hashCode()) || [])[0],
-    ])) as [ROM, File][];
-    return new Map(entries);
+      (hashCodeToInputFiles.get(rom.hashCode()) || []),
+    ])) as [ROM, File[]][];
+
+    // Detect if there is one input archive that contains every ROM, and prefer to use its entries.
+    // There are two situations that can happen:
+    //  1. When raw writing (i.e. `igir copy`, `igir move`) archives of games with multiple ROMs, if
+    //      some of those ROMs exist in multiple input archives, then you may get a conflict warning
+    //      that multiple input files want to write to the same output file - and nothing will be
+    //      written.
+    //  2. When moving + archiving (i.e. `igir move zip`) games with multiple ROMs, if there are
+    //      duplicates of the ROMs in some input archives, then you may get a warning that some of
+    //      the input archives won't be deleted because not every entry in it was used for an
+    //      output file.
+    // First, create a map of any input archives to ROMs from this game
+    const inputArchivesToRoms = this.reverseArchiveMap(new Map(romsAndInputFiles));
+    // Only filter the input files if this game has multiple ROMs, and we found some archives
+    if (game.getRoms().length > 1 && inputArchivesToRoms.size) {
+      const inputArchivesToHashCodes = this.reverseArchiveMap(hashCodeToInputFiles);
+
+      // Find the first archive that contains _exactly_ every ROM from this game
+      const gameArchive = ([...inputArchivesToRoms.entries()]
+        .filter(
+          ([archive, roms]) => roms.length === game.getRoms().length
+            && inputArchivesToHashCodes.get(archive)?.length === roms.length,
+        )[0] || [])[0];
+      if (gameArchive) {
+        // An archive was found, use that as the only possible input file
+        romsAndInputFiles = romsAndInputFiles.map(([rom, inputFiles]) => {
+          const archiveEntry = inputFiles
+            .find((inputFile) => inputFile.getFilePath() === gameArchive.getFilePath()) as File;
+          return [rom, [archiveEntry]];
+        });
+      }
+    }
+
+    return new Map(romsAndInputFiles
+      .filter(([, inputFiles]) => inputFiles.length)
+      .map(([rom, inputFiles]) => [rom, inputFiles[0]]));
+  }
+
+  private static reverseArchiveMap<T>(input: Map<T, File[]>): Map<Archive, T[]> {
+    return [...input.entries()]
+      .reduce((map, [value, files]) => {
+        files
+          .filter((file) => file instanceof ArchiveEntry)
+          .map((archiveEntry) => (archiveEntry as ArchiveEntry<any>).getArchive())
+          .forEach((archive) => {
+            const valuesForArchive = map.get(archive) || [];
+            valuesForArchive.push(value);
+            map.set(archive, valuesForArchive);
+          });
+        return map;
+      }, new Map<Archive, T[]>());
   }
 
   private async getOutputFile(
