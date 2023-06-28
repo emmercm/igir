@@ -159,7 +159,7 @@ export default class CandidateGenerator extends Module {
     // Ignore the Game if not every File is present
     if (missingRoms.length > 0) {
       if (foundRomsWithFiles.length > 0) {
-        await this.logMissingRomFiles(dat, game, release, missingRoms);
+        await this.logMissingRomFiles(dat, game, release, foundRomsWithFiles, missingRoms);
       }
       return undefined;
     }
@@ -253,16 +253,17 @@ export default class CandidateGenerator extends Module {
     dat: DAT,
     game: Game,
     release: Release | undefined,
+    foundRomsWithFiles: ROMWithFiles[],
     missingRoms: ROM[],
   ): Promise<void> {
-    let message = `${dat.getNameShort()}: missing ${missingRoms.length.toLocaleString()} file${missingRoms.length !== 1 ? 's' : ''} for: ${game.getName()}`;
+    let message = `${dat.getNameShort()}: ${game.getName()}: found ${foundRomsWithFiles.length.toLocaleString()} file${missingRoms.length !== 1 ? 's' : ''}, missing ${missingRoms.length.toLocaleString()} file${missingRoms.length !== 1 ? 's' : ''}`;
     if (release?.getRegion()) {
       message += ` (${release?.getRegion()})`;
     }
     missingRoms.forEach((rom) => {
       message += `\n  ${rom.getName()}`;
     });
-    await this.progressBar.logWarn(message);
+    await this.progressBar.logDebug(message);
   }
 
   private async hasConflictingOutputFiles(romsWithFiles: ROMWithFiles[]): Promise<boolean> {

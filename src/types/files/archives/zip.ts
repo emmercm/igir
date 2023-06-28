@@ -88,7 +88,7 @@ export default class Zip extends Archive {
   async createArchive(
     options: Options,
     dat: DAT,
-    inputToOutput: Map<File, ArchiveEntry<Zip>>,
+    inputToOutput: [File, ArchiveEntry<Zip>][],
   ): Promise<void> {
     // Pipe the zip contents to disk, using an intermediate temp file because we may be trying to
     // overwrite an input zip file
@@ -128,7 +128,7 @@ export default class Zip extends Archive {
     zipFile: Archiver,
     options: Options,
     dat: DAT,
-    inputToOutput: Map<File, ArchiveEntry<Zip>>,
+    inputToOutput: [File, ArchiveEntry<Zip>][],
   ): Promise<void> {
     let zipFileError: ArchiverError | undefined;
     const catchError = (err: ArchiverError): void => {
@@ -144,7 +144,7 @@ export default class Zip extends Archive {
 
     // Write all archive entries to the zip
     await async.eachLimit(
-      [...inputToOutput.entries()],
+      inputToOutput,
       /**
        * {@link archiver} uses a sequential, async queue internally:
        * @see https://github.com/archiverjs/node-archiver/blob/b5cc14cc97cc64bdca32c0cbe9d660b5b979be7c/lib/core.js#L52
