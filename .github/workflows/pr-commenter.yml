@@ -4,7 +4,9 @@ on:
   pull_request:
     types:
       - opened
-      - synchronize  # PR's branch was edited (i.e. new commits)
+  push:
+    paths:
+      - '.github/workflows/**'
 
 jobs:
   npm-exec-test:
@@ -25,7 +27,8 @@ jobs:
       - uses: thollander/actions-comment-pull-request@v2
         with:
           message: |
+            :test_tube: This pull request can be tested locally with the following command:
             ```shell
-            npm exec --yes -- "github:${{ github.repository }}#${{ github.head_ref }}"
+            npm exec --yes -- "github:${{ github.repository }}#${{ github.head_ref }}" [commands..] [options]
             ```
           comment_tag: npm-exec
