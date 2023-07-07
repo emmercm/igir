@@ -3,16 +3,15 @@ name: Pull Request Commenter
 on:
   pull_request:
     types:
+      # - edited  # PR's base branch was changed
       - opened
+      - reopened
       - synchronize  # PR's branch was edited (i.e. new commits)
-    paths:
-      - '.github/workflows/**'
 
 jobs:
   npm-exec-test:
     runs-on: ${{ matrix.os }}-latest
     strategy:
-      fail-fast: false
       matrix:
         os: [ ubuntu, macos, windows ]
     steps:
@@ -27,7 +26,8 @@ jobs:
       - uses: thollander/actions-comment-pull-request@v2
         with:
           message: |
-            :test_tube: This pull request can be tested locally with the following command:
+            ## :test_tube: Branch Testing
+            This pull request can be tested locally with the following command:
             ```shell
             npm exec --yes -- "github:${{ github.repository }}#${{ github.head_ref }}" [commands..] [options]
             ```
