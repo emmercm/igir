@@ -87,9 +87,9 @@ jobs:
           cache: 'npm'
 
       # Test the auto-built files
-      - run: node --eval 'if(require("fs").existsSync("build")){process.exit(1);}'
+      - run: node --eval "if(require('fs').existsSync('build')){process.exit(1);}"
       - run: npm install
-      - run: node --eval 'if(!require("fs").existsSync("build")){process.exit(1);}'
+      - run: node --eval "if(\!require('fs').existsSync('build')){process.exit(1);}"
 
   node-package:
     runs-on: ubuntu-latest
