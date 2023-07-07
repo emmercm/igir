@@ -91,7 +91,7 @@ jobs:
       # Test the auto-built files
       - name: Assert output doesn't exist before
         run: node --eval "if(require('fs').existsSync('build')){process.exit(1);}"
-      - run: npm install
+      - run: npm exec --yes -- "github:${{ github.repository }}#${{ github.head_ref }}" --help
       - name: Assert output exists after
         run: node --eval "if(require('fs').existsSync('build')===false){process.exit(1);}"
 
