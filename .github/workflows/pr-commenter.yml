@@ -1,0 +1,31 @@
+name: Pull Request Commenter
+
+on:
+  pull_request:
+    types:
+      - opened
+      - synchronize  # PR's branch was edited (i.e. new commits)
+
+jobs:
+  npm-exec-test:
+    runs-on: ${{ matrix.os }}-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ ubuntu, macos, windows ]
+    steps:
+      - uses: actions/setup-node@v3
+      - run: npm exec --yes -- "github:${{ github.repository }}#${{ github.head_ref }}" --help
+
+  npm-exec:
+    needs:
+      - npm-exec-test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: thollander/actions-comment-pull-request@v2
+        with:
+          message: |
+            ```shell
+            npm exec --yes -- "github:${{ github.repository }}#${{ github.head_ref }}"
+            ```
+          comment_tag: npm-exec
