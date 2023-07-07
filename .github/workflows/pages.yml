@@ -9,6 +9,10 @@ on:
       - opened
       - reopened
       - synchronize  # PR's branch was edited (i.e. new commits)
+    paths:
+      - 'docs/**'
+      - 'mkdocs.yml'
+      - 'README.md'
   release:
     types:
       - published
