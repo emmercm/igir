@@ -82,11 +82,7 @@ jobs:
         os: [ ubuntu, macos, windows ]
     steps:
       # Setup and install
-      - uses: actions/checkout@v3
       - uses: actions/setup-node@v3
-        with:
-          node-version-file: '.nvmrc'
-          cache: 'npm'
 
       # Test the auto-built files
       - name: Assert output doesn't exist before
