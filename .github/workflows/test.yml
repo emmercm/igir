@@ -8,9 +8,10 @@ name: Project CI
 on:
   pull_request:
     types:
+      # - edited  # PR's base branch was changed
       - opened
-      - synchronize  # HEAD has changed, e.g. a push happened
       - reopened
+      - synchronize  # PR's branch was edited (i.e. new commits)
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}

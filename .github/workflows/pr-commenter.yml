@@ -1,0 +1,34 @@
+name: Pull Request Commenter
+
+on:
+  pull_request:
+    types:
+      # - edited  # PR's base branch was changed
+      - opened
+      - reopened
+      - synchronize  # PR's branch was edited (i.e. new commits)
+
+jobs:
+  npm-exec-test:
+    runs-on: ${{ matrix.os }}-latest
+    strategy:
+      matrix:
+        os: [ ubuntu, macos, windows ]
+    steps:
+      - uses: actions/setup-node@v3
+      - run: npm exec --yes -- "github:${{ github.repository }}#${{ github.head_ref }}" --help
+
+  npm-exec:
+    needs:
+      - npm-exec-test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: thollander/actions-comment-pull-request@v2
+        with:
+          message: |
+            ## :test_tube: Branch Testing
+            This pull request can be tested locally with the following command:
+            ```shell
+            npm exec --yes -- "github:${{ github.repository }}#${{ github.head_ref }}" [commands..] [options]
+            ```
+          comment_tag: npm-exec

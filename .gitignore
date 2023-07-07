@@ -109,6 +109,7 @@ build/
 site/
 *.bat
 *.sh
+!test/*.sh
 
 # DATs
 *.dat
