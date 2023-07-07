@@ -4,7 +4,7 @@ on:
   pull_request:
     types:
       - opened
-  push:
+      - synchronize  # PR's branch was edited (i.e. new commits)
     paths:
       - '.github/workflows/**'
 
