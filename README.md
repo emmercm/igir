@@ -10,7 +10,7 @@
   <a href="https://github.com/emmercm/igir"><img alt="GitHub: stars" src="https://img.shields.io/github/stars/emmercm/igir?color=%236e5494&logo=github&logoColor=white"></a>
 </p>
 <p align="center">
-  <a href="https://snyk.io/test/npm/igir"><img alt="Snyk: vulnerabilities" src="https://img.shields.io/snyk/vulnerabilities/npm/igir?logo=snyk&logoColor=white"></a>
+  <a href="https://snyk.io/test/npm/igir"><img alt="Snyk: vulnerabilities" src="https://snyk.io/test/npm/igir/badge.svg"></a>
   <a href="https://codecov.io/gh/emmercm/igir"><img alt="codecov: coverage" src="https://img.shields.io/codecov/c/github/emmercm/igir?logo=codecov&logoColor=white"></a>
   <a href="https://codeclimate.com/github/emmercm/igir/maintainability"><img alt="Code Climate: maintainability" src="https://img.shields.io/codeclimate/maintainability-percentage/emmercm/igir?logo=codeclimate&logoColor=white"></a>
   <a href="https://github.com/emmercm/igir/blob/main/LICENSE"><img alt="license" src="https://img.shields.io/github/license/emmercm/igir?color=blue"></a>
