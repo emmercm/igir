@@ -23,6 +23,7 @@
   },
   "license": "GPL-3.0-or-later",
   "author": "Christian Emmer",
+  "funding": "https://github.com/sponsors/emmercm",
   "type": "module",
   "files": [
     "build",
