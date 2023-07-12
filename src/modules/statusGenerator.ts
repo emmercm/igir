@@ -19,7 +19,7 @@ export default class StatusGenerator extends Module {
     this.options = options;
   }
 
-  async output(
+  async generate(
     dat: DAT,
     parentsToReleaseCandidates: Map<Parent, ReleaseCandidate[]>,
   ): Promise<DATStatus> {
