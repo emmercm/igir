@@ -4,6 +4,7 @@ import util from 'util';
 import ProgressBar from '../console/progressBar.js';
 import DATStatus, { Status } from '../types/datStatus.js';
 import Options from '../types/options.js';
+import ReleaseCandidate from '../types/releaseCandidate.js';
 import Module from './module.js';
 
 /**
@@ -43,9 +44,10 @@ export default class ReportGenerator extends Module {
         return csv.split('\n').slice(1).join('\n');
       });
 
-    const matchedFiles = datStatuses
+    const releaseCandidates = datStatuses
       .flatMap((datStatus) => datStatus.getReleaseCandidates())
-      .filter((releaseCandidate) => releaseCandidate)
+      .filter((releaseCandidate) => releaseCandidate) as ReleaseCandidate[];
+    const matchedFiles = releaseCandidates
       .flatMap((releaseCandidate) => releaseCandidate.getRomsWithFiles())
       .map((romWithFiles) => romWithFiles.getInputFile().getFilePath())
       .reduce((map, filePath) => {
