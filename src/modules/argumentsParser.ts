@@ -369,6 +369,11 @@ export default class ArgumentsParser {
         type: 'boolean',
         conflicts: ['only-bios'],
       })
+      .option('no-device', {
+        group: groupRomFiltering,
+        description: 'Filter out MAME devices',
+        type: 'boolean',
+      })
       .option('no-unlicensed', {
         group: groupRomFiltering,
         description: 'Filter out unlicensed ROMs',

@@ -63,7 +63,7 @@ describe('multiple files', () => {
   });
 
   it('some files are path excluded', async () => {
-    await expect(createDatScanner(['test/fixtures/dats'], ['test/fixtures/**/*.dat']).scan()).resolves.toHaveLength(2);
+    await expect(createDatScanner(['test/fixtures/dats'], ['test/fixtures/**/*.dat']).scan()).resolves.toHaveLength(1);
     await expect(createDatScanner(['test/fixtures/dats'], ['test/fixtures/**/*.zip']).scan()).resolves.toHaveLength(4);
   });
 
@@ -91,6 +91,6 @@ describe('multiple files', () => {
 it('should scan single files', async () => {
   await expect(createDatScanner([path.join(path.resolve(), 'test', 'fixtures', 'dats', 'one.*')]).scan()).resolves.toHaveLength(1);
   await expect(createDatScanner(['test/fixtures/dats/one.*']).scan()).resolves.toHaveLength(1);
-  await expect(createDatScanner(['test/fixtures/*/one.zip']).scan()).resolves.toHaveLength(1);
-  await expect(createDatScanner(['test/fixtures/dats/one.zip']).scan()).resolves.toHaveLength(1);
+  await expect(createDatScanner(['test/fixtures/*/one.dat']).scan()).resolves.toHaveLength(1);
+  await expect(createDatScanner(['test/fixtures/dats/one.dat']).scan()).resolves.toHaveLength(1);
 });

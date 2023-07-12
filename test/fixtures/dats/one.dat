@@ -1,0 +1,44 @@
+<?xml version="1.0"?>
+<!DOCTYPE datafile PUBLIC "-//Logiqx//DTD ROM Management Datafile//EN" "http://www.logiqx.com/Dats/datafile.dtd">
+<datafile>
+	<header>
+		<name>One</name>
+		<description>One</description>
+		<version>20220705</version>
+		<author>emmercm</author>
+	</header>
+	<machine name="Empty">
+		<description>Empty</description>
+		<rom name="Empty.rom" size="0" crc="00000000" md5="d41d8cd98f00b204e9800998ecf8427e" sha1="da39a3ee5e6b4b0d3255bfef95601890afd80709" status="verified"/>
+		<rom name="Missing.rom" size="0" crc="ffffffff" md5="8ead518f69f2e6c4b92e68a89a056d68" sha1="d6487ef2e2c46d33cb46fdf891334331d6f6af1e" status="verified"/>
+	</machine>
+	<machine name="Foobar">
+    <description>Foobar</description>
+    <release name="Foobar" region="USA"/>
+    <rom name="Foobar.lnx" size="7" crc="b22c9747" md5="14758f1afd44c09b7992073ccf00b43d" sha1="988881adc9fc3655077dc2d4d757d480b5ea0e11" status="verified"/>
+  </machine>
+  <machine name="Fizzbuzz">
+    <description>Fizzbuzz</description>
+    <release name="Fizzbuzz" region="EUR"/>
+    <rom name="Fizzbuzz.nes" size="9" crc="370517b5" md5="cbe8410861130a91609295349918c2c2" sha1="5a316d9f0e06964d94cdd62a933803d7147ddadb" status="verified"/>
+  </machine>
+  <machine name="Lorem Ipsum">
+    <description>Lorem Ipsum</description>
+    <release name="Lorem Ipsum" region="JPN"/>
+    <rom name="Lorem Ipsum.rom" size="11" crc="70856527" md5="fffcb698d88fbc9425a636ba7e4712a3" sha1="1d913738eb363a4056c19e158aa81189a1eb7a55" status="verified"/>
+  </machine>
+  <machine name="One Three">
+    <description>One Three</description>
+    <rom name="One.rom" size="4" crc="f817a89f" md5="5bbf5a52328e7439ae6e719dfe712200" sha1="c7059bb19433cc3cabaa6236c83d56668a843dd2" status="verified"/>
+    <rom name="Three.rom" size="6" crc="ff46c5d8" md5="febe6995bad457991331348f7b9c85fa" sha1="1e7720a3460b8a84ac4ba27880d64526a3872f1c" status="verified"/>
+  </machine>
+  <machine name="Three Four Five">
+    <description>Three Four Five</description>
+    <rom name="Three.rom" size="6" crc="ff46c5d8" md5="febe6995bad457991331348f7b9c85fa" sha1="1e7720a3460b8a84ac4ba27880d64526a3872f1c" status="verified"/>
+    <rom name="Four.rom" size="5" crc="1cf3ca74" md5="75ffdb827341e578959bfcabde3789d8" sha1="4a4121ecd766ed16943a0c7b54c18f743e90c3f6" status="verified"/>
+    <rom name="Five.rom" size="5" crc="3e5daf67" md5="014835e36358e38c7f7897d6571e4529" sha1="4430bb02f6ed700d4408eb307b25f8b1a25d93de" status="verified"/>
+  </machine>
+  <machine name="Device" isdevice="yes">
+    <description>Device</description>
+  </machine>
+</datafile>
