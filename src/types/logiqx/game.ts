@@ -33,6 +33,7 @@ export interface GameProps {
   readonly description?: string,
   readonly sourceFile?: string,
   readonly bios?: 'yes' | 'no',
+  readonly device?: 'yes' | 'no',
   readonly cloneOf?: string,
   readonly romOf?: string,
   readonly sampleOf?: string,
@@ -58,6 +59,9 @@ export default class Game implements GameProps {
   @Expose({ name: 'isbios' })
   readonly bios: 'yes' | 'no' = 'no';
 
+  @Expose({ name: 'isdevice' })
+  readonly device: 'yes' | 'no' = 'no';
+
   @Expose({ name: 'cloneof' })
   readonly cloneOf?: string;
 
@@ -79,6 +83,7 @@ export default class Game implements GameProps {
     this.name = options?.name || '';
     this.description = options?.description || '';
     this.bios = options?.bios || this.bios;
+    this.device = options?.device || this.device;
     this.cloneOf = options?.cloneOf;
     this.romOf = options?.romOf;
     this.sampleOf = options?.sampleOf;
@@ -108,6 +113,10 @@ export default class Game implements GameProps {
 
   isBios(): boolean {
     return this.bios === 'yes' || this.name.match(/\[BIOS\]/i) !== null;
+  }
+
+  isDevice(): boolean {
+    return this.device === 'yes';
   }
 
   getReleases(): Release[] {

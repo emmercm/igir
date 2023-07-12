@@ -98,6 +98,7 @@ export default class CandidateFilter extends Module {
       this.regionNotAllowed(releaseCandidate),
       this.options.getOnlyBios() && !game.isBios(),
       this.options.getNoBios() && game.isBios(),
+      this.options.getNoDevice() && game.isDevice(),
       this.options.getOnlyRetail() && !game.isRetail(),
       this.options.getNoUnlicensed() && game.isUnlicensed(),
       this.options.getNoDemo() && game.isDemo(),
