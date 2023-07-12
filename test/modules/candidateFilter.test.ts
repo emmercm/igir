@@ -439,7 +439,7 @@ describe('preFilter', () => {
     it('should return no candidates if none matching', async () => {
       await expectFilteredCandidates({ noBios: true }, [
         await buildReleaseCandidatesWithRegionLanguage('one', 'USA', 'EN', { bios: 'yes' }),
-        await buildReleaseCandidatesWithRegionLanguage('two', 'USA', 'EN', { bios: 'yes' }),
+        await buildReleaseCandidatesWithRegionLanguage('two [BIOS]', 'USA', 'EN', { bios: 'no' }),
       ], 0);
     });
 
@@ -455,6 +455,38 @@ describe('preFilter', () => {
       await expectFilteredCandidates({ noBios: true }, [
         await buildReleaseCandidatesWithRegionLanguage('one', 'USA', 'EN', { bios: 'no' }),
         await buildReleaseCandidatesWithRegionLanguage('two', 'USA', 'EN', { bios: 'no' }),
+      ], 2);
+    });
+  });
+
+  describe('no device', () => {
+    it('should return all candidates when option is false', async () => {
+      await expectFilteredCandidates({ noDevice: false }, [
+        await buildReleaseCandidatesWithRegionLanguage('one', 'USA', 'EN', { device: 'no' }),
+        await buildReleaseCandidatesWithRegionLanguage('two', 'USA', 'EN', { device: 'yes' }),
+        await buildReleaseCandidatesWithRegionLanguage('three', 'USA', 'EN', { device: 'no' }),
+      ], 3);
+    });
+
+    it('should return no candidates if none matching', async () => {
+      await expectFilteredCandidates({ noDevice: true }, [
+        await buildReleaseCandidatesWithRegionLanguage('one', 'USA', 'EN', { device: 'yes' }),
+        await buildReleaseCandidatesWithRegionLanguage('two', 'USA', 'EN', { device: 'yes' }),
+      ], 0);
+    });
+
+    it('should return some candidates if some matching', async () => {
+      await expectFilteredCandidates({ noDevice: true }, [
+        await buildReleaseCandidatesWithRegionLanguage('one', 'USA', 'EN', { device: 'no' }),
+        await buildReleaseCandidatesWithRegionLanguage('two', 'USA', 'EN', { device: 'yes' }),
+        await buildReleaseCandidatesWithRegionLanguage('three', 'USA', 'EN', { device: 'no' }),
+      ], 2);
+    });
+
+    it('should return all candidates if all matching', async () => {
+      await expectFilteredCandidates({ noDevice: true }, [
+        await buildReleaseCandidatesWithRegionLanguage('one', 'USA', 'EN', { device: 'no' }),
+        await buildReleaseCandidatesWithRegionLanguage('two', 'USA', 'EN', { device: 'no' }),
       ], 2);
     });
   });
