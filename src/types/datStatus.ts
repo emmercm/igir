@@ -273,7 +273,7 @@ export default class DATStatus {
       !options.getSingle() && !options.getOnlyBios() && !options.getOnlyRetail()
         ? ROMType.GAME : undefined,
       options.getOnlyBios() || !options.getNoBios() ? ROMType.BIOS : undefined,
-      !options.getNoDevice() ? ROMType.DEVICE : undefined,
+      !options.getNoDevice() && !options.getOnlyBios() ? ROMType.DEVICE : undefined,
       options.getOnlyRetail() || !options.getOnlyBios() ? ROMType.RETAIL : undefined,
       ROMType.PATCHED,
     ].filter((romType) => romType) as ROMType[];
