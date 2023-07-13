@@ -19,6 +19,7 @@ const gameNameBios = 'bios';
 const gameNamePrototype = 'game prototype (proto)';
 const gameNameSingleRom = 'game with single rom';
 const gameNameMultipleRoms = 'game with multiple roms';
+const gameNameDevice = 'device';
 
 const defaultOptions: OptionsProps = {
   dat: [''], // force "is using DATs"
@@ -51,6 +52,11 @@ const dat = new DAT(new Header({
       new ROM('two.rom', 123, '55555555'),
     ],
   }),
+  new Game({
+    name: gameNameDevice,
+    device: 'yes',
+    rom: [],
+  }),
 ]);
 
 async function getParentToReleaseCandidates(
@@ -79,6 +85,13 @@ describe('toConsole', () => {
       expect(stripAnsi(datStatus.toConsole(options))).toEqual('1/5 games, 0/1 BIOSes, 1/4 retail releases found');
     });
 
+    it('should return BIOSes and retail as missing', async () => {
+      const options = new Options({ ...defaultOptions, single: true });
+      const datStatus = await new StatusGenerator(options, new ProgressBarFake())
+        .generate(dat, new Map());
+      expect(stripAnsi(datStatus.toConsole(options))).toEqual('0/1 BIOSes, 1/4 retail releases found');
+    });
+
     it('should return games and retail as missing', async () => {
       const options = new Options({ ...defaultOptions, noBios: true });
       const datStatus = await new StatusGenerator(options, new ProgressBarFake())
@@ -93,12 +106,7 @@ describe('toConsole', () => {
       expect(stripAnsi(datStatus.toConsole(options))).toEqual('0/1 BIOSes found');
     });
 
-    it('should return BIOSes and retail as missing', async () => {
-      const options = new Options({ ...defaultOptions, single: true });
-      const datStatus = await new StatusGenerator(options, new ProgressBarFake())
-        .generate(dat, new Map());
-      expect(stripAnsi(datStatus.toConsole(options))).toEqual('0/1 BIOSes, 1/4 retail releases found');
-    });
+    // TODO(cemmer): --no-device
   });
 
   describe('partially missing', () => {
@@ -179,6 +187,17 @@ dat,game with single rom,MISSING,,false,false,true,false,false,false,false,false
 dat,no roms,FOUND,,false,false,true,false,false,false,false,false,false,false,false,false`);
     });
 
+    it('should return BIOSes and retail as missing', async () => {
+      const options = new Options({ ...defaultOptions, single: true });
+      const datStatus = await new StatusGenerator(options, new ProgressBarFake())
+        .generate(dat, new Map());
+      await expect(datStatus.toCsv(options)).resolves.toEqual(`DAT Name,Game Name,Status,ROM Files,Patched,BIOS,Retail Release,Unlicensed,Demo,Beta,Sample,Prototype,Test,Aftermarket,Homebrew,Bad
+dat,bios,MISSING,,false,true,true,false,false,false,false,false,false,false,false,false
+dat,game with multiple roms,MISSING,,false,false,true,false,false,false,false,false,false,false,false,false
+dat,game with single rom,MISSING,,false,false,true,false,false,false,false,false,false,false,false,false
+dat,no roms,FOUND,,false,false,true,false,false,false,false,false,false,false,false,false`);
+    });
+
     it('should return games and retail as missing', async () => {
       const options = new Options({ noBios: true });
       const datStatus = await new StatusGenerator(options, new ProgressBarFake())
@@ -199,16 +218,7 @@ dat,no roms,FOUND,,false,false,true,false,false,false,false,false,false,false,fa
 dat,bios,MISSING,,false,true,true,false,false,false,false,false,false,false,false,false`);
     });
 
-    it('should return BIOSes and retail as missing', async () => {
-      const options = new Options({ ...defaultOptions, single: true });
-      const datStatus = await new StatusGenerator(options, new ProgressBarFake())
-        .generate(dat, new Map());
-      await expect(datStatus.toCsv(options)).resolves.toEqual(`DAT Name,Game Name,Status,ROM Files,Patched,BIOS,Retail Release,Unlicensed,Demo,Beta,Sample,Prototype,Test,Aftermarket,Homebrew,Bad
-dat,bios,MISSING,,false,true,true,false,false,false,false,false,false,false,false,false
-dat,game with multiple roms,MISSING,,false,false,true,false,false,false,false,false,false,false,false,false
-dat,game with single rom,MISSING,,false,false,true,false,false,false,false,false,false,false,false,false
-dat,no roms,FOUND,,false,false,true,false,false,false,false,false,false,false,false,false`);
-    });
+    // TODO(cemmer): --no-device
   });
 
   describe('partially missing', () => {
