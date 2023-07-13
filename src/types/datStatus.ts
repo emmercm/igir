@@ -10,6 +10,7 @@ import ReleaseCandidate from './releaseCandidate.js';
 enum ROMType {
   GAME = 'games',
   BIOS = 'BIOSes',
+  DEVICE = 'devices',
   RETAIL = 'retail releases',
   PATCHED = 'patched games',
 }
@@ -83,6 +84,9 @@ export default class DATStatus {
     DATStatus.append(map, ROMType.GAME, value);
     if (game.isBios()) {
       DATStatus.append(map, ROMType.BIOS, value);
+    }
+    if (game.isDevice()) {
+      DATStatus.append(map, ROMType.DEVICE, value);
     }
     if (game.isRetail()) {
       DATStatus.append(map, ROMType.RETAIL, value);
@@ -269,6 +273,7 @@ export default class DATStatus {
       !options.getSingle() && !options.getOnlyBios() && !options.getOnlyRetail()
         ? ROMType.GAME : undefined,
       options.getOnlyBios() || !options.getNoBios() ? ROMType.BIOS : undefined,
+      !options.getNoDevice() && !options.getOnlyBios() ? ROMType.DEVICE : undefined,
       options.getOnlyRetail() || !options.getOnlyBios() ? ROMType.RETAIL : undefined,
       ROMType.PATCHED,
     ].filter((romType) => romType) as ROMType[];
