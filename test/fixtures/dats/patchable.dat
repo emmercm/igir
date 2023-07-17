@@ -9,63 +9,63 @@
   </header>
 
   <!-- APS (GBA) -->
-  <machine name="92C85C9">
+  <game name="92C85C9">
     <description>92C85C9</description>
     <rom name="92C85C9.rom" size="65536" crc="06692159" md5="8e0caf88ba437cb7109c5642e06cfdb2" sha1="8335c4505380035c2fa94e2a1b9e69517e746905" status="verified"/>
     <!-- After: size="65536" crc="b13eb478" -->
-  </machine>
+  </game>
   <!-- APS (N64 SIMPLE) -->
-  <machine name="3708F2C">
+  <game name="3708F2C">
     <description>3708F2C</description>
     <rom name="3708F2C.rom" size="1025" crc="20891c9f" md5="b191e2d913681475ef6a579d4b40bb1f" sha1="181e0713260060fa7d6c64292902023ca7c88a06" status="verified"/>
     <!-- After: size="1025" crc="caaaf550" -->
-  </machine>
+  </game>
 
   <!-- IPS -->
-  <machine name="Before">
+  <game name="Before">
     <description>Before</description>
     <rom name="Before.rom" size="7" crc="0361b321" md5="ab8d71b3fdce92efd8bdf29cffd36116" sha1="7473def7220a59a6b4146e629064e1456542242d" status="verified"/>
     <!-- After: size="7" crc="4c8e44d4" -->
-  </machine>
+  </game>
   <!-- IPS32 -->
-  <machine name="65D1206">
+  <game name="65D1206">
     <description>65D1206</description>
     <rom name="65D1206.rom" size="1025" crc="20323455" md5="5ab0c664d1ed83757fbe49e99c509cb0" sha1="31306e0f014d3ac2c24d2abede5f9a67c097c5e7" status="verified"/>
     <!-- After: size=1025" crc="8bb5cc63" -->
-  </machine>
+  </game>
 
   <!-- BPS -->
-  <machine name="Best">
+  <game name="Best">
     <description>Best</description>
     <rom name="Best.rom" size="25" crc="1e3d78cf" md5="5212c8404bf1de024f9fb62289b68474" sha1="727d8db3dbfb5960057cb62e8b47d0e2842a4d55" status="verified"/>
     <!-- After: size="26" crc="6ff9ef96" -->
-  </machine>
+  </game>
 
   <!-- NINJA2 -->
-  <machine name="612644F">
+  <game name="612644F">
     <description>612644F</description>
     <rom name="612644F.rom" size="1025" crc="f7591b29" md5="92c62becd006bac8175304bb80dfb3aa" sha1="2bcd0216e1de4ee670ee4945d600beaf6acf8feb" status="verified"/>
     <!-- After: size="1025" crc="922f5181" -->
-  </machine>
+  </game>
 
   <!-- PPF -->
-  <machine name="C01173E">
+  <game name="C01173E">
     <description>C01173E</description>
     <rom name="C01173E.rom" size="1025" crc="dfaebe28" md5="c9e35aafaec606fcb16763200ce35b0f" sha1="2f185826482db2878663c0cd393d62d0c10814ae" status="verified"/>
     <!-- After: size="1025" crc="95284ab4" -->
-  </machine>
+  </game>
 
   <!-- UPS -->
-  <machine name="KDULVQN">
+  <game name="KDULVQN">
     <description>KDULVQN</description>
     <rom name="KDULVQN.rom" size="1025" crc="b1c303e4" md5="36109a5d2f9041b6ec00d7aea63379f3" sha1="6bc1e23ffaf5fafaf03fb10732b6be3b567b1417" status="verified"/>
     <!-- After: size="1025" crc="e02c6dbb" -->
-  </machine>
+  </game>
 
   <!-- vcdiff -->
-  <machine name="0F09A40">
+  <game name="0F09A40">
     <description>0F09A40</description>
     <rom name="0F09A40.rom" size="1025" crc="2f943e86" md5="02784c56583f4d82d11aec4c57f2859c" sha1="7b5b3998062b8338324b5f69ffcdcc22087ccbd5" status="verified"/>
     <!-- After: size="1025" crc="1fb4f81f" -->
-  </machine>
+  </game>
 </datafile>

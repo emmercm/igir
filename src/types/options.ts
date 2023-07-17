@@ -59,6 +59,7 @@ export interface OptionsProps {
   readonly regionFilter?: string[],
   readonly onlyBios?: boolean,
   readonly noBios?: boolean,
+  readonly noDevice?: boolean,
   readonly noUnlicensed?: boolean,
   readonly onlyRetail?: boolean,
   readonly noDemo?: boolean,
@@ -147,6 +148,8 @@ export default class Options implements OptionsProps {
 
   readonly noBios: boolean;
 
+  readonly noDevice: boolean;
+
   readonly noUnlicensed: boolean;
 
   readonly onlyRetail: boolean;
@@ -234,6 +237,7 @@ export default class Options implements OptionsProps {
     this.regionFilter = options?.regionFilter || [];
     this.onlyBios = options?.onlyBios || false;
     this.noBios = options?.noBios || false;
+    this.noDevice = options?.noDevice || false;
     this.noUnlicensed = options?.noUnlicensed || false;
     this.onlyRetail = options?.onlyRetail || false;
     this.noDemo = options?.noDemo || false;
@@ -802,6 +806,10 @@ export default class Options implements OptionsProps {
 
   getNoBios(): boolean {
     return this.noBios;
+  }
+
+  getNoDevice(): boolean {
+    return this.noDevice;
   }
 
   getNoUnlicensed(): boolean {

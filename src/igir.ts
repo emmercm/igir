@@ -118,7 +118,7 @@ export default class Igir {
 
       // Write the output report
       const datStatus = await new StatusGenerator(this.options, progressBar)
-        .output(dat, parentsToCombinedCandidates);
+        .generate(dat, parentsToCombinedCandidates);
       datsStatuses.push(datStatus);
 
       // Progress bar cleanup

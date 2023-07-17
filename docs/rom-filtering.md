@@ -99,6 +99,14 @@ This option is best used for collating all BIOS files across all consoles to one
 
 Opposite of the above. This will filter out files that are not games.
 
+### No MAME devices
+
+```text
+--no-device
+```
+
+Filters out [MAME devices](https://wiki.mamedev.org/index.php/MAME_Device_Basics). MAME devices typically represent physical devices, such as microcontrollers, video display controllers, sounds boards, and more. Many MAME devices don't have any associated ROM files.
+
 ### No unlicensed
 
 ```text

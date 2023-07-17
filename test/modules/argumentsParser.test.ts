@@ -110,6 +110,7 @@ describe('options', () => {
     expect(options.getRegionFilter()).toHaveLength(0);
     expect(options.getOnlyBios()).toEqual(false);
     expect(options.getNoBios()).toEqual(false);
+    expect(options.getNoDevice()).toEqual(false);
     expect(options.getNoUnlicensed()).toEqual(false);
     expect(options.getOnlyRetail()).toEqual(false);
     expect(options.getNoDemo()).toEqual(false);
@@ -497,6 +498,15 @@ describe('options', () => {
     expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--no-bios', 'false', '--no-bios', 'true']).getNoBios()).toEqual(true);
     expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--no-bios', 'true', '--no-bios', 'false']).getNoBios()).toEqual(false);
     expect(() => argumentsParser.parse([...dummyCommandAndRequiredArgs, '--no-bios', '--only-bios'])).toThrow(/mutually exclusive/i);
+  });
+
+  it('should parse "no-device"', () => {
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--no-device']).getNoDevice()).toEqual(true);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--no-device', 'true']).getNoDevice()).toEqual(true);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--no-device', 'false']).getNoDevice()).toEqual(false);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--no-device', '--no-device']).getNoDevice()).toEqual(true);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--no-device', 'false', '--no-device', 'true']).getNoDevice()).toEqual(true);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--no-device', 'true', '--no-device', 'false']).getNoDevice()).toEqual(false);
   });
 
   it('should parse "no-unlicensed"', () => {
