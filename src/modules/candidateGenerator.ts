@@ -232,7 +232,7 @@ export default class CandidateGenerator extends Module {
       .reduce((map, [value, files]) => {
         files
           .filter((file) => file instanceof ArchiveEntry)
-          .map((archiveEntry) => (archiveEntry as ArchiveEntry<any>).getArchive())
+          .map((archiveEntry) => (archiveEntry as ArchiveEntry<never>).getArchive())
           .forEach((archive) => {
             const valuesForArchive = map.get(archive) || [];
             valuesForArchive.push(value);
