@@ -103,7 +103,7 @@ describe.each(['zip', 'extract', 'raw'])('command: %s', (command) => {
     expect(candidateWithNoRoms.getRomsWithFiles()).toHaveLength(0);
   });
 
-  it('should return some candidates for some games that have all of their files matched: %#', async () => {
+  it('should return some candidates for some games that have all of their files matched', async () => {
     // Given
     const files = [
       await ArchiveEntry.entryOf(new Zip('one.zip'), 'one.rom', 1, '12345678'),
@@ -136,15 +136,17 @@ describe.each(['zip', 'extract', 'raw'])('command: %s', (command) => {
     expect(candidateWithTwoRoms).toHaveLength(0);
   });
 
-  it('should return all candidates for all games that have all of their files matched: %#', async () => {
+  it('should return all candidates for all games that have all of their files matched', async () => {
     // Given
+    const oneTwoThreeZip = new Zip('onetwothree.zip');
+    const twoSevenZip = new SevenZip('two.7z');
     const files = [
       await File.fileOf('one.rom', 1, '12345678'),
-      await ArchiveEntry.entryOf(new Zip('onetwothree.zip'), 'one.rom', 1, '12345678'),
-      await ArchiveEntry.entryOf(new Zip('onetwothree.zip'), 'two.rom', 2, 'abcdef90'),
-      await ArchiveEntry.entryOf(new Zip('onetwothree.zip'), 'three.rom', 4, '34567890'),
-      await ArchiveEntry.entryOf(new SevenZip('two.7z'), 'a.rom', 2, 'abcdef90'),
-      await ArchiveEntry.entryOf(new SevenZip('two.7z'), 'b.rom', 3, '09876543'),
+      await ArchiveEntry.entryOf(oneTwoThreeZip, 'one.rom', 1, '12345678'),
+      await ArchiveEntry.entryOf(oneTwoThreeZip, 'two.rom', 2, 'abcdef90'),
+      await ArchiveEntry.entryOf(oneTwoThreeZip, 'three.rom', 4, '34567890'),
+      await ArchiveEntry.entryOf(twoSevenZip, 'a.rom', 2, 'abcdef90'),
+      await ArchiveEntry.entryOf(twoSevenZip, 'b.rom', 3, '09876543'),
     ];
 
     // When
@@ -177,16 +179,17 @@ describe.each(['zip', 'extract', 'raw'])('command: %s', (command) => {
 });
 
 describe('with ROMs with headers', () => {
+  const twoSevenZip = new SevenZip('two.7z');
   const filePromises = [
     // Extension doesn't change with header removal
     File.fileOf('one.rom', 1, '12345678', ROMHeader.headerFromFilename('dummy.nes')),
     // Extension does change with header removal
-    ArchiveEntry.entryOf(new SevenZip('two.7z'), 'a.rom', 2, 'abcdef90', ROMHeader.headerFromFilename('dummy.smc')),
+    ArchiveEntry.entryOf(twoSevenZip, 'a.rom', 2, 'abcdef90', ROMHeader.headerFromFilename('dummy.smc')),
     // Doesn't have a header
-    ArchiveEntry.entryOf(new SevenZip('two.7z'), 'b.rom', 3, '09876543'),
+    ArchiveEntry.entryOf(twoSevenZip, 'b.rom', 3, '09876543'),
   ];
 
-  test('zip', async () => {
+  it('zip', async () => {
     // Given
     const options = new Options({
       commands: ['copy', 'zip'],
@@ -225,7 +228,7 @@ describe('with ROMs with headers', () => {
     });
   });
 
-  test('extract', async () => {
+  it('extract', async () => {
     // Given
     const options = new Options({
       commands: ['copy', 'extract'],
@@ -255,7 +258,7 @@ describe('with ROMs with headers', () => {
     });
   });
 
-  test('raw', async () => {
+  it('raw', async () => {
     // Given
     const options = new Options({
       commands: ['copy'],
@@ -296,7 +299,7 @@ describe('with different input files for every game ROM', () => {
     ArchiveEntry.entryOf(new Rar('b.7z'), 'b.rom', 3, '09876543'),
   ];
 
-  test.each(['zip', 'extract'])('%s', async (command) => {
+  test.each(['zip', 'extract'])('should generate candidates when all ROMs for a game are in different files: %s', async (command) => {
     // Given
     const options = new Options({ commands: ['copy', command] });
 
@@ -326,7 +329,7 @@ describe('with different input files for every game ROM', () => {
     });
   });
 
-  test('raw', async () => {
+  it('should generate no candidate when multiple input archives need to raw write to the same output path', async () => {
     // Given
     const options = new Options({ commands: ['copy'] });
 
@@ -353,5 +356,74 @@ describe('with different input files for every game ROM', () => {
     });
 
     expect(candidates[2]).toHaveLength(0);
+  });
+});
+
+describe.each(['copy', 'move'])('prefer input files from the same archive when raw writing: %s', (command) => {
+  const options = new Options({ commands: [command] });
+  const dat = new DAT(new Header(), [gameWithTwoRoms]);
+
+  it('should behave like normal with no archives', async () => {
+    // Given
+    const files = [
+      await File.fileOf('two.a', 2, 'abcdef90'),
+      await File.fileOf('two.b', 3, '09876543'),
+    ];
+
+    // When
+    const parentsToCandidates = await candidateGenerator(options, dat, files);
+
+    // Then only one candidate with two files is produced
+    expect(parentsToCandidates.size).toEqual(1);
+    const candidates = [...parentsToCandidates.values()];
+    expect(candidates[0]).toHaveLength(1);
+    expect(candidates[0][0].getRomsWithFiles()).toHaveLength(2);
+    expect(candidates[0][0].getRomsWithFiles()[0].getInputFile().getFilePath()).toEqual('two.a');
+    expect(candidates[0][0].getRomsWithFiles()[1].getInputFile().getFilePath()).toEqual('two.b');
+  });
+
+  it('should prefer input files from the same archive if it contains exactly every ROM', async () => {
+    // Given
+    const archive = new Zip('two.zip');
+    const files = [
+      await File.fileOf('two.a', 2, 'abcdef90'),
+      await File.fileOf('two.b', 3, '09876543'),
+      await ArchiveEntry.entryOf(archive, 'a.rom', 2, 'abcdef90'),
+      await ArchiveEntry.entryOf(archive, 'b.rom', 3, '09876543'),
+    ];
+
+    // When
+    const parentsToCandidates = await candidateGenerator(options, dat, files);
+
+    // Then only one candidate with both of its files coming from the zip is produced
+    expect(parentsToCandidates.size).toEqual(1);
+    const candidates = [...parentsToCandidates.values()];
+    expect(candidates[0]).toHaveLength(1);
+    expect(candidates[0][0].getRomsWithFiles()).toHaveLength(2);
+    expect(candidates[0][0].getRomsWithFiles()[0].getInputFile().getFilePath()).toEqual('two.zip');
+    expect(candidates[0][0].getRomsWithFiles()[1].getInputFile().getFilePath()).toEqual('two.zip');
+  });
+
+  it('should not prefer input archives that contain extra junk files', async () => {
+    // Given
+    const archive = new Zip('two.zip');
+    const files = [
+      await File.fileOf('two.a', 2, 'abcdef90'),
+      await File.fileOf('two.b', 3, '09876543'),
+      await ArchiveEntry.entryOf(archive, '1.rom', 1, '12345678'),
+      await ArchiveEntry.entryOf(archive, 'a.rom', 2, 'abcdef90'),
+      await ArchiveEntry.entryOf(archive, 'b.rom', 3, '09876543'),
+    ];
+
+    // When
+    const parentsToCandidates = await candidateGenerator(options, dat, files);
+
+    // Then only one candidate with both of its files coming from the zip is produced
+    expect(parentsToCandidates.size).toEqual(1);
+    const candidates = [...parentsToCandidates.values()];
+    expect(candidates[0]).toHaveLength(1);
+    expect(candidates[0][0].getRomsWithFiles()).toHaveLength(2);
+    expect(candidates[0][0].getRomsWithFiles()[0].getInputFile().getFilePath()).toEqual('two.a');
+    expect(candidates[0][0].getRomsWithFiles()[1].getInputFile().getFilePath()).toEqual('two.b');
   });
 });

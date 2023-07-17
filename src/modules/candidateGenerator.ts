@@ -185,7 +185,7 @@ export default class CandidateGenerator extends Module {
     ])) as [ROM, File[]][];
 
     // Detect if there is one input archive that contains every ROM, and prefer to use its entries.
-    // There are two situations that can happen:
+    // If we don't do this, here are two situations that can happen:
     //  1. When raw writing (i.e. `igir copy`, `igir move`) archives of games with multiple ROMs, if
     //      some of those ROMs exist in multiple input archives, then you may get a conflict warning
     //      that multiple input files want to write to the same output file - and nothing will be
@@ -194,18 +194,24 @@ export default class CandidateGenerator extends Module {
     //      duplicates of the ROMs in some input archives, then you may get a warning that some of
     //      the input archives won't be deleted because not every entry in it was used for an
     //      output file.
-    // First, create a map of any input archives to ROMs from this game
+    // First, create a map of any input archives -> ROMs from this game
     const inputArchivesToRoms = this.reverseArchiveMap(new Map(romsAndInputFiles));
     // Only filter the input files if this game has multiple ROMs, and we found some archives
     if (game.getRoms().length > 1 && inputArchivesToRoms.size) {
+      // Create a map of input archives -> hash codes of the file entries within it
       const inputArchivesToHashCodes = this.reverseArchiveMap(hashCodeToInputFiles);
 
       // Find the first archive that contains _exactly_ every ROM from this game
-      const gameArchive = ([...inputArchivesToRoms.entries()]
-        .filter(
-          ([archive, roms]) => roms.length === game.getRoms().length
-            && inputArchivesToHashCodes.get(archive)?.length === roms.length,
-        )[0] || [])[0];
+      const gameArchive = (
+        // Given the entry set of input archives that have at least one ROM from this game
+        [...inputArchivesToRoms.entries()]
+          .filter(
+            // Filter to input archives that have every ROM from this game
+            ([archive, roms]) => roms.length === game.getRoms().length
+              // And the input archive _only_ contains ROMs from this game
+              && inputArchivesToHashCodes.get(archive)?.length === roms.length,
+          )[0] || []
+      )[0];
       if (gameArchive) {
         // An archive was found, use that as the only possible input file
         romsAndInputFiles = romsAndInputFiles.map(([rom, inputFiles]) => {
