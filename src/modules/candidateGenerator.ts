@@ -194,29 +194,38 @@ export default class CandidateGenerator extends Module {
     //      duplicates of the ROMs in some input archives, then you may get a warning that some of
     //      the input archives won't be deleted because not every entry in it was used for an
     //      output file.
-    // First, create a map of any input archives -> ROMs from this game
-    const inputArchivesToRoms = this.reverseArchiveMap(new Map(romsAndInputFiles));
+
+    // Group this Game's ROMs by the input Archives that contain them
+    const inputArchivesToRoms = romsAndInputFiles.reduce((map, [rom, files]) => {
+      files
+        .filter((file) => file instanceof ArchiveEntry)
+        .map((file): Archive => (file as ArchiveEntry<never>).getArchive())
+        .forEach((archive) => {
+          const roms = map.get(archive) || [];
+          roms.push(rom);
+          // We need to filter out duplicate ROMs because of Games that contain duplicate ROMs, e.g.
+          //  optical media games that have the same track multiple times.
+          const uniqueRoms = roms.filter((val, idx, values) => values.indexOf(val) === idx);
+          map.set(archive, uniqueRoms);
+        });
+      return map;
+    }, new Map<Archive, ROM[]>());
+
     // Only filter the input files if this game has multiple ROMs, and we found some archives
     if (game.getRoms().length > 1 && inputArchivesToRoms.size) {
-      // Create a map of input archives -> hash codes of the file entries within it
-      const inputArchivesToHashCodes = this.reverseArchiveMap(hashCodeToInputFiles);
+      // Filter to the Archives that contain every ROM in this Game
+      const archivesWithEveryRom = [...inputArchivesToRoms.entries()]
+        .filter(([, roms]) => roms.length === game.getRoms().length)
+        .map(([archive]) => archive);
 
-      // Find the first archive that contains _exactly_ every ROM from this game
-      const gameArchive = (
-        // Given the entry set of input archives that have at least one ROM from this game
-        [...inputArchivesToRoms.entries()]
-          .filter(
-            // Filter to input archives that have every ROM from this game
-            ([archive, roms]) => roms.length === game.getRoms().length
-              // And the input archive _only_ contains ROMs from this game
-              && inputArchivesToHashCodes.get(archive)?.length === roms.length,
-          )[0] || []
-      )[0];
-      if (gameArchive) {
-        // An archive was found, use that as the only possible input file
+      const archiveWithEveryRom = archivesWithEveryRom[0];
+      if (archiveWithEveryRom) {
+        // An Archive was found, use that as the only possible input file
+        // For each of this Game's ROMs, find the matching ArchiveEntry from this Archive
         romsAndInputFiles = romsAndInputFiles.map(([rom, inputFiles]) => {
-          const archiveEntry = inputFiles
-            .find((inputFile) => inputFile.getFilePath() === gameArchive.getFilePath()) as File;
+          const archiveEntry = inputFiles.find((
+            inputFile,
+          ) => inputFile.getFilePath() === archiveWithEveryRom.getFilePath()) as File;
           return [rom, [archiveEntry]];
         });
       }
@@ -225,21 +234,6 @@ export default class CandidateGenerator extends Module {
     return new Map(romsAndInputFiles
       .filter(([, inputFiles]) => inputFiles.length)
       .map(([rom, inputFiles]) => [rom, inputFiles[0]]));
-  }
-
-  private static reverseArchiveMap<T>(input: Map<T, File[]>): Map<Archive, T[]> {
-    return [...input.entries()]
-      .reduce((map, [value, files]) => {
-        files
-          .filter((file) => file instanceof ArchiveEntry)
-          .map((archiveEntry) => (archiveEntry as ArchiveEntry<never>).getArchive())
-          .forEach((archive) => {
-            const valuesForArchive = map.get(archive) || [];
-            valuesForArchive.push(value);
-            map.set(archive, valuesForArchive);
-          });
-        return map;
-      }, new Map<Archive, T[]>());
   }
 
   private async getOutputFile(
