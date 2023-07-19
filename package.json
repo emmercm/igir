@@ -40,6 +40,7 @@
   },
   "scripts": {
     "cache:clear": "npm cache clean --force && node --experimental-vm-modules ./node_modules/jest/bin/jest.js --clearCache",
+    "//install": "npm install [--save|--save-dev] --lockfile-version 1 <package>",
     "postinstall": "node --eval \"if(require('fs').existsSync('build')===false){process.exit(1);}\" || npm run build",
     "prepare": "husky install",
     "start": "ts-node index.ts",
@@ -60,10 +61,10 @@
     "docs:serve": "mkdocs serve"
   },
   "dependencies": {
-    "7zip-min": "1.4.4",
     "@fast-csv/format": "4.3.5",
     "@fast-csv/parse": "4.3.6",
     "@node-rs/crc32": "1.7.0",
+    "7zip-min": "1.4.4",
     "archiver": "5.3.1",
     "async": "3.2.4",
     "async-mutex": "0.4.0",
@@ -85,6 +86,7 @@
     "tar": "6.1.15",
     "term-size": "3.0.2",
     "trash": "8.1.1",
+    "typescript-memoize": "1.1.1",
     "unzipper": "0.10.14",
     "wrap-ansi": "8.1.0",
     "xml2js": "0.6.0",

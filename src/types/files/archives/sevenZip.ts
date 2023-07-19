@@ -1,6 +1,7 @@
 import _7z, { Result } from '7zip-min';
 import { Mutex } from 'async-mutex';
 import path from 'path';
+import { Memoize } from 'typescript-memoize';
 
 import Constants from '../../../constants.js';
 import fsPoly from '../../../polyfill/fsPoly.js';
@@ -36,6 +37,7 @@ export default class SevenZip extends Archive {
     return new SevenZip(filePath);
   }
 
+  @Memoize()
   async getArchiveEntries(attempt = 1): Promise<ArchiveEntry<SevenZip>[]> {
     /**
      * WARN(cemmer): {@link _7z.list} seems to have issues with any amount of real concurrency,
