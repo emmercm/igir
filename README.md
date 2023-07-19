@@ -56,7 +56,7 @@ $ igir --help
   | $$  | $$ __\$$  | $$  | $$__| $$
   | $$  | $$|    \  | $$  | $$    $$   ROM collection manager
   | $$  | $$ \$$$$  | $$  | $$$$$$$\
- _| $$_ | $$__| $$ _| $$_ | $$  | $$   v1.6.6
+ _| $$_ | $$__| $$ _| $$_ | $$  | $$   v1.6.7
 |   $$ \ \$$    $$|   $$ \| $$  | $$
  \$$$$$$  \$$$$$$  \$$$$$$ \$$   \$$
 
@@ -129,6 +129,7 @@ ROM filtering options:
                                                                                          [string]
       --only-bios             Filter to only BIOS files                                 [boolean]
       --no-bios               Filter out BIOS files                                     [boolean]
+      --no-device             Filter out MAME devices                                   [boolean]
       --no-unlicensed         Filter out unlicensed ROMs                                [boolean]
       --only-retail           Filter to only retail releases, enabling all the following options
                                                                                         [boolean]
