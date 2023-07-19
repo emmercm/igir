@@ -1,6 +1,7 @@
 import { Mutex } from 'async-mutex';
 import unrar from 'node-unrar-js';
 import path from 'path';
+import { Memoize } from 'typescript-memoize';
 
 import Archive from './archive.js';
 import ArchiveEntry from './archiveEntry.js';
@@ -15,6 +16,7 @@ export default class Rar extends Archive {
     return new Rar(filePath);
   }
 
+  @Memoize()
   async getArchiveEntries(): Promise<ArchiveEntry<Rar>[]> {
     const rar = await unrar.createExtractorFromFile({
       filepath: this.getFilePath(),

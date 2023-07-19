@@ -4,6 +4,7 @@ import fs from 'fs';
 import path from 'path';
 import { Readable } from 'stream';
 import { clearInterval } from 'timers';
+import { Memoize } from 'typescript-memoize';
 import unzipper from 'unzipper';
 
 import Constants from '../../../constants.js';
@@ -22,6 +23,7 @@ export default class Zip extends Archive {
     return new Zip(filePath);
   }
 
+  @Memoize()
   async getArchiveEntries(): Promise<ArchiveEntry<Zip>[]> {
     // https://github.com/ZJONSSON/node-unzipper/issues/280
     // UTF-8 entry names are not decoded correctly
