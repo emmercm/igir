@@ -1,5 +1,7 @@
 import { Expose } from 'class-transformer';
 
+import Archive from '../files/archives/archive.js';
+import ArchiveEntry from '../files/archives/archiveEntry.js';
 import File from '../files/file.js';
 
 /**
@@ -61,6 +63,10 @@ export default class ROM {
 
   async toFile(): Promise<File> {
     return File.fileOf(this.getName(), this.getSize(), this.getCrc32());
+  }
+
+  async toArchiveEntry<A extends Archive>(archive: A): Promise<ArchiveEntry<A>> {
+    return ArchiveEntry.entryOf(archive, this.getName(), this.getSize(), this.getCrc32());
   }
 
   /** *************************
