@@ -2,6 +2,7 @@ import { crc32 } from '@node-rs/crc32';
 import fs from 'fs';
 import path from 'path';
 import tar from 'tar';
+import { Memoize } from 'typescript-memoize';
 
 import Constants from '../../../constants.js';
 import fsPoly from '../../../polyfill/fsPoly.js';
@@ -19,6 +20,7 @@ export default class Tar extends Archive {
     return new Tar(filePath);
   }
 
+  @Memoize()
   async getArchiveEntries(): Promise<ArchiveEntry<Tar>[]> {
     const archiveEntryPromises: Promise<ArchiveEntry<Tar>>[] = [];
 
