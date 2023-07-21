@@ -135,8 +135,9 @@ describe('with explicit dats', () => {
       [path.join('One', 'Fizzbuzz.nes'), '370517b5'],
       [path.join('One', 'Foobar.lnx'), 'b22c9747'],
       [path.join('One', 'Lorem Ipsum.rom'), '70856527'],
-      [path.join('One', 'One Three', 'One.rom'), 'f817a89f'],
-      [path.join('One', 'One Three', 'Three.rom'), 'ff46c5d8'],
+      [`${path.join('One', 'One Three.zip')}|${path.join('1', 'one.rom')}`, 'f817a89f'],
+      [`${path.join('One', 'One Three.zip')}|${path.join('2', 'two.rom')}`, '96170874'],
+      [`${path.join('One', 'One Three.zip')}|${path.join('3', 'three.rom')}`, 'ff46c5d8'],
       [path.join('One', 'Three Four Five', 'Five.rom'), '3e5daf67'],
       [path.join('One', 'Three Four Five', 'Four.rom'), '1cf3ca74'],
       [path.join('One', 'Three Four Five', 'Three.rom'), 'ff46c5d8'],
@@ -214,8 +215,8 @@ describe('with explicit dats', () => {
       path.join('roms', 'raw', 'fizzbuzz.nes'),
       path.join('roms', 'raw', 'four.rom'),
       path.join('roms', 'raw', 'loremipsum.rom'),
-      path.join('roms', 'raw', 'one.rom'),
-      path.join('roms', 'raw', 'three.rom'),
+      path.join('roms', 'raw', 'three.rom'), // fully consumed for game "Three Four Five"
+      // roms/zip/onetwothree.zip is only partially consumed for game "One Three"
     ]);
   });
 
@@ -301,8 +302,9 @@ describe('with explicit dats', () => {
       [`${path.join('One', 'Fizzbuzz.nes')} -> ${path.join('<input>', 'roms', 'raw', 'fizzbuzz.nes')}`, '370517b5'],
       [`${path.join('One', 'Foobar.lnx')} -> ${path.join('<input>', 'roms', 'foobar.lnx')}`, 'b22c9747'],
       [`${path.join('One', 'Lorem Ipsum.rom')} -> ${path.join('<input>', 'roms', 'raw', 'loremipsum.rom')}`, '70856527'],
-      [`${path.join('One', 'One Three', 'One.rom')} -> ${path.join('<input>', 'roms', 'raw', 'one.rom')}`, 'f817a89f'],
-      [`${path.join('One', 'One Three', 'Three.rom')} -> ${path.join('<input>', 'roms', 'raw', 'three.rom')}`, 'ff46c5d8'],
+      [`${path.join('One', 'One Three.zip')}|${path.join('1', 'one.rom')} -> ${path.join('<input>', 'roms', 'zip', 'onetwothree.zip')}|${path.join('1', 'one.rom')}`, 'f817a89f'],
+      [`${path.join('One', 'One Three.zip')}|${path.join('2', 'two.rom')} -> ${path.join('<input>', 'roms', 'zip', 'onetwothree.zip')}|${path.join('2', 'two.rom')}`, '96170874'],
+      [`${path.join('One', 'One Three.zip')}|${path.join('3', 'three.rom')} -> ${path.join('<input>', 'roms', 'zip', 'onetwothree.zip')}|${path.join('3', 'three.rom')}`, 'ff46c5d8'],
       [`${path.join('One', 'Three Four Five', 'Five.rom')} -> ${path.join('<input>', 'roms', 'raw', 'five.rom')}`, '3e5daf67'],
       [`${path.join('One', 'Three Four Five', 'Four.rom')} -> ${path.join('<input>', 'roms', 'raw', 'four.rom')}`, '1cf3ca74'],
       [`${path.join('One', 'Three Four Five', 'Three.rom')} -> ${path.join('<input>', 'roms', 'raw', 'three.rom')}`, 'ff46c5d8'],
