@@ -69,9 +69,9 @@ async function walkAndStat(dirPath: string): Promise<[string, Stats][]> {
   );
 }
 
-async function datInferrer(romFiles: File[]): Promise<DAT> {
+function datInferrer(romFiles: File[]): DAT {
   // Run DATInferrer, but condense all DATs down to one
-  const datGames = (await new DATInferrer(new ProgressBarFake()).infer(romFiles))
+  const datGames = new DATInferrer(new ProgressBarFake()).infer(romFiles)
     .map((dat) => dat.getGames())
     .flatMap((games) => games);
   // TODO(cemmer): filter to unique games / remove duplicates
@@ -93,7 +93,7 @@ async function romWriter(
     output: outputTemp,
   });
   const romFiles = await new ROMScanner(options, new ProgressBarFake()).scan();
-  const dat = await datInferrer(romFiles);
+  const dat = datInferrer(romFiles);
   const romFilesWithHeaders = await new HeaderProcessor(options, new ProgressBarFake())
     .process(romFiles);
   const indexedRomFiles = await new FileIndexer(options, new ProgressBarFake())

@@ -14,8 +14,8 @@ export default class DATInferrer extends Module {
     super(progressBar, DATInferrer.name);
   }
 
-  async infer(romFiles: File[]): Promise<DAT[]> {
-    await this.progressBar.logInfo(`inferring DATs for ${romFiles.length.toLocaleString()} ROM${romFiles.length !== 1 ? 's' : ''}`);
+  infer(romFiles: File[]): DAT[] {
+    this.progressBar.logInfo(`inferring DATs for ${romFiles.length.toLocaleString()} ROM${romFiles.length !== 1 ? 's' : ''}`);
 
     const datNamesToRomFiles = romFiles.reduce((map, file) => {
       const datName = DATInferrer.getDatName(file);
@@ -24,12 +24,12 @@ export default class DATInferrer extends Module {
       map.set(datName, datRomFiles);
       return map;
     }, new Map<string, File[]>());
-    await this.progressBar.logDebug(`inferred ${datNamesToRomFiles.size.toLocaleString()} DAT${datNamesToRomFiles.size !== 1 ? 's' : ''}`);
+    this.progressBar.logDebug(`inferred ${datNamesToRomFiles.size.toLocaleString()} DAT${datNamesToRomFiles.size !== 1 ? 's' : ''}`);
 
     const dats = [...datNamesToRomFiles.entries()]
       .map(([datName, datRomFiles]) => DATInferrer.createDAT(datName, datRomFiles));
 
-    await this.progressBar.logInfo('done inferring DATs');
+    this.progressBar.logInfo('done inferring DATs');
     return dats;
   }
 

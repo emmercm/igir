@@ -13,11 +13,13 @@ import SingleBarFormatted from './singleBarFormatted.js';
 export default class ProgressBarCLI extends ProgressBar {
   private static readonly RENDER_MUTEX = new Mutex();
 
-  private static fps = 4;
+  private static readonly FPS = 4;
 
   private static multiBar?: MultiBar;
 
   private static lastRedraw: [number, number] = [0, 0];
+
+  private static logQueue: string[] = [];
 
   private readonly logger: Logger;
 
@@ -92,20 +94,32 @@ export default class ProgressBarCLI extends ProgressBar {
    *
    * @see https://github.com/npkgz/cli-progress/issues/79
    */
-  private async render(force = false): Promise<void> {
+  async render(force = false): Promise<void> {
     this.singleBarFormatted?.getSingleBar().update(this.payload);
 
     if (!force) {
       // Limit the frequency of redrawing
       const [elapsedSec, elapsedNano] = process.hrtime(ProgressBarCLI.lastRedraw);
       const elapsedMs = (elapsedSec * 1000000000 + elapsedNano) / 1000000;
-      if (elapsedMs < (1000 / ProgressBarCLI.fps)) {
+      if (elapsedMs < (1000 / ProgressBarCLI.FPS)) {
         return;
       }
     }
 
     try {
       await ProgressBarCLI.RENDER_MUTEX.runExclusive(() => {
+        // Dequeue all log messages
+        if (ProgressBarCLI.multiBar && ProgressBarCLI.logQueue.length) {
+          const logMessage = ProgressBarCLI.logQueue
+            // https://github.com/npkgz/cli-progress/issues/142
+            .map((msg) => wrapAnsi(msg, ConsolePoly.consoleWidth()))
+            // If there are leading or trailing newlines, then blank the entire row to overwrite
+            .map((msg) => msg.replace(/^\n|\n$/g, () => `\n${' '.repeat(ConsolePoly.consoleWidth())}`))
+            .join('\n');
+          ProgressBarCLI.multiBar.log(`${logMessage}\n`);
+          ProgressBarCLI.logQueue = [];
+        }
+
         ProgressBarCLI.multiBar?.update();
         ProgressBarCLI.lastRedraw = process.hrtime();
         ProgressBarCLI.RENDER_MUTEX.cancel(); // cancel all waiting locks, we just redrew
@@ -115,10 +129,6 @@ export default class ProgressBarCLI extends ProgressBar {
         throw e;
       }
     }
-  }
-
-  static setFPS(fps: number): void {
-    this.fps = fps;
   }
 
   async reset(total: number): Promise<void> {
@@ -131,11 +141,11 @@ export default class ProgressBarCLI extends ProgressBar {
     if (this.singleBarFormatted) {
       return this;
     }
-    await this.log(
+    this.log(
       LogLevel.ALWAYS,
       `${this.payload.name} ... ${this.payload.finishedMessage || ''}`.trim(),
-      true,
     );
+    await this.render(true);
     return this;
   }
 
@@ -224,18 +234,17 @@ export default class ProgressBarCLI extends ProgressBar {
     );
   }
 
-  async log(logLevel: LogLevel, message: string, forceRender = false): Promise<void> {
-    if (this.logger.getLogLevel() > logLevel) {
+  log(logLevel: LogLevel, message: string): void {
+    ProgressBarCLI.log(this.logger, logLevel, message);
+  }
+
+  static log(logger: Logger, logLevel: LogLevel, message: string): void {
+    if (logger.getLogLevel() > logLevel) {
       return;
     }
 
-    const formattedMessage = this.logger.formatMessage(logLevel, message);
-
-    // https://github.com/npkgz/cli-progress/issues/142
-    const messageWrapped = wrapAnsi(formattedMessage, ConsolePoly.consoleWidth());
-
-    ProgressBarCLI.multiBar?.log(`${messageWrapped}\n`);
-    await this.render(forceRender);
+    const formattedMessage = logger.formatMessage(logLevel, message);
+    ProgressBarCLI.logQueue.push(formattedMessage);
   }
 
   /**

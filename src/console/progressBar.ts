@@ -53,25 +53,25 @@ export default abstract class ProgressBar {
 
   abstract withLoggerPrefix(prefix: string): ProgressBar;
 
-  abstract log(logLevel: LogLevel, message: string): Promise<void>;
+  abstract log(logLevel: LogLevel, message: string): void;
 
-  async logTrace(message: string): Promise<void> {
+  logTrace(message: string): void {
     return this.log(LogLevel.TRACE, message);
   }
 
-  async logDebug(message: string): Promise<void> {
+  logDebug(message: string): void {
     return this.log(LogLevel.DEBUG, message);
   }
 
-  async logInfo(message: string): Promise<void> {
+  logInfo(message: string): void {
     return this.log(LogLevel.INFO, message);
   }
 
-  async logWarn(message: string): Promise<void> {
+  logWarn(message: string): void {
     return this.log(LogLevel.WARN, message);
   }
 
-  async logError(message: string): Promise<void> {
+  logError(message: string): void {
     return this.log(LogLevel.ERROR, message);
   }
 
