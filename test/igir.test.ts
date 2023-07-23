@@ -98,7 +98,7 @@ async function expectEndToEnd(
   expect(testOutput.deletedFiles).toEqual(expectedDeletedFiles);
 }
 
-describe('with explicit dats', () => {
+describe('with explicit DATs', () => {
   it('should do nothing with no roms', async () => {
     await expectEndToEnd({
       commands: ['copy'],
@@ -421,7 +421,7 @@ describe('with explicit dats', () => {
   });
 });
 
-describe('with inferred dats', () => {
+describe('with inferred DATs', () => {
   it('should do nothing with no roms', async () => {
     await expectEndToEnd({
       commands: ['copy'],
