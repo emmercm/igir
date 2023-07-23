@@ -24,10 +24,10 @@ export default class CandidateFilter extends Module {
     dat: DAT,
     parentsToCandidates: Map<Parent, ReleaseCandidate[]>,
   ): Promise<Map<Parent, ReleaseCandidate[]>> {
-    await this.progressBar.logInfo(`${dat.getNameShort()}: filtering candidates`);
+    this.progressBar.logInfo(`${dat.getNameShort()}: filtering candidates`);
 
     if (!parentsToCandidates.size) {
-      await this.progressBar.logDebug(`${dat.getNameShort()}: no parents, so no candidates to filter`);
+      this.progressBar.logDebug(`${dat.getNameShort()}: no parents, so no candidates to filter`);
       return new Map();
     }
 
@@ -35,7 +35,7 @@ export default class CandidateFilter extends Module {
     const totalReleaseCandidates = [...parentsToCandidates.values()]
       .reduce((sum, rcs) => sum + rcs.length, 0);
     if (!totalReleaseCandidates) {
-      await this.progressBar.logDebug(`${dat.getNameShort()}: no parent has candidates`);
+      this.progressBar.logDebug(`${dat.getNameShort()}: no parent has candidates`);
       return new Map();
     }
 
@@ -49,9 +49,9 @@ export default class CandidateFilter extends Module {
       .flatMap((releaseCandidate) => releaseCandidate.getRomsWithFiles())
       .reduce((sum, romWithFiles) => sum + romWithFiles.getRom().getSize(), 0);
     const filteredCandidates = [...output.values()].reduce((sum, rc) => sum + rc.length, 0);
-    await this.progressBar.logDebug(`${dat.getNameShort()}: filtered to ${fsPoly.sizeReadable(size)} of ${filteredCandidates.toLocaleString()} candidate${filteredCandidates !== 1 ? 's' : ''} for ${output.size.toLocaleString()} parent${output.size !== 1 ? 's' : ''}`);
+    this.progressBar.logDebug(`${dat.getNameShort()}: filtered to ${fsPoly.sizeReadable(size)} of ${filteredCandidates.toLocaleString()} candidate${filteredCandidates !== 1 ? 's' : ''} for ${output.size.toLocaleString()} parent${output.size !== 1 ? 's' : ''}`);
 
-    await this.progressBar.logInfo(`${dat.getNameShort()}: done filtering candidates`);
+    this.progressBar.logInfo(`${dat.getNameShort()}: done filtering candidates`);
     return output;
   }
 
@@ -65,13 +65,13 @@ export default class CandidateFilter extends Module {
     for (let i = 0; i < [...parentsToCandidates.entries()].length; i += 1) {
       const [parent, releaseCandidates] = [...parentsToCandidates.entries()][i];
       await this.progressBar.incrementProgress();
-      await this.progressBar.logTrace(`${dat.getNameShort()}: ${parent.getName()}: ${releaseCandidates.length.toLocaleString()} candidate${releaseCandidates.length !== 1 ? 's' : ''} before filtering`);
+      this.progressBar.logTrace(`${dat.getNameShort()}: ${parent.getName()}: ${releaseCandidates.length.toLocaleString()} candidate${releaseCandidates.length !== 1 ? 's' : ''} before filtering`);
 
       const filteredReleaseCandidates = releaseCandidates
         .filter((rc) => this.preFilter(rc))
         .sort((a, b) => this.sort(a, b))
         .filter((rc, idx) => this.postFilter(idx));
-      await this.progressBar.logTrace(`${dat.getNameShort()}: ${parent.getName()}: ${filteredReleaseCandidates.length.toLocaleString()} candidate${filteredReleaseCandidates.length !== 1 ? 's' : ''} after filtering`);
+      this.progressBar.logTrace(`${dat.getNameShort()}: ${parent.getName()}: ${filteredReleaseCandidates.length.toLocaleString()} candidate${filteredReleaseCandidates.length !== 1 ? 's' : ''} after filtering`);
       output.set(parent, filteredReleaseCandidates);
 
       await this.progressBar.incrementDone();
