@@ -5,10 +5,12 @@ import gracefulFs from 'graceful-fs';
 import semver from 'semver';
 
 import Logger from './src/console/logger.js';
+import { ProgressBarSymbol } from './src/console/progressBar.js';
 import ProgressBarCLI from './src/console/progressBarCLI.js';
 import Constants from './src/constants.js';
 import Igir from './src/igir.js';
 import ArgumentsParser from './src/modules/argumentsParser.js';
+import UpdateChecker from './src/modules/updateChecker.js';
 
 // Monkey-patch 'fs' to help prevent Windows EMFILE errors
 gracefulFs.gracefulify(realFs);
@@ -35,6 +37,10 @@ gracefulFs.gracefulify(realFs);
       process.exit(0);
     }
     logger.setLogLevel(options.getLogLevel());
+
+    const updateProgressBar = await logger.addProgressBar('Checking for updates', ProgressBarSymbol.SEARCHING, 1);
+    // eslint-disable-next-line @typescript-eslint/no-floating-promises
+    new UpdateChecker(updateProgressBar).check();
 
     await new Igir(options, logger).main();
     ProgressBarCLI.stop();
