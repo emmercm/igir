@@ -38,7 +38,7 @@ gracefulFs.gracefulify(realFs);
     }
     logger.setLogLevel(options.getLogLevel());
 
-    const updateProgressBar = await logger.addProgressBar('Checking for updates', ProgressBarSymbol.SEARCHING, 1);
+    const updateProgressBar = await logger.addProgressBar('Checking for updates', ProgressBarSymbol.DOWNLOADING, 1);
     // eslint-disable-next-line @typescript-eslint/no-floating-promises
     new UpdateChecker(updateProgressBar).check();
 
