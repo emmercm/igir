@@ -28,7 +28,7 @@ export default class FixdatCreator extends Module {
       return undefined;
     }
 
-    await this.progressBar.logInfo(`${originalDat.getNameShort()}: generating a fixdat`);
+    this.progressBar.logInfo(`${originalDat.getNameShort()}: generating a fixdat`);
     await this.progressBar.setSymbol(ProgressBarSymbol.WRITING);
     await this.progressBar.reset(1);
 
@@ -45,7 +45,7 @@ export default class FixdatCreator extends Module {
     const gamesWithMissingRoms = originalDat.getGames()
       .filter((game) => !game.getRoms().every((rom) => writtenRomHashCodes.has(rom.hashCode())));
     if (!gamesWithMissingRoms.length) {
-      await this.progressBar.logDebug(`${originalDat.getNameShort()}: no missing games`);
+      this.progressBar.logDebug(`${originalDat.getNameShort()}: no missing games`);
       return undefined;
     }
 
@@ -76,7 +76,7 @@ export default class FixdatCreator extends Module {
     const fixdatPath = path.join(fixdatDir, fixdat.getFilename());
     await util.promisify(fs.writeFile)(fixdatPath, fixdatContents);
 
-    await this.progressBar.logInfo(`${originalDat.getNameShort()}: done generating a fixdat`);
+    this.progressBar.logInfo(`${originalDat.getNameShort()}: done generating a fixdat`);
 
     return fixdatPath;
   }

@@ -19,8 +19,6 @@ export default class ProgressBarCLI extends ProgressBar {
 
   private static lastRedraw: [number, number] = [0, 0];
 
-  private static logQueue: string[] = [];
-
   private readonly logger: Logger;
 
   private readonly payload: ProgressBarPayload;
@@ -96,11 +94,6 @@ export default class ProgressBarCLI extends ProgressBar {
    */
   private async render(force = false): Promise<void> {
     this.singleBarFormatted?.getSingleBar().update(this.payload);
-
-    if (ProgressBarCLI.multiBar && ProgressBarCLI.logQueue.length) {
-      ProgressBarCLI.multiBar.log(`${ProgressBarCLI.logQueue.join('\n')}\n`);
-      ProgressBarCLI.logQueue = [];
-    }
 
     if (!force) {
       // Limit the frequency of redrawing
@@ -231,32 +224,17 @@ export default class ProgressBarCLI extends ProgressBar {
     );
   }
 
-  static log(logger: Logger, logLevel: LogLevel, message: string): void {
-    if (logger.getLogLevel() > logLevel) {
-      return;
-    }
-
-    const formattedMessage = logger.formatMessage(logLevel, message);
-
-    // https://github.com/npkgz/cli-progress/issues/142
-    const messageWrapped = wrapAnsi(formattedMessage, ConsolePoly.consoleWidth());
-
-    // If there are leading or trailing newlines, then blank the entire row to overwrite
-    const messagePadded = messageWrapped.replace(/^\n|\n$/g, () => `\n${' '.repeat(ConsolePoly.consoleWidth())}`);
-
-    if (!ProgressBarCLI.multiBar) {
-      ProgressBarCLI.logQueue.push(messagePadded);
-      return;
-    }
-    ProgressBarCLI.multiBar.log(`${messagePadded}\n`);
-  }
-
   async log(logLevel: LogLevel, message: string, forceRender = false): Promise<void> {
     if (this.logger.getLogLevel() > logLevel) {
       return;
     }
 
-    ProgressBarCLI.log(this.logger, logLevel, message);
+    const formattedMessage = this.logger.formatMessage(logLevel, message);
+
+    // https://github.com/npkgz/cli-progress/issues/142
+    const messageWrapped = wrapAnsi(formattedMessage, ConsolePoly.consoleWidth());
+
+    ProgressBarCLI.multiBar?.log(`${messageWrapped}\n`);
     await this.render(forceRender);
   }
 

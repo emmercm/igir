@@ -16,13 +16,13 @@ export default class ROMScanner extends Scanner {
   }
 
   async scan(): Promise<File[]> {
-    await this.progressBar.logInfo('scanning ROM files');
+    this.progressBar.logInfo('scanning ROM files');
 
     await this.progressBar.setSymbol(ProgressBarSymbol.SEARCHING);
     await this.progressBar.reset(this.options.getInputFileCount());
 
     const romFilePaths = await this.options.scanInputFilesWithoutExclusions();
-    await this.progressBar.logDebug(`found ${romFilePaths.length.toLocaleString()} ROM file${romFilePaths.length !== 1 ? 's' : ''}`);
+    this.progressBar.logDebug(`found ${romFilePaths.length.toLocaleString()} ROM file${romFilePaths.length !== 1 ? 's' : ''}`);
     await this.progressBar.reset(romFilePaths.length);
 
     const filterUnique = false;
@@ -32,7 +32,7 @@ export default class ROMScanner extends Scanner {
       filterUnique,
     );
 
-    await this.progressBar.logInfo('done scanning ROM files');
+    this.progressBar.logInfo('done scanning ROM files');
     return files;
   }
 }

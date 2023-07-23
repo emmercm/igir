@@ -16,8 +16,8 @@ import ReleaseCandidate from '../../src/types/releaseCandidate.js';
 import ProgressBarFake from '../console/progressBarFake.js';
 
 // Run DATInferrer, but condense all DATs down to one
-async function buildInferredDat(romFiles: File[]): Promise<DAT> {
-  const datGames = (await new DATInferrer(new ProgressBarFake()).infer(romFiles))
+function buildInferredDat(romFiles: File[]): DAT {
+  const datGames = new DATInferrer(new ProgressBarFake()).infer(romFiles)
     .map((dat) => dat.getGames())
     .flatMap((games) => games);
   return new DAT(new Header(), datGames);
@@ -59,7 +59,7 @@ describe('with inferred DATs', () => {
     const romFiles = await new ROMScanner(new Options({
       input: [path.join('test', 'fixtures', 'roms', 'headered')],
     }), new ProgressBarFake()).scan();
-    const dat = await buildInferredDat(romFiles);
+    const dat = buildInferredDat(romFiles);
 
     // When
     const parentsToCandidates = await runPatchCandidateGenerator(dat, romFiles);
@@ -75,7 +75,7 @@ describe('with inferred DATs', () => {
     const romFiles = await new ROMScanner(new Options({
       input: [path.join('test', 'fixtures', 'roms', 'patchable')],
     }), new ProgressBarFake()).scan();
-    const dat = await buildInferredDat(romFiles);
+    const dat = buildInferredDat(romFiles);
 
     // When
     const parentsToCandidates = await runPatchCandidateGenerator(dat, romFiles);
