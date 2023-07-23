@@ -102,7 +102,7 @@ async function romWriter(
     .generate(dat, indexedRomFiles);
   if (patchGlob) {
     const patches = await new PatchScanner(options, new ProgressBarFake()).scan();
-    candidates = await new PatchCandidateGenerator(new ProgressBarFake())
+    candidates = await new PatchCandidateGenerator(options, new ProgressBarFake())
       .generate(dat, candidates, patches);
   }
   candidates = await new CombinedCandidateGenerator(options, new ProgressBarFake())
