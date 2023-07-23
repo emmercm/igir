@@ -39,8 +39,6 @@ export default class Igir {
   }
 
   async main(): Promise<void> {
-    this.logger.info('running');
-
     // Scan and process input files
     let dats = await this.processDATScanner();
 
@@ -150,7 +148,6 @@ export default class Igir {
     await this.processReportGenerator(rawRomFiles, cleanedOutputFiles, datsStatuses);
 
     ProgressBarCLI.stop();
-    this.logger.info('done');
   }
 
   private async processDATScanner(): Promise<DAT[]> {
