@@ -1,3 +1,5 @@
+import path from 'path';
+
 import CandidatePostProcessor from '../../src/modules/candidatePostProcessor.js';
 import DAT from '../../src/types/logiqx/dat.js';
 import Game from '../../src/types/logiqx/game.js';
@@ -60,56 +62,56 @@ it('should do nothing with no options', async () => {
     .map((romWithFiles) => romWithFiles.getOutputFile().getFilePath())
     .sort();
   expect(outputFilePaths).toEqual([
-    'Output/Admirable.rom',
-    'Output/Adorable.rom',
-    'Output/Adventurous.rom',
-    'Output/Amazing.rom',
-    'Output/Awesome.rom',
-    'Output/Best.rom',
-    'Output/Brilliant.rom',
-    'Output/Cheerful.rom',
-    'Output/Confident.rom',
-    'Output/Cool.rom',
+    path.join('Output', 'Admirable.rom'),
+    path.join('Output', 'Adorable.rom'),
+    path.join('Output', 'Adventurous.rom'),
+    path.join('Output', 'Amazing.rom'),
+    path.join('Output', 'Awesome.rom'),
+    path.join('Output', 'Best.rom'),
+    path.join('Output', 'Brilliant.rom'),
+    path.join('Output', 'Cheerful.rom'),
+    path.join('Output', 'Confident.rom'),
+    path.join('Output', 'Cool.rom'),
   ]);
 });
 
 describe('dirLetterLimit', () => {
   test.each([
     [undefined, [
-      'Output/A/Admirable.rom',
-      'Output/A/Adorable.rom',
-      'Output/A/Adventurous.rom',
-      'Output/A/Amazing.rom',
-      'Output/A/Awesome.rom',
-      'Output/B/Best.rom',
-      'Output/B/Brilliant.rom',
-      'Output/C/Cheerful.rom',
-      'Output/C/Confident.rom',
-      'Output/C/Cool.rom',
+      path.join('Output', 'A', 'Admirable.rom'),
+      path.join('Output', 'A', 'Adorable.rom'),
+      path.join('Output', 'A', 'Adventurous.rom'),
+      path.join('Output', 'A', 'Amazing.rom'),
+      path.join('Output', 'A', 'Awesome.rom'),
+      path.join('Output', 'B', 'Best.rom'),
+      path.join('Output', 'B', 'Brilliant.rom'),
+      path.join('Output', 'C', 'Cheerful.rom'),
+      path.join('Output', 'C', 'Confident.rom'),
+      path.join('Output', 'C', 'Cool.rom'),
     ]],
     [2, [
-      'Output/A1/Admirable.rom',
-      'Output/A1/Adorable.rom',
-      'Output/A2/Adventurous.rom',
-      'Output/A2/Amazing.rom',
-      'Output/A3/Awesome.rom',
-      'Output/B/Best.rom',
-      'Output/B/Brilliant.rom',
-      'Output/C1/Cheerful.rom',
-      'Output/C1/Confident.rom',
-      'Output/C2/Cool.rom',
+      path.join('Output', 'A1', 'Admirable.rom'),
+      path.join('Output', 'A1', 'Adorable.rom'),
+      path.join('Output', 'A2', 'Adventurous.rom'),
+      path.join('Output', 'A2', 'Amazing.rom'),
+      path.join('Output', 'A3', 'Awesome.rom'),
+      path.join('Output', 'B', 'Best.rom'),
+      path.join('Output', 'B', 'Brilliant.rom'),
+      path.join('Output', 'C1', 'Cheerful.rom'),
+      path.join('Output', 'C1', 'Confident.rom'),
+      path.join('Output', 'C2', 'Cool.rom'),
     ]],
     [3, [
-      'Output/A1/Admirable.rom',
-      'Output/A1/Adorable.rom',
-      'Output/A1/Adventurous.rom',
-      'Output/A2/Amazing.rom',
-      'Output/A2/Awesome.rom',
-      'Output/B/Best.rom',
-      'Output/B/Brilliant.rom',
-      'Output/C/Cheerful.rom',
-      'Output/C/Confident.rom',
-      'Output/C/Cool.rom',
+      path.join('Output', 'A1', 'Admirable.rom'),
+      path.join('Output', 'A1', 'Adorable.rom'),
+      path.join('Output', 'A1', 'Adventurous.rom'),
+      path.join('Output', 'A2', 'Amazing.rom'),
+      path.join('Output', 'A2', 'Awesome.rom'),
+      path.join('Output', 'B', 'Best.rom'),
+      path.join('Output', 'B', 'Brilliant.rom'),
+      path.join('Output', 'C', 'Cheerful.rom'),
+      path.join('Output', 'C', 'Confident.rom'),
+      path.join('Output', 'C', 'Cool.rom'),
     ]],
   ])('it should split the letter dirs: %s', async (limit, expectedFilePaths) => {
     const options = new Options({
