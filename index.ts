@@ -5,7 +5,6 @@ import gracefulFs from 'graceful-fs';
 import semver from 'semver';
 
 import Logger from './src/console/logger.js';
-import { ProgressBarSymbol } from './src/console/progressBar.js';
 import ProgressBarCLI from './src/console/progressBarCLI.js';
 import Constants from './src/constants.js';
 import Igir from './src/igir.js';
@@ -37,10 +36,10 @@ gracefulFs.gracefulify(realFs);
       process.exit(0);
     }
     logger.setLogLevel(options.getLogLevel());
+    ProgressBarCLI.init(logger);
 
-    const updateProgressBar = await logger.addProgressBar('Checking for updates', ProgressBarSymbol.DOWNLOADING, 1);
     // eslint-disable-next-line @typescript-eslint/no-floating-promises
-    new UpdateChecker(updateProgressBar).check();
+    new UpdateChecker(logger).check();
 
     await new Igir(options, logger).main();
     ProgressBarCLI.stop();

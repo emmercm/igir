@@ -40,23 +40,23 @@ export default class ProgressBarCLI extends ProgressBar {
     this.singleBarFormatted = singleBarFormatted;
   }
 
+  static init(logger: Logger): void {
+    ProgressBarCLI.multiBar = new cliProgress.MultiBar({
+      stream: logger.getLogLevel() < LogLevel.NEVER ? logger.getStream() : new PassThrough(),
+      barsize: 25,
+      fps: 1 / 60, // limit the automatic redraws
+      forceRedraw: true,
+      emptyOnZero: true,
+      hideCursor: true,
+    }, cliProgress.Presets.shades_grey);
+  }
+
   static async new(
     logger: Logger,
     name: string,
     symbol: string,
     initialTotal = 0,
   ): Promise<ProgressBarCLI> {
-    if (!ProgressBarCLI.multiBar) {
-      ProgressBarCLI.multiBar = new cliProgress.MultiBar({
-        stream: logger.getLogLevel() < LogLevel.NEVER ? logger.getStream() : new PassThrough(),
-        barsize: 25,
-        fps: 1 / 60, // limit the automatic redraws
-        forceRedraw: true,
-        emptyOnZero: true,
-        hideCursor: true,
-      }, cliProgress.Presets.shades_grey);
-    }
-
     const initialPayload: ProgressBarPayload = {
       symbol,
       name,
@@ -69,7 +69,7 @@ export default class ProgressBarCLI extends ProgressBar {
     }
 
     const singleBarFormatted = new SingleBarFormatted(
-      ProgressBarCLI.multiBar,
+      ProgressBarCLI.multiBar as MultiBar, // we will have already init'ed
       initialTotal,
       initialPayload,
     );
@@ -224,12 +224,12 @@ export default class ProgressBarCLI extends ProgressBar {
     );
   }
 
-  async log(logLevel: LogLevel, message: string, forceRender = false): Promise<void> {
-    if (this.logger.getLogLevel() > logLevel) {
+  static log(logger: Logger, logLevel: LogLevel, message: string): void {
+    if (logger.getLogLevel() > logLevel) {
       return;
     }
 
-    const formattedMessage = this.logger.formatMessage(logLevel, message);
+    const formattedMessage = logger.formatMessage(logLevel, message);
 
     // https://github.com/npkgz/cli-progress/issues/142
     const messageWrapped = wrapAnsi(formattedMessage, ConsolePoly.consoleWidth());
@@ -238,7 +238,11 @@ export default class ProgressBarCLI extends ProgressBar {
     const messagePadded = messageWrapped.replace(/^\n|\n$/g, `\n${' '.repeat(ConsolePoly.consoleWidth())}`);
 
     ProgressBarCLI.multiBar?.log(`${messagePadded}\n`);
-    await this.render(forceRender);
+  }
+
+  async log(logLevel: LogLevel, message: string, forceRender = false): Promise<void> {
+    ProgressBarCLI.log(this.logger, logLevel, message);
+    return this.render(forceRender);
   }
 
   /**
