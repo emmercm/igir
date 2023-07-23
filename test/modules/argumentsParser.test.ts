@@ -6,6 +6,7 @@ import LogLevel from '../../src/console/logLevel.js';
 import Constants from '../../src/constants.js';
 import ArgumentsParser from '../../src/modules/argumentsParser.js';
 import DAT from '../../src/types/logiqx/dat.js';
+import Game from '../../src/types/logiqx/game.js';
 import Header from '../../src/types/logiqx/header.js';
 
 const dummyRequiredArgs = ['--input', os.devNull, '--output', os.devNull];
@@ -219,17 +220,23 @@ describe('options', () => {
   });
 
   it('should parse "output"', () => {
+    const dummyDat = new DAT(new Header(), []);
+    const dummyInputRomPath = '';
+    const dummyGame = new Game();
+    const dummyRelease = undefined;
+    const dummyRomFilename = '';
+
     // Test requirements per command
     expect(() => argumentsParser.parse(['test'])).toThrow(/missing required argument/i);
     expect(() => argumentsParser.parse(['copy', '--input', os.devNull])).toThrow(/missing required option/i);
     expect(() => argumentsParser.parse(['move', '--input', os.devNull])).toThrow(/missing required option/i);
     expect(() => argumentsParser.parse(['copy', 'zip', '--input', os.devNull])).toThrow(/missing required option/i);
     expect(() => argumentsParser.parse(['copy', 'clean', '--input', os.devNull])).toThrow(/missing required option/i);
-    expect(argumentsParser.parse(['report', '--dat', os.devNull, '--input', os.devNull]).getOutputFileParsed()).toContain(Constants.GLOBAL_TEMP_DIR);
+    expect(argumentsParser.parse(['report', '--dat', os.devNull, '--input', os.devNull]).getOutputFileParsed(dummyDat, dummyInputRomPath, dummyGame, dummyRelease, dummyRomFilename)).toContain(Constants.GLOBAL_TEMP_DIR);
     // Test value
-    expect(argumentsParser.parse(['copy', '--input', os.devNull, '-o', 'foo']).getOutputFileParsed()).toEqual('foo');
-    expect(argumentsParser.parse(['copy', '--input', os.devNull, '--output', 'foo']).getOutputFileParsed()).toEqual('foo');
-    expect(argumentsParser.parse(['copy', '--input', os.devNull, '--output', 'foo', '--output', 'bar']).getOutputFileParsed()).toEqual('bar');
+    expect(argumentsParser.parse(['copy', '--input', os.devNull, '-o', 'foo']).getOutputFileParsed(dummyDat, dummyInputRomPath, dummyGame, dummyRelease, dummyRomFilename)).toEqual('foo');
+    expect(argumentsParser.parse(['copy', '--input', os.devNull, '--output', 'foo']).getOutputFileParsed(dummyDat, dummyInputRomPath, dummyGame, dummyRelease, dummyRomFilename)).toEqual('foo');
+    expect(argumentsParser.parse(['copy', '--input', os.devNull, '--output', 'foo', '--output', 'bar']).getOutputFileParsed(dummyDat, dummyInputRomPath, dummyGame, dummyRelease, dummyRomFilename)).toEqual('bar');
   });
 
   it('should parse "dir-mirror"', () => {

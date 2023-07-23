@@ -529,7 +529,7 @@ export default class Options implements OptionsProps {
    * Get the output dir, only resolving any tokens.
    */
   getOutputDirParsed(
-    dat?: DAT,
+    dat: DAT,
     inputRomPath?: string,
     game?: Game,
     release?: Release,
@@ -551,25 +551,28 @@ export default class Options implements OptionsProps {
 
   /**
    * Get the full output path for a ROM file.
+   *
+   * @param dat the {@link DAT} that the ROM/{@link Game} is from.
+   * @param inputRomPath the input file's full file path.
+   * @param game the {@link Game} that this file matches to.
+   * @param release a {@link Release} from the {@link Game}.
+   * @param romFilename the intended output filename (including extension).
    */
   getOutputFileParsed(
-    dat?: DAT,
-    inputRomPath?: string,
-    game?: Game,
-    release?: Release,
-    romFilename?: string,
+    dat: DAT,
+    inputRomPath: string,
+    game: Game,
+    release: Release | undefined,
+    romFilename: string,
   ): string {
-    let romFilenameSanitized: string | undefined;
-    if (romFilename) {
-      romFilenameSanitized = romFilename.replace(/[\\/]/g, path.sep);
-      if (!dat?.getRomNamesContainDirectories()) {
-        romFilenameSanitized = romFilenameSanitized.replace(/[\\/]/g, '_');
-      }
+    let romFilenameSanitized = romFilename.replace(/[\\/]/g, path.sep);
+    if (!dat?.getRomNamesContainDirectories()) {
+      romFilenameSanitized = romFilenameSanitized.replace(/[\\/]/g, '_');
     }
 
     let output = this.getOutputDirParsed(dat, inputRomPath, game, release, romFilename);
 
-    if (this.getDirMirror() && inputRomPath) {
+    if (this.getDirMirror()) {
       const mirroredDir = path.dirname(inputRomPath)
         .replace(/[\\/]/g, path.sep)
         .split(path.sep)
@@ -578,7 +581,7 @@ export default class Options implements OptionsProps {
       output = path.join(output, mirroredDir);
     }
 
-    if (dat && this.getDirDatName()) {
+    if (this.getDirDatName()) {
       output = path.join(output, dat.getNameShort());
     }
 
@@ -590,8 +593,7 @@ export default class Options implements OptionsProps {
       output = path.join(output, letter);
     }
 
-    if (game
-      && game.getRoms().length > 1
+    if (game.getRoms().length > 1
       && (!romFilenameSanitized || !FileFactory.isArchive(romFilenameSanitized))
     ) {
       output = path.join(output, game.getName());
@@ -606,7 +608,7 @@ export default class Options implements OptionsProps {
 
   private static replaceTokensInOutputPath(
     outputPath: string,
-    dat?: DAT,
+    dat: DAT,
     inputRomPath?: string,
     release?: Release,
     outputRomFilename?: string,
@@ -626,11 +628,7 @@ export default class Options implements OptionsProps {
     return result;
   }
 
-  private static replaceDatTokens(input: string, dat?: DAT): string {
-    if (!dat) {
-      return input;
-    }
-
+  private static replaceDatTokens(input: string, dat: DAT): string {
     return input.replace('{datName}', dat.getName().replace(/[\\/]/g, '_'));
   }
 
