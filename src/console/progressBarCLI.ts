@@ -19,6 +19,8 @@ export default class ProgressBarCLI extends ProgressBar {
 
   private static lastRedraw: [number, number] = [0, 0];
 
+  private static logQueue: string[] = [];
+
   private readonly logger: Logger;
 
   private readonly payload: ProgressBarPayload;
@@ -106,6 +108,18 @@ export default class ProgressBarCLI extends ProgressBar {
 
     try {
       await ProgressBarCLI.RENDER_MUTEX.runExclusive(() => {
+        // Dequeue all log messages
+        if (ProgressBarCLI.multiBar && ProgressBarCLI.logQueue.length) {
+          const logMessage = ProgressBarCLI.logQueue
+            // https://github.com/npkgz/cli-progress/issues/142
+            .map((msg) => wrapAnsi(msg, ConsolePoly.consoleWidth()))
+            // If there are leading or trailing newlines, then blank the entire row to overwrite
+            .map((msg) => msg.replace(/^\n|\n$/g, () => `\n${' '.repeat(ConsolePoly.consoleWidth())}`))
+            .join('\n');
+          ProgressBarCLI.multiBar.log(`${logMessage}\n`);
+          ProgressBarCLI.logQueue = [];
+        }
+
         ProgressBarCLI.multiBar?.update();
         ProgressBarCLI.lastRedraw = process.hrtime();
         ProgressBarCLI.RENDER_MUTEX.cancel(); // cancel all waiting locks, we just redrew
@@ -131,11 +145,11 @@ export default class ProgressBarCLI extends ProgressBar {
     if (this.singleBarFormatted) {
       return this;
     }
-    await this.log(
+    this.log(
       LogLevel.ALWAYS,
       `${this.payload.name} ... ${this.payload.finishedMessage || ''}`.trim(),
-      true,
     );
+    await this.render(true);
     return this;
   }
 
@@ -224,18 +238,17 @@ export default class ProgressBarCLI extends ProgressBar {
     );
   }
 
-  async log(logLevel: LogLevel, message: string, forceRender = false): Promise<void> {
-    if (this.logger.getLogLevel() > logLevel) {
+  log(logLevel: LogLevel, message: string): void {
+    ProgressBarCLI.log(this.logger, logLevel, message);
+  }
+
+  static log(logger: Logger, logLevel: LogLevel, message: string): void {
+    if (logger.getLogLevel() > logLevel) {
       return;
     }
 
-    const formattedMessage = this.logger.formatMessage(logLevel, message);
-
-    // https://github.com/npkgz/cli-progress/issues/142
-    const messageWrapped = wrapAnsi(formattedMessage, ConsolePoly.consoleWidth());
-
-    ProgressBarCLI.multiBar?.log(`${messageWrapped}\n`);
-    await this.render(forceRender);
+    const formattedMessage = logger.formatMessage(logLevel, message);
+    ProgressBarCLI.logQueue.push(formattedMessage);
   }
 
   /**

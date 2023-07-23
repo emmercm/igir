@@ -28,9 +28,7 @@ export default class ProgressBarFake extends ProgressBar {
     return this;
   }
 
-  async log(): Promise<void> {
-    return Promise.resolve();
-  }
+  log(): void {}
 
   async reset(): Promise<void> {
     return Promise.resolve();
