@@ -1,21 +1,21 @@
 import https from 'https';
 import semver from 'semver';
 
+import Logger from '../console/logger.js';
 import LogLevel from '../console/logLevel.js';
-import ProgressBar from '../console/progressBar.js';
+import ProgressBarCLI from '../console/progressBarCLI.js';
 import Constants from '../constants.js';
 import BufferPoly from '../polyfill/bufferPoly.js';
-import Module from './module.js';
 
-export default class UpdateChecker extends Module {
-  constructor(progressBar: ProgressBar) {
-    super(progressBar, UpdateChecker.name);
+export default class UpdateChecker {
+  private readonly logger: Logger;
+
+  constructor(logger: Logger) {
+    this.logger = logger;
   }
 
   async check(): Promise<void> {
-    await this.progressBar.incrementProgress();
     await this.log();
-    this.progressBar.delete();
   }
 
   private async log(): Promise<void> {
@@ -27,7 +27,7 @@ export default class UpdateChecker extends Module {
     }
 
     if (npmVersion && semver.lt(Constants.COMMAND_VERSION, npmVersion)) {
-      await this.progressBar.log(LogLevel.NOTICE, `An update is available for ${Constants.COMMAND_NAME}: v${npmVersion}\n`);
+      ProgressBarCLI.log(this.logger, LogLevel.NOTICE, `An update is available for ${Constants.COMMAND_NAME}: v${npmVersion}\n`);
     }
   }
 
