@@ -19,6 +19,8 @@ export default class ProgressBarCLI extends ProgressBar {
 
   private static lastRedraw: [number, number] = [0, 0];
 
+  private static logQueue: string[] = [];
+
   private readonly logger: Logger;
 
   private readonly payload: ProgressBarPayload;
@@ -40,23 +42,23 @@ export default class ProgressBarCLI extends ProgressBar {
     this.singleBarFormatted = singleBarFormatted;
   }
 
-  static init(logger: Logger): void {
-    ProgressBarCLI.multiBar = new cliProgress.MultiBar({
-      stream: logger.getLogLevel() < LogLevel.NEVER ? logger.getStream() : new PassThrough(),
-      barsize: 25,
-      fps: 1 / 60, // limit the automatic redraws
-      forceRedraw: true,
-      emptyOnZero: true,
-      hideCursor: true,
-    }, cliProgress.Presets.shades_grey);
-  }
-
   static async new(
     logger: Logger,
     name: string,
     symbol: string,
     initialTotal = 0,
   ): Promise<ProgressBarCLI> {
+    if (!ProgressBarCLI.multiBar) {
+      ProgressBarCLI.multiBar = new cliProgress.MultiBar({
+        stream: logger.getLogLevel() < LogLevel.NEVER ? logger.getStream() : new PassThrough(),
+        barsize: 25,
+        fps: 1 / 60, // limit the automatic redraws
+        forceRedraw: true,
+        emptyOnZero: true,
+        hideCursor: true,
+      }, cliProgress.Presets.shades_grey);
+    }
+
     const initialPayload: ProgressBarPayload = {
       symbol,
       name,
@@ -69,7 +71,7 @@ export default class ProgressBarCLI extends ProgressBar {
     }
 
     const singleBarFormatted = new SingleBarFormatted(
-      ProgressBarCLI.multiBar as MultiBar, // we will have already init'ed
+      ProgressBarCLI.multiBar,
       initialTotal,
       initialPayload,
     );
@@ -235,14 +237,28 @@ export default class ProgressBarCLI extends ProgressBar {
     const messageWrapped = wrapAnsi(formattedMessage, ConsolePoly.consoleWidth());
 
     // If there are leading or trailing newlines, then blank the entire row to overwrite
-    const messagePadded = messageWrapped.replace(/^\n|\n$/g, `\n${' '.repeat(ConsolePoly.consoleWidth())}`);
+    const messagePadded = messageWrapped.replace(/^\n|\n$/g, () => `\n${' '.repeat(ConsolePoly.consoleWidth())}`);
 
-    ProgressBarCLI.multiBar?.log(`${messagePadded}\n`);
+    // Flush any queue of log messages from before creating a MultiBar
+    if (!ProgressBarCLI.multiBar) {
+      ProgressBarCLI.logQueue.push(messagePadded);
+      return;
+    }
+    if (ProgressBarCLI.logQueue.length) {
+      ProgressBarCLI.multiBar.log(`${ProgressBarCLI.logQueue.join('\n')}\n`);
+      ProgressBarCLI.logQueue = [];
+    }
+
+    ProgressBarCLI.multiBar.log(`${messagePadded}\n`);
   }
 
   async log(logLevel: LogLevel, message: string, forceRender = false): Promise<void> {
+    if (this.logger.getLogLevel() > logLevel) {
+      return;
+    }
+
     ProgressBarCLI.log(this.logger, logLevel, message);
-    return this.render(forceRender);
+    await this.render(forceRender);
   }
 
   /**
