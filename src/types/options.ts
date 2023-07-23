@@ -572,7 +572,7 @@ export default class Options implements OptionsProps {
 
     let output = this.getOutputDirParsed(dat, inputRomPath, game, release, romFilename);
 
-    if (this.getDirMirror()) {
+    if (this.getDirMirror() && inputRomPath) {
       const mirroredDir = path.dirname(inputRomPath)
         .replace(/[\\/]/g, path.sep)
         .split(path.sep)
