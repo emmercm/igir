@@ -13,7 +13,7 @@ import SingleBarFormatted from './singleBarFormatted.js';
 export default class ProgressBarCLI extends ProgressBar {
   private static readonly RENDER_MUTEX = new Mutex();
 
-  private static fps = 4;
+  private static readonly FPS = 4;
 
   private static multiBar?: MultiBar;
 
@@ -94,14 +94,14 @@ export default class ProgressBarCLI extends ProgressBar {
    *
    * @see https://github.com/npkgz/cli-progress/issues/79
    */
-  private async render(force = false): Promise<void> {
+  async render(force = false): Promise<void> {
     this.singleBarFormatted?.getSingleBar().update(this.payload);
 
     if (!force) {
       // Limit the frequency of redrawing
       const [elapsedSec, elapsedNano] = process.hrtime(ProgressBarCLI.lastRedraw);
       const elapsedMs = (elapsedSec * 1000000000 + elapsedNano) / 1000000;
-      if (elapsedMs < (1000 / ProgressBarCLI.fps)) {
+      if (elapsedMs < (1000 / ProgressBarCLI.FPS)) {
         return;
       }
     }
@@ -129,10 +129,6 @@ export default class ProgressBarCLI extends ProgressBar {
         throw e;
       }
     }
-  }
-
-  static setFPS(fps: number): void {
-    this.fps = fps;
   }
 
   async reset(total: number): Promise<void> {
