@@ -4,6 +4,7 @@ enum LogLevel {
   INFO,
   WARN,
   ERROR,
+  NOTICE,
   ALWAYS, // always print
   NEVER, // never print
 }
