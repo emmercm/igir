@@ -76,44 +76,38 @@ Spain:
 
 A game can only have one primary region. The first region detected is what is used.
 
-### Only BIOS
+### BIOS
 
 ```text
---only-bios
+--no-bios, --only-bios
 ```
 
-Games that are marked `bios="yes"` in the DAT, or contain `[BIOS]` in their name, e.g.:
+Filter out, or only include games that are marked `bios="yes"` in the DAT, or contain `[BIOS]` in their name, e.g.:
 
 ```text
 [BIOS] Nintendo Game Boy Boot ROM (World) (Rev 1)
 [BIOS] Nintendo Game Boy Color Boot ROM (World) (Rev 1)
 ```
 
-This option is best used for collating all BIOS files across all consoles to one directory.
+!!! tip
 
-### No BIOS
+    `--only-bios` is a great option to collate all BIOS files across all consoles to one directory.
 
-```text
---no-bios
-```
-
-Opposite of the above. This will filter out files that are not games.
-
-### No MAME devices
+### MAME devices
 
 ```text
---no-device
+--no-device, --only-device
 ```
 
-Filters out [MAME devices](https://wiki.mamedev.org/index.php/MAME_Device_Basics). MAME devices typically represent physical devices, such as microcontrollers, video display controllers, sounds boards, and more. Many MAME devices don't have any associated ROM files.
+Filter out, or only include [MAME devices](https://wiki.mamedev.org/index.php/MAME_Device_Basics). MAME devices typically represent physical devices, such as microcontrollers, video display controllers, sounds boards, and more. Many MAME devices don't have any associated ROM files.
 
-### No unlicensed
+### Unlicensed
 
 ```text
---no-unlicensed
+--no-unlicensed, --only-unlicensed
 ```
 
-Filters out games that contain `(Unl)` or `(Unlicensed)` in their name, e.g.:
+Filter out, or only include games that contain `(Unl)` or `(Unlicensed)` in their name, e.g.:
 
 ```text
 4 in 1 (Europe) (4B-002, Sachen) (Unl)
@@ -194,91 +188,91 @@ Enables all the following `--no-*` options, as well as filtering out games that 
   R-Type DX (U) [C][t2]
   ```
 
-### No demos
+### Demos
 
 ```text
---no-demo
+--no-demo, --only-demo
 ```
 
-Filters out games that contain `(Demo)` in their name, e.g.:
+Filter out, or only include games that contain `(Demo)` in their name, e.g.:
 
 ```text
 Coria and the Sunken City (Unknown) (Demo)
 Two Hearts (Japan) (Demo) (Unl)
 ```
 
-### No betas
+### Betas
 
 ```text
---no-beta
+--no-beta, --only-beta
 ```
 
-Filters out games that contain `(Beta)` in their name, e.g.:
+Filter out, or only include games that contain `(Beta)` in their name, e.g.:
 
 ```text
 Cosmo Tank (Japan) (Beta)
 F-15 Strike Eagle II (USA, Europe) (Beta) (July, 1992)
 ```
 
-### No samples
+### Samples
 
 ```text
---no-sample
+--no-sample, --only-sample
 ```
 
-Filters out games that contain `(Sample)` in their name, e.g.:
+Filter out, or only include games that contain `(Sample)` in their name, e.g.:
 
 ```text
 Mega Man III (USA) (Sample)
 Shin Nihon Pro Wrestling - Toukon Sanjuushi (Japan) (Sample)
 ```
 
-### No prototypes
+### Prototypes
 
 ```text
---no-prototype
+--no-prototype, --only-prototype
 ```
 
-Filters out games that contain `(Proto)` or `(Prototype)` in their name, e.g.:
+Filter out, or only include games that contain `(Proto)` or `(Prototype)` in their name, e.g.:
 
 ```text
 Philip & Marlowe in Bloomland (USA) (Proto)
 Sword of Hope, The (Europe) (Proto)
 ```
 
-### No test ROMs
+### Test ROMs
 
 ```text
---no-test-roms
+--no-test-roms, --only-test-roms
 ```
 
-Filters out games that contain `(Test)` in their name, e.g.:
+Filter out, or only include games that contain `(Test)` in their name, e.g.:
 
 ```text
 2097 ROM Pack II (USA) (Test Program)
 Game Boy Test Cartridge (USA, Europe) (Proto) (Test Program)
 ```
 
-### No homebrew
+### Homebrew
 
 ```text
---no-homebrew
+--no-homebrew, --only-homebrew
 ```
 
-Filters out games that contain `(Homebrew)` in their name, e.g.:
+Filter out, or only include games that contain `(Homebrew)` in their name, e.g.:
 
 ```text
 Game Boy Camera Gallery 2022, The (World) (Aftermarket) (Homebrew)
 GB-Wordyl (World) (Aftermarket) (Homebrew)
 ```
 
-### No unverified dumps
+### Unverified dumps
 
 ```text
---no-unverified
+--no-unverified, --only-unverified
 ```
 
-Filters out games that do _not_ contain `[!]` in their name, e.g.:
+Filter out, or only include games that do _not_ contain `[!]` in their name, e.g.:
 
 ```text
 Getaway, The (U)
@@ -287,15 +281,17 @@ Golf (W) [o1]
 Grand Theft Auto (E) (M5) [C][t1]
 ```
 
-Note that this is a [GoodTools](https://emulation.gametechwiki.com/index.php/GoodTools#Good_codes) naming convention, other groups such as [No-Intro](https://no-intro.org/) never include `[!]` in their names!
+!!! warning
 
-### No bad dumps
+    This is a [GoodTools](https://emulation.gametechwiki.com/index.php/GoodTools#Good_codes) naming convention, other groups such as [No-Intro](https://no-intro.org/) never include `[!]` in their names!
+
+### Bad dumps
 
 ```text
---no-bad
+--no-bad, --only-bad
 ```
 
-Filters out games that contain `[b]` or `[b#]` in their name, e.g.:
+Filter out, or only include games that contain `[b]` or `[b#]` in their name, e.g.:
 
 ```text
 [MIA] Aprilia - DiTech Interface (Unknown) (Unl) [b]
@@ -303,7 +299,7 @@ Great Greed (U) [b1]
 Gremlins 2 - The New Batch (W) [b2]
 ```
 
-And also filters out games that contain `[c]` or `[x]` and are _not_ verified dumps (above), e.g.:
+as well as games that contain `[c]` or `[x]` and are _not_ verified dumps (above), e.g.:
 
 ```text
 Brian Lara Cricket 96 (E) [a1][x]
