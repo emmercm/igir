@@ -35,7 +35,7 @@ export default class CombinedCandidateGenerator extends Module {
     }
 
     await this.progressBar.setSymbol(ProgressBarSymbol.GENERATING);
-    await this.progressBar.reset(dat.getParents().length);
+    await this.progressBar.reset(parentsToCandidates.size);
 
     const game = CombinedCandidateGenerator.buildGame(dat, parentsToCandidates);
     const parent = new Parent(game.getName(), [game]);
