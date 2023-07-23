@@ -11,6 +11,9 @@ import Module from './module.js';
  * {@link Parent}.
  *
  * This class may be run concurrently with other classes.
+ *
+ * TODO(cemmer): this should be a DAT filter, there's nothing ReleaseCandidate specific about this,
+ *  it doesn't do anything based on found files.
  */
 export default class CandidateFilter extends Module {
   private readonly options: Options;
@@ -96,20 +99,31 @@ export default class CandidateFilter extends Module {
         && this.options.getFilterRegexExclude()?.test(game.getName()),
       this.noLanguageAllowed(releaseCandidate),
       this.regionNotAllowed(releaseCandidate),
-      this.options.getOnlyBios() && !game.isBios(),
       this.options.getNoBios() && game.isBios(),
+      this.options.getOnlyBios() && !game.isBios(),
       this.options.getNoDevice() && game.isDevice(),
+      this.options.getOnlyDevice() && !game.isDevice(),
       this.options.getOnlyRetail() && !game.isRetail(),
       this.options.getNoUnlicensed() && game.isUnlicensed(),
+      this.options.getOnlyUnlicensed() && !game.isUnlicensed(),
       this.options.getNoDemo() && game.isDemo(),
+      this.options.getOnlyDemo() && !game.isDemo(),
       this.options.getNoBeta() && game.isBeta(),
+      this.options.getOnlyBeta() && !game.isBeta(),
       this.options.getNoSample() && game.isSample(),
+      this.options.getOnlySample() && !game.isSample(),
       this.options.getNoPrototype() && game.isPrototype(),
+      this.options.getOnlyPrototype() && !game.isPrototype(),
       this.options.getNoTestRoms() && game.isTest(),
+      this.options.getOnlyTestRoms() && !game.isTest(),
       this.options.getNoAftermarket() && game.isAftermarket(),
+      this.options.getOnlyAftermarket() && !game.isAftermarket(),
       this.options.getNoHomebrew() && game.isHomebrew(),
+      this.options.getOnlyHomebrew() && !game.isHomebrew(),
       this.options.getNoUnverified() && !game.isVerified(),
+      this.options.getOnlyUnverified() && game.isVerified(),
       this.options.getNoBad() && game.isBad(),
+      this.options.getOnlyBad() && !game.isBad(),
     ].filter((val) => val).length === 0;
   }
 
