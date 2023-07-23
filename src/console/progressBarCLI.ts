@@ -97,6 +97,11 @@ export default class ProgressBarCLI extends ProgressBar {
   private async render(force = false): Promise<void> {
     this.singleBarFormatted?.getSingleBar().update(this.payload);
 
+    if (ProgressBarCLI.multiBar && ProgressBarCLI.logQueue.length) {
+      ProgressBarCLI.multiBar.log(`${ProgressBarCLI.logQueue.join('\n')}\n`);
+      ProgressBarCLI.logQueue = [];
+    }
+
     if (!force) {
       // Limit the frequency of redrawing
       const [elapsedSec, elapsedNano] = process.hrtime(ProgressBarCLI.lastRedraw);
@@ -239,16 +244,10 @@ export default class ProgressBarCLI extends ProgressBar {
     // If there are leading or trailing newlines, then blank the entire row to overwrite
     const messagePadded = messageWrapped.replace(/^\n|\n$/g, () => `\n${' '.repeat(ConsolePoly.consoleWidth())}`);
 
-    // Flush any queue of log messages from before creating a MultiBar
     if (!ProgressBarCLI.multiBar) {
       ProgressBarCLI.logQueue.push(messagePadded);
       return;
     }
-    if (ProgressBarCLI.logQueue.length) {
-      ProgressBarCLI.multiBar.log(`${ProgressBarCLI.logQueue.join('\n')}\n`);
-      ProgressBarCLI.logQueue = [];
-    }
-
     ProgressBarCLI.multiBar.log(`${messagePadded}\n`);
   }
 

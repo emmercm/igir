@@ -36,7 +36,6 @@ gracefulFs.gracefulify(realFs);
       process.exit(0);
     }
     logger.setLogLevel(options.getLogLevel());
-    ProgressBarCLI.init(logger);
 
     // eslint-disable-next-line @typescript-eslint/no-floating-promises
     new UpdateChecker(logger).check();
