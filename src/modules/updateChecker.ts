@@ -27,7 +27,7 @@ export default class UpdateChecker {
     }
 
     if (npmVersion && semver.lt(Constants.COMMAND_VERSION, npmVersion)) {
-      ProgressBarCLI.log(this.logger, LogLevel.NOTICE, `An update is available for ${Constants.COMMAND_NAME}: v${npmVersion}\n`);
+      ProgressBarCLI.log(this.logger, LogLevel.NOTICE, `An update is available for ${Constants.COMMAND_NAME}: v${npmVersion}`);
     }
   }
 
