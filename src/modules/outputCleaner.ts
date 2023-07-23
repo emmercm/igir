@@ -25,11 +25,11 @@ export default class OutputCleaner extends Module {
   }
 
   async clean(dirsToClean: string[], writtenFilesToExclude: File[]): Promise<string[]> {
-    await this.progressBar.logInfo('cleaning files in output');
+    this.progressBar.logInfo('cleaning files in output');
 
     // If nothing was written, then don't clean anything
     if (!writtenFilesToExclude.length) {
-      await this.progressBar.logDebug('no files were written, not cleaning output');
+      this.progressBar.logDebug('no files were written, not cleaning output');
       return [];
     }
 
@@ -42,31 +42,31 @@ export default class OutputCleaner extends Module {
       writtenFilesToExclude,
     );
     if (!filesToClean.length) {
-      await this.progressBar.logDebug('no files to clean');
+      this.progressBar.logDebug('no files to clean');
       return [];
     }
 
     await this.progressBar.setSymbol(ProgressBarSymbol.RECYCLING);
 
     try {
-      await this.progressBar.logDebug(`cleaning ${filesToClean.length.toLocaleString()} file${filesToClean.length !== 1 ? 's' : ''}`);
+      this.progressBar.logDebug(`cleaning ${filesToClean.length.toLocaleString()} file${filesToClean.length !== 1 ? 's' : ''}`);
       await this.progressBar.reset(filesToClean.length);
       // TODO(cemmer): don't trash save files
       await this.trashOrDelete(filesToClean);
     } catch (e) {
-      await this.progressBar.logError(`failed to clean unmatched files: ${e}`);
+      this.progressBar.logError(`failed to clean unmatched files: ${e}`);
     }
 
     try {
       const emptyDirs = await OutputCleaner.getEmptyDirs(dirsToClean);
       await this.progressBar.reset(emptyDirs.length);
-      await this.progressBar.logDebug(`cleaning ${emptyDirs.length.toLocaleString()} empty director${emptyDirs.length !== 1 ? 'ies' : 'y'}`);
+      this.progressBar.logDebug(`cleaning ${emptyDirs.length.toLocaleString()} empty director${emptyDirs.length !== 1 ? 'ies' : 'y'}`);
       await this.trashOrDelete(emptyDirs);
     } catch (e) {
-      await this.progressBar.logError(`failed to clean empty directories: ${e}`);
+      this.progressBar.logError(`failed to clean empty directories: ${e}`);
     }
 
-    await this.progressBar.logInfo('done cleaning files in output');
+    this.progressBar.logInfo('done cleaning files in output');
     return filesToClean.sort();
   }
 

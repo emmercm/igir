@@ -27,7 +27,7 @@ test.each([
   }), new ProgressBarFake()).scan();
 
   // When
-  const dats = await new DATInferrer(new ProgressBarFake()).infer(romFiles);
+  const dats = new DATInferrer(new ProgressBarFake()).infer(romFiles);
 
   // Then
   const datNameToGameCount = dats.reduce((map, dat) => ({

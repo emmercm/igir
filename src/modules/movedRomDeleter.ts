@@ -20,11 +20,11 @@ export default class MovedROMDeleter extends Module {
       return [];
     }
 
-    await this.progressBar.logInfo('deleting moved ROMs');
+    this.progressBar.logInfo('deleting moved ROMs');
     await this.progressBar.setSymbol(ProgressBarSymbol.FILTERING);
     await this.progressBar.reset(inputRoms.length);
 
-    const fullyConsumedFiles = await this.filterOutPartiallyConsumedArchives(inputRoms, movedRoms);
+    const fullyConsumedFiles = this.filterOutPartiallyConsumedArchives(inputRoms, movedRoms);
 
     const filePathsToDelete = MovedROMDeleter.filterOutWrittenFiles(
       fullyConsumedFiles,
@@ -33,18 +33,18 @@ export default class MovedROMDeleter extends Module {
 
     await this.progressBar.setSymbol(ProgressBarSymbol.DELETING);
     await this.progressBar.reset(filePathsToDelete.length);
-    await this.progressBar.logDebug(`deleting ${filePathsToDelete.length.toLocaleString()} moved file${filePathsToDelete.length !== 1 ? 's' : ''}`);
+    this.progressBar.logDebug(`deleting ${filePathsToDelete.length.toLocaleString()} moved file${filePathsToDelete.length !== 1 ? 's' : ''}`);
 
     await Promise.all(filePathsToDelete.map(async (filePath) => {
-      await this.progressBar.logTrace(`${filePath}: deleting moved file`);
+      this.progressBar.logTrace(`${filePath}: deleting moved file`);
       try {
         await fsPoly.rm(filePath, { force: true });
       } catch (e) {
-        await this.progressBar.logError(`${filePath}: failed to delete`);
+        this.progressBar.logError(`${filePath}: failed to delete`);
       }
     }));
 
-    await this.progressBar.logInfo('done deleting moved ROMs');
+    this.progressBar.logInfo('done deleting moved ROMs');
     return filePathsToDelete;
   }
 
@@ -52,15 +52,15 @@ export default class MovedROMDeleter extends Module {
    * Archives that do not have all of their file entries matched should not be deleted during
    *  moving.
    */
-  private async filterOutPartiallyConsumedArchives(
+  private filterOutPartiallyConsumedArchives(
     inputRoms: File[],
     movedRoms: File[],
-  ): Promise<string[]> {
+  ): string[] {
     const groupedInputRoms = MovedROMDeleter.groupFilesByFilePath(inputRoms);
     const groupedMovedRoms = MovedROMDeleter.groupFilesByFilePath(movedRoms);
 
-    return (await Promise.all(
-      [...groupedMovedRoms.entries()].map(async ([filePath, movedEntries]) => {
+    return [...groupedMovedRoms.entries()]
+      .map(([filePath, movedEntries]) => {
         const movedEntriesStrings = movedEntries.map((entry) => entry.toString());
         const inputEntries = groupedInputRoms.get(filePath) || [];
 
@@ -78,13 +78,13 @@ export default class MovedROMDeleter extends Module {
           return movedEntriesStrings.indexOf(entry.toString()) === -1;
         });
         if (unmovedEntries.length) {
-          await this.progressBar.logWarn(`${filePath}: not deleting moved file, ${unmovedEntries.length.toLocaleString()} archive entr${unmovedEntries.length !== 1 ? 'ies were' : 'y was'} unmatched:${unmovedEntries.sort().map((entry) => `\n  ${entry}`)}`);
+          this.progressBar.logWarn(`${filePath}: not deleting moved file, ${unmovedEntries.length.toLocaleString()} archive entr${unmovedEntries.length !== 1 ? 'ies were' : 'y was'} unmatched:${unmovedEntries.sort().map((entry) => `\n  ${entry}`)}`);
           return undefined;
         }
 
         return filePath;
-      }),
-    )).filter((filePath) => filePath) as string[];
+      })
+      .filter((filePath) => filePath) as string[];
   }
 
   private static groupFilesByFilePath(files: File[]): Map<string, File[]> {

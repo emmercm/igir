@@ -25,7 +25,7 @@ export default class ReportGenerator extends Module {
     cleanedOutputFiles: string[],
     datStatuses: DATStatus[],
   ): Promise<void> {
-    await this.progressBar.logInfo('generating report');
+    this.progressBar.logInfo('generating report');
 
     const report = this.options.getReportOutput();
 
@@ -64,9 +64,9 @@ export default class ReportGenerator extends Module {
 
     const rows = [...matchedFileCsvs, unmatchedCsv, cleanedCsv].filter((csv) => csv);
     await util.promisify(fs.writeFile)(report, rows.join('\n'));
-    await this.progressBar.logDebug(`${report}: wrote ${datStatuses.length.toLocaleString()} CSV row${datStatuses.length !== 1 ? 's' : ''}`);
+    this.progressBar.logDebug(`${report}: wrote ${datStatuses.length.toLocaleString()} CSV row${datStatuses.length !== 1 ? 's' : ''}`);
 
-    await this.progressBar.logInfo('done generating report');
+    this.progressBar.logInfo('done generating report');
     await this.progressBar.done(report);
     await this.progressBar.freeze();
   }

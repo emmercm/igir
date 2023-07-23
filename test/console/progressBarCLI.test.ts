@@ -146,7 +146,7 @@ describe('logDebug', () => {
     const progressBar = await ProgressBarCLI.new(spy.getLogger(), 'name', stripAnsi(ProgressBarSymbol.DONE));
     expect(spy.getLineCount()).toEqual(1);
 
-    await progressBar.logDebug('debug message');
+    progressBar.logDebug('debug message');
     expect(spy.getLineCount()).toEqual(3);
     expect(spy.getLogLine()).toMatch(/DEBUG:.*debug message/);
 
@@ -158,7 +158,7 @@ describe('logDebug', () => {
     const progressBar = await ProgressBarCLI.new(spy.getLogger(), 'name', stripAnsi(ProgressBarSymbol.DONE));
     expect(spy.getLineCount()).toEqual(1);
 
-    await progressBar.logDebug('debug message');
+    progressBar.logDebug('debug message');
     expect(spy.getLineCount()).toEqual(1);
     expect(spy.getLogLine()).toBeUndefined();
 
@@ -172,7 +172,7 @@ describe('logInfo', () => {
     const progressBar = await ProgressBarCLI.new(spy.getLogger(), 'name', stripAnsi(ProgressBarSymbol.DONE));
     expect(spy.getLineCount()).toEqual(1);
 
-    await progressBar.logInfo('info message');
+    progressBar.logInfo('info message');
     expect(spy.getLineCount()).toEqual(3);
     expect(spy.getLogLine()).toMatch(/INFO:.*info message/);
 
@@ -184,7 +184,7 @@ describe('logInfo', () => {
     const progressBar = await ProgressBarCLI.new(spy.getLogger(), 'name', stripAnsi(ProgressBarSymbol.DONE));
     expect(spy.getLineCount()).toEqual(1);
 
-    await progressBar.logInfo('info message');
+    progressBar.logInfo('info message');
     expect(spy.getLineCount()).toEqual(1);
     expect(spy.getLogLine()).toBeUndefined();
 
@@ -198,7 +198,7 @@ describe('logWarn', () => {
     const progressBar = await ProgressBarCLI.new(spy.getLogger(), 'name', stripAnsi(ProgressBarSymbol.DONE));
     expect(spy.getLineCount()).toEqual(1);
 
-    await progressBar.logWarn('warn message');
+    progressBar.logWarn('warn message');
     expect(spy.getLineCount()).toEqual(3);
     expect(spy.getLogLine()).toMatch(/WARN:.*warn message/);
 
@@ -210,7 +210,7 @@ describe('logWarn', () => {
     const progressBar = await ProgressBarCLI.new(spy.getLogger(), 'name', stripAnsi(ProgressBarSymbol.DONE));
     expect(spy.getLineCount()).toEqual(1);
 
-    await progressBar.logWarn('warn message');
+    progressBar.logWarn('warn message');
     expect(spy.getLineCount()).toEqual(1);
     expect(spy.getLogLine()).toBeUndefined();
 
@@ -224,7 +224,7 @@ describe('logError', () => {
     const progressBar = await ProgressBarCLI.new(spy.getLogger(), 'name', stripAnsi(ProgressBarSymbol.DONE));
     expect(spy.getLineCount()).toEqual(1);
 
-    await progressBar.logError('error message');
+    progressBar.logError('error message');
     expect(spy.getLineCount()).toEqual(3);
     expect(spy.getLogLine()).toMatch(/ERROR:.*error message/);
 
@@ -236,7 +236,7 @@ describe('logError', () => {
     const progressBar = await ProgressBarCLI.new(spy.getLogger(), 'name', stripAnsi(ProgressBarSymbol.DONE));
     expect(spy.getLineCount()).toEqual(1);
 
-    await progressBar.logError('error message');
+    progressBar.logError('error message');
     expect(spy.getLineCount()).toEqual(1);
     expect(spy.getLogLine()).toBeUndefined();
 
