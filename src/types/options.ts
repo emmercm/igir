@@ -581,7 +581,7 @@ export default class Options implements OptionsProps {
       output = path.join(output, mirroredDir);
     }
 
-    if (this.getDirDatName()) {
+    if (this.getDirDatName() && dat.getNameShort()) {
       output = path.join(output, dat.getNameShort());
     }
 
