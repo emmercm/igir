@@ -98,7 +98,7 @@ async function expectEndToEnd(
   expect(testOutput.deletedFiles).toEqual(expectedDeletedFiles);
 }
 
-describe('with explicit dats', () => {
+describe('with explicit DATs', () => {
   it('should do nothing with no roms', async () => {
     await expectEndToEnd({
       commands: ['copy'],
@@ -278,12 +278,12 @@ describe('with explicit dats', () => {
       [path.join('Patchable', 'Best.zip|Best.rom'), '1e3d78cf'],
       [path.join('Patchable', 'C01173E.zip|C01173E.rom'), 'dfaebe28'],
       [path.join('Patchable', 'KDULVQN.zip|KDULVQN.rom'), 'b1c303e4'],
-      [path.join('smdb', 'Hardware Target Game Database', 'Dummy', 'Fizzbuzz.zip|Fizzbuzz.nes'), '370517b5'],
-      [path.join('smdb', 'Hardware Target Game Database', 'Dummy', 'Foobar.zip|Foobar.lnx'), 'b22c9747'],
-      [path.join('smdb', 'Hardware Target Game Database', 'Dummy', 'Lorem Ipsum.zip|Lorem Ipsum.rom'), '70856527'],
-      [path.join('smdb', 'Hardware Target Game Database', 'Patchable', '3708F2C.zip|3708F2C.rom'), '20891c9f'],
-      [path.join('smdb', 'Hardware Target Game Database', 'Patchable', '65D1206.zip|65D1206.rom'), '20323455'],
-      [path.join('smdb', 'Hardware Target Game Database', 'Patchable', 'C01173E.zip|C01173E.rom'), 'dfaebe28'],
+      [`${path.join('smdb', 'Hardware Target Game Database', 'Dummy', 'Fizzbuzz.zip')}|Fizzbuzz.nes`, '370517b5'],
+      [`${path.join('smdb', 'Hardware Target Game Database', 'Dummy', 'Foobar.zip')}|Foobar.lnx`, 'b22c9747'],
+      [`${path.join('smdb', 'Hardware Target Game Database', 'Dummy', 'Lorem Ipsum.zip')}|Lorem Ipsum.rom`, '70856527'],
+      [`${path.join('smdb', 'Hardware Target Game Database', 'Patchable', '3708F2C.zip')}|3708F2C.rom`, '20891c9f'],
+      [`${path.join('smdb', 'Hardware Target Game Database', 'Patchable', '65D1206.zip')}|65D1206.rom`, '20323455'],
+      [`${path.join('smdb', 'Hardware Target Game Database', 'Patchable', 'C01173E.zip')}|C01173E.rom`, 'dfaebe28'],
     ]);
   });
 
@@ -421,7 +421,7 @@ describe('with explicit dats', () => {
   });
 });
 
-describe('with inferred dats', () => {
+describe('with inferred DATs', () => {
   it('should do nothing with no roms', async () => {
     await expectEndToEnd({
       commands: ['copy'],

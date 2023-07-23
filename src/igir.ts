@@ -88,8 +88,10 @@ export default class Igir {
       // Generate and filter ROM candidates
       const parentsToCandidates = await new CandidateGenerator(this.options, progressBar)
         .generate(dat, indexedRomFiles);
-      const parentsToPatchedCandidates = await new PatchCandidateGenerator(progressBar)
-        .generate(dat, parentsToCandidates, patches);
+      const parentsToPatchedCandidates = await new PatchCandidateGenerator(
+        this.options,
+        progressBar,
+      ).generate(dat, parentsToCandidates, patches);
       romOutputDirs.push(...this.getCandidateOutputDirs(dat, parentsToPatchedCandidates));
       const parentsToFilteredCandidates = await new CandidateFilter(this.options, progressBar)
         .filter(dat, parentsToPatchedCandidates);

@@ -2,6 +2,7 @@ import path from 'path';
 
 import CandidateGenerator from '../../src/modules/candidateGenerator.js';
 import DATInferrer from '../../src/modules/datInferrer.js';
+import DATScanner from '../../src/modules/datScanner.js';
 import FileIndexer from '../../src/modules/fileIndexer.js';
 import PatchCandidateGenerator from '../../src/modules/patchCandidateGenerator.js';
 import PatchScanner from '../../src/modules/patchScanner.js';
@@ -14,7 +15,16 @@ import Options from '../../src/types/options.js';
 import ReleaseCandidate from '../../src/types/releaseCandidate.js';
 import ProgressBarFake from '../console/progressBarFake.js';
 
+// Run DATInferrer, but condense all DATs down to one
+async function buildInferredDat(romFiles: File[]): Promise<DAT> {
+  const datGames = (await new DATInferrer(new ProgressBarFake()).infer(romFiles))
+    .map((dat) => dat.getGames())
+    .flatMap((games) => games);
+  return new DAT(new Header(), datGames);
+}
+
 async function runPatchCandidateGenerator(
+  dat: DAT,
   romFiles: File[],
 ): Promise<Map<Parent, ReleaseCandidate[]>> {
   const options = new Options({
@@ -22,49 +32,92 @@ async function runPatchCandidateGenerator(
     patch: [path.join('test', 'fixtures', 'patches')],
   });
 
-  // Run DATInferrer, but condense all DATs down to one
-  const datGames = (await new DATInferrer(new ProgressBarFake()).infer(romFiles))
-    .map((dat) => dat.getGames())
-    .flatMap((games) => games);
-  const dat = new DAT(new Header(), datGames);
-
   const indexedRomFiles = await new FileIndexer(options, new ProgressBarFake()).index(romFiles);
   const parentsToCandidates = await new CandidateGenerator(options, new ProgressBarFake())
     .generate(dat, indexedRomFiles);
 
   const patches = await new PatchScanner(options, new ProgressBarFake()).scan();
 
-  return new PatchCandidateGenerator(new ProgressBarFake())
+  return new PatchCandidateGenerator(options, new ProgressBarFake())
     .generate(dat, parentsToCandidates, patches);
 }
 
 it('should do nothing with no parents', async () => {
-  const parentsToCandidates = await runPatchCandidateGenerator([]);
+  // Given
+  const dat = new DAT(new Header(), []);
+
+  // When
+  const parentsToCandidates = await runPatchCandidateGenerator(dat, []);
+
+  // Then
   expect(parentsToCandidates.size).toEqual(0);
 });
 
-it('should do nothing with no relevant patches', async () => {
-  const romFiles = await new ROMScanner(new Options({
-    input: [path.join('test', 'fixtures', 'roms', 'headered')],
-  }), new ProgressBarFake()).scan();
-  const parentsToCandidates = await runPatchCandidateGenerator(romFiles);
+describe('with inferred DATs', () => {
+  it('should do nothing with no relevant patches', async () => {
+    // Given
+    const romFiles = await new ROMScanner(new Options({
+      input: [path.join('test', 'fixtures', 'roms', 'headered')],
+    }), new ProgressBarFake()).scan();
+    const dat = await buildInferredDat(romFiles);
 
-  expect(parentsToCandidates.size).toEqual(6);
-  [...parentsToCandidates.values()]
-    .forEach((releaseCandidates) => expect(releaseCandidates).toHaveLength(1));
+    // When
+    const parentsToCandidates = await runPatchCandidateGenerator(dat, romFiles);
+
+    // Then
+    expect(parentsToCandidates.size).toEqual(6);
+    [...parentsToCandidates.values()]
+      .forEach((releaseCandidates) => expect(releaseCandidates).toHaveLength(1));
+  });
+
+  it('should create patch candidates with relevant patches', async () => {
+    // Given
+    const romFiles = await new ROMScanner(new Options({
+      input: [path.join('test', 'fixtures', 'roms', 'patchable')],
+    }), new ProgressBarFake()).scan();
+    const dat = await buildInferredDat(romFiles);
+
+    // When
+    const parentsToCandidates = await runPatchCandidateGenerator(dat, romFiles);
+
+    // Then parents have doubled
+    expect(parentsToCandidates.size).toEqual(romFiles.length * 2);
+    [...parentsToCandidates.values()]
+      .forEach((releaseCandidates) => expect(releaseCandidates).toHaveLength(1));
+  });
 });
 
-it('should create patch candidates with relevant patches', async () => {
-  // Given
-  const romFiles = await new ROMScanner(new Options({
-    input: [path.join('test', 'fixtures', 'roms', 'patchable')],
-  }), new ProgressBarFake()).scan();
+describe('with explicit DATs', () => {
+  it('should maintain game and ROM paths from HTGD DATs', async () => {
+    // Given
+    const options = new Options({
+      dat: [path.join('test', 'fixtures', 'dats', 'smdb*')],
+      input: [path.join('test', 'fixtures', 'roms', 'patchable')],
+    });
+    const dat = (await new DATScanner(options, new ProgressBarFake()).scan())[0];
+    const romFiles = await new ROMScanner(options, new ProgressBarFake()).scan();
 
-  // When
-  const parentsToCandidates = await runPatchCandidateGenerator(romFiles);
+    // And pre-assert all Game names and ROM names have path separators in them
+    const totalRoms = dat.getGames().reduce((gameSum, game) => gameSum + game.getRoms().length, 0);
+    expect(totalRoms).toBeGreaterThan(0);
+    dat.getGames().forEach((game) => {
+      expect(game.getName().match(/[\\/]/)).toBeTruthy();
+      game.getRoms().forEach((rom) => {
+        expect(rom.getName().match(/[\\/]/)).toBeTruthy();
+      });
+    });
 
-  // Then parents have doubled
-  expect(parentsToCandidates.size).toEqual(romFiles.length * 2);
-  [...parentsToCandidates.values()]
-    .forEach((releaseCandidates) => expect(releaseCandidates).toHaveLength(1));
+    // When
+    const parentsToCandidates = await runPatchCandidateGenerator(dat, romFiles);
+
+    // Then all Game names and ROM names should maintain their path separators
+    parentsToCandidates.forEach((releaseCandidates) => {
+      releaseCandidates.forEach((releaseCandidate) => {
+        expect(releaseCandidate.getGame().getName().match(/[\\/]/)).toBeTruthy();
+        releaseCandidate.getRomsWithFiles().forEach((romWithFiles) => {
+          expect(romWithFiles.getRom().getName().match(/[\\/]/)).toBeTruthy();
+        });
+      });
+    });
+  });
 });

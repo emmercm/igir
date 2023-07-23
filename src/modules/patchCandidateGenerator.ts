@@ -8,14 +8,18 @@ import Game from '../types/logiqx/game.js';
 import Parent from '../types/logiqx/parent.js';
 import Release from '../types/logiqx/release.js';
 import ROM from '../types/logiqx/rom.js';
+import Options from '../types/options.js';
 import Patch from '../types/patches/patch.js';
 import ReleaseCandidate from '../types/releaseCandidate.js';
 import ROMWithFiles from '../types/romWithFiles.js';
 import Module from './module.js';
 
 export default class PatchCandidateGenerator extends Module {
-  constructor(progressBar: ProgressBar) {
+  private readonly options: Options;
+
+  constructor(options: Options, progressBar: ProgressBar) {
     super(progressBar, PatchCandidateGenerator.name);
+    this.options = options;
   }
 
   async generate(
@@ -31,7 +35,7 @@ export default class PatchCandidateGenerator extends Module {
     }
 
     await this.progressBar.setSymbol(ProgressBarSymbol.GENERATING);
-    await this.progressBar.reset(dat.getParents().length);
+    await this.progressBar.reset(parentsToCandidates.size);
 
     const crcToPatches = PatchCandidateGenerator.indexPatchesByCrcBefore(patches);
     await this.progressBar.logDebug(`${dat.getNameShort()}: ${crcToPatches.size} unique patches found`);
@@ -154,8 +158,15 @@ export default class PatchCandidateGenerator extends Module {
             }
 
             // Build a new ROM from the output file's info
+            let romName = path.basename(outputFile.getExtractedFilePath());
+            if (dat.getRomNamesContainDirectories()) {
+              romName = path.join(
+                path.dirname(rom.getName().replace(/[\\/]/g, path.sep)),
+                romName,
+              );
+            }
             rom = new ROM(
-              path.basename(outputFile.getExtractedFilePath()),
+              romName,
               outputFile.getSize(),
               outputFile.getCrc32(),
             );
@@ -166,9 +177,17 @@ export default class PatchCandidateGenerator extends Module {
           return new ROMWithFiles(rom, inputFile, outputFile);
         }));
 
+      // Build a new Game from the ROM's info
+      let gameName = patchedRomName;
+      if (dat.getRomNamesContainDirectories()) {
+        gameName = path.join(
+          path.dirname(unpatchedReleaseCandidate.getGame().getName().replace(/[\\/]/g, path.sep)),
+          gameName,
+        );
+      }
       const patchedGame = new Game({
         ...unpatchedReleaseCandidate.getGame(),
-        name: patchedRomName,
+        name: gameName,
       });
 
       const parent = new Parent(patchedRomName, [patchedGame]);
