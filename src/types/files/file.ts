@@ -334,6 +334,16 @@ export default class File {
     return this.downloadToPath(filePath);
   }
 
+  async withFilePath(filePath: string): Promise<File> {
+    return File.fileOf(
+      filePath,
+      this.getSize(),
+      this.getCrc32(),
+      this.getFileHeader(),
+      this.getPatch(),
+    );
+  }
+
   async withFileHeader(fileHeader: ROMHeader): Promise<File> {
     // Make sure the file actually has the right file signature
     const hasHeader = await this.createReadStream(

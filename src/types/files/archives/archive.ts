@@ -67,14 +67,14 @@ export default abstract class Archive {
     );
   }
 
-  withFileName(fileNameWithoutExt: string): Archive {
+  withFilePath(filePath: string): Archive {
     const { base, ...parsedFilePath } = path.parse(this.getFilePath());
-    parsedFilePath.name = fileNameWithoutExt;
+    parsedFilePath.name = path.parse(filePath).name;
 
     const extMatch = this.getFilePath().match(/[^.]+((\.[a-zA-Z0-9]+)+)$/);
     parsedFilePath.ext = extMatch !== null ? extMatch[1] : '';
 
-    const filePath = path.format(parsedFilePath);
-    return this.new(filePath);
+    const newFilePath = path.format(parsedFilePath);
+    return this.new(newFilePath);
   }
 }
