@@ -234,7 +234,10 @@ export default class ProgressBarCLI extends ProgressBar {
     // https://github.com/npkgz/cli-progress/issues/142
     const messageWrapped = wrapAnsi(formattedMessage, ConsolePoly.consoleWidth());
 
-    ProgressBarCLI.multiBar?.log(`${messageWrapped}\n`);
+    // If there are leading or trailing newlines, then blank the entire row to overwrite
+    const messagePadded = messageWrapped.replace(/^\n|\n$/g, `\n${' '.repeat(ConsolePoly.consoleWidth())}`);
+
+    ProgressBarCLI.multiBar?.log(`${messagePadded}\n`);
     await this.render(forceRender);
   }
 
