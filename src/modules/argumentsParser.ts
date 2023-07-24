@@ -233,6 +233,14 @@ export default class ArgumentsParser {
         description: 'Append the first letter of the ROM name as an output subdirectory',
         type: 'boolean',
       })
+      .option('dir-letter-limit', {
+        group: groupRomOutput,
+        description: 'Limit the number ROMs in letter subdirectories, splitting into multiple if necessary',
+        type: 'number',
+        coerce: (val: number) => Math.max(ArgumentsParser.getLastValue(val), 1),
+        requiresArg: true,
+        implies: 'dir-letter',
+      })
       .option('overwrite', {
         group: groupRomOutput,
         alias: 'O',

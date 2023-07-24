@@ -15,12 +15,14 @@ import LogLevel from '../console/logLevel.js';
 import Constants from '../constants.js';
 import fsPoly from '../polyfill/fsPoly.js';
 import URLPoly from '../polyfill/urlPoly.js';
+import ArchiveEntry from './files/archives/archiveEntry.js';
 import File from './files/file.js';
 import FileFactory from './files/fileFactory.js';
 import GameConsole from './gameConsole.js';
 import DAT from './logiqx/dat.js';
 import Game from './logiqx/game.js';
 import Release from './logiqx/release.js';
+import ROM from './logiqx/rom.js';
 
 export interface OptionsProps {
   readonly commands?: string[],
@@ -41,6 +43,7 @@ export interface OptionsProps {
   readonly dirMirror?: boolean,
   readonly dirDatName?: boolean,
   readonly dirLetter?: boolean,
+  readonly dirLetterLimit?: number,
   readonly overwrite?: boolean,
   readonly overwriteInvalid?: boolean,
   readonly cleanExclude?: string[],
@@ -130,6 +133,8 @@ export default class Options implements OptionsProps {
   readonly dirDatName: boolean;
 
   readonly dirLetter: boolean;
+
+  readonly dirLetterLimit: number;
 
   readonly overwrite: boolean;
 
@@ -252,6 +257,7 @@ export default class Options implements OptionsProps {
     this.dirMirror = options?.dirMirror || false;
     this.dirDatName = options?.dirDatName || false;
     this.dirLetter = options?.dirLetter || false;
+    this.dirLetterLimit = options?.dirLetterLimit || 0;
     this.overwrite = options?.overwrite || false;
     this.overwriteInvalid = options?.overwriteInvalid || false;
     this.cleanExclude = options?.cleanExclude || [];
@@ -593,6 +599,50 @@ export default class Options implements OptionsProps {
     return fsPoly.makeLegal(output);
   }
 
+  getOutputBasenameAndEntryPath(
+    dat: DAT,
+    game: Game,
+    release: Release | undefined,
+    rom: ROM,
+    inputFile: File,
+  ): [string, string] {
+    const { base, ...parsedPath } = path.parse(rom.getName());
+
+    // Alter the output extension of the file
+    const fileHeader = inputFile.getFileHeader();
+    if (parsedPath.ext && fileHeader) {
+      // If the ROM has a header then we're going to ignore the file extension from the DAT
+      if (this.canRemoveHeader(dat, parsedPath.ext)) {
+        parsedPath.ext = fileHeader.getUnheaderedFileExtension();
+      } else {
+        parsedPath.ext = fileHeader.getHeaderedFileExtension();
+      }
+    }
+    let entryPath = path.format(parsedPath);
+
+    // Determine the output path of the file
+    let outputBasename = entryPath;
+    if (this.shouldZip(rom.getName())) {
+      // Should zip, generate the zip name from the game name
+      outputBasename = `${game.getName()}.zip`;
+      entryPath = path.basename(entryPath);
+    } else if (
+      !(inputFile instanceof ArchiveEntry || FileFactory.isArchive(inputFile.getFilePath()))
+      || this.shouldExtract()
+    ) {
+      // Should extract (if needed), generate the file name from the ROM name
+      outputBasename = entryPath;
+    } else {
+      // Should leave archived, generate the archive name from the game name, but use the input
+      //  file's extension
+      const extMatch = inputFile.getFilePath().match(/[^.]+((\.[a-zA-Z0-9]+)+)$/);
+      const ext = extMatch !== null ? extMatch[1] : '';
+      outputBasename = game.getName() + ext;
+    }
+
+    return [outputBasename, entryPath];
+  }
+
   /**
    * Get the full output path for a ROM file.
    *
@@ -600,21 +650,23 @@ export default class Options implements OptionsProps {
    * @param inputRomPath the input file's full file path.
    * @param game the {@link Game} that this file matches to.
    * @param release a {@link Release} from the {@link Game}.
-   * @param romFilename the intended output filename (including extension).
+   * @param romBasename the intended output basename (including extension).
+   * @param romBasenames the intended output basenames for every ROM from this {@link DAT}.
    */
   getOutputFileParsed(
     dat: DAT,
     inputRomPath: string,
     game: Game,
     release: Release | undefined,
-    romFilename: string,
+    romBasename: string,
+    romBasenames?: string[],
   ): string {
-    let romFilenameSanitized = romFilename.replace(/[\\/]/g, path.sep);
+    let romFilenameSanitized = romBasename.replace(/[\\/]/g, path.sep);
     if (!dat?.getRomNamesContainDirectories()) {
       romFilenameSanitized = romFilenameSanitized.replace(/[\\/]/g, '_');
     }
 
-    let output = this.getOutputDirParsed(dat, inputRomPath, game, release, romFilename);
+    let output = this.getOutputDirParsed(dat, inputRomPath, game, release, romBasename);
 
     if (this.getDirMirror() && inputRomPath) {
       const mirroredDir = path.dirname(inputRomPath)
@@ -629,12 +681,9 @@ export default class Options implements OptionsProps {
       output = path.join(output, dat.getNameShort());
     }
 
-    if (this.getDirLetter() && romFilenameSanitized) {
-      let letter = romFilenameSanitized[0].toUpperCase();
-      if (letter.match(/[^A-Z]/)) {
-        letter = '#';
-      }
-      output = path.join(output, letter);
+    const dirLetter = this.getDirLetterParsed(romFilenameSanitized, romBasenames);
+    if (dirLetter) {
+      output = path.join(output, dirLetter);
     }
 
     if (game.getRoms().length > 1
@@ -737,6 +786,51 @@ export default class Options implements OptionsProps {
     return output;
   }
 
+  private getDirLetterParsed(romBasename?: string, romBasenames?: string[]): string | undefined {
+    if (!romBasename || !this.getDirLetter()) {
+      return undefined;
+    }
+
+    // Find the letter for every ROM filename
+    let lettersToFilenames = (romBasenames || [romBasename]).reduce((map, filename) => {
+      let letter = path.basename(filename)[0].toUpperCase();
+      if (letter.match(/[^A-Z]/)) {
+        letter = '#';
+      }
+
+      const existing = map.get(letter) || [];
+      existing.push(filename);
+      map.set(letter, existing);
+      return map;
+    }, new Map<string, string[]>());
+
+    // Split the letter directories, if needed
+    if (this.getDirLetterLimit()) {
+      lettersToFilenames = [...lettersToFilenames.entries()].reduce((map, [letter, filenames]) => {
+        if (filenames.length <= this.getDirLetterLimit()) {
+          map.set(letter, filenames);
+          return map;
+        }
+
+        const uniqueFilenames = filenames
+          .sort()
+          .filter((val, idx, vals) => vals.indexOf(val) === idx);
+        const chunkSize = this.getDirLetterLimit();
+        for (let i = 0; i < uniqueFilenames.length; i += chunkSize) {
+          const newLetter = `${letter}${i / chunkSize + 1}`;
+          const chunk = uniqueFilenames.slice(i, i + chunkSize);
+          map.set(newLetter, chunk);
+        }
+
+        return map;
+      }, new Map<string, string[]>());
+    }
+
+    const foundEntry = [...lettersToFilenames.entries()]
+      .find(([, filenames]) => filenames.indexOf(romBasename) !== -1);
+    return foundEntry ? foundEntry[0] : undefined;
+  }
+
   getDirMirror(): boolean {
     return this.dirMirror;
   }
@@ -747,6 +841,10 @@ export default class Options implements OptionsProps {
 
   getDirLetter(): boolean {
     return this.dirLetter;
+  }
+
+  getDirLetterLimit(): number {
+    return this.dirLetterLimit;
   }
 
   getOverwrite(): boolean {

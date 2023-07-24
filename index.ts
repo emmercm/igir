@@ -9,6 +9,7 @@ import ProgressBarCLI from './src/console/progressBarCLI.js';
 import Constants from './src/constants.js';
 import Igir from './src/igir.js';
 import ArgumentsParser from './src/modules/argumentsParser.js';
+import UpdateChecker from './src/modules/updateChecker.js';
 
 // Monkey-patch 'fs' to help prevent Windows EMFILE errors
 gracefulFs.gracefulify(realFs);
@@ -35,6 +36,9 @@ gracefulFs.gracefulify(realFs);
       process.exit(0);
     }
     logger.setLogLevel(options.getLogLevel());
+
+    // eslint-disable-next-line @typescript-eslint/no-floating-promises
+    new UpdateChecker(logger).check();
 
     await new Igir(options, logger).main();
     ProgressBarCLI.stop();
