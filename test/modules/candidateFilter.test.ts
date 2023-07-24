@@ -1037,6 +1037,8 @@ describe('sort', () => {
       [['three', 'three (Rev 1)', 'three (Rev2)'], 'three'],
       [['four (Rev 1.1)', 'four (Rev 1.2)'], 'four (Rev 1.1)'],
       [['five (Rev 13.37)'], 'five (Rev 13.37)'],
+      [['six (Rev B)', 'six (Rev A)', 'six (Rev C)'], 'six (Rev B)'],
+      [['seven (RE2)', 'seven (RE3)', 'seven'], 'seven (RE2)'],
     ])('should return the first candidate when option is false: %s', async (names, expectedName) => {
       await expectPreferredCandidates(
         { preferRevisionNewer: false, single: true },
@@ -1062,6 +1064,8 @@ describe('sort', () => {
       [['three', 'three (Rev 1)', 'three (Rev2)'], 'three (Rev2)'],
       [['four (Rev 1.1)', 'four (Rev 1.2)'], 'four (Rev 1.2)'],
       [['five (Rev 13.37)'], 'five (Rev 13.37)'],
+      [['six (Rev B)', 'six (Rev A)', 'six (Rev C)'], 'six (Rev C)'],
+      [['seven (RE2)', 'seven (RE3)', 'seven'], 'seven (RE3)'],
     ])('should return the first matching candidate when some matching: %s', async (names, expectedName) => {
       await expectPreferredCandidates(
         { preferRevisionNewer: true, single: true },
@@ -1089,6 +1093,8 @@ describe('sort', () => {
       [['three', 'three (Rev 1)', 'three (Rev2)'], 'three'],
       [['four (Rev 1.1)', 'four (Rev 1.2)'], 'four (Rev 1.1)'],
       [['five (Rev 13.37)'], 'five (Rev 13.37)'],
+      [['six (Rev B)', 'six (Rev A)', 'six (Rev C)'], 'six (Rev B)'],
+      [['seven (RE2)', 'seven (RE3)', 'seven'], 'seven (RE2)'],
     ])('should return the first candidate when option is false: %s', async (names, expectedName) => {
       await expectPreferredCandidates(
         { preferRevisionOlder: false, single: true },
@@ -1114,6 +1120,8 @@ describe('sort', () => {
       [['three', 'three (Rev 1)', 'three (Rev2)'], 'three'],
       [['four (Rev 1.2)', 'four (Rev 1.1)'], 'four (Rev 1.1)'],
       [['five (Rev 13.37)'], 'five (Rev 13.37)'],
+      [['six (Rev B)', 'six (Rev A)', 'six (Rev C)'], 'six (Rev A)'],
+      [['seven (RE2)', 'seven (RE3)', 'seven'], 'seven'],
     ])('should return the first matching candidate when some matching: %s', async (names, expectedName) => {
       await expectPreferredCandidates(
         { preferRevisionOlder: true, single: true },
