@@ -35,11 +35,11 @@ export default class CandidateGenerator extends Module {
     dat: DAT,
     hashCodeToInputFiles: Map<string, File[]>,
   ): Promise<Map<Parent, ReleaseCandidate[]>> {
-    await this.progressBar.logInfo(`${dat.getNameShort()}: generating candidates`);
+    this.progressBar.logInfo(`${dat.getNameShort()}: generating candidates`);
 
     const output = new Map<Parent, ReleaseCandidate[]>();
     if (!hashCodeToInputFiles.size) {
-      await this.progressBar.logDebug(`${dat.getNameShort()}: no input ROMs to make candidates from`);
+      this.progressBar.logDebug(`${dat.getNameShort()}: no input ROMs to make candidates from`);
       return output;
     }
 
@@ -78,7 +78,7 @@ export default class CandidateGenerator extends Module {
         }
       }
 
-      await this.progressBar.logTrace(`${dat.getNameShort()}: ${parent.getName()}: found ${releaseCandidates.length.toLocaleString()} candidate${releaseCandidates.length !== 1 ? 's' : ''}`);
+      this.progressBar.logTrace(`${dat.getNameShort()}: ${parent.getName()}: found ${releaseCandidates.length.toLocaleString()} candidate${releaseCandidates.length !== 1 ? 's' : ''}`);
       output.set(parent, releaseCandidates);
 
       this.progressBar.removeWaitingMessage(waitingMessage);
@@ -90,9 +90,9 @@ export default class CandidateGenerator extends Module {
       .flatMap((releaseCandidate) => releaseCandidate.getRomsWithFiles())
       .reduce((sum, romWithFiles) => sum + romWithFiles.getRom().getSize(), 0);
     const totalCandidates = [...output.values()].reduce((sum, rc) => sum + rc.length, 0);
-    await this.progressBar.logDebug(`${dat.getNameShort()}: generated ${fsPoly.sizeReadable(size)} of ${totalCandidates.toLocaleString()} candidate${totalCandidates !== 1 ? 's' : ''} for ${output.size.toLocaleString()} parent${output.size !== 1 ? 's' : ''}`);
+    this.progressBar.logDebug(`${dat.getNameShort()}: generated ${fsPoly.sizeReadable(size)} of ${totalCandidates.toLocaleString()} candidate${totalCandidates !== 1 ? 's' : ''} for ${output.size.toLocaleString()} parent${output.size !== 1 ? 's' : ''}`);
 
-    await this.progressBar.logInfo(`${dat.getNameShort()}: done generating candidates`);
+    this.progressBar.logInfo(`${dat.getNameShort()}: done generating candidates`);
     return output;
   }
 
@@ -146,7 +146,7 @@ export default class CandidateGenerator extends Module {
           const romWithFiles = new ROMWithFiles(rom, finalInputFile, outputFile);
           return [rom, romWithFiles];
         } catch (e) {
-          await this.progressBar.logInfo(`${dat.getNameShort()}: ${game.getName()}: ${e}`);
+          this.progressBar.logInfo(`${dat.getNameShort()}: ${game.getName()}: ${e}`);
           return [rom, undefined];
         }
       }),
@@ -162,13 +162,13 @@ export default class CandidateGenerator extends Module {
     // Ignore the Game if not every File is present
     if (missingRoms.length > 0) {
       if (foundRomsWithFiles.length > 0) {
-        await this.logMissingRomFiles(dat, game, release, foundRomsWithFiles, missingRoms);
+        this.logMissingRomFiles(dat, game, release, foundRomsWithFiles, missingRoms);
       }
       return undefined;
     }
 
     // Ignore the Game with conflicting input->output files
-    if (await this.hasConflictingOutputFiles(foundRomsWithFiles)) {
+    if (this.hasConflictingOutputFiles(foundRomsWithFiles)) {
       return undefined;
     }
 
@@ -293,13 +293,13 @@ export default class CandidateGenerator extends Module {
     );
   }
 
-  private async logMissingRomFiles(
+  private logMissingRomFiles(
     dat: DAT,
     game: Game,
     release: Release | undefined,
     foundRomsWithFiles: ROMWithFiles[],
     missingRoms: ROM[],
-  ): Promise<void> {
+  ): void {
     let message = `${dat.getNameShort()}: ${game.getName()}: found ${foundRomsWithFiles.length.toLocaleString()} file${missingRoms.length !== 1 ? 's' : ''}, missing ${missingRoms.length.toLocaleString()} file${missingRoms.length !== 1 ? 's' : ''}`;
     if (release?.getRegion()) {
       message += ` (${release?.getRegion()})`;
@@ -307,11 +307,11 @@ export default class CandidateGenerator extends Module {
     missingRoms.forEach((rom) => {
       message += `\n  ${rom.getName()}`;
     });
-    await this.progressBar.logDebug(message);
+    this.progressBar.logDebug(message);
   }
 
-  private async hasConflictingOutputFiles(romsWithFiles: ROMWithFiles[]): Promise<boolean> {
-    // If we're not writing then don't bother looking for conflicts
+  private hasConflictingOutputFiles(romsWithFiles: ROMWithFiles[]): boolean {
+    // If we're not writing, then don't bother looking for conflicts
     if (!this.options.shouldWrite()) {
       return false;
     }
@@ -348,7 +348,7 @@ export default class CandidateGenerator extends Module {
         hasConflict = true;
         let message = `Cannot ${this.options.writeString()} different files to: ${duplicateOutput}:`;
         conflictedInputFiles.forEach((conflictedInputFile) => { message += `\n  ${conflictedInputFile}`; });
-        await this.progressBar.logWarn(message);
+        this.progressBar.logWarn(message);
       }
     }
     return hasConflict;

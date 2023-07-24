@@ -23,13 +23,13 @@ export default class StatusGenerator extends Module {
     dat: DAT,
     parentsToReleaseCandidates: Map<Parent, ReleaseCandidate[]>,
   ): Promise<DATStatus> {
-    await this.progressBar.logInfo(`${dat.getNameShort()}: generating ROM statuses`);
+    this.progressBar.logInfo(`${dat.getNameShort()}: generating ROM statuses`);
 
     const datStatus = new DATStatus(dat, parentsToReleaseCandidates);
 
     await this.progressBar.done(datStatus.toConsole(this.options));
 
-    await this.progressBar.logInfo(`${dat.getNameShort()}: done generating ROM statuses`);
+    this.progressBar.logInfo(`${dat.getNameShort()}: done generating ROM statuses`);
     return datStatus;
   }
 }

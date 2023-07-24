@@ -40,8 +40,6 @@ export default class Igir {
   }
 
   async main(): Promise<void> {
-    this.logger.info('running');
-
     // Scan and process input files
     let dats = await this.processDATScanner();
 
@@ -63,7 +61,7 @@ export default class Igir {
     // Set up progress bar and input for DAT processing
     const datProcessProgressBar = await this.logger.addProgressBar('Processing DATs', ProgressBarSymbol.PROCESSING, dats.length);
     if (!dats.length) {
-      dats = await new DATInferrer(datProcessProgressBar).infer(romFilesWithHeaders);
+      dats = new DATInferrer(datProcessProgressBar).infer(romFilesWithHeaders);
     }
 
     if (this.options.getSingle() && !dats.some((dat) => dat.hasParentCloneInfo())) {
@@ -76,7 +74,7 @@ export default class Igir {
     const datsStatuses: DATStatus[] = [];
 
     // Process every DAT
-    await datProcessProgressBar.logInfo(`processing ${dats.length.toLocaleString()} DAT${dats.length !== 1 ? 's' : ''}`);
+    datProcessProgressBar.logInfo(`processing ${dats.length.toLocaleString()} DAT${dats.length !== 1 ? 's' : ''}`);
     await async.eachLimit(dats, this.options.getDatThreads(), async (dat, callback) => {
       await datProcessProgressBar.incrementProgress();
 
@@ -140,7 +138,7 @@ export default class Igir {
       await datProcessProgressBar.incrementDone();
       callback();
     });
-    await datProcessProgressBar.logInfo(`done processing ${dats.length.toLocaleString()} DAT${dats.length !== 1 ? 's' : ''}`);
+    datProcessProgressBar.logInfo(`done processing ${dats.length.toLocaleString()} DAT${dats.length !== 1 ? 's' : ''}`);
 
     await datProcessProgressBar.doneItems(dats.length, 'DAT', 'processed');
     datProcessProgressBar.delete();
@@ -155,7 +153,6 @@ export default class Igir {
     await this.processReportGenerator(rawRomFiles, cleanedOutputFiles, datsStatuses);
 
     ProgressBarCLI.stop();
-    this.logger.info('done');
   }
 
   private async processDATScanner(): Promise<DAT[]> {

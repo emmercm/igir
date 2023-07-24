@@ -6,7 +6,7 @@ import { WriteStream } from 'tty';
 
 import Constants from '../constants.js';
 import LogLevel from './logLevel.js';
-import { ProgressBarSymbol } from './progressBar.js';
+import ProgressBar, { ProgressBarSymbol } from './progressBar.js';
 import ProgressBarCLI from './progressBarCLI.js';
 
 export default class Logger {
@@ -72,18 +72,19 @@ export default class Logger {
       [LogLevel.INFO]: chalk.cyan,
       [LogLevel.WARN]: chalk.yellow,
       [LogLevel.ERROR]: chalk.red,
+      [LogLevel.NOTICE]: chalk.bold,
     };
     const chalkFunc = chalkFuncs[logLevel];
 
     const loggerTime = this.logLevel <= LogLevel.TRACE ? `[${moment().format('HH:mm:ss.SSS')}] ` : '';
-    const levelPrefix = chalkFunc(`${LogLevel[logLevel]}:${' '.repeat(5 - LogLevel[logLevel].length)} `);
+    const levelPrefix = chalkFunc(`${LogLevel[logLevel]}:${' '.repeat(Math.max(5 - LogLevel[logLevel].length, 0))} `);
     const loggerPrefix = this.logLevel <= LogLevel.INFO && this.loggerPrefix ? `${this.loggerPrefix}: ` : '';
 
     return message
       .replace(/Error: /, '') // strip `new Error()` prefix
-      .trim()
+      .replace(/(\r?\n)(\r?\n)+/, '$1')
       .split('\n')
-      .map((m) => loggerTime + levelPrefix + loggerPrefix + m)
+      .map((m) => (m.trim() ? loggerTime + levelPrefix + loggerPrefix + m : m))
       .join('\n');
   }
 
@@ -96,6 +97,8 @@ export default class Logger {
   warn = (message: unknown = ''): void => this.print(LogLevel.WARN, message);
 
   error = (message: unknown = ''): void => this.print(LogLevel.ERROR, message);
+
+  notice = (message: unknown = ''): void => this.print(LogLevel.NOTICE, message);
 
   printHeader(): void {
     const logo = figlet.textSync(Constants.COMMAND_NAME.toUpperCase(), {
@@ -140,7 +143,7 @@ export default class Logger {
     name: string,
     symbol = ProgressBarSymbol.WAITING,
     initialTotal = 0,
-  ): Promise<ProgressBarCLI> {
+  ): Promise<ProgressBar> {
     return ProgressBarCLI.new(this, name, symbol, initialTotal);
   }
 

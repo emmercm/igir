@@ -65,11 +65,11 @@ export default abstract class Scanner extends Module {
       );
 
       if (!files.length) {
-        await this.progressBar.logWarn(`${filePath}: found no files in path`);
+        this.progressBar.logWarn(`${filePath}: found no files in path`);
       }
       return files;
     } catch (e) {
-      await this.progressBar.logError(`${filePath}: failed to parse file: ${e}`);
+      this.progressBar.logError(`${filePath}: failed to parse file: ${e}`);
       return [];
     }
   }

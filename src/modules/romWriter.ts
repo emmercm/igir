@@ -62,14 +62,14 @@ export default class ROMWriter extends Module {
     );
 
     const totalCandidateCount = [...parentsToWritableCandidates.values()].flatMap((c) => c).length;
-    await this.progressBar.logInfo(`${dat.getNameShort()}: writing ${totalCandidateCount.toLocaleString()} candidate${totalCandidateCount !== 1 ? 's' : ''}`);
+    this.progressBar.logInfo(`${dat.getNameShort()}: writing ${totalCandidateCount.toLocaleString()} candidate${totalCandidateCount !== 1 ? 's' : ''}`);
     await this.progressBar.setSymbol(ProgressBarSymbol.WRITING);
     await this.progressBar.reset(parentsToWritableCandidates.size);
 
     await Promise.all([...parentsToWritableCandidates.entries()].map(
       async ([parent, releaseCandidates]) => ROMWriter.THREAD_SEMAPHORE.runExclusive(async () => {
         await this.progressBar.incrementProgress();
-        await this.progressBar.logTrace(`${dat.getNameShort()}: ${parent.getName()}: writing ${releaseCandidates.length.toLocaleString()} candidate${releaseCandidates.length !== 1 ? 's' : ''}`);
+        this.progressBar.logTrace(`${dat.getNameShort()}: ${parent.getName()}: writing ${releaseCandidates.length.toLocaleString()} candidate${releaseCandidates.length !== 1 ? 's' : ''}`);
 
         /* eslint-disable no-await-in-loop */
         for (let i = 0; i < releaseCandidates.length; i += 1) {
@@ -77,12 +77,12 @@ export default class ROMWriter extends Module {
           await this.writeReleaseCandidate(dat, releaseCandidate);
         }
 
-        await this.progressBar.logTrace(`${dat.getNameShort()}: ${parent.getName()}: done writing ${releaseCandidates.length.toLocaleString()} candidate${releaseCandidates.length !== 1 ? 's' : ''}`);
+        this.progressBar.logTrace(`${dat.getNameShort()}: ${parent.getName()}: done writing ${releaseCandidates.length.toLocaleString()} candidate${releaseCandidates.length !== 1 ? 's' : ''}`);
         await this.progressBar.incrementDone();
       }),
     ));
 
-    await this.progressBar.logInfo(`${dat.getNameShort()}: done writing ${totalCandidateCount.toLocaleString()} candidate${totalCandidateCount !== 1 ? 's' : ''}`);
+    this.progressBar.logInfo(`${dat.getNameShort()}: done writing ${totalCandidateCount.toLocaleString()} candidate${totalCandidateCount !== 1 ? 's' : ''}`);
 
     return this.filesQueuedForDeletion;
   }
@@ -95,7 +95,7 @@ export default class ROMWriter extends Module {
       .filter((romWithFiles) => !romWithFiles.getOutputFile().equals(romWithFiles.getInputFile()))
       .some((notEq) => notEq);
     if (!writeNeeded) {
-      await this.progressBar.logTrace(`${dat.getNameShort()}: ${releaseCandidate.getName()}: input and output files are the same, skipping`);
+      this.progressBar.logTrace(`${dat.getNameShort()}: ${releaseCandidate.getName()}: input and output files are the same, skipping`);
       return;
     }
 
@@ -138,7 +138,7 @@ export default class ROMWriter extends Module {
         romWithFiles.getOutputFile() as ArchiveEntry<Zip>,
       ]) as [File, ArchiveEntry<Zip>][];
     if (!inputToOutputZipEntries.length) {
-      await this.progressBar.logTrace(`${dat.getNameShort()}: ${releaseCandidate.getName()}: no zip archives to write`);
+      this.progressBar.logTrace(`${dat.getNameShort()}: ${releaseCandidate.getName()}: no zip archives to write`);
       return;
     }
 
@@ -148,7 +148,7 @@ export default class ROMWriter extends Module {
     // If the output file already exists, see if we need to do anything
     if (await fsPoly.exists(outputZip.getFilePath())) {
       if (!this.options.getOverwrite() && !this.options.getOverwriteInvalid()) {
-        await this.progressBar.logTrace(`${dat.getNameShort()}: ${outputZip.getFilePath()}: not overwriting existing zip`);
+        this.progressBar.logTrace(`${dat.getNameShort()}: ${outputZip.getFilePath()}: not overwriting existing zip`);
         return;
       }
 
@@ -159,7 +159,7 @@ export default class ROMWriter extends Module {
           inputToOutputZipEntries.map((entry) => entry[1]),
         );
         if (!existingTest) {
-          await this.progressBar.logTrace(`${dat.getNameShort()}: ${outputZip.getFilePath()}: not overwriting existing zip, existing zip has the expected contents`);
+          this.progressBar.logTrace(`${dat.getNameShort()}: ${outputZip.getFilePath()}: not overwriting existing zip, existing zip has the expected contents`);
           return;
         }
       }
@@ -177,7 +177,7 @@ export default class ROMWriter extends Module {
         inputToOutputZipEntries.map((entry) => entry[1]),
       );
       if (writtenTest) {
-        await this.progressBar.logError(`${dat.getNameShort()}: ${outputZip.getFilePath()}: written zip ${writtenTest}`);
+        this.progressBar.logError(`${dat.getNameShort()}: ${outputZip.getFilePath()}: written zip ${writtenTest}`);
         return;
       }
     }
@@ -190,7 +190,7 @@ export default class ROMWriter extends Module {
     outputZip: Zip,
     expectedArchiveEntries: ArchiveEntry<Zip>[],
   ): Promise<string | undefined> {
-    await this.progressBar.logTrace(`${dat.getNameShort()}: ${outputZip.getFilePath()}: testing zip ...`);
+    this.progressBar.logTrace(`${dat.getNameShort()}: ${outputZip.getFilePath()}: testing zip ...`);
 
     const expectedEntriesByPath = expectedArchiveEntries
       .reduce((map, entry) => {
@@ -227,7 +227,7 @@ export default class ROMWriter extends Module {
 
       // Check checksum
       if (expectedFile.getCrc32() === '00000000') {
-        await this.progressBar.logWarn(`${dat.getNameShort()}: ${expectedFile.toString()}: can't test, expected CRC is unknown`);
+        this.progressBar.logWarn(`${dat.getNameShort()}: ${expectedFile.toString()}: can't test, expected CRC is unknown`);
         // eslint-disable-next-line no-continue
         continue;
       }
@@ -237,7 +237,7 @@ export default class ROMWriter extends Module {
       }
     }
 
-    await this.progressBar.logTrace(`${dat.getNameShort()}: ${outputZip.getFilePath()}: test passed`);
+    this.progressBar.logTrace(`${dat.getNameShort()}: ${outputZip.getFilePath()}: test passed`);
     return undefined;
   }
 
@@ -246,17 +246,17 @@ export default class ROMWriter extends Module {
     outputZip: Zip,
     inputToOutputZipEntries: [File, ArchiveEntry<Zip>][],
   ): Promise<boolean> {
-    await this.progressBar.logTrace(`${dat.getNameShort()}: ${outputZip.getFilePath()}: writing ${inputToOutputZipEntries.length.toLocaleString()} archive entr${inputToOutputZipEntries.length !== 1 ? 'ies' : 'y'} ...`);
+    this.progressBar.logTrace(`${dat.getNameShort()}: ${outputZip.getFilePath()}: writing ${inputToOutputZipEntries.length.toLocaleString()} archive entr${inputToOutputZipEntries.length !== 1 ? 'ies' : 'y'} ...`);
 
     try {
       await ROMWriter.ensureOutputDirExists(outputZip.getFilePath());
       await outputZip.createArchive(this.options, dat, inputToOutputZipEntries);
     } catch (e) {
-      await this.progressBar.logError(`${dat.getNameShort()}: ${outputZip.getFilePath()}: failed to create zip: ${e}`);
+      this.progressBar.logError(`${dat.getNameShort()}: ${outputZip.getFilePath()}: failed to create zip: ${e}`);
       return false;
     }
 
-    await this.progressBar.logTrace(`${dat.getNameShort()}: ${outputZip.getFilePath()}: wrote ${inputToOutputZipEntries.length.toLocaleString()} archive entr${inputToOutputZipEntries.length !== 1 ? 'ies' : 'y'}`);
+    this.progressBar.logTrace(`${dat.getNameShort()}: ${outputZip.getFilePath()}: wrote ${inputToOutputZipEntries.length.toLocaleString()} archive entr${inputToOutputZipEntries.length !== 1 ? 'ies' : 'y'}`);
     return true;
   }
 
@@ -274,7 +274,7 @@ export default class ROMWriter extends Module {
     // Return no files if there are none to write
     if (!inputToOutputEntries.length) {
       // TODO(cemmer): unit test
-      await this.progressBar.logTrace(`${dat.getNameShort()}: ${releaseCandidate.getName()}: no raw files to write`);
+      this.progressBar.logTrace(`${dat.getNameShort()}: ${releaseCandidate.getName()}: no raw files to write`);
       return;
     }
 
@@ -288,7 +288,7 @@ export default class ROMWriter extends Module {
     const totalBytes = uniqueInputToOutputEntries
       .flatMap(([, outputFile]) => outputFile)
       .reduce((sum, file) => sum + file.getSize(), 0);
-    await this.progressBar.logTrace(`${dat.getNameShort()}: ${releaseCandidate.getName()}: writing ${fsPoly.sizeReadable(totalBytes)} of ${uniqueInputToOutputEntries.length.toLocaleString()} file${uniqueInputToOutputEntries.length !== 1 ? 's' : ''}`);
+    this.progressBar.logTrace(`${dat.getNameShort()}: ${releaseCandidate.getName()}: writing ${fsPoly.sizeReadable(totalBytes)} of ${uniqueInputToOutputEntries.length.toLocaleString()} file${uniqueInputToOutputEntries.length !== 1 ? 's' : ''}`);
 
     /* eslint-disable no-await-in-loop */
     for (let i = 0; i < uniqueInputToOutputEntries.length; i += 1) {
@@ -305,7 +305,7 @@ export default class ROMWriter extends Module {
   ): Promise<void> {
     // Input and output are the exact same, do nothing
     if (outputRomFile.equals(inputRomFile)) {
-      await this.progressBar.logTrace(`${dat.getNameShort()}: ${releaseCandidate.getName()}: same file, skipping: ${outputRomFile}`);
+      this.progressBar.logTrace(`${dat.getNameShort()}: ${releaseCandidate.getName()}: same file, skipping: ${outputRomFile}`);
       return;
     }
 
@@ -314,14 +314,14 @@ export default class ROMWriter extends Module {
     // If the output file already exists, see if we need to do anything
     if (!this.options.getOverwrite() && await fsPoly.exists(outputFilePath)) {
       if (!this.options.getOverwrite() && !this.options.getOverwriteInvalid()) {
-        await this.progressBar.logTrace(`${dat.getNameShort()}: ${releaseCandidate.getName()}: not overwriting existing file: ${outputFilePath}`);
+        this.progressBar.logTrace(`${dat.getNameShort()}: ${releaseCandidate.getName()}: not overwriting existing file: ${outputFilePath}`);
         return;
       }
 
       if (this.options.getOverwriteInvalid()) {
         const existingTest = await this.testWrittenRaw(dat, outputFilePath, outputRomFile);
         if (!existingTest) {
-          await this.progressBar.logTrace(`${dat.getNameShort()}: ${releaseCandidate.getName()}: not overwriting existing file, existing file is what was expected: ${outputFilePath}`);
+          this.progressBar.logTrace(`${dat.getNameShort()}: ${releaseCandidate.getName()}: not overwriting existing file, existing file is what was expected: ${outputFilePath}`);
           return;
         }
       }
@@ -334,7 +334,7 @@ export default class ROMWriter extends Module {
     if (this.options.shouldTest()) {
       const writtenTest = await this.testWrittenRaw(dat, outputFilePath, outputRomFile);
       if (writtenTest) {
-        await this.progressBar.logError(`${dat.getNameShort()}: ${releaseCandidate.getName()}: written file ${writtenTest}: ${outputFilePath}`);
+        this.progressBar.logError(`${dat.getNameShort()}: ${releaseCandidate.getName()}: written file ${writtenTest}: ${outputFilePath}`);
       }
     }
     this.enqueueFileDeletion(inputRomFile);
@@ -350,7 +350,7 @@ export default class ROMWriter extends Module {
       path.extname(inputRomFile.getExtractedFilePath()),
     );
 
-    await this.progressBar.logTrace(`${dat.getNameShort()}: ${inputRomFile.toString()} writing to ${outputFilePath}`);
+    this.progressBar.logTrace(`${dat.getNameShort()}: ${inputRomFile.toString()} writing to ${outputFilePath}`);
 
     try {
       await ROMWriter.ensureOutputDirExists(outputFilePath);
@@ -359,7 +359,7 @@ export default class ROMWriter extends Module {
       await fsPoly.mv(tempRawFile, outputFilePath);
       return true;
     } catch (e) {
-      await this.progressBar.logError(`${dat.getNameShort()}: ${inputRomFile.toString()}: failed to copy to ${outputFilePath}: ${e}`);
+      this.progressBar.logError(`${dat.getNameShort()}: ${inputRomFile.toString()}: failed to copy to ${outputFilePath}: ${e}`);
       return false;
     }
   }
@@ -369,11 +369,11 @@ export default class ROMWriter extends Module {
     outputFilePath: string,
     expectedFile: File,
   ): Promise<string | undefined> {
-    await this.progressBar.logTrace(`${dat.getNameShort()}: ${outputFilePath}: testing raw`);
+    this.progressBar.logTrace(`${dat.getNameShort()}: ${outputFilePath}: testing raw`);
 
     // Check checksum
     if (expectedFile.getCrc32() === '00000000') {
-      await this.progressBar.logWarn(`${dat.getNameShort()}: ${outputFilePath}: can't test, expected CRC is unknown`);
+      this.progressBar.logWarn(`${dat.getNameShort()}: ${outputFilePath}: can't test, expected CRC is unknown`);
       return undefined;
     }
     const actualFile = await File.fileOf(outputFilePath);
@@ -381,7 +381,7 @@ export default class ROMWriter extends Module {
       return `has the CRC ${actualFile.getCrc32()}, expected ${expectedFile.getCrc32()}`;
     }
 
-    await this.progressBar.logTrace(`${dat.getNameShort()}: ${outputFilePath}: test passed`);
+    this.progressBar.logTrace(`${dat.getNameShort()}: ${outputFilePath}: test passed`);
     return undefined;
   }
 
@@ -419,7 +419,7 @@ export default class ROMWriter extends Module {
   ): Promise<void> {
     // Input and output are the exact same, do nothing
     if (outputRomFile.equals(inputRomFile)) {
-      await this.progressBar.logTrace(`${dat.getNameShort()}: ${outputRomFile}: same file, skipping`);
+      this.progressBar.logTrace(`${dat.getNameShort()}: ${outputRomFile}: same file, skipping`);
       return;
     }
 
@@ -432,14 +432,14 @@ export default class ROMWriter extends Module {
     // If the output file already exists, see if we need to do anything
     if (await fsPoly.exists(targetPath)) {
       if (!this.options.getOverwrite() && !this.options.getOverwriteInvalid()) {
-        await this.progressBar.logTrace(`${dat.getNameShort()}: ${targetPath}: not overwriting existing file`);
+        this.progressBar.logTrace(`${dat.getNameShort()}: ${targetPath}: not overwriting existing file`);
         return;
       }
 
       if (this.options.getOverwriteInvalid()) {
         const existingTest = await ROMWriter.testWrittenSymlink(targetPath, sourcePath);
         if (!existingTest) {
-          await this.progressBar.logTrace(`${dat.getNameShort()}: ${targetPath}: not overwriting existing symlink, existing symlink is what was expected`);
+          this.progressBar.logTrace(`${dat.getNameShort()}: ${targetPath}: not overwriting existing symlink, existing symlink is what was expected`);
           return;
         }
       }
@@ -451,13 +451,13 @@ export default class ROMWriter extends Module {
       await ROMWriter.ensureOutputDirExists(targetPath);
       await fsPoly.symlink(sourcePath, targetPath);
     } catch (e) {
-      await this.progressBar.logError(`${dat.getNameShort()}: ${inputRomFile.toString()}: failed to symlink ${sourcePath} to ${targetPath}: ${e}`);
+      this.progressBar.logError(`${dat.getNameShort()}: ${inputRomFile.toString()}: failed to symlink ${sourcePath} to ${targetPath}: ${e}`);
     }
 
     if (this.options.shouldTest()) {
       const writtenTest = await ROMWriter.testWrittenSymlink(targetPath, sourcePath);
       if (writtenTest) {
-        await this.progressBar.logError(`${dat.getNameShort()}: ${targetPath}: written symlink ${writtenTest}`);
+        this.progressBar.logError(`${dat.getNameShort()}: ${targetPath}: written symlink ${writtenTest}`);
       }
     }
   }
