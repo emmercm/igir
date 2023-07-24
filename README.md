@@ -56,7 +56,7 @@ $ igir --help
   | $$  | $$ __\$$  | $$  | $$__| $$
   | $$  | $$|    \  | $$  | $$    $$   ROM collection manager
   | $$  | $$ \$$$$  | $$  | $$$$$$$\
- _| $$_ | $$__| $$ _| $$_ | $$  | $$   v1.7.1
+ _| $$_ | $$__| $$ _| $$_ | $$  | $$   v1.8.0
 |   $$ \ \$$    $$|   $$ \| $$  | $$
  \$$$$$$  \$$$$$$  \$$$$$$ \$$   \$$
 
@@ -99,6 +99,8 @@ ROM output options:
   -D, --dir-dat-name       Use the DAT name as the output subdirectory                  [boolean]
       --dir-letter         Append the first letter of the ROM name as an output subdirectory
                                                                                         [boolean]
+      --dir-letter-limit   Limit the number ROMs in letter subdirectories, splitting into multipl
+                           e if necessary                                                [number]
   -O, --overwrite          Overwrite any files in the output directory                  [boolean]
       --overwrite-invalid  Overwrite files in the output directory that are the wrong filesize, c
                            hecksum, or zip contents                                     [boolean]
@@ -127,21 +129,21 @@ ROM filtering options:
                               AUS, BRA, CAN, CHN, DAN, EUR, FRA, FYN, GER, GRE, HK, HOL, ITA, JPN
                               , KOR, MEX, NOR, NZ, POR, RUS, SPA, SWE, TAI, UK, UNK, USA, WORLD)
                                                                                          [string]
-      --only-bios             Filter to only BIOS files                                 [boolean]
-      --no-bios               Filter out BIOS files                                     [boolean]
-      --no-device             Filter out MAME devices                                   [boolean]
-      --no-unlicensed         Filter out unlicensed ROMs                                [boolean]
-      --only-retail           Filter to only retail releases, enabling all the following options
+      --no-bios               Filter out BIOS files, opposite of --only-bios            [boolean]
+      --no-device             Filter out MAME devies, opposite of --only-device         [boolean]
+      --no-unlicensed         Filter out unlicensed ROMs, opposite of --only-unlicensed [boolean]
+      --only-retail           Filter to only retail releases, enabling all the following "no" opt
+                              ions                                                      [boolean]
+      --no-demo               Filter out demo ROMs, opposite of --only-demo             [boolean]
+      --no-beta               Filter out beta ROMs, opposite of --only-beta             [boolean]
+      --no-sample             Filter out sample ROMs, opposite of --only-sample         [boolean]
+      --no-prototype          Filter out prototype ROMs, opposite of --only-prototype   [boolean]
+      --no-test-roms          Filter out test ROMs, opposite of --only-test-roms        [boolean]
+      --no-aftermarket        Filter out aftermarket ROMs, opposite of --only-aftermarket
                                                                                         [boolean]
-      --no-demo               Filter out demo ROMs                                      [boolean]
-      --no-beta               Filter out beta ROMs                                      [boolean]
-      --no-sample             Filter out sample ROMs                                    [boolean]
-      --no-prototype          Filter out prototype ROMs                                 [boolean]
-      --no-test-roms          Filter out test ROMs                                      [boolean]
-      --no-aftermarket        Filter out aftermarket ROMs                               [boolean]
-      --no-homebrew           Filter out homebrew ROMs                                  [boolean]
-      --no-unverified         Filter out un-verified ROMs                               [boolean]
-      --no-bad                Filter out bad ROM dumps                                  [boolean]
+      --no-homebrew           Filter out homebrew ROMs, opposite of --only-homebrew     [boolean]
+      --no-unverified         Filter out unverified ROMs, opposite of --only-unverified [boolean]
+      --no-bad                Filter out bad ROM dumps, opposite of --only-bad          [boolean]
 
 One game, one ROM (1G1R) options:
   -s, --single                 Output only a single game per parent (1G1R) (required for all opti
