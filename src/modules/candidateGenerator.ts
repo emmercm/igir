@@ -142,7 +142,7 @@ export default class CandidateGenerator extends Module {
         }
 
         try {
-          const outputFile = await this.getOutputFile(dat, game, release, rom, originalInputFile);
+          const outputFile = await this.getOutputFile(dat, game, release, rom, finalInputFile);
           const romWithFiles = new ROMWithFiles(rom, finalInputFile, outputFile);
           return [rom, romWithFiles];
         } catch (e) {
@@ -243,49 +243,29 @@ export default class CandidateGenerator extends Module {
     rom: ROM,
     inputFile: File,
   ): Promise<File> {
-    const { base, ...parsedPath } = path.parse(rom.getName());
-
-    // Determine the output CRC of the file
-    let outputFileCrc = inputFile.getCrc32();
-    if (inputFile.getFileHeader() && this.options.canRemoveHeader(dat, parsedPath.ext)) {
-      outputFileCrc = inputFile.getCrc32WithoutHeader();
-    }
-
-    // Determine the output extension of the file
-    const fileHeader = inputFile.getFileHeader();
-    if (parsedPath.ext && fileHeader) {
-      // If the ROM has a header then we're going to ignore the file extension from the DAT
-      if (this.options.canRemoveHeader(dat, parsedPath.ext)) {
-        parsedPath.ext = fileHeader.getUnheaderedFileExtension();
-      } else {
-        parsedPath.ext = fileHeader.getHeaderedFileExtension();
-      }
-    }
-    let outputEntryPath = path.format(parsedPath);
-
-    // Determine the output path of the file
-    let outputRomFilename;
-    if (this.options.shouldZip(rom.getName())) {
-      // Should zip, generate the zip name from the game name
-      outputRomFilename = `${game.getName()}.zip`;
-      outputEntryPath = path.basename(outputEntryPath);
-    } else if (!(inputFile instanceof ArchiveEntry) || this.options.shouldExtract()) {
-      // Should extract (if needed), generate the file name from the ROM name
-      outputRomFilename = outputEntryPath;
-    } else {
-      // Should leave archived, generate the archive name from the game name, but use the input
-      //  file's extension
-      const extMatch = inputFile.getFilePath().match(/[^.]+((\.[a-zA-Z0-9]+)+)$/);
-      const ext = extMatch !== null ? extMatch[1] : '';
-      outputRomFilename = game.getName() + ext;
-    }
+    // Determine the output file's basename and archive entry path
+    const [outputFileBasename, outputEntryPath] = this.options.getOutputBasenameAndEntryPath(
+      dat,
+      game,
+      release,
+      rom,
+      inputFile,
+    );
     const outputFilePath = this.options.getOutputFileParsed(
       dat,
       inputFile.getFilePath(),
       game,
       release,
-      outputRomFilename,
+      outputFileBasename,
     );
+
+    // Determine the output CRC of the file
+    let outputFileCrc = inputFile.getCrc32();
+    if (inputFile.getFileHeader()
+      && this.options.canRemoveHeader(dat, path.extname(outputEntryPath))
+    ) {
+      outputFileCrc = inputFile.getCrc32WithoutHeader();
+    }
 
     // Determine the output file type
     if (this.options.shouldZip(rom.getName())) {
