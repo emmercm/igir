@@ -24,10 +24,10 @@ export default class CandidatePostProcessor extends Module {
     dat: DAT,
     parentsToCandidates: Map<Parent, ReleaseCandidate[]>,
   ): Promise<Map<Parent, ReleaseCandidate[]>> {
-    await this.progressBar.logInfo(`${dat.getNameShort()}: processing candidates`);
+    this.progressBar.logInfo(`${dat.getNameShort()}: processing candidates`);
 
     if (!parentsToCandidates.size) {
-      await this.progressBar.logDebug(`${dat.getNameShort()}: no parents, so no candidates to process`);
+      this.progressBar.logDebug(`${dat.getNameShort()}: no parents, so no candidates to process`);
       return new Map();
     }
 
@@ -59,7 +59,7 @@ export default class CandidatePostProcessor extends Module {
         }),
     ));
 
-    await this.progressBar.logInfo(`${dat.getNameShort()}: done processing candidates`);
+    this.progressBar.logInfo(`${dat.getNameShort()}: done processing candidates`);
     return processedCandidates;
   }
 
