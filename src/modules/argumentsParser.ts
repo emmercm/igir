@@ -364,80 +364,57 @@ export default class ArgumentsParser {
         type: 'string',
         coerce: (val: string) => val.split(','),
         requiresArg: true,
-      })
-      .option('only-bios', {
-        group: groupRomFiltering,
-        description: 'Filter to only BIOS files',
-        type: 'boolean',
-        conflicts: ['no-bios'],
-      })
-      .option('no-bios', {
-        group: groupRomFiltering,
-        description: 'Filter out BIOS files',
-        type: 'boolean',
-        conflicts: ['only-bios'],
-      })
-      .option('no-device', {
-        group: groupRomFiltering,
-        description: 'Filter out MAME devices',
-        type: 'boolean',
-      })
-      .option('no-unlicensed', {
-        group: groupRomFiltering,
-        description: 'Filter out unlicensed ROMs',
-        type: 'boolean',
-      })
+      });
+    [
+      ['bios', 'BIOS files'],
+      ['device', 'MAME devies'],
+      ['unlicensed', 'unlicensed ROMs'],
+    ].forEach(([key, description]) => {
+      yargsParser
+        .option(`no-${key}`, {
+          group: groupRomFiltering,
+          description: `Filter out ${description}, opposite of --only-${key}`,
+          type: 'boolean',
+          conflicts: [`only-${key}`],
+        })
+        .option(`only-${key}`, {
+          type: 'boolean',
+          conflicts: [`no-${key}`],
+          hidden: true,
+        });
+    });
+    yargsParser
       .option('only-retail', {
         group: groupRomFiltering,
-        description: 'Filter to only retail releases, enabling all the following options',
+        description: 'Filter to only retail releases, enabling all the following "no" options',
         type: 'boolean',
-      })
-      .option('no-demo', {
-        group: groupRomFiltering,
-        description: 'Filter out demo ROMs',
-        type: 'boolean',
-      })
-      .option('no-beta', {
-        group: groupRomFiltering,
-        description: 'Filter out beta ROMs',
-        type: 'boolean',
-      })
-      .option('no-sample', {
-        group: groupRomFiltering,
-        description: 'Filter out sample ROMs',
-        type: 'boolean',
-      })
-      .option('no-prototype', {
-        group: groupRomFiltering,
-        description: 'Filter out prototype ROMs',
-        type: 'boolean',
-      })
-      .option('no-test-roms', {
-        group: groupRomFiltering,
-        description: 'Filter out test ROMs',
-        type: 'boolean',
-      })
-      .option('no-aftermarket', {
-        group: groupRomFiltering,
-        description: 'Filter out aftermarket ROMs',
-        type: 'boolean',
-      })
-      .option('no-homebrew', {
-        group: groupRomFiltering,
-        description: 'Filter out homebrew ROMs',
-        type: 'boolean',
-      })
-      .option('no-unverified', {
-        group: groupRomFiltering,
-        description: 'Filter out un-verified ROMs',
-        type: 'boolean',
-      })
-      .option('no-bad', {
-        group: groupRomFiltering,
-        description: 'Filter out bad ROM dumps',
-        type: 'boolean',
-      })
+      });
+    [
+      ['demo', 'demo ROMs'],
+      ['beta', 'beta ROMs'],
+      ['sample', 'sample ROMs'],
+      ['prototype', 'prototype ROMs'],
+      ['test-roms', 'test ROMs'],
+      ['aftermarket', 'aftermarket ROMs'],
+      ['homebrew', 'homebrew ROMs'],
+      ['unverified', 'unverified ROMs'],
+      ['bad', 'bad ROM dumps'],
+    ].forEach(([key, description]) => {
+      yargsParser
+        .option(`no-${key}`, {
+          group: groupRomFiltering,
+          description: `Filter out ${description}, opposite of --only-${key}`,
+          type: 'boolean',
+          conflicts: [`only-${key}`],
+        })
+        .option(`only-${key}`, {
+          type: 'boolean',
+          conflicts: [`no-${key}`],
+          hidden: true,
+        });
+    });
 
+    yargsParser
       .option('single', {
         group: groupRomPriority,
         alias: 's',

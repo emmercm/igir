@@ -60,20 +60,31 @@ export interface OptionsProps {
   readonly filterRegexExclude?: string,
   readonly languageFilter?: string[],
   readonly regionFilter?: string[],
-  readonly onlyBios?: boolean,
   readonly noBios?: boolean,
+  readonly onlyBios?: boolean,
   readonly noDevice?: boolean,
+  readonly onlyDevice?: boolean,
   readonly noUnlicensed?: boolean,
+  readonly onlyUnlicensed?: boolean,
   readonly onlyRetail?: boolean,
   readonly noDemo?: boolean,
+  readonly onlyDemo?: boolean,
   readonly noBeta?: boolean,
+  readonly onlyBeta?: boolean,
   readonly noSample?: boolean,
+  readonly onlySample?: boolean,
   readonly noPrototype?: boolean,
+  readonly onlyPrototype?: boolean,
   readonly noTestRoms?: boolean,
+  readonly onlyTestRoms?: boolean,
   readonly noAftermarket?: boolean,
+  readonly onlyAftermarket?: boolean,
   readonly noHomebrew?: boolean,
+  readonly onlyHomebrew?: boolean,
   readonly noUnverified?: boolean,
+  readonly onlyUnverified?: boolean,
   readonly noBad?: boolean,
+  readonly onlyBad?: boolean,
 
   readonly single?: boolean,
   readonly preferVerified?: boolean,
@@ -149,33 +160,55 @@ export default class Options implements OptionsProps {
 
   readonly regionFilter: string[];
 
-  readonly onlyBios: boolean;
-
   readonly noBios: boolean;
+
+  readonly onlyBios: boolean;
 
   readonly noDevice: boolean;
 
+  readonly onlyDevice: boolean;
+
   readonly noUnlicensed: boolean;
+
+  readonly onlyUnlicensed: boolean;
 
   readonly onlyRetail: boolean;
 
   readonly noDemo: boolean;
 
+  readonly onlyDemo: boolean;
+
   readonly noBeta: boolean;
+
+  readonly onlyBeta: boolean;
 
   readonly noSample: boolean;
 
+  readonly onlySample: boolean;
+
   readonly noPrototype: boolean;
+
+  readonly onlyPrototype: boolean;
 
   readonly noTestRoms: boolean;
 
+  readonly onlyTestRoms: boolean;
+
   readonly noAftermarket: boolean;
+
+  readonly onlyAftermarket: boolean;
 
   readonly noHomebrew: boolean;
 
+  readonly onlyHomebrew: boolean;
+
   readonly noUnverified: boolean;
 
+  readonly onlyUnverified: boolean;
+
   readonly noBad: boolean;
+
+  readonly onlyBad: boolean;
 
   readonly single: boolean = false;
 
@@ -241,20 +274,31 @@ export default class Options implements OptionsProps {
     this.filterRegexExclude = options?.filterRegexExclude || '';
     this.languageFilter = options?.languageFilter || [];
     this.regionFilter = options?.regionFilter || [];
-    this.onlyBios = options?.onlyBios || false;
     this.noBios = options?.noBios || false;
+    this.onlyBios = options?.onlyBios || false;
     this.noDevice = options?.noDevice || false;
+    this.onlyDevice = options?.onlyDevice || false;
     this.noUnlicensed = options?.noUnlicensed || false;
+    this.onlyUnlicensed = options?.onlyUnlicensed || false;
     this.onlyRetail = options?.onlyRetail || false;
     this.noDemo = options?.noDemo || false;
+    this.onlyDemo = options?.onlyDemo || false;
     this.noBeta = options?.noBeta || false;
+    this.onlyBeta = options?.onlyBeta || false;
     this.noSample = options?.noSample || false;
+    this.onlySample = options?.onlySample || false;
     this.noPrototype = options?.noPrototype || false;
+    this.onlyPrototype = options?.onlyPrototype || false;
     this.noTestRoms = options?.noTestRoms || false;
+    this.onlyTestRoms = options?.onlyTestRoms || false;
     this.noAftermarket = options?.noAftermarket || false;
+    this.onlyAftermarket = options?.onlyAftermarket || false;
     this.noHomebrew = options?.noHomebrew || false;
+    this.onlyHomebrew = options?.onlyHomebrew || false;
     this.noUnverified = options?.noUnverified || false;
+    this.onlyUnverified = options?.onlyUnverified || false;
     this.noBad = options?.noBad || false;
+    this.onlyBad = options?.onlyBad || false;
 
     this.single = options?.single || false;
     this.preferVerified = options?.preferVerified || false;
@@ -896,20 +940,28 @@ export default class Options implements OptionsProps {
     return Options.filterUniqueUpper(this.regionFilter);
   }
 
-  getOnlyBios(): boolean {
-    return this.onlyBios;
-  }
-
   getNoBios(): boolean {
     return this.noBios;
+  }
+
+  getOnlyBios(): boolean {
+    return this.onlyBios;
   }
 
   getNoDevice(): boolean {
     return this.noDevice;
   }
 
+  getOnlyDevice(): boolean {
+    return this.onlyDevice;
+  }
+
   getNoUnlicensed(): boolean {
     return this.noUnlicensed;
+  }
+
+  getOnlyUnlicensed(): boolean {
+    return this.onlyUnlicensed;
   }
 
   getOnlyRetail(): boolean {
@@ -920,36 +972,72 @@ export default class Options implements OptionsProps {
     return this.noDemo;
   }
 
+  getOnlyDemo(): boolean {
+    return this.onlyDemo;
+  }
+
   getNoBeta(): boolean {
     return this.noBeta;
+  }
+
+  getOnlyBeta(): boolean {
+    return this.onlyBeta;
   }
 
   getNoSample(): boolean {
     return this.noSample;
   }
 
+  getOnlySample(): boolean {
+    return this.onlySample;
+  }
+
   getNoPrototype(): boolean {
     return this.noPrototype;
+  }
+
+  getOnlyPrototype(): boolean {
+    return this.onlyPrototype;
   }
 
   getNoTestRoms(): boolean {
     return this.noTestRoms;
   }
 
+  getOnlyTestRoms(): boolean {
+    return this.onlyTestRoms;
+  }
+
   getNoAftermarket(): boolean {
     return this.noAftermarket;
+  }
+
+  getOnlyAftermarket(): boolean {
+    return this.onlyAftermarket;
   }
 
   getNoHomebrew(): boolean {
     return this.noHomebrew;
   }
 
+  getOnlyHomebrew(): boolean {
+    return this.onlyHomebrew;
+  }
+
   getNoUnverified(): boolean {
     return this.noUnverified;
   }
 
+  getOnlyUnverified(): boolean {
+    return this.onlyUnverified;
+  }
+
   getNoBad(): boolean {
     return this.noBad;
+  }
+
+  getOnlyBad(): boolean {
+    return this.onlyBad;
   }
 
   getSingle(): boolean {
