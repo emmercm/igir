@@ -6,6 +6,7 @@ import { ProgressBarSymbol } from './console/progressBar.js';
 import ProgressBarCLI from './console/progressBarCLI.js';
 import CandidateFilter from './modules/candidateFilter.js';
 import CandidateGenerator from './modules/candidateGenerator.js';
+import CandidatePostProcessor from './modules/candidatePostProcessor.js';
 import CombinedCandidateGenerator from './modules/combinedCandidateGenerator.js';
 import DATInferrer from './modules/datInferrer.js';
 import DATScanner from './modules/datScanner.js';
@@ -93,10 +94,14 @@ export default class Igir {
       romOutputDirs.push(...this.getCandidateOutputDirs(dat, parentsToPatchedCandidates));
       const parentsToFilteredCandidates = await new CandidateFilter(this.options, progressBar)
         .filter(dat, parentsToPatchedCandidates);
+      const parentsToPostProcessedCandidates = await new CandidatePostProcessor(
+        this.options,
+        progressBar,
+      ).process(dat, parentsToFilteredCandidates);
       const parentsToCombinedCandidates = await new CombinedCandidateGenerator(
         this.options,
         progressBar,
-      ).generate(dat, parentsToFilteredCandidates);
+      ).generate(dat, parentsToPostProcessedCandidates);
 
       // Write the output files
       const movedRoms = await new ROMWriter(this.options, progressBar)

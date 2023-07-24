@@ -172,10 +172,24 @@ export default class ReleaseCandidate {
   }
 
   getRevision(): number {
-    const matches = this.getName().match(/\(Rev\s*([0-9.]+)\)/i);
-    if (matches && matches?.length >= 2 && !Number.isNaN(matches[1])) {
-      return Number(matches[1]);
+    // Numeric revision
+    const numberMatches = this.getName().match(/\(Rev\s*([0-9.]+)\)/i);
+    if (numberMatches && numberMatches?.length >= 2 && !Number.isNaN(numberMatches[1])) {
+      return Number(numberMatches[1]);
     }
+
+    // Letter revision
+    const letterMatches = this.getName().match(/\(Rev\s*([A-Z])\)/i);
+    if (letterMatches && letterMatches?.length >= 2) {
+      return letterMatches[1].toUpperCase().charCodeAt(0) - 'A'.charCodeAt(0) + 1;
+    }
+
+    // Ring code revision
+    const ringCodeMatches = this.getName().match(/\(RE([0-9]+)\)/i);
+    if (ringCodeMatches && ringCodeMatches?.length >= 2 && !Number.isNaN(ringCodeMatches[1])) {
+      return Number(ringCodeMatches[1]);
+    }
+
     return 0;
   }
 

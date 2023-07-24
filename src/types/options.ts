@@ -15,12 +15,14 @@ import LogLevel from '../console/logLevel.js';
 import Constants from '../constants.js';
 import fsPoly from '../polyfill/fsPoly.js';
 import URLPoly from '../polyfill/urlPoly.js';
+import ArchiveEntry from './files/archives/archiveEntry.js';
 import File from './files/file.js';
 import FileFactory from './files/fileFactory.js';
 import GameConsole from './gameConsole.js';
 import DAT from './logiqx/dat.js';
 import Game from './logiqx/game.js';
 import Release from './logiqx/release.js';
+import ROM from './logiqx/rom.js';
 
 export interface OptionsProps {
   readonly commands?: string[],
@@ -41,6 +43,7 @@ export interface OptionsProps {
   readonly dirMirror?: boolean,
   readonly dirDatName?: boolean,
   readonly dirLetter?: boolean,
+  readonly dirLetterLimit?: number,
   readonly overwrite?: boolean,
   readonly overwriteInvalid?: boolean,
   readonly cleanExclude?: string[],
@@ -57,20 +60,31 @@ export interface OptionsProps {
   readonly filterRegexExclude?: string,
   readonly languageFilter?: string[],
   readonly regionFilter?: string[],
-  readonly onlyBios?: boolean,
   readonly noBios?: boolean,
+  readonly onlyBios?: boolean,
   readonly noDevice?: boolean,
+  readonly onlyDevice?: boolean,
   readonly noUnlicensed?: boolean,
+  readonly onlyUnlicensed?: boolean,
   readonly onlyRetail?: boolean,
   readonly noDemo?: boolean,
+  readonly onlyDemo?: boolean,
   readonly noBeta?: boolean,
+  readonly onlyBeta?: boolean,
   readonly noSample?: boolean,
+  readonly onlySample?: boolean,
   readonly noPrototype?: boolean,
+  readonly onlyPrototype?: boolean,
   readonly noTestRoms?: boolean,
+  readonly onlyTestRoms?: boolean,
   readonly noAftermarket?: boolean,
+  readonly onlyAftermarket?: boolean,
   readonly noHomebrew?: boolean,
+  readonly onlyHomebrew?: boolean,
   readonly noUnverified?: boolean,
+  readonly onlyUnverified?: boolean,
   readonly noBad?: boolean,
+  readonly onlyBad?: boolean,
 
   readonly single?: boolean,
   readonly preferVerified?: boolean,
@@ -120,6 +134,8 @@ export default class Options implements OptionsProps {
 
   readonly dirLetter: boolean;
 
+  readonly dirLetterLimit: number;
+
   readonly overwrite: boolean;
 
   readonly overwriteInvalid: boolean;
@@ -144,33 +160,55 @@ export default class Options implements OptionsProps {
 
   readonly regionFilter: string[];
 
-  readonly onlyBios: boolean;
-
   readonly noBios: boolean;
+
+  readonly onlyBios: boolean;
 
   readonly noDevice: boolean;
 
+  readonly onlyDevice: boolean;
+
   readonly noUnlicensed: boolean;
+
+  readonly onlyUnlicensed: boolean;
 
   readonly onlyRetail: boolean;
 
   readonly noDemo: boolean;
 
+  readonly onlyDemo: boolean;
+
   readonly noBeta: boolean;
+
+  readonly onlyBeta: boolean;
 
   readonly noSample: boolean;
 
+  readonly onlySample: boolean;
+
   readonly noPrototype: boolean;
+
+  readonly onlyPrototype: boolean;
 
   readonly noTestRoms: boolean;
 
+  readonly onlyTestRoms: boolean;
+
   readonly noAftermarket: boolean;
+
+  readonly onlyAftermarket: boolean;
 
   readonly noHomebrew: boolean;
 
+  readonly onlyHomebrew: boolean;
+
   readonly noUnverified: boolean;
 
+  readonly onlyUnverified: boolean;
+
   readonly noBad: boolean;
+
+  readonly onlyBad: boolean;
 
   readonly single: boolean = false;
 
@@ -219,6 +257,7 @@ export default class Options implements OptionsProps {
     this.dirMirror = options?.dirMirror || false;
     this.dirDatName = options?.dirDatName || false;
     this.dirLetter = options?.dirLetter || false;
+    this.dirLetterLimit = options?.dirLetterLimit || 0;
     this.overwrite = options?.overwrite || false;
     this.overwriteInvalid = options?.overwriteInvalid || false;
     this.cleanExclude = options?.cleanExclude || [];
@@ -235,20 +274,31 @@ export default class Options implements OptionsProps {
     this.filterRegexExclude = options?.filterRegexExclude || '';
     this.languageFilter = options?.languageFilter || [];
     this.regionFilter = options?.regionFilter || [];
-    this.onlyBios = options?.onlyBios || false;
     this.noBios = options?.noBios || false;
+    this.onlyBios = options?.onlyBios || false;
     this.noDevice = options?.noDevice || false;
+    this.onlyDevice = options?.onlyDevice || false;
     this.noUnlicensed = options?.noUnlicensed || false;
+    this.onlyUnlicensed = options?.onlyUnlicensed || false;
     this.onlyRetail = options?.onlyRetail || false;
     this.noDemo = options?.noDemo || false;
+    this.onlyDemo = options?.onlyDemo || false;
     this.noBeta = options?.noBeta || false;
+    this.onlyBeta = options?.onlyBeta || false;
     this.noSample = options?.noSample || false;
+    this.onlySample = options?.onlySample || false;
     this.noPrototype = options?.noPrototype || false;
+    this.onlyPrototype = options?.onlyPrototype || false;
     this.noTestRoms = options?.noTestRoms || false;
+    this.onlyTestRoms = options?.onlyTestRoms || false;
     this.noAftermarket = options?.noAftermarket || false;
+    this.onlyAftermarket = options?.onlyAftermarket || false;
     this.noHomebrew = options?.noHomebrew || false;
+    this.onlyHomebrew = options?.onlyHomebrew || false;
     this.noUnverified = options?.noUnverified || false;
+    this.onlyUnverified = options?.onlyUnverified || false;
     this.noBad = options?.noBad || false;
+    this.onlyBad = options?.onlyBad || false;
 
     this.single = options?.single || false;
     this.preferVerified = options?.preferVerified || false;
@@ -549,6 +599,50 @@ export default class Options implements OptionsProps {
     return fsPoly.makeLegal(output);
   }
 
+  getOutputBasenameAndEntryPath(
+    dat: DAT,
+    game: Game,
+    release: Release | undefined,
+    rom: ROM,
+    inputFile: File,
+  ): [string, string] {
+    const { base, ...parsedPath } = path.parse(rom.getName());
+
+    // Alter the output extension of the file
+    const fileHeader = inputFile.getFileHeader();
+    if (parsedPath.ext && fileHeader) {
+      // If the ROM has a header then we're going to ignore the file extension from the DAT
+      if (this.canRemoveHeader(dat, parsedPath.ext)) {
+        parsedPath.ext = fileHeader.getUnheaderedFileExtension();
+      } else {
+        parsedPath.ext = fileHeader.getHeaderedFileExtension();
+      }
+    }
+    let entryPath = path.format(parsedPath);
+
+    // Determine the output path of the file
+    let outputBasename = entryPath;
+    if (this.shouldZip(rom.getName())) {
+      // Should zip, generate the zip name from the game name
+      outputBasename = `${game.getName()}.zip`;
+      entryPath = path.basename(entryPath);
+    } else if (
+      !(inputFile instanceof ArchiveEntry || FileFactory.isArchive(inputFile.getFilePath()))
+      || this.shouldExtract()
+    ) {
+      // Should extract (if needed), generate the file name from the ROM name
+      outputBasename = entryPath;
+    } else {
+      // Should leave archived, generate the archive name from the game name, but use the input
+      //  file's extension
+      const extMatch = inputFile.getFilePath().match(/[^.]+((\.[a-zA-Z0-9]+)+)$/);
+      const ext = extMatch !== null ? extMatch[1] : '';
+      outputBasename = game.getName() + ext;
+    }
+
+    return [outputBasename, entryPath];
+  }
+
   /**
    * Get the full output path for a ROM file.
    *
@@ -556,21 +650,23 @@ export default class Options implements OptionsProps {
    * @param inputRomPath the input file's full file path.
    * @param game the {@link Game} that this file matches to.
    * @param release a {@link Release} from the {@link Game}.
-   * @param romFilename the intended output filename (including extension).
+   * @param romBasename the intended output basename (including extension).
+   * @param romBasenames the intended output basenames for every ROM from this {@link DAT}.
    */
   getOutputFileParsed(
     dat: DAT,
     inputRomPath: string,
     game: Game,
     release: Release | undefined,
-    romFilename: string,
+    romBasename: string,
+    romBasenames?: string[],
   ): string {
-    let romFilenameSanitized = romFilename.replace(/[\\/]/g, path.sep);
+    let romFilenameSanitized = romBasename.replace(/[\\/]/g, path.sep);
     if (!dat?.getRomNamesContainDirectories()) {
       romFilenameSanitized = romFilenameSanitized.replace(/[\\/]/g, '_');
     }
 
-    let output = this.getOutputDirParsed(dat, inputRomPath, game, release, romFilename);
+    let output = this.getOutputDirParsed(dat, inputRomPath, game, release, romBasename);
 
     if (this.getDirMirror() && inputRomPath) {
       const mirroredDir = path.dirname(inputRomPath)
@@ -585,12 +681,9 @@ export default class Options implements OptionsProps {
       output = path.join(output, dat.getNameShort());
     }
 
-    if (this.getDirLetter() && romFilenameSanitized) {
-      let letter = romFilenameSanitized[0].toUpperCase();
-      if (letter.match(/[^A-Z]/)) {
-        letter = '#';
-      }
-      output = path.join(output, letter);
+    const dirLetter = this.getDirLetterParsed(romFilenameSanitized, romBasenames);
+    if (dirLetter) {
+      output = path.join(output, dirLetter);
     }
 
     if (game.getRoms().length > 1
@@ -693,6 +786,51 @@ export default class Options implements OptionsProps {
     return output;
   }
 
+  private getDirLetterParsed(romBasename?: string, romBasenames?: string[]): string | undefined {
+    if (!romBasename || !this.getDirLetter()) {
+      return undefined;
+    }
+
+    // Find the letter for every ROM filename
+    let lettersToFilenames = (romBasenames || [romBasename]).reduce((map, filename) => {
+      let letter = path.basename(filename)[0].toUpperCase();
+      if (letter.match(/[^A-Z]/)) {
+        letter = '#';
+      }
+
+      const existing = map.get(letter) || [];
+      existing.push(filename);
+      map.set(letter, existing);
+      return map;
+    }, new Map<string, string[]>());
+
+    // Split the letter directories, if needed
+    if (this.getDirLetterLimit()) {
+      lettersToFilenames = [...lettersToFilenames.entries()].reduce((map, [letter, filenames]) => {
+        if (filenames.length <= this.getDirLetterLimit()) {
+          map.set(letter, filenames);
+          return map;
+        }
+
+        const uniqueFilenames = filenames
+          .sort()
+          .filter((val, idx, vals) => vals.indexOf(val) === idx);
+        const chunkSize = this.getDirLetterLimit();
+        for (let i = 0; i < uniqueFilenames.length; i += chunkSize) {
+          const newLetter = `${letter}${i / chunkSize + 1}`;
+          const chunk = uniqueFilenames.slice(i, i + chunkSize);
+          map.set(newLetter, chunk);
+        }
+
+        return map;
+      }, new Map<string, string[]>());
+    }
+
+    const foundEntry = [...lettersToFilenames.entries()]
+      .find(([, filenames]) => filenames.indexOf(romBasename) !== -1);
+    return foundEntry ? foundEntry[0] : undefined;
+  }
+
   getDirMirror(): boolean {
     return this.dirMirror;
   }
@@ -703,6 +841,10 @@ export default class Options implements OptionsProps {
 
   getDirLetter(): boolean {
     return this.dirLetter;
+  }
+
+  getDirLetterLimit(): number {
+    return this.dirLetterLimit;
   }
 
   getOverwrite(): boolean {
@@ -798,20 +940,28 @@ export default class Options implements OptionsProps {
     return Options.filterUniqueUpper(this.regionFilter);
   }
 
-  getOnlyBios(): boolean {
-    return this.onlyBios;
-  }
-
   getNoBios(): boolean {
     return this.noBios;
+  }
+
+  getOnlyBios(): boolean {
+    return this.onlyBios;
   }
 
   getNoDevice(): boolean {
     return this.noDevice;
   }
 
+  getOnlyDevice(): boolean {
+    return this.onlyDevice;
+  }
+
   getNoUnlicensed(): boolean {
     return this.noUnlicensed;
+  }
+
+  getOnlyUnlicensed(): boolean {
+    return this.onlyUnlicensed;
   }
 
   getOnlyRetail(): boolean {
@@ -822,36 +972,72 @@ export default class Options implements OptionsProps {
     return this.noDemo;
   }
 
+  getOnlyDemo(): boolean {
+    return this.onlyDemo;
+  }
+
   getNoBeta(): boolean {
     return this.noBeta;
+  }
+
+  getOnlyBeta(): boolean {
+    return this.onlyBeta;
   }
 
   getNoSample(): boolean {
     return this.noSample;
   }
 
+  getOnlySample(): boolean {
+    return this.onlySample;
+  }
+
   getNoPrototype(): boolean {
     return this.noPrototype;
+  }
+
+  getOnlyPrototype(): boolean {
+    return this.onlyPrototype;
   }
 
   getNoTestRoms(): boolean {
     return this.noTestRoms;
   }
 
+  getOnlyTestRoms(): boolean {
+    return this.onlyTestRoms;
+  }
+
   getNoAftermarket(): boolean {
     return this.noAftermarket;
+  }
+
+  getOnlyAftermarket(): boolean {
+    return this.onlyAftermarket;
   }
 
   getNoHomebrew(): boolean {
     return this.noHomebrew;
   }
 
+  getOnlyHomebrew(): boolean {
+    return this.onlyHomebrew;
+  }
+
   getNoUnverified(): boolean {
     return this.noUnverified;
   }
 
+  getOnlyUnverified(): boolean {
+    return this.onlyUnverified;
+  }
+
   getNoBad(): boolean {
     return this.noBad;
+  }
+
+  getOnlyBad(): boolean {
+    return this.onlyBad;
   }
 
   getSingle(): boolean {

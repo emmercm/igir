@@ -395,131 +395,123 @@ describe('preFilter', () => {
     });
   });
 
-  describe('only bios', () => {
-    it('should return all candidates when option is false', async () => {
-      await expectFilteredCandidates({ onlyBios: false }, [
+  describe('bios', () => {
+    it('option is false', async () => {
+      const parentsToCandidates = [
         await buildReleaseCandidatesWithRegionLanguage('one', 'USA', 'EN', { bios: 'no' }),
         await buildReleaseCandidatesWithRegionLanguage('two', 'USA', 'EN', { bios: 'yes' }),
         await buildReleaseCandidatesWithRegionLanguage('three', 'USA', 'EN', { bios: 'no' }),
-      ], 3);
+      ];
+      await expectFilteredCandidates({ noBios: false }, parentsToCandidates, 3);
+      await expectFilteredCandidates({ onlyBios: false }, parentsToCandidates, 3);
     });
 
-    it('should return no candidates if none matching', async () => {
-      await expectFilteredCandidates({ onlyBios: true }, [
-        await buildReleaseCandidatesWithRegionLanguage('one', 'USA', 'EN', { bios: 'no' }),
-        await buildReleaseCandidatesWithRegionLanguage('two', 'USA', 'EN', { bios: 'no' }),
-      ], 0);
-    });
-
-    it('should return some candidates if some matching', async () => {
-      await expectFilteredCandidates({ onlyBios: true }, [
-        await buildReleaseCandidatesWithRegionLanguage('one', 'USA', 'EN', { bios: 'no' }),
-        await buildReleaseCandidatesWithRegionLanguage('two', 'USA', 'EN', { bios: 'yes' }),
-        await buildReleaseCandidatesWithRegionLanguage('three', 'USA', 'EN', { bios: 'no' }),
-      ], 1);
-    });
-
-    it('should return all candidates if all matching', async () => {
-      await expectFilteredCandidates({ onlyBios: true }, [
-        await buildReleaseCandidatesWithRegionLanguage('one', 'USA', 'EN', { bios: 'yes' }),
-        await buildReleaseCandidatesWithRegionLanguage('two', 'USA', 'EN', { bios: 'yes' }),
-      ], 2);
-    });
-  });
-
-  describe('no bios', () => {
-    it('should return all candidates when option is false', async () => {
-      await expectFilteredCandidates({ noBios: false }, [
-        await buildReleaseCandidatesWithRegionLanguage('one', 'USA', 'EN', { bios: 'no' }),
-        await buildReleaseCandidatesWithRegionLanguage('two', 'USA', 'EN', { bios: 'yes' }),
-        await buildReleaseCandidatesWithRegionLanguage('three', 'USA', 'EN', { bios: 'no' }),
-      ], 3);
-    });
-
-    it('should return no candidates if none matching', async () => {
-      await expectFilteredCandidates({ noBios: true }, [
+    it('all games are BIOS', async () => {
+      const parentsToCandidates = [
         await buildReleaseCandidatesWithRegionLanguage('one', 'USA', 'EN', { bios: 'yes' }),
         await buildReleaseCandidatesWithRegionLanguage('two [BIOS]', 'USA', 'EN', { bios: 'no' }),
-      ], 0);
+      ];
+      await expectFilteredCandidates({ noBios: true }, parentsToCandidates, 0);
+      await expectFilteredCandidates({ onlyBios: true }, parentsToCandidates, 2);
     });
 
-    it('should return some candidates if some matching', async () => {
-      await expectFilteredCandidates({ noBios: true }, [
+    it('some games are BIOS', async () => {
+      const parentsToCandidates = [
         await buildReleaseCandidatesWithRegionLanguage('one', 'USA', 'EN', { bios: 'no' }),
         await buildReleaseCandidatesWithRegionLanguage('two', 'USA', 'EN', { bios: 'yes' }),
         await buildReleaseCandidatesWithRegionLanguage('three', 'USA', 'EN', { bios: 'no' }),
-      ], 2);
+      ];
+      await expectFilteredCandidates({ noBios: true }, parentsToCandidates, 2);
+      await expectFilteredCandidates({ onlyBios: true }, parentsToCandidates, 1);
     });
 
-    it('should return all candidates if all matching', async () => {
-      await expectFilteredCandidates({ noBios: true }, [
+    it('no games are BIOS', async () => {
+      const parentsToCandidates = [
         await buildReleaseCandidatesWithRegionLanguage('one', 'USA', 'EN', { bios: 'no' }),
         await buildReleaseCandidatesWithRegionLanguage('two', 'USA', 'EN', { bios: 'no' }),
-      ], 2);
+      ];
+      await expectFilteredCandidates({ noBios: true }, parentsToCandidates, 2);
+      await expectFilteredCandidates({ onlyBios: true }, parentsToCandidates, 0);
     });
   });
 
-  describe('no device', () => {
-    it('should return all candidates when option is false', async () => {
-      await expectFilteredCandidates({ noDevice: false }, [
+  describe('device', () => {
+    it('option is false', async () => {
+      const parentsToCandidates = [
         await buildReleaseCandidatesWithRegionLanguage('one', 'USA', 'EN', { device: 'no' }),
         await buildReleaseCandidatesWithRegionLanguage('two', 'USA', 'EN', { device: 'yes' }),
         await buildReleaseCandidatesWithRegionLanguage('three', 'USA', 'EN', { device: 'no' }),
-      ], 3);
+      ];
+      await expectFilteredCandidates({ noDevice: false }, parentsToCandidates, 3);
+      await expectFilteredCandidates({ onlyDevice: false }, parentsToCandidates, 3);
     });
 
-    it('should return no candidates if none matching', async () => {
-      await expectFilteredCandidates({ noDevice: true }, [
+    it('all games are device', async () => {
+      const parentsToCandidates = [
         await buildReleaseCandidatesWithRegionLanguage('one', 'USA', 'EN', { device: 'yes' }),
         await buildReleaseCandidatesWithRegionLanguage('two', 'USA', 'EN', { device: 'yes' }),
-      ], 0);
+      ];
+      await expectFilteredCandidates({ noDevice: true }, parentsToCandidates, 0);
+      await expectFilteredCandidates({ onlyDevice: true }, parentsToCandidates, 2);
     });
 
-    it('should return some candidates if some matching', async () => {
-      await expectFilteredCandidates({ noDevice: true }, [
+    it('some games are device', async () => {
+      const parentsToCandidates = [
         await buildReleaseCandidatesWithRegionLanguage('one', 'USA', 'EN', { device: 'no' }),
         await buildReleaseCandidatesWithRegionLanguage('two', 'USA', 'EN', { device: 'yes' }),
         await buildReleaseCandidatesWithRegionLanguage('three', 'USA', 'EN', { device: 'no' }),
-      ], 2);
+      ];
+      await expectFilteredCandidates({ noDevice: true }, parentsToCandidates, 2);
+      await expectFilteredCandidates({ onlyDevice: true }, parentsToCandidates, 1);
     });
 
-    it('should return all candidates if all matching', async () => {
-      await expectFilteredCandidates({ noDevice: true }, [
+    it('no games are device', async () => {
+      const parentsToCandidates = [
         await buildReleaseCandidatesWithRegionLanguage('one', 'USA', 'EN', { device: 'no' }),
         await buildReleaseCandidatesWithRegionLanguage('two', 'USA', 'EN', { device: 'no' }),
-      ], 2);
+      ];
+      await expectFilteredCandidates({ noDevice: true }, parentsToCandidates, 2);
+      await expectFilteredCandidates({ onlyDevice: true }, parentsToCandidates, 0);
     });
   });
 
-  describe('no unlicensed', () => {
-    it('should return all candidates when option is false', async () => {
-      await expectFilteredCandidates({ noUnlicensed: false }, [
+  describe('unlicensed', () => {
+    it('option is false', async () => {
+      const parentsToCandidates = [
         await buildReleaseCandidatesWithRegionLanguage('one', 'USA', 'EN'),
         await buildReleaseCandidatesWithRegionLanguage('two (Unl)', 'USA', 'EN'),
         await buildReleaseCandidatesWithRegionLanguage('three (Unlicensed)', 'USA', 'EN'),
-      ], 3);
+      ];
+      await expectFilteredCandidates({ noUnlicensed: false }, parentsToCandidates, 3);
+      await expectFilteredCandidates({ onlyUnlicensed: false }, parentsToCandidates, 3);
     });
 
-    it('should return no candidates if none matching', async () => {
-      await expectFilteredCandidates({ noUnlicensed: true }, [
+    it('all games are unlicensed', async () => {
+      const parentsToCandidates = [
         await buildReleaseCandidatesWithRegionLanguage('one (Unl)', 'USA', 'EN'),
         await buildReleaseCandidatesWithRegionLanguage('two (Unlicensed)', 'USA', 'EN'),
-      ], 0);
+      ];
+      await expectFilteredCandidates({ noUnlicensed: true }, parentsToCandidates, 0);
+      await expectFilteredCandidates({ onlyUnlicensed: true }, parentsToCandidates, 2);
     });
 
-    it('should return some candidates if some matching', async () => {
-      await expectFilteredCandidates({ noUnlicensed: true }, [
+    it('some games are unlicensed', async () => {
+      const parentsToCandidates = [
         await buildReleaseCandidatesWithRegionLanguage('one (Unlicensed)', 'USA', 'EN'),
         await buildReleaseCandidatesWithRegionLanguage('two', 'USA', 'EN'),
         await buildReleaseCandidatesWithRegionLanguage('three (Unl)', 'USA', 'EN'),
-      ], 1);
+      ];
+      await expectFilteredCandidates({ noUnlicensed: true }, parentsToCandidates, 1);
+      await expectFilteredCandidates({ onlyUnlicensed: true }, parentsToCandidates, 2);
     });
 
-    it('should return all candidates if all matching', async () => {
-      await expectFilteredCandidates({ noUnlicensed: true }, [
+    it('no games are unlicensed', async () => {
+      const parentsToCandidates = [
         await buildReleaseCandidatesWithRegionLanguage('one', 'USA', 'EN'),
         await buildReleaseCandidatesWithRegionLanguage('two', 'USA', 'EN'),
-      ], 2);
+      ];
+      await expectFilteredCandidates({ noUnlicensed: true }, parentsToCandidates, 2);
+      await expectFilteredCandidates({ onlyUnlicensed: true }, parentsToCandidates, 0);
     });
   });
 
@@ -574,291 +566,362 @@ describe('preFilter', () => {
     });
   });
 
-  describe('no demo', () => {
-    it('should return all candidates when option is false', async () => {
-      await expectFilteredCandidates({ noDemo: false }, [
+  describe('demo', () => {
+    it('option is false', async () => {
+      const parentsToCandidates = [
         await buildReleaseCandidatesWithRegionLanguage('one', 'USA', 'EN'),
         await buildReleaseCandidatesWithRegionLanguage('two (Demo)', 'USA', 'EN'),
         await buildReleaseCandidatesWithRegionLanguage('three (Demo 2000)', 'USA', 'EN'),
-      ], 3);
+      ];
+      await expectFilteredCandidates({ noDemo: false }, parentsToCandidates, 3);
+      await expectFilteredCandidates({ onlyDemo: false }, parentsToCandidates, 3);
     });
 
-    it('should return no candidates if none matching', async () => {
-      await expectFilteredCandidates({ noDemo: true }, [
+    it('all games are demo', async () => {
+      const parentsToCandidates = [
         await buildReleaseCandidatesWithRegionLanguage('one (Demo)', 'USA', 'EN'),
         await buildReleaseCandidatesWithRegionLanguage('two (Demo 2000)', 'USA', 'EN'),
-      ], 0);
+      ];
+      await expectFilteredCandidates({ noDemo: true }, parentsToCandidates, 0);
+      await expectFilteredCandidates({ onlyDemo: true }, parentsToCandidates, 2);
     });
 
-    it('should return some candidates if some matching', async () => {
-      await expectFilteredCandidates({ noDemo: true }, [
+    it('some games are demo', async () => {
+      const parentsToCandidates = [
         await buildReleaseCandidatesWithRegionLanguage('one (Demo 2000)', 'USA', 'EN'),
         await buildReleaseCandidatesWithRegionLanguage('two', 'USA', 'EN'),
         await buildReleaseCandidatesWithRegionLanguage('three (Demo)', 'USA', 'EN'),
-      ], 1);
+      ];
+      await expectFilteredCandidates({ noDemo: true }, parentsToCandidates, 1);
+      await expectFilteredCandidates({ onlyDemo: true }, parentsToCandidates, 2);
     });
 
-    it('should return all candidates if all matching', async () => {
-      await expectFilteredCandidates({ noDemo: true }, [
+    it('no games are demo', async () => {
+      const parentsToCandidates = [
         await buildReleaseCandidatesWithRegionLanguage('one', 'USA', 'EN'),
         await buildReleaseCandidatesWithRegionLanguage('two', 'USA', 'EN'),
-      ], 2);
+      ];
+      await expectFilteredCandidates({ noDemo: true }, parentsToCandidates, 2);
+      await expectFilteredCandidates({ onlyDemo: true }, parentsToCandidates, 0);
     });
   });
 
-  describe('no beta', () => {
-    it('should return all candidates when option is false', async () => {
-      await expectFilteredCandidates({ noBeta: false }, [
+  describe('beta', () => {
+    it('option is false', async () => {
+      const parentsToCandidates = [
         await buildReleaseCandidatesWithRegionLanguage('one', 'USA', 'EN'),
         await buildReleaseCandidatesWithRegionLanguage('two (Beta)', 'USA', 'EN'),
         await buildReleaseCandidatesWithRegionLanguage('three (Beta v1.0)', 'USA', 'EN'),
-      ], 3);
+      ];
+      await expectFilteredCandidates({ noBeta: false }, parentsToCandidates, 3);
+      await expectFilteredCandidates({ onlyBeta: false }, parentsToCandidates, 3);
     });
 
-    it('should return no candidates if none matching', async () => {
-      await expectFilteredCandidates({ noBeta: true }, [
+    it('all games are beta', async () => {
+      const parentsToCandidates = [
         await buildReleaseCandidatesWithRegionLanguage('one (Beta)', 'USA', 'EN'),
         await buildReleaseCandidatesWithRegionLanguage('two (Beta v1.0)', 'USA', 'EN'),
-      ], 0);
+      ];
+      await expectFilteredCandidates({ noBeta: true }, parentsToCandidates, 0);
+      await expectFilteredCandidates({ onlyBeta: true }, parentsToCandidates, 2);
     });
 
-    it('should return some candidates if some matching', async () => {
-      await expectFilteredCandidates({ noBeta: true }, [
+    it('some games are beta', async () => {
+      const parentsToCandidates = [
         await buildReleaseCandidatesWithRegionLanguage('one (Beta v1.0)', 'USA', 'EN'),
         await buildReleaseCandidatesWithRegionLanguage('two', 'USA', 'EN'),
         await buildReleaseCandidatesWithRegionLanguage('three (Beta)', 'USA', 'EN'),
-      ], 1);
+      ];
+      await expectFilteredCandidates({ noBeta: true }, parentsToCandidates, 1);
+      await expectFilteredCandidates({ onlyBeta: true }, parentsToCandidates, 2);
     });
 
-    it('should return all candidates if all matching', async () => {
-      await expectFilteredCandidates({ noBeta: true }, [
+    it('no games are beta', async () => {
+      const parentsToCandidates = [
         await buildReleaseCandidatesWithRegionLanguage('one', 'USA', 'EN'),
         await buildReleaseCandidatesWithRegionLanguage('two', 'USA', 'EN'),
-      ], 2);
+      ];
+      await expectFilteredCandidates({ noBeta: true }, parentsToCandidates, 2);
+      await expectFilteredCandidates({ onlyBeta: true }, parentsToCandidates, 0);
     });
   });
 
-  describe('no sample', () => {
-    it('should return all candidates when option is false', async () => {
-      await expectFilteredCandidates({ noSample: false }, [
+  describe('sample', () => {
+    it('option is false', async () => {
+      const parentsToCandidates = [
         await buildReleaseCandidatesWithRegionLanguage('one', 'USA', 'EN'),
         await buildReleaseCandidatesWithRegionLanguage('two (Sample)', 'USA', 'EN'),
         await buildReleaseCandidatesWithRegionLanguage('three (Sample Copy)', 'USA', 'EN'),
-      ], 3);
+      ];
+      await expectFilteredCandidates({ noSample: false }, parentsToCandidates, 3);
+      await expectFilteredCandidates({ onlySample: false }, parentsToCandidates, 3);
     });
 
-    it('should return no candidates if none matching', async () => {
-      await expectFilteredCandidates({ noSample: true }, [
+    it('all games are sample', async () => {
+      const parentsToCandidates = [
         await buildReleaseCandidatesWithRegionLanguage('one (Sample)', 'USA', 'EN'),
         await buildReleaseCandidatesWithRegionLanguage('two (Sample Copy)', 'USA', 'EN'),
-      ], 0);
+      ];
+      await expectFilteredCandidates({ noSample: true }, parentsToCandidates, 0);
+      await expectFilteredCandidates({ onlySample: true }, parentsToCandidates, 2);
     });
 
-    it('should return some candidates if some matching', async () => {
-      await expectFilteredCandidates({ noSample: true }, [
+    it('some games are sample', async () => {
+      const parentsToCandidates = [
         await buildReleaseCandidatesWithRegionLanguage('one (Sample Copy)', 'USA', 'EN'),
         await buildReleaseCandidatesWithRegionLanguage('two', 'USA', 'EN'),
         await buildReleaseCandidatesWithRegionLanguage('three (Sample)', 'USA', 'EN'),
-      ], 1);
+      ];
+      await expectFilteredCandidates({ noSample: true }, parentsToCandidates, 1);
+      await expectFilteredCandidates({ onlySample: true }, parentsToCandidates, 2);
     });
 
-    it('should return all candidates if all matching', async () => {
-      await expectFilteredCandidates({ noSample: true }, [
+    it('no games are sample', async () => {
+      const parentsToCandidates = [
         await buildReleaseCandidatesWithRegionLanguage('one', 'USA', 'EN'),
         await buildReleaseCandidatesWithRegionLanguage('two', 'USA', 'EN'),
-      ], 2);
+      ];
+      await expectFilteredCandidates({ noSample: true }, parentsToCandidates, 2);
+      await expectFilteredCandidates({ onlySample: true }, parentsToCandidates, 0);
     });
   });
 
-  describe('no prototype', () => {
-    it('should return all candidates when option is false', async () => {
-      await expectFilteredCandidates({ noPrototype: false }, [
+  describe('prototype', () => {
+    it('option is false', async () => {
+      const parentsToCandidates = [
         await buildReleaseCandidatesWithRegionLanguage('one', 'USA', 'EN'),
         await buildReleaseCandidatesWithRegionLanguage('two (Proto)', 'USA', 'EN'),
         await buildReleaseCandidatesWithRegionLanguage('three (Prototype)', 'USA', 'EN'),
-      ], 3);
+      ];
+      await expectFilteredCandidates({ noPrototype: false }, parentsToCandidates, 3);
+      await expectFilteredCandidates({ onlyPrototype: false }, parentsToCandidates, 3);
     });
 
-    it('should return no candidates if none matching', async () => {
-      await expectFilteredCandidates({ noPrototype: true }, [
+    it('all games are prototype', async () => {
+      const parentsToCandidates = [
         await buildReleaseCandidatesWithRegionLanguage('one (Proto)', 'USA', 'EN'),
         await buildReleaseCandidatesWithRegionLanguage('two (Prototype)', 'USA', 'EN'),
-      ], 0);
+      ];
+      await expectFilteredCandidates({ noPrototype: true }, parentsToCandidates, 0);
+      await expectFilteredCandidates({ onlyPrototype: true }, parentsToCandidates, 2);
     });
 
-    it('should return some candidates if some matching', async () => {
-      await expectFilteredCandidates({ noPrototype: true }, [
+    it('some games are prototype', async () => {
+      const parentsToCandidates = [
         await buildReleaseCandidatesWithRegionLanguage('one (Prototype)', 'USA', 'EN'),
         await buildReleaseCandidatesWithRegionLanguage('two', 'USA', 'EN'),
         await buildReleaseCandidatesWithRegionLanguage('three (Proto)', 'USA', 'EN'),
-      ], 1);
+      ];
+      await expectFilteredCandidates({ noPrototype: true }, parentsToCandidates, 1);
+      await expectFilteredCandidates({ onlyPrototype: true }, parentsToCandidates, 2);
     });
 
-    it('should return all candidates if all matching', async () => {
-      await expectFilteredCandidates({ noPrototype: true }, [
+    it('no games are prototype', async () => {
+      const parentsToCandidates = [
         await buildReleaseCandidatesWithRegionLanguage('one', 'USA', 'EN'),
         await buildReleaseCandidatesWithRegionLanguage('two', 'USA', 'EN'),
-      ], 2);
+      ];
+      await expectFilteredCandidates({ noPrototype: true }, parentsToCandidates, 2);
+      await expectFilteredCandidates({ onlyPrototype: true }, parentsToCandidates, 0);
     });
   });
 
-  describe('no test roms', () => {
-    it('should return all candidates when option is false', async () => {
-      await expectFilteredCandidates({ noTestRoms: false }, [
+  describe('test roms', () => {
+    it('option is false', async () => {
+      const parentsToCandidates = [
         await buildReleaseCandidatesWithRegionLanguage('one', 'USA', 'EN'),
         await buildReleaseCandidatesWithRegionLanguage('two (Test)', 'USA', 'EN'),
         await buildReleaseCandidatesWithRegionLanguage('three (Test Copy)', 'USA', 'EN'),
-      ], 3);
+      ];
+      await expectFilteredCandidates({ noTestRoms: false }, parentsToCandidates, 3);
+      await expectFilteredCandidates({ onlyTestRoms: false }, parentsToCandidates, 3);
     });
 
-    it('should return no candidates if none matching', async () => {
-      await expectFilteredCandidates({ noTestRoms: true }, [
+    it('all games are test roms', async () => {
+      const parentsToCandidates = [
         await buildReleaseCandidatesWithRegionLanguage('one (Test)', 'USA', 'EN'),
         await buildReleaseCandidatesWithRegionLanguage('two (Test Copy)', 'USA', 'EN'),
-      ], 0);
+      ];
+      await expectFilteredCandidates({ noTestRoms: true }, parentsToCandidates, 0);
+      await expectFilteredCandidates({ onlyTestRoms: true }, parentsToCandidates, 2);
     });
 
-    it('should return some candidates if some matching', async () => {
-      await expectFilteredCandidates({ noTestRoms: true }, [
+    it('some games are test roms', async () => {
+      const parentsToCandidates = [
         await buildReleaseCandidatesWithRegionLanguage('one (Test Copy)', 'USA', 'EN'),
         await buildReleaseCandidatesWithRegionLanguage('two', 'USA', 'EN'),
         await buildReleaseCandidatesWithRegionLanguage('three (Test)', 'USA', 'EN'),
-      ], 1);
+      ];
+      await expectFilteredCandidates({ noTestRoms: true }, parentsToCandidates, 1);
+      await expectFilteredCandidates({ onlyTestRoms: true }, parentsToCandidates, 2);
     });
 
-    it('should return all candidates if all matching', async () => {
-      await expectFilteredCandidates({ noTestRoms: true }, [
+    it('no games are test roms', async () => {
+      const parentsToCandidates = [
         await buildReleaseCandidatesWithRegionLanguage('one', 'USA', 'EN'),
         await buildReleaseCandidatesWithRegionLanguage('two', 'USA', 'EN'),
-      ], 2);
+      ];
+      await expectFilteredCandidates({ noTestRoms: true }, parentsToCandidates, 2);
+      await expectFilteredCandidates({ onlyTestRoms: true }, parentsToCandidates, 0);
     });
   });
 
-  describe('no aftermarket', () => {
-    it('should return all candidates when option is false', async () => {
-      await expectFilteredCandidates({ noAftermarket: false }, [
+  describe('aftermarket', () => {
+    it('option is false', async () => {
+      const parentsToCandidates = [
         await buildReleaseCandidatesWithRegionLanguage('one', 'USA', 'EN'),
         await buildReleaseCandidatesWithRegionLanguage('two (Aftermarket)', 'USA', 'EN'),
         await buildReleaseCandidatesWithRegionLanguage('three (Aftermarket Version)', 'USA', 'EN'),
-      ], 3);
+      ];
+      await expectFilteredCandidates({ noAftermarket: false }, parentsToCandidates, 3);
+      await expectFilteredCandidates({ onlyAftermarket: false }, parentsToCandidates, 3);
     });
 
-    it('should return no candidates if none matching', async () => {
-      await expectFilteredCandidates({ noAftermarket: true }, [
+    it('all games are aftermarket', async () => {
+      const parentsToCandidates = [
         await buildReleaseCandidatesWithRegionLanguage('one (Aftermarket)', 'USA', 'EN'),
         await buildReleaseCandidatesWithRegionLanguage('two (Aftermarket Version)', 'USA', 'EN'),
-      ], 0);
+      ];
+      await expectFilteredCandidates({ noAftermarket: true }, parentsToCandidates, 0);
+      await expectFilteredCandidates({ onlyAftermarket: true }, parentsToCandidates, 2);
     });
 
-    it('should return some candidates if some matching', async () => {
-      await expectFilteredCandidates({ noAftermarket: true }, [
+    it('some games are aftermarket', async () => {
+      const parentsToCandidates = [
         await buildReleaseCandidatesWithRegionLanguage('one (Aftermarket Version)', 'USA', 'EN'),
         await buildReleaseCandidatesWithRegionLanguage('two', 'USA', 'EN'),
         await buildReleaseCandidatesWithRegionLanguage('three (Aftermarket)', 'USA', 'EN'),
-      ], 1);
+      ];
+      await expectFilteredCandidates({ noAftermarket: true }, parentsToCandidates, 1);
+      await expectFilteredCandidates({ onlyAftermarket: true }, parentsToCandidates, 2);
     });
 
-    it('should return all candidates if all matching', async () => {
-      await expectFilteredCandidates({ noAftermarket: true }, [
+    it('no games are aftermarket', async () => {
+      const parentsToCandidates = [
         await buildReleaseCandidatesWithRegionLanguage('one', 'USA', 'EN'),
         await buildReleaseCandidatesWithRegionLanguage('two', 'USA', 'EN'),
-      ], 2);
+      ];
+      await expectFilteredCandidates({ noAftermarket: true }, parentsToCandidates, 2);
+      await expectFilteredCandidates({ onlyAftermarket: true }, parentsToCandidates, 0);
     });
   });
 
-  describe('no homebrew', () => {
-    it('should return all candidates when option is false', async () => {
-      await expectFilteredCandidates({ noHomebrew: false }, [
+  describe('homebrew', () => {
+    it('option is false', async () => {
+      const parentsToCandidates = [
         await buildReleaseCandidatesWithRegionLanguage('one', 'USA', 'EN'),
         await buildReleaseCandidatesWithRegionLanguage('two (Homebrew)', 'USA', 'EN'),
         await buildReleaseCandidatesWithRegionLanguage('three (Homebrew Edition)', 'USA', 'EN'),
-      ], 3);
+      ];
+      await expectFilteredCandidates({ noHomebrew: false }, parentsToCandidates, 3);
+      await expectFilteredCandidates({ onlyHomebrew: false }, parentsToCandidates, 3);
     });
 
-    it('should return no candidates if none matching', async () => {
-      await expectFilteredCandidates({ noHomebrew: true }, [
+    it('all games are homebrew', async () => {
+      const parentsToCandidates = [
         await buildReleaseCandidatesWithRegionLanguage('one (Homebrew)', 'USA', 'EN'),
         await buildReleaseCandidatesWithRegionLanguage('two (Homebrew Edition)', 'USA', 'EN'),
-      ], 0);
+      ];
+      await expectFilteredCandidates({ noHomebrew: true }, parentsToCandidates, 0);
+      await expectFilteredCandidates({ onlyHomebrew: true }, parentsToCandidates, 2);
     });
 
-    it('should return some candidates if some matching', async () => {
-      await expectFilteredCandidates({ noHomebrew: true }, [
+    it('some games are homebrew', async () => {
+      const parentsToCandidates = [
         await buildReleaseCandidatesWithRegionLanguage('one (Homebrew Edition)', 'USA', 'EN'),
         await buildReleaseCandidatesWithRegionLanguage('two', 'USA', 'EN'),
         await buildReleaseCandidatesWithRegionLanguage('three (Homebrew)', 'USA', 'EN'),
-      ], 1);
+      ];
+      await expectFilteredCandidates({ onlyHomebrew: true }, parentsToCandidates, 2);
     });
 
-    it('should return all candidates if all matching', async () => {
-      await expectFilteredCandidates({ noHomebrew: true }, [
+    it('no games are homebrew', async () => {
+      const parentsToCandidates = [
         await buildReleaseCandidatesWithRegionLanguage('one', 'USA', 'EN'),
         await buildReleaseCandidatesWithRegionLanguage('two', 'USA', 'EN'),
-      ], 2);
+      ];
+      await expectFilteredCandidates({ noHomebrew: true }, parentsToCandidates, 2);
+      await expectFilteredCandidates({ onlyHomebrew: true }, parentsToCandidates, 0);
     });
   });
 
-  describe('only verified', () => {
-    it('should return all candidates when option is false', async () => {
-      await expectFilteredCandidates({ noUnverified: false }, [
+  describe('verified', () => {
+    it('option is false', async () => {
+      const parentsToCandidates = [
         await buildReleaseCandidatesWithRegionLanguage('one', [], 'EN'),
         await buildReleaseCandidatesWithRegionLanguage('two [!]', [], 'EN'),
         await buildReleaseCandidatesWithRegionLanguage('three [!]', [], 'EN'),
-      ], 3);
+      ];
+      await expectFilteredCandidates({ noUnverified: false }, parentsToCandidates, 3);
+      await expectFilteredCandidates({ onlyUnverified: false }, parentsToCandidates, 3);
     });
 
-    it('should return no candidates if none matching', async () => {
-      await expectFilteredCandidates({ noUnverified: true }, [
+    it('all games are verified', async () => {
+      const parentsToCandidates = [
         await buildReleaseCandidatesWithRegionLanguage('one', [], 'EN'),
         await buildReleaseCandidatesWithRegionLanguage('two', [], 'EN'),
-      ], 0);
+      ];
+      await expectFilteredCandidates({ noUnverified: true }, parentsToCandidates, 0);
+      await expectFilteredCandidates({ onlyUnverified: true }, parentsToCandidates, 2);
     });
 
-    it('should return some candidates if some matching', async () => {
-      await expectFilteredCandidates({ noUnverified: true }, [
+    it('some games are verified', async () => {
+      const parentsToCandidates = [
         await buildReleaseCandidatesWithRegionLanguage('one [!]', [], 'EN'),
         await buildReleaseCandidatesWithRegionLanguage('two', [], 'EN'),
         await buildReleaseCandidatesWithRegionLanguage('three [!]', [], 'EN'),
-      ], 2);
+      ];
+      await expectFilteredCandidates({ noUnverified: true }, parentsToCandidates, 2);
+      await expectFilteredCandidates({ onlyUnverified: true }, parentsToCandidates, 1);
     });
 
-    it('should return all candidates if all matching', async () => {
-      await expectFilteredCandidates({ noUnverified: true }, [
+    it('no games are verified', async () => {
+      const parentsToCandidates = [
         await buildReleaseCandidatesWithRegionLanguage('one [!]', [], 'EN'),
         await buildReleaseCandidatesWithRegionLanguage('two [!]', [], 'EN'),
-      ], 2);
+      ];
+      await expectFilteredCandidates({ noUnverified: true }, parentsToCandidates, 2);
+      await expectFilteredCandidates({ onlyUnverified: true }, parentsToCandidates, 0);
     });
   });
 
-  describe('no bad', () => {
-    it('should return all candidates when option is false', async () => {
-      await expectFilteredCandidates({ noBad: false }, [
+  describe('bad', () => {
+    it('option is false', async () => {
+      const parentsToCandidates = [
         await buildReleaseCandidatesWithRegionLanguage('one', 'USA', 'EN'),
         await buildReleaseCandidatesWithRegionLanguage('two [b]', 'USA', 'EN'),
         await buildReleaseCandidatesWithRegionLanguage('three [b]', 'USA', 'EN'),
-      ], 3);
+      ];
+      await expectFilteredCandidates({ noBad: false }, parentsToCandidates, 3);
+      await expectFilteredCandidates({ onlyBad: false }, parentsToCandidates, 3);
     });
 
-    it('should return no candidates if none matching', async () => {
-      await expectFilteredCandidates({ noBad: true }, [
+    it('all games are bad', async () => {
+      const parentsToCandidates = [
         await buildReleaseCandidatesWithRegionLanguage('one [b]', 'USA', 'EN'),
         await buildReleaseCandidatesWithRegionLanguage('two [b]', 'USA', 'EN'),
-      ], 0);
+      ];
+      await expectFilteredCandidates({ noBad: true }, parentsToCandidates, 0);
+      await expectFilteredCandidates({ onlyBad: true }, parentsToCandidates, 2);
     });
 
-    it('should return some candidates if some matching', async () => {
-      await expectFilteredCandidates({ noBad: true }, [
+    it('some games are bad', async () => {
+      const parentsToCandidates = [
         await buildReleaseCandidatesWithRegionLanguage('one [b]', 'USA', 'EN'),
         await buildReleaseCandidatesWithRegionLanguage('two', 'USA', 'EN'),
         await buildReleaseCandidatesWithRegionLanguage('three [b]', 'USA', 'EN'),
-      ], 1);
+      ];
+      await expectFilteredCandidates({ noBad: true }, parentsToCandidates, 1);
+      await expectFilteredCandidates({ onlyBad: true }, parentsToCandidates, 2);
     });
 
-    it('should return all candidates if all matching', async () => {
-      await expectFilteredCandidates({ noBad: true }, [
+    it('no games are bad', async () => {
+      const parentsToCandidates = [
         await buildReleaseCandidatesWithRegionLanguage('one', 'USA', 'EN'),
         await buildReleaseCandidatesWithRegionLanguage('two', 'USA', 'EN'),
-      ], 2);
+      ];
+      await expectFilteredCandidates({ noBad: true }, parentsToCandidates, 2);
+      await expectFilteredCandidates({ onlyBad: true }, parentsToCandidates, 0);
     });
   });
 });
@@ -1031,74 +1094,114 @@ describe('sort', () => {
   });
 
   describe('prefer revision newer', () => {
-    it('should return the first candidate when option is false', async () => {
-      await expectPreferredCandidates({ preferRevisionNewer: false, single: true }, [
-        await buildReleaseCandidatesWithRegionLanguage(['one'], 'USA', 'EN'),
-        await buildReleaseCandidatesWithRegionLanguage(['two', 'two (Rev 1)'], 'USA', 'EN'),
-        await buildReleaseCandidatesWithRegionLanguage(['three', 'three (Rev 1)', 'three (Rev2)'], 'USA', 'EN'),
-        await buildReleaseCandidatesWithRegionLanguage(['four (Rev 1.1)', 'four (Rev 1.2)'], 'USA', 'EN'),
-        await buildReleaseCandidatesWithRegionLanguage(['five (Rev 13.37)'], 'USA', 'EN'),
-      ], ['one (USA) (EN)', 'two (USA) (EN)', 'three (USA) (EN)', 'four (Rev 1.1) (USA) (EN)', 'five (Rev 13.37) (USA) (EN)']);
+    test.each([
+      [['one'], 'one'],
+      [['two', 'two (Rev 1)'], 'two'],
+      [['three', 'three (Rev 1)', 'three (Rev2)'], 'three'],
+      [['four (Rev 1.1)', 'four (Rev 1.2)'], 'four (Rev 1.1)'],
+      [['five (Rev 13.37)'], 'five (Rev 13.37)'],
+      [['six (Rev B)', 'six (Rev A)', 'six (Rev C)'], 'six (Rev B)'],
+      [['seven (RE2)', 'seven (RE3)', 'seven'], 'seven (RE2)'],
+    ])('should return the first candidate when option is false: %s', async (names, expectedName) => {
+      await expectPreferredCandidates(
+        { preferRevisionNewer: false, single: true },
+        [await buildReleaseCandidatesWithRegionLanguage(names)],
+        [expectedName],
+      );
     });
 
-    it('should return the first candidate when none matching', async () => {
-      await expectPreferredCandidates({ preferRevisionNewer: true, single: true }, [
-        await buildReleaseCandidatesWithRegionLanguage(['one'], 'USA', 'EN'),
-        await buildReleaseCandidatesWithRegionLanguage(['two', 'two two'], 'USA', 'EN'),
-      ], ['one (USA) (EN)', 'two (USA) (EN)']);
+    test.each([
+      [['one'], 'one'],
+      [['two', 'two two'], 'two'],
+    ])('should return the first candidate when none matching: %s', async (names, expectedName) => {
+      await expectPreferredCandidates(
+        { preferRevisionNewer: true, single: true },
+        [await buildReleaseCandidatesWithRegionLanguage(names)],
+        [expectedName],
+      );
     });
 
-    it('should return the first matching candidate when some matching', async () => {
-      await expectPreferredCandidates({ preferRevisionNewer: true, single: true }, [
-        await buildReleaseCandidatesWithRegionLanguage(['one'], 'USA', 'EN'),
-        await buildReleaseCandidatesWithRegionLanguage(['two', 'two (Rev 1)'], 'USA', 'EN'),
-        await buildReleaseCandidatesWithRegionLanguage(['three', 'three (Rev 1)', 'three (Rev2)'], 'USA', 'EN'),
-        await buildReleaseCandidatesWithRegionLanguage(['four (Rev 1.1)', 'four (Rev 1.2)'], 'USA', 'EN'),
-        await buildReleaseCandidatesWithRegionLanguage(['five (Rev 13.37)'], 'USA', 'EN'),
-      ], ['one (USA) (EN)', 'two (Rev 1) (USA) (EN)', 'three (Rev2) (USA) (EN)', 'four (Rev 1.2) (USA) (EN)', 'five (Rev 13.37) (USA) (EN)']);
+    test.each([
+      [['one'], 'one'],
+      [['two', 'two (Rev 1)'], 'two (Rev 1)'],
+      [['three', 'three (Rev 1)', 'three (Rev2)'], 'three (Rev2)'],
+      [['four (Rev 1.1)', 'four (Rev 1.2)'], 'four (Rev 1.2)'],
+      [['five (Rev 13.37)'], 'five (Rev 13.37)'],
+      [['six (Rev B)', 'six (Rev A)', 'six (Rev C)'], 'six (Rev C)'],
+      [['seven (RE2)', 'seven (RE3)', 'seven'], 'seven (RE3)'],
+    ])('should return the first matching candidate when some matching: %s', async (names, expectedName) => {
+      await expectPreferredCandidates(
+        { preferRevisionNewer: true, single: true },
+        [await buildReleaseCandidatesWithRegionLanguage(names)],
+        [expectedName],
+      );
     });
 
-    it('should return the first candidate when all matching', async () => {
-      await expectPreferredCandidates({ preferRevisionNewer: true, single: true }, [
-        await buildReleaseCandidatesWithRegionLanguage(['one (Rev 1.1)', 'one (Rev 1.2)'], 'USA', 'EN'),
-        await buildReleaseCandidatesWithRegionLanguage(['two (Rev 13.37)'], 'USA', 'EN'),
-      ], ['one (Rev 1.2) (USA) (EN)', 'two (Rev 13.37) (USA) (EN)']);
+    test.each([
+      [['one (Rev 1.1)', 'one (Rev 1.2)'], 'one (Rev 1.2)'],
+      [['two (Rev 13.37)'], 'two (Rev 13.37)'],
+    ])('should return the first candidate when all matching: %s', async (names, expectedName) => {
+      await expectPreferredCandidates(
+        { preferRevisionNewer: true, single: true },
+        [await buildReleaseCandidatesWithRegionLanguage(names)],
+        [expectedName],
+      );
     });
   });
 
   describe('prefer revision older', () => {
-    it('should return the first candidate when option is false', async () => {
-      await expectPreferredCandidates({ preferRevisionOlder: false, single: true }, [
-        await buildReleaseCandidatesWithRegionLanguage(['one'], 'USA', 'EN'),
-        await buildReleaseCandidatesWithRegionLanguage(['two', 'two (Rev 1)'], 'USA', 'EN'),
-        await buildReleaseCandidatesWithRegionLanguage(['three', 'three (Rev 1)', 'three (Rev2)'], 'USA', 'EN'),
-        await buildReleaseCandidatesWithRegionLanguage(['four (Rev 1.1)', 'four (Rev 1.2)'], 'USA', 'EN'),
-        await buildReleaseCandidatesWithRegionLanguage(['five (Rev 13.37)'], 'USA', 'EN'),
-      ], ['one (USA) (EN)', 'two (USA) (EN)', 'three (USA) (EN)', 'four (Rev 1.1) (USA) (EN)', 'five (Rev 13.37) (USA) (EN)']);
+    test.each([
+      [['one'], 'one'],
+      [['two', 'two (Rev 1)'], 'two'],
+      [['three', 'three (Rev 1)', 'three (Rev2)'], 'three'],
+      [['four (Rev 1.1)', 'four (Rev 1.2)'], 'four (Rev 1.1)'],
+      [['five (Rev 13.37)'], 'five (Rev 13.37)'],
+      [['six (Rev B)', 'six (Rev A)', 'six (Rev C)'], 'six (Rev B)'],
+      [['seven (RE2)', 'seven (RE3)', 'seven'], 'seven (RE2)'],
+    ])('should return the first candidate when option is false: %s', async (names, expectedName) => {
+      await expectPreferredCandidates(
+        { preferRevisionOlder: false, single: true },
+        [await buildReleaseCandidatesWithRegionLanguage(names)],
+        [expectedName],
+      );
     });
 
-    it('should return the first candidate when none matching', async () => {
-      await expectPreferredCandidates({ preferRevisionOlder: true, single: true }, [
-        await buildReleaseCandidatesWithRegionLanguage(['one'], 'USA', 'EN'),
-        await buildReleaseCandidatesWithRegionLanguage(['two', 'two two'], 'USA', 'EN'),
-      ], ['one (USA) (EN)', 'two (USA) (EN)']);
+    test.each([
+      [['one'], 'one'],
+      [['two', 'two two'], 'two'],
+    ])('should return the first candidate when none matching: %s', async (names, expectedName) => {
+      await expectPreferredCandidates(
+        { preferRevisionOlder: true, single: true },
+        [await buildReleaseCandidatesWithRegionLanguage(names)],
+        [expectedName],
+      );
     });
 
-    it('should return the first matching candidate when some matching', async () => {
-      await expectPreferredCandidates({ preferRevisionOlder: true, single: true }, [
-        await buildReleaseCandidatesWithRegionLanguage(['one'], 'USA', 'EN'),
-        await buildReleaseCandidatesWithRegionLanguage(['two', 'two (Rev 1)'], 'USA', 'EN'),
-        await buildReleaseCandidatesWithRegionLanguage(['three', 'three (Rev 1)', 'three (Rev2)'], 'USA', 'EN'),
-        await buildReleaseCandidatesWithRegionLanguage(['four (Rev 1.1)', 'four (Rev 1.2)'], 'USA', 'EN'),
-        await buildReleaseCandidatesWithRegionLanguage(['five (Rev 13.37)'], 'USA', 'EN'),
-      ], ['one (USA) (EN)', 'two (USA) (EN)', 'three (USA) (EN)', 'four (Rev 1.1) (USA) (EN)', 'five (Rev 13.37) (USA) (EN)']);
+    test.each([
+      [['one'], 'one'],
+      [['two', 'two (Rev 1)'], 'two'],
+      [['three', 'three (Rev 1)', 'three (Rev2)'], 'three'],
+      [['four (Rev 1.2)', 'four (Rev 1.1)'], 'four (Rev 1.1)'],
+      [['five (Rev 13.37)'], 'five (Rev 13.37)'],
+      [['six (Rev B)', 'six (Rev A)', 'six (Rev C)'], 'six (Rev A)'],
+      [['seven (RE2)', 'seven (RE3)', 'seven'], 'seven'],
+    ])('should return the first matching candidate when some matching: %s', async (names, expectedName) => {
+      await expectPreferredCandidates(
+        { preferRevisionOlder: true, single: true },
+        [await buildReleaseCandidatesWithRegionLanguage(names)],
+        [expectedName],
+      );
     });
 
-    it('should return the first candidate when all matching', async () => {
-      await expectPreferredCandidates({ preferRevisionOlder: true, single: true }, [
-        await buildReleaseCandidatesWithRegionLanguage(['one (Rev 1.1)', 'one (Rev 1.2)'], 'USA', 'EN'),
-        await buildReleaseCandidatesWithRegionLanguage(['two (Rev 13.37)'], 'USA', 'EN'),
-      ], ['one (Rev 1.1) (USA) (EN)', 'two (Rev 13.37) (USA) (EN)']);
+    test.each([
+      [['one (Rev 1.2)', 'one (Rev 1.1)'], 'one (Rev 1.1)'],
+      [['two (Rev 13.37)'], 'two (Rev 13.37)'],
+    ])('should return the first candidate when all matching: %s', async (names, expectedName) => {
+      await expectPreferredCandidates(
+        { preferRevisionOlder: true, single: true },
+        [await buildReleaseCandidatesWithRegionLanguage(names)],
+        [expectedName],
+      );
     });
   });
 

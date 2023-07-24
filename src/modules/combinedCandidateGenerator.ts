@@ -35,7 +35,7 @@ export default class CombinedCandidateGenerator extends Module {
     }
 
     await this.progressBar.setSymbol(ProgressBarSymbol.GENERATING);
-    await this.progressBar.reset(dat.getParents().length);
+    await this.progressBar.reset(parentsToCandidates.size);
 
     const game = CombinedCandidateGenerator.buildGame(dat, parentsToCandidates);
     const parent = new Parent(game.getName(), [game]);
@@ -88,7 +88,7 @@ export default class CombinedCandidateGenerator extends Module {
           }
 
           // Combine all output ArchiveEntry to a single archive of the DAT name
-          let outputEntry = await outputFile.withArchiveFileName(dat.getNameShort());
+          let outputEntry = await outputFile.withFilePath(dat.getNameShort());
 
           // If the game has multiple ROMs, then group them in a folder in the archive
           if (releaseCandidate.getGame().getRoms().length > 1) {

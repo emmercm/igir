@@ -135,9 +135,9 @@ export default class ArchiveEntry<A extends Archive> extends File {
     return this.archive.extractEntryToStream(this.getEntryPath(), callback);
   }
 
-  async withArchiveFileName(fileNameWithoutExt: string): Promise<ArchiveEntry<Archive>> {
+  async withFilePath(filePath: string): Promise<ArchiveEntry<Archive>> {
     return ArchiveEntry.entryOf(
-      this.getArchive().withFileName(fileNameWithoutExt),
+      this.getArchive().withFilePath(filePath),
       this.getEntryPath(),
       this.getSize(),
       this.getCrc32(),
