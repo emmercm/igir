@@ -1,0 +1,70 @@
+# Requires repo secret: PERSONAL_ACCESS_TOKEN with permissions:
+#   Contents: read and write
+#   Pull Requests: read and write
+
+name: Version Bump
+
+on:
+  workflow_dispatch:
+    inputs:
+      increment:
+        description: 'Increment type'
+        required: true
+        type: choice
+        options:
+          - patch
+          - minor
+          - major
+      auto-merge:
+        description: 'Auto-merge pull request?'
+        required: true
+        type: boolean
+        default: true
+run-name: '${{ github.workflow }}: incrementing ${{ inputs.increment }}'
+
+jobs:
+  bump:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      # Bump the version and commit to the default branch
+      - id: bump-and-commit
+        run: |
+          npm run "bump:${{ inputs.increment }}"
+          git add --all
+
+          USER_EMAIL="${GITHUB_ACTOR_ID}+${GITHUB_ACTOR}@users.noreply.github.com"
+          echo "USER_EMAIL=${USER_EMAIL}" >> "$GITHUB_OUTPUT"
+          git config --global user.email "${USER_EMAIL}"
+
+          USER_NAME="$(gh api /users/${GITHUB_ACTOR} | jq .name -r)"
+          echo "USER_NAME=${USER_NAME}" >> "$GITHUB_OUTPUT"
+          git config --global user.name "${USER_NAME}"
+
+          PACKAGE_VERSION="$(jq --raw-output '.version' package.json)"
+          echo "PACKAGE_VERSION=${PACKAGE_VERSION}" >> "$GITHUB_OUTPUT"
+          git commit -m "v${PACKAGE_VERSION}"
+        env:
+          GH_TOKEN: ${{ github.token }}
+
+      # Create the pull request, and optionally mark it as auto-merge
+      - id: create-pull-request
+        uses: peter-evans/create-pull-request@v5
+        with:
+          token: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
+          author: ${{ steps.bump-and-commit.outputs.USER_NAME }} <${{ steps.bump-and-commit.outputs.USER_EMAIL }}>
+          branch: ${{ github.actor }}/${{ steps.bump-and-commit.outputs.PACKAGE_VERSION }}
+          delete-branch: true
+          title: v${{ steps.bump-and-commit.outputs.PACKAGE_VERSION }}
+          assignees: ${{ !inputs.auto-merge && github.repository_owner || '' }}
+          reviewers: ${{ (!inputs.auto-merge && github.repository_owner != github.actor) && github.repository_owner || '' }}
+      - if: ${{ steps.create-pull-request.outputs.pull-request-number }}
+        run: |
+          echo "# v${{ steps.bump-and-commit.outputs.PACKAGE_VERSION }}" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "${{ steps.create-pull-request.outputs.pull-request-url }}" >> "$GITHUB_STEP_SUMMARY"
+      - if: ${{ steps.create-pull-request.outputs.pull-request-number && inputs.auto-merge }}
+        run: gh pr merge "${{ steps.create-pull-request.outputs.pull-request-number }}" --merge --auto
+        env:
+          GH_TOKEN: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
