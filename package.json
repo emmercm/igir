@@ -55,7 +55,6 @@
     "bump:minor": "npm version minor --no-git-tag-version && npm run update:readme",
     "bump:patch": "npm version patch --no-git-tag-version && npm run update:readme",
     "update:readme": "./scripts/update-readme-help.sh",
-    "release": "./node_modules/.bin/release-it --no-increment",
     "prepack": "npm run build && npm run update:readme -- 72",
     "postpack": "npm run update:readme",
     "docs:serve": "mkdocs serve"
@@ -119,7 +118,6 @@
     "eslint-plugin-simple-import-sort": "10.0.0",
     "husky": "8.0.3",
     "jest": "29.5.0",
-    "release-it": "15.11.0",
     "strip-ansi": "7.1.0",
     "ts-jest": "29.1.0",
     "ts-node": "10.9.1",
