@@ -41,12 +41,15 @@ jobs:
 
   # !!! This check should be required by GitHub !!!
   pages-status-check:
+    if: always()
     needs:
       - markdown-lint
       - mkdocs-build
     runs-on: ubuntu-latest
     steps:
-      - run: echo ok
+      - uses: re-actors/alls-green@release/v1
+        with:
+          jobs: ${{ toJSON(needs) }}
 
   deploy:
     if: github.event_name == 'release'
