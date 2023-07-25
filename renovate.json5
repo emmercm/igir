@@ -1,7 +1,8 @@
 {
   $schema: 'https://docs.renovatebot.com/renovate-schema.json',
+  enabled: false,
   extends: [
-    'config:base',
+    'config:recommended',
   ],
   dependencyDashboard: true,
   configMigration: true,
@@ -15,11 +16,13 @@
   // Open PRs immediately for vulnerability alerts
   // Requires "dependency graph" as well as Dependabot "alerts" and "security updates" enabled for the repo
   vulnerabilityAlerts: {
-    enabled: true, // default
-    schedule: 'at any time', // default
-    prCreation: 'immediate', // default
     labels: ['security'],
+    // Global defaults
+    enabled: true,
+    schedule: 'at any time',
+    prCreation: 'immediate',
     automergeSchedule: 'at any time',
+    platformAutomerge: true,
   },
   // WARN: "When the lockfileVersion is higher than 1 in package-lock.json, remediations are only possible when changes are made to package.json."
   transitiveRemediation: true,
@@ -38,13 +41,16 @@
   schedule: 'on the 24th day of the month',
   automerge: true,
   automergeSchedule: 'on the 28th day of the month',
+  platformAutomerge: false, // schedule and automergeSchedule differ, can't use
   prHourlyLimit: 0, // default: disabled
 
   node: {
     groupName: 'Node.js',
+    // Global defaults
     schedule: 'at any time',
     prCreation: 'immediate',
     automergeSchedule: 'at any time',
+    platformAutomerge: true,
   },
 
   npm: {

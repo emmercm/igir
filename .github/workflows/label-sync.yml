@@ -27,11 +27,14 @@ jobs:
 
   # !!! This check should be required by GitHub !!!
   labels-status-check:
+    if: always()
     needs:
       - dry-run
     runs-on: ubuntu-latest
     steps:
-      - run: echo ok
+      - uses: re-actors/alls-green@release/v1
+        with:
+          jobs: ${{ toJSON(needs) }}
 
   sync:
     if: github.event_name == 'push'

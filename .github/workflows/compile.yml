@@ -121,8 +121,11 @@ jobs:
 
   # !!! This check should be required by GitHub !!!
   compile-status-check:
+    if: always()
     needs:
       - node-compile
     runs-on: ubuntu-latest
     steps:
-      - run: echo ok
+      - uses: re-actors/alls-green@release/v1
+        with:
+          jobs: ${{ toJSON(needs) }}
