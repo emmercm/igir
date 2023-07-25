@@ -108,6 +108,7 @@ jobs:
 
   # !!! This check should be required by GitHub !!!
   test-status-check:
+    if: always()
     needs:
       - node-lint
       - node-unit
@@ -116,4 +117,6 @@ jobs:
       - renovate-lint
     runs-on: ubuntu-latest
     steps:
-      - run: echo ok
+      - uses: re-actors/alls-green@release/v1
+        with:
+          jobs: ${{ toJSON(needs) }}
