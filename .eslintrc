@@ -28,7 +28,8 @@
       "patterns": [{
         "group": ["node:*"],
         "message": "Don't use prefixes with Node.js built-ins."
-      }, {
+      }],
+      "paths": [{
         "name": "fs",
         "importNames": ["promises"],
         "message": "Use util.promisify(fs.*)() instead of fs.promises.*()."
