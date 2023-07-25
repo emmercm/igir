@@ -1,4 +1,5 @@
-# Requires repo secret: PERSONAL_ACCESS_TOKEN (with the "repository > administration" permission)
+# Requires repo secret: PERSONAL_ACCESS_TOKEN with permissions:
+#   Administration: read and write
 
 name: Repository Update
 
@@ -6,6 +7,10 @@ on:
   push:
     branches:
       - 'main'
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   repo-update:
