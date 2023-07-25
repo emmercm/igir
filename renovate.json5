@@ -5,78 +5,57 @@
   ],
   dependencyDashboard: true,
   configMigration: true,
-
-  // Personal preferences
   timezone: 'America/Los_Angeles',
-  assignees: ['@emmercm'],
-  reviewers: ['@emmercm'],
-  assignAutomerge: false, // default
-
-  // Open PRs immediately for vulnerability alerts
-  // Requires "dependency graph" as well as Dependabot "alerts" and "security updates" enabled for the repo
+  assignees: [
+    '@emmercm',
+  ],
+  reviewers: [
+    '@emmercm',
+  ],
+  assignAutomerge: false,
   vulnerabilityAlerts: {
-    labels: ['security'],
-    // Global defaults
+    labels: [
+      'security',
+    ],
     enabled: true,
     schedule: 'at any time',
     prCreation: 'immediate',
     automergeSchedule: 'at any time',
     platformAutomerge: true,
   },
-  // WARN: "When the lockfileVersion is higher than 1 in package-lock.json, remediations are only possible when changes are made to package.json."
   transitiveRemediation: true,
-
-  // Use pseudo semantic commit (and therefore PR title) commit messages
-  // "{{{commitMessagePrefix}}} {{{commitMessageAction}}} {{{commitMessageTopic}}} {{{commitMessageExtra}}} {{{commitMessageSuffix}}}"
   commitMessagePrefix: 'Chore:',
   commitMessageAction: 'update',
-
-  // Separate potentially breaking updates, group others
   separateMultipleMajor: true,
-  separateMajorMinor: true, // default
-  separateMinorPatch: false, // default
-
-  // Allow auto-merging of PRs, but reduce their spam on the commit log
+  separateMajorMinor: true,
+  separateMinorPatch: false,
   schedule: 'on the 24th day of the month',
   automerge: true,
   automergeSchedule: 'on the 28th day of the month',
-  platformAutomerge: false, // schedule and automergeSchedule differ, can't use
-  prHourlyLimit: 0, // default: disabled
-
-  node: {
-    groupName: 'Node.js',
-    // Global defaults
-    schedule: 'at any time',
-    prCreation: 'immediate',
-    automergeSchedule: 'at any time',
-    platformAutomerge: true,
-  },
-
+  platformAutomerge: false,
+  prHourlyLimit: 0,
   npm: {
     lockFileMaintenance: {
       enabled: true,
-      schedule: 'on the 24th day of the month', // same as above
-      commitMessageAction: 'update', // same as above
+      schedule: 'on the 24th day of the month',
+      commitMessageAction: 'update',
       commitMessageTopic: 'lockfile',
     },
-
-    // Stability settings
     rangeStrategy: 'pin',
-    commitMessageAction: 'update', // same as above, don't use `rangeStrategy` as the action
+    commitMessageAction: 'update',
     minimumReleaseAge: '3 days',
-
     packageRules: [
-      // Dependencies
       {
         groupName: 'dependencies',
-        matchDepTypes: ['dependencies', 'devDependencies'],
+        matchDepTypes: [
+          'dependencies',
+          'devDependencies',
+        ],
       },
-
-      // Dev dependencies
       {
-        // Group devDependencies together, minus type definitions for dependencies
-        // https://github.com/renovatebot/renovate/issues/519
-        matchDepTypes: ['devDependencies'],
+        matchDepTypes: [
+          'devDependencies',
+        ],
         excludePackageNames: [
           '@types/7zip-min',
           '@types/archiver',
@@ -93,7 +72,6 @@
         groupName: 'dev dependencies',
       },
       {
-        // Group Jest together because of peerDependencies
         matchPackageNames: [
           '@jest/globals',
           '@types/jest',
@@ -103,26 +81,42 @@
         groupName: 'Jest',
       },
       {
-        // Separate TypeScript because upgrades are dependent on support by other dependencies
-        matchPackageNames: ['typescript'],
+        matchPackageNames: [
+          'typescript',
+        ],
         groupName: 'TypeScript',
       },
-
-      // Group/separate all dependency pinning, perform it immediately
       {
-        matchUpdateTypes: ['pin'],
+        matchUpdateTypes: [
+          'pin',
+        ],
         commitMessageAction: 'pin',
         groupName: 'dependency ranges',
         schedule: 'at any time',
         prCreation: 'immediate',
         automergeSchedule: 'at any time',
       },
-
-      // Everything else
       {
-        matchDepTypes: ['optionalDependencies', 'peerDependencies', 'engines', 'volta'],
+        matchDepTypes: [
+          'optionalDependencies',
+          'peerDependencies',
+          'engines',
+          'volta',
+        ],
         enabled: false,
       },
     ],
   },
+  packageRules: [
+    {
+      matchCategories: [
+        'node',
+      ],
+      groupName: 'Node.js',
+      schedule: 'at any time',
+      prCreation: 'immediate',
+      automergeSchedule: 'at any time',
+      platformAutomerge: true,
+    },
+  ],
 }
