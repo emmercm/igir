@@ -1,0 +1,60 @@
+# Requires repo secret: PERSONAL_ACCESS_TOKEN with permissions:
+#   Contents: read and write
+#   Pull Requests: read
+
+name: Release Drafter
+
+on:
+  push:
+    branches:
+      - 'main'
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      # Check to see if the package.json version has changed
+      - id: check
+        uses: EndBug/version-check@v2
+        with:
+          diff-search: true
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      # Generate the release's markdown template
+      - if: steps.check.outputs.changed == 'true'
+        id: auto-changelog
+        run: |
+          EOF=$(dd if=/dev/urandom bs=15 count=1 status=none | base64)
+          echo "MARKDOWN<<$EOF" >> "$GITHUB_OUTPUT"
+          ./scripts/auto-changelog.sh >> "$GITHUB_OUTPUT"
+          echo "" >> "$GITHUB_OUTPUT"
+          echo "" >> "$GITHUB_OUTPUT"
+          echo "$EOF" >> "$GITHUB_OUTPUT"
+
+      # Create/update the draft release
+      - if: steps.check.outputs.changed == 'true'
+        id: release-drafter
+        uses: release-drafter/release-drafter@v5
+        with:
+          name: v${{ steps.check.outputs.version }}
+          tag: v${{ steps.check.outputs.version }}
+          version: ${{ steps.check.outputs.version }}
+          commitish: ${{ github.sha }}
+          # NOTE(cemmer): `template` can't be supplied here, only `header` and `footer`, so have to pick one of those
+          #   and make sure the .github/release-drafter.yml's `template` is empty-ish.
+          header: ${{ steps.auto-changelog.outputs.MARKDOWN }}
+        env:
+          # NOTE(cemmer): PAT here causes the release to be made under your account.
+          #   ${{ secrets.GITHUB_TOKEN }} would cause it to be created from `github-actions`, even when published.
+          GITHUB_TOKEN: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
+      - if: ${{ steps.create-pull-request.outputs.pull-request-number }}
+        run: |
+          echo "# v${{ steps.release-drafter.outputs.id }}" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "${{ steps.release-drafter.outputs.html_url }}" >> "$GITHUB_STEP_SUMMARY"
