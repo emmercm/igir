@@ -592,6 +592,7 @@ export default class Options implements OptionsProps {
       output,
       dat,
       inputRomPath,
+      game,
       release,
       romFilenameSanitized,
     );
@@ -703,11 +704,13 @@ export default class Options implements OptionsProps {
     outputPath: string,
     dat: DAT,
     inputRomPath?: string,
+    game?: Game,
     release?: Release,
     outputRomFilename?: string,
   ): string {
     let result = outputPath;
     result = this.replaceDatTokens(result, dat);
+    result = this.replaceGameTokens(result, game);
     result = this.replaceReleaseTokens(result, release);
     result = this.replaceInputTokens(result, inputRomPath);
     result = this.replaceOutputTokens(result, outputRomFilename);
@@ -723,6 +726,16 @@ export default class Options implements OptionsProps {
 
   private static replaceDatTokens(input: string, dat: DAT): string {
     return input.replace('{datName}', dat.getName().replace(/[\\/]/g, '_'));
+  }
+
+  private static replaceGameTokens(input: string, game?: Game): string {
+    if (!game) {
+      return input;
+    }
+
+    let output = input;
+    output = output.replace('{gameType}', game.getGameType());
+    return output;
   }
 
   private static replaceReleaseTokens(input: string, release?: Release): string {
