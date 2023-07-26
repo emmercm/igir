@@ -41,9 +41,9 @@ gracefulFs.gracefulify(realFs);
     new UpdateChecker(logger).check();
 
     await new Igir(options, logger).main();
-    ProgressBarCLI.stop();
+    await ProgressBarCLI.stop();
   } catch (e) {
-    ProgressBarCLI.stop();
+    await ProgressBarCLI.stop();
     logger.error(e);
     logger.newLine();
     process.exit(1);

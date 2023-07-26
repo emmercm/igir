@@ -18,7 +18,7 @@ describe('reset', () => {
     await progressBar.reset(20);
     expect(spy.getLastLine()).toMatch(new RegExp(`${stripAnsi(ProgressBarSymbol.DONE)} +name .* 0/20`));
 
-    ProgressBarCLI.stop();
+    await ProgressBarCLI.stop();
   });
 });
 
@@ -30,7 +30,7 @@ describe('setSymbol', () => {
     await progressBar.setSymbol('');
     expect(spy.getLastLine()).toMatch(/^name/);
 
-    ProgressBarCLI.stop();
+    await ProgressBarCLI.stop();
   });
 
   test.each(
@@ -42,7 +42,7 @@ describe('setSymbol', () => {
     await progressBar.setSymbol(symbol);
     expect(spy.getLastLine()).toMatch(new RegExp(`^${symbol} +name`));
 
-    ProgressBarCLI.stop();
+    await ProgressBarCLI.stop();
   });
 });
 
@@ -60,7 +60,7 @@ describe('incrementProgress', () => {
     await progressBar.render(true);
     expect(spy.getLastLine()).toMatch(new RegExp(`${stripAnsi(ProgressBarSymbol.DONE)} +name .* \\| ${SingleBarFormatted.BAR_IN_PROGRESS_CHAR}.* \\| 0/100`));
 
-    ProgressBarCLI.stop();
+    await ProgressBarCLI.stop();
   });
 
   it('should work with incrementDone', async () => {
@@ -80,7 +80,7 @@ describe('incrementProgress', () => {
     await progressBar.render(true);
     expect(spy.getLastLine()).toMatch(new RegExp(`${stripAnsi(ProgressBarSymbol.DONE)} +name .* \\| ${SingleBarFormatted.BAR_IN_PROGRESS_CHAR}.* \\| 1/100`));
 
-    ProgressBarCLI.stop();
+    await ProgressBarCLI.stop();
   });
 });
 
@@ -97,7 +97,7 @@ describe('incrementDone', () => {
     await progressBar.render(true);
     expect(spy.getLastLine()).toMatch(new RegExp(`${stripAnsi(ProgressBarSymbol.DONE)} +name .* 2/100`));
 
-    ProgressBarCLI.stop();
+    await ProgressBarCLI.stop();
   });
 });
 
@@ -115,7 +115,7 @@ describe('update', () => {
     await progressBar.render(true);
     expect(spy.getLastLine()).toMatch(new RegExp(`${stripAnsi(ProgressBarSymbol.DONE)} +name .* 32/100`));
 
-    ProgressBarCLI.stop();
+    await ProgressBarCLI.stop();
   });
 });
 
@@ -129,7 +129,7 @@ describe('done', () => {
     expect(spy.getLineCount()).toEqual(3);
     expect(spy.getLastLine()).toMatch(new RegExp(`${stripAnsi(ProgressBarSymbol.DONE)} +name`));
 
-    ProgressBarCLI.stop();
+    await ProgressBarCLI.stop();
   });
 
   it('should update the symbol and message', async () => {
@@ -141,7 +141,7 @@ describe('done', () => {
     expect(spy.getLineCount()).toEqual(3);
     expect(spy.getLastLine()).toMatch(new RegExp(`${stripAnsi(ProgressBarSymbol.DONE)} +name .* done message$`));
 
-    ProgressBarCLI.stop();
+    await ProgressBarCLI.stop();
   });
 });
 
@@ -156,7 +156,7 @@ describe('logDebug', () => {
     expect(spy.getLineCount()).toEqual(3);
     expect(spy.getLogLine()).toMatch(/DEBUG:.*debug message/);
 
-    ProgressBarCLI.stop();
+    await ProgressBarCLI.stop();
   });
 
   it('should not log at the matching log level', async () => {
@@ -168,7 +168,7 @@ describe('logDebug', () => {
     await progressBar.render(true);
     expect(spy.getLogLine()).toBeUndefined();
 
-    ProgressBarCLI.stop();
+    await ProgressBarCLI.stop();
   });
 });
 
@@ -183,7 +183,7 @@ describe('logInfo', () => {
     expect(spy.getLineCount()).toEqual(3);
     expect(spy.getLogLine()).toMatch(/INFO:.*info message/);
 
-    ProgressBarCLI.stop();
+    await ProgressBarCLI.stop();
   });
 
   it('should not log at the matching log level', async () => {
@@ -195,7 +195,7 @@ describe('logInfo', () => {
     await progressBar.render(true);
     expect(spy.getLogLine()).toBeUndefined();
 
-    ProgressBarCLI.stop();
+    await ProgressBarCLI.stop();
   });
 });
 
@@ -210,7 +210,7 @@ describe('logWarn', () => {
     expect(spy.getLineCount()).toEqual(3);
     expect(spy.getLogLine()).toMatch(/WARN:.*warn message/);
 
-    ProgressBarCLI.stop();
+    await ProgressBarCLI.stop();
   });
 
   it('should not log at the matching log level', async () => {
@@ -222,7 +222,7 @@ describe('logWarn', () => {
     await progressBar.render(true);
     expect(spy.getLogLine()).toBeUndefined();
 
-    ProgressBarCLI.stop();
+    await ProgressBarCLI.stop();
   });
 });
 
@@ -237,7 +237,7 @@ describe('logError', () => {
     expect(spy.getLineCount()).toEqual(3);
     expect(spy.getLogLine()).toMatch(/ERROR:.*error message/);
 
-    ProgressBarCLI.stop();
+    await ProgressBarCLI.stop();
   });
 
   it('should not log at the matching log level', async () => {
@@ -249,7 +249,7 @@ describe('logError', () => {
     await progressBar.render(true);
     expect(spy.getLogLine()).toBeUndefined();
 
-    ProgressBarCLI.stop();
+    await ProgressBarCLI.stop();
   });
 });
 
@@ -262,7 +262,7 @@ describe('freeze', () => {
     await progressBar.freeze();
     expect(spy.getLineCount()).toEqual(3); // one final render, and then a log of the render
 
-    ProgressBarCLI.stop();
+    await ProgressBarCLI.stop();
   });
 });
 
@@ -275,6 +275,6 @@ describe('delete', () => {
     progressBar.delete();
     expect(spy.getLineCount()).toEqual(1);
 
-    ProgressBarCLI.stop();
+    await ProgressBarCLI.stop();
   });
 });

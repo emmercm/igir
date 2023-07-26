@@ -17,6 +17,8 @@ export default class ProgressBarCLI extends ProgressBar {
 
   private static multiBar?: MultiBar;
 
+  private static progressBars: ProgressBarCLI[] = [];
+
   private static lastRedraw: [number, number] = [0, 0];
 
   private static logQueue: string[] = [];
@@ -40,6 +42,9 @@ export default class ProgressBarCLI extends ProgressBar {
     this.logger = logger;
     this.payload = payload;
     this.singleBarFormatted = singleBarFormatted;
+    if (singleBarFormatted) {
+      ProgressBarCLI.progressBars = [...ProgressBarCLI.progressBars, this];
+    }
   }
 
   static async new(
@@ -67,7 +72,7 @@ export default class ProgressBarCLI extends ProgressBar {
 
     if (!logger.isTTY()) {
       // Only create progress bars for TTY consoles
-      return new ProgressBarCLI(logger, initialPayload).logPayload();
+      return new ProgressBarCLI(logger, initialPayload);
     }
 
     const singleBarFormatted = new SingleBarFormatted(
@@ -80,10 +85,14 @@ export default class ProgressBarCLI extends ProgressBar {
     return progressBarCLI;
   }
 
-  static stop(): void {
+  static async stop(): Promise<void> {
     this.multiBar?.stop();
     this.multiBar = undefined;
     // Forcing a render shouldn't be necessary
+
+    // Freeze (and delete) any lingering progress bars
+    const progressBarsCopy = ProgressBarCLI.progressBars.slice();
+    await Promise.all(progressBarsCopy.map(async (progressBar) => progressBar.freeze()));
   }
 
   /**
@@ -137,16 +146,15 @@ export default class ProgressBarCLI extends ProgressBar {
     return this.render(true);
   }
 
-  private async logPayload(): Promise<ProgressBarCLI> {
+  private async logPayload(): Promise<void> {
     if (this.singleBarFormatted) {
-      return this;
+      return;
     }
     this.log(
       LogLevel.ALWAYS,
       `${this.payload.name} ... ${this.payload.finishedMessage || ''}`.trim(),
     );
     await this.render(true);
-    return this;
   }
 
   async setName(name: string): Promise<void> {
@@ -223,7 +231,6 @@ export default class ProgressBarCLI extends ProgressBar {
     }
 
     await this.render(true);
-    await this.logPayload();
   }
 
   withLoggerPrefix(prefix: string): ProgressBar {
@@ -256,6 +263,7 @@ export default class ProgressBarCLI extends ProgressBar {
    */
   async freeze(): Promise<void> {
     if (!this.singleBarFormatted) {
+      await this.logPayload();
       return;
     }
 
@@ -271,5 +279,8 @@ export default class ProgressBarCLI extends ProgressBar {
 
     ProgressBarCLI.multiBar?.remove(this.singleBarFormatted.getSingleBar());
     // Forcing a render shouldn't be necessary
+
+    ProgressBarCLI.progressBars = ProgressBarCLI.progressBars
+      .filter((singleBar) => singleBar.singleBarFormatted !== this.singleBarFormatted);
   }
 }

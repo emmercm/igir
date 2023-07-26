@@ -7,6 +7,8 @@ import { linearRegression, linearRegressionLine } from 'simple-statistics';
 import ProgressBarPayload from './progressBarPayload.js';
 
 export default class SingleBarFormatted {
+  public static readonly MAX_NAME_LENGTH = 30;
+
   public static readonly BAR_COMPLETE_CHAR = '\u2588';
 
   public static readonly BAR_IN_PROGRESS_CHAR = '\u2592';
@@ -56,11 +58,10 @@ export default class SingleBarFormatted {
       return '';
     }
 
-    const maxNameLength = 30;
-    const payloadName = payload.name.slice(0, maxNameLength);
-    return payloadName.length > maxNameLength - 1
-      ? payloadName.padEnd(maxNameLength, ' ')
-      : `${payloadName} ${'·'.repeat(maxNameLength - 1 - payloadName.length)}`;
+    const payloadName = payload.name.slice(0, SingleBarFormatted.MAX_NAME_LENGTH);
+    return payloadName.length > SingleBarFormatted.MAX_NAME_LENGTH - 1
+      ? payloadName.padEnd(SingleBarFormatted.MAX_NAME_LENGTH, ' ')
+      : `${payloadName} ${'·'.repeat(SingleBarFormatted.MAX_NAME_LENGTH - 1 - payloadName.length)}`;
   }
 
   private getProgress(options: Options, params: Params, payload: ProgressBarPayload): string {
