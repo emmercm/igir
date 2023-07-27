@@ -27,7 +27,7 @@ jobs:
 
   # !!! This check should be required by GitHub !!!
   labels-status-check:
-    if: always()
+    if: github.event_name == 'pull_request'
     needs:
       - dry-run
     runs-on: ubuntu-latest
