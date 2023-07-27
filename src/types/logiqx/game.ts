@@ -9,6 +9,29 @@ import Release from './release.js';
 import ROM from './rom.js';
 import Sample from './sample.js';
 
+enum GameType {
+  AFTERMARKET = 'Aftermarket',
+  ALPHA = 'Alpha',
+  BAD = 'Bad',
+  BETA = 'Beta',
+  BIOS = 'BIOS',
+  DEMO = 'Demo',
+  DEVICE = 'Device',
+  FIXED = 'Fixed',
+  HACKED = 'Hacked',
+  HOMEBREW = 'Homebrew',
+  OVERDUMP = 'Overdump',
+  PENDING_DUMP = 'Pending Dump',
+  PIRATED = 'Pirated',
+  PROTOTYPE = 'Prototype',
+  RETAIL = 'Retail',
+  SAMPLE = 'Sample',
+  TEST = 'Test',
+  TRAINED = 'Trained',
+  TRANSLATED = 'Translated',
+  UNLICENSED = 'Unlicensed',
+}
+
 /**
  * "There are two 'semi-optional' fields that can be included for each game;
  * 'year' and 'manufacturer'. However, CMPro displays the manufacturer in the
@@ -252,6 +275,55 @@ export default class Game implements GameProps {
         && !this.hasBungFix()
         && !this.hasHack()
         && !this.hasTrainer();
+  }
+
+  getGameType(): GameType {
+    // NOTE(cemmer): priority here matters!
+    if (this.isBios()) {
+      return GameType.BIOS;
+    } if (this.isVerified()) {
+      return GameType.RETAIL;
+    }
+
+    if (this.isAftermarket()) {
+      return GameType.AFTERMARKET;
+    } if (this.isAlpha()) {
+      return GameType.ALPHA;
+    } if (this.isBad()) {
+      return GameType.BAD;
+    } if (this.isBeta()) {
+      return GameType.BETA;
+    } if (this.isDemo()) {
+      return GameType.DEMO;
+    } if (this.isDevice()) {
+      return GameType.DEVICE;
+    } if (this.isFixed()) {
+      return GameType.FIXED;
+    } if (this.hasHack()) {
+      return GameType.HACKED;
+    } if (this.isHomebrew()) {
+      return GameType.HOMEBREW;
+    } if (this.isOverdump()) {
+      return GameType.OVERDUMP;
+    } if (this.isPendingDump()) {
+      return GameType.PENDING_DUMP;
+    } if (this.isPirated()) {
+      return GameType.PIRATED;
+    } if (this.isPrototype()) {
+      return GameType.PROTOTYPE;
+    } if (this.isSample()) {
+      return GameType.SAMPLE;
+    } if (this.isTest()) {
+      return GameType.TEST;
+    } if (this.hasTrainer()) {
+      return GameType.TRAINED;
+    } if (this.isTranslated()) {
+      return GameType.TRANSLATED;
+    } if (this.isUnlicensed()) {
+      return GameType.UNLICENSED;
+    }
+
+    return GameType.RETAIL;
   }
 
   isParent(): boolean {

@@ -55,6 +55,39 @@ describe('getOutputFileParsed', () => {
     });
 
     test.each([
+      // Highest priority
+      ['Game [BIOS]', 'BIOS'],
+      ['Game [!]', 'Retail'],
+      // No particular priority
+      ['Game (Aftermarket)', 'Aftermarket'],
+      ['Game (Alpha)', 'Alpha'],
+      ['Game [b]', 'Bad'],
+      ['Game (Beta)', 'Beta'],
+      ['Game (Demo)', 'Demo'],
+      ['Game [f]', 'Fixed'],
+      ['Game (Hack)', 'Hacked'],
+      ['Game [h]', 'Hacked'],
+      ['Game (Homebrew)', 'Homebrew'],
+      ['Game [o]', 'Overdump'],
+      ['Game [!p]', 'Pending Dump'],
+      ['Game [p]', 'Pirated'],
+      ['Game (Pirate)', 'Pirated'],
+      ['Game (Proto)', 'Prototype'],
+      ['Game (Sample)', 'Sample'],
+      ['Game (Test)', 'Test'],
+      ['Game [t]', 'Trained'],
+      ['Game [T+Eng]', 'Translated'],
+      ['Game (Unl)', 'Unlicensed'],
+      // Default
+      ['Game', 'Retail'],
+    ])('should replace {gameType}: %s', (gameName, expectedPath) => {
+      const game = new Game({ name: gameName });
+      const outputFileParsed = new Options({ commands: ['copy'], output: '{gameType}' }).getOutputFileParsed(dummyDat, dummyInputRomPath, game, dummyRelease, 'dummy.rom');
+      const outputDirname = path.dirname(outputFileParsed);
+      expect(outputDirname).toEqual(expectedPath);
+    });
+
+    test.each([
       ['{inputDirname}', path.join('path', 'to', 'game.rom')],
     ])('should replace {input*}: %s', (output, expectedPath) => {
       expect(new Options({ commands: ['copy'], output }).getOutputFileParsed(dummyDat, 'path/to/game.bin', dummyGame, dummyRelease, 'game.rom')).toEqual(expectedPath);
