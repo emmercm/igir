@@ -1,5 +1,7 @@
 import { Expose } from 'class-transformer';
 
+import Internationalization from '../internationalization.js';
+
 export default class Release {
   @Expose({ name: 'name' })
   private readonly name: string;
@@ -37,9 +39,21 @@ export default class Release {
   }
 
   getLanguage(): string | undefined {
+    return this.getLanguageUnformatted()?.replace(/\w\S*/g, (word) => word.charAt(0).toUpperCase() + word.substring(1).toLowerCase());
+  }
+
+  private getLanguageUnformatted(): string | undefined {
     if (this.language) {
-      return this.language.replace(/\w\S*/g, (word) => word.charAt(0).toUpperCase() + word.substring(1).toLowerCase());
+      return this.language;
     }
+
+    for (let i = 0; i < Internationalization.REGION_OPTIONS.length; i += 1) {
+      const regionOption = Internationalization.REGION_OPTIONS[i];
+      if (regionOption.region === this.getRegion()) {
+        return regionOption.language;
+      }
+    }
+
     return undefined;
   }
 }

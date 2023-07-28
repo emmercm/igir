@@ -2,6 +2,7 @@ import 'reflect-metadata';
 
 import { Expose, Type } from 'class-transformer';
 
+import Internationalization from '../internationalization.js';
 import Archive from './archive.js';
 import BIOSSet from './biosSet.js';
 import Disk from './disk.js';
@@ -161,6 +162,28 @@ export default class Game implements GameProps {
   }
 
   // Computed getters
+
+  getRevision(): number {
+    // Numeric revision
+    const numberMatches = this.getName().match(/\(Rev\s*([0-9.]+)\)/i);
+    if (numberMatches && numberMatches?.length >= 2 && !Number.isNaN(numberMatches[1])) {
+      return Number(numberMatches[1]);
+    }
+
+    // Letter revision
+    const letterMatches = this.getName().match(/\(Rev\s*([A-Z])\)/i);
+    if (letterMatches && letterMatches?.length >= 2) {
+      return letterMatches[1].toUpperCase().charCodeAt(0) - 'A'.charCodeAt(0) + 1;
+    }
+
+    // Ring code revision
+    const ringCodeMatches = this.getName().match(/\(RE([0-9]+)\)/i);
+    if (ringCodeMatches && ringCodeMatches?.length >= 2 && !Number.isNaN(ringCodeMatches[1])) {
+      return Number(ringCodeMatches[1]);
+    }
+
+    return 0;
+  }
 
   isAftermarket(): boolean {
     return this.name.match(/\(Aftermarket[a-z0-9. ]*\)/i) !== null;
@@ -336,6 +359,103 @@ export default class Game implements GameProps {
 
   getParent(): string {
     return this.cloneOf || this.romOf || this.sampleOf || '';
+  }
+
+  // Internationalization
+
+  getRegions(): string[] {
+    const releaseRegions = this.getReleases()
+      .map((release) => release.getRegion().toUpperCase());
+    if (releaseRegions.length) {
+      return releaseRegions;
+    }
+
+    for (let i = 0; i < Internationalization.REGION_OPTIONS.length; i += 1) {
+      const regionOption = Internationalization.REGION_OPTIONS[i];
+      if (regionOption.long
+        && this.getName().match(new RegExp(`\\(${regionOption.long}(,[ a-z]+)*\\)`, 'i'))
+      ) {
+        return [regionOption.region.toUpperCase()];
+      }
+      if (regionOption.regex && this.getName().match(regionOption.regex)) {
+        return [regionOption.region.toUpperCase()];
+      }
+    }
+    return [];
+  }
+
+  getLanguages(): string[] {
+    const releaseLanguages = this.getReleases()
+      .map((release) => release.getLanguage()?.toUpperCase())
+      .filter((language) => language) as string[];
+    if (releaseLanguages.length) {
+      return releaseLanguages;
+    }
+
+    const shortLanguages = this.getShortLanguagesFromName();
+    if (shortLanguages.length) {
+      return shortLanguages;
+    }
+
+    const longLanguages = this.getLongLanguagesFromName();
+    if (longLanguages.length) {
+      return longLanguages;
+    }
+
+    const regionLanguages = this.getLanguagesFromRegions();
+    if (regionLanguages.length) {
+      return regionLanguages;
+    }
+
+    return [];
+  }
+
+  private getShortLanguagesFromName(): string[] {
+    const twoMatches = this.getName().match(/\(([a-zA-Z]{2}([,+-][a-zA-Z]{2})*)\)/);
+    if (twoMatches && twoMatches.length >= 2) {
+      const twoMatchesParsed = twoMatches[1]
+        .replace(/-[a-zA-Z]+$/, '') // chop off country
+        .split(/[,+]/)
+        .map((lang) => lang.toUpperCase())
+        .filter((lang) => Internationalization.LANGUAGES.indexOf(lang) !== -1) // is known
+        .filter((lang, idx, langs) => langs.indexOf(lang) === idx);
+      if (twoMatchesParsed.length) {
+        return twoMatchesParsed;
+      }
+    }
+    return [];
+  }
+
+  private getLongLanguagesFromName(): string[] {
+    // Get language from long languages in the game name
+    const threeMatches = this.getName().match(/\(([a-zA-Z]{3}(-[a-zA-Z]{3})*)\)/);
+    if (threeMatches && threeMatches.length >= 2) {
+      const threeMatchesParsed = threeMatches[1].split('-')
+        .map((lang) => lang.toUpperCase())
+        .map((lang) => Internationalization.LANGUAGE_OPTIONS
+          .filter((langOpt) => langOpt.long?.toUpperCase() === lang.toUpperCase())[0]?.short)
+        .filter((lang) => Internationalization.LANGUAGES.indexOf(lang) !== -1) // is known
+        .filter((lang, idx, langs) => langs.indexOf(lang) === idx);
+      if (threeMatchesParsed.length) {
+        return threeMatchesParsed;
+      }
+    }
+    return [];
+  }
+
+  private getLanguagesFromRegions(): string[] {
+    // Get languages from regions
+    return this.getRegions()
+      .map((region) => {
+        for (let i = 0; i < Internationalization.REGION_OPTIONS.length; i += 1) {
+          const regionOption = Internationalization.REGION_OPTIONS[i];
+          if (regionOption.region === region) {
+            return regionOption.language.toUpperCase();
+          }
+        }
+        return undefined;
+      })
+      .filter((language) => language) as string[];
   }
 
   equals(other: Game): boolean {

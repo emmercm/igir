@@ -1,9 +1,10 @@
+import Internationalization from '../../src/types/internationalization.js';
 import Game from '../../src/types/logiqx/game.js';
 import Release from '../../src/types/logiqx/release.js';
 import ReleaseCandidate from '../../src/types/releaseCandidate.js';
 
 describe('getRegion', () => {
-  test.each(ReleaseCandidate.getRegions())('should return the release region: %s', (region) => {
+  test.each(Internationalization.REGIONS)('should return the release region: %s', (region) => {
     const release = new Release('release', region, undefined);
     const releaseCandidate = new ReleaseCandidate(new Game(), release, []);
     expect(releaseCandidate.getRegion()).toEqual(region);
@@ -35,12 +36,12 @@ describe('getRegion', () => {
 
   it('should return null when region can\'t be inferred', () => {
     const releaseCandidate = new ReleaseCandidate(new Game({ name: 'game' }), undefined, []);
-    expect(releaseCandidate.getRegion()).toBeNull();
+    expect(releaseCandidate.getRegion()).toBeUndefined();
   });
 });
 
 describe('getLanguages', () => {
-  test.each(ReleaseCandidate.getLanguages())('should return the release language: %s', (language) => {
+  test.each(Internationalization.LANGUAGES)('should return the release language: %s', (language) => {
     const release = new Release('release', 'UNK', language);
     const releaseCandidate = new ReleaseCandidate(new Game(), release, []);
     expect(releaseCandidate.getLanguages()).toEqual([language]);
