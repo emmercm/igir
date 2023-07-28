@@ -1,5 +1,5 @@
 # Requires repo secret: PERSONAL_ACCESS_TOKEN with permissions:
-#   Pull Requests: read and write?
+#   Pull Requests: read and write
 
 name: Auto-Merge Rebaser
 
