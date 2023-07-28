@@ -14,7 +14,6 @@ import ROM from '../types/logiqx/rom.js';
 import Options from '../types/options.js';
 import ReleaseCandidate from '../types/releaseCandidate.js';
 import ROMWithFiles from '../types/romWithFiles.js';
-import DATFilter from './datFilter.js';
 import Module from './module.js';
 
 /**
@@ -27,7 +26,7 @@ export default class CandidateGenerator extends Module {
   private readonly options: Options;
 
   constructor(options: Options, progressBar: ProgressBar) {
-    super(progressBar, DATFilter.name);
+    super(progressBar, CandidateGenerator.name);
     this.options = options;
   }
 

@@ -79,13 +79,13 @@ export default class Igir {
     await async.eachLimit(dats, this.options.getDatThreads(), async (dat, callback) => {
       await datProcessProgressBar.incrementProgress();
 
-      const filteredDat = await new DATFilter(this.options, datProcessProgressBar).filter(dat);
-
       const progressBar = await this.logger.addProgressBar(
-        filteredDat.getNameShort(),
+        dat.getNameShort(),
         ProgressBarSymbol.WAITING,
-        filteredDat.getParents().length,
+        dat.getParents().length,
       );
+
+      const filteredDat = await new DATFilter(this.options, progressBar).filter(dat);
 
       // Generate and filter ROM candidates
       const parentsToCandidates = await new CandidateGenerator(this.options, progressBar)
