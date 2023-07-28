@@ -26,7 +26,13 @@ jobs:
   bump:
     runs-on: ubuntu-latest
     steps:
+      # Setup and install
       - uses: actions/checkout@v3
+      - uses: actions/setup-node@v3
+        with:
+          node-version-file: '.nvmrc'
+          cache: 'npm'
+      - run: npm ci
 
       # Bump the version and commit to the default branch
       - id: bump-and-commit
