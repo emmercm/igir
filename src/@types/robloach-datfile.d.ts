@@ -24,6 +24,7 @@ interface DatfileEntry {
   sha1?: string,
 }
 
+// https://github.com/RobLoach/datfile/issues/10
 declare module 'robloach-datfile' {
   import { Readable } from 'stream';
 
