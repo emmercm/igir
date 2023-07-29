@@ -37,46 +37,43 @@ export default class DATStatus {
     this.dat = dat;
 
     // Un-patched ROMs
-    // Index ReleaseCandidates by their ROM's hash code
-    const unpatchedHashCodesToRomsWithInputFiles = [...parentsToReleaseCandidates.values()]
-      .flatMap((releaseCandidates) => releaseCandidates)
-      .filter((releaseCandidate) => !releaseCandidate.isPatched())
-      .reduce((map, releaseCandidate) => {
-        const romsWithFiles = releaseCandidate.getRomsWithFiles();
-        for (let i = 0; i < romsWithFiles.length; i += 1) {
-          map.set(romsWithFiles[i].getRom().hashCode(), releaseCandidate);
-        }
-        return map;
-      }, new Map<string, ReleaseCandidate>());
-    // For every game in every parent in the DAT:
-    //  Remember the game as "found" if all the Game's ROMs have matching ReleaseCandidates
-    dat.getParents().forEach((parent) => {
-      parent.getGames().forEach((game) => {
-        DATStatus.pushValueIntoMap(this.allRomTypesToGames, game, game);
+    [...parentsToReleaseCandidates.entries()]
+      .filter(([, releaseCandidates]) => releaseCandidates.every((rc) => !rc.isPatched()))
+      .forEach(([parent, releaseCandidates]) => {
+        parent.getGames().forEach((game) => {
+          DATStatus.pushValueIntoMap(this.allRomTypesToGames, game, game);
 
-        const releaseCandidates = game.getRoms()
-          .map((rom) => unpatchedHashCodesToRomsWithInputFiles.get(rom.hashCode()))
-          .filter((releaseCandidate) => releaseCandidate);
-        if (releaseCandidates.length === game.getRoms().length) {
-          DATStatus.pushValueIntoMap(
-            this.foundRomTypesToReleaseCandidates,
-            game,
-            // Assume all ROMs had the same ReleaseCandidate
-            releaseCandidates[0],
-          );
-        }
+          const gameReleaseCandidates = releaseCandidates
+            .filter((rc) => !rc.isPatched())
+            .filter((rc) => rc.getGame().hashCode() === game.hashCode());
+          if (gameReleaseCandidates.length || game.getRoms().length === 0) {
+            DATStatus.pushValueIntoMap(
+              this.foundRomTypesToReleaseCandidates,
+              game,
+              // The only reason there may be multiple ReleaseCandidates is for multiple regions,
+              //  but DATStatus doesn't care about regions.
+              gameReleaseCandidates[0],
+            );
+          }
+        });
       });
-    });
 
     // Patched ROMs
-    [...parentsToReleaseCandidates.values()]
-      .flatMap((releaseCandidates) => releaseCandidates)
-      .filter((releaseCandidate) => releaseCandidate.isPatched())
-      .forEach((releaseCandidate) => {
-        const game = releaseCandidate.getGame();
-
-        DATStatus.append(this.allRomTypesToGames, ROMType.PATCHED, game);
-        DATStatus.append(this.foundRomTypesToReleaseCandidates, ROMType.PATCHED, releaseCandidate);
+    [...parentsToReleaseCandidates.entries()]
+      .filter(([, releaseCandidates]) => releaseCandidates.some((rc) => rc.isPatched()))
+      .forEach(([, releaseCandidates]) => {
+        // Patched ROMs
+        releaseCandidates
+          .filter((rc) => rc.isPatched())
+          .forEach((releaseCandidate) => {
+            const game = releaseCandidate.getGame();
+            DATStatus.append(this.allRomTypesToGames, ROMType.PATCHED, game);
+            DATStatus.append(
+              this.foundRomTypesToReleaseCandidates,
+              ROMType.PATCHED,
+              releaseCandidate,
+            );
+          });
       });
   }
 
