@@ -180,7 +180,7 @@ export default class CandidateGenerator extends Module {
   ): Map<ROM, File> {
     let romsAndInputFiles = game.getRoms().map((rom) => ([
       rom,
-      (hashCodeToInputFiles.get(rom.hashCode()) || []),
+      (hashCodeToInputFiles.get(rom.hashCode()) ?? []),
     ])) as [ROM, File[]][];
 
     // Detect if there is one input archive that contains every ROM, and prefer to use its entries.
@@ -200,7 +200,7 @@ export default class CandidateGenerator extends Module {
         .filter((file) => file instanceof ArchiveEntry)
         .map((file): Archive => (file as ArchiveEntry<never>).getArchive())
         .forEach((archive) => {
-          const roms = map.get(archive) || [];
+          const roms = map.get(archive) ?? [];
           roms.push(rom);
           // We need to filter out duplicate ROMs because of Games that contain duplicate ROMs, e.g.
           //  optical media games that have the same track multiple times.

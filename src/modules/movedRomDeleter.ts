@@ -62,7 +62,7 @@ export default class MovedROMDeleter extends Module {
     return [...groupedMovedRoms.entries()]
       .map(([filePath, movedEntries]) => {
         const movedEntriesStrings = movedEntries.map((entry) => entry.toString());
-        const inputEntries = groupedInputRoms.get(filePath) || [];
+        const inputEntries = groupedInputRoms.get(filePath) ?? [];
 
         const unmovedEntries = inputEntries.filter((entry) => {
           if (entry instanceof ArchiveEntry
@@ -90,7 +90,7 @@ export default class MovedROMDeleter extends Module {
   private static groupFilesByFilePath(files: File[]): Map<string, File[]> {
     return files.reduce((map, file) => {
       const key = file.getFilePath();
-      const filesForKey = map.get(key) || [];
+      const filesForKey = map.get(key) ?? [];
 
       filesForKey.push(file);
       const fileStrings = filesForKey.map((fileForKey) => fileForKey.toString());

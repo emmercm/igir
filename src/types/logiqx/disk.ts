@@ -31,10 +31,10 @@ export default class Disk implements DiskOptions {
   readonly status: 'baddump' | 'nodump' | 'good' | 'verified';
 
   constructor(options?: DiskOptions) {
-    this.name = options?.name || '';
-    this.sha1 = options?.sha1 || '';
-    this.md5 = options?.md5 || '';
-    this.merge = options?.merge || '';
-    this.status = options?.status || 'good';
+    this.name = options?.name ?? '';
+    this.sha1 = options?.sha1 ?? '';
+    this.md5 = options?.md5 ?? '';
+    this.merge = options?.merge ?? '';
+    this.status = options?.status ?? 'good';
   }
 }

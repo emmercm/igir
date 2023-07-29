@@ -49,7 +49,7 @@ export default class PatchCandidateGenerator extends Module {
   private static indexPatchesByCrcBefore(patches: Patch[]): Map<string, Patch[]> {
     return patches.reduce((map, patch) => {
       map.set(patch.getCrcBefore(), [
-        ...(map.get(patch.getCrcBefore()) || []),
+        ...(map.get(patch.getCrcBefore()) ?? []),
         patch,
       ]);
       return map;
@@ -141,8 +141,8 @@ export default class PatchCandidateGenerator extends Module {
                 unpatchedReleaseCandidate.getRomsWithFiles().length === 1
                   ? extractedFileName
                   : outputFile.getEntryPath(),
-                patch.getSizeAfter() || 0,
-                patch.getCrcAfter() || '00000000',
+                patch.getSizeAfter() ?? 0,
+                patch.getCrcAfter() ?? '00000000',
                 outputFile.getFileHeader(),
                 outputFile.getPatch(),
               );
@@ -150,8 +150,8 @@ export default class PatchCandidateGenerator extends Module {
               const dirName = path.dirname(outputFile.getFilePath());
               outputFile = await File.fileOf(
                 path.join(dirName, extractedFileName),
-                patch.getSizeAfter() || 0,
-                patch.getCrcAfter() || '00000000',
+                patch.getSizeAfter() ?? 0,
+                patch.getCrcAfter() ?? '00000000',
                 outputFile.getFileHeader(),
                 outputFile.getPatch(),
               );

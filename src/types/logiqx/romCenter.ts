@@ -38,12 +38,12 @@ export default class RomCenter implements RomCenterOptions {
   readonly lockSampleMode: 'yes' | 'no';
 
   constructor(options?: RomCenterOptions) {
-    this.plugin = options?.plugin || '';
-    this.romMode = options?.romMode || 'split';
-    this.biosMode = options?.biosMode || 'split';
-    this.sampleMode = options?.sampleMode || 'merged';
-    this.lockRomMode = options?.lockRomMode || 'no';
-    this.lockBiosMode = options?.lockBiosMode || 'no';
-    this.lockSampleMode = options?.lockSampleMode || 'no';
+    this.plugin = options?.plugin ?? '';
+    this.romMode = options?.romMode ?? 'split';
+    this.biosMode = options?.biosMode ?? 'split';
+    this.sampleMode = options?.sampleMode ?? 'merged';
+    this.lockRomMode = options?.lockRomMode ?? 'no';
+    this.lockBiosMode = options?.lockBiosMode ?? 'no';
+    this.lockSampleMode = options?.lockSampleMode ?? 'no';
   }
 }

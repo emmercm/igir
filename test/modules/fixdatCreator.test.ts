@@ -100,7 +100,7 @@ it('should do nothing if no ROMs are missing', async () => {
 });
 
 it('should write some ROMs if some ROMs are missing', async () => {
-  // Given two games have all their ROMs present (game with no ROMs, game with two ROMs)
+  // Given two games that have all their ROMs present (game with no ROMs, game with two ROMs)
   const parentsToCandidates = await generateParentsToCandidates([gameWithTwoRoms]);
 
   // When a fixdat is generated
@@ -111,7 +111,7 @@ it('should write some ROMs if some ROMs are missing', async () => {
 
   // Then only the game with no ROMs present should exist in the fixdat
   expect(fixdat).toBeDefined();
-  const games = fixdat?.getGames() || [];
+  const games = fixdat?.getGames() ?? [];
   expect(games).toHaveLength(1);
   expect(games[0].getName()).toEqual(gameWithOneRom.getName());
 });
@@ -128,7 +128,7 @@ it('should write all ROMs if all ROMs are missing', async () => {
 
   // Then only the game with no ROMs present should exist in the fixdat
   expect(fixdat).toBeDefined();
-  const games = fixdat?.getGames() || [];
+  const games = fixdat?.getGames() ?? [];
   expect(games).toHaveLength(2);
   expect(games[0].getName()).toEqual(gameWithOneRom.getName());
   expect(games[1].getName()).toEqual(gameWithTwoRoms.getName());

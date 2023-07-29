@@ -54,14 +54,14 @@ export default class ArchiveEntry<A extends Archive> extends File {
         finalSymlinkSource = await fsPoly.readlink(archive.getFilePath());
       }
       if (fileHeader) {
-        finalCrcWithoutHeader = finalCrcWithoutHeader || await this.extractEntryToTempFile(
+        finalCrcWithoutHeader = finalCrcWithoutHeader ?? await this.extractEntryToTempFile(
           archive,
           entryPath,
           async (localFile) => this.calculateCrc32(localFile, fileHeader),
         );
       }
     }
-    finalCrcWithoutHeader = finalCrcWithoutHeader || crc;
+    finalCrcWithoutHeader = finalCrcWithoutHeader ?? crc;
 
     return new ArchiveEntry<A>(
       archive.getFilePath(),

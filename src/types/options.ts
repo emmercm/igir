@@ -239,83 +239,83 @@ export default class Options implements OptionsProps {
   readonly help: boolean;
 
   constructor(options?: OptionsProps) {
-    this.commands = options?.commands || [];
+    this.commands = options?.commands ?? [];
 
-    this.input = options?.input || [];
-    this.inputExclude = options?.inputExclude || [];
-    this.patch = options?.patch || [];
-    this.patchExclude = options?.patchExclude || [];
+    this.input = options?.input ?? [];
+    this.inputExclude = options?.inputExclude ?? [];
+    this.patch = options?.patch ?? [];
+    this.patchExclude = options?.patchExclude ?? [];
 
-    this.dat = options?.dat || [];
-    this.datExclude = options?.datExclude || [];
-    this.datRegex = options?.datRegex || '';
-    this.datRegexExclude = options?.datRegexExclude || '';
+    this.dat = options?.dat ?? [];
+    this.datExclude = options?.datExclude ?? [];
+    this.datRegex = options?.datRegex ?? '';
+    this.datRegexExclude = options?.datRegexExclude ?? '';
 
-    this.fixdat = options?.fixdat || false;
+    this.fixdat = options?.fixdat ?? false;
 
-    this.output = options?.output || '';
-    this.dirMirror = options?.dirMirror || false;
-    this.dirDatName = options?.dirDatName || false;
-    this.dirLetter = options?.dirLetter || false;
-    this.dirLetterLimit = options?.dirLetterLimit || 0;
-    this.overwrite = options?.overwrite || false;
-    this.overwriteInvalid = options?.overwriteInvalid || false;
-    this.cleanExclude = options?.cleanExclude || [];
+    this.output = options?.output ?? '';
+    this.dirMirror = options?.dirMirror ?? false;
+    this.dirDatName = options?.dirDatName ?? false;
+    this.dirLetter = options?.dirLetter ?? false;
+    this.dirLetterLimit = options?.dirLetterLimit ?? 0;
+    this.overwrite = options?.overwrite ?? false;
+    this.overwriteInvalid = options?.overwriteInvalid ?? false;
+    this.cleanExclude = options?.cleanExclude ?? [];
 
-    this.zipExclude = options?.zipExclude || '';
-    this.zipDatName = options?.zipDatName || false;
+    this.zipExclude = options?.zipExclude ?? '';
+    this.zipDatName = options?.zipDatName ?? false;
 
-    this.symlinkRelative = options?.symlinkRelative || false;
+    this.symlinkRelative = options?.symlinkRelative ?? false;
 
-    this.header = options?.header || '';
+    this.header = options?.header ?? '';
     this.removeHeaders = options?.removeHeaders;
 
-    this.filterRegex = options?.filterRegex || '';
-    this.filterRegexExclude = options?.filterRegexExclude || '';
-    this.languageFilter = options?.languageFilter || [];
-    this.regionFilter = options?.regionFilter || [];
-    this.noBios = options?.noBios || false;
-    this.onlyBios = options?.onlyBios || false;
-    this.noDevice = options?.noDevice || false;
-    this.onlyDevice = options?.onlyDevice || false;
-    this.noUnlicensed = options?.noUnlicensed || false;
-    this.onlyUnlicensed = options?.onlyUnlicensed || false;
-    this.onlyRetail = options?.onlyRetail || false;
-    this.noDemo = options?.noDemo || false;
-    this.onlyDemo = options?.onlyDemo || false;
-    this.noBeta = options?.noBeta || false;
-    this.onlyBeta = options?.onlyBeta || false;
-    this.noSample = options?.noSample || false;
-    this.onlySample = options?.onlySample || false;
-    this.noPrototype = options?.noPrototype || false;
-    this.onlyPrototype = options?.onlyPrototype || false;
-    this.noTestRoms = options?.noTestRoms || false;
-    this.onlyTestRoms = options?.onlyTestRoms || false;
-    this.noAftermarket = options?.noAftermarket || false;
-    this.onlyAftermarket = options?.onlyAftermarket || false;
-    this.noHomebrew = options?.noHomebrew || false;
-    this.onlyHomebrew = options?.onlyHomebrew || false;
-    this.noUnverified = options?.noUnverified || false;
-    this.onlyUnverified = options?.onlyUnverified || false;
-    this.noBad = options?.noBad || false;
-    this.onlyBad = options?.onlyBad || false;
+    this.filterRegex = options?.filterRegex ?? '';
+    this.filterRegexExclude = options?.filterRegexExclude ?? '';
+    this.languageFilter = options?.languageFilter ?? [];
+    this.regionFilter = options?.regionFilter ?? [];
+    this.noBios = options?.noBios ?? false;
+    this.onlyBios = options?.onlyBios ?? false;
+    this.noDevice = options?.noDevice ?? false;
+    this.onlyDevice = options?.onlyDevice ?? false;
+    this.noUnlicensed = options?.noUnlicensed ?? false;
+    this.onlyUnlicensed = options?.onlyUnlicensed ?? false;
+    this.onlyRetail = options?.onlyRetail ?? false;
+    this.noDemo = options?.noDemo ?? false;
+    this.onlyDemo = options?.onlyDemo ?? false;
+    this.noBeta = options?.noBeta ?? false;
+    this.onlyBeta = options?.onlyBeta ?? false;
+    this.noSample = options?.noSample ?? false;
+    this.onlySample = options?.onlySample ?? false;
+    this.noPrototype = options?.noPrototype ?? false;
+    this.onlyPrototype = options?.onlyPrototype ?? false;
+    this.noTestRoms = options?.noTestRoms ?? false;
+    this.onlyTestRoms = options?.onlyTestRoms ?? false;
+    this.noAftermarket = options?.noAftermarket ?? false;
+    this.onlyAftermarket = options?.onlyAftermarket ?? false;
+    this.noHomebrew = options?.noHomebrew ?? false;
+    this.onlyHomebrew = options?.onlyHomebrew ?? false;
+    this.noUnverified = options?.noUnverified ?? false;
+    this.onlyUnverified = options?.onlyUnverified ?? false;
+    this.noBad = options?.noBad ?? false;
+    this.onlyBad = options?.onlyBad ?? false;
 
-    this.single = options?.single || false;
-    this.preferVerified = options?.preferVerified || false;
-    this.preferGood = options?.preferGood || false;
-    this.preferLanguage = options?.preferLanguage || [];
-    this.preferRegion = options?.preferRegion || [];
-    this.preferRevisionNewer = options?.preferRevisionNewer || false;
-    this.preferRevisionOlder = options?.preferRevisionOlder || false;
-    this.preferRetail = options?.preferRetail || false;
-    this.preferParent = options?.preferParent || false;
+    this.single = options?.single ?? false;
+    this.preferVerified = options?.preferVerified ?? false;
+    this.preferGood = options?.preferGood ?? false;
+    this.preferLanguage = options?.preferLanguage ?? [];
+    this.preferRegion = options?.preferRegion ?? [];
+    this.preferRevisionNewer = options?.preferRevisionNewer ?? false;
+    this.preferRevisionOlder = options?.preferRevisionOlder ?? false;
+    this.preferRetail = options?.preferRetail ?? false;
+    this.preferParent = options?.preferParent ?? false;
 
-    this.reportOutput = options?.reportOutput || '';
+    this.reportOutput = options?.reportOutput ?? '';
 
-    this.datThreads = Math.max(options?.datThreads || 0, 1);
-    this.writerThreads = Math.max(options?.writerThreads || 0, 1);
-    this.verbose = options?.verbose || 0;
-    this.help = options?.help || false;
+    this.datThreads = Math.max(options?.datThreads ?? 0, 1);
+    this.writerThreads = Math.max(options?.writerThreads ?? 0, 1);
+    this.verbose = options?.verbose ?? 0;
+    this.help = options?.help ?? false;
   }
 
   static fromObject(obj: object): Options {
@@ -780,8 +780,8 @@ export default class Options implements OptionsProps {
       return input;
     }
 
-    const gameConsole = GameConsole.getForConsoleName(dat?.getName() || '')
-      || GameConsole.getForFilename(outputRomFilename);
+    const gameConsole = GameConsole.getForConsoleName(dat?.getName() ?? '')
+      ?? GameConsole.getForFilename(outputRomFilename);
     if (!gameConsole) {
       return input;
     }
@@ -805,13 +805,13 @@ export default class Options implements OptionsProps {
     }
 
     // Find the letter for every ROM filename
-    let lettersToFilenames = (romBasenames || [romBasename]).reduce((map, filename) => {
+    let lettersToFilenames = (romBasenames ?? [romBasename]).reduce((map, filename) => {
       let letter = path.basename(filename)[0].toUpperCase();
       if (letter.match(/[^A-Z]/)) {
         letter = '#';
       }
 
-      const existing = map.get(letter) || [];
+      const existing = map.get(letter) ?? [];
       existing.push(filename);
       map.set(letter, existing);
       return map;
