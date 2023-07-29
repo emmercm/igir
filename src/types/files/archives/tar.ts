@@ -49,7 +49,7 @@ export default class Tar extends Archive {
         archiveEntryPromises.push(ArchiveEntry.entryOf(
           this,
           entry.path,
-          entry.size || 0,
+          entry.size ?? 0,
           (crc || 0).toString(16),
         ));
       });

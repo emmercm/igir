@@ -218,9 +218,9 @@ export default class DATScanner extends Scanner {
       const roms = game.entries
         .filter((rom) => rom.name) // we need ROM filenames
         .map((entry) => new ROM(
-          entry.name || '',
-          parseInt(entry.size || '0', 10),
-          entry.crc || '',
+          entry.name ?? '',
+          parseInt(entry.size ?? '0', 10),
+          entry.crc ?? '',
           entry.md5,
           entry.sha1,
         ));
@@ -266,7 +266,7 @@ export default class DATScanner extends Scanner {
     const games = rows.map((row) => {
       const rom = new ROM(
         row.name,
-        parseInt(row.size || '', 10),
+        parseInt(row.size ?? '', 10),
         row.crc,
         row.md5,
         row.sha1,

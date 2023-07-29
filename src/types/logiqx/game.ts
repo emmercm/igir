@@ -104,15 +104,15 @@ export default class Game implements GameProps {
   readonly rom: ROM | ROM[];
 
   constructor(options?: GameProps) {
-    this.name = options?.name || '';
-    this.description = options?.description || '';
-    this.bios = options?.bios || this.bios;
-    this.device = options?.device || this.device;
+    this.name = options?.name ?? '';
+    this.description = options?.description ?? '';
+    this.bios = options?.bios ?? this.bios;
+    this.device = options?.device ?? this.device;
     this.cloneOf = options?.cloneOf;
     this.romOf = options?.romOf;
     this.sampleOf = options?.sampleOf;
-    this.release = options?.release || [];
-    this.rom = options?.rom || [];
+    this.release = options?.release ?? [];
+    this.rom = options?.rom ?? [];
   }
 
   toXmlDatObj(): object {
@@ -358,7 +358,7 @@ export default class Game implements GameProps {
   }
 
   getParent(): string {
-    return this.cloneOf || this.romOf || this.sampleOf || '';
+    return this.cloneOf ?? this.romOf ?? this.sampleOf ?? '';
   }
 
   // Internationalization

@@ -163,7 +163,7 @@ export default class DAT {
       // Redump-style DAT names
       || this.getName().match(/(\W|^)BIOS(\W|$)/i) !== null
       // libretro-style DAT comments
-      || (this.getHeader().getComment() || '').match(/(\W|^)BIOS(\W|$)/i) !== null;
+      || (this.getHeader().getComment() ?? '').match(/(\W|^)BIOS(\W|$)/i) !== null;
   }
 
   /**
