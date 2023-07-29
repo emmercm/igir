@@ -46,7 +46,7 @@ export default class ROMHeader {
     this.headerValue = headerValue;
     this.dataOffsetBytes = dataOffset;
     this.headeredFileExtension = headeredFileExtension;
-    this.unheaderedFileExtension = unheaderedFileExtension || headeredFileExtension;
+    this.unheaderedFileExtension = unheaderedFileExtension ?? headeredFileExtension;
   }
 
   static getSupportedExtensions(): string[] {

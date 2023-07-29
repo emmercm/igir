@@ -19,7 +19,7 @@ export default class DATInferrer extends Module {
 
     const datNamesToRomFiles = romFiles.reduce((map, file) => {
       const datName = DATInferrer.getDatName(file);
-      const datRomFiles = map.get(datName) || [];
+      const datRomFiles = map.get(datName) ?? [];
       datRomFiles.push(file);
       map.set(datName, datRomFiles);
       return map;
@@ -42,7 +42,7 @@ export default class DATInferrer extends Module {
 
     const gameNamesToRomFiles = romFiles.reduce((map, file) => {
       const gameName = DATInferrer.getGameName(file);
-      const gameRomFiles = map.get(gameName) || [];
+      const gameRomFiles = map.get(gameName) ?? [];
       gameRomFiles.push(file);
       map.set(gameName, gameRomFiles);
       return map;

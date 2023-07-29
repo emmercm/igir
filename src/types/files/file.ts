@@ -63,20 +63,20 @@ export default class File {
     let finalSymlinkSource;
     if (await fsPoly.exists(filePath)) {
       const stat = await util.promisify(fs.stat)(filePath);
-      finalSize = finalSize || stat.size;
-      finalCrc = finalCrc || await this.calculateCrc32(filePath);
+      finalSize = finalSize ?? stat.size;
+      finalCrc = finalCrc ?? await this.calculateCrc32(filePath);
       if (await fsPoly.isSymlink(filePath)) {
         finalSymlinkSource = await fsPoly.readlink(filePath);
       }
       if (fileHeader) {
         finalCrcWithoutHeader = finalCrcWithoutHeader
-          || await this.calculateCrc32(filePath, fileHeader);
+          ?? await this.calculateCrc32(filePath, fileHeader);
       }
     } else {
-      finalSize = finalSize || 0;
-      finalCrc = finalCrc || '';
+      finalSize = finalSize ?? 0;
+      finalCrc = finalCrc ?? '';
     }
-    finalCrcWithoutHeader = finalCrcWithoutHeader || finalCrc;
+    finalCrcWithoutHeader = finalCrcWithoutHeader ?? finalCrc;
 
     return new File(
       filePath,
@@ -100,7 +100,7 @@ export default class File {
   }
 
   getSizeWithoutHeader(): number {
-    return this.size - (this.fileHeader?.getDataOffsetBytes() || 0);
+    return this.size - (this.fileHeader?.getDataOffsetBytes() ?? 0);
   }
 
   getExtractedFilePath(): string {
@@ -144,7 +144,7 @@ export default class File {
     localFile: string,
     fileHeader?: ROMHeader,
   ): Promise<string> {
-    const start = fileHeader?.getDataOffsetBytes() || 0;
+    const start = fileHeader?.getDataOffsetBytes() ?? 0;
 
     const cacheKey = `${localFile}|${start}`;
     return File.crc32Cache.getOrCompute(cacheKey, async () => new Promise((resolve, reject) => {
@@ -208,7 +208,7 @@ export default class File {
     removeHeader: boolean,
   ): Promise<void> {
     const start = removeHeader && this.getFileHeader()
-      ? this.getFileHeader()?.getDataOffsetBytes() || 0
+      ? this.getFileHeader()?.getDataOffsetBytes() ?? 0
       : 0;
     const patch = this.getPatch();
 
@@ -266,7 +266,7 @@ export default class File {
     callback: (stream: Readable) => (T | Promise<T>),
   ): Promise<T> {
     const start = removeHeader && this.getFileHeader()
-      ? this.getFileHeader()?.getDataOffsetBytes() || 0
+      ? this.getFileHeader()?.getDataOffsetBytes() ?? 0
       : 0;
     const patch = this.getPatch();
 

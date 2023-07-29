@@ -37,10 +37,10 @@ export default class ClrMamePro implements ClrMameProOptions {
   readonly forcePacking: 'zip' | 'unzip';
 
   constructor(options?: ClrMameProOptions) {
-    this.header = options?.header || '';
-    this.forceMerging = options?.forceMerging || 'split';
-    this.forceNoDump = options?.forceNoDump || 'obsolete';
-    this.forcePacking = options?.forcePacking || 'zip';
+    this.header = options?.header ?? '';
+    this.forceMerging = options?.forceMerging ?? 'split';
+    this.forceNoDump = options?.forceNoDump ?? 'obsolete';
+    this.forcePacking = options?.forcePacking ?? 'zip';
   }
 
   getHeader(): string {

@@ -153,7 +153,7 @@ export default class ProgressBarCLI extends ProgressBar {
     }
     this.log(
       LogLevel.ALWAYS,
-      `${this.payload.name} ... ${this.payload.finishedMessage || ''}`.trim(),
+      `${this.payload.name}${this.payload.finishedMessage ? ` ... ${this.payload.finishedMessage}` : ''}`.trim(),
     );
     await this.render(true);
   }
@@ -190,7 +190,7 @@ export default class ProgressBarCLI extends ProgressBar {
     clearTimeout(this.waitingMessageTimeout);
 
     this.waitingMessageTimeout = setTimeout(async () => {
-      const total = this.singleBarFormatted?.getSingleBar().getTotal() || 0;
+      const total = this.singleBarFormatted?.getSingleBar().getTotal() ?? 0;
       if (total <= 1) {
         return;
       }
@@ -202,12 +202,12 @@ export default class ProgressBarCLI extends ProgressBar {
   }
 
   async incrementProgress(): Promise<void> {
-    this.payload.inProgress = Math.max(this.payload.inProgress || 0, 0) + 1;
+    this.payload.inProgress = Math.max(this.payload.inProgress ?? 0, 0) + 1;
     return this.render();
   }
 
   async incrementDone(): Promise<void> {
-    this.payload.inProgress = Math.max((this.payload.inProgress || 0) - 1, 0);
+    this.payload.inProgress = Math.max((this.payload.inProgress ?? 0) - 1, 0);
     this.singleBarFormatted?.getSingleBar().increment();
     return this.render();
   }
@@ -220,7 +220,7 @@ export default class ProgressBarCLI extends ProgressBar {
   async done(finishedMessage?: string): Promise<void> {
     await this.setSymbol(ProgressBarSymbol.DONE);
 
-    const total = this.singleBarFormatted?.getSingleBar().getTotal() || 0;
+    const total = this.singleBarFormatted?.getSingleBar().getTotal() ?? 0;
     if (total > 0) {
       this.singleBarFormatted?.getSingleBar().update(total);
     } else {

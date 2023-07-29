@@ -61,11 +61,11 @@ async function runIgir(optionsProps: OptionsProps): Promise<TestOutput> {
       ...(optionsProps.dat
         ? { dat: optionsProps.dat.map((dat) => path.join(tempInput, dat)) }
         : {}),
-      input: (optionsProps.input || [path.join('**', '*')])
+      input: (optionsProps.input ?? [path.join('**', '*')])
         .map((input) => path.join(tempInput, 'roms', input)),
-      patch: (optionsProps.patch || [])
+      patch: (optionsProps.patch ?? [])
         .map((input) => path.join(tempInput, input)),
-      reportOutput: (optionsProps.reportOutput || './report.csv'),
+      reportOutput: (optionsProps.reportOutput ?? './report.csv'),
       output: tempOutput,
       verbose: Number.MAX_SAFE_INTEGER,
     });

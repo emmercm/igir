@@ -77,7 +77,7 @@ export default class Header implements HeaderOptions {
   readonly romNamesContainDirectories: boolean = true;
 
   constructor(options?: HeaderOptions) {
-    this.name = options?.name || '';
+    this.name = options?.name ?? '';
     this.description = options?.description;
     this.version = options?.version;
     this.date = options?.date;

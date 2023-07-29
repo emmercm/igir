@@ -118,8 +118,8 @@ export default class DATStatus {
     return `${DATStatus.getAllowedTypes(options)
       .filter((type) => this.allRomTypesToGames.get(type)?.length)
       .map((type) => {
-        const found = this.foundRomTypesToReleaseCandidates.get(type) || [];
-        const all = this.allRomTypesToGames.get(type) || [];
+        const found = this.foundRomTypesToReleaseCandidates.get(type) ?? [];
+        const all = this.allRomTypesToGames.get(type) ?? [];
 
         if (!options.usingDats()) {
           return `${found.length.toLocaleString()} ${type}`;
@@ -175,7 +175,7 @@ export default class DATStatus {
               .map((file) => file.getFilePath())
               .filter((filePath, idx, filePaths) => filePaths.indexOf(filePath) === idx)
             : [],
-          releaseCandidate?.isPatched() || false,
+          releaseCandidate?.isPatched() ?? false,
           game.isBios(),
           game.isRetail(),
           game.isUnlicensed(),
