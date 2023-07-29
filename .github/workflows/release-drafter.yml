@@ -78,6 +78,6 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
       - if: ${{ steps.release-drafter.outputs.id }}
         run: |
-          echo "# v${{ steps.check.outputs.version }}" >> "$GITHUB_STEP_SUMMARY"
+          echo "# v${{ steps.check.outputs.version }} @ ${{ env.ref }}" >> "$GITHUB_STEP_SUMMARY"
           echo "" >> "$GITHUB_STEP_SUMMARY"
           echo "${{ steps.release-drafter.outputs.html_url }}" >> "$GITHUB_STEP_SUMMARY"
