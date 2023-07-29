@@ -4,9 +4,9 @@ import Logger from '../console/logger.js';
 import Constants from '../constants.js';
 import ConsolePoly from '../polyfill/consolePoly.js';
 import ROMHeader from '../types/files/romHeader.js';
+import Internationalization from '../types/internationalization.js';
 import Options from '../types/options.js';
 import PatchFactory from '../types/patches/patchFactory.js';
-import ReleaseCandidate from '../types/releaseCandidate.js';
 
 /**
  * Parse a CLI argv string[] into {@link Options}.
@@ -352,7 +352,7 @@ export default class ArgumentsParser {
       .option('language-filter', {
         group: groupRomFiltering,
         alias: 'L',
-        description: `List of comma-separated languages to filter to (supported: ${ReleaseCandidate.getLanguages().join(', ')})`,
+        description: `List of comma-separated languages to filter to (supported: ${Internationalization.LANGUAGES.join(', ')})`,
         type: 'string',
         coerce: (val: string) => val.split(','),
         requiresArg: true,
@@ -360,7 +360,7 @@ export default class ArgumentsParser {
       .option('region-filter', {
         group: groupRomFiltering,
         alias: 'R',
-        description: `List of comma-separated regions to filter to (supported: ${ReleaseCandidate.getRegions().join(', ')})`,
+        description: `List of comma-separated regions to filter to (supported: ${Internationalization.REGIONS.join(', ')})`,
         type: 'string',
         coerce: (val: string) => val.split(','),
         requiresArg: true,
@@ -437,7 +437,7 @@ export default class ArgumentsParser {
       .option('prefer-language', {
         group: groupRomPriority,
         alias: 'l',
-        description: `List of comma-separated languages in priority order (supported: ${ReleaseCandidate.getLanguages().join(', ')})`,
+        description: `List of comma-separated languages in priority order (supported: ${Internationalization.LANGUAGES.join(', ')})`,
         type: 'string',
         coerce: (val: string) => val.split(','),
         requiresArg: true,
@@ -446,7 +446,7 @@ export default class ArgumentsParser {
       .option('prefer-region', {
         group: groupRomPriority,
         alias: 'r',
-        description: `List of comma-separated regions in priority order (supported: ${ReleaseCandidate.getRegions().join(', ')})`,
+        description: `List of comma-separated regions in priority order (supported: ${Internationalization.REGIONS.join(', ')})`,
         type: 'string',
         coerce: (val: string) => val.split(','),
         requiresArg: true,

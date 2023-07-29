@@ -4,10 +4,11 @@ import path from 'path';
 import Logger from './console/logger.js';
 import { ProgressBarSymbol } from './console/progressBar.js';
 import ProgressBarCLI from './console/progressBarCLI.js';
-import CandidateFilter from './modules/candidateFilter.js';
 import CandidateGenerator from './modules/candidateGenerator.js';
 import CandidatePostProcessor from './modules/candidatePostProcessor.js';
+import CandidatePreferer from './modules/candidatePreferer.js';
 import CombinedCandidateGenerator from './modules/combinedCandidateGenerator.js';
+import DATFilter from './modules/datFilter.js';
 import DATInferrer from './modules/datInferrer.js';
 import DATScanner from './modules/datScanner.js';
 import FileIndexer from './modules/fileIndexer.js';
@@ -84,28 +85,30 @@ export default class Igir {
         dat.getParents().length,
       );
 
+      const filteredDat = await new DATFilter(this.options, progressBar).filter(dat);
+
       // Generate and filter ROM candidates
       const parentsToCandidates = await new CandidateGenerator(this.options, progressBar)
-        .generate(dat, indexedRomFiles);
+        .generate(filteredDat, indexedRomFiles);
       const parentsToPatchedCandidates = await new PatchCandidateGenerator(
         this.options,
         progressBar,
-      ).generate(dat, parentsToCandidates, patches);
-      romOutputDirs.push(...this.getCandidateOutputDirs(dat, parentsToPatchedCandidates));
-      const parentsToFilteredCandidates = await new CandidateFilter(this.options, progressBar)
-        .filter(dat, parentsToPatchedCandidates);
+      ).generate(filteredDat, parentsToCandidates, patches);
+      romOutputDirs.push(...this.getCandidateOutputDirs(filteredDat, parentsToPatchedCandidates));
+      const parentsToFilteredCandidates = await new CandidatePreferer(this.options, progressBar)
+        .prefer(filteredDat, parentsToPatchedCandidates);
       const parentsToPostProcessedCandidates = await new CandidatePostProcessor(
         this.options,
         progressBar,
-      ).process(dat, parentsToFilteredCandidates);
+      ).process(filteredDat, parentsToFilteredCandidates);
       const parentsToCombinedCandidates = await new CombinedCandidateGenerator(
         this.options,
         progressBar,
-      ).generate(dat, parentsToPostProcessedCandidates);
+      ).generate(filteredDat, parentsToPostProcessedCandidates);
 
       // Write the output files
       const movedRoms = await new ROMWriter(this.options, progressBar)
-        .write(dat, parentsToCombinedCandidates);
+        .write(filteredDat, parentsToCombinedCandidates);
       movedRomsToDelete.push(...movedRoms);
       const writtenRoms = [...parentsToCombinedCandidates.entries()]
         .reduce((map, [parent, releaseCandidates]) => {
@@ -116,14 +119,15 @@ export default class Igir {
           map.set(parent, parentWrittenRoms);
           return map;
         }, new Map<Parent, File[]>());
-      datsToWrittenRoms.set(dat, writtenRoms);
+      datsToWrittenRoms.set(filteredDat, writtenRoms);
 
       // Write a fixdat
-      await new FixdatCreator(this.options, progressBar).write(dat, parentsToCombinedCandidates);
+      await new FixdatCreator(this.options, progressBar)
+        .write(filteredDat, parentsToCombinedCandidates);
 
       // Write the output report
       const datStatus = await new StatusGenerator(this.options, progressBar)
-        .generate(dat, parentsToCombinedCandidates);
+        .generate(filteredDat, parentsToCombinedCandidates);
       datsStatuses.push(datStatus);
 
       // Progress bar cleanup

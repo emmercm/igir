@@ -143,6 +143,7 @@ export default class ProgressBarCLI extends ProgressBar {
   async reset(total: number): Promise<void> {
     this.singleBarFormatted?.getSingleBar().setTotal(total);
     this.singleBarFormatted?.getSingleBar().update(0);
+    this.payload.inProgress = 0;
     return this.render(true);
   }
 

@@ -7,23 +7,20 @@ import ReleaseCandidate from '../types/releaseCandidate.js';
 import Module from './module.js';
 
 /**
- * Apply any specified filter and preference options to the release candidates for each
+ * Apply any specified preference options to the {@link ReleaseCandidate}s for each
  * {@link Parent}.
  *
  * This class may be run concurrently with other classes.
- *
- * TODO(cemmer): this should be a DAT filter, there's nothing ReleaseCandidate specific about this,
- *  it doesn't do anything based on found files.
  */
-export default class CandidateFilter extends Module {
+export default class CandidatePreferer extends Module {
   private readonly options: Options;
 
   constructor(options: Options, progressBar: ProgressBar) {
-    super(progressBar, CandidateFilter.name);
+    super(progressBar, CandidatePreferer.name);
     this.options = options;
   }
 
-  async filter(
+  async prefer(
     dat: DAT,
     parentsToCandidates: Map<Parent, ReleaseCandidate[]>,
   ): Promise<Map<Parent, ReleaseCandidate[]>> {
@@ -31,7 +28,7 @@ export default class CandidateFilter extends Module {
 
     if (!parentsToCandidates.size) {
       this.progressBar.logDebug(`${dat.getNameShort()}: no parents, so no candidates to filter`);
-      return new Map();
+      return parentsToCandidates;
     }
 
     // Return early if there aren't any candidates
@@ -39,13 +36,13 @@ export default class CandidateFilter extends Module {
       .reduce((sum, rcs) => sum + rcs.length, 0);
     if (!totalReleaseCandidates) {
       this.progressBar.logDebug(`${dat.getNameShort()}: no parent has candidates`);
-      return new Map();
+      return parentsToCandidates;
     }
 
     await this.progressBar.setSymbol(ProgressBarSymbol.FILTERING);
     await this.progressBar.reset(parentsToCandidates.size);
 
-    const output = await this.filterSortFilter(dat, parentsToCandidates);
+    const output = await this.sortAndFilter(dat, parentsToCandidates);
 
     const size = [...output.values()]
       .flatMap((releaseCandidates) => releaseCandidates)
@@ -58,7 +55,7 @@ export default class CandidateFilter extends Module {
     return output;
   }
 
-  private async filterSortFilter(
+  private async sortAndFilter(
     dat: DAT,
     parentsToCandidates: Map<Parent, ReleaseCandidate[]>,
   ): Promise<Map<Parent, ReleaseCandidate[]>> {
@@ -71,9 +68,8 @@ export default class CandidateFilter extends Module {
       this.progressBar.logTrace(`${dat.getNameShort()}: ${parent.getName()}: ${releaseCandidates.length.toLocaleString()} candidate${releaseCandidates.length !== 1 ? 's' : ''} before filtering`);
 
       const filteredReleaseCandidates = releaseCandidates
-        .filter((rc) => this.preFilter(rc))
         .sort((a, b) => this.sort(a, b))
-        .filter((rc, idx) => this.postFilter(idx));
+        .filter((rc, idx) => this.filter(idx));
       this.progressBar.logTrace(`${dat.getNameShort()}: ${parent.getName()}: ${filteredReleaseCandidates.length.toLocaleString()} candidate${filteredReleaseCandidates.length !== 1 ? 's' : ''} after filtering`);
       output.set(parent, filteredReleaseCandidates);
 
@@ -81,66 +77,6 @@ export default class CandidateFilter extends Module {
     }
 
     return output;
-  }
-
-  /** *******************
-   *                    *
-   *     Pre Filter     *
-   *                    *
-   ******************** */
-
-  private preFilter(releaseCandidate: ReleaseCandidate): boolean {
-    const game = releaseCandidate.getGame();
-    // If any condition evaluates to 'true' then the candidate will be excluded
-    return [
-      this.options.getFilterRegex()
-        && !this.options.getFilterRegex()?.test(game.getName()),
-      this.options.getFilterRegexExclude()
-        && this.options.getFilterRegexExclude()?.test(game.getName()),
-      this.noLanguageAllowed(releaseCandidate),
-      this.regionNotAllowed(releaseCandidate),
-      this.options.getNoBios() && game.isBios(),
-      this.options.getOnlyBios() && !game.isBios(),
-      this.options.getNoDevice() && game.isDevice(),
-      this.options.getOnlyDevice() && !game.isDevice(),
-      this.options.getOnlyRetail() && !game.isRetail(),
-      this.options.getNoUnlicensed() && game.isUnlicensed(),
-      this.options.getOnlyUnlicensed() && !game.isUnlicensed(),
-      this.options.getNoDemo() && game.isDemo(),
-      this.options.getOnlyDemo() && !game.isDemo(),
-      this.options.getNoBeta() && game.isBeta(),
-      this.options.getOnlyBeta() && !game.isBeta(),
-      this.options.getNoSample() && game.isSample(),
-      this.options.getOnlySample() && !game.isSample(),
-      this.options.getNoPrototype() && game.isPrototype(),
-      this.options.getOnlyPrototype() && !game.isPrototype(),
-      this.options.getNoTestRoms() && game.isTest(),
-      this.options.getOnlyTestRoms() && !game.isTest(),
-      this.options.getNoAftermarket() && game.isAftermarket(),
-      this.options.getOnlyAftermarket() && !game.isAftermarket(),
-      this.options.getNoHomebrew() && game.isHomebrew(),
-      this.options.getOnlyHomebrew() && !game.isHomebrew(),
-      this.options.getNoUnverified() && !game.isVerified(),
-      this.options.getOnlyUnverified() && game.isVerified(),
-      this.options.getNoBad() && game.isBad(),
-      this.options.getOnlyBad() && !game.isBad(),
-    ].filter((val) => val).length === 0;
-  }
-
-  private noLanguageAllowed(releaseCandidate: ReleaseCandidate): boolean {
-    if (this.options.getLanguageFilter().length) {
-      const langs = this.options.getLanguageFilter();
-      if (!releaseCandidate.getLanguages().some((lang) => langs.indexOf(lang) !== -1)) {
-        return true;
-      }
-    }
-    return false;
-  }
-
-  private regionNotAllowed(releaseCandidate: ReleaseCandidate): boolean {
-    const region = releaseCandidate.getRegion();
-    return this.options.getRegionFilter().length > 0
-        && (!region || this.options.getRegionFilter().indexOf(region) === -1);
   }
 
   /** ****************
@@ -208,9 +144,9 @@ export default class CandidateFilter extends Module {
 
   private preferRevisionSort(a: ReleaseCandidate, b: ReleaseCandidate): number {
     if (this.options.getPreferRevisionNewer()) {
-      return b.getRevision() - a.getRevision();
+      return b.getGame().getRevision() - a.getGame().getRevision();
     } if (this.options.getPreferRevisionOlder()) {
-      return a.getRevision() - b.getRevision();
+      return a.getGame().getRevision() - b.getGame().getRevision();
     }
     return 0;
   }
@@ -229,13 +165,13 @@ export default class CandidateFilter extends Module {
     return 0;
   }
 
-  /** ********************
-   *                     *
-   *     Post Filter     *
-   *                     *
-   ********************* */
+  /** ***************
+   *                *
+   *     Filter     *
+   *                *
+   **************** */
 
-  private postFilter(idx: number): boolean {
+  private filter(idx: number): boolean {
     if (this.options.getSingle()) {
       return idx === 0;
     }
