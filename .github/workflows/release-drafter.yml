@@ -29,6 +29,8 @@ jobs:
       - uses: actions/checkout@v3
         with:
           ref: ${{ env.ref }}
+          # auto-changelog requires sufficient history to work with
+          fetch-depth: 100
       - uses: actions/setup-node@v3
         with:
           node-version-file: '.nvmrc'
@@ -39,8 +41,12 @@ jobs:
       - id: check
         uses: EndBug/version-check@v2
         with:
-          diff-search: true
           token: ${{ secrets.GITHUB_TOKEN }}
+          # Note: can't use `diff-search: true` because there isn't a way to provide ${{ env.ref }},
+          #   the action expects ${{ event.commits || event.pull_request._links.commits.href }}
+          #   which won't exist on `workflow_dispatch`
+          file-url: https://unpkg.com/igir/package.json
+          static-checking: localIsNew
 
       # Generate the release's markdown template
       - if: steps.check.outputs.changed == 'true'
@@ -69,7 +75,7 @@ jobs:
           # NOTE(cemmer): PAT here causes the release to be made under your account.
           #   ${{ secrets.GITHUB_TOKEN }} would cause it to be created from `github-actions`, even when published.
           GITHUB_TOKEN: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
-      - if: ${{ steps.create-pull-request.outputs.pull-request-number }}
+      - if: ${{ steps.release-drafter.outputs.id }}
         run: |
           echo "# v${{ steps.release-drafter.outputs.id }}" >> "$GITHUB_STEP_SUMMARY"
           echo "" >> "$GITHUB_STEP_SUMMARY"
