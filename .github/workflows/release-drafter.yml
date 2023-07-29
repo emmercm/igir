@@ -29,6 +29,8 @@ jobs:
       - uses: actions/checkout@v3
         with:
           ref: ${{ env.ref }}
+          # auto-changelog requires sufficient history to work with
+          fetch-depth: 100
       - uses: actions/setup-node@v3
         with:
           node-version-file: '.nvmrc'
@@ -73,7 +75,7 @@ jobs:
           # NOTE(cemmer): PAT here causes the release to be made under your account.
           #   ${{ secrets.GITHUB_TOKEN }} would cause it to be created from `github-actions`, even when published.
           GITHUB_TOKEN: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
-      - if: ${{ steps.create-pull-request.outputs.pull-request-number }}
+      - if: ${{ steps.release-drafter.outputs.id }}
         run: |
           echo "# v${{ steps.release-drafter.outputs.id }}" >> "$GITHUB_STEP_SUMMARY"
           echo "" >> "$GITHUB_STEP_SUMMARY"
