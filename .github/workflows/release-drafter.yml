@@ -25,17 +25,11 @@ jobs:
     env:
       ref: ${{ inputs.ref || github.ref || github.sha }}
     steps:
-      # Setup and install
       - uses: actions/checkout@v3
         with:
           ref: ${{ env.ref }}
-          # auto-changelog requires sufficient history to work with
-          fetch-depth: 100
-      - uses: actions/setup-node@v3
-        with:
-          node-version-file: '.nvmrc'
-          cache: 'npm'
-      - run: npm ci
+          # auto-changelog needs a full fetch for tag info
+          fetch-depth: 0
 
       # Check to see if the package.json version has changed
       - id: check
@@ -49,14 +43,18 @@ jobs:
           static-checking: ${{ github.event_name == 'workflow_dispatch' && 'localIsNew' || '' }}
           file-url: https://unpkg.com/igir/package.json
 
+      - if: steps.check.outputs.changed == 'true'
+        uses: actions/setup-node@v3
+        with:
+          node-version-file: '.nvmrc'
+          cache: 'npm'
+      - if: steps.check.outputs.changed == 'true'
+        run: npm ci
+
       # Generate the release's markdown template
       - if: steps.check.outputs.changed == 'true'
         id: auto-changelog
         run: |
-          # NOTE: auto-changelog operates off of git tags, but the tag won't exist until the
-          #   GitHub release is published.
-          git tag v${{ steps.check.outputs.version }}
-          # Generate the markdown
           EOF=$(dd if=/dev/urandom bs=15 count=1 status=none | base64)
           echo "MARKDOWN<<$EOF" >> "$GITHUB_OUTPUT"
           ./scripts/auto-changelog.sh >> "$GITHUB_OUTPUT"
