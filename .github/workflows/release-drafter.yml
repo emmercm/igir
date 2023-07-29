@@ -41,8 +41,12 @@ jobs:
       - id: check
         uses: EndBug/version-check@v2
         with:
-          diff-search: true
           token: ${{ secrets.GITHUB_TOKEN }}
+          # Note: can't use `diff-search: true` because there isn't a way to provide ${{ env.ref }},
+          #   the action expects ${{ event.commits || event.pull_request._links.commits.href }}
+          #   which won't exist on `workflow_dispatch`
+          file-url: https://unpkg.com/igir/package.json
+          static-checking: localIsNew
 
       # Generate the release's markdown template
       - if: steps.check.outputs.changed == 'true'
