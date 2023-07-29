@@ -28,8 +28,8 @@ jobs:
       - uses: actions/checkout@v3
         with:
           ref: ${{ env.ref }}
-          fetch-depth: 100
           # auto-changelog needs a full fetch for tag info
+          fetch-depth: 0
 
       # Check to see if the package.json version has changed
       - id: check
