@@ -26,7 +26,13 @@ jobs:
   bump:
     runs-on: ubuntu-latest
     steps:
+      # Setup and install
       - uses: actions/checkout@v3
+      - uses: actions/setup-node@v3
+        with:
+          node-version-file: '.nvmrc'
+          cache: 'npm'
+      - run: npm ci
 
       # Bump the version and commit to the default branch
       - id: bump-and-commit
@@ -65,6 +71,6 @@ jobs:
           echo "" >> "$GITHUB_STEP_SUMMARY"
           echo "${{ steps.create-pull-request.outputs.pull-request-url }}" >> "$GITHUB_STEP_SUMMARY"
       - if: ${{ steps.create-pull-request.outputs.pull-request-number && inputs.auto-merge }}
-        run: gh pr merge "${{ steps.create-pull-request.outputs.pull-request-number }}" --merge --auto
+        run: gh pr merge "${{ steps.create-pull-request.outputs.pull-request-number }}" --squash --auto
         env:
           GH_TOKEN: ${{ secrets.PERSONAL_ACCESS_TOKEN }}

@@ -56,7 +56,7 @@ $ igir --help
   | $$  | $$ __\$$  | $$  | $$__| $$
   | $$  | $$|    \  | $$  | $$    $$   ROM collection manager
   | $$  | $$ \$$$$  | $$  | $$$$$$$\
- _| $$_ | $$__| $$ _| $$_ | $$  | $$   v1.8.0
+ _| $$_ | $$__| $$ _| $$_ | $$  | $$   v1.8.1
 |   $$ \ \$$    $$|   $$ \| $$  | $$
  \$$$$$$  \$$$$$$  \$$$$$$ \$$   \$$
 
@@ -180,6 +180,7 @@ Advanced usage:
     {datName}             The name of the DAT that contains the ROM (e.g. "Nintendo - Game Boy")
     {datReleaseRegion}    The region of the ROM release (e.g. "USA"), each ROM can have multiple
     {datReleaseLanguage}  The language of the ROM release (e.g. "En"), each ROM can have multiple
+    {gameType}            The type of the game (e.g. "Retail", "Demo", "Prototype")
 
     {inputDirname}    The input file's dirname
     {outputBasename}  Equivalent to "{outputName}.{outputExt}"
