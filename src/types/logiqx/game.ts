@@ -458,6 +458,14 @@ export default class Game implements GameProps {
       .filter((language) => language) as string[];
   }
 
+  // Pseudo Built-Ins
+
+  hashCode(): string {
+    let hashCode = this.getName();
+    hashCode += `|${this.getRoms().map((rom) => rom.hashCode()).join(',')}`;
+    return hashCode;
+  }
+
   equals(other: Game): boolean {
     if (this === other) {
       return true;
