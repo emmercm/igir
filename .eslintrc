@@ -53,6 +53,8 @@
     // Require any function or method that returns a Promise to be marked async.
     "@typescript-eslint/promise-function-async": ["error"],
 
+    // ***** Misc *****
+    "@typescript-eslint/prefer-nullish-coalescing": "error",
     "@typescript-eslint/prefer-readonly": "error"
   }
 }
