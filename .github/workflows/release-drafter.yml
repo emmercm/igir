@@ -55,10 +55,6 @@ jobs:
       - if: steps.check.outputs.changed == 'true'
         id: auto-changelog
         run: |
-          # NOTE: auto-changelog operates off of git tags, but the tag won't exist until the
-          #   GitHub release is published.
-          git tag v${{ steps.check.outputs.version }}
-          # Generate the markdown
           EOF=$(dd if=/dev/urandom bs=15 count=1 status=none | base64)
           echo "MARKDOWN<<$EOF" >> "$GITHUB_OUTPUT"
           ./scripts/auto-changelog.sh >> "$GITHUB_OUTPUT"
