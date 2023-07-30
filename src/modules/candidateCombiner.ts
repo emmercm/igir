@@ -11,15 +11,15 @@ import ReleaseCandidate from '../types/releaseCandidate.js';
 import ROMWithFiles from '../types/romWithFiles.js';
 import Module from './module.js';
 
-export default class CombinedCandidateGenerator extends Module {
+export default class CandidateCombiner extends Module {
   private readonly options: Options;
 
   constructor(options: Options, progressBar: ProgressBar) {
-    super(progressBar, CombinedCandidateGenerator.name);
+    super(progressBar, CandidateCombiner.name);
     this.options = options;
   }
 
-  async generate(
+  async combine(
     dat: DAT,
     parentsToCandidates: Map<Parent, ReleaseCandidate[]>,
   ): Promise<Map<Parent, ReleaseCandidate[]>> {
@@ -37,9 +37,9 @@ export default class CombinedCandidateGenerator extends Module {
     await this.progressBar.setSymbol(ProgressBarSymbol.GENERATING);
     await this.progressBar.reset(parentsToCandidates.size);
 
-    const game = CombinedCandidateGenerator.buildGame(dat, parentsToCandidates);
+    const game = CandidateCombiner.buildGame(dat, parentsToCandidates);
     const parent = new Parent(game.getName(), [game]);
-    const releaseCandidate = await CombinedCandidateGenerator.buildReleaseCandidate(
+    const releaseCandidate = await CandidateCombiner.buildReleaseCandidate(
       dat,
       game,
       parentsToCandidates,

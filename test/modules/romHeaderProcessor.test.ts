@@ -1,4 +1,4 @@
-import HeaderProcessor from '../../src/modules/headerProcessor.js';
+import ROMHeaderProcessor from '../../src/modules/romHeaderProcessor.js';
 import ROMScanner from '../../src/modules/romScanner.js';
 import Options from '../../src/types/options.js';
 import ProgressBarFake from '../console/progressBarFake.js';
@@ -10,7 +10,7 @@ describe('extension has possible header', () => {
     }), new ProgressBarFake()).scan();
     expect(inputRomFiles.length).toBeGreaterThan(0);
 
-    const processedRomFiles = await new HeaderProcessor(new Options({
+    const processedRomFiles = await new ROMHeaderProcessor(new Options({
       commands: ['copy', 'extract'],
     }), new ProgressBarFake()).process(inputRomFiles);
 
@@ -27,7 +27,7 @@ describe('extension has possible header', () => {
     }), new ProgressBarFake()).scan();
     expect(inputRomFiles.length).toBeGreaterThan(0);
 
-    const processedRomFiles = await new HeaderProcessor(new Options({
+    const processedRomFiles = await new ROMHeaderProcessor(new Options({
       commands: ['copy', 'extract'],
     }), new ProgressBarFake()).process(inputRomFiles);
 
@@ -44,7 +44,7 @@ describe('extension has possible header', () => {
     }), new ProgressBarFake()).scan();
     expect(inputRomFiles.length).toBeGreaterThan(0);
 
-    const processedRomFiles = await new HeaderProcessor(
+    const processedRomFiles = await new ROMHeaderProcessor(
       new Options(),
       new ProgressBarFake(),
     ).process(inputRomFiles);
@@ -64,7 +64,7 @@ describe('should read file for header', () => {
     }), new ProgressBarFake()).scan();
     expect(inputRomFiles.length).toBeGreaterThan(0);
 
-    const processedRomFiles = await new HeaderProcessor(new Options({
+    const processedRomFiles = await new ROMHeaderProcessor(new Options({
       commands: ['copy', 'extract'],
       header: '**/*',
     }), new ProgressBarFake()).process(inputRomFiles);
@@ -82,7 +82,7 @@ describe('should read file for header', () => {
     }), new ProgressBarFake()).scan();
     expect(inputRomFiles.length).toBeGreaterThan(0);
 
-    const processedRomFiles = await new HeaderProcessor(new Options({
+    const processedRomFiles = await new ROMHeaderProcessor(new Options({
       commands: ['copy', 'extract'],
       header: '**/*',
     }), new ProgressBarFake()).process(inputRomFiles);
