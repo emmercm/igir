@@ -69,10 +69,11 @@ export default class DATParentInferrer extends Module {
     return name
       // ***** Retail types *****
       .replace(/\(Alt( [a-z0-9. ]*)?\)/i, '')
+      .replace(/\([^)]*Collector's Edition\)/i, '')
       .replace(/\(Extra Box\)/i, '')
       .replace(/\(Fukkokuban\)/i, '') // "reprint"
       .replace(/\([^)]*Genteiban\)/i, '') // "limited edition"
-      .replace(/\(Limited Edition\)/i, '')
+      .replace(/\(Limited[^)]+Edition\)/i, '')
       .replace(/\(Limited Run Games\)/i, '')
       .replace(/\(Made in [^)]+\)/i, '')
       .replace(/\(Major Wave\)/i, '')
@@ -94,6 +95,7 @@ export default class DATParentInferrer extends Module {
       .replace(/\(Aftermarket[a-z0-9. ]*\)/i, '')
       .replace(/\(Alpha[a-z0-9. ]*\)/i, '')
       .replace(/\(Beta[a-z0-9. ]*\)/i, '')
+      .replace(/\(Build [a-z0-9. ]+\)/i, '')
       .replace(/\(Bung\)/i, '')
       .replace(/\(Debug\)/i, '')
       .replace(/\(Demo[a-z0-9. ]*\)|\([^)]*Taikenban[^)]*\)/i, '') // "trial"
@@ -163,7 +165,7 @@ export default class DATParentInferrer extends Module {
 
       // Search for this game's retail parent.
       // Retail games do not have variants such as "(Demo)", so if we fully strip the game name and
-      // find a match, then we have reasonable confidence that match is this game's parent.
+      //  find a match, then we have reasonable confidence that match is this game's parent.
       let strippedGameName = game.getName();
       strippedGameName = DATParentInferrer.stripGameRegionAndLanguage(strippedGameName);
       strippedGameName = DATParentInferrer.stripGameVariants(strippedGameName);
@@ -178,7 +180,9 @@ export default class DATParentInferrer extends Module {
 
       // Assume this game's non-retail parent.
       // If we got here, then we know these games share the same fully-stripped name. Assume the
-      // first game seen in the DAT should be the parent.
+      //  first game seen in the DAT should be the parent.
+      // The only danger with this assumption is it will affect `--prefer-parent`, but that's not
+      //  likely a commonly-used option.
       if (idx === 0) {
         // This game is the parent
         return game;
