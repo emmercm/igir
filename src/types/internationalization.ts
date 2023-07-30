@@ -114,6 +114,11 @@ export default class Internationalization {
     .filter((region, idx, regions) => regions.indexOf(region) === idx)
     .sort();
 
+  public static readonly REGION_NAMES = this.REGION_OPTIONS
+    .map((regionOption) => regionOption.long)
+    .filter((region, idx, regions) => regions.indexOf(region) === idx)
+    .sort();
+
   public static readonly LANGUAGES = this.REGION_OPTIONS
     .map((regionOption) => regionOption.language.toUpperCase())
     .filter((language, idx, languages) => languages.indexOf(language) === idx)
