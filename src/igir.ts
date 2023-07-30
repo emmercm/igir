@@ -11,7 +11,7 @@ import CandidatePostProcessor from './modules/candidatePostProcessor.js';
 import CandidatePreferer from './modules/candidatePreferer.js';
 import CandidateWriter from './modules/candidateWriter.js';
 import DATFilter from './modules/datFilter.js';
-import DATInferrer from './modules/datInferrer.js';
+import DATGameInferrer from './modules/datGameInferrer.js';
 import DATScanner from './modules/datScanner.js';
 import DirectoryCleaner from './modules/directoryCleaner.js';
 import FileIndexer from './modules/fileIndexer.js';
@@ -62,7 +62,7 @@ export default class Igir {
     // Set up progress bar and input for DAT processing
     const datProcessProgressBar = await this.logger.addProgressBar('Processing DATs', ProgressBarSymbol.PROCESSING, dats.length);
     if (!dats.length) {
-      dats = new DATInferrer(datProcessProgressBar).infer(romFilesWithHeaders);
+      dats = new DATGameInferrer(datProcessProgressBar).infer(romFilesWithHeaders);
     }
 
     if (this.options.getSingle() && !dats.some((dat) => dat.hasParentCloneInfo())) {
