@@ -12,6 +12,7 @@ import CandidatePreferer from './modules/candidatePreferer.js';
 import CandidateWriter from './modules/candidateWriter.js';
 import DATFilter from './modules/datFilter.js';
 import DATGameInferrer from './modules/datGameInferrer.js';
+import DATParentInferrer from './modules/datParentInferrer.js';
 import DATScanner from './modules/datScanner.js';
 import DirectoryCleaner from './modules/directoryCleaner.js';
 import FileIndexer from './modules/fileIndexer.js';
@@ -85,7 +86,8 @@ export default class Igir {
         dat.getParents().length,
       );
 
-      const filteredDat = await new DATFilter(this.options, progressBar).filter(dat);
+      const datWithParents = await new DATParentInferrer(progressBar).infer(dat);
+      const filteredDat = await new DATFilter(this.options, progressBar).filter(datWithParents);
 
       // Generate and filter ROM candidates
       const parentsToCandidates = await new CandidateGenerator(this.options, progressBar)
