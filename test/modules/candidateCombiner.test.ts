@@ -1,7 +1,7 @@
 import path from 'path';
 
+import CandidateCombiner from '../../src/modules/candidateCombiner.js';
 import CandidateGenerator from '../../src/modules/candidateGenerator.js';
-import CombinedCandidateGenerator from '../../src/modules/combinedCandidateGenerator.js';
 import DATInferrer from '../../src/modules/datInferrer.js';
 import FileIndexer from '../../src/modules/fileIndexer.js';
 import ROMScanner from '../../src/modules/romScanner.js';
@@ -27,8 +27,8 @@ async function runCombinedCandidateGenerator(
   const parentsToCandidates = await new CandidateGenerator(options, new ProgressBarFake())
     .generate(dat, indexedRomFiles);
 
-  return new CombinedCandidateGenerator(options, new ProgressBarFake())
-    .generate(dat, parentsToCandidates);
+  return new CandidateCombiner(options, new ProgressBarFake())
+    .combine(dat, parentsToCandidates);
 }
 
 it('should do nothing if option not specified', async () => {

@@ -19,7 +19,7 @@ import Module from './module.js';
  *
  * This class may be run concurrently with other classes.
  */
-export default class ROMWriter extends Module {
+export default class CandidateWriter extends Module {
   private static readonly THREAD_SEMAPHORE = new Semaphore(1);
 
   // WARN(cemmer): there is an undocumented semaphore max value that can be used, the full
@@ -33,12 +33,12 @@ export default class ROMWriter extends Module {
   private readonly filesQueuedForDeletion: File[] = [];
 
   constructor(options: Options, progressBar: ProgressBar) {
-    super(progressBar, ROMWriter.name);
+    super(progressBar, CandidateWriter.name);
     this.options = options;
 
     // This will be the same value globally, but we can't know the value at file import time
-    if (ROMWriter.THREAD_SEMAPHORE.getValue() !== options.getWriterThreads()) {
-      ROMWriter.THREAD_SEMAPHORE.setValue(options.getWriterThreads());
+    if (CandidateWriter.THREAD_SEMAPHORE.getValue() !== options.getWriterThreads()) {
+      CandidateWriter.THREAD_SEMAPHORE.setValue(options.getWriterThreads());
     }
   }
 
@@ -67,7 +67,10 @@ export default class ROMWriter extends Module {
     await this.progressBar.reset(parentsToWritableCandidates.size);
 
     await Promise.all([...parentsToWritableCandidates.entries()].map(
-      async ([parent, releaseCandidates]) => ROMWriter.THREAD_SEMAPHORE.runExclusive(async () => {
+      async ([
+        parent,
+        releaseCandidates,
+      ]) => CandidateWriter.THREAD_SEMAPHORE.runExclusive(async () => {
         await this.progressBar.incrementProgress();
         this.progressBar.logTrace(`${dat.getNameShort()}: ${parent.getName()}: writing ${releaseCandidates.length.toLocaleString()} candidate${releaseCandidates.length !== 1 ? 's' : ''}`);
 
@@ -101,7 +104,7 @@ export default class ROMWriter extends Module {
 
     const totalKilobytes = releaseCandidate.getRomsWithFiles()
       .reduce((sum, romWithFiles) => sum + romWithFiles.getInputFile().getSize(), 0) / 1024;
-    await ROMWriter.FILESIZE_SEMAPHORE.runExclusive(async () => {
+    await CandidateWriter.FILESIZE_SEMAPHORE.runExclusive(async () => {
       const waitingMessage = `${releaseCandidate.getName()} ...`;
       this.progressBar.addWaitingMessage(waitingMessage);
 
@@ -249,7 +252,7 @@ export default class ROMWriter extends Module {
     this.progressBar.logTrace(`${dat.getNameShort()}: ${outputZip.getFilePath()}: writing ${inputToOutputZipEntries.length.toLocaleString()} archive entr${inputToOutputZipEntries.length !== 1 ? 'ies' : 'y'} ...`);
 
     try {
-      await ROMWriter.ensureOutputDirExists(outputZip.getFilePath());
+      await CandidateWriter.ensureOutputDirExists(outputZip.getFilePath());
       await outputZip.createArchive(this.options, dat, inputToOutputZipEntries);
     } catch (e) {
       this.progressBar.logError(`${dat.getNameShort()}: ${outputZip.getFilePath()}: failed to create zip: ${e}`);
@@ -353,7 +356,7 @@ export default class ROMWriter extends Module {
     this.progressBar.logTrace(`${dat.getNameShort()}: ${inputRomFile.toString()} writing to ${outputFilePath}`);
 
     try {
-      await ROMWriter.ensureOutputDirExists(outputFilePath);
+      await CandidateWriter.ensureOutputDirExists(outputFilePath);
       const tempRawFile = await fsPoly.mktemp(outputFilePath);
       await inputRomFile.extractAndPatchToFile(tempRawFile, removeHeader);
       await fsPoly.mv(tempRawFile, outputFilePath);
@@ -437,7 +440,7 @@ export default class ROMWriter extends Module {
       }
 
       if (this.options.getOverwriteInvalid()) {
-        const existingTest = await ROMWriter.testWrittenSymlink(targetPath, sourcePath);
+        const existingTest = await CandidateWriter.testWrittenSymlink(targetPath, sourcePath);
         if (!existingTest) {
           this.progressBar.logTrace(`${dat.getNameShort()}: ${targetPath}: not overwriting existing symlink, existing symlink is what was expected`);
           return;
@@ -448,14 +451,14 @@ export default class ROMWriter extends Module {
     }
 
     try {
-      await ROMWriter.ensureOutputDirExists(targetPath);
+      await CandidateWriter.ensureOutputDirExists(targetPath);
       await fsPoly.symlink(sourcePath, targetPath);
     } catch (e) {
       this.progressBar.logError(`${dat.getNameShort()}: ${inputRomFile.toString()}: failed to symlink ${sourcePath} to ${targetPath}: ${e}`);
     }
 
     if (this.options.shouldTest()) {
-      const writtenTest = await ROMWriter.testWrittenSymlink(targetPath, sourcePath);
+      const writtenTest = await CandidateWriter.testWrittenSymlink(targetPath, sourcePath);
       if (writtenTest) {
         this.progressBar.logError(`${dat.getNameShort()}: ${targetPath}: written symlink ${writtenTest}`);
       }

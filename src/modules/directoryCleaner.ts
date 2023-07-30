@@ -16,19 +16,19 @@ import Module from './module.js';
  *
  * This class will not be run concurrently with any other class.
  */
-export default class OutputCleaner extends Module {
+export default class DirectoryCleaner extends Module {
   private readonly options: Options;
 
   constructor(options: Options, progressBar: ProgressBar) {
-    super(progressBar, OutputCleaner.name);
+    super(progressBar, DirectoryCleaner.name);
     this.options = options;
   }
 
-  async clean(dirsToClean: string[], writtenFilesToExclude: File[]): Promise<string[]> {
+  async clean(dirsToClean: string[], filesToExclude: File[]): Promise<string[]> {
     this.progressBar.logInfo('cleaning files in output');
 
     // If nothing was written, then don't clean anything
-    if (!writtenFilesToExclude.length) {
+    if (!filesToExclude.length) {
       this.progressBar.logDebug('no files were written, not cleaning output');
       return [];
     }
@@ -39,7 +39,7 @@ export default class OutputCleaner extends Module {
     // If there is nothing to clean, then don't do anything
     const filesToClean = await this.options.scanOutputFilesWithoutCleanExclusions(
       dirsToClean,
-      writtenFilesToExclude,
+      filesToExclude,
     );
     if (!filesToClean.length) {
       this.progressBar.logDebug('no files to clean');
@@ -58,7 +58,7 @@ export default class OutputCleaner extends Module {
     }
 
     try {
-      const emptyDirs = await OutputCleaner.getEmptyDirs(dirsToClean);
+      const emptyDirs = await DirectoryCleaner.getEmptyDirs(dirsToClean);
       await this.progressBar.reset(emptyDirs.length);
       this.progressBar.logDebug(`cleaning ${emptyDirs.length.toLocaleString()} empty director${emptyDirs.length !== 1 ? 'ies' : 'y'}`);
       await this.trashOrDelete(emptyDirs);
@@ -87,7 +87,7 @@ export default class OutputCleaner extends Module {
   private static async getEmptyDirs(dirsToClean: string | string[]): Promise<string[]> {
     if (Array.isArray(dirsToClean)) {
       return (await Promise.all(
-        dirsToClean.map(async (dirToClean) => OutputCleaner.getEmptyDirs(dirToClean)),
+        dirsToClean.map(async (dirToClean) => DirectoryCleaner.getEmptyDirs(dirToClean)),
       ))
         .flatMap((emptyDirs) => emptyDirs)
         .filter((emptyDir, idx, emptyDirs) => emptyDirs.indexOf(emptyDir) === idx);

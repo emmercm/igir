@@ -4,15 +4,15 @@ import path from 'path';
 import util from 'util';
 
 import Constants from '../../src/constants.js';
+import CandidateCombiner from '../../src/modules/candidateCombiner.js';
 import CandidateGenerator from '../../src/modules/candidateGenerator.js';
-import CombinedCandidateGenerator from '../../src/modules/combinedCandidateGenerator.js';
+import CandidatePatchGenerator from '../../src/modules/candidatePatchGenerator.js';
+import CandidateWriter from '../../src/modules/candidateWriter.js';
 import DATInferrer from '../../src/modules/datInferrer.js';
 import FileIndexer from '../../src/modules/fileIndexer.js';
-import HeaderProcessor from '../../src/modules/headerProcessor.js';
-import PatchCandidateGenerator from '../../src/modules/patchCandidateGenerator.js';
 import PatchScanner from '../../src/modules/patchScanner.js';
+import ROMHeaderProcessor from '../../src/modules/romHeaderProcessor.js';
 import ROMScanner from '../../src/modules/romScanner.js';
-import ROMWriter from '../../src/modules/romWriter.js';
 import fsPoly from '../../src/polyfill/fsPoly.js';
 import Archive from '../../src/types/files/archives/archive.js';
 import ArchiveEntry from '../../src/types/files/archives/archiveEntry.js';
@@ -94,7 +94,7 @@ async function romWriter(
   });
   const romFiles = await new ROMScanner(options, new ProgressBarFake()).scan();
   const dat = datInferrer(romFiles);
-  const romFilesWithHeaders = await new HeaderProcessor(options, new ProgressBarFake())
+  const romFilesWithHeaders = await new ROMHeaderProcessor(options, new ProgressBarFake())
     .process(romFiles);
   const indexedRomFiles = await new FileIndexer(options, new ProgressBarFake())
     .index(romFilesWithHeaders);
@@ -102,14 +102,14 @@ async function romWriter(
     .generate(dat, indexedRomFiles);
   if (patchGlob) {
     const patches = await new PatchScanner(options, new ProgressBarFake()).scan();
-    candidates = await new PatchCandidateGenerator(options, new ProgressBarFake())
+    candidates = await new CandidatePatchGenerator(options, new ProgressBarFake())
       .generate(dat, candidates, patches);
   }
-  candidates = await new CombinedCandidateGenerator(options, new ProgressBarFake())
-    .generate(dat, candidates);
+  candidates = await new CandidateCombiner(options, new ProgressBarFake())
+    .combine(dat, candidates);
 
   // When
-  await new ROMWriter(options, new ProgressBarFake()).write(dat, candidates);
+  await new CandidateWriter(options, new ProgressBarFake()).write(dat, candidates);
 
   // Then
   return walkAndStat(outputTemp);

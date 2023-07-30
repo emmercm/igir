@@ -14,11 +14,11 @@ import Module from './module.js';
  *
  * This class will not be run concurrently with any other class.
  */
-export default class HeaderProcessor extends Module {
+export default class ROMHeaderProcessor extends Module {
   private readonly options: Options;
 
   constructor(options: Options, progressBar: ProgressBar) {
-    super(progressBar, HeaderProcessor.name);
+    super(progressBar, ROMHeaderProcessor.name);
     this.options = options;
   }
 

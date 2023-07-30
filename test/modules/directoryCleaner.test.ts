@@ -1,7 +1,7 @@
 import path from 'path';
 
 import Constants from '../../src/constants.js';
-import OutputCleaner from '../../src/modules/outputCleaner.js';
+import DirectoryCleaner from '../../src/modules/directoryCleaner.js';
 import fsPoly from '../../src/polyfill/fsPoly.js';
 import File from '../../src/types/files/file.js';
 import Options from '../../src/types/options.js';
@@ -29,7 +29,7 @@ async function runOutputCleaner(
   const before = await fsPoly.walk(tempDir);
   expect(before.length).toBeGreaterThan(0);
 
-  await new OutputCleaner(
+  await new DirectoryCleaner(
     new Options({
       commands: ['move', 'clean'],
       cleanExclude: cleanExclude.map((filePath) => path.join(tempDir, filePath)),
@@ -110,7 +110,7 @@ it('should delete symlinks', async () => {
     const tempLink = await fsPoly.mktemp(path.join(tempDir, 'link'));
     await fsPoly.symlink(tempFileOne, tempLink);
 
-    await new OutputCleaner(
+    await new DirectoryCleaner(
       new Options({
         commands: ['move', 'clean'],
       }),

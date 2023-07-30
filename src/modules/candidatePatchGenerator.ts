@@ -14,11 +14,11 @@ import ReleaseCandidate from '../types/releaseCandidate.js';
 import ROMWithFiles from '../types/romWithFiles.js';
 import Module from './module.js';
 
-export default class PatchCandidateGenerator extends Module {
+export default class CandidatePatchGenerator extends Module {
   private readonly options: Options;
 
   constructor(options: Options, progressBar: ProgressBar) {
-    super(progressBar, PatchCandidateGenerator.name);
+    super(progressBar, CandidatePatchGenerator.name);
     this.options = options;
   }
 
@@ -37,7 +37,7 @@ export default class PatchCandidateGenerator extends Module {
     await this.progressBar.setSymbol(ProgressBarSymbol.GENERATING);
     await this.progressBar.reset(parentsToCandidates.size);
 
-    const crcToPatches = PatchCandidateGenerator.indexPatchesByCrcBefore(patches);
+    const crcToPatches = CandidatePatchGenerator.indexPatchesByCrcBefore(patches);
     this.progressBar.logDebug(`${dat.getNameShort()}: ${crcToPatches.size} unique patches found`);
 
     const patchedParentsToCandidates = this.build(dat, parentsToCandidates, crcToPatches);

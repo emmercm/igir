@@ -4,23 +4,23 @@ import path from 'path';
 import Logger from './console/logger.js';
 import { ProgressBarSymbol } from './console/progressBar.js';
 import ProgressBarCLI from './console/progressBarCLI.js';
+import CandidateCombiner from './modules/candidateCombiner.js';
 import CandidateGenerator from './modules/candidateGenerator.js';
+import CandidatePatchGenerator from './modules/candidatePatchGenerator.js';
 import CandidatePostProcessor from './modules/candidatePostProcessor.js';
 import CandidatePreferer from './modules/candidatePreferer.js';
-import CombinedCandidateGenerator from './modules/combinedCandidateGenerator.js';
+import CandidateWriter from './modules/candidateWriter.js';
 import DATFilter from './modules/datFilter.js';
 import DATInferrer from './modules/datInferrer.js';
 import DATScanner from './modules/datScanner.js';
+import DirectoryCleaner from './modules/directoryCleaner.js';
 import FileIndexer from './modules/fileIndexer.js';
 import FixdatCreator from './modules/fixdatCreator.js';
-import HeaderProcessor from './modules/headerProcessor.js';
 import MovedROMDeleter from './modules/movedRomDeleter.js';
-import OutputCleaner from './modules/outputCleaner.js';
-import PatchCandidateGenerator from './modules/patchCandidateGenerator.js';
 import PatchScanner from './modules/patchScanner.js';
 import ReportGenerator from './modules/reportGenerator.js';
+import ROMHeaderProcessor from './modules/romHeaderProcessor.js';
 import ROMScanner from './modules/romScanner.js';
-import ROMWriter from './modules/romWriter.js';
 import StatusGenerator from './modules/statusGenerator.js';
 import DATStatus from './types/datStatus.js';
 import File from './types/files/file.js';
@@ -48,7 +48,7 @@ export default class Igir {
     const romProgressBar = await this.logger.addProgressBar(romScannerProgressBarName);
     const rawRomFiles = await new ROMScanner(this.options, romProgressBar).scan();
     await romProgressBar.setName('Detecting ROM headers');
-    const romFilesWithHeaders = await new HeaderProcessor(this.options, romProgressBar)
+    const romFilesWithHeaders = await new ROMHeaderProcessor(this.options, romProgressBar)
       .process(rawRomFiles);
     await romProgressBar.setName('Indexing ROMs');
     const indexedRomFiles = await new FileIndexer(this.options, romProgressBar)
@@ -90,7 +90,7 @@ export default class Igir {
       // Generate and filter ROM candidates
       const parentsToCandidates = await new CandidateGenerator(this.options, progressBar)
         .generate(filteredDat, indexedRomFiles);
-      const parentsToPatchedCandidates = await new PatchCandidateGenerator(
+      const parentsToPatchedCandidates = await new CandidatePatchGenerator(
         this.options,
         progressBar,
       ).generate(filteredDat, parentsToCandidates, patches);
@@ -101,13 +101,13 @@ export default class Igir {
         this.options,
         progressBar,
       ).process(filteredDat, parentsToFilteredCandidates);
-      const parentsToCombinedCandidates = await new CombinedCandidateGenerator(
+      const parentsToCombinedCandidates = await new CandidateCombiner(
         this.options,
         progressBar,
-      ).generate(filteredDat, parentsToPostProcessedCandidates);
+      ).combine(filteredDat, parentsToPostProcessedCandidates);
 
       // Write the output files
-      const movedRoms = await new ROMWriter(this.options, progressBar)
+      const movedRoms = await new CandidateWriter(this.options, progressBar)
         .write(filteredDat, parentsToCombinedCandidates);
       movedRomsToDelete.push(...movedRoms);
       const writtenRoms = [...parentsToCombinedCandidates.entries()]
@@ -237,7 +237,7 @@ export default class Igir {
     const writtenFilesToExclude = [...datsToWrittenRoms.values()]
       .flatMap((parentsToFiles) => [...parentsToFiles.values()])
       .flatMap((files) => files);
-    const filesCleaned = await new OutputCleaner(this.options, progressBar)
+    const filesCleaned = await new DirectoryCleaner(this.options, progressBar)
       .clean(uniqueDirsToClean, writtenFilesToExclude);
     await progressBar.doneItems(filesCleaned.length, 'file', 'recycled');
     await progressBar.freeze();

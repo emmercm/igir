@@ -1,10 +1,10 @@
 import path from 'path';
 
 import CandidateGenerator from '../../src/modules/candidateGenerator.js';
+import CandidatePatchGenerator from '../../src/modules/candidatePatchGenerator.js';
 import DATInferrer from '../../src/modules/datInferrer.js';
 import DATScanner from '../../src/modules/datScanner.js';
 import FileIndexer from '../../src/modules/fileIndexer.js';
-import PatchCandidateGenerator from '../../src/modules/patchCandidateGenerator.js';
 import PatchScanner from '../../src/modules/patchScanner.js';
 import ROMScanner from '../../src/modules/romScanner.js';
 import File from '../../src/types/files/file.js';
@@ -38,7 +38,7 @@ async function runPatchCandidateGenerator(
 
   const patches = await new PatchScanner(options, new ProgressBarFake()).scan();
 
-  return new PatchCandidateGenerator(options, new ProgressBarFake())
+  return new CandidatePatchGenerator(options, new ProgressBarFake())
     .generate(dat, parentsToCandidates, patches);
 }
 
