@@ -77,6 +77,7 @@ export default class DATParentInferrer extends Module {
       .replace(/\(Made in [^)]+\)/i, '')
       .replace(/\(Major Wave\)/i, '')
       .replace(/\([^)]*Premium [^)]+\)/i, '')
+      .replace(/\([^)]*Preview Disc\)/i, '')
       .replace(/\(Recalled\)/i, '')
       .replace(/\(Renkaban\)/i, '') // "cheap edition"
       .replace(/\(Reprint\)/i, '')
