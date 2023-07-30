@@ -66,10 +66,6 @@ export default class Igir {
       dats = new DATGameInferrer(datProcessProgressBar).infer(romFilesWithHeaders);
     }
 
-    if (this.options.getSingle() && !dats.some((dat) => dat.hasParentCloneInfo())) {
-      throw new Error('No DAT contains parent/clone information, cannot process --single');
-    }
-
     const datsToWrittenRoms = new Map<DAT, Map<Parent, File[]>>();
     const romOutputDirs: string[] = [];
     const movedRomsToDelete: File[] = [];
@@ -86,6 +82,9 @@ export default class Igir {
         dat.getParents().length,
       );
 
+      if (this.options.getSingle() && !dat.hasParentCloneInfo()) {
+        progressBar.logInfo(`${dat.getNameShort()}: does not contain parent/clone information, attempting to infer it`);
+      }
       const datWithParents = await new DATParentInferrer(progressBar).infer(dat);
       const filteredDat = await new DATFilter(this.options, progressBar).filter(datWithParents);
 

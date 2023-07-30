@@ -112,7 +112,7 @@ export default class DAT {
   }
 
   hasParentCloneInfo(): boolean {
-    return this.getGames().some((game) => game.isClone());
+    return this.getGames().some((game) => game.getParent());
   }
 
   // Computed getters
