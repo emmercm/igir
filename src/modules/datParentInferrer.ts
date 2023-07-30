@@ -122,11 +122,13 @@ export default class DATParentInferrer extends Module {
       .replace(/\[T[+-][^\]]+\]/, '')
       .replace(/\[x\]/, '')
       // ***** Console-specific *****
-      // Nintendo Game Boy
+      // Nintendo - Game Boy
       .replace(/\(SGB Enhanced\)/i, '')
-      // Sega Sega/Mega CD
+      // Nintendo - Game Boy Color
+      .replace(/\(GB Compatible\)/i, '')
+      // Sega - Sega/Mega CD
       .replace(/\(RE-?[0-9]*\)/, '')
-      // Sony PlayStation 1
+      // Sony - PlayStation 1
       .replace(/\(EDC\)/i, '') // copy protection
       .replace(/\(PSone Books\)/i, '')
       .replace(/\((SCES|SCUS|SLES|SLUS)-[0-9]+\)/i, '')
