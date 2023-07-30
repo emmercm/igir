@@ -100,7 +100,7 @@ export default class DATParentInferrer extends Module {
       .replace(/\(Not for Resale\)/i, '')
       .replace(/\(Pirate[a-z0-9. ]*\)/i, '')
       .replace(/\(Proto[a-z0-9. ]*\)/i, '')
-      .replace(/\(Sample[a-z0-9. ]*\)/i, '')
+      .replace(/\([^)]*Sample[a-z0-9. ]*\)/i, '')
       .replace(/\(Test[a-z0-9. ]*\)/i, '')
       .replace(/\(Unl[a-z0-9. ]*\)/i, '')
       .replace(/\(v[0-9.]+[a-z]*\)/i, '')
@@ -131,7 +131,7 @@ export default class DATParentInferrer extends Module {
       .trim();
     // ***** EXPLICITLY LEFT ALONE *****
     // (Bonus Disc .*)
-    // (Disc [0-9])
+    // (Disc [0-9A-Z])
     // (Mega-CD 32X) / (Sega CD 32X)
   }
 
