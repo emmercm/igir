@@ -360,7 +360,7 @@ export default class ArgumentsParser {
       .option('region-filter', {
         group: groupRomFiltering,
         alias: 'R',
-        description: `List of comma-separated regions to filter to (supported: ${Internationalization.REGIONS.join(', ')})`,
+        description: `List of comma-separated regions to filter to (supported: ${Internationalization.REGION_CODES.join(', ')})`,
         type: 'string',
         coerce: (val: string) => val.split(','),
         requiresArg: true,
@@ -446,7 +446,7 @@ export default class ArgumentsParser {
       .option('prefer-region', {
         group: groupRomPriority,
         alias: 'r',
-        description: `List of comma-separated regions in priority order (supported: ${Internationalization.REGIONS.join(', ')})`,
+        description: `List of comma-separated regions in priority order (supported: ${Internationalization.REGION_CODES.join(', ')})`,
         type: 'string',
         coerce: (val: string) => val.split(','),
         requiresArg: true,

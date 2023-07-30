@@ -109,7 +109,7 @@ export default class Internationalization {
     { short: 'ZH', long: 'CHI' },
   ];
 
-  public static readonly REGIONS = this.REGION_OPTIONS
+  public static readonly REGION_CODES = this.REGION_OPTIONS
     .map((regionOption) => regionOption.region.toUpperCase())
     .filter((region, idx, regions) => regions.indexOf(region) === idx)
     .sort();
