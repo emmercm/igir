@@ -83,13 +83,14 @@ export default class DATParentInferrer extends Module {
       .replace(/\(Reprint\)/i, '')
       .replace(/\(Rerelease\)/i, '')
       .replace(/\(Rev[a-z0-9. ]*\)/i, '')
-      .replace(/\(SGB Enhanced\)/i, '')
       .replace(/\([^)]*Seisanban\)/i, '') // "production version"
+      .replace(/\(Shotenban\)/i, '') // "bookstore edition"
       .replace(/\(Special Pack\)/i, '')
       .replace(/\([^)]+ the Best\)/i, '')
       .replace(/\([^)]*Taiouban[^)]*\)/i, '') // "compatible version"
       .replace(/\([^)]*Tokubetsu-?ban[^)]*\)/i, '') // "special edition"
       // ***** Non-retail types *****
+      .replace(/\([0-9]{4}-[0-9]{2}-[0-9]{2}\)/, '') // YYYY-MM-DD
       .replace(/\(Aftermarket[a-z0-9. ]*\)/i, '')
       .replace(/\(Alpha[a-z0-9. ]*\)/i, '')
       .replace(/\(Beta[a-z0-9. ]*\)/i, '')
@@ -121,6 +122,8 @@ export default class DATParentInferrer extends Module {
       .replace(/\[T[+-][^\]]+\]/, '')
       .replace(/\[x\]/, '')
       // ***** Console-specific *****
+      // Nintendo Game Boy
+      .replace(/\(SGB Enhanced\)/i, '')
       // Sega Sega/Mega CD
       .replace(/\(RE-?[0-9]*\)/, '')
       // Sony PlayStation 1
