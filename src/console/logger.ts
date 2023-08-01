@@ -1,5 +1,4 @@
 import chalk from 'chalk';
-import figlet from 'figlet';
 import moment from 'moment';
 import { PassThrough } from 'stream';
 import { WriteStream } from 'tty';
@@ -101,17 +100,16 @@ export default class Logger {
   notice = (message: unknown = ''): void => this.print(LogLevel.NOTICE, message);
 
   printHeader(): void {
-    const logo = figlet.textSync(Constants.COMMAND_NAME.toUpperCase(), {
-      font: 'Big Money-se',
-    }).trimEnd();
-
-    const logoSplit = logo.split('\n');
-    const midLine = Math.min(Math.ceil(logoSplit.length / 2), logoSplit.length - 1);
-    const maxLineLen = logoSplit.reduce((max, line) => Math.max(max, line.length), 0);
-    logoSplit[midLine - 1] = `${logoSplit[midLine - 1].padEnd(maxLineLen, ' ')}   ROM collection manager`;
-    logoSplit[midLine + 1] = `${logoSplit[midLine + 1].padEnd(maxLineLen, ' ')}   v${Constants.COMMAND_VERSION}`;
-
-    this.print(LogLevel.ALWAYS, `${logoSplit.join('\n')}\n\n`);
+    this.print(
+      LogLevel.ALWAYS,
+      `
+ ######    ######   ######  #######
+-= ## =-  ##          ##    ##    ##   ROM collection manager
+-= ## =-  ##   ####   ##    #######    ${Constants.HOMEPAGE}
+-= ## =-  ##    ##    ##    ##   ##    v${Constants.COMMAND_VERSION}
+ ######    ######   ######  ##    ##
+`.replace(/^ *\n|\n *$/, ''),
+    );
   }
 
   colorizeYargs(help: string): void {

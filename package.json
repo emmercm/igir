@@ -71,7 +71,6 @@
     "class-transformer": "0.5.1",
     "cli-progress": "3.12.0",
     "fast-glob": "3.2.12",
-    "figlet": "1.6.0",
     "graceful-fs": "4.2.11",
     "junk": "4.0.1",
     "micromatch": "4.0.5",
