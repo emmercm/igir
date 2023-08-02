@@ -29,3 +29,10 @@ There are a few different popular ROM managers that have similar features:
 | Output: separate input & output dirs    | ✅                                                             | ❌                                                             | ⚠️ yes but files are always moved                           | ❌                                          |
 | Output: subdirectory customization      | ✅                                                             | ❌                                                             | ✅                                                           | ❌                                          |
 | Output: fixdat creation                 | ✅ [DATs docs](input/dats.md)                                  | ✅                                                             | ✅                                                           | ❌                                          |
+
+Other alternative ROM managers can be found in a number of other wikis, such as:
+
+- [Emulation General Wiki](https://emulation.gametechwiki.com/index.php/ROM_managers)
+- [Pleasuredome's "Retro Arcade Guides"](https://pleasuredome.miraheze.org/wiki/ROM_Manager)
+- [Recalbox](https://wiki.recalbox.com/en/tutorials/utilities/rom-management)
+- [RetroPie](https://retropie.org.uk/docs/Validating%2C-Rebuilding%2C-and-Filtering-ROM-Collections/)
