@@ -39,7 +39,7 @@ ROMs-Sorted/
 
 ## DAT information
 
-When using [DATs](../dats.md), you can make use of console & game information contained in them:
+When using [DATs](../input/dats.md), you can make use of console & game information contained in them:
 
 - `{datName}` the matching DAT's name, similar to how the `--dir-dat-name` option works
 - `{datReleaseLanguage}` each of the ROM's language(s) (e.g. `EN`, `ES`, `JA`)

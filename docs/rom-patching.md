@@ -6,7 +6,7 @@ Games and their ROMs are protected under copyrights, so patches are used in orde
 
 ## Specifying patch files
 
-Patch files can be specified with the `--patch` option. See the [file scanning docs](file-scanning.md) for more information.
+Patch files can be specified with the `--patch` option. See the [file scanning docs](input/file-scanning.md) for more information.
 
 ## Patch types
 
