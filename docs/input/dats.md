@@ -79,11 +79,23 @@ Being able to know that many releases are actually the same game gives `igir` th
 
     If you have the option to download "parent/clone" or "P/C" versions of DATs, you should always choose those.
 
-## Aren't DATs primarily for MAME?
+### Parent/clone inference
 
-That's where DATs started. The [Logiqx XML](http://www.logiqx.com/DatFAQs/) DAT format can include information in [clrmamepro](https://mamedev.emulab.it/clrmamepro/) or [Romcenter](http://www.romcenter.com/) formats on how to handle MAME-specific settings such as [merging](https://docs.mamedev.org/usingmame/aboutromsets.html#parents-clones-splitting-and-merging) (non-merged vs. merged vs. split) and packing (zip vs. not). `igir` doesn't use any of this information, but it helps paint a picture of why DATs are structured the way they are.
+One feature that sets `igir` apart from other ROM managers is its ability to infer parent/clone information when DATs don't provide it. For example, Redump DATs don't provide parent/clone information, which makes it much more difficult to create 1G1R sets.
 
-These days, depending on what type of emulation you're interested in, non-MAME DATs such as No-Intro's may be more common than MAME DATs. See the [DAT groups](#dat-groups) section above for some of the popular DAT release groups.
+All of these Super Smash Bros. Melee releases should be considered the same game, even if a DAT doesn't the provide proper information. If they are all treated the same, then the `--single` option can be used in combination with [ROM filters](../rom-filtering.md) to make a 1G1R set. `igir` is smart enough to understand that the only differences are the regions, languages, and revisions.
+
+```text
+Super Smash Bros. Melee (Europe) (En,Fr,De,Es,It)
+Super Smash Bros. Melee (Korea) (En,Ja)
+Super Smash Bros. Melee (USA) (En,Ja)
+Super Smash Bros. Melee (USA) (En,Ja) (Rev 1)
+Super Smash Bros. Melee (USA) (En,Ja) (Rev 2)
+```
+
+!!! note
+
+    It is unlikely that `igir` will ever be perfect with inferring parent/clone information. If you find an instance where `igir` made the wrong choice, please raise an [issue in GitHub](https://github.com/emmercm/igir/issues).
 
 ## Fixdats
 
@@ -113,3 +125,11 @@ ROMs-Sorted/
 ├── Nintendo - Game Boy Advance (20230414-173400) fixdat.dat
 └── Nintendo - Game Boy Color (20230414-173400) fixdat.dat
 ```
+
+## FAQ
+
+### Aren't DATs primarily for MAME?
+
+That's where DATs started. The [Logiqx XML](http://www.logiqx.com/DatFAQs/) DAT format can include information in [clrmamepro](https://mamedev.emulab.it/clrmamepro/) or [Romcenter](http://www.romcenter.com/) formats on how to handle MAME-specific settings such as [merging](https://docs.mamedev.org/usingmame/aboutromsets.html#parents-clones-splitting-and-merging) (non-merged vs. merged vs. split) and packing (zip vs. not). `igir` doesn't use any of this information, but it helps paint a picture of why DATs are structured the way they are.
+
+These days, depending on what type of emulation you're interested in, non-MAME DATs such as No-Intro's may be more common than MAME DATs. See the [DAT groups](#dat-groups) section above for some of the popular DAT release groups.

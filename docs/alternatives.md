@@ -9,8 +9,9 @@ There are a few different popular ROM managers that have similar features:
 | App: OS compatibility                   | ✅ anything [Node.js supports](https://nodejs.org/en/download) | ⚠️ Windows, macOS & Linux via [Wine](https://www.winehq.org/) | ⚠️ Windows, Linux via [Mono](https://www.mono-project.com/) | ❌ Windows only                             |
 | App: UI or CLI                          | CLI only by design                                            | UI only                                                       | Separate UI & CLI versions                                  | UI only                                    |
 | App: required setup steps               | ✅ no setup required                                           | ❌ requires "profile" setup per DAT                            | ⚠️ if specifying DAT & ROM dirs                             | ❌ requires per-DAT DB setup                |
-| DATs: supported formats                 | ✅ Logiqx XML, CMPro, HTGD SMDB ([DATs docs](input/dats.md))   | ✅ Logiqx XML, CMPro                                           | ✅ Logiqx XML, CMPro                                         | ✅ Logiqx XML, CMPro                        |
+| DATs: supported formats                 | ✅ Logiqx XML, CMPro, HTGD SMDB ([DATs docs](input/dats.md))   | ⚠️ Logiqx XML, CMPro                                          | ✅ Logiqx XML, CMPro, HTGD SMDB                              | ✅ Logiqx XML, CMPro                        |
 | DATs: process multiple at once          | ✅                                                             | ⚠️ via the batcher                                            | ✅                                                           | ❌                                          |
+| DATs: infer parent/clone info           | ✅                                                             | ❌                                                             | ❌                                                           | ❌                                          |
 | DATs: built-in download manager         | ❌                                                             | ❌                                                             | ⚠️ via [DatVault](https://www.datvault.com/)                | ❌                                          |
 | DATs: supports DAT URLs                 | ✅                                                             | ❌                                                             | ❌                                                           | ❌                                          |
 | DATs: create from files                 | ❌                                                             | ✅                                                             | ✅                                                           | ❌                                          |
@@ -29,6 +30,10 @@ There are a few different popular ROM managers that have similar features:
 | Output: separate input & output dirs    | ✅                                                             | ❌                                                             | ⚠️ yes but files are always moved                           | ❌                                          |
 | Output: subdirectory customization      | ✅                                                             | ❌                                                             | ✅                                                           | ❌                                          |
 | Output: fixdat creation                 | ✅ [DATs docs](input/dats.md)                                  | ✅                                                             | ✅                                                           | ❌                                          |
+
+!!! warning
+
+    Just like `igir`, other ROM managers that are in active development are likely to release new features often. The above table is not guaranteed to be perfectly up-to-date, it is just a best effort.
 
 Other alternative ROM managers can be found in a number of other wikis, such as:
 
