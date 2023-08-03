@@ -75,55 +75,57 @@ test.each([
 });
 
 describe('dissimilar games', () => {
-  it('should not group different discs', () => {
-    // TODO(cemmer)
-
-    /**
-     * Jade Empire (Korea) (En,Zh,Ko)
-     * Jade Empire (Korea) (En,Zh,Ko) (Bonus Disc)
-     * Jade Empire (USA, Europe) (En,Es,It)
-     * Jade Empire (USA, Europe) (En,Fr,De,Es,It) (Bonus Disc)
-     *
-     * Mortal Kombat - Deception (Europe) (En,Fr,De,Es,It)
-     * Mortal Kombat - Deception (Germany) (En,Fr,De,Es,It)
-     * Mortal Kombat - Deception (USA)
-     * Mortal Kombat - Deception (USA) (Kollector's Edition Bonus Disc)
-     */
+  test.each([
+    [[
+      'Jade Empire (USA, Europe) (En,Es,It)',
+      'Jade Empire (USA, Europe) (En,Fr,De,Es,It) (Bonus Disc)',
+    ]],
+    [[
+      'Mortal Kombat - Deception (USA)',
+      'Mortal Kombat - Deception (USA) (Kollector\'s Edition Bonus Disc)',
+    ]],
+    [[
+      'Final Fantasy VII (USA) (Disc 1)',
+      'Final Fantasy VII (USA) (Disc 2)',
+      'Final Fantasy VII (USA) (Disc 3)',
+      'Final Fantasy VII (USA) (Interactive Sampler CD)',
+      'Final Fantasy VII (USA) (Square Soft on PlayStation Previews)',
+    ]],
+  ])('should not group different discs', async (gameNames) => {
+    const ungroupedDat = buildDat(gameNames);
+    const groupedDat = await new DATParentInferrer(new ProgressBarFake()).infer(ungroupedDat);
+    expect(groupedDat.getParents()).toHaveLength(gameNames.length);
+    expect(groupedDat.getParents().every((parent) => parent.getGames().length === 1)).toEqual(true);
   });
 
-  /**
-   * different years
-   *
-   * Madden NFL 06 (Europe)
-   * Madden NFL 06 (USA)
-   * Madden NFL 07 (Europe)
-   * Madden NFL 07 (USA)
-   * Madden NFL 08 (USA)
-   * Madden NFL 08 (USA) (Beta)
-   * Madden NFL 09 (USA)
-   * Madden NFL 2002 (USA)
-   * Madden NFL 2003 (Europe)
-   * Madden NFL 2003 (USA)
-   * Madden NFL 2004 (Europe)
-   * Madden NFL 2004 (USA)
-   * Madden NFL 2004 (USA) (Rev 1)
-   * Madden NFL 2005 (Europe)
-   * Madden NFL 2005 (USA)
-   */
+  test.each([
+    [[
+      'Madden NFL 06 (USA)',
+      'Madden NFL 07 (USA)',
+      'Madden NFL 08 (USA)',
+      'Madden NFL 09 (USA)',
+      'Madden NFL 2002 (USA)',
+      'Madden NFL 2003 (USA)',
+      'Madden NFL 2004 (USA)',
+      'Madden NFL 2005 (USA)',
+    ]],
+  ])('should not group different years', async (gameNames) => {
+    const ungroupedDat = buildDat(gameNames);
+    const groupedDat = await new DATParentInferrer(new ProgressBarFake()).infer(ungroupedDat);
+    expect(groupedDat.getParents()).toHaveLength(gameNames.length);
+    expect(groupedDat.getParents().every((parent) => parent.getGames().length === 1)).toEqual(true);
+  });
 
-  /**
-   * different taglines
-   *
-   * Hitman - Blood Money (France)
-   * Hitman - Blood Money (Germany)
-   * Hitman - Blood Money (USA, Europe)
-   * Hitman - Contracts (Europe)
-   * Hitman - Contracts (France)
-   * Hitman - Contracts (Germany)
-   * Hitman - Contracts (Italy)
-   * Hitman - Contracts (Japan)
-   * Hitman - Contracts (Spain)
-   * Hitman - Contracts (USA)
-   * Hitman - Silent Assassin (Japan)
-   */
+  test.each([
+    [[
+      'Hitman - Blood Money (France)',
+      'Hitman - Contracts (Europe)',
+      'Hitman - Silent Assassin (Japan)',
+    ]],
+  ])('should not group different taglines', async (gameNames) => {
+    const ungroupedDat = buildDat(gameNames);
+    const groupedDat = await new DATParentInferrer(new ProgressBarFake()).infer(ungroupedDat);
+    expect(groupedDat.getParents()).toHaveLength(gameNames.length);
+    expect(groupedDat.getParents().every((parent) => parent.getGames().length === 1)).toEqual(true);
+  });
 });
