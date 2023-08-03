@@ -16,13 +16,17 @@ Some of these headers are used to tell the emulator information about how to emu
 | Nintendo - Famicom Disk System | fsNES/FDS     | `.fds`    |
 | Nintendo - SNES                | SMC           | `.smc`    |
 
-Those file extensions above are the commonly accepted "correct" ones and `igir` will attempt to detect if a header is present in them automatically. If for some reason your files don't have the right extension (e.g. `.rom`) you can force header detection with the `--header` glob option:
+Those file extensions above are the commonly accepted "correct" extensions and `igir` will attempt to detect if a header is present in those ROM files automatically. If for some reason your files don't have the right extension (e.g. `.rom`) you can force header detection with the `--header` glob option:
 
 ```shell
 igir [commands..] --dat <dats> --input <input> --header "*.rom"
 ```
 
-`igir` will use this detected header information to compute both "headered" and "un-headered" checksums of ROMs and use both of those to match against DAT files. Many DAT groups expressly only include the size and checksum information for the un-headered file, even if the header should not be removed.
+`igir` will use this detected header information to compute both "headered" and "un-headered" checksums of ROMs and use both of those to match against DAT files.
+
+!!! warning
+
+    Many DAT groups expressly only include the size and checksum information for the un-headered file, even if the header should not be removed.
 
 ## Manual header removal
 
@@ -50,6 +54,6 @@ igir [commands..] --dat <dats> --input <input> --remove-headers
 
 ## Automatic header removal
 
-Some DAT groups such as No-Intro publish "headered" and "headerless" DATs for the same console, such as NES. `igir` will treat these DATs differently, automatically removing headers (if present) for "headerless" DATs, and leaving the header intact for "headered" DATs (regardless of CLI parameters).
+Some DAT groups such as No-Intro publish "headered" and "headerless" DATs for the same console, such as NES. `igir` will treat these DATs differently, it will automatically remove headers (if present) for "headerless" DATs, and leave the header intact for "headered" DATs (ignoring the `--remove-headers` option completely).
 
 As explained above, you almost always want the "headered" version. It's only in very specific circumstances that you might need the "headerless" version.

@@ -39,7 +39,6 @@ theme:
     - navigation.tabs.sticky
     - navigation.indexes
     - navigation.sections
-    - navigation.expand
     - navigation.instant
     - navigation.footer
     - toc.follow

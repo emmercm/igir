@@ -45,6 +45,12 @@ When using [DATs](../input/dats.md), you can make use of console & game informat
 - `{datReleaseLanguage}` each of the ROM's language(s) (e.g. `EN`, `ES`, `JA`)
 - `{datReleaseRegion}` each of the ROM's region(s) (e.g. `USA`, `EUR`, `JPN`, `WORLD`)
 
+## Game information
+
+You can use some information about each game:
+
+- `{gameType}` the game's "type," one of: `Aftermarket`, `Alpha`, `Bad`, `Beta`, `BIOS`, `Demo`, `Device`, `Fixed`, `Hacked`, `Homebrew`, `Overdump`, `Pending Dump`, `Pirated`, `Prototype`, `Retail` (most games will be this), `Sample`, `Test`, `Trained`, `Translated`, `Unlicensed`
+
 ## File information
 
 You can use some information about the input and output file's name & location:
