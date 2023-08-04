@@ -248,7 +248,7 @@ describe('options', () => {
     expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--dir-mirror', 'true', '--dir-mirror', 'false']).getDirMirror()).toEqual(false);
   });
 
-  it('should parse "dir-datname"', () => {
+  it('should parse "dir-dat-name"', () => {
     expect(() => argumentsParser.parse([...dummyCommandAndRequiredArgs, '--dir-dat-name'])).toThrow(/dependent|implication/i);
     expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--dat', os.devNull, '-D']).getDirDatName()).toEqual(true);
     expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--dat', os.devNull, '--dir-dat-name']).getDirDatName()).toEqual(true);
@@ -257,6 +257,16 @@ describe('options', () => {
     expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--dat', os.devNull, '--dir-dat-name', '--dir-dat-name']).getDirDatName()).toEqual(true);
     expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--dat', os.devNull, '--dir-dat-name', 'false', '--dir-dat-name', 'true']).getDirDatName()).toEqual(true);
     expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--dat', os.devNull, '--dir-dat-name', 'true', '--dir-dat-name', 'false']).getDirDatName()).toEqual(false);
+  });
+
+  it('should parse "dir-dat-description"', () => {
+    expect(() => argumentsParser.parse([...dummyCommandAndRequiredArgs, '--dir-dat-description'])).toThrow(/dependent|implication/i);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--dat', os.devNull, '--dir-dat-description']).getDirDatDescription()).toEqual(true);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--dat', os.devNull, '--dir-dat-description', 'true']).getDirDatDescription()).toEqual(true);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--dat', os.devNull, '--dir-dat-description', 'false']).getDirDatDescription()).toEqual(false);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--dat', os.devNull, '--dir-dat-description', '--dir-dat-description']).getDirDatDescription()).toEqual(true);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--dat', os.devNull, '--dir-dat-description', 'false', '--dir-dat-description', 'true']).getDirDatDescription()).toEqual(true);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--dat', os.devNull, '--dir-dat-description', 'true', '--dir-dat-description', 'false']).getDirDatDescription()).toEqual(false);
   });
 
   it('should parse "dir-letter"', () => {
