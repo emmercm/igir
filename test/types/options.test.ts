@@ -19,6 +19,7 @@ describe('getOutputDirRoot', () => {
     ['games/{mister}/', 'games'],
     ['Roms/{onion}/', 'Roms'],
     ['{datName}', '.'],
+    ['{datDescription}', '.'],
   ])('should find the root dir: %s', (output, expectedPath) => {
     expect(new Options({ commands: ['copy'], output }).getOutputDirRoot()).toEqual(expectedPath);
   });
@@ -46,10 +47,11 @@ describe('getOutputFileParsed', () => {
   describe('token replacement', () => {
     test.each([
       ['foo/{datName}/bar', path.join('foo', 'DAT _ Name', 'bar', 'game.rom')],
+      ['foo/{datDescription}/bar', path.join('foo', 'DAT _ Description', 'bar', 'game.rom')],
       ['root/{datReleaseRegion}', path.join('root', 'USA', 'game.rom')],
       ['root/{datReleaseLanguage}', path.join('root', 'En', 'game.rom')],
     ])('should replace {dat*}: %s', (output, expectedPath) => {
-      const dat = new DAT(new Header({ name: 'DAT / Name' }), []);
+      const dat = new DAT(new Header({ name: 'DAT / Name', description: 'DAT \\ Description' }), []);
       const release = new Release('Game Name', 'USA', 'En');
       expect(new Options({ commands: ['copy'], output }).getOutputFileParsed(dat, dummyInputRomPath, dummyGame, release, 'game.rom')).toEqual(expectedPath);
     });

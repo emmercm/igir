@@ -732,7 +732,15 @@ export default class Options implements OptionsProps {
   }
 
   private static replaceDatTokens(input: string, dat: DAT): string {
-    return input.replace('{datName}', dat.getName().replace(/[\\/]/g, '_'));
+    let output = input;
+    output = output.replace('{datName}', dat.getName().replace(/[\\/]/g, '_'));
+
+    const description = dat.getDescription();
+    if (description) {
+      output = output.replace('{datDescription}', description.replace(/[\\/]/g, '_'));
+    }
+
+    return output;
   }
 
   private static replaceGameTokens(input: string, game?: Game): string {

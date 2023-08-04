@@ -42,6 +42,7 @@ ROMs-Sorted/
 When using [DATs](../dats.md), you can make use of console & game information contained in them:
 
 - `{datName}` the matching DAT's name, similar to how the `--dir-dat-name` option works
+- `{datDescription}` the matching DAT's description, similar to how the `--dir-dat-description` option works
 - `{datReleaseLanguage}` each of the ROM's language(s) (e.g. `EN`, `ES`, `JA`)
 - `{datReleaseRegion}` each of the ROM's region(s) (e.g. `USA`, `EUR`, `JPN`, `WORLD`)
 
