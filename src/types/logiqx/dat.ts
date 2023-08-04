@@ -141,6 +141,10 @@ export default class DAT {
       .trim();
   }
 
+  getDescription(): string | undefined {
+    return this.getHeader().getDescription();
+  }
+
   getRomNamesContainDirectories(): boolean {
     return this.getHeader().getRomNamesContainDirectories()
       || this.isBiosDat();
