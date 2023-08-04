@@ -159,7 +159,7 @@ export default class DAT {
       filename += ` (${this.getHeader().getVersion()})`;
     }
     filename += '.dat';
-    return filename;
+    return filename.trim();
   }
 
   isBiosDat(): boolean {
