@@ -390,6 +390,7 @@ export default class ArgumentsParser {
         type: 'boolean',
       });
     [
+      ['debug', 'debug ROMs'],
       ['demo', 'demo ROMs'],
       ['beta', 'beta ROMs'],
       ['sample', 'sample ROMs'],

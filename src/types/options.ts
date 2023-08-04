@@ -67,6 +67,8 @@ export interface OptionsProps {
   readonly noUnlicensed?: boolean,
   readonly onlyUnlicensed?: boolean,
   readonly onlyRetail?: boolean,
+  readonly noDebug?: boolean,
+  readonly onlyDebug?: boolean,
   readonly noDemo?: boolean,
   readonly onlyDemo?: boolean,
   readonly noBeta?: boolean,
@@ -173,6 +175,10 @@ export default class Options implements OptionsProps {
   readonly onlyUnlicensed: boolean;
 
   readonly onlyRetail: boolean;
+
+  readonly noDebug: boolean;
+
+  readonly onlyDebug: boolean;
 
   readonly noDemo: boolean;
 
@@ -281,6 +287,8 @@ export default class Options implements OptionsProps {
     this.noUnlicensed = options?.noUnlicensed ?? false;
     this.onlyUnlicensed = options?.onlyUnlicensed ?? false;
     this.onlyRetail = options?.onlyRetail ?? false;
+    this.noDebug = options?.noDebug ?? false;
+    this.onlyDebug = options?.onlyDebug ?? false;
     this.noDemo = options?.noDemo ?? false;
     this.onlyDemo = options?.onlyDemo ?? false;
     this.noBeta = options?.noBeta ?? false;
@@ -979,6 +987,14 @@ export default class Options implements OptionsProps {
 
   getOnlyRetail(): boolean {
     return this.onlyRetail;
+  }
+
+  getNoDebug(): boolean {
+    return this.noDebug;
+  }
+
+  getOnlyDebug(): boolean {
+    return this.onlyDebug;
   }
 
   getNoDemo(): boolean {

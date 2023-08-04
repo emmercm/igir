@@ -16,6 +16,7 @@ enum GameType {
   BAD = 'Bad',
   BETA = 'Beta',
   BIOS = 'BIOS',
+  DEBUG = 'Debug',
   DEMO = 'Demo',
   DEVICE = 'Device',
   FIXED = 'Fixed',
@@ -209,6 +210,10 @@ export default class Game implements GameProps {
     return this.name.match(/\(Beta[a-z0-9. ]*\)/i) !== null;
   }
 
+  isDebug(): boolean {
+    return this.name.match(/\(Debug[a-z0-9. ]*\)/i) !== null;
+  }
+
   isDemo(): boolean {
     return this.name.match(/\(Demo[a-z0-9. ]*\)/i) !== null;
   }
@@ -221,6 +226,9 @@ export default class Game implements GameProps {
     return this.name.match(/\(Homebrew[a-z0-9. ]*\)/i) !== null;
   }
 
+  // NOTE(cemmer): RomVault indicates that some DATs include <rom mia="yes"/>, but I did not find
+  //  any evidence of this in No-Intro, Redump, TOSEC, and FinalBurn Neo.
+  //  https://wiki.romvault.com/doku.php?id=mia_rom_tracking#can_i_manually_flag_roms_as_mia
   isMIA(): boolean {
     return this.name.match(/\[MIA\]/i) !== null;
   }
@@ -284,6 +292,7 @@ export default class Game implements GameProps {
         && !this.isAlpha()
         && !this.isBad()
         && !this.isBeta()
+        && !this.isDebug()
         && !this.isDemo()
         && !this.isFixed()
         && !this.isHomebrew()
@@ -316,6 +325,8 @@ export default class Game implements GameProps {
       return GameType.BAD;
     } if (this.isBeta()) {
       return GameType.BETA;
+    } if (this.isDebug()) {
+      return GameType.DEBUG;
     } if (this.isDemo()) {
       return GameType.DEMO;
     } if (this.isDevice()) {
