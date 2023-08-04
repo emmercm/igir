@@ -63,6 +63,7 @@ describe('getOutputFileParsed', () => {
       ['Game (Alpha)', 'Alpha'],
       ['Game [b]', 'Bad'],
       ['Game (Beta)', 'Beta'],
+      ['Game (Debug)', 'Debug'],
       ['Game (Demo)', 'Demo'],
       ['Game [f]', 'Fixed'],
       ['Game (Hack)', 'Hacked'],

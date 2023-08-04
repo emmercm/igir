@@ -429,7 +429,8 @@ describe('sort', () => {
         await buildReleaseCandidatesWithRegionLanguage(['seven (Proto)', 'seven'], 'USA', 'EN'),
         await buildReleaseCandidatesWithRegionLanguage(['eight (Sample)', 'eight'], 'USA', 'EN'),
         await buildReleaseCandidatesWithRegionLanguage(['nine (Test)', 'nine'], 'USA', 'EN'),
-      ], ['one (USA) (EN)', 'two (Aftermarket) (USA) (EN)', 'three [b] (USA) (EN)', 'four (Beta) (USA) (EN)', 'five (Demo) (USA) (EN)', 'six (Homebrew) (USA) (EN)', 'seven (Proto) (USA) (EN)', 'eight (Sample) (USA) (EN)', 'nine (Test) (USA) (EN)']);
+        await buildReleaseCandidatesWithRegionLanguage(['ten (Debug)', 'ten'], 'USA', 'EN'),
+      ], ['one (USA) (EN)', 'two (Aftermarket) (USA) (EN)', 'three [b] (USA) (EN)', 'four (Beta) (USA) (EN)', 'five (Demo) (USA) (EN)', 'six (Homebrew) (USA) (EN)', 'seven (Proto) (USA) (EN)', 'eight (Sample) (USA) (EN)', 'nine (Test) (USA) (EN)', 'ten (Debug) (USA) (EN)']);
     });
 
     it('should return the first candidate when none matching', async () => {
@@ -451,20 +452,22 @@ describe('sort', () => {
         await buildReleaseCandidatesWithRegionLanguage(['seven (Proto)', 'seven'], 'USA', 'EN'),
         await buildReleaseCandidatesWithRegionLanguage(['eight (Sample)', 'eight'], 'USA', 'EN'),
         await buildReleaseCandidatesWithRegionLanguage(['nine (Test)', 'nine'], 'USA', 'EN'),
-      ], ['one (USA) (EN)', 'two (USA) (EN)', 'three (USA) (EN)', 'four (USA) (EN)', 'five (USA) (EN)', 'six (USA) (EN)', 'seven (USA) (EN)', 'eight (USA) (EN)', 'nine (USA) (EN)']);
+        await buildReleaseCandidatesWithRegionLanguage(['ten (Debug)', 'ten'], 'USA', 'EN'),
+      ], ['one (USA) (EN)', 'two (USA) (EN)', 'three (USA) (EN)', 'four (USA) (EN)', 'five (USA) (EN)', 'six (USA) (EN)', 'seven (USA) (EN)', 'eight (USA) (EN)', 'nine (USA) (EN)', 'ten (USA) (EN)']);
     });
 
     it('should return the first candidate when all matching', async () => {
       await expectPreferredCandidates({ preferRetail: true, single: true }, [
-        await buildReleaseCandidatesWithRegionLanguage(['one (Aftermarket)', 'one'], 'USA', 'EN'),
-        await buildReleaseCandidatesWithRegionLanguage(['two [b]', 'two'], 'USA', 'EN'),
-        await buildReleaseCandidatesWithRegionLanguage(['three (Beta)', 'three (Proto)', 'three'], 'USA', 'EN'),
-        await buildReleaseCandidatesWithRegionLanguage(['four (Demo)', 'four', 'four (Sample)'], 'USA', 'EN'),
-        await buildReleaseCandidatesWithRegionLanguage(['five (Homebrew)', 'five'], 'USA', 'EN'),
-        await buildReleaseCandidatesWithRegionLanguage(['six (Proto)', 'six'], 'USA', 'EN'),
-        await buildReleaseCandidatesWithRegionLanguage(['seven (Sample)', 'seven'], 'USA', 'EN'),
-        await buildReleaseCandidatesWithRegionLanguage(['eight (Test)', 'eight'], 'USA', 'EN'),
-      ], ['one (USA) (EN)', 'two (USA) (EN)', 'three (USA) (EN)', 'four (USA) (EN)', 'five (USA) (EN)', 'six (USA) (EN)', 'seven (USA) (EN)', 'eight (USA) (EN)']);
+        await buildReleaseCandidatesWithRegionLanguage(['two (Aftermarket)', 'two'], 'USA', 'EN'),
+        await buildReleaseCandidatesWithRegionLanguage(['three [b]', 'three'], 'USA', 'EN'),
+        await buildReleaseCandidatesWithRegionLanguage(['four (Beta)', 'four (Proto)', 'four'], 'USA', 'EN'),
+        await buildReleaseCandidatesWithRegionLanguage(['five (Demo)', 'five', 'five (Sample)'], 'USA', 'EN'),
+        await buildReleaseCandidatesWithRegionLanguage(['six (Homebrew)', 'six'], 'USA', 'EN'),
+        await buildReleaseCandidatesWithRegionLanguage(['seven (Proto)', 'seven'], 'USA', 'EN'),
+        await buildReleaseCandidatesWithRegionLanguage(['eight (Sample)', 'eight'], 'USA', 'EN'),
+        await buildReleaseCandidatesWithRegionLanguage(['nine (Test)', 'nine'], 'USA', 'EN'),
+        await buildReleaseCandidatesWithRegionLanguage(['ten (Debug)', 'ten'], 'USA', 'EN'),
+      ], ['two (USA) (EN)', 'three (USA) (EN)', 'four (USA) (EN)', 'five (USA) (EN)', 'six (USA) (EN)', 'seven (USA) (EN)', 'eight (USA) (EN)', 'nine (USA) (EN)', 'ten (USA) (EN)']);
     });
   });
 
