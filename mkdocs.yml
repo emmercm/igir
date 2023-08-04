@@ -39,7 +39,6 @@ theme:
     - navigation.tabs.sticky
     - navigation.indexes
     - navigation.sections
-    - navigation.expand
     - navigation.instant
     - navigation.footer
     - toc.follow
@@ -69,9 +68,9 @@ nav:
               - usage/hardware/mister.md
           - usage/personal.md
       - File Inputs:
-          - file-scanning.md
-          - dats.md
-          - archives.md
+          - input/file-scanning.md
+          - input/dats.md
+          - input/archives.md
       - ROM Processing:
           - rom-filtering.md
           - rom-headers.md
@@ -95,7 +94,10 @@ plugins:
       enable_creation_date: true
   - redirects:
       redirect_maps:
+        'archives.md': 'input/archives.md'
+        'dats.md': 'input/dats.md'
         'examples.md': 'usage/collection-sorting.md'
+        'file-scanning.md': 'input/file-scanning.md'
         'reporting.md': 'output/reporting.md'
   #- htmlproofer:
   #    raise_error_excludes:

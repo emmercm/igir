@@ -6,7 +6,7 @@ They are processed in this order:
 
 1. Any [filters](#filters) (e.g. `--language-filter`, `--region-filter`)
 2. Any priorities (e.g. `--prefer-good`, `--prefer-revision-newer`)
-3. If `--single` is specified, only the highest priority game from a set of parent/clones (see [docs](dats.md#parentclone-pc)) is returned
+3. If `--single` is specified, only the highest priority game from a set of parent/clones (see [docs](input/dats.md#parentclone-pc)) is returned
 
 ## Filters
 

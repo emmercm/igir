@@ -8,7 +8,7 @@ A walkthrough of an example way to sort your ROM collection.
 
 ## First time collection sort
 
-First, you need to download a set of [DATs](../dats.md). For these examples I'll assume you downloaded a No-Intro daily P/C XML `.zip`.
+First, you need to download a set of [DATs](../input/dats.md). For these examples I'll assume you downloaded a No-Intro daily P/C XML `.zip`.
 
 Let's say that you have a directory named `ROMs/` that contains ROMs for many different systems, and it needs some organization. To make sure we're alright with the output, we'll have `igir` copy these files rather than move them. We'll also zip them to reduce disk space & speed up future scans.
 
