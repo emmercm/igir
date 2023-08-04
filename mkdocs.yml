@@ -69,6 +69,9 @@ nav:
               - usage/hardware/analogue-pocket.md
               - usage/hardware/everdrive.md
               - usage/hardware/mister.md
+          - Specific Consoles:
+              - usage/console/gamecube.md
+              - usage/console/ps2.md
           - usage/personal.md
       - File Inputs:
           - input/file-scanning.md
