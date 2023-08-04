@@ -228,6 +228,12 @@ export default class ArgumentsParser {
         type: 'boolean',
         implies: 'dat',
       })
+      .option('dir-dat-description', {
+        group: groupRomOutput,
+        description: 'Use the DAT description as the output subdirectory',
+        type: 'boolean',
+        implies: 'dat',
+      })
       .option('dir-letter', {
         group: groupRomOutput,
         description: 'Append the first letter of the ROM name as an output subdirectory',
@@ -526,6 +532,7 @@ Advanced usage:
 
   Tokens that are replaced when generating the output (--output) path of a ROM:
     {datName}             The name of the DAT that contains the ROM (e.g. "Nintendo - Game Boy")
+    {datDescription}      The description of the DAT that contains the ROM
     {datReleaseRegion}    The region of the ROM release (e.g. "USA"), each ROM can have multiple
     {datReleaseLanguage}  The language of the ROM release (e.g. "En"), each ROM can have multiple
     {gameType}            The type of the game (e.g. "Retail", "Demo", "Prototype")

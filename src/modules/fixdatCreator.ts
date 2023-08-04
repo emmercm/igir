@@ -56,8 +56,8 @@ export default class FixdatCreator extends Module {
     // Construct a new DAT header
     const date = moment().format('YYYYMMDD-HHmmss');
     const header = new Header({
-      name: `${originalDat.getHeader().getName()} fixdat`,
-      description: `${originalDat.getHeader().getDescription()} fixdat`,
+      name: `${originalDat.getHeader().getName()} fixdat`.trim(),
+      description: `${originalDat.getHeader().getDescription()} fixdat`.trim(),
       version: date,
       date,
       author: Constants.AUTHOR,
