@@ -4,13 +4,13 @@ When specifying a ROM [writing command](../commands.md) you have to specify an `
 
 For example, if you want to group all ROMs based on their region, you would specify:
 
-=== "Windows"
+=== ":simple-windowsxp: Windows"
 
     ```batch
     igir.exe copy extract --dat *.dat --input ROMs/ --output "ROMs-Sorted/{datReleaseRegion}/"
     ```
 
-=== "macOS"
+=== ":simple-apple: macOS"
 
     ```shell
     igir copy extract --dat *.dat --input ROMs/ --output "ROMs-Sorted/{datReleaseRegion}/"

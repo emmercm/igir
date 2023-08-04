@@ -129,6 +129,11 @@ markdown_extensions:
       alternate_style: true
   # https://github.com/mkdocs/mkdocs/issues/545: allow two-space indented lists
   - mdx_truly_sane_lists
+  # https://squidfunk.github.io/mkdocs-material/reference/icons-emojis/
+  - attr_list
+  - pymdownx.emoji:
+      emoji_index: !!python/name:materialx.emoji.twemoji
+      emoji_generator: !!python/name:materialx.emoji.to_svg
 
 extra:
   analytics:

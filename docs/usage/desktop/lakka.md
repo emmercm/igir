@@ -6,7 +6,7 @@
 
 Because Lakka uses RetroArch under the hood, the instructions are generally the [same as RetroArch](retroarch.md). By default, the [Lakka BIOS directory](https://www.lakka.tv/doc/Accessing-Lakka-filesystem/) is `/storage/system`:
 
-=== "Lakka (Linux)"
+=== ":simple-linux: Lakka (Linux)"
 
     You can copy ROMs from a USB drive named "USB-Drive" like this:
 
@@ -21,7 +21,7 @@ Because Lakka uses RetroArch under the hood, the instructions are generally the 
 
 Lakka has a `roms` folder at `/storage/roms` that is used by default:
 
-=== "Lakka (Linux)"
+=== ":simple-linux: Lakka (Linux)"
 
     You can copy ROMs from a USB drive named "USB-Drive" like this:
 

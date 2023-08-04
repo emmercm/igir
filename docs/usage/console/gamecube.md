@@ -10,7 +10,7 @@
 
 `igir` has a `--writer-threads` option to limit the number of files being written at once. You can use the option like this:
 
-=== "Windows"
+=== ":simple-windowsxp: Windows"
 
     Replace the `E:\` drive letter with wherever your SD card is:
 
@@ -23,7 +23,7 @@
       --writer-threads 1
     ```
 
-=== "macOS"
+=== ":simple-apple: macOS"
 
     Replace the `/Volumes/SD2SP2` drive name with whatever your SD card is named:
 

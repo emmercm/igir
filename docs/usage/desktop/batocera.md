@@ -6,7 +6,7 @@
 
 Because Batocera uses RetroArch under the hood, the instructions are generally the [same as RetroArch](retroarch.md). By default, the [Batocera BIOS directory](https://wiki.batocera.org/add_games_bios#adding_bios_files) is `/userdata/bios`:
 
-=== "Batocera (Linux)"
+=== ":simple-linux: Batocera (Linux)"
 
     You can copy BIOS files from a USB drive named "USB-Drive" like this:
 
@@ -21,7 +21,7 @@ Because Batocera uses RetroArch under the hood, the instructions are generally t
 
 Batocera has a `roms` folder in the "userdata partition" at `/userdata/roms` that is used by default:
 
-=== "Batocera (Linux)"
+=== ":simple-linux: Batocera (Linux)"
 
     You can copy ROMs from a USB drive named "USB-Drive" like this:
 

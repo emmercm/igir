@@ -6,7 +6,7 @@
 
 Because Recalbox uses RetroArch under the hood, the instructions are generally the [same as RetroArch](retroarch.md). By default, the [Recalbox BIOS directory](https://wiki.recalbox.com/en/basic-usage/file-management#adding-bios) is `/recalbox/share/bios`:
 
-=== "Recalbox (Linux)"
+=== ":simple-linux: Recalbox (Linux)"
 
     You can copy ROMs from a USB drive named "USB-Drive" like this:
 
@@ -21,7 +21,7 @@ Because Recalbox uses RetroArch under the hood, the instructions are generally t
 
 Recalbox has a `roms` folder at `/recalbox/share/roms` that is used by default:
 
-=== "Recalbox (Linux)"
+=== ":simple-linux: Recalbox (Linux)"
 
     You can copy ROMs from a USB drive named "USB-Drive" like this:
 

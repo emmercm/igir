@@ -1,6 +1,8 @@
 # Installation
 
-A few different installation options are offered for `igir`.
+`igir` is supported on :simple-windowsxp: Windows, :simple-apple: macOS, :simple-linux: Linux, and every other operating system that [Node.js](https://nodejs.org) supports.
+
+There are a few different installation options offered for `igir` with varying levels of technical complexity. Every option will require some baseline understanding of command-line interfaces (CLIs).
 
 ## Via Node.js
 
