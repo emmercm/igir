@@ -42,6 +42,7 @@ export interface OptionsProps {
   readonly output?: string,
   readonly dirMirror?: boolean,
   readonly dirDatName?: boolean,
+  readonly dirDatDescription?: boolean,
   readonly dirLetter?: boolean,
   readonly dirLetterLimit?: number,
   readonly overwrite?: boolean,
@@ -131,6 +132,8 @@ export default class Options implements OptionsProps {
   readonly dirMirror: boolean;
 
   readonly dirDatName: boolean;
+
+  readonly dirDatDescription: boolean;
 
   readonly dirLetter: boolean;
 
@@ -256,6 +259,7 @@ export default class Options implements OptionsProps {
     this.output = options?.output ?? '';
     this.dirMirror = options?.dirMirror ?? false;
     this.dirDatName = options?.dirDatName ?? false;
+    this.dirDatDescription = options?.dirDatDescription ?? false;
     this.dirLetter = options?.dirLetter ?? false;
     this.dirLetterLimit = options?.dirLetterLimit ?? 0;
     this.overwrite = options?.overwrite ?? false;
@@ -681,6 +685,9 @@ export default class Options implements OptionsProps {
     if (this.getDirDatName() && dat.getNameShort()) {
       output = path.join(output, dat.getNameShort());
     }
+    if (this.getDirDatDescription() && dat.getDescription()) {
+      output = path.join(output, dat.getDescription() as string);
+    }
 
     const dirLetter = this.getDirLetterParsed(romFilenameSanitized, romBasenames);
     if (dirLetter) {
@@ -850,6 +857,10 @@ export default class Options implements OptionsProps {
 
   getDirDatName(): boolean {
     return this.dirDatName;
+  }
+
+  getDirDatDescription(): boolean {
+    return this.dirDatDescription;
   }
 
   getDirLetter(): boolean {

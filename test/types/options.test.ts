@@ -182,10 +182,17 @@ describe('getOutputFileParsed', () => {
   });
 
   it('should respect "--dir-dat-name"', () => {
-    const dat = new DAT(new Header({ name: 'system' }), []);
+    const dat = new DAT(new Header({ name: 'name', description: 'description' }), []);
     expect(new Options({ commands: ['copy'], output: os.devNull, dirDatName: true }).getOutputFileParsed(dummyDat, dummyInputRomPath, dummyGame, dummyRelease, dummyRomFilename)).toEqual(os.devNull);
-    expect(new Options({ commands: ['copy'], output: os.devNull, dirDatName: true }).getOutputFileParsed(dat, dummyInputRomPath, dummyGame, dummyRelease, dummyRomFilename)).toEqual(path.join(os.devNull, 'system'));
+    expect(new Options({ commands: ['copy'], output: os.devNull, dirDatName: true }).getOutputFileParsed(dat, dummyInputRomPath, dummyGame, dummyRelease, dummyRomFilename)).toEqual(path.join(os.devNull, 'name'));
     expect(new Options({ commands: ['copy'], output: os.devNull, dirDatName: false }).getOutputFileParsed(dat, dummyInputRomPath, dummyGame, dummyRelease, dummyRomFilename)).toEqual(os.devNull);
+  });
+
+  it('should respect "--dir-dat-description"', () => {
+    const dat = new DAT(new Header({ name: 'name', description: 'description' }), []);
+    expect(new Options({ commands: ['copy'], output: os.devNull, dirDatDescription: true }).getOutputFileParsed(dummyDat, dummyInputRomPath, dummyGame, dummyRelease, dummyRomFilename)).toEqual(os.devNull);
+    expect(new Options({ commands: ['copy'], output: os.devNull, dirDatDescription: true }).getOutputFileParsed(dat, dummyInputRomPath, dummyGame, dummyRelease, dummyRomFilename)).toEqual(path.join(os.devNull, 'description'));
+    expect(new Options({ commands: ['copy'], output: os.devNull, dirDatDescription: false }).getOutputFileParsed(dat, dummyInputRomPath, dummyGame, dummyRelease, dummyRomFilename)).toEqual(os.devNull);
   });
 
   it('should respect "--dir-letter"', () => {

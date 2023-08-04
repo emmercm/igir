@@ -228,6 +228,12 @@ export default class ArgumentsParser {
         type: 'boolean',
         implies: 'dat',
       })
+      .option('dir-dat-description', {
+        group: groupRomOutput,
+        description: 'Use the DAT description as the output subdirectory',
+        type: 'boolean',
+        implies: 'dat',
+      })
       .option('dir-letter', {
         group: groupRomOutput,
         description: 'Append the first letter of the ROM name as an output subdirectory',
