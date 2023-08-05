@@ -105,6 +105,7 @@ export default class DATParentInferrer extends Module {
       .replace(/\(Pirate[a-z0-9. ]*\)/i, '')
       .replace(/\(Proto[a-z0-9. ]*\)/i, '')
       .replace(/\([^)]*Sample[a-z0-9. ]*\)/i, '')
+      .replace(/\(Spaceworld[a-z0-9. ]*\)/i, '')
       .replace(/\(Test[a-z0-9. ]*\)/i, '')
       .replace(/\(Unl[a-z0-9. ]*\)/i, '')
       .replace(/\(v[0-9.]+[a-z]*\)/i, '')
@@ -128,6 +129,8 @@ export default class DATParentInferrer extends Module {
       .replace(/\(SGB Enhanced\)/i, '')
       // Nintendo - Game Boy Color
       .replace(/\(GB Compatible\)/i, '')
+      // Nintendo - GameCube
+      .replace(/\(GameCube\)/i, '')
       // Sega - Sega/Mega CD
       .replace(/\(RE-?[0-9]*\)/, '')
       // Sony - PlayStation 1
