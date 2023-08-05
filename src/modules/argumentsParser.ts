@@ -420,7 +420,6 @@ export default class ArgumentsParser {
         alias: 's',
         description: 'Output only a single game per parent (1G1R) (required for all options below, requires --dat with parent/clone information)',
         type: 'boolean',
-        implies: 'dat',
       })
       .option('prefer-verified', {
         group: groupRomPriority,
@@ -476,7 +475,7 @@ export default class ArgumentsParser {
         group: groupRomPriority,
         description: 'Prefer parent ROMs over clones',
         type: 'boolean',
-        implies: ['dat', 'single'],
+        implies: 'single',
       })
 
       .option('report-output', {
