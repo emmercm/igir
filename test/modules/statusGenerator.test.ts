@@ -222,7 +222,7 @@ dat,game with single rom,MISSING,,false,false,true,false,false,false,false,false
 dat,no roms,FOUND,,false,false,true,false,false,false,false,false,false,false,false,false,false`);
     });
 
-    // TODO(cemmer): this is wrong, it's reporting the BIOS when noBios:true.
+    // NOTE(cemmer): the BIOS game shows here because DATFilter is never run, and this is fine
     it('should not report BIOSes when noBios:true', async () => {
       const options = new Options({ noBios: true });
       const datStatus = await new StatusGenerator(options, new ProgressBarFake())
@@ -244,7 +244,7 @@ dat,no roms,FOUND,,false,false,true,false,false,false,false,false,false,false,fa
 dat,bios,MISSING,,false,true,true,false,false,false,false,false,false,false,false,false,false`);
     });
 
-    // TODO(cemmer): this is wrong, it's reporting the device when noDevice:true.
+    // NOTE(cemmer): the device game shows here because DATFilter is never run, and this is fine
     it('should not report devices when noDevice:true', async () => {
       const options = new Options({ ...defaultOptions, noDevice: true });
       const datStatus = await new StatusGenerator(options, new ProgressBarFake())
