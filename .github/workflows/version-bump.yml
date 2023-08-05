@@ -58,6 +58,8 @@ jobs:
       - id: create-pull-request
         uses: peter-evans/create-pull-request@v5
         with:
+          # GitHub won't run workflows off of events from the `github-actions` user
+          # But also, I want the PR to be created under my name for cosmetic reasons
           token: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
           author: ${{ steps.bump-and-commit.outputs.USER_NAME }} <${{ steps.bump-and-commit.outputs.USER_EMAIL }}>
           branch: ${{ github.actor }}/${{ steps.bump-and-commit.outputs.PACKAGE_VERSION }}

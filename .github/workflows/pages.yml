@@ -41,7 +41,7 @@ jobs:
 
   # !!! This check should be required by GitHub !!!
   pages-status-check:
-    if: always()
+    if: github.event_name == 'pull_request'
     needs:
       - markdown-lint
       - mkdocs-build
@@ -58,6 +58,9 @@ jobs:
       contents: write
     steps:
       - uses: actions/checkout@v3
+        with:
+          # the `git-revision-date-localized` plugin needs full history to find page creation date
+          fetch-depth: 0
       - uses: actions/setup-python@v4
         with:
           python-version: 3.x

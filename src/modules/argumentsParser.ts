@@ -228,6 +228,12 @@ export default class ArgumentsParser {
         type: 'boolean',
         implies: 'dat',
       })
+      .option('dir-dat-description', {
+        group: groupRomOutput,
+        description: 'Use the DAT description as the output subdirectory',
+        type: 'boolean',
+        implies: 'dat',
+      })
       .option('dir-letter', {
         group: groupRomOutput,
         description: 'Append the first letter of the ROM name as an output subdirectory',
@@ -390,6 +396,7 @@ export default class ArgumentsParser {
         type: 'boolean',
       });
     [
+      ['debug', 'debug ROMs'],
       ['demo', 'demo ROMs'],
       ['beta', 'beta ROMs'],
       ['sample', 'sample ROMs'],
@@ -471,6 +478,20 @@ export default class ArgumentsParser {
         type: 'boolean',
         implies: 'single',
       })
+      .option('prefer-ntsc', {
+        group: groupRomPriority,
+        description: 'Prefer NTSC ROMs over others',
+        type: 'boolean',
+        conflicts: 'prefer-pal',
+        implies: 'single',
+      })
+      .option('prefer-pal', {
+        group: groupRomPriority,
+        description: 'Prefer PAL ROMs over others',
+        type: 'boolean',
+        conflicts: 'prefer-ntsc',
+        implies: 'single',
+      })
       .option('prefer-parent', {
         group: groupRomPriority,
         description: 'Prefer parent ROMs over clones',
@@ -525,6 +546,7 @@ Advanced usage:
 
   Tokens that are replaced when generating the output (--output) path of a ROM:
     {datName}             The name of the DAT that contains the ROM (e.g. "Nintendo - Game Boy")
+    {datDescription}      The description of the DAT that contains the ROM
     {datReleaseRegion}    The region of the ROM release (e.g. "USA"), each ROM can have multiple
     {datReleaseLanguage}  The language of the ROM release (e.g. "En"), each ROM can have multiple
     {gameType}            The type of the game (e.g. "Retail", "Demo", "Prototype")

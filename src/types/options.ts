@@ -42,6 +42,7 @@ export interface OptionsProps {
   readonly output?: string,
   readonly dirMirror?: boolean,
   readonly dirDatName?: boolean,
+  readonly dirDatDescription?: boolean,
   readonly dirLetter?: boolean,
   readonly dirLetterLimit?: number,
   readonly overwrite?: boolean,
@@ -67,6 +68,8 @@ export interface OptionsProps {
   readonly noUnlicensed?: boolean,
   readonly onlyUnlicensed?: boolean,
   readonly onlyRetail?: boolean,
+  readonly noDebug?: boolean,
+  readonly onlyDebug?: boolean,
   readonly noDemo?: boolean,
   readonly onlyDemo?: boolean,
   readonly noBeta?: boolean,
@@ -94,6 +97,8 @@ export interface OptionsProps {
   readonly preferRevisionNewer?: boolean,
   readonly preferRevisionOlder?: boolean,
   readonly preferRetail?: boolean,
+  readonly preferNTSC?: boolean,
+  readonly preferPAL?: boolean,
   readonly preferParent?: boolean,
 
   readonly reportOutput?: string,
@@ -131,6 +136,8 @@ export default class Options implements OptionsProps {
   readonly dirMirror: boolean;
 
   readonly dirDatName: boolean;
+
+  readonly dirDatDescription: boolean;
 
   readonly dirLetter: boolean;
 
@@ -173,6 +180,10 @@ export default class Options implements OptionsProps {
   readonly onlyUnlicensed: boolean;
 
   readonly onlyRetail: boolean;
+
+  readonly noDebug: boolean;
+
+  readonly onlyDebug: boolean;
 
   readonly noDemo: boolean;
 
@@ -226,6 +237,12 @@ export default class Options implements OptionsProps {
 
   readonly preferRetail: boolean;
 
+  @Expose({ name: 'preferNtsc' })
+  readonly preferNTSC: boolean;
+
+  @Expose({ name: 'preferPal' })
+  readonly preferPAL: boolean;
+
   readonly preferParent: boolean;
 
   readonly reportOutput: string;
@@ -256,6 +273,7 @@ export default class Options implements OptionsProps {
     this.output = options?.output ?? '';
     this.dirMirror = options?.dirMirror ?? false;
     this.dirDatName = options?.dirDatName ?? false;
+    this.dirDatDescription = options?.dirDatDescription ?? false;
     this.dirLetter = options?.dirLetter ?? false;
     this.dirLetterLimit = options?.dirLetterLimit ?? 0;
     this.overwrite = options?.overwrite ?? false;
@@ -281,6 +299,8 @@ export default class Options implements OptionsProps {
     this.noUnlicensed = options?.noUnlicensed ?? false;
     this.onlyUnlicensed = options?.onlyUnlicensed ?? false;
     this.onlyRetail = options?.onlyRetail ?? false;
+    this.noDebug = options?.noDebug ?? false;
+    this.onlyDebug = options?.onlyDebug ?? false;
     this.noDemo = options?.noDemo ?? false;
     this.onlyDemo = options?.onlyDemo ?? false;
     this.noBeta = options?.noBeta ?? false;
@@ -308,6 +328,8 @@ export default class Options implements OptionsProps {
     this.preferRevisionNewer = options?.preferRevisionNewer ?? false;
     this.preferRevisionOlder = options?.preferRevisionOlder ?? false;
     this.preferRetail = options?.preferRetail ?? false;
+    this.preferNTSC = options?.preferNTSC ?? false;
+    this.preferPAL = options?.preferPAL ?? false;
     this.preferParent = options?.preferParent ?? false;
 
     this.reportOutput = options?.reportOutput ?? '';
@@ -681,6 +703,9 @@ export default class Options implements OptionsProps {
     if (this.getDirDatName() && dat.getNameShort()) {
       output = path.join(output, dat.getNameShort());
     }
+    if (this.getDirDatDescription() && dat.getDescription()) {
+      output = path.join(output, dat.getDescription() as string);
+    }
 
     const dirLetter = this.getDirLetterParsed(romFilenameSanitized, romBasenames);
     if (dirLetter) {
@@ -725,7 +750,15 @@ export default class Options implements OptionsProps {
   }
 
   private static replaceDatTokens(input: string, dat: DAT): string {
-    return input.replace('{datName}', dat.getName().replace(/[\\/]/g, '_'));
+    let output = input;
+    output = output.replace('{datName}', dat.getName().replace(/[\\/]/g, '_'));
+
+    const description = dat.getDescription();
+    if (description) {
+      output = output.replace('{datDescription}', description.replace(/[\\/]/g, '_'));
+    }
+
+    return output;
   }
 
   private static replaceGameTokens(input: string, game?: Game): string {
@@ -850,6 +883,10 @@ export default class Options implements OptionsProps {
 
   getDirDatName(): boolean {
     return this.dirDatName;
+  }
+
+  getDirDatDescription(): boolean {
+    return this.dirDatDescription;
   }
 
   getDirLetter(): boolean {
@@ -981,6 +1018,14 @@ export default class Options implements OptionsProps {
     return this.onlyRetail;
   }
 
+  getNoDebug(): boolean {
+    return this.noDebug;
+  }
+
+  getOnlyDebug(): boolean {
+    return this.onlyDebug;
+  }
+
   getNoDemo(): boolean {
     return this.noDemo;
   }
@@ -1083,6 +1128,14 @@ export default class Options implements OptionsProps {
 
   getPreferRetail(): boolean {
     return this.preferRetail;
+  }
+
+  getPreferNTSC(): boolean {
+    return this.preferNTSC;
+  }
+
+  getPreferPAL(): boolean {
+    return this.preferPAL;
   }
 
   getPreferParent(): boolean {

@@ -43,14 +43,17 @@
   platformAutomerge: false, // schedule and automergeSchedule differ, can't use
   prHourlyLimit: 0, // default: disabled
 
-  node: {
-    groupName: 'Node.js',
-    // Global defaults
-    schedule: 'at any time',
-    prCreation: 'immediate',
-    automergeSchedule: 'at any time',
-    platformAutomerge: true,
-  },
+  packageRules: [
+    {
+      matchCategories: ['node',],
+      // Global defaults
+      groupName: 'Node.js',
+      schedule: 'at any time',
+      prCreation: 'immediate',
+      automergeSchedule: 'at any time',
+      platformAutomerge: true,
+    },
+  ],
 
   npm: {
     lockFileMaintenance: {
