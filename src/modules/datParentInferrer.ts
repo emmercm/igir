@@ -77,6 +77,7 @@ export default class DATParentInferrer extends Module {
       .replace(/\(Limited Run Games\)/i, '')
       .replace(/\(Made in [^)]+\)/i, '')
       .replace(/\(Major Wave\)/i, '')
+      .replace(/\((Midway Classics)\)/i, '')
       .replace(/\([^)]*Premium [^)]+\)/i, '')
       .replace(/\([^)]*Preview Disc\)/i, '')
       .replace(/\(Recalled\)/i, '')
@@ -102,6 +103,7 @@ export default class DATParentInferrer extends Module {
       .replace(/\(Hack\)/i, '')
       .replace(/\(Homebrew[a-z0-9. ]*\)/i, '')
       .replace(/\(Not for Resale\)/i, '')
+      .replace(/\(PD\)/i, '') // "public domain"
       .replace(/\(Pirate[a-z0-9. ]*\)/i, '')
       .replace(/\(Proto[a-z0-9. ]*\)/i, '')
       .replace(/\([^)]*Sample[a-z0-9. ]*\)/i, '')
@@ -124,9 +126,10 @@ export default class DATParentInferrer extends Module {
       .replace(/\[t[0-9]*\]/, '')
       .replace(/\[T[+-][^\]]+\]/, '')
       .replace(/\[x\]/, '')
-      // TOSEC
+      // ***** TOSEC *****
       .replace(/\((demo|demo-kiosk|demo-playable|demo-rolling|demo-slideshow)\)/, '') // demo
       .replace(/\((CGA|EGA|HGC|MCGA|MDA|NTSC|NTSC-PAL|PAL|PAL-60|PAL-NTSC|SVGA|VGA|XGA)\)/i, '') // video
+      .replace(/\(M[0-9]+\)/, '') // language
       .replace(/\((CW|CW-R|FW|GW|GW-R|LW|PD|SW|SW-R)\)/i, '') // copyright
       .replace(/\((alpha|beta|preview|pre-release|proto)\)/i, '') // development
       .replace(/(\[(cr|f|h|m|p|t|tr|o|u|v|b|a|!)( [a-z0-9.+ -]+)?\])+/i, '')
@@ -137,6 +140,10 @@ export default class DATParentInferrer extends Module {
       .replace(/\(GB Compatible\)/i, '')
       // Nintendo - GameCube
       .replace(/\(GameCube\)/i, '')
+      // Nintendo - Super Nintendo Entertainment System
+      .replace(/\(NP\)/i, '') // "Nintendo Power"
+      // Sega - Mega Drive / Genesis
+      .replace(/\(MP\)/i, '') // "MegaPlay version"
       // Sega - Sega/Mega CD
       .replace(/\(RE-?[0-9]*\)/, '')
       // Sony - PlayStation 1
