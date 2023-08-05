@@ -65,8 +65,6 @@ const parentsToReleaseCandidatesWithoutFiles = new Map(games.map((game) => ([
   [] as ReleaseCandidate[], // no candidates
 ])));
 
-// TODO(cemmer): this should filter the candidates before generating statuses
-
 async function populateReleaseCandidates(
   parentNames: string[],
 ): Promise<Map<Parent, ReleaseCandidate[]>> {
