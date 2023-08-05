@@ -200,6 +200,7 @@ export default class DATStatus {
         'BIOS',
         'Retail Release',
         'Unlicensed',
+        'Debug',
         'Demo',
         'Beta',
         'Sample',
