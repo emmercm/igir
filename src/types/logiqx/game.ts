@@ -210,7 +210,7 @@ export default class Game implements GameProps {
   }
 
   isDemo(): boolean {
-    return this.name.match(/\(Demo[a-z0-9. ]*\)/i) !== null;
+    return this.name.match(/\(Demo[a-z0-9. -]*\)/i) !== null;
   }
 
   isFixed(): boolean {

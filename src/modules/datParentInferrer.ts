@@ -56,10 +56,10 @@ export default class DATParentInferrer extends Module {
   private static stripGameRegionAndLanguage(name: string): string {
     return name
       // ***** Regions *****
-      .replace(new RegExp(`\\(((${Internationalization.REGION_CODES.join('|')}),? ?)+\\)`, 'i'), '')
-      .replace(new RegExp(`\\(((${Internationalization.REGION_NAMES.join('|')}),? ?)+\\)`, 'i'), '')
+      .replace(new RegExp(`\\(((${Internationalization.REGION_CODES.join('|')})[,+-]? ?)+\\)`, 'i'), '')
+      .replace(new RegExp(`\\(((${Internationalization.REGION_NAMES.join('|')})[,+-]? ?)+\\)`, 'i'), '')
       // ***** Languages *****
-      .replace(new RegExp(`\\(((${Internationalization.LANGUAGES.join('|')}),? ?)+\\)`, 'i'), '')
+      .replace(new RegExp(`\\(((${Internationalization.LANGUAGES.join('|')})[,+-]? ?)+\\)`, 'i'), '')
       // ***** Cleanup *****
       .replace(/  +/g, ' ')
       .trim();
@@ -98,7 +98,7 @@ export default class DATParentInferrer extends Module {
       .replace(/\(Build [a-z0-9. ]+\)/i, '')
       .replace(/\(Bung\)/i, '')
       .replace(/\(Debug\)/i, '')
-      .replace(/\(Demo[a-z0-9. ]*\)|\([^)]*Taikenban[^)]*\)/i, '') // "trial"
+      .replace(/\(Demo[a-z0-9. -]*\)|\([^)]*Taikenban[^)]*\)/i, '') // "trial"
       .replace(/\(Hack\)/i, '')
       .replace(/\(Homebrew[a-z0-9. ]*\)/i, '')
       .replace(/\(Not for Resale\)/i, '')
@@ -124,6 +124,12 @@ export default class DATParentInferrer extends Module {
       .replace(/\[t[0-9]*\]/, '')
       .replace(/\[T[+-][^\]]+\]/, '')
       .replace(/\[x\]/, '')
+      // TOSEC
+      .replace(/\((demo|demo-kiosk|demo-playable|demo-rolling|demo-slideshow)\)/, '') // demo
+      .replace(/\((CGA|EGA|HGC|MCGA|MDA|NTSC|NTSC-PAL|PAL|PAL-60|PAL-NTSC|SVGA|VGA|XGA)\)/i, '') // video
+      .replace(/\((CW|CW-R|FW|GW|GW-R|LW|PD|SW|SW-R)\)/i, '') // copyright
+      .replace(/\((alpha|beta|preview|pre-release|proto)\)/i, '') // development
+      .replace(/(\[(cr|f|h|m|p|t|tr|o|u|v|b|a|!)( [a-z0-9.+ -]+)?\])+/i, '')
       // ***** Console-specific *****
       // Nintendo - Game Boy
       .replace(/\(SGB Enhanced\)/i, '')

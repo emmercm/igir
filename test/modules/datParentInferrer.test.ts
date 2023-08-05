@@ -66,7 +66,45 @@ test.each([
     'Doom 3 (USA, Asia)',
     'Doom 3 (USA, Asia) (Limited Collector\'s Edition)',
   ], 'Doom 3 (Europe) (En,Fr,Es,It)'],
-])('should group similar games', async (gameNames, expectedGameName) => {
+  // https://www.tosecdev.org/tosec-naming-convention
+  [[
+    'Legend of TOSEC, The (1986)(Devstudio)(PAL)',
+    'Legend of TOSEC, The (1986)(Devstudio)(NTSC)',
+  ], 'Legend of TOSEC, The (1986)(Devstudio)(PAL)'],
+  [[
+    'Legend of TOSEC, The (1986)(Devstudio)(de)',
+    'Legend of TOSEC, The (1986)(Devstudio)(pt)',
+    'Legend of TOSEC, The (1986)(Devstudio)(de-fr)',
+  ], 'Legend of TOSEC, The (1986)(Devstudio)(de)'],
+  [[
+    'Legend of TOSEC, The (1986)(Devstudio)(PD)',
+    'Legend of TOSEC, The (1986)(Devstudio)(FR)(SW)',
+  ], 'Legend of TOSEC, The (1986)(Devstudio)(PD)'],
+  [[
+    'Legend of TOSEC, The (1986)(Devstudio)(US)',
+    'Legend of TOSEC, The (1986)(Devstudio)(US)(beta)',
+    'Legend of TOSEC, The (1986)(Devstudio)(US)(proto)',
+  ], 'Legend of TOSEC, The (1986)(Devstudio)(US)'],
+  [[
+    'Legend of TOSEC, The (1986)(Devstudio)(US)',
+    'Legend of TOSEC, The (1986)(Devstudio)(US)[a]',
+    'Legend of TOSEC, The (1986)(Devstudio)(US)[b]',
+    'Legend of TOSEC, The (1986)(Devstudio)(US)[f]',
+    'Legend of TOSEC, The (1986)(Devstudio)(US)[f NTSC]',
+    'Legend of TOSEC, The (1986)(Devstudio)(US)[u]',
+    'Legend of TOSEC, The (1986)(Devstudio)(US)[cr]',
+    'Legend of TOSEC, The (1986)(Devstudio)(US)[tr fr]',
+    'Legend of TOSEC, The (1986)(Devstudio)(US)[tr de-partial someguy]',
+    'Legend of TOSEC, The (1986)(Devstudio)(US)[h Fairlight]',
+    'Legend of TOSEC, The (1986)(Devstudio)(US)[m save game]',
+    'Legend of TOSEC, The (1986)(Devstudio)(US)[o]',
+  ], 'Legend of TOSEC, The (1986)(Devstudio)(US)'],
+  [[
+    'Legend of TOSEC, The (1986)(Devstudio)(US)',
+    'Legend of TOSEC, The (1986)(Devstudio)(US)[cr PDX][h TRSi]',
+    'Legend of TOSEC, The (1986)(Devstudio)(US)[h PDX - TRSi]',
+  ], 'Legend of TOSEC, The (1986)(Devstudio)(US)'],
+])('should group similar games: %s', async (gameNames, expectedGameName) => {
   const ungroupedDat = buildDat(gameNames);
   const groupedDat = await new DATParentInferrer(new ProgressBarFake()).infer(ungroupedDat);
   expect(groupedDat.getParents()).toHaveLength(1);
