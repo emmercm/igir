@@ -23,7 +23,7 @@ jobs:
   release:
     runs-on: ubuntu-latest
     env:
-      ref: ${{ inputs.ref || github.ref || github.sha }}
+      ref: ${{ inputs.ref || github.sha || github.ref }}
     steps:
       - uses: actions/checkout@v3
         with:
