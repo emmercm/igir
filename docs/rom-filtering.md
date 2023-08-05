@@ -1,16 +1,12 @@
-# ROM Filtering
+# ROM Filtering & Preference
 
-`igir` offers many options for filtering as well as 1G1R priority (combined with `--single`).
+`igir` offers many options for filtering as well as 1G1R preferences/priorities (when combined with the `--single` option).
 
-They are processed in this order:
-
-1. Any [filters](#filters) (e.g. `--language-filter`, `--region-filter`)
-2. Any priorities (e.g. `--prefer-good`, `--prefer-revision-newer`)
-3. If `--single` is specified, only the highest priority game from a set of parent/clones (see [docs](input/dats.md#parentclone-pc)) is returned
+ROM filters cut down the list of games desired for a set, and any games filtered out will not appear in [reports](output/reporting.md). ROM preferences decide what duplicates to eliminate (1G1R).
 
 ## Filters
 
-`igir` supports the following filters:
+Multiple filter options can be specified at once.
 
 ### Language filter
 
@@ -18,7 +14,7 @@ They are processed in this order:
 --language-filter [languages..]
 ```
 
-Languages are two-letter codes, and you can specify multiple languages with commas between them. See the `--help` message for the full list of understood languages.
+Languages are two-letter codes, and multiple languages can be specified with commas between them. See the `--help` message for the full list of understood languages.
 
 If a game does not have language information specified, it will be inferred from the region.
 
@@ -272,13 +268,23 @@ GB-Wordyl (World) (Aftermarket) (Homebrew)
 --no-unverified, --only-unverified
 ```
 
-Filter out, or only include games that do _not_ contain `[!]` in their name, e.g.:
+Only include, or filter out games that contain `[!]` in their name.
+
+For example, `--no-unverified` would filter out the following:
 
 ```text
 Getaway, The (U)
 Gex - Enter the Gecko (U) [C][b1]
 Golf (W) [o1]
 Grand Theft Auto (E) (M5) [C][t1]
+```
+
+and `--only-unverified` would filter out the following:
+
+```text
+Kirby & The Amazing Mirror (U) [!]
+Legend of Zelda, The - A Link To The Past with Four Swords (E) (M5) [!]
+Mario & Luigi - Superstar Saga (U) [!]
 ```
 
 !!! warning
@@ -305,3 +311,105 @@ as well as games that contain `[c]` or `[x]` and are _not_ verified dumps (above
 Brian Lara Cricket 96 (E) [a1][x]
 Micro Machines Military - It's a Blast! (E) [x]
 ```
+
+## Preferences (for 1G1R)
+
+The `--single` option is required for all `--prefer-*` options, otherwise there would be no effect.
+
+Multiple `--prefer-*` options can be specified at once, and they will be applied in the following order of importance (most to least).
+
+### Prefer verified
+
+```text
+--prefer-verified
+```
+
+Prefer games that contain `[!]` in their name over those that don't.
+
+!!! warning
+
+    This is a [GoodTools](https://emulation.gametechwiki.com/index.php/GoodTools#Good_codes) naming convention, other groups such as [No-Intro](https://no-intro.org/) never include `[!]` in their names!
+
+### Prefer good
+
+```text
+--prefer-good
+```
+
+Prefer games that _don't_ contain `[b]` or `[b#]` in their name over those that do.
+
+See the [bad dumps](#bad-dumps) section for more information about "good" and "bad" ROMs.
+
+### Prefer language
+
+```text
+--prefer-language
+```
+
+Prefer games of certain languages over those in other languages. Multiple languages can be specified, in priority order, with commas between them. See the `--help` message for the full list of understood languages.
+
+If a game does not have language information specified, it will be inferred from the region.
+
+For example, to prefer games in English and _then_ Japanese, the command would be:
+
+```text
+--prefer-language En,Ja
+```
+
+### Prefer region
+
+```text
+--prefer-region
+```
+
+Prefer games from certain regions over those from other regions. Multiple regions can be specified, in priority order, with commas between them. See the `--help` message for the full list of understood regions.
+
+For example, to prefer games from: USA (highest priority), "world," and then Europe, the command would be:
+
+```text
+--prefer-region USA,WORLD,EUR
+```
+
+### Prefer revision
+
+```text
+--prefer-revision-newer, --prefer-revision-older
+```
+
+Prefer newer or older revisions of a game.
+
+Revisions can be numeric:
+
+```text
+Frogger (Europe) (En,Fr,De,Es,It,Nl) (GB Compatible)
+Frogger (USA) (Rev 1) (GB Compatible)
+Frogger (USA) (Rev 2) (GB Compatible)
+```
+
+or alphabetical:
+
+```text
+MSR - Metropolis Street Racer (Europe) (En,Fr,De,Es)
+MSR - Metropolis Street Racer (Europe) (En,Fr,De,Es) (Rev A)
+MSR - Metropolis Street Racer (Europe) (En,Fr,De,Es) (Rev B)
+```
+
+### Prefer retail
+
+```text
+--prefer-retail
+```
+
+Prefer games that are considered "retail" releases over those that aren't.
+
+See the [only retail](#only-retail) section for more information on what games are considered "retail."
+
+### Prefer parent
+
+```text
+--prefer-parent
+```
+
+Prefer games that DATs consider the "parent" of other game clones, over the clones themselves.
+
+It is unlikely you will often use this option, it is more likely other preference options will accomplish what you want.

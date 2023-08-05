@@ -152,4 +152,4 @@ Your flash cart might then look something like this:
 
 !!! info
 
-    See the [ROM filtering](../rom-filtering.md) page for other ways that you can filter your collection.
+    See the [ROM filtering & preference](../rom-filtering.md) page for other ways that you can filter your collection.
