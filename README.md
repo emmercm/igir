@@ -53,10 +53,10 @@ $ igir --help
  ______   ______   ______  _______
 |      \ /      \ |      \|       \
  \$$$$$$|  $$$$$$\ \$$$$$$| $$$$$$$\
-  | $$  | $$ __\$$  | $$  | $$__| $$
   | $$  | $$|    \  | $$  | $$    $$   ROM collection manager
+  | $$  | $$|    \  | $$  | $$    $$   https://igir.io/
   | $$  | $$ \$$$$  | $$  | $$$$$$$\
- _| $$_ | $$__| $$ _| $$_ | $$  | $$   v1.8.2
+ _| $$_ | $$__| $$ _| $$_ | $$  | $$   v1.9.0
 |   $$ \ \$$    $$|   $$ \| $$  | $$
  \$$$$$$  \$$$$$$  \$$$$$$ \$$   \$$
 
@@ -93,18 +93,20 @@ DAT output options:
                                                                                         [boolean]
 
 ROM output options:
-  -o, --output             Path to the ROM output directory (supports replaceable symbols, see be
-                           low)                                                          [string]
-      --dir-mirror         Use the input subdirectory structure for the output directory[boolean]
-  -D, --dir-dat-name       Use the DAT name as the output subdirectory                  [boolean]
-      --dir-letter         Append the first letter of the ROM name as an output subdirectory
+  -o, --output               Path to the ROM output directory (supports replaceable symbols, see
+                             below)                                                      [string]
+      --dir-mirror           Use the input subdirectory structure for the output directory
                                                                                         [boolean]
-      --dir-letter-limit   Limit the number ROMs in letter subdirectories, splitting into multipl
-                           e if necessary                                                [number]
-  -O, --overwrite          Overwrite any files in the output directory                  [boolean]
-      --overwrite-invalid  Overwrite files in the output directory that are the wrong filesize, c
-                           hecksum, or zip contents                                     [boolean]
-  -C, --clean-exclude      Path(s) to files to exclude from cleaning (supports globbing)  [array]
+  -D, --dir-dat-name         Use the DAT name as the output subdirectory                [boolean]
+      --dir-dat-description  Use the DAT description as the output subdirectory         [boolean]
+      --dir-letter           Append the first letter of the ROM name as an output subdirectory
+                                                                                        [boolean]
+      --dir-letter-limit     Limit the number ROMs in letter subdirectories, splitting into multi
+                             ple if necessary                                            [number]
+  -O, --overwrite            Overwrite any files in the output directory                [boolean]
+      --overwrite-invalid    Overwrite files in the output directory that are the wrong filesize,
+                              checksum, or zip contents                                 [boolean]
+  -C, --clean-exclude        Path(s) to files to exclude from cleaning (supports globbing)[array]
 
 ROM zip command options:
   -Z, --zip-exclude   Glob pattern of files to exclude from zipping                      [string]
@@ -134,6 +136,7 @@ ROM filtering options:
       --no-unlicensed         Filter out unlicensed ROMs, opposite of --only-unlicensed [boolean]
       --only-retail           Filter to only retail releases, enabling all the following "no" opt
                               ions                                                      [boolean]
+      --no-debug              Filter out debug ROMs, opposite of --only-debug           [boolean]
       --no-demo               Filter out demo ROMs, opposite of --only-demo             [boolean]
       --no-beta               Filter out beta ROMs, opposite of --only-beta             [boolean]
       --no-sample             Filter out sample ROMs, opposite of --only-sample         [boolean]
@@ -160,6 +163,8 @@ One game, one ROM (1G1R) options:
       --prefer-revision-newer  Prefer newer ROM revisions over older                    [boolean]
       --prefer-revision-older  Prefer older ROM revisions over newer                    [boolean]
       --prefer-retail          Prefer retail releases (see --only-retail)               [boolean]
+      --prefer-ntsc            Prefer NTSC ROMs over others                             [boolean]
+      --prefer-pal             Prefer PAL ROMs over others                              [boolean]
       --prefer-parent          Prefer parent ROMs over clones                           [boolean]
 
 Report options:
@@ -178,6 +183,7 @@ Advanced usage:
 
   Tokens that are replaced when generating the output (--output) path of a ROM:
     {datName}             The name of the DAT that contains the ROM (e.g. "Nintendo - Game Boy")
+    {datDescription}      The description of the DAT that contains the ROM
     {datReleaseRegion}    The region of the ROM release (e.g. "USA"), each ROM can have multiple
     {datReleaseLanguage}  The language of the ROM release (e.g. "En"), each ROM can have multiple
     {gameType}            The type of the game (e.g. "Retail", "Demo", "Prototype")
