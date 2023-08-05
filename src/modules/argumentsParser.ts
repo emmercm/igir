@@ -396,6 +396,7 @@ export default class ArgumentsParser {
         type: 'boolean',
       });
     [
+      ['debug', 'debug ROMs'],
       ['demo', 'demo ROMs'],
       ['beta', 'beta ROMs'],
       ['sample', 'sample ROMs'],
@@ -476,6 +477,20 @@ export default class ArgumentsParser {
         group: groupRomPriority,
         description: 'Prefer retail releases (see --only-retail)',
         type: 'boolean',
+        implies: 'single',
+      })
+      .option('prefer-ntsc', {
+        group: groupRomPriority,
+        description: 'Prefer NTSC ROMs over others',
+        type: 'boolean',
+        conflicts: 'prefer-pal',
+        implies: 'single',
+      })
+      .option('prefer-pal', {
+        group: groupRomPriority,
+        description: 'Prefer PAL ROMs over others',
+        type: 'boolean',
+        conflicts: 'prefer-ntsc',
         implies: 'single',
       })
       .option('prefer-parent', {

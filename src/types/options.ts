@@ -68,6 +68,8 @@ export interface OptionsProps {
   readonly noUnlicensed?: boolean,
   readonly onlyUnlicensed?: boolean,
   readonly onlyRetail?: boolean,
+  readonly noDebug?: boolean,
+  readonly onlyDebug?: boolean,
   readonly noDemo?: boolean,
   readonly onlyDemo?: boolean,
   readonly noBeta?: boolean,
@@ -95,6 +97,8 @@ export interface OptionsProps {
   readonly preferRevisionNewer?: boolean,
   readonly preferRevisionOlder?: boolean,
   readonly preferRetail?: boolean,
+  readonly preferNTSC?: boolean,
+  readonly preferPAL?: boolean,
   readonly preferParent?: boolean,
 
   readonly reportOutput?: string,
@@ -177,6 +181,10 @@ export default class Options implements OptionsProps {
 
   readonly onlyRetail: boolean;
 
+  readonly noDebug: boolean;
+
+  readonly onlyDebug: boolean;
+
   readonly noDemo: boolean;
 
   readonly onlyDemo: boolean;
@@ -228,6 +236,12 @@ export default class Options implements OptionsProps {
   readonly preferRevisionOlder: boolean;
 
   readonly preferRetail: boolean;
+
+  @Expose({ name: 'preferNtsc' })
+  readonly preferNTSC: boolean;
+
+  @Expose({ name: 'preferPal' })
+  readonly preferPAL: boolean;
 
   readonly preferParent: boolean;
 
@@ -285,6 +299,8 @@ export default class Options implements OptionsProps {
     this.noUnlicensed = options?.noUnlicensed ?? false;
     this.onlyUnlicensed = options?.onlyUnlicensed ?? false;
     this.onlyRetail = options?.onlyRetail ?? false;
+    this.noDebug = options?.noDebug ?? false;
+    this.onlyDebug = options?.onlyDebug ?? false;
     this.noDemo = options?.noDemo ?? false;
     this.onlyDemo = options?.onlyDemo ?? false;
     this.noBeta = options?.noBeta ?? false;
@@ -312,6 +328,8 @@ export default class Options implements OptionsProps {
     this.preferRevisionNewer = options?.preferRevisionNewer ?? false;
     this.preferRevisionOlder = options?.preferRevisionOlder ?? false;
     this.preferRetail = options?.preferRetail ?? false;
+    this.preferNTSC = options?.preferNTSC ?? false;
+    this.preferPAL = options?.preferPAL ?? false;
     this.preferParent = options?.preferParent ?? false;
 
     this.reportOutput = options?.reportOutput ?? '';
@@ -1000,6 +1018,14 @@ export default class Options implements OptionsProps {
     return this.onlyRetail;
   }
 
+  getNoDebug(): boolean {
+    return this.noDebug;
+  }
+
+  getOnlyDebug(): boolean {
+    return this.onlyDebug;
+  }
+
   getNoDemo(): boolean {
     return this.noDemo;
   }
@@ -1102,6 +1128,14 @@ export default class Options implements OptionsProps {
 
   getPreferRetail(): boolean {
     return this.preferRetail;
+  }
+
+  getPreferNTSC(): boolean {
+    return this.preferNTSC;
+  }
+
+  getPreferPAL(): boolean {
+    return this.preferPAL;
   }
 
   getPreferParent(): boolean {

@@ -471,7 +471,8 @@ describe('filter', () => {
         buildGameWithRegionLanguage('seven (Proto)', 'USA', 'EN'),
         buildGameWithRegionLanguage('eight (Sample)', 'USA', 'EN'),
         buildGameWithRegionLanguage('nine (Test)', 'USA', 'EN'),
-      ], 9);
+        buildGameWithRegionLanguage('ten (Debug)', 'USA', 'EN'),
+      ], 10);
     });
 
     it('should return no candidates if none matching', async () => {
@@ -484,6 +485,7 @@ describe('filter', () => {
         buildGameWithRegionLanguage('seven (Proto)', 'USA', 'EN'),
         buildGameWithRegionLanguage('eight (Sample)', 'USA', 'EN'),
         buildGameWithRegionLanguage('nine (Test)', 'USA', 'EN'),
+        buildGameWithRegionLanguage('ten (Debug)', 'USA', 'EN'),
       ], 0);
     });
 
@@ -498,7 +500,8 @@ describe('filter', () => {
         buildGameWithRegionLanguage('seven (Proto)', 'USA', 'EN'),
         buildGameWithRegionLanguage('eight (Sample)', 'USA', 'EN'),
         buildGameWithRegionLanguage('nine (Test)', 'USA', 'EN'),
-        buildGameWithRegionLanguage('ten', 'USA', 'EN'),
+        buildGameWithRegionLanguage('ten (Debug)', 'USA', 'EN'),
+        buildGameWithRegionLanguage('gazillion', 'USA', 'EN'),
       ], 2);
     });
 
@@ -507,6 +510,46 @@ describe('filter', () => {
         buildGameWithRegionLanguage('one', 'USA', 'EN'),
         buildGameWithRegionLanguage('two', 'USA', 'EN'),
       ], 2);
+    });
+  });
+
+  describe('debug', () => {
+    it('option is false', async () => {
+      const parentsToCandidates = [
+        buildGameWithRegionLanguage('one', 'USA', 'EN'),
+        buildGameWithRegionLanguage('two (Debug)', 'USA', 'EN'),
+        buildGameWithRegionLanguage('three (Debug Version)', 'USA', 'EN'),
+      ];
+      await expectFilteredDAT({ noDebug: false }, parentsToCandidates, 3);
+      await expectFilteredDAT({ onlyDebug: false }, parentsToCandidates, 3);
+    });
+
+    it('all games are debug', async () => {
+      const parentsToCandidates = [
+        buildGameWithRegionLanguage('one (Debug)', 'USA', 'EN'),
+        buildGameWithRegionLanguage('two (Debug Version)', 'USA', 'EN'),
+      ];
+      await expectFilteredDAT({ noDebug: true }, parentsToCandidates, 0);
+      await expectFilteredDAT({ onlyDebug: true }, parentsToCandidates, 2);
+    });
+
+    it('some games are debug', async () => {
+      const parentsToCandidates = [
+        buildGameWithRegionLanguage('one (Debug Version)', 'USA', 'EN'),
+        buildGameWithRegionLanguage('two', 'USA', 'EN'),
+        buildGameWithRegionLanguage('three (Debug)', 'USA', 'EN'),
+      ];
+      await expectFilteredDAT({ noDebug: true }, parentsToCandidates, 1);
+      await expectFilteredDAT({ onlyDebug: true }, parentsToCandidates, 2);
+    });
+
+    it('no games are debug', async () => {
+      const parentsToCandidates = [
+        buildGameWithRegionLanguage('one', 'USA', 'EN'),
+        buildGameWithRegionLanguage('two', 'USA', 'EN'),
+      ];
+      await expectFilteredDAT({ noDebug: true }, parentsToCandidates, 2);
+      await expectFilteredDAT({ onlyDebug: true }, parentsToCandidates, 0);
     });
   });
 

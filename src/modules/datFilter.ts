@@ -65,6 +65,8 @@ export default class DATFilter extends Module {
       this.options.getOnlyRetail() && !game.isRetail(),
       this.options.getNoUnlicensed() && game.isUnlicensed(),
       this.options.getOnlyUnlicensed() && !game.isUnlicensed(),
+      this.options.getNoDebug() && game.isDebug(),
+      this.options.getOnlyDebug() && !game.isDebug(),
       this.options.getNoDemo() && game.isDemo(),
       this.options.getOnlyDemo() && !game.isDemo(),
       this.options.getNoBeta() && game.isBeta(),
