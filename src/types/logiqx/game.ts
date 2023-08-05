@@ -55,6 +55,7 @@ enum GameType {
  */
 export interface GameProps {
   readonly name?: string,
+  readonly category?: string,
   readonly description?: string,
   readonly sourceFile?: string,
   readonly bios?: 'yes' | 'no',
@@ -77,6 +78,13 @@ export interface GameProps {
 export default class Game implements GameProps {
   @Expose({ name: 'name' })
   readonly name: string;
+
+  /**
+   * This is non-standard, but Redump uses it:
+   * @see http://wiki.redump.org/index.php?title=Redump_Search_Parameters#Category
+   */
+  @Expose({ name: 'category' })
+  readonly category: string;
 
   @Expose({ name: 'description' })
   readonly description: string;
@@ -106,6 +114,7 @@ export default class Game implements GameProps {
 
   constructor(options?: GameProps) {
     this.name = options?.name ?? '';
+    this.category = options?.category ?? '';
     this.description = options?.description ?? '';
     this.bios = options?.bios ?? this.bios;
     this.device = options?.device ?? this.device;
@@ -119,11 +128,11 @@ export default class Game implements GameProps {
   toXmlDatObj(): object {
     return {
       $: {
-        name: this.name,
+        name: this.getName(),
         // NOTE(cemmer): explicitly not including `cloneof`
       },
       description: {
-        _: this.description,
+        _: this.getDescription(),
       },
       release: this.getReleases().map((release) => release.toXmlDatObj()),
       rom: this.getRoms().map((rom) => rom.toXmlDatObj()),
@@ -134,6 +143,14 @@ export default class Game implements GameProps {
 
   getName(): string {
     return this.name;
+  }
+
+  getCategory(): string {
+    return this.category;
+  }
+
+  getDescription(): string {
+    return this.description;
   }
 
   isBios(): boolean {
@@ -223,7 +240,7 @@ export default class Game implements GameProps {
   }
 
   isDemo(): boolean {
-    return this.name.match(/\(Demo[a-z0-9. ]*\)/i) !== null;
+    return this.name.match(/\(Demo[a-z0-9. -]*\)/i) !== null || this.getCategory() === 'Demos';
   }
 
   isFixed(): boolean {
