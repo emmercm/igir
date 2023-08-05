@@ -471,6 +471,73 @@ describe('sort', () => {
     });
   });
 
+  describe('prefer NTSC', () => {
+    it('should return the first candidate when option is false', async () => {
+      await expectPreferredCandidates({ preferNTSC: false, single: true }, [
+        await buildReleaseCandidatesWithRegionLanguage(['one']),
+        await buildReleaseCandidatesWithRegionLanguage(['two', 'two (NTSC)']),
+        await buildReleaseCandidatesWithRegionLanguage(['three (NTSC)', 'three']),
+      ], ['one', 'two', 'three (NTSC)']);
+    });
+
+    it('should return the first candidate when none matching', async () => {
+      await expectPreferredCandidates({ preferNTSC: true, single: true }, [
+        await buildReleaseCandidatesWithRegionLanguage(['one']),
+        await buildReleaseCandidatesWithRegionLanguage(['four', 'four (Demo)']),
+      ], ['one', 'four']);
+    });
+
+    it('should return the first matching candidate when some matching', async () => {
+      await expectPreferredCandidates({ preferNTSC: true, single: true }, [
+        await buildReleaseCandidatesWithRegionLanguage(['one']),
+        await buildReleaseCandidatesWithRegionLanguage(['two', 'two (NTSC)']),
+        await buildReleaseCandidatesWithRegionLanguage(['three (NTSC)', 'three']),
+      ], ['one', 'two (NTSC)', 'three (NTSC)']);
+    });
+
+    it('should return the first candidate when all matching', async () => {
+      await expectPreferredCandidates({ preferNTSC: true, single: true }, [
+        await buildReleaseCandidatesWithRegionLanguage(['two', 'two (NTSC)']),
+        await buildReleaseCandidatesWithRegionLanguage(['three (NTSC)', 'three']),
+      ], ['two (NTSC)', 'three (NTSC)']);
+    });
+  });
+
+  describe('prefer PAL', () => {
+    it('should return the first candidate when option is false', async () => {
+      await expectPreferredCandidates({ preferPAL: false, single: true }, [
+        await buildReleaseCandidatesWithRegionLanguage(['one']),
+        await buildReleaseCandidatesWithRegionLanguage(['two', 'two (PAL)']),
+        await buildReleaseCandidatesWithRegionLanguage(['three', 'three (PAL 60Hz)']),
+        await buildReleaseCandidatesWithRegionLanguage(['four (PAL)', 'four']),
+      ], ['one', 'two', 'three', 'four (PAL)']);
+    });
+
+    it('should return the first candidate when none matching', async () => {
+      await expectPreferredCandidates({ preferPAL: true, single: true }, [
+        await buildReleaseCandidatesWithRegionLanguage(['one']),
+        await buildReleaseCandidatesWithRegionLanguage(['five', 'five (Demo)']),
+      ], ['one', 'five']);
+    });
+
+    it('should return the first matching candidate when some matching', async () => {
+      await expectPreferredCandidates({ preferPAL: true, single: true }, [
+        await buildReleaseCandidatesWithRegionLanguage(['one']),
+        await buildReleaseCandidatesWithRegionLanguage(['two', 'two (PAL)']),
+        await buildReleaseCandidatesWithRegionLanguage(['three', 'three (PAL 60Hz)']),
+        await buildReleaseCandidatesWithRegionLanguage(['four (PAL)', 'four']),
+      ], ['one', 'two (PAL)', 'three (PAL 60Hz)', 'four (PAL)']);
+    });
+
+    it('should return the first candidate when all matching', async () => {
+      await expectPreferredCandidates({ preferPAL: true, single: true }, [
+        await buildReleaseCandidatesWithRegionLanguage(['two', 'two (PAL)']),
+        await buildReleaseCandidatesWithRegionLanguage(['three', 'three (PAL 60Hz)']),
+        await buildReleaseCandidatesWithRegionLanguage(['four (PAL)', 'four']),
+      ], ['two (PAL)', 'three (PAL 60Hz)', 'four (PAL)']);
+    });
+  });
+
   describe('prefer parent', () => {
     it('should return the first candidate when option is false', async () => {
       await expectPreferredCandidates({ preferParent: false, single: true }, [
