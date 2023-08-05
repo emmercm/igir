@@ -185,6 +185,14 @@ export default class Game implements GameProps {
     return 0;
   }
 
+  isNTSC(): boolean {
+    return this.name.match(/\(NTSC\)/i) !== null;
+  }
+
+  isPAL(): boolean {
+    return this.name.match(/\(PAL[a-z0-9 ]*\)/i) !== null;
+  }
+
   isAftermarket(): boolean {
     return this.name.match(/\(Aftermarket[a-z0-9. ]*\)/i) !== null;
   }
