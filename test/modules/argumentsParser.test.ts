@@ -567,7 +567,7 @@ describe('options', () => {
   });
 
   it('should parse "no-debug"', () => {
-    expect(() => argumentsParser.parse([...dummyCommandAndRequiredArgs, '--no-debug', '--only-demo'])).toThrow(/mutually exclusive/i);
+    expect(() => argumentsParser.parse([...dummyCommandAndRequiredArgs, '--no-debug', '--only-debug'])).toThrow(/mutually exclusive/i);
     expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--no-debug']).getNoDebug()).toEqual(true);
     expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--no-debug', 'true']).getNoDebug()).toEqual(true);
     expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--no-debug', 'false']).getNoDebug()).toEqual(false);
@@ -577,7 +577,7 @@ describe('options', () => {
   });
 
   it('should parse "only-debug"', () => {
-    expect(() => argumentsParser.parse([...dummyCommandAndRequiredArgs, '--only-debug', '--no-demo'])).toThrow(/mutually exclusive/i);
+    expect(() => argumentsParser.parse([...dummyCommandAndRequiredArgs, '--only-debug', '--no-debug'])).toThrow(/mutually exclusive/i);
     expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--only-debug']).getOnlyDebug()).toEqual(true);
     expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--only-debug', 'true']).getOnlyDebug()).toEqual(true);
     expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--only-debug', 'false']).getOnlyDebug()).toEqual(false);
