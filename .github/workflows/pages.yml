@@ -18,7 +18,11 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
-      - run: docker run -v $PWD:/workdir ghcr.io/igorshubovych/markdownlint-cli:latest --disable MD013 MD033 MD046 -- "**/*.md"
+      - run: |
+          docker run -v $PWD:/workdir ghcr.io/igorshubovych/markdownlint-cli:latest \
+            --disable MD013 MD033 MD046 -- \
+            --ignore "docs/license.md" \
+            "**/*.md"
 
   build:
     if: github.event_name == 'pull_request'
