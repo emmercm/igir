@@ -36,7 +36,7 @@ If no archive command is specified, files will be left as-is. If they are alread
 
 !!! note
 
-    See the [archives page](archives.md) for more information on supported archive types.
+    See the [archives page](input/archives.md) for more information on supported archive types.
 
 ### `extract`
 

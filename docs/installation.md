@@ -51,6 +51,6 @@ docker run --interactive --tty \
 
 !!! warning
 
-    Make sure to quote all of your [file globs](file-scanning.md)!
+    Make sure to quote all of your [file globs](input/file-scanning.md)!
 
 [![asciicast](https://asciinema.org/a/5OAVbSXXoosTr0WyBvjQGBqRp.svg)](https://asciinema.org/a/5OAVbSXXoosTr0WyBvjQGBqRp)
