@@ -12,7 +12,7 @@ The MiSTer [`update_all.sh`](https://github.com/theypsilon/Update_All_MiSTer) sc
 
 This token can be used to reference each core's specific directory in the MiSTer's `games` directory.
 
-=== "Windows"
+=== ":simple-windowsxp: Windows"
 
     Replace the `E:\` drive letter with wherever your SD card is:
 
@@ -25,7 +25,7 @@ This token can be used to reference each core's specific directory in the MiSTer
       --no-bios
     ```
 
-=== "macOS"
+=== ":simple-apple: macOS"
 
     Replace the `/Volumes/MISTER` drive name with whatever your SD card is named:
 

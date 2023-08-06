@@ -8,11 +8,11 @@ A walkthrough of an example way to sort your ROM collection.
 
 ## First time collection sort
 
-First, you need to download a set of [DATs](../dats.md). For these examples I'll assume you downloaded a No-Intro daily P/C XML `.zip`.
+First, you need to download a set of [DATs](../input/dats.md). For these examples I'll assume you downloaded a No-Intro daily P/C XML `.zip`.
 
 Let's say that you have a directory named `ROMs/` that contains ROMs for many different systems, and it needs some organization. To make sure we're alright with the output, we'll have `igir` copy these files rather than move them. We'll also zip them to reduce disk space & speed up future scans.
 
-=== "Windows"
+=== ":simple-windowsxp: Windows"
 
     ```batch
     igir.exe copy zip test ^
@@ -22,7 +22,7 @@ Let's say that you have a directory named `ROMs/` that contains ROMs for many di
       --dir-dat-name
     ```
 
-=== "macOS"
+=== ":simple-apple: macOS"
 
     ```shell
     igir copy zip test \
@@ -57,7 +57,7 @@ Let's say that we've done the above first time sort and were happy with the resu
 
 Now we have new ROMs that we want to merge into our collection, and we want to generate a [report](../output/reporting.md) of what ROMs are still missing. We also want to delete any unknown files that may have made their way into our collection.
 
-=== "Windows"
+=== ":simple-windowsxp: Windows"
 
     ```batch
     igir.exe move zip test clean report ^
@@ -68,7 +68,7 @@ Now we have new ROMs that we want to merge into our collection, and we want to g
       --dir-dat-name
     ```
 
-=== "macOS"
+=== ":simple-apple: macOS"
 
     ```shell
     igir move zip test clean report \
@@ -106,7 +106,7 @@ Let's say we've done the above sorting we want to copy some ROMs from `ROMs-Sort
 
 We would prefer having only one copy of every game (1G1R), so there is less to scroll through to find what we want, and because we have a preferred language. Our flash cart can't read `.zip` files, so we'll need to extract our ROMs during copying.
 
-=== "Windows"
+=== ":simple-windowsxp: Windows"
 
     Replace the `E:\` drive letter with wherever your SD card is:
 
@@ -122,7 +122,7 @@ We would prefer having only one copy of every game (1G1R), so there is less to s
       --prefer-region USA,WORLD,EUR,JPN
     ```
 
-=== "macOS"
+=== ":simple-apple: macOS"
 
     Replace the `/Volumes/FlashCart` drive name with whatever your SD card is named:
 
@@ -152,4 +152,4 @@ Your flash cart might then look something like this:
 
 !!! info
 
-    See the [ROM filtering](../rom-filtering.md) page for other ways that you can filter your collection.
+    See the [ROM filtering & preference](../rom-filtering.md) page for other ways that you can filter your collection.

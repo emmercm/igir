@@ -6,7 +6,7 @@
 
 `igir` only supports creating `.zip` archives, which is why the command is `igir zip`.
 
-`.zip` archives store CRC32 information in the file table (see below) which helps drastically speed up file scanning, and they are easy to create without proprietary tools (e.g. Rar).
+`.zip` archives store CRC32 information in their "file table" (see below) which helps drastically speed up `igir`'s file scanning, and they are easy to create without proprietary tools (e.g. Rar).
 
 ## Supported archive types for reading
 

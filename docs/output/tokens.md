@@ -4,13 +4,13 @@ When specifying a ROM [writing command](../commands.md) you have to specify an `
 
 For example, if you want to group all ROMs based on their region, you would specify:
 
-=== "Windows"
+=== ":simple-windowsxp: Windows"
 
     ```batch
     igir.exe copy extract --dat *.dat --input ROMs/ --output "ROMs-Sorted/{datReleaseRegion}/"
     ```
 
-=== "macOS"
+=== ":simple-apple: macOS"
 
     ```shell
     igir copy extract --dat *.dat --input ROMs/ --output "ROMs-Sorted/{datReleaseRegion}/"
@@ -39,12 +39,18 @@ ROMs-Sorted/
 
 ## DAT information
 
-When using [DATs](../dats.md), you can make use of console & game information contained in them:
+When using [DATs](../input/dats.md), you can make use of console & game information contained in them:
 
 - `{datName}` the matching DAT's name, similar to how the `--dir-dat-name` option works
 - `{datDescription}` the matching DAT's description, similar to how the `--dir-dat-description` option works
 - `{datReleaseLanguage}` each of the ROM's language(s) (e.g. `EN`, `ES`, `JA`)
 - `{datReleaseRegion}` each of the ROM's region(s) (e.g. `USA`, `EUR`, `JPN`, `WORLD`)
+
+## Game information
+
+You can use some information about each game:
+
+- `{gameType}` the game's "type," one of: `Aftermarket`, `Alpha`, `Bad`, `Beta`, `BIOS`, `Demo`, `Device`, `Fixed`, `Hacked`, `Homebrew`, `Overdump`, `Pending Dump`, `Pirated`, `Prototype`, `Retail` (most games will be this), `Sample`, `Test`, `Trained`, `Translated`, `Unlicensed`
 
 ## File information
 

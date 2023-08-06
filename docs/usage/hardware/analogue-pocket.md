@@ -18,7 +18,7 @@ Most Pocket updater utilities will download BIOS files required for each core fo
 
 This token can be used to reference each core's specific directory in the SD card's `Assets` directory. ROMs go in the `Assets/{pocket}/common` directory.
 
-=== "Windows"
+=== ":simple-windowsxp: Windows"
 
     Replace the `E:\` drive letter with wherever your SD card is:
 
@@ -32,7 +32,7 @@ This token can be used to reference each core's specific directory in the SD car
       --no-bios
     ```
 
-=== "macOS"
+=== ":simple-apple: macOS"
 
     Replace the `/Volumes/POCKET` drive name with whatever your SD card is named:
 
