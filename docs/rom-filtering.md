@@ -184,6 +184,19 @@ Enables all the following `--no-*` options, as well as filtering out games that 
   R-Type DX (U) [C][t2]
   ```
 
+### Debug
+
+```text
+--no-debug, --only-debug
+```
+
+Filter out, or only include games that contain `(Debug)` in their name, e.g.:
+
+```text
+Megaman - Battle Network 2 (USA) (Debug Version)
+Perfect Dark (USA) (2000-03-22) (Debug)
+```
+
 ### Demos
 
 ```text

@@ -115,15 +115,24 @@ export default class SingleBarFormatted {
 
   private static getBar(options: Options, params: Params, payload: ProgressBarPayload): string {
     const barSize = options.barsize ?? 0;
-    const completeSize = Math.floor(Math.max(params.progress, 0) * barSize);
+    if (barSize <= 0) {
+      return '';
+    }
+
+    const clamp = (
+      val: number | undefined,
+      min: number,
+      max: number,
+    ): number => Math.min(Math.max(val ?? 0, min), max);
+    const completeSize = Math.floor(clamp(params.progress, 0.0, 1.0) * barSize);
     const inProgressSize = params.total > 0
-      ? Math.ceil((Math.max(payload.inProgress ?? 0, 0) / params.total) * barSize)
+      ? Math.ceil((clamp(payload.inProgress, 0, params.total) / params.total) * barSize)
       : 0;
     const incompleteSize = barSize - inProgressSize - completeSize;
 
-    return (SingleBarFormatted.BAR_COMPLETE_CHAR || '').repeat(completeSize)
-      + (SingleBarFormatted.BAR_IN_PROGRESS_CHAR || '').repeat(inProgressSize)
-      + (SingleBarFormatted.BAR_INCOMPLETE_CHAR || '').repeat(incompleteSize);
+    return (SingleBarFormatted.BAR_COMPLETE_CHAR || '').repeat(Math.max(completeSize, 0))
+      + (SingleBarFormatted.BAR_IN_PROGRESS_CHAR || '').repeat(Math.max(inProgressSize, 0))
+      + (SingleBarFormatted.BAR_INCOMPLETE_CHAR || '').repeat(Math.max(incompleteSize, 0));
   }
 
   private getEtaFormatted(etaSeconds: number): string {
