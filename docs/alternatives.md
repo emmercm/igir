@@ -12,9 +12,6 @@ There are a few different popular ROM managers that have similar features:
 | DATs: supported formats                 | ✅ Logiqx XML, CMPro, HTGD SMDB ([DATs docs](input/dats.md))   | ⚠️ Logiqx XML, CMPro                                          | ✅ Logiqx XML, CMPro, HTGD SMDB                              | ✅ Logiqx XML, CMPro                        |
 | DATs: process multiple at once          | ✅                                                             | ⚠️ via the batcher                                            | ✅                                                           | ❌                                          |
 | DATs: infer parent/clone info           | ✅                                                             | ❌                                                             | ❌                                                           | ❌                                          |
-| DATs: built-in download manager         | ❌                                                             | ❌                                                             | ⚠️ via [DatVault](https://www.datvault.com/)                | ❌                                          |
-| DATs: supports DAT URLs                 | ✅                                                             | ❌                                                             | ❌                                                           | ❌                                          |
-| DATs: create from files                 | ❌                                                             | ✅                                                             | ✅                                                           | ❌                                          |
 | DATs: combine multiple                  | ❌                                                             | ❌                                                             | ✅                                                           | ❌                                          |
 | Archives: extraction formats            | ✅ many formats ([archive docs](input/archives.md))            | ✅ `.zip`, `.7z`, `.rar`                                       | ⚠️ `.zip`, `.7z`                                            | ⚠️ `.zip`, `.7z`                           |
 | Archives: creation formats              | ❌ `.zip` only by design                                       | ✅ `.zip`, `.7z`, `.rar`                                       | ⚠️ `.zip`, `.7z`                                            | ⚠️ `.zip`, `.7z`                           |
@@ -32,7 +29,7 @@ There are a few different popular ROM managers that have similar features:
 | Output: create single archive for DAT   | ✅                                                             | ❌                                                             | ✅                                                           | ❌                                          |
 | Output: fixdat creation                 | ✅ [DATs docs](input/dats.md)                                  | ✅                                                             | ✅                                                           | ❌                                          |
 
-!!! warning
+!!! note
 
     Just like `igir`, other ROM managers that are in active development are likely to release new features often. The above table is not guaranteed to be perfectly up-to-date, it is just a best effort.
 
