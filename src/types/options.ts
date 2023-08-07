@@ -13,7 +13,7 @@ import util from 'util';
 
 import LogLevel from '../console/logLevel.js';
 import Constants from '../constants.js';
-import fsPoly from '../polyfill/fsPoly.js';
+import fsPoly, { FsWalkCallback } from '../polyfill/fsPoly.js';
 import URLPoly from '../polyfill/urlPoly.js';
 import ArchiveEntry from './files/archives/archiveEntry.js';
 import File from './files/file.js';
@@ -429,16 +429,16 @@ export default class Options implements OptionsProps {
     return this.input.length;
   }
 
-  private async scanInputFiles(): Promise<string[]> {
-    return Options.scanPaths(this.input);
+  private async scanInputFiles(walkCallback?: FsWalkCallback): Promise<string[]> {
+    return Options.scanPaths(this.input, walkCallback);
   }
 
   private async scanInputExcludeFiles(): Promise<string[]> {
-    return Options.scanPaths(this.inputExclude, false);
+    return Options.scanPaths(this.inputExclude, undefined, false);
   }
 
-  async scanInputFilesWithoutExclusions(): Promise<string[]> {
-    const inputFiles = await this.scanInputFiles();
+  async scanInputFilesWithoutExclusions(walkCallback?: FsWalkCallback): Promise<string[]> {
+    const inputFiles = await this.scanInputFiles(walkCallback);
     const inputExcludeFiles = await this.scanInputExcludeFiles();
     return inputFiles
       .filter((inputPath) => inputExcludeFiles.indexOf(inputPath) === -1);
@@ -448,22 +448,26 @@ export default class Options implements OptionsProps {
     return this.patch.length;
   }
 
-  async scanPatchFilesWithoutExclusions(): Promise<string[]> {
-    const patchFiles = await this.scanPatchFiles();
+  async scanPatchFilesWithoutExclusions(walkCallback?: FsWalkCallback): Promise<string[]> {
+    const patchFiles = await this.scanPatchFiles(walkCallback);
     const patchExcludeFiles = await this.scanPatchExcludeFiles();
     return patchFiles
       .filter((patchPath) => patchExcludeFiles.indexOf(patchPath) === -1);
   }
 
-  private async scanPatchFiles(): Promise<string[]> {
-    return Options.scanPaths(this.patch);
+  private async scanPatchFiles(walkCallback?: FsWalkCallback): Promise<string[]> {
+    return Options.scanPaths(this.patch, walkCallback);
   }
 
   private async scanPatchExcludeFiles(): Promise<string[]> {
-    return Options.scanPaths(this.patchExclude, false);
+    return Options.scanPaths(this.patchExclude, undefined, false);
   }
 
-  private static async scanPaths(globPatterns: string[], requireFiles = true): Promise<string[]> {
+  private static async scanPaths(
+    globPatterns: string[],
+    walkCallback?: FsWalkCallback,
+    requireFiles = true,
+  ): Promise<string[]> {
     // Limit to scanning one glob pattern at a time to keep memory in check
     const uniqueGlobPatterns = globPatterns
       .filter((pattern) => pattern)
@@ -471,7 +475,11 @@ export default class Options implements OptionsProps {
     const globbedPaths = [];
     /* eslint-disable no-await-in-loop */
     for (let i = 0; i < uniqueGlobPatterns.length; i += 1) {
-      globbedPaths.push(...(await this.globPath(uniqueGlobPatterns[i], requireFiles)));
+      globbedPaths.push(...(await this.globPath(
+        uniqueGlobPatterns[i],
+        requireFiles,
+        walkCallback ?? ((): void => {}),
+      )));
     }
 
     // Filter to non-directories
@@ -501,7 +509,11 @@ export default class Options implements OptionsProps {
       .filter((inputPath, idx, arr) => arr.indexOf(inputPath) === idx);
   }
 
-  private static async globPath(inputPath: string, requireFiles: boolean): Promise<string[]> {
+  private static async globPath(
+    inputPath: string,
+    requireFiles: boolean,
+    walkCallback: FsWalkCallback,
+  ): Promise<string[]> {
     // Windows will report that \\.\nul doesn't exist, catch it explicitly
     if (inputPath === os.devNull || inputPath.startsWith(os.devNull + path.sep)) {
       return [];
@@ -512,7 +524,7 @@ export default class Options implements OptionsProps {
 
     // Glob the contents of directories
     if (await fsPoly.isDirectory(inputPath)) {
-      const dirPaths = (await fg(`${fg.escapePath(inputPathNormalized)}/**`))
+      const dirPaths = (await fsPoly.walk(inputPathNormalized, walkCallback))
         .map((filePath) => path.normalize(filePath));
       if (!dirPaths || !dirPaths.length) {
         if (!requireFiles) {
@@ -525,15 +537,17 @@ export default class Options implements OptionsProps {
 
     // If the file exists, don't process it as a glob pattern
     if (await fsPoly.exists(inputPath)) {
+      walkCallback(1);
       return [inputPath];
     }
 
     // Otherwise, process it as a glob pattern
-    const paths = (await fg(inputPathNormalized))
+    const paths = (await fg(inputPathNormalized, { onlyFiles: true }))
       .map((filePath) => path.normalize(filePath));
     if (!paths || !paths.length) {
       if (URLPoly.canParse(inputPath)) {
         // Allow URLs, let the scanner modules deal with them
+        walkCallback(1);
         return [inputPath];
       }
 
@@ -542,6 +556,7 @@ export default class Options implements OptionsProps {
       }
       throw new Error(`${inputPath}: no files found`);
     }
+    walkCallback(paths.length);
     return paths;
   }
 
@@ -553,16 +568,16 @@ export default class Options implements OptionsProps {
     return this.dat.length;
   }
 
-  private async scanDatFiles(): Promise<string[]> {
-    return Options.scanPaths(this.dat);
+  private async scanDatFiles(walkCallback?: FsWalkCallback): Promise<string[]> {
+    return Options.scanPaths(this.dat, walkCallback);
   }
 
   private async scanDatExcludeFiles(): Promise<string[]> {
-    return Options.scanPaths(this.datExclude, false);
+    return Options.scanPaths(this.datExclude, undefined, false);
   }
 
-  async scanDatFilesWithoutExclusions(): Promise<string[]> {
-    const datFiles = await this.scanDatFiles();
+  async scanDatFilesWithoutExclusions(walkCallback?: FsWalkCallback): Promise<string[]> {
+    const datFiles = await this.scanDatFiles(walkCallback);
     const datExcludeFiles = await this.scanDatExcludeFiles();
     return datFiles
       .filter((inputPath) => datExcludeFiles.indexOf(inputPath) === -1);
@@ -906,7 +921,7 @@ export default class Options implements OptionsProps {
   }
 
   private async scanCleanExcludeFiles(): Promise<string[]> {
-    return Options.scanPaths(this.cleanExclude, false);
+    return Options.scanPaths(this.cleanExclude, undefined, false);
   }
 
   async scanOutputFilesWithoutCleanExclusions(
