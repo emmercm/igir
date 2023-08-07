@@ -2,7 +2,7 @@
 
 There are a handful of consoles where it is common for their ROMs to have extra data at the beginning of the file (a "header") that wasn't present on the physical ROM chip.
 
-Some of these headers are used to tell the emulator information about how to emulate the game (Atari 7800 "A78", NES "iNES", Famicom Disk System "FDS", etc.). There are other consoles where it is somewhat common to find the ROMs without a header (Atari Lynx "LYX", SNES "SFC").
+Some of these headers are used to tell the emulator information about how to emulate the game (Atari 7800 "A78," NES "iNES," Famicom Disk System "FDS," etc.). There are other consoles where it is somewhat common to find the ROMs without a header (Atari Lynx "LYX," SNES "SFC").
 
 ## Header detection
 

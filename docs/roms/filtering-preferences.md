@@ -2,7 +2,7 @@
 
 `igir` offers many options for filtering as well as 1G1R preferences/priorities (when combined with the `--single` option).
 
-ROM filters cut down the list of games desired for a set, and any games filtered out will not appear in [reports](output/reporting.md). ROM preferences decide what duplicates to eliminate (1G1R).
+ROM filters cut down the list of games desired for a set, and any games filtered out will not appear in [reports](../output/reporting.md). ROM preferences decide what duplicates to eliminate (1G1R).
 
 ## Filters
 

@@ -32,6 +32,16 @@ Let's say that you have a directory named `ROMs/` that contains ROMs for many di
       --dir-dat-name
     ```
 
+=== ":simple-linux: Linux"
+
+    ```shell
+    igir copy zip test \
+      --dat "No-Intro*.zip" \
+      --input ROMs/ \
+      --output ROMs-Sorted/ \
+      --dir-dat-name
+    ```
+
 This will organize your ROMs into system-specific subdirectories within `ROMs-Sorted/` and name all of your ROMs accurately. Because we copied and didn't move, no files were deleted from the `ROMs/` input directory.
 
 `ROMs-Sorted/` then might look something like this:
@@ -69,6 +79,17 @@ Now we have new ROMs that we want to merge into our collection, and we want to g
     ```
 
 === ":simple-apple: macOS"
+
+    ```shell
+    igir move zip test clean report \
+      --dat "No-Intro*.zip" \
+      --input ROMs-New/ \
+      --input ROMs-Sorted/ \
+      --output ROMs-Sorted/ \
+      --dir-dat-name
+    ```
+
+=== ":simple-linux: Linux"
 
     ```shell
     igir move zip test clean report \
@@ -138,6 +159,22 @@ We would prefer having only one copy of every game (1G1R), so there is less to s
       --prefer-region USA,WORLD,EUR,JPN
     ```
 
+=== ":simple-linux: Linux"
+
+    Replace the `/media/FlashCart` path with wherever your SD card is mounted:
+
+    ```shell
+    igir copy extract test clean \
+      --dat "No-Intro*.zip" \
+      --input "ROMs-Sorted/Nintendo - Game Boy" \
+      --output /media/FlashCart/ \
+      --dir-letter \
+      --no-bios \
+      --single \
+      --prefer-language EN \
+      --prefer-region USA,WORLD,EUR,JPN
+    ```
+
 Your flash cart might then look something like this:
 
 ```text
@@ -152,4 +189,4 @@ Your flash cart might then look something like this:
 
 !!! info
 
-    See the [ROM filtering & preference](../rom-filtering.md) page for other ways that you can filter your collection.
+    See the [ROM filtering & preference](../roms/filtering-preferences.md) page for other ways that you can filter your collection.

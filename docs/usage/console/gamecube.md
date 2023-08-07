@@ -15,7 +15,7 @@
     Replace the `E:\` drive letter with wherever your SD card is:
 
     ```batch
-    igir copy extract test clean ^
+    igir.exe copy extract test clean ^
       --dat "Redump*.zip" ^
       --input "ISOs" ^
       --output "E:\ISOs" ^
@@ -32,6 +32,19 @@
       --dat "Redump*.zip" \
       --input "ISOs/" \
       --output "/Volumes/SD2SP2/ISOs/" \
+      --dir-letter \
+      --writer-threads 1
+    ```
+
+=== ":simple-linux: Linux"
+
+    Replace the `/media/SD2SP2` path with wherever your SD card is mounted:
+
+    ```shell
+    igir copy extract test clean \
+      --dat "Redump*.zip" \
+      --input "ISOs/" \
+      --output "/media/SD2SP2/ISOs/" \
       --dir-letter \
       --writer-threads 1
     ```

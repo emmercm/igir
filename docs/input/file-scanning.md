@@ -4,7 +4,7 @@
 
 - ROMs: `--input` (required), `--input-exclude`
 - [DATs](dats.md): `--dat`, `--dat-exclude`
-- [ROM patches](../rom-patching.md): `--patch`, `--patch-exclude`
+- [ROM patches](../roms/patching.md): `--patch`, `--patch-exclude`
 
 ## Archive files
 

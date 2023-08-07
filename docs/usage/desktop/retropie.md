@@ -46,3 +46,17 @@ The [RetroPie docs](https://retropie.org.uk/docs/Transferring-Roms/) recommend c
       --dir-letter \
       --no-bios
     ```
+
+=== ":simple-linux: Linux"
+
+    Replace the `/media/RETROPIE` path with wherever your SD card is mounted:
+
+    ```shell
+    igir copy zip test clean \
+      --dat "No-Intro*.zip" \
+      --input "ROMs/" \
+      --output "/media/RETROPIE/retropie/roms/" \
+      --dir-dat-name \
+      --dir-letter \
+      --no-bios
+    ```

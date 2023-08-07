@@ -16,6 +16,12 @@ For example, if you want to group all ROMs based on their region, you would spec
     igir copy extract --dat *.dat --input ROMs/ --output "ROMs-Sorted/{datReleaseRegion}/"
     ```
 
+=== ":simple-linux: Linux"
+
+    ```shell
+    igir copy extract --dat *.dat --input ROMs/ --output "ROMs-Sorted/{datReleaseRegion}/"
+    ```
+
 This might result in an output structure such as:
 
 ```text
