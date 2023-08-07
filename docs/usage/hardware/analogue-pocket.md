@@ -23,7 +23,7 @@ This token can be used to reference each core's specific directory in the SD car
     Replace the `E:\` drive letter with wherever your SD card is:
 
     ```batch
-    igir copy extract test clean ^
+    igir.exe copy extract test clean ^
       --dat "No-Intro*.zip" ^
       --input "ROMs" ^
       --output "E:\Assets\{pocket}\common" ^
@@ -43,6 +43,20 @@ This token can be used to reference each core's specific directory in the SD car
       --output "/Volumes/POCKET/Assets/{pocket}/common/" \
       --dir-letter \
       --clean-exclude "/Volumes/POCKET/Assets/*/common/*.*" \
+      --no-bios
+    ```
+
+=== ":simple-linux: Linux"
+
+    Replace the `/media/POCKET` path with wherever your SD card is mounted:
+
+    ```shell
+    igir copy extract test clean \
+      --dat "No-Intro*.zip" \
+      --input "ROMs/" \
+      --output "/media/POCKET/Assets/{pocket}/common/" \
+      --dir-letter \
+      --clean-exclude "/media/POCKET/Assets/*/common/*.*" \
       --no-bios
     ```
 

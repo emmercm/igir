@@ -15,7 +15,7 @@
     Replace the `E:\` drive letter with wherever your USB drive is:
 
     ```batch
-    igir copy extract test clean ^
+    igir.exe copy extract test clean ^
       --dat "Redump*.zip" ^
       --input "ISOs" ^
       --output "E:\DVD" ^
@@ -32,6 +32,19 @@
       --dat "Redump*.zip" \
       --input "ISOs/" \
       --output "/Volumes/PS2/DVD/" \
+      --dir-letter \
+      --writer-threads 1
+    ```
+
+=== ":simple-linux: Linux"
+
+    Replace the `/media/PS2` path with wherever your USB drive is mounted:
+
+    ```shell
+    igir copy extract test clean \
+      --dat "Redump*.zip" \
+      --input "ISOs/" \
+      --output "/media/PS2/DVD/" \
       --dir-letter \
       --writer-threads 1
     ```

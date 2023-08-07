@@ -201,6 +201,17 @@ export default class ProgressBarCLI extends ProgressBar {
     }, timeout);
   }
 
+  async incrementTotal(increment: number): Promise<void> {
+    if (!this.singleBarFormatted) {
+      return;
+    }
+
+    this.singleBarFormatted.getSingleBar().setTotal(
+      this.singleBarFormatted.getSingleBar().getTotal() + increment,
+    );
+    await this.render();
+  }
+
   async incrementProgress(): Promise<void> {
     this.payload.inProgress = Math.max(this.payload.inProgress ?? 0, 0) + 1;
     return this.render();

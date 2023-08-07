@@ -43,6 +43,15 @@ With `igir`'s support for [DAT URLs](../../input/dats.md) we don't even have to 
       --output ~/Documents/RetroArch/system/
     ```
 
+=== ":simple-linux: Linux"
+
+    ```shell
+    igir copy extract test clean \
+      --dat "https://raw.githubusercontent.com/libretro/libretro-database/master/dat/System.dat" \
+      --input BIOS/ \
+      --output ~/Documents/RetroArch/system/
+    ```
+
 ## ROMs
 
 RetroArch is less opinionated about where your ROMs can live, you have to specify "content" directories during setup in the RetroArch UI.
@@ -76,6 +85,17 @@ If you want to store your ROMs in the RetroArch folder, you could co-locate them
     ```
 
 === ":simple-apple: macOS"
+
+    ```shell
+    igir copy zip test \
+      --dat "No-Intro*.zip" \
+      --input ROMs/ \
+      --output ~/Documents/RetroArch/roms \
+      --dir-dat-name \
+      --no-bios
+    ```
+
+=== ":simple-linux: Linux"
 
     ```shell
     igir copy zip test \
