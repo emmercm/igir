@@ -6,6 +6,8 @@ import path from 'path';
 import semver from 'semver';
 import util from 'util';
 
+export type FsWalkCallback = (increment: number) => void;
+
 export default class FsPoly {
   static readonly FILE_READING_CHUNK_SIZE = 1024 * 1024; // 1MiB
 
@@ -316,27 +318,31 @@ export default class FsPoly {
     await util.promisify(fs.close)(file);
   }
 
-  static async walk(pathLike: PathLike): Promise<string[]> {
+  static async walk(pathLike: PathLike, callback?: FsWalkCallback): Promise<string[]> {
     const output = [];
 
     let files: string[];
     try {
-      files = await util.promisify(fs.readdir)(pathLike);
+      files = (await util.promisify(fs.readdir)(pathLike))
+        .filter((filePath) => isNotJunk(path.basename(filePath)));
     } catch (e) {
       return [];
     }
+
+    if (callback) callback(files.length);
 
     /* eslint-disable no-await-in-loop */
     for (let i = 0; i < files.length; i += 1) {
       const file = path.join(pathLike.toString(), files[i]);
       if (await this.isDirectory(file)) {
-        output.push(...await this.walk(file));
+        const subDirFiles = await this.walk(file);
+        output.push(...subDirFiles);
+        if (callback) callback(subDirFiles.length - 1);
       } else {
         output.push(file);
       }
     }
 
-    return output
-      .filter((filePath) => isNotJunk(path.basename(filePath)));
+    return output;
   }
 }
