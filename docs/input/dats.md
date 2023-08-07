@@ -113,15 +113,41 @@ The `--fixdat` option creates a [Logiqx XML](http://www.logiqx.com/DatFAQs/) DAT
 
 For example:
 
-```shell
-igir copy zip \
-  --dat "Nintendo - Game Boy.dat" \
-  --dat "Nintendo - Game Boy Advance.dat" \
-  --dat "Nintendo - Game Boy Color.dat" \
-  --input ROMs/ \
-  --output ROMs-Sorted/ \
-  --fixdat
-```
+=== ":simple-windowsxp: Windows"
+
+    ```batch
+    igir.exe copy zip ^
+      --dat "Nintendo - Game Boy.dat" ^
+      --dat "Nintendo - Game Boy Advance.dat" ^
+      --dat "Nintendo - Game Boy Color.dat" ^
+      --input ROMs/ ^
+      --output ROMs-Sorted/ ^
+      --fixdat
+    ```
+
+=== ":simple-apple: macOS"
+
+    ```shell
+    igir copy zip \
+      --dat "Nintendo - Game Boy.dat" \
+      --dat "Nintendo - Game Boy Advance.dat" \
+      --dat "Nintendo - Game Boy Color.dat" \
+      --input ROMs/ \
+      --output ROMs-Sorted/ \
+      --fixdat
+    ```
+
+=== ":simple-linux: Linux"
+
+    ```shell
+    igir copy zip \
+      --dat "Nintendo - Game Boy.dat" \
+      --dat "Nintendo - Game Boy Advance.dat" \
+      --dat "Nintendo - Game Boy Color.dat" \
+      --input ROMs/ \
+      --output ROMs-Sorted/ \
+      --fixdat
+    ```
 
 may produce some fixdats in the `ROMs-Sorted/` directory, if any of the input DATs have ROMs that weren't found in the `ROMs/` input directory:
 

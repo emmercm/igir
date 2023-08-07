@@ -8,13 +8,13 @@ Information about the inner workings of `igir`.
 
 1. Scan each DAT input path for every file and parse them, if provided (`--dat`)
 2. Scan each ROM input path for every file (`--input`)
-   - Detect headers in those files, if applicable (see [header docs](rom-headers.md))
-3. Scan each patch input path for every file (`--patch`) (see [patching docs](rom-patching.md))
+   - Detect headers in those files, if applicable (see [header docs](roms/headers.md))
+3. Scan each patch input path for every file (`--patch`) (see [patching docs](roms/patching.md))
 4. Then for each DAT:
-   - ROMs in the DAT are filtered to only those desired (see [filtering & preference docs](rom-filtering.md))
+   - ROMs in the DAT are filtered to only those desired (see [filtering & preference docs](roms/filtering-preferences.md))
    - Input files are matched to ROMs in the DAT
    - Patch files are matched to ROMs in the DAT
-   - ROM preferences are applied (`--single`, see [filtering & preference docs](rom-filtering.md))
+   - ROM preferences are applied (`--single`, see [filtering & preference docs](roms/filtering-preferences.md))
    - ROMs are written to the output directory, if specified (`copy`, `move`, `symlink`)
      - Written ROMs are tested for accuracy, if specified (`test`)
    - A "fixdat" is created, if specified (`--fixdat`)

@@ -42,9 +42,11 @@ export default class DATScanner extends Scanner {
     this.progressBar.logInfo('scanning DAT files');
 
     await this.progressBar.setSymbol(ProgressBarSymbol.SEARCHING);
-    await this.progressBar.reset(this.options.getDatFileCount());
+    await this.progressBar.reset(0);
 
-    const datFilePaths = await this.options.scanDatFilesWithoutExclusions();
+    const datFilePaths = await this.options.scanDatFilesWithoutExclusions(async (increment) => {
+      await this.progressBar.incrementTotal(increment);
+    });
     if (!datFilePaths.length) {
       return [];
     }
