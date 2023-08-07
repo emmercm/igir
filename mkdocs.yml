@@ -11,23 +11,13 @@ edit_uri: edit/main/docs/
 remote_branch: gh-pages
 
 theme:
+  logo: logo-light.svg
+  favicon: logo-dark.svg
   name: material
 
   palette:
-    # Palette toggle for dark mode
-    - media: "(prefers-color-scheme: dark)"
-      scheme: slate
-      primary: black
-      toggle:
-        icon: material/brightness-4
-        name: Switch to light mode
-    # Palette toggle for light mode
-    - media: "(prefers-color-scheme: light)"
-      scheme: default
-      primary: black
-      toggle:
-        icon: material/brightness-7
-        name: Switch to dark mode
+    scheme: slate
+    primary: black
 
   icon:
     repo: fontawesome/brands/github
