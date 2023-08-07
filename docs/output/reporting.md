@@ -13,12 +13,32 @@ At least one DAT is required for the `igir report` command to work, otherwise `i
 
 The `igir report` command can be specified on its own without any [writing command](../commands.md) (i.e. `igir copy`, `igir move`, etc.) in order to report on an existing collection. This causes `igir` to operate in a _read-only_ mode, no files will be copied, moved, or deleted. For example:
 
-```shell
-$ igir report --dat *.dat --input ROMs/
+=== ":simple-windowsxp: Windows"
 
-$ ls *.csv
-igir_2023-03-29T18;26;00-04;00.csv
-```
+    ```batch
+    > igir.exe report --dat *.dat --input ROMs/
+
+    > dir /b *.csv
+    igir_2023-03-29T18;26;00-04;00.csv
+    ```
+
+=== ":simple-apple: macOS"
+
+    ```shell
+    $ igir report --dat *.dat --input ROMs/
+
+    $ ls *.csv
+    igir_2023-03-29T18;26;00-04;00.csv
+    ```
+
+=== ":simple-linux: Linux"
+
+    ```shell
+    $ igir report --dat *.dat --input ROMs/
+
+    $ ls *.csv
+    igir_2023-03-29T18;26;00-04;00.csv
+    ```
 
 See the `igir --help` message for the report's default location.
 
@@ -42,12 +62,38 @@ The report output filename supports a version of [Moment.js symbols](https://mom
 
 Here are some example usages:
 
-```shell
-$ igir report --dat *.dat --input ROMs/ --report-output "./report.csv"
+=== ":simple-windowsxp: Windows"
 
-$ igir report --dat *.dat --input ROMs/ --report-output "./report %dddd, %MMMM %Do %YYYY, %h:%mm:%ss %a.csv"
-# ./report Friday, April 14th 2023, 4:28:26 pm.csv
+    ```batch
+    > igir.exe report --dat *.dat --input ROMs/ --report-output "./report.csv"
 
-$ igir report --dat *.dat --input ROMs/ --report-output "/igir/%X.csv"
-# /igir/1681515048.csv
-```
+    > igir.exe report --dat *.dat --input ROMs/ --report-output "./report %dddd, %MMMM %Do %YYYY, %h:%mm:%ss %a.csv"
+    REM ./report Friday, April 14th 2023, 4:28:26 pm.csv
+
+    > igir.exe report --dat *.dat --input ROMs/ --report-output "/igir/%X.csv"
+    REM /igir/1681515048.csv
+    ```
+
+=== ":simple-apple: macOS"
+
+    ```shell
+    $ igir report --dat *.dat --input ROMs/ --report-output "./report.csv"
+
+    $ igir report --dat *.dat --input ROMs/ --report-output "./report %dddd, %MMMM %Do %YYYY, %h:%mm:%ss %a.csv"
+    # ./report Friday, April 14th 2023, 4:28:26 pm.csv
+
+    $ igir report --dat *.dat --input ROMs/ --report-output "/igir/%X.csv"
+    # /igir/1681515048.csv
+    ```
+
+=== ":simple-linux: Linux"
+
+    ```shell
+    $ igir report --dat *.dat --input ROMs/ --report-output "./report.csv"
+
+    $ igir report --dat *.dat --input ROMs/ --report-output "./report %dddd, %MMMM %Do %YYYY, %h:%mm:%ss %a.csv"
+    # ./report Friday, April 14th 2023, 4:28:26 pm.csv
+
+    $ igir report --dat *.dat --input ROMs/ --report-output "/igir/%X.csv"
+    # /igir/1681515048.csv
+    ```

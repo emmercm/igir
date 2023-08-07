@@ -32,6 +32,17 @@ OnionOS has its BIOS folder at the root of the SD card at `/BIOS`, and it uses t
       --output /Volumes/OnionOS/BIOS
     ```
 
+=== ":simple-linux: Linux"
+
+    Replace the `/media/OnionOS` path with wherever your SD card is mounted:
+
+    ```shell
+    igir copy extract test clean \
+      --dat "https://raw.githubusercontent.com/libretro/libretro-database/master/dat/System.dat" \
+      --input BIOS/ \
+      --output /media/OnionOS/BIOS
+    ```
+
 ## ROMs
 
 OnionOS uses its own proprietary [ROM folder structure](https://github.com/OnionUI/Onion/wiki/Emulators#rom-folders---quick-reference), so `igir` has a replaceable `{onion}` token to sort ROMs into the right place. See the [replaceable tokens page](../../output/tokens.md) for more information.
@@ -58,6 +69,19 @@ OnionOS uses its own proprietary [ROM folder structure](https://github.com/Onion
       --dat "No-Intro*.zip" \
       --input ROMs/ \
       --output /Volumes/OnionOS/Roms/{onion} \
+      --dir-letter \
+      --no-bios
+    ```
+
+=== ":simple-linux: Linux"
+
+    Replace the `/media/OnionOS` path with wherever your SD card is mounted:
+
+    ```shell
+    igir copy extract test clean \
+      --dat "No-Intro*.zip" \
+      --input ROMs/ \
+      --output /media/OnionOS/Roms/{onion} \
       --dir-letter \
       --no-bios
     ```

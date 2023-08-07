@@ -78,9 +78,9 @@ nav:
           - input/dats.md
           - input/archives.md
       - ROM Processing:
-          - rom-filtering.md
-          - rom-headers.md
-          - rom-patching.md
+          - roms/filtering-preferences.md
+          - roms/headers.md
+          - roms/patching.md
       - File Outputs:
           - output/tokens.md
           - output/reporting.md
@@ -107,6 +107,9 @@ plugins:
         'examples.md': 'usage/collection-sorting.md'
         'file-scanning.md': 'input/file-scanning.md'
         'reporting.md': 'output/reporting.md'
+        'rom-filtering.md': 'roms/filtering-preferences.md'
+        'rom-headers.md': 'roms/headers.md'
+        'rom-patching.md': 'roms/patching.md'
   #- htmlproofer:
   #    raise_error_excludes:
   #      '-1': [ 'http://www.logiqx.com' ]
