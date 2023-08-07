@@ -33,6 +33,8 @@ export default abstract class ProgressBar {
 
   abstract removeWaitingMessage(waitingMessage: string): void;
 
+  abstract incrementTotal(increment: number): Promise<void>;
+
   abstract incrementProgress(): Promise<void>;
 
   abstract incrementDone(message?: string): Promise<void>;

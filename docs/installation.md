@@ -1,6 +1,8 @@
 # Installation
 
-A few different installation options are offered for `igir`.
+`igir` is supported on :simple-windowsxp: Windows, :simple-apple: macOS, :simple-linux: Linux, and every other operating system that [Node.js](https://nodejs.org) supports.
+
+There are a few different installation options offered for `igir` with varying levels of technical complexity. Every option will require some baseline understanding of command-line interfaces (CLIs).
 
 ## Via Node.js
 
@@ -25,9 +27,17 @@ npx igir@latest copy extract --dat *.dat --input ROMs/ --output ROMs-Sorted/ --d
 
     You can alias the `npx` command in your macOS or Linux [dotfiles](https://missing.csail.mit.edu/2019/dotfiles/) like this:
 
-    ```bash
-    alias igir="npx igir@latest"
-    ```
+    === ":simple-apple: macOS"
+
+        ```bash
+        alias igir="npx igir@latest"
+        ```
+
+    === ":simple-linux: Linux"
+
+        ```bash
+        alias igir="npx igir@latest"
+        ```
 
 ## Via downloaded executable
 
@@ -39,16 +49,38 @@ If you don't want to download Node.js, you can download executables for various 
 
 If none of the above options work for you, [Docker](https://www.docker.com/) may be an option. You will need to mount your input and output directories as volumes, which will significantly reduce your file read and write speeds.
 
-```shell
-docker run --interactive --tty \
-  --volume "$PWD:/pwd" \
-  --workdir "/pwd" \
-  node:lts \
-  npx igir@latest copy zip --dat "*.dat" --input ROMs/ --output ROMs-Sorted/ --dir-dat-name
-```
+=== ":simple-windowsxp: Windows"
+
+    ```batch
+    docker run --interactive --tty ^
+      --volume "%cd%:/pwd" ^
+      --workdir "/pwd" ^
+      node:lts ^
+      npx igir@latest copy zip --dat "*.dat" --input ROMs/ --output ROMs-Sorted/ --dir-dat-name
+    ```
+
+=== ":simple-apple: macOS"
+
+    ```shell
+    docker run --interactive --tty \
+      --volume "$PWD:/pwd" \
+      --workdir "/pwd" \
+      node:lts \
+      npx igir@latest copy zip --dat "*.dat" --input ROMs/ --output ROMs-Sorted/ --dir-dat-name
+    ```
+
+=== ":simple-linux: Linux"
+
+    ```shell
+    docker run --interactive --tty \
+      --volume "$PWD:/pwd" \
+      --workdir "/pwd" \
+      node:lts \
+      npx igir@latest copy zip --dat "*.dat" --input ROMs/ --output ROMs-Sorted/ --dir-dat-name
+    ```
 
 !!! warning
 
-    Make sure to quote all of your [file globs](file-scanning.md)!
+    Make sure to quote all of your [file globs](input/file-scanning.md)!
 
 [![asciicast](https://asciinema.org/a/5OAVbSXXoosTr0WyBvjQGBqRp.svg)](https://asciinema.org/a/5OAVbSXXoosTr0WyBvjQGBqRp)

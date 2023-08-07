@@ -38,7 +38,7 @@ The file tree in that hard drive looks like this:
 └── igir_library_sync.sh
 ```
 
-The root directory has a DAT zip and subdirectory for each [DAT](../dats.md) release group. This helps separate differing quality of DATs and different DAT group ROM naming schemes. I then have one subdirectory for each game console, using the `--dir-dat-name` option.
+The root directory has a DAT zip and subdirectory for each [DAT](../input/dats.md) release group. This helps separate differing quality of DATs and different DAT group ROM naming schemes. I then have one subdirectory for each game console, using the `--dir-dat-name` option.
 
 The `igir_library_sync.sh` script helps me keep this collection organized and merge new ROMs into it. The complete source is:
 
@@ -107,6 +107,10 @@ That lets me create an EN+USA preferred 1G1R set for my Pocket on the fly, makin
 
 ## GameCube
 
+!!! note
+
+    See the full [GameCube](console/gamecube.md) page for more detailed information.
+
 I have this script `sd2sp2_pocket_sync.sh` at the root of my GameCube [SD2SP2](https://github.com/citrus3000psi/SD2SP2) SD card:
 
 ```bash
@@ -126,7 +130,3 @@ npx --yes igir@latest copy extract test clean \
 ```
 
 It doesn't use DATs because I have the ISOs in a trimmed NKit format (see [Swiss](https://github.com/emukidid/swiss-gc)), so they won't match the checksums in DATs. I also exclude some games due to limited SD card size.
-
-!!! note
-
-    This uses the `--writer-threads` debug option because Swiss is sensitive to files being fragmented on the SD card ([swiss-gc#763](https://github.com/emukidid/swiss-gc/issues/763), [swiss-gc#122](https://github.com/emukidid/swiss-gc/issues/122), etc.). From experience, if you write too many files to an SD card at once, you may get an ambiguous error message mentioning fragmentation when loading an ISO.

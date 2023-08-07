@@ -79,12 +79,6 @@ Being able to know that many releases are actually the same game gives `igir` th
 
     If you have the option to download "parent/clone" or "P/C" versions of DATs, you should always choose those.
 
-## Aren't DATs primarily for MAME?
-
-That's where DATs started. The [Logiqx XML](http://www.logiqx.com/DatFAQs/) DAT format can include information in [clrmamepro](https://mamedev.emulab.it/clrmamepro/) or [Romcenter](http://www.romcenter.com/) formats on how to handle MAME-specific settings such as [merging](https://docs.mamedev.org/usingmame/aboutromsets.html#parents-clones-splitting-and-merging) (non-merged vs. merged vs. split) and packing (zip vs. not). `igir` doesn't use any of this information, but it helps paint a picture of why DATs are structured the way they are.
-
-These days, depending on what type of emulation you're interested in, non-MAME DATs such as No-Intro's may be more common than MAME DATs. See the [DAT groups](#dat-groups) section above for some of the popular DAT release groups.
-
 ## Fixdats
 
 "Fixdats" are DATs that contain only ROMs that are missing from your collection. Fixdats are derived from some other DAT (see above for obtaining DATs), containing only a subset of the ROMs. Fixdats are specific to the state of each person's ROM collection, so they aren't necessarily meaningful to other people.
@@ -95,15 +89,41 @@ The `--fixdat` option creates a [Logiqx XML](http://www.logiqx.com/DatFAQs/) DAT
 
 For example:
 
-```shell
-igir copy zip \
-  --dat "Nintendo - Game Boy.dat" \
-  --dat "Nintendo - Game Boy Advance.dat" \
-  --dat "Nintendo - Game Boy Color.dat" \
-  --input ROMs/ \
-  --output ROMs-Sorted/ \
-  --fixdat
-```
+=== ":simple-windowsxp: Windows"
+
+    ```batch
+    igir.exe copy zip ^
+      --dat "Nintendo - Game Boy.dat" ^
+      --dat "Nintendo - Game Boy Advance.dat" ^
+      --dat "Nintendo - Game Boy Color.dat" ^
+      --input ROMs/ ^
+      --output ROMs-Sorted/ ^
+      --fixdat
+    ```
+
+=== ":simple-apple: macOS"
+
+    ```shell
+    igir copy zip \
+      --dat "Nintendo - Game Boy.dat" \
+      --dat "Nintendo - Game Boy Advance.dat" \
+      --dat "Nintendo - Game Boy Color.dat" \
+      --input ROMs/ \
+      --output ROMs-Sorted/ \
+      --fixdat
+    ```
+
+=== ":simple-linux: Linux"
+
+    ```shell
+    igir copy zip \
+      --dat "Nintendo - Game Boy.dat" \
+      --dat "Nintendo - Game Boy Advance.dat" \
+      --dat "Nintendo - Game Boy Color.dat" \
+      --input ROMs/ \
+      --output ROMs-Sorted/ \
+      --fixdat
+    ```
 
 may produce some fixdats in the `ROMs-Sorted/` directory, if any of the input DATs have ROMs that weren't found in the `ROMs/` input directory:
 
@@ -113,3 +133,11 @@ ROMs-Sorted/
 ├── Nintendo - Game Boy Advance (20230414-173400) fixdat.dat
 └── Nintendo - Game Boy Color (20230414-173400) fixdat.dat
 ```
+
+## FAQ
+
+### Aren't DATs primarily for MAME?
+
+That's where DATs started. The [Logiqx XML](http://www.logiqx.com/DatFAQs/) DAT format can include information in [clrmamepro](https://mamedev.emulab.it/clrmamepro/) or [Romcenter](http://www.romcenter.com/) formats on how to handle MAME-specific settings such as [merging](https://docs.mamedev.org/usingmame/aboutromsets.html#parents-clones-splitting-and-merging) (non-merged vs. merged vs. split) and packing (zip vs. not). `igir` doesn't use any of this information, but it helps paint a picture of why DATs are structured the way they are.
+
+These days, depending on what type of emulation you're interested in, non-MAME DATs such as No-Intro's may be more common than MAME DATs. See the [DAT groups](#dat-groups) section above for some of the popular DAT release groups.

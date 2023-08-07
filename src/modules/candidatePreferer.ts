@@ -92,6 +92,8 @@ export default class CandidatePreferer extends Module {
         || this.preferRegionsSort(a, b)
         || this.preferRevisionSort(a, b)
         || this.preferRetailSort(a, b)
+        || this.preferNTSCSort(a, b)
+        || this.preferPALSort(a, b)
         || this.preferParentSort(a, b);
   }
 
@@ -154,6 +156,20 @@ export default class CandidatePreferer extends Module {
   private preferRetailSort(a: ReleaseCandidate, b: ReleaseCandidate): number {
     if (this.options.getPreferRetail()) {
       return (a.getGame().isRetail() ? 0 : 1) - (b.getGame().isRetail() ? 0 : 1);
+    }
+    return 0;
+  }
+
+  private preferNTSCSort(a: ReleaseCandidate, b: ReleaseCandidate): number {
+    if (this.options.getPreferNTSC()) {
+      return (a.getGame().isNTSC() ? 0 : 1) - (b.getGame().isNTSC() ? 0 : 1);
+    }
+    return 0;
+  }
+
+  private preferPALSort(a: ReleaseCandidate, b: ReleaseCandidate): number {
+    if (this.options.getPreferPAL()) {
+      return (a.getGame().isPAL() ? 0 : 1) - (b.getGame().isPAL() ? 0 : 1);
     }
     return 0;
   }

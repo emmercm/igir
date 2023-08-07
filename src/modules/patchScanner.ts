@@ -17,9 +17,11 @@ export default class PatchScanner extends Scanner {
     this.progressBar.logInfo('scanning patch files');
 
     await this.progressBar.setSymbol(ProgressBarSymbol.SEARCHING);
-    await this.progressBar.reset(this.options.getPatchFileCount());
+    await this.progressBar.reset(0);
 
-    const patchFilePaths = await this.options.scanPatchFilesWithoutExclusions();
+    const patchFilePaths = await this.options.scanPatchFilesWithoutExclusions(async (increment) => {
+      await this.progressBar.incrementTotal(increment);
+    });
     this.progressBar.logDebug(`found ${patchFilePaths.length.toLocaleString()} patch file${patchFilePaths.length !== 1 ? 's' : ''}`);
     await this.progressBar.reset(patchFilePaths.length);
 

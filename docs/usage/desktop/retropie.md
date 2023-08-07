@@ -1,12 +1,12 @@
 # RetroPie
 
-[RetroPie](https://retropie.org.uk/) is an installer for [EmulationStation](https://emulationstation.org/) & [RetroArch](https://www.retroarch.com/) on single-board computers (SBCs).
+[RetroPie](https://retropie.org.uk/) is an installer for [EmulationStation](https://emulationstation.org/) & [RetroArch](https://www.retroarch.com/) on single-board computers (SBCs) such as the [Raspberry Pi](https://www.raspberrypi.com/).
 
 ## BIOS
 
 Because RetroPie uses RetroArch under the hood, the instructions are generally the [same as RetroArch](retroarch.md). By default, the RetroPie BIOS directory is `/home/pi/RetroPie/BIOS`:
 
-=== "RetroPie (Linux)"
+=== ":simple-linux: RetroPie (Linux)"
 
     ```shell
     igir copy extract test clean \
@@ -19,7 +19,7 @@ Because RetroPie uses RetroArch under the hood, the instructions are generally t
 
 The [RetroPie docs](https://retropie.org.uk/docs/Transferring-Roms/) recommend creating a `retropie/roms` directory at the root of a USB drive. You can then load up this USB drive with your ROMs from a different computer:
 
-=== "Windows"
+=== ":simple-windowsxp: Windows"
 
     Replace the `E:\` drive letter with wherever your SD card is:
 
@@ -33,7 +33,7 @@ The [RetroPie docs](https://retropie.org.uk/docs/Transferring-Roms/) recommend c
       --no-bios
     ```
 
-=== "macOS"
+=== ":simple-apple: macOS"
 
     Replace the `/Volumes/RETROPIE` drive name with whatever your SD card is named:
 
@@ -42,6 +42,20 @@ The [RetroPie docs](https://retropie.org.uk/docs/Transferring-Roms/) recommend c
       --dat "No-Intro*.zip" \
       --input "ROMs/" \
       --output "/Volumes/RETROPIE/retropie/roms/" \
+      --dir-dat-name \
+      --dir-letter \
+      --no-bios
+    ```
+
+=== ":simple-linux: Linux"
+
+    Replace the `/media/RETROPIE` path with wherever your SD card is mounted:
+
+    ```shell
+    igir copy zip test clean \
+      --dat "No-Intro*.zip" \
+      --input "ROMs/" \
+      --output "/media/RETROPIE/retropie/roms/" \
       --dir-dat-name \
       --dir-letter \
       --no-bios

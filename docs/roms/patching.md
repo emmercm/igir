@@ -6,7 +6,7 @@ Games and their ROMs are protected under copyrights, so patches are used in orde
 
 ## Specifying patch files
 
-Patch files can be specified with the `--patch` option. See the [file scanning docs](file-scanning.md) for more information.
+Patch files can be specified with the `--patch` option. See the [file scanning docs](../input/file-scanning.md) for more information.
 
 ## Patch types
 
@@ -16,13 +16,13 @@ Not all patch types are created equal. Here are some tables of some existing for
 
 **Common patch types:**
 
-| Type                 | Supported                        | CRC32 in patch contents | Notes                                                                                                                                                                                                |
-|----------------------|----------------------------------|-------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `.bps`               | ✅                                | ✅                       |                                                                                                                                                                                                      |
-| `.ips`               | ✅ IPS, IPS32                     | ❌                       |                                                                                                                                                                                                      |
-| `.ppf`               | ✅ 2.0, 3.0                       | ❌                       |                                                                                                                                                                                                      |
-| `.ups`               | ✅                                | ✅                       | ⚠️ UPS patches read and write fies byte-by-byte, making them horribly slow and inefficient. The author, byuu, created `.ups` to replace `.ips`, but then created `.bps` as a replacement for `.ups`. |
-| `.vcdiff`, `.xdelta` | ⚠️ without secondary compression | ❌                       | ⚠️ [xdelta3](https://github.com/jmacd/xdelta) makes use of LZMA secondary compression by default, so many patches are likely to be unsupported.                                                      |
+| Type                 | Supported                        | CRC32 in patch contents | Notes                                                                                                                                                                                                 |
+|----------------------|----------------------------------|-------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `.bps`               | ✅                                | ✅                       |                                                                                                                                                                                                       |
+| `.ips`               | ✅ IPS, IPS32                     | ❌                       |                                                                                                                                                                                                       |
+| `.ppf`               | ✅ 2.0, 3.0                       | ❌                       |                                                                                                                                                                                                       |
+| `.ups`               | ✅                                | ✅                       | ⚠️ UPS patches read and write files byte-by-byte, making them horribly slow and inefficient. The author, byuu, created `.ups` to replace `.ips`, but then created `.bps` as a replacement for `.ups`. |
+| `.vcdiff`, `.xdelta` | ⚠️ without secondary compression | ❌                       | ⚠️ [xdelta3](https://github.com/jmacd/xdelta) makes use of LZMA secondary compression by default, so many patches are likely to be unsupported.                                                       |
 
 **Uncommon patch types:**
 

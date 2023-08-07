@@ -12,12 +12,12 @@ The MiSTer [`update_all.sh`](https://github.com/theypsilon/Update_All_MiSTer) sc
 
 This token can be used to reference each core's specific directory in the MiSTer's `games` directory.
 
-=== "Windows"
+=== ":simple-windowsxp: Windows"
 
     Replace the `E:\` drive letter with wherever your SD card is:
 
     ```batch
-    igir copy extract test clean ^
+    igir.exe copy extract test clean ^
       --dat "No-Intro*.zip" ^
       --input "ROMs" ^
       --output "E:\games\{mister}" ^
@@ -25,7 +25,7 @@ This token can be used to reference each core's specific directory in the MiSTer
       --no-bios
     ```
 
-=== "macOS"
+=== ":simple-apple: macOS"
 
     Replace the `/Volumes/MISTER` drive name with whatever your SD card is named:
 
@@ -34,6 +34,19 @@ This token can be used to reference each core's specific directory in the MiSTer
       --dat "No-Intro*.zip" \
       --input "ROMs/" \
       --output "/Volumes/MISTER/games/{mister}/" \
+      --dir-letter \
+      --no-bios
+    ```
+
+=== ":simple-linux: Linux"
+
+    Replace the `/media/MISTER` path with wherever your SD card is mounted:
+
+    ```shell
+    igir copy extract test clean \
+      --dat "No-Intro*.zip" \
+      --input "ROMs/" \
+      --output "/media/MISTER/games/{mister}/" \
       --dir-letter \
       --no-bios
     ```

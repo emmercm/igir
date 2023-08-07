@@ -29,7 +29,6 @@ theme:
     - navigation.tabs.sticky
     - navigation.indexes
     - navigation.sections
-    - navigation.expand
     - navigation.instant
     - navigation.footer
     - toc.follow
@@ -48,7 +47,10 @@ nav:
       - Usage:
           - usage/collection-sorting.md
           - Desktop Frontends:
+              - usage/desktop/batocera.md
               - usage/desktop/emulationstation.md
+              - usage/desktop/lakka.md
+              - usage/desktop/recalbox.md
               - usage/desktop/retroarch.md
               - usage/desktop/retropie.md
           - Handheld Frontends:
@@ -57,15 +59,18 @@ nav:
               - usage/hardware/analogue-pocket.md
               - usage/hardware/everdrive.md
               - usage/hardware/mister.md
+          - Specific Consoles:
+              - usage/console/gamecube.md
+              - usage/console/ps2.md
           - usage/personal.md
       - File Inputs:
-          - file-scanning.md
-          - dats.md
-          - archives.md
+          - input/file-scanning.md
+          - input/dats.md
+          - input/archives.md
       - ROM Processing:
-          - rom-filtering.md
-          - rom-headers.md
-          - rom-patching.md
+          - roms/filtering-preferences.md
+          - roms/headers.md
+          - roms/patching.md
       - File Outputs:
           - output/tokens.md
           - output/reporting.md
@@ -73,6 +78,8 @@ nav:
           - internals.md
       - Misc:
           - rom-dumping.md
+      - Terms and Conditions:
+          - license.md
   # https://github.com/squidfunk/mkdocs-material/issues/889#issuecomment-582297142: how-to open nav links in new tabs
   - Download ↗: https://github.com/emmercm/igir/releases/latest" target="_blank
   - Issues ↗: https://github.com/emmercm/igir/issues?q=is%3Aopen+is%3Aissue+label%3Abug" target="_blank
@@ -85,8 +92,14 @@ plugins:
       enable_creation_date: true
   - redirects:
       redirect_maps:
+        'archives.md': 'input/archives.md'
+        'dats.md': 'input/dats.md'
         'examples.md': 'usage/collection-sorting.md'
+        'file-scanning.md': 'input/file-scanning.md'
         'reporting.md': 'output/reporting.md'
+        'rom-filtering.md': 'roms/filtering-preferences.md'
+        'rom-headers.md': 'roms/headers.md'
+        'rom-patching.md': 'roms/patching.md'
   #- htmlproofer:
   #    raise_error_excludes:
   #      '-1': [ 'http://www.logiqx.com' ]
@@ -111,6 +124,11 @@ markdown_extensions:
       alternate_style: true
   # https://github.com/mkdocs/mkdocs/issues/545: allow two-space indented lists
   - mdx_truly_sane_lists
+  # https://squidfunk.github.io/mkdocs-material/reference/icons-emojis/
+  - attr_list
+  - pymdownx.emoji:
+      emoji_index: !!python/name:materialx.emoji.twemoji
+      emoji_generator: !!python/name:materialx.emoji.to_svg
 
 extra:
   analytics:

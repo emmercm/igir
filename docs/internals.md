@@ -6,15 +6,18 @@ Information about the inner workings of `igir`.
 
 `igir` runs these steps in the following order:
 
-1. Scans each DAT input path for every file and parses them, if provided (`--dat`)
-2. Scans each ROM input path for every file (`--input`)
-   - Then detects headers in those files, if applicable (see [header docs](rom-headers.md))
-3. Scans each patch input path for every file (`--patch`) (see [patching docs](rom-patching.md))
-4. ROMs are matched to the DATs, if provided
-   - Then ROMs are matched to any applicable patches, creating multiple versions from the same ROM
-   - Then filtering and sorting options are applied (see [filtering docs](rom-filtering.md))
-   - Then ROMs are written to the output directory, if specified (`copy`, `move`)
-   - Then written ROMs are tested for accuracy, if specified (`test`)
-   - Then input ROMs are deleted, if specified (`move`)
-5. Unknown files are recycled from the output directory, if specified (`clean`)
-6. An output report is written to the output directory, if specified (`report`)
+1. Scan each DAT input path for every file and parse them, if provided (`--dat`)
+2. Scan each ROM input path for every file (`--input`)
+   - Detect headers in those files, if applicable (see [header docs](roms/headers.md))
+3. Scan each patch input path for every file (`--patch`) (see [patching docs](roms/patching.md))
+4. Then for each DAT:
+   - ROMs in the DAT are filtered to only those desired (see [filtering & preference docs](roms/filtering-preferences.md))
+   - Input files are matched to ROMs in the DAT
+   - Patch files are matched to ROMs in the DAT
+   - ROM preferences are applied (`--single`, see [filtering & preference docs](roms/filtering-preferences.md))
+   - ROMs are written to the output directory, if specified (`copy`, `move`, `symlink`)
+     - Written ROMs are tested for accuracy, if specified (`test`)
+   - A "fixdat" is created, if specified (`--fixdat`)
+5. "Moved" input ROMs are deleted (`move`)
+6. Unknown files are recycled from the output directory, if specified (`clean`)
+7. An output report is written to the output directory, if specified (`report`)

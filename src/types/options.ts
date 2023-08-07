@@ -13,7 +13,7 @@ import util from 'util';
 
 import LogLevel from '../console/logLevel.js';
 import Constants from '../constants.js';
-import fsPoly from '../polyfill/fsPoly.js';
+import fsPoly, { FsWalkCallback } from '../polyfill/fsPoly.js';
 import URLPoly from '../polyfill/urlPoly.js';
 import ArchiveEntry from './files/archives/archiveEntry.js';
 import File from './files/file.js';
@@ -42,6 +42,7 @@ export interface OptionsProps {
   readonly output?: string,
   readonly dirMirror?: boolean,
   readonly dirDatName?: boolean,
+  readonly dirDatDescription?: boolean,
   readonly dirLetter?: boolean,
   readonly dirLetterLimit?: number,
   readonly overwrite?: boolean,
@@ -67,6 +68,8 @@ export interface OptionsProps {
   readonly noUnlicensed?: boolean,
   readonly onlyUnlicensed?: boolean,
   readonly onlyRetail?: boolean,
+  readonly noDebug?: boolean,
+  readonly onlyDebug?: boolean,
   readonly noDemo?: boolean,
   readonly onlyDemo?: boolean,
   readonly noBeta?: boolean,
@@ -94,6 +97,8 @@ export interface OptionsProps {
   readonly preferRevisionNewer?: boolean,
   readonly preferRevisionOlder?: boolean,
   readonly preferRetail?: boolean,
+  readonly preferNTSC?: boolean,
+  readonly preferPAL?: boolean,
   readonly preferParent?: boolean,
 
   readonly reportOutput?: string,
@@ -131,6 +136,8 @@ export default class Options implements OptionsProps {
   readonly dirMirror: boolean;
 
   readonly dirDatName: boolean;
+
+  readonly dirDatDescription: boolean;
 
   readonly dirLetter: boolean;
 
@@ -173,6 +180,10 @@ export default class Options implements OptionsProps {
   readonly onlyUnlicensed: boolean;
 
   readonly onlyRetail: boolean;
+
+  readonly noDebug: boolean;
+
+  readonly onlyDebug: boolean;
 
   readonly noDemo: boolean;
 
@@ -226,6 +237,12 @@ export default class Options implements OptionsProps {
 
   readonly preferRetail: boolean;
 
+  @Expose({ name: 'preferNtsc' })
+  readonly preferNTSC: boolean;
+
+  @Expose({ name: 'preferPal' })
+  readonly preferPAL: boolean;
+
   readonly preferParent: boolean;
 
   readonly reportOutput: string;
@@ -256,6 +273,7 @@ export default class Options implements OptionsProps {
     this.output = options?.output ?? '';
     this.dirMirror = options?.dirMirror ?? false;
     this.dirDatName = options?.dirDatName ?? false;
+    this.dirDatDescription = options?.dirDatDescription ?? false;
     this.dirLetter = options?.dirLetter ?? false;
     this.dirLetterLimit = options?.dirLetterLimit ?? 0;
     this.overwrite = options?.overwrite ?? false;
@@ -281,6 +299,8 @@ export default class Options implements OptionsProps {
     this.noUnlicensed = options?.noUnlicensed ?? false;
     this.onlyUnlicensed = options?.onlyUnlicensed ?? false;
     this.onlyRetail = options?.onlyRetail ?? false;
+    this.noDebug = options?.noDebug ?? false;
+    this.onlyDebug = options?.onlyDebug ?? false;
     this.noDemo = options?.noDemo ?? false;
     this.onlyDemo = options?.onlyDemo ?? false;
     this.noBeta = options?.noBeta ?? false;
@@ -308,6 +328,8 @@ export default class Options implements OptionsProps {
     this.preferRevisionNewer = options?.preferRevisionNewer ?? false;
     this.preferRevisionOlder = options?.preferRevisionOlder ?? false;
     this.preferRetail = options?.preferRetail ?? false;
+    this.preferNTSC = options?.preferNTSC ?? false;
+    this.preferPAL = options?.preferPAL ?? false;
     this.preferParent = options?.preferParent ?? false;
 
     this.reportOutput = options?.reportOutput ?? '';
@@ -407,16 +429,16 @@ export default class Options implements OptionsProps {
     return this.input.length;
   }
 
-  private async scanInputFiles(): Promise<string[]> {
-    return Options.scanPaths(this.input);
+  private async scanInputFiles(walkCallback?: FsWalkCallback): Promise<string[]> {
+    return Options.scanPaths(this.input, walkCallback);
   }
 
   private async scanInputExcludeFiles(): Promise<string[]> {
-    return Options.scanPaths(this.inputExclude, false);
+    return Options.scanPaths(this.inputExclude, undefined, false);
   }
 
-  async scanInputFilesWithoutExclusions(): Promise<string[]> {
-    const inputFiles = await this.scanInputFiles();
+  async scanInputFilesWithoutExclusions(walkCallback?: FsWalkCallback): Promise<string[]> {
+    const inputFiles = await this.scanInputFiles(walkCallback);
     const inputExcludeFiles = await this.scanInputExcludeFiles();
     return inputFiles
       .filter((inputPath) => inputExcludeFiles.indexOf(inputPath) === -1);
@@ -426,22 +448,26 @@ export default class Options implements OptionsProps {
     return this.patch.length;
   }
 
-  async scanPatchFilesWithoutExclusions(): Promise<string[]> {
-    const patchFiles = await this.scanPatchFiles();
+  async scanPatchFilesWithoutExclusions(walkCallback?: FsWalkCallback): Promise<string[]> {
+    const patchFiles = await this.scanPatchFiles(walkCallback);
     const patchExcludeFiles = await this.scanPatchExcludeFiles();
     return patchFiles
       .filter((patchPath) => patchExcludeFiles.indexOf(patchPath) === -1);
   }
 
-  private async scanPatchFiles(): Promise<string[]> {
-    return Options.scanPaths(this.patch);
+  private async scanPatchFiles(walkCallback?: FsWalkCallback): Promise<string[]> {
+    return Options.scanPaths(this.patch, walkCallback);
   }
 
   private async scanPatchExcludeFiles(): Promise<string[]> {
-    return Options.scanPaths(this.patchExclude, false);
+    return Options.scanPaths(this.patchExclude, undefined, false);
   }
 
-  private static async scanPaths(globPatterns: string[], requireFiles = true): Promise<string[]> {
+  private static async scanPaths(
+    globPatterns: string[],
+    walkCallback?: FsWalkCallback,
+    requireFiles = true,
+  ): Promise<string[]> {
     // Limit to scanning one glob pattern at a time to keep memory in check
     const uniqueGlobPatterns = globPatterns
       .filter((pattern) => pattern)
@@ -449,7 +475,11 @@ export default class Options implements OptionsProps {
     const globbedPaths = [];
     /* eslint-disable no-await-in-loop */
     for (let i = 0; i < uniqueGlobPatterns.length; i += 1) {
-      globbedPaths.push(...(await this.globPath(uniqueGlobPatterns[i], requireFiles)));
+      globbedPaths.push(...(await this.globPath(
+        uniqueGlobPatterns[i],
+        requireFiles,
+        walkCallback ?? ((): void => {}),
+      )));
     }
 
     // Filter to non-directories
@@ -479,7 +509,11 @@ export default class Options implements OptionsProps {
       .filter((inputPath, idx, arr) => arr.indexOf(inputPath) === idx);
   }
 
-  private static async globPath(inputPath: string, requireFiles: boolean): Promise<string[]> {
+  private static async globPath(
+    inputPath: string,
+    requireFiles: boolean,
+    walkCallback: FsWalkCallback,
+  ): Promise<string[]> {
     // Windows will report that \\.\nul doesn't exist, catch it explicitly
     if (inputPath === os.devNull || inputPath.startsWith(os.devNull + path.sep)) {
       return [];
@@ -490,7 +524,7 @@ export default class Options implements OptionsProps {
 
     // Glob the contents of directories
     if (await fsPoly.isDirectory(inputPath)) {
-      const dirPaths = (await fg(`${fg.escapePath(inputPathNormalized)}/**`))
+      const dirPaths = (await fsPoly.walk(inputPathNormalized, walkCallback))
         .map((filePath) => path.normalize(filePath));
       if (!dirPaths || !dirPaths.length) {
         if (!requireFiles) {
@@ -503,15 +537,17 @@ export default class Options implements OptionsProps {
 
     // If the file exists, don't process it as a glob pattern
     if (await fsPoly.exists(inputPath)) {
+      walkCallback(1);
       return [inputPath];
     }
 
     // Otherwise, process it as a glob pattern
-    const paths = (await fg(inputPathNormalized))
+    const paths = (await fg(inputPathNormalized, { onlyFiles: true }))
       .map((filePath) => path.normalize(filePath));
     if (!paths || !paths.length) {
       if (URLPoly.canParse(inputPath)) {
         // Allow URLs, let the scanner modules deal with them
+        walkCallback(1);
         return [inputPath];
       }
 
@@ -520,6 +556,7 @@ export default class Options implements OptionsProps {
       }
       throw new Error(`${inputPath}: no files found`);
     }
+    walkCallback(paths.length);
     return paths;
   }
 
@@ -531,16 +568,16 @@ export default class Options implements OptionsProps {
     return this.dat.length;
   }
 
-  private async scanDatFiles(): Promise<string[]> {
-    return Options.scanPaths(this.dat);
+  private async scanDatFiles(walkCallback?: FsWalkCallback): Promise<string[]> {
+    return Options.scanPaths(this.dat, walkCallback);
   }
 
   private async scanDatExcludeFiles(): Promise<string[]> {
-    return Options.scanPaths(this.datExclude, false);
+    return Options.scanPaths(this.datExclude, undefined, false);
   }
 
-  async scanDatFilesWithoutExclusions(): Promise<string[]> {
-    const datFiles = await this.scanDatFiles();
+  async scanDatFilesWithoutExclusions(walkCallback?: FsWalkCallback): Promise<string[]> {
+    const datFiles = await this.scanDatFiles(walkCallback);
     const datExcludeFiles = await this.scanDatExcludeFiles();
     return datFiles
       .filter((inputPath) => datExcludeFiles.indexOf(inputPath) === -1);
@@ -681,6 +718,9 @@ export default class Options implements OptionsProps {
     if (this.getDirDatName() && dat.getNameShort()) {
       output = path.join(output, dat.getNameShort());
     }
+    if (this.getDirDatDescription() && dat.getDescription()) {
+      output = path.join(output, dat.getDescription() as string);
+    }
 
     const dirLetter = this.getDirLetterParsed(romFilenameSanitized, romBasenames);
     if (dirLetter) {
@@ -725,7 +765,15 @@ export default class Options implements OptionsProps {
   }
 
   private static replaceDatTokens(input: string, dat: DAT): string {
-    return input.replace('{datName}', dat.getName().replace(/[\\/]/g, '_'));
+    let output = input;
+    output = output.replace('{datName}', dat.getName().replace(/[\\/]/g, '_'));
+
+    const description = dat.getDescription();
+    if (description) {
+      output = output.replace('{datDescription}', description.replace(/[\\/]/g, '_'));
+    }
+
+    return output;
   }
 
   private static replaceGameTokens(input: string, game?: Game): string {
@@ -852,6 +900,10 @@ export default class Options implements OptionsProps {
     return this.dirDatName;
   }
 
+  getDirDatDescription(): boolean {
+    return this.dirDatDescription;
+  }
+
   getDirLetter(): boolean {
     return this.dirLetter;
   }
@@ -869,7 +921,7 @@ export default class Options implements OptionsProps {
   }
 
   private async scanCleanExcludeFiles(): Promise<string[]> {
-    return Options.scanPaths(this.cleanExclude, false);
+    return Options.scanPaths(this.cleanExclude, undefined, false);
   }
 
   async scanOutputFilesWithoutCleanExclusions(
@@ -981,6 +1033,14 @@ export default class Options implements OptionsProps {
     return this.onlyRetail;
   }
 
+  getNoDebug(): boolean {
+    return this.noDebug;
+  }
+
+  getOnlyDebug(): boolean {
+    return this.onlyDebug;
+  }
+
   getNoDemo(): boolean {
     return this.noDemo;
   }
@@ -1083,6 +1143,14 @@ export default class Options implements OptionsProps {
 
   getPreferRetail(): boolean {
     return this.preferRetail;
+  }
+
+  getPreferNTSC(): boolean {
+    return this.preferNTSC;
+  }
+
+  getPreferPAL(): boolean {
+    return this.preferPAL;
   }
 
   getPreferParent(): boolean {

@@ -16,6 +16,7 @@ enum GameType {
   BAD = 'Bad',
   BETA = 'Beta',
   BIOS = 'BIOS',
+  DEBUG = 'Debug',
   DEMO = 'Demo',
   DEVICE = 'Device',
   FIXED = 'Fixed',
@@ -54,6 +55,7 @@ enum GameType {
  */
 export interface GameProps {
   readonly name?: string,
+  readonly category?: string,
   readonly description?: string,
   readonly sourceFile?: string,
   readonly bios?: 'yes' | 'no',
@@ -76,6 +78,13 @@ export interface GameProps {
 export default class Game implements GameProps {
   @Expose({ name: 'name' })
   readonly name: string;
+
+  /**
+   * This is non-standard, but Redump uses it:
+   * @see http://wiki.redump.org/index.php?title=Redump_Search_Parameters#Category
+   */
+  @Expose({ name: 'category' })
+  readonly category: string;
 
   @Expose({ name: 'description' })
   readonly description: string;
@@ -105,6 +114,7 @@ export default class Game implements GameProps {
 
   constructor(options?: GameProps) {
     this.name = options?.name ?? '';
+    this.category = options?.category ?? '';
     this.description = options?.description ?? '';
     this.bios = options?.bios ?? this.bios;
     this.device = options?.device ?? this.device;
@@ -118,11 +128,11 @@ export default class Game implements GameProps {
   toXmlDatObj(): object {
     return {
       $: {
-        name: this.name,
+        name: this.getName(),
         // NOTE(cemmer): explicitly not including `cloneof`
       },
       description: {
-        _: this.description,
+        _: this.getDescription(),
       },
       release: this.getReleases().map((release) => release.toXmlDatObj()),
       rom: this.getRoms().map((rom) => rom.toXmlDatObj()),
@@ -133,6 +143,14 @@ export default class Game implements GameProps {
 
   getName(): string {
     return this.name;
+  }
+
+  getCategory(): string {
+    return this.category;
+  }
+
+  getDescription(): string {
+    return this.description;
   }
 
   isBios(): boolean {
@@ -185,6 +203,14 @@ export default class Game implements GameProps {
     return 0;
   }
 
+  isNTSC(): boolean {
+    return this.name.match(/\(NTSC\)/i) !== null;
+  }
+
+  isPAL(): boolean {
+    return this.name.match(/\(PAL[a-z0-9 ]*\)/i) !== null;
+  }
+
   isAftermarket(): boolean {
     return this.name.match(/\(Aftermarket[a-z0-9. ]*\)/i) !== null;
   }
@@ -209,8 +235,12 @@ export default class Game implements GameProps {
     return this.name.match(/\(Beta[a-z0-9. ]*\)/i) !== null;
   }
 
+  isDebug(): boolean {
+    return this.name.match(/\(Debug[a-z0-9. ]*\)/i) !== null;
+  }
+
   isDemo(): boolean {
-    return this.name.match(/\(Demo[a-z0-9. ]*\)/i) !== null;
+    return this.name.match(/\(Demo[a-z0-9. -]*\)/i) !== null || this.getCategory() === 'Demos';
   }
 
   isFixed(): boolean {
@@ -221,6 +251,9 @@ export default class Game implements GameProps {
     return this.name.match(/\(Homebrew[a-z0-9. ]*\)/i) !== null;
   }
 
+  // NOTE(cemmer): RomVault indicates that some DATs include <rom mia="yes"/>, but I did not find
+  //  any evidence of this in No-Intro, Redump, TOSEC, and FinalBurn Neo.
+  //  https://wiki.romvault.com/doku.php?id=mia_rom_tracking#can_i_manually_flag_roms_as_mia
   isMIA(): boolean {
     return this.name.match(/\[MIA\]/i) !== null;
   }
@@ -284,6 +317,7 @@ export default class Game implements GameProps {
         && !this.isAlpha()
         && !this.isBad()
         && !this.isBeta()
+        && !this.isDebug()
         && !this.isDemo()
         && !this.isFixed()
         && !this.isHomebrew()
@@ -316,6 +350,8 @@ export default class Game implements GameProps {
       return GameType.BAD;
     } if (this.isBeta()) {
       return GameType.BETA;
+    } if (this.isDebug()) {
+      return GameType.DEBUG;
     } if (this.isDemo()) {
       return GameType.DEMO;
     } if (this.isDevice()) {
