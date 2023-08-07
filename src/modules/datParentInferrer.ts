@@ -128,6 +128,7 @@ export default class DATParentInferrer extends Module {
       .replace(/\[x\]/, '')
       // ***** TOSEC *****
       .replace(/\((demo|demo-kiosk|demo-playable|demo-rolling|demo-slideshow)\)/, '') // demo
+      .replace(/\([0-9x]{4}(-[0-9x]{2}(-[0-9x]{2})?)?\)/, '') // YYYY-MM-DD
       .replace(/\((CGA|EGA|HGC|MCGA|MDA|NTSC|NTSC-PAL|PAL|PAL-60|PAL-NTSC|SVGA|VGA|XGA)\)/i, '') // video
       .replace(/\(M[0-9]+\)/, '') // language
       .replace(/\((CW|CW-R|FW|GW|GW-R|LW|PD|SW|SW-R)\)/i, '') // copyright

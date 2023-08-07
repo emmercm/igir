@@ -68,6 +68,17 @@ test.each([
   ], 'Doom 3 (Europe) (En,Fr,Es,It)'],
   // https://www.tosecdev.org/tosec-naming-convention
   [[
+    'Legend of TOSEC, The (19xx)',
+    'Legend of TOSEC, The (200x)',
+    'Legend of TOSEC, The (1986)',
+    'Legend of TOSEC, The (199x)',
+    'Legend of TOSEC, The (2001-01)',
+    'Legend of TOSEC, The (1986-06-21)',
+    'Legend of TOSEC, The (19xx-12)',
+    'Legend of TOSEC, The (19xx-12-25)',
+    'Legend of TOSEC, The (19xx-12-2x)',
+  ], 'Legend of TOSEC, The (19xx)'],
+  [[
     'Legend of TOSEC, The (1986)(Devstudio)(PAL)',
     'Legend of TOSEC, The (1986)(Devstudio)(NTSC)',
   ], 'Legend of TOSEC, The (1986)(Devstudio)(PAL)'],
