@@ -17,6 +17,7 @@ export default class Internationalization {
     {
       region: 'AUS', long: 'Australia', language: 'EN', regex: /\(A\)/i,
     },
+    { region: 'BEL', long: 'Belgium', language: 'FR' },
     {
       region: 'BRA', long: 'Brazil', language: 'PT', regex: /\(B\)/i,
     },
@@ -72,7 +73,7 @@ export default class Internationalization {
       region: 'UK', long: 'United Kingdom', language: 'EN', regex: /\(UK\)/i,
     },
     {
-      region: 'UNK', long: '', language: 'EN', regex: /\(Unk\)/i,
+      region: 'UNK', long: 'Unknown', language: 'EN', regex: /\(Unk\)/i,
     },
     {
       region: 'USA', long: 'USA', language: 'EN', regex: /\((4|U)\)/i,
@@ -84,6 +85,7 @@ export default class Internationalization {
     {
       region: 'EUR', long: 'Europe', language: 'EN', regex: /\(E\)/i,
     },
+    { region: '', long: 'Scandinavia', language: '' },
     {
       region: 'WORLD', long: 'World', language: 'EN', regex: /\(W\)/i,
     },
@@ -111,11 +113,13 @@ export default class Internationalization {
 
   public static readonly REGIONS = this.REGION_OPTIONS
     .map((regionOption) => regionOption.region.toUpperCase())
+    .filter((region) => region)
     .filter((region, idx, regions) => regions.indexOf(region) === idx)
     .sort();
 
   public static readonly LANGUAGES = this.REGION_OPTIONS
     .map((regionOption) => regionOption.language.toUpperCase())
+    .filter((language) => language)
     .filter((language, idx, languages) => languages.indexOf(language) === idx)
     .sort();
 }
