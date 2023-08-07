@@ -83,7 +83,7 @@ Being able to know that many releases are actually the same game gives `igir` th
 
 One feature that sets `igir` apart from other ROM managers is its ability to infer parent/clone information when DATs don't provide it. For example, Redump DATs don't provide parent/clone information, which makes it much more difficult to create 1G1R sets.
 
-For example, all of these Super Smash Bros. Melee releases should be considered the same game, even if a DAT doesn't provide proper information. If the releases are all treated the same, then the `--single` option can be used in combination with [ROM preferences](../rom-filtering.md) to make a 1G1R set. `igir` is smart enough to understand that the only differences between these releases are the regions, languages, and revisions.
+For example, all of these Super Smash Bros. Melee releases should be considered the same game, even if a DAT doesn't provide proper information. If the releases are all treated the same, then the `--single` option can be used in combination with [ROM preferences](../roms/filtering-preferences.md) to make a 1G1R set. `igir` is smart enough to understand that the only differences between these releases are the regions, languages, and revisions.
 
 ```text
 Super Smash Bros. Melee (Europe) (En,Fr,De,Es,It)
@@ -101,7 +101,7 @@ Super Smash Bros. Melee (USA) (En,Ja) (Rev 2)
 
     [Retool](https://github.com/unexpectedpanda/retool) is a DAT manipulation tool that has a set of hand-maintained [parent/clone lists](https://github.com/unexpectedpanda/retool-clonelists-metadata) to supplement common DAT groups such as No-Intro and Redump. This helps cover situations such as release titles in different languages that would be hard to group together automatically.
 
-    1G1R DATs made by Retool can be used seamlessly with `igir`. You won't need to supply the `--single` option or any [ROM preferences](../rom-filtering.md), but you can still supply [ROM filtering](../rom-filtering.md) options if desired.
+    1G1R DATs made by Retool can be used seamlessly with `igir`. You won't need to supply the `--single` option or any [ROM preferences](../roms/filtering-preferences.md), but you can still supply [ROM filtering](../roms/filtering-preferences.md) options if desired.
 
 ## Fixdats
 
