@@ -9,6 +9,7 @@ import DAT from '../types/logiqx/dat.js';
 import Header from '../types/logiqx/header.js';
 import Parent from '../types/logiqx/parent.js';
 import Options from '../types/options.js';
+import OutputFactory from '../types/outputFactory.js';
 import ReleaseCandidate from '../types/releaseCandidate.js';
 import Module from './module.js';
 
@@ -50,7 +51,7 @@ export default class FixdatCreator extends Module {
     }
 
     const fixdatDir = this.options.shouldWrite()
-      ? this.options.getOutputDirParsed(originalDat)
+      ? OutputFactory.getDir(this.options, originalDat)
       : process.cwd();
 
     // Construct a new DAT header

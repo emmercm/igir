@@ -402,7 +402,7 @@ describe('with explicit DATs', () => {
 
     // Only the "One" DAT should have missing ROMs (Missing.rom)
     expect(writtenFixdats).toHaveLength(1);
-    expect(writtenFixdats[0]).toMatch(/^One fixdat \([0-9]{8}-[0-9]{6}\)\.dat$/);
+    expect(writtenFixdats[0]).toMatch(/^One[\\/]One fixdat \([0-9]{8}-[0-9]{6}\)\.dat$/);
   });
 
   it('should generate a fixdat when not writing', async () => {

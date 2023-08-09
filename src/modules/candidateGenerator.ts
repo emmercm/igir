@@ -12,6 +12,7 @@ import Parent from '../types/logiqx/parent.js';
 import Release from '../types/logiqx/release.js';
 import ROM from '../types/logiqx/rom.js';
 import Options from '../types/options.js';
+import OutputFactory from '../types/outputFactory.js';
 import ReleaseCandidate from '../types/releaseCandidate.js';
 import ROMWithFiles from '../types/romWithFiles.js';
 import Module from './module.js';
@@ -122,7 +123,7 @@ export default class CandidateGenerator extends Module {
         /**
          * If the matched input file is from an archive, and we're not zipping or extracting, then
          * treat the file as "raw" so it can be copied/moved as-is.
-         * Matches {@link HeaderProcessor.getFileWithHeader}
+         * Matches {@link ROMHeaderProcessor.getFileWithHeader}
          */
         let finalInputFile = originalInputFile;
         if (originalInputFile instanceof ArchiveEntry
@@ -242,26 +243,21 @@ export default class CandidateGenerator extends Module {
     rom: ROM,
     inputFile: File,
   ): Promise<File> {
-    // Determine the output file's basename and archive entry path
-    const [outputFileBasename, outputEntryPath] = this.options.getOutputBasenameAndEntryPath(
+    // Determine the output file's path
+    const outputPathParsed = OutputFactory.getPath(
+      this.options,
       dat,
       game,
       release,
       rom,
       inputFile,
     );
-    const outputFilePath = this.options.getOutputFileParsed(
-      dat,
-      inputFile.getFilePath(),
-      game,
-      release,
-      outputFileBasename,
-    );
+    const outputFilePath = outputPathParsed.format();
 
     // Determine the output CRC of the file
     let outputFileCrc = inputFile.getCrc32();
     if (inputFile.getFileHeader()
-      && this.options.canRemoveHeader(dat, path.extname(outputEntryPath))
+      && this.options.canRemoveHeader(dat, path.extname(outputPathParsed.entryPath))
     ) {
       outputFileCrc = inputFile.getCrc32WithoutHeader();
     }
@@ -271,7 +267,7 @@ export default class CandidateGenerator extends Module {
       // Should zip, return an archive entry within the zip
       return ArchiveEntry.entryOf(
         new Zip(outputFilePath),
-        outputEntryPath,
+        outputPathParsed.entryPath,
         inputFile.getSize(),
         outputFileCrc,
       );
