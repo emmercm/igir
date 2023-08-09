@@ -123,10 +123,12 @@ describe('token replacement', () => {
   });
 
   test.each([
-    ['{inputDirname}', path.join('path', 'to', 'game.rom')],
-  ])('should replace {input*}: %s', async (output, expectedPath) => {
+    ['{inputDirname}', 'game.rom', 'game.rom'],
+    ['{inputDirname}', 'roms/game.rom', path.join('roms', 'game.rom')],
+    ['{inputDirname}', 'roms/subdir/game.rom', path.join('roms', 'subdir', 'game.rom')],
+  ])('should replace {input*}: %s', async (output, filePath, expectedPath) => {
     const options = new Options({ commands: ['copy'], output });
-    const rom = new ROM('path/to/game.rom', 0, '');
+    const rom = new ROM(path.basename(filePath), 0, '');
 
     const outputPath = OutputFactory.getPath(
       options,
@@ -134,17 +136,19 @@ describe('token replacement', () => {
       dummyGame,
       dummyRelease,
       rom,
-      await rom.toFile(),
+      await (await rom.toFile()).withFilePath(filePath),
     );
     expect(outputPath.format()).toEqual(expectedPath);
   });
 
   test.each([
-    ['root/{outputBasename}', path.join('root', 'game.rom', 'game.rom')],
-    ['root/{outputName}.{outputExt}', path.join('root', 'game.rom', 'game.rom')],
-  ])('should replace {output*}: %s', async (output, expectedPath) => {
+    ['{outputBasename}', 'game.rom', path.join('game.rom', 'game.rom')],
+    ['{outputBasename}', 'roms/subdir/game.rom', path.join('game.rom', 'game.rom')],
+    ['{outputName}.{outputExt}', 'game.rom', path.join('game.rom', 'game.rom')],
+    ['{outputName}.{outputExt}', 'roms/subdir/game.rom', path.join('game.rom', 'game.rom')],
+  ])('should replace {output*}: %s', async (output, filePath, expectedPath) => {
     const options = new Options({ commands: ['copy'], output });
-    const rom = new ROM('path/to/game.rom', 0, '');
+    const rom = new ROM(path.basename(filePath), 0, '');
 
     const outputPath = OutputFactory.getPath(
       options,
@@ -152,7 +156,7 @@ describe('token replacement', () => {
       dummyGame,
       dummyRelease,
       rom,
-      await rom.toFile(),
+      await (await rom.toFile()).withFilePath(filePath),
     );
     expect(outputPath.format()).toEqual(expectedPath);
   });
@@ -276,12 +280,13 @@ describe('token replacement', () => {
 
 describe('should respect "--dir-mirror"', () => {
   test.each([
-    [new ROM('', 0, ''), os.devNull],
-    [new ROM('file.rom', 0, ''), path.join(os.devNull, 'file.rom')],
-    [new ROM('roms/file.rom', 0, ''), path.join(os.devNull, 'file.rom')],
-    [new ROM('roms/subdir/file.rom', 0, ''), path.join(os.devNull, 'subdir', 'file.rom')],
-  ])('option is true: %s', async (rom, expectedPath) => {
+    ['', os.devNull],
+    ['file.rom', path.join(os.devNull, 'file.rom')],
+    ['roms/file.rom', path.join(os.devNull, 'file.rom')],
+    ['roms/subdir/file.rom', path.join(os.devNull, 'subdir', 'file.rom')],
+  ])('option is true: %s', async (filePath, expectedPath) => {
     const options = new Options({ commands: ['copy'], output: os.devNull, dirMirror: true });
+    const rom = new ROM(path.basename(filePath), 0, '');
 
     const outputPath = OutputFactory.getPath(
       options,
@@ -289,15 +294,16 @@ describe('should respect "--dir-mirror"', () => {
       dummyGame,
       dummyRelease,
       rom,
-      await rom.toFile(),
+      await (await rom.toFile()).withFilePath(filePath),
     );
     expect(outputPath.format()).toEqual(expectedPath);
   });
 
   test.each([
-    [new ROM('roms/subdir/file.rom', 0, ''), path.join(os.devNull, 'file.rom')],
-  ])('option is false: %s', async (rom, expectedPath) => {
+    ['roms/subdir/file.rom', path.join(os.devNull, 'file.rom')],
+  ])('option is false: %s', async (filePath, expectedPath) => {
     const options = new Options({ commands: ['copy'], output: os.devNull, dirMirror: false });
+    const rom = new ROM(path.basename(filePath), 0, '');
 
     const outputPath = OutputFactory.getPath(
       options,
@@ -305,7 +311,7 @@ describe('should respect "--dir-mirror"', () => {
       dummyGame,
       dummyRelease,
       rom,
-      await rom.toFile(),
+      await (await rom.toFile()).withFilePath(filePath),
     );
     expect(outputPath.format()).toEqual(expectedPath);
   });

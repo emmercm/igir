@@ -16,7 +16,7 @@ interface ParsedPathWithEntryPath extends ParsedPath {
   entryPath: string;
 }
 
-class OutputPath implements ParsedPath {
+class OutputPath implements ParsedPathWithEntryPath {
   base: string;
 
   dir: string;
@@ -47,11 +47,12 @@ export default class OutputFactory {
   /**
    * Get the full output path for a ROM file.
    *
+   * @param options the {@link Options} instance for this run of igir.
    * @param dat the {@link DAT} that the ROM/{@link Game} is from.
-   * @param inputRomPath the input file's full file path.
    * @param game the {@link Game} that this file matches to.
    * @param release a {@link Release} from the {@link Game}.
-   * @param romBasename the intended output basename (including extension).
+   * @param rom a {@link ROM} from the {@link Game}.
+   * @param inputFile a {@link File} that matches the {@link ROM}.
    * @param romBasenames the intended output basenames for every ROM from this {@link DAT}.
    */
   static getPath(
@@ -313,6 +314,9 @@ export default class OutputFactory {
       rom,
       inputFile,
     ));
+    if (dir.trim() === '') {
+      return name;
+    }
     return path.join(dir, name);
   }
 
