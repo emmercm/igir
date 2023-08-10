@@ -89,7 +89,7 @@ export default class DATFilter extends Module {
   }
 
   private noLanguageAllowed(game: Game): boolean {
-    const langs = this.options.getLanguageFilter();
+    const langs = this.options.getFilterLanguage();
     if (!langs.length) {
       return false;
     }
@@ -97,7 +97,7 @@ export default class DATFilter extends Module {
   }
 
   private regionNotAllowed(game: Game): boolean {
-    const regions = this.options.getRegionFilter();
+    const regions = this.options.getFilterRegion();
     if (!regions.length) {
       return false;
     }

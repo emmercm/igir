@@ -355,7 +355,7 @@ export default class ArgumentsParser {
         coerce: ArgumentsParser.getLastValue, // don't allow string[] values
         requiresArg: true,
       })
-      .option('language-filter', {
+      .option('filter-language', {
         group: groupRomFiltering,
         alias: 'L',
         description: `List of comma-separated languages to filter to (supported: ${Internationalization.LANGUAGES.join(', ')})`,
@@ -363,13 +363,33 @@ export default class ArgumentsParser {
         coerce: (val: string) => val.split(','),
         requiresArg: true,
       })
-      .option('region-filter', {
+      .option('language-filter', {
+        type: 'string',
+        coerce: (val: string) => {
+          this.logger.warn('--language-filter is deprecated, use --filter-language instead');
+          return val.split(',');
+        },
+        requiresArg: true,
+        deprecated: true,
+        hidden: true,
+      })
+      .option('filter-region', {
         group: groupRomFiltering,
         alias: 'R',
         description: `List of comma-separated regions to filter to (supported: ${Internationalization.REGIONS.join(', ')})`,
         type: 'string',
         coerce: (val: string) => val.split(','),
         requiresArg: true,
+      })
+      .option('region-filter', {
+        type: 'string',
+        coerce: (val: string) => {
+          this.logger.warn('--region-filter is deprecated, use --filter-region instead');
+          return val.split(',');
+        },
+        requiresArg: true,
+        deprecated: true,
+        hidden: true,
       });
     [
       ['bios', 'BIOS files'],
