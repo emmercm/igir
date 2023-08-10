@@ -138,7 +138,13 @@ export default class CandidateGenerator extends Module {
             return [rom, undefined];
           }
 
-          finalInputFile = await originalInputFile.getArchive().asRawFile();
+          if (this.options.shouldTest()) {
+            // If we're testing, then we need to calculate the archive's CRC
+            finalInputFile = await originalInputFile.getArchive().asRawFile();
+          } else {
+            // Otherwise, we can skip calculating the CRC for efficiency
+            finalInputFile = await originalInputFile.getArchive().asRawFileWithoutCrc();
+          }
         }
 
         try {
@@ -264,27 +270,19 @@ export default class CandidateGenerator extends Module {
 
     // Determine the output file type
     if (this.options.shouldZip(rom.getName())) {
-      // Should zip, return an archive entry within the zip
+      // Should zip, return an archive entry within an output zip
       return ArchiveEntry.entryOf(
         new Zip(outputFilePath),
         outputPathParsed.entryPath,
         inputFile.getSize(),
         outputFileCrc,
       );
-    } if (!(inputFile instanceof ArchiveEntry) || this.options.shouldExtract()) {
-      // Should extract (if needed), return a raw file using the ROM's size/CRC
-      return File.fileOf(
-        outputFilePath,
-        inputFile.getSize(),
-        outputFileCrc,
-      );
     }
-    // Should leave archived
-    const inputArchiveRaw = await inputFile.getArchive().asRawFile();
+    // Otherwise, return a raw file
     return File.fileOf(
       outputFilePath,
-      inputArchiveRaw.getSize(),
-      inputArchiveRaw.getCrc32(),
+      inputFile.getSize(),
+      outputFileCrc,
     );
   }
 
