@@ -11,7 +11,7 @@ import ReleaseCandidate from '../../src/types/releaseCandidate.js';
 import ROMWithFiles from '../../src/types/romWithFiles.js';
 import ProgressBarFake from '../console/progressBarFake.js';
 
-const games = [
+const singleRomGames = [
   'Admirable',
   'Adorable',
   'Adventurous',
@@ -19,13 +19,31 @@ const games = [
   'Awesome',
   'Best',
   'Brilliant',
+].map((name) => new Game({
+  name,
+  rom: new ROM(`${name}.rom`, 0, '00000000'),
+}));
+const subDirRomGames = [
   'Cheerful',
   'Confident',
   'Cool',
 ].map((name) => new Game({
   name,
-  rom: new ROM(`${name}.rom`, 0, '00000000'),
+  rom: new ROM(`disk1\\${name}.rom`, 0, '00000000'),
 }));
+const multiRomGames = [
+  'Dainty',
+  'Daring',
+  'Dazzling',
+  'Dedicated',
+].map((name) => new Game({
+  name,
+  rom: [
+    new ROM(`${name}.cue`, 0, '00000000'),
+    new ROM(`${name} (Track 01).bin`, 0, '00000000'),
+  ],
+}));
+const games = [...singleRomGames, ...subDirRomGames, ...multiRomGames];
 const dat = new DAT(new Header(), games);
 
 async function runCandidatePostProcessor(
@@ -69,9 +87,17 @@ it('should do nothing with no options', async () => {
     path.join('Output', 'Awesome.rom'),
     path.join('Output', 'Best.rom'),
     path.join('Output', 'Brilliant.rom'),
-    path.join('Output', 'Cheerful.rom'),
-    path.join('Output', 'Confident.rom'),
-    path.join('Output', 'Cool.rom'),
+    path.join('Output', 'Dainty', 'Dainty (Track 01).bin'),
+    path.join('Output', 'Dainty', 'Dainty.cue'),
+    path.join('Output', 'Daring', 'Daring (Track 01).bin'),
+    path.join('Output', 'Daring', 'Daring.cue'),
+    path.join('Output', 'Dazzling', 'Dazzling (Track 01).bin'),
+    path.join('Output', 'Dazzling', 'Dazzling.cue'),
+    path.join('Output', 'Dedicated', 'Dedicated (Track 01).bin'),
+    path.join('Output', 'Dedicated', 'Dedicated.cue'),
+    path.join('Output', 'disk1_Cheerful.rom'),
+    path.join('Output', 'disk1_Confident.rom'),
+    path.join('Output', 'disk1_Cool.rom'),
   ]);
 });
 
@@ -85,9 +111,17 @@ describe('dirLetterLimit', () => {
       path.join('Output', 'A', 'Awesome.rom'),
       path.join('Output', 'B', 'Best.rom'),
       path.join('Output', 'B', 'Brilliant.rom'),
-      path.join('Output', 'C', 'Cheerful.rom'),
-      path.join('Output', 'C', 'Confident.rom'),
-      path.join('Output', 'C', 'Cool.rom'),
+      path.join('Output', 'D', 'Dainty', 'Dainty (Track 01).bin'),
+      path.join('Output', 'D', 'Dainty', 'Dainty.cue'),
+      path.join('Output', 'D', 'Daring', 'Daring (Track 01).bin'),
+      path.join('Output', 'D', 'Daring', 'Daring.cue'),
+      path.join('Output', 'D', 'Dazzling', 'Dazzling (Track 01).bin'),
+      path.join('Output', 'D', 'Dazzling', 'Dazzling.cue'),
+      path.join('Output', 'D', 'Dedicated', 'Dedicated (Track 01).bin'),
+      path.join('Output', 'D', 'Dedicated', 'Dedicated.cue'),
+      path.join('Output', 'D', 'disk1_Cheerful.rom'),
+      path.join('Output', 'D', 'disk1_Confident.rom'),
+      path.join('Output', 'D', 'disk1_Cool.rom'),
     ]],
     [2, [
       path.join('Output', 'A1', 'Admirable.rom'),
@@ -97,9 +131,17 @@ describe('dirLetterLimit', () => {
       path.join('Output', 'A3', 'Awesome.rom'),
       path.join('Output', 'B', 'Best.rom'),
       path.join('Output', 'B', 'Brilliant.rom'),
-      path.join('Output', 'C1', 'Cheerful.rom'),
-      path.join('Output', 'C1', 'Confident.rom'),
-      path.join('Output', 'C2', 'Cool.rom'),
+      path.join('Output', 'D1', 'Dainty', 'Dainty (Track 01).bin'),
+      path.join('Output', 'D1', 'Dainty', 'Dainty.cue'),
+      path.join('Output', 'D1', 'Daring', 'Daring (Track 01).bin'),
+      path.join('Output', 'D1', 'Daring', 'Daring.cue'),
+      path.join('Output', 'D2', 'Dazzling', 'Dazzling (Track 01).bin'),
+      path.join('Output', 'D2', 'Dazzling', 'Dazzling.cue'),
+      path.join('Output', 'D2', 'Dedicated', 'Dedicated (Track 01).bin'),
+      path.join('Output', 'D2', 'Dedicated', 'Dedicated.cue'),
+      path.join('Output', 'D3', 'disk1_Cheerful.rom'),
+      path.join('Output', 'D3', 'disk1_Confident.rom'),
+      path.join('Output', 'D4', 'disk1_Cool.rom'),
     ]],
     [3, [
       path.join('Output', 'A1', 'Admirable.rom'),
@@ -109,9 +151,17 @@ describe('dirLetterLimit', () => {
       path.join('Output', 'A2', 'Awesome.rom'),
       path.join('Output', 'B', 'Best.rom'),
       path.join('Output', 'B', 'Brilliant.rom'),
-      path.join('Output', 'C', 'Cheerful.rom'),
-      path.join('Output', 'C', 'Confident.rom'),
-      path.join('Output', 'C', 'Cool.rom'),
+      path.join('Output', 'D1', 'Dainty', 'Dainty (Track 01).bin'),
+      path.join('Output', 'D1', 'Dainty', 'Dainty.cue'),
+      path.join('Output', 'D1', 'Daring', 'Daring (Track 01).bin'),
+      path.join('Output', 'D1', 'Daring', 'Daring.cue'),
+      path.join('Output', 'D1', 'Dazzling', 'Dazzling (Track 01).bin'),
+      path.join('Output', 'D1', 'Dazzling', 'Dazzling.cue'),
+      path.join('Output', 'D2', 'Dedicated', 'Dedicated (Track 01).bin'),
+      path.join('Output', 'D2', 'Dedicated', 'Dedicated.cue'),
+      path.join('Output', 'D2', 'disk1_Cheerful.rom'),
+      path.join('Output', 'D2', 'disk1_Confident.rom'),
+      path.join('Output', 'D3', 'disk1_Cool.rom'),
     ]],
   ])('it should split the letter dirs: %s', async (limit, expectedFilePaths) => {
     const options = new Options({
