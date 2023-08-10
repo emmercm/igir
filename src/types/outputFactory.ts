@@ -44,7 +44,8 @@ class OutputPath implements ParsedPathWithEntryPath {
   format(): string {
     return path.format(this)
       // No double slashes / empty subdir name
-      .replace(/[\\/]{2,}/g, path.sep)
+      .replace(/\/{2,}/g, path.sep) // unix
+      .replace(/(?<!^\\*)\\{2,}/, path.sep) // windows, preserving network paths
       // No trailing slashes
       .replace(/[\\/]+$/, '');
   }
