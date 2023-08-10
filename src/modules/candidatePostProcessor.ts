@@ -2,6 +2,7 @@ import ProgressBar, { ProgressBarSymbol } from '../console/progressBar.js';
 import DAT from '../types/logiqx/dat.js';
 import Parent from '../types/logiqx/parent.js';
 import Options from '../types/options.js';
+import OutputFactory from '../types/outputFactory.js';
 import ReleaseCandidate from '../types/releaseCandidate.js';
 import ROMWithFiles from '../types/romWithFiles.js';
 import Module from './module.js';
@@ -37,13 +38,17 @@ export default class CandidatePostProcessor extends Module {
     const outputFileBasenames = [...parentsToCandidates.values()]
       .flatMap((releaseCandidates) => releaseCandidates)
       .flatMap((releaseCandidate) => releaseCandidate.getRomsWithFiles()
-        .map((romWithFiles) => this.options.getOutputBasenameAndEntryPath(
-          dat,
-          releaseCandidate.getGame(),
-          releaseCandidate.getRelease(),
-          romWithFiles.getRom(),
-          romWithFiles.getInputFile(),
-        )[0]));
+        .map((romWithFiles) => {
+          const outputPathParsed = OutputFactory.getPath(
+            this.options,
+            dat,
+            releaseCandidate.getGame(),
+            releaseCandidate.getRelease(),
+            romWithFiles.getRom(),
+            romWithFiles.getInputFile(),
+          );
+          return outputPathParsed.name + outputPathParsed.ext;
+        }));
 
     const processedCandidates = new Map(await Promise.all(
       [...parentsToCandidates.entries()]
@@ -90,21 +95,15 @@ export default class CandidatePostProcessor extends Module {
   ): Promise<ROMWithFiles[]> {
     return Promise.all(
       romsWithFiles.map(async (romWithFiles) => {
-        const outputBasename = this.options.getOutputBasenameAndEntryPath(
+        const newOutputPath = OutputFactory.getPath(
+          this.options,
           dat,
           releaseCandidate.getGame(),
           releaseCandidate.getRelease(),
           romWithFiles.getRom(),
           romWithFiles.getInputFile(),
-        )[0];
-        const newOutputPath = this.options.getOutputFileParsed(
-          dat,
-          romWithFiles.getInputFile().getFilePath(),
-          releaseCandidate.getGame(),
-          releaseCandidate.getRelease(),
-          outputBasename,
           outputFileBasenames,
-        );
+        ).format();
         if (newOutputPath === romWithFiles.getOutputFile().getFilePath()) {
           return romWithFiles;
         }

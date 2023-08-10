@@ -27,6 +27,7 @@ import File from './types/files/file.js';
 import DAT from './types/logiqx/dat.js';
 import Parent from './types/logiqx/parent.js';
 import Options from './types/options.js';
+import OutputFactory from './types/outputFactory.js';
 import Patch from './types/patches/patch.js';
 import ReleaseCandidate from './types/releaseCandidate.js';
 
@@ -198,13 +199,14 @@ export default class Igir {
     return [...parentsToCandidates.values()]
       .flatMap((releaseCandidates) => releaseCandidates
         .flatMap((releaseCandidate) => releaseCandidate.getRomsWithFiles()
-          .flatMap((romWithFiles) => this.options.getOutputDirParsed(
+          .flatMap((romWithFiles) => path.format(OutputFactory.getPath(
+            this.options,
             dat,
-            romWithFiles.getInputFile().getFilePath(),
             releaseCandidate.getGame(),
             releaseCandidate.getRelease(),
-            path.basename(romWithFiles.getOutputFile().getFilePath()),
-          ))))
+            romWithFiles.getRom(),
+            romWithFiles.getInputFile(),
+          )))))
       .filter((outputDir, idx, outputDirs) => outputDirs.indexOf(outputDir) === idx);
   }
 
