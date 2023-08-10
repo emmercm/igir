@@ -429,40 +429,42 @@ describe('should respect "--dir-letter"', () => {
   });
 });
 
-test.each([
-  [
-    new Game({
-      name: 'game',
-    }),
-    path.join(os.devNull, 'Dummy.rom'),
-  ],
-  [
-    new Game({
-      name: 'game',
-      rom: new ROM('one.rom', 0, ''),
-    }),
-    path.join(os.devNull, 'Dummy.rom'),
-  ],
-  [
-    new Game({
-      name: 'game',
-      rom: [
-        new ROM('one.rom', 0, ''),
-        new ROM('two.rom', 0, ''),
-      ],
-    }),
-    path.join(os.devNull, 'game', 'Dummy.rom'),
-  ],
-])('should respect game name: %s', async (game, expectedPath) => {
-  const options = new Options({ commands: ['copy'], output: os.devNull });
+describe('should respect game name', () => {
+  test.each([
+    [
+      new Game({
+        name: 'game',
+      }),
+      path.join(os.devNull, 'Dummy.rom'),
+    ],
+    [
+      new Game({
+        name: 'game',
+        rom: new ROM('one.rom', 0, ''),
+      }),
+      path.join(os.devNull, 'Dummy.rom'),
+    ],
+    [
+      new Game({
+        name: 'game',
+        rom: [
+          new ROM('one.rom', 0, ''),
+          new ROM('two.rom', 0, ''),
+        ],
+      }),
+      path.join(os.devNull, 'game', 'Dummy.rom'),
+    ],
+  ])('%s', async (game, expectedPath) => {
+    const options = new Options({ commands: ['copy'], output: os.devNull });
 
-  const outputPath = OutputFactory.getPath(
-    options,
-    dummyDat,
-    game,
-    dummyRelease,
-    dummyRom,
-    await dummyRom.toFile(),
-  );
-  expect(outputPath.format()).toEqual(expectedPath);
+    const outputPath = OutputFactory.getPath(
+      options,
+      dummyDat,
+      game,
+      dummyRelease,
+      dummyRom,
+      await dummyRom.toFile(),
+    );
+    expect(outputPath.format()).toEqual(expectedPath);
+  });
 });
