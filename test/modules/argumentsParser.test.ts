@@ -40,48 +40,41 @@ describe('commands', () => {
     expect(() => argumentsParser.parse(['clean', ...dummyRequiredArgs])).toThrow(/command.+requires/i);
   });
 
-  it('should not parse different commands', () => {
-    expect(argumentsParser.parse(['move', ...dummyRequiredArgs]).shouldCopy()).toEqual(false);
-    expect(argumentsParser.parse(['copy', ...dummyRequiredArgs]).shouldMove()).toEqual(false);
-    expect(argumentsParser.parse(['copy', ...dummyRequiredArgs]).shouldExtract()).toEqual(false);
-    expect(argumentsParser.parse(['copy', ...dummyRequiredArgs]).shouldZip('')).toEqual(false);
-    expect(argumentsParser.parse(['copy', ...dummyRequiredArgs]).shouldClean()).toEqual(false);
-    expect(argumentsParser.parse(['copy', ...dummyRequiredArgs]).shouldTest()).toEqual(false);
-    expect(argumentsParser.parse(['copy', ...dummyRequiredArgs]).shouldReport()).toEqual(false);
-  });
-
-  it('should parse multiple commands', () => {
-    const copyExtract = ['copy', 'extract', 'clean', 'test', 'report', ...dummyRequiredArgs, '--dat', os.devNull];
-    expect(argumentsParser.parse(copyExtract).shouldCopy()).toEqual(true);
-    expect(argumentsParser.parse(copyExtract).shouldMove()).toEqual(false);
-    expect(argumentsParser.parse(copyExtract).shouldExtract()).toEqual(true);
-    expect(argumentsParser.parse(copyExtract).shouldZip('')).toEqual(false);
-    expect(argumentsParser.parse(copyExtract).shouldClean()).toEqual(true);
-    expect(argumentsParser.parse(copyExtract).shouldTest()).toEqual(true);
-    expect(argumentsParser.parse(copyExtract).shouldReport()).toEqual(true);
-
-    const moveZip = ['move', 'zip', 'clean', 'test', 'report', ...dummyRequiredArgs, '--dat', os.devNull];
-    expect(argumentsParser.parse(moveZip).shouldCopy()).toEqual(false);
-    expect(argumentsParser.parse(moveZip).shouldMove()).toEqual(true);
-    expect(argumentsParser.parse(moveZip).shouldExtract()).toEqual(false);
-    expect(argumentsParser.parse(moveZip).shouldZip('')).toEqual(true);
-    expect(argumentsParser.parse(moveZip).shouldClean()).toEqual(true);
-    expect(argumentsParser.parse(moveZip).shouldTest()).toEqual(true);
-    expect(argumentsParser.parse(moveZip).shouldReport()).toEqual(true);
-  });
-
-  it('should parse duplicate commands', () => {
-    expect(argumentsParser.parse(['copy', 'copy', 'copy', ...dummyRequiredArgs]).shouldCopy()).toEqual(true);
-  });
-
   it('should not parse commands not present', () => {
     expect(argumentsParser.parse(['move', ...dummyRequiredArgs]).shouldCopy()).toEqual(false);
     expect(argumentsParser.parse(['copy', ...dummyRequiredArgs]).shouldMove()).toEqual(false);
     expect(argumentsParser.parse(['copy', ...dummyRequiredArgs]).shouldExtract()).toEqual(false);
     expect(argumentsParser.parse(['copy', ...dummyRequiredArgs]).shouldZip('')).toEqual(false);
-    expect(argumentsParser.parse(['copy', ...dummyRequiredArgs]).shouldClean()).toEqual(false);
     expect(argumentsParser.parse(['copy', ...dummyRequiredArgs]).shouldTest()).toEqual(false);
+    expect(argumentsParser.parse(['copy', ...dummyRequiredArgs]).shouldFixdat()).toEqual(false);
+    expect(argumentsParser.parse(['copy', ...dummyRequiredArgs]).shouldClean()).toEqual(false);
     expect(argumentsParser.parse(['copy', ...dummyRequiredArgs]).shouldReport()).toEqual(false);
+  });
+
+  it('should parse multiple commands', () => {
+    const copyExtract = ['copy', 'extract', 'test', 'fixdat', 'clean', 'report', ...dummyRequiredArgs, '--dat', os.devNull];
+    expect(argumentsParser.parse(copyExtract).shouldCopy()).toEqual(true);
+    expect(argumentsParser.parse(copyExtract).shouldMove()).toEqual(false);
+    expect(argumentsParser.parse(copyExtract).shouldExtract()).toEqual(true);
+    expect(argumentsParser.parse(copyExtract).shouldZip('')).toEqual(false);
+    expect(argumentsParser.parse(copyExtract).shouldTest()).toEqual(true);
+    expect(argumentsParser.parse(copyExtract).shouldFixdat()).toEqual(true);
+    expect(argumentsParser.parse(copyExtract).shouldClean()).toEqual(true);
+    expect(argumentsParser.parse(copyExtract).shouldReport()).toEqual(true);
+
+    const moveZip = ['move', 'zip', 'test', 'fixdat', 'clean', 'report', ...dummyRequiredArgs, '--dat', os.devNull];
+    expect(argumentsParser.parse(moveZip).shouldCopy()).toEqual(false);
+    expect(argumentsParser.parse(moveZip).shouldMove()).toEqual(true);
+    expect(argumentsParser.parse(moveZip).shouldExtract()).toEqual(false);
+    expect(argumentsParser.parse(moveZip).shouldZip('')).toEqual(true);
+    expect(argumentsParser.parse(moveZip).shouldTest()).toEqual(true);
+    expect(argumentsParser.parse(moveZip).shouldFixdat()).toEqual(true);
+    expect(argumentsParser.parse(moveZip).shouldClean()).toEqual(true);
+    expect(argumentsParser.parse(moveZip).shouldReport()).toEqual(true);
+  });
+
+  it('should parse duplicate commands', () => {
+    expect(argumentsParser.parse(['copy', 'copy', 'copy', ...dummyRequiredArgs]).shouldCopy()).toEqual(true);
   });
 
   it('should throw on unrecognized options', () => {
@@ -210,12 +203,12 @@ describe('options', () => {
   });
 
   it('should parse "fixdat"', () => {
-    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--dat', os.devNull, '--fixdat']).getFixdat()).toEqual(true);
-    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--dat', os.devNull, '--fixdat', 'true']).getFixdat()).toEqual(true);
-    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--dat', os.devNull, '--fixdat', 'false']).getFixdat()).toEqual(false);
-    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--dat', os.devNull, '--fixdat', '--fixdat']).getFixdat()).toEqual(true);
-    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--dat', os.devNull, '--fixdat', 'false', '--fixdat', 'true']).getFixdat()).toEqual(true);
-    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--dat', os.devNull, '--fixdat', 'true', '--fixdat', 'false']).getFixdat()).toEqual(false);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--dat', os.devNull, '--fixdat']).shouldFixdat()).toEqual(true);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--dat', os.devNull, '--fixdat', 'true']).shouldFixdat()).toEqual(true);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--dat', os.devNull, '--fixdat', 'false']).shouldFixdat()).toEqual(false);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--dat', os.devNull, '--fixdat', '--fixdat']).shouldFixdat()).toEqual(true);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--dat', os.devNull, '--fixdat', 'false', '--fixdat', 'true']).shouldFixdat()).toEqual(true);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--dat', os.devNull, '--fixdat', 'true', '--fixdat', 'false']).shouldFixdat()).toEqual(false);
   });
 
   it('should parse "output"', () => {

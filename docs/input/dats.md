@@ -85,44 +85,41 @@ Being able to know that many releases are actually the same game gives `igir` th
 
 Fixdats help you find files missing from your collection, and they can be used to generate a collection of those files once you've found them. This sub-collection of files can then be merged back into your main collection.
 
-The `--fixdat` option creates a [Logiqx XML](http://www.logiqx.com/DatFAQs/) DAT for every input DAT (`--dat`) that is missing ROMs. When writing (`copy`, `move`, and `symlink` commands), the fixdat will be written to the output directory, otherwise it will be written to the working directory.
+The `fixdat` command creates a [Logiqx XML](http://www.logiqx.com/DatFAQs/) DAT for every input DAT (`--dat`) that is missing ROMs. When writing (`copy`, `move`, and `symlink` commands), the fixdat will be written to the output directory, otherwise it will be written to the working directory.
 
 For example:
 
 === ":simple-windowsxp: Windows"
 
     ```batch
-    igir.exe copy zip ^
+    igir.exe copy zip fixdat ^
       --dat "Nintendo - Game Boy.dat" ^
       --dat "Nintendo - Game Boy Advance.dat" ^
       --dat "Nintendo - Game Boy Color.dat" ^
       --input ROMs/ ^
-      --output ROMs-Sorted/ ^
-      --fixdat
+      --output ROMs-Sorted/
     ```
 
 === ":simple-apple: macOS"
 
     ```shell
-    igir copy zip \
+    igir copy zip fixdat \
       --dat "Nintendo - Game Boy.dat" \
       --dat "Nintendo - Game Boy Advance.dat" \
       --dat "Nintendo - Game Boy Color.dat" \
       --input ROMs/ \
-      --output ROMs-Sorted/ \
-      --fixdat
+      --output ROMs-Sorted/
     ```
 
 === ":simple-linux: Linux"
 
     ```shell
-    igir copy zip \
+    igir copy zip fixdat \
       --dat "Nintendo - Game Boy.dat" \
       --dat "Nintendo - Game Boy Advance.dat" \
       --dat "Nintendo - Game Boy Color.dat" \
       --input ROMs/ \
-      --output ROMs-Sorted/ \
-      --fixdat
+      --output ROMs-Sorted/
     ```
 
 may produce some fixdats in the `ROMs-Sorted/` directory, if any of the input DATs have ROMs that weren't found in the `ROMs/` input directory:

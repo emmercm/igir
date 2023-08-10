@@ -25,7 +25,7 @@ export default class FixdatCreator extends Module {
     originalDat: DAT,
     parentsToCandidates: Map<Parent, ReleaseCandidate[]>,
   ): Promise<string | undefined> {
-    if (!this.options.getFixdat()) {
+    if (!this.options.shouldFixdat()) {
       return undefined;
     }
 

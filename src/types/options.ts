@@ -401,6 +401,10 @@ export default class Options implements OptionsProps {
       ));
   }
 
+  shouldFixdat(): boolean {
+    return this.getCommands().indexOf('fixdat') !== -1 || this.fixdat;
+  }
+
   shouldClean(): boolean {
     return this.getCommands().indexOf('clean') !== -1;
   }
@@ -579,10 +583,6 @@ export default class Options implements OptionsProps {
 
   getDatRegexExclude(): RegExp | undefined {
     return Options.getRegex(this.datRegexExclude);
-  }
-
-  getFixdat(): boolean {
-    return this.fixdat;
   }
 
   getOutput(): string {
