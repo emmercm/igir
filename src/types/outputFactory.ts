@@ -101,8 +101,6 @@ export default class OutputFactory {
     romBasename?: string,
     romBasenames?: string[],
   ): string {
-    const romNameSanitized = romBasename?.replace(/[\\/]/g, '_');
-
     let output = options.getOutput();
 
     // Replace all {token}s in the output path
@@ -112,7 +110,7 @@ export default class OutputFactory {
       inputFile?.getFilePath(),
       game,
       release,
-      romNameSanitized,
+      romBasename,
     ));
 
     if (options.getDirMirror() && inputFile?.getFilePath()) {
@@ -131,16 +129,9 @@ export default class OutputFactory {
       output = path.join(output, dat.getDescription() as string);
     }
 
-    const dirLetter = this.getDirLetterParsed(options, romNameSanitized, romBasenames);
+    const dirLetter = this.getDirLetterParsed(options, romBasename, romBasenames);
     if (dirLetter) {
       output = path.join(output, dirLetter);
-    }
-
-    if (game
-        && game.getRoms().length > 1
-        && (!romNameSanitized || !FileFactory.isArchive(romNameSanitized))
-    ) {
-      output = path.join(output, game.getName());
     }
 
     return fsPoly.makeLegal(output);
@@ -277,24 +268,38 @@ export default class OutputFactory {
 
     // Split the letter directories, if needed
     if (options.getDirLetterLimit()) {
-      lettersToFilenames = [...lettersToFilenames.entries()].reduce((map, [letter, filenames]) => {
-        if (filenames.length <= options.getDirLetterLimit()) {
-          map.set(letter, filenames);
-          return map;
-        }
+      lettersToFilenames = [...lettersToFilenames.entries()]
+        .reduce((lettersMap, [letter, filenames]) => {
+          if (filenames.length <= options.getDirLetterLimit()) {
+            lettersMap.set(letter, filenames);
+            return lettersMap;
+          }
 
-        const uniqueFilenames = filenames
-          .sort()
-          .filter((val, idx, vals) => vals.indexOf(val) === idx);
-        const chunkSize = options.getDirLetterLimit();
-        for (let i = 0; i < uniqueFilenames.length; i += chunkSize) {
-          const newLetter = `${letter}${i / chunkSize + 1}`;
-          const chunk = uniqueFilenames.slice(i, i + chunkSize);
-          map.set(newLetter, chunk);
-        }
+          // ROMs may have been grouped together into a subdirectory. For example, when a game has
+          // multiple ROMs, they get grouped by their game name. Therefore, we have to understand
+          // what the "sub-path" should be within the letter directory: the dirname if the ROM has a
+          // subdir, or just the ROM's basename otherwise.
+          const subPathsToFilenames = filenames
+            .filter((val, idx, vals) => vals.indexOf(val) === idx)
+            .reduce((subPathMap, filename) => {
+              const subPath = filename.replace(/[\\/].+$/, '');
+              subPathMap.set(subPath, [...subPathMap.get(subPath) ?? [], filename]);
+              return subPathMap;
+            }, new Map<string, string[]>());
 
-        return map;
-      }, new Map<string, string[]>());
+          const subPaths = [...subPathsToFilenames.keys()].sort();
+          const chunkSize = options.getDirLetterLimit();
+          for (let i = 0; i < subPaths.length; i += chunkSize) {
+            const chunk = subPaths
+              .slice(i, i + chunkSize)
+              .flatMap((subPath) => subPathsToFilenames.get(subPath) ?? []);
+
+            const newLetter = `${letter}${i / chunkSize + 1}`;
+            lettersMap.set(newLetter, chunk);
+          }
+
+          return lettersMap;
+        }, new Map<string, string[]>());
     }
 
     const foundEntry = [...lettersToFilenames.entries()]
@@ -315,17 +320,27 @@ export default class OutputFactory {
     rom: ROM,
     inputFile: File,
   ): string {
-    const { dir, name } = path.parse(this.getOutputFileBasename(
+    const { dir, name, ext } = path.parse(this.getOutputFileBasename(
       options,
       dat,
       game,
       rom,
       inputFile,
     ));
-    if (dir.trim() === '') {
-      return name;
+
+    let output = name;
+    if (dir.trim() !== '') {
+      output = path.join(dir, output);
     }
-    return path.join(dir, name);
+
+    if (game
+      && game.getRoms().length > 1
+      && !FileFactory.isArchive(ext)
+    ) {
+      output = path.join(game.getName(), output);
+    }
+
+    return output;
   }
 
   private static getExt(options: Options, dat: DAT, game: Game, rom: ROM, inputFile: File): string {
@@ -363,7 +378,12 @@ export default class OutputFactory {
   }
 
   private static getRomBasename(options: Options, dat: DAT, rom: ROM, inputFile: File): string {
-    const { base, ...parsedRomPath } = path.parse(rom.getName());
+    let romNameSanitized = rom.getName();
+    if (!dat.getRomNamesContainDirectories()) {
+      romNameSanitized = romNameSanitized?.replace(/[\\/]/g, '_');
+    }
+
+    const { base, ...parsedRomPath } = path.parse(romNameSanitized);
 
     // Alter the output extension of the file
     const fileHeader = inputFile.getFileHeader();
