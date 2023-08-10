@@ -23,6 +23,9 @@ class OutputPath implements ParsedPathWithEntryPath {
 
   ext: string;
 
+  // NOTE(cemmer): this class differs from {@link ParsedPath} crucially in that the "name" here
+  // may contain {@link path.sep} in it on purpose. That's fine, because {@link path.format} handles
+  // it gracefully.
   name: string;
 
   root: string;
@@ -39,7 +42,11 @@ class OutputPath implements ParsedPathWithEntryPath {
   }
 
   format(): string {
-    return path.format(this).replace(/[\\/]$/, '');
+    return path.format(this)
+      // No double slashes / empty subdir name
+      .replace(/[\\/]{2,}/g, path.sep)
+      // No trailing slashes
+      .replace(/[\\/]+$/, '');
   }
 }
 
