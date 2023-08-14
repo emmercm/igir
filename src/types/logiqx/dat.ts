@@ -52,11 +52,13 @@ export default class DAT {
 
     // Find all clones
     this.getGames().forEach((game: Game) => {
-      // TODO(cemmer): a DAT fixture with parent/clone info
-      if (!game.isParent()) {
+      if (game.isClone()) {
         const parent = this.gameNamesToParents.get(game.getParent());
         if (parent) {
           parent.addChild(game);
+        } else {
+          // The DAT is bad, the game is referencing a parent that doesn't exist
+          this.gameNamesToParents.set(game.getName(), new Parent(game.getName(), game));
         }
       }
     });
