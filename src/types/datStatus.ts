@@ -110,7 +110,7 @@ export default class DATStatus {
     return DATStatus.getAllowedTypes(options)
       .reduce((result, romType) => {
         const foundReleaseCandidates = (
-          this.foundRomTypesToReleaseCandidates.get(romType) as ReleaseCandidate[] || []).length;
+          this.foundRomTypesToReleaseCandidates.get(romType) ?? []).length;
         return result || foundReleaseCandidates > 0;
       }, false);
   }
@@ -265,9 +265,9 @@ export default class DATStatus {
     return DATStatus.getAllowedTypes(options)
       .map((type) => romTypesToValues.get(type))
       .flatMap((values) => values)
-      .filter((value) => value)
+      .filter(ArrayPoly.isNotNullish)
       .filter((value, idx, values) => values.indexOf(value) === idx)
-      .sort() as T[];
+      .sort();
   }
 
   private static getAllowedTypes(options: Options): ROMType[] {
