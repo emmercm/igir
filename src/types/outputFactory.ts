@@ -1,6 +1,7 @@
 // eslint-disable-next-line max-classes-per-file
 import path, { ParsedPath } from 'path';
 
+import ArrayPoly from '../polyfill/arrayPoly.js';
 import fsPoly from '../polyfill/fsPoly.js';
 import ArchiveEntry from './files/archives/archiveEntry.js';
 import File from './files/file.js';
@@ -290,7 +291,7 @@ export default class OutputFactory {
           // what the "sub-path" should be within the letter directory: the dirname if the ROM has a
           // subdir, or just the ROM's basename otherwise.
           const subPathsToFilenames = filenames
-            .filter((val, idx, vals) => vals.indexOf(val) === idx)
+            .filter(ArrayPoly.filterUnique)
             .reduce((subPathMap, filename) => {
               const subPath = filename.replace(/[\\/].+$/, '');
               subPathMap.set(subPath, [...subPathMap.get(subPath) ?? [], filename]);

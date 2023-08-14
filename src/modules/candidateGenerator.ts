@@ -161,7 +161,7 @@ export default class CandidateGenerator extends Module {
 
     const foundRomsWithFiles = romFiles
       .map(([, romWithFiles]) => romWithFiles)
-      .filter(ArrayPoly.isNotNullish);
+      .filter(ArrayPoly.filterNotNullish);
     const missingRoms = romFiles
       .filter(([, romWithFiles]) => !romWithFiles)
       .map(([rom]) => rom);
@@ -212,7 +212,7 @@ export default class CandidateGenerator extends Module {
           roms.push(rom);
           // We need to filter out duplicate ROMs because of Games that contain duplicate ROMs, e.g.
           //  optical media games that have the same track multiple times.
-          const uniqueRoms = roms.filter((val, idx, values) => values.indexOf(val) === idx);
+          const uniqueRoms = roms.filter(ArrayPoly.filterUnique);
           map.set(archive, uniqueRoms);
         });
       return map;
@@ -318,8 +318,7 @@ export default class CandidateGenerator extends Module {
       .filter((outputFile) => !(outputFile instanceof ArchiveEntry))
       .map((outputFile) => outputFile.getFilePath())
       .filter((outputPath, idx, outputPaths) => outputPaths.indexOf(outputPath) !== idx)
-      .filter((duplicatePath, idx, duplicatePaths) => duplicatePaths
-        .indexOf(duplicatePath) === idx)
+      .filter(ArrayPoly.filterUnique)
       .sort();
     if (!duplicateOutputPaths.length) {
       // There are no duplicate non-archive output file paths
@@ -337,7 +336,7 @@ export default class CandidateGenerator extends Module {
       const conflictedInputFiles = romsWithFiles
         .filter((romWithFiles) => romWithFiles.getOutputFile().getFilePath() === duplicateOutput)
         .map((romWithFiles) => romWithFiles.getInputFile().toString())
-        .filter((inputFile, idx, inputFiles) => inputFiles.indexOf(inputFile) === idx);
+        .filter(ArrayPoly.filterUnique);
       if (conflictedInputFiles.length > 1) {
         hasConflict = true;
         let message = `Cannot ${this.options.writeString()} different files to: ${duplicateOutput}:`;

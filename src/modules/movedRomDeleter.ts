@@ -85,7 +85,7 @@ export default class MovedROMDeleter extends Module {
 
         return filePath;
       })
-      .filter(ArrayPoly.isNotNullish);
+      .filter(ArrayPoly.filterNotNullish);
   }
 
   private static groupFilesByFilePath(files: File[]): Map<string, File[]> {

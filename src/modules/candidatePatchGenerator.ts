@@ -109,7 +109,7 @@ export default class CandidatePatchGenerator extends Module {
     const releaseCandidatePatches = unpatchedReleaseCandidate.getRomsWithFiles()
       .map((romWithFiles) => crcToPatches.get(romWithFiles.getInputFile().getCrc32()))
       .flatMap((patches) => patches)
-      .filter(ArrayPoly.isNotNullish);
+      .filter(ArrayPoly.filterNotNullish);
 
     // No relevant patches found, no new candidates generated
     if (!releaseCandidatePatches.length) {

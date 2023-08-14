@@ -103,7 +103,7 @@ export default class DATScanner extends Scanner {
         this.progressBar.removeWaitingMessage(waitingMessage);
         return callback(null, dat);
       },
-    )).filter(ArrayPoly.isNotNullish);
+    )).filter(ArrayPoly.filterNotNullish);
 
     return results
       .filter((dat) => {

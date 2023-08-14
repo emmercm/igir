@@ -160,7 +160,7 @@ export default class DATStatus {
     );
 
     const rows = DATStatus.getValuesForAllowedTypes(options, this.allRomTypesToGames)
-      .filter((game, idx, games) => games.indexOf(game) === idx)
+      .filter(ArrayPoly.filterUnique)
       .sort((a, b) => a.getName().localeCompare(b.getName()))
       .map((game) => {
         const releaseCandidate = found.find((rc) => rc && rc.getGame().equals(game));
@@ -174,7 +174,7 @@ export default class DATStatus {
                 ? romWithFiles.getOutputFile()
                 : romWithFiles.getInputFile()))
               .map((file) => file.getFilePath())
-              .filter((filePath, idx, filePaths) => filePaths.indexOf(filePath) === idx)
+              .filter(ArrayPoly.filterUnique)
             : [],
           releaseCandidate?.isPatched() ?? false,
           game.isBios(),
@@ -265,8 +265,8 @@ export default class DATStatus {
     return DATStatus.getAllowedTypes(options)
       .map((type) => romTypesToValues.get(type))
       .flatMap((values) => values)
-      .filter(ArrayPoly.isNotNullish)
-      .filter((value, idx, values) => values.indexOf(value) === idx)
+      .filter(ArrayPoly.filterNotNullish)
+      .filter(ArrayPoly.filterUnique)
       .sort();
   }
 
@@ -278,6 +278,6 @@ export default class DATStatus {
       !options.getNoDevice() && !options.getOnlyBios() ? ROMType.DEVICE : undefined,
       options.getOnlyRetail() || !options.getOnlyBios() ? ROMType.RETAIL : undefined,
       ROMType.PATCHED,
-    ].filter(ArrayPoly.isNotNullish);
+    ].filter(ArrayPoly.filterNotNullish);
   }
 }

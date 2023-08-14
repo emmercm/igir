@@ -6,6 +6,7 @@ import { Readable } from 'stream';
 import util from 'util';
 
 import Constants from '../../constants.js';
+import ArrayPoly from '../../polyfill/arrayPoly.js';
 import FilePoly from '../../polyfill/filePoly.js';
 import fsPoly from '../../polyfill/fsPoly.js';
 import URLPoly from '../../polyfill/urlPoly.js';
@@ -405,7 +406,7 @@ export default class File {
     return [
       this.hashCodeWithHeader(),
       this.hashCodeWithoutHeader(),
-    ].filter((hash, idx, hashes) => hashes.indexOf(hash) === idx);
+    ].filter(ArrayPoly.filterUnique);
   }
 
   equals(other: File): boolean {
