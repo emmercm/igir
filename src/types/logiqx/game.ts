@@ -1,6 +1,6 @@
 import 'reflect-metadata';
 
-import { Expose, Type } from 'class-transformer';
+import { Expose, Transform, Type } from 'class-transformer';
 
 import Internationalization from '../internationalization.js';
 import Archive from './archive.js';
@@ -106,10 +106,12 @@ export default class Game implements GameProps {
 
   @Expose()
   @Type(() => Release)
+  @Transform(({ value }) => value || [])
   readonly release: Release | Release[];
 
   @Expose()
   @Type(() => ROM)
+  @Transform(({ value }) => value || [])
   readonly rom: ROM | ROM[];
 
   constructor(options?: GameProps) {
