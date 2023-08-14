@@ -156,7 +156,7 @@ export default class CandidateGenerator extends Module {
           return [rom, undefined];
         }
       }),
-    ) as [ROM, ROMWithFiles | undefined][];
+    ) satisfies [ROM, ROMWithFiles | undefined][];
 
     const foundRomsWithFiles = romFiles
       .filter(([, romWithFiles]) => romWithFiles)
@@ -188,7 +188,7 @@ export default class CandidateGenerator extends Module {
     let romsAndInputFiles = game.getRoms().map((rom) => ([
       rom,
       (hashCodeToInputFiles.get(rom.hashCode()) ?? []),
-    ])) as [ROM, File[]][];
+    ])) satisfies [ROM, File[]][];
 
     // Detect if there is one input archive that contains every ROM, and prefer to use its entries.
     // If we don't do this, here are two situations that can happen:

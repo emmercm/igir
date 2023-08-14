@@ -168,7 +168,7 @@ export default class DATStatus {
           game.getName(),
           releaseCandidate || !game.getRoms().length ? Status.FOUND : Status.MISSING,
           releaseCandidate
-            ? (releaseCandidate as ReleaseCandidate).getRomsWithFiles()
+            ? releaseCandidate.getRomsWithFiles()
               .map((romWithFiles) => (options.shouldWrite()
                 ? romWithFiles.getOutputFile()
                 : romWithFiles.getInputFile()))
