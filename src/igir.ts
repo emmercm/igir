@@ -172,6 +172,17 @@ export default class Igir {
       throw new Error('No valid DAT files found!');
     }
 
+    if (dats.length === 1) {
+      ([
+        [this.options.getDirDatName(), '--dir-dat-name'],
+        [this.options.getDirDatDescription(), '--dir-dat-description'],
+      ] satisfies [boolean, string][])
+        .filter(([bool]) => bool)
+        .forEach(([, option]) => {
+          progressBar.logWarn(`${option} is most helpful when processing multiple DATs, only one was found`);
+        });
+    }
+
     await progressBar.doneItems(dats.length, 'unique DAT', 'found');
     await progressBar.freeze();
     return dats;
