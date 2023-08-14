@@ -115,7 +115,7 @@ describe('with explicit DATs', () => {
 
   it('should throw on DATs without parent/clone info', async () => {
     await expect(async () => new Igir(new Options({
-      dat: ['test/fixtures/dats/*'],
+      dat: ['test/fixtures/dats/{headered,patchable}.dat'],
       single: true,
     }), new Logger(LogLevel.NEVER)).main()).rejects.toThrow(/parent\/clone/i);
   });
@@ -156,6 +156,25 @@ describe('with explicit DATs', () => {
       [path.join('smdb', 'Hardware Target Game Database', 'Patchable', '3708F2C.rom'), '20891c9f'],
       [path.join('smdb', 'Hardware Target Game Database', 'Patchable', '65D1206.rom'), '20323455'],
       [path.join('smdb', 'Hardware Target Game Database', 'Patchable', 'C01173E.rom'), 'dfaebe28'],
+    ]);
+  });
+
+  it('should copy a 1G1R set', async () => {
+    await expectEndToEnd({
+      commands: ['copy'],
+      dat: ['dats/one.dat'],
+      single: true,
+      preferParent: true,
+    }, [
+      // Fizzbuzz.nes is explicitly missing!
+      ['Foobar.lnx', 'b22c9747'],
+      ['Lorem Ipsum.rom', '70856527'],
+      [`${path.join('One Three.zip')}|${path.join('1', 'one.rom')}`, 'f817a89f'],
+      [`${path.join('One Three.zip')}|${path.join('2', 'two.rom')}`, '96170874'],
+      [`${path.join('One Three.zip')}|${path.join('3', 'three.rom')}`, 'ff46c5d8'],
+      [path.join('Three Four Five', 'Five.rom'), '3e5daf67'],
+      [path.join('Three Four Five', 'Four.rom'), '1cf3ca74'],
+      [path.join('Three Four Five', 'Three.rom'), 'ff46c5d8'],
     ]);
   });
 
