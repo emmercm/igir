@@ -1,6 +1,8 @@
 import 'reflect-metadata';
 
-import { Expose, plainToInstance, Type } from 'class-transformer';
+import {
+  Expose, plainToInstance, Transform, Type,
+} from 'class-transformer';
 import xml2js from 'xml2js';
 
 import Game from './game.js';
@@ -14,15 +16,18 @@ import Parent from './parent.js';
 export default class DAT {
   @Expose()
   @Type(() => Header)
+  @Transform(({ value }) => value || undefined)
   private readonly header: Header;
 
   @Expose()
   @Type(() => Game)
+  @Transform(({ value }) => value || [])
   private readonly game: Game | Game[];
 
   // NOTE(cemmer): this is not Logiqx DTD-compliant, but it's what MAME XML DATs use
   @Expose()
   @Type(() => Machine)
+  @Transform(({ value }) => value || [])
   private readonly machine: Machine | Machine[];
 
   private readonly gameNamesToParents: Map<string, Parent> = new Map();
@@ -95,14 +100,18 @@ export default class DAT {
 
   getGames(): Game[] {
     if (Array.isArray(this.game)) {
-      return this.game;
-    } if (this.game) {
+      if (this.game.length) {
+        return this.game;
+      }
+    } else if (this.game) {
       return [this.game];
     }
 
     if (Array.isArray(this.machine)) {
-      return this.machine;
-    } if (this.machine) {
+      if (this.machine) {
+        return this.machine;
+      }
+    } else if (this.machine) {
       return [this.machine];
     }
 

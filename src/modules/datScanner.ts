@@ -168,6 +168,7 @@ export default class DATScanner extends Scanner {
     let xmlObject: DataFile;
     try {
       xmlObject = await xml2js.parseStringPromise(fileContents, {
+        emptyTag: undefined,
         mergeAttrs: true,
         explicitArray: false,
       });
