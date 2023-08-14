@@ -98,14 +98,18 @@ export default class DAT {
 
   getGames(): Game[] {
     if (Array.isArray(this.game)) {
-      return this.game;
-    } if (this.game) {
+      if (this.game.length) {
+        return this.game;
+      }
+    } else if (this.game) {
       return [this.game];
     }
 
     if (Array.isArray(this.machine)) {
-      return this.machine;
-    } if (this.machine) {
+      if (this.machine) {
+        return this.machine;
+      }
+    } else if (this.machine) {
       return [this.machine];
     }
 
