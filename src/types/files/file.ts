@@ -162,7 +162,7 @@ export default class File {
         }
       });
       stream.on('end', () => {
-        resolve((crc || 0).toString(16));
+        resolve(crc.toString(16));
       });
 
       stream.on('error', reject);

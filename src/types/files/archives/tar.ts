@@ -50,7 +50,7 @@ export default class Tar extends Archive {
           this,
           entry.path,
           entry.size ?? 0,
-          (crc || 0).toString(16),
+          crc.toString(16),
         ));
       });
     });
