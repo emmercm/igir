@@ -2,6 +2,7 @@ import 'reflect-metadata';
 
 import { Expose, Transform, Type } from 'class-transformer';
 
+import ArrayPoly from '../../polyfill/arrayPoly.js';
 import Internationalization from '../internationalization.js';
 import Archive from './archive.js';
 import BIOSSet from './biosSet.js';
@@ -425,7 +426,7 @@ export default class Game implements GameProps {
   getLanguages(): string[] {
     const releaseLanguages = this.getReleases()
       .map((release) => release.getLanguage()?.toUpperCase())
-      .filter((language) => language) as string[];
+      .filter(ArrayPoly.isNotNullish);
     if (releaseLanguages.length) {
       return releaseLanguages;
     }
@@ -493,7 +494,7 @@ export default class Game implements GameProps {
         }
         return undefined;
       })
-      .filter((language) => language) as string[];
+      .filter(ArrayPoly.isNotNullish);
   }
 
   // Pseudo Built-Ins

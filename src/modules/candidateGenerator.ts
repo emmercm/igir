@@ -1,6 +1,7 @@
 import path from 'path';
 
 import ProgressBar, { ProgressBarSymbol } from '../console/progressBar.js';
+import ArrayPoly from '../polyfill/arrayPoly.js';
 import fsPoly from '../polyfill/fsPoly.js';
 import Archive from '../types/files/archives/archive.js';
 import ArchiveEntry from '../types/files/archives/archiveEntry.js';
@@ -159,8 +160,8 @@ export default class CandidateGenerator extends Module {
     ) satisfies [ROM, ROMWithFiles | undefined][];
 
     const foundRomsWithFiles = romFiles
-      .filter(([, romWithFiles]) => romWithFiles)
-      .map(([, romWithFiles]) => romWithFiles) as ROMWithFiles[];
+      .map(([, romWithFiles]) => romWithFiles)
+      .filter(ArrayPoly.isNotNullish);
     const missingRoms = romFiles
       .filter(([, romWithFiles]) => !romWithFiles)
       .map(([rom]) => rom);

@@ -1,6 +1,7 @@
 import { writeToString } from '@fast-csv/format';
 import chalk, { ChalkInstance } from 'chalk';
 
+import ArrayPoly from '../polyfill/arrayPoly.js';
 import DAT from './logiqx/dat.js';
 import Game from './logiqx/game.js';
 import Parent from './logiqx/parent.js';
@@ -91,7 +92,7 @@ export default class DATStatus {
   }
 
   private static append<T>(map: Map<ROMType, T[]>, romType: ROMType, val: T): void {
-    const arr = (map.has(romType) ? map.get(romType) : []) as T[];
+    const arr = map.get(romType) ?? [];
     arr.push(val);
     map.set(romType, arr);
   }
@@ -277,6 +278,6 @@ export default class DATStatus {
       !options.getNoDevice() && !options.getOnlyBios() ? ROMType.DEVICE : undefined,
       options.getOnlyRetail() || !options.getOnlyBios() ? ROMType.RETAIL : undefined,
       ROMType.PATCHED,
-    ].filter((romType) => romType) as ROMType[];
+    ].filter(ArrayPoly.isNotNullish);
   }
 }

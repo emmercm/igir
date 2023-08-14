@@ -1,4 +1,5 @@
 import ProgressBar, { ProgressBarSymbol } from '../console/progressBar.js';
+import ArrayPoly from '../polyfill/arrayPoly.js';
 import fsPoly from '../polyfill/fsPoly.js';
 import ArchiveEntry from '../types/files/archives/archiveEntry.js';
 import File from '../types/files/file.js';
@@ -84,7 +85,7 @@ export default class MovedROMDeleter extends Module {
 
         return filePath;
       })
-      .filter((filePath) => filePath) as string[];
+      .filter(ArrayPoly.isNotNullish);
   }
 
   private static groupFilesByFilePath(files: File[]): Map<string, File[]> {
