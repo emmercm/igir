@@ -276,6 +276,46 @@ describe('token replacement', () => {
 
     await expect(async () => OutputFactory.getPath(options, dummyDat, dummyGame, dummyRelease, rom, await rom.toFile())).rejects.toThrow(/failed to replace/);
   });
+
+  test.each([
+    ['game.a78', path.join('roms', 'atari7800', 'game.a78')],
+    ['game.gb', path.join('roms', 'gb', 'game.gb')],
+    ['game.nes', path.join('roms', 'nes', 'game.nes')],
+  ])(
+    'should replace {batocera} for known extension: %s',
+    async (outputRomFilename, expectedPath) => {
+      const options = new Options({ commands: ['copy'], output: 'roms/{batocera}' });
+      const rom = new ROM(outputRomFilename, 0, '');
+
+      const outputPath = OutputFactory.getPath(
+        options,
+        dummyDat,
+        dummyGame,
+        dummyRelease,
+        rom,
+        await rom.toFile(),
+      );
+      expect(outputPath.format()).toEqual(expectedPath);
+    },
+  );
+
+  test.each(['game.bin', 'game.rom'])(
+    'should throw on {batocera} for unknown extension: %s',
+    async (outputRomFilename) => {
+      const options = new Options({ commands: ['copy'], output: 'roms/{batocera}' });
+
+      const rom = new ROM(outputRomFilename, 0, '');
+
+      await expect(async () => OutputFactory.getPath(
+        options,
+        dummyDat,
+        dummyGame,
+        dummyRelease,
+        rom,
+        await rom.toFile(),
+      )).rejects.toThrow(/failed to replace/);
+    },
+  );
 });
 
 describe('should respect "--dir-mirror"', () => {
