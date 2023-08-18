@@ -6,6 +6,7 @@ import xml2js from 'xml2js';
 
 import ProgressBar, { ProgressBarSymbol } from '../console/progressBar.js';
 import Constants from '../constants.js';
+import ArrayPoly from '../polyfill/arrayPoly.js';
 import bufferPoly from '../polyfill/bufferPoly.js';
 import fsPoly from '../polyfill/fsPoly.js';
 import File from '../types/files/file.js';
@@ -102,7 +103,7 @@ export default class DATScanner extends Scanner {
         this.progressBar.removeWaitingMessage(waitingMessage);
         return callback(null, dat);
       },
-    )).filter((xmlObject) => xmlObject) as DAT[];
+    )).filter(ArrayPoly.filterNotNullish);
 
     return results
       .filter((dat) => {

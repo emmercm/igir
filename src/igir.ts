@@ -22,6 +22,7 @@ import ReportGenerator from './modules/reportGenerator.js';
 import ROMHeaderProcessor from './modules/romHeaderProcessor.js';
 import ROMScanner from './modules/romScanner.js';
 import StatusGenerator from './modules/statusGenerator.js';
+import ArrayPoly from './polyfill/arrayPoly.js';
 import DATStatus from './types/datStatus.js';
 import File from './types/files/file.js';
 import DAT from './types/logiqx/dat.js';
@@ -172,6 +173,17 @@ export default class Igir {
       throw new Error('No valid DAT files found!');
     }
 
+    if (dats.length === 1) {
+      ([
+        [this.options.getDirDatName(), '--dir-dat-name'],
+        [this.options.getDirDatDescription(), '--dir-dat-description'],
+      ] satisfies [boolean, string][])
+        .filter(([bool]) => bool)
+        .forEach(([, option]) => {
+          progressBar.logWarn(`${option} is most helpful when processing multiple DATs, only one was found`);
+        });
+    }
+
     await progressBar.doneItems(dats.length, 'unique DAT', 'found');
     await progressBar.freeze();
     return dats;
@@ -207,7 +219,7 @@ export default class Igir {
             romWithFiles.getRom(),
             romWithFiles.getInputFile(),
           )))))
-      .filter((outputDir, idx, outputDirs) => outputDirs.indexOf(outputDir) === idx);
+      .filter(ArrayPoly.filterUnique);
   }
 
   private async deleteMovedRoms(
@@ -235,7 +247,7 @@ export default class Igir {
     }
 
     const progressBar = await this.logger.addProgressBar('Cleaning output directory');
-    const uniqueDirsToClean = dirsToClean.filter((dir, idx, dirs) => dirs.indexOf(dir) === idx);
+    const uniqueDirsToClean = dirsToClean.filter(ArrayPoly.filterUnique);
     const writtenFilesToExclude = [...datsToWrittenRoms.values()]
       .flatMap((parentsToFiles) => [...parentsToFiles.values()])
       .flatMap((files) => files);

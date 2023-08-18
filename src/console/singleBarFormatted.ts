@@ -130,9 +130,9 @@ export default class SingleBarFormatted {
       : 0;
     const incompleteSize = barSize - inProgressSize - completeSize;
 
-    return (SingleBarFormatted.BAR_COMPLETE_CHAR || '').repeat(Math.max(completeSize, 0))
-      + (SingleBarFormatted.BAR_IN_PROGRESS_CHAR || '').repeat(Math.max(inProgressSize, 0))
-      + (SingleBarFormatted.BAR_INCOMPLETE_CHAR || '').repeat(Math.max(incompleteSize, 0));
+    return SingleBarFormatted.BAR_COMPLETE_CHAR.repeat(Math.max(completeSize, 0))
+      + SingleBarFormatted.BAR_IN_PROGRESS_CHAR.repeat(Math.max(inProgressSize, 0))
+      + SingleBarFormatted.BAR_INCOMPLETE_CHAR.repeat(Math.max(incompleteSize, 0));
   }
 
   private getEtaFormatted(etaSeconds: number): string {
