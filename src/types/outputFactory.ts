@@ -1,6 +1,7 @@
 // eslint-disable-next-line max-classes-per-file
 import path, { ParsedPath } from 'path';
 
+import ArrayPoly from '../polyfill/arrayPoly.js';
 import fsPoly from '../polyfill/fsPoly.js';
 import ArchiveEntry from './files/archives/archiveEntry.js';
 import File from './files/file.js';
@@ -190,9 +191,12 @@ export default class OutputFactory {
 
     let output = input;
     output = output.replace('{datReleaseRegion}', release.getRegion());
-    if (release.getLanguage()) {
-      output = output.replace('{datReleaseLanguage}', release.getLanguage() as string);
+
+    const language = release.getLanguage();
+    if (language) {
+      output = output.replace('{datReleaseLanguage}', language);
     }
+
     return output;
   }
 
@@ -232,15 +236,22 @@ export default class OutputFactory {
     }
 
     let output = input;
-    if (gameConsole.getPocket()) {
-      output = output.replace('{pocket}', gameConsole.getPocket() as string);
+
+    const pocket = gameConsole.getPocket();
+    if (pocket) {
+      output = output.replace('{pocket}', pocket);
     }
-    if (gameConsole.getMister()) {
-      output = output.replace('{mister}', gameConsole.getMister() as string);
+
+    const mister = gameConsole.getMister();
+    if (mister) {
+      output = output.replace('{mister}', mister);
     }
-    if (gameConsole.getOnion()) {
-      output = output.replace('{onion}', gameConsole.getOnion() as string);
+
+    const onion = gameConsole.getOnion();
+    if (onion) {
+      output = output.replace('{onion}', onion);
     }
+
     return output;
   }
 
@@ -280,7 +291,7 @@ export default class OutputFactory {
           // what the "sub-path" should be within the letter directory: the dirname if the ROM has a
           // subdir, or just the ROM's basename otherwise.
           const subPathsToFilenames = filenames
-            .filter((val, idx, vals) => vals.indexOf(val) === idx)
+            .filter(ArrayPoly.filterUnique)
             .reduce((subPathMap, filename) => {
               const subPath = filename.replace(/[\\/].+$/, '');
               subPathMap.set(subPath, [...subPathMap.get(subPath) ?? [], filename]);

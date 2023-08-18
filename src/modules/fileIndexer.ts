@@ -79,13 +79,7 @@ export default class FileIndexer extends Module {
   }
 
   private static setFileInMap<K>(map: Map<K, File[]>, key: K, file: File): void {
-    if (!map.has(key)) {
-      map.set(key, [file]);
-      return;
-    }
-
-    const existing = map.get(key) as File[];
-    map.set(key, [...existing, file]);
+    map.set(key, [...(map.get(key) ?? []), file]);
   }
 
   /**
