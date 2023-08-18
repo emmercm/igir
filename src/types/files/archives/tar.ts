@@ -37,7 +37,7 @@ export default class Tar extends Archive {
     }).pipe(writeStream);
 
     writeStream.on('entry', (entry) => {
-      let crc: number;
+      let crc: number | undefined;
       entry.on('data', (chunk) => {
         if (!crc) {
           crc = crc32(chunk);
@@ -50,7 +50,7 @@ export default class Tar extends Archive {
           this,
           entry.path,
           entry.size ?? 0,
-          crc.toString(16),
+          (crc ?? 0).toString(16),
         ));
       });
     });
