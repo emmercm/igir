@@ -47,13 +47,9 @@ export default class ReportGenerator extends Module {
     const releaseCandidates = datStatuses
       .flatMap((datStatus) => datStatus.getReleaseCandidates())
       .filter((releaseCandidate) => releaseCandidate) as ReleaseCandidate[];
-    const matchedFiles = releaseCandidates
+    const matchedFiles = new Set(releaseCandidates
       .flatMap((releaseCandidate) => releaseCandidate.getRomsWithFiles())
-      .map((romWithFiles) => romWithFiles.getInputFile().getFilePath())
-      .reduce((map, filePath) => {
-        map.set(filePath, true);
-        return map;
-      }, new Map<string, boolean>());
+      .map((romWithFiles) => romWithFiles.getInputFile().getFilePath()));
     const unmatchedFiles = scannedRomFiles
       .filter((filePath, idx, filePaths) => filePaths.indexOf(filePath) === idx)
       .filter((inputFile) => !matchedFiles.has(inputFile))

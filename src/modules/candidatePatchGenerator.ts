@@ -67,7 +67,7 @@ export default class CandidatePatchGenerator extends Module {
       .map(async ([parent, releaseCandidates]): Promise<[Parent, ReleaseCandidate[]][]> => {
         // ReleaseCandidates exist for every Release of a Game, but we only want to create one new
         //  ReleaseCandidate for each Game, so remember which Games we've seen for this Parent
-        const seenGames = new Map<Game, boolean>();
+        const seenGames = new Set<Game>();
 
         const parentsAndReleaseCandidates: [Parent, ReleaseCandidate[]][] = [
           [parent, releaseCandidates],
@@ -87,7 +87,7 @@ export default class CandidatePatchGenerator extends Module {
             releaseCandidate,
             crcToPatches,
           );
-          seenGames.set(releaseCandidate.getGame(), true);
+          seenGames.add(releaseCandidate.getGame());
 
           if (patchedParents) {
             parentsAndReleaseCandidates.push(...patchedParents);
