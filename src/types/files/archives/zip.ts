@@ -139,9 +139,9 @@ export default class Zip extends Archive {
     zipFile.on('error', catchError);
 
     // Keep track of what entries have been written to the temp file on disk
-    const writtenEntries = new Map<string, boolean>();
+    const writtenEntries = new Set<string>();
     zipFile.on('entry', (entry) => {
-      writtenEntries.set(entry.name, true);
+      writtenEntries.add(entry.name);
     });
 
     // Write all archive entries to the zip
