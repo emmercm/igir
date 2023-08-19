@@ -11,11 +11,12 @@ DEMO_DIR="demo"
 
 
 if [[ "${1:-}" == "play" ]]; then
+  # shellcheck disable=SC1091
   . demo-magic.sh
-  TYPE_SPEED=15
-  DEMO_PROMPT="$ "
-  DEMO_CMD_COLOR="\033[1;37m"
-  DEMO_COMMENT_COLOR="\033[0;90m"
+  export TYPE_SPEED=15
+  export DEMO_PROMPT="$ "
+  export DEMO_CMD_COLOR="\033[1;37m"
+  export DEMO_COMMENT_COLOR="\033[0;90m"
   cd "${DEMO_DIR}"
   # NOTE(cemmer): these have to be functions, `pei` won't pick up on aliases
   npx() {
@@ -23,7 +24,7 @@ if [[ "${1:-}" == "play" ]]; then
     node ../build/index.js "$@"
   }
   tree() {
-    command tree -N -I *.rsl* "$@"
+    command tree -N -I -- *.rsl* "$@"
   }
   # BEGIN PLAYBACK
 
@@ -75,6 +76,7 @@ fi
 # Ensure node is available (same as .husky/pre-commit)
 if [[ ! -x "$(command -v node)" ]]; then
   if [[ ! -x "$(command -v nvm)" && -f ~/.nvm/nvm.sh ]]; then
+    # shellcheck disable=SC1090
     . ~/.nvm/nvm.sh
   fi
   if [[ ! -x "$(command -v nvm)" ]]; then
