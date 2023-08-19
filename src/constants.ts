@@ -44,7 +44,7 @@ export default class Constants {
 
   static readonly COMMAND_VERSION = PACKAGE_JSON.version;
 
-  static readonly ENGINES_NODE = PACKAGE_JSON.engines.node || '*';
+  static readonly ENGINES_NODE = PACKAGE_JSON.engines?.node ?? '*';
 
   static readonly GLOBAL_TEMP_DIR = GLOBAL_TEMP_DIR;
 

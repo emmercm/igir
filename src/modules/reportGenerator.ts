@@ -2,9 +2,9 @@ import fs from 'fs';
 import util from 'util';
 
 import ProgressBar from '../console/progressBar.js';
+import ArrayPoly from '../polyfill/arrayPoly.js';
 import DATStatus, { Status } from '../types/datStatus.js';
 import Options from '../types/options.js';
-import ReleaseCandidate from '../types/releaseCandidate.js';
 import Module from './module.js';
 
 /**
@@ -46,12 +46,12 @@ export default class ReportGenerator extends Module {
 
     const releaseCandidates = datStatuses
       .flatMap((datStatus) => datStatus.getReleaseCandidates())
-      .filter((releaseCandidate) => releaseCandidate) as ReleaseCandidate[];
+      .filter(ArrayPoly.filterNotNullish);
     const matchedFiles = new Set(releaseCandidates
       .flatMap((releaseCandidate) => releaseCandidate.getRomsWithFiles())
       .map((romWithFiles) => romWithFiles.getInputFile().getFilePath()));
     const unmatchedFiles = scannedRomFiles
-      .filter((filePath, idx, filePaths) => filePaths.indexOf(filePath) === idx)
+      .filter(ArrayPoly.filterUnique)
       .filter((inputFile) => !matchedFiles.has(inputFile))
       .sort();
     const unmatchedCsv = await DATStatus.filesToCsv(unmatchedFiles, Status.UNMATCHED);

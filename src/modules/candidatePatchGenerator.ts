@@ -1,6 +1,7 @@
 import path from 'path';
 
 import ProgressBar, { ProgressBarSymbol } from '../console/progressBar.js';
+import ArrayPoly from '../polyfill/arrayPoly.js';
 import ArchiveEntry from '../types/files/archives/archiveEntry.js';
 import File from '../types/files/file.js';
 import DAT from '../types/logiqx/dat.js';
@@ -108,7 +109,7 @@ export default class CandidatePatchGenerator extends Module {
     const releaseCandidatePatches = unpatchedReleaseCandidate.getRomsWithFiles()
       .map((romWithFiles) => crcToPatches.get(romWithFiles.getInputFile().getCrc32()))
       .flatMap((patches) => patches)
-      .filter((patch) => patch) as Patch[];
+      .filter(ArrayPoly.filterNotNullish);
 
     // No relevant patches found, no new candidates generated
     if (!releaseCandidatePatches.length) {

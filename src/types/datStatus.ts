@@ -1,6 +1,7 @@
 import { writeToString } from '@fast-csv/format';
 import chalk, { ChalkInstance } from 'chalk';
 
+import ArrayPoly from '../polyfill/arrayPoly.js';
 import DAT from './logiqx/dat.js';
 import Game from './logiqx/game.js';
 import Parent from './logiqx/parent.js';
@@ -91,7 +92,7 @@ export default class DATStatus {
   }
 
   private static append<T>(map: Map<ROMType, T[]>, romType: ROMType, val: T): void {
-    const arr = (map.has(romType) ? map.get(romType) : []) as T[];
+    const arr = map.get(romType) ?? [];
     arr.push(val);
     map.set(romType, arr);
   }
@@ -109,7 +110,7 @@ export default class DATStatus {
     return DATStatus.getAllowedTypes(options)
       .reduce((result, romType) => {
         const foundReleaseCandidates = (
-          this.foundRomTypesToReleaseCandidates.get(romType) as ReleaseCandidate[] || []).length;
+          this.foundRomTypesToReleaseCandidates.get(romType) ?? []).length;
         return result || foundReleaseCandidates > 0;
       }, false);
   }
@@ -159,7 +160,7 @@ export default class DATStatus {
     );
 
     const rows = DATStatus.getValuesForAllowedTypes(options, this.allRomTypesToGames)
-      .filter((game, idx, games) => games.indexOf(game) === idx)
+      .filter(ArrayPoly.filterUnique)
       .sort((a, b) => a.getName().localeCompare(b.getName()))
       .map((game) => {
         const releaseCandidate = found.find((rc) => rc && rc.getGame().equals(game));
@@ -168,12 +169,12 @@ export default class DATStatus {
           game.getName(),
           releaseCandidate || !game.getRoms().length ? Status.FOUND : Status.MISSING,
           releaseCandidate
-            ? (releaseCandidate as ReleaseCandidate).getRomsWithFiles()
+            ? releaseCandidate.getRomsWithFiles()
               .map((romWithFiles) => (options.shouldWrite()
                 ? romWithFiles.getOutputFile()
                 : romWithFiles.getInputFile()))
               .map((file) => file.getFilePath())
-              .filter((filePath, idx, filePaths) => filePaths.indexOf(filePath) === idx)
+              .filter(ArrayPoly.filterUnique)
             : [],
           releaseCandidate?.isPatched() ?? false,
           game.isBios(),
@@ -264,9 +265,9 @@ export default class DATStatus {
     return DATStatus.getAllowedTypes(options)
       .map((type) => romTypesToValues.get(type))
       .flatMap((values) => values)
-      .filter((value) => value)
-      .filter((value, idx, values) => values.indexOf(value) === idx)
-      .sort() as T[];
+      .filter(ArrayPoly.filterNotNullish)
+      .filter(ArrayPoly.filterUnique)
+      .sort();
   }
 
   private static getAllowedTypes(options: Options): ROMType[] {
@@ -277,6 +278,6 @@ export default class DATStatus {
       !options.getNoDevice() && !options.getOnlyBios() ? ROMType.DEVICE : undefined,
       options.getOnlyRetail() || !options.getOnlyBios() ? ROMType.RETAIL : undefined,
       ROMType.PATCHED,
-    ].filter((romType) => romType) as ROMType[];
+    ].filter(ArrayPoly.filterNotNullish);
   }
 }
