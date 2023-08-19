@@ -139,7 +139,7 @@ export default class CandidateGenerator extends Module {
             return [rom, undefined];
           }
 
-          if (this.options.shouldTest()) {
+          if (this.options.shouldTest() || this.options.getOverwriteInvalid()) {
             // If we're testing, then we need to calculate the archive's CRC
             finalInputFile = await originalInputFile.getArchive().asRawFile();
           } else {
