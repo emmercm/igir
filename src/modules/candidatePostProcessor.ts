@@ -29,7 +29,7 @@ export default class CandidatePostProcessor extends Module {
 
     if (!parentsToCandidates.size) {
       this.progressBar.logDebug(`${dat.getNameShort()}: no parents, so no candidates to process`);
-      return new Map();
+      return parentsToCandidates;
     }
 
     await this.progressBar.setSymbol(ProgressBarSymbol.GENERATING);
