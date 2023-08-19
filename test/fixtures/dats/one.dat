@@ -17,7 +17,7 @@
     <release name="Foobar" region="USA"/>
     <rom name="Foobar.lnx" size="7" crc="b22c9747" md5="14758f1afd44c09b7992073ccf00b43d" sha1="988881adc9fc3655077dc2d4d757d480b5ea0e11" status="verified"/>
   </machine>
-  <machine name="Fizzbuzz">
+  <machine name="Fizzbuzz" cloneof="Foobar">
     <description>Fizzbuzz</description>
     <release name="Fizzbuzz" region="EUR"/>
     <rom name="Fizzbuzz.nes" size="9" crc="370517b5" md5="cbe8410861130a91609295349918c2c2" sha1="5a316d9f0e06964d94cdd62a933803d7147ddadb" status="verified"/>

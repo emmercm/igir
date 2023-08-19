@@ -24,9 +24,10 @@ gracefulFs.gracefulify(realFs);
     process.exit(1);
   }
 
-  process.once('SIGINT', () => {
+  process.once('SIGINT', async () => {
     logger.newLine();
-    logger.warn(`Exiting ${Constants.COMMAND_NAME} prematurely`);
+    logger.notice(`Exiting ${Constants.COMMAND_NAME} early`);
+    await ProgressBarCLI.stop();
     process.exit(0);
   });
 

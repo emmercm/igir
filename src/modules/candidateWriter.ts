@@ -139,7 +139,7 @@ export default class CandidateWriter extends Module {
       .map((romWithFiles) => [
         romWithFiles.getInputFile(),
         romWithFiles.getOutputFile() as ArchiveEntry<Zip>,
-      ]) as [File, ArchiveEntry<Zip>][];
+      ]) satisfies [File, ArchiveEntry<Zip>][];
     if (!inputToOutputZipEntries.length) {
       this.progressBar.logTrace(`${dat.getNameShort()}: ${releaseCandidate.getName()}: no zip archives to write`);
       return;
