@@ -1,6 +1,7 @@
 import path from 'path';
 
 import ProgressBar, { ProgressBarSymbol } from '../console/progressBar.js';
+import ArrayPoly from '../polyfill/arrayPoly.js';
 import fsPoly from '../polyfill/fsPoly.js';
 import Archive from '../types/files/archives/archive.js';
 import ArchiveEntry from '../types/files/archives/archiveEntry.js';
@@ -156,11 +157,11 @@ export default class CandidateGenerator extends Module {
           return [rom, undefined];
         }
       }),
-    ) as [ROM, ROMWithFiles | undefined][];
+    ) satisfies [ROM, ROMWithFiles | undefined][];
 
     const foundRomsWithFiles = romFiles
-      .filter(([, romWithFiles]) => romWithFiles)
-      .map(([, romWithFiles]) => romWithFiles) as ROMWithFiles[];
+      .map(([, romWithFiles]) => romWithFiles)
+      .filter(ArrayPoly.filterNotNullish);
     const missingRoms = romFiles
       .filter(([, romWithFiles]) => !romWithFiles)
       .map(([rom]) => rom);
@@ -188,7 +189,7 @@ export default class CandidateGenerator extends Module {
     let romsAndInputFiles = game.getRoms().map((rom) => ([
       rom,
       (hashCodeToInputFiles.get(rom.hashCode()) ?? []),
-    ])) as [ROM, File[]][];
+    ])) satisfies [ROM, File[]][];
 
     // Detect if there is one input archive that contains every ROM, and prefer to use its entries.
     // If we don't do this, here are two situations that can happen:
@@ -211,7 +212,7 @@ export default class CandidateGenerator extends Module {
           roms.push(rom);
           // We need to filter out duplicate ROMs because of Games that contain duplicate ROMs, e.g.
           //  optical media games that have the same track multiple times.
-          const uniqueRoms = roms.filter((val, idx, values) => values.indexOf(val) === idx);
+          const uniqueRoms = roms.filter(ArrayPoly.filterUnique);
           map.set(archive, uniqueRoms);
         });
       return map;
@@ -317,8 +318,7 @@ export default class CandidateGenerator extends Module {
       .filter((outputFile) => !(outputFile instanceof ArchiveEntry))
       .map((outputFile) => outputFile.getFilePath())
       .filter((outputPath, idx, outputPaths) => outputPaths.indexOf(outputPath) !== idx)
-      .filter((duplicatePath, idx, duplicatePaths) => duplicatePaths
-        .indexOf(duplicatePath) === idx)
+      .filter(ArrayPoly.filterUnique)
       .sort();
     if (!duplicateOutputPaths.length) {
       // There are no duplicate non-archive output file paths
@@ -336,7 +336,7 @@ export default class CandidateGenerator extends Module {
       const conflictedInputFiles = romsWithFiles
         .filter((romWithFiles) => romWithFiles.getOutputFile().getFilePath() === duplicateOutput)
         .map((romWithFiles) => romWithFiles.getInputFile().toString())
-        .filter((inputFile, idx, inputFiles) => inputFiles.indexOf(inputFile) === idx);
+        .filter(ArrayPoly.filterUnique);
       if (conflictedInputFiles.length > 1) {
         hasConflict = true;
         let message = `Cannot ${this.options.writeString()} different files to: ${duplicateOutput}:`;
