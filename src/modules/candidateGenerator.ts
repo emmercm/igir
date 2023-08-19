@@ -103,7 +103,7 @@ export default class CandidateGenerator extends Module {
     release: Release | undefined,
     hashCodeToInputFiles: Map<string, File[]>,
   ): Promise<ReleaseCandidate | undefined> {
-    const romsToInputFiles = this.getInputFilesForGame(game, hashCodeToInputFiles);
+    const romsToInputFiles = CandidateGenerator.getInputFilesForGame(game, hashCodeToInputFiles);
 
     // For each Game's ROM, find the matching File
     const romFiles = await Promise.all(
@@ -182,7 +182,7 @@ export default class CandidateGenerator extends Module {
     return new ReleaseCandidate(game, release, foundRomsWithFiles);
   }
 
-  private getInputFilesForGame(
+  private static getInputFilesForGame(
     game: Game,
     hashCodeToInputFiles: Map<string, File[]>,
   ): Map<ROM, File> {
@@ -219,7 +219,7 @@ export default class CandidateGenerator extends Module {
     }, new Map<Archive, ROM[]>());
 
     // Only filter the input files if this game has multiple ROMs, and we found some archives
-    if (!this.options.shouldExtract() && game.getRoms().length > 1 && inputArchivesToRoms.size) {
+    if (game.getRoms().length > 1 && inputArchivesToRoms.size) {
       // Filter to the Archives that contain every ROM in this Game
       const archivesWithEveryRom = [...inputArchivesToRoms.entries()]
         .filter(([, roms]) => roms.length === game.getRoms().length)

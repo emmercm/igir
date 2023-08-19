@@ -234,7 +234,6 @@ describe('with explicit DATs', () => {
       path.join('roms', 'raw', 'fizzbuzz.nes'),
       path.join('roms', 'raw', 'four.rom'),
       path.join('roms', 'raw', 'loremipsum.rom'),
-      path.join('roms', 'raw', 'one.rom'),
       path.join('roms', 'raw', 'three.rom'),
     ]);
   });
@@ -548,6 +547,8 @@ describe('with inferred DATs', () => {
       path.join('roms', 'raw', 'two.rom'),
       path.join('roms', 'raw', 'unknown.rom'),
       path.join('roms', 'unheadered', 'speed_test_v51.sfc.gz'),
+      path.join('roms', 'zip', 'fourfive.zip'),
+      path.join('roms', 'zip', 'onetwothree.zip'),
     ]);
   });
 
