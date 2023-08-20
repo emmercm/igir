@@ -24,7 +24,7 @@ jobs:
         os: [ ubuntu, macos, windows ]
     steps:
       - uses: actions/setup-node@v3
-      - run: npm exec --yes -- "github:${{ github.repository }}#${{ github.head_ref }}" --help
+      - run: npm exec --yes -- "github:${{ github.event.pull_request.head.repo.full_name }}#${{ github.event.pull_request.head.ref }}" --help
 
   npm-exec:
     needs:
@@ -37,6 +37,6 @@ jobs:
             ## :test_tube: Branch Testing
             This pull request can be tested locally with the following command:
             ```shell
-            npm exec --yes -- "github:${{ github.repository }}#${{ github.head_ref }}" [commands..] [options]
+            npm exec --yes -- "github:${{ github.event.pull_request.head.repo.full_name }}#${{ github.event.pull_request.head.ref }}" [commands..] [options]
             ```
           comment_tag: npm-exec
