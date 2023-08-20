@@ -56,7 +56,7 @@ $ igir --help
   | $$  | $$|    \  | $$  | $$    $$   ROM collection manager
   | $$  | $$|    \  | $$  | $$    $$   https://igir.io/
   | $$  | $$ \$$$$  | $$  | $$$$$$$\
- _| $$_ | $$__| $$ _| $$_ | $$  | $$   v1.9.0
+ _| $$_ | $$__| $$ _| $$_ | $$  | $$   v1.9.1
 |   $$ \ \$$    $$|   $$ \| $$  | $$
  \$$$$$$  \$$$$$$  \$$$$$$ \$$   \$$
 
@@ -128,9 +128,9 @@ ROM filtering options:
   -L, --language-filter       List of comma-separated languages to filter to (supported: DA, DE,
                               EL, EN, ES, FI, FR, IT, JA, KO, NL, NO, PT, RU, SV, ZH)    [string]
   -R, --region-filter         List of comma-separated regions to filter to (supported: ARG, ASI,
-                              AUS, BRA, CAN, CHN, DAN, EUR, FRA, FYN, GER, GRE, HK, HOL, ITA, JPN
-                              , KOR, MEX, NOR, NZ, POR, RUS, SPA, SWE, TAI, UK, UNK, USA, WORLD)
-                                                                                         [string]
+                              AUS, BEL, BRA, CAN, CHN, DAN, EUR, FRA, FYN, GER, GRE, HK, HOL, ITA
+                              , JPN, KOR, MEX, NOR, NZ, POR, RUS, SPA, SWE, TAI, UK, UNK, USA, WO
+                              RLD)                                                       [string]
       --no-bios               Filter out BIOS files, opposite of --only-bios            [boolean]
       --no-device             Filter out MAME devies, opposite of --only-device         [boolean]
       --no-unlicensed         Filter out unlicensed ROMs, opposite of --only-unlicensed [boolean]
@@ -157,9 +157,9 @@ One game, one ROM (1G1R) options:
                                , DE, EL, EN, ES, FI, FR, IT, JA, KO, NL, NO, PT, RU, SV, ZH)
                                                                                          [string]
   -r, --prefer-region          List of comma-separated regions in priority order (supported: ARG,
-                                ASI, AUS, BRA, CAN, CHN, DAN, EUR, FRA, FYN, GER, GRE, HK, HOL, I
-                               TA, JPN, KOR, MEX, NOR, NZ, POR, RUS, SPA, SWE, TAI, UK, UNK, USA,
-                                WORLD)                                                   [string]
+                                ASI, AUS, BEL, BRA, CAN, CHN, DAN, EUR, FRA, FYN, GER, GRE, HK, H
+                               OL, ITA, JPN, KOR, MEX, NOR, NZ, POR, RUS, SPA, SWE, TAI, UK, UNK,
+                                USA, WORLD)                                              [string]
       --prefer-revision-newer  Prefer newer ROM revisions over older                    [boolean]
       --prefer-revision-older  Prefer older ROM revisions over newer                    [boolean]
       --prefer-retail          Prefer retail releases (see --only-retail)               [boolean]
