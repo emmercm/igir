@@ -8,7 +8,7 @@
 
 ## ROM writing
 
-`igir` has three writing commands. Only one writing command can be specified at a time, and all require the `--output` option.
+`igir` has three writing commands. Only one writing command can be specified at a time, and all require the `--output <path>` option.
 
 ### `copy`
 

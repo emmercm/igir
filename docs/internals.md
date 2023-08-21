@@ -6,10 +6,10 @@ Information about the inner workings of `igir`.
 
 `igir` runs these steps in the following order:
 
-1. Scan each DAT input path for every file and parse them, if provided (`--dat`)
-2. Scan each ROM input path for every file (`--input`)
+1. Scan each DAT input path for every file and parse them, if provided (`--dat <path>`)
+2. Scan each ROM input path for every file (`--input <path>`)
    - Detect headers in those files, if applicable (see [header docs](roms/headers.md))
-3. Scan each patch input path for every file (`--patch`) (see [patching docs](roms/patching.md))
+3. Scan each patch input path for every file (`--patch <path>`) (see [patching docs](roms/patching.md))
 4. Then for each DAT:
    - ROMs in the DAT are filtered to only those desired (see [filtering & preference docs](roms/filtering-preferences.md))
    - Input files are matched to ROMs in the DAT
