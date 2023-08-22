@@ -1,13 +1,13 @@
 # Output Tokens
 
-When specifying a ROM [writing command](../commands.md) you have to specify an `--output` directory. `igir` has a few replaceable "tokens" that can be referenced in the `--output` directory value. This can aid in sorting ROMs into a more complicated directory structure.
+When specifying a ROM [writing command](../commands.md) you have to specify an `--output <path>` directory. `igir` has a few replaceable "tokens" that can be referenced in the `--output <path>` directory value. This can aid in sorting ROMs into a more complicated directory structure.
 
 For example, if you want to group all ROMs based on their region, you would specify:
 
 === ":simple-windowsxp: Windows"
 
     ```batch
-    igir.exe copy extract --dat *.dat --input ROMs/ --output "ROMs-Sorted/{datReleaseRegion}/"
+    igir copy extract --dat *.dat --input ROMs\ --output "ROMs-Sorted\{datReleaseRegion}\"
     ```
 
 === ":simple-apple: macOS"
