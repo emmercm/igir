@@ -29,6 +29,9 @@ jobs:
   npm-exec:
     needs:
       - npm-exec-test
+    permissions:
+      # Necessary for PRs opened by non-repo-owners
+      pull-requests: write
     runs-on: ubuntu-latest
     steps:
       - uses: thollander/actions-comment-pull-request@v2
