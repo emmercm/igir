@@ -3,11 +3,11 @@ name: Pull Request Renamer
 on:
   # pull_request_target required for pull-requests:write permission on fork PRs
   pull_request_target:
-    types:
-      - edited  # PR's title was changed
-      - opened
-      - reopened
-      - synchronize  # PR's branch was edited (i.e. new commits)
+#    types:
+#      - edited  # PR's title was changed
+#      - opened
+#      - reopened
+#      - synchronize  # PR's branch was edited (i.e. new commits)
 
 jobs:
   rename:
@@ -21,6 +21,7 @@ jobs:
     steps:
       - id: title-massager
         env:
+          # https://docs.github.com/en/actions/security-guides/security-hardening-for-github-actions#using-an-intermediate-environment-variable
           OLD_TITLE: ${{ github.event.pull_request.title }}
         run: |
           ALLOWED_TYPES="Chore|CI|Docs|Feature|Fix|Refactor"

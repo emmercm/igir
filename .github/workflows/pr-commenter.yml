@@ -3,11 +3,11 @@ name: Pull Request Commenter
 on:
   # pull_request_target required for pull-requests:write permission on fork PRs
   pull_request_target:
-    types:
-      # - edited  # PR's base branch was changed
-      - opened
-      - reopened
-      - synchronize  # PR's branch was edited (i.e. new commits)
+#    types:
+#      # - edited  # PR's base branch was changed
+#      - opened
+#      - reopened
+#      - synchronize  # PR's branch was edited (i.e. new commits)
 #    paths:
 #      - '*'
 #      - 'src/**'
@@ -26,6 +26,7 @@ jobs:
     steps:
       - uses: actions/setup-node@v3
       - env:
+          # https://docs.github.com/en/actions/security-guides/security-hardening-for-github-actions#using-an-intermediate-environment-variable
           HEAD_REF: ${{ github.event.pull_request.head.ref }}
         run: npm exec --yes -- "github:${{ github.event.pull_request.head.repo.full_name }}#${HEAD_REF}" --help
 
