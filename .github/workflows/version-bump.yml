@@ -44,7 +44,7 @@ jobs:
           echo "USER_EMAIL=${USER_EMAIL}" >> "${GITHUB_OUTPUT}"
           git config --global user.email "${USER_EMAIL}"
 
-          USER_NAME="$(gh api /users/${GITHUB_ACTOR} | jq .name -r)"
+          USER_NAME="$(gh api "/users/${GITHUB_ACTOR}" | jq .name -r)"
           echo "USER_NAME=${USER_NAME}" >> "${GITHUB_OUTPUT}"
           git config --global user.name "${USER_NAME}"
 
