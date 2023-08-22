@@ -66,13 +66,14 @@ nav:
       - File Inputs:
           - input/file-scanning.md
           - input/dats.md
-          - input/archives.md
+          - input/reading-archives.md
       - ROM Processing:
           - roms/filtering-preferences.md
           - roms/headers.md
           - roms/patching.md
       - File Outputs:
           - output/tokens.md
+          - output/writing-archives.md
           - output/reporting.md
           - output/cleaning.md
       - Advanced:
@@ -93,10 +94,11 @@ plugins:
       enable_creation_date: true
   - redirects:
       redirect_maps:
-        'archives.md': 'input/archives.md'
+        'archives.md': 'input/reading-archives.md'
         'dats.md': 'input/dats.md'
         'examples.md': 'usage/collection-sorting.md'
         'file-scanning.md': 'input/file-scanning.md'
+        'input/archives.md': 'input/reading-archives.md'
         'reporting.md': 'output/reporting.md'
         'rom-filtering.md': 'roms/filtering-preferences.md'
         'rom-headers.md': 'roms/headers.md'
