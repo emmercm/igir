@@ -3,7 +3,7 @@
 <p align="center"><b>Pronounced "eager," <code>igir</code> is a video game ROM collection manager to help filter, sort, patch, archive, and report on collections on any OS.</b></p>
 
 <p align="center">
-  <a href="https://github.com/emmercm/igir#readme"><img alt="CLI: Windows,macOS,Linux" src="https://img.shields.io/badge/CLI-Windows%2C%20macOS%2C%20Linux-lightgrey?logo=windows-terminal"></a>
+  <a href="https://igir.io/"><img alt="CLI: Windows,macOS,Linux" src="https://img.shields.io/badge/CLI-Windows%2C%20macOS%2C%20Linux-lightgrey?logo=windows-terminal"></a>
   <a href="https://www.npmjs.com/package/igir"><img alt="npm: version" src="https://img.shields.io/npm/v/igir?color=%23cc3534&label=version&logo=npm&logoColor=white"></a>
   <a href="https://www.npmjs.com/package/igir"><img alt="npm: downloads" src="https://img.shields.io/npm/dt/igir?color=%23cc3534&logo=npm&logoColor=white"></a>
   <a href="https://github.com/emmercm/igir/releases"><img alt="GitHub: downloads" src="https://img.shields.io/github/downloads/emmercm/igir/total?color=%236e5494&logo=github&logoColor=white"></a>

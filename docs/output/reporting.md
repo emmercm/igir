@@ -60,6 +60,14 @@ The report output filename supports a version of [Moment.js symbols](https://mom
 
     See the [Moment.js docs](https://momentjs.com/docs/#/displaying/) for a complete list of tokens you can use.
 
+!!! warning
+
+    The `%` character is used to denote replaceable variable names (such as `%USERPROFILE%` and `%TEMP%`) in Windows Batch scripting. You may need to "escape" `%` characters with a `^` if you experience problems. Example:
+
+    ```text
+    --report-output ^%X.csv
+    ```
+
 Here are some example usages:
 
 === ":simple-windowsxp: Windows"
@@ -67,10 +75,10 @@ Here are some example usages:
     ```batch
     > igir.exe report --dat *.dat --input ROMs\ --report-output ".\report.csv"
 
-    > igir.exe report --dat *.dat --input ROMs/ --report-output "./report %dddd, %MMMM %Do %YYYY, %h:%mm:%ss %a.csv"
+    > igir.exe report --dat *.dat --input ROMs\ --report-output ".\report %dddd, %MMMM %Do %YYYY, %h:%mm:%ss %a.csv"
     REM ./report Friday, April 14th 2023, 4:28:26 pm.csv
 
-    > igir.exe report --dat *.dat --input ROMs/ --report-output "/igir/%X.csv"
+    > igir.exe report --dat *.dat --input ROMs\ --report-output "igir\%X.csv"
     REM /igir/1681515048.csv
     ```
 
@@ -82,7 +90,7 @@ Here are some example usages:
     $ igir report --dat *.dat --input ROMs/ --report-output "./report %dddd, %MMMM %Do %YYYY, %h:%mm:%ss %a.csv"
     # ./report Friday, April 14th 2023, 4:28:26 pm.csv
 
-    $ igir report --dat *.dat --input ROMs/ --report-output "/igir/%X.csv"
+    $ igir report --dat *.dat --input ROMs/ --report-output "igir\%X.csv"
     # /igir/1681515048.csv
     ```
 
@@ -94,6 +102,6 @@ Here are some example usages:
     $ igir report --dat *.dat --input ROMs/ --report-output "./report %dddd, %MMMM %Do %YYYY, %h:%mm:%ss %a.csv"
     # ./report Friday, April 14th 2023, 4:28:26 pm.csv
 
-    $ igir report --dat *.dat --input ROMs/ --report-output "/igir/%X.csv"
+    $ igir report --dat *.dat --input ROMs/ --report-output "igir/%X.csv"
     # /igir/1681515048.csv
     ```

@@ -65,7 +65,7 @@ If you want to store your ROMs in the RetroArch folder, you could co-locate them
     ```batch
     igir copy zip test ^
       --dat "No-Intro*.zip" ^
-      --input ROMs/ ^
+      --input ROMs\ ^
       --output C:\RetroArch-Win64\roms ^
       --dir-dat-name ^
       --no-bios
@@ -78,7 +78,7 @@ If you want to store your ROMs in the RetroArch folder, you could co-locate them
     ```batch
     igir copy zip test ^
       --dat "No-Intro*.zip" ^
-      --input ROMs/ ^
+      --input ROMs\ ^
       --output C:\RetroArch-Win32\roms ^
       --dir-dat-name ^
       --no-bios

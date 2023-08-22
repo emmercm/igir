@@ -56,7 +56,7 @@ If none of the above options work for you, [Docker](https://www.docker.com/) may
       --volume "%cd%:\pwd" ^
       --workdir "/pwd" ^
       node:lts ^
-      npx igir@latest copy zip --dat "*.dat" --input ROMs/ --output ROMs-Sorted/ --dir-dat-name
+      npx igir@latest copy zip --dat "*.dat" --input ROMs\ --output ROMs-Sorted\ --dir-dat-name
     ```
 
 === ":simple-apple: macOS"
