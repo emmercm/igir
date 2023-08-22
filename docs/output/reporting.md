@@ -16,7 +16,7 @@ The `igir report` command can be specified on its own without any [writing comma
 === ":simple-windowsxp: Windows"
 
     ```batch
-    > igir.exe report --dat *.dat --input ROMs/
+    > igir.exe report --dat *.dat --input ROMs\
 
     > dir /b *.csv
     igir_2023-03-29T18;26;00-04;00.csv
@@ -65,7 +65,7 @@ Here are some example usages:
 === ":simple-windowsxp: Windows"
 
     ```batch
-    > igir.exe report --dat *.dat --input ROMs/ --report-output "./report.csv"
+    > igir.exe report --dat *.dat --input ROMs\ --report-output ".\report.csv"
 
     > igir.exe report --dat *.dat --input ROMs/ --report-output "./report %dddd, %MMMM %Do %YYYY, %h:%mm:%ss %a.csv"
     REM ./report Friday, April 14th 2023, 4:28:26 pm.csv

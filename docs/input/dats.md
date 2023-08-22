@@ -92,12 +92,12 @@ For example:
 === ":simple-windowsxp: Windows"
 
     ```batch
-    igir.exe copy zip ^
+    igir copy zip ^
       --dat "Nintendo - Game Boy.dat" ^
       --dat "Nintendo - Game Boy Advance.dat" ^
       --dat "Nintendo - Game Boy Color.dat" ^
-      --input ROMs/ ^
-      --output ROMs-Sorted/ ^
+      --input ROMs\ ^
+      --output ROMs-Sorted\ ^
       --fixdat
     ```
 

@@ -7,7 +7,7 @@ For example, if you want to group all ROMs based on their region, you would spec
 === ":simple-windowsxp: Windows"
 
     ```batch
-    igir.exe copy extract --dat *.dat --input ROMs/ --output "ROMs-Sorted/{datReleaseRegion}/"
+    igir copy extract --dat *.dat --input ROMs\ --output "ROMs-Sorted\{datReleaseRegion}\"
     ```
 
 === ":simple-apple: macOS"
