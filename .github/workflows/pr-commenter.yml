@@ -1,7 +1,7 @@
 name: Pull Request Commenter
 
 on:
-  pull_request:
+  pull_request_target:
     types:
       # - edited  # PR's base branch was changed
       - opened
@@ -29,9 +29,6 @@ jobs:
   npm-exec:
     needs:
       - npm-exec-test
-    permissions:
-      # Necessary for PRs opened by non-repo-owners
-      pull-requests: write
     runs-on: ubuntu-latest
     steps:
       - uses: thollander/actions-comment-pull-request@v2
