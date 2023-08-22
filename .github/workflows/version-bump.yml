@@ -41,15 +41,15 @@ jobs:
           git add --all
 
           USER_EMAIL="${GITHUB_ACTOR_ID}+${GITHUB_ACTOR}@users.noreply.github.com"
-          echo "USER_EMAIL=${USER_EMAIL}" >> "$GITHUB_OUTPUT"
+          echo "USER_EMAIL=${USER_EMAIL}" >> "${GITHUB_OUTPUT}"
           git config --global user.email "${USER_EMAIL}"
 
           USER_NAME="$(gh api /users/${GITHUB_ACTOR} | jq .name -r)"
-          echo "USER_NAME=${USER_NAME}" >> "$GITHUB_OUTPUT"
+          echo "USER_NAME=${USER_NAME}" >> "${GITHUB_OUTPUT}"
           git config --global user.name "${USER_NAME}"
 
           PACKAGE_VERSION="$(jq --raw-output '.version' package.json)"
-          echo "PACKAGE_VERSION=${PACKAGE_VERSION}" >> "$GITHUB_OUTPUT"
+          echo "PACKAGE_VERSION=${PACKAGE_VERSION}" >> "${GITHUB_OUTPUT}"
           git commit -m "v${PACKAGE_VERSION}"
         env:
           GH_TOKEN: ${{ github.token }}
