@@ -252,6 +252,10 @@ export default class OutputFactory {
       output = output.replace('{onion}', onion);
     }
 
+    const batocera = gameConsole.getBatocera();
+    if (batocera) {
+      output = output.replace('{batocera}', batocera);
+    }
     return output;
   }
 

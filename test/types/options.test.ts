@@ -13,6 +13,7 @@ describe('getOutputDirRoot', () => {
     ['Assets/{pocket}/common/', 'Assets'],
     ['games/{mister}/', 'games'],
     ['Roms/{onion}/', 'Roms'],
+    ['roms/{batocera}/', 'roms'],
     ['{datName}', '.'],
     ['{datDescription}', '.'],
   ])('should find the root dir: %s', (output, expectedPath) => {

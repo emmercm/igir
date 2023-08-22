@@ -29,8 +29,7 @@ Batocera has a `roms` folder in the "userdata partition" at `/userdata/roms` tha
     igir copy zip test clean \
       --dat "/media/USB-Drive/No-Intro*.zip" \
       --input "/media/USB-Drive/ROMs/" \
-      --output "/userdata/roms/" \
-      --dir-dat-name \
+      --output "/userdata/roms/{batocera}" \
       --dir-letter \
       --no-bios
     ```

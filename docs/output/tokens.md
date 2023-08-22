@@ -74,6 +74,7 @@ To help sort ROMs into unique file structures for popular frontends & hardware, 
 - `{pocket}` the [Analogue Pocket](../usage/hardware/analogue-pocket.md) core's directory for the ROM
 - `{mister}` the [MiSTer FPGA](../usage/hardware/mister.md) core's directory for the ROM
 - `{onion}` the [OnionOS / GarlicOS](../usage/handheld/onionos.md) emulator's directory for the ROM
+- `{batocera}` the [Batocera](../usage/desktop/batocera.md) emulator's directory for the ROM
 
 !!! tip
 
