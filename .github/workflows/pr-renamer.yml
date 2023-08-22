@@ -20,8 +20,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - id: title-massager
+        env:
+          OLD_TITLE: ${{ github.event.pull_request.title }}
         run: |
-          OLD_TITLE="${{ github.event.pull_request.title }}"
           ALLOWED_TYPES="Chore|CI|Docs|Feature|Fix|Refactor"
 
           # Ignore version numbers

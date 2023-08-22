@@ -25,7 +25,9 @@ jobs:
         os: [ ubuntu, macos, windows ]
     steps:
       - uses: actions/setup-node@v3
-      - run: npm exec --yes -- "github:${{ github.event.pull_request.head.repo.full_name }}#${{ github.event.pull_request.head.ref }}" --help
+      - env:
+          HEAD_REF: ${{ github.event.pull_request.head.ref }}
+        run: npm exec --yes -- "github:${{ github.event.pull_request.head.repo.full_name }}#${HEAD_REF}" --help
 
   npm-exec:
     needs:
