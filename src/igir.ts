@@ -1,5 +1,4 @@
 import async from 'async';
-import path from 'path';
 
 import Logger from './console/logger.js';
 import { ProgressBarSymbol } from './console/progressBar.js';
@@ -211,14 +210,19 @@ export default class Igir {
     return [...parentsToCandidates.values()]
       .flatMap((releaseCandidates) => releaseCandidates
         .flatMap((releaseCandidate) => releaseCandidate.getRomsWithFiles()
-          .flatMap((romWithFiles) => path.format(OutputFactory.getPath(
-            this.options,
+          .flatMap((romWithFiles) => OutputFactory.getPath(
+            // Parse the output directory, as supplied by the user, ONLY replacing tokens in the
+            // path and NOT respecting any `--dir-*` options.
+            new Options({
+              commands: this.options.getCommands(),
+              output: this.options.getOutput(),
+            }),
             dat,
             releaseCandidate.getGame(),
             releaseCandidate.getRelease(),
             romWithFiles.getRom(),
             romWithFiles.getInputFile(),
-          )))))
+          ).dir)))
       .filter(ArrayPoly.filterUnique);
   }
 

@@ -17,7 +17,7 @@ This token can be used to reference each core's specific directory in the MiSTer
     Replace the `E:\` drive letter with wherever your SD card is:
 
     ```batch
-    igir.exe copy extract test clean ^
+    igir copy extract test clean ^
       --dat "No-Intro*.zip" ^
       --input "ROMs" ^
       --output "E:\games\{mister}" ^

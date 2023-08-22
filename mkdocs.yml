@@ -74,6 +74,7 @@ nav:
       - File Outputs:
           - output/tokens.md
           - output/reporting.md
+          - output/cleaning.md
       - Advanced:
           - internals.md
       - Misc:

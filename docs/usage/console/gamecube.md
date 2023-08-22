@@ -15,7 +15,7 @@
     Replace the `E:\` drive letter with wherever your SD card is:
 
     ```batch
-    igir.exe copy extract test clean ^
+    igir copy extract test clean ^
       --dat "Redump*.zip" ^
       --input "ISOs" ^
       --output "E:\ISOs" ^
