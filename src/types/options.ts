@@ -362,7 +362,7 @@ export default class Options implements OptionsProps {
 
   // Commands
 
-  private getCommands(): string[] {
+  getCommands(): string[] {
     return this.commands.map((c) => c.toLowerCase());
   }
 

@@ -230,6 +230,72 @@ describe('with explicit DATs', () => {
     });
   });
 
+  it('should copy and clean', async () => {
+    await copyFixturesToTemp(async (inputTemp, outputTemp) => {
+      // Given some existing files in the output directory
+      const junkFiles = [
+        path.join(outputTemp, 'one.rom'),
+        path.join(outputTemp, 'rom', 'two.rom'),
+        path.join(outputTemp, 'zip', 'three.zip'),
+        path.join(outputTemp, 'iso', 'four.iso'),
+      ];
+      await Promise.all(junkFiles.map(async (junkFile) => {
+        await fsPoly.touch(junkFile);
+        expect(await fsPoly.exists(junkFile)).toEqual(true);
+      }));
+
+      // When running igir with the clean command
+      const result = await runIgir({
+        commands: ['copy', 'clean'],
+        dat: [path.join(inputTemp, 'dats')],
+        input: [path.join(inputTemp, 'roms')],
+        output: path.join(outputTemp, '{outputExt}'),
+        dirDatName: true,
+      });
+
+      expect(result.outputFilesAndCrcs).toEqual([
+        [`${path.join('7z', 'Headered', 'diagnostic_test_cartridge.a78.7z')}|diagnostic_test_cartridge.a78`, 'f6cc9b1c'],
+        [`${path.join('gz', 'Patchable', 'Best.gz')}|best.rom`, '1e3d78cf'],
+        [path.join('iso', 'four.iso'), '00000000'], // explicitly not deleted, there were no input files with the extension "iso"
+        [path.join('lnx', 'One', 'Foobar.lnx'), 'b22c9747'],
+        [path.join('lnx', 'smdb', 'Hardware Target Game Database', 'Dummy', 'Foobar.lnx'), 'b22c9747'],
+        [path.join('nes', 'Headered', 'allpads.nes'), '9180a163'],
+        [path.join('nes', 'Headered', 'color_test.nes'), 'c9c1b7aa'],
+        [path.join('nes', 'One', 'Fizzbuzz.nes'), '370517b5'],
+        [path.join('nes', 'smdb', 'Hardware Target Game Database', 'Dummy', 'Fizzbuzz.nes'), '370517b5'],
+        ['one.rom', '00000000'], // explicitly not deleted, it is not in an extension subdirectory
+        [`${path.join('rar', 'Headered', 'LCDTestROM.lnx.rar')}|LCDTestROM.lnx`, '2d251538'],
+        [path.join('rom', 'One', 'Lorem Ipsum.rom'), '70856527'],
+        [path.join('rom', 'One', 'Three Four Five', 'Five.rom'), '3e5daf67'],
+        [path.join('rom', 'One', 'Three Four Five', 'Four.rom'), '1cf3ca74'],
+        [path.join('rom', 'One', 'Three Four Five', 'Three.rom'), 'ff46c5d8'],
+        [path.join('rom', 'Patchable', '0F09A40.rom'), '2f943e86'],
+        [path.join('rom', 'Patchable', '3708F2C.rom'), '20891c9f'],
+        [path.join('rom', 'Patchable', '612644F.rom'), 'f7591b29'],
+        [path.join('rom', 'Patchable', '65D1206.rom'), '20323455'],
+        [path.join('rom', 'Patchable', '92C85C9.rom'), '06692159'],
+        [path.join('rom', 'Patchable', 'Before.rom'), '0361b321'],
+        [path.join('rom', 'Patchable', 'C01173E.rom'), 'dfaebe28'],
+        [path.join('rom', 'Patchable', 'KDULVQN.rom'), 'b1c303e4'],
+        [path.join('rom', 'smdb', 'Hardware Target Game Database', 'Dummy', 'Lorem Ipsum.rom'), '70856527'],
+        [path.join('rom', 'smdb', 'Hardware Target Game Database', 'Patchable', '3708F2C.rom'), '20891c9f'],
+        [path.join('rom', 'smdb', 'Hardware Target Game Database', 'Patchable', '65D1206.rom'), '20323455'],
+        [path.join('rom', 'smdb', 'Hardware Target Game Database', 'Patchable', 'C01173E.rom'), 'dfaebe28'],
+        [path.join('smc', 'Headered', 'speed_test_v51.smc'), '9adca6cc'],
+        [`${path.join('zip', 'Headered', 'fds_joypad_test.fds.zip')}|fds_joypad_test.fds`, '1e58456d'],
+        [`${path.join('zip', 'One', 'One Three.zip')}|${path.join('1', 'one.rom')}`, 'f817a89f'],
+        [`${path.join('zip', 'One', 'One Three.zip')}|${path.join('2', 'two.rom')}`, '96170874'],
+        [`${path.join('zip', 'One', 'One Three.zip')}|${path.join('3', 'three.rom')}`, 'ff46c5d8'],
+      ]);
+      expect(result.cwdFilesAndCrcs).toHaveLength(0);
+      expect(result.movedFiles).toHaveLength(0);
+      expect(result.cleanedFiles).toEqual([
+        path.join('rom', 'two.rom'),
+        path.join('zip', 'three.zip'),
+      ]);
+    });
+  });
+
   it('should move, extract and test', async () => {
     await copyFixturesToTemp(async (inputTemp, outputTemp) => {
       const result = await runIgir({
