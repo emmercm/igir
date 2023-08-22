@@ -8,7 +8,7 @@
 
 ## Archive files
 
-`igir` can scan archives for DATs, ROMs, and patches. See the [archives](archives.md) page for more information on supported formats.
+`igir` can scan archives for DATs, ROMs, and patches. See the [archives](reading-archives.md) page for more information on supported formats.
 
 ## Glob patterns
 
