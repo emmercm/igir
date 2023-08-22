@@ -1,6 +1,7 @@
 name: Pull Request Commenter
 
 on:
+  # pull_request_target required for pull-requests:write permission on fork PRs
   pull_request_target:
     types:
       # - edited  # PR's base branch was changed
