@@ -65,6 +65,8 @@ After performing one of the ROM writing commands, verify that the file was writt
 
 Files in the output directory that do not match any ROM in any [DAT](input/dats.md) will be deleted.
 
+See the [output cleaning page](output/cleaning.md) for more information.
+
 ## ROM reporting
 
 ### `report`
