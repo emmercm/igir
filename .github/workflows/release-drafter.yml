@@ -56,13 +56,11 @@ jobs:
         id: auto-changelog
         run: |
           EOF=$(dd if=/dev/urandom bs=15 count=1 status=none | base64)
-          {
-            echo "MARKDOWN<<$EOF"
-            ./scripts/auto-changelog.sh
-            echo ""
-            echo ""
-            echo "$EOF"
-          } >> "$GITHUB_OUTPUT"
+          echo "MARKDOWN<<$EOF" >> "$GITHUB_OUTPUT"
+          ./scripts/auto-changelog.sh >> "$GITHUB_OUTPUT"
+          echo "" >> "$GITHUB_OUTPUT"
+          echo "" >> "$GITHUB_OUTPUT"
+          echo "$EOF" >> "$GITHUB_OUTPUT"
 
       # Create/update the draft release
       - if: steps.check.outputs.changed == 'true'
@@ -82,8 +80,6 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
       - if: ${{ steps.release-drafter.outputs.id }}
         run: |
-          {
-            echo "# v${{ steps.check.outputs.version }} @ ${{ env.ref }}"
-            echo ""
-            echo "${{ steps.release-drafter.outputs.html_url }}"
-          } >> "$GITHUB_STEP_SUMMARY"
+          echo "# v${{ steps.check.outputs.version }} @ ${{ env.ref }}" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "${{ steps.release-drafter.outputs.html_url }}" >> "$GITHUB_STEP_SUMMARY"
