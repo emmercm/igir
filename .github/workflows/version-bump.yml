@@ -41,15 +41,15 @@ jobs:
           git add --all
 
           USER_EMAIL="${GITHUB_ACTOR_ID}+${GITHUB_ACTOR}@users.noreply.github.com"
-          echo "USER_EMAIL=${USER_EMAIL}" >> "$GITHUB_OUTPUT"
+          echo "USER_EMAIL=${USER_EMAIL}" >> "${GITHUB_OUTPUT}"
           git config --global user.email "${USER_EMAIL}"
 
-          USER_NAME="$(gh api /users/${GITHUB_ACTOR} | jq .name -r)"
-          echo "USER_NAME=${USER_NAME}" >> "$GITHUB_OUTPUT"
+          USER_NAME="$(gh api "/users/${GITHUB_ACTOR}" | jq .name -r)"
+          echo "USER_NAME=${USER_NAME}" >> "${GITHUB_OUTPUT}"
           git config --global user.name "${USER_NAME}"
 
           PACKAGE_VERSION="$(jq --raw-output '.version' package.json)"
-          echo "PACKAGE_VERSION=${PACKAGE_VERSION}" >> "$GITHUB_OUTPUT"
+          echo "PACKAGE_VERSION=${PACKAGE_VERSION}" >> "${GITHUB_OUTPUT}"
           git commit -m "v${PACKAGE_VERSION}"
         env:
           GH_TOKEN: ${{ github.token }}
@@ -69,9 +69,11 @@ jobs:
           reviewers: ${{ (!inputs.auto-merge && github.repository_owner != github.actor) && github.repository_owner || '' }}
       - if: ${{ steps.create-pull-request.outputs.pull-request-number }}
         run: |
-          echo "# v${{ steps.bump-and-commit.outputs.PACKAGE_VERSION }}" >> "$GITHUB_STEP_SUMMARY"
-          echo "" >> "$GITHUB_STEP_SUMMARY"
-          echo "${{ steps.create-pull-request.outputs.pull-request-url }}" >> "$GITHUB_STEP_SUMMARY"
+          {
+            echo "# v${{ steps.bump-and-commit.outputs.PACKAGE_VERSION }}"
+            echo ""
+            echo "${{ steps.create-pull-request.outputs.pull-request-url }}"
+          } >> "$GITHUB_STEP_SUMMARY"
       - if: ${{ steps.create-pull-request.outputs.pull-request-number && inputs.auto-merge }}
         run: gh pr merge "${{ steps.create-pull-request.outputs.pull-request-number }}" --squash --auto
         env:
