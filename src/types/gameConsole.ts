@@ -65,6 +65,8 @@ export default class GameConsole {
     // Microsoft
     // TODO(dcramer): multiple outputs for Batocera
     new GameConsole(/MSX/i, [], undefined, 'MSX', 'MSX', undefined),
+    new GameConsole(/Xbox/i, [/* '.iso' */], undefined, undefined, undefined, 'xbox'),
+    new GameConsole(/Xbox 360/i, [/* '.iso' */], undefined, undefined, undefined, 'xbox360'),
     // Nichibutsu
     new GameConsole(/My Vision/i, [], undefined, 'MyVision', undefined, undefined),
     // NEC
