@@ -69,9 +69,11 @@ jobs:
           reviewers: ${{ (!inputs.auto-merge && github.repository_owner != github.actor) && github.repository_owner || '' }}
       - if: ${{ steps.create-pull-request.outputs.pull-request-number }}
         run: |
-          echo "# v${{ steps.bump-and-commit.outputs.PACKAGE_VERSION }}" >> "$GITHUB_STEP_SUMMARY"
-          echo "" >> "$GITHUB_STEP_SUMMARY"
-          echo "${{ steps.create-pull-request.outputs.pull-request-url }}" >> "$GITHUB_STEP_SUMMARY"
+          {
+            echo "# v${{ steps.bump-and-commit.outputs.PACKAGE_VERSION }}"
+            echo ""
+            echo "${{ steps.create-pull-request.outputs.pull-request-url }}"
+          } >> "$GITHUB_STEP_SUMMARY"
       - if: ${{ steps.create-pull-request.outputs.pull-request-number && inputs.auto-merge }}
         run: gh pr merge "${{ steps.create-pull-request.outputs.pull-request-number }}" --squash --auto
         env:
