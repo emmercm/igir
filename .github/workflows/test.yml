@@ -14,7 +14,7 @@ on:
       - synchronize  # PR's branch was edited (i.e. new commits)
 
 concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
+  group: ${{ github.workflow }}-${{ github.head_ref || github.ref }}
   cancel-in-progress: true
 
 jobs:
@@ -28,7 +28,6 @@ jobs:
           node-version-file: '.nvmrc'
           cache: 'npm'
       - run: npm ci
-
       # Lint the source files
       - run: ./node_modules/.bin/ts-node ./index.ts --help
       - run: npm run lint
@@ -51,7 +50,6 @@ jobs:
           node-version: ${{ matrix.node-version }}
           cache: 'npm'
       - run: npm ci
-
       # Test the source files
       - run: npm run test:unit
 
@@ -69,10 +67,25 @@ jobs:
           node-version: ${{ matrix.node-version }}
           cache: 'npm'
       - run: npm ci
-
       # Test the built files
       - run: npm run build
       - run: ./test/endToEndTest.sh
+
+  node-build:
+    runs-on: ${{ matrix.os }}-latest
+    strategy:
+      matrix:
+        os: [ ubuntu, macos, windows ]
+    steps:
+      # Setup and install
+      - uses: actions/checkout@v3
+      - uses: actions/setup-node@v3
+        with:
+          node-version-file: '.nvmrc'
+          cache: 'npm'
+      - run: npm ci
+      # Test building
+      - run: npm run build
 
   node-package:
     runs-on: ubuntu-latest
@@ -87,7 +100,6 @@ jobs:
           node-version: ${{ matrix.node-version }}
           cache: 'npm'
       - run: npm ci
-
       # Test the packaging
       - run: |
           npm pack
@@ -122,6 +134,7 @@ jobs:
       - node-lint
       - node-unit
       - node-e2e
+      - node-build
       - node-package
       - renovate-lint
       - shellcheck

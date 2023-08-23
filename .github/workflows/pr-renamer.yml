@@ -32,7 +32,7 @@ jobs:
           fi
 
           if [[ ! "${OLD_TITLE}" =~ ^[a-zA-Z\\(\\)\\!]+: ]]; then
-            echo "ERROR=No conventional commit type found. The allowed list is: ${ALLOWED_TYPES//|/, }" >> "$GITHUB_OUTPUT"
+            echo "ERROR=No conventional commit type found. The allowed list is: ${ALLOWED_TYPES//|/, }" >> "${GITHUB_OUTPUT}"
             exit 1
           fi
 
@@ -59,12 +59,12 @@ jobs:
 
           # Restrict types
           if [[ ! "${NEW_TITLE}" =~ ^${ALLOWED_TYPES}: ]]; then
-            echo "ERROR=The conventional commit type isn't in the allowed list: ${ALLOWED_TYPES//|/, }" >> "$GITHUB_OUTPUT"
+            echo "ERROR=The conventional commit type isn't in the allowed list: ${ALLOWED_TYPES//|/, }" >> "${GITHUB_OUTPUT}"
             exit 1
           fi
 
-          echo "OLD_TITLE=${OLD_TITLE}" >> "$GITHUB_OUTPUT"
-          echo "NEW_TITLE=${NEW_TITLE}" >> "$GITHUB_OUTPUT"
+          echo "OLD_TITLE=${OLD_TITLE}" >> "${GITHUB_OUTPUT}"
+          echo "NEW_TITLE=${NEW_TITLE}" >> "${GITHUB_OUTPUT}"
       # Required for `gh` CLI
       - uses: actions/checkout@v3
       - id: gh-pr-edit
