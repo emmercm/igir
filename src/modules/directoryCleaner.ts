@@ -91,7 +91,7 @@ export default class DirectoryCleaner extends Module {
         dirsToClean.map(async (dirToClean) => DirectoryCleaner.getEmptyDirs(dirToClean)),
       ))
         .flatMap((emptyDirs) => emptyDirs)
-        .filter(ArrayPoly.filterUnique);
+        .reduce(ArrayPoly.reduceUnique(), []);
     }
 
     // Find all subdirectories and files in the directory

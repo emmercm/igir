@@ -51,7 +51,7 @@ export default class ReportGenerator extends Module {
       .flatMap((releaseCandidate) => releaseCandidate.getRomsWithFiles())
       .map((romWithFiles) => romWithFiles.getInputFile().getFilePath()));
     const unmatchedFiles = scannedRomFiles
-      .filter(ArrayPoly.filterUnique)
+      .reduce(ArrayPoly.reduceUnique(), [])
       .filter((inputFile) => !matchedFiles.has(inputFile))
       .sort();
     const unmatchedCsv = await DATStatus.filesToCsv(unmatchedFiles, Status.UNMATCHED);

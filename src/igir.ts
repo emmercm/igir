@@ -47,7 +47,7 @@ export default class Igir {
     const indexedRoms = await this.processROMScanner();
     const roms = [...indexedRoms.values()]
       .flatMap((files) => files)
-      .filter(ArrayPoly.filterUnique);
+      .reduce(ArrayPoly.reduceUnique(), []);
     const patches = await this.processPatchScanner();
 
     // Set up progress bar and input for DAT processing
@@ -246,7 +246,7 @@ export default class Igir {
             romWithFiles.getRom(),
             romWithFiles.getInputFile(),
           ).dir)))
-      .filter(ArrayPoly.filterUnique);
+      .reduce(ArrayPoly.reduceUnique(), []);
   }
 
   private async deleteMovedRoms(
@@ -274,7 +274,7 @@ export default class Igir {
     }
 
     const progressBar = await this.logger.addProgressBar('Cleaning output directory');
-    const uniqueDirsToClean = dirsToClean.filter(ArrayPoly.filterUnique);
+    const uniqueDirsToClean = dirsToClean.reduce(ArrayPoly.reduceUnique(), []);
     const writtenFilesToExclude = [...datsToWrittenRoms.values()]
       .flatMap((parentsToFiles) => [...parentsToFiles.values()])
       .flatMap((files) => files);

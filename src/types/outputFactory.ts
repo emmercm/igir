@@ -295,7 +295,7 @@ export default class OutputFactory {
           // what the "sub-path" should be within the letter directory: the dirname if the ROM has a
           // subdir, or just the ROM's basename otherwise.
           const subPathsToFilenames = filenames
-            .filter(ArrayPoly.filterUnique)
+            .reduce(ArrayPoly.reduceUnique(), [])
             .reduce((subPathMap, filename) => {
               const subPath = filename.replace(/[\\/].+$/, '');
               subPathMap.set(subPath, [...subPathMap.get(subPath) ?? [], filename]);

@@ -72,7 +72,7 @@ export default class PatchFactory {
   static getSupportedExtensions(): string[] {
     return Object.values(PatchFactory.PATCH_PARSERS)
       .flatMap((parser) => parser.extensions)
-      .filter(ArrayPoly.filterUnique)
+      .reduce(ArrayPoly.reduceUnique(), [])
       .sort();
   }
 

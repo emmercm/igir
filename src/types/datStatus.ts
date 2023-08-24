@@ -160,7 +160,7 @@ export default class DATStatus {
     );
 
     const rows = DATStatus.getValuesForAllowedTypes(options, this.allRomTypesToGames)
-      .filter(ArrayPoly.filterUnique)
+      .reduce(ArrayPoly.reduceUnique(), [])
       .sort((a, b) => a.getName().localeCompare(b.getName()))
       .map((game) => {
         const releaseCandidate = found.find((rc) => rc && rc.getGame().equals(game));
@@ -174,7 +174,7 @@ export default class DATStatus {
                 ? romWithFiles.getOutputFile()
                 : romWithFiles.getInputFile()))
               .map((file) => file.getFilePath())
-              .filter(ArrayPoly.filterUnique)
+              .reduce(ArrayPoly.reduceUnique(), [])
             : [],
           releaseCandidate?.isPatched() ?? false,
           game.isBios(),
@@ -266,7 +266,7 @@ export default class DATStatus {
       .map((type) => romTypesToValues.get(type))
       .flatMap((values) => values)
       .filter(ArrayPoly.filterNotNullish)
-      .filter(ArrayPoly.filterUnique)
+      .reduce(ArrayPoly.reduceUnique(), [])
       .sort();
   }
 

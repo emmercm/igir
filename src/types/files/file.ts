@@ -406,7 +406,7 @@ export default class File {
     return [
       this.hashCodeWithHeader(),
       this.hashCodeWithoutHeader(),
-    ].filter(ArrayPoly.filterUnique);
+    ].reduce(ArrayPoly.reduceUnique(), []);
   }
 
   equals(other: File): boolean {
