@@ -1,7 +1,7 @@
 import async from 'async';
 
 import Logger from './console/logger.js';
-import { ProgressBarSymbol } from './console/progressBar.js';
+import ProgressBar, { ProgressBarSymbol } from './console/progressBar.js';
 import ProgressBarCLI from './console/progressBarCLI.js';
 import CandidateCombiner from './modules/candidateCombiner.js';
 import CandidateGenerator from './modules/candidateGenerator.js';
@@ -44,26 +44,16 @@ export default class Igir {
   async main(): Promise<void> {
     // Scan and process input files
     let dats = await this.processDATScanner();
-
-    const romScannerProgressBarName = 'Scanning for ROMs';
-    const romProgressBar = await this.logger.addProgressBar(romScannerProgressBarName);
-    const rawRomFiles = await new ROMScanner(this.options, romProgressBar).scan();
-    await romProgressBar.setName('Detecting ROM headers');
-    const romFilesWithHeaders = await new ROMHeaderProcessor(this.options, romProgressBar)
-      .process(rawRomFiles);
-    await romProgressBar.setName('Indexing ROMs');
-    const indexedRomFiles = await new FileIndexer(this.options, romProgressBar)
-      .index(romFilesWithHeaders);
-    await romProgressBar.setName(romScannerProgressBarName); // reset
-    await romProgressBar.doneItems(rawRomFiles.length, 'file', 'found');
-    await romProgressBar.freeze();
-
+    const indexedRoms = await this.processROMScanner();
+    const roms = [...indexedRoms.values()]
+      .flatMap((files) => files)
+      .filter(ArrayPoly.filterUnique);
     const patches = await this.processPatchScanner();
 
     // Set up progress bar and input for DAT processing
     const datProcessProgressBar = await this.logger.addProgressBar('Processing DATs', ProgressBarSymbol.PROCESSING, dats.length);
     if (!dats.length) {
-      dats = new DATInferrer(datProcessProgressBar).infer(romFilesWithHeaders);
+      dats = new DATInferrer(datProcessProgressBar).infer(roms);
     }
 
     if (this.options.getSingle() && !dats.some((dat) => dat.hasParentCloneInfo())) {
@@ -89,29 +79,19 @@ export default class Igir {
       const filteredDat = await new DATFilter(this.options, progressBar).filter(dat);
 
       // Generate and filter ROM candidates
-      const parentsToCandidates = await new CandidateGenerator(this.options, progressBar)
-        .generate(filteredDat, indexedRomFiles);
-      const parentsToPatchedCandidates = await new CandidatePatchGenerator(
-        this.options,
+      const parentsToCandidates = await this.generateCandidates(
         progressBar,
-      ).generate(filteredDat, parentsToCandidates, patches);
-      romOutputDirs.push(...this.getCandidateOutputDirs(filteredDat, parentsToPatchedCandidates));
-      const parentsToFilteredCandidates = await new CandidatePreferer(this.options, progressBar)
-        .prefer(filteredDat, parentsToPatchedCandidates);
-      const parentsToPostProcessedCandidates = await new CandidatePostProcessor(
-        this.options,
-        progressBar,
-      ).process(filteredDat, parentsToFilteredCandidates);
-      const parentsToCombinedCandidates = await new CandidateCombiner(
-        this.options,
-        progressBar,
-      ).combine(filteredDat, parentsToPostProcessedCandidates);
+        filteredDat,
+        indexedRoms,
+        patches,
+      );
+      romOutputDirs.push(...this.getCandidateOutputDirs(filteredDat, parentsToCandidates));
 
       // Write the output files
       const movedRoms = await new CandidateWriter(this.options, progressBar)
-        .write(filteredDat, parentsToCombinedCandidates);
+        .write(filteredDat, parentsToCandidates);
       movedRomsToDelete.push(...movedRoms);
-      const writtenRoms = [...parentsToCombinedCandidates.entries()]
+      const writtenRoms = [...parentsToCandidates.entries()]
         .reduce((map, [parent, releaseCandidates]) => {
           // For each Parent, find what rom Files were written
           const parentWrittenRoms = releaseCandidates
@@ -124,15 +104,15 @@ export default class Igir {
 
       // Write a fixdat
       await new FixdatCreator(this.options, progressBar)
-        .write(filteredDat, parentsToCombinedCandidates);
+        .write(filteredDat, parentsToCandidates);
 
       // Write the output report
       const datStatus = await new StatusGenerator(this.options, progressBar)
-        .generate(filteredDat, parentsToCombinedCandidates);
+        .generate(filteredDat, parentsToCandidates);
       datsStatuses.push(datStatus);
 
       // Progress bar cleanup
-      const totalReleaseCandidates = [...parentsToCombinedCandidates.values()]
+      const totalReleaseCandidates = [...parentsToCandidates.values()]
         .reduce((sum, rcs) => sum + rcs.length, 0);
       if (totalReleaseCandidates > 0) {
         await progressBar.freeze();
@@ -149,13 +129,13 @@ export default class Igir {
     datProcessProgressBar.delete();
 
     // Delete moved ROMs
-    await this.deleteMovedRoms(rawRomFiles, movedRomsToDelete, datsToWrittenRoms);
+    await this.deleteMovedRoms(roms, movedRomsToDelete, datsToWrittenRoms);
 
     // Clean the output directories
     const cleanedOutputFiles = await this.processOutputCleaner(romOutputDirs, datsToWrittenRoms);
 
     // Generate the report
-    await this.processReportGenerator(rawRomFiles, cleanedOutputFiles, datsStatuses);
+    await this.processReportGenerator(roms, cleanedOutputFiles, datsStatuses);
 
     await ProgressBarCLI.stop();
   }
@@ -188,6 +168,27 @@ export default class Igir {
     return dats;
   }
 
+  private async processROMScanner(): Promise<Map<string, File[]>> {
+    const romScannerProgressBarName = 'Scanning for ROMs';
+    const romProgressBar = await this.logger.addProgressBar(romScannerProgressBarName);
+
+    const rawRomFiles = await new ROMScanner(this.options, romProgressBar).scan();
+
+    await romProgressBar.setName('Detecting ROM headers');
+    const romFilesWithHeaders = await new ROMHeaderProcessor(this.options, romProgressBar)
+      .process(rawRomFiles);
+
+    await romProgressBar.setName('Indexing ROMs');
+    const indexedRomFiles = await new FileIndexer(this.options, romProgressBar)
+      .index(romFilesWithHeaders);
+
+    await romProgressBar.setName(romScannerProgressBarName); // reset
+    await romProgressBar.doneItems(rawRomFiles.length, 'file', 'found');
+    await romProgressBar.freeze();
+
+    return indexedRomFiles;
+  }
+
   private async processPatchScanner(): Promise<Patch[]> {
     if (!this.options.getPatchFileCount()) {
       return [];
@@ -198,6 +199,28 @@ export default class Igir {
     await progressBar.doneItems(patches.length, 'unique patch', 'found');
     await progressBar.freeze();
     return patches;
+  }
+
+  private async generateCandidates(
+    progressBar: ProgressBar,
+    dat: DAT,
+    indexedRoms: Map<string, File[]>,
+    patches: Patch[],
+  ): Promise<Map<Parent, ReleaseCandidate[]>> {
+    const candidates = await new CandidateGenerator(this.options, progressBar)
+      .generate(dat, indexedRoms);
+
+    const patchedCandidates = await new CandidatePatchGenerator(this.options, progressBar)
+      .generate(dat, candidates, patches);
+
+    const filteredCandidates = await new CandidatePreferer(this.options, progressBar)
+      .prefer(dat, patchedCandidates);
+
+    const postProcessedCandidates = await new CandidatePostProcessor(this.options, progressBar)
+      .process(dat, filteredCandidates);
+
+    return new CandidateCombiner(this.options, progressBar)
+      .combine(dat, postProcessedCandidates);
   }
 
   /**
