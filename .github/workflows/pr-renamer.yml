@@ -24,6 +24,10 @@ jobs:
           # https://docs.github.com/en/actions/security-guides/security-hardening-for-github-actions#using-an-intermediate-environment-variable
           OLD_TITLE: ${{ github.event.pull_request.title }}
         run: |
+          echo "OLD_TITLE=${OLD_TITLE}" >> "${GITHUB_OUTPUT}"
+          # Default to account for early successful termination
+          echo "NEW_TITLE=${OLD_TITLE}" >> "${GITHUB_OUTPUT}"
+
           ALLOWED_TYPES="Chore|CI|Docs|Feature|Fix|Refactor"
 
           # Ignore version numbers
@@ -63,7 +67,6 @@ jobs:
             exit 1
           fi
 
-          echo "OLD_TITLE=${OLD_TITLE}" >> "${GITHUB_OUTPUT}"
           echo "NEW_TITLE=${NEW_TITLE}" >> "${GITHUB_OUTPUT}"
       # Required for `gh` CLI
       - uses: actions/checkout@v3
