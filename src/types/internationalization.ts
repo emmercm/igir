@@ -116,12 +116,12 @@ export default class Internationalization {
   public static readonly REGIONS = this.REGION_OPTIONS
     .map((regionOption) => regionOption.region.toUpperCase())
     .filter((region) => region)
-    .filter(ArrayPoly.filterUnique)
+    .reduce(ArrayPoly.reduceUnique(), [])
     .sort();
 
   public static readonly LANGUAGES = this.REGION_OPTIONS
     .map((regionOption) => regionOption.language.toUpperCase())
     .filter((language) => language)
-    .filter(ArrayPoly.filterUnique)
+    .reduce(ArrayPoly.reduceUnique(), [])
     .sort();
 }

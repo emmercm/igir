@@ -466,7 +466,7 @@ export default class Options implements OptionsProps {
     // Limit to scanning one glob pattern at a time to keep memory in check
     const uniqueGlobPatterns = globPatterns
       .filter((pattern) => pattern)
-      .filter(ArrayPoly.filterUnique);
+      .reduce(ArrayPoly.reduceUnique(), []);
     const globbedPaths = [];
     /* eslint-disable no-await-in-loop */
     for (let i = 0; i < uniqueGlobPatterns.length; i += 1) {
@@ -501,7 +501,7 @@ export default class Options implements OptionsProps {
 
     // Remove duplicates
     return globbedFiles
-      .filter(ArrayPoly.filterUnique);
+      .reduce(ArrayPoly.reduceUnique(), []);
   }
 
   private static async globPath(
@@ -875,7 +875,7 @@ export default class Options implements OptionsProps {
     const symbolMatches = reportOutput.match(/%([a-zA-Z])(\1|o)*/g);
     if (symbolMatches) {
       symbolMatches
-        .filter(ArrayPoly.filterUnique)
+        .reduce(ArrayPoly.reduceUnique(), [])
         .forEach((match) => {
           const val = moment().format(match.replace(/^%/, ''));
           reportOutput = reportOutput.replace(match, val);
@@ -911,6 +911,6 @@ export default class Options implements OptionsProps {
   static filterUniqueUpper(array: string[]): string[] {
     return array
       .map((value) => value.toUpperCase())
-      .filter(ArrayPoly.filterUnique);
+      .reduce(ArrayPoly.reduceUnique(), []);
   }
 }

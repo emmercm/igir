@@ -80,7 +80,7 @@ async function runIgir(optionsProps: OptionsProps): Promise<TestOutput> {
     const inputFilesBefore = (await Promise.all(options.getInputPaths()
       .map(async (inputPath) => fsPoly.walk(inputPath))))
       .flatMap((inputFiles) => inputFiles)
-      .filter(ArrayPoly.filterUnique);
+      .reduce(ArrayPoly.reduceUnique(), []);
     const outputFilesBefore = await fsPoly.walk(options.getOutputDirRoot());
 
     await new Igir(options, new Logger(LogLevel.NEVER)).main();
@@ -97,7 +97,7 @@ async function runIgir(optionsProps: OptionsProps): Promise<TestOutput> {
     const inputFilesAfter = (await Promise.all(options.getInputPaths()
       .map(async (inputPath) => fsPoly.walk(inputPath))))
       .flatMap((inputFiles) => inputFiles)
-      .filter(ArrayPoly.filterUnique);
+      .reduce(ArrayPoly.reduceUnique(), []);
     const movedFiles = inputFilesBefore
       .filter((filePath) => inputFilesAfter.indexOf(filePath) === -1)
       .map((filePath) => {

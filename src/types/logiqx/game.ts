@@ -457,7 +457,7 @@ export default class Game implements GameProps {
         .split(/[,+]/)
         .map((lang) => lang.toUpperCase())
         .filter((lang) => Internationalization.LANGUAGES.indexOf(lang) !== -1) // is known
-        .filter(ArrayPoly.filterUnique);
+        .reduce(ArrayPoly.reduceUnique(), []);
       if (twoMatchesParsed.length) {
         return twoMatchesParsed;
       }
@@ -474,7 +474,7 @@ export default class Game implements GameProps {
         .map((lang) => Internationalization.LANGUAGE_OPTIONS
           .filter((langOpt) => langOpt.long?.toUpperCase() === lang.toUpperCase())[0]?.short)
         .filter((lang) => Internationalization.LANGUAGES.indexOf(lang) !== -1) // is known
-        .filter(ArrayPoly.filterUnique);
+        .reduce(ArrayPoly.reduceUnique(), []);
       if (threeMatchesParsed.length) {
         return threeMatchesParsed;
       }

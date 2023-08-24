@@ -18,13 +18,18 @@ export default class ArrayPoly {
   }
 
   /**
-   * Filter elements in an array to only unique ones. Usage:
+   * Reduce elements in an array to only unique values. Usage:
    *
    * <code>
-   * [1, 2, 3, 1, 1, 3].filter(ArrayPoly.filterUnique);
+   * [1, 2, 3, 1, 1, 3].reduce(ArrayPoly.reduceUnique(), []);
    * </code>
    */
-  public static filterUnique<T>(value: T, index: number, array: T[]): boolean {
-    return array.indexOf(value) === index;
+  public static reduceUnique<T>(): (previous: T[], current: T, idx: number, array: T[]) => T[] {
+    return (previous: T[], current: T, idx: number, array: T[]): T[] => {
+      if (idx === 0) {
+        return [...new Set(array)];
+      }
+      return previous;
+    };
   }
 }
