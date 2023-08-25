@@ -136,7 +136,7 @@ describe('token replacement', () => {
       dummyGame,
       dummyRelease,
       rom,
-      await (await rom.toFile()).withFilePath(filePath),
+      (await rom.toFile()).withFilePath(filePath),
     );
     expect(outputPath.format()).toEqual(expectedPath);
   });
@@ -156,7 +156,7 @@ describe('token replacement', () => {
       dummyGame,
       dummyRelease,
       rom,
-      await (await rom.toFile()).withFilePath(filePath),
+      (await rom.toFile()).withFilePath(filePath),
     );
     expect(outputPath.format()).toEqual(expectedPath);
   });
@@ -334,7 +334,7 @@ describe('should respect "--dir-mirror"', () => {
       dummyGame,
       dummyRelease,
       rom,
-      await (await rom.toFile()).withFilePath(filePath),
+      (await rom.toFile()).withFilePath(filePath),
     );
     expect(outputPath.format()).toEqual(expectedPath);
   });
@@ -351,7 +351,7 @@ describe('should respect "--dir-mirror"', () => {
       dummyGame,
       dummyRelease,
       rom,
-      await (await rom.toFile()).withFilePath(filePath),
+      (await rom.toFile()).withFilePath(filePath),
     );
     expect(outputPath.format()).toEqual(expectedPath);
   });
