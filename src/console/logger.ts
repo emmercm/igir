@@ -72,7 +72,7 @@ export default class Logger {
       [LogLevel.INFO]: chalk.cyan,
       [LogLevel.WARN]: chalk.yellow,
       [LogLevel.ERROR]: chalk.red,
-      [LogLevel.NOTICE]: chalk.bold,
+      [LogLevel.NOTICE]: chalk.underline,
       [LogLevel.ALWAYS]: (msg) => msg,
       [LogLevel.NEVER]: (msg) => msg,
     } satisfies { [key in LogLevel]: (message: string) => string };
