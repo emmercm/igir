@@ -54,6 +54,7 @@ jobs:
                 "node:$(cat .nvmrc)" sh -c \
                 "./node_modules/.bin/caxa --input build/ --output igir -- \"{{caxa}}/node_modules/.bin/node\" \"{{caxa}}/index.js\" && ./igir --help"
               tar cvf - igir | gzip --best > "${BIN_OUTPUT}"
+          # TODO(cemmer): macOS arm64: https://github.com/github/roadmap/issues/528
           - os: macos
             build: |
               NPM_PKG_VERSION=$(npm pkg get version | sed 's/"//g')
