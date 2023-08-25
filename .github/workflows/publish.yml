@@ -11,6 +11,9 @@ on:
 jobs:
   node-publish:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
     steps:
       - uses: actions/checkout@v3
       - uses: actions/setup-node@v3
@@ -23,6 +26,6 @@ jobs:
         run: |
           echo 'registry="https://registry.npmjs.org/"' > ./.npmrc
           echo "//registry.npmjs.org/:_authToken=${NODE_AUTH_TOKEN}" >> ./.npmrc
-          npm publish --regsitry=https://registry.npmjs.org/ --userconfig=./.npmrc
+          npm publish --regsitry=https://registry.npmjs.org/ --userconfig=./.npmrc --provenance --access public
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
