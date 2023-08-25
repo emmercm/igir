@@ -125,10 +125,8 @@ export default class ProgressBarCLI extends ProgressBar {
               // https://github.com/npkgz/cli-progress/issues/142
               const wrapped = wrapAnsi(msg, consoleWidth).split('\n');
 
-              // Pad the last wrapped line with spaces, so that it overwrites previous output
-              if (wrapped.length > 1) {
-                wrapped[wrapped.length - 1] = wrapped[wrapped.length - 1].padEnd(consoleWidth, ' ');
-              }
+              // Pad the last line with spaces, so that it overwrites previous output
+              wrapped[wrapped.length - 1] = wrapped[wrapped.length - 1].padEnd(consoleWidth, ' ');
 
               return wrapped.join('\n');
             })
