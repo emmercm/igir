@@ -104,6 +104,21 @@
         groupName: 'dev dependencies',
       },
       {
+        // Group ESLint together so files can be fixed automatically
+        matchPackagePatterns: [
+          '^@typescript-eslint',
+          '^eslint',
+        ],
+        groupName: 'ESLint',
+        postUpgradeTasks: {
+          commands: [
+            'npm ci --ignore-scripts',
+            'npm run lint:fix',
+          ],
+          fileFilters: ['**/*.ts']
+        },
+      },
+      {
         // Group Jest together because of peerDependencies
         matchPackageNames: [
           '@jest/globals',
