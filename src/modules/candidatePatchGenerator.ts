@@ -130,7 +130,7 @@ export default class CandidatePatchGenerator extends Module {
           // Apply the patch to the appropriate file
           if (patch.getCrcBefore() === romWithFiles.getRom().getCrc32()) {
             // Attach the patch to the input file
-            inputFile = await inputFile.withPatch(patch);
+            inputFile = inputFile.withPatch(patch);
 
             // Build a new output file
             const extMatch = romWithFiles.getRom().getName().match(/[^.]+((\.[a-zA-Z0-9]+)+)$/);

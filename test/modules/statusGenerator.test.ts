@@ -169,7 +169,7 @@ describe('toConsole', () => {
         new Parent(game.getName(), game),
         [new ReleaseCandidate(game, undefined, [new ROMWithFiles(
           rom,
-          await (await rom.toFile()).withPatch(IPSPatch.patchFrom(await File.fileOf('patch 00000000.ips'))),
+          (await rom.toFile()).withPatch(IPSPatch.patchFrom(await File.fileOf('patch 00000000.ips'))),
           await rom.toFile(),
         )])],
       ],
@@ -312,7 +312,7 @@ dat,no roms,FOUND,,false,false,true,false,false,false,false,false,false,false,fa
         new Parent(game.getName(), game),
         [new ReleaseCandidate(game, undefined, [new ROMWithFiles(
           rom,
-          await (await rom.toFile()).withPatch(IPSPatch.patchFrom(await File.fileOf('patch 00000000.ips'))),
+          (await rom.toFile()).withPatch(IPSPatch.patchFrom(await File.fileOf('patch 00000000.ips'))),
           await rom.toFile(),
         )])],
       ],
