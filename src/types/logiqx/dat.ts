@@ -174,7 +174,7 @@ export default class DAT {
   }
 
   isBiosDat(): boolean {
-    return this.getGames().every((game) => game.isBios())
+    return (this.getGames().length > 0 && this.getGames().every((game) => game.isBios()))
       // Redump-style DAT names
       || this.getName().match(/(\W|^)BIOS(\W|$)/i) !== null
       // libretro-style DAT comments
