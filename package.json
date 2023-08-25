@@ -73,6 +73,7 @@
     "fast-glob": "3.2.12",
     "figlet": "1.6.0",
     "graceful-fs": "4.2.11",
+    "is-admin": "4.0.0",
     "junk": "4.0.1",
     "micromatch": "4.0.5",
     "moment": "2.29.4",

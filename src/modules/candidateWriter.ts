@@ -338,6 +338,7 @@ export default class CandidateWriter extends Module {
       const writtenTest = await this.testWrittenRaw(dat, outputFilePath, outputRomFile);
       if (writtenTest) {
         this.progressBar.logError(`${dat.getNameShort()}: ${releaseCandidate.getName()}: written file ${writtenTest}: ${outputFilePath}`);
+        return;
       }
     }
     this.enqueueFileDeletion(inputRomFile);
@@ -455,6 +456,7 @@ export default class CandidateWriter extends Module {
       await fsPoly.symlink(sourcePath, targetPath);
     } catch (e) {
       this.progressBar.logError(`${dat.getNameShort()}: ${inputRomFile.toString()}: failed to symlink ${sourcePath} to ${targetPath}: ${e}`);
+      return;
     }
 
     if (this.options.shouldTest()) {
