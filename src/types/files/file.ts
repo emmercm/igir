@@ -353,11 +353,13 @@ export default class File implements FileProps {
       return this;
     }
 
-    return new File({
-      ...this,
+    return File.fileOf(
+      this.getFilePath(),
+      this.getSize(),
+      this.getCrc32(),
       fileHeader,
-      patch: undefined, // don't allow a patch
-    });
+      undefined, // don't allow a patch
+    );
   }
 
   withPatch(patch: Patch): File {
