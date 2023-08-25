@@ -229,7 +229,7 @@ export default class OutputFactory {
       return input;
     }
 
-    const gameConsole = GameConsole.getForConsoleName(dat?.getName() ?? '')
+    const gameConsole = GameConsole.getForDatName(dat?.getName() ?? '')
         ?? GameConsole.getForFilename(outputRomFilename);
     if (!gameConsole) {
       return input;
