@@ -4,39 +4,24 @@ import { Readable } from 'stream';
 import Constants from '../../../constants.js';
 import fsPoly from '../../../polyfill/fsPoly.js';
 import Patch from '../../patches/patch.js';
-import File from '../file.js';
+import File, { FileProps } from '../file.js';
 import ROMHeader from '../romHeader.js';
 import Archive from './archive.js';
 
-export default class ArchiveEntry<A extends Archive> extends File {
-  private readonly archive: A;
+interface ArchiveEntryProps<A> extends FileProps {
+  readonly archive: A;
+  readonly entryPath: string;
+}
 
-  private readonly entryPath: string;
+export default class ArchiveEntry<A extends Archive> extends File implements ArchiveEntryProps<A> {
+  readonly archive: A;
 
-  protected constructor(
-    /** {@link File} */
-    filePath: string,
-    size: number,
-    crc: string,
-    crc32WithoutHeader: string,
-    symlinkSource: string | undefined,
-    fileHeader: ROMHeader | undefined,
-    patch: Patch | undefined,
-    /** {@link ArchiveEntry} */
-    archive: A,
-    entryPath: string,
-  ) {
-    super(
-      filePath,
-      size,
-      crc,
-      crc32WithoutHeader,
-      symlinkSource,
-      fileHeader,
-      patch,
-    );
-    this.archive = archive;
-    this.entryPath = path.normalize(entryPath);
+  readonly entryPath: string;
+
+  protected constructor(archiveEntryProps: ArchiveEntryProps<A>) {
+    super(archiveEntryProps);
+    this.archive = archiveEntryProps.archive;
+    this.entryPath = path.normalize(archiveEntryProps.entryPath);
   }
 
   static async entryOf<A extends Archive>(
@@ -63,17 +48,17 @@ export default class ArchiveEntry<A extends Archive> extends File {
     }
     finalCrcWithoutHeader = finalCrcWithoutHeader ?? crc;
 
-    return new ArchiveEntry<A>(
-      archive.getFilePath(),
+    return new ArchiveEntry<A>({
+      filePath: archive.getFilePath(),
       size,
-      crc,
-      finalCrcWithoutHeader,
-      finalSymlinkSource,
+      crc32: crc,
+      crc32WithoutHeader: finalCrcWithoutHeader,
+      symlinkSource: finalSymlinkSource,
       fileHeader,
       patch,
       archive,
       entryPath,
-    );
+    });
   }
 
   getArchive(): A {
@@ -135,15 +120,11 @@ export default class ArchiveEntry<A extends Archive> extends File {
     return this.archive.extractEntryToStream(this.getEntryPath(), callback);
   }
 
-  async withFilePath(filePath: string): Promise<ArchiveEntry<Archive>> {
-    return ArchiveEntry.entryOf(
-      this.getArchive().withFilePath(filePath),
-      this.getEntryPath(),
-      this.getSize(),
-      this.getCrc32(),
-      this.getFileHeader(),
-      this.getPatch(),
-    );
+  withFilePath(filePath: string): ArchiveEntry<Archive> {
+    return new ArchiveEntry({
+      ...this,
+      archive: this.getArchive().withFilePath(filePath),
+    });
   }
 
   async withEntryPath(entryPath: string): Promise<ArchiveEntry<A>> {
@@ -176,19 +157,16 @@ export default class ArchiveEntry<A extends Archive> extends File {
     );
   }
 
-  async withPatch(patch: Patch): Promise<ArchiveEntry<A>> {
+  withPatch(patch: Patch): ArchiveEntry<A> {
     if (patch.getCrcBefore() !== this.getCrc32()) {
       return this;
     }
 
-    return ArchiveEntry.entryOf(
-      this.getArchive(),
-      this.getEntryPath(),
-      this.getSize(),
-      this.getCrc32(),
-      undefined, // don't allow a file header
+    return new ArchiveEntry({
+      ...this,
+      fileHeader: undefined, // don't allow a file header
       patch,
-    );
+    });
   }
 
   toString(): string {
