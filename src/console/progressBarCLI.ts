@@ -119,11 +119,19 @@ export default class ProgressBarCLI extends ProgressBar {
       await ProgressBarCLI.RENDER_MUTEX.runExclusive(() => {
         // Dequeue all log messages
         if (ProgressBarCLI.multiBar && ProgressBarCLI.logQueue.length) {
+          const consoleWidth = ConsolePoly.consoleWidth();
           const logMessage = ProgressBarCLI.logQueue
-            // https://github.com/npkgz/cli-progress/issues/142
-            .map((msg) => wrapAnsi(msg, ConsolePoly.consoleWidth()))
-            // If there are leading or trailing newlines, then blank the entire row to overwrite
-            .map((msg) => msg.replace(/^\n|\n$/g, () => `\n${' '.repeat(ConsolePoly.consoleWidth())}`))
+            .map((msg) => {
+              // https://github.com/npkgz/cli-progress/issues/142
+              const wrapped = wrapAnsi(msg, consoleWidth).split('\n');
+
+              // Pad the last wrapped line with spaces, so that it overwrites previous output
+              if (wrapped.length > 1) {
+                wrapped[wrapped.length - 1] = wrapped[wrapped.length - 1].padEnd(consoleWidth, ' ');
+              }
+
+              return wrapped.join('\n');
+            })
             .join('\n');
           ProgressBarCLI.multiBar.log(`${logMessage}\n`);
           ProgressBarCLI.logQueue = [];
