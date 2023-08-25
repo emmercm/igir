@@ -16,6 +16,21 @@ export default class FsPoly {
     .map((info) => info.mounted)
     .sort((a, b) => b.split(/[\\/]/).length - a.split(/[\\/]/).length);
 
+  static async canSymlink(tempDir: string): Promise<boolean> {
+    const source = await this.mktemp(path.join(tempDir, 'source'));
+    await this.touch(source);
+    const target = await this.mktemp(path.join(tempDir, 'target'));
+    try {
+      await this.symlink(source, target);
+      return await this.exists(target);
+    } catch (e) {
+      return false;
+    } finally {
+      await this.rm(source, { force: true });
+      await this.rm(target, { force: true });
+    }
+  }
+
   static async copyDir(src: string, dest: string): Promise<void> {
     await this.mkdir(dest, { recursive: true });
     const entries = await util.promisify(fs.readdir)(src, { withFileTypes: true });

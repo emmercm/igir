@@ -1,8 +1,10 @@
 import async from 'async';
+import isAdmin from 'is-admin';
 
 import Logger from './console/logger.js';
 import ProgressBar, { ProgressBarSymbol } from './console/progressBar.js';
 import ProgressBarCLI from './console/progressBarCLI.js';
+import Constants from './constants.js';
 import CandidateCombiner from './modules/candidateCombiner.js';
 import CandidateGenerator from './modules/candidateGenerator.js';
 import CandidatePatchGenerator from './modules/candidatePatchGenerator.js';
@@ -22,6 +24,7 @@ import ROMHeaderProcessor from './modules/romHeaderProcessor.js';
 import ROMScanner from './modules/romScanner.js';
 import StatusGenerator from './modules/statusGenerator.js';
 import ArrayPoly from './polyfill/arrayPoly.js';
+import FsPoly from './polyfill/fsPoly.js';
 import DATStatus from './types/datStatus.js';
 import File from './types/files/file.js';
 import DAT from './types/logiqx/dat.js';
@@ -42,6 +45,15 @@ export default class Igir {
   }
 
   async main(): Promise<void> {
+    // Windows 10 may require admin privileges to symlink at all
+    // @see https://github.com/nodejs/node/issues/18518
+    if (this.options.shouldSymlink() && process.platform === 'win32' && !await FsPoly.canSymlink(Constants.GLOBAL_TEMP_DIR)) {
+      if (!await isAdmin()) {
+        throw new Error(`${Constants.COMMAND_NAME} does not have permissions to create symlinks, please try running as administrator`);
+      }
+      throw new Error(`${Constants.COMMAND_NAME} does not have permissions to create symlinks`);
+    }
+
     // Scan and process input files
     let dats = await this.processDATScanner();
     const indexedRoms = await this.processROMScanner();
