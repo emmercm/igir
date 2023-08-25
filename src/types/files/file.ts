@@ -14,41 +14,43 @@ import Cache from '../cache.js';
 import Patch from '../patches/patch.js';
 import ROMHeader from './romHeader.js';
 
-export default class File {
+export interface FileProps {
+  readonly filePath: string;
+  readonly size: number;
+  readonly crc32: string;
+  readonly crc32WithoutHeader: string;
+  readonly symlinkSource?: string;
+  readonly fileHeader?: ROMHeader;
+  readonly patch?: Patch;
+}
+
+export default class File implements FileProps {
   private static readonly crc32Cache = new Cache<string, string>(
     Constants.FILE_CHECKSUM_CACHE_SIZE,
   );
 
-  private readonly filePath: string;
+  readonly filePath: string;
 
-  private readonly size: number;
+  readonly size: number;
 
-  private readonly crc32: string;
+  readonly crc32: string;
 
-  private readonly crc32WithoutHeader: string;
+  readonly crc32WithoutHeader: string;
 
-  private readonly symlinkSource?: string;
+  readonly symlinkSource?: string;
 
-  private readonly fileHeader?: ROMHeader;
+  readonly fileHeader?: ROMHeader;
 
-  private readonly patch?: Patch;
+  readonly patch?: Patch;
 
-  protected constructor(
-    filePath: string,
-    size: number,
-    crc: string,
-    crc32WithoutHeader: string,
-    symlinkSource?: string,
-    fileHeader?: ROMHeader,
-    patch?: Patch,
-  ) {
-    this.filePath = path.normalize(filePath);
-    this.size = size;
-    this.crc32 = crc.toLowerCase().padStart(8, '0');
-    this.crc32WithoutHeader = crc32WithoutHeader.toLowerCase().padStart(8, '0');
-    this.symlinkSource = symlinkSource;
-    this.fileHeader = fileHeader;
-    this.patch = patch;
+  protected constructor(fileProps: FileProps) {
+    this.filePath = path.normalize(fileProps.filePath);
+    this.size = fileProps.size;
+    this.crc32 = fileProps.crc32.toLowerCase().padStart(8, '0');
+    this.crc32WithoutHeader = fileProps.crc32WithoutHeader.toLowerCase().padStart(8, '0');
+    this.symlinkSource = fileProps.symlinkSource;
+    this.fileHeader = fileProps.fileHeader;
+    this.patch = fileProps.patch;
   }
 
   static async fileOf(
@@ -79,15 +81,15 @@ export default class File {
     }
     finalCrcWithoutHeader = finalCrcWithoutHeader ?? finalCrc;
 
-    return new File(
+    return new File({
       filePath,
-      finalSize,
-      finalCrc,
-      finalCrcWithoutHeader,
-      finalSymlinkSource,
+      size: finalSize,
+      crc32: finalCrc,
+      crc32WithoutHeader: finalCrcWithoutHeader,
+      symlinkSource: finalSymlinkSource,
       fileHeader,
       patch,
-    );
+    });
   }
 
   // Property getters
@@ -335,14 +337,11 @@ export default class File {
     return this.downloadToPath(filePath);
   }
 
-  async withFilePath(filePath: string): Promise<File> {
-    return File.fileOf(
+  withFilePath(filePath: string): File {
+    return new File({
+      ...this,
       filePath,
-      this.getSize(),
-      this.getCrc32(),
-      this.getFileHeader(),
-      this.getPatch(),
-    );
+    });
   }
 
   async withFileHeader(fileHeader: ROMHeader): Promise<File> {
@@ -363,18 +362,16 @@ export default class File {
     );
   }
 
-  async withPatch(patch: Patch): Promise<File> {
+  withPatch(patch: Patch): File {
     if (patch.getCrcBefore() !== this.getCrc32()) {
       return this;
     }
 
-    return File.fileOf(
-      this.getFilePath(),
-      this.getSize(),
-      this.getCrc32(),
-      undefined, // don't allow a file header
+    return new File({
+      ...this,
+      fileHeader: undefined,
       patch,
-    );
+    });
   }
 
   /** *************************
