@@ -43,9 +43,9 @@ export default class GameConsole {
     // Casio
     new GameConsole(/PV-?1000/i, [/* '.bin' */], undefined, 'Casio_PV-1000', undefined, 'pv1000'),
     // Commodore
-    // TODO(dcramer): multiple outputs for Batocera
     new GameConsole(/Amiga/i, [], 'amiga', 'Amiga', 'AMIGA', undefined),
     new GameConsole(/Amiga CD32/i, [/* '.bin', '.cue' */], undefined, undefined, undefined, 'amigacd32'),
+    new GameConsole(/Amiga CDTV/i, [/* '.bin', '.cue' */], undefined, undefined, undefined, 'amigacdtv'),
     new GameConsole(/Commodore 64/i, ['.crt', '.d64', '.t64'], undefined, 'C64', 'COMMODORE', 'c64'),
     // Coleco
     new GameConsole(/ColecoVision/i, ['.col'], 'coleco', 'Coleco', 'COLECO', 'colecovision'),
@@ -68,8 +68,10 @@ export default class GameConsole {
     // Mattel
     new GameConsole(/Intellivision/i, ['.int'], 'intv', 'Intellivision', 'INTELLIVISION', 'intellivision'),
     // Microsoft
-    // TODO(dcramer): multiple outputs for Batocera
-    new GameConsole(/MSX/i, [], undefined, 'MSX', 'MSX', undefined),
+    new GameConsole(/MSX/i, [], undefined, 'MSX', 'MSX', 'msx1'),
+    new GameConsole(/MSX2/i, [], undefined, 'MSX', 'MSX', 'msx2'),
+    new GameConsole(/MSX2+/i, [], undefined, 'MSX', 'MSX', 'msx2+'),
+    new GameConsole(/MSX TurboR/i, [], undefined, 'MSX', 'MSX', 'msxturbor'),
     new GameConsole(/Xbox/i, [/* '.iso' */], undefined, undefined, undefined, 'xbox'),
     new GameConsole(/Xbox 360/i, [/* '.iso' */], undefined, undefined, undefined, 'xbox360'),
     // Nichibutsu
@@ -140,7 +142,7 @@ export default class GameConsole {
     new GameConsole(/Mega Duck/i, ['.md1', '.md2'], 'mega_duck', undefined, 'MEGADUCK', 'megaduck'),
   ];
 
-  readonly regex: RegExp;
+  readonly datRegex: RegExp;
 
   readonly extensions: string[];
 
@@ -153,14 +155,14 @@ export default class GameConsole {
   readonly batocera?: string;
 
   constructor(
-    regex: RegExp,
+    datRegex: RegExp,
     extensions: string[],
     pocket?: string,
     mister?: string,
     onion?: string,
     batocera?: string,
   ) {
-    this.regex = regex;
+    this.datRegex = datRegex;
     this.extensions = extensions;
     this.pocket = pocket;
     this.mister = mister;
@@ -174,17 +176,17 @@ export default class GameConsole {
       .filter((console) => console.getExtensions().some((ext) => ext === fileExtension))[0];
   }
 
-  static getForConsoleName(consoleName: string): GameConsole | undefined {
+  static getForDatName(consoleName: string): GameConsole | undefined {
     return this.CONSOLES
       .slice().reverse() // more specific names come second (e.g. "Game Boy" and "Game Boy Color")
-      .filter((console) => console.getRegex().test(consoleName))[0];
+      .filter((console) => console.getDatRegex().test(consoleName))[0];
   }
 
-  getRegex(): RegExp {
-    return this.regex;
+  private getDatRegex(): RegExp {
+    return this.datRegex;
   }
 
-  getExtensions(): string[] {
+  private getExtensions(): string[] {
     return this.extensions;
   }
 
