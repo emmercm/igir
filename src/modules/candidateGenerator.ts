@@ -294,7 +294,7 @@ export default class CandidateGenerator extends Module {
     foundRomsWithFiles: ROMWithFiles[],
     missingRoms: ROM[],
   ): void {
-    let message = `${dat.getNameShort()}: ${game.getName()}: found ${foundRomsWithFiles.length.toLocaleString()} file${missingRoms.length !== 1 ? 's' : ''}, missing ${missingRoms.length.toLocaleString()} file${missingRoms.length !== 1 ? 's' : ''}`;
+    let message = `${dat.getNameShort()}: ${game.getName()}: found ${foundRomsWithFiles.length.toLocaleString()} file${foundRomsWithFiles.length !== 1 ? 's' : ''}, missing ${missingRoms.length.toLocaleString()} file${missingRoms.length !== 1 ? 's' : ''}`;
     if (release?.getRegion()) {
       message += ` (${release?.getRegion()})`;
     }

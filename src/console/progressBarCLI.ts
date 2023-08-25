@@ -121,15 +121,20 @@ export default class ProgressBarCLI extends ProgressBar {
         if (ProgressBarCLI.multiBar && ProgressBarCLI.logQueue.length) {
           const consoleWidth = ConsolePoly.consoleWidth();
           const logMessage = ProgressBarCLI.logQueue
-            .map((msg) => {
-              // https://github.com/npkgz/cli-progress/issues/142
-              const wrapped = wrapAnsi(msg, consoleWidth).split('\n');
-
-              // Pad the last line with spaces, so that it overwrites previous output
-              wrapped[wrapped.length - 1] = wrapped[wrapped.length - 1].padEnd(consoleWidth, ' ');
-
-              return wrapped.join('\n');
-            })
+            // Wrapping is broken: https://github.com/npkgz/cli-progress/issues/142
+            .map((msg, msgIdx) => wrapAnsi(msg, consoleWidth)
+              // ...and if we manually wrap lines, we also need to deal with overwriting existing
+              //  progress bar output.
+              .split('\n')
+              .map((line, lineIdx) => {
+                if (msgIdx === 0 && lineIdx === 0) {
+                  // The very first line shouldn't need padding, the progress bar renderer should
+                  //  be calling `process.stdout.clearLine()`.
+                  return line;
+                }
+                return line.padEnd(consoleWidth, ' ');
+              })
+              .join('\n'))
             .join('\n');
           ProgressBarCLI.multiBar.log(`${logMessage}\n`);
           ProgressBarCLI.logQueue = [];
