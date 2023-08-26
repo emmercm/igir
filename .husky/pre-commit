@@ -20,7 +20,7 @@ node --version > /dev/null 2>&1 || exit 1
 
 # Ensure node modules are installed
 if [ ! -d "node_modules" ]; then
-  npm ci
+  npm ci --ignore-scripts
 fi
 
 
