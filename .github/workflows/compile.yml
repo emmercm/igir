@@ -7,6 +7,9 @@ on:
       - opened
       - reopened
       - synchronize  # PR's branch was edited (i.e. new commits)
+    paths:
+      - '*'
+      - 'src/**'
   release:
     types:
       - published
@@ -129,4 +132,5 @@ jobs:
     steps:
       - uses: re-actors/alls-green@release/v1
         with:
+          allowed-skips: node-compile
           jobs: ${{ toJSON(needs) }}
