@@ -62,7 +62,7 @@ jobs:
             echo ""
             echo ""
             echo "$EOF"
-          } >> "$GITHUB_OUTPUT"
+          } >> "${GITHUB_OUTPUT}"
 
       # Create/update the draft release
       - if: steps.check.outputs.changed == 'true'
@@ -86,4 +86,4 @@ jobs:
             echo "# v${{ steps.check.outputs.version }} @ ${{ env.ref }}"
             echo ""
             echo "${{ steps.release-drafter.outputs.html_url }}"
-          } >> "$GITHUB_STEP_SUMMARY"
+          } >> "${GITHUB_STEP_SUMMARY}"
