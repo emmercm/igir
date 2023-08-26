@@ -115,21 +115,29 @@ async function romWriter(
   return walkAndStat(outputTemp);
 }
 
+// TODO(cemmer): why does this hang on Windows in CI?
 it('should not do anything if there are no parents', async () => {
   await copyFixturesToTemp(async (inputTemp, outputTemp) => {
+    console.log(inputTemp, outputTemp);
+
     // Given
     const options = new Options({ commands: ['copy'] });
+    console.log(options);
     const inputFilesBefore = await walkAndStat(inputTemp);
+    console.log(inputFilesBefore);
     await expect(walkAndStat(outputTemp)).resolves.toHaveLength(0);
 
     // When
-    await romWriter(options, os.devNull, '**/*', undefined, outputTemp);
+    const output = await romWriter(options, os.devNull, '**/*', undefined, outputTemp);
+    console.log(output);
 
     // Then no files were written
     await expect(walkAndStat(outputTemp)).resolves.toHaveLength(0);
+    console.log('output is empty');
 
     // And the input files weren't touched
     await expect(walkAndStat(inputTemp)).resolves.toEqual(inputFilesBefore);
+    console.log('input is unchanged');
   });
 });
 
