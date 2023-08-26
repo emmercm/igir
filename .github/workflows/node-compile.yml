@@ -40,6 +40,7 @@ jobs:
     strategy:
       matrix:
         include:
+          # docker manifest inspect node:<version> | jq '.manifests[].platform'
           - os: ubuntu
             build: |
               NPM_PKG_VERSION=$(npm pkg get version | sed 's/"//g')
