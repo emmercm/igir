@@ -1,7 +1,7 @@
 # https://docs.github.com/en/actions/publishing-packages/publishing-nodejs-packages
 # Requires repo secret: NPM_TOKEN ("automation" access token)
 
-name: Publish npm
+name: Node.js Publish
 
 on:
   release:

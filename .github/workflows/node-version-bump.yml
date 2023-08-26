@@ -2,7 +2,7 @@
 #   Contents: read and write
 #   Pull Requests: read and write
 
-name: Version Bump
+name: Node.js Version Bump
 
 on:
   workflow_dispatch:

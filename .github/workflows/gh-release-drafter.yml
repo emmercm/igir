@@ -2,7 +2,7 @@
 #   Contents: read and write
 #   Pull Requests: read
 
-name: Release Drafter
+name: GitHub Release Drafter
 
 on:
   push:
@@ -74,7 +74,7 @@ jobs:
           version: ${{ steps.check.outputs.version }}
           commitish: ${{ env.ref }}
           # NOTE(cemmer): `template` can't be supplied here, only `header` and `footer`, so have to pick one of those
-          #   and make sure the .github/release-drafter.yml's `template` is empty-ish.
+          #   and make sure the .github/gh-release-drafter.yml's `template` is empty-ish.
           header: ${{ steps.auto-changelog.outputs.MARKDOWN }}
         env:
           # NOTE(cemmer): PAT here causes the release to be made under your account.

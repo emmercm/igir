@@ -7,10 +7,13 @@ on:
       - opened
       - reopened
       - synchronize  # PR's branch was edited (i.e. new commits)
-
   push:
     branches:
       - 'main'
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.head_ref || github.ref }}
+  cancel-in-progress: true
 
 jobs:
   dry-run:

@@ -1,4 +1,4 @@
-name: Compile Node.js
+name: Node.js Compile
 
 on:
   pull_request:
