@@ -1,9 +1,7 @@
 # https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-nodejs
 # https://hanxiao.io/2021/01/24/Speedup-CI-Workflow-in-Github-Actions-via-Strategy-Matrix/
 
-name: Project CI
-
-# TODO(cemmer): test README help message
+name: Node.js Test
 
 on:
   pull_request:
@@ -18,7 +16,27 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  path-filter:
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: read
+    outputs:
+      changes: ${{ steps.filter.outputs.changes }}
+    steps:
+      - uses: actions/checkout@v3
+      - id: filter
+        uses: dorny/paths-filter@v2
+        with:
+          filters: |
+            changes:
+              - '*'
+              - 'src/**'
+              - 'test/**'
+
   node-lint:
+    needs:
+      - path-filter
+    if: ${{ needs.path-filter.outputs.changes == 'true' }}
     runs-on: ubuntu-latest
     steps:
       # Setup and install
@@ -36,6 +54,9 @@ jobs:
   # https://stackoverflow.com/questions/44097267/find-packages-that-give-deprecated-warning-npm
 
   node-unit:
+    needs:
+      - path-filter
+    if: ${{ needs.path-filter.outputs.changes == 'true' }}
     runs-on: ${{ matrix.os }}-latest
     strategy:
       matrix:
@@ -54,6 +75,9 @@ jobs:
       - run: npm run test:unit
 
   node-e2e:
+    needs:
+      - path-filter
+    if: ${{ needs.path-filter.outputs.changes == 'true' }}
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -72,6 +96,9 @@ jobs:
       - run: ./test/endToEndTest.sh
 
   node-build:
+    needs:
+      - path-filter
+    if: ${{ needs.path-filter.outputs.changes == 'true' }}
     runs-on: ${{ matrix.os }}-latest
     strategy:
       matrix:
@@ -88,6 +115,9 @@ jobs:
       - run: npm run build
 
   node-package:
+    needs:
+      - path-filter
+    if: ${{ needs.path-filter.outputs.changes == 'true' }}
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -110,36 +140,19 @@ jobs:
           cd ..
           rm -rf package
 
-  renovate-lint:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
-      - uses: rinchsan/renovate-config-validator@v0.0.12
-        with:
-          pattern: 'renovate.json5'
-
-  shellcheck:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
-      - name: Run ShellCheck
-        uses: ludeeus/action-shellcheck@master
-        with:
-          additional_files: '.husky/*'
-
   # !!! This check should be required by GitHub !!!
   test-status-check:
     if: always()
     needs:
+      - path-filter
       - node-lint
       - node-unit
       - node-e2e
       - node-build
       - node-package
-      - renovate-lint
-      - shellcheck
     runs-on: ubuntu-latest
     steps:
       - uses: re-actors/alls-green@release/v1
         with:
+          allowed-skips: node-lint, node-unit, node-e2e, node-build, node-package
           jobs: ${{ toJSON(needs) }}

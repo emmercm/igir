@@ -1,7 +1,7 @@
 # Requires repo secret: PERSONAL_ACCESS_TOKEN with permissions:
 #   Administration: read and write
 
-name: Repository Update
+name: GitHub Repository Update
 
 on:
   push:

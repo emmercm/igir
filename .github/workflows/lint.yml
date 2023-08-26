@@ -1,4 +1,4 @@
-name: Workflow Linter
+name: Linter
 
 on:
   pull_request:
@@ -13,7 +13,24 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  lint:
+  renovate-lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: rinchsan/renovate-config-validator@v0.0.12
+        with:
+          pattern: 'renovate.json5'
+
+  shellcheck:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Run ShellCheck
+        uses: ludeeus/action-shellcheck@master
+        with:
+          additional_files: '.husky/*'
+
+  workflow-lint:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
@@ -22,10 +39,12 @@ jobs:
       - run: actionlint
 
   # !!! This check should be required by GitHub !!!
-  workflow-status-check:
+  linter-status-check:
     if: always()
     needs:
-      - lint
+      - renovate-lint
+      - shellcheck
+      - workflow-lint
     runs-on: ubuntu-latest
     steps:
       - uses: re-actors/alls-green@release/v1

@@ -2,7 +2,7 @@
 #   Contents: read and write
 #   Pull Requests: read
 
-name: Release Drafter
+name: GitHub Release Drafter
 
 on:
   push:
@@ -62,7 +62,7 @@ jobs:
             echo ""
             echo ""
             echo "$EOF"
-          } >> "$GITHUB_OUTPUT"
+          } >> "${GITHUB_OUTPUT}"
 
       # Create/update the draft release
       - if: steps.check.outputs.changed == 'true'
@@ -74,7 +74,7 @@ jobs:
           version: ${{ steps.check.outputs.version }}
           commitish: ${{ env.ref }}
           # NOTE(cemmer): `template` can't be supplied here, only `header` and `footer`, so have to pick one of those
-          #   and make sure the .github/release-drafter.yml's `template` is empty-ish.
+          #   and make sure the .github/gh-release-drafter.yml's `template` is empty-ish.
           header: ${{ steps.auto-changelog.outputs.MARKDOWN }}
         env:
           # NOTE(cemmer): PAT here causes the release to be made under your account.
@@ -86,4 +86,4 @@ jobs:
             echo "# v${{ steps.check.outputs.version }} @ ${{ env.ref }}"
             echo ""
             echo "${{ steps.release-drafter.outputs.html_url }}"
-          } >> "$GITHUB_STEP_SUMMARY"
+          } >> "${GITHUB_STEP_SUMMARY}"

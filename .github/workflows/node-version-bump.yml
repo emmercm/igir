@@ -2,7 +2,7 @@
 #   Contents: read and write
 #   Pull Requests: read and write
 
-name: Version Bump
+name: Node.js Version Bump
 
 on:
   workflow_dispatch:
@@ -73,7 +73,7 @@ jobs:
             echo "# v${{ steps.bump-and-commit.outputs.PACKAGE_VERSION }}"
             echo ""
             echo "${{ steps.create-pull-request.outputs.pull-request-url }}"
-          } >> "$GITHUB_STEP_SUMMARY"
+          } >> "${GITHUB_STEP_SUMMARY}"
       - if: ${{ steps.create-pull-request.outputs.pull-request-number && inputs.auto-merge }}
         run: gh pr merge "${{ steps.create-pull-request.outputs.pull-request-number }}" --squash --auto
         env:

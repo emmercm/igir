@@ -1,7 +1,11 @@
 # Requires repo secret: PERSONAL_ACCESS_TOKEN with permissions:
 #   Pull Requests: read and write
 
-name: Auto-Merge Rebaser
+# This effectively creates a merge queue out of all PRs marked as auto-merge, but merge queues are
+#   a GitHub feature is only available to organizations or those on Enterprise Cloud right now.
+#   https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/configuring-pull-request-merges/managing-a-merge-queue
+
+name: GitHub Auto-Merge Rebaser
 
 on:
   push:

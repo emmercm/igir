@@ -1,4 +1,4 @@
-name: Compile Node.js
+name: Node.js Compile
 
 on:
   pull_request:
@@ -16,7 +16,26 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  path-filter:
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: read
+    outputs:
+      changes: ${{ steps.filter.outputs.changes }}
+    steps:
+      - uses: actions/checkout@v3
+      - id: filter
+        uses: dorny/paths-filter@v2
+        with:
+          filters: |
+            changes:
+              - '*'
+              - 'src/**'
+
   node-compile:
+    needs:
+      - path-filter
+    if: ${{ needs.path-filter.outputs.changes == 'true' }}
     runs-on: ${{ matrix.os }}-latest
     strategy:
       matrix:
@@ -124,9 +143,11 @@ jobs:
   compile-status-check:
     if: always()
     needs:
+      - path-filter
       - node-compile
     runs-on: ubuntu-latest
     steps:
       - uses: re-actors/alls-green@release/v1
         with:
+          allowed-skips: node-compile
           jobs: ${{ toJSON(needs) }}

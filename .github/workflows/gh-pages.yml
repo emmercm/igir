@@ -13,15 +13,40 @@ on:
     types:
       - published
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.head_ref || github.ref }}
+  cancel-in-progress: true
+
 jobs:
+  path-filter:
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: read
+    outputs:
+      changes: ${{ steps.filter.outputs.changes }}
+    steps:
+      - uses: actions/checkout@v3
+      - id: filter
+        uses: dorny/paths-filter@v2
+        with:
+          filters: |
+            changes:
+              - '**/mkdocs.yml'
+              - '**/*.md'
+
   lint:
+    needs:
+      - path-filter
+    if: ${{ needs.path-filter.outputs.changes == 'true' }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
       - run: docker run -v "${PWD}:/workdir" ghcr.io/igorshubovych/markdownlint-cli:latest --disable MD013 MD033 MD046 -- "**/*.md"
 
   build:
-    if: github.event_name == 'pull_request'
+    needs:
+      - path-filter
+    if: ${{ github.event_name == 'pull_request' && needs.path-filter.outputs.changes == 'true' }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
@@ -50,14 +75,16 @@ jobs:
 
   # !!! This check should be required by GitHub !!!
   pages-status-check:
-    if: github.event_name == 'pull_request'
+    if: always()
     needs:
+      - path-filter
       - lint
       - build
     runs-on: ubuntu-latest
     steps:
       - uses: re-actors/alls-green@release/v1
         with:
+          allowed-skips: lint, build
           jobs: ${{ toJSON(needs) }}
 
   deploy:
