@@ -16,14 +16,15 @@ on:
         type: string
 
 concurrency:
-  group: ${{ github.workflow }}-${{ github.head_ref || github.ref }}
+  group: ${{ github.workflow }}-${{ inputs.ref || github.head_ref || github.ref }}
   cancel-in-progress: true
+
+env:
+  ref: ${{ inputs.ref || github.sha || github.ref }}
 
 jobs:
   release:
     runs-on: ubuntu-latest
-    env:
-      ref: ${{ inputs.ref || github.sha || github.ref }}
     steps:
       - uses: actions/checkout@v3
         with:
