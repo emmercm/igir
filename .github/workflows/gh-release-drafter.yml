@@ -100,7 +100,7 @@ jobs:
             -H "Authorization: Bearer <YOUR-TOKEN>" \
             -H "X-GitHub-Api-Version: 2022-11-28" \
             "https://api.github.com/repos/${GITHUB_REPOSITORY}/commits/${GIT_SHA}/pulls" \
-              | jq --raw-output '.[0].number)
+              | jq --raw-output '.[0].number')
           echo "PR_NUMBER=${PR_NUMBER}" >> "${GITHUB_OUTPUT}"
       - if: ${{ steps.release-drafter.outputs.id }}
         uses: thollander/actions-comment-pull-request@v2
