@@ -75,6 +75,7 @@ jobs:
 
   # !!! This check should be required by GitHub !!!
   pages-status-check:
+    if: always()
     needs:
       - path-filter
       - lint
