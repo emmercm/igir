@@ -8,7 +8,7 @@
 
 ## ROM writing
 
-`igir` has three writing commands. Only one writing command can be specified at a time, and all require the `--output` option.
+`igir` has three writing commands. Only one writing command can be specified at a time, and all require the `--output <path>` option.
 
 ### `copy`
 
@@ -36,7 +36,7 @@ If no archive command is specified, files will be left as-is. If they are alread
 
 !!! note
 
-    See the [archives page](input/archives.md) for more information on supported archive types.
+    See the [archives page](input/reading-archives.md) for more information on supported archive types.
 
 ### `extract`
 
@@ -64,6 +64,8 @@ After performing one of the ROM writing commands, verify that the file was writt
 ### `clean`
 
 Files in the output directory that do not match any ROM in any [DAT](input/dats.md) will be deleted.
+
+See the [output cleaning page](output/cleaning.md) for more information.
 
 ## ROM reporting
 

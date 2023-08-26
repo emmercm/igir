@@ -1,0 +1,101 @@
+name: Pull Request Renamer
+
+on:
+  # pull_request_target required for pull-requests:write permission on fork PRs
+  pull_request_target:
+    types:
+      - edited  # PR's title was changed
+      - opened
+      - reopened
+      - synchronize  # PR's branch was edited (i.e. new commits)
+
+jobs:
+  rename:
+    permissions:
+      # actions/checkout@v3
+      contents: read
+      # `gh` CLI
+      repository-projects: read
+      pull-requests: write
+    runs-on: ubuntu-latest
+    steps:
+      - id: title-massager
+        env:
+          # https://docs.github.com/en/actions/security-guides/security-hardening-for-github-actions#using-an-intermediate-environment-variable
+          OLD_TITLE: ${{ github.event.pull_request.title }}
+        run: |
+          echo "OLD_TITLE=${OLD_TITLE}" >> "${GITHUB_OUTPUT}"
+          # Default to account for early successful termination
+          echo "NEW_TITLE=${OLD_TITLE}" >> "${GITHUB_OUTPUT}"
+
+          ALLOWED_TYPES="Chore|CI|Docs|Feature|Fix|Refactor"
+
+          # Ignore version numbers
+          if [[ "${OLD_TITLE}" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            exit 0
+          fi
+
+          if [[ ! "${OLD_TITLE}" =~ ^[a-zA-Z\\(\\)\\!]+: ]]; then
+            echo "ERROR=No conventional commit type found. The allowed list is: ${ALLOWED_TYPES//|/, }" >> "${GITHUB_OUTPUT}"
+            exit 1
+          fi
+
+          NEW_TITLE="${OLD_TITLE}"
+
+          NEW_TITLE="$(echo "${OLD_TITLE}" | sed -r \
+            `# Strip scope` \
+            -e 's/^([a-z]+)\([^)]+\)(!?:)/\1\2/i' \
+            `# Massage scope` \
+            -e 's/^[a-z]+!:/Breaking:/i' \
+            -e 's/^chore:/Chore:/i' \
+            -e 's/^ci:/CI:/i' \
+            -e 's/^docs:/Docs:/i' \
+            -e 's/^feat(ure)?:/Feature:/i' \
+            -e 's/^fix:/Fix:/i' \
+            -e 's/^ref(actor)?:/Refactor:/i')"
+          echo "${NEW_TITLE}"
+
+          # Lowercase the first letter of the description
+          #TYPE="$(echo "${NEW_TITLE}" | cut -d ':' -f 1)"
+          #FIRST_LETTER="$(echo "${NEW_TITLE}" | cut -d ':' -f 2 | awk '{$1=$1};1' | cut -c1 | tr [A-Z] [a-z])"
+          #REMAINING_LETTERS="$(echo "${NEW_TITLE}" | cut -d ':' -f 2 | awk '{$1=$1};1' | cut -c2-)"
+          #NEW_TITLE="${TYPE}: ${FIRST_LETTER}${REMAINING_LETTERS}"
+
+          # Restrict types
+          if [[ ! "${NEW_TITLE}" =~ ^${ALLOWED_TYPES}: ]]; then
+            echo "ERROR=The conventional commit type isn't in the allowed list: ${ALLOWED_TYPES//|/, }" >> "${GITHUB_OUTPUT}"
+            exit 1
+          fi
+
+          echo "NEW_TITLE=${NEW_TITLE}" >> "${GITHUB_OUTPUT}"
+      # Required for `gh` CLI
+      - uses: actions/checkout@v3
+      - id: gh-pr-edit
+        run: gh pr edit "${{ github.event.pull_request.number }}" --title "${NEW_TITLE}"
+        env:
+          GH_TOKEN: ${{ github.token }}
+          # https://docs.github.com/en/actions/security-guides/security-hardening-for-github-actions#using-an-intermediate-environment-variable
+          NEW_TITLE: ${{ steps.title-massager.outputs.NEW_TITLE }}
+      - if: '!cancelled()'
+        uses: thollander/actions-comment-pull-request@v2
+        with:
+          message: |
+            ## :x: Pull Request Title
+            This pull request's title does not match the repository standards, and it cannot be automatically fixed. The error is:
+            ```text
+            ${{ steps.title-massager.outputs.ERROR }}
+            ```
+          mode: ${{ steps.gh-pr-edit.outcome != 'success' && 'upsert' || 'delete' }}
+          create_if_not_exists: ${{ steps.gh-pr-edit.outcome != 'success' && 'true' || 'false' }}
+          comment_tag: pr-renamer
+
+  # !!! This check should be required by GitHub !!!
+  title-status-check:
+    if: always()
+    needs:
+      - rename
+    runs-on: ubuntu-latest
+    steps:
+      - uses: re-actors/alls-green@release/v1
+        with:
+          jobs: ${{ toJSON(needs) }}

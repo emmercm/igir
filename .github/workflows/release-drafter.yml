@@ -16,7 +16,7 @@ on:
         type: string
 
 concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
+  group: ${{ github.workflow }}-${{ github.head_ref || github.ref }}
   cancel-in-progress: true
 
 jobs:
@@ -40,9 +40,8 @@ jobs:
           #   version triggers this workflow, but `workflow_dispatch` doesn't carry commit or
           #   commit ref info that's needed for it.
           diff-search: ${{ github.event_name != 'workflow_dispatch' && true || false }}
-          assume-same-version: ${{ github.event_name != 'workflow_dispatch' && 'new' || '' }}
           static-checking: ${{ github.event_name == 'workflow_dispatch' && 'localIsNew' || '' }}
-          file-url: https://unpkg.com/igir/package.json
+          file-url: ${{ github.event_name == 'workflow_dispatch' && 'https://unpkg.com/igir/package.json' || '' }}
 
       - if: steps.check.outputs.changed == 'true'
         uses: actions/setup-node@v3
@@ -57,11 +56,13 @@ jobs:
         id: auto-changelog
         run: |
           EOF=$(dd if=/dev/urandom bs=15 count=1 status=none | base64)
-          echo "MARKDOWN<<$EOF" >> "$GITHUB_OUTPUT"
-          ./scripts/auto-changelog.sh >> "$GITHUB_OUTPUT"
-          echo "" >> "$GITHUB_OUTPUT"
-          echo "" >> "$GITHUB_OUTPUT"
-          echo "$EOF" >> "$GITHUB_OUTPUT"
+          {
+            echo "MARKDOWN<<$EOF"
+            ./scripts/auto-changelog.sh
+            echo ""
+            echo ""
+            echo "$EOF"
+          } >> "$GITHUB_OUTPUT"
 
       # Create/update the draft release
       - if: steps.check.outputs.changed == 'true'
@@ -81,6 +82,8 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
       - if: ${{ steps.release-drafter.outputs.id }}
         run: |
-          echo "# v${{ steps.check.outputs.version }} @ ${{ env.ref }}" >> "$GITHUB_STEP_SUMMARY"
-          echo "" >> "$GITHUB_STEP_SUMMARY"
-          echo "${{ steps.release-drafter.outputs.html_url }}" >> "$GITHUB_STEP_SUMMARY"
+          {
+            echo "# v${{ steps.check.outputs.version }} @ ${{ env.ref }}"
+            echo ""
+            echo "${{ steps.release-drafter.outputs.html_url }}"
+          } >> "$GITHUB_STEP_SUMMARY"

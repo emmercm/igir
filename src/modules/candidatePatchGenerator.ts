@@ -1,6 +1,7 @@
 import path from 'path';
 
 import ProgressBar, { ProgressBarSymbol } from '../console/progressBar.js';
+import ArrayPoly from '../polyfill/arrayPoly.js';
 import ArchiveEntry from '../types/files/archives/archiveEntry.js';
 import File from '../types/files/file.js';
 import DAT from '../types/logiqx/dat.js';
@@ -67,7 +68,7 @@ export default class CandidatePatchGenerator extends Module {
       .map(async ([parent, releaseCandidates]): Promise<[Parent, ReleaseCandidate[]][]> => {
         // ReleaseCandidates exist for every Release of a Game, but we only want to create one new
         //  ReleaseCandidate for each Game, so remember which Games we've seen for this Parent
-        const seenGames = new Map<Game, boolean>();
+        const seenGames = new Set<Game>();
 
         const parentsAndReleaseCandidates: [Parent, ReleaseCandidate[]][] = [
           [parent, releaseCandidates],
@@ -87,7 +88,7 @@ export default class CandidatePatchGenerator extends Module {
             releaseCandidate,
             crcToPatches,
           );
-          seenGames.set(releaseCandidate.getGame(), true);
+          seenGames.add(releaseCandidate.getGame());
 
           if (patchedParents) {
             parentsAndReleaseCandidates.push(...patchedParents);
@@ -108,7 +109,7 @@ export default class CandidatePatchGenerator extends Module {
     const releaseCandidatePatches = unpatchedReleaseCandidate.getRomsWithFiles()
       .map((romWithFiles) => crcToPatches.get(romWithFiles.getInputFile().getCrc32()))
       .flatMap((patches) => patches)
-      .filter((patch) => patch) as Patch[];
+      .filter(ArrayPoly.filterNotNullish);
 
     // No relevant patches found, no new candidates generated
     if (!releaseCandidatePatches.length) {
@@ -129,7 +130,7 @@ export default class CandidatePatchGenerator extends Module {
           // Apply the patch to the appropriate file
           if (patch.getCrcBefore() === romWithFiles.getRom().getCrc32()) {
             // Attach the patch to the input file
-            inputFile = await inputFile.withPatch(patch);
+            inputFile = inputFile.withPatch(patch);
 
             // Build a new output file
             const extMatch = romWithFiles.getRom().getName().match(/[^.]+((\.[a-zA-Z0-9]+)+)$/);

@@ -40,7 +40,7 @@ export default class Logger {
 
   isTTY(): boolean {
     if (this.stream instanceof WriteStream) {
-      return (this.stream as WriteStream).isTTY;
+      return (this.stream satisfies WriteStream).isTTY;
     }
     if (this.stream instanceof PassThrough) {
       // Testing streams should be treated as TTY
@@ -66,18 +66,20 @@ export default class Logger {
       return message;
     }
 
-    const chalkFuncs: { [key: number]: (message: string) => string } = {
+    const chalkFuncs = {
       [LogLevel.TRACE]: chalk.grey,
       [LogLevel.DEBUG]: chalk.magenta,
       [LogLevel.INFO]: chalk.cyan,
       [LogLevel.WARN]: chalk.yellow,
       [LogLevel.ERROR]: chalk.red,
-      [LogLevel.NOTICE]: chalk.bold,
-    };
+      [LogLevel.NOTICE]: chalk.underline,
+      [LogLevel.ALWAYS]: (msg) => msg,
+      [LogLevel.NEVER]: (msg) => msg,
+    } satisfies { [key in LogLevel]: (message: string) => string };
     const chalkFunc = chalkFuncs[logLevel];
 
     const loggerTime = this.logLevel <= LogLevel.TRACE ? `[${moment().format('HH:mm:ss.SSS')}] ` : '';
-    const levelPrefix = chalkFunc(`${LogLevel[logLevel]}:${' '.repeat(Math.max(5 - LogLevel[logLevel].length, 0))} `);
+    const levelPrefix = `${chalkFunc(LogLevel[logLevel])}:${' '.repeat(Math.max(5 - LogLevel[logLevel].length, 0))} `;
     const loggerPrefix = this.logLevel <= LogLevel.INFO && this.loggerPrefix ? `${this.loggerPrefix}: ` : '';
 
     return message

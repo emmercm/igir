@@ -6,6 +6,7 @@ import util from 'util';
 
 import ProgressBar, { ProgressBarSymbol } from '../console/progressBar.js';
 import Constants from '../constants.js';
+import ArrayPoly from '../polyfill/arrayPoly.js';
 import fsPoly from '../polyfill/fsPoly.js';
 import File from '../types/files/file.js';
 import Options from '../types/options.js';
@@ -90,7 +91,7 @@ export default class DirectoryCleaner extends Module {
         dirsToClean.map(async (dirToClean) => DirectoryCleaner.getEmptyDirs(dirToClean)),
       ))
         .flatMap((emptyDirs) => emptyDirs)
-        .filter((emptyDir, idx, emptyDirs) => emptyDirs.indexOf(emptyDir) === idx);
+        .reduce(ArrayPoly.reduceUnique(), []);
     }
 
     // Find all subdirectories and files in the directory

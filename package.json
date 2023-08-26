@@ -1,6 +1,6 @@
 {
   "name": "igir",
-  "version": "1.9.0",
+  "version": "1.9.2",
   "description": "🕹 A video game ROM collection manager to help filter, sort, patch, archive, and report on collections on any OS.",
   "keywords": [
     "1g1r",
@@ -44,7 +44,7 @@
     "postinstall": "node --eval \"if(require('fs').existsSync('build')===false){process.exit(1);}\" || npm run build",
     "prepare": "husky install",
     "start": "ts-node index.ts",
-    "build": "tsc && chmod +x build/index.js",
+    "build": "tsc && node --eval \"if(process.platform!=='win32'){process.exit(1);}\" || chmod +x build/index.js",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "test": "npm run test:unit && npm run lint",
@@ -73,6 +73,7 @@
     "fast-glob": "3.2.12",
     "figlet": "1.6.0",
     "graceful-fs": "4.2.11",
+    "is-admin": "4.0.0",
     "junk": "4.0.1",
     "micromatch": "4.0.5",
     "moment": "2.29.4",

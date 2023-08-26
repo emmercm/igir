@@ -1,3 +1,5 @@
+import ArrayPoly from '../polyfill/arrayPoly.js';
+
 interface RegionOptions {
   region: string;
   long: string;
@@ -114,12 +116,12 @@ export default class Internationalization {
   public static readonly REGIONS = this.REGION_OPTIONS
     .map((regionOption) => regionOption.region.toUpperCase())
     .filter((region) => region)
-    .filter((region, idx, regions) => regions.indexOf(region) === idx)
+    .reduce(ArrayPoly.reduceUnique(), [])
     .sort();
 
   public static readonly LANGUAGES = this.REGION_OPTIONS
     .map((regionOption) => regionOption.language.toUpperCase())
     .filter((language) => language)
-    .filter((language, idx, languages) => languages.indexOf(language) === idx)
+    .reduce(ArrayPoly.reduceUnique(), [])
     .sort();
 }

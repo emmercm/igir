@@ -1,5 +1,6 @@
 import { Readable } from 'stream';
 
+import ArrayPoly from '../../polyfill/arrayPoly.js';
 import File from '../files/file.js';
 import APSPatch from './apsPatch.js';
 import BPSPatch from './bpsPatch.js';
@@ -71,7 +72,7 @@ export default class PatchFactory {
   static getSupportedExtensions(): string[] {
     return Object.values(PatchFactory.PATCH_PARSERS)
       .flatMap((parser) => parser.extensions)
-      .filter((ext, idx, exts) => exts.indexOf(ext) === idx)
+      .reduce(ArrayPoly.reduceUnique(), [])
       .sort();
   }
 

@@ -9,9 +9,9 @@ Because flash carts are specific to a specific console, you can provide specific
     Replace the `E:\` drive letter with wherever your SD card is:
 
     ```batch
-    igir.exe copy extract test clean ^
+    igir copy extract test clean ^
       --dat "Nintendo - Game Boy.dat" ^
-      --input "ROMs-Sorted/Nintendo - Game Boy" ^
+      --input "ROMs-Sorted\Nintendo - Game Boy" ^
       --output E:\ ^
       --no-bios
     ```
@@ -49,9 +49,9 @@ Alternatively, `igir` supports [Hardware Target Game Database SMDB files](https:
     Replace the `E:\` drive letter with wherever your SD card is:
 
     ```batch
-    igir.exe copy extract test clean ^
+    igir copy extract test clean ^
       --dat "https://raw.githubusercontent.com/frederic-mahe/Hardware-Target-Game-Database/master/EverDrive%20Pack%20SMDBs/EverDrive%20GB%20SMDB.txt" ^
-      --input "ROMs-Sorted/Nintendo - Game Boy" ^
+      --input "ROMs-Sorted\Nintendo - Game Boy" ^
       --output E:\
     ```
 

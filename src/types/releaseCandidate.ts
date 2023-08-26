@@ -48,8 +48,9 @@ export default class ReleaseCandidate {
 
   getLanguages(): string[] {
     // Get language off of the release
-    if (this.release?.getLanguage()) {
-      return [(this.release.getLanguage() as string).toUpperCase()];
+    const releaseLanguage = this.release?.getLanguage();
+    if (releaseLanguage) {
+      return [releaseLanguage.toUpperCase()];
     }
 
     return this.game.getLanguages();

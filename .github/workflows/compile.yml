@@ -12,7 +12,7 @@ on:
       - published
 
 concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
+  group: ${{ github.workflow }}-${{ github.head_ref || github.ref }}
   cancel-in-progress: true
 
 jobs:
@@ -26,7 +26,7 @@ jobs:
               NPM_PKG_VERSION=$(npm pkg get version | sed 's/"//g')
               NODE_ARCH=amd64
               BIN_OUTPUT="igir-${NPM_PKG_VERSION}-${RUNNER_OS}-${NODE_ARCH/\//}.tar.gz"
-              echo "BIN_OUTPUT=${BIN_OUTPUT}" >> $GITHUB_ENV
+              echo "BIN_OUTPUT=${BIN_OUTPUT}" >> "${GITHUB_ENV}"
               cp package.json build/
               docker run --rm --platform "linux/${NODE_ARCH}" --volume "$(pwd):/app" --workdir "/app" \
                 "node:$(cat .nvmrc)" sh -c \
@@ -37,7 +37,7 @@ jobs:
               NPM_PKG_VERSION=$(npm pkg get version | sed 's/"//g')
               NODE_ARCH=arm/v7
               BIN_OUTPUT="igir-${NPM_PKG_VERSION}-${RUNNER_OS}-${NODE_ARCH/\//}.tar.gz"
-              echo "BIN_OUTPUT=${BIN_OUTPUT}" >> $GITHUB_ENV
+              echo "BIN_OUTPUT=${BIN_OUTPUT}" >> "${GITHUB_ENV}"
               cp package.json build/
               docker run --rm --platform "linux/${NODE_ARCH}" --volume "$(pwd):/app" --workdir "/app" \
                 "node:$(cat .nvmrc)" sh -c \
@@ -48,18 +48,19 @@ jobs:
               NPM_PKG_VERSION=$(npm pkg get version | sed 's/"//g')
               NODE_ARCH=arm64/v8
               BIN_OUTPUT="igir-${NPM_PKG_VERSION}-${RUNNER_OS}-${NODE_ARCH/\//}.tar.gz"
-              echo "BIN_OUTPUT=${BIN_OUTPUT}" >> $GITHUB_ENV
+              echo "BIN_OUTPUT=${BIN_OUTPUT}" >> "${GITHUB_ENV}"
               cp package.json build/
               docker run --rm --platform "linux/${NODE_ARCH}" --volume "$(pwd):/app" --workdir "/app" \
                 "node:$(cat .nvmrc)" sh -c \
                 "./node_modules/.bin/caxa --input build/ --output igir -- \"{{caxa}}/node_modules/.bin/node\" \"{{caxa}}/index.js\" && ./igir --help"
               tar cvf - igir | gzip --best > "${BIN_OUTPUT}"
+          # TODO(cemmer): macOS arm64: https://github.com/github/roadmap/issues/528
           - os: macos
             build: |
               NPM_PKG_VERSION=$(npm pkg get version | sed 's/"//g')
               NODE_ARCH=$(node --print 'process.arch')
               BIN_OUTPUT="igir-${NPM_PKG_VERSION}-${RUNNER_OS}-${NODE_ARCH}.tar.gz"
-              echo "BIN_OUTPUT=${BIN_OUTPUT}" >> $GITHUB_ENV
+              echo "BIN_OUTPUT=${BIN_OUTPUT}" >> "${GITHUB_ENV}"
               cp package.json build/
               ./node_modules/.bin/caxa --input build/ --output igir -- "{{caxa}}/node_modules/.bin/node" "{{caxa}}/index.js"
               ./igir --help
@@ -108,7 +109,7 @@ jobs:
           node-version-file: '.nvmrc'
           cache: 'npm'
       - run: npm ci
-      - run: echo "NPM_PKG_VERSION=$(npm pkg get version | sed 's/"//g')" >> $GITHUB_ENV
+      - run: echo "NPM_PKG_VERSION=$(npm pkg get version | sed 's/"//g')" >> "${GITHUB_ENV}"
       # Download and update
       - uses: actions/download-artifact@v3
       - uses: softprops/action-gh-release@v1

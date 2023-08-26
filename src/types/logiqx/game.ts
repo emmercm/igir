@@ -1,7 +1,8 @@
 import 'reflect-metadata';
 
-import { Expose, Type } from 'class-transformer';
+import { Expose, Transform, Type } from 'class-transformer';
 
+import ArrayPoly from '../../polyfill/arrayPoly.js';
 import Internationalization from '../internationalization.js';
 import Archive from './archive.js';
 import BIOSSet from './biosSet.js';
@@ -106,10 +107,12 @@ export default class Game implements GameProps {
 
   @Expose()
   @Type(() => Release)
+  @Transform(({ value }) => value || [])
   readonly release: Release | Release[];
 
   @Expose()
   @Type(() => ROM)
+  @Transform(({ value }) => value || [])
   readonly rom: ROM | ROM[];
 
   constructor(options?: GameProps) {
@@ -423,7 +426,7 @@ export default class Game implements GameProps {
   getLanguages(): string[] {
     const releaseLanguages = this.getReleases()
       .map((release) => release.getLanguage()?.toUpperCase())
-      .filter((language) => language) as string[];
+      .filter(ArrayPoly.filterNotNullish);
     if (releaseLanguages.length) {
       return releaseLanguages;
     }
@@ -454,7 +457,7 @@ export default class Game implements GameProps {
         .split(/[,+]/)
         .map((lang) => lang.toUpperCase())
         .filter((lang) => Internationalization.LANGUAGES.indexOf(lang) !== -1) // is known
-        .filter((lang, idx, langs) => langs.indexOf(lang) === idx);
+        .reduce(ArrayPoly.reduceUnique(), []);
       if (twoMatchesParsed.length) {
         return twoMatchesParsed;
       }
@@ -471,7 +474,7 @@ export default class Game implements GameProps {
         .map((lang) => Internationalization.LANGUAGE_OPTIONS
           .filter((langOpt) => langOpt.long?.toUpperCase() === lang.toUpperCase())[0]?.short)
         .filter((lang) => Internationalization.LANGUAGES.indexOf(lang) !== -1) // is known
-        .filter((lang, idx, langs) => langs.indexOf(lang) === idx);
+        .reduce(ArrayPoly.reduceUnique(), []);
       if (threeMatchesParsed.length) {
         return threeMatchesParsed;
       }
@@ -491,7 +494,7 @@ export default class Game implements GameProps {
         }
         return undefined;
       })
-      .filter((language) => language) as string[];
+      .filter(ArrayPoly.filterNotNullish);
   }
 
   // Pseudo Built-Ins

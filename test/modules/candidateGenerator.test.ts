@@ -19,7 +19,6 @@ import Options from '../../src/types/options.js';
 import ReleaseCandidate from '../../src/types/releaseCandidate.js';
 import ProgressBarFake from '../console/progressBarFake.js';
 
-// TODO(cemmer): test parent/clone behavior
 const gameWithNoRoms = new Game({
   name: 'game with no ROMs',
 });
@@ -32,12 +31,21 @@ const gameWithOneRom = new Game({
   ],
   rom: new ROM('one.rom', 1, '12345678'),
 });
-const gameWithTwoRoms = new Game({
-  name: 'game with two ROMs',
-  release: new Release('game with two ROMs', 'WORLD'),
+const gameWithTwoRomsParent = new Game({
+  name: 'game with two ROMs (parent)',
+  release: new Release('game with two ROMs (parent)', 'WORLD'),
   rom: [
     new ROM('two.a', 2, 'abcdef90'),
     new ROM('two.b', 3, '09876543'),
+  ],
+});
+const gameWithTwoRomsClone = new Game({
+  name: 'game with two ROMs (clone)',
+  cloneOf: gameWithTwoRomsParent.getName(),
+  release: new Release('game with two ROMs (clone)', 'JPN'),
+  rom: [
+    new ROM('three.a', 4, 'abcd1234'),
+    new ROM('three.b', 5, '86753090'),
   ],
 });
 const gameWithDuplicateRoms = new Game({
@@ -50,7 +58,12 @@ const gameWithDuplicateRoms = new Game({
     new ROM('Disc (Track 04).cue', 4, '11bf5dbd'),
   ],
 });
-const datWithThreeGames = new DAT(new Header(), [gameWithNoRoms, gameWithOneRom, gameWithTwoRoms]);
+const datWithFourGames = new DAT(new Header(), [
+  gameWithNoRoms,
+  gameWithOneRom,
+  gameWithTwoRomsParent,
+  gameWithTwoRomsClone,
+]);
 
 async function candidateGenerator(
   options: Options,
@@ -103,7 +116,7 @@ describe.each(['zip', 'extract', 'raw'])('command: %s', (command) => {
     const files = await Promise.all(filePromises);
 
     // When
-    const parentsToCandidates = await candidateGenerator(options, datWithThreeGames, files);
+    const parentsToCandidates = await candidateGenerator(options, datWithFourGames, files);
 
     // Then
     expect(parentsToCandidates.size).toEqual(3);
@@ -122,7 +135,7 @@ describe.each(['zip', 'extract', 'raw'])('command: %s', (command) => {
     ];
 
     // When
-    const parentsToCandidates = await candidateGenerator(options, datWithThreeGames, files);
+    const parentsToCandidates = await candidateGenerator(options, datWithFourGames, files);
 
     // Then
     expect(parentsToCandidates.size).toEqual(3);
@@ -160,7 +173,7 @@ describe.each(['zip', 'extract', 'raw'])('command: %s', (command) => {
     ];
 
     // When
-    const parentsToCandidates = await candidateGenerator(options, datWithThreeGames, files);
+    const parentsToCandidates = await candidateGenerator(options, datWithFourGames, files);
 
     // Then
     expect(parentsToCandidates.size).toEqual(3);
@@ -207,7 +220,7 @@ describe('with ROMs with headers', () => {
     });
 
     // When
-    const parentsToCandidates = await candidateGenerator(options, datWithThreeGames, filePromises);
+    const parentsToCandidates = await candidateGenerator(options, datWithFourGames, filePromises);
 
     // Then
     expect(parentsToCandidates.size).toEqual(3);
@@ -229,11 +242,11 @@ describe('with ROMs with headers', () => {
       expect(candidate.getRomsWithFiles()).toHaveLength(2);
       const candidateWithTwoRomsOutputOne = candidate.getRomsWithFiles()[0]
         .getOutputFile() as ArchiveEntry<Zip>;
-      expect(candidateWithTwoRomsOutputOne.getFilePath()).toEqual('game with two ROMs.zip'); // respected DAT
+      expect(candidateWithTwoRomsOutputOne.getFilePath()).toEqual('game with two ROMs (parent).zip'); // respected DAT
       expect(candidateWithTwoRomsOutputOne.getEntryPath()).toEqual('two.sfc'); // respected un-headered extension
       const candidateWithTwoRomsOutputTwo = candidate.getRomsWithFiles()[1]
         .getOutputFile() as ArchiveEntry<Zip>;
-      expect(candidateWithTwoRomsOutputTwo.getFilePath()).toEqual('game with two ROMs.zip'); // respected DAT
+      expect(candidateWithTwoRomsOutputTwo.getFilePath()).toEqual('game with two ROMs (parent).zip'); // respected DAT
       expect(candidateWithTwoRomsOutputTwo.getEntryPath()).toEqual('two.b'); // respected DAT
     });
   });
@@ -246,7 +259,7 @@ describe('with ROMs with headers', () => {
     });
 
     // When
-    const parentsToCandidates = await candidateGenerator(options, datWithThreeGames, filePromises);
+    const parentsToCandidates = await candidateGenerator(options, datWithFourGames, filePromises);
 
     // Then
     expect(parentsToCandidates.size).toEqual(3);
@@ -263,8 +276,8 @@ describe('with ROMs with headers', () => {
     expect(candidateWithTwoRoms).toHaveLength(1);
     candidateWithTwoRoms.forEach((candidate) => {
       expect(candidate.getRomsWithFiles()).toHaveLength(2);
-      expect(candidate.getRomsWithFiles()[0].getOutputFile().getFilePath()).toEqual(path.join('game with two ROMs', 'two.sfc')); // respected un-headered extension
-      expect(candidate.getRomsWithFiles()[1].getOutputFile().getFilePath()).toEqual(path.join('game with two ROMs', 'two.b')); // respected DAT
+      expect(candidate.getRomsWithFiles()[0].getOutputFile().getFilePath()).toEqual(path.join('game with two ROMs (parent)', 'two.sfc')); // respected un-headered extension
+      expect(candidate.getRomsWithFiles()[1].getOutputFile().getFilePath()).toEqual(path.join('game with two ROMs (parent)', 'two.b')); // respected DAT
     });
   });
 
@@ -276,7 +289,7 @@ describe('with ROMs with headers', () => {
     });
 
     // When
-    const parentsToCandidates = await candidateGenerator(options, datWithThreeGames, filePromises);
+    const parentsToCandidates = await candidateGenerator(options, datWithFourGames, filePromises);
 
     // Then
     expect(parentsToCandidates.size).toEqual(3);
@@ -294,9 +307,9 @@ describe('with ROMs with headers', () => {
     candidateWithTwoRoms.forEach((candidate) => {
       expect(candidate.getRomsWithFiles()).toHaveLength(2);
       const candidateWithTwoRomsOutputOne = candidate.getRomsWithFiles()[0].getOutputFile();
-      expect(candidateWithTwoRomsOutputOne.getFilePath()).toEqual('game with two ROMs.7z'); // respected DAT and input extension
+      expect(candidateWithTwoRomsOutputOne.getFilePath()).toEqual('game with two ROMs (parent).7z'); // respected DAT and input extension
       const candidateWithTwoRomsOutputTwo = candidate.getRomsWithFiles()[1].getOutputFile();
-      expect(candidateWithTwoRomsOutputTwo.getFilePath()).toEqual('game with two ROMs.7z'); // respected DAT and input extension
+      expect(candidateWithTwoRomsOutputTwo.getFilePath()).toEqual('game with two ROMs (parent).7z'); // respected DAT and input extension
     });
   });
 });
@@ -314,7 +327,7 @@ describe('with different input files for every game ROM', () => {
     const options = new Options({ commands: ['copy', command] });
 
     // When
-    const parentsToCandidates = await candidateGenerator(options, datWithThreeGames, filePromises);
+    const parentsToCandidates = await candidateGenerator(options, datWithFourGames, filePromises);
 
     // Then there should still be 3 parents, with the input -> output:
     //  (nothing) -> game with no ROMs
@@ -344,7 +357,7 @@ describe('with different input files for every game ROM', () => {
     const options = new Options({ commands: ['copy'] });
 
     // When
-    const parentsToCandidates = await candidateGenerator(options, datWithThreeGames, filePromises);
+    const parentsToCandidates = await candidateGenerator(options, datWithFourGames, filePromises);
 
     // Then there should still be 3 parents, with the input -> output:
     //  (nothing) -> game with no ROMs
@@ -412,7 +425,8 @@ describe.each(['copy', 'move'])('prefer input files from the same archive when r
   });
 
   describe.each([
-    gameWithTwoRoms,
+    gameWithTwoRomsParent,
+    gameWithTwoRomsClone,
     gameWithDuplicateRoms,
   ])('game: %s', (datGame) => {
     const dat = new DAT(new Header(), [datGame]);

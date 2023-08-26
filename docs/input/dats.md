@@ -12,7 +12,7 @@ DATs are catalogs of every known ROM that exists per game system, complete with 
 
 These DATs help `igir` distinguish known ROM files in input directories from other files. Because DATs typically contain the complete catalog for a console, `igir` also uses them to generate reports for you on what ROMs were found and which are missing.
 
-`igir` will look for `.dat` files automatically in your working directory, but you can specify a specific location with the `--dat` option:
+`igir` will look for `.dat` files automatically in your working directory, but you can specify a specific location with the `--dat <path>` option:
 
 ```shell
 igir [commands..] --dat dats/*.dat --input <input>
@@ -44,7 +44,7 @@ igir [commands..] --dat No-Intro*.zip --input <input>
 
 1. Go to the No-Intro DAT-o-MATIC [daily download page](https://datomatic.no-intro.org/index.php?page=download&s=64&op=daily)
 2. Select the "P/C XML" dropdown option (as opposed to "standard DAT") and download the `.zip` to wherever you store your ROMs
-3. Every time you run `igir`, specify the `.zip` file you downloaded with the `--dat` option:
+3. Every time you run `igir`, specify the `.zip` file you downloaded with the `--dat <path>` option:
 
   ```shell
   igir [commands..] --dat "No-Intro*.zip" --input <input>
@@ -85,19 +85,19 @@ Being able to know that many releases are actually the same game gives `igir` th
 
 Fixdats help you find files missing from your collection, and they can be used to generate a collection of those files once you've found them. This sub-collection of files can then be merged back into your main collection.
 
-The `--fixdat` option creates a [Logiqx XML](http://www.logiqx.com/DatFAQs/) DAT for every input DAT (`--dat`) that is missing ROMs. When writing (`copy`, `move`, and `symlink` commands), the fixdat will be written to the output directory, otherwise it will be written to the working directory.
+The `--fixdat` option creates a [Logiqx XML](http://www.logiqx.com/DatFAQs/) DAT for every input DAT (the `--dat <path>` option) that is missing ROMs. When writing (`copy`, `move`, and `symlink` commands), the fixdat will be written to the output directory, otherwise it will be written to the working directory.
 
 For example:
 
 === ":simple-windowsxp: Windows"
 
     ```batch
-    igir.exe copy zip ^
+    igir copy zip ^
       --dat "Nintendo - Game Boy.dat" ^
       --dat "Nintendo - Game Boy Advance.dat" ^
       --dat "Nintendo - Game Boy Color.dat" ^
-      --input ROMs/ ^
-      --output ROMs-Sorted/ ^
+      --input ROMs\ ^
+      --output ROMs-Sorted\ ^
       --fixdat
     ```
 

@@ -20,7 +20,7 @@ import Module from './module.js';
  * This class may be run concurrently with other classes.
  */
 export default class CandidateWriter extends Module {
-  private static readonly THREAD_SEMAPHORE = new Semaphore(1);
+  private static readonly THREAD_SEMAPHORE = new Semaphore(Number.MAX_SAFE_INTEGER);
 
   // WARN(cemmer): there is an undocumented semaphore max value that can be used, the full
   //  4,700,372,992 bytes of a DVD+R will cause runExclusive() to never run or return.
@@ -37,7 +37,7 @@ export default class CandidateWriter extends Module {
     this.options = options;
 
     // This will be the same value globally, but we can't know the value at file import time
-    if (CandidateWriter.THREAD_SEMAPHORE.getValue() !== options.getWriterThreads()) {
+    if (options.getWriterThreads() < CandidateWriter.THREAD_SEMAPHORE.getValue()) {
       CandidateWriter.THREAD_SEMAPHORE.setValue(options.getWriterThreads());
     }
   }
@@ -139,7 +139,7 @@ export default class CandidateWriter extends Module {
       .map((romWithFiles) => [
         romWithFiles.getInputFile(),
         romWithFiles.getOutputFile() as ArchiveEntry<Zip>,
-      ]) as [File, ArchiveEntry<Zip>][];
+      ]) satisfies [File, ArchiveEntry<Zip>][];
     if (!inputToOutputZipEntries.length) {
       this.progressBar.logTrace(`${dat.getNameShort()}: ${releaseCandidate.getName()}: no zip archives to write`);
       return;
@@ -338,6 +338,7 @@ export default class CandidateWriter extends Module {
       const writtenTest = await this.testWrittenRaw(dat, outputFilePath, outputRomFile);
       if (writtenTest) {
         this.progressBar.logError(`${dat.getNameShort()}: ${releaseCandidate.getName()}: written file ${writtenTest}: ${outputFilePath}`);
+        return;
       }
     }
     this.enqueueFileDeletion(inputRomFile);
@@ -455,6 +456,7 @@ export default class CandidateWriter extends Module {
       await fsPoly.symlink(sourcePath, targetPath);
     } catch (e) {
       this.progressBar.logError(`${dat.getNameShort()}: ${inputRomFile.toString()}: failed to symlink ${sourcePath} to ${targetPath}: ${e}`);
+      return;
     }
 
     if (this.options.shouldTest()) {

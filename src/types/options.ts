@@ -13,6 +13,7 @@ import util from 'util';
 
 import LogLevel from '../console/logLevel.js';
 import Constants from '../constants.js';
+import ArrayPoly from '../polyfill/arrayPoly.js';
 import fsPoly, { FsWalkCallback } from '../polyfill/fsPoly.js';
 import URLPoly from '../polyfill/urlPoly.js';
 import File from './files/file.js';
@@ -369,7 +370,7 @@ export default class Options implements OptionsProps {
 
   // Commands
 
-  private getCommands(): string[] {
+  getCommands(): string[] {
     return this.commands.map((c) => c.toLowerCase());
   }
 
@@ -473,7 +474,7 @@ export default class Options implements OptionsProps {
     // Limit to scanning one glob pattern at a time to keep memory in check
     const uniqueGlobPatterns = globPatterns
       .filter((pattern) => pattern)
-      .filter((pattern, idx, patterns) => patterns.indexOf(pattern) === idx);
+      .reduce(ArrayPoly.reduceUnique(), []);
     const globbedPaths = [];
     /* eslint-disable no-await-in-loop */
     for (let i = 0; i < uniqueGlobPatterns.length; i += 1) {
@@ -508,7 +509,7 @@ export default class Options implements OptionsProps {
 
     // Remove duplicates
     return globbedFiles
-      .filter((inputPath, idx, arr) => arr.indexOf(inputPath) === idx);
+      .reduce(ArrayPoly.reduceUnique(), []);
   }
 
   private static async globPath(
@@ -894,7 +895,7 @@ export default class Options implements OptionsProps {
     const symbolMatches = reportOutput.match(/%([a-zA-Z])(\1|o)*/g);
     if (symbolMatches) {
       symbolMatches
-        .filter((match, idx, matches) => matches.indexOf(match) === idx)
+        .reduce(ArrayPoly.reduceUnique(), [])
         .forEach((match) => {
           const val = moment().format(match.replace(/^%/, ''));
           reportOutput = reportOutput.replace(match, val);
@@ -930,6 +931,6 @@ export default class Options implements OptionsProps {
   static filterUniqueUpper(array: string[]): string[] {
     return array
       .map((value) => value.toUpperCase())
-      .filter((val, idx, arr) => arr.indexOf(val) === idx);
+      .reduce(ArrayPoly.reduceUnique(), []);
   }
 }

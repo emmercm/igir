@@ -119,11 +119,22 @@ export default class ProgressBarCLI extends ProgressBar {
       await ProgressBarCLI.RENDER_MUTEX.runExclusive(() => {
         // Dequeue all log messages
         if (ProgressBarCLI.multiBar && ProgressBarCLI.logQueue.length) {
+          const consoleWidth = ConsolePoly.consoleWidth();
           const logMessage = ProgressBarCLI.logQueue
-            // https://github.com/npkgz/cli-progress/issues/142
-            .map((msg) => wrapAnsi(msg, ConsolePoly.consoleWidth()))
-            // If there are leading or trailing newlines, then blank the entire row to overwrite
-            .map((msg) => msg.replace(/^\n|\n$/g, () => `\n${' '.repeat(ConsolePoly.consoleWidth())}`))
+            // Wrapping is broken: https://github.com/npkgz/cli-progress/issues/142
+            .map((msg, msgIdx) => wrapAnsi(msg, consoleWidth)
+              // ...and if we manually wrap lines, we also need to deal with overwriting existing
+              //  progress bar output.
+              .split('\n')
+              .map((line, lineIdx) => {
+                if (msgIdx === 0 && lineIdx === 0) {
+                  // The very first line shouldn't need padding, the progress bar renderer should
+                  //  be calling `process.stdout.clearLine()`.
+                  return line;
+                }
+                return line.padEnd(consoleWidth, ' ');
+              })
+              .join('\n'))
             .join('\n');
           ProgressBarCLI.multiBar.log(`${logMessage}\n`);
           ProgressBarCLI.logQueue = [];
@@ -290,7 +301,8 @@ export default class ProgressBarCLI extends ProgressBar {
     }
 
     ProgressBarCLI.multiBar?.remove(this.singleBarFormatted.getSingleBar());
-    // Forcing a render shouldn't be necessary
+    // NOTE(cemmer): forcing a render shouldn't be necessary, BUT if nothing is rendered after
+    // deletion, then this deleted progress bar won't be overwritten!
 
     ProgressBarCLI.progressBars = ProgressBarCLI.progressBars
       .filter((singleBar) => singleBar.singleBarFormatted !== this.singleBarFormatted);

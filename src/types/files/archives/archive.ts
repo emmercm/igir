@@ -1,6 +1,5 @@
 import path from 'path';
 import { Readable } from 'stream';
-import { Memoize } from 'typescript-memoize';
 
 import Constants from '../../../constants.js';
 import fsPoly from '../../../polyfill/fsPoly.js';
@@ -20,9 +19,12 @@ export default abstract class Archive {
    * Forget that the current file is an archive and treat it as a raw file, such that we can
    *  compute its size and CRC.
    */
-  @Memoize()
   async asRawFile(): Promise<File> {
     return File.fileOf(this.getFilePath());
+  }
+
+  async asRawFileWithoutCrc(): Promise<File> {
+    return File.fileOf(this.getFilePath(), undefined, '');
   }
 
   getFilePath(): string {
