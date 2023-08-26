@@ -39,11 +39,7 @@ export default class Tar extends Archive {
     writeStream.on('entry', (entry) => {
       let crc: number | undefined;
       entry.on('data', (chunk) => {
-        if (!crc) {
-          crc = crc32(chunk);
-        } else {
-          crc = crc32(chunk, crc);
-        }
+        crc = crc32(chunk, crc);
       });
       entry.on('end', () => {
         archiveEntryPromises.push(ArchiveEntry.entryOf(
@@ -51,6 +47,7 @@ export default class Tar extends Archive {
           entry.path,
           entry.size ?? 0,
           (crc ?? 0).toString(16),
+          // TODO(cemmer): MD5, SHA1
         ));
       });
     });

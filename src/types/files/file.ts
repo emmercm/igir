@@ -1,4 +1,5 @@
 import { crc32 } from '@node-rs/crc32';
+import crypto from 'crypto';
 import fs, { OpenMode, PathLike } from 'fs';
 import https from 'https';
 import path from 'path';
@@ -14,10 +15,15 @@ import Cache from '../cache.js';
 import Patch from '../patches/patch.js';
 import ROMHeader from './romHeader.js';
 
-export interface FileProps {
+export interface FileChecksums {
+  crc32: string,
+  md5?: string,
+  sha1?: string,
+}
+
+export interface FileProps extends FileChecksums {
   readonly filePath: string;
   readonly size: number;
-  readonly crc32: string;
   readonly crc32WithoutHeader: string;
   readonly symlinkSource?: string;
   readonly fileHeader?: ROMHeader;
@@ -25,7 +31,7 @@ export interface FileProps {
 }
 
 export default class File implements FileProps {
-  private static readonly crc32Cache = new Cache<string, string>(
+  private static readonly checksumCache = new Cache<string, FileChecksums>(
     Constants.FILE_CHECKSUM_CACHE_SIZE,
   );
 
@@ -37,6 +43,10 @@ export default class File implements FileProps {
 
   readonly crc32WithoutHeader: string;
 
+  readonly md5?: string;
+
+  readonly sha1?: string;
+
   readonly symlinkSource?: string;
 
   readonly fileHeader?: ROMHeader;
@@ -47,6 +57,8 @@ export default class File implements FileProps {
     this.filePath = path.normalize(fileProps.filePath);
     this.size = fileProps.size;
     this.crc32 = fileProps.crc32.toLowerCase().padStart(8, '0');
+    this.md5 = fileProps.md5;
+    this.sha1 = fileProps.sha1;
     this.crc32WithoutHeader = fileProps.crc32WithoutHeader.toLowerCase().padStart(8, '0');
     this.symlinkSource = fileProps.symlinkSource;
     this.fileHeader = fileProps.fileHeader;
@@ -57,23 +69,32 @@ export default class File implements FileProps {
     filePath: string,
     size?: number,
     crc?: string,
+    md5?: string,
+    sha1?: string,
     fileHeader?: ROMHeader,
     patch?: Patch,
   ): Promise<File> {
     let finalSize = size;
     let finalCrc = crc;
     let finalCrcWithoutHeader;
+    let finalMd5 = md5;
+    let finalSha1 = sha1;
     let finalSymlinkSource;
     if (await fsPoly.exists(filePath)) {
       const stat = await util.promisify(fs.stat)(filePath);
       finalSize = finalSize ?? stat.size;
-      finalCrc = finalCrc ?? await this.calculateCrc32(filePath);
+      if (finalCrc === undefined) {
+        const checksums = await this.calculateChecksums(filePath);
+        finalCrc = checksums.crc32;
+        finalMd5 = checksums.md5;
+        finalSha1 = checksums.sha1;
+      }
       if (await fsPoly.isSymlink(filePath)) {
         finalSymlinkSource = await fsPoly.readlink(filePath);
       }
       if (fileHeader) {
         finalCrcWithoutHeader = finalCrcWithoutHeader
-          ?? await this.calculateCrc32(filePath, fileHeader);
+          ?? (await this.calculateChecksums(filePath, fileHeader)).crc32;
       }
     } else {
       finalSize = finalSize ?? 0;
@@ -86,6 +107,8 @@ export default class File implements FileProps {
       size: finalSize,
       crc32: finalCrc,
       crc32WithoutHeader: finalCrcWithoutHeader,
+      md5: finalMd5,
+      sha1: finalSha1,
       symlinkSource: finalSymlinkSource,
       fileHeader,
       patch,
@@ -118,6 +141,14 @@ export default class File implements FileProps {
     return this.crc32WithoutHeader;
   }
 
+  getMd5(): string | undefined {
+    return this.md5;
+  }
+
+  getSha1(): string | undefined {
+    return this.sha1;
+  }
+
   protected getSymlinkSource(): string | undefined {
     return this.symlinkSource;
   }
@@ -143,29 +174,40 @@ export default class File implements FileProps {
 
   // Other functions
 
-  protected static async calculateCrc32(
+  protected static async calculateChecksums(
     localFile: string,
     fileHeader?: ROMHeader,
-  ): Promise<string> {
+  ): Promise<FileChecksums> {
     const start = fileHeader?.getDataOffsetBytes() ?? 0;
 
     const cacheKey = `${localFile}|${start}`;
-    return File.crc32Cache.getOrCompute(cacheKey, async () => new Promise((resolve, reject) => {
+    return File.checksumCache.getOrCompute(cacheKey, async () => new Promise((resolve, reject) => {
       const stream = fs.createReadStream(localFile, {
         start,
         highWaterMark: Constants.FILE_READING_CHUNK_SIZE,
       });
 
       let crc: number | undefined;
+      // TODO(cemmer): selectively calculate MD5 and SHA1
+      // TODO(cemmer): no need to calculate if a header has been provided?
+      const md5 = crypto.createHash('md5');
+      const sha1 = crypto.createHash('sha1');
+
       stream.on('data', (chunk) => {
-        if (!crc) {
-          crc = crc32(chunk);
-        } else {
-          crc = crc32(chunk, crc);
+        crc = crc32(chunk, crc);
+        if (md5) {
+          md5.update(chunk);
+        }
+        if (sha1) {
+          sha1.update(chunk);
         }
       });
       stream.on('end', () => {
-        resolve((crc ?? 0).toString(16));
+        resolve({
+          crc32: (crc ?? 0).toString(16),
+          md5: md5 !== undefined ? md5.digest('hex') : undefined,
+          sha1: sha1 !== undefined ? sha1.digest('hex') : undefined,
+        });
       });
 
       stream.on('error', reject);
@@ -357,6 +399,8 @@ export default class File implements FileProps {
       this.getFilePath(),
       this.getSize(),
       this.getCrc32(),
+      this.getMd5(),
+      this.getSha1(),
       fileHeader,
       undefined, // don't allow a patch
     );

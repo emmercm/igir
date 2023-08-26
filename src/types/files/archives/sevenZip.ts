@@ -80,6 +80,7 @@ export default class SevenZip extends Archive {
         result.name,
         parseInt(result.size, 10),
         result.crc,
+        // TODO(cemmer): MD5, SHA1
       )));
   }
 

@@ -144,6 +144,8 @@ export default class CandidatePatchGenerator extends Module {
                   : outputFile.getEntryPath(),
                 patch.getSizeAfter() ?? 0,
                 patch.getCrcAfter() ?? '00000000',
+                undefined,
+                undefined,
                 outputFile.getFileHeader(),
                 outputFile.getPatch(),
               );
@@ -153,6 +155,8 @@ export default class CandidatePatchGenerator extends Module {
                 path.join(dirName, extractedFileName),
                 patch.getSizeAfter() ?? 0,
                 patch.getCrcAfter() ?? '00000000',
+                undefined,
+                undefined,
                 outputFile.getFileHeader(),
                 outputFile.getPatch(),
               );

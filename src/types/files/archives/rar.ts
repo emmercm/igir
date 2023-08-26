@@ -28,6 +28,7 @@ export default class Rar extends Archive {
         fileHeader.name,
         fileHeader.unpSize,
         fileHeader.crc.toString(16),
+        // TODO(cemmer): MD5, SHA1
       )));
   }
 

@@ -29,6 +29,8 @@ export default class ArchiveEntry<A extends Archive> extends File implements Arc
     entryPath: string,
     size: number,
     crc: string,
+    md5?: string,
+    sha1?: string,
     fileHeader?: ROMHeader,
     patch?: Patch,
   ): Promise<ArchiveEntry<A>> {
@@ -39,11 +41,11 @@ export default class ArchiveEntry<A extends Archive> extends File implements Arc
         finalSymlinkSource = await fsPoly.readlink(archive.getFilePath());
       }
       if (fileHeader) {
-        finalCrcWithoutHeader = finalCrcWithoutHeader ?? await this.extractEntryToTempFile(
+        finalCrcWithoutHeader = (await this.extractEntryToTempFile(
           archive,
           entryPath,
-          async (localFile) => this.calculateCrc32(localFile, fileHeader),
-        );
+          async (localFile) => this.calculateChecksums(localFile, fileHeader),
+        )).crc32;
       }
     }
     finalCrcWithoutHeader = finalCrcWithoutHeader ?? crc;
@@ -127,15 +129,11 @@ export default class ArchiveEntry<A extends Archive> extends File implements Arc
     });
   }
 
-  async withEntryPath(entryPath: string): Promise<ArchiveEntry<A>> {
-    return ArchiveEntry.entryOf(
-      this.getArchive(),
+  withEntryPath(entryPath: string): ArchiveEntry<A> {
+    return new ArchiveEntry({
+      ...this,
       entryPath,
-      this.getSize(),
-      this.getCrc32(),
-      this.getFileHeader(),
-      this.getPatch(),
-    );
+    });
   }
 
   async withFileHeader(fileHeader: ROMHeader): Promise<ArchiveEntry<A>> {
@@ -152,6 +150,8 @@ export default class ArchiveEntry<A extends Archive> extends File implements Arc
       this.getEntryPath(),
       this.getSize(),
       this.getCrc32(),
+      this.getMd5(),
+      this.getSha1(),
       fileHeader,
       undefined, // don't allow a patch
     );

@@ -38,6 +38,7 @@ export default class Zip extends Archive {
         entryFile.path,
         entryFile.uncompressedSize,
         entryFile.crc32.toString(16),
+        // TODO(cemmer): MD5, SHA1
       )));
   }
 

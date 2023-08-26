@@ -205,9 +205,9 @@ describe('with ROMs with headers', () => {
   const twoSevenZip = new SevenZip('two.7z');
   const filePromises = [
     // Extension doesn't change with header removal
-    File.fileOf('one.rom', 1, '12345678', ROMHeader.headerFromFilename('dummy.nes')),
+    File.fileOf('one.rom', 1, '12345678', undefined, undefined, ROMHeader.headerFromFilename('dummy.nes')),
     // Extension does change with header removal
-    ArchiveEntry.entryOf(twoSevenZip, 'a.rom', 2, 'abcdef90', ROMHeader.headerFromFilename('dummy.smc')),
+    ArchiveEntry.entryOf(twoSevenZip, 'a.rom', 2, 'abcdef90', undefined, undefined, ROMHeader.headerFromFilename('dummy.smc')),
     // Doesn't have a header
     ArchiveEntry.entryOf(twoSevenZip, 'b.rom', 3, '09876543'),
   ];

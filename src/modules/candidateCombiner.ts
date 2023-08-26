@@ -39,7 +39,7 @@ export default class CandidateCombiner extends Module {
 
     const game = CandidateCombiner.buildGame(dat, parentsToCandidates);
     const parent = new Parent(game.getName(), [game]);
-    const releaseCandidate = await CandidateCombiner.buildReleaseCandidate(
+    const releaseCandidate = CandidateCombiner.buildReleaseCandidate(
       dat,
       game,
       parentsToCandidates,
@@ -71,15 +71,15 @@ export default class CandidateCombiner extends Module {
     });
   }
 
-  private static async buildReleaseCandidate(
+  private static buildReleaseCandidate(
     dat: DAT,
     game: Game,
     parentsToCandidates: Map<Parent, ReleaseCandidate[]>,
-  ): Promise<ReleaseCandidate> {
-    const romsWithFiles = await Promise.all([...parentsToCandidates.values()]
+  ): ReleaseCandidate {
+    const romsWithFiles = [...parentsToCandidates.values()]
       .flatMap((releaseCandidates) => releaseCandidates)
       .flatMap((releaseCandidate) => releaseCandidate.getRomsWithFiles()
-        .map(async (romWithFiles) => {
+        .map((romWithFiles) => {
           // If the output isn't an archive then it must have been excluded (e.g. --zip-exclude),
           //  don't manipulate it.
           const outputFile = romWithFiles.getOutputFile();
@@ -92,7 +92,7 @@ export default class CandidateCombiner extends Module {
 
           // If the game has multiple ROMs, then group them in a folder in the archive
           if (releaseCandidate.getGame().getRoms().length > 1) {
-            outputEntry = await outputEntry.withEntryPath(path.join(
+            outputEntry = outputEntry.withEntryPath(path.join(
               releaseCandidate.getGame().getName(),
               outputEntry.getEntryPath(),
             ));
@@ -103,7 +103,7 @@ export default class CandidateCombiner extends Module {
             romWithFiles.getInputFile(),
             outputEntry,
           );
-        })));
+        }));
 
     return new ReleaseCandidate(game, undefined, romsWithFiles);
   }
