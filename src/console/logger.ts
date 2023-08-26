@@ -79,7 +79,7 @@ export default class Logger {
     const chalkFunc = chalkFuncs[logLevel];
 
     const loggerTime = this.logLevel <= LogLevel.TRACE ? `[${moment().format('HH:mm:ss.SSS')}] ` : '';
-    const levelPrefix = chalkFunc(`${LogLevel[logLevel]}:${' '.repeat(Math.max(5 - LogLevel[logLevel].length, 0))} `);
+    const levelPrefix = `${chalkFunc(LogLevel[logLevel])}:${' '.repeat(Math.max(5 - LogLevel[logLevel].length, 0))} `;
     const loggerPrefix = this.logLevel <= LogLevel.INFO && this.loggerPrefix ? `${this.loggerPrefix}: ` : '';
 
     return message
