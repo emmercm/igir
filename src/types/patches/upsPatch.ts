@@ -81,7 +81,6 @@ export default class UPSPatch extends Patch {
     sourceFile: FilePoly,
     targetFile: FilePoly,
   ): Promise<void> {
-    /* eslint-disable no-await-in-loop, no-bitwise */
     while (patchFile.getPosition() < patchFile.getSize() - 12) {
       const relativeOffset = await Patch.readUpsUint(patchFile);
       sourceFile.skipNext(relativeOffset);

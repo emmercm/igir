@@ -30,7 +30,6 @@ export default class SingleBarFormatted {
   constructor(multiBar: MultiBar, initialTotal: number, initialPayload: ProgressBarPayload) {
     this.multiBar = multiBar;
     this.singleBar = this.multiBar.create(initialTotal, 0, initialPayload, {
-      /* eslint-disable-next-line arrow-body-style */
       format: (options, params, payload: ProgressBarPayload): string => {
         this.lastOutput = `${`${SingleBarFormatted.getSymbol(payload)} ${SingleBarFormatted.getName(payload)}`.trim()} | ${this.getProgress(options, params, payload)}`.trim();
         return this.lastOutput;

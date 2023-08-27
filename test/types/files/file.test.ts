@@ -113,7 +113,6 @@ describe('copyToTempFile', () => {
     expect(raws).toHaveLength(10);
 
     const temp = await fsPoly.mkdtemp(Constants.GLOBAL_TEMP_DIR);
-    /* eslint-disable no-await-in-loop */
     for (let i = 0; i < raws.length; i += 1) {
       const raw = raws[i];
       await raw.extractToTempFile(async (tempFile) => {
@@ -133,7 +132,6 @@ describe('createReadStream', () => {
     expect(raws).toHaveLength(9);
 
     const temp = await fsPoly.mkdtemp(Constants.GLOBAL_TEMP_DIR);
-    /* eslint-disable no-await-in-loop */
     for (let i = 0; i < raws.length; i += 1) {
       const raw = raws[i];
       await raw.createReadStream(async (stream) => {

@@ -75,7 +75,6 @@ export default class CandidatePatchGenerator extends Module {
         ];
 
         // Possibly generate multiple new Parents for the ReleaseCandidates
-        /* eslint-disable no-await-in-loop */
         for (let i = 0; i < releaseCandidates.length; i += 1) {
           const releaseCandidate = releaseCandidates[i];
           if (seenGames.has(releaseCandidate.getGame())) {

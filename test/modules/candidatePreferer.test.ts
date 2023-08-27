@@ -108,7 +108,6 @@ async function buildReleaseCandidatesWithRegionLanguage(
 
       /** {@see CandidateGenerator} */
       const releaseCandidateReleases = releases.length ? releases : [undefined];
-      /* eslint-disable no-await-in-loop */
       for (let k = 0; k < releaseCandidateReleases.length; k += 1) {
         const release = releaseCandidateReleases[k];
         releaseCandidates.push(new ReleaseCandidate(

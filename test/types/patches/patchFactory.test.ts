@@ -8,7 +8,6 @@ describe('patchFromFilename', () => {
       patch: ['./test/fixtures/roms'],
     }).scanPatchFilesWithoutExclusions();
 
-    /* eslint-disable no-await-in-loop */
     for (let i = 0; i < inputPatchFilePaths.length; i += 1) {
       const inputPatchFile = await File.fileOf(inputPatchFilePaths[i]);
       const patch = await PatchFactory.patchFromFilename(inputPatchFile);
@@ -21,7 +20,6 @@ describe('patchFromFilename', () => {
       patch: ['./test/fixtures/patches'],
     }).scanPatchFilesWithoutExclusions();
 
-    /* eslint-disable no-await-in-loop */
     for (let i = 0; i < inputPatchFilePaths.length; i += 1) {
       const inputPatchFile = await File.fileOf(inputPatchFilePaths[i]);
       const patch = await PatchFactory.patchFromFilename(inputPatchFile);
@@ -36,7 +34,6 @@ describe('patchFromFileContents', () => {
       patch: ['./test/fixtures/roms'],
     }).scanPatchFilesWithoutExclusions();
 
-    /* eslint-disable no-await-in-loop */
     for (let i = 0; i < inputPatchFilePaths.length; i += 1) {
       const inputPatchFile = await File.fileOf(inputPatchFilePaths[i]);
       const patch = await PatchFactory.patchFromFileContents(inputPatchFile);
@@ -49,7 +46,6 @@ describe('patchFromFileContents', () => {
       patch: ['./test/fixtures/patches'],
     }).scanPatchFilesWithoutExclusions();
 
-    /* eslint-disable no-await-in-loop */
     for (let i = 0; i < inputPatchFilePaths.length; i += 1) {
       const inputPatchFile = await File.fileOf(inputPatchFilePaths[i]);
       const patch = await PatchFactory.patchFromFileContents(inputPatchFile);

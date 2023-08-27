@@ -84,7 +84,6 @@ export default class PPFPatch extends Patch {
     const targetFile = await FilePoly.fileFrom(outputRomPath, 'r+');
 
     try {
-      /* eslint-disable no-await-in-loop */
       while (!patchFile.isEOF()) {
         await PPFPatch.applyPatchBlock(patchFile, targetFile, header);
       }

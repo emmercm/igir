@@ -66,7 +66,6 @@ export default class APSGBAPatch extends Patch {
     sourceFile: FilePoly,
     targetFile: FilePoly,
   ): Promise<void> {
-    /* eslint-disable no-await-in-loop, no-bitwise */
     while (patchFile.getPosition() < patchFile.getSize()) {
       const offset = (await patchFile.readNext(4)).readUInt32LE();
       patchFile.skipNext(2); // CRC16 of original 64KiB block
