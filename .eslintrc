@@ -3,7 +3,8 @@
     "eslint:recommended",
     "plugin:@typescript-eslint/recommended",
     "airbnb-base",
-    "airbnb-typescript/base"
+    "airbnb-typescript/base",
+    "plugin:jsdoc/recommended-typescript-error"
   ],
   "plugins": [
     "@typescript-eslint",
@@ -52,6 +53,22 @@
     "@typescript-eslint/no-floating-promises": ["error"],
     // Require any function or method that returns a Promise to be marked async.
     "@typescript-eslint/promise-function-async": ["error"],
+
+    // ***** JSDoc *****
+    "jsdoc/require-jsdoc": ["error", {
+      // Disable some excessive rules
+      "checkConstructors": false,
+      "checkGetters": false,
+      "checkSetters": false,
+      // Require on public parts of classes
+      "publicOnly": true,
+      "require": {
+        "ClassDeclaration": true,
+        "MethodDefinition": true
+      },
+      // Don't create missing doc blocks (yet)
+      "enableFixer": false
+    }],
 
     // ***** Misc *****
     "@typescript-eslint/prefer-nullish-coalescing": "error",
