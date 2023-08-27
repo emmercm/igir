@@ -88,7 +88,6 @@ export default class APSN64Patch extends Patch {
   }
 
   private static async applyPatch(patchFile: FilePoly, targetFile: FilePoly): Promise<void> {
-    /* eslint-disable no-await-in-loop, no-bitwise */
     while (patchFile.getPosition() < patchFile.getSize()) {
       const offset = (await patchFile.readNext(4)).readUInt32LE();
       const size = (await patchFile.readNext(1)).readUInt8();

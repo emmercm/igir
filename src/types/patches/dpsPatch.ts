@@ -57,7 +57,6 @@ export default class DPSPatch extends Patch {
     sourceFile: FilePoly,
     targetFile: FilePoly,
   ): Promise<void> {
-    /* eslint-disable no-await-in-loop, no-bitwise */
     while (patchFile.getPosition() < patchFile.getSize()) {
       const mode = (await patchFile.readNext(1)).readUInt8();
       const outputOffset = (await patchFile.readNext(4)).readUInt32LE();

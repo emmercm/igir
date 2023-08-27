@@ -14,7 +14,6 @@ import UpdateChecker from './src/modules/updateChecker.js';
 // Monkey-patch 'fs' to help prevent Windows EMFILE errors
 gracefulFs.gracefulify(realFs);
 
-/* eslint-disable-next-line @typescript-eslint/no-floating-promises */
 (async (): Promise<void> => {
   const logger = new Logger();
   logger.printHeader();
@@ -38,7 +37,6 @@ gracefulFs.gracefulify(realFs);
     }
     logger.setLogLevel(options.getLogLevel());
 
-    // eslint-disable-next-line @typescript-eslint/no-floating-promises
     new UpdateChecker(logger).check();
 
     await new Igir(options, logger).main();

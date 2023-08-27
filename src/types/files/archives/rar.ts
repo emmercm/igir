@@ -48,7 +48,6 @@ export default class Rar extends Archive {
       });
       // For whatever reason, the library author decided to delay extraction until the file is
       // iterated, so we have to execute this expression, but can throw away the results
-      /* eslint-disable @typescript-eslint/no-unused-expressions */
       [...rar.extract({
         files: [entryPath.replace(/[\\/]/g, '/')],
       }).files];

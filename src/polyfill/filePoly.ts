@@ -48,7 +48,6 @@ export default class FilePoly {
 
     const write = await this.fileFrom(pathLike, 'wx');
     let written = 0;
-    /* eslint-disable no-await-in-loop */
     while (written < size) {
       const buffer = Buffer.alloc(Math.min(size - written, Constants.FILE_READING_CHUNK_SIZE));
       await write.write(buffer);

@@ -61,7 +61,6 @@ export default class CandidatePreferer extends Module {
   ): Promise<Map<Parent, ReleaseCandidate[]>> {
     const output = new Map<Parent, ReleaseCandidate[]>();
 
-    /* eslint-disable no-await-in-loop */
     for (let i = 0; i < [...parentsToCandidates.entries()].length; i += 1) {
       const [parent, releaseCandidates] = [...parentsToCandidates.entries()][i];
       await this.progressBar.incrementProgress();

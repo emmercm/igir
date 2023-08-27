@@ -1258,7 +1258,6 @@ describe('symlink', () => {
       // And files were written
       const outputFilesBefore = await walkAndStat(outputTemp);
       expect(outputFilesBefore).not.toHaveLength(0);
-      /* eslint-disable no-await-in-loop */
       for (let i = 0; i < outputFilesBefore.length; i += 1) {
         const [outputPath, stats] = outputFilesBefore[i];
         expect(stats.isSymbolicLink()).toEqual(true);
@@ -1289,7 +1288,6 @@ describe('symlink', () => {
       // And files were written
       const outputFilesBefore = await walkAndStat(outputTemp);
       expect(outputFilesBefore).not.toHaveLength(0);
-      /* eslint-disable no-await-in-loop */
       for (let i = 0; i < outputFilesBefore.length; i += 1) {
         const [outputPath, stats] = outputFilesBefore[i];
         expect(stats.isSymbolicLink()).toEqual(true);
@@ -1307,7 +1305,6 @@ describe('symlink', () => {
       expect(outputFilesAfter.map((pair) => pair[0]))
         .toEqual(outputFilesBefore.map((pair) => pair[0]));
       expect(outputFilesAfter).not.toEqual(outputFilesBefore);
-      /* eslint-disable no-await-in-loop */
       for (let i = 0; i < outputFilesAfter.length; i += 1) {
         const [outputPath, stats] = outputFilesAfter[i];
         expect(stats.isSymbolicLink()).toEqual(true);
@@ -1331,7 +1328,6 @@ describe('symlink', () => {
       // Then files were written
       const outputFilesBefore = await walkAndStat(outputTemp);
       expect(outputFilesBefore).not.toHaveLength(0);
-      /* eslint-disable no-await-in-loop */
       for (let i = 0; i < outputFilesBefore.length; i += 1) {
         const [outputPath, stats] = outputFilesBefore[i];
         expect(stats.isSymbolicLink()).toEqual(true);

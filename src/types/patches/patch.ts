@@ -57,7 +57,6 @@ export default abstract class Patch {
     let data = 0;
     let shift = 1;
 
-    /* eslint-disable no-await-in-loop, no-bitwise */
     while (!fp.isEOF()) {
       const x = (await fp.readNext(1)).readUInt8();
       data += (x & 0x7f) * shift; // drop the left-most bit
@@ -74,7 +73,6 @@ export default abstract class Patch {
   static async readVcdiffUintFromFile(fp: FilePoly): Promise<number> {
     let num = 0;
 
-    /* eslint-disable no-await-in-loop, no-bitwise */
     while (!fp.isEOF()) {
       const bits = (await fp.readNext(1)).readUInt8();
       num = (num << 7) + (bits & 0x7f);
