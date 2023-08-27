@@ -73,7 +73,6 @@ export default class DirectoryCleaner extends Module {
 
   private async trashOrDelete(filePaths: string[]): Promise<void> {
     // Prefer recycling...
-    /* eslint-disable no-await-in-loop */
     for (let i = 0; i < filePaths.length; i += Constants.OUTPUT_CLEANER_BATCH_SIZE) {
       await trash(filePaths.slice(i, i + Constants.OUTPUT_CLEANER_BATCH_SIZE));
       await this.progressBar.update(i);

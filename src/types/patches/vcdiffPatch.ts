@@ -122,7 +122,6 @@ class VcdiffHeader {
     this.codeTable = codeTable;
   }
 
-  /* eslint-disable no-bitwise */
   static async fromFilePoly(patchFile: FilePoly): Promise<VcdiffHeader> {
     const header = await patchFile.readNext(3);
     if (!header.equals(VcdiffHeader.FILE_SIGNATURE)) {
@@ -206,7 +205,6 @@ class VcdiffWindow {
     this.copyAddressesData = copyAddressesData;
   }
 
-  /* eslint-disable no-bitwise */
   static async fromFilePoly(patchFile: FilePoly): Promise<VcdiffWindow> {
     const winIndicator = (await patchFile.readNext(1)).readUInt8();
     let sourceSegmentSize = 0;
@@ -324,7 +322,6 @@ class VcdiffWindow {
      * NOTE(cemmer): this has to write byte-by-byte because it may read-after-write with
      *  the target file.
      */
-    /* eslint-disable no-await-in-loop */
     for (let byteNum = 0; byteNum < size; byteNum += 1) {
       let byte: Buffer;
       if (addr < this.sourceSegmentSize) {
@@ -439,7 +436,6 @@ export default class VcdiffPatch extends Patch {
   }
 
   async createPatchedFile(inputRomFile: File, outputRomPath: string): Promise<void> {
-    /* eslint-disable no-bitwise */
     return this.getFile().extractToTempFilePoly('r', async (patchFile) => {
       const copyCache = new VcdiffCache();
       const header = await VcdiffHeader.fromFilePoly(patchFile);
@@ -485,7 +481,6 @@ export default class VcdiffPatch extends Patch {
   ): Promise<void> {
     let targetWindowPosition = 0;
 
-    /* eslint-disable no-await-in-loop */
     while (!patchFile.isEOF()) {
       const window = await VcdiffWindow.fromFilePoly(patchFile);
       copyCache.reset();

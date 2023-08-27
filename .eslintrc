@@ -49,8 +49,6 @@
     "@typescript-eslint/require-await": "error",
     // Enforce consistent returning of awaited values.
     "@typescript-eslint/return-await": "error",
-    // Require Promise-like statements to be handled appropriately.
-    "@typescript-eslint/no-floating-promises": ["error"],
     // Require any function or method that returns a Promise to be marked async.
     "@typescript-eslint/promise-function-async": ["error"],
 
@@ -70,8 +68,21 @@
       "enableFixer": false
     }],
 
-    // ***** Misc *****
+    // ***** Misc Disallows *****
     "@typescript-eslint/prefer-nullish-coalescing": "error",
-    "@typescript-eslint/prefer-readonly": "error"
+    "@typescript-eslint/prefer-readonly": "error",
+
+    // ***** Misc Allows *****
+    // There are a few places where this needs to be allowed, but only a few, so warn on them
+    "@typescript-eslint/no-floating-promises": "warn",
+    // There are a few places where this needs to be allowed, but only a few, so warn on them
+    "@typescript-eslint/no-unused-expressions": "warn",
+    // Significant parts of igir use async.js or mutexes & semaphores to intentlaly limit
+    // concurrent promises, so we want to respect those
+    "no-await-in-loop": "off",
+    // ROM patch file processors use a lot of bitwise operations for legitimate reasons
+    "no-bitwise": "off",
+    // Referencing ASCII characters <32 is entirely legitimate
+    "no-control-regex": "off"
   }
 }

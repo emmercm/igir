@@ -117,7 +117,6 @@ export default class SevenZip extends Archive {
             .replace(tempDir + path.sep, '')
             // Convert all non-ASCII characters into single character matches
             .replace(/\./g, '\\.')
-            // eslint-disable-next-line no-control-regex
             .replace(/[^\x00-\x7F]/g, '.');
           const regex = new RegExp(`^${pattern}$`);
           return entryPath.match(regex) !== null;

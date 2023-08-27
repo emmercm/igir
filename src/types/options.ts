@@ -468,7 +468,6 @@ export default class Options implements OptionsProps {
       .filter((pattern) => pattern)
       .reduce(ArrayPoly.reduceUnique(), []);
     const globbedPaths = [];
-    /* eslint-disable no-await-in-loop */
     for (let i = 0; i < uniqueGlobPatterns.length; i += 1) {
       globbedPaths.push(...(await this.globPath(
         uniqueGlobPatterns[i],

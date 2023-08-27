@@ -206,8 +206,7 @@ export default class ProgressBarCLI extends ProgressBar {
         return;
       }
 
-      // eslint-disable-next-line prefer-destructuring
-      this.payload.waitingMessage = this.waitingMessages[0];
+      [this.payload.waitingMessage] = this.waitingMessages;
       await this.render(true);
     }, timeout);
   }

@@ -35,7 +35,6 @@ export default class FsPoly {
     await this.mkdir(dest, { recursive: true });
     const entries = await util.promisify(fs.readdir)(src, { withFileTypes: true });
 
-    /* eslint-disable no-await-in-loop */
     for (let i = 0; i < entries.length; i += 1) {
       const entry = entries[i];
       const srcPath = path.join(src, entry.name);
@@ -153,14 +152,14 @@ export default class FsPoly {
   }
 
   static async mktemp(prefix: string): Promise<string> {
-    /* eslint-disable no-constant-condition, no-await-in-loop */
-    while (true) {
+    for (let i = 0; i < 10; i += 1) {
       const randomExtension = crypto.randomBytes(4).readUInt32LE().toString(36);
       const filePath = `${prefix.replace(/\.+$/, '')}.${randomExtension}`;
       if (!await this.exists(filePath)) {
         return filePath;
       }
     }
+    throw new Error('failed to generate non-existent temp file');
   }
 
   static async mv(oldPath: string, newPath: string, attempt = 1): Promise<void> {
@@ -346,7 +345,6 @@ export default class FsPoly {
 
     if (callback) callback(files.length);
 
-    /* eslint-disable no-await-in-loop */
     for (let i = 0; i < files.length; i += 1) {
       const file = path.join(pathLike.toString(), files[i]);
       if (await this.isDirectory(file)) {

@@ -35,7 +35,6 @@ describe('headerFromFileStream', () => {
     }), new ProgressBarFake()).scan();
     expect(headeredRoms).toHaveLength(6);
 
-    /* eslint-disable no-await-in-loop */
     for (let i = 0; i < headeredRoms.length; i += 1) {
       await headeredRoms[i].createReadStream(async (stream) => {
         const fileHeader = await ROMHeader.headerFromFileStream(stream);
@@ -50,7 +49,6 @@ describe('headerFromFileStream', () => {
     }), new ProgressBarFake()).scan();
     expect(headeredRoms.length).toBeGreaterThan(0);
 
-    /* eslint-disable no-await-in-loop */
     for (let i = 0; i < headeredRoms.length; i += 1) {
       await headeredRoms[i].createReadStream(async (stream) => {
         const fileHeader = await ROMHeader.headerFromFileStream(stream);

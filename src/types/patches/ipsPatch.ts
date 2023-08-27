@@ -64,7 +64,6 @@ export default class IPSPatch extends Patch {
     offsetSize: number,
     eofString: string,
   ): Promise<void> {
-    /* eslint-disable no-await-in-loop */
     while (!patchFile.isEOF()) {
       const offsetPeek = await patchFile.peekNext(eofString.length);
       if (offsetPeek === null || offsetPeek.toString() === eofString) {
