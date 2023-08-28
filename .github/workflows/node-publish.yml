@@ -21,11 +21,39 @@ jobs:
           node-version-file: '.nvmrc'
           cache: 'npm'
       - run: npm ci
-      - name: npm publish
+      - id: publish
+        name: npm publish
         # https://github.com/bitwarden/clients/pull/3272
         run: |
           echo 'registry="https://registry.npmjs.org/"' > ./.npmrc
           echo "//registry.npmjs.org/:_authToken=${NODE_AUTH_TOKEN}" >> ./.npmrc
           npm publish --regsitry=https://registry.npmjs.org/ --userconfig=./.npmrc --provenance --access public
+
+          {
+            echo "PACKAGE_NAME=$(jq --raw-output '.name' package.json)"
+            echo "PACKAGE_VERSION=$(jq --raw-output '.version' package.json)"
+          } >> "${GITHUB_OUTPUT}"
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      # Comment back on the PR that caused this push
+      - id: pr-finder
+        run: |
+          GIT_SHA=$(git rev-parse HEAD)
+          echo "${GIT_SHA}"
+          PR_NUMBER=$(curl -L \
+            --fail-with-body \
+            --silent \
+            -H "Accept: application/vnd.github+json" \
+            -H "X-GitHub-Api-Version: 2022-11-28" \
+            "https://api.github.com/repos/${GITHUB_REPOSITORY}/commits/${GIT_SHA}/pulls" \
+              | jq --raw-output '.[0].number')
+          echo "PR_NUMBER=${PR_NUMBER}" >> "${GITHUB_OUTPUT}"
+      - if: ${{ steps.release-drafter.outputs.id }}
+        uses: thollander/actions-comment-pull-request@v2
+        with:
+          message: |
+            ## :package: npm Publish
+            This pull request resulted in the npm release: [v${{ steps.publish.outputs.PACKAGE_VERSION }}](https://www.npmjs.com/package/${{ steps.publish.outputs.PACKAGE_NAME }}/v/${{ steps.publish.outputs.PACKAGE_VERSION }})
+          comment_tag: gh-release
+          pr_number: ${{ steps.pr-finder.outputs.PR_NUMBER }}
