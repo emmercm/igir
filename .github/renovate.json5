@@ -50,6 +50,12 @@
   //  so the `prPriority` option SHOULD be respected.
   rebaseWhen: 'conflicted', // separate PRs updating the lockfile are likely to conflict each other
 
+  // Allow some post-upgrade commands that may be used below
+  allowedPostUpgradeCommands: [
+    '^npm ci --ignore-scripts$',
+    '^npm run lint:fix$',
+  ],
+
   packageRules: [
     {
       matchCategories: ['node'],
