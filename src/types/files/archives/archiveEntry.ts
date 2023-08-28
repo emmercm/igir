@@ -28,7 +28,7 @@ export default class ArchiveEntry<A extends Archive> extends File implements Arc
     archive: A,
     entryPath: string,
     size: number,
-    crc: string,
+    crc?: string,
     md5?: string,
     sha1?: string,
     fileHeader?: ROMHeader,

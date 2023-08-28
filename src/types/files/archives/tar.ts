@@ -1,4 +1,3 @@
-import { crc32 } from '@node-rs/crc32';
 import fs from 'fs';
 import path from 'path';
 import tar from 'tar';
@@ -6,6 +5,7 @@ import { Memoize } from 'typescript-memoize';
 
 import Constants from '../../../constants.js';
 import fsPoly from '../../../polyfill/fsPoly.js';
+import FileChecksums from '../fileChecksums.js';
 import Archive from './archive.js';
 import ArchiveEntry from './archiveEntry.js';
 
@@ -36,20 +36,16 @@ export default class Tar extends Archive {
       highWaterMark: Constants.FILE_READING_CHUNK_SIZE,
     }).pipe(writeStream);
 
-    writeStream.on('entry', (entry) => {
-      let crc: number | undefined;
-      entry.on('data', (chunk) => {
-        crc = crc32(chunk, crc);
-      });
-      entry.on('end', () => {
-        archiveEntryPromises.push(ArchiveEntry.entryOf(
-          this,
-          entry.path,
-          entry.size ?? 0,
-          (crc ?? 0).toString(16),
-          // TODO(cemmer): MD5, SHA1
-        ));
-      });
+    writeStream.on('entry', async (entry) => {
+      const checksums = await FileChecksums.hashStream(entry, 0);
+      archiveEntryPromises.push(ArchiveEntry.entryOf(
+        this,
+        entry.path,
+        entry.size ?? 0,
+        checksums.crc32,
+        checksums.md5,
+        checksums.sha1,
+      ));
     });
 
     // Wait for the tar file to be closed

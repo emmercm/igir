@@ -31,7 +31,7 @@ export default abstract class Archive {
     return this.filePath;
   }
 
-  abstract getArchiveEntries(): Promise<ArchiveEntry<Archive>[]>;
+  abstract getArchiveEntries(checksumBitmask: number): Promise<ArchiveEntry<Archive>[]>;
 
   abstract extractEntryToFile(
     entryPath: string,

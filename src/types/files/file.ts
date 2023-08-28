@@ -1,5 +1,3 @@
-import { crc32 } from '@node-rs/crc32';
-import crypto from 'crypto';
 import fs, { OpenMode, PathLike } from 'fs';
 import https from 'https';
 import path from 'path';
@@ -13,25 +11,20 @@ import fsPoly from '../../polyfill/fsPoly.js';
 import URLPoly from '../../polyfill/urlPoly.js';
 import Cache from '../cache.js';
 import Patch from '../patches/patch.js';
+import FileChecksums, { ChecksumBitmask, ChecksumProps } from './fileChecksums.js';
 import ROMHeader from './romHeader.js';
 
-export interface FileChecksums {
-  crc32: string,
-  md5?: string,
-  sha1?: string,
-}
-
-export interface FileProps extends FileChecksums {
+export interface FileProps extends ChecksumProps {
   readonly filePath: string;
   readonly size: number;
-  readonly crc32WithoutHeader: string;
+  readonly crc32WithoutHeader?: string;
   readonly symlinkSource?: string;
   readonly fileHeader?: ROMHeader;
   readonly patch?: Patch;
 }
 
 export default class File implements FileProps {
-  private static readonly checksumCache = new Cache<string, FileChecksums>(
+  private static readonly checksumCache = new Cache<string, ChecksumProps>(
     Constants.FILE_CHECKSUM_CACHE_SIZE,
   );
 
@@ -56,10 +49,10 @@ export default class File implements FileProps {
   protected constructor(fileProps: FileProps) {
     this.filePath = path.normalize(fileProps.filePath);
     this.size = fileProps.size;
-    this.crc32 = fileProps.crc32.toLowerCase().padStart(8, '0');
+    this.crc32 = (fileProps.crc32 ?? '').toLowerCase().padStart(8, '0');
     this.md5 = fileProps.md5;
     this.sha1 = fileProps.sha1;
-    this.crc32WithoutHeader = fileProps.crc32WithoutHeader.toLowerCase().padStart(8, '0');
+    this.crc32WithoutHeader = (fileProps.crc32WithoutHeader ?? '').toLowerCase().padStart(8, '0');
     this.symlinkSource = fileProps.symlinkSource;
     this.fileHeader = fileProps.fileHeader;
     this.patch = fileProps.patch;
@@ -93,8 +86,7 @@ export default class File implements FileProps {
         finalSymlinkSource = await fsPoly.readlink(filePath);
       }
       if (fileHeader) {
-        finalCrcWithoutHeader = finalCrcWithoutHeader
-          ?? (await this.calculateChecksums(filePath, fileHeader)).crc32;
+        finalCrcWithoutHeader = (await this.calculateChecksums(filePath, fileHeader)).crc32;
       }
     } else {
       finalSize = finalSize ?? 0;
@@ -175,43 +167,20 @@ export default class File implements FileProps {
   // Other functions
 
   protected static async calculateChecksums(
-    localFile: string,
+    filePath: string,
     fileHeader?: ROMHeader,
-  ): Promise<FileChecksums> {
+  ): Promise<ChecksumProps> {
     const start = fileHeader?.getDataOffsetBytes() ?? 0;
 
-    const cacheKey = `${localFile}|${start}`;
-    return File.checksumCache.getOrCompute(cacheKey, async () => new Promise((resolve, reject) => {
-      const stream = fs.createReadStream(localFile, {
+    const cacheKey = `${filePath}|${start}`;
+    return File.checksumCache.getOrCompute(cacheKey, async () => {
+      const stream = fs.createReadStream(filePath, {
         start,
         highWaterMark: Constants.FILE_READING_CHUNK_SIZE,
       });
 
-      let crc: number | undefined;
-      // TODO(cemmer): selectively calculate MD5 and SHA1
-      // TODO(cemmer): no need to calculate if a header has been provided?
-      const md5 = crypto.createHash('md5');
-      const sha1 = crypto.createHash('sha1');
-
-      stream.on('data', (chunk) => {
-        crc = crc32(chunk, crc);
-        if (md5) {
-          md5.update(chunk);
-        }
-        if (sha1) {
-          sha1.update(chunk);
-        }
-      });
-      stream.on('end', () => {
-        resolve({
-          crc32: (crc ?? 0).toString(16),
-          md5: md5 !== undefined ? md5.digest('hex') : undefined,
-          sha1: sha1 !== undefined ? sha1.digest('hex') : undefined,
-        });
-      });
-
-      stream.on('error', reject);
-    }));
+      return FileChecksums.hashStream(stream, ChecksumBitmask.CRC32);
+    });
   }
 
   async extractToFile(destinationPath: string): Promise<void> {
