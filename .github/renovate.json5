@@ -48,7 +48,7 @@
   platformAutomerge: true, // default
   // Rely on the PR Rebaser GitHub Action to do this. PRs will merge in the order they are created,
   //  so the `prPriority` option SHOULD be respected.
-  rebaseWhen: 'never',
+  rebaseWhen: 'conflicted', // separate PRs updating the lockfile are likely to conflict each other
 
   packageRules: [
     {
