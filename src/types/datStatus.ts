@@ -1,5 +1,5 @@
-import { writeToString } from '@fast-csv/format';
 import chalk, { ChalkInstance } from 'chalk';
+import { writeToString } from 'fast-csv';
 
 import ArrayPoly from '../polyfill/arrayPoly.js';
 import DAT from './logiqx/dat.js';

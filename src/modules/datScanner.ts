@@ -1,5 +1,5 @@
-import { parse } from '@fast-csv/parse';
 import async, { AsyncResultCallback } from 'async';
+import { parse } from 'fast-csv';
 import path from 'path';
 import robloachDatfile from 'robloach-datfile';
 import xml2js from 'xml2js';

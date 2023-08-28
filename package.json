@@ -59,8 +59,6 @@
     "docs:serve": "mkdocs serve"
   },
   "dependencies": {
-    "@fast-csv/format": "4.3.5",
-    "@fast-csv/parse": "4.3.6",
     "@node-rs/crc32": "1.7.0",
     "7zip-min": "1.4.4",
     "archiver": "5.3.1",
@@ -69,6 +67,7 @@
     "chalk": "5.2.0",
     "class-transformer": "0.5.1",
     "cli-progress": "3.12.0",
+    "fast-csv": "4.3.6",
     "fast-glob": "3.2.12",
     "figlet": "1.6.0",
     "graceful-fs": "4.2.11",
