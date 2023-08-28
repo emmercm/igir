@@ -128,9 +128,12 @@
   "//engines": [
     "ES6 modules generally require ^12.20.0 || ^14.13.1 || >=16.0.0, though `tsc` can target ES5 or lower",
     "But a lot of dependencies use node: prefixed imports such as node:fs which `tsc` can't get around",
-    "And support for require('node:...') was added in Node.js v14.18.0"
+    "And support for require('node:...') was added in Node.js v14.18.0.",
+    "As of August 2023, Renovate stopped respecting package-lock.json versions and instead let npm",
+    "upgrade the version. v3 lockfiles are backwards compatible to npm v7, which started being used",
+    "in Node.js v15.0.0."
   ],
   "engines": {
-    "node": ">=14.18.0"
+    "node": ">=15.0.0"
   }
 }
