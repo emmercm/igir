@@ -39,6 +39,9 @@ export default class DATScanner extends Scanner {
     super(options, progressBar, DATScanner.name);
   }
 
+  /**
+   * Scan files and parse {@link DAT}s.
+   */
   async scan(): Promise<DAT[]> {
     this.progressBar.logInfo('scanning DAT files');
 

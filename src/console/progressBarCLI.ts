@@ -10,6 +10,9 @@ import ProgressBar, { ProgressBarSymbol } from './progressBar.js';
 import ProgressBarPayload from './progressBarPayload.js';
 import SingleBarFormatted from './singleBarFormatted.js';
 
+/**
+ * A {@link ProgressBar} that is intended to print to a TTY CLI.
+ */
 export default class ProgressBarCLI extends ProgressBar {
   private static readonly RENDER_MUTEX = new Mutex();
 
@@ -47,6 +50,9 @@ export default class ProgressBarCLI extends ProgressBar {
     }
   }
 
+  /**
+   * Create a new {@link ProgressBarCLI}, and initialize the {@link MultiBar} if it hasn't been yet.
+   */
   static async new(
     logger: Logger,
     name: string,
@@ -85,6 +91,9 @@ export default class ProgressBarCLI extends ProgressBar {
     return progressBarCLI;
   }
 
+  /**
+   * Stop the {@link MultiBar} (and therefore everyProgressBar).
+   */
   static async stop(): Promise<void> {
     this.multiBar?.stop();
     this.multiBar = undefined;
@@ -100,7 +109,6 @@ export default class ProgressBarCLI extends ProgressBar {
    * p-map, etc.) keep cli-progress from redrawing with its setTimeout(), so it might be necessary
    * to force it. This function needs to be safe to be called concurrently because of the way
    * cli-progress clears previous output.
-   *
    * @see https://github.com/npkgz/cli-progress/issues/79
    */
   async render(force = false): Promise<void> {
@@ -151,6 +159,9 @@ export default class ProgressBarCLI extends ProgressBar {
     }
   }
 
+  /**
+   * Reset the {@link ProgressBar}'s progress to zero and change its total.
+   */
   async reset(total: number): Promise<void> {
     this.singleBarFormatted?.getSingleBar().setTotal(total);
     this.singleBarFormatted?.getSingleBar().update(0);
@@ -181,13 +192,16 @@ export default class ProgressBarCLI extends ProgressBar {
 
   /**
    * If progress hasn't been made by some timeout period, then show a waiting message to let the
-   *  user know that there is still something processing.
+   * user know that there is still something processing.
    */
   addWaitingMessage(waitingMessage: string): void {
     this.waitingMessages.push(waitingMessage);
     this.setWaitingMessageTimeout();
   }
 
+  /**
+   * Remove a waiting message to let the user know some processing has finished.
+   */
   removeWaitingMessage(waitingMessage: string): void {
     this.waitingMessages = this.waitingMessages.filter((msg) => msg !== waitingMessage);
 
@@ -211,6 +225,9 @@ export default class ProgressBarCLI extends ProgressBar {
     }, timeout);
   }
 
+  /**
+   * Increment the total by some amount.
+   */
   async incrementTotal(increment: number): Promise<void> {
     if (!this.singleBarFormatted) {
       return;
@@ -222,22 +239,34 @@ export default class ProgressBarCLI extends ProgressBar {
     await this.render();
   }
 
+  /**
+   * Increment the in-progress count by one.
+   */
   async incrementProgress(): Promise<void> {
     this.payload.inProgress = Math.max(this.payload.inProgress ?? 0, 0) + 1;
     return this.render();
   }
 
+  /**
+   * Decrement the in-progress count by one, and increment the completed count by one.
+   */
   async incrementDone(): Promise<void> {
     this.payload.inProgress = Math.max((this.payload.inProgress ?? 0) - 1, 0);
     this.singleBarFormatted?.getSingleBar().increment();
     return this.render();
   }
 
+  /**
+   * Set the completed count.
+   */
   async update(current: number): Promise<void> {
     this.singleBarFormatted?.getSingleBar().update(current);
     return this.render();
   }
 
+  /**
+   * Set the completed count to the total, and render any completion message.
+   */
   async done(finishedMessage?: string): Promise<void> {
     await this.setSymbol(ProgressBarSymbol.DONE);
 
@@ -255,6 +284,9 @@ export default class ProgressBarCLI extends ProgressBar {
     await this.render(true);
   }
 
+  /**
+   * Return a copy of this {@link ProgressBar} with a new string prefix.
+   */
   withLoggerPrefix(prefix: string): ProgressBar {
     return new ProgressBarCLI(
       this.logger.withLoggerPrefix(prefix),
@@ -263,10 +295,16 @@ export default class ProgressBarCLI extends ProgressBar {
     );
   }
 
+  /**
+   * Log a message at some specified {@link LogLevel}.
+   */
   log(logLevel: LogLevel, message: string): void {
     ProgressBarCLI.log(this.logger, logLevel, message);
   }
 
+  /**
+   * Log a message at some specified {@link LogLevel}.
+   */
   static log(logger: Logger, logLevel: LogLevel, message: string): void {
     if (logger.getLogLevel() > logLevel) {
       return;
@@ -280,7 +318,6 @@ export default class ProgressBarCLI extends ProgressBar {
    * When the number of progress bars exceeds the height of the console, cli-progress fails to be
    * able to clear them all reliably. It's recommended you don't have too many active progress bars
    * at once.
-   *
    * @see https://github.com/npkgz/cli-progress/issues/59
    */
   async freeze(): Promise<void> {
@@ -294,6 +331,9 @@ export default class ProgressBarCLI extends ProgressBar {
     this.delete();
   }
 
+  /**
+   * Delete this {@link ProgressBarCLI} from the CLI.
+   */
   delete(): void {
     if (!this.singleBarFormatted) {
       return;

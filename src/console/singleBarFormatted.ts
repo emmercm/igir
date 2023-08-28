@@ -6,6 +6,9 @@ import { linearRegression, linearRegressionLine } from 'simple-statistics';
 
 import ProgressBarPayload from './progressBarPayload.js';
 
+/**
+ * A wrapper class for a cli-progress {@link SingleBar} that formats the output.
+ */
 export default class SingleBarFormatted {
   public static readonly MAX_NAME_LENGTH = 30;
 
@@ -90,9 +93,11 @@ export default class SingleBarFormatted {
   }
 
   private calculateEta(params: Params): number {
-    function clamp(val: number, min: number, max: number): number {
-      return Math.min(Math.max(val, min), max);
-    }
+    const clamp = (
+      val: number,
+      min: number,
+      max: number,
+    ): number => Math.min(Math.max(val, min), max);
     const MAX_BUFFER_SIZE = clamp(Math.floor(params.total / 10), 25, 50);
 
     this.valueTimeBuffer = [

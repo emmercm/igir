@@ -15,6 +15,12 @@ import ReleaseCandidate from '../types/releaseCandidate.js';
 import ROMWithFiles from '../types/romWithFiles.js';
 import Module from './module.js';
 
+/**
+ * For each {@link Patch} that matches a {@link ROM}, generate a new {@link Parent} and
+ * {@link ReleaseCandidate} of that {@link Game}.
+ *
+ * This class may be run concurrently with other classes.
+ */
 export default class CandidatePatchGenerator extends Module {
   private readonly options: Options;
 
@@ -23,6 +29,9 @@ export default class CandidatePatchGenerator extends Module {
     this.options = options;
   }
 
+  /**
+   * Generate the patched candidates.
+   */
   async generate(
     dat: DAT,
     parentsToCandidates: Map<Parent, ReleaseCandidate[]>,

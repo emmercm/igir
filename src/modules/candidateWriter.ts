@@ -42,6 +42,9 @@ export default class CandidateWriter extends Module {
     }
   }
 
+  /**
+   * Write & test candidates.
+   */
   async write(
     dat: DAT,
     parentsToCandidates: Map<Parent, ReleaseCandidate[]>,
@@ -125,11 +128,13 @@ export default class CandidateWriter extends Module {
     }
   }
 
-  /** ********************
-   *                     *
+  /**
+   ***********************
+   *
    *     Zip Writing     *
-   *                     *
-   ********************* */
+   *
+   ***********************
+   */
 
   private async writeZip(dat: DAT, releaseCandidate: ReleaseCandidate): Promise<void> {
     // Return no files if there are none to write
@@ -262,11 +267,13 @@ export default class CandidateWriter extends Module {
     return true;
   }
 
-  /** ********************
-   *                     *
+  /**
+   ***********************
+   *
    *     Raw Writing     *
-   *                     *
-   ********************* */
+   *
+   ***********************
+   */
 
   private async writeRaw(dat: DAT, releaseCandidate: ReleaseCandidate): Promise<void> {
     const inputToOutputEntries = releaseCandidate.getRomsWithFiles()
@@ -397,11 +404,13 @@ export default class CandidateWriter extends Module {
     this.filesQueuedForDeletion.push(inputRomFile);
   }
 
-  /** ************************
-   *                         *
+  /**
+   ***************************
+   *
    *     Symlink Writing     *
-   *                         *
-   ************************* */
+   *
+   ***************************
+   */
 
   private async writeSymlink(dat: DAT, releaseCandidate: ReleaseCandidate): Promise<void> {
     const inputToOutputEntries = releaseCandidate.getRomsWithFiles();

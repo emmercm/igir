@@ -20,6 +20,9 @@ export default class ReportGenerator extends Module {
     this.options = options;
   }
 
+  /**
+   * Generate the report.
+   */
   async generate(
     scannedRomFiles: string[],
     cleanedOutputFiles: string[],

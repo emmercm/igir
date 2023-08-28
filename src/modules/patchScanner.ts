@@ -9,11 +9,19 @@ import Patch from '../types/patches/patch.js';
 import PatchFactory from '../types/patches/patchFactory.js';
 import Scanner from './scanner.js';
 
+/**
+ * Scan for {@link Patch}es and parse them into the correct supported type.
+ *
+ * This class will not be run concurrently with any other class.
+ */
 export default class PatchScanner extends Scanner {
   constructor(options: Options, progressBar: ProgressBar) {
     super(options, progressBar, PatchScanner.name);
   }
 
+  /**
+   * Scan & process {@link Patch}es.
+   */
   async scan(): Promise<Patch[]> {
     this.progressBar.logInfo('scanning patch files');
 

@@ -39,6 +39,7 @@
     "simple-import-sort/exports": "error",
     "simple-import-sort/imports": "error",
 
+    // ***** Typing *****
     // Require explicit return types on functions and class methods.
     "@typescript-eslint/explicit-function-return-type": "error",
 
@@ -54,19 +55,17 @@
 
     // ***** JSDoc *****
     "jsdoc/require-jsdoc": ["error", {
-      // Disable some excessive rules
-      "checkConstructors": false,
-      "checkGetters": false,
-      "checkSetters": false,
       // Require on public parts of classes
-      "publicOnly": true,
-      "require": {
-        "ClassDeclaration": true,
-        "MethodDefinition": true
-      },
-      // Don't create missing doc blocks (yet)
-      "enableFixer": false
+      "checkConstructors": false,
+      "contexts": [
+        "ClassDeclaration",
+        // TODO(cemmer): require private methods as well
+        "MethodDefinition[accessibility!=private][key.name!=/^(get|set)[A-Z][a-zA-Z]+/]"
+      ]
     }],
+    "jsdoc/require-param": "off",
+    "jsdoc/require-returns": "off",
+    "jsdoc/no-blank-blocks": "error",
 
     // ***** Misc Disallows *****
     "@typescript-eslint/prefer-nullish-coalescing": "error",
@@ -84,5 +83,20 @@
     "no-bitwise": "off",
     // Referencing ASCII characters <32 is entirely legitimate
     "no-control-regex": "off"
-  }
+  },
+
+  "overrides": [
+    {
+      "files": [
+        "test/**/*.ts",
+        // TODO(cemmer)
+        "src/polyfill/**/*.ts",
+        "src/types/files/**/*.ts",
+        "src/types/patches/**/*.ts"
+      ],
+      "rules": {
+        "jsdoc/require-jsdoc": "off"
+      }
+    }
+  ]
 }

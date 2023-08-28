@@ -20,6 +20,9 @@ export default class CandidatePreferer extends Module {
     this.options = options;
   }
 
+  /**
+   * Prefer some candidates.
+   */
   async prefer(
     dat: DAT,
     parentsToCandidates: Map<Parent, ReleaseCandidate[]>,
@@ -78,11 +81,13 @@ export default class CandidatePreferer extends Module {
     return output;
   }
 
-  /** ****************
-   *                 *
+  /**
+   *******************
+   *
    *     Sorting     *
-   *                 *
-   ***************** */
+   *
+   *******************
+   */
 
   private sort(a: ReleaseCandidate, b: ReleaseCandidate): number {
     return this.preferVerifiedSort(a, b)
@@ -180,11 +185,13 @@ export default class CandidatePreferer extends Module {
     return 0;
   }
 
-  /** ***************
-   *                *
+  /**
+   ******************
+   *
    *     Filter     *
-   *                *
-   **************** */
+   *
+   ******************
+   */
 
   private filter(idx: number): boolean {
     if (this.options.getSingle()) {

@@ -374,11 +374,13 @@ export default class File implements FileProps {
     });
   }
 
-  /** *************************
-   *                          *
+  /**
+   ****************************
+   *
    *     Pseudo Built-Ins     *
-   *                          *
-   ************************** */
+   *
+   ****************************
+   */
 
   toString(): string {
     if (this.getSymlinkSource()) {

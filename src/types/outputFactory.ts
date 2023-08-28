@@ -13,10 +13,16 @@ import Release from './logiqx/release.js';
 import ROM from './logiqx/rom.js';
 import Options from './options.js';
 
+/**
+ * A {@link ParsedPath} that carries {@link ArchiveEntry} path information.
+ */
 interface ParsedPathWithEntryPath extends ParsedPath {
   entryPath: string;
 }
 
+/**
+ * A {@link ParsedPathWithEntryPath} that normalizes formatting across OSes.
+ */
 class OutputPath implements ParsedPathWithEntryPath {
   base: string;
 
@@ -42,6 +48,9 @@ class OutputPath implements ParsedPathWithEntryPath {
     this.entryPath = parsedPath.entryPath.replace(/[\\/]/g, path.sep);
   }
 
+  /**
+   * Format this {@link OutputPath}, similar to {@link path#format}.
+   */
   format(): string {
     return path.format(this)
       // No double slashes / empty subdir name
@@ -52,10 +61,13 @@ class OutputPath implements ParsedPathWithEntryPath {
   }
 }
 
+/**
+ * A factory of static methods to generate output paths for a {@link ROM} and its related
+ * {@link Game} and {@link Release}.
+ */
 export default class OutputFactory {
   /**
    * Get the full output path for a ROM file.
-   *
    * @param options the {@link Options} instance for this run of igir.
    * @param dat the {@link DAT} that the ROM/{@link Game} is from.
    * @param game the {@link Game} that this file matches to.
@@ -87,11 +99,13 @@ export default class OutputFactory {
     });
   }
 
-  /** ***********************
-   *                        *
+  /**
+   **************************
+   *
    *     File directory     *
-   *                        *
-   ************************ */
+   *
+   * *************************
+   */
 
   public static getDir(
     options: Options,
@@ -322,11 +336,13 @@ export default class OutputFactory {
     return foundEntry ? foundEntry[0] : undefined;
   }
 
-  /** ********************************
-   *                                 *
+  /**
+   ***********************************
+   *
    *     File name and extension     *
-   *                                 *
-   ********************************* */
+   *
+   * *********************************
+   */
 
   private static getName(
     options: Options,

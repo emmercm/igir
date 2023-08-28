@@ -12,6 +12,9 @@ interface LanguageOptions {
   long?: string;
 }
 
+/**
+ * A static class of regions and languages that can be parsed and understood.
+ */
 export default class Internationalization {
   public static readonly REGION_OPTIONS: RegionOptions[] = [
     // Specific countries

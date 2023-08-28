@@ -7,6 +7,9 @@ import ProgressBarCLI from '../console/progressBarCLI.js';
 import Constants from '../constants.js';
 import BufferPoly from '../polyfill/bufferPoly.js';
 
+/**
+ * Check for a newer version and log if one is found.
+ */
 export default class UpdateChecker {
   private readonly logger: Logger;
 
@@ -14,11 +17,10 @@ export default class UpdateChecker {
     this.logger = logger;
   }
 
+  /**
+   * Check for a newer version and log if one is found.
+   */
   async check(): Promise<void> {
-    await this.log();
-  }
-
-  private async log(): Promise<void> {
     let npmVersion;
     try {
       npmVersion = await UpdateChecker.getVersion(Constants.COMMAND_NAME);

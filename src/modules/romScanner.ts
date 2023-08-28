@@ -15,6 +15,9 @@ export default class ROMScanner extends Scanner {
     super(options, progressBar, ROMScanner.name);
   }
 
+  /**
+   * Scan for ROM files.
+   */
   async scan(): Promise<File[]> {
     this.progressBar.logInfo('scanning ROM files');
 
