@@ -19,6 +19,9 @@ export default class StatusGenerator extends Module {
     this.options = options;
   }
 
+  /**
+   * Generate a {@link DATStatus} for the {@link DAT}.
+   */
   async generate(
     dat: DAT,
     parentsToReleaseCandidates: Map<Parent, ReleaseCandidate[]>,

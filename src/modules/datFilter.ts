@@ -18,6 +18,9 @@ export default class DATFilter extends Module {
     this.options = options;
   }
 
+  /**
+   * Create a new DAT after filtering.
+   */
   async filter(dat: DAT): Promise<DAT> {
     this.progressBar.logInfo(`${dat.getNameShort()}: filtering DAT`);
 
@@ -43,11 +46,13 @@ export default class DATFilter extends Module {
     return filteredDat;
   }
 
-  /** ***************
-   *                *
+  /**
+   ******************
+   *
    *     Filter     *
-   *                *
-   **************** */
+   *
+   ******************
+   */
 
   private filterGame(game: Game): boolean {
     // If any condition evaluates to 'true', then the candidate will be excluded

@@ -34,6 +34,9 @@ import OutputFactory from './types/outputFactory.js';
 import Patch from './types/patches/patch.js';
 import ReleaseCandidate from './types/releaseCandidate.js';
 
+/**
+ * The main class that coordinates file scanning, processing, and writing.
+ */
 export default class Igir {
   private readonly options: Options;
 
@@ -44,6 +47,9 @@ export default class Igir {
     this.logger = logger;
   }
 
+  /**
+   * The main method for this application.
+   */
   async main(): Promise<void> {
     // Windows 10 may require admin privileges to symlink at all
     // @see https://github.com/nodejs/node/issues/18518

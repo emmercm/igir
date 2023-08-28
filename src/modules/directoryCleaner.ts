@@ -25,6 +25,9 @@ export default class DirectoryCleaner extends Module {
     this.options = options;
   }
 
+  /**
+   * Clean some directories, excluding some files.
+   */
   async clean(dirsToClean: string[], filesToExclude: File[]): Promise<string[]> {
     this.progressBar.logInfo('cleaning files in output');
 

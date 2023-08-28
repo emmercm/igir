@@ -48,6 +48,9 @@ interface HeaderOptions {
   readonly romNamesContainDirectories?: boolean;
 }
 
+/**
+ * Metadata for a {@link DAT}.
+ */
 export default class Header implements HeaderOptions {
   @Expose({ name: 'name' })
   readonly name: string;
@@ -92,6 +95,9 @@ export default class Header implements HeaderOptions {
       : false;
   }
 
+  /**
+   * Create an XML object, to be used by the owning {@link DAT}.
+   */
   toXmlDatObj(): object {
     return Object.fromEntries(Object.entries({
       name: this.name,
@@ -132,6 +138,9 @@ export default class Header implements HeaderOptions {
 
   // Computed getters
 
+  /**
+   * Return a string representation of this {@link Header}.
+   */
   toString(): string {
     return JSON.stringify(this, null, '  ')
       .replace(/\n +/g, ' ');

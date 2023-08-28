@@ -22,6 +22,10 @@ export const ProgressBarSymbol = {
   DONE: chalk.green(process.platform === 'win32' ? '√' : '✓'),
 };
 
+/**
+ * ProgressBar represents a single progress bar (of potentially many) to present completion
+ * information about an operation.
+ */
 export default abstract class ProgressBar {
   abstract reset(total: number): Promise<void>;
 
@@ -43,6 +47,10 @@ export default abstract class ProgressBar {
 
   abstract done(finishedMessage?: string): Promise<void>;
 
+  /**
+   * Call the `done()` method with a completion message that indicates how many items were
+   * processed.
+   */
   async doneItems(count: number, noun: string, verb: string): Promise<void> {
     let pluralSuffix = 's';
     if (noun.toLowerCase().endsWith('ch')
@@ -58,22 +66,37 @@ export default abstract class ProgressBar {
 
   abstract log(logLevel: LogLevel, message: string): void;
 
+  /**
+   * Log a TRACE message.
+   */
   logTrace(message: string): void {
     return this.log(LogLevel.TRACE, message);
   }
 
+  /**
+   * Log a DEBUG message.
+   */
   logDebug(message: string): void {
     return this.log(LogLevel.DEBUG, message);
   }
 
+  /**
+   * Log an INFO message.
+   */
   logInfo(message: string): void {
     return this.log(LogLevel.INFO, message);
   }
 
+  /**
+   * Log a WARN message.
+   */
   logWarn(message: string): void {
     return this.log(LogLevel.WARN, message);
   }
 
+  /**
+   * Log an ERROR message.
+   */
   logError(message: string): void {
     return this.log(LogLevel.ERROR, message);
   }

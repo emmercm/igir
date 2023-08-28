@@ -11,6 +11,12 @@ import ReleaseCandidate from '../types/releaseCandidate.js';
 import ROMWithFiles from '../types/romWithFiles.js';
 import Module from './module.js';
 
+/**
+ * Combine every {@link Parent} and its {@link ReleaseCandidate}s for a {@link DAT} into a single
+ * {@link Parent}.
+ *
+ * This class may be run concurrently with other classes.
+ */
 export default class CandidateCombiner extends Module {
   private readonly options: Options;
 
@@ -19,6 +25,9 @@ export default class CandidateCombiner extends Module {
     this.options = options;
   }
 
+  /**
+   * Combine the candidates.
+   */
   async combine(
     dat: DAT,
     parentsToCandidates: Map<Parent, ReleaseCandidate[]>,

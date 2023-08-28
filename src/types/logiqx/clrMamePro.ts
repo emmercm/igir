@@ -12,7 +12,6 @@ interface ClrMameProOptions {
 /**
  * "CMPro data files use a 'clrmamepro' element to specify details such as the
  * emulator name, description, category and the data file version."
- *
  * @see http://www.logiqx.com/DatFAQs/CMPro.php
  */
 export default class ClrMamePro implements ClrMameProOptions {

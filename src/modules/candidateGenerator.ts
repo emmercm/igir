@@ -32,6 +32,9 @@ export default class CandidateGenerator extends Module {
     this.options = options;
   }
 
+  /**
+   * Generate the candidates.
+   */
   async generate(
     dat: DAT,
     hashCodeToInputFiles: Map<string, File[]>,

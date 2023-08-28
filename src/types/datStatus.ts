@@ -23,6 +23,10 @@ export enum Status {
   DELETED,
 }
 
+/**
+ * Parse and hold information about every {@link Game} in a {@link DAT}, as well as which
+ * {@link Game}s were found (had a {@link ReleaseCandidate} created for it).
+ */
 export default class DATStatus {
   private readonly dat: DAT;
 
@@ -106,6 +110,9 @@ export default class DATStatus {
       .flatMap((releaseCandidates) => releaseCandidates);
   }
 
+  /**
+   * If any {@link Game} in the entire {@link DAT} was found in the input files.
+   */
   anyGamesFound(options: Options): boolean {
     return DATStatus.getAllowedTypes(options)
       .reduce((result, romType) => {
@@ -115,6 +122,9 @@ export default class DATStatus {
       }, false);
   }
 
+  /**
+   * Return a string of CLI-friendly output to be printed by a {@link Logger}.
+   */
   toConsole(options: Options): string {
     return `${DATStatus.getAllowedTypes(options)
       .filter((type) => this.allRomTypesToGames.get(type)?.length)
@@ -153,6 +163,9 @@ export default class DATStatus {
       .join(', ')} ${options.shouldWrite() ? 'written' : 'found'}`;
   }
 
+  /**
+   * Return the file contents of a CSV with status information for every {@link Game}.
+   */
   async toCsv(options: Options): Promise<string> {
     const found = DATStatus.getValuesForAllowedTypes(
       options,
@@ -214,6 +227,9 @@ export default class DATStatus {
     });
   }
 
+  /**
+   * Return a string of CSV rows without headers for a certain {@link Status}.
+   */
   static async filesToCsv(filePaths: string[], status: Status): Promise<string> {
     return writeToString(filePaths.map((filePath) => this.buildCsvRow('', '', status, [filePath])));
   }

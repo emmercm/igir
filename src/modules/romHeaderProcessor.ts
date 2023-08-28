@@ -9,7 +9,7 @@ import Options from '../types/options.js';
 import Module from './module.js';
 
 /**
- * For every input ROM file found, attempt to find a matching header and resolve its
+ * For every input {@link ROM} file found, attempt to find a matching {@link Header} and resolve its
  * header-less checksum.
  *
  * This class will not be run concurrently with any other class.
@@ -22,6 +22,9 @@ export default class ROMHeaderProcessor extends Module {
     this.options = options;
   }
 
+  /**
+   * Process each {@link File}, finding any {@link Header} present.
+   */
   async process(inputRomFiles: File[]): Promise<File[]> {
     if (!inputRomFiles.length) {
       return inputRomFiles;

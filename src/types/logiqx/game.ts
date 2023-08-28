@@ -51,7 +51,6 @@ enum GameType {
  * If you don't use these fields correctly then you cannot guarantee that your
  * data file will work as expected in CMPro and RomCenter for all three merge
  * types."
- *
  * @see http://www.logiqx.com/DatFAQs/CMPro.php
  */
 export interface GameProps {
@@ -76,6 +75,10 @@ export interface GameProps {
   readonly archive?: Archive | Archive[],
 }
 
+/**
+ * A logical "game" that contains zero or more {@link ROM}s, and has zero or more region
+ * {@link Release}s.
+ */
 export default class Game implements GameProps {
   @Expose({ name: 'name' })
   readonly name: string;
@@ -128,6 +131,9 @@ export default class Game implements GameProps {
     this.rom = options?.rom ?? [];
   }
 
+  /**
+   * Create an XML object, to be used by the owning {@link DAT}.
+   */
   toXmlDatObj(): object {
     return {
       $: {
@@ -156,10 +162,16 @@ export default class Game implements GameProps {
     return this.description;
   }
 
+  /**
+   * Is this game a collection of BIOS file(s).
+   */
   isBios(): boolean {
     return this.bios === 'yes' || this.name.match(/\[BIOS\]/i) !== null;
   }
 
+  /**
+   * Is this game a MAME "device"?
+   */
   isDevice(): boolean {
     return this.device === 'yes';
   }
@@ -206,22 +218,37 @@ export default class Game implements GameProps {
     return 0;
   }
 
+  /**
+   * Is this game explicitly NTSC?
+   */
   isNTSC(): boolean {
     return this.name.match(/\(NTSC\)/i) !== null;
   }
 
+  /**
+   * Is this game explicitly PAL?
+   */
   isPAL(): boolean {
     return this.name.match(/\(PAL[a-z0-9 ]*\)/i) !== null;
   }
 
+  /**
+   * Is this game aftermarket (released after the last known console release)?
+   */
   isAftermarket(): boolean {
     return this.name.match(/\(Aftermarket[a-z0-9. ]*\)/i) !== null;
   }
 
+  /**
+   * Is this game an alpha pre-release?
+   */
   isAlpha(): boolean {
     return this.name.match(/\(Alpha[a-z0-9. ]*\)/i) !== null;
   }
 
+  /**
+   * Is this game a "bad" dump?
+   */
   isBad(): boolean {
     if (this.name.match(/\[b[0-9]*\]/) !== null) {
       return true;
@@ -234,66 +261,112 @@ export default class Game implements GameProps {
         || this.name.match(/\[x\]/) !== null; // "thought to have a bad checksum"
   }
 
+  /**
+   * Is this game a beta pre-release?
+   */
   isBeta(): boolean {
     return this.name.match(/\(Beta[a-z0-9. ]*\)/i) !== null;
   }
 
+  /**
+   * Does this game contain debug symbols?
+   */
   isDebug(): boolean {
     return this.name.match(/\(Debug[a-z0-9. ]*\)/i) !== null;
   }
 
+  /**
+   * Is this game a demo?
+   */
   isDemo(): boolean {
     return this.name.match(/\(Demo[a-z0-9. -]*\)/i) !== null || this.getCategory() === 'Demos';
   }
 
+  /**
+   * Is this game "fixed" (altered to run better in emulation)?
+   */
   isFixed(): boolean {
     return this.name.match(/\[f[0-9]*\]/) !== null;
   }
 
+  /**
+   * Is this game community homebrew?
+   */
   isHomebrew(): boolean {
     return this.name.match(/\(Homebrew[a-z0-9. ]*\)/i) !== null;
   }
 
-  // NOTE(cemmer): RomVault indicates that some DATs include <rom mia="yes"/>, but I did not find
-  //  any evidence of this in No-Intro, Redump, TOSEC, and FinalBurn Neo.
-  //  https://wiki.romvault.com/doku.php?id=mia_rom_tracking#can_i_manually_flag_roms_as_mia
+  /**
+   * Is this game MIA (has not been dumped yet)?
+   *
+   * NOTE(cemmer): RomVault indicates that some DATs include <rom mia="yes"/>, but I did not find
+   * any evidence of this in No-Intro, Redump, TOSEC, and FinalBurn Neo.
+   * https://wiki.romvault.com/doku.php?id=mia_rom_tracking#can_i_manually_flag_roms_as_mia
+   */
   isMIA(): boolean {
     return this.name.match(/\[MIA\]/i) !== null;
   }
 
+  /**
+   * Is this game an overdump (contains excess data)?
+   */
   isOverdump(): boolean {
     return this.name.match(/\[o[0-9]*\]/) !== null;
   }
 
+  /**
+   * Is this game a pending dump (works, but isn't a proper dump)?
+   */
   isPendingDump(): boolean {
     return this.name.match(/\[!p\]/) !== null;
   }
 
+  /**
+   * Is this game pirated (probably has copyright information removed)?
+   */
   isPirated(): boolean {
     return this.name.match(/\(Pirate[a-z0-9. ]*\)/i) !== null
         || this.name.match(/\[p[0-9]*\]/) !== null;
   }
 
+  /**
+   * Is this game a prototype?
+   */
   isPrototype(): boolean {
     return this.name.match(/\(Proto[a-z0-9. ]*\)/i) !== null;
   }
 
+  /**
+   * Is this game a sample?
+   */
   isSample(): boolean {
     return this.name.match(/\(Sample[a-z0-9. ]*\)/i) !== null;
   }
 
+  /**
+   * Is this game a test?
+   */
   isTest(): boolean {
     return this.name.match(/\(Test[a-z0-9. ]*\)/i) !== null;
   }
 
+  /**
+   * Is this game translated by the community?
+   */
   isTranslated(): boolean {
     return this.name.match(/\[T[+-][^\]]+\]/) !== null;
   }
 
+  /**
+   * Is this game unlicensed (but was still physically produced and sold)?
+   */
   isUnlicensed(): boolean {
     return this.name.match(/\(Unl[a-z0-9. ]*\)/i) !== null;
   }
 
+  /**
+   * Is this game an explicitly verified dump?
+   */
   isVerified(): boolean {
     if (this.name.match(/\[!\]/) !== null) {
       return true;
@@ -302,19 +375,32 @@ export default class Game implements GameProps {
     return this.getReleases().length > 0;
   }
 
+  /**
+   * Was this game altered to work on a Bung cartridge?
+   * @see https://en.wikipedia.org/wiki/Bung_Enterprises
+   */
   hasBungFix(): boolean {
     return this.name.match(/\(Bung\)|\[bf\]/i) !== null;
   }
 
+  /**
+   * Does this game have a community hack?
+   */
   hasHack(): boolean {
     return this.name.match(/\(Hack\)/i) !== null
         || this.name.match(/\[h[a-zA-Z90-9+]*\]/) !== null;
   }
 
+  /**
+   * Does this game have a trainer?
+   */
   hasTrainer(): boolean {
     return this.name.match(/\[t[0-9]*\]/) !== null;
   }
 
+  /**
+   * Is this game "retail"?
+   */
   isRetail(): boolean {
     return !this.isAftermarket()
         && !this.isAlpha()
@@ -388,10 +474,16 @@ export default class Game implements GameProps {
     return GameType.RETAIL;
   }
 
+  /**
+   * Is this game a parent (is not a clone)?
+   */
   isParent(): boolean {
     return !this.isClone();
   }
 
+  /**
+   * Is this game a clone?
+   */
   isClone(): boolean {
     return this.getParent() !== '';
   }
@@ -499,12 +591,18 @@ export default class Game implements GameProps {
 
   // Pseudo Built-Ins
 
+  /**
+   * A string hash code to uniquely identify this {@link Game}.
+   */
   hashCode(): string {
     let hashCode = this.getName();
     hashCode += `|${this.getRoms().map((rom) => rom.hashCode()).join(',')}`;
     return hashCode;
   }
 
+  /**
+   * Is this {@link Game} equal to another {@link Game}?
+   */
   equals(other: Game): boolean {
     if (this === other) {
       return true;
