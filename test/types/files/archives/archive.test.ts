@@ -68,7 +68,6 @@ describe('asRawFile', () => {
     const options = new Options({ input: [input] });
     const files = await new ROMScanner(options, new ProgressBarFake()).scan();
 
-    /* eslint-disable no-await-in-loop */
     for (let i = 0; i < files.length; i += 1) {
       const file = files[i];
       expect(file).toBeInstanceOf(ArchiveEntry);
@@ -95,7 +94,6 @@ describe('asRawFileWithoutCrc', () => {
     const options = new Options({ input: [input] });
     const files = await new ROMScanner(options, new ProgressBarFake()).scan();
 
-    /* eslint-disable no-await-in-loop */
     for (let i = 0; i < files.length; i += 1) {
       const file = files[i];
       expect(file).toBeInstanceOf(ArchiveEntry);

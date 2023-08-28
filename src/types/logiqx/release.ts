@@ -2,6 +2,9 @@ import { Expose } from 'class-transformer';
 
 import Internationalization from '../internationalization.js';
 
+/**
+ * A region release of a {@link Game}.
+ */
 export default class Release {
   @Expose({ name: 'name' })
   private readonly name: string;
@@ -18,6 +21,9 @@ export default class Release {
     this.language = language;
   }
 
+  /**
+   * Create an XML object, to be used by the owning {@link Game}.
+   */
   toXmlDatObj(): object {
     return {
       $: {

@@ -9,7 +9,8 @@ import Options from '../types/options.js';
 import PatchFactory from '../types/patches/patchFactory.js';
 
 /**
- * Parse a CLI argv string[] into {@link Options}.
+ * Parse a {@link process.argv} (without its first two arguments, the Node.js executable and the
+ * script name) and return a validated {@link Options} object.
  *
  * This class will not be run concurrently with any other class.
  */
@@ -46,6 +47,9 @@ export default class ArgumentsParser {
     );
   }
 
+  /**
+   * Parse the arguments.
+   */
   parse(argv: string[]): Options {
     this.logger.info(`Parsing CLI arguments: ${argv}`);
 

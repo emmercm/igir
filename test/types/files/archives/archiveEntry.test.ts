@@ -122,7 +122,6 @@ describe('copyToTempFile', () => {
     expect(archiveEntries).toHaveLength(23);
 
     const temp = await fsPoly.mkdtemp(Constants.GLOBAL_TEMP_DIR);
-    /* eslint-disable no-await-in-loop */
     for (let i = 0; i < archiveEntries.length; i += 1) {
       const archiveEntry = archiveEntries[i];
       await archiveEntry.extractToTempFile(async (tempFile) => {
@@ -147,7 +146,6 @@ describe('createReadStream', () => {
     expect(archiveEntries).toHaveLength(23);
 
     const temp = await fsPoly.mkdtemp(Constants.GLOBAL_TEMP_DIR);
-    /* eslint-disable no-await-in-loop */
     for (let i = 0; i < archiveEntries.length; i += 1) {
       const archiveEntry = archiveEntries[i];
       await archiveEntry.createReadStream(async (stream) => {

@@ -21,6 +21,9 @@ export default class CandidatePostProcessor extends Module {
     this.options = options;
   }
 
+  /**
+   * Post-process the candidates.
+   */
   async process(
     dat: DAT,
     parentsToCandidates: Map<Parent, ReleaseCandidate[]>,

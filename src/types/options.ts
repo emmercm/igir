@@ -104,6 +104,9 @@ export interface OptionsProps {
   readonly help?: boolean,
 }
 
+/**
+ * A collection of all options for a single invocation of the application.
+ */
 export default class Options implements OptionsProps {
   @Expose({ name: '_' })
   readonly commands: string[];
@@ -335,12 +338,18 @@ export default class Options implements OptionsProps {
     this.help = options?.help ?? false;
   }
 
+  /**
+   * Construct a {@link Options} from a generic object, such as one from `yargs`.
+   */
   static fromObject(obj: object): Options {
     return plainToInstance(Options, obj, {
       enableImplicitConversion: true,
     });
   }
 
+  /**
+   * Return a JSON representation of all options.
+   */
   toString(): string {
     return JSON.stringify(instanceToPlain(this));
   }
@@ -366,34 +375,58 @@ export default class Options implements OptionsProps {
     return this.commands.map((c) => c.toLowerCase());
   }
 
+  /**
+   * Was any writing command provided?
+   */
   shouldWrite(): boolean {
     return this.writeString() !== undefined;
   }
 
+  /**
+   * The writing command that was specified.
+   */
   writeString(): string | undefined {
     return ['copy', 'move', 'symlink'].find((command) => this.getCommands().indexOf(command) !== -1);
   }
 
+  /**
+   * Was the `copy` command provided?
+   */
   shouldCopy(): boolean {
     return this.getCommands().indexOf('copy') !== -1;
   }
 
+  /**
+   * Was the `move` command provided?
+   */
   shouldMove(): boolean {
     return this.getCommands().indexOf('move') !== -1;
   }
 
+  /**
+   * Was the `symlink` command provided?
+   */
   shouldSymlink(): boolean {
     return this.getCommands().indexOf('symlink') !== -1;
   }
 
+  /**
+   * Was the `extract` command provided?
+   */
   shouldExtract(): boolean {
     return this.getCommands().indexOf('extract') !== -1;
   }
 
+  /**
+   * Was the `zip` command provided?
+   */
   canZip(): boolean {
     return this.getCommands().indexOf('zip') !== -1;
   }
 
+  /**
+   * Should a given output file path be zipped?
+   */
   shouldZip(filePath: string): boolean {
     return this.canZip()
       && (!this.getZipExclude() || !micromatch.isMatch(
@@ -402,14 +435,23 @@ export default class Options implements OptionsProps {
       ));
   }
 
+  /**
+   * Was the `clean` command provided?
+   */
   shouldClean(): boolean {
     return this.getCommands().indexOf('clean') !== -1;
   }
 
+  /**
+   * Was the `test` command provided?
+   */
   shouldTest(): boolean {
     return this.getCommands().indexOf('test') !== -1;
   }
 
+  /**
+   * Was the `report` command provided?
+   */
   shouldReport(): boolean {
     return this.getCommands().indexOf('report') !== -1;
   }
@@ -432,6 +474,9 @@ export default class Options implements OptionsProps {
     return Options.scanPaths(this.inputExclude, undefined, false);
   }
 
+  /**
+   * Scan for input files, and input files to exclude, and return the difference.
+   */
   async scanInputFilesWithoutExclusions(walkCallback?: FsWalkCallback): Promise<string[]> {
     const inputFiles = await this.scanInputFiles(walkCallback);
     const inputExcludeFiles = await this.scanInputExcludeFiles();
@@ -443,6 +488,9 @@ export default class Options implements OptionsProps {
     return this.patch.length;
   }
 
+  /**
+   * Scan for patch files, and patch files to exclude, and return the difference.
+   */
   async scanPatchFilesWithoutExclusions(walkCallback?: FsWalkCallback): Promise<string[]> {
     const patchFiles = await this.scanPatchFiles(walkCallback);
     const patchExcludeFiles = await this.scanPatchExcludeFiles();
@@ -468,7 +516,6 @@ export default class Options implements OptionsProps {
       .filter((pattern) => pattern)
       .reduce(ArrayPoly.reduceUnique(), []);
     const globbedPaths = [];
-    /* eslint-disable no-await-in-loop */
     for (let i = 0; i < uniqueGlobPatterns.length; i += 1) {
       globbedPaths.push(...(await this.globPath(
         uniqueGlobPatterns[i],
@@ -555,6 +602,9 @@ export default class Options implements OptionsProps {
     return paths;
   }
 
+  /**
+   * Were any DAT paths provided?
+   */
   usingDats(): boolean {
     return this.dat.length > 0;
   }
@@ -567,6 +617,9 @@ export default class Options implements OptionsProps {
     return Options.scanPaths(this.datExclude, undefined, false);
   }
 
+  /**
+   * Scan for DAT files, and DAT files to exclude, and return the difference.
+   */
   async scanDatFilesWithoutExclusions(walkCallback?: FsWalkCallback): Promise<string[]> {
     const datFiles = await this.scanDatFiles(walkCallback);
     const datExcludeFiles = await this.scanDatExcludeFiles();
@@ -635,6 +688,9 @@ export default class Options implements OptionsProps {
     return Options.scanPaths(this.cleanExclude, undefined, false);
   }
 
+  /**
+   * Scan for output files, and output files to exclude from cleaning, and return the difference.
+   */
   async scanOutputFilesWithoutCleanExclusions(
     outputDirs: string[],
     writtenFiles: File[],
@@ -669,6 +725,9 @@ export default class Options implements OptionsProps {
     return this.header;
   }
 
+  /**
+   * Should a file have its contents read to detect any {@link Header}?
+   */
   shouldReadFileForHeader(filePath: string): boolean {
     return this.getHeader().length > 0 && micromatch.isMatch(
       filePath.replace(/^.[\\/]/, ''),
@@ -676,6 +735,9 @@ export default class Options implements OptionsProps {
     );
   }
 
+  /**
+   * Can the {@link Header} be removed for a {@link extension} during writing?
+   */
   canRemoveHeader(dat: DAT, extension: string): boolean {
     // ROMs in "headered" DATs shouldn't have their header removed
     if (dat.isHeadered()) {
@@ -908,7 +970,7 @@ export default class Options implements OptionsProps {
     return this.help;
   }
 
-  static filterUniqueUpper(array: string[]): string[] {
+  private static filterUniqueUpper(array: string[]): string[] {
     return array
       .map((value) => value.toUpperCase())
       .reduce(ArrayPoly.reduceUnique(), []);

@@ -13,6 +13,10 @@ import OutputFactory from '../types/outputFactory.js';
 import ReleaseCandidate from '../types/releaseCandidate.js';
 import Module from './module.js';
 
+/**
+ * Create a "fixdat" that contains every {@link Game} that has at least one {@link ROM} that wasn't
+ * found, and therefore the {@link Game} was not written to the output.
+ */
 export default class FixdatCreator extends Module {
   private readonly options: Options;
 
@@ -21,6 +25,9 @@ export default class FixdatCreator extends Module {
     this.options = options;
   }
 
+  /**
+   * Create & write a fixdat.
+   */
   async write(
     originalDat: DAT,
     parentsToCandidates: Map<Parent, ReleaseCandidate[]>,

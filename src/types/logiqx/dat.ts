@@ -39,6 +39,9 @@ export default class DAT {
     this.generateGameNamesToParents();
   }
 
+  /**
+   * Construct a {@link DAT} from a generic object, such as one from reading an XML file.
+   */
   static fromObject(obj: object): DAT {
     return plainToInstance(DAT, obj, {
       enableImplicitConversion: true,
@@ -71,6 +74,9 @@ export default class DAT {
     return this;
   }
 
+  /**
+   * Serialize this {@link DAT} to the file contents of an XML file.
+   */
   toXmlDat(): string {
     return new xml2js.Builder({
       renderOpts: { pretty: true, indent: '\t', newline: '\n' },
@@ -122,6 +128,9 @@ export default class DAT {
     return [...this.gameNamesToParents.values()];
   }
 
+  /**
+   * Does any {@link Game} in this {@link DAT} have clone information.
+   */
   hasParentCloneInfo(): boolean {
     return this.getGames().some((game) => game.isClone());
   }
@@ -173,6 +182,9 @@ export default class DAT {
     return filename.trim();
   }
 
+  /**
+   * Is this a {@link DAT} that only contains BIOS files.
+   */
   isBiosDat(): boolean {
     return (this.getGames().length > 0 && this.getGames().every((game) => game.isBios()))
       // Redump-style DAT names
@@ -196,7 +208,7 @@ export default class DAT {
 
   /**
    * Does a DAT explicitly contain headerless ROMs. It is possible for a DAT to be both non-headered
-   *  and non-headerless.
+   * and non-headerless.
    */
   isHeaderless(): boolean {
     // No-Intro "headerless" DATs have this field set
@@ -207,6 +219,9 @@ export default class DAT {
     return this.getName().match(/\(headerless\)/i) !== null;
   }
 
+  /**
+   * Return a short string representation of this {@link DAT}.
+   */
   toString(): string {
     return `{"header": ${this.header.toString()}, "games": ${this.getGames().length}}`;
   }

@@ -20,6 +20,9 @@ export default class CandidatePreferer extends Module {
     this.options = options;
   }
 
+  /**
+   * Prefer some candidates.
+   */
   async prefer(
     dat: DAT,
     parentsToCandidates: Map<Parent, ReleaseCandidate[]>,
@@ -61,7 +64,6 @@ export default class CandidatePreferer extends Module {
   ): Promise<Map<Parent, ReleaseCandidate[]>> {
     const output = new Map<Parent, ReleaseCandidate[]>();
 
-    /* eslint-disable no-await-in-loop */
     for (let i = 0; i < [...parentsToCandidates.entries()].length; i += 1) {
       const [parent, releaseCandidates] = [...parentsToCandidates.entries()][i];
       await this.progressBar.incrementProgress();
@@ -79,11 +81,13 @@ export default class CandidatePreferer extends Module {
     return output;
   }
 
-  /** ****************
-   *                 *
+  /**
+   *******************
+   *
    *     Sorting     *
-   *                 *
-   ***************** */
+   *
+   *******************
+   */
 
   private sort(a: ReleaseCandidate, b: ReleaseCandidate): number {
     return this.preferVerifiedSort(a, b)
@@ -181,11 +185,13 @@ export default class CandidatePreferer extends Module {
     return 0;
   }
 
-  /** ***************
-   *                *
+  /**
+   ******************
+   *
    *     Filter     *
-   *                *
-   **************** */
+   *
+   ******************
+   */
 
   private filter(idx: number): boolean {
     if (this.options.getSingle()) {

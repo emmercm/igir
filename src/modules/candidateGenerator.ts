@@ -32,6 +32,9 @@ export default class CandidateGenerator extends Module {
     this.options = options;
   }
 
+  /**
+   * Generate the candidates.
+   */
   async generate(
     dat: DAT,
     hashCodeToInputFiles: Map<string, File[]>,
@@ -49,7 +52,6 @@ export default class CandidateGenerator extends Module {
     await this.progressBar.reset(parents.length);
 
     // For each parent, try to generate a parent candidate
-    /* eslint-disable no-await-in-loop */
     for (let i = 0; i < parents.length; i += 1) {
       const parent = parents[i];
       await this.progressBar.incrementProgress();
@@ -325,7 +327,6 @@ export default class CandidateGenerator extends Module {
       return false;
     }
 
-    /* eslint-disable no-await-in-loop */
     let hasConflict = false;
     for (let i = 0; i < duplicateOutputPaths.length; i += 1) {
       const duplicateOutput = duplicateOutputPaths[i];

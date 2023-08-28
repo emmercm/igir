@@ -9,6 +9,9 @@ import LogLevel from './logLevel.js';
 import ProgressBar, { ProgressBarSymbol } from './progressBar.js';
 import ProgressBarCLI from './progressBarCLI.js';
 
+/**
+ * {@link Logger} is a class that deals with the formatting and outputting log messages to a stream.
+ */
 export default class Logger {
   private logLevel: LogLevel;
 
@@ -38,6 +41,9 @@ export default class Logger {
     return this.stream;
   }
 
+  /**
+   * Determine if this {@link Logger}'s underlying stream is a TTY stream or not.
+   */
   isTTY(): boolean {
     if (this.stream instanceof WriteStream) {
       return (this.stream satisfies WriteStream).isTTY;
@@ -56,10 +62,16 @@ export default class Logger {
     this.stream.write(`${this.formatMessage(logLevel, String(message).toString())}\n`);
   };
 
+  /**
+   * Print a newline.
+   */
   newLine(): void {
     this.print(LogLevel.ALWAYS);
   }
 
+  /**
+   * Format a log message for a given {@link LogLevel}.
+   */
   formatMessage(logLevel: LogLevel, message: string): string {
     // Don't format "ALWAYS" or "NEVER"
     if (logLevel >= LogLevel.ALWAYS) {
@@ -102,6 +114,9 @@ export default class Logger {
 
   notice = (message: unknown = ''): void => this.print(LogLevel.NOTICE, message);
 
+  /**
+   * Print the CLI header.
+   */
   printHeader(): void {
     const logo = figlet.textSync(Constants.COMMAND_NAME.toUpperCase(), {
       font: 'Big Money-se',
@@ -117,6 +132,9 @@ export default class Logger {
     this.print(LogLevel.ALWAYS, `${logoSplit.join('\n')}\n\n`);
   }
 
+  /**
+   * Print a colorized yargs help string.
+   */
   colorizeYargs(help: string): void {
     this.print(
       LogLevel.ALWAYS,
@@ -142,6 +160,9 @@ export default class Logger {
     );
   }
 
+  /**
+   * Create a {@link ProgressBar} with a reference to this {@link Logger}.
+   */
   async addProgressBar(
     name: string,
     symbol = ProgressBarSymbol.WAITING,
@@ -150,6 +171,9 @@ export default class Logger {
     return ProgressBarCLI.new(this, name, symbol, initialTotal);
   }
 
+  /**
+   * Return a copy of this Logger with a new string prefix.
+   */
   withLoggerPrefix(prefix: string): Logger {
     return new Logger(this.logLevel, this.stream, prefix);
   }

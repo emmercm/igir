@@ -87,7 +87,6 @@ export default class BPSPatch extends Patch {
     let sourceRelativeOffset = 0;
     let targetRelativeOffset = 0;
 
-    /* eslint-disable no-await-in-loop, no-bitwise */
     while (patchFile.getPosition() < patchFile.getSize() - 12) {
       const blockHeader = await Patch.readUpsUint(patchFile);
       const action = blockHeader & 3;

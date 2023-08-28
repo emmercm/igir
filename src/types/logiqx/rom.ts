@@ -34,6 +34,9 @@ export default class ROM {
     this.sha1 = sha1;
   }
 
+  /**
+   * Create an XML object, to be used by the owning {@link Game}.
+   */
   toXmlDatObj(): object {
     return {
       $: {
@@ -61,20 +64,31 @@ export default class ROM {
     return this.crc ? this.crc.replace(/^0x/, '').padStart(8, '0') : '';
   }
 
+  /**
+   * Turn this {@link ROM} into a non-existent {@link File}.
+   */
   async toFile(): Promise<File> {
     return File.fileOf(this.getName(), this.getSize(), this.getCrc32());
   }
 
+  /**
+   * Turn this {@link ROM} into a non-existent {@link ArchiveEntry}, given a {@link Archive}.
+   */
   async toArchiveEntry<A extends Archive>(archive: A): Promise<ArchiveEntry<A>> {
     return ArchiveEntry.entryOf(archive, this.getName(), this.getSize(), this.getCrc32());
   }
 
-  /** *************************
-   *                          *
+  /**
+   ****************************
+   *
    *     Pseudo Built-Ins     *
-   *                          *
-   ************************** */
+   *
+   ****************************
+   */
 
+  /**
+   * A string hash code to uniquely identify this {@link ROM}.
+   */
   hashCode(): string {
     return File.hashCode(this.getCrc32(), this.getSize());
   }

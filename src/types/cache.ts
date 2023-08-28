@@ -1,5 +1,8 @@
 import { Mutex } from 'async-mutex';
 
+/**
+ * A cache of a fixed size the ejects the oldest inserted key.
+ */
 export default class Cache<K, V> {
   private readonly keyOrder: K[] = [];
 

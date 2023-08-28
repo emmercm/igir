@@ -1,5 +1,8 @@
 import { Expose } from 'class-transformer';
 
+/**
+ * A BIOS set?
+ */
 export default class BIOSSet {
   @Expose({ name: 'name' })
   private readonly name!: string;

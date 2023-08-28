@@ -42,6 +42,9 @@ export default class CandidateWriter extends Module {
     }
   }
 
+  /**
+   * Write & test candidates.
+   */
   async write(
     dat: DAT,
     parentsToCandidates: Map<Parent, ReleaseCandidate[]>,
@@ -74,7 +77,6 @@ export default class CandidateWriter extends Module {
         await this.progressBar.incrementProgress();
         this.progressBar.logTrace(`${dat.getNameShort()}: ${parent.getName()}: writing ${releaseCandidates.length.toLocaleString()} candidate${releaseCandidates.length !== 1 ? 's' : ''}`);
 
-        /* eslint-disable no-await-in-loop */
         for (let i = 0; i < releaseCandidates.length; i += 1) {
           const releaseCandidate = releaseCandidates[i];
           await this.writeReleaseCandidate(dat, releaseCandidate);
@@ -126,11 +128,13 @@ export default class CandidateWriter extends Module {
     }
   }
 
-  /** ********************
-   *                     *
+  /**
+   ***********************
+   *
    *     Zip Writing     *
-   *                     *
-   ********************* */
+   *
+   ***********************
+   */
 
   private async writeZip(dat: DAT, releaseCandidate: ReleaseCandidate): Promise<void> {
     // Return no files if there are none to write
@@ -263,11 +267,13 @@ export default class CandidateWriter extends Module {
     return true;
   }
 
-  /** ********************
-   *                     *
+  /**
+   ***********************
+   *
    *     Raw Writing     *
-   *                     *
-   ********************* */
+   *
+   ***********************
+   */
 
   private async writeRaw(dat: DAT, releaseCandidate: ReleaseCandidate): Promise<void> {
     const inputToOutputEntries = releaseCandidate.getRomsWithFiles()
@@ -293,7 +299,6 @@ export default class CandidateWriter extends Module {
       .reduce((sum, file) => sum + file.getSize(), 0);
     this.progressBar.logTrace(`${dat.getNameShort()}: ${releaseCandidate.getName()}: writing ${fsPoly.sizeReadable(totalBytes)} of ${uniqueInputToOutputEntries.length.toLocaleString()} file${uniqueInputToOutputEntries.length !== 1 ? 's' : ''}`);
 
-    /* eslint-disable no-await-in-loop */
     for (let i = 0; i < uniqueInputToOutputEntries.length; i += 1) {
       const [inputRomFile, outputRomFile] = uniqueInputToOutputEntries[i];
       await this.writeRawSingle(dat, releaseCandidate, inputRomFile, outputRomFile);
@@ -399,16 +404,17 @@ export default class CandidateWriter extends Module {
     this.filesQueuedForDeletion.push(inputRomFile);
   }
 
-  /** ************************
-   *                         *
+  /**
+   ***************************
+   *
    *     Symlink Writing     *
-   *                         *
-   ************************* */
+   *
+   ***************************
+   */
 
   private async writeSymlink(dat: DAT, releaseCandidate: ReleaseCandidate): Promise<void> {
     const inputToOutputEntries = releaseCandidate.getRomsWithFiles();
 
-    /* eslint-disable no-await-in-loop */
     for (let i = 0; i < inputToOutputEntries.length; i += 1) {
       const inputRomFile = inputToOutputEntries[i].getInputFile();
       const outputRomFile = inputToOutputEntries[i].getOutputFile();

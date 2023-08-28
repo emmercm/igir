@@ -25,6 +25,9 @@ export default class DirectoryCleaner extends Module {
     this.options = options;
   }
 
+  /**
+   * Clean some directories, excluding some files.
+   */
   async clean(dirsToClean: string[], filesToExclude: File[]): Promise<string[]> {
     this.progressBar.logInfo('cleaning files in output');
 
@@ -73,7 +76,6 @@ export default class DirectoryCleaner extends Module {
 
   private async trashOrDelete(filePaths: string[]): Promise<void> {
     // Prefer recycling...
-    /* eslint-disable no-await-in-loop */
     for (let i = 0; i < filePaths.length; i += Constants.OUTPUT_CLEANER_BATCH_SIZE) {
       await trash(filePaths.slice(i, i + Constants.OUTPUT_CLEANER_BATCH_SIZE));
       await this.progressBar.update(i);

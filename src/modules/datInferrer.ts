@@ -9,11 +9,21 @@ import Header from '../types/logiqx/header.js';
 import ROM from '../types/logiqx/rom.js';
 import Module from './module.js';
 
+/**
+ * If no {@link DAT}s are provided, implicitly create some. A {@link DAT} will be created for every
+ * subdirectory that contains files, and {@link Game}s will be named after each file's extracted
+ * path (without the extension).
+ *
+ * This class will not be run concurrently with any other class.
+ */
 export default class DATInferrer extends Module {
   constructor(progressBar: ProgressBar) {
     super(progressBar, DATInferrer.name);
   }
 
+  /**
+   * Infer DATs from input files.
+   */
   infer(romFiles: File[]): DAT[] {
     this.progressBar.logInfo(`inferring DATs for ${romFiles.length.toLocaleString()} ROM${romFiles.length !== 1 ? 's' : ''}`);
 

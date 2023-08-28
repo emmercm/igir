@@ -1,5 +1,9 @@
 import path from 'path';
 
+/**
+ * A class of information about specific game consoles and their names, standard file extensions,
+ * and how to replace output tokens such as `{pocket}`.
+ */
 export default class GameConsole {
   /**
    * Analogue Pocket ROMs go in the /Assets/{pocket}/common/ directory
@@ -15,8 +19,9 @@ export default class GameConsole {
    * Batocera ROMs go in the roms/{batocera} directory:
    *  @see https://wiki.batocera.org/systems
    *
-   * @see https://emulation.gametechwiki.com/index.php/List_of_filetypes
-   * @see https://emulation.fandom.com/wiki/List_of_filetypes
+   * Other:
+   *  @see https://emulation.gametechwiki.com/index.php/List_of_filetypes
+   *  @see https://emulation.fandom.com/wiki/List_of_filetypes
    */
   private static readonly CONSOLES: GameConsole[] = [
     // Amstrad

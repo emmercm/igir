@@ -5,6 +5,9 @@ import url from 'url';
 
 import fsPoly from './polyfill/fsPoly.js';
 
+/**
+ * Search for a {@link fileName} in {@link filePath} or any of its parent directories.
+ */
 function scanUpPathForFile(filePath: string, fileName: string): string | undefined {
   const fullPath = path.join(filePath, fileName);
   if (fs.existsSync(fullPath)) {
@@ -35,6 +38,9 @@ process.once('exit', () => {
   });
 });
 
+/**
+ * A static class of constants that are determined at startup, to be used widely.
+ */
 export default class Constants {
   static readonly COMMAND_NAME = COMMAND_NAME;
 
