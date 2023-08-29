@@ -94,6 +94,9 @@
         // Be strict about Node.js version compatability (from package's `engines.node`)
         constraintsFiltering: 'strict',
         rollbackPrs: true,
+        rollback: {
+          prPriority: 10,
+        },
       },
 
       // Dev dependencies
