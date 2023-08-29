@@ -85,8 +85,18 @@
     packageRules: [
       // Dependencies
       {
+        // Group dependencies and their `@types/*` packages together
         groupName: 'dependencies',
         matchDepTypes: ['dependencies', 'devDependencies'],
+      },
+      {
+        matchDepTypes: ['dependencies'],
+        // Be strict about Node.js version compatability (from package's `engines.node`)
+        constraintsFiltering: 'strict',
+        rollbackPrs: true,
+        rollback: {
+          prPriority: 10,
+        },
       },
 
       // Dev dependencies
