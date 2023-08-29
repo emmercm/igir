@@ -132,8 +132,8 @@ export default class Zip extends Archive {
     dat: DAT,
     inputToOutput: [File, ArchiveEntry<Zip>][],
   ): Promise<void> {
-    let zipFileError: ArchiverError | undefined;
-    const catchError = (err: ArchiverError): void => {
+    let zipFileError: Error | undefined;
+    const catchError = (err: Error): void => {
       zipFileError = err;
     };
     zipFile.on('error', catchError);
@@ -163,6 +163,9 @@ export default class Zip extends Archive {
         );
 
         return inputFile.createPatchedReadStream(removeHeader, async (stream) => {
+          // Catch stream errors such as `ENOENT: no such file or directory`
+          stream.on('error', catchError);
+
           const entryName = outputArchiveEntry.getEntryPath().replace(/[\\/]/g, '/');
           zipFile.append(stream, {
             name: entryName,
