@@ -1,4 +1,4 @@
-import archiver, { Archiver, ArchiverError } from 'archiver';
+import archiver, { Archiver } from 'archiver';
 import async from 'async';
 import fs from 'fs';
 import path from 'path';
