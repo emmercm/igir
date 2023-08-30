@@ -180,7 +180,7 @@ export default class DATStatus {
         return DATStatus.buildCsvRow(
           this.getDATName(),
           game.getName(),
-          releaseCandidate || !game.getRoms().length ? Status.FOUND : Status.MISSING,
+          releaseCandidate ?? !game.getRoms().length ? Status.FOUND : Status.MISSING,
           releaseCandidate
             ? releaseCandidate.getRomsWithFiles()
               .map((romWithFiles) => (options.shouldWrite()

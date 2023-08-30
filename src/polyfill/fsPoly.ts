@@ -184,7 +184,7 @@ export default class FsPoly {
       return await util.promisify(fs.rename)(oldPath, newPath);
     } catch (e) {
       // These are the same error codes that `graceful-fs` catches
-      if (['EACCES', 'EPERM', 'EBUSY'].indexOf((e as NodeJS.ErrnoException).code || '') === -1) {
+      if (['EACCES', 'EPERM', 'EBUSY'].indexOf((e as NodeJS.ErrnoException).code ?? '') === -1) {
         throw e;
       }
 
