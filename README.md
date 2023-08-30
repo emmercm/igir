@@ -229,9 +229,9 @@ Example use cases:
 
 ## Feature requests, bug reports, and contributing
 
-Feedback is a gift! Your feature requests and bug reports help improve the project for everyone. Feel free to submit an issue on GitHub using one of the templates.
+Feedback is a gift! Your feature requests and bug reports help improve the project for everyone. Feel free to [submit an issue](https://github.com/emmercm/igir/issues/new/choose) on GitHub using one of the templates.
 
-Even better, if you feel comfortable writing code, please feel free to submit a pull request against the project!
+Even better, if you feel comfortable writing code, please feel free to submit a pull request against the project! Please see the full [contribution guidelines](https://igir.io/contributing) for rules to follow.
 
 <br>
 <p align="center">

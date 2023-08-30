@@ -84,6 +84,7 @@ nav:
       - Misc:
           - rom-dumping.md
       - Terms and Conditions:
+          - contributing.md
           - license.md
   # https://github.com/squidfunk/mkdocs-material/issues/889#issuecomment-582297142: how-to open nav links in new tabs
   - Download ↗: https://github.com/emmercm/igir/releases/latest" target="_blank
