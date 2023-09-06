@@ -2,15 +2,15 @@ import os from 'os';
 import path from 'path';
 
 import Constants from '../src/constants.js';
-import DAT from '../src/types/logiqx/dat.js';
-import Game from '../src/types/logiqx/game.js';
-import Header from '../src/types/logiqx/header.js';
-import Release from '../src/types/logiqx/release.js';
-import ROM from '../src/types/logiqx/rom.js';
+import Game from '../src/types/dats/game.js';
+import Header from '../src/types/dats/logiqx/header.js';
+import LogiqxDAT from '../src/types/dats/logiqx/logiqxDat.js';
+import Release from '../src/types/dats/release.js';
+import ROM from '../src/types/dats/rom.js';
 import Options from '../src/types/options.js';
 import OutputFactory from '../src/types/outputFactory.js';
 
-const dummyDat = new DAT(new Header(), []);
+const dummyDat = new LogiqxDAT(new Header(), []);
 const dummyGame = new Game({ name: 'Dummy Game' });
 const dummyRelease = undefined;
 const dummyRom = new ROM('Dummy.rom', 0, '00000000');
@@ -66,7 +66,7 @@ describe('token replacement', () => {
     ['root/{datReleaseLanguage}', path.join('root', 'En', 'Dummy.rom')],
   ])('should replace {dat*}: %s', async (output, expectedPath) => {
     const options = new Options({ commands: ['copy'], output });
-    const dat = new DAT(new Header({ name: 'DAT / Name', description: 'DAT \\ Description' }), []);
+    const dat = new LogiqxDAT(new Header({ name: 'DAT / Name', description: 'DAT \\ Description' }), []);
     const release = new Release('Game Name', 'USA', 'En');
 
     const outputPath = OutputFactory.getPath(
@@ -207,7 +207,7 @@ describe('token replacement', () => {
 
     const outputPath = OutputFactory.getPath(
       options,
-      new DAT(new Header({ name: datName }), []),
+      new LogiqxDAT(new Header({ name: datName }), []),
       dummyGame,
       dummyRelease,
       dummyRom,
@@ -363,7 +363,7 @@ describe('should respect "--dir-dat-name"', () => {
     ['name', path.join(os.devNull, 'name', 'Dummy.rom')],
   ])('option is true: %s', async (datName, expectedPath) => {
     const options = new Options({ commands: ['copy'], output: os.devNull, dirDatName: true });
-    const dat = new DAT(new Header({ name: datName, description: 'description' }), []);
+    const dat = new LogiqxDAT(new Header({ name: datName, description: 'description' }), []);
 
     const outputPath = OutputFactory.getPath(
       options,
@@ -380,7 +380,7 @@ describe('should respect "--dir-dat-name"', () => {
     ['name', path.join(os.devNull, 'Dummy.rom')],
   ])('option is false: %s', async (datName, expectedPath) => {
     const options = new Options({ commands: ['copy'], output: os.devNull, dirDatName: false });
-    const dat = new DAT(new Header({ name: datName, description: 'description' }), []);
+    const dat = new LogiqxDAT(new Header({ name: datName, description: 'description' }), []);
 
     const outputPath = OutputFactory.getPath(
       options,
@@ -400,7 +400,7 @@ describe('should respect "--dir-dat-description"', () => {
     ['description', path.join(os.devNull, 'description', 'Dummy.rom')],
   ])('option is true: %s', async (datDescription, expectedPath) => {
     const options = new Options({ commands: ['copy'], output: os.devNull, dirDatDescription: true });
-    const dat = new DAT(new Header({ name: 'name', description: datDescription }), []);
+    const dat = new LogiqxDAT(new Header({ name: 'name', description: datDescription }), []);
 
     const outputPath = OutputFactory.getPath(
       options,
@@ -417,7 +417,7 @@ describe('should respect "--dir-dat-description"', () => {
     ['description', path.join(os.devNull, 'Dummy.rom')],
   ])('option is false: %s', async (datDescription, expectedPath) => {
     const options = new Options({ commands: ['copy'], output: os.devNull, dirDatDescription: false });
-    const dat = new DAT(new Header({ name: 'name', description: datDescription }), []);
+    const dat = new LogiqxDAT(new Header({ name: 'name', description: datDescription }), []);
 
     const outputPath = OutputFactory.getPath(
       options,

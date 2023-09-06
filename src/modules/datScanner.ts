@@ -9,13 +9,15 @@ import Constants from '../constants.js';
 import ArrayPoly from '../polyfill/arrayPoly.js';
 import bufferPoly from '../polyfill/bufferPoly.js';
 import fsPoly from '../polyfill/fsPoly.js';
+import DAT from '../types/dats/dat.js';
+import DATObject from '../types/dats/datObject.js';
+import Game from '../types/dats/game.js';
+import Header from '../types/dats/logiqx/header.js';
+import LogiqxDAT from '../types/dats/logiqx/logiqxDat.js';
+import MameDAT from '../types/dats/mame/mameDat.js';
+import ROM from '../types/dats/rom.js';
 import File from '../types/files/file.js';
 import FileFactory from '../types/files/fileFactory.js';
-import DAT from '../types/logiqx/dat.js';
-import DataFile from '../types/logiqx/dataFile.js';
-import Game from '../types/logiqx/game.js';
-import Header from '../types/logiqx/header.js';
-import ROM from '../types/logiqx/rom.js';
 import Options from '../types/options.js';
 import Scanner from './scanner.js';
 
@@ -123,6 +125,10 @@ export default class DATScanner extends Scanner {
   private async parseDatFile(datFile: File): Promise<DAT | undefined> {
     let dat = await datFile.createReadStream(async (stream) => {
       const fileContents = (await bufferPoly.fromReadable(stream)).toString();
+      if (!fileContents) {
+        this.progressBar.logDebug(`${datFile.toString()}: file is empty`);
+        return undefined;
+      }
 
       const xmlDat = await this.parseXmlDat(datFile, fileContents);
       if (xmlDat) {
@@ -151,7 +157,7 @@ export default class DATScanner extends Scanner {
     //  which only has one game for every BIOS file, even though there are 90+ consoles.
     if (dat.getGames().length === 1 && dat.getGames()[0].getRoms().length > 10) {
       const game = dat.getGames()[0];
-      dat = new DAT(dat.getHeader(), dat.getGames()[0].getRoms().map((rom) => new Game({
+      dat = new LogiqxDAT(dat.getHeader(), dat.getGames()[0].getRoms().map((rom) => new Game({
         ...game,
         name: rom.getName(),
         rom: [rom],
@@ -169,9 +175,9 @@ export default class DATScanner extends Scanner {
   private async parseXmlDat(datFile: File, fileContents: string): Promise<DAT | undefined> {
     this.progressBar.logTrace(`${datFile.toString()}: attempting to parse ${fsPoly.sizeReadable(fileContents.length)} of XML`);
 
-    let xmlObject: DataFile;
+    let datObject: DATObject;
     try {
-      xmlObject = await xml2js.parseStringPromise(fileContents, {
+      datObject = await xml2js.parseStringPromise(fileContents, {
         emptyTag: undefined,
         mergeAttrs: true,
         explicitArray: false,
@@ -184,12 +190,26 @@ export default class DATScanner extends Scanner {
 
     this.progressBar.logTrace(`${datFile.toString()}: parsed XML, deserializing to DAT`);
 
-    try {
-      return DAT.fromObject(xmlObject.datafile);
-    } catch (e) {
-      this.progressBar.logDebug(`${datFile.toString()}: failed to parse DAT object: ${e}`);
-      return undefined;
+    if (datObject.datafile) {
+      try {
+        return LogiqxDAT.fromObject(datObject.datafile);
+      } catch (e) {
+        this.progressBar.logDebug(`${datFile.toString()}: failed to parse DAT object: ${e}`);
+        return undefined;
+      }
     }
+
+    if (datObject.mame) {
+      try {
+        return MameDAT.fromObject(datObject.mame);
+      } catch (e) {
+        this.progressBar.logDebug(`${datFile.toString()}: failed to parse DAT object: ${e}`);
+        return undefined;
+      }
+    }
+
+    this.progressBar.logDebug(`${datFile.toString()}: parsed XML, but failed to find a known DAT root`);
+    return undefined;
   }
 
   private async parseCmproDat(datFile: File, fileContents: string): Promise<DAT | undefined> {
@@ -238,7 +258,7 @@ export default class DATScanner extends Scanner {
       });
     });
 
-    return new DAT(header, games);
+    return new LogiqxDAT(header, games);
   }
 
   /**
@@ -286,7 +306,7 @@ export default class DATScanner extends Scanner {
       });
     });
 
-    return new DAT(new Header({
+    return new LogiqxDAT(new Header({
       name: path.parse(datFile.getExtractedFilePath()).name,
       romNamesContainDirectories: true,
     }), games);

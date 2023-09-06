@@ -1,11 +1,11 @@
 import path from 'path';
 
 import CandidatePostProcessor from '../../src/modules/candidatePostProcessor.js';
-import DAT from '../../src/types/logiqx/dat.js';
-import Game from '../../src/types/logiqx/game.js';
-import Header from '../../src/types/logiqx/header.js';
-import Parent from '../../src/types/logiqx/parent.js';
-import ROM from '../../src/types/logiqx/rom.js';
+import Game from '../../src/types/dats/game.js';
+import Header from '../../src/types/dats/logiqx/header.js';
+import LogiqxDAT from '../../src/types/dats/logiqx/logiqxDat.js';
+import Parent from '../../src/types/dats/parent.js';
+import ROM from '../../src/types/dats/rom.js';
 import Options from '../../src/types/options.js';
 import ReleaseCandidate from '../../src/types/releaseCandidate.js';
 import ROMWithFiles from '../../src/types/romWithFiles.js';
@@ -44,7 +44,7 @@ const multiRomGames = [
   ],
 }));
 const games = [...singleRomGames, ...subDirRomGames, ...multiRomGames];
-const dat = new DAT(new Header(), games);
+const dat = new LogiqxDAT(new Header(), games);
 
 async function runCandidatePostProcessor(
   options: Options,

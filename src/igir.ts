@@ -25,10 +25,10 @@ import ROMScanner from './modules/romScanner.js';
 import StatusGenerator from './modules/statusGenerator.js';
 import ArrayPoly from './polyfill/arrayPoly.js';
 import FsPoly from './polyfill/fsPoly.js';
+import DAT from './types/dats/dat.js';
+import Parent from './types/dats/parent.js';
 import DATStatus from './types/datStatus.js';
 import File from './types/files/file.js';
-import DAT from './types/logiqx/dat.js';
-import Parent from './types/logiqx/parent.js';
 import Options from './types/options.js';
 import OutputFactory from './types/outputFactory.js';
 import Patch from './types/patches/patch.js';
@@ -177,7 +177,7 @@ export default class Igir {
       ] satisfies [boolean, string][])
         .filter(([bool]) => bool)
         .forEach(([, option]) => {
-          progressBar.logWarn(`${option} is most helpful when processing multiple DATs, only one was found`);
+          progressBar.logWarn(`${option} is most helpful when processing multiple DATs, only one DAT was found`);
         });
     }
 

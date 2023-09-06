@@ -1,6 +1,6 @@
-import Game from '../../../src/types/logiqx/game.js';
-import Release from '../../../src/types/logiqx/release.js';
-import ROM from '../../../src/types/logiqx/rom.js';
+import Game from '../../../src/types/dats/game.js';
+import Release from '../../../src/types/dats/release.js';
+import ROM from '../../../src/types/dats/rom.js';
 
 describe('isBios', () => {
   test.each([

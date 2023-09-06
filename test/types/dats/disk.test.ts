@@ -1,4 +1,4 @@
-import Disk from '../../../src/types/logiqx/disk.js';
+import Disk from '../../../src/types/dats/disk.js';
 
 it('should instantiate', () => {
   expect(new Disk()).toBeTruthy();

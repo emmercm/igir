@@ -5,12 +5,12 @@ import FileIndexer from '../../src/modules/fileIndexer.js';
 import MovedROMDeleter from '../../src/modules/movedRomDeleter.js';
 import ROMScanner from '../../src/modules/romScanner.js';
 import fsPoly from '../../src/polyfill/fsPoly.js';
+import Game from '../../src/types/dats/game.js';
+import Header from '../../src/types/dats/logiqx/header.js';
+import LogiqxDAT from '../../src/types/dats/logiqx/logiqxDat.js';
+import ROM from '../../src/types/dats/rom.js';
 import Zip from '../../src/types/files/archives/zip.js';
 import File from '../../src/types/files/file.js';
-import DAT from '../../src/types/logiqx/dat.js';
-import Game from '../../src/types/logiqx/game.js';
-import Header from '../../src/types/logiqx/header.js';
-import ROM from '../../src/types/logiqx/rom.js';
 import Options from '../../src/types/options.js';
 import ProgressBarFake from '../console/progressBarFake.js';
 
@@ -132,7 +132,7 @@ describe('should delete archives', () => {
         output: 'output',
       });
 
-      const dat = new DAT(new Header(), games);
+      const dat = new LogiqxDAT(new Header(), games);
 
       const rawRomFiles = (await Promise.all(dat.getParents()
         .flatMap((parent) => parent.getGames())

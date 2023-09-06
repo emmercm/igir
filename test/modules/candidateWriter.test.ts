@@ -14,12 +14,13 @@ import PatchScanner from '../../src/modules/patchScanner.js';
 import ROMHeaderProcessor from '../../src/modules/romHeaderProcessor.js';
 import ROMScanner from '../../src/modules/romScanner.js';
 import fsPoly from '../../src/polyfill/fsPoly.js';
+import DAT from '../../src/types/dats/dat.js';
+import Header from '../../src/types/dats/logiqx/header.js';
+import LogiqxDAT from '../../src/types/dats/logiqx/logiqxDat.js';
 import Archive from '../../src/types/files/archives/archive.js';
 import ArchiveEntry from '../../src/types/files/archives/archiveEntry.js';
 import File from '../../src/types/files/file.js';
 import FileFactory from '../../src/types/files/fileFactory.js';
-import DAT from '../../src/types/logiqx/dat.js';
-import Header from '../../src/types/logiqx/header.js';
 import Options, { OptionsProps } from '../../src/types/options.js';
 import ProgressBarFake from '../console/progressBarFake.js';
 
@@ -75,7 +76,7 @@ function datInferrer(romFiles: File[]): DAT {
     .map((dat) => dat.getGames())
     .flatMap((games) => games);
   // TODO(cemmer): filter to unique games / remove duplicates
-  return new DAT(new Header({ name: 'ROMWriter Test' }), datGames);
+  return new LogiqxDAT(new Header({ name: 'ROMWriter Test' }), datGames);
 }
 
 async function romWriter(

@@ -1,10 +1,10 @@
 import CandidatePreferer from '../../src/modules/candidatePreferer.js';
-import DAT from '../../src/types/logiqx/dat.js';
-import Game, { GameProps } from '../../src/types/logiqx/game.js';
-import Header from '../../src/types/logiqx/header.js';
-import Parent from '../../src/types/logiqx/parent.js';
-import Release from '../../src/types/logiqx/release.js';
-import ROM from '../../src/types/logiqx/rom.js';
+import Game, { GameProps } from '../../src/types/dats/game.js';
+import Header from '../../src/types/dats/logiqx/header.js';
+import LogiqxDAT from '../../src/types/dats/logiqx/logiqxDat.js';
+import Parent from '../../src/types/dats/parent.js';
+import Release from '../../src/types/dats/release.js';
+import ROM from '../../src/types/dats/rom.js';
 import Options, { OptionsProps } from '../../src/types/options.js';
 import ReleaseCandidate from '../../src/types/releaseCandidate.js';
 import ROMWithFiles from '../../src/types/romWithFiles.js';
@@ -19,7 +19,7 @@ async function expectFilteredCandidates(
   parentsToCandidates: [Parent, ReleaseCandidate[]][],
   expectedSize: number,
 ): Promise<void> {
-  const dat = new DAT(new Header(), []);
+  const dat = new LogiqxDAT(new Header(), []);
 
   const [filteredParentsToCandidates] = await Promise.all([buildCandidateFilter(options)
     .prefer(dat, new Map(parentsToCandidates))]);
@@ -34,7 +34,7 @@ async function expectPreferredCandidates(
   parentsToCandidates: [Parent, ReleaseCandidate[]][],
   expectedNames: string[],
 ): Promise<void> {
-  const dat = new DAT(new Header(), []);
+  const dat = new LogiqxDAT(new Header(), []);
 
   const filteredParentsToCandidates = await buildCandidateFilter(options)
     .prefer(dat, new Map(parentsToCandidates));

@@ -3,14 +3,14 @@ import path, { ParsedPath } from 'path';
 
 import ArrayPoly from '../polyfill/arrayPoly.js';
 import fsPoly from '../polyfill/fsPoly.js';
+import DAT from './dats/dat.js';
+import Game from './dats/game.js';
+import Release from './dats/release.js';
+import ROM from './dats/rom.js';
 import ArchiveEntry from './files/archives/archiveEntry.js';
 import File from './files/file.js';
 import FileFactory from './files/fileFactory.js';
 import GameConsole from './gameConsole.js';
-import DAT from './logiqx/dat.js';
-import Game from './logiqx/game.js';
-import Release from './logiqx/release.js';
-import ROM from './logiqx/rom.js';
 import Options from './options.js';
 
 /**

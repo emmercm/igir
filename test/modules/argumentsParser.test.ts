@@ -5,8 +5,8 @@ import Logger from '../../src/console/logger.js';
 import LogLevel from '../../src/console/logLevel.js';
 import Constants from '../../src/constants.js';
 import ArgumentsParser from '../../src/modules/argumentsParser.js';
-import DAT from '../../src/types/logiqx/dat.js';
-import Header from '../../src/types/logiqx/header.js';
+import Header from '../../src/types/dats/logiqx/header.js';
+import LogiqxDAT from '../../src/types/dats/logiqx/logiqxDat.js';
 
 const dummyRequiredArgs = ['--input', os.devNull, '--output', os.devNull];
 const dummyCommandAndRequiredArgs = ['copy', ...dummyRequiredArgs];
@@ -357,7 +357,7 @@ describe('options', () => {
   });
 
   it('should parse "remove-headers"', () => {
-    const dat = new DAT(new Header(), []);
+    const dat = new LogiqxDAT(new Header(), []);
 
     // False
     expect(argumentsParser.parse(dummyCommandAndRequiredArgs).canRemoveHeader(dat, '.smc')).toEqual(false);

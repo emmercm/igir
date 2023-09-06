@@ -1,12 +1,12 @@
 import stripAnsi from 'strip-ansi';
 
 import StatusGenerator from '../../src/modules/statusGenerator.js';
+import Game from '../../src/types/dats/game.js';
+import Header from '../../src/types/dats/logiqx/header.js';
+import LogiqxDAT from '../../src/types/dats/logiqx/logiqxDat.js';
+import Parent from '../../src/types/dats/parent.js';
+import ROM from '../../src/types/dats/rom.js';
 import File from '../../src/types/files/file.js';
-import DAT from '../../src/types/logiqx/dat.js';
-import Game from '../../src/types/logiqx/game.js';
-import Header from '../../src/types/logiqx/header.js';
-import Parent from '../../src/types/logiqx/parent.js';
-import ROM from '../../src/types/logiqx/rom.js';
 import Options, { OptionsProps } from '../../src/types/options.js';
 import IPSPatch from '../../src/types/patches/ipsPatch.js';
 import ReleaseCandidate from '../../src/types/releaseCandidate.js';
@@ -56,7 +56,7 @@ const games = [
   }),
 ];
 
-const dummyDat = new DAT(new Header({
+const dummyDat = new LogiqxDAT(new Header({
   name: 'dat',
 }), games);
 
