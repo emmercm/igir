@@ -38,8 +38,8 @@ export default class FileChecksums {
       stream.on('end', () => {
         resolve({
           crc32: (crc ?? 0).toString(16),
-          md5: md5 !== undefined ? md5.digest('hex') : undefined,
-          sha1: sha1 !== undefined ? sha1.digest('hex') : undefined,
+          md5: md5?.digest('hex'),
+          sha1: sha1?.digest('hex'),
         });
       });
 

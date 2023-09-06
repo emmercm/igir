@@ -6,11 +6,12 @@ import SevenZip from './archives/sevenZip.js';
 import Tar from './archives/tar.js';
 import Zip from './archives/zip.js';
 import File from './file.js';
+import { ChecksumBitmask } from './fileChecksums.js';
 
 export default class FileFactory {
   static async filesFrom(filePath: string): Promise<File[]> {
     if (this.isArchive(filePath)) {
-      return this.archiveFrom(filePath).getArchiveEntries();
+      return this.archiveFrom(filePath).getArchiveEntries(ChecksumBitmask.CRC32);
     }
     return [await File.fileOf(filePath)];
   }
