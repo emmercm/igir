@@ -12,19 +12,38 @@ DATs are catalogs of every known ROM that exists per game system, complete with 
 
 These DATs help `igir` distinguish known ROM files in input directories from other files. Because DATs typically contain the complete catalog for a console, `igir` also uses them to generate reports for you on what ROMs were found and which are missing.
 
-`igir` will look for `.dat` files automatically in your working directory, but you can specify a specific location with the `--dat <path>` option:
+`igir` will look for `*.dat` files automatically in your working directory, but you can specify a specific location with the `--dat <path>` option:
 
 ```shell
-igir [commands..] --dat dats/*.dat --input <input>
+igir [commands..] --dat "dats/*.dat" --input <input>
 ```
 
 Or you can specify archives that can contain multiple DATs (such as No-Intro's [daily download](https://datomatic.no-intro.org/index.php?page=download&s=64&op=daily)) with:
 
 ```shell
-igir [commands..] --dat No-Intro*.zip --input <input>
+igir [commands..] --dat "No-Intro*.zip" --input <input>
 ```
 
-**`igir` can process DAT files in [XML](https://github.com/SabreTools/SabreTools/wiki/DatFile-Formats#logiqx-xml-format) and [CMPro](http://www.logiqx.com/DatFAQs/CMPro.php) formats, as well as [Hardware Target Game Database](https://github.com/frederic-mahe/Hardware-Target-Game-Database) SMDBs that contain file sizes.**
+## Just tell me what to do
+
+The rest of this page goes into different types of DATs and different groups of people that publish them. If all you want to do is organize your ROMs with `igir` in some sane way, follow these instructions:
+
+1. Go to the No-Intro DAT-o-MATIC [daily download page](https://datomatic.no-intro.org/index.php?page=download&s=64&op=daily)
+2. Select the "P/C XML" dropdown option (as opposed to "standard DAT") and download the `.zip` to wherever you store your ROMs
+3. Every time you run `igir`, specify the `.zip` file you downloaded with the `--dat <path>` option:
+
+  ```shell
+  igir [commands..] --dat "No-Intro*.zip" --input <input>
+  ```
+
+## Supported DAT formats
+
+There have been a few DAT-like formats developed over the years. `igir` supports the following:
+
+- [Logiqx XML](https://github.com/SabreTools/SabreTools/wiki/DatFile-Formats#logiqx-xml-format) (most common) (No-Intro, Redump, TOSEC, and more)
+- [MAME ListXML](https://easyemu.mameworld.info/mameguide/command_line/frontend_commands/listxml.html) (XML exported by the `mame -listxml` command)
+- [CMPro](http://www.logiqx.com/DatFAQs/CMPro.php)
+- [Hardware Target Game Database](https://github.com/frederic-mahe/Hardware-Target-Game-Database) SMDBs that contain file sizes
 
 !!! tip
 
@@ -40,22 +59,14 @@ igir [commands..] --dat No-Intro*.zip --input <input>
 
     See the [file scanning docs](file-scanning.md) for more information on specify files with the `--dat` option.
 
-## Just tell me what to do
-
-1. Go to the No-Intro DAT-o-MATIC [daily download page](https://datomatic.no-intro.org/index.php?page=download&s=64&op=daily)
-2. Select the "P/C XML" dropdown option (as opposed to "standard DAT") and download the `.zip` to wherever you store your ROMs
-3. Every time you run `igir`, specify the `.zip` file you downloaded with the `--dat <path>` option:
-
-  ```shell
-  igir [commands..] --dat "No-Intro*.zip" --input <input>
-  ```
-
 ## DAT groups
 
 A number of different release groups maintain sets of DATs, the most popular are:
 
 - [No-Intro](https://datomatic.no-intro.org/index.php?page=download&s=64&op=daily) (cartridge-based consoles)
 - [Redump](http://redump.org/downloads/) (optical media-based consoles)
+- [progetto-SNAPS](https://www.progettosnaps.net/dats/MAME/) (MAME)
+- [pleasuredome](https://pleasuredome.github.io/pleasuredome/mame/) (MAME)
 
 And some less popular release groups are:
 
@@ -66,8 +77,6 @@ And some less popular release groups are:
   - [Mirrored DATs](https://github.com/libretro/libretro-database/tree/master/metadat) (No-Intro and Redump/trurip/TOSEC DATs)
   - [FinalBurn NEO](https://github.com/libretro/FBNeo/tree/master/dats) (arcade, gen 1-4 consoles)
 - [ADVANsCEne](https://www.advanscene.com/html/dats.php) (GBA, DS, 3DS, PSP, PS Vita)
-- [progetto-SNAPS](https://www.progettosnaps.net/dats/MAME/) (MAME)
-- [pleasuredome](https://pleasuredome.github.io/pleasuredome/mame/) (MAME)
 
 ## Parent/clone (P/C) DATs
 
