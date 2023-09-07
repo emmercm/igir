@@ -5,7 +5,7 @@ import {
 import DAT from '../dat.js';
 import Game from '../game.js';
 import Header from '../logiqx/header.js';
-import Machine from '../machine.js';
+import Machine from './machine.js';
 
 /**
  * MAME-schema DAT that documents {@link Machine}s.

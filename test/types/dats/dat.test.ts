@@ -2,7 +2,7 @@ import Game from '../../../src/types/dats/game.js';
 import ClrMamePro from '../../../src/types/dats/logiqx/clrMamePro.js';
 import Header from '../../../src/types/dats/logiqx/header.js';
 import LogiqxDAT from '../../../src/types/dats/logiqx/logiqxDat.js';
-import Machine from '../../../src/types/dats/machine.js';
+import Machine from '../../../src/types/dats/mame/machine.js';
 import MameDAT from '../../../src/types/dats/mame/mameDat.js';
 
 describe('getGames', () => {

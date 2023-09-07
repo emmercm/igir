@@ -7,7 +7,7 @@ import xml2js from 'xml2js';
 
 import DAT from '../dat.js';
 import Game from '../game.js';
-import Machine from '../machine.js';
+import Machine from '../mame/machine.js';
 import Header from './header.js';
 
 /**
