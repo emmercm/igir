@@ -166,7 +166,12 @@ describe('fromObject', () => {
     const dat = MameDAT.fromObject(obj.mame);
 
     expect(dat.getName()).toEqual('0.257 (mame0257-dirty)');
+
     expect(dat.getGames()).toHaveLength(1);
+    expect(dat.getGames()[0].getName()).toEqual('005');
+
     expect(dat.getParents()).toHaveLength(1);
+    expect(dat.getParents()[0].getName()).toEqual('005');
+    expect(dat.getParents()[0].getGames()).toHaveLength(1);
   });
 });

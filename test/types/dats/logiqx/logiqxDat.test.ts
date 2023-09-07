@@ -37,7 +37,11 @@ describe('fromObject', () => {
     const dat = LogiqxDAT.fromObject(obj.datafile);
 
     expect(dat.getName()).toEqual('Nintendo - Game Boy (Parent-Clone)');
+
     expect(dat.getGames()).toHaveLength(2);
+
     expect(dat.getParents()).toHaveLength(1);
+    expect(dat.getParents()[0].getName()).toEqual('[BIOS] Nintendo Game Boy Boot ROM (World) (Rev 1)');
+    expect(dat.getParents()[0].getGames()).toHaveLength(2);
   });
 });
