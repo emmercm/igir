@@ -42,12 +42,41 @@ There have been a few DAT-like formats developed over the years. `igir` supports
 
 - [Logiqx XML](https://github.com/SabreTools/SabreTools/wiki/DatFile-Formats#logiqx-xml-format) (most common) (No-Intro, Redump, TOSEC, and more)
 - [MAME ListXML](https://easyemu.mameworld.info/mameguide/command_line/frontend_commands/listxml.html) (XML exported by the `mame -listxml` command)
+
+  !!! tip
+
+      Instead of exporting the ListXML to a file yourself, you can also specify a MAME executable for the DAT path and then `igir` is smart enough to parse it:
+
+      === ":simple-windowsxp: Windows"
+
+          Windows is fairly easy, MAME is officially compiled for Windows and downloads can be found on many mirror sites.
+
+          ```batch
+          igir [commands..] --dat "mame0257b_64bit.exe" --input <input>
+          ```
+
+      === ":simple-apple: macOS"
+
+          MAME isn't officially compiled for macOS, you will have to use a third-party release such as [SDL MAME](https://sdlmame.lngn.net/).
+
+          ```shell
+          igir [commands..] --dat "mame0257-x86/mame" --input <input>
+          ```
+
+      === ":simple-linux: Linux"
+
+          Most distros (Ubuntu, Debian, Fedora, etc.) have MAME in their package repositories, but some will require you to compile MAME yourself. If the `mame` executable is in your `$PATH`, you can specify its path like this:
+
+          ```shell
+          igir [commands..] --dat "$(which "mame")" --input <input>
+          ```
+
 - [CMPro](http://www.logiqx.com/DatFAQs/CMPro.php)
 - [Hardware Target Game Database](https://github.com/frederic-mahe/Hardware-Target-Game-Database) SMDBs that contain file sizes
 
 !!! tip
 
-    `igir` supports URLs to DAT files and archives! This is helpful to make sure you're always using the most up-to-date version of a DAT hosted on sites such as GitHub. For example:
+    `igir` supports URLs to DAT files and archives. This is helpful to make sure you're always using the most up-to-date version of a DAT hosted on sites such as GitHub. For example:
 
     ```shell
     igir [commands..] --dat "https://raw.githubusercontent.com/libretro/libretro-database/master/dat/DOOM.dat" --input <input>
@@ -57,7 +86,7 @@ There have been a few DAT-like formats developed over the years. `igir` supports
 
 !!! info
 
-    See the [file scanning docs](file-scanning.md) for more information on specify files with the `--dat` option.
+    See the [file scanning docs](file-scanning.md) for more information on specifying file paths with the `--dat <path>` option.
 
 ## DAT groups
 

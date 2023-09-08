@@ -1,5 +1,5 @@
 import crypto from 'crypto';
-import fs, { MakeDirectoryOptions, PathLike, RmOptions } from 'fs';
+import fs, {constants, MakeDirectoryOptions, PathLike, RmOptions} from 'fs';
 import { isNotJunk } from 'junk';
 import nodeDiskInfo from 'node-disk-info';
 import path from 'path';
@@ -75,6 +75,15 @@ export default class FsPoly {
   static isDirectorySync(pathLike: PathLike): boolean {
     try {
       return fs.lstatSync(pathLike).isDirectory();
+    } catch (e) {
+      return false;
+    }
+  }
+
+  static async isExecutable(pathLike: PathLike): Promise<boolean> {
+    try {
+      await util.promisify(fs.access)(pathLike, fs.constants.X_OK);
+      return true;
     } catch (e) {
       return false;
     }

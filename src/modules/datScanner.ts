@@ -1,5 +1,6 @@
 import { parse } from '@fast-csv/parse';
 import async, { AsyncResultCallback } from 'async';
+import * as child_process from 'child_process';
 import path from 'path';
 import robloachDatfile from 'robloach-datfile';
 import xml2js from 'xml2js';
@@ -123,31 +124,19 @@ export default class DATScanner extends Scanner {
   }
 
   private async parseDatFile(datFile: File): Promise<DAT | undefined> {
-    let dat = await datFile.createReadStream(async (stream) => {
-      const fileContents = (await bufferPoly.fromReadable(stream)).toString();
-      if (!fileContents) {
-        this.progressBar.logDebug(`${datFile.toString()}: file is empty`);
-        return undefined;
-      }
+    let dat: DAT | undefined;
 
-      const xmlDat = await this.parseXmlDat(datFile, fileContents);
-      if (xmlDat) {
-        return xmlDat;
-      }
+    if (!dat && await fsPoly.isExecutable(datFile.getFilePath())) {
+      dat = await this.parseMameListxml(datFile);
+    }
 
-      const cmproDatParsed = await this.parseCmproDat(datFile, fileContents);
-      if (cmproDatParsed) {
-        return cmproDatParsed;
-      }
+    if (!dat) {
+      dat = await datFile.createReadStream(async (stream) => {
+        const fileContents = (await bufferPoly.fromReadable(stream)).toString();
+        return this.parseDatContents(datFile, fileContents);
+      });
+    }
 
-      const smdbParsed = await this.parseSourceMaterialDatabase(datFile, fileContents);
-      if (smdbParsed) {
-        return smdbParsed;
-      }
-
-      this.progressBar.logDebug(`${datFile.toString()}: failed to parse DAT file`);
-      return undefined;
-    });
     if (!dat) {
       return dat;
     }
@@ -170,6 +159,65 @@ export default class DATScanner extends Scanner {
     this.progressBar.logTrace(`${datFile.toString()}: ${fsPoly.sizeReadable(size)} of ${dat.getGames().length.toLocaleString()} game${dat.getGames().length !== 1 ? 's' : ''}, ${dat.getParents().length.toLocaleString()} parent${dat.getParents().length !== 1 ? 's' : ''} parsed`);
 
     return dat;
+  }
+
+  private async parseMameListxml(mameExecutable: File): Promise<DAT | undefined> {
+    this.progressBar.logTrace(`${mameExecutable.toString()}: attempting to get ListXML from MAME executable`);
+
+    let fileContents: string;
+    try {
+      fileContents = await new Promise((resolve, reject) => {
+        const proc = child_process.spawn(mameExecutable.getFilePath(), ['-listxml'], { windowsHide: true });
+
+        let output = '';
+        proc.stdout.on('data', (chunk) => {
+          output += chunk.toString();
+        });
+        proc.stderr.on('data', (chunk) => {
+          output += chunk.toString();
+        });
+
+        proc.on('exit', (code) => {
+          if (code) {
+            reject(new Error(`exit code ${code}`));
+            return;
+          }
+          resolve(output);
+        });
+
+        proc.on('error', reject);
+      });
+    } catch (e) {
+      this.progressBar.logDebug(`${mameExecutable.toString()}: failed to get ListXML from MAME executable: ${e}`);
+      return undefined;
+    }
+
+    return this.parseDatContents(mameExecutable, fileContents);
+  }
+
+  private async parseDatContents(datFile: File, fileContents: string): Promise<DAT | undefined> {
+    if (!fileContents) {
+      this.progressBar.logDebug(`${datFile.toString()}: file is empty`);
+      return undefined;
+    }
+
+    const xmlDat = await this.parseXmlDat(datFile, fileContents);
+    if (xmlDat) {
+      return xmlDat;
+    }
+
+    const cmproDatParsed = await this.parseCmproDat(datFile, fileContents);
+    if (cmproDatParsed) {
+      return cmproDatParsed;
+    }
+
+    const smdbParsed = await this.parseSourceMaterialDatabase(datFile, fileContents);
+    if (smdbParsed) {
+      return smdbParsed;
+    }
+
+    this.progressBar.logDebug(`${datFile.toString()}: failed to parse DAT file`);
+    return undefined;
   }
 
   private async parseXmlDat(datFile: File, fileContents: string): Promise<DAT | undefined> {
