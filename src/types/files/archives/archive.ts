@@ -4,8 +4,8 @@ import { Readable } from 'stream';
 import Constants from '../../../constants.js';
 import fsPoly from '../../../polyfill/fsPoly.js';
 import File from '../file.js';
+import { ChecksumBitmask } from '../fileChecksums.js';
 import ArchiveEntry from './archiveEntry.js';
-import {ChecksumBitmask} from "../fileChecksums.js";
 
 export default abstract class Archive {
   private readonly filePath: string;
