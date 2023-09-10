@@ -462,10 +462,6 @@ export default class Options implements OptionsProps {
     return this.input;
   }
 
-  getInputFileCount(): number {
-    return this.input.length;
-  }
-
   private async scanInputFiles(walkCallback?: FsWalkCallback): Promise<string[]> {
     return Options.scanPaths(this.input, walkCallback);
   }

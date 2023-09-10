@@ -1,5 +1,6 @@
 import os from 'os';
 import path from 'path';
+import which from 'which';
 
 import DATScanner from '../../src/modules/datScanner.js';
 import Options from '../../src/types/options.js';
@@ -47,6 +48,11 @@ it('should not throw on non-DATs', async () => {
   await expect(createDatScanner(['test/fixtures/roms/*.rom']).scan()).resolves.toHaveLength(0);
   await expect(createDatScanner(['test/fixtures/roms/invalid.*']).scan()).resolves.toHaveLength(0);
   await expect(createDatScanner(['test/fixtures/roms/invalid.*', 'test/fixtures/roms/invalid.*']).scan()).resolves.toHaveLength(0);
+});
+
+it('should not throw on non-MAME executables', async () => {
+  const echo = await which('echo');
+  await expect(createDatScanner([echo]).scan()).resolves.toHaveLength(0);
 });
 
 describe('multiple files', () => {
