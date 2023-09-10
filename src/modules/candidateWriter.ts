@@ -242,6 +242,16 @@ export default class CandidateWriter extends Module {
       if (actualFile.getCrc32() !== expectedFile.getCrc32()) {
         return `has the file ${entryPath} with the CRC ${actualFile.getCrc32()}, expected ${expectedFile.getCrc32()}`;
       }
+
+      // Check size
+      if (!expectedFile.getSize()) {
+        this.progressBar.logWarn(`${dat.getNameShort()}: ${expectedFile.toString()}: can't test, expected size is unknown`);
+        // eslint-disable-next-line no-continue
+        continue;
+      }
+      if (actualFile.getSize() !== expectedFile.getSize()) {
+        return `has the file ${entryPath} of size ${actualFile.getSize().toLocaleString()}B, expected ${expectedFile.getSize().toLocaleString()}B`;
+      }
     }
 
     this.progressBar.logTrace(`${dat.getNameShort()}: ${outputZip.getFilePath()}: test passed`);
@@ -388,6 +398,15 @@ export default class CandidateWriter extends Module {
     const actualFile = await File.fileOf(outputFilePath);
     if (actualFile.getCrc32() !== expectedFile.getCrc32()) {
       return `has the CRC ${actualFile.getCrc32()}, expected ${expectedFile.getCrc32()}`;
+    }
+
+    // Check size
+    if (!expectedFile.getSize()) {
+      this.progressBar.logWarn(`${dat.getNameShort()}: ${outputFilePath}: can't test, expected size is unknown`);
+      return undefined;
+    }
+    if (actualFile.getSize() !== expectedFile.getSize()) {
+      return `is of size ${actualFile.getSize().toLocaleString()}B, expected ${expectedFile.getSize().toLocaleString()}B`;
     }
 
     this.progressBar.logTrace(`${dat.getNameShort()}: ${outputFilePath}: test passed`);
