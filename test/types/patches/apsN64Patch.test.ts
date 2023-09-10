@@ -25,7 +25,7 @@ describe('constructor', () => {
     'ABCD12345 Bangarang.aps',
     'Bepzinky 1234567.aps',
   ])('should throw if no CRC found: %s', async (filePath) => {
-    const file = await File.fileOf(filePath, 0, '00000000');
+    const file = await File.fileOf(filePath);
     await expect(APSN64Patch.patchFrom(file)).rejects.toThrow(/couldn't parse/i);
   });
 

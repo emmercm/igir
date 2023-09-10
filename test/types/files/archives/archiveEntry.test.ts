@@ -18,7 +18,7 @@ describe('getEntryPath', () => {
     path.join('foo', 'bar.rom'),
   ])('should return the constructor value: %s', async (archiveEntryPath) => {
     const archive = new Zip('/some/archive.zip');
-    const archiveEntry = await ArchiveEntry.entryOf(archive, archiveEntryPath, 0, '00000000');
+    const archiveEntry = await ArchiveEntry.entryOf(archive, archiveEntryPath);
     expect(archiveEntry.getEntryPath()).toEqual(archiveEntryPath);
   });
 });
@@ -159,22 +159,22 @@ describe('createReadStream', () => {
 
 describe('equals', () => {
   it('should equal itself', async () => {
-    const entry = await ArchiveEntry.entryOf(new Zip('file.zip'), 'entry.rom', 0, '00000000');
+    const entry = await ArchiveEntry.entryOf(new Zip('file.zip'), 'entry.rom');
     expect(entry.equals(entry)).toEqual(true);
   });
 
   it('should equal the same entry', async () => {
-    const first = await ArchiveEntry.entryOf(new Zip('file.zip'), 'entry.rom', 0, '00000000');
-    const second = await ArchiveEntry.entryOf(new Zip('file.zip'), 'entry.rom', 0, '00000000');
+    const first = await ArchiveEntry.entryOf(new Zip('file.zip'), 'entry.rom');
+    const second = await ArchiveEntry.entryOf(new Zip('file.zip'), 'entry.rom');
     expect(first.equals(second)).toEqual(true);
     expect(second.equals(first)).toEqual(true);
   });
 
   it('should not equal a different entry', async () => {
-    const first = await ArchiveEntry.entryOf(new Zip('file.zip'), 'entry.rom', 0, '00000000');
-    const second = await ArchiveEntry.entryOf(new SevenZip('file.7z'), 'entry.rom', 0, '00000000');
-    const third = await ArchiveEntry.entryOf(new Zip('file.zip'), 'other.rom', 0, '00000000');
-    const fourth = await ArchiveEntry.entryOf(new Zip('file.zip'), 'entry.rom', 0, '12345678');
+    const first = await ArchiveEntry.entryOf(new Zip('file.zip'), 'entry.rom');
+    const second = await ArchiveEntry.entryOf(new SevenZip('file.7z'), 'entry.rom');
+    const third = await ArchiveEntry.entryOf(new Zip('file.zip'), 'other.rom');
+    const fourth = await ArchiveEntry.entryOf(new Zip('file.zip'), 'entry.rom', 0, { crc32: '12345678' });
     expect(first.equals(second)).toEqual(false);
     expect(second.equals(third)).toEqual(false);
     expect(third.equals(fourth)).toEqual(false);

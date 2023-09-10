@@ -42,7 +42,7 @@ describe('createArchive', () => {
         new Zip(`${tempFile.getExtractedFilePath()}.zip`),
         tempFile.getExtractedFilePath(),
         tempFile.getSize(),
-        tempFile.getCrc32(),
+        tempFile,
       );
       return [tempFile, archiveEntry] as [File, ArchiveEntry<Zip>];
     }));

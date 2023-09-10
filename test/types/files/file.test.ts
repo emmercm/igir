@@ -11,7 +11,7 @@ import ProgressBarFake from '../../console/progressBarFake.js';
 
 describe('getFilePath', () => {
   it('should return the constructor value', async () => {
-    const file = await File.fileOf(path.join('some', 'path'), 0, '00000000');
+    const file = await File.fileOf(path.join('some', 'path'));
     expect(file.getFilePath()).toEqual(path.join('some', 'path'));
   });
 });
@@ -24,7 +24,7 @@ describe('getCrc32', () => {
     ['2002', '00002002'],
     ['00000000', '00000000'],
   ])('should return the constructor value: %s', async (crc, expectedCrc) => {
-    const file = await File.fileOf(path.join('some', 'path'), 0, crc);
+    const file = await File.fileOf(path.join('some', 'path'), 0, { crc32: crc });
     expect(file.getCrc32()).toEqual(expectedCrc);
   });
 
@@ -145,21 +145,21 @@ describe('createReadStream', () => {
 
 describe('equals', () => {
   it('should equal itself', async () => {
-    const file = await File.fileOf('file.rom', 0, '00000000');
+    const file = await File.fileOf('file.rom');
     expect(file.equals(file)).toEqual(true);
   });
 
   it('should equal the same file', async () => {
-    const first = await File.fileOf('file.rom', 0, '00000000');
-    const second = await File.fileOf('file.rom', 0, '00000000');
+    const first = await File.fileOf('file.rom');
+    const second = await File.fileOf('file.rom');
     expect(first.equals(second)).toEqual(true);
     expect(second.equals(first)).toEqual(true);
   });
 
   it('should not equal a different file', async () => {
-    const first = await File.fileOf('file.rom', 0, '00000000');
-    const second = await File.fileOf('other.rom', 0, '00000000');
-    const third = await File.fileOf('file.rom', 0, '12345678');
+    const first = await File.fileOf('file.rom');
+    const second = await File.fileOf('other.rom');
+    const third = await File.fileOf('file.rom', 0, { crc32: '12345678' });
     expect(first.equals(second)).toEqual(false);
     expect(second.equals(third)).toEqual(false);
     expect(third.equals(first)).toEqual(false);

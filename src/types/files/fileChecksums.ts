@@ -3,6 +3,7 @@ import crypto from 'crypto';
 import { Stream } from 'stream';
 
 export enum ChecksumBitmask {
+  NONE = 0x000,
   CRC32 = 0x001,
   MD5 = 0x010,
   SHA1 = 0x100,

@@ -14,6 +14,7 @@ import Patch from '../types/patches/patch.js';
 import ReleaseCandidate from '../types/releaseCandidate.js';
 import ROMWithFiles from '../types/romWithFiles.js';
 import Module from './module.js';
+import {ChecksumBitmask} from "../types/files/fileChecksums.js";
 
 /**
  * For each {@link Patch} that matches a {@link ROM}, generate a new {@link Parent} and
@@ -151,9 +152,8 @@ export default class CandidatePatchGenerator extends Module {
                   ? extractedFileName
                   : outputFile.getEntryPath(),
                 patch.getSizeAfter() ?? 0,
-                patch.getCrcAfter() ?? '00000000',
-                undefined,
-                undefined,
+                { crc32: patch.getCrcAfter() },
+                ChecksumBitmask.NONE,
                 outputFile.getFileHeader(),
                 outputFile.getPatch(),
               );
@@ -162,9 +162,8 @@ export default class CandidatePatchGenerator extends Module {
               outputFile = await File.fileOf(
                 path.join(dirName, extractedFileName),
                 patch.getSizeAfter() ?? 0,
-                patch.getCrcAfter() ?? '00000000',
-                undefined,
-                undefined,
+                { crc32: patch.getCrcAfter() },
+                ChecksumBitmask.NONE,
                 outputFile.getFileHeader(),
                 outputFile.getPatch(),
               );

@@ -21,7 +21,7 @@ export default class Tar extends Archive {
   }
 
   @Memoize()
-  async getArchiveEntries(): Promise<ArchiveEntry<Tar>[]> {
+  async getArchiveEntries(checksumBitmask: number): Promise<ArchiveEntry<Tar>[]> {
     const archiveEntryPromises: Promise<ArchiveEntry<Tar>>[] = [];
 
     // WARN(cemmer): entries in tar archives don't have headers, the entire file has to be read to
@@ -37,14 +37,13 @@ export default class Tar extends Archive {
     }).pipe(writeStream);
 
     writeStream.on('entry', async (entry) => {
-      const checksums = await FileChecksums.hashStream(entry, 0);
+      const checksums = await FileChecksums.hashStream(entry, checksumBitmask);
       archiveEntryPromises.push(ArchiveEntry.entryOf(
         this,
         entry.path,
         entry.size ?? 0,
-        checksums.crc32,
-        checksums.md5,
-        checksums.sha1,
+        checksums,
+        checksumBitmask,
       ));
     });
 

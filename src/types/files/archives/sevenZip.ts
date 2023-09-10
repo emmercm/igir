@@ -38,7 +38,7 @@ export default class SevenZip extends Archive {
   }
 
   @Memoize()
-  async getArchiveEntries(attempt = 1): Promise<ArchiveEntry<SevenZip>[]> {
+  async getArchiveEntries(checksumBitmask: number, attempt = 1): Promise<ArchiveEntry<SevenZip>[]> {
     /**
      * WARN(cemmer): {@link _7z.list} seems to have issues with any amount of real concurrency,
      *  it will return no files but also no error. Try to prevent that behavior.
@@ -70,7 +70,7 @@ export default class SevenZip extends Archive {
       await new Promise((resolve) => {
         setTimeout(resolve, Math.random() * (2 ** (attempt - 1) * 100));
       });
-      return this.getArchiveEntries(attempt + 1);
+      return this.getArchiveEntries(checksumBitmask, attempt + 1);
     }
 
     return Promise.all(filesIn7z
@@ -79,8 +79,9 @@ export default class SevenZip extends Archive {
         this,
         result.name,
         parseInt(result.size, 10),
-        result.crc,
-        // TODO(cemmer): MD5, SHA1
+        { crc32: result.crc },
+        // If MD5 or SHA1 is desired, this file will need to be extracted to calculate
+        checksumBitmask,
       )));
   }
 

@@ -24,7 +24,7 @@ export default class Zip extends Archive {
   }
 
   @Memoize()
-  async getArchiveEntries(): Promise<ArchiveEntry<Zip>[]> {
+  async getArchiveEntries(checksumBitmask: number): Promise<ArchiveEntry<Zip>[]> {
     // https://github.com/ZJONSSON/node-unzipper/issues/280
     // UTF-8 entry names are not decoded correctly
     // But this is mitigated by `extractEntryToStream()` and therefore `extractEntryToFile()` both
@@ -37,8 +37,9 @@ export default class Zip extends Archive {
         this,
         entryFile.path,
         entryFile.uncompressedSize,
-        entryFile.crc32.toString(16),
-        // TODO(cemmer): MD5, SHA1
+        { crc32: entryFile.crc32.toString(16) },
+        // If MD5 or SHA1 is desired, this file will need to be extracted to calculate
+        checksumBitmask,
       )));
   }
 

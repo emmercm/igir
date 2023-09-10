@@ -9,11 +9,14 @@ import File from './file.js';
 import { ChecksumBitmask } from './fileChecksums.js';
 
 export default class FileFactory {
-  static async filesFrom(filePath: string): Promise<File[]> {
+  static async filesFrom(
+    filePath: string,
+    checksumBitmask: number = ChecksumBitmask.CRC32,
+  ): Promise<File[]> {
     if (this.isArchive(filePath)) {
-      return this.archiveFrom(filePath).getArchiveEntries(ChecksumBitmask.CRC32);
+      return this.archiveFrom(filePath).getArchiveEntries(checksumBitmask);
     }
-    return [await File.fileOf(filePath)];
+    return [await File.fileOf(filePath, undefined, undefined, checksumBitmask)];
   }
 
   /**
