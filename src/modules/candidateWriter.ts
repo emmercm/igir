@@ -8,6 +8,7 @@ import fsPoly from '../polyfill/fsPoly.js';
 import ArchiveEntry from '../types/files/archives/archiveEntry.js';
 import Zip from '../types/files/archives/zip.js';
 import File from '../types/files/file.js';
+import { ChecksumBitmask } from '../types/files/fileChecksums.js';
 import DAT from '../types/logiqx/dat.js';
 import Parent from '../types/logiqx/parent.js';
 import Options from '../types/options.js';
@@ -207,7 +208,7 @@ export default class CandidateWriter extends Module {
 
     let archiveEntries: ArchiveEntry<Zip>[];
     try {
-      archiveEntries = await outputZip.getArchiveEntries();
+      archiveEntries = await outputZip.getArchiveEntries(ChecksumBitmask.CRC32);
     } catch (e) {
       return `failed to get archive contents: ${e}`;
     }
