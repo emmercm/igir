@@ -877,10 +877,10 @@ describe('with inferred DATs', () => {
     });
   });
 
-  it('should copy, extract, remove headers, and test', async () => {
+  it('should move, extract, remove headers, and test', async () => {
     await copyFixturesToTemp(async (inputTemp, outputTemp) => {
       const result = await runIgir({
-        commands: ['copy', 'extract', 'test'],
+        commands: ['move', 'extract', 'test'],
         input: [path.join(inputTemp, 'roms', 'headered')],
         output: outputTemp,
         removeHeaders: [''], // all
@@ -895,7 +895,14 @@ describe('with inferred DATs', () => {
         ['speed_test_v51.sfc', '8beffd94'],
       ]);
       expect(result.cwdFilesAndCrcs).toHaveLength(0);
-      expect(result.movedFiles).toHaveLength(0);
+      expect(result.movedFiles).toEqual([
+        'LCDTestROM.lnx.rar',
+        'allpads.nes',
+        'color_test.nintendoentertainmentsystem',
+        'diagnostic_test_cartridge.a78.7z',
+        'fds_joypad_test.fds.zip',
+        'speed_test_v51.smc',
+      ]);
       expect(result.cleanedFiles).toHaveLength(0);
     });
   });
