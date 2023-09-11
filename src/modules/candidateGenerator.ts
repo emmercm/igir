@@ -280,27 +280,17 @@ export default class CandidateGenerator extends Module {
       return ArchiveEntry.entryOf(
         new Zip(outputFilePath),
         outputPathParsed.entryPath,
-<<<<<<< HEAD
-        inputFile.getSize(),
+        outputFileSize,
         // TODO(cemmer): calculate MD5 and SHA1 for testing purposes?
         { crc32: outputFileCrc },
-=======
-        outputFileSize,
-        outputFileCrc,
->>>>>>> origin/main
       );
     }
     // Otherwise, return a raw file
     return File.fileOf(
       outputFilePath,
-<<<<<<< HEAD
-      inputFile.getSize(),
+      outputFileSize,
       // TODO(cemmer): calculate MD5 and SHA1 for testing purposes?
       { crc32: outputFileCrc },
-=======
-      outputFileSize,
-      outputFileCrc,
->>>>>>> origin/main
     );
   }
 
