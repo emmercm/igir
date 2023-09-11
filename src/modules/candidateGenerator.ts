@@ -265,11 +265,13 @@ export default class CandidateGenerator extends Module {
 
     // Determine the output CRC of the file
     let outputFileCrc = inputFile.getCrc32();
+    let outputFileSize = inputFile.getSize();
     if (inputFile.getFileHeader()
       && this.options.canRemoveHeader(dat, path.extname(outputPathParsed.entryPath))
     ) {
       // TODO(cemmer): inputFile.getSizeWithoutHeader() ?
       outputFileCrc = inputFile.getCrc32WithoutHeader();
+      outputFileSize = inputFile.getSizeWithoutHeader();
     }
 
     // Determine the output file type
@@ -278,17 +280,27 @@ export default class CandidateGenerator extends Module {
       return ArchiveEntry.entryOf(
         new Zip(outputFilePath),
         outputPathParsed.entryPath,
+<<<<<<< HEAD
         inputFile.getSize(),
         // TODO(cemmer): calculate MD5 and SHA1 for testing purposes?
         { crc32: outputFileCrc },
+=======
+        outputFileSize,
+        outputFileCrc,
+>>>>>>> origin/main
       );
     }
     // Otherwise, return a raw file
     return File.fileOf(
       outputFilePath,
+<<<<<<< HEAD
       inputFile.getSize(),
       // TODO(cemmer): calculate MD5 and SHA1 for testing purposes?
       { crc32: outputFileCrc },
+=======
+      outputFileSize,
+      outputFileCrc,
+>>>>>>> origin/main
     );
   }
 
