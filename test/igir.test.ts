@@ -691,6 +691,22 @@ describe('with inferred DATs', () => {
     });
   });
 
+  it('should move to the same directory', async () => {
+    await copyFixturesToTemp(async (inputTemp, outputTemp) => {
+      const inputDir = path.join(inputTemp, 'roms', 'raw');
+      const inputBefore = await walkWithCrc(inputDir, inputDir);
+
+      await runIgir({
+        commands: ['move', 'test'],
+        input: [inputDir],
+        output: inputDir,
+      });
+
+      await expect(walkWithCrc(inputDir, inputDir)).resolves.toEqual(inputBefore);
+      await expect(walkWithCrc(inputTemp, outputTemp)).resolves.toHaveLength(0);
+    });
+  });
+
   it('should move, extract, and test', async () => {
     await copyFixturesToTemp(async (inputTemp, outputTemp) => {
       const result = await runIgir({

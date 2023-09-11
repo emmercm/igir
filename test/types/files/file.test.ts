@@ -7,6 +7,7 @@ import fsPoly from '../../../src/polyfill/fsPoly.js';
 import File from '../../../src/types/files/file.js';
 import ROMHeader from '../../../src/types/files/romHeader.js';
 import Options from '../../../src/types/options.js';
+import IPSPatch from '../../../src/types/patches/ipsPatch.js';
 import ProgressBarFake from '../../console/progressBarFake.js';
 
 describe('getFilePath', () => {
@@ -68,6 +69,17 @@ describe('getCrc32WithoutHeader', () => {
 });
 
 describe('getSymlinkSourceResolved', () => {
+  it('should not resolve non-symlinks', async () => {
+    const tempDir = await fsPoly.mkdtemp(Constants.GLOBAL_TEMP_DIR);
+    try {
+      const tempFile = path.resolve(await fsPoly.mktemp(path.join(tempDir, 'file')));
+      const fileLink = await File.fileOf(tempFile);
+      expect(fileLink.getSymlinkSourceResolved()).toBeUndefined();
+    } finally {
+      await fsPoly.rm(tempDir, { recursive: true });
+    }
+  });
+
   it('should resolve absolute symlinks', async () => {
     const tempDir = await fsPoly.mkdtemp(Constants.GLOBAL_TEMP_DIR);
     try {
@@ -140,6 +152,22 @@ describe('createReadStream', () => {
       });
     }
     await fsPoly.rm(temp, { recursive: true });
+  });
+});
+
+describe('withPatch', () => {
+  it('should attach a matching patch', async () => {
+    const file = await File.fileOf('file.rom', 0, '00000000');
+    const patch = IPSPatch.patchFrom(await File.fileOf('patch 00000000.ips'));
+    const patchedFile = file.withPatch(patch);
+    expect(patchedFile.getPatch()).toEqual(patch);
+  });
+
+  it('should not attach a non-matching patch', async () => {
+    const file = await File.fileOf('file.rom', 0, 'FFFFFFFF');
+    const patch = IPSPatch.patchFrom(await File.fileOf('patch 00000000.ips'));
+    const patchedFile = file.withPatch(patch);
+    expect(patchedFile.getPatch()).toBeUndefined();
   });
 });
 
