@@ -7,9 +7,11 @@ import fsPoly from '../../../../src/polyfill/fsPoly.js';
 import ArchiveEntry from '../../../../src/types/files/archives/archiveEntry.js';
 import SevenZip from '../../../../src/types/files/archives/sevenZip.js';
 import Zip from '../../../../src/types/files/archives/zip.js';
+import File from '../../../../src/types/files/file.js';
 import FileFactory from '../../../../src/types/files/fileFactory.js';
 import ROMHeader from '../../../../src/types/files/romHeader.js';
 import Options from '../../../../src/types/options.js';
+import IPSPatch from '../../../../src/types/patches/ipsPatch.js';
 import ProgressBarFake from '../../../console/progressBarFake.js';
 
 describe('getEntryPath', () => {
@@ -154,6 +156,22 @@ describe('createReadStream', () => {
       });
     }
     await fsPoly.rm(temp, { recursive: true });
+  });
+});
+
+describe('withPatch', () => {
+  it('should attach a matching patch', async () => {
+    const entry = await ArchiveEntry.entryOf(new Zip('file.zip'), 'entry.rom', 0, '00000000');
+    const patch = IPSPatch.patchFrom(await File.fileOf('patch 00000000.ips'));
+    const patchedEntry = entry.withPatch(patch);
+    expect(patchedEntry.getPatch()).toEqual(patch);
+  });
+
+  it('should not attach a non-matching patch', async () => {
+    const entry = await ArchiveEntry.entryOf(new Zip('file.zip'), 'entry.rom', 0, 'FFFFFFFF');
+    const patch = IPSPatch.patchFrom(await File.fileOf('patch 00000000.ips'));
+    const patchedEntry = entry.withPatch(patch);
+    expect(patchedEntry.getPatch()).toBeUndefined();
   });
 });
 
