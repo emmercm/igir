@@ -581,7 +581,7 @@ describe('with explicit DATs', () => {
   ])('should generate a fixdat when writing: %s', async (command) => {
     await copyFixturesToTemp(async (inputTemp, outputTemp) => {
       const result = await runIgir({
-        commands: [command],
+        commands: [command, 'clean'],
         dat: [path.join(inputTemp, 'dats')],
         input: [path.join(inputTemp, 'roms')],
         output: outputTemp,
@@ -688,6 +688,22 @@ describe('with inferred DATs', () => {
       expect(result.cwdFilesAndCrcs).toHaveLength(0);
       expect(result.movedFiles).toHaveLength(0);
       expect(result.cleanedFiles).toHaveLength(0);
+    });
+  });
+
+  it('should move to the same directory', async () => {
+    await copyFixturesToTemp(async (inputTemp, outputTemp) => {
+      const inputDir = path.join(inputTemp, 'roms', 'raw');
+      const inputBefore = await walkWithCrc(inputDir, inputDir);
+
+      await runIgir({
+        commands: ['move', 'test'],
+        input: [inputDir],
+        output: inputDir,
+      });
+
+      await expect(walkWithCrc(inputDir, inputDir)).resolves.toEqual(inputBefore);
+      await expect(walkWithCrc(inputTemp, outputTemp)).resolves.toHaveLength(0);
     });
   });
 
