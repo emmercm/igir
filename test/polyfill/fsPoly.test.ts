@@ -3,6 +3,79 @@ import path from 'path';
 import Constants from '../../src/constants.js';
 import fsPoly from '../../src/polyfill/fsPoly.js';
 
+describe('canSymlink', () => {
+  it('should not throw', async () => {
+    await expect(fsPoly.canSymlink(Constants.GLOBAL_TEMP_DIR)).resolves.not.toThrow();
+  });
+});
+
+describe('isDirectory', () => {
+  it('should return true for a directory', async () => {
+    const tempDir = await fsPoly.mkdtemp(Constants.GLOBAL_TEMP_DIR);
+    await expect(fsPoly.isDirectory(tempDir)).resolves.toEqual(true);
+  });
+
+  it('should return false for a file', async () => {
+    const tempFile = await fsPoly.mktemp(path.join(Constants.GLOBAL_TEMP_DIR, 'temp'));
+    await fsPoly.touch(tempFile);
+    await expect(fsPoly.isDirectory(tempFile)).resolves.toEqual(false);
+    await fsPoly.rm(tempFile);
+  });
+
+  it('should return false for non-existent file', async () => {
+    const tempFile = await fsPoly.mktemp(path.join(Constants.GLOBAL_TEMP_DIR, 'temp'));
+    await expect(fsPoly.isDirectory(tempFile)).resolves.toEqual(false);
+  });
+});
+
+describe('isDirectorySync', () => {
+  it('should return true for a directory', async () => {
+    const tempDir = await fsPoly.mkdtemp(Constants.GLOBAL_TEMP_DIR);
+    expect(fsPoly.isDirectorySync(tempDir)).toEqual(true);
+  });
+
+  it('should return false for a file', async () => {
+    const tempFile = await fsPoly.mktemp(path.join(Constants.GLOBAL_TEMP_DIR, 'temp'));
+    await fsPoly.touch(tempFile);
+    expect(fsPoly.isDirectorySync(tempFile)).toEqual(false);
+    await fsPoly.rm(tempFile);
+  });
+
+  it('should return false for non-existent file', async () => {
+    const tempFile = await fsPoly.mktemp(path.join(Constants.GLOBAL_TEMP_DIR, 'temp'));
+    expect(fsPoly.isDirectorySync(tempFile)).toEqual(false);
+  });
+});
+
+describe('isSymlink', () => {
+  it('should return true for a symlink', async () => {
+    const tempFile = await fsPoly.mktemp(path.join(Constants.GLOBAL_TEMP_DIR, 'temp'));
+    await fsPoly.touch(tempFile);
+    const tempLink = await fsPoly.mktemp(path.join(Constants.GLOBAL_TEMP_DIR, 'link'));
+    await fsPoly.symlink(tempFile, tempLink);
+    await expect(fsPoly.isSymlink(tempLink)).resolves.toEqual(true);
+    await fsPoly.rm(tempLink);
+    await fsPoly.rm(tempFile);
+  });
+
+  it('should return false for a plain directory', async () => {
+    const tempDir = await fsPoly.mkdtemp(Constants.GLOBAL_TEMP_DIR);
+    await expect(fsPoly.isSymlink(tempDir)).resolves.toEqual(false);
+  });
+
+  it('should return false for a plain file', async () => {
+    const tempFile = await fsPoly.mktemp(path.join(Constants.GLOBAL_TEMP_DIR, 'temp'));
+    await fsPoly.touch(tempFile);
+    await expect(fsPoly.isSymlink(tempFile)).resolves.toEqual(false);
+    await fsPoly.rm(tempFile);
+  });
+
+  it('should return false for non-existent file', async () => {
+    const tempFile = await fsPoly.mktemp(path.join(Constants.GLOBAL_TEMP_DIR, 'temp'));
+    await expect(fsPoly.isSymlink(tempFile)).resolves.toEqual(false);
+  });
+});
+
 describe('makeLegal', () => {
   describe('unix', () => {
     test.each([
@@ -70,6 +143,7 @@ describe('rm', () => {
     await fsPoly.rm(tempLink);
     await expect(fsPoly.exists(tempLink)).resolves.toEqual(false);
     await expect(fsPoly.exists(tempFile)).resolves.toEqual(true);
+    await fsPoly.rm(tempFile);
   });
 });
 
@@ -110,5 +184,6 @@ describe('rmSync', () => {
     fsPoly.rmSync(tempLink);
     await expect(fsPoly.exists(tempLink)).resolves.toEqual(false);
     await expect(fsPoly.exists(tempFile)).resolves.toEqual(true);
+    fsPoly.rmSync(tempFile);
   });
 });
