@@ -2,7 +2,7 @@
 
 # GitHub defaults
 - name: bug
-  description: Something isn't working
+  description: A confirmed issues that needs fixing
   color: 'd73a4a'
 #- name: dependencies
 #  description: Pull requests that update a dependency file
@@ -25,9 +25,9 @@
 #- name: invalid
 #  description: This doesn't seem right
 #  color: 'e4e669'
-#- name: question
-#  description: Further information is requested
-#  color: 'd876e3'
+- name: question
+  description: Further information is requested
+  color: 'd876e3'
 #- name: wontfix
 #  description: This will not be worked on
 #  color: 'ffffff'
@@ -37,6 +37,10 @@
 #  color: '4c2e9c'
 #  alias: ['enhancement']
 - name: potential-bug
-  color: '66b9cc'
+  description: A potential issue that needs confirmation and/or triage
+  color: '9f06e2'
 - name: security
   color: 'f72e32'
+- name: up-for-grabs
+  description: Issues to consider for external contribution
+  color: '66cc8d'
