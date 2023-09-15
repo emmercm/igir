@@ -44,3 +44,7 @@
 - name: up-for-grabs
   description: Issues to consider for external contribution
   color: '66cc8d'
+
+- name: stale
+  description: Issue has had no recent activity and will be automatically closed
+  color: 'ffffff'
