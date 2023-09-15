@@ -319,6 +319,18 @@ describe('zip', () => {
     });
   });
 
+  it('should not move if tested zip has wrong number of entries', () => {
+    // TODO(cemmer)
+  });
+
+  it('should not move if tested zip is missing an entry', () => {
+    // TODO(cemmer)
+  });
+
+  it('should not move if tested zip has an entry with an unexpected checksum', () => {
+    // TODO(cemmer)
+  });
+
   test.each([
     // Control group of un-headered files
     ['raw/empty.rom', 'empty.rom', '00000000'],

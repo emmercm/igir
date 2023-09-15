@@ -78,7 +78,7 @@ export default class Igir {
       throw new Error('No DAT contains parent/clone information, cannot process --single');
     }
 
-    const datsToWrittenRoms = new Map<DAT, Map<Parent, File[]>>();
+    const datsToWrittenFiles = new Map<DAT, File[]>();
     const romOutputDirs: string[] = [];
     const movedRomsToDelete: File[] = [];
     const datsStatuses: DATStatus[] = [];
@@ -109,20 +109,22 @@ export default class Igir {
       const movedRoms = await new CandidateWriter(this.options, progressBar)
         .write(filteredDat, parentsToCandidates);
       movedRomsToDelete.push(...movedRoms);
-      const writtenRoms = [...parentsToCandidates.entries()]
-        .reduce((map, [parent, releaseCandidates]) => {
-          // For each Parent, find what rom Files were written
-          const parentWrittenRoms = releaseCandidates
-            .flatMap((releaseCandidate) => releaseCandidate.getRomsWithFiles())
-            .map((romWithFiles) => romWithFiles.getOutputFile());
-          map.set(parent, parentWrittenRoms);
-          return map;
-        }, new Map<Parent, File[]>());
-      datsToWrittenRoms.set(filteredDat, writtenRoms);
+      const writtenRoms = [...parentsToCandidates.values()]
+        .flatMap((releaseCandidates) => releaseCandidates)
+        .flatMap((releaseCandidate) => releaseCandidate
+          .getRomsWithFiles()
+          .map((romWithFiles) => romWithFiles.getOutputFile()));
+      datsToWrittenFiles.set(filteredDat, writtenRoms);
 
       // Write a fixdat
-      await new FixdatCreator(this.options, progressBar)
+      const fixdatPath = await new FixdatCreator(this.options, progressBar)
         .write(filteredDat, parentsToCandidates);
+      if (fixdatPath) {
+        datsToWrittenFiles.set(filteredDat, [
+          ...(datsToWrittenFiles.get(filteredDat) ?? []),
+          await File.fileOf(fixdatPath),
+        ]);
+      }
 
       // Write the output report
       const datStatus = await new StatusGenerator(this.options, progressBar)
@@ -147,10 +149,10 @@ export default class Igir {
     datProcessProgressBar.delete();
 
     // Delete moved ROMs
-    await this.deleteMovedRoms(roms, movedRomsToDelete, datsToWrittenRoms);
+    await this.deleteMovedRoms(roms, movedRomsToDelete, datsToWrittenFiles);
 
     // Clean the output directories
-    const cleanedOutputFiles = await this.processOutputCleaner(romOutputDirs, datsToWrittenRoms);
+    const cleanedOutputFiles = await this.processOutputCleaner(romOutputDirs, datsToWrittenFiles);
 
     // Generate the report
     await this.processReportGenerator(roms, cleanedOutputFiles, datsStatuses);
@@ -270,7 +272,7 @@ export default class Igir {
   private async deleteMovedRoms(
     rawRomFiles: File[],
     movedRomsToDelete: File[],
-    datsToWrittenRoms: Map<DAT, Map<Parent, File[]>>,
+    datsToWrittenFiles: Map<DAT, File[]>,
   ): Promise<void> {
     if (!movedRomsToDelete.length) {
       return;
@@ -278,14 +280,14 @@ export default class Igir {
 
     const progressBar = await this.logger.addProgressBar('Deleting moved files');
     const deletedFilePaths = await new MovedROMDeleter(progressBar)
-      .delete(rawRomFiles, movedRomsToDelete, datsToWrittenRoms);
+      .delete(rawRomFiles, movedRomsToDelete, datsToWrittenFiles);
     await progressBar.doneItems(deletedFilePaths.length, 'moved file', 'deleted');
     await progressBar.freeze();
   }
 
   private async processOutputCleaner(
     dirsToClean: string[],
-    datsToWrittenRoms: Map<DAT, Map<Parent, File[]>>,
+    datsToWrittenFiles: Map<DAT, File[]>,
   ): Promise<string[]> {
     if (!this.options.shouldWrite() || !this.options.shouldClean()) {
       return [];
@@ -293,8 +295,7 @@ export default class Igir {
 
     const progressBar = await this.logger.addProgressBar('Cleaning output directory');
     const uniqueDirsToClean = dirsToClean.reduce(ArrayPoly.reduceUnique(), []);
-    const writtenFilesToExclude = [...datsToWrittenRoms.values()]
-      .flatMap((parentsToFiles) => [...parentsToFiles.values()])
+    const writtenFilesToExclude = [...datsToWrittenFiles.values()]
       .flatMap((files) => files);
     const filesCleaned = await new DirectoryCleaner(this.options, progressBar)
       .clean(uniqueDirsToClean, writtenFilesToExclude);

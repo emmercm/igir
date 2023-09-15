@@ -36,3 +36,31 @@ describe('fileOfSize', () => {
     }
   });
 });
+
+describe('readAt', () => {
+  it('should read a small file', async () => {
+    const tempFile = await fsPoly.mktemp(path.join(Constants.GLOBAL_TEMP_DIR, 'file'));
+    await expect(fsPoly.exists(tempFile)).resolves.toEqual(false);
+
+    try {
+      const file = await filePoly.fileOfSize(tempFile, 'r', Constants.MAX_MEMORY_FILE_SIZE - 1);
+      await expect(file.readAt(0, 16)).resolves.toEqual(Buffer.alloc(16));
+      await file.close();
+    } finally {
+      await fsPoly.rm(tempFile);
+    }
+  });
+
+  it('should read a large file', async () => {
+    const tempFile = await fsPoly.mktemp(path.join(Constants.GLOBAL_TEMP_DIR, 'file'));
+    await expect(fsPoly.exists(tempFile)).resolves.toEqual(false);
+
+    try {
+      const file = await filePoly.fileOfSize(tempFile, 'r', Constants.MAX_MEMORY_FILE_SIZE + 1);
+      await expect(file.readAt(0, 16)).resolves.toEqual(Buffer.alloc(16));
+      await file.close();
+    } finally {
+      await fsPoly.rm(tempFile);
+    }
+  });
+});

@@ -153,14 +153,11 @@ describe('should delete archives', () => {
         .flatMap((releaseCandidate) => releaseCandidate.getRomsWithFiles())
         .map((romWithFiles) => romWithFiles.getInputFile());
 
-      const parentsToWrittenRoms = new Map([...parentsToCandidates.entries()]
-        .map(([parent, releaseCandidates]) => {
-          const writtenRoms = releaseCandidates
-            .flatMap((releaseCandidate) => releaseCandidate.getRomsWithFiles())
-            .map((romWithFiles) => romWithFiles.getOutputFile());
-          return [parent, writtenRoms];
-        }));
-      const datsToWrittenRoms = new Map([[dat, parentsToWrittenRoms]]);
+      const writtenRoms = [...parentsToCandidates.values()]
+        .flatMap((releaseCandidates) => releaseCandidates)
+        .flatMap((releaseCanddiate) => releaseCanddiate.getRomsWithFiles())
+        .map((romWithFiles) => romWithFiles.getOutputFile());
+      const datsToWrittenRoms = new Map([[dat, writtenRoms]]);
 
       const deletedFilePaths = (
         await new MovedROMDeleter(new ProgressBarFake())
