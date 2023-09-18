@@ -74,17 +74,17 @@ export interface GameProps {
  * {@link Release}s.
  */
 export default class Game implements GameProps {
-  @Expose({ name: 'name' })
+  @Expose()
   readonly name: string;
 
   /**
    * This is non-standard, but Redump uses it:
    * @see http://wiki.redump.org/index.php?title=Redump_Search_Parameters#Category
    */
-  @Expose({ name: 'category' })
+  @Expose()
   readonly category: string;
 
-  @Expose({ name: 'description' })
+  @Expose()
   readonly description: string;
 
   @Expose({ name: 'isbios' })

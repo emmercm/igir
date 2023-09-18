@@ -30,14 +30,14 @@ const gameWithOneRom = new Game({
     new Release('game with one ROM and multiple releases', 'EUR', 'En'),
     new Release('game with one ROM and multiple releases', 'JPN', 'Ja'),
   ],
-  rom: new ROM('one.rom', 1, '12345678'),
+  rom: new ROM({ name: 'one.rom', size: 1, crc: '12345678' }),
 });
 const gameWithTwoRomsParent = new Game({
   name: 'game with two ROMs (parent)',
   release: new Release('game with two ROMs (parent)', 'WORLD'),
   rom: [
-    new ROM('two.a', 2, 'abcdef90'),
-    new ROM('two.b', 3, '09876543'),
+    new ROM({ name: 'two.a', size: 2, crc: 'abcdef90' }),
+    new ROM({ name: 'two.b', size: 3, crc: '09876543' }),
   ],
 });
 const gameWithTwoRomsClone = new Game({
@@ -45,18 +45,18 @@ const gameWithTwoRomsClone = new Game({
   cloneOf: gameWithTwoRomsParent.getName(),
   release: new Release('game with two ROMs (clone)', 'JPN'),
   rom: [
-    new ROM('three.a', 4, 'abcd1234'),
-    new ROM('three.b', 5, '86753090'),
+    new ROM({ name: 'three.a', size: 4, crc: 'abcd1234' }),
+    new ROM({ name: 'three.b', size: 5, crc: '86753090' }),
   ],
 });
 const gameWithDuplicateRoms = new Game({
   name: 'game with duplicate ROMs',
   rom: [
-    new ROM('Disc.cue', 0, 'a8c5c66e'),
-    new ROM('Disc (Track 01).cue', 1, '22144d0f'),
-    new ROM('Disc (Track 02).cue', 2, '11bf5dbd'),
-    new ROM('Disc (Track 03).cue', 3, 'f9188f3a'),
-    new ROM('Disc (Track 04).cue', 4, '11bf5dbd'),
+    new ROM({ name: 'Disc.cue', size: 0, crc: 'a8c5c66e' }),
+    new ROM({ name: 'Disc (Track 01).cue', size: 1, crc: '22144d0f' }),
+    new ROM({ name: 'Disc (Track 02).cue', size: 2, crc: '11bf5dbd' }),
+    new ROM({ name: 'Disc (Track 03).cue', size: 3, crc: 'f9188f3a' }),
+    new ROM({ name: 'Disc (Track 04).cue', size: 4, crc: '11bf5dbd' }),
   ],
 });
 const datWithFourGames = new LogiqxDAT(new Header(), [

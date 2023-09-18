@@ -292,13 +292,13 @@ export default class DATScanner extends Scanner {
       const game = obj as DatfileGame;
       const roms = game.entries
         .filter((rom) => rom.name) // we need ROM filenames
-        .map((entry) => new ROM(
-          entry.name ?? '',
-          parseInt(entry.size ?? '0', 10),
-          entry.crc ?? '',
-          entry.md5,
-          entry.sha1,
-        ));
+        .map((entry) => new ROM({
+          name: entry.name ?? '',
+          size: parseInt(entry.size ?? '0', 10),
+          crc: entry.crc ?? '',
+          md5: entry.md5,
+          sha1: entry.sha1,
+        }));
 
       return new Game({
         ...game,
@@ -339,13 +339,13 @@ export default class DATScanner extends Scanner {
     this.progressBar.logTrace(`${datFile.toString()}: parsed SMDB, deserializing to DAT`);
 
     const games = rows.map((row) => {
-      const rom = new ROM(
-        row.name,
-        parseInt(row.size ?? '', 10),
-        row.crc,
-        row.md5,
-        row.sha1,
-      );
+      const rom = new ROM({
+        name: row.name,
+        size: parseInt(row.size ?? '', 10),
+        crc: row.crc,
+        md5: row.md5,
+        sha1: row.sha1,
+      });
       const gameName = row.name.replace(/\.[^\\/]+$/, '');
       return new Game({
         name: gameName,
