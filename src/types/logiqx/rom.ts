@@ -4,34 +4,54 @@ import Archive from '../files/archives/archive.js';
 import ArchiveEntry from '../files/archives/archiveEntry.js';
 import File from '../files/file.js';
 
+export interface ROMProps {
+  readonly name: string,
+  readonly size: number,
+  readonly crc?: string,
+  readonly md5?: string,
+  readonly sha1?: string,
+  readonly status?: string,
+  readonly merge?: string,
+  readonly bios?: string,
+}
+
 /**
  * @see http://www.logiqx.com/DatFAQs/CMPro.php
  */
-export default class ROM {
-  @Expose({ name: 'name' })
-  private readonly name: string;
+export default class ROM implements ROMProps {
+  @Expose()
+  readonly name: string;
 
-  @Expose({ name: 'size' })
-  private readonly size: number;
+  @Expose()
+  readonly size: number;
 
-  @Expose({ name: 'crc' })
-  private readonly crc?: string;
+  @Expose()
+  readonly crc?: string;
 
-  @Expose({ name: 'md5' })
-  private readonly md5?: string;
+  @Expose()
+  readonly md5?: string;
 
-  @Expose({ name: 'sha1' })
-  private readonly sha1?: string;
+  @Expose()
+  readonly sha1?: string;
 
-  @Expose({ name: 'status' })
-  private readonly status?: string;
+  @Expose()
+  readonly status?: string;
 
-  constructor(name: string, size: number, crc: string, md5?: string, sha1?: string) {
-    this.name = name;
-    this.size = size;
-    this.crc = crc;
-    this.md5 = md5;
-    this.sha1 = sha1;
+  @Expose()
+  readonly merge?: string;
+
+  @Expose()
+  readonly bios?: string;
+
+  constructor(props?: ROMProps) {
+    this.name = props?.name ?? '';
+    this.size = props?.size ?? 0;
+    this.crc = props?.crc;
+    this.md5 = props?.md5;
+    this.sha1 = props?.sha1;
+    this.status = props?.status;
+    this.merge = props?.merge;
+    this.bios = props?.bios;
   }
 
   /**
@@ -62,6 +82,14 @@ export default class ROM {
 
   getCrc32(): string {
     return this.crc ? this.crc.replace(/^0x/, '').padStart(8, '0') : '';
+  }
+
+  getMerge(): string | undefined {
+    return this.merge;
+  }
+
+  getBios(): string | undefined {
+    return this.bios;
   }
 
   /**

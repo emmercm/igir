@@ -16,13 +16,13 @@ const gameWithNoRoms = new Game({
 });
 const gameWithOneRom = new Game({
   name: 'game with one ROM',
-  rom: new ROM('one.rom', 1, '12345678'),
+  rom: new ROM({ name: 'one.rom', size: 1, crc: '12345678' }),
 });
 const gameWithTwoRoms = new Game({
   name: 'game with two ROMs',
   rom: [
-    new ROM('two.a', 2, 'abcdef90'),
-    new ROM('two.b', 3, '09876543'),
+    new ROM({ name: 'two.a', size: 2, crc: 'abcdef90' }),
+    new ROM({ name: 'two.b', size: 3, crc: '09876543' }),
   ],
 });
 const dat = new DAT(new Header(), [gameWithNoRoms, gameWithOneRom, gameWithTwoRoms]);

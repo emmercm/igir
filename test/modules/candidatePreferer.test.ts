@@ -100,7 +100,7 @@ async function buildReleaseCandidatesWithRegionLanguage(
         releases.push(new Release(releaseName, region, language));
       }
 
-      const rom = new ROM(`${romName}.rom`, 0, '00000000');
+      const rom = new ROM({ name: `${romName}.rom`, size: 0, crc: '00000000' });
       const game = new Game({
         name: romName, rom: [rom], release: releases, ...gameOptionsArr[i],
       });

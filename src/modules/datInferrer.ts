@@ -59,11 +59,11 @@ export default class DATInferrer extends Module {
     }, new Map<string, File[]>());
 
     const games = [...gameNamesToRomFiles.entries()].map(([gameName, gameRomFiles]) => {
-      const roms = gameRomFiles.map((romFile) => new ROM(
-        path.basename(romFile.getExtractedFilePath()),
-        romFile.getSize(),
-        romFile.getCrc32(),
-      ));
+      const roms = gameRomFiles.map((romFile) => new ROM({
+        name: path.basename(romFile.getExtractedFilePath()),
+        size: romFile.getSize(),
+        crc: romFile.getCrc32(),
+      }));
       return new Game({
         name: gameName,
         rom: roms,

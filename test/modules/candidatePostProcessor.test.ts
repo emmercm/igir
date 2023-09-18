@@ -21,7 +21,7 @@ const singleRomGames = [
   'Brilliant',
 ].map((name) => new Game({
   name,
-  rom: new ROM(`${name}.rom`, 0, '00000000'),
+  rom: new ROM({ name: `${name}.rom`, size: 0, crc: '00000000' }),
 }));
 const subDirRomGames = [
   'Cheerful',
@@ -29,7 +29,7 @@ const subDirRomGames = [
   'Cool',
 ].map((name) => new Game({
   name,
-  rom: new ROM(`disk1\\${name}.rom`, 0, '00000000'),
+  rom: new ROM({ name: `disk1\\${name}.rom`, size: 0, crc: '00000000' }),
 }));
 const multiRomGames = [
   'Dainty',
@@ -39,8 +39,8 @@ const multiRomGames = [
 ].map((name) => new Game({
   name,
   rom: [
-    new ROM(`${name}.cue`, 0, '00000000'),
-    new ROM(`${name} (Track 01).bin`, 0, '00000000'),
+    new ROM({ name: `${name}.cue`, size: 0, crc: '00000000' }),
+    new ROM({ name: `${name} (Track 01).bin`, size: 0, crc: '00000000' }),
   ],
 }));
 const games = [...singleRomGames, ...subDirRomGames, ...multiRomGames];

@@ -32,21 +32,21 @@ const games = [
   new Game({
     name: gameNameBios,
     bios: 'yes',
-    rom: new ROM('bios.rom', 123, '11111111'),
+    rom: new ROM({ name: 'bios.rom', size: 123, crc: '11111111' }),
   }),
   new Game({
     name: gameNamePrototype,
-    rom: new ROM('game prototype (proto).rom', 123, '22222222'),
+    rom: new ROM({ name: 'game prototype (proto).rom', size: 123, crc: '22222222' }),
   }),
   new Game({
     name: gameNameSingleRom,
-    rom: new ROM('game.rom', 123, '33333333'),
+    rom: new ROM({ name: 'game.rom', size: 123, crc: '33333333' }),
   }),
   new Game({
     name: gameNameMultipleRoms,
     rom: [
-      new ROM('one.rom', 123, '44444444'),
-      new ROM('two.rom', 123, '55555555'),
+      new ROM({ name: 'one.rom', size: 123, crc: '44444444' }),
+      new ROM({ name: 'two.rom', size: 123, crc: '55555555' }),
     ],
   }),
   new Game({
@@ -162,7 +162,7 @@ describe('toConsole', () => {
 
   it('should always print patched games as found', async () => {
     const game = new Game({ name: 'patched game' });
-    const rom = new ROM('patched.rom', 123, '00000000');
+    const rom = new ROM({ name: 'patched.rom', size: 123, crc: '00000000' });
     const map = new Map([
       ...parentsToReleaseCandidatesWithoutFiles,
       [
@@ -305,7 +305,7 @@ dat,no roms,FOUND,,false,false,true,false,false,false,false,false,false,false,fa
 
   it('should always report patched games as found', async () => {
     const game = new Game({ name: 'patched game' });
-    const rom = new ROM('patched.rom', 123, '00000000');
+    const rom = new ROM({ name: 'patched.rom', size: 123, crc: '00000000' });
     const map = new Map([
       ...parentsToReleaseCandidatesWithoutFiles,
       [
