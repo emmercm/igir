@@ -30,7 +30,7 @@ const datStatusEmpty = new DATStatus(
 const gamesSingle = [
   new Game({
     name: 'One',
-    rom: [new ROM('One', 123, 'abcdef01')],
+    rom: [new ROM({ name: 'One', size: 123, crc: 'abcdef01' })],
   }),
 ];
 async function buildDatStatusSingle(): Promise<DATStatus> {
@@ -57,15 +57,15 @@ async function buildDatStatusSingle(): Promise<DATStatus> {
 const gamesMultiple = [
   new Game({
     name: 'Two',
-    rom: [new ROM('Two', 234, 'bcdef012')],
+    rom: [new ROM({ name: 'Two', size: 234, crc: 'bcdef012' })],
   }),
   new Game({
     name: 'Three',
-    rom: [new ROM('Three', 345, 'cdef0123')],
+    rom: [new ROM({ name: 'Three', size: 345, crc: 'cdef0123' })],
   }),
   new Game({
     name: 'Four',
-    rom: [new ROM('Four', 456, 'def01234')],
+    rom: [new ROM({ name: 'Four', size: 456, crc: 'def01234' })],
   }),
   new Game({
     name: 'Five',

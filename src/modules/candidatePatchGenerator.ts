@@ -174,11 +174,11 @@ export default class CandidatePatchGenerator extends Module {
                 romName,
               );
             }
-            rom = new ROM(
-              romName,
-              outputFile.getSize(),
-              outputFile.getCrc32(),
-            );
+            rom = new ROM({
+              name: romName,
+              size: outputFile.getSize(),
+              crc: outputFile.getCrc32(),
+            });
 
             this.progressBar.logTrace(`${dat.getNameShort()}: ${inputFile.toString()}: patch candidate generated: ${outputFile.toString()}`);
           }
