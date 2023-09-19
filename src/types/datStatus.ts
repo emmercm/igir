@@ -2,9 +2,9 @@ import { writeToString } from '@fast-csv/format';
 import chalk, { ChalkInstance } from 'chalk';
 
 import ArrayPoly from '../polyfill/arrayPoly.js';
-import DAT from './logiqx/dat.js';
-import Game from './logiqx/game.js';
-import Parent from './logiqx/parent.js';
+import DAT from './dats/dat.js';
+import Game from './dats/game.js';
+import Parent from './dats/parent.js';
 import Options from './options.js';
 import ReleaseCandidate from './releaseCandidate.js';
 

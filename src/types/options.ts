@@ -16,8 +16,8 @@ import Constants from '../constants.js';
 import ArrayPoly from '../polyfill/arrayPoly.js';
 import fsPoly, { FsWalkCallback } from '../polyfill/fsPoly.js';
 import URLPoly from '../polyfill/urlPoly.js';
+import DAT from './dats/dat.js';
 import File from './files/file.js';
-import DAT from './logiqx/dat.js';
 
 export interface OptionsProps {
   readonly commands?: string[],
@@ -460,10 +460,6 @@ export default class Options implements OptionsProps {
 
   getInputPaths(): string[] {
     return this.input;
-  }
-
-  getInputFileCount(): number {
-    return this.input.length;
   }
 
   private async scanInputFiles(walkCallback?: FsWalkCallback): Promise<string[]> {

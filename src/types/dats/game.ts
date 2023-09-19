@@ -4,12 +4,9 @@ import { Expose, Transform, Type } from 'class-transformer';
 
 import ArrayPoly from '../../polyfill/arrayPoly.js';
 import Internationalization from '../internationalization.js';
-import Archive from './archive.js';
-import BIOSSet from './biosSet.js';
 import Disk from './disk.js';
 import Release from './release.js';
 import ROM from './rom.js';
-import Sample from './sample.js';
 
 enum GameType {
   AFTERMARKET = 'Aftermarket',
@@ -68,11 +65,8 @@ export interface GameProps {
   readonly year?: string,
   readonly manufacturer?: string,
   readonly release?: Release | Release[],
-  readonly biosSet?: BIOSSet | BIOSSet[],
   readonly rom?: ROM | ROM[],
   readonly disk?: Disk | Disk[],
-  readonly sample?: Sample | Sample[],
-  readonly archive?: Archive | Archive[],
 }
 
 /**

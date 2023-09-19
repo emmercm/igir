@@ -2,6 +2,13 @@ import path from 'path';
 
 import CandidateGenerator from '../../src/modules/candidateGenerator.js';
 import FileIndexer from '../../src/modules/fileIndexer.js';
+import DAT from '../../src/types/dats/dat.js';
+import Game from '../../src/types/dats/game.js';
+import Header from '../../src/types/dats/logiqx/header.js';
+import LogiqxDAT from '../../src/types/dats/logiqx/logiqxDat.js';
+import Parent from '../../src/types/dats/parent.js';
+import Release from '../../src/types/dats/release.js';
+import ROM from '../../src/types/dats/rom.js';
 import ArchiveEntry from '../../src/types/files/archives/archiveEntry.js';
 import Rar from '../../src/types/files/archives/rar.js';
 import SevenZip from '../../src/types/files/archives/sevenZip.js';
@@ -9,12 +16,6 @@ import Tar from '../../src/types/files/archives/tar.js';
 import Zip from '../../src/types/files/archives/zip.js';
 import File from '../../src/types/files/file.js';
 import ROMHeader from '../../src/types/files/romHeader.js';
-import DAT from '../../src/types/logiqx/dat.js';
-import Game from '../../src/types/logiqx/game.js';
-import Header from '../../src/types/logiqx/header.js';
-import Parent from '../../src/types/logiqx/parent.js';
-import Release from '../../src/types/logiqx/release.js';
-import ROM from '../../src/types/logiqx/rom.js';
 import Options from '../../src/types/options.js';
 import ReleaseCandidate from '../../src/types/releaseCandidate.js';
 import ProgressBarFake from '../console/progressBarFake.js';
@@ -58,7 +59,7 @@ const gameWithDuplicateRoms = new Game({
     new ROM({ name: 'Disc (Track 04).cue', size: 4, crc: '11bf5dbd' }),
   ],
 });
-const datWithFourGames = new DAT(new Header(), [
+const datWithFourGames = new LogiqxDAT(new Header(), [
   gameWithNoRoms,
   gameWithOneRom,
   gameWithTwoRomsParent,
@@ -82,7 +83,7 @@ describe.each(['zip', 'extract', 'raw'])('command: %s', (command) => {
 
   it('should return no candidates with no parents', async () => {
     // Given
-    const datWithoutParents = new DAT(new Header(), []);
+    const datWithoutParents = new LogiqxDAT(new Header(), []);
 
     // When
     const parentsToCandidates = await candidateGenerator(options, datWithoutParents, []);
@@ -93,7 +94,7 @@ describe.each(['zip', 'extract', 'raw'])('command: %s', (command) => {
 
   it('should return no candidates with no games with ROMs', async () => {
     // Given
-    const datWithGamesWithNoRoms = new DAT(new Header(), [gameWithNoRoms]);
+    const datWithGamesWithNoRoms = new LogiqxDAT(new Header(), [gameWithNoRoms]);
 
     // When
     const parentsToCandidates = await candidateGenerator(options, datWithGamesWithNoRoms, []);
@@ -389,7 +390,7 @@ describe.each(['copy', 'move'])('prefer input files from the same archive when r
     // Given
     const datGame = gameWithOneRom;
     expect(datGame.getRoms()).toHaveLength(1);
-    const dat = new DAT(new Header(), [datGame]);
+    const dat = new LogiqxDAT(new Header(), [datGame]);
 
     // And every file is present, both raw and archived
     const rawFiles = await Promise.all(dat.getGames()
@@ -429,7 +430,7 @@ describe.each(['copy', 'move'])('prefer input files from the same archive when r
     gameWithTwoRomsClone,
     gameWithDuplicateRoms,
   ])('game: %s', (datGame) => {
-    const dat = new DAT(new Header(), [datGame]);
+    const dat = new LogiqxDAT(new Header(), [datGame]);
 
     it('should behave like normal with no archives', async () => {
       // Given every file is present, raw

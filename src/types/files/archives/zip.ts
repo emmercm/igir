@@ -9,7 +9,7 @@ import unzipper from 'unzipper';
 
 import Constants from '../../../constants.js';
 import fsPoly from '../../../polyfill/fsPoly.js';
-import DAT from '../../logiqx/dat.js';
+import DAT from '../../dats/dat.js';
 import Options from '../../options.js';
 import File from '../file.js';
 import Archive from './archive.js';

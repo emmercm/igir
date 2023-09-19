@@ -80,6 +80,15 @@ export default class FsPoly {
     }
   }
 
+  static async isExecutable(pathLike: PathLike): Promise<boolean> {
+    try {
+      await util.promisify(fs.access)(pathLike, fs.constants.X_OK);
+      return true;
+    } catch (e) {
+      return false;
+    }
+  }
+
   static async isSymlink(pathLike: PathLike): Promise<boolean> {
     try {
       return (await util.promisify(fs.lstat)(pathLike)).isSymbolicLink();
