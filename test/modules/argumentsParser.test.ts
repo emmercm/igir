@@ -109,7 +109,7 @@ describe('options', () => {
 
     expect(options.getSymlinkRelative()).toEqual(false);
 
-    expect(options.getMergeRoms()).toEqual(MergeMode.NONMERGED);
+    expect(options.getMergeRoms()).toEqual(MergeMode.FULLNONMERGED);
 
     expect(options.getFilterRegex()).toBeUndefined();
     expect(options.getFilterRegexExclude()).toBeUndefined();
