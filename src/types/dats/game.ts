@@ -77,6 +77,8 @@ export default class Game implements GameProps {
   @Expose()
   readonly name: string;
 
+  // readonly sourcefile?: string;
+
   /**
    * This is non-standard, but Redump uses it:
    * @see http://wiki.redump.org/index.php?title=Redump_Search_Parameters#Category
@@ -102,6 +104,11 @@ export default class Game implements GameProps {
   @Expose({ name: 'sampleof' })
   readonly sampleOf?: string;
 
+  // readonly board?: string;
+  // readonly rebuildto?: string;
+  // readonly year?: string;
+  // readonly manufacturer?: string;
+
   @Expose()
   @Type(() => Release)
   @Transform(({ value }) => value || [])
@@ -112,17 +119,17 @@ export default class Game implements GameProps {
   @Transform(({ value }) => value || [])
   readonly rom: ROM | ROM[];
 
-  constructor(options?: GameProps) {
-    this.name = options?.name ?? '';
-    this.category = options?.category ?? '';
-    this.description = options?.description ?? '';
-    this.bios = options?.bios ?? this.bios;
-    this.device = options?.device ?? this.device;
-    this.cloneOf = options?.cloneOf;
-    this.romOf = options?.romOf;
-    this.sampleOf = options?.sampleOf;
-    this.release = options?.release ?? [];
-    this.rom = options?.rom ?? [];
+  constructor(props?: GameProps) {
+    this.name = props?.name ?? '';
+    this.category = props?.category ?? '';
+    this.description = props?.description ?? '';
+    this.bios = props?.bios ?? this.bios;
+    this.device = props?.device ?? this.device;
+    this.cloneOf = props?.cloneOf;
+    this.romOf = props?.romOf;
+    this.sampleOf = props?.sampleOf;
+    this.release = props?.release ?? [];
+    this.rom = props?.rom ?? [];
   }
 
   /**
@@ -483,7 +490,7 @@ export default class Game implements GameProps {
   }
 
   getParent(): string {
-    return this.cloneOf ?? this.romOf ?? this.sampleOf ?? '';
+    return this.cloneOf ?? '';
   }
 
   // Internationalization
