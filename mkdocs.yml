@@ -41,13 +41,13 @@ theme:
 
 nav:
   - Documentation:
-      - Home:
-        - index.md
-      - overview.md
-      - installation.md
-      - commands.md
-      - alternatives.md
-      - Usage:
+      - index.md
+      - Getting Started:
+        - overview.md
+        - installation.md
+        - commands.md
+        - alternatives.md
+      - Example Usage:
           - usage/collection-sorting.md
           - Desktop Frontends:
               - usage/desktop/batocera.md
@@ -75,8 +75,9 @@ nav:
           - roms/headers.md
           - roms/patching.md
       - File Outputs:
-          - output/tokens.md
           - output/writing-archives.md
+          - output/arcade.md
+          - output/tokens.md
           - output/reporting.md
           - output/cleaning.md
       - Advanced:

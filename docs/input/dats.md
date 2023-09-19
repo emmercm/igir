@@ -52,7 +52,7 @@ There have been a few DAT-like formats developed over the years. `igir` supports
           Windows is fairly easy, MAME is officially compiled for Windows and downloads can be found on many mirror sites.
 
           ```batch
-          igir [commands..] --dat "mame0257b_64bit.exe" --input <input>
+          igir [commands..] --dat "mame0258b_64bit.exe" --input <input>
           ```
 
       === ":simple-apple: macOS"
@@ -60,7 +60,7 @@ There have been a few DAT-like formats developed over the years. `igir` supports
           MAME isn't officially compiled for macOS, you will have to use a third-party release such as [SDL MAME](https://sdlmame.lngn.net/).
 
           ```shell
-          igir [commands..] --dat "mame0257-x86/mame" --input <input>
+          igir [commands..] --dat "mame0258-x86/mame" --input <input>
           ```
 
       === ":simple-linux: Linux"
@@ -94,8 +94,7 @@ A number of different release groups maintain sets of DATs, the most popular are
 
 - [No-Intro](https://datomatic.no-intro.org/index.php?page=download&s=64&op=daily) (cartridge-based consoles)
 - [Redump](http://redump.org/downloads/) (optical media-based consoles)
-- [progetto-SNAPS](https://www.progettosnaps.net/dats/MAME/) (MAME)
-- [pleasuredome](https://pleasuredome.github.io/pleasuredome/mame/) (MAME)
+- [MAME](https://www.mamedev.org/release.html) (official "full driver" MAME ListXML)
 
 And some less popular release groups are:
 
@@ -106,6 +105,8 @@ And some less popular release groups are:
   - [Mirrored DATs](https://github.com/libretro/libretro-database/tree/master/metadat) (No-Intro and Redump/trurip/TOSEC DATs)
   - [FinalBurn NEO](https://github.com/libretro/FBNeo/tree/master/dats) (arcade, gen 1-4 consoles)
 - [ADVANsCEne](https://www.advanscene.com/html/dats.php) (GBA, DS, 3DS, PSP, PS Vita)
+- [progetto-SNAPS](https://www.progettosnaps.net/dats/MAME/) (MAME ListXMLs with some unnecessary metadata removed, e.g. inputs, DIP switches, and ports)
+- [pleasuredome](https://pleasuredome.github.io/pleasuredome/mame/) (MAME merged, non-merged, and split sets _without_ parent/clone information)
 
 ## Parent/clone (P/C) DATs
 
@@ -116,6 +117,23 @@ Being able to know that many releases are actually the same game gives `igir` th
 !!! note
 
     If you have the option to download "parent/clone" or "P/C" versions of DATs, you should always choose those.
+
+## Arcade
+
+Building a ROM set that works with your _exact_ version of [MAME](https://www.mamedev.org/) or FinalBurn [Alpha](https://www.fbalpha.com/) / [Neo](https://github.com/finalburnneo/FBNeo) is necessarily complicated. Arcade machines vary wildly in hardware, arcade machines contain many more ROM chips than cartridge-based consoles, arcade ROM dumps are sometimes imperfect, and arcade emulators prefer mostly working emulation over perfect emulation.
+
+In general, the rule-of-thumb with DATs and arcade emulation is: your emulator probably has a companion DAT that describes the _exact_ way you have to organize your ROMs. That means:
+
+- ROMs organized with a MAME v0.258 DAT will likely _not_ work with MAME v0.78 (2003)
+- ROMs organized with a MAME v0.258 DAT will likely _not_ work with MAME v0.174 (2016)
+- ROMs organized with a MAME v0.258 DAT will likely _not_ work with FinalBurn
+- ROMs organized with a FinalBurn Neo v1.0.0.2 DAT will likely _not_ work with FinalBurn Neo v1.0.0.0
+- ROMs organized with a FinalBurn Neo v1.0.0.2 DAT will likely _not_ work with FinalBurn Alpha v0.2.97.29
+- ROMs organized with a FinalBurn Alpha v0.2.97.29 DAT will likely _not_ work with FinalBurn Alpha v0.2.96.71
+
+If you are using a desktop frontend such as [RetroArch](../usage/desktop/retroarch.md), it may come with multiple versions of the same emulator, and it is unlikely that any of them is the most recent version. Follow the frontend's documentation to location or download the correct DAT to use with each emulator.
+
+See the [arcade page](../foo.md) for more information on building & re-building arcade ROM sets.
 
 ## Fixdats
 
@@ -171,11 +189,3 @@ ROMs-Sorted/
 ├── Nintendo - Game Boy Advance (20230414-173400) fixdat.dat
 └── Nintendo - Game Boy Color (20230414-173400) fixdat.dat
 ```
-
-## FAQ
-
-### Aren't DATs primarily for MAME?
-
-That's where DATs started. The [Logiqx XML](http://www.logiqx.com/DatFAQs/) DAT format can include information in [clrmamepro](https://mamedev.emulab.it/clrmamepro/) or [Romcenter](http://www.romcenter.com/) formats on how to handle MAME-specific settings such as [merging](https://docs.mamedev.org/usingmame/aboutromsets.html#parents-clones-splitting-and-merging) (non-merged vs. merged vs. split) and packing (zip vs. not). `igir` doesn't use any of this information, but it helps paint a picture of why DATs are structured the way they are.
-
-These days, depending on what type of emulation you're interested in, non-MAME DATs such as No-Intro's may be more common than MAME DATs. See the [DAT groups](#dat-groups) section above for some of the popular DAT release groups.
