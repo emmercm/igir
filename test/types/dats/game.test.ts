@@ -1,6 +1,6 @@
-import Game from '../../../src/types/logiqx/game.js';
-import Release from '../../../src/types/logiqx/release.js';
-import ROM from '../../../src/types/logiqx/rom.js';
+import Game from '../../../src/types/dats/game.js';
+import Release from '../../../src/types/dats/release.js';
+import ROM from '../../../src/types/dats/rom.js';
 
 describe('isBios', () => {
   test.each([
@@ -27,7 +27,7 @@ describe('getReleases', () => {
 
 describe('getRoms', () => {
   it('should always return a list', () => {
-    const rom = new ROM('name', 0, '00000000');
+    const rom = new ROM({ name: 'name', size: 0, crc: '00000000' });
 
     expect(new Game({ rom: [rom] }).getRoms()).toEqual([rom]);
     expect(new Game({ rom }).getRoms()).toEqual([rom]);

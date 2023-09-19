@@ -5,9 +5,10 @@ import util from 'util';
 
 import ProgressBar, { ProgressBarSymbol } from '../console/progressBar.js';
 import Constants from '../constants.js';
-import DAT from '../types/logiqx/dat.js';
-import Header from '../types/logiqx/header.js';
-import Parent from '../types/logiqx/parent.js';
+import DAT from '../types/dats/dat.js';
+import Header from '../types/dats/logiqx/header.js';
+import LogiqxDAT from '../types/dats/logiqx/logiqxDat.js';
+import Parent from '../types/dats/parent.js';
 import Options from '../types/options.js';
 import OutputFactory from '../types/outputFactory.js';
 import ReleaseCandidate from '../types/releaseCandidate.js';
@@ -76,7 +77,7 @@ export default class FixdatCreator extends Module {
     });
 
     // Construct a new DAT and write it to the output dir
-    const fixdat = new DAT(header, gamesWithMissingRoms);
+    const fixdat = new LogiqxDAT(header, gamesWithMissingRoms);
     const fixdatContents = fixdat.toXmlDat();
     const fixdatPath = path.join(fixdatDir, fixdat.getFilename());
     await util.promisify(fs.writeFile)(fixdatPath, fixdatContents);

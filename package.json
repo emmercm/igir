@@ -1,6 +1,6 @@
 {
   "name": "igir",
-  "version": "1.9.3",
+  "version": "1.9.4",
   "description": "🕹 A video game ROM collection manager to help filter, sort, patch, archive, and report on collections on any OS.",
   "keywords": [
     "1g1r",
@@ -105,6 +105,7 @@
     "@types/semver": "7.5.0",
     "@types/tar": "6.1.5",
     "@types/unzipper": "0.10.6",
+    "@types/which": "3.0.0",
     "@types/xml2js": "0.4.11",
     "@types/yargs": "17.0.24",
     "@typescript-eslint/eslint-plugin": "6.4.1",
@@ -123,7 +124,8 @@
     "strip-ansi": "7.1.0",
     "ts-jest": "29.1.1",
     "ts-node": "10.9.1",
-    "typescript": "5.2.2"
+    "typescript": "5.2.2",
+    "which": "4.0.0"
   },
   "//engines": [
     "Requires ^12.20.0 || ^14.13.1 || >=16.0.0 for ES6 modules, even though `tsc` can target ES5 or lower.",

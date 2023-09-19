@@ -1,56 +1,22 @@
-import 'reflect-metadata';
-
-import {
-  Expose, plainToInstance, Transform, Type,
-} from 'class-transformer';
-import xml2js from 'xml2js';
-
 import Game from './game.js';
-import Header from './header.js';
-import Machine from './machine.js';
+import Header from './logiqx/header.js';
 import Parent from './parent.js';
 
 /**
- * @see http://www.logiqx.com/DatFAQs/DatCreation.php
+ * The base class for other DAT classes.
  */
-export default class DAT {
-  @Expose()
-  @Type(() => Header)
-  @Transform(({ value }) => value || undefined)
-  private readonly header: Header;
-
-  @Expose()
-  @Type(() => Game)
-  @Transform(({ value }) => value || [])
-  private readonly game: Game | Game[];
-
-  // NOTE(cemmer): this is not Logiqx DTD-compliant, but it's what MAME XML DATs use
-  @Expose()
-  @Type(() => Machine)
-  @Transform(({ value }) => value || [])
-  private readonly machine: Machine | Machine[];
-
+export default abstract class DAT {
   private readonly gameNamesToParents: Map<string, Parent> = new Map();
 
-  constructor(header: Header, games: Game | Game[]) {
-    this.header = header;
-    this.game = games;
-    this.machine = [];
-    this.generateGameNamesToParents();
-  }
+  abstract getHeader(): Header;
+
+  abstract getGames(): Game[];
 
   /**
-   * Construct a {@link DAT} from a generic object, such as one from reading an XML file.
+   * Group all {@link Game} clones together into one {@link Parent}. If no parent/clone information
+   * exists, then there will be one {@link Parent} for every {@link Game}.
    */
-  static fromObject(obj: object): DAT {
-    return plainToInstance(DAT, obj, {
-      enableImplicitConversion: true,
-      excludeExtraneousValues: true,
-    })
-      .generateGameNamesToParents();
-  }
-
-  private generateGameNamesToParents(): DAT {
+  protected generateGameNamesToParents(): DAT {
     // Find all parents
     this.getGames().forEach((game: Game) => {
       if (game.isParent()) {
@@ -74,56 +40,6 @@ export default class DAT {
     return this;
   }
 
-  /**
-   * Serialize this {@link DAT} to the file contents of an XML file.
-   */
-  toXmlDat(): string {
-    return new xml2js.Builder({
-      renderOpts: { pretty: true, indent: '\t', newline: '\n' },
-      xmldec: { version: '1.0' },
-      doctype: {
-        pubID: '-//Logiqx//DTD ROM Management Datafile//EN',
-        sysID: 'http://www.logiqx.com/Dats/datafile.dtd',
-      },
-      cdata: true,
-    }).buildObject(this.toXmlDatObj());
-  }
-
-  private toXmlDatObj(): object {
-    return {
-      datafile: {
-        header: this.header.toXmlDatObj(),
-        game: this.getGames().map((game) => game.toXmlDatObj()),
-      },
-    };
-  }
-
-  // Property getters
-
-  getHeader(): Header {
-    return this.header;
-  }
-
-  getGames(): Game[] {
-    if (Array.isArray(this.game)) {
-      if (this.game.length) {
-        return this.game;
-      }
-    } else if (this.game) {
-      return [this.game];
-    }
-
-    if (Array.isArray(this.machine)) {
-      if (this.machine) {
-        return this.machine;
-      }
-    } else if (this.machine) {
-      return [this.machine];
-    }
-
-    return [];
-  }
-
   getParents(): Parent[] {
     return [...this.gameNamesToParents.values()];
   }
@@ -134,8 +50,6 @@ export default class DAT {
   hasParentCloneInfo(): boolean {
     return this.getGames().some((game) => game.isClone());
   }
-
-  // Computed getters
 
   getName(): string {
     return this.getHeader().getName();
@@ -183,7 +97,7 @@ export default class DAT {
   }
 
   /**
-   * Is this a {@link DAT} that only contains BIOS files.
+   * Is this a {@link LogiqxDAT} that only contains BIOS files.
    */
   isBiosDat(): boolean {
     return (this.getGames().length > 0 && this.getGames().every((game) => game.isBios()))
@@ -220,9 +134,9 @@ export default class DAT {
   }
 
   /**
-   * Return a short string representation of this {@link DAT}.
+   * Return a short string representation of this {@link LogiqxDAT}.
    */
   toString(): string {
-    return `{"header": ${this.header.toString()}, "games": ${this.getGames().length}}`;
+    return `{"header": ${this.getHeader().toString()}, "games": ${this.getGames().length}}`;
   }
 }

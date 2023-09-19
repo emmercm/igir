@@ -1,12 +1,12 @@
 import stripAnsi from 'strip-ansi';
 
 import StatusGenerator from '../../src/modules/statusGenerator.js';
+import Game from '../../src/types/dats/game.js';
+import Header from '../../src/types/dats/logiqx/header.js';
+import LogiqxDAT from '../../src/types/dats/logiqx/logiqxDat.js';
+import Parent from '../../src/types/dats/parent.js';
+import ROM from '../../src/types/dats/rom.js';
 import File from '../../src/types/files/file.js';
-import DAT from '../../src/types/logiqx/dat.js';
-import Game from '../../src/types/logiqx/game.js';
-import Header from '../../src/types/logiqx/header.js';
-import Parent from '../../src/types/logiqx/parent.js';
-import ROM from '../../src/types/logiqx/rom.js';
 import Options, { OptionsProps } from '../../src/types/options.js';
 import IPSPatch from '../../src/types/patches/ipsPatch.js';
 import ReleaseCandidate from '../../src/types/releaseCandidate.js';
@@ -32,21 +32,21 @@ const games = [
   new Game({
     name: gameNameBios,
     bios: 'yes',
-    rom: new ROM('bios.rom', 123, '11111111'),
+    rom: new ROM({ name: 'bios.rom', size: 123, crc: '11111111' }),
   }),
   new Game({
     name: gameNamePrototype,
-    rom: new ROM('game prototype (proto).rom', 123, '22222222'),
+    rom: new ROM({ name: 'game prototype (proto).rom', size: 123, crc: '22222222' }),
   }),
   new Game({
     name: gameNameSingleRom,
-    rom: new ROM('game.rom', 123, '33333333'),
+    rom: new ROM({ name: 'game.rom', size: 123, crc: '33333333' }),
   }),
   new Game({
     name: gameNameMultipleRoms,
     rom: [
-      new ROM('one.rom', 123, '44444444'),
-      new ROM('two.rom', 123, '55555555'),
+      new ROM({ name: 'one.rom', size: 123, crc: '44444444' }),
+      new ROM({ name: 'two.rom', size: 123, crc: '55555555' }),
     ],
   }),
   new Game({
@@ -56,7 +56,7 @@ const games = [
   }),
 ];
 
-const dummyDat = new DAT(new Header({
+const dummyDat = new LogiqxDAT(new Header({
   name: 'dat',
 }), games);
 
@@ -162,7 +162,7 @@ describe('toConsole', () => {
 
   it('should always print patched games as found', async () => {
     const game = new Game({ name: 'patched game' });
-    const rom = new ROM('patched.rom', 123, '00000000');
+    const rom = new ROM({ name: 'patched.rom', size: 123, crc: '00000000' });
     const map = new Map([
       ...parentsToReleaseCandidatesWithoutFiles,
       [
@@ -305,7 +305,7 @@ dat,no roms,FOUND,,false,false,true,false,false,false,false,false,false,false,fa
 
   it('should always report patched games as found', async () => {
     const game = new Game({ name: 'patched game' });
-    const rom = new ROM('patched.rom', 123, '00000000');
+    const rom = new ROM({ name: 'patched.rom', size: 123, crc: '00000000' });
     const map = new Map([
       ...parentsToReleaseCandidatesWithoutFiles,
       [

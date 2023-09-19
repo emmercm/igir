@@ -1,11 +1,11 @@
 import path from 'path';
 
 import CandidatePostProcessor from '../../src/modules/candidatePostProcessor.js';
-import DAT from '../../src/types/logiqx/dat.js';
-import Game from '../../src/types/logiqx/game.js';
-import Header from '../../src/types/logiqx/header.js';
-import Parent from '../../src/types/logiqx/parent.js';
-import ROM from '../../src/types/logiqx/rom.js';
+import Game from '../../src/types/dats/game.js';
+import Header from '../../src/types/dats/logiqx/header.js';
+import LogiqxDAT from '../../src/types/dats/logiqx/logiqxDat.js';
+import Parent from '../../src/types/dats/parent.js';
+import ROM from '../../src/types/dats/rom.js';
 import Options from '../../src/types/options.js';
 import ReleaseCandidate from '../../src/types/releaseCandidate.js';
 import ROMWithFiles from '../../src/types/romWithFiles.js';
@@ -21,7 +21,7 @@ const singleRomGames = [
   'Brilliant',
 ].map((name) => new Game({
   name,
-  rom: new ROM(`${name}.rom`, 0, '00000000'),
+  rom: new ROM({ name: `${name}.rom`, size: 0, crc: '00000000' }),
 }));
 const subDirRomGames = [
   'Cheerful',
@@ -29,7 +29,7 @@ const subDirRomGames = [
   'Cool',
 ].map((name) => new Game({
   name,
-  rom: new ROM(`disk1\\${name}.rom`, 0, '00000000'),
+  rom: new ROM({ name: `disk1\\${name}.rom`, size: 0, crc: '00000000' }),
 }));
 const multiRomGames = [
   'Dainty',
@@ -39,12 +39,12 @@ const multiRomGames = [
 ].map((name) => new Game({
   name,
   rom: [
-    new ROM(`${name}.cue`, 0, '00000000'),
-    new ROM(`${name} (Track 01).bin`, 0, '00000000'),
+    new ROM({ name: `${name}.cue`, size: 0, crc: '00000000' }),
+    new ROM({ name: `${name} (Track 01).bin`, size: 0, crc: '00000000' }),
   ],
 }));
 const games = [...singleRomGames, ...subDirRomGames, ...multiRomGames];
-const dat = new DAT(new Header(), games);
+const dat = new LogiqxDAT(new Header(), games);
 
 async function runCandidatePostProcessor(
   options: Options,

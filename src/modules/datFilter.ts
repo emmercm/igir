@@ -1,7 +1,8 @@
 import ProgressBar, { ProgressBarSymbol } from '../console/progressBar.js';
 import fsPoly from '../polyfill/fsPoly.js';
-import DAT from '../types/logiqx/dat.js';
-import Game from '../types/logiqx/game.js';
+import DAT from '../types/dats/dat.js';
+import Game from '../types/dats/game.js';
+import LogiqxDAT from '../types/dats/logiqx/logiqxDat.js';
 import Options from '../types/options.js';
 import Module from './module.js';
 
@@ -35,7 +36,7 @@ export default class DATFilter extends Module {
 
     const filteredGames = dat.getGames()
       .filter((game) => this.filterGame(game));
-    const filteredDat = new DAT(dat.getHeader(), filteredGames);
+    const filteredDat = new LogiqxDAT(dat.getHeader(), filteredGames);
 
     const size = filteredDat.getGames()
       .flatMap((game) => game.getRoms())

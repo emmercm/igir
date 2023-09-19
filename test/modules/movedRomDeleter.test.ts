@@ -5,12 +5,12 @@ import FileIndexer from '../../src/modules/fileIndexer.js';
 import MovedROMDeleter from '../../src/modules/movedRomDeleter.js';
 import ROMScanner from '../../src/modules/romScanner.js';
 import fsPoly from '../../src/polyfill/fsPoly.js';
+import Game from '../../src/types/dats/game.js';
+import Header from '../../src/types/dats/logiqx/header.js';
+import LogiqxDAT from '../../src/types/dats/logiqx/logiqxDat.js';
+import ROM from '../../src/types/dats/rom.js';
 import Zip from '../../src/types/files/archives/zip.js';
 import File from '../../src/types/files/file.js';
-import DAT from '../../src/types/logiqx/dat.js';
-import Game from '../../src/types/logiqx/game.js';
-import Header from '../../src/types/logiqx/header.js';
-import ROM from '../../src/types/logiqx/rom.js';
 import Options from '../../src/types/options.js';
 import ProgressBarFake from '../console/progressBarFake.js';
 
@@ -38,19 +38,19 @@ describe('should delete archives', () => {
         new Game({
           name: 'Euro Demo 42 (Europe)',
           rom: [
-            new ROM('Euro Demo 42 (Europe).cue', 1374, '96b2b896'),
-            new ROM('Euro Demo 42 (Europe) (Track 01).bin', 326168304, '738a3744'),
-            new ROM('Euro Demo 42 (Europe) (Track 02).bin', 12199824, '1b77f37f'),
-            new ROM('Euro Demo 42 (Europe) (Track 03).bin', 1147776, 'c39c78b2'),
-            new ROM('Euro Demo 42 (Europe) (Track 04).bin', 1147776, 'c39c78b2'),
-            new ROM('Euro Demo 42 (Europe) (Track 05).bin', 10746288, '30a1b973'),
-            new ROM('Euro Demo 42 (Europe) (Track 06).bin', 1147776, 'c39c78b2'),
-            new ROM('Euro Demo 42 (Europe) (Track 07).bin', 1147776, 'c39c78b2'),
-            new ROM('Euro Demo 42 (Europe) (Track 08).bin', 37260384, '0c2c3820'),
-            new ROM('Euro Demo 42 (Europe) (Track 09).bin', 32182416, '80784294'),
-            new ROM('Euro Demo 42 (Europe) (Track 10).bin', 26619936, '227a67cf'),
-            new ROM('Euro Demo 42 (Europe) (Track 11).bin', 19189968, '2ed908e7'),
-            new ROM('Euro Demo 42 (Europe) (Track 12).bin', 32356464, 'f6f33c3b'),
+            new ROM({ name: 'Euro Demo 42 (Europe).cue', size: 1374, crc: '96b2b896' }),
+            new ROM({ name: 'Euro Demo 42 (Europe) (Track 01).bin', size: 326168304, crc: '738a3744' }),
+            new ROM({ name: 'Euro Demo 42 (Europe) (Track 02).bin', size: 12199824, crc: '1b77f37f' }),
+            new ROM({ name: 'Euro Demo 42 (Europe) (Track 03).bin', size: 1147776, crc: 'c39c78b2' }),
+            new ROM({ name: 'Euro Demo 42 (Europe) (Track 04).bin', size: 1147776, crc: 'c39c78b2' }),
+            new ROM({ name: 'Euro Demo 42 (Europe) (Track 05).bin', size: 10746288, crc: '30a1b973' }),
+            new ROM({ name: 'Euro Demo 42 (Europe) (Track 06).bin', size: 1147776, crc: 'c39c78b2' }),
+            new ROM({ name: 'Euro Demo 42 (Europe) (Track 07).bin', size: 1147776, crc: 'c39c78b2' }),
+            new ROM({ name: 'Euro Demo 42 (Europe) (Track 08).bin', size: 37260384, crc: '0c2c3820' }),
+            new ROM({ name: 'Euro Demo 42 (Europe) (Track 09).bin', size: 32182416, crc: '80784294' }),
+            new ROM({ name: 'Euro Demo 42 (Europe) (Track 10).bin', size: 26619936, crc: '227a67cf' }),
+            new ROM({ name: 'Euro Demo 42 (Europe) (Track 11).bin', size: 19189968, crc: '2ed908e7' }),
+            new ROM({ name: 'Euro Demo 42 (Europe) (Track 12).bin', size: 32356464, crc: 'f6f33c3b' }),
           ],
         }),
       ], [
@@ -61,63 +61,63 @@ describe('should delete archives', () => {
         new Game({
           name: 'Zero 4 Champ II (Japan)',
           rom: [
-            new ROM('Zero 4 Champ II (Japan).cue', 4187, 'a8c5c66e'),
-            new ROM('Zero 4 Champ II (Japan) (Track 01).bin', 7916832, '22144d0f'),
-            new ROM('Zero 4 Champ II (Japan) (Track 02).bin', 25542720, 'a3ecc4eb'),
-            new ROM('Zero 4 Champ II (Japan) (Track 03).bin', 13041840, '5f4717be'),
-            new ROM('Zero 4 Champ II (Japan) (Track 04).bin', 11741184, 'a929f0e1'),
-            new ROM('Zero 4 Champ II (Japan) (Track 05).bin', 11475408, '8ce00863'),
-            new ROM('Zero 4 Champ II (Japan) (Track 06).bin', 10151232, '1b052c36'),
-            new ROM('Zero 4 Champ II (Japan) (Track 07).bin', 13135920, '54d7853c'),
-            new ROM('Zero 4 Champ II (Japan) (Track 08).bin', 24213840, 'aad2c61a'),
-            new ROM('Zero 4 Champ II (Japan) (Track 09).bin', 11799984, '10f0d49b'),
-            new ROM('Zero 4 Champ II (Japan) (Track 10).bin', 16334640, '9eb8f90f'),
-            new ROM('Zero 4 Champ II (Japan) (Track 11).bin', 11338992, 'fa3d048a'),
-            new ROM('Zero 4 Champ II (Japan) (Track 12).bin', 12084576, '33167322'),
-            new ROM('Zero 4 Champ II (Japan) (Track 13).bin', 10513440, '09fb1bd2'),
-            new ROM('Zero 4 Champ II (Japan) (Track 14).bin', 16325232, '7404385c'),
-            new ROM('Zero 4 Champ II (Japan) (Track 15).bin', 15266832, '7f2b9388'),
-            new ROM('Zero 4 Champ II (Japan) (Track 16).bin', 11153184, '0c360c9b'),
-            new ROM('Zero 4 Champ II (Japan) (Track 17).bin', 11148480, '2f712235'),
-            new ROM('Zero 4 Champ II (Japan) (Track 18).bin', 11357808, '8a7b39b2'),
-            new ROM('Zero 4 Champ II (Japan) (Track 19).bin', 7067760, '616c4702'),
-            new ROM('Zero 4 Champ II (Japan) (Track 20).bin', 13279392, '27706096'),
-            new ROM('Zero 4 Champ II (Japan) (Track 21).bin', 7923888, 'fecb096f'),
-            new ROM('Zero 4 Champ II (Japan) (Track 22).bin', 14888160, '9528018f'),
-            new ROM('Zero 4 Champ II (Japan) (Track 23).bin', 6385680, '26c2432a'),
-            new ROM('Zero 4 Champ II (Japan) (Track 24).bin', 16367568, 'ce330910'),
-            new ROM('Zero 4 Champ II (Japan) (Track 25).bin', 846720, '11bf5dbd'),
-            new ROM('Zero 4 Champ II (Japan) (Track 26).bin', 3281040, 'f9188f3a'),
-            new ROM('Zero 4 Champ II (Japan) (Track 27).bin', 846720, '11bf5dbd'),
-            new ROM('Zero 4 Champ II (Japan) (Track 28).bin', 4887456, '8d2dbe56'),
-            new ROM('Zero 4 Champ II (Japan) (Track 29).bin', 12945408, '8d234a26'),
-            new ROM('Zero 4 Champ II (Japan) (Track 30).bin', 17611776, '92ee3fb4'),
-            new ROM('Zero 4 Champ II (Japan) (Track 31).bin', 21073920, '7b03db99'),
-            new ROM('Zero 4 Champ II (Japan) (Track 32).bin', 14556528, '1f3057c2'),
-            new ROM('Zero 4 Champ II (Japan) (Track 33).bin', 10520496, '887d8c2a'),
-            new ROM('Zero 4 Champ II (Japan) (Track 34).bin', 11219040, '05d3e3a4'),
-            new ROM('Zero 4 Champ II (Japan) (Track 35).bin', 12411504, 'b4cabb3b'),
-            new ROM('Zero 4 Champ II (Japan) (Track 36).bin', 15285648, '8f997117'),
-            new ROM('Zero 4 Champ II (Japan) (Track 37).bin', 11284896, '798a830f'),
-            new ROM('Zero 4 Champ II (Japan) (Track 38).bin', 24498432, 'ac1cbe07'),
-            new ROM('Zero 4 Champ II (Japan) (Track 39).bin', 19533360, '36df83e6'),
-            new ROM('Zero 4 Champ II (Japan) (Track 40).bin', 21897120, '137e2970'),
-            new ROM('Zero 4 Champ II (Japan) (Track 41).bin', 2629536, 'd02a90b7'),
-            new ROM('Zero 4 Champ II (Japan) (Track 42).bin', 14224896, 'aa345590'),
-            new ROM('Zero 4 Champ II (Japan) (Track 43).bin', 25192272, '661f8f8e'),
+            new ROM({ name: 'Zero 4 Champ II (Japan).cue', size: 4187, crc: 'a8c5c66e' }),
+            new ROM({ name: 'Zero 4 Champ II (Japan) (Track 01).bin', size: 7916832, crc: '22144d0f' }),
+            new ROM({ name: 'Zero 4 Champ II (Japan) (Track 02).bin', size: 25542720, crc: 'a3ecc4eb' }),
+            new ROM({ name: 'Zero 4 Champ II (Japan) (Track 03).bin', size: 13041840, crc: '5f4717be' }),
+            new ROM({ name: 'Zero 4 Champ II (Japan) (Track 04).bin', size: 11741184, crc: 'a929f0e1' }),
+            new ROM({ name: 'Zero 4 Champ II (Japan) (Track 05).bin', size: 11475408, crc: '8ce00863' }),
+            new ROM({ name: 'Zero 4 Champ II (Japan) (Track 06).bin', size: 10151232, crc: '1b052c36' }),
+            new ROM({ name: 'Zero 4 Champ II (Japan) (Track 07).bin', size: 13135920, crc: '54d7853c' }),
+            new ROM({ name: 'Zero 4 Champ II (Japan) (Track 08).bin', size: 24213840, crc: 'aad2c61a' }),
+            new ROM({ name: 'Zero 4 Champ II (Japan) (Track 09).bin', size: 11799984, crc: '10f0d49b' }),
+            new ROM({ name: 'Zero 4 Champ II (Japan) (Track 10).bin', size: 16334640, crc: '9eb8f90f' }),
+            new ROM({ name: 'Zero 4 Champ II (Japan) (Track 11).bin', size: 11338992, crc: 'fa3d048a' }),
+            new ROM({ name: 'Zero 4 Champ II (Japan) (Track 12).bin', size: 12084576, crc: '33167322' }),
+            new ROM({ name: 'Zero 4 Champ II (Japan) (Track 13).bin', size: 10513440, crc: '09fb1bd2' }),
+            new ROM({ name: 'Zero 4 Champ II (Japan) (Track 14).bin', size: 16325232, crc: '7404385c' }),
+            new ROM({ name: 'Zero 4 Champ II (Japan) (Track 15).bin', size: 15266832, crc: '7f2b9388' }),
+            new ROM({ name: 'Zero 4 Champ II (Japan) (Track 16).bin', size: 11153184, crc: '0c360c9b' }),
+            new ROM({ name: 'Zero 4 Champ II (Japan) (Track 17).bin', size: 11148480, crc: '2f712235' }),
+            new ROM({ name: 'Zero 4 Champ II (Japan) (Track 18).bin', size: 11357808, crc: '8a7b39b2' }),
+            new ROM({ name: 'Zero 4 Champ II (Japan) (Track 19).bin', size: 7067760, crc: '616c4702' }),
+            new ROM({ name: 'Zero 4 Champ II (Japan) (Track 20).bin', size: 13279392, crc: '27706096' }),
+            new ROM({ name: 'Zero 4 Champ II (Japan) (Track 21).bin', size: 7923888, crc: 'fecb096f' }),
+            new ROM({ name: 'Zero 4 Champ II (Japan) (Track 22).bin', size: 14888160, crc: '9528018f' }),
+            new ROM({ name: 'Zero 4 Champ II (Japan) (Track 23).bin', size: 6385680, crc: '26c2432a' }),
+            new ROM({ name: 'Zero 4 Champ II (Japan) (Track 24).bin', size: 16367568, crc: 'ce330910' }),
+            new ROM({ name: 'Zero 4 Champ II (Japan) (Track 25).bin', size: 846720, crc: '11bf5dbd' }),
+            new ROM({ name: 'Zero 4 Champ II (Japan) (Track 26).bin', size: 3281040, crc: 'f9188f3a' }),
+            new ROM({ name: 'Zero 4 Champ II (Japan) (Track 27).bin', size: 846720, crc: '11bf5dbd' }),
+            new ROM({ name: 'Zero 4 Champ II (Japan) (Track 28).bin', size: 4887456, crc: '8d2dbe56' }),
+            new ROM({ name: 'Zero 4 Champ II (Japan) (Track 29).bin', size: 12945408, crc: '8d234a26' }),
+            new ROM({ name: 'Zero 4 Champ II (Japan) (Track 30).bin', size: 17611776, crc: '92ee3fb4' }),
+            new ROM({ name: 'Zero 4 Champ II (Japan) (Track 31).bin', size: 21073920, crc: '7b03db99' }),
+            new ROM({ name: 'Zero 4 Champ II (Japan) (Track 32).bin', size: 14556528, crc: '1f3057c2' }),
+            new ROM({ name: 'Zero 4 Champ II (Japan) (Track 33).bin', size: 10520496, crc: '887d8c2a' }),
+            new ROM({ name: 'Zero 4 Champ II (Japan) (Track 34).bin', size: 11219040, crc: '05d3e3a4' }),
+            new ROM({ name: 'Zero 4 Champ II (Japan) (Track 35).bin', size: 12411504, crc: 'b4cabb3b' }),
+            new ROM({ name: 'Zero 4 Champ II (Japan) (Track 36).bin', size: 15285648, crc: '8f997117' }),
+            new ROM({ name: 'Zero 4 Champ II (Japan) (Track 37).bin', size: 11284896, crc: '798a830f' }),
+            new ROM({ name: 'Zero 4 Champ II (Japan) (Track 38).bin', size: 24498432, crc: 'ac1cbe07' }),
+            new ROM({ name: 'Zero 4 Champ II (Japan) (Track 39).bin', size: 19533360, crc: '36df83e6' }),
+            new ROM({ name: 'Zero 4 Champ II (Japan) (Track 40).bin', size: 21897120, crc: '137e2970' }),
+            new ROM({ name: 'Zero 4 Champ II (Japan) (Track 41).bin', size: 2629536, crc: 'd02a90b7' }),
+            new ROM({ name: 'Zero 4 Champ II (Japan) (Track 42).bin', size: 14224896, crc: 'aa345590' }),
+            new ROM({ name: 'Zero 4 Champ II (Japan) (Track 43).bin', size: 25192272, crc: '661f8f8e' }),
           ],
         }),
         new Game({
           name: 'Adventure Quiz - Capcom World + Hatena no Daibouken (Japan)',
           rom: [
-            new ROM('Adventure Quiz - Capcom World + Hatena no Daibouken (Japan).cue', 984, '54a01e7d'),
-            new ROM('Adventure Quiz - Capcom World + Hatena no Daibouken (Japan) (Track 1).bin', 7916832, '22144d0f'),
-            new ROM('Adventure Quiz - Capcom World + Hatena no Daibouken (Japan) (Track 2).bin', 10536960, '59cc5f3f'),
-            new ROM('Adventure Quiz - Capcom World + Hatena no Daibouken (Japan) (Track 3).bin', 7785120, '877dde76'),
-            new ROM('Adventure Quiz - Capcom World + Hatena no Daibouken (Japan) (Track 4).bin', 18992400, '3236adb9'),
-            new ROM('Adventure Quiz - Capcom World + Hatena no Daibouken (Japan) (Track 5).bin', 9252768, '341cc45f'),
-            new ROM('Adventure Quiz - Capcom World + Hatena no Daibouken (Japan) (Track 6).bin', 27854736, 'e3646dc1'),
-            new ROM('Adventure Quiz - Capcom World + Hatena no Daibouken (Japan) (Track 7).bin', 5216736, 'e3792471'),
+            new ROM({ name: 'Adventure Quiz - Capcom World + Hatena no Daibouken (Japan).cue', size: 984, crc: '54a01e7d' }),
+            new ROM({ name: 'Adventure Quiz - Capcom World + Hatena no Daibouken (Japan) (Track 1).bin', size: 7916832, crc: '22144d0f' }),
+            new ROM({ name: 'Adventure Quiz - Capcom World + Hatena no Daibouken (Japan) (Track 2).bin', size: 10536960, crc: '59cc5f3f' }),
+            new ROM({ name: 'Adventure Quiz - Capcom World + Hatena no Daibouken (Japan) (Track 3).bin', size: 7785120, crc: '877dde76' }),
+            new ROM({ name: 'Adventure Quiz - Capcom World + Hatena no Daibouken (Japan) (Track 4).bin', size: 18992400, crc: '3236adb9' }),
+            new ROM({ name: 'Adventure Quiz - Capcom World + Hatena no Daibouken (Japan) (Track 5).bin', size: 9252768, crc: '341cc45f' }),
+            new ROM({ name: 'Adventure Quiz - Capcom World + Hatena no Daibouken (Japan) (Track 6).bin', size: 27854736, crc: 'e3646dc1' }),
+            new ROM({ name: 'Adventure Quiz - Capcom World + Hatena no Daibouken (Japan) (Track 7).bin', size: 5216736, crc: 'e3792471' }),
           ],
         }),
       ], [
@@ -132,7 +132,7 @@ describe('should delete archives', () => {
         output: 'output',
       });
 
-      const dat = new DAT(new Header(), games);
+      const dat = new LogiqxDAT(new Header(), games);
 
       const rawRomFiles = (await Promise.all(dat.getParents()
         .flatMap((parent) => parent.getGames())
@@ -153,14 +153,11 @@ describe('should delete archives', () => {
         .flatMap((releaseCandidate) => releaseCandidate.getRomsWithFiles())
         .map((romWithFiles) => romWithFiles.getInputFile());
 
-      const parentsToWrittenRoms = new Map([...parentsToCandidates.entries()]
-        .map(([parent, releaseCandidates]) => {
-          const writtenRoms = releaseCandidates
-            .flatMap((releaseCandidate) => releaseCandidate.getRomsWithFiles())
-            .map((romWithFiles) => romWithFiles.getOutputFile());
-          return [parent, writtenRoms];
-        }));
-      const datsToWrittenRoms = new Map([[dat, parentsToWrittenRoms]]);
+      const writtenRoms = [...parentsToCandidates.values()]
+        .flatMap((releaseCandidates) => releaseCandidates)
+        .flatMap((releaseCanddiate) => releaseCanddiate.getRomsWithFiles())
+        .map((romWithFiles) => romWithFiles.getOutputFile());
+      const datsToWrittenRoms = new Map([[dat, writtenRoms]]);
 
       const deletedFilePaths = (
         await new MovedROMDeleter(new ProgressBarFake())

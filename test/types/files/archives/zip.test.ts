@@ -3,12 +3,12 @@ import path from 'path';
 import Constants from '../../../../src/constants.js';
 import ROMScanner from '../../../../src/modules/romScanner.js';
 import fsPoly from '../../../../src/polyfill/fsPoly.js';
+import Header from '../../../../src/types/dats/logiqx/header.js';
+import LogiqxDAT from '../../../../src/types/dats/logiqx/logiqxDat.js';
 import ArchiveEntry from '../../../../src/types/files/archives/archiveEntry.js';
 import Zip from '../../../../src/types/files/archives/zip.js';
 import File from '../../../../src/types/files/file.js';
 import FileFactory from '../../../../src/types/files/fileFactory.js';
-import DAT from '../../../../src/types/logiqx/dat.js';
-import Header from '../../../../src/types/logiqx/header.js';
 import Options from '../../../../src/types/options.js';
 import ProgressBarFake from '../../../console/progressBarFake.js';
 
@@ -57,7 +57,7 @@ describe('createArchive', () => {
     const zip = inputToOutput[0][1].getArchive();
     await expect(zip.createArchive(
       new Options(),
-      new DAT(new Header(), []),
+      new LogiqxDAT(new Header(), []),
       inputToOutput,
     )).rejects.toThrow();
 

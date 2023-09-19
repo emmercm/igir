@@ -581,7 +581,7 @@ describe('with explicit DATs', () => {
   ])('should generate a fixdat when writing: %s', async (command) => {
     await copyFixturesToTemp(async (inputTemp, outputTemp) => {
       const result = await runIgir({
-        commands: [command],
+        commands: [command, 'clean'],
         dat: [path.join(inputTemp, 'dats')],
         input: [path.join(inputTemp, 'roms')],
         output: outputTemp,

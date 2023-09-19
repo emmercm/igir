@@ -1,5 +1,5 @@
+import ROM from './dats/rom.js';
 import File from './files/file.js';
-import ROM from './logiqx/rom.js';
 
 /**
  * A container holding a {@link ROM}, a found input {@link File}, and a desired output {@link File}.

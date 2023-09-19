@@ -1,12 +1,13 @@
 import path from 'path';
 
 import ProgressBar from '../console/progressBar.js';
+import DAT from '../types/dats/dat.js';
+import Game from '../types/dats/game.js';
+import Header from '../types/dats/logiqx/header.js';
+import LogiqxDAT from '../types/dats/logiqx/logiqxDat.js';
+import ROM from '../types/dats/rom.js';
 import ArchiveEntry from '../types/files/archives/archiveEntry.js';
 import File from '../types/files/file.js';
-import DAT from '../types/logiqx/dat.js';
-import Game from '../types/logiqx/game.js';
-import Header from '../types/logiqx/header.js';
-import ROM from '../types/logiqx/rom.js';
 import Module from './module.js';
 
 /**
@@ -59,18 +60,18 @@ export default class DATInferrer extends Module {
     }, new Map<string, File[]>());
 
     const games = [...gameNamesToRomFiles.entries()].map(([gameName, gameRomFiles]) => {
-      const roms = gameRomFiles.map((romFile) => new ROM(
-        path.basename(romFile.getExtractedFilePath()),
-        romFile.getSize(),
-        romFile.getCrc32(),
-      ));
+      const roms = gameRomFiles.map((romFile) => new ROM({
+        name: path.basename(romFile.getExtractedFilePath()),
+        size: romFile.getSize(),
+        crc: romFile.getCrc32(),
+      }));
       return new Game({
         name: gameName,
         rom: roms,
       });
     });
 
-    return new DAT(header, games);
+    return new LogiqxDAT(header, games);
   }
 
   private static getGameName(file: File): string {
