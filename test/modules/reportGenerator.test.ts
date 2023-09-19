@@ -150,7 +150,7 @@ Multiple,Five,FOUND,,false,false,true,false,false,false,false,false,false,false,
 Multiple,Four,FOUND,Four.rom,false,false,true,false,false,false,false,false,false,false,false,false,false
 Multiple,Three,FOUND,Three.rom,false,false,true,false,false,false,false,false,false,false,false,false,false
 Multiple,Two,FOUND,Two.rom,false,false,true,false,false,false,false,false,false,false,false,false,false
-,,UNMATCHED,One.rom,false,false,false,false,false,false,false,false,false,false,false,false,false`);
+,,UNUSED,One.rom,false,false,false,false,false,false,false,false,false,false,false,false,false`);
   });
 });
 
@@ -166,7 +166,7 @@ Multiple,Five,FOUND,,false,false,true,false,false,false,false,false,false,false,
 Multiple,Four,FOUND,Four.rom,false,false,true,false,false,false,false,false,false,false,false,false,false
 Multiple,Three,FOUND,Three.rom,false,false,true,false,false,false,false,false,false,false,false,false,false
 Multiple,Two,FOUND,Two.rom,false,false,true,false,false,false,false,false,false,false,false,false,false
-,,UNMATCHED,One.rom,false,false,false,false,false,false,false,false,false,false,false,false,false
+,,UNUSED,One.rom,false,false,false,false,false,false,false,false,false,false,false,false,false
 ,,DELETED,Three.rom,false,false,false,false,false,false,false,false,false,false,false,false,false
 ,,DELETED,Four.rom,false,false,false,false,false,false,false,false,false,false,false,false,false`);
     },
