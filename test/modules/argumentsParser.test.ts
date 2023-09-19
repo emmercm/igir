@@ -7,7 +7,7 @@ import Constants from '../../src/constants.js';
 import ArgumentsParser from '../../src/modules/argumentsParser.js';
 import Header from '../../src/types/dats/logiqx/header.js';
 import LogiqxDAT from '../../src/types/dats/logiqx/logiqxDat.js';
-import {MergeMode} from "../../src/types/options.js";
+import { MergeMode } from '../../src/types/options.js';
 
 const dummyRequiredArgs = ['--input', os.devNull, '--output', os.devNull];
 const dummyCommandAndRequiredArgs = ['copy', ...dummyRequiredArgs];

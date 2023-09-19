@@ -1,14 +1,14 @@
-import ProgressBar, {ProgressBarSymbol} from '../console/progressBar.js';
+import ProgressBar, { ProgressBarSymbol } from '../console/progressBar.js';
 import ArrayPoly from '../polyfill/arrayPoly.js';
 import DAT from '../types/dats/dat.js';
 import Game from '../types/dats/game.js';
+import Header from '../types/dats/logiqx/header.js';
 import LogiqxDAT from '../types/dats/logiqx/logiqxDat.js';
 import Machine from '../types/dats/mame/machine.js';
 import Parent from '../types/dats/parent.js';
 import ROM from '../types/dats/rom.js';
-import Options, {MergeMode} from '../types/options.js';
+import Options, { MergeMode } from '../types/options.js';
 import Module from './module.js';
-import Header from "../types/dats/logiqx/header.js";
 
 /**
  * TODO(cemmer)
