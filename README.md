@@ -35,7 +35,7 @@ With `igir` you can manage a ROM collection of any size:
 - 🗜️ Extract or archive ROMs in mass (see [archive docs](https://igir.io/output/writing-archives))
 - 🩹 Patch ROMs automatically in mass (see [scanning](https://igir.io/input/file-scanning) & [patching docs](https://igir.io/roms/patching))
 - 🎩 Parse ROMs with headers, and optionally remove them (see [header docs](https://igir.io/roms/headers))
-- ↔️ Split or merge MAME ROM sets (see [arcade docs](https://igir.io/output/arcade))
+- ↔️ Split, merge, and re-build MAME ROM sets (see [arcade docs](https://igir.io/output/arcade))
 - 🔮 Report on what ROMs are present or missing for each console, and create fixdats for missing ROMs (see [reporting](https://igir.io/output/reporting) & [DAT docs](https://igir.io/input/dats))
 
 ## How do I run `igir`?
