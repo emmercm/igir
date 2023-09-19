@@ -38,7 +38,11 @@ export default class DATStatus {
   (ReleaseCandidate | undefined)[]
   >();
 
-  constructor(dat: DAT, parentsToReleaseCandidates: Map<Parent, ReleaseCandidate[]>) {
+  constructor(
+    dat: DAT,
+    options: Options,
+    parentsToReleaseCandidates: Map<Parent, ReleaseCandidate[]>,
+  ) {
     this.dat = dat;
 
     // Un-patched ROMs
@@ -46,12 +50,12 @@ export default class DATStatus {
       .filter(([, releaseCandidates]) => releaseCandidates.every((rc) => !rc.isPatched()))
       .forEach(([parent, releaseCandidates]) => {
         parent.getGames().forEach((game) => {
-          DATStatus.pushValueIntoMap(this.allRomTypesToGames, game, game);
-
           const gameReleaseCandidates = releaseCandidates
             .filter((rc) => !rc.isPatched())
             .filter((rc) => rc.getGame().hashCode() === game.hashCode());
           if (gameReleaseCandidates.length || game.getRoms().length === 0) {
+            // This game has at least one candidate, or it has no roms - mark it found
+            DATStatus.pushValueIntoMap(this.allRomTypesToGames, game, game);
             DATStatus.pushValueIntoMap(
               this.foundRomTypesToReleaseCandidates,
               game,
@@ -59,6 +63,14 @@ export default class DATStatus {
               //  but DATStatus doesn't care about regions.
               gameReleaseCandidates[0],
             );
+            return;
+          }
+
+          // When running in 1G1R mode, if any Game in a Parent has a ReleaseCandidate, then we only
+          // want to include only that Status.FOUND Game (above) in the report. This will filter out
+          // non-preferred games from the report.
+          if (!options.getSingle() || !releaseCandidates.length) {
+            DATStatus.pushValueIntoMap(this.allRomTypesToGames, game, game);
           }
         });
       });
@@ -288,8 +300,7 @@ export default class DATStatus {
 
   private static getAllowedTypes(options: Options): ROMType[] {
     return [
-      !options.getSingle() && !options.getOnlyBios() && !options.getOnlyRetail()
-        ? ROMType.GAME : undefined,
+      !options.getOnlyBios() && !options.getOnlyRetail() ? ROMType.GAME : undefined,
       options.getOnlyBios() || !options.getNoBios() ? ROMType.BIOS : undefined,
       !options.getNoDevice() && !options.getOnlyBios() ? ROMType.DEVICE : undefined,
       options.getOnlyRetail() || !options.getOnlyBios() ? ROMType.RETAIL : undefined,

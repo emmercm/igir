@@ -24,6 +24,7 @@ import ProgressBarFake from '../console/progressBarFake.js';
 
 const datStatusEmpty = new DATStatus(
   new LogiqxDAT(new Header({ name: 'Empty' }), []),
+  new Options(),
   new Map(),
 );
 
@@ -50,6 +51,7 @@ async function buildDatStatusSingle(): Promise<DATStatus> {
   const parentsToReleaseCandidates = new Map<Parent, ReleaseCandidate[]>(entries);
   return new DATStatus(
     new LogiqxDAT(new Header({ name: 'Single' }), gamesSingle),
+    new Options(),
     parentsToReleaseCandidates,
   );
 }
@@ -89,6 +91,7 @@ async function buildDatStatusMultiple(): Promise<DATStatus> {
   const parentsToReleaseCandidates = new Map<Parent, ReleaseCandidate[]>(entries);
   return new DATStatus(
     new LogiqxDAT(new Header({ name: 'Multiple' }), gamesMultiple),
+    new Options(),
     parentsToReleaseCandidates,
   );
 }

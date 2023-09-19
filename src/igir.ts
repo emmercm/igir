@@ -233,11 +233,11 @@ export default class Igir {
     const patchedCandidates = await new CandidatePatchGenerator(this.options, progressBar)
       .generate(dat, candidates, patches);
 
-    const filteredCandidates = await new CandidatePreferer(this.options, progressBar)
+    const preferredCandidates = await new CandidatePreferer(this.options, progressBar)
       .prefer(dat, patchedCandidates);
 
     const postProcessedCandidates = await new CandidatePostProcessor(this.options, progressBar)
-      .process(dat, filteredCandidates);
+      .process(dat, preferredCandidates);
 
     return new CandidateCombiner(this.options, progressBar)
       .combine(dat, postProcessedCandidates);
