@@ -120,12 +120,12 @@ Being able to know that many releases are actually the same game gives `igir` th
 
 ## Arcade
 
-Building a ROM set that works with your _exact_ version of [MAME](https://www.mamedev.org/) or FinalBurn [Alpha](https://www.fbalpha.com/) / [Neo](https://github.com/finalburnneo/FBNeo) is necessarily complicated. Arcade machines vary wildly in hardware, arcade machines contain many more ROM chips than cartridge-based consoles, arcade ROM dumps are sometimes imperfect, and arcade emulators prefer mostly working emulation over perfect emulation.
+Building a ROM set that works with your _exact_ version of [MAME](https://www.mamedev.org/) or FinalBurn [Alpha](https://www.fbalpha.com/) / [Neo](https://github.com/finalburnneo/FBNeo) is necessarily complicated. Arcade machines vary wildly in hardware, they contain many more ROM chips than cartridge-based consoles, their ROM dumps are sometimes imperfect, and arcade emulators prefer "mostly working" emulation over perfect emulation.
 
-In general, the rule-of-thumb with DATs and arcade emulation is: your emulator probably has a companion DAT that describes the _exact_ way you have to organize your ROMs. That means:
+The rule-of-thumb with DATs and arcade emulation is: your emulator probably has a companion DAT that describes the _exact_ ROM files it needs and the _exact_ way you have to organize those ROMs. That means:
 
-- ROMs organized with a MAME v0.258 DAT will likely _not_ work with MAME v0.78 (2003)
-- ROMs organized with a MAME v0.258 DAT will likely _not_ work with MAME v0.174 (2016)
+- ROMs organized with a MAME v0.258 DAT will likely _not_ work with MAME 2003 (v0.78)
+- ROMs organized with a MAME v0.258 DAT will likely _not_ work with MAME 2016 (v0.174)
 - ROMs organized with a MAME v0.258 DAT will likely _not_ work with FinalBurn
 - ROMs organized with a FinalBurn Neo v1.0.0.2 DAT will likely _not_ work with FinalBurn Neo v1.0.0.0
 - ROMs organized with a FinalBurn Neo v1.0.0.2 DAT will likely _not_ work with FinalBurn Alpha v0.2.97.29
@@ -133,7 +133,7 @@ In general, the rule-of-thumb with DATs and arcade emulation is: your emulator p
 
 If you are using a desktop frontend such as [RetroArch](../usage/desktop/retroarch.md), it may come with multiple versions of the same emulator, and it is unlikely that any of them is the most recent version. Follow the frontend's documentation to location or download the correct DAT to use with each emulator.
 
-See the [arcade page](../foo.md) for more information on building & re-building arcade ROM sets.
+See the [arcade page](../output/arcade.md) for more information on building & re-building arcade ROM sets.
 
 ## Fixdats
 
