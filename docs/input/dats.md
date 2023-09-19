@@ -133,7 +133,7 @@ The rule-of-thumb with DATs and arcade emulation is: your emulator probably has 
 
 If you are using a desktop frontend such as [RetroArch](../usage/desktop/retroarch.md), it may come with multiple versions of the same emulator, and it is unlikely that any of them is the most recent version. Follow the frontend's documentation to location or download the correct DAT to use with each emulator.
 
-See the [arcade page](../output/arcade.md) for more information on building & re-building arcade ROM sets.
+See the [arcade page](../usage/arcade.md) for more information on building & re-building arcade ROM sets.
 
 ## Fixdats
 

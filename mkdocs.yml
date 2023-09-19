@@ -65,6 +65,7 @@ nav:
           - Specific Consoles:
               - usage/console/gamecube.md
               - usage/console/ps2.md
+          - usage/arcade.md
           - usage/personal.md
       - File Inputs:
           - input/file-scanning.md
@@ -76,7 +77,6 @@ nav:
           - roms/patching.md
       - File Outputs:
           - output/writing-archives.md
-          - output/arcade.md
           - output/tokens.md
           - output/reporting.md
           - output/cleaning.md

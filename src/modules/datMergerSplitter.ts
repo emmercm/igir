@@ -11,7 +11,9 @@ import Options, { MergeMode } from '../types/options.js';
 import Module from './module.js';
 
 /**
- * TODO(cemmer)
+ * Process a {@link DAT} with the ROM merge mode specified.
+ *
+ * This class may be run concurrently with other classes.
  */
 export default class DATMergerSplitter extends Module {
   private readonly options: Options;
@@ -22,7 +24,7 @@ export default class DATMergerSplitter extends Module {
   }
 
   /**
-   * TODO(cemmer)
+   * Un-merge, split, or merge the {@link Game}s within a {@link DAT}.
    */
   async merge(dat: DAT): Promise<DAT> {
     this.progressBar.logInfo(`${dat.getNameShort()}: merging & splitting`);
@@ -44,7 +46,7 @@ export default class DATMergerSplitter extends Module {
       return map;
     }, new Map<string, Game>());
 
-    await this.progressBar.setSymbol(ProgressBarSymbol.GENERATING);
+    await this.progressBar.setSymbol(ProgressBarSymbol.MERGE_SPLIT);
     await this.progressBar.reset(dat.getGames().length);
 
     const newGames = dat.getParents()
@@ -68,7 +70,7 @@ export default class DATMergerSplitter extends Module {
         if (!(game instanceof Machine)) {
           return game;
         }
-        return new Game({
+        return new Machine({
           ...game,
           rom: [
             ...game.getDeviceRefs()
@@ -88,7 +90,7 @@ export default class DATMergerSplitter extends Module {
           if (game.isBios()) {
             return game;
           }
-          return new Game({
+          return new Machine({
             ...game,
             rom: game.getRoms()
               .filter((rom) => !rom.getBios()),
@@ -105,10 +107,18 @@ export default class DATMergerSplitter extends Module {
       || this.options.getMergeRoms() === MergeMode.MERGED
     ) {
       cloneGames = cloneGames
-        .map((childGame) => new Game({
+        .map((childGame) => new Machine({
           ...childGame,
           rom: DATMergerSplitter.diffGameRoms(parentGame, childGame),
         }));
+    }
+
+    // 'full' types are fully playable on their own, so they no longer have a "parent"
+    if (this.options.getMergeRoms() === MergeMode.FULLNONMERGED) {
+      games = games.map((game) => new Machine({
+        ...game,
+        cloneOf: undefined,
+      }));
     }
 
     // For everything other than 'merged' we keep the same number of games
@@ -127,7 +137,7 @@ export default class DATMergerSplitter extends Module {
     const cloneRomHashCodes = cloneRoms.map((rom) => rom.hashCode());
     cloneRoms = cloneRoms
       .filter((rom, idx) => cloneRomHashCodes.indexOf(rom.hashCode()) === idx);
-    return [new Game({
+    return [new Machine({
       ...parentGame,
       rom: [...cloneRoms, ...parentGame.getRoms()],
     })];

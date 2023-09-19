@@ -626,6 +626,9 @@ Example use cases:
   Create patched copies of ROMs in an existing collection, not overwriting existing files:
     $0 copy extract --input ROMs/ --patch Patches/ --output ROMs/
 
+  Re-build a MAME ROM set for a specific version of MAME:
+    $0 copy zip --dat "MAME 0.258.dat" --input MAME/ --output MAME-0.258/ --merge-roms split
+
   Copy ROMs to an Analogue Pocket and test they were written correctly:
     $0 copy extract test --dat *.dat --input ROMs/ --output /Assets/{pocket}/common/ --dir-letter`)
 
