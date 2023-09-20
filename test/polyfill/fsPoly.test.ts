@@ -28,25 +28,6 @@ describe('isDirectory', () => {
   });
 });
 
-describe('isDirectorySync', () => {
-  it('should return true for a directory', async () => {
-    const tempDir = await fsPoly.mkdtemp(Constants.GLOBAL_TEMP_DIR);
-    expect(fsPoly.isDirectorySync(tempDir)).toEqual(true);
-  });
-
-  it('should return false for a file', async () => {
-    const tempFile = await fsPoly.mktemp(path.join(Constants.GLOBAL_TEMP_DIR, 'temp'));
-    await fsPoly.touch(tempFile);
-    expect(fsPoly.isDirectorySync(tempFile)).toEqual(false);
-    await fsPoly.rm(tempFile);
-  });
-
-  it('should return false for non-existent file', async () => {
-    const tempFile = await fsPoly.mktemp(path.join(Constants.GLOBAL_TEMP_DIR, 'temp'));
-    expect(fsPoly.isDirectorySync(tempFile)).toEqual(false);
-  });
-});
-
 describe('isSymlink', () => {
   it('should return true for a symlink', async () => {
     const tempFile = await fsPoly.mktemp(path.join(Constants.GLOBAL_TEMP_DIR, 'temp'));
@@ -144,46 +125,5 @@ describe('rm', () => {
     await expect(fsPoly.exists(tempLink)).resolves.toEqual(false);
     await expect(fsPoly.exists(tempFile)).resolves.toEqual(true);
     await fsPoly.rm(tempFile);
-  });
-});
-
-describe('rmSync', () => {
-  it('should throw on missing file', async () => {
-    const tempFile = await fsPoly.mktemp(path.join(Constants.GLOBAL_TEMP_DIR, 'temp'));
-    await expect(fsPoly.exists(tempFile)).resolves.toEqual(false);
-    expect(() => fsPoly.rmSync(tempFile)).toThrow();
-  });
-
-  it('should not throw on missing file', async () => {
-    const tempFile = await fsPoly.mktemp(path.join(Constants.GLOBAL_TEMP_DIR, 'temp'));
-    await expect(fsPoly.exists(tempFile)).resolves.toEqual(false);
-    expect(() => fsPoly.rmSync(tempFile, { force: true })).not.toThrow();
-  });
-
-  it('should delete an existing file', async () => {
-    const tempFile = await fsPoly.mktemp(path.join(Constants.GLOBAL_TEMP_DIR, 'temp'));
-    await fsPoly.touch(tempFile);
-    await expect(fsPoly.exists(tempFile)).resolves.toEqual(true);
-    fsPoly.rmSync(tempFile);
-    await expect(fsPoly.exists(tempFile)).resolves.toEqual(false);
-  });
-
-  it('should delete an existing directory', async () => {
-    const tempDir = await fsPoly.mkdtemp(path.join(Constants.GLOBAL_TEMP_DIR, 'temp'));
-    await expect(fsPoly.exists(tempDir)).resolves.toEqual(true);
-    fsPoly.rmSync(tempDir);
-    await expect(fsPoly.exists(tempDir)).resolves.toEqual(false);
-  });
-
-  it('should not delete a symlink\'s target', async () => {
-    const tempFile = await fsPoly.mktemp(path.join(Constants.GLOBAL_TEMP_DIR, 'temp'));
-    await fsPoly.touch(tempFile);
-    const tempLink = await fsPoly.mktemp(path.join(Constants.GLOBAL_TEMP_DIR, 'link'));
-    await fsPoly.symlink(tempFile, tempLink);
-    await expect(fsPoly.exists(tempLink)).resolves.toEqual(true);
-    fsPoly.rmSync(tempLink);
-    await expect(fsPoly.exists(tempLink)).resolves.toEqual(false);
-    await expect(fsPoly.exists(tempFile)).resolves.toEqual(true);
-    fsPoly.rmSync(tempFile);
   });
 });

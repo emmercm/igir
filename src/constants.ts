@@ -31,8 +31,8 @@ const PACKAGE_JSON = JSON.parse(
 const COMMAND_NAME = PACKAGE_JSON.name;
 
 const GLOBAL_TEMP_DIR = fsPoly.mkdtempSync(path.join(os.tmpdir(), COMMAND_NAME));
-process.once('exit', () => {
-  fsPoly.rmSync(GLOBAL_TEMP_DIR, {
+process.once('beforeExit', async () => {
+  await fsPoly.rm(GLOBAL_TEMP_DIR, {
     force: true,
     recursive: true,
   });

@@ -72,14 +72,6 @@ export default class FsPoly {
     }
   }
 
-  static isDirectorySync(pathLike: PathLike): boolean {
-    try {
-      return fs.lstatSync(pathLike).isDirectory();
-    } catch (e) {
-      return false;
-    }
-  }
-
   static async isExecutable(pathLike: PathLike): Promise<boolean> {
     try {
       await util.promisify(fs.access)(pathLike, fs.constants.X_OK);
@@ -262,44 +254,6 @@ export default class FsPoly {
     } else {
       // Added in: v10.0.0
       await util.promisify(fs.unlink)(pathLike);
-    }
-  }
-
-  /**
-   * fs.rmSync() was added in: v14.14.0
-   */
-  static rmSync(pathLike: PathLike, options: RmOptions = {}): void {
-    const optionsWithRetry = {
-      maxRetries: 2,
-      ...options,
-    };
-
-    try {
-      // Added in: v0.11.15
-      fs.accessSync(pathLike); // throw if file doesn't exist
-    } catch (e) {
-      if (optionsWithRetry.force) {
-        return;
-      }
-      throw e;
-    }
-
-    // Added in: v0.1.30
-    if (this.isDirectorySync(pathLike)) {
-      // DEP0147
-      if (semver.lt(process.version, '16.0.0')) {
-        // Added in: v0.1.21
-        fs.rmdirSync(pathLike, optionsWithRetry);
-      } else {
-        // Added in: v14.14.0
-        fs.rmSync(pathLike, {
-          ...optionsWithRetry,
-          recursive: true,
-        });
-      }
-    } else {
-      // Added in: v0.1.21
-      fs.unlinkSync(pathLike);
     }
   }
 
