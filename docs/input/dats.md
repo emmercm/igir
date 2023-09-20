@@ -74,19 +74,23 @@ There have been a few DAT-like formats developed over the years. `igir` supports
 - [CMPro](http://www.logiqx.com/DatFAQs/CMPro.php)
 - [Hardware Target Game Database](https://github.com/frederic-mahe/Hardware-Target-Game-Database) SMDBs that contain file sizes
 
-!!! tip
+!!! note
 
-    `igir` supports URLs to DAT files and archives. This is helpful to make sure you're always using the most up-to-date version of a DAT hosted on sites such as GitHub. For example:
+    In case you come across a DAT in a format that `igir` doesn't support, SabreTools supports reading [a number of obscure formats](https://github.com/SabreTools/SabreTools/wiki/DatFile-Formats) and converting them to more standard formats such as Logiqx XML.
 
-    ```shell
-    igir [commands..] --dat "https://raw.githubusercontent.com/libretro/libretro-database/master/dat/DOOM.dat" --input <input>
-    ```
+## DAT input options
+
+The `--dat <path>` supports files, archives, directories, and globs like any of the other file options. See the [file scanning page](file-scanning.md) for more information.
+
+`igir` also supports URLs to DAT files and archives. This is helpful to make sure you're always using the most up-to-date version of a DAT hosted on sites such as GitHub. For example:
+
+```shell
+igir [commands..] --dat "https://raw.githubusercontent.com/libretro/libretro-database/master/dat/DOOM.dat" --input <input>
+```
+
+!!! note
 
     Because of the way [DAT-o-MATIC](https://datomatic.no-intro.org/index.php) prepares & serves downloads, you can't use this method for official No-Intro DATs.
-
-!!! info
-
-    See the [file scanning docs](file-scanning.md) for more information on specifying file paths with the `--dat <path>` option.
 
 ## DAT groups
 

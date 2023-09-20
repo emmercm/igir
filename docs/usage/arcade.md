@@ -2,7 +2,7 @@
 
 Building a ROM set that works with the _exact_ version of your arcade emulator is necessarily complicated, and the terminology is confusing.
 
-This page is written to give users just enough context to build & re-build arcade ROM sets. [RetroArch](https://docs.libretro.com/guides/arcade-getting-started), [RetroPie](https://retropie.org.uk/docs/Validating%2C-Rebuilding%2C-and-Filtering-ROM-Collections/?h=merge#validating-and-rebuilding-roms), and [Pleasuredome](https://pleasuredome.miraheze.org/wiki/Main_Page) are great resources to read more about the nuances of arcade emulation & ROM sets.
+This page is written to give users just enough context to build & re-build arcade ROM sets. [MAMEWorld](https://easyemu.mameworld.info/mameguide/getting_started/about_roms.html), [Pleasuredome](https://pleasuredome.miraheze.org/wiki/Main_Page), [RetroArch](https://docs.libretro.com/guides/arcade-getting-started), and [RetroPie](https://retropie.org.uk/docs/Validating%2C-Rebuilding%2C-and-Filtering-ROM-Collections/?h=merge#validating-and-rebuilding-roms) are great resources to read more about the nuances of arcade emulation & ROM sets.
 
 !!! warning
 
