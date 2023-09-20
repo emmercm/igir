@@ -12,13 +12,13 @@ DATs are catalogs of every known ROM that exists per game system, complete with 
 
 These DATs help `igir` distinguish known ROM files in input directories from other files. Because DATs typically contain the complete catalog for a console, `igir` also uses them to generate reports for you on what ROMs were found and which are missing.
 
-`igir` will look for `*.dat` files automatically in your working directory, but you can specify a specific location with the `--dat <path>` option:
+The location to your DAT files are specified with the `--dat <path>` option:
 
 ```shell
 igir [commands..] --dat "dats/*.dat" --input <input>
 ```
 
-Or you can specify archives that can contain multiple DATs (such as No-Intro's [daily download](https://datomatic.no-intro.org/index.php?page=download&s=64&op=daily)) with:
+you can even specify archives that can contain multiple DATs (such as No-Intro's [daily download](https://datomatic.no-intro.org/index.php?page=download&s=64&op=daily)):
 
 ```shell
 igir [commands..] --dat "No-Intro*.zip" --input <input>

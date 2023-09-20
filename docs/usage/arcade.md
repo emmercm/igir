@@ -2,7 +2,7 @@
 
 Building a ROM set that works with the _exact_ version of your arcade emulator is necessarily complicated, and the terminology is confusing.
 
-This page is written to give users just enough context to build & re-build arcade ROM sets. [MAMEWorld](https://easyemu.mameworld.info/mameguide/getting_started/about_roms.html), [Pleasuredome](https://pleasuredome.miraheze.org/wiki/Main_Page), [RetroArch](https://docs.libretro.com/guides/arcade-getting-started), and [RetroPie](https://retropie.org.uk/docs/Validating%2C-Rebuilding%2C-and-Filtering-ROM-Collections/?h=merge#validating-and-rebuilding-roms) are great resources to read more about the nuances of arcade emulation & ROM sets.
+This page is written to give users just enough context to build & re-build arcade ROM sets. [MAME](https://docs.mamedev.org/usingmame/aboutromsets.html), [MAMEWorld](https://easyemu.mameworld.info/mameguide/getting_started/about_roms.html), [Pleasuredome](https://pleasuredome.miraheze.org/wiki/Main_Page), [RetroArch](https://docs.libretro.com/guides/arcade-getting-started), and [RetroPie](https://retropie.org.uk/docs/Validating%2C-Rebuilding%2C-and-Filtering-ROM-Collections/?h=merge#validating-and-rebuilding-roms) are great resources to read more about the nuances of arcade emulation & ROM sets.
 
 !!! warning
 
@@ -82,7 +82,7 @@ The ROM merge type can be specified with the `--merge-roms <type>` option:
       --merge-roms split
     ```
 
-## Scenario: building a new ROM set
+## Example: building a new ROM set
 
 Let's say we want to build an arcade ROM set that's compatible with the most recent version of [RetroArch](desktop/retroarch.md). The steps would look like this:
 
@@ -154,7 +154,7 @@ Let's say we want to build an arcade ROM set that's compatible with the most rec
         --merge-roms split
       ```
 
-## Scenario: re-building a ROM set
+## Example: re-building a ROM set
 
 Most other ROM managers use the terms "re-build" & "fix" when talking about taking an existing set of arcade ROMs, a different emulator version's DAT, and using that DAT to perform an in-place rename of the ROM files. You can think about this as "upgrading" or "downgrading" your ROM set to work with a different emulator version.
 
@@ -221,3 +221,75 @@ Taking the MAME v0.258 set we created above, let's say we want to "downgrade" it
         --output ~/Documents/RetroArch/roms/MAME-0.78 \
         --merge-roms split
       ```
+
+## Building other ROM sets
+
+Sometimes people have a need to build very specific sets. Here are some instructions on how you would build them.
+
+### BIOS set
+
+Build a set of only BIOS files, with each in its own `.zip` file:
+
+=== ":simple-windowsxp: Windows"
+
+    ```batch
+    igir copy zip ^
+      --dat "MAME_Dats_258\DATs\MAME 0.258.dat" ^
+      --input "MAME-ROMs\" ^
+      --output "MAME-BIOS\" ^
+      --only-bios
+    ```
+
+=== ":simple-apple: macOS"
+
+    ```shell
+    igir copy zip \
+      --dat "MAME_Dats_258/DATs/MAME 0.258.dat" \
+      --input "MAME-ROMs/" \
+      --output "MAME-BIOS/" \
+      --only-bios
+    ```
+
+=== ":simple-linux: Linux"
+
+    ```shell
+    igir copy zip \
+      --dat "MAME_Dats_258/DATs/MAME 0.258.dat" \
+      --input "MAME-ROMs/" \
+      --output "MAME-BIOS/" \
+      --only-bios
+    ```
+
+### Device set
+
+Build a set of only device files, with each in its own `.zip` file:
+
+=== ":simple-windowsxp: Windows"
+
+    ```batch
+    igir copy zip ^
+      --dat "MAME_Dats_258\DATs\MAME 0.258.dat" ^
+      --input "MAME-ROMs\" ^
+      --output "MAME-Devices\" ^
+      --only-device
+    ```
+
+=== ":simple-apple: macOS"
+
+    ```shell
+    igir copy zip \
+      --dat "MAME_Dats_258/DATs/MAME 0.258.dat" \
+      --input "MAME-ROMs/" \
+      --output "MAME-Devices/" \
+      --only-device
+    ```
+
+=== ":simple-linux: Linux"
+
+    ```shell
+    igir copy zip \
+      --dat "MAME_Dats_258/DATs/MAME 0.258.dat" \
+      --input "MAME-ROMs/" \
+      --output "MAME-Devices/" \
+      --only-device
+    ```
