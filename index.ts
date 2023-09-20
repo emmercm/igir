@@ -1,11 +1,12 @@
 #!/usr/bin/env node
 
-import realFs from 'fs';
+import realFs from 'node:fs';
+
 import gracefulFs from 'graceful-fs';
 import semver from 'semver';
 
 import Logger from './src/console/logger.js';
-import ProgressBarCLI from './src/console/progressBarCLI.js';
+import ProgressBarCLI from './src/console/progressBarCli.js';
 import Constants from './src/constants.js';
 import Igir from './src/igir.js';
 import ArgumentsParser from './src/modules/argumentsParser.js';

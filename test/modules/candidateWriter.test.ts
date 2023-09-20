@@ -1,7 +1,7 @@
-import fs, { Stats } from 'fs';
-import os from 'os';
-import path from 'path';
-import util from 'util';
+import fs, { Stats } from 'node:fs';
+import os from 'node:os';
+import path from 'node:path';
+import util from 'node:util';
 
 import Constants from '../../src/constants.js';
 import CandidateCombiner from '../../src/modules/candidateCombiner.js';

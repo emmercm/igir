@@ -1,8 +1,9 @@
-import fs from 'fs';
+import fs from 'node:fs';
+import path from 'node:path';
+import util from 'node:util';
+
 import { isNotJunk } from 'junk';
-import path from 'path';
 import trash from 'trash';
-import util from 'util';
 
 import ProgressBar, { ProgressBarSymbol } from '../console/progressBar.js';
 import Constants from '../constants.js';

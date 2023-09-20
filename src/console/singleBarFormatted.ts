@@ -128,7 +128,7 @@ export default class SingleBarFormatted {
       min: number,
       max: number,
     ): number => Math.min(Math.max(val ?? 0, min), max);
-    const completeSize = Math.floor(clamp(params.progress, 0.0, 1.0) * barSize);
+    const completeSize = Math.floor(clamp(params.progress, 0, 1) * barSize);
     const inProgressSize = params.total > 0
       ? Math.ceil((clamp(payload.inProgress, 0, params.total) / params.total) * barSize)
       : 0;
@@ -144,7 +144,7 @@ export default class SingleBarFormatted {
     //  Update only every 5s if the ETA is >60s
     const [elapsedSec, elapsedNano] = process.hrtime(this.lastEtaTime);
     const elapsedMs = (elapsedSec * 1_000_000_000 + elapsedNano) / 1_000_000;
-    if (etaSeconds > 60 && elapsedMs < 5_000) {
+    if (etaSeconds > 60 && elapsedMs < 5000) {
       return this.lastEtaValue;
     }
     this.lastEtaTime = process.hrtime();

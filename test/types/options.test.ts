@@ -1,4 +1,4 @@
-import path from 'path';
+import path from 'node:path';
 
 import Header from '../../src/types/dats/logiqx/header.js';
 import LogiqxDAT from '../../src/types/dats/logiqx/logiqxDat.js';

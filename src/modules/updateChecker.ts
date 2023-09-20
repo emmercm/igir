@@ -1,9 +1,10 @@
-import https from 'https';
+import https from 'node:https';
+
 import semver from 'semver';
 
 import Logger from '../console/logger.js';
 import LogLevel from '../console/logLevel.js';
-import ProgressBarCLI from '../console/progressBarCLI.js';
+import ProgressBarCLI from '../console/progressBarCli.js';
 import Constants from '../constants.js';
 import BufferPoly from '../polyfill/bufferPoly.js';
 
@@ -38,7 +39,7 @@ export default class UpdateChecker {
   private static async getVersion(packageName: string): Promise<string> {
     return new Promise((resolve, reject) => {
       https.get(`https://registry.npmjs.org/${packageName}/latest`, {
-        timeout: 5_000,
+        timeout: 5000,
       }, async (res) => {
         const data = await BufferPoly.fromReadable(res);
         let json;

@@ -1,4 +1,4 @@
-import path from 'path';
+import path from 'node:path';
 
 import Logger from '../src/console/logger.js';
 import LogLevel from '../src/console/logLevel.js';
