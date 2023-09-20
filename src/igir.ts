@@ -7,6 +7,7 @@ import ProgressBarCLI from './console/progressBarCLI.js';
 import Constants from './constants.js';
 import CandidateCombiner from './modules/candidateCombiner.js';
 import CandidateGenerator from './modules/candidateGenerator.js';
+import CandidateMergeSplitValidator from './modules/candidateMergeSplitValidator.js';
 import CandidatePatchGenerator from './modules/candidatePatchGenerator.js';
 import CandidatePostProcessor from './modules/candidatePostProcessor.js';
 import CandidatePreferer from './modules/candidatePreferer.js';
@@ -240,6 +241,9 @@ export default class Igir {
 
     const postProcessedCandidates = await new CandidatePostProcessor(this.options, progressBar)
       .process(dat, filteredCandidates);
+
+    await new CandidateMergeSplitValidator(this.options, progressBar)
+      .validate(dat, postProcessedCandidates);
 
     return new CandidateCombiner(this.options, progressBar)
       .combine(dat, postProcessedCandidates);
