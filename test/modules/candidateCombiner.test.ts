@@ -1,4 +1,4 @@
-import path from 'path';
+import path from 'node:path';
 
 import CandidateCombiner from '../../src/modules/candidateCombiner.js';
 import CandidateGenerator from '../../src/modules/candidateGenerator.js';

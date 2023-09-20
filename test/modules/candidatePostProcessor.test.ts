@@ -1,4 +1,4 @@
-import path from 'path';
+import path from 'node:path';
 
 import CandidatePostProcessor from '../../src/modules/candidatePostProcessor.js';
 import Game from '../../src/types/dats/game.js';

@@ -1,7 +1,7 @@
-import fs from 'fs';
-import os from 'os';
-import path from 'path';
-import url from 'url';
+import fs from 'node:fs';
+import os from 'node:os';
+import path from 'node:path';
+import url from 'node:url';
 
 import fsPoly from './polyfill/fsPoly.js';
 
@@ -31,8 +31,8 @@ const PACKAGE_JSON = JSON.parse(
 const COMMAND_NAME = PACKAGE_JSON.name;
 
 const GLOBAL_TEMP_DIR = fsPoly.mkdtempSync(path.join(os.tmpdir(), COMMAND_NAME));
-process.once('exit', () => {
-  fsPoly.rmSync(GLOBAL_TEMP_DIR, {
+process.once('beforeExit', async () => {
+  await fsPoly.rm(GLOBAL_TEMP_DIR, {
     force: true,
     recursive: true,
   });
@@ -59,7 +59,7 @@ export default class Constants {
    * @example
    * Promise.all([].map(async (file) => fs.lstat(file));
    */
-  static readonly MAX_FS_THREADS = 1_000;
+  static readonly MAX_FS_THREADS = 1000;
 
   /**
    * Default max semaphore filesize of files to read (and checksum) and write (and test) at once.
