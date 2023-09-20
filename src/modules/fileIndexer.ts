@@ -1,4 +1,4 @@
-import path from 'path';
+import path from 'node:path';
 
 import ProgressBar, { ProgressBarSymbol } from '../console/progressBar.js';
 import ArchiveEntry from '../types/files/archives/archiveEntry.js';

@@ -1,4 +1,5 @@
-import { PassThrough } from 'stream';
+import { PassThrough } from 'node:stream';
+
 import stripAnsi from 'strip-ansi';
 
 import Logger from '../../src/console/logger.js';

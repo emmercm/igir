@@ -1,6 +1,7 @@
+import { PassThrough } from 'node:stream';
+
 import { E_CANCELED, Mutex } from 'async-mutex';
 import cliProgress, { MultiBar } from 'cli-progress';
-import { PassThrough } from 'stream';
 import wrapAnsi from 'wrap-ansi';
 
 import ConsolePoly from '../polyfill/consolePoly.js';
@@ -117,7 +118,7 @@ export default class ProgressBarCLI extends ProgressBar {
     if (!force) {
       // Limit the frequency of redrawing
       const [elapsedSec, elapsedNano] = process.hrtime(ProgressBarCLI.lastRedraw);
-      const elapsedMs = (elapsedSec * 1000000000 + elapsedNano) / 1000000;
+      const elapsedMs = (elapsedSec * 1_000_000_000 + elapsedNano) / 1_000_000;
       if (elapsedMs < (1000 / ProgressBarCLI.FPS)) {
         return;
       }

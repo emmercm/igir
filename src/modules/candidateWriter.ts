@@ -1,5 +1,6 @@
+import path from 'node:path';
+
 import { Semaphore } from 'async-mutex';
-import path from 'path';
 
 import ProgressBar, { ProgressBarSymbol } from '../console/progressBar.js';
 import Constants from '../constants.js';

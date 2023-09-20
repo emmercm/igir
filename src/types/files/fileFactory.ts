@@ -1,4 +1,4 @@
-import path from 'path';
+import path from 'node:path';
 
 import Archive from './archives/archive.js';
 import Rar from './archives/rar.js';

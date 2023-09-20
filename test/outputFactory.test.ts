@@ -1,5 +1,5 @@
-import os from 'os';
-import path from 'path';
+import os from 'node:os';
+import path from 'node:path';
 
 import Constants from '../src/constants.js';
 import Game from '../src/types/dats/game.js';
@@ -474,8 +474,8 @@ describe('should respect "--dir-letter"', () => {
     const game = new Game({
       name: 'Apidya (Unknown)',
       rom: [
-        new ROM({ name: 'disk1\\apidya_disk1_00.0.raw', size: 265730, crc: '555b1be8' }),
-        new ROM({ name: 'disk1\\apidya_disk1_00.1.raw', size: 256990, crc: '9ef64ba6' }),
+        new ROM({ name: 'disk1\\apidya_disk1_00.0.raw', size: 265_730, crc: '555b1be8' }),
+        new ROM({ name: 'disk1\\apidya_disk1_00.1.raw', size: 256_990, crc: '9ef64ba6' }),
       ],
     });
 

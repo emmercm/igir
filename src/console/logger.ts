@@ -1,13 +1,14 @@
+import { PassThrough } from 'node:stream';
+import { WriteStream } from 'node:tty';
+
 import chalk from 'chalk';
 import figlet from 'figlet';
 import moment from 'moment';
-import { PassThrough } from 'stream';
-import { WriteStream } from 'tty';
 
 import Constants from '../constants.js';
 import LogLevel from './logLevel.js';
 import ProgressBar, { ProgressBarSymbol } from './progressBar.js';
-import ProgressBarCLI from './progressBarCLI.js';
+import ProgressBarCLI from './progressBarCli.js';
 
 /**
  * {@link Logger} is a class that deals with the formatting and outputting log messages to a stream.

@@ -1,4 +1,4 @@
-import path from 'path';
+import path from 'node:path';
 
 import CandidateGenerator from '../../src/modules/candidateGenerator.js';
 import FileIndexer from '../../src/modules/fileIndexer.js';
@@ -107,7 +107,7 @@ describe.each(['zip', 'extract', 'raw'])('command: %s', (command) => {
     // Doesn't match anything
     [File.fileOf('three.rom', 4, '34567890')],
     // Doesn't match size
-    [File.fileOf('one.rom', 999999, '12345678')],
+    [File.fileOf('one.rom', 999_999, '12345678')],
     // Doesn't match CRC
     [File.fileOf('one.rom', 1, '00000000')],
     // Matches one ROM of a game with multiple ROMs
