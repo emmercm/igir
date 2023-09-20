@@ -1,4 +1,4 @@
-import path from 'path';
+import path from 'node:path';
 
 import ROMScanner from '../../../../src/modules/romScanner.js';
 import Archive from '../../../../src/types/files/archives/archive.js';
