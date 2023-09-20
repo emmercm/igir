@@ -113,14 +113,6 @@ export default class DATMergerSplitter extends Module {
         }));
     }
 
-    // 'full' types are fully playable on their own, so they no longer have a "parent"
-    if (this.options.getMergeRoms() === MergeMode.FULLNONMERGED) {
-      games = games.map((game) => new Machine({
-        ...game,
-        cloneOf: undefined,
-      }));
-    }
-
     // For everything other than 'merged' we keep the same number of games
     if (this.options.getMergeRoms() !== MergeMode.MERGED) {
       return [parentGame, ...cloneGames];
