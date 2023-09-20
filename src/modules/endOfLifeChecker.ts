@@ -2,7 +2,7 @@ import semver from 'semver';
 
 import Logger from '../console/logger.js';
 import LogLevel from '../console/logLevel.js';
-import ProgressBarCLI from '../console/progressBarCLI.js';
+import ProgressBarCLI from '../console/progressBarCli.js';
 
 /**
  * Check if the current Node.js version has reached EOL and log if it has.

@@ -1,9 +1,10 @@
+import fs from 'node:fs';
+import path from 'node:path';
+import { Readable } from 'node:stream';
+import { clearInterval } from 'node:timers';
+
 import archiver, { Archiver } from 'archiver';
 import async from 'async';
-import fs from 'fs';
-import path from 'path';
-import { Readable } from 'stream';
-import { clearInterval } from 'timers';
 import { Memoize } from 'typescript-memoize';
 import unzipper from 'unzipper';
 

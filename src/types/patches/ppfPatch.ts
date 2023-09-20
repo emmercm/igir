@@ -112,7 +112,7 @@ export default class PPFPatch extends Patch {
       offset = (await patchFile.readNext(4)).readUInt32LE();
     } else if (header.version === 3) {
       offset = (await patchFile.readNext(4)).readUInt32LE()
-        + ((await patchFile.readNext(4)).readUInt32LE() * 0x100000000);
+        + ((await patchFile.readNext(4)).readUInt32LE() * 0x1_00_00_00_00);
     }
 
     const bytesToChange = (await patchFile.readNext(1)).readUInt8();

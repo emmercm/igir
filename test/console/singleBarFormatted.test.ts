@@ -3,7 +3,7 @@ import stripAnsi from 'strip-ansi';
 
 import ProgressBarPayload from '../../src/console/progressBarPayload.js';
 import SingleBarFormatted from '../../src/console/singleBarFormatted.js';
-import ProgressBarCLISpy from './progressBarCLISpy.js';
+import ProgressBarCLISpy from './progressBarCliSpy.js';
 
 function testSingleBarFormatted(
   initialTotal: number,

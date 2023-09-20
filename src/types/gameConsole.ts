@@ -1,4 +1,4 @@
-import path from 'path';
+import path from 'node:path';
 
 /**
  * A class of information about specific game consoles and their names, standard file extensions,

@@ -1,7 +1,8 @@
+import * as child_process from 'node:child_process';
+import path from 'node:path';
+
 import { parse } from '@fast-csv/parse';
 import async, { AsyncResultCallback } from 'async';
-import * as child_process from 'child_process';
-import path from 'path';
 import robloachDatfile from 'robloach-datfile';
 import xml2js from 'xml2js';
 
