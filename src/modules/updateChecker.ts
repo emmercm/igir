@@ -1,12 +1,18 @@
-import https from 'https';
+import https from 'node:https';
+
 import semver from 'semver';
 
 import Logger from '../console/logger.js';
 import LogLevel from '../console/logLevel.js';
-import ProgressBarCLI from '../console/progressBarCLI.js';
+import ProgressBarCLI from '../console/progressBarCli.js';
 import Constants from '../constants.js';
 import BufferPoly from '../polyfill/bufferPoly.js';
 
+/**
+ * Check for a newer version and log if one is found.
+ *
+ * This class will not be run concurrently with any other class.
+ */
 export default class UpdateChecker {
   private readonly logger: Logger;
 
@@ -14,11 +20,10 @@ export default class UpdateChecker {
     this.logger = logger;
   }
 
+  /**
+   * Check for a newer version and log if one is found.
+   */
   async check(): Promise<void> {
-    await this.log();
-  }
-
-  private async log(): Promise<void> {
     let npmVersion;
     try {
       npmVersion = await UpdateChecker.getVersion(Constants.COMMAND_NAME);
@@ -34,7 +39,7 @@ export default class UpdateChecker {
   private static async getVersion(packageName: string): Promise<string> {
     return new Promise((resolve, reject) => {
       https.get(`https://registry.npmjs.org/${packageName}/latest`, {
-        timeout: 5_000,
+        timeout: 5000,
       }, async (res) => {
         const data = await BufferPoly.fromReadable(res);
         let json;

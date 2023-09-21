@@ -5,9 +5,8 @@ import Patch from './patch.js';
 
 /**
  * WARN(cemmer): because UPS patches use nul-byte termination for records rather than some kind of
- *  length identifier, which forces patchers to read both the UPS file and ROM file byte-by-byte,
- *  large patches can perform tremendously poorly if they contain many small records.
- *
+ * length identifier, which forces patchers to read both the UPS file and ROM file byte-by-byte,
+ * large patches can perform tremendously poorly if they contain many small records.
  * @see https://www.romhacking.net/documents/392/
  * @see https://github.com/btimofeev/UniPatcher/wiki/UPS
  * @see https://www.gamebrew.org/wiki/Upset
@@ -81,7 +80,6 @@ export default class UPSPatch extends Patch {
     sourceFile: FilePoly,
     targetFile: FilePoly,
   ): Promise<void> {
-    /* eslint-disable no-await-in-loop, no-bitwise */
     while (patchFile.getPosition() < patchFile.getSize() - 12) {
       const relativeOffset = await Patch.readUpsUint(patchFile);
       sourceFile.skipNext(relativeOffset);

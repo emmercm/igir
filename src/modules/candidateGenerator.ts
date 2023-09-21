@@ -1,17 +1,19 @@
-import path from 'path';
+import path from 'node:path';
 
 import ProgressBar, { ProgressBarSymbol } from '../console/progressBar.js';
+import ArrayPoly from '../polyfill/arrayPoly.js';
 import fsPoly from '../polyfill/fsPoly.js';
+import DAT from '../types/dats/dat.js';
+import Game from '../types/dats/game.js';
+import Parent from '../types/dats/parent.js';
+import Release from '../types/dats/release.js';
+import ROM from '../types/dats/rom.js';
 import Archive from '../types/files/archives/archive.js';
 import ArchiveEntry from '../types/files/archives/archiveEntry.js';
 import Zip from '../types/files/archives/zip.js';
 import File from '../types/files/file.js';
-import DAT from '../types/logiqx/dat.js';
-import Game from '../types/logiqx/game.js';
-import Parent from '../types/logiqx/parent.js';
-import Release from '../types/logiqx/release.js';
-import ROM from '../types/logiqx/rom.js';
 import Options from '../types/options.js';
+import OutputFactory from '../types/outputFactory.js';
 import ReleaseCandidate from '../types/releaseCandidate.js';
 import ROMWithFiles from '../types/romWithFiles.js';
 import Module from './module.js';
@@ -30,6 +32,9 @@ export default class CandidateGenerator extends Module {
     this.options = options;
   }
 
+  /**
+   * Generate the candidates.
+   */
   async generate(
     dat: DAT,
     hashCodeToInputFiles: Map<string, File[]>,
@@ -47,7 +52,6 @@ export default class CandidateGenerator extends Module {
     await this.progressBar.reset(parents.length);
 
     // For each parent, try to generate a parent candidate
-    /* eslint-disable no-await-in-loop */
     for (let i = 0; i < parents.length; i += 1) {
       const parent = parents[i];
       await this.progressBar.incrementProgress();
@@ -101,7 +105,7 @@ export default class CandidateGenerator extends Module {
     release: Release | undefined,
     hashCodeToInputFiles: Map<string, File[]>,
   ): Promise<ReleaseCandidate | undefined> {
-    const romsToInputFiles = this.getInputFilesForGame(game, hashCodeToInputFiles);
+    const romsToInputFiles = CandidateGenerator.getInputFilesForGame(game, hashCodeToInputFiles);
 
     // For each Game's ROM, find the matching File
     const romFiles = await Promise.all(
@@ -122,7 +126,7 @@ export default class CandidateGenerator extends Module {
         /**
          * If the matched input file is from an archive, and we're not zipping or extracting, then
          * treat the file as "raw" so it can be copied/moved as-is.
-         * Matches {@link HeaderProcessor.getFileWithHeader}
+         * Matches {@link ROMHeaderProcessor.getFileWithHeader}
          */
         let finalInputFile = originalInputFile;
         if (originalInputFile instanceof ArchiveEntry
@@ -137,7 +141,13 @@ export default class CandidateGenerator extends Module {
             return [rom, undefined];
           }
 
-          finalInputFile = await originalInputFile.getArchive().asRawFile();
+          if (this.options.shouldTest() || this.options.getOverwriteInvalid()) {
+            // If we're testing, then we need to calculate the archive's CRC
+            finalInputFile = await originalInputFile.getArchive().asRawFile();
+          } else {
+            // Otherwise, we can skip calculating the CRC for efficiency
+            finalInputFile = await originalInputFile.getArchive().asRawFileWithoutCrc();
+          }
         }
 
         try {
@@ -149,11 +159,11 @@ export default class CandidateGenerator extends Module {
           return [rom, undefined];
         }
       }),
-    ) as [ROM, ROMWithFiles | undefined][];
+    ) satisfies [ROM, ROMWithFiles | undefined][];
 
     const foundRomsWithFiles = romFiles
-      .filter(([, romWithFiles]) => romWithFiles)
-      .map(([, romWithFiles]) => romWithFiles) as ROMWithFiles[];
+      .map(([, romWithFiles]) => romWithFiles)
+      .filter(ArrayPoly.filterNotNullish);
     const missingRoms = romFiles
       .filter(([, romWithFiles]) => !romWithFiles)
       .map(([rom]) => rom);
@@ -174,14 +184,14 @@ export default class CandidateGenerator extends Module {
     return new ReleaseCandidate(game, release, foundRomsWithFiles);
   }
 
-  private getInputFilesForGame(
+  private static getInputFilesForGame(
     game: Game,
     hashCodeToInputFiles: Map<string, File[]>,
   ): Map<ROM, File> {
     let romsAndInputFiles = game.getRoms().map((rom) => ([
       rom,
       (hashCodeToInputFiles.get(rom.hashCode()) ?? []),
-    ])) as [ROM, File[]][];
+    ])) satisfies [ROM, File[]][];
 
     // Detect if there is one input archive that contains every ROM, and prefer to use its entries.
     // If we don't do this, here are two situations that can happen:
@@ -204,14 +214,14 @@ export default class CandidateGenerator extends Module {
           roms.push(rom);
           // We need to filter out duplicate ROMs because of Games that contain duplicate ROMs, e.g.
           //  optical media games that have the same track multiple times.
-          const uniqueRoms = roms.filter((val, idx, values) => values.indexOf(val) === idx);
+          const uniqueRoms = roms.reduce(ArrayPoly.reduceUnique(), []);
           map.set(archive, uniqueRoms);
         });
       return map;
     }, new Map<Archive, ROM[]>());
 
     // Only filter the input files if this game has multiple ROMs, and we found some archives
-    if (!this.options.shouldExtract() && game.getRoms().length > 1 && inputArchivesToRoms.size) {
+    if (game.getRoms().length > 1 && inputArchivesToRoms.size) {
       // Filter to the Archives that contain every ROM in this Game
       const archivesWithEveryRom = [...inputArchivesToRoms.entries()]
         .filter(([, roms]) => roms.length === game.getRoms().length)
@@ -242,53 +252,42 @@ export default class CandidateGenerator extends Module {
     rom: ROM,
     inputFile: File,
   ): Promise<File> {
-    // Determine the output file's basename and archive entry path
-    const [outputFileBasename, outputEntryPath] = this.options.getOutputBasenameAndEntryPath(
+    // Determine the output file's path
+    const outputPathParsed = OutputFactory.getPath(
+      this.options,
       dat,
       game,
       release,
       rom,
       inputFile,
     );
-    const outputFilePath = this.options.getOutputFileParsed(
-      dat,
-      inputFile.getFilePath(),
-      game,
-      release,
-      outputFileBasename,
-    );
+    const outputFilePath = outputPathParsed.format();
 
     // Determine the output CRC of the file
     let outputFileCrc = inputFile.getCrc32();
+    let outputFileSize = inputFile.getSize();
     if (inputFile.getFileHeader()
-      && this.options.canRemoveHeader(dat, path.extname(outputEntryPath))
+      && this.options.canRemoveHeader(dat, path.extname(outputPathParsed.entryPath))
     ) {
       outputFileCrc = inputFile.getCrc32WithoutHeader();
+      outputFileSize = inputFile.getSizeWithoutHeader();
     }
 
     // Determine the output file type
     if (this.options.shouldZip(rom.getName())) {
-      // Should zip, return an archive entry within the zip
+      // Should zip, return an archive entry within an output zip
       return ArchiveEntry.entryOf(
         new Zip(outputFilePath),
-        outputEntryPath,
-        inputFile.getSize(),
-        outputFileCrc,
-      );
-    } if (!(inputFile instanceof ArchiveEntry) || this.options.shouldExtract()) {
-      // Should extract (if needed), return a raw file using the ROM's size/CRC
-      return File.fileOf(
-        outputFilePath,
-        inputFile.getSize(),
+        outputPathParsed.entryPath,
+        outputFileSize,
         outputFileCrc,
       );
     }
-    // Should leave archived
-    const inputArchiveRaw = await inputFile.getArchive().asRawFile();
+    // Otherwise, return a raw file
     return File.fileOf(
       outputFilePath,
-      inputArchiveRaw.getSize(),
-      inputArchiveRaw.getCrc32(),
+      outputFileSize,
+      outputFileCrc,
     );
   }
 
@@ -299,7 +298,7 @@ export default class CandidateGenerator extends Module {
     foundRomsWithFiles: ROMWithFiles[],
     missingRoms: ROM[],
   ): void {
-    let message = `${dat.getNameShort()}: ${game.getName()}: found ${foundRomsWithFiles.length.toLocaleString()} file${missingRoms.length !== 1 ? 's' : ''}, missing ${missingRoms.length.toLocaleString()} file${missingRoms.length !== 1 ? 's' : ''}`;
+    let message = `${dat.getNameShort()}: ${game.getName()}: found ${foundRomsWithFiles.length.toLocaleString()} file${foundRomsWithFiles.length !== 1 ? 's' : ''}, missing ${missingRoms.length.toLocaleString()} file${missingRoms.length !== 1 ? 's' : ''}`;
     if (release?.getRegion()) {
       message += ` (${release?.getRegion()})`;
     }
@@ -322,16 +321,16 @@ export default class CandidateGenerator extends Module {
       .map((romWithFiles) => romWithFiles.getOutputFile())
       .filter((outputFile) => !(outputFile instanceof ArchiveEntry))
       .map((outputFile) => outputFile.getFilePath())
+      // Is a duplicate output path
       .filter((outputPath, idx, outputPaths) => outputPaths.indexOf(outputPath) !== idx)
-      .filter((duplicatePath, idx, duplicatePaths) => duplicatePaths
-        .indexOf(duplicatePath) === idx)
+      // Only return one copy of duplicate output paths
+      .reduce(ArrayPoly.reduceUnique(), [])
       .sort();
     if (!duplicateOutputPaths.length) {
       // There are no duplicate non-archive output file paths
       return false;
     }
 
-    /* eslint-disable no-await-in-loop */
     let hasConflict = false;
     for (let i = 0; i < duplicateOutputPaths.length; i += 1) {
       const duplicateOutput = duplicateOutputPaths[i];
@@ -342,7 +341,7 @@ export default class CandidateGenerator extends Module {
       const conflictedInputFiles = romsWithFiles
         .filter((romWithFiles) => romWithFiles.getOutputFile().getFilePath() === duplicateOutput)
         .map((romWithFiles) => romWithFiles.getInputFile().toString())
-        .filter((inputFile, idx, inputFiles) => inputFiles.indexOf(inputFile) === idx);
+        .reduce(ArrayPoly.reduceUnique(), []);
       if (conflictedInputFiles.length > 1) {
         hasConflict = true;
         let message = `Cannot ${this.options.writeString()} different files to: ${duplicateOutput}:`;

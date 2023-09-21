@@ -1,6 +1,6 @@
+import Game from '../../src/types/dats/game.js';
+import Release from '../../src/types/dats/release.js';
 import Internationalization from '../../src/types/internationalization.js';
-import Game from '../../src/types/logiqx/game.js';
-import Release from '../../src/types/logiqx/release.js';
 import ReleaseCandidate from '../../src/types/releaseCandidate.js';
 
 describe('getRegion', () => {

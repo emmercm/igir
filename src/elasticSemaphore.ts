@@ -1,5 +1,9 @@
 import { Mutex, Semaphore } from 'async-mutex';
 
+/**
+ * Wrapper for an `async-mutex` {@link Semaphore} that can have its total increased if a weight
+ * exceeds the maximum.
+ */
 export default class ElasticSemaphore {
   private readonly valueMutex = new Mutex();
 
@@ -12,6 +16,9 @@ export default class ElasticSemaphore {
     this.semaphore = new Semaphore(this.value);
   }
 
+  /**
+   * Run some {@link callback} with a required {@link weight}.
+   */
   async runExclusive<T>(callback: (value: number) => Promise<T> | T, weight: number): Promise<T> {
     const weightNormalized = Math.max(1, Math.ceil(weight));
 

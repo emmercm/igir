@@ -29,7 +29,9 @@ theme:
     - navigation.tabs.sticky
     - navigation.indexes
     - navigation.sections
+    - navigation.path
     - navigation.instant
+    - navigation.instant.prefetch
     - navigation.footer
     - toc.follow
     - toc.integrate
@@ -38,8 +40,9 @@ theme:
     - content.tabs.link
 
 nav:
-  - Home: index.md
   - Documentation:
+      - Home:
+        - index.md
       - overview.md
       - installation.md
       - commands.md
@@ -66,19 +69,22 @@ nav:
       - File Inputs:
           - input/file-scanning.md
           - input/dats.md
-          - input/archives.md
+          - input/reading-archives.md
       - ROM Processing:
           - roms/filtering-preferences.md
           - roms/headers.md
           - roms/patching.md
       - File Outputs:
           - output/tokens.md
+          - output/writing-archives.md
           - output/reporting.md
+          - output/cleaning.md
       - Advanced:
           - internals.md
       - Misc:
           - rom-dumping.md
       - Terms and Conditions:
+          - contributing.md
           - license.md
   # https://github.com/squidfunk/mkdocs-material/issues/889#issuecomment-582297142: how-to open nav links in new tabs
   - Download ↗: https://github.com/emmercm/igir/releases/latest" target="_blank
@@ -86,16 +92,22 @@ nav:
   - Discuss ↗: https://github.com/emmercm/igir/discussions" target="_blank
 
 plugins:
-  - search
+  - search:
+      lang: en
+  - exclude-search:
+      exclude:
+        - index.md
+      exclude_unreferenced: true
   - social
   - git-revision-date-localized:
-      enable_creation_date: true
+      enable_creation_date: false
   - redirects:
       redirect_maps:
-        'archives.md': 'input/archives.md'
+        'archives.md': 'input/reading-archives.md'
         'dats.md': 'input/dats.md'
         'examples.md': 'usage/collection-sorting.md'
         'file-scanning.md': 'input/file-scanning.md'
+        'input/archives.md': 'input/reading-archives.md'
         'reporting.md': 'output/reporting.md'
         'rom-filtering.md': 'roms/filtering-preferences.md'
         'rom-headers.md': 'roms/headers.md'

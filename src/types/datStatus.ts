@@ -1,9 +1,10 @@
 import { writeToString } from '@fast-csv/format';
 import chalk, { ChalkInstance } from 'chalk';
 
-import DAT from './logiqx/dat.js';
-import Game from './logiqx/game.js';
-import Parent from './logiqx/parent.js';
+import ArrayPoly from '../polyfill/arrayPoly.js';
+import DAT from './dats/dat.js';
+import Game from './dats/game.js';
+import Parent from './dats/parent.js';
 import Options from './options.js';
 import ReleaseCandidate from './releaseCandidate.js';
 
@@ -22,6 +23,10 @@ export enum Status {
   DELETED,
 }
 
+/**
+ * Parse and hold information about every {@link Game} in a {@link DAT}, as well as which
+ * {@link Game}s were found (had a {@link ReleaseCandidate} created for it).
+ */
 export default class DATStatus {
   private readonly dat: DAT;
 
@@ -91,7 +96,7 @@ export default class DATStatus {
   }
 
   private static append<T>(map: Map<ROMType, T[]>, romType: ROMType, val: T): void {
-    const arr = (map.has(romType) ? map.get(romType) : []) as T[];
+    const arr = map.get(romType) ?? [];
     arr.push(val);
     map.set(romType, arr);
   }
@@ -105,15 +110,21 @@ export default class DATStatus {
       .flatMap((releaseCandidates) => releaseCandidates);
   }
 
+  /**
+   * If any {@link Game} in the entire {@link DAT} was found in the input files.
+   */
   anyGamesFound(options: Options): boolean {
     return DATStatus.getAllowedTypes(options)
       .reduce((result, romType) => {
         const foundReleaseCandidates = (
-          this.foundRomTypesToReleaseCandidates.get(romType) as ReleaseCandidate[] || []).length;
+          this.foundRomTypesToReleaseCandidates.get(romType) ?? []).length;
         return result || foundReleaseCandidates > 0;
       }, false);
   }
 
+  /**
+   * Return a string of CLI-friendly output to be printed by a {@link Logger}.
+   */
   toConsole(options: Options): string {
     return `${DATStatus.getAllowedTypes(options)
       .filter((type) => this.allRomTypesToGames.get(type)?.length)
@@ -152,6 +163,9 @@ export default class DATStatus {
       .join(', ')} ${options.shouldWrite() ? 'written' : 'found'}`;
   }
 
+  /**
+   * Return the file contents of a CSV with status information for every {@link Game}.
+   */
   async toCsv(options: Options): Promise<string> {
     const found = DATStatus.getValuesForAllowedTypes(
       options,
@@ -159,21 +173,21 @@ export default class DATStatus {
     );
 
     const rows = DATStatus.getValuesForAllowedTypes(options, this.allRomTypesToGames)
-      .filter((game, idx, games) => games.indexOf(game) === idx)
+      .reduce(ArrayPoly.reduceUnique(), [])
       .sort((a, b) => a.getName().localeCompare(b.getName()))
       .map((game) => {
         const releaseCandidate = found.find((rc) => rc && rc.getGame().equals(game));
         return DATStatus.buildCsvRow(
           this.getDATName(),
           game.getName(),
-          releaseCandidate || !game.getRoms().length ? Status.FOUND : Status.MISSING,
+          releaseCandidate ?? !game.getRoms().length ? Status.FOUND : Status.MISSING,
           releaseCandidate
-            ? (releaseCandidate as ReleaseCandidate).getRomsWithFiles()
+            ? releaseCandidate.getRomsWithFiles()
               .map((romWithFiles) => (options.shouldWrite()
                 ? romWithFiles.getOutputFile()
                 : romWithFiles.getInputFile()))
               .map((file) => file.getFilePath())
-              .filter((filePath, idx, filePaths) => filePaths.indexOf(filePath) === idx)
+              .reduce(ArrayPoly.reduceUnique(), [])
             : [],
           releaseCandidate?.isPatched() ?? false,
           game.isBios(),
@@ -213,6 +227,9 @@ export default class DATStatus {
     });
   }
 
+  /**
+   * Return a string of CSV rows without headers for a certain {@link Status}.
+   */
   static async filesToCsv(filePaths: string[], status: Status): Promise<string> {
     return writeToString(filePaths.map((filePath) => this.buildCsvRow('', '', status, [filePath])));
   }
@@ -264,19 +281,23 @@ export default class DATStatus {
     return DATStatus.getAllowedTypes(options)
       .map((type) => romTypesToValues.get(type))
       .flatMap((values) => values)
-      .filter((value) => value)
-      .filter((value, idx, values) => values.indexOf(value) === idx)
-      .sort() as T[];
+      .filter(ArrayPoly.filterNotNullish)
+      .reduce(ArrayPoly.reduceUnique(), [])
+      .sort();
   }
 
   private static getAllowedTypes(options: Options): ROMType[] {
     return [
-      !options.getSingle() && !options.getOnlyBios() && !options.getOnlyRetail()
+      !options.getSingle()
+      && !options.getOnlyBios() && !options.getOnlyDevice() && !options.getOnlyRetail()
         ? ROMType.GAME : undefined,
-      options.getOnlyBios() || !options.getNoBios() ? ROMType.BIOS : undefined,
-      !options.getNoDevice() && !options.getOnlyBios() ? ROMType.DEVICE : undefined,
-      options.getOnlyRetail() || !options.getOnlyBios() ? ROMType.RETAIL : undefined,
+      options.getOnlyBios() || (!options.getNoBios() && !options.getOnlyDevice())
+        ? ROMType.BIOS : undefined,
+      options.getOnlyDevice() || (!options.getOnlyBios() && !options.getNoDevice())
+        ? ROMType.DEVICE : undefined,
+      options.getOnlyRetail() || (!options.getOnlyBios() && !options.getOnlyDevice())
+        ? ROMType.RETAIL : undefined,
       ROMType.PATCHED,
-    ].filter((romType) => romType) as ROMType[];
+    ].filter(ArrayPoly.filterNotNullish);
   }
 }

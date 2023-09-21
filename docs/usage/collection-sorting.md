@@ -15,10 +15,10 @@ Let's say that you have a directory named `ROMs/` that contains ROMs for many di
 === ":simple-windowsxp: Windows"
 
     ```batch
-    igir.exe copy zip test ^
+    igir copy zip test ^
       --dat "No-Intro*.zip" ^
-      --input ROMs/ ^
-      --output ROMs-Sorted/ ^
+      --input ROMs\ ^
+      --output ROMs-Sorted\ ^
       --dir-dat-name
     ```
 
@@ -70,11 +70,11 @@ Now we have new ROMs that we want to merge into our collection, and we want to g
 === ":simple-windowsxp: Windows"
 
     ```batch
-    igir.exe move zip test clean report ^
+    igir move zip test clean report ^
       --dat "No-Intro*.zip" ^
-      --input ROMs-New/ ^
-      --input ROMs-Sorted/ ^
-      --output ROMs-Sorted/ ^
+      --input ROMs-New\ ^
+      --input ROMs-Sorted\ ^
+      --output ROMs-Sorted\ ^
       --dir-dat-name
     ```
 
@@ -132,9 +132,9 @@ We would prefer having only one copy of every game (1G1R), so there is less to s
     Replace the `E:\` drive letter with wherever your SD card is:
 
     ```batch
-    igir.exe copy extract test clean ^
+    igir copy extract test clean ^
       --dat "No-Intro*.zip" ^
-      --input "ROMs-Sorted/Nintendo - Game Boy" ^
+      --input "ROMs-Sorted\Nintendo - Game Boy" ^
       --output E:\ ^
       --dir-letter ^
       --no-bios ^

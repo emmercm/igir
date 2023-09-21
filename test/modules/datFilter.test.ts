@@ -1,9 +1,9 @@
 import DATFilter from '../../src/modules/datFilter.js';
-import DAT from '../../src/types/logiqx/dat.js';
-import Game, { GameProps } from '../../src/types/logiqx/game.js';
-import Header from '../../src/types/logiqx/header.js';
-import Release from '../../src/types/logiqx/release.js';
-import ROM from '../../src/types/logiqx/rom.js';
+import Game, { GameProps } from '../../src/types/dats/game.js';
+import Header from '../../src/types/dats/logiqx/header.js';
+import LogiqxDAT from '../../src/types/dats/logiqx/logiqxDat.js';
+import Release from '../../src/types/dats/release.js';
+import ROM from '../../src/types/dats/rom.js';
 import Options, { OptionsProps } from '../../src/types/options.js';
 import ProgressBarFake from '../console/progressBarFake.js';
 
@@ -16,7 +16,7 @@ async function expectFilteredDAT(
   gamesArr: Game[][],
   expectedSize: number,
 ): Promise<void> {
-  const dat = new DAT(new Header(), gamesArr.flatMap((games) => games));
+  const dat = new LogiqxDAT(new Header(), gamesArr.flatMap((games) => games));
   const filteredDat = await buildDATFilter(options).filter(dat);
   expect(filteredDat.getGames().length).toEqual(expectedSize);
 }
@@ -61,7 +61,7 @@ function buildGameWithRegionLanguage(
         releases.push(new Release(releaseName, region, language));
       }
 
-      const rom = new ROM(`${romName}.rom`, 0, '00000000');
+      const rom = new ROM({ name: `${romName}.rom`, size: 0, crc: '00000000' });
       const game = new Game({
         name: romName, rom: [rom], release: releases, ...gameOptionsArr[i],
       });

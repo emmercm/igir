@@ -1,8 +1,11 @@
-import path from 'path';
+import path from 'node:path';
 
+import ROMScanner from '../../../../src/modules/romScanner.js';
 import Archive from '../../../../src/types/files/archives/archive.js';
 import ArchiveEntry from '../../../../src/types/files/archives/archiveEntry.js';
 import FileFactory from '../../../../src/types/files/fileFactory.js';
+import Options from '../../../../src/types/options.js';
+import ProgressBarFake from '../../../console/progressBarFake.js';
 
 describe('getArchiveEntries', () => {
   test.each([
@@ -50,6 +53,59 @@ describe('getArchiveEntries', () => {
       expect((entry as ArchiveEntry<Archive>).getEntryPath())
         .toEqual(path.normalize(expectedEntry[0]));
       expect(entry.getCrc32()).toEqual(expectedEntry[1]);
+    }
+  });
+});
+
+describe('asRawFile', () => {
+  test.each([
+    'test/fixtures/roms/7z',
+    'test/fixtures/roms/rar',
+    'test/fixtures/roms/tar',
+    'test/fixtures/roms/zip',
+  ])('should calculate raw file', async (input) => {
+    // Given some files
+    const options = new Options({ input: [input] });
+    const files = await new ROMScanner(options, new ProgressBarFake()).scan();
+
+    for (let i = 0; i < files.length; i += 1) {
+      const file = files[i];
+      expect(file).toBeInstanceOf(ArchiveEntry);
+
+      // When getting the raw file
+      const rawFile = await ((file as ArchiveEntry<never>).getArchive() as Archive).asRawFile();
+
+      // Then it should have a size and a real CRC
+      expect(rawFile.getSize()).toBeGreaterThan(0);
+      expect(rawFile.getCrc32()).not.toEqual('00000000');
+      expect(rawFile.getCrc32WithoutHeader()).not.toEqual('00000000');
+    }
+  });
+});
+
+describe('asRawFileWithoutCrc', () => {
+  test.each([
+    'test/fixtures/roms/7z',
+    'test/fixtures/roms/rar',
+    'test/fixtures/roms/tar',
+    'test/fixtures/roms/zip',
+  ])('should calculate raw file', async (input) => {
+    // Given some files
+    const options = new Options({ input: [input] });
+    const files = await new ROMScanner(options, new ProgressBarFake()).scan();
+
+    for (let i = 0; i < files.length; i += 1) {
+      const file = files[i];
+      expect(file).toBeInstanceOf(ArchiveEntry);
+
+      // When getting the raw file
+      const rawFile = await ((file as ArchiveEntry<never>).getArchive() as Archive)
+        .asRawFileWithoutCrc();
+
+      // Then it should have a size and a dummy CRC
+      expect(rawFile.getSize()).toBeGreaterThan(0);
+      expect(rawFile.getCrc32()).toEqual('00000000');
+      expect(rawFile.getCrc32WithoutHeader()).toEqual('00000000');
     }
   });
 });

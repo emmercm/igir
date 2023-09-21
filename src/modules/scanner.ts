@@ -9,6 +9,9 @@ import FileFactory from '../types/files/fileFactory.js';
 import Options from '../types/options.js';
 import Module from './module.js';
 
+/**
+ * The base class for every input file scanner class.
+ */
 export default abstract class Scanner extends Module {
   // WARN(cemmer): there is an undocumented semaphore max value that can be used, the full
   //  4,700,372,992 bytes of a DVD+R will cause runExclusive() to never run or return.

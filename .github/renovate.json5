@@ -16,12 +16,16 @@
   // Requires "dependency graph" as well as Dependabot "alerts" and "security updates" enabled for the repo
   vulnerabilityAlerts: {
     labels: ['security'],
-    // Global defaults
-    enabled: true,
-    schedule: 'at any time',
-    prCreation: 'immediate',
-    automergeSchedule: 'at any time',
     platformAutomerge: true,
+    // Renovate's defaults for `vulnerabilityAlerts`
+    groupName: '',
+    schedule: [],
+    dependencyDashboardApproval: false,
+    minimumReleaseAge: '',
+    rangeStrategy: 'update-lockfile',
+    commitMessageSuffix: '[SECURITY]',
+    branchTopic: '{{{datasource}}}-{{{depName}}}-vulnerability',
+    prCreation: 'immediate',
   },
   // WARN: "When the lockfileVersion is higher than 1 in package-lock.json, remediations are only possible when changes are made to package.json."
   transitiveRemediation: true,
@@ -37,42 +41,62 @@
   separateMinorPatch: false, // default
 
   // Allow auto-merging of PRs, but reduce their spam on the commit log
-  schedule: 'on the 24th day of the month',
+  schedule: 'on the 28th day of the month',
+  prCreation: 'immediate', // default
+  prHourlyLimit: 0, // no limit
   automerge: true,
-  automergeSchedule: 'on the 28th day of the month',
-  platformAutomerge: false, // schedule and automergeSchedule differ, can't use
-  prHourlyLimit: 0, // default: disabled
+  platformAutomerge: true, // default
+  // Rely on the PR Rebaser GitHub Action to do this. PRs will merge in the order they are created,
+  //  so the `prPriority` option SHOULD be respected.
+  rebaseWhen: 'conflicted', // separate PRs updating the lockfile are likely to conflict each other
+
+  // Allow some post-upgrade commands that may be used below
+  allowedPostUpgradeCommands: [
+    '^npm ci --ignore-scripts$',
+    '^npm run lint:fix$',
+  ],
 
   packageRules: [
     {
-      matchCategories: ['node',],
-      // Global defaults
+      matchCategories: ['node'],
       groupName: 'Node.js',
+      // Renovate's defaults for these options
       schedule: 'at any time',
       prCreation: 'immediate',
-      automergeSchedule: 'at any time',
       platformAutomerge: true,
     },
   ],
 
   npm: {
     lockFileMaintenance: {
+      // These options are required to override the `lockFileMaintenance` defaults
       enabled: true,
-      schedule: 'on the 24th day of the month', // same as above
+      schedule: 'on the 28th day of the month', // same as above
       commitMessageAction: 'update', // same as above
       commitMessageTopic: 'lockfile',
     },
 
-    // Stability settings
+    // Stability settings: don't raise a PR until a dependency is at least 3 days old
     rangeStrategy: 'pin',
     commitMessageAction: 'update', // same as above, don't use `rangeStrategy` as the action
     minimumReleaseAge: '3 days',
+    internalChecksFilter: 'strict',
 
     packageRules: [
       // Dependencies
       {
+        // Group dependencies and their `@types/*` packages together
         groupName: 'dependencies',
         matchDepTypes: ['dependencies', 'devDependencies'],
+      },
+      {
+        matchDepTypes: ['dependencies'],
+        // Be strict about Node.js version compatability (from package's `engines.node`)
+        constraintsFiltering: 'strict',
+        rollbackPrs: true,
+        rollback: {
+          prPriority: 10,
+        },
       },
 
       // Dev dependencies
@@ -96,6 +120,21 @@
         groupName: 'dev dependencies',
       },
       {
+        // Group ESLint together so files can be fixed automatically
+        matchPackagePatterns: [
+          '^@typescript-eslint',
+          '^eslint',
+        ],
+        groupName: 'ESLint',
+        postUpgradeTasks: {
+          commands: [
+            'npm ci --ignore-scripts',
+            'npm run lint:fix',
+          ],
+          fileFilters: ['**/*.ts']
+        },
+      },
+      {
         // Group Jest together because of peerDependencies
         matchPackageNames: [
           '@jest/globals',
@@ -116,9 +155,10 @@
         matchUpdateTypes: ['pin'],
         commitMessageAction: 'pin',
         groupName: 'dependency ranges',
+        // Renovate's defaults for these options
         schedule: 'at any time',
         prCreation: 'immediate',
-        automergeSchedule: 'at any time',
+        platformAutomerge: true,
       },
 
       // Everything else

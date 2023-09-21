@@ -1,24 +1,26 @@
 #!/usr/bin/env sh
+# shellcheck disable=SC1091
 . "$(dirname -- "$0")/_/husky.sh"
 
 # Change to the project's root directory
 cd "$(dirname -- "$0")/.." || exit 1
 
 # Ensure node is available (same as asciinema-rec.sh)
-if [[ ! -x "$(command -v node)" ]]; then
-  if [[ ! -x "$(command -v nvm)" && -f ~/.nvm/nvm.sh ]]; then
+if [ ! -x "$(command -v node)" ]; then
+  if [ ! -x "$(command -v nvm)" ] && [ -f ~/.nvm/nvm.sh ]; then
+    # shellcheck disable=SC1090
     . ~/.nvm/nvm.sh
   fi
-  if [[ ! -x "$(command -v nvm)" ]]; then
+  if [ ! -x "$(command -v nvm)" ]; then
     nvm install || true
     nvm use || exit 1
   fi
 fi
-node --version &> /dev/null || exit 1
+node --version > /dev/null 2>&1 || exit 1
 
 # Ensure node modules are installed
-if [[ ! -d "node_modules" ]]; then
-  npm ci
+if [ ! -d "node_modules" ]; then
+  npm ci --ignore-scripts
 fi
 
 

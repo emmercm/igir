@@ -1,7 +1,13 @@
-import Game from './logiqx/game.js';
-import Release from './logiqx/release.js';
+import Game from './dats/game.js';
+import Release from './dats/release.js';
 import ROMWithFiles from './romWithFiles.js';
 
+/**
+ * A container holding a {@link Game}, optionally a {@link Release} for that {@link Game}, and a
+ * {@link ROMWithFiles} with input and output {@link File} information for every {@link ROM}.
+ * In other words, a {@link ReleaseCandidate} will only exist if every {@link ROM} of a {@link Game}
+ * has been found.
+ */
 export default class ReleaseCandidate {
   private readonly game: Game;
 
@@ -48,13 +54,17 @@ export default class ReleaseCandidate {
 
   getLanguages(): string[] {
     // Get language off of the release
-    if (this.release?.getLanguage()) {
-      return [(this.release.getLanguage() as string).toUpperCase()];
+    const releaseLanguage = this.release?.getLanguage();
+    if (releaseLanguage) {
+      return [releaseLanguage.toUpperCase()];
     }
 
     return this.game.getLanguages();
   }
 
+  /**
+   * Returns true if any {@link ROMWithFiles} input {@link File} has a {@link Patch} attached to it.
+   */
   isPatched(): boolean {
     return this.getRomsWithFiles().some((romWithFiles) => romWithFiles.getInputFile().getPatch());
   }

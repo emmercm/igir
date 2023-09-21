@@ -1,28 +1,24 @@
 import 'reflect-metadata';
 
+import fs from 'node:fs';
+import os from 'node:os';
+import path from 'node:path';
+import util from 'node:util';
+
 import async, { AsyncResultCallback } from 'async';
 import { Expose, instanceToPlain, plainToInstance } from 'class-transformer';
 import fg from 'fast-glob';
-import fs from 'fs';
 import { isNotJunk } from 'junk';
 import micromatch from 'micromatch';
 import moment from 'moment';
-import os from 'os';
-import path from 'path';
-import util from 'util';
 
 import LogLevel from '../console/logLevel.js';
 import Constants from '../constants.js';
+import ArrayPoly from '../polyfill/arrayPoly.js';
 import fsPoly, { FsWalkCallback } from '../polyfill/fsPoly.js';
 import URLPoly from '../polyfill/urlPoly.js';
-import ArchiveEntry from './files/archives/archiveEntry.js';
+import DAT from './dats/dat.js';
 import File from './files/file.js';
-import FileFactory from './files/fileFactory.js';
-import GameConsole from './gameConsole.js';
-import DAT from './logiqx/dat.js';
-import Game from './logiqx/game.js';
-import Release from './logiqx/release.js';
-import ROM from './logiqx/rom.js';
 
 export interface OptionsProps {
   readonly commands?: string[],
@@ -109,6 +105,9 @@ export interface OptionsProps {
   readonly help?: boolean,
 }
 
+/**
+ * A collection of all options for a single invocation of the application.
+ */
 export default class Options implements OptionsProps {
   @Expose({ name: '_' })
   readonly commands: string[];
@@ -340,12 +339,18 @@ export default class Options implements OptionsProps {
     this.help = options?.help ?? false;
   }
 
+  /**
+   * Construct a {@link Options} from a generic object, such as one from `yargs`.
+   */
   static fromObject(obj: object): Options {
     return plainToInstance(Options, obj, {
       enableImplicitConversion: true,
     });
   }
 
+  /**
+   * Return a JSON representation of all options.
+   */
   toString(): string {
     return JSON.stringify(instanceToPlain(this));
   }
@@ -367,38 +372,62 @@ export default class Options implements OptionsProps {
 
   // Commands
 
-  private getCommands(): string[] {
-    return this.commands.map((c) => c.toLowerCase());
+  getCommands(): Set<string> {
+    return new Set(this.commands.map((c) => c.toLowerCase()));
   }
 
+  /**
+   * Was any writing command provided?
+   */
   shouldWrite(): boolean {
     return this.writeString() !== undefined;
   }
 
+  /**
+   * The writing command that was specified.
+   */
   writeString(): string | undefined {
-    return ['copy', 'move', 'symlink'].find((command) => this.getCommands().indexOf(command) !== -1);
+    return ['copy', 'move', 'symlink'].find((command) => this.getCommands().has(command));
   }
 
+  /**
+   * Was the `copy` command provided?
+   */
   shouldCopy(): boolean {
-    return this.getCommands().indexOf('copy') !== -1;
+    return this.getCommands().has('copy');
   }
 
+  /**
+   * Was the `move` command provided?
+   */
   shouldMove(): boolean {
-    return this.getCommands().indexOf('move') !== -1;
+    return this.getCommands().has('move');
   }
 
+  /**
+   * Was the `symlink` command provided?
+   */
   shouldSymlink(): boolean {
-    return this.getCommands().indexOf('symlink') !== -1;
+    return this.getCommands().has('symlink');
   }
 
+  /**
+   * Was the `extract` command provided?
+   */
   shouldExtract(): boolean {
-    return this.getCommands().indexOf('extract') !== -1;
+    return this.getCommands().has('extract');
   }
 
+  /**
+   * Was the `zip` command provided?
+   */
   canZip(): boolean {
-    return this.getCommands().indexOf('zip') !== -1;
+    return this.getCommands().has('zip');
   }
 
+  /**
+   * Should a given output file path be zipped?
+   */
   shouldZip(filePath: string): boolean {
     return this.canZip()
       && (!this.getZipExclude() || !micromatch.isMatch(
@@ -407,26 +436,31 @@ export default class Options implements OptionsProps {
       ));
   }
 
+  /**
+   * Was the `clean` command provided?
+   */
   shouldClean(): boolean {
-    return this.getCommands().indexOf('clean') !== -1;
+    return this.getCommands().has('clean');
   }
 
+  /**
+   * Was the `test` command provided?
+   */
   shouldTest(): boolean {
-    return this.getCommands().indexOf('test') !== -1;
+    return this.getCommands().has('test');
   }
 
+  /**
+   * Was the `report` command provided?
+   */
   shouldReport(): boolean {
-    return this.getCommands().indexOf('report') !== -1;
+    return this.getCommands().has('report');
   }
 
   // Options
 
   getInputPaths(): string[] {
     return this.input;
-  }
-
-  getInputFileCount(): number {
-    return this.input.length;
   }
 
   private async scanInputFiles(walkCallback?: FsWalkCallback): Promise<string[]> {
@@ -437,22 +471,28 @@ export default class Options implements OptionsProps {
     return Options.scanPaths(this.inputExclude, undefined, false);
   }
 
+  /**
+   * Scan for input files, and input files to exclude, and return the difference.
+   */
   async scanInputFilesWithoutExclusions(walkCallback?: FsWalkCallback): Promise<string[]> {
     const inputFiles = await this.scanInputFiles(walkCallback);
-    const inputExcludeFiles = await this.scanInputExcludeFiles();
+    const inputExcludeFiles = new Set(await this.scanInputExcludeFiles());
     return inputFiles
-      .filter((inputPath) => inputExcludeFiles.indexOf(inputPath) === -1);
+      .filter((inputPath) => !inputExcludeFiles.has(inputPath));
   }
 
   getPatchFileCount(): number {
     return this.patch.length;
   }
 
+  /**
+   * Scan for patch files, and patch files to exclude, and return the difference.
+   */
   async scanPatchFilesWithoutExclusions(walkCallback?: FsWalkCallback): Promise<string[]> {
     const patchFiles = await this.scanPatchFiles(walkCallback);
-    const patchExcludeFiles = await this.scanPatchExcludeFiles();
+    const patchExcludeFiles = new Set(await this.scanPatchExcludeFiles());
     return patchFiles
-      .filter((patchPath) => patchExcludeFiles.indexOf(patchPath) === -1);
+      .filter((patchPath) => !patchExcludeFiles.has(patchPath));
   }
 
   private async scanPatchFiles(walkCallback?: FsWalkCallback): Promise<string[]> {
@@ -471,9 +511,8 @@ export default class Options implements OptionsProps {
     // Limit to scanning one glob pattern at a time to keep memory in check
     const uniqueGlobPatterns = globPatterns
       .filter((pattern) => pattern)
-      .filter((pattern, idx, patterns) => patterns.indexOf(pattern) === idx);
+      .reduce(ArrayPoly.reduceUnique(), []);
     const globbedPaths = [];
-    /* eslint-disable no-await-in-loop */
     for (let i = 0; i < uniqueGlobPatterns.length; i += 1) {
       globbedPaths.push(...(await this.globPath(
         uniqueGlobPatterns[i],
@@ -506,7 +545,7 @@ export default class Options implements OptionsProps {
 
     // Remove duplicates
     return globbedFiles
-      .filter((inputPath, idx, arr) => arr.indexOf(inputPath) === idx);
+      .reduce(ArrayPoly.reduceUnique(), []);
   }
 
   private static async globPath(
@@ -560,12 +599,11 @@ export default class Options implements OptionsProps {
     return paths;
   }
 
+  /**
+   * Were any DAT paths provided?
+   */
   usingDats(): boolean {
     return this.dat.length > 0;
-  }
-
-  getDatFileCount(): number {
-    return this.dat.length;
   }
 
   private async scanDatFiles(walkCallback?: FsWalkCallback): Promise<string[]> {
@@ -576,11 +614,14 @@ export default class Options implements OptionsProps {
     return Options.scanPaths(this.datExclude, undefined, false);
   }
 
+  /**
+   * Scan for DAT files, and DAT files to exclude, and return the difference.
+   */
   async scanDatFilesWithoutExclusions(walkCallback?: FsWalkCallback): Promise<string[]> {
     const datFiles = await this.scanDatFiles(walkCallback);
-    const datExcludeFiles = await this.scanDatExcludeFiles();
+    const datExcludeFiles = new Set(await this.scanDatExcludeFiles());
     return datFiles
-      .filter((inputPath) => datExcludeFiles.indexOf(inputPath) === -1);
+      .filter((inputPath) => !datExcludeFiles.has(inputPath));
   }
 
   getDatRegex(): RegExp | undefined {
@@ -595,7 +636,7 @@ export default class Options implements OptionsProps {
     return this.fixdat;
   }
 
-  private getOutput(): string {
+  getOutput(): string {
     return this.shouldWrite() ? this.output : Constants.GLOBAL_TEMP_DIR;
   }
 
@@ -610,286 +651,6 @@ export default class Options implements OptionsProps {
       }
     }
     return outputSplit.join(path.sep);
-  }
-
-  /**
-   * Get the output dir, only resolving any tokens.
-   */
-  getOutputDirParsed(
-    dat: DAT,
-    inputRomPath?: string,
-    game?: Game,
-    release?: Release,
-    romFilename?: string,
-  ): string {
-    const romFilenameSanitized = romFilename?.replace(/[\\/]/g, '_');
-
-    let output = this.getOutput();
-    output = Options.replaceTokensInOutputPath(
-      output,
-      dat,
-      inputRomPath,
-      game,
-      release,
-      romFilenameSanitized,
-    );
-
-    return fsPoly.makeLegal(output);
-  }
-
-  getOutputBasenameAndEntryPath(
-    dat: DAT,
-    game: Game,
-    release: Release | undefined,
-    rom: ROM,
-    inputFile: File,
-  ): [string, string] {
-    const { base, ...parsedPath } = path.parse(rom.getName());
-
-    // Alter the output extension of the file
-    const fileHeader = inputFile.getFileHeader();
-    if (parsedPath.ext && fileHeader) {
-      // If the ROM has a header then we're going to ignore the file extension from the DAT
-      if (this.canRemoveHeader(dat, parsedPath.ext)) {
-        parsedPath.ext = fileHeader.getUnheaderedFileExtension();
-      } else {
-        parsedPath.ext = fileHeader.getHeaderedFileExtension();
-      }
-    }
-    let entryPath = path.format(parsedPath);
-
-    // Determine the output path of the file
-    let outputBasename = entryPath;
-    if (this.shouldZip(rom.getName())) {
-      // Should zip, generate the zip name from the game name
-      outputBasename = `${game.getName()}.zip`;
-      entryPath = path.basename(entryPath);
-    } else if (
-      !(inputFile instanceof ArchiveEntry || FileFactory.isArchive(inputFile.getFilePath()))
-      || this.shouldExtract()
-    ) {
-      // Should extract (if needed), generate the file name from the ROM name
-      outputBasename = entryPath;
-    } else {
-      // Should leave archived, generate the archive name from the game name, but use the input
-      //  file's extension
-      const extMatch = inputFile.getFilePath().match(/[^.]+((\.[a-zA-Z0-9]+)+)$/);
-      const ext = extMatch !== null ? extMatch[1] : '';
-      outputBasename = game.getName() + ext;
-    }
-
-    return [outputBasename, entryPath];
-  }
-
-  /**
-   * Get the full output path for a ROM file.
-   *
-   * @param dat the {@link DAT} that the ROM/{@link Game} is from.
-   * @param inputRomPath the input file's full file path.
-   * @param game the {@link Game} that this file matches to.
-   * @param release a {@link Release} from the {@link Game}.
-   * @param romBasename the intended output basename (including extension).
-   * @param romBasenames the intended output basenames for every ROM from this {@link DAT}.
-   */
-  getOutputFileParsed(
-    dat: DAT,
-    inputRomPath: string,
-    game: Game,
-    release: Release | undefined,
-    romBasename: string,
-    romBasenames?: string[],
-  ): string {
-    let romFilenameSanitized = romBasename.replace(/[\\/]/g, path.sep);
-    if (!dat?.getRomNamesContainDirectories()) {
-      romFilenameSanitized = romFilenameSanitized.replace(/[\\/]/g, '_');
-    }
-
-    let output = this.getOutputDirParsed(dat, inputRomPath, game, release, romBasename);
-
-    if (this.getDirMirror() && inputRomPath) {
-      const mirroredDir = path.dirname(inputRomPath)
-        .replace(/[\\/]/g, path.sep)
-        .split(path.sep)
-        .splice(1)
-        .join(path.sep);
-      output = path.join(output, mirroredDir);
-    }
-
-    if (this.getDirDatName() && dat.getNameShort()) {
-      output = path.join(output, dat.getNameShort());
-    }
-    if (this.getDirDatDescription() && dat.getDescription()) {
-      output = path.join(output, dat.getDescription() as string);
-    }
-
-    const dirLetter = this.getDirLetterParsed(romFilenameSanitized, romBasenames);
-    if (dirLetter) {
-      output = path.join(output, dirLetter);
-    }
-
-    if (game.getRoms().length > 1
-      && (!romFilenameSanitized || !FileFactory.isArchive(romFilenameSanitized))
-    ) {
-      output = path.join(output, game.getName());
-    }
-
-    if (romFilenameSanitized) {
-      output = path.join(output, romFilenameSanitized);
-    }
-
-    return fsPoly.makeLegal(output);
-  }
-
-  private static replaceTokensInOutputPath(
-    outputPath: string,
-    dat: DAT,
-    inputRomPath?: string,
-    game?: Game,
-    release?: Release,
-    outputRomFilename?: string,
-  ): string {
-    let result = outputPath;
-    result = this.replaceDatTokens(result, dat);
-    result = this.replaceGameTokens(result, game);
-    result = this.replaceReleaseTokens(result, release);
-    result = this.replaceInputTokens(result, inputRomPath);
-    result = this.replaceOutputTokens(result, outputRomFilename);
-    result = this.replaceOutputGameConsoleTokens(result, dat, outputRomFilename);
-
-    const leftoverTokens = result.match(/\{[a-zA-Z]+\}/g);
-    if (leftoverTokens !== null && leftoverTokens.length) {
-      throw new Error(`failed to replace output token${leftoverTokens.length !== 1 ? 's' : ''}: ${leftoverTokens.join(', ')}`);
-    }
-
-    return result;
-  }
-
-  private static replaceDatTokens(input: string, dat: DAT): string {
-    let output = input;
-    output = output.replace('{datName}', dat.getName().replace(/[\\/]/g, '_'));
-
-    const description = dat.getDescription();
-    if (description) {
-      output = output.replace('{datDescription}', description.replace(/[\\/]/g, '_'));
-    }
-
-    return output;
-  }
-
-  private static replaceGameTokens(input: string, game?: Game): string {
-    if (!game) {
-      return input;
-    }
-
-    let output = input;
-    output = output.replace('{gameType}', game.getGameType());
-    return output;
-  }
-
-  private static replaceReleaseTokens(input: string, release?: Release): string {
-    if (!release) {
-      return input;
-    }
-
-    let output = input;
-    output = output.replace('{datReleaseRegion}', release.getRegion());
-    if (release.getLanguage()) {
-      output = output.replace('{datReleaseLanguage}', release.getLanguage() as string);
-    }
-    return output;
-  }
-
-  private static replaceInputTokens(input: string, inputRomPath?: string): string {
-    if (!inputRomPath) {
-      return input;
-    }
-
-    return input.replace('{inputDirname}', path.parse(inputRomPath).dir);
-  }
-
-  private static replaceOutputTokens(input: string, outputRomFilename?: string): string {
-    if (!outputRomFilename) {
-      return input;
-    }
-
-    const outputRom = path.parse(outputRomFilename);
-    return input
-      .replace('{outputBasename}', outputRom.base)
-      .replace('{outputName}', outputRom.name)
-      .replace('{outputExt}', outputRom.ext.replace(/^\./, ''));
-  }
-
-  private static replaceOutputGameConsoleTokens(
-    input: string,
-    dat?: DAT,
-    outputRomFilename?: string,
-  ): string {
-    if (!outputRomFilename) {
-      return input;
-    }
-
-    const gameConsole = GameConsole.getForConsoleName(dat?.getName() ?? '')
-      ?? GameConsole.getForFilename(outputRomFilename);
-    if (!gameConsole) {
-      return input;
-    }
-
-    let output = input;
-    if (gameConsole.getPocket()) {
-      output = output.replace('{pocket}', gameConsole.getPocket() as string);
-    }
-    if (gameConsole.getMister()) {
-      output = output.replace('{mister}', gameConsole.getMister() as string);
-    }
-    if (gameConsole.getOnion()) {
-      output = output.replace('{onion}', gameConsole.getOnion() as string);
-    }
-    return output;
-  }
-
-  private getDirLetterParsed(romBasename?: string, romBasenames?: string[]): string | undefined {
-    if (!romBasename || !this.getDirLetter()) {
-      return undefined;
-    }
-
-    // Find the letter for every ROM filename
-    let lettersToFilenames = (romBasenames ?? [romBasename]).reduce((map, filename) => {
-      let letter = path.basename(filename)[0].toUpperCase();
-      if (letter.match(/[^A-Z]/)) {
-        letter = '#';
-      }
-
-      const existing = map.get(letter) ?? [];
-      existing.push(filename);
-      map.set(letter, existing);
-      return map;
-    }, new Map<string, string[]>());
-
-    // Split the letter directories, if needed
-    if (this.getDirLetterLimit()) {
-      lettersToFilenames = [...lettersToFilenames.entries()].reduce((map, [letter, filenames]) => {
-        if (filenames.length <= this.getDirLetterLimit()) {
-          map.set(letter, filenames);
-          return map;
-        }
-
-        const uniqueFilenames = filenames
-          .sort()
-          .filter((val, idx, vals) => vals.indexOf(val) === idx);
-        const chunkSize = this.getDirLetterLimit();
-        for (let i = 0; i < uniqueFilenames.length; i += chunkSize) {
-          const newLetter = `${letter}${i / chunkSize + 1}`;
-          const chunk = uniqueFilenames.slice(i, i + chunkSize);
-          map.set(newLetter, chunk);
-        }
-
-        return map;
-      }, new Map<string, string[]>());
-    }
-
-    const foundEntry = [...lettersToFilenames.entries()]
-      .find(([, filenames]) => filenames.indexOf(romBasename) !== -1);
-    return foundEntry ? foundEntry[0] : undefined;
   }
 
   getDirMirror(): boolean {
@@ -924,22 +685,25 @@ export default class Options implements OptionsProps {
     return Options.scanPaths(this.cleanExclude, undefined, false);
   }
 
+  /**
+   * Scan for output files, and output files to exclude from cleaning, and return the difference.
+   */
   async scanOutputFilesWithoutCleanExclusions(
     outputDirs: string[],
     writtenFiles: File[],
   ): Promise<string[]> {
     // Written files that shouldn't be cleaned
-    const writtenFilesNormalized = writtenFiles
-      .map((file) => path.normalize(file.getFilePath()));
+    const writtenFilesNormalized = new Set(writtenFiles
+      .map((file) => path.normalize(file.getFilePath())));
 
     // Files excluded from cleaning
-    const cleanExcludedFilesNormalized = (await this.scanCleanExcludeFiles())
-      .map((filePath) => path.normalize(filePath));
+    const cleanExcludedFilesNormalized = new Set((await this.scanCleanExcludeFiles())
+      .map((filePath) => path.normalize(filePath)));
 
     return (await Options.scanPaths(outputDirs))
       .map((filePath) => path.normalize(filePath))
-      .filter((filePath) => writtenFilesNormalized.indexOf(filePath) === -1)
-      .filter((filePath) => cleanExcludedFilesNormalized.indexOf(filePath) === -1);
+      .filter((filePath) => !writtenFilesNormalized.has(filePath))
+      .filter((filePath) => !cleanExcludedFilesNormalized.has(filePath));
   }
 
   private getZipExclude(): string {
@@ -958,6 +722,9 @@ export default class Options implements OptionsProps {
     return this.header;
   }
 
+  /**
+   * Should a file have its contents read to detect any {@link Header}?
+   */
   shouldReadFileForHeader(filePath: string): boolean {
     return this.getHeader().length > 0 && micromatch.isMatch(
       filePath.replace(/^.[\\/]/, ''),
@@ -965,6 +732,9 @@ export default class Options implements OptionsProps {
     );
   }
 
+  /**
+   * Can the {@link Header} be removed for a {@link extension} during writing?
+   */
   canRemoveHeader(dat: DAT, extension: string): boolean {
     // ROMs in "headered" DATs shouldn't have their header removed
     if (dat.isHeadered()) {
@@ -997,12 +767,12 @@ export default class Options implements OptionsProps {
     return Options.getRegex(this.filterRegexExclude);
   }
 
-  getLanguageFilter(): string[] {
-    return Options.filterUniqueUpper(this.languageFilter);
+  getLanguageFilter(): Set<string> {
+    return new Set(Options.filterUniqueUpper(this.languageFilter));
   }
 
-  getRegionFilter(): string[] {
-    return Options.filterUniqueUpper(this.regionFilter);
+  getRegionFilter(): Set<string> {
+    return new Set(Options.filterUniqueUpper(this.regionFilter));
   }
 
   getNoBios(): boolean {
@@ -1164,7 +934,7 @@ export default class Options implements OptionsProps {
     const symbolMatches = reportOutput.match(/%([a-zA-Z])(\1|o)*/g);
     if (symbolMatches) {
       symbolMatches
-        .filter((match, idx, matches) => matches.indexOf(match) === idx)
+        .reduce(ArrayPoly.reduceUnique(), [])
         .forEach((match) => {
           const val = moment().format(match.replace(/^%/, ''));
           reportOutput = reportOutput.replace(match, val);
@@ -1197,9 +967,9 @@ export default class Options implements OptionsProps {
     return this.help;
   }
 
-  static filterUniqueUpper(array: string[]): string[] {
+  private static filterUniqueUpper(array: string[]): string[] {
     return array
       .map((value) => value.toUpperCase())
-      .filter((val, idx, arr) => arr.indexOf(val) === idx);
+      .reduce(ArrayPoly.reduceUnique(), []);
   }
 }

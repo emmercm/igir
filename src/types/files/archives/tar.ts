@@ -1,6 +1,7 @@
+import fs from 'node:fs';
+import path from 'node:path';
+
 import { crc32 } from '@node-rs/crc32';
-import fs from 'fs';
-import path from 'path';
 import tar from 'tar';
 import { Memoize } from 'typescript-memoize';
 
@@ -37,7 +38,7 @@ export default class Tar extends Archive {
     }).pipe(writeStream);
 
     writeStream.on('entry', (entry) => {
-      let crc: number;
+      let crc: number | undefined;
       entry.on('data', (chunk) => {
         if (!crc) {
           crc = crc32(chunk);
@@ -50,7 +51,7 @@ export default class Tar extends Archive {
           this,
           entry.path,
           entry.size ?? 0,
-          (crc || 0).toString(16),
+          (crc ?? 0).toString(16),
         ));
       });
     });

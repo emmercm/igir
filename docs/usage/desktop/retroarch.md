@@ -17,7 +17,7 @@ With `igir`'s support for [DAT URLs](../../input/dats.md) we don't even have to 
     The root directory is based on where you installed RetroArch, but by default it is:
 
     ```batch
-    igir.exe copy extract test clean ^
+    igir copy extract test clean ^
       --dat "https://raw.githubusercontent.com/libretro/libretro-database/master/dat/System.dat" ^
       --input BIOS/ ^
       --output C:\RetroArch-Win64\system
@@ -28,7 +28,7 @@ With `igir`'s support for [DAT URLs](../../input/dats.md) we don't even have to 
     The root directory is based on where you installed RetroArch, but by default it is:
 
     ```batch
-    igir.exe copy extract test clean ^
+    igir copy extract test clean ^
       --dat "https://raw.githubusercontent.com/libretro/libretro-database/master/dat/System.dat" ^
       --input BIOS/ ^
       --output C:\RetroArch-Win32\system
@@ -63,9 +63,9 @@ If you want to store your ROMs in the RetroArch folder, you could co-locate them
     The root directory is based on where you installed RetroArch, but by default it is:
 
     ```batch
-    igir.exe copy zip test ^
+    igir copy zip test ^
       --dat "No-Intro*.zip" ^
-      --input ROMs/ ^
+      --input ROMs\ ^
       --output C:\RetroArch-Win64\roms ^
       --dir-dat-name ^
       --no-bios
@@ -76,9 +76,9 @@ If you want to store your ROMs in the RetroArch folder, you could co-locate them
     The root directory is based on where you installed RetroArch, but by default it is:
 
     ```batch
-    igir.exe copy zip test ^
+    igir copy zip test ^
       --dat "No-Intro*.zip" ^
-      --input ROMs/ ^
+      --input ROMs\ ^
       --output C:\RetroArch-Win32\roms ^
       --dir-dat-name ^
       --no-bios

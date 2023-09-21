@@ -1,15 +1,16 @@
+import path from 'node:path';
+
 import { Semaphore } from 'async-mutex';
-import path from 'path';
 
 import ProgressBar, { ProgressBarSymbol } from '../console/progressBar.js';
 import Constants from '../constants.js';
 import ElasticSemaphore from '../elasticSemaphore.js';
 import fsPoly from '../polyfill/fsPoly.js';
+import DAT from '../types/dats/dat.js';
+import Parent from '../types/dats/parent.js';
 import ArchiveEntry from '../types/files/archives/archiveEntry.js';
 import Zip from '../types/files/archives/zip.js';
 import File from '../types/files/file.js';
-import DAT from '../types/logiqx/dat.js';
-import Parent from '../types/logiqx/parent.js';
 import Options from '../types/options.js';
 import ReleaseCandidate from '../types/releaseCandidate.js';
 import Module from './module.js';
@@ -20,7 +21,7 @@ import Module from './module.js';
  * This class may be run concurrently with other classes.
  */
 export default class CandidateWriter extends Module {
-  private static readonly THREAD_SEMAPHORE = new Semaphore(1);
+  private static readonly THREAD_SEMAPHORE = new Semaphore(Number.MAX_SAFE_INTEGER);
 
   // WARN(cemmer): there is an undocumented semaphore max value that can be used, the full
   //  4,700,372,992 bytes of a DVD+R will cause runExclusive() to never run or return.
@@ -37,11 +38,14 @@ export default class CandidateWriter extends Module {
     this.options = options;
 
     // This will be the same value globally, but we can't know the value at file import time
-    if (CandidateWriter.THREAD_SEMAPHORE.getValue() !== options.getWriterThreads()) {
+    if (options.getWriterThreads() < CandidateWriter.THREAD_SEMAPHORE.getValue()) {
       CandidateWriter.THREAD_SEMAPHORE.setValue(options.getWriterThreads());
     }
   }
 
+  /**
+   * Write & test candidates.
+   */
   async write(
     dat: DAT,
     parentsToCandidates: Map<Parent, ReleaseCandidate[]>,
@@ -58,7 +62,11 @@ export default class CandidateWriter extends Module {
     // Filter to only the parents that actually have candidates (and therefore output)
     const parentsToWritableCandidates = new Map(
       [...parentsToCandidates.entries()]
-        .filter(([, candidates]) => candidates.length),
+        // The parent has candidates
+        .filter(([, releaseCandidates]) => releaseCandidates.length)
+        // At least some candidates have files
+        .filter(([, releaseCandidates]) => releaseCandidates
+          .some((releaseCandidate) => releaseCandidate.getRomsWithFiles().length)),
     );
 
     const totalCandidateCount = [...parentsToWritableCandidates.values()].flatMap((c) => c).length;
@@ -74,7 +82,6 @@ export default class CandidateWriter extends Module {
         await this.progressBar.incrementProgress();
         this.progressBar.logTrace(`${dat.getNameShort()}: ${parent.getName()}: writing ${releaseCandidates.length.toLocaleString()} candidate${releaseCandidates.length !== 1 ? 's' : ''}`);
 
-        /* eslint-disable no-await-in-loop */
         for (let i = 0; i < releaseCandidates.length; i += 1) {
           const releaseCandidate = releaseCandidates[i];
           await this.writeReleaseCandidate(dat, releaseCandidate);
@@ -126,11 +133,13 @@ export default class CandidateWriter extends Module {
     }
   }
 
-  /** ********************
-   *                     *
+  /**
+   ***********************
+   *
    *     Zip Writing     *
-   *                     *
-   ********************* */
+   *
+   ***********************
+   */
 
   private async writeZip(dat: DAT, releaseCandidate: ReleaseCandidate): Promise<void> {
     // Return no files if there are none to write
@@ -139,7 +148,7 @@ export default class CandidateWriter extends Module {
       .map((romWithFiles) => [
         romWithFiles.getInputFile(),
         romWithFiles.getOutputFile() as ArchiveEntry<Zip>,
-      ]) as [File, ArchiveEntry<Zip>][];
+      ]) satisfies [File, ArchiveEntry<Zip>][];
     if (!inputToOutputZipEntries.length) {
       this.progressBar.logTrace(`${dat.getNameShort()}: ${releaseCandidate.getName()}: no zip archives to write`);
       return;
@@ -238,6 +247,16 @@ export default class CandidateWriter extends Module {
       if (actualFile.getCrc32() !== expectedFile.getCrc32()) {
         return `has the file ${entryPath} with the CRC ${actualFile.getCrc32()}, expected ${expectedFile.getCrc32()}`;
       }
+
+      // Check size
+      if (!expectedFile.getSize()) {
+        this.progressBar.logWarn(`${dat.getNameShort()}: ${expectedFile.toString()}: can't test, expected size is unknown`);
+        // eslint-disable-next-line no-continue
+        continue;
+      }
+      if (actualFile.getSize() !== expectedFile.getSize()) {
+        return `has the file ${entryPath} of size ${actualFile.getSize().toLocaleString()}B, expected ${expectedFile.getSize().toLocaleString()}B`;
+      }
     }
 
     this.progressBar.logTrace(`${dat.getNameShort()}: ${outputZip.getFilePath()}: test passed`);
@@ -263,11 +282,13 @@ export default class CandidateWriter extends Module {
     return true;
   }
 
-  /** ********************
-   *                     *
+  /**
+   ***********************
+   *
    *     Raw Writing     *
-   *                     *
-   ********************* */
+   *
+   ***********************
+   */
 
   private async writeRaw(dat: DAT, releaseCandidate: ReleaseCandidate): Promise<void> {
     const inputToOutputEntries = releaseCandidate.getRomsWithFiles()
@@ -293,7 +314,6 @@ export default class CandidateWriter extends Module {
       .reduce((sum, file) => sum + file.getSize(), 0);
     this.progressBar.logTrace(`${dat.getNameShort()}: ${releaseCandidate.getName()}: writing ${fsPoly.sizeReadable(totalBytes)} of ${uniqueInputToOutputEntries.length.toLocaleString()} file${uniqueInputToOutputEntries.length !== 1 ? 's' : ''}`);
 
-    /* eslint-disable no-await-in-loop */
     for (let i = 0; i < uniqueInputToOutputEntries.length; i += 1) {
       const [inputRomFile, outputRomFile] = uniqueInputToOutputEntries[i];
       await this.writeRawSingle(dat, releaseCandidate, inputRomFile, outputRomFile);
@@ -338,6 +358,7 @@ export default class CandidateWriter extends Module {
       const writtenTest = await this.testWrittenRaw(dat, outputFilePath, outputRomFile);
       if (writtenTest) {
         this.progressBar.logError(`${dat.getNameShort()}: ${releaseCandidate.getName()}: written file ${writtenTest}: ${outputFilePath}`);
+        return;
       }
     }
     this.enqueueFileDeletion(inputRomFile);
@@ -384,6 +405,15 @@ export default class CandidateWriter extends Module {
       return `has the CRC ${actualFile.getCrc32()}, expected ${expectedFile.getCrc32()}`;
     }
 
+    // Check size
+    if (!expectedFile.getSize()) {
+      this.progressBar.logWarn(`${dat.getNameShort()}: ${outputFilePath}: can't test, expected size is unknown`);
+      return undefined;
+    }
+    if (actualFile.getSize() !== expectedFile.getSize()) {
+      return `is of size ${actualFile.getSize().toLocaleString()}B, expected ${expectedFile.getSize().toLocaleString()}B`;
+    }
+
     this.progressBar.logTrace(`${dat.getNameShort()}: ${outputFilePath}: test passed`);
     return undefined;
   }
@@ -398,16 +428,17 @@ export default class CandidateWriter extends Module {
     this.filesQueuedForDeletion.push(inputRomFile);
   }
 
-  /** ************************
-   *                         *
+  /**
+   ***************************
+   *
    *     Symlink Writing     *
-   *                         *
-   ************************* */
+   *
+   ***************************
+   */
 
   private async writeSymlink(dat: DAT, releaseCandidate: ReleaseCandidate): Promise<void> {
     const inputToOutputEntries = releaseCandidate.getRomsWithFiles();
 
-    /* eslint-disable no-await-in-loop */
     for (let i = 0; i < inputToOutputEntries.length; i += 1) {
       const inputRomFile = inputToOutputEntries[i].getInputFile();
       const outputRomFile = inputToOutputEntries[i].getOutputFile();
@@ -455,6 +486,7 @@ export default class CandidateWriter extends Module {
       await fsPoly.symlink(sourcePath, targetPath);
     } catch (e) {
       this.progressBar.logError(`${dat.getNameShort()}: ${inputRomFile.toString()}: failed to symlink ${sourcePath} to ${targetPath}: ${e}`);
+      return;
     }
 
     if (this.options.shouldTest()) {

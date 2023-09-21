@@ -1,7 +1,7 @@
-import { Readable } from 'stream';
+import { Readable } from 'node:stream';
 
-export default class BufferPoly {
-  static async fromReadable(readable: Readable): Promise<Buffer> {
+export default {
+  async fromReadable(readable: Readable): Promise<Buffer> {
     return new Promise((resolve, reject) => {
       readable.resume();
 
@@ -16,5 +16,5 @@ export default class BufferPoly {
 
       readable.on('error', reject);
     });
-  }
-}
+  },
+};

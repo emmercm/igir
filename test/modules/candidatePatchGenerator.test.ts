@@ -1,4 +1,4 @@
-import path from 'path';
+import path from 'node:path';
 
 import CandidateGenerator from '../../src/modules/candidateGenerator.js';
 import CandidatePatchGenerator from '../../src/modules/candidatePatchGenerator.js';
@@ -7,10 +7,11 @@ import DATScanner from '../../src/modules/datScanner.js';
 import FileIndexer from '../../src/modules/fileIndexer.js';
 import PatchScanner from '../../src/modules/patchScanner.js';
 import ROMScanner from '../../src/modules/romScanner.js';
+import DAT from '../../src/types/dats/dat.js';
+import Header from '../../src/types/dats/logiqx/header.js';
+import LogiqxDAT from '../../src/types/dats/logiqx/logiqxDat.js';
+import Parent from '../../src/types/dats/parent.js';
 import File from '../../src/types/files/file.js';
-import DAT from '../../src/types/logiqx/dat.js';
-import Header from '../../src/types/logiqx/header.js';
-import Parent from '../../src/types/logiqx/parent.js';
 import Options from '../../src/types/options.js';
 import ReleaseCandidate from '../../src/types/releaseCandidate.js';
 import ProgressBarFake from '../console/progressBarFake.js';
@@ -20,7 +21,7 @@ function buildInferredDat(romFiles: File[]): DAT {
   const datGames = new DATGameInferrer(new ProgressBarFake()).infer(romFiles)
     .map((dat) => dat.getGames())
     .flatMap((games) => games);
-  return new DAT(new Header(), datGames);
+  return new LogiqxDAT(new Header(), datGames);
 }
 
 async function runPatchCandidateGenerator(
@@ -44,7 +45,7 @@ async function runPatchCandidateGenerator(
 
 it('should do nothing with no parents', async () => {
   // Given
-  const dat = new DAT(new Header(), []);
+  const dat = new LogiqxDAT(new Header(), []);
 
   // When
   const parentsToCandidates = await runPatchCandidateGenerator(dat, []);

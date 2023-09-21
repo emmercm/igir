@@ -2,17 +2,26 @@ import async, { AsyncResultCallback } from 'async';
 
 import ProgressBar, { ProgressBarSymbol } from '../console/progressBar.js';
 import Constants from '../constants.js';
+import ArrayPoly from '../polyfill/arrayPoly.js';
 import File from '../types/files/file.js';
 import Options from '../types/options.js';
 import Patch from '../types/patches/patch.js';
 import PatchFactory from '../types/patches/patchFactory.js';
 import Scanner from './scanner.js';
 
+/**
+ * Scan for {@link Patch}es and parse them into the correct supported type.
+ *
+ * This class will not be run concurrently with any other class.
+ */
 export default class PatchScanner extends Scanner {
   constructor(options: Options, progressBar: ProgressBar) {
     super(options, progressBar, PatchScanner.name);
   }
 
+  /**
+   * Scan & process {@link Patch}es.
+   */
   async scan(): Promise<Patch[]> {
     this.progressBar.logInfo('scanning patch files');
 
@@ -33,7 +42,7 @@ export default class PatchScanner extends Scanner {
     const patches = (await async.mapLimit(
       files,
       Constants.PATCH_SCANNER_THREADS,
-      async (file, callback: AsyncResultCallback<Patch, Error>) => {
+      async (file, callback: AsyncResultCallback<Patch | undefined, Error>) => {
         await this.progressBar.incrementProgress();
         const waitingMessage = `${file.toString()} ...`;
         this.progressBar.addWaitingMessage(waitingMessage);
@@ -49,7 +58,7 @@ export default class PatchScanner extends Scanner {
           this.progressBar.removeWaitingMessage(waitingMessage);
         }
       },
-    )).filter((patch) => patch);
+    )).filter(ArrayPoly.filterNotNullish);
 
     this.progressBar.logInfo('done scanning patch files');
     return patches;
