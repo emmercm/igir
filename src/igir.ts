@@ -7,12 +7,14 @@ import ProgressBarCLI from './console/progressBarCli.js';
 import Constants from './constants.js';
 import CandidateCombiner from './modules/candidateCombiner.js';
 import CandidateGenerator from './modules/candidateGenerator.js';
+import CandidateMergeSplitValidator from './modules/candidateMergeSplitValidator.js';
 import CandidatePatchGenerator from './modules/candidatePatchGenerator.js';
 import CandidatePostProcessor from './modules/candidatePostProcessor.js';
 import CandidatePreferer from './modules/candidatePreferer.js';
 import CandidateWriter from './modules/candidateWriter.js';
 import DATFilter from './modules/datFilter.js';
 import DATInferrer from './modules/datInferrer.js';
+import DATMergerSplitter from './modules/datMergerSplitter.js';
 import DATScanner from './modules/datScanner.js';
 import DirectoryCleaner from './modules/directoryCleaner.js';
 import FileIndexer from './modules/fileIndexer.js';
@@ -94,7 +96,8 @@ export default class Igir {
         dat.getParents().length,
       );
 
-      const filteredDat = await new DATFilter(this.options, progressBar).filter(dat);
+      const mergedSplitDat = await new DATMergerSplitter(this.options, progressBar).merge(dat);
+      const filteredDat = await new DATFilter(this.options, progressBar).filter(mergedSplitDat);
 
       // Generate and filter ROM candidates
       const parentsToCandidates = await this.generateCandidates(
@@ -238,6 +241,9 @@ export default class Igir {
 
     const postProcessedCandidates = await new CandidatePostProcessor(this.options, progressBar)
       .process(dat, filteredCandidates);
+
+    await new CandidateMergeSplitValidator(this.options, progressBar)
+      .validate(dat, postProcessedCandidates);
 
     return new CandidateCombiner(this.options, progressBar)
       .combine(dat, postProcessedCandidates);
