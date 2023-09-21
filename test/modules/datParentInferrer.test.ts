@@ -1,11 +1,12 @@
 import DATParentInferrer from '../../src/modules/datParentInferrer.js';
-import DAT from '../../src/types/logiqx/dat.js';
-import Game from '../../src/types/logiqx/game.js';
-import Header from '../../src/types/logiqx/header.js';
+import DAT from '../../src/types/dats/dat.js';
+import Game from '../../src/types/dats/game.js';
+import Header from '../../src/types/dats/logiqx/header.js';
+import LogiqxDAT from '../../src/types/dats/logiqx/logiqxDat.js';
 import ProgressBarFake from '../console/progressBarFake.js';
 
 function buildDat(gameNames: string[]): DAT {
-  return new DAT(
+  return new LogiqxDAT(
     new Header(),
     gameNames.map((name) => new Game({ name })),
   );

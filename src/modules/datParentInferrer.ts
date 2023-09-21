@@ -1,7 +1,8 @@
 import ProgressBar, { ProgressBarSymbol } from '../console/progressBar.js';
+import DAT from '../types/dats/dat.js';
+import Game from '../types/dats/game.js';
+import LogiqxDAT from '../types/dats/logiqx/logiqxDat.js';
 import Internationalization from '../types/internationalization.js';
-import DAT from '../types/logiqx/dat.js';
-import Game from '../types/logiqx/game.js';
 import Module from './module.js';
 
 /**
@@ -14,6 +15,9 @@ export default class DATParentInferrer extends Module {
     super(progressBar, DATParentInferrer.name);
   }
 
+  /**
+   * Infer {@link Parent}s from {@link Game}s.
+   */
   async infer(dat: DAT): Promise<DAT> {
     this.progressBar.logInfo(`inferring parents for ${dat.getGames().length.toLocaleString()} game${dat.getGames().length !== 1 ? 's' : ''}`);
 
@@ -46,7 +50,7 @@ export default class DATParentInferrer extends Module {
       return DATParentInferrer.electParent(games);
     });
 
-    const groupedDat = new DAT(dat.getHeader(), newGames);
+    const groupedDat = new LogiqxDAT(dat.getHeader(), newGames);
     this.progressBar.logDebug(`${groupedDat.getNameShort()}: grouped to ${groupedDat.getParents().length.toLocaleString()} parent${groupedDat.getParents().length !== 1 ? 's' : ''}`);
 
     this.progressBar.logInfo('done inferring parents');
@@ -199,7 +203,7 @@ export default class DATParentInferrer extends Module {
       // If we got here, then we know these games share the same fully-stripped name. Assume the
       //  first game seen in the DAT should be the parent.
       // The only danger with this assumption is it will affect `--prefer-parent`, but that's not
-      //  likely a commonly-used option.
+      //  likely a commonly used option.
       if (idx === 0) {
         // This game is the parent
         return game;
