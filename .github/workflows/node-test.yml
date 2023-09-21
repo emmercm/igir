@@ -12,7 +12,7 @@ on:
       - synchronize  # PR's branch was edited (i.e. new commits)
 
 concurrency:
-  group: ${{ github.workflow }}-${{ github.head_ref || github.ref }}
+  group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
