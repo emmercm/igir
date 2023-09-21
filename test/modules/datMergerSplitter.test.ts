@@ -7,7 +7,7 @@ import ROM from '../../src/types/dats/rom.js';
 import Options, { MergeMode } from '../../src/types/options.js';
 import ProgressBarFake from '../console/progressBarFake.js';
 
-/* eslint-disable object-curly-newline */
+/* eslint-disable object-curly-newline, unicorn/numeric-separators-style */
 // MAME v0.257
 const dat = new LogiqxDAT(new Header(), [
   // ***** Games *****
