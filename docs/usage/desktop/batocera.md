@@ -4,7 +4,7 @@
 
 ## BIOS
 
-Because Batocera uses RetroArch under the hood, the instructions are generally the [same as RetroArch](retroarch.md). By default, the [Batocera BIOS directory](https://wiki.batocera.org/add_games_bios#adding_bios_files) is `/userdata/bios`:
+Because Batocera uses RetroArch under the hood, the instructions are generally the [same as RetroArch](retroarch.md). By default, the [Batocera BIOS directory](https://wiki.batocera.org/add_games_bios#adding_bios_files) is `/userdata/bios/`:
 
 === ":simple-linux: Batocera (Linux)"
 

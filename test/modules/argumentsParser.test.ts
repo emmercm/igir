@@ -7,6 +7,7 @@ import Constants from '../../src/constants.js';
 import ArgumentsParser from '../../src/modules/argumentsParser.js';
 import Header from '../../src/types/dats/logiqx/header.js';
 import LogiqxDAT from '../../src/types/dats/logiqx/logiqxDat.js';
+import { MergeMode } from '../../src/types/options.js';
 
 const dummyRequiredArgs = ['--input', os.devNull, '--output', os.devNull];
 const dummyCommandAndRequiredArgs = ['copy', ...dummyRequiredArgs];
@@ -93,35 +94,70 @@ describe('commands', () => {
 describe('options', () => {
   it('should have expected defaults', () => {
     const options = argumentsParser.parse(dummyCommandAndRequiredArgs);
+
+    expect(options.getFixdat()).toEqual(false);
+
     expect(options.getDirMirror()).toEqual(false);
     expect(options.getDirDatName()).toEqual(false);
+    expect(options.getDirDatDescription()).toEqual(false);
     expect(options.getDirLetter()).toEqual(false);
-    expect(options.getSingle()).toEqual(false);
+    expect(options.getDirLetterLimit()).toEqual(0);
     expect(options.getOverwrite()).toEqual(false);
+    expect(options.getOverwriteInvalid()).toEqual(false);
+
+    expect(options.getZipDatName()).toEqual(false);
+
+    expect(options.getSymlinkRelative()).toEqual(false);
+
+    expect(options.getMergeRoms()).toEqual(MergeMode.NONMERGED);
+
+    expect(options.getFilterRegex()).toBeUndefined();
+    expect(options.getFilterRegexExclude()).toBeUndefined();
+    expect(options.getLanguageFilter().size).toEqual(0);
+    expect(options.getRegionFilter().size).toEqual(0);
+    expect(options.getNoBios()).toEqual(false);
+    expect(options.getOnlyBios()).toEqual(false);
+    expect(options.getNoDevice()).toEqual(false);
+    expect(options.getOnlyDevice()).toEqual(false);
+    expect(options.getNoUnlicensed()).toEqual(false);
+    expect(options.getOnlyUnlicensed()).toEqual(false);
+    expect(options.getOnlyRetail()).toEqual(false);
+    expect(options.getNoDebug()).toEqual(false);
+    expect(options.getOnlyDebug()).toEqual(false);
+    expect(options.getNoDemo()).toEqual(false);
+    expect(options.getOnlyDemo()).toEqual(false);
+    expect(options.getNoBeta()).toEqual(false);
+    expect(options.getOnlyBeta()).toEqual(false);
+    expect(options.getNoSample()).toEqual(false);
+    expect(options.getOnlySample()).toEqual(false);
+    expect(options.getNoPrototype()).toEqual(false);
+    expect(options.getOnlyPrototype()).toEqual(false);
+    expect(options.getNoTestRoms()).toEqual(false);
+    expect(options.getOnlyTestRoms()).toEqual(false);
+    expect(options.getNoAftermarket()).toEqual(false);
+    expect(options.getOnlyAftermarket()).toEqual(false);
+    expect(options.getNoHomebrew()).toEqual(false);
+    expect(options.getOnlyHomebrew()).toEqual(false);
+    expect(options.getNoUnverified()).toEqual(false);
+    expect(options.getOnlyUnverified()).toEqual(false);
+    expect(options.getNoBad()).toEqual(false);
+    expect(options.getOnlyBad()).toEqual(false);
+
+    expect(options.getSingle()).toEqual(false);
     expect(options.getPreferVerified()).toEqual(false);
     expect(options.getPreferGood()).toEqual(false);
     expect(options.getPreferLanguages()).toHaveLength(0);
     expect(options.getPreferRegions()).toHaveLength(0);
-    expect(options.getLanguageFilter().size).toEqual(0);
     expect(options.getPreferRevisionNewer()).toEqual(false);
     expect(options.getPreferRevisionOlder()).toEqual(false);
     expect(options.getPreferRetail()).toEqual(false);
+    expect(options.getPreferNTSC()).toEqual(false);
+    expect(options.getPreferPAL()).toEqual(false);
     expect(options.getPreferParent()).toEqual(false);
-    expect(options.getRegionFilter().size).toEqual(0);
-    expect(options.getOnlyBios()).toEqual(false);
-    expect(options.getNoBios()).toEqual(false);
-    expect(options.getNoDevice()).toEqual(false);
-    expect(options.getNoUnlicensed()).toEqual(false);
-    expect(options.getOnlyRetail()).toEqual(false);
-    expect(options.getNoDemo()).toEqual(false);
-    expect(options.getNoBeta()).toEqual(false);
-    expect(options.getNoSample()).toEqual(false);
-    expect(options.getNoPrototype()).toEqual(false);
-    expect(options.getNoTestRoms()).toEqual(false);
-    expect(options.getNoAftermarket()).toEqual(false);
-    expect(options.getNoHomebrew()).toEqual(false);
-    expect(options.getNoUnverified()).toEqual(false);
-    expect(options.getNoBad()).toEqual(false);
+
+    expect(options.getDatThreads()).toEqual(3);
+    expect(options.getWriterThreads()).toEqual(20);
+    expect(options.getLogLevel()).toEqual(LogLevel.WARN);
     expect(options.getHelp()).toEqual(false);
   });
 
@@ -476,6 +512,17 @@ describe('options', () => {
     expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--prefer-parent', '--prefer-parent', '--single']).getPreferParent()).toEqual(true);
     expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--prefer-parent', 'false', '--prefer-parent', 'true', '--single']).getPreferParent()).toEqual(true);
     expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--prefer-parent', 'true', '--prefer-parent', 'false', '--single']).getPreferParent()).toEqual(false);
+  });
+
+  it('should parse "merge-roms"', () => {
+    expect(argumentsParser.parse(dummyCommandAndRequiredArgs).getMergeRoms())
+      .toEqual(MergeMode.NONMERGED);
+    expect(() => argumentsParser.parse([...dummyCommandAndRequiredArgs, '--merge-roms', 'foobar']).getMergeRoms()).toThrow(/invalid values/i);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--merge-roms', 'fullnonmerged']).getMergeRoms()).toEqual(MergeMode.FULLNONMERGED);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--merge-roms', 'nonmerged']).getMergeRoms()).toEqual(MergeMode.NONMERGED);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--merge-roms', 'split']).getMergeRoms()).toEqual(MergeMode.SPLIT);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--merge-roms', 'merged']).getMergeRoms()).toEqual(MergeMode.MERGED);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--merge-roms', 'merged', '--merge-roms', 'split']).getMergeRoms()).toEqual(MergeMode.SPLIT);
   });
 
   it('should parse "filter-regex"', () => {

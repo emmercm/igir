@@ -12,13 +12,13 @@ DATs are catalogs of every known ROM that exists per game system, complete with 
 
 These DATs help `igir` distinguish known ROM files in input directories from other files. Because DATs typically contain the complete catalog for a console, `igir` also uses them to generate reports for you on what ROMs were found and which are missing.
 
-`igir` will look for `*.dat` files automatically in your working directory, but you can specify a specific location with the `--dat <path>` option:
+The location to your DAT files are specified with the `--dat <path>` option:
 
 ```shell
 igir [commands..] --dat "dats/*.dat" --input <input>
 ```
 
-Or you can specify archives that can contain multiple DATs (such as No-Intro's [daily download](https://datomatic.no-intro.org/index.php?page=download&s=64&op=daily)) with:
+you can even specify archives that can contain multiple DATs (such as No-Intro's [daily download](https://datomatic.no-intro.org/index.php?page=download&s=64&op=daily)):
 
 ```shell
 igir [commands..] --dat "No-Intro*.zip" --input <input>
@@ -52,7 +52,7 @@ There have been a few DAT-like formats developed over the years. `igir` supports
           Windows is fairly easy, MAME is officially compiled for Windows and downloads can be found on many mirror sites.
 
           ```batch
-          igir [commands..] --dat "mame0257b_64bit.exe" --input <input>
+          igir [commands..] --dat "mame0258b_64bit.exe" --input <input>
           ```
 
       === ":simple-apple: macOS"
@@ -60,7 +60,7 @@ There have been a few DAT-like formats developed over the years. `igir` supports
           MAME isn't officially compiled for macOS, you will have to use a third-party release such as [SDL MAME](https://sdlmame.lngn.net/).
 
           ```shell
-          igir [commands..] --dat "mame0257-x86/mame" --input <input>
+          igir [commands..] --dat "mame0258-x86/mame" --input <input>
           ```
 
       === ":simple-linux: Linux"
@@ -74,19 +74,23 @@ There have been a few DAT-like formats developed over the years. `igir` supports
 - [CMPro](http://www.logiqx.com/DatFAQs/CMPro.php)
 - [Hardware Target Game Database](https://github.com/frederic-mahe/Hardware-Target-Game-Database) SMDBs that contain file sizes
 
-!!! tip
+!!! note
 
-    `igir` supports URLs to DAT files and archives. This is helpful to make sure you're always using the most up-to-date version of a DAT hosted on sites such as GitHub. For example:
+    In case you come across a DAT in a format that `igir` doesn't support, SabreTools supports reading [a number of obscure formats](https://github.com/SabreTools/SabreTools/wiki/DatFile-Formats) and converting them to more standard formats such as Logiqx XML.
 
-    ```shell
-    igir [commands..] --dat "https://raw.githubusercontent.com/libretro/libretro-database/master/dat/DOOM.dat" --input <input>
-    ```
+## DAT input options
+
+The `--dat <path>` supports files, archives, directories, and globs like any of the other file options. See the [file scanning page](file-scanning.md) for more information.
+
+`igir` also supports URLs to DAT files and archives. This is helpful to make sure you're always using the most up-to-date version of a DAT hosted on sites such as GitHub. For example:
+
+```shell
+igir [commands..] --dat "https://raw.githubusercontent.com/libretro/libretro-database/master/dat/DOOM.dat" --input <input>
+```
+
+!!! note
 
     Because of the way [DAT-o-MATIC](https://datomatic.no-intro.org/index.php) prepares & serves downloads, you can't use this method for official No-Intro DATs.
-
-!!! info
-
-    See the [file scanning docs](file-scanning.md) for more information on specifying file paths with the `--dat <path>` option.
 
 ## DAT groups
 
@@ -94,8 +98,7 @@ A number of different release groups maintain sets of DATs, the most popular are
 
 - [No-Intro](https://datomatic.no-intro.org/index.php?page=download&s=64&op=daily) (cartridge-based consoles)
 - [Redump](http://redump.org/downloads/) (optical media-based consoles)
-- [progetto-SNAPS](https://www.progettosnaps.net/dats/MAME/) (MAME)
-- [pleasuredome](https://pleasuredome.github.io/pleasuredome/mame/) (MAME)
+- [MAME](https://www.mamedev.org/release.html) (official "full driver" MAME ListXML)
 
 And some less popular release groups are:
 
@@ -106,6 +109,8 @@ And some less popular release groups are:
   - [Mirrored DATs](https://github.com/libretro/libretro-database/tree/master/metadat) (No-Intro and Redump/trurip/TOSEC DATs)
   - [FinalBurn NEO](https://github.com/libretro/FBNeo/tree/master/dats) (arcade, gen 1-4 consoles)
 - [ADVANsCEne](https://www.advanscene.com/html/dats.php) (GBA, DS, 3DS, PSP, PS Vita)
+- [progetto-SNAPS](https://www.progettosnaps.net/dats/MAME/) (MAME ListXMLs with some unnecessary metadata removed, e.g. inputs, DIP switches, and ports)
+- [pleasuredome](https://pleasuredome.github.io/pleasuredome/mame/) (MAME merged, non-merged, and split sets _without_ parent/clone information)
 
 ## Parent/clone (P/C) DATs
 
@@ -121,7 +126,7 @@ Being able to know that many releases are actually the same game gives `igir` th
 
 One feature that sets `igir` apart from other ROM managers is its ability to infer parent/clone information when DATs don't provide it. For example, Redump DATs don't provide parent/clone information, which makes it much more difficult to create 1G1R sets.
 
-For example, all of these Super Smash Bros. Melee releases should be considered the same game, even if a DAT doesn't provide proper information. If the releases are all treated the same, then the `--single` option can be used in combination with [ROM preferences](../roms/filtering-preferences.md) to make a 1G1R set. `igir` is smart enough to understand that the only differences between these releases are the regions, languages, and revisions.
+For example, all of these Super Smash Bros. Melee releases should be considered the same game, even if a DAT doesn't provide proper information. If the releases are all considered the same game, then the `--single` option can be used in combination with [ROM preferences](../roms/filtering-preferences.md) to make a 1G1R set. `igir` is smart enough to understand that the only differences between these releases are the regions, languages, and revisions.
 
 ```text
 Super Smash Bros. Melee (Europe) (En,Fr,De,Es,It)
@@ -139,7 +144,24 @@ Super Smash Bros. Melee (USA) (En,Ja) (Rev 2)
 
     [Retool](https://github.com/unexpectedpanda/retool) is a DAT manipulation tool that has a set of hand-maintained [parent/clone lists](https://github.com/unexpectedpanda/retool-clonelists-metadata) to supplement common DAT groups such as No-Intro and Redump. This helps cover situations such as release titles in different languages that would be hard to group together automatically.
 
-    1G1R DATs made by Retool can be used seamlessly with `igir`. You won't need to supply the `--single` option or any [ROM preferences](../roms/filtering-preferences.md), but you can still supply [ROM filtering](../roms/filtering-preferences.md) options if desired.
+    1G1R DATs made by Retool can be used seamlessly with `igir`. You won't need to supply the `--single` option or any [ROM preferences](../roms/filtering-preferences.md) for `igir`, as you would have already applied these preferences in Retool, but you can still supply [ROM filtering](../roms/filtering-preferences.md) options if desired.
+
+## Arcade DATs
+
+Building a ROM set that works with your _exact_ version of [MAME](https://www.mamedev.org/) or FinalBurn [Alpha](https://www.fbalpha.com/) / [Neo](https://github.com/finalburnneo/FBNeo) is necessarily complicated. Arcade machines vary wildly in hardware, they contain many more ROM chips than cartridge-based consoles, their ROM dumps are sometimes imperfect, and arcade emulators prefer "mostly working" emulation over perfect emulation.
+
+The rule-of-thumb with DATs and arcade emulation is: your emulator probably has a companion DAT that describes the _exact_ ROM files it needs and the _exact_ way you have to organize those ROMs. That means:
+
+- ROMs organized with a MAME v0.258 DAT will likely _not_ work with MAME 2003 (v0.78)
+- ROMs organized with a MAME v0.258 DAT will likely _not_ work with MAME 2016 (v0.174)
+- ROMs organized with a MAME v0.258 DAT will likely _not_ work with FinalBurn
+- ROMs organized with a FinalBurn Neo v1.0.0.2 DAT will likely _not_ work with FinalBurn Neo v1.0.0.0
+- ROMs organized with a FinalBurn Neo v1.0.0.2 DAT will likely _not_ work with FinalBurn Alpha v0.2.97.29
+- ROMs organized with a FinalBurn Alpha v0.2.97.29 DAT will likely _not_ work with FinalBurn Alpha v0.2.96.71
+
+If you are using a desktop frontend such as [RetroArch](../usage/desktop/retroarch.md), it may come with multiple versions of the same emulator, and it is unlikely that any of them is the most recent version. Follow the frontend's documentation to location or download the correct DAT to use with each emulator.
+
+See the [arcade page](../usage/arcade.md) for more information on building & re-building arcade ROM sets.
 
 ## Fixdats
 
@@ -195,11 +217,3 @@ ROMs-Sorted/
 ├── Nintendo - Game Boy Advance (20230414-173400) fixdat.dat
 └── Nintendo - Game Boy Color (20230414-173400) fixdat.dat
 ```
-
-## FAQ
-
-### Aren't DATs primarily for MAME?
-
-That's where DATs started. The [Logiqx XML](http://www.logiqx.com/DatFAQs/) DAT format can include information in [clrmamepro](https://mamedev.emulab.it/clrmamepro/) or [Romcenter](http://www.romcenter.com/) formats on how to handle MAME-specific settings such as [merging](https://docs.mamedev.org/usingmame/aboutromsets.html#parents-clones-splitting-and-merging) (non-merged vs. merged vs. split) and packing (zip vs. not). `igir` doesn't use any of this information, but it helps paint a picture of why DATs are structured the way they are.
-
-These days, depending on what type of emulation you're interested in, non-MAME DATs such as No-Intro's may be more common than MAME DATs. See the [DAT groups](#dat-groups) section above for some of the popular DAT release groups.

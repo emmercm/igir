@@ -4,7 +4,7 @@
 
 ## BIOS
 
-Because Lakka uses RetroArch under the hood, the instructions are generally the [same as RetroArch](retroarch.md). By default, the [Lakka BIOS directory](https://www.lakka.tv/doc/Accessing-Lakka-filesystem/) is `/storage/system`:
+Because Lakka uses RetroArch under the hood, the instructions are generally the [same as RetroArch](retroarch.md). By default, the [Lakka BIOS directory](https://www.lakka.tv/doc/Accessing-Lakka-filesystem/) is `/storage/system/`:
 
 === ":simple-linux: Lakka (Linux)"
 
@@ -19,7 +19,7 @@ Because Lakka uses RetroArch under the hood, the instructions are generally the 
 
 ## ROMs
 
-Lakka has a `roms` folder at `/storage/roms` that is used by default:
+Lakka has a `roms` folder at `/storage/roms/` that is used by default:
 
 === ":simple-linux: Lakka (Linux)"
 

@@ -41,13 +41,13 @@ theme:
 
 nav:
   - Documentation:
-      - Home:
-        - index.md
-      - overview.md
-      - installation.md
-      - commands.md
-      - alternatives.md
-      - Usage:
+      - index.md
+      - Getting Started:
+        - overview.md
+        - installation.md
+        - commands.md
+        - alternatives.md
+      - Example Usage:
           - usage/collection-sorting.md
           - Desktop Frontends:
               - usage/desktop/batocera.md
@@ -65,6 +65,7 @@ nav:
           - Specific Consoles:
               - usage/console/gamecube.md
               - usage/console/ps2.md
+          - usage/arcade.md
           - usage/personal.md
       - File Inputs:
           - input/file-scanning.md
@@ -75,8 +76,8 @@ nav:
           - roms/headers.md
           - roms/patching.md
       - File Outputs:
-          - output/tokens.md
           - output/writing-archives.md
+          - output/tokens.md
           - output/reporting.md
           - output/cleaning.md
       - Advanced:

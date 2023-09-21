@@ -6,7 +6,9 @@ import path from 'node:path';
 import util from 'node:util';
 
 import async, { AsyncResultCallback } from 'async';
-import { Expose, instanceToPlain, plainToInstance } from 'class-transformer';
+import {
+  Expose, instanceToPlain, plainToInstance, Transform,
+} from 'class-transformer';
 import fg from 'fast-glob';
 import { isNotJunk } from 'junk';
 import micromatch from 'micromatch';
@@ -19,6 +21,17 @@ import fsPoly, { FsWalkCallback } from '../polyfill/fsPoly.js';
 import URLPoly from '../polyfill/urlPoly.js';
 import DAT from './dats/dat.js';
 import File from './files/file.js';
+
+export enum MergeMode {
+  // Clones contain all parent ROMs, all games contain BIOS & device ROMs
+  FULLNONMERGED = 1,
+  // Clones contain all parent ROMs, BIOS & device ROMsets are separate
+  NONMERGED,
+  // Clones exclude all parent ROMs, BIOS & device ROMsets are separate
+  SPLIT,
+  // Clones are merged into parent, BIOS & device ROMsets are separate
+  MERGED,
+}
 
 export interface OptionsProps {
   readonly commands?: string[],
@@ -52,6 +65,8 @@ export interface OptionsProps {
 
   readonly header?: string,
   readonly removeHeaders?: string[],
+
+  readonly mergeRoms?: string,
 
   readonly filterRegex?: string,
   readonly filterRegexExclude?: string,
@@ -158,6 +173,8 @@ export default class Options implements OptionsProps {
 
   readonly removeHeaders?: string[];
 
+  readonly mergeRoms?: string;
+
   readonly filterRegex: string;
 
   readonly filterRegexExclude: string;
@@ -237,9 +254,11 @@ export default class Options implements OptionsProps {
   readonly preferRetail: boolean;
 
   @Expose({ name: 'preferNtsc' })
+  @Transform(({ value }) => !!value)
   readonly preferNTSC: boolean;
 
   @Expose({ name: 'preferPal' })
+  @Transform(({ value }) => !!value)
   readonly preferPAL: boolean;
 
   readonly preferParent: boolean;
@@ -286,6 +305,8 @@ export default class Options implements OptionsProps {
 
     this.header = options?.header ?? '';
     this.removeHeaders = options?.removeHeaders;
+
+    this.mergeRoms = options?.mergeRoms;
 
     this.filterRegex = options?.filterRegex ?? '';
     this.filterRegexExclude = options?.filterRegexExclude ?? '';
@@ -757,6 +778,15 @@ export default class Options implements OptionsProps {
     // Option was provided with extensions, we should remove headers on name match
     return this.removeHeaders
       .some((removeHeader) => removeHeader.toLowerCase() === extension.toLowerCase());
+  }
+
+  getMergeRoms(): MergeMode | undefined {
+    const mergeMode = Object.keys(MergeMode)
+      .find((mode) => mode.toLowerCase() === this.mergeRoms?.toLowerCase());
+    if (!mergeMode) {
+      return undefined;
+    }
+    return MergeMode[mergeMode as keyof typeof MergeMode];
   }
 
   getFilterRegex(): RegExp | undefined {

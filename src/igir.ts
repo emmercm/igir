@@ -7,12 +7,14 @@ import ProgressBarCLI from './console/progressBarCli.js';
 import Constants from './constants.js';
 import CandidateCombiner from './modules/candidateCombiner.js';
 import CandidateGenerator from './modules/candidateGenerator.js';
+import CandidateMergeSplitValidator from './modules/candidateMergeSplitValidator.js';
 import CandidatePatchGenerator from './modules/candidatePatchGenerator.js';
 import CandidatePostProcessor from './modules/candidatePostProcessor.js';
 import CandidatePreferer from './modules/candidatePreferer.js';
 import CandidateWriter from './modules/candidateWriter.js';
 import DATFilter from './modules/datFilter.js';
 import DATGameInferrer from './modules/datGameInferrer.js';
+import DATMergerSplitter from './modules/datMergerSplitter.js';
 import DATParentInferrer from './modules/datParentInferrer.js';
 import DATScanner from './modules/datScanner.js';
 import DirectoryCleaner from './modules/directoryCleaner.js';
@@ -91,11 +93,10 @@ export default class Igir {
         dat.getParents().length,
       );
 
-      if (this.options.getSingle() && !dat.hasParentCloneInfo()) {
-        progressBar.logInfo(`${dat.getNameShort()}: does not contain parent/clone information, attempting to infer it`);
-      }
       const datWithParents = await new DATParentInferrer(progressBar).infer(dat);
-      const filteredDat = await new DATFilter(this.options, progressBar).filter(datWithParents);
+      const mergedSplitDat = await new DATMergerSplitter(this.options, progressBar)
+        .merge(datWithParents);
+      const filteredDat = await new DATFilter(this.options, progressBar).filter(mergedSplitDat);
 
       // Generate and filter ROM candidates
       const parentsToCandidates = await this.generateCandidates(
@@ -239,6 +240,9 @@ export default class Igir {
 
     const postProcessedCandidates = await new CandidatePostProcessor(this.options, progressBar)
       .process(dat, filteredCandidates);
+
+    await new CandidateMergeSplitValidator(this.options, progressBar)
+      .validate(dat, postProcessedCandidates);
 
     return new CandidateCombiner(this.options, progressBar)
       .combine(dat, postProcessedCandidates);
