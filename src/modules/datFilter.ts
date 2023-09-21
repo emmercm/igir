@@ -96,17 +96,17 @@ export default class DATFilter extends Module {
 
   private noLanguageAllowed(game: Game): boolean {
     const langs = this.options.getLanguageFilter();
-    if (!langs.length) {
+    if (!langs.size) {
       return false;
     }
-    return !game.getLanguages().some((lang) => langs.indexOf(lang) !== -1);
+    return !game.getLanguages().some((lang) => langs.has(lang));
   }
 
   private regionNotAllowed(game: Game): boolean {
     const regions = this.options.getRegionFilter();
-    if (!regions.length) {
+    if (!regions.size) {
       return false;
     }
-    return !game.getRegions().some((region) => regions.indexOf(region) !== -1);
+    return !game.getRegions().some((region) => regions.has(region));
   }
 }
