@@ -1,17 +1,18 @@
 import 'reflect-metadata';
 
+import fs from 'node:fs';
+import os from 'node:os';
+import path from 'node:path';
+import util from 'node:util';
+
 import async, { AsyncResultCallback } from 'async';
 import {
   Expose, instanceToPlain, plainToInstance, Transform,
 } from 'class-transformer';
 import fg from 'fast-glob';
-import fs from 'fs';
 import { isNotJunk } from 'junk';
 import micromatch from 'micromatch';
 import moment from 'moment';
-import os from 'os';
-import path from 'path';
-import util from 'util';
 
 import LogLevel from '../console/logLevel.js';
 import Constants from '../constants.js';

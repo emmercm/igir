@@ -3,7 +3,7 @@ import isAdmin from 'is-admin';
 
 import Logger from './console/logger.js';
 import ProgressBar, { ProgressBarSymbol } from './console/progressBar.js';
-import ProgressBarCLI from './console/progressBarCLI.js';
+import ProgressBarCLI from './console/progressBarCli.js';
 import Constants from './constants.js';
 import CandidateCombiner from './modules/candidateCombiner.js';
 import CandidateGenerator from './modules/candidateGenerator.js';
