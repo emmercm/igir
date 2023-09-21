@@ -17,7 +17,7 @@ enum ROMType {
 }
 
 export enum Status {
-  MISSING,
+  MISSING = 1,
   FOUND,
   UNMATCHED,
   DELETED,
