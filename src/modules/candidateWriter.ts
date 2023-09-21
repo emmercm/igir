@@ -62,7 +62,11 @@ export default class CandidateWriter extends Module {
     // Filter to only the parents that actually have candidates (and therefore output)
     const parentsToWritableCandidates = new Map(
       [...parentsToCandidates.entries()]
-        .filter(([, candidates]) => candidates.length),
+        // The parent has candidates
+        .filter(([, releaseCandidates]) => releaseCandidates.length)
+        // At least some candidates have files
+        .filter(([, releaseCandidates]) => releaseCandidates
+          .some((releaseCandidate) => releaseCandidate.getRomsWithFiles().length)),
     );
 
     const totalCandidateCount = [...parentsToWritableCandidates.values()].flatMap((c) => c).length;
