@@ -13,8 +13,9 @@ import CandidatePostProcessor from './modules/candidatePostProcessor.js';
 import CandidatePreferer from './modules/candidatePreferer.js';
 import CandidateWriter from './modules/candidateWriter.js';
 import DATFilter from './modules/datFilter.js';
-import DATInferrer from './modules/datInferrer.js';
+import DATGameInferrer from './modules/datGameInferrer.js';
 import DATMergerSplitter from './modules/datMergerSplitter.js';
+import DATParentInferrer from './modules/datParentInferrer.js';
 import DATScanner from './modules/datScanner.js';
 import DirectoryCleaner from './modules/directoryCleaner.js';
 import FileIndexer from './modules/fileIndexer.js';
@@ -73,11 +74,7 @@ export default class Igir {
     // Set up progress bar and input for DAT processing
     const datProcessProgressBar = await this.logger.addProgressBar('Processing DATs', ProgressBarSymbol.PROCESSING, dats.length);
     if (!dats.length) {
-      dats = new DATInferrer(datProcessProgressBar).infer(roms);
-    }
-
-    if (this.options.getSingle() && !dats.some((dat) => dat.hasParentCloneInfo())) {
-      throw new Error('No DAT contains parent/clone information, cannot process --single');
+      dats = new DATGameInferrer(datProcessProgressBar).infer(roms);
     }
 
     const datsToWrittenFiles = new Map<DAT, File[]>();
@@ -96,7 +93,9 @@ export default class Igir {
         dat.getParents().length,
       );
 
-      const mergedSplitDat = await new DATMergerSplitter(this.options, progressBar).merge(dat);
+      const datWithParents = await new DATParentInferrer(progressBar).infer(dat);
+      const mergedSplitDat = await new DATMergerSplitter(this.options, progressBar)
+        .merge(datWithParents);
       const filteredDat = await new DATFilter(this.options, progressBar).filter(mergedSplitDat);
 
       // Generate and filter ROM candidates

@@ -8,7 +8,7 @@ import CandidateCombiner from '../../src/modules/candidateCombiner.js';
 import CandidateGenerator from '../../src/modules/candidateGenerator.js';
 import CandidatePatchGenerator from '../../src/modules/candidatePatchGenerator.js';
 import CandidateWriter from '../../src/modules/candidateWriter.js';
-import DATInferrer from '../../src/modules/datInferrer.js';
+import DATGameInferrer from '../../src/modules/datGameInferrer.js';
 import FileIndexer from '../../src/modules/fileIndexer.js';
 import PatchScanner from '../../src/modules/patchScanner.js';
 import ROMHeaderProcessor from '../../src/modules/romHeaderProcessor.js';
@@ -72,7 +72,7 @@ async function walkAndStat(dirPath: string): Promise<[string, Stats][]> {
 
 function datInferrer(romFiles: File[]): DAT {
   // Run DATInferrer, but condense all DATs down to one
-  const datGames = new DATInferrer(new ProgressBarFake()).infer(romFiles)
+  const datGames = new DATGameInferrer(new ProgressBarFake()).infer(romFiles)
     .map((dat) => dat.getGames())
     .flatMap((games) => games);
   // TODO(cemmer): filter to unique games / remove duplicates

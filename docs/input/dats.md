@@ -122,7 +122,31 @@ Being able to know that many releases are actually the same game gives `igir` th
 
     If you have the option to download "parent/clone" or "P/C" versions of DATs, you should always choose those.
 
-## Arcade
+### Parent/clone inference
+
+One feature that sets `igir` apart from other ROM managers is its ability to infer parent/clone information when DATs don't provide it. For example, Redump DATs don't provide parent/clone information, which makes it much more difficult to create 1G1R sets.
+
+For example, all of these Super Smash Bros. Melee releases should be considered the same game, even if a DAT doesn't provide proper information. If the releases are all considered the same game, then the `--single` option can be used in combination with [ROM preferences](../roms/filtering-preferences.md) to make a 1G1R set. `igir` is smart enough to understand that the only differences between these releases are the regions, languages, and revisions.
+
+```text
+Super Smash Bros. Melee (Europe) (En,Fr,De,Es,It)
+Super Smash Bros. Melee (Korea) (En,Ja)
+Super Smash Bros. Melee (USA) (En,Ja)
+Super Smash Bros. Melee (USA) (En,Ja) (Rev 1)
+Super Smash Bros. Melee (USA) (En,Ja) (Rev 2)
+```
+
+!!! note
+
+    It is unlikely that `igir` will ever be perfect with inferring parent/clone information. If you find an instance where `igir` made the wrong choice, please create a [GitHub issue](https://github.com/emmercm/igir/issues).
+
+!!! tip
+
+    [Retool](https://github.com/unexpectedpanda/retool) is a DAT manipulation tool that has a set of hand-maintained [parent/clone lists](https://github.com/unexpectedpanda/retool-clonelists-metadata) to supplement common DAT groups such as No-Intro and Redump. This helps cover situations such as release titles in different languages that would be hard to group together automatically.
+
+    1G1R DATs made by Retool can be used seamlessly with `igir`. You won't need to supply the `--single` option or any [ROM preferences](../roms/filtering-preferences.md) for `igir`, as you would have already applied these preferences in Retool, but you can still supply [ROM filtering](../roms/filtering-preferences.md) options if desired.
+
+## Arcade DATs
 
 Building a ROM set that works with your _exact_ version of [MAME](https://www.mamedev.org/) or FinalBurn [Alpha](https://www.fbalpha.com/) / [Neo](https://github.com/finalburnneo/FBNeo) is necessarily complicated. Arcade machines vary wildly in hardware, they contain many more ROM chips than cartridge-based consoles, their ROM dumps are sometimes imperfect, and arcade emulators prefer "mostly working" emulation over perfect emulation.
 

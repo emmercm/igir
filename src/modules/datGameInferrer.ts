@@ -17,19 +17,19 @@ import Module from './module.js';
  *
  * This class will not be run concurrently with any other class.
  */
-export default class DATInferrer extends Module {
+export default class DATGameInferrer extends Module {
   constructor(progressBar: ProgressBar) {
-    super(progressBar, DATInferrer.name);
+    super(progressBar, DATGameInferrer.name);
   }
 
   /**
-   * Infer DATs from input files.
+   * Infer {@link Game}s from input files.
    */
   infer(romFiles: File[]): DAT[] {
     this.progressBar.logInfo(`inferring DATs for ${romFiles.length.toLocaleString()} ROM${romFiles.length !== 1 ? 's' : ''}`);
 
     const datNamesToRomFiles = romFiles.reduce((map, file) => {
-      const datName = DATInferrer.getDatName(file);
+      const datName = DATGameInferrer.getDatName(file);
       const datRomFiles = map.get(datName) ?? [];
       datRomFiles.push(file);
       map.set(datName, datRomFiles);
@@ -38,7 +38,7 @@ export default class DATInferrer extends Module {
     this.progressBar.logDebug(`inferred ${datNamesToRomFiles.size.toLocaleString()} DAT${datNamesToRomFiles.size !== 1 ? 's' : ''}`);
 
     const dats = [...datNamesToRomFiles.entries()]
-      .map(([datName, datRomFiles]) => DATInferrer.createDAT(datName, datRomFiles));
+      .map(([datName, datRomFiles]) => DATGameInferrer.createDAT(datName, datRomFiles));
 
     this.progressBar.logInfo('done inferring DATs');
     return dats;
@@ -52,7 +52,7 @@ export default class DATInferrer extends Module {
     const header = new Header({ name: datName });
 
     const gameNamesToRomFiles = romFiles.reduce((map, file) => {
-      const gameName = DATInferrer.getGameName(file);
+      const gameName = DATGameInferrer.getGameName(file);
       const gameRomFiles = map.get(gameName) ?? [];
       gameRomFiles.push(file);
       map.set(gameName, gameRomFiles);
