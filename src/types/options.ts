@@ -393,8 +393,8 @@ export default class Options implements OptionsProps {
 
   // Commands
 
-  getCommands(): string[] {
-    return this.commands.map((c) => c.toLowerCase());
+  getCommands(): Set<string> {
+    return new Set(this.commands.map((c) => c.toLowerCase()));
   }
 
   /**
@@ -408,42 +408,42 @@ export default class Options implements OptionsProps {
    * The writing command that was specified.
    */
   writeString(): string | undefined {
-    return ['copy', 'move', 'symlink'].find((command) => this.getCommands().indexOf(command) !== -1);
+    return ['copy', 'move', 'symlink'].find((command) => this.getCommands().has(command));
   }
 
   /**
    * Was the `copy` command provided?
    */
   shouldCopy(): boolean {
-    return this.getCommands().indexOf('copy') !== -1;
+    return this.getCommands().has('copy');
   }
 
   /**
    * Was the `move` command provided?
    */
   shouldMove(): boolean {
-    return this.getCommands().indexOf('move') !== -1;
+    return this.getCommands().has('move');
   }
 
   /**
    * Was the `symlink` command provided?
    */
   shouldSymlink(): boolean {
-    return this.getCommands().indexOf('symlink') !== -1;
+    return this.getCommands().has('symlink');
   }
 
   /**
    * Was the `extract` command provided?
    */
   shouldExtract(): boolean {
-    return this.getCommands().indexOf('extract') !== -1;
+    return this.getCommands().has('extract');
   }
 
   /**
    * Was the `zip` command provided?
    */
   canZip(): boolean {
-    return this.getCommands().indexOf('zip') !== -1;
+    return this.getCommands().has('zip');
   }
 
   /**
@@ -461,21 +461,21 @@ export default class Options implements OptionsProps {
    * Was the `clean` command provided?
    */
   shouldClean(): boolean {
-    return this.getCommands().indexOf('clean') !== -1;
+    return this.getCommands().has('clean');
   }
 
   /**
    * Was the `test` command provided?
    */
   shouldTest(): boolean {
-    return this.getCommands().indexOf('test') !== -1;
+    return this.getCommands().has('test');
   }
 
   /**
    * Was the `report` command provided?
    */
   shouldReport(): boolean {
-    return this.getCommands().indexOf('report') !== -1;
+    return this.getCommands().has('report');
   }
 
   // Options
@@ -497,9 +497,9 @@ export default class Options implements OptionsProps {
    */
   async scanInputFilesWithoutExclusions(walkCallback?: FsWalkCallback): Promise<string[]> {
     const inputFiles = await this.scanInputFiles(walkCallback);
-    const inputExcludeFiles = await this.scanInputExcludeFiles();
+    const inputExcludeFiles = new Set(await this.scanInputExcludeFiles());
     return inputFiles
-      .filter((inputPath) => inputExcludeFiles.indexOf(inputPath) === -1);
+      .filter((inputPath) => !inputExcludeFiles.has(inputPath));
   }
 
   getPatchFileCount(): number {
@@ -511,9 +511,9 @@ export default class Options implements OptionsProps {
    */
   async scanPatchFilesWithoutExclusions(walkCallback?: FsWalkCallback): Promise<string[]> {
     const patchFiles = await this.scanPatchFiles(walkCallback);
-    const patchExcludeFiles = await this.scanPatchExcludeFiles();
+    const patchExcludeFiles = new Set(await this.scanPatchExcludeFiles());
     return patchFiles
-      .filter((patchPath) => patchExcludeFiles.indexOf(patchPath) === -1);
+      .filter((patchPath) => !patchExcludeFiles.has(patchPath));
   }
 
   private async scanPatchFiles(walkCallback?: FsWalkCallback): Promise<string[]> {
@@ -640,9 +640,9 @@ export default class Options implements OptionsProps {
    */
   async scanDatFilesWithoutExclusions(walkCallback?: FsWalkCallback): Promise<string[]> {
     const datFiles = await this.scanDatFiles(walkCallback);
-    const datExcludeFiles = await this.scanDatExcludeFiles();
+    const datExcludeFiles = new Set(await this.scanDatExcludeFiles());
     return datFiles
-      .filter((inputPath) => datExcludeFiles.indexOf(inputPath) === -1);
+      .filter((inputPath) => !datExcludeFiles.has(inputPath));
   }
 
   getDatRegex(): RegExp | undefined {
@@ -714,17 +714,17 @@ export default class Options implements OptionsProps {
     writtenFiles: File[],
   ): Promise<string[]> {
     // Written files that shouldn't be cleaned
-    const writtenFilesNormalized = writtenFiles
-      .map((file) => path.normalize(file.getFilePath()));
+    const writtenFilesNormalized = new Set(writtenFiles
+      .map((file) => path.normalize(file.getFilePath())));
 
     // Files excluded from cleaning
-    const cleanExcludedFilesNormalized = (await this.scanCleanExcludeFiles())
-      .map((filePath) => path.normalize(filePath));
+    const cleanExcludedFilesNormalized = new Set((await this.scanCleanExcludeFiles())
+      .map((filePath) => path.normalize(filePath)));
 
     return (await Options.scanPaths(outputDirs))
       .map((filePath) => path.normalize(filePath))
-      .filter((filePath) => writtenFilesNormalized.indexOf(filePath) === -1)
-      .filter((filePath) => cleanExcludedFilesNormalized.indexOf(filePath) === -1);
+      .filter((filePath) => !writtenFilesNormalized.has(filePath))
+      .filter((filePath) => !cleanExcludedFilesNormalized.has(filePath));
   }
 
   private getZipExclude(): string {
@@ -797,12 +797,12 @@ export default class Options implements OptionsProps {
     return Options.getRegex(this.filterRegexExclude);
   }
 
-  getLanguageFilter(): string[] {
-    return Options.filterUniqueUpper(this.languageFilter);
+  getLanguageFilter(): Set<string> {
+    return new Set(Options.filterUniqueUpper(this.languageFilter));
   }
 
-  getRegionFilter(): string[] {
-    return Options.filterUniqueUpper(this.regionFilter);
+  getRegionFilter(): Set<string> {
+    return new Set(Options.filterUniqueUpper(this.regionFilter));
   }
 
   getNoBios(): boolean {

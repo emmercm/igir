@@ -263,7 +263,7 @@ export default class Igir {
             // Parse the output directory, as supplied by the user, ONLY replacing tokens in the
             // path and NOT respecting any `--dir-*` options.
             new Options({
-              commands: this.options.getCommands(),
+              commands: [...this.options.getCommands()],
               output: this.options.getOutput(),
             }),
             dat,
