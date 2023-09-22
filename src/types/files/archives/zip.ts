@@ -124,7 +124,7 @@ export default class Zip extends Archive {
       writeStream.on('close', resolve);
     });
 
-    await fsPoly.mv(tempZipFile, this.getFilePath());
+    return fsPoly.mv(tempZipFile, this.getFilePath());
   }
 
   private static async addArchiveEntries(
