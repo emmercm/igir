@@ -167,7 +167,7 @@ export default class CandidateWriter extends Module {
       if (this.options.getOverwriteInvalid()) {
         const existingTest = await this.testZipContents(
           dat,
-          outputZip,
+          outputZip.getFilePath(),
           inputToOutputZipEntries.map((entry) => entry[1]),
         );
         if (!existingTest) {
@@ -185,7 +185,7 @@ export default class CandidateWriter extends Module {
     if (this.options.shouldTest()) {
       const writtenTest = await this.testZipContents(
         dat,
-        outputZip,
+        outputZip.getFilePath(),
         inputToOutputZipEntries.map((entry) => entry[1]),
       );
       if (writtenTest) {
@@ -199,10 +199,10 @@ export default class CandidateWriter extends Module {
 
   private async testZipContents(
     dat: DAT,
-    outputZip: Zip,
+    zipFilePath: string,
     expectedArchiveEntries: ArchiveEntry<Zip>[],
   ): Promise<string | undefined> {
-    this.progressBar.logTrace(`${dat.getNameShort()}: ${outputZip.getFilePath()}: testing zip ...`);
+    this.progressBar.logTrace(`${dat.getNameShort()}: ${zipFilePath}: testing zip ...`);
 
     const expectedEntriesByPath = expectedArchiveEntries
       .reduce((map, entry) => {
@@ -212,7 +212,7 @@ export default class CandidateWriter extends Module {
 
     let archiveEntries: ArchiveEntry<Zip>[];
     try {
-      archiveEntries = await outputZip.getArchiveEntries();
+      archiveEntries = await new Zip(zipFilePath).getArchiveEntries();
     } catch (e) {
       return `failed to get archive contents: ${e}`;
     }
@@ -259,7 +259,7 @@ export default class CandidateWriter extends Module {
       }
     }
 
-    this.progressBar.logTrace(`${dat.getNameShort()}: ${outputZip.getFilePath()}: test passed`);
+    this.progressBar.logTrace(`${dat.getNameShort()}: ${zipFilePath}: test passed`);
     return undefined;
   }
 
