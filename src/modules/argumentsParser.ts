@@ -353,7 +353,7 @@ export default class ArgumentsParser {
           .map((mode) => mode.toLowerCase()),
         coerce: ArgumentsParser.getLastValue, // don't allow string[] values
         requiresArg: true,
-        default: MergeMode[MergeMode.NONMERGED].toLowerCase(),
+        default: MergeMode[MergeMode.FULLNONMERGED].toLowerCase(),
       })
 
       .option('filter-regex', {
