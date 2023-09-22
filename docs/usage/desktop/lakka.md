@@ -1,6 +1,6 @@
 # Lakka
 
-[Lakka](https://www.lakka.tv/) is a pre-configured Linux distribution based on [LibreELEC](https://libreelec.tv/) that comes with [RetroArch](https://www.retroarch.com/) installed. Lakka is primarily for single-board computers (SBCs) such as the [Raspberry Pi](https://www.raspberrypi.com/).
+[Lakka](https://www.lakka.tv/) is a pre-configured Linux distribution based on [LibreELEC](https://libreelec.tv/) that comes with [RetroArch](retroarch.md) installed. Lakka is primarily for single-board computers (SBCs) such as the [Raspberry Pi](https://www.raspberrypi.com/).
 
 ## BIOS
 

@@ -49,22 +49,25 @@ nav:
         - alternatives.md
       - Example Usage:
           - usage/collection-sorting.md
-          - Desktop Frontends:
-              - usage/desktop/batocera.md
-              - usage/desktop/emulationstation.md
-              - usage/desktop/lakka.md
-              - usage/desktop/recalbox.md
-              - usage/desktop/retroarch.md
-              - usage/desktop/retropie.md
-          - Handheld Frontends:
-              - usage/handheld/onionos.md
-          - Specific Hardware:
-              - usage/hardware/analogue-pocket.md
-              - usage/hardware/everdrive.md
-              - usage/hardware/mister.md
-          - Specific Consoles:
-              - usage/console/gamecube.md
-              - usage/console/ps2.md
+          - Emulator Frontends:
+            - usage/desktop/batocera.md
+            - usage/desktop/emuelec.md
+            - usage/desktop/emulationstation.md
+            - usage/desktop/lakka.md
+            - usage/desktop/launchbox.md
+            - usage/handheld/onionos.md
+            - usage/desktop/openemu.md
+            - usage/desktop/recalbox.md
+            - usage/desktop/retroarch.md
+            - usage/desktop/retropie.md
+          - FPGA:
+            - usage/hardware/mister.md
+            - usage/hardware/analogue-pocket.md
+          - Flash Carts:
+            - usage/hardware/everdrive.md
+          - Game Consoles:
+            - usage/console/gamecube.md
+            - usage/console/ps2.md
           - usage/arcade.md
           - usage/personal.md
       - File Inputs:

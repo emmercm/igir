@@ -8,7 +8,7 @@
 
 ## BIOS
 
-OnionOS has its BIOS folder at the root of the SD card at `/BIOS/`, and it uses the [RetroArch filenames](https://github.com/OnionUI/Onion/wiki/Installation#step-3-copy-over-your-bios-and-rom-files):
+OnionOS has its BIOS folder at the root of the SD card at `/BIOS/`, and it uses the [RetroArch filenames](https://onionui.github.io/docs/installation/fresh#step-3-copy-over-your-bios-and-rom-files):
 
 === ":simple-windowsxp: Windows"
 
