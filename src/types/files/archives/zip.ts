@@ -70,7 +70,7 @@ export default class Zip extends Archive {
 
     const entry = archive.files
       .filter((entryFile) => entryFile.type === 'File')
-      .filter((entryFile) => entryFile.path === entryPath.replace(/[\\/]/g, '/'))[0];
+      .find((entryFile) => entryFile.path === entryPath.replace(/[\\/]/g, '/'));
     if (!entry) {
       throw new Error(`didn't find entry '${entryPath}'`);
     }

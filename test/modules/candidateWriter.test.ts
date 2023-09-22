@@ -510,7 +510,7 @@ describe('zip', () => {
       const romFilesAfter = await walkAndStat(path.join(inputTemp, 'roms'));
       romFilesBefore.forEach(([inputFile, statsBefore]) => {
         const [, statsAfter] = romFilesAfter
-          .filter(([inputFileAfter]) => inputFileAfter === inputFile)[0] || [];
+          .find(([inputFileAfter]) => inputFileAfter === inputFile) ?? [];
         if (statsAfter) {
           // File wasn't deleted, ensure it wasn't touched
           expect(statsAfter).toEqual(statsBefore);
@@ -906,7 +906,7 @@ describe('extract', () => {
       const romFilesAfter = await walkAndStat(path.join(inputTemp, 'roms'));
       romFilesBefore.forEach(([inputFile, statsBefore]) => {
         const [, statsAfter] = romFilesAfter
-          .filter(([inputFileAfter]) => inputFileAfter === inputFile)[0] || [];
+          .find(([inputFileAfter]) => inputFileAfter === inputFile) ?? [];
         if (statsAfter) {
           // File wasn't deleted, ensure it wasn't touched
           expect(statsAfter).toEqual(statsBefore);
@@ -1227,7 +1227,7 @@ describe('raw', () => {
       const romFilesAfter = await walkAndStat(path.join(inputTemp, 'roms'));
       romFilesBefore.forEach(([inputFile, statsBefore]) => {
         const [, statsAfter] = romFilesAfter
-          .filter(([inputFileAfter]) => inputFileAfter === inputFile)[0] || [];
+          .find(([inputFileAfter]) => inputFileAfter === inputFile) ?? [];
         if (statsAfter) {
           // File wasn't deleted, ensure it wasn't touched
           expect(statsAfter).toEqual(statsBefore);
