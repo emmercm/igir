@@ -1,0 +1,168 @@
+name: Node.js Compile
+
+on:
+  pull_request:
+    types:
+      # - edited  # PR's base branch was changed
+      - opened
+      - reopened
+      - synchronize  # PR's branch was edited (i.e. new commits)
+  release:
+    types:
+      - published
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Tag (e.g. "v1.0.0")'
+        required: true
+        type: string
+
+concurrency:
+  group: ${{ github.workflow }}-${{ inputs.tag || github.ref }}
+  cancel-in-progress: true
+
+env:
+  ref: ${{ inputs.tag && format('refs/tags/{0}',inputs.tag) || github.sha || github.ref }}
+
+jobs:
+  path-filter:
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: read
+    outputs:
+      changes: ${{ steps.filter.outputs.changes }}
+    steps:
+      - uses: actions/checkout@v3
+      - id: filter
+        uses: dorny/paths-filter@v2
+        with:
+          filters: |
+            changes:
+              - '*'
+              - 'src/**'
+          ref: ${{ env.ref }}
+
+  node-compile:
+    needs:
+      - path-filter
+    if: ${{ needs.path-filter.outputs.changes == 'true' || github.event_name != 'pull_request' }}
+    runs-on: ${{ matrix.os }}-latest
+    strategy:
+      matrix:
+        include:
+          # docker manifest inspect node:<version> | jq '.manifests[].platform'
+          - os: ubuntu
+            build: |
+              NPM_PKG_VERSION=$(npm pkg get version | sed 's/"//g')
+              NODE_ARCH=amd64
+              BIN_OUTPUT="igir-${NPM_PKG_VERSION}-${RUNNER_OS}-${NODE_ARCH/\//}.tar.gz"
+              echo "BIN_OUTPUT=${BIN_OUTPUT}" >> "${GITHUB_ENV}"
+              cp package.json build/
+              docker run --rm --platform "linux/${NODE_ARCH}" --volume "$(pwd):/app" --workdir "/app" \
+                "node:$(cat .nvmrc)" sh -c \
+                "./node_modules/.bin/caxa --input build/ --output igir -- \"{{caxa}}/node_modules/.bin/node\" \"{{caxa}}/index.js\" && ./igir --help"
+              tar cvf - igir | gzip --best > "${BIN_OUTPUT}"
+          - os: ubuntu
+            build: |
+              NPM_PKG_VERSION=$(npm pkg get version | sed 's/"//g')
+              NODE_ARCH=arm/v7
+              BIN_OUTPUT="igir-${NPM_PKG_VERSION}-${RUNNER_OS}-${NODE_ARCH/\//}.tar.gz"
+              echo "BIN_OUTPUT=${BIN_OUTPUT}" >> "${GITHUB_ENV}"
+              cp package.json build/
+              docker run --rm --platform "linux/${NODE_ARCH}" --volume "$(pwd):/app" --workdir "/app" \
+                "node:$(cat .nvmrc)" sh -c \
+                "./node_modules/.bin/caxa --input build/ --output igir -- \"{{caxa}}/node_modules/.bin/node\" \"{{caxa}}/index.js\" && ./igir --help"
+              tar cvf - igir | gzip --best > "${BIN_OUTPUT}"
+          - os: ubuntu
+            build: |
+              NPM_PKG_VERSION=$(npm pkg get version | sed 's/"//g')
+              NODE_ARCH=arm64/v8
+              BIN_OUTPUT="igir-${NPM_PKG_VERSION}-${RUNNER_OS}-${NODE_ARCH/\//}.tar.gz"
+              echo "BIN_OUTPUT=${BIN_OUTPUT}" >> "${GITHUB_ENV}"
+              cp package.json build/
+              docker run --rm --platform "linux/${NODE_ARCH}" --volume "$(pwd):/app" --workdir "/app" \
+                "node:$(cat .nvmrc)" sh -c \
+                "./node_modules/.bin/caxa --input build/ --output igir -- \"{{caxa}}/node_modules/.bin/node\" \"{{caxa}}/index.js\" && ./igir --help"
+              tar cvf - igir | gzip --best > "${BIN_OUTPUT}"
+          # TODO(cemmer): macOS arm64: https://github.com/github/roadmap/issues/528
+          - os: macos
+            build: |
+              NPM_PKG_VERSION=$(npm pkg get version | sed 's/"//g')
+              NODE_ARCH=$(node --print 'process.arch')
+              BIN_OUTPUT="igir-${NPM_PKG_VERSION}-${RUNNER_OS}-${NODE_ARCH}.tar.gz"
+              echo "BIN_OUTPUT=${BIN_OUTPUT}" >> "${GITHUB_ENV}"
+              cp package.json build/
+              ./node_modules/.bin/caxa --input build/ --output igir -- "{{caxa}}/node_modules/.bin/node" "{{caxa}}/index.js"
+              ./igir --help
+              tar cvf - igir | gzip --best > "${BIN_OUTPUT}"
+          - os: windows
+            build: |
+              $NPM_PKG_VERSION=$(npm pkg get version).replace('"','')
+              $NODE_ARCH=$(node --print 'process.arch')
+              $BIN_OUTPUT="igir-$NPM_PKG_VERSION-${env:RUNNER_OS}-${NODE_ARCH}.zip"
+              echo "BIN_OUTPUT=${BIN_OUTPUT}" | Out-File -FilePath $env:GITHUB_ENV -Append # no need for -Encoding utf8
+              copy package.json build\
+              .\node_modules\.bin\caxa --input build\ --output igir.exe -- "{{caxa}}/node_modules/.bin/node" "{{caxa}}/index.js"
+              .\igir.exe --help
+              Compress-Archive -Path igir.exe -DestinationPath "${BIN_OUTPUT}" -CompressionLevel Optimal -Force
+    steps:
+      # Setup and install
+      - uses: actions/checkout@v3
+        with:
+          ref: ${{ env.ref }}
+      - if: matrix.os == 'ubuntu'
+        uses: docker/setup-qemu-action@v2
+      - uses: actions/setup-node@v3
+        with:
+          node-version-file: '.nvmrc'
+          cache: 'npm'
+      - run: npm ci
+      - run: npm run build
+      # Compile and upload
+      - run: ${{ matrix.build }}
+      - run: echo ${{ env.BIN_OUTPUT }}
+      - if: ${{ github.event_name != 'pull_request' }}
+        uses: actions/upload-artifact@v3
+        with:
+          name: ${{ matrix.os }}
+          path: ${{ env.BIN_OUTPUT }}
+          if-no-files-found: error
+
+  release-update:
+    if: ${{ github.event_name != 'pull_request' }}
+    needs:
+      - node-compile
+    runs-on: ubuntu-latest
+    steps:
+      # Get the package version
+      - uses: actions/checkout@v3
+        with:
+          ref: ${{ env.ref }}
+      - uses: actions/setup-node@v3
+        with:
+          node-version-file: '.nvmrc'
+          cache: 'npm'
+      - run: npm ci
+      - run: echo "NPM_PKG_VERSION=$(npm pkg get version | sed 's/"//g')" >> "${GITHUB_ENV}"
+      # Download and update
+      - uses: actions/download-artifact@v3
+      - uses: softprops/action-gh-release@v1
+        with:
+          tag_name: v${{ env.NPM_PKG_VERSION }}
+          files: |
+            ubuntu/*
+            macos/*
+            windows/*
+
+  # !!! This check should be required by GitHub !!!
+  compile-status-check:
+    if: always()
+    needs:
+      - path-filter
+      - node-compile
+    runs-on: ubuntu-latest
+    steps:
+      - uses: re-actors/alls-green@release/v1
+        with:
+          allowed-skips: node-compile
+          jobs: ${{ toJSON(needs) }}

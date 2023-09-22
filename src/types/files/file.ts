@@ -1,9 +1,10 @@
+import fs, { OpenMode, PathLike } from 'node:fs';
+import https from 'node:https';
+import path from 'node:path';
+import { Readable } from 'node:stream';
+import util from 'node:util';
+
 import { crc32 } from '@node-rs/crc32';
-import fs, { OpenMode, PathLike } from 'fs';
-import https from 'https';
-import path from 'path';
-import { Readable } from 'stream';
-import util from 'util';
 
 import Constants from '../../constants.js';
 import ArrayPoly from '../../polyfill/arrayPoly.js';
@@ -374,11 +375,13 @@ export default class File implements FileProps {
     });
   }
 
-  /** *************************
-   *                          *
+  /**
+   ****************************
+   *
    *     Pseudo Built-Ins     *
-   *                          *
-   ************************** */
+   *
+   ****************************
+   */
 
   toString(): string {
     if (this.getSymlinkSource()) {

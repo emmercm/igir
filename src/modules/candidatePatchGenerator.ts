@@ -1,20 +1,26 @@
-import path from 'path';
+import path from 'node:path';
 
 import ProgressBar, { ProgressBarSymbol } from '../console/progressBar.js';
 import ArrayPoly from '../polyfill/arrayPoly.js';
+import DAT from '../types/dats/dat.js';
+import Game from '../types/dats/game.js';
+import Parent from '../types/dats/parent.js';
+import Release from '../types/dats/release.js';
+import ROM from '../types/dats/rom.js';
 import ArchiveEntry from '../types/files/archives/archiveEntry.js';
 import File from '../types/files/file.js';
-import DAT from '../types/logiqx/dat.js';
-import Game from '../types/logiqx/game.js';
-import Parent from '../types/logiqx/parent.js';
-import Release from '../types/logiqx/release.js';
-import ROM from '../types/logiqx/rom.js';
 import Options from '../types/options.js';
 import Patch from '../types/patches/patch.js';
 import ReleaseCandidate from '../types/releaseCandidate.js';
 import ROMWithFiles from '../types/romWithFiles.js';
 import Module from './module.js';
 
+/**
+ * For each {@link Patch} that matches a {@link ROM}, generate a new {@link Parent} and
+ * {@link ReleaseCandidate} of that {@link Game}.
+ *
+ * This class may be run concurrently with other classes.
+ */
 export default class CandidatePatchGenerator extends Module {
   private readonly options: Options;
 
@@ -23,6 +29,9 @@ export default class CandidatePatchGenerator extends Module {
     this.options = options;
   }
 
+  /**
+   * Generate the patched candidates.
+   */
   async generate(
     dat: DAT,
     parentsToCandidates: Map<Parent, ReleaseCandidate[]>,
@@ -75,7 +84,6 @@ export default class CandidatePatchGenerator extends Module {
         ];
 
         // Possibly generate multiple new Parents for the ReleaseCandidates
-        /* eslint-disable no-await-in-loop */
         for (let i = 0; i < releaseCandidates.length; i += 1) {
           const releaseCandidate = releaseCandidates[i];
           if (seenGames.has(releaseCandidate.getGame())) {
@@ -166,11 +174,11 @@ export default class CandidatePatchGenerator extends Module {
                 romName,
               );
             }
-            rom = new ROM(
-              romName,
-              outputFile.getSize(),
-              outputFile.getCrc32(),
-            );
+            rom = new ROM({
+              name: romName,
+              size: outputFile.getSize(),
+              crc: outputFile.getCrc32(),
+            });
 
             this.progressBar.logTrace(`${dat.getNameShort()}: ${inputFile.toString()}: patch candidate generated: ${outputFile.toString()}`);
           }

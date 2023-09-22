@@ -1,10 +1,10 @@
 # Batocera
 
-[Batocera](https://batocera.org/) is a pre-configured Linux distribution for [EmulationStation](https://emulationstation.org/) & [RetroArch](https://www.retroarch.com/). Batocera is primarily for single-board computers (SBCs) such as the [Raspberry Pi](https://www.raspberrypi.com/).
+[Batocera](https://batocera.org/) is a pre-configured Linux distribution for [EmulationStation](emulationstation.md) & [RetroArch](retroarch.md). Batocera is primarily for single-board computers (SBCs) such as the [Raspberry Pi](https://www.raspberrypi.com/).
 
 ## BIOS
 
-Because Batocera uses RetroArch under the hood, the instructions are generally the [same as RetroArch](retroarch.md). By default, the [Batocera BIOS directory](https://wiki.batocera.org/add_games_bios#adding_bios_files) is `/userdata/bios`:
+Because Batocera uses RetroArch under the hood, the instructions are generally the [same as RetroArch](retroarch.md). By default, the [Batocera BIOS directory](https://wiki.batocera.org/add_games_bios#adding_bios_files) is `/userdata/bios/`:
 
 === ":simple-linux: Batocera (Linux)"
 

@@ -1,16 +1,22 @@
-import path from 'path';
+import path from 'node:path';
 
 import ProgressBar, { ProgressBarSymbol } from '../console/progressBar.js';
+import DAT from '../types/dats/dat.js';
+import Game from '../types/dats/game.js';
+import Parent from '../types/dats/parent.js';
+import ROM from '../types/dats/rom.js';
 import ArchiveEntry from '../types/files/archives/archiveEntry.js';
-import DAT from '../types/logiqx/dat.js';
-import Game from '../types/logiqx/game.js';
-import Parent from '../types/logiqx/parent.js';
-import ROM from '../types/logiqx/rom.js';
 import Options from '../types/options.js';
 import ReleaseCandidate from '../types/releaseCandidate.js';
 import ROMWithFiles from '../types/romWithFiles.js';
 import Module from './module.js';
 
+/**
+ * Combine every {@link Parent} and its {@link ReleaseCandidate}s for a {@link DAT} into a single
+ * {@link Parent}.
+ *
+ * This class may be run concurrently with other classes.
+ */
 export default class CandidateCombiner extends Module {
   private readonly options: Options;
 
@@ -19,6 +25,9 @@ export default class CandidateCombiner extends Module {
     this.options = options;
   }
 
+  /**
+   * Combine the candidates.
+   */
   async combine(
     dat: DAT,
     parentsToCandidates: Map<Parent, ReleaseCandidate[]>,

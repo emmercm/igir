@@ -1,10 +1,10 @@
 # Recalbox
 
-[Recalbox](https://www.recalbox.com/) is a pre-configured Linux distribution for [EmulationStation](https://emulationstation.org/) & [RetroArch](https://www.retroarch.com/).
+[Recalbox](https://www.recalbox.com/) is a pre-configured Linux distribution for [EmulationStation](emulationstation.md) & [RetroArch](retroarch.md).
 
 ## BIOS
 
-Because Recalbox uses RetroArch under the hood, the instructions are generally the [same as RetroArch](retroarch.md). By default, the [Recalbox BIOS directory](https://wiki.recalbox.com/en/basic-usage/file-management#adding-bios) is `/recalbox/share/bios`:
+Because Recalbox uses RetroArch under the hood, the instructions are generally the [same as RetroArch](retroarch.md). By default, the [Recalbox BIOS directory](https://wiki.recalbox.com/en/basic-usage/file-management#adding-bios) is `/recalbox/share/bios/`:
 
 === ":simple-linux: Recalbox (Linux)"
 
@@ -19,7 +19,7 @@ Because Recalbox uses RetroArch under the hood, the instructions are generally t
 
 ## ROMs
 
-Recalbox has a `roms` folder at `/recalbox/share/roms` that is used by default:
+Recalbox has a `roms` folder at `/recalbox/share/roms/` that is used by default:
 
 === ":simple-linux: Recalbox (Linux)"
 

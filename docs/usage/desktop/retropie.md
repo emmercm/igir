@@ -1,10 +1,10 @@
 # RetroPie
 
-[RetroPie](https://retropie.org.uk/) is an installer for [EmulationStation](https://emulationstation.org/) & [RetroArch](https://www.retroarch.com/) on single-board computers (SBCs) such as the [Raspberry Pi](https://www.raspberrypi.com/).
+[RetroPie](https://retropie.org.uk/) is an installer for [EmulationStation](emulationstation.md) & [RetroArch](retroarch.md) on single-board computers (SBCs) such as the [Raspberry Pi](https://www.raspberrypi.com/).
 
 ## BIOS
 
-Because RetroPie uses RetroArch under the hood, the instructions are generally the [same as RetroArch](retroarch.md). By default, the RetroPie BIOS directory is `/home/pi/RetroPie/BIOS`:
+Because RetroPie uses RetroArch under the hood, the instructions are generally the [same as RetroArch](retroarch.md). By default, the RetroPie BIOS directory is `/home/pi/RetroPie/BIOS/`:
 
 === ":simple-linux: RetroPie (Linux)"
 

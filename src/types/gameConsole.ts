@@ -1,5 +1,9 @@
-import path from 'path';
+import path from 'node:path';
 
+/**
+ * A class of information about specific game consoles and their names, standard file extensions,
+ * and how to replace output tokens such as `{pocket}`.
+ */
 export default class GameConsole {
   /**
    * Analogue Pocket ROMs go in the /Assets/{pocket}/common/ directory
@@ -15,8 +19,10 @@ export default class GameConsole {
    * Batocera ROMs go in the roms/{batocera} directory:
    *  @see https://wiki.batocera.org/systems
    *
-   * @see https://emulation.gametechwiki.com/index.php/List_of_filetypes
-   * @see https://emulation.fandom.com/wiki/List_of_filetypes
+   * Other:
+   *  @see https://emulation.gametechwiki.com/index.php/List_of_filetypes
+   *  @see https://emulation.fandom.com/wiki/List_of_filetypes
+   *  @see https://github.com/OpenEmu/OpenEmu/wiki/User-guide:-Importing
    */
   private static readonly CONSOLES: GameConsole[] = [
     // Amstrad
@@ -91,6 +97,8 @@ export default class GameConsole {
     new GameConsole(/GBC|Game ?Boy Color/i, ['.gbc'], 'gbc', 'Gameboy', 'GBC', 'gbc'),
     new GameConsole(/Nintendo 64|N64/i, ['.n64', '.v64', '.z64'], undefined, undefined, undefined, 'n64'),
     new GameConsole(/Nintendo 64DD|N64DD/i, ['.ndd'], undefined, undefined, undefined, 'n64dd'),
+    new GameConsole(/(\W|^)3DS(\W|$)|Nintendo 3DS/i, ['.3ds'], undefined, undefined, undefined, '3ds'),
+    new GameConsole(/(\W|^)NDS(\W|$)|Nintendo DS/i, ['.nds'], undefined, undefined, undefined, 'nds'),
     new GameConsole(/(\W|^)NES(\W|$)|Nintendo Entertainment System/i, ['.nes', '.nez'], 'nes', 'NES', 'FC', 'nes'),
     new GameConsole(/Pokemon Mini/i, ['.min'], 'poke_mini', 'PokemonMini', 'POKE', 'pokemini'),
     new GameConsole(/Satellaview/i, ['.bs'], 'snes', 'SNES', 'SATELLAVIEW', 'satellaview'),

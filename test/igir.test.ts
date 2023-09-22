@@ -1,4 +1,4 @@
-import path from 'path';
+import path from 'node:path';
 
 import Logger from '../src/console/logger.js';
 import LogLevel from '../src/console/logLevel.js';
@@ -145,13 +145,6 @@ describe('with explicit DATs', () => {
     await expect(async () => new Igir(new Options({
       dat: ['src/*'],
     }), new Logger(LogLevel.NEVER)).main()).rejects.toThrow(/no valid dat files/i);
-  });
-
-  it('should throw on DATs without parent/clone info', async () => {
-    await expect(async () => new Igir(new Options({
-      dat: ['test/fixtures/dats/{headered,patchable}.dat'],
-      single: true,
-    }), new Logger(LogLevel.NEVER)).main()).rejects.toThrow(/parent\/clone/i);
   });
 
   it('should copy and test', async () => {
@@ -581,7 +574,7 @@ describe('with explicit DATs', () => {
   ])('should generate a fixdat when writing: %s', async (command) => {
     await copyFixturesToTemp(async (inputTemp, outputTemp) => {
       const result = await runIgir({
-        commands: [command],
+        commands: [command, 'clean'],
         dat: [path.join(inputTemp, 'dats')],
         input: [path.join(inputTemp, 'roms')],
         output: outputTemp,
@@ -688,6 +681,22 @@ describe('with inferred DATs', () => {
       expect(result.cwdFilesAndCrcs).toHaveLength(0);
       expect(result.movedFiles).toHaveLength(0);
       expect(result.cleanedFiles).toHaveLength(0);
+    });
+  });
+
+  it('should move to the same directory', async () => {
+    await copyFixturesToTemp(async (inputTemp, outputTemp) => {
+      const inputDir = path.join(inputTemp, 'roms', 'raw');
+      const inputBefore = await walkWithCrc(inputDir, inputDir);
+
+      await runIgir({
+        commands: ['move', 'test'],
+        input: [inputDir],
+        output: inputDir,
+      });
+
+      await expect(walkWithCrc(inputDir, inputDir)).resolves.toEqual(inputBefore);
+      await expect(walkWithCrc(inputTemp, outputTemp)).resolves.toHaveLength(0);
     });
   });
 
@@ -861,10 +870,10 @@ describe('with inferred DATs', () => {
     });
   });
 
-  it('should copy, extract, remove headers, and test', async () => {
+  it('should move, extract, remove headers, and test', async () => {
     await copyFixturesToTemp(async (inputTemp, outputTemp) => {
       const result = await runIgir({
-        commands: ['copy', 'extract', 'test'],
+        commands: ['move', 'extract', 'test'],
         input: [path.join(inputTemp, 'roms', 'headered')],
         output: outputTemp,
         removeHeaders: [''], // all
@@ -879,7 +888,14 @@ describe('with inferred DATs', () => {
         ['speed_test_v51.sfc', '8beffd94'],
       ]);
       expect(result.cwdFilesAndCrcs).toHaveLength(0);
-      expect(result.movedFiles).toHaveLength(0);
+      expect(result.movedFiles).toEqual([
+        'LCDTestROM.lnx.rar',
+        'allpads.nes',
+        'color_test.nintendoentertainmentsystem',
+        'diagnostic_test_cartridge.a78.7z',
+        'fds_joypad_test.fds.zip',
+        'speed_test_v51.smc',
+      ]);
       expect(result.cleanedFiles).toHaveLength(0);
     });
   });

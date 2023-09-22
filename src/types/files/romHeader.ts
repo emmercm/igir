@@ -1,5 +1,5 @@
-import path from 'path';
-import { Readable } from 'stream';
+import path from 'node:path';
+import { Readable } from 'node:stream';
 
 export default class ROMHeader {
   private static readonly HEADERS: { [key: string]:ROMHeader } = {

@@ -9,19 +9,27 @@ import LogLevel from './logLevel.js';
  */
 export const ProgressBarSymbol = {
   WAITING: chalk.grey(process.platform === 'win32' ? '…' : '⋯'),
+  PROCESSING: chalk.cyan(process.platform === 'win32' ? '¤' : '⚙'),
+  // Files
   DOWNLOADING: chalk.bold('↓'),
   SEARCHING: chalk.magenta(process.platform === 'win32' ? '○' : '↻'),
   HASHING: chalk.magenta('#'),
   INDEXING: chalk.magenta('#'),
+  // DATs & candidates
+  MERGE_SPLIT: chalk.cyan('↔'),
   GENERATING: chalk.cyan('Σ'),
-  PROCESSING: chalk.cyan(process.platform === 'win32' ? '¤' : '⚙'),
   FILTERING: chalk.cyan('∆'),
+  VALIDATING: chalk.cyan(process.platform === 'win32' ? '?' : '≟'),
   WRITING: chalk.yellow(process.platform === 'win32' ? '»' : '✎'),
   RECYCLING: chalk.blue(process.platform === 'win32' ? '≠' : '♻'),
   DELETING: chalk.red(process.platform === 'win32' ? 'X' : '✕'),
   DONE: chalk.green(process.platform === 'win32' ? '√' : '✓'),
 };
 
+/**
+ * ProgressBar represents a single progress bar (of potentially many) to present completion
+ * information about an operation.
+ */
 export default abstract class ProgressBar {
   abstract reset(total: number): Promise<void>;
 
@@ -43,6 +51,10 @@ export default abstract class ProgressBar {
 
   abstract done(finishedMessage?: string): Promise<void>;
 
+  /**
+   * Call the `done()` method with a completion message that indicates how many items were
+   * processed.
+   */
   async doneItems(count: number, noun: string, verb: string): Promise<void> {
     let pluralSuffix = 's';
     if (noun.toLowerCase().endsWith('ch')
@@ -58,22 +70,37 @@ export default abstract class ProgressBar {
 
   abstract log(logLevel: LogLevel, message: string): void;
 
+  /**
+   * Log a TRACE message.
+   */
   logTrace(message: string): void {
     return this.log(LogLevel.TRACE, message);
   }
 
+  /**
+   * Log a DEBUG message.
+   */
   logDebug(message: string): void {
     return this.log(LogLevel.DEBUG, message);
   }
 
+  /**
+   * Log an INFO message.
+   */
   logInfo(message: string): void {
     return this.log(LogLevel.INFO, message);
   }
 
+  /**
+   * Log a WARN message.
+   */
   logWarn(message: string): void {
     return this.log(LogLevel.WARN, message);
   }
 
+  /**
+   * Log an ERROR message.
+   */
   logError(message: string): void {
     return this.log(LogLevel.ERROR, message);
   }

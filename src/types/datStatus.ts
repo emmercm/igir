@@ -2,9 +2,9 @@ import { writeToString } from '@fast-csv/format';
 import chalk, { ChalkInstance } from 'chalk';
 
 import ArrayPoly from '../polyfill/arrayPoly.js';
-import DAT from './logiqx/dat.js';
-import Game from './logiqx/game.js';
-import Parent from './logiqx/parent.js';
+import DAT from './dats/dat.js';
+import Game from './dats/game.js';
+import Parent from './dats/parent.js';
 import Options from './options.js';
 import ReleaseCandidate from './releaseCandidate.js';
 
@@ -17,12 +17,16 @@ enum ROMType {
 }
 
 export enum Status {
-  MISSING,
+  MISSING = 1,
   FOUND,
   UNMATCHED,
   DELETED,
 }
 
+/**
+ * Parse and hold information about every {@link Game} in a {@link DAT}, as well as which
+ * {@link Game}s were found (had a {@link ReleaseCandidate} created for it).
+ */
 export default class DATStatus {
   private readonly dat: DAT;
 
@@ -106,6 +110,9 @@ export default class DATStatus {
       .flatMap((releaseCandidates) => releaseCandidates);
   }
 
+  /**
+   * If any {@link Game} in the entire {@link DAT} was found in the input files.
+   */
   anyGamesFound(options: Options): boolean {
     return DATStatus.getAllowedTypes(options)
       .reduce((result, romType) => {
@@ -115,6 +122,9 @@ export default class DATStatus {
       }, false);
   }
 
+  /**
+   * Return a string of CLI-friendly output to be printed by a {@link Logger}.
+   */
   toConsole(options: Options): string {
     return `${DATStatus.getAllowedTypes(options)
       .filter((type) => this.allRomTypesToGames.get(type)?.length)
@@ -153,6 +163,9 @@ export default class DATStatus {
       .join(', ')} ${options.shouldWrite() ? 'written' : 'found'}`;
   }
 
+  /**
+   * Return the file contents of a CSV with status information for every {@link Game}.
+   */
   async toCsv(options: Options): Promise<string> {
     const found = DATStatus.getValuesForAllowedTypes(
       options,
@@ -167,7 +180,7 @@ export default class DATStatus {
         return DATStatus.buildCsvRow(
           this.getDATName(),
           game.getName(),
-          releaseCandidate || !game.getRoms().length ? Status.FOUND : Status.MISSING,
+          releaseCandidate ?? !game.getRoms().length ? Status.FOUND : Status.MISSING,
           releaseCandidate
             ? releaseCandidate.getRomsWithFiles()
               .map((romWithFiles) => (options.shouldWrite()
@@ -214,6 +227,9 @@ export default class DATStatus {
     });
   }
 
+  /**
+   * Return a string of CSV rows without headers for a certain {@link Status}.
+   */
   static async filesToCsv(filePaths: string[], status: Status): Promise<string> {
     return writeToString(filePaths.map((filePath) => this.buildCsvRow('', '', status, [filePath])));
   }
@@ -272,11 +288,15 @@ export default class DATStatus {
 
   private static getAllowedTypes(options: Options): ROMType[] {
     return [
-      !options.getSingle() && !options.getOnlyBios() && !options.getOnlyRetail()
+      !options.getSingle()
+      && !options.getOnlyBios() && !options.getOnlyDevice() && !options.getOnlyRetail()
         ? ROMType.GAME : undefined,
-      options.getOnlyBios() || !options.getNoBios() ? ROMType.BIOS : undefined,
-      !options.getNoDevice() && !options.getOnlyBios() ? ROMType.DEVICE : undefined,
-      options.getOnlyRetail() || !options.getOnlyBios() ? ROMType.RETAIL : undefined,
+      options.getOnlyBios() || (!options.getNoBios() && !options.getOnlyDevice())
+        ? ROMType.BIOS : undefined,
+      options.getOnlyDevice() || (!options.getOnlyBios() && !options.getNoDevice())
+        ? ROMType.DEVICE : undefined,
+      options.getOnlyRetail() || (!options.getOnlyBios() && !options.getOnlyDevice())
+        ? ROMType.RETAIL : undefined,
       ROMType.PATCHED,
     ].filter(ArrayPoly.filterNotNullish);
   }

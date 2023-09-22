@@ -1,5 +1,5 @@
-import fs from 'fs';
-import util from 'util';
+import fs from 'node:fs';
+import util from 'node:util';
 
 import ProgressBar from '../console/progressBar.js';
 import ArrayPoly from '../polyfill/arrayPoly.js';
@@ -20,6 +20,9 @@ export default class ReportGenerator extends Module {
     this.options = options;
   }
 
+  /**
+   * Generate the report.
+   */
   async generate(
     scannedRomFiles: string[],
     cleanedOutputFiles: string[],

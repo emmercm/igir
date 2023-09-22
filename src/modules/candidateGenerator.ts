@@ -1,17 +1,17 @@
-import path from 'path';
+import path from 'node:path';
 
 import ProgressBar, { ProgressBarSymbol } from '../console/progressBar.js';
 import ArrayPoly from '../polyfill/arrayPoly.js';
 import fsPoly from '../polyfill/fsPoly.js';
+import DAT from '../types/dats/dat.js';
+import Game from '../types/dats/game.js';
+import Parent from '../types/dats/parent.js';
+import Release from '../types/dats/release.js';
+import ROM from '../types/dats/rom.js';
 import Archive from '../types/files/archives/archive.js';
 import ArchiveEntry from '../types/files/archives/archiveEntry.js';
 import Zip from '../types/files/archives/zip.js';
 import File from '../types/files/file.js';
-import DAT from '../types/logiqx/dat.js';
-import Game from '../types/logiqx/game.js';
-import Parent from '../types/logiqx/parent.js';
-import Release from '../types/logiqx/release.js';
-import ROM from '../types/logiqx/rom.js';
 import Options from '../types/options.js';
 import OutputFactory from '../types/outputFactory.js';
 import ReleaseCandidate from '../types/releaseCandidate.js';
@@ -32,6 +32,9 @@ export default class CandidateGenerator extends Module {
     this.options = options;
   }
 
+  /**
+   * Generate the candidates.
+   */
   async generate(
     dat: DAT,
     hashCodeToInputFiles: Map<string, File[]>,
@@ -49,7 +52,6 @@ export default class CandidateGenerator extends Module {
     await this.progressBar.reset(parents.length);
 
     // For each parent, try to generate a parent candidate
-    /* eslint-disable no-await-in-loop */
     for (let i = 0; i < parents.length; i += 1) {
       const parent = parents[i];
       await this.progressBar.incrementProgress();
@@ -263,10 +265,12 @@ export default class CandidateGenerator extends Module {
 
     // Determine the output CRC of the file
     let outputFileCrc = inputFile.getCrc32();
+    let outputFileSize = inputFile.getSize();
     if (inputFile.getFileHeader()
       && this.options.canRemoveHeader(dat, path.extname(outputPathParsed.entryPath))
     ) {
       outputFileCrc = inputFile.getCrc32WithoutHeader();
+      outputFileSize = inputFile.getSizeWithoutHeader();
     }
 
     // Determine the output file type
@@ -275,14 +279,14 @@ export default class CandidateGenerator extends Module {
       return ArchiveEntry.entryOf(
         new Zip(outputFilePath),
         outputPathParsed.entryPath,
-        inputFile.getSize(),
+        outputFileSize,
         outputFileCrc,
       );
     }
     // Otherwise, return a raw file
     return File.fileOf(
       outputFilePath,
-      inputFile.getSize(),
+      outputFileSize,
       outputFileCrc,
     );
   }
@@ -317,7 +321,9 @@ export default class CandidateGenerator extends Module {
       .map((romWithFiles) => romWithFiles.getOutputFile())
       .filter((outputFile) => !(outputFile instanceof ArchiveEntry))
       .map((outputFile) => outputFile.getFilePath())
+      // Is a duplicate output path
       .filter((outputPath, idx, outputPaths) => outputPaths.indexOf(outputPath) !== idx)
+      // Only return one copy of duplicate output paths
       .reduce(ArrayPoly.reduceUnique(), [])
       .sort();
     if (!duplicateOutputPaths.length) {
@@ -325,7 +331,6 @@ export default class CandidateGenerator extends Module {
       return false;
     }
 
-    /* eslint-disable no-await-in-loop */
     let hasConflict = false;
     for (let i = 0; i < duplicateOutputPaths.length; i += 1) {
       const duplicateOutput = duplicateOutputPaths[i];

@@ -1,4 +1,4 @@
-import path from 'path';
+import path from 'node:path';
 
 import FilePoly from '../../polyfill/filePoly.js';
 import File from '../files/file.js';
@@ -57,10 +57,9 @@ export default abstract class Patch {
     let data = 0;
     let shift = 1;
 
-    /* eslint-disable no-await-in-loop, no-bitwise */
     while (!fp.isEOF()) {
       const x = (await fp.readNext(1)).readUInt8();
-      data += (x & 0x7f) * shift; // drop the left-most bit
+      data += (x & 0x7F) * shift; // drop the left-most bit
       if (x & 0x80) { // left-most bit is telling us this is the end
         break;
       }
@@ -74,10 +73,9 @@ export default abstract class Patch {
   static async readVcdiffUintFromFile(fp: FilePoly): Promise<number> {
     let num = 0;
 
-    /* eslint-disable no-await-in-loop, no-bitwise */
     while (!fp.isEOF()) {
       const bits = (await fp.readNext(1)).readUInt8();
-      num = (num << 7) + (bits & 0x7f);
+      num = (num << 7) + (bits & 0x7F);
       if (!(bits & 0x80)) { // left-most bit is telling us to keep going
         break;
       }
@@ -93,7 +91,7 @@ export default abstract class Patch {
     while (lastOffset < buffer.length) {
       const bits = buffer.readUInt8(lastOffset);
       lastOffset += 1;
-      num = (num << 7) + (bits & 0x7f);
+      num = (num << 7) + (bits & 0x7F);
       if (!(bits & 0x80)) { // left-most bit is telling us to keep going
         break;
       }

@@ -1,21 +1,30 @@
 import ProgressBar, { ProgressBarSymbol } from '../console/progressBar.js';
 import ArrayPoly from '../polyfill/arrayPoly.js';
 import fsPoly from '../polyfill/fsPoly.js';
+import DAT from '../types/dats/dat.js';
 import ArchiveEntry from '../types/files/archives/archiveEntry.js';
 import File from '../types/files/file.js';
-import DAT from '../types/logiqx/dat.js';
-import Parent from '../types/logiqx/parent.js';
 import Module from './module.js';
 
+/**
+ * After all output {@link File}s have been written, delete any input {@link File}s that were
+ * "moved." This needs to happen after all writing has finished in order to guarantee we're done
+ * reading input {@link File}s from disk.
+ *
+ * This class will not be run concurrently with any other class.
+ */
 export default class MovedROMDeleter extends Module {
   constructor(progressBar: ProgressBar) {
     super(progressBar, MovedROMDeleter.name);
   }
 
+  /**
+   * Delete input files that were moved.
+   */
   async delete(
     inputRoms: File[],
     movedRoms: File[],
-    datsToWrittenRoms: Map<DAT, Map<Parent, File[]>>,
+    datsToWrittenFiles: Map<DAT, File[]>,
   ): Promise<string[]> {
     if (!movedRoms.length) {
       return [];
@@ -29,7 +38,7 @@ export default class MovedROMDeleter extends Module {
 
     const filePathsToDelete = MovedROMDeleter.filterOutWrittenFiles(
       fullyConsumedFiles,
-      datsToWrittenRoms,
+      datsToWrittenFiles,
     );
 
     await this.progressBar.setSymbol(ProgressBarSymbol.DELETING);
@@ -118,10 +127,9 @@ export default class MovedROMDeleter extends Module {
    */
   private static filterOutWrittenFiles(
     movedRoms: string[],
-    datsToWrittenRoms: Map<DAT, Map<Parent, File[]>>,
+    datsToWrittenFiles: Map<DAT, File[]>,
   ): string[] {
-    const writtenFilePaths = new Set([...datsToWrittenRoms.values()]
-      .flatMap((parentsToFiles) => [...parentsToFiles.values()])
+    const writtenFilePaths = new Set([...datsToWrittenFiles.values()]
       .flatMap((files) => files)
       .map((file) => file.getFilePath()));
 

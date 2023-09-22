@@ -1,15 +1,16 @@
-import archiver, { Archiver, ArchiverError } from 'archiver';
+import fs from 'node:fs';
+import path from 'node:path';
+import { Readable } from 'node:stream';
+import { clearInterval } from 'node:timers';
+
+import archiver, { Archiver } from 'archiver';
 import async from 'async';
-import fs from 'fs';
-import path from 'path';
-import { Readable } from 'stream';
-import { clearInterval } from 'timers';
 import { Memoize } from 'typescript-memoize';
 import unzipper from 'unzipper';
 
 import Constants from '../../../constants.js';
 import fsPoly from '../../../polyfill/fsPoly.js';
-import DAT from '../../logiqx/dat.js';
+import DAT from '../../dats/dat.js';
 import Options from '../../options.js';
 import File from '../file.js';
 import Archive from './archive.js';
@@ -132,8 +133,8 @@ export default class Zip extends Archive {
     dat: DAT,
     inputToOutput: [File, ArchiveEntry<Zip>][],
   ): Promise<void> {
-    let zipFileError: ArchiverError | undefined;
-    const catchError = (err: ArchiverError): void => {
+    let zipFileError: Error | undefined;
+    const catchError = (err: Error): void => {
       zipFileError = err;
     };
     zipFile.on('error', catchError);
@@ -163,6 +164,9 @@ export default class Zip extends Archive {
         );
 
         return inputFile.createPatchedReadStream(removeHeader, async (stream) => {
+          // Catch stream errors such as `ENOENT: no such file or directory`
+          stream.on('error', catchError);
+
           const entryName = outputArchiveEntry.getEntryPath().replace(/[\\/]/g, '/');
           zipFile.append(stream, {
             name: entryName,

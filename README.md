@@ -28,14 +28,15 @@ A video of an example use case:
 
 With `igir` you can manage a ROM collection of any size:
 
-- 🔍 Scan for DATs, ROMs, and ROM patches - including those in archives (see [scanning](https://igir.io/file-scanning) & [archive docs](https://igir.io/archives))
-- 📂 Organize ROM files by console (see [DAT docs](https://igir.io/dats))
-- 🪄 Name ROM files consistently, including the right extension (see [DAT docs](https://igir.io/dats))
-- ✂️ Filter out duplicate ROMs, or ROMs in languages you don't understand (see [filtering docs](https://igir.io/rom-filtering))
-- 🗜️ Extract or archive ROMs in mass (see [archive docs](https://igir.io/archives))
-- 🩹 Patch ROMs automatically in mass (see [scanning](https://igir.io/file-scanning) & [patching docs](https://igir.io/rom-patching))
-- 🎩 Parse ROMs with headers, and optionally remove them (see [header docs](https://igir.io/rom-headers))
-- 🔮 Report on what ROMs are present or missing for each console, and create fixdats for missing ROMs (see [reporting](https://igir.io/reporting) & [DAT docs](https://igir.io/dats))
+- 🔍 Scan for DATs, ROMs, and ROM patches - including those in archives (see [scanning](https://igir.io/input/file-scanning) & [archive docs](https://igir.io/input/reading-archives))
+- 📂 Organize ROM files by console (see [DAT docs](https://igir.io/input/dats))
+- 🪄 Name ROM files consistently, including the right extension (see [DAT docs](https://igir.io/input/dats))
+- ✂️ Filter out duplicate ROMs, or ROMs in languages you don't understand (see [filtering docs](https://igir.io/roms/filtering-preferences))
+- 🗜️ Extract or archive ROMs in mass (see [archive docs](https://igir.io/output/writing-archives))
+- 🩹 Patch ROMs automatically in mass (see [scanning](https://igir.io/input/file-scanning) & [patching docs](https://igir.io/roms/patching))
+- 🎩 Parse ROMs with headers, and optionally remove them (see [header docs](https://igir.io/roms/headers))
+- ↔️ Build & re-build (un-merge, split, or merge) MAME ROM sets (see [arcade docs](https://igir.io/output/arcade))
+- 🔮 Report on what ROMs are present or missing for each console, and create fixdats for missing ROMs (see [reporting](https://igir.io/output/reporting) & [DAT docs](https://igir.io/input/dats))
 
 ## How do I run `igir`?
 
@@ -56,7 +57,7 @@ $ igir --help
   | $$  | $$|    \  | $$  | $$    $$   ROM collection manager
   | $$  | $$|    \  | $$  | $$    $$   https://igir.io/
   | $$  | $$ \$$$$  | $$  | $$$$$$$\
- _| $$_ | $$__| $$ _| $$_ | $$  | $$   v1.9.2
+ _| $$_ | $$__| $$ _| $$_ | $$  | $$   v1.9.4
 |   $$ \ \$$    $$|   $$ \| $$  | $$
  \$$$$$$  \$$$$$$  \$$$$$$ \$$   \$$
 
@@ -229,9 +230,9 @@ Example use cases:
 
 ## Feature requests, bug reports, and contributing
 
-Feedback is a gift! Your feature requests and bug reports help improve the project for everyone. Feel free to submit an issue on GitHub using one of the templates.
+Feedback is a gift! Your feature requests and bug reports help improve the project for everyone. Feel free to [submit an issue](https://github.com/emmercm/igir/issues/new/choose) on GitHub using one of the templates.
 
-Even better, if you feel comfortable writing code, please feel free to submit a pull request against the project!
+Even better, if you feel comfortable writing code, please feel free to submit a pull request against the project! Please see the full [contribution guidelines](https://igir.io/contributing) for rules to follow.
 
 <br>
 <p align="center">

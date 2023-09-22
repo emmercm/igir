@@ -1,23 +1,37 @@
 import 'reflect-metadata';
 
+import fs from 'node:fs';
+import os from 'node:os';
+import path from 'node:path';
+import util from 'node:util';
+
 import async, { AsyncResultCallback } from 'async';
-import { Expose, instanceToPlain, plainToInstance } from 'class-transformer';
+import {
+  Expose, instanceToPlain, plainToInstance, Transform,
+} from 'class-transformer';
 import fg from 'fast-glob';
-import fs from 'fs';
 import { isNotJunk } from 'junk';
 import micromatch from 'micromatch';
 import moment from 'moment';
-import os from 'os';
-import path from 'path';
-import util from 'util';
 
 import LogLevel from '../console/logLevel.js';
 import Constants from '../constants.js';
 import ArrayPoly from '../polyfill/arrayPoly.js';
 import fsPoly, { FsWalkCallback } from '../polyfill/fsPoly.js';
 import URLPoly from '../polyfill/urlPoly.js';
+import DAT from './dats/dat.js';
 import File from './files/file.js';
-import DAT from './logiqx/dat.js';
+
+export enum MergeMode {
+  // Clones contain all parent ROMs, all games contain BIOS & device ROMs
+  FULLNONMERGED = 1,
+  // Clones contain all parent ROMs, BIOS & device ROMsets are separate
+  NONMERGED,
+  // Clones exclude all parent ROMs, BIOS & device ROMsets are separate
+  SPLIT,
+  // Clones are merged into parent, BIOS & device ROMsets are separate
+  MERGED,
+}
 
 export interface OptionsProps {
   readonly commands?: string[],
@@ -51,6 +65,8 @@ export interface OptionsProps {
 
   readonly header?: string,
   readonly removeHeaders?: string[],
+
+  readonly mergeRoms?: string,
 
   readonly filterRegex?: string,
   readonly filterRegexExclude?: string,
@@ -106,6 +122,9 @@ export interface OptionsProps {
   readonly help?: boolean,
 }
 
+/**
+ * A collection of all options for a single invocation of the application.
+ */
 export default class Options implements OptionsProps {
   @Expose({ name: '_' })
   readonly commands: string[];
@@ -155,6 +174,8 @@ export default class Options implements OptionsProps {
   readonly header: string;
 
   readonly removeHeaders?: string[];
+
+  readonly mergeRoms?: string;
 
   readonly filterRegex: string;
 
@@ -239,9 +260,11 @@ export default class Options implements OptionsProps {
   readonly preferRetail: boolean;
 
   @Expose({ name: 'preferNtsc' })
+  @Transform(({ value }) => !!value)
   readonly preferNTSC: boolean;
 
   @Expose({ name: 'preferPal' })
+  @Transform(({ value }) => !!value)
   readonly preferPAL: boolean;
 
   readonly preferParent: boolean;
@@ -288,6 +311,8 @@ export default class Options implements OptionsProps {
 
     this.header = options?.header ?? '';
     this.removeHeaders = options?.removeHeaders;
+
+    this.mergeRoms = options?.mergeRoms;
 
     this.filterRegex = options?.filterRegex ?? '';
     this.filterRegexExclude = options?.filterRegexExclude ?? '';
@@ -343,12 +368,18 @@ export default class Options implements OptionsProps {
     this.help = options?.help ?? false;
   }
 
+  /**
+   * Construct a {@link Options} from a generic object, such as one from `yargs`.
+   */
   static fromObject(obj: object): Options {
     return plainToInstance(Options, obj, {
       enableImplicitConversion: true,
     });
   }
 
+  /**
+   * Return a JSON representation of all options.
+   */
   toString(): string {
     return JSON.stringify(instanceToPlain(this));
   }
@@ -370,38 +401,62 @@ export default class Options implements OptionsProps {
 
   // Commands
 
-  getCommands(): string[] {
-    return this.commands.map((c) => c.toLowerCase());
+  getCommands(): Set<string> {
+    return new Set(this.commands.map((c) => c.toLowerCase()));
   }
 
+  /**
+   * Was any writing command provided?
+   */
   shouldWrite(): boolean {
     return this.writeString() !== undefined;
   }
 
+  /**
+   * The writing command that was specified.
+   */
   writeString(): string | undefined {
-    return ['copy', 'move', 'symlink'].find((command) => this.getCommands().indexOf(command) !== -1);
+    return ['copy', 'move', 'symlink'].find((command) => this.getCommands().has(command));
   }
 
+  /**
+   * Was the `copy` command provided?
+   */
   shouldCopy(): boolean {
-    return this.getCommands().indexOf('copy') !== -1;
+    return this.getCommands().has('copy');
   }
 
+  /**
+   * Was the `move` command provided?
+   */
   shouldMove(): boolean {
-    return this.getCommands().indexOf('move') !== -1;
+    return this.getCommands().has('move');
   }
 
+  /**
+   * Was the `symlink` command provided?
+   */
   shouldSymlink(): boolean {
-    return this.getCommands().indexOf('symlink') !== -1;
+    return this.getCommands().has('symlink');
   }
 
+  /**
+   * Was the `extract` command provided?
+   */
   shouldExtract(): boolean {
-    return this.getCommands().indexOf('extract') !== -1;
+    return this.getCommands().has('extract');
   }
 
+  /**
+   * Was the `zip` command provided?
+   */
   canZip(): boolean {
-    return this.getCommands().indexOf('zip') !== -1;
+    return this.getCommands().has('zip');
   }
 
+  /**
+   * Should a given output file path be zipped?
+   */
   shouldZip(filePath: string): boolean {
     return this.canZip()
       && (!this.getZipExclude() || !micromatch.isMatch(
@@ -410,26 +465,31 @@ export default class Options implements OptionsProps {
       ));
   }
 
+  /**
+   * Was the `clean` command provided?
+   */
   shouldClean(): boolean {
-    return this.getCommands().indexOf('clean') !== -1;
+    return this.getCommands().has('clean');
   }
 
+  /**
+   * Was the `test` command provided?
+   */
   shouldTest(): boolean {
-    return this.getCommands().indexOf('test') !== -1;
+    return this.getCommands().has('test');
   }
 
+  /**
+   * Was the `report` command provided?
+   */
   shouldReport(): boolean {
-    return this.getCommands().indexOf('report') !== -1;
+    return this.getCommands().has('report');
   }
 
   // Options
 
   getInputPaths(): string[] {
     return this.input;
-  }
-
-  getInputFileCount(): number {
-    return this.input.length;
   }
 
   private async scanInputFiles(walkCallback?: FsWalkCallback): Promise<string[]> {
@@ -440,22 +500,28 @@ export default class Options implements OptionsProps {
     return Options.scanPaths(this.inputExclude, undefined, false);
   }
 
+  /**
+   * Scan for input files, and input files to exclude, and return the difference.
+   */
   async scanInputFilesWithoutExclusions(walkCallback?: FsWalkCallback): Promise<string[]> {
     const inputFiles = await this.scanInputFiles(walkCallback);
-    const inputExcludeFiles = await this.scanInputExcludeFiles();
+    const inputExcludeFiles = new Set(await this.scanInputExcludeFiles());
     return inputFiles
-      .filter((inputPath) => inputExcludeFiles.indexOf(inputPath) === -1);
+      .filter((inputPath) => !inputExcludeFiles.has(inputPath));
   }
 
   getPatchFileCount(): number {
     return this.patch.length;
   }
 
+  /**
+   * Scan for patch files, and patch files to exclude, and return the difference.
+   */
   async scanPatchFilesWithoutExclusions(walkCallback?: FsWalkCallback): Promise<string[]> {
     const patchFiles = await this.scanPatchFiles(walkCallback);
-    const patchExcludeFiles = await this.scanPatchExcludeFiles();
+    const patchExcludeFiles = new Set(await this.scanPatchExcludeFiles());
     return patchFiles
-      .filter((patchPath) => patchExcludeFiles.indexOf(patchPath) === -1);
+      .filter((patchPath) => !patchExcludeFiles.has(patchPath));
   }
 
   private async scanPatchFiles(walkCallback?: FsWalkCallback): Promise<string[]> {
@@ -476,7 +542,6 @@ export default class Options implements OptionsProps {
       .filter((pattern) => pattern)
       .reduce(ArrayPoly.reduceUnique(), []);
     const globbedPaths = [];
-    /* eslint-disable no-await-in-loop */
     for (let i = 0; i < uniqueGlobPatterns.length; i += 1) {
       globbedPaths.push(...(await this.globPath(
         uniqueGlobPatterns[i],
@@ -563,6 +628,9 @@ export default class Options implements OptionsProps {
     return paths;
   }
 
+  /**
+   * Were any DAT paths provided?
+   */
   usingDats(): boolean {
     return this.dat.length > 0;
   }
@@ -575,11 +643,14 @@ export default class Options implements OptionsProps {
     return Options.scanPaths(this.datExclude, undefined, false);
   }
 
+  /**
+   * Scan for DAT files, and DAT files to exclude, and return the difference.
+   */
   async scanDatFilesWithoutExclusions(walkCallback?: FsWalkCallback): Promise<string[]> {
     const datFiles = await this.scanDatFiles(walkCallback);
-    const datExcludeFiles = await this.scanDatExcludeFiles();
+    const datExcludeFiles = new Set(await this.scanDatExcludeFiles());
     return datFiles
-      .filter((inputPath) => datExcludeFiles.indexOf(inputPath) === -1);
+      .filter((inputPath) => !datExcludeFiles.has(inputPath));
   }
 
   getDatRegex(): RegExp | undefined {
@@ -643,22 +714,25 @@ export default class Options implements OptionsProps {
     return Options.scanPaths(this.cleanExclude, undefined, false);
   }
 
+  /**
+   * Scan for output files, and output files to exclude from cleaning, and return the difference.
+   */
   async scanOutputFilesWithoutCleanExclusions(
     outputDirs: string[],
     writtenFiles: File[],
   ): Promise<string[]> {
     // Written files that shouldn't be cleaned
-    const writtenFilesNormalized = writtenFiles
-      .map((file) => path.normalize(file.getFilePath()));
+    const writtenFilesNormalized = new Set(writtenFiles
+      .map((file) => path.normalize(file.getFilePath())));
 
     // Files excluded from cleaning
-    const cleanExcludedFilesNormalized = (await this.scanCleanExcludeFiles())
-      .map((filePath) => path.normalize(filePath));
+    const cleanExcludedFilesNormalized = new Set((await this.scanCleanExcludeFiles())
+      .map((filePath) => path.normalize(filePath)));
 
     return (await Options.scanPaths(outputDirs))
       .map((filePath) => path.normalize(filePath))
-      .filter((filePath) => writtenFilesNormalized.indexOf(filePath) === -1)
-      .filter((filePath) => cleanExcludedFilesNormalized.indexOf(filePath) === -1);
+      .filter((filePath) => !writtenFilesNormalized.has(filePath))
+      .filter((filePath) => !cleanExcludedFilesNormalized.has(filePath));
   }
 
   private getZipExclude(): string {
@@ -677,6 +751,9 @@ export default class Options implements OptionsProps {
     return this.header;
   }
 
+  /**
+   * Should a file have its contents read to detect any {@link Header}?
+   */
   shouldReadFileForHeader(filePath: string): boolean {
     return this.getHeader().length > 0 && micromatch.isMatch(
       filePath.replace(/^.[\\/]/, ''),
@@ -684,6 +761,9 @@ export default class Options implements OptionsProps {
     );
   }
 
+  /**
+   * Can the {@link Header} be removed for a {@link extension} during writing?
+   */
   canRemoveHeader(dat: DAT, extension: string): boolean {
     // ROMs in "headered" DATs shouldn't have their header removed
     if (dat.isHeadered()) {
@@ -708,6 +788,15 @@ export default class Options implements OptionsProps {
       .some((removeHeader) => removeHeader.toLowerCase() === extension.toLowerCase());
   }
 
+  getMergeRoms(): MergeMode | undefined {
+    const mergeMode = Object.keys(MergeMode)
+      .find((mode) => mode.toLowerCase() === this.mergeRoms?.toLowerCase());
+    if (!mergeMode) {
+      return undefined;
+    }
+    return MergeMode[mergeMode as keyof typeof MergeMode];
+  }
+
   getFilterRegex(): RegExp | undefined {
     return Options.getRegex(this.filterRegex);
   }
@@ -716,24 +805,24 @@ export default class Options implements OptionsProps {
     return Options.getRegex(this.filterRegexExclude);
   }
 
-  getFilterLanguage(): string[] {
+  getFilterLanguage(): Set<string> {
     if (this.filterLanguage.length) {
-      return Options.filterUniqueUpper(this.filterLanguage);
+      return new Set(Options.filterUniqueUpper(this.filterLanguage));
     }
     if (this.languageFilter.length) {
-      return Options.filterUniqueUpper(this.languageFilter);
+      return new Set(Options.filterUniqueUpper(this.languageFilter));
     }
-    return [];
+    return new Set();
   }
 
-  getFilterRegion(): string[] {
+  getFilterRegion(): Set<string> {
     if (this.filterRegion.length) {
-      return Options.filterUniqueUpper(this.filterRegion);
+      return new Set(Options.filterUniqueUpper(this.filterRegion));
     }
     if (this.regionFilter.length) {
-      return Options.filterUniqueUpper(this.regionFilter);
+      return new Set(Options.filterUniqueUpper(this.regionFilter));
     }
-    return [];
+    return new Set([]);
   }
 
   getNoBios(): boolean {
@@ -928,7 +1017,7 @@ export default class Options implements OptionsProps {
     return this.help;
   }
 
-  static filterUniqueUpper(array: string[]): string[] {
+  private static filterUniqueUpper(array: string[]): string[] {
     return array
       .map((value) => value.toUpperCase())
       .reduce(ArrayPoly.reduceUnique(), []);
