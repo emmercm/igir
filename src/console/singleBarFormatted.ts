@@ -53,7 +53,7 @@ export default class SingleBarFormatted {
     const symbol = chalk.bold(payload.symbol ?? '');
     const name = payload.name ?? '';
 
-    const namePadded = `${name} ${'·'.repeat(SingleBarFormatted.MAX_NAME_LENGTH)}`;
+    const namePadded = `${name} ${'·'.repeat(SingleBarFormatted.MAX_NAME_LENGTH)}`.trim();
     const symbolAndName = `${symbol} ${namePadded}`;
 
     const excessLength = stripAnsi(symbolAndName).trimStart().length
