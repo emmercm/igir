@@ -1,4 +1,5 @@
 import async from 'async';
+import chalk from 'chalk';
 import isAdmin from 'is-admin';
 
 import Logger from './console/logger.js';
@@ -72,7 +73,7 @@ export default class Igir {
     const patches = await this.processPatchScanner();
 
     // Set up progress bar and input for DAT processing
-    const datProcessProgressBar = await this.logger.addProgressBar('Processing DATs', ProgressBarSymbol.PROCESSING, dats.length);
+    const datProcessProgressBar = await this.logger.addProgressBar(chalk.underline('Processing DATs'), ProgressBarSymbol.NONE, dats.length);
     if (!dats.length) {
       dats = new DATGameInferrer(datProcessProgressBar).infer(roms);
     }
