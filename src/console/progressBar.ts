@@ -8,10 +8,11 @@ import LogLevel from './logLevel.js';
  * @see https://www.fileformat.info/info/unicode/font/lucida_console/grid.htm (win32)
  */
 export const ProgressBarSymbol = {
+  NONE: '',
   WAITING: chalk.grey(process.platform === 'win32' ? '…' : '⋯'),
   PROCESSING: chalk.cyan(process.platform === 'win32' ? '¤' : '⚙'),
   // Files
-  DOWNLOADING: chalk.bold('↓'),
+  DOWNLOADING: chalk.magenta('↓'),
   SEARCHING: chalk.magenta(process.platform === 'win32' ? '○' : '↻'),
   HASHING: chalk.magenta('#'),
   INDEXING: chalk.magenta('#'),
