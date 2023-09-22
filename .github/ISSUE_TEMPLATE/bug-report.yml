@@ -3,8 +3,6 @@
 name: 🐞 Bug Report
 description: Create a report to help us improve.
 labels: ["potential-bug"]
-assignees:
-  - emmercm
 body:
   - type: markdown
     attributes:
@@ -43,7 +41,11 @@ body:
     attributes:
       label: Debug logs
       description: |
-        The debug logs of the command run with the `-vvv` option.
+        The debug logs of your command run with the `-vvv` option. This is _not_ just a copy of the standard progress bar CLI output.
+
+        You can redirect the CLI output of `igir` to a file with the syntax: `igir [commands..] [options] -vvv > igir.log`. You can then attach this file in the GitHub text editor.
+
+        This field is _not_ optional as it is one of the most important ways to gain insight into your unique scenario. Without this information it is difficult to reproduce your problem.
     validations:
       required: true
 
@@ -66,7 +68,7 @@ body:
       description: |
         What version of Node.js are you running? This can be seen with the `node --version` command.
 
-        You can specify "N/A" when using a standalone version of `igir`.
+        You can specify "N/A" when using a standalone version of `igir` (one downloaded from GitHub).
     validations:
       required: true
 

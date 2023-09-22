@@ -1,10 +1,10 @@
 # Batocera
 
-[Batocera](https://batocera.org/) is a pre-configured Linux distribution for [EmulationStation](https://emulationstation.org/) & [RetroArch](https://www.retroarch.com/). Batocera is primarily for single-board computers (SBCs) such as the [Raspberry Pi](https://www.raspberrypi.com/).
+[Batocera](https://batocera.org/) is a pre-configured Linux distribution for [EmulationStation](emulationstation.md) & [RetroArch](retroarch.md). Batocera is primarily for single-board computers (SBCs) such as the [Raspberry Pi](https://www.raspberrypi.com/).
 
 ## BIOS
 
-Because Batocera uses RetroArch under the hood, the instructions are generally the [same as RetroArch](retroarch.md). By default, the [Batocera BIOS directory](https://wiki.batocera.org/add_games_bios#adding_bios_files) is `/userdata/bios`:
+Because Batocera uses RetroArch under the hood, the instructions are generally the [same as RetroArch](retroarch.md). By default, the [Batocera BIOS directory](https://wiki.batocera.org/add_games_bios#adding_bios_files) is `/userdata/bios/`:
 
 === ":simple-linux: Batocera (Linux)"
 
@@ -19,7 +19,7 @@ Because Batocera uses RetroArch under the hood, the instructions are generally t
 
 ## ROMs
 
-Batocera has a `roms` folder in the "userdata partition" at `/userdata/roms` that is used by default:
+Batocera uses its own proprietary [ROM folder structure](https://wiki.batocera.org/systems), so `igir` has a replaceable `{batocera}` token to sort ROMs into the right place. See the [replaceable tokens page](../../output/tokens.md) for more information.
 
 === ":simple-linux: Batocera (Linux)"
 
@@ -29,8 +29,7 @@ Batocera has a `roms` folder in the "userdata partition" at `/userdata/roms` tha
     igir copy zip test clean \
       --dat "/media/USB-Drive/No-Intro*.zip" \
       --input "/media/USB-Drive/ROMs/" \
-      --output "/userdata/roms/" \
-      --dir-dat-name \
+      --output "/userdata/roms/{batocera}" \
       --dir-letter \
       --no-bios
     ```

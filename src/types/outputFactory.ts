@@ -1,21 +1,27 @@
 // eslint-disable-next-line max-classes-per-file
-import path, { ParsedPath } from 'path';
+import path, { ParsedPath } from 'node:path';
 
 import fsPoly from '../polyfill/fsPoly.js';
+import DAT from './dats/dat.js';
+import Game from './dats/game.js';
+import Release from './dats/release.js';
+import ROM from './dats/rom.js';
 import ArchiveEntry from './files/archives/archiveEntry.js';
 import File from './files/file.js';
 import FileFactory from './files/fileFactory.js';
 import GameConsole from './gameConsole.js';
-import DAT from './logiqx/dat.js';
-import Game from './logiqx/game.js';
-import Release from './logiqx/release.js';
-import ROM from './logiqx/rom.js';
 import Options from './options.js';
 
+/**
+ * A {@link ParsedPath} that carries {@link ArchiveEntry} path information.
+ */
 interface ParsedPathWithEntryPath extends ParsedPath {
   entryPath: string;
 }
 
+/**
+ * A {@link ParsedPathWithEntryPath} that normalizes formatting across OSes.
+ */
 class OutputPath implements ParsedPathWithEntryPath {
   base: string;
 
@@ -41,6 +47,9 @@ class OutputPath implements ParsedPathWithEntryPath {
     this.entryPath = parsedPath.entryPath.replace(/[\\/]/g, path.sep);
   }
 
+  /**
+   * Format this {@link OutputPath}, similar to {@link path#format}.
+   */
   format(): string {
     return path.format(this)
       // No double slashes / empty subdir name
@@ -51,10 +60,13 @@ class OutputPath implements ParsedPathWithEntryPath {
   }
 }
 
+/**
+ * A factory of static methods to generate output paths for a {@link ROM} and its related
+ * {@link Game} and {@link Release}.
+ */
 export default class OutputFactory {
   /**
    * Get the full output path for a ROM file.
-   *
    * @param options the {@link Options} instance for this run of igir.
    * @param dat the {@link DAT} that the ROM/{@link Game} is from.
    * @param game the {@link Game} that this file matches to.
@@ -86,11 +98,13 @@ export default class OutputFactory {
     });
   }
 
-  /** ***********************
-   *                        *
+  /**
+   **************************
+   *
    *     File directory     *
-   *                        *
-   ************************ */
+   *
+   * *************************
+   */
 
   public static getDir(
     options: Options,
@@ -190,9 +204,12 @@ export default class OutputFactory {
 
     let output = input;
     output = output.replace('{datReleaseRegion}', release.getRegion());
-    if (release.getLanguage()) {
-      output = output.replace('{datReleaseLanguage}', release.getLanguage() as string);
+
+    const language = release.getLanguage();
+    if (language) {
+      output = output.replace('{datReleaseLanguage}', language);
     }
+
     return output;
   }
 
@@ -225,21 +242,32 @@ export default class OutputFactory {
       return input;
     }
 
-    const gameConsole = GameConsole.getForConsoleName(dat?.getName() ?? '')
+    const gameConsole = GameConsole.getForDatName(dat?.getName() ?? '')
         ?? GameConsole.getForFilename(outputRomFilename);
     if (!gameConsole) {
       return input;
     }
 
     let output = input;
-    if (gameConsole.getPocket()) {
-      output = output.replace('{pocket}', gameConsole.getPocket() as string);
+
+    const pocket = gameConsole.getPocket();
+    if (pocket) {
+      output = output.replace('{pocket}', pocket);
     }
-    if (gameConsole.getMister()) {
-      output = output.replace('{mister}', gameConsole.getMister() as string);
+
+    const mister = gameConsole.getMister();
+    if (mister) {
+      output = output.replace('{mister}', mister);
     }
-    if (gameConsole.getOnion()) {
-      output = output.replace('{onion}', gameConsole.getOnion() as string);
+
+    const onion = gameConsole.getOnion();
+    if (onion) {
+      output = output.replace('{onion}', onion);
+    }
+
+    const batocera = gameConsole.getBatocera();
+    if (batocera) {
+      output = output.replace('{batocera}', batocera);
     }
     return output;
   }
@@ -255,23 +283,23 @@ export default class OutputFactory {
 
     // Find the letter for every ROM filename
     let lettersToFilenames = (romBasenames ?? [romBasename]).reduce((map, filename) => {
-      let letter = path.basename(filename)[0].toUpperCase();
+      let letter = filename[0].toUpperCase();
       if (letter.match(/[^A-Z]/)) {
         letter = '#';
       }
 
-      const existing = map.get(letter) ?? [];
-      existing.push(filename);
+      const existing = map.get(letter) ?? new Set();
+      existing.add(filename);
       map.set(letter, existing);
       return map;
-    }, new Map<string, string[]>());
+    }, new Map<string, Set<string>>());
 
     // Split the letter directories, if needed
     if (options.getDirLetterLimit()) {
       lettersToFilenames = [...lettersToFilenames.entries()]
         .reduce((lettersMap, [letter, filenames]) => {
-          if (filenames.length <= options.getDirLetterLimit()) {
-            lettersMap.set(letter, filenames);
+          if (filenames.size <= options.getDirLetterLimit()) {
+            lettersMap.set(letter, new Set(filenames));
             return lettersMap;
           }
 
@@ -279,8 +307,7 @@ export default class OutputFactory {
           // multiple ROMs, they get grouped by their game name. Therefore, we have to understand
           // what the "sub-path" should be within the letter directory: the dirname if the ROM has a
           // subdir, or just the ROM's basename otherwise.
-          const subPathsToFilenames = filenames
-            .filter((val, idx, vals) => vals.indexOf(val) === idx)
+          const subPathsToFilenames = [...filenames]
             .reduce((subPathMap, filename) => {
               const subPath = filename.replace(/[\\/].+$/, '');
               subPathMap.set(subPath, [...subPathMap.get(subPath) ?? [], filename]);
@@ -295,23 +322,25 @@ export default class OutputFactory {
               .flatMap((subPath) => subPathsToFilenames.get(subPath) ?? []);
 
             const newLetter = `${letter}${i / chunkSize + 1}`;
-            lettersMap.set(newLetter, chunk);
+            lettersMap.set(newLetter, new Set(chunk));
           }
 
           return lettersMap;
-        }, new Map<string, string[]>());
+        }, new Map<string, Set<string>>());
     }
 
     const foundEntry = [...lettersToFilenames.entries()]
-      .find(([, filenames]) => filenames.indexOf(romBasename) !== -1);
+      .find(([, filenames]) => filenames.has(romBasename));
     return foundEntry ? foundEntry[0] : undefined;
   }
 
-  /** ********************************
-   *                                 *
+  /**
+   ***********************************
+   *
    *     File name and extension     *
-   *                                 *
-   ********************************* */
+   *
+   * *********************************
+   */
 
   private static getName(
     options: Options,

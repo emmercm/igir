@@ -1,13 +1,13 @@
-# Reporting
+# ROM Reports
 
 ## Overview
 
-When using DATs (the `--dat` option), the `igir report` command can report on:
+When using DATs (the `--dat <path>` option), the `igir report` [command](../commands.md) can report on:
 
 - What ROMs were found, and where the files are
 - What ROMs are missing
 - What input files didn't match to any ROM
-- What output files were cleaned (`igir clean` command)
+- What output files were [cleaned](cleaning.md) (`igir clean` command)
 
 At least one DAT is required for the `igir report` command to work, otherwise `igir` has no way to understand what input files are known ROMs and which aren't. See the [DAT docs](../input/dats.md) for more information about DATs.
 
@@ -16,7 +16,7 @@ The `igir report` command can be specified on its own without any [writing comma
 === ":simple-windowsxp: Windows"
 
     ```batch
-    > igir.exe report --dat *.dat --input ROMs/
+    > igir.exe report --dat *.dat --input ROMs\
 
     > dir /b *.csv
     igir_2023-03-29T18;26;00-04;00.csv
@@ -52,7 +52,7 @@ To perform this filtering, most spreadsheet applications have a button or menu i
 
 ## Output location
 
-The `--report-output` options is provided to configure where the `igir report` CSV is written. See the `igir --help` message for the report's default location.
+The `--report-output <path>` option is provided to configure where the `igir report` CSV is written. See the `igir --help` message for the report's default location.
 
 The report output filename supports a version of [Moment.js symbols](https://momentjs.com/docs/#/displaying/) for date and time. To make it clearer what is a replaceable symbol, `%` is prepended to symbols. This is _non-standard_ for Moment.js, but the `%` format should feel more familiar to more people as it resembles [Python's `date.strftime()`](https://docs.python.org/3/library/datetime.html#datetime.date.strftime), [PHP's `strftime()`](https://www.php.net/manual/en/function.strftime.php), [C++'s `strftime()`](https://cplusplus.com/reference/ctime/strftime/), and more.
 
@@ -60,17 +60,25 @@ The report output filename supports a version of [Moment.js symbols](https://mom
 
     See the [Moment.js docs](https://momentjs.com/docs/#/displaying/) for a complete list of tokens you can use.
 
+!!! warning
+
+    The `%` character is used to denote replaceable variable names (such as `%USERPROFILE%` and `%TEMP%`) in Windows Batch scripting. You may need to "escape" `%` characters with a `^` if you experience problems. Example:
+
+    ```text
+    --report-output ^%X.csv
+    ```
+
 Here are some example usages:
 
 === ":simple-windowsxp: Windows"
 
     ```batch
-    > igir.exe report --dat *.dat --input ROMs/ --report-output "./report.csv"
+    > igir.exe report --dat *.dat --input ROMs\ --report-output ".\report.csv"
 
-    > igir.exe report --dat *.dat --input ROMs/ --report-output "./report %dddd, %MMMM %Do %YYYY, %h:%mm:%ss %a.csv"
+    > igir.exe report --dat *.dat --input ROMs\ --report-output ".\report %dddd, %MMMM %Do %YYYY, %h:%mm:%ss %a.csv"
     REM ./report Friday, April 14th 2023, 4:28:26 pm.csv
 
-    > igir.exe report --dat *.dat --input ROMs/ --report-output "/igir/%X.csv"
+    > igir.exe report --dat *.dat --input ROMs\ --report-output "igir\%X.csv"
     REM /igir/1681515048.csv
     ```
 
@@ -82,7 +90,7 @@ Here are some example usages:
     $ igir report --dat *.dat --input ROMs/ --report-output "./report %dddd, %MMMM %Do %YYYY, %h:%mm:%ss %a.csv"
     # ./report Friday, April 14th 2023, 4:28:26 pm.csv
 
-    $ igir report --dat *.dat --input ROMs/ --report-output "/igir/%X.csv"
+    $ igir report --dat *.dat --input ROMs/ --report-output "igir\%X.csv"
     # /igir/1681515048.csv
     ```
 
@@ -94,6 +102,6 @@ Here are some example usages:
     $ igir report --dat *.dat --input ROMs/ --report-output "./report %dddd, %MMMM %Do %YYYY, %h:%mm:%ss %a.csv"
     # ./report Friday, April 14th 2023, 4:28:26 pm.csv
 
-    $ igir report --dat *.dat --input ROMs/ --report-output "/igir/%X.csv"
+    $ igir report --dat *.dat --input ROMs/ --report-output "igir/%X.csv"
     # /igir/1681515048.csv
     ```

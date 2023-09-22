@@ -1,7 +1,7 @@
 import ProgressBar from '../console/progressBar.js';
+import DAT from '../types/dats/dat.js';
+import Parent from '../types/dats/parent.js';
 import DATStatus from '../types/datStatus.js';
-import DAT from '../types/logiqx/dat.js';
-import Parent from '../types/logiqx/parent.js';
 import Options from '../types/options.js';
 import ReleaseCandidate from '../types/releaseCandidate.js';
 import Module from './module.js';
@@ -19,6 +19,9 @@ export default class StatusGenerator extends Module {
     this.options = options;
   }
 
+  /**
+   * Generate a {@link DATStatus} for the {@link DAT}.
+   */
   async generate(
     dat: DAT,
     parentsToReleaseCandidates: Map<Parent, ReleaseCandidate[]>,

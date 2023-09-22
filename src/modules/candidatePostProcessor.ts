@@ -1,6 +1,6 @@
 import ProgressBar, { ProgressBarSymbol } from '../console/progressBar.js';
-import DAT from '../types/logiqx/dat.js';
-import Parent from '../types/logiqx/parent.js';
+import DAT from '../types/dats/dat.js';
+import Parent from '../types/dats/parent.js';
 import Options from '../types/options.js';
 import OutputFactory from '../types/outputFactory.js';
 import ReleaseCandidate from '../types/releaseCandidate.js';
@@ -21,6 +21,9 @@ export default class CandidatePostProcessor extends Module {
     this.options = options;
   }
 
+  /**
+   * Post-process the candidates.
+   */
   async process(
     dat: DAT,
     parentsToCandidates: Map<Parent, ReleaseCandidate[]>,
@@ -29,12 +32,13 @@ export default class CandidatePostProcessor extends Module {
 
     if (!parentsToCandidates.size) {
       this.progressBar.logDebug(`${dat.getNameShort()}: no parents, so no candidates to process`);
-      return new Map();
+      return parentsToCandidates;
     }
 
     await this.progressBar.setSymbol(ProgressBarSymbol.GENERATING);
     await this.progressBar.reset(parentsToCandidates.size);
 
+    // Get the output basename of every ROM
     const outputFileBasenames = [...parentsToCandidates.values()]
       .flatMap((releaseCandidates) => releaseCandidates)
       .flatMap((releaseCandidate) => releaseCandidate.getRomsWithFiles()
@@ -50,30 +54,27 @@ export default class CandidatePostProcessor extends Module {
           return outputPathParsed.name + outputPathParsed.ext;
         }));
 
-    const processedCandidates = new Map(await Promise.all(
-      [...parentsToCandidates.entries()]
-        .map(async ([parent, releaseCandidates]): Promise<[Parent, ReleaseCandidate[]]> => {
-          const newReleaseCandidates = await Promise.all(
-            releaseCandidates.map(async (releaseCandidate) => this.mapReleaseCandidate(
-              dat,
-              releaseCandidate,
-              outputFileBasenames,
-            )),
-          );
-          return [parent, newReleaseCandidates];
-        }),
-    ));
+    const processedCandidates = new Map([...parentsToCandidates.entries()]
+      .map(([parent, releaseCandidates]): [Parent, ReleaseCandidate[]] => {
+        const newReleaseCandidates = releaseCandidates
+          .map((releaseCandidate) => this.mapReleaseCandidate(
+            dat,
+            releaseCandidate,
+            outputFileBasenames,
+          ));
+        return [parent, newReleaseCandidates];
+      }));
 
     this.progressBar.logInfo(`${dat.getNameShort()}: done processing candidates`);
     return processedCandidates;
   }
 
-  private async mapReleaseCandidate(
+  private mapReleaseCandidate(
     dat: DAT,
     releaseCandidate: ReleaseCandidate,
     outputFileBasenames: string[],
-  ): Promise<ReleaseCandidate> {
-    const newRomsWithFiles = await this.mapRomsWithFiles(
+  ): ReleaseCandidate {
+    const newRomsWithFiles = this.mapRomsWithFiles(
       dat,
       releaseCandidate,
       releaseCandidate.getRomsWithFiles(),
@@ -87,35 +88,32 @@ export default class CandidatePostProcessor extends Module {
     );
   }
 
-  private async mapRomsWithFiles(
+  private mapRomsWithFiles(
     dat: DAT,
     releaseCandidate: ReleaseCandidate,
     romsWithFiles: ROMWithFiles[],
     outputFileBasenames: string[],
-  ): Promise<ROMWithFiles[]> {
-    return Promise.all(
-      romsWithFiles.map(async (romWithFiles) => {
-        const newOutputPath = OutputFactory.getPath(
-          this.options,
-          dat,
-          releaseCandidate.getGame(),
-          releaseCandidate.getRelease(),
-          romWithFiles.getRom(),
-          romWithFiles.getInputFile(),
-          outputFileBasenames,
-        ).format();
-        if (newOutputPath === romWithFiles.getOutputFile().getFilePath()) {
-          return romWithFiles;
-        }
+  ): ROMWithFiles[] {
+    return romsWithFiles.map((romWithFiles) => {
+      const newOutputPath = OutputFactory.getPath(
+        this.options,
+        dat,
+        releaseCandidate.getGame(),
+        releaseCandidate.getRelease(),
+        romWithFiles.getRom(),
+        romWithFiles.getInputFile(),
+        outputFileBasenames,
+      ).format();
+      if (newOutputPath === romWithFiles.getOutputFile().getFilePath()) {
+        return romWithFiles;
+      }
 
-        const newOutputFile = await romWithFiles.getOutputFile()
-          .withFilePath(newOutputPath);
-        return new ROMWithFiles(
-          romWithFiles.getRom(),
-          romWithFiles.getInputFile(),
-          newOutputFile,
-        );
-      }),
-    );
+      const newOutputFile = romWithFiles.getOutputFile().withFilePath(newOutputPath);
+      return new ROMWithFiles(
+        romWithFiles.getRom(),
+        romWithFiles.getInputFile(),
+        newOutputFile,
+      );
+    });
   }
 }

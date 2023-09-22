@@ -1,10 +1,11 @@
-import crypto from 'crypto';
-import fs, { MakeDirectoryOptions, PathLike, RmOptions } from 'fs';
+import crypto from 'node:crypto';
+import fs, { MakeDirectoryOptions, PathLike, RmOptions } from 'node:fs';
+import path from 'node:path';
+import util from 'node:util';
+
 import { isNotJunk } from 'junk';
 import nodeDiskInfo from 'node-disk-info';
-import path from 'path';
 import semver from 'semver';
-import util from 'util';
 
 export type FsWalkCallback = (increment: number) => void;
 
@@ -16,11 +17,25 @@ export default class FsPoly {
     .map((info) => info.mounted)
     .sort((a, b) => b.split(/[\\/]/).length - a.split(/[\\/]/).length);
 
+  static async canSymlink(tempDir: string): Promise<boolean> {
+    const source = await this.mktemp(path.join(tempDir, 'source'));
+    await this.touch(source);
+    const target = await this.mktemp(path.join(tempDir, 'target'));
+    try {
+      await this.symlink(source, target);
+      return await this.exists(target);
+    } catch (e) {
+      return false;
+    } finally {
+      await this.rm(source, { force: true });
+      await this.rm(target, { force: true });
+    }
+  }
+
   static async copyDir(src: string, dest: string): Promise<void> {
     await this.mkdir(dest, { recursive: true });
     const entries = await util.promisify(fs.readdir)(src, { withFileTypes: true });
 
-    /* eslint-disable no-await-in-loop */
     for (let i = 0; i < entries.length; i += 1) {
       const entry = entries[i];
       const srcPath = path.join(src, entry.name);
@@ -58,9 +73,10 @@ export default class FsPoly {
     }
   }
 
-  static isDirectorySync(pathLike: PathLike): boolean {
+  static async isExecutable(pathLike: PathLike): Promise<boolean> {
     try {
-      return fs.lstatSync(pathLike).isDirectory();
+      await util.promisify(fs.access)(pathLike, fs.constants.X_OK);
+      return true;
     } catch (e) {
       return false;
     }
@@ -138,14 +154,14 @@ export default class FsPoly {
   }
 
   static async mktemp(prefix: string): Promise<string> {
-    /* eslint-disable no-constant-condition, no-await-in-loop */
-    while (true) {
+    for (let i = 0; i < 10; i += 1) {
       const randomExtension = crypto.randomBytes(4).readUInt32LE().toString(36);
       const filePath = `${prefix.replace(/\.+$/, '')}.${randomExtension}`;
       if (!await this.exists(filePath)) {
         return filePath;
       }
     }
+    throw new Error('failed to generate non-existent temp file');
   }
 
   static async mv(oldPath: string, newPath: string, attempt = 1): Promise<void> {
@@ -170,7 +186,7 @@ export default class FsPoly {
       return await util.promisify(fs.rename)(oldPath, newPath);
     } catch (e) {
       // These are the same error codes that `graceful-fs` catches
-      if (['EACCES', 'EPERM', 'EBUSY'].indexOf((e as NodeJS.ErrnoException).code || '') === -1) {
+      if (['EACCES', 'EPERM', 'EBUSY'].indexOf((e as NodeJS.ErrnoException).code ?? '') === -1) {
         throw e;
       }
 
@@ -242,44 +258,6 @@ export default class FsPoly {
     }
   }
 
-  /**
-   * fs.rmSync() was added in: v14.14.0
-   */
-  static rmSync(pathLike: PathLike, options: RmOptions = {}): void {
-    const optionsWithRetry = {
-      maxRetries: 2,
-      ...options,
-    };
-
-    try {
-      // Added in: v0.11.15
-      fs.accessSync(pathLike); // throw if file doesn't exist
-    } catch (e) {
-      if (optionsWithRetry.force) {
-        return;
-      }
-      throw e;
-    }
-
-    // Added in: v0.1.30
-    if (this.isDirectorySync(pathLike)) {
-      // DEP0147
-      if (semver.lt(process.version, '16.0.0')) {
-        // Added in: v0.1.21
-        fs.rmdirSync(pathLike, optionsWithRetry);
-      } else {
-        // Added in: v14.14.0
-        fs.rmSync(pathLike, {
-          ...optionsWithRetry,
-          recursive: true,
-        });
-      }
-    } else {
-      // Added in: v0.1.21
-      fs.unlinkSync(pathLike);
-    }
-  }
-
   static async size(pathLike: PathLike): Promise<number> {
     try {
       return (await util.promisify(fs.lstat)(pathLike)).size;
@@ -331,7 +309,6 @@ export default class FsPoly {
 
     if (callback) callback(files.length);
 
-    /* eslint-disable no-await-in-loop */
     for (let i = 0; i < files.length; i += 1) {
       const file = path.join(pathLike.toString(), files[i]);
       if (await this.isDirectory(file)) {

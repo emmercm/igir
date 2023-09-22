@@ -1,4 +1,4 @@
-import path from 'path';
+import path from 'node:path';
 
 import ProgressBar, { ProgressBarSymbol } from '../console/progressBar.js';
 import ArchiveEntry from '../types/files/archives/archiveEntry.js';
@@ -10,6 +10,10 @@ import File from '../types/files/file.js';
 import Options from '../types/options.js';
 import Module from './module.js';
 
+/**
+ * This class indexes {@link File}s by their {@link File.hashCode}, and sorts duplicate files by a
+ * set of preferences.
+ */
 export default class FileIndexer extends Module {
   protected readonly options: Options;
 
@@ -18,6 +22,9 @@ export default class FileIndexer extends Module {
     this.options = options;
   }
 
+  /**
+   * Index files.
+   */
   async index(files: File[]): Promise<Map<string, File[]>> {
     if (!files.length) {
       return new Map();
@@ -79,13 +86,7 @@ export default class FileIndexer extends Module {
   }
 
   private static setFileInMap<K>(map: Map<K, File[]>, key: K, file: File): void {
-    if (!map.has(key)) {
-      map.set(key, [file]);
-      return;
-    }
-
-    const existing = map.get(key) as File[];
-    map.set(key, [...existing, file]);
+    map.set(key, [...(map.get(key) ?? []), file]);
   }
 
   /**

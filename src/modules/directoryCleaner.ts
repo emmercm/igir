@@ -1,11 +1,13 @@
-import fs from 'fs';
+import fs from 'node:fs';
+import path from 'node:path';
+import util from 'node:util';
+
 import { isNotJunk } from 'junk';
-import path from 'path';
 import trash from 'trash';
-import util from 'util';
 
 import ProgressBar, { ProgressBarSymbol } from '../console/progressBar.js';
 import Constants from '../constants.js';
+import ArrayPoly from '../polyfill/arrayPoly.js';
 import fsPoly from '../polyfill/fsPoly.js';
 import File from '../types/files/file.js';
 import Options from '../types/options.js';
@@ -24,6 +26,9 @@ export default class DirectoryCleaner extends Module {
     this.options = options;
   }
 
+  /**
+   * Clean some directories, excluding some files.
+   */
   async clean(dirsToClean: string[], filesToExclude: File[]): Promise<string[]> {
     this.progressBar.logInfo('cleaning files in output');
 
@@ -72,7 +77,6 @@ export default class DirectoryCleaner extends Module {
 
   private async trashOrDelete(filePaths: string[]): Promise<void> {
     // Prefer recycling...
-    /* eslint-disable no-await-in-loop */
     for (let i = 0; i < filePaths.length; i += Constants.OUTPUT_CLEANER_BATCH_SIZE) {
       await trash(filePaths.slice(i, i + Constants.OUTPUT_CLEANER_BATCH_SIZE));
       await this.progressBar.update(i);
@@ -90,7 +94,7 @@ export default class DirectoryCleaner extends Module {
         dirsToClean.map(async (dirToClean) => DirectoryCleaner.getEmptyDirs(dirToClean)),
       ))
         .flatMap((emptyDirs) => emptyDirs)
-        .filter((emptyDir, idx, emptyDirs) => emptyDirs.indexOf(emptyDir) === idx);
+        .reduce(ArrayPoly.reduceUnique(), []);
     }
 
     // Find all subdirectories and files in the directory

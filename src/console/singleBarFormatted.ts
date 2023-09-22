@@ -6,6 +6,9 @@ import { linearRegression, linearRegressionLine } from 'simple-statistics';
 
 import ProgressBarPayload from './progressBarPayload.js';
 
+/**
+ * A wrapper class for a cli-progress {@link SingleBar} that formats the output.
+ */
 export default class SingleBarFormatted {
   public static readonly MAX_NAME_LENGTH = 30;
 
@@ -30,7 +33,6 @@ export default class SingleBarFormatted {
   constructor(multiBar: MultiBar, initialTotal: number, initialPayload: ProgressBarPayload) {
     this.multiBar = multiBar;
     this.singleBar = this.multiBar.create(initialTotal, 0, initialPayload, {
-      /* eslint-disable-next-line arrow-body-style */
       format: (options, params, payload: ProgressBarPayload): string => {
         this.lastOutput = `${`${SingleBarFormatted.getSymbol(payload)} ${SingleBarFormatted.getName(payload)}`.trim()} | ${this.getProgress(options, params, payload)}`.trim();
         return this.lastOutput;
@@ -91,9 +93,11 @@ export default class SingleBarFormatted {
   }
 
   private calculateEta(params: Params): number {
-    function clamp(val: number, min: number, max: number): number {
-      return Math.min(Math.max(val, min), max);
-    }
+    const clamp = (
+      val: number,
+      min: number,
+      max: number,
+    ): number => Math.min(Math.max(val, min), max);
     const MAX_BUFFER_SIZE = clamp(Math.floor(params.total / 10), 25, 50);
 
     this.valueTimeBuffer = [
@@ -124,15 +128,15 @@ export default class SingleBarFormatted {
       min: number,
       max: number,
     ): number => Math.min(Math.max(val ?? 0, min), max);
-    const completeSize = Math.floor(clamp(params.progress, 0.0, 1.0) * barSize);
+    const completeSize = Math.floor(clamp(params.progress, 0, 1) * barSize);
     const inProgressSize = params.total > 0
       ? Math.ceil((clamp(payload.inProgress, 0, params.total) / params.total) * barSize)
       : 0;
     const incompleteSize = barSize - inProgressSize - completeSize;
 
-    return (SingleBarFormatted.BAR_COMPLETE_CHAR || '').repeat(Math.max(completeSize, 0))
-      + (SingleBarFormatted.BAR_IN_PROGRESS_CHAR || '').repeat(Math.max(inProgressSize, 0))
-      + (SingleBarFormatted.BAR_INCOMPLETE_CHAR || '').repeat(Math.max(incompleteSize, 0));
+    return SingleBarFormatted.BAR_COMPLETE_CHAR.repeat(Math.max(completeSize, 0))
+      + SingleBarFormatted.BAR_IN_PROGRESS_CHAR.repeat(Math.max(inProgressSize, 0))
+      + SingleBarFormatted.BAR_INCOMPLETE_CHAR.repeat(Math.max(incompleteSize, 0));
   }
 
   private getEtaFormatted(etaSeconds: number): string {
@@ -140,7 +144,7 @@ export default class SingleBarFormatted {
     //  Update only every 5s if the ETA is >60s
     const [elapsedSec, elapsedNano] = process.hrtime(this.lastEtaTime);
     const elapsedMs = (elapsedSec * 1_000_000_000 + elapsedNano) / 1_000_000;
-    if (etaSeconds > 60 && elapsedMs < 5_000) {
+    if (etaSeconds > 60 && elapsedMs < 5000) {
       return this.lastEtaValue;
     }
     this.lastEtaTime = process.hrtime();

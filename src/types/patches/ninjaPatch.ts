@@ -68,7 +68,6 @@ export default class NinjaPatch extends Patch {
     const targetFile = await FilePoly.fileFrom(outputRomPath, 'r+');
 
     try {
-      /* eslint-disable no-await-in-loop */
       while (!patchFile.isEOF()) {
         await this.applyCommand(patchFile, targetFile);
       }
@@ -121,7 +120,6 @@ export default class NinjaPatch extends Patch {
       const overflow = overflowSize > 0
         ? await patchFile.readNext(overflowSize)
         : Buffer.alloc(overflowSize);
-      /* eslint-disable no-bitwise */
       for (let i = 0; i < overflow.length; i += 1) {
         overflow[i] ^= 255; // NOTE(cemmer): this isn't documented anywhere
       }

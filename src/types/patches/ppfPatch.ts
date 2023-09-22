@@ -84,7 +84,6 @@ export default class PPFPatch extends Patch {
     const targetFile = await FilePoly.fileFrom(outputRomPath, 'r+');
 
     try {
-      /* eslint-disable no-await-in-loop */
       while (!patchFile.isEOF()) {
         await PPFPatch.applyPatchBlock(patchFile, targetFile, header);
       }
@@ -113,7 +112,7 @@ export default class PPFPatch extends Patch {
       offset = (await patchFile.readNext(4)).readUInt32LE();
     } else if (header.version === 3) {
       offset = (await patchFile.readNext(4)).readUInt32LE()
-        + ((await patchFile.readNext(4)).readUInt32LE() * 0x100000000);
+        + ((await patchFile.readNext(4)).readUInt32LE() * 0x1_00_00_00_00);
     }
 
     const bytesToChange = (await patchFile.readNext(1)).readUInt8();

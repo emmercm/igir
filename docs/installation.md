@@ -53,10 +53,10 @@ If none of the above options work for you, [Docker](https://www.docker.com/) may
 
     ```batch
     docker run --interactive --tty ^
-      --volume "%cd%:/pwd" ^
+      --volume "%cd%:\pwd" ^
       --workdir "/pwd" ^
       node:lts ^
-      npx igir@latest copy zip --dat "*.dat" --input ROMs/ --output ROMs-Sorted/ --dir-dat-name
+      npx igir@latest copy zip --dat "*.dat" --input ROMs\ --output ROMs-Sorted\ --dir-dat-name
     ```
 
 === ":simple-apple: macOS"

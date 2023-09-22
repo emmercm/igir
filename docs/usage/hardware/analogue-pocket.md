@@ -23,11 +23,12 @@ This token can be used to reference each core's specific directory in the SD car
     Replace the `E:\` drive letter with wherever your SD card is:
 
     ```batch
-    igir.exe copy extract test clean ^
+    igir copy extract test clean ^
       --dat "No-Intro*.zip" ^
       --input "ROMs" ^
       --output "E:\Assets\{pocket}\common" ^
       --dir-letter ^
+      --dir-letter-limit 1000 ^
       --clean-exclude "E:\Assets\*\common\*.*" ^
       --no-bios
     ```
@@ -42,6 +43,7 @@ This token can be used to reference each core's specific directory in the SD car
       --input "ROMs/" \
       --output "/Volumes/POCKET/Assets/{pocket}/common/" \
       --dir-letter \
+      --dir-letter-limit 1000 \
       --clean-exclude "/Volumes/POCKET/Assets/*/common/*.*" \
       --no-bios
     ```
@@ -56,6 +58,7 @@ This token can be used to reference each core's specific directory in the SD car
       --input "ROMs/" \
       --output "/media/POCKET/Assets/{pocket}/common/" \
       --dir-letter \
+      --dir-letter-limit 1000 \
       --clean-exclude "/media/POCKET/Assets/*/common/*.*" \
       --no-bios
     ```

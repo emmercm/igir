@@ -1,0 +1,158 @@
+# https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-nodejs
+# https://hanxiao.io/2021/01/24/Speedup-CI-Workflow-in-Github-Actions-via-Strategy-Matrix/
+
+name: Node.js Test
+
+on:
+  pull_request:
+    types:
+      # - edited  # PR's base branch was changed
+      - opened
+      - reopened
+      - synchronize  # PR's branch was edited (i.e. new commits)
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  path-filter:
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: read
+    outputs:
+      changes: ${{ steps.filter.outputs.changes }}
+    steps:
+      - uses: actions/checkout@v3
+      - id: filter
+        uses: dorny/paths-filter@v2
+        with:
+          filters: |
+            changes:
+              - '*'
+              - 'src/**'
+              - 'test/**'
+
+  node-lint:
+    needs:
+      - path-filter
+    if: ${{ needs.path-filter.outputs.changes == 'true' }}
+    runs-on: ubuntu-latest
+    steps:
+      # Setup and install
+      - uses: actions/checkout@v3
+      - uses: actions/setup-node@v3
+        with:
+          node-version-file: '.nvmrc'
+          cache: 'npm'
+      - run: npm ci
+      # Lint the source files
+      - run: ./node_modules/.bin/ts-node ./index.ts --help
+      - run: npm run lint
+
+  # TODO(cemmer): check for deprecated dependencies
+  # https://stackoverflow.com/questions/44097267/find-packages-that-give-deprecated-warning-npm
+
+  node-unit:
+    needs:
+      - path-filter
+    if: ${{ needs.path-filter.outputs.changes == 'true' }}
+    runs-on: ${{ matrix.os }}-latest
+    strategy:
+      matrix:
+        os: [ ubuntu, macos, windows ]
+        node-version: [ lts/*, lts/-1, 16.3.0 ]
+    steps:
+      # Setup and install
+      - uses: actions/checkout@v3
+      - name: Use Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v3
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: 'npm'
+      - run: npm ci
+      # Test the source files
+      - run: npm run test:unit
+
+  node-e2e:
+    needs:
+      - path-filter
+    if: ${{ needs.path-filter.outputs.changes == 'true' }}
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node-version: [ lts/*, lts/-1, 16.3.0 ]
+    steps:
+      # Setup and install
+      - uses: actions/checkout@v3
+      - name: Use Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v3
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: 'npm'
+      - run: npm ci
+      # Test the built files
+      - run: npm run build
+      - run: ./test/endToEndTest.sh
+
+  node-build:
+    needs:
+      - path-filter
+    if: ${{ needs.path-filter.outputs.changes == 'true' }}
+    runs-on: ${{ matrix.os }}-latest
+    strategy:
+      matrix:
+        os: [ ubuntu, macos, windows ]
+    steps:
+      # Setup and install
+      - uses: actions/checkout@v3
+      - uses: actions/setup-node@v3
+        with:
+          node-version-file: '.nvmrc'
+          cache: 'npm'
+      - run: npm ci
+      # Test building
+      - run: npm run build
+
+  node-package:
+    needs:
+      - path-filter
+    if: ${{ needs.path-filter.outputs.changes == 'true' }}
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node-version: [ lts/*, lts/-1, 16.3.0 ]
+    steps:
+      # Setup and install
+      - uses: actions/checkout@v3
+      - uses: actions/setup-node@v3
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: 'npm'
+      - run: npm ci
+      # Test the packaging
+      - run: |
+          npm pack
+          tar -xvzf igir-*.tgz
+          cd package
+          npm install --ignore-scripts
+          ./build/index.js --help
+          cd ..
+          rm -rf package
+
+  # !!! This check should be required by GitHub !!!
+  test-status-check:
+    if: always()
+    needs:
+      - path-filter
+      - node-lint
+      - node-unit
+      - node-e2e
+      - node-build
+      - node-package
+    runs-on: ubuntu-latest
+    steps:
+      - uses: re-actors/alls-green@release/v1
+        with:
+          allowed-skips: node-lint, node-unit, node-e2e, node-build, node-package
+          jobs: ${{ toJSON(needs) }}

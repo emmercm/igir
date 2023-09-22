@@ -1,20 +1,30 @@
 import ProgressBar, { ProgressBarSymbol } from '../console/progressBar.js';
+import ArrayPoly from '../polyfill/arrayPoly.js';
 import fsPoly from '../polyfill/fsPoly.js';
+import DAT from '../types/dats/dat.js';
 import ArchiveEntry from '../types/files/archives/archiveEntry.js';
 import File from '../types/files/file.js';
-import DAT from '../types/logiqx/dat.js';
-import Parent from '../types/logiqx/parent.js';
 import Module from './module.js';
 
+/**
+ * After all output {@link File}s have been written, delete any input {@link File}s that were
+ * "moved." This needs to happen after all writing has finished in order to guarantee we're done
+ * reading input {@link File}s from disk.
+ *
+ * This class will not be run concurrently with any other class.
+ */
 export default class MovedROMDeleter extends Module {
   constructor(progressBar: ProgressBar) {
     super(progressBar, MovedROMDeleter.name);
   }
 
+  /**
+   * Delete input files that were moved.
+   */
   async delete(
     inputRoms: File[],
     movedRoms: File[],
-    datsToWrittenRoms: Map<DAT, Map<Parent, File[]>>,
+    datsToWrittenFiles: Map<DAT, File[]>,
   ): Promise<string[]> {
     if (!movedRoms.length) {
       return [];
@@ -28,7 +38,7 @@ export default class MovedROMDeleter extends Module {
 
     const filePathsToDelete = MovedROMDeleter.filterOutWrittenFiles(
       fullyConsumedFiles,
-      datsToWrittenRoms,
+      datsToWrittenFiles,
     );
 
     await this.progressBar.setSymbol(ProgressBarSymbol.DELETING);
@@ -61,7 +71,16 @@ export default class MovedROMDeleter extends Module {
 
     return [...groupedMovedRoms.entries()]
       .map(([filePath, movedEntries]) => {
-        const movedEntriesStrings = movedEntries.map((entry) => entry.toString());
+        // NOTE(cemmer): games can have ROMs with duplicate checksums, which means an Archive of
+        //  that game's ROMs will contain some duplicate files. When extracting or zipping, we would
+        //  have generated multiple ReleaseCandidates with the same input File, resulting in the
+        //  duplicate files in the Archive not being considered "moved." Therefore, we should use
+        //  the unique set of ArchiveEntry hash codes to know if every ArchiveEntry was "consumed"
+        //  during writing.
+        const movedEntryHashCodes = new Set(
+          movedEntries.flatMap((file) => file.hashCodes()),
+        );
+
         const inputEntries = groupedInputRoms.get(filePath) ?? [];
 
         const unmovedEntries = inputEntries.filter((entry) => {
@@ -75,7 +94,7 @@ export default class MovedROMDeleter extends Module {
           }
 
           // Otherwise, the entry needs to have been explicitly moved
-          return movedEntriesStrings.indexOf(entry.toString()) === -1;
+          return entry.hashCodes().some((hashCode) => !movedEntryHashCodes.has(hashCode));
         });
         if (unmovedEntries.length) {
           this.progressBar.logWarn(`${filePath}: not deleting moved file, ${unmovedEntries.length.toLocaleString()} archive entr${unmovedEntries.length !== 1 ? 'ies were' : 'y was'} unmatched:${unmovedEntries.sort().map((entry) => `\n  ${entry}`)}`);
@@ -84,7 +103,7 @@ export default class MovedROMDeleter extends Module {
 
         return filePath;
       })
-      .filter((filePath) => filePath) as string[];
+      .filter(ArrayPoly.filterNotNullish);
   }
 
   private static groupFilesByFilePath(files: File[]): Map<string, File[]> {
@@ -108,15 +127,11 @@ export default class MovedROMDeleter extends Module {
    */
   private static filterOutWrittenFiles(
     movedRoms: string[],
-    datsToWrittenRoms: Map<DAT, Map<Parent, File[]>>,
+    datsToWrittenFiles: Map<DAT, File[]>,
   ): string[] {
-    const writtenFilePaths = [...datsToWrittenRoms.values()]
-      .flatMap((parentsToFiles) => [...parentsToFiles.values()])
+    const writtenFilePaths = new Set([...datsToWrittenFiles.values()]
       .flatMap((files) => files)
-      .reduce((map, file) => {
-        map.set(file.getFilePath(), true);
-        return map;
-      }, new Map<string, boolean>());
+      .map((file) => file.getFilePath()));
 
     return movedRoms.filter((filePath) => !writtenFilePaths.has(filePath));
   }

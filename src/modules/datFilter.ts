@@ -1,7 +1,8 @@
 import ProgressBar, { ProgressBarSymbol } from '../console/progressBar.js';
 import fsPoly from '../polyfill/fsPoly.js';
-import DAT from '../types/logiqx/dat.js';
-import Game from '../types/logiqx/game.js';
+import DAT from '../types/dats/dat.js';
+import Game from '../types/dats/game.js';
+import LogiqxDAT from '../types/dats/logiqx/logiqxDat.js';
 import Options from '../types/options.js';
 import Module from './module.js';
 
@@ -18,6 +19,9 @@ export default class DATFilter extends Module {
     this.options = options;
   }
 
+  /**
+   * Create a new DAT after filtering.
+   */
   async filter(dat: DAT): Promise<DAT> {
     this.progressBar.logInfo(`${dat.getNameShort()}: filtering DAT`);
 
@@ -32,7 +36,7 @@ export default class DATFilter extends Module {
 
     const filteredGames = dat.getGames()
       .filter((game) => this.filterGame(game));
-    const filteredDat = new DAT(dat.getHeader(), filteredGames);
+    const filteredDat = new LogiqxDAT(dat.getHeader(), filteredGames);
 
     const size = filteredDat.getGames()
       .flatMap((game) => game.getRoms())
@@ -43,11 +47,13 @@ export default class DATFilter extends Module {
     return filteredDat;
   }
 
-  /** ***************
-   *                *
+  /**
+   ******************
+   *
    *     Filter     *
-   *                *
-   **************** */
+   *
+   ******************
+   */
 
   private filterGame(game: Game): boolean {
     // If any condition evaluates to 'true', then the candidate will be excluded
@@ -90,17 +96,17 @@ export default class DATFilter extends Module {
 
   private noLanguageAllowed(game: Game): boolean {
     const langs = this.options.getLanguageFilter();
-    if (!langs.length) {
+    if (!langs.size) {
       return false;
     }
-    return !game.getLanguages().some((lang) => langs.indexOf(lang) !== -1);
+    return !game.getLanguages().some((lang) => langs.has(lang));
   }
 
   private regionNotAllowed(game: Game): boolean {
     const regions = this.options.getRegionFilter();
-    if (!regions.length) {
+    if (!regions.size) {
       return false;
     }
-    return !game.getRegions().some((region) => regions.indexOf(region) !== -1);
+    return !game.getRegions().some((region) => regions.has(region));
   }
 }

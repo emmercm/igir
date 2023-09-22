@@ -1,5 +1,5 @@
-import path from 'path';
-import { Readable } from 'stream';
+import path from 'node:path';
+import { Readable } from 'node:stream';
 
 export default class ROMHeader {
   private static readonly HEADERS: { [key: string]:ROMHeader } = {
@@ -58,7 +58,7 @@ export default class ROMHeader {
     for (let i = 0; i < headers.length; i += 1) {
       const header = headers[i];
       if (header.headeredFileExtension.toLowerCase() === path.extname(filePath).toLowerCase()
-        || (header.unheaderedFileExtension?.toLowerCase() || '') === path.extname(filePath).toLowerCase()
+        || (header.unheaderedFileExtension?.toLowerCase() ?? '') === path.extname(filePath).toLowerCase()
       ) {
         return header;
       }

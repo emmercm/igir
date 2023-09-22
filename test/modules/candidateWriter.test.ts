@@ -1,25 +1,26 @@
-import fs, { Stats } from 'fs';
-import os from 'os';
-import path from 'path';
-import util from 'util';
+import fs, { Stats } from 'node:fs';
+import os from 'node:os';
+import path from 'node:path';
+import util from 'node:util';
 
 import Constants from '../../src/constants.js';
 import CandidateCombiner from '../../src/modules/candidateCombiner.js';
 import CandidateGenerator from '../../src/modules/candidateGenerator.js';
 import CandidatePatchGenerator from '../../src/modules/candidatePatchGenerator.js';
 import CandidateWriter from '../../src/modules/candidateWriter.js';
-import DATInferrer from '../../src/modules/datInferrer.js';
+import DATGameInferrer from '../../src/modules/datGameInferrer.js';
 import FileIndexer from '../../src/modules/fileIndexer.js';
 import PatchScanner from '../../src/modules/patchScanner.js';
 import ROMHeaderProcessor from '../../src/modules/romHeaderProcessor.js';
 import ROMScanner from '../../src/modules/romScanner.js';
 import fsPoly from '../../src/polyfill/fsPoly.js';
+import DAT from '../../src/types/dats/dat.js';
+import Header from '../../src/types/dats/logiqx/header.js';
+import LogiqxDAT from '../../src/types/dats/logiqx/logiqxDat.js';
 import Archive from '../../src/types/files/archives/archive.js';
 import ArchiveEntry from '../../src/types/files/archives/archiveEntry.js';
 import File from '../../src/types/files/file.js';
 import FileFactory from '../../src/types/files/fileFactory.js';
-import DAT from '../../src/types/logiqx/dat.js';
-import Header from '../../src/types/logiqx/header.js';
 import Options, { OptionsProps } from '../../src/types/options.js';
 import ProgressBarFake from '../console/progressBarFake.js';
 
@@ -71,11 +72,11 @@ async function walkAndStat(dirPath: string): Promise<[string, Stats][]> {
 
 function datInferrer(romFiles: File[]): DAT {
   // Run DATInferrer, but condense all DATs down to one
-  const datGames = new DATInferrer(new ProgressBarFake()).infer(romFiles)
+  const datGames = new DATGameInferrer(new ProgressBarFake()).infer(romFiles)
     .map((dat) => dat.getGames())
     .flatMap((games) => games);
   // TODO(cemmer): filter to unique games / remove duplicates
-  return new DAT(new Header({ name: 'ROMWriter Test' }), datGames);
+  return new LogiqxDAT(new Header({ name: 'ROMWriter Test' }), datGames);
 }
 
 async function romWriter(
@@ -115,21 +116,29 @@ async function romWriter(
   return walkAndStat(outputTemp);
 }
 
+// TODO(cemmer): why does this hang on Windows in CI?
 it('should not do anything if there are no parents', async () => {
   await copyFixturesToTemp(async (inputTemp, outputTemp) => {
+    console.log(inputTemp, outputTemp);
+
     // Given
     const options = new Options({ commands: ['copy'] });
+    console.log(options);
     const inputFilesBefore = await walkAndStat(inputTemp);
+    console.log(inputFilesBefore);
     await expect(walkAndStat(outputTemp)).resolves.toHaveLength(0);
 
     // When
-    await romWriter(options, os.devNull, '**/*', undefined, outputTemp);
+    const output = await romWriter(options, os.devNull, '**/*', undefined, outputTemp);
+    console.log(output);
 
     // Then no files were written
     await expect(walkAndStat(outputTemp)).resolves.toHaveLength(0);
+    console.log('output is empty');
 
     // And the input files weren't touched
     await expect(walkAndStat(inputTemp)).resolves.toEqual(inputFilesBefore);
+    console.log('input is unchanged');
   });
 });
 
@@ -308,6 +317,18 @@ describe('zip', () => {
       // And the input files weren't touched
       await expect(walkAndStat(inputTemp)).resolves.toEqual(inputFilesBefore);
     });
+  });
+
+  it('should not move if tested zip has wrong number of entries', () => {
+    // TODO(cemmer)
+  });
+
+  it('should not move if tested zip is missing an entry', () => {
+    // TODO(cemmer)
+  });
+
+  it('should not move if tested zip has an entry with an unexpected checksum', () => {
+    // TODO(cemmer)
   });
 
   test.each([
@@ -1250,7 +1271,6 @@ describe('symlink', () => {
       // And files were written
       const outputFilesBefore = await walkAndStat(outputTemp);
       expect(outputFilesBefore).not.toHaveLength(0);
-      /* eslint-disable no-await-in-loop */
       for (let i = 0; i < outputFilesBefore.length; i += 1) {
         const [outputPath, stats] = outputFilesBefore[i];
         expect(stats.isSymbolicLink()).toEqual(true);
@@ -1281,7 +1301,6 @@ describe('symlink', () => {
       // And files were written
       const outputFilesBefore = await walkAndStat(outputTemp);
       expect(outputFilesBefore).not.toHaveLength(0);
-      /* eslint-disable no-await-in-loop */
       for (let i = 0; i < outputFilesBefore.length; i += 1) {
         const [outputPath, stats] = outputFilesBefore[i];
         expect(stats.isSymbolicLink()).toEqual(true);
@@ -1299,7 +1318,6 @@ describe('symlink', () => {
       expect(outputFilesAfter.map((pair) => pair[0]))
         .toEqual(outputFilesBefore.map((pair) => pair[0]));
       expect(outputFilesAfter).not.toEqual(outputFilesBefore);
-      /* eslint-disable no-await-in-loop */
       for (let i = 0; i < outputFilesAfter.length; i += 1) {
         const [outputPath, stats] = outputFilesAfter[i];
         expect(stats.isSymbolicLink()).toEqual(true);
@@ -1323,7 +1341,6 @@ describe('symlink', () => {
       // Then files were written
       const outputFilesBefore = await walkAndStat(outputTemp);
       expect(outputFilesBefore).not.toHaveLength(0);
-      /* eslint-disable no-await-in-loop */
       for (let i = 0; i < outputFilesBefore.length; i += 1) {
         const [outputPath, stats] = outputFilesBefore[i];
         expect(stats.isSymbolicLink()).toEqual(true);

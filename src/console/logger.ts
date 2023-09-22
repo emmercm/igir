@@ -1,14 +1,18 @@
+import { PassThrough } from 'node:stream';
+import { WriteStream } from 'node:tty';
+
 import chalk from 'chalk';
 import figlet from 'figlet';
 import moment from 'moment';
-import { PassThrough } from 'stream';
-import { WriteStream } from 'tty';
 
 import Constants from '../constants.js';
 import LogLevel from './logLevel.js';
 import ProgressBar, { ProgressBarSymbol } from './progressBar.js';
-import ProgressBarCLI from './progressBarCLI.js';
+import ProgressBarCLI from './progressBarCli.js';
 
+/**
+ * {@link Logger} is a class that deals with the formatting and outputting log messages to a stream.
+ */
 export default class Logger {
   private logLevel: LogLevel;
 
@@ -38,9 +42,12 @@ export default class Logger {
     return this.stream;
   }
 
+  /**
+   * Determine if this {@link Logger}'s underlying stream is a TTY stream or not.
+   */
   isTTY(): boolean {
     if (this.stream instanceof WriteStream) {
-      return (this.stream as WriteStream).isTTY;
+      return (this.stream satisfies WriteStream).isTTY;
     }
     if (this.stream instanceof PassThrough) {
       // Testing streams should be treated as TTY
@@ -56,28 +63,36 @@ export default class Logger {
     this.stream.write(`${this.formatMessage(logLevel, String(message).toString())}\n`);
   };
 
+  /**
+   * Print a newline.
+   */
   newLine(): void {
     this.print(LogLevel.ALWAYS);
   }
 
+  /**
+   * Format a log message for a given {@link LogLevel}.
+   */
   formatMessage(logLevel: LogLevel, message: string): string {
     // Don't format "ALWAYS" or "NEVER"
     if (logLevel >= LogLevel.ALWAYS) {
       return message;
     }
 
-    const chalkFuncs: { [key: number]: (message: string) => string } = {
+    const chalkFuncs = {
       [LogLevel.TRACE]: chalk.grey,
       [LogLevel.DEBUG]: chalk.magenta,
       [LogLevel.INFO]: chalk.cyan,
       [LogLevel.WARN]: chalk.yellow,
       [LogLevel.ERROR]: chalk.red,
-      [LogLevel.NOTICE]: chalk.bold,
-    };
+      [LogLevel.NOTICE]: chalk.underline,
+      [LogLevel.ALWAYS]: (msg) => msg,
+      [LogLevel.NEVER]: (msg) => msg,
+    } satisfies { [key in LogLevel]: (message: string) => string };
     const chalkFunc = chalkFuncs[logLevel];
 
     const loggerTime = this.logLevel <= LogLevel.TRACE ? `[${moment().format('HH:mm:ss.SSS')}] ` : '';
-    const levelPrefix = chalkFunc(`${LogLevel[logLevel]}:${' '.repeat(Math.max(5 - LogLevel[logLevel].length, 0))} `);
+    const levelPrefix = `${chalkFunc(LogLevel[logLevel])}:${' '.repeat(Math.max(5 - LogLevel[logLevel].length, 0))} `;
     const loggerPrefix = this.logLevel <= LogLevel.INFO && this.loggerPrefix ? `${this.loggerPrefix}: ` : '';
 
     return message
@@ -100,6 +115,9 @@ export default class Logger {
 
   notice = (message: unknown = ''): void => this.print(LogLevel.NOTICE, message);
 
+  /**
+   * Print the CLI header.
+   */
   printHeader(): void {
     const logo = figlet.textSync(Constants.COMMAND_NAME.toUpperCase(), {
       font: 'Big Money-se',
@@ -115,6 +133,9 @@ export default class Logger {
     this.print(LogLevel.ALWAYS, `${logoSplit.join('\n')}\n\n`);
   }
 
+  /**
+   * Print a colorized yargs help string.
+   */
   colorizeYargs(help: string): void {
     this.print(
       LogLevel.ALWAYS,
@@ -140,6 +161,9 @@ export default class Logger {
     );
   }
 
+  /**
+   * Create a {@link ProgressBar} with a reference to this {@link Logger}.
+   */
   async addProgressBar(
     name: string,
     symbol = ProgressBarSymbol.WAITING,
@@ -148,6 +172,9 @@ export default class Logger {
     return ProgressBarCLI.new(this, name, symbol, initialTotal);
   }
 
+  /**
+   * Return a copy of this Logger with a new string prefix.
+   */
   withLoggerPrefix(prefix: string): Logger {
     return new Logger(this.logLevel, this.stream, prefix);
   }

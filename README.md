@@ -3,7 +3,7 @@
 <p align="center"><b>Pronounced "eager," <code>igir</code> is a video game ROM collection manager to help filter, sort, patch, archive, and report on collections on any OS.</b></p>
 
 <p align="center">
-  <a href="https://github.com/emmercm/igir#readme"><img alt="CLI: Windows,macOS,Linux" src="https://img.shields.io/badge/CLI-Windows%2C%20macOS%2C%20Linux-lightgrey?logo=windows-terminal"></a>
+  <a href="https://igir.io/"><img alt="CLI: Windows,macOS,Linux" src="https://img.shields.io/badge/CLI-Windows%2C%20macOS%2C%20Linux-lightgrey?logo=windows-terminal"></a>
   <a href="https://www.npmjs.com/package/igir"><img alt="npm: version" src="https://img.shields.io/npm/v/igir?color=%23cc3534&label=version&logo=npm&logoColor=white"></a>
   <a href="https://www.npmjs.com/package/igir"><img alt="npm: downloads" src="https://img.shields.io/npm/dt/igir?color=%23cc3534&logo=npm&logoColor=white"></a>
   <a href="https://github.com/emmercm/igir/releases"><img alt="GitHub: downloads" src="https://img.shields.io/github/downloads/emmercm/igir/total?color=%236e5494&logo=github&logoColor=white"></a>
@@ -28,14 +28,15 @@ A video of an example use case:
 
 With `igir` you can manage a ROM collection of any size:
 
-- 🔍 Scan for DATs, ROMs, and ROM patches - including those in archives (see [scanning](https://igir.io/file-scanning) & [archive docs](https://igir.io/archives))
-- 📂 Organize ROM files by console (see [DAT docs](https://igir.io/dats))
-- 🪄 Name ROM files consistently, including the right extension (see [DAT docs](https://igir.io/dats))
-- ✂️ Filter out duplicate ROMs, or ROMs in languages you don't understand (see [filtering docs](https://igir.io/rom-filtering))
-- 🗜️ Extract or archive ROMs in mass (see [archive docs](https://igir.io/archives))
-- 🩹 Patch ROMs automatically in mass (see [scanning](https://igir.io/file-scanning) & [patching docs](https://igir.io/rom-patching))
-- 🎩 Parse ROMs with headers, and optionally remove them (see [header docs](https://igir.io/rom-headers))
-- 🔮 Report on what ROMs are present or missing for each console, and create fixdats for missing ROMs (see [reporting](https://igir.io/reporting) & [DAT docs](https://igir.io/dats))
+- 🔍 Scan for DATs, ROMs, and ROM patches - including those in archives (see [scanning](https://igir.io/input/file-scanning) & [archive docs](https://igir.io/input/reading-archives))
+- 📂 Organize ROM files by console (see [DAT docs](https://igir.io/input/dats))
+- 🪄 Name ROM files consistently, including the right extension (see [DAT docs](https://igir.io/input/dats))
+- ✂️ Filter out duplicate ROMs, or ROMs in languages you don't understand (see [filtering docs](https://igir.io/roms/filtering-preferences))
+- 🗜️ Extract or archive ROMs in mass (see [archive docs](https://igir.io/output/writing-archives))
+- 🩹 Patch ROMs automatically in mass (see [scanning](https://igir.io/input/file-scanning) & [patching docs](https://igir.io/roms/patching))
+- 🎩 Parse ROMs with headers, and optionally remove them (see [header docs](https://igir.io/roms/headers))
+- ↔️ Build & re-build (un-merge, split, or merge) MAME ROM sets (see [arcade docs](https://igir.io/output/arcade))
+- 🔮 Report on what ROMs are present or missing for each console, and create fixdats for missing ROMs (see [reporting](https://igir.io/output/reporting) & [DAT docs](https://igir.io/input/dats))
 
 ## How do I run `igir`?
 
@@ -56,7 +57,7 @@ $ igir --help
   | $$  | $$|    \  | $$  | $$    $$   ROM collection manager
   | $$  | $$|    \  | $$  | $$    $$   https://igir.io/
   | $$  | $$ \$$$$  | $$  | $$$$$$$\
- _| $$_ | $$__| $$ _| $$_ | $$  | $$   v1.9.0
+ _| $$_ | $$__| $$ _| $$_ | $$  | $$   v1.9.4
 |   $$ \ \$$    $$|   $$ \| $$  | $$
  \$$$$$$  \$$$$$$  \$$$$$$ \$$   \$$
 
@@ -128,9 +129,9 @@ ROM filtering options:
   -L, --language-filter       List of comma-separated languages to filter to (supported: DA, DE,
                               EL, EN, ES, FI, FR, IT, JA, KO, NL, NO, PT, RU, SV, ZH)    [string]
   -R, --region-filter         List of comma-separated regions to filter to (supported: ARG, ASI,
-                              AUS, BRA, CAN, CHN, DAN, EUR, FRA, FYN, GER, GRE, HK, HOL, ITA, JPN
-                              , KOR, MEX, NOR, NZ, POR, RUS, SPA, SWE, TAI, UK, UNK, USA, WORLD)
-                                                                                         [string]
+                              AUS, BEL, BRA, CAN, CHN, DAN, EUR, FRA, FYN, GER, GRE, HK, HOL, ITA
+                              , JPN, KOR, MEX, NOR, NZ, POR, RUS, SPA, SWE, TAI, UK, UNK, USA, WO
+                              RLD)                                                       [string]
       --no-bios               Filter out BIOS files, opposite of --only-bios            [boolean]
       --no-device             Filter out MAME devies, opposite of --only-device         [boolean]
       --no-unlicensed         Filter out unlicensed ROMs, opposite of --only-unlicensed [boolean]
@@ -157,9 +158,9 @@ One game, one ROM (1G1R) options:
                                , DE, EL, EN, ES, FI, FR, IT, JA, KO, NL, NO, PT, RU, SV, ZH)
                                                                                          [string]
   -r, --prefer-region          List of comma-separated regions in priority order (supported: ARG,
-                                ASI, AUS, BRA, CAN, CHN, DAN, EUR, FRA, FYN, GER, GRE, HK, HOL, I
-                               TA, JPN, KOR, MEX, NOR, NZ, POR, RUS, SPA, SWE, TAI, UK, UNK, USA,
-                                WORLD)                                                   [string]
+                                ASI, AUS, BEL, BRA, CAN, CHN, DAN, EUR, FRA, FYN, GER, GRE, HK, H
+                               OL, ITA, JPN, KOR, MEX, NOR, NZ, POR, RUS, SPA, SWE, TAI, UK, UNK,
+                                USA, WORLD)                                              [string]
       --prefer-revision-newer  Prefer newer ROM revisions over older                    [boolean]
       --prefer-revision-older  Prefer older ROM revisions over newer                    [boolean]
       --prefer-retail          Prefer retail releases (see --only-retail)               [boolean]
@@ -193,9 +194,10 @@ Advanced usage:
     {outputName}      The output file's filename without extension
     {outputExt}       The output file's extension
 
-    {pocket}  The ROM's core-specific /Assets/* directory for the Analogue Pocket (e.g. "gb")
-    {mister}  The ROM's core-specific /games/* directory for the MiSTer FPGA (e.g. "Gameboy")
-    {onion}   The ROM's emulator-specific /Roms/* directory for OnionOS/GarlicOS (e.g. "GB")
+    {pocket}    The ROM's core-specific /Assets/* directory for the Analogue Pocket (e.g. "gb")
+    {mister}    The ROM's core-specific /games/* directory for the MiSTer FPGA (e.g. "Gameboy")
+    {onion}     The ROM's emulator-specific /Roms/* directory for OnionOS/GarlicOS (e.g. "GB")
+    {batocera}  The ROM's emulator-specific /roms/* directory for Batocera (e.g. "gb")
 
 Example use cases:
 
@@ -228,9 +230,9 @@ Example use cases:
 
 ## Feature requests, bug reports, and contributing
 
-Feedback is a gift! Your feature requests and bug reports help improve the project for everyone. Feel free to submit an issue on GitHub using one of the templates.
+Feedback is a gift! Your feature requests and bug reports help improve the project for everyone. Feel free to [submit an issue](https://github.com/emmercm/igir/issues/new/choose) on GitHub using one of the templates.
 
-Even better, if you feel comfortable writing code, please feel free to submit a pull request against the project!
+Even better, if you feel comfortable writing code, please feel free to submit a pull request against the project! Please see the full [contribution guidelines](https://igir.io/contributing) for rules to follow.
 
 <br>
 <p align="center">
