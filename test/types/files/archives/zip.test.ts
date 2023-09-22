@@ -30,7 +30,7 @@ describe('createArchive', () => {
 
     // Given a temp ROM file copied from fixtures
     const rom = (await findRoms(input))
-      .filter((file) => file.getSize())[0];
+      .find((file) => file.getSize());
     const tempDir = await fsPoly.mkdtemp(Constants.GLOBAL_TEMP_DIR);
     const tempFilePath = path.join(tempDir, path.basename(rom.getFilePath()));
     await fsPoly.copyFile(rom.getFilePath(), tempFilePath);

@@ -565,7 +565,7 @@ export default class Game implements GameProps {
       const threeMatchesParsed = threeMatches[1].split('-')
         .map((lang) => lang.toUpperCase())
         .map((lang) => Internationalization.LANGUAGE_OPTIONS
-          .filter((langOpt) => langOpt.long?.toUpperCase() === lang.toUpperCase())[0]?.short)
+          .find((langOpt) => langOpt.long?.toUpperCase() === lang.toUpperCase())?.short)
         .filter((lang) => Internationalization.LANGUAGES.indexOf(lang) !== -1) // is known
         .reduce(ArrayPoly.reduceUnique(), []);
       if (threeMatchesParsed.length) {
