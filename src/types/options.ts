@@ -457,6 +457,9 @@ export default class Options implements OptionsProps {
       ));
   }
 
+  /**
+   * Was the 'fixdat' command provided?
+   */
   shouldFixdat(): boolean {
     return this.getCommands().has('fixdat') || this.fixdat;
   }
