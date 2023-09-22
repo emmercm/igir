@@ -22,6 +22,7 @@ export default class GameConsole {
    * Other:
    *  @see https://emulation.gametechwiki.com/index.php/List_of_filetypes
    *  @see https://emulation.fandom.com/wiki/List_of_filetypes
+   *  @see https://github.com/OpenEmu/OpenEmu/wiki/User-guide:-Importing
    */
   private static readonly CONSOLES: GameConsole[] = [
     // Amstrad

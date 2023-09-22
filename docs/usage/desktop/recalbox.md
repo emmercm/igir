@@ -1,6 +1,6 @@
 # Recalbox
 
-[Recalbox](https://www.recalbox.com/) is a pre-configured Linux distribution for [EmulationStation](https://emulationstation.org/) & [RetroArch](https://www.retroarch.com/).
+[Recalbox](https://www.recalbox.com/) is a pre-configured Linux distribution for [EmulationStation](emulationstation.md) & [RetroArch](retroarch.md).
 
 ## BIOS
 
