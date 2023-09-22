@@ -822,7 +822,7 @@ export default class Options implements OptionsProps {
     if (this.regionFilter.length) {
       return new Set(Options.filterUniqueUpper(this.regionFilter));
     }
-    return new Set([]);
+    return new Set();
   }
 
   getNoBios(): boolean {
