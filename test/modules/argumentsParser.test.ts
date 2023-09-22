@@ -109,7 +109,7 @@ describe('options', () => {
 
     expect(options.getSymlinkRelative()).toEqual(false);
 
-    expect(options.getMergeRoms()).toEqual(MergeMode.NONMERGED);
+    expect(options.getMergeRoms()).toEqual(MergeMode.FULLNONMERGED);
 
     expect(options.getFilterRegex()).toBeUndefined();
     expect(options.getFilterRegexExclude()).toBeUndefined();
@@ -516,7 +516,7 @@ describe('options', () => {
 
   it('should parse "merge-roms"', () => {
     expect(argumentsParser.parse(dummyCommandAndRequiredArgs).getMergeRoms())
-      .toEqual(MergeMode.NONMERGED);
+      .toEqual(MergeMode.FULLNONMERGED);
     expect(() => argumentsParser.parse([...dummyCommandAndRequiredArgs, '--merge-roms', 'foobar']).getMergeRoms()).toThrow(/invalid values/i);
     expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--merge-roms', 'fullnonmerged']).getMergeRoms()).toEqual(MergeMode.FULLNONMERGED);
     expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--merge-roms', 'nonmerged']).getMergeRoms()).toEqual(MergeMode.NONMERGED);
