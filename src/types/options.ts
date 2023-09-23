@@ -466,10 +466,10 @@ export default class Options implements OptionsProps {
   }
 
   /**
-   * Was the `clean` command provided?
+   * Was the 'fixdat' command provided?
    */
-  shouldClean(): boolean {
-    return this.getCommands().has('clean');
+  shouldFixdat(): boolean {
+    return this.getCommands().has('fixdat') || this.fixdat;
   }
 
   /**
@@ -477,6 +477,13 @@ export default class Options implements OptionsProps {
    */
   shouldTest(): boolean {
     return this.getCommands().has('test');
+  }
+
+  /**
+   * Was the `clean` command provided?
+   */
+  shouldClean(): boolean {
+    return this.getCommands().has('clean');
   }
 
   /**
@@ -659,10 +666,6 @@ export default class Options implements OptionsProps {
 
   getDatRegexExclude(): RegExp | undefined {
     return Options.getRegex(this.datRegexExclude);
-  }
-
-  getFixdat(): boolean {
-    return this.fixdat;
   }
 
   getOutput(): string {

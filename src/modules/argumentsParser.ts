@@ -55,7 +55,6 @@ export default class ArgumentsParser {
 
     const groupInput = 'Input options (supports globbing):';
     const groupDatInput = 'DAT input options:';
-    const groupDatOutput = 'DAT output options:';
     const groupRomOutput = 'ROM output options:';
     const groupRomZip = 'ROM zip command options:';
     const groupRomSymlink = 'ROM symlink command options:';
@@ -85,6 +84,9 @@ export default class ArgumentsParser {
         addCommands(yargsSubObj);
       })
       .command('test', 'Test ROMs for accuracy after writing them to the output directory', (yargsSubObj) => {
+        addCommands(yargsSubObj);
+      })
+      .command('fixdat', 'Generate a fixdat of any missing games for every DAT processed (requires --dat)', (yargsSubObj) => {
         addCommands(yargsSubObj);
       })
       .command('clean', 'Recycle unknown files in the output directory', (yargsSubObj) => {
@@ -207,10 +209,14 @@ export default class ArgumentsParser {
       })
 
       .option('fixdat', {
-        group: groupDatOutput,
-        description: 'Generate a fixdat of any missing games for every DAT processed (requires --dat)',
         type: 'boolean',
+        coerce: (val: boolean) => {
+          this.logger.warn('--fixdat is deprecated, use the fixdat command instead');
+          return val;
+        },
         implies: 'dat',
+        deprecated: true,
+        hidden: true,
       })
 
       .option('output', {
