@@ -17,13 +17,13 @@ enum ROMType {
 }
 
 export enum Status {
-  // The Game wanted to be written, but there was no matching ReleaseCandidate
-  MISSING = 1,
   // The Game wanted to be written, and it was
-  FOUND,
+  FOUND = 1,
   // The Game was ignored due to 1G1R rules, and it is unknown if there was a matching
   // ReleaseCandidate
   IGNORED,
+  // The Game wanted to be written, but there was no matching ReleaseCandidate
+  MISSING,
   // The input File was not used in any ReleaseCandidate
   UNMATCHED,
   // The output File was not from any ReleaseCandidate, so it was deleted
