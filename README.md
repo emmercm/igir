@@ -24,7 +24,7 @@
 
 A video of an example use case:
 
-[![asciicast](https://asciinema.org/a/AwESXP8AI5xrm9DCdbZGjNtYF.svg)](https://asciinema.org/a/AwESXP8AI5xrm9DCdbZGjNtYF)
+[![asciicast](https://asciinema.org/a/Sum1WBdZRsSTvbZvVuP5Ho1N9.svg)](https://asciinema.org/a/Sum1WBdZRsSTvbZvVuP5Ho1N9)
 
 With `igir` you can manage a ROM collection of any size:
 
@@ -57,7 +57,7 @@ $ igir --help
   | $$  | $$|    \  | $$  | $$    $$   ROM collection manager
   | $$  | $$|    \  | $$  | $$    $$   https://igir.io/
   | $$  | $$ \$$$$  | $$  | $$$$$$$\
- _| $$_ | $$__| $$ _| $$_ | $$  | $$   v1.9.4
+ _| $$_ | $$__| $$ _| $$_ | $$  | $$   v2.0.0
 |   $$ \ \$$    $$|   $$ \| $$  | $$
  \$$$$$$  \$$$$$$  \$$$$$$ \$$   \$$
 
@@ -71,6 +71,7 @@ Commands (can specify multiple):
   igir extract  Extract ROM files in archives when copying or moving
   igir zip      Create zip archives of ROMs when copying or moving
   igir test     Test ROMs for accuracy after writing them to the output directory
+  igir fixdat   Generate a fixdat of any missing games for every DAT processed (requires --dat)
   igir clean    Recycle unknown files in the output directory
   igir report   Generate a CSV report on the known & unknown ROM files found in the input directo
                 ries (requires --dat)
@@ -83,15 +84,16 @@ Input options (supports globbing):
   -P, --patch-exclude  Path(s) to ROM patch files or archives to exclude from processing  [array]
 
 DAT input options:
-  -d, --dat                Path(s) to DAT files or archives (supports globbing)           [array]
-      --dat-exclude        Path(s) to DAT files or archives to exclude from processing (supports
-                           globbing)                                                      [array]
-      --dat-regex          Regular expression of DAT names to process                    [string]
-      --dat-regex-exclude  Regular expression of DAT names to exclude from processing    [string]
-
-DAT output options:
-      --fixdat  Generate a fixdat of any missing games for every DAT processed (requires --dat)
-                                                                                        [boolean]
+  -d, --dat                            Path(s) to DAT files or archives (supports globbing)
+                                                                                          [array]
+      --dat-exclude                    Path(s) to DAT files or archives to exclude from processin
+                                       g (supports globbing)                              [array]
+      --dat-name-regex                 Regular expression of DAT names to process        [string]
+      --dat-name-regex-exclude         Regular expression of DAT names to exclude from processing
+                                                                                         [string]
+      --dat-description-regex          Regular expression of DAT descriptions to process [string]
+      --dat-description-regex-exclude  Regular expression of DAT descriptions to exclude from pro
+                                       cessing                                           [string]
 
 ROM output options:
   -o, --output               Path to the ROM output directory (supports replaceable symbols, see
@@ -123,12 +125,16 @@ ROM header options:
   -H, --remove-headers  Remove known headers from ROMs, optionally limited to a list of comma-sep
                         arated file extensions (supported: .a78, .fds, .lnx, .nes, .smc) [string]
 
+ROM MAME merge & split options (requires DATs with parent/clone information):
+      --merge-roms  ROM merge/split mode
+            [choices: "fullnonmerged", "nonmerged", "split", "merged"] [default: "fullnonmerged"]
+
 ROM filtering options:
   -x, --filter-regex          Regular expression of game names to filter to              [string]
   -X, --filter-regex-exclude  Regular expression of game names to exclude                [string]
-  -L, --language-filter       List of comma-separated languages to filter to (supported: DA, DE,
+  -L, --filter-language       List of comma-separated languages to filter to (supported: DA, DE,
                               EL, EN, ES, FI, FR, IT, JA, KO, NL, NO, PT, RU, SV, ZH)    [string]
-  -R, --region-filter         List of comma-separated regions to filter to (supported: ARG, ASI,
+  -R, --filter-region         List of comma-separated regions to filter to (supported: ARG, ASI,
                               AUS, BEL, BRA, CAN, CHN, DAN, EUR, FRA, FYN, GER, GRE, HK, HOL, ITA
                               , JPN, KOR, MEX, NOR, NZ, POR, RUS, SPA, SWE, TAI, UK, UNK, USA, WO
                               RLD)                                                       [string]
@@ -151,7 +157,7 @@ ROM filtering options:
 
 One game, one ROM (1G1R) options:
   -s, --single                 Output only a single game per parent (1G1R) (required for all opti
-                               ons below, requires --dat with parent/clone information) [boolean]
+                               ons below, requires DATs with parent/clone information)  [boolean]
       --prefer-verified        Prefer verified ROM dumps over unverified                [boolean]
       --prefer-good            Prefer good ROM dumps over bad                           [boolean]
   -l, --prefer-language        List of comma-separated languages in priority order (supported: DA
@@ -222,6 +228,9 @@ Example use cases:
 
   Create patched copies of ROMs in an existing collection, not overwriting existing files:
     igir copy extract --input ROMs/ --patch Patches/ --output ROMs/
+
+  Re-build a MAME ROM set for a specific version of MAME:
+    igir copy zip --dat "MAME 0.258.dat" --input MAME/ --output MAME-0.258/ --merge-roms split
 
   Copy ROMs to an Analogue Pocket and test they were written correctly:
     igir copy extract test --dat *.dat --input ROMs/ --output /Assets/{pocket}/common/ --dir-lett

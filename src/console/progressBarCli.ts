@@ -341,7 +341,7 @@ export default class ProgressBarCLI extends ProgressBar {
     }
 
     ProgressBarCLI.multiBar?.remove(this.singleBarFormatted.getSingleBar());
-    // NOTE(cemmer): forcing a render shouldn't be necessary, BUT if nothing is rendered after
+    // TODO(cemmer): forcing a render shouldn't be necessary, BUT if nothing is rendered after
     // deletion, then this deleted progress bar won't be overwritten!
 
     ProgressBarCLI.progressBars = ProgressBarCLI.progressBars
