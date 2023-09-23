@@ -1,5 +1,10 @@
+import path from 'node:path';
+
+import Constants from '../../src/constants.js';
 import ROMHeaderProcessor from '../../src/modules/romHeaderProcessor.js';
 import ROMScanner from '../../src/modules/romScanner.js';
+import FsPoly from '../../src/polyfill/fsPoly.js';
+import File from '../../src/types/files/file.js';
 import Options from '../../src/types/options.js';
 import ProgressBarFake from '../console/progressBarFake.js';
 
@@ -21,6 +26,19 @@ describe('extension has possible header', () => {
     }
   });
 
+  it('should not throw on non-existent files', async () => {
+    const tempPath = path.join(Constants.GLOBAL_TEMP_DIR, 'file.nes');
+    await expect(FsPoly.exists(tempPath)).resolves.toEqual(false);
+    const inputRomFiles = [await File.fileOf(tempPath)];
+
+    const processedRomFiles = await new ROMHeaderProcessor(new Options({
+      commands: ['copy', 'extract'],
+    }), new ProgressBarFake()).process(inputRomFiles);
+
+    expect(processedRomFiles).toHaveLength(1);
+    expect(processedRomFiles[0].getFileHeader()).toBeUndefined();
+  });
+
   it('should process raw headered files', async () => {
     const inputRomFiles = await new ROMScanner(new Options({
       input: ['./test/fixtures/roms/headered/*{.a78,.lnx,.nes,.fds,.smc}*'],
@@ -33,6 +51,7 @@ describe('extension has possible header', () => {
 
     expect(processedRomFiles).toHaveLength(inputRomFiles.length);
     for (let i = 0; i < processedRomFiles.length; i += 1) {
+      expect(processedRomFiles[i].getFileHeader()).not.toBeUndefined();
       // CRC should have changed
       expect(inputRomFiles[i].equals(processedRomFiles[i])).toEqual(false);
     }
@@ -51,6 +70,7 @@ describe('extension has possible header', () => {
 
     expect(processedRomFiles).toHaveLength(inputRomFiles.length);
     for (let i = 0; i < processedRomFiles.length; i += 1) {
+      expect(processedRomFiles[i].getFileHeader()).toBeUndefined();
       // CRC should NOT have changed
       expect(inputRomFiles[i].equals(processedRomFiles[i])).toEqual(true);
     }
@@ -71,6 +91,7 @@ describe('should read file for header', () => {
 
     expect(processedRomFiles).toHaveLength(inputRomFiles.length);
     for (let i = 0; i < processedRomFiles.length; i += 1) {
+      expect(processedRomFiles[i].getFileHeader()).toBeUndefined();
       // CRC should NOT have changed
       expect(inputRomFiles[i].equals(processedRomFiles[i])).toEqual(true);
     }
@@ -89,6 +110,7 @@ describe('should read file for header', () => {
 
     expect(processedRomFiles).toHaveLength(inputRomFiles.length);
     for (let i = 0; i < processedRomFiles.length; i += 1) {
+      expect(processedRomFiles[i].getFileHeader()).not.toBeUndefined();
       // CRC should have changed
       expect(inputRomFiles[i].equals(processedRomFiles[i])).toEqual(false);
     }

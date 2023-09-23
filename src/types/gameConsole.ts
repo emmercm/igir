@@ -181,13 +181,13 @@ export default class GameConsole {
   static getForFilename(filePath: string): GameConsole | undefined {
     const fileExtension = path.extname(filePath).toLowerCase();
     return this.CONSOLES
-      .filter((console) => console.getExtensions().some((ext) => ext === fileExtension))[0];
+      .find((console) => console.getExtensions().some((ext) => ext === fileExtension));
   }
 
   static getForDatName(consoleName: string): GameConsole | undefined {
     return this.CONSOLES
       .slice().reverse() // more specific names come second (e.g. "Game Boy" and "Game Boy Color")
-      .filter((console) => console.getDatRegex().test(consoleName))[0];
+      .find((console) => console.getDatRegex().test(consoleName));
   }
 
   private getDatRegex(): RegExp {
