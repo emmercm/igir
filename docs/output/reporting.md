@@ -5,6 +5,7 @@
 When using DATs (the `--dat <path>` option), the `igir report` [command](../commands.md) can report on:
 
 - What ROMs were found, and where the files are
+- What ROMs were ignored (due to `--single` 1G1R rules)
 - What ROMs are missing
 - What input files didn't match to any ROM
 - What output files were [cleaned](cleaning.md) (`igir clean` command)
