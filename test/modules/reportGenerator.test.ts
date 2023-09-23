@@ -141,7 +141,7 @@ Multiple,Two,FOUND,Two.rom,false,false,true,false,false,false,false,false,false,
   });
 });
 
-it('should return one row for every unmatched file in a multiple game DAT', async () => {
+it('should return one row for every unused file in a multiple game DAT', async () => {
   await wrapReportGenerator(new Options(), [
     'One.rom',
     'Two.rom',
@@ -153,7 +153,7 @@ Multiple,Five,FOUND,,false,false,true,false,false,false,false,false,false,false,
 Multiple,Four,FOUND,Four.rom,false,false,true,false,false,false,false,false,false,false,false,false,false
 Multiple,Three,FOUND,Three.rom,false,false,true,false,false,false,false,false,false,false,false,false,false
 Multiple,Two,FOUND,Two.rom,false,false,true,false,false,false,false,false,false,false,false,false,false
-,,UNMATCHED,One.rom,false,false,false,false,false,false,false,false,false,false,false,false,false`);
+,,UNUSED,One.rom,false,false,false,false,false,false,false,false,false,false,false,false,false`);
   });
 });
 
@@ -169,7 +169,7 @@ Multiple,Five,FOUND,,false,false,true,false,false,false,false,false,false,false,
 Multiple,Four,FOUND,Four.rom,false,false,true,false,false,false,false,false,false,false,false,false,false
 Multiple,Three,FOUND,Three.rom,false,false,true,false,false,false,false,false,false,false,false,false,false
 Multiple,Two,FOUND,Two.rom,false,false,true,false,false,false,false,false,false,false,false,false,false
-,,UNMATCHED,One.rom,false,false,false,false,false,false,false,false,false,false,false,false,false
+,,UNUSED,One.rom,false,false,false,false,false,false,false,false,false,false,false,false,false
 ,,DELETED,Three.rom,false,false,false,false,false,false,false,false,false,false,false,false,false
 ,,DELETED,Four.rom,false,false,false,false,false,false,false,false,false,false,false,false,false`);
     },

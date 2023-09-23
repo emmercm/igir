@@ -25,7 +25,7 @@ export enum Status {
   // The Game wanted to be written, but there was no matching ReleaseCandidate
   MISSING,
   // The input File was not used in any ReleaseCandidate
-  UNMATCHED,
+  UNUSED,
   // The output File was not from any ReleaseCandidate, so it was deleted
   DELETED,
 }
@@ -79,7 +79,7 @@ export default class DATStatus {
           // When running in 1G1R mode, if this Parent has at least one ReleaseCandidate, but no
           // matching ReleaseCandidate was found for this Game (above), then report it as IGNORED.
           // We can't know if this Game had matching input files, they would have already been
-          // discarded, so those files will be reported as UNMATCHED.
+          // discarded, so those files will be reported as UNUSED.
           if (options.getSingle() && releaseCandidates.length) {
             this.ignoredHashCodesToGames.set(game.hashCode(), game);
           }
