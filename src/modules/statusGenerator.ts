@@ -28,7 +28,7 @@ export default class StatusGenerator extends Module {
   ): Promise<DATStatus> {
     this.progressBar.logInfo(`${dat.getNameShort()}: generating ROM statuses`);
 
-    const datStatus = new DATStatus(dat, parentsToReleaseCandidates);
+    const datStatus = new DATStatus(dat, this.options, parentsToReleaseCandidates);
 
     await this.progressBar.done(datStatus.toConsole(this.options));
 
