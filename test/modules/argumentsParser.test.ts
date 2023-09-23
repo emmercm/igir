@@ -114,8 +114,8 @@ describe('options', () => {
 
     expect(options.getFilterRegex()).toBeUndefined();
     expect(options.getFilterRegexExclude()).toBeUndefined();
-    expect(options.getLanguageFilter().size).toEqual(0);
-    expect(options.getRegionFilter().size).toEqual(0);
+    expect(options.getFilterLanguage().size).toEqual(0);
+    expect(options.getFilterRegion().size).toEqual(0);
     expect(options.getNoBios()).toEqual(false);
     expect(options.getOnlyBios()).toEqual(false);
     expect(options.getNoDevice()).toEqual(false);
@@ -545,20 +545,20 @@ describe('options', () => {
 
   it('should parse "language-filter"', () => {
     expect(() => argumentsParser.parse([...dummyCommandAndRequiredArgs, '--language-filter'])).toThrow(/not enough arguments/i);
-    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '-L', 'EN']).getLanguageFilter()).toEqual(new Set(['EN']));
-    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--language-filter', 'EN']).getLanguageFilter()).toEqual(new Set(['EN']));
-    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--language-filter', 'EN,it']).getLanguageFilter()).toEqual(new Set(['EN', 'IT']));
-    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--language-filter', 'en,IT,JA']).getLanguageFilter()).toEqual(new Set(['EN', 'IT', 'JA']));
-    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--language-filter', 'EN,en']).getLanguageFilter()).toEqual(new Set(['EN']));
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '-L', 'EN']).getFilterLanguage()).toEqual(new Set(['EN']));
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--language-filter', 'EN']).getFilterLanguage()).toEqual(new Set(['EN']));
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--language-filter', 'EN,it']).getFilterLanguage()).toEqual(new Set(['EN', 'IT']));
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--language-filter', 'en,IT,JA']).getFilterLanguage()).toEqual(new Set(['EN', 'IT', 'JA']));
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--language-filter', 'EN,en']).getFilterLanguage()).toEqual(new Set(['EN']));
   });
 
   it('should parse "region-filter"', () => {
     expect(() => argumentsParser.parse([...dummyCommandAndRequiredArgs, '--region-filter'])).toThrow(/not enough arguments/i);
-    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '-R', 'USA']).getRegionFilter()).toEqual(new Set(['USA']));
-    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--region-filter', 'USA']).getRegionFilter()).toEqual(new Set(['USA']));
-    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--region-filter', 'USA,eur']).getRegionFilter()).toEqual(new Set(['USA', 'EUR']));
-    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--region-filter', 'usa,EUR,JPN']).getRegionFilter()).toEqual(new Set(['USA', 'EUR', 'JPN']));
-    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--region-filter', 'USA,usa']).getRegionFilter()).toEqual(new Set(['USA']));
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '-R', 'USA']).getFilterRegion()).toEqual(new Set(['USA']));
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--region-filter', 'USA']).getFilterRegion()).toEqual(new Set(['USA']));
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--region-filter', 'USA,eur']).getFilterRegion()).toEqual(new Set(['USA', 'EUR']));
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--region-filter', 'usa,EUR,JPN']).getFilterRegion()).toEqual(new Set(['USA', 'EUR', 'JPN']));
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--region-filter', 'USA,usa']).getFilterRegion()).toEqual(new Set(['USA']));
   });
 
   it('should parse "no-bios"', () => {
