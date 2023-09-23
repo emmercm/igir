@@ -148,6 +148,7 @@
         // Separate TypeScript because upgrades are dependent on support by other dependencies
         matchPackageNames: ['typescript'],
         groupName: 'TypeScript',
+        prPriority: -10,
       },
 
       // Group/separate all dependency pinning, perform it immediately

@@ -98,13 +98,14 @@ export default class DATMergerSplitter extends Module {
         });
     }
 
-    const parentGame = games.filter((game) => game.isParent())[0];
+    const parentGame = games.find((game) => game.isParent());
     let cloneGames = games
       .filter((game) => game.isClone());
 
     // 'split' and 'merged' types should exclude ROMs found in their parent
-    if (this.options.getMergeRoms() === MergeMode.SPLIT
-      || this.options.getMergeRoms() === MergeMode.MERGED
+    if (parentGame
+      && (this.options.getMergeRoms() === MergeMode.SPLIT
+        || this.options.getMergeRoms() === MergeMode.MERGED)
     ) {
       cloneGames = cloneGames
         .map((childGame) => new Machine({
@@ -115,7 +116,10 @@ export default class DATMergerSplitter extends Module {
 
     // For everything other than 'merged' we keep the same number of games
     if (this.options.getMergeRoms() !== MergeMode.MERGED) {
-      return [parentGame, ...cloneGames];
+      if (parentGame) {
+        return [parentGame, ...cloneGames];
+      }
+      return cloneGames;
     }
 
     // For 'merged' we reduce to one game
@@ -131,7 +135,7 @@ export default class DATMergerSplitter extends Module {
       .filter((rom, idx) => cloneRomHashCodes.indexOf(rom.hashCode()) === idx);
     return [new Machine({
       ...parentGame,
-      rom: [...cloneRoms, ...parentGame.getRoms()],
+      rom: [...cloneRoms, ...(parentGame ? parentGame.getRoms() : [])],
     })];
   }
 

@@ -78,6 +78,9 @@
     // ***** Functions *****
     "unicorn/prefer-default-parameters": "error",
 
+    // ***** Loops *****
+    "unicorn/prefer-array-find": "error",
+
     // ***** Operands *****
     "@typescript-eslint/prefer-nullish-coalescing": "error",
 
