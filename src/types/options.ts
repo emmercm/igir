@@ -465,17 +465,17 @@ export default class Options implements OptionsProps {
   }
 
   /**
-   * Was the `clean` command provided?
-   */
-  shouldClean(): boolean {
-    return this.getCommands().has('clean');
-  }
-
-  /**
    * Was the `test` command provided?
    */
   shouldTest(): boolean {
     return this.getCommands().has('test');
+  }
+
+  /**
+   * Was the `clean` command provided?
+   */
+  shouldClean(): boolean {
+    return this.getCommands().has('clean');
   }
 
   /**

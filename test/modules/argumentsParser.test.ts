@@ -88,7 +88,15 @@ describe('options', () => {
   it('should have expected defaults', () => {
     const options = argumentsParser.parse(dummyCommandAndRequiredArgs);
 
-    expect(options.getFixdat()).toEqual(false);
+    expect(options.shouldCopy()).toEqual(true); // dummy command
+    expect(options.shouldMove()).toEqual(false);
+    expect(options.shouldSymlink()).toEqual(false);
+    expect(options.shouldExtract()).toEqual(false);
+    expect(options.canZip()).toEqual(false);
+    expect(options.shouldFixdat()).toEqual(false);
+    expect(options.shouldTest()).toEqual(false);
+    expect(options.shouldClean()).toEqual(false);
+    expect(options.shouldReport()).toEqual(false);
 
     expect(options.getDirMirror()).toEqual(false);
     expect(options.getDirDatName()).toEqual(false);
