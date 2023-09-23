@@ -4,10 +4,11 @@
 
 When using DATs (the `--dat <path>` option), the `igir report` [command](../commands.md) can report on:
 
-- What ROMs were found, and where the files are
-- What ROMs are missing
-- What input files didn't match to any ROM
-- What output files were [cleaned](cleaning.md) (`igir clean` command)
+- `FOUND`: what ROMs were found, and where the files are on disk
+- `IGNORED`: what ROMs were ignored (due to [`--single` 1G1R rules](../roms/filtering-preferences.md))
+- `MISSING`: what ROMs were wanted, but are missing
+- `UNMATCHED`: what input files didn't match to any ROM
+- `DELETED`: what output files were [cleaned](cleaning.md) (`igir clean` command)
 
 At least one DAT is required for the `igir report` command to work, otherwise `igir` has no way to understand what input files are known ROMs and which aren't. See the [DAT docs](../input/dats.md) for more information about DATs.
 
