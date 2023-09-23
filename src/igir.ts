@@ -1,18 +1,22 @@
 import async from 'async';
+import chalk from 'chalk';
 import isAdmin from 'is-admin';
 
 import Logger from './console/logger.js';
 import ProgressBar, { ProgressBarSymbol } from './console/progressBar.js';
-import ProgressBarCLI from './console/progressBarCLI.js';
+import ProgressBarCLI from './console/progressBarCli.js';
 import Constants from './constants.js';
 import CandidateCombiner from './modules/candidateCombiner.js';
 import CandidateGenerator from './modules/candidateGenerator.js';
+import CandidateMergeSplitValidator from './modules/candidateMergeSplitValidator.js';
 import CandidatePatchGenerator from './modules/candidatePatchGenerator.js';
 import CandidatePostProcessor from './modules/candidatePostProcessor.js';
 import CandidatePreferer from './modules/candidatePreferer.js';
 import CandidateWriter from './modules/candidateWriter.js';
 import DATFilter from './modules/datFilter.js';
-import DATInferrer from './modules/datInferrer.js';
+import DATGameInferrer from './modules/datGameInferrer.js';
+import DATMergerSplitter from './modules/datMergerSplitter.js';
+import DATParentInferrer from './modules/datParentInferrer.js';
 import DATScanner from './modules/datScanner.js';
 import DirectoryCleaner from './modules/directoryCleaner.js';
 import FileIndexer from './modules/fileIndexer.js';
@@ -69,13 +73,9 @@ export default class Igir {
     const patches = await this.processPatchScanner();
 
     // Set up progress bar and input for DAT processing
-    const datProcessProgressBar = await this.logger.addProgressBar('Processing DATs', ProgressBarSymbol.PROCESSING, dats.length);
+    const datProcessProgressBar = await this.logger.addProgressBar(chalk.underline('Processing DATs'), ProgressBarSymbol.NONE, dats.length);
     if (!dats.length) {
-      dats = new DATInferrer(datProcessProgressBar).infer(roms);
-    }
-
-    if (this.options.getSingle() && !dats.some((dat) => dat.hasParentCloneInfo())) {
-      throw new Error('No DAT contains parent/clone information, cannot process --single');
+      dats = new DATGameInferrer(datProcessProgressBar).infer(roms);
     }
 
     const datsToWrittenFiles = new Map<DAT, File[]>();
@@ -94,7 +94,10 @@ export default class Igir {
         dat.getParents().length,
       );
 
-      const filteredDat = await new DATFilter(this.options, progressBar).filter(dat);
+      const datWithParents = await new DATParentInferrer(progressBar).infer(dat);
+      const mergedSplitDat = await new DATMergerSplitter(this.options, progressBar)
+        .merge(datWithParents);
+      const filteredDat = await new DATFilter(this.options, progressBar).filter(mergedSplitDat);
 
       // Generate and filter ROM candidates
       const parentsToCandidates = await this.generateCandidates(
@@ -233,11 +236,14 @@ export default class Igir {
     const patchedCandidates = await new CandidatePatchGenerator(this.options, progressBar)
       .generate(dat, candidates, patches);
 
-    const filteredCandidates = await new CandidatePreferer(this.options, progressBar)
+    const preferredCandidates = await new CandidatePreferer(this.options, progressBar)
       .prefer(dat, patchedCandidates);
 
     const postProcessedCandidates = await new CandidatePostProcessor(this.options, progressBar)
-      .process(dat, filteredCandidates);
+      .process(dat, preferredCandidates);
+
+    await new CandidateMergeSplitValidator(this.options, progressBar)
+      .validate(dat, postProcessedCandidates);
 
     return new CandidateCombiner(this.options, progressBar)
       .combine(dat, postProcessedCandidates);
@@ -257,7 +263,7 @@ export default class Igir {
             // Parse the output directory, as supplied by the user, ONLY replacing tokens in the
             // path and NOT respecting any `--dir-*` options.
             new Options({
-              commands: this.options.getCommands(),
+              commands: [...this.options.getCommands()],
               output: this.options.getOutput(),
             }),
             dat,

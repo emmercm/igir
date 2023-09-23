@@ -26,7 +26,7 @@ interface DatfileEntry {
 
 // https://github.com/RobLoach/datfile/issues/10
 declare module 'robloach-datfile' {
-  import { Readable } from 'stream';
+  import { Readable } from 'node:stream';
 
   function parse(
     input: string | Readable,

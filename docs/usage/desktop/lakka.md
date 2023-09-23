@@ -1,10 +1,10 @@
 # Lakka
 
-[Lakka](https://www.lakka.tv/) is a pre-configured Linux distribution based on [LibreELEC](https://libreelec.tv/) that comes with [RetroArch](https://www.retroarch.com/) installed. Lakka is primarily for single-board computers (SBCs) such as the [Raspberry Pi](https://www.raspberrypi.com/).
+[Lakka](https://www.lakka.tv/) is a pre-configured Linux distribution based on [LibreELEC](https://libreelec.tv/) that comes with [RetroArch](retroarch.md) installed. Lakka is primarily for single-board computers (SBCs) such as the [Raspberry Pi](https://www.raspberrypi.com/).
 
 ## BIOS
 
-Because Lakka uses RetroArch under the hood, the instructions are generally the [same as RetroArch](retroarch.md). By default, the [Lakka BIOS directory](https://www.lakka.tv/doc/Accessing-Lakka-filesystem/) is `/storage/system`:
+Because Lakka uses RetroArch under the hood, the instructions are generally the [same as RetroArch](retroarch.md). By default, the [Lakka BIOS directory](https://www.lakka.tv/doc/Accessing-Lakka-filesystem/) is `/storage/system/`:
 
 === ":simple-linux: Lakka (Linux)"
 
@@ -19,7 +19,7 @@ Because Lakka uses RetroArch under the hood, the instructions are generally the 
 
 ## ROMs
 
-Lakka has a `roms` folder at `/storage/roms` that is used by default:
+Lakka has a `roms` folder at `/storage/roms/` that is used by default:
 
 === ":simple-linux: Lakka (Linux)"
 

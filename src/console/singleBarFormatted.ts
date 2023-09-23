@@ -3,6 +3,7 @@ import {
   MultiBar, Options, Params, SingleBar,
 } from 'cli-progress';
 import { linearRegression, linearRegressionLine } from 'simple-statistics';
+import stripAnsi from 'strip-ansi';
 
 import ProgressBarPayload from './progressBarPayload.js';
 
@@ -34,7 +35,7 @@ export default class SingleBarFormatted {
     this.multiBar = multiBar;
     this.singleBar = this.multiBar.create(initialTotal, 0, initialPayload, {
       format: (options, params, payload: ProgressBarPayload): string => {
-        this.lastOutput = `${`${SingleBarFormatted.getSymbol(payload)} ${SingleBarFormatted.getName(payload)}`.trim()} | ${this.getProgress(options, params, payload)}`.trim();
+        this.lastOutput = `${SingleBarFormatted.getSymbolAndName(payload)} | ${this.getProgress(options, params, payload)}`.trim();
         return this.lastOutput;
       },
     });
@@ -48,22 +49,21 @@ export default class SingleBarFormatted {
     return this.lastOutput;
   }
 
-  private static getSymbol(payload: ProgressBarPayload): string {
-    if (!payload.symbol) {
-      return '';
-    }
-    return chalk.bold(payload.symbol);
-  }
+  private static getSymbolAndName(payload: ProgressBarPayload): string {
+    const symbol = chalk.bold(payload.symbol ?? '');
+    const name = payload.name ?? '';
 
-  private static getName(payload: ProgressBarPayload): string {
-    if (!payload.name) {
-      return '';
-    }
+    const namePadded = `${name} ${'·'.repeat(SingleBarFormatted.MAX_NAME_LENGTH)}`.trim();
+    const symbolAndName = `${symbol} ${namePadded}`;
 
-    const payloadName = payload.name.slice(0, SingleBarFormatted.MAX_NAME_LENGTH);
-    return payloadName.length > SingleBarFormatted.MAX_NAME_LENGTH - 1
-      ? payloadName.padEnd(SingleBarFormatted.MAX_NAME_LENGTH, ' ')
-      : `${payloadName} ${'·'.repeat(SingleBarFormatted.MAX_NAME_LENGTH - 1 - payloadName.length)}`;
+    const excessLength = stripAnsi(symbolAndName).trimStart().length
+        - SingleBarFormatted.MAX_NAME_LENGTH;
+    const nameTrimmed = namePadded.slice(
+      0,
+      namePadded.length - (excessLength > 0 ? excessLength : 0),
+    );
+
+    return `${symbol} ${nameTrimmed}`.trimStart();
   }
 
   private getProgress(options: Options, params: Params, payload: ProgressBarPayload): string {
@@ -128,7 +128,7 @@ export default class SingleBarFormatted {
       min: number,
       max: number,
     ): number => Math.min(Math.max(val ?? 0, min), max);
-    const completeSize = Math.floor(clamp(params.progress, 0.0, 1.0) * barSize);
+    const completeSize = Math.floor(clamp(params.progress, 0, 1) * barSize);
     const inProgressSize = params.total > 0
       ? Math.ceil((clamp(payload.inProgress, 0, params.total) / params.total) * barSize)
       : 0;
@@ -144,7 +144,7 @@ export default class SingleBarFormatted {
     //  Update only every 5s if the ETA is >60s
     const [elapsedSec, elapsedNano] = process.hrtime(this.lastEtaTime);
     const elapsedMs = (elapsedSec * 1_000_000_000 + elapsedNano) / 1_000_000;
-    if (etaSeconds > 60 && elapsedMs < 5_000) {
+    if (etaSeconds > 60 && elapsedMs < 5000) {
       return this.lastEtaValue;
     }
     this.lastEtaTime = process.hrtime();

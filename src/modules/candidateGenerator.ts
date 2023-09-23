@@ -1,4 +1,4 @@
-import path from 'path';
+import path from 'node:path';
 
 import ProgressBar, { ProgressBarSymbol } from '../console/progressBar.js';
 import ArrayPoly from '../polyfill/arrayPoly.js';
@@ -321,7 +321,9 @@ export default class CandidateGenerator extends Module {
       .map((romWithFiles) => romWithFiles.getOutputFile())
       .filter((outputFile) => !(outputFile instanceof ArchiveEntry))
       .map((outputFile) => outputFile.getFilePath())
+      // Is a duplicate output path
       .filter((outputPath, idx, outputPaths) => outputPaths.indexOf(outputPath) !== idx)
+      // Only return one copy of duplicate output paths
       .reduce(ArrayPoly.reduceUnique(), [])
       .sort();
     if (!duplicateOutputPaths.length) {

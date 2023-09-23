@@ -1,7 +1,8 @@
-import fs from 'fs';
+import fs from 'node:fs';
+import path from 'node:path';
+import util from 'node:util';
+
 import moment from 'moment';
-import path from 'path';
-import util from 'util';
 
 import ProgressBar, { ProgressBarSymbol } from '../console/progressBar.js';
 import Constants from '../constants.js';

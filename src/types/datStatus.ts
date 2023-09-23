@@ -17,9 +17,16 @@ enum ROMType {
 }
 
 export enum Status {
-  MISSING = 1,
-  FOUND,
-  UNUSED,
+  // The Game wanted to be written, and it was
+  FOUND = 1,
+  // The Game was ignored due to 1G1R rules, and it is unknown if there was a matching
+  // ReleaseCandidate
+  IGNORED,
+  // The Game wanted to be written, but there was no matching ReleaseCandidate
+  MISSING,
+  // The input File was not used in any ReleaseCandidate
+  UNMATCHED,
+  // The output File was not from any ReleaseCandidate, so it was deleted
   DELETED,
 }
 
@@ -38,7 +45,13 @@ export default class DATStatus {
   (ReleaseCandidate | undefined)[]
   >();
 
-  constructor(dat: DAT, parentsToReleaseCandidates: Map<Parent, ReleaseCandidate[]>) {
+  private readonly ignoredHashCodesToGames = new Map<string, Game>();
+
+  constructor(
+    dat: DAT,
+    options: Options,
+    parentsToReleaseCandidates: Map<Parent, ReleaseCandidate[]>,
+  ) {
     this.dat = dat;
 
     // Un-patched ROMs
@@ -52,13 +65,23 @@ export default class DATStatus {
             .filter((rc) => !rc.isPatched())
             .filter((rc) => rc.getGame().hashCode() === game.hashCode());
           if (gameReleaseCandidates.length || game.getRoms().length === 0) {
+            // This game has at least one candidate, or it has no roms - mark it found
             DATStatus.pushValueIntoMap(
               this.foundRomTypesToReleaseCandidates,
               game,
               // The only reason there may be multiple ReleaseCandidates is for multiple regions,
               //  but DATStatus doesn't care about regions.
-              gameReleaseCandidates[0],
+              gameReleaseCandidates.find(() => true),
             );
+            return;
+          }
+
+          // When running in 1G1R mode, if this Parent has at least one ReleaseCandidate, but no
+          // matching ReleaseCandidate was found for this Game (above), then report it as IGNORED.
+          // We can't know if this Game had matching input files, they would have already been
+          // discarded, so those files will be reported as UNMATCHED.
+          if (options.getSingle() && releaseCandidates.length) {
+            this.ignoredHashCodesToGames.set(game.hashCode(), game);
           }
         });
       });
@@ -130,7 +153,9 @@ export default class DATStatus {
       .filter((type) => this.allRomTypesToGames.get(type)?.length)
       .map((type) => {
         const found = this.foundRomTypesToReleaseCandidates.get(type) ?? [];
-        const all = this.allRomTypesToGames.get(type) ?? [];
+        const all = (this.allRomTypesToGames.get(type) ?? [])
+          // Do not report ignored 1G1R games in the CLI total
+          .filter((game) => !this.ignoredHashCodesToGames.has(game.hashCode()));
 
         if (!options.usingDats()) {
           return `${found.length.toLocaleString()} ${type}`;
@@ -167,7 +192,7 @@ export default class DATStatus {
    * Return the file contents of a CSV with status information for every {@link Game}.
    */
   async toCsv(options: Options): Promise<string> {
-    const found = DATStatus.getValuesForAllowedTypes(
+    const foundReleaseCandidates = DATStatus.getValuesForAllowedTypes(
       options,
       this.foundRomTypesToReleaseCandidates,
     );
@@ -176,20 +201,31 @@ export default class DATStatus {
       .reduce(ArrayPoly.reduceUnique(), [])
       .sort((a, b) => a.getName().localeCompare(b.getName()))
       .map((game) => {
-        const releaseCandidate = found.find((rc) => rc && rc.getGame().equals(game));
+        let status = Status.MISSING;
+
+        if (this.ignoredHashCodesToGames.has(game.hashCode())) {
+          status = Status.IGNORED;
+        }
+
+        const foundReleaseCandidate = foundReleaseCandidates
+          .find((rc) => rc && rc.getGame().equals(game));
+        if (foundReleaseCandidate ?? !game.getRoms().length) {
+          status = Status.FOUND;
+        }
+
         return DATStatus.buildCsvRow(
           this.getDATName(),
           game.getName(),
-          releaseCandidate ?? !game.getRoms().length ? Status.FOUND : Status.MISSING,
-          releaseCandidate
-            ? releaseCandidate.getRomsWithFiles()
+          status,
+          foundReleaseCandidate
+            ? foundReleaseCandidate.getRomsWithFiles()
               .map((romWithFiles) => (options.shouldWrite()
                 ? romWithFiles.getOutputFile()
                 : romWithFiles.getInputFile()))
               .map((file) => file.getFilePath())
               .reduce(ArrayPoly.reduceUnique(), [])
             : [],
-          releaseCandidate?.isPatched() ?? false,
+          foundReleaseCandidate?.isPatched() ?? false,
           game.isBios(),
           game.isRetail(),
           game.isUnlicensed(),
@@ -288,11 +324,14 @@ export default class DATStatus {
 
   private static getAllowedTypes(options: Options): ROMType[] {
     return [
-      !options.getSingle() && !options.getOnlyBios() && !options.getOnlyRetail()
+      !options.getOnlyBios() && !options.getOnlyDevice() && !options.getOnlyRetail()
         ? ROMType.GAME : undefined,
-      options.getOnlyBios() || !options.getNoBios() ? ROMType.BIOS : undefined,
-      !options.getNoDevice() && !options.getOnlyBios() ? ROMType.DEVICE : undefined,
-      options.getOnlyRetail() || !options.getOnlyBios() ? ROMType.RETAIL : undefined,
+      options.getOnlyBios() || (!options.getNoBios() && !options.getOnlyDevice())
+        ? ROMType.BIOS : undefined,
+      options.getOnlyDevice() || (!options.getOnlyBios() && !options.getNoDevice())
+        ? ROMType.DEVICE : undefined,
+      options.getOnlyRetail() || (!options.getOnlyBios() && !options.getOnlyDevice())
+        ? ROMType.RETAIL : undefined,
       ROMType.PATCHED,
     ].filter(ArrayPoly.filterNotNullish);
   }

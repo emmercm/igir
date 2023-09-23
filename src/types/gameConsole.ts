@@ -1,4 +1,4 @@
-import path from 'path';
+import path from 'node:path';
 
 /**
  * A class of information about specific game consoles and their names, standard file extensions,
@@ -22,6 +22,7 @@ export default class GameConsole {
    * Other:
    *  @see https://emulation.gametechwiki.com/index.php/List_of_filetypes
    *  @see https://emulation.fandom.com/wiki/List_of_filetypes
+   *  @see https://github.com/OpenEmu/OpenEmu/wiki/User-guide:-Importing
    */
   private static readonly CONSOLES: GameConsole[] = [
     // Amstrad
@@ -96,6 +97,8 @@ export default class GameConsole {
     new GameConsole(/GBC|Game ?Boy Color/i, ['.gbc'], 'gbc', 'Gameboy', 'GBC', 'gbc'),
     new GameConsole(/Nintendo 64|N64/i, ['.n64', '.v64', '.z64'], undefined, undefined, undefined, 'n64'),
     new GameConsole(/Nintendo 64DD|N64DD/i, ['.ndd'], undefined, undefined, undefined, 'n64dd'),
+    new GameConsole(/(\W|^)3DS(\W|$)|Nintendo 3DS/i, ['.3ds'], undefined, undefined, undefined, '3ds'),
+    new GameConsole(/(\W|^)NDS(\W|$)|Nintendo DS/i, ['.nds'], undefined, undefined, undefined, 'nds'),
     new GameConsole(/(\W|^)NES(\W|$)|Nintendo Entertainment System/i, ['.nes', '.nez'], 'nes', 'NES', 'FC', 'nes'),
     new GameConsole(/Pokemon Mini/i, ['.min'], 'poke_mini', 'PokemonMini', 'POKE', 'pokemini'),
     new GameConsole(/Satellaview/i, ['.bs'], 'snes', 'SNES', 'SATELLAVIEW', 'satellaview'),
@@ -178,13 +181,13 @@ export default class GameConsole {
   static getForFilename(filePath: string): GameConsole | undefined {
     const fileExtension = path.extname(filePath).toLowerCase();
     return this.CONSOLES
-      .filter((console) => console.getExtensions().some((ext) => ext === fileExtension))[0];
+      .find((console) => console.getExtensions().some((ext) => ext === fileExtension));
   }
 
   static getForDatName(consoleName: string): GameConsole | undefined {
     return this.CONSOLES
       .slice().reverse() // more specific names come second (e.g. "Game Boy" and "Game Boy Color")
-      .filter((console) => console.getDatRegex().test(consoleName))[0];
+      .find((console) => console.getDatRegex().test(consoleName));
   }
 
   private getDatRegex(): RegExp {
