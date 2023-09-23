@@ -25,7 +25,7 @@ export enum Status {
   // The Game wanted to be written, but there was no matching ReleaseCandidate
   MISSING,
   // The input File was not used in any ReleaseCandidate
-  UNMATCHED,
+  UNUSED,
   // The output File was not from any ReleaseCandidate, so it was deleted
   DELETED,
 }
