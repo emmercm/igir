@@ -47,6 +47,12 @@ The `igir_library_sync.sh` script helps me keep this collection organized and me
 # @param {...string} $@ Input directories to merge into this collection
 set -euo pipefail
 
+here="$(pwd)"
+# shellcheck disable=SC2064
+trap "cd \"${here}\"" EXIT
+cd "$(dirname "$0")"
+
+
 # Treat every CLI argument as an input directory
 INPUTS=()
 for INPUT in "$@"; do
@@ -55,18 +61,32 @@ done
 
 npx --yes igir@latest move zip test clean report \
   --dat "./No-Intro*.zip" \
+  --dat-name-regex-exclude "/encrypted/i" \
   --input "./No-Intro/" \
   "${INPUTS[@]}" \
   --patch "./Patches/" \
   --output "./No-Intro/" \
-  --dir-dat-name
+  --dir-dat-name \
+  --overwrite-invalid
 
-npx --yes igir@latest move extract test report \
+npx --yes igir@latest move zip test \
   --dat "./Redump*.zip" \
   --input "./Redump/" \
   "${INPUTS[@]}" \
   --output "./Redump/" \
   --dir-dat-name
+
+npx --yes igir@latest move zip test clean \
+  `# Official MAME XML extracted from the progetto-SNAPS archive` \
+  --dat "./mame*.xml" \
+  `# Rollback DAT downloaded from Pleasuredome` \
+  --dat "./MAME*Rollback*.zip" \
+  --input "./MAME/" \
+  "${INPUTS[@]}" \
+  --output "./MAME/" \
+  --dir-dat-name \
+  --overwrite-invalid \
+  --merge-roms split
 ```
 
 I then copy ROMs to other devices from this source of truth.
@@ -83,17 +103,26 @@ I have this script `igir_pocket_sync.sh` at the root of my Analogue Pocket's SD 
 #!/usr/bin/env bash
 set -euo pipefail
 
+here="$(pwd)"
+# shellcheck disable=SC2064
+trap "cd \"${here}\"" EXIT
+cd "$(dirname "$0")"
+
+
 SOURCE=/Volumes/WDPassport4
 
 npx igir@latest copy extract test clean \
   --dat "${SOURCE}/No-Intro*.zip" \
+  --dat-name-regex-exclude "/headerless/i" \
   --input "${SOURCE}/No-Intro/" \
   --input-exclude "${SOURCE}/No-Intro/Nintendo - Game Boy Advance (e-Reader)/" \
   --patch "${SOURCE}/Patches/" \
   --output "./Assets/{pocket}/common/" \
   --dir-letter \
+  --dir-letter-limit 1000 \
   `# Leave BIOS files alone` \
   --clean-exclude "./Assets/*/common/*.*" \
+  --overwrite-invalid \
   --no-bios \
   --no-bad \
   --single \
