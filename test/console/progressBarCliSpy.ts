@@ -36,8 +36,8 @@ export default class ProgressBarCLISpy {
     return this.outputLines[this.outputLines.length - 1];
   }
 
-  getLogLine(): string {
+  getLogLine(): string | undefined {
     return this.outputLines
-      .filter((line) => line.match(/^[A-Z]+:.+/) !== null)[0];
+      .find((line) => line.match(/^[A-Z]+:.+/) !== null);
   }
 }

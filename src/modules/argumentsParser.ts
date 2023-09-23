@@ -55,7 +55,6 @@ export default class ArgumentsParser {
 
     const groupInput = 'Input options (supports globbing):';
     const groupDatInput = 'DAT input options:';
-    const groupDatOutput = 'DAT output options:';
     const groupRomOutput = 'ROM output options:';
     const groupRomZip = 'ROM zip command options:';
     const groupRomSymlink = 'ROM symlink command options:';
@@ -85,6 +84,9 @@ export default class ArgumentsParser {
         addCommands(yargsSubObj);
       })
       .command('test', 'Test ROMs for accuracy after writing them to the output directory', (yargsSubObj) => {
+        addCommands(yargsSubObj);
+      })
+      .command('fixdat', 'Generate a fixdat of any missing games for every DAT processed (requires --dat)', (yargsSubObj) => {
         addCommands(yargsSubObj);
       })
       .command('clean', 'Recycle unknown files in the output directory', (yargsSubObj) => {
@@ -239,10 +241,14 @@ export default class ArgumentsParser {
       })
 
       .option('fixdat', {
-        group: groupDatOutput,
-        description: 'Generate a fixdat of any missing games for every DAT processed (requires --dat)',
         type: 'boolean',
+        coerce: (val: boolean) => {
+          this.logger.warn('--fixdat is deprecated, use the fixdat command instead');
+          return val;
+        },
         implies: 'dat',
+        deprecated: true,
+        hidden: true,
       })
 
       .option('output', {
@@ -385,7 +391,7 @@ export default class ArgumentsParser {
           .map((mode) => mode.toLowerCase()),
         coerce: ArgumentsParser.getLastValue, // don't allow string[] values
         requiresArg: true,
-        default: MergeMode[MergeMode.NONMERGED].toLowerCase(),
+        default: MergeMode[MergeMode.FULLNONMERGED].toLowerCase(),
       })
 
       .option('filter-regex', {
@@ -404,7 +410,7 @@ export default class ArgumentsParser {
         coerce: ArgumentsParser.getLastValue, // don't allow string[] values
         requiresArg: true,
       })
-      .option('language-filter', {
+      .option('filter-language', {
         group: groupRomFiltering,
         alias: 'L',
         description: `List of comma-separated languages to filter to (supported: ${Internationalization.LANGUAGES.join(', ')})`,
@@ -412,13 +418,33 @@ export default class ArgumentsParser {
         coerce: (val: string) => val.split(','),
         requiresArg: true,
       })
-      .option('region-filter', {
+      .option('language-filter', {
+        type: 'string',
+        coerce: (val: string) => {
+          this.logger.warn('--language-filter is deprecated, use --filter-language instead');
+          return val.split(',');
+        },
+        requiresArg: true,
+        deprecated: true,
+        hidden: true,
+      })
+      .option('filter-region', {
         group: groupRomFiltering,
         alias: 'R',
         description: `List of comma-separated regions to filter to (supported: ${Internationalization.REGION_CODES.join(', ')})`,
         type: 'string',
         coerce: (val: string) => val.split(','),
         requiresArg: true,
+      })
+      .option('region-filter', {
+        type: 'string',
+        coerce: (val: string) => {
+          this.logger.warn('--region-filter is deprecated, use --filter-region instead');
+          return val.split(',');
+        },
+        requiresArg: true,
+        deprecated: true,
+        hidden: true,
       });
     [
       ['bios', 'BIOS files'],

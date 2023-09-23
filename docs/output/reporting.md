@@ -4,10 +4,11 @@
 
 When using DATs (the `--dat <path>` option), the `igir report` [command](../commands.md) can report on:
 
-- What ROMs were found, and where the files are
-- What ROMs are missing
-- What input files didn't match to any ROM
-- What output files were [cleaned](cleaning.md) (`igir clean` command)
+- `FOUND`: what ROMs were found, and where the files are on disk
+- `IGNORED`: what ROMs were ignored (due to [`--single` 1G1R rules](../roms/filtering-preferences.md))
+- `MISSING`: what ROMs were wanted, but are missing
+- `UNUSED`: what input files didn't match to any ROM
+- `DELETED`: what output files were [cleaned](cleaning.md) (`igir clean` command)
 
 At least one DAT is required for the `igir report` command to work, otherwise `igir` has no way to understand what input files are known ROMs and which aren't. See the [DAT docs](../input/dats.md) for more information about DATs.
 
@@ -46,7 +47,7 @@ See the `igir --help` message for the report's default location.
 
 The output report format is a standard CSV that can be opened in Microsoft Excel, Apple Numbers, Google Sheets, LibreOffice Calc, and other similar spreadsheet applications.
 
-Unlike the report formats of [other ROM managers](../alternatives.md), CSVs allow you to filter rows by column values. For example, you can filter the "Status" column to only "MISSING" to understand what ROMs are missing from your collection, or to "UNMATCHED" to understand what input files aren't recognized as a known ROM. The ability to filter CSVs in spreadsheet applications means that `igir` should not need use-case-specific report options to achieve your goal.
+Unlike the report formats of [other ROM managers](../alternatives.md), CSVs allow you to filter rows by column values. For example, you can filter the "Status" column to only "MISSING" to understand what ROMs are missing from your collection, or to "UNUSED" to understand what input files weren't used as the source of any output file. The ability to filter CSVs in spreadsheet applications means that `igir` should not need use-case-specific report options to achieve your goal.
 
 To perform this filtering, most spreadsheet applications have a button or menu item to "create a filter" or "auto filter."
 

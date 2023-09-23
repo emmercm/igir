@@ -1,4 +1,5 @@
 import async from 'async';
+import chalk from 'chalk';
 import isAdmin from 'is-admin';
 
 import Logger from './console/logger.js';
@@ -72,7 +73,7 @@ export default class Igir {
     const patches = await this.processPatchScanner();
 
     // Set up progress bar and input for DAT processing
-    const datProcessProgressBar = await this.logger.addProgressBar('Processing DATs', ProgressBarSymbol.PROCESSING, dats.length);
+    const datProcessProgressBar = await this.logger.addProgressBar(chalk.underline('Processing DATs'), ProgressBarSymbol.NONE, dats.length);
     if (!dats.length) {
       dats = new DATGameInferrer(datProcessProgressBar).infer(roms);
     }
@@ -235,11 +236,11 @@ export default class Igir {
     const patchedCandidates = await new CandidatePatchGenerator(this.options, progressBar)
       .generate(dat, candidates, patches);
 
-    const filteredCandidates = await new CandidatePreferer(this.options, progressBar)
+    const preferredCandidates = await new CandidatePreferer(this.options, progressBar)
       .prefer(dat, patchedCandidates);
 
     const postProcessedCandidates = await new CandidatePostProcessor(this.options, progressBar)
-      .process(dat, filteredCandidates);
+      .process(dat, preferredCandidates);
 
     await new CandidateMergeSplitValidator(this.options, progressBar)
       .validate(dat, postProcessedCandidates);

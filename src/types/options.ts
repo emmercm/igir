@@ -74,7 +74,9 @@ export interface OptionsProps {
 
   readonly filterRegex?: string,
   readonly filterRegexExclude?: string,
+  readonly filterLanguage?: string[],
   readonly languageFilter?: string[],
+  readonly filterRegion?: string[],
   readonly regionFilter?: string[],
   readonly noBios?: boolean,
   readonly onlyBios?: boolean,
@@ -191,7 +193,11 @@ export default class Options implements OptionsProps {
 
   readonly filterRegexExclude: string;
 
+  readonly filterLanguage: string[];
+
   readonly languageFilter: string[];
+
+  readonly filterRegion: string[];
 
   readonly regionFilter: string[];
 
@@ -326,7 +332,9 @@ export default class Options implements OptionsProps {
 
     this.filterRegex = options?.filterRegex ?? '';
     this.filterRegexExclude = options?.filterRegexExclude ?? '';
+    this.filterLanguage = options?.filterLanguage ?? [];
     this.languageFilter = options?.languageFilter ?? [];
+    this.filterRegion = options?.filterRegion ?? [];
     this.regionFilter = options?.regionFilter ?? [];
     this.noBios = options?.noBios ?? false;
     this.onlyBios = options?.onlyBios ?? false;
@@ -474,10 +482,10 @@ export default class Options implements OptionsProps {
   }
 
   /**
-   * Was the `clean` command provided?
+   * Was the 'fixdat' command provided?
    */
-  shouldClean(): boolean {
-    return this.getCommands().has('clean');
+  shouldFixdat(): boolean {
+    return this.getCommands().has('fixdat') || this.fixdat;
   }
 
   /**
@@ -485,6 +493,13 @@ export default class Options implements OptionsProps {
    */
   shouldTest(): boolean {
     return this.getCommands().has('test');
+  }
+
+  /**
+   * Was the `clean` command provided?
+   */
+  shouldClean(): boolean {
+    return this.getCommands().has('clean');
   }
 
   /**
@@ -677,10 +692,6 @@ export default class Options implements OptionsProps {
     return Options.getRegex(this.datDescriptionRegexExclude);
   }
 
-  getFixdat(): boolean {
-    return this.fixdat;
-  }
-
   getOutput(): string {
     return this.shouldWrite() ? this.output : Constants.GLOBAL_TEMP_DIR;
   }
@@ -821,12 +832,24 @@ export default class Options implements OptionsProps {
     return Options.getRegex(this.filterRegexExclude);
   }
 
-  getLanguageFilter(): Set<string> {
-    return new Set(Options.filterUniqueUpper(this.languageFilter));
+  getFilterLanguage(): Set<string> {
+    if (this.filterLanguage.length) {
+      return new Set(Options.filterUniqueUpper(this.filterLanguage));
+    }
+    if (this.languageFilter.length) {
+      return new Set(Options.filterUniqueUpper(this.languageFilter));
+    }
+    return new Set();
   }
 
-  getRegionFilter(): Set<string> {
-    return new Set(Options.filterUniqueUpper(this.regionFilter));
+  getFilterRegion(): Set<string> {
+    if (this.filterRegion.length) {
+      return new Set(Options.filterUniqueUpper(this.filterRegion));
+    }
+    if (this.regionFilter.length) {
+      return new Set(Options.filterUniqueUpper(this.regionFilter));
+    }
+    return new Set();
   }
 
   getNoBios(): boolean {
