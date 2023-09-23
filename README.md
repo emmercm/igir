@@ -24,7 +24,7 @@
 
 A video of an example use case:
 
-[![asciicast](https://asciinema.org/a/AwESXP8AI5xrm9DCdbZGjNtYF.svg)](https://asciinema.org/a/AwESXP8AI5xrm9DCdbZGjNtYF)
+[![asciicast](https://asciinema.org/a/Sum1WBdZRsSTvbZvVuP5Ho1N9.svg)](https://asciinema.org/a/Sum1WBdZRsSTvbZvVuP5Ho1N9)
 
 With `igir` you can manage a ROM collection of any size:
 
