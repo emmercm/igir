@@ -1,10 +1,11 @@
-import crypto from 'crypto';
-import fs, { MakeDirectoryOptions, PathLike, RmOptions } from 'fs';
+import crypto from 'node:crypto';
+import fs, { MakeDirectoryOptions, PathLike, RmOptions } from 'node:fs';
+import path from 'node:path';
+import util from 'node:util';
+
 import { isNotJunk } from 'junk';
 import nodeDiskInfo from 'node-disk-info';
-import path from 'path';
 import semver from 'semver';
-import util from 'util';
 
 export type FsWalkCallback = (increment: number) => void;
 
@@ -67,14 +68,6 @@ export default class FsPoly {
   static async isDirectory(pathLike: PathLike): Promise<boolean> {
     try {
       return (await util.promisify(fs.lstat)(pathLike)).isDirectory();
-    } catch (e) {
-      return false;
-    }
-  }
-
-  static isDirectorySync(pathLike: PathLike): boolean {
-    try {
-      return fs.lstatSync(pathLike).isDirectory();
     } catch (e) {
       return false;
     }
@@ -262,44 +255,6 @@ export default class FsPoly {
     } else {
       // Added in: v10.0.0
       await util.promisify(fs.unlink)(pathLike);
-    }
-  }
-
-  /**
-   * fs.rmSync() was added in: v14.14.0
-   */
-  static rmSync(pathLike: PathLike, options: RmOptions = {}): void {
-    const optionsWithRetry = {
-      maxRetries: 2,
-      ...options,
-    };
-
-    try {
-      // Added in: v0.11.15
-      fs.accessSync(pathLike); // throw if file doesn't exist
-    } catch (e) {
-      if (optionsWithRetry.force) {
-        return;
-      }
-      throw e;
-    }
-
-    // Added in: v0.1.30
-    if (this.isDirectorySync(pathLike)) {
-      // DEP0147
-      if (semver.lt(process.version, '16.0.0')) {
-        // Added in: v0.1.21
-        fs.rmdirSync(pathLike, optionsWithRetry);
-      } else {
-        // Added in: v14.14.0
-        fs.rmSync(pathLike, {
-          ...optionsWithRetry,
-          recursive: true,
-        });
-      }
-    } else {
-      // Added in: v0.1.21
-      fs.unlinkSync(pathLike);
     }
   }
 

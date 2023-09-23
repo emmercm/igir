@@ -9,7 +9,8 @@
   "plugins": [
     "@typescript-eslint",
     "simple-import-sort",
-    "jest"
+    "jest",
+    "unicorn"
   ],
 
   "parser": "@typescript-eslint/parser",
@@ -24,12 +25,15 @@
   },
 
   "rules": {
+    // ***** Files *****
+    "unicorn/no-empty-file": "error",
+    "unicorn/filename-case": ["error", {
+      "case": "camelCase"
+    }],
+
     // ***** Imports *****
+    "unicorn/prefer-node-protocol": "error",
     "@typescript-eslint/no-restricted-imports": ["error", {
-      "patterns": [{
-        "group": ["node:*"],
-        "message": "Don't use prefixes with Node.js built-ins."
-      }],
       "paths": [{
         "name": "fs",
         "importNames": ["promises"],
@@ -67,9 +71,23 @@
     "jsdoc/require-returns": "off",
     "jsdoc/no-blank-blocks": "error",
 
-    // ***** Misc Disallows *****
-    "@typescript-eslint/prefer-nullish-coalescing": "error",
+    // ***** Classes *****
+    "unicorn/no-static-only-class": "error",
     "@typescript-eslint/prefer-readonly": "error",
+
+    // ***** Functions *****
+    "unicorn/prefer-default-parameters": "error",
+
+    // ***** Loops *****
+    "unicorn/prefer-array-find": "error",
+
+    // ***** Operands *****
+    "@typescript-eslint/prefer-nullish-coalescing": "error",
+
+    // ***** Numbers *****
+    "unicorn/no-zero-fractions": "error",
+    "unicorn/number-literal-case": "error",
+    "unicorn/numeric-separators-style": "error",
 
     // ***** Misc Allows *****
     // There are a few places where this needs to be allowed, but only a few, so warn on them

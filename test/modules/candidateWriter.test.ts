@@ -1,14 +1,14 @@
-import fs, { Stats } from 'fs';
-import os from 'os';
-import path from 'path';
-import util from 'util';
+import fs, { Stats } from 'node:fs';
+import os from 'node:os';
+import path from 'node:path';
+import util from 'node:util';
 
 import Constants from '../../src/constants.js';
 import CandidateCombiner from '../../src/modules/candidateCombiner.js';
 import CandidateGenerator from '../../src/modules/candidateGenerator.js';
 import CandidatePatchGenerator from '../../src/modules/candidatePatchGenerator.js';
 import CandidateWriter from '../../src/modules/candidateWriter.js';
-import DATInferrer from '../../src/modules/datInferrer.js';
+import DATGameInferrer from '../../src/modules/datGameInferrer.js';
 import FileIndexer from '../../src/modules/fileIndexer.js';
 import PatchScanner from '../../src/modules/patchScanner.js';
 import ROMHeaderProcessor from '../../src/modules/romHeaderProcessor.js';
@@ -72,7 +72,7 @@ async function walkAndStat(dirPath: string): Promise<[string, Stats][]> {
 
 function datInferrer(romFiles: File[]): DAT {
   // Run DATInferrer, but condense all DATs down to one
-  const datGames = new DATInferrer(new ProgressBarFake()).infer(romFiles)
+  const datGames = new DATGameInferrer(new ProgressBarFake()).infer(romFiles)
     .map((dat) => dat.getGames())
     .flatMap((games) => games);
   // TODO(cemmer): filter to unique games / remove duplicates
@@ -510,7 +510,7 @@ describe('zip', () => {
       const romFilesAfter = await walkAndStat(path.join(inputTemp, 'roms'));
       romFilesBefore.forEach(([inputFile, statsBefore]) => {
         const [, statsAfter] = romFilesAfter
-          .filter(([inputFileAfter]) => inputFileAfter === inputFile)[0] || [];
+          .find(([inputFileAfter]) => inputFileAfter === inputFile) ?? [];
         if (statsAfter) {
           // File wasn't deleted, ensure it wasn't touched
           expect(statsAfter).toEqual(statsBefore);
@@ -906,7 +906,7 @@ describe('extract', () => {
       const romFilesAfter = await walkAndStat(path.join(inputTemp, 'roms'));
       romFilesBefore.forEach(([inputFile, statsBefore]) => {
         const [, statsAfter] = romFilesAfter
-          .filter(([inputFileAfter]) => inputFileAfter === inputFile)[0] || [];
+          .find(([inputFileAfter]) => inputFileAfter === inputFile) ?? [];
         if (statsAfter) {
           // File wasn't deleted, ensure it wasn't touched
           expect(statsAfter).toEqual(statsBefore);
@@ -1227,7 +1227,7 @@ describe('raw', () => {
       const romFilesAfter = await walkAndStat(path.join(inputTemp, 'roms'));
       romFilesBefore.forEach(([inputFile, statsBefore]) => {
         const [, statsAfter] = romFilesAfter
-          .filter(([inputFileAfter]) => inputFileAfter === inputFile)[0] || [];
+          .find(([inputFileAfter]) => inputFileAfter === inputFile) ?? [];
         if (statsAfter) {
           // File wasn't deleted, ensure it wasn't touched
           expect(statsAfter).toEqual(statsBefore);

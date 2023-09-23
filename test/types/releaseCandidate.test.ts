@@ -4,7 +4,7 @@ import Internationalization from '../../src/types/internationalization.js';
 import ReleaseCandidate from '../../src/types/releaseCandidate.js';
 
 describe('getRegion', () => {
-  test.each(Internationalization.REGIONS)('should return the release region: %s', (region) => {
+  test.each(Internationalization.REGION_CODES)('should return the release region: %s', (region) => {
     const release = new Release('release', region, undefined);
     const releaseCandidate = new ReleaseCandidate(new Game(), release, []);
     expect(releaseCandidate.getRegion()).toEqual(region);

@@ -48,7 +48,7 @@ export default abstract class DAT {
    * Does any {@link Game} in this {@link DAT} have clone information.
    */
   hasParentCloneInfo(): boolean {
-    return this.getGames().some((game) => game.isClone());
+    return this.getGames().some((game) => game.getParent());
   }
 
   getName(): string {

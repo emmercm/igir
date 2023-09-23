@@ -1,4 +1,4 @@
-import path from 'path';
+import path from 'node:path';
 
 import Logger from '../src/console/logger.js';
 import LogLevel from '../src/console/logLevel.js';
@@ -145,13 +145,6 @@ describe('with explicit DATs', () => {
     await expect(async () => new Igir(new Options({
       dat: ['src/*'],
     }), new Logger(LogLevel.NEVER)).main()).rejects.toThrow(/no valid dat files/i);
-  });
-
-  it('should throw on DATs without parent/clone info', async () => {
-    await expect(async () => new Igir(new Options({
-      dat: ['test/fixtures/dats/{headered,patchable}.dat'],
-      single: true,
-    }), new Logger(LogLevel.NEVER)).main()).rejects.toThrow(/parent\/clone/i);
   });
 
   it('should copy and test', async () => {

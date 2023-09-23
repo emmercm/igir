@@ -1,4 +1,5 @@
-import { PassThrough } from 'stream';
+import { PassThrough } from 'node:stream';
+
 import stripAnsi from 'strip-ansi';
 
 import Logger from '../../src/console/logger.js';
@@ -35,8 +36,8 @@ export default class ProgressBarCLISpy {
     return this.outputLines[this.outputLines.length - 1];
   }
 
-  getLogLine(): string {
+  getLogLine(): string | undefined {
     return this.outputLines
-      .filter((line) => line.match(/^[A-Z]+:.+/) !== null)[0];
+      .find((line) => line.match(/^[A-Z]+:.+/) !== null);
   }
 }

@@ -1,4 +1,4 @@
-import path from 'path';
+import path from 'node:path';
 
 import Constants from '../../src/constants.js';
 import filePoly from '../../src/polyfill/filePoly.js';
@@ -22,7 +22,7 @@ describe('fileOfSize', () => {
     }
   });
 
-  test.each([1, 42, 226, 1337, 8675309])('should create a file of size: %s', async (size) => {
+  test.each([1, 42, 226, 1337, 8_675_309])('should create a file of size: %s', async (size) => {
     const tempFile = await fsPoly.mktemp(path.join(Constants.GLOBAL_TEMP_DIR, 'file'));
     await expect(fsPoly.exists(tempFile)).resolves.toEqual(false);
 

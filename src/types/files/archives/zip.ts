@@ -1,9 +1,10 @@
+import fs from 'node:fs';
+import path from 'node:path';
+import { Readable } from 'node:stream';
+import { clearInterval } from 'node:timers';
+
 import archiver, { Archiver } from 'archiver';
 import async from 'async';
-import fs from 'fs';
-import path from 'path';
-import { Readable } from 'stream';
-import { clearInterval } from 'timers';
 import { Memoize } from 'typescript-memoize';
 import unzipper from 'unzipper';
 
@@ -69,7 +70,7 @@ export default class Zip extends Archive {
 
     const entry = archive.files
       .filter((entryFile) => entryFile.type === 'File')
-      .filter((entryFile) => entryFile.path === entryPath.replace(/[\\/]/g, '/'))[0];
+      .find((entryFile) => entryFile.path === entryPath.replace(/[\\/]/g, '/'));
     if (!entry) {
       throw new Error(`didn't find entry '${entryPath}'`);
     }
@@ -123,7 +124,7 @@ export default class Zip extends Archive {
       writeStream.on('close', resolve);
     });
 
-    await fsPoly.mv(tempZipFile, this.getFilePath());
+    return fsPoly.mv(tempZipFile, this.getFilePath());
   }
 
   private static async addArchiveEntries(

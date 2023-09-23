@@ -17,7 +17,7 @@ enum ROMType {
 }
 
 export enum Status {
-  MISSING,
+  MISSING = 1,
   FOUND,
   UNMATCHED,
   DELETED,
@@ -300,10 +300,14 @@ export default class DATStatus {
 
   private static getAllowedTypes(options: Options): ROMType[] {
     return [
-      !options.getOnlyBios() && !options.getOnlyRetail() ? ROMType.GAME : undefined,
-      options.getOnlyBios() || !options.getNoBios() ? ROMType.BIOS : undefined,
-      !options.getNoDevice() && !options.getOnlyBios() ? ROMType.DEVICE : undefined,
-      options.getOnlyRetail() || !options.getOnlyBios() ? ROMType.RETAIL : undefined,
+      !options.getOnlyBios() && !options.getOnlyDevice() && !options.getOnlyRetail()
+        ? ROMType.GAME : undefined,
+      options.getOnlyBios() || (!options.getNoBios() && !options.getOnlyDevice())
+        ? ROMType.BIOS : undefined,
+      options.getOnlyDevice() || (!options.getOnlyBios() && !options.getNoDevice())
+        ? ROMType.DEVICE : undefined,
+      options.getOnlyRetail() || (!options.getOnlyBios() && !options.getOnlyDevice())
+        ? ROMType.RETAIL : undefined,
       ROMType.PATCHED,
     ].filter(ArrayPoly.filterNotNullish);
   }

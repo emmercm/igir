@@ -1,5 +1,5 @@
 enum LogLevel {
-  TRACE,
+  TRACE = 1,
   DEBUG,
   INFO,
   WARN,

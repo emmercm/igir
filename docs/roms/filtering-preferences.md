@@ -1,4 +1,4 @@
-# ROM Filtering & Preference
+# ROM Filtering & Preferences
 
 `igir` offers many options for filtering as well as 1G1R preferences/priorities (when combined with the `--single` option).
 

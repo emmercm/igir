@@ -5,7 +5,7 @@ import Constants from '../constants.js';
 import ConsolePoly from '../polyfill/consolePoly.js';
 import ROMHeader from '../types/files/romHeader.js';
 import Internationalization from '../types/internationalization.js';
-import Options from '../types/options.js';
+import Options, { MergeMode } from '../types/options.js';
 import PatchFactory from '../types/patches/patchFactory.js';
 
 /**
@@ -60,6 +60,7 @@ export default class ArgumentsParser {
     const groupRomZip = 'ROM zip command options:';
     const groupRomSymlink = 'ROM symlink command options:';
     const groupRomHeader = 'ROM header options:';
+    const groupRomMergeSplit = 'ROM MAME merge & split options (requires DATs with parent/clone information):';
     const groupRomFiltering = 'ROM filtering options:';
     const groupRomPriority = 'One game, one ROM (1G1R) options:';
     const groupReport = 'Report options:';
@@ -343,6 +344,18 @@ export default class ArgumentsParser {
           }),
       })
 
+      .option('merge-roms', {
+        group: groupRomMergeSplit,
+        description: 'ROM merge/split mode',
+        // type: 'string',
+        choices: Object.keys(MergeMode)
+          .filter((mode) => Number.isNaN(Number(mode)))
+          .map((mode) => mode.toLowerCase()),
+        coerce: ArgumentsParser.getLastValue, // don't allow string[] values
+        requiresArg: true,
+        default: MergeMode[MergeMode.FULLNONMERGED].toLowerCase(),
+      })
+
       .option('filter-regex', {
         group: groupRomFiltering,
         alias: 'x',
@@ -370,7 +383,7 @@ export default class ArgumentsParser {
       .option('region-filter', {
         group: groupRomFiltering,
         alias: 'R',
-        description: `List of comma-separated regions to filter to (supported: ${Internationalization.REGIONS.join(', ')})`,
+        description: `List of comma-separated regions to filter to (supported: ${Internationalization.REGION_CODES.join(', ')})`,
         type: 'string',
         coerce: (val: string) => val.split(','),
         requiresArg: true,
@@ -429,9 +442,8 @@ export default class ArgumentsParser {
       .option('single', {
         group: groupRomPriority,
         alias: 's',
-        description: 'Output only a single game per parent (1G1R) (required for all options below, requires --dat with parent/clone information)',
+        description: 'Output only a single game per parent (1G1R) (required for all options below, requires DATs with parent/clone information)',
         type: 'boolean',
-        implies: 'dat',
       })
       .option('prefer-verified', {
         group: groupRomPriority,
@@ -457,7 +469,7 @@ export default class ArgumentsParser {
       .option('prefer-region', {
         group: groupRomPriority,
         alias: 'r',
-        description: `List of comma-separated regions in priority order (supported: ${Internationalization.REGIONS.join(', ')})`,
+        description: `List of comma-separated regions in priority order (supported: ${Internationalization.REGION_CODES.join(', ')})`,
         type: 'string',
         coerce: (val: string) => val.split(','),
         requiresArg: true,
@@ -501,7 +513,7 @@ export default class ArgumentsParser {
         group: groupRomPriority,
         description: 'Prefer parent ROMs over clones',
         type: 'boolean',
-        implies: ['dat', 'single'],
+        implies: 'single',
       })
 
       .option('report-output', {
@@ -539,6 +551,30 @@ export default class ArgumentsParser {
         alias: 'v',
         description: 'Enable verbose logging, can specify up to three times (-vvv)',
         type: 'count',
+      })
+
+      .check((checkArgv) => {
+        if (checkArgv.mergeRoms !== MergeMode[MergeMode.FULLNONMERGED].toLowerCase() && (
+          checkArgv.dirMirror
+          || checkArgv.dirLetter
+        )) {
+          this.logger.warn(`at least one --dir-* option was provided, be careful about how you organize non-'${MergeMode[MergeMode.FULLNONMERGED].toLowerCase()}' ROM sets into different subdirectories`);
+        }
+
+        if (checkArgv.mergeRoms !== MergeMode[MergeMode.FULLNONMERGED].toLowerCase() && (
+          checkArgv.noBios
+          || checkArgv.noDevice
+        )) {
+          this.logger.warn(`--no-bios and --no-device may leave non-'${MergeMode[MergeMode.FULLNONMERGED].toLowerCase()}' ROM sets in an unplayable state`);
+        }
+
+        if ((checkArgv.single && !checkArgv.preferParent)
+          && checkArgv.mergeRoms === MergeMode[MergeMode.SPLIT].toLowerCase()
+        ) {
+          this.logger.warn(`--single may leave '${MergeMode[MergeMode.SPLIT].toLowerCase()}' ROM sets in an unplayable state`);
+        }
+
+        return true;
       })
 
       .wrap(ArgumentsParser.getHelpWidth(argv))
@@ -588,6 +624,9 @@ Example use cases:
 
   Create patched copies of ROMs in an existing collection, not overwriting existing files:
     $0 copy extract --input ROMs/ --patch Patches/ --output ROMs/
+
+  Re-build a MAME ROM set for a specific version of MAME:
+    $0 copy zip --dat "MAME 0.258.dat" --input MAME/ --output MAME-0.258/ --merge-roms split
 
   Copy ROMs to an Analogue Pocket and test they were written correctly:
     $0 copy extract test --dat *.dat --input ROMs/ --output /Assets/{pocket}/common/ --dir-letter`)

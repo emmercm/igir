@@ -1,8 +1,8 @@
-import path from 'path';
+import path from 'node:path';
 
 import CandidateCombiner from '../../src/modules/candidateCombiner.js';
 import CandidateGenerator from '../../src/modules/candidateGenerator.js';
-import DATInferrer from '../../src/modules/datInferrer.js';
+import DATGameInferrer from '../../src/modules/datGameInferrer.js';
 import FileIndexer from '../../src/modules/fileIndexer.js';
 import ROMScanner from '../../src/modules/romScanner.js';
 import Header from '../../src/types/dats/logiqx/header.js';
@@ -18,7 +18,7 @@ async function runCombinedCandidateGenerator(
   romFiles: File[],
 ): Promise<Map<Parent, ReleaseCandidate[]>> {
   // Run DATInferrer, but condense all DATs down to one
-  const datGames = new DATInferrer(new ProgressBarFake()).infer(romFiles)
+  const datGames = new DATGameInferrer(new ProgressBarFake()).infer(romFiles)
     .map((dat) => dat.getGames())
     .flatMap((games) => games);
   const dat = new LogiqxDAT(new Header(), datGames);

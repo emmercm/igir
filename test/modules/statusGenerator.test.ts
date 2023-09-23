@@ -133,6 +133,13 @@ describe('toConsole', () => {
         .generate(dummyDat, parentsToReleaseCandidatesWithoutFiles);
       expect(stripAnsi(datStatus.toConsole(options))).toEqual('2/6 games, 0/1 BIOSes, 2/5 retail releases found');
     });
+
+    it('should not print device count when onlyDevice:true', async () => {
+      const options = new Options({ ...defaultOptions, onlyDevice: true });
+      const datStatus = await new StatusGenerator(options, new ProgressBarFake())
+        .generate(dummyDat, parentsToReleaseCandidatesWithoutFiles);
+      expect(stripAnsi(datStatus.toConsole(options))).toEqual('1/1 devices found');
+    });
   });
 
   describe('partially missing', () => {
@@ -268,6 +275,14 @@ dat,game prototype (proto),MISSING,,false,false,false,false,false,false,false,fa
 dat,game with multiple roms,MISSING,,false,false,true,false,false,false,false,false,false,false,false,false,false
 dat,game with single rom,MISSING,,false,false,true,false,false,false,false,false,false,false,false,false,false
 dat,no roms,FOUND,,false,false,true,false,false,false,false,false,false,false,false,false,false`);
+    });
+
+    it('should not report devices when onlyDevice:true', async () => {
+      const options = new Options({ ...defaultOptions, onlyDevice: true });
+      const datStatus = await new StatusGenerator(options, new ProgressBarFake())
+        .generate(dummyDat, parentsToReleaseCandidatesWithoutFiles);
+      await expect(datStatus.toCsv(options)).resolves.toEqual(`DAT Name,Game Name,Status,ROM Files,Patched,BIOS,Retail Release,Unlicensed,Debug,Demo,Beta,Sample,Prototype,Test,Aftermarket,Homebrew,Bad
+dat,device,FOUND,,false,false,true,false,false,false,false,false,false,false,false,false,false`);
     });
   });
 

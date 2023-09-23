@@ -1,4 +1,4 @@
-import path from 'path';
+import path from 'node:path';
 
 /**
  * A class of information about specific game consoles and their names, standard file extensions,
@@ -22,6 +22,7 @@ export default class GameConsole {
    * Other:
    *  @see https://emulation.gametechwiki.com/index.php/List_of_filetypes
    *  @see https://emulation.fandom.com/wiki/List_of_filetypes
+   *  @see https://github.com/OpenEmu/OpenEmu/wiki/User-guide:-Importing
    */
   private static readonly CONSOLES: GameConsole[] = [
     // Amstrad
@@ -180,13 +181,13 @@ export default class GameConsole {
   static getForFilename(filePath: string): GameConsole | undefined {
     const fileExtension = path.extname(filePath).toLowerCase();
     return this.CONSOLES
-      .filter((console) => console.getExtensions().some((ext) => ext === fileExtension))[0];
+      .find((console) => console.getExtensions().some((ext) => ext === fileExtension));
   }
 
   static getForDatName(consoleName: string): GameConsole | undefined {
     return this.CONSOLES
       .slice().reverse() // more specific names come second (e.g. "Game Boy" and "Game Boy Color")
-      .filter((console) => console.getDatRegex().test(consoleName))[0];
+      .find((console) => console.getDatRegex().test(consoleName));
   }
 
   private getDatRegex(): RegExp {
