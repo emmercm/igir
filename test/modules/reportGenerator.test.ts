@@ -141,7 +141,7 @@ Multiple,Two,FOUND,Two.rom,false,false,true,false,false,false,false,false,false,
   });
 });
 
-it('should return one row for every unmatched file in a multiple game DAT', async () => {
+it('should return one row for every unused file in a multiple game DAT', async () => {
   await wrapReportGenerator(new Options(), [
     'One.rom',
     'Two.rom',
