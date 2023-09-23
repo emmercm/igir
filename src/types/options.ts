@@ -44,7 +44,11 @@ export interface OptionsProps {
   readonly dat?: string[],
   readonly datExclude?: string[],
   readonly datRegex?: string,
+  readonly datNameRegex?: string,
   readonly datRegexExclude?: string,
+  readonly datNameRegexExclude?: string,
+  readonly datDescriptionRegex?: string,
+  readonly datDescriptionRegexExclude?: string,
 
   readonly fixdat?: boolean;
 
@@ -143,7 +147,15 @@ export default class Options implements OptionsProps {
 
   readonly datRegex: string;
 
+  readonly datNameRegex: string;
+
   readonly datRegexExclude: string;
+
+  readonly datNameRegexExclude: string;
+
+  readonly datDescriptionRegex: string;
+
+  readonly datDescriptionRegexExclude: string;
 
   readonly fixdat: boolean;
 
@@ -290,7 +302,11 @@ export default class Options implements OptionsProps {
     this.dat = options?.dat ?? [];
     this.datExclude = options?.datExclude ?? [];
     this.datRegex = options?.datRegex ?? '';
+    this.datNameRegex = options?.datNameRegex ?? '';
     this.datRegexExclude = options?.datRegexExclude ?? '';
+    this.datNameRegexExclude = options?.datNameRegexExclude ?? '';
+    this.datDescriptionRegex = options?.datDescriptionRegex ?? '';
+    this.datDescriptionRegexExclude = options?.datDescriptionRegexExclude ?? '';
 
     this.fixdat = options?.fixdat ?? false;
 
@@ -660,12 +676,20 @@ export default class Options implements OptionsProps {
       .filter((inputPath) => !datExcludeFiles.has(inputPath));
   }
 
-  getDatRegex(): RegExp | undefined {
-    return Options.getRegex(this.datRegex);
+  getDatNameRegex(): RegExp | undefined {
+    return Options.getRegex(this.datNameRegex || this.datRegex);
   }
 
-  getDatRegexExclude(): RegExp | undefined {
-    return Options.getRegex(this.datRegexExclude);
+  getDatNameRegexExclude(): RegExp | undefined {
+    return Options.getRegex(this.datNameRegexExclude || this.datRegexExclude);
+  }
+
+  getDatDescriptionRegex(): RegExp | undefined {
+    return Options.getRegex(this.datDescriptionRegex);
+  }
+
+  getDatDescriptionRegexExclude(): RegExp | undefined {
+    return Options.getRegex(this.datDescriptionRegexExclude);
   }
 
   getOutput(): string {

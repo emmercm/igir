@@ -98,6 +98,11 @@ describe('options', () => {
     expect(options.shouldClean()).toEqual(false);
     expect(options.shouldReport()).toEqual(false);
 
+    expect(options.getDatNameRegex()).toBeUndefined();
+    expect(options.getDatNameRegexExclude()).toBeUndefined();
+    expect(options.getDatDescriptionRegex()).toBeUndefined();
+    expect(options.getDatDescriptionRegexExclude()).toBeUndefined();
+
     expect(options.getDirMirror()).toEqual(false);
     expect(options.getDirDatName()).toEqual(false);
     expect(options.getDirDatDescription()).toEqual(false);
@@ -230,20 +235,47 @@ describe('options', () => {
     expect((await argumentsParser.parse([...dummyCommandAndRequiredArgs, '--dat', './src', '--dat-exclude', './src']).scanDatFilesWithoutExclusions()).length).toEqual(0);
   });
 
-  it('should parse "dat-regex"', () => {
-    expect(argumentsParser.parse(dummyCommandAndRequiredArgs).getDatRegex()).toBeUndefined();
-    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--dat-regex', '[a-z]']).getDatRegex()?.test('lower')).toEqual(true);
-    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--dat-regex', '[a-z]']).getDatRegex()?.test('UPPER')).toEqual(false);
-    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--dat-regex', '/[a-z]/i']).getDatRegex()?.test('UPPER')).toEqual(true);
-    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--dat-regex', '/[a-z]/i', '--dat-regex', '[0-9]']).getDatRegex()?.test('UPPER')).toEqual(false);
+  it('should parse "dat-name-regex"', () => {
+    expect(argumentsParser.parse(dummyCommandAndRequiredArgs).getDatNameRegex()).toBeUndefined();
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--dat-name-regex', '[a-z]']).getDatNameRegex()?.test('lower')).toEqual(true);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--dat-name-regex', '[a-z]']).getDatNameRegex()?.test('UPPER')).toEqual(false);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--dat-name-regex', '/[a-z]/i']).getDatNameRegex()?.test('UPPER')).toEqual(true);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--dat-name-regex', '/[a-z]/i', '--dat-name-regex', '[0-9]']).getDatNameRegex()?.test('UPPER')).toEqual(false);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--dat-regex', '[a-z]']).getDatNameRegex()?.test('lower')).toEqual(true);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--dat-regex', '[a-z]']).getDatNameRegex()?.test('UPPER')).toEqual(false);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--dat-regex', '/[a-z]/i']).getDatNameRegex()?.test('UPPER')).toEqual(true);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--dat-regex', '/[a-z]/i', '--dat-regex', '[0-9]']).getDatNameRegex()?.test('UPPER')).toEqual(false);
   });
 
-  it('should parse "dat-regex-exclude"', () => {
-    expect(argumentsParser.parse(dummyCommandAndRequiredArgs).getDatRegexExclude()).toBeUndefined();
-    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--dat-regex-exclude', '[a-z]']).getDatRegexExclude()?.test('lower')).toEqual(true);
-    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--dat-regex-exclude', '[a-z]']).getDatRegexExclude()?.test('UPPER')).toEqual(false);
-    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--dat-regex-exclude', '/[a-z]/i']).getDatRegexExclude()?.test('UPPER')).toEqual(true);
-    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--dat-regex-exclude', '/[a-z]/i', '--dat-regex-exclude', '[0-9]']).getDatRegexExclude()?.test('UPPER')).toEqual(false);
+  it('should parse "dat-name-regex-exclude"', () => {
+    expect(argumentsParser.parse(dummyCommandAndRequiredArgs).getDatNameRegexExclude())
+      .toBeUndefined();
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--dat-name-regex-exclude', '[a-z]']).getDatNameRegexExclude()?.test('lower')).toEqual(true);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--dat-name-regex-exclude', '[a-z]']).getDatNameRegexExclude()?.test('UPPER')).toEqual(false);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--dat-name-regex-exclude', '/[a-z]/i']).getDatNameRegexExclude()?.test('UPPER')).toEqual(true);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--dat-name-regex-exclude', '/[a-z]/i', '--dat-name-regex-exclude', '[0-9]']).getDatNameRegexExclude()?.test('UPPER')).toEqual(false);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--dat-regex-exclude', '[a-z]']).getDatNameRegexExclude()?.test('lower')).toEqual(true);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--dat-regex-exclude', '[a-z]']).getDatNameRegexExclude()?.test('UPPER')).toEqual(false);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--dat-regex-exclude', '/[a-z]/i']).getDatNameRegexExclude()?.test('UPPER')).toEqual(true);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--dat-regex-exclude', '/[a-z]/i', '--dat-regex-exclude', '[0-9]']).getDatNameRegexExclude()?.test('UPPER')).toEqual(false);
+  });
+
+  it('should parse "dat-description-regex"', () => {
+    expect(argumentsParser.parse(dummyCommandAndRequiredArgs).getDatDescriptionRegex())
+      .toBeUndefined();
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--dat-description-regex', '[a-z]']).getDatDescriptionRegex()?.test('lower')).toEqual(true);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--dat-description-regex', '[a-z]']).getDatDescriptionRegex()?.test('UPPER')).toEqual(false);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--dat-description-regex', '/[a-z]/i']).getDatDescriptionRegex()?.test('UPPER')).toEqual(true);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--dat-description-regex', '/[a-z]/i', '--dat-description-regex', '[0-9]']).getDatDescriptionRegex()?.test('UPPER')).toEqual(false);
+  });
+
+  it('should parse "dat-description-regex-exclude"', () => {
+    expect(argumentsParser.parse(dummyCommandAndRequiredArgs).getDatDescriptionRegexExclude())
+      .toBeUndefined();
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--dat-description-regex-exclude', '[a-z]']).getDatDescriptionRegexExclude()?.test('lower')).toEqual(true);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--dat-description-regex-exclude', '[a-z]']).getDatDescriptionRegexExclude()?.test('UPPER')).toEqual(false);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--dat-description-regex-exclude', '/[a-z]/i']).getDatDescriptionRegexExclude()?.test('UPPER')).toEqual(true);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--dat-description-regex-exclude', '/[a-z]/i', '--dat-description-regex-exclude', '[0-9]']).getDatDescriptionRegexExclude()?.test('UPPER')).toEqual(false);
   });
 
   it('should parse "fixdat"', () => {

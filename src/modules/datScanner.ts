@@ -114,12 +114,27 @@ export default class DATScanner extends Scanner {
 
     return results
       .filter((dat) => {
-        const datRegex = this.options.getDatRegex();
-        return !datRegex || dat.getName().match(datRegex) !== null;
+        const datNameRegex = this.options.getDatNameRegex();
+        return !datNameRegex || dat.getName().match(datNameRegex) !== null;
       })
       .filter((dat) => {
-        const datRegexExclude = this.options.getDatRegexExclude();
-        return !datRegexExclude || dat.getName().match(datRegexExclude) === null;
+        const datNameRegexExclude = this.options.getDatNameRegexExclude();
+        return !datNameRegexExclude || dat.getName().match(datNameRegexExclude) === null;
+      })
+      .filter((dat) => {
+        const datDescriptionRegex = this.options.getDatDescriptionRegex();
+        if (!dat.getDescription()) {
+          return true;
+        }
+        return !datDescriptionRegex || dat.getDescription()?.match(datDescriptionRegex) !== null;
+      })
+      .filter((dat) => {
+        const datDescriptionRegexExclude = this.options.getDatDescriptionRegexExclude();
+        if (!dat.getDescription()) {
+          return true;
+        }
+        return !datDescriptionRegexExclude
+            || dat.getDescription()?.match(datDescriptionRegexExclude) === null;
       })
       .sort((a, b) => a.getNameShort().localeCompare(b.getNameShort()));
   }
@@ -355,8 +370,10 @@ export default class DATScanner extends Scanner {
       });
     });
 
+    const datName = path.parse(datFile.getExtractedFilePath()).name;
     return new LogiqxDAT(new Header({
-      name: path.parse(datFile.getExtractedFilePath()).name,
+      name: datName,
+      description: datName,
       romNamesContainDirectories: true,
     }), games);
   }

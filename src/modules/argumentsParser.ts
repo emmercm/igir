@@ -183,16 +183,48 @@ export default class ArgumentsParser {
         type: 'array',
         requiresArg: true,
       })
-      .option('dat-regex', {
+      .option('dat-name-regex', {
         group: groupDatInput,
         description: 'Regular expression of DAT names to process',
         type: 'string',
         coerce: ArgumentsParser.getLastValue, // don't allow string[] values
         requiresArg: true,
       })
-      .option('dat-regex-exclude', {
+      .option('dat-regex', {
+        type: 'string',
+        coerce: (val) => {
+          this.logger.warn('--dat-regex is deprecated, use --dat-name-regex instead');
+          return ArgumentsParser.getLastValue(val); // don't allow string[] values
+        },
+        requiresArg: true,
+        hidden: true,
+      })
+      .option('dat-name-regex-exclude', {
         group: groupDatInput,
         description: 'Regular expression of DAT names to exclude from processing',
+        type: 'string',
+        coerce: ArgumentsParser.getLastValue, // don't allow string[] values
+        requiresArg: true,
+      })
+      .option('dat-regex-exclude', {
+        type: 'string',
+        coerce: (val) => {
+          this.logger.warn('--dat-regex-exclude is deprecated, use --dat-name-regex-exclude instead');
+          return ArgumentsParser.getLastValue(val); // don't allow string[] values
+        },
+        requiresArg: true,
+        hidden: true,
+      })
+      .option('dat-description-regex', {
+        group: groupDatInput,
+        description: 'Regular expression of DAT descriptions to process',
+        type: 'string',
+        coerce: ArgumentsParser.getLastValue, // don't allow string[] values
+        requiresArg: true,
+      })
+      .option('dat-description-regex-exclude', {
+        group: groupDatInput,
+        description: 'Regular expression of DAT descriptions to exclude from processing',
         type: 'string',
         coerce: ArgumentsParser.getLastValue, // don't allow string[] values
         requiresArg: true,
