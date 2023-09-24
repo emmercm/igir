@@ -10,7 +10,7 @@ import ArchiveEntry from './files/archives/archiveEntry.js';
 import File from './files/file.js';
 import FileFactory from './files/fileFactory.js';
 import GameConsole from './gameConsole.js';
-import Options from './options.js';
+import Options, { GameSubdirMode } from './options.js';
 
 /**
  * A {@link ParsedPath} that carries {@link ArchiveEntry} path information.
@@ -362,10 +362,12 @@ export default class OutputFactory {
       output = path.join(dir, output);
     }
 
-    if (game
-      && game.getRoms().length > 1
-      && !FileFactory.isArchive(ext)
-    ) {
+    if (game && (
+      (options.getDirGameSubdir() === GameSubdirMode.MULTIPLE
+        && game.getRoms().length > 1
+        && !FileFactory.isArchive(ext))
+      || options.getDirGameSubdir() === GameSubdirMode.ALWAYS
+    )) {
       output = path.join(game.getName(), output);
     }
 
