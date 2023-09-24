@@ -7,7 +7,7 @@ import Header from '../src/types/dats/logiqx/header.js';
 import LogiqxDAT from '../src/types/dats/logiqx/logiqxDat.js';
 import Release from '../src/types/dats/release.js';
 import ROM from '../src/types/dats/rom.js';
-import Options from '../src/types/options.js';
+import Options, { GameSubdirMode } from '../src/types/options.js';
 import OutputFactory from '../src/types/outputFactory.js';
 
 const dummyDat = new LogiqxDAT(new Header(), []);
@@ -487,7 +487,12 @@ describe('should respect "--dir-letter"', () => {
     });
 
     it('should respect the game name', async () => {
-      const options = new Options({ commands: ['copy'], output: os.devNull, dirLetter: true });
+      const options = new Options({
+        commands: ['copy'],
+        output: os.devNull,
+        dirLetter: true,
+        dirGameSubdir: GameSubdirMode[GameSubdirMode.MULTIPLE].toLowerCase(),
+      });
 
       const outputPaths = await Promise.all(game.getRoms().map(async (rom) => OutputFactory.getPath(
         options,
@@ -505,7 +510,40 @@ describe('should respect "--dir-letter"', () => {
   });
 });
 
-describe('should respect game name', () => {
+describe('should respect "--dir-game-subdir"', () => {
+  test.each([
+    new Game({
+      name: 'game',
+    }),
+    new Game({
+      name: 'game',
+      rom: new ROM({ name: 'one.rom', size: 0, crc: '' }),
+    }),
+    new Game({
+      name: 'game',
+      rom: [
+        new ROM({ name: 'one.rom', size: 0, crc: '' }),
+        new ROM({ name: 'two.rom', size: 0, crc: '' }),
+      ],
+    }),
+  ])('"never": %s', async (game) => {
+    const options = new Options({
+      commands: ['copy'],
+      output: os.devNull,
+      dirGameSubdir: GameSubdirMode[GameSubdirMode.NEVER].toLowerCase(),
+    });
+
+    const outputPath = OutputFactory.getPath(
+      options,
+      dummyDat,
+      game,
+      dummyRelease,
+      dummyRom,
+      await dummyRom.toFile(),
+    );
+    expect(outputPath.format()).toEqual(path.join(os.devNull, 'Dummy.rom'));
+  });
+
   test.each([
     [
       new Game({
@@ -530,8 +568,12 @@ describe('should respect game name', () => {
       }),
       path.join(os.devNull, 'game', 'Dummy.rom'),
     ],
-  ])('%s', async (game, expectedPath) => {
-    const options = new Options({ commands: ['copy'], output: os.devNull });
+  ])('"multiple": %s', async (game, expectedPath) => {
+    const options = new Options({
+      commands: ['copy'],
+      output: os.devNull,
+      dirGameSubdir: GameSubdirMode[GameSubdirMode.MULTIPLE].toLowerCase(),
+    });
 
     const outputPath = OutputFactory.getPath(
       options,
@@ -542,5 +584,38 @@ describe('should respect game name', () => {
       await dummyRom.toFile(),
     );
     expect(outputPath.format()).toEqual(expectedPath);
+  });
+
+  test.each([
+    new Game({
+      name: 'game',
+    }),
+    new Game({
+      name: 'game',
+      rom: new ROM({ name: 'one.rom', size: 0, crc: '' }),
+    }),
+    new Game({
+      name: 'game',
+      rom: [
+        new ROM({ name: 'one.rom', size: 0, crc: '' }),
+        new ROM({ name: 'two.rom', size: 0, crc: '' }),
+      ],
+    }),
+  ])('"always": %s', async (game) => {
+    const options = new Options({
+      commands: ['copy'],
+      output: os.devNull,
+      dirGameSubdir: GameSubdirMode[GameSubdirMode.ALWAYS].toLowerCase(),
+    });
+
+    const outputPath = OutputFactory.getPath(
+      options,
+      dummyDat,
+      game,
+      dummyRelease,
+      dummyRom,
+      await dummyRom.toFile(),
+    );
+    expect(outputPath.format()).toEqual(path.join(os.devNull, 'game', 'Dummy.rom'));
   });
 });
