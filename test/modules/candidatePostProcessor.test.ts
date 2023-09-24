@@ -6,7 +6,7 @@ import Header from '../../src/types/dats/logiqx/header.js';
 import LogiqxDAT from '../../src/types/dats/logiqx/logiqxDat.js';
 import Parent from '../../src/types/dats/parent.js';
 import ROM from '../../src/types/dats/rom.js';
-import Options from '../../src/types/options.js';
+import Options, { GameSubdirMode } from '../../src/types/options.js';
 import ReleaseCandidate from '../../src/types/releaseCandidate.js';
 import ROMWithFiles from '../../src/types/romWithFiles.js';
 import ProgressBarFake from '../console/progressBarFake.js';
@@ -70,6 +70,7 @@ it('should do nothing with no options', async () => {
   const options = new Options({
     commands: ['copy'],
     output: 'Output',
+    dirGameSubdir: GameSubdirMode[GameSubdirMode.MULTIPLE].toLowerCase(),
   });
 
   const parentsToCandidates = await runCandidatePostProcessor(options);
@@ -169,6 +170,7 @@ describe('dirLetterLimit', () => {
       output: 'Output',
       dirLetter: true,
       dirLetterLimit: limit,
+      dirGameSubdir: GameSubdirMode[GameSubdirMode.MULTIPLE].toLowerCase(),
     });
 
     const parentsToCandidates = await runCandidatePostProcessor(options);
