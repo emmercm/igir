@@ -5,7 +5,7 @@ import Constants from '../constants.js';
 import ConsolePoly from '../polyfill/consolePoly.js';
 import ROMHeader from '../types/files/romHeader.js';
 import Internationalization from '../types/internationalization.js';
-import Options, { MergeMode } from '../types/options.js';
+import Options, { GameSubdirMode, MergeMode } from '../types/options.js';
 import PatchFactory from '../types/patches/patchFactory.js';
 
 /**
@@ -55,7 +55,7 @@ export default class ArgumentsParser {
 
     const groupInput = 'Input options (supports globbing):';
     const groupDatInput = 'DAT input options:';
-    const groupRomOutput = 'ROM output options:';
+    const groupRomOutput = 'ROM output options (processed in order):';
     const groupRomZip = 'ROM zip command options:';
     const groupRomSymlink = 'ROM symlink command options:';
     const groupRomHeader = 'ROM header options:';
@@ -290,6 +290,16 @@ export default class ArgumentsParser {
         requiresArg: true,
         implies: 'dir-letter',
       })
+      .option('dir-game-subdir', {
+        group: groupRomOutput,
+        description: 'Append the name of the game as an output directory depending on its ROMs',
+        choices: Object.keys(GameSubdirMode)
+          .filter((mode) => Number.isNaN(Number(mode)))
+          .map((mode) => mode.toLowerCase()),
+        coerce: ArgumentsParser.getLastValue, // don't allow string[] values
+        requiresArg: true,
+        default: GameSubdirMode[GameSubdirMode.MULTIPLE].toLowerCase(),
+      })
       .option('overwrite', {
         group: groupRomOutput,
         alias: 'O',
@@ -385,7 +395,6 @@ export default class ArgumentsParser {
       .option('merge-roms', {
         group: groupRomMergeSplit,
         description: 'ROM merge/split mode',
-        // type: 'string',
         choices: Object.keys(MergeMode)
           .filter((mode) => Number.isNaN(Number(mode)))
           .map((mode) => mode.toLowerCase()),

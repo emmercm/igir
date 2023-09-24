@@ -33,6 +33,15 @@ export enum MergeMode {
   MERGED,
 }
 
+export enum GameSubdirMode {
+  // Never add the Game name as a subdirectory
+  NEVER = 1,
+  // Add the Game name as a subdirectory if it has multiple output files
+  MULTIPLE,
+  // Always add the Game name as a subdirectory
+  ALWAYS,
+}
+
 export interface OptionsProps {
   readonly commands?: string[],
 
@@ -58,6 +67,7 @@ export interface OptionsProps {
   readonly dirDatDescription?: boolean,
   readonly dirLetter?: boolean,
   readonly dirLetterLimit?: number,
+  readonly dirGameSubdir?: string,
   readonly overwrite?: boolean,
   readonly overwriteInvalid?: boolean,
   readonly cleanExclude?: string[],
@@ -170,6 +180,8 @@ export default class Options implements OptionsProps {
   readonly dirLetter: boolean;
 
   readonly dirLetterLimit: number;
+
+  readonly dirGameSubdir?: string;
 
   readonly overwrite: boolean;
 
@@ -316,6 +328,7 @@ export default class Options implements OptionsProps {
     this.dirDatDescription = options?.dirDatDescription ?? false;
     this.dirLetter = options?.dirLetter ?? false;
     this.dirLetterLimit = options?.dirLetterLimit ?? 0;
+    this.dirGameSubdir = options?.dirGameSubdir;
     this.overwrite = options?.overwrite ?? false;
     this.overwriteInvalid = options?.overwriteInvalid ?? false;
     this.cleanExclude = options?.cleanExclude ?? [];
@@ -727,6 +740,15 @@ export default class Options implements OptionsProps {
 
   getDirLetterLimit(): number {
     return this.dirLetterLimit;
+  }
+
+  getDirGameSubdir(): GameSubdirMode | undefined {
+    const subdirMode = Object.keys(GameSubdirMode)
+      .find((mode) => mode.toLowerCase() === this.dirGameSubdir?.toLowerCase());
+    if (!subdirMode) {
+      return undefined;
+    }
+    return GameSubdirMode[subdirMode as keyof typeof GameSubdirMode];
   }
 
   getOverwrite(): boolean {
