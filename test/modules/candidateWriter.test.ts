@@ -894,7 +894,10 @@ describe('extract', () => {
   ])('should move, extract, and test: %s', async (inputGlob, expectedOutputPaths, expectedDeletedInputPaths) => {
     await copyFixturesToTemp(async (inputTemp, outputTemp) => {
       // Given
-      const options = new Options({ commands: ['move', 'extract', 'test'] });
+      const options = new Options({
+        commands: ['move', 'extract', 'test'],
+        dirGameSubdir: GameSubdirMode[GameSubdirMode.MULTIPLE].toLowerCase(),
+      });
       const romFilesBefore = await walkAndStat(path.join(inputTemp, 'roms'));
       await expect(walkAndStat(outputTemp)).resolves.toHaveLength(0);
 

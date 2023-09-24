@@ -7,7 +7,7 @@ import Igir from '../src/igir.js';
 import ArrayPoly from '../src/polyfill/arrayPoly.js';
 import fsPoly from '../src/polyfill/fsPoly.js';
 import FileFactory from '../src/types/files/fileFactory.js';
-import Options, { OptionsProps } from '../src/types/options.js';
+import Options, {GameSubdirMode, OptionsProps} from '../src/types/options.js';
 
 interface TestOutput {
   outputFilesAndCrcs: string[][],
@@ -155,6 +155,7 @@ describe('with explicit DATs', () => {
         input: [path.join(inputTemp, 'roms')],
         output: outputTemp,
         dirDatName: true,
+        dirGameSubdir: GameSubdirMode[GameSubdirMode.MULTIPLE].toLowerCase(),
       });
 
       expect(result.outputFilesAndCrcs).toEqual([
@@ -202,6 +203,7 @@ describe('with explicit DATs', () => {
         dat: [path.join(inputTemp, 'dats', 'one.dat')],
         input: [path.join(inputTemp, 'roms')],
         output: outputTemp,
+        dirGameSubdir: GameSubdirMode[GameSubdirMode.MULTIPLE].toLowerCase(),
         single: true,
         preferParent: true,
       });
@@ -244,6 +246,7 @@ describe('with explicit DATs', () => {
         input: [path.join(inputTemp, 'roms')],
         output: path.join(outputTemp, '{outputExt}'),
         dirDatName: true,
+        dirGameSubdir: GameSubdirMode[GameSubdirMode.MULTIPLE].toLowerCase(),
       });
 
       expect(result.outputFilesAndCrcs).toEqual([
@@ -297,6 +300,7 @@ describe('with explicit DATs', () => {
         input: [path.join(inputTemp, 'roms')],
         output: outputTemp,
         dirDatName: true,
+        dirGameSubdir: GameSubdirMode[GameSubdirMode.MULTIPLE].toLowerCase(),
       });
 
       expect(result.outputFilesAndCrcs).toEqual([
@@ -450,6 +454,7 @@ describe('with explicit DATs', () => {
         input: [path.join(inputTemp, 'roms')],
         output: outputTemp,
         dirDatName: true,
+        dirGameSubdir: GameSubdirMode[GameSubdirMode.MULTIPLE].toLowerCase(),
       });
 
       expect(result.outputFilesAndCrcs).toEqual([
@@ -499,6 +504,7 @@ describe('with explicit DATs', () => {
         patch: [path.join(inputTemp, 'patches')],
         output: outputTemp,
         dirDatName: true,
+        dirGameSubdir: GameSubdirMode[GameSubdirMode.MULTIPLE].toLowerCase(),
         removeHeaders: [''], // all
       });
 
@@ -706,6 +712,7 @@ describe('with inferred DATs', () => {
         commands: ['move', 'extract', 'test'],
         input: [path.join(inputTemp, 'roms')],
         output: outputTemp,
+        dirGameSubdir: GameSubdirMode[GameSubdirMode.MULTIPLE].toLowerCase(),
       });
 
       expect(result.outputFilesAndCrcs).toEqual([
