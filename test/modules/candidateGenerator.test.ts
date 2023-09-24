@@ -16,7 +16,7 @@ import Tar from '../../src/types/files/archives/tar.js';
 import Zip from '../../src/types/files/archives/zip.js';
 import File from '../../src/types/files/file.js';
 import ROMHeader from '../../src/types/files/romHeader.js';
-import Options from '../../src/types/options.js';
+import Options, { GameSubdirMode } from '../../src/types/options.js';
 import ReleaseCandidate from '../../src/types/releaseCandidate.js';
 import ProgressBarFake from '../console/progressBarFake.js';
 
@@ -257,6 +257,7 @@ describe('with ROMs with headers', () => {
     const options = new Options({
       commands: ['copy', 'extract'],
       removeHeaders: [''], // all
+      dirGameSubdir: GameSubdirMode[GameSubdirMode.MULTIPLE].toLowerCase(),
     });
 
     // When
