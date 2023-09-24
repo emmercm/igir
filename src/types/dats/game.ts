@@ -369,11 +369,7 @@ export default class Game implements GameProps {
    * Is this game an explicitly verified dump?
    */
   isVerified(): boolean {
-    if (this.name.match(/\[!\]/) !== null) {
-      return true;
-    }
-    // Assume verification if there are releases
-    return this.getReleases().length > 0;
+    return this.name.match(/\[!\]/) !== null;
   }
 
   /**

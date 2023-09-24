@@ -109,7 +109,14 @@ describe('token replacement', () => {
     ['Game', 'Retail'],
   ])('should replace {gameType}: %s', async (gameName, expectedPath) => {
     const options = new Options({ commands: ['copy'], output: '{gameType}' });
-    const game = new Game({ name: gameName });
+    const game = new Game({
+      name: gameName,
+      release: [
+        new Release(gameName, 'USA'),
+        new Release(gameName, 'EUR'),
+        new Release(gameName, 'JPN'),
+      ],
+    });
 
     const outputPath = OutputFactory.getPath(
       options,
