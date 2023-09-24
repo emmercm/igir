@@ -67,11 +67,11 @@ export default class DATMergerSplitter extends Module {
     // Get rid of duplicate ROMs. MAME will sometimes duplicate a file with the exact same name,
     // size, and checksum but with a different "region" (e.g. neogeo).
     games = games.map((game) => {
-      const romHashCodes = game.getRoms().map((rom) => rom.hashCode());
+      const romNames = game.getRoms().map((rom) => rom.getName());
       return new Machine({
         ...game,
         rom: game.getRoms()
-          .filter((rom, idx) => romHashCodes.indexOf(rom.hashCode()) === idx),
+          .filter((rom, idx) => romNames.indexOf(rom.getName()) === idx),
       });
     });
 
