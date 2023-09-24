@@ -7,7 +7,7 @@ import Igir from '../src/igir.js';
 import ArrayPoly from '../src/polyfill/arrayPoly.js';
 import fsPoly from '../src/polyfill/fsPoly.js';
 import FileFactory from '../src/types/files/fileFactory.js';
-import Options, {GameSubdirMode, OptionsProps} from '../src/types/options.js';
+import Options, { GameSubdirMode, OptionsProps } from '../src/types/options.js';
 
 interface TestOutput {
   outputFilesAndCrcs: string[][],
