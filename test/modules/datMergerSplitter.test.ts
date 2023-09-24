@@ -514,6 +514,77 @@ const dat = new LogiqxDAT(new Header(), [
     rom: new ROM({ name: '54xx.bin', size: 1024, crc: 'ee7357e0', sha1: '01bdf984a49e8d0cc8761b2cc162fd6434d5afbe' }),
     deviceRef: new DeviceRef('mb8844'),
   }),
+  new Machine({
+    name: 'neogeo',
+    bios: 'yes',
+    description: 'Neo-Geo MV-6',
+    rom: [
+      new ROM({ name: 'sp-s2.sp1', bios: 'euro', size: 131072, crc: '9036d879', sha1: '4f5ed7105b7128794654ce82b51723e16e389543' }),
+      new ROM({ name: 'sp-s.sp1', bios: 'euro-s1', size: 131072, crc: 'c7f2fa45', sha1: '09576ff20b4d6b365e78e6a5698ea450262697cd' }),
+      new ROM({ name: 'sp-45.sp1', bios: 'asia-mv1c', size: 524288, crc: '03cc9f6a', sha1: 'cdf1f49e3ff2bac528c21ed28449cf35b7957dc1' }),
+      new ROM({ name: 'sp-s3.sp1', bios: 'asia-mv1b', size: 131072, crc: '91b64be3', sha1: '720a3e20d26818632aedf2c2fd16c54f213543e1' }),
+      new ROM({ name: 'sp-u2.sp1', bios: 'us', size: 131072, crc: 'e72943de', sha1: '5c6bba07d2ec8ac95776aa3511109f5e1e2e92eb' }),
+      new ROM({ name: 'sp-e.sp1', bios: 'us-e', size: 131072, crc: '2723a5b5', sha1: '5dbff7531cf04886cde3ef022fb5ca687573dcb8' }),
+      new ROM({ name: 'sp1-u2', bios: 'us-v2', size: 131072, crc: '62f021f4', sha1: '62d372269e1b3161c64ae21123655a0a22ffd1bb' }),
+      new ROM({ name: 'sp1-u4.bin', bios: 'us-u4', size: 131072, crc: '1179a30f', sha1: '866817f47aa84d903d0b819d61f6ef356893d16a' }),
+      new ROM({ name: 'sp1-u3.bin', bios: 'us-u3', size: 131072, crc: '2025b7a2', sha1: '73d774746196f377111cd7aa051cc8bb5dd948b3' }),
+      new ROM({ name: 'vs-bios.rom', bios: 'japan', size: 131072, crc: 'f0e8f27d', sha1: 'ecf01eda815909f1facec62abf3594eaa8d11075' }),
+      new ROM({ name: 'sp-j2.sp1', bios: 'japan-s2', size: 131072, crc: 'acede59c', sha1: 'b6f97acd282fd7e94d9426078a90f059b5e9dd91' }),
+      new ROM({ name: 'sp1.jipan.1024', bios: 'japan-s1', size: 131072, crc: '9fb0abe4', sha1: '18a987ce2229df79a8cf6a84f968f0e42ce4e59d' }),
+      new ROM({ name: 'japan-j3.bin', bios: 'japan-mv1b', size: 131072, crc: 'dff6d41f', sha1: 'e92910e20092577a4523a6b39d578a71d4de7085' }),
+      new ROM({ name: 'sp1-j3.bin', bios: 'japan-j3a', size: 131072, crc: 'fbc6d469', sha1: '46b2b409b5b68869e367b40c846373623edb632a' }),
+      new ROM({ name: 'sp-j3.sp1', bios: 'japan-mv1c', size: 524288, crc: '486cb450', sha1: '52c21ea817928904b80745a8c8d15cbad61e1dc1' }),
+      new ROM({ name: 'sp-1v1_3db8c.bin', bios: 'japan-hotel', size: 131072, crc: '162f0ebe', sha1: 'fe1c6dd3dfcf97d960065b1bb46c1e11cb7bf271' }),
+      new ROM({ name: 'uni-bios_4_0.rom', bios: 'unibios40', size: 131072, crc: 'a7aab458', sha1: '938a0bda7d9a357240718c2cec319878d36b8f72' }),
+      new ROM({ name: 'uni-bios_3_3.rom', bios: 'unibios33', size: 131072, crc: '24858466', sha1: '0ad92efb0c2338426635e0159d1f60b4473d0785' }),
+      new ROM({ name: 'uni-bios_3_2.rom', bios: 'unibios32', size: 131072, crc: 'a4e8b9b3', sha1: 'c92f18c3f1edda543d264ecd0ea915240e7c8258' }),
+      new ROM({ name: 'uni-bios_3_1.rom', bios: 'unibios31', size: 131072, crc: '0c58093f', sha1: '29329a3448c2505e1ff45ffa75e61e9693165153' }),
+      new ROM({ name: 'uni-bios_3_0.rom', bios: 'unibios30', size: 131072, crc: 'a97c89a9', sha1: '97a5eff3b119062f10e31ad6f04fe4b90d366e7f' }),
+      new ROM({ name: 'uni-bios_2_3.rom', bios: 'unibios23', size: 131072, crc: '27664eb5', sha1: '5b02900a3ccf3df168bdcfc98458136fd2b92ac0' }),
+      new ROM({ name: 'uni-bios_2_3o.rom', bios: 'unibios23o', size: 131072, crc: '601720ae', sha1: '1b8a72c720cdb5ee3f1d735bbcf447b09204b8d9' }),
+      new ROM({ name: 'uni-bios_2_2.rom', bios: 'unibios22', size: 131072, crc: '2d50996a', sha1: '5241a4fb0c63b1a23fd1da8efa9c9a9bd3b4279c' }),
+      new ROM({ name: 'uni-bios_2_1.rom', bios: 'unibios21', size: 131072, crc: '8dabf76b', sha1: 'c23732c4491d966cf0373c65c83c7a4e88f0082c' }),
+      new ROM({ name: 'uni-bios_2_0.rom', bios: 'unibios20', size: 131072, crc: '0c12c2ad', sha1: '37bcd4d30f3892078b46841d895a6eff16dc921e' }),
+      new ROM({ name: 'uni-bios_1_3.rom', bios: 'unibios13', size: 131072, crc: 'b24b44a0', sha1: 'eca8851d30557b97c309a0d9f4a9d20e5b14af4e' }),
+      new ROM({ name: 'uni-bios_1_2.rom', bios: 'unibios12', size: 131072, crc: '4fa698e9', sha1: '682e13ec1c42beaa2d04473967840c88fd52c75a' }),
+      new ROM({ name: 'uni-bios_1_2o.rom', bios: 'unibios12o', size: 131072, crc: 'e19d3ce9', sha1: 'af88ef837f44a3af2d7144bb46a37c8512b67770' }),
+      new ROM({ name: 'uni-bios_1_1.rom', bios: 'unibios11', size: 131072, crc: '5dda0d84', sha1: '4153d533c02926a2577e49c32657214781ff29b7' }),
+      new ROM({ name: 'uni-bios_1_0.rom', bios: 'unibios10', size: 131072, crc: '0ce453a0', sha1: '3b4c0cd26c176fc6b26c3a2f95143dd478f6abf9' }),
+      new ROM({ name: 'sm1.sm1', size: 131072, crc: '94416d67', sha1: '42f9d7ddd6c0931fd64226a60dc73602b2819dcf' }),
+      new ROM({ name: 'sm1.sm1', size: 131072, crc: '94416d67', sha1: '42f9d7ddd6c0931fd64226a60dc73602b2819dcf' }),
+      new ROM({ name: '000-lo.lo', size: 131072, crc: '5a86cff2', sha1: '5992277debadeb64d1c1c64b0a92d9293eaf7e4a' }),
+      new ROM({ name: 'sfix.sfix', size: 131072, crc: 'c2ea0cfd', sha1: 'fd4a618cdcdbf849374f0a50dd8efe9dbab706c3' }),
+    ],
+    deviceRef: [
+      new DeviceRef('m68000'),
+      new DeviceRef('z80'),
+      new DeviceRef('hc259'),
+      new DeviceRef('screen'),
+      new DeviceRef('palette'),
+      new DeviceRef('neosprite_opt'),
+      new DeviceRef('ipt_merge_all_hi'),
+      new DeviceRef('generic_latch_8'),
+      new DeviceRef('generic_latch_8'),
+      new DeviceRef('ym2610'),
+      new DeviceRef('watchdog'),
+      new DeviceRef('upd4990a'),
+      new DeviceRef('nvram'),
+      new DeviceRef('speaker'),
+      new DeviceRef('speaker'),
+      new DeviceRef('ng_memcard'),
+      new DeviceRef('neogeo_ctrl_edge'),
+      new DeviceRef('neogeo_joyac'),
+      new DeviceRef('neogeo_control_port'),
+      new DeviceRef('neogeo_control_port'),
+      new DeviceRef('neogeo_cart_slot'),
+      new DeviceRef('neogeo_cart_slot'),
+      new DeviceRef('neogeo_cart_slot'),
+      new DeviceRef('neogeo_cart_slot'),
+      new DeviceRef('neogeo_cart_slot'),
+      new DeviceRef('neogeo_cart_slot'),
+      new DeviceRef('software_list'),
+    ],
+  }),
   new Machine({ name: 'ns16550', device: 'yes' }),
   new Machine({ name: 'palette', device: 'yes' }),
   new Machine({ name: 'pwm_display', device: 'yes' }),
@@ -554,9 +625,10 @@ it('should full-non-merged', async () => {
   expect(gameNamesToRomCount.get('galagamk')).toEqual(16);
 
   // No change to BIOS or devices
-  expect(result.getGames().filter((game) => game.isBios())).toHaveLength(1);
+  expect(result.getGames().filter((game) => game.isBios())).toHaveLength(2);
   expect(result.getGames().filter((game) => game.isDevice())).toHaveLength(21);
   expect(gameNamesToRomCount.get('aristmk6')).toEqual(96);
+  expect(gameNamesToRomCount.get('neogeo')).toEqual(34);
 });
 
 it('should non-merged', async () => {
@@ -587,9 +659,10 @@ it('should non-merged', async () => {
   expect(gameNamesToRomCount.get('galagamk')).toEqual(14);
 
   // No change to BIOS or devices
-  expect(result.getGames().filter((game) => game.isBios())).toHaveLength(1);
+  expect(result.getGames().filter((game) => game.isBios())).toHaveLength(2);
   expect(result.getGames().filter((game) => game.isDevice())).toHaveLength(21);
   expect(gameNamesToRomCount.get('aristmk6')).toEqual(96);
+  expect(gameNamesToRomCount.get('neogeo')).toEqual(34);
 });
 
 it('should split', async () => {
@@ -621,9 +694,10 @@ it('should split', async () => {
   expect(gameNamesToRomCount.get('galagamk')).toEqual(5);
 
   // No change to BIOS or devices
-  expect(result.getGames().filter((game) => game.isBios())).toHaveLength(1);
+  expect(result.getGames().filter((game) => game.isBios())).toHaveLength(2);
   expect(result.getGames().filter((game) => game.isDevice())).toHaveLength(21);
   expect(gameNamesToRomCount.get('aristmk6')).toEqual(96);
+  expect(gameNamesToRomCount.get('neogeo')).toEqual(34);
 });
 
 it('should merged', async () => {
@@ -652,7 +726,8 @@ it('should merged', async () => {
   expect(gameNamesToRomCount.get('galaga')).toEqual(24);
 
   // No change to BIOS or devices
-  expect(result.getGames().filter((game) => game.isBios())).toHaveLength(1);
+  expect(result.getGames().filter((game) => game.isBios())).toHaveLength(2);
   expect(result.getGames().filter((game) => game.isDevice())).toHaveLength(21);
   expect(gameNamesToRomCount.get('aristmk6')).toEqual(96);
+  expect(gameNamesToRomCount.get('neogeo')).toEqual(34);
 });
