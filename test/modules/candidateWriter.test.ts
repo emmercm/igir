@@ -21,7 +21,7 @@ import Archive from '../../src/types/files/archives/archive.js';
 import ArchiveEntry from '../../src/types/files/archives/archiveEntry.js';
 import File from '../../src/types/files/file.js';
 import FileFactory from '../../src/types/files/fileFactory.js';
-import Options, { OptionsProps } from '../../src/types/options.js';
+import Options, { GameSubdirMode, OptionsProps } from '../../src/types/options.js';
 import ProgressBarFake from '../console/progressBarFake.js';
 
 async function copyFixturesToTemp(
@@ -841,7 +841,10 @@ describe('extract', () => {
   ])('should copy, extract, and test: %s', async (inputGlob, expectedOutputPaths) => {
     await copyFixturesToTemp(async (inputTemp, outputTemp) => {
       // Given
-      const options = new Options({ commands: ['copy', 'extract', 'test'] });
+      const options = new Options({
+        commands: ['copy', 'extract', 'test'],
+        dirGameSubdir: GameSubdirMode[GameSubdirMode.MULTIPLE].toLowerCase(),
+      });
       const inputFilesBefore = await walkAndStat(inputTemp);
       await expect(walkAndStat(outputTemp)).resolves.toHaveLength(0);
 
