@@ -30,7 +30,7 @@ export default class GameConsole {
     // Arduboy
     new GameConsole(/Arduboy/i, ['.arduboy', '.hex'], 'arduboy', 'Arduboy', undefined, 'arduboy', 'arduboy'),
     // Atari
-    new GameConsole(/800|8-bit Family/, ['.atr', '.atx'], undefined, 'ATARI800', 'EIGHTHUNDRED', 'atari800, 'atari800'),
+    new GameConsole(/800|8-bit Family/, ['.atr', '.atx'], undefined, 'ATARI800', 'EIGHTHUNDRED', 'atari800', 'atari800'),
     new GameConsole(/2600/, ['.a26', '.act', '.pb', '.tv', '.tvr', '.mn', '.cv', '.eb', '.ef', '.efr', '.ua', '.x07', '.sb'], '2600', 'Atari2600', 'ATARI', 'atari2600', 'atari2600'),
     new GameConsole(/5200/, ['.a52'], undefined, 'Atari5200', 'FIFTYTWOHUNDRED', 'atari5200', 'atari5200'),
     new GameConsole(/7800/, ['.a78'], '7800', 'Atari7800', 'SEVENTYEIGHTHUNDRED', 'atari7800', 'atari7800'),
