@@ -78,14 +78,14 @@ export default class GameConsole {
     new GameConsole(/MSX2/i, [], undefined, 'MSX', 'MSX', 'msx2', 'msx2'),
     new GameConsole(/MSX2+/i, [], undefined, 'MSX', 'MSX', 'msx2+', undefined),
     new GameConsole(/MSX TurboR/i, [], undefined, 'MSX', 'MSX', 'msxturbor', undefined),
-    new GameConsole(/Xbox/i, [/* '.iso' */], undefined, undefined, undefined, 'xbox', undefined),
+    new GameConsole(/Xbox/i, [/* '.iso' */], undefined, undefined, undefined, 'xbox', 'xbox'),
     new GameConsole(/Xbox 360/i, [/* '.iso' */], undefined, undefined, undefined, 'xbox360', undefined),
     // Nichibutsu
     new GameConsole(/My Vision/i, [], undefined, 'MyVision', undefined, undefined, undefined),
     // NEC
     new GameConsole(/PC Engine|TurboGrafx/i, ['.pce'], 'pce', 'TGFX16', 'PCE', 'pcengine', 'tg16'),
     new GameConsole(/(PC Engine|TurboGrafx) CD/i, [/* '.bin', '.cue' */], 'pcecd', 'TGFX16', 'PCECD', 'pcenginecd', 'tg16cd'),
-    new GameConsole(/SuperGrafx/i, ['.sgx'], 'pce', 'TGFX16', 'SGFX', 'supergrafx', undefined),
+    new GameConsole(/SuperGrafx/i, ['.sgx'], 'pce', 'TGFX16', 'SGFX', 'supergrafx', 'sgfx'),
     new GameConsole(/PC-88/i, ['.d88'], undefined, 'PC8801', 'PCEIGHTYEIGHT', 'pc88', 'pc88'),
     new GameConsole(/PC-98/i, ['.d98'], undefined, undefined, 'PCNINETYEIGHT', 'pc98', 'pc98'),
     // Nintendo
@@ -97,7 +97,7 @@ export default class GameConsole {
     new GameConsole(/GBC|Game ?Boy Color/i, ['.gbc'], 'gbc', 'Gameboy', 'GBC', 'gbc', 'gbc'),
     new GameConsole(/Nintendo 64|N64/i, ['.n64', '.v64', '.z64'], undefined, undefined, undefined, 'n64', 'n64'),
     new GameConsole(/Nintendo 64DD|N64DD/i, ['.ndd'], undefined, undefined, undefined, 'n64dd', undefined),
-    new GameConsole(/(\W|^)3DS(\W|$)|Nintendo 3DS/i, ['.3ds'], undefined, undefined, undefined, '3ds', undefined),
+    new GameConsole(/(\W|^)3DS(\W|$)|Nintendo 3DS/i, ['.3ds'], undefined, undefined, undefined, '3ds', '3ds'),
     new GameConsole(/(\W|^)NDS(\W|$)|Nintendo DS/i, ['.nds'], undefined, undefined, undefined, 'nds', 'nds'),
     new GameConsole(/(\W|^)NES(\W|$)|Nintendo Entertainment System/i, ['.nes', '.nez'], 'nes', 'NES', 'FC', 'nes', 'nes'),
     new GameConsole(/Pokemon Mini/i, ['.min'], 'poke_mini', 'PokemonMini', 'POKE', 'pokemini', 'pokemini'),
@@ -106,7 +106,7 @@ export default class GameConsole {
     new GameConsole(/(\W|^)SNES(\W|$)|Super Nintendo Entertainment System/i, ['.sfc', '.smc'], 'snes', 'SNES', 'SFC', 'snes', 'snes'),
     new GameConsole(/Virtual Boy/i, ['.vb', '.vboy'], undefined, undefined, 'VB', 'virtualboy', 'virtualboy'),
     new GameConsole(/Wii/i, [/* '.iso' */], undefined, undefined, undefined, 'wii', 'wii'),
-    new GameConsole(/Wii ?U/i, [/* '.iso' */], undefined, undefined, undefined, 'wiiu', undefined),
+    new GameConsole(/Wii ?U/i, [/* '.iso' */], undefined, undefined, undefined, 'wiiu', 'wiiu'),
     // Panasonic
     new GameConsole(/3DO/i, [/* '.bin', '.cue' */], undefined, undefined, 'PANASONIC', '3do', '3do'),
     // Philips
@@ -137,7 +137,7 @@ export default class GameConsole {
     // Sony
     new GameConsole(/PlayStation|psx/i, [/* '.bin', '.cue' */], undefined, 'PSX', 'PS', 'psx', 'psx'),
     new GameConsole(/PlayStation 2|ps2/i, [/* '.bin', '.cue' */], undefined, undefined, undefined, 'ps2', 'ps2'),
-    new GameConsole(/PlayStation 3|ps3/i, [/* '.bin', '.cue' */], undefined, undefined, undefined, 'ps3', undefined),
+    new GameConsole(/PlayStation 3|ps3/i, [/* '.bin', '.cue' */], undefined, undefined, undefined, 'ps3', 'ps3'),
     new GameConsole(/PlayStation [4-9]|ps[4-9]/i, [/* '.bin', '.cue' */], undefined, undefined, undefined, undefined, undefined),
     // Timetop
     new GameConsole(/GameKing/i, [/* '.bin' */], 'game_king', undefined, undefined, undefined, undefined),
