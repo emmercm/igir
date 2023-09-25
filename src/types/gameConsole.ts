@@ -19,6 +19,9 @@ export default class GameConsole {
    * Batocera ROMs go in the roms/{batocera} directory:
    *  @see https://wiki.batocera.org/systems
    *
+   * JELOS ROMs go in the {jelos} directory:
+   *  @see https://github.com/JustEnoughLinuxOS/distribution/blob/main/documentation/PER_DEVICE_DOCUMENTATION/AMD64/SUPPORTED_EMULATORS_AND_CORES.md
+   *
    * Other:
    *  @see https://emulation.gametechwiki.com/index.php/List_of_filetypes
    *  @see https://emulation.fandom.com/wiki/List_of_filetypes
