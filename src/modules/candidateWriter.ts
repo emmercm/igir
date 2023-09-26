@@ -202,7 +202,7 @@ export default class CandidateWriter extends Module {
     zipFilePath: string,
     expectedArchiveEntries: ArchiveEntry<Zip>[],
   ): Promise<string | undefined> {
-    this.progressBar.logTrace(`${dat.getNameShort()}: ${zipFilePath}: testing zip ...`);
+    this.progressBar.logTrace(`${dat.getNameShort()}: ${zipFilePath}: testing zip`);
 
     const expectedEntriesByPath = expectedArchiveEntries
       .reduce((map, entry) => {
