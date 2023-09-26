@@ -68,8 +68,7 @@ export default class DATMergerSplitter extends Module {
     // size, and checksum but with a different "region" (e.g. neogeo).
     games = games.map((game) => {
       const romNames = game.getRoms().map((rom) => rom.getName());
-      return new Machine({
-        ...game,
+      return game.withProps({
         rom: game.getRoms()
           .filter((rom, idx) => romNames.indexOf(rom.getName()) === idx),
       });
@@ -81,8 +80,7 @@ export default class DATMergerSplitter extends Module {
         if (!(game instanceof Machine)) {
           return game;
         }
-        return new Machine({
-          ...game,
+        return game.withProps({
           rom: [
             ...game.getDeviceRefs()
               .map((deviceRef) => gameNamesToGames.get(deviceRef.getName()))
@@ -101,8 +99,7 @@ export default class DATMergerSplitter extends Module {
           if (game.isBios()) {
             return game;
           }
-          return new Machine({
-            ...game,
+          return game.withProps({
             rom: game.getRoms()
               .filter((rom) => !rom.getBios()),
           });
@@ -119,8 +116,7 @@ export default class DATMergerSplitter extends Module {
         || this.options.getMergeRoms() === MergeMode.MERGED)
     ) {
       cloneGames = cloneGames
-        .map((childGame) => new Machine({
-          ...childGame,
+        .map((childGame) => childGame.withProps({
           rom: DATMergerSplitter.diffGameRoms(parentGame, childGame),
         }));
     }
