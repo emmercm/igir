@@ -194,8 +194,7 @@ export default class CandidatePatchGenerator extends Module {
           gameName,
         );
       }
-      const patchedGame = new Game({
-        ...unpatchedReleaseCandidate.getGame(),
+      const patchedGame = unpatchedReleaseCandidate.getGame().withProps({
         name: gameName,
       });
 

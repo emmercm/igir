@@ -587,6 +587,15 @@ export default class Game implements GameProps {
       .filter(ArrayPoly.filterNotNullish);
   }
 
+  // Immutable setters
+
+  /**
+   * Return a new copy of this {@link Game} with some different properties.
+   */
+  withProps(props: GameProps): Game {
+    return new Game({ ...this, ...props });
+  }
+
   // Pseudo Built-Ins
 
   /**

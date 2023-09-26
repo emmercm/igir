@@ -29,4 +29,13 @@ export default class Machine extends Game implements MachineProps {
     }
     return [];
   }
+
+  // Immutable setters
+
+  /**
+   * Return a new copy of this {@link Machine} with some different properties.
+   */
+  withProps(props: MachineProps): Machine {
+    return new Machine({ ...this, ...props });
+  }
 }

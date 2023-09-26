@@ -63,7 +63,7 @@ describe('token replacement', () => {
     ['foo/{datName}/bar', path.join('foo', 'DAT _ Name', 'bar', 'Dummy.rom')],
     ['foo/{datDescription}/bar', path.join('foo', 'DAT _ Description', 'bar', 'Dummy.rom')],
     ['root/{datReleaseRegion}', path.join('root', 'USA', 'Dummy.rom')],
-    ['root/{datReleaseLanguage}', path.join('root', 'En', 'Dummy.rom')],
+    ['root/{datReleaseLanguage}', path.join('root', 'EN', 'Dummy.rom')],
   ])('should replace {dat*}: %s', async (output, expectedPath) => {
     const options = new Options({ commands: ['copy'], output });
     const dat = new LogiqxDAT(new Header({ name: 'DAT / Name', description: 'DAT \\ Description' }), []);
@@ -74,6 +74,58 @@ describe('token replacement', () => {
       dat,
       dummyGame,
       release,
+      dummyRom,
+      await dummyRom.toFile(),
+    );
+    expect(outputPath.format()).toEqual(expectedPath);
+  });
+
+  test.each([
+    ['root/{gameRegion}', 'Game (E)', [], path.join('root', 'EUR', 'Dummy.rom')],
+    ['root/{gameRegion}', 'Game (Europe)', [], path.join('root', 'EUR', 'Dummy.rom')],
+    ['root/{gameRegion}', 'Game', ['EUR'], path.join('root', 'EUR', 'Dummy.rom')],
+    ['root/{gameRegion}', 'Game', ['EUR', 'JPN'], path.join('root', 'EUR', 'Dummy.rom')],
+    ['root/{gameRegion}', 'Game', ['JPN'], path.join('root', 'JPN', 'Dummy.rom')],
+    ['root/{gameRegion}', 'Game', ['JPN', 'EUR'], path.join('root', 'JPN', 'Dummy.rom')],
+  ])('should replace {gameRegion}: %s', async (output, gameName, regions, expectedPath) => {
+    const options = new Options({ commands: ['copy'], output });
+    const dat = new LogiqxDAT(new Header(), []);
+    const game = new Game({
+      name: gameName,
+      release: regions.map((region) => new Release(gameName, region)),
+    });
+
+    const outputPath = OutputFactory.getPath(
+      options,
+      dat,
+      game,
+      game.getReleases().find(() => true),
+      dummyRom,
+      await dummyRom.toFile(),
+    );
+    expect(outputPath.format()).toEqual(expectedPath);
+  });
+
+  test.each([
+    ['root/{gameLanguage}', 'Game (E)', [], path.join('root', 'EN', 'Dummy.rom')],
+    ['root/{gameLanguage}', 'Game (Europe)', [], path.join('root', 'EN', 'Dummy.rom')],
+    ['root/{gameLanguage}', 'Game', ['EUR'], path.join('root', 'EN', 'Dummy.rom')],
+    ['root/{gameLanguage}', 'Game', ['EUR', 'JPN'], path.join('root', 'EN', 'Dummy.rom')],
+    ['root/{gameLanguage}', 'Game', ['JPN'], path.join('root', 'JA', 'Dummy.rom')],
+    ['root/{gameLanguage}', 'Game', ['JPN', 'EUR'], path.join('root', 'JA', 'Dummy.rom')],
+  ])('should replace {gameLanguage}: %s', async (output, gameName, regions, expectedPath) => {
+    const options = new Options({ commands: ['copy'], output });
+    const dat = new LogiqxDAT(new Header(), []);
+    const game = new Game({
+      name: gameName,
+      release: regions.map((region) => new Release(gameName, region)),
+    });
+
+    const outputPath = OutputFactory.getPath(
+      options,
+      dat,
+      game,
+      game.getReleases().find(() => true),
       dummyRom,
       await dummyRom.toFile(),
     );

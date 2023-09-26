@@ -196,7 +196,7 @@ export default class DATParentInferrer extends Module {
           // This game is the parent
           return game;
         }
-        return new Game({ ...game, cloneOf: retailParent.getName() });
+        return game.withProps({ cloneOf: retailParent.getName() });
       }
 
       // Assume this game's non-retail parent.
@@ -208,7 +208,7 @@ export default class DATParentInferrer extends Module {
         // This game is the parent
         return game;
       }
-      return new Game({ ...game, cloneOf: games[0].getName() });
+      return game.withProps({ cloneOf: games[0].getName() });
     });
   }
 }
