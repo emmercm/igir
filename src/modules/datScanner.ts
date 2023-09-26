@@ -162,8 +162,7 @@ export default class DATScanner extends Scanner {
     //  which only has one game for every BIOS file, even though there are 90+ consoles.
     if (dat.getGames().length === 1 && dat.getGames()[0].getRoms().length > 10) {
       const game = dat.getGames()[0];
-      dat = new LogiqxDAT(dat.getHeader(), dat.getGames()[0].getRoms().map((rom) => new Game({
-        ...game,
+      dat = new LogiqxDAT(dat.getHeader(), dat.getGames()[0].getRoms().map((rom) => game.withProps({
         name: rom.getName(),
         rom: [rom],
       })));
