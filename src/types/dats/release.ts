@@ -45,7 +45,7 @@ export default class Release {
   }
 
   getLanguage(): string | undefined {
-    return this.getLanguageUnformatted()?.replace(/\w\S*/g, (word) => word.charAt(0).toUpperCase() + word.substring(1).toLowerCase());
+    return this.getLanguageUnformatted()?.toUpperCase();
   }
 
   private getLanguageUnformatted(): string | undefined {
