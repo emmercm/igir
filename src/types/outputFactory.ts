@@ -160,9 +160,10 @@ export default class OutputFactory {
     outputRomFilename?: string,
   ): string {
     let result = outputPath;
-    result = this.replaceDatTokens(result, dat);
-    result = this.replaceGameTokens(result, game);
+    // NOTE(cemmer): order here is important! They should go most specific to least
     result = this.replaceReleaseTokens(result, release);
+    result = this.replaceGameTokens(result, game);
+    result = this.replaceDatTokens(result, dat);
     result = this.replaceInputTokens(result, inputRomPath);
     result = this.replaceOutputTokens(result, outputRomFilename);
     result = this.replaceOutputGameConsoleTokens(result, dat, outputRomFilename);
@@ -175,13 +176,19 @@ export default class OutputFactory {
     return result;
   }
 
-  private static replaceDatTokens(input: string, dat: DAT): string {
-    let output = input;
-    output = output.replace('{datName}', dat.getName().replace(/[\\/]/g, '_'));
+  private static replaceReleaseTokens(input: string, release?: Release): string {
+    if (!release) {
+      return input;
+    }
 
-    const description = dat.getDescription();
-    if (description) {
-      output = output.replace('{datDescription}', description.replace(/[\\/]/g, '_'));
+    let output = input;
+    output = output.replace('{gameRegion}', release.getRegion());
+    output = output.replace('{datReleaseRegion}', release.getRegion()); // deprecated
+
+    const releaseLanguage = release.getLanguage();
+    if (releaseLanguage) {
+      output = output.replace('{gameLanguage}', releaseLanguage);
+      output = output.replace('{datReleaseLanguage}', releaseLanguage); // deprecated
     }
 
     return output;
@@ -194,20 +201,27 @@ export default class OutputFactory {
 
     let output = input;
     output = output.replace('{gameType}', game.getGameType());
+
+    const gameRegion = game.getRegions().find(() => true);
+    if (gameRegion) {
+      output = output.replace('{gameRegion}', gameRegion);
+    }
+
+    const gameLanguage = game.getLanguages().find(() => true);
+    if (gameLanguage) {
+      output = output.replace('{gameLanguage}', gameLanguage);
+    }
+
     return output;
   }
 
-  private static replaceReleaseTokens(input: string, release?: Release): string {
-    if (!release) {
-      return input;
-    }
-
+  private static replaceDatTokens(input: string, dat: DAT): string {
     let output = input;
-    output = output.replace('{datReleaseRegion}', release.getRegion());
+    output = output.replace('{datName}', dat.getName().replace(/[\\/]/g, '_'));
 
-    const language = release.getLanguage();
-    if (language) {
-      output = output.replace('{datReleaseLanguage}', language);
+    const description = dat.getDescription();
+    if (description) {
+      output = output.replace('{datDescription}', description.replace(/[\\/]/g, '_'));
     }
 
     return output;

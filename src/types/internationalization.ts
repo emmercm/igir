@@ -125,7 +125,7 @@ export default class Internationalization {
   public static readonly REGION_NAMES = this.REGION_OPTIONS
     .map((regionOption) => regionOption.long)
     .filter((region) => region)
-    .filter((region, idx, regions) => regions.indexOf(region) === idx)
+    .reduce(ArrayPoly.reduceUnique(), [])
     .sort();
 
   public static readonly LANGUAGES = this.REGION_OPTIONS
