@@ -57,7 +57,7 @@ $ igir --help
   | $$  | $$|    \  | $$  | $$    $$   ROM collection manager
   | $$  | $$|    \  | $$  | $$    $$   https://igir.io/
   | $$  | $$ \$$$$  | $$  | $$$$$$$\
- _| $$_ | $$__| $$ _| $$_ | $$  | $$   v2.0.0
+ _| $$_ | $$__| $$ _| $$_ | $$  | $$   v2.0.1
 |   $$ \ \$$    $$|   $$ \| $$  | $$
  \$$$$$$  \$$$$$$  \$$$$$$ \$$   \$$
 
@@ -95,7 +95,7 @@ DAT input options:
       --dat-description-regex-exclude  Regular expression of DAT descriptions to exclude from pro
                                        cessing                                           [string]
 
-ROM output options:
+ROM output options (processed in order):
   -o, --output               Path to the ROM output directory (supports replaceable symbols, see
                              below)                                                      [string]
       --dir-mirror           Use the input subdirectory structure for the output directory
@@ -106,6 +106,8 @@ ROM output options:
                                                                                         [boolean]
       --dir-letter-limit     Limit the number ROMs in letter subdirectories, splitting into multi
                              ple if necessary                                            [number]
+      --dir-game-subdir      Append the name of the game as an output directory depending on its
+                             ROMs  [choices: "never", "multiple", "always"] [default: "multiple"]
   -O, --overwrite            Overwrite any files in the output directory                [boolean]
       --overwrite-invalid    Overwrite files in the output directory that are the wrong filesize,
                               checksum, or zip contents                                 [boolean]
