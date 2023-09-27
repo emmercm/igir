@@ -64,13 +64,22 @@ export default class DATMergerSplitter extends Module {
   private mergeParent(parent: Parent, gameNamesToGames: Map<string, Game>): Game[] {
     let games = parent.getGames();
 
-    // Get rid of duplicate ROMs. MAME will sometimes duplicate a file with the exact same name,
-    // size, and checksum but with a different "region" (e.g. neogeo).
+    const romNameFunc = (rom: ROM): string => rom.getName()
+      // Numeric sort will sort underscore before hyphens? ASCII says don't do that
+      .replace('-', '__');
+    const romSortFunc = (a: ROM, b: ROM): number => romNameFunc(a)
+      .localeCompare(romNameFunc(b), undefined, { numeric: true });
+
+    // Sanitization
     games = games.map((game) => {
       const romNames = game.getRoms().map((rom) => rom.getName());
       return game.withProps({
         rom: game.getRoms()
-          .filter((rom, idx) => romNames.indexOf(rom.getName()) === idx),
+          // Get rid of duplicate ROMs. MAME will sometimes duplicate a file with the exact same
+          // name, size, and checksum but with a different "region" (e.g. neogeo).
+          .filter((rom, idx) => romNames.indexOf(rom.getName()) === idx)
+          // Sort for easier debugging and testing
+          .sort(romSortFunc),
       });
     });
 
@@ -87,7 +96,7 @@ export default class DATMergerSplitter extends Module {
               .filter(ArrayPoly.filterNotNullish)
               .flatMap((deviceGame) => deviceGame.getRoms()),
             ...game.getRoms(),
-          ],
+          ].sort(romSortFunc),
         });
       });
     }
@@ -101,7 +110,8 @@ export default class DATMergerSplitter extends Module {
           }
           return game.withProps({
             rom: game.getRoms()
-              .filter((rom) => !rom.getBios()),
+              .filter((rom) => !rom.getBios())
+              .sort(romSortFunc),
           });
         });
     }
@@ -117,7 +127,8 @@ export default class DATMergerSplitter extends Module {
     ) {
       cloneGames = cloneGames
         .map((childGame) => childGame.withProps({
-          rom: DATMergerSplitter.diffGameRoms(parentGame, childGame),
+          rom: DATMergerSplitter.diffGameRoms(parentGame, childGame)
+            .sort(romSortFunc),
         }));
     }
 
