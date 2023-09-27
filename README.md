@@ -57,7 +57,7 @@ $ igir --help
   | $$  | $$|    \  | $$  | $$    $$   ROM collection manager
   | $$  | $$|    \  | $$  | $$    $$   https://igir.io/
   | $$  | $$ \$$$$  | $$  | $$$$$$$\
- _| $$_ | $$__| $$ _| $$_ | $$  | $$   v2.0.1
+ _| $$_ | $$__| $$ _| $$_ | $$  | $$   v2.0.2
 |   $$ \ \$$    $$|   $$ \| $$  | $$
  \$$$$$$  \$$$$$$  \$$$$$$ \$$   \$$
 
@@ -191,11 +191,11 @@ Help & debug options:
 Advanced usage:
 
   Tokens that are replaced when generating the output (--output) path of a ROM:
-    {datName}             The name of the DAT that contains the ROM (e.g. "Nintendo - Game Boy")
-    {datDescription}      The description of the DAT that contains the ROM
-    {datReleaseRegion}    The region of the ROM release (e.g. "USA"), each ROM can have multiple
-    {datReleaseLanguage}  The language of the ROM release (e.g. "En"), each ROM can have multiple
-    {gameType}            The type of the game (e.g. "Retail", "Demo", "Prototype")
+    {datName}         The name of the DAT that contains the ROM (e.g. "Nintendo - Game Boy")
+    {datDescription}  The description of the DAT that contains the ROM
+    {gameRegion}      The region of the ROM release (e.g. "USA"), each ROM can have multiple
+    {gameLanguage}    The language of the ROM release (e.g. "En"), each ROM can have multiple
+    {gameType}        The type of the game (e.g. "Retail", "Demo", "Prototype")
 
     {inputDirname}    The input file's dirname
     {outputBasename}  Equivalent to "{outputName}.{outputExt}"
