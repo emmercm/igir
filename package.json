@@ -105,7 +105,7 @@
     "@types/jest": "29.5.5",
     "@types/micromatch": "4.0.2",
     "@types/node": "18.17.11",
-    "@types/semver": "7.5.2",
+    "@types/semver": "7.5.3",
     "@types/tar": "6.1.6",
     "@types/unzipper": "0.10.7",
     "@types/which": "3.0.0",
