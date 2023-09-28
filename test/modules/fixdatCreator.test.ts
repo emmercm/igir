@@ -78,7 +78,7 @@ it('should do nothing if the option is false', async () => {
 
   // When a fixdat is generated, but the option isn't provided
   const fixdat = await runFixdatCreator(
-    { fixdat: false },
+    { commands: [] },
     parentsToCandidates,
   );
 
@@ -92,7 +92,7 @@ it('should do nothing if no ROMs are missing', async () => {
 
   // When a fixdat is generated
   const fixdat = await runFixdatCreator(
-    { fixdat: true },
+    { commands: ['fixdat'] },
     parentsToCandidates,
   );
 
@@ -106,7 +106,7 @@ it('should write some ROMs if some ROMs are missing', async () => {
 
   // When a fixdat is generated
   const fixdat = await runFixdatCreator(
-    { fixdat: true },
+    { commands: ['fixdat'] },
     parentsToCandidates,
   );
 
@@ -123,7 +123,7 @@ it('should write all ROMs if all ROMs are missing', async () => {
 
   // When a fixdat is generated
   const fixdat = await runFixdatCreator(
-    { fixdat: true },
+    { commands: ['fixdat'] },
     parentsToCandidates,
   );
 

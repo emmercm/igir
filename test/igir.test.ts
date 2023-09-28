@@ -624,14 +624,13 @@ describe('with explicit DATs', () => {
     'copy',
     'move',
     'symlink',
-  ])('should generate a fixdat when writing: %s', async (command) => {
+  ])('should %s, fixdat, and clean', async (command) => {
     await copyFixturesToTemp(async (inputTemp, outputTemp) => {
       const result = await runIgir({
-        commands: [command, 'clean'],
+        commands: [command, 'fixdat', 'clean'],
         dat: [path.join(inputTemp, 'dats')],
         input: [path.join(inputTemp, 'roms')],
         output: outputTemp,
-        fixdat: true,
         dirDatName: true,
       });
 
@@ -648,14 +647,13 @@ describe('with explicit DATs', () => {
     });
   });
 
-  it('should generate a fixdat when not writing', async () => {
+  it('should fixdat and report', async () => {
     await copyFixturesToTemp(async (inputTemp, outputTemp) => {
       const result = await runIgir({
-        commands: ['report'],
+        commands: ['fixdat', 'report'],
         dat: [path.join(inputTemp, 'dats')],
         input: [path.join(inputTemp, 'roms')],
         output: outputTemp,
-        fixdat: true,
         dirDatName: true,
         reportOutput: 'report.csv',
       });
