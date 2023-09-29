@@ -1,5 +1,5 @@
-import Game from './logiqx/game.js';
-import Release from './logiqx/release.js';
+import Game from './dats/game.js';
+import Release from './dats/release.js';
 import ROMWithFiles from './romWithFiles.js';
 
 /**

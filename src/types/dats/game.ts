@@ -4,12 +4,9 @@ import { Expose, Transform, Type } from 'class-transformer';
 
 import ArrayPoly from '../../polyfill/arrayPoly.js';
 import Internationalization from '../internationalization.js';
-import Archive from './archive.js';
-import BIOSSet from './biosSet.js';
 import Disk from './disk.js';
 import Release from './release.js';
 import ROM from './rom.js';
-import Sample from './sample.js';
 
 enum GameType {
   AFTERMARKET = 'Aftermarket',
@@ -68,11 +65,8 @@ export interface GameProps {
   readonly year?: string,
   readonly manufacturer?: string,
   readonly release?: Release | Release[],
-  readonly biosSet?: BIOSSet | BIOSSet[],
   readonly rom?: ROM | ROM[],
   readonly disk?: Disk | Disk[],
-  readonly sample?: Sample | Sample[],
-  readonly archive?: Archive | Archive[],
 }
 
 /**
@@ -80,17 +74,19 @@ export interface GameProps {
  * {@link Release}s.
  */
 export default class Game implements GameProps {
-  @Expose({ name: 'name' })
+  @Expose()
   readonly name: string;
+
+  // readonly sourcefile?: string;
 
   /**
    * This is non-standard, but Redump uses it:
    * @see http://wiki.redump.org/index.php?title=Redump_Search_Parameters#Category
    */
-  @Expose({ name: 'category' })
+  @Expose()
   readonly category: string;
 
-  @Expose({ name: 'description' })
+  @Expose()
   readonly description: string;
 
   @Expose({ name: 'isbios' })
@@ -108,6 +104,11 @@ export default class Game implements GameProps {
   @Expose({ name: 'sampleof' })
   readonly sampleOf?: string;
 
+  // readonly board?: string;
+  // readonly rebuildto?: string;
+  // readonly year?: string;
+  // readonly manufacturer?: string;
+
   @Expose()
   @Type(() => Release)
   @Transform(({ value }) => value || [])
@@ -118,17 +119,17 @@ export default class Game implements GameProps {
   @Transform(({ value }) => value || [])
   readonly rom: ROM | ROM[];
 
-  constructor(options?: GameProps) {
-    this.name = options?.name ?? '';
-    this.category = options?.category ?? '';
-    this.description = options?.description ?? '';
-    this.bios = options?.bios ?? this.bios;
-    this.device = options?.device ?? this.device;
-    this.cloneOf = options?.cloneOf;
-    this.romOf = options?.romOf;
-    this.sampleOf = options?.sampleOf;
-    this.release = options?.release ?? [];
-    this.rom = options?.rom ?? [];
+  constructor(props?: GameProps) {
+    this.name = props?.name ?? '';
+    this.category = props?.category ?? '';
+    this.description = props?.description ?? '';
+    this.bios = props?.bios ?? this.bios;
+    this.device = props?.device ?? this.device;
+    this.cloneOf = props?.cloneOf;
+    this.romOf = props?.romOf;
+    this.sampleOf = props?.sampleOf;
+    this.release = props?.release ?? [];
+    this.rom = props?.rom ?? [];
   }
 
   /**
@@ -368,11 +369,7 @@ export default class Game implements GameProps {
    * Is this game an explicitly verified dump?
    */
   isVerified(): boolean {
-    if (this.name.match(/\[!\]/) !== null) {
-      return true;
-    }
-    // Assume verification if there are releases
-    return this.getReleases().length > 0;
+    return this.name.match(/\[!\]/) !== null;
   }
 
   /**
@@ -489,7 +486,7 @@ export default class Game implements GameProps {
   }
 
   getParent(): string {
-    return this.cloneOf ?? this.romOf ?? this.sampleOf ?? '';
+    return this.cloneOf ?? '';
   }
 
   // Internationalization
@@ -564,7 +561,8 @@ export default class Game implements GameProps {
       const threeMatchesParsed = threeMatches[1].split('-')
         .map((lang) => lang.toUpperCase())
         .map((lang) => Internationalization.LANGUAGE_OPTIONS
-          .filter((langOpt) => langOpt.long?.toUpperCase() === lang.toUpperCase())[0]?.short)
+          .find((langOpt) => langOpt.long?.toUpperCase() === lang.toUpperCase())?.short)
+        .filter(ArrayPoly.filterNotNullish)
         .filter((lang) => Internationalization.LANGUAGES.indexOf(lang) !== -1) // is known
         .reduce(ArrayPoly.reduceUnique(), []);
       if (threeMatchesParsed.length) {
@@ -587,6 +585,15 @@ export default class Game implements GameProps {
         return undefined;
       })
       .filter(ArrayPoly.filterNotNullish);
+  }
+
+  // Immutable setters
+
+  /**
+   * Return a new copy of this {@link Game} with some different properties.
+   */
+  withProps(props: GameProps): Game {
+    return new Game({ ...this, ...props });
   }
 
   // Pseudo Built-Ins

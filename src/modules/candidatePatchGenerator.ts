@@ -1,15 +1,15 @@
-import path from 'path';
+import path from 'node:path';
 
 import ProgressBar, { ProgressBarSymbol } from '../console/progressBar.js';
 import ArrayPoly from '../polyfill/arrayPoly.js';
+import DAT from '../types/dats/dat.js';
+import Game from '../types/dats/game.js';
+import Parent from '../types/dats/parent.js';
+import Release from '../types/dats/release.js';
+import ROM from '../types/dats/rom.js';
 import ArchiveEntry from '../types/files/archives/archiveEntry.js';
 import File from '../types/files/file.js';
 import { ChecksumBitmask } from '../types/files/fileChecksums.js';
-import DAT from '../types/logiqx/dat.js';
-import Game from '../types/logiqx/game.js';
-import Parent from '../types/logiqx/parent.js';
-import Release from '../types/logiqx/release.js';
-import ROM from '../types/logiqx/rom.js';
 import Options from '../types/options.js';
 import Patch from '../types/patches/patch.js';
 import ReleaseCandidate from '../types/releaseCandidate.js';
@@ -177,11 +177,11 @@ export default class CandidatePatchGenerator extends Module {
                 romName,
               );
             }
-            rom = new ROM(
-              romName,
-              outputFile.getSize(),
-              outputFile.getCrc32(),
-            );
+            rom = new ROM({
+              name: romName,
+              size: outputFile.getSize(),
+              crc: outputFile.getCrc32(),
+            });
 
             this.progressBar.logTrace(`${dat.getNameShort()}: ${inputFile.toString()}: patch candidate generated: ${outputFile.toString()}`);
           }
@@ -197,8 +197,7 @@ export default class CandidatePatchGenerator extends Module {
           gameName,
         );
       }
-      const patchedGame = new Game({
-        ...unpatchedReleaseCandidate.getGame(),
+      const patchedGame = unpatchedReleaseCandidate.getGame().withProps({
         name: gameName,
       });
 

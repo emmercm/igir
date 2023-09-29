@@ -25,9 +25,11 @@ This token can be used to reference each core's specific directory in the SD car
     ```batch
     igir copy extract test clean ^
       --dat "No-Intro*.zip" ^
+      --dat-name-regex-exclude "/headerless/i" ^
       --input "ROMs" ^
       --output "E:\Assets\{pocket}\common" ^
       --dir-letter ^
+      --dir-letter-limit 1000 ^
       --clean-exclude "E:\Assets\*\common\*.*" ^
       --no-bios
     ```
@@ -39,9 +41,11 @@ This token can be used to reference each core's specific directory in the SD car
     ```shell
     igir copy extract test clean \
       --dat "No-Intro*.zip" \
+      --dat-name-regex-exclude "/headerless/i" \
       --input "ROMs/" \
       --output "/Volumes/POCKET/Assets/{pocket}/common/" \
       --dir-letter \
+      --dir-letter-limit 1000 \
       --clean-exclude "/Volumes/POCKET/Assets/*/common/*.*" \
       --no-bios
     ```
@@ -53,16 +57,22 @@ This token can be used to reference each core's specific directory in the SD car
     ```shell
     igir copy extract test clean \
       --dat "No-Intro*.zip" \
+      --dat-name-regex-exclude "/headerless/i" \
       --input "ROMs/" \
       --output "/media/POCKET/Assets/{pocket}/common/" \
       --dir-letter \
+      --dir-letter-limit 1000 \
       --clean-exclude "/media/POCKET/Assets/*/common/*.*" \
       --no-bios
     ```
 
 !!! note
 
-    The `--clean-exclude` option in the above examples is so we don't accidentally "clean" (delete) the BIOS files for each core.
+    The `--clean-exclude <path>` option in the above examples is so we don't accidentally "clean" (delete) the BIOS files for each core.
+
+!!! note
+
+    The `--dat-name-regex-exclude "/headerless/i"` option in the above examples is to exclude any "headered" No-Intro DATs. Some consoles such as NES have separate "headered" and "headerless" DATs, and they have duplicated ROM filenames, so we want to avoid writing different input files to the same output location.
 
 Your SD card should look like this, likely with more cores:
 

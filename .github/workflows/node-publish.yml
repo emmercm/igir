@@ -12,10 +12,14 @@ jobs:
   node-publish:
     runs-on: ubuntu-latest
     permissions:
+      # actions/checkout@v3
       contents: read
+      # `npm publish --provenance`
       id-token: write
+      # thollander/actions-comment-pull-request@v2
+      pull-requests: write
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - uses: actions/setup-node@v3
         with:
           node-version-file: '.nvmrc'

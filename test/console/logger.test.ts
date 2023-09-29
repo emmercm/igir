@@ -1,4 +1,4 @@
-import { PassThrough, Writable } from 'stream';
+import { PassThrough, Writable } from 'node:stream';
 
 import Logger from '../../src/console/logger.js';
 import LogLevel from '../../src/console/logLevel.js';

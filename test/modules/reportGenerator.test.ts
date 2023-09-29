@@ -1,17 +1,17 @@
-import fs from 'fs';
-import path from 'path';
-import util from 'util';
+import fs from 'node:fs';
+import path from 'node:path';
+import util from 'node:util';
 
 import Constants from '../../src/constants.js';
 import ReportGenerator from '../../src/modules/reportGenerator.js';
 import fsPoly from '../../src/polyfill/fsPoly.js';
+import Game from '../../src/types/dats/game.js';
+import Header from '../../src/types/dats/logiqx/header.js';
+import LogiqxDAT from '../../src/types/dats/logiqx/logiqxDat.js';
+import Parent from '../../src/types/dats/parent.js';
+import ROM from '../../src/types/dats/rom.js';
 import DATStatus from '../../src/types/datStatus.js';
 import File from '../../src/types/files/file.js';
-import DAT from '../../src/types/logiqx/dat.js';
-import Game from '../../src/types/logiqx/game.js';
-import Header from '../../src/types/logiqx/header.js';
-import Parent from '../../src/types/logiqx/parent.js';
-import ROM from '../../src/types/logiqx/rom.js';
 import Options, { OptionsProps } from '../../src/types/options.js';
 import ReleaseCandidate from '../../src/types/releaseCandidate.js';
 import ROMWithFiles from '../../src/types/romWithFiles.js';
@@ -23,14 +23,15 @@ import ProgressBarFake from '../console/progressBarFake.js';
  */
 
 const datStatusEmpty = new DATStatus(
-  new DAT(new Header({ name: 'Empty' }), []),
+  new LogiqxDAT(new Header({ name: 'Empty' }), []),
+  new Options(),
   new Map(),
 );
 
 const gamesSingle = [
   new Game({
     name: 'One',
-    rom: [new ROM('One', 123, 'abcdef01')],
+    rom: [new ROM({ name: 'One', size: 123, crc: 'abcdef01' })],
   }),
 ];
 async function buildDatStatusSingle(): Promise<DATStatus> {
@@ -49,7 +50,8 @@ async function buildDatStatusSingle(): Promise<DATStatus> {
   );
   const parentsToReleaseCandidates = new Map<Parent, ReleaseCandidate[]>(entries);
   return new DATStatus(
-    new DAT(new Header({ name: 'Single' }), gamesSingle),
+    new LogiqxDAT(new Header({ name: 'Single' }), gamesSingle),
+    new Options(),
     parentsToReleaseCandidates,
   );
 }
@@ -57,15 +59,15 @@ async function buildDatStatusSingle(): Promise<DATStatus> {
 const gamesMultiple = [
   new Game({
     name: 'Two',
-    rom: [new ROM('Two', 234, 'bcdef012')],
+    rom: [new ROM({ name: 'Two', size: 234, crc: 'bcdef012' })],
   }),
   new Game({
     name: 'Three',
-    rom: [new ROM('Three', 345, 'cdef0123')],
+    rom: [new ROM({ name: 'Three', size: 345, crc: 'cdef0123' })],
   }),
   new Game({
     name: 'Four',
-    rom: [new ROM('Four', 456, 'def01234')],
+    rom: [new ROM({ name: 'Four', size: 456, crc: 'def01234' })],
   }),
   new Game({
     name: 'Five',
@@ -88,7 +90,8 @@ async function buildDatStatusMultiple(): Promise<DATStatus> {
   );
   const parentsToReleaseCandidates = new Map<Parent, ReleaseCandidate[]>(entries);
   return new DATStatus(
-    new DAT(new Header({ name: 'Multiple' }), gamesMultiple),
+    new LogiqxDAT(new Header({ name: 'Multiple' }), gamesMultiple),
+    new Options(),
     parentsToReleaseCandidates,
   );
 }
@@ -138,7 +141,7 @@ Multiple,Two,FOUND,Two.rom,false,false,true,false,false,false,false,false,false,
   });
 });
 
-it('should return one row for every unmatched file in a multiple game DAT', async () => {
+it('should return one row for every unused file in a multiple game DAT', async () => {
   await wrapReportGenerator(new Options(), [
     'One.rom',
     'Two.rom',
@@ -150,7 +153,7 @@ Multiple,Five,FOUND,,false,false,true,false,false,false,false,false,false,false,
 Multiple,Four,FOUND,Four.rom,false,false,true,false,false,false,false,false,false,false,false,false,false
 Multiple,Three,FOUND,Three.rom,false,false,true,false,false,false,false,false,false,false,false,false,false
 Multiple,Two,FOUND,Two.rom,false,false,true,false,false,false,false,false,false,false,false,false,false
-,,UNMATCHED,One.rom,false,false,false,false,false,false,false,false,false,false,false,false,false`);
+,,UNUSED,One.rom,false,false,false,false,false,false,false,false,false,false,false,false,false`);
   });
 });
 
@@ -166,7 +169,7 @@ Multiple,Five,FOUND,,false,false,true,false,false,false,false,false,false,false,
 Multiple,Four,FOUND,Four.rom,false,false,true,false,false,false,false,false,false,false,false,false,false
 Multiple,Three,FOUND,Three.rom,false,false,true,false,false,false,false,false,false,false,false,false,false
 Multiple,Two,FOUND,Two.rom,false,false,true,false,false,false,false,false,false,false,false,false,false
-,,UNMATCHED,One.rom,false,false,false,false,false,false,false,false,false,false,false,false,false
+,,UNUSED,One.rom,false,false,false,false,false,false,false,false,false,false,false,false,false
 ,,DELETED,Three.rom,false,false,false,false,false,false,false,false,false,false,false,false,false
 ,,DELETED,Four.rom,false,false,false,false,false,false,false,false,false,false,false,false,false`);
     },

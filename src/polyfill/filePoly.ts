@@ -1,5 +1,5 @@
-import fs, { OpenMode, PathLike } from 'fs';
-import util from 'util';
+import fs, { OpenMode, PathLike } from 'node:fs';
+import util from 'node:util';
 
 import Constants from '../constants.js';
 import fsPoly from './fsPoly.js';

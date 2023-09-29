@@ -1,12 +1,13 @@
-import os from 'os';
-import path from 'path';
+import os from 'node:os';
+import path from 'node:path';
 
 import Logger from '../../src/console/logger.js';
 import LogLevel from '../../src/console/logLevel.js';
 import Constants from '../../src/constants.js';
 import ArgumentsParser from '../../src/modules/argumentsParser.js';
-import DAT from '../../src/types/logiqx/dat.js';
-import Header from '../../src/types/logiqx/header.js';
+import Header from '../../src/types/dats/logiqx/header.js';
+import LogiqxDAT from '../../src/types/dats/logiqx/logiqxDat.js';
+import { GameSubdirMode, MergeMode } from '../../src/types/options.js';
 
 const dummyRequiredArgs = ['--input', os.devNull, '--output', os.devNull];
 const dummyCommandAndRequiredArgs = ['copy', ...dummyRequiredArgs];
@@ -40,48 +41,41 @@ describe('commands', () => {
     expect(() => argumentsParser.parse(['clean', ...dummyRequiredArgs])).toThrow(/command.+requires/i);
   });
 
-  it('should not parse different commands', () => {
-    expect(argumentsParser.parse(['move', ...dummyRequiredArgs]).shouldCopy()).toEqual(false);
-    expect(argumentsParser.parse(['copy', ...dummyRequiredArgs]).shouldMove()).toEqual(false);
-    expect(argumentsParser.parse(['copy', ...dummyRequiredArgs]).shouldExtract()).toEqual(false);
-    expect(argumentsParser.parse(['copy', ...dummyRequiredArgs]).shouldZip('')).toEqual(false);
-    expect(argumentsParser.parse(['copy', ...dummyRequiredArgs]).shouldClean()).toEqual(false);
-    expect(argumentsParser.parse(['copy', ...dummyRequiredArgs]).shouldTest()).toEqual(false);
-    expect(argumentsParser.parse(['copy', ...dummyRequiredArgs]).shouldReport()).toEqual(false);
-  });
-
-  it('should parse multiple commands', () => {
-    const copyExtract = ['copy', 'extract', 'clean', 'test', 'report', ...dummyRequiredArgs, '--dat', os.devNull];
-    expect(argumentsParser.parse(copyExtract).shouldCopy()).toEqual(true);
-    expect(argumentsParser.parse(copyExtract).shouldMove()).toEqual(false);
-    expect(argumentsParser.parse(copyExtract).shouldExtract()).toEqual(true);
-    expect(argumentsParser.parse(copyExtract).shouldZip('')).toEqual(false);
-    expect(argumentsParser.parse(copyExtract).shouldClean()).toEqual(true);
-    expect(argumentsParser.parse(copyExtract).shouldTest()).toEqual(true);
-    expect(argumentsParser.parse(copyExtract).shouldReport()).toEqual(true);
-
-    const moveZip = ['move', 'zip', 'clean', 'test', 'report', ...dummyRequiredArgs, '--dat', os.devNull];
-    expect(argumentsParser.parse(moveZip).shouldCopy()).toEqual(false);
-    expect(argumentsParser.parse(moveZip).shouldMove()).toEqual(true);
-    expect(argumentsParser.parse(moveZip).shouldExtract()).toEqual(false);
-    expect(argumentsParser.parse(moveZip).shouldZip('')).toEqual(true);
-    expect(argumentsParser.parse(moveZip).shouldClean()).toEqual(true);
-    expect(argumentsParser.parse(moveZip).shouldTest()).toEqual(true);
-    expect(argumentsParser.parse(moveZip).shouldReport()).toEqual(true);
-  });
-
-  it('should parse duplicate commands', () => {
-    expect(argumentsParser.parse(['copy', 'copy', 'copy', ...dummyRequiredArgs]).shouldCopy()).toEqual(true);
-  });
-
   it('should not parse commands not present', () => {
     expect(argumentsParser.parse(['move', ...dummyRequiredArgs]).shouldCopy()).toEqual(false);
     expect(argumentsParser.parse(['copy', ...dummyRequiredArgs]).shouldMove()).toEqual(false);
     expect(argumentsParser.parse(['copy', ...dummyRequiredArgs]).shouldExtract()).toEqual(false);
     expect(argumentsParser.parse(['copy', ...dummyRequiredArgs]).shouldZip('')).toEqual(false);
-    expect(argumentsParser.parse(['copy', ...dummyRequiredArgs]).shouldClean()).toEqual(false);
     expect(argumentsParser.parse(['copy', ...dummyRequiredArgs]).shouldTest()).toEqual(false);
+    expect(argumentsParser.parse(['copy', ...dummyRequiredArgs]).shouldFixdat()).toEqual(false);
+    expect(argumentsParser.parse(['copy', ...dummyRequiredArgs]).shouldClean()).toEqual(false);
     expect(argumentsParser.parse(['copy', ...dummyRequiredArgs]).shouldReport()).toEqual(false);
+  });
+
+  it('should parse multiple commands', () => {
+    const copyExtract = ['copy', 'extract', 'test', 'fixdat', 'clean', 'report', ...dummyRequiredArgs, '--dat', os.devNull];
+    expect(argumentsParser.parse(copyExtract).shouldCopy()).toEqual(true);
+    expect(argumentsParser.parse(copyExtract).shouldMove()).toEqual(false);
+    expect(argumentsParser.parse(copyExtract).shouldExtract()).toEqual(true);
+    expect(argumentsParser.parse(copyExtract).shouldZip('')).toEqual(false);
+    expect(argumentsParser.parse(copyExtract).shouldTest()).toEqual(true);
+    expect(argumentsParser.parse(copyExtract).shouldFixdat()).toEqual(true);
+    expect(argumentsParser.parse(copyExtract).shouldClean()).toEqual(true);
+    expect(argumentsParser.parse(copyExtract).shouldReport()).toEqual(true);
+
+    const moveZip = ['move', 'zip', 'test', 'fixdat', 'clean', 'report', ...dummyRequiredArgs, '--dat', os.devNull];
+    expect(argumentsParser.parse(moveZip).shouldCopy()).toEqual(false);
+    expect(argumentsParser.parse(moveZip).shouldMove()).toEqual(true);
+    expect(argumentsParser.parse(moveZip).shouldExtract()).toEqual(false);
+    expect(argumentsParser.parse(moveZip).shouldZip('')).toEqual(true);
+    expect(argumentsParser.parse(moveZip).shouldTest()).toEqual(true);
+    expect(argumentsParser.parse(moveZip).shouldFixdat()).toEqual(true);
+    expect(argumentsParser.parse(moveZip).shouldClean()).toEqual(true);
+    expect(argumentsParser.parse(moveZip).shouldReport()).toEqual(true);
+  });
+
+  it('should parse duplicate commands', () => {
+    expect(argumentsParser.parse(['copy', 'copy', 'copy', ...dummyRequiredArgs]).shouldCopy()).toEqual(true);
   });
 
   it('should throw on unrecognized options', () => {
@@ -93,35 +87,84 @@ describe('commands', () => {
 describe('options', () => {
   it('should have expected defaults', () => {
     const options = argumentsParser.parse(dummyCommandAndRequiredArgs);
+
+    expect(options.shouldCopy()).toEqual(true); // dummy command
+    expect(options.shouldMove()).toEqual(false);
+    expect(options.shouldSymlink()).toEqual(false);
+    expect(options.shouldExtract()).toEqual(false);
+    expect(options.canZip()).toEqual(false);
+    expect(options.shouldFixdat()).toEqual(false);
+    expect(options.shouldTest()).toEqual(false);
+    expect(options.shouldClean()).toEqual(false);
+    expect(options.shouldReport()).toEqual(false);
+
+    expect(options.getDatNameRegex()).toBeUndefined();
+    expect(options.getDatNameRegexExclude()).toBeUndefined();
+    expect(options.getDatDescriptionRegex()).toBeUndefined();
+    expect(options.getDatDescriptionRegexExclude()).toBeUndefined();
+
     expect(options.getDirMirror()).toEqual(false);
     expect(options.getDirDatName()).toEqual(false);
+    expect(options.getDirDatDescription()).toEqual(false);
     expect(options.getDirLetter()).toEqual(false);
-    expect(options.getSingle()).toEqual(false);
+    expect(options.getDirLetterLimit()).toEqual(0);
+    expect(options.getDirGameSubdir()).toEqual(GameSubdirMode.MULTIPLE);
     expect(options.getOverwrite()).toEqual(false);
+    expect(options.getOverwriteInvalid()).toEqual(false);
+
+    expect(options.getZipDatName()).toEqual(false);
+
+    expect(options.getSymlinkRelative()).toEqual(false);
+
+    expect(options.getMergeRoms()).toEqual(MergeMode.FULLNONMERGED);
+
+    expect(options.getFilterRegex()).toBeUndefined();
+    expect(options.getFilterRegexExclude()).toBeUndefined();
+    expect(options.getFilterLanguage().size).toEqual(0);
+    expect(options.getFilterRegion().size).toEqual(0);
+    expect(options.getNoBios()).toEqual(false);
+    expect(options.getOnlyBios()).toEqual(false);
+    expect(options.getNoDevice()).toEqual(false);
+    expect(options.getOnlyDevice()).toEqual(false);
+    expect(options.getNoUnlicensed()).toEqual(false);
+    expect(options.getOnlyUnlicensed()).toEqual(false);
+    expect(options.getOnlyRetail()).toEqual(false);
+    expect(options.getNoDebug()).toEqual(false);
+    expect(options.getOnlyDebug()).toEqual(false);
+    expect(options.getNoDemo()).toEqual(false);
+    expect(options.getOnlyDemo()).toEqual(false);
+    expect(options.getNoBeta()).toEqual(false);
+    expect(options.getOnlyBeta()).toEqual(false);
+    expect(options.getNoSample()).toEqual(false);
+    expect(options.getOnlySample()).toEqual(false);
+    expect(options.getNoPrototype()).toEqual(false);
+    expect(options.getOnlyPrototype()).toEqual(false);
+    expect(options.getNoTestRoms()).toEqual(false);
+    expect(options.getOnlyTestRoms()).toEqual(false);
+    expect(options.getNoAftermarket()).toEqual(false);
+    expect(options.getOnlyAftermarket()).toEqual(false);
+    expect(options.getNoHomebrew()).toEqual(false);
+    expect(options.getOnlyHomebrew()).toEqual(false);
+    expect(options.getNoUnverified()).toEqual(false);
+    expect(options.getOnlyUnverified()).toEqual(false);
+    expect(options.getNoBad()).toEqual(false);
+    expect(options.getOnlyBad()).toEqual(false);
+
+    expect(options.getSingle()).toEqual(false);
     expect(options.getPreferVerified()).toEqual(false);
     expect(options.getPreferGood()).toEqual(false);
     expect(options.getPreferLanguages()).toHaveLength(0);
     expect(options.getPreferRegions()).toHaveLength(0);
-    expect(options.getLanguageFilter()).toHaveLength(0);
     expect(options.getPreferRevisionNewer()).toEqual(false);
     expect(options.getPreferRevisionOlder()).toEqual(false);
     expect(options.getPreferRetail()).toEqual(false);
+    expect(options.getPreferNTSC()).toEqual(false);
+    expect(options.getPreferPAL()).toEqual(false);
     expect(options.getPreferParent()).toEqual(false);
-    expect(options.getRegionFilter()).toHaveLength(0);
-    expect(options.getOnlyBios()).toEqual(false);
-    expect(options.getNoBios()).toEqual(false);
-    expect(options.getNoDevice()).toEqual(false);
-    expect(options.getNoUnlicensed()).toEqual(false);
-    expect(options.getOnlyRetail()).toEqual(false);
-    expect(options.getNoDemo()).toEqual(false);
-    expect(options.getNoBeta()).toEqual(false);
-    expect(options.getNoSample()).toEqual(false);
-    expect(options.getNoPrototype()).toEqual(false);
-    expect(options.getNoTestRoms()).toEqual(false);
-    expect(options.getNoAftermarket()).toEqual(false);
-    expect(options.getNoHomebrew()).toEqual(false);
-    expect(options.getNoUnverified()).toEqual(false);
-    expect(options.getNoBad()).toEqual(false);
+
+    expect(options.getDatThreads()).toEqual(3);
+    expect(options.getWriterThreads()).toEqual(20);
+    expect(options.getLogLevel()).toEqual(LogLevel.WARN);
     expect(options.getHelp()).toEqual(false);
   });
 
@@ -193,29 +236,56 @@ describe('options', () => {
     expect((await argumentsParser.parse([...dummyCommandAndRequiredArgs, '--dat', './src', '--dat-exclude', './src']).scanDatFilesWithoutExclusions()).length).toEqual(0);
   });
 
-  it('should parse "dat-regex"', () => {
-    expect(argumentsParser.parse(dummyCommandAndRequiredArgs).getDatRegex()).toBeUndefined();
-    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--dat-regex', '[a-z]']).getDatRegex()?.test('lower')).toEqual(true);
-    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--dat-regex', '[a-z]']).getDatRegex()?.test('UPPER')).toEqual(false);
-    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--dat-regex', '/[a-z]/i']).getDatRegex()?.test('UPPER')).toEqual(true);
-    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--dat-regex', '/[a-z]/i', '--dat-regex', '[0-9]']).getDatRegex()?.test('UPPER')).toEqual(false);
+  it('should parse "dat-name-regex"', () => {
+    expect(argumentsParser.parse(dummyCommandAndRequiredArgs).getDatNameRegex()).toBeUndefined();
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--dat-name-regex', '[a-z]']).getDatNameRegex()?.test('lower')).toEqual(true);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--dat-name-regex', '[a-z]']).getDatNameRegex()?.test('UPPER')).toEqual(false);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--dat-name-regex', '/[a-z]/i']).getDatNameRegex()?.test('UPPER')).toEqual(true);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--dat-name-regex', '/[a-z]/i', '--dat-name-regex', '[0-9]']).getDatNameRegex()?.test('UPPER')).toEqual(false);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--dat-regex', '[a-z]']).getDatNameRegex()?.test('lower')).toEqual(true);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--dat-regex', '[a-z]']).getDatNameRegex()?.test('UPPER')).toEqual(false);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--dat-regex', '/[a-z]/i']).getDatNameRegex()?.test('UPPER')).toEqual(true);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--dat-regex', '/[a-z]/i', '--dat-regex', '[0-9]']).getDatNameRegex()?.test('UPPER')).toEqual(false);
   });
 
-  it('should parse "dat-regex-exclude"', () => {
-    expect(argumentsParser.parse(dummyCommandAndRequiredArgs).getDatRegexExclude()).toBeUndefined();
-    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--dat-regex-exclude', '[a-z]']).getDatRegexExclude()?.test('lower')).toEqual(true);
-    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--dat-regex-exclude', '[a-z]']).getDatRegexExclude()?.test('UPPER')).toEqual(false);
-    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--dat-regex-exclude', '/[a-z]/i']).getDatRegexExclude()?.test('UPPER')).toEqual(true);
-    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--dat-regex-exclude', '/[a-z]/i', '--dat-regex-exclude', '[0-9]']).getDatRegexExclude()?.test('UPPER')).toEqual(false);
+  it('should parse "dat-name-regex-exclude"', () => {
+    expect(argumentsParser.parse(dummyCommandAndRequiredArgs).getDatNameRegexExclude())
+      .toBeUndefined();
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--dat-name-regex-exclude', '[a-z]']).getDatNameRegexExclude()?.test('lower')).toEqual(true);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--dat-name-regex-exclude', '[a-z]']).getDatNameRegexExclude()?.test('UPPER')).toEqual(false);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--dat-name-regex-exclude', '/[a-z]/i']).getDatNameRegexExclude()?.test('UPPER')).toEqual(true);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--dat-name-regex-exclude', '/[a-z]/i', '--dat-name-regex-exclude', '[0-9]']).getDatNameRegexExclude()?.test('UPPER')).toEqual(false);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--dat-regex-exclude', '[a-z]']).getDatNameRegexExclude()?.test('lower')).toEqual(true);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--dat-regex-exclude', '[a-z]']).getDatNameRegexExclude()?.test('UPPER')).toEqual(false);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--dat-regex-exclude', '/[a-z]/i']).getDatNameRegexExclude()?.test('UPPER')).toEqual(true);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--dat-regex-exclude', '/[a-z]/i', '--dat-regex-exclude', '[0-9]']).getDatNameRegexExclude()?.test('UPPER')).toEqual(false);
+  });
+
+  it('should parse "dat-description-regex"', () => {
+    expect(argumentsParser.parse(dummyCommandAndRequiredArgs).getDatDescriptionRegex())
+      .toBeUndefined();
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--dat-description-regex', '[a-z]']).getDatDescriptionRegex()?.test('lower')).toEqual(true);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--dat-description-regex', '[a-z]']).getDatDescriptionRegex()?.test('UPPER')).toEqual(false);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--dat-description-regex', '/[a-z]/i']).getDatDescriptionRegex()?.test('UPPER')).toEqual(true);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--dat-description-regex', '/[a-z]/i', '--dat-description-regex', '[0-9]']).getDatDescriptionRegex()?.test('UPPER')).toEqual(false);
+  });
+
+  it('should parse "dat-description-regex-exclude"', () => {
+    expect(argumentsParser.parse(dummyCommandAndRequiredArgs).getDatDescriptionRegexExclude())
+      .toBeUndefined();
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--dat-description-regex-exclude', '[a-z]']).getDatDescriptionRegexExclude()?.test('lower')).toEqual(true);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--dat-description-regex-exclude', '[a-z]']).getDatDescriptionRegexExclude()?.test('UPPER')).toEqual(false);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--dat-description-regex-exclude', '/[a-z]/i']).getDatDescriptionRegexExclude()?.test('UPPER')).toEqual(true);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--dat-description-regex-exclude', '/[a-z]/i', '--dat-description-regex-exclude', '[0-9]']).getDatDescriptionRegexExclude()?.test('UPPER')).toEqual(false);
   });
 
   it('should parse "fixdat"', () => {
-    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--dat', os.devNull, '--fixdat']).getFixdat()).toEqual(true);
-    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--dat', os.devNull, '--fixdat', 'true']).getFixdat()).toEqual(true);
-    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--dat', os.devNull, '--fixdat', 'false']).getFixdat()).toEqual(false);
-    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--dat', os.devNull, '--fixdat', '--fixdat']).getFixdat()).toEqual(true);
-    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--dat', os.devNull, '--fixdat', 'false', '--fixdat', 'true']).getFixdat()).toEqual(true);
-    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--dat', os.devNull, '--fixdat', 'true', '--fixdat', 'false']).getFixdat()).toEqual(false);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--dat', os.devNull, '--fixdat']).shouldFixdat()).toEqual(true);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--dat', os.devNull, '--fixdat', 'true']).shouldFixdat()).toEqual(true);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--dat', os.devNull, '--fixdat', 'false']).shouldFixdat()).toEqual(false);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--dat', os.devNull, '--fixdat', '--fixdat']).shouldFixdat()).toEqual(true);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--dat', os.devNull, '--fixdat', 'false', '--fixdat', 'true']).shouldFixdat()).toEqual(true);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--dat', os.devNull, '--fixdat', 'true', '--fixdat', 'false']).shouldFixdat()).toEqual(false);
   });
 
   it('should parse "output"', () => {
@@ -281,8 +351,17 @@ describe('options', () => {
     expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--dir-letter', '--dir-letter-limit', '5', '--dir-letter-limit', '10']).getDirLetterLimit()).toEqual(10);
   });
 
+  it('should parse "dir-game-subdir"', () => {
+    expect(argumentsParser.parse(dummyCommandAndRequiredArgs).getDirGameSubdir())
+      .toEqual(GameSubdirMode.MULTIPLE);
+    expect(() => argumentsParser.parse([...dummyCommandAndRequiredArgs, '--dir-game-subdir', 'foobar']).getDirGameSubdir()).toThrow(/invalid values/i);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--dir-game-subdir', 'never']).getDirGameSubdir()).toEqual(GameSubdirMode.NEVER);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--dir-game-subdir', 'multiple']).getDirGameSubdir()).toEqual(GameSubdirMode.MULTIPLE);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--dir-game-subdir', 'always']).getDirGameSubdir()).toEqual(GameSubdirMode.ALWAYS);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--dir-game-subdir', 'always', '--dir-game-subdir', 'never']).getDirGameSubdir()).toEqual(GameSubdirMode.NEVER);
+  });
+
   it('should parse "single"', () => {
-    expect(() => argumentsParser.parse([...dummyCommandAndRequiredArgs, '--single'])).toThrow(/dependent|implication/i);
     expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--dat', os.devNull, '-s']).getSingle()).toEqual(true);
     expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--dat', os.devNull, '--single']).getSingle()).toEqual(true);
     expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--dat', os.devNull, '--single', 'true']).getSingle()).toEqual(true);
@@ -357,7 +436,7 @@ describe('options', () => {
   });
 
   it('should parse "remove-headers"', () => {
-    const dat = new DAT(new Header(), []);
+    const dat = new LogiqxDAT(new Header(), []);
 
     // False
     expect(argumentsParser.parse(dummyCommandAndRequiredArgs).canRemoveHeader(dat, '.smc')).toEqual(false);
@@ -377,81 +456,74 @@ describe('options', () => {
 
   it('should parse "prefer-verified"', () => {
     expect(() => argumentsParser.parse([...dummyCommandAndRequiredArgs, '--prefer-verified'])).toThrow(/dependent|implication/i);
-    expect(() => argumentsParser.parse([...dummyCommandAndRequiredArgs, '--prefer-verified', '--single'])).toThrow(/dependent|implication/i);
-    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--dat', os.devNull, '--prefer-verified', '--single']).getPreferVerified()).toEqual(true);
-    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--dat', os.devNull, '--prefer-verified', 'true', '--single']).getPreferVerified()).toEqual(true);
-    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--dat', os.devNull, '--prefer-verified', 'false', '--single']).getPreferVerified()).toEqual(false);
-    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--dat', os.devNull, '--prefer-verified', '--prefer-verified', '--single']).getPreferVerified()).toEqual(true);
-    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--dat', os.devNull, '--prefer-verified', 'false', '--prefer-verified', 'true', '--single']).getPreferVerified()).toEqual(true);
-    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--dat', os.devNull, '--prefer-verified', 'true', '--prefer-verified', 'false', '--single']).getPreferVerified()).toEqual(false);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--prefer-verified', '--single']).getPreferVerified()).toEqual(true);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--prefer-verified', 'true', '--single']).getPreferVerified()).toEqual(true);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--prefer-verified', 'false', '--single']).getPreferVerified()).toEqual(false);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--prefer-verified', '--prefer-verified', '--single']).getPreferVerified()).toEqual(true);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--prefer-verified', 'false', '--prefer-verified', 'true', '--single']).getPreferVerified()).toEqual(true);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--prefer-verified', 'true', '--prefer-verified', 'false', '--single']).getPreferVerified()).toEqual(false);
   });
 
   it('should parse "prefer-good"', () => {
     expect(() => argumentsParser.parse([...dummyCommandAndRequiredArgs, '--prefer-good'])).toThrow(/dependent|implication/i);
-    expect(() => argumentsParser.parse([...dummyCommandAndRequiredArgs, '--prefer-good', '--single'])).toThrow(/dependent|implication/i);
-    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--dat', os.devNull, '--prefer-good', '--single']).getPreferGood()).toEqual(true);
-    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--dat', os.devNull, '--prefer-good', 'true', '--single']).getPreferGood()).toEqual(true);
-    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--dat', os.devNull, '--prefer-good', 'false', '--single']).getPreferGood()).toEqual(false);
-    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--dat', os.devNull, '--prefer-good', '--prefer-good', '--single']).getPreferGood()).toEqual(true);
-    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--dat', os.devNull, '--prefer-good', 'false', '--prefer-good', 'true', '--single']).getPreferGood()).toEqual(true);
-    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--dat', os.devNull, '--prefer-good', 'true', '--prefer-good', 'false', '--single']).getPreferGood()).toEqual(false);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--prefer-good', '--single']).getPreferGood()).toEqual(true);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--prefer-good', 'true', '--single']).getPreferGood()).toEqual(true);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--prefer-good', 'false', '--single']).getPreferGood()).toEqual(false);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--prefer-good', '--prefer-good', '--single']).getPreferGood()).toEqual(true);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--prefer-good', 'false', '--prefer-good', 'true', '--single']).getPreferGood()).toEqual(true);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--prefer-good', 'true', '--prefer-good', 'false', '--single']).getPreferGood()).toEqual(false);
   });
 
   it('should parse "prefer-language"', () => {
     expect(() => argumentsParser.parse([...dummyCommandAndRequiredArgs, '--prefer-language'])).toThrow(/not enough arguments/i);
     expect(() => argumentsParser.parse([...dummyCommandAndRequiredArgs, '--prefer-language', 'EN'])).toThrow(/dependent|implication/i);
-    expect(() => argumentsParser.parse([...dummyCommandAndRequiredArgs, '--prefer-language', 'EN', '--single'])).toThrow(/dependent|implication/i);
-    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--dat', os.devNull, '-l', 'EN', '--single']).getPreferLanguages()).toEqual(['EN']);
-    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--dat', os.devNull, '--prefer-language', 'EN', '--single']).getPreferLanguages()).toEqual(['EN']);
-    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--dat', os.devNull, '--prefer-language', 'EN,it', '--single']).getPreferLanguages()).toEqual(['EN', 'IT']);
-    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--dat', os.devNull, '--prefer-language', 'en,IT,JA', '--single']).getPreferLanguages()).toEqual(['EN', 'IT', 'JA']);
-    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--dat', os.devNull, '--prefer-language', 'EN,en', '--single']).getPreferLanguages()).toEqual(['EN']);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '-l', 'EN', '--single']).getPreferLanguages()).toEqual(['EN']);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--prefer-language', 'EN', '--single']).getPreferLanguages()).toEqual(['EN']);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--prefer-language', 'EN,it', '--single']).getPreferLanguages()).toEqual(['EN', 'IT']);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--prefer-language', 'en,IT,JA', '--single']).getPreferLanguages()).toEqual(['EN', 'IT', 'JA']);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--prefer-language', 'EN,en', '--single']).getPreferLanguages()).toEqual(['EN']);
   });
 
   it('should parse "prefer-region"', () => {
     expect(() => argumentsParser.parse([...dummyCommandAndRequiredArgs, '--prefer-region'])).toThrow(/not enough arguments/i);
     expect(() => argumentsParser.parse([...dummyCommandAndRequiredArgs, '--prefer-region', 'USA'])).toThrow(/dependent|implication/i);
-    expect(() => argumentsParser.parse([...dummyCommandAndRequiredArgs, '--prefer-region', 'USA', '--single'])).toThrow(/dependent|implication/i);
-    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--dat', os.devNull, '-r', 'USA', '--single']).getPreferRegions()).toEqual(['USA']);
-    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--dat', os.devNull, '--prefer-region', 'USA', '--single']).getPreferRegions()).toEqual(['USA']);
-    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--dat', os.devNull, '--prefer-region', 'USA,eur', '--single']).getPreferRegions()).toEqual(['USA', 'EUR']);
-    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--dat', os.devNull, '--prefer-region', 'usa,EUR,JPN', '--single']).getPreferRegions()).toEqual(['USA', 'EUR', 'JPN']);
-    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--dat', os.devNull, '--prefer-region', 'USA,usa', '--single']).getPreferRegions()).toEqual(['USA']);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '-r', 'USA', '--single']).getPreferRegions()).toEqual(['USA']);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--prefer-region', 'USA', '--single']).getPreferRegions()).toEqual(['USA']);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--prefer-region', 'USA,eur', '--single']).getPreferRegions()).toEqual(['USA', 'EUR']);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--prefer-region', 'usa,EUR,JPN', '--single']).getPreferRegions()).toEqual(['USA', 'EUR', 'JPN']);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--prefer-region', 'USA,usa', '--single']).getPreferRegions()).toEqual(['USA']);
   });
 
   it('should parse "prefer-revision-newer"', () => {
+    expect(() => argumentsParser.parse([...dummyCommandAndRequiredArgs, '--prefer-revision-newer', '--prefer-revision-older', '--single'])).toThrow(/mutually exclusive/i);
     expect(() => argumentsParser.parse([...dummyCommandAndRequiredArgs, '--prefer-revision-newer'])).toThrow(/dependent|implication/i);
-    expect(() => argumentsParser.parse([...dummyCommandAndRequiredArgs, '--prefer-revision-newer', '--single'])).toThrow(/dependent|implication/i);
-    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--dat', os.devNull, '--prefer-revision-newer', '--single']).getPreferRevisionNewer()).toEqual(true);
-    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--dat', os.devNull, '--prefer-revision-newer', 'true', '--single']).getPreferRevisionNewer()).toEqual(true);
-    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--dat', os.devNull, '--prefer-revision-newer', 'false', '--single']).getPreferRevisionNewer()).toEqual(false);
-    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--dat', os.devNull, '--prefer-revision-newer', '--prefer-revision-newer', '--single']).getPreferRevisionNewer()).toEqual(true);
-    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--dat', os.devNull, '--prefer-revision-newer', 'false', '--prefer-revision-newer', 'true', '--single']).getPreferRevisionNewer()).toEqual(true);
-    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--dat', os.devNull, '--prefer-revision-newer', 'true', '--prefer-revision-newer', 'false', '--single']).getPreferRevisionNewer()).toEqual(false);
-    expect(() => argumentsParser.parse([...dummyCommandAndRequiredArgs, '--dat', os.devNull, '--prefer-revision-newer', '--prefer-revision-older', '--single'])).toThrow(/mutually exclusive/i);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--prefer-revision-newer', '--single']).getPreferRevisionNewer()).toEqual(true);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--prefer-revision-newer', 'true', '--single']).getPreferRevisionNewer()).toEqual(true);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--prefer-revision-newer', 'false', '--single']).getPreferRevisionNewer()).toEqual(false);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--prefer-revision-newer', '--prefer-revision-newer', '--single']).getPreferRevisionNewer()).toEqual(true);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--prefer-revision-newer', 'false', '--prefer-revision-newer', 'true', '--single']).getPreferRevisionNewer()).toEqual(true);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--prefer-revision-newer', 'true', '--prefer-revision-newer', 'false', '--single']).getPreferRevisionNewer()).toEqual(false);
   });
 
   it('should parse "prefer-revision-older"', () => {
+    expect(() => argumentsParser.parse([...dummyCommandAndRequiredArgs, '--prefer-revision-older', '--prefer-revision-newer', '--single'])).toThrow(/mutually exclusive/i);
     expect(() => argumentsParser.parse([...dummyCommandAndRequiredArgs, '--prefer-revision-older'])).toThrow(/dependent|implication/i);
-    expect(() => argumentsParser.parse([...dummyCommandAndRequiredArgs, '--prefer-revision-older', '--single'])).toThrow(/dependent|implication/i);
-    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--dat', os.devNull, '--prefer-revision-older', '--single']).getPreferRevisionOlder()).toEqual(true);
-    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--dat', os.devNull, '--prefer-revision-older', 'true', '--single']).getPreferRevisionOlder()).toEqual(true);
-    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--dat', os.devNull, '--prefer-revision-older', 'false', '--single']).getPreferRevisionOlder()).toEqual(false);
-    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--dat', os.devNull, '--prefer-revision-older', '--prefer-revision-older', '--single']).getPreferRevisionOlder()).toEqual(true);
-    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--dat', os.devNull, '--prefer-revision-older', 'false', '--prefer-revision-older', 'true', '--single']).getPreferRevisionOlder()).toEqual(true);
-    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--dat', os.devNull, '--prefer-revision-older', 'true', '--prefer-revision-older', 'false', '--single']).getPreferRevisionOlder()).toEqual(false);
-    expect(() => argumentsParser.parse([...dummyCommandAndRequiredArgs, '--dat', os.devNull, '--prefer-revision-older', '--prefer-revision-newer', '--single'])).toThrow(/mutually exclusive/i);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--prefer-revision-older', '--single']).getPreferRevisionOlder()).toEqual(true);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--prefer-revision-older', 'true', '--single']).getPreferRevisionOlder()).toEqual(true);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--prefer-revision-older', 'false', '--single']).getPreferRevisionOlder()).toEqual(false);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--prefer-revision-older', '--prefer-revision-older', '--single']).getPreferRevisionOlder()).toEqual(true);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--prefer-revision-older', 'false', '--prefer-revision-older', 'true', '--single']).getPreferRevisionOlder()).toEqual(true);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--prefer-revision-older', 'true', '--prefer-revision-older', 'false', '--single']).getPreferRevisionOlder()).toEqual(false);
   });
 
   it('should parse "prefer-retail"', () => {
     expect(() => argumentsParser.parse([...dummyCommandAndRequiredArgs, '--prefer-retail'])).toThrow(/dependent|implication/i);
-    expect(() => argumentsParser.parse([...dummyCommandAndRequiredArgs, '--prefer-retail', '--single'])).toThrow(/dependent|implication/i);
-    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--dat', os.devNull, '--prefer-retail', '--single']).getPreferRetail()).toEqual(true);
-    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--dat', os.devNull, '--prefer-retail', 'true', '--single']).getPreferRetail()).toEqual(true);
-    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--dat', os.devNull, '--prefer-retail', 'false', '--single']).getPreferRetail()).toEqual(false);
-    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--dat', os.devNull, '--prefer-retail', '--prefer-retail', '--single']).getPreferRetail()).toEqual(true);
-    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--dat', os.devNull, '--prefer-retail', 'false', '--prefer-retail', 'true', '--single']).getPreferRetail()).toEqual(true);
-    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--dat', os.devNull, '--prefer-retail', 'true', '--prefer-retail', 'false', '--single']).getPreferRetail()).toEqual(false);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--prefer-retail', '--single']).getPreferRetail()).toEqual(true);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--prefer-retail', 'true', '--single']).getPreferRetail()).toEqual(true);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--prefer-retail', 'false', '--single']).getPreferRetail()).toEqual(false);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--prefer-retail', '--prefer-retail', '--single']).getPreferRetail()).toEqual(true);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--prefer-retail', 'false', '--prefer-retail', 'true', '--single']).getPreferRetail()).toEqual(true);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--prefer-retail', 'true', '--prefer-retail', 'false', '--single']).getPreferRetail()).toEqual(false);
   });
 
   it('should parse "prefer-ntsc"', () => {
@@ -478,13 +550,23 @@ describe('options', () => {
 
   it('should parse "prefer-parent"', () => {
     expect(() => argumentsParser.parse([...dummyCommandAndRequiredArgs, '--prefer-parent'])).toThrow(/dependent|implication/i);
-    expect(() => argumentsParser.parse([...dummyCommandAndRequiredArgs, '--prefer-parent', '--single'])).toThrow(/dependent|implication/i);
-    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--dat', os.devNull, '--prefer-parent', '--single']).getPreferParent()).toEqual(true);
-    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--dat', os.devNull, '--prefer-parent', 'true', '--single']).getPreferParent()).toEqual(true);
-    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--dat', os.devNull, '--prefer-parent', 'false', '--single']).getPreferParent()).toEqual(false);
-    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--dat', os.devNull, '--prefer-parent', '--prefer-parent', '--single']).getPreferParent()).toEqual(true);
-    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--dat', os.devNull, '--prefer-parent', 'false', '--prefer-parent', 'true', '--single']).getPreferParent()).toEqual(true);
-    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--dat', os.devNull, '--prefer-parent', 'true', '--prefer-parent', 'false', '--single']).getPreferParent()).toEqual(false);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--prefer-parent', '--single']).getPreferParent()).toEqual(true);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--prefer-parent', 'true', '--single']).getPreferParent()).toEqual(true);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--prefer-parent', 'false', '--single']).getPreferParent()).toEqual(false);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--prefer-parent', '--prefer-parent', '--single']).getPreferParent()).toEqual(true);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--prefer-parent', 'false', '--prefer-parent', 'true', '--single']).getPreferParent()).toEqual(true);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--prefer-parent', 'true', '--prefer-parent', 'false', '--single']).getPreferParent()).toEqual(false);
+  });
+
+  it('should parse "merge-roms"', () => {
+    expect(argumentsParser.parse(dummyCommandAndRequiredArgs).getMergeRoms())
+      .toEqual(MergeMode.FULLNONMERGED);
+    expect(() => argumentsParser.parse([...dummyCommandAndRequiredArgs, '--merge-roms', 'foobar']).getMergeRoms()).toThrow(/invalid values/i);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--merge-roms', 'fullnonmerged']).getMergeRoms()).toEqual(MergeMode.FULLNONMERGED);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--merge-roms', 'nonmerged']).getMergeRoms()).toEqual(MergeMode.NONMERGED);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--merge-roms', 'split']).getMergeRoms()).toEqual(MergeMode.SPLIT);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--merge-roms', 'merged']).getMergeRoms()).toEqual(MergeMode.MERGED);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--merge-roms', 'merged', '--merge-roms', 'split']).getMergeRoms()).toEqual(MergeMode.SPLIT);
   });
 
   it('should parse "filter-regex"', () => {
@@ -506,20 +588,20 @@ describe('options', () => {
 
   it('should parse "language-filter"', () => {
     expect(() => argumentsParser.parse([...dummyCommandAndRequiredArgs, '--language-filter'])).toThrow(/not enough arguments/i);
-    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '-L', 'EN']).getLanguageFilter()).toEqual(['EN']);
-    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--language-filter', 'EN']).getLanguageFilter()).toEqual(['EN']);
-    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--language-filter', 'EN,it']).getLanguageFilter()).toEqual(['EN', 'IT']);
-    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--language-filter', 'en,IT,JA']).getLanguageFilter()).toEqual(['EN', 'IT', 'JA']);
-    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--language-filter', 'EN,en']).getLanguageFilter()).toEqual(['EN']);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '-L', 'EN']).getFilterLanguage()).toEqual(new Set(['EN']));
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--language-filter', 'EN']).getFilterLanguage()).toEqual(new Set(['EN']));
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--language-filter', 'EN,it']).getFilterLanguage()).toEqual(new Set(['EN', 'IT']));
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--language-filter', 'en,IT,JA']).getFilterLanguage()).toEqual(new Set(['EN', 'IT', 'JA']));
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--language-filter', 'EN,en']).getFilterLanguage()).toEqual(new Set(['EN']));
   });
 
   it('should parse "region-filter"', () => {
     expect(() => argumentsParser.parse([...dummyCommandAndRequiredArgs, '--region-filter'])).toThrow(/not enough arguments/i);
-    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '-R', 'USA']).getRegionFilter()).toEqual(['USA']);
-    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--region-filter', 'USA']).getRegionFilter()).toEqual(['USA']);
-    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--region-filter', 'USA,eur']).getRegionFilter()).toEqual(['USA', 'EUR']);
-    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--region-filter', 'usa,EUR,JPN']).getRegionFilter()).toEqual(['USA', 'EUR', 'JPN']);
-    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--region-filter', 'USA,usa']).getRegionFilter()).toEqual(['USA']);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '-R', 'USA']).getFilterRegion()).toEqual(new Set(['USA']));
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--region-filter', 'USA']).getFilterRegion()).toEqual(new Set(['USA']));
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--region-filter', 'USA,eur']).getFilterRegion()).toEqual(new Set(['USA', 'EUR']));
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--region-filter', 'usa,EUR,JPN']).getFilterRegion()).toEqual(new Set(['USA', 'EUR', 'JPN']));
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--region-filter', 'USA,usa']).getFilterRegion()).toEqual(new Set(['USA']));
   });
 
   it('should parse "no-bios"', () => {

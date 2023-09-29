@@ -116,8 +116,14 @@ export default class Internationalization {
     { short: 'ZH', long: 'CHI' },
   ];
 
-  public static readonly REGIONS = this.REGION_OPTIONS
+  public static readonly REGION_CODES = this.REGION_OPTIONS
     .map((regionOption) => regionOption.region.toUpperCase())
+    .filter((region) => region)
+    .reduce(ArrayPoly.reduceUnique(), [])
+    .sort();
+
+  public static readonly REGION_NAMES = this.REGION_OPTIONS
+    .map((regionOption) => regionOption.long)
     .filter((region) => region)
     .reduce(ArrayPoly.reduceUnique(), [])
     .sort();

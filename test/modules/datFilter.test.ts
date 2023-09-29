@@ -1,9 +1,9 @@
 import DATFilter from '../../src/modules/datFilter.js';
-import DAT from '../../src/types/logiqx/dat.js';
-import Game, { GameProps } from '../../src/types/logiqx/game.js';
-import Header from '../../src/types/logiqx/header.js';
-import Release from '../../src/types/logiqx/release.js';
-import ROM from '../../src/types/logiqx/rom.js';
+import Game, { GameProps } from '../../src/types/dats/game.js';
+import Header from '../../src/types/dats/logiqx/header.js';
+import LogiqxDAT from '../../src/types/dats/logiqx/logiqxDat.js';
+import Release from '../../src/types/dats/release.js';
+import ROM from '../../src/types/dats/rom.js';
 import Options, { OptionsProps } from '../../src/types/options.js';
 import ProgressBarFake from '../console/progressBarFake.js';
 
@@ -16,7 +16,7 @@ async function expectFilteredDAT(
   gamesArr: Game[][],
   expectedSize: number,
 ): Promise<void> {
-  const dat = new DAT(new Header(), gamesArr.flatMap((games) => games));
+  const dat = new LogiqxDAT(new Header(), gamesArr.flatMap((games) => games));
   const filteredDat = await buildDATFilter(options).filter(dat);
   expect(filteredDat.getGames().length).toEqual(expectedSize);
 }
@@ -61,7 +61,7 @@ function buildGameWithRegionLanguage(
         releases.push(new Release(releaseName, region, language));
       }
 
-      const rom = new ROM(`${romName}.rom`, 0, '00000000');
+      const rom = new ROM({ name: `${romName}.rom`, size: 0, crc: '00000000' });
       const game = new Game({
         name: romName, rom: [rom], release: releases, ...gameOptionsArr[i],
       });
@@ -96,15 +96,15 @@ describe('filter', () => {
 
   it('should return no candidates if none given', async () => {
     await expectFilteredDAT({
-      languageFilter: [],
+      filterLanguage: [],
     }, [], 0);
 
     await expectFilteredDAT({
-      languageFilter: ['ZH'],
+      filterLanguage: ['ZH'],
     }, [], 0);
 
     await expectFilteredDAT({
-      languageFilter: ['ZH', 'DE'],
+      filterLanguage: ['ZH', 'DE'],
     }, [], 0);
   });
 
@@ -185,25 +185,25 @@ describe('filter', () => {
   describe('language filter', () => {
     it('should return no candidates if none matching', async () => {
       await expectFilteredDAT({
-        languageFilter: ['ZH'],
+        filterLanguage: ['ZH'],
       }, [
         buildGameWithRegionLanguage('one', 'USA', 'EN'),
       ], 0);
 
       await expectFilteredDAT({
-        languageFilter: ['ZH'],
+        filterLanguage: ['ZH'],
       }, [
         buildGameWithRegionLanguage('one', 'EUR', undefined),
       ], 0);
 
       await expectFilteredDAT({
-        languageFilter: ['ZH'],
+        filterLanguage: ['ZH'],
       }, [
         buildGameWithRegionLanguage('one (En,Fr,De)', 'EUR', undefined),
       ], 0);
 
       await expectFilteredDAT({
-        languageFilter: ['ZH'],
+        filterLanguage: ['ZH'],
       }, [
         buildGameWithRegionLanguage('one', 'USA', 'EN'),
         buildGameWithRegionLanguage('two', 'JPN', 'JA'),
@@ -213,7 +213,7 @@ describe('filter', () => {
 
     it('should return some candidates if some matching', async () => {
       await expectFilteredDAT({
-        languageFilter: ['ZH'],
+        filterLanguage: ['ZH'],
       }, [
         buildGameWithRegionLanguage('one', 'USA', 'EN'),
         buildGameWithRegionLanguage('two', 'CHN', 'ZH'),
@@ -221,7 +221,7 @@ describe('filter', () => {
       ], 1);
 
       await expectFilteredDAT({
-        languageFilter: ['ZH'],
+        filterLanguage: ['ZH'],
       }, [
         buildGameWithRegionLanguage('one', 'USA', undefined),
         buildGameWithRegionLanguage('two', 'CHN', undefined),
@@ -229,7 +229,7 @@ describe('filter', () => {
       ], 1);
 
       await expectFilteredDAT({
-        languageFilter: ['EN', 'ZH'],
+        filterLanguage: ['EN', 'ZH'],
       }, [
         buildGameWithRegionLanguage('one', 'USA', 'EN'),
         buildGameWithRegionLanguage('two', 'JPN', 'JA'),
@@ -239,39 +239,39 @@ describe('filter', () => {
 
     it('should return all candidates if all matching', async () => {
       await expectFilteredDAT({
-        languageFilter: ['EN'],
+        filterLanguage: ['EN'],
       }, [
         buildGameWithRegionLanguage('one', 'USA', 'EN'),
       ], 1);
 
       await expectFilteredDAT({
-        languageFilter: ['EN'],
+        filterLanguage: ['EN'],
       }, [
         buildGameWithRegionLanguage('one', 'EUR', undefined),
       ], 1);
 
       await expectFilteredDAT({
-        languageFilter: ['EN'],
+        filterLanguage: ['EN'],
       }, [
         buildGameWithRegionLanguage('one (En,Fr,De)', 'EUR', undefined),
       ], 1);
 
       await expectFilteredDAT({
-        languageFilter: ['EN', 'ZH'],
+        filterLanguage: ['EN', 'ZH'],
       }, [
         buildGameWithRegionLanguage('one', 'USA', 'EN'),
         buildGameWithRegionLanguage('two', 'CHN', 'ZH'),
       ], 2);
 
       await expectFilteredDAT({
-        languageFilter: ['EN', 'ZH'],
+        filterLanguage: ['EN', 'ZH'],
       }, [
         buildGameWithRegionLanguage('one', 'USA', undefined),
         buildGameWithRegionLanguage('two', 'CHN', undefined),
       ], 2);
 
       await expectFilteredDAT({
-        languageFilter: ['EN', 'JA'],
+        filterLanguage: ['EN', 'JA'],
       }, [
         buildGameWithRegionLanguage('one', 'USA', 'EN'),
         buildGameWithRegionLanguage('two', 'JPN', 'JA'),
@@ -283,13 +283,13 @@ describe('filter', () => {
   describe('region filter', () => {
     it('should return no candidates if none matching', async () => {
       await expectFilteredDAT({
-        regionFilter: ['EUR'],
+        filterRegion: ['EUR'],
       }, [
         buildGameWithRegionLanguage('one', 'USA', 'EN'),
       ], 0);
 
       await expectFilteredDAT({
-        regionFilter: ['CHN'],
+        filterRegion: ['CHN'],
       }, [
         buildGameWithRegionLanguage('one', ['USA', 'CAN'], 'EN'),
         buildGameWithRegionLanguage('two', 'JPN', 'JA'),
@@ -299,7 +299,7 @@ describe('filter', () => {
 
     it('should return some candidates if some matching', async () => {
       await expectFilteredDAT({
-        regionFilter: ['USA'],
+        filterRegion: ['USA'],
       }, [
         buildGameWithRegionLanguage('one', 'USA', 'EN'),
         buildGameWithRegionLanguage('two', 'CHN', 'ZH'),
@@ -307,7 +307,7 @@ describe('filter', () => {
       ], 1);
 
       await expectFilteredDAT({
-        regionFilter: ['CAN', 'ASI'],
+        filterRegion: ['CAN', 'ASI'],
       }, [
         buildGameWithRegionLanguage('one', ['USA', 'CAN'], 'EN'),
         buildGameWithRegionLanguage('two', 'JPN', 'JA'),
@@ -317,20 +317,20 @@ describe('filter', () => {
 
     it('should return all candidates if all matching', async () => {
       await expectFilteredDAT({
-        regionFilter: ['USA'],
+        filterRegion: ['USA'],
       }, [
         buildGameWithRegionLanguage('one', 'USA', 'EN'),
       ], 1);
 
       await expectFilteredDAT({
-        regionFilter: ['USA', 'CHN'],
+        filterRegion: ['USA', 'CHN'],
       }, [
         buildGameWithRegionLanguage('one', 'USA', 'EN'),
         buildGameWithRegionLanguage('two', 'CHN', 'ZH'),
       ], 2);
 
       await expectFilteredDAT({
-        regionFilter: ['USA', 'JPN'],
+        filterRegion: ['USA', 'JPN'],
       }, [
         buildGameWithRegionLanguage('one', 'USA', 'EN'),
         buildGameWithRegionLanguage('two', 'JPN', 'JA'),

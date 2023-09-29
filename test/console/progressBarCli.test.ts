@@ -2,9 +2,9 @@ import stripAnsi from 'strip-ansi';
 
 import LogLevel from '../../src/console/logLevel.js';
 import { ProgressBarSymbol } from '../../src/console/progressBar.js';
-import ProgressBarCLI from '../../src/console/progressBarCLI.js';
+import ProgressBarCLI from '../../src/console/progressBarCli.js';
 import SingleBarFormatted from '../../src/console/singleBarFormatted.js';
-import ProgressBarCLISpy from './progressBarCLISpy.js';
+import ProgressBarCLISpy from './progressBarCliSpy.js';
 
 describe('reset', () => {
   it('should change the value and total', async () => {

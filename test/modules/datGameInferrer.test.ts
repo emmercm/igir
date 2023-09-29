@@ -1,4 +1,4 @@
-import DATInferrer from '../../src/modules/datInferrer.js';
+import DATGameInferrer from '../../src/modules/datGameInferrer.js';
 import ROMScanner from '../../src/modules/romScanner.js';
 import Options from '../../src/types/options.js';
 import ProgressBarFake from '../console/progressBarFake.js';
@@ -27,7 +27,7 @@ test.each([
   }), new ProgressBarFake()).scan();
 
   // When
-  const dats = new DATInferrer(new ProgressBarFake()).infer(romFiles);
+  const dats = new DATGameInferrer(new ProgressBarFake()).infer(romFiles);
 
   // Then
   const datNameToGameCount = dats.reduce((map, dat) => ({

@@ -1,7 +1,7 @@
 import ProgressBar, { ProgressBarSymbol } from '../console/progressBar.js';
 import fsPoly from '../polyfill/fsPoly.js';
-import DAT from '../types/logiqx/dat.js';
-import Parent from '../types/logiqx/parent.js';
+import DAT from '../types/dats/dat.js';
+import Parent from '../types/dats/parent.js';
 import Options from '../types/options.js';
 import ReleaseCandidate from '../types/releaseCandidate.js';
 import Module from './module.js';

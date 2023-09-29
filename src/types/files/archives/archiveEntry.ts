@@ -1,5 +1,5 @@
-import path from 'path';
-import { Readable } from 'stream';
+import path from 'node:path';
+import { Readable } from 'node:stream';
 
 import Constants from '../../../constants.js';
 import fsPoly from '../../../polyfill/fsPoly.js';

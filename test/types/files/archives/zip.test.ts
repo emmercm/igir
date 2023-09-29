@@ -1,14 +1,14 @@
-import path from 'path';
+import path from 'node:path';
 
 import Constants from '../../../../src/constants.js';
 import ROMScanner from '../../../../src/modules/romScanner.js';
 import fsPoly from '../../../../src/polyfill/fsPoly.js';
+import Header from '../../../../src/types/dats/logiqx/header.js';
+import LogiqxDAT from '../../../../src/types/dats/logiqx/logiqxDat.js';
 import ArchiveEntry from '../../../../src/types/files/archives/archiveEntry.js';
 import Zip from '../../../../src/types/files/archives/zip.js';
 import File from '../../../../src/types/files/file.js';
 import FileFactory from '../../../../src/types/files/fileFactory.js';
-import DAT from '../../../../src/types/logiqx/dat.js';
-import Header from '../../../../src/types/logiqx/header.js';
 import Options from '../../../../src/types/options.js';
 import ProgressBarFake from '../../../console/progressBarFake.js';
 
@@ -30,7 +30,10 @@ describe('createArchive', () => {
 
     // Given a temp ROM file copied from fixtures
     const rom = (await findRoms(input))
-      .filter((file) => file.getSize())[0];
+      .find((file) => file.getSize());
+    if (!rom) {
+      fail('no ROM of a non-zero size was found');
+    }
     const tempDir = await fsPoly.mkdtemp(Constants.GLOBAL_TEMP_DIR);
     const tempFilePath = path.join(tempDir, path.basename(rom.getFilePath()));
     await fsPoly.copyFile(rom.getFilePath(), tempFilePath);
@@ -57,7 +60,7 @@ describe('createArchive', () => {
     const zip = inputToOutput[0][1].getArchive();
     await expect(zip.createArchive(
       new Options(),
-      new DAT(new Header(), []),
+      new LogiqxDAT(new Header(), []),
       inputToOutput,
     )).rejects.toThrow();
 

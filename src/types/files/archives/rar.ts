@@ -1,6 +1,7 @@
+import path from 'node:path';
+
 import { Mutex } from 'async-mutex';
 import unrar from 'node-unrar-js';
-import path from 'path';
 import { Memoize } from 'typescript-memoize';
 
 import Archive from './archive.js';

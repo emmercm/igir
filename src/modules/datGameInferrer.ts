@@ -1,12 +1,13 @@
-import path from 'path';
+import path from 'node:path';
 
 import ProgressBar from '../console/progressBar.js';
+import DAT from '../types/dats/dat.js';
+import Game from '../types/dats/game.js';
+import Header from '../types/dats/logiqx/header.js';
+import LogiqxDAT from '../types/dats/logiqx/logiqxDat.js';
+import ROM from '../types/dats/rom.js';
 import ArchiveEntry from '../types/files/archives/archiveEntry.js';
 import File from '../types/files/file.js';
-import DAT from '../types/logiqx/dat.js';
-import Game from '../types/logiqx/game.js';
-import Header from '../types/logiqx/header.js';
-import ROM from '../types/logiqx/rom.js';
 import Module from './module.js';
 
 /**
@@ -16,19 +17,19 @@ import Module from './module.js';
  *
  * This class will not be run concurrently with any other class.
  */
-export default class DATInferrer extends Module {
+export default class DATGameInferrer extends Module {
   constructor(progressBar: ProgressBar) {
-    super(progressBar, DATInferrer.name);
+    super(progressBar, DATGameInferrer.name);
   }
 
   /**
-   * Infer DATs from input files.
+   * Infer {@link Game}s from input files.
    */
   infer(romFiles: File[]): DAT[] {
     this.progressBar.logInfo(`inferring DATs for ${romFiles.length.toLocaleString()} ROM${romFiles.length !== 1 ? 's' : ''}`);
 
     const datNamesToRomFiles = romFiles.reduce((map, file) => {
-      const datName = DATInferrer.getDatName(file);
+      const datName = DATGameInferrer.getDatName(file);
       const datRomFiles = map.get(datName) ?? [];
       datRomFiles.push(file);
       map.set(datName, datRomFiles);
@@ -37,7 +38,7 @@ export default class DATInferrer extends Module {
     this.progressBar.logDebug(`inferred ${datNamesToRomFiles.size.toLocaleString()} DAT${datNamesToRomFiles.size !== 1 ? 's' : ''}`);
 
     const dats = [...datNamesToRomFiles.entries()]
-      .map(([datName, datRomFiles]) => DATInferrer.createDAT(datName, datRomFiles));
+      .map(([datName, datRomFiles]) => DATGameInferrer.createDAT(datName, datRomFiles));
 
     this.progressBar.logInfo('done inferring DATs');
     return dats;
@@ -51,7 +52,7 @@ export default class DATInferrer extends Module {
     const header = new Header({ name: datName });
 
     const gameNamesToRomFiles = romFiles.reduce((map, file) => {
-      const gameName = DATInferrer.getGameName(file);
+      const gameName = DATGameInferrer.getGameName(file);
       const gameRomFiles = map.get(gameName) ?? [];
       gameRomFiles.push(file);
       map.set(gameName, gameRomFiles);
@@ -59,18 +60,18 @@ export default class DATInferrer extends Module {
     }, new Map<string, File[]>());
 
     const games = [...gameNamesToRomFiles.entries()].map(([gameName, gameRomFiles]) => {
-      const roms = gameRomFiles.map((romFile) => new ROM(
-        path.basename(romFile.getExtractedFilePath()),
-        romFile.getSize(),
-        romFile.getCrc32(),
-      ));
+      const roms = gameRomFiles.map((romFile) => new ROM({
+        name: path.basename(romFile.getExtractedFilePath()),
+        size: romFile.getSize(),
+        crc: romFile.getCrc32(),
+      }));
       return new Game({
         name: gameName,
         rom: roms,
       });
     });
 
-    return new DAT(header, games);
+    return new LogiqxDAT(header, games);
   }
 
   private static getGameName(file: File): string {

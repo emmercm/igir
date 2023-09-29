@@ -1,6 +1,7 @@
+import path from 'node:path';
+
 import _7z, { Result } from '7zip-min';
 import { Mutex } from 'async-mutex';
-import path from 'path';
 import { Memoize } from 'typescript-memoize';
 
 import Constants from '../../../constants.js';

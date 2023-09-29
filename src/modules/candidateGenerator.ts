@@ -1,17 +1,17 @@
-import path from 'path';
+import path from 'node:path';
 
 import ProgressBar, { ProgressBarSymbol } from '../console/progressBar.js';
 import ArrayPoly from '../polyfill/arrayPoly.js';
 import fsPoly from '../polyfill/fsPoly.js';
+import DAT from '../types/dats/dat.js';
+import Game from '../types/dats/game.js';
+import Parent from '../types/dats/parent.js';
+import Release from '../types/dats/release.js';
+import ROM from '../types/dats/rom.js';
 import Archive from '../types/files/archives/archive.js';
 import ArchiveEntry from '../types/files/archives/archiveEntry.js';
 import Zip from '../types/files/archives/zip.js';
 import File from '../types/files/file.js';
-import DAT from '../types/logiqx/dat.js';
-import Game from '../types/logiqx/game.js';
-import Parent from '../types/logiqx/parent.js';
-import Release from '../types/logiqx/release.js';
-import ROM from '../types/logiqx/rom.js';
 import Options from '../types/options.js';
 import OutputFactory from '../types/outputFactory.js';
 import ReleaseCandidate from '../types/releaseCandidate.js';
@@ -324,7 +324,9 @@ export default class CandidateGenerator extends Module {
       .map((romWithFiles) => romWithFiles.getOutputFile())
       .filter((outputFile) => !(outputFile instanceof ArchiveEntry))
       .map((outputFile) => outputFile.getFilePath())
+      // Is a duplicate output path
       .filter((outputPath, idx, outputPaths) => outputPaths.indexOf(outputPath) !== idx)
+      // Only return one copy of duplicate output paths
       .reduce(ArrayPoly.reduceUnique(), [])
       .sort();
     if (!duplicateOutputPaths.length) {

@@ -1,4 +1,4 @@
-import path from 'path';
+import path from 'node:path';
 
 import Logger from '../src/console/logger.js';
 import LogLevel from '../src/console/logLevel.js';
@@ -7,7 +7,7 @@ import Igir from '../src/igir.js';
 import ArrayPoly from '../src/polyfill/arrayPoly.js';
 import fsPoly from '../src/polyfill/fsPoly.js';
 import FileFactory from '../src/types/files/fileFactory.js';
-import Options, { OptionsProps } from '../src/types/options.js';
+import Options, { GameSubdirMode, OptionsProps } from '../src/types/options.js';
 
 interface TestOutput {
   outputFilesAndCrcs: string[][],
@@ -147,13 +147,6 @@ describe('with explicit DATs', () => {
     }), new Logger(LogLevel.NEVER)).main()).rejects.toThrow(/no valid dat files/i);
   });
 
-  it('should throw on DATs without parent/clone info', async () => {
-    await expect(async () => new Igir(new Options({
-      dat: ['test/fixtures/dats/{headered,patchable}.dat'],
-      single: true,
-    }), new Logger(LogLevel.NEVER)).main()).rejects.toThrow(/parent\/clone/i);
-  });
-
   it('should copy and test', async () => {
     await copyFixturesToTemp(async (inputTemp, outputTemp) => {
       const result = await runIgir({
@@ -162,6 +155,7 @@ describe('with explicit DATs', () => {
         input: [path.join(inputTemp, 'roms')],
         output: outputTemp,
         dirDatName: true,
+        dirGameSubdir: GameSubdirMode[GameSubdirMode.MULTIPLE].toLowerCase(),
       });
 
       expect(result.outputFilesAndCrcs).toEqual([
@@ -209,6 +203,7 @@ describe('with explicit DATs', () => {
         dat: [path.join(inputTemp, 'dats', 'one.dat')],
         input: [path.join(inputTemp, 'roms')],
         output: outputTemp,
+        dirGameSubdir: GameSubdirMode[GameSubdirMode.MULTIPLE].toLowerCase(),
         single: true,
         preferParent: true,
       });
@@ -251,6 +246,7 @@ describe('with explicit DATs', () => {
         input: [path.join(inputTemp, 'roms')],
         output: path.join(outputTemp, '{outputExt}'),
         dirDatName: true,
+        dirGameSubdir: GameSubdirMode[GameSubdirMode.MULTIPLE].toLowerCase(),
       });
 
       expect(result.outputFilesAndCrcs).toEqual([
@@ -304,6 +300,7 @@ describe('with explicit DATs', () => {
         input: [path.join(inputTemp, 'roms')],
         output: outputTemp,
         dirDatName: true,
+        dirGameSubdir: GameSubdirMode[GameSubdirMode.MULTIPLE].toLowerCase(),
       });
 
       expect(result.outputFilesAndCrcs).toEqual([
@@ -449,6 +446,53 @@ describe('with explicit DATs', () => {
     });
   });
 
+  it('should copy, zip by DAT, and test', async () => {
+    await copyFixturesToTemp(async (inputTemp, outputTemp) => {
+      const result = await runIgir({
+        commands: ['copy', 'zip', 'test'],
+        dat: [path.join(inputTemp, 'dats')],
+        input: [path.join(inputTemp, 'roms')],
+        output: outputTemp,
+        zipDatName: true,
+      });
+
+      expect(result.outputFilesAndCrcs).toEqual([
+        [`${path.join('Hardware Target Game Database', 'Dummy', 'smdb.zip')}|3708F2C.rom`, '20891c9f'],
+        [`${path.join('Hardware Target Game Database', 'Dummy', 'smdb.zip')}|65D1206.rom`, '20323455'],
+        [`${path.join('Hardware Target Game Database', 'Dummy', 'smdb.zip')}|C01173E.rom`, 'dfaebe28'],
+        [`${path.join('Hardware Target Game Database', 'Dummy', 'smdb.zip')}|Fizzbuzz.nes`, '370517b5'],
+        [`${path.join('Hardware Target Game Database', 'Dummy', 'smdb.zip')}|Foobar.lnx`, 'b22c9747'],
+        [`${path.join('Hardware Target Game Database', 'Dummy', 'smdb.zip')}|Lorem Ipsum.rom`, '70856527'],
+        ['Headered.zip|allpads.nes', '9180a163'],
+        ['Headered.zip|color_test.nes', 'c9c1b7aa'],
+        ['Headered.zip|diagnostic_test_cartridge.a78', 'f6cc9b1c'],
+        ['Headered.zip|fds_joypad_test.fds', '1e58456d'],
+        ['Headered.zip|LCDTestROM.lnx', '2d251538'],
+        ['Headered.zip|speed_test_v51.smc', '9adca6cc'],
+        ['One.zip|Fizzbuzz.nes', '370517b5'],
+        ['One.zip|Foobar.lnx', 'b22c9747'],
+        ['One.zip|Lorem Ipsum.rom', '70856527'],
+        [`One.zip|${path.join('One Three', 'One.rom')}`, 'f817a89f'],
+        [`One.zip|${path.join('One Three', 'Three.rom')}`, 'ff46c5d8'],
+        [`One.zip|${path.join('Three Four Five', 'Five.rom')}`, '3e5daf67'],
+        [`One.zip|${path.join('Three Four Five', 'Four.rom')}`, '1cf3ca74'],
+        [`One.zip|${path.join('Three Four Five', 'Three.rom')}`, 'ff46c5d8'],
+        ['Patchable.zip|0F09A40.rom', '2f943e86'],
+        ['Patchable.zip|3708F2C.rom', '20891c9f'],
+        ['Patchable.zip|612644F.rom', 'f7591b29'],
+        ['Patchable.zip|65D1206.rom', '20323455'],
+        ['Patchable.zip|92C85C9.rom', '06692159'],
+        ['Patchable.zip|Before.rom', '0361b321'],
+        ['Patchable.zip|Best.rom', '1e3d78cf'],
+        ['Patchable.zip|C01173E.rom', 'dfaebe28'],
+        ['Patchable.zip|KDULVQN.rom', 'b1c303e4'],
+      ]);
+      expect(result.cwdFilesAndCrcs).toHaveLength(0);
+      expect(result.movedFiles).toHaveLength(0);
+      expect(result.cleanedFiles).toHaveLength(0);
+    });
+  });
+
   it('should symlink and test', async () => {
     await copyFixturesToTemp(async (inputTemp, outputTemp) => {
       const result = await runIgir({
@@ -457,6 +501,7 @@ describe('with explicit DATs', () => {
         input: [path.join(inputTemp, 'roms')],
         output: outputTemp,
         dirDatName: true,
+        dirGameSubdir: GameSubdirMode[GameSubdirMode.MULTIPLE].toLowerCase(),
       });
 
       expect(result.outputFilesAndCrcs).toEqual([
@@ -506,6 +551,7 @@ describe('with explicit DATs', () => {
         patch: [path.join(inputTemp, 'patches')],
         output: outputTemp,
         dirDatName: true,
+        dirGameSubdir: GameSubdirMode[GameSubdirMode.MULTIPLE].toLowerCase(),
         removeHeaders: [''], // all
       });
 
@@ -578,14 +624,13 @@ describe('with explicit DATs', () => {
     'copy',
     'move',
     'symlink',
-  ])('should generate a fixdat when writing: %s', async (command) => {
+  ])('should %s, fixdat, and clean', async (command) => {
     await copyFixturesToTemp(async (inputTemp, outputTemp) => {
       const result = await runIgir({
-        commands: [command],
+        commands: [command, 'fixdat', 'clean'],
         dat: [path.join(inputTemp, 'dats')],
         input: [path.join(inputTemp, 'roms')],
         output: outputTemp,
-        fixdat: true,
         dirDatName: true,
       });
 
@@ -602,14 +647,13 @@ describe('with explicit DATs', () => {
     });
   });
 
-  it('should generate a fixdat when not writing', async () => {
+  it('should fixdat and report', async () => {
     await copyFixturesToTemp(async (inputTemp, outputTemp) => {
       const result = await runIgir({
-        commands: ['report'],
+        commands: ['fixdat', 'report'],
         dat: [path.join(inputTemp, 'dats')],
         input: [path.join(inputTemp, 'roms')],
         output: outputTemp,
-        fixdat: true,
         dirDatName: true,
         reportOutput: 'report.csv',
       });
@@ -691,12 +735,29 @@ describe('with inferred DATs', () => {
     });
   });
 
+  it('should move to the same directory', async () => {
+    await copyFixturesToTemp(async (inputTemp, outputTemp) => {
+      const inputDir = path.join(inputTemp, 'roms', 'raw');
+      const inputBefore = await walkWithCrc(inputDir, inputDir);
+
+      await runIgir({
+        commands: ['move', 'test'],
+        input: [inputDir],
+        output: inputDir,
+      });
+
+      await expect(walkWithCrc(inputDir, inputDir)).resolves.toEqual(inputBefore);
+      await expect(walkWithCrc(inputTemp, outputTemp)).resolves.toHaveLength(0);
+    });
+  });
+
   it('should move, extract, and test', async () => {
     await copyFixturesToTemp(async (inputTemp, outputTemp) => {
       const result = await runIgir({
         commands: ['move', 'extract', 'test'],
         input: [path.join(inputTemp, 'roms')],
         output: outputTemp,
+        dirGameSubdir: GameSubdirMode[GameSubdirMode.MULTIPLE].toLowerCase(),
       });
 
       expect(result.outputFilesAndCrcs).toEqual([

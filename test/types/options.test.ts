@@ -1,7 +1,7 @@
-import path from 'path';
+import path from 'node:path';
 
-import DAT from '../../src/types/logiqx/dat.js';
-import Header from '../../src/types/logiqx/header.js';
+import Header from '../../src/types/dats/logiqx/header.js';
+import LogiqxDAT from '../../src/types/dats/logiqx/logiqxDat.js';
 import Options from '../../src/types/options.js';
 
 describe('getOutputDirRoot', () => {
@@ -25,7 +25,7 @@ describe('canRemoveHeader', () => {
   test.each([
     'Nintendo - Nintendo Entertainment System (Headered) (Parent-Clone)',
   ])('should not remove header for headered DATs: %s', (datName) => {
-    const dat = new DAT(new Header({ name: datName }), []);
+    const dat = new LogiqxDAT(new Header({ name: datName }), []);
     const options = new Options({ removeHeaders: [''] });
     expect(options.canRemoveHeader(dat, '.smc')).toEqual(false);
   });
@@ -33,7 +33,7 @@ describe('canRemoveHeader', () => {
   test.each([
     'Nintendo - Nintendo Entertainment System (Headerless) (Parent-Clone)',
   ])('should remove header for headerless DATs: %s', (datName) => {
-    const dat = new DAT(new Header({ name: datName }), []);
+    const dat = new LogiqxDAT(new Header({ name: datName }), []);
     const options = new Options({ removeHeaders: [''] });
     expect(options.canRemoveHeader(dat, '.smc')).toEqual(true);
   });
@@ -41,7 +41,7 @@ describe('canRemoveHeader', () => {
   test.each(
     ['.a78', '.lnx', '.nes', '.fds', '.smc'],
   )('should not remove header when option not provided: %s', (extension) => {
-    const dat = new DAT(new Header(), []);
+    const dat = new LogiqxDAT(new Header(), []);
     const options = new Options();
     expect(options.canRemoveHeader(dat, extension)).toEqual(false);
   });
@@ -49,7 +49,7 @@ describe('canRemoveHeader', () => {
   test.each(
     ['.a78', '.lnx', '.nes', '.fds', '.smc', '.someotherextension'],
   )('should remove header when no arg provided: %s', (extension) => {
-    const dat = new DAT(new Header(), []);
+    const dat = new LogiqxDAT(new Header(), []);
     const options = new Options({ removeHeaders: [''] });
     expect(options.canRemoveHeader(dat, extension)).toEqual(true);
   });
@@ -57,7 +57,7 @@ describe('canRemoveHeader', () => {
   test.each(
     ['.lnx', '.smc', '.someotherextension'],
   )('should remove header when extension matches: %s', (extension) => {
-    const dat = new DAT(new Header(), []);
+    const dat = new LogiqxDAT(new Header(), []);
     const options = new Options({ removeHeaders: ['.LNX', '.smc', '.someotherextension'] });
     expect(options.canRemoveHeader(dat, extension)).toEqual(true);
   });
@@ -65,7 +65,7 @@ describe('canRemoveHeader', () => {
   test.each(
     ['.a78', '.nes', '.fds'],
   )('should not remove header when extension does not match: %s', (extension) => {
-    const dat = new DAT(new Header(), []);
+    const dat = new LogiqxDAT(new Header(), []);
     const options = new Options({ removeHeaders: ['.LNX', '.smc', '.someotherextension'] });
     expect(options.canRemoveHeader(dat, extension)).toEqual(false);
   });

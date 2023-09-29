@@ -1,17 +1,16 @@
 // eslint-disable-next-line max-classes-per-file
-import path, { ParsedPath } from 'path';
+import path, { ParsedPath } from 'node:path';
 
-import ArrayPoly from '../polyfill/arrayPoly.js';
 import fsPoly from '../polyfill/fsPoly.js';
+import DAT from './dats/dat.js';
+import Game from './dats/game.js';
+import Release from './dats/release.js';
+import ROM from './dats/rom.js';
 import ArchiveEntry from './files/archives/archiveEntry.js';
 import File from './files/file.js';
 import FileFactory from './files/fileFactory.js';
 import GameConsole from './gameConsole.js';
-import DAT from './logiqx/dat.js';
-import Game from './logiqx/game.js';
-import Release from './logiqx/release.js';
-import ROM from './logiqx/rom.js';
-import Options from './options.js';
+import Options, { GameSubdirMode } from './options.js';
 
 /**
  * A {@link ParsedPath} that carries {@link ArchiveEntry} path information.
@@ -95,7 +94,7 @@ export default class OutputFactory {
       base: '',
       name,
       ext,
-      entryPath: path.basename(this.getRomBasename(options, dat, rom, inputFile)),
+      entryPath: this.getEntryPath(options, dat, game, rom, inputFile),
     });
   }
 
@@ -161,9 +160,10 @@ export default class OutputFactory {
     outputRomFilename?: string,
   ): string {
     let result = outputPath;
-    result = this.replaceDatTokens(result, dat);
-    result = this.replaceGameTokens(result, game);
+    // NOTE(cemmer): order here is important! They should go most specific to least
     result = this.replaceReleaseTokens(result, release);
+    result = this.replaceGameTokens(result, game);
+    result = this.replaceDatTokens(result, dat);
     result = this.replaceInputTokens(result, inputRomPath);
     result = this.replaceOutputTokens(result, outputRomFilename);
     result = this.replaceOutputGameConsoleTokens(result, dat, outputRomFilename);
@@ -176,13 +176,19 @@ export default class OutputFactory {
     return result;
   }
 
-  private static replaceDatTokens(input: string, dat: DAT): string {
-    let output = input;
-    output = output.replace('{datName}', dat.getName().replace(/[\\/]/g, '_'));
+  private static replaceReleaseTokens(input: string, release?: Release): string {
+    if (!release) {
+      return input;
+    }
 
-    const description = dat.getDescription();
-    if (description) {
-      output = output.replace('{datDescription}', description.replace(/[\\/]/g, '_'));
+    let output = input;
+    output = output.replace('{gameRegion}', release.getRegion());
+    output = output.replace('{datReleaseRegion}', release.getRegion()); // deprecated
+
+    const releaseLanguage = release.getLanguage();
+    if (releaseLanguage) {
+      output = output.replace('{gameLanguage}', releaseLanguage);
+      output = output.replace('{datReleaseLanguage}', releaseLanguage); // deprecated
     }
 
     return output;
@@ -195,20 +201,27 @@ export default class OutputFactory {
 
     let output = input;
     output = output.replace('{gameType}', game.getGameType());
+
+    const gameRegion = game.getRegions().find(() => true);
+    if (gameRegion) {
+      output = output.replace('{gameRegion}', gameRegion);
+    }
+
+    const gameLanguage = game.getLanguages().find(() => true);
+    if (gameLanguage) {
+      output = output.replace('{gameLanguage}', gameLanguage);
+    }
+
     return output;
   }
 
-  private static replaceReleaseTokens(input: string, release?: Release): string {
-    if (!release) {
-      return input;
-    }
-
+  private static replaceDatTokens(input: string, dat: DAT): string {
     let output = input;
-    output = output.replace('{datReleaseRegion}', release.getRegion());
+    output = output.replace('{datName}', dat.getName().replace(/[\\/]/g, '_'));
 
-    const language = release.getLanguage();
-    if (language) {
-      output = output.replace('{datReleaseLanguage}', language);
+    const description = dat.getDescription();
+    if (description) {
+      output = output.replace('{datDescription}', description.replace(/[\\/]/g, '_'));
     }
 
     return output;
@@ -289,18 +302,18 @@ export default class OutputFactory {
         letter = '#';
       }
 
-      const existing = map.get(letter) ?? [];
-      existing.push(filename);
+      const existing = map.get(letter) ?? new Set();
+      existing.add(filename);
       map.set(letter, existing);
       return map;
-    }, new Map<string, string[]>());
+    }, new Map<string, Set<string>>());
 
     // Split the letter directories, if needed
     if (options.getDirLetterLimit()) {
       lettersToFilenames = [...lettersToFilenames.entries()]
         .reduce((lettersMap, [letter, filenames]) => {
-          if (filenames.length <= options.getDirLetterLimit()) {
-            lettersMap.set(letter, filenames);
+          if (filenames.size <= options.getDirLetterLimit()) {
+            lettersMap.set(letter, new Set(filenames));
             return lettersMap;
           }
 
@@ -308,8 +321,7 @@ export default class OutputFactory {
           // multiple ROMs, they get grouped by their game name. Therefore, we have to understand
           // what the "sub-path" should be within the letter directory: the dirname if the ROM has a
           // subdir, or just the ROM's basename otherwise.
-          const subPathsToFilenames = filenames
-            .reduce(ArrayPoly.reduceUnique(), [])
+          const subPathsToFilenames = [...filenames]
             .reduce((subPathMap, filename) => {
               const subPath = filename.replace(/[\\/].+$/, '');
               subPathMap.set(subPath, [...subPathMap.get(subPath) ?? [], filename]);
@@ -324,15 +336,15 @@ export default class OutputFactory {
               .flatMap((subPath) => subPathsToFilenames.get(subPath) ?? []);
 
             const newLetter = `${letter}${i / chunkSize + 1}`;
-            lettersMap.set(newLetter, chunk);
+            lettersMap.set(newLetter, new Set(chunk));
           }
 
           return lettersMap;
-        }, new Map<string, string[]>());
+        }, new Map<string, Set<string>>());
     }
 
     const foundEntry = [...lettersToFilenames.entries()]
-      .find(([, filenames]) => filenames.indexOf(romBasename) !== -1);
+      .find(([, filenames]) => filenames.has(romBasename));
     return foundEntry ? foundEntry[0] : undefined;
   }
 
@@ -364,10 +376,12 @@ export default class OutputFactory {
       output = path.join(dir, output);
     }
 
-    if (game
-      && game.getRoms().length > 1
-      && !FileFactory.isArchive(ext)
-    ) {
+    if (game && (
+      (options.getDirGameSubdir() === GameSubdirMode.MULTIPLE
+        && game.getRoms().length > 1
+        && !FileFactory.isArchive(ext))
+      || options.getDirGameSubdir() === GameSubdirMode.ALWAYS
+    )) {
       output = path.join(game.getName(), output);
     }
 
@@ -386,29 +400,56 @@ export default class OutputFactory {
     rom: ROM,
     inputFile: File,
   ): string {
-    const romPath = this.getRomBasename(options, dat, rom, inputFile);
-
     // Determine the output path of the file
     if (options.shouldZip(rom.getName())) {
       // Should zip, generate the zip name from the game name
       return `${game.getName()}.zip`;
     }
 
+    const romBasename = this.getRomBasename(options, dat, rom, inputFile);
+
     if (
       !(inputFile instanceof ArchiveEntry || FileFactory.isArchive(inputFile.getFilePath()))
             || options.shouldExtract()
     ) {
       // Should extract (if needed), generate the file name from the ROM name
-      return romPath;
+      return romBasename;
     }
+
     // Should leave archived, generate the archive name from the game name, but use the input
-    //  file's extension
+    // file's extension
     const extMatch = inputFile.getFilePath().match(/[^.]+((\.[a-zA-Z0-9]+)+)$/);
     const ext = extMatch !== null ? extMatch[1] : '';
     return game.getName() + ext;
   }
 
-  private static getRomBasename(options: Options, dat: DAT, rom: ROM, inputFile: File): string {
+  private static getEntryPath(
+    options: Options,
+    dat: DAT,
+    game: Game,
+    rom: ROM,
+    inputFile: File,
+  ): string {
+    const romBasename = this.getRomBasename(options, dat, rom, inputFile);
+    if (!options.shouldZip(rom.getName())) {
+      return romBasename;
+    }
+
+    // The file structure from HTGD SMDBs ends up in both the Game and ROM names. If we're
+    // zipping, then the Game name will end up in the filename, we don't need it duplicated in
+    // the entry path.
+    const gameNameSanitized = game.getName().replace(/[\\/]/g, path.sep);
+    return romBasename
+      .replace(/[\\/]/g, path.sep)
+      .replace(`${path.dirname(gameNameSanitized)}${path.sep}`, '');
+  }
+
+  private static getRomBasename(
+    options: Options,
+    dat: DAT,
+    rom: ROM,
+    inputFile: File,
+  ): string {
     let romNameSanitized = rom.getName();
     if (!dat.getRomNamesContainDirectories()) {
       romNameSanitized = romNameSanitized?.replace(/[\\/]/g, '_');

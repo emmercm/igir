@@ -1,7 +1,14 @@
-import path from 'path';
+import path from 'node:path';
 
 import CandidateGenerator from '../../src/modules/candidateGenerator.js';
 import FileIndexer from '../../src/modules/fileIndexer.js';
+import DAT from '../../src/types/dats/dat.js';
+import Game from '../../src/types/dats/game.js';
+import Header from '../../src/types/dats/logiqx/header.js';
+import LogiqxDAT from '../../src/types/dats/logiqx/logiqxDat.js';
+import Parent from '../../src/types/dats/parent.js';
+import Release from '../../src/types/dats/release.js';
+import ROM from '../../src/types/dats/rom.js';
 import ArchiveEntry from '../../src/types/files/archives/archiveEntry.js';
 import Rar from '../../src/types/files/archives/rar.js';
 import SevenZip from '../../src/types/files/archives/sevenZip.js';
@@ -9,13 +16,7 @@ import Tar from '../../src/types/files/archives/tar.js';
 import Zip from '../../src/types/files/archives/zip.js';
 import File from '../../src/types/files/file.js';
 import ROMHeader from '../../src/types/files/romHeader.js';
-import DAT from '../../src/types/logiqx/dat.js';
-import Game from '../../src/types/logiqx/game.js';
-import Header from '../../src/types/logiqx/header.js';
-import Parent from '../../src/types/logiqx/parent.js';
-import Release from '../../src/types/logiqx/release.js';
-import ROM from '../../src/types/logiqx/rom.js';
-import Options from '../../src/types/options.js';
+import Options, { GameSubdirMode } from '../../src/types/options.js';
 import ReleaseCandidate from '../../src/types/releaseCandidate.js';
 import ProgressBarFake from '../console/progressBarFake.js';
 
@@ -29,14 +30,14 @@ const gameWithOneRom = new Game({
     new Release('game with one ROM and multiple releases', 'EUR', 'En'),
     new Release('game with one ROM and multiple releases', 'JPN', 'Ja'),
   ],
-  rom: new ROM('one.rom', 1, '12345678'),
+  rom: new ROM({ name: 'one.rom', size: 1, crc: '12345678' }),
 });
 const gameWithTwoRomsParent = new Game({
   name: 'game with two ROMs (parent)',
   release: new Release('game with two ROMs (parent)', 'WORLD'),
   rom: [
-    new ROM('two.a', 2, 'abcdef90'),
-    new ROM('two.b', 3, '09876543'),
+    new ROM({ name: 'two.a', size: 2, crc: 'abcdef90' }),
+    new ROM({ name: 'two.b', size: 3, crc: '09876543' }),
   ],
 });
 const gameWithTwoRomsClone = new Game({
@@ -44,21 +45,21 @@ const gameWithTwoRomsClone = new Game({
   cloneOf: gameWithTwoRomsParent.getName(),
   release: new Release('game with two ROMs (clone)', 'JPN'),
   rom: [
-    new ROM('three.a', 4, 'abcd1234'),
-    new ROM('three.b', 5, '86753090'),
+    new ROM({ name: 'three.a', size: 4, crc: 'abcd1234' }),
+    new ROM({ name: 'three.b', size: 5, crc: '86753090' }),
   ],
 });
 const gameWithDuplicateRoms = new Game({
   name: 'game with duplicate ROMs',
   rom: [
-    new ROM('Disc.cue', 0, 'a8c5c66e'),
-    new ROM('Disc (Track 01).cue', 1, '22144d0f'),
-    new ROM('Disc (Track 02).cue', 2, '11bf5dbd'),
-    new ROM('Disc (Track 03).cue', 3, 'f9188f3a'),
-    new ROM('Disc (Track 04).cue', 4, '11bf5dbd'),
+    new ROM({ name: 'Disc.cue', size: 0, crc: 'a8c5c66e' }),
+    new ROM({ name: 'Disc (Track 01).cue', size: 1, crc: '22144d0f' }),
+    new ROM({ name: 'Disc (Track 02).cue', size: 2, crc: '11bf5dbd' }),
+    new ROM({ name: 'Disc (Track 03).cue', size: 3, crc: 'f9188f3a' }),
+    new ROM({ name: 'Disc (Track 04).cue', size: 4, crc: '11bf5dbd' }),
   ],
 });
-const datWithFourGames = new DAT(new Header(), [
+const datWithFourGames = new LogiqxDAT(new Header(), [
   gameWithNoRoms,
   gameWithOneRom,
   gameWithTwoRomsParent,
@@ -82,7 +83,7 @@ describe.each(['zip', 'extract', 'raw'])('command: %s', (command) => {
 
   it('should return no candidates with no parents', async () => {
     // Given
-    const datWithoutParents = new DAT(new Header(), []);
+    const datWithoutParents = new LogiqxDAT(new Header(), []);
 
     // When
     const parentsToCandidates = await candidateGenerator(options, datWithoutParents, []);
@@ -93,7 +94,7 @@ describe.each(['zip', 'extract', 'raw'])('command: %s', (command) => {
 
   it('should return no candidates with no games with ROMs', async () => {
     // Given
-    const datWithGamesWithNoRoms = new DAT(new Header(), [gameWithNoRoms]);
+    const datWithGamesWithNoRoms = new LogiqxDAT(new Header(), [gameWithNoRoms]);
 
     // When
     const parentsToCandidates = await candidateGenerator(options, datWithGamesWithNoRoms, []);
@@ -106,7 +107,7 @@ describe.each(['zip', 'extract', 'raw'])('command: %s', (command) => {
     // Doesn't match anything
     [File.fileOf('three.rom', 4, { crc32: '34567890' })],
     // Doesn't match size
-    [File.fileOf('one.rom', 999999, { crc32: '12345678' })],
+    [File.fileOf('one.rom', 999_999, { crc32: '12345678' })],
     // Doesn't match CRC
     [File.fileOf('one.rom', 1, { crc32: '00000000' })],
     // Matches one ROM of a game with multiple ROMs
@@ -256,6 +257,7 @@ describe('with ROMs with headers', () => {
     const options = new Options({
       commands: ['copy', 'extract'],
       removeHeaders: [''], // all
+      dirGameSubdir: GameSubdirMode[GameSubdirMode.MULTIPLE].toLowerCase(),
     });
 
     // When
@@ -389,7 +391,7 @@ describe.each(['copy', 'move'])('prefer input files from the same archive when r
     // Given
     const datGame = gameWithOneRom;
     expect(datGame.getRoms()).toHaveLength(1);
-    const dat = new DAT(new Header(), [datGame]);
+    const dat = new LogiqxDAT(new Header(), [datGame]);
 
     // And every file is present, both raw and archived
     const rawFiles = await Promise.all(dat.getGames()
@@ -429,7 +431,7 @@ describe.each(['copy', 'move'])('prefer input files from the same archive when r
     gameWithTwoRomsClone,
     gameWithDuplicateRoms,
   ])('game: %s', (datGame) => {
-    const dat = new DAT(new Header(), [datGame]);
+    const dat = new LogiqxDAT(new Header(), [datGame]);
 
     it('should behave like normal with no archives', async () => {
       // Given every file is present, raw

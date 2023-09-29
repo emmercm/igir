@@ -43,7 +43,13 @@ export default class ROMHeaderProcessor extends Module {
         const waitingMessage = `${inputFile.toString()} ...`;
         this.progressBar.addWaitingMessage(waitingMessage);
 
-        const fileWithHeader = await this.getFileWithHeader(inputFile);
+        let fileWithHeader: File | undefined;
+        try {
+          fileWithHeader = await this.getFileWithHeader(inputFile);
+        } catch (e) {
+          this.progressBar.logError(`${inputFile.toString()}: failed to process ROM header: ${e}`);
+          fileWithHeader = inputFile;
+        }
 
         this.progressBar.removeWaitingMessage(waitingMessage);
         await this.progressBar.incrementDone();

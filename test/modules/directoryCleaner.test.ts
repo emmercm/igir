@@ -1,4 +1,4 @@
-import path from 'path';
+import path from 'node:path';
 
 import Constants from '../../src/constants.js';
 import DirectoryCleaner from '../../src/modules/directoryCleaner.js';

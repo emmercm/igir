@@ -5,7 +5,7 @@ import Constants from '../constants.js';
 import ConsolePoly from '../polyfill/consolePoly.js';
 import ROMHeader from '../types/files/romHeader.js';
 import Internationalization from '../types/internationalization.js';
-import Options from '../types/options.js';
+import Options, { GameSubdirMode, MergeMode } from '../types/options.js';
 import PatchFactory from '../types/patches/patchFactory.js';
 
 /**
@@ -55,11 +55,11 @@ export default class ArgumentsParser {
 
     const groupInput = 'Input options (supports globbing):';
     const groupDatInput = 'DAT input options:';
-    const groupDatOutput = 'DAT output options:';
-    const groupRomOutput = 'ROM output options:';
+    const groupRomOutput = 'ROM output options (processed in order):';
     const groupRomZip = 'ROM zip command options:';
     const groupRomSymlink = 'ROM symlink command options:';
     const groupRomHeader = 'ROM header options:';
+    const groupRomMergeSplit = 'ROM MAME merge & split options (requires DATs with parent/clone information):';
     const groupRomFiltering = 'ROM filtering options:';
     const groupRomPriority = 'One game, one ROM (1G1R) options:';
     const groupReport = 'Report options:';
@@ -84,6 +84,9 @@ export default class ArgumentsParser {
         addCommands(yargsSubObj);
       })
       .command('test', 'Test ROMs for accuracy after writing them to the output directory', (yargsSubObj) => {
+        addCommands(yargsSubObj);
+      })
+      .command('fixdat', 'Generate a fixdat of any missing games for every DAT processed (requires --dat)', (yargsSubObj) => {
         addCommands(yargsSubObj);
       })
       .command('clean', 'Recycle unknown files in the output directory', (yargsSubObj) => {
@@ -180,16 +183,48 @@ export default class ArgumentsParser {
         type: 'array',
         requiresArg: true,
       })
-      .option('dat-regex', {
+      .option('dat-name-regex', {
         group: groupDatInput,
         description: 'Regular expression of DAT names to process',
         type: 'string',
         coerce: ArgumentsParser.getLastValue, // don't allow string[] values
         requiresArg: true,
       })
-      .option('dat-regex-exclude', {
+      .option('dat-regex', {
+        type: 'string',
+        coerce: (val) => {
+          this.logger.warn('--dat-regex is deprecated, use --dat-name-regex instead');
+          return ArgumentsParser.getLastValue(val); // don't allow string[] values
+        },
+        requiresArg: true,
+        hidden: true,
+      })
+      .option('dat-name-regex-exclude', {
         group: groupDatInput,
         description: 'Regular expression of DAT names to exclude from processing',
+        type: 'string',
+        coerce: ArgumentsParser.getLastValue, // don't allow string[] values
+        requiresArg: true,
+      })
+      .option('dat-regex-exclude', {
+        type: 'string',
+        coerce: (val) => {
+          this.logger.warn('--dat-regex-exclude is deprecated, use --dat-name-regex-exclude instead');
+          return ArgumentsParser.getLastValue(val); // don't allow string[] values
+        },
+        requiresArg: true,
+        hidden: true,
+      })
+      .option('dat-description-regex', {
+        group: groupDatInput,
+        description: 'Regular expression of DAT descriptions to process',
+        type: 'string',
+        coerce: ArgumentsParser.getLastValue, // don't allow string[] values
+        requiresArg: true,
+      })
+      .option('dat-description-regex-exclude', {
+        group: groupDatInput,
+        description: 'Regular expression of DAT descriptions to exclude from processing',
         type: 'string',
         coerce: ArgumentsParser.getLastValue, // don't allow string[] values
         requiresArg: true,
@@ -206,10 +241,14 @@ export default class ArgumentsParser {
       })
 
       .option('fixdat', {
-        group: groupDatOutput,
-        description: 'Generate a fixdat of any missing games for every DAT processed (requires --dat)',
         type: 'boolean',
+        coerce: (val: boolean) => {
+          this.logger.warn('--fixdat is deprecated, use the fixdat command instead');
+          return val;
+        },
         implies: 'dat',
+        deprecated: true,
+        hidden: true,
       })
 
       .option('output', {
@@ -250,6 +289,16 @@ export default class ArgumentsParser {
         coerce: (val: number) => Math.max(ArgumentsParser.getLastValue(val), 1),
         requiresArg: true,
         implies: 'dir-letter',
+      })
+      .option('dir-game-subdir', {
+        group: groupRomOutput,
+        description: 'Append the name of the game as an output directory depending on its ROMs',
+        choices: Object.keys(GameSubdirMode)
+          .filter((mode) => Number.isNaN(Number(mode)))
+          .map((mode) => mode.toLowerCase()),
+        coerce: ArgumentsParser.getLastValue, // don't allow string[] values
+        requiresArg: true,
+        default: GameSubdirMode[GameSubdirMode.MULTIPLE].toLowerCase(),
       })
       .option('overwrite', {
         group: groupRomOutput,
@@ -343,6 +392,17 @@ export default class ArgumentsParser {
           }),
       })
 
+      .option('merge-roms', {
+        group: groupRomMergeSplit,
+        description: 'ROM merge/split mode',
+        choices: Object.keys(MergeMode)
+          .filter((mode) => Number.isNaN(Number(mode)))
+          .map((mode) => mode.toLowerCase()),
+        coerce: ArgumentsParser.getLastValue, // don't allow string[] values
+        requiresArg: true,
+        default: MergeMode[MergeMode.FULLNONMERGED].toLowerCase(),
+      })
+
       .option('filter-regex', {
         group: groupRomFiltering,
         alias: 'x',
@@ -359,7 +419,7 @@ export default class ArgumentsParser {
         coerce: ArgumentsParser.getLastValue, // don't allow string[] values
         requiresArg: true,
       })
-      .option('language-filter', {
+      .option('filter-language', {
         group: groupRomFiltering,
         alias: 'L',
         description: `List of comma-separated languages to filter to (supported: ${Internationalization.LANGUAGES.join(', ')})`,
@@ -367,13 +427,33 @@ export default class ArgumentsParser {
         coerce: (val: string) => val.split(','),
         requiresArg: true,
       })
-      .option('region-filter', {
+      .option('language-filter', {
+        type: 'string',
+        coerce: (val: string) => {
+          this.logger.warn('--language-filter is deprecated, use --filter-language instead');
+          return val.split(',');
+        },
+        requiresArg: true,
+        deprecated: true,
+        hidden: true,
+      })
+      .option('filter-region', {
         group: groupRomFiltering,
         alias: 'R',
-        description: `List of comma-separated regions to filter to (supported: ${Internationalization.REGIONS.join(', ')})`,
+        description: `List of comma-separated regions to filter to (supported: ${Internationalization.REGION_CODES.join(', ')})`,
         type: 'string',
         coerce: (val: string) => val.split(','),
         requiresArg: true,
+      })
+      .option('region-filter', {
+        type: 'string',
+        coerce: (val: string) => {
+          this.logger.warn('--region-filter is deprecated, use --filter-region instead');
+          return val.split(',');
+        },
+        requiresArg: true,
+        deprecated: true,
+        hidden: true,
       });
     [
       ['bios', 'BIOS files'],
@@ -429,9 +509,8 @@ export default class ArgumentsParser {
       .option('single', {
         group: groupRomPriority,
         alias: 's',
-        description: 'Output only a single game per parent (1G1R) (required for all options below, requires --dat with parent/clone information)',
+        description: 'Output only a single game per parent (1G1R) (required for all options below, requires DATs with parent/clone information)',
         type: 'boolean',
-        implies: 'dat',
       })
       .option('prefer-verified', {
         group: groupRomPriority,
@@ -457,7 +536,7 @@ export default class ArgumentsParser {
       .option('prefer-region', {
         group: groupRomPriority,
         alias: 'r',
-        description: `List of comma-separated regions in priority order (supported: ${Internationalization.REGIONS.join(', ')})`,
+        description: `List of comma-separated regions in priority order (supported: ${Internationalization.REGION_CODES.join(', ')})`,
         type: 'string',
         coerce: (val: string) => val.split(','),
         requiresArg: true,
@@ -501,7 +580,7 @@ export default class ArgumentsParser {
         group: groupRomPriority,
         description: 'Prefer parent ROMs over clones',
         type: 'boolean',
-        implies: ['dat', 'single'],
+        implies: 'single',
       })
 
       .option('report-output', {
@@ -541,6 +620,30 @@ export default class ArgumentsParser {
         type: 'count',
       })
 
+      .check((checkArgv) => {
+        if (checkArgv.mergeRoms !== MergeMode[MergeMode.FULLNONMERGED].toLowerCase() && (
+          checkArgv.dirMirror
+          || checkArgv.dirLetter
+        )) {
+          this.logger.warn(`at least one --dir-* option was provided, be careful about how you organize non-'${MergeMode[MergeMode.FULLNONMERGED].toLowerCase()}' ROM sets into different subdirectories`);
+        }
+
+        if (checkArgv.mergeRoms !== MergeMode[MergeMode.FULLNONMERGED].toLowerCase() && (
+          checkArgv.noBios
+          || checkArgv.noDevice
+        )) {
+          this.logger.warn(`--no-bios and --no-device may leave non-'${MergeMode[MergeMode.FULLNONMERGED].toLowerCase()}' ROM sets in an unplayable state`);
+        }
+
+        if ((checkArgv.single && !checkArgv.preferParent)
+          && checkArgv.mergeRoms === MergeMode[MergeMode.SPLIT].toLowerCase()
+        ) {
+          this.logger.warn(`--single may leave '${MergeMode[MergeMode.SPLIT].toLowerCase()}' ROM sets in an unplayable state`);
+        }
+
+        return true;
+      })
+
       .wrap(ArgumentsParser.getHelpWidth(argv))
       .version(false)
 
@@ -550,11 +653,11 @@ export default class ArgumentsParser {
 Advanced usage:
 
   Tokens that are replaced when generating the output (--output) path of a ROM:
-    {datName}             The name of the DAT that contains the ROM (e.g. "Nintendo - Game Boy")
-    {datDescription}      The description of the DAT that contains the ROM
-    {datReleaseRegion}    The region of the ROM release (e.g. "USA"), each ROM can have multiple
-    {datReleaseLanguage}  The language of the ROM release (e.g. "En"), each ROM can have multiple
-    {gameType}            The type of the game (e.g. "Retail", "Demo", "Prototype")
+    {datName}         The name of the DAT that contains the ROM (e.g. "Nintendo - Game Boy")
+    {datDescription}  The description of the DAT that contains the ROM
+    {gameRegion}      The region of the ROM release (e.g. "USA"), each ROM can have multiple
+    {gameLanguage}    The language of the ROM release (e.g. "En"), each ROM can have multiple
+    {gameType}        The type of the game (e.g. "Retail", "Demo", "Prototype")
 
     {inputDirname}    The input file's dirname
     {outputBasename}  Equivalent to "{outputName}.{outputExt}"
@@ -588,6 +691,9 @@ Example use cases:
 
   Create patched copies of ROMs in an existing collection, not overwriting existing files:
     $0 copy extract --input ROMs/ --patch Patches/ --output ROMs/
+
+  Re-build a MAME ROM set for a specific version of MAME:
+    $0 copy zip --dat "MAME 0.258.dat" --input MAME/ --output MAME-0.258/ --merge-roms split
 
   Copy ROMs to an Analogue Pocket and test they were written correctly:
     $0 copy extract test --dat *.dat --input ROMs/ --output /Assets/{pocket}/common/ --dir-letter`)

@@ -1,5 +1,5 @@
-import fs from 'fs';
-import util from 'util';
+import fs from 'node:fs';
+import util from 'node:util';
 
 import ProgressBar from '../console/progressBar.js';
 import ArrayPoly from '../polyfill/arrayPoly.js';
@@ -50,18 +50,18 @@ export default class ReportGenerator extends Module {
     const releaseCandidates = datStatuses
       .flatMap((datStatus) => datStatus.getReleaseCandidates())
       .filter(ArrayPoly.filterNotNullish);
-    const matchedFiles = new Set(releaseCandidates
+    const usedFiles = new Set(releaseCandidates
       .flatMap((releaseCandidate) => releaseCandidate.getRomsWithFiles())
       .map((romWithFiles) => romWithFiles.getInputFile().getFilePath()));
-    const unmatchedFiles = scannedRomFiles
+    const unusedFiles = scannedRomFiles
       .reduce(ArrayPoly.reduceUnique(), [])
-      .filter((inputFile) => !matchedFiles.has(inputFile))
+      .filter((inputFile) => !usedFiles.has(inputFile))
       .sort();
-    const unmatchedCsv = await DATStatus.filesToCsv(unmatchedFiles, Status.UNMATCHED);
+    const unusedCsv = await DATStatus.filesToCsv(unusedFiles, Status.UNUSED);
 
     const cleanedCsv = await DATStatus.filesToCsv(cleanedOutputFiles, Status.DELETED);
 
-    const rows = [...matchedFileCsvs, unmatchedCsv, cleanedCsv].filter((csv) => csv);
+    const rows = [...matchedFileCsvs, unusedCsv, cleanedCsv].filter((csv) => csv);
     await util.promisify(fs.writeFile)(report, rows.join('\n'));
     this.progressBar.logDebug(`${report}: wrote ${datStatuses.length.toLocaleString()} CSV row${datStatuses.length !== 1 ? 's' : ''}`);
 

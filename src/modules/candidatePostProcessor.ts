@@ -1,6 +1,6 @@
 import ProgressBar, { ProgressBarSymbol } from '../console/progressBar.js';
-import DAT from '../types/logiqx/dat.js';
-import Parent from '../types/logiqx/parent.js';
+import DAT from '../types/dats/dat.js';
+import Parent from '../types/dats/parent.js';
 import Options from '../types/options.js';
 import OutputFactory from '../types/outputFactory.js';
 import ReleaseCandidate from '../types/releaseCandidate.js';

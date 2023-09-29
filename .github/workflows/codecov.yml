@@ -14,14 +14,14 @@ on:
       - 'main'
 
 concurrency:
-  group: ${{ github.workflow }}-${{ github.head_ref || github.ref }}
+  group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
   codecov-lint:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - uses: formsort/action-check-codecov-config@v1
 
   # !!! The codecov/project check should be required by GitHub !!!
@@ -32,7 +32,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       # Setup and install
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - uses: actions/setup-node@v3
         with:
           node-version-file: '.nvmrc'

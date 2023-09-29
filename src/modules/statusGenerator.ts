@@ -1,7 +1,7 @@
 import ProgressBar from '../console/progressBar.js';
+import DAT from '../types/dats/dat.js';
+import Parent from '../types/dats/parent.js';
 import DATStatus from '../types/datStatus.js';
-import DAT from '../types/logiqx/dat.js';
-import Parent from '../types/logiqx/parent.js';
 import Options from '../types/options.js';
 import ReleaseCandidate from '../types/releaseCandidate.js';
 import Module from './module.js';
@@ -28,7 +28,7 @@ export default class StatusGenerator extends Module {
   ): Promise<DATStatus> {
     this.progressBar.logInfo(`${dat.getNameShort()}: generating ROM statuses`);
 
-    const datStatus = new DATStatus(dat, parentsToReleaseCandidates);
+    const datStatus = new DATStatus(dat, this.options, parentsToReleaseCandidates);
 
     await this.progressBar.done(datStatus.toConsole(this.options));
 

@@ -17,7 +17,7 @@ Information about the inner workings of `igir`.
    - ROM preferences are applied (`--single`, see [filtering & preference docs](roms/filtering-preferences.md))
    - ROMs are written to the output directory, if specified (`copy`, `move`, `symlink`)
      - Written ROMs are tested for accuracy, if specified (`test`)
-   - A "fixdat" is created, if specified (`--fixdat`)
+   - A "fixdat" is created, if specified (`fixdat`)
 5. "Moved" input ROMs are deleted (`move`)
 6. Unknown files are recycled from the output directory, if specified (`clean`, see [cleaning docs](output/cleaning.md))
 7. An output report is written to the output directory, if specified (`report`, see [reporting docs](output/reporting.md))
