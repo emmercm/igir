@@ -1,12 +1,13 @@
+import crypto from 'node:crypto';
+import { Stream } from 'node:stream';
+
 import { crc32 } from '@node-rs/crc32';
-import crypto from 'crypto';
-import { Stream } from 'stream';
 
 export enum ChecksumBitmask {
-  NONE = 0x000,
-  CRC32 = 0x001,
-  MD5 = 0x010,
-  SHA1 = 0x100,
+  NONE = 0x0_00,
+  CRC32 = 0x0_01,
+  MD5 = 0x0_10,
+  SHA1 = 0x1_00,
 }
 
 export interface ChecksumProps {
