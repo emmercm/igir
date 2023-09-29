@@ -5,6 +5,7 @@ import ArrayPoly from '../polyfill/arrayPoly.js';
 import DAT from './dats/dat.js';
 import Game from './dats/game.js';
 import Parent from './dats/parent.js';
+import File from './files/file.js';
 import Options from './options.js';
 import ReleaseCandidate from './releaseCandidate.js';
 
@@ -16,9 +17,11 @@ enum ROMType {
   PATCHED = 'patched games',
 }
 
-export enum Status {
-  // The Game wanted to be written, and it was
+export enum GameStatus {
+  // The Game wanted to be written, and it has no ROMs or every ROM was found
   FOUND = 1,
+  // Only some of the Game's ROMs were found
+  INCOMPLETE,
   // The Game was ignored due to 1G1R rules, and it is unknown if there was a matching
   // ReleaseCandidate
   IGNORED,
@@ -45,6 +48,8 @@ export default class DATStatus {
   (ReleaseCandidate | undefined)[]
   >();
 
+  private readonly incompleteRomTypesToReleaseCandidates = new Map<ROMType, ReleaseCandidate[]>();
+
   private readonly ignoredHashCodesToGames = new Map<string, Game>();
 
   constructor(
@@ -65,13 +70,27 @@ export default class DATStatus {
             .filter((rc) => !rc.isPatched())
             .filter((rc) => rc.getGame().hashCode() === game.hashCode());
           if (gameReleaseCandidates.length || game.getRoms().length === 0) {
-            // This game has at least one candidate, or it has no roms - mark it found
+            // The only reason there may be multiple ReleaseCandidates for a Game is if it has
+            // multiple regions, but DATStatus doesn't care about regions.
+            const gameReleaseCandidate = gameReleaseCandidates.find(() => true);
+
+            if (gameReleaseCandidate
+              && gameReleaseCandidate.getRomsWithFiles().length !== game.getRoms().length
+            ) {
+              // The found ReleaseCandidate is incomplete
+              DATStatus.pushValueIntoMap(
+                this.incompleteRomTypesToReleaseCandidates,
+                game,
+                gameReleaseCandidate,
+              );
+              return;
+            }
+
+            // The found ReleaseCandidate is complete
             DATStatus.pushValueIntoMap(
               this.foundRomTypesToReleaseCandidates,
               game,
-              // The only reason there may be multiple ReleaseCandidates is for multiple regions,
-              //  but DATStatus doesn't care about regions.
-              gameReleaseCandidates.find(() => true),
+              gameReleaseCandidate,
             );
             return;
           }
@@ -128,9 +147,15 @@ export default class DATStatus {
     return this.dat.getNameShort();
   }
 
-  getReleaseCandidates(): (ReleaseCandidate | undefined)[] {
-    return [...this.foundRomTypesToReleaseCandidates.values()]
-      .flatMap((releaseCandidates) => releaseCandidates);
+  getInputFiles(): File[] {
+    return [
+      ...this.foundRomTypesToReleaseCandidates.values(),
+      ...this.incompleteRomTypesToReleaseCandidates.values(),
+    ]
+      .flatMap((releaseCandidates) => releaseCandidates)
+      .filter(ArrayPoly.filterNotNullish)
+      .flatMap((releaseCandidate) => releaseCandidate.getRomsWithFiles())
+      .map((romWithFiles) => romWithFiles.getInputFile());
   }
 
   /**
@@ -197,34 +222,48 @@ export default class DATStatus {
       this.foundRomTypesToReleaseCandidates,
     );
 
+    const incompleteReleaseCandidates = DATStatus.getValuesForAllowedTypes(
+      options,
+      this.incompleteRomTypesToReleaseCandidates,
+    );
+
     const rows = DATStatus.getValuesForAllowedTypes(options, this.allRomTypesToGames)
       .reduce(ArrayPoly.reduceUnique(), [])
       .sort((a, b) => a.getName().localeCompare(b.getName()))
       .map((game) => {
-        let status = Status.MISSING;
+        let status = GameStatus.MISSING;
 
         if (this.ignoredHashCodesToGames.has(game.hashCode())) {
-          status = Status.IGNORED;
+          status = GameStatus.IGNORED;
+        }
+
+        const incompleteReleaseCandidate = incompleteReleaseCandidates
+          .find((rc) => rc.getGame().equals(game));
+        if (incompleteReleaseCandidate) {
+          status = GameStatus.INCOMPLETE;
         }
 
         const foundReleaseCandidate = foundReleaseCandidates
           .find((rc) => rc && rc.getGame().equals(game));
         if (foundReleaseCandidate ?? !game.getRoms().length) {
-          status = Status.FOUND;
+          status = GameStatus.FOUND;
         }
+
+        const filePaths = [
+          ...(incompleteReleaseCandidate ? incompleteReleaseCandidate.getRomsWithFiles() : []),
+          ...(foundReleaseCandidate ? foundReleaseCandidate.getRomsWithFiles() : []),
+        ]
+          .map((romWithFiles) => (options.shouldWrite()
+            ? romWithFiles.getOutputFile()
+            : romWithFiles.getInputFile()))
+          .map((file) => file.getFilePath())
+          .reduce(ArrayPoly.reduceUnique(), []);
 
         return DATStatus.buildCsvRow(
           this.getDATName(),
           game.getName(),
           status,
-          foundReleaseCandidate
-            ? foundReleaseCandidate.getRomsWithFiles()
-              .map((romWithFiles) => (options.shouldWrite()
-                ? romWithFiles.getOutputFile()
-                : romWithFiles.getInputFile()))
-              .map((file) => file.getFilePath())
-              .reduce(ArrayPoly.reduceUnique(), [])
-            : [],
+          filePaths,
           foundReleaseCandidate?.isPatched() ?? false,
           game.isBios(),
           game.isRetail(),
@@ -264,16 +303,16 @@ export default class DATStatus {
   }
 
   /**
-   * Return a string of CSV rows without headers for a certain {@link Status}.
+   * Return a string of CSV rows without headers for a certain {@link GameStatus}.
    */
-  static async filesToCsv(filePaths: string[], status: Status): Promise<string> {
+  static async filesToCsv(filePaths: string[], status: GameStatus): Promise<string> {
     return writeToString(filePaths.map((filePath) => this.buildCsvRow('', '', status, [filePath])));
   }
 
   private static buildCsvRow(
     datName: string,
     gameName: string,
-    status: Status,
+    status: GameStatus,
     filePaths: string[] = [],
     patched = false,
     bios = false,
@@ -292,7 +331,7 @@ export default class DATStatus {
     return [
       datName,
       gameName,
-      Status[status],
+      GameStatus[status],
       filePaths.join('|'),
       String(patched),
       String(bios),
