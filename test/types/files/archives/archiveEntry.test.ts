@@ -161,14 +161,14 @@ describe('createReadStream', () => {
 
 describe('withPatch', () => {
   it('should attach a matching patch', async () => {
-    const entry = await ArchiveEntry.entryOf(new Zip('file.zip'), 'entry.rom', 0, '00000000');
+    const entry = await ArchiveEntry.entryOf(new Zip('file.zip'), 'entry.rom', 0, { crc32: '00000000' });
     const patch = IPSPatch.patchFrom(await File.fileOf('patch 00000000.ips'));
     const patchedEntry = entry.withPatch(patch);
     expect(patchedEntry.getPatch()).toEqual(patch);
   });
 
   it('should not attach a non-matching patch', async () => {
-    const entry = await ArchiveEntry.entryOf(new Zip('file.zip'), 'entry.rom', 0, 'FFFFFFFF');
+    const entry = await ArchiveEntry.entryOf(new Zip('file.zip'), 'entry.rom', 0, { crc32: 'FFFFFFFF' });
     const patch = IPSPatch.patchFrom(await File.fileOf('patch 00000000.ips'));
     const patchedEntry = entry.withPatch(patch);
     expect(patchedEntry.getPatch()).toBeUndefined();
