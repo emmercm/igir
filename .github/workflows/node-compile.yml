@@ -111,7 +111,7 @@ jobs:
         with:
           ref: ${{ env.ref }}
       - if: matrix.os == 'ubuntu'
-        uses: docker/setup-qemu-action@v2
+        uses: docker/setup-qemu-action@v3
       - uses: actions/setup-node@v3
         with:
           node-version-file: '.nvmrc'
