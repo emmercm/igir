@@ -59,7 +59,7 @@ export default class ArgumentsParser {
     const groupRomZip = 'ROM zip command options:';
     const groupRomSymlink = 'ROM symlink command options:';
     const groupRomHeader = 'ROM header options:';
-    const groupRomMergeSplit = 'ROM MAME merge & split options (requires DATs with parent/clone information):';
+    const groupRomSet = 'ROM set options:';
     const groupRomFiltering = 'ROM filtering options:';
     const groupRomPriority = 'One game, one ROM (1G1R) options:';
     const groupReport = 'Report options:';
@@ -393,14 +393,19 @@ export default class ArgumentsParser {
       })
 
       .option('merge-roms', {
-        group: groupRomMergeSplit,
-        description: 'ROM merge/split mode',
+        group: groupRomSet,
+        description: 'ROM merge/split mode (requires DATs with parent/clone information)',
         choices: Object.keys(MergeMode)
           .filter((mode) => Number.isNaN(Number(mode)))
           .map((mode) => mode.toLowerCase()),
         coerce: ArgumentsParser.getLastValue, // don't allow string[] values
         requiresArg: true,
         default: MergeMode[MergeMode.FULLNONMERGED].toLowerCase(),
+      })
+      .option('allow-incomplete-sets', {
+        group: groupRomSet,
+        description: 'Allow writing games that don\'t have all of their ROMs',
+        type: 'boolean',
       })
 
       .option('filter-regex', {

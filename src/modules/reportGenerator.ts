@@ -3,7 +3,7 @@ import util from 'node:util';
 
 import ProgressBar from '../console/progressBar.js';
 import ArrayPoly from '../polyfill/arrayPoly.js';
-import DATStatus, { Status } from '../types/datStatus.js';
+import DATStatus, { GameStatus } from '../types/datStatus.js';
 import Options from '../types/options.js';
 import Module from './module.js';
 
@@ -47,19 +47,16 @@ export default class ReportGenerator extends Module {
         return csv.split('\n').slice(1).join('\n');
       });
 
-    const releaseCandidates = datStatuses
-      .flatMap((datStatus) => datStatus.getReleaseCandidates())
-      .filter(ArrayPoly.filterNotNullish);
-    const usedFiles = new Set(releaseCandidates
-      .flatMap((releaseCandidate) => releaseCandidate.getRomsWithFiles())
-      .map((romWithFiles) => romWithFiles.getInputFile().getFilePath()));
+    const usedFiles = new Set(datStatuses
+      .flatMap((datStatus) => datStatus.getInputFiles())
+      .map((file) => file.getFilePath()));
     const unusedFiles = scannedRomFiles
       .reduce(ArrayPoly.reduceUnique(), [])
       .filter((inputFile) => !usedFiles.has(inputFile))
       .sort();
-    const unusedCsv = await DATStatus.filesToCsv(unusedFiles, Status.UNUSED);
+    const unusedCsv = await DATStatus.filesToCsv(unusedFiles, GameStatus.UNUSED);
 
-    const cleanedCsv = await DATStatus.filesToCsv(cleanedOutputFiles, Status.DELETED);
+    const cleanedCsv = await DATStatus.filesToCsv(cleanedOutputFiles, GameStatus.DELETED);
 
     const rows = [...matchedFileCsvs, unusedCsv, cleanedCsv].filter((csv) => csv);
     await util.promisify(fs.writeFile)(report, rows.join('\n'));

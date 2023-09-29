@@ -607,6 +607,106 @@ const dat = new LogiqxDAT(new Header(), [
     ],
   }),
   new Machine({
+    name: 'ddonpach',
+    description: 'DoDonPachi (World, 1997 2/ 5 Master Ver.)',
+    rom: [
+      new ROM({ name: 'b1.u27', size: 524288, crc: 'b5cdc8d3', sha1: '58757b50e21a27e500a82c03f62cf02a85389926' }),
+      new ROM({ name: 'b2.u26', size: 524288, crc: '6bbb063a', sha1: 'e5de64b9c3efc0a38a2e0e16b78ee393bff63558' }),
+      new ROM({ name: 'u50.bin', size: 2097152, crc: '14b260ec', sha1: '33bda210302428d5500115d0c7a839cdfcb67d17' }),
+      new ROM({ name: 'u51.bin', size: 2097152, crc: 'e7ba8cce', sha1: 'ad74a6b7d53760b19587c4a6dbea937daa7e87ce' }),
+      new ROM({ name: 'u52.bin', size: 2097152, crc: '02492ee0', sha1: '64d9cc64a4ad189a8b03cf6a749ddb732b4a0014' }),
+      new ROM({ name: 'u53.bin', size: 2097152, crc: 'cb4c10f0', sha1: 'a622e8bd0c938b5d38b392b247400b744d8be288' }),
+      new ROM({ name: 'u60.bin', size: 2097152, crc: '903096a7', sha1: 'a243e903fef7c4a7b71383263e82e42acd869261' }),
+      new ROM({ name: 'u61.bin', size: 2097152, crc: 'd89b7631', sha1: 'a66bb4955ca58fab8973ca37a0f971e9a67ce017' }),
+      new ROM({ name: 'u62.bin', size: 2097152, crc: '292bfb6b', sha1: '11b385991ee990eb5ef36e136b988802b5f90fa4' }),
+      new ROM({ name: 'u6.bin', size: 2097152, crc: '9dfdafaf', sha1: 'f5cb450cdc78a20c3a74c6dac05c9ac3cba08327' }),
+      new ROM({ name: 'u7.bin', size: 2097152, crc: '795b17d5', sha1: 'cbfc29f1df9600c82e0fdae00edd00da5b73e14c' }),
+      new ROM({ name: 'eeprom-ddonpach.bin', size: 128, crc: '315fb546', sha1: '7f597107d1610fc286413e0e93c794c80c0c554f' }),
+    ],
+    deviceRef: [
+      new DeviceRef('m68000'),
+      new DeviceRef('timer'),
+      new DeviceRef('screen'),
+      new DeviceRef('palette'),
+      new DeviceRef('gfxdecode'),
+      new DeviceRef('tmap038'),
+      new DeviceRef('tmap038'),
+      new DeviceRef('tmap038'),
+      new DeviceRef('93c46_16'),
+      new DeviceRef('gfxdecode'),
+      new DeviceRef('speaker'),
+      new DeviceRef('ymz280b'),
+    ],
+  }),
+  new Machine({
+    name: 'ddonpacha',
+    cloneOf: 'ddonpach',
+    romOf: 'ddonpach',
+    description: 'DoDonPachi (2012/02/12 Arrange Ver. 1.1) (hack)',
+    rom: [
+      new ROM({ name: 'arrange_u27.bin', size: 524288, crc: '44b899ae', sha1: '798ec437d861b94fcd90c99a7015dd420887c788' }),
+      new ROM({ name: 'arrange_u26.bin', size: 524288, crc: '727a09a8', sha1: '91876386855f19e8a3d8d1df71dfe9b3d98e9ea9' }),
+      new ROM({ name: 'u50.bin', merge: 'u50.bin', size: 2097152, crc: '14b260ec', sha1: '33bda210302428d5500115d0c7a839cdfcb67d17' }),
+      new ROM({ name: 'arrange_u51.bin', size: 2097152, crc: '0f3e5148', sha1: '3016f4d075940feae691389606cd2aa7ac53849e' }),
+      new ROM({ name: 'u52.bin', merge: 'u52.bin', size: 2097152, crc: '02492ee0', sha1: '64d9cc64a4ad189a8b03cf6a749ddb732b4a0014' }),
+      new ROM({ name: 'u53.bin', merge: 'u53.bin', size: 2097152, crc: 'cb4c10f0', sha1: 'a622e8bd0c938b5d38b392b247400b744d8be288' }),
+      new ROM({ name: 'u60.bin', merge: 'u60.bin', size: 2097152, crc: '903096a7', sha1: 'a243e903fef7c4a7b71383263e82e42acd869261' }),
+      new ROM({ name: 'u61.bin', merge: 'u61.bin', size: 2097152, crc: 'd89b7631', sha1: 'a66bb4955ca58fab8973ca37a0f971e9a67ce017' }),
+      new ROM({ name: 'arrange_u62.bin', size: 2097152, crc: '42e4c6c5', sha1: '4d282f7592f5fc5e11839c57f39cae20b8422aa1' }),
+      new ROM({ name: 'u6.bin', merge: 'u6.bin', size: 2097152, crc: '9dfdafaf', sha1: 'f5cb450cdc78a20c3a74c6dac05c9ac3cba08327' }),
+      new ROM({ name: 'u7.bin', merge: 'u7.bin', size: 2097152, crc: '795b17d5', sha1: 'cbfc29f1df9600c82e0fdae00edd00da5b73e14c' }),
+      new ROM({ name: 'eeprom-ddonpach.bin', size: 128, crc: '2df16438', sha1: '4881b70589a97e2420feb6d6e6737273beeff303' }),
+    ],
+    deviceRef: [
+      new DeviceRef('m68000'),
+      new DeviceRef('timer'),
+      new DeviceRef('screen'),
+      new DeviceRef('palette'),
+      new DeviceRef('gfxdecode'),
+      new DeviceRef('tmap038'),
+      new DeviceRef('tmap038'),
+      new DeviceRef('tmap038'),
+      new DeviceRef('93c46_16'),
+      new DeviceRef('gfxdecode'),
+      new DeviceRef('speaker'),
+      new DeviceRef('ymz280b'),
+    ],
+  }),
+  new Machine({
+    name: 'ddonpachj',
+    cloneOf: 'ddonpach',
+    romOf: 'ddonpach',
+    description: 'DoDonPachi (Japan, 1997 2/ 5 Master Ver.)',
+    rom: [
+      new ROM({ name: 'u27.bin', size: 524288, crc: '2432ff9b', sha1: 'fbc826c30553f6553ead40b312b73c049e8f4bf6' }),
+      new ROM({ name: 'u26.bin', size: 524288, crc: '4f3a914a', sha1: 'ae98eba049f1462aa1145f6959b9f9a32c97278f' }),
+      new ROM({ name: 'u50.bin', merge: 'u50.bin', size: 2097152, crc: '14b260ec', sha1: '33bda210302428d5500115d0c7a839cdfcb67d17' }),
+      new ROM({ name: 'u51.bin', merge: 'u51.bin', size: 2097152, crc: 'e7ba8cce', sha1: 'ad74a6b7d53760b19587c4a6dbea937daa7e87ce' }),
+      new ROM({ name: 'u52.bin', merge: 'u52.bin', size: 2097152, crc: '02492ee0', sha1: '64d9cc64a4ad189a8b03cf6a749ddb732b4a0014' }),
+      new ROM({ name: 'u53.bin', merge: 'u53.bin', size: 2097152, crc: 'cb4c10f0', sha1: 'a622e8bd0c938b5d38b392b247400b744d8be288' }),
+      new ROM({ name: 'u60.bin', merge: 'u60.bin', size: 2097152, crc: '903096a7', sha1: 'a243e903fef7c4a7b71383263e82e42acd869261' }),
+      new ROM({ name: 'u61.bin', merge: 'u61.bin', size: 2097152, crc: 'd89b7631', sha1: 'a66bb4955ca58fab8973ca37a0f971e9a67ce017' }),
+      new ROM({ name: 'u62.bin', merge: 'u62.bin', size: 2097152, crc: '292bfb6b', sha1: '11b385991ee990eb5ef36e136b988802b5f90fa4' }),
+      new ROM({ name: 'u6.bin', merge: 'u6.bin', size: 2097152, crc: '9dfdafaf', sha1: 'f5cb450cdc78a20c3a74c6dac05c9ac3cba08327' }),
+      new ROM({ name: 'u7.bin', merge: 'u7.bin', size: 2097152, crc: '795b17d5', sha1: 'cbfc29f1df9600c82e0fdae00edd00da5b73e14c' }),
+      new ROM({ name: 'eeprom-ddonpach.bin', merge: 'eeprom-ddonpach.bin', size: 128, crc: '315fb546', sha1: '7f597107d1610fc286413e0e93c794c80c0c554f' }),
+    ],
+    deviceRef: [
+      new DeviceRef('m68000'),
+      new DeviceRef('timer'),
+      new DeviceRef('screen'),
+      new DeviceRef('palette'),
+      new DeviceRef('gfxdecode'),
+      new DeviceRef('tmap038'),
+      new DeviceRef('tmap038'),
+      new DeviceRef('tmap038'),
+      new DeviceRef('93c46_16'),
+      new DeviceRef('gfxdecode'),
+      new DeviceRef('speaker'),
+      new DeviceRef('ymz280b'),
+    ],
+  }),
+  new Machine({
     name: 'galaga',
     description: 'Galaga (Namco rev. B)',
     rom: [
@@ -1053,6 +1153,7 @@ const dat = new LogiqxDAT(new Header(), [
     ],
   }),
   // ***** Devices *****
+  new Machine({ name: '93c46_16', device: 'yes' }),
   new Machine({ name: '93c56_16', device: 'yes' }),
   new Machine({ name: 'ay8910', device: 'yes' }),
   new Machine({ name: 'discrete', device: 'yes' }),
@@ -1060,6 +1161,7 @@ const dat = new LogiqxDAT(new Header(), [
   new Machine({ name: 'gfxdecode', device: 'yes' }),
   new Machine({ name: 'hd38820', device: 'yes' }),
   new Machine({ name: 'ls259', device: 'yes' }),
+  new Machine({ name: 'm68000', device: 'yes' }),
   new Machine({ name: 'mb8843', device: 'yes' }),
   new Machine({ name: 'mb8844', device: 'yes' }),
   new Machine({ name: 'namco', device: 'yes' }),
@@ -1161,7 +1263,9 @@ const dat = new LogiqxDAT(new Header(), [
   new Machine({ name: 'speaker', device: 'yes' }),
   new Machine({ name: 'speaker_sound_device', device: 'yes' }),
   new Machine({ name: 'timer', device: 'yes' }),
+  new Machine({ name: 'tmap038', device: 'yes' }),
   new Machine({ name: 'watchdog', device: 'yes' }),
+  new Machine({ name: 'ymz280b', device: 'yes' }),
   new Machine({ name: 'z80', device: 'yes' }),
 ]);
 
@@ -1275,6 +1379,19 @@ it('should full-non-merged', async () => {
     'sw-05.m5', 'sw-06.m6', 'sw-07.m7',
   ]);
   expect(gameNamesToRomNames.get('bbtime')).toEqual(['bbtime.svg', 'hd38820a65']);
+  expect(gameNamesToRomNames.get('ddonpach')).toEqual([
+    'b1.u27', 'b2.u26', 'eeprom-ddonpach.bin', 'u6.bin', 'u7.bin', 'u50.bin', 'u51.bin', 'u52.bin',
+    'u53.bin', 'u60.bin', 'u61.bin', 'u62.bin',
+  ]);
+  expect(gameNamesToRomNames.get('ddonpacha')).toEqual([
+    'arrange_u26.bin', 'arrange_u27.bin', 'arrange_u51.bin', 'arrange_u62.bin',
+    'eeprom-ddonpach.bin', 'u6.bin', 'u7.bin', 'u50.bin', 'u52.bin', 'u53.bin', 'u60.bin',
+    'u61.bin',
+  ]);
+  expect(gameNamesToRomNames.get('ddonpachj')).toEqual([
+    'eeprom-ddonpach.bin', 'u6.bin', 'u7.bin', 'u26.bin', 'u27.bin', 'u50.bin', 'u51.bin',
+    'u52.bin', 'u53.bin', 'u60.bin', 'u61.bin', 'u62.bin',
+  ]);
   // Includes device ROMs
   expect(gameNamesToRomNames.get('galaga')).toEqual([
     '51xx.bin', '54xx.bin', 'gg1_1b.3p', 'gg1_2b.3m', 'gg1_3.2m', 'gg1_4b.2l', 'gg1_5b.3f',
@@ -1318,7 +1435,7 @@ it('should full-non-merged', async () => {
 
   // No change to BIOS or devices
   expect(result.getGames().filter((game) => game.isBios())).toHaveLength(2);
-  expect(result.getGames().filter((game) => game.isDevice())).toHaveLength(27);
+  expect(result.getGames().filter((game) => game.isDevice())).toHaveLength(31);
   expect(gameNamesToRomNames.get('aristmk6')).toHaveLength(96);
   expect(gameNamesToRomNames.get('neogeo')).toHaveLength(34);
 });
@@ -1385,6 +1502,19 @@ it('should non-merged', async () => {
     'sw-05.m5', 'sw-06.m6', 'sw-07.m7',
   ]);
   expect(gameNamesToRomNames.get('bbtime')).toEqual(['bbtime.svg', 'hd38820a65']);
+  expect(gameNamesToRomNames.get('ddonpach')).toEqual([
+    'b1.u27', 'b2.u26', 'eeprom-ddonpach.bin', 'u6.bin', 'u7.bin', 'u50.bin', 'u51.bin', 'u52.bin',
+    'u53.bin', 'u60.bin', 'u61.bin', 'u62.bin',
+  ]);
+  expect(gameNamesToRomNames.get('ddonpacha')).toEqual([
+    'arrange_u26.bin', 'arrange_u27.bin', 'arrange_u51.bin', 'arrange_u62.bin',
+    'eeprom-ddonpach.bin', 'u6.bin', 'u7.bin', 'u50.bin', 'u52.bin', 'u53.bin', 'u60.bin',
+    'u61.bin',
+  ]);
+  expect(gameNamesToRomNames.get('ddonpachj')).toEqual([
+    'eeprom-ddonpach.bin', 'u6.bin', 'u7.bin', 'u26.bin', 'u27.bin', 'u50.bin', 'u51.bin',
+    'u52.bin', 'u53.bin', 'u60.bin', 'u61.bin', 'u62.bin',
+  ]);
   expect(gameNamesToRomNames.get('galaga')).toEqual([
     'gg1_1b.3p', 'gg1_2b.3m', 'gg1_3.2m', 'gg1_4b.2l', 'gg1_5b.3f', 'gg1_7b.2c', 'gg1_9.4l',
     'gg1_10.4f', 'gg1_11.4d', 'prom-1.1d', 'prom-2.5c', 'prom-3.1c', 'prom-4.2n', 'prom-5.5n',
@@ -1420,7 +1550,7 @@ it('should non-merged', async () => {
 
   // No change to BIOS or devices
   expect(result.getGames().filter((game) => game.isBios())).toHaveLength(2);
-  expect(result.getGames().filter((game) => game.isDevice())).toHaveLength(27);
+  expect(result.getGames().filter((game) => game.isDevice())).toHaveLength(31);
   expect(gameNamesToRomNames.get('aristmk6')).toHaveLength(96);
   expect(gameNamesToRomNames.get('neogeo')).toHaveLength(34);
 });
@@ -1474,6 +1604,17 @@ it('should split', async () => {
   expect(gameNamesToRomNames.get('1942w')).toEqual([
     'sw-02.f2', 'sw-03.m3', 'sw-04.m4', 'sw-05.m5', 'sw-07.m7',
   ]);
+  expect(gameNamesToRomNames.get('ddonpach')).toEqual([
+    'b1.u27', 'b2.u26', 'eeprom-ddonpach.bin', 'u6.bin', 'u7.bin', 'u50.bin', 'u51.bin', 'u52.bin',
+    'u53.bin', 'u60.bin', 'u61.bin', 'u62.bin',
+  ]);
+  expect(gameNamesToRomNames.get('ddonpacha')).toEqual([
+    'arrange_u26.bin', 'arrange_u27.bin', 'arrange_u51.bin', 'arrange_u62.bin',
+    'eeprom-ddonpach.bin',
+  ]);
+  expect(gameNamesToRomNames.get('ddonpachj')).toEqual([
+    'u26.bin', 'u27.bin',
+  ]);
   expect(gameNamesToRomNames.get('galaga')).toEqual([
     'gg1_1b.3p', 'gg1_2b.3m', 'gg1_3.2m', 'gg1_4b.2l', 'gg1_5b.3f', 'gg1_7b.2c', 'gg1_9.4l',
     'gg1_10.4f', 'gg1_11.4d', 'prom-1.1d', 'prom-2.5c', 'prom-3.1c', 'prom-4.2n', 'prom-5.5n',
@@ -1503,7 +1644,7 @@ it('should split', async () => {
 
   // No change to BIOS or devices
   expect(result.getGames().filter((game) => game.isBios())).toHaveLength(2);
-  expect(result.getGames().filter((game) => game.isDevice())).toHaveLength(27);
+  expect(result.getGames().filter((game) => game.isDevice())).toHaveLength(31);
   expect(gameNamesToRomNames.get('aristmk6')).toHaveLength(96);
   expect(gameNamesToRomNames.get('neogeo')).toHaveLength(34);
 });
@@ -1562,6 +1703,14 @@ it('should merged', async () => {
     'gg1_1b.3p', 'gg1_2b.3m', 'gg1_3.2m', 'gg1_4b.2l', 'gg1_5b.3f', 'gg1_7b.2c', 'gg1_9.4l',
     'gg1_10.4f', 'gg1_11.4d', 'prom-1.1d', 'prom-2.5c', 'prom-3.1c', 'prom-4.2n', 'prom-5.5n',
   ]);
+  expect(gameNamesToRomNames.get('ddonpach')).toEqual([
+    'ddonpacha\\arrange_u26.bin', 'ddonpacha\\arrange_u27.bin', 'ddonpacha\\arrange_u51.bin',
+    'ddonpacha\\arrange_u62.bin', 'ddonpacha\\eeprom-ddonpach.bin', 'ddonpachj\\u26.bin',
+    'ddonpachj\\u27.bin', 'b1.u27', 'b2.u26', 'eeprom-ddonpach.bin', 'u6.bin', 'u7.bin', 'u50.bin',
+    'u51.bin', 'u52.bin', 'u53.bin', 'u60.bin', 'u61.bin', 'u62.bin',
+  ]);
+  expect(gameNamesToRomNames.has('ddonpacha')).toEqual(false);
+  expect(gameNamesToRomNames.has('ddonpachj')).toEqual(false);
   expect(gameNamesToRomNames.has('galagamf')).toEqual(false);
   expect(gameNamesToRomNames.has('galagamk')).toEqual(false);
   expect(gameNamesToRomNames.has('galagamw')).toEqual(false);
@@ -1572,7 +1721,7 @@ it('should merged', async () => {
 
   // No change to BIOS or devices
   expect(result.getGames().filter((game) => game.isBios())).toHaveLength(2);
-  expect(result.getGames().filter((game) => game.isDevice())).toHaveLength(27);
+  expect(result.getGames().filter((game) => game.isDevice())).toHaveLength(31);
   expect(gameNamesToRomNames.get('aristmk6')).toHaveLength(96);
   expect(gameNamesToRomNames.get('neogeo')).toHaveLength(34);
 });

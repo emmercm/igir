@@ -569,6 +569,15 @@ describe('options', () => {
     expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--merge-roms', 'merged', '--merge-roms', 'split']).getMergeRoms()).toEqual(MergeMode.SPLIT);
   });
 
+  it('should parse "allow-incomplete-sets"', () => {
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--allow-incomplete-sets']).getAllowIncompleteSets()).toEqual(true);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--allow-incomplete-sets', 'true']).getAllowIncompleteSets()).toEqual(true);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--allow-incomplete-sets', 'false']).getAllowIncompleteSets()).toEqual(false);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--allow-incomplete-sets', '--allow-incomplete-sets']).getAllowIncompleteSets()).toEqual(true);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--allow-incomplete-sets', 'false', '--allow-incomplete-sets', 'true']).getAllowIncompleteSets()).toEqual(true);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--allow-incomplete-sets', 'true', '--allow-incomplete-sets', 'false']).getAllowIncompleteSets()).toEqual(false);
+  });
+
   it('should parse "filter-regex"', () => {
     expect(argumentsParser.parse(dummyCommandAndRequiredArgs).getFilterRegex()).toBeUndefined();
     expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--filter-regex', '[a-z]']).getFilterRegex()?.test('lower')).toEqual(true);

@@ -164,12 +164,16 @@ export default class CandidateGenerator extends Module {
     const foundRomsWithFiles = romFiles
       .map(([, romWithFiles]) => romWithFiles)
       .filter(ArrayPoly.filterNotNullish);
+    if (romFiles.length && !foundRomsWithFiles.length) {
+      // The Game has ROMs, but none were found
+      return undefined;
+    }
+
+    // Ignore the Game if not every File is present
     const missingRoms = romFiles
       .filter(([, romWithFiles]) => !romWithFiles)
       .map(([rom]) => rom);
-
-    // Ignore the Game if not every File is present
-    if (missingRoms.length > 0) {
+    if (missingRoms.length > 0 && !this.options.getAllowIncompleteSets()) {
       if (foundRomsWithFiles.length > 0) {
         this.logMissingRomFiles(dat, game, release, foundRomsWithFiles, missingRoms);
       }

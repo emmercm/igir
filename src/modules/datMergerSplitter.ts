@@ -159,12 +159,23 @@ export default class DATMergerSplitter extends Module {
   }
 
   private static diffGameRoms(parent: Game, child: Game): ROM[] {
-    const parentNames = new Set(parent.getRoms().map((rom) => rom.getName()));
-    const childMergeNames = new Set(child.getRoms().map((rom) => rom.getMerge() ?? rom.getName()));
-    const diffNames = new Set([...childMergeNames.values()]
-      .filter((childHash) => !parentNames.has(childHash)));
+    const parentRomNamesToHashCodes = parent.getRoms().reduce((map, rom) => {
+      map.set(rom.getName(), rom.hashCode());
+      return map;
+    }, new Map<string, string>());
 
-    return child.getRoms()
-      .filter((rom) => diffNames.has(rom.getName()));
+    return child.getRoms().filter((rom) => {
+      const parentName = rom.getMerge() ?? rom.getName();
+      const parentHashCode = parentRomNamesToHashCodes.get(parentName);
+      if (!parentHashCode) {
+        // Parent doesn't have a ROM of the same name -> keep it
+        return true;
+      }
+      if (parentHashCode !== rom.hashCode()) {
+        // Parent has a ROM of the same name, but a different checksum -> keep it
+        return true;
+      }
+      return false;
+    });
   }
 }
