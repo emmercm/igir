@@ -135,13 +135,13 @@ describe.each(['zip', 'extract', 'raw'])('command: %s', (command) => {
     });
     const files = [
       // Doesn't match anything
-      await File.fileOf('three.rom', 4, '34567890'),
+      await File.fileOf('three.rom', 4, { crc32: '34567890' }),
       // Doesn't match size
-      await File.fileOf('one.rom', 999_999, '12345678'),
+      await File.fileOf('one.rom', 999_999, { crc32: '12345678' }),
       // Doesn't match CRC
-      await File.fileOf('one.rom', 1, '00000000'),
+      await File.fileOf('one.rom', 1, { crc32: '00000000' }),
       // Matches one ROM of a game with multiple ROMs
-      await File.fileOf('two.a', 2, 'abcdef90'),
+      await File.fileOf('two.a', 2, { crc32: 'abcdef90' }),
     ];
 
     // When
