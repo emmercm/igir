@@ -5,6 +5,7 @@ import ROMScanner from '../../../src/modules/romScanner.js';
 import bufferPoly from '../../../src/polyfill/bufferPoly.js';
 import fsPoly from '../../../src/polyfill/fsPoly.js';
 import File from '../../../src/types/files/file.js';
+import { ChecksumBitmask } from '../../../src/types/files/fileChecksums.js';
 import ROMHeader from '../../../src/types/files/romHeader.js';
 import Options from '../../../src/types/options.js';
 import IPSPatch from '../../../src/types/patches/ipsPatch.js';
@@ -27,6 +28,8 @@ describe('getCrc32', () => {
   ])('should return the constructor value: %s', async (crc, expectedCrc) => {
     const file = await File.fileOf(path.join('some', 'path'), 0, { crc32: crc });
     expect(file.getCrc32()).toEqual(expectedCrc);
+    expect(file.getMd5()).toBeUndefined();
+    expect(file.getSha1()).toBeUndefined();
   });
 
   test.each([
@@ -37,6 +40,8 @@ describe('getCrc32', () => {
   ])('should hash the full file: %s', async (filePath, expectedCrc) => {
     const file = await File.fileOf(filePath);
     expect(file.getCrc32()).toEqual(expectedCrc);
+    expect(file.getMd5()).toBeUndefined();
+    expect(file.getSha1()).toBeUndefined();
   });
 });
 
@@ -47,6 +52,8 @@ describe('getCrc32WithoutHeader', () => {
   ])('should hash the full file when no header given: %s', async (filePath, expectedCrc) => {
     const file = await File.fileOf(filePath);
     expect(file.getCrc32WithoutHeader()).toEqual(expectedCrc);
+    expect(file.getMd5()).toBeUndefined();
+    expect(file.getSha1()).toBeUndefined();
   });
 
   test.each([
@@ -56,6 +63,8 @@ describe('getCrc32WithoutHeader', () => {
     const file = await (await File.fileOf(filePath))
       .withFileHeader(ROMHeader.headerFromFilename(filePath) as ROMHeader);
     expect(file.getCrc32WithoutHeader()).toEqual(expectedCrc);
+    expect(file.getMd5()).toBeUndefined();
+    expect(file.getSha1()).toBeUndefined();
   });
 
   test.each([
@@ -65,6 +74,34 @@ describe('getCrc32WithoutHeader', () => {
     const file = await (await File.fileOf(filePath))
       .withFileHeader(ROMHeader.headerFromFilename(filePath) as ROMHeader);
     expect(file.getCrc32WithoutHeader()).toEqual(expectedCrc);
+  });
+});
+
+describe('getMd5', () => {
+  test.each([
+    ['./test/fixtures/roms/raw/empty.rom', 'd41d8cd98f00b204e9800998ecf8427e'],
+    ['./test/fixtures/roms/raw/fizzbuzz.nes', 'cbe8410861130a91609295349918c2c2'],
+    ['./test/fixtures/roms/raw/foobar.lnx', '14758f1afd44c09b7992073ccf00b43d'],
+    ['./test/fixtures/roms/raw/loremipsum.rom', 'fffcb698d88fbc9425a636ba7e4712a3'],
+  ])('should hash the full file: %s', async (filePath, expectedMd5) => {
+    const file = await File.fileOf(filePath, undefined, undefined, ChecksumBitmask.MD5);
+    expect(file.getCrc32()).toEqual('00000000');
+    expect(file.getMd5()).toEqual(expectedMd5);
+    expect(file.getSha1()).toBeUndefined();
+  });
+});
+
+describe('getSha1', () => {
+  test.each([
+    ['./test/fixtures/roms/raw/empty.rom', 'da39a3ee5e6b4b0d3255bfef95601890afd80709'],
+    ['./test/fixtures/roms/raw/fizzbuzz.nes', '5a316d9f0e06964d94cdd62a933803d7147ddadb'],
+    ['./test/fixtures/roms/raw/foobar.lnx', '988881adc9fc3655077dc2d4d757d480b5ea0e11'],
+    ['./test/fixtures/roms/raw/loremipsum.rom', '1d913738eb363a4056c19e158aa81189a1eb7a55'],
+  ])('should hash the full file: %s', async (filePath, expectedSha1) => {
+    const file = await File.fileOf(filePath, undefined, undefined, ChecksumBitmask.SHA1);
+    expect(file.getCrc32()).toEqual('00000000');
+    expect(file.getMd5()).toBeUndefined();
+    expect(file.getSha1()).toEqual(expectedSha1);
   });
 });
 

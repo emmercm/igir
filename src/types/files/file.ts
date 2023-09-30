@@ -190,7 +190,7 @@ export default class File implements FileProps {
   ): Promise<ChecksumProps> {
     const start = fileHeader?.getDataOffsetBytes() ?? 0;
 
-    const cacheKey = `${filePath}|${start}`;
+    const cacheKey = `${filePath}|${start}|${checksumBitmask}`;
     return File.checksumCache.getOrCompute(cacheKey, async () => {
       const stream = fs.createReadStream(filePath, {
         start,
