@@ -1,3 +1,5 @@
+import 'jest-extended';
+
 import DATMergerSplitter from '../../src/modules/datMergerSplitter.js';
 import Header from '../../src/types/dats/logiqx/header.js';
 import LogiqxDAT from '../../src/types/dats/logiqx/logiqxDat.js';
@@ -1544,7 +1546,7 @@ it('should full-non-merged', async () => {
     }, new Map<string, string[]>());
 
   // Includes BIOS files
-  expect(gameNamesToRomNames.get('100lions')).toEqual(expect.arrayContaining([
+  expect(gameNamesToRomNames.get('100lions')).toEqual(expect.toIncludeAllMembers([
     '01.02.08_left.u3', '01.02.08_right.u2', '01.03.03a_left.u70', '01.03.03a_right.u83',
     '01.03.03e_left.u70', '01.03.03e_right.u83', '01.03.05_left.u70', '01.03.05_right.u83',
     '01.03.06_left.u70', '01.03.06_right.u83', '01.03.07_left.u70', '01.03.07_right.u83',
@@ -1569,7 +1571,7 @@ it('should full-non-merged', async () => {
     '21012901_left.u70', '21012901_right.u83', '24010467_left.u70', '24010467_right.u83',
     '24013001_left.u70', '24013001_right.u83', '25012805_left.u70', '25012805_right.u83',
   ]));
-  expect(gameNamesToRomNames.get('100lionsa')).toEqual(expect.arrayContaining([
+  expect(gameNamesToRomNames.get('100lionsa')).toEqual(expect.toIncludeAllMembers([
     '01.02.08_left.u3', '01.02.08_right.u2', '01.03.03a_left.u70', '01.03.03a_right.u83',
     '01.03.03e_left.u70', '01.03.03e_right.u83', '01.03.05_left.u70', '01.03.05_right.u83',
     '01.03.06_left.u70', '01.03.06_right.u83', '01.03.07_left.u70', '01.03.07_right.u83',
@@ -1594,53 +1596,53 @@ it('should full-non-merged', async () => {
     '21012901_right.u83', '24010467_left.u70', '24010467_right.u83', '24013001_left.u70',
     '24013001_right.u83', '25012805_left.u70', '25012805_right.u83', '30223811.u73', '30223811.u86',
   ]));
-  expect(gameNamesToRomNames.get('1942')).toEqual(expect.arrayContaining([
+  expect(gameNamesToRomNames.get('1942')).toEqual(expect.toIncludeAllMembers([
     'sb-0.f1', 'sb-1.k6', 'sb-2.d1', 'sb-3.d2', 'sb-4.d6', 'sb-5.e8', 'sb-6.e9', 'sb-7.e10',
     'sb-8.k3', 'sb-9.m11', 'sr-01.c11', 'sr-02.f2', 'sr-08.a1', 'sr-09.a2', 'sr-10.a3', 'sr-11.a4',
     'sr-12.a5', 'sr-13.a6', 'sr-14.l1', 'sr-15.l2', 'sr-16.n1', 'sr-17.n2', 'srb-03.m3',
     'srb-04.m4', 'srb-05.m5', 'srb-06.m6', 'srb-07.m7',
   ]));
-  expect(gameNamesToRomNames.get('1942a')).toEqual(expect.arrayContaining([
+  expect(gameNamesToRomNames.get('1942a')).toEqual(expect.toIncludeAllMembers([
     'sb-0.f1', 'sb-1.k6', 'sb-2.d1', 'sb-3.d2', 'sb-4.d6', 'sb-5.e8', 'sb-6.e9', 'sb-7.e10',
     'sb-8.k3', 'sb-9.m11', 'sr-01.c11', 'sr-02.f2', 'sr-04.m4', 'sr-05.m5', 'sr-06.m6', 'sr-07.m7',
     'sr-08.a1', 'sr-09.a2', 'sr-10.a3', 'sr-11.a4', 'sr-12.a5', 'sr-13.a6', 'sr-14.l1', 'sr-15.l2',
     'sr-16.n1', 'sr-17.n2', 'sra-03.m3',
   ]));
-  expect(gameNamesToRomNames.get('1942abl')).toEqual(expect.arrayContaining([
+  expect(gameNamesToRomNames.get('1942abl')).toEqual(expect.toIncludeAllMembers([
     '1.bin', '2.bin', '3.bin', '5.bin', '7.bin', '9.bin', '11.bin', '13.bin', '14.bin', '16.bin',
     'sb-0.f1', 'sb-1.k6', 'sb-2.d1', 'sb-3.d2', 'sb-4.d6', 'sb-5.e8', 'sb-6.e9', 'sb-7.e10',
     'sb-8.k3', 'sb-9.m11',
   ]));
-  expect(gameNamesToRomNames.get('1942b')).toEqual(expect.arrayContaining([
+  expect(gameNamesToRomNames.get('1942b')).toEqual(expect.toIncludeAllMembers([
     'sb-0.f1', 'sb-1.k6', 'sb-2.d1', 'sb-3.d2', 'sb-4.d6', 'sb-5.e8', 'sb-6.e9', 'sb-7.e10',
     'sb-8.k3', 'sb-9.m11', 'sr-01.c11', 'sr-02.f2', 'sr-03.m3', 'sr-04.m4', 'sr-05.m5', 'sr-06.m6',
     'sr-07.m7', 'sr-08.a1', 'sr-09.a2', 'sr-10.a3', 'sr-11.a4', 'sr-12.a5', 'sr-13.a6', 'sr-14.l1',
     'sr-15.l2', 'sr-16.n1', 'sr-17.n2',
   ]));
-  expect(gameNamesToRomNames.get('1942h')).toEqual(expect.arrayContaining([
+  expect(gameNamesToRomNames.get('1942h')).toEqual(expect.toIncludeAllMembers([
     'sb-0.f1', 'sb-1.k6', 'sb-2.d1', 'sb-3.d2', 'sb-4.d6', 'sb-5.e8', 'sb-6.e9', 'sb-7.e10',
     'sb-8.k3', 'sb-9.m11', 'sr-01.c11', 'sr-02.f2', 'sr-08.a1', 'sr-09.a2', 'sr-10.a3', 'sr-11.a4',
     'sr-12.a5', 'sr-13.a6', 'sr-14.l1', 'sr-15.l2', 'sr-16.n1', 'sr-17.n2', 'srb-06.m6',
     'srb-07.m7', 'supercharger_1942_@3.m3', 'supercharger_1942_@4.m4', 'supercharger_1942_@5.m5',
   ]));
-  expect(gameNamesToRomNames.get('1942p')).toEqual(expect.arrayContaining([
+  expect(gameNamesToRomNames.get('1942p')).toEqual(expect.toIncludeAllMembers([
     '1.bin', '2.bin', '3.bin', '04.bin', '5.bin', '6.bin', '7.bin', '8.bin', '9.bin', '10.bin',
     '11.bin', '12.bin', 'ic22.bin',
   ]));
-  expect(gameNamesToRomNames.get('1942w')).toEqual(expect.arrayContaining([
+  expect(gameNamesToRomNames.get('1942w')).toEqual(expect.toIncludeAllMembers([
     'sb-0.f1', 'sb-1.k6', 'sb-2.d1', 'sb-3.d2', 'sb-4.d6', 'sb-5.e8', 'sb-6.e9', 'sb-7.e10',
     'sb-8.k3', 'sb-9.m11', 'sr-01.c11', 'sr-08.a1', 'sr-09.a2', 'sr-10.a3', 'sr-11.a4', 'sr-12.a5',
     'sr-13.a6', 'sr-14.l1', 'sr-15.l2', 'sr-16.n1', 'sr-17.n2', 'sw-02.f2', 'sw-03.m3', 'sw-04.m4',
     'sw-05.m5', 'sw-06.m6', 'sw-07.m7',
   ]));
-  expect(gameNamesToRomNames.get('aes')).toEqual(expect.arrayContaining([
+  expect(gameNamesToRomNames.get('aes')).toEqual(expect.toIncludeAllMembers([
     '000-lo.lo', 'neo-epo.bin', 'neo-po.bin', 'neodebug.rom', 'uni-bios_1_3.rom',
     'uni-bios_2_0.rom', 'uni-bios_2_1.rom', 'uni-bios_2_2.rom', 'uni-bios_2_3.rom',
     'uni-bios_2_3o.rom', 'uni-bios_3_0.rom', 'uni-bios_3_1.rom', 'uni-bios_3_2.rom',
     'uni-bios_3_3.rom', 'uni-bios_4_0.rom',
   ]));
-  expect(gameNamesToRomNames.get('bbtime')).toEqual(expect.arrayContaining(['bbtime.svg', 'hd38820a65']));
-  expect(gameNamesToRomNames.get('c64')).toEqual(expect.arrayContaining([
+  expect(gameNamesToRomNames.get('bbtime')).toEqual(expect.toIncludeAllMembers(['bbtime.svg', 'hd38820a65']));
+  expect(gameNamesToRomNames.get('c64')).toEqual(expect.toIncludeAllMembers([
     '325302-01.uab4', '901225-01.u5', '901226-01.u3', '901227-01.u4', '901227-02.u4',
     '901227-03.u4', '901229-01.uab5', '901229-02.uab5', '901229-03.uab5', '901229-05 ae.uab5',
     '901229-06 aa.uab5', '906114-01.u17', 'digidos.u4', 'digidos.uab5', 'dosrom12.u4', 'exos3.u4',
@@ -1651,60 +1653,60 @@ it('should full-non-merged', async () => {
     'turboaccess26.u4', 'turboaccess301.u4', 'turboaccess302.u4', 'turboprocess.u4',
     'turboprocessus.u4', 'turborom2.u4', 'turborom.u4',
   ]));
-  expect(gameNamesToRomNames.get('ddonpach')).toEqual(expect.arrayContaining([
+  expect(gameNamesToRomNames.get('ddonpach')).toEqual(expect.toIncludeAllMembers([
     'b1.u27', 'b2.u26', 'eeprom-ddonpach.bin', 'u6.bin', 'u7.bin', 'u50.bin', 'u51.bin', 'u52.bin',
     'u53.bin', 'u60.bin', 'u61.bin', 'u62.bin',
   ]));
-  expect(gameNamesToRomNames.get('ddonpacha')).toEqual(expect.arrayContaining([
+  expect(gameNamesToRomNames.get('ddonpacha')).toEqual(expect.toIncludeAllMembers([
     'arrange_u26.bin', 'arrange_u27.bin', 'arrange_u51.bin', 'arrange_u62.bin',
     'eeprom-ddonpach.bin', 'u6.bin', 'u7.bin', 'u50.bin', 'u52.bin', 'u53.bin', 'u60.bin',
     'u61.bin',
   ]));
-  expect(gameNamesToRomNames.get('ddonpachj')).toEqual(expect.arrayContaining([
+  expect(gameNamesToRomNames.get('ddonpachj')).toEqual(expect.toIncludeAllMembers([
     'eeprom-ddonpach.bin', 'u6.bin', 'u7.bin', 'u26.bin', 'u27.bin', 'u50.bin', 'u51.bin',
     'u52.bin', 'u53.bin', 'u60.bin', 'u61.bin', 'u62.bin',
   ]));
   // Includes device ROMs
-  expect(gameNamesToRomNames.get('galaga')).toEqual(expect.arrayContaining([
+  expect(gameNamesToRomNames.get('galaga')).toEqual(expect.toIncludeAllMembers([
     '51xx.bin', '54xx.bin', 'gg1_1b.3p', 'gg1_2b.3m', 'gg1_3.2m', 'gg1_4b.2l', 'gg1_5b.3f',
     'gg1_7b.2c', 'gg1_9.4l', 'gg1_10.4f', 'gg1_11.4d', 'prom-1.1d', 'prom-2.5c', 'prom-3.1c',
     'prom-4.2n', 'prom-5.5n',
   ]));
-  expect(gameNamesToRomNames.get('galagamf')).toEqual(expect.arrayContaining([
+  expect(gameNamesToRomNames.get('galagamf')).toEqual(expect.toIncludeAllMembers([
     '51xx.bin', '54xx.bin', '2600j.bin', '2700k.bin', '2800l.bin', '3200a.bin', '3300b.bin',
     '3400c.bin', '3500d.bin', '3600fast.bin', '3700g.bin', 'prom-1.1d', 'prom-2.5c', 'prom-3.1c',
     'prom-4.2n', 'prom-5.5n',
   ]));
-  expect(gameNamesToRomNames.get('galagamk')).toEqual(expect.arrayContaining([
+  expect(gameNamesToRomNames.get('galagamk')).toEqual(expect.toIncludeAllMembers([
     '51xx.bin', '54xx.bin', '3400c.bin', 'gg1-5.3f', 'gg1-7b.2c', 'gg1-9.4l', 'gg1-10.4f',
     'gg1-11.4d', 'mk2-1', 'mk2-2', 'mk2-4', 'prom-1.1d', 'prom-2.5c', 'prom-3.1c', 'prom-4.2n',
     'prom-5.5n',
   ]));
-  expect(gameNamesToRomNames.get('galagamw')).toEqual(expect.arrayContaining([
+  expect(gameNamesToRomNames.get('galagamw')).toEqual(expect.toIncludeAllMembers([
     '51xx.bin', '54xx.bin', '2600j.bin', '2700k.bin', '2800l.bin', '3200a.bin', '3300b.bin',
     '3400c.bin', '3500d.bin', '3600e.bin', '3700g.bin', 'prom-1.1d', 'prom-2.5c', 'prom-3.1c',
     'prom-4.2n', 'prom-5.5n',
   ]));
-  expect(gameNamesToRomNames.get('galagao')).toEqual(expect.arrayContaining([
+  expect(gameNamesToRomNames.get('galagao')).toEqual(expect.toIncludeAllMembers([
     '51xx.bin', '54xx.bin', 'gg1-1.3p', 'gg1-2.3m', 'gg1-3.2m', 'gg1-4.2l', 'gg1-5.3f', 'gg1-7.2c',
     'gg1-9.4l', 'gg1-10.4f', 'gg1-11.4d', 'prom-1.1d', 'prom-2.5c', 'prom-3.1c', 'prom-4.2n',
     'prom-5.5n',
   ]));
-  expect(gameNamesToRomNames.get('gallag')).toEqual(expect.arrayContaining([
+  expect(gameNamesToRomNames.get('gallag')).toEqual(expect.toIncludeAllMembers([
     '51xx.bin', 'gallag.1', 'gallag.2', 'gallag.3', 'gallag.4', 'gallag.5', 'gallag.6', 'gallag.7',
     'gallag.8', 'gallag.9', 'gallag.a', 'prom-1.1d', 'prom-2.5c', 'prom-3.1c', 'prom-4.2n',
     'prom-5.5n',
   ]));
-  expect(gameNamesToRomNames.get('gatsbee')).toEqual(expect.arrayContaining([
+  expect(gameNamesToRomNames.get('gatsbee')).toEqual(expect.toIncludeAllMembers([
     '1.4b', '2.4c', '3.4d', '4.4e', '8.5r', '9.6a', '10.7a', '51xx.bin', '54xx.bin', 'gallag.6',
     'gg1-5.3f', 'gg1-7.2c', 'prom-1.1d', 'prom-2.5c', 'prom-3.1c', 'prom-4.2n', 'prom-5.5n',
   ]));
-  expect(gameNamesToRomNames.get('nebulbee')).toEqual(expect.arrayContaining([
+  expect(gameNamesToRomNames.get('nebulbee')).toEqual(expect.toIncludeAllMembers([
     '1c.bin', '1d.bin', '2n.bin', '5c.bin', '51xx.bin', 'gg1-5', 'gg1-7', 'gg1_3.2m', 'gg1_9.4l',
     'gg1_10.4f', 'gg1_11.4d', 'nebulbee.01', 'nebulbee.02', 'nebulbee.04', 'nebulbee.07',
     'prom-5.5n',
   ]));
-  expect(gameNamesToRomNames.get('liblrabl')).toEqual(expect.arrayContaining([
+  expect(gameNamesToRomNames.get('liblrabl')).toEqual(expect.toIncludeAllMembers([
     '2c.rom', '5b.rom', '5c.rom', '5p.rom', '8c.rom', '9t.rom', '10c.rom', 'lr1-1.1t', 'lr1-2.1s',
     'lr1-3.1r', 'lr1-4.3d', 'lr1-5.5l', 'lr1-6.2p',
   ]));
@@ -1735,112 +1737,110 @@ it('should non-merged', async () => {
       return map;
     }, new Map<string, string[]>());
 
-  // Excludes BIOS files
-  expect(gameNamesToRomNames.get('100lions')).toEqual(expect.arrayContaining(['10219211.u73', '10219211.u86']));
-  expect(gameNamesToRomNames.get('100lionsa')).toEqual(expect.arrayContaining(['30223811.u73', '30223811.u86']));
-  expect(gameNamesToRomNames.get('1942')).toEqual(expect.arrayContaining([
+  // Excludes device files
+  expect(gameNamesToRomNames.get('100lions')).toEqual(expect.toIncludeAllMembers(['10219211.u73', '10219211.u86']));
+  expect(gameNamesToRomNames.get('100lionsa')).toEqual(expect.toIncludeAllMembers(['30223811.u73', '30223811.u86']));
+  expect(gameNamesToRomNames.get('1942')).toEqual(expect.toIncludeAllMembers([
     'sb-0.f1', 'sb-1.k6', 'sb-2.d1', 'sb-3.d2', 'sb-4.d6', 'sb-5.e8', 'sb-6.e9', 'sb-7.e10',
     'sb-8.k3', 'sb-9.m11', 'sr-01.c11', 'sr-02.f2', 'sr-08.a1', 'sr-09.a2', 'sr-10.a3', 'sr-11.a4',
     'sr-12.a5', 'sr-13.a6', 'sr-14.l1', 'sr-15.l2', 'sr-16.n1', 'sr-17.n2', 'srb-03.m3',
     'srb-04.m4', 'srb-05.m5', 'srb-06.m6', 'srb-07.m7',
   ]));
-  expect(gameNamesToRomNames.get('1942a')).toEqual(expect.arrayContaining([
+  expect(gameNamesToRomNames.get('1942a')).toEqual(expect.toIncludeAllMembers([
     'sb-0.f1', 'sb-1.k6', 'sb-2.d1', 'sb-3.d2', 'sb-4.d6', 'sb-5.e8', 'sb-6.e9', 'sb-7.e10',
     'sb-8.k3', 'sb-9.m11', 'sr-01.c11', 'sr-02.f2', 'sr-04.m4', 'sr-05.m5', 'sr-06.m6', 'sr-07.m7',
     'sr-08.a1', 'sr-09.a2', 'sr-10.a3', 'sr-11.a4', 'sr-12.a5', 'sr-13.a6', 'sr-14.l1', 'sr-15.l2',
     'sr-16.n1', 'sr-17.n2', 'sra-03.m3',
   ]));
-  expect(gameNamesToRomNames.get('1942abl')).toEqual(expect.arrayContaining([
+  expect(gameNamesToRomNames.get('1942abl')).toEqual(expect.toIncludeAllMembers([
     '1.bin', '2.bin', '3.bin', '5.bin', '7.bin', '9.bin', '11.bin', '13.bin', '14.bin', '16.bin',
     'sb-0.f1', 'sb-1.k6', 'sb-2.d1', 'sb-3.d2', 'sb-4.d6', 'sb-5.e8', 'sb-6.e9', 'sb-7.e10',
     'sb-8.k3', 'sb-9.m11',
   ]));
-  expect(gameNamesToRomNames.get('1942b')).toEqual(expect.arrayContaining([
+  expect(gameNamesToRomNames.get('1942b')).toEqual(expect.toIncludeAllMembers([
     'sb-0.f1', 'sb-1.k6', 'sb-2.d1', 'sb-3.d2', 'sb-4.d6', 'sb-5.e8', 'sb-6.e9', 'sb-7.e10',
     'sb-8.k3', 'sb-9.m11', 'sr-01.c11', 'sr-02.f2', 'sr-03.m3', 'sr-04.m4', 'sr-05.m5', 'sr-06.m6',
     'sr-07.m7', 'sr-08.a1', 'sr-09.a2', 'sr-10.a3', 'sr-11.a4', 'sr-12.a5', 'sr-13.a6', 'sr-14.l1',
     'sr-15.l2', 'sr-16.n1', 'sr-17.n2',
   ]));
-  expect(gameNamesToRomNames.get('1942h')).toEqual(expect.arrayContaining([
+  expect(gameNamesToRomNames.get('1942h')).toEqual(expect.toIncludeAllMembers([
     'sb-0.f1', 'sb-1.k6', 'sb-2.d1', 'sb-3.d2', 'sb-4.d6', 'sb-5.e8', 'sb-6.e9', 'sb-7.e10',
     'sb-8.k3', 'sb-9.m11', 'sr-01.c11', 'sr-02.f2', 'sr-08.a1', 'sr-09.a2', 'sr-10.a3', 'sr-11.a4',
     'sr-12.a5', 'sr-13.a6', 'sr-14.l1', 'sr-15.l2', 'sr-16.n1', 'sr-17.n2', 'srb-06.m6',
     'srb-07.m7', 'supercharger_1942_@3.m3', 'supercharger_1942_@4.m4', 'supercharger_1942_@5.m5',
   ]));
-  expect(gameNamesToRomNames.get('1942p')).toEqual(expect.arrayContaining([
+  expect(gameNamesToRomNames.get('1942p')).toEqual(expect.toIncludeAllMembers([
     '1.bin', '2.bin', '3.bin', '04.bin', '5.bin', '6.bin', '7.bin', '8.bin', '9.bin', '10.bin',
     '11.bin', '12.bin', 'ic22.bin',
   ]));
-  expect(gameNamesToRomNames.get('1942w')).toEqual(expect.arrayContaining([
+  expect(gameNamesToRomNames.get('1942w')).toEqual(expect.toIncludeAllMembers([
     'sb-0.f1', 'sb-1.k6', 'sb-2.d1', 'sb-3.d2', 'sb-4.d6', 'sb-5.e8', 'sb-6.e9', 'sb-7.e10',
     'sb-8.k3', 'sb-9.m11', 'sr-01.c11', 'sr-08.a1', 'sr-09.a2', 'sr-10.a3', 'sr-11.a4', 'sr-12.a5',
     'sr-13.a6', 'sr-14.l1', 'sr-15.l2', 'sr-16.n1', 'sr-17.n2', 'sw-02.f2', 'sw-03.m3', 'sw-04.m4',
     'sw-05.m5', 'sw-06.m6', 'sw-07.m7',
   ]));
-  expect(gameNamesToRomNames.get('aes')).toEqual(expect.arrayContaining([
+  expect(gameNamesToRomNames.get('aes')).toEqual(expect.toIncludeAllMembers([
     '000-lo.lo', 'neo-epo.bin', 'neo-po.bin', 'neodebug.rom', 'uni-bios_1_3.rom',
     'uni-bios_2_0.rom', 'uni-bios_2_1.rom', 'uni-bios_2_2.rom', 'uni-bios_2_3.rom',
     'uni-bios_2_3o.rom', 'uni-bios_3_0.rom', 'uni-bios_3_1.rom', 'uni-bios_3_2.rom',
     'uni-bios_3_3.rom', 'uni-bios_4_0.rom',
   ]));
-  expect(gameNamesToRomNames.get('bbtime')).toEqual(expect.arrayContaining(['bbtime.svg', 'hd38820a65']));
-  expect(gameNamesToRomNames.get('c64')).toEqual(expect.arrayContaining([
-    '325302-01.uab4', '901225-01.u5', '901226-01.u3', '901227-01.u4', '901227-02.u4',
-    '901227-03.u4', '901229-01.uab5', '901229-02.uab5', '901229-03.uab5', '901229-05 ae.uab5',
-    '901229-06 aa.uab5', '906114-01.u17', 'digidos.u4', 'digidos.uab5', 'dosrom12.u4', 'exos3.u4',
-    'exos4.u4', 'jiffydos 1541.uab5', 'jiffydos c64.u4', 'kernal-10-mager.u4', 'kernal-20-1.u4',
-    'kernal-20-1_au.u4', 'kernal-20-2.u4', 'kernal-20-3.u4', 'kernal-30.u4', 'magnum.u4',
-    'mercury3.u4', 'mercury31s.u4', 'prodos24l2.u4', 'prodos35l2.u4', 'prodos.u4', 'rolo27.uab5',
-    'speed-dos.u4', 'speed-dosplus27.u4', 'speed-dosplus.u4', 'speed-dosplus.uab5', 'ttd34.uab5',
-    'turboaccess26.u4', 'turboaccess301.u4', 'turboaccess302.u4', 'turboprocess.u4',
-    'turboprocessus.u4', 'turborom2.u4', 'turborom.u4',
+  expect(gameNamesToRomNames.get('bbtime')).toEqual(expect.toIncludeAllMembers(['bbtime.svg', 'hd38820a65']));
+  expect(gameNamesToRomNames.get('c64')).toEqual(expect.toIncludeAllMembers([
+    '901225-01.u5', '901226-01.u3', '901227-01.u4', '901227-02.u4', '901227-03.u4', '906114-01.u17',
+    'digidos.u4', 'dosrom12.u4', 'exos3.u4', 'exos4.u4', 'jiffydos c64.u4', 'kernal-10-mager.u4',
+    'kernal-20-1.u4', 'kernal-20-1_au.u4', 'kernal-20-2.u4', 'kernal-20-3.u4', 'kernal-30.u4',
+    'magnum.u4', 'mercury3.u4', 'mercury31s.u4', 'prodos24l2.u4', 'prodos35l2.u4', 'prodos.u4',
+    'speed-dos.u4', 'speed-dosplus27.u4', 'speed-dosplus.u4', 'turboaccess26.u4',
+    'turboaccess301.u4', 'turboaccess302.u4', 'turboprocess.u4', 'turboprocessus.u4',
+    'turborom2.u4', 'turborom.u4',
   ]));
-  expect(gameNamesToRomNames.get('ddonpach')).toEqual(expect.arrayContaining([
+  expect(gameNamesToRomNames.get('ddonpach')).toEqual(expect.toIncludeAllMembers([
     'b1.u27', 'b2.u26', 'eeprom-ddonpach.bin', 'u6.bin', 'u7.bin', 'u50.bin', 'u51.bin', 'u52.bin',
     'u53.bin', 'u60.bin', 'u61.bin', 'u62.bin',
   ]));
-  expect(gameNamesToRomNames.get('ddonpacha')).toEqual(expect.arrayContaining([
+  expect(gameNamesToRomNames.get('ddonpacha')).toEqual(expect.toIncludeAllMembers([
     'arrange_u26.bin', 'arrange_u27.bin', 'arrange_u51.bin', 'arrange_u62.bin',
     'eeprom-ddonpach.bin', 'u6.bin', 'u7.bin', 'u50.bin', 'u52.bin', 'u53.bin', 'u60.bin',
     'u61.bin',
   ]));
-  expect(gameNamesToRomNames.get('ddonpachj')).toEqual(expect.arrayContaining([
+  expect(gameNamesToRomNames.get('ddonpachj')).toEqual(expect.toIncludeAllMembers([
     'eeprom-ddonpach.bin', 'u6.bin', 'u7.bin', 'u26.bin', 'u27.bin', 'u50.bin', 'u51.bin',
     'u52.bin', 'u53.bin', 'u60.bin', 'u61.bin', 'u62.bin',
   ]));
-  expect(gameNamesToRomNames.get('galaga')).toEqual(expect.arrayContaining([
+  expect(gameNamesToRomNames.get('galaga')).toEqual(expect.toIncludeAllMembers([
     'gg1_1b.3p', 'gg1_2b.3m', 'gg1_3.2m', 'gg1_4b.2l', 'gg1_5b.3f', 'gg1_7b.2c', 'gg1_9.4l',
     'gg1_10.4f', 'gg1_11.4d', 'prom-1.1d', 'prom-2.5c', 'prom-3.1c', 'prom-4.2n', 'prom-5.5n',
   ]));
-  expect(gameNamesToRomNames.get('galagamf')).toEqual(expect.arrayContaining([
+  expect(gameNamesToRomNames.get('galagamf')).toEqual(expect.toIncludeAllMembers([
     '2600j.bin', '2700k.bin', '2800l.bin', '3200a.bin', '3300b.bin', '3400c.bin', '3500d.bin',
     '3600fast.bin', '3700g.bin', 'prom-1.1d', 'prom-2.5c', 'prom-3.1c', 'prom-4.2n', 'prom-5.5n',
   ]));
-  expect(gameNamesToRomNames.get('galagamk')).toEqual(expect.arrayContaining([
+  expect(gameNamesToRomNames.get('galagamk')).toEqual(expect.toIncludeAllMembers([
     '3400c.bin', 'gg1-5.3f', 'gg1-7b.2c', 'gg1-9.4l', 'gg1-10.4f', 'gg1-11.4d', 'mk2-1', 'mk2-2',
     'mk2-4', 'prom-1.1d', 'prom-2.5c', 'prom-3.1c', 'prom-4.2n', 'prom-5.5n',
   ]));
-  expect(gameNamesToRomNames.get('galagamw')).toEqual(expect.arrayContaining([
+  expect(gameNamesToRomNames.get('galagamw')).toEqual(expect.toIncludeAllMembers([
     '2600j.bin', '2700k.bin', '2800l.bin', '3200a.bin', '3300b.bin', '3400c.bin', '3500d.bin',
     '3600e.bin', '3700g.bin', 'prom-1.1d', 'prom-2.5c', 'prom-3.1c', 'prom-4.2n', 'prom-5.5n',
   ]));
-  expect(gameNamesToRomNames.get('galagao')).toEqual(expect.arrayContaining([
+  expect(gameNamesToRomNames.get('galagao')).toEqual(expect.toIncludeAllMembers([
     'gg1-1.3p', 'gg1-2.3m', 'gg1-3.2m', 'gg1-4.2l', 'gg1-5.3f', 'gg1-7.2c', 'gg1-9.4l', 'gg1-10.4f',
     'gg1-11.4d', 'prom-1.1d', 'prom-2.5c', 'prom-3.1c', 'prom-4.2n', 'prom-5.5n',
   ]));
-  expect(gameNamesToRomNames.get('gallag')).toEqual(expect.arrayContaining([
+  expect(gameNamesToRomNames.get('gallag')).toEqual(expect.toIncludeAllMembers([
     'gallag.1', 'gallag.2', 'gallag.3', 'gallag.4', 'gallag.5', 'gallag.6', 'gallag.7', 'gallag.8',
     'gallag.9', 'gallag.a', 'prom-1.1d', 'prom-2.5c', 'prom-3.1c', 'prom-4.2n', 'prom-5.5n',
   ]));
-  expect(gameNamesToRomNames.get('gatsbee')).toEqual(expect.arrayContaining([
+  expect(gameNamesToRomNames.get('gatsbee')).toEqual(expect.toIncludeAllMembers([
     '1.4b', '2.4c', '3.4d', '4.4e', '8.5r', '9.6a', '10.7a', 'gallag.6', 'gg1-5.3f', 'gg1-7.2c',
     'prom-1.1d', 'prom-2.5c', 'prom-3.1c', 'prom-4.2n', 'prom-5.5n',
   ]));
-  expect(gameNamesToRomNames.get('nebulbee')).toEqual(expect.arrayContaining([
+  expect(gameNamesToRomNames.get('nebulbee')).toEqual(expect.toIncludeAllMembers([
     '1c.bin', '1d.bin', '2n.bin', '5c.bin', 'gg1-5', 'gg1-7', 'gg1_3.2m', 'gg1_9.4l', 'gg1_10.4f',
     'gg1_11.4d', 'nebulbee.01', 'nebulbee.02', 'nebulbee.04', 'nebulbee.07', 'prom-5.5n',
   ]));
-  expect(gameNamesToRomNames.get('liblrabl')).toEqual(expect.arrayContaining([
+  expect(gameNamesToRomNames.get('liblrabl')).toEqual(expect.toIncludeAllMembers([
     '2c.rom', '5b.rom', '5c.rom', '5p.rom', '8c.rom', '9t.rom', '10c.rom', 'lr1-1.1t', 'lr1-2.1s',
     'lr1-3.1r', 'lr1-4.3d', 'lr1-5.5l', 'lr1-6.2p',
   ]));
@@ -1872,46 +1872,46 @@ it('should split', async () => {
     }, new Map<string, string[]>());
 
   // No change
-  expect(gameNamesToRomNames.get('aes')).toEqual(expect.arrayContaining([
+  expect(gameNamesToRomNames.get('aes')).toEqual(expect.toIncludeAllMembers([
     '000-lo.lo', 'neo-epo.bin', 'neo-po.bin', 'neodebug.rom', 'uni-bios_1_3.rom',
     'uni-bios_2_0.rom', 'uni-bios_2_1.rom', 'uni-bios_2_2.rom', 'uni-bios_2_3.rom',
     'uni-bios_2_3o.rom', 'uni-bios_3_0.rom', 'uni-bios_3_1.rom', 'uni-bios_3_2.rom',
     'uni-bios_3_3.rom', 'uni-bios_4_0.rom',
   ]));
-  expect(gameNamesToRomNames.get('bbtime')).toEqual(expect.arrayContaining(['bbtime.svg', 'hd38820a65']));
-  expect(gameNamesToRomNames.get('liblrabl')).toEqual(expect.arrayContaining([
+  expect(gameNamesToRomNames.get('bbtime')).toEqual(expect.toIncludeAllMembers(['bbtime.svg', 'hd38820a65']));
+  expect(gameNamesToRomNames.get('liblrabl')).toEqual(expect.toIncludeAllMembers([
     '2c.rom', '5b.rom', '5c.rom', '5p.rom', '8c.rom', '9t.rom', '10c.rom', 'lr1-1.1t', 'lr1-2.1s',
     'lr1-3.1r', 'lr1-4.3d', 'lr1-5.5l', 'lr1-6.2p',
   ]));
   // Clones exclude parent ROMs
-  expect(gameNamesToRomNames.get('100lions')).toEqual(expect.arrayContaining(['10219211.u73', '10219211.u86']));
-  expect(gameNamesToRomNames.get('100lionsa')).toEqual(expect.arrayContaining(['30223811.u73', '30223811.u86']));
-  expect(gameNamesToRomNames.get('1942')).toEqual(expect.arrayContaining([
+  expect(gameNamesToRomNames.get('100lions')).toEqual(expect.toIncludeAllMembers(['10219211.u73', '10219211.u86']));
+  expect(gameNamesToRomNames.get('100lionsa')).toEqual(expect.toIncludeAllMembers(['30223811.u73', '30223811.u86']));
+  expect(gameNamesToRomNames.get('1942')).toEqual(expect.toIncludeAllMembers([
     'sb-0.f1', 'sb-1.k6', 'sb-2.d1', 'sb-3.d2', 'sb-4.d6', 'sb-5.e8', 'sb-6.e9', 'sb-7.e10',
     'sb-8.k3', 'sb-9.m11', 'sr-01.c11', 'sr-02.f2', 'sr-08.a1', 'sr-09.a2', 'sr-10.a3', 'sr-11.a4',
     'sr-12.a5', 'sr-13.a6', 'sr-14.l1', 'sr-15.l2', 'sr-16.n1', 'sr-17.n2', 'srb-03.m3',
     'srb-04.m4', 'srb-05.m5', 'srb-06.m6', 'srb-07.m7',
   ]));
-  expect(gameNamesToRomNames.get('1942a')).toEqual(expect.arrayContaining([
+  expect(gameNamesToRomNames.get('1942a')).toEqual(expect.toIncludeAllMembers([
     'sr-04.m4', 'sr-05.m5', 'sr-06.m6', 'sr-07.m7', 'sra-03.m3',
   ]));
-  expect(gameNamesToRomNames.get('1942abl')).toEqual(expect.arrayContaining([
+  expect(gameNamesToRomNames.get('1942abl')).toEqual(expect.toIncludeAllMembers([
     '3.bin', '5.bin', '7.bin', '9.bin', '11.bin', '13.bin', '14.bin', '16.bin',
   ]));
-  expect(gameNamesToRomNames.get('1942b')).toEqual(expect.arrayContaining([
+  expect(gameNamesToRomNames.get('1942b')).toEqual(expect.toIncludeAllMembers([
     'sr-03.m3', 'sr-04.m4', 'sr-05.m5', 'sr-06.m6', 'sr-07.m7',
   ]));
-  expect(gameNamesToRomNames.get('1942h')).toEqual(expect.arrayContaining([
+  expect(gameNamesToRomNames.get('1942h')).toEqual(expect.toIncludeAllMembers([
     'supercharger_1942_@3.m3', 'supercharger_1942_@4.m4', 'supercharger_1942_@5.m5',
   ]));
-  expect(gameNamesToRomNames.get('1942p')).toEqual(expect.arrayContaining([
+  expect(gameNamesToRomNames.get('1942p')).toEqual(expect.toIncludeAllMembers([
     '1.bin', '2.bin', '3.bin', '04.bin', '5.bin', '6.bin', '7.bin', '9.bin', '10.bin', '11.bin',
     '12.bin',
   ]));
-  expect(gameNamesToRomNames.get('1942w')).toEqual(expect.arrayContaining([
+  expect(gameNamesToRomNames.get('1942w')).toEqual(expect.toIncludeAllMembers([
     'sw-02.f2', 'sw-03.m3', 'sw-04.m4', 'sw-05.m5', 'sw-07.m7',
   ]));
-  expect(gameNamesToRomNames.get('c64')).toEqual(expect.arrayContaining([
+  expect(gameNamesToRomNames.get('c64')).toEqual(expect.toIncludeAllMembers([
     '901225-01.u5', '901226-01.u3', '901227-01.u4', '901227-02.u4', '901227-03.u4', '906114-01.u17',
     'digidos.u4', 'dosrom12.u4', 'exos3.u4', 'exos4.u4', 'jiffydos c64.u4', 'kernal-10-mager.u4',
     'kernal-20-1.u4', 'kernal-20-1_au.u4', 'kernal-20-2.u4', 'kernal-20-3.u4', 'kernal-30.u4',
@@ -1920,40 +1920,40 @@ it('should split', async () => {
     'turboaccess301.u4', 'turboaccess302.u4', 'turboprocess.u4', 'turboprocessus.u4',
     'turborom2.u4', 'turborom.u4',
   ]));
-  expect(gameNamesToRomNames.get('ddonpach')).toEqual(expect.arrayContaining([
+  expect(gameNamesToRomNames.get('ddonpach')).toEqual(expect.toIncludeAllMembers([
     'b1.u27', 'b2.u26', 'eeprom-ddonpach.bin', 'u6.bin', 'u7.bin', 'u50.bin', 'u51.bin', 'u52.bin',
     'u53.bin', 'u60.bin', 'u61.bin', 'u62.bin',
   ]));
-  expect(gameNamesToRomNames.get('ddonpacha')).toEqual(expect.arrayContaining([
+  expect(gameNamesToRomNames.get('ddonpacha')).toEqual(expect.toIncludeAllMembers([
     'arrange_u26.bin', 'arrange_u27.bin', 'arrange_u51.bin', 'arrange_u62.bin',
     'eeprom-ddonpach.bin',
   ]));
-  expect(gameNamesToRomNames.get('ddonpachj')).toEqual(expect.arrayContaining([
+  expect(gameNamesToRomNames.get('ddonpachj')).toEqual(expect.toIncludeAllMembers([
     'u26.bin', 'u27.bin',
   ]));
-  expect(gameNamesToRomNames.get('galaga')).toEqual(expect.arrayContaining([
+  expect(gameNamesToRomNames.get('galaga')).toEqual(expect.toIncludeAllMembers([
     'gg1_1b.3p', 'gg1_2b.3m', 'gg1_3.2m', 'gg1_4b.2l', 'gg1_5b.3f', 'gg1_7b.2c', 'gg1_9.4l',
     'gg1_10.4f', 'gg1_11.4d', 'prom-1.1d', 'prom-2.5c', 'prom-3.1c', 'prom-4.2n', 'prom-5.5n',
   ]));
-  expect(gameNamesToRomNames.get('galagamf')).toEqual(expect.arrayContaining([
+  expect(gameNamesToRomNames.get('galagamf')).toEqual(expect.toIncludeAllMembers([
     '3200a.bin', '3300b.bin', '3400c.bin', '3500d.bin', '3600fast.bin', '3700g.bin',
   ]));
-  expect(gameNamesToRomNames.get('galagamk')).toEqual(expect.arrayContaining([
+  expect(gameNamesToRomNames.get('galagamk')).toEqual(expect.toIncludeAllMembers([
     '3400c.bin', 'gg1-5.3f', 'mk2-1', 'mk2-2', 'mk2-4',
   ]));
-  expect(gameNamesToRomNames.get('galagamw')).toEqual(expect.arrayContaining([
+  expect(gameNamesToRomNames.get('galagamw')).toEqual(expect.toIncludeAllMembers([
     '3200a.bin', '3300b.bin', '3400c.bin', '3500d.bin', '3600e.bin', '3700g.bin',
   ]));
-  expect(gameNamesToRomNames.get('galagao')).toEqual(expect.arrayContaining([
+  expect(gameNamesToRomNames.get('galagao')).toEqual(expect.toIncludeAllMembers([
     'gg1-1.3p', 'gg1-2.3m', 'gg1-4.2l', 'gg1-5.3f', 'gg1-7.2c',
   ]));
-  expect(gameNamesToRomNames.get('gallag')).toEqual(expect.arrayContaining([
+  expect(gameNamesToRomNames.get('gallag')).toEqual(expect.toIncludeAllMembers([
     'gallag.1', 'gallag.2', 'gallag.4', 'gallag.5', 'gallag.6', 'gallag.7', 'gallag.8',
   ]));
-  expect(gameNamesToRomNames.get('gatsbee')).toEqual(expect.arrayContaining([
+  expect(gameNamesToRomNames.get('gatsbee')).toEqual(expect.toIncludeAllMembers([
     '1.4b', '2.4c', '3.4d', '4.4e', '8.5r', '9.6a', '10.7a', 'gallag.6', 'gg1-5.3f', 'gg1-7.2c',
   ]));
-  expect(gameNamesToRomNames.get('nebulbee')).toEqual(expect.arrayContaining([
+  expect(gameNamesToRomNames.get('nebulbee')).toEqual(expect.toIncludeAllMembers([
     '1c.bin', '1d.bin', '2n.bin', '5c.bin', 'gg1-5', 'gg1-7', 'nebulbee.01', 'nebulbee.02',
     'nebulbee.04', 'nebulbee.07',
   ]));
@@ -1985,14 +1985,14 @@ it('should merged', async () => {
     }, new Map<string, string[]>());
 
   // No change from regular non-merged (because there are no clones)
-  expect(gameNamesToRomNames.get('aes')).toEqual(expect.arrayContaining([
+  expect(gameNamesToRomNames.get('aes')).toEqual(expect.toIncludeAllMembers([
     '000-lo.lo', 'neo-epo.bin', 'neo-po.bin', 'neodebug.rom', 'uni-bios_1_3.rom',
     'uni-bios_2_0.rom', 'uni-bios_2_1.rom', 'uni-bios_2_2.rom', 'uni-bios_2_3.rom',
     'uni-bios_2_3o.rom', 'uni-bios_3_0.rom', 'uni-bios_3_1.rom', 'uni-bios_3_2.rom',
     'uni-bios_3_3.rom', 'uni-bios_4_0.rom',
   ]));
-  expect(gameNamesToRomNames.get('bbtime')).toEqual(expect.arrayContaining(['bbtime.svg', 'hd38820a65']));
-  expect(gameNamesToRomNames.get('c64')).toEqual(expect.arrayContaining([
+  expect(gameNamesToRomNames.get('bbtime')).toEqual(expect.toIncludeAllMembers(['bbtime.svg', 'hd38820a65']));
+  expect(gameNamesToRomNames.get('c64')).toEqual(expect.toIncludeAllMembers([
     // NOTE(cemmer): excludes clones
     '901225-01.u5', '901226-01.u3', '901227-01.u4', '901227-02.u4', '901227-03.u4', '906114-01.u17',
     'digidos.u4', 'dosrom12.u4', 'exos3.u4', 'exos4.u4', 'jiffydos c64.u4', 'kernal-10-mager.u4',
@@ -2002,17 +2002,17 @@ it('should merged', async () => {
     'turboaccess301.u4', 'turboaccess302.u4', 'turboprocess.u4', 'turboprocessus.u4',
     'turborom2.u4', 'turborom.u4',
   ]));
-  expect(gameNamesToRomNames.get('liblrabl')).toEqual(expect.arrayContaining([
+  expect(gameNamesToRomNames.get('liblrabl')).toEqual(expect.toIncludeAllMembers([
     '2c.rom', '5b.rom', '5c.rom', '5p.rom', '8c.rom', '9t.rom', '10c.rom', 'lr1-1.1t', 'lr1-2.1s',
     'lr1-3.1r', 'lr1-4.3d', 'lr1-5.5l', 'lr1-6.2p',
   ]));
   // Clones are merged in
-  expect(gameNamesToRomNames.get('100lions')).toEqual(expect.arrayContaining([
+  expect(gameNamesToRomNames.get('100lions')).toEqual(expect.toIncludeAllMembers([
     '100lionsa\\30223811.u73', '100lionsa\\30223811.u86',
     '10219211.u73', '10219211.u86',
   ]));
   expect(gameNamesToRomNames.has('100lionsa')).toEqual(false);
-  expect(gameNamesToRomNames.get('1942')).toEqual(expect.arrayContaining([
+  expect(gameNamesToRomNames.get('1942')).toEqual(expect.toIncludeAllMembers([
     '1942a\\sr-04.m4', '1942a\\sr-05.m5', '1942a\\sr-06.m6', '1942a\\sr-07.m7', '1942a\\sra-03.m3',
     '1942abl\\3.bin', '1942abl\\7.bin', '1942abl\\9.bin', '1942abl\\11.bin', '1942abl\\13.bin', '1942abl\\14.bin', '1942abl\\16.bin',
     '1942b\\sr-03.m3',
@@ -2030,7 +2030,7 @@ it('should merged', async () => {
   expect(gameNamesToRomNames.has('1942h')).toEqual(false);
   expect(gameNamesToRomNames.has('1942p')).toEqual(false);
   expect(gameNamesToRomNames.has('1942w')).toEqual(false);
-  expect(gameNamesToRomNames.get('galaga')).toEqual(expect.arrayContaining([
+  expect(gameNamesToRomNames.get('galaga')).toEqual(expect.toIncludeAllMembers([
     'galagamf\\3200a.bin', 'galagamf\\3300b.bin', 'galagamf\\3400c.bin', 'galagamf\\3500d.bin', 'galagamf\\3600fast.bin', 'galagamf\\3700g.bin',
     'galagamk\\gg1-5.3f', 'galagamk\\mk2-1', 'galagamk\\mk2-2', 'galagamk\\mk2-4',
     'galagamw\\3600e.bin', 'galagao\\gg1-1.3p', 'galagao\\gg1-2.3m', 'galagao\\gg1-4.2l', 'galagao\\gg1-7.2c',
@@ -2040,7 +2040,7 @@ it('should merged', async () => {
     'gg1_1b.3p', 'gg1_2b.3m', 'gg1_3.2m', 'gg1_4b.2l', 'gg1_5b.3f', 'gg1_7b.2c', 'gg1_9.4l',
     'gg1_10.4f', 'gg1_11.4d', 'prom-1.1d', 'prom-2.5c', 'prom-3.1c', 'prom-4.2n', 'prom-5.5n',
   ]));
-  expect(gameNamesToRomNames.get('ddonpach')).toEqual(expect.arrayContaining([
+  expect(gameNamesToRomNames.get('ddonpach')).toEqual(expect.toIncludeAllMembers([
     'ddonpacha\\arrange_u26.bin', 'ddonpacha\\arrange_u27.bin', 'ddonpacha\\arrange_u51.bin',
     'ddonpacha\\arrange_u62.bin', 'ddonpacha\\eeprom-ddonpach.bin', 'ddonpachj\\u26.bin',
     'ddonpachj\\u27.bin', 'b1.u27', 'b2.u26', 'eeprom-ddonpach.bin', 'u6.bin', 'u7.bin', 'u50.bin',
