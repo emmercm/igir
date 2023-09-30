@@ -64,12 +64,6 @@ export default class DATMergerSplitter extends Module {
   private mergeParent(parent: Parent, gameNamesToGames: Map<string, Game>): Game[] {
     let games = parent.getGames();
 
-    const romNameFunc = (rom: ROM): string => rom.getName()
-      // Numeric sort will sort underscore before hyphens? ASCII says don't do that
-      .replace('-', '__');
-    const romSortFunc = (a: ROM, b: ROM): number => romNameFunc(a)
-      .localeCompare(romNameFunc(b), undefined, { numeric: true });
-
     // Sanitization
     games = games.map((game) => {
       const romNames = game.getRoms().map((rom) => rom.getName());
@@ -79,9 +73,7 @@ export default class DATMergerSplitter extends Module {
           .filter((rom) => rom.getStatus() !== 'nodump')
           // Get rid of duplicate ROMs. MAME will sometimes duplicate a file with the exact same
           // name, size, and checksum but with a different "region" (e.g. neogeo).
-          .filter((rom, idx) => romNames.indexOf(rom.getName()) === idx)
-          // Sort for easier debugging and testing
-          .sort(romSortFunc),
+          .filter((rom, idx) => romNames.indexOf(rom.getName()) === idx),
       });
     });
 
@@ -103,7 +95,7 @@ export default class DATMergerSplitter extends Module {
               .flatMap((deviceGame) => deviceGame.getRoms()
                 .filter((rom) => rom.getStatus() !== 'nodump')),
             ...game.getRoms(),
-          ].sort(romSortFunc),
+          ],
         });
       });
     }
@@ -129,8 +121,7 @@ export default class DATMergerSplitter extends Module {
           });
 
           return game.withProps({
-            rom: DATMergerSplitter.diffGameRoms(biosGame, game)
-              .sort(romSortFunc),
+            rom: DATMergerSplitter.diffGameRoms(biosGame, game),
           });
         });
     }
@@ -153,8 +144,7 @@ export default class DATMergerSplitter extends Module {
           }
 
           return game.withProps({
-            rom: DATMergerSplitter.diffGameRoms(parentGame, game)
-              .sort(romSortFunc),
+            rom: DATMergerSplitter.diffGameRoms(parentGame, game),
           });
         });
     }

@@ -4,13 +4,15 @@ import Archive from '../files/archives/archive.js';
 import ArchiveEntry from '../files/archives/archiveEntry.js';
 import File from '../files/file.js';
 
+type ROMStatus = 'baddump' | 'nodump' | 'good';
+
 export interface ROMProps {
   readonly name: string,
   readonly size: number,
   readonly crc?: string,
   readonly md5?: string,
   readonly sha1?: string,
-  readonly status?: string,
+  readonly status?: ROMStatus,
   readonly merge?: string,
   readonly bios?: string,
 }
@@ -35,7 +37,7 @@ export default class ROM implements ROMProps {
   readonly sha1?: string;
 
   @Expose()
-  readonly status?: string;
+  readonly status?: ROMStatus;
 
   @Expose()
   readonly merge?: string;
@@ -82,6 +84,10 @@ export default class ROM implements ROMProps {
 
   getCrc32(): string {
     return this.crc ? this.crc.replace(/^0x/, '').padStart(8, '0') : '';
+  }
+
+  getStatus(): ROMStatus | undefined {
+    return this.status;
   }
 
   getMerge(): string | undefined {
