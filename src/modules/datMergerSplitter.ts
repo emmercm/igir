@@ -105,32 +105,56 @@ export default class DATMergerSplitter extends Module {
     if (this.options.getMergeRoms() !== MergeMode.FULLNONMERGED) {
       games = games
         .map((game) => {
-          if (game.isBios()) {
+          if (!game.getBios()) {
+            // This game doesn't use an external BIOS
             return game;
           }
+
+          let biosGame = gameNamesToGames.get(game.getBios());
+          if (!biosGame) {
+            // Invalid romOf attribute, external BIOS not found
+            return game;
+          }
+          // Only BIOS ROMs in the BIOS parent should be considered. This accounts for clones that
+          // reference their non-BIOS parent as their 'romOf'.
+          biosGame = biosGame.withProps({
+            rom: biosGame.getRoms().filter((rom) => rom.getBios()),
+          });
+
           return game.withProps({
-            rom: game.getRoms()
-              .filter((rom) => !rom.getBios())
+            rom: DATMergerSplitter.diffGameRoms(biosGame, game)
+              .sort(romSortFunc),
+          });
+        });
+    }
+
+    // 'split' and 'merged' types should exclude ROMs found in their parent
+    if (this.options.getMergeRoms() === MergeMode.SPLIT
+      || this.options.getMergeRoms() === MergeMode.MERGED
+    ) {
+      games = games
+        .map((game) => {
+          if (!game.getParent()) {
+            // This game doesn't have a parent
+            return game;
+          }
+
+          const parentGame = gameNamesToGames.get(game.getParent());
+          if (!parentGame) {
+            // Invalid cloneOf attribute, parent not found
+            return game;
+          }
+
+          return game.withProps({
+            rom: DATMergerSplitter.diffGameRoms(parentGame, game)
               .sort(romSortFunc),
           });
         });
     }
 
     const parentGame = games.find((game) => game.isParent());
-    let cloneGames = games
+    const cloneGames = games
       .filter((game) => game.isClone());
-
-    // 'split' and 'merged' types should exclude ROMs found in their parent
-    if (parentGame
-      && (this.options.getMergeRoms() === MergeMode.SPLIT
-        || this.options.getMergeRoms() === MergeMode.MERGED)
-    ) {
-      cloneGames = cloneGames
-        .map((childGame) => childGame.withProps({
-          rom: DATMergerSplitter.diffGameRoms(parentGame, childGame)
-            .sort(romSortFunc),
-        }));
-    }
 
     // For everything other than 'merged' we keep the same number of games
     if (this.options.getMergeRoms() !== MergeMode.MERGED) {
