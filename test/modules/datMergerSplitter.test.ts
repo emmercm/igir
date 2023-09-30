@@ -592,6 +592,48 @@ const dat = new LogiqxDAT(new Header(), [
     ],
   }),
   new Machine({
+    name: 'aes',
+    description: 'Neo-Geo AES (NTSC)',
+    rom: [
+      new ROM({ name: 'neo-epo.bin', bios: 'asia', size: 131072, crc: 'd27a71f1', sha1: '1b3b22092f30c4d1b2c15f04d1670eb1e9fbea07' }),
+      new ROM({ name: 'neo-po.bin', bios: 'japan', size: 131072, crc: '16d0c132', sha1: '4e4a440cae46f3889d20234aebd7f8d5f522e22c' }),
+      new ROM({ name: 'neodebug.rom', bios: 'devel', size: 131072, crc: '698ebb7d', sha1: '081c49aa8cc7dad5939833dc1b18338321ea0a07' }),
+      new ROM({ name: 'uni-bios_4_0.rom', bios: 'unibios40', size: 131072, crc: 'a7aab458', sha1: '938a0bda7d9a357240718c2cec319878d36b8f72' }),
+      new ROM({ name: 'uni-bios_3_3.rom', bios: 'unibios33', size: 131072, crc: '24858466', sha1: '0ad92efb0c2338426635e0159d1f60b4473d0785' }),
+      new ROM({ name: 'uni-bios_3_2.rom', bios: 'unibios32', size: 131072, crc: 'a4e8b9b3', sha1: 'c92f18c3f1edda543d264ecd0ea915240e7c8258' }),
+      new ROM({ name: 'uni-bios_3_1.rom', bios: 'unibios31', size: 131072, crc: '0c58093f', sha1: '29329a3448c2505e1ff45ffa75e61e9693165153' }),
+      new ROM({ name: 'uni-bios_3_0.rom', bios: 'unibios30', size: 131072, crc: 'a97c89a9', sha1: '97a5eff3b119062f10e31ad6f04fe4b90d366e7f' }),
+      new ROM({ name: 'uni-bios_2_3.rom', bios: 'unibios23', size: 131072, crc: '27664eb5', sha1: '5b02900a3ccf3df168bdcfc98458136fd2b92ac0' }),
+      new ROM({ name: 'uni-bios_2_3o.rom', bios: 'unibios23o', size: 131072, crc: '601720ae', sha1: '1b8a72c720cdb5ee3f1d735bbcf447b09204b8d9' }),
+      new ROM({ name: 'uni-bios_2_2.rom', bios: 'unibios22', size: 131072, crc: '2d50996a', sha1: '5241a4fb0c63b1a23fd1da8efa9c9a9bd3b4279c' }),
+      new ROM({ name: 'uni-bios_2_1.rom', bios: 'unibios21', size: 131072, crc: '8dabf76b', sha1: 'c23732c4491d966cf0373c65c83c7a4e88f0082c' }),
+      new ROM({ name: 'uni-bios_2_0.rom', bios: 'unibios20', size: 131072, crc: '0c12c2ad', sha1: '37bcd4d30f3892078b46841d895a6eff16dc921e' }),
+      new ROM({ name: 'uni-bios_1_3.rom', bios: 'unibios13', size: 131072, crc: 'b24b44a0', sha1: 'eca8851d30557b97c309a0d9f4a9d20e5b14af4e' }),
+      new ROM({ name: '000-lo.lo', size: 131072, crc: '5a86cff2', sha1: '5992277debadeb64d1c1c64b0a92d9293eaf7e4a' }),
+    ],
+    deviceRef: [
+      new DeviceRef('m68000'),
+      new DeviceRef('z80'),
+      new DeviceRef('hc259'),
+      new DeviceRef('screen'),
+      new DeviceRef('palette'),
+      new DeviceRef('neosprite_opt'),
+      new DeviceRef('ipt_merge_all_hi'),
+      new DeviceRef('generic_latch_8'),
+      new DeviceRef('generic_latch_8'),
+      new DeviceRef('ym2610'),
+      new DeviceRef('speaker'),
+      new DeviceRef('speaker'),
+      new DeviceRef('ng_memcard'),
+      new DeviceRef('neogeo_cart_slot'),
+      new DeviceRef('neogeo_control_port'),
+      new DeviceRef('neogeo_joy'),
+      new DeviceRef('neogeo_control_port'),
+      new DeviceRef('neogeo_joy'),
+      new DeviceRef('software_list'),
+    ],
+  }),
+  new Machine({
     name: 'bbtime',
     description: 'Burger Time (Bandai)',
     rom: [
@@ -1152,6 +1194,7 @@ const dat = new LogiqxDAT(new Header(), [
       new DeviceRef('palette'),
     ],
   }),
+
   // ***** Devices *****
   new Machine({ name: '93c46_16', device: 'yes' }),
   new Machine({ name: '93c56_16', device: 'yes' }),
@@ -1159,7 +1202,9 @@ const dat = new LogiqxDAT(new Header(), [
   new Machine({ name: 'discrete', device: 'yes' }),
   new Machine({ name: 'generic_latch_8', device: 'yes' }),
   new Machine({ name: 'gfxdecode', device: 'yes' }),
+  new Machine({ name: 'hc259', device: 'yes' }),
   new Machine({ name: 'hd38820', device: 'yes' }),
+  new Machine({ name: 'ipt_merge_all_hi', device: 'yes' }),
   new Machine({ name: 'ls259', device: 'yes' }),
   new Machine({ name: 'm68000', device: 'yes' }),
   new Machine({ name: 'mb8843', device: 'yes' }),
@@ -1252,7 +1297,12 @@ const dat = new LogiqxDAT(new Header(), [
       new DeviceRef('software_list'),
     ],
   }),
+  new Machine({ name: 'neogeo_cart_slot', device: 'yes' }),
+  new Machine({ name: 'neogeo_control_port', device: 'yes' }),
+  new Machine({ name: 'neogeo_joy', device: 'yes' }),
+  new Machine({ name: 'neosprite_opt', device: 'yes' }),
   new Machine({ name: 'netlist_sound', device: 'yes' }),
+  new Machine({ name: 'ng_memcard', device: 'yes' }),
   new Machine({ name: 'nl_stream_in', device: 'yes' }),
   new Machine({ name: 'nl_stream_out', device: 'yes' }),
   new Machine({ name: 'ns16550', device: 'yes' }),
@@ -1265,6 +1315,7 @@ const dat = new LogiqxDAT(new Header(), [
   new Machine({ name: 'timer', device: 'yes' }),
   new Machine({ name: 'tmap038', device: 'yes' }),
   new Machine({ name: 'watchdog', device: 'yes' }),
+  new Machine({ name: 'ym2610', device: 'yes' }),
   new Machine({ name: 'ymz280b', device: 'yes' }),
   new Machine({ name: 'z80', device: 'yes' }),
 ]);
@@ -1378,6 +1429,12 @@ it('should full-non-merged', async () => {
     'sr-13.a6', 'sr-14.l1', 'sr-15.l2', 'sr-16.n1', 'sr-17.n2', 'sw-02.f2', 'sw-03.m3', 'sw-04.m4',
     'sw-05.m5', 'sw-06.m6', 'sw-07.m7',
   ]);
+  expect(gameNamesToRomNames.get('aes')).toEqual([
+    '000-lo.lo', 'neo-epo.bin', 'neo-po.bin', 'neodebug.rom', 'uni-bios_1_3.rom',
+    'uni-bios_2_0.rom', 'uni-bios_2_1.rom', 'uni-bios_2_2.rom', 'uni-bios_2_3.rom',
+    'uni-bios_2_3o.rom', 'uni-bios_3_0.rom', 'uni-bios_3_1.rom', 'uni-bios_3_2.rom',
+    'uni-bios_3_3.rom', 'uni-bios_4_0.rom',
+  ]);
   expect(gameNamesToRomNames.get('bbtime')).toEqual(['bbtime.svg', 'hd38820a65']);
   expect(gameNamesToRomNames.get('ddonpach')).toEqual([
     'b1.u27', 'b2.u26', 'eeprom-ddonpach.bin', 'u6.bin', 'u7.bin', 'u50.bin', 'u51.bin', 'u52.bin',
@@ -1435,7 +1492,7 @@ it('should full-non-merged', async () => {
 
   // No change to BIOS or devices
   expect(result.getGames().filter((game) => game.isBios())).toHaveLength(2);
-  expect(result.getGames().filter((game) => game.isDevice())).toHaveLength(31);
+  expect(result.getGames().filter((game) => game.isDevice())).toHaveLength(39);
   expect(gameNamesToRomNames.get('aristmk6')).toHaveLength(96);
   expect(gameNamesToRomNames.get('neogeo')).toHaveLength(34);
 });
@@ -1501,6 +1558,12 @@ it('should non-merged', async () => {
     'sr-13.a6', 'sr-14.l1', 'sr-15.l2', 'sr-16.n1', 'sr-17.n2', 'sw-02.f2', 'sw-03.m3', 'sw-04.m4',
     'sw-05.m5', 'sw-06.m6', 'sw-07.m7',
   ]);
+  expect(gameNamesToRomNames.get('aes')).toEqual([
+    '000-lo.lo', 'neo-epo.bin', 'neo-po.bin', 'neodebug.rom', 'uni-bios_1_3.rom',
+    'uni-bios_2_0.rom', 'uni-bios_2_1.rom', 'uni-bios_2_2.rom', 'uni-bios_2_3.rom',
+    'uni-bios_2_3o.rom', 'uni-bios_3_0.rom', 'uni-bios_3_1.rom', 'uni-bios_3_2.rom',
+    'uni-bios_3_3.rom', 'uni-bios_4_0.rom',
+  ]);
   expect(gameNamesToRomNames.get('bbtime')).toEqual(['bbtime.svg', 'hd38820a65']);
   expect(gameNamesToRomNames.get('ddonpach')).toEqual([
     'b1.u27', 'b2.u26', 'eeprom-ddonpach.bin', 'u6.bin', 'u7.bin', 'u50.bin', 'u51.bin', 'u52.bin',
@@ -1550,7 +1613,7 @@ it('should non-merged', async () => {
 
   // No change to BIOS or devices
   expect(result.getGames().filter((game) => game.isBios())).toHaveLength(2);
-  expect(result.getGames().filter((game) => game.isDevice())).toHaveLength(31);
+  expect(result.getGames().filter((game) => game.isDevice())).toHaveLength(39);
   expect(gameNamesToRomNames.get('aristmk6')).toHaveLength(96);
   expect(gameNamesToRomNames.get('neogeo')).toHaveLength(34);
 });
@@ -1575,6 +1638,12 @@ it('should split', async () => {
     }, new Map<string, string[]>());
 
   // No change
+  expect(gameNamesToRomNames.get('aes')).toEqual([
+    '000-lo.lo', 'neo-epo.bin', 'neo-po.bin', 'neodebug.rom', 'uni-bios_1_3.rom',
+    'uni-bios_2_0.rom', 'uni-bios_2_1.rom', 'uni-bios_2_2.rom', 'uni-bios_2_3.rom',
+    'uni-bios_2_3o.rom', 'uni-bios_3_0.rom', 'uni-bios_3_1.rom', 'uni-bios_3_2.rom',
+    'uni-bios_3_3.rom', 'uni-bios_4_0.rom',
+  ]);
   expect(gameNamesToRomNames.get('bbtime')).toEqual(['bbtime.svg', 'hd38820a65']);
   // Clones exclude parent ROMs
   expect(gameNamesToRomNames.get('100lions')).toEqual(['10219211.u73', '10219211.u86']);
@@ -1644,7 +1713,7 @@ it('should split', async () => {
 
   // No change to BIOS or devices
   expect(result.getGames().filter((game) => game.isBios())).toHaveLength(2);
-  expect(result.getGames().filter((game) => game.isDevice())).toHaveLength(31);
+  expect(result.getGames().filter((game) => game.isDevice())).toHaveLength(39);
   expect(gameNamesToRomNames.get('aristmk6')).toHaveLength(96);
   expect(gameNamesToRomNames.get('neogeo')).toHaveLength(34);
 });
@@ -1669,6 +1738,12 @@ it('should merged', async () => {
     }, new Map<string, string[]>());
 
   // No change from regular non-merged (because there are no clones)
+  expect(gameNamesToRomNames.get('aes')).toEqual([
+    '000-lo.lo', 'neo-epo.bin', 'neo-po.bin', 'neodebug.rom', 'uni-bios_1_3.rom',
+    'uni-bios_2_0.rom', 'uni-bios_2_1.rom', 'uni-bios_2_2.rom', 'uni-bios_2_3.rom',
+    'uni-bios_2_3o.rom', 'uni-bios_3_0.rom', 'uni-bios_3_1.rom', 'uni-bios_3_2.rom',
+    'uni-bios_3_3.rom', 'uni-bios_4_0.rom',
+  ]);
   expect(gameNamesToRomNames.get('bbtime')).toEqual(['bbtime.svg', 'hd38820a65']);
   // Clones are merged in
   expect(gameNamesToRomNames.get('100lions')).toEqual([
@@ -1721,7 +1796,7 @@ it('should merged', async () => {
 
   // No change to BIOS or devices
   expect(result.getGames().filter((game) => game.isBios())).toHaveLength(2);
-  expect(result.getGames().filter((game) => game.isDevice())).toHaveLength(31);
+  expect(result.getGames().filter((game) => game.isDevice())).toHaveLength(39);
   expect(gameNamesToRomNames.get('aristmk6')).toHaveLength(96);
   expect(gameNamesToRomNames.get('neogeo')).toHaveLength(34);
 });
