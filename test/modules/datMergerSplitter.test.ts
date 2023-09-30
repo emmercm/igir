@@ -12,6 +12,7 @@ import ProgressBarFake from '../console/progressBarFake.js';
 const dat = new LogiqxDAT(new Header(), [
   // ***** Games *****
   new Machine({
+    // Game that has clone(s) and a romOf BIOS parent
     name: '100lions',
     romOf: 'aristmk6',
     description: '100 Lions (10219211, NSW/ACT)',
@@ -238,7 +239,10 @@ const dat = new LogiqxDAT(new Header(), [
       new DeviceRef('palette'),
     ],
   }),
+
   new Machine({
+    // Game with multiple clones, where clones have duplicate filenames with different checksums
+    // (3.bin)
     name: '1942',
     description: '1942 (Revision B)',
     rom: [
@@ -591,7 +595,9 @@ const dat = new LogiqxDAT(new Header(), [
       new DeviceRef('nl_stream_out'),
     ],
   }),
+
   new Machine({
+    // Game with BIOS files but no romOf BIOS parent
     name: 'aes',
     description: 'Neo-Geo AES (NTSC)',
     rom: [
@@ -633,7 +639,9 @@ const dat = new LogiqxDAT(new Header(), [
       new DeviceRef('software_list'),
     ],
   }),
+
   new Machine({
+    // Game with no clones
     name: 'bbtime',
     description: 'Burger Time (Bandai)',
     rom: [
@@ -648,7 +656,10 @@ const dat = new LogiqxDAT(new Header(), [
       new DeviceRef('speaker_sound_device'),
     ],
   }),
+
   new Machine({
+    // Game where parent and clone(s) have duplicate filenames with different checksums
+    // (eeprom-ddonpach.bin)
     name: 'ddonpach',
     description: 'DoDonPachi (World, 1997 2/ 5 Master Ver.)',
     rom: [
@@ -748,7 +759,9 @@ const dat = new LogiqxDAT(new Header(), [
       new DeviceRef('ymz280b'),
     ],
   }),
+
   new Machine({
+    // Game with clones that have DeviceRefs with ROM files
     name: 'galaga',
     description: 'Galaga (Namco rev. B)',
     rom: [
@@ -1082,6 +1095,42 @@ const dat = new LogiqxDAT(new Header(), [
       new DeviceRef('z80'),
     ],
   }),
+
+  new Machine({
+    // Game with DeviceRefs that have 'status=nodump' ROMs
+    name: 'liblrabl',
+    description: 'Libble Rabble',
+    rom: [
+      new ROM({ name: '5b.rom', size: 16384, crc: 'da7a93c2', sha1: 'fe4a02cdab66722eb7b8cf58825f899b1949a6a2' }),
+      new ROM({ name: '5c.rom', size: 16384, crc: '6cae25dc', sha1: 'de74317a7d5de1865d096c377923a764be5e6879' }),
+      new ROM({ name: '2c.rom', size: 8192, crc: '7c09e50a', sha1: '5f004d60bbb7355e008a9cda137b28bc2192b8ef' }),
+      new ROM({ name: '8c.rom', size: 16384, crc: 'a00cd959', sha1: 'cc5621103c31cfbc65941615cab391db0f74e6ce' }),
+      new ROM({ name: '10c.rom', size: 16384, crc: '09ce209b', sha1: '2ed46d6592f8227bac8ab54963d9a300706ade47' }),
+      new ROM({ name: '5p.rom', size: 8192, crc: '3b4937f0', sha1: '06d9de576f1c2262c34aeb91054e68c9298af688' }),
+      new ROM({ name: '9t.rom', size: 16384, crc: 'a88e24ca', sha1: 'eada133579f19de09255084dcdc386311606a335' }),
+      new ROM({ name: 'lr1-3.1r', size: 256, crc: 'f3ec0d07', sha1: 'b0aad1fb6df79f202889600f486853995352f9c2' }),
+      new ROM({ name: 'lr1-2.1s', size: 256, crc: '2ae4f702', sha1: '838fdca9e91fea4f64a59880ac47c48973bb8fbf' }),
+      new ROM({ name: 'lr1-1.1t', size: 256, crc: '7601f208', sha1: '572d070ca387b780030ed5de38a8970b7cc14349' }),
+      new ROM({ name: 'lr1-5.5l', size: 256, crc: '940f5397', sha1: '825a7bd78a8a08d30bad2e4890ae6e9ad88b36b8' }),
+      new ROM({ name: 'lr1-6.2p', size: 512, crc: 'a6b7f850', sha1: '7cfde16dfd5c4d5b876b4fbe4f924f1385932a93' }),
+      new ROM({ name: 'lr1-4.3d', size: 256, crc: '16a9166a', sha1: '847cbaf7c88616576c410177e066ae1d792ac0ba' }),
+    ],
+    deviceRef: [
+      new DeviceRef('mc6809e'),
+      new DeviceRef('timer'),
+      new DeviceRef('m68000'),
+      new DeviceRef('mc6809e'),
+      new DeviceRef('namco58'),
+      new DeviceRef('namco56'),
+      new DeviceRef('namco56'),
+      new DeviceRef('screen'),
+      new DeviceRef('gfxdecode'),
+      new DeviceRef('palette'),
+      new DeviceRef('speaker'),
+      new DeviceRef('namco_15xx'),
+    ],
+  }),
+
   // ***** BIOSes *****
   new Machine({
     name: 'aristmk6',
@@ -1209,8 +1258,10 @@ const dat = new LogiqxDAT(new Header(), [
   new Machine({ name: 'm68000', device: 'yes' }),
   new Machine({ name: 'mb8843', device: 'yes' }),
   new Machine({ name: 'mb8844', device: 'yes' }),
+  new Machine({ name: 'mc6809e', device: 'yes' }),
   new Machine({ name: 'namco', device: 'yes' }),
   new Machine({ name: 'namco_05xx_starfield', device: 'yes' }),
+  new Machine({ name: 'namco_15xx', device: 'yes' }),
   new Machine({ name: 'namco06', device: 'yes' }),
   new Machine({
     name: 'namco51',
@@ -1225,6 +1276,14 @@ const dat = new LogiqxDAT(new Header(), [
     description: 'Namco 54xx',
     rom: new ROM({ name: '54xx.bin', size: 1024, crc: 'ee7357e0', sha1: '01bdf984a49e8d0cc8761b2cc162fd6434d5afbe' }),
     deviceRef: new DeviceRef('mb8844'),
+  }),
+  new Machine({
+    name: 'namco56',
+    rom: new ROM({ name: '56xx.bin', size: 1024, status: 'nodump' }),
+  }),
+  new Machine({
+    name: 'namco58',
+    rom: new ROM({ name: '58xx.bin', size: 1024, status: 'nodump' }),
   }),
   new Machine({
     name: 'neogeo',
@@ -1489,10 +1548,14 @@ it('should full-non-merged', async () => {
     'gg1_10.4f', 'gg1_11.4d', 'nebulbee.01', 'nebulbee.02', 'nebulbee.04', 'nebulbee.07',
     'prom-5.5n',
   ]);
+  expect(gameNamesToRomNames.get('liblrabl')).toEqual([
+    '2c.rom', '5b.rom', '5c.rom', '5p.rom', '8c.rom', '9t.rom', '10c.rom', 'lr1-1.1t', 'lr1-2.1s',
+    'lr1-3.1r', 'lr1-4.3d', 'lr1-5.5l', 'lr1-6.2p',
+  ]);
 
   // No change to BIOS or devices
   expect(result.getGames().filter((game) => game.isBios())).toHaveLength(2);
-  expect(result.getGames().filter((game) => game.isDevice())).toHaveLength(39);
+  expect(result.getGames().filter((game) => game.isDevice())).toHaveLength(41);
   expect(gameNamesToRomNames.get('aristmk6')).toHaveLength(96);
   expect(gameNamesToRomNames.get('neogeo')).toHaveLength(34);
 });
@@ -1610,10 +1673,14 @@ it('should non-merged', async () => {
     '1c.bin', '1d.bin', '2n.bin', '5c.bin', 'gg1-5', 'gg1-7', 'gg1_3.2m', 'gg1_9.4l', 'gg1_10.4f',
     'gg1_11.4d', 'nebulbee.01', 'nebulbee.02', 'nebulbee.04', 'nebulbee.07', 'prom-5.5n',
   ]);
+  expect(gameNamesToRomNames.get('liblrabl')).toEqual([
+    '2c.rom', '5b.rom', '5c.rom', '5p.rom', '8c.rom', '9t.rom', '10c.rom', 'lr1-1.1t', 'lr1-2.1s',
+    'lr1-3.1r', 'lr1-4.3d', 'lr1-5.5l', 'lr1-6.2p',
+  ]);
 
   // No change to BIOS or devices
   expect(result.getGames().filter((game) => game.isBios())).toHaveLength(2);
-  expect(result.getGames().filter((game) => game.isDevice())).toHaveLength(39);
+  expect(result.getGames().filter((game) => game.isDevice())).toHaveLength(41);
   expect(gameNamesToRomNames.get('aristmk6')).toHaveLength(96);
   expect(gameNamesToRomNames.get('neogeo')).toHaveLength(34);
 });
@@ -1645,6 +1712,10 @@ it('should split', async () => {
     'uni-bios_3_3.rom', 'uni-bios_4_0.rom',
   ]);
   expect(gameNamesToRomNames.get('bbtime')).toEqual(['bbtime.svg', 'hd38820a65']);
+  expect(gameNamesToRomNames.get('liblrabl')).toEqual([
+    '2c.rom', '5b.rom', '5c.rom', '5p.rom', '8c.rom', '9t.rom', '10c.rom', 'lr1-1.1t', 'lr1-2.1s',
+    'lr1-3.1r', 'lr1-4.3d', 'lr1-5.5l', 'lr1-6.2p',
+  ]);
   // Clones exclude parent ROMs
   expect(gameNamesToRomNames.get('100lions')).toEqual(['10219211.u73', '10219211.u86']);
   expect(gameNamesToRomNames.get('100lionsa')).toEqual(['30223811.u73', '30223811.u86']);
@@ -1713,7 +1784,7 @@ it('should split', async () => {
 
   // No change to BIOS or devices
   expect(result.getGames().filter((game) => game.isBios())).toHaveLength(2);
-  expect(result.getGames().filter((game) => game.isDevice())).toHaveLength(39);
+  expect(result.getGames().filter((game) => game.isDevice())).toHaveLength(41);
   expect(gameNamesToRomNames.get('aristmk6')).toHaveLength(96);
   expect(gameNamesToRomNames.get('neogeo')).toHaveLength(34);
 });
@@ -1745,6 +1816,10 @@ it('should merged', async () => {
     'uni-bios_3_3.rom', 'uni-bios_4_0.rom',
   ]);
   expect(gameNamesToRomNames.get('bbtime')).toEqual(['bbtime.svg', 'hd38820a65']);
+  expect(gameNamesToRomNames.get('liblrabl')).toEqual([
+    '2c.rom', '5b.rom', '5c.rom', '5p.rom', '8c.rom', '9t.rom', '10c.rom', 'lr1-1.1t', 'lr1-2.1s',
+    'lr1-3.1r', 'lr1-4.3d', 'lr1-5.5l', 'lr1-6.2p',
+  ]);
   // Clones are merged in
   expect(gameNamesToRomNames.get('100lions')).toEqual([
     '100lionsa\\30223811.u73', '100lionsa\\30223811.u86', '10219211.u73', '10219211.u86',
@@ -1796,7 +1871,7 @@ it('should merged', async () => {
 
   // No change to BIOS or devices
   expect(result.getGames().filter((game) => game.isBios())).toHaveLength(2);
-  expect(result.getGames().filter((game) => game.isDevice())).toHaveLength(39);
+  expect(result.getGames().filter((game) => game.isDevice())).toHaveLength(41);
   expect(gameNamesToRomNames.get('aristmk6')).toHaveLength(96);
   expect(gameNamesToRomNames.get('neogeo')).toHaveLength(34);
 });

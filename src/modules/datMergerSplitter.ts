@@ -75,6 +75,8 @@ export default class DATMergerSplitter extends Module {
       const romNames = game.getRoms().map((rom) => rom.getName());
       return game.withProps({
         rom: game.getRoms()
+          // Get rid of ROMs that haven't been dumped yet
+          .filter((rom) => rom.getStatus() !== 'nodump')
           // Get rid of duplicate ROMs. MAME will sometimes duplicate a file with the exact same
           // name, size, and checksum but with a different "region" (e.g. neogeo).
           .filter((rom, idx) => romNames.indexOf(rom.getName()) === idx)
@@ -92,9 +94,14 @@ export default class DATMergerSplitter extends Module {
         return game.withProps({
           rom: [
             ...game.getDeviceRefs()
-              .map((deviceRef) => gameNamesToGames.get(deviceRef.getName()))
+              // De-duplicate DeviceRef names
+              .map((deviceRef) => deviceRef.getName())
+              .reduce(ArrayPoly.reduceUnique(), [])
+              // Get ROMs from the DeviceRef
+              .map((deviceRefName) => gameNamesToGames.get(deviceRefName))
               .filter(ArrayPoly.filterNotNullish)
-              .flatMap((deviceGame) => deviceGame.getRoms()),
+              .flatMap((deviceGame) => deviceGame.getRoms()
+                .filter((rom) => rom.getStatus() !== 'nodump')),
             ...game.getRoms(),
           ].sort(romSortFunc),
         });
