@@ -57,7 +57,7 @@ $ igir --help
   | $$  | $$|    \  | $$  | $$    $$   ROM collection manager
   | $$  | $$|    \  | $$  | $$    $$   https://igir.io/
   | $$  | $$ \$$$$  | $$  | $$$$$$$\
- _| $$_ | $$__| $$ _| $$_ | $$  | $$   v2.0.2
+ _| $$_ | $$__| $$ _| $$_ | $$  | $$   v2.0.3
 |   $$ \ \$$    $$|   $$ \| $$  | $$
  \$$$$$$  \$$$$$$  \$$$$$$ \$$   \$$
 
@@ -127,9 +127,10 @@ ROM header options:
   -H, --remove-headers  Remove known headers from ROMs, optionally limited to a list of comma-sep
                         arated file extensions (supported: .a78, .fds, .lnx, .nes, .smc) [string]
 
-ROM MAME merge & split options (requires DATs with parent/clone information):
-      --merge-roms  ROM merge/split mode
+ROM set options:
+      --merge-roms             ROM merge/split mode (requires DATs with parent/clone information)
             [choices: "fullnonmerged", "nonmerged", "split", "merged"] [default: "fullnonmerged"]
+      --allow-incomplete-sets  Allow writing games that don't have all of their ROMs    [boolean]
 
 ROM filtering options:
   -x, --filter-regex          Regular expression of game names to filter to              [string]

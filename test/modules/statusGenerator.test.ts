@@ -85,11 +85,7 @@ async function candidateGenerator(
                   await rom.toFile(),
                   await rom.toFile(),
                 )));
-              return new ReleaseCandidate(
-                game,
-                release,
-                romWithFiles,
-              );
+              return new ReleaseCandidate(game, release, romWithFiles);
             }));
           }),
       )).flatMap((rc) => rc);
@@ -297,6 +293,46 @@ dat,bios,FOUND,bios.rom,false,true,true,false,false,false,false,false,false,fals
 dat,device,FOUND,,false,false,true,false,false,false,false,false,false,false,false,false,false
 dat,game prototype (proto),MISSING,,false,false,false,false,false,false,false,false,true,false,false,false,false
 dat,game with multiple roms,MISSING,,false,false,true,false,false,false,false,false,false,false,false,false,false
+dat,game with single rom,MISSING,,false,false,true,false,false,false,false,false,false,false,false,false,false
+dat,no roms,FOUND,,false,false,true,false,false,false,false,false,false,false,false,false,false`);
+    });
+
+    it('should report on incomplete games', async () => {
+      const options = new Options(defaultOptions);
+
+      const map = new Map(await Promise.all([...parentsToReleaseCandidatesWithoutFiles.entries()]
+        .map(async ([parent]): Promise<[Parent, ReleaseCandidate[]]> => {
+          // Only the game with multiple ROMs
+          if (parent.getName() !== gameNameMultipleRoms) {
+            return [parent, []];
+          }
+
+          const releaseCandidatesWithFiles = (await Promise.all(
+            parent.getGames().map(async (game) => {
+              const releases = game.getReleases().length ? game.getReleases() : [undefined];
+              return Promise.all(releases.map(async (release) => {
+                const romWithFiles = await Promise.all(game.getRoms()
+                  // Only the first ROM, not all of them
+                  .slice(0, 1)
+                  .map(async (rom) => new ROMWithFiles(
+                    rom,
+                    await rom.toFile(),
+                    await rom.toFile(),
+                  )));
+                return new ReleaseCandidate(game, release, romWithFiles);
+              }));
+            }),
+          )).flatMap((rc) => rc);
+          return [parent, releaseCandidatesWithFiles];
+        })));
+
+      const datStatus = await new StatusGenerator(options, new ProgressBarFake())
+        .generate(dummyDat, map);
+      await expect(datStatus.toCsv(options)).resolves.toEqual(`DAT Name,Game Name,Status,ROM Files,Patched,BIOS,Retail Release,Unlicensed,Debug,Demo,Beta,Sample,Prototype,Test,Aftermarket,Homebrew,Bad
+dat,bios,MISSING,,false,true,true,false,false,false,false,false,false,false,false,false,false
+dat,device,FOUND,,false,false,true,false,false,false,false,false,false,false,false,false,false
+dat,game prototype (proto),MISSING,,false,false,false,false,false,false,false,false,true,false,false,false,false
+dat,game with multiple roms,INCOMPLETE,one.rom,false,false,true,false,false,false,false,false,false,false,false,false,false
 dat,game with single rom,MISSING,,false,false,true,false,false,false,false,false,false,false,false,false,false
 dat,no roms,FOUND,,false,false,true,false,false,false,false,false,false,false,false,false,false`);
     });

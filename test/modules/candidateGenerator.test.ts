@@ -127,6 +127,40 @@ describe.each(['zip', 'extract', 'raw'])('command: %s', (command) => {
     expect(candidateWithNoRoms.getRomsWithFiles()).toHaveLength(0);
   });
 
+  it('should return candidates when games don\'t have all of their ROMs when allowIncompleteSets:true', async () => {
+    // Given
+    const allowIncompleteOptions = new Options({
+      ...options,
+      allowIncompleteSets: true,
+    });
+    const files = [
+      // Doesn't match anything
+      await File.fileOf('three.rom', 4, '34567890'),
+      // Doesn't match size
+      await File.fileOf('one.rom', 999_999, '12345678'),
+      // Doesn't match CRC
+      await File.fileOf('one.rom', 1, '00000000'),
+      // Matches one ROM of a game with multiple ROMs
+      await File.fileOf('two.a', 2, 'abcdef90'),
+    ];
+
+    // When
+    const parentsToCandidates = await candidateGenerator(
+      allowIncompleteOptions,
+      datWithFourGames,
+      files,
+    );
+
+    // Then
+    const incompleteCandidates = [...parentsToCandidates.entries()]
+      .filter(([parent]) => parent.getName() === gameWithTwoRomsParent.getName())
+      .flatMap(([, releaseCandidates]) => releaseCandidates);
+    expect(incompleteCandidates).toHaveLength(1);
+    expect(incompleteCandidates[0].getRomsWithFiles().length).toBeGreaterThan(0);
+    expect(incompleteCandidates[0].getRomsWithFiles())
+      .not.toHaveLength(incompleteCandidates[0].getGame().getRoms().length);
+  });
+
   it('should return some candidates for some games that have all of their files matched', async () => {
     // Given
     const files = [
