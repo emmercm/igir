@@ -18,6 +18,26 @@ export default class ArrayPoly {
   }
 
   /**
+   * Filter elements in an array to only unique values, using the result of a mapper function to
+   * test for equality. Usage:
+   *
+   * <code>
+   * ['a', 'b', 'c', 'a', 'A', 'C'].filter(ArrayPoly.filterUniqueMapped((str) => str.toUpperCase());
+   * </code>
+   */
+  public static filterUniqueMapped<T, V>(
+    mapper: (arg: T) => V,
+  ): (value: T, idx: number, values: T[]) => boolean {
+    let mappedValues: V[];
+    return (value: T, idx: number, values: T[]): boolean => {
+      if (!mappedValues) {
+        mappedValues = values.map((val) => mapper(val));
+      }
+      return mappedValues.indexOf(mapper(value)) === idx;
+    };
+  }
+
+  /**
    * Reduce elements in an array to only unique values. Usage:
    *
    * <code>
