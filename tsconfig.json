@@ -102,7 +102,7 @@
   },
   "ts-node": {
     "esm": true,
-    "experimentalSpecifierResolution": true,
+    "experimentalSpecifierResolution": "node",
     "files": true, // without this `ts-node` and `node --loader ts-node/esm` won't find our custom types
   }
 }
