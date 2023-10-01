@@ -65,17 +65,14 @@ export default class DATMergerSplitter extends Module {
     let games = parent.getGames();
 
     // Sanitization
-    games = games.map((game) => {
-      const romNames = game.getRoms().map((rom) => rom.getName());
-      return game.withProps({
-        rom: game.getRoms()
-          // Get rid of ROMs that haven't been dumped yet
-          .filter((rom) => rom.getStatus() !== 'nodump')
-          // Get rid of duplicate ROMs. MAME will sometimes duplicate a file with the exact same
-          // name, size, and checksum but with a different "region" (e.g. neogeo).
-          .filter((rom, idx) => romNames.indexOf(rom.getName()) === idx),
-      });
-    });
+    games = games.map((game) => game.withProps({
+      rom: game.getRoms()
+        // Get rid of ROMs that haven't been dumped yet
+        .filter((rom) => rom.getStatus() !== 'nodump')
+        // Get rid of duplicate ROMs. MAME will sometimes duplicate a file with the exact same
+        // name, size, and checksum but with a different "region" (e.g. neogeo).
+        .filter(ArrayPoly.filterUniqueMapped((rom) => rom.getName())),
+    }));
 
     // 'full' types expect device ROMs to be included
     if (this.options.getMergeRoms() === MergeMode.FULLNONMERGED) {
@@ -170,9 +167,8 @@ export default class DATMergerSplitter extends Module {
         })));
     const allRoms = [...cloneRoms, ...(parentGame ? parentGame.getRoms() : [])];
     // And remove any duplicate ROMs, even if the duplicates exist only in clones and not the parent
-    const allRomHashCodes = allRoms.map((rom) => rom.hashCode());
     const allRomsDeduplicated = allRoms
-      .filter((rom, idx) => allRomHashCodes.indexOf(rom.hashCode()) === idx);
+      .filter(ArrayPoly.filterUniqueMapped((rom) => rom.hashCode()));
     return [new Machine({
       ...parentGame,
       rom: allRomsDeduplicated,
