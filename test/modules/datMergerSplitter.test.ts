@@ -1,3 +1,5 @@
+import 'jest-extended';
+
 import DATMergerSplitter from '../../src/modules/datMergerSplitter.js';
 import Header from '../../src/types/dats/logiqx/header.js';
 import LogiqxDAT from '../../src/types/dats/logiqx/logiqxDat.js';
@@ -12,6 +14,7 @@ import ProgressBarFake from '../console/progressBarFake.js';
 const dat = new LogiqxDAT(new Header(), [
   // ***** Games *****
   new Machine({
+    // Game that has clone(s) and a romOf BIOS parent
     name: '100lions',
     romOf: 'aristmk6',
     description: '100 Lions (10219211, NSW/ACT)',
@@ -238,7 +241,10 @@ const dat = new LogiqxDAT(new Header(), [
       new DeviceRef('palette'),
     ],
   }),
+
   new Machine({
+    // Game with multiple clones, where clones have duplicate filenames with different checksums
+    // (3.bin)
     name: '1942',
     description: '1942 (Revision B)',
     rom: [
@@ -591,7 +597,9 @@ const dat = new LogiqxDAT(new Header(), [
       new DeviceRef('nl_stream_out'),
     ],
   }),
+
   new Machine({
+    // Game with BIOS files but no romOf BIOS parent
     name: 'aes',
     description: 'Neo-Geo AES (NTSC)',
     rom: [
@@ -633,7 +641,9 @@ const dat = new LogiqxDAT(new Header(), [
       new DeviceRef('software_list'),
     ],
   }),
+
   new Machine({
+    // Game with no clones
     name: 'bbtime',
     description: 'Burger Time (Bandai)',
     rom: [
@@ -648,7 +658,93 @@ const dat = new LogiqxDAT(new Header(), [
       new DeviceRef('speaker_sound_device'),
     ],
   }),
+
   new Machine({
+    // Game with DeviceRefs that have 'status=nodump' ROMs
+    name: 'c64',
+    description: 'Commodore 64 (NTSC)',
+    rom: [
+      new ROM({ name: '901227-01.u4', bios: 'r1', size: 8192, crc: 'dce782fa', sha1: '87cc04d61fc748b82df09856847bb5c2754a2033' }),
+      new ROM({ name: '901227-02.u4', bios: 'r2', size: 8192, crc: 'a5c687b3', sha1: '0e2e4ee3f2d41f00bed72f9ab588b83e306fdb13' }),
+      new ROM({ name: '901227-03.u4', bios: 'r3', size: 8192, crc: 'dbe3e7c7', sha1: '1d503e56df85a62fee696e7618dc5b4e781df1bb' }),
+      new ROM({ name: 'jiffydos c64.u4', bios: 'jiffydos', size: 8192, crc: '2f79984c', sha1: '31e73e66eccb28732daea8ec3ad1addd9b39a017' }),
+      new ROM({ name: 'speed-dos.u4', bios: 'speeddos', size: 8192, crc: '5beb9ac8', sha1: '8896c8de9e26ef1396eb46020b2de346a3eeab7e' }),
+      new ROM({ name: 'speed-dosplus.u4', bios: 'speeddos20', size: 8192, crc: '10aee0ae', sha1: '6cebd4dc0c5e8c0b073586a3f1c43cc3349b9736' }),
+      new ROM({ name: 'speed-dosplus27.u4', bios: 'speeddos27', size: 8192, crc: 'ff59995e', sha1: 'c8d864e5fc7089af8afce97dc0a0224df11df1c3' }),
+      new ROM({ name: 'prodos.u4', bios: 'prodos', size: 8192, crc: '37ed83a2', sha1: '35f4f0fe03c0b7b3762b526ba855de41b496fb60' }),
+      new ROM({ name: 'prodos24l2.u4', bios: 'prodos2', size: 8192, crc: '41dad9fe', sha1: 'fbf3dcc2ed40e58b07595740ea6fbff7ab19ebad' }),
+      new ROM({ name: 'prodos35l2.u4', bios: 'prodos3', size: 8192, crc: '2822eee7', sha1: '77356b84c1648018863d1c8dd5bc3a37485bc00e' }),
+      new ROM({ name: 'turborom.u4', bios: 'turborom', size: 8192, crc: 'e6c763a2', sha1: 'eff5a4b6bc65daa9421bd3856dd99a3195068e1c' }),
+      new ROM({ name: 'dosrom12.u4', bios: 'dosrom', size: 8192, crc: 'ac030fc0', sha1: '0e4b38e81b49f55d52162154a44f0fffd2b0d04f' }),
+      new ROM({ name: 'turborom2.u4', bios: 'turborom2', size: 8192, crc: 'ea3ba683', sha1: '4bb23f764a3d255119fbae37202ca820caa04e1f' }),
+      new ROM({ name: 'mercury3.u4', bios: 'mercury', size: 8192, crc: '6eac46a2', sha1: '4e351aa5fcb97c4c21e565aa2c830cc09bd47533' }),
+      new ROM({ name: 'kernal-10-mager.u4', bios: 'dolphin', size: 8192, crc: 'c9bb21bc', sha1: 'e305216e50ff8a7acf102be6c6343e3d44a16233' }),
+      new ROM({ name: 'kernal-20-1_au.u4', bios: 'dolphin201au', size: 8192, crc: '7068bbcc', sha1: '325ce7e32609a8fc704aaa76f5eb4cd7d8099a92' }),
+      new ROM({ name: 'kernal-20-1.u4', bios: 'dolphin201', size: 8192, crc: 'c9c4c44e', sha1: '7f5d8f08c5ed2182ffb415a3d777fdd922496d02' }),
+      new ROM({ name: 'kernal-20-2.u4', bios: 'dolphin202', size: 8192, crc: 'ffaeb9bc', sha1: '5f6c1bad379da16f77bccb58e80910f307dfd5f8' }),
+      new ROM({ name: 'kernal-20-3.u4', bios: 'dolphin203', size: 8192, crc: '4fd511f2', sha1: '316fba280dcb29496d593c0c4e3ee9a19844054e' }),
+      new ROM({ name: 'kernal-30.u4', bios: 'dolphin30', size: 8192, crc: '5402d643', sha1: '733acb96fead2fb4df77840c5bb618f08439fc7e' }),
+      new ROM({ name: 'turboaccess26.u4', bios: 'taccess', size: 8192, crc: '93de6cd9', sha1: 'a74478f3b9153c13176eac80ebfacc512ae7cbf0' }),
+      new ROM({ name: 'turboaccess301.u4', bios: 'ttrans301', size: 8192, crc: 'b3304dcf', sha1: '4d47a265ef65e4823f862cfc3d514c2a71473580' }),
+      new ROM({ name: 'turboaccess302.u4', bios: 'ttrans302', size: 8192, crc: '9e696a7b', sha1: '5afae75d66d539f4bb4af763f029f0ef6523a4eb' }),
+      new ROM({ name: 'turboprocess.u4', bios: 'tprocess', size: 8192, crc: 'e5610d76', sha1: 'e3f35777cfd16cce4717858f77ff354763395ba9' }),
+      new ROM({ name: 'turboprocessus.u4', bios: 'tprocessn', size: 8192, crc: '7480b76a', sha1: 'ef1664b5057ae3cc6d104fc2f5c1fb29ee5a1b2b' }),
+      new ROM({ name: 'exos3.u4', bios: 'exos3', size: 8192, crc: '4e54d020', sha1: 'f8931b7c0b26807f4de0cc241f0b1e2c8f5271e9' }),
+      new ROM({ name: 'exos4.u4', bios: 'exos4', size: 8192, crc: 'd5cf83a9', sha1: 'd5f03a5c0e9d00032d4751ecc6bcd6385879c9c7' }),
+      new ROM({ name: 'digidos.u4', bios: 'digidos', size: 8192, crc: '2b0c8e89', sha1: '542d6f61c318bced0642e7c2d4d3b34a0f13e634' }),
+      new ROM({ name: 'magnum.u4', bios: 'magnum', size: 8192, crc: 'b2cffcc6', sha1: '827c782c1723b5d0992c05c00738ae4b2133b641' }),
+      new ROM({ name: 'mercury31s.u4', bios: 'mercury31s', size: 8192, crc: '97aa5d2f', sha1: '9fc653e61c34225245036f266db14e05feeadb21' }),
+      new ROM({ name: '901226-01.u3', size: 8192, crc: 'f833d117', sha1: '79015323128650c742a3694c9429aa91f355905e' }),
+      new ROM({ name: '901225-01.u5', size: 4096, crc: 'ec4272ee', sha1: 'adc7c31e18c7c7413d54802ef2f4193da14711aa' }),
+      new ROM({ name: '906114-01.u17', size: 245, crc: '54c89351', sha1: 'efb315f560b6f72444b8f0b2ca4b0ccbcd144a1b' }),
+    ],
+    deviceRef: [
+      new DeviceRef('m6510'),
+      new DeviceRef('ipt_merge_any_hi'),
+      new DeviceRef('ipt_merge_any_hi'),
+      new DeviceRef('mos6567'),
+      new DeviceRef('screen'),
+      new DeviceRef('speaker'),
+      new DeviceRef('mos6581'),
+      new DeviceRef('pls100'),
+      new DeviceRef('mos6526'),
+      new DeviceRef('mos6526'),
+      new DeviceRef('pet_datassette_port'),
+      new DeviceRef('c1530'),
+      new DeviceRef('cassette_image'),
+      new DeviceRef('cbm_iec_slot'),
+      new DeviceRef('cbm_iec_slot'),
+      new DeviceRef('c1541'),
+      new DeviceRef('m6502'),
+      new DeviceRef('mos6522'),
+      new DeviceRef('mos6522'),
+      new DeviceRef('c64h156'),
+      new DeviceRef('floppy_connector'),
+      new DeviceRef('alps_3255190x'),
+      new DeviceRef('speaker'),
+      new DeviceRef('flopsnd'),
+      new DeviceRef('cbm_iec_slot'),
+      new DeviceRef('cbm_iec_slot'),
+      new DeviceRef('cbm_iec_slot'),
+      new DeviceRef('cbm_iec'),
+      new DeviceRef('vcs_control_port'),
+      new DeviceRef('vcs_control_port'),
+      new DeviceRef('vcs_joystick'),
+      new DeviceRef('c64_expansion_slot'),
+      new DeviceRef('pet_user_port'),
+      new DeviceRef('quickload'),
+      new DeviceRef('software_list'),
+      new DeviceRef('software_list'),
+      new DeviceRef('software_list'),
+      new DeviceRef('software_list'),
+      new DeviceRef('software_list'),
+      new DeviceRef('ram'),
+    ],
+  }),
+
+  new Machine({
+    // Game where parent and clone(s) have duplicate filenames with different checksums
+    // (eeprom-ddonpach.bin)
     name: 'ddonpach',
     description: 'DoDonPachi (World, 1997 2/ 5 Master Ver.)',
     rom: [
@@ -748,7 +844,9 @@ const dat = new LogiqxDAT(new Header(), [
       new DeviceRef('ymz280b'),
     ],
   }),
+
   new Machine({
+    // Game with clones that have DeviceRefs with ROM files
     name: 'galaga',
     description: 'Galaga (Namco rev. B)',
     rom: [
@@ -1082,6 +1180,42 @@ const dat = new LogiqxDAT(new Header(), [
       new DeviceRef('z80'),
     ],
   }),
+
+  new Machine({
+    // Game with DeviceRefs that have 'status=nodump' ROMs
+    name: 'liblrabl',
+    description: 'Libble Rabble',
+    rom: [
+      new ROM({ name: '5b.rom', size: 16384, crc: 'da7a93c2', sha1: 'fe4a02cdab66722eb7b8cf58825f899b1949a6a2' }),
+      new ROM({ name: '5c.rom', size: 16384, crc: '6cae25dc', sha1: 'de74317a7d5de1865d096c377923a764be5e6879' }),
+      new ROM({ name: '2c.rom', size: 8192, crc: '7c09e50a', sha1: '5f004d60bbb7355e008a9cda137b28bc2192b8ef' }),
+      new ROM({ name: '8c.rom', size: 16384, crc: 'a00cd959', sha1: 'cc5621103c31cfbc65941615cab391db0f74e6ce' }),
+      new ROM({ name: '10c.rom', size: 16384, crc: '09ce209b', sha1: '2ed46d6592f8227bac8ab54963d9a300706ade47' }),
+      new ROM({ name: '5p.rom', size: 8192, crc: '3b4937f0', sha1: '06d9de576f1c2262c34aeb91054e68c9298af688' }),
+      new ROM({ name: '9t.rom', size: 16384, crc: 'a88e24ca', sha1: 'eada133579f19de09255084dcdc386311606a335' }),
+      new ROM({ name: 'lr1-3.1r', size: 256, crc: 'f3ec0d07', sha1: 'b0aad1fb6df79f202889600f486853995352f9c2' }),
+      new ROM({ name: 'lr1-2.1s', size: 256, crc: '2ae4f702', sha1: '838fdca9e91fea4f64a59880ac47c48973bb8fbf' }),
+      new ROM({ name: 'lr1-1.1t', size: 256, crc: '7601f208', sha1: '572d070ca387b780030ed5de38a8970b7cc14349' }),
+      new ROM({ name: 'lr1-5.5l', size: 256, crc: '940f5397', sha1: '825a7bd78a8a08d30bad2e4890ae6e9ad88b36b8' }),
+      new ROM({ name: 'lr1-6.2p', size: 512, crc: 'a6b7f850', sha1: '7cfde16dfd5c4d5b876b4fbe4f924f1385932a93' }),
+      new ROM({ name: 'lr1-4.3d', size: 256, crc: '16a9166a', sha1: '847cbaf7c88616576c410177e066ae1d792ac0ba' }),
+    ],
+    deviceRef: [
+      new DeviceRef('mc6809e'),
+      new DeviceRef('timer'),
+      new DeviceRef('m68000'),
+      new DeviceRef('mc6809e'),
+      new DeviceRef('namco58'),
+      new DeviceRef('namco56'),
+      new DeviceRef('namco56'),
+      new DeviceRef('screen'),
+      new DeviceRef('gfxdecode'),
+      new DeviceRef('palette'),
+      new DeviceRef('speaker'),
+      new DeviceRef('namco_15xx'),
+    ],
+  }),
+
   // ***** BIOSes *****
   new Machine({
     name: 'aristmk6',
@@ -1198,19 +1332,76 @@ const dat = new LogiqxDAT(new Header(), [
   // ***** Devices *****
   new Machine({ name: '93c46_16', device: 'yes' }),
   new Machine({ name: '93c56_16', device: 'yes' }),
+  new Machine({
+    name: 'alps_3255190x',
+    device: 'yes',
+    description: 'ALPS 32551901/32551902 Floppy Drive',
+    deviceRef: [
+      new DeviceRef('speaker'),
+      new DeviceRef('flopsnd'),
+    ],
+  }),
   new Machine({ name: 'ay8910', device: 'yes' }),
+  new Machine({
+    name: 'c1530',
+    device: 'yes',
+    description: 'Commodore 1530 Datassette',
+    deviceRef: new DeviceRef('cassette_image'),
+  }),
+  new Machine({
+    name: 'c1541',
+    device: 'yes',
+    description: 'Commodore 1541 Disk Drive',
+    rom: [
+      new ROM({ name: '901229-01.uab5', bios: 'r1', size: 8192, crc: '9a48d3f0', sha1: '7a1054c6156b51c25410caec0f609efb079d3a77' }),
+      new ROM({ name: '901229-02.uab5', bios: 'r2', size: 8192, crc: 'b29bab75', sha1: '91321142e226168b1139c30c83896933f317d000' }),
+      new ROM({ name: '901229-03.uab5', bios: 'r3', size: 8192, crc: '9126e74a', sha1: '03d17bd745066f1ead801c5183ac1d3af7809744' }),
+      new ROM({ name: '901229-04.uab5', bios: 'r4', size: 8192, status: 'nodump' }),
+      new ROM({ name: '901229-05 ae.uab5', bios: 'r5', size: 8192, crc: '361c9f37', sha1: 'f5d60777440829e46dc91285e662ba072acd2d8b' }),
+      new ROM({ name: '901229-06 aa.uab5', bios: 'r6', size: 8192, crc: '3a235039', sha1: 'c7f94f4f51d6de4cdc21ecbb7e57bb209f0530c0' }),
+      new ROM({ name: 'jiffydos 1541.uab5', bios: 'jiffydos', size: 8192, crc: 'bc7e4aeb', sha1: 'db6cfaa6d9b78d58746c811de29f3b1f44d99ddf' }),
+      new ROM({ name: 'speed-dosplus.uab5', bios: 'speeddos', size: 16384, crc: 'f9db1eac', sha1: '95407e59a9c1d26a0e4bcf2c244cfe8942576e2c' }),
+      new ROM({ name: 'rolo27.uab5', bios: 'rolo27', size: 8192, crc: '171c7962', sha1: '04c892c4b3d7c74750576521fa081f07d8ca8557' }),
+      new ROM({ name: 'ttd34.uab5', bios: 'tt34', size: 32768, crc: '518d34a1', sha1: '4d6ffdce6ab122e9627b0a839861687bcd4e03ec' }),
+      new ROM({ name: 'digidos.uab5', bios: 'digidos', size: 8192, crc: 'b3f05ea3', sha1: '99d3d848344c68410b686cda812f3788b41fead3' }),
+      new ROM({ name: '325302-01.uab4', size: 8192, crc: '29ae9752', sha1: '8e0547430135ba462525c224e76356bd3d430f11' }),
+    ],
+    deviceRef: [
+      new DeviceRef('m6502'),
+      new DeviceRef('mos6522'),
+      new DeviceRef('mos6522'),
+      new DeviceRef('c64h156'),
+      new DeviceRef('floppy_connector'),
+    ],
+  }),
+  new Machine({ name: 'c64_expansion_slot', device: 'yes' }),
+  new Machine({ name: 'c64h156', device: 'yes' }),
+  new Machine({ name: 'cassette_image', device: 'yes' }),
+  new Machine({ name: 'cbm_iec', device: 'yes' }),
+  new Machine({ name: 'cbm_iec_slot', device: 'yes' }),
   new Machine({ name: 'discrete', device: 'yes' }),
+  new Machine({ name: 'floppy_connector', device: 'yes' }),
+  new Machine({ name: 'flopsnd', device: 'yes' }),
   new Machine({ name: 'generic_latch_8', device: 'yes' }),
   new Machine({ name: 'gfxdecode', device: 'yes' }),
   new Machine({ name: 'hc259', device: 'yes' }),
   new Machine({ name: 'hd38820', device: 'yes' }),
   new Machine({ name: 'ipt_merge_all_hi', device: 'yes' }),
+  new Machine({ name: 'ipt_merge_any_hi', device: 'yes' }),
   new Machine({ name: 'ls259', device: 'yes' }),
+  new Machine({ name: 'm6502', device: 'yes' }),
+  new Machine({ name: 'm6510', device: 'yes' }),
   new Machine({ name: 'm68000', device: 'yes' }),
   new Machine({ name: 'mb8843', device: 'yes' }),
   new Machine({ name: 'mb8844', device: 'yes' }),
+  new Machine({ name: 'mc6809e', device: 'yes' }),
+  new Machine({ name: 'mos6522', device: 'yes' }),
+  new Machine({ name: 'mos6526', device: 'yes' }),
+  new Machine({ name: 'mos6567', device: 'yes' }),
+  new Machine({ name: 'mos6581', device: 'yes' }),
   new Machine({ name: 'namco', device: 'yes' }),
   new Machine({ name: 'namco_05xx_starfield', device: 'yes' }),
+  new Machine({ name: 'namco_15xx', device: 'yes' }),
   new Machine({ name: 'namco06', device: 'yes' }),
   new Machine({
     name: 'namco51',
@@ -1225,6 +1416,14 @@ const dat = new LogiqxDAT(new Header(), [
     description: 'Namco 54xx',
     rom: new ROM({ name: '54xx.bin', size: 1024, crc: 'ee7357e0', sha1: '01bdf984a49e8d0cc8761b2cc162fd6434d5afbe' }),
     deviceRef: new DeviceRef('mb8844'),
+  }),
+  new Machine({
+    name: 'namco56',
+    rom: new ROM({ name: '56xx.bin', size: 1024, status: 'nodump' }),
+  }),
+  new Machine({
+    name: 'namco58',
+    rom: new ROM({ name: '58xx.bin', size: 1024, status: 'nodump' }),
   }),
   new Machine({
     name: 'neogeo',
@@ -1307,13 +1506,20 @@ const dat = new LogiqxDAT(new Header(), [
   new Machine({ name: 'nl_stream_out', device: 'yes' }),
   new Machine({ name: 'ns16550', device: 'yes' }),
   new Machine({ name: 'palette', device: 'yes' }),
+  new Machine({ name: 'pet_datassette_port', device: 'yes' }),
+  new Machine({ name: 'pet_user_port', device: 'yes' }),
+  new Machine({ name: 'pls100', device: 'yes' }),
   new Machine({ name: 'pwm_display', device: 'yes' }),
+  new Machine({ name: 'quickload', device: 'yes' }),
+  new Machine({ name: 'ram', device: 'yes' }),
   new Machine({ name: 'screen', device: 'yes' }),
   new Machine({ name: 'sh4le', device: 'yes' }),
   new Machine({ name: 'speaker', device: 'yes' }),
   new Machine({ name: 'speaker_sound_device', device: 'yes' }),
   new Machine({ name: 'timer', device: 'yes' }),
   new Machine({ name: 'tmap038', device: 'yes' }),
+  new Machine({ name: 'vcs_control_port', device: 'yes' }),
+  new Machine({ name: 'vcs_joystick', device: 'yes' }),
   new Machine({ name: 'watchdog', device: 'yes' }),
   new Machine({ name: 'ym2610', device: 'yes' }),
   new Machine({ name: 'ymz280b', device: 'yes' }),
@@ -1340,7 +1546,7 @@ it('should full-non-merged', async () => {
     }, new Map<string, string[]>());
 
   // Includes BIOS files
-  expect(gameNamesToRomNames.get('100lions')).toEqual([
+  expect(gameNamesToRomNames.get('100lions')).toEqual(expect.toIncludeAllMembers([
     '01.02.08_left.u3', '01.02.08_right.u2', '01.03.03a_left.u70', '01.03.03a_right.u83',
     '01.03.03e_left.u70', '01.03.03e_right.u83', '01.03.05_left.u70', '01.03.05_right.u83',
     '01.03.06_left.u70', '01.03.06_right.u83', '01.03.07_left.u70', '01.03.07_right.u83',
@@ -1364,8 +1570,8 @@ it('should full-non-merged', async () => {
     '20012305_left.u70', '20012305_right.u83', '20012605_left.u70', '20012605_right.u83',
     '21012901_left.u70', '21012901_right.u83', '24010467_left.u70', '24010467_right.u83',
     '24013001_left.u70', '24013001_right.u83', '25012805_left.u70', '25012805_right.u83',
-  ]);
-  expect(gameNamesToRomNames.get('100lionsa')).toEqual([
+  ]));
+  expect(gameNamesToRomNames.get('100lionsa')).toEqual(expect.toIncludeAllMembers([
     '01.02.08_left.u3', '01.02.08_right.u2', '01.03.03a_left.u70', '01.03.03a_right.u83',
     '01.03.03e_left.u70', '01.03.03e_right.u83', '01.03.05_left.u70', '01.03.05_right.u83',
     '01.03.06_left.u70', '01.03.06_right.u83', '01.03.07_left.u70', '01.03.07_right.u83',
@@ -1389,110 +1595,125 @@ it('should full-non-merged', async () => {
     '20012305_right.u83', '20012605_left.u70', '20012605_right.u83', '21012901_left.u70',
     '21012901_right.u83', '24010467_left.u70', '24010467_right.u83', '24013001_left.u70',
     '24013001_right.u83', '25012805_left.u70', '25012805_right.u83', '30223811.u73', '30223811.u86',
-  ]);
-  expect(gameNamesToRomNames.get('1942')).toEqual([
+  ]));
+  expect(gameNamesToRomNames.get('1942')).toEqual(expect.toIncludeAllMembers([
     'sb-0.f1', 'sb-1.k6', 'sb-2.d1', 'sb-3.d2', 'sb-4.d6', 'sb-5.e8', 'sb-6.e9', 'sb-7.e10',
     'sb-8.k3', 'sb-9.m11', 'sr-01.c11', 'sr-02.f2', 'sr-08.a1', 'sr-09.a2', 'sr-10.a3', 'sr-11.a4',
     'sr-12.a5', 'sr-13.a6', 'sr-14.l1', 'sr-15.l2', 'sr-16.n1', 'sr-17.n2', 'srb-03.m3',
     'srb-04.m4', 'srb-05.m5', 'srb-06.m6', 'srb-07.m7',
-  ]);
-  expect(gameNamesToRomNames.get('1942a')).toEqual([
+  ]));
+  expect(gameNamesToRomNames.get('1942a')).toEqual(expect.toIncludeAllMembers([
     'sb-0.f1', 'sb-1.k6', 'sb-2.d1', 'sb-3.d2', 'sb-4.d6', 'sb-5.e8', 'sb-6.e9', 'sb-7.e10',
     'sb-8.k3', 'sb-9.m11', 'sr-01.c11', 'sr-02.f2', 'sr-04.m4', 'sr-05.m5', 'sr-06.m6', 'sr-07.m7',
     'sr-08.a1', 'sr-09.a2', 'sr-10.a3', 'sr-11.a4', 'sr-12.a5', 'sr-13.a6', 'sr-14.l1', 'sr-15.l2',
     'sr-16.n1', 'sr-17.n2', 'sra-03.m3',
-  ]);
-  expect(gameNamesToRomNames.get('1942abl')).toEqual([
+  ]));
+  expect(gameNamesToRomNames.get('1942abl')).toEqual(expect.toIncludeAllMembers([
     '1.bin', '2.bin', '3.bin', '5.bin', '7.bin', '9.bin', '11.bin', '13.bin', '14.bin', '16.bin',
     'sb-0.f1', 'sb-1.k6', 'sb-2.d1', 'sb-3.d2', 'sb-4.d6', 'sb-5.e8', 'sb-6.e9', 'sb-7.e10',
     'sb-8.k3', 'sb-9.m11',
-  ]);
-  expect(gameNamesToRomNames.get('1942b')).toEqual([
+  ]));
+  expect(gameNamesToRomNames.get('1942b')).toEqual(expect.toIncludeAllMembers([
     'sb-0.f1', 'sb-1.k6', 'sb-2.d1', 'sb-3.d2', 'sb-4.d6', 'sb-5.e8', 'sb-6.e9', 'sb-7.e10',
     'sb-8.k3', 'sb-9.m11', 'sr-01.c11', 'sr-02.f2', 'sr-03.m3', 'sr-04.m4', 'sr-05.m5', 'sr-06.m6',
     'sr-07.m7', 'sr-08.a1', 'sr-09.a2', 'sr-10.a3', 'sr-11.a4', 'sr-12.a5', 'sr-13.a6', 'sr-14.l1',
     'sr-15.l2', 'sr-16.n1', 'sr-17.n2',
-  ]);
-  expect(gameNamesToRomNames.get('1942h')).toEqual([
+  ]));
+  expect(gameNamesToRomNames.get('1942h')).toEqual(expect.toIncludeAllMembers([
     'sb-0.f1', 'sb-1.k6', 'sb-2.d1', 'sb-3.d2', 'sb-4.d6', 'sb-5.e8', 'sb-6.e9', 'sb-7.e10',
     'sb-8.k3', 'sb-9.m11', 'sr-01.c11', 'sr-02.f2', 'sr-08.a1', 'sr-09.a2', 'sr-10.a3', 'sr-11.a4',
     'sr-12.a5', 'sr-13.a6', 'sr-14.l1', 'sr-15.l2', 'sr-16.n1', 'sr-17.n2', 'srb-06.m6',
     'srb-07.m7', 'supercharger_1942_@3.m3', 'supercharger_1942_@4.m4', 'supercharger_1942_@5.m5',
-  ]);
-  expect(gameNamesToRomNames.get('1942p')).toEqual([
+  ]));
+  expect(gameNamesToRomNames.get('1942p')).toEqual(expect.toIncludeAllMembers([
     '1.bin', '2.bin', '3.bin', '04.bin', '5.bin', '6.bin', '7.bin', '8.bin', '9.bin', '10.bin',
     '11.bin', '12.bin', 'ic22.bin',
-  ]);
-  expect(gameNamesToRomNames.get('1942w')).toEqual([
+  ]));
+  expect(gameNamesToRomNames.get('1942w')).toEqual(expect.toIncludeAllMembers([
     'sb-0.f1', 'sb-1.k6', 'sb-2.d1', 'sb-3.d2', 'sb-4.d6', 'sb-5.e8', 'sb-6.e9', 'sb-7.e10',
     'sb-8.k3', 'sb-9.m11', 'sr-01.c11', 'sr-08.a1', 'sr-09.a2', 'sr-10.a3', 'sr-11.a4', 'sr-12.a5',
     'sr-13.a6', 'sr-14.l1', 'sr-15.l2', 'sr-16.n1', 'sr-17.n2', 'sw-02.f2', 'sw-03.m3', 'sw-04.m4',
     'sw-05.m5', 'sw-06.m6', 'sw-07.m7',
-  ]);
-  expect(gameNamesToRomNames.get('aes')).toEqual([
+  ]));
+  expect(gameNamesToRomNames.get('aes')).toEqual(expect.toIncludeAllMembers([
     '000-lo.lo', 'neo-epo.bin', 'neo-po.bin', 'neodebug.rom', 'uni-bios_1_3.rom',
     'uni-bios_2_0.rom', 'uni-bios_2_1.rom', 'uni-bios_2_2.rom', 'uni-bios_2_3.rom',
     'uni-bios_2_3o.rom', 'uni-bios_3_0.rom', 'uni-bios_3_1.rom', 'uni-bios_3_2.rom',
     'uni-bios_3_3.rom', 'uni-bios_4_0.rom',
-  ]);
-  expect(gameNamesToRomNames.get('bbtime')).toEqual(['bbtime.svg', 'hd38820a65']);
-  expect(gameNamesToRomNames.get('ddonpach')).toEqual([
+  ]));
+  expect(gameNamesToRomNames.get('bbtime')).toEqual(expect.toIncludeAllMembers(['bbtime.svg', 'hd38820a65']));
+  expect(gameNamesToRomNames.get('c64')).toEqual(expect.toIncludeAllMembers([
+    '325302-01.uab4', '901225-01.u5', '901226-01.u3', '901227-01.u4', '901227-02.u4',
+    '901227-03.u4', '901229-01.uab5', '901229-02.uab5', '901229-03.uab5', '901229-05 ae.uab5',
+    '901229-06 aa.uab5', '906114-01.u17', 'digidos.u4', 'digidos.uab5', 'dosrom12.u4', 'exos3.u4',
+    'exos4.u4', 'jiffydos 1541.uab5', 'jiffydos c64.u4', 'kernal-10-mager.u4', 'kernal-20-1.u4',
+    'kernal-20-1_au.u4', 'kernal-20-2.u4', 'kernal-20-3.u4', 'kernal-30.u4', 'magnum.u4',
+    'mercury3.u4', 'mercury31s.u4', 'prodos24l2.u4', 'prodos35l2.u4', 'prodos.u4', 'rolo27.uab5',
+    'speed-dos.u4', 'speed-dosplus27.u4', 'speed-dosplus.u4', 'speed-dosplus.uab5', 'ttd34.uab5',
+    'turboaccess26.u4', 'turboaccess301.u4', 'turboaccess302.u4', 'turboprocess.u4',
+    'turboprocessus.u4', 'turborom2.u4', 'turborom.u4',
+  ]));
+  expect(gameNamesToRomNames.get('ddonpach')).toEqual(expect.toIncludeAllMembers([
     'b1.u27', 'b2.u26', 'eeprom-ddonpach.bin', 'u6.bin', 'u7.bin', 'u50.bin', 'u51.bin', 'u52.bin',
     'u53.bin', 'u60.bin', 'u61.bin', 'u62.bin',
-  ]);
-  expect(gameNamesToRomNames.get('ddonpacha')).toEqual([
+  ]));
+  expect(gameNamesToRomNames.get('ddonpacha')).toEqual(expect.toIncludeAllMembers([
     'arrange_u26.bin', 'arrange_u27.bin', 'arrange_u51.bin', 'arrange_u62.bin',
     'eeprom-ddonpach.bin', 'u6.bin', 'u7.bin', 'u50.bin', 'u52.bin', 'u53.bin', 'u60.bin',
     'u61.bin',
-  ]);
-  expect(gameNamesToRomNames.get('ddonpachj')).toEqual([
+  ]));
+  expect(gameNamesToRomNames.get('ddonpachj')).toEqual(expect.toIncludeAllMembers([
     'eeprom-ddonpach.bin', 'u6.bin', 'u7.bin', 'u26.bin', 'u27.bin', 'u50.bin', 'u51.bin',
     'u52.bin', 'u53.bin', 'u60.bin', 'u61.bin', 'u62.bin',
-  ]);
+  ]));
   // Includes device ROMs
-  expect(gameNamesToRomNames.get('galaga')).toEqual([
+  expect(gameNamesToRomNames.get('galaga')).toEqual(expect.toIncludeAllMembers([
     '51xx.bin', '54xx.bin', 'gg1_1b.3p', 'gg1_2b.3m', 'gg1_3.2m', 'gg1_4b.2l', 'gg1_5b.3f',
     'gg1_7b.2c', 'gg1_9.4l', 'gg1_10.4f', 'gg1_11.4d', 'prom-1.1d', 'prom-2.5c', 'prom-3.1c',
     'prom-4.2n', 'prom-5.5n',
-  ]);
-  expect(gameNamesToRomNames.get('galagamf')).toEqual([
+  ]));
+  expect(gameNamesToRomNames.get('galagamf')).toEqual(expect.toIncludeAllMembers([
     '51xx.bin', '54xx.bin', '2600j.bin', '2700k.bin', '2800l.bin', '3200a.bin', '3300b.bin',
     '3400c.bin', '3500d.bin', '3600fast.bin', '3700g.bin', 'prom-1.1d', 'prom-2.5c', 'prom-3.1c',
     'prom-4.2n', 'prom-5.5n',
-  ]);
-  expect(gameNamesToRomNames.get('galagamk')).toEqual([
+  ]));
+  expect(gameNamesToRomNames.get('galagamk')).toEqual(expect.toIncludeAllMembers([
     '51xx.bin', '54xx.bin', '3400c.bin', 'gg1-5.3f', 'gg1-7b.2c', 'gg1-9.4l', 'gg1-10.4f',
     'gg1-11.4d', 'mk2-1', 'mk2-2', 'mk2-4', 'prom-1.1d', 'prom-2.5c', 'prom-3.1c', 'prom-4.2n',
     'prom-5.5n',
-  ]);
-  expect(gameNamesToRomNames.get('galagamw')).toEqual([
+  ]));
+  expect(gameNamesToRomNames.get('galagamw')).toEqual(expect.toIncludeAllMembers([
     '51xx.bin', '54xx.bin', '2600j.bin', '2700k.bin', '2800l.bin', '3200a.bin', '3300b.bin',
     '3400c.bin', '3500d.bin', '3600e.bin', '3700g.bin', 'prom-1.1d', 'prom-2.5c', 'prom-3.1c',
     'prom-4.2n', 'prom-5.5n',
-  ]);
-  expect(gameNamesToRomNames.get('galagao')).toEqual([
+  ]));
+  expect(gameNamesToRomNames.get('galagao')).toEqual(expect.toIncludeAllMembers([
     '51xx.bin', '54xx.bin', 'gg1-1.3p', 'gg1-2.3m', 'gg1-3.2m', 'gg1-4.2l', 'gg1-5.3f', 'gg1-7.2c',
     'gg1-9.4l', 'gg1-10.4f', 'gg1-11.4d', 'prom-1.1d', 'prom-2.5c', 'prom-3.1c', 'prom-4.2n',
     'prom-5.5n',
-  ]);
-  expect(gameNamesToRomNames.get('gallag')).toEqual([
+  ]));
+  expect(gameNamesToRomNames.get('gallag')).toEqual(expect.toIncludeAllMembers([
     '51xx.bin', 'gallag.1', 'gallag.2', 'gallag.3', 'gallag.4', 'gallag.5', 'gallag.6', 'gallag.7',
     'gallag.8', 'gallag.9', 'gallag.a', 'prom-1.1d', 'prom-2.5c', 'prom-3.1c', 'prom-4.2n',
     'prom-5.5n',
-  ]);
-  expect(gameNamesToRomNames.get('gatsbee')).toEqual([
+  ]));
+  expect(gameNamesToRomNames.get('gatsbee')).toEqual(expect.toIncludeAllMembers([
     '1.4b', '2.4c', '3.4d', '4.4e', '8.5r', '9.6a', '10.7a', '51xx.bin', '54xx.bin', 'gallag.6',
     'gg1-5.3f', 'gg1-7.2c', 'prom-1.1d', 'prom-2.5c', 'prom-3.1c', 'prom-4.2n', 'prom-5.5n',
-  ]);
-  expect(gameNamesToRomNames.get('nebulbee')).toEqual([
+  ]));
+  expect(gameNamesToRomNames.get('nebulbee')).toEqual(expect.toIncludeAllMembers([
     '1c.bin', '1d.bin', '2n.bin', '5c.bin', '51xx.bin', 'gg1-5', 'gg1-7', 'gg1_3.2m', 'gg1_9.4l',
     'gg1_10.4f', 'gg1_11.4d', 'nebulbee.01', 'nebulbee.02', 'nebulbee.04', 'nebulbee.07',
     'prom-5.5n',
-  ]);
+  ]));
+  expect(gameNamesToRomNames.get('liblrabl')).toEqual(expect.toIncludeAllMembers([
+    '2c.rom', '5b.rom', '5c.rom', '5p.rom', '8c.rom', '9t.rom', '10c.rom', 'lr1-1.1t', 'lr1-2.1s',
+    'lr1-3.1r', 'lr1-4.3d', 'lr1-5.5l', 'lr1-6.2p',
+  ]));
 
   // No change to BIOS or devices
   expect(result.getGames().filter((game) => game.isBios())).toHaveLength(2);
-  expect(result.getGames().filter((game) => game.isDevice())).toHaveLength(39);
+  expect(result.getGames().filter((game) => game.isDevice())).toHaveLength(65);
   expect(gameNamesToRomNames.get('aristmk6')).toHaveLength(96);
   expect(gameNamesToRomNames.get('neogeo')).toHaveLength(34);
 });
@@ -1516,104 +1737,117 @@ it('should non-merged', async () => {
       return map;
     }, new Map<string, string[]>());
 
-  // Excludes BIOS files
-  expect(gameNamesToRomNames.get('100lions')).toEqual(['10219211.u73', '10219211.u86']);
-  expect(gameNamesToRomNames.get('100lionsa')).toEqual(['30223811.u73', '30223811.u86']);
-  expect(gameNamesToRomNames.get('1942')).toEqual([
+  // Excludes device files
+  expect(gameNamesToRomNames.get('100lions')).toEqual(expect.toIncludeAllMembers(['10219211.u73', '10219211.u86']));
+  expect(gameNamesToRomNames.get('100lionsa')).toEqual(expect.toIncludeAllMembers(['30223811.u73', '30223811.u86']));
+  expect(gameNamesToRomNames.get('1942')).toEqual(expect.toIncludeAllMembers([
     'sb-0.f1', 'sb-1.k6', 'sb-2.d1', 'sb-3.d2', 'sb-4.d6', 'sb-5.e8', 'sb-6.e9', 'sb-7.e10',
     'sb-8.k3', 'sb-9.m11', 'sr-01.c11', 'sr-02.f2', 'sr-08.a1', 'sr-09.a2', 'sr-10.a3', 'sr-11.a4',
     'sr-12.a5', 'sr-13.a6', 'sr-14.l1', 'sr-15.l2', 'sr-16.n1', 'sr-17.n2', 'srb-03.m3',
     'srb-04.m4', 'srb-05.m5', 'srb-06.m6', 'srb-07.m7',
-  ]);
-  expect(gameNamesToRomNames.get('1942a')).toEqual([
+  ]));
+  expect(gameNamesToRomNames.get('1942a')).toEqual(expect.toIncludeAllMembers([
     'sb-0.f1', 'sb-1.k6', 'sb-2.d1', 'sb-3.d2', 'sb-4.d6', 'sb-5.e8', 'sb-6.e9', 'sb-7.e10',
     'sb-8.k3', 'sb-9.m11', 'sr-01.c11', 'sr-02.f2', 'sr-04.m4', 'sr-05.m5', 'sr-06.m6', 'sr-07.m7',
     'sr-08.a1', 'sr-09.a2', 'sr-10.a3', 'sr-11.a4', 'sr-12.a5', 'sr-13.a6', 'sr-14.l1', 'sr-15.l2',
     'sr-16.n1', 'sr-17.n2', 'sra-03.m3',
-  ]);
-  expect(gameNamesToRomNames.get('1942abl')).toEqual([
+  ]));
+  expect(gameNamesToRomNames.get('1942abl')).toEqual(expect.toIncludeAllMembers([
     '1.bin', '2.bin', '3.bin', '5.bin', '7.bin', '9.bin', '11.bin', '13.bin', '14.bin', '16.bin',
     'sb-0.f1', 'sb-1.k6', 'sb-2.d1', 'sb-3.d2', 'sb-4.d6', 'sb-5.e8', 'sb-6.e9', 'sb-7.e10',
     'sb-8.k3', 'sb-9.m11',
-  ]);
-  expect(gameNamesToRomNames.get('1942b')).toEqual([
+  ]));
+  expect(gameNamesToRomNames.get('1942b')).toEqual(expect.toIncludeAllMembers([
     'sb-0.f1', 'sb-1.k6', 'sb-2.d1', 'sb-3.d2', 'sb-4.d6', 'sb-5.e8', 'sb-6.e9', 'sb-7.e10',
     'sb-8.k3', 'sb-9.m11', 'sr-01.c11', 'sr-02.f2', 'sr-03.m3', 'sr-04.m4', 'sr-05.m5', 'sr-06.m6',
     'sr-07.m7', 'sr-08.a1', 'sr-09.a2', 'sr-10.a3', 'sr-11.a4', 'sr-12.a5', 'sr-13.a6', 'sr-14.l1',
     'sr-15.l2', 'sr-16.n1', 'sr-17.n2',
-  ]);
-  expect(gameNamesToRomNames.get('1942h')).toEqual([
+  ]));
+  expect(gameNamesToRomNames.get('1942h')).toEqual(expect.toIncludeAllMembers([
     'sb-0.f1', 'sb-1.k6', 'sb-2.d1', 'sb-3.d2', 'sb-4.d6', 'sb-5.e8', 'sb-6.e9', 'sb-7.e10',
     'sb-8.k3', 'sb-9.m11', 'sr-01.c11', 'sr-02.f2', 'sr-08.a1', 'sr-09.a2', 'sr-10.a3', 'sr-11.a4',
     'sr-12.a5', 'sr-13.a6', 'sr-14.l1', 'sr-15.l2', 'sr-16.n1', 'sr-17.n2', 'srb-06.m6',
     'srb-07.m7', 'supercharger_1942_@3.m3', 'supercharger_1942_@4.m4', 'supercharger_1942_@5.m5',
-  ]);
-  expect(gameNamesToRomNames.get('1942p')).toEqual([
+  ]));
+  expect(gameNamesToRomNames.get('1942p')).toEqual(expect.toIncludeAllMembers([
     '1.bin', '2.bin', '3.bin', '04.bin', '5.bin', '6.bin', '7.bin', '8.bin', '9.bin', '10.bin',
     '11.bin', '12.bin', 'ic22.bin',
-  ]);
-  expect(gameNamesToRomNames.get('1942w')).toEqual([
+  ]));
+  expect(gameNamesToRomNames.get('1942w')).toEqual(expect.toIncludeAllMembers([
     'sb-0.f1', 'sb-1.k6', 'sb-2.d1', 'sb-3.d2', 'sb-4.d6', 'sb-5.e8', 'sb-6.e9', 'sb-7.e10',
     'sb-8.k3', 'sb-9.m11', 'sr-01.c11', 'sr-08.a1', 'sr-09.a2', 'sr-10.a3', 'sr-11.a4', 'sr-12.a5',
     'sr-13.a6', 'sr-14.l1', 'sr-15.l2', 'sr-16.n1', 'sr-17.n2', 'sw-02.f2', 'sw-03.m3', 'sw-04.m4',
     'sw-05.m5', 'sw-06.m6', 'sw-07.m7',
-  ]);
-  expect(gameNamesToRomNames.get('aes')).toEqual([
+  ]));
+  expect(gameNamesToRomNames.get('aes')).toEqual(expect.toIncludeAllMembers([
     '000-lo.lo', 'neo-epo.bin', 'neo-po.bin', 'neodebug.rom', 'uni-bios_1_3.rom',
     'uni-bios_2_0.rom', 'uni-bios_2_1.rom', 'uni-bios_2_2.rom', 'uni-bios_2_3.rom',
     'uni-bios_2_3o.rom', 'uni-bios_3_0.rom', 'uni-bios_3_1.rom', 'uni-bios_3_2.rom',
     'uni-bios_3_3.rom', 'uni-bios_4_0.rom',
-  ]);
-  expect(gameNamesToRomNames.get('bbtime')).toEqual(['bbtime.svg', 'hd38820a65']);
-  expect(gameNamesToRomNames.get('ddonpach')).toEqual([
+  ]));
+  expect(gameNamesToRomNames.get('bbtime')).toEqual(expect.toIncludeAllMembers(['bbtime.svg', 'hd38820a65']));
+  expect(gameNamesToRomNames.get('c64')).toEqual(expect.toIncludeAllMembers([
+    '901225-01.u5', '901226-01.u3', '901227-01.u4', '901227-02.u4', '901227-03.u4', '906114-01.u17',
+    'digidos.u4', 'dosrom12.u4', 'exos3.u4', 'exos4.u4', 'jiffydos c64.u4', 'kernal-10-mager.u4',
+    'kernal-20-1.u4', 'kernal-20-1_au.u4', 'kernal-20-2.u4', 'kernal-20-3.u4', 'kernal-30.u4',
+    'magnum.u4', 'mercury3.u4', 'mercury31s.u4', 'prodos24l2.u4', 'prodos35l2.u4', 'prodos.u4',
+    'speed-dos.u4', 'speed-dosplus27.u4', 'speed-dosplus.u4', 'turboaccess26.u4',
+    'turboaccess301.u4', 'turboaccess302.u4', 'turboprocess.u4', 'turboprocessus.u4',
+    'turborom2.u4', 'turborom.u4',
+  ]));
+  expect(gameNamesToRomNames.get('ddonpach')).toEqual(expect.toIncludeAllMembers([
     'b1.u27', 'b2.u26', 'eeprom-ddonpach.bin', 'u6.bin', 'u7.bin', 'u50.bin', 'u51.bin', 'u52.bin',
     'u53.bin', 'u60.bin', 'u61.bin', 'u62.bin',
-  ]);
-  expect(gameNamesToRomNames.get('ddonpacha')).toEqual([
+  ]));
+  expect(gameNamesToRomNames.get('ddonpacha')).toEqual(expect.toIncludeAllMembers([
     'arrange_u26.bin', 'arrange_u27.bin', 'arrange_u51.bin', 'arrange_u62.bin',
     'eeprom-ddonpach.bin', 'u6.bin', 'u7.bin', 'u50.bin', 'u52.bin', 'u53.bin', 'u60.bin',
     'u61.bin',
-  ]);
-  expect(gameNamesToRomNames.get('ddonpachj')).toEqual([
+  ]));
+  expect(gameNamesToRomNames.get('ddonpachj')).toEqual(expect.toIncludeAllMembers([
     'eeprom-ddonpach.bin', 'u6.bin', 'u7.bin', 'u26.bin', 'u27.bin', 'u50.bin', 'u51.bin',
     'u52.bin', 'u53.bin', 'u60.bin', 'u61.bin', 'u62.bin',
-  ]);
-  expect(gameNamesToRomNames.get('galaga')).toEqual([
+  ]));
+  expect(gameNamesToRomNames.get('galaga')).toEqual(expect.toIncludeAllMembers([
     'gg1_1b.3p', 'gg1_2b.3m', 'gg1_3.2m', 'gg1_4b.2l', 'gg1_5b.3f', 'gg1_7b.2c', 'gg1_9.4l',
     'gg1_10.4f', 'gg1_11.4d', 'prom-1.1d', 'prom-2.5c', 'prom-3.1c', 'prom-4.2n', 'prom-5.5n',
-  ]);
-  expect(gameNamesToRomNames.get('galagamf')).toEqual([
+  ]));
+  expect(gameNamesToRomNames.get('galagamf')).toEqual(expect.toIncludeAllMembers([
     '2600j.bin', '2700k.bin', '2800l.bin', '3200a.bin', '3300b.bin', '3400c.bin', '3500d.bin',
     '3600fast.bin', '3700g.bin', 'prom-1.1d', 'prom-2.5c', 'prom-3.1c', 'prom-4.2n', 'prom-5.5n',
-  ]);
-  expect(gameNamesToRomNames.get('galagamk')).toEqual([
+  ]));
+  expect(gameNamesToRomNames.get('galagamk')).toEqual(expect.toIncludeAllMembers([
     '3400c.bin', 'gg1-5.3f', 'gg1-7b.2c', 'gg1-9.4l', 'gg1-10.4f', 'gg1-11.4d', 'mk2-1', 'mk2-2',
     'mk2-4', 'prom-1.1d', 'prom-2.5c', 'prom-3.1c', 'prom-4.2n', 'prom-5.5n',
-  ]);
-  expect(gameNamesToRomNames.get('galagamw')).toEqual([
+  ]));
+  expect(gameNamesToRomNames.get('galagamw')).toEqual(expect.toIncludeAllMembers([
     '2600j.bin', '2700k.bin', '2800l.bin', '3200a.bin', '3300b.bin', '3400c.bin', '3500d.bin',
     '3600e.bin', '3700g.bin', 'prom-1.1d', 'prom-2.5c', 'prom-3.1c', 'prom-4.2n', 'prom-5.5n',
-  ]);
-  expect(gameNamesToRomNames.get('galagao')).toEqual([
+  ]));
+  expect(gameNamesToRomNames.get('galagao')).toEqual(expect.toIncludeAllMembers([
     'gg1-1.3p', 'gg1-2.3m', 'gg1-3.2m', 'gg1-4.2l', 'gg1-5.3f', 'gg1-7.2c', 'gg1-9.4l', 'gg1-10.4f',
     'gg1-11.4d', 'prom-1.1d', 'prom-2.5c', 'prom-3.1c', 'prom-4.2n', 'prom-5.5n',
-  ]);
-  expect(gameNamesToRomNames.get('gallag')).toEqual([
+  ]));
+  expect(gameNamesToRomNames.get('gallag')).toEqual(expect.toIncludeAllMembers([
     'gallag.1', 'gallag.2', 'gallag.3', 'gallag.4', 'gallag.5', 'gallag.6', 'gallag.7', 'gallag.8',
     'gallag.9', 'gallag.a', 'prom-1.1d', 'prom-2.5c', 'prom-3.1c', 'prom-4.2n', 'prom-5.5n',
-  ]);
-  expect(gameNamesToRomNames.get('gatsbee')).toEqual([
+  ]));
+  expect(gameNamesToRomNames.get('gatsbee')).toEqual(expect.toIncludeAllMembers([
     '1.4b', '2.4c', '3.4d', '4.4e', '8.5r', '9.6a', '10.7a', 'gallag.6', 'gg1-5.3f', 'gg1-7.2c',
     'prom-1.1d', 'prom-2.5c', 'prom-3.1c', 'prom-4.2n', 'prom-5.5n',
-  ]);
-  expect(gameNamesToRomNames.get('nebulbee')).toEqual([
+  ]));
+  expect(gameNamesToRomNames.get('nebulbee')).toEqual(expect.toIncludeAllMembers([
     '1c.bin', '1d.bin', '2n.bin', '5c.bin', 'gg1-5', 'gg1-7', 'gg1_3.2m', 'gg1_9.4l', 'gg1_10.4f',
     'gg1_11.4d', 'nebulbee.01', 'nebulbee.02', 'nebulbee.04', 'nebulbee.07', 'prom-5.5n',
-  ]);
+  ]));
+  expect(gameNamesToRomNames.get('liblrabl')).toEqual(expect.toIncludeAllMembers([
+    '2c.rom', '5b.rom', '5c.rom', '5p.rom', '8c.rom', '9t.rom', '10c.rom', 'lr1-1.1t', 'lr1-2.1s',
+    'lr1-3.1r', 'lr1-4.3d', 'lr1-5.5l', 'lr1-6.2p',
+  ]));
 
   // No change to BIOS or devices
   expect(result.getGames().filter((game) => game.isBios())).toHaveLength(2);
-  expect(result.getGames().filter((game) => game.isDevice())).toHaveLength(39);
+  expect(result.getGames().filter((game) => game.isDevice())).toHaveLength(65);
   expect(gameNamesToRomNames.get('aristmk6')).toHaveLength(96);
   expect(gameNamesToRomNames.get('neogeo')).toHaveLength(34);
 });
@@ -1638,82 +1872,95 @@ it('should split', async () => {
     }, new Map<string, string[]>());
 
   // No change
-  expect(gameNamesToRomNames.get('aes')).toEqual([
+  expect(gameNamesToRomNames.get('aes')).toEqual(expect.toIncludeAllMembers([
     '000-lo.lo', 'neo-epo.bin', 'neo-po.bin', 'neodebug.rom', 'uni-bios_1_3.rom',
     'uni-bios_2_0.rom', 'uni-bios_2_1.rom', 'uni-bios_2_2.rom', 'uni-bios_2_3.rom',
     'uni-bios_2_3o.rom', 'uni-bios_3_0.rom', 'uni-bios_3_1.rom', 'uni-bios_3_2.rom',
     'uni-bios_3_3.rom', 'uni-bios_4_0.rom',
-  ]);
-  expect(gameNamesToRomNames.get('bbtime')).toEqual(['bbtime.svg', 'hd38820a65']);
+  ]));
+  expect(gameNamesToRomNames.get('bbtime')).toEqual(expect.toIncludeAllMembers(['bbtime.svg', 'hd38820a65']));
+  expect(gameNamesToRomNames.get('liblrabl')).toEqual(expect.toIncludeAllMembers([
+    '2c.rom', '5b.rom', '5c.rom', '5p.rom', '8c.rom', '9t.rom', '10c.rom', 'lr1-1.1t', 'lr1-2.1s',
+    'lr1-3.1r', 'lr1-4.3d', 'lr1-5.5l', 'lr1-6.2p',
+  ]));
   // Clones exclude parent ROMs
-  expect(gameNamesToRomNames.get('100lions')).toEqual(['10219211.u73', '10219211.u86']);
-  expect(gameNamesToRomNames.get('100lionsa')).toEqual(['30223811.u73', '30223811.u86']);
-  expect(gameNamesToRomNames.get('1942')).toEqual([
+  expect(gameNamesToRomNames.get('100lions')).toEqual(expect.toIncludeAllMembers(['10219211.u73', '10219211.u86']));
+  expect(gameNamesToRomNames.get('100lionsa')).toEqual(expect.toIncludeAllMembers(['30223811.u73', '30223811.u86']));
+  expect(gameNamesToRomNames.get('1942')).toEqual(expect.toIncludeAllMembers([
     'sb-0.f1', 'sb-1.k6', 'sb-2.d1', 'sb-3.d2', 'sb-4.d6', 'sb-5.e8', 'sb-6.e9', 'sb-7.e10',
     'sb-8.k3', 'sb-9.m11', 'sr-01.c11', 'sr-02.f2', 'sr-08.a1', 'sr-09.a2', 'sr-10.a3', 'sr-11.a4',
     'sr-12.a5', 'sr-13.a6', 'sr-14.l1', 'sr-15.l2', 'sr-16.n1', 'sr-17.n2', 'srb-03.m3',
     'srb-04.m4', 'srb-05.m5', 'srb-06.m6', 'srb-07.m7',
-  ]);
-  expect(gameNamesToRomNames.get('1942a')).toEqual([
+  ]));
+  expect(gameNamesToRomNames.get('1942a')).toEqual(expect.toIncludeAllMembers([
     'sr-04.m4', 'sr-05.m5', 'sr-06.m6', 'sr-07.m7', 'sra-03.m3',
-  ]);
-  expect(gameNamesToRomNames.get('1942abl')).toEqual([
+  ]));
+  expect(gameNamesToRomNames.get('1942abl')).toEqual(expect.toIncludeAllMembers([
     '3.bin', '5.bin', '7.bin', '9.bin', '11.bin', '13.bin', '14.bin', '16.bin',
-  ]);
-  expect(gameNamesToRomNames.get('1942b')).toEqual([
+  ]));
+  expect(gameNamesToRomNames.get('1942b')).toEqual(expect.toIncludeAllMembers([
     'sr-03.m3', 'sr-04.m4', 'sr-05.m5', 'sr-06.m6', 'sr-07.m7',
-  ]);
-  expect(gameNamesToRomNames.get('1942h')).toEqual([
+  ]));
+  expect(gameNamesToRomNames.get('1942h')).toEqual(expect.toIncludeAllMembers([
     'supercharger_1942_@3.m3', 'supercharger_1942_@4.m4', 'supercharger_1942_@5.m5',
-  ]);
-  expect(gameNamesToRomNames.get('1942p')).toEqual([
+  ]));
+  expect(gameNamesToRomNames.get('1942p')).toEqual(expect.toIncludeAllMembers([
     '1.bin', '2.bin', '3.bin', '04.bin', '5.bin', '6.bin', '7.bin', '9.bin', '10.bin', '11.bin',
     '12.bin',
-  ]);
-  expect(gameNamesToRomNames.get('1942w')).toEqual([
+  ]));
+  expect(gameNamesToRomNames.get('1942w')).toEqual(expect.toIncludeAllMembers([
     'sw-02.f2', 'sw-03.m3', 'sw-04.m4', 'sw-05.m5', 'sw-07.m7',
-  ]);
-  expect(gameNamesToRomNames.get('ddonpach')).toEqual([
+  ]));
+  expect(gameNamesToRomNames.get('c64')).toEqual(expect.toIncludeAllMembers([
+    '901225-01.u5', '901226-01.u3', '901227-01.u4', '901227-02.u4', '901227-03.u4', '906114-01.u17',
+    'digidos.u4', 'dosrom12.u4', 'exos3.u4', 'exos4.u4', 'jiffydos c64.u4', 'kernal-10-mager.u4',
+    'kernal-20-1.u4', 'kernal-20-1_au.u4', 'kernal-20-2.u4', 'kernal-20-3.u4', 'kernal-30.u4',
+    'magnum.u4', 'mercury3.u4', 'mercury31s.u4', 'prodos24l2.u4', 'prodos35l2.u4', 'prodos.u4',
+    'speed-dos.u4', 'speed-dosplus27.u4', 'speed-dosplus.u4', 'turboaccess26.u4',
+    'turboaccess301.u4', 'turboaccess302.u4', 'turboprocess.u4', 'turboprocessus.u4',
+    'turborom2.u4', 'turborom.u4',
+  ]));
+  expect(gameNamesToRomNames.get('ddonpach')).toEqual(expect.toIncludeAllMembers([
     'b1.u27', 'b2.u26', 'eeprom-ddonpach.bin', 'u6.bin', 'u7.bin', 'u50.bin', 'u51.bin', 'u52.bin',
     'u53.bin', 'u60.bin', 'u61.bin', 'u62.bin',
-  ]);
-  expect(gameNamesToRomNames.get('ddonpacha')).toEqual([
+  ]));
+  expect(gameNamesToRomNames.get('ddonpacha')).toEqual(expect.toIncludeAllMembers([
     'arrange_u26.bin', 'arrange_u27.bin', 'arrange_u51.bin', 'arrange_u62.bin',
     'eeprom-ddonpach.bin',
-  ]);
-  expect(gameNamesToRomNames.get('ddonpachj')).toEqual([
+  ]));
+  expect(gameNamesToRomNames.get('ddonpachj')).toEqual(expect.toIncludeAllMembers([
     'u26.bin', 'u27.bin',
-  ]);
-  expect(gameNamesToRomNames.get('galaga')).toEqual([
+  ]));
+  expect(gameNamesToRomNames.get('galaga')).toEqual(expect.toIncludeAllMembers([
     'gg1_1b.3p', 'gg1_2b.3m', 'gg1_3.2m', 'gg1_4b.2l', 'gg1_5b.3f', 'gg1_7b.2c', 'gg1_9.4l',
     'gg1_10.4f', 'gg1_11.4d', 'prom-1.1d', 'prom-2.5c', 'prom-3.1c', 'prom-4.2n', 'prom-5.5n',
-  ]);
-  expect(gameNamesToRomNames.get('galagamf')).toEqual([
+  ]));
+  expect(gameNamesToRomNames.get('galagamf')).toEqual(expect.toIncludeAllMembers([
     '3200a.bin', '3300b.bin', '3400c.bin', '3500d.bin', '3600fast.bin', '3700g.bin',
-  ]);
-  expect(gameNamesToRomNames.get('galagamk')).toEqual([
+  ]));
+  expect(gameNamesToRomNames.get('galagamk')).toEqual(expect.toIncludeAllMembers([
     '3400c.bin', 'gg1-5.3f', 'mk2-1', 'mk2-2', 'mk2-4',
-  ]);
-  expect(gameNamesToRomNames.get('galagamw')).toEqual([
+  ]));
+  expect(gameNamesToRomNames.get('galagamw')).toEqual(expect.toIncludeAllMembers([
     '3200a.bin', '3300b.bin', '3400c.bin', '3500d.bin', '3600e.bin', '3700g.bin',
-  ]);
-  expect(gameNamesToRomNames.get('galagao')).toEqual([
+  ]));
+  expect(gameNamesToRomNames.get('galagao')).toEqual(expect.toIncludeAllMembers([
     'gg1-1.3p', 'gg1-2.3m', 'gg1-4.2l', 'gg1-5.3f', 'gg1-7.2c',
-  ]);
-  expect(gameNamesToRomNames.get('gallag')).toEqual([
+  ]));
+  expect(gameNamesToRomNames.get('gallag')).toEqual(expect.toIncludeAllMembers([
     'gallag.1', 'gallag.2', 'gallag.4', 'gallag.5', 'gallag.6', 'gallag.7', 'gallag.8',
-  ]);
-  expect(gameNamesToRomNames.get('gatsbee')).toEqual([
+  ]));
+  expect(gameNamesToRomNames.get('gatsbee')).toEqual(expect.toIncludeAllMembers([
     '1.4b', '2.4c', '3.4d', '4.4e', '8.5r', '9.6a', '10.7a', 'gallag.6', 'gg1-5.3f', 'gg1-7.2c',
-  ]);
-  expect(gameNamesToRomNames.get('nebulbee')).toEqual([
+  ]));
+  expect(gameNamesToRomNames.get('nebulbee')).toEqual(expect.toIncludeAllMembers([
     '1c.bin', '1d.bin', '2n.bin', '5c.bin', 'gg1-5', 'gg1-7', 'nebulbee.01', 'nebulbee.02',
     'nebulbee.04', 'nebulbee.07',
-  ]);
+  ]));
 
   // No change to BIOS or devices
   expect(result.getGames().filter((game) => game.isBios())).toHaveLength(2);
-  expect(result.getGames().filter((game) => game.isDevice())).toHaveLength(39);
+  expect(result.getGames().filter((game) => game.isDevice())).toHaveLength(65);
   expect(gameNamesToRomNames.get('aristmk6')).toHaveLength(96);
   expect(gameNamesToRomNames.get('neogeo')).toHaveLength(34);
 });
@@ -1738,19 +1985,34 @@ it('should merged', async () => {
     }, new Map<string, string[]>());
 
   // No change from regular non-merged (because there are no clones)
-  expect(gameNamesToRomNames.get('aes')).toEqual([
+  expect(gameNamesToRomNames.get('aes')).toEqual(expect.toIncludeAllMembers([
     '000-lo.lo', 'neo-epo.bin', 'neo-po.bin', 'neodebug.rom', 'uni-bios_1_3.rom',
     'uni-bios_2_0.rom', 'uni-bios_2_1.rom', 'uni-bios_2_2.rom', 'uni-bios_2_3.rom',
     'uni-bios_2_3o.rom', 'uni-bios_3_0.rom', 'uni-bios_3_1.rom', 'uni-bios_3_2.rom',
     'uni-bios_3_3.rom', 'uni-bios_4_0.rom',
-  ]);
-  expect(gameNamesToRomNames.get('bbtime')).toEqual(['bbtime.svg', 'hd38820a65']);
+  ]));
+  expect(gameNamesToRomNames.get('bbtime')).toEqual(expect.toIncludeAllMembers(['bbtime.svg', 'hd38820a65']));
+  expect(gameNamesToRomNames.get('c64')).toEqual(expect.toIncludeAllMembers([
+    // NOTE(cemmer): excludes clones
+    '901225-01.u5', '901226-01.u3', '901227-01.u4', '901227-02.u4', '901227-03.u4', '906114-01.u17',
+    'digidos.u4', 'dosrom12.u4', 'exos3.u4', 'exos4.u4', 'jiffydos c64.u4', 'kernal-10-mager.u4',
+    'kernal-20-1.u4', 'kernal-20-1_au.u4', 'kernal-20-2.u4', 'kernal-20-3.u4', 'kernal-30.u4',
+    'magnum.u4', 'mercury3.u4', 'mercury31s.u4', 'prodos24l2.u4', 'prodos35l2.u4', 'prodos.u4',
+    'speed-dos.u4', 'speed-dosplus27.u4', 'speed-dosplus.u4', 'turboaccess26.u4',
+    'turboaccess301.u4', 'turboaccess302.u4', 'turboprocess.u4', 'turboprocessus.u4',
+    'turborom2.u4', 'turborom.u4',
+  ]));
+  expect(gameNamesToRomNames.get('liblrabl')).toEqual(expect.toIncludeAllMembers([
+    '2c.rom', '5b.rom', '5c.rom', '5p.rom', '8c.rom', '9t.rom', '10c.rom', 'lr1-1.1t', 'lr1-2.1s',
+    'lr1-3.1r', 'lr1-4.3d', 'lr1-5.5l', 'lr1-6.2p',
+  ]));
   // Clones are merged in
-  expect(gameNamesToRomNames.get('100lions')).toEqual([
-    '100lionsa\\30223811.u73', '100lionsa\\30223811.u86', '10219211.u73', '10219211.u86',
-  ]);
+  expect(gameNamesToRomNames.get('100lions')).toEqual(expect.toIncludeAllMembers([
+    '100lionsa\\30223811.u73', '100lionsa\\30223811.u86',
+    '10219211.u73', '10219211.u86',
+  ]));
   expect(gameNamesToRomNames.has('100lionsa')).toEqual(false);
-  expect(gameNamesToRomNames.get('1942')).toEqual([
+  expect(gameNamesToRomNames.get('1942')).toEqual(expect.toIncludeAllMembers([
     '1942a\\sr-04.m4', '1942a\\sr-05.m5', '1942a\\sr-06.m6', '1942a\\sr-07.m7', '1942a\\sra-03.m3',
     '1942abl\\3.bin', '1942abl\\7.bin', '1942abl\\9.bin', '1942abl\\11.bin', '1942abl\\13.bin', '1942abl\\14.bin', '1942abl\\16.bin',
     '1942b\\sr-03.m3',
@@ -1761,14 +2023,14 @@ it('should merged', async () => {
     'sb-8.k3', 'sb-9.m11', 'sr-01.c11', 'sr-02.f2', 'sr-08.a1', 'sr-09.a2', 'sr-10.a3', 'sr-11.a4',
     'sr-12.a5', 'sr-13.a6', 'sr-14.l1', 'sr-15.l2', 'sr-16.n1', 'sr-17.n2', 'srb-03.m3',
     'srb-04.m4', 'srb-05.m5', 'srb-06.m6', 'srb-07.m7',
-  ]);
+  ]));
   expect(gameNamesToRomNames.has('1942a')).toEqual(false);
   expect(gameNamesToRomNames.has('1942abl')).toEqual(false);
   expect(gameNamesToRomNames.has('1942b')).toEqual(false);
   expect(gameNamesToRomNames.has('1942h')).toEqual(false);
   expect(gameNamesToRomNames.has('1942p')).toEqual(false);
   expect(gameNamesToRomNames.has('1942w')).toEqual(false);
-  expect(gameNamesToRomNames.get('galaga')).toEqual([
+  expect(gameNamesToRomNames.get('galaga')).toEqual(expect.toIncludeAllMembers([
     'galagamf\\3200a.bin', 'galagamf\\3300b.bin', 'galagamf\\3400c.bin', 'galagamf\\3500d.bin', 'galagamf\\3600fast.bin', 'galagamf\\3700g.bin',
     'galagamk\\gg1-5.3f', 'galagamk\\mk2-1', 'galagamk\\mk2-2', 'galagamk\\mk2-4',
     'galagamw\\3600e.bin', 'galagao\\gg1-1.3p', 'galagao\\gg1-2.3m', 'galagao\\gg1-4.2l', 'galagao\\gg1-7.2c',
@@ -1777,13 +2039,13 @@ it('should merged', async () => {
     'nebulbee\\1c.bin', 'nebulbee\\1d.bin', 'nebulbee\\2n.bin', 'nebulbee\\5c.bin', 'nebulbee\\nebulbee.01', 'nebulbee\\nebulbee.02', 'nebulbee\\nebulbee.04', 'nebulbee\\nebulbee.07',
     'gg1_1b.3p', 'gg1_2b.3m', 'gg1_3.2m', 'gg1_4b.2l', 'gg1_5b.3f', 'gg1_7b.2c', 'gg1_9.4l',
     'gg1_10.4f', 'gg1_11.4d', 'prom-1.1d', 'prom-2.5c', 'prom-3.1c', 'prom-4.2n', 'prom-5.5n',
-  ]);
-  expect(gameNamesToRomNames.get('ddonpach')).toEqual([
+  ]));
+  expect(gameNamesToRomNames.get('ddonpach')).toEqual(expect.toIncludeAllMembers([
     'ddonpacha\\arrange_u26.bin', 'ddonpacha\\arrange_u27.bin', 'ddonpacha\\arrange_u51.bin',
     'ddonpacha\\arrange_u62.bin', 'ddonpacha\\eeprom-ddonpach.bin', 'ddonpachj\\u26.bin',
     'ddonpachj\\u27.bin', 'b1.u27', 'b2.u26', 'eeprom-ddonpach.bin', 'u6.bin', 'u7.bin', 'u50.bin',
     'u51.bin', 'u52.bin', 'u53.bin', 'u60.bin', 'u61.bin', 'u62.bin',
-  ]);
+  ]));
   expect(gameNamesToRomNames.has('ddonpacha')).toEqual(false);
   expect(gameNamesToRomNames.has('ddonpachj')).toEqual(false);
   expect(gameNamesToRomNames.has('galagamf')).toEqual(false);
@@ -1796,7 +2058,7 @@ it('should merged', async () => {
 
   // No change to BIOS or devices
   expect(result.getGames().filter((game) => game.isBios())).toHaveLength(2);
-  expect(result.getGames().filter((game) => game.isDevice())).toHaveLength(39);
+  expect(result.getGames().filter((game) => game.isDevice())).toHaveLength(65);
   expect(gameNamesToRomNames.get('aristmk6')).toHaveLength(96);
   expect(gameNamesToRomNames.get('neogeo')).toHaveLength(34);
 });

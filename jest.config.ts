@@ -3,6 +3,8 @@ import { JestConfigWithTsJest } from 'ts-jest';
 const jestConfig: JestConfigWithTsJest = {
   testEnvironment: 'node',
 
+  setupFilesAfterEnv: ['jest-extended/all'],
+
   // Most tests are I/O-bound, increase the test timeout globally
   testTimeout: 20_000,
 

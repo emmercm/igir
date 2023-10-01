@@ -64,22 +64,16 @@ export default class DATMergerSplitter extends Module {
   private mergeParent(parent: Parent, gameNamesToGames: Map<string, Game>): Game[] {
     let games = parent.getGames();
 
-    const romNameFunc = (rom: ROM): string => rom.getName()
-      // Numeric sort will sort underscore before hyphens? ASCII says don't do that
-      .replace('-', '__');
-    const romSortFunc = (a: ROM, b: ROM): number => romNameFunc(a)
-      .localeCompare(romNameFunc(b), undefined, { numeric: true });
-
     // Sanitization
     games = games.map((game) => {
       const romNames = game.getRoms().map((rom) => rom.getName());
       return game.withProps({
         rom: game.getRoms()
+          // Get rid of ROMs that haven't been dumped yet
+          .filter((rom) => rom.getStatus() !== 'nodump')
           // Get rid of duplicate ROMs. MAME will sometimes duplicate a file with the exact same
           // name, size, and checksum but with a different "region" (e.g. neogeo).
-          .filter((rom, idx) => romNames.indexOf(rom.getName()) === idx)
-          // Sort for easier debugging and testing
-          .sort(romSortFunc),
+          .filter((rom, idx) => romNames.indexOf(rom.getName()) === idx),
       });
     });
 
@@ -92,11 +86,16 @@ export default class DATMergerSplitter extends Module {
         return game.withProps({
           rom: [
             ...game.getDeviceRefs()
-              .map((deviceRef) => gameNamesToGames.get(deviceRef.getName()))
+              // De-duplicate DeviceRef names
+              .map((deviceRef) => deviceRef.getName())
+              .reduce(ArrayPoly.reduceUnique(), [])
+              // Get ROMs from the DeviceRef
+              .map((deviceRefName) => gameNamesToGames.get(deviceRefName))
               .filter(ArrayPoly.filterNotNullish)
-              .flatMap((deviceGame) => deviceGame.getRoms()),
+              .flatMap((deviceGame) => deviceGame.getRoms()
+                .filter((rom) => rom.getStatus() !== 'nodump')),
             ...game.getRoms(),
-          ].sort(romSortFunc),
+          ],
         });
       });
     }
@@ -122,8 +121,7 @@ export default class DATMergerSplitter extends Module {
           });
 
           return game.withProps({
-            rom: DATMergerSplitter.diffGameRoms(biosGame, game)
-              .sort(romSortFunc),
+            rom: DATMergerSplitter.diffGameRoms(biosGame, game),
           });
         });
     }
@@ -146,8 +144,7 @@ export default class DATMergerSplitter extends Module {
           }
 
           return game.withProps({
-            rom: DATMergerSplitter.diffGameRoms(parentGame, game)
-              .sort(romSortFunc),
+            rom: DATMergerSplitter.diffGameRoms(parentGame, game),
           });
         });
     }
