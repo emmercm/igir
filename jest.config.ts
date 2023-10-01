@@ -1,31 +1,19 @@
-import path from 'node:path';
+import { JestConfigWithTsJest } from 'ts-jest';
 
-const jestConfig = {
+const jestConfig: JestConfigWithTsJest = {
   testEnvironment: 'node',
 
   // Most tests are I/O-bound, increase the test timeout globally
   testTimeout: 20_000,
 
   // BEGIN https://kulshekhar.github.io/ts-jest/docs/guides/esm-support
-  preset: 'ts-jest/presets/default-esm-legacy',
+  extensionsToTreatAsEsm: ['.ts'],
   transform: {
-    '\\.ts$': ['ts-jest', { useESM: true }],
+    '^.+\\.tsx?$': ['ts-jest', { useESM: true }],
   },
   moduleNameMapper: {
     '^(\\.{1,2}/.*)\\.js$': '$1',
     // END https://kulshekhar.github.io/ts-jest/docs/guides/esm-support
-
-    // BEGIN https://github.com/facebook/jest/issues/12270#issuecomment-1111533936
-    chalk: require.resolve('chalk'),
-    '#ansi-styles': path.join(
-      require.resolve('chalk').split('chalk')[0],
-      'chalk/source/vendor/ansi-styles/index.js',
-    ),
-    '#supports-color': path.join(
-      require.resolve('chalk').split('chalk')[0],
-      'chalk/source/vendor/supports-color/index.js',
-    ),
-    // END https://github.com/facebook/jest/issues/12270#issuecomment-1111533936
   },
 
   // Don't run any compiled versions of the tests, if they exist
