@@ -24,7 +24,7 @@ describe('constructor', () => {
     'ABCD12345 Bangarang.xdelta',
     'Bepzinky 1234567.xdelta',
   ])('should throw if no CRC found: %s', async (filePath) => {
-    const file = await File.fileOf(filePath, 0, '00000000');
+    const file = await File.fileOf(filePath, 0);
     expect(() => VcdiffPatch.patchFrom(file)).toThrow(/couldn't parse/i);
   });
 
@@ -38,7 +38,7 @@ describe('constructor', () => {
     ['Ipsum#8765edcb.xdelta', '8765edcb'],
     ['Dolor 7654dcba.xdelta', '7654dcba'],
   ])('should find the CRC in the filename: %s', async (filePath, expectedCrc) => {
-    const file = await File.fileOf(filePath, 0, '00000000');
+    const file = await File.fileOf(filePath, 0);
     const patch = VcdiffPatch.patchFrom(file);
     expect(patch.getCrcBefore()).toEqual(expectedCrc);
   });

@@ -5,6 +5,7 @@ import Constants from '../../../constants.js';
 import fsPoly from '../../../polyfill/fsPoly.js';
 import Patch from '../../patches/patch.js';
 import File, { FileProps } from '../file.js';
+import { ChecksumBitmask, ChecksumProps } from '../fileChecksums.js';
 import ROMHeader from '../romHeader.js';
 import Archive from './archive.js';
 
@@ -27,32 +28,60 @@ export default class ArchiveEntry<A extends Archive> extends File implements Arc
   static async entryOf<A extends Archive>(
     archive: A,
     entryPath: string,
-    size: number,
-    crc: string,
+    size?: number,
+    checksums?: ChecksumProps,
+    checksumBitmask: number = ChecksumBitmask.CRC32,
     fileHeader?: ROMHeader,
     patch?: Patch,
   ): Promise<ArchiveEntry<A>> {
+    let finalSize = size;
+    let finalCrcWithHeader = checksums?.crc32;
     let finalCrcWithoutHeader;
+    let finalMd5 = checksums?.md5;
+    let finalSha1 = checksums?.sha1;
     let finalSymlinkSource;
+
     if (await fsPoly.exists(archive.getFilePath())) {
+      // Calculate checksums
+      if ((!finalCrcWithHeader && (checksumBitmask & ChecksumBitmask.CRC32))
+        || (!finalMd5 && (checksumBitmask & ChecksumBitmask.MD5))
+        || (!finalSha1 && (checksumBitmask & ChecksumBitmask.SHA1))
+      ) {
+        const calculatedChecksums = await this.extractEntryToTempFile(
+          archive,
+          entryPath,
+          async (localFile) => this.calculateChecksums(localFile, checksumBitmask),
+        );
+        finalCrcWithHeader = calculatedChecksums.crc32 ?? finalCrcWithHeader;
+        finalMd5 = calculatedChecksums.md5 ?? finalMd5;
+        finalSha1 = calculatedChecksums.sha1 ?? finalSha1;
+      }
+      if (fileHeader) {
+        finalCrcWithoutHeader = (await this.extractEntryToTempFile(
+          archive,
+          entryPath,
+          async (localFile) => this.calculateChecksums(
+            localFile,
+            ChecksumBitmask.CRC32,
+            fileHeader,
+          ),
+        )).crc32;
+      }
+
       if (await fsPoly.isSymlink(archive.getFilePath())) {
         finalSymlinkSource = await fsPoly.readlink(archive.getFilePath());
       }
-      if (fileHeader) {
-        finalCrcWithoutHeader = finalCrcWithoutHeader ?? await this.extractEntryToTempFile(
-          archive,
-          entryPath,
-          async (localFile) => this.calculateCrc32(localFile, fileHeader),
-        );
-      }
     }
-    finalCrcWithoutHeader = finalCrcWithoutHeader ?? crc;
+    finalSize = finalSize ?? 0;
+    finalCrcWithoutHeader = finalCrcWithoutHeader ?? finalCrcWithHeader;
 
     return new ArchiveEntry<A>({
       filePath: archive.getFilePath(),
-      size,
-      crc32: crc,
+      size: finalSize,
+      crc32: finalCrcWithHeader,
       crc32WithoutHeader: finalCrcWithoutHeader,
+      md5: finalMd5,
+      sha1: finalSha1,
       symlinkSource: finalSymlinkSource,
       fileHeader,
       patch,
@@ -127,15 +156,11 @@ export default class ArchiveEntry<A extends Archive> extends File implements Arc
     });
   }
 
-  async withEntryPath(entryPath: string): Promise<ArchiveEntry<A>> {
-    return ArchiveEntry.entryOf(
-      this.getArchive(),
+  withEntryPath(entryPath: string): ArchiveEntry<A> {
+    return new ArchiveEntry({
+      ...this,
       entryPath,
-      this.getSize(),
-      this.getCrc32(),
-      this.getFileHeader(),
-      this.getPatch(),
-    );
+    });
   }
 
   async withFileHeader(fileHeader: ROMHeader): Promise<ArchiveEntry<A>> {
@@ -151,7 +176,8 @@ export default class ArchiveEntry<A extends Archive> extends File implements Arc
       this.getArchive(),
       this.getEntryPath(),
       this.getSize(),
-      this.getCrc32(),
+      this,
+      this.getChecksumBitmask(),
       fileHeader,
       undefined, // don't allow a patch
     );

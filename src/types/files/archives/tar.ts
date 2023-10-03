@@ -1,12 +1,12 @@
 import fs from 'node:fs';
 import path from 'node:path';
 
-import { crc32 } from '@node-rs/crc32';
 import tar from 'tar';
 import { Memoize } from 'typescript-memoize';
 
 import Constants from '../../../constants.js';
 import fsPoly from '../../../polyfill/fsPoly.js';
+import FileChecksums from '../fileChecksums.js';
 import Archive from './archive.js';
 import ArchiveEntry from './archiveEntry.js';
 
@@ -22,7 +22,7 @@ export default class Tar extends Archive {
   }
 
   @Memoize()
-  async getArchiveEntries(): Promise<ArchiveEntry<Tar>[]> {
+  async getArchiveEntries(checksumBitmask: number): Promise<ArchiveEntry<Tar>[]> {
     const archiveEntryPromises: Promise<ArchiveEntry<Tar>>[] = [];
 
     // WARN(cemmer): entries in tar archives don't have headers, the entire file has to be read to
@@ -37,23 +37,15 @@ export default class Tar extends Archive {
       highWaterMark: Constants.FILE_READING_CHUNK_SIZE,
     }).pipe(writeStream);
 
-    writeStream.on('entry', (entry) => {
-      let crc: number | undefined;
-      entry.on('data', (chunk) => {
-        if (!crc) {
-          crc = crc32(chunk);
-        } else {
-          crc = crc32(chunk, crc);
-        }
-      });
-      entry.on('end', () => {
-        archiveEntryPromises.push(ArchiveEntry.entryOf(
-          this,
-          entry.path,
-          entry.size ?? 0,
-          (crc ?? 0).toString(16),
-        ));
-      });
+    writeStream.on('entry', async (entry) => {
+      const checksums = await FileChecksums.hashStream(entry, checksumBitmask);
+      archiveEntryPromises.push(ArchiveEntry.entryOf(
+        this,
+        entry.path,
+        entry.size ?? 0,
+        checksums,
+        checksumBitmask,
+      ));
     });
 
     // Wait for the tar file to be closed

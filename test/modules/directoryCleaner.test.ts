@@ -24,7 +24,7 @@ async function runOutputCleaner(
   await fsPoly.copyDir(ROM_FIXTURES_DIR, tempDir);
 
   const writtenRomFilesToExclude = await Promise.all(writtenFilePathsToExclude
-    .map(async (filePath) => File.fileOf(path.join(tempDir, filePath), 0, '00000000')));
+    .map(async (filePath) => File.fileOf(path.join(tempDir, filePath))));
 
   const before = await fsPoly.walk(tempDir);
   expect(before.length).toBeGreaterThan(0);
