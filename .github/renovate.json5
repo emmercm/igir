@@ -41,7 +41,7 @@
   separateMinorPatch: false, // default
 
   // Allow auto-merging of PRs, but reduce their spam on the commit log
-  schedule: 'on the 28th day of the month',
+  schedule: 'on the 27th day of the month',
   prCreation: 'immediate', // default
   prHourlyLimit: 0, // no limit
   automerge: true,
@@ -49,6 +49,7 @@
   // Rely on the PR Rebaser GitHub Action to do this. PRs will merge in the order they are created,
   //  so the `prPriority` option SHOULD be respected.
   rebaseWhen: 'conflicted', // separate PRs updating the lockfile are likely to conflict each other
+  updateNotScheduled: true, // default
 
   // Allow some post-upgrade commands that may be used below
   allowedPostUpgradeCommands: [
@@ -71,7 +72,7 @@
     lockFileMaintenance: {
       // These options are required to override the `lockFileMaintenance` defaults
       enabled: true,
-      schedule: 'on the 28th day of the month', // same as above
+      schedule: 'on the 28th day of the month', // one day after the above, to de-conflict
       commitMessageAction: 'update', // same as above
       commitMessageTopic: 'lockfile',
     },

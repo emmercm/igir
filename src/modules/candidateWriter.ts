@@ -5,6 +5,7 @@ import { Semaphore } from 'async-mutex';
 import ProgressBar, { ProgressBarSymbol } from '../console/progressBar.js';
 import Constants from '../constants.js';
 import ElasticSemaphore from '../elasticSemaphore.js';
+import ArrayPoly from '../polyfill/arrayPoly.js';
 import fsPoly from '../polyfill/fsPoly.js';
 import DAT from '../types/dats/dat.js';
 import Parent from '../types/dats/parent.js';
@@ -305,10 +306,8 @@ export default class CandidateWriter extends Module {
 
     // De-duplicate based on the output file. Raw copying archives will produce the same
     //  input->output for every ROM.
-    const outputRomFiles = inputToOutputEntries
-      .map(([, outputRomFile]) => outputRomFile.toString());
     const uniqueInputToOutputEntries = inputToOutputEntries
-      .filter((_, idx) => outputRomFiles.indexOf(outputRomFiles[idx]) === idx);
+      .filter(ArrayPoly.filterUniqueMapped(([, outputRomFile]) => outputRomFile.toString()));
 
     const totalBytes = uniqueInputToOutputEntries
       .flatMap(([, outputFile]) => outputFile)

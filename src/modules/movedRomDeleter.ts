@@ -112,9 +112,8 @@ export default class MovedROMDeleter extends Module {
       const filesForKey = map.get(key) ?? [];
 
       filesForKey.push(file);
-      const fileStrings = filesForKey.map((fileForKey) => fileForKey.toString());
       const uniqueFilesForKey = filesForKey
-        .filter((_, idx) => fileStrings.indexOf(fileStrings[idx]) === idx);
+        .filter(ArrayPoly.filterUniqueMapped((fileForKey) => fileForKey.toString()));
 
       map.set(key, uniqueFilesForKey);
       return map;

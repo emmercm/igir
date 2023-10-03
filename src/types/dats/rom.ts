@@ -5,13 +5,15 @@ import ArchiveEntry from '../files/archives/archiveEntry.js';
 import File from '../files/file.js';
 import { ChecksumProps } from '../files/fileChecksums.js';
 
+type ROMStatus = 'baddump' | 'nodump' | 'good';
+
 export interface ROMProps {
   readonly name: string,
   readonly size: number,
   readonly crc?: string,
   readonly md5?: string,
   readonly sha1?: string,
-  readonly status?: string,
+  readonly status?: ROMStatus,
   readonly merge?: string,
   readonly bios?: string,
 }
@@ -36,7 +38,7 @@ export default class ROM implements ROMProps {
   readonly sha1?: string;
 
   @Expose()
-  readonly status?: string;
+  readonly status?: ROMStatus;
 
   @Expose()
   readonly merge?: string;
@@ -99,6 +101,10 @@ export default class ROM implements ROMProps {
       md5: this.getMd5(),
       sha1: this.getSha1(),
     };
+  }
+
+  getStatus(): ROMStatus | undefined {
+    return this.status;
   }
 
   getMerge(): string | undefined {
