@@ -49,7 +49,7 @@
   description: Issues that are a good candidate for a Hacktoberfest contribution
   color: 'ff8911'
 - name: hacktoberfest-accepted
-  description: Pull requests that should be counted for Hacktoberfest contributions but aren't ready to be merged yet
+  description: Pull requests that should be counted for Hacktoberfest contributions but aren't ready to be merged
   color: 'ff8911'
 - name: stale
   description: Issues that haven't had recent activity that will be automatically closed
