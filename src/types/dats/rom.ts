@@ -3,6 +3,7 @@ import { Expose } from 'class-transformer';
 import Archive from '../files/archives/archive.js';
 import ArchiveEntry from '../files/archives/archiveEntry.js';
 import File from '../files/file.js';
+import { ChecksumProps } from '../files/fileChecksums.js';
 
 type ROMStatus = 'baddump' | 'nodump' | 'good';
 
@@ -83,7 +84,23 @@ export default class ROM implements ROMProps {
   }
 
   getCrc32(): string {
-    return this.crc ? this.crc.replace(/^0x/, '').padStart(8, '0') : '';
+    return (this.crc ?? '').toLowerCase().replace(/^0x/, '').padStart(8, '0');
+  }
+
+  getMd5(): string {
+    return (this.md5 ?? '').toLowerCase().replace(/^0x/, '').padStart(32, '0');
+  }
+
+  getSha1(): string {
+    return (this.sha1 ?? '').toLowerCase().replace(/^0x/, '').padStart(40, '0');
+  }
+
+  getChecksumProps(): ChecksumProps {
+    return {
+      crc32: this.getCrc32(),
+      md5: this.getMd5(),
+      sha1: this.getSha1(),
+    };
   }
 
   getStatus(): ROMStatus | undefined {
@@ -102,14 +119,14 @@ export default class ROM implements ROMProps {
    * Turn this {@link ROM} into a non-existent {@link File}.
    */
   async toFile(): Promise<File> {
-    return File.fileOf(this.getName(), this.getSize(), this.getCrc32());
+    return File.fileOf(this.getName(), this.getSize(), this.getChecksumProps());
   }
 
   /**
    * Turn this {@link ROM} into a non-existent {@link ArchiveEntry}, given a {@link Archive}.
    */
   async toArchiveEntry<A extends Archive>(archive: A): Promise<ArchiveEntry<A>> {
-    return ArchiveEntry.entryOf(archive, this.getName(), this.getSize(), this.getCrc32());
+    return ArchiveEntry.entryOf(archive, this.getName(), this.getSize(), this.getChecksumProps());
   }
 
   /**

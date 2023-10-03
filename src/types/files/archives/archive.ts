@@ -4,6 +4,7 @@ import { Readable } from 'node:stream';
 import Constants from '../../../constants.js';
 import fsPoly from '../../../polyfill/fsPoly.js';
 import File from '../file.js';
+import { ChecksumBitmask } from '../fileChecksums.js';
 import ArchiveEntry from './archiveEntry.js';
 
 export default abstract class Archive {
@@ -20,18 +21,19 @@ export default abstract class Archive {
    *  compute its size and CRC.
    */
   async asRawFile(): Promise<File> {
+    // TODO(cemmer): calculate MD5 and SHA1 for testing purposes?
     return File.fileOf(this.getFilePath());
   }
 
   async asRawFileWithoutCrc(): Promise<File> {
-    return File.fileOf(this.getFilePath(), undefined, '');
+    return File.fileOf(this.getFilePath(), undefined, undefined, ChecksumBitmask.NONE);
   }
 
   getFilePath(): string {
     return this.filePath;
   }
 
-  abstract getArchiveEntries(): Promise<ArchiveEntry<Archive>[]>;
+  abstract getArchiveEntries(checksumBitmask: number): Promise<ArchiveEntry<Archive>[]>;
 
   abstract extractEntryToFile(
     entryPath: string,

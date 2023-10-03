@@ -12,6 +12,7 @@ import Parent from '../types/dats/parent.js';
 import ArchiveEntry from '../types/files/archives/archiveEntry.js';
 import Zip from '../types/files/archives/zip.js';
 import File from '../types/files/file.js';
+import { ChecksumBitmask } from '../types/files/fileChecksums.js';
 import Options from '../types/options.js';
 import ReleaseCandidate from '../types/releaseCandidate.js';
 import Module from './module.js';
@@ -213,7 +214,7 @@ export default class CandidateWriter extends Module {
 
     let archiveEntries: ArchiveEntry<Zip>[];
     try {
-      archiveEntries = await new Zip(zipFilePath).getArchiveEntries();
+      archiveEntries = await new Zip(zipFilePath).getArchiveEntries(ChecksumBitmask.CRC32);
     } catch (e) {
       return `failed to get archive contents: ${e}`;
     }

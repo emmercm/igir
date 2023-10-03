@@ -273,6 +273,7 @@ export default class CandidateGenerator extends Module {
     if (inputFile.getFileHeader()
       && this.options.canRemoveHeader(dat, path.extname(outputPathParsed.entryPath))
     ) {
+      // TODO(cemmer): inputFile.getSizeWithoutHeader() ?
       outputFileCrc = inputFile.getCrc32WithoutHeader();
       outputFileSize = inputFile.getSizeWithoutHeader();
     }
@@ -284,14 +285,16 @@ export default class CandidateGenerator extends Module {
         new Zip(outputFilePath),
         outputPathParsed.entryPath,
         outputFileSize,
-        outputFileCrc,
+        // TODO(cemmer): calculate MD5 and SHA1 for testing purposes?
+        { crc32: outputFileCrc },
       );
     }
     // Otherwise, return a raw file
     return File.fileOf(
       outputFilePath,
       outputFileSize,
-      outputFileCrc,
+      // TODO(cemmer): calculate MD5 and SHA1 for testing purposes?
+      { crc32: outputFileCrc },
     );
   }
 

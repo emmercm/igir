@@ -4,8 +4,6 @@ import path from 'node:path';
 import { Readable } from 'node:stream';
 import util from 'node:util';
 
-import { crc32 } from '@node-rs/crc32';
-
 import Constants from '../../constants.js';
 import ArrayPoly from '../../polyfill/arrayPoly.js';
 import FilePoly from '../../polyfill/filePoly.js';
@@ -13,20 +11,20 @@ import fsPoly from '../../polyfill/fsPoly.js';
 import URLPoly from '../../polyfill/urlPoly.js';
 import Cache from '../cache.js';
 import Patch from '../patches/patch.js';
+import FileChecksums, { ChecksumBitmask, ChecksumProps } from './fileChecksums.js';
 import ROMHeader from './romHeader.js';
 
-export interface FileProps {
+export interface FileProps extends ChecksumProps {
   readonly filePath: string;
   readonly size: number;
-  readonly crc32: string;
-  readonly crc32WithoutHeader: string;
+  readonly crc32WithoutHeader?: string;
   readonly symlinkSource?: string;
   readonly fileHeader?: ROMHeader;
   readonly patch?: Patch;
 }
 
 export default class File implements FileProps {
-  private static readonly crc32Cache = new Cache<string, string>(
+  private static readonly checksumCache = new Cache<string, ChecksumProps>(
     Constants.FILE_CHECKSUM_CACHE_SIZE,
   );
 
@@ -38,6 +36,10 @@ export default class File implements FileProps {
 
   readonly crc32WithoutHeader: string;
 
+  readonly md5?: string;
+
+  readonly sha1?: string;
+
   readonly symlinkSource?: string;
 
   readonly fileHeader?: ROMHeader;
@@ -47,8 +49,10 @@ export default class File implements FileProps {
   protected constructor(fileProps: FileProps) {
     this.filePath = path.normalize(fileProps.filePath);
     this.size = fileProps.size;
-    this.crc32 = fileProps.crc32.toLowerCase().padStart(8, '0');
-    this.crc32WithoutHeader = fileProps.crc32WithoutHeader.toLowerCase().padStart(8, '0');
+    this.crc32 = (fileProps.crc32 ?? '').toLowerCase().replace(/^0x/, '').padStart(8, '0');
+    this.md5 = fileProps.md5?.toLowerCase().replace(/^0x/, '').padStart(32, '0');
+    this.sha1 = fileProps.sha1?.toLowerCase().replace(/^0x/, '').padStart(40, '0');
+    this.crc32WithoutHeader = (fileProps.crc32WithoutHeader ?? '').toLowerCase().padStart(8, '0');
     this.symlinkSource = fileProps.symlinkSource;
     this.fileHeader = fileProps.fileHeader;
     this.patch = fileProps.patch;
@@ -57,36 +61,57 @@ export default class File implements FileProps {
   static async fileOf(
     filePath: string,
     size?: number,
-    crc?: string,
+    checksums?: ChecksumProps,
+    checksumBitmask: number = ChecksumBitmask.CRC32,
     fileHeader?: ROMHeader,
     patch?: Patch,
   ): Promise<File> {
     let finalSize = size;
-    let finalCrc = crc;
+    let finalCrcWithHeader = checksums?.crc32;
     let finalCrcWithoutHeader;
+    let finalMd5 = checksums?.md5;
+    let finalSha1 = checksums?.sha1;
     let finalSymlinkSource;
+
     if (await fsPoly.exists(filePath)) {
+      // Calculate size
       const stat = await util.promisify(fs.stat)(filePath);
       finalSize = finalSize ?? stat.size;
-      finalCrc = finalCrc ?? await this.calculateCrc32(filePath);
+
+      // Calculate checksums
+      if ((!finalCrcWithHeader && (checksumBitmask & ChecksumBitmask.CRC32))
+        || (!finalMd5 && (checksumBitmask & ChecksumBitmask.MD5))
+        || (!finalSha1 && (checksumBitmask & ChecksumBitmask.SHA1))
+      ) {
+        const calculatedChecksums = await this.calculateChecksums(filePath, checksumBitmask);
+        finalCrcWithHeader = calculatedChecksums.crc32 ?? finalCrcWithHeader;
+        finalMd5 = calculatedChecksums.md5 ?? finalMd5;
+        finalSha1 = calculatedChecksums.sha1 ?? finalSha1;
+      }
+      if (fileHeader) {
+        finalCrcWithoutHeader = (await this.calculateChecksums(
+          filePath,
+          ChecksumBitmask.CRC32,
+          fileHeader,
+        )).crc32;
+      }
+
       if (await fsPoly.isSymlink(filePath)) {
         finalSymlinkSource = await fsPoly.readlink(filePath);
       }
-      if (fileHeader) {
-        finalCrcWithoutHeader = finalCrcWithoutHeader
-          ?? await this.calculateCrc32(filePath, fileHeader);
-      }
     } else {
       finalSize = finalSize ?? 0;
-      finalCrc = finalCrc ?? '';
+      finalCrcWithHeader = finalCrcWithHeader ?? '';
     }
-    finalCrcWithoutHeader = finalCrcWithoutHeader ?? finalCrc;
+    finalCrcWithoutHeader = finalCrcWithoutHeader ?? finalCrcWithHeader;
 
     return new File({
       filePath,
       size: finalSize,
-      crc32: finalCrc,
+      crc32: finalCrcWithHeader,
       crc32WithoutHeader: finalCrcWithoutHeader,
+      md5: finalMd5,
+      sha1: finalSha1,
       symlinkSource: finalSymlinkSource,
       fileHeader,
       patch,
@@ -119,6 +144,14 @@ export default class File implements FileProps {
     return this.crc32WithoutHeader;
   }
 
+  getMd5(): string | undefined {
+    return this.md5;
+  }
+
+  getSha1(): string | undefined {
+    return this.sha1;
+  }
+
   protected getSymlinkSource(): string | undefined {
     return this.symlinkSource;
   }
@@ -142,35 +175,30 @@ export default class File implements FileProps {
     return URLPoly.canParse(this.getFilePath());
   }
 
+  protected getChecksumBitmask(): number {
+    return (this.getCrc32().replace(/^0|0$/, '') ? ChecksumBitmask.CRC32 : 0)
+      & (this.getMd5()?.replace(/^0|0$/, '') ? ChecksumBitmask.MD5 : 0)
+      & (this.getSha1()?.replace(/^0|0$/, '') ? ChecksumBitmask.SHA1 : 0);
+  }
+
   // Other functions
 
-  protected static async calculateCrc32(
-    localFile: string,
+  protected static async calculateChecksums(
+    filePath: string,
+    checksumBitmask: number,
     fileHeader?: ROMHeader,
-  ): Promise<string> {
+  ): Promise<ChecksumProps> {
     const start = fileHeader?.getDataOffsetBytes() ?? 0;
 
-    const cacheKey = `${localFile}|${start}`;
-    return File.crc32Cache.getOrCompute(cacheKey, async () => new Promise((resolve, reject) => {
-      const stream = fs.createReadStream(localFile, {
+    const cacheKey = `${filePath}|${start}|${checksumBitmask}`;
+    return File.checksumCache.getOrCompute(cacheKey, async () => {
+      const stream = fs.createReadStream(filePath, {
         start,
         highWaterMark: Constants.FILE_READING_CHUNK_SIZE,
       });
 
-      let crc: number | undefined;
-      stream.on('data', (chunk) => {
-        if (!crc) {
-          crc = crc32(chunk);
-        } else {
-          crc = crc32(chunk, crc);
-        }
-      });
-      stream.on('end', () => {
-        resolve((crc ?? 0).toString(16));
-      });
-
-      stream.on('error', reject);
-    }));
+      return FileChecksums.hashStream(stream, checksumBitmask);
+    });
   }
 
   async extractToFile(destinationPath: string): Promise<void> {
@@ -321,7 +349,7 @@ export default class File implements FileProps {
         res.pipe(writeStream);
         writeStream.on('finish', async () => {
           writeStream.close();
-          resolve(await File.fileOf(filePath));
+          resolve(await File.fileOf(filePath, undefined, undefined, this.getChecksumBitmask()));
         });
       })
         .on('error', reject)
@@ -357,7 +385,8 @@ export default class File implements FileProps {
     return File.fileOf(
       this.getFilePath(),
       this.getSize(),
-      this.getCrc32(),
+      this,
+      this.getChecksumBitmask(),
       fileHeader,
       undefined, // don't allow a patch
     );

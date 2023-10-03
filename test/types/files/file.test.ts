@@ -5,6 +5,7 @@ import ROMScanner from '../../../src/modules/romScanner.js';
 import bufferPoly from '../../../src/polyfill/bufferPoly.js';
 import fsPoly from '../../../src/polyfill/fsPoly.js';
 import File from '../../../src/types/files/file.js';
+import { ChecksumBitmask } from '../../../src/types/files/fileChecksums.js';
 import ROMHeader from '../../../src/types/files/romHeader.js';
 import Options from '../../../src/types/options.js';
 import IPSPatch from '../../../src/types/patches/ipsPatch.js';
@@ -12,7 +13,7 @@ import ProgressBarFake from '../../console/progressBarFake.js';
 
 describe('getFilePath', () => {
   it('should return the constructor value', async () => {
-    const file = await File.fileOf(path.join('some', 'path'), 0, '00000000');
+    const file = await File.fileOf(path.join('some', 'path'));
     expect(file.getFilePath()).toEqual(path.join('some', 'path'));
   });
 });
@@ -25,8 +26,10 @@ describe('getCrc32', () => {
     ['2002', '00002002'],
     ['00000000', '00000000'],
   ])('should return the constructor value: %s', async (crc, expectedCrc) => {
-    const file = await File.fileOf(path.join('some', 'path'), 0, crc);
+    const file = await File.fileOf(path.join('some', 'path'), 0, { crc32: crc });
     expect(file.getCrc32()).toEqual(expectedCrc);
+    expect(file.getMd5()).toBeUndefined();
+    expect(file.getSha1()).toBeUndefined();
   });
 
   test.each([
@@ -37,6 +40,8 @@ describe('getCrc32', () => {
   ])('should hash the full file: %s', async (filePath, expectedCrc) => {
     const file = await File.fileOf(filePath);
     expect(file.getCrc32()).toEqual(expectedCrc);
+    expect(file.getMd5()).toBeUndefined();
+    expect(file.getSha1()).toBeUndefined();
   });
 });
 
@@ -47,6 +52,8 @@ describe('getCrc32WithoutHeader', () => {
   ])('should hash the full file when no header given: %s', async (filePath, expectedCrc) => {
     const file = await File.fileOf(filePath);
     expect(file.getCrc32WithoutHeader()).toEqual(expectedCrc);
+    expect(file.getMd5()).toBeUndefined();
+    expect(file.getSha1()).toBeUndefined();
   });
 
   test.each([
@@ -56,6 +63,8 @@ describe('getCrc32WithoutHeader', () => {
     const file = await (await File.fileOf(filePath))
       .withFileHeader(ROMHeader.headerFromFilename(filePath) as ROMHeader);
     expect(file.getCrc32WithoutHeader()).toEqual(expectedCrc);
+    expect(file.getMd5()).toBeUndefined();
+    expect(file.getSha1()).toBeUndefined();
   });
 
   test.each([
@@ -65,6 +74,34 @@ describe('getCrc32WithoutHeader', () => {
     const file = await (await File.fileOf(filePath))
       .withFileHeader(ROMHeader.headerFromFilename(filePath) as ROMHeader);
     expect(file.getCrc32WithoutHeader()).toEqual(expectedCrc);
+  });
+});
+
+describe('getMd5', () => {
+  test.each([
+    ['./test/fixtures/roms/raw/empty.rom', 'd41d8cd98f00b204e9800998ecf8427e'],
+    ['./test/fixtures/roms/raw/fizzbuzz.nes', 'cbe8410861130a91609295349918c2c2'],
+    ['./test/fixtures/roms/raw/foobar.lnx', '14758f1afd44c09b7992073ccf00b43d'],
+    ['./test/fixtures/roms/raw/loremipsum.rom', 'fffcb698d88fbc9425a636ba7e4712a3'],
+  ])('should hash the full file: %s', async (filePath, expectedMd5) => {
+    const file = await File.fileOf(filePath, undefined, undefined, ChecksumBitmask.MD5);
+    expect(file.getCrc32()).toEqual('00000000');
+    expect(file.getMd5()).toEqual(expectedMd5);
+    expect(file.getSha1()).toBeUndefined();
+  });
+});
+
+describe('getSha1', () => {
+  test.each([
+    ['./test/fixtures/roms/raw/empty.rom', 'da39a3ee5e6b4b0d3255bfef95601890afd80709'],
+    ['./test/fixtures/roms/raw/fizzbuzz.nes', '5a316d9f0e06964d94cdd62a933803d7147ddadb'],
+    ['./test/fixtures/roms/raw/foobar.lnx', '988881adc9fc3655077dc2d4d757d480b5ea0e11'],
+    ['./test/fixtures/roms/raw/loremipsum.rom', '1d913738eb363a4056c19e158aa81189a1eb7a55'],
+  ])('should hash the full file: %s', async (filePath, expectedSha1) => {
+    const file = await File.fileOf(filePath, undefined, undefined, ChecksumBitmask.SHA1);
+    expect(file.getCrc32()).toEqual('00000000');
+    expect(file.getMd5()).toBeUndefined();
+    expect(file.getSha1()).toEqual(expectedSha1);
   });
 });
 
@@ -157,14 +194,14 @@ describe('createReadStream', () => {
 
 describe('withPatch', () => {
   it('should attach a matching patch', async () => {
-    const file = await File.fileOf('file.rom', 0, '00000000');
+    const file = await File.fileOf('file.rom', 0, { crc32: '00000000' });
     const patch = IPSPatch.patchFrom(await File.fileOf('patch 00000000.ips'));
     const patchedFile = file.withPatch(patch);
     expect(patchedFile.getPatch()).toEqual(patch);
   });
 
   it('should not attach a non-matching patch', async () => {
-    const file = await File.fileOf('file.rom', 0, 'FFFFFFFF');
+    const file = await File.fileOf('file.rom', 0, { crc32: 'FFFFFFFF' });
     const patch = IPSPatch.patchFrom(await File.fileOf('patch 00000000.ips'));
     const patchedFile = file.withPatch(patch);
     expect(patchedFile.getPatch()).toBeUndefined();
@@ -173,21 +210,21 @@ describe('withPatch', () => {
 
 describe('equals', () => {
   it('should equal itself', async () => {
-    const file = await File.fileOf('file.rom', 0, '00000000');
+    const file = await File.fileOf('file.rom');
     expect(file.equals(file)).toEqual(true);
   });
 
   it('should equal the same file', async () => {
-    const first = await File.fileOf('file.rom', 0, '00000000');
-    const second = await File.fileOf('file.rom', 0, '00000000');
+    const first = await File.fileOf('file.rom');
+    const second = await File.fileOf('file.rom');
     expect(first.equals(second)).toEqual(true);
     expect(second.equals(first)).toEqual(true);
   });
 
   it('should not equal a different file', async () => {
-    const first = await File.fileOf('file.rom', 0, '00000000');
-    const second = await File.fileOf('other.rom', 0, '00000000');
-    const third = await File.fileOf('file.rom', 0, '12345678');
+    const first = await File.fileOf('file.rom');
+    const second = await File.fileOf('other.rom');
+    const third = await File.fileOf('file.rom', 0, { crc32: '12345678' });
     expect(first.equals(second)).toEqual(false);
     expect(second.equals(third)).toEqual(false);
     expect(third.equals(first)).toEqual(false);
