@@ -165,6 +165,8 @@ export default class GameConsole {
 
   readonly batocera?: string;
 
+  readonly jelos?: string;
+
   constructor(
     datRegex: RegExp,
     extensions: string[],
