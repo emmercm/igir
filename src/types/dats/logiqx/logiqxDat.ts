@@ -3,7 +3,6 @@ import 'reflect-metadata';
 import {
   Expose, plainToInstance, Transform, Type,
 } from 'class-transformer';
-import xml2js from 'xml2js';
 
 import DAT from '../dat.js';
 import Game from '../game.js';
@@ -47,30 +46,6 @@ export default class LogiqxDAT extends DAT {
       excludeExtraneousValues: true,
     })
       .generateGameNamesToParents();
-  }
-
-  /**
-   * Serialize this {@link LogiqxDAT} to the file contents of an XML file.
-   */
-  toXmlDat(): string {
-    return new xml2js.Builder({
-      renderOpts: { pretty: true, indent: '\t', newline: '\n' },
-      xmldec: { version: '1.0' },
-      doctype: {
-        pubID: '-//Logiqx//DTD ROM Management Datafile//EN',
-        sysID: 'http://www.logiqx.com/Dats/datafile.dtd',
-      },
-      cdata: true,
-    }).buildObject(this.toXmlDatObj());
-  }
-
-  private toXmlDatObj(): object {
-    return {
-      datafile: {
-        header: this.header.toXmlDatObj(),
-        game: this.getGames().map((game) => game.toXmlDatObj()),
-      },
-    };
   }
 
   // Property getters

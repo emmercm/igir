@@ -135,11 +135,18 @@ export default class Game implements GameProps {
   /**
    * Create an XML object, to be used by the owning {@link DAT}.
    */
-  toXmlDatObj(): object {
+  toXmlDatObj(parentNames: Set<string>): object {
     return {
       $: {
         name: this.getName(),
-        // NOTE(cemmer): explicitly not including `cloneof`
+        isbios: this.isBios() ? 'yes' : undefined,
+        isdevice: this.isDevice() ? 'yes' : undefined,
+        cloneof: this.getParent() && parentNames.has(this.getParent())
+          ? this.getParent()
+          : undefined,
+        romof: this.getBios() && parentNames.has(this.getBios())
+          ? this.getBios()
+          : undefined,
       },
       description: {
         _: this.getDescription(),

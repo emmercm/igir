@@ -4,6 +4,7 @@ import ProgressBar, { ProgressBarSymbol } from '../console/progressBar.js';
 import Constants from '../constants.js';
 import ArrayPoly from '../polyfill/arrayPoly.js';
 import File from '../types/files/file.js';
+import { ChecksumBitmask } from '../types/files/fileChecksums.js';
 import Options from '../types/options.js';
 import Patch from '../types/patches/patch.js';
 import PatchFactory from '../types/patches/patchFactory.js';
@@ -34,9 +35,10 @@ export default class PatchScanner extends Scanner {
     this.progressBar.logDebug(`found ${patchFilePaths.length.toLocaleString()} patch file${patchFilePaths.length !== 1 ? 's' : ''}`);
     await this.progressBar.reset(patchFilePaths.length);
 
-    const files = await this.getFilesFromPaths(
+    const files = await this.getUniqueFilesFromPaths(
       patchFilePaths,
       Constants.PATCH_SCANNER_THREADS,
+      ChecksumBitmask.NONE,
     );
 
     const patches = (await async.mapLimit(

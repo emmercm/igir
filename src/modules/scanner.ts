@@ -3,6 +3,7 @@ import async, { AsyncResultCallback } from 'async';
 import ProgressBar from '../console/progressBar.js';
 import Constants from '../constants.js';
 import ElasticSemaphore from '../elasticSemaphore.js';
+import ArrayPoly from '../polyfill/arrayPoly.js';
 import fsPoly from '../polyfill/fsPoly.js';
 import File from '../types/files/file.js';
 import FileFactory from '../types/files/fileFactory.js';
@@ -29,41 +30,41 @@ export default abstract class Scanner extends Module {
   protected async getFilesFromPaths(
     filePaths: string[],
     threads: number,
-    filterUnique = true,
+    checksumBitmask: number,
   ): Promise<File[]> {
-    const foundFiles = (await async.mapLimit(
+    return (await async.mapLimit(
       filePaths,
       threads,
       async (inputFile, callback: AsyncResultCallback<File[], Error>) => {
         await this.progressBar.incrementProgress();
 
-        const files = await this.getFilesFromPath(inputFile);
+        const files = await this.getFilesFromPath(inputFile, checksumBitmask);
 
         await this.progressBar.incrementDone();
         callback(null, files);
       },
     ))
       .flatMap((files) => files);
-    if (!filterUnique) {
-      return foundFiles;
-    }
-
-    // Limit to unique files
-    return [...foundFiles
-      .reduce((map, file) => {
-        const hashCodes = file.hashCodes().join(',');
-        if (!map.has(hashCodes)) {
-          map.set(hashCodes, file);
-        }
-        return map;
-      }, new Map<string, File>()).values()];
   }
 
-  private async getFilesFromPath(filePath: string): Promise<File[]> {
+  protected async getUniqueFilesFromPaths(
+    filePaths: string[],
+    threads: number,
+    checksumBitmask: number,
+  ): Promise<File[]> {
+    const foundFiles = await this.getFilesFromPaths(filePaths, threads, checksumBitmask);
+    return foundFiles
+      .filter(ArrayPoly.filterUniqueMapped((file) => file.hashCodes().join(',')));
+  }
+
+  private async getFilesFromPath(
+    filePath: string,
+    checksumBitmask: number,
+  ): Promise<File[]> {
     try {
       const totalKilobytes = await fsPoly.size(filePath) / 1024;
       const files = await Scanner.FILESIZE_SEMAPHORE.runExclusive(
-        async () => FileFactory.filesFrom(filePath),
+        async () => FileFactory.filesFrom(filePath, checksumBitmask),
         totalKilobytes,
       );
 

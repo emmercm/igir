@@ -67,63 +67,74 @@ export default class ArgumentsParser {
 
     // Add every command to a yargs object, recursively, resulting in the ability to specify
     // multiple commands
-    const addCommands = (yargsObj: Argv): Argv => yargsObj
-      .command('copy', 'Copy ROM files from the input to output directory', (yargsSubObj) => {
-        addCommands(yargsSubObj);
-      })
-      .command('move', 'Move ROM files from the input to output directory', (yargsSubObj) => {
-        addCommands(yargsSubObj);
-      })
-      .command('symlink', 'Create symlinks in the output directory to ROM files in the input directory', (yargsSubObj) => {
-        addCommands(yargsSubObj);
-      })
-      .command('extract', 'Extract ROM files in archives when copying or moving', (yargsSubObj) => {
-        addCommands(yargsSubObj);
-      })
-      .command('zip', 'Create zip archives of ROMs when copying or moving', (yargsSubObj) => {
-        addCommands(yargsSubObj);
-      })
-      .command('test', 'Test ROMs for accuracy after writing them to the output directory', (yargsSubObj) => {
-        addCommands(yargsSubObj);
-      })
-      .command('fixdat', 'Generate a fixdat of any missing games for every DAT processed (requires --dat)', (yargsSubObj) => {
-        addCommands(yargsSubObj);
-      })
-      .command('clean', 'Recycle unknown files in the output directory', (yargsSubObj) => {
-        addCommands(yargsSubObj);
-      })
-      .command('report', 'Generate a CSV report on the known & unknown ROM files found in the input directories (requires --dat)', (yargsSubObj) => {
-        addCommands(yargsSubObj);
-      })
-      .check((checkArgv) => {
-        if (checkArgv.help) {
+    const commands = [
+      ['copy', 'Copy ROM files from the input to output directory'],
+      ['move', 'Move ROM files from the input to output directory'],
+      ['symlink', 'Create symlinks in the output directory to ROM files in the input directory'],
+      ['extract', 'Extract ROM files in archives when copying or moving'],
+      ['zip', 'Create zip archives of ROMs when copying or moving'],
+      ['test', 'Test ROMs for accuracy after writing them to the output directory'],
+      ['dir2dat', 'TODO(cemmer)'],
+      ['fixdat', 'Generate a fixdat of any missing games for every DAT processed (requires --dat)'],
+      ['clean', 'Recycle unknown files in the output directory'],
+      ['report', 'Generate a CSV report on the known & unknown ROM files found in the input directories (requires --dat)'],
+    ];
+    let ignoreParseOutput = false;
+    const addCommands = (yargsObj: Argv): Argv => {
+      // yargsObj.argv is a getter that causes `.parse()` down below to get fired, so we need to
+      // indicate the help message should not be printed for this getter invocation
+      ignoreParseOutput = true;
+      const existingCommands = (yargsObj.argv as { _:string[] })._;
+      ignoreParseOutput = false;
+
+      commands
+        // Don't show duplicate commands, i.e. don't give `igir copy copy` as an option when
+        // specifying `igir copy --help`.
+        .filter(([command]) => existingCommands.indexOf(command) === -1)
+        .forEach(([command, description]) => {
+          yargsObj.command(command, description, (yargsSubObj) => addCommands(yargsSubObj));
+        });
+
+      if (existingCommands.length) {
+        // Only register the check function once
+        return yargsObj;
+      }
+      return yargsObj
+        .check((checkArgv) => {
+          if (checkArgv.help) {
+            return true;
+          }
+
+          const writeCommands = ['copy', 'move', 'symlink'].filter((command) => checkArgv._.indexOf(command) !== -1);
+          if (writeCommands.length > 1) {
+            throw new Error(`Incompatible commands: ${writeCommands.join(', ')}`);
+          }
+
+          const archiveCommands = ['symlink', 'extract', 'zip'].filter((command) => checkArgv._.indexOf(command) !== -1);
+          if (archiveCommands.length > 1) {
+            throw new Error(`Incompatible commands: ${archiveCommands.join(', ')}`);
+          }
+
+          const datWritingCommands = ['dir2dat', 'fixdat'].filter((command) => checkArgv._.indexOf(command) !== -1);
+          if (datWritingCommands.length > 1) {
+            throw new Error(`Incompatible commands: ${datWritingCommands.join(', ')}`);
+          }
+
+          ['extract', 'zip'].forEach((command) => {
+            if (checkArgv._.indexOf(command) !== -1 && ['copy', 'move'].every((write) => checkArgv._.indexOf(write) === -1)) {
+              throw new Error(`Command "${command}" also requires the commands copy or move`);
+            }
+          });
+
+          ['test', 'clean'].forEach((command) => {
+            if (checkArgv._.indexOf(command) !== -1 && ['copy', 'move', 'symlink'].every((write) => checkArgv._.indexOf(write) === -1)) {
+              throw new Error(`Command "${command}" requires one of the commands: copy, move, or symlink`);
+            }
+          });
+
           return true;
-        }
-
-        const writeCommands = ['copy', 'move', 'symlink'].filter((command) => checkArgv._.indexOf(command) !== -1);
-        if (writeCommands.length > 1) {
-          throw new Error(`Incompatible commands: ${writeCommands.join(', ')}`);
-        }
-
-        const archiveCommands = ['symlink', 'extract', 'zip'].filter((command) => checkArgv._.indexOf(command) !== -1);
-        if (archiveCommands.length > 1) {
-          throw new Error(`Incompatible commands: ${archiveCommands.join(', ')}`);
-        }
-
-        ['extract', 'zip'].forEach((command) => {
-          if (checkArgv._.indexOf(command) !== -1 && ['copy', 'move'].every((write) => checkArgv._.indexOf(write) === -1)) {
-            throw new Error(`Command "${command}" also requires the commands copy or move`);
-          }
         });
-
-        ['test', 'clean'].forEach((command) => {
-          if (checkArgv._.indexOf(command) !== -1 && ['copy', 'move', 'symlink'].every((write) => checkArgv._.indexOf(write) === -1)) {
-            throw new Error(`Command "${command}" requires one of the commands: copy, move, or symlink`);
-          }
-        });
-
-        return true;
-      });
+    };
 
     const yargsParser = yargs([])
       .parserConfiguration({
@@ -721,7 +732,7 @@ Example use cases:
     const yargsArgv = yargsParser
       .strictOptions(true)
       .parse(argv, {}, (err, parsedArgv, output) => {
-        if (output) {
+        if (output && !ignoreParseOutput) {
           this.logger.colorizeYargs(`${output.trimEnd()}\n`);
         }
       });

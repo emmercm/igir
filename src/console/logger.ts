@@ -143,7 +143,7 @@ export default class Logger {
         .replace(/^(Usage:.+)/, chalk.bold('$1'))
 
         .replace(/(\[commands\.*\])/g, chalk.magenta('$1'))
-        .replace(new RegExp(`(${Constants.COMMAND_NAME}) (( ?[a-z])+)`, 'g'), `$1 ${chalk.magenta('$2')}`)
+        .replace(new RegExp(`(${Constants.COMMAND_NAME}) (( ?[a-z0-9])+)`, 'g'), `$1 ${chalk.magenta('$2')}`)
 
         .replace(/(\[options\.*\])/g, chalk.cyan('$1'))
         .replace(/([^a-zA-Z0-9-])(-[a-zA-Z0-9]+)/g, `$1${chalk.cyanBright('$2')}`)

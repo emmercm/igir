@@ -18,6 +18,7 @@ import DATGameInferrer from './modules/datGameInferrer.js';
 import DATMergerSplitter from './modules/datMergerSplitter.js';
 import DATParentInferrer from './modules/datParentInferrer.js';
 import DATScanner from './modules/datScanner.js';
+import Dir2DatCreator from './modules/dir2DatCreator.js';
 import DirectoryCleaner from './modules/directoryCleaner.js';
 import FileIndexer from './modules/fileIndexer.js';
 import FixdatCreator from './modules/fixdatCreator.js';
@@ -119,9 +120,19 @@ export default class Igir {
           .map((romWithFiles) => romWithFiles.getOutputFile()));
       datsToWrittenFiles.set(filteredDat, writtenRoms);
 
+      // Write a dir2dat
+      const dir2DatPath = await new Dir2DatCreator(this.options, progressBar)
+        .create(filteredDat);
+      if (dir2DatPath) {
+        datsToWrittenFiles.set(filteredDat, [
+          ...(datsToWrittenFiles.get(filteredDat) ?? []),
+          await File.fileOf(dir2DatPath),
+        ]);
+      }
+
       // Write a fixdat
       const fixdatPath = await new FixdatCreator(this.options, progressBar)
-        .write(filteredDat, parentsToCandidates);
+        .create(filteredDat, parentsToCandidates);
       if (fixdatPath) {
         datsToWrittenFiles.set(filteredDat, [
           ...(datsToWrittenFiles.get(filteredDat) ?? []),
@@ -164,6 +175,9 @@ export default class Igir {
   }
 
   private async processDATScanner(): Promise<DAT[]> {
+    if (this.options.shouldDir2Dat()) {
+      return [];
+    }
     if (!this.options.usingDats()) {
       this.logger.warn('No DAT files provided, consider using some for the best results!');
       return [];
