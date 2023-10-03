@@ -39,6 +39,14 @@ npx igir@latest copy extract --dat *.dat --input ROMs/ --output ROMs-Sorted/ --d
         alias igir="npx igir@latest"
         ```
 
+!!! note
+
+    If you want to help beta test `igir`, you can run the most bleeding-edge version with the command:
+
+    ```shell
+    npm exec --yes -- "github:emmercm/igir#main" [commands..] [options]
+    ```
+
 ## Via downloaded executable
 
 [![GitHub: release](https://img.shields.io/github/v/release/emmercm/igir?color=%236e5494&logo=github&logoColor=white)](https://github.com/emmercm/igir/releases/latest)

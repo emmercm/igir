@@ -18,7 +18,7 @@ export default class Rar extends Archive {
   }
 
   @Memoize()
-  async getArchiveEntries(): Promise<ArchiveEntry<Rar>[]> {
+  async getArchiveEntries(checksumBitmask: number): Promise<ArchiveEntry<Rar>[]> {
     const rar = await unrar.createExtractorFromFile({
       filepath: this.getFilePath(),
     });
@@ -28,7 +28,9 @@ export default class Rar extends Archive {
         this,
         fileHeader.name,
         fileHeader.unpSize,
-        fileHeader.crc.toString(16),
+        { crc32: fileHeader.crc.toString(16) },
+        // If MD5 or SHA1 is desired, this file will need to be extracted to calculate
+        checksumBitmask,
       )));
   }
 

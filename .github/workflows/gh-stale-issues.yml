@@ -17,4 +17,3 @@ jobs:
           close-issue-message: 'This issue was closed because it has been stalled for 14 days with no activity. Only repository collaborators will be able to re-open this issue.'
           stale-issue-label: 'stale'
           only-labels: 'question'
-          exempt-assignees: 'emmercm'

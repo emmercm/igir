@@ -94,7 +94,7 @@ export default class OutputFactory {
       base: '',
       name,
       ext,
-      entryPath: path.basename(this.getRomBasename(options, dat, rom, inputFile)),
+      entryPath: this.getEntryPath(options, dat, game, rom, inputFile),
     });
   }
 
@@ -405,29 +405,56 @@ export default class OutputFactory {
     rom: ROM,
     inputFile: File,
   ): string {
-    const romPath = this.getRomBasename(options, dat, rom, inputFile);
-
     // Determine the output path of the file
     if (options.shouldZip(rom.getName())) {
       // Should zip, generate the zip name from the game name
       return `${game.getName()}.zip`;
     }
 
+    const romBasename = this.getRomBasename(options, dat, rom, inputFile);
+
     if (
       !(inputFile instanceof ArchiveEntry || FileFactory.isArchive(inputFile.getFilePath()))
             || options.shouldExtract()
     ) {
       // Should extract (if needed), generate the file name from the ROM name
-      return romPath;
+      return romBasename;
     }
+
     // Should leave archived, generate the archive name from the game name, but use the input
-    //  file's extension
+    // file's extension
     const extMatch = inputFile.getFilePath().match(/[^.]+((\.[a-zA-Z0-9]+)+)$/);
     const ext = extMatch !== null ? extMatch[1] : '';
     return game.getName() + ext;
   }
 
-  private static getRomBasename(options: Options, dat: DAT, rom: ROM, inputFile: File): string {
+  private static getEntryPath(
+    options: Options,
+    dat: DAT,
+    game: Game,
+    rom: ROM,
+    inputFile: File,
+  ): string {
+    const romBasename = this.getRomBasename(options, dat, rom, inputFile);
+    if (!options.shouldZip(rom.getName())) {
+      return romBasename;
+    }
+
+    // The file structure from HTGD SMDBs ends up in both the Game and ROM names. If we're
+    // zipping, then the Game name will end up in the filename, we don't need it duplicated in
+    // the entry path.
+    const gameNameSanitized = game.getName().replace(/[\\/]/g, path.sep);
+    return romBasename
+      .replace(/[\\/]/g, path.sep)
+      .replace(`${path.dirname(gameNameSanitized)}${path.sep}`, '');
+  }
+
+  private static getRomBasename(
+    options: Options,
+    dat: DAT,
+    rom: ROM,
+    inputFile: File,
+  ): string {
     let romNameSanitized = rom.getName();
     if (!dat.getRomNamesContainDirectories()) {
       romNameSanitized = romNameSanitized?.replace(/[\\/]/g, '_');

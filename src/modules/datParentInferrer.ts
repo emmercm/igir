@@ -21,6 +21,11 @@ export default class DATParentInferrer extends Module {
   async infer(dat: DAT): Promise<DAT> {
     this.progressBar.logInfo(`inferring parents for ${dat.getGames().length.toLocaleString()} game${dat.getGames().length !== 1 ? 's' : ''}`);
 
+    if (dat.hasParentCloneInfo()) {
+      this.progressBar.logDebug(`${dat.getNameShort()}: DAT has parent/clone info, skipping`);
+      return dat;
+    }
+
     if (!dat.getGames().length) {
       this.progressBar.logDebug(`${dat.getNameShort()}: no games to process`);
       return dat;

@@ -5,12 +5,14 @@ import { Semaphore } from 'async-mutex';
 import ProgressBar, { ProgressBarSymbol } from '../console/progressBar.js';
 import Constants from '../constants.js';
 import ElasticSemaphore from '../elasticSemaphore.js';
+import ArrayPoly from '../polyfill/arrayPoly.js';
 import fsPoly from '../polyfill/fsPoly.js';
 import DAT from '../types/dats/dat.js';
 import Parent from '../types/dats/parent.js';
 import ArchiveEntry from '../types/files/archives/archiveEntry.js';
 import Zip from '../types/files/archives/zip.js';
 import File from '../types/files/file.js';
+import { ChecksumBitmask } from '../types/files/fileChecksums.js';
 import Options from '../types/options.js';
 import ReleaseCandidate from '../types/releaseCandidate.js';
 import Module from './module.js';
@@ -212,7 +214,7 @@ export default class CandidateWriter extends Module {
 
     let archiveEntries: ArchiveEntry<Zip>[];
     try {
-      archiveEntries = await new Zip(zipFilePath).getArchiveEntries();
+      archiveEntries = await new Zip(zipFilePath).getArchiveEntries(ChecksumBitmask.CRC32);
     } catch (e) {
       return `failed to get archive contents: ${e}`;
     }
@@ -304,10 +306,8 @@ export default class CandidateWriter extends Module {
 
     // De-duplicate based on the output file. Raw copying archives will produce the same
     //  input->output for every ROM.
-    const outputRomFiles = inputToOutputEntries
-      .map(([, outputRomFile]) => outputRomFile.toString());
     const uniqueInputToOutputEntries = inputToOutputEntries
-      .filter((_, idx) => outputRomFiles.indexOf(outputRomFiles[idx]) === idx);
+      .filter(ArrayPoly.filterUniqueMapped(([, outputRomFile]) => outputRomFile.toString()));
 
     const totalBytes = uniqueInputToOutputEntries
       .flatMap(([, outputFile]) => outputFile)

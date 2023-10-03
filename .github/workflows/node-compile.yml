@@ -32,7 +32,7 @@ jobs:
     outputs:
       changes: ${{ steps.filter.outputs.changes }}
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - id: filter
         uses: dorny/paths-filter@v2
         with:
@@ -107,11 +107,11 @@ jobs:
               Compress-Archive -Path igir.exe -DestinationPath "${BIN_OUTPUT}" -CompressionLevel Optimal -Force
     steps:
       # Setup and install
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         with:
           ref: ${{ env.ref }}
       - if: matrix.os == 'ubuntu'
-        uses: docker/setup-qemu-action@v2
+        uses: docker/setup-qemu-action@v3
       - uses: actions/setup-node@v3
         with:
           node-version-file: '.nvmrc'
@@ -135,7 +135,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       # Get the package version
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         with:
           ref: ${{ env.ref }}
       - uses: actions/setup-node@v3

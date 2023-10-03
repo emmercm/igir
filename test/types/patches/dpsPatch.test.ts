@@ -25,7 +25,7 @@ describe('constructor', () => {
     'ABCD12345 Bangarang.dps',
     'Bepzinky 1234567.dps',
   ])('should throw if no CRC found: %s', async (filePath) => {
-    const file = await File.fileOf(filePath, 0, '00000000');
+    const file = await File.fileOf(filePath);
     expect(() => DPSPatch.patchFrom(file)).toThrow(/couldn't parse/i);
   });
 

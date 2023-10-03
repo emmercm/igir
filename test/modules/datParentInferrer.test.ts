@@ -12,6 +12,31 @@ function buildDat(gameNames: string[]): DAT {
   );
 }
 
+it('should not do anything if the DAT has parent/clone info', async () => {
+  // Given
+  const dat = new LogiqxDAT(new Header(), [
+    new Game({ name: 'game one' }),
+    new Game({ name: 'game two', cloneOf: 'game one' }),
+  ]);
+
+  // When
+  const inferredDat = await new DATParentInferrer(new ProgressBarFake()).infer(dat);
+
+  // Then
+  expect(inferredDat === dat).toEqual(true);
+});
+
+it('should not do anything if the DAT has no games', async () => {
+  // Given
+  const dat = new LogiqxDAT(new Header(), []);
+
+  // When
+  const inferredDat = await new DATParentInferrer(new ProgressBarFake()).infer(dat);
+
+  // Then
+  expect(inferredDat === dat).toEqual(true);
+});
+
 test.each([
   [[
     'Pikmin (Europe) (En,Fr,De,Es,It)',

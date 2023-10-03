@@ -105,13 +105,13 @@ describe.each(['zip', 'extract', 'raw'])('command: %s', (command) => {
 
   test.each([
     // Doesn't match anything
-    [File.fileOf('three.rom', 4, '34567890')],
+    [File.fileOf('three.rom', 4, { crc32: '34567890' })],
     // Doesn't match size
-    [File.fileOf('one.rom', 999_999, '12345678')],
+    [File.fileOf('one.rom', 999_999, { crc32: '12345678' })],
     // Doesn't match CRC
-    [File.fileOf('one.rom', 1, '00000000')],
+    [File.fileOf('one.rom', 1, { crc32: '00000000' })],
     // Matches one ROM of a game with multiple ROMs
-    [File.fileOf('two.a', 2, 'abcdef90')],
+    [File.fileOf('two.a', 2, { crc32: 'abcdef90' })],
   ])('should only return candidates of games with no ROMs when no game has all of its files matched: %#', async (...filePromises) => {
     // Given
     const files = await Promise.all(filePromises);
@@ -127,12 +127,46 @@ describe.each(['zip', 'extract', 'raw'])('command: %s', (command) => {
     expect(candidateWithNoRoms.getRomsWithFiles()).toHaveLength(0);
   });
 
+  it('should return candidates when games don\'t have all of their ROMs when allowIncompleteSets:true', async () => {
+    // Given
+    const allowIncompleteOptions = new Options({
+      ...options,
+      allowIncompleteSets: true,
+    });
+    const files = [
+      // Doesn't match anything
+      await File.fileOf('three.rom', 4, { crc32: '34567890' }),
+      // Doesn't match size
+      await File.fileOf('one.rom', 999_999, { crc32: '12345678' }),
+      // Doesn't match CRC
+      await File.fileOf('one.rom', 1, { crc32: '00000000' }),
+      // Matches one ROM of a game with multiple ROMs
+      await File.fileOf('two.a', 2, { crc32: 'abcdef90' }),
+    ];
+
+    // When
+    const parentsToCandidates = await candidateGenerator(
+      allowIncompleteOptions,
+      datWithFourGames,
+      files,
+    );
+
+    // Then
+    const incompleteCandidates = [...parentsToCandidates.entries()]
+      .filter(([parent]) => parent.getName() === gameWithTwoRomsParent.getName())
+      .flatMap(([, releaseCandidates]) => releaseCandidates);
+    expect(incompleteCandidates).toHaveLength(1);
+    expect(incompleteCandidates[0].getRomsWithFiles().length).toBeGreaterThan(0);
+    expect(incompleteCandidates[0].getRomsWithFiles())
+      .not.toHaveLength(incompleteCandidates[0].getGame().getRoms().length);
+  });
+
   it('should return some candidates for some games that have all of their files matched', async () => {
     // Given
     const files = [
-      await ArchiveEntry.entryOf(new Zip('one.zip'), 'one.rom', 1, '12345678'),
-      await File.fileOf('1.rom', 1, '12345678'), // duplicate
-      await File.fileOf('two.a', 2, 'abcdef90'), // only 1/2 ROMs were found for the game
+      await ArchiveEntry.entryOf(new Zip('one.zip'), 'one.rom', 1, { crc32: '12345678' }),
+      await File.fileOf('1.rom', 1, { crc32: '12345678' }), // duplicate
+      await File.fileOf('two.a', 2, { crc32: 'abcdef90' }), // only 1/2 ROMs were found for the game
     ];
 
     // When
@@ -165,12 +199,12 @@ describe.each(['zip', 'extract', 'raw'])('command: %s', (command) => {
     const oneTwoThreeZip = new Zip('onetwothree.zip');
     const twoSevenZip = new SevenZip('two.7z');
     const files = [
-      await File.fileOf('one.rom', 1, '12345678'),
-      await ArchiveEntry.entryOf(oneTwoThreeZip, 'one.rom', 1, '12345678'),
-      await ArchiveEntry.entryOf(oneTwoThreeZip, 'two.rom', 2, 'abcdef90'),
-      await ArchiveEntry.entryOf(oneTwoThreeZip, 'three.rom', 4, '34567890'),
-      await ArchiveEntry.entryOf(twoSevenZip, 'a.rom', 2, 'abcdef90'),
-      await ArchiveEntry.entryOf(twoSevenZip, 'b.rom', 3, '09876543'),
+      await File.fileOf('one.rom', 1, { crc32: '12345678' }),
+      await ArchiveEntry.entryOf(oneTwoThreeZip, 'one.rom', 1, { crc32: '12345678' }),
+      await ArchiveEntry.entryOf(oneTwoThreeZip, 'two.rom', 2, { crc32: 'abcdef90' }),
+      await ArchiveEntry.entryOf(oneTwoThreeZip, 'three.rom', 4, { crc32: '34567890' }),
+      await ArchiveEntry.entryOf(twoSevenZip, 'a.rom', 2, { crc32: 'abcdef90' }),
+      await ArchiveEntry.entryOf(twoSevenZip, 'b.rom', 3, { crc32: '09876543' }),
     ];
 
     // When
@@ -206,11 +240,11 @@ describe('with ROMs with headers', () => {
   const twoSevenZip = new SevenZip('two.7z');
   const filePromises = [
     // Extension doesn't change with header removal
-    File.fileOf('one.rom', 1, '12345678', ROMHeader.headerFromFilename('dummy.nes')),
+    File.fileOf('one.rom', 1, { crc32: '12345678' }, undefined, ROMHeader.headerFromFilename('dummy.nes')),
     // Extension does change with header removal
-    ArchiveEntry.entryOf(twoSevenZip, 'a.rom', 2, 'abcdef90', ROMHeader.headerFromFilename('dummy.smc')),
+    ArchiveEntry.entryOf(twoSevenZip, 'a.rom', 2, { crc32: 'abcdef90' }, undefined, ROMHeader.headerFromFilename('dummy.smc')),
     // Doesn't have a header
-    ArchiveEntry.entryOf(twoSevenZip, 'b.rom', 3, '09876543'),
+    ArchiveEntry.entryOf(twoSevenZip, 'b.rom', 3, { crc32: '09876543' }),
   ];
 
   it('zip', async () => {
@@ -318,10 +352,10 @@ describe('with ROMs with headers', () => {
 
 describe('with different input files for every game ROM', () => {
   const filePromises = [
-    File.fileOf('one.rom', 1, '12345678'),
-    ArchiveEntry.entryOf(new Tar('1.tar'), '1.rom', 1, '12345678'), // duplicate
-    ArchiveEntry.entryOf(new Rar('a.7z'), 'a.rom', 2, 'abcdef90'),
-    ArchiveEntry.entryOf(new Rar('b.7z'), 'b.rom', 3, '09876543'),
+    File.fileOf('one.rom', 1, { crc32: '12345678' }),
+    ArchiveEntry.entryOf(new Tar('1.tar'), '1.rom', 1, { crc32: '12345678' }), // duplicate
+    ArchiveEntry.entryOf(new Rar('a.7z'), 'a.rom', 2, { crc32: 'abcdef90' }),
+    ArchiveEntry.entryOf(new Rar('b.7z'), 'b.rom', 3, { crc32: '09876543' }),
   ];
 
   test.each(['zip', 'extract'])('should generate candidates when all ROMs for a game are in different files: %s', async (command) => {
@@ -505,7 +539,7 @@ describe.each(['copy', 'move'])('prefer input files from the same archive when r
       const files = [
         ...rawFiles,
         ...archiveEntries,
-        await ArchiveEntry.entryOf(archive, 'junk.rom', 999, '55555555'),
+        await ArchiveEntry.entryOf(archive, 'junk.rom', 999, { crc32: '55555555' }),
       ];
 
       // When

@@ -20,7 +20,7 @@ jobs:
     if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - uses: EndBug/label-sync@v2
         with:
           config-file: .github/labels.yml
@@ -30,20 +30,21 @@ jobs:
 
   # !!! This check should be required by GitHub !!!
   labels-status-check:
-    if: github.event_name == 'pull_request'
+    if: always()
     needs:
       - dry-run
     runs-on: ubuntu-latest
     steps:
       - uses: re-actors/alls-green@release/v1
         with:
+          allowed-skips: dry-run
           jobs: ${{ toJSON(needs) }}
 
   sync:
     if: github.event_name == 'push'
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - uses: EndBug/label-sync@v2
         with:
           config-file: .github/labels.yml

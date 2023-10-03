@@ -64,15 +64,15 @@ export default class DATMergerSplitter extends Module {
   private mergeParent(parent: Parent, gameNamesToGames: Map<string, Game>): Game[] {
     let games = parent.getGames();
 
-    // Get rid of duplicate ROMs. MAME will sometimes duplicate a file with the exact same name,
-    // size, and checksum but with a different "region" (e.g. neogeo).
-    games = games.map((game) => {
-      const romNames = game.getRoms().map((rom) => rom.getName());
-      return game.withProps({
-        rom: game.getRoms()
-          .filter((rom, idx) => romNames.indexOf(rom.getName()) === idx),
-      });
-    });
+    // Sanitization
+    games = games.map((game) => game.withProps({
+      rom: game.getRoms()
+        // Get rid of ROMs that haven't been dumped yet
+        .filter((rom) => rom.getStatus() !== 'nodump')
+        // Get rid of duplicate ROMs. MAME will sometimes duplicate a file with the exact same
+        // name, size, and checksum but with a different "region" (e.g. neogeo).
+        .filter(ArrayPoly.filterUniqueMapped((rom) => rom.getName())),
+    }));
 
     // 'full' types expect device ROMs to be included
     if (this.options.getMergeRoms() === MergeMode.FULLNONMERGED) {
@@ -83,9 +83,14 @@ export default class DATMergerSplitter extends Module {
         return game.withProps({
           rom: [
             ...game.getDeviceRefs()
-              .map((deviceRef) => gameNamesToGames.get(deviceRef.getName()))
+              // De-duplicate DeviceRef names
+              .map((deviceRef) => deviceRef.getName())
+              .reduce(ArrayPoly.reduceUnique(), [])
+              // Get ROMs from the DeviceRef
+              .map((deviceRefName) => gameNamesToGames.get(deviceRefName))
               .filter(ArrayPoly.filterNotNullish)
-              .flatMap((deviceGame) => deviceGame.getRoms()),
+              .flatMap((deviceGame) => deviceGame.getRoms()
+                .filter((rom) => rom.getStatus() !== 'nodump')),
             ...game.getRoms(),
           ],
         });
@@ -96,30 +101,54 @@ export default class DATMergerSplitter extends Module {
     if (this.options.getMergeRoms() !== MergeMode.FULLNONMERGED) {
       games = games
         .map((game) => {
-          if (game.isBios()) {
+          if (!game.getBios()) {
+            // This game doesn't use an external BIOS
             return game;
           }
+
+          let biosGame = gameNamesToGames.get(game.getBios());
+          if (!biosGame) {
+            // Invalid romOf attribute, external BIOS not found
+            return game;
+          }
+          // Only BIOS ROMs in the BIOS parent should be considered. This accounts for clones that
+          // reference their non-BIOS parent as their 'romOf'.
+          biosGame = biosGame.withProps({
+            rom: biosGame.getRoms().filter((rom) => rom.getBios()),
+          });
+
           return game.withProps({
-            rom: game.getRoms()
-              .filter((rom) => !rom.getBios()),
+            rom: DATMergerSplitter.diffGameRoms(biosGame, game),
+          });
+        });
+    }
+
+    // 'split' and 'merged' types should exclude ROMs found in their parent
+    if (this.options.getMergeRoms() === MergeMode.SPLIT
+      || this.options.getMergeRoms() === MergeMode.MERGED
+    ) {
+      games = games
+        .map((game) => {
+          if (!game.getParent()) {
+            // This game doesn't have a parent
+            return game;
+          }
+
+          const parentGame = gameNamesToGames.get(game.getParent());
+          if (!parentGame) {
+            // Invalid cloneOf attribute, parent not found
+            return game;
+          }
+
+          return game.withProps({
+            rom: DATMergerSplitter.diffGameRoms(parentGame, game),
           });
         });
     }
 
     const parentGame = games.find((game) => game.isParent());
-    let cloneGames = games
+    const cloneGames = games
       .filter((game) => game.isClone());
-
-    // 'split' and 'merged' types should exclude ROMs found in their parent
-    if (parentGame
-      && (this.options.getMergeRoms() === MergeMode.SPLIT
-        || this.options.getMergeRoms() === MergeMode.MERGED)
-    ) {
-      cloneGames = cloneGames
-        .map((childGame) => childGame.withProps({
-          rom: DATMergerSplitter.diffGameRoms(parentGame, childGame),
-        }));
-    }
 
     // For everything other than 'merged' we keep the same number of games
     if (this.options.getMergeRoms() !== MergeMode.MERGED) {
@@ -138,9 +167,8 @@ export default class DATMergerSplitter extends Module {
         })));
     const allRoms = [...cloneRoms, ...(parentGame ? parentGame.getRoms() : [])];
     // And remove any duplicate ROMs, even if the duplicates exist only in clones and not the parent
-    const allRomHashCodes = allRoms.map((rom) => rom.hashCode());
     const allRomsDeduplicated = allRoms
-      .filter((rom, idx) => allRomHashCodes.indexOf(rom.hashCode()) === idx);
+      .filter(ArrayPoly.filterUniqueMapped((rom) => rom.hashCode()));
     return [new Machine({
       ...parentGame,
       rom: allRomsDeduplicated,
@@ -148,12 +176,23 @@ export default class DATMergerSplitter extends Module {
   }
 
   private static diffGameRoms(parent: Game, child: Game): ROM[] {
-    const parentNames = new Set(parent.getRoms().map((rom) => rom.getName()));
-    const childMergeNames = new Set(child.getRoms().map((rom) => rom.getMerge() ?? rom.getName()));
-    const diffNames = new Set([...childMergeNames.values()]
-      .filter((childHash) => !parentNames.has(childHash)));
+    const parentRomNamesToHashCodes = parent.getRoms().reduce((map, rom) => {
+      map.set(rom.getName(), rom.hashCode());
+      return map;
+    }, new Map<string, string>());
 
-    return child.getRoms()
-      .filter((rom) => diffNames.has(rom.getName()));
+    return child.getRoms().filter((rom) => {
+      const parentName = rom.getMerge() ?? rom.getName();
+      const parentHashCode = parentRomNamesToHashCodes.get(parentName);
+      if (!parentHashCode) {
+        // Parent doesn't have a ROM of the same name -> keep it
+        return true;
+      }
+      if (parentHashCode !== rom.hashCode()) {
+        // Parent has a ROM of the same name, but a different checksum -> keep it
+        return true;
+      }
+      return false;
+    });
   }
 }

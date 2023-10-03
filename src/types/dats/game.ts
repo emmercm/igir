@@ -489,6 +489,10 @@ export default class Game implements GameProps {
     return this.cloneOf ?? '';
   }
 
+  getBios(): string {
+    return this.romOf ?? '';
+  }
+
   // Internationalization
 
   getRegions(): string[] {

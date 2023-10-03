@@ -45,6 +45,12 @@
   description: Issues to consider for external contribution
   color: '66cc8d'
 
+- name: hacktoberfest
+  description: Issues that are a good candidate for a Hacktoberfest contribution
+  color: 'ff8911'
+- name: hacktoberfest-accepted
+  description: Pull requests that should be counted for Hacktoberfest contributions but aren't ready to be merged
+  color: 'ff8911'
 - name: stale
-  description: Issue has had no recent activity and will be automatically closed
+  description: Issues that haven't had recent activity that will be automatically closed
   color: 'ffffff'

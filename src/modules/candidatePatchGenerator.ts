@@ -9,6 +9,7 @@ import Release from '../types/dats/release.js';
 import ROM from '../types/dats/rom.js';
 import ArchiveEntry from '../types/files/archives/archiveEntry.js';
 import File from '../types/files/file.js';
+import { ChecksumBitmask } from '../types/files/fileChecksums.js';
 import Options from '../types/options.js';
 import Patch from '../types/patches/patch.js';
 import ReleaseCandidate from '../types/releaseCandidate.js';
@@ -151,7 +152,8 @@ export default class CandidatePatchGenerator extends Module {
                   ? extractedFileName
                   : outputFile.getEntryPath(),
                 patch.getSizeAfter() ?? 0,
-                patch.getCrcAfter() ?? '00000000',
+                { crc32: patch.getCrcAfter() },
+                ChecksumBitmask.NONE,
                 outputFile.getFileHeader(),
                 outputFile.getPatch(),
               );
@@ -160,7 +162,8 @@ export default class CandidatePatchGenerator extends Module {
               outputFile = await File.fileOf(
                 path.join(dirName, extractedFileName),
                 patch.getSizeAfter() ?? 0,
-                patch.getCrcAfter() ?? '00000000',
+                { crc32: patch.getCrcAfter() },
+                ChecksumBitmask.NONE,
                 outputFile.getFileHeader(),
                 outputFile.getPatch(),
               );
