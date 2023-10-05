@@ -153,7 +153,7 @@ export default class CandidatePatchGenerator extends Module {
                   : outputFile.getEntryPath(),
                 patch.getSizeAfter() ?? 0,
                 { crc32: patch.getCrcAfter() },
-                ChecksumBitmask.NONE,
+                ChecksumBitmask.NONE, // don't calculate anything, the file doesn't exist
                 outputFile.getFileHeader(),
                 outputFile.getPatch(),
               );
@@ -163,7 +163,7 @@ export default class CandidatePatchGenerator extends Module {
                 path.join(dirName, extractedFileName),
                 patch.getSizeAfter() ?? 0,
                 { crc32: patch.getCrcAfter() },
-                ChecksumBitmask.NONE,
+                ChecksumBitmask.NONE, // don't calculate anything, the file doesn't exist
                 outputFile.getFileHeader(),
                 outputFile.getPatch(),
               );

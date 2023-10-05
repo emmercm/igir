@@ -67,7 +67,13 @@ export default class Zip extends Archive {
   async extractEntryToStream<T>(
     entryPath: string,
     callback: (stream: Readable) => (Promise<T> | T),
+    start = 0,
   ): Promise<T> {
+    if (start > 0) {
+      // Zip library doesn't support starting the stream at some offset
+      return super.extractEntryToStream(entryPath, callback, start);
+    }
+
     const archive = await unzipper.Open.file(this.getFilePath());
 
     const entry = archive.files
@@ -123,6 +129,8 @@ export default class Zip extends Archive {
     // Finalize writing the zip file
     await zipFile.finalize();
     await new Promise((resolve) => {
+      // We are writing to a file, so we want to wait on the 'close' event which indicates the file
+      // descriptor has been closed. 'finished' will also fire before 'close' does.
       writeStream.on('close', resolve);
     });
 
@@ -140,6 +148,11 @@ export default class Zip extends Archive {
       zipFileError = err;
     };
     zipFile.on('error', catchError);
+    zipFile.on('warning', (err) => {
+      if (err.code !== 'ENOENT') {
+        catchError(err);
+      }
+    });
 
     // Keep track of what entries have been written to the temp file on disk
     const writtenEntries = new Set<string>();
