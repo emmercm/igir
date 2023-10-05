@@ -83,13 +83,13 @@ export default class File implements FileProps {
         || (!finalMd5 && (checksumBitmask & ChecksumBitmask.MD5))
         || (!finalSha1 && (checksumBitmask & ChecksumBitmask.SHA1))
       ) {
-        const calculatedChecksums = await this.calculateChecksums(filePath, checksumBitmask);
+        const calculatedChecksums = await this.calculateFileChecksums(filePath, checksumBitmask);
         finalCrcWithHeader = calculatedChecksums.crc32 ?? finalCrcWithHeader;
         finalMd5 = calculatedChecksums.md5 ?? finalMd5;
         finalSha1 = calculatedChecksums.sha1 ?? finalSha1;
       }
-      if (fileHeader) {
-        finalCrcWithoutHeader = (await this.calculateChecksums(
+      if (fileHeader && (checksumBitmask & ChecksumBitmask.CRC32)) {
+        finalCrcWithoutHeader = (await this.calculateFileChecksums(
           filePath,
           ChecksumBitmask.CRC32,
           fileHeader,
@@ -177,13 +177,13 @@ export default class File implements FileProps {
 
   protected getChecksumBitmask(): number {
     return (this.getCrc32().replace(/^0|0$/, '') ? ChecksumBitmask.CRC32 : 0)
-      & (this.getMd5()?.replace(/^0|0$/, '') ? ChecksumBitmask.MD5 : 0)
-      & (this.getSha1()?.replace(/^0|0$/, '') ? ChecksumBitmask.SHA1 : 0);
+      | (this.getMd5()?.replace(/^0|0$/, '') ? ChecksumBitmask.MD5 : 0)
+      | (this.getSha1()?.replace(/^0|0$/, '') ? ChecksumBitmask.SHA1 : 0);
   }
 
   // Other functions
 
-  protected static async calculateChecksums(
+  private static async calculateFileChecksums(
     filePath: string,
     checksumBitmask: number,
     fileHeader?: ROMHeader,

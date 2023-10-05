@@ -5,7 +5,7 @@ import Constants from '../../../constants.js';
 import fsPoly from '../../../polyfill/fsPoly.js';
 import Patch from '../../patches/patch.js';
 import File, { FileProps } from '../file.js';
-import { ChecksumBitmask, ChecksumProps } from '../fileChecksums.js';
+import FileChecksums, { ChecksumBitmask, ChecksumProps } from '../fileChecksums.js';
 import ROMHeader from '../romHeader.js';
 import Archive from './archive.js';
 
@@ -47,24 +47,22 @@ export default class ArchiveEntry<A extends Archive> extends File implements Arc
         || (!finalMd5 && (checksumBitmask & ChecksumBitmask.MD5))
         || (!finalSha1 && (checksumBitmask & ChecksumBitmask.SHA1))
       ) {
-        const calculatedChecksums = await this.extractEntryToTempFile(
+        const calculatedChecksums = await this.calculateEntryChecksums(
           archive,
           entryPath,
-          async (localFile) => this.calculateChecksums(localFile, checksumBitmask),
+          checksumBitmask,
         );
+
         finalCrcWithHeader = calculatedChecksums.crc32 ?? finalCrcWithHeader;
         finalMd5 = calculatedChecksums.md5 ?? finalMd5;
         finalSha1 = calculatedChecksums.sha1 ?? finalSha1;
       }
-      if (fileHeader) {
-        finalCrcWithoutHeader = (await this.extractEntryToTempFile(
+      if (fileHeader && (checksumBitmask & ChecksumBitmask.CRC32)) {
+        finalCrcWithoutHeader = (await this.calculateEntryChecksums(
           archive,
           entryPath,
-          async (localFile) => this.calculateChecksums(
-            localFile,
-            ChecksumBitmask.CRC32,
-            fileHeader,
-          ),
+          ChecksumBitmask.CRC32,
+          fileHeader,
         )).crc32;
       }
 
@@ -109,6 +107,19 @@ export default class ArchiveEntry<A extends Archive> extends File implements Arc
       this.getArchive(),
       this.getEntryPath(),
       extractedFilePath,
+    );
+  }
+
+  private static async calculateEntryChecksums(
+    archive: Archive,
+    entryPath: string,
+    checksumBitmask: number,
+    fileHeader?: ROMHeader,
+  ): Promise<ChecksumProps> {
+    return archive.extractEntryToStream(
+      entryPath,
+      async (stream) => FileChecksums.hashStream(stream, checksumBitmask),
+      fileHeader?.getDataOffsetBytes() ?? 0,
     );
   }
 
