@@ -220,7 +220,7 @@ export default class GameConsole {
   getBatocera(): string | undefined {
     return this.batocera;
   }
-  
+
   getJelos(): string | undefined {
     return this.jelos;
   }
