@@ -283,6 +283,11 @@ export default class OutputFactory {
     if (batocera) {
       output = output.replace('{batocera}', batocera);
     }
+
+    const jelos = gameConsole.getJelos();
+    if (jelos) {
+      output = output.replace('{jelos}', jelos);
+    }
     return output;
   }
 

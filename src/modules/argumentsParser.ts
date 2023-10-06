@@ -673,6 +673,7 @@ Advanced usage:
     {mister}    The ROM's core-specific /games/* directory for the MiSTer FPGA (e.g. "Gameboy")
     {onion}     The ROM's emulator-specific /Roms/* directory for OnionOS/GarlicOS (e.g. "GB")
     {batocera}  The ROM's emulator-specific /roms/* directory for Batocera (e.g. "gb")
+    {jelos}     The ROM's emulator-specific /roms/* directory for JELOS (e.g. "gb")
 
 Example use cases:
 
