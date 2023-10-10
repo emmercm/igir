@@ -116,19 +116,34 @@ export default class CandidatePreferer extends Module {
   }
 
   private preferLanguagesSort(a: ReleaseCandidate, b: ReleaseCandidate): number {
-    if (this.options.getPreferLanguages().length) {
-      return this.preferLanguageSortValue(a) - this.preferLanguageSortValue(b);
+    const preferLanguages = this.options.getPreferLanguages();
+    if (!preferLanguages.length) {
+      return 0;
     }
-    return 0;
-  }
 
-  private preferLanguageSortValue(releaseCandidate: ReleaseCandidate): number {
-    return releaseCandidate.getLanguages()
-      .map((lang) => {
-        const priority = this.options.getPreferLanguages().indexOf(lang);
-        return priority !== -1 ? priority : Number.MAX_SAFE_INTEGER;
-      })
-      .reduce((min, idx) => Math.min(min, idx), Number.MAX_SAFE_INTEGER);
+    const aLangs = a.getLanguages();
+    const bLangs = b.getLanguages();
+    const langCount = Math.max(aLangs.length, bLangs.length);
+
+    for (let i = 0; i < langCount; i += 1) {
+      const aLang = aLangs.at(i);
+      const bLang = bLangs.at(i);
+      if (!aLang || !bLang) {
+        return 0;
+      }
+
+      const aIndex = preferLanguages.indexOf(aLang);
+      const aPriority = aIndex !== -1 ? aIndex : Number.MAX_SAFE_INTEGER;
+      const bIndex = preferLanguages.indexOf(bLang);
+      const bPriority = bIndex !== -1 ? bIndex : Number.MAX_SAFE_INTEGER;
+
+      const diff = aPriority - bPriority;
+      if (diff !== 0) {
+        return diff;
+      }
+    }
+
+    return 0;
   }
 
   private preferRegionsSort(a: ReleaseCandidate, b: ReleaseCandidate): number {
