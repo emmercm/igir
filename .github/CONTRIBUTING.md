@@ -54,6 +54,20 @@ npm test
 npm pack
 ```
 
+### Running code
+
+A script has been defined for the `npm start` command to easily run `igir`:
+
+```shell
+npm start -- [commands..] [options]
+```
+
+for example:
+
+```shell
+npm start -- report --dat *.dat --input ROMs/
+```
+
 ### Code style
 
 `igir` uses [ESLint](https://eslint.org/) as its linter and style enforcer. Rules have been specifically chosen to increase code consistency, safety, readability, and maintainability.
@@ -78,6 +92,18 @@ Appropriate updates must be made to all relevant documentation pages if function
 
 That said, quality commit messages help future maintainers understand past intentions. Please use your best judgement on descriptive, clear, and concise commit messages.
 
+### Pull request checklist
+
+Here are steps that should be completed prior to submitting a pull request:
+
+- [ ] Validate your change works as expected locally by running `igir` (not just the unit tests)
+- [ ] Unit tests have been added to cover your change
+- [ ] `npm test` has been run locally for your change, to validate:
+  - Your added & changed tests are passing
+  - Your added & changed code adheres to the linter settings
+- [ ] Appropriate docs have been added or changed for your change
+- [ ] Your branch has no conflicts with the main (destination) branch
+
 ### Pull requests
 
 To contribute code changes, you will need to:
@@ -85,8 +111,10 @@ To contribute code changes, you will need to:
 1. [Fork the repository](https://github.com/emmercm/igir/fork)
 2. Create a new branch in your copy of the repository
 3. Make any intended changes
-4. [Create a pull request](https://github.com/emmercm/igir/compare), complete with a meaningful title & description
-5. Ensure that all GitHub status checks are passing, otherwise address the related issue(s)
+4. Complete the above pull request checklist
+5. [Create a pull request](https://github.com/emmercm/igir/compare), complete with a meaningful title & description
+6. Ensure that all GitHub status checks are passing, otherwise address the related issue(s)
+   1. Running tests in GitHub may require maintainer approval
 
 ## License
 
