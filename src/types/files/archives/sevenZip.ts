@@ -1,3 +1,5 @@
+import 'disposablestack/auto';
+
 import path from 'node:path';
 
 import _7z, { Result } from '7zip-min';

@@ -1,3 +1,5 @@
+import 'disposablestack/auto';
+
 import crypto from 'node:crypto';
 import fs, { MakeDirectoryOptions, PathLike, RmOptions } from 'node:fs';
 import path from 'node:path';

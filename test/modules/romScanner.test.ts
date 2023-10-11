@@ -1,3 +1,5 @@
+import 'disposablestack/auto';
+
 import os from 'node:os';
 import path from 'node:path';
 

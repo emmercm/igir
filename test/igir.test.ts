@@ -1,3 +1,5 @@
+import 'disposablestack/auto';
+
 import path from 'node:path';
 
 import Logger from '../src/console/logger.js';

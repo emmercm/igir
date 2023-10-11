@@ -1,3 +1,5 @@
+import 'disposablestack/auto';
+
 import async, { AsyncResultCallback } from 'async';
 
 import ProgressBar, { ProgressBarSymbol } from '../console/progressBar.js';

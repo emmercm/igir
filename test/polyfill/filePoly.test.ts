@@ -1,3 +1,5 @@
+import 'disposablestack/auto';
+
 import path from 'node:path';
 
 import Constants from '../../src/constants.js';
@@ -15,8 +17,7 @@ describe('fileOfSize', () => {
     await fsPoly.touch(tempFile);
     await expect(fsPoly.exists(tempFile)).resolves.toEqual(true);
 
-    const file = await filePoly.fileOfSize(tempFile, 'r', size);
-    await file.close();
+    await using file = await filePoly.fileOfSize(tempFile, 'r', size);
     expect(file.getPathLike()).toEqual(tempFile);
     await expect(fsPoly.size(tempFile)).resolves.toEqual(size);
   });
@@ -28,8 +29,7 @@ describe('fileOfSize', () => {
     disposableStack.defer(async () => fsPoly.rm(tempFile));
     await expect(fsPoly.exists(tempFile)).resolves.toEqual(false);
 
-    const file = await filePoly.fileOfSize(tempFile, 'r', size);
-    await file.close();
+    await using file = await filePoly.fileOfSize(tempFile, 'r', size);
     expect(file.getPathLike()).toEqual(tempFile);
     await expect(fsPoly.size(tempFile)).resolves.toEqual(size);
   });
@@ -43,9 +43,8 @@ describe('readAt', () => {
     disposableStack.defer(async () => fsPoly.rm(tempFile));
     await expect(fsPoly.exists(tempFile)).resolves.toEqual(false);
 
-    const file = await filePoly.fileOfSize(tempFile, 'r', Constants.MAX_MEMORY_FILE_SIZE - 1);
+    await using file = await filePoly.fileOfSize(tempFile, 'r', Constants.MAX_MEMORY_FILE_SIZE - 1);
     await expect(file.readAt(0, 16)).resolves.toEqual(Buffer.alloc(16));
-    await file.close();
   });
 
   it('should read a large file', async () => {
@@ -55,8 +54,7 @@ describe('readAt', () => {
     disposableStack.defer(async () => fsPoly.rm(tempFile));
     await expect(fsPoly.exists(tempFile)).resolves.toEqual(false);
 
-    const file = await filePoly.fileOfSize(tempFile, 'r', Constants.MAX_MEMORY_FILE_SIZE + 1);
+    await using file = await filePoly.fileOfSize(tempFile, 'r', Constants.MAX_MEMORY_FILE_SIZE + 1);
     await expect(file.readAt(0, 16)).resolves.toEqual(Buffer.alloc(16));
-    await file.close();
   });
 });
