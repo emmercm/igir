@@ -23,7 +23,7 @@ export default class ArgumentsParser {
 
   private static getLastValue<T>(arr: T | T[]): T {
     if (Array.isArray(arr) && arr.length) {
-      return arr.at(-1);
+      return arr.at(-1) as T;
     }
     return arr as T;
   }
