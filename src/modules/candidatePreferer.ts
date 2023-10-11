@@ -121,25 +121,15 @@ export default class CandidatePreferer extends Module {
       return 0;
     }
 
-    const aLangs = a.getLanguages();
-    const bLangs = b.getLanguages();
-    const langCount = Math.max(aLangs.length, bLangs.length);
-
-    for (let i = 0; i < langCount; i += 1) {
-      const aLang = aLangs.at(i);
-      const bLang = bLangs.at(i);
-      if (!aLang || !bLang) {
-        return 0;
+    const aLangs = new Set(a.getLanguages());
+    const bLangs = new Set(b.getLanguages());
+    for (let i = 0; i < preferLanguages.length; i += 1) {
+      const preferredLang = preferLanguages[i];
+      if (aLangs.has(preferredLang) && !bLangs.has(preferredLang)) {
+        return -1;
       }
-
-      const aIndex = preferLanguages.indexOf(aLang);
-      const aPriority = aIndex !== -1 ? aIndex : Number.MAX_SAFE_INTEGER;
-      const bIndex = preferLanguages.indexOf(bLang);
-      const bPriority = bIndex !== -1 ? bIndex : Number.MAX_SAFE_INTEGER;
-
-      const diff = aPriority - bPriority;
-      if (diff !== 0) {
-        return diff;
+      if (!aLangs.has(preferredLang) && bLangs.has(preferredLang)) {
+        return 1;
       }
     }
 
