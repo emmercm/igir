@@ -61,7 +61,7 @@ jobs:
     strategy:
       matrix:
         os: [ ubuntu, macos, windows ]
-        node-version: [ lts/*, lts/-1, 16.3.0 ]
+        node-version: [ lts/*, lts/-1, 16.6.0 ]
     steps:
       # Setup and install
       - uses: actions/checkout@v4
@@ -81,7 +81,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        node-version: [ lts/*, lts/-1, 16.3.0 ]
+        node-version: [ lts/*, lts/-1, 16.6.0 ]
     steps:
       # Setup and install
       - uses: actions/checkout@v4
@@ -121,7 +121,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        node-version: [ lts/*, lts/-1, 16.3.0 ]
+        node-version: [ lts/*, lts/-1, 16.6.0 ]
     steps:
       # Setup and install
       - uses: actions/checkout@v4
