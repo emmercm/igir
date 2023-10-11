@@ -232,3 +232,61 @@ describe('hasTrainer', () => {
     expect(new Game({ name }).isRetail()).toEqual(!expected);
   });
 });
+
+describe('getLanguages', () => {
+  test.each([
+    [
+      new Game({
+        name: 'Choplifter (Japan) (En) (Rev 1)',
+        release: new Release('Choplifter (Japan) (En) (Rev 1)', 'JPN'),
+      }),
+      ['EN'],
+    ],
+    [
+      new Game({
+        name: 'Flipull - An Exciting Cube Game (Japan) (En) (Rev 1)',
+        release: new Release('Flipull - An Exciting Cube Game (Japan) (En) (Rev 1)', 'JPN'),
+      }),
+      ['EN'],
+    ],
+    [
+      new Game({
+        name: 'Legend of Zelda, The - A Link to the Past (Canada) (Fr)',
+        release: new Release('Legend of Zelda, The - A Link to the Past (Canada) (Fr)', 'CAN'),
+      }),
+      ['FR'],
+    ],
+    [
+      new Game({
+        name: '1080 Snowboarding (Europe) (En,Ja,Fr,De)',
+        release: new Release('1080 Snowboarding (Europe) (En,Ja,Fr,De)', 'EUR'),
+      }),
+      ['EN', 'JA', 'FR', 'DE'],
+    ],
+  ])('should prefer explicit languages over region language: %s', (game, expectedLanguages) => {
+    expect(game.getLanguages()).toEqual(expectedLanguages);
+  });
+
+  test.each([
+    [
+      new Game({
+        name: 'Punch-Out!! (Europe)',
+        release: new Release('Punch-Out!! (Europe)', 'EUR'),
+      }),
+      ['EN'],
+    ],
+    [
+      new Game({ name: 'Mike Tyson\'s Punch-Out!! (Japan, USA) (En) (Rev 1)' }),
+      ['EN'],
+    ],
+    [
+      new Game({
+        name: 'Legend of Zelda, The - A Link to the Past (Germany)',
+        release: new Release('Legend of Zelda, The - A Link to the Past (Germany)', 'GER'),
+      }),
+      ['DE'],
+    ],
+  ])('should get language from region: %s', (game, expectedLanguages) => {
+    expect(game.getLanguages()).toEqual(expectedLanguages);
+  });
+});
