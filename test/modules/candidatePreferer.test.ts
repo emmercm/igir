@@ -249,6 +249,40 @@ describe('sort', () => {
       await expectPreferredCandidates({ single: true, preferLanguage: ['EN'] }, [[parent, releaseCandidates]], [gameWorld.getName()]);
     });
 
+    test.each([
+      [
+        // Single language matches both candidates, choose the first
+        ['Tintin in Tibet (Europe) (En,Fr,De,Nl)', 'Tintin in Tibet (Europe) (En,Es,Sv)'],
+        ['EN'],
+        'Tintin in Tibet (Europe) (En,Fr,De,Nl)',
+      ],
+      [
+        // First language matches both, use the second language
+        ['Tintin in Tibet (Europe) (En,Fr,De,Nl)', 'Tintin in Tibet (Europe) (En,Es,Sv)'],
+        ['EN', 'ES'],
+        'Tintin in Tibet (Europe) (En,Es,Sv)',
+      ],
+      [
+        // First language matches both, use the second language (reverse)
+        ['Tintin in Tibet (Europe) (En,Fr,De,Nl)', 'Tintin in Tibet (Europe) (En,Es,Sv)'],
+        ['EN', 'ES'],
+        'Tintin in Tibet (Europe) (En,Es,Sv)',
+      ],
+      [
+        // First and second language match different candidates, choose the first language
+        ['Tintin in Tibet (Europe) (En,Fr,De,Nl)', 'Tintin in Tibet (Europe) (En,Es,Sv)'],
+        ['SV', 'DE'],
+        'Tintin in Tibet (Europe) (En,Es,Sv)',
+      ],
+    ])('should rank candidates by all preferred languages: %s', async (gameNames, preferLanguage, expectedName) => {
+      const games = gameNames.map((gameName) => new Game({ name: gameName }));
+      const parent = new Parent(games[0].getName(), games);
+      const releaseCandidates = games.map((game) => new ReleaseCandidate(game, undefined, []));
+      await expectPreferredCandidates({ preferLanguage, single: true }, [
+        [parent, releaseCandidates],
+      ], [expectedName]);
+    });
+
     it('should return the first candidate when all matching', async () => {
       await expectPreferredCandidates({ preferLanguage: ['EN', 'JA'], single: true }, [
         await buildReleaseCandidatesWithRegionLanguage('one', 'USA', 'EN'),
