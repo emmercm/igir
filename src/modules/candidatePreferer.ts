@@ -116,19 +116,24 @@ export default class CandidatePreferer extends Module {
   }
 
   private preferLanguagesSort(a: ReleaseCandidate, b: ReleaseCandidate): number {
-    if (this.options.getPreferLanguages().length) {
-      return this.preferLanguageSortValue(a) - this.preferLanguageSortValue(b);
+    const preferLanguages = this.options.getPreferLanguages();
+    if (!preferLanguages.length) {
+      return 0;
     }
-    return 0;
-  }
 
-  private preferLanguageSortValue(releaseCandidate: ReleaseCandidate): number {
-    return releaseCandidate.getLanguages()
-      .map((lang) => {
-        const priority = this.options.getPreferLanguages().indexOf(lang);
-        return priority !== -1 ? priority : Number.MAX_SAFE_INTEGER;
-      })
-      .reduce((min, idx) => Math.min(min, idx), Number.MAX_SAFE_INTEGER);
+    const aLangs = new Set(a.getLanguages());
+    const bLangs = new Set(b.getLanguages());
+    for (let i = 0; i < preferLanguages.length; i += 1) {
+      const preferredLang = preferLanguages[i];
+      if (aLangs.has(preferredLang) && !bLangs.has(preferredLang)) {
+        return -1;
+      }
+      if (!aLangs.has(preferredLang) && bLangs.has(preferredLang)) {
+        return 1;
+      }
+    }
+
+    return 0;
   }
 
   private preferRegionsSort(a: ReleaseCandidate, b: ReleaseCandidate): number {
