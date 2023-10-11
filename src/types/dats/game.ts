@@ -527,6 +527,13 @@ export default class Game implements GameProps {
       return longLanguages;
     }
 
+    const releaseLanguages = this.getReleases()
+      .map((release) => release.getLanguage())
+      .filter(ArrayPoly.filterNotNullish);
+    if (releaseLanguages.length) {
+      return releaseLanguages;
+    }
+
     const regionLanguages = this.getLanguagesFromRegions();
     if (regionLanguages.length) {
       return regionLanguages;
