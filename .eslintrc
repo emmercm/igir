@@ -78,11 +78,12 @@
     // ***** Functions *****
     "unicorn/prefer-default-parameters": "error",
 
-    // ***** Loops *****
-    "unicorn/prefer-array-find": "error",
-
     // ***** Operands *****
     "@typescript-eslint/prefer-nullish-coalescing": "error",
+
+    // ***** Arrays *****
+    "unicorn/prefer-array-find": "error",
+    "unicorn/prefer-at": "error",
 
     // ***** Numbers *****
     "unicorn/no-zero-fractions": "error",

@@ -45,7 +45,7 @@ export default class DATGameInferrer extends Module {
   }
 
   private static getDatName(file: File): string {
-    return path.dirname(file.getFilePath()).split(/[\\/]/).slice(-1)[0];
+    return path.dirname(file.getFilePath()).split(/[\\/]/).at(-1);
   }
 
   private static createDAT(datName: string, romFiles: File[]): DAT {
