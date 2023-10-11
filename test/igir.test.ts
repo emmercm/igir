@@ -19,23 +19,21 @@ interface TestOutput {
 async function copyFixturesToTemp(
   callback: (input: string, output: string) => void | Promise<void>,
 ): Promise<void> {
+  await using disposableStack = new AsyncDisposableStack();
+
   const temp = await fsPoly.mkdtemp(path.join(Constants.GLOBAL_TEMP_DIR));
 
   // Set up the input directory
   const inputTemp = path.join(temp, 'input');
   await fsPoly.copyDir('./test/fixtures', inputTemp);
+  disposableStack.defer(async () => fsPoly.rm(inputTemp, { recursive: true }));
 
   // Set up the output directory
   const outputTemp = path.join(temp, 'output');
+  disposableStack.defer(async () => fsPoly.rm(outputTemp, { force: true, recursive: true }));
 
-  try {
-    // Call the callback
-    await callback(inputTemp, outputTemp);
-  } finally {
-    // Delete the temp files
-    await fsPoly.rm(inputTemp, { recursive: true });
-    await fsPoly.rm(outputTemp, { force: true, recursive: true });
-  }
+  // Call the callback
+  await callback(inputTemp, outputTemp);
 }
 
 async function chdir<T>(dir: string, runnable: () => (T | Promise<T>)): Promise<T> {

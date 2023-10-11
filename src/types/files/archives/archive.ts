@@ -44,17 +44,16 @@ export default abstract class Archive {
     entryPath: string,
     callback: (tempFile: string) => (T | Promise<T>),
   ): Promise<T> {
+    await using disposableStack = new AsyncDisposableStack();
+
     const tempFile = await fsPoly.mktemp(path.join(
       Constants.GLOBAL_TEMP_DIR,
       path.basename(entryPath),
     ));
+    disposableStack.defer(async () => fsPoly.rm(tempFile, { force: true }));
 
-    try {
-      await this.extractEntryToFile(entryPath, tempFile);
-      return await callback(tempFile);
-    } finally {
-      await fsPoly.rm(tempFile, { force: true });
-    }
+    await this.extractEntryToFile(entryPath, tempFile);
+    return callback(tempFile);
   }
 
   /**

@@ -42,21 +42,20 @@ describe('apply', () => {
     ['AAAAAAAAAA', Buffer.from('425053318a8a80a54142434445464748494acfd08e47056d1e3225e07029', 'hex'), 'ABCDEFGHIJ'],
     ['AAAAAAAAAAAAAAAAAAAA', Buffer.from('4250533194948095414243444546a48d45454545c518201d686456eb69a20342', 'hex'), 'ABCDEFAAAAAAAAAAEEEE'],
   ])('should apply the patch #%#: %s', async (baseContents, patchContents, expectedContents) => {
-    const inputRom = await writeTemp('ROM', baseContents);
-    const outputRom = await fsPoly.mktemp('ROM');
-    const patchFile = await writeTemp('patch.bps', patchContents);
+    await using disposableStack = new AsyncDisposableStack();
 
-    try {
-      const patch = await BPSPatch.patchFrom(patchFile);
-      await patch.createPatchedFile(inputRom, outputRom);
-      const actualContents = (
-        await bufferPoly.fromReadable(fs.createReadStream(outputRom))
-      ).toString();
-      expect(actualContents).toEqual(expectedContents);
-    } finally {
-      await fsPoly.rm(inputRom.getFilePath());
-      await fsPoly.rm(outputRom);
-      await fsPoly.rm(patchFile.getFilePath());
-    }
+    const inputRom = await writeTemp('ROM', baseContents);
+    disposableStack.defer(async () => fsPoly.rm(inputRom.getFilePath(), { force: true }));
+    const outputRom = await fsPoly.mktemp('ROM');
+    disposableStack.defer(async () => fsPoly.rm(outputRom, { force: true }));
+    const patchFile = await writeTemp('patch.bps', patchContents);
+    disposableStack.defer(async () => fsPoly.rm(patchFile.getFilePath(), { force: true }));
+
+    const patch = await BPSPatch.patchFrom(patchFile);
+    await patch.createPatchedFile(inputRom, outputRom);
+    const actualContents = (
+      await bufferPoly.fromReadable(fs.createReadStream(outputRom))
+    ).toString();
+    expect(actualContents).toEqual(expectedContents);
   });
 });

@@ -52,21 +52,20 @@ describe('apply', () => {
     // APSN64PatchType.N64
     // TODO(cemmer): test
   ])('should apply the patch #%#: %s', async (baseContents, patchContents, expectedContents) => {
-    const inputRom = await writeTemp('ROM', baseContents);
-    const outputRom = await fsPoly.mktemp('ROM');
-    const patchFile = await writeTemp('patch 00000000.aps', patchContents);
+    await using disposableStack = new AsyncDisposableStack();
 
-    try {
-      const patch = await APSPatch.patchFrom(patchFile);
-      await patch.createPatchedFile(inputRom, outputRom);
-      const actualContents = (
-        await bufferPoly.fromReadable(fs.createReadStream(outputRom))
-      ).toString();
-      expect(actualContents).toEqual(expectedContents);
-    } finally {
-      await fsPoly.rm(inputRom.getFilePath());
-      await fsPoly.rm(outputRom);
-      await fsPoly.rm(patchFile.getFilePath());
-    }
+    const inputRom = await writeTemp('ROM', baseContents);
+    disposableStack.defer(async () => fsPoly.rm(inputRom.getFilePath(), { force: true }));
+    const outputRom = await fsPoly.mktemp('ROM');
+    disposableStack.defer(async () => fsPoly.rm(outputRom, { force: true }));
+    const patchFile = await writeTemp('patch 00000000.aps', patchContents);
+    disposableStack.defer(async () => fsPoly.rm(patchFile.getFilePath(), { force: true }));
+
+    const patch = await APSPatch.patchFrom(patchFile);
+    await patch.createPatchedFile(inputRom, outputRom);
+    const actualContents = (
+      await bufferPoly.fromReadable(fs.createReadStream(outputRom))
+    ).toString();
+    expect(actualContents).toEqual(expectedContents);
   });
 });

@@ -54,27 +54,27 @@ describe('multiple files', () => {
   });
 
   it('should scan symlinked files', async () => {
+    await using disposableStack = new AsyncDisposableStack();
+
     const scannedRealFiles = (await createRomScanner(['test/fixtures/roms']).scan())
       .sort((a, b) => a.getFilePath().localeCompare(b.getFilePath()));
 
     const tempDir = await fsPoly.mkdtemp(Constants.GLOBAL_TEMP_DIR);
-    try {
-      const romFiles = await fsPoly.walk('test/fixtures/roms');
-      await Promise.all(romFiles.map(async (romFile) => {
-        const tempLink = path.join(tempDir, romFile);
-        await fsPoly.mkdir(path.dirname(tempLink), { recursive: true });
-        await fsPoly.symlink(path.resolve(romFile), tempLink);
-      }));
-      const scannedSymlinks = (await createRomScanner([tempDir]).scan())
-        .sort((a, b) => a.getFilePath().localeCompare(b.getFilePath()));
+    disposableStack.defer(async () => fsPoly.rm(tempDir, { recursive: true }));
 
-      expect(scannedSymlinks).toHaveLength(scannedRealFiles.length);
-      for (let i = 0; i < scannedSymlinks.length; i += 1) {
-        expect(scannedSymlinks[i].getSize()).toEqual(scannedRealFiles[i].getSize());
-        expect(scannedSymlinks[i].getCrc32()).toEqual(scannedRealFiles[i].getCrc32());
-      }
-    } finally {
-      await fsPoly.rm(tempDir, { recursive: true });
+    const romFiles = await fsPoly.walk('test/fixtures/roms');
+    await Promise.all(romFiles.map(async (romFile) => {
+      const tempLink = path.join(tempDir, romFile);
+      await fsPoly.mkdir(path.dirname(tempLink), { recursive: true });
+      await fsPoly.symlink(path.resolve(romFile), tempLink);
+    }));
+    const scannedSymlinks = (await createRomScanner([tempDir]).scan())
+      .sort((a, b) => a.getFilePath().localeCompare(b.getFilePath()));
+
+    expect(scannedSymlinks).toHaveLength(scannedRealFiles.length);
+    for (let i = 0; i < scannedSymlinks.length; i += 1) {
+      expect(scannedSymlinks[i].getSize()).toEqual(scannedRealFiles[i].getSize());
+      expect(scannedSymlinks[i].getCrc32()).toEqual(scannedRealFiles[i].getCrc32());
     }
   });
 });

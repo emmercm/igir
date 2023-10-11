@@ -27,22 +27,20 @@ import ProgressBarFake from '../console/progressBarFake.js';
 async function copyFixturesToTemp(
   callback: (input: string, output: string) => void | Promise<void>,
 ): Promise<void> {
+  await using disposableStack = new AsyncDisposableStack();
+
   // Set up the input directory
   const inputTemp = await fsPoly.mkdtemp(path.join(Constants.GLOBAL_TEMP_DIR, 'input'));
   await fsPoly.copyDir('./test/fixtures', inputTemp);
+  disposableStack.defer(async () => fsPoly.rm(inputTemp, { recursive: true }));
 
   // Set up the output directory, but delete it so ROMWriter can make it
   const outputTemp = await fsPoly.mkdtemp(path.join(Constants.GLOBAL_TEMP_DIR, 'output'));
+  disposableStack.defer(async () => fsPoly.rm(outputTemp, { force: true, recursive: true }));
   await fsPoly.rm(outputTemp, { force: true, recursive: true });
 
-  try {
-    // Call the callback
-    await callback(inputTemp, outputTemp);
-  } finally {
-    // Delete the temp files
-    await fsPoly.rm(inputTemp, { recursive: true });
-    await fsPoly.rm(outputTemp, { force: true, recursive: true });
-  }
+  // Call the callback
+  await callback(inputTemp, outputTemp);
 }
 
 async function walkAndStat(dirPath: string): Promise<[string, Stats][]> {

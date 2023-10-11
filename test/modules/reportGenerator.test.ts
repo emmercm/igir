@@ -103,7 +103,11 @@ async function wrapReportGenerator(
   datStatuses: DATStatus[],
   callback: (contents: string) => void | Promise<void>,
 ): Promise<void> {
+  await using disposableStack = new AsyncDisposableStack();
+
   const reportOutput = await fsPoly.mktemp(path.join(Constants.GLOBAL_TEMP_DIR, 'report.csv'));
+  disposableStack.defer(async () => fsPoly.rm(reportOutput, { force: true }));
+
   const options = new Options({
     ...optionsProps,
     reportOutput,
@@ -114,8 +118,6 @@ async function wrapReportGenerator(
 
   const contents = (await util.promisify(fs.readFile)(reportOutput)).toString();
   await callback(contents);
-
-  await fsPoly.rm(reportOutput);
 }
 
 it('should return empty contents for an empty DAT', async () => {

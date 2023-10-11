@@ -99,27 +99,27 @@ it('should delete everything if all unmatched and nothing excluded', async () =>
 });
 
 it('should delete symlinks', async () => {
+  await using disposableStack = new AsyncDisposableStack();
+
   const tempDir = await fsPoly.mkdtemp(Constants.GLOBAL_TEMP_DIR);
-  try {
-    const tempFileOne = await fsPoly.mktemp(path.join(tempDir, 'one'));
-    await fsPoly.touch(tempFileOne);
+  disposableStack.defer(async () => fsPoly.rm(tempDir, { recursive: true, force: true }));
 
-    const tempFileTwo = await fsPoly.mktemp(path.join(tempDir, 'two'));
-    await fsPoly.touch(tempFileTwo);
+  const tempFileOne = await fsPoly.mktemp(path.join(tempDir, 'one'));
+  await fsPoly.touch(tempFileOne);
 
-    const tempLink = await fsPoly.mktemp(path.join(tempDir, 'link'));
-    await fsPoly.symlink(tempFileOne, tempLink);
+  const tempFileTwo = await fsPoly.mktemp(path.join(tempDir, 'two'));
+  await fsPoly.touch(tempFileTwo);
 
-    await new DirectoryCleaner(
-      new Options({
-        commands: ['move', 'clean'],
-      }),
-      new ProgressBarFake(),
-    ).clean([tempDir], [await File.fileOf(tempFileOne)]);
+  const tempLink = await fsPoly.mktemp(path.join(tempDir, 'link'));
+  await fsPoly.symlink(tempFileOne, tempLink);
 
-    const filesRemaining = await fsPoly.walk(tempDir);
-    expect(filesRemaining).toEqual([tempFileOne]);
-  } finally {
-    await fsPoly.rm(tempDir, { recursive: true });
-  }
+  await new DirectoryCleaner(
+    new Options({
+      commands: ['move', 'clean'],
+    }),
+    new ProgressBarFake(),
+  ).clean([tempDir], [await File.fileOf(tempFileOne)]);
+
+  const filesRemaining = await fsPoly.walk(tempDir);
+  expect(filesRemaining).toEqual([tempFileOne]);
 });

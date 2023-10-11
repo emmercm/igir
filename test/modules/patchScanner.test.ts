@@ -55,20 +55,20 @@ describe('multiple files', () => {
   });
 
   it('should scan multiple files of incorrect extensions', async () => {
+    await using disposableStack = new AsyncDisposableStack();
+
     const patchFiles = (await new Options({ patch: ['test/fixtures/patches/*'] }).scanPatchFilesWithoutExclusions())
       .filter((filePath) => !FileFactory.isArchive(filePath));
 
     const tempDir = await fsPoly.mkdtemp(Constants.GLOBAL_TEMP_DIR);
-    try {
-      const tempFiles = await Promise.all(patchFiles.map(async (patchFile) => {
-        const tempFile = path.join(tempDir, `${path.basename(patchFile)}.txt`);
-        await fsPoly.copyFile(patchFile, tempFile);
-        return tempFile;
-      }));
-      expect(tempFiles.length).toBeGreaterThan(0);
-      await expect(createPatchScanner(tempFiles).scan()).resolves.toHaveLength(tempFiles.length);
-    } finally {
-      await fsPoly.rm(tempDir, { recursive: true });
-    }
+    disposableStack.defer(async () => fsPoly.rm(tempDir, { recursive: true }));
+
+    const tempFiles = await Promise.all(patchFiles.map(async (patchFile) => {
+      const tempFile = path.join(tempDir, `${path.basename(patchFile)}.txt`);
+      await fsPoly.copyFile(patchFile, tempFile);
+      return tempFile;
+    }));
+    expect(tempFiles.length).toBeGreaterThan(0);
+    await expect(createPatchScanner(tempFiles).scan()).resolves.toHaveLength(tempFiles.length);
   });
 });

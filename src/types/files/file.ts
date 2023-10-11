@@ -208,17 +208,17 @@ export default class File implements FileProps {
   async extractToTempFile<T>(
     callback: (tempFile: string) => (T | Promise<T>),
   ): Promise<T> {
+    await using disposableStack = new AsyncDisposableStack();
+
     const tempFile = await fsPoly.mktemp(path.join(
       Constants.GLOBAL_TEMP_DIR,
       path.basename(this.getFilePath()),
     ));
+    disposableStack.defer(async () => fsPoly.rm(tempFile, { force: true }));
+
     await fsPoly.copyFile(this.getFilePath(), tempFile);
 
-    try {
-      return await callback(tempFile);
-    } finally {
-      await fsPoly.rm(tempFile, { force: true });
-    }
+    return callback(tempFile);
   }
 
   async extractToTempFilePoly<T>(
@@ -239,6 +239,8 @@ export default class File implements FileProps {
     destinationPath: string,
     removeHeader: boolean,
   ): Promise<void> {
+    await using disposableStack = new AsyncDisposableStack();
+
     const start = removeHeader && this.getFileHeader()
       ? this.getFileHeader()?.getDataOffsetBytes() ?? 0
       : 0;
@@ -259,23 +261,20 @@ export default class File implements FileProps {
       Constants.GLOBAL_TEMP_DIR,
       path.basename(this.getExtractedFilePath()),
     ));
+    disposableStack.defer(async () => fsPoly.rm(tempFile, { force: true }));
     if (patch) {
       // Create a patched temp file, then copy it without removing its header
       await patch.createPatchedFile(this, tempFile);
-      try {
-        return await File.createStreamFromFile(
-          tempFile,
-          start,
-          async (stream) => new Promise((resolve, reject) => {
-            const writeStream = fs.createWriteStream(destinationPath);
-            writeStream.on('close', resolve);
-            writeStream.on('error', reject);
-            stream.pipe(writeStream);
-          }),
-        );
-      } finally {
-        await fsPoly.rm(tempFile, { force: true });
-      }
+      return File.createStreamFromFile(
+        tempFile,
+        start,
+        async (stream) => new Promise((resolve, reject) => {
+          const writeStream = fs.createWriteStream(destinationPath);
+          writeStream.on('close', resolve);
+          writeStream.on('error', reject);
+          stream.pipe(writeStream);
+        }),
+      );
     }
     // Extract this file removing its header
     return this.createReadStream(async (stream) => new Promise((resolve, reject) => {
@@ -297,6 +296,8 @@ export default class File implements FileProps {
     removeHeader: boolean,
     callback: (stream: Readable) => (T | Promise<T>),
   ): Promise<T> {
+    await using disposableStack = new AsyncDisposableStack();
+
     const start = removeHeader && this.getFileHeader()
       ? this.getFileHeader()?.getDataOffsetBytes() ?? 0
       : 0;
@@ -312,12 +313,9 @@ export default class File implements FileProps {
       Constants.GLOBAL_TEMP_DIR,
       path.basename(this.getExtractedFilePath()),
     ));
-    try {
-      await patch.createPatchedFile(this, tempFile);
-      return await File.createStreamFromFile(tempFile, start, callback);
-    } finally {
-      await fsPoly.rm(tempFile, { force: true });
-    }
+    disposableStack.defer(async () => fsPoly.rm(tempFile, { force: true }));
+    await patch.createPatchedFile(this, tempFile);
+    return File.createStreamFromFile(tempFile, start, callback);
   }
 
   static async createStreamFromFile<T>(

@@ -24,6 +24,10 @@ export default class FilePoly {
     this.tempBuffer = Buffer.allocUnsafe(Math.min(this.size, Constants.FILE_READING_CHUNK_SIZE));
   }
 
+  async [Symbol.asyncDispose](): Promise<void> {
+    await this.close();
+  }
+
   static async fileFrom(pathLike: PathLike, flags: OpenMode): Promise<FilePoly> {
     return new FilePoly(
       pathLike,

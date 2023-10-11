@@ -107,50 +107,50 @@ describe('getSha1', () => {
 
 describe('getSymlinkSourceResolved', () => {
   it('should not resolve non-symlinks', async () => {
+    await using disposableStack = new AsyncDisposableStack();
+
     const tempDir = await fsPoly.mkdtemp(Constants.GLOBAL_TEMP_DIR);
-    try {
-      const tempFile = path.resolve(await fsPoly.mktemp(path.join(tempDir, 'file')));
-      const fileLink = await File.fileOf(tempFile);
-      expect(fileLink.getSymlinkSourceResolved()).toBeUndefined();
-    } finally {
-      await fsPoly.rm(tempDir, { recursive: true });
-    }
+    disposableStack.defer(async () => fsPoly.rm(tempDir, { recursive: true, force: true }));
+
+    const tempFile = path.resolve(await fsPoly.mktemp(path.join(tempDir, 'file')));
+    const fileLink = await File.fileOf(tempFile);
+    expect(fileLink.getSymlinkSourceResolved()).toBeUndefined();
   });
 
   it('should resolve absolute symlinks', async () => {
+    await using disposableStack = new AsyncDisposableStack();
+
     const tempDir = await fsPoly.mkdtemp(Constants.GLOBAL_TEMP_DIR);
-    try {
-      const tempFile = path.resolve(await fsPoly.mktemp(path.join(tempDir, 'dir1', 'file')));
-      await fsPoly.mkdir(path.dirname(tempFile), { recursive: true });
-      await fsPoly.touch(tempFile);
+    disposableStack.defer(async () => fsPoly.rm(tempDir, { recursive: true, force: true }));
 
-      const tempLink = await fsPoly.mktemp(path.join(tempDir, 'dir2', 'link'));
-      await fsPoly.mkdir(path.dirname(tempLink), { recursive: true });
-      await fsPoly.symlink(path.resolve(tempFile), tempLink);
-      const fileLink = await File.fileOf(tempLink);
+    const tempFile = path.resolve(await fsPoly.mktemp(path.join(tempDir, 'dir1', 'file')));
+    await fsPoly.mkdir(path.dirname(tempFile), { recursive: true });
+    await fsPoly.touch(tempFile);
 
-      expect(fileLink.getSymlinkSourceResolved()).toEqual(tempFile);
-    } finally {
-      await fsPoly.rm(tempDir, { recursive: true });
-    }
+    const tempLink = await fsPoly.mktemp(path.join(tempDir, 'dir2', 'link'));
+    await fsPoly.mkdir(path.dirname(tempLink), { recursive: true });
+    await fsPoly.symlink(path.resolve(tempFile), tempLink);
+    const fileLink = await File.fileOf(tempLink);
+
+    expect(fileLink.getSymlinkSourceResolved()).toEqual(tempFile);
   });
 
   it('should resolve relative symlinks', async () => {
+    await using disposableStack = new AsyncDisposableStack();
+
     const tempDir = await fsPoly.mkdtemp(Constants.GLOBAL_TEMP_DIR);
-    try {
-      const tempFile = path.resolve(await fsPoly.mktemp(path.join(tempDir, 'dir1', 'file')));
-      await fsPoly.mkdir(path.dirname(tempFile), { recursive: true });
-      await fsPoly.touch(tempFile);
+    disposableStack.defer(async () => fsPoly.rm(tempDir, { recursive: true, force: true }));
 
-      const tempLink = await fsPoly.mktemp(path.join(tempDir, 'dir2', 'link'));
-      await fsPoly.mkdir(path.dirname(tempLink), { recursive: true });
-      await fsPoly.symlink(path.relative(path.dirname(tempLink), tempFile), tempLink);
-      const fileLink = await File.fileOf(tempLink);
+    const tempFile = path.resolve(await fsPoly.mktemp(path.join(tempDir, 'dir1', 'file')));
+    await fsPoly.mkdir(path.dirname(tempFile), { recursive: true });
+    await fsPoly.touch(tempFile);
 
-      expect(fileLink.getSymlinkSourceResolved()).toEqual(tempFile);
-    } finally {
-      await fsPoly.rm(tempDir, { recursive: true });
-    }
+    const tempLink = await fsPoly.mktemp(path.join(tempDir, 'dir2', 'link'));
+    await fsPoly.mkdir(path.dirname(tempLink), { recursive: true });
+    await fsPoly.symlink(path.relative(path.dirname(tempLink), tempFile), tempLink);
+    const fileLink = await File.fileOf(tempLink);
+
+    expect(fileLink.getSymlinkSourceResolved()).toEqual(tempFile);
   });
 });
 

@@ -66,20 +66,20 @@ export default class Tar extends Archive {
     entryPath: string,
     extractedFilePath: string,
   ): Promise<void> {
+    await using disposableStack = new AsyncDisposableStack();
+
     const tempDir = await fsPoly.mkdtemp(path.join(Constants.GLOBAL_TEMP_DIR, 'tar'));
-    try {
-      // https://github.com/isaacs/node-tar/issues/357
-      const tempFile = path.join(tempDir, entryPath);
+    disposableStack.defer(async () => fsPoly.rm(tempDir, { recursive: true, force: true }));
 
-      await tar.extract({
-        file: this.getFilePath(),
-        cwd: tempDir,
-        strict: true,
-      }, [entryPath.replace(/[\\/]/g, '/')]);
+    // https://github.com/isaacs/node-tar/issues/357
+    const tempFile = path.join(tempDir, entryPath);
 
-      await fsPoly.mv(tempFile, extractedFilePath);
-    } finally {
-      await fsPoly.rm(tempDir, { recursive: true, force: true });
-    }
+    await tar.extract({
+      file: this.getFilePath(),
+      cwd: tempDir,
+      strict: true,
+    }, [entryPath.replace(/[\\/]/g, '/')]);
+
+    await fsPoly.mv(tempFile, extractedFilePath);
   }
 }
