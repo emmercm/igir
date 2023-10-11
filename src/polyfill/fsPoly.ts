@@ -18,17 +18,19 @@ export default class FsPoly {
     .sort((a, b) => b.split(/[\\/]/).length - a.split(/[\\/]/).length);
 
   static async canSymlink(tempDir: string): Promise<boolean> {
+    await using disposableStack = new AsyncDisposableStack();
+
     const source = await this.mktemp(path.join(tempDir, 'source'));
     await this.touch(source);
+    disposableStack.defer(async () => this.rm(source, { force: true }));
+
     const target = await this.mktemp(path.join(tempDir, 'target'));
     try {
       await this.symlink(source, target);
+      disposableStack.defer(async () => this.rm(target, { force: true }));
       return await this.exists(target);
     } catch (e) {
       return false;
-    } finally {
-      await this.rm(source, { force: true });
-      await this.rm(target, { force: true });
     }
   }
 
