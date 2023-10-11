@@ -49,13 +49,9 @@ export default class IPSPatch extends Patch {
     eofString: string,
   ): Promise<void> {
     await inputRomFile.extractToFile(outputRomPath);
-    const targetFile = await FilePoly.fileFrom(outputRomPath, 'r+');
+    await using targetFile = await FilePoly.fileFrom(outputRomPath, 'r+');
 
-    try {
-      await IPSPatch.applyPatch(patchFile, targetFile, offsetSize, eofString);
-    } finally {
-      await targetFile.close();
-    }
+    await IPSPatch.applyPatch(patchFile, targetFile, offsetSize, eofString);
   }
 
   private static async applyPatch(

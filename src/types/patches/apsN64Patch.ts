@@ -78,13 +78,9 @@ export default class APSN64Patch extends Patch {
     patchFile: FilePoly,
   ): Promise<void> {
     await inputRomFile.extractToFile(outputRomPath);
-    const targetFile = await FilePoly.fileFrom(outputRomPath, 'r+');
+    await using targetFile = await FilePoly.fileFrom(outputRomPath, 'r+');
 
-    try {
-      await APSN64Patch.applyPatch(patchFile, targetFile);
-    } finally {
-      await targetFile.close();
-    }
+    await APSN64Patch.applyPatch(patchFile, targetFile);
   }
 
   private static async applyPatch(patchFile: FilePoly, targetFile: FilePoly): Promise<void> {

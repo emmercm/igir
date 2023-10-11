@@ -65,14 +65,10 @@ export default class NinjaPatch extends Patch {
     patchFile: FilePoly,
   ): Promise<void> {
     await inputRomFile.extractToFile(outputRomPath);
-    const targetFile = await FilePoly.fileFrom(outputRomPath, 'r+');
+    await using targetFile = await FilePoly.fileFrom(outputRomPath, 'r+');
 
-    try {
-      while (!patchFile.isEOF()) {
-        await this.applyCommand(patchFile, targetFile);
-      }
-    } finally {
-      await targetFile.close();
+    while (!patchFile.isEOF()) {
+      await this.applyCommand(patchFile, targetFile);
     }
   }
 

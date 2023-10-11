@@ -81,14 +81,10 @@ export default class PPFPatch extends Patch {
     header: PPFHeader,
   ): Promise<void> {
     await inputRomFile.extractToFile(outputRomPath);
-    const targetFile = await FilePoly.fileFrom(outputRomPath, 'r+');
+    await using targetFile = await FilePoly.fileFrom(outputRomPath, 'r+');
 
-    try {
-      while (!patchFile.isEOF()) {
-        await PPFPatch.applyPatchBlock(patchFile, targetFile, header);
-      }
-    } finally {
-      await targetFile.close();
+    while (!patchFile.isEOF()) {
+      await PPFPatch.applyPatchBlock(patchFile, targetFile, header);
     }
   }
 

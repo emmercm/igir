@@ -226,12 +226,8 @@ export default class File implements FileProps {
     callback: (filePoly: FilePoly) => (T | Promise<T>),
   ): Promise<T> {
     return this.extractToTempFile(async (tempFile) => {
-      const filePoly = await FilePoly.fileFrom(tempFile, flags);
-      try {
-        return await callback(filePoly);
-      } finally {
-        await filePoly.close();
-      }
+      await using filePoly = await FilePoly.fileFrom(tempFile, flags);
+      return callback(filePoly);
     });
   }
 

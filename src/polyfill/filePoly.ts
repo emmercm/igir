@@ -4,7 +4,7 @@ import util from 'node:util';
 import Constants from '../constants.js';
 import fsPoly from './fsPoly.js';
 
-export default class FilePoly {
+export default class FilePoly implements AsyncDisposable {
   private readonly pathLike: PathLike;
 
   private readonly fd: number;

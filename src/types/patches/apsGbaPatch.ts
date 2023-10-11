@@ -47,17 +47,12 @@ export default class APSGBAPatch extends Patch {
     patchFile: FilePoly,
   ): Promise<void> {
     return inputRomFile.extractToTempFile(async (tempRomFile) => {
-      const sourceFile = await FilePoly.fileFrom(tempRomFile, 'r');
+      await using sourceFile = await FilePoly.fileFrom(tempRomFile, 'r');
 
       await fsPoly.copyFile(tempRomFile, outputRomPath);
-      const targetFile = await FilePoly.fileFrom(outputRomPath, 'r+');
+      await using targetFile = await FilePoly.fileFrom(outputRomPath, 'r+');
 
-      try {
-        await APSGBAPatch.applyPatch(patchFile, sourceFile, targetFile);
-      } finally {
-        await targetFile.close();
-        await sourceFile.close();
-      }
+      await APSGBAPatch.applyPatch(patchFile, sourceFile, targetFile);
     });
   }
 
