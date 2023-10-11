@@ -517,19 +517,12 @@ export default class Game implements GameProps {
   }
 
   getLanguages(): string[] {
-    const releaseLanguages = this.getReleases()
-      .map((release) => release.getLanguage()?.toUpperCase())
-      .filter(ArrayPoly.filterNotNullish);
-    if (releaseLanguages.length) {
-      return releaseLanguages;
-    }
-
-    const shortLanguages = this.getShortLanguagesFromName();
+    const shortLanguages = this.getTwoLetterLanguagesFromName();
     if (shortLanguages.length) {
       return shortLanguages;
     }
 
-    const longLanguages = this.getLongLanguagesFromName();
+    const longLanguages = this.getThreeLetterLanguagesFromName();
     if (longLanguages.length) {
       return longLanguages;
     }
@@ -542,7 +535,7 @@ export default class Game implements GameProps {
     return [];
   }
 
-  private getShortLanguagesFromName(): string[] {
+  private getTwoLetterLanguagesFromName(): string[] {
     const twoMatches = this.getName().match(/\(([a-zA-Z]{2}([,+-][a-zA-Z]{2})*)\)/);
     if (twoMatches && twoMatches.length >= 2) {
       const twoMatchesParsed = twoMatches[1]
@@ -558,7 +551,7 @@ export default class Game implements GameProps {
     return [];
   }
 
-  private getLongLanguagesFromName(): string[] {
+  private getThreeLetterLanguagesFromName(): string[] {
     // Get language from long languages in the game name
     const threeMatches = this.getName().match(/\(([a-zA-Z]{3}(-[a-zA-Z]{3})*)\)/);
     if (threeMatches && threeMatches.length >= 2) {
