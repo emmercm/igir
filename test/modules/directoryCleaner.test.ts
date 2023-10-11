@@ -102,7 +102,7 @@ it('should delete symlinks', async () => {
   await using disposableStack = new AsyncDisposableStack();
 
   const tempDir = await fsPoly.mkdtemp(Constants.GLOBAL_TEMP_DIR);
-  disposableStack.defer(async () => fsPoly.rm(tempDir, { recursive: true, force: true }));
+  disposableStack.defer(async () => fsPoly.rm(tempDir, { recursive: true }));
 
   const tempFileOne = await fsPoly.mktemp(path.join(tempDir, 'one'));
   await fsPoly.touch(tempFileOne);

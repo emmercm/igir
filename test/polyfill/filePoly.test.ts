@@ -11,7 +11,7 @@ describe('fileOfSize', () => {
     const size = 8080;
 
     const tempFile = await fsPoly.mktemp(path.join(Constants.GLOBAL_TEMP_DIR, 'file'));
-    disposableStack.defer(async () => fsPoly.rm(tempFile, { force: true }));
+    disposableStack.defer(async () => fsPoly.rm(tempFile));
     await fsPoly.touch(tempFile);
     await expect(fsPoly.exists(tempFile)).resolves.toEqual(true);
 
@@ -25,7 +25,7 @@ describe('fileOfSize', () => {
     await using disposableStack = new AsyncDisposableStack();
 
     const tempFile = await fsPoly.mktemp(path.join(Constants.GLOBAL_TEMP_DIR, 'file'));
-    disposableStack.defer(async () => fsPoly.rm(tempFile, { force: true }));
+    disposableStack.defer(async () => fsPoly.rm(tempFile));
     await expect(fsPoly.exists(tempFile)).resolves.toEqual(false);
 
     const file = await filePoly.fileOfSize(tempFile, 'r', size);
@@ -40,7 +40,7 @@ describe('readAt', () => {
     await using disposableStack = new AsyncDisposableStack();
 
     const tempFile = await fsPoly.mktemp(path.join(Constants.GLOBAL_TEMP_DIR, 'file'));
-    disposableStack.defer(async () => fsPoly.rm(tempFile, { force: true }));
+    disposableStack.defer(async () => fsPoly.rm(tempFile));
     await expect(fsPoly.exists(tempFile)).resolves.toEqual(false);
 
     const file = await filePoly.fileOfSize(tempFile, 'r', Constants.MAX_MEMORY_FILE_SIZE - 1);
@@ -52,7 +52,7 @@ describe('readAt', () => {
     await using disposableStack = new AsyncDisposableStack();
 
     const tempFile = await fsPoly.mktemp(path.join(Constants.GLOBAL_TEMP_DIR, 'file'));
-    disposableStack.defer(async () => fsPoly.rm(tempFile, { force: true }));
+    disposableStack.defer(async () => fsPoly.rm(tempFile));
     await expect(fsPoly.exists(tempFile)).resolves.toEqual(false);
 
     const file = await filePoly.fileOfSize(tempFile, 'r', Constants.MAX_MEMORY_FILE_SIZE + 1);

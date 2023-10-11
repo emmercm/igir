@@ -106,7 +106,7 @@ async function wrapReportGenerator(
   await using disposableStack = new AsyncDisposableStack();
 
   const reportOutput = await fsPoly.mktemp(path.join(Constants.GLOBAL_TEMP_DIR, 'report.csv'));
-  disposableStack.defer(async () => fsPoly.rm(reportOutput, { force: true }));
+  disposableStack.defer(async () => fsPoly.rm(reportOutput));
 
   const options = new Options({
     ...optionsProps,

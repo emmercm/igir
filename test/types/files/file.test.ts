@@ -110,7 +110,7 @@ describe('getSymlinkSourceResolved', () => {
     await using disposableStack = new AsyncDisposableStack();
 
     const tempDir = await fsPoly.mkdtemp(Constants.GLOBAL_TEMP_DIR);
-    disposableStack.defer(async () => fsPoly.rm(tempDir, { recursive: true, force: true }));
+    disposableStack.defer(async () => fsPoly.rm(tempDir, { recursive: true }));
 
     const tempFile = path.resolve(await fsPoly.mktemp(path.join(tempDir, 'file')));
     const fileLink = await File.fileOf(tempFile);
@@ -121,7 +121,7 @@ describe('getSymlinkSourceResolved', () => {
     await using disposableStack = new AsyncDisposableStack();
 
     const tempDir = await fsPoly.mkdtemp(Constants.GLOBAL_TEMP_DIR);
-    disposableStack.defer(async () => fsPoly.rm(tempDir, { recursive: true, force: true }));
+    disposableStack.defer(async () => fsPoly.rm(tempDir, { recursive: true }));
 
     const tempFile = path.resolve(await fsPoly.mktemp(path.join(tempDir, 'dir1', 'file')));
     await fsPoly.mkdir(path.dirname(tempFile), { recursive: true });
@@ -139,7 +139,7 @@ describe('getSymlinkSourceResolved', () => {
     await using disposableStack = new AsyncDisposableStack();
 
     const tempDir = await fsPoly.mkdtemp(Constants.GLOBAL_TEMP_DIR);
-    disposableStack.defer(async () => fsPoly.rm(tempDir, { recursive: true, force: true }));
+    disposableStack.defer(async () => fsPoly.rm(tempDir, { recursive: true }));
 
     const tempFile = path.resolve(await fsPoly.mktemp(path.join(tempDir, 'dir1', 'file')));
     await fsPoly.mkdir(path.dirname(tempFile), { recursive: true });

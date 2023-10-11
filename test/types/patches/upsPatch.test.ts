@@ -45,11 +45,11 @@ describe('apply', () => {
     await using disposableStack = new AsyncDisposableStack();
 
     const inputRom = await writeTemp('ROM', baseContents);
-    disposableStack.defer(async () => fsPoly.rm(inputRom.getFilePath(), { force: true }));
+    disposableStack.defer(async () => fsPoly.rm(inputRom.getFilePath()));
     const outputRom = await fsPoly.mktemp('ROM');
-    disposableStack.defer(async () => fsPoly.rm(outputRom, { force: true }));
+    disposableStack.defer(async () => fsPoly.rm(outputRom));
     const patchFile = await writeTemp('patch.bps', patchContents);
-    disposableStack.defer(async () => fsPoly.rm(patchFile.getFilePath(), { force: true }));
+    disposableStack.defer(async () => fsPoly.rm(patchFile.getFilePath()));
 
     const patch = await UPSPatch.patchFrom(patchFile);
     await patch.createPatchedFile(inputRom, outputRom);
