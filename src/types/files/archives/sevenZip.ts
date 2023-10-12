@@ -47,7 +47,7 @@ export default class SevenZip extends Archive {
      */
     for (let attempt = 1; attempt <= 3; attempt += 1) {
       const archiveEntries = await this.getArchiveEntriesNotCached(checksumBitmask);
-      if (archiveEntries) {
+      if (archiveEntries.length) {
         return archiveEntries;
       }
 
