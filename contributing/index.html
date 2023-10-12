@@ -1826,6 +1826,13 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#running-code" class="md-nav__link">
+    Running code
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#code-style" class="md-nav__link">
     Code style
   </a>
@@ -1849,6 +1856,13 @@
           <li class="md-nav__item">
   <a href="#git-commit-messages" class="md-nav__link">
     Git commit messages
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#pull-request-checklist" class="md-nav__link">
+    Pull request checklist
   </a>
   
 </li>
@@ -2029,6 +2043,13 @@
 </span><span id="__span-3-2"><a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>npm<span class="w"> </span><span class="nb">test</span>
 </span><span id="__span-3-3"><a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a>npm<span class="w"> </span>pack
 </span></code></pre></div>
+<h3 id="running-code">Running code</h3>
+<p>A script has been defined for the <code>npm start</code> command to easily run <code>igir</code>:</p>
+<div class="language-shell highlight"><pre><span></span><code><span id="__span-4-1"><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>npm<span class="w"> </span>start<span class="w"> </span>--<span class="w"> </span><span class="o">[</span>commands..<span class="o">]</span><span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
+</span></code></pre></div>
+<p>for example:</p>
+<div class="language-shell highlight"><pre><span></span><code><span id="__span-5-1"><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a>npm<span class="w"> </span>start<span class="w"> </span>--<span class="w"> </span>report<span class="w"> </span>--dat<span class="w"> </span>*.dat<span class="w"> </span>--input<span class="w"> </span>ROMs/
+</span></code></pre></div>
 <h3 id="code-style">Code style</h3>
 <p><code>igir</code> uses <a href="https://eslint.org/">ESLint</a> as its linter and style enforcer. Rules have been specifically chosen to increase code consistency, safety, readability, and maintainability.</p>
 <p>All code changes must pass the existing ESLint rules. Discussions on adding, removing, and changing ESLint rules should happen outside of pull requests that contain code changes, in their own dedicated pull request or discussion thread (above).</p>
@@ -2041,14 +2062,31 @@
 <h3 id="git-commit-messages">Git commit messages</h3>
 <p><code>igir</code> is configured to squash-merge all pull requests, such that only the pull request title ends up in the commit history of the main branch. This means that individual commit messages are less important, and it puts more emphasis on quality pull request titles &amp; descriptions.</p>
 <p>That said, quality commit messages help future maintainers understand past intentions. Please use your best judgement on descriptive, clear, and concise commit messages.</p>
+<h3 id="pull-request-checklist">Pull request checklist</h3>
+<p>Here are steps that should be completed prior to submitting a pull request:</p>
+<ul>
+<li>[ ] Validate your change works as expected locally by running <code>igir</code> (not just the unit tests)</li>
+<li>[ ] Unit tests have been added to cover your change</li>
+<li>[ ] <code>npm test</code> has been run locally for your change, to validate:<ul>
+<li>Your added &amp; changed tests are passing</li>
+<li>Your added &amp; changed code adheres to the linter settings</li>
+</ul>
+</li>
+<li>[ ] Appropriate docs have been added or changed for your change</li>
+<li>[ ] Your branch has no conflicts with the main (destination) branch</li>
+</ul>
 <h3 id="pull-requests">Pull requests</h3>
 <p>To contribute code changes, you will need to:</p>
 <ol>
 <li><a href="https://github.com/emmercm/igir/fork">Fork the repository</a></li>
 <li>Create a new branch in your copy of the repository</li>
 <li>Make any intended changes</li>
+<li>Complete the above pull request checklist</li>
 <li><a href="https://github.com/emmercm/igir/compare">Create a pull request</a>, complete with a meaningful title &amp; description</li>
-<li>Ensure that all GitHub status checks are passing, otherwise address the related issue(s)</li>
+<li>Ensure that all GitHub status checks are passing, otherwise address the related issue(s)<ol>
+<li>Running tests in GitHub may require maintainer approval</li>
+</ol>
+</li>
 </ol>
 <h2 id="license">License</h2>
 <p><code>igir</code> is licensed under <a href="https://github.com/emmercm/igir/blob/main/LICENSE">GNU General Public License v3.0</a>.</p>
@@ -2060,7 +2098,7 @@
   <small>
     
       Last update:
-      <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date">August 28, 2023</span>
+      <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date">October 11, 2023</span>
       
     
   </small>
