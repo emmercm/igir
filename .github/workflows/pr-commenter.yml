@@ -38,7 +38,7 @@ jobs:
       - uses: thollander/actions-comment-pull-request@v2
         with:
           message: |
-            ## :test_tube: Branch Testing
+            ## :test_tube: Branch testing instructions
             This pull request can be tested locally with the following command:
             ```shell
             npm exec --yes -- "github:${{ github.event.pull_request.head.repo.full_name }}#${{ github.event.pull_request.head.ref }}" [commands..] [options]
