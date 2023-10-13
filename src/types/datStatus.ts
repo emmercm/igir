@@ -245,7 +245,7 @@ export default class DATStatus {
 
         const foundReleaseCandidate = foundReleaseCandidates
           .find((rc) => rc && rc.getGame().equals(game));
-        if (foundReleaseCandidate === undefined || !game.getRoms().length) {
+        if (foundReleaseCandidate !== undefined || !game.getRoms().length) {
           status = GameStatus.FOUND;
         }
 

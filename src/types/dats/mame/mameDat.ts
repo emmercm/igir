@@ -50,8 +50,10 @@ export default class MameDAT extends DAT {
 
   getGames(): Game[] {
     if (Array.isArray(this.machine)) {
-      return this.machine;
-    } if (this.machine) {
+      if (this.machine.length) {
+        return this.machine;
+      }
+    } else if (this.machine) {
       return [this.machine];
     }
     return [];

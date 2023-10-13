@@ -711,9 +711,13 @@ Example use cases:
         description: 'Show help',
         type: 'boolean',
       })
-      .fail((msg, err) => {
-        // TODO(cemmer): is this needed?
-        throw err;
+      .fail((msg, err, _yargs) => {
+        // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
+        if (err) {
+          throw err;
+        }
+        this.logger.colorizeYargs(`${_yargs.help().toString().trimEnd()}\n`);
+        throw new Error(msg);
       });
 
     const yargsArgv = yargsParser
