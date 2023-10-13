@@ -152,7 +152,7 @@ export default class DATStatus {
       ...this.foundRomTypesToReleaseCandidates.values(),
       ...this.incompleteRomTypesToReleaseCandidates.values(),
     ]
-      .flatMap((releaseCandidates) => releaseCandidates)
+      .flat()
       .filter(ArrayPoly.filterNotNullish)
       .flatMap((releaseCandidate) => releaseCandidate.getRomsWithFiles())
       .map((romWithFiles) => romWithFiles.getInputFile());
@@ -354,8 +354,7 @@ export default class DATStatus {
     romTypesToValues: Map<ROMType, T[]>,
   ): T[] {
     return DATStatus.getAllowedTypes(options)
-      .map((type) => romTypesToValues.get(type))
-      .flatMap((values) => values)
+      .flatMap((type) => romTypesToValues.get(type))
       .filter(ArrayPoly.filterNotNullish)
       .reduce(ArrayPoly.reduceUnique(), [])
       .sort();

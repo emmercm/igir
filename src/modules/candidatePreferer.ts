@@ -48,7 +48,7 @@ export default class CandidatePreferer extends Module {
     const output = await this.sortAndFilter(dat, parentsToCandidates);
 
     const size = [...output.values()]
-      .flatMap((releaseCandidates) => releaseCandidates)
+      .flat()
       .flatMap((releaseCandidate) => releaseCandidate.getRomsWithFiles())
       .reduce((sum, romWithFiles) => sum + romWithFiles.getRom().getSize(), 0);
     const filteredCandidates = [...output.values()].reduce((sum, rc) => sum + rc.length, 0);
@@ -123,8 +123,7 @@ export default class CandidatePreferer extends Module {
 
     const aLangs = new Set(a.getLanguages());
     const bLangs = new Set(b.getLanguages());
-    for (let i = 0; i < preferLanguages.length; i += 1) {
-      const preferredLang = preferLanguages[i];
+    for (const preferredLang of preferLanguages) {
       if (aLangs.has(preferredLang) && !bLangs.has(preferredLang)) {
         return -1;
       }

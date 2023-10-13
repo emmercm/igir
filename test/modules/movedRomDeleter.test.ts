@@ -140,7 +140,8 @@ describe('should delete archives', () => {
           // A path that should not exist
           const zip = new Zip(path.join(inputPath, `${game.getName()}.zip`));
           return Promise.all(game.getRoms().map(async (rom) => rom.toArchiveEntry(zip)));
-        }))).flatMap((files) => files);
+        })))
+        .flat();
 
       const indexedRomFiles = await new FileIndexer(options, new ProgressBarFake())
         .index(rawRomFiles);
@@ -149,12 +150,12 @@ describe('should delete archives', () => {
 
       const inputRoms = rawRomFiles;
       const movedRoms = [...parentsToCandidates.values()]
-        .flatMap((releaseCandidates) => releaseCandidates)
+        .flat()
         .flatMap((releaseCandidate) => releaseCandidate.getRomsWithFiles())
         .map((romWithFiles) => romWithFiles.getInputFile());
 
       const writtenRoms = [...parentsToCandidates.values()]
-        .flatMap((releaseCandidates) => releaseCandidates)
+        .flat()
         .flatMap((releaseCanddiate) => releaseCanddiate.getRomsWithFiles())
         .map((romWithFiles) => romWithFiles.getOutputFile());
       const datsToWrittenRoms = new Map([[dat, writtenRoms]]);

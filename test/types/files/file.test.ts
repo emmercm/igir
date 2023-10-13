@@ -162,8 +162,7 @@ describe('copyToTempFile', () => {
     expect(raws).toHaveLength(10);
 
     const temp = await fsPoly.mkdtemp(Constants.GLOBAL_TEMP_DIR);
-    for (let i = 0; i < raws.length; i += 1) {
-      const raw = raws[i];
+    for (const raw of raws) {
       await raw.extractToTempFile(async (tempFile) => {
         await expect(fsPoly.exists(tempFile)).resolves.toEqual(true);
         expect(tempFile).not.toEqual(raw.getFilePath());
@@ -181,8 +180,7 @@ describe('createReadStream', () => {
     expect(raws).toHaveLength(9);
 
     const temp = await fsPoly.mkdtemp(Constants.GLOBAL_TEMP_DIR);
-    for (let i = 0; i < raws.length; i += 1) {
-      const raw = raws[i];
+    for (const raw of raws) {
       await raw.createReadStream(async (stream) => {
         const contents = (await bufferPoly.fromReadable(stream)).toString();
         expect(contents).toBeTruthy();

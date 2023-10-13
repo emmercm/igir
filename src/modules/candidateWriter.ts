@@ -71,7 +71,7 @@ export default class CandidateWriter extends Module {
           .some((releaseCandidate) => releaseCandidate.getRomsWithFiles().length)),
     );
 
-    const totalCandidateCount = [...parentsToWritableCandidates.values()].flatMap((c) => c).length;
+    const totalCandidateCount = [...parentsToWritableCandidates.values()].flat().length;
     this.progressBar.logInfo(`${dat.getNameShort()}: writing ${totalCandidateCount.toLocaleString()} candidate${totalCandidateCount !== 1 ? 's' : ''}`);
     await this.progressBar.setSymbol(ProgressBarSymbol.WRITING);
     await this.progressBar.reset(parentsToWritableCandidates.size);
@@ -84,8 +84,7 @@ export default class CandidateWriter extends Module {
         await this.progressBar.incrementProgress();
         this.progressBar.logTrace(`${dat.getNameShort()}: ${parent.getName()}: writing ${releaseCandidates.length.toLocaleString()} candidate${releaseCandidates.length !== 1 ? 's' : ''}`);
 
-        for (let i = 0; i < releaseCandidates.length; i += 1) {
-          const releaseCandidate = releaseCandidates[i];
+        for (const releaseCandidate of releaseCandidates) {
           await this.writeReleaseCandidate(dat, releaseCandidate);
         }
 
@@ -230,8 +229,7 @@ export default class CandidateWriter extends Module {
     }
 
     const entryPaths = [...expectedEntriesByPath.keys()];
-    for (let i = 0; i < entryPaths.length; i += 1) {
-      const entryPath = entryPaths[i];
+    for (const entryPath of entryPaths) {
       const expectedFile = expectedEntriesByPath.get(entryPath) as ArchiveEntry<Zip>;
 
       // Check existence
@@ -314,8 +312,7 @@ export default class CandidateWriter extends Module {
       .reduce((sum, file) => sum + file.getSize(), 0);
     this.progressBar.logTrace(`${dat.getNameShort()}: ${releaseCandidate.getName()}: writing ${fsPoly.sizeReadable(totalBytes)} of ${uniqueInputToOutputEntries.length.toLocaleString()} file${uniqueInputToOutputEntries.length !== 1 ? 's' : ''}`);
 
-    for (let i = 0; i < uniqueInputToOutputEntries.length; i += 1) {
-      const [inputRomFile, outputRomFile] = uniqueInputToOutputEntries[i];
+    for (const [inputRomFile, outputRomFile] of uniqueInputToOutputEntries) {
       await this.writeRawSingle(dat, releaseCandidate, inputRomFile, outputRomFile);
     }
   }
@@ -439,9 +436,9 @@ export default class CandidateWriter extends Module {
   private async writeSymlink(dat: DAT, releaseCandidate: ReleaseCandidate): Promise<void> {
     const inputToOutputEntries = releaseCandidate.getRomsWithFiles();
 
-    for (let i = 0; i < inputToOutputEntries.length; i += 1) {
-      const inputRomFile = inputToOutputEntries[i].getInputFile();
-      const outputRomFile = inputToOutputEntries[i].getOutputFile();
+    for (const inputToOutputEntry of inputToOutputEntries) {
+      const inputRomFile = inputToOutputEntry.getInputFile();
+      const outputRomFile = inputToOutputEntry.getOutputFile();
       await this.writeSymlinkSingle(dat, inputRomFile, outputRomFile);
     }
   }

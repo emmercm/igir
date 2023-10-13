@@ -52,8 +52,7 @@ export default class CandidateGenerator extends Module {
     await this.progressBar.reset(parents.length);
 
     // For each parent, try to generate a parent candidate
-    for (let i = 0; i < parents.length; i += 1) {
-      const parent = parents[i];
+    for (const parent of parents) {
       await this.progressBar.incrementProgress();
       const waitingMessage = `${parent.getName()} ...`;
       this.progressBar.addWaitingMessage(waitingMessage);
@@ -66,8 +65,7 @@ export default class CandidateGenerator extends Module {
 
         // For every release (ensuring at least one), find all release candidates
         const releases = game.getReleases().length ? game.getReleases() : [undefined];
-        for (let k = 0; k < releases.length; k += 1) {
-          const release = releases[k];
+        for (const release of releases) {
 
           const releaseCandidate = await this.buildReleaseCandidateForRelease(
             dat,
@@ -89,7 +87,7 @@ export default class CandidateGenerator extends Module {
     }
 
     const size = [...output.values()]
-      .flatMap((releaseCandidates) => releaseCandidates)
+      .flat()
       .flatMap((releaseCandidate) => releaseCandidate.getRomsWithFiles())
       .reduce((sum, romWithFiles) => sum + romWithFiles.getRom().getSize(), 0);
     const totalCandidates = [...output.values()].reduce((sum, rc) => sum + rc.length, 0);
@@ -339,8 +337,7 @@ export default class CandidateGenerator extends Module {
     }
 
     let hasConflict = false;
-    for (let i = 0; i < duplicateOutputPaths.length; i += 1) {
-      const duplicateOutput = duplicateOutputPaths[i];
+    for (const duplicateOutput of duplicateOutputPaths) {
 
       // For an output path that has multiple input paths, filter to only the unique input paths,
       //  and if there are still multiple input file paths then we won't be able to resolve this

@@ -555,7 +555,7 @@ export default class GameConsole {
   static getForFilename(filePath: string): GameConsole | undefined {
     const fileExtension = path.extname(filePath).toLowerCase();
     return this.CONSOLES
-      .find((console) => console.getExtensions().some((ext) => ext === fileExtension));
+      .find((console) => console.getExtensions().includes(fileExtension));
   }
 
   static getForDatName(consoleName: string): GameConsole | undefined {

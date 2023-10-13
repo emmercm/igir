@@ -20,9 +20,9 @@ describe('extension has possible header', () => {
     }), new ProgressBarFake()).process(inputRomFiles);
 
     expect(processedRomFiles).toHaveLength(inputRomFiles.length);
-    for (let i = 0; i < processedRomFiles.length; i += 1) {
+    for (const [idx, processedRomFile] of processedRomFiles.entries()) {
       // CRC should NOT have changed
-      expect(inputRomFiles[i].equals(processedRomFiles[i])).toEqual(true);
+      expect(inputRomFiles[idx].equals(processedRomFile)).toEqual(true);
     }
   });
 
@@ -50,10 +50,10 @@ describe('extension has possible header', () => {
     }), new ProgressBarFake()).process(inputRomFiles);
 
     expect(processedRomFiles).toHaveLength(inputRomFiles.length);
-    for (let i = 0; i < processedRomFiles.length; i += 1) {
-      expect(processedRomFiles[i].getFileHeader()).not.toBeUndefined();
+    for (const [idx, processedRomFile] of processedRomFiles.entries()) {
+      expect(processedRomFile.getFileHeader()).not.toBeUndefined();
       // CRC should have changed
-      expect(inputRomFiles[i].equals(processedRomFiles[i])).toEqual(false);
+      expect(inputRomFiles[idx].equals(processedRomFile)).toEqual(false);
     }
   });
 
@@ -69,10 +69,10 @@ describe('extension has possible header', () => {
     ).process(inputRomFiles);
 
     expect(processedRomFiles).toHaveLength(inputRomFiles.length);
-    for (let i = 0; i < processedRomFiles.length; i += 1) {
-      expect(processedRomFiles[i].getFileHeader()).toBeUndefined();
+    for (const [idx, processedRomFile] of processedRomFiles.entries()) {
+      expect(processedRomFile.getFileHeader()).toBeUndefined();
       // CRC should NOT have changed
-      expect(inputRomFiles[i].equals(processedRomFiles[i])).toEqual(true);
+      expect(inputRomFiles[idx].equals(processedRomFile)).toEqual(true);
     }
   });
 });
@@ -90,10 +90,10 @@ describe('should read file for header', () => {
     }), new ProgressBarFake()).process(inputRomFiles);
 
     expect(processedRomFiles).toHaveLength(inputRomFiles.length);
-    for (let i = 0; i < processedRomFiles.length; i += 1) {
-      expect(processedRomFiles[i].getFileHeader()).toBeUndefined();
+    for (const [idx, processedRomFile] of processedRomFiles.entries()) {
+      expect(processedRomFile.getFileHeader()).toBeUndefined();
       // CRC should NOT have changed
-      expect(inputRomFiles[i].equals(processedRomFiles[i])).toEqual(true);
+      expect(inputRomFiles[idx].equals(processedRomFile)).toEqual(true);
     }
   });
 
@@ -109,10 +109,10 @@ describe('should read file for header', () => {
     }), new ProgressBarFake()).process(inputRomFiles);
 
     expect(processedRomFiles).toHaveLength(inputRomFiles.length);
-    for (let i = 0; i < processedRomFiles.length; i += 1) {
-      expect(processedRomFiles[i].getFileHeader()).not.toBeUndefined();
+    for (const [idx, processedRomFile] of processedRomFiles.entries()) {
+      expect(processedRomFile.getFileHeader()).not.toBeUndefined();
       // CRC should have changed
-      expect(inputRomFiles[i].equals(processedRomFiles[i])).toEqual(false);
+      expect(inputRomFiles[idx].equals(processedRomFile)).toEqual(false);
     }
   });
 });

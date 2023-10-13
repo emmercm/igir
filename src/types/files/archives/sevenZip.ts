@@ -89,7 +89,7 @@ export default class SevenZip extends Archive {
       .map(async (result) => ArchiveEntry.entryOf(
         this,
         result.name,
-        parseInt(result.size, 10),
+        Number.parseInt(result.size, 10),
         { crc32: result.crc },
         // If MD5 or SHA1 is desired, this file will need to be extracted to calculate
         checksumBitmask,

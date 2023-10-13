@@ -68,7 +68,7 @@ export default class Igir {
     let dats = await this.processDATScanner();
     const indexedRoms = await this.processROMScanner();
     const roms = [...indexedRoms.values()]
-      .flatMap((files) => files)
+      .flat()
       .reduce(ArrayPoly.reduceUnique(), []);
     const patches = await this.processPatchScanner();
 
@@ -113,7 +113,7 @@ export default class Igir {
         .write(filteredDat, parentsToCandidates);
       movedRomsToDelete.push(...movedRoms);
       const writtenRoms = [...parentsToCandidates.values()]
-        .flatMap((releaseCandidates) => releaseCandidates)
+        .flat()
         .flatMap((releaseCandidate) => releaseCandidate
           .getRomsWithFiles()
           .map((romWithFiles) => romWithFiles.getOutputFile()));
@@ -301,8 +301,7 @@ export default class Igir {
 
     const progressBar = await this.logger.addProgressBar('Cleaning output directory');
     const uniqueDirsToClean = dirsToClean.reduce(ArrayPoly.reduceUnique(), []);
-    const writtenFilesToExclude = [...datsToWrittenFiles.values()]
-      .flatMap((files) => files);
+    const writtenFilesToExclude = [...datsToWrittenFiles.values()].flat();
     const filesCleaned = await new DirectoryCleaner(this.options, progressBar)
       .clean(uniqueDirsToClean, writtenFilesToExclude);
     await progressBar.doneItems(filesCleaned.length, 'file', 'recycled');

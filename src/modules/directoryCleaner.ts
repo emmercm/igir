@@ -93,7 +93,7 @@ export default class DirectoryCleaner extends Module {
       return (await Promise.all(
         dirsToClean.map(async (dirToClean) => DirectoryCleaner.getEmptyDirs(dirToClean)),
       ))
-        .flatMap((emptyDirs) => emptyDirs)
+        .flat()
         .reduce(ArrayPoly.reduceUnique(), []);
     }
 

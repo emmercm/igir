@@ -44,7 +44,7 @@ export default class FixdatCreator extends Module {
 
     // Create an easily searchable index of every ROM that has a ReleaseCandidate
     const writtenRomHashCodes = new Set([...parentsToCandidates.values()]
-      .flatMap((releaseCandidates) => releaseCandidates)
+      .flat()
       .flatMap((releaseCandidate) => releaseCandidate.getRomsWithFiles())
       .map((romWithFiles) => romWithFiles.getRom())
       .map((rom) => rom.hashCode()));

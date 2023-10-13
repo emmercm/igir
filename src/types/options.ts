@@ -582,9 +582,9 @@ export default class Options implements OptionsProps {
       .filter((pattern) => pattern)
       .reduce(ArrayPoly.reduceUnique(), []);
     const globbedPaths = [];
-    for (let i = 0; i < uniqueGlobPatterns.length; i += 1) {
+    for (const uniqueGlobPattern of uniqueGlobPatterns) {
       globbedPaths.push(...(await this.globPath(
-        uniqueGlobPatterns[i],
+        uniqueGlobPattern,
         requireFiles,
         walkCallback ?? ((): void => {}),
       )));
@@ -596,15 +596,15 @@ export default class Options implements OptionsProps {
       Constants.MAX_FS_THREADS,
       async (file, callback: AsyncResultCallback<boolean, Error>) => {
         if (!await fsPoly.exists(file) && URLPoly.canParse(file)) {
-          callback(null, true);
+          callback(undefined, true);
           return;
         }
 
         try {
-          callback(null, !(await util.promisify(fs.lstat)(file)).isDirectory());
+          callback(undefined, !(await util.promisify(fs.lstat)(file)).isDirectory());
         } catch (e) {
           // Assume errors mean the path doesn't exist
-          callback(null, false);
+          callback(undefined, false);
         }
       },
     );

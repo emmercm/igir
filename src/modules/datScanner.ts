@@ -89,7 +89,7 @@ export default class DATScanner extends Scanner {
         this.progressBar.logWarn(`${datFile.toString()}: failed to download: ${e}`);
         return [];
       }
-    }))).flatMap((d) => d);
+    }))).flat();
   }
 
   // Parse each file into a DAT
@@ -108,7 +108,7 @@ export default class DATScanner extends Scanner {
 
         await this.progressBar.incrementDone();
         this.progressBar.removeWaitingMessage(waitingMessage);
-        return callback(null, dat);
+        return callback(undefined, dat);
       },
     )).filter(ArrayPoly.filterNotNullish);
 
@@ -309,7 +309,7 @@ export default class DATScanner extends Scanner {
         .filter((rom) => rom.name) // we need ROM filenames
         .map((entry) => new ROM({
           name: entry.name ?? '',
-          size: parseInt(entry.size ?? '0', 10),
+          size: Number.parseInt(entry.size ?? '0', 10),
           crc: entry.crc ?? '',
           md5: entry.md5,
           sha1: entry.sha1,
@@ -356,7 +356,7 @@ export default class DATScanner extends Scanner {
     const games = rows.map((row) => {
       const rom = new ROM({
         name: row.name,
-        size: parseInt(row.size ?? '', 10),
+        size: Number.parseInt(row.size ?? '', 10),
         crc: row.crc,
         md5: row.md5,
         sha1: row.sha1,
@@ -383,13 +383,13 @@ export default class DATScanner extends Scanner {
 
       const stream = parse<SmdbRow, SmdbRow>({
         delimiter: '\t',
-        quote: null,
+        quote: undefined,
         headers: ['sha256', 'name', 'sha1', 'md5', 'crc', 'size'],
       })
         .validate((row: SmdbRow) => row.name
           && row.crc
           && row.crc.length === 8
-          && (!row.size || Number.isInteger(parseInt(row.size, 10))))
+          && (!row.size || Number.isInteger(Number.parseInt(row.size, 10))))
         .on('error', reject)
         .on('data', (row) => {
           rows.push(row);

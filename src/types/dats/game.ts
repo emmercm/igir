@@ -207,7 +207,7 @@ export default class Game implements GameProps {
     // Letter revision
     const letterMatches = this.getName().match(/\(Rev\s*([A-Z])\)/i);
     if (letterMatches && letterMatches?.length >= 2) {
-      return letterMatches[1].toUpperCase().charCodeAt(0) - 'A'.charCodeAt(0) + 1;
+      return (letterMatches[1].toUpperCase().codePointAt(0) as number) - ('A'.codePointAt(0) as number) + 1;
     }
 
     // Ring code revision
@@ -549,7 +549,7 @@ export default class Game implements GameProps {
         .replace(/-[a-zA-Z]+$/, '') // chop off country
         .split(/[,+]/)
         .map((lang) => lang.toUpperCase())
-        .filter((lang) => Internationalization.LANGUAGES.indexOf(lang) !== -1) // is known
+        .filter((lang) => Internationalization.LANGUAGES.includes(lang)) // is known
         .reduce(ArrayPoly.reduceUnique(), []);
       if (twoMatchesParsed.length) {
         return twoMatchesParsed;
@@ -567,7 +567,7 @@ export default class Game implements GameProps {
         .map((lang) => Internationalization.LANGUAGE_OPTIONS
           .find((langOpt) => langOpt.long?.toUpperCase() === lang.toUpperCase())?.short)
         .filter(ArrayPoly.filterNotNullish)
-        .filter((lang) => Internationalization.LANGUAGES.indexOf(lang) !== -1) // is known
+        .filter((lang) => Internationalization.LANGUAGES.includes(lang)) // is known
         .reduce(ArrayPoly.reduceUnique(), []);
       if (threeMatchesParsed.length) {
         return threeMatchesParsed;

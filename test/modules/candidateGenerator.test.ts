@@ -121,7 +121,7 @@ describe.each(['zip', 'extract', 'raw'])('command: %s', (command) => {
 
     // Then
     expect(parentsToCandidates.size).toEqual(3);
-    const candidates = [...parentsToCandidates.values()].flatMap((c) => c);
+    const candidates = [...parentsToCandidates.values()].flat();
     expect(candidates).toHaveLength(1);
     const candidateWithNoRoms = candidates[0];
     expect(candidateWithNoRoms.getRomsWithFiles()).toHaveLength(0);
@@ -448,14 +448,14 @@ describe.each(['copy', 'move'])('prefer input files from the same archive when r
     const candidates = [...parentsToCandidates.values()];
     expect(candidates[0]).toHaveLength(Math.max(datGame.getReleases().length, 1));
 
-    for (let i = 0; i < candidates.length; i += 1) {
-      const candidate = candidates[i][0];
-      const romsWithFiles = candidate.getRomsWithFiles();
+    for (const candidate of candidates) {
+      const firstCandidate = candidate[0];
+      const romsWithFiles = firstCandidate.getRomsWithFiles();
       expect(romsWithFiles).toHaveLength(datGame.getRoms().length);
 
-      for (let j = 0; j < romsWithFiles.length; j += 1) {
-        const inputFile = romsWithFiles[j].getInputFile();
-        expect(inputFile.getFilePath()).toEqual(datGame.getRoms()[j].getName());
+      for (const [idx, romsWithFile] of romsWithFiles.entries()) {
+        const inputFile = romsWithFile.getInputFile();
+        expect(inputFile.getFilePath()).toEqual(datGame.getRoms()[idx].getName());
       }
     }
   });
@@ -481,14 +481,14 @@ describe.each(['copy', 'move'])('prefer input files from the same archive when r
       const candidates = [...parentsToCandidates.values()];
       expect(candidates[0]).toHaveLength(Math.max(datGame.getReleases().length, 1));
 
-      for (let i = 0; i < candidates.length; i += 1) {
-        const candidate = candidates[i][0];
-        const romsWithFiles = candidate.getRomsWithFiles();
+      for (const candidate of candidates) {
+        const firstCandidate = candidate[0];
+        const romsWithFiles = firstCandidate.getRomsWithFiles();
         expect(romsWithFiles).toHaveLength(datGame.getRoms().length);
 
-        for (let j = 0; j < romsWithFiles.length; j += 1) {
-          const inputFile = romsWithFiles[j].getInputFile();
-          expect(inputFile.getFilePath()).toEqual(datGame.getRoms()[j].getName());
+        for (const [idx, romsWithFile] of romsWithFiles.entries()) {
+          const inputFile = romsWithFile.getInputFile();
+          expect(inputFile.getFilePath()).toEqual(datGame.getRoms()[idx].getName());
         }
       }
     });
@@ -515,13 +515,13 @@ describe.each(['copy', 'move'])('prefer input files from the same archive when r
       const candidates = [...parentsToCandidates.values()];
       expect(candidates[0]).toHaveLength(Math.max(datGame.getReleases().length, 1));
 
-      for (let i = 0; i < candidates.length; i += 1) {
-        const candidate = candidates[i][0];
-        const romsWithFiles = candidate.getRomsWithFiles();
+      for (const candidate of candidates) {
+        const firstCandidate = candidate[0];
+        const romsWithFiles = firstCandidate.getRomsWithFiles();
         expect(romsWithFiles).toHaveLength(datGame.getRoms().length);
 
-        for (let j = 0; j < romsWithFiles.length; j += 1) {
-          const inputFile = romsWithFiles[j].getInputFile();
+        for (const romsWithFile of romsWithFiles) {
+          const inputFile = romsWithFile.getInputFile();
           expect(inputFile.getFilePath()).toEqual(archive.getFilePath());
         }
       }
@@ -550,13 +550,13 @@ describe.each(['copy', 'move'])('prefer input files from the same archive when r
       const candidates = [...parentsToCandidates.values()];
       expect(candidates[0]).toHaveLength(Math.max(datGame.getReleases().length, 1));
 
-      for (let i = 0; i < candidates.length; i += 1) {
-        const candidate = candidates[i][0];
-        const romsWithFiles = candidate.getRomsWithFiles();
+      for (const candidate of candidates) {
+        const firstCandidate = candidate[0];
+        const romsWithFiles = firstCandidate.getRomsWithFiles();
         expect(romsWithFiles).toHaveLength(datGame.getRoms().length);
 
-        for (let j = 0; j < romsWithFiles.length; j += 1) {
-          const inputFile = romsWithFiles[j].getInputFile();
+        for (const romsWithFile of romsWithFiles) {
+          const inputFile = romsWithFile.getInputFile();
           expect(inputFile.getFilePath()).toEqual(archive.getFilePath());
         }
       }

@@ -36,8 +36,7 @@ export default class FsPoly {
     await this.mkdir(dest, { recursive: true });
     const entries = await util.promisify(fs.readdir)(src, { withFileTypes: true });
 
-    for (let i = 0; i < entries.length; i += 1) {
-      const entry = entries[i];
+    for (const entry of entries) {
       const srcPath = path.join(src, entry.name);
       const destPath = path.join(dest, entry.name);
 
@@ -186,7 +185,7 @@ export default class FsPoly {
       return await util.promisify(fs.rename)(oldPath, newPath);
     } catch (e) {
       // These are the same error codes that `graceful-fs` catches
-      if (['EACCES', 'EPERM', 'EBUSY'].indexOf((e as NodeJS.ErrnoException).code ?? '') === -1) {
+      if (!['EACCES', 'EPERM', 'EBUSY'].includes((e as NodeJS.ErrnoException).code ?? '')) {
         throw e;
       }
 
@@ -273,7 +272,7 @@ export default class FsPoly {
     const k = 1024;
     const sizes = ['B', 'KiB', 'MiB', 'GiB', 'TiB', 'PiB', 'EiB', 'ZiB', 'YiB'];
     const i = bytes === 0 ? 0 : Math.floor(Math.log(bytes) / Math.log(k));
-    return `${parseFloat((bytes / k ** i).toFixed(decimals))}${sizes[i]}`;
+    return `${Number.parseFloat((bytes / k ** i).toFixed(decimals))}${sizes[i]}`;
   }
 
   static async symlink(file: PathLike, link: PathLike): Promise<void> {
@@ -309,14 +308,14 @@ export default class FsPoly {
 
     if (callback) callback(files.length);
 
-    for (let i = 0; i < files.length; i += 1) {
-      const file = path.join(pathLike.toString(), files[i]);
-      if (await this.isDirectory(file)) {
-        const subDirFiles = await this.walk(file);
+    for (const file of files) {
+      const fullPath = path.join(pathLike.toString(), file);
+      if (await this.isDirectory(fullPath)) {
+        const subDirFiles = await this.walk(fullPath);
         output.push(...subDirFiles);
         if (callback) callback(subDirFiles.length - 1);
       } else {
-        output.push(file);
+        output.push(fullPath);
       }
     }
 

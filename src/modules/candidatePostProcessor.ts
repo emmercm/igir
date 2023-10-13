@@ -40,7 +40,7 @@ export default class CandidatePostProcessor extends Module {
 
     // Get the output basename of every ROM
     const outputFileBasenames = [...parentsToCandidates.values()]
-      .flatMap((releaseCandidates) => releaseCandidates)
+      .flat()
       .flatMap((releaseCandidate) => releaseCandidate.getRomsWithFiles()
         .map((romWithFiles) => {
           const outputPathParsed = OutputFactory.getPath(

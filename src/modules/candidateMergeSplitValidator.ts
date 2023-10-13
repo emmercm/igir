@@ -40,7 +40,7 @@ export default class CandidateMergeSplitValidator extends Module {
     }, new Map<string, Game>());
 
     const releaseCandidatesIndexed = [...parentsToCandidates.values()]
-      .flatMap((releaseCandidates) => releaseCandidates)
+      .flat()
       .filter((releaseCandidate) => releaseCandidate.getRomsWithFiles().length)
       .reduce((map, releaseCandidate) => {
         map.set(releaseCandidate.getGame().getName(), releaseCandidate);
@@ -49,7 +49,7 @@ export default class CandidateMergeSplitValidator extends Module {
 
     // For every Game that has ReleaseCandidate(s) with files
     [...parentsToCandidates.values()]
-      .flatMap((releaseCandidates) => releaseCandidates)
+      .flat()
       .filter((releaseCandidate) => releaseCandidate.getRomsWithFiles().length)
       .map((releaseCandidate) => releaseCandidate.getGame())
       .reduce(ArrayPoly.reduceUnique(), [])

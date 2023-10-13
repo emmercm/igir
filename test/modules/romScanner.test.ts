@@ -69,9 +69,9 @@ describe('multiple files', () => {
         .sort((a, b) => a.getFilePath().localeCompare(b.getFilePath()));
 
       expect(scannedSymlinks).toHaveLength(scannedRealFiles.length);
-      for (let i = 0; i < scannedSymlinks.length; i += 1) {
-        expect(scannedSymlinks[i].getSize()).toEqual(scannedRealFiles[i].getSize());
-        expect(scannedSymlinks[i].getCrc32()).toEqual(scannedRealFiles[i].getCrc32());
+      for (const [idx, scannedSymlink] of scannedSymlinks.entries()) {
+        expect(scannedSymlink.getSize()).toEqual(scannedRealFiles[idx].getSize());
+        expect(scannedSymlink.getCrc32()).toEqual(scannedRealFiles[idx].getCrc32());
       }
     } finally {
       await fsPoly.rm(tempDir, { recursive: true });

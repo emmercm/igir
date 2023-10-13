@@ -54,7 +54,7 @@ export default class ROMHeaderProcessor extends Module {
         this.progressBar.removeWaitingMessage(waitingMessage);
         await this.progressBar.incrementDone();
 
-        return callback(null, fileWithHeader);
+        return callback(undefined, fileWithHeader);
       },
     );
 

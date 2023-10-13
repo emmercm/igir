@@ -129,7 +129,7 @@ export default class MovedROMDeleter extends Module {
     datsToWrittenFiles: Map<DAT, File[]>,
   ): string[] {
     const writtenFilePaths = new Set([...datsToWrittenFiles.values()]
-      .flatMap((files) => files)
+      .flat()
       .map((file) => file.getFilePath()));
 
     return movedRoms.filter((filePath) => !writtenFilePaths.has(filePath));

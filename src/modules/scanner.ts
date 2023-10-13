@@ -40,10 +40,10 @@ export default abstract class Scanner extends Module {
         const files = await this.getFilesFromPath(inputFile);
 
         await this.progressBar.incrementDone();
-        callback(null, files);
+        callback(undefined, files);
       },
     ))
-      .flatMap((files) => files);
+      .flat();
     if (!filterUnique) {
       return foundFiles;
     }

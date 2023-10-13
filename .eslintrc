@@ -2,8 +2,6 @@
   "extends": [
     "eslint:recommended",
     "plugin:@typescript-eslint/recommended",
-    "airbnb-base",
-    "airbnb-typescript/base",
     "plugin:jsdoc/recommended-typescript-error"
   ],
   "plugins": [
@@ -43,20 +41,6 @@
     "simple-import-sort/exports": "error",
     "simple-import-sort/imports": "error",
 
-    // ***** Typing *****
-    // Require explicit return types on functions and class methods.
-    "@typescript-eslint/explicit-function-return-type": "error",
-
-    // ***** Promises *****
-    // Disallow awaiting a value that is not a Thenable.
-    "@typescript-eslint/await-thenable": "error",
-    // Disallow async functions which have no `await` expression.
-    "@typescript-eslint/require-await": "error",
-    // Enforce consistent returning of awaited values.
-    "@typescript-eslint/return-await": "error",
-    // Require any function or method that returns a Promise to be marked async.
-    "@typescript-eslint/promise-function-async": ["error"],
-
     // ***** JSDoc *****
     "jsdoc/require-jsdoc": ["error", {
       // Require on public parts of classes
@@ -71,11 +55,26 @@
     "jsdoc/require-returns": "off",
     "jsdoc/no-blank-blocks": "error",
 
+    // ***** Types *****
+    "unicorn/no-null": "error",
+
+    // ***** Promises *****
+    // Disallow awaiting a value that is not a Thenable.
+    "@typescript-eslint/await-thenable": "error",
+    // Disallow async functions which have no `await` expression.
+    "@typescript-eslint/require-await": "error",
+    // Enforce consistent returning of awaited values.
+    "@typescript-eslint/return-await": "error",
+    // Require any function or method that returns a Promise to be marked async.
+    "@typescript-eslint/promise-function-async": ["error"],
+
     // ***** Classes *****
     "unicorn/no-static-only-class": "error",
     "@typescript-eslint/prefer-readonly": "error",
 
     // ***** Functions *****
+    // Require explicit return types on functions and class methods.
+    "@typescript-eslint/explicit-function-return-type": "error",
     "unicorn/prefer-default-parameters": "error",
 
     // ***** Operands *****
@@ -90,16 +89,35 @@
       "allowNullableString": true
     }],
 
+    // ***** Loops *****
+    "unicorn/no-for-loop": "error",
+
+    // ***** Objects *****
+    "@typescript-eslint/no-unused-vars": ["error", {
+      // Allow the use of destructuring to remove keys from an object
+      "ignoreRestSiblings": true
+    }],
+    "unicorn/empty-brace-spaces": "error",
+
     // ***** Arrays *****
-    // Try to enforce early terminations of loops, rather than statements such as `.find(x=>x)[0]`
-    "unicorn/prefer-array-find": "error",
+    "unicorn/no-new-array": "error",
     // TypeScript doesn't do a good job of reporting indexed values as potentially undefined, such as `[1,2,3][999]`
     "unicorn/prefer-at": "error",
+    // Try to enforce early terminations of loops, rather than statements such as `.find(x=>x)[0]`
+    "unicorn/prefer-array-find": "error",
+    "unicorn/prefer-array-flat": "error",
+    "unicorn/prefer-array-flat-map": "error",
+    "unicorn/prefer-includes": "error",
+    "unicorn/prefer-object-from-entries": "error",
 
     // ***** Numbers *****
     "unicorn/no-zero-fractions": "error",
     "unicorn/number-literal-case": "error",
     "unicorn/numeric-separators-style": "error",
+    "unicorn/prefer-number-properties": "error",
+
+    // ***** Strings *****
+    "unicorn/prefer-code-point": "error",
 
     // ***** Misc Allows *****
     // There are a few places where this needs to be allowed, but only a few, so warn on them
