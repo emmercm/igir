@@ -47,7 +47,7 @@ jobs:
       - path-filter
     if: ${{ needs.path-filter.outputs.changes == 'true' || github.event_name != 'pull_request' }}
     runs-on: ${{ matrix.os }}-latest
-    name: node-compile (${{ matrix.os }} ${{ matrix.arch }})
+    name: node-compile (${{ matrix.os || 'N/A' }} ${{ matrix.arch || '*' }})
     strategy:
       matrix:
         include:
@@ -90,7 +90,6 @@ jobs:
               tar cvf - igir | gzip --best > "${BIN_OUTPUT}"
           # TODO(cemmer): macOS arm64: https://github.com/github/roadmap/issues/528
           - os: macos
-            arch: '*'
             build: |
               NPM_PKG_VERSION=$(npm pkg get version | sed 's/"//g')
               NODE_ARCH=$(node --print 'process.arch')
@@ -101,7 +100,6 @@ jobs:
               ./igir --help
               tar cvf - igir | gzip --best > "${BIN_OUTPUT}"
           - os: windows
-            arch: '*'
             build: |
               $NPM_PKG_VERSION=$(npm pkg get version).replace('"','')
               $NODE_ARCH=$(node --print 'process.arch')
