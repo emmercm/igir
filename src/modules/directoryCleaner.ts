@@ -33,7 +33,7 @@ export default class DirectoryCleaner extends Module {
     this.progressBar.logInfo('cleaning files in output');
 
     // If nothing was written, then don't clean anything
-    if (!filesToExclude.length) {
+    if (filesToExclude.length === 0) {
       this.progressBar.logDebug('no files were written, not cleaning output');
       return [];
     }
@@ -46,7 +46,7 @@ export default class DirectoryCleaner extends Module {
       dirsToClean,
       filesToExclude,
     );
-    if (!filesToClean.length) {
+    if (filesToClean.length === 0) {
       this.progressBar.logDebug('no files to clean');
       return [];
     }
@@ -58,8 +58,8 @@ export default class DirectoryCleaner extends Module {
       await this.progressBar.reset(filesToClean.length);
       // TODO(cemmer): don't trash save files
       await this.trashOrDelete(filesToClean);
-    } catch (e) {
-      this.progressBar.logError(`failed to clean unmatched files: ${e}`);
+    } catch (error) {
+      this.progressBar.logError(`failed to clean unmatched files: ${error}`);
     }
 
     try {
@@ -67,8 +67,8 @@ export default class DirectoryCleaner extends Module {
       await this.progressBar.reset(emptyDirs.length);
       this.progressBar.logDebug(`cleaning ${emptyDirs.length.toLocaleString()} empty director${emptyDirs.length !== 1 ? 'ies' : 'y'}`);
       await this.trashOrDelete(emptyDirs);
-    } catch (e) {
-      this.progressBar.logError(`failed to clean empty directories: ${e}`);
+    } catch (error) {
+      this.progressBar.logError(`failed to clean empty directories: ${error}`);
     }
 
     this.progressBar.logInfo('done cleaning files in output');
@@ -114,7 +114,7 @@ export default class DirectoryCleaner extends Module {
     }));
 
     // If there are no subdirectories or files, this directory is empty
-    if (!subDirs.length && !subFiles.length) {
+    if (subDirs.length === 0 && subFiles.length === 0) {
       return [dirsToClean];
     }
 

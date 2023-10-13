@@ -77,7 +77,7 @@ async function candidateGenerator(
         parent.getGames()
           .filter((game) => gameNames.includes(game.getName()))
           .map(async (game) => {
-            const releases = game.getReleases().length ? game.getReleases() : [undefined];
+            const releases = game.getReleases().length > 0 ? game.getReleases() : [undefined];
             return Promise.all(releases.map(async (release) => {
               const romWithFiles = await Promise.all(game.getRoms()
                 .map(async (rom) => new ROMWithFiles(
@@ -309,7 +309,7 @@ dat,no roms,FOUND,,false,false,true,false,false,false,false,false,false,false,fa
 
           const releaseCandidatesWithFiles = (await Promise.all(
             parent.getGames().map(async (game) => {
-              const releases = game.getReleases().length ? game.getReleases() : [undefined];
+              const releases = game.getReleases().length > 0 ? game.getReleases() : [undefined];
               return Promise.all(releases.map(async (release) => {
                 const romWithFiles = await Promise.all(game.getRoms()
                   // Only the first ROM, not all of them

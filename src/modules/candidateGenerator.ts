@@ -42,7 +42,7 @@ export default class CandidateGenerator extends Module {
     this.progressBar.logInfo(`${dat.getNameShort()}: generating candidates`);
 
     const output = new Map<Parent, ReleaseCandidate[]>();
-    if (!hashCodeToInputFiles.size) {
+    if (hashCodeToInputFiles.size === 0) {
       this.progressBar.logDebug(`${dat.getNameShort()}: no input ROMs to make candidates from`);
       return output;
     }
@@ -64,7 +64,7 @@ export default class CandidateGenerator extends Module {
         const game = parent.getGames()[j];
 
         // For every release (ensuring at least one), find all release candidates
-        const releases = game.getReleases().length ? game.getReleases() : [undefined];
+        const releases = game.getReleases().length > 0 ? game.getReleases() : [undefined];
         for (const release of releases) {
 
           const releaseCandidate = await this.buildReleaseCandidateForRelease(
@@ -152,8 +152,8 @@ export default class CandidateGenerator extends Module {
           const outputFile = await this.getOutputFile(dat, game, release, rom, finalInputFile);
           const romWithFiles = new ROMWithFiles(rom, finalInputFile, outputFile);
           return [rom, romWithFiles];
-        } catch (e) {
-          this.progressBar.logInfo(`${dat.getNameShort()}: ${game.getName()}: ${e}`);
+        } catch (error) {
+          this.progressBar.logInfo(`${dat.getNameShort()}: ${game.getName()}: ${error}`);
           return [rom, undefined];
         }
       }),
@@ -162,7 +162,7 @@ export default class CandidateGenerator extends Module {
     const foundRomsWithFiles = romFiles
       .map(([, romWithFiles]) => romWithFiles)
       .filter(ArrayPoly.filterNotNullish);
-    if (romFiles.length && !foundRomsWithFiles.length) {
+    if (romFiles.length > 0 && foundRomsWithFiles.length === 0) {
       // The Game has ROMs, but none were found
       return undefined;
     }
@@ -223,7 +223,7 @@ export default class CandidateGenerator extends Module {
     }, new Map<Archive, ROM[]>());
 
     // Only filter the input files if this game has multiple ROMs, and we found some archives
-    if (game.getRoms().length > 1 && inputArchivesToRoms.size) {
+    if (game.getRoms().length > 1 && inputArchivesToRoms.size > 0) {
       // Filter to the Archives that contain every ROM in this Game
       const archivesWithEveryRom = [...inputArchivesToRoms.entries()]
         .filter(([, roms]) => roms.length === game.getRoms().length)
@@ -331,7 +331,7 @@ export default class CandidateGenerator extends Module {
       // Only return one copy of duplicate output paths
       .reduce(ArrayPoly.reduceUnique(), [])
       .sort();
-    if (!duplicateOutputPaths.length) {
+    if (duplicateOutputPaths.length === 0) {
       // There are no duplicate non-archive output file paths
       return false;
     }

@@ -58,7 +58,7 @@ async function walkWithCrc(inputDir: string, outputDir: string): Promise<string[
     .map(async (filePath) => {
       try {
         return await FileFactory.filesFrom(filePath);
-      } catch (e) {
+      } catch {
         return [];
       }
     })))

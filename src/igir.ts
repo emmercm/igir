@@ -74,7 +74,7 @@ export default class Igir {
 
     // Set up progress bar and input for DAT processing
     const datProcessProgressBar = await this.logger.addProgressBar(chalk.underline('Processing DATs'), ProgressBarSymbol.NONE, dats.length);
-    if (!dats.length) {
+    if (dats.length === 0) {
       dats = new DATGameInferrer(datProcessProgressBar).infer(roms);
     }
 
@@ -171,7 +171,7 @@ export default class Igir {
 
     const progressBar = await this.logger.addProgressBar('Scanning for DATs');
     const dats = await new DATScanner(this.options, progressBar).scan();
-    if (!dats.length) {
+    if (dats.length === 0) {
       throw new Error('No valid DAT files found!');
     }
 
@@ -280,7 +280,7 @@ export default class Igir {
     movedRomsToDelete: File[],
     datsToWrittenFiles: Map<DAT, File[]>,
   ): Promise<void> {
-    if (!movedRomsToDelete.length) {
+    if (movedRomsToDelete.length === 0) {
       return;
     }
 

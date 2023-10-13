@@ -50,8 +50,8 @@ export default class PatchScanner extends Scanner {
         try {
           const patch = await this.patchFromFile(file);
           callback(undefined, patch);
-        } catch (e) {
-          this.progressBar.logWarn(`${file.toString()}: failed to parse patch: ${e}`);
+        } catch (error) {
+          this.progressBar.logWarn(`${file.toString()}: failed to parse patch: ${error}`);
           callback(undefined, undefined);
         } finally {
           await this.progressBar.incrementDone();

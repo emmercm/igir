@@ -86,7 +86,7 @@ export default class CandidateMergeSplitValidator extends Module {
           missingDependencies = [...missingDependencies, ...missingDeviceGames];
         }
 
-        if (missingDependencies.length) {
+        if (missingDependencies.length > 0) {
           this.progressBar.logWarn(`${game.getName()}: missing dependent ROM set${missingDependencies.length !== 1 ? 's' : ''}: ${missingDependencies.join(', ')}`);
         }
       });

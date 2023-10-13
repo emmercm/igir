@@ -69,13 +69,18 @@
     "@typescript-eslint/promise-function-async": ["error"],
 
     // ***** Classes *****
-    "unicorn/no-static-only-class": "error",
     "@typescript-eslint/prefer-readonly": "error",
+    "unicorn/new-for-builtins": "error",
+    "unicorn/no-static-only-class": "error",
 
     // ***** Functions *****
     // Require explicit return types on functions and class methods.
     "@typescript-eslint/explicit-function-return-type": "error",
     "unicorn/prefer-default-parameters": "error",
+
+    // ***** Errors *****
+    "unicorn/catch-error-name": "error",
+    "unicorn/prefer-optional-catch-binding": "error",
 
     // ***** Operands *****
     "@typescript-eslint/prefer-nullish-coalescing": "error",
@@ -88,6 +93,8 @@
       "allowNullableBoolean": true,
       "allowNullableString": true
     }],
+    // Don't allow truthy or falsey conditionals on array lengths
+    "unicorn/explicit-length-check": "error",
 
     // ***** Loops *****
     "unicorn/no-for-loop": "error",

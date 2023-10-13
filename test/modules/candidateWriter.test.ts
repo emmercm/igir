@@ -59,7 +59,7 @@ async function walkAndStat(dirPath: string): Promise<[string, Stats][]> {
           // Hard-code properties that can change with file reads
           stats.atime = new Date(0);
           stats.atimeMs = 0;
-        } catch (e) {
+        } catch {
           stats = new Stats();
         }
         return [

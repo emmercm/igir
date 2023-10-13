@@ -40,7 +40,7 @@ export default class CandidatePatchGenerator extends Module {
   ): Promise<Map<Parent, ReleaseCandidate[]>> {
     this.progressBar.logInfo(`${dat.getNameShort()}: generating patched candidates`);
 
-    if (!parentsToCandidates.size) {
+    if (parentsToCandidates.size === 0) {
       this.progressBar.logDebug(`${dat.getNameShort()}: no parents to make patched candidates for`);
       return parentsToCandidates;
     }
@@ -119,7 +119,7 @@ export default class CandidatePatchGenerator extends Module {
       .filter(ArrayPoly.filterNotNullish);
 
     // No relevant patches found, no new candidates generated
-    if (!releaseCandidatePatches.length) {
+    if (releaseCandidatePatches.length === 0) {
       return undefined;
     }
 

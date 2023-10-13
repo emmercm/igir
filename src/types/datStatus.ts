@@ -69,7 +69,7 @@ export default class DATStatus {
           const gameReleaseCandidates = releaseCandidates
             .filter((rc) => !rc.isPatched())
             .filter((rc) => rc.getGame().hashCode() === game.hashCode());
-          if (gameReleaseCandidates.length || game.getRoms().length === 0) {
+          if (gameReleaseCandidates.length > 0 || game.getRoms().length === 0) {
             // The only reason there may be multiple ReleaseCandidates for a Game is if it has
             // multiple regions, but DATStatus doesn't care about regions.
             const gameReleaseCandidate = gameReleaseCandidates.find(() => true);
@@ -99,7 +99,7 @@ export default class DATStatus {
           // matching ReleaseCandidate was found for this Game (above), then report it as IGNORED.
           // We can't know if this Game had matching input files, they would have already been
           // discarded, so those files will be reported as UNUSED.
-          if (options.getSingle() && releaseCandidates.length) {
+          if (options.getSingle() && releaseCandidates.length > 0) {
             this.ignoredHashCodesToGames.set(game.hashCode(), game);
           }
         });
@@ -245,7 +245,7 @@ export default class DATStatus {
 
         const foundReleaseCandidate = foundReleaseCandidates
           .find((rc) => rc && rc.getGame().equals(game));
-        if (foundReleaseCandidate !== undefined || !game.getRoms().length) {
+        if (foundReleaseCandidate !== undefined || game.getRoms().length === 0) {
           status = GameStatus.FOUND;
         }
 

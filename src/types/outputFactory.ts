@@ -169,7 +169,7 @@ export default class OutputFactory {
     result = this.replaceOutputGameConsoleTokens(result, dat, outputRomFilename);
 
     const leftoverTokens = result.match(/\{[a-zA-Z]+\}/g);
-    if (leftoverTokens !== null && leftoverTokens.length) {
+    if (leftoverTokens !== null && leftoverTokens.length > 0) {
       throw new Error(`failed to replace output token${leftoverTokens.length !== 1 ? 's' : ''}: ${leftoverTokens.join(', ')}`);
     }
 

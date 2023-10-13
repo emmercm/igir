@@ -22,7 +22,7 @@ export default class ArgumentsParser {
   }
 
   private static getLastValue<T>(arr: T | T[]): T {
-    if (Array.isArray(arr) && arr.length) {
+    if (Array.isArray(arr) && arr.length > 0) {
       return arr.at(-1) as T;
     }
     return arr as T;
@@ -234,7 +234,7 @@ export default class ArgumentsParser {
           return true;
         }
         const needDat = ['report'].filter((command) => checkArgv._.includes(command));
-        if ((!checkArgv.dat || !checkArgv.dat.length) && needDat.length) {
+        if ((!checkArgv.dat || checkArgv.dat.length === 0) && needDat.length > 0) {
           throw new Error(`Missing required option for commands ${needDat.join(', ')}: --dat`);
         }
         return true;
@@ -323,7 +323,7 @@ export default class ArgumentsParser {
           return true;
         }
         const needOutput = ['copy', 'move', 'extract', 'zip', 'clean'].filter((command) => checkArgv._.includes(command));
-        if (!checkArgv.output && needOutput.length) {
+        if (!checkArgv.output && needOutput.length > 0) {
           throw new Error(`Missing required option for command${needOutput.length !== 1 ? 's' : ''} ${needOutput.join(', ')}: --output`);
         }
         return true;
@@ -347,7 +347,7 @@ export default class ArgumentsParser {
           return true;
         }
         const needZip = ['zip-exclude', 'zip-dat-name'].filter((option) => checkArgv[option]);
-        if (!checkArgv._.includes('zip') && needZip.length) {
+        if (!checkArgv._.includes('zip') && needZip.length > 0) {
           throw new Error(`Missing required command for option${needZip.length !== 1 ? 's' : ''} ${needZip.join(', ')}: zip`);
         }
         return true;
@@ -363,7 +363,7 @@ export default class ArgumentsParser {
           return true;
         }
         const needSymlink = ['symlink-relative'].filter((option) => checkArgv[option]);
-        if (!checkArgv._.includes('symlink') && needSymlink.length) {
+        if (!checkArgv._.includes('symlink') && needSymlink.length > 0) {
           throw new Error(`Missing required command for option${needSymlink.length !== 1 ? 's' : ''} ${needSymlink.join(', ')}: symlink`);
         }
         return true;

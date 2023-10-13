@@ -26,7 +26,7 @@ export default class MovedROMDeleter extends Module {
     movedRoms: File[],
     datsToWrittenFiles: Map<DAT, File[]>,
   ): Promise<string[]> {
-    if (!movedRoms.length) {
+    if (movedRoms.length === 0) {
       return [];
     }
 
@@ -49,7 +49,7 @@ export default class MovedROMDeleter extends Module {
       this.progressBar.logTrace(`${filePath}: deleting moved file`);
       try {
         await fsPoly.rm(filePath, { force: true });
-      } catch (e) {
+      } catch {
         this.progressBar.logError(`${filePath}: failed to delete`);
       }
     }));
@@ -96,7 +96,7 @@ export default class MovedROMDeleter extends Module {
           // Otherwise, the entry needs to have been explicitly moved
           return entry.hashCodes().some((hashCode) => !movedEntryHashCodes.has(hashCode));
         });
-        if (unmovedEntries.length) {
+        if (unmovedEntries.length > 0) {
           this.progressBar.logWarn(`${filePath}: not deleting moved file, ${unmovedEntries.length.toLocaleString()} archive entr${unmovedEntries.length !== 1 ? 'ies were' : 'y was'} unmatched:${unmovedEntries.sort().map((entry) => `\n  ${entry}`)}`);
           return undefined;
         }

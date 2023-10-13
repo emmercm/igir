@@ -29,7 +29,7 @@ export default class CandidatePreferer extends Module {
   ): Promise<Map<Parent, ReleaseCandidate[]>> {
     this.progressBar.logInfo(`${dat.getNameShort()}: filtering candidates`);
 
-    if (!parentsToCandidates.size) {
+    if (parentsToCandidates.size === 0) {
       this.progressBar.logDebug(`${dat.getNameShort()}: no parents, so no candidates to filter`);
       return parentsToCandidates;
     }
@@ -117,7 +117,7 @@ export default class CandidatePreferer extends Module {
 
   private preferLanguagesSort(a: ReleaseCandidate, b: ReleaseCandidate): number {
     const preferLanguages = this.options.getPreferLanguages();
-    if (!preferLanguages.length) {
+    if (preferLanguages.length === 0) {
       return 0;
     }
 
@@ -136,7 +136,7 @@ export default class CandidatePreferer extends Module {
   }
 
   private preferRegionsSort(a: ReleaseCandidate, b: ReleaseCandidate): number {
-    if (this.options.getPreferRegions().length) {
+    if (this.options.getPreferRegions().length > 0) {
       return this.preferRegionSortValue(a) - this.preferRegionSortValue(b);
     }
     return 0;

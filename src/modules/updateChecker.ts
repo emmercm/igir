@@ -27,7 +27,7 @@ export default class UpdateChecker {
     let npmVersion;
     try {
       npmVersion = await UpdateChecker.getVersion(Constants.COMMAND_NAME);
-    } catch (e) {
+    } catch {
       return;
     }
 
@@ -45,8 +45,8 @@ export default class UpdateChecker {
         let json;
         try {
           json = JSON.parse(data.toString()) || {};
-        } catch (e) {
-          reject(e);
+        } catch (error) {
+          reject(error);
           return;
         }
 

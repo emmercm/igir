@@ -602,7 +602,7 @@ export default class Options implements OptionsProps {
 
         try {
           callback(undefined, !(await util.promisify(fs.lstat)(file)).isDirectory());
-        } catch (e) {
+        } catch {
           // Assume errors mean the path doesn't exist
           callback(undefined, false);
         }
@@ -634,7 +634,7 @@ export default class Options implements OptionsProps {
     if (await fsPoly.isDirectory(inputPath)) {
       const dirPaths = (await fsPoly.walk(inputPathNormalized, walkCallback))
         .map((filePath) => path.normalize(filePath));
-      if (!dirPaths.length) {
+      if (dirPaths.length === 0) {
         if (!requireFiles) {
           return [];
         }
@@ -652,7 +652,7 @@ export default class Options implements OptionsProps {
     // Otherwise, process it as a glob pattern
     const paths = (await fg(inputPathNormalized, { onlyFiles: true }))
       .map((filePath) => path.normalize(filePath));
-    if (!paths.length) {
+    if (paths.length === 0) {
       if (URLPoly.canParse(inputPath)) {
         // Allow URLs, let the scanner modules deal with them
         walkCallback(1);
@@ -864,20 +864,20 @@ export default class Options implements OptionsProps {
   }
 
   getFilterLanguage(): Set<string> {
-    if (this.filterLanguage.length) {
+    if (this.filterLanguage.length > 0) {
       return new Set(Options.filterUniqueUpper(this.filterLanguage));
     }
-    if (this.languageFilter.length) {
+    if (this.languageFilter.length > 0) {
       return new Set(Options.filterUniqueUpper(this.languageFilter));
     }
     return new Set();
   }
 
   getFilterRegion(): Set<string> {
-    if (this.filterRegion.length) {
+    if (this.filterRegion.length > 0) {
       return new Set(Options.filterUniqueUpper(this.filterRegion));
     }
-    if (this.regionFilter.length) {
+    if (this.regionFilter.length > 0) {
       return new Set(Options.filterUniqueUpper(this.regionFilter));
     }
     return new Set();

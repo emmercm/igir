@@ -103,7 +103,7 @@ async function buildReleaseCandidatesWithRegionLanguage(
       games.push(game);
 
       /** {@see CandidateGenerator} */
-      const releaseCandidateReleases = releases.length ? releases : [undefined];
+      const releaseCandidateReleases = releases.length > 0 ? releases : [undefined];
       for (const release of releaseCandidateReleases) {
         releaseCandidates.push(new ReleaseCandidate(
           game,
