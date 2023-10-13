@@ -49,7 +49,7 @@ export default class ReleaseCandidate {
       return this.release.getRegion();
     }
 
-    return this.game.getRegions()[0];
+    return this.game.getRegions().at(0);
   }
 
   getLanguages(): string[] {
