@@ -193,7 +193,7 @@ export default class DATScanner extends Scanner {
         });
 
         proc.on('exit', (code) => {
-          if (code) {
+          if (code !== null && code > 0) {
             reject(new Error(`exit code ${code}`));
             return;
           }

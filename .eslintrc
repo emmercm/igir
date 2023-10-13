@@ -81,6 +81,13 @@
     // ***** Operands *****
     "@typescript-eslint/prefer-nullish-coalescing": "error",
 
+    // ***** Conditionals *****
+    "@typescript-eslint/strict-boolean-expressions": ["error", {
+      "allowAny": true,
+      "allowNullableBoolean": true,
+      "allowNullableString": true
+    }],
+
     // ***** Arrays *****
     "unicorn/prefer-array-find": "error",
     "unicorn/prefer-at": "error",

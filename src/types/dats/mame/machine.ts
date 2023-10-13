@@ -14,7 +14,7 @@ export default class Machine extends Game implements MachineProps {
   @Expose({ name: 'device_ref' })
   @Type(() => DeviceRef)
   @Transform(({ value }) => value || [])
-  readonly deviceRef: DeviceRef | DeviceRef[];
+  readonly deviceRef?: DeviceRef | DeviceRef[];
 
   constructor(props?: MachineProps) {
     super(props);

@@ -28,7 +28,7 @@ export default class ArrayPoly {
   public static filterUniqueMapped<T, V>(
     mapper: (arg: T) => V,
   ): (value: T, idx: number, values: T[]) => boolean {
-    let mappedValues: V[];
+    let mappedValues: V[] | undefined;
     return (value: T, idx: number, values: T[]): boolean => {
       if (!mappedValues) {
         mappedValues = values.map((val) => mapper(val));

@@ -23,7 +23,7 @@ export default class MameDAT extends DAT {
   @Expose()
   @Type(() => Machine)
   @Transform(({ value }) => value || [])
-  private readonly machine: Machine | Machine[];
+  private readonly machine?: Machine | Machine[];
 
   constructor(machine: Machine | Machine[]) {
     super();
@@ -50,10 +50,8 @@ export default class MameDAT extends DAT {
 
   getGames(): Game[] {
     if (Array.isArray(this.machine)) {
-      if (this.machine) {
-        return this.machine;
-      }
-    } else if (this.machine) {
+      return this.machine;
+    } if (this.machine) {
       return [this.machine];
     }
     return [];

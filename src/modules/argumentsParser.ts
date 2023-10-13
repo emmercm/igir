@@ -711,12 +711,9 @@ Example use cases:
         description: 'Show help',
         type: 'boolean',
       })
-      .fail((msg, err, _yargs) => {
-        if (err) {
-          throw err;
-        }
-        this.logger.colorizeYargs(`${_yargs.help().toString().trimEnd()}\n`);
-        throw new Error(msg);
+      .fail((msg, err) => {
+        // TODO(cemmer): is this needed?
+        throw err;
       });
 
     const yargsArgv = yargsParser
