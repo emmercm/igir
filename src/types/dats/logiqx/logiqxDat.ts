@@ -22,13 +22,13 @@ export default class LogiqxDAT extends DAT {
   @Expose()
   @Type(() => Game)
   @Transform(({ value }) => value || [])
-  private readonly game: Game | Game[];
+  private readonly game?: Game | Game[];
 
   // NOTE(cemmer): this is not Logiqx DTD-compliant, but it's what pleasuredome Datfiles use
   @Expose()
   @Type(() => Machine)
   @Transform(({ value }) => value || [])
-  private readonly machine: Machine | Machine[];
+  private readonly machine?: Machine | Machine[];
 
   constructor(header: Header, games: Game | Game[]) {
     super();
@@ -89,7 +89,7 @@ export default class LogiqxDAT extends DAT {
     }
 
     if (Array.isArray(this.machine)) {
-      if (this.machine) {
+      if (this.machine.length) {
         return this.machine;
       }
     } else if (this.machine) {

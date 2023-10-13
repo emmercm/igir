@@ -381,12 +381,11 @@ export default class OutputFactory {
       output = path.join(dir, output);
     }
 
-    if (game && (
-      (options.getDirGameSubdir() === GameSubdirMode.MULTIPLE
+    if ((options.getDirGameSubdir() === GameSubdirMode.MULTIPLE
         && game.getRoms().length > 1
         && !FileFactory.isArchive(ext))
       || options.getDirGameSubdir() === GameSubdirMode.ALWAYS
-    )) {
+    ) {
       output = path.join(game.getName(), output);
     }
 

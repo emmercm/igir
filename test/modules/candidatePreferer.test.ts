@@ -60,7 +60,7 @@ async function expectPreferredCandidates(
 }
 
 function arrayCoerce<T>(val: T | T[] | undefined): T[] {
-  if (!val) {
+  if (val === undefined) {
     return [];
   }
   return Array.isArray(val) ? val : [val];

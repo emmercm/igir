@@ -712,6 +712,7 @@ Example use cases:
         type: 'boolean',
       })
       .fail((msg, err, _yargs) => {
+        // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
         if (err) {
           throw err;
         }
