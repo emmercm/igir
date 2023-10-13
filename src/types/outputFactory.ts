@@ -302,7 +302,7 @@ export default class OutputFactory {
 
     // Find the letter for every ROM filename
     let lettersToFilenames = (romBasenames ?? [romBasename]).reduce((map, filename) => {
-      let letter = filename[0].toUpperCase();
+      let letter = filename.charAt(0).toUpperCase();
       if (letter.match(/[^A-Z]/)) {
         letter = '#';
       }
