@@ -112,12 +112,12 @@ export default class Game implements GameProps {
   @Expose()
   @Type(() => Release)
   @Transform(({ value }) => value || [])
-  readonly release: Release | Release[];
+  readonly release?: Release | Release[];
 
   @Expose()
   @Type(() => ROM)
   @Transform(({ value }) => value || [])
-  readonly rom: ROM | ROM[];
+  readonly rom?: ROM | ROM[];
 
   constructor(props?: GameProps) {
     this.name = props?.name ?? '';

@@ -634,7 +634,7 @@ export default class Options implements OptionsProps {
     if (await fsPoly.isDirectory(inputPath)) {
       const dirPaths = (await fsPoly.walk(inputPathNormalized, walkCallback))
         .map((filePath) => path.normalize(filePath));
-      if (!dirPaths || !dirPaths.length) {
+      if (!dirPaths.length) {
         if (!requireFiles) {
           return [];
         }
@@ -652,7 +652,7 @@ export default class Options implements OptionsProps {
     // Otherwise, process it as a glob pattern
     const paths = (await fg(inputPathNormalized, { onlyFiles: true }))
       .map((filePath) => path.normalize(filePath));
-    if (!paths || !paths.length) {
+    if (!paths.length) {
       if (URLPoly.canParse(inputPath)) {
         // Allow URLs, let the scanner modules deal with them
         walkCallback(1);

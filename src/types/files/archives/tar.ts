@@ -27,7 +27,7 @@ export default class Tar extends Archive {
 
     // WARN(cemmer): entries in tar archives don't have headers, the entire file has to be read to
     // calculate the CRCs
-    let errorMessage;
+    let errorMessage: string | undefined;
     const writeStream = new tar.Parse({
       onwarn: (code, message): void => {
         errorMessage = `${code}: ${message}`;

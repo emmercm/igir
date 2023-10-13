@@ -231,7 +231,7 @@ export default class CandidateGenerator extends Module {
         .filter(([, roms]) => roms.length === game.getRoms().length)
         .map(([archive]) => archive);
 
-      const archiveWithEveryRom = archivesWithEveryRom[0];
+      const archiveWithEveryRom = archivesWithEveryRom.at(0);
       if (archiveWithEveryRom) {
         // An Archive was found, use that as the only possible input file
         // For each of this Game's ROMs, find the matching ArchiveEntry from this Archive
