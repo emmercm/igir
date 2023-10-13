@@ -73,8 +73,7 @@ async function walkAndStat(dirPath: string): Promise<[string, Stats][]> {
 function datInferrer(romFiles: File[]): DAT {
   // Run DATInferrer, but condense all DATs down to one
   const datGames = new DATGameInferrer(new ProgressBarFake()).infer(romFiles)
-    .map((dat) => dat.getGames())
-    .flatMap((games) => games);
+    .flatMap((dat) => dat.getGames());
   // TODO(cemmer): filter to unique games / remove duplicates
   return new LogiqxDAT(new Header({ name: 'ROMWriter Test' }), datGames);
 }
@@ -410,7 +409,7 @@ describe('zip', () => {
 
       const writtenRomsAndCrcs = (await Promise.all(outputFiles
         .map(async ([outputPath]) => FileFactory.filesFrom(path.join(outputTemp, outputPath)))))
-        .flatMap((entries) => entries)
+        .flat()
         .map((entry) => [entry.toString().replace(outputTemp + path.sep, ''), entry.getCrc32()])
         .sort((a, b) => a[0].localeCompare(b[0]));
       expect(writtenRomsAndCrcs).toEqual(expectedFilesAndCrcs);
@@ -806,7 +805,7 @@ describe('extract', () => {
 
       const writtenRomsAndCrcs = (await Promise.all(outputFiles
         .map(async ([outputPath]) => FileFactory.filesFrom(path.join(outputTemp, outputPath)))))
-        .flatMap((entries) => entries)
+        .flat()
         .map((entry) => [entry.toString().replace(outputTemp + path.sep, ''), entry.getCrc32()])
         .sort((a, b) => a[0].localeCompare(b[0]));
       expect(writtenRomsAndCrcs).toEqual(expectedFilesAndCrcs);
@@ -1133,7 +1132,7 @@ describe('raw', () => {
 
       const writtenRomsAndCrcs = (await Promise.all(outputFiles
         .map(async ([outputPath]) => FileFactory.filesFrom(path.join(outputTemp, outputPath)))))
-        .flatMap((entries) => entries)
+        .flat()
         .map((entry) => [entry.toString().replace(outputTemp + path.sep, ''), entry.getCrc32()])
         .sort((a, b) => a[0].localeCompare(b[0]));
       expect(writtenRomsAndCrcs).toEqual(expectedFilesAndCrcs);
@@ -1277,8 +1276,7 @@ describe('symlink', () => {
       // And files were written
       const outputFilesBefore = await walkAndStat(outputTemp);
       expect(outputFilesBefore).not.toHaveLength(0);
-      for (let i = 0; i < outputFilesBefore.length; i += 1) {
-        const [outputPath, stats] = outputFilesBefore[i];
+      for (const [outputPath, stats] of outputFilesBefore) {
         expect(stats.isSymbolicLink()).toEqual(true);
         await expect(fsPoly.readlink(path.join(outputTemp, outputPath))).resolves.toMatch(new RegExp(`^${inputTemp.replace(/\\/g, '\\\\')}`));
       }
@@ -1307,8 +1305,7 @@ describe('symlink', () => {
       // And files were written
       const outputFilesBefore = await walkAndStat(outputTemp);
       expect(outputFilesBefore).not.toHaveLength(0);
-      for (let i = 0; i < outputFilesBefore.length; i += 1) {
-        const [outputPath, stats] = outputFilesBefore[i];
+      for (const [outputPath, stats] of outputFilesBefore) {
         expect(stats.isSymbolicLink()).toEqual(true);
         await expect(fsPoly.readlink(path.join(outputTemp, outputPath))).resolves.toMatch(new RegExp(`^${inputTemp.replace(/\\/g, '\\\\')}`));
       }
@@ -1324,8 +1321,7 @@ describe('symlink', () => {
       expect(outputFilesAfter.map((pair) => pair[0]))
         .toEqual(outputFilesBefore.map((pair) => pair[0]));
       expect(outputFilesAfter).not.toEqual(outputFilesBefore);
-      for (let i = 0; i < outputFilesAfter.length; i += 1) {
-        const [outputPath, stats] = outputFilesAfter[i];
+      for (const [outputPath, stats] of outputFilesAfter) {
         expect(stats.isSymbolicLink()).toEqual(true);
         await expect(fsPoly.readlink(path.join(outputTemp, outputPath))).resolves.toMatch(new RegExp(`^${inputTemp.replace(/\\/g, '\\\\')}`));
       }
@@ -1347,8 +1343,7 @@ describe('symlink', () => {
       // Then files were written
       const outputFilesBefore = await walkAndStat(outputTemp);
       expect(outputFilesBefore).not.toHaveLength(0);
-      for (let i = 0; i < outputFilesBefore.length; i += 1) {
-        const [outputPath, stats] = outputFilesBefore[i];
+      for (const [outputPath, stats] of outputFilesBefore) {
         expect(stats.isSymbolicLink()).toEqual(true);
         const outputPathAbsolute = path.resolve(path.join(outputTemp, outputPath));
         const outputPathResolved = path.resolve(
