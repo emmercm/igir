@@ -506,18 +506,20 @@ describe('zip', () => {
       expect(outputFiles).toEqual(expectedOutputPaths);
 
       // And the expected files were moved (deleted)
-      const romFilesAfter = await walkAndStat(path.join(inputTemp, 'roms'));
-      romFilesBefore.forEach(([inputFile, statsBefore]) => {
-        const [, statsAfter] = romFilesAfter
-          .find(([inputFileAfter]) => inputFileAfter === inputFile) ?? [];
-        if (statsAfter) {
+      const romFilesAfter = new Map(await walkAndStat(path.join(inputTemp, 'roms')));
+      romFilesBefore
+        .map(([inputFile, statsBefore]) => ([statsBefore, romFilesAfter.get(inputFile)]))
+        .filter((statsTuple): statsTuple is [Stats, Stats] => statsTuple.every((val) => val))
+        .forEach(([statsBefore, statsAfter]) => {
           // File wasn't deleted, ensure it wasn't touched
           expect(statsAfter).toEqual(statsBefore);
-        } else {
+        });
+      romFilesBefore
+        .filter(([inputFile]) => !romFilesAfter.has(inputFile))
+        .forEach(([inputFile]) => {
           // File was deleted, ensure it was expected
           expect(expectedDeletedInputPaths).toContain(inputFile.replace(/[\\/]/g, '/'));
-        }
-      });
+        });
     });
   });
 
@@ -908,18 +910,20 @@ describe('extract', () => {
       expect(outputFiles).toEqual(expectedOutputPaths);
 
       // And the expected files were moved (deleted)
-      const romFilesAfter = await walkAndStat(path.join(inputTemp, 'roms'));
-      romFilesBefore.forEach(([inputFile, statsBefore]) => {
-        const [, statsAfter] = romFilesAfter
-          .find(([inputFileAfter]) => inputFileAfter === inputFile) ?? [];
-        if (statsAfter) {
+      const romFilesAfter = new Map(await walkAndStat(path.join(inputTemp, 'roms')));
+      romFilesBefore
+        .map(([inputFile, statsBefore]) => ([statsBefore, romFilesAfter.get(inputFile)]))
+        .filter((statsTuple): statsTuple is [Stats, Stats] => statsTuple.every((val) => val))
+        .forEach(([statsBefore, statsAfter]) => {
           // File wasn't deleted, ensure it wasn't touched
           expect(statsAfter).toEqual(statsBefore);
-        } else {
+        });
+      romFilesBefore
+        .filter(([inputFile]) => !romFilesAfter.has(inputFile))
+        .forEach(([inputFile]) => {
           // File was deleted, ensure it was expected
           expect(expectedDeletedInputPaths).toContain(inputFile.replace(/[\\/]/g, '/'));
-        }
-      });
+        });
     });
   });
 });
@@ -1229,18 +1233,20 @@ describe('raw', () => {
       expect(outputFiles).toEqual(expectedOutputPaths);
 
       // And the expected files were moved (deleted)
-      const romFilesAfter = await walkAndStat(path.join(inputTemp, 'roms'));
-      romFilesBefore.forEach(([inputFile, statsBefore]) => {
-        const [, statsAfter] = romFilesAfter
-          .find(([inputFileAfter]) => inputFileAfter === inputFile) ?? [];
-        if (statsAfter) {
+      const romFilesAfter = new Map(await walkAndStat(path.join(inputTemp, 'roms')));
+      romFilesBefore
+        .map(([inputFile, statsBefore]) => ([statsBefore, romFilesAfter.get(inputFile)]))
+        .filter((statsTuple): statsTuple is [Stats, Stats] => statsTuple.every((val) => val))
+        .forEach(([statsBefore, statsAfter]) => {
           // File wasn't deleted, ensure it wasn't touched
           expect(statsAfter).toEqual(statsBefore);
-        } else {
+        });
+      romFilesBefore
+        .filter(([inputFile]) => !romFilesAfter.has(inputFile))
+        .forEach(([inputFile]) => {
           // File was deleted, ensure it was expected
           expect(expectedDeletedInputPaths).toContain(inputFile.replace(/[\\/]/g, '/'));
-        }
-      });
+        });
     });
   });
 });
