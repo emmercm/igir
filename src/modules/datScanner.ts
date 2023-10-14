@@ -346,7 +346,7 @@ export default class DATScanner extends Scanner {
       return undefined;
     }
 
-    if (rows.some((row) => row.size === 0)) {
+    if (rows.some((row) => row.size === undefined || row.size.length === 0)) {
       this.progressBar.logWarn(`${datFile.toString()}: SMDB doesn't specify ROM file sizes, can't use`);
       return undefined;
     }
@@ -389,7 +389,7 @@ export default class DATScanner extends Scanner {
         .validate((row: SmdbRow) => row.name
           && row.crc
           && row.crc.length === 8
-          && (row.size === 0 || Number.isInteger(Number.parseInt(row.size, 10))))
+          && (row.size === undefined || row.size.length === 0 || Number.isInteger(Number.parseInt(row.size, 10))))
         .on('error', reject)
         .on('data', (row) => {
           rows.push(row);
