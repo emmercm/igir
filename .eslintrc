@@ -126,18 +126,17 @@
     // ***** Strings *****
     "unicorn/prefer-code-point": "error",
 
-    // ***** Misc Allows *****
+    // ********** Recommended Overrides **********
+
+    // ***** eslint:recommended *****
+    // Referencing ASCII characters <32 is entirely legitimate
+    "no-control-regex": "off",
+
+    // ***** plugin:@typescript-eslint/recommended *****
     // There are a few places where this needs to be allowed, but only a few, so warn on them
     "@typescript-eslint/no-floating-promises": "warn",
     // There are a few places where this needs to be allowed, but only a few, so warn on them
-    "@typescript-eslint/no-unused-expressions": "warn",
-    // Significant parts of igir use async.js or mutexes & semaphores to intentlaly limit
-    // concurrent promises, so we want to respect those
-    "no-await-in-loop": "off",
-    // ROM patch file processors use a lot of bitwise operations for legitimate reasons
-    "no-bitwise": "off",
-    // Referencing ASCII characters <32 is entirely legitimate
-    "no-control-regex": "off"
+    "@typescript-eslint/no-unused-expressions": "warn"
   },
 
   "overrides": [
