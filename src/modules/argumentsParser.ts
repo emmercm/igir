@@ -22,7 +22,7 @@ export default class ArgumentsParser {
   }
 
   private static getLastValue<T>(arr: T | T[]): T {
-    if (Array.isArray(arr) && arr.length) {
+    if (Array.isArray(arr) && arr.length > 0) {
       return arr.at(-1) as T;
     }
     return arr as T;
@@ -32,9 +32,9 @@ export default class ArgumentsParser {
     // Look for --help/-h with a numerical value
     for (let i = 0; i < argv.length; i += 1) {
       if (argv[i].toLowerCase() === '--help' || argv[i].toLowerCase() === '-h') {
-        const helpFlagVal = parseInt(argv[i + 1], 10);
+        const helpFlagVal = Number.parseInt(argv[i + 1], 10);
         if (!Number.isNaN(helpFlagVal)) {
-          return parseInt(argv[i + 1], 10);
+          return Number.parseInt(argv[i + 1], 10);
         }
       }
     }
@@ -100,24 +100,24 @@ export default class ArgumentsParser {
           return true;
         }
 
-        const writeCommands = ['copy', 'move', 'symlink'].filter((command) => checkArgv._.indexOf(command) !== -1);
+        const writeCommands = ['copy', 'move', 'symlink'].filter((command) => checkArgv._.includes(command));
         if (writeCommands.length > 1) {
           throw new Error(`Incompatible commands: ${writeCommands.join(', ')}`);
         }
 
-        const archiveCommands = ['symlink', 'extract', 'zip'].filter((command) => checkArgv._.indexOf(command) !== -1);
+        const archiveCommands = ['symlink', 'extract', 'zip'].filter((command) => checkArgv._.includes(command));
         if (archiveCommands.length > 1) {
           throw new Error(`Incompatible commands: ${archiveCommands.join(', ')}`);
         }
 
         ['extract', 'zip'].forEach((command) => {
-          if (checkArgv._.indexOf(command) !== -1 && ['copy', 'move'].every((write) => checkArgv._.indexOf(write) === -1)) {
+          if (checkArgv._.includes(command) && ['copy', 'move'].every((write) => !checkArgv._.includes(write))) {
             throw new Error(`Command "${command}" also requires the commands copy or move`);
           }
         });
 
         ['test', 'clean'].forEach((command) => {
-          if (checkArgv._.indexOf(command) !== -1 && ['copy', 'move', 'symlink'].every((write) => checkArgv._.indexOf(write) === -1)) {
+          if (checkArgv._.includes(command) && ['copy', 'move', 'symlink'].every((write) => !checkArgv._.includes(write))) {
             throw new Error(`Command "${command}" requires one of the commands: copy, move, or symlink`);
           }
         });
@@ -233,8 +233,8 @@ export default class ArgumentsParser {
         if (checkArgv.help) {
           return true;
         }
-        const needDat = ['report'].filter((command) => checkArgv._.indexOf(command) !== -1);
-        if ((!checkArgv.dat || !checkArgv.dat.length) && needDat.length) {
+        const needDat = ['report'].filter((command) => checkArgv._.includes(command));
+        if ((!checkArgv.dat || checkArgv.dat.length === 0) && needDat.length > 0) {
           throw new Error(`Missing required option for commands ${needDat.join(', ')}: --dat`);
         }
         return true;
@@ -322,8 +322,8 @@ export default class ArgumentsParser {
         if (checkArgv.help) {
           return true;
         }
-        const needOutput = ['copy', 'move', 'extract', 'zip', 'clean'].filter((command) => checkArgv._.indexOf(command) !== -1);
-        if (!checkArgv.output && needOutput.length) {
+        const needOutput = ['copy', 'move', 'extract', 'zip', 'clean'].filter((command) => checkArgv._.includes(command));
+        if (!checkArgv.output && needOutput.length > 0) {
           throw new Error(`Missing required option for command${needOutput.length !== 1 ? 's' : ''} ${needOutput.join(', ')}: --output`);
         }
         return true;
@@ -347,7 +347,7 @@ export default class ArgumentsParser {
           return true;
         }
         const needZip = ['zip-exclude', 'zip-dat-name'].filter((option) => checkArgv[option]);
-        if (checkArgv._.indexOf('zip') === -1 && needZip.length) {
+        if (!checkArgv._.includes('zip') && needZip.length > 0) {
           throw new Error(`Missing required command for option${needZip.length !== 1 ? 's' : ''} ${needZip.join(', ')}: zip`);
         }
         return true;
@@ -363,7 +363,7 @@ export default class ArgumentsParser {
           return true;
         }
         const needSymlink = ['symlink-relative'].filter((option) => checkArgv[option]);
-        if (checkArgv._.indexOf('symlink') === -1 && needSymlink.length) {
+        if (!checkArgv._.includes('symlink') && needSymlink.length > 0) {
           throw new Error(`Missing required command for option${needSymlink.length !== 1 ? 's' : ''} ${needSymlink.join(', ')}: symlink`);
         }
         return true;

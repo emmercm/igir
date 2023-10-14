@@ -358,9 +358,9 @@ class VcdiffCache {
 
   constructor(sNear = 4, sSame = 3) {
     this.sNear = sNear;
-    this.near = new Array(sNear);
+    this.near = Array.from({length: sNear});
     this.sSame = sSame;
-    this.same = new Array(sSame * 256);
+    this.same = Array.from({length: sSame * 256});
   }
 
   reset(): void {

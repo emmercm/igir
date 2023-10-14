@@ -24,7 +24,7 @@ export default class FsPoly {
     try {
       await this.symlink(source, target);
       return await this.exists(target);
-    } catch (e) {
+    } catch {
       return false;
     } finally {
       await this.rm(source, { force: true });
@@ -36,8 +36,7 @@ export default class FsPoly {
     await this.mkdir(dest, { recursive: true });
     const entries = await util.promisify(fs.readdir)(src, { withFileTypes: true });
 
-    for (let i = 0; i < entries.length; i += 1) {
-      const entry = entries[i];
+    for (const entry of entries) {
       const srcPath = path.join(src, entry.name);
       const destPath = path.join(dest, entry.name);
 
@@ -68,7 +67,7 @@ export default class FsPoly {
   static async isDirectory(pathLike: PathLike): Promise<boolean> {
     try {
       return (await util.promisify(fs.lstat)(pathLike)).isDirectory();
-    } catch (e) {
+    } catch {
       return false;
     }
   }
@@ -77,7 +76,7 @@ export default class FsPoly {
     try {
       await util.promisify(fs.access)(pathLike, fs.constants.X_OK);
       return true;
-    } catch (e) {
+    } catch {
       return false;
     }
   }
@@ -85,7 +84,7 @@ export default class FsPoly {
   static async isSymlink(pathLike: PathLike): Promise<boolean> {
     try {
       return (await util.promisify(fs.lstat)(pathLike)).isSymbolicLink();
-    } catch (e) {
+    } catch {
       return false;
     }
   }
@@ -123,7 +122,7 @@ export default class FsPoly {
 
       // Added in: v10.0.0
       return await util.promisify(fs.mkdtemp)(rootDirProcessed);
-    } catch (e) {
+    } catch {
       const backupDir = path.join(process.cwd(), 'tmp') + path.sep;
       await this.mkdir(backupDir, { recursive: true });
 
@@ -144,7 +143,7 @@ export default class FsPoly {
 
       // Added in: v5.10.0
       return fs.mkdtempSync(rootDirProcessed);
-    } catch (e) {
+    } catch {
       const backupDir = path.join(process.cwd(), 'tmp') + path.sep;
       fs.mkdirSync(backupDir, { recursive: true });
 
@@ -184,15 +183,15 @@ export default class FsPoly {
 
     try {
       return await util.promisify(fs.rename)(oldPath, newPath);
-    } catch (e) {
+    } catch (error) {
       // These are the same error codes that `graceful-fs` catches
-      if (['EACCES', 'EPERM', 'EBUSY'].indexOf((e as NodeJS.ErrnoException).code ?? '') === -1) {
-        throw e;
+      if (!['EACCES', 'EPERM', 'EBUSY'].includes((error as NodeJS.ErrnoException).code ?? '')) {
+        throw error;
       }
 
       // Backoff with jitter
       if (attempt >= 3) {
-        throw e;
+        throw error;
       }
       await new Promise((resolve) => {
         setTimeout(resolve, Math.random() * (2 ** (attempt - 1) * 100));
@@ -232,11 +231,11 @@ export default class FsPoly {
     try {
       // Added in: v10.0.0
       await util.promisify(fs.access)(pathLike); // throw if file doesn't exist
-    } catch (e) {
+    } catch (error) {
       if (optionsWithRetry?.force) {
         return;
       }
-      throw e;
+      throw error;
     }
 
     // Added in: v10.0.0
@@ -261,7 +260,7 @@ export default class FsPoly {
   static async size(pathLike: PathLike): Promise<number> {
     try {
       return (await util.promisify(fs.lstat)(pathLike)).size;
-    } catch (e) {
+    } catch {
       return 0;
     }
   }
@@ -273,7 +272,7 @@ export default class FsPoly {
     const k = 1024;
     const sizes = ['B', 'KiB', 'MiB', 'GiB', 'TiB', 'PiB', 'EiB', 'ZiB', 'YiB'];
     const i = bytes === 0 ? 0 : Math.floor(Math.log(bytes) / Math.log(k));
-    return `${parseFloat((bytes / k ** i).toFixed(decimals))}${sizes[i]}`;
+    return `${Number.parseFloat((bytes / k ** i).toFixed(decimals))}${sizes[i]}`;
   }
 
   static async symlink(file: PathLike, link: PathLike): Promise<void> {
@@ -303,20 +302,20 @@ export default class FsPoly {
     try {
       files = (await util.promisify(fs.readdir)(pathLike))
         .filter((filePath) => isNotJunk(path.basename(filePath)));
-    } catch (e) {
+    } catch {
       return [];
     }
 
     if (callback) callback(files.length);
 
-    for (let i = 0; i < files.length; i += 1) {
-      const file = path.join(pathLike.toString(), files[i]);
-      if (await this.isDirectory(file)) {
-        const subDirFiles = await this.walk(file);
+    for (const file of files) {
+      const fullPath = path.join(pathLike.toString(), file);
+      if (await this.isDirectory(fullPath)) {
+        const subDirFiles = await this.walk(fullPath);
         output.push(...subDirFiles);
         if (callback) callback(subDirFiles.length - 1);
       } else {
-        output.push(file);
+        output.push(fullPath);
       }
     }
 

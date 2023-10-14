@@ -120,10 +120,10 @@ export default class Zip extends Archive {
     // Write each entry
     try {
       await Zip.addArchiveEntries(zipFile, options, dat, inputToOutput);
-    } catch (e) {
+    } catch (error) {
       zipFile.abort();
       await fsPoly.rm(tempZipFile, { force: true });
-      throw e;
+      throw error;
     }
 
     // Finalize writing the zip file

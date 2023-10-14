@@ -26,7 +26,7 @@ export default class DATFilter extends Module {
     this.progressBar.logInfo(`${dat.getNameShort()}: filtering DAT`);
 
     // Return early if there aren't any games
-    if (!dat.getGames().length) {
+    if (dat.getGames().length === 0) {
       this.progressBar.logDebug(`${dat.getNameShort()}: no games to filter`);
       return dat;
     }
@@ -96,7 +96,7 @@ export default class DATFilter extends Module {
 
   private noLanguageAllowed(game: Game): boolean {
     const langs = this.options.getFilterLanguage();
-    if (!langs.size) {
+    if (langs.size === 0) {
       return false;
     }
     return !game.getLanguages().some((lang) => langs.has(lang));
@@ -104,7 +104,7 @@ export default class DATFilter extends Module {
 
   private regionNotAllowed(game: Game): boolean {
     const regions = this.options.getFilterRegion();
-    if (!regions.size) {
+    if (regions.size === 0) {
       return false;
     }
     return !game.getRegions().some((region) => regions.has(region));

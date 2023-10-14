@@ -75,9 +75,9 @@ async function candidateGenerator(
     .map(async ([parent]): Promise<[Parent, ReleaseCandidate[]]> => {
       const releaseCandidatesWithFiles = (await Promise.all(
         parent.getGames()
-          .filter((game) => gameNames.indexOf(game.getName()) !== -1)
+          .filter((game) => gameNames.includes(game.getName()))
           .map(async (game) => {
-            const releases = game.getReleases().length ? game.getReleases() : [undefined];
+            const releases = game.getReleases().length > 0 ? game.getReleases() : [undefined];
             return Promise.all(releases.map(async (release) => {
               const romWithFiles = await Promise.all(game.getRoms()
                 .map(async (rom) => new ROMWithFiles(
@@ -88,7 +88,7 @@ async function candidateGenerator(
               return new ReleaseCandidate(game, release, romWithFiles);
             }));
           }),
-      )).flatMap((rc) => rc);
+      )).flat();
       return [parent, releaseCandidatesWithFiles];
     })));
 
@@ -309,7 +309,7 @@ dat,no roms,FOUND,,false,false,true,false,false,false,false,false,false,false,fa
 
           const releaseCandidatesWithFiles = (await Promise.all(
             parent.getGames().map(async (game) => {
-              const releases = game.getReleases().length ? game.getReleases() : [undefined];
+              const releases = game.getReleases().length > 0 ? game.getReleases() : [undefined];
               return Promise.all(releases.map(async (release) => {
                 const romWithFiles = await Promise.all(game.getRoms()
                   // Only the first ROM, not all of them
@@ -322,7 +322,7 @@ dat,no roms,FOUND,,false,false,true,false,false,false,false,false,false,false,fa
                 return new ReleaseCandidate(game, release, romWithFiles);
               }));
             }),
-          )).flatMap((rc) => rc);
+          )).flat();
           return [parent, releaseCandidatesWithFiles];
         })));
 

@@ -35,8 +35,8 @@ describe('headerFromFileStream', () => {
     }), new ProgressBarFake()).scan();
     expect(headeredRoms).toHaveLength(6);
 
-    for (let i = 0; i < headeredRoms.length; i += 1) {
-      await headeredRoms[i].createReadStream(async (stream) => {
+    for (const headeredRom of headeredRoms) {
+      await headeredRom.createReadStream(async (stream) => {
         const fileHeader = await ROMHeader.headerFromFileStream(stream);
         expect(fileHeader).toBeDefined();
       });
@@ -49,8 +49,8 @@ describe('headerFromFileStream', () => {
     }), new ProgressBarFake()).scan();
     expect(headeredRoms.length).toBeGreaterThan(0);
 
-    for (let i = 0; i < headeredRoms.length; i += 1) {
-      await headeredRoms[i].createReadStream(async (stream) => {
+    for (const headeredRom of headeredRoms) {
+      await headeredRom.createReadStream(async (stream) => {
         const fileHeader = await ROMHeader.headerFromFileStream(stream);
         expect(fileHeader).toBeUndefined();
       });
