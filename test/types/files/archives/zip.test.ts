@@ -32,7 +32,7 @@ describe('createArchive', () => {
     const rom = (await findRoms(input))
       .find((file) => file.getSize());
     if (!rom) {
-      fail('no ROM of a non-zero size was found');
+      throw new Error('no ROM of a non-zero size was found');
     }
     const tempDir = await fsPoly.mkdtemp(Constants.GLOBAL_TEMP_DIR);
     const tempFilePath = path.join(tempDir, path.basename(rom.getFilePath()));
