@@ -116,7 +116,7 @@ export default class FilePoly {
         size,
         offset,
       )).bytesRead;
-    } catch (e) {
+    } catch {
       // NOTE(cemmer): Windows will give "EINVAL: invalid argument, read" when reading out of
       //  bounds, but other OSes don't. Swallow the error.
       return Buffer.alloc(0);

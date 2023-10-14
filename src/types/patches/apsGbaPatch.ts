@@ -74,8 +74,8 @@ export default class APSGBAPatch extends Patch {
 
       const sourceData = await sourceFile.readAt(offset, xorData.length);
       const targetData = Buffer.allocUnsafe(xorData.length);
-      for (let i = 0; i < xorData.length; i += 1) {
-        targetData[i] = (i < sourceData.length ? sourceData[i] : 0x00) ^ xorData[i];
+      for (const [idx, xorDatum] of xorData.entries()) {
+        targetData[idx] = (idx < sourceData.length ? sourceData[idx] : 0x00) ^ xorDatum;
       }
       await targetFile.writeAt(targetData, offset);
     }

@@ -55,7 +55,7 @@ export default class DATScanner extends Scanner {
     const datFilePaths = await this.options.scanDatFilesWithoutExclusions(async (increment) => {
       await this.progressBar.incrementTotal(increment);
     });
-    if (!datFilePaths.length) {
+    if (datFilePaths.length === 0) {
       return [];
     }
     this.progressBar.logDebug(`found ${datFilePaths.length.toLocaleString()} DAT file${datFilePaths.length !== 1 ? 's' : ''}`);
@@ -85,11 +85,11 @@ export default class DATScanner extends Scanner {
         const downloadedDatFile = await datFile.downloadToTempPath('dat');
         this.progressBar.logTrace(`${datFile.toString()}: downloaded to ${downloadedDatFile.toString()}`);
         return await FileFactory.filesFrom(downloadedDatFile.getFilePath());
-      } catch (e) {
-        this.progressBar.logWarn(`${datFile.toString()}: failed to download: ${e}`);
+      } catch (error) {
+        this.progressBar.logWarn(`${datFile.toString()}: failed to download: ${error}`);
         return [];
       }
-    }))).flatMap((d) => d);
+    }))).flat();
   }
 
   // Parse each file into a DAT
@@ -108,7 +108,7 @@ export default class DATScanner extends Scanner {
 
         await this.progressBar.incrementDone();
         this.progressBar.removeWaitingMessage(waitingMessage);
-        return callback(null, dat);
+        return callback(undefined, dat);
       },
     )).filter(ArrayPoly.filterNotNullish);
 
@@ -202,8 +202,8 @@ export default class DATScanner extends Scanner {
 
         proc.on('error', reject);
       });
-    } catch (e) {
-      this.progressBar.logDebug(`${mameExecutable.toString()}: failed to get ListXML from MAME executable: ${e}`);
+    } catch (error) {
+      this.progressBar.logDebug(`${mameExecutable.toString()}: failed to get ListXML from MAME executable: ${error}`);
       return undefined;
     }
 
@@ -245,8 +245,8 @@ export default class DATScanner extends Scanner {
         mergeAttrs: true,
         explicitArray: false,
       });
-    } catch (e) {
-      const message = (e as Error).message.split('\n').join(', ');
+    } catch (error) {
+      const message = (error as Error).message.split('\n').join(', ');
       this.progressBar.logDebug(`${datFile.toString()}: failed to parse DAT XML: ${message}`);
       return undefined;
     }
@@ -256,8 +256,8 @@ export default class DATScanner extends Scanner {
     if (datObject.datafile) {
       try {
         return LogiqxDAT.fromObject(datObject.datafile);
-      } catch (e) {
-        this.progressBar.logDebug(`${datFile.toString()}: failed to parse DAT object: ${e}`);
+      } catch (error) {
+        this.progressBar.logDebug(`${datFile.toString()}: failed to parse DAT object: ${error}`);
         return undefined;
       }
     }
@@ -265,8 +265,8 @@ export default class DATScanner extends Scanner {
     if (datObject.mame) {
       try {
         return MameDAT.fromObject(datObject.mame);
-      } catch (e) {
-        this.progressBar.logDebug(`${datFile.toString()}: failed to parse DAT object: ${e}`);
+      } catch (error) {
+        this.progressBar.logDebug(`${datFile.toString()}: failed to parse DAT object: ${error}`);
         return undefined;
       }
     }
@@ -289,11 +289,11 @@ export default class DATScanner extends Scanner {
     let cmproDat;
     try {
       cmproDat = await robloachDatfile.parse(fileContents);
-    } catch (e) {
-      this.progressBar.logDebug(`${datFile.toString()}: failed to parse CMPro DAT: ${e}`);
+    } catch (error) {
+      this.progressBar.logDebug(`${datFile.toString()}: failed to parse CMPro DAT: ${error}`);
       return undefined;
     }
-    if (!cmproDat.length) {
+    if (cmproDat.length === 0) {
       this.progressBar.logWarn(`${datFile.toString()}: failed to parse CMPro DAT, no header or games found`);
       return undefined;
     }
@@ -309,7 +309,7 @@ export default class DATScanner extends Scanner {
         .filter((rom) => rom.name) // we need ROM filenames
         .map((entry) => new ROM({
           name: entry.name ?? '',
-          size: parseInt(entry.size ?? '0', 10),
+          size: Number.parseInt(entry.size ?? '0', 10),
           crc: entry.crc ?? '',
           md5: entry.md5,
           sha1: entry.sha1,
@@ -336,17 +336,17 @@ export default class DATScanner extends Scanner {
     let rows: SmdbRow[] = [];
     try {
       rows = await DATScanner.parseSourceMaterialTsv(fileContents);
-    } catch (e) {
-      this.progressBar.logDebug(`${datFile.toString()}: failed to parse SMDB: ${e}`);
+    } catch (error) {
+      this.progressBar.logDebug(`${datFile.toString()}: failed to parse SMDB: ${error}`);
       return undefined;
     }
 
-    if (!rows.length) {
+    if (rows.length === 0) {
       this.progressBar.logTrace(`${datFile.toString()}: failed to parse SMDB, file has no rows`);
       return undefined;
     }
 
-    if (rows.some((row) => !row.size)) {
+    if (rows.some((row) => row.size === undefined || row.size.length === 0)) {
       this.progressBar.logWarn(`${datFile.toString()}: SMDB doesn't specify ROM file sizes, can't use`);
       return undefined;
     }
@@ -356,7 +356,7 @@ export default class DATScanner extends Scanner {
     const games = rows.map((row) => {
       const rom = new ROM({
         name: row.name,
-        size: parseInt(row.size ?? '', 10),
+        size: Number.parseInt(row.size ?? '', 10),
         crc: row.crc,
         md5: row.md5,
         sha1: row.sha1,
@@ -383,13 +383,13 @@ export default class DATScanner extends Scanner {
 
       const stream = parse<SmdbRow, SmdbRow>({
         delimiter: '\t',
-        quote: null,
+        quote: undefined,
         headers: ['sha256', 'name', 'sha1', 'md5', 'crc', 'size'],
       })
         .validate((row: SmdbRow) => row.name
           && row.crc
           && row.crc.length === 8
-          && (!row.size || Number.isInteger(parseInt(row.size, 10))))
+          && (row.size === undefined || row.size.length === 0 || Number.isInteger(Number.parseInt(row.size, 10))))
         .on('error', reject)
         .on('data', (row) => {
           rows.push(row);

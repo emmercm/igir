@@ -52,7 +52,7 @@ export default class CandidateWriter extends Module {
     dat: DAT,
     parentsToCandidates: Map<Parent, ReleaseCandidate[]>,
   ): Promise<File[]> {
-    if (!parentsToCandidates.size) {
+    if (parentsToCandidates.size === 0) {
       return [];
     }
 
@@ -71,7 +71,7 @@ export default class CandidateWriter extends Module {
           .some((releaseCandidate) => releaseCandidate.getRomsWithFiles().length)),
     );
 
-    const totalCandidateCount = [...parentsToWritableCandidates.values()].flatMap((c) => c).length;
+    const totalCandidateCount = [...parentsToWritableCandidates.values()].flat().length;
     this.progressBar.logInfo(`${dat.getNameShort()}: writing ${totalCandidateCount.toLocaleString()} candidate${totalCandidateCount !== 1 ? 's' : ''}`);
     await this.progressBar.setSymbol(ProgressBarSymbol.WRITING);
     await this.progressBar.reset(parentsToWritableCandidates.size);
@@ -84,8 +84,7 @@ export default class CandidateWriter extends Module {
         await this.progressBar.incrementProgress();
         this.progressBar.logTrace(`${dat.getNameShort()}: ${parent.getName()}: writing ${releaseCandidates.length.toLocaleString()} candidate${releaseCandidates.length !== 1 ? 's' : ''}`);
 
-        for (let i = 0; i < releaseCandidates.length; i += 1) {
-          const releaseCandidate = releaseCandidates[i];
+        for (const releaseCandidate of releaseCandidates) {
           await this.writeReleaseCandidate(dat, releaseCandidate);
         }
 
@@ -151,7 +150,7 @@ export default class CandidateWriter extends Module {
         romWithFiles.getInputFile(),
         romWithFiles.getOutputFile() as ArchiveEntry<Zip>,
       ]) satisfies [File, ArchiveEntry<Zip>][];
-    if (!inputToOutputZipEntries.length) {
+    if (inputToOutputZipEntries.length === 0) {
       this.progressBar.logTrace(`${dat.getNameShort()}: ${releaseCandidate.getName()}: no zip archives to write`);
       return;
     }
@@ -215,8 +214,8 @@ export default class CandidateWriter extends Module {
     let archiveEntries: ArchiveEntry<Zip>[];
     try {
       archiveEntries = await new Zip(zipFilePath).getArchiveEntries(ChecksumBitmask.CRC32);
-    } catch (e) {
-      return `failed to get archive contents: ${e}`;
+    } catch (error) {
+      return `failed to get archive contents: ${error}`;
     }
 
     const actualEntriesByPath = archiveEntries
@@ -230,8 +229,7 @@ export default class CandidateWriter extends Module {
     }
 
     const entryPaths = [...expectedEntriesByPath.keys()];
-    for (let i = 0; i < entryPaths.length; i += 1) {
-      const entryPath = entryPaths[i];
+    for (const entryPath of entryPaths) {
       const expectedFile = expectedEntriesByPath.get(entryPath) as ArchiveEntry<Zip>;
 
       // Check existence
@@ -275,8 +273,8 @@ export default class CandidateWriter extends Module {
     try {
       await CandidateWriter.ensureOutputDirExists(outputZip.getFilePath());
       await outputZip.createArchive(this.options, dat, inputToOutputZipEntries);
-    } catch (e) {
-      this.progressBar.logError(`${dat.getNameShort()}: ${outputZip.getFilePath()}: failed to create zip: ${e}`);
+    } catch (error) {
+      this.progressBar.logError(`${dat.getNameShort()}: ${outputZip.getFilePath()}: failed to create zip: ${error}`);
       return false;
     }
 
@@ -298,7 +296,7 @@ export default class CandidateWriter extends Module {
       .map((romWithFiles) => [romWithFiles.getInputFile(), romWithFiles.getOutputFile()]);
 
     // Return no files if there are none to write
-    if (!inputToOutputEntries.length) {
+    if (inputToOutputEntries.length === 0) {
       // TODO(cemmer): unit test
       this.progressBar.logTrace(`${dat.getNameShort()}: ${releaseCandidate.getName()}: no raw files to write`);
       return;
@@ -314,8 +312,7 @@ export default class CandidateWriter extends Module {
       .reduce((sum, file) => sum + file.getSize(), 0);
     this.progressBar.logTrace(`${dat.getNameShort()}: ${releaseCandidate.getName()}: writing ${fsPoly.sizeReadable(totalBytes)} of ${uniqueInputToOutputEntries.length.toLocaleString()} file${uniqueInputToOutputEntries.length !== 1 ? 's' : ''}`);
 
-    for (let i = 0; i < uniqueInputToOutputEntries.length; i += 1) {
-      const [inputRomFile, outputRomFile] = uniqueInputToOutputEntries[i];
+    for (const [inputRomFile, outputRomFile] of uniqueInputToOutputEntries) {
       await this.writeRawSingle(dat, releaseCandidate, inputRomFile, outputRomFile);
     }
   }
@@ -382,8 +379,8 @@ export default class CandidateWriter extends Module {
       await inputRomFile.extractAndPatchToFile(tempRawFile, removeHeader);
       await fsPoly.mv(tempRawFile, outputFilePath);
       return true;
-    } catch (e) {
-      this.progressBar.logError(`${dat.getNameShort()}: ${inputRomFile.toString()}: failed to copy to ${outputFilePath}: ${e}`);
+    } catch (error) {
+      this.progressBar.logError(`${dat.getNameShort()}: ${inputRomFile.toString()}: failed to copy to ${outputFilePath}: ${error}`);
       return false;
     }
   }
@@ -439,9 +436,9 @@ export default class CandidateWriter extends Module {
   private async writeSymlink(dat: DAT, releaseCandidate: ReleaseCandidate): Promise<void> {
     const inputToOutputEntries = releaseCandidate.getRomsWithFiles();
 
-    for (let i = 0; i < inputToOutputEntries.length; i += 1) {
-      const inputRomFile = inputToOutputEntries[i].getInputFile();
-      const outputRomFile = inputToOutputEntries[i].getOutputFile();
+    for (const inputToOutputEntry of inputToOutputEntries) {
+      const inputRomFile = inputToOutputEntry.getInputFile();
+      const outputRomFile = inputToOutputEntry.getOutputFile();
       await this.writeSymlinkSingle(dat, inputRomFile, outputRomFile);
     }
   }
@@ -484,8 +481,8 @@ export default class CandidateWriter extends Module {
     try {
       await CandidateWriter.ensureOutputDirExists(targetPath);
       await fsPoly.symlink(sourcePath, targetPath);
-    } catch (e) {
-      this.progressBar.logError(`${dat.getNameShort()}: ${inputRomFile.toString()}: failed to symlink ${sourcePath} to ${targetPath}: ${e}`);
+    } catch (error) {
+      this.progressBar.logError(`${dat.getNameShort()}: ${inputRomFile.toString()}: failed to symlink ${sourcePath} to ${targetPath}: ${error}`);
       return;
     }
 

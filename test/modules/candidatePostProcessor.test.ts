@@ -76,7 +76,7 @@ it('should do nothing with no options', async () => {
   const parentsToCandidates = await runCandidatePostProcessor(options);
 
   const outputFilePaths = [...parentsToCandidates.values()]
-    .flatMap((releaseCandidates) => releaseCandidates)
+    .flat()
     .flatMap((releaseCandidate) => releaseCandidate.getRomsWithFiles())
     .map((romWithFiles) => romWithFiles.getOutputFile().getFilePath())
     .sort();
@@ -176,7 +176,7 @@ describe('dirLetterLimit', () => {
     const parentsToCandidates = await runCandidatePostProcessor(options);
 
     const outputFilePaths = [...parentsToCandidates.values()]
-      .flatMap((releaseCandidates) => releaseCandidates)
+      .flat()
       .flatMap((releaseCandidate) => releaseCandidate.getRomsWithFiles())
       .map((romWithFiles) => romWithFiles.getOutputFile().getFilePath())
       .sort();

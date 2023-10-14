@@ -3,17 +3,21 @@ import path from 'node:path';
 interface OutputTokens {
   // Analogue Pocket ROMs go in the /Assets/{pocket}/common/ directory
   pocket?: string,
+
   // MiSTer ROMs go in the /games/{mister}/ directory:
   // @see https://mister-devel.github.io/MkDocs_MiSTer/developer/corenames/
   // @see https://mister-devel.github.io/MkDocs_MiSTer/cores/console/
   // @see https://mister-devel.github.io/MkDocs_MiSTer/cores/computer/
   mister?: string,
+
   // OnionOS/GarlicOS ROMs go in the /Roms/{onion} directory:
-  // @see https://github.com/OnionUI/Onion/wiki/Emulators
+  // @see https://onionui.github.io/docs/emulators
   onion?: string,
+
   // Batocera ROMs go in the roms/{batocera} directory:
   // @see https://wiki.batocera.org/systems
   batocera?: string,
+
   // JELOS ROMs go in the ??? directory:
   // @see https://github.com/JustEnoughLinuxOS/distribution/blob/main/documentation/PER_DEVICE_DOCUMENTATION/AMD64/SUPPORTED_EMULATORS_AND_CORES.md
   jelos?: string,
@@ -31,12 +35,28 @@ export default class GameConsole {
    *  @see https://github.com/OpenEmu/OpenEmu/wiki/User-guide:-Importing
    */
   private static readonly CONSOLES: GameConsole[] = [
+    // Acorn
+    new GameConsole(/Atom/i, [], {
+      mister: 'AcornAtom',
+      batocera: 'atom',
+    }),
     // Amstrad
     new GameConsole(/CPC/i, [], {
       mister: 'Amstrad',
       onion: 'CPC',
       batocera: 'amstradcpc',
       jelos: 'amstradcpc',
+    }),
+    new GameConsole(/PCW/i, [], {
+      mister: 'AmstradPCW',
+    }),
+    // Apple
+    new GameConsole(/Apple.*I/i, [], {
+      mister: 'Apple-I',
+    }),
+    new GameConsole(/Apple.*IIe?/i, [], {
+      mister: 'Apple-II',
+      batocera: 'apple2',
     }),
     // Arduboy
     new GameConsole(/Arduboy/i, ['.arduboy', '.hex'], {
@@ -83,7 +103,7 @@ export default class GameConsole {
       batocera: 'lynx',
       jelos: 'atarilynx',
     }),
-    new GameConsole(/Atari (- )?ST/i, ['.msa', '.st', '.stx'], {
+    new GameConsole(/Atari.*ST/i, ['.msa', '.st', '.stx'], {
       mister: 'AtariST',
       onion: 'ATARIST',
       batocera: 'atarist',
@@ -95,6 +115,12 @@ export default class GameConsole {
       batocera: 'astrocde',
     }),
     // Bandai
+    new GameConsole(/Super ?Vision 8000/i, [], {
+      mister: 'Supervision8000',
+    }),
+    new GameConsole(/RX[ -]?78/i, [], {
+      mister: 'RX78',
+    }),
     new GameConsole(/WonderSwan/i, ['.ws'], {
       pocket: 'wonderswan',
       mister: 'WonderSwan',
@@ -118,9 +144,12 @@ export default class GameConsole {
     // Capcom
     // TODO(cemmer): CPS1, CPS2, CPS3
     // Casio
-    new GameConsole(/PV-?1000/i, [/* '.bin' */], {
+    new GameConsole(/PV[ -]?1000/i, [/* '.bin' */], {
       mister: 'Casio_PV-1000',
       batocera: 'pv1000',
+    }),
+    new GameConsole(/PV[ -]?2000/i, [/* '.bin' */], {
+      mister: 'Casio_PV-2000',
     }),
     // Commodore
     new GameConsole(/Amiga/i, [], {
@@ -130,17 +159,27 @@ export default class GameConsole {
       jelos: 'amiga',
     }),
     new GameConsole(/Amiga CD32/i, [/* '.bin', '.cue' */], {
+      mister: 'Amiga',
       batocera: 'amigacd32',
       jelos: 'amigacd32',
     }),
     new GameConsole(/Amiga CDTV/i, [/* '.bin', '.cue' */], {
       batocera: 'amigacdtv',
     }),
-    new GameConsole(/Commodore 64/i, ['.crt', '.d64', '.t64'], {
+    new GameConsole(/Commodore C?16/i, [/* unknown */], {
+      mister: 'C16',
+      jelos: 'c16',
+    }),
+    new GameConsole(/Commodore C?64/i, ['.crt', '.d64', '.t64'], {
       mister: 'C64',
       onion: 'COMMODORE',
       batocera: 'c64',
       jelos: 'c64',
+    }),
+    new GameConsole(/Commodore C?128/i, [/* unknown */], {
+      mister: 'C128',
+      batocera: 'c128',
+      jelos: 'c128',
     }),
     // Coleco
     new GameConsole(/ColecoVision/i, ['.col'], {
@@ -313,6 +352,7 @@ export default class GameConsole {
       jelos: 'gbc',
     }),
     new GameConsole(/Nintendo 64|N64/i, ['.n64', '.v64', '.z64'], {
+      mister: 'N64',
       batocera: 'n64',
       jelos: 'n64',
     }),
@@ -380,7 +420,7 @@ export default class GameConsole {
       jelos: '3do',
     }),
     // Philips
-    new GameConsole(/CD-?i/i, [/* '.bin', '.cue' */], {
+    new GameConsole(/CD[ -]?i/i, [/* '.bin', '.cue' */], {
       batocera: 'cdi',
     }),
     new GameConsole(/Videopac/i, [/* '.bin' */], {
@@ -435,7 +475,7 @@ export default class GameConsole {
       batocera: 'saturn',
       jelos: 'saturn',
     }),
-    new GameConsole(/SG-?1000/i, ['.sc', '.sg'], {
+    new GameConsole(/SG[ -]?1000/i, ['.sc', '.sg'], {
       pocket: 'sg1000',
       mister: 'SG1000',
       onion: 'SEGASGONE',
@@ -443,6 +483,9 @@ export default class GameConsole {
       jelos: 'sg-1000',
     }),
     // Sharp
+    new GameConsole(/MZ/i, [], {
+      mister: 'SharpMZ',
+    }),
     new GameConsole(/X1/i, ['.2d', '.2hd', '.dx1', '.tfd'], {
       onion: 'XONE',
       batocera: 'x1',
@@ -455,6 +498,9 @@ export default class GameConsole {
       jelos: 'x68000',
     }),
     // Sinclair
+    new GameConsole(/ZX[ -]?80/i, [], {
+      mister: 'ZX81',
+    }),
     new GameConsole(/ZX[ -]?81/i, [], {
       mister: 'ZX81',
       batocera: 'zx81',
@@ -504,8 +550,7 @@ export default class GameConsole {
       batocera: 'ps3',
       jelos: 'ps3',
     }),
-    new GameConsole(/PlayStation [4-9]|ps[4-9]/i, [/* '.bin', '.cue' */], {
-    }),
+    new GameConsole(/PlayStation [4-9]|ps[4-9]/i, [/* '.bin', '.cue' */], {}),
     // Timetop
     new GameConsole(/GameKing/i, [/* '.bin' */], {
       pocket: 'game_king',
@@ -555,7 +600,7 @@ export default class GameConsole {
   static getForFilename(filePath: string): GameConsole | undefined {
     const fileExtension = path.extname(filePath).toLowerCase();
     return this.CONSOLES
-      .find((console) => console.getExtensions().some((ext) => ext === fileExtension));
+      .find((console) => console.getExtensions().includes(fileExtension));
   }
 
   static getForDatName(consoleName: string): GameConsole | undefined {

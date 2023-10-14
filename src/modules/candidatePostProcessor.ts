@@ -30,7 +30,7 @@ export default class CandidatePostProcessor extends Module {
   ): Promise<Map<Parent, ReleaseCandidate[]>> {
     this.progressBar.logInfo(`${dat.getNameShort()}: processing candidates`);
 
-    if (!parentsToCandidates.size) {
+    if (parentsToCandidates.size === 0) {
       this.progressBar.logDebug(`${dat.getNameShort()}: no parents, so no candidates to process`);
       return parentsToCandidates;
     }
@@ -40,7 +40,7 @@ export default class CandidatePostProcessor extends Module {
 
     // Get the output basename of every ROM
     const outputFileBasenames = [...parentsToCandidates.values()]
-      .flatMap((releaseCandidates) => releaseCandidates)
+      .flat()
       .flatMap((releaseCandidate) => releaseCandidate.getRomsWithFiles()
         .map((romWithFiles) => {
           const outputPathParsed = OutputFactory.getPath(
