@@ -81,7 +81,7 @@ export default class LogiqxDAT extends DAT {
 
   getGames(): Game[] {
     if (Array.isArray(this.game)) {
-      if (this.game.length) {
+      if (this.game.length > 0) {
         return this.game;
       }
     } else if (this.game) {
@@ -89,7 +89,7 @@ export default class LogiqxDAT extends DAT {
     }
 
     if (Array.isArray(this.machine)) {
-      if (this.machine.length) {
+      if (this.machine.length > 0) {
         return this.machine;
       }
     } else if (this.machine) {

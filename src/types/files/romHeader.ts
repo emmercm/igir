@@ -55,8 +55,7 @@ export default class ROMHeader {
 
   static headerFromFilename(filePath: string): ROMHeader | undefined {
     const headers = Object.values(this.HEADERS);
-    for (let i = 0; i < headers.length; i += 1) {
-      const header = headers[i];
+    for (const header of headers) {
       if (header.headeredFileExtension.toLowerCase() === path.extname(filePath).toLowerCase()
         || (header.unheaderedFileExtension?.toLowerCase() ?? '') === path.extname(filePath).toLowerCase()
       ) {
@@ -102,8 +101,7 @@ export default class ROMHeader {
     const fileHeader = await ROMHeader.readHeaderHex(stream, 0, this.MAX_HEADER_LENGTH_BYTES);
 
     const headers = Object.values(this.HEADERS);
-    for (let i = 0; i < headers.length; i += 1) {
-      const header = headers[i];
+    for (const header of headers) {
       const headerValue = fileHeader.slice(
         header.headerOffsetBytes * 2,
         header.headerOffsetBytes * 2 + header.headerValue.length,

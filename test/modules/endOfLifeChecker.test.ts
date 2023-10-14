@@ -5,7 +5,7 @@ import LogLevel from '../../src/console/logLevel.js';
 import EndOfLifeChecker from '../../src/modules/endOfLifeChecker.js';
 
 function range(start: number, end: number): number[] {
-  return [...Array(end - start + 1).keys()].map((val) => val + start);
+  return [...Array.from({length:end - start + 1}).keys()].map((val) => val + start);
 }
 const versions = range(4, 20 + 5)
   .map((major) => `v${major}.${major}.0`);

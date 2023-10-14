@@ -207,7 +207,7 @@ export default class Game implements GameProps {
     // Letter revision
     const letterMatches = this.getName().match(/\(Rev\s*([A-Z])\)/i);
     if (letterMatches && letterMatches?.length >= 2) {
-      return letterMatches[1].toUpperCase().charCodeAt(0) - 'A'.charCodeAt(0) + 1;
+      return (letterMatches[1].toUpperCase().codePointAt(0) as number) - ('A'.codePointAt(0) as number) + 1;
     }
 
     // Ring code revision
@@ -498,7 +498,7 @@ export default class Game implements GameProps {
   getRegions(): string[] {
     const releaseRegions = this.getReleases()
       .map((release) => release.getRegion().toUpperCase());
-    if (releaseRegions.length) {
+    if (releaseRegions.length > 0) {
       return releaseRegions;
     }
 
@@ -518,24 +518,24 @@ export default class Game implements GameProps {
 
   getLanguages(): string[] {
     const shortLanguages = this.getTwoLetterLanguagesFromName();
-    if (shortLanguages.length) {
+    if (shortLanguages.length > 0) {
       return shortLanguages;
     }
 
     const longLanguages = this.getThreeLetterLanguagesFromName();
-    if (longLanguages.length) {
+    if (longLanguages.length > 0) {
       return longLanguages;
     }
 
     const releaseLanguages = this.getReleases()
       .map((release) => release.getLanguage())
       .filter(ArrayPoly.filterNotNullish);
-    if (releaseLanguages.length) {
+    if (releaseLanguages.length > 0) {
       return releaseLanguages;
     }
 
     const regionLanguages = this.getLanguagesFromRegions();
-    if (regionLanguages.length) {
+    if (regionLanguages.length > 0) {
       return regionLanguages;
     }
 
@@ -549,9 +549,9 @@ export default class Game implements GameProps {
         .replace(/-[a-zA-Z]+$/, '') // chop off country
         .split(/[,+]/)
         .map((lang) => lang.toUpperCase())
-        .filter((lang) => Internationalization.LANGUAGES.indexOf(lang) !== -1) // is known
+        .filter((lang) => Internationalization.LANGUAGES.includes(lang)) // is known
         .reduce(ArrayPoly.reduceUnique(), []);
-      if (twoMatchesParsed.length) {
+      if (twoMatchesParsed.length > 0) {
         return twoMatchesParsed;
       }
     }
@@ -567,9 +567,9 @@ export default class Game implements GameProps {
         .map((lang) => Internationalization.LANGUAGE_OPTIONS
           .find((langOpt) => langOpt.long?.toUpperCase() === lang.toUpperCase())?.short)
         .filter(ArrayPoly.filterNotNullish)
-        .filter((lang) => Internationalization.LANGUAGES.indexOf(lang) !== -1) // is known
+        .filter((lang) => Internationalization.LANGUAGES.includes(lang)) // is known
         .reduce(ArrayPoly.reduceUnique(), []);
-      if (threeMatchesParsed.length) {
+      if (threeMatchesParsed.length > 0) {
         return threeMatchesParsed;
       }
     }

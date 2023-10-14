@@ -191,8 +191,7 @@ describe('copyToTempFile', () => {
     expect(archiveEntries).toHaveLength(23);
 
     const temp = await fsPoly.mkdtemp(Constants.GLOBAL_TEMP_DIR);
-    for (let i = 0; i < archiveEntries.length; i += 1) {
-      const archiveEntry = archiveEntries[i];
+    for (const archiveEntry of archiveEntries) {
       await archiveEntry.extractToTempFile(async (tempFile) => {
         await expect(fsPoly.exists(tempFile)).resolves.toEqual(true);
         expect(tempFile).not.toEqual(archiveEntry.getFilePath());
@@ -215,8 +214,7 @@ describe('createReadStream', () => {
     expect(archiveEntries).toHaveLength(23);
 
     const temp = await fsPoly.mkdtemp(Constants.GLOBAL_TEMP_DIR);
-    for (let i = 0; i < archiveEntries.length; i += 1) {
-      const archiveEntry = archiveEntries[i];
+    for (const archiveEntry of archiveEntries) {
       await archiveEntry.createReadStream(async (stream) => {
         const contents = (await bufferPoly.fromReadable(stream)).toString();
         expect(contents).toBeTruthy();

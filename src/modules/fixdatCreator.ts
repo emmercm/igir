@@ -44,14 +44,14 @@ export default class FixdatCreator extends Module {
 
     // Create an easily searchable index of every ROM that has a ReleaseCandidate
     const writtenRomHashCodes = new Set([...parentsToCandidates.values()]
-      .flatMap((releaseCandidates) => releaseCandidates)
+      .flat()
       .flatMap((releaseCandidate) => releaseCandidate.getRomsWithFiles())
       .map((romWithFiles) => romWithFiles.getRom())
       .map((rom) => rom.hashCode()));
     // Find all the games who have at least one missing ROM
     const gamesWithMissingRoms = originalDat.getGames()
       .filter((game) => !game.getRoms().every((rom) => writtenRomHashCodes.has(rom.hashCode())));
-    if (!gamesWithMissingRoms.length) {
+    if (gamesWithMissingRoms.length === 0) {
       this.progressBar.logDebug(`${originalDat.getNameShort()}: no missing games`);
       return undefined;
     }
