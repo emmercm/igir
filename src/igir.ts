@@ -68,13 +68,13 @@ export default class Igir {
     let dats = await this.processDATScanner();
     const indexedRoms = await this.processROMScanner();
     const roms = [...indexedRoms.values()]
-      .flatMap((files) => files)
+      .flat()
       .reduce(ArrayPoly.reduceUnique(), []);
     const patches = await this.processPatchScanner();
 
     // Set up progress bar and input for DAT processing
     const datProcessProgressBar = await this.logger.addProgressBar(chalk.underline('Processing DATs'), ProgressBarSymbol.NONE, dats.length);
-    if (!dats.length) {
+    if (dats.length === 0) {
       dats = new DATGameInferrer(datProcessProgressBar).infer(roms);
     }
 
@@ -113,7 +113,7 @@ export default class Igir {
         .write(filteredDat, parentsToCandidates);
       movedRomsToDelete.push(...movedRoms);
       const writtenRoms = [...parentsToCandidates.values()]
-        .flatMap((releaseCandidates) => releaseCandidates)
+        .flat()
         .flatMap((releaseCandidate) => releaseCandidate
           .getRomsWithFiles()
           .map((romWithFiles) => romWithFiles.getOutputFile()));
@@ -171,7 +171,7 @@ export default class Igir {
 
     const progressBar = await this.logger.addProgressBar('Scanning for DATs');
     const dats = await new DATScanner(this.options, progressBar).scan();
-    if (!dats.length) {
+    if (dats.length === 0) {
       throw new Error('No valid DAT files found!');
     }
 
@@ -280,7 +280,7 @@ export default class Igir {
     movedRomsToDelete: File[],
     datsToWrittenFiles: Map<DAT, File[]>,
   ): Promise<void> {
-    if (!movedRomsToDelete.length) {
+    if (movedRomsToDelete.length === 0) {
       return;
     }
 
@@ -301,8 +301,7 @@ export default class Igir {
 
     const progressBar = await this.logger.addProgressBar('Cleaning output directory');
     const uniqueDirsToClean = dirsToClean.reduce(ArrayPoly.reduceUnique(), []);
-    const writtenFilesToExclude = [...datsToWrittenFiles.values()]
-      .flatMap((files) => files);
+    const writtenFilesToExclude = [...datsToWrittenFiles.values()].flat();
     const filesCleaned = await new DirectoryCleaner(this.options, progressBar)
       .clean(uniqueDirsToClean, writtenFilesToExclude);
     await progressBar.doneItems(filesCleaned.length, 'file', 'recycled');

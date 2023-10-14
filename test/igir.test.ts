@@ -58,11 +58,11 @@ async function walkWithCrc(inputDir: string, outputDir: string): Promise<string[
     .map(async (filePath) => {
       try {
         return await FileFactory.filesFrom(filePath);
-      } catch (e) {
+      } catch {
         return [];
       }
     })))
-    .flatMap((files) => files)
+    .flat()
     .map((file) => ([
       file.toString()
         .replace(inputDir, '<input>')
@@ -79,7 +79,7 @@ async function runIgir(optionsProps: OptionsProps): Promise<TestOutput> {
   return chdir(tempCwd, async () => {
     const inputFilesBefore = (await Promise.all(options.getInputPaths()
       .map(async (inputPath) => fsPoly.walk(inputPath))))
-      .flatMap((inputFiles) => inputFiles)
+      .flat()
       .reduce(ArrayPoly.reduceUnique(), []);
     const outputFilesBefore = await fsPoly.walk(options.getOutputDirRoot());
 
@@ -87,19 +87,19 @@ async function runIgir(optionsProps: OptionsProps): Promise<TestOutput> {
 
     const outputFilesAndCrcs = (await Promise.all(options.getInputPaths()
       .map(async (inputPath) => walkWithCrc(inputPath, options.getOutputDirRoot()))))
-      .flatMap((filesAndCrcs) => filesAndCrcs)
+      .flat()
       .sort((a, b) => a[0].localeCompare(b[0]));
     const cwdFilesAndCrcs = (await Promise.all(options.getInputPaths()
       .map(async (inputPath) => walkWithCrc(inputPath, tempCwd))))
-      .flatMap((filesAndCrcs) => filesAndCrcs)
+      .flat()
       .sort((a, b) => a[0].localeCompare(b[0]));
 
     const inputFilesAfter = (await Promise.all(options.getInputPaths()
       .map(async (inputPath) => fsPoly.walk(inputPath))))
-      .flatMap((inputFiles) => inputFiles)
+      .flat()
       .reduce(ArrayPoly.reduceUnique(), []);
     const movedFiles = inputFilesBefore
-      .filter((filePath) => inputFilesAfter.indexOf(filePath) === -1)
+      .filter((filePath) => !inputFilesAfter.includes(filePath))
       .map((filePath) => {
         let replaced = filePath;
         options.getInputPaths().forEach((inputPath) => {
@@ -111,7 +111,7 @@ async function runIgir(optionsProps: OptionsProps): Promise<TestOutput> {
 
     const outputFilesAfter = await fsPoly.walk(options.getOutputDirRoot());
     const cleanedFiles = outputFilesBefore
-      .filter((filePath) => outputFilesAfter.indexOf(filePath) === -1)
+      .filter((filePath) => !outputFilesAfter.includes(filePath))
       .map((filePath) => filePath.replace(options.getOutputDirRoot() + path.sep, ''))
       .sort();
 

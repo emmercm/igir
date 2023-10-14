@@ -38,7 +38,7 @@ export default class CandidateCombiner extends Module {
 
     this.progressBar.logInfo(`${dat.getNameShort()}: generating consolidated candidate`);
 
-    if (!parentsToCandidates.size) {
+    if (parentsToCandidates.size === 0) {
       this.progressBar.logDebug(`${dat.getNameShort()}: no parents to make patched candidates for`);
       return parentsToCandidates;
     }
@@ -63,7 +63,7 @@ export default class CandidateCombiner extends Module {
     const name = dat.getNameShort();
 
     const roms = [...parentsToCandidates.values()]
-      .flatMap((releaseCandidates) => releaseCandidates)
+      .flat()
       .flatMap((releaseCandidate) => releaseCandidate.getRomsWithFiles())
       .map((romWithFiles) => romWithFiles.getRom());
     const uniqueRoms = [...roms.reduce((map, rom) => {
@@ -86,7 +86,7 @@ export default class CandidateCombiner extends Module {
     parentsToCandidates: Map<Parent, ReleaseCandidate[]>,
   ): ReleaseCandidate {
     const romsWithFiles = [...parentsToCandidates.values()]
-      .flatMap((releaseCandidates) => releaseCandidates)
+      .flat()
       .flatMap((releaseCandidate) => releaseCandidate.getRomsWithFiles()
         .map((romWithFiles) => {
           // If the output isn't an archive then it must have been excluded (e.g. --zip-exclude),

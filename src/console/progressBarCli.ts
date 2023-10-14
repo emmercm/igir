@@ -127,7 +127,7 @@ export default class ProgressBarCLI extends ProgressBar {
     try {
       await ProgressBarCLI.RENDER_MUTEX.runExclusive(() => {
         // Dequeue all log messages
-        if (ProgressBarCLI.multiBar && ProgressBarCLI.logQueue.length) {
+        if (ProgressBarCLI.multiBar && ProgressBarCLI.logQueue.length > 0) {
           const consoleWidth = ConsolePoly.consoleWidth();
           const logMessage = ProgressBarCLI.logQueue
             // Wrapping is broken: https://github.com/npkgz/cli-progress/issues/142
@@ -153,9 +153,9 @@ export default class ProgressBarCLI extends ProgressBar {
         ProgressBarCLI.lastRedraw = process.hrtime();
         ProgressBarCLI.RENDER_MUTEX.cancel(); // cancel all waiting locks, we just redrew
       });
-    } catch (e) {
-      if (e !== E_CANCELED) {
-        throw e;
+    } catch (error) {
+      if (error !== E_CANCELED) {
+        throw error;
       }
     }
   }

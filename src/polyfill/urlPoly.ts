@@ -7,7 +7,7 @@ export default {
       // eslint-disable-next-line no-new
       new URL(input, base);
       return true;
-    } catch (e) {
+    } catch {
       return false;
     }
   },

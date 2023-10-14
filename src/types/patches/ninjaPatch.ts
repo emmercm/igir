@@ -40,7 +40,7 @@ export default class NinjaPatch extends Patch {
       if (!header.equals(NinjaPatch.FILE_SIGNATURE)) {
         throw new Error(`NINJA patch header is invalid: ${this.getFile().toString()}`);
       }
-      const version = parseInt((await patchFile.readNext(1)).toString(), 10);
+      const version = Number.parseInt((await patchFile.readNext(1)).toString(), 10);
       if (version !== 2) {
         throw new Error(`NINJA v${version} isn't supported: ${this.getFile().toString()}`);
       }

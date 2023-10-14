@@ -40,7 +40,7 @@ export default class CandidatePatchGenerator extends Module {
   ): Promise<Map<Parent, ReleaseCandidate[]>> {
     this.progressBar.logInfo(`${dat.getNameShort()}: generating patched candidates`);
 
-    if (!parentsToCandidates.size) {
+    if (parentsToCandidates.size === 0) {
       this.progressBar.logDebug(`${dat.getNameShort()}: no parents to make patched candidates for`);
       return parentsToCandidates;
     }
@@ -85,8 +85,7 @@ export default class CandidatePatchGenerator extends Module {
         ];
 
         // Possibly generate multiple new Parents for the ReleaseCandidates
-        for (let i = 0; i < releaseCandidates.length; i += 1) {
-          const releaseCandidate = releaseCandidates[i];
+        for (const releaseCandidate of releaseCandidates) {
           if (seenGames.has(releaseCandidate.getGame())) {
             // eslint-disable-next-line no-continue
             continue;
@@ -106,7 +105,7 @@ export default class CandidatePatchGenerator extends Module {
 
         return parentsAndReleaseCandidates;
       })))
-      .flatMap((entries) => entries));
+      .flat());
   }
 
   private async buildPatchedParentsForReleaseCandidate(
@@ -116,12 +115,11 @@ export default class CandidatePatchGenerator extends Module {
   ): Promise<[Parent, ReleaseCandidate[]][] | undefined> {
     // Get all patch files relevant to any ROM in the ReleaseCandidate
     const releaseCandidatePatches = unpatchedReleaseCandidate.getRomsWithFiles()
-      .map((romWithFiles) => crcToPatches.get(romWithFiles.getInputFile().getCrc32()))
-      .flatMap((patches) => patches)
+      .flatMap((romWithFiles) => crcToPatches.get(romWithFiles.getInputFile().getCrc32()))
       .filter(ArrayPoly.filterNotNullish);
 
     // No relevant patches found, no new candidates generated
-    if (!releaseCandidatePatches.length) {
+    if (releaseCandidatePatches.length === 0) {
       return undefined;
     }
 

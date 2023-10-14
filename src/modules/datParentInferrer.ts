@@ -26,7 +26,7 @@ export default class DATParentInferrer extends Module {
       return dat;
     }
 
-    if (!dat.getGames().length) {
+    if (dat.getGames().length === 0) {
       this.progressBar.logDebug(`${dat.getNameShort()}: no games to process`);
       return dat;
     }

@@ -8,8 +8,8 @@ describe('patchFromFilename', () => {
       patch: ['./test/fixtures/roms'],
     }).scanPatchFilesWithoutExclusions();
 
-    for (let i = 0; i < inputPatchFilePaths.length; i += 1) {
-      const inputPatchFile = await File.fileOf(inputPatchFilePaths[i]);
+    for (const inputPatchFilePath of inputPatchFilePaths) {
+      const inputPatchFile = await File.fileOf(inputPatchFilePath);
       const patch = await PatchFactory.patchFromFilename(inputPatchFile);
       expect(patch).toBeUndefined();
     }
@@ -20,8 +20,8 @@ describe('patchFromFilename', () => {
       patch: ['./test/fixtures/patches'],
     }).scanPatchFilesWithoutExclusions();
 
-    for (let i = 0; i < inputPatchFilePaths.length; i += 1) {
-      const inputPatchFile = await File.fileOf(inputPatchFilePaths[i]);
+    for (const inputPatchFilePath of inputPatchFilePaths) {
+      const inputPatchFile = await File.fileOf(inputPatchFilePath);
       const patch = await PatchFactory.patchFromFilename(inputPatchFile);
       expect(patch).toBeDefined();
     }
@@ -34,8 +34,8 @@ describe('patchFromFileContents', () => {
       patch: ['./test/fixtures/roms'],
     }).scanPatchFilesWithoutExclusions();
 
-    for (let i = 0; i < inputPatchFilePaths.length; i += 1) {
-      const inputPatchFile = await File.fileOf(inputPatchFilePaths[i]);
+    for (const inputPatchFilePath of inputPatchFilePaths) {
+      const inputPatchFile = await File.fileOf(inputPatchFilePath);
       const patch = await PatchFactory.patchFromFileContents(inputPatchFile);
       expect(patch).toBeUndefined();
     }
@@ -46,8 +46,8 @@ describe('patchFromFileContents', () => {
       patch: ['./test/fixtures/patches'],
     }).scanPatchFilesWithoutExclusions();
 
-    for (let i = 0; i < inputPatchFilePaths.length; i += 1) {
-      const inputPatchFile = await File.fileOf(inputPatchFilePaths[i]);
+    for (const inputPatchFilePath of inputPatchFilePaths) {
+      const inputPatchFile = await File.fileOf(inputPatchFilePath);
       const patch = await PatchFactory.patchFromFileContents(inputPatchFile);
       expect(patch).toBeDefined();
     }

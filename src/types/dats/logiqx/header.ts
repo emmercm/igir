@@ -142,7 +142,7 @@ export default class Header implements HeaderOptions {
    * Return a string representation of this {@link Header}.
    */
   toString(): string {
-    return JSON.stringify(this, null, '  ')
+    return JSON.stringify(this, undefined, '  ')
       .replace(/\n +/g, ' ');
   }
 }
