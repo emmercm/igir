@@ -13,9 +13,7 @@ export default class FsPoly {
   static readonly FILE_READING_CHUNK_SIZE = 1024 * 1024; // 1MiB
 
   // Assume that all drives we're reading from or writing to were already mounted at startup
-  private static readonly DRIVE_MOUNTS = nodeDiskInfo.getDiskInfoSync()
-    .map((info) => info.mounted)
-    .sort((a, b) => b.split(/[\\/]/).length - a.split(/[\\/]/).length);
+  public static readonly DRIVE_MOUNTS = FsPoly.disksSync();
 
   static async canSymlink(tempDir: string): Promise<boolean> {
     const source = await this.mktemp(path.join(tempDir, 'source'));
@@ -55,6 +53,13 @@ export default class FsPoly {
       // Windows doesn't update mtime on overwrite?
       await this.touch(dest);
     }
+  }
+
+  static disksSync(): string[] {
+    return nodeDiskInfo.getDiskInfoSync()
+      .filter((info) => info.available > 0)
+      .map((info) => info.mounted)
+      .sort((a, b) => b.split(/[\\/]/).length - a.split(/[\\/]/).length);
   }
 
   /**
