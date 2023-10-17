@@ -80,9 +80,7 @@ async function buildReleaseCandidatesWithRegionLanguage(
   const games: Game[] = [];
   const releaseCandidates: ReleaseCandidate[] = [];
   for (const [idx, romName] of namesArr.entries()) {
-
     for (const language of languagesArr) {
-
       // Every region is a different Release+ReleaseCandidate
       const releases: Release[] = [];
       for (const region of regionsArr) {

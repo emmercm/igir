@@ -2,6 +2,8 @@
   "extends": [
     "eslint:recommended",
     "plugin:@typescript-eslint/recommended",
+    "airbnb-base",
+    "airbnb-typescript/base",
     "plugin:jsdoc/recommended-typescript-error",
     "plugin:jest/recommended"
   ],
@@ -138,6 +140,11 @@
     "@typescript-eslint/no-floating-promises": "warn",
     // There are a few places where this needs to be allowed, but only a few, so warn on them
     "@typescript-eslint/no-unused-expressions": "warn",
+
+    // ***** airbnb-base, airbnb-typescript/base *****
+    "no-await-in-loop": "off",
+    "no-bitwise": "off",
+    "no-restricted-syntax": "off",
 
     // ***** plugin:jest/recommended *****
     // A lot of test files define their own expect functions

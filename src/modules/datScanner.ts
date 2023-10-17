@@ -389,7 +389,10 @@ export default class DATScanner extends Scanner {
         .validate((row: SmdbRow) => row.name
           && row.crc
           && row.crc.length === 8
-          && (row.size === undefined || row.size.length === 0 || Number.isInteger(Number.parseInt(row.size, 10))))
+          && (row.size === undefined
+            || row.size.length === 0
+            || Number.isInteger(Number.parseInt(row.size, 10))
+          ))
         .on('error', reject)
         .on('data', (row) => {
           rows.push(row);
