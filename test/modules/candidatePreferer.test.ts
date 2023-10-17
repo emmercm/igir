@@ -53,14 +53,13 @@ async function expectPreferredCandidates(
 
   // Assert the candidate names, in any order
   expect(candidateNames).toHaveLength(expectedNames.length);
-  for (let i = 0; i < expectedNames.length; i += 1) {
-    const expectedName = expectedNames[i];
+  for (const expectedName of expectedNames) {
     expect(candidateNames).toContain(expectedName);
   }
 }
 
 function arrayCoerce<T>(val: T | T[] | undefined): T[] {
-  if (!val) {
+  if (val === undefined) {
     return [];
   }
   return Array.isArray(val) ? val : [val];
@@ -80,16 +79,13 @@ async function buildReleaseCandidatesWithRegionLanguage(
   // Every different name+language combo is a different ROM+Game
   const games: Game[] = [];
   const releaseCandidates: ReleaseCandidate[] = [];
-  for (let i = 0; i < namesArr.length; i += 1) {
-    const romName = namesArr[i];
+  for (const [idx, romName] of namesArr.entries()) {
 
-    for (let j = 0; j < languagesArr.length; j += 1) {
-      const language = languagesArr[j];
+    for (const language of languagesArr) {
 
       // Every region is a different Release+ReleaseCandidate
       const releases: Release[] = [];
-      for (let k = 0; k < regionsArr.length; k += 1) {
-        const region = regionsArr[k];
+      for (const region of regionsArr) {
         let releaseName = romName;
         if (region) {
           releaseName += ` (${region})`;
@@ -102,14 +98,13 @@ async function buildReleaseCandidatesWithRegionLanguage(
 
       const rom = new ROM({ name: `${romName}.rom`, size: 0, crc: '00000000' });
       const game = new Game({
-        name: romName, rom: [rom], release: releases, ...gameOptionsArr[i],
+        name: romName, rom: [rom], release: releases, ...gameOptionsArr[idx],
       });
       games.push(game);
 
       /** {@see CandidateGenerator} */
-      const releaseCandidateReleases = releases.length ? releases : [undefined];
-      for (let k = 0; k < releaseCandidateReleases.length; k += 1) {
-        const release = releaseCandidateReleases[k];
+      const releaseCandidateReleases = releases.length > 0 ? releases : [undefined];
+      for (const release of releaseCandidateReleases) {
         releaseCandidates.push(new ReleaseCandidate(
           game,
           release,
@@ -247,6 +242,40 @@ describe('sort', () => {
       const releaseCandidates = games
         .map((game) => new ReleaseCandidate(game, game.getReleases()[0], []));
       await expectPreferredCandidates({ single: true, preferLanguage: ['EN'] }, [[parent, releaseCandidates]], [gameWorld.getName()]);
+    });
+
+    test.each([
+      [
+        // Single language matches both candidates, choose the first
+        ['Tintin in Tibet (Europe) (En,Fr,De,Nl)', 'Tintin in Tibet (Europe) (En,Es,Sv)'],
+        ['EN'],
+        'Tintin in Tibet (Europe) (En,Fr,De,Nl)',
+      ],
+      [
+        // First language matches both, use the second language
+        ['Tintin in Tibet (Europe) (En,Fr,De,Nl)', 'Tintin in Tibet (Europe) (En,Es,Sv)'],
+        ['EN', 'ES'],
+        'Tintin in Tibet (Europe) (En,Es,Sv)',
+      ],
+      [
+        // First language matches both, use the second language (reverse)
+        ['Tintin in Tibet (Europe) (En,Fr,De,Nl)', 'Tintin in Tibet (Europe) (En,Es,Sv)'],
+        ['EN', 'ES'],
+        'Tintin in Tibet (Europe) (En,Es,Sv)',
+      ],
+      [
+        // First and second language match different candidates, choose the first language
+        ['Tintin in Tibet (Europe) (En,Fr,De,Nl)', 'Tintin in Tibet (Europe) (En,Es,Sv)'],
+        ['SV', 'DE'],
+        'Tintin in Tibet (Europe) (En,Es,Sv)',
+      ],
+    ])('should rank candidates by all preferred languages: %s', async (gameNames, preferLanguage, expectedName) => {
+      const games = gameNames.map((gameName) => new Game({ name: gameName }));
+      const parent = new Parent(games[0].getName(), games);
+      const releaseCandidates = games.map((game) => new ReleaseCandidate(game, undefined, []));
+      await expectPreferredCandidates({ preferLanguage, single: true }, [
+        [parent, releaseCandidates],
+      ], [expectedName]);
     });
 
     it('should return the first candidate when all matching', async () => {

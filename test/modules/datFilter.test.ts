@@ -16,13 +16,13 @@ async function expectFilteredDAT(
   gamesArr: Game[][],
   expectedSize: number,
 ): Promise<void> {
-  const dat = new LogiqxDAT(new Header(), gamesArr.flatMap((games) => games));
+  const dat = new LogiqxDAT(new Header(), gamesArr.flat());
   const filteredDat = await buildDATFilter(options).filter(dat);
   expect(filteredDat.getGames().length).toEqual(expectedSize);
 }
 
 function arrayCoerce<T>(val: T | T[] | undefined): T[] {
-  if (!val) {
+  if (val === undefined) {
     return [];
   }
   return Array.isArray(val) ? val : [val];
@@ -41,16 +41,13 @@ function buildGameWithRegionLanguage(
 
   // Every different name+language combo is a different ROM+Game
   const games: Game[] = [];
-  for (let i = 0; i < namesArr.length; i += 1) {
-    const romName = namesArr[i];
+  for (const [idx, romName] of namesArr.entries()) {
 
-    for (let j = 0; j < languagesArr.length; j += 1) {
-      const language = languagesArr[j];
+    for (const language of languagesArr) {
 
       // Every region is a different Release+ReleaseCandidate
       const releases: Release[] = [];
-      for (let k = 0; k < regionsArr.length; k += 1) {
-        const region = regionsArr[k];
+      for (const region of regionsArr) {
         let releaseName = romName;
         if (region) {
           releaseName += ` (${region})`;
@@ -63,7 +60,7 @@ function buildGameWithRegionLanguage(
 
       const rom = new ROM({ name: `${romName}.rom`, size: 0, crc: '00000000' });
       const game = new Game({
-        name: romName, rom: [rom], release: releases, ...gameOptionsArr[i],
+        name: romName, rom: [rom], release: releases, ...gameOptionsArr[idx],
       });
       games.push(game);
     }

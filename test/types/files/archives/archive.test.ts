@@ -47,9 +47,8 @@ describe('getArchiveEntries', () => {
     const entries = await FileFactory.filesFrom(filePath);
     expect(entries).toHaveLength(expectedEntries.length);
 
-    for (let i = 0; i < entries.length; i += 1) {
-      const entry = entries[i];
-      const expectedEntry = expectedEntries[i];
+    for (const [idx, entry] of entries.entries()) {
+      const expectedEntry = expectedEntries[idx];
       expect((entry as ArchiveEntry<Archive>).getEntryPath())
         .toEqual(path.normalize(expectedEntry[0]));
       expect(entry.getCrc32()).toEqual(expectedEntry[1]);
@@ -68,8 +67,7 @@ describe('asRawFile', () => {
     const options = new Options({ input: [input] });
     const files = await new ROMScanner(options, new ProgressBarFake()).scan();
 
-    for (let i = 0; i < files.length; i += 1) {
-      const file = files[i];
+    for (const file of files) {
       expect(file).toBeInstanceOf(ArchiveEntry);
 
       // When getting the raw file
@@ -94,8 +92,7 @@ describe('asRawFileWithoutCrc', () => {
     const options = new Options({ input: [input] });
     const files = await new ROMScanner(options, new ProgressBarFake()).scan();
 
-    for (let i = 0; i < files.length; i += 1) {
-      const file = files[i];
+    for (const file of files) {
       expect(file).toBeInstanceOf(ArchiveEntry);
 
       // When getting the raw file

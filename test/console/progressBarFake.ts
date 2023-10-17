@@ -3,8 +3,7 @@
 import ProgressBar from '../../src/console/progressBar.js';
 
 export default class ProgressBarFake extends ProgressBar {
-  delete(): void {
-  }
+  delete(): void {}
 
   async done(): Promise<void> {
     return Promise.resolve();

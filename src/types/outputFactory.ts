@@ -169,7 +169,7 @@ export default class OutputFactory {
     result = this.replaceOutputGameConsoleTokens(result, dat, outputRomFilename);
 
     const leftoverTokens = result.match(/\{[a-zA-Z]+\}/g);
-    if (leftoverTokens !== null && leftoverTokens.length) {
+    if (leftoverTokens !== null && leftoverTokens.length > 0) {
       throw new Error(`failed to replace output token${leftoverTokens.length !== 1 ? 's' : ''}: ${leftoverTokens.join(', ')}`);
     }
 
@@ -283,6 +283,11 @@ export default class OutputFactory {
     if (batocera) {
       output = output.replace('{batocera}', batocera);
     }
+
+    const jelos = gameConsole.getJelos();
+    if (jelos) {
+      output = output.replace('{jelos}', jelos);
+    }
     return output;
   }
 
@@ -297,7 +302,7 @@ export default class OutputFactory {
 
     // Find the letter for every ROM filename
     let lettersToFilenames = (romBasenames ?? [romBasename]).reduce((map, filename) => {
-      let letter = filename[0].toUpperCase();
+      let letter = filename.charAt(0).toUpperCase();
       if (letter.match(/[^A-Z]/)) {
         letter = '#';
       }
@@ -376,12 +381,11 @@ export default class OutputFactory {
       output = path.join(dir, output);
     }
 
-    if (game && (
-      (options.getDirGameSubdir() === GameSubdirMode.MULTIPLE
+    if ((options.getDirGameSubdir() === GameSubdirMode.MULTIPLE
         && game.getRoms().length > 1
         && !FileFactory.isArchive(ext))
       || options.getDirGameSubdir() === GameSubdirMode.ALWAYS
-    )) {
+    ) {
       output = path.join(game.getName(), output);
     }
 

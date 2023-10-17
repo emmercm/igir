@@ -19,8 +19,7 @@ import ProgressBarFake from '../console/progressBarFake.js';
 // Run DATInferrer, but condense all DATs down to one
 function buildInferredDat(romFiles: File[]): DAT {
   const datGames = new DATGameInferrer(new ProgressBarFake()).infer(romFiles)
-    .map((dat) => dat.getGames())
-    .flatMap((games) => games);
+    .flatMap((dat) => dat.getGames());
   return new LogiqxDAT(new Header(), datGames);
 }
 

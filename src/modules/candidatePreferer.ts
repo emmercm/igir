@@ -29,7 +29,7 @@ export default class CandidatePreferer extends Module {
   ): Promise<Map<Parent, ReleaseCandidate[]>> {
     this.progressBar.logInfo(`${dat.getNameShort()}: filtering candidates`);
 
-    if (!parentsToCandidates.size) {
+    if (parentsToCandidates.size === 0) {
       this.progressBar.logDebug(`${dat.getNameShort()}: no parents, so no candidates to filter`);
       return parentsToCandidates;
     }
@@ -48,7 +48,7 @@ export default class CandidatePreferer extends Module {
     const output = await this.sortAndFilter(dat, parentsToCandidates);
 
     const size = [...output.values()]
-      .flatMap((releaseCandidates) => releaseCandidates)
+      .flat()
       .flatMap((releaseCandidate) => releaseCandidate.getRomsWithFiles())
       .reduce((sum, romWithFiles) => sum + romWithFiles.getRom().getSize(), 0);
     const filteredCandidates = [...output.values()].reduce((sum, rc) => sum + rc.length, 0);
@@ -116,23 +116,27 @@ export default class CandidatePreferer extends Module {
   }
 
   private preferLanguagesSort(a: ReleaseCandidate, b: ReleaseCandidate): number {
-    if (this.options.getPreferLanguages().length) {
-      return this.preferLanguageSortValue(a) - this.preferLanguageSortValue(b);
+    const preferLanguages = this.options.getPreferLanguages();
+    if (preferLanguages.length === 0) {
+      return 0;
     }
+
+    const aLangs = new Set(a.getLanguages());
+    const bLangs = new Set(b.getLanguages());
+    for (const preferredLang of preferLanguages) {
+      if (aLangs.has(preferredLang) && !bLangs.has(preferredLang)) {
+        return -1;
+      }
+      if (!aLangs.has(preferredLang) && bLangs.has(preferredLang)) {
+        return 1;
+      }
+    }
+
     return 0;
   }
 
-  private preferLanguageSortValue(releaseCandidate: ReleaseCandidate): number {
-    return releaseCandidate.getLanguages()
-      .map((lang) => {
-        const priority = this.options.getPreferLanguages().indexOf(lang);
-        return priority !== -1 ? priority : Number.MAX_SAFE_INTEGER;
-      })
-      .reduce((min, idx) => Math.min(min, idx), Number.MAX_SAFE_INTEGER);
-  }
-
   private preferRegionsSort(a: ReleaseCandidate, b: ReleaseCandidate): number {
-    if (this.options.getPreferRegions().length) {
+    if (this.options.getPreferRegions().length > 0) {
       return this.preferRegionSortValue(a) - this.preferRegionSortValue(b);
     }
     return 0;

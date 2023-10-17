@@ -26,7 +26,7 @@ export default class ROMHeaderProcessor extends Module {
    * Process each {@link File}, finding any {@link Header} present.
    */
   async process(inputRomFiles: File[]): Promise<File[]> {
-    if (!inputRomFiles.length) {
+    if (inputRomFiles.length === 0) {
       return inputRomFiles;
     }
 
@@ -46,15 +46,15 @@ export default class ROMHeaderProcessor extends Module {
         let fileWithHeader: File | undefined;
         try {
           fileWithHeader = await this.getFileWithHeader(inputFile);
-        } catch (e) {
-          this.progressBar.logError(`${inputFile.toString()}: failed to process ROM header: ${e}`);
+        } catch (error) {
+          this.progressBar.logError(`${inputFile.toString()}: failed to process ROM header: ${error}`);
           fileWithHeader = inputFile;
         }
 
         this.progressBar.removeWaitingMessage(waitingMessage);
         await this.progressBar.incrementDone();
 
-        return callback(null, fileWithHeader);
+        return callback(undefined, fileWithHeader);
       },
     );
 

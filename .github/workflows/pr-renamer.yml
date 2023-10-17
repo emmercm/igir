@@ -84,7 +84,7 @@ jobs:
         uses: thollander/actions-comment-pull-request@v2
         with:
           message: |
-            ## :x: Pull Request Title
+            ## :x: Invalid pull request title
             This pull request's title does not match the repository standards, and it cannot be automatically fixed. The error is:
             ```text
             ${{ steps.title-massager.outputs.ERROR }}

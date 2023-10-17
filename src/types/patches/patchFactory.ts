@@ -80,8 +80,7 @@ export default class PatchFactory {
     const filePath = file.getExtractedFilePath();
 
     const parsers = Object.values(this.PATCH_PARSERS);
-    for (let i = 0; i < parsers.length; i += 1) {
-      const parser = parsers[i];
+    for (const parser of parsers) {
       if (parser.extensions.some((ext) => filePath.toLowerCase().endsWith(ext))) {
         return parser.factory(file);
       }
@@ -123,8 +122,7 @@ export default class PatchFactory {
     );
 
     const parsers = Object.values(this.PATCH_PARSERS);
-    for (let i = 0; i < parsers.length; i += 1) {
-      const parser = parsers[i];
+    for (const parser of parsers) {
       if (parser.fileSignatures.some((fileSignature) => fileHeader.startsWith(fileSignature.toString('hex')))) {
         return parser.factory(file);
       }

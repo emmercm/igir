@@ -41,7 +41,7 @@ export default abstract class Scanner extends Module {
         const files = await this.getFilesFromPath(inputFile, checksumBitmask);
 
         await this.progressBar.incrementDone();
-        callback(null, files);
+        callback(undefined, files);
       },
     ))
       .flatMap((files) => files);
@@ -68,12 +68,12 @@ export default abstract class Scanner extends Module {
         totalKilobytes,
       );
 
-      if (!files.length) {
+      if (files.length === 0) {
         this.progressBar.logWarn(`${filePath}: found no files in path`);
       }
       return files;
-    } catch (e) {
-      this.progressBar.logError(`${filePath}: failed to parse file: ${e}`);
+    } catch (error) {
+      this.progressBar.logError(`${filePath}: failed to parse file: ${error}`);
       return [];
     }
   }

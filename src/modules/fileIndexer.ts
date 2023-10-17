@@ -26,7 +26,7 @@ export default class FileIndexer extends Module {
    * Index files.
    */
   async index(files: File[]): Promise<Map<string, File[]>> {
-    if (!files.length) {
+    if (files.length === 0) {
       return new Map();
     }
 

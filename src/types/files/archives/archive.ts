@@ -64,10 +64,11 @@ export default abstract class Archive {
   async extractEntryToStream<T>(
     entryPath: string,
     callback: (stream: Readable) => (Promise<T> | T),
+    start = 0,
   ): Promise<T> {
     return this.extractEntryToTempFile(
       entryPath,
-      async (tempFile) => File.createStreamFromFile(tempFile, 0, callback),
+      async (tempFile) => File.createStreamFromFile(tempFile, start, callback),
     );
   }
 

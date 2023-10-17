@@ -57,7 +57,7 @@ $ igir --help
   | $$  | $$|    \  | $$  | $$    $$   ROM collection manager
   | $$  | $$|    \  | $$  | $$    $$   https://igir.io/
   | $$  | $$ \$$$$  | $$  | $$$$$$$\
- _| $$_ | $$__| $$ _| $$_ | $$  | $$   v2.0.4
+ _| $$_ | $$__| $$ _| $$_ | $$  | $$   v2.0.6
 |   $$ \ \$$    $$|   $$ \| $$  | $$
  \$$$$$$  \$$$$$$  \$$$$$$ \$$   \$$
 
@@ -207,6 +207,7 @@ Advanced usage:
     {mister}    The ROM's core-specific /games/* directory for the MiSTer FPGA (e.g. "Gameboy")
     {onion}     The ROM's emulator-specific /Roms/* directory for OnionOS/GarlicOS (e.g. "GB")
     {batocera}  The ROM's emulator-specific /roms/* directory for Batocera (e.g. "gb")
+    {jelos}     The ROM's emulator-specific /roms/* directory for JELOS (e.g. "gb")
 
 Example use cases:
 
@@ -252,4 +253,5 @@ Even better, if you feel comfortable writing code, please feel free to submit a 
   <a href="https://github.com/emmercm/igir/issues?q=is%3Aopen+is%3Aissue+label%3Abug"><img alt="GitHub: bugs" src="https://img.shields.io/github/issues/emmercm/igir/bug?color=%23d73a4a&label=bugs&logo=github&logoColor=white"></a>
   <a href="https://github.com/emmercm/igir/issues?q=is%3Aopen+is%3Aissue+label%3Aenhancement"><img alt="GitHub: feature requests" src="https://img.shields.io/github/issues/emmercm/igir/enhancement?color=%234BBCBC&label=feature%20requests&logo=github&logoColor=white"></a>
   <a href="https://github.com/emmercm/igir/discussions"><img alt="GitHub: discussions" src="https://img.shields.io/github/discussions/emmercm/igir?logo=github&logoColor=white"></a>
+  <a href="https://hacktoberfest.com/"><img alt="Hacktoberfest: participant" src="https://img.shields.io/badge/hacktoberfest-participant-orange?logo=digitalocean&logoColor=white"></a>
 </p>

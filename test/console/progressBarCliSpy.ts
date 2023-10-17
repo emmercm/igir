@@ -33,7 +33,7 @@ export default class ProgressBarCLISpy {
   }
 
   getLastLine(): string {
-    return this.outputLines[this.outputLines.length - 1];
+    return this.outputLines.at(-1) ?? '';
   }
 
   getLogLine(): string | undefined {
