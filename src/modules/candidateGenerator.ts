@@ -66,7 +66,6 @@ export default class CandidateGenerator extends Module {
         // For every release (ensuring at least one), find all release candidates
         const releases = game.getReleases().length > 0 ? game.getReleases() : [undefined];
         for (const release of releases) {
-
           const releaseCandidate = await this.buildReleaseCandidateForRelease(
             dat,
             game,
@@ -338,7 +337,6 @@ export default class CandidateGenerator extends Module {
 
     let hasConflict = false;
     for (const duplicateOutput of duplicateOutputPaths) {
-
       // For an output path that has multiple input paths, filter to only the unique input paths,
       //  and if there are still multiple input file paths then we won't be able to resolve this
       //  at write time
