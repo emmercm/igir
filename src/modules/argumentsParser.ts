@@ -2,6 +2,7 @@ import yargs, { Argv } from 'yargs';
 
 import Logger from '../console/logger.js';
 import Constants from '../constants.js';
+import ArrayPoly from "../polyfill/arrayPoly.js";
 import ConsolePoly from '../polyfill/consolePoly.js';
 import ROMHeader from '../types/files/romHeader.js';
 import Internationalization from '../types/internationalization.js';
@@ -79,27 +80,27 @@ export default class ArgumentsParser {
       ['clean', 'Recycle unknown files in the output directory'],
       ['report', 'Generate a CSV report on the known & unknown ROM files found in the input directories (requires --dat)'],
     ];
-    let ignoreParseOutput = false;
-    const addCommands = (yargsObj: Argv): Argv => {
-      // yargsObj.argv is a getter that causes `.parse()` down below to get fired, so we need to
-      // indicate the help message should not be printed for this getter invocation
-      ignoreParseOutput = true;
-      const existingCommands = (yargsObj.argv as { _:string[] })._;
-      ignoreParseOutput = false;
-
+    const addCommands = (yargsObj: Argv, commandsToAdd = commands.map((command) => command[0])): Argv => {
       commands
         // Don't show duplicate commands, i.e. don't give `igir copy copy` as an option when
         // specifying `igir copy --help`.
-        .filter(([command]) => !existingCommands.includes(command))
+        .filter(([command]) => commandsToAdd.includes(command))
         .forEach(([command, description]) => {
-          yargsObj.command(command, description, (yargsSubObj) => addCommands(yargsSubObj));
+          yargsObj.command(command, description, (yargsSubObj) => addCommands(
+            yargsSubObj,
+            commandsToAdd.filter((c) => c !== command),
+          ));
         });
 
-      if (existingCommands.length > 0) {
+      if (commandsToAdd.length === 0) {
         // Only register the check function once
         return yargsObj;
       }
       return yargsObj
+        .middleware((middlewareArgv) => {
+          // Ignore duplicate commands
+          middlewareArgv._ = middlewareArgv._.reduce(ArrayPoly.reduceUnique(), []);
+        }, true)
         .check((checkArgv) => {
           if (checkArgv.help) {
             return true;
@@ -734,7 +735,7 @@ Example use cases:
     const yargsArgv = yargsParser
       .strictOptions(true)
       .parse(argv, {}, (err, parsedArgv, output) => {
-        if (output && !ignoreParseOutput) {
+        if (output) {
           this.logger.colorizeYargs(`${output.trimEnd()}\n`);
         }
       });
