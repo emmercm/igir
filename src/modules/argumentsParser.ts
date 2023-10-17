@@ -2,7 +2,7 @@ import yargs, { Argv } from 'yargs';
 
 import Logger from '../console/logger.js';
 import Constants from '../constants.js';
-import ArrayPoly from "../polyfill/arrayPoly.js";
+import ArrayPoly from '../polyfill/arrayPoly.js';
 import ConsolePoly from '../polyfill/consolePoly.js';
 import ROMHeader from '../types/files/romHeader.js';
 import Internationalization from '../types/internationalization.js';
@@ -80,7 +80,10 @@ export default class ArgumentsParser {
       ['clean', 'Recycle unknown files in the output directory'],
       ['report', 'Generate a CSV report on the known & unknown ROM files found in the input directories (requires --dat)'],
     ];
-    const addCommands = (yargsObj: Argv, commandsToAdd = commands.map((command) => command[0])): Argv => {
+    const addCommands = (
+      yargsObj: Argv,
+      commandsToAdd = commands.map((command) => command[0]),
+    ): Argv => {
       commands
         // Don't show duplicate commands, i.e. don't give `igir copy copy` as an option when
         // specifying `igir copy --help`.
@@ -98,6 +101,7 @@ export default class ArgumentsParser {
       }
       return yargsObj
         .middleware((middlewareArgv) => {
+          /* eslint-disable no-param-reassign */
           // Ignore duplicate commands
           middlewareArgv._ = middlewareArgv._.reduce(ArrayPoly.reduceUnique(), []);
         }, true)
