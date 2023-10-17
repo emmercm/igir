@@ -42,9 +42,7 @@ function buildGameWithRegionLanguage(
   // Every different name+language combo is a different ROM+Game
   const games: Game[] = [];
   for (const [idx, romName] of namesArr.entries()) {
-
     for (const language of languagesArr) {
-
       // Every region is a different Release+ReleaseCandidate
       const releases: Release[] = [];
       for (const region of regionsArr) {
