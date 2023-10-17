@@ -43,8 +43,7 @@ export default abstract class Scanner extends Module {
         await this.progressBar.incrementDone();
         callback(undefined, files);
       },
-    ))
-      .flatMap((files) => files);
+    )).flat();
   }
 
   protected async getUniqueFilesFromPaths(

@@ -90,12 +90,12 @@ export default class ArgumentsParser {
       commands
         // Don't show duplicate commands, i.e. don't give `igir copy copy` as an option when
         // specifying `igir copy --help`.
-        .filter(([command]) => existingCommands.indexOf(command) === -1)
+        .filter(([command]) => !existingCommands.includes(command))
         .forEach(([command, description]) => {
           yargsObj.command(command, description, (yargsSubObj) => addCommands(yargsSubObj));
         });
 
-      if (existingCommands.length) {
+      if (existingCommands.length > 0) {
         // Only register the check function once
         return yargsObj;
       }
@@ -105,29 +105,29 @@ export default class ArgumentsParser {
             return true;
           }
 
-          const writeCommands = ['copy', 'move', 'symlink'].filter((command) => checkArgv._.indexOf(command) !== -1);
+          const writeCommands = ['copy', 'move', 'symlink'].filter((command) => checkArgv._.includes(command));
           if (writeCommands.length > 1) {
             throw new Error(`Incompatible commands: ${writeCommands.join(', ')}`);
           }
 
-          const archiveCommands = ['symlink', 'extract', 'zip'].filter((command) => checkArgv._.indexOf(command) !== -1);
+          const archiveCommands = ['symlink', 'extract', 'zip'].filter((command) => checkArgv._.includes(command));
           if (archiveCommands.length > 1) {
             throw new Error(`Incompatible commands: ${archiveCommands.join(', ')}`);
           }
 
-          const datWritingCommands = ['dir2dat', 'fixdat'].filter((command) => checkArgv._.indexOf(command) !== -1);
+          const datWritingCommands = ['dir2dat', 'fixdat'].filter((command) => checkArgv._.includes(command));
           if (datWritingCommands.length > 1) {
             throw new Error(`Incompatible commands: ${datWritingCommands.join(', ')}`);
           }
 
           ['extract', 'zip'].forEach((command) => {
-            if (checkArgv._.indexOf(command) !== -1 && ['copy', 'move'].every((write) => checkArgv._.indexOf(write) === -1)) {
+            if (checkArgv._.includes(command) && ['copy', 'move'].every((write) => !checkArgv._.includes(write))) {
               throw new Error(`Command "${command}" also requires the commands copy or move`);
             }
           });
 
           ['test', 'clean'].forEach((command) => {
-            if (checkArgv._.indexOf(command) !== -1 && ['copy', 'move', 'symlink'].every((write) => checkArgv._.indexOf(write) === -1)) {
+            if (checkArgv._.includes(command) && ['copy', 'move', 'symlink'].every((write) => !checkArgv._.includes(write))) {
               throw new Error(`Command "${command}" requires one of the commands: copy, move, or symlink`);
             }
           });

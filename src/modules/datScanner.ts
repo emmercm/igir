@@ -90,8 +90,8 @@ export default class DATScanner extends Scanner {
         const downloadedDatFile = await datFile.downloadToTempPath('dat');
         this.progressBar.logTrace(`${datFile.toString()}: downloaded to ${downloadedDatFile.toString()}`);
         return await FileFactory.filesFrom(downloadedDatFile.getFilePath(), ChecksumBitmask.NONE);
-      } catch (e) {
-        this.progressBar.logWarn(`${datFile.toString()}: failed to download: ${e}`);
+      } catch (error) {
+        this.progressBar.logWarn(`${datFile.toString()}: failed to download: ${error}`);
         return [];
       }
     }))).flat();
