@@ -23,7 +23,7 @@ import Module from './module.js';
  * This class will not be run concurrently with any other class.
  */
 export default class DATGameInferrer extends Module {
-  private static readonly DEFAULT_DAT_NAME = moment().format('YYYYMMDD-HHmmss');
+  private static readonly DEFAULT_DAT_NAME = Constants.COMMAND_NAME;
 
   private readonly options: Options;
 
