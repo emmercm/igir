@@ -306,14 +306,18 @@ export default class FsPoly {
       return [];
     }
 
-    if (callback) callback(files.length);
+    if (callback) {
+      callback(files.length);
+    }
 
     for (const file of files) {
       const fullPath = path.join(pathLike.toString(), file);
       if (await this.isDirectory(fullPath)) {
         const subDirFiles = await this.walk(fullPath);
         output.push(...subDirFiles);
-        if (callback) callback(subDirFiles.length - 1);
+        if (callback) {
+          callback(subDirFiles.length - 1);
+        }
       } else {
         output.push(fullPath);
       }
