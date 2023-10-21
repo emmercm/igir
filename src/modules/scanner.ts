@@ -37,9 +37,12 @@ export default abstract class Scanner extends Module {
       threads,
       async (inputFile, callback: AsyncResultCallback<File[], Error>) => {
         await this.progressBar.incrementProgress();
+        const waitingMessage = `${inputFile} ...`;
+        this.progressBar.addWaitingMessage(waitingMessage);
 
         const files = await this.getFilesFromPath(inputFile, checksumBitmask);
 
+        this.progressBar.removeWaitingMessage(waitingMessage);
         await this.progressBar.incrementDone();
         callback(undefined, files);
       },

@@ -1,9 +1,11 @@
 import path from 'node:path';
 
+import async, { AsyncResultCallback } from 'async';
 import { Mutex } from 'async-mutex';
 import unrar from 'node-unrar-js';
 import { Memoize } from 'typescript-memoize';
 
+import Constants from '../../../constants.js';
 import Archive from './archive.js';
 import ArchiveEntry from './archiveEntry.js';
 
@@ -22,16 +24,21 @@ export default class Rar extends Archive {
     const rar = await unrar.createExtractorFromFile({
       filepath: this.getFilePath(),
     });
-    return Promise.all([...rar.getFileList().fileHeaders]
-      .filter((fileHeader) => !fileHeader.flags.directory)
-      .map(async (fileHeader) => ArchiveEntry.entryOf(
-        this,
-        fileHeader.name,
-        fileHeader.unpSize,
-        { crc32: fileHeader.crc.toString(16) },
-        // If MD5 or SHA1 is desired, this file will need to be extracted to calculate
-        checksumBitmask,
-      )));
+    return async.mapLimit(
+      [...rar.getFileList().fileHeaders].filter((fileHeader) => !fileHeader.flags.directory),
+      Constants.ARCHIVE_ENTRY_SCANNER_THREADS_PER_ARCHIVE,
+      async (fileHeader, callback: AsyncResultCallback<ArchiveEntry<Rar>, Error>) => {
+        const archiveEntry = await ArchiveEntry.entryOf(
+          this,
+          fileHeader.name,
+          fileHeader.unpSize,
+          { crc32: fileHeader.crc.toString(16) },
+          // If MD5 or SHA1 is desired, this file will need to be extracted to calculate
+          checksumBitmask,
+        );
+        callback(undefined, archiveEntry);
+      },
+    );
   }
 
   async extractEntryToFile(

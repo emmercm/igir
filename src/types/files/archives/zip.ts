@@ -4,7 +4,7 @@ import { Readable } from 'node:stream';
 import { clearInterval } from 'node:timers';
 
 import archiver, { Archiver } from 'archiver';
-import async from 'async';
+import async, { AsyncResultCallback } from 'async';
 import { Memoize } from 'typescript-memoize';
 import unzipper from 'unzipper';
 
@@ -32,16 +32,21 @@ export default class Zip extends Archive {
     //  using `unzipper.Open.file()` as well, so mangled filenames here will still extract fine
     const archive = await unzipper.Open.file(this.getFilePath());
 
-    return Promise.all(archive.files
-      .filter((entryFile) => entryFile.type === 'File')
-      .map(async (entryFile) => ArchiveEntry.entryOf(
-        this,
-        entryFile.path,
-        entryFile.uncompressedSize,
-        { crc32: entryFile.crc32.toString(16) },
-        // If MD5 or SHA1 is desired, this file will need to be extracted to calculate
-        checksumBitmask,
-      )));
+    return async.mapLimit(
+      archive.files.filter((entryFile) => entryFile.type === 'File'),
+      Constants.ARCHIVE_ENTRY_SCANNER_THREADS_PER_ARCHIVE,
+      async (entryFile, callback: AsyncResultCallback<ArchiveEntry<Zip>, Error>) => {
+        const archiveEntry = await ArchiveEntry.entryOf(
+          this,
+          entryFile.path,
+          entryFile.uncompressedSize,
+          { crc32: entryFile.crc32.toString(16) },
+          // If MD5 or SHA1 is desired, this file will need to be extracted to calculate
+          checksumBitmask,
+        );
+        callback(undefined, archiveEntry);
+      },
+    );
   }
 
   async extractEntryToFile(
