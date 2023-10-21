@@ -141,9 +141,14 @@ export default class Igir {
       }
 
       // Write the output report
-      const datStatus = await new StatusGenerator(this.options, progressBar)
+      const datStatus = new StatusGenerator(this.options, progressBar)
         .generate(filteredDat, parentsToCandidates);
       datsStatuses.push(datStatus);
+      await progressBar.done([
+        datStatus.toConsole(this.options),
+        dir2DatPath ? `dir2dat: ${dir2DatPath}` : undefined,
+        fixdatPath ? `Fixdat: ${fixdatPath}` : undefined,
+      ].filter((line) => line).join('\n'));
 
       // Progress bar cleanup
       const totalReleaseCandidates = [...parentsToCandidates.values()]
