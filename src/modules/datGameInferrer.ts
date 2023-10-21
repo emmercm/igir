@@ -4,6 +4,7 @@ import moment from 'moment';
 
 import ProgressBar from '../console/progressBar.js';
 import Constants from '../constants.js';
+import ArrayPoly from '../polyfill/arrayPoly.js';
 import DAT from '../types/dats/dat.js';
 import Game from '../types/dats/game.js';
 import Header from '../types/dats/logiqx/header.js';
@@ -22,6 +23,8 @@ import Module from './module.js';
  * This class will not be run concurrently with any other class.
  */
 export default class DATGameInferrer extends Module {
+  private static readonly DEFAULT_DAT_NAME = moment().format('YYYYMMDD-HHmmss');
+
   private readonly options: Options;
 
   constructor(options: Options, progressBar: ProgressBar) {
@@ -36,14 +39,17 @@ export default class DATGameInferrer extends Module {
     this.progressBar.logInfo(`inferring DATs for ${romFiles.length.toLocaleString()} ROM${romFiles.length !== 1 ? 's' : ''}`);
 
     const normalizedInputPaths = this.options.getInputPaths()
-      .map((inputPath) => path.normalize(inputPath));
+      .map((inputPath) => path.normalize(inputPath))
+      // Try to strip out glob patterns
+      .map((inputPath) => inputPath.replace(/([\\/][?*]+)+$/, ''));
 
     const inputPathsToRomFiles = romFiles.reduce((map, file) => {
       const normalizedPath = file.getFilePath().normalize();
-      normalizedInputPaths
+      const matchedInputPaths = normalizedInputPaths
         // `.filter()` rather than `.find()` because a file can be found in overlapping input paths,
         // therefore it should be counted in both
-        .filter((inputPath) => normalizedPath.startsWith(inputPath))
+        .filter((inputPath) => normalizedPath.startsWith(inputPath));
+      (matchedInputPaths.length > 0 ? matchedInputPaths : [DATGameInferrer.DEFAULT_DAT_NAME])
         .forEach((inputPath) => {
           const datRomFiles = [...(map.get(inputPath) ?? []), file];
           map.set(inputPath, datRomFiles);
@@ -84,13 +90,15 @@ export default class DATGameInferrer extends Module {
     }, new Map<string, File[]>());
 
     const games = [...gameNamesToRomFiles.entries()].map(([gameName, gameRomFiles]) => {
-      const roms = gameRomFiles.map((romFile) => new ROM({
-        name: path.basename(romFile.getExtractedFilePath()),
-        size: romFile.getSize(),
-        crc: romFile.getCrc32(),
-        md5: romFile.getMd5(),
-        sha1: romFile.getSha1(),
-      }));
+      const roms = gameRomFiles
+        .map((romFile) => new ROM({
+          name: path.basename(romFile.getExtractedFilePath()),
+          size: romFile.getSize(),
+          crc: romFile.getCrc32(),
+          md5: romFile.getMd5(),
+          sha1: romFile.getSha1(),
+        }))
+        .filter(ArrayPoly.filterUniqueMapped((rom) => rom.getName()));
       return new Game({
         name: gameName,
         description: gameName,
