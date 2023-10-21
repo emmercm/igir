@@ -96,13 +96,17 @@ export default class ProgressBarCLI extends ProgressBar {
    * Stop the {@link MultiBar} (and therefore everyProgressBar).
    */
   static async stop(): Promise<void> {
-    this.multiBar?.stop();
-    this.multiBar = undefined;
-    // Forcing a render shouldn't be necessary
-
     // Freeze (and delete) any lingering progress bars
     const progressBarsCopy = ProgressBarCLI.progressBars.slice();
     await Promise.all(progressBarsCopy.map(async (progressBar) => progressBar.freeze()));
+
+    // Clear the last deleted, non-frozen progress bar
+    ProgressBarCLI.multiBar?.log(' ');
+    this.multiBar?.update();
+
+    this.multiBar?.stop();
+    this.multiBar = undefined;
+    // Forcing a render shouldn't be necessary
   }
 
   /**
