@@ -35,8 +35,22 @@ export default class SingleBarFormatted {
     this.multiBar = multiBar;
     this.singleBar = this.multiBar.create(initialTotal, 0, initialPayload, {
       format: (options, params, payload: ProgressBarPayload): string => {
-        this.lastOutput = `${SingleBarFormatted.getSymbolAndName(payload)} | ${this.getProgress(options, params, payload)}`.trim();
-        return this.lastOutput;
+        const symbolAndName = SingleBarFormatted.getSymbolAndName(payload);
+        const progressWrapped = this.getProgress(options, params, payload)
+          .split('\n')
+          .map((line, idx) => {
+            if (idx === 0) {
+              return line;
+            }
+            return ' '.repeat(stripAnsi(symbolAndName).length + 3) + line;
+          })
+          .join('\n\x1b[K');
+
+        this.lastOutput = `${symbolAndName} | ${progressWrapped}`.trim();
+        return this.lastOutput
+          // cli-progress doesn't handle multi-line progress bars, collapse to one line. The multi-
+          // line message will get logged correctly when the progress bar is frozen & logged.
+          .replace(/\n\S*\s+/g, ' ');
       },
     });
   }

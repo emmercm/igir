@@ -135,19 +135,11 @@ export default class ProgressBarCLI extends ProgressBar {
           const consoleWidth = ConsolePoly.consoleWidth();
           const logMessage = ProgressBarCLI.logQueue
             // Wrapping is broken: https://github.com/npkgz/cli-progress/issues/142
-            .map((msg, msgIdx) => wrapAnsi(msg, consoleWidth)
+            .map((msg) => wrapAnsi(msg, consoleWidth, { trim: false })
               // ...and if we manually wrap lines, we also need to deal with overwriting existing
               //  progress bar output.
               .split('\n')
-              .map((line, lineIdx) => {
-                if (msgIdx === 0 && lineIdx === 0) {
-                  // The very first line shouldn't need padding, the progress bar renderer should
-                  //  be calling `process.stdout.clearLine()`.
-                  return line;
-                }
-                return line.padEnd(consoleWidth, ' ');
-              })
-              .join('\n'))
+              .join('\n\x1b[K'))
             .join('\n');
           ProgressBarCLI.multiBar.log(`${logMessage}\n`);
           ProgressBarCLI.logQueue = [];
@@ -175,12 +167,20 @@ export default class ProgressBarCLI extends ProgressBar {
   }
 
   private async logPayload(): Promise<void> {
-    if (this.singleBarFormatted) {
-      return;
-    }
+    const name = this.payload.name ?? '';
+    const finishedMessageWrapped = this.payload.finishedMessage
+      ?.split('\n')
+      .map((line, idx) => {
+        if (idx === 0) {
+          return line;
+        }
+        return `   ${line}`;
+      })
+      .join('\n');
+
     this.log(
       LogLevel.ALWAYS,
-      `${this.payload.name}${this.payload.finishedMessage ? ` ... ${this.payload.finishedMessage}` : ''}`.trim(),
+      `${name}${finishedMessageWrapped ? ` ... ${finishedMessageWrapped}` : ''}`,
     );
     await this.render(true);
   }
@@ -345,9 +345,6 @@ export default class ProgressBarCLI extends ProgressBar {
     }
 
     ProgressBarCLI.multiBar?.remove(this.singleBarFormatted.getSingleBar());
-    // TODO(cemmer): forcing a render shouldn't be necessary, BUT if nothing is rendered after
-    // deletion, then this deleted progress bar won't be overwritten!
-
     ProgressBarCLI.progressBars = ProgressBarCLI.progressBars
       .filter((singleBar) => singleBar.singleBarFormatted !== this.singleBarFormatted);
   }
