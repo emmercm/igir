@@ -1,6 +1,7 @@
 import path from 'node:path';
 
 import _7z, { Result } from '7zip-min';
+import async, { AsyncResultCallback } from 'async';
 import { Mutex } from 'async-mutex';
 import { Memoize } from 'typescript-memoize';
 
@@ -84,16 +85,21 @@ export default class SevenZip extends Archive {
       }),
     );
 
-    return Promise.all(filesIn7z
-      .filter((result) => !result.attr?.startsWith('D'))
-      .map(async (result) => ArchiveEntry.entryOf(
-        this,
-        result.name,
-        Number.parseInt(result.size, 10),
-        { crc32: result.crc },
-        // If MD5 or SHA1 is desired, this file will need to be extracted to calculate
-        checksumBitmask,
-      )));
+    return async.mapLimit(
+      filesIn7z.filter((result) => !result.attr?.startsWith('D')),
+      Constants.ARCHIVE_ENTRY_SCANNER_THREADS_PER_ARCHIVE,
+      async (result, callback: AsyncResultCallback<ArchiveEntry<SevenZip>, Error>) => {
+        const archiveEntry = await ArchiveEntry.entryOf(
+          this,
+          result.name,
+          Number.parseInt(result.size, 10),
+          { crc32: result.crc },
+          // If MD5 or SHA1 is desired, this file will need to be extracted to calculate
+          checksumBitmask,
+        );
+        callback(undefined, archiveEntry);
+      },
+    );
   }
 
   async extractEntryToFile(

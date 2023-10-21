@@ -88,6 +88,11 @@ export default class Constants {
   static readonly ROM_HEADER_PROCESSOR_THREADS = 20;
 
   /**
+   * Max number of archive entries to process (possibly extract & MD5/SHA1 checksum) at once.
+   */
+  static readonly ARCHIVE_ENTRY_SCANNER_THREADS_PER_ARCHIVE = 5;
+
+  /**
    * Default number of DATs to process at once.
    */
   static readonly DAT_DEFAULT_THREADS = 3;
