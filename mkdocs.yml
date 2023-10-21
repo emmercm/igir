@@ -92,6 +92,7 @@ nav:
           - license.md
   # https://github.com/squidfunk/mkdocs-material/issues/889#issuecomment-582297142: how-to open nav links in new tabs
   - Download ↗: https://github.com/emmercm/igir/releases/latest" target="_blank
+  - Donate ↗: https://github.com/sponsors/emmercm
   - Issues ↗: https://github.com/emmercm/igir/issues?q=is%3Aopen+is%3Aissue+label%3Abug" target="_blank
   - Discuss ↗: https://github.com/emmercm/igir/discussions" target="_blank
 
@@ -143,8 +144,8 @@ markdown_extensions:
   # https://squidfunk.github.io/mkdocs-material/reference/icons-emojis/
   - attr_list
   - pymdownx.emoji:
-      emoji_index: !!python/name:materialx.emoji.twemoji
-      emoji_generator: !!python/name:materialx.emoji.to_svg
+      emoji_index: !!python/name:material.extensions.emoji.twemoji
+      emoji_generator: !!python/name:material.extensions.emoji.to_svg
 
 extra:
   analytics:

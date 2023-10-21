@@ -151,12 +151,15 @@ site/
 *.ups
 *.xdelta
 
+# Always commit some WebStorm configs
+!.idea/runConfigurations/*
+
+# Always commit files in the docs/ folder (ignoring extension ignores above)
+!docs/*
+
 # Always commit fixtures
 !test/fixtures/dats/*
 !test/fixtures/dats/*/*
 !test/fixtures/patches/*
 !test/fixtures/roms/*
 !test/fixtures/roms/*/*
-
-# Always commit some WebStorm configs
-!.idea/runConfigurations/*
