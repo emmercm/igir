@@ -68,24 +68,9 @@ export default class Constants {
   static readonly MAX_READ_WRITE_CONCURRENT_KILOBYTES = Math.ceil(4_700_372_992 / 1024);
 
   /**
-   * Max number of DAT files to parse at once during scanning.
+   * Default number of DATs to process at once.
    */
-  static readonly DAT_SCANNER_THREADS = 20;
-
-  /**
-   * Max number of ROM files to parse at once during scanning.
-   */
-  static readonly ROM_SCANNER_THREADS = 20;
-
-  /**
-   * Max number of ROM patch files to parse at once during scanning.
-   */
-  static readonly PATCH_SCANNER_THREADS = 20;
-
-  /**
-   * Max number of ROMs to parse for headers at once.
-   */
-  static readonly ROM_HEADER_PROCESSOR_THREADS = 20;
+  static readonly DAT_DEFAULT_THREADS = 3;
 
   /**
    * Max number of archive entries to process (possibly extract & MD5/SHA1 checksum) at once.
@@ -93,9 +78,9 @@ export default class Constants {
   static readonly ARCHIVE_ENTRY_SCANNER_THREADS_PER_ARCHIVE = 5;
 
   /**
-   * Default number of DATs to process at once.
+   * A sane max number of files to write at once.
    */
-  static readonly DAT_DEFAULT_THREADS = 3;
+  static readonly FILE_READER_DEFAULT_THREADS = 20;
 
   /**
    * A sane max number of ROM release candidates to write at once. This will be the limiting factor

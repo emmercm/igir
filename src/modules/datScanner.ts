@@ -7,7 +7,6 @@ import robloachDatfile from 'robloach-datfile';
 import xml2js from 'xml2js';
 
 import ProgressBar, { ProgressBarSymbol } from '../console/progressBar.js';
-import Constants from '../constants.js';
 import ArrayPoly from '../polyfill/arrayPoly.js';
 import bufferPoly from '../polyfill/bufferPoly.js';
 import fsPoly from '../polyfill/fsPoly.js';
@@ -62,7 +61,7 @@ export default class DATScanner extends Scanner {
     await this.progressBar.reset(datFilePaths.length);
 
     this.progressBar.logDebug('enumerating DAT archives');
-    const datFiles = await this.getFilesFromPaths(datFilePaths, Constants.DAT_SCANNER_THREADS);
+    const datFiles = await this.getFilesFromPaths(datFilePaths, this.options.getReaderThreads());
     await this.progressBar.reset(datFiles.length);
 
     const downloadedDats = await this.downloadDats(datFiles);
@@ -98,7 +97,7 @@ export default class DATScanner extends Scanner {
 
     const results = (await async.mapLimit(
       datFiles,
-      Constants.DAT_SCANNER_THREADS,
+      this.options.getReaderThreads(),
       async (datFile: File, callback: AsyncResultCallback<DAT | undefined, Error>) => {
         await this.progressBar.incrementProgress();
         const waitingMessage = `${datFile.toString()} ...`;

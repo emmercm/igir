@@ -1,7 +1,6 @@
 import async, { AsyncResultCallback } from 'async';
 
 import ProgressBar, { ProgressBarSymbol } from '../console/progressBar.js';
-import Constants from '../constants.js';
 import ArchiveEntry from '../types/files/archives/archiveEntry.js';
 import File from '../types/files/file.js';
 import ROMHeader from '../types/files/romHeader.js';
@@ -37,7 +36,7 @@ export default class ROMHeaderProcessor extends Module {
 
     const parsedFiles = await async.mapLimit(
       inputRomFiles,
-      Constants.ROM_HEADER_PROCESSOR_THREADS,
+      this.options.getReaderThreads(),
       async (inputFile, callback: AsyncResultCallback<File, Error>) => {
         await this.progressBar.incrementProgress();
         const waitingMessage = `${inputFile.toString()} ...`;
