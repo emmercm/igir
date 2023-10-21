@@ -1,0 +1,16 @@
+mkdocs-material
+
+mkdocs-exclude-search
+mkdocs-git-revision-date-localized-plugin
+mkdocs-htmlproofer-plugin
+mkdocs-material[imaging]
+mkdocs-redirects
+mdx_truly_sane_lists
+
+# Requires:
+# macOS:
+#   brew install cairo
+#   sudo ln -s /opt/homebrew/Cellar/cairo/*/lib/libcairo.2.dylib /usr/local/lib/
+# Linux: sudo apt-get install libcairo2-dev libfreetype6-dev libffi-dev libjpeg-dev libpng-dev libz-dev
+pillow
+cairosvg

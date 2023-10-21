@@ -588,13 +588,16 @@ export default class Options implements OptionsProps {
     const uniqueGlobPatterns = globPatterns
       .filter((pattern) => pattern)
       .reduce(ArrayPoly.reduceUnique(), []);
-    const globbedPaths = [];
+    let globbedPaths: string[] = [];
     for (const uniqueGlobPattern of uniqueGlobPatterns) {
-      globbedPaths.push(...(await this.globPath(
+      const paths = await this.globPath(
         uniqueGlobPattern,
         requireFiles,
         walkCallback ?? ((): void => {}),
-      )));
+      );
+      // NOTE(cemmer): if `paths` is really large, `globbedPaths.push(...paths)` can hit a stack
+      // size limit
+      globbedPaths = [...globbedPaths, ...paths];
     }
 
     // Filter to non-directories

@@ -46,7 +46,11 @@ gracefulFs.gracefulify(realFs);
     await ProgressBarCLI.stop();
   } catch (error) {
     await ProgressBarCLI.stop();
-    logger.error(error);
+    if (error instanceof Error && error.stack) {
+      logger.error(error.stack);
+    } else {
+      logger.error(error);
+    }
     logger.newLine();
     process.exit(1);
   }
