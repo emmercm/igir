@@ -16,11 +16,14 @@ export const ProgressBarSymbol = {
   SEARCHING: chalk.magenta(process.platform === 'win32' ? '○' : '↻'),
   HASHING: chalk.magenta('#'),
   INDEXING: chalk.magenta('#'),
-  // DATs & candidates
+  // DATs
+  GROUPING_SIMILAR: chalk.cyan('∩'),
   MERGE_SPLIT: chalk.cyan('↔'),
+  // Candidates
   GENERATING: chalk.cyan('Σ'),
   FILTERING: chalk.cyan('∆'),
   VALIDATING: chalk.cyan(process.platform === 'win32' ? '?' : '≟'),
+  COMBINING_ALL: chalk.cyan(process.platform === 'win32' ? 'U' : '∪'),
   WRITING: chalk.yellow(process.platform === 'win32' ? '»' : '✎'),
   RECYCLING: chalk.blue(process.platform === 'win32' ? '≠' : '♻'),
   DELETING: chalk.red(process.platform === 'win32' ? 'X' : '✕'),
