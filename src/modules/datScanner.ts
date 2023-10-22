@@ -73,7 +73,12 @@ export default class DATScanner extends Scanner {
   }
 
   private async downloadDats(datFiles: File[]): Promise<File[]> {
+    if (!datFiles.some((datFile) => datFile.isURL())) {
+      return datFiles;
+    }
+
     this.progressBar.logDebug('downloading DATs from URLs');
+    await this.progressBar.setSymbol(ProgressBarSymbol.DOWNLOADING);
 
     return (await Promise.all(datFiles.map(async (datFile) => {
       if (!datFile.isURL()) {
@@ -104,7 +109,12 @@ export default class DATScanner extends Scanner {
         const waitingMessage = `${datFile.toString()} ...`;
         this.progressBar.addWaitingMessage(waitingMessage);
 
-        const dat = await this.parseDatFile(datFile);
+        let dat: DAT | undefined;
+        try {
+          dat = await this.parseDatFile(datFile);
+        } catch (error) {
+          this.progressBar.logWarn(`${datFile.toString()}: failed to parse DAT file: ${error}`);
+        }
 
         await this.progressBar.incrementDone();
         this.progressBar.removeWaitingMessage(waitingMessage);
@@ -305,7 +315,8 @@ export default class DATScanner extends Scanner {
     const cmproGames = cmproDat.slice(1);
     const games = cmproGames.flatMap((obj) => {
       const game = obj as DatfileGame;
-      const roms = game.entries
+      // TODO(cemmer): https://github.com/RobLoach/datfile/issues/2
+      const roms = (game.entries ?? [])
         .filter((rom) => rom.name) // we need ROM filenames
         .map((entry) => new ROM({
           name: entry.name ?? '',
