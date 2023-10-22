@@ -73,7 +73,12 @@ export default class DATScanner extends Scanner {
   }
 
   private async downloadDats(datFiles: File[]): Promise<File[]> {
+    if (!datFiles.some((datFile) => datFile.isURL())) {
+      return datFiles;
+    }
+
     this.progressBar.logDebug('downloading DATs from URLs');
+    await this.progressBar.setSymbol(ProgressBarSymbol.DOWNLOADING);
 
     return (await Promise.all(datFiles.map(async (datFile) => {
       if (!datFile.isURL()) {
@@ -95,6 +100,7 @@ export default class DATScanner extends Scanner {
   // Parse each file into a DAT
   private async parseDatFiles(datFiles: File[]): Promise<DAT[]> {
     this.progressBar.logDebug(`parsing ${datFiles.length.toLocaleString()} DAT file${datFiles.length !== 1 ? 's' : ''}`);
+    await this.progressBar.setSymbol(ProgressBarSymbol.PARSING_CONTENTS);
 
     const results = (await async.mapLimit(
       datFiles,

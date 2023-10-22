@@ -4,6 +4,8 @@ import path from 'node:path';
 import { Readable } from 'node:stream';
 import util from 'node:util';
 
+import { Memoize } from 'typescript-memoize';
+
 import Constants from '../../constants.js';
 import ArrayPoly from '../../polyfill/arrayPoly.js';
 import FilePoly from '../../polyfill/filePoly.js';
@@ -171,6 +173,7 @@ export default class File implements FileProps {
     return this.patch;
   }
 
+  @Memoize()
   isURL(): boolean {
     return URLPoly.canParse(this.getFilePath());
   }
