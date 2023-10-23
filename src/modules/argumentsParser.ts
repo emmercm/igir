@@ -606,7 +606,7 @@ export default class ArgumentsParser {
       })
       .option('reader-threads', {
         group: groupHelpDebug,
-        description: 'Maximum number of ROMs to read in parallel',
+        description: 'Maximum number of ROMs to read in parallel per disk',
         type: 'number',
         coerce: (val: number) => Math.max(val, 1),
         requiresArg: true,
