@@ -3,7 +3,6 @@ import path from 'node:path';
 
 import { parse } from '@fast-csv/parse';
 import async, { AsyncResultCallback } from 'async';
-import robloachDatfile from 'robloach-datfile';
 import xml2js from 'xml2js';
 
 import ProgressBar, { ProgressBarSymbol } from '../console/progressBar.js';
@@ -11,6 +10,7 @@ import Constants from '../constants.js';
 import ArrayPoly from '../polyfill/arrayPoly.js';
 import bufferPoly from '../polyfill/bufferPoly.js';
 import fsPoly from '../polyfill/fsPoly.js';
+import CMProParser, { DATProps, GameProps, ROMProps } from '../types/dats/cmpro/cmProParser.js';
 import DAT from '../types/dats/dat.js';
 import DATObject from '../types/dats/datObject.js';
 import Game from '../types/dats/game.js';
@@ -232,7 +232,7 @@ export default class DATScanner extends Scanner {
       return xmlDat;
     }
 
-    const cmproDatParsed = await this.parseCmproDat(datFile, fileContents);
+    const cmproDatParsed = this.parseCmproDat(datFile, fileContents);
     if (cmproDatParsed) {
       return cmproDatParsed;
     }
@@ -286,10 +286,9 @@ export default class DATScanner extends Scanner {
     return undefined;
   }
 
-  private async parseCmproDat(datFile: File, fileContents: string): Promise<DAT | undefined> {
+  private parseCmproDat(datFile: File, fileContents: string): DAT | undefined {
     /**
-     * Sanity check that this might be a CMPro file, otherwise {@link robloachDatfile} has a chance
-     * to throw fatal errors.
+     * Sanity check that this might be a CMPro file.
      */
     if (fileContents.match(/^(clrmamepro|game|resource) \(\r?\n(\t.+\r?\n)+\)$/m) === null) {
       return undefined;
@@ -297,27 +296,46 @@ export default class DATScanner extends Scanner {
 
     this.progressBar.logTrace(`${datFile.toString()}: attempting to parse CMPro DAT`);
 
-    let cmproDat;
+    let cmproDat: DATProps;
     try {
-      cmproDat = await robloachDatfile.parse(fileContents);
+      cmproDat = new CMProParser(fileContents).parse();
     } catch (error) {
       this.progressBar.logDebug(`${datFile.toString()}: failed to parse CMPro DAT: ${error}`);
-      return undefined;
-    }
-    if (cmproDat.length === 0) {
-      this.progressBar.logWarn(`${datFile.toString()}: failed to parse CMPro DAT, no header or games found`);
       return undefined;
     }
 
     this.progressBar.logTrace(`${datFile.toString()}: parsed CMPro DAT, deserializing to DAT`);
 
-    const header = new Header(cmproDat[0]);
+    const header = new Header({
+      name: cmproDat.clrmamepro?.name,
+      description: cmproDat.clrmamepro?.description,
+      version: cmproDat.clrmamepro?.version,
+      date: cmproDat.clrmamepro?.date,
+      author: cmproDat.clrmamepro?.author,
+      url: cmproDat.clrmamepro?.url,
+      comment: cmproDat.clrmamepro?.comment,
+    });
 
-    const cmproGames = cmproDat.slice(1);
-    const games = cmproGames.flatMap((obj) => {
-      const game = obj as DatfileGame;
-      // TODO(cemmer): https://github.com/RobLoach/datfile/issues/2
-      const roms = (game.entries ?? [])
+    let cmproDatGames: GameProps[] = [];
+    if (cmproDat.game) {
+      if (Array.isArray(cmproDat.game)) {
+        cmproDatGames = cmproDat.game;
+      } else {
+        cmproDatGames = [cmproDat.game];
+      }
+    }
+
+    const games = cmproDatGames.flatMap((game) => {
+      let gameRoms: ROMProps[] = [];
+      if (game.rom) {
+        if (Array.isArray(game.rom)) {
+          gameRoms = game.rom;
+        } else {
+          gameRoms = [game.rom];
+        }
+      }
+
+      const roms = gameRoms
         .filter((rom) => rom.name) // we need ROM filenames
         .map((entry) => new ROM({
           name: entry.name ?? '',
@@ -328,7 +346,15 @@ export default class DATScanner extends Scanner {
         }));
 
       return new Game({
-        ...game,
+        name: game.name,
+        category: undefined,
+        description: game.description,
+        bios: undefined,
+        device: undefined,
+        cloneOf: game.cloneof,
+        romOf: game.romof,
+        sampleOf: undefined,
+        release: undefined,
         rom: roms,
       });
     });
