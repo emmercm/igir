@@ -101,7 +101,7 @@ export default class FsPoly {
     const filePathDrive = drives
       // Sort by mount points with the deepest number of subdirectories first
       .sort((a, b) => b.mounted.split(/[\\/]/).length - a.mounted.split(/[\\/]/).length)
-      .find((drive) => resolvedPath.startsWith(path.resolve(drive.mounted.replace(/[\\/]/g, path.sep))));
+      .find((drive) => resolvedPath.startsWith(drive.mounted));
 
     if (!filePathDrive) {
       // Assume 'false' by default

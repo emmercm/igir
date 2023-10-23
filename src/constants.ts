@@ -55,7 +55,7 @@ export default class Constants {
   static readonly GLOBAL_TEMP_DIR = GLOBAL_TEMP_DIR;
 
   /**
-   * A sane max of filesystem threads for operations such as:
+   * A reasonable max of filesystem threads for operations such as:
    * @example
    * Promise.all([].map(async (file) => fs.lstat(file));
    */
