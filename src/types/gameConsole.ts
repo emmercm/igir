@@ -419,6 +419,7 @@ export default class GameConsole {
       onion: 'VB',
       batocera: 'virtualboy',
       jelos: 'virtualboy',
+      funkeyos: 'Virtualboy',
     }),
     new GameConsole(/Wii/i, [/* '.iso' */], {
       batocera: 'wii',
@@ -548,11 +549,13 @@ export default class GameConsole {
       onion: 'NGP',
       batocera: 'ngp',
       jelos: 'ngp',
+      funkeyos: 'Neo Geo Pocket',
     }),
     new GameConsole(/Neo ?Geo Pocket Color/i, ['.ngc'], {
       onion: 'NGP',
       batocera: 'ngpc',
       jelos: 'ngpc',
+      funkeyos: 'Neo Geo Pocket',
     }),
     // Sony
     new GameConsole(/PlayStation|psx/i, [/* '.bin', '.cue' */], {
