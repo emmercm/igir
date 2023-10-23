@@ -32,7 +32,17 @@ export default class DriveSemaphore {
     return Promise.all(files.map(async (file) => {
       const filePath = file instanceof File ? file.getFilePath() : file as string;
       const filePathNormalized = filePath.replace(/[\\/]/g, path.sep);
-      const filePathDisk = disks.find((disk) => filePathNormalized.startsWith(disk)) ?? '';
+
+      // Try to get the path of the drive this file is on
+      let filePathDisk = disks.find((disk) => filePathNormalized.startsWith(disk)) ?? '';
+
+      if (!filePathDisk) {
+        // If a drive couldn't be found, try to parse a samba server name
+        const sambaMatches = filePathNormalized.match(/^([\\/]{2}[^\\/]+)/);
+        if (sambaMatches !== null) {
+          [, filePathDisk] = sambaMatches;
+        }
+      }
 
       const keySemaphore = await this.keySemaphoresMutex.runExclusive(async () => {
         if (!this.keySemaphores.has(filePathDisk)) {
