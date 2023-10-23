@@ -288,6 +288,11 @@ export default class OutputFactory {
     if (jelos) {
       output = output.replace('{jelos}', jelos);
     }
+
+    const funkeyos = gameConsole.getFunkeyOS();
+    if (funkeyos) {
+      output = output.replace('{funkeyos}', funkeyos);
+    }
     return output;
   }
 
