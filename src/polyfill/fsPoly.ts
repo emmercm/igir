@@ -57,6 +57,15 @@ export default class FsPoly {
     }
   }
 
+  static async disks(): Promise<string[]> {
+    const disks = await nodeDiskInfo.getDiskInfo();
+    return disks
+      .filter((drive) => drive.available > 0)
+      .map((drive) => drive.mounted)
+      // Sort by mount points with the deepest number of subdirectories first
+      .sort((a, b) => b.split(/[\\/]/).length - a.split(/[\\/]/).length);
+  }
+
   /**
    * There is no promise version of existsSync()
    */
@@ -79,6 +88,26 @@ export default class FsPoly {
     } catch {
       return false;
     }
+  }
+
+  static async isSamba(filePath: string): Promise<boolean> {
+    const normalizedPath = filePath.replace(/[\\/]/g, path.sep);
+    if (normalizedPath.startsWith(`${path.sep}${path.sep}`)) {
+      return true;
+    }
+
+    const resolvedPath = path.resolve(normalizedPath);
+    const drives = await nodeDiskInfo.getDiskInfo();
+    const filePathDrive = drives
+      // Sort by mount points with the deepest number of subdirectories first
+      .sort((a, b) => b.mounted.split(/[\\/]/).length - a.mounted.split(/[\\/]/).length)
+      .find((drive) => resolvedPath.startsWith(path.resolve(drive.mounted.replace(/[\\/]/g, path.sep))));
+
+    if (!filePathDrive) {
+      // Assume 'false' by default
+      return false;
+    }
+    return filePathDrive.filesystem.replace(/[\\/]/g, path.sep).startsWith(`${path.sep}${path.sep}`);
   }
 
   static async isSymlink(pathLike: PathLike): Promise<boolean> {
