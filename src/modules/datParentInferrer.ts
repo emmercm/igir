@@ -31,7 +31,7 @@ export default class DATParentInferrer extends Module {
       return dat;
     }
 
-    await this.progressBar.setSymbol(ProgressBarSymbol.GENERATING);
+    await this.progressBar.setSymbol(ProgressBarSymbol.GROUPING_SIMILAR);
     await this.progressBar.reset(dat.getGames().length);
 
     // Group games by their stripped names
