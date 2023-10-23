@@ -401,7 +401,6 @@ export default class GameConsole {
       onion: 'SATELLAVIEW',
       batocera: 'satellaview',
       jelos: 'satellaview',
-      funkeyos: 'SNES',
     }),
     new GameConsole(/Sufami/i, [], {
       onion: 'SUFAMI',
