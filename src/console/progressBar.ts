@@ -12,11 +12,12 @@ export const ProgressBarSymbol = {
   WAITING: chalk.grey(process.platform === 'win32' ? '…' : '⋯'),
   PROCESSING: chalk.cyan(process.platform === 'win32' ? '¤' : '⚙'),
   // Files
-  DOWNLOADING: chalk.magenta('↓'),
   SEARCHING: chalk.magenta(process.platform === 'win32' ? '○' : '↻'),
+  DOWNLOADING: chalk.magenta('↓'),
+  PARSING_CONTENTS: chalk.magenta('Σ'),
   HASHING: chalk.magenta('#'),
   INDEXING: chalk.magenta('#'),
-  // DATs
+  // Processing a single DAT
   GROUPING_SIMILAR: chalk.cyan('∩'),
   MERGE_SPLIT: chalk.cyan('↔'),
   // Candidates

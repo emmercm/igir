@@ -100,6 +100,7 @@ export default class DATScanner extends Scanner {
   // Parse each file into a DAT
   private async parseDatFiles(datFiles: File[]): Promise<DAT[]> {
     this.progressBar.logDebug(`parsing ${datFiles.length.toLocaleString()} DAT file${datFiles.length !== 1 ? 's' : ''}`);
+    await this.progressBar.setSymbol(ProgressBarSymbol.PARSING_CONTENTS);
 
     const results = (await async.mapLimit(
       datFiles,
