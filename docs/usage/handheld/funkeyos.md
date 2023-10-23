@@ -2,15 +2,15 @@
 
 !!! info
 
-    [FunKey OS](https://github.com/FunKey-Project/FunKey-OS) is a Retro Emulation OS for the [FunKey S](https://www.funkey-project.com/) handheld. It is also used on the RG Nano. It is not very well documented which consoles are supported on which device. The `funkeyos` tag should handle systems supported by either of those handhelds.
+    [FunKey OS](https://github.com/FunKey-Project/FunKey-OS) is a Retro Emulation OS for the [FunKey S](https://www.funkey-project.com/) handheld. It is also used on the [Anbernic RG Nano](https://anbernic.com/products/rg-nano). It is not very well documented which consoles are supported on which device. The `funkeyos` tag should handle systems supported by either of those handhelds.
 
 [FunKey OS](https://github.com/FunKey-Project/FunKey-OS) is a minimalistic buildroot based Linux distribution originally designed for the tiny ARM based [FunKey S](https://www.funkey-project.com/) handheld. It is also used on the [Anbernic RG Nano](https://anbernic.com/products/rg-nano) with a few modifications. 
 
 ## BIOS
 
-FunKey OS ships with most emulators not needing BIOS files. Two notable exceptions are the GBA bios as well as the PS1 BIOPS. These can be [installed manually](https://doc.funkey-project.com/user_manual/tutorials/software/gba_bios/). Only two files are needed, so automating the task might be more work than copying them across.
+FunKey OS ships with most emulators not needing BIOS files. Two notable exceptions are the GBA BIOS as well as the PS1 BIOS. These can be [installed manually](https://doc.funkey-project.com/user_manual/tutorials/software/gba_bios/). Only two files are needed, so automating the task might be more work than copying them across.
 
-To sum up the documntation, two files need to be copied:
+To sum up the documentation, two files need to be copied:
 
 * `gba_bios.bin` (MD5 hash `a860e8c0b6d573d191e4ec7db1b1e4f6`) to `<sdcard>/Game Boy Advance` for the GBA BIOS
 * `SCPH1001.BIN` (512kib in size) to `<sdcard>/PS1` of the card for the PS1 BIOS
