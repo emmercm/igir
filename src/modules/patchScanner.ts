@@ -1,7 +1,6 @@
 import async, { AsyncResultCallback } from 'async';
 
 import ProgressBar, { ProgressBarSymbol } from '../console/progressBar.js';
-import Constants from '../constants.js';
 import ArrayPoly from '../polyfill/arrayPoly.js';
 import File from '../types/files/file.js';
 import Options from '../types/options.js';
@@ -36,12 +35,12 @@ export default class PatchScanner extends Scanner {
 
     const files = await this.getFilesFromPaths(
       patchFilePaths,
-      Constants.PATCH_SCANNER_THREADS,
+      this.options.getReaderThreads(),
     );
 
     const patches = (await async.mapLimit(
       files,
-      Constants.PATCH_SCANNER_THREADS,
+      this.options.getReaderThreads(),
       async (file, callback: AsyncResultCallback<Patch | undefined, Error>) => {
         await this.progressBar.incrementProgress();
         const waitingMessage = `${file.toString()} ...`;
