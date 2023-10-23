@@ -12,15 +12,19 @@ export const ProgressBarSymbol = {
   WAITING: chalk.grey(process.platform === 'win32' ? '…' : '⋯'),
   PROCESSING: chalk.cyan(process.platform === 'win32' ? '¤' : '⚙'),
   // Files
-  DOWNLOADING: chalk.magenta('↓'),
   SEARCHING: chalk.magenta(process.platform === 'win32' ? '○' : '↻'),
+  DOWNLOADING: chalk.magenta('↓'),
+  PARSING_CONTENTS: chalk.magenta('Σ'),
   HASHING: chalk.magenta('#'),
   INDEXING: chalk.magenta('#'),
-  // DATs & candidates
+  // Processing a single DAT
+  GROUPING_SIMILAR: chalk.cyan('∩'),
   MERGE_SPLIT: chalk.cyan('↔'),
+  // Candidates
   GENERATING: chalk.cyan('Σ'),
   FILTERING: chalk.cyan('∆'),
   VALIDATING: chalk.cyan(process.platform === 'win32' ? '?' : '≟'),
+  COMBINING_ALL: chalk.cyan(process.platform === 'win32' ? 'U' : '∪'),
   WRITING: chalk.yellow(process.platform === 'win32' ? '»' : '✎'),
   RECYCLING: chalk.blue(process.platform === 'win32' ? '≠' : '♻'),
   DELETING: chalk.red(process.platform === 'win32' ? 'X' : '✕'),

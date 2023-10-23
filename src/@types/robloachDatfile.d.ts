@@ -12,8 +12,8 @@ interface DatfileHeader {
 
 interface DatfileGame {
   name: string,
-  entries: DatfileEntry[],
-  description: string,
+  entries?: DatfileEntry[],
+  description?: string,
 }
 
 interface DatfileEntry {
