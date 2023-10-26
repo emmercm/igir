@@ -9,7 +9,7 @@ cd "$(dirname -- "$0")/.." || exit 1
 if [ ! -x "$(command -v node)" ]; then
   if [ ! -x "$(command -v nvm)" ] && [ -f ~/.nvm/nvm.sh ]; then
     # shellcheck disable=SC1090
-    . ~/.nvm/nvm.sh
+    . ~/.nvm/nvm.sh --install
   fi
   if [ ! -x "$(command -v nvm)" ]; then
     nvm install || true
