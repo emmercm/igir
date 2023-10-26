@@ -73,14 +73,14 @@ export default class Constants {
   static readonly DAT_DEFAULT_THREADS = 3;
 
   /**
-   * Max number of archive entries to process (possibly extract & MD5/SHA1 checksum) at once.
-   */
-  static readonly ARCHIVE_ENTRY_SCANNER_THREADS_PER_ARCHIVE = 5;
-
-  /**
    * A reasonable max number of files to write at once.
    */
   static readonly FILE_READER_DEFAULT_THREADS = 10;
+
+  /**
+   * Max number of archive entries to process (possibly extract & MD5/SHA1 checksum) at once.
+   */
+  static readonly ARCHIVE_ENTRY_SCANNER_THREADS_PER_ARCHIVE = 5;
 
   /**
    * A reasonable max number of ROM release candidates to write at once. This will be the limiting

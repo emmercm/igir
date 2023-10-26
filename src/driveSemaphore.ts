@@ -16,10 +16,13 @@ export default class DriveSemaphore {
 
   private readonly keySemaphoresMutex = new Mutex();
 
-  private readonly defaultThreads: number;
+  private readonly threads: number;
 
-  constructor(defaultThreads = 1) {
-    this.defaultThreads = defaultThreads;
+  private readonly threadsSemaphore: Semaphore;
+
+  constructor(threads = 1) {
+    this.threads = threads;
+    this.threadsSemaphore = new Semaphore(threads);
   }
 
   /**
@@ -74,8 +77,10 @@ export default class DriveSemaphore {
 
     const keySemaphore = await this.keySemaphoresMutex.runExclusive(async () => {
       if (!this.keySemaphores.has(filePathDisk)) {
-        let threads = this.defaultThreads;
+        let { threads } = this;
         if (await FsPoly.isSamba(filePathDisk)) {
+          // Forcefully limit the number of files to be processed concurrently from a single
+          // Samba network share
           threads = 1;
         }
         this.keySemaphores.set(filePathDisk, new Semaphore(threads));
@@ -83,6 +88,13 @@ export default class DriveSemaphore {
       return this.keySemaphores.get(filePathDisk) as Semaphore;
     });
 
-    return keySemaphore.runExclusive(async () => runnable(file));
+    // First, limit the number of threads per drive, which will better balance the processing of
+    // files on different drives vs. processing files sequentially
+    return keySemaphore.runExclusive(
+      // Second, limit the overall number of threads
+      async () => this.threadsSemaphore.runExclusive(
+        async () => runnable(file),
+      ),
+    );
   }
 }
