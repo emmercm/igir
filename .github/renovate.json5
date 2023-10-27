@@ -165,7 +165,7 @@
 
       // Everything else
       {
-        matchDepTypes: ['optionalDependencies', 'peerDependencies', 'engines', 'volta'],
+        matchDepTypes: ['optionalDependencies', 'peerDependencies', 'engines'],
         enabled: false,
       },
     ],
