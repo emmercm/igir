@@ -1,12 +1,12 @@
 import crypto from 'node:crypto';
 import fs, { MakeDirectoryOptions, PathLike, RmOptions } from 'node:fs';
+import os from 'node:os';
 import path from 'node:path';
 import util from 'node:util';
 
 import { isNotJunk } from 'junk';
 import nodeDiskInfo from 'node-disk-info';
 import semver from 'semver';
-import os from "node:os";
 
 export type FsWalkCallback = (increment: number) => void;
 
