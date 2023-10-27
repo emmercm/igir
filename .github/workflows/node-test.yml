@@ -44,7 +44,7 @@ jobs:
       - uses: volta-cli/action@v4
       - run: npm ci
       # Lint the source files
-      - run: ./node_modules/.bin/ts-node ./index.ts --help
+      - run: npm start -- --help
       - run: npm run lint
 
   # TODO(cemmer): check for deprecated dependencies
