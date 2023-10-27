@@ -45,10 +45,7 @@ jobs:
           file-url: ${{ github.event_name == 'workflow_dispatch' && 'https://unpkg.com/igir/package.json' || '' }}
 
       - if: steps.check.outputs.changed == 'true'
-        uses: actions/setup-node@v3
-        with:
-          node-version-file: '.nvmrc'
-          cache: 'npm'
+        uses: volta-cli/action@v4
       - if: steps.check.outputs.changed == 'true'
         run: npm ci
 

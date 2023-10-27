@@ -33,12 +33,7 @@ First, you will want to check out `igir`'s source code from GitHub:
 git clone https://github.com/emmercm/igir.git
 ```
 
-`igir` is written in TypeScript for the Node.js runtime. The current version of Node.js that `igir` uses is defined in the `.nvmrc` file. After [installing](https://github.com/nvm-sh/nvm#installing-and-updating), nvm will let you easily switch to the correct Node.js version:
-
-```shell
-nvm install
-nvm use
-```
+`igir` is written in TypeScript for the Node.js runtime. The current version of Node.js that `igir` uses is defined under the `"volta"` object in the `package.json` file. After [installing](https://docs.volta.sh/guide/getting-started), Volta will make sure you're always using the correct Node.js version.
 
 Third-party dependencies are managed and easily installed with npm:
 

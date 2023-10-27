@@ -41,10 +41,7 @@ jobs:
     steps:
       # Setup and install
       - uses: actions/checkout@v4
-      - uses: actions/setup-node@v3
-        with:
-          node-version-file: '.nvmrc'
-          cache: 'npm'
+      - uses: volta-cli/action@v4
       - run: npm ci
       # Lint the source files
       - run: ./node_modules/.bin/ts-node ./index.ts --help
@@ -65,11 +62,7 @@ jobs:
     steps:
       # Setup and install
       - uses: actions/checkout@v4
-      - name: Use Node.js ${{ matrix.node-version }}
-        uses: actions/setup-node@v3
-        with:
-          node-version: ${{ matrix.node-version }}
-          cache: 'npm'
+      - uses: volta-cli/action@v4
       - run: npm ci
       # Test the source files
       - run: npm run test:unit
@@ -85,11 +78,7 @@ jobs:
     steps:
       # Setup and install
       - uses: actions/checkout@v4
-      - name: Use Node.js ${{ matrix.node-version }}
-        uses: actions/setup-node@v3
-        with:
-          node-version: ${{ matrix.node-version }}
-          cache: 'npm'
+      - uses: volta-cli/action@v4
       - run: npm ci
       # Test the built files
       - run: npm run build
@@ -106,10 +95,7 @@ jobs:
     steps:
       # Setup and install
       - uses: actions/checkout@v4
-      - uses: actions/setup-node@v3
-        with:
-          node-version-file: '.nvmrc'
-          cache: 'npm'
+      - uses: volta-cli/action@v4
       - run: npm ci
       # Test building
       - run: npm run build
@@ -125,10 +111,7 @@ jobs:
     steps:
       # Setup and install
       - uses: actions/checkout@v4
-      - uses: actions/setup-node@v3
-        with:
-          node-version: ${{ matrix.node-version }}
-          cache: 'npm'
+      - uses: volta-cli/action@v4
       - run: npm ci
       # Test the packaging
       - run: |
