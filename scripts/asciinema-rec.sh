@@ -75,16 +75,7 @@ if [[ ! -x "$(command -v pv)" ]]; then
   exit 1
 fi
 
-# Ensure node is available (same as .husky/pre-commit)
-if [[ ! -x "$(command -v node)" ]]; then
-  if [[ ! -x "$(command -v nvm)" && -f ~/.nvm/nvm.sh ]]; then
-    # shellcheck disable=SC1090
-    . ~/.nvm/nvm.sh
-  fi
-  if [[ ! -x "$(command -v nvm)" ]]; then
-    nvm use || exit 1
-  fi
-fi
+# Ensure node is available
 npm --version &> /dev/null || exit 1
 
 # Make sure we're using the latest version

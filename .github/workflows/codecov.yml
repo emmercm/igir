@@ -33,10 +33,7 @@ jobs:
     steps:
       # Setup and install
       - uses: actions/checkout@v4
-      - uses: actions/setup-node@v3
-        with:
-          node-version-file: '.nvmrc'
-          cache: 'npm'
+      - uses: volta-cli/action@v4
       - run: npm ci
 
       # Run test coverage
