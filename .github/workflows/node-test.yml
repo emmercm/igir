@@ -63,6 +63,8 @@ jobs:
       # Setup and install
       - uses: actions/checkout@v4
       - uses: volta-cli/action@v4
+        with:
+          node-version: ${{ matrix.node-version }}
       - run: npm ci
       # Test the source files
       - run: npm run test:unit
@@ -79,6 +81,8 @@ jobs:
       # Setup and install
       - uses: actions/checkout@v4
       - uses: volta-cli/action@v4
+        with:
+          node-version: ${{ matrix.node-version }}
       - run: npm ci
       # Test the built files
       - run: npm run build
@@ -112,6 +116,8 @@ jobs:
       # Setup and install
       - uses: actions/checkout@v4
       - uses: volta-cli/action@v4
+        with:
+          node-version: ${{ matrix.node-version }}
       - run: npm ci
       # Test the packaging
       - run: |
