@@ -8,8 +8,8 @@ cd "$(dirname -- "$0")/.." || exit 1
 # Ensure node is available (same as asciinema-rec.sh)
 if [ ! -x "$(command -v node)" ]; then
   if [ ! -x "$(command -v nvm)" ] && [ -f ~/.nvm/nvm.sh ]; then
-    # shellcheck disable=SC1090
-    . ~/.nvm/nvm.sh
+    # shellcheck disable=SC1090,SC2240
+    . ~/.nvm/nvm.sh --install
   fi
   if [ ! -x "$(command -v nvm)" ]; then
     nvm install || true
