@@ -325,7 +325,7 @@ export default class FsPoly {
   }
 
   static async walk(pathLike: PathLike, callback?: FsWalkCallback): Promise<string[]> {
-    const output = [];
+    let output: string[] = [];
 
     let files: string[];
     try {
@@ -343,12 +343,12 @@ export default class FsPoly {
       const fullPath = path.join(pathLike.toString(), file);
       if (await this.isDirectory(fullPath)) {
         const subDirFiles = await this.walk(fullPath);
-        output.push(...subDirFiles);
+        output = [...output, ...subDirFiles];
         if (callback) {
           callback(subDirFiles.length - 1);
         }
       } else {
-        output.push(fullPath);
+        output = [...output, fullPath];
       }
     }
 
