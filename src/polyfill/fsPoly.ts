@@ -6,6 +6,7 @@ import util from 'node:util';
 import { isNotJunk } from 'junk';
 import nodeDiskInfo from 'node-disk-info';
 import semver from 'semver';
+import os from "node:os";
 
 export type FsWalkCallback = (increment: number) => void;
 
@@ -92,7 +93,7 @@ export default class FsPoly {
 
   static async isSamba(filePath: string): Promise<boolean> {
     const normalizedPath = filePath.replace(/[\\/]/g, path.sep);
-    if (normalizedPath.startsWith(`${path.sep}${path.sep}`)) {
+    if (normalizedPath.startsWith(`${path.sep}${path.sep}`) && normalizedPath !== os.devNull) {
       return true;
     }
 
