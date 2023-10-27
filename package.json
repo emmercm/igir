@@ -43,10 +43,9 @@
   },
   "scripts": {
     "cache:clear": "npm cache clean --force && node --experimental-vm-modules ./node_modules/jest/bin/jest.js --clearCache",
-    "//install": "npm install [--save|--save-dev] --lockfile-version 1 <package>",
     "postinstall": "node --eval \"if(require('fs').existsSync('build')===false){process.exit(1);}\" || npm run build",
     "prepare": "husky install",
-    "start": "ts-node index.ts",
+    "start": "node --loader ts-node/esm index.ts",
     "build": "tsc && node --eval \"if(process.platform!=='win32'){process.exit(1);}\" || chmod +x build/index.js",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
