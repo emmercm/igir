@@ -472,6 +472,71 @@ describe('token replacement', () => {
       )).rejects.toThrow(/failed to replace/);
     },
   );
+
+  test.each([
+    ['game.lnx', path.join('', 'Atari lynx', 'game.lnx')],
+    ['game.ws', path.join('', 'WonderSwan', 'game.ws')],
+    ['game.wsc', path.join('', 'WonderSwan', 'game.wsc')],
+    ['game.pce', path.join('', 'PCE-TurboGrafx', 'game.pce')],
+    ['game.fds', path.join('', 'NES', 'game.fds')],
+    ['game.gb', path.join('', 'Game Boy', 'game.gb')],
+    ['game.gba', path.join('', 'Game Boy Advance', 'game.gba')],
+    ['game.gbc', path.join('', 'Game Boy Color', 'game.gbc')],
+    ['game.nes', path.join('', 'NES', 'game.nes')],
+    ['game.nez', path.join('', 'NES', 'game.nez')],
+    ['game.min', path.join('', 'Pokemini', 'game.min')],
+    ['game.sfc', path.join('', 'SNES', 'game.sfc')],
+    ['game.smc', path.join('', 'SNES', 'game.smc')],
+    ['game.vb', path.join('', 'Virtualboy', 'game.vb')],
+    ['game.gg', path.join('', 'Game Gear', 'game.gg')],
+    ['game.sms', path.join('', 'Sega Master System', 'game.sms')],
+    ['game.gen', path.join('', 'Sega Genesis', 'game.gen')],
+    ['game.md', path.join('', 'Sega Genesis', 'game.md')],
+    ['game.mdx', path.join('', 'Sega Genesis', 'game.mdx')],
+    ['game.sgd', path.join('', 'Sega Genesis', 'game.sgd')],
+    ['game.smd', path.join('', 'Sega Genesis', 'game.smd')],
+    ['game.ngp', path.join('', 'Neo Geo Pocket', 'game.ngp')],
+    ['game.ngc', path.join('', 'Neo Geo Pocket', 'game.ngc')],
+  ])(
+    'should replace {funkeyos} for known extension: %s',
+    async (outputRomFilename, expectedPath) => {
+      const options = new Options({ commands: ['copy'], output: '{funkeyos}' });
+      const rom = new ROM({ name: outputRomFilename, size: 0, crc: '' });
+
+      const outputPath = OutputFactory.getPath(
+        options,
+        dummyDat,
+        dummyGame,
+        dummyRelease,
+        rom,
+        await rom.toFile(),
+      );
+      expect(outputPath.format()).toEqual(expectedPath);
+    },
+  );
+
+  test.each([
+    'game.bin',
+    'game.rom',
+    // satellaview is not supported by https://github.com/FunKey-Project/FunKey-OS/blob/master/FunKey/board/funkey/rootfs-overlay/usr/games/collections/SNES/settings.conf
+    'game.bs',
+  ])(
+    'should throw on {funkeyos} for unknown extension: %s',
+    async (outputRomFilename) => {
+      const options = new Options({ commands: ['copy'], output: 'roms/{funkeyos}' });
+
+      const rom = new ROM({ name: outputRomFilename, size: 0, crc: '' });
+
+      await expect(async () => OutputFactory.getPath(
+        options,
+        dummyDat,
+        dummyGame,
+        dummyRelease,
+        rom,
+        await rom.toFile(),
+      )).rejects.toThrow(/failed to replace/);
+    },
+  );
 });
 
 describe('should respect "--dir-mirror"', () => {
