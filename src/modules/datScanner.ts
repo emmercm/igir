@@ -2,10 +2,10 @@ import * as child_process from 'node:child_process';
 import path from 'node:path';
 
 import { parse } from '@fast-csv/parse';
-import async, { AsyncResultCallback } from 'async';
 import xml2js from 'xml2js';
 
 import ProgressBar, { ProgressBarSymbol } from '../console/progressBar.js';
+import DriveSemaphore from '../driveSemaphore.js';
 import ArrayPoly from '../polyfill/arrayPoly.js';
 import bufferPoly from '../polyfill/bufferPoly.js';
 import fsPoly from '../polyfill/fsPoly.js';
@@ -101,10 +101,9 @@ export default class DATScanner extends Scanner {
     this.progressBar.logDebug(`parsing ${datFiles.length.toLocaleString()} DAT file${datFiles.length !== 1 ? 's' : ''}`);
     await this.progressBar.setSymbol(ProgressBarSymbol.PARSING_CONTENTS);
 
-    const results = (await async.mapLimit(
+    const results = (await new DriveSemaphore(this.options.getReaderThreads()).map(
       datFiles,
-      this.options.getReaderThreads(),
-      async (datFile: File, callback: AsyncResultCallback<DAT | undefined, Error>) => {
+      async (datFile) => {
         await this.progressBar.incrementProgress();
         const waitingMessage = `${datFile.toString()} ...`;
         this.progressBar.addWaitingMessage(waitingMessage);
@@ -118,7 +117,7 @@ export default class DATScanner extends Scanner {
 
         await this.progressBar.incrementDone();
         this.progressBar.removeWaitingMessage(waitingMessage);
-        return callback(undefined, dat);
+        return dat;
       },
     )).filter(ArrayPoly.filterNotNullish);
 

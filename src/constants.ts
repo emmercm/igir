@@ -55,7 +55,7 @@ export default class Constants {
   static readonly GLOBAL_TEMP_DIR = GLOBAL_TEMP_DIR;
 
   /**
-   * A sane max of filesystem threads for operations such as:
+   * A reasonable max of filesystem threads for operations such as:
    * @example
    * Promise.all([].map(async (file) => fs.lstat(file));
    */
@@ -73,20 +73,20 @@ export default class Constants {
   static readonly DAT_DEFAULT_THREADS = 3;
 
   /**
+   * A reasonable max number of files to write at once.
+   */
+  static readonly FILE_READER_DEFAULT_THREADS = 10;
+
+  /**
    * Max number of archive entries to process (possibly extract & MD5/SHA1 checksum) at once.
    */
   static readonly ARCHIVE_ENTRY_SCANNER_THREADS_PER_ARCHIVE = 5;
 
   /**
-   * A sane max number of files to write at once.
+   * A reasonable max number of ROM release candidates to write at once. This will be the limiting
+   * factor for consoles with many small ROMs.
    */
-  static readonly FILE_READER_DEFAULT_THREADS = 20;
-
-  /**
-   * A sane max number of ROM release candidates to write at once. This will be the limiting factor
-   * for consoles with many small ROMs.
-   */
-  static readonly ROM_WRITER_DEFAULT_THREADS = 20;
+  static readonly ROM_WRITER_DEFAULT_THREADS = 10;
 
   /**
    * Max number of files to recycle/delete at once.

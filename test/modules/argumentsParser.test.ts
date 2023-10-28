@@ -163,8 +163,8 @@ describe('options', () => {
     expect(options.getPreferParent()).toEqual(false);
 
     expect(options.getDatThreads()).toEqual(3);
-    expect(options.getReaderThreads()).toEqual(20);
-    expect(options.getWriterThreads()).toEqual(20);
+    expect(options.getReaderThreads()).toEqual(10);
+    expect(options.getWriterThreads()).toEqual(10);
     expect(options.getLogLevel()).toEqual(LogLevel.WARN);
     expect(options.getHelp()).toEqual(false);
   });
@@ -898,7 +898,7 @@ describe('options', () => {
   });
 
   it('should parse "reader-threads"', () => {
-    expect(argumentsParser.parse(dummyCommandAndRequiredArgs).getWriterThreads()).toEqual(20);
+    expect(argumentsParser.parse(dummyCommandAndRequiredArgs).getWriterThreads()).toEqual(10);
     expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--reader-threads', '-1']).getReaderThreads()).toEqual(1);
     expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--reader-threads', '0']).getReaderThreads()).toEqual(1);
     expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--reader-threads', '1']).getReaderThreads()).toEqual(1);
@@ -906,7 +906,7 @@ describe('options', () => {
   });
 
   it('should parse "writer-threads"', () => {
-    expect(argumentsParser.parse(dummyCommandAndRequiredArgs).getWriterThreads()).toEqual(20);
+    expect(argumentsParser.parse(dummyCommandAndRequiredArgs).getWriterThreads()).toEqual(10);
     expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--writer-threads', '-1']).getWriterThreads()).toEqual(1);
     expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--writer-threads', '0']).getWriterThreads()).toEqual(1);
     expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--writer-threads', '1']).getWriterThreads()).toEqual(1);

@@ -1,6 +1,5 @@
-import async, { AsyncResultCallback } from 'async';
-
 import ProgressBar, { ProgressBarSymbol } from '../console/progressBar.js';
+import DriveSemaphore from '../driveSemaphore.js';
 import ArrayPoly from '../polyfill/arrayPoly.js';
 import File from '../types/files/file.js';
 import Options from '../types/options.js';
@@ -38,20 +37,18 @@ export default class PatchScanner extends Scanner {
       this.options.getReaderThreads(),
     );
 
-    const patches = (await async.mapLimit(
+    const patches = (await new DriveSemaphore(this.options.getReaderThreads()).map(
       files,
-      this.options.getReaderThreads(),
-      async (file, callback: AsyncResultCallback<Patch | undefined, Error>) => {
+      async (file) => {
         await this.progressBar.incrementProgress();
         const waitingMessage = `${file.toString()} ...`;
         this.progressBar.addWaitingMessage(waitingMessage);
 
         try {
-          const patch = await this.patchFromFile(file);
-          callback(undefined, patch);
+          return await this.patchFromFile(file);
         } catch (error) {
           this.progressBar.logWarn(`${file.toString()}: failed to parse patch: ${error}`);
-          callback(undefined, undefined);
+          return undefined;
         } finally {
           await this.progressBar.incrementDone();
           this.progressBar.removeWaitingMessage(waitingMessage);
