@@ -4,7 +4,7 @@
 
     [FunKey OS](https://github.com/FunKey-Project/FunKey-OS) is a Retro Emulation OS for the [FunKey S](https://www.funkey-project.com/) handheld. It is also used on the [Anbernic RG Nano](https://anbernic.com/products/rg-nano). It is not very well documented which consoles are supported on which device. The `funkeyos` tag should handle systems supported by either of those handhelds.
 
-[FunKey OS](https://github.com/FunKey-Project/FunKey-OS) is a minimalistic buildroot based Linux distribution originally designed for the tiny ARM based [FunKey S](https://www.funkey-project.com/) handheld. It is also used on the [Anbernic RG Nano](https://anbernic.com/products/rg-nano) with a few modifications. 
+[FunKey OS](https://github.com/FunKey-Project/FunKey-OS) is a minimalistic buildroot based Linux distribution originally designed for the tiny ARM based [FunKey S](https://www.funkey-project.com/) handheld. It is also used on the [Anbernic RG Nano](https://anbernic.com/products/rg-nano) with a few modifications.
 
 ## BIOS
 
