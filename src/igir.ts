@@ -79,8 +79,8 @@ export default class Igir {
     }
 
     const datsToWrittenFiles = new Map<DAT, File[]>();
-    const romOutputDirs: string[] = [];
-    const movedRomsToDelete: File[] = [];
+    let romOutputDirs: string[] = [];
+    let movedRomsToDelete: File[] = [];
     const datsStatuses: DATStatus[] = [];
 
     // Process every DAT
@@ -106,12 +106,15 @@ export default class Igir {
         indexedRoms,
         patches,
       );
-      romOutputDirs.push(...this.getCandidateOutputDirs(filteredDat, parentsToCandidates));
+      romOutputDirs = [
+        ...romOutputDirs,
+        ...this.getCandidateOutputDirs(filteredDat, parentsToCandidates),
+      ];
 
       // Write the output files
       const movedRoms = await new CandidateWriter(this.options, progressBar)
         .write(filteredDat, parentsToCandidates);
-      movedRomsToDelete.push(...movedRoms);
+      movedRomsToDelete = [...movedRomsToDelete, ...movedRoms];
       const writtenRoms = [...parentsToCandidates.values()]
         .flat()
         .flatMap((releaseCandidate) => releaseCandidate
