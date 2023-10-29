@@ -57,7 +57,7 @@ $ igir --help
   | $$  | $$|    \  | $$  | $$    $$   ROM collection manager
   | $$  | $$|    \  | $$  | $$    $$   https://igir.io/
   | $$  | $$ \$$$$  | $$  | $$$$$$$\
- _| $$_ | $$__| $$ _| $$_ | $$  | $$   v2.0.7
+ _| $$_ | $$__| $$ _| $$_ | $$  | $$   v2.1.0
 |   $$ \ \$$    $$|   $$ \| $$  | $$
  \$$$$$$  \$$$$$$  \$$$$$$ \$$   \$$
 
@@ -183,7 +183,8 @@ Report options:
 
 Help & debug options:
       --dat-threads     Number of DATs to process in parallel               [number] [default: 3]
-      --writer-threads  Maximum number of ROMs to write in parallel        [number] [default: 20]
+      --reader-threads  Maximum number of ROMs to read in parallel per disk[number] [default: 10]
+      --writer-threads  Maximum number of ROMs to write in parallel        [number] [default: 10]
   -v, --verbose         Enable verbose logging, can specify up to three times (-vvv)      [count]
   -h, --help            Show help                                                       [boolean]
 
@@ -208,8 +209,7 @@ Advanced usage:
     {onion}     The ROM's emulator-specific /Roms/* directory for OnionOS/GarlicOS (e.g. "GB")
     {batocera}  The ROM's emulator-specific /roms/* directory for Batocera (e.g. "gb")
     {jelos}     The ROM's emulator-specific /roms/* directory for JELOS (e.g. "gb")
-    {funkeyos}  The ROM's emulator-specific /* directory for FunKey OS (e.g. "Game Boy")
-
+    {funkeyos}  The ROM's emulator-specific /Roms* directory for FunKey OS (e.g. "Game Boy")
 
 Example use cases:
 
