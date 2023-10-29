@@ -51,10 +51,6 @@ Here is the full help message which shows all available options and a number of 
 ```help
 $ igir --help
 
-
-> igir@2.1.0 start
-> node --loader ts-node/esm index.ts --help 97
-
  ______   ______   ______  _______
 |      \ /      \ |      \|       \
  \$$$$$$|  $$$$$$\ \$$$$$$| $$$$$$$\
