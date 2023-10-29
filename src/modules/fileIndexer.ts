@@ -50,7 +50,7 @@ export default class FileIndexer extends Module {
     });
 
     const outputDir = path.resolve(this.options.getOutputDirRoot());
-    const outputDirDisk = FsPoly.disksSync().find((mount) => outputDir.startsWith(mount));
+    const outputDirDisk = (await FsPoly.disks()).find((mount) => outputDir.startsWith(mount));
 
     // Sort the file arrays
     [...results.entries()]
