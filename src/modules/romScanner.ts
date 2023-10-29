@@ -1,5 +1,4 @@
 import ProgressBar, { ProgressBarSymbol } from '../console/progressBar.js';
-import Constants from '../constants.js';
 import File from '../types/files/file.js';
 import Options from '../types/options.js';
 import Scanner from './scanner.js';
@@ -33,7 +32,7 @@ export default class ROMScanner extends Scanner {
     const filterUnique = false;
     const files = await this.getFilesFromPaths(
       romFilePaths,
-      Constants.ROM_SCANNER_THREADS,
+      this.options.getReaderThreads(),
       filterUnique,
     );
 

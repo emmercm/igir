@@ -1,5 +1,6 @@
 import crypto from 'node:crypto';
 import fs, { MakeDirectoryOptions, PathLike, RmOptions } from 'node:fs';
+import os from 'node:os';
 import path from 'node:path';
 import util from 'node:util';
 
@@ -55,10 +56,20 @@ export default class FsPoly {
     }
   }
 
+  static async disks(): Promise<string[]> {
+    const disks = await nodeDiskInfo.getDiskInfo();
+    return disks
+      .filter((drive) => drive.available > 0)
+      .map((drive) => drive.mounted)
+      // Sort by mount points with the deepest number of subdirectories first
+      .sort((a, b) => b.split(/[\\/]/).length - a.split(/[\\/]/).length);
+  }
+
   static disksSync(): string[] {
     return nodeDiskInfo.getDiskInfoSync()
-      .filter((info) => info.available > 0)
-      .map((info) => info.mounted)
+      .filter((drive) => drive.available > 0)
+      .map((drive) => drive.mounted)
+      // Sort by mount points with the deepest number of subdirectories first
       .sort((a, b) => b.split(/[\\/]/).length - a.split(/[\\/]/).length);
   }
 
@@ -84,6 +95,26 @@ export default class FsPoly {
     } catch {
       return false;
     }
+  }
+
+  static async isSamba(filePath: string): Promise<boolean> {
+    const normalizedPath = filePath.replace(/[\\/]/g, path.sep);
+    if (normalizedPath.startsWith(`${path.sep}${path.sep}`) && normalizedPath !== os.devNull) {
+      return true;
+    }
+
+    const resolvedPath = path.resolve(normalizedPath);
+    const drives = await nodeDiskInfo.getDiskInfo();
+    const filePathDrive = drives
+      // Sort by mount points with the deepest number of subdirectories first
+      .sort((a, b) => b.mounted.split(/[\\/]/).length - a.mounted.split(/[\\/]/).length)
+      .find((drive) => resolvedPath.startsWith(drive.mounted));
+
+    if (!filePathDrive) {
+      // Assume 'false' by default
+      return false;
+    }
+    return filePathDrive.filesystem.replace(/[\\/]/g, path.sep).startsWith(`${path.sep}${path.sep}`);
   }
 
   static async isSymlink(pathLike: PathLike): Promise<boolean> {
@@ -301,7 +332,7 @@ export default class FsPoly {
   }
 
   static async walk(pathLike: PathLike, callback?: FsWalkCallback): Promise<string[]> {
-    const output = [];
+    let output: string[] = [];
 
     let files: string[];
     try {
@@ -311,16 +342,20 @@ export default class FsPoly {
       return [];
     }
 
-    if (callback) callback(files.length);
+    if (callback) {
+      callback(files.length);
+    }
 
     for (const file of files) {
       const fullPath = path.join(pathLike.toString(), file);
       if (await this.isDirectory(fullPath)) {
         const subDirFiles = await this.walk(fullPath);
-        output.push(...subDirFiles);
-        if (callback) callback(subDirFiles.length - 1);
+        output = [...output, ...subDirFiles];
+        if (callback) {
+          callback(subDirFiles.length - 1);
+        }
       } else {
-        output.push(fullPath);
+        output = [...output, fullPath];
       }
     }
 

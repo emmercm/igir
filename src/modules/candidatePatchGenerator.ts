@@ -80,7 +80,7 @@ export default class CandidatePatchGenerator extends Module {
         //  ReleaseCandidate for each Game, so remember which Games we've seen for this Parent
         const seenGames = new Set<Game>();
 
-        const parentsAndReleaseCandidates: [Parent, ReleaseCandidate[]][] = [
+        let parentsAndReleaseCandidates: [Parent, ReleaseCandidate[]][] = [
           [parent, releaseCandidates],
         ];
 
@@ -99,7 +99,7 @@ export default class CandidatePatchGenerator extends Module {
           seenGames.add(releaseCandidate.getGame());
 
           if (patchedParents) {
-            parentsAndReleaseCandidates.push(...patchedParents);
+            parentsAndReleaseCandidates = [...parentsAndReleaseCandidates, ...patchedParents];
           }
         }
 

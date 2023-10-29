@@ -61,15 +61,7 @@ jobs:
           key: ${{ github.ref }}
           path: .cache
       - run: |
-          pip install mkdocs-material
-          pip install \
-            mkdocs-exclude-search \
-            mkdocs-git-revision-date-localized-plugin \
-            mkdocs-redirects \
-            mkdocs-htmlproofer-plugin \
-            mdx_truly_sane_lists
-      - run: |
-          pip install pillow cairosvg
+          pip install --requirement docs/requirements.txt
           sudo apt-get install libcairo2-dev libfreetype6-dev libffi-dev libjpeg-dev libpng-dev libz-dev
       - run: mkdocs build --strict --verbose
 
@@ -105,14 +97,6 @@ jobs:
           key: ${{ github.ref }}
           path: .cache
       - run: |
-          pip install mkdocs-material
-          pip install \
-            mkdocs-exclude-search \
-            mkdocs-git-revision-date-localized-plugin \
-            mkdocs-redirects \
-            mkdocs-htmlproofer-plugin \
-            mdx_truly_sane_lists
-      - run: |
-          pip install pillow cairosvg
+          pip install --requirement docs/requirements.txt
           sudo apt-get install libcairo2-dev libfreetype6-dev libffi-dev libjpeg-dev libpng-dev libz-dev
       - run: mkdocs gh-deploy --strict --verbose --force

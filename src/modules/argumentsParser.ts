@@ -604,6 +604,14 @@ export default class ArgumentsParser {
         requiresArg: true,
         default: Constants.DAT_DEFAULT_THREADS,
       })
+      .option('reader-threads', {
+        group: groupHelpDebug,
+        description: 'Maximum number of ROMs to read in parallel per disk',
+        type: 'number',
+        coerce: (val: number) => Math.max(val, 1),
+        requiresArg: true,
+        default: Constants.FILE_READER_DEFAULT_THREADS,
+      })
       .option('writer-threads', {
         group: groupHelpDebug,
         description: 'Maximum number of ROMs to write in parallel',
@@ -674,6 +682,7 @@ Advanced usage:
     {onion}     The ROM's emulator-specific /Roms/* directory for OnionOS/GarlicOS (e.g. "GB")
     {batocera}  The ROM's emulator-specific /roms/* directory for Batocera (e.g. "gb")
     {jelos}     The ROM's emulator-specific /roms/* directory for JELOS (e.g. "gb")
+    {funkeyos}  The ROM's emulator-specific /Roms* directory for FunKey OS (e.g. "Game Boy")
 
 Example use cases:
 

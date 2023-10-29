@@ -1,7 +1,5 @@
-import async, { AsyncResultCallback } from 'async';
-
 import ProgressBar, { ProgressBarSymbol } from '../console/progressBar.js';
-import Constants from '../constants.js';
+import DriveSemaphore from '../driveSemaphore.js';
 import ArchiveEntry from '../types/files/archives/archiveEntry.js';
 import File from '../types/files/file.js';
 import ROMHeader from '../types/files/romHeader.js';
@@ -35,10 +33,9 @@ export default class ROMHeaderProcessor extends Module {
     await this.progressBar.setSymbol(ProgressBarSymbol.HASHING);
     await this.progressBar.reset(inputRomFiles.length);
 
-    const parsedFiles = await async.mapLimit(
+    const parsedFiles = await new DriveSemaphore(this.options.getReaderThreads()).map(
       inputRomFiles,
-      Constants.ROM_HEADER_PROCESSOR_THREADS,
-      async (inputFile, callback: AsyncResultCallback<File, Error>) => {
+      async (inputFile) => {
         await this.progressBar.incrementProgress();
         const waitingMessage = `${inputFile.toString()} ...`;
         this.progressBar.addWaitingMessage(waitingMessage);
@@ -54,7 +51,7 @@ export default class ROMHeaderProcessor extends Module {
         this.progressBar.removeWaitingMessage(waitingMessage);
         await this.progressBar.incrementDone();
 
-        return callback(undefined, fileWithHeader);
+        return fileWithHeader;
       },
     );
 

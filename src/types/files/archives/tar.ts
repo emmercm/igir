@@ -38,6 +38,7 @@ export default class Tar extends Archive {
     }).pipe(writeStream);
 
     writeStream.on('entry', async (entry) => {
+      // TODO(cemmer): use ARCHIVE_ENTRY_SCANNER_THREADS
       const checksums = await FileChecksums.hashStream(entry, checksumBitmask);
       archiveEntryPromises.push(ArchiveEntry.entryOf(
         this,

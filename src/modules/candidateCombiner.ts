@@ -43,7 +43,7 @@ export default class CandidateCombiner extends Module {
       return parentsToCandidates;
     }
 
-    await this.progressBar.setSymbol(ProgressBarSymbol.GENERATING);
+    await this.progressBar.setSymbol(ProgressBarSymbol.COMBINING_ALL);
     await this.progressBar.reset(parentsToCandidates.size);
 
     const game = CandidateCombiner.buildGame(dat, parentsToCandidates);

@@ -1,3 +1,4 @@
+import os from 'node:os';
 import path from 'node:path';
 
 import Constants from '../../src/constants.js';
@@ -25,6 +26,24 @@ describe('isDirectory', () => {
   it('should return false for non-existent file', async () => {
     const tempFile = await fsPoly.mktemp(path.join(Constants.GLOBAL_TEMP_DIR, 'temp'));
     await expect(fsPoly.isDirectory(tempFile)).resolves.toEqual(false);
+  });
+});
+
+describe('isSamba', () => {
+  test.each([
+    '.',
+    os.devNull,
+    'test',
+    path.resolve('test'),
+  ])('should return false: %s', async (filePath) => {
+    await expect(fsPoly.isSamba(filePath)).resolves.toEqual(false);
+  });
+
+  test.each([
+    '//foo/bar',
+    '\\\\foo\\bar',
+  ])('should return true: %s', async (filePath) => {
+    await expect(fsPoly.isSamba(filePath)).resolves.toEqual(true);
   });
 });
 

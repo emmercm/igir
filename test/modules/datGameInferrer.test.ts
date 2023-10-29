@@ -30,6 +30,8 @@ test.each([
   const dats = new DATGameInferrer(new ProgressBarFake()).infer(romFiles);
 
   // Then
-  const datNameToGameCount = Object.fromEntries(dats.map(( dat) => [dat.getName(), dat.getGames().length]));
+  const datNameToGameCount = Object.fromEntries(
+    dats.map((dat) => [dat.getName(), dat.getGames().length]),
+  );
   expect(datNameToGameCount).toEqual(expected);
 });
