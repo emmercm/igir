@@ -20,7 +20,7 @@
       
       
       <link rel="icon" href="../logo-dark.svg">
-      <meta name="generator" content="mkdocs-1.5.3, mkdocs-material-9.4.6">
+      <meta name="generator" content="mkdocs-1.5.3, mkdocs-material-9.4.7">
     
     
       
@@ -28,7 +28,7 @@
       
     
     
-      <link rel="stylesheet" href="../assets/stylesheets/main.35e1ed30.min.css">
+      <link rel="stylesheet" href="../assets/stylesheets/main.4b4a2bd9.min.css">
       
         
         <link rel="stylesheet" href="../assets/stylesheets/palette.356b1318.min.css">
@@ -2067,24 +2067,21 @@
 <p>First, you will want to check out <code>igir</code>'s source code from GitHub:</p>
 <div class="language-shell highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>git<span class="w"> </span>clone<span class="w"> </span>https://github.com/emmercm/igir.git
 </span></code></pre></div>
-<p><code>igir</code> is written in TypeScript for the Node.js runtime. The current version of Node.js that <code>igir</code> uses is defined in the <code>.nvmrc</code> file. After <a href="https://github.com/nvm-sh/nvm#installing-and-updating">installing</a>, nvm will let you easily switch to the correct Node.js version:</p>
-<div class="language-shell highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>nvm<span class="w"> </span>install
-</span><span id="__span-1-2"><a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>nvm<span class="w"> </span>use
-</span></code></pre></div>
+<p><code>igir</code> is written in TypeScript for the Node.js runtime. The current version of Node.js that <code>igir</code> uses is defined under the <code>"volta"</code> object in the <code>package.json</code> file. After <a href="https://docs.volta.sh/guide/getting-started">installing</a>, Volta will make sure you're always using the correct Node.js version.</p>
 <p>Third-party dependencies are managed and easily installed with npm:</p>
-<div class="language-shell highlight"><pre><span></span><code><span id="__span-2-1"><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>npm<span class="w"> </span>install
+<div class="language-shell highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>npm<span class="w"> </span>install
 </span></code></pre></div>
 <p>Scripts are defined for common npm commands:</p>
-<div class="language-shell highlight"><pre><span></span><code><span id="__span-3-1"><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>npm<span class="w"> </span>start<span class="w"> </span>--<span class="w"> </span><span class="o">[</span>arguments..<span class="o">]</span>
-</span><span id="__span-3-2"><a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>npm<span class="w"> </span><span class="nb">test</span>
-</span><span id="__span-3-3"><a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a>npm<span class="w"> </span>pack
+<div class="language-shell highlight"><pre><span></span><code><span id="__span-2-1"><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>npm<span class="w"> </span>start<span class="w"> </span>--<span class="w"> </span><span class="o">[</span>arguments..<span class="o">]</span>
+</span><span id="__span-2-2"><a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>npm<span class="w"> </span><span class="nb">test</span>
+</span><span id="__span-2-3"><a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a>npm<span class="w"> </span>pack
 </span></code></pre></div>
 <h3 id="running-code">Running code</h3>
 <p>A script has been defined for the <code>npm start</code> command to easily run <code>igir</code>:</p>
-<div class="language-shell highlight"><pre><span></span><code><span id="__span-4-1"><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>npm<span class="w"> </span>start<span class="w"> </span>--<span class="w"> </span><span class="o">[</span>commands..<span class="o">]</span><span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
+<div class="language-shell highlight"><pre><span></span><code><span id="__span-3-1"><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>npm<span class="w"> </span>start<span class="w"> </span>--<span class="w"> </span><span class="o">[</span>commands..<span class="o">]</span><span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
 </span></code></pre></div>
 <p>for example:</p>
-<div class="language-shell highlight"><pre><span></span><code><span id="__span-5-1"><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a>npm<span class="w"> </span>start<span class="w"> </span>--<span class="w"> </span>report<span class="w"> </span>--dat<span class="w"> </span>*.dat<span class="w"> </span>--input<span class="w"> </span>ROMs/
+<div class="language-shell highlight"><pre><span></span><code><span id="__span-4-1"><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>npm<span class="w"> </span>start<span class="w"> </span>--<span class="w"> </span>report<span class="w"> </span>--dat<span class="w"> </span>*.dat<span class="w"> </span>--input<span class="w"> </span>ROMs/
 </span></code></pre></div>
 <h3 id="code-style">Code style</h3>
 <p><code>igir</code> uses <a href="https://eslint.org/">ESLint</a> as its linter and style enforcer. Rules have been specifically chosen to increase code consistency, safety, readability, and maintainability.</p>
@@ -2134,7 +2131,7 @@
   <small>
     
       Last update:
-      <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date">October 11, 2023</span>
+      <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date">October 27, 2023</span>
       
     
   </small>

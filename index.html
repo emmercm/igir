@@ -18,7 +18,7 @@
       
       
       <link rel="icon" href="logo-dark.svg">
-      <meta name="generator" content="mkdocs-1.5.3, mkdocs-material-9.4.6">
+      <meta name="generator" content="mkdocs-1.5.3, mkdocs-material-9.4.7">
     
     
       
@@ -26,7 +26,7 @@
       
     
     
-      <link rel="stylesheet" href="assets/stylesheets/main.35e1ed30.min.css">
+      <link rel="stylesheet" href="assets/stylesheets/main.4b4a2bd9.min.css">
       
         
         <link rel="stylesheet" href="assets/stylesheets/palette.356b1318.min.css">
@@ -1961,7 +1961,7 @@
 </span><span id="__span-1-6"><a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>  | $$  | $$|    \  | $$  | $$    $$   ROM collection manager
 </span><span id="__span-1-7"><a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a>  | $$  | $$|    \  | $$  | $$    $$   https://igir.io/
 </span><span id="__span-1-8"><a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a>  | $$  | $$ \$$$$  | $$  | $$$$$$$\
-</span><span id="__span-1-9"><a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a> _| $$_ | $$__| $$ _| $$_ | $$  | $$   v2.0.7
+</span><span id="__span-1-9"><a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a> _| $$_ | $$__| $$ _| $$_ | $$  | $$   v2.1.0
 </span><span id="__span-1-10"><a id="__codelineno-1-10" name="__codelineno-1-10" href="#__codelineno-1-10"></a>|   $$ \ \$$    $$|   $$ \| $$  | $$
 </span><span id="__span-1-11"><a id="__codelineno-1-11" name="__codelineno-1-11" href="#__codelineno-1-11"></a> \$$$$$$  \$$$$$$  \$$$$$$ \$$   \$$
 </span><span id="__span-1-12"><a id="__codelineno-1-12" name="__codelineno-1-12" href="#__codelineno-1-12"></a>
@@ -2087,62 +2087,64 @@
 </span><span id="__span-1-132"><a id="__codelineno-1-132" name="__codelineno-1-132" href="#__codelineno-1-132"></a>
 </span><span id="__span-1-133"><a id="__codelineno-1-133" name="__codelineno-1-133" href="#__codelineno-1-133"></a>Help &amp; debug options:
 </span><span id="__span-1-134"><a id="__codelineno-1-134" name="__codelineno-1-134" href="#__codelineno-1-134"></a>      --dat-threads     Number of DATs to process in parallel               [number] [default: 3]
-</span><span id="__span-1-135"><a id="__codelineno-1-135" name="__codelineno-1-135" href="#__codelineno-1-135"></a>      --writer-threads  Maximum number of ROMs to write in parallel        [number] [default: 20]
-</span><span id="__span-1-136"><a id="__codelineno-1-136" name="__codelineno-1-136" href="#__codelineno-1-136"></a>  -v, --verbose         Enable verbose logging, can specify up to three times (-vvv)      [count]
-</span><span id="__span-1-137"><a id="__codelineno-1-137" name="__codelineno-1-137" href="#__codelineno-1-137"></a>  -h, --help            Show help                                                       [boolean]
-</span><span id="__span-1-138"><a id="__codelineno-1-138" name="__codelineno-1-138" href="#__codelineno-1-138"></a>
-</span><span id="__span-1-139"><a id="__codelineno-1-139" name="__codelineno-1-139" href="#__codelineno-1-139"></a>-------------------------------------------------------------------------------------------------
-</span><span id="__span-1-140"><a id="__codelineno-1-140" name="__codelineno-1-140" href="#__codelineno-1-140"></a>
-</span><span id="__span-1-141"><a id="__codelineno-1-141" name="__codelineno-1-141" href="#__codelineno-1-141"></a>Advanced usage:
-</span><span id="__span-1-142"><a id="__codelineno-1-142" name="__codelineno-1-142" href="#__codelineno-1-142"></a>
-</span><span id="__span-1-143"><a id="__codelineno-1-143" name="__codelineno-1-143" href="#__codelineno-1-143"></a>  Tokens that are replaced when generating the output (--output) path of a ROM:
-</span><span id="__span-1-144"><a id="__codelineno-1-144" name="__codelineno-1-144" href="#__codelineno-1-144"></a>    {datName}         The name of the DAT that contains the ROM (e.g. &quot;Nintendo - Game Boy&quot;)
-</span><span id="__span-1-145"><a id="__codelineno-1-145" name="__codelineno-1-145" href="#__codelineno-1-145"></a>    {datDescription}  The description of the DAT that contains the ROM
-</span><span id="__span-1-146"><a id="__codelineno-1-146" name="__codelineno-1-146" href="#__codelineno-1-146"></a>    {gameRegion}      The region of the ROM release (e.g. &quot;USA&quot;), each ROM can have multiple
-</span><span id="__span-1-147"><a id="__codelineno-1-147" name="__codelineno-1-147" href="#__codelineno-1-147"></a>    {gameLanguage}    The language of the ROM release (e.g. &quot;En&quot;), each ROM can have multiple
-</span><span id="__span-1-148"><a id="__codelineno-1-148" name="__codelineno-1-148" href="#__codelineno-1-148"></a>    {gameType}        The type of the game (e.g. &quot;Retail&quot;, &quot;Demo&quot;, &quot;Prototype&quot;)
-</span><span id="__span-1-149"><a id="__codelineno-1-149" name="__codelineno-1-149" href="#__codelineno-1-149"></a>
-</span><span id="__span-1-150"><a id="__codelineno-1-150" name="__codelineno-1-150" href="#__codelineno-1-150"></a>    {inputDirname}    The input file&#39;s dirname
-</span><span id="__span-1-151"><a id="__codelineno-1-151" name="__codelineno-1-151" href="#__codelineno-1-151"></a>    {outputBasename}  Equivalent to &quot;{outputName}.{outputExt}&quot;
-</span><span id="__span-1-152"><a id="__codelineno-1-152" name="__codelineno-1-152" href="#__codelineno-1-152"></a>    {outputName}      The output file&#39;s filename without extension
-</span><span id="__span-1-153"><a id="__codelineno-1-153" name="__codelineno-1-153" href="#__codelineno-1-153"></a>    {outputExt}       The output file&#39;s extension
-</span><span id="__span-1-154"><a id="__codelineno-1-154" name="__codelineno-1-154" href="#__codelineno-1-154"></a>
-</span><span id="__span-1-155"><a id="__codelineno-1-155" name="__codelineno-1-155" href="#__codelineno-1-155"></a>    {pocket}    The ROM&#39;s core-specific /Assets/* directory for the Analogue Pocket (e.g. &quot;gb&quot;)
-</span><span id="__span-1-156"><a id="__codelineno-1-156" name="__codelineno-1-156" href="#__codelineno-1-156"></a>    {mister}    The ROM&#39;s core-specific /games/* directory for the MiSTer FPGA (e.g. &quot;Gameboy&quot;)
-</span><span id="__span-1-157"><a id="__codelineno-1-157" name="__codelineno-1-157" href="#__codelineno-1-157"></a>    {onion}     The ROM&#39;s emulator-specific /Roms/* directory for OnionOS/GarlicOS (e.g. &quot;GB&quot;)
-</span><span id="__span-1-158"><a id="__codelineno-1-158" name="__codelineno-1-158" href="#__codelineno-1-158"></a>    {batocera}  The ROM&#39;s emulator-specific /roms/* directory for Batocera (e.g. &quot;gb&quot;)
-</span><span id="__span-1-159"><a id="__codelineno-1-159" name="__codelineno-1-159" href="#__codelineno-1-159"></a>    {jelos}     The ROM&#39;s emulator-specific /roms/* directory for JELOS (e.g. &quot;gb&quot;)
-</span><span id="__span-1-160"><a id="__codelineno-1-160" name="__codelineno-1-160" href="#__codelineno-1-160"></a>
-</span><span id="__span-1-161"><a id="__codelineno-1-161" name="__codelineno-1-161" href="#__codelineno-1-161"></a>Example use cases:
+</span><span id="__span-1-135"><a id="__codelineno-1-135" name="__codelineno-1-135" href="#__codelineno-1-135"></a>      --reader-threads  Maximum number of ROMs to read in parallel per disk[number] [default: 10]
+</span><span id="__span-1-136"><a id="__codelineno-1-136" name="__codelineno-1-136" href="#__codelineno-1-136"></a>      --writer-threads  Maximum number of ROMs to write in parallel        [number] [default: 10]
+</span><span id="__span-1-137"><a id="__codelineno-1-137" name="__codelineno-1-137" href="#__codelineno-1-137"></a>  -v, --verbose         Enable verbose logging, can specify up to three times (-vvv)      [count]
+</span><span id="__span-1-138"><a id="__codelineno-1-138" name="__codelineno-1-138" href="#__codelineno-1-138"></a>  -h, --help            Show help                                                       [boolean]
+</span><span id="__span-1-139"><a id="__codelineno-1-139" name="__codelineno-1-139" href="#__codelineno-1-139"></a>
+</span><span id="__span-1-140"><a id="__codelineno-1-140" name="__codelineno-1-140" href="#__codelineno-1-140"></a>-------------------------------------------------------------------------------------------------
+</span><span id="__span-1-141"><a id="__codelineno-1-141" name="__codelineno-1-141" href="#__codelineno-1-141"></a>
+</span><span id="__span-1-142"><a id="__codelineno-1-142" name="__codelineno-1-142" href="#__codelineno-1-142"></a>Advanced usage:
+</span><span id="__span-1-143"><a id="__codelineno-1-143" name="__codelineno-1-143" href="#__codelineno-1-143"></a>
+</span><span id="__span-1-144"><a id="__codelineno-1-144" name="__codelineno-1-144" href="#__codelineno-1-144"></a>  Tokens that are replaced when generating the output (--output) path of a ROM:
+</span><span id="__span-1-145"><a id="__codelineno-1-145" name="__codelineno-1-145" href="#__codelineno-1-145"></a>    {datName}         The name of the DAT that contains the ROM (e.g. &quot;Nintendo - Game Boy&quot;)
+</span><span id="__span-1-146"><a id="__codelineno-1-146" name="__codelineno-1-146" href="#__codelineno-1-146"></a>    {datDescription}  The description of the DAT that contains the ROM
+</span><span id="__span-1-147"><a id="__codelineno-1-147" name="__codelineno-1-147" href="#__codelineno-1-147"></a>    {gameRegion}      The region of the ROM release (e.g. &quot;USA&quot;), each ROM can have multiple
+</span><span id="__span-1-148"><a id="__codelineno-1-148" name="__codelineno-1-148" href="#__codelineno-1-148"></a>    {gameLanguage}    The language of the ROM release (e.g. &quot;En&quot;), each ROM can have multiple
+</span><span id="__span-1-149"><a id="__codelineno-1-149" name="__codelineno-1-149" href="#__codelineno-1-149"></a>    {gameType}        The type of the game (e.g. &quot;Retail&quot;, &quot;Demo&quot;, &quot;Prototype&quot;)
+</span><span id="__span-1-150"><a id="__codelineno-1-150" name="__codelineno-1-150" href="#__codelineno-1-150"></a>
+</span><span id="__span-1-151"><a id="__codelineno-1-151" name="__codelineno-1-151" href="#__codelineno-1-151"></a>    {inputDirname}    The input file&#39;s dirname
+</span><span id="__span-1-152"><a id="__codelineno-1-152" name="__codelineno-1-152" href="#__codelineno-1-152"></a>    {outputBasename}  Equivalent to &quot;{outputName}.{outputExt}&quot;
+</span><span id="__span-1-153"><a id="__codelineno-1-153" name="__codelineno-1-153" href="#__codelineno-1-153"></a>    {outputName}      The output file&#39;s filename without extension
+</span><span id="__span-1-154"><a id="__codelineno-1-154" name="__codelineno-1-154" href="#__codelineno-1-154"></a>    {outputExt}       The output file&#39;s extension
+</span><span id="__span-1-155"><a id="__codelineno-1-155" name="__codelineno-1-155" href="#__codelineno-1-155"></a>
+</span><span id="__span-1-156"><a id="__codelineno-1-156" name="__codelineno-1-156" href="#__codelineno-1-156"></a>    {pocket}    The ROM&#39;s core-specific /Assets/* directory for the Analogue Pocket (e.g. &quot;gb&quot;)
+</span><span id="__span-1-157"><a id="__codelineno-1-157" name="__codelineno-1-157" href="#__codelineno-1-157"></a>    {mister}    The ROM&#39;s core-specific /games/* directory for the MiSTer FPGA (e.g. &quot;Gameboy&quot;)
+</span><span id="__span-1-158"><a id="__codelineno-1-158" name="__codelineno-1-158" href="#__codelineno-1-158"></a>    {onion}     The ROM&#39;s emulator-specific /Roms/* directory for OnionOS/GarlicOS (e.g. &quot;GB&quot;)
+</span><span id="__span-1-159"><a id="__codelineno-1-159" name="__codelineno-1-159" href="#__codelineno-1-159"></a>    {batocera}  The ROM&#39;s emulator-specific /roms/* directory for Batocera (e.g. &quot;gb&quot;)
+</span><span id="__span-1-160"><a id="__codelineno-1-160" name="__codelineno-1-160" href="#__codelineno-1-160"></a>    {jelos}     The ROM&#39;s emulator-specific /roms/* directory for JELOS (e.g. &quot;gb&quot;)
+</span><span id="__span-1-161"><a id="__codelineno-1-161" name="__codelineno-1-161" href="#__codelineno-1-161"></a>    {funkeyos}  The ROM&#39;s emulator-specific /Roms* directory for FunKey OS (e.g. &quot;Game Boy&quot;)
 </span><span id="__span-1-162"><a id="__codelineno-1-162" name="__codelineno-1-162" href="#__codelineno-1-162"></a>
-</span><span id="__span-1-163"><a id="__codelineno-1-163" name="__codelineno-1-163" href="#__codelineno-1-163"></a>  Merge new ROMs into an existing ROM collection and generate a report:
-</span><span id="__span-1-164"><a id="__codelineno-1-164" name="__codelineno-1-164" href="#__codelineno-1-164"></a>    igir copy report --dat *.dat --input **/*.zip --input ROMs/ --output ROMs/
-</span><span id="__span-1-165"><a id="__codelineno-1-165" name="__codelineno-1-165" href="#__codelineno-1-165"></a>
-</span><span id="__span-1-166"><a id="__codelineno-1-166" name="__codelineno-1-166" href="#__codelineno-1-166"></a>  Generate a report on an existing ROM collection, without copying or moving ROMs (read only):
-</span><span id="__span-1-167"><a id="__codelineno-1-167" name="__codelineno-1-167" href="#__codelineno-1-167"></a>    igir report --dat *.dat --input ROMs/
-</span><span id="__span-1-168"><a id="__codelineno-1-168" name="__codelineno-1-168" href="#__codelineno-1-168"></a>
-</span><span id="__span-1-169"><a id="__codelineno-1-169" name="__codelineno-1-169" href="#__codelineno-1-169"></a>  Organize and zip an existing ROM collection:
-</span><span id="__span-1-170"><a id="__codelineno-1-170" name="__codelineno-1-170" href="#__codelineno-1-170"></a>    igir move zip --dat *.dat --input ROMs/ --output ROMs/
-</span><span id="__span-1-171"><a id="__codelineno-1-171" name="__codelineno-1-171" href="#__codelineno-1-171"></a>
-</span><span id="__span-1-172"><a id="__codelineno-1-172" name="__codelineno-1-172" href="#__codelineno-1-172"></a>  Produce a 1G1R set per console, preferring English ROMs from USA&gt;WORLD&gt;EUR&gt;JPN:
-</span><span id="__span-1-173"><a id="__codelineno-1-173" name="__codelineno-1-173" href="#__codelineno-1-173"></a>    igir copy --dat *.dat --input **/*.zip --output 1G1R/ --dir-dat-name --single --prefer-langua
-</span><span id="__span-1-174"><a id="__codelineno-1-174" name="__codelineno-1-174" href="#__codelineno-1-174"></a>    ge EN --prefer-region USA,WORLD,EUR,JPN
-</span><span id="__span-1-175"><a id="__codelineno-1-175" name="__codelineno-1-175" href="#__codelineno-1-175"></a>
-</span><span id="__span-1-176"><a id="__codelineno-1-176" name="__codelineno-1-176" href="#__codelineno-1-176"></a>  Copy all Mario, Metroid, and Zelda games to one directory:
-</span><span id="__span-1-177"><a id="__codelineno-1-177" name="__codelineno-1-177" href="#__codelineno-1-177"></a>    igir copy --input ROMs/ --output Nintendo/ --filter-regex &quot;/(Mario|Metroid|Zelda)/i&quot;
-</span><span id="__span-1-178"><a id="__codelineno-1-178" name="__codelineno-1-178" href="#__codelineno-1-178"></a>
-</span><span id="__span-1-179"><a id="__codelineno-1-179" name="__codelineno-1-179" href="#__codelineno-1-179"></a>  Copy all BIOS files into one directory, extracting if necessary:
-</span><span id="__span-1-180"><a id="__codelineno-1-180" name="__codelineno-1-180" href="#__codelineno-1-180"></a>    igir copy extract --dat *.dat --input **/*.zip --output BIOS/ --only-bios
-</span><span id="__span-1-181"><a id="__codelineno-1-181" name="__codelineno-1-181" href="#__codelineno-1-181"></a>
-</span><span id="__span-1-182"><a id="__codelineno-1-182" name="__codelineno-1-182" href="#__codelineno-1-182"></a>  Create patched copies of ROMs in an existing collection, not overwriting existing files:
-</span><span id="__span-1-183"><a id="__codelineno-1-183" name="__codelineno-1-183" href="#__codelineno-1-183"></a>    igir copy extract --input ROMs/ --patch Patches/ --output ROMs/
-</span><span id="__span-1-184"><a id="__codelineno-1-184" name="__codelineno-1-184" href="#__codelineno-1-184"></a>
-</span><span id="__span-1-185"><a id="__codelineno-1-185" name="__codelineno-1-185" href="#__codelineno-1-185"></a>  Re-build a MAME ROM set for a specific version of MAME:
-</span><span id="__span-1-186"><a id="__codelineno-1-186" name="__codelineno-1-186" href="#__codelineno-1-186"></a>    igir copy zip --dat &quot;MAME 0.258.dat&quot; --input MAME/ --output MAME-0.258/ --merge-roms split
-</span><span id="__span-1-187"><a id="__codelineno-1-187" name="__codelineno-1-187" href="#__codelineno-1-187"></a>
-</span><span id="__span-1-188"><a id="__codelineno-1-188" name="__codelineno-1-188" href="#__codelineno-1-188"></a>  Copy ROMs to an Analogue Pocket and test they were written correctly:
-</span><span id="__span-1-189"><a id="__codelineno-1-189" name="__codelineno-1-189" href="#__codelineno-1-189"></a>    igir copy extract test --dat *.dat --input ROMs/ --output /Assets/{pocket}/common/ --dir-lett
-</span><span id="__span-1-190"><a id="__codelineno-1-190" name="__codelineno-1-190" href="#__codelineno-1-190"></a>    er
+</span><span id="__span-1-163"><a id="__codelineno-1-163" name="__codelineno-1-163" href="#__codelineno-1-163"></a>Example use cases:
+</span><span id="__span-1-164"><a id="__codelineno-1-164" name="__codelineno-1-164" href="#__codelineno-1-164"></a>
+</span><span id="__span-1-165"><a id="__codelineno-1-165" name="__codelineno-1-165" href="#__codelineno-1-165"></a>  Merge new ROMs into an existing ROM collection and generate a report:
+</span><span id="__span-1-166"><a id="__codelineno-1-166" name="__codelineno-1-166" href="#__codelineno-1-166"></a>    igir copy report --dat *.dat --input **/*.zip --input ROMs/ --output ROMs/
+</span><span id="__span-1-167"><a id="__codelineno-1-167" name="__codelineno-1-167" href="#__codelineno-1-167"></a>
+</span><span id="__span-1-168"><a id="__codelineno-1-168" name="__codelineno-1-168" href="#__codelineno-1-168"></a>  Generate a report on an existing ROM collection, without copying or moving ROMs (read only):
+</span><span id="__span-1-169"><a id="__codelineno-1-169" name="__codelineno-1-169" href="#__codelineno-1-169"></a>    igir report --dat *.dat --input ROMs/
+</span><span id="__span-1-170"><a id="__codelineno-1-170" name="__codelineno-1-170" href="#__codelineno-1-170"></a>
+</span><span id="__span-1-171"><a id="__codelineno-1-171" name="__codelineno-1-171" href="#__codelineno-1-171"></a>  Organize and zip an existing ROM collection:
+</span><span id="__span-1-172"><a id="__codelineno-1-172" name="__codelineno-1-172" href="#__codelineno-1-172"></a>    igir move zip --dat *.dat --input ROMs/ --output ROMs/
+</span><span id="__span-1-173"><a id="__codelineno-1-173" name="__codelineno-1-173" href="#__codelineno-1-173"></a>
+</span><span id="__span-1-174"><a id="__codelineno-1-174" name="__codelineno-1-174" href="#__codelineno-1-174"></a>  Produce a 1G1R set per console, preferring English ROMs from USA&gt;WORLD&gt;EUR&gt;JPN:
+</span><span id="__span-1-175"><a id="__codelineno-1-175" name="__codelineno-1-175" href="#__codelineno-1-175"></a>    igir copy --dat *.dat --input **/*.zip --output 1G1R/ --dir-dat-name --single --prefer-langua
+</span><span id="__span-1-176"><a id="__codelineno-1-176" name="__codelineno-1-176" href="#__codelineno-1-176"></a>    ge EN --prefer-region USA,WORLD,EUR,JPN
+</span><span id="__span-1-177"><a id="__codelineno-1-177" name="__codelineno-1-177" href="#__codelineno-1-177"></a>
+</span><span id="__span-1-178"><a id="__codelineno-1-178" name="__codelineno-1-178" href="#__codelineno-1-178"></a>  Copy all Mario, Metroid, and Zelda games to one directory:
+</span><span id="__span-1-179"><a id="__codelineno-1-179" name="__codelineno-1-179" href="#__codelineno-1-179"></a>    igir copy --input ROMs/ --output Nintendo/ --filter-regex &quot;/(Mario|Metroid|Zelda)/i&quot;
+</span><span id="__span-1-180"><a id="__codelineno-1-180" name="__codelineno-1-180" href="#__codelineno-1-180"></a>
+</span><span id="__span-1-181"><a id="__codelineno-1-181" name="__codelineno-1-181" href="#__codelineno-1-181"></a>  Copy all BIOS files into one directory, extracting if necessary:
+</span><span id="__span-1-182"><a id="__codelineno-1-182" name="__codelineno-1-182" href="#__codelineno-1-182"></a>    igir copy extract --dat *.dat --input **/*.zip --output BIOS/ --only-bios
+</span><span id="__span-1-183"><a id="__codelineno-1-183" name="__codelineno-1-183" href="#__codelineno-1-183"></a>
+</span><span id="__span-1-184"><a id="__codelineno-1-184" name="__codelineno-1-184" href="#__codelineno-1-184"></a>  Create patched copies of ROMs in an existing collection, not overwriting existing files:
+</span><span id="__span-1-185"><a id="__codelineno-1-185" name="__codelineno-1-185" href="#__codelineno-1-185"></a>    igir copy extract --input ROMs/ --patch Patches/ --output ROMs/
+</span><span id="__span-1-186"><a id="__codelineno-1-186" name="__codelineno-1-186" href="#__codelineno-1-186"></a>
+</span><span id="__span-1-187"><a id="__codelineno-1-187" name="__codelineno-1-187" href="#__codelineno-1-187"></a>  Re-build a MAME ROM set for a specific version of MAME:
+</span><span id="__span-1-188"><a id="__codelineno-1-188" name="__codelineno-1-188" href="#__codelineno-1-188"></a>    igir copy zip --dat &quot;MAME 0.258.dat&quot; --input MAME/ --output MAME-0.258/ --merge-roms split
+</span><span id="__span-1-189"><a id="__codelineno-1-189" name="__codelineno-1-189" href="#__codelineno-1-189"></a>
+</span><span id="__span-1-190"><a id="__codelineno-1-190" name="__codelineno-1-190" href="#__codelineno-1-190"></a>  Copy ROMs to an Analogue Pocket and test they were written correctly:
+</span><span id="__span-1-191"><a id="__codelineno-1-191" name="__codelineno-1-191" href="#__codelineno-1-191"></a>    igir copy extract test --dat *.dat --input ROMs/ --output /Assets/{pocket}/common/ --dir-lett
+</span><span id="__span-1-192"><a id="__codelineno-1-192" name="__codelineno-1-192" href="#__codelineno-1-192"></a>    er
 </span></code></pre></div>
 <h2 id="feature-requests-bug-reports-and-contributing">Feature requests, bug reports, and contributing</h2>
 <p>Feedback is a gift! Your feature requests and bug reports help improve the project for everyone. Feel free to <a href="https://github.com/emmercm/igir/issues/new/choose">submit an issue</a> on GitHub using one of the templates.</p>
@@ -2161,7 +2163,7 @@
   <small>
     
       Last update:
-      <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date">October 21, 2023</span>
+      <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date">October 29, 2023</span>
       
     
   </small>
