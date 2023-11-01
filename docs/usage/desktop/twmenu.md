@@ -1,25 +1,18 @@
 # TWiLightMenu++
 
-!!BUG Document this
-
 !!! info
 
-    [FunKey OS](https://github.com/FunKey-Project/FunKey-OS) is a Retro Emulation OS for the [FunKey S](https://www.funkey-project.com/) handheld. It is also used on the [Anbernic RG Nano](https://anbernic.com/products/rg-nano). It is not very well documented which consoles are supported on which device. The `funkeyos` tag should handle systems supported by either of those handhelds.
+    [TWiLightMenu++](https://github.com/DS-Homebrew/TWiLightMenu) is a Retro Emulation OS for the Nintendo 3DS and DSi handhelds. It is not very well documented which consoles are supported. While the contributors list in [README.md](https://github.com/DS-Homebrew/TWiLightMenu/blob/master/README.md) suggests that a lot more systems are supported (Atari A800 for example) than we are filtering with the `{twmenu}` tag. This list may evolve while more users use and test the tag.
 
-[FunKey OS](https://github.com/FunKey-Project/FunKey-OS) is a minimalistic buildroot based Linux distribution originally designed for the tiny ARM based [FunKey S](https://www.funkey-project.com/) handheld. It is also used on the [Anbernic RG Nano](https://anbernic.com/products/rg-nano) with a few modifications.
+[TWiLightMenu++](https://github.com/DS-Homebrew/TWiLightMenu) is a launcher replacement software for the Nintendo 3DS and DSi handhelds. It aims to make launching and opening a multitude of media content types (Roms, music, videos etc.) easier and more convenient. It comes with many emulators preinstalled (see the link above). While large rom collections are hard to browse, it provides a neat way to carry more of your ROM collection on a great handheld.
 
 ## BIOS
 
-FunKey OS ships with most emulators not needing BIOS files. Two notable exceptions are the GBA BIOS as well as the PS1 BIOS. These can be [installed manually](https://doc.funkey-project.com/user_manual/tutorials/software/gba_bios/). Only two files are needed, so automating the task might be more work than copying them across.
-
-To sum up the documentation, two files need to be copied:
-
-* `gba_bios.bin` (MD5 hash `a860e8c0b6d573d191e4ec7db1b1e4f6`) to `<sdcard>/Game Boy Advance` for the GBA BIOS
-* `SCPH1001.BIN` (512kib in size) to `<sdcard>/PS1` of the card for the PS1 BIOS
+TWiLightMenu++ ships with most emulators not needing BIOS files. No exceptions are known to the author.
 
 ## ROMs
 
-Funkey OS uses its own proprietary [ROM folder structure](https://github.com/FunKey-Project/FunKey-OS/tree/master/FunKey/board/funkey/rootfs-overlay/usr/games/collections) based in the root of the SD card, so `igir` has a replaceable `{funkeyos}` token to sort ROMs into the right place. See the [replaceable tokens page](../../output/tokens.md) for more information.
+TWiLightMenu uses its own proprietary [ROM folder structure](https://github.com/DS-Homebrew/TWiLightMenu/tree/master/7zfile/roms) based in the root of the SD card, so `igir` has a replaceable `{twmenu}` token to sort ROMs into the right place. See the [replaceable tokens page](../../output/tokens.md) for more information.
 
 === ":simple-windowsxp: Windows"
 
@@ -29,7 +22,7 @@ Funkey OS uses its own proprietary [ROM folder structure](https://github.com/Fun
     igir copy extract test clean ^
       --dat "No-Intro*.zip" ^
       --input ROMs\ ^
-      --output "E:\{funkeyos}" ^
+      --output "E:\{twmenu}" ^
       --dir-letter ^
       --no-bios
     ```
@@ -42,7 +35,7 @@ Funkey OS uses its own proprietary [ROM folder structure](https://github.com/Fun
     igir copy extract test clean \
       --dat "No-Intro*.zip" \
       --input ROMs/ \
-      --output "/Volumes/FunKeyS/{funkeyos}" \
+      --output "/Volumes/DSCard/roms/{twmenu}" \
       --dir-letter \
       --no-bios
     ```
@@ -55,7 +48,7 @@ Funkey OS uses its own proprietary [ROM folder structure](https://github.com/Fun
     igir copy extract test clean \
       --dat "No-Intro*.zip" \
       --input ROMs/ \
-      --output "/media/FunKeyS/{funkeyos}" \
+      --output "/media/DSCard/roms/{twmenu}" \
       --dir-letter \
       --no-bios
     ```
