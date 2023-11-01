@@ -30,7 +30,6 @@ interface OutputTokens {
   // @see https://github.com/DS-Homebrew/TWiLightMenu/tree/master/7zfile/roms
   //   Unmapped so far:
   //      Sord M5 -> m5
-  //      DSiWare -> dsiware
   twmenu?: string,
 }
 
@@ -398,6 +397,9 @@ export default class GameConsole {
       jelos: 'nds',
       twmenu: 'nds',
     }),
+    new GameConsole(/(\W|^)NDSi(\W|$)|Nintendo DSi([Ww]are)?/i, [], {
+      twmenu: 'dsiware',
+    }), // try to map DSiWare
     new GameConsole(/(\W|^)NES(\W|$)|Nintendo Entertainment System/i, ['.nes', '.nez'], {
       pocket: 'nes',
       mister: 'NES',
@@ -601,6 +603,10 @@ export default class GameConsole {
       jelos: 'ps3',
     }),
     new GameConsole(/PlayStation [4-9]|ps[4-9]/i, [/* '.bin', '.cue' */], {}),
+    // Sord
+    new GameConsole(/Sord[ -]M(5|five)/i, [/* '.bin', '.cas' */], {
+      twmenu: 'm5',
+    }),
     // Timetop
     new GameConsole(/GameKing/i, [/* '.bin' */], {
       pocket: 'game_king',
