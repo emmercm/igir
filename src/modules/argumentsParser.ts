@@ -683,7 +683,7 @@ Advanced usage:
     {batocera}  The ROM's emulator-specific /roms/* directory for Batocera (e.g. "gb")
     {jelos}     The ROM's emulator-specific /roms/* directory for JELOS (e.g. "gb")
     {funkeyos}  The ROM's emulator-specific /Roms* directory for FunKey OS (e.g. "Game Boy")
-    {twmenu}    The ROM's emulator-specific /roms* directory for FunKey OS (e.g. "gb")
+    {twmenu}    The ROM's emulator-specific /roms/* directory for FunKey OS (e.g. "gb")
 
 Example use cases:
 
