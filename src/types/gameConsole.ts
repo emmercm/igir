@@ -105,7 +105,7 @@ export default class GameConsole {
       onion: 'SEVENTYEIGHTHUNDRED',
       batocera: 'atari7800',
       jelos: 'atari7800',
-      twmenu: 'a72',
+      twmenu: 'a78',
     }),
     new GameConsole(/Jaguar/i, ['.j64'], {
       onion: 'JAGUAR',
@@ -689,5 +689,9 @@ export default class GameConsole {
 
   getFunkeyOS(): string | undefined {
     return this.outputTokens.funkeyos;
+  }
+
+  getTWMenu(): string | undefined {
+    return this.outputTokens.twmenu;
   }
 }

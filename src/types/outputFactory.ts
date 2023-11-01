@@ -294,7 +294,7 @@ export default class OutputFactory {
       output = output.replace('{funkeyos}', funkeyos);
     }
 
-    const twmenu = gameConsole.getFunkeyOS();
+    const twmenu = gameConsole.getTWMenu();
     if (twmenu) {
       output = output.replace('{twmenu}', twmenu);
     }
