@@ -28,8 +28,6 @@ interface OutputTokens {
 
   // TWiLightMenu++ Roms go into the /roms subfolder on the 3DS/DSi SD card
   // @see https://github.com/DS-Homebrew/TWiLightMenu/tree/master/7zfile/roms
-  //   Unmapped so far:
-  //      Sord M5 -> m5
   twmenu?: string,
 }
 
