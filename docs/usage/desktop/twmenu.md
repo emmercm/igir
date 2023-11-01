@@ -29,7 +29,7 @@ TWiLightMenu uses its own proprietary [ROM folder structure](https://github.com/
 
 === ":simple-apple: macOS"
 
-    Replace the `/Volumes/FunKeyS` drive name with whatever your SD card is named:
+    Replace the `/Volumes/DSCard` drive name with whatever your SD card is named:
 
     ```shell
     igir copy extract test clean \
@@ -42,7 +42,7 @@ TWiLightMenu uses its own proprietary [ROM folder structure](https://github.com/
 
 === ":simple-linux: Linux"
 
-    Replace the `/media/FunKeyS` path with wherever your SD card is mounted:
+    Replace the `/media/DSCard` path with wherever your SD card is mounted:
 
     ```shell
     igir copy extract test clean \
