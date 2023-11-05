@@ -71,12 +71,12 @@ You can use some information about the input and output file's name & location:
 
 To help sort ROMs into unique file structures for popular frontends & hardware, `igir` offers a few specific tokens:
 
-- `{pocket}` the [Analogue Pocket](../usage/hardware/analogue-pocket.md) core's directory for the ROM
-- `{mister}` the [MiSTer FPGA](../usage/hardware/mister.md) core's directory for the ROM
-- `{onion}` the [OnionOS / GarlicOS](../usage/handheld/onionos.md) emulator's directory for the ROM
 - `{batocera}` the [Batocera](../usage/desktop/batocera.md) emulator's directory for the ROM
 - `{funkeyos}` the [FunKey OS](../usage/handheld/funkeyos.md) emulator's directory for the ROM
-- `{twmenu}` the [TWiLightMenu++](../usage/desktop/twmenu.md) emulator's directory for the ROM
+- `{jelos}` the [JELOS](../usage/handheld/jelos.md) emulator's directory for the ROM
+- `{mister}` the [MiSTer FPGA](../usage/hardware/mister.md) core's directory for the ROM
+- `{onion}` the [OnionOS / GarlicOS](../usage/handheld/onionos.md) emulator's directory for the ROM
+- `{pocket}` the [Analogue Pocket](../usage/hardware/analogue-pocket.md) core's directory for the ROM
 
 !!! tip
 
