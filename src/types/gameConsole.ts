@@ -563,7 +563,6 @@ export default class GameConsole {
       onion: 'NEOGEO',
       batocera: 'neogeo',
       jelos: 'neogeo',
-      funkeyos: 'Neo Geo Pocket',
     }),
     new GameConsole(/Neo ?Geo CD/i, [/* '.bin', '.cue' */], {
       onion: 'NEOCD',
