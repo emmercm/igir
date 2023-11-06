@@ -523,7 +523,7 @@ describe('token replacement', () => {
   ])(
     'should throw on {funkeyos} for unknown extension: %s',
     async (outputRomFilename) => {
-      const options = new Options({ commands: ['copy'], output: 'roms/{funkeyos}' });
+      const options = new Options({ commands: ['copy'], output: '{funkeyos}' });
 
       const rom = new ROM({ name: outputRomFilename, size: 0, crc: '' });
 
