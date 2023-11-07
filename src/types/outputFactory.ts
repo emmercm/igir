@@ -293,6 +293,11 @@ export default class OutputFactory {
     if (funkeyos) {
       output = output.replace('{funkeyos}', funkeyos);
     }
+
+    const miyoocfw = gameConsole.getMiyooCFW();
+    if (miyoocfw) {
+      output = output.replace('{miyoocfw}', miyoocfw);
+    }
     return output;
   }
 

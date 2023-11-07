@@ -537,6 +537,69 @@ describe('token replacement', () => {
       )).rejects.toThrow(/failed to replace/);
     },
   );
+
+  test.each([
+    ['game.a26', path.join('roms', '2600', 'game.a26')],
+    ['game.lnx', path.join('roms', 'LYNX', 'game.lnx')],
+    ['game.ws', path.join('roms', 'WSWAN', 'game.ws')],
+    ['game.wsc', path.join('roms', 'WSWAN', 'game.wsc')], // TODO: check if this works
+    ['game.vec', path.join('roms', 'VECTREX', 'game.vec')],
+    ['game.pce', path.join('roms', 'PCE', 'game.pce')],
+    ['game.gb', path.join('roms', 'GB', 'game.gb')],
+    ['game.sgb', path.join('roms', 'GB', 'game.sgb')],
+    ['game.gbc', path.join('roms', 'GB', 'game.gbc')],
+    ['game.gba', path.join('roms', 'GBA', 'game.gba')],
+    ['game.srl', path.join('roms', 'GBA', 'game.srl')],
+    ['game.nes', path.join('roms', 'NES', 'game.nes')],
+    ['game.fds', path.join('roms', 'NES', 'game.fds')],
+    ['game.sfc', path.join('roms', 'SNES', 'game.sfc')],
+    ['game.smc', path.join('roms', 'SNES', 'game.smc')],
+    ['game.min', path.join('roms', 'POKEMINI', 'game.min')],
+    ['game.gg', path.join('roms', 'SMS', 'game.gg')],
+    ['game.sms', path.join('roms', 'SMS', 'game.sms')],
+    ['game.gen', path.join('roms', 'SMD', 'game.gen')],
+    ['game.md', path.join('roms', 'SMD', 'game.md')],
+    ['game.smd', path.join('roms', 'SMD', 'game.smd')],
+  ])(
+    'should replace {miyoocfw} for known extension: %s',
+    async (outputRomFilename, expectedPath) => {
+      const options = new Options({ commands: ['copy'], output: 'roms/{miyoocfw}' });
+      const rom = new ROM({ name: outputRomFilename, size: 0, crc: '' });
+
+      const outputPath = OutputFactory.getPath(
+        options,
+        dummyDat,
+        dummyGame,
+        dummyRelease,
+        rom,
+        await rom.toFile(),
+      );
+      expect(outputPath.format()).toEqual(expectedPath);
+    },
+  );
+
+  test.each([
+    'game.bin',
+    'game.rom',
+    // satellaview is not supported by https://github.com/DS-Homebrew/TWiLightMenu/tree/master/7zfile/roms/snes
+    'game.bs',
+  ])(
+    'should throw on {miyoocfw} for unknown extension: %s',
+    async (outputRomFilename) => {
+      const options = new Options({ commands: ['copy'], output: 'roms/{miyoocfw}' });
+
+      const rom = new ROM({ name: outputRomFilename, size: 0, crc: '' });
+
+      await expect(async () => OutputFactory.getPath(
+        options,
+        dummyDat,
+        dummyGame,
+        dummyRelease,
+        rom,
+        await rom.toFile(),
+      )).rejects.toThrow(/failed to replace/);
+    },
+  );
 });
 
 describe('should respect "--dir-mirror"', () => {
