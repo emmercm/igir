@@ -51,12 +51,6 @@
   rebaseWhen: 'conflicted', // separate PRs updating the lockfile are likely to conflict each other
   updateNotScheduled: true, // default
 
-  // Allow some post-upgrade commands that may be used below
-  allowedPostUpgradeCommands: [
-    '^npm ci --ignore-scripts$',
-    '^npm run lint:fix$',
-  ],
-
   packageRules: [
     {
       matchCategories: ['node'],
@@ -89,6 +83,8 @@
         // Group dependencies and their `@types/*` packages together
         groupName: 'dependencies',
         matchDepTypes: ['dependencies', 'devDependencies'],
+        // Only group non-major updates
+        matchUpdateTypes: ['patch', 'minor']
       },
       {
         matchDepTypes: ['dependencies'],
@@ -104,6 +100,7 @@
       {
         // Group devDependencies together, minus type definitions for dependencies
         // https://github.com/renovatebot/renovate/issues/519
+        groupName: 'dev dependencies',
         matchDepTypes: ['devDependencies'],
         excludePackageNames: [
           '@types/7zip-min',
@@ -118,7 +115,8 @@
           '@types/xml2js',
           '@types/yargs',
         ],
-        groupName: 'dev dependencies',
+        // Only group non-major updates
+        matchUpdateTypes: ['patch', 'minor']
       },
       {
         // Group ESLint together so files can be fixed automatically
@@ -126,14 +124,7 @@
           '^@typescript-eslint',
           '^eslint',
         ],
-        groupName: 'ESLint',
-        postUpgradeTasks: {
-          commands: [
-            'npm ci --ignore-scripts',
-            'npm run lint:fix',
-          ],
-          fileFilters: ['**/*.ts']
-        },
+        groupName: 'ESLint'
       },
       {
         // Group Jest together because of peerDependencies
