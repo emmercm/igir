@@ -451,7 +451,7 @@ export default class GameConsole {
       jelos: 'snes',
       funkeyos: 'SNES',
       twmenu: 'snes',
-      miyoocfw: 'SNES'
+      miyoocfw: 'SNES',
     }),
     new GameConsole(/Virtual Boy/i, ['.vb', '.vboy'], {
       onion: 'VB',
