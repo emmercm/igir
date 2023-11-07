@@ -589,7 +589,7 @@ describe('token replacement', () => {
     // satellaview is not supported by https://github.com/DS-Homebrew/TWiLightMenu/tree/master/7zfile/roms/snes
     'game.bs',
   ])(
-    'should throw on {funkeyos} for unknown extension: %s',
+    'should throw on {twmenu} for unknown extension: %s',
     async (outputRomFilename) => {
       const options = new Options({ commands: ['copy'], output: 'roms/{twmenu}' });
 
