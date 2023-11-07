@@ -315,6 +315,7 @@ export default class GameConsole {
       jelos: 'tg16',
       funkeyos: 'PCE-TurboGrafx',
       twmenu: 'tg16',
+      miyoocfw: 'PCE',
     }),
     new GameConsole(/(PC Engine|TurboGrafx) CD/i, [/* '.bin', '.cue' */], {
       pocket: 'pcecd',
