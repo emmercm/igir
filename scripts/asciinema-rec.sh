@@ -22,7 +22,7 @@ if [[ "${1:-}" == "play" ]]; then
   # shellcheck disable=SC2317
   npx() {
     shift # discard "igir@latest"
-    node ../build/index.js "$@" --dat-name-regex-exclude "/encrypted|headerless/i"
+    node ../dist/index.js "$@" --dat-name-regex-exclude "/encrypted|headerless/i"
   }
   # shellcheck disable=SC2317
   tree() {

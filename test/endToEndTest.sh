@@ -25,7 +25,7 @@ cd "$(parent_find . "package.json")"
 
 test_igir() {
   temp="$(mktemp -d)"
-  ./build/index.js "$@" \
+  ./dist/index.js "$@" \
     --dat test/fixtures/dats/* \
     --input test/fixtures/roms/* \
     --output "${temp}"
