@@ -683,6 +683,7 @@ Advanced usage:
     {batocera}  The ROM's emulator-specific /roms/* directory for Batocera (e.g. "gb")
     {jelos}     The ROM's emulator-specific /roms/* directory for JELOS (e.g. "gb")
     {funkeyos}  The ROM's emulator-specific /* directory for FunKey OS (e.g. "Game Boy")
+    {miyoocfw}  The ROM's emulator-specific /roms/* directory for MiyooCFW (e.g. "GB")
 
 Example use cases:
 
