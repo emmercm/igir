@@ -581,7 +581,7 @@ describe('token replacement', () => {
   test.each([
     'game.bin',
     'game.rom',
-    // satellaview is not supported by https://github.com/DS-Homebrew/TWiLightMenu/tree/master/7zfile/roms/snes
+    // satellaview is not supported by https://github.com/TriForceX/MiyooCFW/wiki/Emulator-Info
     'game.bs',
   ])(
     'should throw on {miyoocfw} for unknown extension: %s',
