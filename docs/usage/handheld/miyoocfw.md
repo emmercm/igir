@@ -19,7 +19,6 @@ MiyooCFW doesn't seem to have a centralized folder for putting BIOS files so it'
 | Sony PlayStation 1 | PCSX ReARMed | /emus/pcsx_rearmed/bios/ | `SCPH1001.BIN` | `924e392ed05558ffdb115408c263dccf` | Optional but required for LLE, activate in options |
 | GCE Vectrex | Vecxemu | /.vecxemu/ | `rom.dat` | `ab082fa8c8e632dd68589a8c7741388f` | not part of 'System.dat', available as part of vecxemu [here](https://github.com/gameblabla/vecxemu/raw/master/rom.dat) |
 
-
 ## ROMs
 
 MiyooCFW supports many many systems and ROM formats. Check the table on the [MiyooCFW Wiki](https://github.com/TriForceX/MiyooCFW/wiki/Emulator-Info) for more precise instructions about the indivudual systems. Most supported systems and their ROMS can be automatically sorted by `igir` using the `{miyoocfw}` output token. See the [replaceable tokens page](../../output/tokens.md) for more information.
