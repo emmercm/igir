@@ -125,7 +125,7 @@ jobs:
           tar -xvzf igir-*.tgz
           cd package
           npm install --ignore-scripts
-          ./build/index.js --help
+          ./dist/index.js --help
           cd ..
           rm -rf package
 
