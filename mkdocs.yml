@@ -100,6 +100,10 @@ nav:
   - Discuss ↗: https://github.com/emmercm/igir/discussions" target="_blank
 
 plugins:
+  - unused_files:
+      file_types:
+        - md
+      strict: true
   - search:
       lang: en
   - exclude-search:
