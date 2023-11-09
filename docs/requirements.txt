@@ -5,6 +5,7 @@ mkdocs-git-revision-date-localized-plugin
 mkdocs-htmlproofer-plugin
 mkdocs-material[imaging]
 mkdocs-redirects
+mkdocs-unused-files
 mdx_truly_sane_lists
 
 # Requires:
