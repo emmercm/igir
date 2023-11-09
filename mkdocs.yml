@@ -62,6 +62,7 @@ nav:
             - usage/desktop/recalbox.md
             - usage/desktop/retroarch.md
             - usage/desktop/retropie.md
+            - usage/handheld/twmenu.md
           - FPGA:
             - usage/hardware/mister.md
             - usage/hardware/analogue-pocket.md
