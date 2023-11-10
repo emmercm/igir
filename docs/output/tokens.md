@@ -78,6 +78,7 @@ To help sort ROMs into unique file structures for popular frontends & hardware, 
 - `{mister}` the [MiSTer FPGA](../usage/hardware/mister.md) core's directory for the ROM
 - `{onion}` the [OnionOS / GarlicOS](../usage/handheld/onionos.md) emulator's directory for the ROM
 - `{pocket}` the [Analogue Pocket](../usage/hardware/analogue-pocket.md) core's directory for the ROM
+- `{twmenu}` the [TWiLightMenu++](../usage/handheld/twmenu.md) emulator's directory for the ROM
 
 !!! tip
 

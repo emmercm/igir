@@ -29,6 +29,10 @@ interface OutputTokens {
   // MiyooCFW Roms go into the /roms subfolder of the SD card
   // @see https://github.com/TriForceX/MiyooCFW/wiki/Emulator-Info
   miyoocfw?: string,
+
+  // TWiLightMenu++ Roms go into the /roms subfolder on the 3DS/DSi SD card
+  // @see https://github.com/DS-Homebrew/TWiLightMenu/tree/master/7zfile/roms
+  twmenu?: string,
 }
 
 /**
@@ -54,6 +58,7 @@ export default class GameConsole {
       onion: 'CPC',
       batocera: 'amstradcpc',
       jelos: 'amstradcpc',
+      twmenu: 'cpc',
     }),
     new GameConsole(/PCW/i, [], {
       mister: 'AmstradPCW',
@@ -87,12 +92,14 @@ export default class GameConsole {
       batocera: 'atari2600',
       jelos: 'atari2600',
       miyoocfw: '2600',
+      twmenu: 'a26',
     }),
     new GameConsole(/5200/, ['.a52'], {
       mister: 'Atari5200',
       onion: 'FIFTYTWOHUNDRED',
       batocera: 'atari5200',
       jelos: 'atari5200',
+      twmenu: 'a52',
     }),
     new GameConsole(/7800/, ['.a78'], {
       pocket: '7800',
@@ -100,6 +107,7 @@ export default class GameConsole {
       onion: 'SEVENTYEIGHTHUNDRED',
       batocera: 'atari7800',
       jelos: 'atari7800',
+      twmenu: 'a78',
     }),
     new GameConsole(/Jaguar/i, ['.j64'], {
       onion: 'JAGUAR',
@@ -140,6 +148,7 @@ export default class GameConsole {
       jelos: 'wonderswan',
       funkeyos: 'WonderSwan',
       miyoocfw: 'WSWAN',
+      twmenu: 'ws',
     }),
     new GameConsole(/WonderSwan Color/i, ['.wsc'], {
       pocket: 'wonderswan',
@@ -149,6 +158,7 @@ export default class GameConsole {
       jelos: 'wonderswancolor',
       funkeyos: 'WonderSwan',
       miyoocfw: 'WSWAN', // TODO: check if this works
+      twmenu: 'ws',
     }),
     // Bit Corporation
     new GameConsole(/Gamate/i, [/* '.bin' */], {
@@ -203,6 +213,7 @@ export default class GameConsole {
       onion: 'COLECO',
       batocera: 'colecovision',
       jelos: 'coleco',
+      twmenu: 'col',
     }),
     // Emerson
     new GameConsole(/Arcadia/i, [/* '.bin' */], {
@@ -304,6 +315,7 @@ export default class GameConsole {
       jelos: 'tg16',
       funkeyos: 'PCE-TurboGrafx',
       miyoocfw: 'PCE',
+      twmenu: 'tg16',
     }),
     new GameConsole(/(PC Engine|TurboGrafx) CD/i, [/* '.bin', '.cue' */], {
       pocket: 'pcecd',
@@ -359,6 +371,7 @@ export default class GameConsole {
       jelos: 'gb',
       funkeyos: 'Game Boy',
       miyoocfw: 'GB',
+      twmenu: 'gb',
     }), // pocket:sgb for spiritualized1997
     new GameConsole(/GBA|Game ?Boy Advance/i, ['.gba', '.srl'], {
       pocket: 'gba',
@@ -368,6 +381,7 @@ export default class GameConsole {
       jelos: 'gba',
       funkeyos: 'Game Boy Advance',
       miyoocfw: 'GBA',
+      twmenu: 'gba',
     }),
     new GameConsole(/GBC|Game ?Boy Color/i, ['.gbc'], {
       pocket: 'gbc',
@@ -377,6 +391,7 @@ export default class GameConsole {
       jelos: 'gbc',
       funkeyos: 'Game Boy Color',
       miyoocfw: 'GB',
+      twmenu: 'gb',
     }),
     new GameConsole(/Nintendo 64|N64/i, ['.n64', '.v64', '.z64'], {
       mister: 'N64',
@@ -393,7 +408,11 @@ export default class GameConsole {
     new GameConsole(/(\W|^)NDS(\W|$)|Nintendo DS/i, ['.nds'], {
       batocera: 'nds',
       jelos: 'nds',
+      twmenu: 'nds',
     }),
+    new GameConsole(/(\W|^)NDSi(\W|$)|Nintendo DSi([Ww]are)?/i, [], {
+      twmenu: 'dsiware',
+    }), // try to map DSiWare
     new GameConsole(/(\W|^)NES(\W|$)|Nintendo Entertainment System/i, ['.nes', '.nez'], {
       pocket: 'nes',
       mister: 'NES',
@@ -402,6 +421,7 @@ export default class GameConsole {
       jelos: 'nes',
       funkeyos: 'NES',
       miyoocfw: 'NES',
+      twmenu: 'nes',
     }),
     new GameConsole(/Pokemon Mini/i, ['.min'], {
       pocket: 'poke_mini',
@@ -432,6 +452,7 @@ export default class GameConsole {
       jelos: 'snes',
       funkeyos: 'SNES',
       miyoocfw: 'SNES',
+      twmenu: 'snes',
     }),
     new GameConsole(/Virtual Boy/i, ['.vb', '.vboy'], {
       onion: 'VB',
@@ -486,6 +507,7 @@ export default class GameConsole {
       jelos: 'gamegear',
       funkeyos: 'Game Gear',
       miyoocfw: 'SMS',
+      twmenu: 'gg',
     }),
     new GameConsole(/Master System/i, ['.sms'], {
       pocket: 'sms',
@@ -495,6 +517,7 @@ export default class GameConsole {
       jelos: 'mastersystem',
       funkeyos: 'Sega Master System',
       miyoocfw: 'SMS',
+      twmenu: 'sms',
     }),
     new GameConsole(/(Mega|Sega) CD/i, [/* '.bin', '.cue' */], {
       mister: 'MegaCD',
@@ -511,6 +534,7 @@ export default class GameConsole {
       jelos: 'genesis',
       funkeyos: 'Sega Genesis',
       miyoocfw: 'SMD',
+      twmenu: 'gen',
     }),
     new GameConsole(/Saturn/i, [/* '.bin', '.cue' */], {
       batocera: 'saturn',
@@ -522,6 +546,7 @@ export default class GameConsole {
       onion: 'SEGASGONE',
       batocera: 'sg1000',
       jelos: 'sg-1000',
+      twmenu: 'sg',
     }),
     // Sharp
     new GameConsole(/MZ/i, [], {
@@ -572,12 +597,14 @@ export default class GameConsole {
       batocera: 'ngp',
       jelos: 'ngp',
       funkeyos: 'Neo Geo Pocket',
+      twmenu: 'ngp',
     }),
     new GameConsole(/Neo ?Geo Pocket Color/i, ['.ngc'], {
       onion: 'NGP',
       batocera: 'ngpc',
       jelos: 'ngpc',
       funkeyos: 'Neo Geo Pocket',
+      twmenu: 'ngp',
     }),
     // Sony
     new GameConsole(/PlayStation|psx/i, [/* '.bin', '.cue' */], {
@@ -597,6 +624,10 @@ export default class GameConsole {
       jelos: 'ps3',
     }),
     new GameConsole(/PlayStation [4-9]|ps[4-9]/i, [/* '.bin', '.cue' */], {}),
+    // Sord
+    new GameConsole(/Sord[ -]M(5|five)/i, [/* '.bin', '.cas' */], {
+      twmenu: 'm5',
+    }),
     // Timetop
     new GameConsole(/GameKing/i, [/* '.bin' */], {
       pocket: 'game_king',
@@ -689,5 +720,9 @@ export default class GameConsole {
 
   getMiyooCFW(): string | undefined {
     return this.outputTokens.miyoocfw;
+  }
+
+  getTWMenu(): string | undefined {
+    return this.outputTokens.twmenu;
   }
 }

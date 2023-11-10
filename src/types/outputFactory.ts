@@ -298,6 +298,12 @@ export default class OutputFactory {
     if (miyoocfw) {
       output = output.replace('{miyoocfw}', miyoocfw);
     }
+
+    const twmenu = gameConsole.getTWMenu();
+    if (twmenu) {
+      output = output.replace('{twmenu}', twmenu);
+    }
+
     return output;
   }
 
