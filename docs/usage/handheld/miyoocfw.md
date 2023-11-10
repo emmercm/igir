@@ -5,7 +5,10 @@
 ## BIOS Files
 
 MiyooCFW doesn't seem to have a centralized folder for putting BIOS files so it's a chore to prepare the card for running the provided emulators. Here's a try to help with finding the right ones and putting them in the right place.
-Please keep in mind that this information is based on the table in the official [MiyooCFW Emulator Info](https://github.com/TriForceX/MiyooCFW/wiki/Emulator-Info) and might be out of date. Please refer to the official list for reference.
+
+!!! info
+
+    Please keep in mind that this information is based on the table in the official [MiyooCFW Emulator Info](https://github.com/TriForceX/MiyooCFW/wiki/Emulator-Info) and might be out of date. Please refer to the official list for reference.
 
 | System   | Emulator | Folder | Filenames | MD5SUMs | Comments |
 |----------|----------|--------|-----------|---------|----------|
