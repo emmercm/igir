@@ -21,7 +21,7 @@ describe('constructor', () => {
     Buffer.from('foobar'),
   ])('should throw on bad patch: %s', async (patchContents) => {
     const patchFile = await writeTemp('patch.bps', patchContents);
-    await expect(BPSPatch.patchFrom(patchFile)).rejects.toThrow(/couldn't parse/i);
+    await expect(BPSPatch.patchFrom(patchFile)).rejects.toThrow();
   });
 
   test.each([

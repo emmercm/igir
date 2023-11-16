@@ -1,6 +1,7 @@
 import FilePoly from '../../polyfill/filePoly.js';
 import fsPoly from '../../polyfill/fsPoly.js';
 import File from '../files/file.js';
+import FileChecksums, { ChecksumBitmask } from '../files/fileChecksums.js';
 import Patch from './patch.js';
 
 /**
@@ -24,11 +25,20 @@ export default class UPSPatch extends Patch {
     await file.extractToTempFilePoly('r', async (patchFile) => {
       patchFile.seek(UPSPatch.FILE_SIGNATURE.length);
       await Patch.readUpsUint(patchFile); // source size
-      targetSize = await Patch.readUpsUint(patchFile); // target size
+      targetSize = await Patch.readUpsUint(patchFile);
 
       patchFile.seek(patchFile.getSize() - 12);
       crcBefore = (await patchFile.readNext(4)).reverse().toString('hex');
       crcAfter = (await patchFile.readNext(4)).reverse().toString('hex');
+
+      // Validate the patch contents
+      const patchChecksumExpected = (await patchFile.readNext(4)).reverse().toString('hex');
+      patchFile.seek(0);
+      const patchData = await patchFile.readNext(patchFile.getSize() - 4);
+      const patchChecksumsActual = await FileChecksums.hashData(patchData, ChecksumBitmask.CRC32);
+      if (patchChecksumsActual.crc32 !== patchChecksumExpected) {
+        throw new Error(`UPS patch is invalid, CRC of contents (${patchChecksumsActual.crc32}) doesn't match expected (${patchChecksumExpected}): ${file.toString()}`);
+      }
     });
 
     if (crcBefore.length !== 8 || crcAfter.length !== 8) {

@@ -1,5 +1,5 @@
 import crypto from 'node:crypto';
-import { Stream } from 'node:stream';
+import { Readable, Stream } from 'node:stream';
 
 import { crc32 } from '@node-rs/crc32';
 
@@ -17,6 +17,17 @@ export interface ChecksumProps {
 }
 
 export default class FileChecksums {
+  public static async hashData(
+    data: Buffer | string,
+    checksumBitmask: number,
+  ): Promise<ChecksumProps> {
+    const readable = new Readable();
+    readable.push(data);
+    // eslint-disable-next-line unicorn/no-null
+    readable.push(null);
+    return this.hashStream(readable, checksumBitmask);
+  }
+
   public static async hashStream(
     stream: Stream,
     checksumBitmask: number,
