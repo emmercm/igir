@@ -446,7 +446,7 @@ export default class GameConsole {
       jelos: 'pokemini',
       funkeyos: 'Pokemini',
       miyoocfw: 'POKEMINI',
-      minui: 'Pokemon mini (PKM)', //uses unrendedable unicode char in original install
+      minui: 'Pokemon mini (PKM)', // uses unrendedable unicode char in original install
     }),
     new GameConsole(/Satellaview/i, ['.bs'], {
       pocket: 'snes',
