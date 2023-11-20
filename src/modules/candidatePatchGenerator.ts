@@ -38,13 +38,12 @@ export default class CandidatePatchGenerator extends Module {
     parentsToCandidates: Map<Parent, ReleaseCandidate[]>,
     patches: Patch[],
   ): Promise<Map<Parent, ReleaseCandidate[]>> {
-    this.progressBar.logInfo(`${dat.getNameShort()}: generating patched candidates`);
-
     if (parentsToCandidates.size === 0) {
       this.progressBar.logDebug(`${dat.getNameShort()}: no parents to make patched candidates for`);
       return parentsToCandidates;
     }
 
+    this.progressBar.logInfo(`${dat.getNameShort()}: generating patched candidates`);
     await this.progressBar.setSymbol(ProgressBarSymbol.GENERATING);
     await this.progressBar.reset(parentsToCandidates.size);
 

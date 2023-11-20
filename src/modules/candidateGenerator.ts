@@ -39,15 +39,15 @@ export default class CandidateGenerator extends Module {
     dat: DAT,
     hashCodeToInputFiles: Map<string, File[]>,
   ): Promise<Map<Parent, ReleaseCandidate[]>> {
-    this.progressBar.logInfo(`${dat.getNameShort()}: generating candidates`);
-
-    const output = new Map<Parent, ReleaseCandidate[]>();
     if (hashCodeToInputFiles.size === 0) {
       this.progressBar.logDebug(`${dat.getNameShort()}: no input ROMs to make candidates from`);
-      return output;
+      return new Map();
     }
 
+    const output = new Map<Parent, ReleaseCandidate[]>();
     const parents = dat.getParents();
+
+    this.progressBar.logInfo(`${dat.getNameShort()}: generating candidates`);
     await this.progressBar.setSymbol(ProgressBarSymbol.GENERATING);
     await this.progressBar.reset(parents.length);
 

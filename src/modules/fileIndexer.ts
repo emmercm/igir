@@ -32,7 +32,6 @@ export default class FileIndexer extends Module {
     }
 
     this.progressBar.logInfo(`indexing ${files.length.toLocaleString()} file${files.length !== 1 ? 's' : ''}`);
-
     await this.progressBar.setSymbol(ProgressBarSymbol.INDEXING);
     // await this.progressBar.reset(files.length);
 
