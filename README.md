@@ -57,7 +57,7 @@ $ igir --help
   | $$  | $$|    \  | $$  | $$    $$   ROM collection manager
   | $$  | $$|    \  | $$  | $$    $$   https://igir.io/
   | $$  | $$ \$$$$  | $$  | $$$$$$$\
- _| $$_ | $$__| $$ _| $$_ | $$  | $$   v2.0.7
+ _| $$_ | $$__| $$ _| $$_ | $$  | $$   v2.1.1
 |   $$ \ \$$    $$|   $$ \| $$  | $$
  \$$$$$$  \$$$$$$  \$$$$$$ \$$   \$$
 
@@ -183,7 +183,8 @@ Report options:
 
 Help & debug options:
       --dat-threads     Number of DATs to process in parallel               [number] [default: 3]
-      --writer-threads  Maximum number of ROMs to write in parallel        [number] [default: 20]
+      --reader-threads  Maximum number of ROMs to read in parallel per disk[number] [default: 10]
+      --writer-threads  Maximum number of ROMs to write in parallel        [number] [default: 10]
   -v, --verbose         Enable verbose logging, can specify up to three times (-vvv)      [count]
   -h, --help            Show help                                                       [boolean]
 
@@ -203,11 +204,15 @@ Advanced usage:
     {outputName}      The output file's filename without extension
     {outputExt}       The output file's extension
 
-    {pocket}    The ROM's core-specific /Assets/* directory for the Analogue Pocket (e.g. "gb")
-    {mister}    The ROM's core-specific /games/* directory for the MiSTer FPGA (e.g. "Gameboy")
-    {onion}     The ROM's emulator-specific /Roms/* directory for OnionOS/GarlicOS (e.g. "GB")
     {batocera}  The ROM's emulator-specific /roms/* directory for Batocera (e.g. "gb")
+    {funkeyos}  The ROM's emulator-specific /* directory for FunKey OS (e.g. "Game Boy")
     {jelos}     The ROM's emulator-specific /roms/* directory for JELOS (e.g. "gb")
+    {mister}    The ROM's core-specific /games/* directory for the MiSTer FPGA (e.g. "Gameboy")
+    {miyoocfw}  The ROM's emulator-specific /roms/* directory for MiyooCFW (e.g. "GB")
+    {onion}     The ROM's emulator-specific /Roms/* directory for OnionOS/GarlicOS (e.g. "GB")
+    {pocket}    The ROM's core-specific /Assets/* directory for the Analogue Pocket (e.g. "gb")
+    {twmenu}    The ROM's emulator-specific /roms/* directory for TWiLightMenu++ on the DSi/3DS (
+    e.g. "gb")
 
 Example use cases:
 

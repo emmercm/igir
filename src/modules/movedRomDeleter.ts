@@ -32,9 +32,9 @@ export default class MovedROMDeleter extends Module {
 
     this.progressBar.logInfo('deleting moved ROMs');
     await this.progressBar.setSymbol(ProgressBarSymbol.FILTERING);
-    await this.progressBar.reset(inputRoms.length);
+    await this.progressBar.reset(movedRoms.length);
 
-    const fullyConsumedFiles = this.filterOutPartiallyConsumedArchives(inputRoms, movedRoms);
+    const fullyConsumedFiles = this.filterOutPartiallyConsumedArchives(movedRoms, inputRoms);
 
     const filePathsToDelete = MovedROMDeleter.filterOutWrittenFiles(
       fullyConsumedFiles,
@@ -63,8 +63,8 @@ export default class MovedROMDeleter extends Module {
    *  moving.
    */
   private filterOutPartiallyConsumedArchives(
-    inputRoms: File[],
     movedRoms: File[],
+    inputRoms: File[],
   ): string[] {
     const groupedInputRoms = MovedROMDeleter.groupFilesByFilePath(inputRoms);
     const groupedMovedRoms = MovedROMDeleter.groupFilesByFilePath(movedRoms);

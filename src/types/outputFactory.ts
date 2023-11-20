@@ -288,6 +288,22 @@ export default class OutputFactory {
     if (jelos) {
       output = output.replace('{jelos}', jelos);
     }
+
+    const funkeyos = gameConsole.getFunkeyOS();
+    if (funkeyos) {
+      output = output.replace('{funkeyos}', funkeyos);
+    }
+
+    const miyoocfw = gameConsole.getMiyooCFW();
+    if (miyoocfw) {
+      output = output.replace('{miyoocfw}', miyoocfw);
+    }
+
+    const twmenu = gameConsole.getTWMenu();
+    if (twmenu) {
+      output = output.replace('{twmenu}', twmenu);
+    }
+
     return output;
   }
 

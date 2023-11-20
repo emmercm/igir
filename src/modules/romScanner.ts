@@ -1,5 +1,4 @@
 import ProgressBar, { ProgressBarSymbol } from '../console/progressBar.js';
-import Constants from '../constants.js';
 import File from '../types/files/file.js';
 import { ChecksumBitmask } from '../types/files/fileChecksums.js';
 import Options from '../types/options.js';
@@ -33,7 +32,7 @@ export default class ROMScanner extends Scanner {
 
     const files = await this.getFilesFromPaths(
       romFilePaths,
-      Constants.ROM_SCANNER_THREADS,
+      this.options.getReaderThreads(),
       this.options.shouldDir2Dat()
         ? ChecksumBitmask.CRC32 | ChecksumBitmask.MD5 | ChecksumBitmask.SHA1
         : ChecksumBitmask.CRC32,

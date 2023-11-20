@@ -119,10 +119,8 @@ export default class DirectoryCleaner extends Module {
     }
 
     // Otherwise, recurse and look for empty subdirectories
-    const emptyDirs: string[] = [];
-    await Promise.all(subDirs.map(async (subDir) => {
-      emptyDirs.push(...await this.getEmptyDirs(subDir));
-    }));
-    return emptyDirs;
+    return (await Promise.all(
+      subDirs.map(async (subDir) => this.getEmptyDirs(subDir)),
+    )).flat();
   }
 }

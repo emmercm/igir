@@ -19,7 +19,7 @@
     "project": "./tsconfig.json",
     "sourceType": "module"
   },
-  "ignorePatterns": ["build/**"],
+  "ignorePatterns": ["dist/**"],
 
   "env": {
     "jest/globals": true
@@ -110,6 +110,10 @@
     "unicorn/empty-brace-spaces": "error",
 
     // ***** Arrays *****
+    "no-restricted-syntax": ["error", {
+      "selector": "CallExpression[callee.property.name='push'] > SpreadElement",
+      "message": "Array#push(...Array) can cause 'call stack size exceeded' runtime errors when pushing many values, prefer 'Array = [...Array, ...Array]'"
+    }],
     "unicorn/no-new-array": "error",
     // TypeScript doesn't do a good job of reporting indexed values as potentially undefined, such as `[1,2,3][999]`
     "unicorn/prefer-at": "error",
@@ -144,7 +148,6 @@
     // ***** airbnb-base, airbnb-typescript/base *****
     "no-await-in-loop": "off",
     "no-bitwise": "off",
-    "no-restricted-syntax": "off",
 
     // ***** plugin:jest/recommended *****
     // A lot of test files define their own expect functions

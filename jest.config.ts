@@ -19,7 +19,7 @@ const jestConfig: JestConfigWithTsJest = {
   },
 
   // Don't run any compiled versions of the tests, if they exist
-  modulePathIgnorePatterns: ['<rootDir>/build/'],
+  modulePathIgnorePatterns: ['<rootDir>/dist/'],
   // Don't report coverage on the test directory
   coveragePathIgnorePatterns: ['<rootDir>/test/'],
 

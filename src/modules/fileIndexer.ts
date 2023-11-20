@@ -1,6 +1,7 @@
 import path from 'node:path';
 
 import ProgressBar, { ProgressBarSymbol } from '../console/progressBar.js';
+import FsPoly from '../polyfill/fsPoly.js';
 import ArchiveEntry from '../types/files/archives/archiveEntry.js';
 import Rar from '../types/files/archives/rar.js';
 import SevenZip from '../types/files/archives/sevenZip.js';
@@ -48,6 +49,9 @@ export default class FileIndexer extends Module {
       }
     });
 
+    const outputDir = path.resolve(this.options.getOutputDirRoot());
+    const outputDirDisk = (await FsPoly.disks()).find((mount) => outputDir.startsWith(mount));
+
     // Sort the file arrays
     [...results.entries()]
       .forEach(([hashCode, filesForHash]) => filesForHash.sort((fileOne, fileTwo) => {
@@ -67,12 +71,25 @@ export default class FileIndexer extends Module {
           return fileOneArchived - fileTwoArchived;
         }
 
-        // Then, prefer files that are already in the output directory
-        const outputDir = path.resolve(this.options.getOutputDirRoot());
-        const fileOneInOutput = path.resolve(fileOne.getFilePath()).startsWith(outputDir) ? 0 : 1;
-        const fileTwoInOutput = path.resolve(fileTwo.getFilePath()).startsWith(outputDir) ? 0 : 1;
+        // Then, prefer files that are NOT already in the output directory
+        // This is in case the output file is invalid and we're trying to overwrite it with
+        // something else. Otherwise, we'll just attempt to overwrite the invalid output file with
+        // itself, still resulting in an invalid output file.
+        const fileOneInOutput = path.resolve(fileOne.getFilePath()).startsWith(outputDir) ? 1 : 0;
+        const fileTwoInOutput = path.resolve(fileTwo.getFilePath()).startsWith(outputDir) ? 1 : 0;
         if (fileOneInOutput !== fileTwoInOutput) {
           return fileOneInOutput - fileTwoInOutput;
+        }
+
+        // Then, prefer files that are on the same disk for fs efficiency see {@link FsPoly#mv}
+        if (outputDirDisk) {
+          const fileOneInOutputDisk = path.resolve(fileOne.getFilePath())
+            .startsWith(outputDirDisk) ? 0 : 1;
+          const fileTwoInOutputDisk = path.resolve(fileTwo.getFilePath())
+            .startsWith(outputDirDisk) ? 0 : 1;
+          if (fileOneInOutputDisk !== fileTwoInOutputDisk) {
+            return fileOneInOutputDisk - fileTwoInOutputDisk;
+          }
         }
 
         // Otherwise, be deterministic

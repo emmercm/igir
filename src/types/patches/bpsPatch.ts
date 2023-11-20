@@ -1,6 +1,7 @@
 import FilePoly from '../../polyfill/filePoly.js';
 import fsPoly from '../../polyfill/fsPoly.js';
 import File from '../files/file.js';
+import FileChecksums, { ChecksumBitmask } from '../files/fileChecksums.js';
 import Patch from './patch.js';
 
 enum BPSAction {
@@ -27,15 +28,24 @@ export default class BPSPatch extends Patch {
     await file.extractToTempFilePoly('r', async (patchFile) => {
       patchFile.seek(BPSPatch.FILE_SIGNATURE.length);
       await Patch.readUpsUint(patchFile); // source size
-      targetSize = await Patch.readUpsUint(patchFile); // target size
+      targetSize = await Patch.readUpsUint(patchFile);
 
       patchFile.seek(patchFile.getSize() - 12);
       crcBefore = (await patchFile.readNext(4)).reverse().toString('hex');
       crcAfter = (await patchFile.readNext(4)).reverse().toString('hex');
+
+      // Validate the patch contents
+      const patchChecksumExpected = (await patchFile.readNext(4)).reverse().toString('hex');
+      patchFile.seek(0);
+      const patchData = await patchFile.readNext(patchFile.getSize() - 4);
+      const patchChecksumsActual = await FileChecksums.hashData(patchData, ChecksumBitmask.CRC32);
+      if (patchChecksumsActual.crc32 !== patchChecksumExpected) {
+        throw new Error(`BPS patch is invalid, CRC of contents (${patchChecksumsActual.crc32}) doesn't match expected (${patchChecksumExpected}): ${file.toString()}`);
+      }
     });
 
     if (crcBefore.length !== 8 || crcAfter.length !== 8) {
-      throw new Error(`Couldn't parse base file CRC for patch: ${file.toString()}`);
+      throw new Error(`couldn't parse base file CRC for patch: ${file.toString()}`);
     }
 
     return new BPSPatch(file, crcBefore, crcAfter, targetSize);
@@ -102,11 +112,18 @@ export default class BPSPatch extends Patch {
         sourceRelativeOffset += (offset & 1 ? -1 : +1) * (offset >> 1);
         await targetFile.write(await sourceFile.readAt(sourceRelativeOffset, length));
         sourceRelativeOffset += length;
-      } else {
+      } else if (action === BPSAction.TARGET_COPY) {
         const offset = await Patch.readUpsUint(patchFile);
         targetRelativeOffset += (offset & 1 ? -1 : +1) * (offset >> 1);
-        await targetFile.write(await targetFile.readAt(targetRelativeOffset, length));
-        targetRelativeOffset += length;
+        // WARN: you explicitly can't read the target file all at once, you have to read byte by
+        // byte, because later iterations of the loop may need to read data that was changed by
+        // earlier iterations of the loop.
+        for (let i = 0; i < length; i += 1) {
+          await targetFile.write(await targetFile.readAt(targetRelativeOffset, 1));
+          targetRelativeOffset += 1;
+        }
+      } else {
+        throw new Error(`BPS action ${action} isn't supported`);
       }
     }
   }

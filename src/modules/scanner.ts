@@ -1,7 +1,6 @@
-import async, { AsyncResultCallback } from 'async';
-
 import ProgressBar from '../console/progressBar.js';
 import Constants from '../constants.js';
+import DriveSemaphore from '../driveSemaphore.js';
 import ElasticSemaphore from '../elasticSemaphore.js';
 import ArrayPoly from '../polyfill/arrayPoly.js';
 import fsPoly from '../polyfill/fsPoly.js';
@@ -32,10 +31,9 @@ export default abstract class Scanner extends Module {
     threads: number,
     checksumBitmask: number,
   ): Promise<File[]> {
-    return (await async.mapLimit(
+    return (await new DriveSemaphore(threads).map(
       filePaths,
-      threads,
-      async (inputFile, callback: AsyncResultCallback<File[], Error>) => {
+      async (inputFile) => {
         await this.progressBar.incrementProgress();
         const waitingMessage = `${inputFile} ...`;
         this.progressBar.addWaitingMessage(waitingMessage);
@@ -44,7 +42,7 @@ export default abstract class Scanner extends Module {
 
         this.progressBar.removeWaitingMessage(waitingMessage);
         await this.progressBar.incrementDone();
-        callback(undefined, files);
+        return files;
       },
     )).flat();
   }
