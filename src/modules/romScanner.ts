@@ -19,7 +19,6 @@ export default class ROMScanner extends Scanner {
    */
   async scan(): Promise<File[]> {
     this.progressBar.logInfo('scanning ROM files');
-
     await this.progressBar.setSymbol(ProgressBarSymbol.SEARCHING);
     await this.progressBar.reset(0);
 
