@@ -30,14 +30,13 @@ export default class DirectoryCleaner extends Module {
    * Clean some directories, excluding some files.
    */
   async clean(dirsToClean: string[], filesToExclude: File[]): Promise<string[]> {
-    this.progressBar.logInfo('cleaning files in output');
-
     // If nothing was written, then don't clean anything
     if (filesToExclude.length === 0) {
       this.progressBar.logDebug('no files were written, not cleaning output');
       return [];
     }
 
+    this.progressBar.logInfo('cleaning files in output');
     await this.progressBar.setSymbol(ProgressBarSymbol.SEARCHING);
     await this.progressBar.reset(dirsToClean.length);
 

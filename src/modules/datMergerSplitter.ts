@@ -27,8 +27,6 @@ export default class DATMergerSplitter extends Module {
    * Un-merge, split, or merge the {@link Game}s within a {@link DAT}.
    */
   async merge(dat: DAT): Promise<DAT> {
-    this.progressBar.logInfo(`${dat.getNameShort()}: merging & splitting`);
-
     // Don't do anything if no type provided
     if (this.options.getMergeRoms() === undefined) {
       this.progressBar.logDebug(`${dat.getNameShort()}: no ROM merge option provided, doing nothing`);
@@ -46,6 +44,7 @@ export default class DATMergerSplitter extends Module {
       return map;
     }, new Map<string, Game>());
 
+    this.progressBar.logInfo(`${dat.getNameShort()}: merging & splitting`);
     await this.progressBar.setSymbol(ProgressBarSymbol.MERGE_SPLIT);
     await this.progressBar.reset(dat.getGames().length);
 

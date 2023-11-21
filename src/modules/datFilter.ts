@@ -23,14 +23,13 @@ export default class DATFilter extends Module {
    * Create a new DAT after filtering.
    */
   async filter(dat: DAT): Promise<DAT> {
-    this.progressBar.logInfo(`${dat.getNameShort()}: filtering DAT`);
-
     // Return early if there aren't any games
     if (dat.getGames().length === 0) {
       this.progressBar.logDebug(`${dat.getNameShort()}: no games to filter`);
       return dat;
     }
 
+    this.progressBar.logInfo(`${dat.getNameShort()}: filtering DAT`);
     await this.progressBar.setSymbol(ProgressBarSymbol.FILTERING);
     await this.progressBar.reset(dat.getGames().length);
 
