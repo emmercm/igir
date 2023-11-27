@@ -102,7 +102,7 @@
     "@types/async": "3.2.22",
     "@types/cli-progress": "3.11.4",
     "@types/figlet": "1.5.7",
-    "@types/jest": "29.5.6",
+    "@types/jest": "29.5.10",
     "@types/micromatch": "4.0.4",
     "@types/node": "20.10.0",
     "@types/semver": "7.5.4",
@@ -111,15 +111,15 @@
     "@types/which": "3.0.3",
     "@types/xml2js": "0.4.13",
     "@types/yargs": "17.0.29",
-    "@typescript-eslint/eslint-plugin": "6.9.0",
-    "@typescript-eslint/parser": "6.9.0",
+    "@typescript-eslint/eslint-plugin": "6.12.0",
+    "@typescript-eslint/parser": "6.12.0",
     "auto-changelog": "2.4.0",
     "caxa": "3.0.1",
-    "eslint": "8.52.0",
+    "eslint": "8.54.0",
     "eslint-config-airbnb-typescript": "17.1.0",
     "eslint-plugin-import": "2.29.0",
-    "eslint-plugin-jest": "27.4.3",
-    "eslint-plugin-jsdoc": "46.8.2",
+    "eslint-plugin-jest": "27.6.0",
+    "eslint-plugin-jsdoc": "46.9.0",
     "eslint-plugin-simple-import-sort": "10.0.0",
     "eslint-plugin-unicorn": "48.0.1",
     "husky": "8.0.3",
@@ -142,6 +142,6 @@
     "node": ">=16.6.0"
   },
   "volta": {
-    "node": "20.9.0"
+    "node": "20.10.0"
   }
 }
