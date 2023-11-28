@@ -28,13 +28,12 @@ export default class CandidatePostProcessor extends Module {
     dat: DAT,
     parentsToCandidates: Map<Parent, ReleaseCandidate[]>,
   ): Promise<Map<Parent, ReleaseCandidate[]>> {
-    this.progressBar.logInfo(`${dat.getNameShort()}: processing candidates`);
-
     if (parentsToCandidates.size === 0) {
       this.progressBar.logDebug(`${dat.getNameShort()}: no parents, so no candidates to process`);
       return parentsToCandidates;
     }
 
+    this.progressBar.logInfo(`${dat.getNameShort()}: processing candidates`);
     await this.progressBar.setSymbol(ProgressBarSymbol.GENERATING);
     await this.progressBar.reset(parentsToCandidates.size);
 

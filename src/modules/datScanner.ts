@@ -47,7 +47,6 @@ export default class DATScanner extends Scanner {
    */
   async scan(): Promise<DAT[]> {
     this.progressBar.logInfo('scanning DAT files');
-
     await this.progressBar.setSymbol(ProgressBarSymbol.SEARCHING);
     await this.progressBar.reset(0);
 
