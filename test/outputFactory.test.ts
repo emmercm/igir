@@ -333,6 +333,37 @@ describe('token replacement', () => {
   });
 
   test.each([
+    ['game.a78', path.join('ROMS', 'A7800', 'game.a78')],
+    ['game.gb', path.join('ROMS', 'GB', 'game.gb')],
+    ['game.nes', path.join('ROMS', 'FC', 'game.nes')],
+  ])('should replace {adam} for known extension: %s', async (outputRomFilename, expectedPath) => {
+    const options = new Options({ commands: ['copy'], output: 'ROMS/{adam}' });
+    const rom = new ROM({ name: outputRomFilename, size: 0, crc: '' });
+
+    const outputPath = OutputFactory.getPath(
+      options,
+      dummyDat,
+      dummyGame,
+      dummyRelease,
+      rom,
+      await rom.toFile(),
+    );
+    expect(outputPath.format()).toEqual(expectedPath);
+  });
+
+  test.each([
+    'game.n64',
+    'game.bs',
+    'game.bin',
+    'game.rom',
+  ])('should throw on {adam} for unknown extension: %s', async (outputRomFilename) => {
+    const options = new Options({ commands: ['copy'], output: 'games/{adam}' });
+    const rom = new ROM({ name: outputRomFilename, size: 0, crc: '' });
+
+    await expect(async () => OutputFactory.getPath(options, dummyDat, dummyGame, dummyRelease, rom, await rom.toFile())).rejects.toThrow(/failed to replace/);
+  });
+
+  test.each([
     ['game.a78', path.join('games', 'Atari7800', 'game.a78')],
     ['game.gb', path.join('games', 'Gameboy', 'game.gb')],
     ['game.nes', path.join('games', 'NES', 'game.nes')],
