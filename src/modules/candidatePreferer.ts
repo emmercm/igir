@@ -27,10 +27,15 @@ export default class CandidatePreferer extends Module {
     dat: DAT,
     parentsToCandidates: Map<Parent, ReleaseCandidate[]>,
   ): Promise<Map<Parent, ReleaseCandidate[]>> {
-    this.progressBar.logInfo(`${dat.getNameShort()}: filtering candidates`);
+    this.progressBar.logInfo(`${dat.getNameShort()}: preferring candidates`);
 
     if (parentsToCandidates.size === 0) {
-      this.progressBar.logDebug(`${dat.getNameShort()}: no parents, so no candidates to filter`);
+      this.progressBar.logDebug(`${dat.getNameShort()}: no parents, so no candidates to prefer`);
+      return parentsToCandidates;
+    }
+
+    if (!this.options.getSingle()) {
+      this.progressBar.logDebug(`${dat.getNameShort()}: not running in single/1G1R mode, not preferring candidates`);
       return parentsToCandidates;
     }
 
@@ -54,7 +59,7 @@ export default class CandidatePreferer extends Module {
     const filteredCandidates = [...output.values()].reduce((sum, rc) => sum + rc.length, 0);
     this.progressBar.logDebug(`${dat.getNameShort()}: filtered to ${fsPoly.sizeReadable(size)} of ${filteredCandidates.toLocaleString()} candidate${filteredCandidates !== 1 ? 's' : ''} for ${output.size.toLocaleString()} parent${output.size !== 1 ? 's' : ''}`);
 
-    this.progressBar.logInfo(`${dat.getNameShort()}: done filtering candidates`);
+    this.progressBar.logInfo(`${dat.getNameShort()}: done preferring candidates`);
     return output;
   }
 
@@ -67,13 +72,21 @@ export default class CandidatePreferer extends Module {
     for (let i = 0; i < [...parentsToCandidates.entries()].length; i += 1) {
       const [parent, releaseCandidates] = [...parentsToCandidates.entries()][i];
       await this.progressBar.incrementProgress();
-      this.progressBar.logTrace(`${dat.getNameShort()}: ${parent.getName()}: ${releaseCandidates.length.toLocaleString()} candidate${releaseCandidates.length !== 1 ? 's' : ''} before filtering`);
+      if (releaseCandidates.length > 1) {
+        // Reduce log spam by only logging parents that can be changed
+        this.progressBar.logTrace(`${dat.getNameShort()}: ${parent.getName()}: ${releaseCandidates.length.toLocaleString()} candidate${releaseCandidates.length !== 1 ? 's' : ''} before filtering`);
+      }
 
-      const filteredReleaseCandidates = releaseCandidates
+      const preferredReleaseCandidate = releaseCandidates
         .sort((a, b) => this.sort(a, b))
-        .filter((rc, idx) => this.filter(idx));
-      this.progressBar.logTrace(`${dat.getNameShort()}: ${parent.getName()}: ${filteredReleaseCandidates.length.toLocaleString()} candidate${filteredReleaseCandidates.length !== 1 ? 's' : ''} after filtering`);
-      output.set(parent, filteredReleaseCandidates);
+        .find(() => true);
+      if (preferredReleaseCandidate) {
+        this.progressBar.logTrace(`${dat.getNameShort()}: ${parent.getName()}: preferred ${preferredReleaseCandidate.getName()}`);
+        output.set(parent, [preferredReleaseCandidate]);
+      } else {
+        // The parent didn't have any candidates
+        output.set(parent, []);
+      }
 
       await this.progressBar.incrementDone();
     }
@@ -187,20 +200,5 @@ export default class CandidatePreferer extends Module {
       return (a.getGame().isParent() ? 0 : 1) - (b.getGame().isParent() ? 0 : 1);
     }
     return 0;
-  }
-
-  /**
-   ******************
-   *
-   *     Filter     *
-   *
-   ******************
-   */
-
-  private filter(idx: number): boolean {
-    if (this.options.getSingle()) {
-      return idx === 0;
-    }
-    return true;
   }
 }

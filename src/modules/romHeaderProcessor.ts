@@ -29,7 +29,6 @@ export default class ROMHeaderProcessor extends Module {
     }
 
     this.progressBar.logInfo('processing file headers');
-
     await this.progressBar.setSymbol(ProgressBarSymbol.HASHING);
     await this.progressBar.reset(inputRomFiles.length);
 
