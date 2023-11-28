@@ -416,7 +416,7 @@ export default class GameConsole {
       twmenu: 'gba',
     }),
     new GameConsole(/GBC|Game ?Boy Color/i, ['.gbc'], {
-      adam: 'gbc',
+      adam: 'GBC',
       pocket: 'gbc',
       mister: 'Gameboy',
       onion: 'GBC',
