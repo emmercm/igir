@@ -31,8 +31,9 @@ jobs:
         with:
           filters: |
             changes:
-              - '**/mkdocs.yml'
+              - 'docs/**'
               - '**/*.md'
+              - 'mkdocs.yml'
 
   lint:
     needs:
