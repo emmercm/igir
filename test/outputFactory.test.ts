@@ -666,6 +666,70 @@ describe('token replacement', () => {
       )).rejects.toThrow(/failed to replace/);
     },
   );
+
+  test.each([
+    ['game.pce', path.join('Roms', 'TurboGrafx-16 (PCE)', 'game.pce')],
+    ['game.fds', path.join('Roms', 'Famicom Disk System (FC)', 'game.fds')],
+    ['game.gb', path.join('Roms', 'Game Boy (GB)', 'game.gb')],
+    ['game.sgb', path.join('Roms', 'Game Boy (GB)', 'game.sgb')],
+    ['game.gba', path.join('Roms', 'Game Boy Advance (GBA)', 'game.gba')],
+    ['game.srl', path.join('Roms', 'Game Boy Advance (GBA)', 'game.srl')],
+    ['game.gbc', path.join('Roms', 'Game Boy Color (GBC)', 'game.gbc')],
+    ['game.nes', path.join('Roms', 'Nintendo Entertainment System (FC)', 'game.nes')],
+    ['game.nez', path.join('Roms', 'Nintendo Entertainment System (FC)', 'game.nez')],
+    ['game.min', path.join('Roms', 'Pokemon mini (PKM)', 'game.min')],
+    ['game.sfc', path.join('Roms', 'Super Nintendo Entertainment System (SFC)', 'game.sfc')],
+    ['game.smc', path.join('Roms', 'Super Nintendo Entertainment System (SFC)', 'game.smc')],
+    ['game.vb', path.join('Roms', 'Virtual Boy (VB)', 'game.vb')],
+    ['game.vboy', path.join('Roms', 'Virtual Boy (VB)', 'game.vboy')],
+    ['game.32x', path.join('Roms', 'Sega 32X (MD)', 'game.32x')],
+    ['game.gg', path.join('Roms', 'Sega Game Gear (GG)', 'game.gg')],
+    ['game.sms', path.join('Roms', 'Sega Master System (SMS)', 'game.sms')],
+    ['game.gen', path.join('Roms', 'Sega Genesis (MD)', 'game.gen')],
+    ['game.md', path.join('Roms', 'Sega Genesis (MD)', 'game.md')],
+    ['game.mdx', path.join('Roms', 'Sega Genesis (MD)', 'game.mdx')],
+    ['game.sgd', path.join('Roms', 'Sega Genesis (MD)', 'game.sgd')],
+    ['game.smd', path.join('Roms', 'Sega Genesis (MD)', 'game.smd')],
+    ['game.ngp', path.join('Roms', 'Neo Geo Pocket (NGPC)', 'game.ngp')],
+    ['game.ngc', path.join('Roms', 'Neo Geo Pocket Color (NGPC)', 'game.ngc')],
+  ])(
+    'should replace {minui} for known extension: %s',
+    async (outputRomFilename, expectedPath) => {
+      const options = new Options({ commands: ['copy'], output: 'Roms/{minui}' });
+      const rom = new ROM({ name: outputRomFilename, size: 0, crc: '' });
+
+      const outputPath = OutputFactory.getPath(
+        options,
+        dummyDat,
+        dummyGame,
+        dummyRelease,
+        rom,
+        await rom.toFile(),
+      );
+      expect(outputPath.format()).toEqual(expectedPath);
+    },
+  );
+
+  test.each([
+    'game.bin',
+    'game.rom',
+    'game.mgw',
+  ])(
+    'should throw on {minui} for unknown extension: %s',
+    async (outputRomFilename) => {
+      const options = new Options({ commands: ['copy'], output: 'roms/{minui}' });
+      const rom = new ROM({ name: outputRomFilename, size: 0, crc: '' });
+
+      await expect(async () => OutputFactory.getPath(
+        options,
+        dummyDat,
+        dummyGame,
+        dummyRelease,
+        rom,
+        await rom.toFile(),
+      )).rejects.toThrow(/failed to replace/);
+    },
+  );
 });
 
 describe('should respect "--dir-mirror"', () => {

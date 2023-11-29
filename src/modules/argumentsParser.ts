@@ -680,6 +680,7 @@ Advanced usage:
     {batocera}  The ROM's emulator-specific /roms/* directory for Batocera (e.g. "gb")
     {funkeyos}  The ROM's emulator-specific /* directory for FunKey OS (e.g. "Game Boy")
     {jelos}     The ROM's emulator-specific /roms/* directory for JELOS (e.g. "gb")
+    {minui}     The ROM's emulator-specific /Roms/* directory for MinUI (e.g. "Game Boy (GB)")
     {mister}    The ROM's core-specific /games/* directory for the MiSTer FPGA (e.g. "Gameboy")
     {miyoocfw}  The ROM's emulator-specific /roms/* directory for MiyooCFW (e.g. "GB")
     {onion}     The ROM's emulator-specific /Roms/* directory for OnionOS/GarlicOS (e.g. "GB")
