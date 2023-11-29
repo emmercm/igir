@@ -50,6 +50,7 @@ nav:
       - Example Usage:
           - usage/collection-sorting.md
           - Emulator Frontends:
+            - usage/handheld/adam.md
             - usage/desktop/batocera.md
             - usage/desktop/emuelec.md
             - usage/desktop/emulationstation.md
