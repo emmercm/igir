@@ -649,11 +649,11 @@ export default class GameConsole {
       batocera: 'ps3',
       jelos: 'ps3',
     }),
-    new GameConsole(/PlayStation Portable|psp/i, [/* '.bin', '.cue' */], {
+    new GameConsole(/PlayStation ?Portable|psp/i, [/* '.bin', '.cue' */], {
       batocera: 'psp',
       jelos: 'psp',
     }),
-    new GameConsole(/PlayStation Vita|psvita/i, [], {
+    new GameConsole(/PlayStation ?Vita|psvita/i, [], {
       batocera: 'psvita',
     }),
     new GameConsole(/PlayStation [4-9]|ps[4-9]/i, [/* '.bin', '.cue' */], {}),
