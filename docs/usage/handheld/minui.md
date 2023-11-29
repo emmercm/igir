@@ -1,4 +1,4 @@
-# MiyooCFW
+# MinUI
 
 [MinUI](https://github.com/shauninman/MinUI/) is a custom launcher supporting the Powkiddy RGB30, Trimui Smart (and Pro), Miyoo Mini (and Plus), as well as Anbernic RG35XX. It is focused on providing a minimalistic and easy to use frontend for the most important 8 and 16 bit consoles.
 
