@@ -32,6 +32,11 @@ export default class FileChecksums {
     stream: Stream,
     checksumBitmask: number,
   ): Promise<ChecksumProps> {
+    // Not calculating any checksums, do nothing
+    if (!checksumBitmask) {
+      return {};
+    }
+
     return new Promise((resolve, reject) => {
       let crc: number | undefined;
       const md5 = checksumBitmask & ChecksumBitmask.MD5 ? crypto.createHash('md5') : undefined;
@@ -50,7 +55,7 @@ export default class FileChecksums {
       });
       stream.on('end', () => {
         resolve({
-          crc32: (crc ?? 0).toString(16),
+          crc32: crc?.toString(16),
           md5: md5?.digest('hex'),
           sha1: sha1?.digest('hex'),
         });
