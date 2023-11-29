@@ -6,30 +6,17 @@ interface OutputTokens {
   // @see https://github.com/eduardofilo/RG350_adam_image/wiki/En:-3.-Content-installation#roms
   adam?: string,
 
-  // Analogue Pocket ROMs go in the /Assets/{pocket}/common/ directory
-  pocket?: string,
-
-  // MiSTer ROMs go in the /games/{mister}/ directory:
-  // @see https://mister-devel.github.io/MkDocs_MiSTer/developer/corenames/
-  // @see https://mister-devel.github.io/MkDocs_MiSTer/cores/console/
-  // @see https://mister-devel.github.io/MkDocs_MiSTer/cores/computer/
-  mister?: string,
-
-  // OnionOS/GarlicOS ROMs go in the /Roms/{onion} directory:
-  // @see https://onionui.github.io/docs/emulators
-  onion?: string,
-
   // Batocera ROMs go in the roms/{batocera} directory:
   // @see https://wiki.batocera.org/systems
   batocera?: string,
 
-  // JELOS ROMs go in the ??? directory:
-  // @see https://github.com/JustEnoughLinuxOS/distribution/blob/main/documentation/PER_DEVICE_DOCUMENTATION/AMD64/SUPPORTED_EMULATORS_AND_CORES.md
-  jelos?: string,
-
   // FunKey S ROMs go into the subfolder of / for the console:
   // @see https://github.com/FunKey-Project/FunKey-OS/tree/master/FunKey/board/funkey/rootfs-overlay/usr/games/collections
   funkeyos?: string,
+
+  // JELOS ROMs go in the ??? directory:
+  // @see https://github.com/JustEnoughLinuxOS/distribution/blob/main/documentation/PER_DEVICE_DOCUMENTATION/AMD64/SUPPORTED_EMULATORS_AND_CORES.md
+  jelos?: string,
 
   // MinUI roms go into the /Roms folder on the SD card
   // @see https://github.com/shauninman/MinUI/tree/main/skeleton/BASE/Roms
@@ -39,9 +26,22 @@ interface OutputTokens {
   // @see https://github.com/shauninman/MinUI/blob/main/skeleton/BASE/README.txt
   minui?: string,
 
+  // MiSTer ROMs go in the /games/{mister}/ directory:
+  // @see https://mister-devel.github.io/MkDocs_MiSTer/developer/corenames/
+  // @see https://mister-devel.github.io/MkDocs_MiSTer/cores/console/
+  // @see https://mister-devel.github.io/MkDocs_MiSTer/cores/computer/
+  mister?: string,
+
   // MiyooCFW Roms go into the /roms subfolder of the SD card
   // @see https://github.com/TriForceX/MiyooCFW/wiki/Emulator-Info
   miyoocfw?: string,
+
+  // OnionOS/GarlicOS ROMs go in the /Roms/{onion} directory:
+  // @see https://onionui.github.io/docs/emulators
+  onion?: string,
+
+  // Analogue Pocket ROMs go in the /Assets/{pocket}/common/ directory
+  pocket?: string,
 
   // TWiLightMenu++ Roms go into the /roms subfolder on the 3DS/DSi SD card
   // @see https://github.com/DS-Homebrew/TWiLightMenu/tree/master/7zfile/roms
