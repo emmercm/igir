@@ -57,7 +57,7 @@ Adam supports many different ROM formats in subfolders of `ROMS` on the second S
 
 !!! tip
 
-      Please note that sorting the supported Arcade machine releases (MAME, CPS, FBA) in a single pass is not supported be `igir` at this time. Try the [Arcade docs](../arcade.md) docs for help with this.
+      Please note that sorting the supported Arcade machine releases (MAME, CPS, FBA) in a single pass is not supported by `igir` at this time. Try the [Arcade docs](../arcade.md) docs for help with this.
 
 === ":simple-windowsxp: Windows"
 
