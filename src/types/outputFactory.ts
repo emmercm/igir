@@ -264,6 +264,11 @@ export default class OutputFactory {
 
     let output = input;
 
+    const adam = gameConsole.getAdam();
+    if (adam) {
+      output = output.replace('{adam}', adam);
+    }
+
     const pocket = gameConsole.getPocket();
     if (pocket) {
       output = output.replace('{pocket}', pocket);
