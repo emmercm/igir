@@ -100,9 +100,25 @@ describe('multiple files', () => {
   });
 });
 
-it('should scan single files', async () => {
-  await expect(createDatScanner({ dat: [path.join(path.resolve(), 'test', 'fixtures', 'dats', 'one.*')] }).scan()).resolves.toHaveLength(1);
-  await expect(createDatScanner({ dat: ['test/fixtures/dats/one.*'] }).scan()).resolves.toHaveLength(1);
-  await expect(createDatScanner({ dat: ['test/fixtures/*/one.dat'] }).scan()).resolves.toHaveLength(1);
-  await expect(createDatScanner({ dat: ['test/fixtures/dats/one.dat'] }).scan()).resolves.toHaveLength(1);
+describe('single files', () => {
+  test.each([
+    path.join(path.resolve(), 'test', 'fixtures', 'dats', 'one.*'),
+    'test/fixtures/dats/one.*',
+    'test/fixtures/*/one.dat',
+    'test/fixtures/dats/one.dat',
+  ])('should scan single files: %s', async (dat) => {
+    await expect(createDatScanner({ dat: [dat] }).scan()).resolves.toHaveLength(1);
+  });
+
+  it('should filter out zero size ROMs', async () => {
+    const dats = await createDatScanner({ dat: ['**/one.dat'] }).scan();
+    expect(dats).toHaveLength(1);
+    const dat = dats[0];
+
+    const gameEmpty = dat.getGames().find((game) => game.getName() === 'Empty');
+    expect(gameEmpty?.getRoms()).toHaveLength(0);
+
+    const gameEmptyMissing = dat.getGames().find((game) => game.getName() === 'Empty Missing');
+    expect(gameEmptyMissing?.getRoms()).toHaveLength(1);
+  });
 });
