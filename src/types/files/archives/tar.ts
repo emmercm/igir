@@ -5,7 +5,6 @@ import tar from 'tar';
 import { Memoize } from 'typescript-memoize';
 
 import Constants from '../../../constants.js';
-import fsPoly from '../../../polyfill/fsPoly.js';
 import FileChecksums from '../fileChecksums.js';
 import Archive from './archive.js';
 import ArchiveEntry from './archiveEntry.js';
@@ -67,20 +66,16 @@ export default class Tar extends Archive {
     entryPath: string,
     extractedFilePath: string,
   ): Promise<void> {
-    const tempDir = await fsPoly.mkdtemp(path.join(Constants.GLOBAL_TEMP_DIR, 'tar'));
-    try {
-      // https://github.com/isaacs/node-tar/issues/357
-      const tempFile = path.join(tempDir, entryPath);
-
-      await tar.extract({
-        file: this.getFilePath(),
-        cwd: tempDir,
-        strict: true,
-      }, [entryPath.replace(/[\\/]/g, '/')]);
-
-      await fsPoly.mv(tempFile, extractedFilePath);
-    } finally {
-      await fsPoly.rm(tempDir, { recursive: true, force: true });
-    }
+    return tar.extract({
+      file: this.getFilePath(),
+      cwd: path.dirname(extractedFilePath),
+      strict: true,
+      filter: (_, stat) => {
+        // @ts-expect-error the type is wrong: https://github.com/isaacs/node-tar/issues/357#issuecomment-1416806436
+        // eslint-disable-next-line no-param-reassign
+        stat.path = path.basename(extractedFilePath);
+        return true;
+      },
+    }, [entryPath.replace(/[\\/]/g, '/')]);
   }
 }
