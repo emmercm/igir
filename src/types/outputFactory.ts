@@ -309,6 +309,11 @@ export default class OutputFactory {
       output = output.replace('{twmenu}', twmenu);
     }
 
+    const minui = gameConsole.getMinUI();
+    if (minui) {
+      output = output.replace('{minui}', minui);
+    }
+
     return output;
   }
 

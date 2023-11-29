@@ -31,6 +31,14 @@ interface OutputTokens {
   // @see https://github.com/FunKey-Project/FunKey-OS/tree/master/FunKey/board/funkey/rootfs-overlay/usr/games/collections
   funkeyos?: string,
 
+  // MinUI roms go into the /Roms folder on the SD card
+  // @see https://github.com/shauninman/MinUI/tree/main/skeleton/BASE/Roms
+  // @see https://github.com/shauninman/MinUI/tree/main/skeleton/EXTRAS/Roms
+  // There are some special considerations about naming these folders
+  // to influence UI presentation
+  // @see https://github.com/shauninman/MinUI/blob/main/skeleton/BASE/README.txt
+  minui?: string,
+
   // MiyooCFW Roms go into the /roms subfolder of the SD card
   // @see https://github.com/TriForceX/MiyooCFW/wiki/Emulator-Info
   miyoocfw?: string,
@@ -339,6 +347,7 @@ export default class GameConsole {
       funkeyos: 'PCE-TurboGrafx',
       miyoocfw: 'PCE',
       twmenu: 'tg16',
+      minui: 'TurboGrafx-16 (PCE)',
     }),
     new GameConsole(/(PC Engine|TurboGrafx) CD/i, [/* '.bin', '.cue' */], {
       adam: 'PCECD',
@@ -348,6 +357,7 @@ export default class GameConsole {
       batocera: 'pcenginecd',
       jelos: 'tg16cd',
       miyoocfw: 'PCE',
+      minui: 'TurboGrafx-16 CD (PCE)',
     }),
     new GameConsole(/SuperGrafx/i, ['.sgx'], {
       pocket: 'pce',
@@ -381,6 +391,7 @@ export default class GameConsole {
       jelos: 'fds',
       funkeyos: 'NES',
       miyoocfw: 'NES',
+      minui: 'Famicom Disk System (FC)',
     }),
     new GameConsole(/Game (and|&) Watch/i, ['.mgw'], {
       adam: 'GW',
@@ -403,6 +414,7 @@ export default class GameConsole {
       funkeyos: 'Game Boy',
       miyoocfw: 'GB',
       twmenu: 'gb',
+      minui: 'Game Boy (GB)',
     }), // pocket:sgb for spiritualized1997
     new GameConsole(/GBA|Game ?Boy Advance/i, ['.gba', '.srl'], {
       adam: 'GBA',
@@ -414,6 +426,7 @@ export default class GameConsole {
       funkeyos: 'Game Boy Advance',
       miyoocfw: 'GBA',
       twmenu: 'gba',
+      minui: 'Game Boy Advance (GBA)',
     }),
     new GameConsole(/GBC|Game ?Boy Color/i, ['.gbc'], {
       adam: 'GBC',
@@ -425,6 +438,7 @@ export default class GameConsole {
       funkeyos: 'Game Boy Color',
       miyoocfw: 'GB',
       twmenu: 'gb',
+      minui: 'Game Boy Color (GBC)',
     }),
     new GameConsole(/Nintendo 64|N64/i, ['.n64', '.v64', '.z64'], {
       mister: 'N64',
@@ -456,6 +470,7 @@ export default class GameConsole {
       funkeyos: 'NES',
       miyoocfw: 'NES',
       twmenu: 'nes',
+      minui: 'Nintendo Entertainment System (FC)',
     }),
     new GameConsole(/Pokemon Mini/i, ['.min'], {
       adam: 'POKEMINI',
@@ -466,6 +481,7 @@ export default class GameConsole {
       jelos: 'pokemini',
       funkeyos: 'Pokemini',
       miyoocfw: 'POKEMINI',
+      minui: 'Pokemon mini (PKM)', // uses unrendedable unicode char in original install
     }),
     new GameConsole(/Satellaview/i, ['.bs'], {
       pocket: 'snes',
@@ -489,6 +505,7 @@ export default class GameConsole {
       funkeyos: 'SNES',
       miyoocfw: 'SNES',
       twmenu: 'snes',
+      minui: 'Super Nintendo Entertainment System (SFC)',
     }),
     new GameConsole(/Virtual Boy/i, ['.vb', '.vboy'], {
       adam: 'VB',
@@ -496,6 +513,7 @@ export default class GameConsole {
       batocera: 'virtualboy',
       jelos: 'virtualboy',
       funkeyos: 'Virtualboy',
+      minui: 'Virtual Boy (VB)',
     }),
     new GameConsole(/Wii/i, [/* '.iso' */], {
       batocera: 'wii',
@@ -532,6 +550,7 @@ export default class GameConsole {
       onion: 'THIRTYTWOX',
       batocera: 'sega32x',
       jelos: 'sega32x',
+      minui: 'Sega 32X (MD)', // added for sorting convenience
     }),
     new GameConsole(/Dreamcast/i, [/* '.bin', '.cue' */], {
       batocera: 'dreamcast',
@@ -547,6 +566,7 @@ export default class GameConsole {
       funkeyos: 'Game Gear',
       miyoocfw: 'SMS',
       twmenu: 'gg',
+      minui: 'Sega Game Gear (GG)',
     }),
     new GameConsole(/Master System/i, ['.sms'], {
       adam: 'SMS',
@@ -558,6 +578,7 @@ export default class GameConsole {
       funkeyos: 'Sega Master System',
       miyoocfw: 'SMS',
       twmenu: 'sms',
+      minui: 'Sega Master System (SMS)',
     }),
     new GameConsole(/(Mega|Sega) CD/i, [/* '.bin', '.cue' */], {
       adam: 'SEGACD',
@@ -566,6 +587,7 @@ export default class GameConsole {
       batocera: 'segacd',
       jelos: 'segacd',
       miyoocfw: 'SMD',
+      minui: 'Sega CD (MD)', // added for sorting convenience
     }),
     new GameConsole(/Mega Drive|Genesis/i, ['.gen', '.md', '.mdx', '.sgd', '.smd'], {
       adam: 'MD',
@@ -577,6 +599,7 @@ export default class GameConsole {
       funkeyos: 'Sega Genesis',
       miyoocfw: 'SMD',
       twmenu: 'gen',
+      minui: 'Sega Genesis (MD)',
     }),
     new GameConsole(/Saturn/i, [/* '.bin', '.cue' */], {
       batocera: 'saturn',
@@ -644,6 +667,7 @@ export default class GameConsole {
       jelos: 'ngp',
       funkeyos: 'Neo Geo Pocket',
       twmenu: 'ngp',
+      minui: 'Neo Geo Pocket (NGPC)', // added for sorting convenience
     }),
     new GameConsole(/Neo ?Geo Pocket Color/i, ['.ngc'], {
       adam: 'NGP',
@@ -652,6 +676,7 @@ export default class GameConsole {
       jelos: 'ngpc',
       funkeyos: 'Neo Geo Pocket',
       twmenu: 'ngp',
+      minui: 'Neo Geo Pocket Color (NGPC)', // added for sorting convenience
     }),
     // Sony
     new GameConsole(/PlayStation|psx/i, [/* '.bin', '.cue' */], {
@@ -662,6 +687,7 @@ export default class GameConsole {
       jelos: 'psx',
       funkeyos: 'PS1',
       miyoocfw: 'PS1',
+      minui: 'Sony PlayStation (PS)',
     }),
     new GameConsole(/PlayStation 2|ps2/i, [/* '.bin', '.cue' */], {
       batocera: 'ps2',
@@ -777,5 +803,9 @@ export default class GameConsole {
 
   getTWMenu(): string | undefined {
     return this.outputTokens.twmenu;
+  }
+
+  getMinUI(): string | undefined {
+    return this.outputTokens.minui;
   }
 }
