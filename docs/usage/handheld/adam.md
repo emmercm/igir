@@ -55,7 +55,10 @@ The Adam image does not come with BIOS files. Where you have to put which of you
 
 Adam supports many different ROM formats in subfolders of `ROMS` on the second SD card (TF2). An exhaustive list can be found in [their wiki](https://github.com/eduardofilo/RG350_adam_image/tree/master/data/local/home/.simplemenu/section_groups), where you can also find information about which ROMS are supported in compressed form. Most supported systems and their ROMS can be automatically sorted by `igir` using the `{adam}` output token. See the [replaceable tokens page](../../output/tokens.md) for more information.
 
-Please note that sorting the supported Arcade machine releases (MAME, CPS, FBA) in a single pass is not supported be `igir` at this time. Please see the [Arcade docs](../arcade.md) docs for help with this.
+
+!!! tip
+
+      Please note that sorting the supported Arcade machine releases (MAME, CPS, FBA) in a single pass is not supported be `igir` at this time. Try the [Arcade docs](../arcade.md) docs for help with this.
 
 === ":simple-windowsxp: Windows"
 

@@ -74,10 +74,10 @@ To help sort ROMs into unique file structures for popular frontends & hardware, 
 - `{adam}` the ['Adam' image](../usage/handheld/adam.md) emulator's directory for the ROM
 - `{batocera}` the [Batocera](../usage/desktop/batocera.md) emulator's directory for the ROM
 - `{funkeyos}` the [FunKey OS](../usage/handheld/funkeyos.md) emulator's directory for the ROM
-- `{jelos}` the [JELOS](../usage/handheld/jelos.md) emulator's directory for the ROM
 - `{minui}` the [MinUI](../usage/handheld/minui.md) emulator's directory for the ROM
-- `{mister}` the [MiSTer FPGA](../usage/hardware/mister.md) core's directory for the ROM
 - `{miyoocfw}` the [MiyooCFW](../usage/handheld/miyoocfw.md) emulator's directory for the ROM
+- `{jelos}` the [JELOS](../usage/handheld/jelos.md) emulator's directory for the ROM
+- `{mister}` the [MiSTer FPGA](../usage/hardware/mister.md) core's directory for the ROM
 - `{onion}` the [OnionOS / GarlicOS](../usage/handheld/onionos.md) emulator's directory for the ROM
 - `{pocket}` the [Analogue Pocket](../usage/hardware/analogue-pocket.md) core's directory for the ROM
 - `{twmenu}` the [TWiLightMenu++](../usage/handheld/twmenu.md) emulator's directory for the ROM
