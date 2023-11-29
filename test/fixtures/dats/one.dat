@@ -1,18 +1,22 @@
 <?xml version="1.0"?>
 <!DOCTYPE datafile PUBLIC "-//Logiqx//DTD ROM Management Datafile//EN" "http://www.logiqx.com/Dats/datafile.dtd">
 <datafile>
-	<header>
-		<name>One</name>
-		<description>One</description>
-		<version>20220705</version>
-		<author>emmercm</author>
-	</header>
-	<machine name="Empty">
-		<description>Empty</description>
-		<rom name="Empty.rom" size="0" crc="00000000" md5="d41d8cd98f00b204e9800998ecf8427e" sha1="da39a3ee5e6b4b0d3255bfef95601890afd80709" status="verified"/>
-		<rom name="Missing.rom" size="0" crc="ffffffff" md5="8ead518f69f2e6c4b92e68a89a056d68" sha1="d6487ef2e2c46d33cb46fdf891334331d6f6af1e" status="verified"/>
-	</machine>
-	<machine name="Foobar">
+  <header>
+    <name>One</name>
+    <description>One</description>
+    <version>20220705</version>
+    <author>emmercm</author>
+  </header>
+  <machine name="Empty">
+    <description>Empty</description>
+    <rom name="Empty.rom" size="0" crc="00000000" md5="d41d8cd98f00b204e9800998ecf8427e" sha1="da39a3ee5e6b4b0d3255bfef95601890afd80709" status="verified"/>
+  </machine>
+  <machine name="Empty Missing">
+    <description>Empty Missing</description>
+    <rom name="Empty.rom" size="0" crc="00000000" md5="d41d8cd98f00b204e9800998ecf8427e" sha1="da39a3ee5e6b4b0d3255bfef95601890afd80709" status="verified"/>
+    <rom name="Missing.rom" size="8" crc="cd28cc98" md5="676513fde5797c3785164942c97dfec1" sha1="f9c24e2abb82063a3ba2c44efd2d3c797f28ac90" status="verified"/>
+  </machine>
+  <machine name="Foobar">
     <description>Foobar</description>
     <release name="Foobar" region="USA"/>
     <rom name="Foobar.lnx" size="7" crc="b22c9747" md5="14758f1afd44c09b7992073ccf00b43d" sha1="988881adc9fc3655077dc2d4d757d480b5ea0e11" status="verified"/>
