@@ -706,6 +706,10 @@ export default class GameConsole {
     new GameConsole(/GameKing/i, [/* '.bin' */], {
       pocket: 'game_king',
     }),
+    // Uzebox
+    new GameConsole(/Uzebox/i, [ '.uze' ], {
+      batocera: 'uzebox',
+    }),
     // VTech
     new GameConsole(/CreatiVision/i, [/* '.rom' */], {
       batocera: 'crvision',
@@ -714,6 +718,10 @@ export default class GameConsole {
     }),
     new GameConsole(/V\.Smile/i, [/* '.bin' */], {
       batocera: 'vsmile',
+    }),
+    // WASM-4
+    new GameConsole(/WASM-?4/i, [ '.wasm' ], {
+      batocera: 'wasm4',
     }),
     // Watara
     new GameConsole(/Supervision/i, ['.sv'], {
