@@ -51,15 +51,33 @@
   rebaseWhen: 'conflicted', // separate PRs updating the lockfile are likely to conflict each other
   updateNotScheduled: true, // default
 
+  // Stability settings: don't raise a PR until a dependency is at least 3 days old
+  rangeStrategy: 'pin',
+  minimumReleaseAge: '3 days',
+  internalChecksFilter: 'strict',
+
   packageRules: [
+    // Update Node.js versions immediately
     {
-      matchCategories: ['node'],
+      matchPackageNames: ['node'],
       groupName: 'Node.js',
       // Renovate's defaults for these options
       schedule: 'at any time',
       prCreation: 'immediate',
       platformAutomerge: true,
+      minimumReleaseAge: '0 days'
     },
+
+    // Perform dependency pinning immediately
+    {
+      matchUpdateTypes: ['pin'],
+      commitMessageAction: 'pin',
+      groupName: 'dependency ranges',
+      // Renovate's defaults for these options
+      schedule: 'at any time',
+      prCreation: 'immediate',
+      platformAutomerge: true,
+    }
   ],
 
   npm: {
@@ -70,12 +88,6 @@
       commitMessageAction: 'update', // same as above
       commitMessageTopic: 'lockfile',
     },
-
-    // Stability settings: don't raise a PR until a dependency is at least 3 days old
-    rangeStrategy: 'pin',
-    commitMessageAction: 'update', // same as above, don't use `rangeStrategy` as the action
-    minimumReleaseAge: '3 days',
-    internalChecksFilter: 'strict',
 
     packageRules: [
       // Dependencies
@@ -143,22 +155,11 @@
         prPriority: -10,
       },
 
-      // Group/separate all dependency pinning, perform it immediately
-      {
-        matchUpdateTypes: ['pin'],
-        commitMessageAction: 'pin',
-        groupName: 'dependency ranges',
-        // Renovate's defaults for these options
-        schedule: 'at any time',
-        prCreation: 'immediate',
-        platformAutomerge: true,
-      },
-
       // Everything else
       {
         matchDepTypes: ['optionalDependencies', 'peerDependencies', 'engines'],
         enabled: false,
-      },
-    ],
-  },
+      }
+    ]
+  }
 }
