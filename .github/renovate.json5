@@ -68,6 +68,12 @@
       minimumReleaseAge: '0 days'
     },
 
+    // Group any/all package files in the docs/ directory
+    {
+      matchFileNames: ['docs/**'],
+      groupName: 'docs dependencies'
+    },
+
     // Perform dependency pinning immediately
     {
       matchUpdateTypes: ['pin'],
