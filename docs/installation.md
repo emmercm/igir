@@ -60,7 +60,7 @@ If none of the above options work for you, [Docker](https://www.docker.com/) may
 === ":simple-windowsxp: Windows"
 
     ```batch
-    docker run --interactive --tty ^
+    docker run --interactive --tty --rm ^
       --volume "%cd%:\pwd" ^
       --workdir "/pwd" ^
       node:lts ^
@@ -70,7 +70,7 @@ If none of the above options work for you, [Docker](https://www.docker.com/) may
 === ":simple-apple: macOS"
 
     ```shell
-    docker run --interactive --tty \
+    docker run --interactive --tty --rm \
       --volume "$PWD:/pwd" \
       --workdir "/pwd" \
       node:lts \
@@ -80,7 +80,7 @@ If none of the above options work for you, [Docker](https://www.docker.com/) may
 === ":simple-linux: Linux"
 
     ```shell
-    docker run --interactive --tty \
+    docker run --interactive --tty --rm \
       --volume "$PWD:/pwd" \
       --workdir "/pwd" \
       node:lts \
