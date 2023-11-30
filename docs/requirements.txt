@@ -1,17 +1,17 @@
-mkdocs-material
+mkdocs==1.5.3
+mkdocs-material==9.4.14
 
-mkdocs-exclude-search
-mkdocs-git-revision-date-localized-plugin
-mkdocs-htmlproofer-plugin
-mkdocs-material[imaging]
-mkdocs-redirects
-mkdocs-unused-files
-mdx_truly_sane_lists
+mkdocs-exclude-search==0.6.5
+mkdocs-git-revision-date-localized-plugin==1.2.1
+mkdocs-htmlproofer-plugin==1.0.0
+mkdocs-redirects==1.2.1
+mkdocs-unused-files==0.2.0
+mdx-truly-sane-lists==1.3
 
 # Requires:
 # macOS:
 #   brew install cairo
 #   sudo ln -s /opt/homebrew/Cellar/cairo/*/lib/libcairo.2.dylib /usr/local/lib/
 # Linux: sudo apt-get install libcairo2-dev libfreetype6-dev libffi-dev libjpeg-dev libpng-dev libz-dev
-pillow
-cairosvg
+Pillow==9.5.0
+CairoSVG==2.7.1
