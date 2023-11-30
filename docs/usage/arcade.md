@@ -6,7 +6,7 @@ This page is written to give users just enough context to build & re-build arcad
 
 !!! warning
 
-    People often shorthand all arcade emulation as "MAME," but there are other modern and maintained arcade emulators such as [FinalBurn Neo](https://github.com/finalburnneo/FBNeo). Different emulators have different needs, so it's important to understand what emulator and what version you're using.
+    People often shorthand all arcade emulation as "MAME," but there are other modern and actively maintained arcade emulators such as [FinalBurn Neo](https://github.com/finalburnneo/FBNeo). Different emulators have different needs, so it's important to understand what emulator and what version you're using.
 
 ## Emulator versions & DATs
 
@@ -18,7 +18,7 @@ Because of all of these reasons, each arcade emulator version usually comes with
 
 !!! danger
 
-    tl;dr each arcade emulator version has an _exact_ DAT you need to use to sort your ROMs or your games may not work.
+    tl;dr each arcade emulator version has an _exact_ DAT file you need to use to sort your ROMs or your games may not work!
 
 ## Finding DATs
 

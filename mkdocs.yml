@@ -123,6 +123,7 @@ plugins:
         'examples.md': 'usage/collection-sorting.md'
         'file-scanning.md': 'input/file-scanning.md'
         'input/archives.md': 'input/reading-archives.md'
+        'output/arcade.md': 'usage/arcade.md'
         'reporting.md': 'output/reporting.md'
         'rom-filtering.md': 'roms/filtering-preferences.md'
         'rom-headers.md': 'roms/headers.md'
