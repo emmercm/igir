@@ -57,8 +57,9 @@
   internalChecksFilter: 'strict',
 
   packageRules: [
+    // Update Node.js versions immediately
     {
-      matchCategories: ['node'],
+      matchPackageNames: ['node'],
       groupName: 'Node.js',
       // Renovate's defaults for these options
       schedule: 'at any time',
