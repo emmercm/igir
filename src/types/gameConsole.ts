@@ -10,6 +10,9 @@ interface OutputTokens {
   // @see https://wiki.batocera.org/systems
   batocera?: string,
 
+  // Canonicalized console name
+  console?: string,
+
   // FunKey S ROMs go into the subfolder of / for the console:
   // @see https://github.com/FunKey-Project/FunKey-OS/tree/master/FunKey/board/funkey/rootfs-overlay/usr/games/collections
   funkeyos?: string,
@@ -63,31 +66,37 @@ export default class GameConsole {
     // Acorn
     new GameConsole(/Atom/i, [], {
       batocera: 'atom',
+      console: 'Acorn Atom',
       mister: 'AcornAtom',
     }),
     // Amstrad
     new GameConsole(/CPC/i, [], {
       adam: 'AMSTRAD',
       batocera: 'amstradcpc',
+      console: 'Amstrad CPC',
       jelos: 'amstradcpc',
       mister: 'Amstrad',
       onion: 'CPC',
       twmenu: 'cpc',
     }),
     new GameConsole(/PCW/i, [], {
+      console: 'Amstrad PCW',
       mister: 'AmstradPCW',
     }),
     // Apple
     new GameConsole(/Apple.*I/i, [], {
+      console: 'Apple I',
       mister: 'Apple-I',
     }),
     new GameConsole(/Apple.*IIe?/i, [], {
       batocera: 'apple2',
+      console: 'Apple II',
       mister: 'Apple-II',
     }),
     // Arduboy
     new GameConsole(/Arduboy/i, ['.arduboy', '.hex'], {
       batocera: 'arduboy',
+      console: 'Arduboy - Arduboy',
       jelos: 'arduboy',
       mister: 'Arduboy',
       pocket: 'arduboy',
@@ -95,6 +104,7 @@ export default class GameConsole {
     // Atari
     new GameConsole(/800|8-bit Family/, ['.atr', '.atx'], {
       batocera: 'atari800',
+      console: 'Atari 800',
       jelos: 'atari800',
       mister: 'ATARI800',
       onion: 'EIGHTHUNDRED',
@@ -102,6 +112,7 @@ export default class GameConsole {
     new GameConsole(/2600/, ['.a26', '.act', '.pb', '.tv', '.tvr', '.mn', '.cv', '.eb', '.ef', '.efr', '.ua', '.x07', '.sb'], {
       adam: 'A2600',
       batocera: 'atari2600',
+      console: 'Atari 2600',
       jelos: 'atari2600',
       mister: 'Atari2600',
       miyoocfw: '2600',
@@ -112,6 +123,7 @@ export default class GameConsole {
     new GameConsole(/5200/, ['.a52'], {
       adam: 'A5200',
       batocera: 'atari5200',
+      console: 'Atari 5200',
       jelos: 'atari5200',
       mister: 'Atari5200',
       onion: 'FIFTYTWOHUNDRED',
@@ -120,6 +132,7 @@ export default class GameConsole {
     new GameConsole(/7800/, ['.a78'], {
       adam: 'A7800',
       batocera: 'atari7800',
+      console: 'Atari 7800',
       jelos: 'atari7800',
       mister: 'Atari7800',
       onion: 'SEVENTYEIGHTHUNDRED',
@@ -128,12 +141,14 @@ export default class GameConsole {
     }),
     new GameConsole(/Jaguar/i, ['.j64'], {
       batocera: 'jaguar',
+      console: 'Atari Jaguar',
       jelos: 'atarijaguar',
       onion: 'JAGUAR',
     }),
     new GameConsole(/Lynx/i, ['.lnx', '.lyx'], {
       adam: 'LYNX',
       batocera: 'lynx',
+      console: 'Atari Lynx',
       funkeyos: 'Atari lynx',
       jelos: 'atarilynx',
       mister: 'AtariLynx',
@@ -142,6 +157,7 @@ export default class GameConsole {
     }),
     new GameConsole(/Atari.*ST/i, ['.msa', '.st', '.stx'], {
       batocera: 'atarist',
+      console: 'Atari ST',
       jelos: 'atarist',
       mister: 'AtariST',
       onion: 'ATARIST',
@@ -149,18 +165,22 @@ export default class GameConsole {
     // Bally
     new GameConsole(/Astrocade/i, [/* '.bin' */], {
       batocera: 'astrocde',
+      console: 'Bally Astrocade',
       mister: 'Astrocade',
     }),
     // Bandai
     new GameConsole(/Super ?Vision 8000/i, [], {
+      console: 'Bandai Super Vision 8000',
       mister: 'Supervision8000',
     }),
     new GameConsole(/RX[ -]?78/i, [], {
+      console: 'Bandai RX-78',
       mister: 'RX78',
     }),
     new GameConsole(/WonderSwan/i, ['.ws'], {
       adam: 'WSC',
       batocera: 'wswan',
+      console: 'Bandai WonderSwan',
       funkeyos: 'WonderSwan',
       jelos: 'wonderswan',
       mister: 'WonderSwan',
@@ -172,6 +192,7 @@ export default class GameConsole {
     new GameConsole(/WonderSwan Color/i, ['.wsc'], {
       adam: 'WSC',
       batocera: 'wswanc',
+      console: 'Bandai WonderSwan Color',
       funkeyos: 'WonderSwan',
       jelos: 'wonderswancolor',
       mister: 'WonderSwan',
@@ -183,6 +204,7 @@ export default class GameConsole {
     // Bit Corporation
     new GameConsole(/Gamate/i, [/* '.bin' */], {
       batocera: 'gamate',
+      console: 'Bit Corporation Gamate',
       mister: 'Gamate',
       pocket: 'gamate',
     }),
@@ -191,42 +213,50 @@ export default class GameConsole {
     // Casio
     new GameConsole(/PV[ -]?1000/i, [/* '.bin' */], {
       batocera: 'pv1000',
+      console: 'Casio PV-1000',
       mister: 'Casio_PV-1000',
     }),
     new GameConsole(/PV[ -]?2000/i, [/* '.bin' */], {
+      console: 'Casio PV-2000',
       mister: 'Casio_PV-2000',
     }),
     // Commodore
     new GameConsole(/Amiga/i, [], {
       adam: 'AMIGA',
+      console: 'Commodore Amiga',
       jelos: 'amiga',
       mister: 'Amiga',
       onion: 'AMIGA',
       pocket: 'amiga',
     }),
-    new GameConsole(/Amiga CD32/i, [/* '.bin', '.cue' */], {
+    new GameConsole(/(Amiga )?CD32/i, [/* '.bin', '.cue' */], {
       adam: 'AMIGA',
       batocera: 'amigacd32',
+      console: 'Commorore Amiga CD32',
       jelos: 'amigacd32',
       mister: 'Amiga',
     }),
-    new GameConsole(/Amiga CDTV/i, [/* '.bin', '.cue' */], {
+    new GameConsole(/(Amiga )?CDTV/i, [/* '.bin', '.cue' */], {
       adam: 'AMIGA',
       batocera: 'amigacdtv',
+      console: 'Commodore Amiga CDTV',
     }),
     new GameConsole(/Commodore C?16/i, [/* unknown */], {
       jelos: 'c16',
+      console: 'Commodore C16',
       mister: 'C16',
     }),
     new GameConsole(/Commodore C?64/i, ['.crt', '.d64', '.t64'], {
       adam: 'C64',
       batocera: 'c64',
+      console: 'Commodore C64',
       jelos: 'c64',
       mister: 'C64',
       onion: 'COMMODORE',
     }),
     new GameConsole(/Commodore C?128/i, [/* unknown */], {
       batocera: 'c128',
+      console: 'Commodore C128',
       jelos: 'c128',
       mister: 'C128',
     }),
@@ -234,6 +264,7 @@ export default class GameConsole {
     new GameConsole(/ColecoVision/i, ['.col'], {
       adam: 'COLECO',
       batocera: 'colecovision',
+      console: 'Coleco ColecoVision',
       jelos: 'coleco',
       mister: 'Coleco',
       onion: 'COLECO',
@@ -243,22 +274,26 @@ export default class GameConsole {
     // Emerson
     new GameConsole(/Arcadia/i, [/* '.bin' */], {
       batocera: 'arcadia',
+      console: 'Emerson Arcadia',
       mister: 'Arcadia',
       pocket: 'arcadia',
     }),
     // Entex
     new GameConsole(/Adventure Vision/i, [/* '.bin' */], {
       batocera: 'advision',
+      console: 'Entex Adventure Vision',
       mister: 'AVision',
       pocket: 'avision',
     }),
     // Epoch
     new GameConsole(/Super Cassette Vision/i, [/* '.bin' */], {
+      console: 'Epoch Super Cassette Vision',
       batocera: 'scv',
     }),
     // Fairchild
     new GameConsole(/Channel F/i, [/* '.bin' */], {
       batocera: 'channelf',
+      console: 'Fairchild Channel F',
       jelos: 'channelf',
       mister: 'ChannelF',
       onion: 'FAIRCHILD',
@@ -266,11 +301,13 @@ export default class GameConsole {
     }),
     // Funtech
     new GameConsole(/Super A'?Can/i, [/* '.bin' */], {
+      console: 'Funtech Super A-Can',
       batocera: 'supracan',
     }),
     // GCE
     new GameConsole(/Vectrex/i, ['.vec'], {
       batocera: 'vectrex',
+      console: 'GCE Vectrex',
       jelos: 'vectrex',
       mister: 'Vectrex',
       miyoocfw: 'VECTREX',
@@ -279,19 +316,22 @@ export default class GameConsole {
     // Interton
     new GameConsole(/VC ?4000/i, [/* '.bin' */], {
       batocera: 'vc4000',
+      console: 'Interton VC 4000',
       mister: 'VC4000',
     }),
     // Lexaloffle
     new GameConsole(/Pico[- ]?8/i, ['.png', '.p8'], {
       adam: 'PICO8',
       batocera: 'pico',
+      console: 'Lexaloffle Pico-8',
       jelos: 'pico-8',
       minui: 'Pico-8 (P8)',
       onion: 'PICO',
     }),
-    // Magnavox
-    new GameConsole(/Odyssey 2/i, [/* '.bin' */], {
+    // Magnavox / Philips
+    new GameConsole(/(Odyssey ?2|Videopac)/i, [/* '.bin' */], {
       batocera: 'o2em',
+      console: 'Magnavox Odyssey 2',
       jelos: 'odyssey',
       mister: 'Odyssey2',
       onion: 'ODYSSEY',
@@ -301,6 +341,7 @@ export default class GameConsole {
     new GameConsole(/Intellivision/i, ['.int'], {
       adam: 'INTELLI',
       batocera: 'intellivision',
+      console: 'Mattel Intellivision',
       jelos: 'intellivision',
       mister: 'Intellivision',
       onion: 'INTELLIVISION',
@@ -310,6 +351,7 @@ export default class GameConsole {
     new GameConsole(/MSX/i, [], {
       adam: 'MSX',
       batocera: 'msx1',
+      console: 'Microsoft MSX',
       jelos: 'msx',
       mister: 'MSX',
       onion: 'MSX',
@@ -317,6 +359,7 @@ export default class GameConsole {
     new GameConsole(/MSX2/i, [], {
       adam: 'MSX',
       batocera: 'msx2',
+      console: 'Microsoft MSX2',
       jelos: 'msx2',
       mister: 'MSX',
       onion: 'MSX',
@@ -324,30 +367,36 @@ export default class GameConsole {
     new GameConsole(/MSX2+/i, [], {
       adam: 'MSX',
       batocera: 'msx2+',
+      console: 'Microsoft MSX2+',
       mister: 'MSX',
       onion: 'MSX',
     }),
     new GameConsole(/MSX TurboR/i, [], {
       adam: 'MSX',
       batocera: 'msxturbor',
+      console: 'Microsoft MSX TurboR',
       mister: 'MSX',
       onion: 'MSX',
     }),
     new GameConsole(/Xbox/i, [/* '.iso' */], {
       batocera: 'xbox',
+      console: 'Microsoft XBox',
       jelos: 'xbox',
     }),
     new GameConsole(/Xbox 360/i, [/* '.iso' */], {
       batocera: 'xbox360',
+      console: 'Microsoft XBox 360',
     }),
     // Nichibutsu
     new GameConsole(/My Vision/i, [], {
+      console: 'Nichibutsu My Vision',
       mister: 'MyVision',
     }),
     // NEC
     new GameConsole(/PC Engine|TurboGrafx/i, ['.pce'], {
       adam: 'PCE',
       batocera: 'pcengine',
+      console: 'NEC PC Engine',
       funkeyos: 'PCE-TurboGrafx',
       jelos: 'tg16',
       minui: 'TurboGrafx-16 (PCE)',
@@ -360,6 +409,7 @@ export default class GameConsole {
     new GameConsole(/(PC Engine|TurboGrafx) CD/i, [/* '.bin', '.cue' */], {
       adam: 'PCECD',
       batocera: 'pcenginecd',
+      console: 'NEC PC Engine CD',
       jelos: 'tg16cd',
       minui: 'TurboGrafx-16 CD (PCE)',
       mister: 'TGFX16',
@@ -369,6 +419,7 @@ export default class GameConsole {
     }),
     new GameConsole(/SuperGrafx/i, ['.sgx'], {
       batocera: 'supergrafx',
+      console: 'NEC SuberGrafx',
       jelos: 'sgfx',
       mister: 'TGFX16',
       onion: 'SGFX',
@@ -376,17 +427,20 @@ export default class GameConsole {
     }),
     new GameConsole(/PC-88/i, ['.d88'], {
       batocera: 'pc88',
+      console: 'NEC PC-88',
       jelos: 'pc88',
       mister: 'PC8801',
       onion: 'PCEIGHTYEIGHT',
     }),
     new GameConsole(/PC-98/i, ['.d98'], {
       batocera: 'pc98',
+      console: 'NEC PC-98',
       jelos: 'pc98',
       onion: 'PCNINETYEIGHT',
     }),
     new GameConsole(/PC-FX/i, [/* '.bin', '.cue' */], {
       batocera: 'pcfx',
+      console: 'NEC PC-FX',
       jelos: 'pcfx',
       onion: 'PCFX',
     }),
@@ -394,12 +448,14 @@ export default class GameConsole {
     new GameConsole(/TIC-80/i, ['.tic'], {
       adam: 'TIC80',
       batocera: 'tic80',
+      console: 'Nexbox TIC-80',
       onion: 'TIC',
     }),
     // Nintendo
     new GameConsole(/FDS|Famicom Computer Disk System/i, ['.fds'], {
       adam: 'FDS',
       batocera: 'fds',
+      console: 'Nintendo Famicom Computer Disk System',
       funkeyos: 'NES',
       jelos: 'fds',
       minui: 'Famicom Disk System (FC)',
@@ -411,17 +467,20 @@ export default class GameConsole {
     new GameConsole(/Game (and|&) Watch/i, ['.mgw'], {
       adam: 'GW',
       batocera: 'gameandwatch',
+      console: 'Nintendo Game and Watch',
       jelos: 'gameandwatch',
       mister: 'GameNWatch',
       onion: 'GW',
     }),
     new GameConsole(/GameCube/i, [/* '.iso' */], {
       batocera: 'gamecube',
+      console: 'Nintendo GameCube',
       jelos: 'gamecube',
     }),
     new GameConsole(/GB|Game ?Boy/i, ['.gb', '.sgb'], {
       adam: 'GB',
       batocera: 'gb',
+      console: 'Nintendo GameBoy',
       funkeyos: 'Game Boy',
       jelos: 'gb',
       minui: 'Game Boy (GB)',
@@ -434,6 +493,7 @@ export default class GameConsole {
     new GameConsole(/GBA|Game ?Boy Advance/i, ['.gba', '.srl'], {
       adam: 'GBA',
       batocera: 'gba',
+      console: 'Nintendo GameBoy Advance',
       funkeyos: 'Game Boy Advance',
       jelos: 'gba',
       minui: 'Game Boy Advance (GBA)',
@@ -446,6 +506,7 @@ export default class GameConsole {
     new GameConsole(/GBC|Game ?Boy Color/i, ['.gbc'], {
       adam: 'GBC',
       batocera: 'gbc',
+      console: 'Nintendo GameBoy Color',
       funkeyos: 'Game Boy Color',
       jelos: 'gbc',
       minui: 'Game Boy Color (GBC)',
@@ -457,27 +518,33 @@ export default class GameConsole {
     }),
     new GameConsole(/Nintendo 64|N64/i, ['.n64', '.v64', '.z64'], {
       batocera: 'n64',
+      console: 'Nintendo 64',
       jelos: 'n64',
       mister: 'N64',
     }),
     new GameConsole(/Nintendo 64DD|N64DD/i, ['.ndd'], {
       batocera: 'n64dd',
+      console: 'Nintendo 64DD',
     }),
     new GameConsole(/(\W|^)3DS(\W|$)|Nintendo 3DS/i, ['.3ds'], {
       batocera: '3ds',
+      console: 'Nintendo 3DS',
       jelos: '3ds',
     }),
     new GameConsole(/(\W|^)NDS(\W|$)|Nintendo DS/i, ['.nds'], {
       batocera: 'nds',
+      console: 'Nintendo DS',
       jelos: 'nds',
       twmenu: 'nds',
     }),
     new GameConsole(/(\W|^)NDSi(\W|$)|Nintendo DSi([Ww]are)?/i, [], {
+      console: 'Nintendo DSiWare',
       twmenu: 'dsiware',
     }), // try to map DSiWare
     new GameConsole(/(\W|^)NES(\W|$)|Nintendo Entertainment System/i, ['.nes', '.nez'], {
       adam: 'FC',
       batocera: 'nes',
+      console: 'Nintendo Entertainment System',
       funkeyos: 'NES',
       jelos: 'nes',
       minui: 'Nintendo Entertainment System (FC)',
@@ -490,6 +557,7 @@ export default class GameConsole {
     new GameConsole(/Pokemon Mini/i, ['.min'], {
       adam: 'POKEMINI',
       batocera: 'pokemini',
+      console: 'Nintendo Pokemon Mini',
       funkeyos: 'Pokemini',
       jelos: 'pokemini',
       minui: 'Pokemon mini (PKM)', // uses unrendedable unicode char in original install
@@ -500,6 +568,7 @@ export default class GameConsole {
     }),
     new GameConsole(/Satellaview/i, ['.bs'], {
       batocera: 'satellaview',
+      console: 'Nintendo Satellaview',
       jelos: 'satellaview',
       mister: 'SNES',
       onion: 'SATELLAVIEW',
@@ -507,12 +576,14 @@ export default class GameConsole {
     }),
     new GameConsole(/Sufami/i, [], {
       batocera: 'sufami',
+      console: 'Nintendo Sufami',
       jelos: 'sufami',
       onion: 'SUFAMI',
     }),
     new GameConsole(/(\W|^)SNES(\W|$)|Super Nintendo Entertainment System/i, ['.sfc', '.smc'], {
       adam: 'SFC',
       batocera: 'snes',
+      console: 'Nintendo Super Nintendo Entertainment System',
       funkeyos: 'SNES',
       jelos: 'snes',
       minui: 'Super Nintendo Entertainment System (SFC)',
@@ -522,9 +593,10 @@ export default class GameConsole {
       pocket: 'snes',
       twmenu: 'snes',
     }),
-    new GameConsole(/Virtual Boy/i, ['.vb', '.vboy'], {
+    new GameConsole(/Virtual ?Boy/i, ['.vb', '.vboy'], {
       adam: 'VB',
       batocera: 'virtualboy',
+      console: 'Nintendo VirtualBoy',
       funkeyos: 'Virtualboy',
       jelos: 'virtualboy',
       minui: 'Virtual Boy (VB)',
@@ -532,48 +604,49 @@ export default class GameConsole {
     }),
     new GameConsole(/Wii/i, [/* '.iso' */], {
       batocera: 'wii',
+      console: 'Nintendo Wii',
       jelos: 'wii',
     }),
     new GameConsole(/Wii ?U/i, [/* '.iso' */], {
       batocera: 'wiiu',
+      console: 'Nintendo Wii U',
       jelos: 'wiiu',
     }),
     // Panasonic
     new GameConsole(/3DO/i, [/* '.bin', '.cue' */], {
       batocera: '3do',
+      console: 'Panasonic 3DO',
       jelos: '3do',
       onion: 'PANASONIC',
     }),
     // Philips
     new GameConsole(/CD[ -]?i/i, [/* '.bin', '.cue' */], {
       batocera: 'cdi',
+      console: 'Philips CDi',
     }),
-    new GameConsole(/Videopac\+/i, [/* '.bin' */], {
+    new GameConsole(/(Videopac\+|G7400)/i, [/* '.bin' */], {
       batocera: 'videopacplus',
-      jelos: 'videopac',
-      mister: 'Odyssey2',
-      onion: 'VIDEOPAC',
-    }),
-    new GameConsole(/(Odyssey ?2|Videopac|G4700)/i, [/* '.bin' */], {
-      batocera: 'o2em',
+      console: 'Philips Videopac+',
       jelos: 'videopac',
       mister: 'Odyssey2',
       onion: 'VIDEOPAC',
     }),
     // RCA
     new GameConsole(/Studio (2|II)/i, [/* '.bin' */], {
+      console: 'RCA Studio II',
       pocket: 'studio2',
     }),
     // Sammy
     new GameConsole(/Atomiswave/i, [/* '.bin', '.cue' */], {
       batocera: 'atomiswave',
+      console: 'Sammy Atomiswave',
       jelos: 'atomiswave',
     }),
-
     // Sega
     new GameConsole(/32X/i, ['.32x'], {
       adam: '32X',
       batocera: 'sega32x',
+      console: 'Sega 32X',
       jelos: 'sega32x',
       minui: 'Sega 32X (MD)', // added for sorting convenience
       mister: 'S32X',
@@ -581,11 +654,13 @@ export default class GameConsole {
     }),
     new GameConsole(/Dreamcast/i, [/* '.bin', '.cue' */], {
       batocera: 'dreamcast',
+      console: 'Sega Dreamcast',
       jelos: 'dreamcast',
     }),
     new GameConsole(/Game Gear/i, ['.gg'], {
       adam: 'GG',
       batocera: 'gamegear',
+      console: 'Sega Game Gear',
       funkeyos: 'Game Gear',
       jelos: 'gamegear',
       minui: 'Sega Game Gear (GG)',
@@ -598,6 +673,7 @@ export default class GameConsole {
     new GameConsole(/Master System/i, ['.sms'], {
       adam: 'SMS',
       batocera: 'mastersystem',
+      console: 'Sega Master System',
       funkeyos: 'Sega Master System',
       jelos: 'mastersystem',
       minui: 'Sega Master System (SMS)',
@@ -610,6 +686,7 @@ export default class GameConsole {
     new GameConsole(/(Mega|Sega) CD/i, [/* '.bin', '.cue' */], {
       adam: 'SEGACD',
       batocera: 'segacd',
+      console: 'Sega Mega CD, Sega CD',
       jelos: 'segacd',
       minui: 'Sega CD (MD)', // added for sorting convenience
       mister: 'MegaCD',
@@ -619,6 +696,7 @@ export default class GameConsole {
     new GameConsole(/Mega Drive|Genesis/i, ['.gen', '.md', '.mdx', '.sgd', '.smd'], {
       adam: 'MD',
       batocera: 'megadrive',
+      console: 'Sega Megadrive, Genesis',
       funkeyos: 'Sega Genesis',
       jelos: 'genesis',
       minui: 'Sega Genesis (MD)',
@@ -630,18 +708,22 @@ export default class GameConsole {
     }),
     new GameConsole(/Naomi/i, [/* '.bin', '.cue' */], {
       batocera: 'naomi',
+      console: 'Sega Naomi',
       jelos: 'naomi',
     }),
     new GameConsole(/Naomi ?(2|II)/i, [/* '.bin', '.cue' */], {
       batocera: 'naomi2',
+      console: 'Sega Naomi 2',
     }),
     new GameConsole(/Saturn/i, [/* '.bin', '.cue' */], {
       batocera: 'saturn',
+      console: 'Sega Saturn',
       jelos: 'saturn',
     }),
     new GameConsole(/SG[ -]?1000/i, ['.sc', '.sg'], {
       adam: 'SG1000',
       batocera: 'sg1000',
+      console: 'Sega SG-1000',
       jelos: 'sg-1000',
       mister: 'SG1000',
       onion: 'SEGASGONE',
@@ -650,25 +732,30 @@ export default class GameConsole {
     }),
     // Sharp
     new GameConsole(/MZ/i, [], {
+      console: 'Sharp MZ',
       mister: 'SharpMZ',
     }),
     new GameConsole(/X1/i, ['.2d', '.2hd', '.dx1', '.tfd'], {
       batocera: 'x1',
+      console: 'Sharp X1',
       jelos: 'x1',
       onion: 'XONE',
     }),
     new GameConsole(/X68000/i, [], {
       batocera: 'x68000',
+      console: 'Sharp X68000',
       jelos: 'x68000',
       mister: 'X68000',
       onion: 'X68000',
     }),
     // Sinclair
     new GameConsole(/ZX[ -]?80/i, [], {
+      console: 'Sinclair ZX80',
       mister: 'ZX81',
     }),
     new GameConsole(/ZX[ -]?81/i, [], {
       batocera: 'zx81',
+      console: 'Sinclair ZX81',
       jelos: 'zx81',
       onion: 'ZXEIGHTYONE',
       mister: 'ZX81',
@@ -676,6 +763,7 @@ export default class GameConsole {
     new GameConsole(/ZX[ -]?Spectrum/i, ['.scl', '.szx', '.z80'], {
       adam: 'ZX',
       batocera: 'zxspectrum',
+      console: 'Sinclair ZX Spectrum',
       jelos: 'zxspectrum',
       mister: 'Spectrum',
       onion: 'ZXS',
@@ -684,6 +772,7 @@ export default class GameConsole {
     new GameConsole(/Neo ?Geo/i, [], {
       adam: 'NEOGEO',
       batocera: 'neogeo',
+      console: 'SNK Neo Geo',
       jelos: 'neogeo',
       mister: 'NeoGeo',
       miyoocfw: 'NEOGEO',
@@ -692,12 +781,14 @@ export default class GameConsole {
     }),
     new GameConsole(/Neo ?Geo CD/i, [/* '.bin', '.cue' */], {
       batocera: 'neogeocd',
+      console: 'SNK Neo Geo CD',
       jelos: 'neocd',
       onion: 'NEOCD',
     }),
     new GameConsole(/Neo ?Geo Pocket/i, ['.ngp'], {
       adam: 'NGP',
       batocera: 'ngp',
+      console: 'SNK Neo Geo Pocket',
       funkeyos: 'Neo Geo Pocket',
       jelos: 'ngp',
       minui: 'Neo Geo Pocket (NGPC)', // added for sorting convenience
@@ -707,6 +798,7 @@ export default class GameConsole {
     new GameConsole(/Neo ?Geo Pocket Color/i, ['.ngc'], {
       adam: 'NGP',
       batocera: 'ngpc',
+      console: 'SNK Neo Geo Pocket Color',
       funkeyos: 'Neo Geo Pocket',
       jelos: 'ngpc',
       minui: 'Neo Geo Pocket Color (NGPC)', // added for sorting convenience
@@ -717,6 +809,7 @@ export default class GameConsole {
     new GameConsole(/PlayStation|psx/i, [/* '.bin', '.cue' */], {
       adam: 'PS',
       batocera: 'psx',
+      console: 'Sony PlayStation',
       funkeyos: 'PS1',
       jelos: 'psx',
       minui: 'Sony PlayStation (PS)',
@@ -726,55 +819,66 @@ export default class GameConsole {
     }),
     new GameConsole(/PlayStation 2|ps2/i, [/* '.bin', '.cue' */], {
       batocera: 'ps2',
+      console: 'Sony PlayStation 2',
       jelos: 'ps2',
     }),
     new GameConsole(/PlayStation 3|ps3/i, [/* '.bin', '.cue' */], {
       batocera: 'ps3',
+      console: 'Sony PlayStation 3',
       jelos: 'ps3',
     }),
     new GameConsole(/PlayStation [4-9]|ps[4-9]/i, [/* '.bin', '.cue' */], {}),
     // Sord
     new GameConsole(/Sord[ -]M(5|five)/i, [/* '.bin', '.cas' */], {
+      console: 'Sord M5',
       twmenu: 'm5',
     }),
     // Sun Microsystems
     new GameConsole(/(J2|Java) ?ME/i, ['.jar'], {
+      console: 'Sun Microsystems J2ME',
       jelos: 'j2me',
     }),
     // Timetop
     new GameConsole(/GameKing/i, [/* '.bin' */], {
+      console: 'TimeTop GameKing',
       pocket: 'game_king',
     }),
     // Uzebox
     new GameConsole(/Uzebox/i, ['.uze'], {
       batocera: 'uzebox',
+      console: 'Uzebox',
       jelos: 'uzebox',
     }),
     // VTech
     new GameConsole(/CreatiVision/i, [/* '.rom' */], {
       batocera: 'crvision',
+      console: 'VTech CreatiVision',
       mister: 'CreatiVision',
       pocket: 'creativision',
     }),
     new GameConsole(/V\.Smile/i, [/* '.bin' */], {
       batocera: 'vsmile',
+      console: 'VTech V.Smile',
     }),
     // WASM-4
     new GameConsole(/WASM-?4/i, ['.wasm'], {
       batocera: 'wasm4',
+      console: 'WASM-4',
     }),
     // Watara
     new GameConsole(/Supervision/i, ['.sv'], {
       adam: 'SUPERVISION',
       batocera: 'supervision',
+      console: 'Watara Supervision',
       jelos: 'supervision',
       mister: 'SuperVision',
       onion: 'SUPERVISION',
       pocket: 'supervision',
     }),
     // Wellback
-    new GameConsole(/Mega Duck/i, ['.md1', '.md2'], {
+    new GameConsole(/Mega ?Duck/i, ['.md1', '.md2'], {
       batocera: 'megaduck',
+      console: 'Wellback Mega Duck',
       jelos: 'megaduck',
       onion: 'MEGADUCK',
       pocket: 'mega_duck',
@@ -823,6 +927,10 @@ export default class GameConsole {
 
   getBatocera(): string | undefined {
     return this.outputTokens.batocera;
+  }
+
+  getConsoleName(): string | undefined {
+    return this.outputTokens.console;
   }
 
   getFunkeyOS(): string | undefined {
