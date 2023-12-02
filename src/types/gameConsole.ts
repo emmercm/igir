@@ -564,6 +564,12 @@ export default class GameConsole {
     new GameConsole(/Studio (2|II)/i, [/* '.bin' */], {
       pocket: 'studio2',
     }),
+    // Sammy
+    new GameConsole(/Atomiswave/i, [/* '.bin', '.cue' */], {
+      batocera: 'atomiswave',
+      jelos: 'atomiswave',
+    }),
+
     // Sega
     new GameConsole(/32X/i, ['.32x'], {
       adam: '32X',
@@ -626,7 +632,7 @@ export default class GameConsole {
       batocera: 'naomi',
       jelos: 'naomi',
     }),
-    new GameConsole(/Naomi ?2/i, [/* '.bin', '.cue' */], {
+    new GameConsole(/Naomi ?(2|II)/i, [/* '.bin', '.cue' */], {
       batocera: 'naomi2',
     }),
     new GameConsole(/Saturn/i, [/* '.bin', '.cue' */], {
