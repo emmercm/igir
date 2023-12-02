@@ -281,6 +281,10 @@ export default class GameConsole {
       batocera: 'vc4000',
       mister: 'VC4000',
     }),
+    // Lexaloffle
+    new GameConsole(/Pico[- ]?8/i, ['.png', '.p8'], {
+      batocera: 'pico-8',
+    }),
     // Magnavox
     new GameConsole(/Odyssey 2/i, [/* '.bin' */], {
       batocera: 'o2em',
