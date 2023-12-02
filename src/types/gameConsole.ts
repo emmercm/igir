@@ -283,7 +283,11 @@ export default class GameConsole {
     }),
     // Lexaloffle
     new GameConsole(/Pico[- ]?8/i, ['.png', '.p8'], {
-      batocera: 'pico-8',
+      adam: 'PICO8',
+      batocera: 'pico',
+      jelos: 'pico-8',
+      minui: 'Pico-8 (P8)',
+      onion: 'PICO',
     }),
     // Magnavox
     new GameConsole(/Odyssey 2/i, [/* '.bin' */], {
@@ -381,9 +385,16 @@ export default class GameConsole {
       jelos: 'pc98',
       onion: 'PCNINETYEIGHT',
     }),
+    new GameConsole(/PC-FX/i, [/* '.bin', '.cue' */], {
+      batocera: 'pcfx',
+      jelos: 'pcfx',
+      onion: 'PCFX',
+    }),
     // nesbox
     new GameConsole(/TIC-80/i, ['.tic'], {
       adam: 'TIC80',
+      batocera: 'tic80',
+      onion: 'TIC',
     }),
     // Nintendo
     new GameConsole(/FDS|Famicom Computer Disk System/i, ['.fds'], {
@@ -537,8 +548,14 @@ export default class GameConsole {
     new GameConsole(/CD[ -]?i/i, [/* '.bin', '.cue' */], {
       batocera: 'cdi',
     }),
-    new GameConsole(/Videopac/i, [/* '.bin' */], {
+    new GameConsole(/Videopac\+/i, [/* '.bin' */], {
       batocera: 'videopacplus',
+      jelos: 'videopac',
+      mister: 'Odyssey2',
+      onion: 'VIDEOPAC',
+    }),
+    new GameConsole(/(Odyssey ?2|Videopac|G4700)/i, [/* '.bin' */], {
+      batocera: 'o2em',
       jelos: 'videopac',
       mister: 'Odyssey2',
       onion: 'VIDEOPAC',
@@ -605,6 +622,13 @@ export default class GameConsole {
       pocket: 'genesis',
       twmenu: 'gen',
     }),
+    new GameConsole(/Naomi/i, [/* '.bin', '.cue' */], {
+      batocera: 'naomi',
+      jelos: 'naomi',
+    }),
+    new GameConsole(/Naomi ?2/i, [/* '.bin', '.cue' */], {
+      batocera: 'naomi2',
+    }),
     new GameConsole(/Saturn/i, [/* '.bin', '.cue' */], {
       batocera: 'saturn',
       jelos: 'saturn',
@@ -640,6 +664,7 @@ export default class GameConsole {
     new GameConsole(/ZX[ -]?81/i, [], {
       batocera: 'zx81',
       jelos: 'zx81',
+      onion: 'ZXEIGHTYONE',
       mister: 'ZX81',
     }),
     new GameConsole(/ZX[ -]?Spectrum/i, ['.scl', '.szx', '.z80'], {
@@ -706,13 +731,18 @@ export default class GameConsole {
     new GameConsole(/Sord[ -]M(5|five)/i, [/* '.bin', '.cas' */], {
       twmenu: 'm5',
     }),
+    // Sun Microsystems
+    new GameConsole(/(J2|Java) ?ME/i, ['.jar'], {
+      jelos: 'j2me',
+    }),
     // Timetop
     new GameConsole(/GameKing/i, [/* '.bin' */], {
       pocket: 'game_king',
     }),
     // Uzebox
-    new GameConsole(/Uzebox/i, [ '.uze' ], {
+    new GameConsole(/Uzebox/i, ['.uze'], {
       batocera: 'uzebox',
+      jelos: 'uzebox',
     }),
     // VTech
     new GameConsole(/CreatiVision/i, [/* '.rom' */], {
@@ -724,7 +754,7 @@ export default class GameConsole {
       batocera: 'vsmile',
     }),
     // WASM-4
-    new GameConsole(/WASM-?4/i, [ '.wasm' ], {
+    new GameConsole(/WASM-?4/i, ['.wasm'], {
       batocera: 'wasm4',
     }),
     // Watara
