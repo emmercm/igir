@@ -16,7 +16,7 @@ concurrency:
 jobs:
   rename:
     permissions:
-      # actions/checkout@v3
+      # actions/checkout@v4
       contents: read
       # `gh` CLI
       repository-projects: read
