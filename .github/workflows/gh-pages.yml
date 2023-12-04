@@ -31,8 +31,9 @@ jobs:
         with:
           filters: |
             changes:
-              - '**/mkdocs.yml'
+              - 'docs/**'
               - '**/*.md'
+              - 'mkdocs.yml'
 
   lint:
     needs:
@@ -41,7 +42,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - run: docker run -v "${PWD}:/workdir" ghcr.io/igorshubovych/markdownlint-cli:latest --disable MD013 MD033 MD046 -- "**/*.md"
+      - run: docker run --rm --volume "${PWD}:/workdir" ghcr.io/igorshubovych/markdownlint-cli:latest --disable MD013 MD033 MD046 -- "**/*.md"
 
   build:
     needs:

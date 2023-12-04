@@ -144,7 +144,8 @@ describe('getMd5', () => {
     expect(archiveEntries).toHaveLength(1);
     const archiveEntry = archiveEntries[0];
 
-    expect(archiveEntry.getCrc32()).toEqual('00000000');
+    // Some archives store CRC32, or otherwise it's defaulted to '00000000'
+    expect(archiveEntry.getCrc32()).toBeDefined();
     expect(archiveEntry.getMd5()).toEqual(expectedMd5);
     expect(archiveEntry.getSha1()).toBeUndefined();
   });
@@ -172,7 +173,8 @@ describe('getSha1', () => {
     expect(archiveEntries).toHaveLength(1);
     const archiveEntry = archiveEntries[0];
 
-    expect(archiveEntry.getCrc32()).toEqual('00000000');
+    // Some archives store CRC32, or otherwise it's defaulted to '00000000'
+    expect(archiveEntry.getCrc32()).toBeDefined();
     expect(archiveEntry.getMd5()).toBeUndefined();
     expect(archiveEntry.getSha1()).toEqual(expectedSha1);
   });

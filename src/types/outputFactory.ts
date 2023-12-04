@@ -264,6 +264,11 @@ export default class OutputFactory {
 
     let output = input;
 
+    const adam = gameConsole.getAdam();
+    if (adam) {
+      output = output.replace('{adam}', adam);
+    }
+
     const pocket = gameConsole.getPocket();
     if (pocket) {
       output = output.replace('{pocket}', pocket);
@@ -302,6 +307,11 @@ export default class OutputFactory {
     const twmenu = gameConsole.getTWMenu();
     if (twmenu) {
       output = output.replace('{twmenu}', twmenu);
+    }
+
+    const minui = gameConsole.getMinUI();
+    if (minui) {
+      output = output.replace('{minui}', minui);
     }
 
     return output;

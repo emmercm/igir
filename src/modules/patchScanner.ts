@@ -23,7 +23,6 @@ export default class PatchScanner extends Scanner {
    */
   async scan(): Promise<Patch[]> {
     this.progressBar.logInfo('scanning patch files');
-
     await this.progressBar.setSymbol(ProgressBarSymbol.SEARCHING);
     await this.progressBar.reset(0);
 

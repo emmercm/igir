@@ -48,7 +48,6 @@ export default class DATScanner extends Scanner {
    */
   async scan(): Promise<DAT[]> {
     this.progressBar.logInfo('scanning DAT files');
-
     await this.progressBar.setSymbol(ProgressBarSymbol.SEARCHING);
     await this.progressBar.reset(0);
 
@@ -124,7 +123,9 @@ export default class DATScanner extends Scanner {
         this.progressBar.removeWaitingMessage(waitingMessage);
         return dat;
       },
-    )).filter(ArrayPoly.filterNotNullish);
+    ))
+      .filter(ArrayPoly.filterNotNullish)
+      .map((dat) => DATScanner.sanitizeDat(dat));
 
     return results
       .filter((dat) => {
@@ -291,7 +292,7 @@ export default class DATScanner extends Scanner {
 
   private parseCmproDat(datFile: File, fileContents: string): DAT | undefined {
     /**
-     * Sanity check that this might be a CMPro file.
+     * Validation that this might be a CMPro file.
      */
     if (fileContents.match(/^(clrmamepro|game|resource) \(\r?\n(\t.+\r?\n)+\)$/m) === null) {
       return undefined;
@@ -442,5 +443,17 @@ export default class DATScanner extends Scanner {
       stream.write(fileContents);
       stream.end();
     });
+  }
+
+  private static sanitizeDat(dat: DAT): DAT {
+    const games = dat.getGames()
+      .map((game) => {
+        const roms = game.getRoms()
+          // ROMs have to have filenames and sizes
+          .filter((rom) => rom.name && rom.size > 0);
+        return game.withProps({ rom: roms });
+      });
+
+    return new LogiqxDAT(dat.getHeader(), games);
   }
 }

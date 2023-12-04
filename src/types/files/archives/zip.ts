@@ -13,6 +13,7 @@ import fsPoly from '../../../polyfill/fsPoly.js';
 import DAT from '../../dats/dat.js';
 import Options from '../../options.js';
 import File from '../file.js';
+import FileChecksums, { ChecksumBitmask } from '../fileChecksums.js';
 import Archive from './archive.js';
 import ArchiveEntry from './archiveEntry.js';
 
@@ -36,12 +37,18 @@ export default class Zip extends Archive {
       archive.files.filter((entryFile) => entryFile.type === 'File'),
       Constants.ARCHIVE_ENTRY_SCANNER_THREADS_PER_ARCHIVE,
       async (entryFile, callback: AsyncResultCallback<ArchiveEntry<Zip>, Error>) => {
+        const checksumsWithoutCrc = await FileChecksums.hashStream(
+          entryFile.stream(),
+          checksumBitmask & ~ChecksumBitmask.CRC32,
+        );
         const archiveEntry = await ArchiveEntry.entryOf(
           this,
           entryFile.path,
           entryFile.uncompressedSize,
-          { crc32: entryFile.crc32.toString(16) },
-          // If MD5 or SHA1 is desired, this file will need to be extracted to calculate
+          {
+            ...checksumsWithoutCrc,
+            crc32: entryFile.crc32.toString(16),
+          },
           checksumBitmask,
         );
         callback(undefined, archiveEntry);

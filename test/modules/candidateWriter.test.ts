@@ -78,7 +78,7 @@ function datInferrer(options: Options, romFiles: File[]): DAT {
   return new LogiqxDAT(new Header({ name: 'ROMWriter Test' }), datGames);
 }
 
-async function romWriter(
+async function candidateWriter(
   optionsProps: OptionsProps,
   inputTemp: string,
   inputGlob: string,
@@ -128,7 +128,7 @@ it('should not do anything if there are no parents', async () => {
     await expect(walkAndStat(outputTemp)).resolves.toHaveLength(0);
 
     // When
-    const output = await romWriter(options, os.devNull, '**/*', undefined, outputTemp);
+    const output = await candidateWriter(options, os.devNull, '**/*', undefined, outputTemp);
     console.log(output);
 
     // Then no files were written
@@ -149,7 +149,7 @@ it('should not do anything with no write commands', async () => {
     await expect(walkAndStat(outputTemp)).resolves.toHaveLength(0);
 
     // When
-    await romWriter(options, inputTemp, '**/*', undefined, outputTemp);
+    await candidateWriter(options, inputTemp, '**/*', undefined, outputTemp);
 
     // Then no files were written
     await expect(walkAndStat(outputTemp)).resolves.toHaveLength(0);
@@ -167,7 +167,7 @@ it('should not do anything if the input and output files are the same', async ()
     await expect(walkAndStat(inputTemp)).resolves.not.toHaveLength(0);
 
     // When
-    await romWriter(options, inputTemp, '**/*', undefined, inputTemp);
+    await candidateWriter(options, inputTemp, '**/*', undefined, inputTemp);
 
     // Then the input files weren't touched
     await expect(walkAndStat(inputTemp)).resolves.toEqual(inputFilesBefore);
@@ -185,7 +185,7 @@ describe('zip', () => {
         .toBeGreaterThan(0);
 
       // When
-      await romWriter(options, inputTemp, 'zip/*', undefined, inputZip);
+      await candidateWriter(options, inputTemp, 'zip/*', undefined, inputZip);
 
       // Then the input files weren't touched
       await expect(walkAndStat(inputZip)).resolves.toEqual(inputFilesBefore);
@@ -200,7 +200,7 @@ describe('zip', () => {
       await expect(walkAndStat(outputTemp)).resolves.toHaveLength(0);
 
       // And we've written once
-      await romWriter(options, inputTemp, '**/*', undefined, outputTemp);
+      await candidateWriter(options, inputTemp, '**/*', undefined, outputTemp);
 
       // And files were written
       const outputFilesBefore = await walkAndStat(outputTemp);
@@ -208,7 +208,7 @@ describe('zip', () => {
       expect(outputFilesBefore.some(([, stats]) => stats.isSymbolicLink())).toEqual(false);
 
       // When we write again
-      await romWriter(options, inputTemp, '**/*', undefined, outputTemp);
+      await candidateWriter(options, inputTemp, '**/*', undefined, outputTemp);
 
       // Then the output wasn't touched
       await expect(walkAndStat(outputTemp)).resolves.toEqual(outputFilesBefore);
@@ -226,7 +226,7 @@ describe('zip', () => {
       await expect(walkAndStat(outputTemp)).resolves.toHaveLength(0);
 
       // And we've written once
-      await romWriter(options, inputTemp, '**/*', undefined, outputTemp);
+      await candidateWriter(options, inputTemp, '**/*', undefined, outputTemp);
 
       // And files were written
       const outputFilesBefore = await walkAndStat(outputTemp);
@@ -234,7 +234,7 @@ describe('zip', () => {
       expect(outputFilesBefore.some(([, stats]) => stats.isSymbolicLink())).toEqual(false);
 
       // When we write again
-      await romWriter({
+      await candidateWriter({
         ...options,
         overwrite: true,
       }, inputTemp, '**/*', undefined, outputTemp);
@@ -258,7 +258,7 @@ describe('zip', () => {
       await expect(walkAndStat(outputTemp)).resolves.toHaveLength(0);
 
       // And we've written once
-      await romWriter(options, inputTemp, '**/*', undefined, outputTemp);
+      await candidateWriter(options, inputTemp, '**/*', undefined, outputTemp);
 
       // And files were written
       const outputFilesBefore = await walkAndStat(outputTemp);
@@ -266,7 +266,7 @@ describe('zip', () => {
       expect(outputFilesBefore.some(([, stats]) => stats.isSymbolicLink())).toEqual(false);
 
       // When we write again
-      await romWriter({
+      await candidateWriter({
         ...options,
         overwriteInvalid: true,
       }, inputTemp, '**/*', undefined, outputTemp);
@@ -287,7 +287,7 @@ describe('zip', () => {
       await expect(walkAndStat(outputTemp)).resolves.toHaveLength(0);
 
       // And we've written once
-      await romWriter(options, inputTemp, '**/*', undefined, outputTemp);
+      await candidateWriter(options, inputTemp, '**/*', undefined, outputTemp);
 
       // And files were written
       const outputFilesBefore = await walkAndStat(outputTemp);
@@ -302,7 +302,7 @@ describe('zip', () => {
       }));
 
       // When we write again
-      await romWriter({
+      await candidateWriter({
         ...options,
         overwriteInvalid: true,
       }, inputTemp, '**/*', undefined, outputTemp);
@@ -346,7 +346,13 @@ describe('zip', () => {
   ])('should not remove headers if not requested: %s', async (inputGlob, expectedFileName, expectedCrc) => {
     await copyFixturesToTemp(async (inputTemp, outputTemp) => {
       const options = new Options({ commands: ['copy', 'zip', 'test'] });
-      const outputFiles = (await romWriter(options, inputTemp, inputGlob, undefined, outputTemp));
+      const outputFiles = await candidateWriter(
+        options,
+        inputTemp,
+        inputGlob,
+        undefined,
+        outputTemp,
+      );
       expect(outputFiles).toHaveLength(1);
       const archiveEntries = await FileFactory.filesFrom(path.join(outputTemp, outputFiles[0][0]));
       expect(archiveEntries).toHaveLength(1);
@@ -375,7 +381,13 @@ describe('zip', () => {
         commands: ['copy', 'zip', 'test'],
         removeHeaders: [''], // all
       });
-      const outputFiles = (await romWriter(options, inputTemp, inputGlob, undefined, outputTemp));
+      const outputFiles = await candidateWriter(
+        options,
+        inputTemp,
+        inputGlob,
+        undefined,
+        outputTemp,
+      );
       expect(outputFiles).toHaveLength(1);
       const archiveEntries = await FileFactory.filesFrom(path.join(outputTemp, outputFiles[0][0]));
       expect(archiveEntries).toHaveLength(1);
@@ -405,7 +417,7 @@ describe('zip', () => {
       const options = new Options({
         commands: ['copy', 'zip', 'test'],
       });
-      const outputFiles = (await romWriter(options, inputTemp, inputGlob, 'patches', outputTemp));
+      const outputFiles = (await candidateWriter(options, inputTemp, inputGlob, 'patches', outputTemp));
 
       const writtenRomsAndCrcs = (await Promise.all(outputFiles
         .map(async ([outputPath]) => FileFactory.filesFrom(path.join(outputTemp, outputPath)))))
@@ -449,7 +461,13 @@ describe('zip', () => {
       await expect(walkAndStat(outputTemp)).resolves.toHaveLength(0);
 
       // When
-      const outputFiles = (await romWriter(options, inputTemp, inputGlob, undefined, outputTemp))
+      const outputFiles = (await candidateWriter(
+        options,
+        inputTemp,
+        inputGlob,
+        undefined,
+        outputTemp,
+      ))
         .map((pair) => pair[0]).sort();
 
       // Then the expected files were written
@@ -499,7 +517,13 @@ describe('zip', () => {
       await expect(walkAndStat(outputTemp)).resolves.toHaveLength(0);
 
       // When
-      const outputFiles = (await romWriter(options, inputTemp, inputGlob, undefined, outputTemp))
+      const outputFiles = (await candidateWriter(
+        options,
+        inputTemp,
+        inputGlob,
+        undefined,
+        outputTemp,
+      ))
         .map((pair) => pair[0]).sort();
 
       // Then the expected files were written
@@ -576,7 +600,13 @@ describe('zip', () => {
       await expect(walkAndStat(outputTemp)).resolves.toHaveLength(0);
 
       // When
-      const outputFiles = await romWriter(options, inputTemp, inputGlob, undefined, outputTemp);
+      const outputFiles = await candidateWriter(
+        options,
+        inputTemp,
+        inputGlob,
+        undefined,
+        outputTemp,
+      );
 
       // Then
       expect(outputFiles).toHaveLength(1);
@@ -600,7 +630,7 @@ describe('extract', () => {
         .toBeGreaterThan(0);
 
       // When
-      await romWriter(options, inputTemp, 'raw/*', undefined, inputRaw);
+      await candidateWriter(options, inputTemp, 'raw/*', undefined, inputRaw);
 
       // Then the input files weren't touched
       await expect(walkAndStat(inputRaw)).resolves.toEqual(inputFilesBefore);
@@ -615,7 +645,7 @@ describe('extract', () => {
       await expect(walkAndStat(outputTemp)).resolves.toHaveLength(0);
 
       // And we've written once
-      await romWriter(options, inputTemp, '**/*', undefined, outputTemp);
+      await candidateWriter(options, inputTemp, '**/*', undefined, outputTemp);
 
       // And files were written
       const outputFilesBefore = await walkAndStat(outputTemp);
@@ -623,7 +653,7 @@ describe('extract', () => {
       expect(outputFilesBefore.some(([, stats]) => stats.isSymbolicLink())).toEqual(false);
 
       // When we write again
-      await romWriter(options, inputTemp, '**/*', undefined, outputTemp);
+      await candidateWriter(options, inputTemp, '**/*', undefined, outputTemp);
 
       // Then the output wasn't touched
       await expect(walkAndStat(outputTemp)).resolves.toEqual(outputFilesBefore);
@@ -641,7 +671,7 @@ describe('extract', () => {
       await expect(walkAndStat(outputTemp)).resolves.toHaveLength(0);
 
       // And we've written once
-      await romWriter(options, inputTemp, '**/*', undefined, outputTemp);
+      await candidateWriter(options, inputTemp, '**/*', undefined, outputTemp);
 
       // And files were written
       const outputFilesBefore = await walkAndStat(outputTemp);
@@ -649,7 +679,7 @@ describe('extract', () => {
       expect(outputFilesBefore.some(([, stats]) => stats.isSymbolicLink())).toEqual(false);
 
       // When we write again
-      await romWriter({
+      await candidateWriter({
         ...options,
         overwrite: true,
       }, inputTemp, '**/*', undefined, outputTemp);
@@ -673,7 +703,7 @@ describe('extract', () => {
       await expect(walkAndStat(outputTemp)).resolves.toHaveLength(0);
 
       // And we've written once
-      await romWriter(options, inputTemp, '**/*', undefined, outputTemp);
+      await candidateWriter(options, inputTemp, '**/*', undefined, outputTemp);
 
       // And files were written
       const outputFilesBefore = await walkAndStat(outputTemp);
@@ -681,7 +711,7 @@ describe('extract', () => {
       expect(outputFilesBefore.some(([, stats]) => stats.isSymbolicLink())).toEqual(false);
 
       // When we write again
-      await romWriter({
+      await candidateWriter({
         ...options,
         overwriteInvalid: true,
       }, inputTemp, '**/*', undefined, outputTemp);
@@ -702,7 +732,7 @@ describe('extract', () => {
       await expect(walkAndStat(outputTemp)).resolves.toHaveLength(0);
 
       // And we've written once
-      await romWriter(options, inputTemp, '**/*', undefined, outputTemp);
+      await candidateWriter(options, inputTemp, '**/*', undefined, outputTemp);
 
       // And files were written
       const outputFilesBefore = await walkAndStat(outputTemp);
@@ -717,7 +747,7 @@ describe('extract', () => {
       }));
 
       // When we write again
-      await romWriter({
+      await candidateWriter({
         ...options,
         overwriteInvalid: true,
       }, inputTemp, '**/*', undefined, outputTemp);
@@ -749,7 +779,13 @@ describe('extract', () => {
   ])('should not remove headers if not requested: %s', async (inputGlob, expectedFileName, expectedCrc) => {
     await copyFixturesToTemp(async (inputTemp, outputTemp) => {
       const options = new Options({ commands: ['copy', 'extract', 'test'] });
-      const outputFiles = (await romWriter(options, inputTemp, inputGlob, undefined, outputTemp));
+      const outputFiles = await candidateWriter(
+        options,
+        inputTemp,
+        inputGlob,
+        undefined,
+        outputTemp,
+      );
       expect(outputFiles).toHaveLength(1);
       expect(outputFiles[0][0]).toEqual(expectedFileName);
       const outputFile = await File.fileOf(path.join(outputTemp, outputFiles[0][0]));
@@ -776,7 +812,13 @@ describe('extract', () => {
         commands: ['copy', 'extract', 'test'],
         removeHeaders: [''], // all
       });
-      const outputFiles = (await romWriter(options, inputTemp, inputGlob, undefined, outputTemp));
+      const outputFiles = await candidateWriter(
+        options,
+        inputTemp,
+        inputGlob,
+        undefined,
+        outputTemp,
+      );
       expect(outputFiles).toHaveLength(1);
       expect(outputFiles[0][0]).toEqual(expectedFileName);
       const outputFile = await File.fileOf(path.join(outputTemp, outputFiles[0][0]));
@@ -804,7 +846,7 @@ describe('extract', () => {
       const options = new Options({
         commands: ['copy', 'extract', 'test'],
       });
-      const outputFiles = (await romWriter(options, inputTemp, inputGlob, 'patches', outputTemp));
+      const outputFiles = (await candidateWriter(options, inputTemp, inputGlob, 'patches', outputTemp));
 
       const writtenRomsAndCrcs = (await Promise.all(outputFiles
         .map(async ([outputPath]) => FileFactory.filesFrom(path.join(outputTemp, outputPath)))))
@@ -851,7 +893,13 @@ describe('extract', () => {
       await expect(walkAndStat(outputTemp)).resolves.toHaveLength(0);
 
       // When
-      const outputFiles = (await romWriter(options, inputTemp, inputGlob, undefined, outputTemp))
+      const outputFiles = (await candidateWriter(
+        options,
+        inputTemp,
+        inputGlob,
+        undefined,
+        outputTemp,
+      ))
         .map((pair) => pair[0]).sort();
 
       // Then the expected files were written
@@ -904,7 +952,13 @@ describe('extract', () => {
       await expect(walkAndStat(outputTemp)).resolves.toHaveLength(0);
 
       // When
-      const outputFiles = (await romWriter(options, inputTemp, inputGlob, undefined, outputTemp))
+      const outputFiles = (await candidateWriter(
+        options,
+        inputTemp,
+        inputGlob,
+        undefined,
+        outputTemp,
+      ))
         .map((pair) => pair[0]).sort();
 
       // Then the expected files were written
@@ -940,7 +994,7 @@ describe('raw', () => {
         .toBeGreaterThan(0);
 
       // When
-      await romWriter(options, inputTemp, 'raw/*', undefined, inputRaw);
+      await candidateWriter(options, inputTemp, 'raw/*', undefined, inputRaw);
 
       // Then the input files weren't touched
       await expect(walkAndStat(inputRaw)).resolves.toEqual(inputFilesBefore);
@@ -955,7 +1009,7 @@ describe('raw', () => {
       await expect(walkAndStat(outputTemp)).resolves.toHaveLength(0);
 
       // And we've written once
-      await romWriter(options, inputTemp, '**/*', undefined, outputTemp);
+      await candidateWriter(options, inputTemp, '**/*', undefined, outputTemp);
 
       // And files were written
       const outputFilesBefore = await walkAndStat(outputTemp);
@@ -963,7 +1017,7 @@ describe('raw', () => {
       expect(outputFilesBefore.some(([, stats]) => stats.isSymbolicLink())).toEqual(false);
 
       // When we write again
-      await romWriter(options, inputTemp, '**/*', undefined, outputTemp);
+      await candidateWriter(options, inputTemp, '**/*', undefined, outputTemp);
 
       // Then the output wasn't touched
       await expect(walkAndStat(outputTemp)).resolves.toEqual(outputFilesBefore);
@@ -981,7 +1035,7 @@ describe('raw', () => {
       await expect(walkAndStat(outputTemp)).resolves.toHaveLength(0);
 
       // And we've written once
-      await romWriter(options, inputTemp, '**/*', undefined, outputTemp);
+      await candidateWriter(options, inputTemp, '**/*', undefined, outputTemp);
 
       // And files were written
       const outputFilesBefore = await walkAndStat(outputTemp);
@@ -989,7 +1043,7 @@ describe('raw', () => {
       expect(outputFilesBefore.some(([, stats]) => stats.isSymbolicLink())).toEqual(false);
 
       // When we write again
-      await romWriter({
+      await candidateWriter({
         ...options,
         overwrite: true,
       }, inputTemp, '**/*', undefined, outputTemp);
@@ -1013,7 +1067,7 @@ describe('raw', () => {
       await expect(walkAndStat(outputTemp)).resolves.toHaveLength(0);
 
       // And we've written once
-      await romWriter(options, inputTemp, '**/*', undefined, outputTemp);
+      await candidateWriter(options, inputTemp, '**/*', undefined, outputTemp);
 
       // And files were written
       const outputFilesBefore = await walkAndStat(outputTemp);
@@ -1021,7 +1075,7 @@ describe('raw', () => {
       expect(outputFilesBefore.some(([, stats]) => stats.isSymbolicLink())).toEqual(false);
 
       // When we write again
-      await romWriter({
+      await candidateWriter({
         ...options,
         overwriteInvalid: true,
       }, inputTemp, '**/*', undefined, outputTemp);
@@ -1042,7 +1096,7 @@ describe('raw', () => {
       await expect(walkAndStat(outputTemp)).resolves.toHaveLength(0);
 
       // And we've written once
-      await romWriter(options, inputTemp, '**/*', undefined, outputTemp);
+      await candidateWriter(options, inputTemp, '**/*', undefined, outputTemp);
 
       // And files were written
       const outputFilesBefore = await walkAndStat(outputTemp);
@@ -1057,7 +1111,7 @@ describe('raw', () => {
       }));
 
       // When we write again
-      await romWriter({
+      await candidateWriter({
         ...options,
         overwriteInvalid: true,
       }, inputTemp, '**/*', undefined, outputTemp);
@@ -1085,7 +1139,13 @@ describe('raw', () => {
   ])('should not remove headers if not requested: %s', async (inputGlob, expectedFileName, expectedCrc) => {
     await copyFixturesToTemp(async (inputTemp, outputTemp) => {
       const options = new Options({ commands: ['copy', 'test'] });
-      const outputFiles = (await romWriter(options, inputTemp, inputGlob, undefined, outputTemp));
+      const outputFiles = await candidateWriter(
+        options,
+        inputTemp,
+        inputGlob,
+        undefined,
+        outputTemp,
+      );
       expect(outputFiles).toHaveLength(1);
       expect(outputFiles[0][0]).toEqual(expectedFileName);
       const outputFile = await File.fileOf(path.join(outputTemp, outputFiles[0][0]));
@@ -1108,7 +1168,13 @@ describe('raw', () => {
         commands: ['copy', 'test'],
         removeHeaders: [''], // all
       });
-      const outputFiles = (await romWriter(options, inputTemp, inputGlob, undefined, outputTemp));
+      const outputFiles = await candidateWriter(
+        options,
+        inputTemp,
+        inputGlob,
+        undefined,
+        outputTemp,
+      );
       expect(outputFiles).toHaveLength(1);
       expect(outputFiles[0][0]).toEqual(expectedFileName);
       const outputFile = await File.fileOf(path.join(outputTemp, outputFiles[0][0]));
@@ -1133,7 +1199,7 @@ describe('raw', () => {
       const options = new Options({
         commands: ['copy', 'test'],
       });
-      const outputFiles = await romWriter(options, inputTemp, inputGlob, 'patches', outputTemp);
+      const outputFiles = await candidateWriter(options, inputTemp, inputGlob, 'patches', outputTemp);
 
       const writtenRomsAndCrcs = (await Promise.all(outputFiles
         .map(async ([outputPath]) => FileFactory.filesFrom(path.join(outputTemp, outputPath)))))
@@ -1177,7 +1243,13 @@ describe('raw', () => {
       await expect(walkAndStat(outputTemp)).resolves.toHaveLength(0);
 
       // When
-      const outputFiles = (await romWriter(options, inputTemp, inputGlob, undefined, outputTemp))
+      const outputFiles = (await candidateWriter(
+        options,
+        inputTemp,
+        inputGlob,
+        undefined,
+        outputTemp,
+      ))
         .map((pair) => pair[0]).sort();
 
       // Then the expected files were written
@@ -1227,7 +1299,13 @@ describe('raw', () => {
       await expect(walkAndStat(outputTemp)).resolves.toHaveLength(0);
 
       // When
-      const outputFiles = (await romWriter(options, inputTemp, inputGlob, undefined, outputTemp))
+      const outputFiles = (await candidateWriter(
+        options,
+        inputTemp,
+        inputGlob,
+        undefined,
+        outputTemp,
+      ))
         .map((pair) => pair[0]).sort();
 
       // Then the expected files were written
@@ -1263,7 +1341,7 @@ describe('symlink', () => {
         .toBeGreaterThan(0);
 
       // When
-      await romWriter(options, inputTemp, 'raw/*', undefined, inputRaw);
+      await candidateWriter(options, inputTemp, 'raw/*', undefined, inputRaw);
 
       // Then the input files weren't touched
       await expect(walkAndStat(inputRaw)).resolves.toEqual(inputFilesBefore);
@@ -1278,7 +1356,7 @@ describe('symlink', () => {
       await expect(walkAndStat(outputTemp)).resolves.toHaveLength(0);
 
       // And we've written once
-      await romWriter(options, inputTemp, '**/*', undefined, outputTemp);
+      await candidateWriter(options, inputTemp, '**/*', undefined, outputTemp);
 
       // And files were written
       const outputFilesBefore = await walkAndStat(outputTemp);
@@ -1289,7 +1367,7 @@ describe('symlink', () => {
       }
 
       // When we write again
-      await romWriter(options, inputTemp, '**/*', undefined, outputTemp);
+      await candidateWriter(options, inputTemp, '**/*', undefined, outputTemp);
 
       // Then the output wasn't touched
       await expect(walkAndStat(outputTemp)).resolves.toEqual(outputFilesBefore);
@@ -1307,7 +1385,7 @@ describe('symlink', () => {
       await expect(walkAndStat(outputTemp)).resolves.toHaveLength(0);
 
       // And we've written once
-      await romWriter(options, inputTemp, '**/*', undefined, outputTemp);
+      await candidateWriter(options, inputTemp, '**/*', undefined, outputTemp);
 
       // And files were written
       const outputFilesBefore = await walkAndStat(outputTemp);
@@ -1318,7 +1396,7 @@ describe('symlink', () => {
       }
 
       // When we write again
-      await romWriter({
+      await candidateWriter({
         ...options,
         overwrite: true,
       }, inputTemp, '**/*', undefined, outputTemp);
@@ -1345,7 +1423,7 @@ describe('symlink', () => {
       await expect(walkAndStat(outputTemp)).resolves.toHaveLength(0);
 
       // When we write
-      await romWriter(options, inputTemp, '**/*', undefined, outputTemp);
+      await candidateWriter(options, inputTemp, '**/*', undefined, outputTemp);
 
       // Then files were written
       const outputFilesBefore = await walkAndStat(outputTemp);
