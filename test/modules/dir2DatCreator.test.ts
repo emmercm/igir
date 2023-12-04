@@ -55,6 +55,7 @@ it('should write a valid DAT', async () => {
   try {
     await expect(FsPoly.exists(dir2dat)).resolves.toEqual(true);
     const writtenDats = await new DATScanner(new Options({
+      ...options,
       dat: [dir2dat],
     }), new ProgressBarFake()).scan();
     expect(writtenDats).toHaveLength(1);

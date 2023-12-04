@@ -125,7 +125,7 @@ export default class DATScanner extends Scanner {
       },
     ))
       .filter(ArrayPoly.filterNotNullish)
-      .map((dat) => DATScanner.sanitizeDat(dat));
+      .map((dat) => this.sanitizeDat(dat));
 
     return results
       .filter((dat) => {
@@ -445,12 +445,12 @@ export default class DATScanner extends Scanner {
     });
   }
 
-  private static sanitizeDat(dat: DAT): DAT {
+  private sanitizeDat(dat: DAT): DAT {
     const games = dat.getGames()
       .map((game) => {
         const roms = game.getRoms()
           // ROMs have to have filenames and sizes
-          .filter((rom) => rom.name && rom.size > 0);
+          .filter((rom) => this.options.shouldDir2Dat() || (rom.name && rom.size > 0));
         return game.withProps({ rom: roms });
       });
 

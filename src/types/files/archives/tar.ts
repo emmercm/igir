@@ -36,8 +36,8 @@ export default class Tar extends Archive {
       highWaterMark: Constants.FILE_READING_CHUNK_SIZE,
     }).pipe(writeStream);
 
+    // Note: entries are read sequentially, so entry streams need to be fully read or resumed
     writeStream.on('entry', async (entry) => {
-      // TODO(cemmer): use ARCHIVE_ENTRY_SCANNER_THREADS
       const checksums = await FileChecksums.hashStream(entry, checksumBitmask);
       archiveEntryPromises.push(ArchiveEntry.entryOf(
         this,
@@ -46,6 +46,8 @@ export default class Tar extends Archive {
         checksums,
         checksumBitmask,
       ));
+      // In case we didn't need to read the stream for hashes, resume the file reading
+      entry.resume();
     });
 
     // Wait for the tar file to be closed
