@@ -1,6 +1,6 @@
 # dir2dat
 
-"dir2dat" refers to DATs that have been automatically created based on files in an input directory. These DATs are not usually useful as-is, they generally require some hand editing after creation.
+"dir2dat" refers to DATs that have been automatically created based on files in an input directory. DATs generated this way are not typically useful as-is, they usually require some hand editing after creation.
 
 `igir` has the ability to create these DATs with the `igir dir2dat` command. Example:
 
