@@ -952,4 +952,54 @@ describe('with inferred DATs', () => {
       expect(result.cleanedFiles).toHaveLength(0);
     });
   });
+
+  it('should dir2dat', async () => {
+    await copyFixturesToTemp(async (inputTemp, outputTemp) => {
+      const result = await runIgir({
+        commands: ['dir2dat'],
+        dat: [path.join(inputTemp, 'dats')],
+        input: [path.join(inputTemp, 'roms')],
+        output: outputTemp,
+        dirDatName: true,
+      });
+
+      const writtenDir2Dats = result.cwdFilesAndCrcs
+        .map(([filePath]) => filePath)
+        .filter((filePath) => filePath.endsWith('.dat'));
+
+      // Only the "roms" input path was provided
+      expect(writtenDir2Dats).toHaveLength(1);
+      expect(writtenDir2Dats[0]).toMatch(/^roms \([0-9]{8}-[0-9]{6}\)\.dat$/);
+
+      expect(result.movedFiles).toHaveLength(0);
+      expect(result.cleanedFiles).toHaveLength(0);
+    });
+  });
+
+  test.each([
+    'copy',
+    'move',
+    'symlink',
+  ])('should %s, dir2dat, and clean', async (command) => {
+    await copyFixturesToTemp(async (inputTemp, outputTemp) => {
+      const result = await runIgir({
+        commands: [command, 'dir2dat', 'clean'],
+        dat: [path.join(inputTemp, 'dats')],
+        input: [path.join(inputTemp, 'roms')],
+        output: outputTemp,
+        dirDatName: true,
+      });
+
+      const writtenDir2Dats = result.outputFilesAndCrcs
+        .map(([filePath]) => filePath)
+        .filter((filePath) => filePath.endsWith('.dat'));
+
+      // Only the "roms" input path was provided
+      expect(writtenDir2Dats).toHaveLength(1);
+      expect(writtenDir2Dats[0]).toMatch(/^roms[\\/]roms \([0-9]{8}-[0-9]{6}\)\.dat$/);
+
+      expect(result.cwdFilesAndCrcs).toHaveLength(0);
+      expect(result.cleanedFiles).toHaveLength(0);
+    });
+  });
 });
