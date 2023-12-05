@@ -83,6 +83,17 @@ export default class GameConsole {
       console: 'Amstrad PCW',
       mister: 'AmstradPCW',
     }),
+    // ACT
+    new GameConsole(/Apricot/i, [/* '.dsk' */], {
+      console: 'ACT Apricot',
+    }),
+    // APF
+    new GameConsole(/Imagination Machine/i, [/* '.wav' */], {
+      console: 'APF Imagination Machine',
+    }),
+    new GameConsole(/MP-?1000/i, [/* '.bin' */], {
+      console: 'APF MP-1000',
+    }),
     // Apple
     new GameConsole(/Apple.*I/i, [], {
       console: 'Apple I',
@@ -102,7 +113,7 @@ export default class GameConsole {
       pocket: 'arduboy',
     }),
     // Atari
-    new GameConsole(/800|8-bit Family/, ['.atr', '.atx'], {
+    new GameConsole(/(atari|^|\s)800(\s|$)|8-bit Family/, ['.atr', '.atx'], {
       batocera: 'atari800',
       console: 'Atari 800',
       jelos: 'atari800',
@@ -144,6 +155,9 @@ export default class GameConsole {
       console: 'Atari Jaguar',
       jelos: 'atarijaguar',
       onion: 'JAGUAR',
+    }),
+    new GameConsole(/Jaguar ?CD( Interactive( Entertainment System)?)?/i, [/* '.bin', '.cue' */], {
+      console: 'Atari Jaguar CD Interactive Entertainment System',
     }),
     new GameConsole(/Lynx/i, ['.lnx', '.lyx'], {
       adam: 'LYNX',
@@ -201,6 +215,13 @@ export default class GameConsole {
       pocket: 'wonderswan',
       twmenu: 'ws',
     }),
+    // Benesse
+    new GameConsole(/Pocket Challenge (V?2|II)/i, ['.pc2'], {
+      console: 'Benesse Pocket Challenge V2',
+    }),
+    new GameConsole(/Pocket Challenge W/i, ['.pcw'], {
+      console: 'Benesse Pocket Challenge W',
+    }),
     // Bit Corporation
     new GameConsole(/Gamate/i, [/* '.bin' */], {
       batocera: 'gamate',
@@ -215,6 +236,9 @@ export default class GameConsole {
       batocera: 'pv1000',
       console: 'Casio PV-1000',
       mister: 'Casio_PV-1000',
+    }),
+    new GameConsole(/Loopy/i, [/* '.bin' */], {
+      console: 'Casio Loopy',
     }),
     new GameConsole(/PV[ -]?2000/i, [/* '.bin' */], {
       console: 'Casio PV-2000',
@@ -240,6 +264,12 @@ export default class GameConsole {
       adam: 'AMIGA',
       batocera: 'amigacdtv',
       console: 'Commodore Amiga CDTV',
+    }),
+    new GameConsole(/Commodore Vic-?20/i, [/* '.bin' */], {
+      console: 'Commodore Vic-20',
+    }),
+    new GameConsole(/Commodore (Plus|\+)-?4/i, [/* '.bin' */], {
+      console: 'Commodore Plus-4',
     }),
     new GameConsole(/Commodore C?16/i, [/* unknown */], {
       jelos: 'c16',
@@ -304,6 +334,10 @@ export default class GameConsole {
       console: 'Funtech Super A-Can',
       batocera: 'supracan',
     }),
+    // Fukutake Publishing
+    new GameConsole(/StudyBox/i, ['.study'], {
+      console: 'Fukutake Publishing StudyBox',
+    }),
     // GCE
     new GameConsole(/Vectrex/i, ['.vec'], {
       batocera: 'vectrex',
@@ -313,11 +347,40 @@ export default class GameConsole {
       miyoocfw: 'VECTREX',
       onion: 'VECTREX',
     }),
+    // Game Park
+    new GameConsole(/GP ?32/i, [/* '.bin' */], {
+      console: 'Game Park GP32',
+    }),
+    new GameConsole(/GP ?2X/i, [/* '.bin' */], {
+      console: 'Game Park GP2X',
+    }),
+    new GameConsole(/GP ?2X Wiz/i, [/* '.bin' */], {
+      console: 'Game Park Holdings GP2X Wiz',
+    }),
+    // Hartung
+    new GameConsole(/Game ?Master/i, [], {
+      console: 'Hartung Game Master',
+    }),
     // Interton
     new GameConsole(/VC ?4000/i, [/* '.bin' */], {
       batocera: 'vc4000',
       console: 'Interton VC 4000',
       mister: 'VC4000',
+    }),
+    // iQue
+    new GameConsole(/iQue/i, [], {
+      console: 'iQue iQue',
+    }),
+    // Konami
+    new GameConsole(/Picno/i, [/* '.bin' */], {
+      console: 'Konami Picno',
+    }),
+    // LeapFrog
+    new GameConsole(/L(eapster)?( Learning Game System|LGS)?/i, [], {
+      console: 'LeapFrog Leapster Learning Game System',
+    }),
+    new GameConsole(/LeapPad/i, [/* '.bin' */], {
+      console: 'LeapFrog LeapPad',
     }),
     // Lexaloffle
     new GameConsole(/Pico[- ]?8/i, ['.png', '.p8'], {
@@ -452,6 +515,15 @@ export default class GameConsole {
       onion: 'TIC',
     }),
     // Nintendo
+    new GameConsole(/e-?Reader/i, [/* '.raw' */], {
+      console: 'Nintendo e-Reader',
+    }),
+    new GameConsole(/Family BASIC/i, [/* '.wav' */], {
+      console: 'Nintendo Family BASIC',
+    }),
+    new GameConsole(/FNS|Famicom Computer Network System/i, ['.fns'], {
+      console: 'Nintendo Family Computer Network System',
+    }),
     new GameConsole(/FDS|Famicom Computer Disk System/i, ['.fds'], {
       adam: 'FDS',
       batocera: 'fds',
@@ -829,10 +901,12 @@ export default class GameConsole {
     }),
     new GameConsole(/PlayStation ?Portable|psp/i, [/* '.bin', '.cue' */], {
       batocera: 'psp',
+      console: 'Sony PlayStation Portable',
       jelos: 'psp',
     }),
     new GameConsole(/PlayStation ?Vita|psvita/i, [], {
       batocera: 'psvita',
+      console: 'Sony PlayStation Vita',
     }),
     new GameConsole(/PlayStation [4-9]|ps[4-9]/i, [/* '.bin', '.cue' */], {}),
     // Sord
@@ -845,10 +919,19 @@ export default class GameConsole {
       console: 'Sun Microsystems J2ME',
       jelos: 'j2me',
     }),
+    // Tiger
+    new GameConsole(/Game.com/i, ['.tgc'], {
+      console: 'Tiger Game.com',
+    }),
+    // Tiger Electronics (of Gizmondo fame)
     // Timetop
     new GameConsole(/GameKing/i, [/* '.bin' */], {
       console: 'TimeTop GameKing',
       pocket: 'game_king',
+    }),
+    // Toshiba
+    new GameConsole(/Visicom/i, [/* '.bin', '.rom' */], {
+      console: 'Toshiba Visicom',
     }),
     // Uzebox
     new GameConsole(/Uzebox/i, ['.uze'], {
@@ -889,6 +972,10 @@ export default class GameConsole {
       jelos: 'megaduck',
       onion: 'MEGADUCK',
       pocket: 'mega_duck',
+    }),
+    // Zeeboo
+    new GameConsole(/Zeeboo/i, [/* '.* ' */], {
+      console: 'Zeeboo Zeebo',
     }),
   ];
 
