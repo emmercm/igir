@@ -85,7 +85,7 @@ export default class GameConsole {
     }),
     // ACT
     new GameConsole(/Apricot/i, [/* '.dsk' */], {
-      console: 'ACT Apricot',
+      console: 'ACT Apricot PC Xi',
     }),
     // APF
     new GameConsole(/Imagination Machine/i, [/* '.wav' */], {
