@@ -113,7 +113,7 @@ export default class GameConsole {
       pocket: 'arduboy',
     }),
     // Atari
-    new GameConsole(/(atari|^|\s)800(\s|$)|8-bit Family/, ['.atr', '.atx'], {
+    new GameConsole(/(a(tari)?|^|\s)800(\s|$)|8-?b(it)? Family/i, ['.atr', '.atx'], {
       batocera: 'atari800',
       console: 'Atari 800',
       jelos: 'atari800',
@@ -683,6 +683,13 @@ export default class GameConsole {
       batocera: 'wiiu',
       console: 'Nintendo Wii U',
       jelos: 'wiiu',
+    }),
+    // OpenPandora
+    new GameConsole(/(\s|^)Pandora/i, ['.pnd'], {
+      console: 'OpenPandora Pandora',
+    }),
+    new GameConsole(/(\s|^)Pyre/i, [], {
+      console: 'OpenPandora Pyre',
     }),
     // Panasonic
     new GameConsole(/3DO/i, [/* '.bin', '.cue' */], {
