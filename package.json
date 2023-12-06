@@ -42,6 +42,10 @@
     "type": "git",
     "url": "git+https://github.com/emmercm/igir.git"
   },
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
+  },
   "scripts": {
     "cache:clear": "npm cache clean --force && node --experimental-vm-modules ./node_modules/jest/bin/jest.js --clearCache",
     "postinstall": "node --eval \"if(require('fs').existsSync('dist')===false){process.exit(1);}\" || npm run build",

@@ -7,12 +7,13 @@ on:
   release:
     types:
       - published
+  workflow_dispatch:
 
 jobs:
   node-publish:
     runs-on: ubuntu-latest
     permissions:
-      # actions/checkout@v3
+      # actions/checkout@v4
       contents: read
       # `npm publish --provenance`
       id-token: write
@@ -21,15 +22,15 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: volta-cli/action@v4
+        with:
+          registry-url: 'https://registry.npmjs.org'
       - run: npm ci
       - id: publish
         name: npm publish
-        # https://github.com/bitwarden/clients/pull/3272
         run: |
-          echo 'registry="https://registry.npmjs.org/"' > ./.npmrc
-          echo "//registry.npmjs.org/:_authToken=${NODE_AUTH_TOKEN}" >> ./.npmrc
-          npm publish --regsitry=https://registry.npmjs.org/ --userconfig=./.npmrc --provenance --access public
-
+          set -x
+          npm whoami
+          npm publish
           {
             echo "PACKAGE_NAME=$(jq --raw-output '.name' package.json)"
             echo "PACKAGE_VERSION=$(jq --raw-output '.version' package.json)"
