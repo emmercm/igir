@@ -376,7 +376,7 @@ export default class GameConsole {
       console: 'Konami Picno',
     }),
     // LeapFrog
-    new GameConsole(/L(eapster)?( Learning Game System|LGS)?/i, [], {
+    new GameConsole(/Leapster( Learning Game System|LGS)?/i, [], {
       console: 'LeapFrog Leapster Learning Game System',
     }),
     new GameConsole(/LeapPad/i, [/* '.bin' */], {
