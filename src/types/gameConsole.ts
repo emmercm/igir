@@ -981,8 +981,8 @@ export default class GameConsole {
       pocket: 'mega_duck',
     }),
     // Zeeboo
-    new GameConsole(/Zeeboo/i, [/* '.* ' */], {
-      console: 'Zeeboo Zeebo',
+    new GameConsole(/Zeebo/i, [], {
+      console: 'Zeebo Zeebo',
     }),
   ];
 
