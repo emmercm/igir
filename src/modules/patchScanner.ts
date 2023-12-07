@@ -2,6 +2,7 @@ import ProgressBar, { ProgressBarSymbol } from '../console/progressBar.js';
 import DriveSemaphore from '../driveSemaphore.js';
 import ArrayPoly from '../polyfill/arrayPoly.js';
 import File from '../types/files/file.js';
+import { ChecksumBitmask } from '../types/files/fileChecksums.js';
 import Options from '../types/options.js';
 import Patch from '../types/patches/patch.js';
 import PatchFactory from '../types/patches/patchFactory.js';
@@ -31,9 +32,10 @@ export default class PatchScanner extends Scanner {
     this.progressBar.logDebug(`found ${patchFilePaths.length.toLocaleString()} patch file${patchFilePaths.length !== 1 ? 's' : ''}`);
     await this.progressBar.reset(patchFilePaths.length);
 
-    const files = await this.getFilesFromPaths(
+    const files = await this.getUniqueFilesFromPaths(
       patchFilePaths,
       this.options.getReaderThreads(),
+      ChecksumBitmask.NONE,
     );
 
     const patches = (await new DriveSemaphore(this.options.getReaderThreads()).map(

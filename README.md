@@ -29,14 +29,14 @@ A video of an example use case:
 With `igir` you can manage a ROM collection of any size:
 
 - 🔍 Scan for DATs, ROMs, and ROM patches - including those in archives (see [scanning](https://igir.io/input/file-scanning) & [archive docs](https://igir.io/input/reading-archives))
-- 📂 Organize ROM files by console (see [DAT docs](https://igir.io/input/dats))
-- 🪄 Name ROM files consistently, including the right extension (see [DAT docs](https://igir.io/input/dats))
+- 📂 Organize ROM files by console (see [DAT docs](https://igir.io/dats/overview))
+- 🪄 Name ROM files consistently, including the right extension (see [DAT docs](https://igir.io/dats/overview))
 - ✂️ Filter out duplicate ROMs, or ROMs in languages you don't understand (see [filtering docs](https://igir.io/roms/filtering-preferences))
 - 🗜️ Extract or archive ROMs in mass (see [archive docs](https://igir.io/output/writing-archives))
 - 🩹 Patch ROMs automatically in mass (see [scanning](https://igir.io/input/file-scanning) & [patching docs](https://igir.io/roms/patching))
 - 🎩 Parse ROMs with headers, and optionally remove them (see [header docs](https://igir.io/roms/headers))
 - ↔️ Build & re-build (un-merge, split, or merge) MAME ROM sets (see [arcade docs](https://igir.io/usage/arcade))
-- 🔮 Report on what ROMs are present or missing for each console, and create fixdats for missing ROMs (see [reporting](https://igir.io/output/reporting) & [DAT docs](https://igir.io/input/dats))
+- 🔮 Report on what ROMs are present or missing for each console, and create fixdats for missing ROMs (see [reporting](https://igir.io/output/reporting) & [DAT docs](https://igir.io/dats/overview))
 
 ## How do I run `igir`?
 
@@ -57,7 +57,7 @@ $ igir --help
   | $$  | $$|    \  | $$  | $$    $$   ROM collection manager
   | $$  | $$|    \  | $$  | $$    $$   https://igir.io/
   | $$  | $$ \$$$$  | $$  | $$$$$$$\
- _| $$_ | $$__| $$ _| $$_ | $$  | $$   v2.1.2
+ _| $$_ | $$__| $$ _| $$_ | $$  | $$   v2.2.0
 |   $$ \ \$$    $$|   $$ \| $$  | $$
  \$$$$$$  \$$$$$$  \$$$$$$ \$$   \$$
 
@@ -71,6 +71,7 @@ Commands (can specify multiple):
   igir extract  Extract ROM files in archives when copying or moving
   igir zip      Create zip archives of ROMs when copying or moving
   igir test     Test ROMs for accuracy after writing them to the output directory
+  igir dir2dat  Generate a DAT from all input files
   igir fixdat   Generate a fixdat of any missing games for every DAT processed (requires --dat)
   igir clean    Recycle unknown files in the output directory
   igir report   Generate a CSV report on the known & unknown ROM files found in the input directo

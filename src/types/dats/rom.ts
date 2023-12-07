@@ -63,12 +63,12 @@ export default class ROM implements ROMProps {
   toXmlDatObj(): object {
     return {
       $: {
-        name: this.name,
-        size: this.size,
-        crc: this.crc,
-        md5: this.md5,
-        sha1: this.sha1,
-        status: this.status,
+        name: this.getName(),
+        size: this.getSize(),
+        crc: this.getCrc32(),
+        md5: this.getMd5(),
+        sha1: this.getSha1(),
+        status: this.getStatus(),
       },
     };
   }
@@ -87,12 +87,12 @@ export default class ROM implements ROMProps {
     return (this.crc ?? '').toLowerCase().replace(/^0x/, '').padStart(8, '0');
   }
 
-  getMd5(): string {
-    return (this.md5 ?? '').toLowerCase().replace(/^0x/, '').padStart(32, '0');
+  getMd5(): string | undefined {
+    return this.md5?.toLowerCase().replace(/^0x/, '').padStart(32, '0');
   }
 
-  getSha1(): string {
-    return (this.sha1 ?? '').toLowerCase().replace(/^0x/, '').padStart(40, '0');
+  getSha1(): string | undefined {
+    return this.sha1?.toLowerCase().replace(/^0x/, '').padStart(40, '0');
   }
 
   getChecksumProps(): ChecksumProps {

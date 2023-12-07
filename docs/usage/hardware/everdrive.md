@@ -2,7 +2,7 @@
 
 ## ROMs
 
-Because flash carts are specific to a specific console, you can provide specific input directories & [DATs](../../input/dats.md) when you run `igir`. For example:
+Because flash carts are specific to a specific console, you can provide specific input directories & [DATs](../../dats/overview.md) when you run `igir`. For example:
 
 === ":simple-windowsxp: Windows"
 
@@ -42,7 +42,7 @@ Because flash carts are specific to a specific console, you can provide specific
 
 you can then add some other output options such as `--dir-letter`, if desired.
 
-Alternatively, `igir` supports [Hardware Target Game Database SMDB files](https://github.com/frederic-mahe/Hardware-Target-Game-Database/tree/master/EverDrive%20Pack%20SMDBs) as [DATs](../../input/dats.md). Unlike typical DATs, Hardware Target Game Database SMDBs typically have an opinionated directory structure to help sort ROMs by language, category, genre, and more. Example usage:
+Alternatively, `igir` supports [Hardware Target Game Database SMDB files](https://github.com/frederic-mahe/Hardware-Target-Game-Database/tree/master/EverDrive%20Pack%20SMDBs) as [DATs](../../dats/overview.md). Unlike typical DATs, Hardware Target Game Database SMDBs typically have an opinionated directory structure to help sort ROMs by language, category, genre, and more. Example usage:
 
 === ":simple-windowsxp: Windows"
 

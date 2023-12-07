@@ -17,8 +17,8 @@ import ReleaseCandidate from '../../src/types/releaseCandidate.js';
 import ProgressBarFake from '../console/progressBarFake.js';
 
 // Run DATInferrer, but condense all DATs down to one
-function buildInferredDat(romFiles: File[]): DAT {
-  const datGames = new DATGameInferrer(new ProgressBarFake()).infer(romFiles)
+function buildInferredDat(options: Options, romFiles: File[]): DAT {
+  const datGames = new DATGameInferrer(options, new ProgressBarFake()).infer(romFiles)
     .flatMap((dat) => dat.getGames());
   return new LogiqxDAT(new Header(), datGames);
 }
@@ -56,10 +56,11 @@ it('should do nothing with no parents', async () => {
 describe('with inferred DATs', () => {
   it('should do nothing with no relevant patches', async () => {
     // Given
-    const romFiles = await new ROMScanner(new Options({
+    const options = new Options({
       input: [path.join('test', 'fixtures', 'roms', 'headered')],
-    }), new ProgressBarFake()).scan();
-    const dat = buildInferredDat(romFiles);
+    });
+    const romFiles = await new ROMScanner(options, new ProgressBarFake()).scan();
+    const dat = buildInferredDat(options, romFiles);
 
     // When
     const parentsToCandidates = await runPatchCandidateGenerator(dat, romFiles);
@@ -72,10 +73,11 @@ describe('with inferred DATs', () => {
 
   it('should create patch candidates with relevant patches', async () => {
     // Given
-    const romFiles = await new ROMScanner(new Options({
+    const options = new Options({
       input: [path.join('test', 'fixtures', 'roms', 'patchable')],
-    }), new ProgressBarFake()).scan();
-    const dat = buildInferredDat(romFiles);
+    });
+    const romFiles = await new ROMScanner(options, new ProgressBarFake()).scan();
+    const dat = buildInferredDat(options, romFiles);
 
     // When
     const parentsToCandidates = await runPatchCandidateGenerator(dat, romFiles);

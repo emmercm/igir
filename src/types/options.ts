@@ -503,6 +503,13 @@ export default class Options implements OptionsProps {
   }
 
   /**
+   * Was the 'dir2dat' command provided?
+   */
+  shouldDir2Dat(): boolean {
+    return this.getCommands().has('dir2dat');
+  }
+
+  /**
    * Was the 'fixdat' command provided?
    */
   shouldFixdat(): boolean {
