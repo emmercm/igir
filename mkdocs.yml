@@ -114,7 +114,7 @@ plugins:
       lang: en
   - exclude-search:
       exclude:
-        - overview.md
+        - index.md
       exclude_unreferenced: true
   - social
   - git-revision-date-localized:
