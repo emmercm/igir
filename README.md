@@ -57,7 +57,7 @@ $ igir --help
   | $$  | $$|    \  | $$  | $$    $$   ROM collection manager
   | $$  | $$|    \  | $$  | $$    $$   https://igir.io/
   | $$  | $$ \$$$$  | $$  | $$$$$$$\
- _| $$_ | $$__| $$ _| $$_ | $$  | $$   v2.1.2
+ _| $$_ | $$__| $$ _| $$_ | $$  | $$   v2.2.0
 |   $$ \ \$$    $$|   $$ \| $$  | $$
  \$$$$$$  \$$$$$$  \$$$$$$ \$$   \$$
 
@@ -71,6 +71,7 @@ Commands (can specify multiple):
   igir extract  Extract ROM files in archives when copying or moving
   igir zip      Create zip archives of ROMs when copying or moving
   igir test     Test ROMs for accuracy after writing them to the output directory
+  igir dir2dat  Generate a DAT from all input files
   igir fixdat   Generate a fixdat of any missing games for every DAT processed (requires --dat)
   igir clean    Recycle unknown files in the output directory
   igir report   Generate a CSV report on the known & unknown ROM files found in the input directo
