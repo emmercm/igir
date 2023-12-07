@@ -279,8 +279,17 @@ export default class ArgumentsParser {
       })
       .option('dir-letter', {
         group: groupRomOutput,
-        description: 'Append the first letter of the ROM name as an output subdirectory',
+        description: 'Group games in an output subdirectory by the first letters in their name',
         type: 'boolean',
+      })
+      .option('dir-letter-count', {
+        group: groupRomOutput,
+        description: 'How many game name letters to use for the subdirectory name',
+        type: 'number',
+        coerce: (val: number) => Math.max(ArgumentsParser.getLastValue(val), 1),
+        requiresArg: true,
+        // Note: can't `implies: 'dir-letter'` with a default value set
+        default: 1,
       })
       .option('dir-letter-limit', {
         group: groupRomOutput,

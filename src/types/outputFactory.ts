@@ -328,16 +328,30 @@ export default class OutputFactory {
 
     // Find the letter for every ROM filename
     let lettersToFilenames = (romBasenames ?? [romBasename]).reduce((map, filename) => {
-      let letter = filename.charAt(0).toUpperCase();
-      if (letter.match(/[^A-Z]/)) {
-        letter = '#';
-      }
+      const filenameParsed = path.parse(filename);
+      let letters = (filenameParsed.dir || filenameParsed.name)
+        .substring(0, options.getDirLetterCount())
+        .padEnd(options.getDirLetterCount(), 'A')
+        .toUpperCase()
+        .replace(/[^A-Z0-9]/g, '#');
+      // TODO(cemmer): only do this when not grouping letters together
+      letters = letters.replace(/[^A-Z]/g, '#');
 
-      const existing = map.get(letter) ?? new Set();
+      const existing = map.get(letters) ?? new Set();
       existing.add(filename);
-      map.set(letter, existing);
+      map.set(letters, existing);
       return map;
     }, new Map<string, Set<string>>());
+
+    [...lettersToFilenames.entries()]
+      .sort((a, b) => a[0].localeCompare(b[0]))
+      .reduce((arr, [letter, filenames]) => {
+        // TODO: group letters together
+        const tuples = [...filenames.values()]
+          .sort()
+          .map((filename) => [letter, filename] satisfies [string, string]);
+        return [...arr, ...tuples];
+      }, [] as [string, string][]);
 
     // Split the letter directories, if needed
     if (options.getDirLetterLimit()) {

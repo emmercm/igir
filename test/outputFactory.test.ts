@@ -889,11 +889,26 @@ describe('should respect "--dir-dat-description"', () => {
 describe('should respect "--dir-letter"', () => {
   describe('games with one ROM', () => {
     test.each([
-      ['', os.devNull],
-      ['file.rom', path.join(os.devNull, 'F', 'file.rom')],
-      ['🙂.rom', path.join(os.devNull, '#', '🙂.rom')],
-    ])('option is true: %s', async (romName, expectedPath) => {
-      const options = new Options({ commands: ['copy'], output: os.devNull, dirLetter: true });
+      [0, '', os.devNull],
+      [1, '', os.devNull],
+      [2, '', os.devNull],
+      [999, '', os.devNull],
+      [1, 'file.rom', path.join(os.devNull, 'F', 'file.rom')],
+      [3, 'file.rom', path.join(os.devNull, 'FIL', 'file.rom')],
+      [10, 'file.rom', path.join(os.devNull, 'FILEAAAAAA', 'file.rom')],
+      [1, '007.rom', path.join(os.devNull, '#', '007.rom')],
+      [2, '007.rom', path.join(os.devNull, '##', '007.rom')],
+      [10, '007.rom', path.join(os.devNull, '###AAAAAAA', '007.rom')],
+      [1, '🙂.rom', path.join(os.devNull, '#', '🙂.rom')],
+      [3, '🙂.rom', path.join(os.devNull, '##A', '🙂.rom')],
+      [10, '🙂.rom', path.join(os.devNull, '##AAAAAAAA', '🙂.rom')],
+    ])('option is true: %s', async (dirLetterCount, romName, expectedPath) => {
+      const options = new Options({
+        commands: ['copy'],
+        output: os.devNull,
+        dirLetter: true,
+        dirLetterCount,
+      });
       const rom = new ROM({ name: romName, size: 0, crc: '' });
 
       const outputPath = OutputFactory.getPath(
@@ -939,6 +954,7 @@ describe('should respect "--dir-letter"', () => {
         commands: ['copy'],
         output: os.devNull,
         dirLetter: true,
+        dirLetterCount: 1,
         dirGameSubdir: GameSubdirMode[GameSubdirMode.MULTIPLE].toLowerCase(),
       });
 
