@@ -1,5 +1,7 @@
 # EverDrive
 
+The [EverDrive](https://krikzz.com/) flash carts by Krikzz are some of the high quality, highest rate of compatability, and most often recommended flash carts available on the market today.
+
 ## ROMs
 
 Because flash carts are specific to a specific console, you can provide specific input directories & [DATs](../../dats/overview.md) when you run `igir`. For example:
@@ -10,8 +12,8 @@ Because flash carts are specific to a specific console, you can provide specific
 
     ```batch
     igir copy extract test clean ^
-      --dat "Nintendo - Game Boy.dat" ^
-      --input "ROMs-Sorted\Nintendo - Game Boy" ^
+      --dat "Nintendo - Nintendo Entertainment System (Headered).dat" ^
+      --input "ROMs-Sorted\Nintendo - Nintendo Entertainment System" ^
       --output E:\ ^
       --no-bios
     ```
@@ -22,8 +24,8 @@ Because flash carts are specific to a specific console, you can provide specific
 
     ```shell
     igir copy extract test clean \
-      --dat "Nintendo - Game Boy.dat" \
-      --input "ROMs-Sorted/Nintendo - Game Boy" \
+      --dat "Nintendo - Nintendo Entertainment System (Headered).dat" \
+      --input "ROMs-Sorted/Nintendo - Nintendo Entertainment System" \
       --output /Volumes/EverDrive/ \
       --no-bios
     ```
@@ -34,8 +36,8 @@ Because flash carts are specific to a specific console, you can provide specific
 
     ```shell
     igir copy extract test clean \
-      --dat "Nintendo - Game Boy.dat" \
-      --input "ROMs-Sorted/Nintendo - Game Boy" \
+      --dat "Nintendo - Nintendo Entertainment System (Headered).dat" \
+      --input "ROMs-Sorted/Nintendo - Nintendo Entertainment System" \
       --output /media/EverDrive/ \
       --no-bios
     ```
@@ -50,8 +52,8 @@ Alternatively, `igir` supports [Hardware Target Game Database SMDB files](https:
 
     ```batch
     igir copy extract test clean ^
-      --dat "https://raw.githubusercontent.com/frederic-mahe/Hardware-Target-Game-Database/master/EverDrive%20Pack%20SMDBs/EverDrive%20GB%20SMDB.txt" ^
-      --input "ROMs-Sorted\Nintendo - Game Boy" ^
+      --dat "https://raw.githubusercontent.com/frederic-mahe/Hardware-Target-Game-Database/master/EverDrive%20Pack%20SMDBs/NES2.0%20SMDB.txt" ^
+      --input "ROMs-Sorted\Nintendo - Nintendo Entertainment System" ^
       --output E:\
     ```
 
@@ -61,8 +63,8 @@ Alternatively, `igir` supports [Hardware Target Game Database SMDB files](https:
 
     ```shell
     igir copy extract test clean \
-      --dat "https://raw.githubusercontent.com/frederic-mahe/Hardware-Target-Game-Database/master/EverDrive%20Pack%20SMDBs/EverDrive%20GB%20SMDB.txt" \
-      --input "ROMs-Sorted/Nintendo - Game Boy" \
+      --dat "https://raw.githubusercontent.com/frederic-mahe/Hardware-Target-Game-Database/master/EverDrive%20Pack%20SMDBs/NES2.0%20SMDB.txt" \
+      --input "ROMs-Sorted/Nintendo - Nintendo Entertainment System" \
       --output /Volumes/EverDrive/
     ```
 
@@ -72,7 +74,7 @@ Alternatively, `igir` supports [Hardware Target Game Database SMDB files](https:
 
     ```shell
     igir copy extract test clean \
-      --dat "https://raw.githubusercontent.com/frederic-mahe/Hardware-Target-Game-Database/master/EverDrive%20Pack%20SMDBs/EverDrive%20GB%20SMDB.txt" \
-      --input "ROMs-Sorted/Nintendo - Game Boy" \
+      --dat "https://raw.githubusercontent.com/frederic-mahe/Hardware-Target-Game-Database/master/EverDrive%20Pack%20SMDBs/NES2.0%20SMDB.txt" \
+      --input "ROMs-Sorted/Nintendo - Nintendo Entertainment System" \
       --output /media/EverDrive/
     ```
