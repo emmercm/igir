@@ -2,8 +2,8 @@
 
 The `igir clean` [command](../commands.md) can be used when writing (`igir copy`, `igir move`, and `igir symlink`) to delete files from the `--output <path>` directory that are either:
 
-- Not contained in any provided [DAT](../input/dats.md) (the `--dat <path>` option).
-- Contained in a [DAT](../input/dats.md) (the `--dat <path>` option), but the file is in the incorrect location.
+- Not contained in any provided [DAT](../dats/overview.md) (the `--dat <path>` option).
+- Contained in a [DAT](../dats/overview.md) (the `--dat <path>` option), but the file is in the incorrect location.
 
 ## The golden rule
 
@@ -11,7 +11,7 @@ The golden rule of the `igir clean` command is it will _not_ delete files in any
 
 In practical terms, this means:
 
-**1. If no file was written (i.e. no input file matched any ROM in any [DAT](../input/dats.md)), then `igir clean` will not delete any files.**
+**1. If no file was written (i.e. no input file matched any ROM in any [DAT](../dats/overview.md)), then `igir clean` will not delete any files.**
 
 **2. If [tokens](tokens.md) are used with the `--output <path>` option, only subdirectories that are written to will be considered for cleaning.**
 

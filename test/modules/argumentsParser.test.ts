@@ -47,19 +47,21 @@ describe('commands', () => {
     expect(argumentsParser.parse(['copy', ...dummyRequiredArgs]).shouldExtract()).toEqual(false);
     expect(argumentsParser.parse(['copy', ...dummyRequiredArgs]).shouldZip('')).toEqual(false);
     expect(argumentsParser.parse(['copy', ...dummyRequiredArgs]).shouldTest()).toEqual(false);
+    expect(argumentsParser.parse(['copy', ...dummyRequiredArgs]).shouldDir2Dat()).toEqual(false);
     expect(argumentsParser.parse(['copy', ...dummyRequiredArgs]).shouldFixdat()).toEqual(false);
     expect(argumentsParser.parse(['copy', ...dummyRequiredArgs]).shouldClean()).toEqual(false);
     expect(argumentsParser.parse(['copy', ...dummyRequiredArgs]).shouldReport()).toEqual(false);
   });
 
   it('should parse multiple commands', () => {
-    const copyExtract = ['copy', 'extract', 'test', 'fixdat', 'clean', 'report', ...dummyRequiredArgs, '--dat', os.devNull];
+    const copyExtract = ['copy', 'extract', 'test', 'dir2dat', 'clean', 'report', ...dummyRequiredArgs, '--dat', os.devNull];
     expect(argumentsParser.parse(copyExtract).shouldCopy()).toEqual(true);
     expect(argumentsParser.parse(copyExtract).shouldMove()).toEqual(false);
     expect(argumentsParser.parse(copyExtract).shouldExtract()).toEqual(true);
     expect(argumentsParser.parse(copyExtract).shouldZip('')).toEqual(false);
     expect(argumentsParser.parse(copyExtract).shouldTest()).toEqual(true);
-    expect(argumentsParser.parse(copyExtract).shouldFixdat()).toEqual(true);
+    expect(argumentsParser.parse(copyExtract).shouldDir2Dat()).toEqual(true);
+    expect(argumentsParser.parse(copyExtract).shouldFixdat()).toEqual(false);
     expect(argumentsParser.parse(copyExtract).shouldClean()).toEqual(true);
     expect(argumentsParser.parse(copyExtract).shouldReport()).toEqual(true);
 
@@ -69,6 +71,7 @@ describe('commands', () => {
     expect(argumentsParser.parse(moveZip).shouldExtract()).toEqual(false);
     expect(argumentsParser.parse(moveZip).shouldZip('')).toEqual(true);
     expect(argumentsParser.parse(moveZip).shouldTest()).toEqual(true);
+    expect(argumentsParser.parse(moveZip).shouldDir2Dat()).toEqual(false);
     expect(argumentsParser.parse(moveZip).shouldFixdat()).toEqual(true);
     expect(argumentsParser.parse(moveZip).shouldClean()).toEqual(true);
     expect(argumentsParser.parse(moveZip).shouldReport()).toEqual(true);
@@ -93,6 +96,7 @@ describe('options', () => {
     expect(options.shouldSymlink()).toEqual(false);
     expect(options.shouldExtract()).toEqual(false);
     expect(options.canZip()).toEqual(false);
+    expect(options.shouldDir2Dat()).toEqual(false);
     expect(options.shouldFixdat()).toEqual(false);
     expect(options.shouldTest()).toEqual(false);
     expect(options.shouldClean()).toEqual(false);

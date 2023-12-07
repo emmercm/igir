@@ -4,30 +4,32 @@ import Options from '../../src/types/options.js';
 import ProgressBarFake from '../console/progressBarFake.js';
 
 test.each([
-  ['test/fixtures/roms/**/*', {
-    '7z': 5,
+  // No input paths
+  [[], {}],
+  // One input path
+  [['test/fixtures/roms/**/*'], { roms: 27 }],
+  [['test/fixtures/roms/7z/*'], { '7z': 5 }],
+  [['test/fixtures/roms/rar/*'], { rar: 5 }],
+  [['test/fixtures/roms/raw/*'], { raw: 10 }],
+  [['test/fixtures/roms/tar/*'], { tar: 5 }],
+  [['test/fixtures/roms/zip/*'], { zip: 6 }],
+  // Multiple input paths
+  [[
+    'test/fixtures/roms/headered',
+    'test/fixtures/roms/patchable/*',
+    'test/fixtures/roms/unheadered/**/*',
+  ], {
     headered: 6,
     patchable: 9,
-    rar: 5,
-    raw: 10,
-    roms: 5,
-    tar: 5,
     unheadered: 1,
-    zip: 6,
   }],
-  ['test/fixtures/roms/7z/*', { '7z': 5 }],
-  ['test/fixtures/roms/rar/*', { rar: 5 }],
-  ['test/fixtures/roms/raw/*', { raw: 10 }],
-  ['test/fixtures/roms/tar/*', { tar: 5 }],
-  ['test/fixtures/roms/zip/*', { zip: 6 }],
-])('should infer DATs: %s', async (inputGlob, expected) => {
+])('should infer DATs: %s', async (input, expected) => {
   // Given
-  const romFiles = await new ROMScanner(new Options({
-    input: [inputGlob],
-  }), new ProgressBarFake()).scan();
+  const options = new Options({ input });
+  const romFiles = await new ROMScanner(options, new ProgressBarFake()).scan();
 
   // When
-  const dats = new DATGameInferrer(new ProgressBarFake()).infer(romFiles);
+  const dats = new DATGameInferrer(options, new ProgressBarFake()).infer(romFiles);
 
   // Then
   const datNameToGameCount = Object.fromEntries(

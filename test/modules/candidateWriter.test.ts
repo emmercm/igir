@@ -70,9 +70,9 @@ async function walkAndStat(dirPath: string): Promise<[string, Stats][]> {
   );
 }
 
-function datInferrer(romFiles: File[]): DAT {
+function datInferrer(options: Options, romFiles: File[]): DAT {
   // Run DATInferrer, but condense all DATs down to one
-  const datGames = new DATGameInferrer(new ProgressBarFake()).infer(romFiles)
+  const datGames = new DATGameInferrer(options, new ProgressBarFake()).infer(romFiles)
     .flatMap((dat) => dat.getGames());
   // TODO(cemmer): filter to unique games / remove duplicates
   return new LogiqxDAT(new Header({ name: 'ROMWriter Test' }), datGames);
@@ -93,7 +93,7 @@ async function candidateWriter(
     output: outputTemp,
   });
   const romFiles = await new ROMScanner(options, new ProgressBarFake()).scan();
-  const dat = datInferrer(romFiles);
+  const dat = datInferrer(options, romFiles);
   const romFilesWithHeaders = await new ROMHeaderProcessor(options, new ProgressBarFake())
     .process(romFiles);
   const indexedRomFiles = await new FileIndexer(options, new ProgressBarFake())
@@ -575,7 +575,8 @@ describe('zip', () => {
       [`ROMWriter Test.zip|${path.join('onetwothree', 'one.rom')}`, 'f817a89f'],
       [`ROMWriter Test.zip|${path.join('onetwothree', 'three.rom')}`, 'ff46c5d8'],
       [`ROMWriter Test.zip|${path.join('onetwothree', 'two.rom')}`, '96170874'],
-      ['ROMWriter Test.zip|speed_test_v51.sfc', '8beffd94'],
+      [`ROMWriter Test.zip|${path.join('speed_test_v51', 'speed_test_v51.sfc')}`, '8beffd94'],
+      [`ROMWriter Test.zip|${path.join('speed_test_v51', 'speed_test_v51.smc')}`, '9adca6cc'],
       ['ROMWriter Test.zip|three.rom', 'ff46c5d8'],
       ['ROMWriter Test.zip|two.rom', '96170874'],
       ['ROMWriter Test.zip|unknown.rom', '377a7727'],
