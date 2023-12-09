@@ -62,11 +62,15 @@ export default class GameConsole {
   private static readonly CONSOLES: GameConsole[] = [
 
     // Acorn
+    // Acorn Archimedes
+    new GameConsole(/Archimedes/i, [], {}),
     // Acorn Atom
     new GameConsole(/Atom/i, [], {
       batocera: 'atom',
       mister: 'AcornAtom',
     }),
+    // Acorn RISC-PC
+    new GameConsole(/RISC-PC/i, [], {}),
 
     // Amstrad
     // Amstrad CPC
@@ -82,6 +86,8 @@ export default class GameConsole {
     new GameConsole(/PCW/i, [], {
       mister: 'AmstradPCW',
     }),
+    // Amstrad GX4000
+    new GameConsole(/GX-?4000/i, [], {}),
 
     // ACT
     // ACT Apricot PC Xi
@@ -322,6 +328,8 @@ export default class GameConsole {
     }),
 
     // Epoch
+    // Acorn Game Pocket Computer
+    new GameConsole(/Game Pocket Computer/i, [], {}),
     // Epoch Super Cassette Vision
     new GameConsole(/Super Cassette Vision/i, [/* '.bin' */], {
       batocera: 'scv',
@@ -342,6 +350,14 @@ export default class GameConsole {
     new GameConsole(/Super A'?Can/i, [/* '.bin' */], {
       batocera: 'supracan',
     }),
+
+    // Fujitsu
+    // Fujitsu FM-7
+    new GameConsole(/FM-?7(\W|$)/i, [], {}),
+    // Fujitsu FMR50
+    new GameConsole(/FM-?R50(\W|$)/i, [], {}),
+    // Fujitsu FM-Towns
+    new GameConsole(/FM-?Towns(\W|$)/i, [], {}),
 
     // Fukutake Publishing
     // Fukutake Publishing StudyBox
@@ -467,6 +483,8 @@ export default class GameConsole {
     new GameConsole(/Xbox 360/i, [/* '.iso' */], {
       batocera: 'xbox360',
     }),
+    // Microsoft Xbox Series X
+    new GameConsole(/XBox Series X/i, [], {}),
 
     // Nichibutsu
     // Nichibutsu My Vision
