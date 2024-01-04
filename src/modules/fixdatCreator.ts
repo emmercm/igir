@@ -6,6 +6,7 @@ import moment from 'moment';
 
 import ProgressBar, { ProgressBarSymbol } from '../console/progressBar.js';
 import Constants from '../constants.js';
+import fsPoly from '../polyfill/fsPoly.js';
 import DAT from '../types/dats/dat.js';
 import Header from '../types/dats/logiqx/header.js';
 import LogiqxDAT from '../types/dats/logiqx/logiqxDat.js';
@@ -14,7 +15,6 @@ import Options from '../types/options.js';
 import OutputFactory from '../types/outputFactory.js';
 import ReleaseCandidate from '../types/releaseCandidate.js';
 import Module from './module.js';
-import fsPoly from "../polyfill/fsPoly.js";
 
 /**
  * Create a "fixdat" that contains every {@link Game} that has at least one {@link ROM} that wasn't
