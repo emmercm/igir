@@ -38,12 +38,15 @@ export default class DirectoryCleaner extends Module {
 
     this.progressBar.logInfo('cleaning files in output');
     await this.progressBar.setSymbol(ProgressBarSymbol.SEARCHING);
-    await this.progressBar.reset(dirsToClean.length);
+    await this.progressBar.reset(0);
 
     // If there is nothing to clean, then don't do anything
     const filesToClean = await this.options.scanOutputFilesWithoutCleanExclusions(
       dirsToClean,
       filesToExclude,
+      async (increment) => {
+        await this.progressBar.incrementTotal(increment);
+      },
     );
     if (filesToClean.length === 0) {
       this.progressBar.logDebug('no files to clean');
