@@ -38,9 +38,14 @@ export default class Zip extends Archive {
       Constants.ARCHIVE_ENTRY_SCANNER_THREADS_PER_ARCHIVE,
       async (entryFile, callback: AsyncResultCallback<ArchiveEntry<Zip>, Error>) => {
         const checksumsWithoutCrc = await FileChecksums.hashStream(
-          entryFile.stream(),
+          entryFile.stream()
+            // Ignore FILE_ENDED exceptions. This may cause entries to have an empty path, which
+            // may lead to unexpected behavior, but at least this won't crash because of an
+            // unhandled exception on the stream.
+            .on('error', () => {}),
           checksumBitmask & ~ChecksumBitmask.CRC32,
         );
+
         const archiveEntry = await ArchiveEntry.entryOf(
           this,
           entryFile.path,
