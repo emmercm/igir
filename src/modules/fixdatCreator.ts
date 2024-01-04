@@ -14,6 +14,7 @@ import Options from '../types/options.js';
 import OutputFactory from '../types/outputFactory.js';
 import ReleaseCandidate from '../types/releaseCandidate.js';
 import Module from './module.js';
+import fsPoly from "../polyfill/fsPoly.js";
 
 /**
  * Create a "fixdat" that contains every {@link Game} that has at least one {@link ROM} that wasn't
@@ -59,6 +60,9 @@ export default class FixdatCreator extends Module {
     const fixdatDir = this.options.shouldWrite()
       ? OutputFactory.getDir(this.options, originalDat)
       : process.cwd();
+    if (!await fsPoly.exists(fixdatDir)) {
+      await fsPoly.mkdir(fixdatDir, { recursive: true });
+    }
 
     // Construct a new DAT header
     const date = moment().format('YYYYMMDD-HHmmss');
