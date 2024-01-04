@@ -6,6 +6,7 @@ import moment from 'moment';
 
 import ProgressBar, { ProgressBarSymbol } from '../console/progressBar.js';
 import Constants from '../constants.js';
+import fsPoly from '../polyfill/fsPoly.js';
 import DAT from '../types/dats/dat.js';
 import Header from '../types/dats/logiqx/header.js';
 import LogiqxDAT from '../types/dats/logiqx/logiqxDat.js';
@@ -59,6 +60,9 @@ export default class FixdatCreator extends Module {
     const fixdatDir = this.options.shouldWrite()
       ? OutputFactory.getDir(this.options, originalDat)
       : process.cwd();
+    if (!await fsPoly.exists(fixdatDir)) {
+      await fsPoly.mkdir(fixdatDir, { recursive: true });
+    }
 
     // Construct a new DAT header
     const date = moment().format('YYYYMMDD-HHmmss');
