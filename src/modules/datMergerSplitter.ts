@@ -49,7 +49,7 @@ export default class DATMergerSplitter extends Module {
     await this.progressBar.reset(dat.getGames().length);
 
     const newGames = dat.getParents()
-      .flatMap((parent) => this.mergeParent(parent, gameNamesToGames));
+      .flatMap((parent) => this.mergeParent(dat, parent, gameNamesToGames));
     const newDat = new LogiqxDAT(new Header({
       ...dat.getHeader(),
       romNamesContainDirectories: this.options.getMergeRoms() === MergeMode.MERGED,
@@ -60,7 +60,7 @@ export default class DATMergerSplitter extends Module {
     return newDat;
   }
 
-  private mergeParent(parent: Parent, gameNamesToGames: Map<string, Game>): Game[] {
+  private mergeParent(dat: DAT, parent: Parent, gameNamesToGames: Map<string, Game>): Game[] {
     let games = parent.getGames();
 
     // Sanitization
@@ -108,13 +108,17 @@ export default class DATMergerSplitter extends Module {
           let biosGame = gameNamesToGames.get(game.getBios());
           if (!biosGame) {
             // Invalid romOf attribute, external BIOS not found
+            this.progressBar.logWarn(`${dat.getNameShort()}: ${game.getName()} references an invalid BIOS: ${game.getBios()}`);
             return game;
           }
-          // Only BIOS ROMs in the BIOS parent should be considered. This accounts for clones that
-          // reference their non-BIOS parent as their 'romOf'.
-          biosGame = biosGame.withProps({
-            rom: biosGame.getRoms().filter((rom) => rom.getBios()),
-          });
+          // If the referenced `romOf` game is not a BIOS, then it must be a parent game.
+          // Reduce the non-BIOS parent to only its BIOS ROMs, so that they can be excluded from
+          // the child.
+          if (!biosGame.isBios()) {
+            biosGame = biosGame.withProps({
+              rom: biosGame.getRoms().filter((rom) => rom.getBios()),
+            });
+          }
 
           return game.withProps({
             rom: DATMergerSplitter.diffGameRoms(biosGame, game),
@@ -136,6 +140,7 @@ export default class DATMergerSplitter extends Module {
           const parentGame = gameNamesToGames.get(game.getParent());
           if (!parentGame) {
             // Invalid cloneOf attribute, parent not found
+            this.progressBar.logWarn(`${dat.getNameShort()}: ${game.getName()} references an invalid parent: ${game.getParent()}`);
             return game;
           }
 
