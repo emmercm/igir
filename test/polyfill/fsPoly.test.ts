@@ -35,15 +35,15 @@ describe('isSamba', () => {
     os.devNull,
     'test',
     path.resolve('test'),
-  ])('should return false: %s', async (filePath) => {
-    await expect(fsPoly.isSamba(filePath)).resolves.toEqual(false);
+  ])('should return false: %s', (filePath) => {
+    expect(fsPoly.isSamba(filePath)).toEqual(false);
   });
 
   test.each([
     '//foo/bar',
     '\\\\foo\\bar',
-  ])('should return true: %s', async (filePath) => {
-    await expect(fsPoly.isSamba(filePath)).resolves.toEqual(true);
+  ])('should return true: %s', (filePath) => {
+    expect(fsPoly.isSamba(filePath)).toEqual(true);
   });
 });
 
