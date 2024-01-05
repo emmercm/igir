@@ -56,21 +56,43 @@ export default class FsPoly {
     }
   }
 
-  static async disks(): Promise<string[]> {
-    const disks = await nodeDiskInfo.getDiskInfo();
-    return disks
-      .filter((drive) => drive.available > 0)
-      .map((drive) => drive.mounted)
-      // Sort by mount points with the deepest number of subdirectories first
-      .sort((a, b) => b.split(/[\\/]/).length - a.split(/[\\/]/).length);
+  static async disks(attempt = 1): Promise<string[]> {
+    try {
+      return (await nodeDiskInfo.getDiskInfo())
+        .filter((drive) => drive.available > 0)
+        .map((drive) => drive.mounted)
+        // Sort by mount points with the deepest number of subdirectories first
+        .sort((a, b) => b.split(/[\\/]/).length - a.split(/[\\/]/).length);
+    } catch (error) {
+      if (!['EBADF'].includes((error as NodeJS.ErrnoException).code ?? '')
+        || attempt >= 3
+      ) {
+        throw error;
+      }
+    }
+
+    await new Promise((resolve) => {
+      setTimeout(resolve, Math.random() * (2 ** (attempt - 1) * 100));
+    });
+    return this.disks(attempt + 1);
   }
 
-  static disksSync(): string[] {
-    return nodeDiskInfo.getDiskInfoSync()
-      .filter((drive) => drive.available > 0)
-      .map((drive) => drive.mounted)
-      // Sort by mount points with the deepest number of subdirectories first
-      .sort((a, b) => b.split(/[\\/]/).length - a.split(/[\\/]/).length);
+  static disksSync(attempt = 1): string[] {
+    try {
+      return nodeDiskInfo.getDiskInfoSync()
+        .filter((drive) => drive.available > 0)
+        .map((drive) => drive.mounted)
+        // Sort by mount points with the deepest number of subdirectories first
+        .sort((a, b) => b.split(/[\\/]/).length - a.split(/[\\/]/).length);
+    } catch (error) {
+      if (!['EBADF'].includes((error as NodeJS.ErrnoException).code ?? '')
+        || attempt >= 3
+      ) {
+        throw error;
+      }
+    }
+
+    return this.disksSync(attempt + 1);
   }
 
   /**
