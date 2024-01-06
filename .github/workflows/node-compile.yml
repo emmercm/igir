@@ -125,7 +125,7 @@ jobs:
       - if: ${{ github.event_name != 'pull_request' }}
         uses: actions/upload-artifact@v4
         with:
-          name: ${{ matrix.os }}
+          name: ${{ env.BIN_OUTPUT }}
           path: ${{ env.BIN_OUTPUT }}
           if-no-files-found: error
 
@@ -147,10 +147,7 @@ jobs:
       - uses: softprops/action-gh-release@v1
         with:
           tag_name: v${{ env.NPM_PKG_VERSION }}
-          files: |
-            ubuntu/*
-            macos/*
-            windows/*
+          files: igir-*/*
 
   # !!! This check should be required by GitHub !!!
   compile-status-check:
