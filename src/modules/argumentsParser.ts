@@ -295,7 +295,7 @@ export default class ArgumentsParser {
       })
       .option('dir-letter', {
         group: groupRomOutput,
-        description: 'Group games in an output subdirectory by the first letters in their name',
+        description: 'Group games in an output subdirectory by the first --dir-letter-count letters in their name',
         type: 'boolean',
       })
       .option('dir-letter-count', {
@@ -309,7 +309,7 @@ export default class ArgumentsParser {
       })
       .option('dir-letter-limit', {
         group: groupRomOutput,
-        description: 'Limit the number ROMs in letter subdirectories, splitting into multiple if necessary',
+        description: 'Limit the number games in letter subdirectories, splitting into multiple subdirectories if necessary',
         type: 'number',
         coerce: (val: number) => Math.max(ArgumentsParser.getLastValue(val), 1),
         requiresArg: true,
@@ -317,7 +317,7 @@ export default class ArgumentsParser {
       })
       .option('dir-game-subdir', {
         group: groupRomOutput,
-        description: 'Append the name of the game as an output directory depending on its ROMs',
+        description: 'Append the name of the game as an output subdirectory depending on its ROMs',
         choices: Object.keys(GameSubdirMode)
           .filter((mode) => Number.isNaN(Number(mode)))
           .map((mode) => mode.toLowerCase()),
