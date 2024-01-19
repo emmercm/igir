@@ -507,6 +507,13 @@ export default class Options implements OptionsProps {
   }
 
   /**
+   * Was the 'dir2dat' command provided?
+   */
+  shouldDir2Dat(): boolean {
+    return this.getCommands().has('dir2dat');
+  }
+
+  /**
    * Was the 'fixdat' command provided?
    */
   shouldFixdat(): boolean {
@@ -788,6 +795,7 @@ export default class Options implements OptionsProps {
   async scanOutputFilesWithoutCleanExclusions(
     outputDirs: string[],
     writtenFiles: File[],
+    walkCallback?: FsWalkCallback,
   ): Promise<string[]> {
     // Written files that shouldn't be cleaned
     const writtenFilesNormalized = new Set(writtenFiles
@@ -797,7 +805,7 @@ export default class Options implements OptionsProps {
     const cleanExcludedFilesNormalized = new Set((await this.scanCleanExcludeFiles())
       .map((filePath) => path.normalize(filePath)));
 
-    return (await Options.scanPaths(outputDirs))
+    return (await Options.scanPaths(outputDirs, walkCallback, false))
       .map((filePath) => path.normalize(filePath))
       .filter((filePath) => !writtenFilesNormalized.has(filePath))
       .filter((filePath) => !cleanExcludedFilesNormalized.has(filePath));

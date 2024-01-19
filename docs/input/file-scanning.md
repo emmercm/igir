@@ -3,7 +3,7 @@
 `igir` has a few options to specify input files, as well as files to exclude:
 
 - ROMs: `--input <path>` (required), `--input-exclude <path>`
-- [DATs](dats.md): `--dat <path>`, `--dat-exclude <path>`
+- [DATs](../dats/overview.md): `--dat <path>`, `--dat-exclude <path>`
 - [ROM patches](../roms/patching.md): `--patch <path>`, `--patch-exclude <path>`
 
 ## Archive files

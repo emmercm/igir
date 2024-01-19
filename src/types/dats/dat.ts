@@ -1,3 +1,6 @@
+import xml2js from 'xml2js';
+
+import FsPoly from '../../polyfill/fsPoly.js';
 import Game from './game.js';
 import Header from './logiqx/header.js';
 import Parent from './parent.js';
@@ -93,7 +96,7 @@ export default abstract class DAT {
       filename += ` (${this.getHeader().getVersion()})`;
     }
     filename += '.dat';
-    return filename.trim();
+    return FsPoly.makeLegal(filename.trim());
   }
 
   /**
@@ -134,7 +137,32 @@ export default abstract class DAT {
   }
 
   /**
-   * Return a short string representation of this {@link LogiqxDAT}.
+   * Serialize this {@link DAT} to the file contents of an XML file.
+   */
+  toXmlDat(): string {
+    return new xml2js.Builder({
+      renderOpts: { pretty: true, indent: '\t', newline: '\n' },
+      xmldec: { version: '1.0' },
+      doctype: {
+        pubID: '-//Logiqx//DTD ROM Management Datafile//EN',
+        sysID: 'http://www.logiqx.com/Dats/datafile.dtd',
+      },
+      cdata: true,
+    }).buildObject(this.toXmlDatObj());
+  }
+
+  private toXmlDatObj(): object {
+    const parentNames = new Set(this.getParents().map((parent) => parent.getName()));
+    return {
+      datafile: {
+        header: this.getHeader().toXmlDatObj(),
+        game: this.getGames().map((game) => game.toXmlDatObj(parentNames)),
+      },
+    };
+  }
+
+  /**
+   * Return a short string representation of this {@link DAT}.
    */
   toString(): string {
     return `{"header": ${this.getHeader().toString()}, "games": ${this.getGames().length}}`;

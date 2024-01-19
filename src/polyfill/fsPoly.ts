@@ -14,7 +14,7 @@ export default class FsPoly {
   static readonly FILE_READING_CHUNK_SIZE = 1024 * 1024; // 1MiB
 
   // Assume that all drives we're reading from or writing to were already mounted at startup
-  public static readonly DRIVE_MOUNTS = FsPoly.disksSync();
+  public static readonly DRIVES = nodeDiskInfo.getDiskInfoSync();
 
   static async canSymlink(tempDir: string): Promise<boolean> {
     const source = await this.mktemp(path.join(tempDir, 'source'));
@@ -56,17 +56,8 @@ export default class FsPoly {
     }
   }
 
-  static async disks(): Promise<string[]> {
-    const disks = await nodeDiskInfo.getDiskInfo();
-    return disks
-      .filter((drive) => drive.available > 0)
-      .map((drive) => drive.mounted)
-      // Sort by mount points with the deepest number of subdirectories first
-      .sort((a, b) => b.split(/[\\/]/).length - a.split(/[\\/]/).length);
-  }
-
   static disksSync(): string[] {
-    return nodeDiskInfo.getDiskInfoSync()
+    return FsPoly.DRIVES
       .filter((drive) => drive.available > 0)
       .map((drive) => drive.mounted)
       // Sort by mount points with the deepest number of subdirectories first
@@ -97,15 +88,14 @@ export default class FsPoly {
     }
   }
 
-  static async isSamba(filePath: string): Promise<boolean> {
+  static isSamba(filePath: string): boolean {
     const normalizedPath = filePath.replace(/[\\/]/g, path.sep);
     if (normalizedPath.startsWith(`${path.sep}${path.sep}`) && normalizedPath !== os.devNull) {
       return true;
     }
 
     const resolvedPath = path.resolve(normalizedPath);
-    const drives = await nodeDiskInfo.getDiskInfo();
-    const filePathDrive = drives
+    const filePathDrive = this.DRIVES
       // Sort by mount points with the deepest number of subdirectories first
       .sort((a, b) => b.mounted.split(/[\\/]/).length - a.mounted.split(/[\\/]/).length)
       .find((drive) => resolvedPath.startsWith(drive.mounted));
@@ -245,8 +235,9 @@ export default class FsPoly {
     if (path.dirname(oneResolved) === path.dirname(twoResolved)) {
       return false;
     }
-    return FsPoly.DRIVE_MOUNTS.find((mount) => oneResolved.startsWith(mount))
-      !== FsPoly.DRIVE_MOUNTS.find((mount) => twoResolved.startsWith(mount));
+    const driveMounts = this.disksSync();
+    return driveMounts.find((mount) => oneResolved.startsWith(mount))
+      !== driveMounts.find((mount) => twoResolved.startsWith(mount));
   }
 
   static async readlink(pathLike: PathLike): Promise<string> {

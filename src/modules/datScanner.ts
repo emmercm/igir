@@ -18,6 +18,7 @@ import LogiqxDAT from '../types/dats/logiqx/logiqxDat.js';
 import MameDAT from '../types/dats/mame/mameDat.js';
 import ROM from '../types/dats/rom.js';
 import File from '../types/files/file.js';
+import { ChecksumBitmask } from '../types/files/fileChecksums.js';
 import FileFactory from '../types/files/fileFactory.js';
 import Options from '../types/options.js';
 import Scanner from './scanner.js';
@@ -60,7 +61,11 @@ export default class DATScanner extends Scanner {
     await this.progressBar.reset(datFilePaths.length);
 
     this.progressBar.logDebug('enumerating DAT archives');
-    const datFiles = await this.getFilesFromPaths(datFilePaths, this.options.getReaderThreads());
+    const datFiles = await this.getUniqueFilesFromPaths(
+      datFilePaths,
+      this.options.getReaderThreads(),
+      ChecksumBitmask.NONE,
+    );
     await this.progressBar.reset(datFiles.length);
 
     const downloadedDats = await this.downloadDats(datFiles);
@@ -87,7 +92,7 @@ export default class DATScanner extends Scanner {
         this.progressBar.logTrace(`${datFile.toString()}: downloading`);
         const downloadedDatFile = await datFile.downloadToTempPath('dat');
         this.progressBar.logTrace(`${datFile.toString()}: downloaded to ${downloadedDatFile.toString()}`);
-        return await FileFactory.filesFrom(downloadedDatFile.getFilePath());
+        return await FileFactory.filesFrom(downloadedDatFile.getFilePath(), ChecksumBitmask.NONE);
       } catch (error) {
         this.progressBar.logWarn(`${datFile.toString()}: failed to download: ${error}`);
         return [];
@@ -120,7 +125,7 @@ export default class DATScanner extends Scanner {
       },
     ))
       .filter(ArrayPoly.filterNotNullish)
-      .map((dat) => DATScanner.sanitizeDat(dat));
+      .map((dat) => this.sanitizeDat(dat));
 
     return results
       .filter((dat) => {
@@ -440,12 +445,12 @@ export default class DATScanner extends Scanner {
     });
   }
 
-  private static sanitizeDat(dat: DAT): DAT {
+  private sanitizeDat(dat: DAT): DAT {
     const games = dat.getGames()
       .map((game) => {
         const roms = game.getRoms()
           // ROMs have to have filenames and sizes
-          .filter((rom) => rom.name && rom.size > 0);
+          .filter((rom) => this.options.shouldDir2Dat() || (rom.name && rom.size > 0));
         return game.withProps({ rom: roms });
       });
 

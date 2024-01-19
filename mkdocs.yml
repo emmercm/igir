@@ -71,14 +71,18 @@ nav:
             - usage/hardware/analogue-pocket.md
           - Flash Carts:
             - usage/hardware/everdrive.md
+            - usage/hardware/ezflash.md
           - Game Consoles:
             - usage/console/gamecube.md
             - usage/console/ps2.md
           - usage/arcade.md
           - usage/personal.md
+      - DATs:
+          - dats/overview.md
+          - dats/fixdats.md
+          - dats/dir2dat.md
       - File Inputs:
           - input/file-scanning.md
-          - input/dats.md
           - input/reading-archives.md
       - ROM Processing:
           - roms/filtering-preferences.md
@@ -119,10 +123,11 @@ plugins:
   - redirects:
       redirect_maps:
         'archives.md': 'input/reading-archives.md'
-        'dats.md': 'input/dats.md'
+        'dats.md': 'dats/overview.md'
         'examples.md': 'usage/collection-sorting.md'
         'file-scanning.md': 'input/file-scanning.md'
         'input/archives.md': 'input/reading-archives.md'
+        'input/dats.md': 'dats/overview.md'
         'output/arcade.md': 'usage/arcade.md'
         'reporting.md': 'output/reporting.md'
         'rom-filtering.md': 'roms/filtering-preferences.md'

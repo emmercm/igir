@@ -787,8 +787,8 @@ describe('with inferred DATs', () => {
         [path.join('onetwothree', 'one.rom'), 'f817a89f'],
         [path.join('onetwothree', 'three.rom'), 'ff46c5d8'],
         [path.join('onetwothree', 'two.rom'), '96170874'],
-        ['speed_test_v51.sfc', '8beffd94'],
-        ['speed_test_v51.smc', '9adca6cc'],
+        [path.join('speed_test_v51', 'speed_test_v51.sfc'), '8beffd94'],
+        [path.join('speed_test_v51', 'speed_test_v51.smc'), '9adca6cc'],
         ['three.rom', 'ff46c5d8'],
         ['two.rom', '96170874'],
         ['unknown.rom', '377a7727'],
@@ -863,6 +863,7 @@ describe('with inferred DATs', () => {
         ['onetwothree.zip|one.rom', 'f817a89f'],
         ['onetwothree.zip|three.rom', 'ff46c5d8'],
         ['onetwothree.zip|two.rom', '96170874'],
+        ['speed_test_v51.zip|speed_test_v51.sfc', '8beffd94'],
         ['speed_test_v51.zip|speed_test_v51.smc', '9adca6cc'],
         ['three.zip|three.rom', 'ff46c5d8'],
         ['two.zip|two.rom', '96170874'],
@@ -948,6 +949,56 @@ describe('with inferred DATs', () => {
         'fds_joypad_test.fds.zip',
         'speed_test_v51.smc',
       ]);
+      expect(result.cleanedFiles).toHaveLength(0);
+    });
+  });
+
+  it('should dir2dat', async () => {
+    await copyFixturesToTemp(async (inputTemp, outputTemp) => {
+      const result = await runIgir({
+        commands: ['dir2dat'],
+        dat: [path.join(inputTemp, 'dats')],
+        input: [path.join(inputTemp, 'roms')],
+        output: outputTemp,
+        dirDatName: true,
+      });
+
+      const writtenDir2Dats = result.cwdFilesAndCrcs
+        .map(([filePath]) => filePath)
+        .filter((filePath) => filePath.endsWith('.dat'));
+
+      // Only the "roms" input path was provided
+      expect(writtenDir2Dats).toHaveLength(1);
+      expect(writtenDir2Dats[0]).toMatch(/^roms \([0-9]{8}-[0-9]{6}\)\.dat$/);
+
+      expect(result.movedFiles).toHaveLength(0);
+      expect(result.cleanedFiles).toHaveLength(0);
+    });
+  });
+
+  test.each([
+    'copy',
+    'move',
+    'symlink',
+  ])('should %s, dir2dat, and clean', async (command) => {
+    await copyFixturesToTemp(async (inputTemp, outputTemp) => {
+      const result = await runIgir({
+        commands: [command, 'dir2dat', 'clean'],
+        dat: [path.join(inputTemp, 'dats')],
+        input: [path.join(inputTemp, 'roms')],
+        output: outputTemp,
+        dirDatName: true,
+      });
+
+      const writtenDir2Dats = result.outputFilesAndCrcs
+        .map(([filePath]) => filePath)
+        .filter((filePath) => filePath.endsWith('.dat'));
+
+      // Only the "roms" input path was provided
+      expect(writtenDir2Dats).toHaveLength(1);
+      expect(writtenDir2Dats[0]).toMatch(/^roms[\\/]roms \([0-9]{8}-[0-9]{6}\)\.dat$/);
+
+      expect(result.cwdFilesAndCrcs).toHaveLength(0);
       expect(result.cleanedFiles).toHaveLength(0);
     });
   });

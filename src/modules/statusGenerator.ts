@@ -22,15 +22,13 @@ export default class StatusGenerator extends Module {
   /**
    * Generate a {@link DATStatus} for the {@link DAT}.
    */
-  async generate(
+  generate(
     dat: DAT,
     parentsToReleaseCandidates: Map<Parent, ReleaseCandidate[]>,
-  ): Promise<DATStatus> {
+  ): DATStatus {
     this.progressBar.logInfo(`${dat.getNameShort()}: generating ROM statuses`);
 
     const datStatus = new DATStatus(dat, this.options, parentsToReleaseCandidates);
-
-    await this.progressBar.done(datStatus.toConsole(this.options));
 
     this.progressBar.logInfo(`${dat.getNameShort()}: done generating ROM statuses`);
     return datStatus;

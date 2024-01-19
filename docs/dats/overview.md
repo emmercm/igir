@@ -1,4 +1,4 @@
-# DATs
+# DAT Overview
 
 ## Overview
 
@@ -80,7 +80,7 @@ There have been a few DAT-like formats developed over the years. `igir` supports
 
 ## DAT input options
 
-The `--dat <path>` supports files, archives, directories, and globs like any of the other file options. See the [file scanning page](file-scanning.md) for more information.
+The `--dat <path>` supports files, archives, directories, and globs like any of the other file options. See the [file scanning page](../input/file-scanning.md) for more information.
 
 `igir` also supports URLs to DAT files and archives. This is helpful to make sure you're always using the most up-to-date version of a DAT hosted on sites such as GitHub. For example:
 
@@ -162,56 +162,3 @@ The rule-of-thumb with DATs and arcade emulation is: your emulator probably has 
 If you are using a desktop frontend such as [RetroArch](../usage/desktop/retroarch.md), it may come with multiple versions of the same emulator, and it is unlikely that any of them is the most recent version. Follow the frontend's documentation to location or download the correct DAT to use with each emulator.
 
 See the [arcade page](../usage/arcade.md) for more information on building & re-building arcade ROM sets.
-
-## Fixdats
-
-"Fixdats" are DATs that contain only ROMs that are missing from your collection. Fixdats are derived from some other DAT (see above for obtaining DATs), containing only a subset of the ROMs. Fixdats are specific to the state of each person's ROM collection, so they aren't necessarily meaningful to other people.
-
-Fixdats help you find files missing from your collection, and they can be used to generate a collection of those files once you've found them. This sub-collection of files can then be merged back into your main collection.
-
-The `fixdat` command creates a [Logiqx XML](http://www.logiqx.com/DatFAQs/) DAT for every input DAT (the `--dat <path>` option) that is missing ROMs. When writing (`copy`, `move`, and `symlink` commands), the fixdat will be written to the output directory, otherwise it will be written to the working directory.
-
-For example:
-
-=== ":simple-windowsxp: Windows"
-
-    ```batch
-    igir copy zip fixdat ^
-      --dat "Nintendo - Game Boy.dat" ^
-      --dat "Nintendo - Game Boy Advance.dat" ^
-      --dat "Nintendo - Game Boy Color.dat" ^
-      --input ROMs\ ^
-      --output ROMs-Sorted\ ^
-      --fixdat
-    ```
-
-=== ":simple-apple: macOS"
-
-    ```shell
-    igir copy zip fixdat \
-      --dat "Nintendo - Game Boy.dat" \
-      --dat "Nintendo - Game Boy Advance.dat" \
-      --dat "Nintendo - Game Boy Color.dat" \
-      --input ROMs/ \
-      --output ROMs-Sorted/
-    ```
-
-=== ":simple-linux: Linux"
-
-    ```shell
-    igir copy zip fixdat \
-      --dat "Nintendo - Game Boy.dat" \
-      --dat "Nintendo - Game Boy Advance.dat" \
-      --dat "Nintendo - Game Boy Color.dat" \
-      --input ROMs/ \
-      --output ROMs-Sorted/
-    ```
-
-may produce some fixdats in the `ROMs-Sorted/` directory, if any of the input DATs have ROMs that weren't found in the `ROMs/` input directory:
-
-```text
-ROMs-Sorted/
-├── Nintendo - Game Boy (20230414-173400) fixdat.dat
-├── Nintendo - Game Boy Advance (20230414-173400) fixdat.dat
-└── Nintendo - Game Boy Color (20230414-173400) fixdat.dat
-```

@@ -55,7 +55,7 @@ async function runFixdatCreator(
   parentsToCandidates: Map<Parent, ReleaseCandidate[]>,
 ): Promise<DAT | undefined> {
   const fixdatPath = await new FixdatCreator(new Options(optionsProps), new ProgressBarFake())
-    .write(dat, parentsToCandidates);
+    .create(dat, parentsToCandidates);
   if (!fixdatPath) {
     return undefined;
   }
