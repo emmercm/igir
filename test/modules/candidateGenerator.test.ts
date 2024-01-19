@@ -354,8 +354,8 @@ describe('with different input files for every game ROM', () => {
   const filePromises = [
     File.fileOf('one.rom', 1, { crc32: '12345678' }),
     ArchiveEntry.entryOf(new Tar('1.tar'), '1.rom', 1, { crc32: '12345678' }), // duplicate
-    ArchiveEntry.entryOf(new Rar('a.7z'), 'a.rom', 2, { crc32: 'abcdef90' }),
-    ArchiveEntry.entryOf(new Rar('b.7z'), 'b.rom', 3, { crc32: '09876543' }),
+    ArchiveEntry.entryOf(new Rar('a.rar'), 'a.rom', 2, { crc32: 'abcdef90' }),
+    ArchiveEntry.entryOf(new Rar('b.rar'), 'b.rom', 3, { crc32: '09876543' }),
   ];
 
   test.each(['zip', 'extract'])('should generate candidates when all ROMs for a game are in different files: %s', async (command) => {
@@ -368,7 +368,7 @@ describe('with different input files for every game ROM', () => {
     // Then there should still be 3 parents, with the input -> output:
     //  (nothing) -> game with no ROMs
     //  one.rom -> game with one ROM
-    //  a.7z|a.rom & b.7z|b.rom -> game with two ROMs (either in a folder or a zip, together)
+    //  a.rar|a.rom & b.rar|b.rom -> game with two ROMs (either in a folder or a zip, together)
     expect(parentsToCandidates.size).toEqual(3);
     const candidates = [...parentsToCandidates.values()];
 
@@ -398,7 +398,7 @@ describe('with different input files for every game ROM', () => {
     // Then there should still be 3 parents, with the input -> output:
     //  (nothing) -> game with no ROMs
     //  one.rom -> one.rom
-    //  a.7z|a.rom & b.7z|b.rom -> game with two ROMs.7z -- CONFLICT!
+    //  a.rar|a.rom & b.rar|b.rom -> game with two ROMs.rar -- CONFLICT!
     // Because we're not extracting or zipping, two different input 7z files wanted to write to the
     //  same output file, which is a problem, so the parent resulted in no candidates
     expect(parentsToCandidates.size).toEqual(3);
