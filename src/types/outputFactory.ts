@@ -334,7 +334,7 @@ export default class OutputFactory {
         .padEnd(options.getDirLetterCount(), 'A')
         .toUpperCase()
         .replace(/[^A-Z0-9]/g, '#');
-      // TODO(cemmer): only do this when not grouping letters together
+      // TODO(cemmer): only do this when not --dir-letter-group
       letters = letters.replace(/[^A-Z]/g, '#');
 
       const existing = map.get(letters) ?? new Set();
@@ -346,7 +346,7 @@ export default class OutputFactory {
     [...lettersToFilenames.entries()]
       .sort((a, b) => a[0].localeCompare(b[0]))
       .reduce((arr, [letter, filenames]) => {
-        // TODO: group letters together
+        // TODO(cemmer): --dir-letter-group
         const tuples = [...filenames.values()]
           .sort()
           .map((filename) => [letter, filename] satisfies [string, string]);
