@@ -343,16 +343,6 @@ export default class OutputFactory {
       return map;
     }, new Map<string, Set<string>>());
 
-    [...lettersToFilenames.entries()]
-      .sort((a, b) => a[0].localeCompare(b[0]))
-      .reduce((arr, [letter, filenames]) => {
-        // TODO(cemmer): --dir-letter-group
-        const tuples = [...filenames.values()]
-          .sort()
-          .map((filename) => [letter, filename] satisfies [string, string]);
-        return [...arr, ...tuples];
-      }, [] as [string, string][]);
-
     // Split the letter directories, if needed
     if (options.getDirLetterLimit()) {
       lettersToFilenames = [...lettersToFilenames.entries()]
