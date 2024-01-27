@@ -67,7 +67,7 @@
     "docs:serve": "mkdocs serve"
   },
   "dependencies": {
-    "@fast-csv/format": "4.3.5",
+    "@fast-csv/format": "5.0.0",
     "@fast-csv/parse": "5.0.0",
     "@node-rs/crc32": "1.9.2",
     "7zip-min": "1.4.4",
