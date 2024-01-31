@@ -309,7 +309,7 @@ export default class ArgumentsParser {
       })
       .option('dir-letter-limit', {
         group: groupRomOutput,
-        description: 'Limit the number games in letter subdirectories, splitting into multiple subdirectories if necessary',
+        description: 'Limit the number of games in letter subdirectories, splitting into multiple subdirectories if necessary',
         type: 'number',
         coerce: (val: number) => Math.max(ArgumentsParser.getLastValue(val), 1),
         requiresArg: true,
