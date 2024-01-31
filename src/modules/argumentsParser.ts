@@ -309,7 +309,7 @@ export default class ArgumentsParser {
       .check((checkArgv) => {
         // Re-implement `implies: 'dir-letter'`, which isn't possible with a default value
         if (checkArgv['dir-letter-count'] && !checkArgv['dir-letter']) {
-          throw new Error('Missing dependent arguments: dir-letter-count -> dir-letter');
+          throw new Error('Missing dependent arguments:\n dir-letter-count -> dir-letter');
         }
         return true;
       })
