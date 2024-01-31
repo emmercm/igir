@@ -348,6 +348,8 @@ describe('options', () => {
   });
 
   it('should parse "dir-letter-count"', () => {
+    expect(() => argumentsParser.parse([...dummyCommandAndRequiredArgs, '--dir-letter-count'])).toThrow(/not enough arguments/i);
+    expect(() => argumentsParser.parse([...dummyCommandAndRequiredArgs, '--dir-letter-count', '1'])).toThrow(/dependent|implication/i);
     expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--dir-letter', '--dir-letter-count', '-1']).getDirLetterCount()).toEqual(1);
     expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--dir-letter', '--dir-letter-count', '0']).getDirLetterCount()).toEqual(1);
     expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--dir-letter', '--dir-letter-count', '1']).getDirLetterCount()).toEqual(1);

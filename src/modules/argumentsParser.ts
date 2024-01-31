@@ -304,8 +304,14 @@ export default class ArgumentsParser {
         type: 'number',
         coerce: (val: number) => Math.max(ArgumentsParser.getLastValue(val), 1),
         requiresArg: true,
-        // Note: can't `implies: 'dir-letter'` with a default value set
         default: 1,
+      })
+      .check((checkArgv) => {
+        // Re-implement `implies: 'dir-letter'`, which isn't possible with a default value
+        if (checkArgv['dir-letter-count'] && !checkArgv['dir-letter']) {
+          throw new Error('Missing dependent arguments: dir-letter-count -> dir-letter');
+        }
+        return true;
       })
       .option('dir-letter-limit', {
         group: groupRomOutput,
