@@ -12,6 +12,7 @@ import Igir from './src/igir.js';
 import ArgumentsParser from './src/modules/argumentsParser.js';
 import EndOfLifeChecker from './src/modules/endOfLifeChecker.js';
 import UpdateChecker from './src/modules/updateChecker.js';
+import Options from './src/types/options.js';
 
 // Monkey-patch 'fs' to help prevent Windows EMFILE errors
 gracefulFs.gracefulify(realFs);
@@ -32,13 +33,23 @@ gracefulFs.gracefulify(realFs);
     process.exit(0);
   });
 
+  // Parse CLI arguments
+  let options: Options;
   try {
-    const options = new ArgumentsParser(logger).parse(process.argv.slice(2));
+    options = new ArgumentsParser(logger).parse(process.argv.slice(2));
     if (options.getHelp()) {
       process.exit(0);
     }
     logger.setLogLevel(options.getLogLevel());
+  } catch (error) {
+    // Explicitly do not log the stack trace, for readability
+    logger.error(error);
+    logger.newLine();
+    process.exit(1);
+  }
 
+  // Start the main process
+  try {
     new EndOfLifeChecker(logger).check(process.version);
     new UpdateChecker(logger).check();
 
@@ -47,6 +58,7 @@ gracefulFs.gracefulify(realFs);
   } catch (error) {
     await ProgressBarCLI.stop();
     if (error instanceof Error && error.stack) {
+      // Log the stack trace to help with bug reports
       logger.error(error.stack);
     } else {
       logger.error(error);
