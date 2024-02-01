@@ -113,6 +113,7 @@ describe('options', () => {
     expect(options.getDirLetter()).toEqual(false);
     expect(options.getDirLetterCount()).toEqual(1);
     expect(options.getDirLetterLimit()).toEqual(0);
+    expect(options.getDirLetterGroup()).toEqual(false);
     expect(options.getDirGameSubdir()).toEqual(GameSubdirMode.MULTIPLE);
     expect(options.getOverwrite()).toEqual(false);
     expect(options.getOverwriteInvalid()).toEqual(false);
@@ -366,6 +367,16 @@ describe('options', () => {
     expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--dir-letter', '--dir-letter-limit', '1']).getDirLetterLimit()).toEqual(1);
     expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--dir-letter', '--dir-letter-limit', '5']).getDirLetterLimit()).toEqual(5);
     expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--dir-letter', '--dir-letter-limit', '5', '--dir-letter-limit', '10']).getDirLetterLimit()).toEqual(10);
+  });
+
+  it('should parse "dir-letter-group"', () => {
+    expect(() => argumentsParser.parse([...dummyCommandAndRequiredArgs, '--dir-letter-group'])).toThrow(/dependent|implication/i);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--dir-letter', '--dir-letter-limit', '1', '--dir-letter-group']).getDirLetterGroup()).toEqual(true);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--dir-letter', '--dir-letter-limit', '1', '--dir-letter-group', 'true']).getDirLetterGroup()).toEqual(true);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--dir-letter', '--dir-letter-limit', '1', '--dir-letter-group', 'false']).getDirLetterGroup()).toEqual(false);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--dir-letter', '--dir-letter-limit', '1', '--dir-letter-group', '--dir-letter-group']).getDirLetterGroup()).toEqual(true);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--dir-letter', '--dir-letter-limit', '1', '--dir-letter-group', 'false', '--dir-letter-group', 'true']).getDirLetterGroup()).toEqual(true);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--dir-letter', '--dir-letter-limit', '1', '--dir-letter-group', 'true', '--dir-letter-group', 'false']).getDirLetterGroup()).toEqual(false);
   });
 
   it('should parse "dir-game-subdir"', () => {

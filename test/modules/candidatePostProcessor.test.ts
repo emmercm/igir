@@ -164,13 +164,138 @@ describe('dirLetterLimit', () => {
       path.join('Output', 'D2', 'disk1_Confident.rom'),
       path.join('Output', 'D3', 'disk1_Cool.rom'),
     ]],
-  ])('it should split the letter dirs: %s', async (limit, expectedFilePaths) => {
+  ])('it should split the letter dirs based on limit: %s', async (dirLetterLimit, expectedFilePaths) => {
     const options = new Options({
       commands: ['copy'],
       output: 'Output',
       dirLetter: true,
       dirLetterCount: 1,
-      dirLetterLimit: limit,
+      dirLetterLimit,
+      dirGameSubdir: GameSubdirMode[GameSubdirMode.MULTIPLE].toLowerCase(),
+    });
+
+    const parentsToCandidates = await runCandidatePostProcessor(options);
+
+    const outputFilePaths = [...parentsToCandidates.values()]
+      .flat()
+      .flatMap((releaseCandidate) => releaseCandidate.getRomsWithFiles())
+      .map((romWithFiles) => romWithFiles.getOutputFile().getFilePath())
+      .sort();
+    expect(outputFilePaths).toEqual(expectedFilePaths);
+  });
+});
+
+describe('dirLetterGroup', () => {
+  test.each([
+    [1, undefined, [
+      // This isn't realistic, but we should have a test case for it
+      'Output/A-D/Admirable.rom',
+      'Output/A-D/Adorable.rom',
+      'Output/A-D/Adventurous.rom',
+      'Output/A-D/Amazing.rom',
+      'Output/A-D/Awesome.rom',
+      'Output/A-D/Best.rom',
+      'Output/A-D/Brilliant.rom',
+      'Output/A-D/Dainty/Dainty (Track 01).bin',
+      'Output/A-D/Dainty/Dainty.cue',
+      'Output/A-D/Daring/Daring (Track 01).bin',
+      'Output/A-D/Daring/Daring.cue',
+      'Output/A-D/Dazzling/Dazzling (Track 01).bin',
+      'Output/A-D/Dazzling/Dazzling.cue',
+      'Output/A-D/Dedicated/Dedicated (Track 01).bin',
+      'Output/A-D/Dedicated/Dedicated.cue',
+      'Output/A-D/disk1_Cheerful.rom',
+      'Output/A-D/disk1_Confident.rom',
+      'Output/A-D/disk1_Cool.rom',
+    ]],
+    [1, 2, [
+      'Output/A-A1/Admirable.rom',
+      'Output/A-A1/Adorable.rom',
+      'Output/A-A2/Adventurous.rom',
+      'Output/A-A2/Amazing.rom',
+      'Output/A-B/Awesome.rom',
+      'Output/A-B/Best.rom',
+      'Output/B-D/Brilliant.rom',
+      'Output/B-D/Dainty/Dainty (Track 01).bin',
+      'Output/B-D/Dainty/Dainty.cue',
+      'Output/D-D1/Daring/Daring (Track 01).bin',
+      'Output/D-D1/Daring/Daring.cue',
+      'Output/D-D1/Dazzling/Dazzling (Track 01).bin',
+      'Output/D-D1/Dazzling/Dazzling.cue',
+      'Output/D-D2/Dedicated/Dedicated (Track 01).bin',
+      'Output/D-D2/Dedicated/Dedicated.cue',
+      'Output/D-D2/disk1_Cheerful.rom',
+      'Output/D-D3/disk1_Confident.rom',
+      'Output/D-D3/disk1_Cool.rom',
+    ]],
+    [1, 3, [
+      'Output/A-A/Admirable.rom',
+      'Output/A-A/Adorable.rom',
+      'Output/A-A/Adventurous.rom',
+      'Output/A-B/Amazing.rom',
+      'Output/A-B/Awesome.rom',
+      'Output/A-B/Best.rom',
+      'Output/B-D/Brilliant.rom',
+      'Output/B-D/Dainty/Dainty (Track 01).bin',
+      'Output/B-D/Dainty/Dainty.cue',
+      'Output/B-D/Daring/Daring (Track 01).bin',
+      'Output/B-D/Daring/Daring.cue',
+      'Output/D-D1/Dazzling/Dazzling (Track 01).bin',
+      'Output/D-D1/Dazzling/Dazzling.cue',
+      'Output/D-D1/Dedicated/Dedicated (Track 01).bin',
+      'Output/D-D1/Dedicated/Dedicated.cue',
+      'Output/D-D1/disk1_Cheerful.rom',
+      'Output/D-D2/disk1_Confident.rom',
+      'Output/D-D2/disk1_Cool.rom',
+    ]],
+    [2, 3, [
+      'Output/AD-AD/Admirable.rom',
+      'Output/AD-AD/Adorable.rom',
+      'Output/AD-AD/Adventurous.rom',
+      'Output/AM-BE/Amazing.rom',
+      'Output/AM-BE/Awesome.rom',
+      'Output/AM-BE/Best.rom',
+      'Output/BR-DA/Brilliant.rom',
+      'Output/BR-DA/Dainty/Dainty (Track 01).bin',
+      'Output/BR-DA/Dainty/Dainty.cue',
+      'Output/BR-DA/Daring/Daring (Track 01).bin',
+      'Output/BR-DA/Daring/Daring.cue',
+      'Output/DA-DI/Dazzling/Dazzling (Track 01).bin',
+      'Output/DA-DI/Dazzling/Dazzling.cue',
+      'Output/DA-DI/Dedicated/Dedicated (Track 01).bin',
+      'Output/DA-DI/Dedicated/Dedicated.cue',
+      'Output/DA-DI/disk1_Cheerful.rom',
+      'Output/DI-DI/disk1_Confident.rom',
+      'Output/DI-DI/disk1_Cool.rom',
+    ]],
+    [3, 4, [
+      'Output/ADM-AMA/Admirable.rom',
+      'Output/ADM-AMA/Adorable.rom',
+      'Output/ADM-AMA/Adventurous.rom',
+      'Output/ADM-AMA/Amazing.rom',
+      'Output/AWE-DAI/Awesome.rom',
+      'Output/AWE-DAI/Best.rom',
+      'Output/AWE-DAI/Brilliant.rom',
+      'Output/AWE-DAI/Dainty/Dainty (Track 01).bin',
+      'Output/AWE-DAI/Dainty/Dainty.cue',
+      'Output/DAR-DIS/Daring/Daring (Track 01).bin',
+      'Output/DAR-DIS/Daring/Daring.cue',
+      'Output/DAR-DIS/Dazzling/Dazzling (Track 01).bin',
+      'Output/DAR-DIS/Dazzling/Dazzling.cue',
+      'Output/DAR-DIS/Dedicated/Dedicated (Track 01).bin',
+      'Output/DAR-DIS/Dedicated/Dedicated.cue',
+      'Output/DAR-DIS/disk1_Cheerful.rom',
+      'Output/DIS-DIS/disk1_Confident.rom',
+      'Output/DIS-DIS/disk1_Cool.rom',
+    ]],
+  ])('it should group based on count & limit: %s, %s', async (dirLetterCount, dirLetterLimit, expectedFilePaths) => {
+    const options = new Options({
+      commands: ['copy'],
+      output: 'Output',
+      dirLetter: true,
+      dirLetterCount,
+      dirLetterLimit,
+      dirLetterGroup: true,
       dirGameSubdir: GameSubdirMode[GameSubdirMode.MULTIPLE].toLowerCase(),
     });
 
