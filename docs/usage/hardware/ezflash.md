@@ -42,7 +42,7 @@ Because flash carts are specific to a specific console, you can provide specific
       --no-bios
     ```
 
-you can then add some other output options such as `--dir-letter`, if desired.
+you can then add some other output options such as the [`--dir-letter` option](../../output/path-options.md), if desired.
 
 !!! warning
 
