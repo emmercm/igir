@@ -68,11 +68,15 @@ This token can be used to reference each core's specific directory in the SD car
 
 !!! note
 
-    The `--clean-exclude <path>` option in the above examples is so we don't accidentally "clean" (delete) the BIOS files for each core.
+    The `--dat-name-regex-exclude "/headerless/i"` option in the above examples is to exclude any "headered" No-Intro DATs. Some consoles such as NES have separate "headered" and "headerless" DATs, and they have duplicated ROM filenames, so we want to avoid writing different input files to the same output location.
 
 !!! note
 
-    The `--dat-name-regex-exclude "/headerless/i"` option in the above examples is to exclude any "headered" No-Intro DATs. Some consoles such as NES have separate "headered" and "headerless" DATs, and they have duplicated ROM filenames, so we want to avoid writing different input files to the same output location.
+    The `--dir-letter-limit 1000` option in the above example is because some cores won't read more than a certain number of files in one directory. See [output path options](../../output/path-options.md) for other options available.
+
+!!! note
+
+    The `--clean-exclude <path>` option in the above examples is so we don't accidentally "clean" (delete) the BIOS files for each core.
 
 Your SD card should look like this, likely with more cores:
 

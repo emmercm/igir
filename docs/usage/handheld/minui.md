@@ -29,7 +29,7 @@ MinUI supports many many systems and ROM formats. Check the folders [here (base)
 
 MinUI uses the names unter /Roms on the SD card in a more creative way than most other frontends. The folder names consist of a *UI name* and a *PAK name*. The *UI name* is used as the name shown in the User interface as a list item name, while the *PAK name* controls which software pack is used to open the files within. Files with the same *UI name* but different *PAK name* are listed in the same list in the UI but are opened with different PAKs. `igir` uses the vendor recommendations for the folder names with some exceptions.
 
-MinUI requires multi-file releases to be grouped into subfolders (bin/cue releases of the PS1 for example). It is recommended to use `--dir-game-subdir=multiple` - which is the default at this time.
+MinUI requires multi-file releases to be grouped into subdirectories (bin/cue releases of the PS1 for example). It is recommended to use the [`--dir-game-subdir multiple` option](../../output/path-options.md), which is the default at this time.
 
 More details about these features can be found [here](https://github.com/shauninman/MinUI/tree/main/skeleton/BASE) under the sections `Roms` and `Disc-based games`.
 

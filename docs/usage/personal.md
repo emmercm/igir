@@ -38,7 +38,7 @@ The file tree in that hard drive looks like this:
 └── igir_library_sync.sh
 ```
 
-The root directory has a DAT zip and subdirectory for each [DAT](../dats/overview.md) release group. This helps separate differing quality of DATs and different DAT group ROM naming schemes. I then have one subdirectory for each game console, using the `--dir-dat-name` option.
+The root directory has a DAT zip and subdirectory for each [DAT](../dats/overview.md) release group. This helps separate differing quality of DATs and different DAT group ROM naming schemes. I then have one subdirectory for each game console, using the [`--dir-dat-name` option](../output/path-options.md).
 
 The `igir_library_sync.sh` script helps me keep this collection organized and merge new ROMs into it. The complete source is:
 
