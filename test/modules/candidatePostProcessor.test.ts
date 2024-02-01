@@ -164,13 +164,138 @@ describe('dirLetterLimit', () => {
       path.join('Output', 'D2', 'disk1_Confident.rom'),
       path.join('Output', 'D3', 'disk1_Cool.rom'),
     ]],
-  ])('it should split the letter dirs: %s', async (limit, expectedFilePaths) => {
+  ])('it should split the letter dirs based on limit: %s', async (dirLetterLimit, expectedFilePaths) => {
     const options = new Options({
       commands: ['copy'],
       output: 'Output',
       dirLetter: true,
       dirLetterCount: 1,
-      dirLetterLimit: limit,
+      dirLetterLimit,
+      dirGameSubdir: GameSubdirMode[GameSubdirMode.MULTIPLE].toLowerCase(),
+    });
+
+    const parentsToCandidates = await runCandidatePostProcessor(options);
+
+    const outputFilePaths = [...parentsToCandidates.values()]
+      .flat()
+      .flatMap((releaseCandidate) => releaseCandidate.getRomsWithFiles())
+      .map((romWithFiles) => romWithFiles.getOutputFile().getFilePath())
+      .sort();
+    expect(outputFilePaths).toEqual(expectedFilePaths);
+  });
+});
+
+describe('dirLetterGroup', () => {
+  test.each([
+    [1, undefined, [
+      // This isn't realistic, but we should have a test case for it
+      path.join('Output', 'A-D', 'Admirable.rom'),
+      path.join('Output', 'A-D', 'Adorable.rom'),
+      path.join('Output', 'A-D', 'Adventurous.rom'),
+      path.join('Output', 'A-D', 'Amazing.rom'),
+      path.join('Output', 'A-D', 'Awesome.rom'),
+      path.join('Output', 'A-D', 'Best.rom'),
+      path.join('Output', 'A-D', 'Brilliant.rom'),
+      path.join('Output', 'A-D', 'Dainty', 'Dainty (Track 01).bin'),
+      path.join('Output', 'A-D', 'Dainty', 'Dainty.cue'),
+      path.join('Output', 'A-D', 'Daring', 'Daring (Track 01).bin'),
+      path.join('Output', 'A-D', 'Daring', 'Daring.cue'),
+      path.join('Output', 'A-D', 'Dazzling', 'Dazzling (Track 01).bin'),
+      path.join('Output', 'A-D', 'Dazzling', 'Dazzling.cue'),
+      path.join('Output', 'A-D', 'Dedicated', 'Dedicated (Track 01).bin'),
+      path.join('Output', 'A-D', 'Dedicated', 'Dedicated.cue'),
+      path.join('Output', 'A-D', 'disk1_Cheerful.rom'),
+      path.join('Output', 'A-D', 'disk1_Confident.rom'),
+      path.join('Output', 'A-D', 'disk1_Cool.rom'),
+    ]],
+    [1, 2, [
+      path.join('Output', 'A-A1', 'Admirable.rom'),
+      path.join('Output', 'A-A1', 'Adorable.rom'),
+      path.join('Output', 'A-A2', 'Adventurous.rom'),
+      path.join('Output', 'A-A2', 'Amazing.rom'),
+      path.join('Output', 'A-B', 'Awesome.rom'),
+      path.join('Output', 'A-B', 'Best.rom'),
+      path.join('Output', 'B-D', 'Brilliant.rom'),
+      path.join('Output', 'B-D', 'Dainty', 'Dainty (Track 01).bin'),
+      path.join('Output', 'B-D', 'Dainty', 'Dainty.cue'),
+      path.join('Output', 'D-D1', 'Daring', 'Daring (Track 01).bin'),
+      path.join('Output', 'D-D1', 'Daring', 'Daring.cue'),
+      path.join('Output', 'D-D1', 'Dazzling', 'Dazzling (Track 01).bin'),
+      path.join('Output', 'D-D1', 'Dazzling', 'Dazzling.cue'),
+      path.join('Output', 'D-D2', 'Dedicated', 'Dedicated (Track 01).bin'),
+      path.join('Output', 'D-D2', 'Dedicated', 'Dedicated.cue'),
+      path.join('Output', 'D-D2', 'disk1_Cheerful.rom'),
+      path.join('Output', 'D-D3', 'disk1_Confident.rom'),
+      path.join('Output', 'D-D3', 'disk1_Cool.rom'),
+    ]],
+    [1, 3, [
+      path.join('Output', 'A-A', 'Admirable.rom'),
+      path.join('Output', 'A-A', 'Adorable.rom'),
+      path.join('Output', 'A-A', 'Adventurous.rom'),
+      path.join('Output', 'A-B', 'Amazing.rom'),
+      path.join('Output', 'A-B', 'Awesome.rom'),
+      path.join('Output', 'A-B', 'Best.rom'),
+      path.join('Output', 'B-D', 'Brilliant.rom'),
+      path.join('Output', 'B-D', 'Dainty', 'Dainty (Track 01).bin'),
+      path.join('Output', 'B-D', 'Dainty', 'Dainty.cue'),
+      path.join('Output', 'B-D', 'Daring', 'Daring (Track 01).bin'),
+      path.join('Output', 'B-D', 'Daring', 'Daring.cue'),
+      path.join('Output', 'D-D1', 'Dazzling', 'Dazzling (Track 01).bin'),
+      path.join('Output', 'D-D1', 'Dazzling', 'Dazzling.cue'),
+      path.join('Output', 'D-D1', 'Dedicated', 'Dedicated (Track 01).bin'),
+      path.join('Output', 'D-D1', 'Dedicated', 'Dedicated.cue'),
+      path.join('Output', 'D-D1', 'disk1_Cheerful.rom'),
+      path.join('Output', 'D-D2', 'disk1_Confident.rom'),
+      path.join('Output', 'D-D2', 'disk1_Cool.rom'),
+    ]],
+    [2, 3, [
+      path.join('Output', 'AD-AD', 'Admirable.rom'),
+      path.join('Output', 'AD-AD', 'Adorable.rom'),
+      path.join('Output', 'AD-AD', 'Adventurous.rom'),
+      path.join('Output', 'AM-BE', 'Amazing.rom'),
+      path.join('Output', 'AM-BE', 'Awesome.rom'),
+      path.join('Output', 'AM-BE', 'Best.rom'),
+      path.join('Output', 'BR-DA', 'Brilliant.rom'),
+      path.join('Output', 'BR-DA', 'Dainty', 'Dainty (Track 01).bin'),
+      path.join('Output', 'BR-DA', 'Dainty', 'Dainty.cue'),
+      path.join('Output', 'BR-DA', 'Daring', 'Daring (Track 01).bin'),
+      path.join('Output', 'BR-DA', 'Daring', 'Daring.cue'),
+      path.join('Output', 'DA-DI', 'Dazzling', 'Dazzling (Track 01).bin'),
+      path.join('Output', 'DA-DI', 'Dazzling', 'Dazzling.cue'),
+      path.join('Output', 'DA-DI', 'Dedicated', 'Dedicated (Track 01).bin'),
+      path.join('Output', 'DA-DI', 'Dedicated', 'Dedicated.cue'),
+      path.join('Output', 'DA-DI', 'disk1_Cheerful.rom'),
+      path.join('Output', 'DI-DI', 'disk1_Confident.rom'),
+      path.join('Output', 'DI-DI', 'disk1_Cool.rom'),
+    ]],
+    [3, 4, [
+      path.join('Output', 'ADM-AMA', 'Admirable.rom'),
+      path.join('Output', 'ADM-AMA', 'Adorable.rom'),
+      path.join('Output', 'ADM-AMA', 'Adventurous.rom'),
+      path.join('Output', 'ADM-AMA', 'Amazing.rom'),
+      path.join('Output', 'AWE-DAI', 'Awesome.rom'),
+      path.join('Output', 'AWE-DAI', 'Best.rom'),
+      path.join('Output', 'AWE-DAI', 'Brilliant.rom'),
+      path.join('Output', 'AWE-DAI', 'Dainty', 'Dainty (Track 01).bin'),
+      path.join('Output', 'AWE-DAI', 'Dainty', 'Dainty.cue'),
+      path.join('Output', 'DAR-DIS', 'Daring', 'Daring (Track 01).bin'),
+      path.join('Output', 'DAR-DIS', 'Daring', 'Daring.cue'),
+      path.join('Output', 'DAR-DIS', 'Dazzling', 'Dazzling (Track 01).bin'),
+      path.join('Output', 'DAR-DIS', 'Dazzling', 'Dazzling.cue'),
+      path.join('Output', 'DAR-DIS', 'Dedicated', 'Dedicated (Track 01).bin'),
+      path.join('Output', 'DAR-DIS', 'Dedicated', 'Dedicated.cue'),
+      path.join('Output', 'DAR-DIS', 'disk1_Cheerful.rom'),
+      path.join('Output', 'DIS-DIS', 'disk1_Confident.rom'),
+      path.join('Output', 'DIS-DIS', 'disk1_Cool.rom'),
+    ]],
+  ])('it should group based on count & limit: %s, %s', async (dirLetterCount, dirLetterLimit, expectedFilePaths) => {
+    const options = new Options({
+      commands: ['copy'],
+      output: 'Output',
+      dirLetter: true,
+      dirLetterCount,
+      dirLetterLimit,
+      dirLetterGroup: true,
       dirGameSubdir: GameSubdirMode[GameSubdirMode.MULTIPLE].toLowerCase(),
     });
 

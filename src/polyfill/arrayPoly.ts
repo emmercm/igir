@@ -38,6 +38,34 @@ export default class ArrayPoly {
   }
 
   /**
+   * Reduce elements in an array to chunks of size {@link limit}.
+   *
+   * <code>
+   * [1, 2, 3, 4, 5, 6, 7, 8, 9, 10].reduce(ArrayPoly.reduceChunk(3), []);
+   * </code>
+   */
+  public static reduceChunk<T>(
+    limit: number,
+  ): (previous: T[][], current: T, idx: number, array: T[]) => T[][] {
+    return (previous: T[][], current: T, idx: number, array: T[]): T[][] => {
+      if (idx === 0) {
+        if (limit <= 0) {
+          return [array];
+        }
+
+        const chunks = [] as T[][];
+        for (let i = 0; i < array.length; i += limit) {
+          const chunk = array.slice(i, i + limit);
+          chunks.push(chunk);
+        }
+        return chunks;
+      }
+
+      return previous;
+    };
+  }
+
+  /**
    * Reduce elements in an array to only unique values. Usage:
    *
    * <code>

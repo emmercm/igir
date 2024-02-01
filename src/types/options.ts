@@ -68,6 +68,7 @@ export interface OptionsProps {
   readonly dirLetter?: boolean,
   readonly dirLetterCount?: number,
   readonly dirLetterLimit?: number,
+  readonly dirLetterGroup?: boolean,
   readonly dirGameSubdir?: string,
   readonly overwrite?: boolean,
   readonly overwriteInvalid?: boolean,
@@ -185,6 +186,8 @@ export default class Options implements OptionsProps {
   readonly dirLetterCount: number;
 
   readonly dirLetterLimit: number;
+
+  readonly dirLetterGroup: boolean;
 
   readonly dirGameSubdir?: string;
 
@@ -338,6 +341,7 @@ export default class Options implements OptionsProps {
     this.dirLetter = options?.dirLetter ?? false;
     this.dirLetterCount = options?.dirLetterCount ?? 0;
     this.dirLetterLimit = options?.dirLetterLimit ?? 0;
+    this.dirLetterGroup = options?.dirLetterGroup ?? false;
     this.dirGameSubdir = options?.dirGameSubdir;
     this.overwrite = options?.overwrite ?? false;
     this.overwriteInvalid = options?.overwriteInvalid ?? false;
@@ -766,6 +770,10 @@ export default class Options implements OptionsProps {
 
   getDirLetterLimit(): number {
     return this.dirLetterLimit;
+  }
+
+  getDirLetterGroup(): boolean {
+    return this.dirLetterGroup;
   }
 
   getDirGameSubdir(): GameSubdirMode | undefined {

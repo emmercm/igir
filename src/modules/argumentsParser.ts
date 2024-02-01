@@ -321,6 +321,12 @@ export default class ArgumentsParser {
         requiresArg: true,
         implies: 'dir-letter',
       })
+      .option('dir-letter-group', {
+        group: groupRomOutput,
+        description: 'Group letter subdirectories into ranges, combining multiple letters together (requires --dir-letter-limit)',
+        type: 'boolean',
+        implies: 'dir-letter-limit',
+      })
       .option('dir-game-subdir', {
         group: groupRomOutput,
         description: 'Append the name of the game as an output subdirectory depending on its ROMs',
