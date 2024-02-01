@@ -89,8 +89,9 @@ nav:
           - roms/headers.md
           - roms/patching.md
       - File Outputs:
-          - output/writing-archives.md
+          - output/path-options.md
           - output/tokens.md
+          - output/writing-archives.md
           - output/reporting.md
           - output/cleaning.md
       - Advanced:
