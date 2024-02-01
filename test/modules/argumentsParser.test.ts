@@ -111,6 +111,7 @@ describe('options', () => {
     expect(options.getDirDatName()).toEqual(false);
     expect(options.getDirDatDescription()).toEqual(false);
     expect(options.getDirLetter()).toEqual(false);
+    expect(options.getDirLetterCount()).toEqual(1);
     expect(options.getDirLetterLimit()).toEqual(0);
     expect(options.getDirGameSubdir()).toEqual(GameSubdirMode.MULTIPLE);
     expect(options.getOverwrite()).toEqual(false);
@@ -344,6 +345,17 @@ describe('options', () => {
     expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--dir-letter', '--dir-letter']).getDirLetter()).toEqual(true);
     expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--dir-letter', 'false', '--dir-letter', 'true']).getDirLetter()).toEqual(true);
     expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--dir-letter', 'true', '--dir-letter', 'false']).getDirLetter()).toEqual(false);
+  });
+
+  it('should parse "dir-letter-count"', () => {
+    expect(() => argumentsParser.parse([...dummyCommandAndRequiredArgs, '--dir-letter-count'])).toThrow(/not enough arguments/i);
+    expect(() => argumentsParser.parse([...dummyCommandAndRequiredArgs, '--dir-letter-count', '1'])).not.toThrow();
+    expect(() => argumentsParser.parse([...dummyCommandAndRequiredArgs, '--dir-letter-count', '2'])).toThrow(/dependent|implication/i);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--dir-letter', '--dir-letter-count', '-1']).getDirLetterCount()).toEqual(1);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--dir-letter', '--dir-letter-count', '0']).getDirLetterCount()).toEqual(1);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--dir-letter', '--dir-letter-count', '1']).getDirLetterCount()).toEqual(1);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--dir-letter', '--dir-letter-count', '5']).getDirLetterCount()).toEqual(5);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--dir-letter', '--dir-letter-count', '5', '--dir-letter-count', '10']).getDirLetterCount()).toEqual(10);
   });
 
   it('should parse "dir-letter-limit"', () => {

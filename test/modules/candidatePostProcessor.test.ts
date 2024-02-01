@@ -169,6 +169,7 @@ describe('dirLetterLimit', () => {
       commands: ['copy'],
       output: 'Output',
       dirLetter: true,
+      dirLetterCount: 1,
       dirLetterLimit: limit,
       dirGameSubdir: GameSubdirMode[GameSubdirMode.MULTIPLE].toLowerCase(),
     });

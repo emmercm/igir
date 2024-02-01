@@ -295,12 +295,27 @@ export default class ArgumentsParser {
       })
       .option('dir-letter', {
         group: groupRomOutput,
-        description: 'Append the first letter of the ROM name as an output subdirectory',
+        description: 'Group games in an output subdirectory by the first --dir-letter-count letters in their name',
         type: 'boolean',
+      })
+      .option('dir-letter-count', {
+        group: groupRomOutput,
+        description: 'How many game name letters to use for the subdirectory name',
+        type: 'number',
+        coerce: (val: number) => Math.max(ArgumentsParser.getLastValue(val), 1),
+        requiresArg: true,
+        default: 1,
+      })
+      .check((checkArgv) => {
+        // Re-implement `implies: 'dir-letter'`, which isn't possible with a default value
+        if (checkArgv['dir-letter-count'] > 1 && !checkArgv['dir-letter']) {
+          throw new Error('Missing dependent arguments:\n dir-letter-count -> dir-letter');
+        }
+        return true;
       })
       .option('dir-letter-limit', {
         group: groupRomOutput,
-        description: 'Limit the number ROMs in letter subdirectories, splitting into multiple if necessary',
+        description: 'Limit the number of games in letter subdirectories, splitting into multiple subdirectories if necessary',
         type: 'number',
         coerce: (val: number) => Math.max(ArgumentsParser.getLastValue(val), 1),
         requiresArg: true,
@@ -308,7 +323,7 @@ export default class ArgumentsParser {
       })
       .option('dir-game-subdir', {
         group: groupRomOutput,
-        description: 'Append the name of the game as an output directory depending on its ROMs',
+        description: 'Append the name of the game as an output subdirectory depending on its ROMs',
         choices: Object.keys(GameSubdirMode)
           .filter((mode) => Number.isNaN(Number(mode)))
           .map((mode) => mode.toLowerCase()),
