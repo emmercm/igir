@@ -1,6 +1,4 @@
 #!/usr/bin/env sh
-# shellcheck disable=SC1091
-. "$(dirname -- "$0")/_/husky.sh"
 
 # Change to the project's root directory
 cd "$(dirname -- "$0")/.." || exit 1
