@@ -1,3 +1,5 @@
+import fs from 'node:fs';
+
 import yargs, { Argv } from 'yargs';
 
 import Logger from '../console/logger.js';
@@ -27,6 +29,14 @@ export default class ArgumentsParser {
       return arr.at(-1) as T;
     }
     return arr as T;
+  }
+
+  private static readRegexFile(value: string | string[]): string {
+    const lastValue = ArgumentsParser.getLastValue(value);
+    if (fs.existsSync(lastValue)) {
+      return fs.readFileSync(lastValue).toString();
+    }
+    return lastValue;
   }
 
   private static getHelpWidth(argv: string[]): number {
@@ -203,14 +213,14 @@ export default class ArgumentsParser {
         group: groupDatInput,
         description: 'Regular expression of DAT names to process',
         type: 'string',
-        coerce: ArgumentsParser.getLastValue, // don't allow string[] values
+        coerce: ArgumentsParser.readRegexFile,
         requiresArg: true,
       })
       .option('dat-regex', {
         type: 'string',
         coerce: (val) => {
           this.logger.warn('--dat-regex is deprecated, use --dat-name-regex instead');
-          return ArgumentsParser.getLastValue(val); // don't allow string[] values
+          return ArgumentsParser.readRegexFile(val);
         },
         requiresArg: true,
         hidden: true,
@@ -219,14 +229,14 @@ export default class ArgumentsParser {
         group: groupDatInput,
         description: 'Regular expression of DAT names to exclude from processing',
         type: 'string',
-        coerce: ArgumentsParser.getLastValue, // don't allow string[] values
+        coerce: ArgumentsParser.readRegexFile,
         requiresArg: true,
       })
       .option('dat-regex-exclude', {
         type: 'string',
         coerce: (val) => {
           this.logger.warn('--dat-regex-exclude is deprecated, use --dat-name-regex-exclude instead');
-          return ArgumentsParser.getLastValue(val); // don't allow string[] values
+          return ArgumentsParser.readRegexFile(val);
         },
         requiresArg: true,
         hidden: true,
@@ -235,14 +245,14 @@ export default class ArgumentsParser {
         group: groupDatInput,
         description: 'Regular expression of DAT descriptions to process',
         type: 'string',
-        coerce: ArgumentsParser.getLastValue, // don't allow string[] values
+        coerce: ArgumentsParser.readRegexFile,
         requiresArg: true,
       })
       .option('dat-description-regex-exclude', {
         group: groupDatInput,
         description: 'Regular expression of DAT descriptions to exclude from processing',
         type: 'string',
-        coerce: ArgumentsParser.getLastValue, // don't allow string[] values
+        coerce: ArgumentsParser.readRegexFile,
         requiresArg: true,
       })
       .check((checkArgv) => {
@@ -450,7 +460,7 @@ export default class ArgumentsParser {
         alias: 'x',
         description: 'Regular expression of game names to filter to',
         type: 'string',
-        coerce: ArgumentsParser.getLastValue, // don't allow string[] values
+        coerce: ArgumentsParser.readRegexFile,
         requiresArg: true,
       })
       .option('filter-regex-exclude', {
@@ -458,7 +468,7 @@ export default class ArgumentsParser {
         alias: 'X',
         description: 'Regular expression of game names to exclude',
         type: 'string',
-        coerce: ArgumentsParser.getLastValue, // don't allow string[] values
+        coerce: ArgumentsParser.readRegexFile,
         requiresArg: true,
       })
       .option('filter-language', {
