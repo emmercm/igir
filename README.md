@@ -7,7 +7,7 @@
   <a href="https://www.npmjs.com/package/igir"><img alt="npm: version" src="https://img.shields.io/npm/v/igir?color=%23cc3534&label=version&logo=npm&logoColor=white"></a>
   <a href="https://www.npmjs.com/package/igir"><img alt="npm: downloads" src="https://img.shields.io/npm/dt/igir?color=%23cc3534&logo=npm&logoColor=white"></a>
   <a href="https://github.com/emmercm/igir/releases"><img alt="GitHub: downloads" src="https://img.shields.io/github/downloads/emmercm/igir/total?color=%236e5494&logo=github&logoColor=white"></a>
-  <a href="https://github.com/emmercm/igir"><img alt="GitHub: stars" src="https://img.shields.io/github/stars/emmercm/igir?color=%236e5494&logo=github&logoColor=white"></a>
+  <a href="https://github.com/emmercm/igir"><img alt="GitHub: stars" src="https://img.shields.io/github/stars/emmercm/igir?style=flat&logo=github&logoColor=white&color=%236e5494"></a>
 </p>
 <p align="center">
   <a href="https://snyk.io/test/npm/igir"><img alt="Snyk: vulnerabilities" src="https://snyk.io/test/npm/igir/badge.svg"></a>
