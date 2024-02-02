@@ -8,6 +8,40 @@ ROM filters cut down the list of games desired for a set, and any games filtered
 
 Multiple filter options can be specified at once.
 
+### Game name regex filter
+
+```text
+--filter-regex <regex|filename>, --filter-regex-exclude <regex|filename>
+```
+
+Only include, or exclude games based on their DAT name (or filename if not using DATs).
+
+Regex flags can be optionally provided in the form `/<pattern>/<flags>`, for example:
+
+```text
+.*case sensitive.*
+/.*case insensitive.*/i
+```
+
+A filename can be provided to a file that contains one or more lines of patterns. Multiple patterns will be combined in a logical "or" fashion. For example:
+
+```text
+# patterns.txt
+^Mario
+/kirby|zelda/i
+
+# --filter-regex patterns.txt would match:
+Mario's Picross (USA, Europe) (SGB Enhanced)
+Kirby's Dream Land (USA, Europe)
+Legend of Zelda, The - Link's Awakening (USA, Europe) (Rev 2)
+
+# --filter-regex patterns.txt would NOT match:
+Dr. Mario (World) (Rev 1)
+Super Mario Land (World) (Rev 1)
+Tetris (World) (Rev 1)
+Wario Land II (USA, Europe) (SGB Enhanced)
+```
+
 ### Language filter
 
 ```text

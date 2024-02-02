@@ -130,26 +130,31 @@ export default class DATScanner extends Scanner {
     return results
       .filter((dat) => {
         const datNameRegex = this.options.getDatNameRegex();
-        return !datNameRegex || dat.getName().match(datNameRegex) !== null;
+        return !datNameRegex
+            || datNameRegex.some((regex) => regex.test(dat.getName()));
       })
       .filter((dat) => {
         const datNameRegexExclude = this.options.getDatNameRegexExclude();
-        return !datNameRegexExclude || dat.getName().match(datNameRegexExclude) === null;
+        return !datNameRegexExclude
+            || !datNameRegexExclude.some((regex) => regex.test(dat.getName()));
       })
       .filter((dat) => {
+        const datDescription = dat.getDescription();
+        if (!datDescription) {
+          return true;
+        }
         const datDescriptionRegex = this.options.getDatDescriptionRegex();
-        if (!dat.getDescription()) {
-          return true;
-        }
-        return !datDescriptionRegex || dat.getDescription()?.match(datDescriptionRegex) !== null;
+        return !datDescriptionRegex
+            || datDescriptionRegex.some((regex) => regex.test(datDescription));
       })
       .filter((dat) => {
-        const datDescriptionRegexExclude = this.options.getDatDescriptionRegexExclude();
-        if (!dat.getDescription()) {
+        const datDescription = dat.getDescription();
+        if (!datDescription) {
           return true;
         }
+        const datDescriptionRegexExclude = this.options.getDatDescriptionRegexExclude();
         return !datDescriptionRegexExclude
-            || dat.getDescription()?.match(datDescriptionRegexExclude) === null;
+            || !datDescriptionRegexExclude.some((regex) => regex.test(datDescription));
       })
       .sort((a, b) => a.getNameShort().localeCompare(b.getNameShort()));
   }
