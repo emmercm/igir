@@ -431,17 +431,21 @@ export default class Options implements OptionsProps {
 
   // Helpers
 
-  private static getRegex(pattern: string): RegExp | undefined {
+  private static getRegex(pattern: string): RegExp[] | undefined {
     if (!pattern.trim()) {
       return undefined;
     }
 
-    const flagsMatch = pattern.match(/^\/(.+)\/([a-z]*)$/);
-    if (flagsMatch !== null) {
-      return new RegExp(flagsMatch[1], flagsMatch[2]);
-    }
-
-    return new RegExp(pattern);
+    return pattern
+      .split(/\r?\n/)
+      .filter((line) => line.length)
+      .map((line) => {
+        const flagsMatch = line.match(/^\/(.+)\/([a-z]*)$/);
+        if (flagsMatch !== null) {
+          return new RegExp(flagsMatch[1], flagsMatch[2]);
+        }
+        return new RegExp(line);
+      });
   }
 
   // Commands
@@ -715,19 +719,19 @@ export default class Options implements OptionsProps {
       .filter((inputPath) => !datExcludeFiles.has(inputPath));
   }
 
-  getDatNameRegex(): RegExp | undefined {
+  getDatNameRegex(): RegExp[] | undefined {
     return Options.getRegex(this.datNameRegex || this.datRegex);
   }
 
-  getDatNameRegexExclude(): RegExp | undefined {
+  getDatNameRegexExclude(): RegExp[] | undefined {
     return Options.getRegex(this.datNameRegexExclude || this.datRegexExclude);
   }
 
-  getDatDescriptionRegex(): RegExp | undefined {
+  getDatDescriptionRegex(): RegExp[] | undefined {
     return Options.getRegex(this.datDescriptionRegex);
   }
 
-  getDatDescriptionRegexExclude(): RegExp | undefined {
+  getDatDescriptionRegexExclude(): RegExp[] | undefined {
     return Options.getRegex(this.datDescriptionRegexExclude);
   }
 
@@ -886,11 +890,11 @@ export default class Options implements OptionsProps {
     return this.allowIncompleteSets || !this.shouldWrite();
   }
 
-  getFilterRegex(): RegExp | undefined {
+  getFilterRegex(): RegExp[] | undefined {
     return Options.getRegex(this.filterRegex);
   }
 
-  getFilterRegexExclude(): RegExp | undefined {
+  getFilterRegexExclude(): RegExp[] | undefined {
     return Options.getRegex(this.filterRegexExclude);
   }
 
