@@ -71,7 +71,7 @@ async function walkAndStat(dirPath: string): Promise<[string, Stats][]> {
 }
 
 function datInferrer(options: Options, romFiles: File[]): DAT {
-  // Run DATInferrer, but condense all DATs down to one
+  // Run DATGameInferrer, but condense all DATs down to one
   const datGames = new DATGameInferrer(options, new ProgressBarFake()).infer(romFiles)
     .flatMap((dat) => dat.getGames());
   // TODO(cemmer): filter to unique games / remove duplicates

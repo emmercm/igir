@@ -109,6 +109,7 @@ describe('options', () => {
     expect(options.getDatNameRegexExclude()).toBeUndefined();
     expect(options.getDatDescriptionRegex()).toBeUndefined();
     expect(options.getDatDescriptionRegexExclude()).toBeUndefined();
+    expect(options.getDatCombine()).toEqual(false);
 
     expect(options.getDirMirror()).toEqual(false);
     expect(options.getDirDatName()).toEqual(false);
@@ -335,6 +336,15 @@ describe('options', () => {
     } finally {
       await FsPoly.rm(tempFile);
     }
+  });
+
+  it('should parse "dat-combine"', () => {
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--dat-combine']).getDatCombine()).toEqual(true);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--dat-combine', 'true']).getDatCombine()).toEqual(true);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--dat-combine', 'false']).getDatCombine()).toEqual(false);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--dat-combine', '--dat-combine']).getDatCombine()).toEqual(true);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--dat-combine', 'false', '--dat-combine', 'true']).getDatCombine()).toEqual(true);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--dat-combine', 'true', '--dat-combine', 'false']).getDatCombine()).toEqual(false);
   });
 
   it('should parse "fixdat"', () => {

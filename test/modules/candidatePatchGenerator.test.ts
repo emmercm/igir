@@ -2,6 +2,7 @@ import path from 'node:path';
 
 import CandidateGenerator from '../../src/modules/candidateGenerator.js';
 import CandidatePatchGenerator from '../../src/modules/candidatePatchGenerator.js';
+import DATCombiner from '../../src/modules/datCombiner.js';
 import DATGameInferrer from '../../src/modules/datGameInferrer.js';
 import DATScanner from '../../src/modules/datScanner.js';
 import FileIndexer from '../../src/modules/fileIndexer.js';
@@ -16,11 +17,10 @@ import Options from '../../src/types/options.js';
 import ReleaseCandidate from '../../src/types/releaseCandidate.js';
 import ProgressBarFake from '../console/progressBarFake.js';
 
-// Run DATInferrer, but condense all DATs down to one
+// Run DATGameInferrer, but condense all DATs down to one
 function buildInferredDat(options: Options, romFiles: File[]): DAT {
-  const datGames = new DATGameInferrer(options, new ProgressBarFake()).infer(romFiles)
-    .flatMap((dat) => dat.getGames());
-  return new LogiqxDAT(new Header(), datGames);
+  const dats = new DATGameInferrer(options, new ProgressBarFake()).infer(romFiles);
+  return new DATCombiner(new ProgressBarFake()).combine(dats);
 }
 
 async function runPatchCandidateGenerator(
