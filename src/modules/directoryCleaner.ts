@@ -62,6 +62,7 @@ export default class DirectoryCleaner extends Module {
       await this.trashOrDelete(filesToClean);
     } catch (error) {
       this.progressBar.logError(`failed to clean unmatched files: ${error}`);
+      return [];
     }
 
     try {
@@ -80,14 +81,30 @@ export default class DirectoryCleaner extends Module {
   private async trashOrDelete(filePaths: string[]): Promise<void> {
     // Prefer recycling...
     for (let i = 0; i < filePaths.length; i += Constants.OUTPUT_CLEANER_BATCH_SIZE) {
-      await trash(filePaths.slice(i, i + Constants.OUTPUT_CLEANER_BATCH_SIZE));
+      const filePathsChunk = filePaths.slice(i, i + Constants.OUTPUT_CLEANER_BATCH_SIZE);
+      try {
+        await trash(filePathsChunk);
+      } catch (error) {
+        this.progressBar.logWarn(`failed to recycle ${filePathsChunk.length} file${filePathsChunk.length !== 1 ? 's' : ''}: ${error}`);
+      }
       await this.progressBar.update(i);
     }
 
     // ...but if that doesn't work, delete the leftovers
-    await Promise.all(filePaths.map(async (filePath) => {
-      await fsPoly.rm(filePath, { force: true });
-    }));
+    const filePathsExist = await Promise.all(
+      filePaths.map(async (filePath) => fsPoly.exists(filePath)),
+    );
+    await Promise.all(
+      filePaths
+        .filter((filePath, idx) => filePathsExist.at(idx))
+        .map(async (filePath) => {
+          try {
+            await fsPoly.rm(filePath, { force: true });
+          } catch (error) {
+            this.progressBar.logError(`failed to delete ${filePath}: ${error}`);
+          }
+        }),
+    );
   }
 
   private static async getEmptyDirs(dirsToClean: string | string[]): Promise<string[]> {
