@@ -7,7 +7,7 @@
   <a href="https://www.npmjs.com/package/igir"><img alt="npm: version" src="https://img.shields.io/npm/v/igir?color=%23cc3534&label=version&logo=npm&logoColor=white"></a>
   <a href="https://www.npmjs.com/package/igir"><img alt="npm: downloads" src="https://img.shields.io/npm/dt/igir?color=%23cc3534&logo=npm&logoColor=white"></a>
   <a href="https://github.com/emmercm/igir/releases"><img alt="GitHub: downloads" src="https://img.shields.io/github/downloads/emmercm/igir/total?color=%236e5494&logo=github&logoColor=white"></a>
-  <a href="https://github.com/emmercm/igir"><img alt="GitHub: stars" src="https://img.shields.io/github/stars/emmercm/igir?color=%236e5494&logo=github&logoColor=white"></a>
+  <a href="https://github.com/emmercm/igir"><img alt="GitHub: stars" src="https://img.shields.io/github/stars/emmercm/igir?style=flat&logo=github&logoColor=white&color=%236e5494"></a>
 </p>
 <p align="center">
   <a href="https://snyk.io/test/npm/igir"><img alt="Snyk: vulnerabilities" src="https://snyk.io/test/npm/igir/badge.svg"></a>
@@ -57,7 +57,7 @@ $ igir --help
   | $$  | $$|    \  | $$  | $$    $$   ROM collection manager
   | $$  | $$|    \  | $$  | $$    $$   https://igir.io/
   | $$  | $$ \$$$$  | $$  | $$$$$$$\
- _| $$_ | $$__| $$ _| $$_ | $$  | $$   v2.2.0
+ _| $$_ | $$__| $$ _| $$_ | $$  | $$   v2.3.0
 |   $$ \ \$$    $$|   $$ \| $$  | $$
  \$$$$$$  \$$$$$$  \$$$$$$ \$$   \$$
 
@@ -103,12 +103,17 @@ ROM output options (processed in order):
                                                                                         [boolean]
   -D, --dir-dat-name         Use the DAT name as the output subdirectory                [boolean]
       --dir-dat-description  Use the DAT description as the output subdirectory         [boolean]
-      --dir-letter           Append the first letter of the ROM name as an output subdirectory
-                                                                                        [boolean]
-      --dir-letter-limit     Limit the number ROMs in letter subdirectories, splitting into multi
-                             ple if necessary                                            [number]
-      --dir-game-subdir      Append the name of the game as an output directory depending on its
-                             ROMs  [choices: "never", "multiple", "always"] [default: "multiple"]
+      --dir-letter           Group games in an output subdirectory by the first --dir-letter-coun
+                             t letters in their name                                    [boolean]
+      --dir-letter-count     How many game name letters to use for the subdirectory name
+                                                                            [number] [default: 1]
+      --dir-letter-limit     Limit the number of games in letter subdirectories, splitting into m
+                             ultiple subdirectories if necessary                         [number]
+      --dir-letter-group     Group letter subdirectories into ranges, combining multiple letters
+                             together (requires --dir-letter-limit)                     [boolean]
+      --dir-game-subdir      Append the name of the game as an output subdirectory depending on i
+                             ts ROMs
+                                   [choices: "never", "multiple", "always"] [default: "multiple"]
   -O, --overwrite            Overwrite any files in the output directory                [boolean]
       --overwrite-invalid    Overwrite files in the output directory that are the wrong filesize,
                               checksum, or zip contents                                 [boolean]

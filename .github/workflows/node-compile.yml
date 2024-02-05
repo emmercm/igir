@@ -123,9 +123,9 @@ jobs:
       - run: ${{ matrix.build }}
       - run: echo ${{ env.BIN_OUTPUT }}
       - if: ${{ github.event_name != 'pull_request' }}
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
-          name: ${{ matrix.os }}
+          name: ${{ env.BIN_OUTPUT }}
           path: ${{ env.BIN_OUTPUT }}
           if-no-files-found: error
 
@@ -143,14 +143,11 @@ jobs:
       - run: npm ci
       - run: echo "NPM_PKG_VERSION=$(npm pkg get version | sed 's/"//g')" >> "${GITHUB_ENV}"
       # Download and update
-      - uses: actions/download-artifact@v3
+      - uses: actions/download-artifact@v4
       - uses: softprops/action-gh-release@v1
         with:
           tag_name: v${{ env.NPM_PKG_VERSION }}
-          files: |
-            ubuntu/*
-            macos/*
-            windows/*
+          files: igir-*/*
 
   # !!! This check should be required by GitHub !!!
   compile-status-check:

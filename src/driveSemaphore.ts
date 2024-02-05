@@ -32,7 +32,7 @@ export default class DriveSemaphore {
     files: K[],
     runnable: (file: K) => (V | Promise<V>),
   ): Promise<V[]> {
-    const disks = await FsPoly.disks();
+    const disks = FsPoly.disksSync();
 
     // Limit the number of ongoing threads to something reasonable
     return async.mapLimit(
@@ -75,10 +75,10 @@ export default class DriveSemaphore {
       }
     }
 
-    const keySemaphore = await this.keySemaphoresMutex.runExclusive(async () => {
+    const keySemaphore = await this.keySemaphoresMutex.runExclusive(() => {
       if (!this.keySemaphores.has(filePathDisk)) {
         let { threads } = this;
-        if (await FsPoly.isSamba(filePathDisk)) {
+        if (FsPoly.isSamba(filePathDisk)) {
           // Forcefully limit the number of files to be processed concurrently from a single
           // Samba network share
           threads = 1;

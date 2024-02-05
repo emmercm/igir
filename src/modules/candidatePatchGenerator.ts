@@ -72,7 +72,7 @@ export default class CandidatePatchGenerator extends Module {
     crcToPatches: Map<string, Patch[]>,
   ): Promise<Map<Parent, ReleaseCandidate[]>> {
     // For every parent
-    return new Map((await Promise.all([...parentsToCandidates.entries()]
+    const patchedParentsToCandidates = new Map((await Promise.all([...parentsToCandidates.entries()]
       // For every Parent's ReleaseCandidates
       .map(async ([parent, releaseCandidates]): Promise<[Parent, ReleaseCandidate[]][]> => {
         // ReleaseCandidates exist for every Release of a Game, but we only want to create one new
@@ -105,6 +105,22 @@ export default class CandidatePatchGenerator extends Module {
         return parentsAndReleaseCandidates;
       })))
       .flat());
+
+    // Log any patch files that didn't get used by a ReleaseCandidate
+    const usedPatches = new Set([...patchedParentsToCandidates.values()]
+      .flat()
+      .flatMap((releaseCandidate) => releaseCandidate.getRomsWithFiles()
+        .map((romWithFiles) => romWithFiles.getInputFile().getPatch())
+        .filter(ArrayPoly.filterNotNullish))
+      .map((patch) => patch.getFile().toString()));
+    [...crcToPatches.values()]
+      .flat()
+      .filter((patch) => !usedPatches.has(patch.getFile().toString()))
+      .forEach((patch) => {
+        this.progressBar.logWarn(`no matching input file found for patch: ${patch.getFile().toString()}`);
+      });
+
+    return patchedParentsToCandidates;
   }
 
   private async buildPatchedParentsForReleaseCandidate(

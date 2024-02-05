@@ -83,6 +83,13 @@
       schedule: 'at any time',
       prCreation: 'immediate',
       platformAutomerge: true,
+    },
+
+    // Disable automatic merging of GitHub Actions major version updates
+    {
+      matchManagers: ['github-actions'],
+      matchUpdateTypes: ['major'],
+      automerge: false
     }
   ],
 

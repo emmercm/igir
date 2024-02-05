@@ -2,24 +2,35 @@
 
 When specifying a ROM [writing command](../commands.md) you have to specify an `--output <path>` directory. `igir` has a few replaceable "tokens" that can be referenced in the `--output <path>` directory value. This can aid in sorting ROMs into a more complicated directory structure.
 
+See [output path tokens](./path-options.md) for other options that will further sort your ROMs into subdirectories.
+
 For example, if you want to group all ROMs based on their region, you would specify:
 
 === ":simple-windowsxp: Windows"
 
     ```batch
-    igir copy extract --dat *.dat --input ROMs\ --output "ROMs-Sorted\{gameRegion}\"
+    igir copy extract ^
+      --dat *.dat ^
+      --input ROMs\ ^
+      --output "ROMs-Sorted\{gameRegion}\"
     ```
 
 === ":simple-apple: macOS"
 
     ```shell
-    igir copy extract --dat *.dat --input ROMs/ --output "ROMs-Sorted/{gameRegion}/"
+    igir copy extract \
+      --dat *.dat \
+      --input ROMs/ \
+      --output "ROMs-Sorted/{gameRegion}/"
     ```
 
 === ":simple-linux: Linux"
 
     ```shell
-    igir copy extract --dat *.dat --input ROMs/ --output "ROMs-Sorted/{gameRegion}/"
+    igir copy extract \
+      --dat *.dat \
+      --input ROMs/ \
+      --output "ROMs-Sorted/{gameRegion}/"
     ```
 
 This might result in an output structure such as:
@@ -47,8 +58,8 @@ ROMs-Sorted/
 
 When using [DATs](../dats/overview.md), you can make use of console & game information contained in them:
 
-- `{datName}` the matching DAT's name, similar to how the `--dir-dat-name` option works
-- `{datDescription}` the matching DAT's description, similar to how the `--dir-dat-description` option works
+- `{datName}` the matching DAT's name, similar to how the [`--dir-dat-name` option](./path-options.md) works
+- `{datDescription}` the matching DAT's description, similar to how the [`--dir-dat-description` option](./path-options.md) works
 - `{gameRegion}` each of the ROM's region(s) (e.g. `USA`, `EUR`, `JPN`, `WORLD`)
 - `{gameLanguage}` each of the ROM's language(s) (e.g. `EN`, `ES`, `JA`)
 

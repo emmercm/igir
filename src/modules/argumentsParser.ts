@@ -1,3 +1,5 @@
+import fs from 'node:fs';
+
 import yargs, { Argv } from 'yargs';
 
 import Logger from '../console/logger.js';
@@ -27,6 +29,14 @@ export default class ArgumentsParser {
       return arr.at(-1) as T;
     }
     return arr as T;
+  }
+
+  private static readRegexFile(value: string | string[]): string {
+    const lastValue = ArgumentsParser.getLastValue(value);
+    if (fs.existsSync(lastValue)) {
+      return fs.readFileSync(lastValue).toString();
+    }
+    return lastValue;
   }
 
   private static getHelpWidth(argv: string[]): number {
@@ -203,14 +213,14 @@ export default class ArgumentsParser {
         group: groupDatInput,
         description: 'Regular expression of DAT names to process',
         type: 'string',
-        coerce: ArgumentsParser.getLastValue, // don't allow string[] values
+        coerce: ArgumentsParser.readRegexFile,
         requiresArg: true,
       })
       .option('dat-regex', {
         type: 'string',
         coerce: (val) => {
           this.logger.warn('--dat-regex is deprecated, use --dat-name-regex instead');
-          return ArgumentsParser.getLastValue(val); // don't allow string[] values
+          return ArgumentsParser.readRegexFile(val);
         },
         requiresArg: true,
         hidden: true,
@@ -219,14 +229,14 @@ export default class ArgumentsParser {
         group: groupDatInput,
         description: 'Regular expression of DAT names to exclude from processing',
         type: 'string',
-        coerce: ArgumentsParser.getLastValue, // don't allow string[] values
+        coerce: ArgumentsParser.readRegexFile,
         requiresArg: true,
       })
       .option('dat-regex-exclude', {
         type: 'string',
         coerce: (val) => {
           this.logger.warn('--dat-regex-exclude is deprecated, use --dat-name-regex-exclude instead');
-          return ArgumentsParser.getLastValue(val); // don't allow string[] values
+          return ArgumentsParser.readRegexFile(val);
         },
         requiresArg: true,
         hidden: true,
@@ -235,14 +245,14 @@ export default class ArgumentsParser {
         group: groupDatInput,
         description: 'Regular expression of DAT descriptions to process',
         type: 'string',
-        coerce: ArgumentsParser.getLastValue, // don't allow string[] values
+        coerce: ArgumentsParser.readRegexFile,
         requiresArg: true,
       })
       .option('dat-description-regex-exclude', {
         group: groupDatInput,
         description: 'Regular expression of DAT descriptions to exclude from processing',
         type: 'string',
-        coerce: ArgumentsParser.getLastValue, // don't allow string[] values
+        coerce: ArgumentsParser.readRegexFile,
         requiresArg: true,
       })
       .check((checkArgv) => {
@@ -295,20 +305,41 @@ export default class ArgumentsParser {
       })
       .option('dir-letter', {
         group: groupRomOutput,
-        description: 'Append the first letter of the ROM name as an output subdirectory',
+        description: 'Group games in an output subdirectory by the first --dir-letter-count letters in their name',
         type: 'boolean',
+      })
+      .option('dir-letter-count', {
+        group: groupRomOutput,
+        description: 'How many game name letters to use for the subdirectory name',
+        type: 'number',
+        coerce: (val: number) => Math.max(ArgumentsParser.getLastValue(val), 1),
+        requiresArg: true,
+        default: 1,
+      })
+      .check((checkArgv) => {
+        // Re-implement `implies: 'dir-letter'`, which isn't possible with a default value
+        if (checkArgv['dir-letter-count'] > 1 && !checkArgv['dir-letter']) {
+          throw new Error('Missing dependent arguments:\n dir-letter-count -> dir-letter');
+        }
+        return true;
       })
       .option('dir-letter-limit', {
         group: groupRomOutput,
-        description: 'Limit the number ROMs in letter subdirectories, splitting into multiple if necessary',
+        description: 'Limit the number of games in letter subdirectories, splitting into multiple subdirectories if necessary',
         type: 'number',
         coerce: (val: number) => Math.max(ArgumentsParser.getLastValue(val), 1),
         requiresArg: true,
         implies: 'dir-letter',
       })
+      .option('dir-letter-group', {
+        group: groupRomOutput,
+        description: 'Group letter subdirectories into ranges, combining multiple letters together (requires --dir-letter-limit)',
+        type: 'boolean',
+        implies: 'dir-letter-limit',
+      })
       .option('dir-game-subdir', {
         group: groupRomOutput,
-        description: 'Append the name of the game as an output directory depending on its ROMs',
+        description: 'Append the name of the game as an output subdirectory depending on its ROMs',
         choices: Object.keys(GameSubdirMode)
           .filter((mode) => Number.isNaN(Number(mode)))
           .map((mode) => mode.toLowerCase()),
@@ -429,7 +460,7 @@ export default class ArgumentsParser {
         alias: 'x',
         description: 'Regular expression of game names to filter to',
         type: 'string',
-        coerce: ArgumentsParser.getLastValue, // don't allow string[] values
+        coerce: ArgumentsParser.readRegexFile,
         requiresArg: true,
       })
       .option('filter-regex-exclude', {
@@ -437,7 +468,7 @@ export default class ArgumentsParser {
         alias: 'X',
         description: 'Regular expression of game names to exclude',
         type: 'string',
-        coerce: ArgumentsParser.getLastValue, // don't allow string[] values
+        coerce: ArgumentsParser.readRegexFile,
         requiresArg: true,
       })
       .option('filter-language', {

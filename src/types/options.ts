@@ -66,7 +66,9 @@ export interface OptionsProps {
   readonly dirDatName?: boolean,
   readonly dirDatDescription?: boolean,
   readonly dirLetter?: boolean,
+  readonly dirLetterCount?: number,
   readonly dirLetterLimit?: number,
+  readonly dirLetterGroup?: boolean,
   readonly dirGameSubdir?: string,
   readonly overwrite?: boolean,
   readonly overwriteInvalid?: boolean,
@@ -181,7 +183,11 @@ export default class Options implements OptionsProps {
 
   readonly dirLetter: boolean;
 
+  readonly dirLetterCount: number;
+
   readonly dirLetterLimit: number;
+
+  readonly dirLetterGroup: boolean;
 
   readonly dirGameSubdir?: string;
 
@@ -333,7 +339,9 @@ export default class Options implements OptionsProps {
     this.dirDatName = options?.dirDatName ?? false;
     this.dirDatDescription = options?.dirDatDescription ?? false;
     this.dirLetter = options?.dirLetter ?? false;
+    this.dirLetterCount = options?.dirLetterCount ?? 0;
     this.dirLetterLimit = options?.dirLetterLimit ?? 0;
+    this.dirLetterGroup = options?.dirLetterGroup ?? false;
     this.dirGameSubdir = options?.dirGameSubdir;
     this.overwrite = options?.overwrite ?? false;
     this.overwriteInvalid = options?.overwriteInvalid ?? false;
@@ -423,17 +431,21 @@ export default class Options implements OptionsProps {
 
   // Helpers
 
-  private static getRegex(pattern: string): RegExp | undefined {
+  private static getRegex(pattern: string): RegExp[] | undefined {
     if (!pattern.trim()) {
       return undefined;
     }
 
-    const flagsMatch = pattern.match(/^\/(.+)\/([a-z]*)$/);
-    if (flagsMatch !== null) {
-      return new RegExp(flagsMatch[1], flagsMatch[2]);
-    }
-
-    return new RegExp(pattern);
+    return pattern
+      .split(/\r?\n/)
+      .filter((line) => line.length)
+      .map((line) => {
+        const flagsMatch = line.match(/^\/(.+)\/([a-z]*)$/);
+        if (flagsMatch !== null) {
+          return new RegExp(flagsMatch[1], flagsMatch[2]);
+        }
+        return new RegExp(line);
+      });
   }
 
   // Commands
@@ -707,19 +719,19 @@ export default class Options implements OptionsProps {
       .filter((inputPath) => !datExcludeFiles.has(inputPath));
   }
 
-  getDatNameRegex(): RegExp | undefined {
+  getDatNameRegex(): RegExp[] | undefined {
     return Options.getRegex(this.datNameRegex || this.datRegex);
   }
 
-  getDatNameRegexExclude(): RegExp | undefined {
+  getDatNameRegexExclude(): RegExp[] | undefined {
     return Options.getRegex(this.datNameRegexExclude || this.datRegexExclude);
   }
 
-  getDatDescriptionRegex(): RegExp | undefined {
+  getDatDescriptionRegex(): RegExp[] | undefined {
     return Options.getRegex(this.datDescriptionRegex);
   }
 
-  getDatDescriptionRegexExclude(): RegExp | undefined {
+  getDatDescriptionRegexExclude(): RegExp[] | undefined {
     return Options.getRegex(this.datDescriptionRegexExclude);
   }
 
@@ -756,8 +768,16 @@ export default class Options implements OptionsProps {
     return this.dirLetter;
   }
 
+  getDirLetterCount(): number {
+    return this.dirLetterCount;
+  }
+
   getDirLetterLimit(): number {
     return this.dirLetterLimit;
+  }
+
+  getDirLetterGroup(): boolean {
+    return this.dirLetterGroup;
   }
 
   getDirGameSubdir(): GameSubdirMode | undefined {
@@ -787,6 +807,7 @@ export default class Options implements OptionsProps {
   async scanOutputFilesWithoutCleanExclusions(
     outputDirs: string[],
     writtenFiles: File[],
+    walkCallback?: FsWalkCallback,
   ): Promise<string[]> {
     // Written files that shouldn't be cleaned
     const writtenFilesNormalized = new Set(writtenFiles
@@ -796,7 +817,7 @@ export default class Options implements OptionsProps {
     const cleanExcludedFilesNormalized = new Set((await this.scanCleanExcludeFiles())
       .map((filePath) => path.normalize(filePath)));
 
-    return (await Options.scanPaths(outputDirs))
+    return (await Options.scanPaths(outputDirs, walkCallback, false))
       .map((filePath) => path.normalize(filePath))
       .filter((filePath) => !writtenFilesNormalized.has(filePath))
       .filter((filePath) => !cleanExcludedFilesNormalized.has(filePath));
@@ -869,11 +890,11 @@ export default class Options implements OptionsProps {
     return this.allowIncompleteSets || !this.shouldWrite();
   }
 
-  getFilterRegex(): RegExp | undefined {
+  getFilterRegex(): RegExp[] | undefined {
     return Options.getRegex(this.filterRegex);
   }
 
-  getFilterRegexExclude(): RegExp | undefined {
+  getFilterRegexExclude(): RegExp[] | undefined {
     return Options.getRegex(this.filterRegexExclude);
   }
 

@@ -1,6 +1,7 @@
 // eslint-disable-next-line max-classes-per-file
 import path, { ParsedPath } from 'node:path';
 
+import ArrayPoly from '../polyfill/arrayPoly.js';
 import fsPoly from '../polyfill/fsPoly.js';
 import DAT from './dats/dat.js';
 import Game from './dats/game.js';
@@ -328,26 +329,27 @@ export default class OutputFactory {
 
     // Find the letter for every ROM filename
     let lettersToFilenames = (romBasenames ?? [romBasename]).reduce((map, filename) => {
-      let letter = filename.charAt(0).toUpperCase();
-      if (letter.match(/[^A-Z]/)) {
-        letter = '#';
+      const filenameParsed = path.parse(filename);
+      let letters = (filenameParsed.dir || filenameParsed.name)
+        .substring(0, options.getDirLetterCount())
+        .padEnd(options.getDirLetterCount(), 'A')
+        .toUpperCase()
+        .replace(/[^A-Z0-9]/g, '#');
+      if (!options.getDirLetterGroup()) {
+        letters = letters.replace(/[^A-Z]/g, '#');
       }
 
-      const existing = map.get(letter) ?? new Set();
+      const existing = map.get(letters) ?? new Set();
       existing.add(filename);
-      map.set(letter, existing);
+      map.set(letters, existing);
       return map;
     }, new Map<string, Set<string>>());
 
-    // Split the letter directories, if needed
-    if (options.getDirLetterLimit()) {
+    if (options.getDirLetterGroup()) {
       lettersToFilenames = [...lettersToFilenames.entries()]
-        .reduce((lettersMap, [letter, filenames]) => {
-          if (filenames.size <= options.getDirLetterLimit()) {
-            lettersMap.set(letter, new Set(filenames));
-            return lettersMap;
-          }
-
+        .sort((a, b) => a[0].localeCompare(b[0]))
+        // Generate a tuple of [letter, Set(filenames)] for every subpath
+        .reduce((arr, [letter, filenames]) => {
           // ROMs may have been grouped together into a subdirectory. For example, when a game has
           // multiple ROMs, they get grouped by their game name. Therefore, we have to understand
           // what the "sub-path" should be within the letter directory: the dirname if the ROM has a
@@ -358,6 +360,46 @@ export default class OutputFactory {
               subPathMap.set(subPath, [...subPathMap.get(subPath) ?? [], filename]);
               return subPathMap;
             }, new Map<string, string[]>());
+          const tuples = [...subPathsToFilenames.entries()]
+            .sort(([subPathOne], [subPathTwo]) => subPathOne.localeCompare(subPathTwo))
+            .map(([, subPathFilenames]) => [
+              letter,
+              new Set(subPathFilenames),
+            ] satisfies [string, Set<string>]);
+          return [...arr, ...tuples];
+        }, [] as [string, Set<string>][])
+        // Group letters together to create letter ranges
+        .reduce(ArrayPoly.reduceChunk(options.getDirLetterLimit()), [])
+        .reduce((map, tuples) => {
+          const firstTuple = tuples.at(0) as [string, Set<string>];
+          const lastTuple = tuples.at(-1) as [string, Set<string>];
+          const letterRange = `${firstTuple[0]}-${lastTuple[0]}`;
+          const newFilenames = new Set(tuples.flatMap(([, filenames]) => [...filenames]));
+          const existingFilenames = map.get(letterRange) ?? new Set();
+          map.set(letterRange, new Set([...existingFilenames, ...newFilenames]));
+          return map;
+        }, new Map<string, Set<string>>());
+    }
+
+    // Split the letter directories, if needed
+    if (options.getDirLetterLimit()) {
+      lettersToFilenames = [...lettersToFilenames.entries()]
+        .reduce((lettersMap, [letter, filenames]) => {
+          // ROMs may have been grouped together into a subdirectory. For example, when a game has
+          // multiple ROMs, they get grouped by their game name. Therefore, we have to understand
+          // what the "sub-path" should be within the letter directory: the dirname if the ROM has a
+          // subdir, or just the ROM's basename otherwise.
+          const subPathsToFilenames = [...filenames]
+            .reduce((subPathMap, filename) => {
+              const subPath = filename.replace(/[\\/].+$/, '');
+              subPathMap.set(subPath, [...subPathMap.get(subPath) ?? [], filename]);
+              return subPathMap;
+            }, new Map<string, string[]>());
+
+          if (subPathsToFilenames.size <= options.getDirLetterLimit()) {
+            lettersMap.set(letter, new Set(filenames));
+            return lettersMap;
+          }
 
           const subPaths = [...subPathsToFilenames.keys()].sort();
           const chunkSize = options.getDirLetterLimit();
