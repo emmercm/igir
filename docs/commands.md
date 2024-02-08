@@ -18,9 +18,9 @@ Files in the input directories will be left alone, they will _not_ be modified o
 
 ### `move`
 
-Move ROMs from an input directory to the output directory. The same directory can be specified for both input & output, resulting in ROMs being renamed as their names change in [DATs](dats/overview.md).
+Move ROMs from an input directory to the output directory. The same directory can be specified for both input & output, resulting in ROMs being renamed as their names change in [DATs](dats/introduction.md).
 
-ROMs will be deleted from their input directory after _all_ ROMs for _every_ [DAT](dats/overview.md) have been written.
+ROMs will be deleted from their input directory after _all_ ROMs for _every_ [DAT](dats/introduction.md) have been written.
 
 ### `symlink`
 
@@ -63,7 +63,7 @@ After performing one of the ROM writing commands, verify that the file was writt
 
 ### `clean`
 
-Files in the output directory that do not match any ROM in any [DAT](dats/overview.md) will be deleted.
+Files in the output directory that do not match any ROM in any [DAT](dats/introduction.md) will be deleted.
 
 See the [output cleaning page](output/cleaning.md) for more information.
 
@@ -71,6 +71,6 @@ See the [output cleaning page](output/cleaning.md) for more information.
 
 ### `report`
 
-A report will be generated of what input files were matched by what DAT, and what games in what [DATs](dats/overview.md) have missing ROMs.
+A report will be generated of what input files were matched by what DAT, and what games in what [DATs](dats/introduction.md) have missing ROMs.
 
 See the [reporting page](output/reporting.md) for more information.

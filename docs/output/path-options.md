@@ -28,7 +28,7 @@ ROMs-Input/
         └── pokemon yellow.gb
 ```
 
-When combined with a [DAT](../dats/overview.md), the ROMs will be written with a standardized name, but the output subdirectory structure will match the input:
+When combined with a [DAT](../dats/introduction.md), the ROMs will be written with a standardized name, but the output subdirectory structure will match the input:
 
 === ":simple-windowsxp: Windows"
 
@@ -82,7 +82,7 @@ ROMs-Output/
 --dir-dat-name
 ```
 
-This option appends the matching [DAT](../dats/overview.md)'s name (not its filename) to each file, causing ROMs to be grouped by their console.
+This option appends the matching [DAT](../dats/introduction.md)'s name (not its filename) to each file, causing ROMs to be grouped by their console.
 
 For example, here are some ROMs from multiple consoles combined in one input directory:
 
@@ -157,7 +157,7 @@ ROMs-Output/
 --dir-dat-description
 ```
 
-Similar to `--dir-dat-name`, this option will append the matching [DAT](../dats/overview.md)'s description to each file.
+Similar to `--dir-dat-name`, this option will append the matching [DAT](../dats/introduction.md)'s description to each file.
 
 === ":simple-windowsxp: Windows"
 

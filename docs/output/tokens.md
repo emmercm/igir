@@ -56,7 +56,7 @@ ROMs-Sorted/
 
 ## DAT information
 
-When using [DATs](../dats/overview.md), you can make use of console & game information contained in them:
+When using [DATs](../dats/introduction.md), you can make use of console & game information contained in them:
 
 - `{datName}` the matching DAT's name, similar to how the [`--dir-dat-name` option](./path-options.md) works
 - `{datDescription}` the matching DAT's description, similar to how the [`--dir-dat-description` option](./path-options.md) works

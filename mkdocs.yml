@@ -78,9 +78,10 @@ nav:
           - usage/arcade.md
           - usage/personal.md
       - DATs:
-          - dats/overview.md
-          - dats/fixdats.md
+          - dats/introduction.md
+          - dats/processing.md
           - dats/dir2dat.md
+          - dats/fixdats.md
       - File Inputs:
           - input/file-scanning.md
           - input/reading-archives.md
@@ -124,11 +125,12 @@ plugins:
   - redirects:
       redirect_maps:
         'archives.md': 'input/reading-archives.md'
-        'dats.md': 'dats/overview.md'
+        'dats.md': 'dats/introduction.md'
+        'dats/overview.md': 'dats/introduction.md'
         'examples.md': 'usage/collection-sorting.md'
-        'file-scanning.md': 'input/file-scanning.md'
+        'file-scanning.md': 'input/file-processing.md'
         'input/archives.md': 'input/reading-archives.md'
-        'input/dats.md': 'dats/overview.md'
+        'input/dats.md': 'dats/introduction.md'
         'output/arcade.md': 'usage/arcade.md'
         'reporting.md': 'output/reporting.md'
         'rom-filtering.md': 'roms/filtering-preferences.md'
