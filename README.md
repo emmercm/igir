@@ -57,7 +57,7 @@ $ igir --help
   | $$  | $$|    \  | $$  | $$    $$   ROM collection manager
   | $$  | $$|    \  | $$  | $$    $$   https://igir.io/
   | $$  | $$ \$$$$  | $$  | $$$$$$$\
- _| $$_ | $$__| $$ _| $$_ | $$  | $$   v2.3.0
+ _| $$_ | $$__| $$ _| $$_ | $$  | $$   v2.4.0
 |   $$ \ \$$    $$|   $$ \| $$  | $$
  \$$$$$$  \$$$$$$  \$$$$$$ \$$   \$$
 
@@ -95,6 +95,9 @@ DAT input options:
       --dat-description-regex          Regular expression of DAT descriptions to process [string]
       --dat-description-regex-exclude  Regular expression of DAT descriptions to exclude from pro
                                        cessing                                           [string]
+      --dat-combine                    Combine every game from every found & filtered DAT into on
+                                       e DAT                                            [boolean]
+      --dat-ignore-parent-clone        Ignore any parent/clone information found in DATs[boolean]
 
 ROM output options (processed in order):
   -o, --output               Path to the ROM output directory (supports replaceable symbols, see
@@ -167,6 +170,8 @@ ROM filtering options:
 One game, one ROM (1G1R) options:
   -s, --single                 Output only a single game per parent (1G1R) (required for all opti
                                ons below, requires DATs with parent/clone information)  [boolean]
+      --prefer-game-regex      Regular expression of game names to prefer                [string]
+      --prefer-rom-regex       Regular expression of ROM filenames to prefer             [string]
       --prefer-verified        Prefer verified ROM dumps over unverified                [boolean]
       --prefer-good            Prefer good ROM dumps over bad                           [boolean]
   -l, --prefer-language        List of comma-separated languages in priority order (supported: DA
@@ -224,24 +229,24 @@ Advanced usage:
 
 Example use cases:
 
-  Merge new ROMs into an existing ROM collection and generate a report:
-    igir copy report --dat *.dat --input **/*.zip --input ROMs/ --output ROMs/
-
-  Generate a report on an existing ROM collection, without copying or moving ROMs (read only):
-    igir report --dat *.dat --input ROMs/
+  Merge new ROMs into an existing ROM collection and delete any unrecognized files:
+    igir copy clean --dat "*.dat" --input New-ROMs/ --input ROMs/ --output ROMs/
 
   Organize and zip an existing ROM collection:
-    igir move zip --dat *.dat --input ROMs/ --output ROMs/
+    igir move zip --dat "*.dat" --input ROMs/ --output ROMs/
+
+  Generate a report on an existing ROM collection, without copying or moving ROMs (read only):
+    igir report --dat "*.dat" --input ROMs/
 
   Produce a 1G1R set per console, preferring English ROMs from USA>WORLD>EUR>JPN:
-    igir copy --dat *.dat --input **/*.zip --output 1G1R/ --dir-dat-name --single --prefer-langua
-    ge EN --prefer-region USA,WORLD,EUR,JPN
+    igir copy --dat "*.dat" --input "**/*.zip" --output 1G1R/ --dir-dat-name --single --prefer-la
+    nguage EN --prefer-region USA,WORLD,EUR,JPN
 
   Copy all Mario, Metroid, and Zelda games to one directory:
     igir copy --input ROMs/ --output Nintendo/ --filter-regex "/(Mario|Metroid|Zelda)/i"
 
   Copy all BIOS files into one directory, extracting if necessary:
-    igir copy extract --dat *.dat --input **/*.zip --output BIOS/ --only-bios
+    igir copy extract --dat "*.dat" --input "**/*.zip" --output BIOS/ --only-bios
 
   Create patched copies of ROMs in an existing collection, not overwriting existing files:
     igir copy extract --input ROMs/ --patch Patches/ --output ROMs/
@@ -250,8 +255,8 @@ Example use cases:
     igir copy zip --dat "MAME 0.258.dat" --input MAME/ --output MAME-0.258/ --merge-roms split
 
   Copy ROMs to an Analogue Pocket and test they were written correctly:
-    igir copy extract test --dat *.dat --input ROMs/ --output /Assets/{pocket}/common/ --dir-lett
-    er
+    igir copy extract test --dat "*.dat" --input ROMs/ --output /Assets/{pocket}/common/ --dir-le
+    tter
 ```
 
 ## Feature requests, bug reports, and contributing
