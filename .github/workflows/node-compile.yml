@@ -132,7 +132,7 @@ jobs:
       - run: ${{ matrix.build }}
       - run: |
           {
-            echo "# ${{ github.jobs[github.job].name }}"
+            echo "# ${{ jobs[github.job].name }}"
             echo ""
             echo "BIN_OUTPUT: ${{ env.BIN_OUTPUT }}"
           } >> "${GITHUB_STEP_SUMMARY}"
