@@ -34,6 +34,7 @@ export default class FileChecksums {
   ): Promise<ChecksumProps> {
     // Not calculating any checksums, do nothing
     if (!checksumBitmask) {
+      // WARN(cemmer): this may leave the stream un-drained and therefore some file handles open!
       return {};
     }
 

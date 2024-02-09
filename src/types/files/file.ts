@@ -200,7 +200,11 @@ export default class File implements FileProps {
         highWaterMark: Constants.FILE_READING_CHUNK_SIZE,
       });
 
-      return FileChecksums.hashStream(stream, checksumBitmask);
+      try {
+        return await FileChecksums.hashStream(stream, checksumBitmask);
+      } finally {
+        stream.destroy();
+      }
     });
   }
 
