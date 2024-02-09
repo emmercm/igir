@@ -10,10 +10,11 @@ import unzipper from 'unzipper';
 
 import Constants from '../../../constants.js';
 import fsPoly from '../../../polyfill/fsPoly.js';
+import StreamPoly from '../../../polyfill/streamPoly.js';
 import DAT from '../../dats/dat.js';
 import Options from '../../options.js';
 import File from '../file.js';
-import FileChecksums, { ChecksumBitmask } from '../fileChecksums.js';
+import FileChecksums, { ChecksumBitmask, ChecksumProps } from '../fileChecksums.js';
 import Archive from './archive.js';
 import ArchiveEntry from './archiveEntry.js';
 
@@ -37,14 +38,25 @@ export default class Zip extends Archive {
       archive.files.filter((entryFile) => entryFile.type === 'File'),
       Constants.ARCHIVE_ENTRY_SCANNER_THREADS_PER_ARCHIVE,
       async (entryFile, callback: AsyncResultCallback<ArchiveEntry<Zip>, Error>) => {
-        const checksumsWithoutCrc = await FileChecksums.hashStream(
-          entryFile.stream()
+        let checksumsWithoutCrc: ChecksumProps = {};
+        const entryChecksumBitmask = checksumBitmask & ~ChecksumBitmask.CRC32;
+        if (entryChecksumBitmask) {
+          const entryStream = entryFile.stream()
             // Ignore FILE_ENDED exceptions. This may cause entries to have an empty path, which
             // may lead to unexpected behavior, but at least this won't crash because of an
             // unhandled exception on the stream.
-            .on('error', () => {}),
-          checksumBitmask & ~ChecksumBitmask.CRC32,
-        );
+            .on('error', () => {});
+          try {
+            checksumsWithoutCrc = await FileChecksums.hashStream(entryStream, entryChecksumBitmask);
+          } finally {
+            /**
+             * In the case the callback doesn't read the entire stream, {@link unzipper} will leave
+             * the file handle open. Drain the stream so the file handle can be released. The stream
+             * cannot be destroyed by the callback, or this will never resolve!
+             */
+            await StreamPoly.autodrain(entryStream);
+          }
+        }
 
         const archiveEntry = await ArchiveEntry.entryOf(
           this,
@@ -97,6 +109,7 @@ export default class Zip extends Archive {
       .filter((entryFile) => entryFile.type === 'File')
       .find((entryFile) => entryFile.path === entryPath.replace(/[\\/]/g, '/'));
     if (!entry) {
+      // This should never happen, this likely means the zip file was modified after scanning
       throw new Error(`didn't find entry '${entryPath}'`);
     }
 
@@ -109,7 +122,7 @@ export default class Zip extends Archive {
        * file handle open. Drain the stream so the file handle can be released. The stream cannot
        * be destroyed by the callback, or this will never resolve!
        */
-      await new Promise((resolve) => { stream.end(resolve); });
+      await StreamPoly.autodrain(stream);
     }
   }
 
