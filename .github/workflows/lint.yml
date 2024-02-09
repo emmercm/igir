@@ -36,7 +36,8 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-go@v5
       - run: go install github.com/rhysd/actionlint/cmd/actionlint@latest
-      - run: actionlint
+      # TODO(cemmer): re-enable when https://github.com/rhysd/actionlint/pull/392 releases
+      # - run: actionlint
 
   # !!! This check should be required by GitHub !!!
   linter-status-check:
