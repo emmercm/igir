@@ -3,6 +3,7 @@ import DAT from '../../src/types/dats/dat.js';
 import Game from '../../src/types/dats/game.js';
 import Header from '../../src/types/dats/logiqx/header.js';
 import LogiqxDAT from '../../src/types/dats/logiqx/logiqxDat.js';
+import Options from '../../src/types/options.js';
 import ProgressBarFake from '../console/progressBarFake.js';
 
 function buildDat(gameNames: string[]): DAT {
@@ -20,10 +21,29 @@ it('should not do anything if the DAT has parent/clone info', async () => {
   ]);
 
   // When
-  const inferredDat = await new DATParentInferrer(new ProgressBarFake()).infer(dat);
+  const inferredDat = await new DATParentInferrer(new Options(), new ProgressBarFake()).infer(dat);
 
   // Then
   expect(inferredDat === dat).toEqual(true);
+});
+
+it('should ignore the DAT\'s parent/clone info if specified', async () => {
+  // Given
+  const options = new Options({
+    datIgnoreParentClone: true,
+  });
+  const dat = new LogiqxDAT(new Header(), [
+    new Game({ name: 'game one' }),
+    new Game({ name: 'game two', cloneOf: 'game one' }),
+  ]);
+
+  // When
+  const inferredDat = await new DATParentInferrer(options, new ProgressBarFake()).infer(dat);
+
+  // Then
+  expect(inferredDat === dat).toEqual(false);
+  expect(inferredDat.getParents()).toHaveLength(dat.getGames().length);
+  expect(inferredDat.getParents().every((parent) => parent.getGames().length === 1)).toEqual(true);
 });
 
 it('should not do anything if the DAT has no games', async () => {
@@ -31,7 +51,7 @@ it('should not do anything if the DAT has no games', async () => {
   const dat = new LogiqxDAT(new Header(), []);
 
   // When
-  const inferredDat = await new DATParentInferrer(new ProgressBarFake()).infer(dat);
+  const inferredDat = await new DATParentInferrer(new Options(), new ProgressBarFake()).infer(dat);
 
   // Then
   expect(inferredDat === dat).toEqual(true);
@@ -143,7 +163,8 @@ test.each([
   ], 'Legend of TOSEC, The (1986)(Devstudio)(US)'],
 ])('should group similar games: %s', async (gameNames, expectedGameName) => {
   const ungroupedDat = buildDat(gameNames);
-  const groupedDat = await new DATParentInferrer(new ProgressBarFake()).infer(ungroupedDat);
+  const groupedDat = await new DATParentInferrer(new Options(), new ProgressBarFake())
+    .infer(ungroupedDat);
   expect(groupedDat.getParents()).toHaveLength(1);
   expect(groupedDat.getParents()[0].getGames()).toHaveLength(ungroupedDat.getGames().length);
   expect(groupedDat.getParents()[0].getName()).toEqual(expectedGameName);
@@ -168,7 +189,8 @@ describe('dissimilar games', () => {
     ]],
   ])('should not group different discs', async (gameNames) => {
     const ungroupedDat = buildDat(gameNames);
-    const groupedDat = await new DATParentInferrer(new ProgressBarFake()).infer(ungroupedDat);
+    const groupedDat = await new DATParentInferrer(new Options(), new ProgressBarFake())
+      .infer(ungroupedDat);
     expect(groupedDat.getParents()).toHaveLength(gameNames.length);
     expect(groupedDat.getParents().every((parent) => parent.getGames().length === 1)).toEqual(true);
   });
@@ -186,7 +208,8 @@ describe('dissimilar games', () => {
     ]],
   ])('should not group different years', async (gameNames) => {
     const ungroupedDat = buildDat(gameNames);
-    const groupedDat = await new DATParentInferrer(new ProgressBarFake()).infer(ungroupedDat);
+    const groupedDat = await new DATParentInferrer(new Options(), new ProgressBarFake())
+      .infer(ungroupedDat);
     expect(groupedDat.getParents()).toHaveLength(gameNames.length);
     expect(groupedDat.getParents().every((parent) => parent.getGames().length === 1)).toEqual(true);
   });
@@ -199,7 +222,8 @@ describe('dissimilar games', () => {
     ]],
   ])('should not group different taglines', async (gameNames) => {
     const ungroupedDat = buildDat(gameNames);
-    const groupedDat = await new DATParentInferrer(new ProgressBarFake()).infer(ungroupedDat);
+    const groupedDat = await new DATParentInferrer(new Options(), new ProgressBarFake())
+      .infer(ungroupedDat);
     expect(groupedDat.getParents()).toHaveLength(gameNames.length);
     expect(groupedDat.getParents().every((parent) => parent.getGames().length === 1)).toEqual(true);
   });
