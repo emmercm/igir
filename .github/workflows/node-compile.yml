@@ -99,16 +99,16 @@ jobs:
               ./node_modules/.bin/caxa --input dist/ --output igir -- "{{caxa}}/node_modules/.bin/node" "{{caxa}}/index.js"
               ./igir --help
               tar cvf - igir | gzip --best > "${BIN_OUTPUT}"
-          - os: macos-14
-            build: |
-              NPM_PKG_VERSION=$(npm pkg get version | sed 's/"//g')
-              NODE_ARCH=$(node --print 'process.arch')
-              BIN_OUTPUT="igir-${NPM_PKG_VERSION}-${RUNNER_OS}-${NODE_ARCH}.tar.gz"
-              echo "BIN_OUTPUT=${BIN_OUTPUT}" >> "${GITHUB_ENV}"
-              cp package.json dist/
-              ./node_modules/.bin/caxa --input dist/ --output igir -- "{{caxa}}/node_modules/.bin/node" "{{caxa}}/index.js"
-              ./igir --help
-              tar cvf - igir | gzip --best > "${BIN_OUTPUT}"
+#          - os: macos-14
+#            build: |
+#              NPM_PKG_VERSION=$(npm pkg get version | sed 's/"//g')
+#              NODE_ARCH=$(node --print 'process.arch')
+#              BIN_OUTPUT="igir-${NPM_PKG_VERSION}-${RUNNER_OS}-${NODE_ARCH}.tar.gz"
+#              echo "BIN_OUTPUT=${BIN_OUTPUT}" >> "${GITHUB_ENV}"
+#              cp package.json dist/
+#              ./node_modules/.bin/caxa --input dist/ --output igir -- "{{caxa}}/node_modules/.bin/node" "{{caxa}}/index.js"
+#              ./igir --help
+#              tar cvf - igir | gzip --best > "${BIN_OUTPUT}"
           - os: windows-latest
             build: |
               $NPM_PKG_VERSION=$(npm pkg get version).replace('"','')
