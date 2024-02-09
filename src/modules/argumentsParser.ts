@@ -575,6 +575,14 @@ export default class ArgumentsParser {
         description: 'Output only a single game per parent (1G1R) (required for all options below, requires DATs with parent/clone information)',
         type: 'boolean',
       })
+      .option('prefer-regex', {
+        group: groupRomPriority,
+        description: 'Regular expression of game names to prefer',
+        type: 'string',
+        coerce: ArgumentsParser.readRegexFile,
+        requiresArg: true,
+        implies: 'single',
+      })
       .option('prefer-verified', {
         group: groupRomPriority,
         description: 'Prefer verified ROM dumps over unverified',

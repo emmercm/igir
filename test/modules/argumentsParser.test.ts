@@ -162,6 +162,7 @@ describe('options', () => {
     expect(options.getOnlyBad()).toEqual(false);
 
     expect(options.getSingle()).toEqual(false);
+    expect(options.getPreferRegex()).toBeUndefined();
     expect(options.getPreferVerified()).toEqual(false);
     expect(options.getPreferGood()).toEqual(false);
     expect(options.getPreferLanguages()).toHaveLength(0);
@@ -552,6 +553,26 @@ describe('options', () => {
     expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, 'zip', '--remove-headers', '.smc']).canRemoveHeader(dat, '.SMC')).toEqual(true);
     expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, 'zip', '-H', 'LNX,.smc']).canRemoveHeader(dat, '.smc')).toEqual(true);
     expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, 'zip', '--remove-headers', 'lnx,.LNX']).canRemoveHeader(dat, '.LnX')).toEqual(true);
+  });
+
+  it('should parse "prefer-regex"', async () => {
+    expect(() => argumentsParser.parse([...dummyCommandAndRequiredArgs, '--prefer-regex', '[a-z]'])).toThrow(/dependent|implication/i);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--single', '--prefer-regex', '[a-z]']).getPreferRegex()?.some((regex) => regex.test('lower'))).toEqual(true);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--single', '--prefer-regex', '[a-z]']).getPreferRegex()?.some((regex) => regex.test('UPPER'))).toEqual(false);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--single', '--prefer-regex', '/[a-z]/i']).getPreferRegex()?.some((regex) => regex.test('UPPER'))).toEqual(true);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--single', '--prefer-regex', '/[a-z]/i', '--prefer-regex', '[0-9]']).getPreferRegex()?.some((regex) => regex.test('UPPER'))).toEqual(false);
+
+    const tempFile = await FsPoly.mktemp(path.join(Constants.GLOBAL_TEMP_DIR, 'temp'));
+    try {
+      await util.promisify(fs.writeFile)(tempFile, '\n/[a-z]/i\r\n[0-9]\n\n');
+      expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--single', '--prefer-regex', tempFile]).getPreferRegex()?.some((regex) => regex.test(''))).toEqual(false);
+      expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--single', '--prefer-regex', tempFile]).getPreferRegex()?.some((regex) => regex.test('lower'))).toEqual(true);
+      expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--single', '--prefer-regex', tempFile]).getPreferRegex()?.some((regex) => regex.test('UPPER'))).toEqual(true);
+      expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--single', '--prefer-regex', tempFile]).getPreferRegex()?.some((regex) => regex.test('007'))).toEqual(true);
+      expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--single', '--prefer-regex', tempFile]).getPreferRegex()?.some((regex) => regex.test('@!#?@!'))).toEqual(false);
+    } finally {
+      await FsPoly.rm(tempFile);
+    }
   });
 
   it('should parse "prefer-verified"', () => {

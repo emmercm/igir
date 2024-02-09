@@ -165,6 +165,40 @@ describe('sort', () => {
     });
   });
 
+  describe('prefer regex', () => {
+    it('should return the first candidate when option is empty', async () => {
+      await expectPreferredCandidates({ preferRegex: undefined, single: true }, [
+        await buildReleaseCandidatesWithRegionLanguage(['one'], [], 'EN'),
+        await buildReleaseCandidatesWithRegionLanguage(['two', 'three'], [], 'EN'),
+        await buildReleaseCandidatesWithRegionLanguage(['four', 'five', 'six'], [], 'EN'),
+      ], ['one', 'two', 'four']);
+    });
+
+    it('should return the first candidate when none matching', async () => {
+      await expectPreferredCandidates({ preferRegex: 'NINE', single: true }, [
+        await buildReleaseCandidatesWithRegionLanguage(['one'], [], 'EN'),
+        await buildReleaseCandidatesWithRegionLanguage(['two', 'three'], [], 'EN'),
+        await buildReleaseCandidatesWithRegionLanguage(['four', 'five', 'six'], [], 'EN'),
+      ], ['one', 'two', 'four']);
+    });
+
+    it('should return the first matching candidate when some matching', async () => {
+      await expectPreferredCandidates({ preferRegex: '/THREE|five/i', single: true }, [
+        await buildReleaseCandidatesWithRegionLanguage(['one'], [], 'EN'),
+        await buildReleaseCandidatesWithRegionLanguage(['two', 'three'], [], 'EN'),
+        await buildReleaseCandidatesWithRegionLanguage(['four', 'five', 'six'], [], 'EN'),
+      ], ['one', 'three', 'five']);
+    });
+
+    it('should return the first candidate when all matching', async () => {
+      await expectPreferredCandidates({ preferRegex: 'one|two|three|four|five|six', single: true }, [
+        await buildReleaseCandidatesWithRegionLanguage(['one'], [], 'EN'),
+        await buildReleaseCandidatesWithRegionLanguage(['two', 'three'], [], 'EN'),
+        await buildReleaseCandidatesWithRegionLanguage(['four', 'five', 'six'], [], 'EN'),
+      ], ['one', 'two', 'four']);
+    });
+  });
+
   describe('prefer good', () => {
     it('should return the first candidate when option is false', async () => {
       await expectPreferredCandidates({ preferGood: false, single: true }, [

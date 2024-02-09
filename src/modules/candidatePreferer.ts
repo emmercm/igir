@@ -103,7 +103,8 @@ export default class CandidatePreferer extends Module {
    */
 
   private sort(a: ReleaseCandidate, b: ReleaseCandidate): number {
-    return this.preferVerifiedSort(a, b)
+    return this.preferRegexSort(a, b)
+        || this.preferVerifiedSort(a, b)
         || this.preferGoodSort(a, b)
         || this.preferLanguagesSort(a, b)
         || this.preferRegionsSort(a, b)
@@ -114,18 +115,29 @@ export default class CandidatePreferer extends Module {
         || this.preferParentSort(a, b);
   }
 
-  private preferVerifiedSort(a: ReleaseCandidate, b: ReleaseCandidate): number {
-    if (this.options.getPreferVerified()) {
-      return (a.getGame().isVerified() ? 0 : 1) - (b.getGame().isVerified() ? 0 : 1);
+  private preferRegexSort(a: ReleaseCandidate, b: ReleaseCandidate): number {
+    const preferRegex = this.options.getPreferRegex();
+    if (preferRegex === undefined || preferRegex.length === 0) {
+      return 0;
     }
-    return 0;
+
+    const aMatched = preferRegex.some((regex) => regex.test(a.getGame().getName())) ? 0 : 1;
+    const bMatched = preferRegex.some((regex) => regex.test(b.getGame().getName())) ? 0 : 1;
+    return aMatched - bMatched;
+  }
+
+  private preferVerifiedSort(a: ReleaseCandidate, b: ReleaseCandidate): number {
+    if (!this.options.getPreferVerified()) {
+      return 0;
+    }
+    return (a.getGame().isVerified() ? 0 : 1) - (b.getGame().isVerified() ? 0 : 1);
   }
 
   private preferGoodSort(a: ReleaseCandidate, b: ReleaseCandidate): number {
-    if (this.options.getPreferGood()) {
-      return (b.getGame().isBad() ? 0 : 1) - (a.getGame().isBad() ? 0 : 1);
+    if (!this.options.getPreferGood()) {
+      return 0;
     }
-    return 0;
+    return (b.getGame().isBad() ? 0 : 1) - (a.getGame().isBad() ? 0 : 1);
   }
 
   private preferLanguagesSort(a: ReleaseCandidate, b: ReleaseCandidate): number {
@@ -149,10 +161,10 @@ export default class CandidatePreferer extends Module {
   }
 
   private preferRegionsSort(a: ReleaseCandidate, b: ReleaseCandidate): number {
-    if (this.options.getPreferRegions().length > 0) {
-      return this.preferRegionSortValue(a) - this.preferRegionSortValue(b);
+    if (this.options.getPreferRegions().length === 0) {
+      return 0;
     }
-    return 0;
+    return this.preferRegionSortValue(a) - this.preferRegionSortValue(b);
   }
 
   private preferRegionSortValue(releaseCandidate: ReleaseCandidate): number {
@@ -175,30 +187,30 @@ export default class CandidatePreferer extends Module {
   }
 
   private preferRetailSort(a: ReleaseCandidate, b: ReleaseCandidate): number {
-    if (this.options.getPreferRetail()) {
-      return (a.getGame().isRetail() ? 0 : 1) - (b.getGame().isRetail() ? 0 : 1);
+    if (!this.options.getPreferRetail()) {
+      return 0;
     }
-    return 0;
+    return (a.getGame().isRetail() ? 0 : 1) - (b.getGame().isRetail() ? 0 : 1);
   }
 
   private preferNTSCSort(a: ReleaseCandidate, b: ReleaseCandidate): number {
-    if (this.options.getPreferNTSC()) {
-      return (a.getGame().isNTSC() ? 0 : 1) - (b.getGame().isNTSC() ? 0 : 1);
+    if (!this.options.getPreferNTSC()) {
+      return 0;
     }
-    return 0;
+    return (a.getGame().isNTSC() ? 0 : 1) - (b.getGame().isNTSC() ? 0 : 1);
   }
 
   private preferPALSort(a: ReleaseCandidate, b: ReleaseCandidate): number {
-    if (this.options.getPreferPAL()) {
-      return (a.getGame().isPAL() ? 0 : 1) - (b.getGame().isPAL() ? 0 : 1);
+    if (!this.options.getPreferPAL()) {
+      return 0;
     }
-    return 0;
+    return (a.getGame().isPAL() ? 0 : 1) - (b.getGame().isPAL() ? 0 : 1);
   }
 
   private preferParentSort(a: ReleaseCandidate, b: ReleaseCandidate): number {
-    if (this.options.getPreferParent()) {
-      return (a.getGame().isParent() ? 0 : 1) - (b.getGame().isParent() ? 0 : 1);
+    if (!this.options.getPreferParent()) {
+      return 0;
     }
-    return 0;
+    return (a.getGame().isParent() ? 0 : 1) - (b.getGame().isParent() ? 0 : 1);
   }
 }
