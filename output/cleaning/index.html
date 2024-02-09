@@ -1413,6 +1413,8 @@
       
         
       
+        
+      
     
     
     
@@ -1453,11 +1455,11 @@
   
   
     <li class="md-nav__item">
-      <a href="../../dats/overview/" class="md-nav__link">
+      <a href="../../dats/introduction/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
-    DAT Overview
+    Introduction to DATs
   </span>
   
 
@@ -1474,11 +1476,11 @@
   
   
     <li class="md-nav__item">
-      <a href="../../dats/fixdats/" class="md-nav__link">
+      <a href="../../dats/processing/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
-    Fixdats
+    DAT Processing
   </span>
   
 
@@ -1500,6 +1502,27 @@
   
   <span class="md-ellipsis">
     dir2dat
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../dats/fixdats/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Fixdats
   </span>
   
 
@@ -2312,13 +2335,13 @@
 <h1 id="output-cleaning">Output Cleaning</h1>
 <p>The <code>igir clean</code> <a href="../../commands/">command</a> can be used when writing (<code>igir copy</code>, <code>igir move</code>, and <code>igir symlink</code>) to delete files from the <code>--output &lt;path&gt;</code> directory that are either:</p>
 <ul>
-<li>Not contained in any provided <a href="../../dats/overview/">DAT</a> (the <code>--dat &lt;path&gt;</code> option).</li>
-<li>Contained in a <a href="../../dats/overview/">DAT</a> (the <code>--dat &lt;path&gt;</code> option), but the file is in the incorrect location.</li>
+<li>Not contained in any provided <a href="../../dats/introduction/">DAT</a> (the <a href="../../dats/processing/#scanning-for-dats"><code>--dat &lt;path&gt;</code> option</a>).</li>
+<li>Contained in a <a href="../../dats/introduction/">DAT</a> (the <a href="../../dats/processing/#scanning-for-dats"><code>--dat &lt;path&gt;</code> option</a>), but the file is in the incorrect location.</li>
 </ul>
 <h2 id="the-golden-rule">The golden rule</h2>
 <p>The golden rule of the <code>igir clean</code> command is it will <em>not</em> delete files in any directory tree that it did not write to.</p>
 <p>In practical terms, this means:</p>
-<p><strong>1. If no file was written (i.e. no input file matched any ROM in any <a href="../../dats/overview/">DAT</a>), then <code>igir clean</code> will not delete any files.</strong></p>
+<p><strong>1. If no file was written (i.e. no input file matched any ROM in any <a href="../../dats/introduction/">DAT</a>), then <code>igir clean</code> will not delete any files.</strong></p>
 <p><strong>2. If <a href="../tokens/">tokens</a> are used with the <code>--output &lt;path&gt;</code> option, only subdirectories that are written to will be considered for cleaning.</strong></p>
 <p>For example, if the output directory is specified as <code>--output "games/{mister}"</code>, and only Game Boy Color games are found in <code>--input &lt;path&gt;</code>, then only the <code>games/Gameboy/</code> directory would be considered for cleaning. Other directories that may already exist such as <code>games/GBA/</code> and <code>games/NES/</code> would <em>not</em> be considered for cleaning, as <code>igir</code> did not write there.</p>
 <p>In other words, <code>games/{mister}</code> is <em>not</em> equivalent to <code>games/*</code>. <code>igir</code> will <em>not</em> indiscriminately delete files in <code>games/</code>.</p>
@@ -2362,7 +2385,7 @@
     <span class="md-icon" title="Last update">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1-2.1-2M12.5 7v5.2l4 2.4-1 1L11 13V7h1.5M11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2v1.8Z"/></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date">December 7, 2023</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date">February 9, 2024</span>
   </span>
 
     

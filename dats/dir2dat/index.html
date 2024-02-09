@@ -13,10 +13,10 @@
         <link rel="canonical" href="https://igir.io/dats/dir2dat/">
       
       
-        <link rel="prev" href="../fixdats/">
+        <link rel="prev" href="../processing/">
       
       
-        <link rel="next" href="../../input/file-scanning/">
+        <link rel="next" href="../fixdats/">
       
       
       <link rel="icon" href="../../logo-dark.svg">
@@ -1415,6 +1415,8 @@
       
         
       
+        
+      
     
     
     
@@ -1455,11 +1457,11 @@
   
   
     <li class="md-nav__item">
-      <a href="../overview/" class="md-nav__link">
+      <a href="../introduction/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
-    DAT Overview
+    Introduction to DATs
   </span>
   
 
@@ -1476,11 +1478,11 @@
   
   
     <li class="md-nav__item">
-      <a href="../fixdats/" class="md-nav__link">
+      <a href="../processing/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
-    Fixdats
+    DAT Processing
   </span>
   
 
@@ -1573,6 +1575,27 @@
   
 </nav>
       
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../fixdats/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Fixdats
+  </span>
+  
+
+      </a>
     </li>
   
 
@@ -2319,7 +2342,7 @@
 
 
 <h1 id="dir2dat">dir2dat</h1>
-<p>"dir2dat" refers to DATs that have been automatically created based on files in an input directory. DATs generated this way are not typically useful as-is, they usually require some hand editing after creation.</p>
+<p>"dir2dat" refers to DATs that have been automatically created based on files in an input directory. <a href="../introduction/">DATs</a> generated this way are not typically useful as-is, they usually require some hand editing after creation.</p>
 <p><code>igir</code> has the ability to create these DATs with the <code>igir dir2dat</code> command. Example:</p>
 <div class="language-shell highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>igir<span class="w"> </span>dir2dat<span class="w"> </span>--input<span class="w"> </span>&lt;path&gt;<span class="w"> </span><span class="o">[</span>--input<span class="w"> </span>&lt;path&gt;..<span class="o">]</span>
 </span></code></pre></div>
@@ -2352,6 +2375,10 @@
 </div>
 </div>
 <p>then ROMs can appear in multiple resulting dir2dat files.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>You can use the <a href="../processing/#dat-combining"><code>--dat-combine</code> option</a> to create only one DAT even when multiple input paths are provided.</p>
+</div>
 </li>
 </ul>
 <ul>
@@ -2400,7 +2427,7 @@
 <h2 id="combining-with-other-options">Combining with other options</h2>
 <p>Once DATs have been generated from input files, they are processed the same as any other DAT file. That means:</p>
 <ul>
-<li><strong>Parent/clone information may be <a href="../overview/#parentclone-inference">inferred</a> from game names.</strong><p>If your input files are in some kind of standard naming convention (e.g. <a href="https://wiki.no-intro.org/index.php?title=Naming_Convention">No-Intro</a>, <a href="https://datomatic.no-intro.org/stuff/The%20Official%20No-Intro%20Convention%20(20071030).pdf">Redump</a>, or <a href="https://www.tosecdev.org/tosec-naming-convention">TOSEC</a>), then parent/clone information can be inferred for <a href="../../roms/filtering-preferences/">1G1R preferences</a>.</p>
+<li><strong>Parent/clone information may be <a href="../processing/#parentclone-inference">inferred</a> from game names.</strong><p>If your input files are in some kind of standard naming convention (e.g. <a href="https://wiki.no-intro.org/index.php?title=Naming_Convention">No-Intro</a>, <a href="https://datomatic.no-intro.org/stuff/The%20Official%20No-Intro%20Convention%20(20071030).pdf">Redump</a>, or <a href="https://www.tosecdev.org/tosec-naming-convention">TOSEC</a>), then parent/clone information can be inferred for <a href="../../roms/filtering-preferences/">1G1R preferences</a>.</p>
 <p>Parent/clone information also allows for <a href="../../usage/arcade/">merging &amp; splitting</a> of ROM sets.</p>
 </li>
 </ul>
@@ -2433,7 +2460,7 @@
     <span class="md-icon" title="Last update">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1-2.1-2M12.5 7v5.2l4 2.4-1 1L11 13V7h1.5M11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2v1.8Z"/></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date">December 7, 2023</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date">February 9, 2024</span>
   </span>
 
     
@@ -2467,7 +2494,7 @@
       <nav class="md-footer__inner md-grid" aria-label="Footer" >
         
           
-          <a href="../fixdats/" class="md-footer__link md-footer__link--prev" aria-label="Previous: Fixdats">
+          <a href="../processing/" class="md-footer__link md-footer__link--prev" aria-label="Previous: DAT Processing">
             <div class="md-footer__button md-icon">
               
               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12Z"/></svg>
@@ -2477,20 +2504,20 @@
                 Previous
               </span>
               <div class="md-ellipsis">
-                Fixdats
+                DAT Processing
               </div>
             </div>
           </a>
         
         
           
-          <a href="../../input/file-scanning/" class="md-footer__link md-footer__link--next" aria-label="Next: File Scanning">
+          <a href="../fixdats/" class="md-footer__link md-footer__link--next" aria-label="Next: Fixdats">
             <div class="md-footer__title">
               <span class="md-footer__direction">
                 Next
               </span>
               <div class="md-ellipsis">
-                File Scanning
+                Fixdats
               </div>
             </div>
             <div class="md-footer__button md-icon">
