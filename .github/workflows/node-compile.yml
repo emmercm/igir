@@ -61,6 +61,7 @@ jobs:
               BIN_OUTPUT="igir-${NPM_PKG_VERSION}-${RUNNER_OS}-${NODE_ARCH/\//}.tar.gz"
               echo "BIN_OUTPUT=${BIN_OUTPUT}" >> "${GITHUB_ENV}"
               cp package.json dist/
+              echo "docker run --platform linux/${NODE_ARCH} node:$(jq --raw-output '.volta.node' package.json)"
               docker run --rm --platform "linux/${NODE_ARCH}" --volume "$(pwd):/app" --workdir "/app" \
                 "node:$(jq --raw-output '.volta.node' package.json)" sh -c \
                 "./node_modules/.bin/caxa --input dist/ --output igir -- \"{{caxa}}/node_modules/.bin/node\" \"{{caxa}}/index.js\" && ./igir --help"
@@ -73,6 +74,7 @@ jobs:
               BIN_OUTPUT="igir-${NPM_PKG_VERSION}-${RUNNER_OS}-${NODE_ARCH/\//}.tar.gz"
               echo "BIN_OUTPUT=${BIN_OUTPUT}" >> "${GITHUB_ENV}"
               cp package.json dist/
+              echo "docker run --platform linux/${NODE_ARCH} node:$(jq --raw-output '.volta.node' package.json)"
               docker run --rm --platform "linux/${NODE_ARCH}" --volume "$(pwd):/app" --workdir "/app" \
                 "node:$(jq --raw-output '.volta.node' package.json)" sh -c \
                 "./node_modules/.bin/caxa --input dist/ --output igir -- \"{{caxa}}/node_modules/.bin/node\" \"{{caxa}}/index.js\" && ./igir --help"
@@ -85,6 +87,7 @@ jobs:
               BIN_OUTPUT="igir-${NPM_PKG_VERSION}-${RUNNER_OS}-${NODE_ARCH/\//}.tar.gz"
               echo "BIN_OUTPUT=${BIN_OUTPUT}" >> "${GITHUB_ENV}"
               cp package.json dist/
+              echo "docker run --platform linux/${NODE_ARCH} node:$(jq --raw-output '.volta.node' package.json)"
               docker run --rm --platform "linux/${NODE_ARCH}" --volume "$(pwd):/app" --workdir "/app" \
                 "node:$(jq --raw-output '.volta.node' package.json)" sh -c \
                 "./node_modules/.bin/caxa --input dist/ --output igir -- \"{{caxa}}/node_modules/.bin/node\" \"{{caxa}}/index.js\" && ./igir --help"
