@@ -66,12 +66,12 @@ function arrayCoerce<T>(val: T | T[] | undefined): T[] {
 }
 
 async function buildReleaseCandidatesWithRegionLanguage(
-  names: string | string[],
+  gameNames: string | string[],
   regions?: string | string[],
   languages?: string | string[],
   gameOptions?: GameProps | GameProps[],
 ): Promise<[Parent, ReleaseCandidate[]]> {
-  const namesArr = arrayCoerce(names);
+  const gameNamesArr = arrayCoerce(gameNames);
   const regionsArr = arrayCoerce(regions);
   const languagesArr = Array.isArray(languages) ? languages : [languages];
   const gameOptionsArr = arrayCoerce(gameOptions);
@@ -79,12 +79,12 @@ async function buildReleaseCandidatesWithRegionLanguage(
   // Every different name+language combo is a different ROM+Game
   const games: Game[] = [];
   const releaseCandidates: ReleaseCandidate[] = [];
-  for (const [idx, romName] of namesArr.entries()) {
+  for (const [idx, gameName] of gameNamesArr.entries()) {
     for (const language of languagesArr) {
       // Every region is a different Release+ReleaseCandidate
       const releases: Release[] = [];
       for (const region of regionsArr) {
-        let releaseName = romName;
+        let releaseName = gameName;
         if (region) {
           releaseName += ` (${region})`;
         }
@@ -94,9 +94,12 @@ async function buildReleaseCandidatesWithRegionLanguage(
         releases.push(new Release(releaseName, region, language));
       }
 
-      const rom = new ROM({ name: `${romName}.rom`, size: 0, crc: '00000000' });
+      const rom = new ROM({ name: `${gameName}.rom`, size: 0, crc: '00000000' });
       const game = new Game({
-        name: romName, rom: [rom], release: releases, ...gameOptionsArr[idx],
+        name: gameName,
+        rom: [rom],
+        release: releases,
+        ...gameOptionsArr[idx],
       });
       games.push(game);
 
@@ -116,7 +119,7 @@ async function buildReleaseCandidatesWithRegionLanguage(
     }
   }
 
-  const parent = new Parent(namesArr[0], games);
+  const parent = new Parent(gameNamesArr[0], games);
   return [parent, releaseCandidates];
 }
 
@@ -131,6 +134,74 @@ it('should return nothing if no parent has release candidates', async () => {
 });
 
 describe('sort', () => {
+  describe('prefer game regex', () => {
+    it('should return the first candidate when option is empty', async () => {
+      await expectPreferredCandidates({ preferGameRegex: undefined, single: true }, [
+        await buildReleaseCandidatesWithRegionLanguage(['one'], [], 'EN'),
+        await buildReleaseCandidatesWithRegionLanguage(['two', 'three'], [], 'EN'),
+        await buildReleaseCandidatesWithRegionLanguage(['four', 'five', 'six'], [], 'EN'),
+      ], ['one', 'two', 'four']);
+    });
+
+    it('should return the first candidate when none matching', async () => {
+      await expectPreferredCandidates({ preferGameRegex: 'NINE', single: true }, [
+        await buildReleaseCandidatesWithRegionLanguage(['one'], [], 'EN'),
+        await buildReleaseCandidatesWithRegionLanguage(['two', 'three'], [], 'EN'),
+        await buildReleaseCandidatesWithRegionLanguage(['four', 'five', 'six'], [], 'EN'),
+      ], ['one', 'two', 'four']);
+    });
+
+    it('should return the first matching candidate when some matching', async () => {
+      await expectPreferredCandidates({ preferGameRegex: '/THREE|five/i', single: true }, [
+        await buildReleaseCandidatesWithRegionLanguage(['one'], [], 'EN'),
+        await buildReleaseCandidatesWithRegionLanguage(['two', 'three'], [], 'EN'),
+        await buildReleaseCandidatesWithRegionLanguage(['four', 'five', 'six'], [], 'EN'),
+      ], ['one', 'three', 'five']);
+    });
+
+    it('should return the first candidate when all matching', async () => {
+      await expectPreferredCandidates({ preferGameRegex: '[aeiou]', single: true }, [
+        await buildReleaseCandidatesWithRegionLanguage(['one'], [], 'EN'),
+        await buildReleaseCandidatesWithRegionLanguage(['two', 'three'], [], 'EN'),
+        await buildReleaseCandidatesWithRegionLanguage(['four', 'five', 'six'], [], 'EN'),
+      ], ['one', 'two', 'four']);
+    });
+  });
+
+  describe('prefer rom regex', () => {
+    it('should return the first candidate when option is empty', async () => {
+      await expectPreferredCandidates({ preferRomRegex: undefined, single: true }, [
+        await buildReleaseCandidatesWithRegionLanguage(['one'], [], 'EN'),
+        await buildReleaseCandidatesWithRegionLanguage(['two', 'three'], [], 'EN'),
+        await buildReleaseCandidatesWithRegionLanguage(['four', 'five', 'six'], [], 'EN'),
+      ], ['one', 'two', 'four']);
+    });
+
+    it('should return the first candidate when none matching', async () => {
+      await expectPreferredCandidates({ preferRomRegex: '/five\\.nes/i', single: true }, [
+        await buildReleaseCandidatesWithRegionLanguage(['one'], [], 'EN'),
+        await buildReleaseCandidatesWithRegionLanguage(['two', 'three'], [], 'EN'),
+        await buildReleaseCandidatesWithRegionLanguage(['four', 'five', 'six'], [], 'EN'),
+      ], ['one', 'two', 'four']);
+    });
+
+    it('should return the first matching candidate when some matching', async () => {
+      await expectPreferredCandidates({ preferRomRegex: '/THREE|five\\.rom/i', single: true }, [
+        await buildReleaseCandidatesWithRegionLanguage(['one'], [], 'EN'),
+        await buildReleaseCandidatesWithRegionLanguage(['two', 'three'], [], 'EN'),
+        await buildReleaseCandidatesWithRegionLanguage(['four', 'five', 'six'], [], 'EN'),
+      ], ['one', 'three', 'five']);
+    });
+
+    it('should return the first candidate when all matching', async () => {
+      await expectPreferredCandidates({ preferRomRegex: '[aeiou]', single: true }, [
+        await buildReleaseCandidatesWithRegionLanguage(['one'], [], 'EN'),
+        await buildReleaseCandidatesWithRegionLanguage(['two', 'three'], [], 'EN'),
+        await buildReleaseCandidatesWithRegionLanguage(['four', 'five', 'six'], [], 'EN'),
+      ], ['one', 'two', 'four']);
+    });
+  });
+
   describe('prefer verified', () => {
     it('should return the first candidate when option is false', async () => {
       await expectPreferredCandidates({ preferVerified: false, single: true }, [

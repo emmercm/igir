@@ -122,6 +122,8 @@ export interface OptionsProps {
   readonly onlyBad?: boolean,
 
   readonly single?: boolean,
+  readonly preferGameRegex?: string,
+  readonly preferRomRegex?: string,
   readonly preferVerified?: boolean,
   readonly preferGood?: boolean,
   readonly preferLanguage?: string[],
@@ -283,7 +285,11 @@ export default class Options implements OptionsProps {
 
   readonly onlyBad: boolean;
 
-  readonly single: boolean = false;
+  readonly single: boolean;
+
+  readonly preferGameRegex: string;
+
+  readonly preferRomRegex: string;
 
   readonly preferVerified: boolean;
 
@@ -401,6 +407,8 @@ export default class Options implements OptionsProps {
     this.onlyBad = options?.onlyBad ?? false;
 
     this.single = options?.single ?? false;
+    this.preferGameRegex = options?.preferGameRegex ?? '';
+    this.preferRomRegex = options?.preferRomRegex ?? '';
     this.preferVerified = options?.preferVerified ?? false;
     this.preferGood = options?.preferGood ?? false;
     this.preferLanguage = options?.preferLanguage ?? [];
@@ -1044,6 +1052,14 @@ export default class Options implements OptionsProps {
 
   getSingle(): boolean {
     return this.single;
+  }
+
+  getPreferGameRegex(): RegExp[] | undefined {
+    return Options.getRegex(this.preferGameRegex);
+  }
+
+  getPreferRomRegex(): RegExp[] | undefined {
+    return Options.getRegex(this.preferRomRegex);
   }
 
   getPreferVerified(): boolean {
