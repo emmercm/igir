@@ -133,8 +133,6 @@ jobs:
       - run: ${{ matrix.build }}
       - run: |
           {
-            echo "# ${{ job.container.id }}"
-            echo ""
             echo "BIN_OUTPUT: ${{ env.BIN_OUTPUT }}"
           } >> "${GITHUB_STEP_SUMMARY}"
       - if: ${{ github.event_name != 'pull_request' }}
