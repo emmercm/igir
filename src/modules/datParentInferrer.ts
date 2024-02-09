@@ -3,6 +3,7 @@ import DAT from '../types/dats/dat.js';
 import Game from '../types/dats/game.js';
 import LogiqxDAT from '../types/dats/logiqx/logiqxDat.js';
 import Internationalization from '../types/internationalization.js';
+import Options from '../types/options.js';
 import Module from './module.js';
 
 /**
@@ -11,15 +12,18 @@ import Module from './module.js';
  * This class may be run concurrently with other classes.
  */
 export default class DATParentInferrer extends Module {
-  constructor(progressBar: ProgressBar) {
+  private readonly options: Options;
+
+  constructor(options: Options, progressBar: ProgressBar) {
     super(progressBar, DATParentInferrer.name);
+    this.options = options;
   }
 
   /**
    * Infer {@link Parent}s from {@link Game}s.
    */
   async infer(dat: DAT): Promise<DAT> {
-    if (dat.hasParentCloneInfo()) {
+    if (dat.hasParentCloneInfo() && !this.options.getDatIgnoreParentClone()) {
       this.progressBar.logDebug(`${dat.getNameShort()}: DAT has parent/clone info, skipping`);
       return dat;
     }
@@ -45,20 +49,12 @@ export default class DATParentInferrer extends Module {
       .sort((a, b) => a[0].localeCompare(b[0]))
       .map(([, games]) => games);
 
-    const newGames = groupedGames.flatMap((games) => {
-      if (games.length <= 1) {
-        // Only one game, there can't be a parent
-        return games;
-      }
-
-      return DATParentInferrer.electParent(games);
-    });
-
-    const groupedDat = new LogiqxDAT(dat.getHeader(), newGames);
-    this.progressBar.logDebug(`${groupedDat.getNameShort()}: grouped to ${groupedDat.getParents().length.toLocaleString()} parent${groupedDat.getParents().length !== 1 ? 's' : ''}`);
+    const newGames = groupedGames.flatMap((games) => DATParentInferrer.electParent(games));
+    const inferredDat = new LogiqxDAT(dat.getHeader(), newGames);
+    this.progressBar.logDebug(`${inferredDat.getNameShort()}: grouped to ${inferredDat.getParents().length.toLocaleString()} parent${inferredDat.getParents().length !== 1 ? 's' : ''}`);
 
     this.progressBar.logInfo('done inferring parents');
-    return groupedDat;
+    return inferredDat;
   }
 
   private static stripGameRegionAndLanguage(name: string): string {
@@ -183,11 +179,6 @@ export default class DATParentInferrer extends Module {
     }, new Map<string, Game>());
 
     return games.map((game, idx) => {
-      if (game.getParent()) {
-        // Game has a parent, respect it
-        return game;
-      }
-
       // Search for this game's retail parent.
       // Retail games do not have variants such as "(Demo)", so if we fully strip the game name and
       //  find a match, then we have reasonable confidence that match is this game's parent.
@@ -198,7 +189,7 @@ export default class DATParentInferrer extends Module {
       if (retailParent) {
         if (retailParent.hashCode() === game.hashCode()) {
           // This game is the parent
-          return game;
+          return game.withProps({ cloneOf: undefined });
         }
         return game.withProps({ cloneOf: retailParent.getName() });
       }
@@ -210,7 +201,7 @@ export default class DATParentInferrer extends Module {
       //  likely a commonly used option.
       if (idx === 0) {
         // This game is the parent
-        return game;
+        return game.withProps({ cloneOf: undefined });
       }
       return game.withProps({ cloneOf: games[0].getName() });
     });

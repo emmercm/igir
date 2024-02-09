@@ -96,7 +96,7 @@ export default class Igir {
         dat.getParents().length,
       );
 
-      const datWithParents = await new DATParentInferrer(progressBar).infer(dat);
+      const datWithParents = await new DATParentInferrer(this.options, progressBar).infer(dat);
       const mergedSplitDat = await new DATMergerSplitter(this.options, progressBar)
         .merge(datWithParents);
       const filteredDat = await new DATFilter(this.options, progressBar).filter(mergedSplitDat);

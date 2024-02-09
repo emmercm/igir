@@ -110,6 +110,7 @@ describe('options', () => {
     expect(options.getDatDescriptionRegex()).toBeUndefined();
     expect(options.getDatDescriptionRegexExclude()).toBeUndefined();
     expect(options.getDatCombine()).toEqual(false);
+    expect(options.getDatIgnoreParentClone()).toEqual(false);
 
     expect(options.getDirMirror()).toEqual(false);
     expect(options.getDirDatName()).toEqual(false);
@@ -345,6 +346,16 @@ describe('options', () => {
     expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--dat-combine', '--dat-combine']).getDatCombine()).toEqual(true);
     expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--dat-combine', 'false', '--dat-combine', 'true']).getDatCombine()).toEqual(true);
     expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--dat-combine', 'true', '--dat-combine', 'false']).getDatCombine()).toEqual(false);
+  });
+
+  it('should parse "dat-ignore-parent-clone"', () => {
+    expect(() => argumentsParser.parse([...dummyCommandAndRequiredArgs, '--dat-ignore-parent-clone'])).toThrow(/dependent|implication/i);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--dat', os.devNull, '--dat-ignore-parent-clone']).getDatIgnoreParentClone()).toEqual(true);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--dat', os.devNull, '--dat-ignore-parent-clone', 'true']).getDatIgnoreParentClone()).toEqual(true);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--dat', os.devNull, '--dat-ignore-parent-clone', 'false']).getDatIgnoreParentClone()).toEqual(false);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--dat', os.devNull, '--dat-ignore-parent-clone', '--dat-ignore-parent-clone']).getDatIgnoreParentClone()).toEqual(true);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--dat', os.devNull, '--dat-ignore-parent-clone', 'false', '--dat-ignore-parent-clone', 'true']).getDatIgnoreParentClone()).toEqual(true);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--dat', os.devNull, '--dat-ignore-parent-clone', 'true', '--dat-ignore-parent-clone', 'false']).getDatIgnoreParentClone()).toEqual(false);
   });
 
   it('should parse "fixdat"', () => {

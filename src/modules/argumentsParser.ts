@@ -260,6 +260,12 @@ export default class ArgumentsParser {
         description: 'Combine every game from every found & filtered DAT into one DAT',
         type: 'boolean',
       })
+      .option('dat-ignore-parent-clone', {
+        group: groupDatInput,
+        description: 'Ignore any parent/clone information found in DATs',
+        type: 'boolean',
+        implies: 'dat',
+      })
       .check((checkArgv) => {
         if (checkArgv.help) {
           return true;

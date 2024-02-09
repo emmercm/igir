@@ -59,6 +59,7 @@ export interface OptionsProps {
   readonly datDescriptionRegex?: string,
   readonly datDescriptionRegexExclude?: string,
   readonly datCombine?: boolean,
+  readonly datIgnoreParentClone?: boolean,
 
   readonly fixdat?: boolean;
 
@@ -173,6 +174,8 @@ export default class Options implements OptionsProps {
   readonly datDescriptionRegexExclude: string;
 
   readonly datCombine: boolean;
+
+  readonly datIgnoreParentClone: boolean;
 
   readonly fixdat: boolean;
 
@@ -335,6 +338,7 @@ export default class Options implements OptionsProps {
     this.datDescriptionRegex = options?.datDescriptionRegex ?? '';
     this.datDescriptionRegexExclude = options?.datDescriptionRegexExclude ?? '';
     this.datCombine = options?.datCombine ?? false;
+    this.datIgnoreParentClone = options?.datIgnoreParentClone ?? false;
 
     this.fixdat = options?.fixdat ?? false;
 
@@ -741,6 +745,10 @@ export default class Options implements OptionsProps {
 
   getDatCombine(): boolean {
     return this.datCombine;
+  }
+
+  getDatIgnoreParentClone(): boolean {
+    return this.datIgnoreParentClone;
   }
 
   getOutput(): string {
