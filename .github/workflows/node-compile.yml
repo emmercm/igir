@@ -124,7 +124,7 @@ jobs:
       - run: ${{ matrix.build }}
       - run: |
           {
-            echo "# ${{ toJSON(job) }}"
+            echo "# ${{ job.container.id }}"
             echo ""
             echo "BIN_OUTPUT: ${{ env.BIN_OUTPUT }}"
           } >> "${GITHUB_STEP_SUMMARY}"
