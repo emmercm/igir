@@ -376,8 +376,23 @@ Prefer games if their DAT name (or filename if not using DATs) matches a regular
 Regex flags can be optionally provided in the form `/<pattern>/<flags>`, for example:
 
 ```text
-.*case sensitive.*
-/.*case insensitive.*/i
+.*Mario.*
+/.*mario.*/i
+```
+
+### Prefer ROM filenames
+
+```text
+--prefer-rom-regex <regex|filename>
+```
+
+Prefer games if any of their ROM filenames matches a regular expression.
+
+Regex flags can be optionally provided in the form `/<pattern>/<flags>`, for example:
+
+```text
+Mario.*\\.gb$
+/mario.*\\.gb$/i
 ```
 
 ### Prefer verified

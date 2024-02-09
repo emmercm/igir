@@ -103,7 +103,8 @@ export default class CandidatePreferer extends Module {
    */
 
   private sort(a: ReleaseCandidate, b: ReleaseCandidate): number {
-    return this.preferRegexSort(a, b)
+    return this.preferGameRegexSort(a, b)
+        || this.preferRomRegexSort(a, b)
         || this.preferVerifiedSort(a, b)
         || this.preferGoodSort(a, b)
         || this.preferLanguagesSort(a, b)
@@ -115,14 +116,27 @@ export default class CandidatePreferer extends Module {
         || this.preferParentSort(a, b);
   }
 
-  private preferRegexSort(a: ReleaseCandidate, b: ReleaseCandidate): number {
-    const preferRegex = this.options.getPreferGameRegex();
-    if (preferRegex === undefined || preferRegex.length === 0) {
+  private preferGameRegexSort(a: ReleaseCandidate, b: ReleaseCandidate): number {
+    const gameRegex = this.options.getPreferGameRegex();
+    if (gameRegex === undefined || gameRegex.length === 0) {
       return 0;
     }
 
-    const aMatched = preferRegex.some((regex) => regex.test(a.getGame().getName())) ? 0 : 1;
-    const bMatched = preferRegex.some((regex) => regex.test(b.getGame().getName())) ? 0 : 1;
+    const aMatched = gameRegex.some((regex) => regex.test(a.getGame().getName())) ? 0 : 1;
+    const bMatched = gameRegex.some((regex) => regex.test(b.getGame().getName())) ? 0 : 1;
+    return aMatched - bMatched;
+  }
+
+  private preferRomRegexSort(a: ReleaseCandidate, b: ReleaseCandidate): number {
+    const romRegex = this.options.getPreferRomRegex();
+    if (romRegex === undefined || romRegex.length === 0) {
+      return 0;
+    }
+
+    const aMatched = romRegex
+      .some((regex) => a.getGame().getRoms().some((rom) => regex.test(rom.getName()))) ? 0 : 1;
+    const bMatched = romRegex
+      .some((regex) => b.getGame().getRoms().some((rom) => regex.test(rom.getName()))) ? 0 : 1;
     return aMatched - bMatched;
   }
 

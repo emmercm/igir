@@ -575,6 +575,26 @@ describe('options', () => {
     }
   });
 
+  it('should parse "prefer-rom-regex"', async () => {
+    expect(() => argumentsParser.parse([...dummyCommandAndRequiredArgs, '--prefer-rom-regex', '[a-z]'])).toThrow(/dependent|implication/i);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--single', '--prefer-rom-regex', '[a-z]']).getPreferGameRegex()?.some((regex) => regex.test('lower'))).toEqual(true);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--single', '--prefer-rom-regex', '[a-z]']).getPreferGameRegex()?.some((regex) => regex.test('UPPER'))).toEqual(false);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--single', '--prefer-rom-regex', '/[a-z]/i']).getPreferGameRegex()?.some((regex) => regex.test('UPPER'))).toEqual(true);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--single', '--prefer-rom-regex', '/[a-z]/i', '--prefer-rom-regex', '[0-9]']).getPreferGameRegex()?.some((regex) => regex.test('UPPER'))).toEqual(false);
+
+    const tempFile = await FsPoly.mktemp(path.join(Constants.GLOBAL_TEMP_DIR, 'temp'));
+    try {
+      await util.promisify(fs.writeFile)(tempFile, '\n/[a-z]/i\r\n[0-9]\n\n');
+      expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--single', '--prefer-rom-regex', tempFile]).getPreferGameRegex()?.some((regex) => regex.test(''))).toEqual(false);
+      expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--single', '--prefer-rom-regex', tempFile]).getPreferGameRegex()?.some((regex) => regex.test('lower'))).toEqual(true);
+      expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--single', '--prefer-rom-regex', tempFile]).getPreferGameRegex()?.some((regex) => regex.test('UPPER'))).toEqual(true);
+      expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--single', '--prefer-rom-regex', tempFile]).getPreferGameRegex()?.some((regex) => regex.test('007'))).toEqual(true);
+      expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--single', '--prefer-rom-regex', tempFile]).getPreferGameRegex()?.some((regex) => regex.test('@!#?@!'))).toEqual(false);
+    } finally {
+      await FsPoly.rm(tempFile);
+    }
+  });
+
   it('should parse "prefer-verified"', () => {
     expect(() => argumentsParser.parse([...dummyCommandAndRequiredArgs, '--prefer-verified'])).toThrow(/dependent|implication/i);
     expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--prefer-verified', '--single']).getPreferVerified()).toEqual(true);
