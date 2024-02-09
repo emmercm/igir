@@ -58,6 +58,7 @@ export interface OptionsProps {
   readonly datNameRegexExclude?: string,
   readonly datDescriptionRegex?: string,
   readonly datDescriptionRegexExclude?: string,
+  readonly datCombine?: boolean,
 
   readonly fixdat?: boolean;
 
@@ -170,6 +171,8 @@ export default class Options implements OptionsProps {
   readonly datDescriptionRegex: string;
 
   readonly datDescriptionRegexExclude: string;
+
+  readonly datCombine: boolean;
 
   readonly fixdat: boolean;
 
@@ -331,6 +334,7 @@ export default class Options implements OptionsProps {
     this.datNameRegexExclude = options?.datNameRegexExclude ?? '';
     this.datDescriptionRegex = options?.datDescriptionRegex ?? '';
     this.datDescriptionRegexExclude = options?.datDescriptionRegexExclude ?? '';
+    this.datCombine = options?.datCombine ?? false;
 
     this.fixdat = options?.fixdat ?? false;
 
@@ -733,6 +737,10 @@ export default class Options implements OptionsProps {
 
   getDatDescriptionRegexExclude(): RegExp[] | undefined {
     return Options.getRegex(this.datDescriptionRegexExclude);
+  }
+
+  getDatCombine(): boolean {
+    return this.datCombine;
   }
 
   getOutput(): string {

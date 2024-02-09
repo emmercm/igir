@@ -13,6 +13,7 @@ import CandidatePatchGenerator from './modules/candidatePatchGenerator.js';
 import CandidatePostProcessor from './modules/candidatePostProcessor.js';
 import CandidatePreferer from './modules/candidatePreferer.js';
 import CandidateWriter from './modules/candidateWriter.js';
+import DATCombiner from './modules/datCombiner.js';
 import DATFilter from './modules/datFilter.js';
 import DATGameInferrer from './modules/datGameInferrer.js';
 import DATMergerSplitter from './modules/datMergerSplitter.js';
@@ -192,7 +193,7 @@ export default class Igir {
     }
 
     const progressBar = await this.logger.addProgressBar('Scanning for DATs');
-    const dats = await new DATScanner(this.options, progressBar).scan();
+    let dats = await new DATScanner(this.options, progressBar).scan();
     if (dats.length === 0) {
       throw new Error('No valid DAT files found!');
     }
@@ -206,6 +207,11 @@ export default class Igir {
         .forEach(([, option]) => {
           progressBar.logWarn(`${option} is most helpful when processing multiple DATs, only one DAT was found`);
         });
+    }
+
+    if (this.options.getDatCombine()) {
+      await progressBar.reset(1);
+      dats = [new DATCombiner(progressBar).combine(dats)];
     }
 
     await progressBar.doneItems(dats.length, 'unique DAT', 'found');

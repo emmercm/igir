@@ -1,6 +1,6 @@
 # dir2dat
 
-"dir2dat" refers to DATs that have been automatically created based on files in an input directory. DATs generated this way are not typically useful as-is, they usually require some hand editing after creation.
+"dir2dat" refers to DATs that have been automatically created based on files in an input directory. [DATs](./introduction.md) generated this way are not typically useful as-is, they usually require some hand editing after creation.
 
 `igir` has the ability to create these DATs with the `igir dir2dat` command. Example:
 
@@ -40,7 +40,11 @@ igir dir2dat --input <path> [--input <path>..]
         --input ~/ROMs/NES
       ```
 
-    then ROMs can appear in multiple resulting dir2dat files.
+  then ROMs can appear in multiple resulting dir2dat files.
+
+  !!! note
+
+      You can use the [`--dat-combine` option](./processing.md#dat-combining) to create only one DAT even when multiple input paths are provided.
 
 - **Each input path's [basename](https://linux.die.net/man/1/basename) will be used for the DAT's name.**
 
@@ -67,7 +71,7 @@ igir dir2dat --input <path> [--input <path>..]
 
 Once DATs have been generated from input files, they are processed the same as any other DAT file. That means:
 
-- **Parent/clone information may be [inferred](overview.md#parentclone-inference) from game names.**
+- **Parent/clone information may be [inferred](processing.md#parentclone-inference) from game names.**
 
     If your input files are in some kind of standard naming convention (e.g. [No-Intro](https://wiki.no-intro.org/index.php?title=Naming_Convention), [Redump](https://datomatic.no-intro.org/stuff/The%20Official%20No-Intro%20Convention%20(20071030).pdf), or [TOSEC](https://www.tosecdev.org/tosec-naming-convention)), then parent/clone information can be inferred for [1G1R preferences](../roms/filtering-preferences.md).
 

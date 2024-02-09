@@ -8,7 +8,7 @@ The MiSTer [`update_all.sh`](https://github.com/theypsilon/Update_All_MiSTer) sc
 
 ## ROMs
 
-`igir` has support for replaceable "tokens" in the `--output` option. This makes it easier to sort ROMs on devices that have an expected directory structure. The `{mister}` token exists to help sort ROMs on the MiSTer. See the [replaceable tokens page](../../output/tokens.md) for more information.
+`igir` has support for replaceable "tokens" in the `--output <path>` option. This makes it easier to sort ROMs on devices that have an expected directory structure. The `{mister}` token exists to help sort ROMs on the MiSTer. See the [replaceable tokens page](../../output/tokens.md) for more information.
 
 This token can be used to reference each core's specific directory in the MiSTer's `games` directory.
 

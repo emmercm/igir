@@ -255,6 +255,11 @@ export default class ArgumentsParser {
         coerce: ArgumentsParser.readRegexFile,
         requiresArg: true,
       })
+      .option('dat-combine', {
+        group: groupDatInput,
+        description: 'Combine every game from every found & filtered DAT into one DAT',
+        type: 'boolean',
+      })
       .check((checkArgv) => {
         if (checkArgv.help) {
           return true;
