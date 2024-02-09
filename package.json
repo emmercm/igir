@@ -62,7 +62,7 @@
     "bump:minor": "npm version minor --no-git-tag-version && npm run update:readme",
     "bump:patch": "npm version patch --no-git-tag-version && npm run update:readme",
     "update:readme": "./scripts/update-readme-help.sh",
-    "prepack": "npm run build && npm run update:readme -- 69",
+    "prepack": "npm run build && npm run update:readme -- 72",
     "postpack": "npm run update:readme",
     "docs:serve": "mkdocs serve"
   },
