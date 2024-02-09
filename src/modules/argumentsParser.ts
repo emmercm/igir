@@ -748,23 +748,23 @@ Advanced usage:
 
 Example use cases:
 
-  Merge new ROMs into an existing ROM collection and generate a report:
-    $0 copy report --dat *.dat --input **/*.zip --input ROMs/ --output ROMs/
-
-  Generate a report on an existing ROM collection, without copying or moving ROMs (read only):
-    $0 report --dat *.dat --input ROMs/
+  Merge new ROMs into an existing ROM collection and delete any unrecognized files:
+    $0 copy clean --dat "*.dat" --input New-ROMs/ --input ROMs/ --output ROMs/
 
   Organize and zip an existing ROM collection:
-    $0 move zip --dat *.dat --input ROMs/ --output ROMs/
+    $0 move zip --dat "*.dat" --input ROMs/ --output ROMs/
+
+  Generate a report on an existing ROM collection, without copying or moving ROMs (read only):
+    $0 report --dat "*.dat" --input ROMs/
 
   Produce a 1G1R set per console, preferring English ROMs from USA>WORLD>EUR>JPN:
-    $0 copy --dat *.dat --input **/*.zip --output 1G1R/ --dir-dat-name --single --prefer-language EN --prefer-region USA,WORLD,EUR,JPN
+    $0 copy --dat "*.dat" --input "**/*.zip" --output 1G1R/ --dir-dat-name --single --prefer-language EN --prefer-region USA,WORLD,EUR,JPN
 
   Copy all Mario, Metroid, and Zelda games to one directory:
     $0 copy --input ROMs/ --output Nintendo/ --filter-regex "/(Mario|Metroid|Zelda)/i"
 
   Copy all BIOS files into one directory, extracting if necessary:
-    $0 copy extract --dat *.dat --input **/*.zip --output BIOS/ --only-bios
+    $0 copy extract --dat "*.dat" --input "**/*.zip" --output BIOS/ --only-bios
 
   Create patched copies of ROMs in an existing collection, not overwriting existing files:
     $0 copy extract --input ROMs/ --patch Patches/ --output ROMs/
@@ -773,7 +773,7 @@ Example use cases:
     $0 copy zip --dat "MAME 0.258.dat" --input MAME/ --output MAME-0.258/ --merge-roms split
 
   Copy ROMs to an Analogue Pocket and test they were written correctly:
-    $0 copy extract test --dat *.dat --input ROMs/ --output /Assets/{pocket}/common/ --dir-letter`)
+    $0 copy extract test --dat "*.dat" --input ROMs/ --output /Assets/{pocket}/common/ --dir-letter`)
 
       // Colorize help output
       .option('help', {
