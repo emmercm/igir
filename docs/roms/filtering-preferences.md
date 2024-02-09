@@ -11,7 +11,7 @@ Multiple filter options can be specified at once.
 ### Game name filter
 
 ```text
---filter-regex <regex|filename>, --filter-regex-exclude <regex|filename>
+--filter-regex <pattern|filename>, --filter-regex-exclude <pattern|filename>
 ```
 
 Only include, or exclude games based if their DAT name (or filename if not using DATs) matches a regular expression.
@@ -368,7 +368,7 @@ Multiple `--prefer-*` options can be specified at once, and they will be applied
 ### Prefer game names
 
 ```text
---prefer-game-regex <regex|filename>
+--prefer-game-regex <pattern|filename>
 ```
 
 Prefer games if their DAT name (or filename if not using DATs) matches a regular expression.
@@ -383,7 +383,7 @@ Regex flags can be optionally provided in the form `/<pattern>/<flags>`, for exa
 ### Prefer ROM filenames
 
 ```text
---prefer-rom-regex <regex|filename>
+--prefer-rom-regex <pattern|filename>
 ```
 
 Prefer games if any of their ROM filenames matches a regular expression.

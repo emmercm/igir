@@ -77,7 +77,7 @@ To be able to process only the DATs you want in downloaded archives, `igir` has 
 ### DAT name regex filtering
 
 ```text
---dat-name-regex <regex|filename>, --dat-name-regex-exclude <regex|filename>
+--dat-name-regex <pattern|filename>, --dat-name-regex-exclude <pattern|filename>
 ```
 
 These options limit which DATs are processed. The regex is applied to the DAT's name found within its file contents, not its filename.
