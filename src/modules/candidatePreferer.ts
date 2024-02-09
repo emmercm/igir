@@ -116,7 +116,7 @@ export default class CandidatePreferer extends Module {
   }
 
   private preferRegexSort(a: ReleaseCandidate, b: ReleaseCandidate): number {
-    const preferRegex = this.options.getPreferRegex();
+    const preferRegex = this.options.getPreferGameRegex();
     if (preferRegex === undefined || preferRegex.length === 0) {
       return 0;
     }

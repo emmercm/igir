@@ -368,7 +368,7 @@ Multiple `--prefer-*` options can be specified at once, and they will be applied
 ### Prefer game names
 
 ```text
---prefer-regex <regex|filename>
+--prefer-game-regex <regex|filename>
 ```
 
 Prefer games if their DAT name (or filename if not using DATs) matches a regular expression.
