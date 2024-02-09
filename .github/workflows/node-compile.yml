@@ -133,7 +133,7 @@ jobs:
       - run: ${{ matrix.build }}
       - run: |
           {
-            echo "# ${{ jobs.node-compile.name }}"
+            echo "# ${{ toJSON(needs) }}"
             echo ""
             echo "BIN_OUTPUT: ${{ env.BIN_OUTPUT }}"
           } >> "${GITHUB_STEP_SUMMARY}"
