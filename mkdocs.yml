@@ -128,7 +128,6 @@ plugins:
         'dats.md': 'dats/introduction.md'
         'dats/overview.md': 'dats/introduction.md'
         'examples.md': 'usage/collection-sorting.md'
-        'file-scanning.md': 'input/file-processing.md'
         'input/archives.md': 'input/reading-archives.md'
         'input/dats.md': 'dats/introduction.md'
         'output/arcade.md': 'usage/arcade.md'
