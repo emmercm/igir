@@ -38,8 +38,9 @@ jobs:
         with:
           filters: |
             changes:
-              - '*'
+              - '.github/workflows/node-compile.yml'
               - 'src/**'
+              - '*'
           ref: ${{ env.ref }}
 
   node-compile:

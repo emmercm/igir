@@ -29,9 +29,10 @@ jobs:
         with:
           filters: |
             changes:
-              - '*'
+              - '.github/workflows/node-test.yml'
               - 'src/**'
               - 'test/**'
+              - '*'
 
   node-lint:
     needs:
