@@ -46,13 +46,13 @@ jobs:
     needs:
       - path-filter
     if: ${{ needs.path-filter.outputs.changes == 'true' || github.event_name != 'pull_request' }}
-    runs-on: ${{ matrix.os }}-latest
+    runs-on: ${{ matrix.os }}
     name: node-compile (${{ matrix.os }} ${{ matrix.arch }})
     strategy:
       matrix:
         include:
           # docker manifest inspect node:<version> | jq '.manifests[].platform'
-          - os: ubuntu
+          - os: ubuntu-latest
             arch: amd64
             build: |
               NPM_PKG_VERSION=$(npm pkg get version | sed 's/"//g')
@@ -64,7 +64,7 @@ jobs:
                 "node:$(jq --raw-output '.volta.node' package.json)" sh -c \
                 "./node_modules/.bin/caxa --input dist/ --output igir -- \"{{caxa}}/node_modules/.bin/node\" \"{{caxa}}/index.js\" && ./igir --help"
               tar cvf - igir | gzip --best > "${BIN_OUTPUT}"
-          - os: ubuntu
+          - os: ubuntu-latest
             arch: arm/v7
             build: |
               NPM_PKG_VERSION=$(npm pkg get version | sed 's/"//g')
@@ -76,7 +76,7 @@ jobs:
                 "node:$(jq --raw-output '.volta.node' package.json)" sh -c \
                 "./node_modules/.bin/caxa --input dist/ --output igir -- \"{{caxa}}/node_modules/.bin/node\" \"{{caxa}}/index.js\" && ./igir --help"
               tar cvf - igir | gzip --best > "${BIN_OUTPUT}"
-          - os: ubuntu
+          - os: ubuntu-latest
             arch: arm64/v8
             build: |
               NPM_PKG_VERSION=$(npm pkg get version | sed 's/"//g')
@@ -88,8 +88,7 @@ jobs:
                 "node:$(jq --raw-output '.volta.node' package.json)" sh -c \
                 "./node_modules/.bin/caxa --input dist/ --output igir -- \"{{caxa}}/node_modules/.bin/node\" \"{{caxa}}/index.js\" && ./igir --help"
               tar cvf - igir | gzip --best > "${BIN_OUTPUT}"
-          # TODO(cemmer): macOS arm64: https://github.com/github/roadmap/issues/528
-          - os: macos
+          - os: macos-13
             build: |
               NPM_PKG_VERSION=$(npm pkg get version | sed 's/"//g')
               NODE_ARCH=$(node --print 'process.arch')
@@ -99,7 +98,17 @@ jobs:
               ./node_modules/.bin/caxa --input dist/ --output igir -- "{{caxa}}/node_modules/.bin/node" "{{caxa}}/index.js"
               ./igir --help
               tar cvf - igir | gzip --best > "${BIN_OUTPUT}"
-          - os: windows
+          - os: macos-14
+            build: |
+              NPM_PKG_VERSION=$(npm pkg get version | sed 's/"//g')
+              NODE_ARCH=$(node --print 'process.arch')
+              BIN_OUTPUT="igir-${NPM_PKG_VERSION}-${RUNNER_OS}-${NODE_ARCH}.tar.gz"
+              echo "BIN_OUTPUT=${BIN_OUTPUT}" >> "${GITHUB_ENV}"
+              cp package.json dist/
+              ./node_modules/.bin/caxa --input dist/ --output igir -- "{{caxa}}/node_modules/.bin/node" "{{caxa}}/index.js"
+              ./igir --help
+              tar cvf - igir | gzip --best > "${BIN_OUTPUT}"
+          - os: windows-latest
             build: |
               $NPM_PKG_VERSION=$(npm pkg get version).replace('"','')
               $NODE_ARCH=$(node --print 'process.arch')
@@ -121,7 +130,12 @@ jobs:
       - run: npm run build
       # Compile and upload
       - run: ${{ matrix.build }}
-      - run: echo ${{ env.BIN_OUTPUT }}
+      - run: |
+          {
+            echo "# ${{ github.jobs[github.job].name }}"
+            echo ""
+            echo "BIN_OUTPUT: ${{ env.BIN_OUTPUT }}"
+          } >> "${GITHUB_STEP_SUMMARY}"
       - if: ${{ github.event_name != 'pull_request' }}
         uses: actions/upload-artifact@v4
         with:
