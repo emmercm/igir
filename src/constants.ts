@@ -59,7 +59,7 @@ export default class Constants {
    * @example
    * Promise.all([].map(async (file) => fs.lstat(file));
    */
-  static readonly MAX_FS_THREADS = 1000;
+  static readonly MAX_FS_THREADS = 100;
 
   /**
    * Default max semaphore filesize of files to read (and checksum) and write (and test) at once.
