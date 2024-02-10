@@ -2,7 +2,7 @@ import * as child_process from 'node:child_process';
 import path from 'node:path';
 
 import { parse } from '@fast-csv/parse';
-import xml2js from 'xml2js';
+import { XMLParser } from 'fast-xml-parser';
 
 import ProgressBar, { ProgressBarSymbol } from '../console/progressBar.js';
 import DriveSemaphore from '../driveSemaphore.js';
@@ -236,7 +236,7 @@ export default class DATScanner extends Scanner {
       return undefined;
     }
 
-    const xmlDat = await this.parseXmlDat(datFile, fileContents);
+    const xmlDat = this.parseXmlDat(datFile, fileContents);
     if (xmlDat) {
       return xmlDat;
     }
@@ -255,16 +255,15 @@ export default class DATScanner extends Scanner {
     return undefined;
   }
 
-  private async parseXmlDat(datFile: File, fileContents: string): Promise<DAT | undefined> {
+  private parseXmlDat(datFile: File, fileContents: string): DAT | undefined {
     this.progressBar.logTrace(`${datFile.toString()}: attempting to parse ${fsPoly.sizeReadable(fileContents.length)} of XML`);
 
     let datObject: DATObject;
     try {
-      datObject = await xml2js.parseStringPromise(fileContents, {
-        emptyTag: undefined,
-        mergeAttrs: true,
-        explicitArray: false,
-      });
+      datObject = new XMLParser({
+        ignoreAttributes: false,
+        attributeNamePrefix: '',
+      }).parse(fileContents);
     } catch (error) {
       const message = (error as Error).message.split('\n').join(', ');
       this.progressBar.logDebug(`${datFile.toString()}: failed to parse DAT XML: ${message}`);
