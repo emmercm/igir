@@ -35,7 +35,7 @@ export default class ProgressBarCLI extends ProgressBar {
 
   private waitingMessageTimeout?: NodeJS.Timeout;
 
-  private waitingMessages: string[] = [];
+  private readonly waitingMessages: Set<string> = new Set();
 
   private constructor(
     logger: Logger,
@@ -200,7 +200,7 @@ export default class ProgressBarCLI extends ProgressBar {
    * user know that there is still something processing.
    */
   addWaitingMessage(waitingMessage: string): void {
-    this.waitingMessages.push(waitingMessage);
+    this.waitingMessages.add(waitingMessage);
     this.setWaitingMessageTimeout();
   }
 
@@ -208,7 +208,7 @@ export default class ProgressBarCLI extends ProgressBar {
    * Remove a waiting message to let the user know some processing has finished.
    */
   removeWaitingMessage(waitingMessage: string): void {
-    this.waitingMessages = this.waitingMessages.filter((msg) => msg !== waitingMessage);
+    this.waitingMessages.delete(waitingMessage);
 
     if (this.payload.waitingMessage) {
       // Render immediately if the output could change
