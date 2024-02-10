@@ -59,7 +59,7 @@ async function runCandidatePostProcessor(
     ))),
   )));
   const datCandidates = new Map(gameReleaseCandidates.map((releaseCandidate) => ([
-    new Parent(releaseCandidate.getName(), releaseCandidate.getGame()),
+    new Parent(releaseCandidate.getGame()),
     [releaseCandidate],
   ])));
 

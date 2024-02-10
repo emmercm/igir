@@ -26,7 +26,7 @@ export default abstract class DAT {
     this.getGames()
       .filter((game) => game.isParent())
       .forEach((game: Game) => {
-        gameNamesToParents.set(game.getName(), new Parent(game.getName(), game));
+        gameNamesToParents.set(game.getName(), new Parent(game));
       });
 
     // Find all clones
@@ -38,7 +38,7 @@ export default abstract class DAT {
           parent.addChild(game);
         } else {
           // The DAT is bad, the game is referencing a parent that doesn't exist
-          gameNamesToParents.set(game.getName(), new Parent(game.getName(), game));
+          gameNamesToParents.set(game.getName(), new Parent(game));
         }
       });
 
