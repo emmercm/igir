@@ -46,7 +46,7 @@ export default class CandidateCombiner extends Module {
     await this.progressBar.reset(parentsToCandidates.size);
 
     const game = CandidateCombiner.buildGame(dat, parentsToCandidates);
-    const parent = new Parent(game.getName(), [game]);
+    const parent = new Parent(game);
     const releaseCandidate = CandidateCombiner.buildReleaseCandidate(
       dat,
       game,

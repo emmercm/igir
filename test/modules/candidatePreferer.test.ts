@@ -119,7 +119,7 @@ async function buildReleaseCandidatesWithRegionLanguage(
     }
   }
 
-  const parent = new Parent(gameNamesArr[0], games);
+  const parent = new Parent(games[0], games);
   return [parent, releaseCandidates];
 }
 
@@ -307,7 +307,7 @@ describe('sort', () => {
       const gameWorldJa = new Game({ name: 'Akumajou Special - Boku Dracula-kun (World) (Ja) (Castlevania Anniversary Collection)' });
       const gameWorld = new Game({ name: 'Kid Dracula (World) (Castlevania Anniversary Collection)' });
       const games = [gameParent, gameWorldJa, gameWorld];
-      const parent = new Parent(gameParent.getName(), games);
+      const parent = new Parent(gameParent, games);
       const releaseCandidates = games
         .map((game) => new ReleaseCandidate(game, game.getReleases()[0], []));
       await expectPreferredCandidates({ single: true, preferLanguage: ['EN'] }, [[parent, releaseCandidates]], [gameWorld.getName()]);
@@ -340,7 +340,7 @@ describe('sort', () => {
       ],
     ])('should rank candidates by all preferred languages: %s', async (gameNames, preferLanguage, expectedName) => {
       const games = gameNames.map((gameName) => new Game({ name: gameName }));
-      const parent = new Parent(games[0].getName(), games);
+      const parent = new Parent(games[0], games);
       const releaseCandidates = games.map((game) => new ReleaseCandidate(game, undefined, []));
       await expectPreferredCandidates({ preferLanguage, single: true }, [
         [parent, releaseCandidates],

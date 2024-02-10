@@ -9,7 +9,7 @@ import Parent from './parent.js';
  * The base class for other DAT classes.
  */
 export default abstract class DAT {
-  private readonly gameNamesToParents: Map<string, Parent> = new Map();
+  private parents: Parent[] = [];
 
   abstract getHeader(): Header;
 
@@ -20,38 +20,42 @@ export default abstract class DAT {
    * exists, then there will be one {@link Parent} for every {@link Game}.
    */
   protected generateGameNamesToParents(): DAT {
+    const gameNamesToParents: Map<string, Parent> = new Map();
+
     // Find all parents
-    this.getGames().forEach((game: Game) => {
-      if (game.isParent()) {
-        this.gameNamesToParents.set(game.getName(), new Parent(game.getName(), game));
-      }
-    });
+    this.getGames()
+      .filter((game) => game.isParent())
+      .forEach((game: Game) => {
+        gameNamesToParents.set(game.getName(), new Parent(game));
+      });
 
     // Find all clones
-    this.getGames().forEach((game: Game) => {
-      if (game.isClone()) {
-        const parent = this.gameNamesToParents.get(game.getParent());
+    this.getGames()
+      .filter((game) => game.isClone())
+      .forEach((game: Game) => {
+        const parent = gameNamesToParents.get(game.getParent());
         if (parent) {
           parent.addChild(game);
         } else {
           // The DAT is bad, the game is referencing a parent that doesn't exist
-          this.gameNamesToParents.set(game.getName(), new Parent(game.getName(), game));
+          gameNamesToParents.set(game.getName(), new Parent(game));
         }
-      }
-    });
+      });
+
+    this.parents = [...gameNamesToParents.values()];
 
     return this;
   }
 
   getParents(): Parent[] {
-    return [...this.gameNamesToParents.values()];
+    return this.parents;
   }
 
   /**
    * Does any {@link Game} in this {@link DAT} have clone information.
    */
   hasParentCloneInfo(): boolean {
-    return this.getGames().some((game) => game.getParent());
+    return this.getParents().length > 0 && this.getParents().length !== this.getGames().length;
   }
 
   getName(): string {
