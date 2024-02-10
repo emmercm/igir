@@ -4,7 +4,6 @@ import { Expose, Transform, Type } from 'class-transformer';
 
 import ArrayPoly from '../../polyfill/arrayPoly.js';
 import Internationalization from '../internationalization.js';
-import Disk from './disk.js';
 import Release from './release.js';
 import ROM from './rom.js';
 
@@ -54,19 +53,19 @@ export interface GameProps {
   readonly name?: string,
   readonly category?: string,
   readonly description?: string,
-  readonly sourceFile?: string,
+  // readonly sourceFile?: string,
   readonly bios?: 'yes' | 'no',
   readonly device?: 'yes' | 'no',
   readonly cloneOf?: string,
   readonly romOf?: string,
   readonly sampleOf?: string,
-  readonly board?: string,
-  readonly rebuildTo?: string,
-  readonly year?: string,
-  readonly manufacturer?: string,
+  // readonly board?: string,
+  // readonly rebuildTo?: string,
+  // readonly year?: string,
+  // readonly manufacturer?: string,
   readonly release?: Release | Release[],
   readonly rom?: ROM | ROM[],
-  readonly disk?: Disk | Disk[],
+  // readonly disk?: Disk | Disk[],
 }
 
 /**
@@ -76,8 +75,6 @@ export interface GameProps {
 export default class Game implements GameProps {
   @Expose()
   readonly name: string;
-
-  // readonly sourcefile?: string;
 
   /**
    * This is non-standard, but Redump uses it:
