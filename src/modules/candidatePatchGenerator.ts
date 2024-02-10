@@ -214,7 +214,7 @@ export default class CandidatePatchGenerator extends Module {
         name: gameName,
       });
 
-      const parent = new Parent(patchedRomName, [patchedGame]);
+      const parent = new Parent(patchedGame);
 
       let patchedRelease;
       const unpatchedRelease = unpatchedReleaseCandidate.getRelease();

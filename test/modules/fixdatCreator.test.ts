@@ -35,7 +35,7 @@ async function generateParentsToCandidates(
   games: Game[],
 ): Promise<Map<Parent, ReleaseCandidate[]>> {
   const entries = await Promise.all(games.map(async (game) => [
-    new Parent(game.getName(), game),
+    new Parent(game),
     [new ReleaseCandidate(
       game,
       undefined,

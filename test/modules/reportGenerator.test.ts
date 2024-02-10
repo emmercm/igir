@@ -37,7 +37,7 @@ const gamesSingle = [
 async function buildDatStatusSingle(): Promise<DATStatus> {
   const entries = await Promise.all(
     gamesSingle.map(async (game): Promise<[Parent, ReleaseCandidate[]]> => [
-      new Parent(game.getName(), game),
+      new Parent(game),
       [new ReleaseCandidate(
         game,
         undefined,
@@ -77,7 +77,7 @@ const gamesMultiple = [
 async function buildDatStatusMultiple(): Promise<DATStatus> {
   const entries = await Promise.all(
     gamesMultiple.map(async (game): Promise<[Parent, ReleaseCandidate[]]> => [
-      new Parent(game.getName(), game),
+      new Parent(game),
       [new ReleaseCandidate(
         game,
         undefined,
