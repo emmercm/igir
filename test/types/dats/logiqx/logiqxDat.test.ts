@@ -1,10 +1,8 @@
-import xml2js from 'xml2js';
-
 import DATObject from '../../../../src/types/dats/datObject.js';
 import LogiqxDAT from '../../../../src/types/dats/logiqx/logiqxDat.js';
 
 describe('fromObject', () => {
-  it('should parse a valid DAT', async () => {
+  it('should parse a valid DAT', () => {
     const xml = `<?xml version="1.0"?>
 <!DOCTYPE datafile PUBLIC "-//Logiqx//DTD ROM Management Datafile//EN" "http://www.logiqx.com/Dats/datafile.dtd">
 <datafile>
@@ -28,13 +26,8 @@ describe('fromObject', () => {
     <rom name="[BIOS] Nintendo Game Boy Boot ROM (Japan) (En).gb" size="256" crc="c2f5cc97" md5="a8f84a0ac44da5d3f0ee19f9cea80a8c" sha1="8bd501e31921e9601788316dbd3ce9833a97bcbc" status="verified"/>
   </game>
 </datafile>`;
-    const obj = await xml2js.parseStringPromise(xml, {
-      emptyTag: undefined,
-      mergeAttrs: true,
-      explicitArray: false,
-    }) satisfies DATObject;
-
-    const dat = LogiqxDAT.fromObject(obj.datafile);
+    const obj = DATObject.fromXmlString(xml);
+    const dat = LogiqxDAT.fromObject(obj.datafile as object);
 
     expect(dat.getName()).toEqual('Nintendo - Game Boy (Parent-Clone)');
 
