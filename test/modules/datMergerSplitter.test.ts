@@ -2070,10 +2070,7 @@ describe('FinalBurn Neo Neo Geo e544671', () => {
     new Game({
       name: '3countb',
       romOf: 'neogeo',
-      sourceFile: 'neogeo/d_neogeo.cpp',
       description: '3 Count Bout / Fire Suplex (NGM-043 ~ NGH-043)',
-      year: '1993',
-      manufacturer: 'SNK',
       rom: [
         new ROM({ name: '043-p1.p1', size: 1048576, crc: 'ffbdd928' }),
         new ROM({ name: '043-s1.s1', size: 131072, crc: 'c362d484' }),
@@ -2128,10 +2125,7 @@ describe('FinalBurn Neo Neo Geo e544671', () => {
       name: '3countba',
       cloneOf: '3countb',
       romOf: '3countb',
-      sourceFile: 'neogeo/d_neogeo.cpp',
       description: '3 Count Bout / Fire Suplex (NGM-043)',
-      year: '1993',
-      manufacturer: 'SNK',
       rom: [
         new ROM({ name: '043-epr.ep1', size: 524288, crc: 'eb2714c4' }),
         new ROM({ name: '043-epr.ep2', size: 524288, crc: '5e764567' }),
@@ -2186,10 +2180,7 @@ describe('FinalBurn Neo Neo Geo e544671', () => {
     new Game({
       bios: 'yes',
       name: 'neogeo',
-      sourceFile: 'neogeo/d_neogeo.cpp',
       description: 'Neo Geo',
-      year: '1990',
-      manufacturer: 'SNK',
       rom: [
         new ROM({ name: 'sp-s3.sp1', size: 131072, crc: '91b64be3' }),
         new ROM({ name: 'sp-s2.sp1', size: 131072, crc: '9036d879' }),

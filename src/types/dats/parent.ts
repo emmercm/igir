@@ -4,29 +4,33 @@ import Game from './game.js';
  * A container of {@link Game}s that are all related together by parent/clone {@link DAT} info.
  */
 export default class Parent {
-  private readonly name: string;
+  private readonly parentGame: Game;
 
-  private readonly games: Game[];
+  private readonly allGames: Game[];
 
-  constructor(name: string, games: Game | Game[]) {
-    this.name = name;
-    this.games = Array.isArray(games) ? games : [games];
+  constructor(parentGame: Game, allGames?: Game | Game[]) {
+    this.parentGame = parentGame;
+    if (allGames !== undefined) {
+      this.allGames = Array.isArray(allGames) ? allGames : [allGames];
+    } else {
+      this.allGames = [parentGame];
+    }
   }
 
   // Property getters
 
   getName(): string {
-    return this.name;
+    return this.parentGame.getName();
   }
 
   getGames(): Game[] {
-    return this.games;
+    return this.allGames;
   }
 
   /**
    * Add a child {@link Game} to this {@link Parent}'s list of {@link Game}s.
    */
   addChild(child: Game): void {
-    this.games.push(child);
+    this.allGames.push(child);
   }
 }
