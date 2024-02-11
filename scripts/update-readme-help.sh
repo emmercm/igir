@@ -11,7 +11,7 @@ cd "$(dirname "$0")/.."
 README="README.md"
 HELP="\$ igir --help
 
-$(npm start --silent -- --help "${1:-94}" | sed 's/ *$//g')"
+$(npm start --silent -- --help "${1:-96}" | sed 's/ *$//g')"
 (awk 'BEGIN {msg=ARGV[1]; delete ARGV[1]; p=1} /^```help/ {print; print msg; p=0} /^```$/ {p=1} p' \
   "${HELP}" \
   "${README}" > "${README}.temp" || exit 1) && mv -f "${README}.temp" "${README}"
