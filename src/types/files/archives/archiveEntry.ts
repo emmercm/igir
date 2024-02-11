@@ -37,49 +37,62 @@ export default class ArchiveEntry<A extends Archive> extends File implements Arc
     let finalSize = size;
     let finalCrcWithHeader = checksums?.crc32;
     let finalCrcWithoutHeader;
-    let finalMd5 = checksums?.md5;
-    let finalSha1 = checksums?.sha1;
+    let finalMd5WithHeader = checksums?.md5;
+    let finalMd5WithoutHeader;
+    let finalSha1WithHeader = checksums?.sha1;
+    let finalSha1WithoutHeader;
     let finalSymlinkSource;
 
     if (await fsPoly.exists(archive.getFilePath())) {
+      // Calculate size
+      finalSize = finalSize ?? 0;
+
       // Calculate checksums
       if ((!finalCrcWithHeader && (checksumBitmask & ChecksumBitmask.CRC32))
-        || (!finalMd5 && (checksumBitmask & ChecksumBitmask.MD5))
-        || (!finalSha1 && (checksumBitmask & ChecksumBitmask.SHA1))
+        || (!finalMd5WithHeader && (checksumBitmask & ChecksumBitmask.MD5))
+        || (!finalSha1WithHeader && (checksumBitmask & ChecksumBitmask.SHA1))
       ) {
-        const calculatedChecksums = await this.calculateEntryChecksums(
+        const headeredChecksums = await this.calculateEntryChecksums(
           archive,
           entryPath,
           checksumBitmask,
         );
-
-        finalCrcWithHeader = calculatedChecksums.crc32 ?? finalCrcWithHeader;
-        finalMd5 = calculatedChecksums.md5 ?? finalMd5;
-        finalSha1 = calculatedChecksums.sha1 ?? finalSha1;
+        finalCrcWithHeader = headeredChecksums.crc32 ?? finalCrcWithHeader;
+        finalMd5WithHeader = headeredChecksums.md5 ?? finalMd5WithHeader;
+        finalSha1WithHeader = headeredChecksums.sha1 ?? finalSha1WithHeader;
       }
-      if (fileHeader && (checksumBitmask & ChecksumBitmask.CRC32)) {
-        finalCrcWithoutHeader = (await this.calculateEntryChecksums(
+      if (fileHeader && checksumBitmask) {
+        const unheaderedChecksums = await this.calculateEntryChecksums(
           archive,
           entryPath,
-          ChecksumBitmask.CRC32,
+          checksumBitmask,
           fileHeader,
-        )).crc32;
+        );
+        finalCrcWithoutHeader = unheaderedChecksums.crc32;
+        finalMd5WithoutHeader = unheaderedChecksums.md5;
+        finalSha1WithoutHeader = unheaderedChecksums.sha1;
       }
 
       if (await fsPoly.isSymlink(archive.getFilePath())) {
         finalSymlinkSource = await fsPoly.readlink(archive.getFilePath());
       }
+    } else {
+      finalSize = finalSize ?? 0;
+      finalCrcWithHeader = finalCrcWithHeader ?? '';
     }
-    finalSize = finalSize ?? 0;
     finalCrcWithoutHeader = finalCrcWithoutHeader ?? finalCrcWithHeader;
+    finalMd5WithoutHeader = finalMd5WithoutHeader ?? finalMd5WithHeader;
+    finalSha1WithoutHeader = finalSha1WithoutHeader ?? finalSha1WithHeader;
 
     return new ArchiveEntry<A>({
       filePath: archive.getFilePath(),
       size: finalSize,
       crc32: finalCrcWithHeader,
       crc32WithoutHeader: finalCrcWithoutHeader,
-      md5: finalMd5,
-      sha1: finalSha1,
+      md5: finalMd5WithHeader,
+      md5WithoutHeader: finalMd5WithoutHeader,
+      sha1: finalSha1WithHeader,
+      sha1WithoutHeader: finalSha1WithoutHeader,
       symlinkSource: finalSymlinkSource,
       fileHeader,
       patch,
