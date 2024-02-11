@@ -105,7 +105,7 @@ export default class DATScanner extends Scanner {
     this.progressBar.logDebug(`parsing ${datFiles.length.toLocaleString()} DAT file${datFiles.length !== 1 ? 's' : ''}`);
     await this.progressBar.setSymbol(ProgressBarSymbol.PARSING_CONTENTS);
 
-    const results = (await new DriveSemaphore(this.options.getReaderThreads()).map(
+    return (await new DriveSemaphore(this.options.getReaderThreads()).map(
       datFiles,
       async (datFile) => {
         await this.progressBar.incrementProgress();
@@ -121,41 +121,15 @@ export default class DATScanner extends Scanner {
 
         await this.progressBar.incrementDone();
         this.progressBar.removeWaitingMessage(waitingMessage);
+
+        if (dat && this.shouldFilterOut(dat)) {
+          return undefined;
+        }
         return dat;
       },
     ))
       .filter(ArrayPoly.filterNotNullish)
-      .map((dat) => this.sanitizeDat(dat));
-
-    return results
-      .filter((dat) => {
-        const datNameRegex = this.options.getDatNameRegex();
-        return !datNameRegex
-            || datNameRegex.some((regex) => regex.test(dat.getName()));
-      })
-      .filter((dat) => {
-        const datNameRegexExclude = this.options.getDatNameRegexExclude();
-        return !datNameRegexExclude
-            || !datNameRegexExclude.some((regex) => regex.test(dat.getName()));
-      })
-      .filter((dat) => {
-        const datDescription = dat.getDescription();
-        if (!datDescription) {
-          return true;
-        }
-        const datDescriptionRegex = this.options.getDatDescriptionRegex();
-        return !datDescriptionRegex
-            || datDescriptionRegex.some((regex) => regex.test(datDescription));
-      })
-      .filter((dat) => {
-        const datDescription = dat.getDescription();
-        if (!datDescription) {
-          return true;
-        }
-        const datDescriptionRegexExclude = this.options.getDatDescriptionRegexExclude();
-        return !datDescriptionRegexExclude
-            || !datDescriptionRegexExclude.some((regex) => regex.test(datDescription));
-      })
+      .map((dat) => this.sanitizeDat(dat))
       .sort((a, b) => a.getNameShort().localeCompare(b.getNameShort()));
   }
 
@@ -448,6 +422,38 @@ export default class DATScanner extends Scanner {
       stream.write(fileContents);
       stream.end();
     });
+  }
+
+  private shouldFilterOut(dat: DAT): boolean {
+    const datNameRegex = this.options.getDatNameRegex();
+    if (datNameRegex && !datNameRegex.some((regex) => regex.test(dat.getName()))) {
+      return true;
+    }
+
+    const datNameRegexExclude = this.options.getDatNameRegexExclude();
+    if (datNameRegexExclude && datNameRegexExclude.some((regex) => regex.test(dat.getName()))) {
+      return true;
+    }
+
+    const datDescription = dat.getDescription();
+
+    const datDescriptionRegex = this.options.getDatDescriptionRegex();
+    if (datDescription
+      && datDescriptionRegex
+      && !datDescriptionRegex.some((regex) => regex.test(datDescription))
+    ) {
+      return true;
+    }
+
+    const datDescriptionRegexExclude = this.options.getDatDescriptionRegexExclude();
+    if (datDescription
+      && datDescriptionRegexExclude
+      && datDescriptionRegexExclude.some((regex) => regex.test(datDescription))
+    ) {
+      return true;
+    }
+
+    return false;
   }
 
   private sanitizeDat(dat: DAT): DAT {
