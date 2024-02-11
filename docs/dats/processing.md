@@ -123,6 +123,10 @@ Super Smash Bros. Melee (USA) (En,Ja) (Rev 2)
 
 !!! note
 
+    If a DAT has any parent/clone information then `igir` will use that and skip inference. If you want to ignore this information, you can provide the `--dat-ignore-parent-clone` option.
+
+!!! note
+
     It is unlikely that `igir` will ever be perfect with inferring parent/clone information. If you find an instance where `igir` made the wrong choice, please create a [GitHub issue](https://github.com/emmercm/igir/issues).
 
 !!! tip
