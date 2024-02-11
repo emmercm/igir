@@ -1,10 +1,8 @@
-import xml2js from 'xml2js';
-
 import DATObject from '../../../../src/types/dats/datObject.js';
 import MameDAT from '../../../../src/types/dats/mame/mameDat.js';
 
 describe('fromObject', () => {
-  it('should parse a valid DAT', async () => {
+  it('should parse a valid DAT', () => {
     const xml = `<?xml version="1.0"?>
 <mame build="0.257 (mame0257-dirty)" debug="no" mameconfig="10">
   <machine name="005" sourcefile="sega/segag80r.cpp" sampleof="005">
@@ -157,13 +155,8 @@ describe('fromObject', () => {
     <feature type="sound" status="imperfect"/>
   </machine>
 </mame>`;
-    const obj = await xml2js.parseStringPromise(xml, {
-      emptyTag: undefined,
-      mergeAttrs: true,
-      explicitArray: false,
-    }) satisfies DATObject;
-
-    const dat = MameDAT.fromObject(obj.mame);
+    const obj = DATObject.fromXmlString(xml);
+    const dat = MameDAT.fromObject(obj.mame as object);
 
     expect(dat.getName()).toEqual('0.257 (mame0257-dirty)');
 

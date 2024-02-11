@@ -2,7 +2,6 @@ import * as child_process from 'node:child_process';
 import path from 'node:path';
 
 import { parse } from '@fast-csv/parse';
-import { XMLParser } from 'fast-xml-parser';
 
 import ProgressBar, { ProgressBarSymbol } from '../console/progressBar.js';
 import DriveSemaphore from '../driveSemaphore.js';
@@ -11,7 +10,7 @@ import bufferPoly from '../polyfill/bufferPoly.js';
 import fsPoly from '../polyfill/fsPoly.js';
 import CMProParser, { DATProps, GameProps, ROMProps } from '../types/dats/cmpro/cmProParser.js';
 import DAT from '../types/dats/dat.js';
-import DATObject from '../types/dats/datObject.js';
+import DATObject, { DATObjectProps } from '../types/dats/datObject.js';
 import Game from '../types/dats/game.js';
 import Header from '../types/dats/logiqx/header.js';
 import LogiqxDAT from '../types/dats/logiqx/logiqxDat.js';
@@ -258,12 +257,9 @@ export default class DATScanner extends Scanner {
   private parseXmlDat(datFile: File, fileContents: string): DAT | undefined {
     this.progressBar.logTrace(`${datFile.toString()}: attempting to parse ${fsPoly.sizeReadable(fileContents.length)} of XML`);
 
-    let datObject: DATObject;
+    let datObject: DATObjectProps;
     try {
-      datObject = new XMLParser({
-        ignoreAttributes: false,
-        attributeNamePrefix: '',
-      }).parse(fileContents);
+      datObject = DATObject.fromXmlString(fileContents);
     } catch (error) {
       const message = (error as Error).message.split('\n').join(', ');
       this.progressBar.logDebug(`${datFile.toString()}: failed to parse DAT XML: ${message}`);

@@ -144,6 +144,7 @@ export default abstract class DAT {
    * Serialize this {@link DAT} to the file contents of an XML file.
    */
   toXmlDat(): string {
+    // TODO(cemmer): replace with fast-xml-parser https://github.com/NaturalIntelligence/fast-xml-parser/issues/639
     return new xml2js.Builder({
       renderOpts: { pretty: true, indent: '\t', newline: '\n' },
       xmldec: { version: '1.0' },
