@@ -115,7 +115,6 @@ async function candidateWriter(
   return walkAndStat(outputTemp);
 }
 
-// TODO(cemmer): why does this hang on Windows in CI?
 it('should not do anything if there are no parents', async () => {
   await copyFixturesToTemp(async (inputTemp, outputTemp) => {
     // Given
