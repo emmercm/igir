@@ -2,7 +2,6 @@ import fs, { OpenMode, PathLike } from 'node:fs';
 import https from 'node:https';
 import path from 'node:path';
 import { Readable } from 'node:stream';
-import util from 'node:util';
 
 import { Memoize } from 'typescript-memoize';
 
@@ -20,6 +19,8 @@ export interface FileProps extends ChecksumProps {
   readonly filePath: string;
   readonly size: number;
   readonly crc32WithoutHeader?: string;
+  readonly md5WithoutHeader?: string;
+  readonly sha1WithoutHeader?: string;
   readonly symlinkSource?: string;
   readonly fileHeader?: ROMHeader;
   readonly patch?: Patch;
@@ -40,7 +41,11 @@ export default class File implements FileProps {
 
   readonly md5?: string;
 
+  readonly md5WithoutHeader?: string;
+
   readonly sha1?: string;
+
+  readonly sha1WithoutHeader?: string;
 
   readonly symlinkSource?: string;
 
@@ -52,9 +57,11 @@ export default class File implements FileProps {
     this.filePath = path.normalize(fileProps.filePath);
     this.size = fileProps.size;
     this.crc32 = (fileProps.crc32 ?? '').toLowerCase().replace(/^0x/, '').padStart(8, '0');
+    this.crc32WithoutHeader = (fileProps.crc32WithoutHeader ?? '').toLowerCase().replace(/^0x/, '').padStart(8, '0');
     this.md5 = fileProps.md5?.toLowerCase().replace(/^0x/, '').padStart(32, '0');
+    this.md5WithoutHeader = fileProps.md5WithoutHeader?.toLowerCase().replace(/^0x/, '').padStart(32, '0');
     this.sha1 = fileProps.sha1?.toLowerCase().replace(/^0x/, '').padStart(40, '0');
-    this.crc32WithoutHeader = (fileProps.crc32WithoutHeader ?? '').toLowerCase().padStart(8, '0');
+    this.sha1WithoutHeader = fileProps.sha1WithoutHeader?.toLowerCase().replace(/^0x/, '').padStart(40, '0');
     this.symlinkSource = fileProps.symlinkSource;
     this.fileHeader = fileProps.fileHeader;
     this.patch = fileProps.patch;
@@ -71,31 +78,37 @@ export default class File implements FileProps {
     let finalSize = size;
     let finalCrcWithHeader = checksums?.crc32;
     let finalCrcWithoutHeader;
-    let finalMd5 = checksums?.md5;
-    let finalSha1 = checksums?.sha1;
+    let finalMd5WithHeader = checksums?.md5;
+    let finalMd5WithoutHeader;
+    let finalSha1WithHeader = checksums?.sha1;
+    let finalSha1WithoutHeader;
     let finalSymlinkSource;
 
     if (await fsPoly.exists(filePath)) {
       // Calculate size
-      const stat = await util.promisify(fs.stat)(filePath);
-      finalSize = finalSize ?? stat.size;
+      if (finalSize === undefined) {
+        finalSize = await fsPoly.size(filePath);
+      }
 
       // Calculate checksums
       if ((!finalCrcWithHeader && (checksumBitmask & ChecksumBitmask.CRC32))
-        || (!finalMd5 && (checksumBitmask & ChecksumBitmask.MD5))
-        || (!finalSha1 && (checksumBitmask & ChecksumBitmask.SHA1))
+        || (!finalMd5WithHeader && (checksumBitmask & ChecksumBitmask.MD5))
+        || (!finalSha1WithHeader && (checksumBitmask & ChecksumBitmask.SHA1))
       ) {
-        const calculatedChecksums = await this.calculateFileChecksums(filePath, checksumBitmask);
-        finalCrcWithHeader = calculatedChecksums.crc32 ?? finalCrcWithHeader;
-        finalMd5 = calculatedChecksums.md5 ?? finalMd5;
-        finalSha1 = calculatedChecksums.sha1 ?? finalSha1;
+        const headeredChecksums = await this.calculateFileChecksums(filePath, checksumBitmask);
+        finalCrcWithHeader = headeredChecksums.crc32 ?? finalCrcWithHeader;
+        finalMd5WithHeader = headeredChecksums.md5 ?? finalMd5WithHeader;
+        finalSha1WithHeader = headeredChecksums.sha1 ?? finalSha1WithHeader;
       }
-      if (fileHeader && (checksumBitmask & ChecksumBitmask.CRC32)) {
-        finalCrcWithoutHeader = (await this.calculateFileChecksums(
+      if (fileHeader && checksumBitmask) {
+        const unheaderedChecksums = await this.calculateFileChecksums(
           filePath,
-          ChecksumBitmask.CRC32,
+          checksumBitmask,
           fileHeader,
-        )).crc32;
+        );
+        finalCrcWithoutHeader = unheaderedChecksums.crc32;
+        finalMd5WithoutHeader = unheaderedChecksums.md5;
+        finalSha1WithoutHeader = unheaderedChecksums.sha1;
       }
 
       if (await fsPoly.isSymlink(filePath)) {
@@ -106,14 +119,18 @@ export default class File implements FileProps {
       finalCrcWithHeader = finalCrcWithHeader ?? '';
     }
     finalCrcWithoutHeader = finalCrcWithoutHeader ?? finalCrcWithHeader;
+    finalMd5WithoutHeader = finalMd5WithoutHeader ?? finalMd5WithHeader;
+    finalSha1WithoutHeader = finalSha1WithoutHeader ?? finalSha1WithHeader;
 
     return new File({
       filePath,
       size: finalSize,
       crc32: finalCrcWithHeader,
       crc32WithoutHeader: finalCrcWithoutHeader,
-      md5: finalMd5,
-      sha1: finalSha1,
+      md5: finalMd5WithHeader,
+      md5WithoutHeader: finalMd5WithoutHeader,
+      sha1: finalSha1WithHeader,
+      sha1WithoutHeader: finalSha1WithoutHeader,
       symlinkSource: finalSymlinkSource,
       fileHeader,
       patch,
@@ -150,8 +167,16 @@ export default class File implements FileProps {
     return this.md5;
   }
 
+  getMd5WithoutHeader(): string | undefined {
+    return this.md5WithoutHeader;
+  }
+
   getSha1(): string | undefined {
     return this.sha1;
+  }
+
+  getSha1WithoutHeader(): string | undefined {
+    return this.sha1WithoutHeader;
   }
 
   protected getSymlinkSource(): string | undefined {
@@ -179,9 +204,9 @@ export default class File implements FileProps {
   }
 
   protected getChecksumBitmask(): number {
-    return (this.getCrc32().replace(/^0|0$/, '') ? ChecksumBitmask.CRC32 : 0)
-      | (this.getMd5()?.replace(/^0|0$/, '') ? ChecksumBitmask.MD5 : 0)
-      | (this.getSha1()?.replace(/^0|0$/, '') ? ChecksumBitmask.SHA1 : 0);
+    return (this.getCrc32().replace(/^0+|0+$/, '') ? ChecksumBitmask.CRC32 : 0)
+      | (this.getMd5()?.replace(/^0+|0+$/, '') ? ChecksumBitmask.MD5 : 0)
+      | (this.getSha1()?.replace(/^0+|0+$/, '') ? ChecksumBitmask.SHA1 : 0);
   }
 
   // Other functions
