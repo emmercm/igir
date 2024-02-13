@@ -3,6 +3,7 @@ import path from 'node:path';
 import Constants from '../../../src/constants.js';
 import ROMScanner from '../../../src/modules/romScanner.js';
 import bufferPoly from '../../../src/polyfill/bufferPoly.js';
+import FilePoly from '../../../src/polyfill/filePoly.js';
 import fsPoly from '../../../src/polyfill/fsPoly.js';
 import File from '../../../src/types/files/file.js';
 import { ChecksumBitmask } from '../../../src/types/files/fileChecksums.js';
@@ -15,6 +16,50 @@ describe('getFilePath', () => {
   it('should return the constructor value', async () => {
     const file = await File.fileOf(path.join('some', 'path'));
     expect(file.getFilePath()).toEqual(path.join('some', 'path'));
+  });
+});
+
+describe('getSize', () => {
+  test.each([
+    [0],
+    [1],
+    [100],
+    [10_000],
+    [1_000_000],
+  ])('should get the file\'s size: %s', async (size) => {
+    const tempDir = await fsPoly.mkdtemp(Constants.GLOBAL_TEMP_DIR);
+    try {
+      const tempFile = path.resolve(await fsPoly.mktemp(path.join(tempDir, 'file')));
+      await (await FilePoly.fileOfSize(tempFile, 'r', size)).close(); // touch
+
+      const fileLink = await File.fileOf(tempFile);
+
+      expect(fileLink.getSize()).toEqual(size);
+    } finally {
+      await fsPoly.rm(tempDir, { recursive: true });
+    }
+  });
+
+  test.each([
+    [0],
+    [1],
+    [100],
+    [10_000],
+    [1_000_000],
+  ])('should get the symlink\'s target size: %s', async (size) => {
+    const tempDir = await fsPoly.mkdtemp(Constants.GLOBAL_TEMP_DIR);
+    try {
+      const tempFile = path.resolve(await fsPoly.mktemp(path.join(tempDir, 'file')));
+      await (await FilePoly.fileOfSize(tempFile, 'r', size)).close(); // touch
+
+      const tempLink = await fsPoly.mktemp(path.join(tempDir, 'link'));
+      await fsPoly.symlink(path.resolve(tempFile), tempLink);
+      const fileLink = await File.fileOf(tempLink);
+
+      expect(fileLink.getSize()).toEqual(size);
+    } finally {
+      await fsPoly.rm(tempDir, { recursive: true });
+    }
   });
 });
 
