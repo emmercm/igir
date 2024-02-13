@@ -88,6 +88,7 @@ async function runIgir(optionsProps: OptionsProps): Promise<TestOutput> {
     const outputFilesAndCrcs = (await Promise.all(options.getInputPaths()
       .map(async (inputPath) => walkWithCrc(inputPath, options.getOutputDirRoot()))))
       .flat()
+      .filter((tuple, idx, tuples) => tuples.findIndex((dupe) => dupe[0] === tuple[0]) === idx)
       .sort((a, b) => a[0].localeCompare(b[0]));
     const cwdFilesAndCrcs = (await Promise.all(options.getInputPaths()
       .map(async (inputPath) => walkWithCrc(inputPath, tempCwd))))
@@ -289,6 +290,45 @@ describe('with explicit DATs', () => {
         path.join('rom', 'two.rom'),
         path.join('zip', 'three.zip'),
       ]);
+    });
+  });
+
+  it('should copy and extract symlinked files', async () => {
+    await copyFixturesToTemp(async (inputTemp, outputTemp) => {
+      // Given some symlinks
+      const inputDir = path.join(inputTemp, 'roms', 'raw');
+      const inputFiles = await fsPoly.walk(inputDir);
+      const inputSymlinks = await Promise.all(inputFiles.map(async (inputFile) => {
+        const symlink = `${inputFile}.symlink`;
+        await fsPoly.symlink(inputFile, symlink);
+        return symlink;
+      }));
+
+      const result = await runIgir({
+        commands: ['copy', 'extract'],
+        dat: [path.join(inputTemp, 'dats')],
+        input: inputSymlinks,
+        output: outputTemp,
+        dirDatName: true,
+        dirGameSubdir: GameSubdirMode[GameSubdirMode.MULTIPLE].toLowerCase(),
+      });
+
+      expect(result.outputFilesAndCrcs).toEqual([
+        [path.join('One', 'Fizzbuzz.nes'), '370517b5'],
+        [path.join('One', 'Foobar.lnx'), 'b22c9747'],
+        [path.join('One', 'Lorem Ipsum.rom'), '70856527'],
+        [path.join('One', 'One Three', 'One.rom'), 'f817a89f'],
+        [path.join('One', 'One Three', 'Three.rom'), 'ff46c5d8'],
+        [path.join('One', 'Three Four Five', 'Five.rom'), '3e5daf67'],
+        [path.join('One', 'Three Four Five', 'Four.rom'), '1cf3ca74'],
+        [path.join('One', 'Three Four Five', 'Three.rom'), 'ff46c5d8'],
+        [path.join('smdb', 'Hardware Target Game Database', 'Dummy', 'Fizzbuzz.nes'), '370517b5'],
+        [path.join('smdb', 'Hardware Target Game Database', 'Dummy', 'Foobar.lnx'), 'b22c9747'],
+        [path.join('smdb', 'Hardware Target Game Database', 'Dummy', 'Lorem Ipsum.rom'), '70856527'],
+      ]);
+      expect(result.cwdFilesAndCrcs).toHaveLength(0);
+      expect(result.movedFiles).toHaveLength(0);
+      expect(result.cleanedFiles).toHaveLength(0);
     });
   });
 
