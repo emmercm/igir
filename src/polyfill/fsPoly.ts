@@ -284,9 +284,12 @@ export default class FsPoly {
     }
   }
 
+  /**
+   * Note: this will follow symlinks and get the size of the target.
+   */
   static async size(pathLike: PathLike): Promise<number> {
     try {
-      return (await util.promisify(fs.lstat)(pathLike)).size;
+      return (await util.promisify(fs.stat)(pathLike)).size;
     } catch {
       return 0;
     }
