@@ -38,7 +38,7 @@ function givenDAT(): DAT {
         new Release('EUR', 'EUR', 'EN'),
         new Release('JPN', 'JPN', 'JA'),
       ],
-      rom: new ROM({ name: 'four.rom', size: 0, crc: '00000004' }),
+      rom: new ROM({ name: 'four.rom', size: 0, crc32: '00000004' }),
     }),
   ]);
 }

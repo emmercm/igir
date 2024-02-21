@@ -213,6 +213,7 @@ export default class CandidateWriter extends Module {
 
     let archiveEntries: ArchiveEntry<Zip>[];
     try {
+      // TODO(cemmer): test with highest checksum available
       archiveEntries = await new Zip(zipFilePath).getArchiveEntries(ChecksumBitmask.CRC32);
     } catch (error) {
       return `failed to get archive contents: ${error}`;
@@ -397,6 +398,7 @@ export default class CandidateWriter extends Module {
       this.progressBar.logWarn(`${dat.getNameShort()}: ${outputFilePath}: can't test, expected CRC is unknown`);
       return undefined;
     }
+    // TODO(cemmer): test with highest checksum available
     const actualFile = await File.fileOf(outputFilePath);
     if (actualFile.getCrc32() !== expectedFile.getCrc32()) {
       return `has the CRC ${actualFile.getCrc32()}, expected ${expectedFile.getCrc32()}`;

@@ -1,5 +1,6 @@
 import { Expose } from 'class-transformer';
 
+import ArrayPoly from '../../polyfill/arrayPoly.js';
 import Archive from '../files/archives/archive.js';
 import ArchiveEntry from '../files/archives/archiveEntry.js';
 import File from '../files/file.js';
@@ -7,12 +8,9 @@ import { ChecksumProps } from '../files/fileChecksums.js';
 
 type ROMStatus = 'baddump' | 'nodump' | 'good';
 
-export interface ROMProps {
+export interface ROMProps extends ChecksumProps {
   readonly name: string,
   readonly size: number,
-  readonly crc?: string,
-  readonly md5?: string,
-  readonly sha1?: string,
   readonly status?: ROMStatus,
   readonly merge?: string,
   readonly bios?: string,
@@ -29,7 +27,7 @@ export default class ROM implements ROMProps {
   readonly size: number;
 
   @Expose()
-  readonly crc?: string;
+  readonly crc32: string;
 
   @Expose()
   readonly md5?: string;
@@ -49,9 +47,9 @@ export default class ROM implements ROMProps {
   constructor(props?: ROMProps) {
     this.name = props?.name ?? '';
     this.size = props?.size ?? 0;
-    this.crc = props?.crc;
-    this.md5 = props?.md5;
-    this.sha1 = props?.sha1;
+    this.crc32 = (props?.crc32 ?? '').toLowerCase().replace(/^0x/, '').padStart(8, '0');
+    this.md5 = props?.md5?.toLowerCase().replace(/^0x/, '').padStart(32, '0');
+    this.sha1 = props?.sha1?.toLowerCase().replace(/^0x/, '').padStart(40, '0');
     this.status = props?.status;
     this.merge = props?.merge;
     this.bios = props?.bios;
@@ -84,15 +82,15 @@ export default class ROM implements ROMProps {
   }
 
   getCrc32(): string {
-    return (this.crc ?? '').toLowerCase().replace(/^0x/, '').padStart(8, '0');
+    return this.crc32;
   }
 
   getMd5(): string | undefined {
-    return this.md5?.toLowerCase().replace(/^0x/, '').padStart(32, '0');
+    return this.md5;
   }
 
   getSha1(): string | undefined {
-    return this.sha1?.toLowerCase().replace(/^0x/, '').padStart(40, '0');
+    return this.sha1;
   }
 
   getChecksumProps(): ChecksumProps {
@@ -142,5 +140,15 @@ export default class ROM implements ROMProps {
    */
   hashCode(): string {
     return File.hashCode(this.getCrc32(), this.getSize());
+  }
+
+  hashCodes(): string[] {
+    return [
+      `${this.getCrc32()}|${this.getSize()}`,
+      this.getMd5(),
+      this.getSha1(),
+    ]
+      .filter(ArrayPoly.filterNotNullish)
+      .reduce(ArrayPoly.reduceUnique(), []);
   }
 }

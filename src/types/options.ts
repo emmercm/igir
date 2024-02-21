@@ -21,6 +21,7 @@ import fsPoly, { FsWalkCallback } from '../polyfill/fsPoly.js';
 import URLPoly from '../polyfill/urlPoly.js';
 import DAT from './dats/dat.js';
 import File from './files/file.js';
+import { ChecksumBitmask } from './files/fileChecksums.js';
 
 export enum MergeMode {
   // Clones contain all parent ROMs, all games contain BIOS & device ROMs
@@ -80,6 +81,8 @@ export interface OptionsProps {
   readonly zipDatName?: boolean,
 
   readonly symlinkRelative?: boolean,
+
+  readonly matchChecksum?: ChecksumBitmask,
 
   readonly header?: string,
   readonly removeHeaders?: string[],
@@ -212,6 +215,8 @@ export default class Options implements OptionsProps {
   readonly symlinkRelative: boolean;
 
   readonly header: string;
+
+  readonly matchChecksum: ChecksumBitmask;
 
   readonly removeHeaders?: string[];
 
@@ -365,6 +370,8 @@ export default class Options implements OptionsProps {
     this.zipDatName = options?.zipDatName ?? false;
 
     this.symlinkRelative = options?.symlinkRelative ?? false;
+
+    this.matchChecksum = options?.matchChecksum ?? ChecksumBitmask.CRC32;
 
     this.header = options?.header ?? '';
     this.removeHeaders = options?.removeHeaders;
@@ -857,6 +864,17 @@ export default class Options implements OptionsProps {
 
   getSymlinkRelative(): boolean {
     return this.symlinkRelative;
+  }
+
+  getMatchChecksum(): ChecksumBitmask {
+    return this.matchChecksum;
+  }
+
+  getMatchChecksumNeeded(): ChecksumBitmask {
+    if (this.shouldDir2Dat()) {
+      return ChecksumBitmask.CRC32 | ChecksumBitmask.MD5 | ChecksumBitmask.SHA1;
+    }
+    return this.getMatchChecksum();
   }
 
   private getHeader(): string {

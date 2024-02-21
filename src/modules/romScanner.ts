@@ -32,9 +32,7 @@ export default class ROMScanner extends Scanner {
     const files = await this.getFilesFromPaths(
       romFilePaths,
       this.options.getReaderThreads(),
-      this.options.shouldDir2Dat()
-        ? ChecksumBitmask.CRC32 | ChecksumBitmask.MD5 | ChecksumBitmask.SHA1
-        : ChecksumBitmask.CRC32,
+      this.options.getMatchChecksum(),
     );
 
     this.progressBar.logInfo('done scanning ROM files');

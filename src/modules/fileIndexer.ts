@@ -40,11 +40,13 @@ export default class FileIndexer extends Module {
     // TODO(cemmer): ability to index files by some other property such as name
     files.forEach((file) => {
       // Index on full file contents
-      FileIndexer.setFileInMap(results, file.hashCodeWithHeader(), file);
+      file.hashCodesWithHeader()
+        .forEach((hashCode) => FileIndexer.setFileInMap(results, hashCode, file));
 
       // Optionally index without a header
       if (file.getFileHeader()) {
-        FileIndexer.setFileInMap(results, file.hashCodeWithoutHeader(), file);
+        file.hashCodesWithoutHeader()
+          .forEach((hashCode) => FileIndexer.setFileInMap(results, hashCode, file));
       }
     });
 

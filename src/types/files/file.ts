@@ -455,18 +455,30 @@ export default class File implements FileProps {
     return `${crc}|${size}`;
   }
 
-  hashCodeWithHeader(): string {
-    return File.hashCode(this.getCrc32(), this.getSize());
+  hashCodesWithHeader(): string[] {
+    return [
+      `${this.getCrc32()}|${this.getSize()}`,
+      this.getMd5(),
+      this.getSha1(),
+    ]
+      .filter(ArrayPoly.filterNotNullish)
+      .reduce(ArrayPoly.reduceUnique(), []);
   }
 
-  hashCodeWithoutHeader(): string {
-    return File.hashCode(this.getCrc32WithoutHeader(), this.getSizeWithoutHeader());
+  hashCodesWithoutHeader(): string[] {
+    return [
+      `${this.getCrc32WithoutHeader()}|${this.getSizeWithoutHeader()}`,
+      this.getMd5WithoutHeader(),
+      this.getSha1WithoutHeader(),
+    ]
+      .filter(ArrayPoly.filterNotNullish)
+      .reduce(ArrayPoly.reduceUnique(), []);
   }
 
   hashCodes(): string[] {
     return [
-      this.hashCodeWithHeader(),
-      this.hashCodeWithoutHeader(),
+      ...this.hashCodesWithHeader(),
+      ...this.hashCodesWithoutHeader(),
     ].reduce(ArrayPoly.reduceUnique(), []);
   }
 
