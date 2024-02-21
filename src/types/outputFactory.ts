@@ -270,6 +270,11 @@ export default class OutputFactory {
       output = output.replace('{adam}', adam);
     }
 
+    const emulationstation = gameConsole.getEmulationStation();
+    if (emulationstation) {
+      output = output.replace('{emulationstation}', emulationstation);
+    }
+
     const pocket = gameConsole.getPocket();
     if (pocket) {
       output = output.replace('{pocket}', pocket);
@@ -303,6 +308,11 @@ export default class OutputFactory {
     const miyoocfw = gameConsole.getMiyooCFW();
     if (miyoocfw) {
       output = output.replace('{miyoocfw}', miyoocfw);
+    }
+
+    const retrodeck = gameConsole.getRetroDECK();
+    if (retrodeck) {
+      output = output.replace('{retrodeck}', retrodeck);
     }
 
     const twmenu = gameConsole.getTWMenu();
