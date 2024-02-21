@@ -22,7 +22,7 @@ const fileFilter = (filters: FileFilter[]): string[] => {
   let results: string[] = [];
   filters.forEach((filter) => {
     if (filter.include) {
-      const include = fg.globSync(filter.include, filter)
+      const include = fg.globSync(filter.include.replace(/\\/g, '/'), filter)
         .map((file) => path.resolve(file));
       if (include.length === 0) {
         throw new Error(`glob pattern '${filter.include}' returned no paths`);
@@ -30,7 +30,7 @@ const fileFilter = (filters: FileFilter[]): string[] => {
       results = [...results, ...include];
     }
     if (filter.exclude) {
-      const exclude = new Set(fg.globSync(filter.exclude, filter)
+      const exclude = new Set(fg.globSync(filter.exclude.replace(/\\/g, '/'), filter)
         .map((file) => path.resolve(file)));
       if (exclude.size === 0) {
         throw new Error(`glob pattern '${filter.exclude}' returned no paths`);
