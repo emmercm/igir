@@ -57,7 +57,7 @@ export default class Logger {
   }
 
   private readonly print = (logLevel: LogLevel, message: unknown = ''): void => {
-    if (this.logLevel > logLevel && this.logLevel !== LogLevel.ALWAYS) {
+    if (this.logLevel > logLevel) {
       return;
     }
     this.stream.write(`${this.formatMessage(logLevel, String(message).toString())}\n`);
@@ -80,13 +80,13 @@ export default class Logger {
     }
 
     const chalkFuncs = {
+      [LogLevel.ALWAYS]: (msg) => msg,
       [LogLevel.TRACE]: chalk.grey,
       [LogLevel.DEBUG]: chalk.magenta,
       [LogLevel.INFO]: chalk.cyan,
       [LogLevel.WARN]: chalk.yellow,
       [LogLevel.ERROR]: chalk.red,
       [LogLevel.NOTICE]: chalk.underline,
-      [LogLevel.ALWAYS]: (msg) => msg,
       [LogLevel.NEVER]: (msg) => msg,
     } satisfies { [key in LogLevel]: (message: string) => string };
     const chalkFunc = chalkFuncs[logLevel];

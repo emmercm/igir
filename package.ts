@@ -42,7 +42,7 @@ const fileFilter = (filters: FileFilter[]): string[] => {
 };
 
 (async (): Promise<void> => {
-  const logger = new Logger(LogLevel.ALWAYS);
+  const logger = new Logger(LogLevel.TRACE);
 
   const argv = await yargs(process.argv.slice(2))
     .locale('en')
