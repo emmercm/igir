@@ -57,7 +57,7 @@ export default class Logger {
   }
 
   private readonly print = (logLevel: LogLevel, message: unknown = ''): void => {
-    if (this.logLevel > logLevel) {
+    if (this.logLevel > logLevel && this.logLevel !== LogLevel.ALWAYS) {
       return;
     }
     this.stream.write(`${this.formatMessage(logLevel, String(message).toString())}\n`);
