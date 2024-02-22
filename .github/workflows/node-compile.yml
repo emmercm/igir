@@ -65,9 +65,9 @@ jobs:
                 "npm run package . igir"
               tar cvf - igir | gzip --best > "${BIN_OUTPUT}"
               {
-                echo "```text"
+                echo '```text'
                 ls -al igir "${BIN_OUTPUT}"
-                echo "```"
+                echo '```'
               } >> "${GITHUB_STEP_SUMMARY}"
           - os: ubuntu-latest
             arch: arm/v7
@@ -81,9 +81,9 @@ jobs:
                 "npm run package -- . igir"
               tar cvf - igir | gzip --best > "${BIN_OUTPUT}"
               {
-                echo "```text"
+                echo '```text'
                 ls -al igir "${BIN_OUTPUT}"
-                echo "```"
+                echo '```'
               } >> "${GITHUB_STEP_SUMMARY}"
           - os: ubuntu-latest
             arch: arm64/v8
@@ -97,9 +97,9 @@ jobs:
                 "npm run package -- . igir"
               tar cvf - igir | gzip --best > "${BIN_OUTPUT}"
               {
-                echo "```text"
+                echo '```text'
                 ls -al igir "${BIN_OUTPUT}"
-                echo "```"
+                echo '```'
               } >> "${GITHUB_STEP_SUMMARY}"
           - os: macos-13
             build: |
@@ -110,9 +110,9 @@ jobs:
               npm run package -- . igir
               tar cvf - igir | gzip --best > "${BIN_OUTPUT}"
               {
-                echo "```text"
+                echo '```text'
                 ls -al igir "${BIN_OUTPUT}"
-                echo "```"
+                echo '```'
               } >> "${GITHUB_STEP_SUMMARY}"
           - os: macos-14
             build: |
@@ -123,9 +123,9 @@ jobs:
               npm run package -- . igir
               tar cvf - igir | gzip --best > "${BIN_OUTPUT}"
               {
-                echo "```text"
+                echo '```text'
                 ls -al igir "${BIN_OUTPUT}"
-                echo "```"
+                echo '```'
               } >> "${GITHUB_STEP_SUMMARY}"
           - os: windows-latest
             build: |
