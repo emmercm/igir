@@ -801,7 +801,7 @@ export default class GameConsole {
       mister: 'SharpMZ',
     }),
     new GameConsole(/X1/i, ['.2d', '.2hd', '.dx1', '.tfd'], {
-      batocera: 'x1', 
+      batocera: 'x1',
       emulationstation: 'x1',
       jelos: 'x1',
       onion: 'XONE',
