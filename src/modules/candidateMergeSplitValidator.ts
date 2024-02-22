@@ -29,7 +29,7 @@ export default class CandidateMergeSplitValidator extends Module {
     dat: DAT,
     parentsToCandidates: Map<Parent, ReleaseCandidate[]>,
   ): Promise<void> {
-    this.progressBar.logInfo(`${dat.getNameShort()}: validating merged & split ROM sets`);
+    this.progressBar.logTrace(`${dat.getNameShort()}: validating merged & split ROM sets`);
 
     await this.progressBar.setSymbol(ProgressBarSymbol.VALIDATING);
     await this.progressBar.reset(parentsToCandidates.size);
@@ -87,10 +87,10 @@ export default class CandidateMergeSplitValidator extends Module {
         }
 
         if (missingDependencies.length > 0) {
-          this.progressBar.logWarn(`${game.getName()}: missing dependent ROM set${missingDependencies.length !== 1 ? 's' : ''}: ${missingDependencies.join(', ')}`);
+          this.progressBar.logWarn(`${dat.getNameShort()}: ${game.getName()}: missing dependent ROM set${missingDependencies.length !== 1 ? 's' : ''}: ${missingDependencies.join(', ')}`);
         }
       });
 
-    this.progressBar.logInfo(`${dat.getNameShort()}: done validating merged & split ROM sets`);
+    this.progressBar.logTrace(`${dat.getNameShort()}: done validating merged & split ROM sets`);
   }
 }

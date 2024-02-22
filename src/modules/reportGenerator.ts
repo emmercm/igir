@@ -28,9 +28,9 @@ export default class ReportGenerator extends Module {
     cleanedOutputFiles: string[],
     datStatuses: DATStatus[],
   ): Promise<void> {
-    this.progressBar.logInfo('generating report');
+    this.progressBar.logTrace('generating report');
 
-    const report = this.options.getReportOutput();
+    const reportPath = this.options.getReportOutput();
 
     const matchedFileCsvs = (await Promise.all(
       datStatuses
@@ -58,12 +58,13 @@ export default class ReportGenerator extends Module {
 
     const cleanedCsv = await DATStatus.filesToCsv(cleanedOutputFiles, GameStatus.DELETED);
 
+    this.progressBar.logInfo(`writing report '${reportPath}'`);
     const rows = [...matchedFileCsvs, unusedCsv, cleanedCsv].filter((csv) => csv);
-    await util.promisify(fs.writeFile)(report, rows.join('\n'));
-    this.progressBar.logDebug(`${report}: wrote ${datStatuses.length.toLocaleString()} CSV row${datStatuses.length !== 1 ? 's' : ''}`);
+    await util.promisify(fs.writeFile)(reportPath, rows.join('\n'));
+    this.progressBar.logTrace(`wrote ${datStatuses.length.toLocaleString()} CSV row${datStatuses.length !== 1 ? 's' : ''}: ${reportPath}`);
 
-    this.progressBar.logInfo('done generating report');
-    await this.progressBar.done(report);
+    this.progressBar.logTrace('done generating report');
+    await this.progressBar.done(reportPath);
     await this.progressBar.freeze();
   }
 }

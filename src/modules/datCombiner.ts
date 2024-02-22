@@ -21,14 +21,14 @@ export default class DATCombiner extends Module {
    * Combine the DATs.
    */
   combine(dats: DAT[]): DAT {
-    this.progressBar.logInfo(`combining ${dats.length} DAT${dats.length !== 1 ? 's' : ''}`);
+    this.progressBar.logTrace(`combining ${dats.length} DAT${dats.length !== 1 ? 's' : ''}`);
 
     const newDat = new LogiqxDAT(
       DATCombiner.generateHeader(dats),
       dats.flatMap((dat) => dat.getGames()),
     );
 
-    this.progressBar.logInfo(`done combining ${dats.length} DAT${dats.length !== 1 ? 's' : ''}`);
+    this.progressBar.logTrace(`done combining ${dats.length} DAT${dats.length !== 1 ? 's' : ''}`);
     return newDat;
   }
 
