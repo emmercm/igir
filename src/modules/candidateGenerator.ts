@@ -40,14 +40,14 @@ export default class CandidateGenerator extends Module {
     hashCodeToInputFiles: Map<string, File[]>,
   ): Promise<Map<Parent, ReleaseCandidate[]>> {
     if (hashCodeToInputFiles.size === 0) {
-      this.progressBar.logDebug(`${dat.getNameShort()}: no input ROMs to make candidates from`);
+      this.progressBar.logTrace(`${dat.getNameShort()}: no input ROMs to make candidates from`);
       return new Map();
     }
 
     const output = new Map<Parent, ReleaseCandidate[]>();
     const parents = dat.getParents();
 
-    this.progressBar.logInfo(`${dat.getNameShort()}: generating candidates`);
+    this.progressBar.logTrace(`${dat.getNameShort()}: generating candidates`);
     await this.progressBar.setSymbol(ProgressBarSymbol.GENERATING);
     await this.progressBar.reset(parents.length);
 
@@ -90,9 +90,9 @@ export default class CandidateGenerator extends Module {
       .flatMap((releaseCandidate) => releaseCandidate.getRomsWithFiles())
       .reduce((sum, romWithFiles) => sum + romWithFiles.getRom().getSize(), 0);
     const totalCandidates = [...output.values()].reduce((sum, rc) => sum + rc.length, 0);
-    this.progressBar.logDebug(`${dat.getNameShort()}: generated ${fsPoly.sizeReadable(size)} of ${totalCandidates.toLocaleString()} candidate${totalCandidates !== 1 ? 's' : ''} for ${output.size.toLocaleString()} parent${output.size !== 1 ? 's' : ''}`);
+    this.progressBar.logTrace(`${dat.getNameShort()}: generated ${fsPoly.sizeReadable(size)} of ${totalCandidates.toLocaleString()} candidate${totalCandidates !== 1 ? 's' : ''} for ${output.size.toLocaleString()} parent${output.size !== 1 ? 's' : ''}`);
 
-    this.progressBar.logInfo(`${dat.getNameShort()}: done generating candidates`);
+    this.progressBar.logTrace(`${dat.getNameShort()}: done generating candidates`);
     return output;
   }
 
@@ -308,7 +308,7 @@ export default class CandidateGenerator extends Module {
     missingRoms.forEach((rom) => {
       message += `\n  ${rom.getName()}`;
     });
-    this.progressBar.logDebug(message);
+    this.progressBar.logTrace(message);
   }
 
   private hasConflictingOutputFiles(romsWithFiles: ROMWithFiles[]): boolean {

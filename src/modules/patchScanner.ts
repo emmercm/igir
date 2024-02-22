@@ -22,14 +22,14 @@ export default class PatchScanner extends Scanner {
    * Scan & process {@link Patch}es.
    */
   async scan(): Promise<Patch[]> {
-    this.progressBar.logInfo('scanning patch files');
+    this.progressBar.logTrace('scanning patch files');
     await this.progressBar.setSymbol(ProgressBarSymbol.SEARCHING);
     await this.progressBar.reset(0);
 
     const patchFilePaths = await this.options.scanPatchFilesWithoutExclusions(async (increment) => {
       await this.progressBar.incrementTotal(increment);
     });
-    this.progressBar.logDebug(`found ${patchFilePaths.length.toLocaleString()} patch file${patchFilePaths.length !== 1 ? 's' : ''}`);
+    this.progressBar.logTrace(`found ${patchFilePaths.length.toLocaleString()} patch file${patchFilePaths.length !== 1 ? 's' : ''}`);
     await this.progressBar.reset(patchFilePaths.length);
 
     const files = await this.getUniqueFilesFromPaths(
@@ -57,7 +57,7 @@ export default class PatchScanner extends Scanner {
       },
     )).filter(ArrayPoly.filterNotNullish);
 
-    this.progressBar.logInfo('done scanning patch files');
+    this.progressBar.logTrace('done scanning patch files');
     return patches;
   }
 

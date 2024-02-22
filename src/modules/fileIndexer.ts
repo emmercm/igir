@@ -31,7 +31,7 @@ export default class FileIndexer extends Module {
       return new Map();
     }
 
-    this.progressBar.logInfo(`indexing ${files.length.toLocaleString()} file${files.length !== 1 ? 's' : ''}`);
+    this.progressBar.logTrace(`indexing ${files.length.toLocaleString()} file${files.length !== 1 ? 's' : ''}`);
     await this.progressBar.setSymbol(ProgressBarSymbol.INDEXING);
     // await this.progressBar.reset(files.length);
 
@@ -95,9 +95,9 @@ export default class FileIndexer extends Module {
         return fileOne.getFilePath().localeCompare(fileTwo.getFilePath());
       }));
 
-    this.progressBar.logDebug(`found ${results.size} unique file${results.size !== 1 ? 's' : ''}`);
+    this.progressBar.logTrace(`found ${results.size} unique file${results.size !== 1 ? 's' : ''}`);
 
-    this.progressBar.logInfo('done indexing files');
+    this.progressBar.logTrace('done indexing files');
     return results;
   }
 
