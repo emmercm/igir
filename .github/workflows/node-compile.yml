@@ -64,7 +64,11 @@ jobs:
                 "node:$(jq --raw-output '.volta.node' package.json)" sh -c \
                 "npm run package . igir"
               tar cvf - igir | gzip --best > "${BIN_OUTPUT}"
-              ls -al igir "${BIN_OUTPUT}" >> "${GITHUB_STEP_SUMMARY}"
+              {
+                echo "```text"
+                ls -al igir "${BIN_OUTPUT}"
+                echo "```"
+              } >> "${GITHUB_STEP_SUMMARY}"
           - os: ubuntu-latest
             arch: arm/v7
             build: |
@@ -76,7 +80,11 @@ jobs:
                 "node:$(jq --raw-output '.volta.node' package.json)" sh -c \
                 "npm run package -- . igir"
               tar cvf - igir | gzip --best > "${BIN_OUTPUT}"
-              ls -al igir "${BIN_OUTPUT}" >> "${GITHUB_STEP_SUMMARY}"
+              {
+                echo "```text"
+                ls -al igir "${BIN_OUTPUT}"
+                echo "```"
+              } >> "${GITHUB_STEP_SUMMARY}"
           - os: ubuntu-latest
             arch: arm64/v8
             build: |
@@ -88,7 +96,11 @@ jobs:
                 "node:$(jq --raw-output '.volta.node' package.json)" sh -c \
                 "npm run package -- . igir"
               tar cvf - igir | gzip --best > "${BIN_OUTPUT}"
-              ls -al igir "${BIN_OUTPUT}" >> "${GITHUB_STEP_SUMMARY}"
+              {
+                echo "```text"
+                ls -al igir "${BIN_OUTPUT}"
+                echo "```"
+              } >> "${GITHUB_STEP_SUMMARY}"
           - os: macos-13
             build: |
               NPM_PKG_VERSION=$(npm pkg get version | sed 's/"//g')
@@ -97,7 +109,11 @@ jobs:
               echo "BIN_OUTPUT=${BIN_OUTPUT}" >> "${GITHUB_ENV}"
               npm run package -- . igir
               tar cvf - igir | gzip --best > "${BIN_OUTPUT}"
-              ls -al "${BIN_OUTPUT}" >> "${GITHUB_STEP_SUMMARY}"
+              {
+                echo "```text"
+                ls -al igir "${BIN_OUTPUT}"
+                echo "```"
+              } >> "${GITHUB_STEP_SUMMARY}"
           - os: macos-14
             build: |
               NPM_PKG_VERSION=$(npm pkg get version | sed 's/"//g')
@@ -106,7 +122,11 @@ jobs:
               echo "BIN_OUTPUT=${BIN_OUTPUT}" >> "${GITHUB_ENV}"
               npm run package -- . igir
               tar cvf - igir | gzip --best > "${BIN_OUTPUT}"
-              ls -al igir "${BIN_OUTPUT}" >> "${GITHUB_STEP_SUMMARY}"
+              {
+                echo "```text"
+                ls -al igir "${BIN_OUTPUT}"
+                echo "```"
+              } >> "${GITHUB_STEP_SUMMARY}"
           - os: windows-latest
             build: |
               $NPM_PKG_VERSION=$(npm pkg get version).replace('"','')
@@ -115,7 +135,10 @@ jobs:
               echo "BIN_OUTPUT=${BIN_OUTPUT}" | Out-File -FilePath $env:GITHUB_ENV -Append # no need for -Encoding utf8
               npm run package -- . igir.exe
               Compress-Archive -Path igir.exe -DestinationPath "${BIN_OUTPUT}" -CompressionLevel Optimal -Force
-              ( dir igir.exe; dir "${BIN_OUTPUT}" ) >> "${env:GITHUB_STEP_SUMMARY}"
+              echo "``````text"  >> "${env:GITHUB_STEP_SUMMARY}"
+              dir igir.exe >> "${env:GITHUB_STEP_SUMMARY}"
+              dir "${BIN_OUTPUT}" >> "${env:GITHUB_STEP_SUMMARY}"
+              echo "``````" >> "${env:GITHUB_STEP_SUMMARY}"
     steps:
       # Setup and install
       - uses: actions/checkout@v4
