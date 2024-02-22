@@ -39,7 +39,7 @@ export default class FixdatCreator extends Module {
       return undefined;
     }
 
-    this.progressBar.logInfo(`${originalDat.getNameShort()}: generating a fixdat`);
+    this.progressBar.logTrace(`${originalDat.getNameShort()}: generating a fixdat`);
     await this.progressBar.setSymbol(ProgressBarSymbol.WRITING);
     await this.progressBar.reset(1);
 
@@ -53,7 +53,7 @@ export default class FixdatCreator extends Module {
     const gamesWithMissingRoms = originalDat.getGames()
       .filter((game) => !game.getRoms().every((rom) => writtenRomHashCodes.has(rom.hashCode())));
     if (gamesWithMissingRoms.length === 0) {
-      this.progressBar.logDebug(`${originalDat.getNameShort()}: no missing games`);
+      this.progressBar.logDebug(`${originalDat.getNameShort()}: not creating a fixdat, all games were found`);
       return undefined;
     }
 
@@ -84,9 +84,10 @@ export default class FixdatCreator extends Module {
     const fixdat = new LogiqxDAT(header, gamesWithMissingRoms);
     const fixdatContents = fixdat.toXmlDat();
     const fixdatPath = path.join(fixdatDir, fixdat.getFilename());
+    this.progressBar.logInfo(`${originalDat.getNameShort()}: writing fixdat to '${fixdatPath}'`);
     await util.promisify(fs.writeFile)(fixdatPath, fixdatContents);
 
-    this.progressBar.logInfo(`${originalDat.getNameShort()}: done generating a fixdat`);
+    this.progressBar.logTrace(`${originalDat.getNameShort()}: done generating a fixdat`);
     return fixdatPath;
   }
 }

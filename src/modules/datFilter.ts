@@ -25,11 +25,11 @@ export default class DATFilter extends Module {
   async filter(dat: DAT): Promise<DAT> {
     // Return early if there aren't any games
     if (dat.getGames().length === 0) {
-      this.progressBar.logDebug(`${dat.getNameShort()}: no games to filter`);
+      this.progressBar.logTrace(`${dat.getNameShort()}: no games to filter`);
       return dat;
     }
 
-    this.progressBar.logInfo(`${dat.getNameShort()}: filtering DAT`);
+    this.progressBar.logTrace(`${dat.getNameShort()}: filtering DAT`);
     await this.progressBar.setSymbol(ProgressBarSymbol.FILTERING);
     await this.progressBar.reset(dat.getGames().length);
 
@@ -40,9 +40,9 @@ export default class DATFilter extends Module {
     const size = filteredDat.getGames()
       .flatMap((game) => game.getRoms())
       .reduce((sum, rom) => sum + rom.getSize(), 0);
-    this.progressBar.logDebug(`${filteredDat.getNameShort()}: filtered to ${filteredGames.length.toLocaleString()}/${dat.getGames().length.toLocaleString()} game${filteredGames.length !== 1 ? 's' : ''} (${fsPoly.sizeReadable(size)})`);
+    this.progressBar.logTrace(`${filteredDat.getNameShort()}: filtered to ${filteredGames.length.toLocaleString()}/${dat.getGames().length.toLocaleString()} game${filteredGames.length !== 1 ? 's' : ''} (${fsPoly.sizeReadable(size)})`);
 
-    this.progressBar.logInfo(`${filteredDat.getNameShort()}: done filtering DAT`);
+    this.progressBar.logTrace(`${filteredDat.getNameShort()}: done filtering DAT`);
     return filteredDat;
   }
 

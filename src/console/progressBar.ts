@@ -77,6 +77,9 @@ export default abstract class ProgressBar {
 
   /**
    * Log a TRACE message.
+   *
+   * This should be used to log internal actions that most users shouldn't care about, but could be
+   * helpful in bug reports.
    */
   logTrace(message: string): void {
     return this.log(LogLevel.TRACE, message);
@@ -84,6 +87,9 @@ export default abstract class ProgressBar {
 
   /**
    * Log a DEBUG message.
+   *
+   * This should be used to log actions that weren't taken (i.e. skipped writing a ROM because it
+   * already exists, etc.).
    */
   logDebug(message: string): void {
     return this.log(LogLevel.DEBUG, message);
@@ -91,6 +97,9 @@ export default abstract class ProgressBar {
 
   /**
    * Log an INFO message.
+   *
+   * This should be used to log actions that were taken (i.e. copying/moving ROMs, recycling files,
+   * writing DATs, etc.).
    */
   logInfo(message: string): void {
     return this.log(LogLevel.INFO, message);

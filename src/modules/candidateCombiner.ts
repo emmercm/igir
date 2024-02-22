@@ -37,11 +37,11 @@ export default class CandidateCombiner extends Module {
     }
 
     if (parentsToCandidates.size === 0) {
-      this.progressBar.logDebug(`${dat.getNameShort()}: no parents to make patched candidates for`);
+      this.progressBar.logTrace(`${dat.getNameShort()}: no parents to make patched candidates for`);
       return parentsToCandidates;
     }
 
-    this.progressBar.logInfo(`${dat.getNameShort()}: generating consolidated candidate`);
+    this.progressBar.logTrace(`${dat.getNameShort()}: generating consolidated candidate`);
     await this.progressBar.setSymbol(ProgressBarSymbol.COMBINING_ALL);
     await this.progressBar.reset(parentsToCandidates.size);
 
