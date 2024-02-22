@@ -152,7 +152,7 @@ export default class CandidateGenerator extends Module {
           const romWithFiles = new ROMWithFiles(rom, finalInputFile, outputFile);
           return [rom, romWithFiles];
         } catch (error) {
-          this.progressBar.logInfo(`${dat.getNameShort()}: ${game.getName()}: ${error}`);
+          this.progressBar.logWarn(`${dat.getNameShort()}: ${game.getName()}: ${error}`);
           return [rom, undefined];
         }
       }),
