@@ -79,14 +79,19 @@ export default class DirectoryCleaner extends Module {
   }
 
   private async trashOrDelete(filePaths: string[]): Promise<void> {
+    if (this.options.getCleanDryRun()) {
+      this.progressBar.logDebug(`paths skipped from cleaning (dry run):\n${filePaths.map((filePath) => `  ${filePath}`).join('\n')}`);
+      return;
+    }
+
     // Prefer recycling...
     for (let i = 0; i < filePaths.length; i += Constants.OUTPUT_CLEANER_BATCH_SIZE) {
       const filePathsChunk = filePaths.slice(i, i + Constants.OUTPUT_CLEANER_BATCH_SIZE);
-      this.progressBar.logInfo(`cleaning files:\n${filePathsChunk.map((filePath) => `  ${filePath}`).join('\n')}`);
+      this.progressBar.logInfo(`cleaning path${filePathsChunk.length !== 1 ? 's' : ''}:\n${filePathsChunk.map((filePath) => `  ${filePath}`).join('\n')}`);
       try {
         await trash(filePathsChunk);
       } catch (error) {
-        this.progressBar.logWarn(`failed to recycle ${filePathsChunk.length} file${filePathsChunk.length !== 1 ? 's' : ''}: ${error}`);
+        this.progressBar.logWarn(`failed to recycle ${filePathsChunk.length} path${filePathsChunk.length !== 1 ? 's' : ''}: ${error}`);
       }
       await this.progressBar.update(i);
     }

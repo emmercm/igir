@@ -376,6 +376,11 @@ export default class ArgumentsParser {
         type: 'array',
         requiresArg: true,
       })
+      .option('clean-dry-run', {
+        group: groupRomOutput,
+        description: 'Don\'t clean any files and instead only print what files would be cleaned',
+        type: 'boolean',
+      })
       .check((checkArgv) => {
         if (checkArgv.help) {
           return true;
@@ -383,6 +388,10 @@ export default class ArgumentsParser {
         const needOutput = ['copy', 'move', 'extract', 'zip', 'clean'].filter((command) => checkArgv._.includes(command));
         if (!checkArgv.output && needOutput.length > 0) {
           throw new Error(`Missing required option for command${needOutput.length !== 1 ? 's' : ''} ${needOutput.join(', ')}: --output`);
+        }
+        const needClean = ['clean-exclude', 'clean-dry-run'].filter((option) => checkArgv[option]);
+        if (!checkArgv._.includes('clean') && needClean.length > 0) {
+          throw new Error(`Missing required command for option${needClean.length !== 1 ? 's' : ''} ${needClean.join(', ')}: clean`);
         }
         return true;
       })
