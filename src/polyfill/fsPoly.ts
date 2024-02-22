@@ -8,6 +8,8 @@ import { isNotJunk } from 'junk';
 import nodeDiskInfo from 'node-disk-info';
 import semver from 'semver';
 
+import ArrayPoly from './arrayPoly.js';
+
 export type FsWalkCallback = (increment: number) => void;
 
 export default class FsPoly {
@@ -56,6 +58,16 @@ export default class FsPoly {
     }
   }
 
+  static async dirs(dirPath: string): Promise<string[]> {
+    const readDir = (await util.promisify(fs.readdir)(dirPath))
+      .filter((filePath) => isNotJunk(path.basename(filePath)))
+      .map((filePath) => path.join(dirPath, filePath));
+
+    return (await Promise.all(
+      readDir.map(async (filePath) => (await this.isDirectory(filePath) ? filePath : undefined)),
+    )).filter(ArrayPoly.filterNotNullish);
+  }
+
   static disksSync(): string[] {
     return FsPoly.DRIVES
       .filter((drive) => drive.available > 0)
@@ -73,7 +85,11 @@ export default class FsPoly {
 
   static async isDirectory(pathLike: PathLike): Promise<boolean> {
     try {
-      return (await util.promisify(fs.lstat)(pathLike)).isDirectory();
+      const lstat = (await util.promisify(fs.lstat)(pathLike));
+      if (lstat.isSymbolicLink()) {
+        return await this.isDirectory(await this.readlink(pathLike));
+      }
+      return lstat.isDirectory();
     } catch {
       return false;
     }
