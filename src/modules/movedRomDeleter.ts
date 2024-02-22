@@ -30,7 +30,7 @@ export default class MovedROMDeleter extends Module {
       return [];
     }
 
-    this.progressBar.logInfo('deleting moved ROMs');
+    this.progressBar.logTrace('deleting moved ROMs');
     await this.progressBar.setSymbol(ProgressBarSymbol.FILTERING);
     await this.progressBar.reset(movedRoms.length);
 
@@ -43,10 +43,10 @@ export default class MovedROMDeleter extends Module {
 
     await this.progressBar.setSymbol(ProgressBarSymbol.DELETING);
     await this.progressBar.reset(filePathsToDelete.length);
-    this.progressBar.logDebug(`deleting ${filePathsToDelete.length.toLocaleString()} moved file${filePathsToDelete.length !== 1 ? 's' : ''}`);
+    this.progressBar.logTrace(`deleting ${filePathsToDelete.length.toLocaleString()} moved file${filePathsToDelete.length !== 1 ? 's' : ''}`);
 
     await Promise.all(filePathsToDelete.map(async (filePath) => {
-      this.progressBar.logTrace(`${filePath}: deleting moved file`);
+      this.progressBar.logInfo(`deleting moved file: ${filePath}`);
       try {
         await fsPoly.rm(filePath, { force: true });
       } catch {
@@ -54,7 +54,7 @@ export default class MovedROMDeleter extends Module {
       }
     }));
 
-    this.progressBar.logInfo('done deleting moved ROMs');
+    this.progressBar.logTrace('done deleting moved ROMs');
     return filePathsToDelete;
   }
 
@@ -97,7 +97,7 @@ export default class MovedROMDeleter extends Module {
           return entry.hashCodes().some((hashCode) => !movedEntryHashCodes.has(hashCode));
         });
         if (unmovedEntries.length > 0) {
-          this.progressBar.logWarn(`${filePath}: not deleting moved file, ${unmovedEntries.length.toLocaleString()} archive entr${unmovedEntries.length !== 1 ? 'ies were' : 'y was'} unmatched:${unmovedEntries.sort().map((entry) => `\n  ${entry}`)}`);
+          this.progressBar.logWarn(`${filePath}: not deleting moved file, ${unmovedEntries.length.toLocaleString()} archive entr${unmovedEntries.length !== 1 ? 'ies were' : 'y was'} unmatched:\n${unmovedEntries.sort().map((entry) => `  ${entry}`).join('\n')}`);
           return undefined;
         }
 

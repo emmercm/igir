@@ -26,11 +26,11 @@ export default class StatusGenerator extends Module {
     dat: DAT,
     parentsToReleaseCandidates: Map<Parent, ReleaseCandidate[]>,
   ): DATStatus {
-    this.progressBar.logInfo(`${dat.getNameShort()}: generating ROM statuses`);
+    this.progressBar.logTrace(`${dat.getNameShort()}: generating ROM statuses`);
 
     const datStatus = new DATStatus(dat, this.options, parentsToReleaseCandidates);
 
-    this.progressBar.logInfo(`${dat.getNameShort()}: done generating ROM statuses`);
+    this.progressBar.logTrace(`${dat.getNameShort()}: done generating ROM statuses`);
     return datStatus;
   }
 }

@@ -62,7 +62,7 @@ export default class ArgumentsParser {
    * Parse the arguments.
    */
   parse(argv: string[]): Options {
-    this.logger.info(`Parsing CLI arguments: ${argv}`);
+    this.logger.trace(`Parsing CLI arguments: ${argv}`);
 
     const groupInput = 'Input options (supports globbing):';
     const groupDatInput = 'DAT input options:';
@@ -816,7 +816,7 @@ Example use cases:
       });
 
     const options = Options.fromObject(yargsArgv);
-    this.logger.info(`Parsed options: ${options.toString()}`);
+    this.logger.trace(`Parsed options: ${options.toString()}`);
 
     return options;
   }
