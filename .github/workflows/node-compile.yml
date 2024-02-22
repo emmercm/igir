@@ -115,10 +115,7 @@ jobs:
               echo "BIN_OUTPUT=${BIN_OUTPUT}" | Out-File -FilePath $env:GITHUB_ENV -Append # no need for -Encoding utf8
               npm run package -- . igir.exe
               Compress-Archive -Path igir.exe -DestinationPath "${BIN_OUTPUT}" -CompressionLevel Optimal -Force
-              (
-                dir igir.exe
-                dir "${BIN_OUTPUT}"
-              ) >> "${env:GITHUB_STEP_SUMMARY}"
+              ( dir igir.exe; dir "${BIN_OUTPUT}" ) >> "${env:GITHUB_STEP_SUMMARY}"
     steps:
       # Setup and install
       - uses: actions/checkout@v4
