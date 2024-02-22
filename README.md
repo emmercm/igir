@@ -229,6 +229,7 @@ Advanced usage:
 
     {adam}      The ROM's emulator-specific /ROMS/* directory for the 'Adam' image (e.g. "GB")
     {batocera}  The ROM's emulator-specific /roms/* directory for Batocera (e.g. "gb")
+    {es}        The ROM's emulator-specific /roms/* directory for EmulationStation (e.g. "gb")
     {funkeyos}  The ROM's emulator-specific /* directory for FunKey OS (e.g. "Game Boy")
     {jelos}     The ROM's emulator-specific /roms/* directory for JELOS (e.g. "gb")
     {minui}     The ROM's emulator-specific /Roms/* directory for MinUI (e.g. "Game Boy (GB)")
@@ -237,6 +238,7 @@ Advanced usage:
     {miyoocfw}  The ROM's emulator-specific /roms/* directory for MiyooCFW (e.g. "GB")
     {onion}     The ROM's emulator-specific /Roms/* directory for OnionOS/GarlicOS (e.g. "GB")
     {pocket}    The ROM's core-specific /Assets/* directory for the Analogue Pocket (e.g. "gb"
+    {retrodeck} The ROM's emulator-specific /roms/* directory for RetroDECK (e.g. "gb")
     )
     {twmenu}    The ROM's emulator-specific /roms/* directory for TWiLightMenu++ on the DSi/3D
     S (e.g. "gb")

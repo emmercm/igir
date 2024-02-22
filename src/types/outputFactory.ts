@@ -270,9 +270,9 @@ export default class OutputFactory {
       output = output.replace('{adam}', adam);
     }
 
-    const emulationstation = gameConsole.getEmulationStation();
-    if (emulationstation) {
-      output = output.replace('{emulationstation}', emulationstation);
+    const es = gameConsole.getEmulationStation();
+    if (es) {
+      output = output.replace('{es}', es);
     }
 
     const pocket = gameConsole.getPocket();

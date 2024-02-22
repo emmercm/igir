@@ -1,7 +1,6 @@
 import path from 'node:path';
 
 interface OutputTokens {
-
   // Adam image has it's roms in the /ROMS/{adam} subdirectory
   // @see https://github.com/eduardofilo/RG350_adam_image/wiki/En:-3.-Content-installation#roms
   adam?: string,
@@ -10,7 +9,7 @@ interface OutputTokens {
   // @see https://wiki.batocera.org/systems
   batocera?: string,
 
-  // EmulationStation ROMs go in the roms/{emulationstation} directory:
+  // EmulationStation ROMs go in the roms/{es} directory:
   // @see https://gitlab.com/es-de/emulationstation-de/-/blob/master/resources/systems/linux/es_systems.xml
   emulationstation?: string,
 
@@ -75,7 +74,7 @@ export default class GameConsole {
       mister: 'AcornAtom',
     }),
     // Amstrad
-    new GameConsole(/CPC/i, ['.cdt', '.cpr', '.dsk', '.kcr', '.m3u', '.sna', '.tap', '.tar', '.voc'], {
+    new GameConsole(/CPC/i, [], {
       adam: 'AMSTRAD',
       batocera: 'amstradcpc',
       emulationstation: 'amstradcpc',
@@ -92,7 +91,7 @@ export default class GameConsole {
     new GameConsole(/Apple.*I/i, [/* unknown */], {
       mister: 'Apple-I',
     }),
-    new GameConsole(/Apple.*IIe?/i, ['.do', '.dsk', '.nib', '.po'], {
+    new GameConsole(/Apple.*IIe?/i, ['.do', '.nib', '.po'], {
       batocera: 'apple2',
       emulationstation: 'apple2',
       mister: 'Apple-II',
@@ -112,7 +111,7 @@ export default class GameConsole {
       retrodeck: 'arduboy',
     }),
     // Atari
-    new GameConsole(/800|8-bit Family/, ['.a52', '.atr', '.atx', '.car', '.cas', '.cdm', '.xex', '.xfd'], {
+    new GameConsole(/800|8-bit Family/, ['.atr', '.atx'], {
       batocera: 'atari800',
       emulationstation: 'atari800',
       jelos: 'atari800',
@@ -132,7 +131,7 @@ export default class GameConsole {
       retrodeck: 'atari2600',
       twmenu: 'a26',
     }),
-    new GameConsole(/5200/, ['.a52', '.atr', '.atx', '.car', '.cas', '.cdm', '.xex', '.xfd'], {
+    new GameConsole(/5200/, ['.a52'], {
       adam: 'A5200',
       batocera: 'atari5200',
       emulationstation: 'atari5200',
@@ -153,14 +152,14 @@ export default class GameConsole {
       retrodeck: 'atari7800',
       twmenu: 'a78',
     }),
-    new GameConsole(/Jaguar/i, ['.abs', '.cdi', '.cof', '.j64', '.jag', '.prg'], {
+    new GameConsole(/Jaguar/i, ['.j64'], {
       batocera: 'jaguar',
       emulationstation: 'atarijaguar',
       jelos: 'atarijaguar',
       onion: 'JAGUAR',
       retrodeck: 'atarijaguar',
     }),
-    new GameConsole(/Lynx/i, ['.lnx', '.lyx', '.o'], {
+    new GameConsole(/Lynx/i, ['.lnx', '.lyx'], {
       adam: 'LYNX',
       batocera: 'lynx',
       emulationstation: 'atarilynx',
@@ -171,7 +170,7 @@ export default class GameConsole {
       onion: 'LYNX',
       retrodeck: 'atarilynx',
     }),
-    new GameConsole(/Atari.*ST/i, ['.dim', '.ipf', '.m3u', '.msa', '.st', '.stx'], {
+    new GameConsole(/Atari.*ST/i, ['.msa', '.st', '.stx'], {
       batocera: 'atarist',
       emulationstation: 'atarist',
       jelos: 'atarist',
@@ -193,7 +192,7 @@ export default class GameConsole {
     new GameConsole(/RX[ -]?78/i, [], {
       mister: 'RX78',
     }),
-    new GameConsole(/WonderSwan/i, ['.pc2', '.ws'], {
+    new GameConsole(/WonderSwan/i, ['.ws'], {
       adam: 'WSC',
       batocera: 'wswan',
       emulationstation: 'wonderswan',
@@ -206,7 +205,7 @@ export default class GameConsole {
       retrodeck: 'wonderswan',
       twmenu: 'ws',
     }),
-    new GameConsole(/WonderSwan Color/i, ['.pc2', '.ws', '.wsc'], {
+    new GameConsole(/WonderSwan Color/i, ['.wsc'], {
       adam: 'WSC',
       batocera: 'wswanc',
       emulationstation: 'wswanc',
@@ -239,7 +238,7 @@ export default class GameConsole {
       mister: 'Casio_PV-2000',
     }),
     // Commodore
-    new GameConsole(/Amiga/i, ['.adf', '.adz', '.ccd', '.chd', '.dms', '.fdi', '.hdf', '.hdz', '.ipf', '.lha', '.m3u', '.mds', '.nrg', '.rp9', '.uae'], {
+    new GameConsole(/Amiga/i, [], {
       adam: 'AMIGA',
       emulationstation: 'amiga',
       jelos: 'amiga',
@@ -248,7 +247,7 @@ export default class GameConsole {
       pocket: 'amiga',
       retrodeck: 'amiga',
     }),
-    new GameConsole(/Amiga CD32/i, ['.adf', '.adz', '.ccd', '.chd', '.dms', '.fdi', '.hdf', '.hdz', '.ipf', '.lha', '.m3u', '.mds', '.nrg', '.rp9', '.uae'], {
+    new GameConsole(/Amiga CD32/i, [/* '.bin', '.cue' */], {
       adam: 'AMIGA',
       batocera: 'amigacd32',
       emulationstation: 'amigacd32',
@@ -256,7 +255,7 @@ export default class GameConsole {
       mister: 'Amiga',
       retrodeck: 'amigacd32',
     }),
-    new GameConsole(/Amiga CDTV/i, ['.ccd', '.chd', '.m3u', '.mds', '.nrg', '.rp9'], {
+    new GameConsole(/Amiga CDTV/i, [/* '.bin', '.cue' */], {
       adam: 'AMIGA',
       batocera: 'amigacdtv',
       emulationstation: 'cdtv',
@@ -266,7 +265,7 @@ export default class GameConsole {
       jelos: 'c16',
       mister: 'C16',
     }),
-    new GameConsole(/Commodore C?64/i, ['.cmd', '.crt', '.d2m', '.d4m', '.d64', '.d6z', '.d71', '.d7z', '.d80', '.d81', '.d82', '.d8z', '.g41', '.g4z', '.g64', '.g6z', '.gz', '.lnx', '.m3u', '.nbz', '.nib', '.p00', '.prg', '.t64', '.tap', '.vfl', '.vsf', '.x64', '.x6z'], {
+    new GameConsole(/Commodore C?64/i, ['.crt', '.d64', '.t64'], {
       adam: 'C64',
       batocera: 'c64',
       emulationstation: 'c64',
@@ -280,16 +279,16 @@ export default class GameConsole {
       jelos: 'c128',
       mister: 'C128',
     }),
-    new GameConsole(/Plus.*4/i, ['.cmd', '.crt', '.d2m', '.d4m', '.d64', '.d6z', '.d71', '.d7z', '.d80', '.d81', '.d82', '.d8z', '.g41', '.g4z', '.g64', '.g6z', '.gz', '.lnx', '.m3u', '.nbz', '.nib', '.p00', '.prg', '.t64', '.tap', '.vfl', '.vsf', '.x64', '.x6z'], {
+    new GameConsole(/Plus.*4/i, [], {
       emulationstation: 'plus4',
       retrodeck: 'plus4',
     }),
-    new GameConsole(/VIC.*20/i, ['.cmd', '.crt', '.d2m', '.d4m', '.d64', '.d6z', '.d71', '.d7z', '.d80', '.d81', '.d82', '.d8z', '.g41', '.g4z', '.g64', '.g6z', '.gz', '.lnx', '.m3u', '.nbz', '.nib', '.p00', '.prg', '.t64', '.tap', '.vfl', '.vsf', '.x64', '.x6z'], {
+    new GameConsole(/VIC.*20/i, [], {
       emulationstation: 'vic20',
       retrodeck: 'vic20',
     }),
     // Coleco
-    new GameConsole(/ColecoVision/i, ['.cas', '.col', '.cv', '.dsk', '.m3u', '.mx1', '.mx2', '.ri', '.sc', '.sg'], {
+    new GameConsole(/ColecoVision/i, ['.col'], {
       adam: 'COLECO',
       batocera: 'colecovision',
       emulationstation: 'colecovision',
@@ -316,7 +315,7 @@ export default class GameConsole {
       pocket: 'avision',
     }),
     // Epoch
-    new GameConsole(/Super Cassette Vision/i, ['.0'], {
+    new GameConsole(/Super Cassette Vision/i, [], {
       batocera: 'scv',
       emulationstation: 'scv',
       retrodeck: 'scv',
@@ -378,7 +377,7 @@ export default class GameConsole {
       retrodeck: 'intellivision',
     }),
     // Microsoft
-    new GameConsole(/MSX/i, ['.cas', '.col', '.di1', '.di2', '.dmk', '.dsk', '.fd1', '.fd2', '.m3u', '.mx1', '.mx2', '.ogv', '.ri', '.sc', '.sg', '.wav', '.xsa'], {
+    new GameConsole(/MSX/i, ['.mx1'], {
       adam: 'MSX',
       batocera: 'msx1',
       emulationstation: 'msx',
@@ -387,7 +386,7 @@ export default class GameConsole {
       onion: 'MSX',
       retrodeck: 'msx',
     }),
-    new GameConsole(/MSX2/i, ['.cas', '.col', '.di1', '.di2', '.dmk', '.dsk', '.fd1', '.fd2', '.m3u', '.mx1', '.mx2', '.ogv', '.ri', '.sc', '.sg', '.wav', '.xsa'], {
+    new GameConsole(/MSX2/i, ['.mx2'], {
       adam: 'MSX',
       batocera: 'msx2',
       emulationstation: 'msx2',
@@ -396,7 +395,7 @@ export default class GameConsole {
       onion: 'MSX',
       retrodeck: 'msx2',
     }),
-    new GameConsole(/MSX2+/i, ['.cas', '.col', '.di1', '.di2', '.dmk', '.dsk', '.fd1', '.fd2', '.m3u', '.mx1', '.mx2', '.ogv', '.ri', '.sc', '.sg', '.wav', '.xsa'], {
+    new GameConsole(/MSX2+/i, [], {
       adam: 'MSX',
       batocera: 'msx2+',
       emulationstation: 'msx2',
@@ -404,7 +403,7 @@ export default class GameConsole {
       onion: 'MSX',
       retrodeck: 'msx2',
     }),
-    new GameConsole(/MSX TurboR/i, ['.cas', '.col', '.di1', '.di2', '.dmk', '.dsk', '.fd1', '.fd2', '.m3u', '.mx1', '.mx2', '.ogv', '.ri', '.sc', '.sg', '.wav', '.xsa'], {
+    new GameConsole(/MSX TurboR/i, [], {
       adam: 'MSX',
       batocera: 'msxturbor',
       emulationstation: 'msx',
@@ -427,7 +426,7 @@ export default class GameConsole {
       emulationstation: 'j2me',
       retrodeck: 'j2me',
     }),
-    new GameConsole(/Palm OS/i, ['.img', '.pqa', '.prc'], {
+    new GameConsole(/Palm OS/i, ['.pqa', '.prc'], {
       emulationstation: 'palm',
       retrodeck: 'palm',
     }),
@@ -440,7 +439,7 @@ export default class GameConsole {
       mister: 'MyVision',
     }),
     // NEC
-    new GameConsole(/PC Engine|TurboGrafx/i, ['.ccd', '.chd', '.img', '.m3u', '.pce', '.sgx', '.toc'], {
+    new GameConsole(/PC Engine|TurboGrafx/i, ['.pce'], {
       adam: 'PCE',
       batocera: 'pcengine',
       emulationstation: 'pcengine',
@@ -454,7 +453,7 @@ export default class GameConsole {
       retrodeck: 'pcengine',
       twmenu: 'tg16',
     }),
-    new GameConsole(/(PC Engine|TurboGrafx) CD/i, ['.ccd', '.chd', '.img', '.m3u', '.pce', '.sgx', '.toc'], {
+    new GameConsole(/(PC Engine|TurboGrafx) CD/i, [/* '.bin', '.cue' */], {
       adam: 'PCECD',
       batocera: 'pcenginecd',
       emulationstation: 'pcenginecd',
@@ -466,7 +465,7 @@ export default class GameConsole {
       pocket: 'pcecd',
       retrodeck: 'pcenginecd',
     }),
-    new GameConsole(/SuperGrafx/i, ['.ccd', '.chd', '.pce', '.sgx'], {
+    new GameConsole(/SuperGrafx/i, ['.sgx'], {
       batocera: 'supergrafx',
       emulationstation: 'supergrafx',
       jelos: 'sgfx',
@@ -475,7 +474,7 @@ export default class GameConsole {
       pocket: 'pce',
       retrodeck: 'supergrafx',
     }),
-    new GameConsole(/PC-88/i, ['.88d', '.cmt', '.d88', '.m3u', '.t88', '.u88'], {
+    new GameConsole(/PC-88/i, ['.d88'], {
       batocera: 'pc88',
       emulationstation: 'pc88',
       jelos: 'pc88',
@@ -483,14 +482,14 @@ export default class GameConsole {
       onion: 'PCEIGHTYEIGHT',
       retrodeck: 'pc88',
     }),
-    new GameConsole(/PC-98/i, ['.2hd', '.88d', '.98d', '.cmd', '.d88', '.d98', '.dup', '.fdd', '.fdi', '.hdd', '.hdi', '.hdm', '.hdn', '.m3u', '.nhd', '.tfd', '.thd', '.xdf', 'xdf'], {
+    new GameConsole(/PC-98/i, ['.d98'], {
       batocera: 'pc98',
       emulationstation: 'pc98',
       jelos: 'pc98',
       onion: 'PCNINETYEIGHT',
       retrodeck: 'pc98',
     }),
-    new GameConsole(/PC-FX/i, ['.ccd', '.chd', '.m3u', '.toc'], {
+    new GameConsole(/PC-FX/i, [], {
       emulationstation: 'pcfx',
       retrodeck: 'pcfx',
     }),
@@ -501,7 +500,7 @@ export default class GameConsole {
       retrodeck: 'tic80',
     }),
     // Nintendo
-    new GameConsole(/FDS|Famicom Computer Disk System/i, ['.fds', '.nes', '.unf', '.unif'], {
+    new GameConsole(/FDS|Famicom Computer Disk System/i, ['.fds'], {
       adam: 'FDS',
       batocera: 'fds',
       emulationstation: 'fds',
@@ -523,13 +522,13 @@ export default class GameConsole {
       onion: 'GW',
       retrodeck: 'gameandwatch',
     }),
-    new GameConsole(/GameCube/i, ['.ciso', '.dff', '.dol', '.elf', '.gcm', '.gcz', '.json', '.m3u', '.rvz', '.tgc', '.wad', '.wbfs', '.wia'], {
+    new GameConsole(/GameCube/i, [/* '.iso' */], {
       batocera: 'gc',
       emulationstation: 'fds',
       jelos: 'gamecube',
       retrodeck: 'gc',
     }),
-    new GameConsole(/GB|Game ?Boy/i, ['.bs', '.cgb', '.dmg', '.gb', '.gbc', '.sfc', '.sgb', '.smc'], {
+    new GameConsole(/GB|Game ?Boy/i, ['.gb', '.sgb'], {
       adam: 'GB',
       batocera: 'gb',
       emulationstation: 'gb',
@@ -543,7 +542,7 @@ export default class GameConsole {
       retrodeck: 'gb',
       twmenu: 'gb',
     }), // pocket:sgb for spiritualized1997
-    new GameConsole(/GBA|Game ?Boy Advance/i, ['.agb', '.cgb', '.dmg', '.gb', '.gba', '.gbc', '.sgb', '.srl'], {
+    new GameConsole(/GBA|Game ?Boy Advance/i, ['.gba', '.srl'], {
       adam: 'GBA',
       batocera: 'gba',
       emulationstation: 'gba',
@@ -557,7 +556,7 @@ export default class GameConsole {
       retrodeck: 'gba',
       twmenu: 'gba',
     }),
-    new GameConsole(/GBC|Game ?Boy Color/i, ['.bs', '.cgb', '.dmg', '.gb', '.gbc', '.sfc', '.sgb', '.smc'], {
+    new GameConsole(/GBC|Game ?Boy Color/i, ['.gbc'], {
       adam: 'GBC',
       batocera: 'gbc',
       emulationstation: 'gbc',
@@ -571,25 +570,25 @@ export default class GameConsole {
       retrodeck: 'gbc',
       twmenu: 'gb',
     }),
-    new GameConsole(/Nintendo 64|N64/i, ['.d64', '.n64', '.ndd', '.u1', '.v64', '.z64'], {
+    new GameConsole(/Nintendo 64|N64/i, ['.d64', '.n64', '.v64', '.z64'], {
       batocera: 'n64',
       emulationstation: 'n64',
       jelos: 'n64',
       mister: 'N64',
       retrodeck: 'n64',
     }),
-    new GameConsole(/Nintendo 64DD|N64DD/i, ['.d64', '.n64', '.ndd', '.u1', '.v64', '.z64'], {
+    new GameConsole(/Nintendo 64DD|N64DD/i, ['.ndd'], {
       batocera: 'n64dd',
       emulationstation: 'n64dd',
       retrodeck: 'n64dd',
     }),
-    new GameConsole(/(\W|^)3DS(\W|$)|Nintendo 3DS/i, ['.3ds', '.3dsx', '.app', '.axf', '.cci', '.cxi', '.elf'], {
+    new GameConsole(/(\W|^)3DS(\W|$)|Nintendo 3DS/i, ['.3ds', '.3dsx'], {
       batocera: '3ds',
       emulationstation: 'n3ds',
       jelos: '3ds',
       retrodeck: 'n3ds',
     }),
-    new GameConsole(/(\W|^)NDS(\W|$)|Nintendo DS/i, ['.app', '.nds'], {
+    new GameConsole(/(\W|^)NDS(\W|$)|Nintendo DS/i, ['.nds'], {
       batocera: 'nds',
       emulationstation: 'nds',
       jelos: 'nds',
@@ -601,7 +600,7 @@ export default class GameConsole {
       retrodeck: 'nds',
       twmenu: 'dsiware',
     }), // try to map DSiWare
-    new GameConsole(/(\W|^)NES(\W|$)|Nintendo Entertainment System/i, ['.fds', '.nes', '.nez', '.unf', '.unif'], {
+    new GameConsole(/(\W|^)NES(\W|$)|Nintendo Entertainment System/i, ['.nes', '.nez'], {
       adam: 'FC',
       batocera: 'nes',
       emulationstation: 'nes',
@@ -628,7 +627,7 @@ export default class GameConsole {
       pocket: 'poke_mini',
       retrodeck: 'pokemini',
     }),
-    new GameConsole(/Satellaview/i, ['.bml', '.bs', '.fig', '.sfc', '.smc', '.st', '.swc'], {
+    new GameConsole(/Satellaview/i, ['.bs'], {
       batocera: 'satellaview',
       emulationstation: 'satellaview',
       jelos: 'satellaview',
@@ -637,14 +636,14 @@ export default class GameConsole {
       pocket: 'snes',
       retrodeck: 'satellaview',
     }),
-    new GameConsole(/Sufami/i, ['.bml', '.bs', '.fig', '.sfc', '.smc', '.st'], {
+    new GameConsole(/Sufami/i, [], {
       batocera: 'sufami',
       emulationstation: 'sufami',
       jelos: 'sufami',
       onion: 'SUFAMI',
       retrodeck: 'sufami',
     }),
-    new GameConsole(/(\W|^)SNES(\W|$)|Super Nintendo Entertainment System/i, ['.bml', '.bs', '.bsx', '.dx2', '.fig', '.gd3', '.gd7', '.mgd', '.sfc', '.smc', '.st', '.swc'], {
+    new GameConsole(/(\W|^)SNES(\W|$)|Super Nintendo Entertainment System/i, ['.sfc', '.smc'], {
       adam: 'SFC',
       batocera: 'snes',
       emulationstation: 'snes',
@@ -672,7 +671,7 @@ export default class GameConsole {
       onion: 'VB',
       retrodeck: 'virtualboy',
     }),
-    new GameConsole(/Wii/i, ['.ciso', '.dff', '.dol', '.elf', '.gcm', '.gcz', '.json', '.m3u', '.rvz', '.tgc', '.wad', '.wbfs', '.wia'], {
+    new GameConsole(/Wii/i, [/* '.iso' */], {
       batocera: 'wii',
       emulationstation: 'wii',
       jelos: 'wii',
@@ -685,7 +684,7 @@ export default class GameConsole {
       retrodeck: 'wiiu',
     }),
     // Panasonic
-    new GameConsole(/3DO/i, ['.chd'], {
+    new GameConsole(/3DO/i, [/* '.chd' */], {
       batocera: '3do',
       emulationstation: '3do',
       jelos: '3do',
@@ -693,7 +692,7 @@ export default class GameConsole {
       retrodeck: '3do',
     }),
     // Philips
-    new GameConsole(/CD[ -]?i/i, ['.chd', {
+    new GameConsole(/CD[ -]?i/i, [/* '.chd' */], {
       batocera: 'cdi',
       emulationstation: 'cdimono1',
       retrodeck: 'cdimono1',
@@ -711,7 +710,7 @@ export default class GameConsole {
       pocket: 'studio2',
     }),
     // Sega
-    new GameConsole(/32X/i, ['.32x', '.68k', '.gen', '.md', '.smd', '.sms'], {
+    new GameConsole(/32X/i, ['.32x'], {
       adam: '32X',
       batocera: 'sega32x',
       emulationstation: 'sega32x',
@@ -721,13 +720,13 @@ export default class GameConsole {
       onion: 'THIRTYTWOX',
       retrodeck: 'sega32x',
     }),
-    new GameConsole(/Dreamcast/i, ['.cdi', '.chd', '.dat', '.elf', '.gdi', '.lst', '.m3u'], {
+    new GameConsole(/Dreamcast/i, [/* '.bin', '.cue' */], {
       batocera: 'dreamcast',
       emulationstation: 'dreamcast',
       jelos: 'dreamcast',
       retrodeck: 'dreamcast',
     }),
-    new GameConsole(/Game Gear/i, ['.68k', '.bms', '.chd', '.col', '.gen', '.gg', '.m3u', '.md', '.mdx', '.sg', '.sgd', '.smd', '.sms'], {
+    new GameConsole(/Game Gear/i, ['.gg'], {
       adam: 'GG',
       batocera: 'gamegear',
       emulationstation: 'gamegear',
@@ -741,7 +740,7 @@ export default class GameConsole {
       retrodeck: 'gamegear',
       twmenu: 'gg',
     }),
-    new GameConsole(/Master System/i, ['.68k', '.bms', '.chd', '.col', '.gen', '.gg', '.m3u', '.md', '.mdx', '.sg', '.sgd', '.smd', '.sms'], {
+    new GameConsole(/Master System/i, ['.sms'], {
       adam: 'SMS',
       batocera: 'mastersystem',
       emulationstation: 'mastersystem',
@@ -755,7 +754,7 @@ export default class GameConsole {
       retrodeck: 'mastersystem',
       twmenu: 'sms',
     }),
-    new GameConsole(/(Mega|Sega) CD/i, ['.68k', '.bms', '.chd', '.gen', '.gg', '.m3u', '.md', '.mdx', '.sg', '.sgd', '.smd', '.sms'], {
+    new GameConsole(/(Mega|Sega) CD/i, [/* '.bin', '.cue' */], {
       adam: 'SEGACD',
       batocera: 'segacd',
       emulationstation: 'segacd',
@@ -766,7 +765,7 @@ export default class GameConsole {
       onion: 'SEGACD',
       retrodeck: 'segacd',
     }),
-    new GameConsole(/Mega Drive|Genesis/i, ['.32x', '.68k', '.bms', '.chd', '.gen', '.gg', '.m3u', '.md', '.mdx', '.sg', '.sgd', '.smd', '.sms'], {
+    new GameConsole(/Mega Drive|Genesis/i, ['.gen', '.md', '.mdx', '.sgd', '.smd'], {
       adam: 'MD',
       batocera: 'megadrive',
       emulationstation: 'megadrive',
@@ -780,13 +779,13 @@ export default class GameConsole {
       retrodeck: 'megadrive',
       twmenu: 'gen',
     }),
-    new GameConsole(/Saturn/i, ['.ccd', '.chd', '.m3u', '.mds', '.toc'], {
+    new GameConsole(/Saturn/i, [/* '.bin', '.cue' */], {
       batocera: 'saturn',
       emulationstation: 'saturn',
       jelos: 'saturn',
       retrodeck: 'saturn',
     }),
-    new GameConsole(/SG[ -]?1000/i, ['.68k', '.bms', '.chd', '.gen', '.gg', '.m3u', '.md', '.mdx', '.ri', '.sg', '.sgd', '.smd', '.sms'], {
+    new GameConsole(/SG[ -]?1000/i, ['.sc', '.sg'], {
       adam: 'SG1000',
       batocera: 'sg1000',
       emulationstation: 'sg-1000',
@@ -801,14 +800,14 @@ export default class GameConsole {
     new GameConsole(/MZ/i, [], {
       mister: 'SharpMZ',
     }),
-    new GameConsole(/X1/i, ['.2d', '.2hd', '.88d', '.cmd', '.d88', '.dup', '.dx1', '.hdm', '.tap', '.tfd', '.xdf'], {
+    new GameConsole(/X1/i, ['.2d', '.2hd', '.dx1', '.tfd'], {
       batocera: 'x1', 
       emulationstation: 'x1',
       jelos: 'x1',
       onion: 'XONE',
       retrodeck: 'x1',
     }),
-    new GameConsole(/X68000/i, ['.2hd', '.88d', '.cmd', '.d88', '.dim', '.dup', '.hdf', '.hdm', '.img', '.m3u', '.xdf'], {
+    new GameConsole(/X68000/i, [], {
       batocera: 'x68000',
       emulationstation: 'x68000',
       jelos: 'x68000',
@@ -817,19 +816,19 @@ export default class GameConsole {
       retrodeck: 'x68000',
     }),
     // Sinclair
-    new GameConsole(/ZX[ -]?80/i, ['.p', '.tzx'], {
+    new GameConsole(/ZX[ -]?80/i, [], {
       emulationstation: 'zx81',
       mister: 'ZX81',
       retrodeck: 'zx81',
     }),
-    new GameConsole(/ZX[ -]?81/i, ['.p', '.tzx'], {
+    new GameConsole(/ZX[ -]?81/i, [], {
       batocera: 'zx81',
       emulationstation: 'zx81',
       jelos: 'zx81',
       mister: 'ZX81',
       retrodeck: 'zx81',
     }),
-    new GameConsole(/ZX[ -]?Spectrum/i, ['.dsk', '.gz', '.img', '.mgt', '.rzx', '.scl', '.sh', '.sna', '.szx', '.tap', '.trd', '.tzx', '.udi', '.z80'], {
+    new GameConsole(/ZX[ -]?Spectrum/i, ['.scl', '.szx', '.z80'], {
       adam: 'ZX',
       batocera: 'zxspectrum',
       emulationstation: 'zxspectrum',
@@ -857,7 +856,7 @@ export default class GameConsole {
       onion: 'NEOCD',
       retrodeck: 'neogeocd',
     }),
-    new GameConsole(/Neo ?Geo Pocket/i, ['.ngc', '.ngp', '.ngpc', '.npc'], {
+    new GameConsole(/Neo ?Geo Pocket/i, ['.ngp'], {
       adam: 'NGP',
       batocera: 'ngp',
       emulationstation: 'ngp',
@@ -868,7 +867,7 @@ export default class GameConsole {
       retrodeck: 'ngp',
       twmenu: 'ngp',
     }),
-    new GameConsole(/Neo ?Geo Pocket Color/i, ['.ngc', '.ngp', '.ngpc', '.npc'], {
+    new GameConsole(/Neo ?Geo Pocket Color/i, ['.ngpc', '.npc'], {
       adam: 'NGP',
       batocera: 'ngpc',
       emulationstation: 'ngpc',
@@ -880,7 +879,7 @@ export default class GameConsole {
       twmenu: 'ngp',
     }),
     // Sony
-    new GameConsole(/PlayStation|psx/i, ['.cbn', '.ccd', '.chd', '.ecm', '.exe', '.img', '.m3u', '.mdf', '.mds', '.minipsf', '.pbp', '.psexe', '.psf', '.toc', '.z', '.znx'], {
+    new GameConsole(/PlayStation|psx/i, ['.minipsf', '.pbp', '.psexe', '.psf'], {
       adam: 'PS',
       batocera: 'psx',
       emulationstation: 'psx',
@@ -892,19 +891,19 @@ export default class GameConsole {
       onion: 'PS',
       retrodeck: 'psx',
     }),
-    new GameConsole(/PlayStation 2|ps2/i, ['.arcadedef', '.chd', '.ciso', '.cso', '.dump', '.elf', '.gz', '.img', '.isz', '.m3u', '.mdf', '.ngr', '.nrg'], {
+    new GameConsole(/PlayStation 2|ps2/i, [/* '.bin', '.cue' */], {
       batocera: 'ps2',
       emulationstation: 'ps2',
       jelos: 'ps2',
       retrodeck: 'ps2',
     }),
-    new GameConsole(/PlayStation 3|ps3/i, ['.desktop', '.ps3', '.ps3dir', {
+    new GameConsole(/PlayStation 3|ps3/i, ['.ps3', '.ps3dir'], {
       batocera: 'ps3',
       emulationstation: 'ps3',
       jelos: 'ps3',
       retrodeck: 'ps3',
     }),
-    new GameConsole(/PlayStation ?Portable|psp/i, ['.cso', '.elf', '.pbp', '.prx'], {
+    new GameConsole(/PlayStation ?Portable|psp/i, ['.cso'], {
       batocera: 'psp',
       emulationstation: 'psp',
       jelos: 'psp',
