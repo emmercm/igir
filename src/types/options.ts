@@ -75,6 +75,7 @@ export interface OptionsProps {
   readonly overwrite?: boolean,
   readonly overwriteInvalid?: boolean,
   readonly cleanExclude?: string[],
+  readonly cleanDryRun?: boolean,
 
   readonly zipExclude?: string,
   readonly zipDatName?: boolean,
@@ -204,6 +205,8 @@ export default class Options implements OptionsProps {
   readonly overwriteInvalid: boolean;
 
   readonly cleanExclude: string[];
+
+  readonly cleanDryRun: boolean;
 
   readonly zipExclude: string;
 
@@ -360,6 +363,7 @@ export default class Options implements OptionsProps {
     this.overwrite = options?.overwrite ?? false;
     this.overwriteInvalid = options?.overwriteInvalid ?? false;
     this.cleanExclude = options?.cleanExclude ?? [];
+    this.cleanDryRun = options?.cleanDryRun ?? false;
 
     this.zipExclude = options?.zipExclude ?? '';
     this.zipDatName = options?.zipDatName ?? false;
@@ -845,6 +849,10 @@ export default class Options implements OptionsProps {
       .map((filePath) => path.normalize(filePath))
       .filter((filePath) => !writtenFilesNormalized.has(filePath))
       .filter((filePath) => !cleanExcludedFilesNormalized.has(filePath));
+  }
+
+  getCleanDryRun(): boolean {
+    return this.cleanDryRun;
   }
 
   private getZipExclude(): string {

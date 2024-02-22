@@ -445,6 +445,7 @@ export default class File implements FileProps {
    */
 
   toString(): string {
+    // TODO(cemmer): indicate if there's a patch?
     if (this.getSymlinkSource()) {
       return `${this.getFilePath()} -> ${this.getSymlinkSource()}`;
     }

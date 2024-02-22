@@ -122,6 +122,7 @@ describe('options', () => {
     expect(options.getDirGameSubdir()).toEqual(GameSubdirMode.MULTIPLE);
     expect(options.getOverwrite()).toEqual(false);
     expect(options.getOverwriteInvalid()).toEqual(false);
+    expect(options.getCleanDryRun()).toEqual(false);
 
     expect(options.getZipDatName()).toEqual(false);
 
@@ -493,14 +494,25 @@ describe('options', () => {
   });
 
   it('should parse "clean-exclude"', async () => {
+    expect(() => argumentsParser.parse([...dummyCommandAndRequiredArgs, '--clean-exclude', os.devNull])).toThrow(/missing required command/i);
     const argv = ['copy', '--input', os.devNull, '--output', os.devNull];
     const outputDir = './src';
     expect((await argumentsParser.parse(argv)
       .scanOutputFilesWithoutCleanExclusions([outputDir], [])).length).toBeGreaterThan(0);
-    expect((await argumentsParser.parse([...argv, '-C', os.devNull]).scanOutputFilesWithoutCleanExclusions([outputDir], [])).length).toBeGreaterThan(0);
-    expect((await argumentsParser.parse([...argv, '-C', 'nonexistentfile']).scanOutputFilesWithoutCleanExclusions([outputDir], [])).length).toBeGreaterThan(0);
-    expect((await argumentsParser.parse([...argv, '--clean-exclude', outputDir]).scanOutputFilesWithoutCleanExclusions([outputDir], [])).length).toEqual(0);
-    expect((await argumentsParser.parse([...argv, '--clean-exclude', outputDir]).scanOutputFilesWithoutCleanExclusions([outputDir], [])).length).toEqual(0);
+    expect((await argumentsParser.parse([...argv, 'clean', '-C', os.devNull]).scanOutputFilesWithoutCleanExclusions([outputDir], [])).length).toBeGreaterThan(0);
+    expect((await argumentsParser.parse([...argv, 'clean', '-C', 'nonexistentfile']).scanOutputFilesWithoutCleanExclusions([outputDir], [])).length).toBeGreaterThan(0);
+    expect((await argumentsParser.parse([...argv, 'clean', '--clean-exclude', outputDir]).scanOutputFilesWithoutCleanExclusions([outputDir], [])).length).toEqual(0);
+    expect((await argumentsParser.parse([...argv, 'clean', '--clean-exclude', outputDir]).scanOutputFilesWithoutCleanExclusions([outputDir], [])).length).toEqual(0);
+  });
+
+  it('should parse "clean-dry-run"', () => {
+    expect(() => argumentsParser.parse([...dummyCommandAndRequiredArgs, '--clean-dry-run'])).toThrow(/missing required command/i);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, 'clean', '--clean-dry-run']).getCleanDryRun()).toEqual(true);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, 'clean', '--clean-dry-run', 'true']).getCleanDryRun()).toEqual(true);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, 'clean', '--clean-dry-run', 'false']).getCleanDryRun()).toEqual(false);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, 'clean', '--clean-dry-run', '--clean-dry-run']).getCleanDryRun()).toEqual(true);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, 'clean', '--clean-dry-run', 'false', '--clean-dry-run', 'true']).getCleanDryRun()).toEqual(true);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, 'clean', '--clean-dry-run', 'true', '--clean-dry-run', 'false']).getCleanDryRun()).toEqual(false);
   });
 
   it('should parse "zip-exclude"', () => {
