@@ -28,7 +28,7 @@ export default class ROMHeaderProcessor extends Module {
       return inputRomFiles;
     }
 
-    this.progressBar.logInfo('processing file headers');
+    this.progressBar.logTrace('processing file headers');
     await this.progressBar.setSymbol(ProgressBarSymbol.HASHING);
     await this.progressBar.reset(inputRomFiles.length);
 
@@ -55,9 +55,9 @@ export default class ROMHeaderProcessor extends Module {
     );
 
     const headeredRomsCount = parsedFiles.filter((romFile) => romFile.getFileHeader()).length;
-    this.progressBar.logDebug(`found headers in ${headeredRomsCount.toLocaleString()} ROM${headeredRomsCount !== 1 ? 's' : ''}`);
+    this.progressBar.logTrace(`found headers in ${headeredRomsCount.toLocaleString()} ROM${headeredRomsCount !== 1 ? 's' : ''}`);
 
-    this.progressBar.logInfo('done processing file headers');
+    this.progressBar.logTrace('done processing file headers');
     return parsedFiles;
   }
 

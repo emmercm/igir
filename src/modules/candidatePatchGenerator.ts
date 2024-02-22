@@ -39,19 +39,19 @@ export default class CandidatePatchGenerator extends Module {
     patches: Patch[],
   ): Promise<Map<Parent, ReleaseCandidate[]>> {
     if (parentsToCandidates.size === 0) {
-      this.progressBar.logDebug(`${dat.getNameShort()}: no parents to make patched candidates for`);
+      this.progressBar.logTrace(`${dat.getNameShort()}: no parents to make patched candidates for`);
       return parentsToCandidates;
     }
 
-    this.progressBar.logInfo(`${dat.getNameShort()}: generating patched candidates`);
+    this.progressBar.logTrace(`${dat.getNameShort()}: generating patched candidates`);
     await this.progressBar.setSymbol(ProgressBarSymbol.GENERATING);
     await this.progressBar.reset(parentsToCandidates.size);
 
     const crcToPatches = CandidatePatchGenerator.indexPatchesByCrcBefore(patches);
-    this.progressBar.logDebug(`${dat.getNameShort()}: ${crcToPatches.size} unique patches found`);
+    this.progressBar.logTrace(`${dat.getNameShort()}: ${crcToPatches.size} unique patch${crcToPatches.size !== 1 ? 'es' : ''} found`);
 
     const patchedParentsToCandidates = this.build(dat, parentsToCandidates, crcToPatches);
-    this.progressBar.logInfo(`${dat.getNameShort()}: done generating patched candidates`);
+    this.progressBar.logTrace(`${dat.getNameShort()}: done generating patched candidates`);
 
     return patchedParentsToCandidates;
   }
@@ -117,7 +117,7 @@ export default class CandidatePatchGenerator extends Module {
       .flat()
       .filter((patch) => !usedPatches.has(patch.getFile().toString()))
       .forEach((patch) => {
-        this.progressBar.logWarn(`no matching input file found for patch: ${patch.getFile().toString()}`);
+        this.progressBar.logWarn(`${patch.getFile().toString()}: no matching input file found for patch`);
       });
 
     return patchedParentsToCandidates;
