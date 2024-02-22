@@ -52,6 +52,7 @@
     "prepare": "husky",
     "start": "node --loader ts-node/esm index.ts",
     "build": "tsc && node --eval \"if(process.platform!=='win32'){process.exit(1);}\" || chmod +x dist/index.js",
+    "package": "npm run build && node --loader ts-node/esm package.ts",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "test": "npm run test:unit && npm run lint",

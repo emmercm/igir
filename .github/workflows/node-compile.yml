@@ -57,68 +57,88 @@ jobs:
             arch: amd64
             build: |
               NPM_PKG_VERSION=$(npm pkg get version | sed 's/"//g')
-              NODE_ARCH=amd64
-              BIN_OUTPUT="igir-${NPM_PKG_VERSION}-${RUNNER_OS}-${NODE_ARCH/\//}.tar.gz"
+              DOCKER_ARCH=amd64
+              BIN_OUTPUT="igir-${NPM_PKG_VERSION}-${RUNNER_OS}-${DOCKER_ARCH/\//}.tar.gz"
               echo "BIN_OUTPUT=${BIN_OUTPUT}" >> "${GITHUB_ENV}"
-              cp package.json dist/
-              docker run --rm --platform "linux/${NODE_ARCH}" --volume "$(pwd):/app" --workdir "/app" \
+              docker run --rm --platform "linux/${DOCKER_ARCH}" --volume "$(pwd):/app" --workdir "/app" \
                 "node:$(jq --raw-output '.volta.node' package.json)" sh -c \
-                "./node_modules/.bin/caxa --input dist/ --output igir -- \"{{caxa}}/node_modules/.bin/node\" \"{{caxa}}/index.js\" && ./igir --help"
+                "npm run package . igir"
               tar cvf - igir | gzip --best > "${BIN_OUTPUT}"
+              {
+                echo '```text'
+                ls -alh igir "${BIN_OUTPUT}"
+                echo '```'
+              } >> "${GITHUB_STEP_SUMMARY}"
           - os: ubuntu-latest
             arch: arm/v7
             build: |
               NPM_PKG_VERSION=$(npm pkg get version | sed 's/"//g')
-              NODE_ARCH=arm/v7
-              BIN_OUTPUT="igir-${NPM_PKG_VERSION}-${RUNNER_OS}-${NODE_ARCH/\//}.tar.gz"
+              DOCKER_ARCH=arm/v7
+              BIN_OUTPUT="igir-${NPM_PKG_VERSION}-${RUNNER_OS}-${DOCKER_ARCH/\//}.tar.gz"
               echo "BIN_OUTPUT=${BIN_OUTPUT}" >> "${GITHUB_ENV}"
-              cp package.json dist/
-              docker run --rm --platform "linux/${NODE_ARCH}" --volume "$(pwd):/app" --workdir "/app" \
+              docker run --rm --platform "linux/${DOCKER_ARCH}" --volume "$(pwd):/app" --workdir "/app" \
                 "node:$(jq --raw-output '.volta.node' package.json)" sh -c \
-                "./node_modules/.bin/caxa --input dist/ --output igir -- \"{{caxa}}/node_modules/.bin/node\" \"{{caxa}}/index.js\" && ./igir --help"
+                "npm run package -- . igir"
               tar cvf - igir | gzip --best > "${BIN_OUTPUT}"
+              {
+                echo '```text'
+                ls -alh igir "${BIN_OUTPUT}"
+                echo '```'
+              } >> "${GITHUB_STEP_SUMMARY}"
           - os: ubuntu-latest
             arch: arm64/v8
             build: |
               NPM_PKG_VERSION=$(npm pkg get version | sed 's/"//g')
-              NODE_ARCH=arm64/v8
-              BIN_OUTPUT="igir-${NPM_PKG_VERSION}-${RUNNER_OS}-${NODE_ARCH/\//}.tar.gz"
+              DOCKER_ARCH=arm64/v8
+              BIN_OUTPUT="igir-${NPM_PKG_VERSION}-${RUNNER_OS}-${DOCKER_ARCH/\//}.tar.gz"
               echo "BIN_OUTPUT=${BIN_OUTPUT}" >> "${GITHUB_ENV}"
-              cp package.json dist/
-              docker run --rm --platform "linux/${NODE_ARCH}" --volume "$(pwd):/app" --workdir "/app" \
+              docker run --rm --platform "linux/${DOCKER_ARCH}" --volume "$(pwd):/app" --workdir "/app" \
                 "node:$(jq --raw-output '.volta.node' package.json)" sh -c \
-                "./node_modules/.bin/caxa --input dist/ --output igir -- \"{{caxa}}/node_modules/.bin/node\" \"{{caxa}}/index.js\" && ./igir --help"
+                "npm run package -- . igir"
               tar cvf - igir | gzip --best > "${BIN_OUTPUT}"
+              {
+                echo '```text'
+                ls -alh igir "${BIN_OUTPUT}"
+                echo '```'
+              } >> "${GITHUB_STEP_SUMMARY}"
           - os: macos-13
             build: |
               NPM_PKG_VERSION=$(npm pkg get version | sed 's/"//g')
               NODE_ARCH=$(node --print 'process.arch')
               BIN_OUTPUT="igir-${NPM_PKG_VERSION}-${RUNNER_OS}-${NODE_ARCH}.tar.gz"
               echo "BIN_OUTPUT=${BIN_OUTPUT}" >> "${GITHUB_ENV}"
-              cp package.json dist/
-              ./node_modules/.bin/caxa --input dist/ --output igir -- "{{caxa}}/node_modules/.bin/node" "{{caxa}}/index.js"
-              ./igir --help
+              npm run package -- . igir
               tar cvf - igir | gzip --best > "${BIN_OUTPUT}"
+              {
+                echo '```text'
+                ls -alh igir "${BIN_OUTPUT}"
+                echo '```'
+              } >> "${GITHUB_STEP_SUMMARY}"
           - os: macos-14
             build: |
               NPM_PKG_VERSION=$(npm pkg get version | sed 's/"//g')
               NODE_ARCH=$(node --print 'process.arch')
               BIN_OUTPUT="igir-${NPM_PKG_VERSION}-${RUNNER_OS}-${NODE_ARCH}.tar.gz"
               echo "BIN_OUTPUT=${BIN_OUTPUT}" >> "${GITHUB_ENV}"
-              cp package.json dist/
-              ./node_modules/.bin/caxa --input dist/ --output igir -- "{{caxa}}/node_modules/.bin/node" "{{caxa}}/index.js"
-              ./igir --help
+              npm run package -- . igir
               tar cvf - igir | gzip --best > "${BIN_OUTPUT}"
+              {
+                echo '```text'
+                ls -alh igir "${BIN_OUTPUT}"
+                echo '```'
+              } >> "${GITHUB_STEP_SUMMARY}"
           - os: windows-latest
             build: |
               $NPM_PKG_VERSION=$(npm pkg get version).replace('"','')
               $NODE_ARCH=$(node --print 'process.arch')
               $BIN_OUTPUT="igir-$NPM_PKG_VERSION-${env:RUNNER_OS}-${NODE_ARCH}.zip"
               echo "BIN_OUTPUT=${BIN_OUTPUT}" | Out-File -FilePath $env:GITHUB_ENV -Append # no need for -Encoding utf8
-              copy package.json dist\
-              .\node_modules\.bin\caxa --input dist\ --output igir.exe -- "{{caxa}}/node_modules/.bin/node" "{{caxa}}/index.js"
-              .\igir.exe --help
+              npm run package -- . igir.exe
               Compress-Archive -Path igir.exe -DestinationPath "${BIN_OUTPUT}" -CompressionLevel Optimal -Force
+              echo "``````text"  >> "${env:GITHUB_STEP_SUMMARY}"
+              Get-ChildItem igir.exe >> "${env:GITHUB_STEP_SUMMARY}"
+              Get-ChildItem "${BIN_OUTPUT}" >> "${env:GITHUB_STEP_SUMMARY}"
+              echo "``````" >> "${env:GITHUB_STEP_SUMMARY}"
     steps:
       # Setup and install
       - uses: actions/checkout@v4
@@ -131,10 +151,6 @@ jobs:
       - run: npm run build
       # Compile and upload
       - run: ${{ matrix.build }}
-      - run: |
-          {
-            echo "BIN_OUTPUT: ${{ env.BIN_OUTPUT }}"
-          } >> "${GITHUB_STEP_SUMMARY}"
       - if: ${{ github.event_name != 'pull_request' }}
         uses: actions/upload-artifact@v4
         with:
