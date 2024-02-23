@@ -500,7 +500,7 @@ export default class GameConsole {
       retrodeck: 'tic80',
     }),
     // Nintendo
-    new GameConsole(/FDS|Famicom Computer Disk System/i, ['.fds'], {
+    new GameConsole(/FDS|Famicom Computer Disk System|Family Computer Disk System/i, ['.fds'], {
       adam: 'FDS',
       batocera: 'fds',
       emulationstation: 'fds',
