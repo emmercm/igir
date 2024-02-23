@@ -271,6 +271,9 @@ export default class FsPoly {
   }
 
   static async realpath(pathLike: PathLike): Promise<string> {
+    if (!await this.exists(pathLike)) {
+      throw new Error(`can't get realpath of non-existent path: ${pathLike}`);
+    }
     return util.promisify(fs.realpath)(pathLike);
   }
 
