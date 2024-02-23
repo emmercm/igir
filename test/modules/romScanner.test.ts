@@ -61,11 +61,16 @@ describe('multiple files', () => {
     const tempDir = await fsPoly.mkdtemp(Constants.GLOBAL_TEMP_DIR);
     try {
       const romFiles = await fsPoly.walk('test/fixtures/roms');
-      await Promise.all(romFiles.map(async (romFile) => {
+      await Promise.all(romFiles.map(async (romFile, idx) => {
         const tempLink = path.join(tempDir, romFile);
         await fsPoly.mkdir(path.dirname(tempLink), { recursive: true });
-        // TODO(cemmer): test relative symlinks
-        await fsPoly.symlink(path.resolve(romFile), tempLink);
+        if (idx % 2 === 0) {
+          // symlink some files with absolute paths
+          await fsPoly.symlink(path.resolve(romFile), tempLink);
+        } else {
+          // symlink some files with relative paths
+          await fsPoly.symlink(await fsPoly.symlinkRelativePath(romFile, tempLink), tempLink);
+        }
       }));
 
       // When scanning symlinked files
@@ -93,11 +98,16 @@ describe('multiple files', () => {
     // Given some symlinked dirs
     const tempDir = await fsPoly.mkdtemp(Constants.GLOBAL_TEMP_DIR);
     try {
-      await Promise.all(romDirs.map(async (romDir) => {
+      await Promise.all(romDirs.map(async (romDir, idx) => {
         const tempLink = path.join(tempDir, romDir);
         await fsPoly.mkdir(path.dirname(tempLink), { recursive: true });
-        // TODO(cemmer): test relative symlinks
-        await fsPoly.symlink(path.resolve(romDir), tempLink);
+        if (idx % 2 === 0) {
+          // symlink some files with absolute paths
+          await fsPoly.symlink(path.resolve(romDir), tempLink);
+        } else {
+          // symlink some files with relative paths
+          await fsPoly.symlink(await fsPoly.symlinkRelativePath(romDir, tempLink), tempLink);
+        }
       }));
 
       // When scanning symlink dirs

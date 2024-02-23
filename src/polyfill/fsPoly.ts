@@ -83,11 +83,12 @@ export default class FsPoly {
     return util.promisify(fs.exists)(pathLike);
   }
 
-  static async isDirectory(pathLike: PathLike): Promise<boolean> {
+  static async isDirectory(pathLike: string): Promise<boolean> {
     try {
       const lstat = (await util.promisify(fs.lstat)(pathLike));
       if (lstat.isSymbolicLink()) {
-        return await this.isDirectory(await this.readlink(pathLike));
+        const link = await this.readlinkResolved(pathLike);
+        return await this.isDirectory(link);
       }
       return lstat.isDirectory();
     } catch {
@@ -261,11 +262,23 @@ export default class FsPoly {
     return util.promisify(fs.readlink)(pathLike);
   }
 
+  static async readlinkResolved(link: string): Promise<string> {
+    const source = await this.readlink(link);
+    if (path.isAbsolute(source)) {
+      return source;
+    }
+    return path.join(path.dirname(link), source);
+  }
+
+  static async realpath(pathLike: PathLike): Promise<string> {
+    return util.promisify(fs.realpath)(pathLike);
+  }
+
   /**
    * fs.rm() was added in: v14.14.0
    * util.promisify(fs.rm)() was added in: v14.14.0
    */
-  static async rm(pathLike: PathLike, options: RmOptions = {}): Promise<void> {
+  static async rm(pathLike: string, options: RmOptions = {}): Promise<void> {
     const optionsWithRetry = {
       maxRetries: 2,
       ...options,
@@ -321,8 +334,21 @@ export default class FsPoly {
     return `${Number.parseFloat((bytes / k ** i).toFixed(decimals))}${sizes[i]}`;
   }
 
-  static async symlink(file: PathLike, link: PathLike): Promise<void> {
-    return util.promisify(fs.symlink)(file, link);
+  static async symlink(target: PathLike, link: PathLike): Promise<void> {
+    return util.promisify(fs.symlink)(target, link);
+  }
+
+  static async symlinkRelativePath(target: string, link: string): Promise<string> {
+    // NOTE(cemmer): macOS can be funny with files or links in system folders such as
+    // `/var/folders/*/...` whose real path is actually `/private/var/folders/*/...`, and
+    // path.resolve() won't resolve these fully, so we need the OS to resolve them in order to
+    // generate valid relative paths
+    const realTarget = await this.realpath(target);
+    const realLink = path.join(
+      await this.realpath(path.dirname(link)),
+      path.basename(link),
+    );
+    return path.relative(path.dirname(realLink), realTarget);
   }
 
   static async touch(filePath: string): Promise<void> {
@@ -356,6 +382,7 @@ export default class FsPoly {
       callback(files.length);
     }
 
+    // TODO(cemmer): `Promise.all()` this?
     for (const file of files) {
       const fullPath = path.join(pathLike.toString(), file);
       if (await this.isDirectory(fullPath)) {

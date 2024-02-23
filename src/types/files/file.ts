@@ -183,13 +183,6 @@ export default class File implements FileProps {
     return this.symlinkSource;
   }
 
-  getSymlinkSourceResolved(): string | undefined {
-    if (!this.symlinkSource) {
-      return undefined;
-    }
-    return path.resolve(path.dirname(this.getFilePath()), this.symlinkSource);
-  }
-
   getFileHeader(): ROMHeader | undefined {
     return this.fileHeader;
   }
