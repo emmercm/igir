@@ -106,6 +106,14 @@ describe('makeLegal', () => {
   });
 });
 
+describe('readlink', () => {
+  // TODO(cemmer)
+});
+
+describe('readlinkResolved', () => {
+  // TODO(cemmer)
+});
+
 describe('rm', () => {
   it('should throw on missing file', async () => {
     const tempFile = await fsPoly.mktemp(path.join(Constants.GLOBAL_TEMP_DIR, 'temp'));

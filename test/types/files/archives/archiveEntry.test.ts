@@ -15,6 +15,11 @@ import Options from '../../../../src/types/options.js';
 import IPSPatch from '../../../../src/types/patches/ipsPatch.js';
 import ProgressBarFake from '../../../console/progressBarFake.js';
 
+describe('archiveOf', () => {
+  // TODO(cemmer): what does it do with a file that doesn't exist - I think the TAR filestream
+  //  reading might hang forever, specifically
+});
+
 describe('getEntryPath', () => {
   test.each([
     'something.rom',
@@ -23,6 +28,63 @@ describe('getEntryPath', () => {
     const archive = new Zip('/some/archive.zip');
     const archiveEntry = await ArchiveEntry.entryOf(archive, archiveEntryPath);
     expect(archiveEntry.getEntryPath()).toEqual(archiveEntryPath);
+  });
+});
+
+describe('getSize', () => {
+  describe.each([
+    ['./test/fixtures/roms/7z/fizzbuzz.7z', 9],
+    ['./test/fixtures/roms/rar/fizzbuzz.rar', 9],
+    ['./test/fixtures/roms/tar/fizzbuzz.tar.gz', 9],
+    ['./test/fixtures/roms/zip/fizzbuzz.zip', 9],
+    ['./test/fixtures/roms/7z/foobar.7z', 7],
+    ['./test/fixtures/roms/rar/foobar.rar', 7],
+    ['./test/fixtures/roms/tar/foobar.tar.gz', 7],
+    ['./test/fixtures/roms/zip/foobar.zip', 7],
+    ['./test/fixtures/roms/7z/loremipsum.7z', 11],
+    ['./test/fixtures/roms/rar/loremipsum.rar', 11],
+    ['./test/fixtures/roms/tar/loremipsum.tar.gz', 11],
+    ['./test/fixtures/roms/zip/loremipsum.zip', 11],
+  ])('%s', (filePath, expectedSize) => {
+    it('should get the file\'s size', async () => {
+      const archiveEntries = await FileFactory.filesFrom(filePath);
+      expect(archiveEntries).toHaveLength(1);
+      const archiveEntry = archiveEntries[0];
+
+      expect(archiveEntry.getSize()).toEqual(expectedSize);
+    });
+
+    it('should get the absolute symlink\'s target size', async () => {
+      const tempDir = await fsPoly.mkdtemp(Constants.GLOBAL_TEMP_DIR);
+      try {
+        const tempLink = path.join(tempDir, path.basename(filePath));
+        await fsPoly.symlink(path.resolve(filePath), tempLink);
+
+        const archiveEntries = await FileFactory.filesFrom(tempLink);
+        expect(archiveEntries).toHaveLength(1);
+        const archiveEntry = archiveEntries[0];
+
+        expect(archiveEntry.getSize()).toEqual(expectedSize);
+      } finally {
+        await fsPoly.rm(tempDir, { recursive: true });
+      }
+    });
+
+    it('should get the relative symlink\'s target size', async () => {
+      const tempDir = await fsPoly.mkdtemp(Constants.GLOBAL_TEMP_DIR);
+      try {
+        const tempLink = path.join(tempDir, path.basename(filePath));
+        await fsPoly.symlink(await fsPoly.symlinkRelativePath(filePath, tempLink), tempLink);
+
+        const archiveEntries = await FileFactory.filesFrom(tempLink);
+        expect(archiveEntries).toHaveLength(1);
+        const archiveEntry = archiveEntries[0];
+
+        expect(archiveEntry.getSize()).toEqual(expectedSize);
+      } finally {
+        await fsPoly.rm(tempDir, { recursive: true });
+      }
+    });
   });
 });
 

@@ -470,43 +470,44 @@ export default class CandidateWriter extends Module {
       return;
     }
 
-    const targetPath = outputRomFile.getFilePath();
+    const linkPath = outputRomFile.getFilePath();
     let sourcePath = path.resolve(inputRomFile.getFilePath());
     if (this.options.getSymlinkRelative()) {
-      sourcePath = path.relative(path.dirname(targetPath), sourcePath);
+      await CandidateWriter.ensureOutputDirExists(linkPath);
+      sourcePath = await fsPoly.symlinkRelativePath(sourcePath, linkPath);
     }
 
     // If the output file already exists, see if we need to do anything
-    if (await fsPoly.exists(targetPath)) {
+    if (await fsPoly.exists(linkPath)) {
       if (!this.options.getOverwrite() && !this.options.getOverwriteInvalid()) {
-        this.progressBar.logDebug(`${dat.getNameShort()}: ${releaseCandidate.getName()}: ${targetPath}: not overwriting existing file`);
+        this.progressBar.logDebug(`${dat.getNameShort()}: ${releaseCandidate.getName()}: ${linkPath}: not overwriting existing file`);
         return;
       }
 
       if (this.options.getOverwriteInvalid()) {
-        const existingTest = await CandidateWriter.testWrittenSymlink(targetPath, sourcePath);
+        const existingTest = await CandidateWriter.testWrittenSymlink(linkPath, sourcePath);
         if (!existingTest) {
-          this.progressBar.logDebug(`${dat.getNameShort()}: ${releaseCandidate.getName()}: ${targetPath}: not overwriting existing symlink, existing symlink is what was expected`);
+          this.progressBar.logDebug(`${dat.getNameShort()}: ${releaseCandidate.getName()}: ${linkPath}: not overwriting existing symlink, existing symlink is what was expected`);
           return;
         }
       }
 
-      await fsPoly.rm(targetPath, { force: true });
+      await fsPoly.rm(linkPath, { force: true });
     }
 
-    this.progressBar.logInfo(`${dat.getNameShort()}: ${releaseCandidate.getName()}: creating symlink '${sourcePath}' -> '${targetPath}'`);
+    this.progressBar.logInfo(`${dat.getNameShort()}: ${releaseCandidate.getName()}: creating symlink '${sourcePath}' -> '${linkPath}'`);
     try {
-      await CandidateWriter.ensureOutputDirExists(targetPath);
-      await fsPoly.symlink(sourcePath, targetPath);
+      await CandidateWriter.ensureOutputDirExists(linkPath);
+      await fsPoly.symlink(sourcePath, linkPath);
     } catch (error) {
-      this.progressBar.logError(`${dat.getNameShort()}: ${releaseCandidate.getName()}: ${targetPath}: failed to symlink from ${sourcePath}: ${error}`);
+      this.progressBar.logError(`${dat.getNameShort()}: ${releaseCandidate.getName()}: ${linkPath}: failed to symlink from ${sourcePath}: ${error}`);
       return;
     }
 
     if (this.options.shouldTest()) {
-      const writtenTest = await CandidateWriter.testWrittenSymlink(targetPath, sourcePath);
+      const writtenTest = await CandidateWriter.testWrittenSymlink(linkPath, sourcePath);
       if (writtenTest) {
-        this.progressBar.logError(`${dat.getNameShort()}: ${releaseCandidate.getName()} ${targetPath}: written symlink ${writtenTest}`);
+        this.progressBar.logError(`${dat.getNameShort()}: ${releaseCandidate.getName()} ${linkPath}: written symlink ${writtenTest}`);
       }
     }
   }
@@ -518,6 +519,10 @@ export default class CandidateWriter extends Module {
     const existingSourcePath = await fsPoly.readlink(targetPath);
     if (path.normalize(existingSourcePath) !== path.normalize(expectedSourcePath)) {
       return `has the source path '${existingSourcePath}', expected '${expectedSourcePath}`;
+    }
+
+    if (!await fsPoly.exists(await fsPoly.readlinkResolved(targetPath))) {
+      return `has the source path '${existingSourcePath}' which doesn't exist`;
     }
 
     return undefined;
