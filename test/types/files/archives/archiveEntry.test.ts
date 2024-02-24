@@ -58,10 +58,10 @@ describe('getSize', () => {
       const tempDir = await fsPoly.mkdtemp(Constants.GLOBAL_TEMP_DIR);
       try {
         // Make a copy of the original file to ensure it's on the same drive
-        const tempFile = await fsPoly.mktemp(path.join(tempDir, path.basename(filePath)));
+        const tempFile = path.join(tempDir, `file_${path.basename(filePath)}`);
         await fsPoly.copyFile(filePath, tempFile);
 
-        const tempLink = path.join(tempDir, path.basename(tempFile));
+        const tempLink = path.join(tempDir, `link_${path.basename(filePath)}`);
         await fsPoly.hardlink(path.resolve(tempFile), tempLink);
 
         const archiveEntries = await FileFactory.filesFrom(tempLink);

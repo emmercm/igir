@@ -60,22 +60,29 @@ describe('multiple files', () => {
     // Given some symlinked files
     const tempDir = await fsPoly.mkdtemp(Constants.GLOBAL_TEMP_DIR);
     try {
+      const filesDir = path.join(tempDir, 'files');
+      await fsPoly.mkdir(filesDir);
+
       const romFiles = await Promise.all((await fsPoly.walk('test/fixtures/roms'))
         .map(async (romFile) => {
           // Make a copy of the original file to ensure it's on the same drive
-          const tempFile = await fsPoly.mktemp(path.join(tempDir, path.basename(romFile)));
+          const tempFile = path.join(filesDir, romFile);
+          await fsPoly.mkdir(path.dirname(tempFile), { recursive: true });
           await fsPoly.copyFile(romFile, tempFile);
           return tempFile;
         }));
 
+      const linksDir = path.join(tempDir, 'links');
+      await fsPoly.mkdir(linksDir);
+
       await Promise.all(romFiles.map(async (romFile) => {
-        const tempLink = path.join(tempDir, romFile);
+        const tempLink = path.join(linksDir, romFile);
         await fsPoly.mkdir(path.dirname(tempLink), { recursive: true });
         await fsPoly.hardlink(path.resolve(romFile), tempLink);
       }));
 
       // When scanning symlinked files
-      const scannedSymlinks = (await createRomScanner([tempDir]).scan())
+      const scannedSymlinks = (await createRomScanner([linksDir]).scan())
         .sort((a, b) => a.getFilePath().localeCompare(b.getFilePath()));
 
       // Then the files scan successfully
