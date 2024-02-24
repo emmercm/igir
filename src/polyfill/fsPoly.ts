@@ -20,16 +20,19 @@ export default class FsPoly {
 
   static async canSymlink(tempDir: string): Promise<boolean> {
     const source = await this.mktemp(path.join(tempDir, 'source'));
-    await this.touch(source);
-    const target = await this.mktemp(path.join(tempDir, 'target'));
     try {
-      await this.symlink(source, target);
-      return await this.exists(target);
+      await this.touch(source);
+      const target = await this.mktemp(path.join(tempDir, 'target'));
+      try {
+        await this.symlink(source, target);
+        return await this.exists(target);
+      } finally {
+        await this.rm(target, { force: true });
+      }
     } catch {
       return false;
     } finally {
       await this.rm(source, { force: true });
-      await this.rm(target, { force: true });
     }
   }
 
@@ -81,6 +84,22 @@ export default class FsPoly {
    */
   static async exists(pathLike: PathLike): Promise<boolean> {
     return util.promisify(fs.exists)(pathLike);
+  }
+
+  static async hardlink(target: string, link: string): Promise<void> {
+    try {
+      // Added in: v10.0.0
+      return await util.promisify(fs.link)(target, link);
+    } catch (error) {
+      if (this.onDifferentDrives(target, link)) {
+        throw new Error(`can't hard link files on different drives: ${target}, ${link}`);
+      }
+      throw error;
+    }
+  }
+
+  static async inode(pathLike: PathLike): Promise<number> {
+    return (await util.promisify(fs.stat)(pathLike)).ino;
   }
 
   static async isDirectory(pathLike: string): Promise<boolean> {
@@ -149,7 +168,7 @@ export default class FsPoly {
     return replaced;
   }
 
-  static async mkdir(pathLike: PathLike, options: MakeDirectoryOptions): Promise<void> {
+  static async mkdir(pathLike: PathLike, options?: MakeDirectoryOptions): Promise<void> {
     await util.promisify(fs.mkdir)(pathLike, options);
   }
 
@@ -258,6 +277,9 @@ export default class FsPoly {
   }
 
   static async readlink(pathLike: PathLike): Promise<string> {
+    if (!await this.isSymlink(pathLike)) {
+      throw new Error(`can't readlink of non-symlink: ${pathLike}`);
+    }
     // Added in: v10.0.0
     return util.promisify(fs.readlink)(pathLike);
   }
