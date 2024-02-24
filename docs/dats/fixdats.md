@@ -4,7 +4,7 @@
 
 Fixdats help you find files missing from your collection, and they can be used to generate a collection of those files once you've found them. This sub-collection of files can then be merged back into your main collection.
 
-The `fixdat` command creates a [Logiqx XML](http://www.logiqx.com/DatFAQs/) DAT for every input DAT (the [`--dat <path>` option](./processing.md#scanning-for-dats)) that is missing ROMs. When writing (`copy`, `move`, and `symlink` [commands](../commands.md)), the fixdat will be written to the output directory, otherwise it will be written to the working directory.
+The `fixdat` command creates a [Logiqx XML](http://www.logiqx.com/DatFAQs/) DAT for every input DAT (the [`--dat <path>` option](./processing.md#scanning-for-dats)) that is missing ROMs. When writing (`copy`, `move`, and `link` [commands](../commands.md)), the fixdat will be written to the output directory, otherwise it will be written to the working directory.
 
 For example:
 

@@ -115,8 +115,8 @@ export default class CandidateWriter extends Module {
       const waitingMessage = `${releaseCandidate.getName()} ...`;
       this.progressBar.addWaitingMessage(waitingMessage);
 
-      if (this.options.shouldSymlink()) {
-        await this.writeSymlink(dat, releaseCandidate);
+      if (this.options.shouldLink()) {
+        await this.writeLink(dat, releaseCandidate);
       } else {
         await this.writeZip(dat, releaseCandidate);
         await this.writeRaw(dat, releaseCandidate);
@@ -441,24 +441,24 @@ export default class CandidateWriter extends Module {
   }
 
   /**
-   ***************************
+   ************************
    *
-   *     Symlink Writing     *
+   *     Link Writing     *
    *
-   ***************************
+   ************************
    */
 
-  private async writeSymlink(dat: DAT, releaseCandidate: ReleaseCandidate): Promise<void> {
+  private async writeLink(dat: DAT, releaseCandidate: ReleaseCandidate): Promise<void> {
     const inputToOutputEntries = releaseCandidate.getRomsWithFiles();
 
     for (const inputToOutputEntry of inputToOutputEntries) {
       const inputRomFile = inputToOutputEntry.getInputFile();
       const outputRomFile = inputToOutputEntry.getOutputFile();
-      await this.writeSymlinkSingle(dat, releaseCandidate, inputRomFile, outputRomFile);
+      await this.writeLinkSingle(dat, releaseCandidate, inputRomFile, outputRomFile);
     }
   }
 
-  private async writeSymlinkSingle(
+  private async writeLinkSingle(
     dat: DAT,
     releaseCandidate: ReleaseCandidate,
     inputRomFile: File,
@@ -471,10 +471,10 @@ export default class CandidateWriter extends Module {
     }
 
     const linkPath = outputRomFile.getFilePath();
-    let sourcePath = path.resolve(inputRomFile.getFilePath());
-    if (this.options.getSymlinkRelative()) {
+    let targetPath = path.resolve(inputRomFile.getFilePath());
+    if (this.options.getSymlink() && this.options.getSymlinkRelative()) {
       await CandidateWriter.ensureOutputDirExists(linkPath);
-      sourcePath = await fsPoly.symlinkRelativePath(sourcePath, linkPath);
+      targetPath = await fsPoly.symlinkRelativePath(targetPath, linkPath);
     }
 
     // If the output file already exists, see if we need to do anything
@@ -485,9 +485,17 @@ export default class CandidateWriter extends Module {
       }
 
       if (this.options.getOverwriteInvalid()) {
-        const existingTest = await CandidateWriter.testWrittenSymlink(linkPath, sourcePath);
+        let existingTest;
+        if (this.options.getSymlink()) {
+          existingTest = await CandidateWriter.testWrittenSymlink(linkPath, targetPath);
+        } else {
+          existingTest = await CandidateWriter.testWrittenHardlink(
+            linkPath,
+            inputRomFile.getFilePath(),
+          );
+        }
         if (!existingTest) {
-          this.progressBar.logDebug(`${dat.getNameShort()}: ${releaseCandidate.getName()}: ${linkPath}: not overwriting existing symlink, existing symlink is what was expected`);
+          this.progressBar.logDebug(`${dat.getNameShort()}: ${releaseCandidate.getName()}: ${linkPath}: not overwriting existing link, existing link is what was expected`);
           return;
         }
       }
@@ -495,34 +503,68 @@ export default class CandidateWriter extends Module {
       await fsPoly.rm(linkPath, { force: true });
     }
 
-    this.progressBar.logInfo(`${dat.getNameShort()}: ${releaseCandidate.getName()}: creating symlink '${sourcePath}' -> '${linkPath}'`);
     try {
       await CandidateWriter.ensureOutputDirExists(linkPath);
-      await fsPoly.symlink(sourcePath, linkPath);
+      if (this.options.getSymlink()) {
+        this.progressBar.logInfo(`${dat.getNameShort()}: ${releaseCandidate.getName()}: creating symlink '${targetPath}' -> '${linkPath}'`);
+        await fsPoly.symlink(targetPath, linkPath);
+      } else {
+        this.progressBar.logInfo(`${dat.getNameShort()}: ${releaseCandidate.getName()}: creating hard link '${targetPath}' -> '${linkPath}'`);
+        await fsPoly.hardlink(targetPath, linkPath);
+      }
     } catch (error) {
-      this.progressBar.logError(`${dat.getNameShort()}: ${releaseCandidate.getName()}: ${linkPath}: failed to symlink from ${sourcePath}: ${error}`);
+      this.progressBar.logError(`${dat.getNameShort()}: ${releaseCandidate.getName()}: ${linkPath}: failed to link from ${targetPath}: ${error}`);
       return;
     }
 
     if (this.options.shouldTest()) {
-      const writtenTest = await CandidateWriter.testWrittenSymlink(linkPath, sourcePath);
+      let writtenTest;
+      if (this.options.getSymlink()) {
+        writtenTest = await CandidateWriter.testWrittenSymlink(linkPath, targetPath);
+      } else {
+        writtenTest = await CandidateWriter.testWrittenHardlink(
+          linkPath,
+          inputRomFile.getFilePath(),
+        );
+      }
       if (writtenTest) {
-        this.progressBar.logError(`${dat.getNameShort()}: ${releaseCandidate.getName()} ${linkPath}: written symlink ${writtenTest}`);
+        this.progressBar.logError(`${dat.getNameShort()}: ${releaseCandidate.getName()} ${linkPath}: written link ${writtenTest}`);
       }
     }
   }
 
   private static async testWrittenSymlink(
-    targetPath: string,
-    expectedSourcePath: string,
+    linkPath: string,
+    expectedTargetPath: string,
   ): Promise<string | undefined> {
-    const existingSourcePath = await fsPoly.readlink(targetPath);
-    if (path.normalize(existingSourcePath) !== path.normalize(expectedSourcePath)) {
-      return `has the source path '${existingSourcePath}', expected '${expectedSourcePath}`;
+    if (!await fsPoly.exists(linkPath)) {
+      return 'doesn\'t exist';
     }
 
-    if (!await fsPoly.exists(await fsPoly.readlinkResolved(targetPath))) {
-      return `has the source path '${existingSourcePath}' which doesn't exist`;
+    const existingSourcePath = await fsPoly.readlink(linkPath);
+    if (path.normalize(existingSourcePath) !== path.normalize(expectedTargetPath)) {
+      return `has the target path '${existingSourcePath}', expected '${expectedTargetPath}`;
+    }
+
+    if (!await fsPoly.exists(await fsPoly.readlinkResolved(linkPath))) {
+      return `has the target path '${existingSourcePath}' which doesn't exist`;
+    }
+
+    return undefined;
+  }
+
+  private static async testWrittenHardlink(
+    linkPath: string,
+    inputRomPath: string,
+  ): Promise<string | undefined> {
+    if (!await fsPoly.exists(linkPath)) {
+      return 'doesn\'t exist';
+    }
+
+    const targetInode = await fsPoly.inode(linkPath);
+    const sourceInode = await fsPoly.inode(inputRomPath);
+    if (targetInode !== sourceInode) {
+      return `references a different file than '${inputRomPath}'`;
     }
 
     return undefined;

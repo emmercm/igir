@@ -59,7 +59,11 @@ export default class Igir {
   async main(): Promise<void> {
     // Windows 10 may require admin privileges to symlink at all
     // @see https://github.com/nodejs/node/issues/18518
-    if (this.options.shouldSymlink() && process.platform === 'win32' && !await FsPoly.canSymlink(Constants.GLOBAL_TEMP_DIR)) {
+    if (this.options.shouldLink()
+      && this.options.getSymlink()
+      && process.platform === 'win32'
+      && !await FsPoly.canSymlink(Constants.GLOBAL_TEMP_DIR)
+    ) {
       if (!await isAdmin()) {
         throw new Error(`${Constants.COMMAND_NAME} does not have permissions to create symlinks, please try running as administrator`);
       }

@@ -293,6 +293,45 @@ describe('with explicit DATs', () => {
     });
   });
 
+  it('should copy and extract hard linked files', async () => {
+    await copyFixturesToTemp(async (inputTemp, outputTemp) => {
+      // Given some symlinks
+      const inputDir = path.join(inputTemp, 'roms', 'raw');
+      const inputFiles = await fsPoly.walk(inputDir);
+      const inputHardlinks = await Promise.all(inputFiles.map(async (inputFile) => {
+        const symlink = `${inputFile}.symlink`;
+        await fsPoly.hardlink(inputFile, symlink);
+        return symlink;
+      }));
+
+      const result = await runIgir({
+        commands: ['copy', 'extract'],
+        dat: [path.join(inputTemp, 'dats')],
+        input: inputHardlinks,
+        output: outputTemp,
+        dirDatName: true,
+        dirGameSubdir: GameSubdirMode[GameSubdirMode.MULTIPLE].toLowerCase(),
+      });
+
+      expect(result.outputFilesAndCrcs).toEqual([
+        [path.join('One', 'Fizzbuzz.nes'), '370517b5'],
+        [path.join('One', 'Foobar.lnx'), 'b22c9747'],
+        [path.join('One', 'Lorem Ipsum.rom'), '70856527'],
+        [path.join('One', 'One Three', 'One.rom'), 'f817a89f'],
+        [path.join('One', 'One Three', 'Three.rom'), 'ff46c5d8'],
+        [path.join('One', 'Three Four Five', 'Five.rom'), '3e5daf67'],
+        [path.join('One', 'Three Four Five', 'Four.rom'), '1cf3ca74'],
+        [path.join('One', 'Three Four Five', 'Three.rom'), 'ff46c5d8'],
+        [path.join('smdb', 'Hardware Target Game Database', 'Dummy', 'Fizzbuzz.nes'), '370517b5'],
+        [path.join('smdb', 'Hardware Target Game Database', 'Dummy', 'Foobar.lnx'), 'b22c9747'],
+        [path.join('smdb', 'Hardware Target Game Database', 'Dummy', 'Lorem Ipsum.rom'), '70856527'],
+      ]);
+      expect(result.cwdFilesAndCrcs).toHaveLength(0);
+      expect(result.movedFiles).toHaveLength(0);
+      expect(result.cleanedFiles).toHaveLength(0);
+    });
+  });
+
   it('should copy and extract symlinked files', async () => {
     await copyFixturesToTemp(async (inputTemp, outputTemp) => {
       // Given some symlinks
@@ -536,12 +575,13 @@ describe('with explicit DATs', () => {
   it('should symlink and test', async () => {
     await copyFixturesToTemp(async (inputTemp, outputTemp) => {
       const result = await runIgir({
-        commands: ['symlink', 'test'],
+        commands: ['link', 'test'],
         dat: [path.join(inputTemp, 'dats')],
         input: [path.join(inputTemp, 'roms')],
         output: outputTemp,
         dirDatName: true,
         dirGameSubdir: GameSubdirMode[GameSubdirMode.MULTIPLE].toLowerCase(),
+        symlink: true,
       });
 
       expect(result.outputFilesAndCrcs).toEqual([
@@ -663,7 +703,7 @@ describe('with explicit DATs', () => {
   test.each([
     'copy',
     'move',
-    'symlink',
+    'link',
   ])('should %s, fixdat, and clean', async (command) => {
     await copyFixturesToTemp(async (inputTemp, outputTemp) => {
       const result = await runIgir({
@@ -918,9 +958,10 @@ describe('with inferred DATs', () => {
   it('should relative symlink, and test', async () => {
     await copyFixturesToTemp(async (inputTemp, outputTemp) => {
       const result = await runIgir({
-        commands: ['symlink', 'test'],
+        commands: ['link', 'test'],
         input: [path.join(inputTemp, 'roms')],
         output: outputTemp,
+        symlink: true,
         symlinkRelative: true,
       });
 
@@ -1019,7 +1060,7 @@ describe('with inferred DATs', () => {
   test.each([
     'copy',
     'move',
-    'symlink',
+    'link',
   ])('should %s, dir2dat, and clean', async (command) => {
     await copyFixturesToTemp(async (inputTemp, outputTemp) => {
       const result = await runIgir({

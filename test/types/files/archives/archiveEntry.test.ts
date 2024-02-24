@@ -54,6 +54,26 @@ describe('getSize', () => {
       expect(archiveEntry.getSize()).toEqual(expectedSize);
     });
 
+    it('should get the hard link\'s target size', async () => {
+      const tempDir = await fsPoly.mkdtemp(Constants.GLOBAL_TEMP_DIR);
+      try {
+        // Make a copy of the original file to ensure it's on the same drive
+        const tempFile = path.join(tempDir, `file_${path.basename(filePath)}`);
+        await fsPoly.copyFile(filePath, tempFile);
+
+        const tempLink = path.join(tempDir, `link_${path.basename(filePath)}`);
+        await fsPoly.hardlink(path.resolve(tempFile), tempLink);
+
+        const archiveEntries = await FileFactory.filesFrom(tempLink);
+        expect(archiveEntries).toHaveLength(1);
+        const archiveEntry = archiveEntries[0];
+
+        expect(archiveEntry.getSize()).toEqual(expectedSize);
+      } finally {
+        await fsPoly.rm(tempDir, { recursive: true });
+      }
+    });
+
     it('should get the absolute symlink\'s target size', async () => {
       const tempDir = await fsPoly.mkdtemp(Constants.GLOBAL_TEMP_DIR);
       try {
