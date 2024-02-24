@@ -524,7 +524,7 @@ export default class GameConsole {
     }),
     new GameConsole(/GameCube/i, [/* '.iso' */], {
       batocera: 'gc',
-      emulationstation: 'fds',
+      emulationstation: 'gc',
       jelos: 'gamecube',
       retrodeck: 'gc',
     }),
