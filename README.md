@@ -58,7 +58,7 @@ $ igir --help
   | $$  | $$|    \  | $$  | $$    $$   ROM collection manager
   | $$  | $$|    \  | $$  | $$    $$   https://igir.io/
   | $$  | $$ \$$$$  | $$  | $$$$$$$\
- _| $$_ | $$__| $$ _| $$_ | $$  | $$   v2.4.2
+ _| $$_ | $$__| $$ _| $$_ | $$  | $$   v2.5.0
 |   $$ \ \$$    $$|   $$ \| $$  | $$
  \$$$$$$  \$$$$$$  \$$$$$$ \$$   \$$
 
@@ -68,7 +68,7 @@ Usage: igir [commands..] [options]
 Commands (can specify multiple):
   igir copy     Copy ROM files from the input to output directory
   igir move     Move ROM files from the input to output directory
-  igir symlink  Create symlinks in the output directory to ROM files in the input directory
+  igir link     Create links in the output directory to ROM files in the input directory
   igir extract  Extract ROM files in archives when copying or moving
   igir zip      Create zip archives of ROMs when copying or moving
   igir test     Test ROMs for accuracy after writing them to the output directory
@@ -132,7 +132,8 @@ ROM zip command options:
       --zip-dat-name  Group all ROMs from the same DAT into the same zip archive, if not exclude
                       d from zipping (enforces --dat-threads 1)                        [boolean]
 
-ROM symlink command options:
+ROM link command options:
+      --symlink           Creates symbolic links instead of hard links                 [boolean]
       --symlink-relative  Create symlinks as relative to the target path, as opposed to absolute
                                                                                        [boolean]
 
@@ -225,6 +226,8 @@ Advanced usage:
 
     {adam}      The ROM's emulator-specific /ROMS/* directory for the 'Adam' image (e.g. "GB")
     {batocera}  The ROM's emulator-specific /roms/* directory for Batocera (e.g. "gb")
+    {es}        The ROM's emulator-specific /roms/* directory for the 'EmulationStation' image (
+    e.g. "gb")
     {funkeyos}  The ROM's emulator-specific /* directory for FunKey OS (e.g. "Game Boy")
     {jelos}     The ROM's emulator-specific /roms/* directory for JELOS (e.g. "gb")
     {minui}     The ROM's emulator-specific /Roms/* directory for MinUI (e.g. "Game Boy (GB)")
@@ -232,6 +235,8 @@ Advanced usage:
     {miyoocfw}  The ROM's emulator-specific /roms/* directory for MiyooCFW (e.g. "GB")
     {onion}     The ROM's emulator-specific /Roms/* directory for OnionOS/GarlicOS (e.g. "GB")
     {pocket}    The ROM's core-specific /Assets/* directory for the Analogue Pocket (e.g. "gb")
+    {retrodeck} The ROM's emulator-specific /roms/* directory for the 'RetroDECK' image (e.g. "g
+    b")
     {twmenu}    The ROM's emulator-specific /roms/* directory for TWiLightMenu++ on the DSi/3DS
     (e.g. "gb")
 
