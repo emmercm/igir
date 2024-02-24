@@ -15,11 +15,6 @@ import Options from '../../../../src/types/options.js';
 import IPSPatch from '../../../../src/types/patches/ipsPatch.js';
 import ProgressBarFake from '../../../console/progressBarFake.js';
 
-describe('archiveOf', () => {
-  // TODO(cemmer): what does it do with a file that doesn't exist - I think the TAR filestream
-  //  reading might hang forever, specifically
-});
-
 describe('getEntryPath', () => {
   test.each([
     'something.rom',
