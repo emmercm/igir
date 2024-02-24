@@ -500,7 +500,7 @@ export default class GameConsole {
       retrodeck: 'tic80',
     }),
     // Nintendo
-    new GameConsole(/FDS|Famicom Computer Disk System|Family Computer Disk System/i, ['.fds'], {
+    new GameConsole(/FDS|(Famicom|Family) Computer Disk System/i, ['.fds'], {
       adam: 'FDS',
       batocera: 'fds',
       emulationstation: 'fds',
@@ -684,7 +684,7 @@ export default class GameConsole {
       retrodeck: 'wiiu',
     }),
     // Panasonic
-    new GameConsole(/3DO/i, [/* '.chd' */], {
+    new GameConsole(/3DO/i, [/* '.bin', '.cue' */], {
       batocera: '3do',
       emulationstation: '3do',
       jelos: '3do',
@@ -692,7 +692,7 @@ export default class GameConsole {
       retrodeck: '3do',
     }),
     // Philips
-    new GameConsole(/CD[ -]?i/i, [/* '.chd' */], {
+    new GameConsole(/CD[ -]?i/i, [/* '.bin', '.cue' */], {
       batocera: 'cdi',
       emulationstation: 'cdimono1',
       retrodeck: 'cdimono1',
@@ -849,7 +849,7 @@ export default class GameConsole {
       pocket: 'ng',
       retrodeck: 'neogeo',
     }),
-    new GameConsole(/Neo ?Geo CD/i, [/* '.bin' */], {
+    new GameConsole(/Neo ?Geo CD/i, [/* '.bin', '.cue' */], {
       batocera: 'neogeocd',
       emulationstation: 'neogeocd',
       jelos: 'neocd',
@@ -867,7 +867,7 @@ export default class GameConsole {
       retrodeck: 'ngp',
       twmenu: 'ngp',
     }),
-    new GameConsole(/Neo ?Geo Pocket Color/i, ['.ngpc', '.npc'], {
+    new GameConsole(/Neo ?Geo Pocket Color/i, ['.ngc', '.ngpc', '.npc'], {
       adam: 'NGP',
       batocera: 'ngpc',
       emulationstation: 'ngpc',
