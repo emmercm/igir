@@ -76,7 +76,7 @@ describe('multiple files', () => {
       await fsPoly.mkdir(linksDir);
 
       await Promise.all(romFiles.map(async (romFile) => {
-        const tempLink = path.join(linksDir, romFile);
+        const tempLink = path.join(linksDir, path.relative(filesDir, romFile));
         await fsPoly.mkdir(path.dirname(tempLink), { recursive: true });
         await fsPoly.hardlink(path.resolve(romFile), tempLink);
       }));
