@@ -80,6 +80,7 @@ export interface OptionsProps {
   readonly zipExclude?: string,
   readonly zipDatName?: boolean,
 
+  readonly symlink?: boolean,
   readonly symlinkRelative?: boolean,
 
   readonly header?: string,
@@ -211,6 +212,8 @@ export default class Options implements OptionsProps {
   readonly zipExclude: string;
 
   readonly zipDatName: boolean;
+
+  readonly symlink: boolean;
 
   readonly symlinkRelative: boolean;
 
@@ -368,6 +371,7 @@ export default class Options implements OptionsProps {
     this.zipExclude = options?.zipExclude ?? '';
     this.zipDatName = options?.zipDatName ?? false;
 
+    this.symlink = options?.symlink ?? false;
     this.symlinkRelative = options?.symlinkRelative ?? false;
 
     this.header = options?.header ?? '';
@@ -485,7 +489,7 @@ export default class Options implements OptionsProps {
    * The writing command that was specified.
    */
   writeString(): string | undefined {
-    return ['copy', 'move', 'symlink'].find((command) => this.getCommands().has(command));
+    return ['copy', 'move', 'link', 'symlink'].find((command) => this.getCommands().has(command));
   }
 
   /**
@@ -503,10 +507,10 @@ export default class Options implements OptionsProps {
   }
 
   /**
-   * Was the `symlink` command provided?
+   * Was the `link` command provided?
    */
-  shouldSymlink(): boolean {
-    return this.getCommands().has('symlink');
+  shouldLink(): boolean {
+    return this.getCommands().has('link');
   }
 
   /**
@@ -861,6 +865,10 @@ export default class Options implements OptionsProps {
 
   getZipDatName(): boolean {
     return this.zipDatName;
+  }
+
+  getSymlink(): boolean {
+    return this.symlink;
   }
 
   getSymlinkRelative(): boolean {
