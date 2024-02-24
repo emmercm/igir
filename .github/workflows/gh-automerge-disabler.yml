@@ -9,7 +9,6 @@ on:
   pull_request_target:
     types:
       - edited
-      - synchronize  # PR's branch was edited (i.e. new commits)
 
 permissions:
   # actions/checkout@v4, `gh` CLI
