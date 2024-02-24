@@ -12,6 +12,10 @@ import Options from '../../../src/types/options.js';
 import IPSPatch from '../../../src/types/patches/ipsPatch.js';
 import ProgressBarFake from '../../console/progressBarFake.js';
 
+describe('fileOf', () => {
+  // TODO(cemmer): what does it do with a file that doesn't exist
+});
+
 describe('getFilePath', () => {
   it('should return the constructor value', async () => {
     const file = await File.fileOf(path.join('some', 'path'));
@@ -20,46 +24,58 @@ describe('getFilePath', () => {
 });
 
 describe('getSize', () => {
-  test.each([
+  describe.each([
     [0],
     [1],
     [100],
     [10_000],
     [1_000_000],
-  ])('should get the file\'s size: %s', async (size) => {
-    const tempDir = await fsPoly.mkdtemp(Constants.GLOBAL_TEMP_DIR);
-    try {
-      const tempFile = path.resolve(await fsPoly.mktemp(path.join(tempDir, 'file')));
-      await (await FilePoly.fileOfSize(tempFile, 'r', size)).close(); // touch
+  ])('%s', (size) => {
+    it('should get the file\'s size: %s', async () => {
+      const tempDir = await fsPoly.mkdtemp(Constants.GLOBAL_TEMP_DIR);
+      try {
+        const tempFile = path.resolve(await fsPoly.mktemp(path.join(tempDir, 'file')));
+        await (await FilePoly.fileOfSize(tempFile, 'r', size)).close(); // touch
 
-      const fileLink = await File.fileOf(tempFile);
+        const fileLink = await File.fileOf(tempFile);
 
-      expect(fileLink.getSize()).toEqual(size);
-    } finally {
-      await fsPoly.rm(tempDir, { recursive: true });
-    }
-  });
+        expect(fileLink.getSize()).toEqual(size);
+      } finally {
+        await fsPoly.rm(tempDir, { recursive: true });
+      }
+    });
 
-  test.each([
-    [0],
-    [1],
-    [100],
-    [10_000],
-    [1_000_000],
-  ])('should get the symlink\'s target size: %s', async (size) => {
-    const tempDir = await fsPoly.mkdtemp(Constants.GLOBAL_TEMP_DIR);
-    try {
-      const tempFile = path.resolve(await fsPoly.mktemp(path.join(tempDir, 'file')));
-      await (await FilePoly.fileOfSize(tempFile, 'r', size)).close(); // touch
+    it('should get the absolute symlink\'s target size: %s', async () => {
+      const tempDir = await fsPoly.mkdtemp(Constants.GLOBAL_TEMP_DIR);
+      try {
+        const tempFile = path.resolve(await fsPoly.mktemp(path.join(tempDir, 'file')));
+        await (await FilePoly.fileOfSize(tempFile, 'r', size)).close(); // touch
 
-      const tempLink = await fsPoly.mktemp(path.join(tempDir, 'link'));
-      await fsPoly.symlink(path.resolve(tempFile), tempLink);
-      const fileLink = await File.fileOf(tempLink);
+        const tempLink = await fsPoly.mktemp(path.join(tempDir, 'link'));
+        await fsPoly.symlink(path.resolve(tempFile), tempLink);
+        const fileLink = await File.fileOf(tempLink);
 
-      expect(fileLink.getSize()).toEqual(size);
-    } finally {
-      await fsPoly.rm(tempDir, { recursive: true });
-    }
+        expect(fileLink.getSize()).toEqual(size);
+      } finally {
+        await fsPoly.rm(tempDir, { recursive: true });
+      }
+    });
+
+    it('should get the relative symlink\'s target size: %s', async () => {
+      const tempDir = await fsPoly.mkdtemp(Constants.GLOBAL_TEMP_DIR);
+      try {
+        const tempFile = path.resolve(await fsPoly.mktemp(path.join(tempDir, 'file')));
+        await (await FilePoly.fileOfSize(tempFile, 'r', size)).close(); // touch
+
+        const tempLink = await fsPoly.mktemp(path.join(tempDir, 'link'));
+        await fsPoly.symlink(await fsPoly.symlinkRelativePath(tempFile, tempLink), tempLink);
+        const fileLink = await File.fileOf(tempLink);
+
+        expect(fileLink.getSize()).toEqual(size);
+      } finally {
+        await fsPoly.rm(tempDir, { recursive: true });
+      }
+    });
   });
 });
 
@@ -256,55 +272,6 @@ describe('getSha1WithoutHeader', () => {
     expect(file.getMd5WithoutHeader()).toBeUndefined();
     expect(file.getSha1()).not.toEqual(file.getSha1WithoutHeader());
     expect(file.getSha1WithoutHeader()).toEqual(expectedSha1);
-  });
-});
-
-describe('getSymlinkSourceResolved', () => {
-  it('should not resolve non-symlinks', async () => {
-    const tempDir = await fsPoly.mkdtemp(Constants.GLOBAL_TEMP_DIR);
-    try {
-      const tempFile = path.resolve(await fsPoly.mktemp(path.join(tempDir, 'file')));
-      const fileLink = await File.fileOf(tempFile);
-      expect(fileLink.getSymlinkSourceResolved()).toBeUndefined();
-    } finally {
-      await fsPoly.rm(tempDir, { recursive: true });
-    }
-  });
-
-  it('should resolve absolute symlinks', async () => {
-    const tempDir = await fsPoly.mkdtemp(Constants.GLOBAL_TEMP_DIR);
-    try {
-      const tempFile = path.resolve(await fsPoly.mktemp(path.join(tempDir, 'dir1', 'file')));
-      await fsPoly.mkdir(path.dirname(tempFile), { recursive: true });
-      await fsPoly.touch(tempFile);
-
-      const tempLink = await fsPoly.mktemp(path.join(tempDir, 'dir2', 'link'));
-      await fsPoly.mkdir(path.dirname(tempLink), { recursive: true });
-      await fsPoly.symlink(path.resolve(tempFile), tempLink);
-      const fileLink = await File.fileOf(tempLink);
-
-      expect(fileLink.getSymlinkSourceResolved()).toEqual(tempFile);
-    } finally {
-      await fsPoly.rm(tempDir, { recursive: true });
-    }
-  });
-
-  it('should resolve relative symlinks', async () => {
-    const tempDir = await fsPoly.mkdtemp(Constants.GLOBAL_TEMP_DIR);
-    try {
-      const tempFile = path.resolve(await fsPoly.mktemp(path.join(tempDir, 'dir1', 'file')));
-      await fsPoly.mkdir(path.dirname(tempFile), { recursive: true });
-      await fsPoly.touch(tempFile);
-
-      const tempLink = await fsPoly.mktemp(path.join(tempDir, 'dir2', 'link'));
-      await fsPoly.mkdir(path.dirname(tempLink), { recursive: true });
-      await fsPoly.symlink(path.relative(path.dirname(tempLink), tempFile), tempLink);
-      const fileLink = await File.fileOf(tempLink);
-
-      expect(fileLink.getSymlinkSourceResolved()).toEqual(tempFile);
-    } finally {
-      await fsPoly.rm(tempDir, { recursive: true });
-    }
   });
 });
 
