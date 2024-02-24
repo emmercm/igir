@@ -48,6 +48,16 @@ describe('isSamba', () => {
 });
 
 describe('isSymlink', () => {
+  it('should return false for a hard link', async () => {
+    const tempFile = await fsPoly.mktemp(path.join(Constants.GLOBAL_TEMP_DIR, 'temp'));
+    await fsPoly.touch(tempFile);
+    const tempLink = await fsPoly.mktemp(path.join(Constants.GLOBAL_TEMP_DIR, 'link'));
+    await fsPoly.hardlink(tempFile, tempLink);
+    await expect(fsPoly.isSymlink(tempLink)).resolves.toEqual(false);
+    await fsPoly.rm(tempLink);
+    await fsPoly.rm(tempFile);
+  });
+
   it('should return true for a symlink', async () => {
     const tempFile = await fsPoly.mktemp(path.join(Constants.GLOBAL_TEMP_DIR, 'temp'));
     await fsPoly.touch(tempFile);
@@ -103,6 +113,100 @@ describe('makeLegal', () => {
     ])('should make the file path legal: %s', (input, expected) => {
       expect(fsPoly.makeLegal(input, '\\')).toEqual(expected);
     });
+  });
+});
+
+describe('readlink', () => {
+  it('should throw on hard links', async () => {
+    const tempFile = await fsPoly.mktemp(path.join(Constants.GLOBAL_TEMP_DIR, 'temp'));
+    await fsPoly.touch(tempFile);
+    const tempLink = await fsPoly.mktemp(path.join(Constants.GLOBAL_TEMP_DIR, 'link'));
+    await fsPoly.hardlink(tempFile, tempLink);
+
+    await expect(fsPoly.readlink(tempLink)).rejects.toThrow(/non-symlink/);
+
+    await fsPoly.rm(tempLink);
+    await fsPoly.rm(tempFile);
+  });
+
+  it('should read absolute symlinks', async () => {
+    const tempFile = await fsPoly.mktemp(path.join(Constants.GLOBAL_TEMP_DIR, 'temp'));
+    await fsPoly.touch(tempFile);
+    const tempLink = await fsPoly.mktemp(path.join(Constants.GLOBAL_TEMP_DIR, 'link'));
+    const tempFileAbsolute = path.resolve(tempFile);
+    await fsPoly.symlink(tempFileAbsolute, tempLink);
+
+    const readLink = await fsPoly.readlink(tempLink);
+    expect(readLink).toEqual(tempFileAbsolute);
+    expect(path.isAbsolute(readLink)).toEqual(true);
+
+    await fsPoly.rm(tempLink);
+    await fsPoly.rm(tempFile);
+  });
+
+  it('should read relative symlinks', async () => {
+    const tempFile = await fsPoly.mktemp(path.join(Constants.GLOBAL_TEMP_DIR, 'temp'));
+    await fsPoly.touch(tempFile);
+    const tempLink = await fsPoly.mktemp(path.join(Constants.GLOBAL_TEMP_DIR, 'link'));
+    const tempFileRelative = await fsPoly.symlinkRelativePath(tempFile, tempLink);
+    await fsPoly.symlink(tempFileRelative, tempLink);
+
+    const readLink = await fsPoly.readlink(tempLink);
+    expect(readLink).toEqual(tempFileRelative);
+    expect(path.isAbsolute(readLink)).toEqual(false);
+
+    await fsPoly.rm(tempLink);
+    await fsPoly.rm(tempFile);
+  });
+
+  it('should throw on plain files', async () => {
+    const tempFile = await fsPoly.mktemp(path.join(Constants.GLOBAL_TEMP_DIR, 'temp'));
+    await fsPoly.touch(tempFile);
+
+    await expect(fsPoly.readlink(tempFile)).rejects.toThrow(/non-symlink/);
+
+    await fsPoly.rm(tempFile);
+  });
+
+  it('should throw on directories', async () => {
+    const tempDir = await fsPoly.mkdtemp(Constants.GLOBAL_TEMP_DIR);
+
+    await expect(fsPoly.readlink(tempDir)).rejects.toThrow(/non-symlink/);
+
+    await fsPoly.rm(tempDir);
+  });
+});
+
+describe('readlinkResolved', () => {
+  it('should read absolute symlinks', async () => {
+    const tempFile = await fsPoly.mktemp(path.join(Constants.GLOBAL_TEMP_DIR, 'temp'));
+    await fsPoly.touch(tempFile);
+    const tempLink = await fsPoly.mktemp(path.join(Constants.GLOBAL_TEMP_DIR, 'link'));
+    const tempFileAbsolute = path.resolve(tempFile);
+    await fsPoly.symlink(tempFileAbsolute, tempLink);
+
+    const readLinkResolved = await fsPoly.readlinkResolved(tempLink);
+    expect(readLinkResolved).toEqual(tempFileAbsolute);
+    expect(path.isAbsolute(readLinkResolved)).toEqual(true);
+
+    await fsPoly.rm(tempLink);
+    await fsPoly.rm(tempFile);
+  });
+
+  it('should read relative symlinks', async () => {
+    const tempFile = await fsPoly.mktemp(path.join(Constants.GLOBAL_TEMP_DIR, 'temp'));
+    await fsPoly.touch(tempFile);
+    const tempLink = await fsPoly.mktemp(path.join(Constants.GLOBAL_TEMP_DIR, 'link'));
+    const tempFileRelative = await fsPoly.symlinkRelativePath(tempFile, tempLink);
+    await fsPoly.symlink(tempFileRelative, tempLink);
+
+    const readLinkResolved = await fsPoly.readlinkResolved(tempLink);
+    expect(readLinkResolved).not.toEqual(tempFileRelative);
+    expect(readLinkResolved).toEqual(path.resolve(tempFile));
+    expect(path.isAbsolute(readLinkResolved)).toEqual(true);
+
+    await fsPoly.rm(tempLink);
+    await fsPoly.rm(tempFile);
   });
 });
 

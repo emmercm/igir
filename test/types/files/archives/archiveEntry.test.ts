@@ -26,6 +26,83 @@ describe('getEntryPath', () => {
   });
 });
 
+describe('getSize', () => {
+  describe.each([
+    ['./test/fixtures/roms/7z/fizzbuzz.7z', 9],
+    ['./test/fixtures/roms/rar/fizzbuzz.rar', 9],
+    ['./test/fixtures/roms/tar/fizzbuzz.tar.gz', 9],
+    ['./test/fixtures/roms/zip/fizzbuzz.zip', 9],
+    ['./test/fixtures/roms/7z/foobar.7z', 7],
+    ['./test/fixtures/roms/rar/foobar.rar', 7],
+    ['./test/fixtures/roms/tar/foobar.tar.gz', 7],
+    ['./test/fixtures/roms/zip/foobar.zip', 7],
+    ['./test/fixtures/roms/7z/loremipsum.7z', 11],
+    ['./test/fixtures/roms/rar/loremipsum.rar', 11],
+    ['./test/fixtures/roms/tar/loremipsum.tar.gz', 11],
+    ['./test/fixtures/roms/zip/loremipsum.zip', 11],
+  ])('%s', (filePath, expectedSize) => {
+    it('should get the file\'s size', async () => {
+      const archiveEntries = await FileFactory.filesFrom(filePath);
+      expect(archiveEntries).toHaveLength(1);
+      const archiveEntry = archiveEntries[0];
+
+      expect(archiveEntry.getSize()).toEqual(expectedSize);
+    });
+
+    it('should get the hard link\'s target size', async () => {
+      const tempDir = await fsPoly.mkdtemp(Constants.GLOBAL_TEMP_DIR);
+      try {
+        // Make a copy of the original file to ensure it's on the same drive
+        const tempFile = path.join(tempDir, `file_${path.basename(filePath)}`);
+        await fsPoly.copyFile(filePath, tempFile);
+
+        const tempLink = path.join(tempDir, `link_${path.basename(filePath)}`);
+        await fsPoly.hardlink(path.resolve(tempFile), tempLink);
+
+        const archiveEntries = await FileFactory.filesFrom(tempLink);
+        expect(archiveEntries).toHaveLength(1);
+        const archiveEntry = archiveEntries[0];
+
+        expect(archiveEntry.getSize()).toEqual(expectedSize);
+      } finally {
+        await fsPoly.rm(tempDir, { recursive: true });
+      }
+    });
+
+    it('should get the absolute symlink\'s target size', async () => {
+      const tempDir = await fsPoly.mkdtemp(Constants.GLOBAL_TEMP_DIR);
+      try {
+        const tempLink = path.join(tempDir, path.basename(filePath));
+        await fsPoly.symlink(path.resolve(filePath), tempLink);
+
+        const archiveEntries = await FileFactory.filesFrom(tempLink);
+        expect(archiveEntries).toHaveLength(1);
+        const archiveEntry = archiveEntries[0];
+
+        expect(archiveEntry.getSize()).toEqual(expectedSize);
+      } finally {
+        await fsPoly.rm(tempDir, { recursive: true });
+      }
+    });
+
+    it('should get the relative symlink\'s target size', async () => {
+      const tempDir = await fsPoly.mkdtemp(Constants.GLOBAL_TEMP_DIR);
+      try {
+        const tempLink = path.join(tempDir, path.basename(filePath));
+        await fsPoly.symlink(await fsPoly.symlinkRelativePath(filePath, tempLink), tempLink);
+
+        const archiveEntries = await FileFactory.filesFrom(tempLink);
+        expect(archiveEntries).toHaveLength(1);
+        const archiveEntry = archiveEntries[0];
+
+        expect(archiveEntry.getSize()).toEqual(expectedSize);
+      } finally {
+        await fsPoly.rm(tempDir, { recursive: true });
+      }
+    });
+  });
+});
+
 describe('getCrc32', () => {
   test.each([
     ['./test/fixtures/roms/7z/fizzbuzz.7z', '370517b5'],

@@ -1,13 +1,29 @@
 import path from 'node:path';
 
+import Constants from '../../../../src/constants.js';
 import ROMScanner from '../../../../src/modules/romScanner.js';
+import fsPoly from '../../../../src/polyfill/fsPoly.js';
 import Archive from '../../../../src/types/files/archives/archive.js';
 import ArchiveEntry from '../../../../src/types/files/archives/archiveEntry.js';
+import Rar from '../../../../src/types/files/archives/rar.js';
+import SevenZip from '../../../../src/types/files/archives/sevenZip.js';
+import Tar from '../../../../src/types/files/archives/tar.js';
+import Zip from '../../../../src/types/files/archives/zip.js';
 import FileFactory from '../../../../src/types/files/fileFactory.js';
 import Options from '../../../../src/types/options.js';
 import ProgressBarFake from '../../../console/progressBarFake.js';
 
 describe('getArchiveEntries', () => {
+  test.each([...new Set([
+    ...Zip.SUPPORTED_EXTENSIONS,
+    ...Tar.SUPPORTED_EXTENSIONS,
+    ...Rar.SUPPORTED_EXTENSIONS,
+    ...SevenZip.SUPPORTED_EXTENSIONS,
+  ])])('should throw when the file doesn\'t exist: %s', async (extension) => {
+    const tempFile = (await fsPoly.mktemp(path.join(Constants.GLOBAL_TEMP_DIR, 'file'))) + extension;
+    await expect(FileFactory.filesFrom(tempFile)).rejects.toThrow();
+  });
+
   test.each([
     // fizzbuzz
     ['./test/fixtures/roms/7z/fizzbuzz.7z', 'fizzbuzz.nes', '370517b5'],

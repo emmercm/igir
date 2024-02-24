@@ -11,7 +11,7 @@ There are additional levels of verbosity that can be enabled with the `-v` flag:
 
   This includes:
 
-  - Files being copied, zipped, and symlinked
+  - Files being copied, zipped, and linked
   - [dir2dat](../dats/dir2dat.md) files being created
   - [Fixdat](../dats/fixdats.md) files being created
   - Input files deleted after being moved
@@ -31,13 +31,13 @@ There are additional levels of verbosity that can be enabled with the `-v` flag:
   This includes:
 
   - Everything from the `INFO` level above
-  - Files skipped from being copied, zipped, or symlinked because the output file exists and an `--overwrite` option wasn't provided
+  - Files skipped from being copied, zipped, or linked because the output file exists and an `--overwrite` option wasn't provided
   - [Fixdat](../dats/fixdats.md) files skipped from being created because all games were found
 
   Usage:
 
   ```shell
-  igir [commands..] [options] -v
+  igir [commands..] [options] -vv
   ```
 
   This level is helpful to turn on if you want debug why an action didn't take place.
@@ -47,7 +47,7 @@ There are additional levels of verbosity that can be enabled with the `-v` flag:
   Usage:
 
   ```shell
-  igir [commands..] [options] -v
+  igir [commands..] [options] -vvv
   ```
 
   !!! note

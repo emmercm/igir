@@ -68,7 +68,7 @@ export default class ArgumentsParser {
     const groupDatInput = 'DAT input options:';
     const groupRomOutput = 'ROM output options (processed in order):';
     const groupRomZip = 'ROM zip command options:';
-    const groupRomSymlink = 'ROM symlink command options:';
+    const groupRomLink = 'ROM link command options:';
     const groupRomHeader = 'ROM header options:';
     const groupRomSet = 'ROM set options:';
     const groupRomFiltering = 'ROM filtering options:';
@@ -78,10 +78,11 @@ export default class ArgumentsParser {
 
     // Add every command to a yargs object, recursively, resulting in the ability to specify
     // multiple commands
-    const commands = [
+    const commands: [string, string | boolean][] = [
       ['copy', 'Copy ROM files from the input to output directory'],
       ['move', 'Move ROM files from the input to output directory'],
-      ['symlink', 'Create symlinks in the output directory to ROM files in the input directory'],
+      ['link', 'Create links in the output directory to ROM files in the input directory'],
+      ['symlink', false],
       ['extract', 'Extract ROM files in archives when copying or moving'],
       ['zip', 'Create zip archives of ROMs when copying or moving'],
       ['test', 'Test ROMs for accuracy after writing them to the output directory'],
@@ -99,10 +100,18 @@ export default class ArgumentsParser {
         // specifying `igir copy --help`.
         .filter(([command]) => commandsToAdd.includes(command))
         .forEach(([command, description]) => {
-          yargsObj.command(command, description, (yargsSubObj) => addCommands(
-            yargsSubObj,
-            commandsToAdd.filter((c) => c !== command),
-          ));
+          if (typeof description === 'string') {
+            yargsObj.command(command, description, (yargsSubObj) => addCommands(
+              yargsSubObj,
+              commandsToAdd.filter((c) => c !== command),
+            ));
+          } else {
+            // A deprecation message should be printed elsewhere
+            yargsObj.command(command, false, (yargsSubObj) => addCommands(
+              yargsSubObj,
+              commandsToAdd.filter((c) => c !== command),
+            ));
+          }
         });
 
       if (commandsToAdd.length === 0) {
@@ -111,8 +120,8 @@ export default class ArgumentsParser {
       }
       return yargsObj
         .middleware((middlewareArgv) => {
-          /* eslint-disable no-param-reassign */
           // Ignore duplicate commands
+          // eslint-disable-next-line no-param-reassign
           middlewareArgv._ = middlewareArgv._.reduce(ArrayPoly.reduceUnique(), []);
         }, true)
         .check((checkArgv) => {
@@ -120,12 +129,12 @@ export default class ArgumentsParser {
             return true;
           }
 
-          const writeCommands = ['copy', 'move', 'symlink'].filter((command) => checkArgv._.includes(command));
+          const writeCommands = ['copy', 'move', 'link', 'symlink'].filter((command) => checkArgv._.includes(command));
           if (writeCommands.length > 1) {
             throw new Error(`Incompatible commands: ${writeCommands.join(', ')}`);
           }
 
-          const archiveCommands = ['symlink', 'extract', 'zip'].filter((command) => checkArgv._.includes(command));
+          const archiveCommands = ['link', 'symlink', 'extract', 'zip'].filter((command) => checkArgv._.includes(command));
           if (archiveCommands.length > 1) {
             throw new Error(`Incompatible commands: ${archiveCommands.join(', ')}`);
           }
@@ -142,8 +151,8 @@ export default class ArgumentsParser {
           });
 
           ['test', 'clean'].forEach((command) => {
-            if (checkArgv._.includes(command) && ['copy', 'move', 'symlink'].every((write) => !checkArgv._.includes(write))) {
-              throw new Error(`Command "${command}" requires one of the commands: copy, move, or symlink`);
+            if (checkArgv._.includes(command) && ['copy', 'move', 'link', 'symlink'].every((write) => !checkArgv._.includes(write))) {
+              throw new Error(`Command "${command}" requires one of the commands: copy, move, or link`);
             }
           });
 
@@ -219,7 +228,7 @@ export default class ArgumentsParser {
       .option('dat-regex', {
         type: 'string',
         coerce: (val) => {
-          this.logger.warn('--dat-regex is deprecated, use --dat-name-regex instead');
+          this.logger.warn('the \'--dat-regex\' option is deprecated, use \'--dat-name-regex\' instead');
           return ArgumentsParser.readRegexFile(val);
         },
         requiresArg: true,
@@ -235,7 +244,7 @@ export default class ArgumentsParser {
       .option('dat-regex-exclude', {
         type: 'string',
         coerce: (val) => {
-          this.logger.warn('--dat-regex-exclude is deprecated, use --dat-name-regex-exclude instead');
+          this.logger.warn('the \'--dat-regex-exclude\' option is deprecated, use \'--dat-name-regex-exclude\' instead');
           return ArgumentsParser.readRegexFile(val);
         },
         requiresArg: true,
@@ -280,7 +289,7 @@ export default class ArgumentsParser {
       .option('fixdat', {
         type: 'boolean',
         coerce: (val: boolean) => {
-          this.logger.warn('--fixdat is deprecated, use the fixdat command instead');
+          this.logger.warn('the \'--fixdat\' option is deprecated, use the \'fixdat\' command instead');
           return val;
         },
         implies: 'dat',
@@ -420,18 +429,33 @@ export default class ArgumentsParser {
         return true;
       })
 
+      .option('symlink', {
+        group: groupRomLink,
+        description: 'Creates symbolic links instead of hard links',
+        type: 'boolean',
+      })
+      .middleware((middlewareArgv) => {
+        if (middlewareArgv._.includes('symlink')) {
+          this.logger.warn('the \'symlink\' command is deprecated, use \'link --symlink\' instead');
+          if (middlewareArgv.symlink === undefined) {
+            // eslint-disable-next-line no-param-reassign
+            middlewareArgv.symlink = true;
+          }
+        }
+      }, true)
       .option('symlink-relative', {
-        group: groupRomSymlink,
+        group: groupRomLink,
         description: 'Create symlinks as relative to the target path, as opposed to absolute',
         type: 'boolean',
+        implies: 'symlink',
       })
       .check((checkArgv) => {
         if (checkArgv.help) {
           return true;
         }
-        const needSymlink = ['symlink-relative'].filter((option) => checkArgv[option]);
-        if (!checkArgv._.includes('symlink') && needSymlink.length > 0) {
-          throw new Error(`Missing required command for option${needSymlink.length !== 1 ? 's' : ''} ${needSymlink.join(', ')}: symlink`);
+        const needLinkCommand = ['symlink'].filter((option) => checkArgv[option]);
+        if (!checkArgv._.includes('link') && !checkArgv._.includes('symlink') && needLinkCommand.length > 0) {
+          throw new Error(`Missing required command for option${needLinkCommand.length !== 1 ? 's' : ''} ${needLinkCommand.join(', ')}: link`);
         }
         return true;
       })
@@ -502,7 +526,7 @@ export default class ArgumentsParser {
       .option('language-filter', {
         type: 'string',
         coerce: (val: string) => {
-          this.logger.warn('--language-filter is deprecated, use --filter-language instead');
+          this.logger.warn('the \'--language-filter\' option is deprecated, use \'--filter-language\' instead');
           return val.split(',');
         },
         requiresArg: true,
@@ -520,7 +544,7 @@ export default class ArgumentsParser {
       .option('region-filter', {
         type: 'string',
         coerce: (val: string) => {
-          this.logger.warn('--region-filter is deprecated, use --filter-region instead');
+          this.logger.warn('the \'--region-filter\' option is deprecated, use \'--filter-region\' instead');
           return val.split(',');
         },
         requiresArg: true,
@@ -704,8 +728,8 @@ export default class ArgumentsParser {
         default: Constants.ROM_WRITER_DEFAULT_THREADS,
       })
       .middleware((middlewareArgv) => {
-        /* eslint-disable no-param-reassign */
         if (middlewareArgv.zipDatName) {
+          // eslint-disable-next-line no-param-reassign
           middlewareArgv.datThreads = 1;
         }
       }, true)
