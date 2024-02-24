@@ -44,3 +44,31 @@ If you want to clean _every_ directory in `games/`, you could specify it as both
 The `--clean-exclude <path>` option exists so that one or more paths (with support for [globbing](../input/file-scanning.md)) can be excluded from deletion.
 
 See the [Analogue Pocket](../usage/hardware/analogue-pocket.md) page for a practical example.
+
+## Dry run
+
+The `--clean-dry-run` option exists to see what paths `igir clean` would delete, without _actually_ deleting them.
+
+!!! note
+
+    You will want to set the [log level](../advanced/logging.md) to at least DEBUG (`-vv`) in order to see actions that were skipped, such as cleaning.
+
+Usage:
+
+=== ":simple-windowsxp: Windows"
+
+    ```batch
+    igir [commands..] clean [options] --clean-dry-run -vv
+    ```
+
+=== ":simple-apple: macOS"
+
+    ```shell
+    igir [commands..] clean [options] --clean-dry-run -vv
+    ```
+
+=== ":simple-linux: Linux"
+
+    ```shell
+    igir [commands..] clean [options] --clean-dry-run -vv
+    ```
