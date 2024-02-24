@@ -32,9 +32,10 @@ export default class Tar extends Archive {
         errorMessage = `${code}: ${message}`;
       },
     });
-    fs.createReadStream(this.getFilePath(), {
+    const readStream = fs.createReadStream(this.getFilePath(), {
       highWaterMark: Constants.FILE_READING_CHUNK_SIZE,
-    }).pipe(writeStream);
+    });
+    readStream.pipe(writeStream);
 
     // Note: entries are read sequentially, so entry streams need to be fully read or resumed
     writeStream.on('entry', async (entry) => {
@@ -51,8 +52,9 @@ export default class Tar extends Archive {
     });
 
     // Wait for the tar file to be closed
-    await new Promise<void>((resolve) => {
+    await new Promise<void>((resolve, reject) => {
       writeStream.on('end', resolve);
+      readStream.on('error', reject);
     });
 
     // NOTE(cemmer): for whatever promise hell reason, if we tell `tar` to be strict, the exception
