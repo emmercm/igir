@@ -1,6 +1,6 @@
 # Output Cleaning
 
-The `igir clean` [command](../commands.md) can be used when writing (`igir copy`, `igir move`, and `igir symlink`) to delete files from the `--output <path>` directory that are either:
+The `igir clean` [command](../commands.md) can be used when writing (`igir copy`, `igir move`, and `igir link`) to delete files from the `--output <path>` directory that are either:
 
 - Not contained in any provided [DAT](../dats/introduction.md) (the [`--dat <path>` option](../dats/processing.md#scanning-for-dats)).
 - Contained in a [DAT](../dats/introduction.md) (the [`--dat <path>` option](../dats/processing.md#scanning-for-dats)), but the file is in the incorrect location.

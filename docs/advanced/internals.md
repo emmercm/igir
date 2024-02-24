@@ -18,7 +18,7 @@ Information about the inner workings of `igir`.
    - Patch files are matched to ROMs found
    - ROM preferences are applied (`--single`, see [filtering & preference docs](../roms/filtering-preferences.md#preferences-for-1g1r))
    - ROMs are combined (`--zip-dat-name`)
-   - ROMs are written to the output directory, if specified (`copy`, `move`, `symlink`)
+   - ROMs are written to the output directory, if specified (`copy`, `move`, `link`)
      - Written ROMs are tested for accuracy, if specified (`test`)
    - A "dir2dat" DAT is created, if specified (`dir2dat`) (see [dir2dat docs](../dats/dir2dat.md))
    - A "fixdat" is created, if specified (`fixdat`) (see [fixdats docs](../dats/fixdats.md))

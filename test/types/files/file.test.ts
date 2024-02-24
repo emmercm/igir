@@ -45,6 +45,22 @@ describe('getSize', () => {
       }
     });
 
+    it('should get the hard link\'s target size: %s', async () => {
+      const tempDir = await fsPoly.mkdtemp(Constants.GLOBAL_TEMP_DIR);
+      try {
+        const tempFile = path.resolve(await fsPoly.mktemp(path.join(tempDir, 'file')));
+        await (await FilePoly.fileOfSize(tempFile, 'r', size)).close(); // touch
+
+        const tempLink = await fsPoly.mktemp(path.join(tempDir, 'link'));
+        await fsPoly.hardlink(path.resolve(tempFile), tempLink);
+        const fileLink = await File.fileOf(tempLink);
+
+        expect(fileLink.getSize()).toEqual(size);
+      } finally {
+        await fsPoly.rm(tempDir, { recursive: true });
+      }
+    });
+
     it('should get the absolute symlink\'s target size: %s', async () => {
       const tempDir = await fsPoly.mkdtemp(Constants.GLOBAL_TEMP_DIR);
       try {

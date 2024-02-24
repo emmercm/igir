@@ -96,7 +96,7 @@ describe('options', () => {
 
     expect(options.shouldCopy()).toEqual(true); // dummy command
     expect(options.shouldMove()).toEqual(false);
-    expect(options.shouldSymlink()).toEqual(false);
+    expect(options.shouldLink()).toEqual(false);
     expect(options.shouldExtract()).toEqual(false);
     expect(options.canZip()).toEqual(false);
     expect(options.shouldDir2Dat()).toEqual(false);
@@ -126,6 +126,7 @@ describe('options', () => {
 
     expect(options.getZipDatName()).toEqual(false);
 
+    expect(options.getSymlink()).toEqual(false);
     expect(options.getSymlinkRelative()).toEqual(false);
 
     expect(options.getMergeRoms()).toEqual(MergeMode.FULLNONMERGED);
@@ -534,14 +535,42 @@ describe('options', () => {
     expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, 'zip', '--zip-dat-name', 'true', '--zip-dat-name', 'false']).getZipDatName()).toEqual(false);
   });
 
+  it('should parse "symlink"', () => {
+    expect(() => argumentsParser.parse([...dummyCommandAndRequiredArgs, '--symlink-relative'])).toThrow(/dependent|implication/i);
+    expect(argumentsParser.parse(['symlink', ...dummyRequiredArgs]).getSymlink()).toEqual(true);
+    expect(argumentsParser.parse(['symlink', ...dummyRequiredArgs, '--symlink']).getSymlink()).toEqual(true);
+    expect(argumentsParser.parse(['symlink', ...dummyRequiredArgs, '--symlink', 'true']).getSymlink()).toEqual(true);
+    expect(argumentsParser.parse(['symlink', ...dummyRequiredArgs, '--symlink', 'false']).getSymlink()).toEqual(false);
+    expect(argumentsParser.parse(['symlink', ...dummyRequiredArgs, '--symlink', '--symlink']).getSymlink()).toEqual(true);
+    expect(argumentsParser.parse(['symlink', ...dummyRequiredArgs, '--symlink', 'false', '--symlink', 'true']).getSymlink()).toEqual(true);
+    expect(argumentsParser.parse(['symlink', ...dummyRequiredArgs, '--symlink', 'true', '--symlink', 'false']).getSymlink()).toEqual(false);
+
+    expect(() => argumentsParser.parse([...dummyCommandAndRequiredArgs, 'link', '--symlink-relative'])).toThrow(/dependent|implication/i);
+    expect(argumentsParser.parse(['link', ...dummyRequiredArgs]).getSymlink()).toEqual(false);
+    expect(argumentsParser.parse(['link', ...dummyRequiredArgs, '--symlink']).getSymlink()).toEqual(true);
+    expect(argumentsParser.parse(['link', ...dummyRequiredArgs, '--symlink', 'true']).getSymlink()).toEqual(true);
+    expect(argumentsParser.parse(['link', ...dummyRequiredArgs, '--symlink', 'false']).getSymlink()).toEqual(false);
+    expect(argumentsParser.parse(['link', ...dummyRequiredArgs, '--symlink', '--symlink']).getSymlink()).toEqual(true);
+    expect(argumentsParser.parse(['link', ...dummyRequiredArgs, '--symlink', 'false', '--symlink', 'true']).getSymlink()).toEqual(true);
+    expect(argumentsParser.parse(['link', ...dummyRequiredArgs, '--symlink', 'true', '--symlink', 'false']).getSymlink()).toEqual(false);
+  });
+
   it('should parse "symlink-relative"', () => {
-    expect(() => argumentsParser.parse([...dummyCommandAndRequiredArgs, '--symlink-relative'])).toThrow(/missing required command/i);
+    expect(() => argumentsParser.parse([...dummyCommandAndRequiredArgs, '--symlink-relative'])).toThrow(/dependent|implication/i);
     expect(argumentsParser.parse(['symlink', ...dummyRequiredArgs, '--symlink-relative']).getSymlinkRelative()).toEqual(true);
     expect(argumentsParser.parse(['symlink', ...dummyRequiredArgs, '--symlink-relative', 'true']).getSymlinkRelative()).toEqual(true);
     expect(argumentsParser.parse(['symlink', ...dummyRequiredArgs, '--symlink-relative', 'false']).getSymlinkRelative()).toEqual(false);
     expect(argumentsParser.parse(['symlink', ...dummyRequiredArgs, '--symlink-relative', '--symlink-relative']).getSymlinkRelative()).toEqual(true);
     expect(argumentsParser.parse(['symlink', ...dummyRequiredArgs, '--symlink-relative', 'false', '--symlink-relative', 'true']).getSymlinkRelative()).toEqual(true);
     expect(argumentsParser.parse(['symlink', ...dummyRequiredArgs, '--symlink-relative', 'true', '--symlink-relative', 'false']).getSymlinkRelative()).toEqual(false);
+
+    expect(() => argumentsParser.parse([...dummyCommandAndRequiredArgs, 'link', '--symlink-relative'])).toThrow(/dependent|implication/i);
+    expect(argumentsParser.parse(['link', ...dummyRequiredArgs, '--symlink', '--symlink-relative']).getSymlinkRelative()).toEqual(true);
+    expect(argumentsParser.parse(['link', ...dummyRequiredArgs, '--symlink', '--symlink-relative', 'true']).getSymlinkRelative()).toEqual(true);
+    expect(argumentsParser.parse(['link', ...dummyRequiredArgs, '--symlink', '--symlink-relative', 'false']).getSymlinkRelative()).toEqual(false);
+    expect(argumentsParser.parse(['link', ...dummyRequiredArgs, '--symlink', '--symlink-relative', '--symlink-relative']).getSymlinkRelative()).toEqual(true);
+    expect(argumentsParser.parse(['link', ...dummyRequiredArgs, '--symlink', '--symlink-relative', 'false', '--symlink-relative', 'true']).getSymlinkRelative()).toEqual(true);
+    expect(argumentsParser.parse(['link', ...dummyRequiredArgs, '--symlink', '--symlink-relative', 'true', '--symlink-relative', 'false']).getSymlinkRelative()).toEqual(false);
   });
 
   it('should parse "header"', () => {

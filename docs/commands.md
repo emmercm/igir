@@ -22,11 +22,11 @@ Move ROMs from an input directory to the output directory. The same directory ca
 
 ROMs will be deleted from their input directory after _all_ ROMs for _every_ [DAT](dats/introduction.md) have been written.
 
-### `symlink`
+### `link`
 
-Create a symbolic link in the output directory to a ROM in the input directory.
+Create a link in the output directory to a ROM in the input directory.
 
-By default, absolute file paths will be used. You can specify the `--symlink-relative` option to use relative file paths.
+By default, hard links are created, similar to [ln(1)](https://linux.die.net/man/1/ln). Use the `--symlink` option to create symbolic links.
 
 ## ROM archiving
 
