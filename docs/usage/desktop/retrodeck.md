@@ -1,7 +1,5 @@
 # RetroDECK
 
-## RetroDECK
-
 [RetroDECK](https://retrodeck.net/) is a self contained application package that uses [EmulationStation](emulationstation.md) as a frontend for [RetroArch](retroarch.md) and many other standalone emulators. It is primarily designed and optimised for the Steam Deck.
 
 ## BIOS
