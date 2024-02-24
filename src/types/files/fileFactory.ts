@@ -13,10 +13,21 @@ export default class FileFactory {
     filePath: string,
     checksumBitmask: number = ChecksumBitmask.CRC32,
   ): Promise<File[]> {
-    if (this.isArchive(filePath)) {
-      return this.archiveFrom(filePath).getArchiveEntries(checksumBitmask);
+    if (!this.isArchive(filePath)) {
+      return [await File.fileOf(filePath, undefined, undefined, checksumBitmask)];
     }
-    return [await File.fileOf(filePath, undefined, undefined, checksumBitmask)];
+
+    try {
+      return await this.archiveFrom(filePath).getArchiveEntries(checksumBitmask);
+    } catch (error) {
+      if (error && typeof error === 'object' && 'code' in error && error.code === 'ENOENT') {
+        throw new Error(`file doesn't exist: ${filePath}`);
+      }
+      if (typeof error === 'string') {
+        throw new Error(error);
+      }
+      throw error;
+    }
   }
 
   /**

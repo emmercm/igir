@@ -98,27 +98,77 @@ it('should delete everything if all unmatched and nothing excluded', async () =>
   ])).resolves.toHaveLength(0);
 });
 
-it('should delete symlinks', async () => {
+it('should delete hard links', async () => {
   const tempDir = await fsPoly.mkdtemp(Constants.GLOBAL_TEMP_DIR);
   try {
-    const tempFileOne = await fsPoly.mktemp(path.join(tempDir, 'one'));
+    const filesDir = path.join(tempDir, 'files');
+    await fsPoly.mkdir(filesDir);
+    const linksDir = path.join(tempDir, 'links');
+    await fsPoly.mkdir(linksDir);
+
+    const tempFileOne = await fsPoly.mktemp(path.join(filesDir, 'one'));
     await fsPoly.touch(tempFileOne);
+    const tempLinkOne = await fsPoly.mktemp(path.join(linksDir, 'one'));
+    await fsPoly.hardlink(tempFileOne, tempLinkOne);
 
-    const tempFileTwo = await fsPoly.mktemp(path.join(tempDir, 'two'));
+    const tempFileTwo = await fsPoly.mktemp(path.join(filesDir, 'two'));
     await fsPoly.touch(tempFileTwo);
-
-    const tempLink = await fsPoly.mktemp(path.join(tempDir, 'link'));
-    await fsPoly.symlink(tempFileOne, tempLink);
+    const tempLinkTwo = await fsPoly.mktemp(path.join(linksDir, 'two'));
+    await fsPoly.hardlink(tempFileTwo, tempLinkTwo);
 
     await new DirectoryCleaner(
       new Options({
         commands: ['move', 'clean'],
       }),
       new ProgressBarFake(),
-    ).clean([tempDir], [await File.fileOf(tempFileOne)]);
+    ).clean([linksDir], [await File.fileOf(tempLinkOne)]);
 
     const filesRemaining = await fsPoly.walk(tempDir);
-    expect(filesRemaining).toEqual([tempFileOne]);
+    expect(filesRemaining).toEqual([
+      // Original files were preserved
+      tempFileOne,
+      tempFileTwo,
+      // The excluded file was preserved
+      tempLinkOne,
+    ]);
+  } finally {
+    await fsPoly.rm(tempDir, { recursive: true });
+  }
+});
+
+it('should delete symlinks', async () => {
+  const tempDir = await fsPoly.mkdtemp(Constants.GLOBAL_TEMP_DIR);
+  try {
+    const filesDir = path.join(tempDir, 'files');
+    await fsPoly.mkdir(filesDir);
+    const linksDir = path.join(tempDir, 'links');
+    await fsPoly.mkdir(linksDir);
+
+    const tempFileOne = await fsPoly.mktemp(path.join(filesDir, 'one'));
+    await fsPoly.touch(tempFileOne);
+    const tempLinkOne = await fsPoly.mktemp(path.join(linksDir, 'one'));
+    await fsPoly.symlink(tempFileOne, tempLinkOne);
+
+    const tempFileTwo = await fsPoly.mktemp(path.join(filesDir, 'two'));
+    await fsPoly.touch(tempFileTwo);
+    const tempLinkTwo = await fsPoly.mktemp(path.join(linksDir, 'two'));
+    await fsPoly.symlink(tempFileTwo, tempLinkTwo);
+
+    await new DirectoryCleaner(
+      new Options({
+        commands: ['move', 'clean'],
+      }),
+      new ProgressBarFake(),
+    ).clean([linksDir], [await File.fileOf(tempLinkOne)]);
+
+    const filesRemaining = await fsPoly.walk(tempDir);
+    expect(filesRemaining).toEqual([
+      // Original files were preserved
+      tempFileOne,
+      tempFileTwo,
+      // The excluded file was preserved
+      tempLinkOne,
+    ]);
   } finally {
     await fsPoly.rm(tempDir, { recursive: true });
   }

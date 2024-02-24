@@ -59,6 +59,9 @@ async function walkAndStat(dirPath: string): Promise<[string, Stats][]> {
           // Hard-code properties that can change with file reads
           stats.atime = new Date(0);
           stats.atimeMs = 0;
+          // Hard-code properties that can change with hardlinking
+          stats.ctimeMs = 0;
+          stats.nlink = 0;
         } catch {
           stats = new Stats();
         }
@@ -1322,11 +1325,14 @@ describe('raw', () => {
   });
 });
 
-describe('symlink', () => {
+describe.each([
+  [true],
+  [false],
+])('link with symlink: %s', (symlink) => {
   it('should not write if the output is the input', async () => {
     await copyFixturesToTemp(async (inputTemp) => {
       // Given
-      const options = new Options({ commands: ['symlink', 'test'] });
+      const options = new Options({ commands: ['link', 'test'], symlink });
       const inputRaw = path.join(inputTemp, 'roms', 'raw');
       const inputFilesBefore = await walkAndStat(inputRaw);
       expect(inputFilesBefore.length)
@@ -1343,7 +1349,7 @@ describe('symlink', () => {
   it('should not write anything if the output exists and not overwriting', async () => {
     await copyFixturesToTemp(async (inputTemp, outputTemp) => {
       // Given
-      const options = new Options({ commands: ['symlink', 'test'] });
+      const options = new Options({ commands: ['link', 'test'], symlink });
       const inputFilesBefore = await walkAndStat(inputTemp);
       await expect(walkAndStat(outputTemp)).resolves.toHaveLength(0);
 
@@ -1353,9 +1359,8 @@ describe('symlink', () => {
       // And files were written
       const outputFilesBefore = await walkAndStat(outputTemp);
       expect(outputFilesBefore).not.toHaveLength(0);
-      for (const [outputPath, stats] of outputFilesBefore) {
-        expect(stats.isSymbolicLink()).toEqual(true);
-        await expect(fsPoly.readlink(path.join(outputTemp, outputPath))).resolves.toMatch(new RegExp(`^${inputTemp.replace(/\\/g, '\\\\')}`));
+      for (const [, stats] of outputFilesBefore) {
+        expect(stats.isSymbolicLink()).toEqual(symlink);
       }
 
       // When we write again
@@ -1365,14 +1370,14 @@ describe('symlink', () => {
       await expect(walkAndStat(outputTemp)).resolves.toEqual(outputFilesBefore);
 
       // And the input files weren't touched
-      await expect(walkAndStat(inputTemp)).resolves.toEqual(inputFilesBefore);
+      await expect(walkAndStat(inputTemp)).resolves.toMatchObject(inputFilesBefore);
     });
   });
 
   it('should write if the output is expected and overwriting', async () => {
     await copyFixturesToTemp(async (inputTemp, outputTemp) => {
       // Given
-      const options = new Options({ commands: ['symlink', 'test'] });
+      const options = new Options({ commands: ['link', 'test'], symlink });
       const inputFilesBefore = await walkAndStat(inputTemp);
       await expect(walkAndStat(outputTemp)).resolves.toHaveLength(0);
 
@@ -1382,9 +1387,8 @@ describe('symlink', () => {
       // And files were written
       const outputFilesBefore = await walkAndStat(outputTemp);
       expect(outputFilesBefore).not.toHaveLength(0);
-      for (const [outputPath, stats] of outputFilesBefore) {
-        expect(stats.isSymbolicLink()).toEqual(true);
-        await expect(fsPoly.readlink(path.join(outputTemp, outputPath))).resolves.toMatch(new RegExp(`^${inputTemp.replace(/\\/g, '\\\\')}`));
+      for (const [, stats] of outputFilesBefore) {
+        expect(stats.isSymbolicLink()).toEqual(symlink);
       }
 
       // When we write again
@@ -1398,38 +1402,37 @@ describe('symlink', () => {
       expect(outputFilesAfter.map((pair) => pair[0]))
         .toEqual(outputFilesBefore.map((pair) => pair[0]));
       expect(outputFilesAfter).not.toEqual(outputFilesBefore);
-      for (const [outputPath, stats] of outputFilesAfter) {
-        expect(stats.isSymbolicLink()).toEqual(true);
-        await expect(fsPoly.readlink(path.join(outputTemp, outputPath))).resolves.toMatch(new RegExp(`^${inputTemp.replace(/\\/g, '\\\\')}`));
+      for (const [, stats] of outputFilesAfter) {
+        expect(stats.isSymbolicLink()).toEqual(symlink);
       }
 
       // And the input files weren't touched
-      await expect(walkAndStat(inputTemp)).resolves.toEqual(inputFilesBefore);
+      await expect(walkAndStat(inputTemp)).resolves.toMatchObject(inputFilesBefore);
     });
   });
+});
 
-  it('should write relative symlinks', async () => {
-    await copyFixturesToTemp(async (inputTemp, outputTemp) => {
-      // Given
-      const options = new Options({ commands: ['symlink', 'test'], symlinkRelative: true });
-      await expect(walkAndStat(outputTemp)).resolves.toHaveLength(0);
+it('should write relative symlinks', async () => {
+  await copyFixturesToTemp(async (inputTemp, outputTemp) => {
+    // Given
+    const options = new Options({ commands: ['link', 'test'], symlink: true, symlinkRelative: true });
+    await expect(walkAndStat(outputTemp)).resolves.toHaveLength(0);
 
-      // When we write
-      await candidateWriter(options, inputTemp, '**/*', undefined, outputTemp);
+    // When we write
+    await candidateWriter(options, inputTemp, '**/*', undefined, outputTemp);
 
-      // Then files were written
-      const outputFilesBefore = await walkAndStat(outputTemp);
-      expect(outputFilesBefore).not.toHaveLength(0);
-      for (const [outputPath, stats] of outputFilesBefore) {
-        expect(stats.isSymbolicLink()).toEqual(true);
-        const outputPathAbsolute = path.resolve(path.join(outputTemp, outputPath));
-        const outputPathResolved = path.resolve(
-          path.dirname(outputPathAbsolute),
-          await fsPoly.readlink(outputPathAbsolute),
-        );
-        await expect(fsPoly.exists(outputPathResolved)).resolves.toEqual(true);
-        expect(outputPathResolved.startsWith(inputTemp)).toEqual(true);
-      }
-    });
+    // Then files were written
+    const outputFilesBefore = await walkAndStat(outputTemp);
+    expect(outputFilesBefore).not.toHaveLength(0);
+    for (const [outputPath, stats] of outputFilesBefore) {
+      expect(stats.isSymbolicLink()).toEqual(true);
+      const outputPathAbsolute = path.resolve(path.join(outputTemp, outputPath));
+      const outputPathResolved = path.resolve(
+        path.dirname(outputPathAbsolute),
+        await fsPoly.readlink(outputPathAbsolute),
+      );
+      await expect(fsPoly.exists(outputPathResolved)).resolves.toEqual(true);
+      expect(outputPathResolved.startsWith(inputTemp)).toEqual(true);
+    }
   });
 });
