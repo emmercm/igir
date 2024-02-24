@@ -64,7 +64,7 @@
       // Renovate's defaults for these options
       schedule: 'at any time',
       prCreation: 'immediate',
-      platformAutomerge: true,
+      automerge: true,
       minimumReleaseAge: '0 days'
     },
 
@@ -82,7 +82,7 @@
       // Renovate's defaults for these options
       schedule: 'at any time',
       prCreation: 'immediate',
-      platformAutomerge: true,
+      automerge: true,
     },
 
     // Disable automatic merging of GitHub Actions major version updates
