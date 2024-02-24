@@ -610,9 +610,9 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#symlink" class="md-nav__link">
+  <a href="#link" class="md-nav__link">
     <span class="md-ellipsis">
-      symlink
+      link
     </span>
   </a>
   
@@ -851,6 +851,8 @@
   
     
     
+      
+        
       
         
       
@@ -1199,6 +1201,27 @@
   
   <span class="md-ellipsis">
     RetroArch
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../usage/desktop/retrodeck/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    RetroDECK
   </span>
   
 
@@ -2521,9 +2544,9 @@
 <h3 id="move"><code>move</code></h3>
 <p>Move ROMs from an input directory to the output directory. The same directory can be specified for both input &amp; output, resulting in ROMs being renamed as their names change in <a href="../dats/introduction/">DATs</a>.</p>
 <p>ROMs will be deleted from their input directory after <em>all</em> ROMs for <em>every</em> <a href="../dats/introduction/">DAT</a> have been written.</p>
-<h3 id="symlink"><code>symlink</code></h3>
-<p>Create a symbolic link in the output directory to a ROM in the input directory.</p>
-<p>By default, absolute file paths will be used. You can specify the <code>--symlink-relative</code> option to use relative file paths.</p>
+<h3 id="link"><code>link</code></h3>
+<p>Create a link in the output directory to a ROM in the input directory.</p>
+<p>By default, hard links are created, similar to <a href="https://linux.die.net/man/1/ln">ln(1)</a>. Use the <code>--symlink</code> option to create symbolic links.</p>
 <h2 id="rom-archiving">ROM archiving</h2>
 <p><code>igir</code> has two ROM archive commands. Archive commands require either the <code>copy</code> or <code>move</code> write command. Only one archive command can be specified at a time.</p>
 <p>If no archive command is specified, files will be left as-is. If they are already extracted, then they will stay extracted. If they are already archived (including non-<code>.zip</code> archives), then they will stay archived.</p>
@@ -2572,7 +2595,7 @@
     <span class="md-icon" title="Last update">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1-2.1-2M12.5 7v5.2l4 2.4-1 1L11 13V7h1.5M11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2v1.8Z"/></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date">February 9, 2024</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date">February 24, 2024</span>
   </span>
 
     
