@@ -48,6 +48,7 @@ npx igir@latest [commands..] [options]
 
 Here is the full help message which shows all available options and a number of common use case examples:
 
+<!-- WARN: everything below is automatically updated! Update src/modules/argumentsParser.ts instead! -->
 ```help
 $ igir --help
 
@@ -265,6 +266,7 @@ Example use cases:
     igir copy extract test --dat "*.dat" --input ROMs/ --output /Assets/{pocket}/common/ --dir-l
     etter
 ```
+<!-- WARN: everything above is automatically updated! Update src/modules/argumentsParser.ts instead! -->
 
 ## Feature requests, bug reports, and contributing
 
