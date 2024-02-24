@@ -60,7 +60,14 @@ describe('multiple files', () => {
     // Given some symlinked files
     const tempDir = await fsPoly.mkdtemp(Constants.GLOBAL_TEMP_DIR);
     try {
-      const romFiles = await fsPoly.walk('test/fixtures/roms');
+      const romFiles = await Promise.all((await fsPoly.walk('test/fixtures/roms'))
+        .map(async (romFile) => {
+          // Make a copy of the original file to ensure it's on the same drive
+          const tempFile = await fsPoly.mktemp(path.join(tempDir, path.basename(romFile)));
+          await fsPoly.copyFile(romFile, tempFile);
+          return tempFile;
+        }));
+
       await Promise.all(romFiles.map(async (romFile) => {
         const tempLink = path.join(tempDir, romFile);
         await fsPoly.mkdir(path.dirname(tempLink), { recursive: true });

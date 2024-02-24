@@ -92,7 +92,7 @@ export default class FsPoly {
       return await util.promisify(fs.link)(target, link);
     } catch (error) {
       if (this.onDifferentDrives(target, link)) {
-        throw new Error(`can't hard link files on different drives: ${target}, ${link}`);
+        throw new Error(`can't hard link files on different drives: ${error}`);
       }
       throw error;
     }

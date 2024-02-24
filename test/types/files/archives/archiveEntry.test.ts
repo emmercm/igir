@@ -57,8 +57,12 @@ describe('getSize', () => {
     it('should get the hard link\'s target size', async () => {
       const tempDir = await fsPoly.mkdtemp(Constants.GLOBAL_TEMP_DIR);
       try {
-        const tempLink = path.join(tempDir, path.basename(filePath));
-        await fsPoly.hardlink(path.resolve(filePath), tempLink);
+        // Make a copy of the original file to ensure it's on the same drive
+        const tempFile = await fsPoly.mktemp(path.join(tempDir, path.basename(filePath)));
+        await fsPoly.copyFile(filePath, tempFile);
+
+        const tempLink = path.join(tempDir, path.basename(tempFile));
+        await fsPoly.hardlink(path.resolve(tempFile), tempLink);
 
         const archiveEntries = await FileFactory.filesFrom(tempLink);
         expect(archiveEntries).toHaveLength(1);
