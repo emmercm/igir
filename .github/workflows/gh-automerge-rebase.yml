@@ -22,7 +22,7 @@ jobs:
   autoupdate:
     runs-on: ubuntu-latest
     steps:
-      - uses: adRise/update-pr-branch@v0.7.0
+      - uses: adRise/update-pr-branch@v0.7.2
         with:
           # GitHub won't run workflows off of code commits+pushes from the `github-actions` user
           token: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
