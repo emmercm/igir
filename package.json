@@ -108,7 +108,7 @@
     "@types/async": "3.2.24",
     "@types/cli-progress": "3.11.5",
     "@types/figlet": "1.5.8",
-    "@types/jest": "29.5.11",
+    "@types/jest": "29.5.12",
     "@types/micromatch": "4.0.6",
     "@types/node": "20.11.6",
     "@types/semver": "7.5.6",
