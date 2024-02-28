@@ -237,7 +237,7 @@ Perfect Dark (USA) (2000-03-22) (Debug)
 --no-demo, --only-demo
 ```
 
-Filter out, or only include games that contain the following in their name:
+Filter out, or only include games that contain one of the following in their name:
 
 - `(Demo[a-z0-9. -]*)` (regex)
 - `@barai`
