@@ -110,6 +110,7 @@ export default class DATParentInferrer extends Module {
       .replace(/\(PD\)/i, '') // "public domain"
       .replace(/\(Pirate[a-z0-9. ]*\)/i, '')
       .replace(/\(Proto[a-z0-9. ]*\)/i, '')
+      .replace(/\([a-z0-9. ]*Program\)|(Check|Sample) Program/i, '')
       .replace(/\([^)]*Sample[a-z0-9. ]*\)/i, '')
       .replace(/\(Spaceworld[a-z0-9. ]*\)/i, '')
       .replace(/\(Test[a-z0-9. ]*\)/i, '')
