@@ -102,14 +102,14 @@ export default class DATParentInferrer extends Module {
       .replace(/\(Beta[a-z0-9. ]*\)/i, '')
       .replace(/\(Build [a-z0-9. ]+\)/i, '')
       .replace(/\(Bung\)/i, '')
-      .replace(/\(Debug\)/i, '')
-      .replace(/\(Demo[a-z0-9. -]*\)|\([^)]*Taikenban[^)]*\)/i, '') // "trial"
+      .replace(/\(Debug[a-z0-9. ]*\)/i, '')
+      .replace(Game.DEMO_REGEX, '')
       .replace(/\(Hack\)/i, '')
       .replace(/\(Homebrew[a-z0-9. ]*\)/i, '')
       .replace(/\(Not for Resale\)/i, '')
       .replace(/\(PD\)/i, '') // "public domain"
       .replace(/\(Pirate[a-z0-9. ]*\)/i, '')
-      .replace(/\(Proto[a-z0-9. ]*\)/i, '')
+      .replace(/\([^)]*Proto[a-z0-9. ]*\)/i, '')
       .replace(/\([^)]*Sample[a-z0-9. ]*\)/i, '')
       .replace(/\(Spaceworld[a-z0-9. ]*\)/i, '')
       .replace(/\(Test[a-z0-9. ]*\)/i, '')

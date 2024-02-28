@@ -280,11 +280,25 @@ export default class Game implements GameProps {
     return this.name.match(/\(Debug[a-z0-9. ]*\)/i) !== null;
   }
 
+  public static readonly DEMO_REGEX = new RegExp([
+    '\\(Demo[a-z0-9. -]*\\)',
+    '@barai',
+    '\\(Kiosk[a-z0-9. -]*\\)',
+    '\\(Preview\\)',
+    'GameCube Preview',
+    'Kiosk Demo Disc',
+    'PS2 Kiosk',
+    'PSP System Kiosk',
+    'Taikenban', // "trial"
+    'Trial Edition',
+  ].join('|'), 'i');
+
   /**
    * Is this game a demo?
    */
   isDemo(): boolean {
-    return this.name.match(/\(Demo[a-z0-9. -]*\)/i) !== null || this.getCategory() === 'Demos';
+    return this.name.match(Game.DEMO_REGEX) !== null
+      || this.getCategory() === 'Demos';
   }
 
   /**
@@ -338,14 +352,15 @@ export default class Game implements GameProps {
    * Is this game a prototype?
    */
   isPrototype(): boolean {
-    return this.name.match(/\(Proto[a-z0-9. ]*\)/i) !== null;
+    return this.name.match(/\([^)]*Proto[a-z0-9. ]*\)/i) !== null
+        || this.getCategory() === 'Preproduction';
   }
 
   /**
    * Is this game a sample?
    */
   isSample(): boolean {
-    return this.name.match(/\(Sample[a-z0-9. ]*\)/i) !== null;
+    return this.name.match(/\([^)]*Sample[a-z0-9. ]*\)/i) !== null;
   }
 
   /**
