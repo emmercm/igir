@@ -126,14 +126,14 @@ it('should return empty contents for an empty DAT', async () => {
 
 it('should return one row for every game in a single game DAT', async () => {
   await wrapReportGenerator(new Options(), [], [], [await buildDatStatusSingle()], (contents) => {
-    expect(contents).toEqual(`DAT Name,Game Name,Status,ROM Files,Patched,BIOS,Retail Release,Unlicensed,Debug,Demo,Beta,Sample,Prototype,Test,Aftermarket,Homebrew,Bad
+    expect(contents).toEqual(`DAT Name,Game Name,Status,ROM Files,Patched,BIOS,Retail Release,Unlicensed,Debug,Demo,Beta,Sample,Prototype,Program,Aftermarket,Homebrew,Bad
 Single,One,FOUND,One.rom,false,false,true,false,false,false,false,false,false,false,false,false,false`);
   });
 });
 
 it('should return one row for every game in a multiple game DAT', async () => {
   await wrapReportGenerator(new Options(), [], [], [await buildDatStatusMultiple()], (contents) => {
-    expect(contents).toEqual(`DAT Name,Game Name,Status,ROM Files,Patched,BIOS,Retail Release,Unlicensed,Debug,Demo,Beta,Sample,Prototype,Test,Aftermarket,Homebrew,Bad
+    expect(contents).toEqual(`DAT Name,Game Name,Status,ROM Files,Patched,BIOS,Retail Release,Unlicensed,Debug,Demo,Beta,Sample,Prototype,Program,Aftermarket,Homebrew,Bad
 Multiple,Five,FOUND,,false,false,true,false,false,false,false,false,false,false,false,false,false
 Multiple,Four,FOUND,Four.rom,false,false,true,false,false,false,false,false,false,false,false,false,false
 Multiple,Three,FOUND,Three.rom,false,false,true,false,false,false,false,false,false,false,false,false,false
@@ -148,7 +148,7 @@ it('should return one row for every unused file in a multiple game DAT', async (
     'Three.rom',
     'Four.rom',
   ], [], [await buildDatStatusMultiple()], (contents) => {
-    expect(contents).toEqual(`DAT Name,Game Name,Status,ROM Files,Patched,BIOS,Retail Release,Unlicensed,Debug,Demo,Beta,Sample,Prototype,Test,Aftermarket,Homebrew,Bad
+    expect(contents).toEqual(`DAT Name,Game Name,Status,ROM Files,Patched,BIOS,Retail Release,Unlicensed,Debug,Demo,Beta,Sample,Prototype,Program,Aftermarket,Homebrew,Bad
 Multiple,Five,FOUND,,false,false,true,false,false,false,false,false,false,false,false,false,false
 Multiple,Four,FOUND,Four.rom,false,false,true,false,false,false,false,false,false,false,false,false,false
 Multiple,Three,FOUND,Three.rom,false,false,true,false,false,false,false,false,false,false,false,false,false
@@ -164,7 +164,7 @@ it('should return one row for every cleaned file in a multiple game DAT', async 
     ['Three.rom', 'Four.rom'],
     [await buildDatStatusMultiple()],
     (contents) => {
-      expect(contents).toEqual(`DAT Name,Game Name,Status,ROM Files,Patched,BIOS,Retail Release,Unlicensed,Debug,Demo,Beta,Sample,Prototype,Test,Aftermarket,Homebrew,Bad
+      expect(contents).toEqual(`DAT Name,Game Name,Status,ROM Files,Patched,BIOS,Retail Release,Unlicensed,Debug,Demo,Beta,Sample,Prototype,Program,Aftermarket,Homebrew,Bad
 Multiple,Five,FOUND,,false,false,true,false,false,false,false,false,false,false,false,false,false
 Multiple,Four,FOUND,Four.rom,false,false,true,false,false,false,false,false,false,false,false,false,false
 Multiple,Three,FOUND,Three.rom,false,false,true,false,false,false,false,false,false,false,false,false,false
@@ -182,7 +182,7 @@ it('should return one row for every game in multiple DATs', async () => {
     await buildDatStatusSingle(),
     await buildDatStatusMultiple(),
   ], (contents) => {
-    expect(contents).toEqual(`DAT Name,Game Name,Status,ROM Files,Patched,BIOS,Retail Release,Unlicensed,Debug,Demo,Beta,Sample,Prototype,Test,Aftermarket,Homebrew,Bad
+    expect(contents).toEqual(`DAT Name,Game Name,Status,ROM Files,Patched,BIOS,Retail Release,Unlicensed,Debug,Demo,Beta,Sample,Prototype,Program,Aftermarket,Homebrew,Bad
 Multiple,Five,FOUND,,false,false,true,false,false,false,false,false,false,false,false,false,false
 Multiple,Four,FOUND,Four.rom,false,false,true,false,false,false,false,false,false,false,false,false,false
 Multiple,Three,FOUND,Three.rom,false,false,true,false,false,false,false,false,false,false,false,false,false

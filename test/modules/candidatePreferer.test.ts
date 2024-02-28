@@ -525,9 +525,9 @@ describe('sort', () => {
         await buildReleaseCandidatesWithRegionLanguage(['six (Homebrew)', 'six'], 'USA', 'EN'),
         await buildReleaseCandidatesWithRegionLanguage(['seven (Proto)', 'seven'], 'USA', 'EN'),
         await buildReleaseCandidatesWithRegionLanguage(['eight (Sample)', 'eight'], 'USA', 'EN'),
-        await buildReleaseCandidatesWithRegionLanguage(['nine (Test)', 'nine'], 'USA', 'EN'),
+        await buildReleaseCandidatesWithRegionLanguage(['nine (Program)', 'nine'], 'USA', 'EN'),
         await buildReleaseCandidatesWithRegionLanguage(['ten (Debug)', 'ten'], 'USA', 'EN'),
-      ], ['one (USA) (EN)', 'two (Aftermarket) (USA) (EN)', 'three [b] (USA) (EN)', 'four (Beta) (USA) (EN)', 'five (Demo) (USA) (EN)', 'six (Homebrew) (USA) (EN)', 'seven (Proto) (USA) (EN)', 'eight (Sample) (USA) (EN)', 'nine (Test) (USA) (EN)', 'ten (Debug) (USA) (EN)']);
+      ], ['one (USA) (EN)', 'two (Aftermarket) (USA) (EN)', 'three [b] (USA) (EN)', 'four (Beta) (USA) (EN)', 'five (Demo) (USA) (EN)', 'six (Homebrew) (USA) (EN)', 'seven (Proto) (USA) (EN)', 'eight (Sample) (USA) (EN)', 'nine (Program) (USA) (EN)', 'ten (Debug) (USA) (EN)']);
     });
 
     it('should return the first candidate when none matching', async () => {
@@ -548,7 +548,7 @@ describe('sort', () => {
         await buildReleaseCandidatesWithRegionLanguage(['six (Homebrew)', 'six'], 'USA', 'EN'),
         await buildReleaseCandidatesWithRegionLanguage(['seven (Proto)', 'seven'], 'USA', 'EN'),
         await buildReleaseCandidatesWithRegionLanguage(['eight (Sample)', 'eight'], 'USA', 'EN'),
-        await buildReleaseCandidatesWithRegionLanguage(['nine (Test)', 'nine'], 'USA', 'EN'),
+        await buildReleaseCandidatesWithRegionLanguage(['nine (Program)', 'nine'], 'USA', 'EN'),
         await buildReleaseCandidatesWithRegionLanguage(['ten (Debug)', 'ten'], 'USA', 'EN'),
       ], ['one (USA) (EN)', 'two (USA) (EN)', 'three (USA) (EN)', 'four (USA) (EN)', 'five (USA) (EN)', 'six (USA) (EN)', 'seven (USA) (EN)', 'eight (USA) (EN)', 'nine (USA) (EN)', 'ten (USA) (EN)']);
     });
@@ -562,7 +562,7 @@ describe('sort', () => {
         await buildReleaseCandidatesWithRegionLanguage(['six (Homebrew)', 'six'], 'USA', 'EN'),
         await buildReleaseCandidatesWithRegionLanguage(['seven (Proto)', 'seven'], 'USA', 'EN'),
         await buildReleaseCandidatesWithRegionLanguage(['eight (Sample)', 'eight'], 'USA', 'EN'),
-        await buildReleaseCandidatesWithRegionLanguage(['nine (Test)', 'nine'], 'USA', 'EN'),
+        await buildReleaseCandidatesWithRegionLanguage(['nine (Program)', 'nine'], 'USA', 'EN'),
         await buildReleaseCandidatesWithRegionLanguage(['ten (Debug)', 'ten'], 'USA', 'EN'),
       ], ['two (USA) (EN)', 'three (USA) (EN)', 'four (USA) (EN)', 'five (USA) (EN)', 'six (USA) (EN)', 'seven (USA) (EN)', 'eight (USA) (EN)', 'nine (USA) (EN)', 'ten (USA) (EN)']);
     });

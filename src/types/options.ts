@@ -112,8 +112,8 @@ export interface OptionsProps {
   readonly onlySample?: boolean,
   readonly noPrototype?: boolean,
   readonly onlyPrototype?: boolean,
-  readonly noTestRoms?: boolean,
-  readonly onlyTestRoms?: boolean,
+  readonly noProgram?: boolean,
+  readonly onlyProgram?: boolean,
   readonly noAftermarket?: boolean,
   readonly onlyAftermarket?: boolean,
   readonly noHomebrew?: boolean,
@@ -271,9 +271,9 @@ export default class Options implements OptionsProps {
 
   readonly onlyPrototype: boolean;
 
-  readonly noTestRoms: boolean;
+  readonly noProgram: boolean;
 
-  readonly onlyTestRoms: boolean;
+  readonly onlyProgram: boolean;
 
   readonly noAftermarket: boolean;
 
@@ -403,8 +403,8 @@ export default class Options implements OptionsProps {
     this.onlySample = options?.onlySample ?? false;
     this.noPrototype = options?.noPrototype ?? false;
     this.onlyPrototype = options?.onlyPrototype ?? false;
-    this.noTestRoms = options?.noTestRoms ?? false;
-    this.onlyTestRoms = options?.onlyTestRoms ?? false;
+    this.noProgram = options?.noProgram ?? false;
+    this.onlyProgram = options?.onlyProgram ?? false;
     this.noAftermarket = options?.noAftermarket ?? false;
     this.onlyAftermarket = options?.onlyAftermarket ?? false;
     this.noHomebrew = options?.noHomebrew ?? false;
@@ -1026,12 +1026,12 @@ export default class Options implements OptionsProps {
     return this.onlyPrototype;
   }
 
-  getNoTestRoms(): boolean {
-    return this.noTestRoms;
+  getNoProgram(): boolean {
+    return this.noProgram;
   }
 
-  getOnlyTestRoms(): boolean {
-    return this.onlyTestRoms;
+  getOnlyProgram(): boolean {
+    return this.onlyProgram;
   }
 
   getNoAftermarket(): boolean {

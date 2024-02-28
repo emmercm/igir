@@ -296,17 +296,21 @@ Philip & Marlowe in Bloomland (USA) (Proto)
 Sword of Hope, The (Europe) (Proto)
 ```
 
-### Test ROMs
+### Program application ROMS
 
 ```text
---no-test-roms, --only-test-roms
+--no-program, --only-program
 ```
 
-Filter out, or only include games that contain `(Test)` in their name, e.g.:
+Filter out, or only include games that contain one of the following in their name
+
+- `([a-z0-9. ]*Program)` (regex)
+- `Check Program`
+- `Sample Program`
 
 ```text
-2097 ROM Pack II (USA) (Test Program)
-Game Boy Test Cartridge (USA, Europe) (Proto) (Test Program)
+AGB Aging Cartridge (World) (v1.0) (Test Program)
+AGB-Parallel Interface Cartridge (Japan) (En) (Program)
 ```
 
 ### Homebrew

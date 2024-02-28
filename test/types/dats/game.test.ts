@@ -148,6 +148,19 @@ describe('isPirated', () => {
   });
 });
 
+describe('isProgram', () => {
+  test.each([
+    ['Aggressive Inline (Europe) (En,Fr,De)', false],
+    ['AGB-Parallel Interface Cartridge (Japan) (En) (Program)', true],
+    ['AGS Aging Cartridge (World) (Rev 3) (v9.0) (Test Program)', true],
+    ['Mars Check Program Version 1.0 (Unknown) (SDK Build) (Set 1)', true],
+    ['Nintendo DS - G2D Sample Program (World) (En) (2007-08-21) (SDK)', true],
+  ])('%s', (name, expected) => {
+    expect(new Game({ name }).isProgram()).toEqual(expected);
+    expect(new Game({ name }).isRetail()).toEqual(!expected);
+  });
+});
+
 describe('isPrototype', () => {
   test.each([
     ['Glover (Europe) (En,Fr,De)', false],
@@ -166,16 +179,6 @@ describe('isSample', () => {
     ['Alfred Chicken (Europe)', false],
   ])('%s', (name, expected) => {
     expect(new Game({ name }).isSample()).toEqual(expected);
-    expect(new Game({ name }).isRetail()).toEqual(!expected);
-  });
-});
-
-describe('isTest', () => {
-  test.each([
-    ['Game Boy Test Cartridge (USA, Europe) (Proto) (Test Program)', true],
-    ['10-Pin Bowling (USA)', false],
-  ])('%s', (name, expected) => {
-    expect(new Game({ name }).isTest()).toEqual(expected);
     expect(new Game({ name }).isRetail()).toEqual(!expected);
   });
 });
