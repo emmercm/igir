@@ -79,8 +79,19 @@ describe('isBeta', () => {
 
 describe('isDemo', () => {
   test.each([
+    // No-Intro
     ['Pocket Monsters Gin (Japan) (Demo) (Spaceworld 1997) (SGB Enhanced)', true],
     ['Pocket Puyo Puyo Tsuu (Japan) (Rev 1) (SGB Enhanced) (NP)', false],
+    ['DK - King of Swing (USA) (Demo) (Kiosk)', true],
+    ['Aneboku - Onee-chan wa Bijin 3 Shimai (TG Taikenban) (Unknown)', true],
+    ['Camping Mama + Papa - Taikenban (Japan) (Demo)', true],
+    ['Ace Attorney Investigations - Miles Edgeworth - Trial Edition (USA) (Rev 1) (Demo) (Nintendo Channel)', true],
+    // Redump
+    ['Eternal Arcadia (Japan) (Disc 1) (@barai)', true],
+    ['Guitar Hero - Warriors of Rock 3.40 IDU FW Update (USA) (Kiosk Demo)', true],
+    ['PlayStation Kiosk Demo Disc Version 1.16 (USA)', true],
+    ['PS2 Kiosk Q3-Q4 2005 (USA)', true],
+    ['PSP System Kiosk Disc 1 (USA)', true],
   ])('%s', (name, expected) => {
     expect(new Game({ name }).isDemo()).toEqual(expected);
     expect(new Game({ name }).isRetail()).toEqual(!expected);
@@ -139,8 +150,10 @@ describe('isPirated', () => {
 
 describe('isPrototype', () => {
   test.each([
-    ['Popeye (USA) (Proto)', true],
-    ['Popeye 2 (Europe)', false],
+    ['Glover (Europe) (En,Fr,De)', false],
+    ['Glover 2 (USA) (Proto 1)', true],
+    ['ClayFighter 2 (USA) (Proto) (1995-04-28)', true],
+    ['Game Boy Gallery 2 (Japan) (Possible Proto) (SGB Enhanced, GB Compatible) (NP)', true],
   ])('%s', (name, expected) => {
     expect(new Game({ name }).isPrototype()).toEqual(expected);
     expect(new Game({ name }).isRetail()).toEqual(!expected);
