@@ -80,7 +80,7 @@ export default class DirectoryCleaner extends Module {
 
   private async trashOrDelete(filePaths: string[]): Promise<void> {
     if (this.options.getCleanDryRun()) {
-      this.progressBar.logDebug(`paths skipped from cleaning (dry run):\n${filePaths.map((filePath) => `  ${filePath}`).join('\n')}`);
+      this.progressBar.logInfo(`paths skipped from cleaning (dry run):\n${filePaths.map((filePath) => `  ${filePath}`).join('\n')}`);
       return;
     }
 
