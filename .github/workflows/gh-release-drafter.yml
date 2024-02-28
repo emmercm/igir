@@ -65,7 +65,7 @@ jobs:
       # Create/update the draft release
       - if: steps.check.outputs.changed == 'true'
         id: release-drafter
-        uses: release-drafter/release-drafter@v5
+        uses: release-drafter/release-drafter@v6
         with:
           name: v${{ steps.check.outputs.version }}
           tag: v${{ steps.check.outputs.version }}
