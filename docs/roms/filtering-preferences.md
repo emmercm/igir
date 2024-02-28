@@ -237,7 +237,20 @@ Perfect Dark (USA) (2000-03-22) (Debug)
 --no-demo, --only-demo
 ```
 
-Filter out, or only include games that contain `(Demo)` in their name, e.g.:
+Filter out, or only include games that contain one of the following in their name:
+
+- `(Demo[a-z0-9. -]*)` (regex)
+- `@barai`
+- `(Kiosk[a-z0-9. -]*)` (regex)
+- `(Preview)`
+- `GameCube Preview`
+- `Kiosk Demo Disc`
+- `PS2 Kiosk`
+- `PSP System Kiosk`
+- `Taikenban`
+- `Trial Edition`
+
+or has the game category of `Demos`, e.g.:
 
 ```text
 Coria and the Sunken City (Unknown) (Demo)
@@ -276,7 +289,7 @@ Shin Nihon Pro Wrestling - Toukon Sanjuushi (Japan) (Sample)
 --no-prototype, --only-prototype
 ```
 
-Filter out, or only include games that contain `(Proto)` or `(Prototype)` in their name, e.g.:
+Filter out, or only include games that contain `(Proto)` or `(Prototype)` in their name, or has the game category of `Preproduction`, e.g.:
 
 ```text
 Philip & Marlowe in Bloomland (USA) (Proto)
