@@ -82,6 +82,8 @@ export default class DATFilter extends Module {
       this.options.getOnlyPrototype() && !game.isPrototype(),
       this.options.getNoTestRoms() && game.isTest(),
       this.options.getOnlyTestRoms() && !game.isTest(),
+      this.options.getNoProgram() && game.isProgram(),
+      this.options.getOnlyProgram() && !game.isProgram(),
       this.options.getNoAftermarket() && game.isAftermarket(),
       this.options.getOnlyAftermarket() && !game.isAftermarket(),
       this.options.getNoHomebrew() && game.isHomebrew(),

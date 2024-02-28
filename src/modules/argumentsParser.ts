@@ -582,6 +582,7 @@ export default class ArgumentsParser {
       ['sample', 'sample ROMs'],
       ['prototype', 'prototype ROMs'],
       ['test-roms', 'test ROMs'],
+      ['program', 'program application ROMs'],
       ['aftermarket', 'aftermarket ROMs'],
       ['homebrew', 'homebrew ROMs'],
       ['unverified', 'unverified ROMs'],

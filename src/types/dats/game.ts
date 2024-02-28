@@ -22,6 +22,7 @@ enum GameType {
   OVERDUMP = 'Overdump',
   PENDING_DUMP = 'Pending Dump',
   PIRATED = 'Pirated',
+  PROGRAM = 'Program',
   PROTOTYPE = 'Prototype',
   RETAIL = 'Retail',
   SAMPLE = 'Sample',
@@ -335,6 +336,14 @@ export default class Game implements GameProps {
   }
 
   /**
+   * Is this game a "program" application?
+   */
+  isProgram(): boolean {
+    return this.name.match(/\([a-z0-9. ]*Program\)|(Check|Sample) Program/i) !== null
+        || this.getCategory() === 'Applications';
+  }
+
+  /**
    * Is this game a prototype?
    */
   isPrototype(): boolean {
@@ -415,6 +424,7 @@ export default class Game implements GameProps {
         && !this.isOverdump()
         && !this.isPendingDump()
         && !this.isPirated()
+        && !this.isProgram()
         && !this.isPrototype()
         && !this.isSample()
         && !this.isTest()
@@ -458,6 +468,8 @@ export default class Game implements GameProps {
       return GameType.PENDING_DUMP;
     } if (this.isPirated()) {
       return GameType.PIRATED;
+    } if (this.isProgram()) {
+      return GameType.PROGRAM;
     } if (this.isPrototype()) {
       return GameType.PROTOTYPE;
     } if (this.isSample()) {
