@@ -465,7 +465,7 @@ describe('filter', () => {
         buildGameWithRegionLanguage('six (Homebrew)', 'USA', 'EN'),
         buildGameWithRegionLanguage('seven (Proto)', 'USA', 'EN'),
         buildGameWithRegionLanguage('eight (Sample)', 'USA', 'EN'),
-        buildGameWithRegionLanguage('nine (Test)', 'USA', 'EN'),
+        buildGameWithRegionLanguage('nine (Program)', 'USA', 'EN'),
         buildGameWithRegionLanguage('ten (Debug)', 'USA', 'EN'),
       ], 10);
     });
@@ -479,7 +479,7 @@ describe('filter', () => {
         buildGameWithRegionLanguage('six (Homebrew)', 'USA', 'EN'),
         buildGameWithRegionLanguage('seven (Proto)', 'USA', 'EN'),
         buildGameWithRegionLanguage('eight (Sample)', 'USA', 'EN'),
-        buildGameWithRegionLanguage('nine (Test)', 'USA', 'EN'),
+        buildGameWithRegionLanguage('nine (Program)', 'USA', 'EN'),
         buildGameWithRegionLanguage('ten (Debug)', 'USA', 'EN'),
       ], 0);
     });
@@ -494,7 +494,7 @@ describe('filter', () => {
         buildGameWithRegionLanguage('six (Homebrew)', 'USA', 'EN'),
         buildGameWithRegionLanguage('seven (Proto)', 'USA', 'EN'),
         buildGameWithRegionLanguage('eight (Sample)', 'USA', 'EN'),
-        buildGameWithRegionLanguage('nine (Test)', 'USA', 'EN'),
+        buildGameWithRegionLanguage('nine (Program)', 'USA', 'EN'),
         buildGameWithRegionLanguage('ten (Debug)', 'USA', 'EN'),
         buildGameWithRegionLanguage('gazillion', 'USA', 'EN'),
       ], 2);
@@ -708,43 +708,43 @@ describe('filter', () => {
     });
   });
 
-  describe('test roms', () => {
+  describe('program', () => {
     it('option is false', async () => {
       const parentsToCandidates = [
         buildGameWithRegionLanguage('one', 'USA', 'EN'),
-        buildGameWithRegionLanguage('two (Test)', 'USA', 'EN'),
-        buildGameWithRegionLanguage('three (Test Copy)', 'USA', 'EN'),
+        buildGameWithRegionLanguage('two (Program)', 'USA', 'EN'),
+        buildGameWithRegionLanguage('three (Test Program)', 'USA', 'EN'),
       ];
-      await expectFilteredDAT({ noTestRoms: false }, parentsToCandidates, 3);
-      await expectFilteredDAT({ onlyTestRoms: false }, parentsToCandidates, 3);
+      await expectFilteredDAT({ noProgram: false }, parentsToCandidates, 3);
+      await expectFilteredDAT({ onlyProgram: false }, parentsToCandidates, 3);
     });
 
-    it('all games are test roms', async () => {
+    it('all games are programs', async () => {
       const parentsToCandidates = [
-        buildGameWithRegionLanguage('one (Test)', 'USA', 'EN'),
-        buildGameWithRegionLanguage('two (Test Copy)', 'USA', 'EN'),
+        buildGameWithRegionLanguage('one (Program)', 'USA', 'EN'),
+        buildGameWithRegionLanguage('two (Test Program)', 'USA', 'EN'),
       ];
-      await expectFilteredDAT({ noTestRoms: true }, parentsToCandidates, 0);
-      await expectFilteredDAT({ onlyTestRoms: true }, parentsToCandidates, 2);
+      await expectFilteredDAT({ noProgram: true }, parentsToCandidates, 0);
+      await expectFilteredDAT({ onlyProgram: true }, parentsToCandidates, 2);
     });
 
-    it('some games are test roms', async () => {
+    it('some games are programs', async () => {
       const parentsToCandidates = [
-        buildGameWithRegionLanguage('one (Test Copy)', 'USA', 'EN'),
+        buildGameWithRegionLanguage('one (Test Program)', 'USA', 'EN'),
         buildGameWithRegionLanguage('two', 'USA', 'EN'),
-        buildGameWithRegionLanguage('three (Test)', 'USA', 'EN'),
+        buildGameWithRegionLanguage('three (Program)', 'USA', 'EN'),
       ];
-      await expectFilteredDAT({ noTestRoms: true }, parentsToCandidates, 1);
-      await expectFilteredDAT({ onlyTestRoms: true }, parentsToCandidates, 2);
+      await expectFilteredDAT({ noProgram: true }, parentsToCandidates, 1);
+      await expectFilteredDAT({ onlyProgram: true }, parentsToCandidates, 2);
     });
 
-    it('no games are test roms', async () => {
+    it('no games are programs', async () => {
       const parentsToCandidates = [
         buildGameWithRegionLanguage('one', 'USA', 'EN'),
         buildGameWithRegionLanguage('two', 'USA', 'EN'),
       ];
-      await expectFilteredDAT({ noTestRoms: true }, parentsToCandidates, 2);
-      await expectFilteredDAT({ onlyTestRoms: true }, parentsToCandidates, 0);
+      await expectFilteredDAT({ noProgram: true }, parentsToCandidates, 2);
+      await expectFilteredDAT({ onlyProgram: true }, parentsToCandidates, 0);
     });
   });
 

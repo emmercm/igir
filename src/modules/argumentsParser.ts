@@ -575,24 +575,26 @@ export default class ArgumentsParser {
         description: 'Filter to only retail releases, enabling all the following "no" options',
         type: 'boolean',
       });
-    [
-      ['debug', 'debug ROMs'],
-      ['demo', 'demo ROMs'],
-      ['beta', 'beta ROMs'],
-      ['sample', 'sample ROMs'],
-      ['prototype', 'prototype ROMs'],
-      ['test-roms', 'test ROMs'],
-      ['aftermarket', 'aftermarket ROMs'],
-      ['homebrew', 'homebrew ROMs'],
-      ['unverified', 'unverified ROMs'],
-      ['bad', 'bad ROM dumps'],
-    ].forEach(([key, description]) => {
+    ([
+      ['debug', 'debug ROMs', false],
+      ['demo', 'demo ROMs', false],
+      ['beta', 'beta ROMs', false],
+      ['sample', 'sample ROMs', false],
+      ['prototype', 'prototype ROMs', false],
+      ['test-roms', 'test ROMs', true],
+      ['program', 'program application ROMs', false],
+      ['aftermarket', 'aftermarket ROMs', false],
+      ['homebrew', 'homebrew ROMs', false],
+      ['unverified', 'unverified ROMs', false],
+      ['bad', 'bad ROM dumps', false],
+    ] satisfies [string, string, boolean][]).forEach(([key, description, hidden]) => {
       yargsParser
         .option(`no-${key}`, {
           group: groupRomFiltering,
           description: `Filter out ${description}, opposite of --only-${key}`,
           type: 'boolean',
           conflicts: [`only-${key}`],
+          hidden,
         })
         .option(`only-${key}`, {
           type: 'boolean',
@@ -600,6 +602,22 @@ export default class ArgumentsParser {
           hidden: true,
         });
     });
+    yargsParser.middleware((middlewareArgv) => {
+      if (middlewareArgv['no-test-roms'] === true) {
+        this.logger.warn('the \'--no-test-roms\' option is deprecated, use \'--no-program\' instead');
+        if (middlewareArgv.noProgram === undefined) {
+          // eslint-disable-next-line no-param-reassign
+          middlewareArgv.noProgram = true;
+        }
+      }
+      if (middlewareArgv['only-test-roms'] === true) {
+        this.logger.warn('the \'--only-test-roms\' option is deprecated, use \'--only-program\' instead');
+        if (middlewareArgv.onlyProgram === undefined) {
+          // eslint-disable-next-line no-param-reassign
+          middlewareArgv.onlyProgram = true;
+        }
+      }
+    }, true);
 
     yargsParser
       .option('single', {

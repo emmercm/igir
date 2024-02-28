@@ -228,7 +228,7 @@ describe('toCSV', () => {
       const map = await candidateGenerator(options, []);
       const datStatus = new StatusGenerator(options, new ProgressBarFake())
         .generate(dummyDat, map);
-      await expect(datStatus.toCsv(options)).resolves.toEqual(`DAT Name,Game Name,Status,ROM Files,Patched,BIOS,Retail Release,Unlicensed,Debug,Demo,Beta,Sample,Prototype,Test,Aftermarket,Homebrew,Bad
+      await expect(datStatus.toCsv(options)).resolves.toEqual(`DAT Name,Game Name,Status,ROM Files,Patched,BIOS,Retail Release,Unlicensed,Debug,Demo,Beta,Sample,Prototype,Program,Aftermarket,Homebrew,Bad
 dat,bios,MISSING,,false,true,true,false,false,false,false,false,false,false,false,false,false
 dat,device,FOUND,,false,false,true,false,false,false,false,false,false,false,false,false,false
 dat,game prototype (proto),MISSING,,false,false,false,false,false,false,false,false,true,false,false,false,false
@@ -242,7 +242,7 @@ dat,no roms,FOUND,,false,false,true,false,false,false,false,false,false,false,fa
       const options = new Options({ noBios: true });
       const datStatus = new StatusGenerator(options, new ProgressBarFake())
         .generate(dummyDat, parentsToReleaseCandidatesWithoutFiles);
-      await expect(datStatus.toCsv(options)).resolves.toEqual(`DAT Name,Game Name,Status,ROM Files,Patched,BIOS,Retail Release,Unlicensed,Debug,Demo,Beta,Sample,Prototype,Test,Aftermarket,Homebrew,Bad
+      await expect(datStatus.toCsv(options)).resolves.toEqual(`DAT Name,Game Name,Status,ROM Files,Patched,BIOS,Retail Release,Unlicensed,Debug,Demo,Beta,Sample,Prototype,Program,Aftermarket,Homebrew,Bad
 dat,bios,MISSING,,false,true,true,false,false,false,false,false,false,false,false,false,false
 dat,device,FOUND,,false,false,true,false,false,false,false,false,false,false,false,false,false
 dat,game prototype (proto),MISSING,,false,false,false,false,false,false,false,false,true,false,false,false,false
@@ -255,7 +255,7 @@ dat,no roms,FOUND,,false,false,true,false,false,false,false,false,false,false,fa
       const options = new Options({ ...defaultOptions, onlyBios: true });
       const datStatus = new StatusGenerator(options, new ProgressBarFake())
         .generate(dummyDat, parentsToReleaseCandidatesWithoutFiles);
-      await expect(datStatus.toCsv(options)).resolves.toEqual(`DAT Name,Game Name,Status,ROM Files,Patched,BIOS,Retail Release,Unlicensed,Debug,Demo,Beta,Sample,Prototype,Test,Aftermarket,Homebrew,Bad
+      await expect(datStatus.toCsv(options)).resolves.toEqual(`DAT Name,Game Name,Status,ROM Files,Patched,BIOS,Retail Release,Unlicensed,Debug,Demo,Beta,Sample,Prototype,Program,Aftermarket,Homebrew,Bad
 dat,bios,MISSING,,false,true,true,false,false,false,false,false,false,false,false,false,false`);
     });
 
@@ -264,7 +264,7 @@ dat,bios,MISSING,,false,true,true,false,false,false,false,false,false,false,fals
       const options = new Options({ ...defaultOptions, noDevice: true });
       const datStatus = new StatusGenerator(options, new ProgressBarFake())
         .generate(dummyDat, parentsToReleaseCandidatesWithoutFiles);
-      await expect(datStatus.toCsv(options)).resolves.toEqual(`DAT Name,Game Name,Status,ROM Files,Patched,BIOS,Retail Release,Unlicensed,Debug,Demo,Beta,Sample,Prototype,Test,Aftermarket,Homebrew,Bad
+      await expect(datStatus.toCsv(options)).resolves.toEqual(`DAT Name,Game Name,Status,ROM Files,Patched,BIOS,Retail Release,Unlicensed,Debug,Demo,Beta,Sample,Prototype,Program,Aftermarket,Homebrew,Bad
 dat,bios,MISSING,,false,true,true,false,false,false,false,false,false,false,false,false,false
 dat,device,FOUND,,false,false,true,false,false,false,false,false,false,false,false,false,false
 dat,game prototype (proto),MISSING,,false,false,false,false,false,false,false,false,true,false,false,false,false
@@ -277,7 +277,7 @@ dat,no roms,FOUND,,false,false,true,false,false,false,false,false,false,false,fa
       const options = new Options({ ...defaultOptions, onlyDevice: true });
       const datStatus = new StatusGenerator(options, new ProgressBarFake())
         .generate(dummyDat, parentsToReleaseCandidatesWithoutFiles);
-      await expect(datStatus.toCsv(options)).resolves.toEqual(`DAT Name,Game Name,Status,ROM Files,Patched,BIOS,Retail Release,Unlicensed,Debug,Demo,Beta,Sample,Prototype,Test,Aftermarket,Homebrew,Bad
+      await expect(datStatus.toCsv(options)).resolves.toEqual(`DAT Name,Game Name,Status,ROM Files,Patched,BIOS,Retail Release,Unlicensed,Debug,Demo,Beta,Sample,Prototype,Program,Aftermarket,Homebrew,Bad
 dat,device,FOUND,,false,false,true,false,false,false,false,false,false,false,false,false,false`);
     });
   });
@@ -288,7 +288,7 @@ dat,device,FOUND,,false,false,true,false,false,false,false,false,false,false,fal
       const map = await candidateGenerator(options, [gameNameBios]);
       const datStatus = new StatusGenerator(options, new ProgressBarFake())
         .generate(dummyDat, map);
-      await expect(datStatus.toCsv(options)).resolves.toEqual(`DAT Name,Game Name,Status,ROM Files,Patched,BIOS,Retail Release,Unlicensed,Debug,Demo,Beta,Sample,Prototype,Test,Aftermarket,Homebrew,Bad
+      await expect(datStatus.toCsv(options)).resolves.toEqual(`DAT Name,Game Name,Status,ROM Files,Patched,BIOS,Retail Release,Unlicensed,Debug,Demo,Beta,Sample,Prototype,Program,Aftermarket,Homebrew,Bad
 dat,bios,FOUND,bios.rom,false,true,true,false,false,false,false,false,false,false,false,false,false
 dat,device,FOUND,,false,false,true,false,false,false,false,false,false,false,false,false,false
 dat,game prototype (proto),MISSING,,false,false,false,false,false,false,false,false,true,false,false,false,false
@@ -328,7 +328,7 @@ dat,no roms,FOUND,,false,false,true,false,false,false,false,false,false,false,fa
 
       const datStatus = new StatusGenerator(options, new ProgressBarFake())
         .generate(dummyDat, map);
-      await expect(datStatus.toCsv(options)).resolves.toEqual(`DAT Name,Game Name,Status,ROM Files,Patched,BIOS,Retail Release,Unlicensed,Debug,Demo,Beta,Sample,Prototype,Test,Aftermarket,Homebrew,Bad
+      await expect(datStatus.toCsv(options)).resolves.toEqual(`DAT Name,Game Name,Status,ROM Files,Patched,BIOS,Retail Release,Unlicensed,Debug,Demo,Beta,Sample,Prototype,Program,Aftermarket,Homebrew,Bad
 dat,bios,MISSING,,false,true,true,false,false,false,false,false,false,false,false,false,false
 dat,device,FOUND,,false,false,true,false,false,false,false,false,false,false,false,false,false
 dat,game prototype (proto),MISSING,,false,false,false,false,false,false,false,false,true,false,false,false,false
@@ -342,7 +342,7 @@ dat,no roms,FOUND,,false,false,true,false,false,false,false,false,false,false,fa
       const map = await candidateGenerator(options, [gameNamePrototype]);
       const datStatus = new StatusGenerator(options, new ProgressBarFake())
         .generate(dummyDat, map);
-      await expect(datStatus.toCsv(options)).resolves.toEqual(`DAT Name,Game Name,Status,ROM Files,Patched,BIOS,Retail Release,Unlicensed,Debug,Demo,Beta,Sample,Prototype,Test,Aftermarket,Homebrew,Bad
+      await expect(datStatus.toCsv(options)).resolves.toEqual(`DAT Name,Game Name,Status,ROM Files,Patched,BIOS,Retail Release,Unlicensed,Debug,Demo,Beta,Sample,Prototype,Program,Aftermarket,Homebrew,Bad
 dat,bios,MISSING,,false,true,true,false,false,false,false,false,false,false,false,false,false
 dat,device,FOUND,,false,false,true,false,false,false,false,false,false,false,false,false,false
 dat,game prototype (proto),FOUND,game prototype (proto).rom,false,false,false,false,false,false,false,false,true,false,false,false,false
@@ -356,7 +356,7 @@ dat,no roms,FOUND,,false,false,true,false,false,false,false,false,false,false,fa
       const map = await candidateGenerator(options, [gameNameSingleRom]);
       const datStatus = new StatusGenerator(options, new ProgressBarFake())
         .generate(dummyDat, map);
-      await expect(datStatus.toCsv(options)).resolves.toEqual(`DAT Name,Game Name,Status,ROM Files,Patched,BIOS,Retail Release,Unlicensed,Debug,Demo,Beta,Sample,Prototype,Test,Aftermarket,Homebrew,Bad
+      await expect(datStatus.toCsv(options)).resolves.toEqual(`DAT Name,Game Name,Status,ROM Files,Patched,BIOS,Retail Release,Unlicensed,Debug,Demo,Beta,Sample,Prototype,Program,Aftermarket,Homebrew,Bad
 dat,bios,MISSING,,false,true,true,false,false,false,false,false,false,false,false,false,false
 dat,device,FOUND,,false,false,true,false,false,false,false,false,false,false,false,false,false
 dat,game prototype (proto),MISSING,,false,false,false,false,false,false,false,false,true,false,false,false,false
@@ -384,7 +384,7 @@ dat,no roms,FOUND,,false,false,true,false,false,false,false,false,false,false,fa
     const options = new Options(defaultOptions);
     const datStatus = new StatusGenerator(options, new ProgressBarFake())
       .generate(dummyDat, map);
-    await expect(datStatus.toCsv(options)).resolves.toEqual(`DAT Name,Game Name,Status,ROM Files,Patched,BIOS,Retail Release,Unlicensed,Debug,Demo,Beta,Sample,Prototype,Test,Aftermarket,Homebrew,Bad
+    await expect(datStatus.toCsv(options)).resolves.toEqual(`DAT Name,Game Name,Status,ROM Files,Patched,BIOS,Retail Release,Unlicensed,Debug,Demo,Beta,Sample,Prototype,Program,Aftermarket,Homebrew,Bad
 dat,bios,MISSING,,false,true,true,false,false,false,false,false,false,false,false,false,false
 dat,device,FOUND,,false,false,true,false,false,false,false,false,false,false,false,false,false
 dat,game prototype (proto),MISSING,,false,false,false,false,false,false,false,false,true,false,false,false,false
@@ -404,7 +404,7 @@ dat,patched game,FOUND,patched.rom,true,false,true,false,false,false,false,false
     ]);
     const datStatus = new StatusGenerator(options, new ProgressBarFake())
       .generate(dummyDat, map);
-    await expect(datStatus.toCsv(options)).resolves.toEqual(`DAT Name,Game Name,Status,ROM Files,Patched,BIOS,Retail Release,Unlicensed,Debug,Demo,Beta,Sample,Prototype,Test,Aftermarket,Homebrew,Bad
+    await expect(datStatus.toCsv(options)).resolves.toEqual(`DAT Name,Game Name,Status,ROM Files,Patched,BIOS,Retail Release,Unlicensed,Debug,Demo,Beta,Sample,Prototype,Program,Aftermarket,Homebrew,Bad
 dat,bios,FOUND,bios.rom,false,true,true,false,false,false,false,false,false,false,false,false,false
 dat,device,FOUND,,false,false,true,false,false,false,false,false,false,false,false,false,false
 dat,game prototype (proto),FOUND,game prototype (proto).rom,false,false,false,false,false,false,false,false,true,false,false,false,false
@@ -427,7 +427,7 @@ dat,no roms,FOUND,,false,false,true,false,false,false,false,false,false,false,fa
     ]);
     const datStatus = new StatusGenerator(options, new ProgressBarFake())
       .generate(dummyDat, map);
-    await expect(datStatus.toCsv(options)).resolves.toEqual(`DAT Name,Game Name,Status,ROM Files,Patched,BIOS,Retail Release,Unlicensed,Debug,Demo,Beta,Sample,Prototype,Test,Aftermarket,Homebrew,Bad
+    await expect(datStatus.toCsv(options)).resolves.toEqual(`DAT Name,Game Name,Status,ROM Files,Patched,BIOS,Retail Release,Unlicensed,Debug,Demo,Beta,Sample,Prototype,Program,Aftermarket,Homebrew,Bad
 dat,bios,FOUND,bios.rom,false,true,true,false,false,false,false,false,false,false,false,false,false
 dat,device,FOUND,,false,false,true,false,false,false,false,false,false,false,false,false,false
 dat,game prototype (proto),IGNORED,,false,false,false,false,false,false,false,false,true,false,false,false,false
