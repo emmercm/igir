@@ -170,16 +170,6 @@ describe('isSample', () => {
   });
 });
 
-describe('isTest', () => {
-  test.each([
-    ['Game Boy Test Cartridge (USA, Europe) (Proto) (Test Program)', true],
-    ['10-Pin Bowling (USA)', false],
-  ])('%s', (name, expected) => {
-    expect(new Game({ name }).isTest()).toEqual(expected);
-    expect(new Game({ name }).isRetail()).toEqual(!expected);
-  });
-});
-
 describe('isTranslated', () => {
   test.each([
     ['Driver - You Are The Wheelman (U) (M5) [C][T-Pol_aRPi]', true],

@@ -113,7 +113,6 @@ export default class DATParentInferrer extends Module {
       .replace(/\([a-z0-9. ]*Program\)|(Check|Sample) Program/i, '')
       .replace(/\([^)]*Sample[a-z0-9. ]*\)/i, '')
       .replace(/\(Spaceworld[a-z0-9. ]*\)/i, '')
-      .replace(/\(Test[a-z0-9. ]*\)/i, '')
       .replace(/\(Unl[a-z0-9. ]*\)/i, '')
       .replace(/\(v[0-9.]+[a-z]*\)/i, '')
       .replace(/\(Version [0-9.]+[a-z]*\)/i, '')

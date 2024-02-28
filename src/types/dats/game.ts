@@ -26,7 +26,6 @@ enum GameType {
   PROTOTYPE = 'Prototype',
   RETAIL = 'Retail',
   SAMPLE = 'Sample',
-  TEST = 'Test',
   TRAINED = 'Trained',
   TRANSLATED = 'Translated',
   UNLICENSED = 'Unlicensed',
@@ -358,13 +357,6 @@ export default class Game implements GameProps {
   }
 
   /**
-   * Is this game a test?
-   */
-  isTest(): boolean {
-    return this.name.match(/\(Test[a-z0-9. ]*\)/i) !== null;
-  }
-
-  /**
    * Is this game translated by the community?
    */
   isTranslated(): boolean {
@@ -427,7 +419,6 @@ export default class Game implements GameProps {
         && !this.isProgram()
         && !this.isPrototype()
         && !this.isSample()
-        && !this.isTest()
         && !this.isTranslated()
         && !this.hasBungFix()
         && !this.hasHack()
@@ -474,8 +465,6 @@ export default class Game implements GameProps {
       return GameType.PROTOTYPE;
     } if (this.isSample()) {
       return GameType.SAMPLE;
-    } if (this.isTest()) {
-      return GameType.TEST;
     } if (this.hasTrainer()) {
       return GameType.TRAINED;
     } if (this.isTranslated()) {

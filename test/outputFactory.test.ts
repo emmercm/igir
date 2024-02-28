@@ -210,7 +210,7 @@ describe('token replacement', () => {
     ['Game (Pirate)', 'Pirated'],
     ['Game (Proto)', 'Prototype'],
     ['Game (Sample)', 'Sample'],
-    ['Game (Test)', 'Test'],
+    ['Game (Program)', 'Program'],
     ['Game [t]', 'Trained'],
     ['Game [T+Eng]', 'Translated'],
     ['Game (Unl)', 'Unlicensed'],
