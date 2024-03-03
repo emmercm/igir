@@ -28,13 +28,13 @@ describe('commands', () => {
   });
 
   it('should throw on conflicting commands', () => {
-    expect(() => argumentsParser.parse(['copy', 'move', ...dummyRequiredArgs])).toThrow(/incompatible command/i);
-    expect(() => argumentsParser.parse(['copy', 'symlink', ...dummyRequiredArgs])).toThrow(/incompatible command/i);
-    expect(() => argumentsParser.parse(['move', 'symlink', ...dummyRequiredArgs])).toThrow(/incompatible command/i);
+    expect(() => argumentsParser.parse(['copy', 'move', ...dummyRequiredArgs])).toThrow(/unknown command/i);
+    expect(() => argumentsParser.parse(['copy', 'symlink', ...dummyRequiredArgs])).toThrow(/unknown command/i);
+    expect(() => argumentsParser.parse(['move', 'symlink', ...dummyRequiredArgs])).toThrow(/unknown command/i);
 
-    expect(() => argumentsParser.parse(['extract', 'zip', ...dummyRequiredArgs])).toThrow(/incompatible command/i);
-    expect(() => argumentsParser.parse(['extract', 'symlink', ...dummyRequiredArgs])).toThrow(/incompatible command/i);
-    expect(() => argumentsParser.parse(['zip', 'symlink', ...dummyRequiredArgs])).toThrow(/incompatible command/i);
+    expect(() => argumentsParser.parse(['extract', 'zip', ...dummyRequiredArgs])).toThrow(/unknown command/i);
+    expect(() => argumentsParser.parse(['extract', 'symlink', ...dummyRequiredArgs])).toThrow(/unknown command/i);
+    expect(() => argumentsParser.parse(['zip', 'symlink', ...dummyRequiredArgs])).toThrow(/unknown command/i);
   });
 
   it('should throw on commands requiring other commands', () => {
@@ -536,7 +536,6 @@ describe('options', () => {
   });
 
   it('should parse "symlink"', () => {
-    expect(() => argumentsParser.parse([...dummyCommandAndRequiredArgs, '--symlink-relative'])).toThrow(/dependent|implication/i);
     expect(argumentsParser.parse(['symlink', ...dummyRequiredArgs]).getSymlink()).toEqual(true);
     expect(argumentsParser.parse(['symlink', ...dummyRequiredArgs, '--symlink']).getSymlink()).toEqual(true);
     expect(argumentsParser.parse(['symlink', ...dummyRequiredArgs, '--symlink', 'true']).getSymlink()).toEqual(true);
@@ -545,7 +544,6 @@ describe('options', () => {
     expect(argumentsParser.parse(['symlink', ...dummyRequiredArgs, '--symlink', 'false', '--symlink', 'true']).getSymlink()).toEqual(true);
     expect(argumentsParser.parse(['symlink', ...dummyRequiredArgs, '--symlink', 'true', '--symlink', 'false']).getSymlink()).toEqual(false);
 
-    expect(() => argumentsParser.parse([...dummyCommandAndRequiredArgs, 'link', '--symlink-relative'])).toThrow(/dependent|implication/i);
     expect(argumentsParser.parse(['link', ...dummyRequiredArgs]).getSymlink()).toEqual(false);
     expect(argumentsParser.parse(['link', ...dummyRequiredArgs, '--symlink']).getSymlink()).toEqual(true);
     expect(argumentsParser.parse(['link', ...dummyRequiredArgs, '--symlink', 'true']).getSymlink()).toEqual(true);
@@ -564,7 +562,7 @@ describe('options', () => {
     expect(argumentsParser.parse(['symlink', ...dummyRequiredArgs, '--symlink-relative', 'false', '--symlink-relative', 'true']).getSymlinkRelative()).toEqual(true);
     expect(argumentsParser.parse(['symlink', ...dummyRequiredArgs, '--symlink-relative', 'true', '--symlink-relative', 'false']).getSymlinkRelative()).toEqual(false);
 
-    expect(() => argumentsParser.parse([...dummyCommandAndRequiredArgs, 'link', '--symlink-relative'])).toThrow(/dependent|implication/i);
+    expect(() => argumentsParser.parse(['link', ...dummyRequiredArgs, '--symlink-relative'])).toThrow(/dependent|implication/i);
     expect(argumentsParser.parse(['link', ...dummyRequiredArgs, '--symlink', '--symlink-relative']).getSymlinkRelative()).toEqual(true);
     expect(argumentsParser.parse(['link', ...dummyRequiredArgs, '--symlink', '--symlink-relative', 'true']).getSymlinkRelative()).toEqual(true);
     expect(argumentsParser.parse(['link', ...dummyRequiredArgs, '--symlink', '--symlink-relative', 'false']).getSymlinkRelative()).toEqual(false);

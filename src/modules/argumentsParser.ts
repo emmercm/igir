@@ -91,30 +91,45 @@ export default class ArgumentsParser {
       ['clean', 'Recycle unknown files in the output directory'],
       ['report', 'Generate a CSV report on the known & unknown ROM files found in the input directories (requires --dat)'],
     ];
+    const mutuallyExclusiveCommands = [
+      // Write commands
+      ['copy', 'move', 'link', 'symlink'],
+      // Archive manipulation commands
+      ['link', 'symlink', 'extract', 'zip'],
+      // DAT writing commands
+      ['dir2dat', 'fixdat'],
+    ];
     const addCommands = (
       yargsObj: Argv,
-      commandsToAdd = commands.map((command) => command[0]),
+      previousCommands: string[] = [],
     ): Argv => {
       commands
-        // Don't show duplicate commands, i.e. don't give `igir copy copy` as an option when
-        // specifying `igir copy --help`.
-        .filter(([command]) => commandsToAdd.includes(command))
+        // Don't allow/show duplicate commands, i.e. don't give `igir copy copy` as an option
+        .filter(([command]) => !previousCommands.includes(command))
+        // Don't allow/show conflicting commands, i.e. don't give `igir copy move` as an option
+        .filter(([command]) => {
+          const incompatibleCommands = previousCommands
+            .flatMap((previousCommand) => mutuallyExclusiveCommands
+              .filter((mutuallyExclusive) => mutuallyExclusive.includes(previousCommand))
+              .flat());
+          return !incompatibleCommands.includes(command);
+        })
         .forEach(([command, description]) => {
           if (typeof description === 'string') {
             yargsObj.command(command, description, (yargsSubObj) => addCommands(
               yargsSubObj,
-              commandsToAdd.filter((c) => c !== command),
+              [...previousCommands, command],
             ));
           } else {
             // A deprecation message should be printed elsewhere
             yargsObj.command(command, false, (yargsSubObj) => addCommands(
               yargsSubObj,
-              commandsToAdd.filter((c) => c !== command),
+              [...previousCommands, command],
             ));
           }
         });
 
-      if (commandsToAdd.length === 0) {
+      if (previousCommands.length === 0) {
         // Only register the check function once
         return yargsObj;
       }
@@ -127,21 +142,6 @@ export default class ArgumentsParser {
         .check((checkArgv) => {
           if (checkArgv.help) {
             return true;
-          }
-
-          const writeCommands = ['copy', 'move', 'link', 'symlink'].filter((command) => checkArgv._.includes(command));
-          if (writeCommands.length > 1) {
-            throw new Error(`Incompatible commands: ${writeCommands.join(', ')}`);
-          }
-
-          const archiveCommands = ['link', 'symlink', 'extract', 'zip'].filter((command) => checkArgv._.includes(command));
-          if (archiveCommands.length > 1) {
-            throw new Error(`Incompatible commands: ${archiveCommands.join(', ')}`);
-          }
-
-          const datWritingCommands = ['dir2dat', 'fixdat'].filter((command) => checkArgv._.includes(command));
-          if (datWritingCommands.length > 1) {
-            throw new Error(`Incompatible commands: ${datWritingCommands.join(', ')}`);
           }
 
           ['extract', 'zip'].forEach((command) => {

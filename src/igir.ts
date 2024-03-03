@@ -118,15 +118,10 @@ export default class Igir {
       ];
 
       // Write the output files
-      const movedRoms = await new CandidateWriter(this.options, progressBar)
+      const writerResults = await new CandidateWriter(this.options, progressBar)
         .write(filteredDat, parentsToCandidates);
-      movedRomsToDelete = [...movedRomsToDelete, ...movedRoms];
-      const writtenRoms = [...parentsToCandidates.values()]
-        .flat()
-        .flatMap((releaseCandidate) => releaseCandidate
-          .getRomsWithFiles()
-          .map((romWithFiles) => romWithFiles.getOutputFile()));
-      datsToWrittenFiles.set(filteredDat, writtenRoms);
+      movedRomsToDelete = [...movedRomsToDelete, ...writerResults.moved];
+      datsToWrittenFiles.set(filteredDat, writerResults.wrote);
 
       // Write a dir2dat
       const dir2DatPath = await new Dir2DatCreator(this.options, progressBar)
