@@ -62,6 +62,7 @@ export default class CandidateGenerator extends Module {
       // For every game
       for (let j = 0; j < parent.getGames().length; j += 1) {
         const game = parent.getGames()[j];
+        let foundCandidates = 0;
 
         // For every release (ensuring at least one), find all release candidates
         const releases = game.getReleases().length > 0 ? game.getReleases() : [undefined];
@@ -74,11 +75,14 @@ export default class CandidateGenerator extends Module {
           );
           if (releaseCandidate) {
             releaseCandidates.push(releaseCandidate);
+            foundCandidates += 1;
           }
         }
+
+        this.progressBar.logTrace(`${dat.getNameShort()}: ${game.getName()}: found ${foundCandidates.toLocaleString()} candidate${foundCandidates !== 1 ? 's' : ''}`);
       }
 
-      this.progressBar.logTrace(`${dat.getNameShort()}: ${parent.getName()}: found ${releaseCandidates.length.toLocaleString()} candidate${releaseCandidates.length !== 1 ? 's' : ''}`);
+      this.progressBar.logTrace(`${dat.getNameShort()}: ${parent.getName()} (parent): found ${releaseCandidates.length.toLocaleString()} candidate${releaseCandidates.length !== 1 ? 's' : ''}`);
       output.set(parent, releaseCandidates);
 
       this.progressBar.removeWaitingMessage(waitingMessage);
