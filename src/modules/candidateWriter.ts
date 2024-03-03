@@ -17,6 +17,11 @@ import Options from '../types/options.js';
 import ReleaseCandidate from '../types/releaseCandidate.js';
 import Module from './module.js';
 
+export interface CandidateWriterResults {
+  wrote: File[],
+  moved: File[],
+}
+
 /**
  * Copy or move output ROM files, if applicable.
  *
@@ -51,14 +56,26 @@ export default class CandidateWriter extends Module {
   async write(
     dat: DAT,
     parentsToCandidates: Map<Parent, ReleaseCandidate[]>,
-  ): Promise<File[]> {
+  ): Promise<CandidateWriterResults> {
+    const writtenFiles = [...parentsToCandidates.values()]
+      .flat()
+      .flatMap((releaseCandidate) => releaseCandidate
+        .getRomsWithFiles()
+        .map((romWithFiles) => romWithFiles.getOutputFile()));
+
     if (parentsToCandidates.size === 0) {
-      return [];
+      return {
+        wrote: writtenFiles,
+        moved: [],
+      };
     }
 
     // Return early if we shouldn't write (are only reporting)
     if (!this.options.shouldWrite()) {
-      return [];
+      return {
+        wrote: writtenFiles,
+        moved: [],
+      };
     }
 
     // Filter to only the parents that actually have candidates (and therefore output)
@@ -95,7 +112,15 @@ export default class CandidateWriter extends Module {
 
     this.progressBar.logTrace(`${dat.getNameShort()}: done writing ${totalCandidateCount.toLocaleString()} candidate${totalCandidateCount !== 1 ? 's' : ''}`);
 
-    return this.filesQueuedForDeletion;
+    const writtenFilePaths = new Set(writtenFiles.map((writtenFile) => writtenFile.getFilePath()));
+    const movedFiles = this.filesQueuedForDeletion
+      // Files that were written should not be eligible for move deletion. This protects against
+      // the same directory being used for both an input and output directory.
+      .filter((fileQueued) => !writtenFilePaths.has(fileQueued.getFilePath()));
+    return {
+      wrote: writtenFiles,
+      moved: movedFiles,
+    };
   }
 
   private async writeReleaseCandidate(
@@ -169,7 +194,7 @@ export default class CandidateWriter extends Module {
           dat,
           releaseCandidate,
           outputZip.getFilePath(),
-          inputToOutputZipEntries.map((entry) => entry[1]),
+          inputToOutputZipEntries.map(([, outputEntry]) => outputEntry),
         );
         if (!existingTest) {
           this.progressBar.logDebug(`${dat.getNameShort()}: ${releaseCandidate.getName()}: ${outputZip.getFilePath()}: not overwriting existing zip file, existing zip has the expected contents`);
