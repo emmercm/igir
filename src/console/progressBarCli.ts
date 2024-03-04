@@ -139,7 +139,7 @@ export default class ProgressBarCLI extends ProgressBar {
               // ...and if we manually wrap lines, we also need to deal with overwriting existing
               //  progress bar output.
               .split('\n')
-              .join('\n\x1b[K'))
+              .join(`\n${this.logger.isTTY() ? '\x1b[K' : ''}`))
             .join('\n');
           ProgressBarCLI.multiBar.log(`${logMessage}\n`);
           ProgressBarCLI.logQueue = [];

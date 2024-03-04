@@ -44,7 +44,7 @@ export default class DATMergerSplitter extends Module {
       return map;
     }, new Map<string, Game>());
 
-    this.progressBar.logTrace(`${dat.getNameShort()}: merging & splitting`);
+    this.progressBar.logTrace(`${dat.getNameShort()}: merging & splitting ${dat.getGames().length.toLocaleString()} game${dat.getGames().length !== 1 ? 's' : ''}`);
     await this.progressBar.setSymbol(ProgressBarSymbol.MERGE_SPLIT);
     await this.progressBar.reset(dat.getGames().length);
 

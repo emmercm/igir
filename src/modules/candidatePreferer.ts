@@ -74,7 +74,7 @@ export default class CandidatePreferer extends Module {
       await this.progressBar.incrementProgress();
       if (releaseCandidates.length > 1) {
         // Reduce log spam by only logging parents that can be changed
-        this.progressBar.logTrace(`${dat.getNameShort()}: ${parent.getName()}: ${releaseCandidates.length.toLocaleString()} candidate${releaseCandidates.length !== 1 ? 's' : ''} before filtering`);
+        this.progressBar.logTrace(`${dat.getNameShort()}: ${parent.getName()} (parent): ${releaseCandidates.length.toLocaleString()} candidate${releaseCandidates.length !== 1 ? 's' : ''} before filtering`);
       }
 
       const preferredReleaseCandidate = releaseCandidates
