@@ -757,6 +757,11 @@ export default class ArgumentsParser {
         description: 'Enable verbose logging, can specify up to three times (-vvv)',
         type: 'count',
       })
+      .middleware((middlewareArgv) => {
+        if (middlewareArgv['clean-dry-run'] === true && (middlewareArgv.verbose ?? 0) < 1) {
+          this.logger.warn('--clean-dry-run prints INFO logs for files skipped, enable them with -v');
+        }
+      })
 
       .check((checkArgv) => {
         if (checkArgv.mergeRoms !== MergeMode[MergeMode.FULLNONMERGED].toLowerCase() && (
