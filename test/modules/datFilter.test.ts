@@ -14,11 +14,11 @@ function buildDATFilter(options: OptionsProps = {}): DATFilter {
 async function expectFilteredDAT(
   options: OptionsProps,
   gamesArr: Game[][],
-  expectedSize: number,
+  expectedGameCount: number,
 ): Promise<void> {
   const dat = new LogiqxDAT(new Header(), gamesArr.flat());
   const filteredDat = await buildDATFilter(options).filter(dat);
-  expect(filteredDat.getGames().length).toEqual(expectedSize);
+  expect(filteredDat.getGames().length).toEqual(expectedGameCount);
 }
 
 function arrayCoerce<T>(val: T | T[] | undefined): T[] {
@@ -56,9 +56,16 @@ function buildGameWithRegionLanguage(
         releases.push(new Release(releaseName, region, language));
       }
 
-      const rom = new ROM({ name: `${romName}.rom`, size: 0, crc: '00000000' });
+      const rom = new ROM({
+        name: `${romName}.rom`,
+        size: 0,
+        crc: '00000000',
+      });
       const game = new Game({
-        name: romName, rom: [rom], release: releases, ...gameOptionsArr[idx],
+        name: `${romName}${language ? ` (${language})` : ''}`, // all games need to have unique names
+        rom: [rom],
+        release: releases,
+        ...gameOptionsArr[idx],
       });
       games.push(game);
     }
@@ -101,6 +108,38 @@ describe('filter', () => {
     await expectFilteredDAT({
       filterLanguage: ['ZH', 'DE'],
     }, [], 0);
+  });
+
+  it('should not leave children abandoned', async () => {
+    const options = new Options({
+      filterRegion: ['USA', 'WORLD'],
+    });
+    const parent = new Game({ name: 'Legend of Zelda, The (Europe) (Rev 1)' });
+    const children = [
+      'Dongfang de Chuanshuo - The Hyrule Fantasy (China) (Pirate)',
+      'Legend of Zelda, The (Europe)',
+      'Legend of Zelda, The (USA)',
+      'Legend of Zelda, The (USA) (Rev 1)',
+      'Legend of Zelda, The (USA) (Rev 1) (GameCube Edition)',
+      'Legend of Zelda, The (USA) (GameCube Edition)',
+      'Legend of Zelda, The (Europe) (Rev 1) (Virtual Console)',
+      'Legend of Zelda, The (USA) (Rev 1) (Virtual Console)',
+      'Zelda no Densetsu 1 - The Hyrule Fantasy (Japan)',
+    ].map((name) => new Game({ name, cloneOf: parent.getName() }));
+    const dat = new LogiqxDAT(new Header(), [parent, ...children]);
+    expect(dat.getParents()).toHaveLength(1);
+
+    const filteredDat = await new DATFilter(options, new ProgressBarFake()).filter(dat);
+
+    expect(filteredDat.getParents()).toHaveLength(1);
+    expect(filteredDat.getGames().map((game) => game.getName())).toEqual([
+      'Legend of Zelda, The (USA)',
+      'Legend of Zelda, The (USA) (Rev 1)',
+      'Legend of Zelda, The (USA) (Rev 1) (GameCube Edition)',
+      'Legend of Zelda, The (USA) (GameCube Edition)',
+      'Legend of Zelda, The (USA) (Rev 1) (Virtual Console)',
+    ]);
+    expect(filteredDat.getGames().every((game) => game.getParent())).toEqual(true);
   });
 
   describe('filter regex', () => {

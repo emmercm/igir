@@ -33,8 +33,21 @@ export default class DATFilter extends Module {
     await this.progressBar.setSymbol(ProgressBarSymbol.FILTERING);
     await this.progressBar.reset(dat.getGames().length);
 
-    const filteredGames = dat.getGames()
-      .filter((game) => this.filterGame(game));
+    const filteredGames = dat.getParents().flatMap((parent) => {
+      const games = parent.getGames().filter((game) => this.filterGame(game));
+      if (games.length === parent.getGames().length) {
+        // Nothing was filtered, return
+        return games;
+      }
+
+      // Elect a new parent in case it was filtered out
+      if (games.find((game) => game.getName() === parent.getName())) {
+        // Parent is still present, return
+        return games;
+      }
+      const newParent = games.at(0)?.getName();
+      return games.map((game) => game.withProps({ cloneOf: newParent }));
+    });
     const filteredDat = new LogiqxDAT(dat.getHeader(), filteredGames);
 
     const size = filteredDat.getGames()
