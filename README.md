@@ -58,7 +58,7 @@ $ igir --help
   | $$  | $$|    \  | $$  | $$    $$   ROM collection manager
   | $$  | $$|    \  | $$  | $$    $$   https://igir.io/
   | $$  | $$ \$$$$  | $$  | $$$$$$$\
- _| $$_ | $$__| $$ _| $$_ | $$  | $$   v2.5.0
+ _| $$_ | $$__| $$ _| $$_ | $$  | $$   v2.5.1
 |   $$ \ \$$    $$|   $$ \| $$  | $$
  \$$$$$$  \$$$$$$  \$$$$$$ \$$   \$$
 
@@ -168,7 +168,8 @@ ROM filtering options:
       --no-beta               Filter out beta ROMs, opposite of --only-beta            [boolean]
       --no-sample             Filter out sample ROMs, opposite of --only-sample        [boolean]
       --no-prototype          Filter out prototype ROMs, opposite of --only-prototype  [boolean]
-      --no-test-roms          Filter out test ROMs, opposite of --only-test-roms       [boolean]
+      --no-program            Filter out program application ROMs, opposite of --only-program
+                                                                                       [boolean]
       --no-aftermarket        Filter out aftermarket ROMs, opposite of --only-aftermarket
                                                                                        [boolean]
       --no-homebrew           Filter out homebrew ROMs, opposite of --only-homebrew    [boolean]
