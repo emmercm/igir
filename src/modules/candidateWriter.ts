@@ -17,6 +17,11 @@ import Options from '../types/options.js';
 import ReleaseCandidate from '../types/releaseCandidate.js';
 import Module from './module.js';
 
+export interface CandidateWriterResults {
+  wrote: File[],
+  moved: File[],
+}
+
 /**
  * Copy or move output ROM files, if applicable.
  *
@@ -51,14 +56,26 @@ export default class CandidateWriter extends Module {
   async write(
     dat: DAT,
     parentsToCandidates: Map<Parent, ReleaseCandidate[]>,
-  ): Promise<File[]> {
+  ): Promise<CandidateWriterResults> {
+    const writtenFiles = [...parentsToCandidates.values()]
+      .flat()
+      .flatMap((releaseCandidate) => releaseCandidate
+        .getRomsWithFiles()
+        .map((romWithFiles) => romWithFiles.getOutputFile()));
+
     if (parentsToCandidates.size === 0) {
-      return [];
+      return {
+        wrote: writtenFiles,
+        moved: [],
+      };
     }
 
     // Return early if we shouldn't write (are only reporting)
     if (!this.options.shouldWrite()) {
-      return [];
+      return {
+        wrote: writtenFiles,
+        moved: [],
+      };
     }
 
     // Filter to only the parents that actually have candidates (and therefore output)
@@ -72,7 +89,7 @@ export default class CandidateWriter extends Module {
     );
 
     const totalCandidateCount = [...parentsToWritableCandidates.values()].flat().length;
-    this.progressBar.logInfo(`${dat.getNameShort()}: writing ${totalCandidateCount.toLocaleString()} candidate${totalCandidateCount !== 1 ? 's' : ''}`);
+    this.progressBar.logTrace(`${dat.getNameShort()}: writing ${totalCandidateCount.toLocaleString()} candidate${totalCandidateCount !== 1 ? 's' : ''}`);
     await this.progressBar.setSymbol(ProgressBarSymbol.WRITING);
     await this.progressBar.reset(parentsToWritableCandidates.size);
 
@@ -82,20 +99,28 @@ export default class CandidateWriter extends Module {
         releaseCandidates,
       ]) => CandidateWriter.THREAD_SEMAPHORE.runExclusive(async () => {
         await this.progressBar.incrementProgress();
-        this.progressBar.logTrace(`${dat.getNameShort()}: ${parent.getName()}: writing ${releaseCandidates.length.toLocaleString()} candidate${releaseCandidates.length !== 1 ? 's' : ''}`);
+        this.progressBar.logTrace(`${dat.getNameShort()}: ${parent.getName()} (parent): writing ${releaseCandidates.length.toLocaleString()} candidate${releaseCandidates.length !== 1 ? 's' : ''}`);
 
         for (const releaseCandidate of releaseCandidates) {
           await this.writeReleaseCandidate(dat, releaseCandidate);
         }
 
-        this.progressBar.logTrace(`${dat.getNameShort()}: ${parent.getName()}: done writing ${releaseCandidates.length.toLocaleString()} candidate${releaseCandidates.length !== 1 ? 's' : ''}`);
+        this.progressBar.logTrace(`${dat.getNameShort()}: ${parent.getName()} (parent): done writing ${releaseCandidates.length.toLocaleString()} candidate${releaseCandidates.length !== 1 ? 's' : ''}`);
         await this.progressBar.incrementDone();
       }),
     ));
 
-    this.progressBar.logInfo(`${dat.getNameShort()}: done writing ${totalCandidateCount.toLocaleString()} candidate${totalCandidateCount !== 1 ? 's' : ''}`);
+    this.progressBar.logTrace(`${dat.getNameShort()}: done writing ${totalCandidateCount.toLocaleString()} candidate${totalCandidateCount !== 1 ? 's' : ''}`);
 
-    return this.filesQueuedForDeletion;
+    const writtenFilePaths = new Set(writtenFiles.map((writtenFile) => writtenFile.getFilePath()));
+    const movedFiles = this.filesQueuedForDeletion
+      // Files that were written should not be eligible for move deletion. This protects against
+      // the same directory being used for both an input and output directory.
+      .filter((fileQueued) => !writtenFilePaths.has(fileQueued.getFilePath()));
+    return {
+      wrote: writtenFiles,
+      moved: movedFiles,
+    };
   }
 
   private async writeReleaseCandidate(
@@ -103,10 +128,9 @@ export default class CandidateWriter extends Module {
     releaseCandidate: ReleaseCandidate,
   ): Promise<void> {
     const writeNeeded = releaseCandidate.getRomsWithFiles()
-      .filter((romWithFiles) => !romWithFiles.getOutputFile().equals(romWithFiles.getInputFile()))
-      .some((notEq) => notEq);
+      .some((romWithFiles) => !romWithFiles.getOutputFile().equals(romWithFiles.getInputFile()));
     if (!writeNeeded) {
-      this.progressBar.logTrace(`${dat.getNameShort()}: ${releaseCandidate.getName()}: input and output files are the same, skipping`);
+      this.progressBar.logDebug(`${dat.getNameShort()}: ${releaseCandidate.getName()}: input and output files are the same, skipping`);
       return;
     }
 
@@ -116,8 +140,8 @@ export default class CandidateWriter extends Module {
       const waitingMessage = `${releaseCandidate.getName()} ...`;
       this.progressBar.addWaitingMessage(waitingMessage);
 
-      if (this.options.shouldSymlink()) {
-        await this.writeSymlink(dat, releaseCandidate);
+      if (this.options.shouldLink()) {
+        await this.writeLink(dat, releaseCandidate);
       } else {
         await this.writeZip(dat, releaseCandidate);
         await this.writeRaw(dat, releaseCandidate);
@@ -161,24 +185,25 @@ export default class CandidateWriter extends Module {
     // If the output file already exists, see if we need to do anything
     if (await fsPoly.exists(outputZip.getFilePath())) {
       if (!this.options.getOverwrite() && !this.options.getOverwriteInvalid()) {
-        this.progressBar.logTrace(`${dat.getNameShort()}: ${outputZip.getFilePath()}: not overwriting existing zip`);
+        this.progressBar.logDebug(`${dat.getNameShort()}: ${releaseCandidate.getName()}: ${outputZip.getFilePath()}: not overwriting existing zip file`);
         return;
       }
 
       if (this.options.getOverwriteInvalid()) {
         const existingTest = await this.testZipContents(
           dat,
+          releaseCandidate,
           outputZip.getFilePath(),
-          inputToOutputZipEntries.map((entry) => entry[1]),
+          inputToOutputZipEntries.map(([, outputEntry]) => outputEntry),
         );
         if (!existingTest) {
-          this.progressBar.logTrace(`${dat.getNameShort()}: ${outputZip.getFilePath()}: not overwriting existing zip, existing zip has the expected contents`);
+          this.progressBar.logDebug(`${dat.getNameShort()}: ${releaseCandidate.getName()}: ${outputZip.getFilePath()}: not overwriting existing zip file, existing zip has the expected contents`);
           return;
         }
       }
     }
 
-    if (!await this.writeZipFile(dat, outputZip, inputToOutputZipEntries)) {
+    if (!await this.writeZipFile(dat, releaseCandidate, outputZip, inputToOutputZipEntries)) {
       // It's expected that an error was already logged
       return;
     }
@@ -186,11 +211,12 @@ export default class CandidateWriter extends Module {
     if (this.options.shouldTest()) {
       const writtenTest = await this.testZipContents(
         dat,
+        releaseCandidate,
         outputZip.getFilePath(),
         inputToOutputZipEntries.map((entry) => entry[1]),
       );
       if (writtenTest) {
-        this.progressBar.logError(`${dat.getNameShort()}: ${outputZip.getFilePath()}: written zip ${writtenTest}`);
+        this.progressBar.logError(`${dat.getNameShort()}: ${releaseCandidate.getName()}: ${outputZip.getFilePath()}: written zip ${writtenTest}`);
         return;
       }
     }
@@ -200,10 +226,11 @@ export default class CandidateWriter extends Module {
 
   private async testZipContents(
     dat: DAT,
+    releaseCandidate: ReleaseCandidate,
     zipFilePath: string,
     expectedArchiveEntries: ArchiveEntry<Zip>[],
   ): Promise<string | undefined> {
-    this.progressBar.logTrace(`${dat.getNameShort()}: ${zipFilePath}: testing zip`);
+    this.progressBar.logTrace(`${dat.getNameShort()}: ${releaseCandidate.getName()}: ${zipFilePath}: testing zip`);
 
     const expectedEntriesByPath = expectedArchiveEntries
       .reduce((map, entry) => {
@@ -240,7 +267,7 @@ export default class CandidateWriter extends Module {
 
       // Check checksum
       if (expectedFile.getCrc32() === '00000000') {
-        this.progressBar.logWarn(`${dat.getNameShort()}: ${expectedFile.toString()}: can't test, expected CRC is unknown`);
+        this.progressBar.logWarn(`${dat.getNameShort()}: ${releaseCandidate.getName()}: ${expectedFile.toString()}: can't test, expected CRC is unknown`);
         // eslint-disable-next-line no-continue
         continue;
       }
@@ -251,7 +278,7 @@ export default class CandidateWriter extends Module {
 
       // Check size
       if (!expectedFile.getSize()) {
-        this.progressBar.logWarn(`${dat.getNameShort()}: ${expectedFile.toString()}: can't test, expected size is unknown`);
+        this.progressBar.logWarn(`${dat.getNameShort()}: ${releaseCandidate.getName()}: ${expectedFile.toString()}: can't test, expected size is unknown`);
         // eslint-disable-next-line no-continue
         continue;
       }
@@ -260,26 +287,27 @@ export default class CandidateWriter extends Module {
       }
     }
 
-    this.progressBar.logTrace(`${dat.getNameShort()}: ${zipFilePath}: test passed`);
+    this.progressBar.logTrace(`${dat.getNameShort()}: ${releaseCandidate.getName()}: ${zipFilePath}: test passed`);
     return undefined;
   }
 
   private async writeZipFile(
     dat: DAT,
+    releaseCandidate: ReleaseCandidate,
     outputZip: Zip,
     inputToOutputZipEntries: [File, ArchiveEntry<Zip>][],
   ): Promise<boolean> {
-    this.progressBar.logTrace(`${dat.getNameShort()}: ${outputZip.getFilePath()}: writing ${inputToOutputZipEntries.length.toLocaleString()} archive entr${inputToOutputZipEntries.length !== 1 ? 'ies' : 'y'} ...`);
+    this.progressBar.logInfo(`${dat.getNameShort()}: ${releaseCandidate.getName()}: creating zip archive '${outputZip.getFilePath()}' with the entries:\n${inputToOutputZipEntries.map(([input, output]) => `  '${input.toString()}' -> '${output.getEntryPath()}'`).join('\n')}`);
 
     try {
       await CandidateWriter.ensureOutputDirExists(outputZip.getFilePath());
       await outputZip.createArchive(this.options, dat, inputToOutputZipEntries);
     } catch (error) {
-      this.progressBar.logError(`${dat.getNameShort()}: ${outputZip.getFilePath()}: failed to create zip: ${error}`);
+      this.progressBar.logError(`${dat.getNameShort()}: ${releaseCandidate.getName()}: ${outputZip.getFilePath()}: failed to create zip: ${error}`);
       return false;
     }
 
-    this.progressBar.logTrace(`${dat.getNameShort()}: ${outputZip.getFilePath()}: wrote ${inputToOutputZipEntries.length.toLocaleString()} archive entr${inputToOutputZipEntries.length !== 1 ? 'ies' : 'y'}`);
+    this.progressBar.logTrace(`${dat.getNameShort()}: ${releaseCandidate.getName()}: ${outputZip.getFilePath()}: wrote ${inputToOutputZipEntries.length.toLocaleString()} archive entr${inputToOutputZipEntries.length !== 1 ? 'ies' : 'y'}`);
     return true;
   }
 
@@ -326,7 +354,7 @@ export default class CandidateWriter extends Module {
   ): Promise<void> {
     // Input and output are the exact same, do nothing
     if (outputRomFile.equals(inputRomFile)) {
-      this.progressBar.logTrace(`${dat.getNameShort()}: ${releaseCandidate.getName()}: same file, skipping: ${outputRomFile}`);
+      this.progressBar.logDebug(`${dat.getNameShort()}: ${releaseCandidate.getName()}: ${outputRomFile}: input and output file is the same, skipping`);
       return;
     }
 
@@ -335,27 +363,37 @@ export default class CandidateWriter extends Module {
     // If the output file already exists, see if we need to do anything
     if (!this.options.getOverwrite() && await fsPoly.exists(outputFilePath)) {
       if (!this.options.getOverwrite() && !this.options.getOverwriteInvalid()) {
-        this.progressBar.logTrace(`${dat.getNameShort()}: ${releaseCandidate.getName()}: not overwriting existing file: ${outputFilePath}`);
+        this.progressBar.logDebug(`${dat.getNameShort()}: ${releaseCandidate.getName()}: ${outputFilePath}: not overwriting existing file`);
         return;
       }
 
       if (this.options.getOverwriteInvalid()) {
-        const existingTest = await this.testWrittenRaw(dat, outputFilePath, outputRomFile);
+        const existingTest = await this.testWrittenRaw(
+          dat,
+          releaseCandidate,
+          outputFilePath,
+          outputRomFile,
+        );
         if (!existingTest) {
-          this.progressBar.logTrace(`${dat.getNameShort()}: ${releaseCandidate.getName()}: not overwriting existing file, existing file is what was expected: ${outputFilePath}`);
+          this.progressBar.logDebug(`${dat.getNameShort()}: ${releaseCandidate.getName()}: ${outputFilePath}: not overwriting existing file, existing file is what was expected`);
           return;
         }
       }
     }
 
-    if (!await this.writeRawFile(dat, inputRomFile, outputFilePath)) {
+    if (!await this.writeRawFile(dat, releaseCandidate, inputRomFile, outputFilePath)) {
       // It's expected that an error was already logged
       return;
     }
     if (this.options.shouldTest()) {
-      const writtenTest = await this.testWrittenRaw(dat, outputFilePath, outputRomFile);
+      const writtenTest = await this.testWrittenRaw(
+        dat,
+        releaseCandidate,
+        outputFilePath,
+        outputRomFile,
+      );
       if (writtenTest) {
-        this.progressBar.logError(`${dat.getNameShort()}: ${releaseCandidate.getName()}: written file ${writtenTest}: ${outputFilePath}`);
+        this.progressBar.logError(`${dat.getNameShort()}: ${releaseCandidate.getName()}: ${outputFilePath}: written file ${writtenTest}`);
         return;
       }
     }
@@ -364,6 +402,7 @@ export default class CandidateWriter extends Module {
 
   private async writeRawFile(
     dat: DAT,
+    releaseCandidate: ReleaseCandidate,
     inputRomFile: File,
     outputFilePath: string,
   ): Promise<boolean> {
@@ -372,7 +411,7 @@ export default class CandidateWriter extends Module {
       path.extname(inputRomFile.getExtractedFilePath()),
     );
 
-    this.progressBar.logTrace(`${dat.getNameShort()}: ${inputRomFile.toString()} writing to ${outputFilePath}`);
+    this.progressBar.logInfo(`${dat.getNameShort()}: ${releaseCandidate.getName()}: copying file '${inputRomFile.toString()}' -> '${outputFilePath}'`);
 
     try {
       await CandidateWriter.ensureOutputDirExists(outputFilePath);
@@ -381,21 +420,22 @@ export default class CandidateWriter extends Module {
       await fsPoly.mv(tempRawFile, outputFilePath);
       return true;
     } catch (error) {
-      this.progressBar.logError(`${dat.getNameShort()}: ${inputRomFile.toString()}: failed to copy to ${outputFilePath}: ${error}`);
+      this.progressBar.logError(`${dat.getNameShort()}: ${releaseCandidate.getName()}: ${outputFilePath}: failed to copy from ${inputRomFile.toString()}: ${error}`);
       return false;
     }
   }
 
   private async testWrittenRaw(
     dat: DAT,
+    releaseCandidate: ReleaseCandidate,
     outputFilePath: string,
     expectedFile: File,
   ): Promise<string | undefined> {
-    this.progressBar.logTrace(`${dat.getNameShort()}: ${outputFilePath}: testing raw`);
+    this.progressBar.logTrace(`${dat.getNameShort()}: ${releaseCandidate.getName()}: ${outputFilePath}: testing raw file`);
 
     // Check checksum
     if (expectedFile.getCrc32() === '00000000') {
-      this.progressBar.logWarn(`${dat.getNameShort()}: ${outputFilePath}: can't test, expected CRC is unknown`);
+      this.progressBar.logWarn(`${dat.getNameShort()}: ${releaseCandidate.getName()}: ${outputFilePath}: can't test, expected CRC is unknown`);
       return undefined;
     }
     // TODO(cemmer): test with highest checksum available
@@ -406,14 +446,14 @@ export default class CandidateWriter extends Module {
 
     // Check size
     if (!expectedFile.getSize()) {
-      this.progressBar.logWarn(`${dat.getNameShort()}: ${outputFilePath}: can't test, expected size is unknown`);
+      this.progressBar.logWarn(`${dat.getNameShort()}: ${releaseCandidate.getName()}: ${outputFilePath}: can't test, expected size is unknown`);
       return undefined;
     }
     if (actualFile.getSize() !== expectedFile.getSize()) {
       return `is of size ${actualFile.getSize().toLocaleString()}B, expected ${expectedFile.getSize().toLocaleString()}B`;
     }
 
-    this.progressBar.logTrace(`${dat.getNameShort()}: ${outputFilePath}: test passed`);
+    this.progressBar.logTrace(`${dat.getNameShort()}: ${releaseCandidate.getName()}: ${outputFilePath}: test passed`);
     return undefined;
   }
 
@@ -428,81 +468,130 @@ export default class CandidateWriter extends Module {
   }
 
   /**
-   ***************************
+   ************************
    *
-   *     Symlink Writing     *
+   *     Link Writing     *
    *
-   ***************************
+   ************************
    */
 
-  private async writeSymlink(dat: DAT, releaseCandidate: ReleaseCandidate): Promise<void> {
+  private async writeLink(dat: DAT, releaseCandidate: ReleaseCandidate): Promise<void> {
     const inputToOutputEntries = releaseCandidate.getRomsWithFiles();
 
     for (const inputToOutputEntry of inputToOutputEntries) {
       const inputRomFile = inputToOutputEntry.getInputFile();
       const outputRomFile = inputToOutputEntry.getOutputFile();
-      await this.writeSymlinkSingle(dat, inputRomFile, outputRomFile);
+      await this.writeLinkSingle(dat, releaseCandidate, inputRomFile, outputRomFile);
     }
   }
 
-  private async writeSymlinkSingle(
+  private async writeLinkSingle(
     dat: DAT,
+    releaseCandidate: ReleaseCandidate,
     inputRomFile: File,
     outputRomFile: File,
   ): Promise<void> {
     // Input and output are the exact same, do nothing
     if (outputRomFile.equals(inputRomFile)) {
-      this.progressBar.logTrace(`${dat.getNameShort()}: ${outputRomFile}: same file, skipping`);
+      this.progressBar.logDebug(`${dat.getNameShort()}: ${releaseCandidate.getName()}: ${outputRomFile}: input and output file is the same, skipping`);
       return;
     }
 
-    const targetPath = outputRomFile.getFilePath();
-    let sourcePath = path.resolve(inputRomFile.getFilePath());
-    if (this.options.getSymlinkRelative()) {
-      sourcePath = path.relative(path.dirname(targetPath), sourcePath);
+    const linkPath = outputRomFile.getFilePath();
+    let targetPath = path.resolve(inputRomFile.getFilePath());
+    if (this.options.getSymlink() && this.options.getSymlinkRelative()) {
+      await CandidateWriter.ensureOutputDirExists(linkPath);
+      targetPath = await fsPoly.symlinkRelativePath(targetPath, linkPath);
     }
 
     // If the output file already exists, see if we need to do anything
-    if (await fsPoly.exists(targetPath)) {
+    if (await fsPoly.exists(linkPath)) {
       if (!this.options.getOverwrite() && !this.options.getOverwriteInvalid()) {
-        this.progressBar.logTrace(`${dat.getNameShort()}: ${targetPath}: not overwriting existing file`);
+        this.progressBar.logDebug(`${dat.getNameShort()}: ${releaseCandidate.getName()}: ${linkPath}: not overwriting existing file`);
         return;
       }
 
       if (this.options.getOverwriteInvalid()) {
-        const existingTest = await CandidateWriter.testWrittenSymlink(targetPath, sourcePath);
+        let existingTest;
+        if (this.options.getSymlink()) {
+          existingTest = await CandidateWriter.testWrittenSymlink(linkPath, targetPath);
+        } else {
+          existingTest = await CandidateWriter.testWrittenHardlink(
+            linkPath,
+            inputRomFile.getFilePath(),
+          );
+        }
         if (!existingTest) {
-          this.progressBar.logTrace(`${dat.getNameShort()}: ${targetPath}: not overwriting existing symlink, existing symlink is what was expected`);
+          this.progressBar.logDebug(`${dat.getNameShort()}: ${releaseCandidate.getName()}: ${linkPath}: not overwriting existing link, existing link is what was expected`);
           return;
         }
       }
 
-      await fsPoly.rm(targetPath, { force: true });
+      await fsPoly.rm(linkPath, { force: true });
     }
 
     try {
-      await CandidateWriter.ensureOutputDirExists(targetPath);
-      await fsPoly.symlink(sourcePath, targetPath);
+      await CandidateWriter.ensureOutputDirExists(linkPath);
+      if (this.options.getSymlink()) {
+        this.progressBar.logInfo(`${dat.getNameShort()}: ${releaseCandidate.getName()}: creating symlink '${targetPath}' -> '${linkPath}'`);
+        await fsPoly.symlink(targetPath, linkPath);
+      } else {
+        this.progressBar.logInfo(`${dat.getNameShort()}: ${releaseCandidate.getName()}: creating hard link '${targetPath}' -> '${linkPath}'`);
+        await fsPoly.hardlink(targetPath, linkPath);
+      }
     } catch (error) {
-      this.progressBar.logError(`${dat.getNameShort()}: ${inputRomFile.toString()}: failed to symlink ${sourcePath} to ${targetPath}: ${error}`);
+      this.progressBar.logError(`${dat.getNameShort()}: ${releaseCandidate.getName()}: ${linkPath}: failed to link from ${targetPath}: ${error}`);
       return;
     }
 
     if (this.options.shouldTest()) {
-      const writtenTest = await CandidateWriter.testWrittenSymlink(targetPath, sourcePath);
+      let writtenTest;
+      if (this.options.getSymlink()) {
+        writtenTest = await CandidateWriter.testWrittenSymlink(linkPath, targetPath);
+      } else {
+        writtenTest = await CandidateWriter.testWrittenHardlink(
+          linkPath,
+          inputRomFile.getFilePath(),
+        );
+      }
       if (writtenTest) {
-        this.progressBar.logError(`${dat.getNameShort()}: ${targetPath}: written symlink ${writtenTest}`);
+        this.progressBar.logError(`${dat.getNameShort()}: ${releaseCandidate.getName()} ${linkPath}: written link ${writtenTest}`);
       }
     }
   }
 
   private static async testWrittenSymlink(
-    targetPath: string,
-    expectedSourcePath: string,
+    linkPath: string,
+    expectedTargetPath: string,
   ): Promise<string | undefined> {
-    const existingSourcePath = await fsPoly.readlink(targetPath);
-    if (path.normalize(existingSourcePath) !== path.normalize(expectedSourcePath)) {
-      return `has the source path '${existingSourcePath}', expected '${expectedSourcePath}`;
+    if (!await fsPoly.exists(linkPath)) {
+      return 'doesn\'t exist';
+    }
+
+    const existingSourcePath = await fsPoly.readlink(linkPath);
+    if (path.normalize(existingSourcePath) !== path.normalize(expectedTargetPath)) {
+      return `has the target path '${existingSourcePath}', expected '${expectedTargetPath}`;
+    }
+
+    if (!await fsPoly.exists(await fsPoly.readlinkResolved(linkPath))) {
+      return `has the target path '${existingSourcePath}' which doesn't exist`;
+    }
+
+    return undefined;
+  }
+
+  private static async testWrittenHardlink(
+    linkPath: string,
+    inputRomPath: string,
+  ): Promise<string | undefined> {
+    if (!await fsPoly.exists(linkPath)) {
+      return 'doesn\'t exist';
+    }
+
+    const targetInode = await fsPoly.inode(linkPath);
+    const sourceInode = await fsPoly.inode(inputRomPath);
+    if (targetInode !== sourceInode) {
+      return `references a different file than '${inputRomPath}'`;
     }
 
     return undefined;

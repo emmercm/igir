@@ -59,7 +59,11 @@ export default class Igir {
   async main(): Promise<void> {
     // Windows 10 may require admin privileges to symlink at all
     // @see https://github.com/nodejs/node/issues/18518
-    if (this.options.shouldSymlink() && process.platform === 'win32' && !await FsPoly.canSymlink(Constants.GLOBAL_TEMP_DIR)) {
+    if (this.options.shouldLink()
+      && this.options.getSymlink()
+      && process.platform === 'win32'
+      && !await FsPoly.canSymlink(Constants.GLOBAL_TEMP_DIR)
+    ) {
       if (!await isAdmin()) {
         throw new Error(`${Constants.COMMAND_NAME} does not have permissions to create symlinks, please try running as administrator`);
       }
@@ -86,7 +90,7 @@ export default class Igir {
     const datsStatuses: DATStatus[] = [];
 
     // Process every DAT
-    datProcessProgressBar.logInfo(`processing ${dats.length.toLocaleString()} DAT${dats.length !== 1 ? 's' : ''}`);
+    datProcessProgressBar.logTrace(`processing ${dats.length.toLocaleString()} DAT${dats.length !== 1 ? 's' : ''}`);
     await async.eachLimit(dats, this.options.getDatThreads(), async (dat, callback) => {
       await datProcessProgressBar.incrementProgress();
 
@@ -114,15 +118,10 @@ export default class Igir {
       ];
 
       // Write the output files
-      const movedRoms = await new CandidateWriter(this.options, progressBar)
+      const writerResults = await new CandidateWriter(this.options, progressBar)
         .write(filteredDat, parentsToCandidates);
-      movedRomsToDelete = [...movedRomsToDelete, ...movedRoms];
-      const writtenRoms = [...parentsToCandidates.values()]
-        .flat()
-        .flatMap((releaseCandidate) => releaseCandidate
-          .getRomsWithFiles()
-          .map((romWithFiles) => romWithFiles.getOutputFile()));
-      datsToWrittenFiles.set(filteredDat, writtenRoms);
+      movedRomsToDelete = [...movedRomsToDelete, ...writerResults.moved];
+      datsToWrittenFiles.set(filteredDat, writerResults.wrote);
 
       // Write a dir2dat
       const dir2DatPath = await new Dir2DatCreator(this.options, progressBar)
@@ -166,7 +165,7 @@ export default class Igir {
       await datProcessProgressBar.incrementDone();
       callback();
     });
-    datProcessProgressBar.logInfo(`done processing ${dats.length.toLocaleString()} DAT${dats.length !== 1 ? 's' : ''}`);
+    datProcessProgressBar.logTrace(`done processing ${dats.length.toLocaleString()} DAT${dats.length !== 1 ? 's' : ''}`);
 
     await datProcessProgressBar.doneItems(dats.length, 'DAT', 'processed');
     datProcessProgressBar.delete();

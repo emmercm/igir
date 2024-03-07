@@ -40,14 +40,14 @@ export default class CandidateGenerator extends Module {
     hashCodeToInputFiles: Map<string, File[]>,
   ): Promise<Map<Parent, ReleaseCandidate[]>> {
     if (hashCodeToInputFiles.size === 0) {
-      this.progressBar.logDebug(`${dat.getNameShort()}: no input ROMs to make candidates from`);
+      this.progressBar.logTrace(`${dat.getNameShort()}: no input ROMs to make candidates from`);
       return new Map();
     }
 
     const output = new Map<Parent, ReleaseCandidate[]>();
     const parents = dat.getParents();
 
-    this.progressBar.logInfo(`${dat.getNameShort()}: generating candidates`);
+    this.progressBar.logTrace(`${dat.getNameShort()}: generating candidates`);
     await this.progressBar.setSymbol(ProgressBarSymbol.GENERATING);
     await this.progressBar.reset(parents.length);
 
@@ -62,6 +62,7 @@ export default class CandidateGenerator extends Module {
       // For every game
       for (let j = 0; j < parent.getGames().length; j += 1) {
         const game = parent.getGames()[j];
+        let foundCandidates = 0;
 
         // For every release (ensuring at least one), find all release candidates
         const releases = game.getReleases().length > 0 ? game.getReleases() : [undefined];
@@ -74,11 +75,14 @@ export default class CandidateGenerator extends Module {
           );
           if (releaseCandidate) {
             releaseCandidates.push(releaseCandidate);
+            foundCandidates += 1;
           }
         }
+
+        this.progressBar.logTrace(`${dat.getNameShort()}: ${game.getName()}: found ${foundCandidates.toLocaleString()} candidate${foundCandidates !== 1 ? 's' : ''}`);
       }
 
-      this.progressBar.logTrace(`${dat.getNameShort()}: ${parent.getName()}: found ${releaseCandidates.length.toLocaleString()} candidate${releaseCandidates.length !== 1 ? 's' : ''}`);
+      this.progressBar.logTrace(`${dat.getNameShort()}: ${parent.getName()} (parent): found ${releaseCandidates.length.toLocaleString()} candidate${releaseCandidates.length !== 1 ? 's' : ''}`);
       output.set(parent, releaseCandidates);
 
       this.progressBar.removeWaitingMessage(waitingMessage);
@@ -90,9 +94,9 @@ export default class CandidateGenerator extends Module {
       .flatMap((releaseCandidate) => releaseCandidate.getRomsWithFiles())
       .reduce((sum, romWithFiles) => sum + romWithFiles.getRom().getSize(), 0);
     const totalCandidates = [...output.values()].reduce((sum, rc) => sum + rc.length, 0);
-    this.progressBar.logDebug(`${dat.getNameShort()}: generated ${fsPoly.sizeReadable(size)} of ${totalCandidates.toLocaleString()} candidate${totalCandidates !== 1 ? 's' : ''} for ${output.size.toLocaleString()} parent${output.size !== 1 ? 's' : ''}`);
+    this.progressBar.logTrace(`${dat.getNameShort()}: generated ${fsPoly.sizeReadable(size)} of ${totalCandidates.toLocaleString()} candidate${totalCandidates !== 1 ? 's' : ''} for ${output.size.toLocaleString()} parent${output.size !== 1 ? 's' : ''}`);
 
-    this.progressBar.logInfo(`${dat.getNameShort()}: done generating candidates`);
+    this.progressBar.logTrace(`${dat.getNameShort()}: done generating candidates`);
     return output;
   }
 
@@ -152,7 +156,7 @@ export default class CandidateGenerator extends Module {
           const romWithFiles = new ROMWithFiles(rom, finalInputFile, outputFile);
           return [rom, romWithFiles];
         } catch (error) {
-          this.progressBar.logInfo(`${dat.getNameShort()}: ${game.getName()}: ${error}`);
+          this.progressBar.logWarn(`${dat.getNameShort()}: ${game.getName()}: ${error}`);
           return [rom, undefined];
         }
       }),
@@ -308,7 +312,7 @@ export default class CandidateGenerator extends Module {
     missingRoms.forEach((rom) => {
       message += `\n  ${rom.getName()}`;
     });
-    this.progressBar.logDebug(message);
+    this.progressBar.logTrace(message);
   }
 
   private hasConflictingOutputFiles(romsWithFiles: ROMWithFiles[]): boolean {

@@ -36,7 +36,7 @@ export default class DATGameInferrer extends Module {
    * Infer {@link Game}s from input files.
    */
   infer(romFiles: File[]): DAT[] {
-    this.progressBar.logInfo(`inferring DATs for ${romFiles.length.toLocaleString()} ROM${romFiles.length !== 1 ? 's' : ''}`);
+    this.progressBar.logTrace(`inferring DATs for ${romFiles.length.toLocaleString()} ROM${romFiles.length !== 1 ? 's' : ''}`);
 
     const normalizedInputPaths = this.options.getInputPaths()
       .map((inputPath) => path.normalize(inputPath))
@@ -56,12 +56,12 @@ export default class DATGameInferrer extends Module {
         });
       return map;
     }, new Map<string, File[]>());
-    this.progressBar.logDebug(`inferred ${inputPathsToRomFiles.size.toLocaleString()} DAT${inputPathsToRomFiles.size !== 1 ? 's' : ''}`);
+    this.progressBar.logTrace(`inferred ${inputPathsToRomFiles.size.toLocaleString()} DAT${inputPathsToRomFiles.size !== 1 ? 's' : ''}`);
 
     const dats = [...inputPathsToRomFiles.entries()]
       .map(([inputPath, datRomFiles]) => DATGameInferrer.createDAT(inputPath, datRomFiles));
 
-    this.progressBar.logInfo('done inferring DATs');
+    this.progressBar.logTrace('done inferring DATs');
     return dats;
   }
 

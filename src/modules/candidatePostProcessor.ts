@@ -29,11 +29,11 @@ export default class CandidatePostProcessor extends Module {
     parentsToCandidates: Map<Parent, ReleaseCandidate[]>,
   ): Promise<Map<Parent, ReleaseCandidate[]>> {
     if (parentsToCandidates.size === 0) {
-      this.progressBar.logDebug(`${dat.getNameShort()}: no parents, so no candidates to process`);
+      this.progressBar.logTrace(`${dat.getNameShort()}: no parents, so no candidates to process`);
       return parentsToCandidates;
     }
 
-    this.progressBar.logInfo(`${dat.getNameShort()}: processing candidates`);
+    this.progressBar.logTrace(`${dat.getNameShort()}: processing candidates`);
     await this.progressBar.setSymbol(ProgressBarSymbol.GENERATING);
     await this.progressBar.reset(parentsToCandidates.size);
 
@@ -64,7 +64,7 @@ export default class CandidatePostProcessor extends Module {
         return [parent, newReleaseCandidates];
       }));
 
-    this.progressBar.logInfo(`${dat.getNameShort()}: done processing candidates`);
+    this.progressBar.logTrace(`${dat.getNameShort()}: done processing candidates`);
     return processedCandidates;
   }
 

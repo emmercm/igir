@@ -76,10 +76,12 @@ export interface OptionsProps {
   readonly overwrite?: boolean,
   readonly overwriteInvalid?: boolean,
   readonly cleanExclude?: string[],
+  readonly cleanDryRun?: boolean,
 
   readonly zipExclude?: string,
   readonly zipDatName?: boolean,
 
+  readonly symlink?: boolean,
   readonly symlinkRelative?: boolean,
 
   readonly matchChecksum?: ChecksumBitmask,
@@ -113,8 +115,8 @@ export interface OptionsProps {
   readonly onlySample?: boolean,
   readonly noPrototype?: boolean,
   readonly onlyPrototype?: boolean,
-  readonly noTestRoms?: boolean,
-  readonly onlyTestRoms?: boolean,
+  readonly noProgram?: boolean,
+  readonly onlyProgram?: boolean,
   readonly noAftermarket?: boolean,
   readonly onlyAftermarket?: boolean,
   readonly noHomebrew?: boolean,
@@ -208,9 +210,13 @@ export default class Options implements OptionsProps {
 
   readonly cleanExclude: string[];
 
+  readonly cleanDryRun: boolean;
+
   readonly zipExclude: string;
 
   readonly zipDatName: boolean;
+
+  readonly symlink: boolean;
 
   readonly symlinkRelative: boolean;
 
@@ -270,9 +276,9 @@ export default class Options implements OptionsProps {
 
   readonly onlyPrototype: boolean;
 
-  readonly noTestRoms: boolean;
+  readonly noProgram: boolean;
 
-  readonly onlyTestRoms: boolean;
+  readonly onlyProgram: boolean;
 
   readonly noAftermarket: boolean;
 
@@ -365,10 +371,12 @@ export default class Options implements OptionsProps {
     this.overwrite = options?.overwrite ?? false;
     this.overwriteInvalid = options?.overwriteInvalid ?? false;
     this.cleanExclude = options?.cleanExclude ?? [];
+    this.cleanDryRun = options?.cleanDryRun ?? false;
 
     this.zipExclude = options?.zipExclude ?? '';
     this.zipDatName = options?.zipDatName ?? false;
 
+    this.symlink = options?.symlink ?? false;
     this.symlinkRelative = options?.symlinkRelative ?? false;
 
     this.matchChecksum = options?.matchChecksum ?? ChecksumBitmask.CRC32;
@@ -402,8 +410,8 @@ export default class Options implements OptionsProps {
     this.onlySample = options?.onlySample ?? false;
     this.noPrototype = options?.noPrototype ?? false;
     this.onlyPrototype = options?.onlyPrototype ?? false;
-    this.noTestRoms = options?.noTestRoms ?? false;
-    this.onlyTestRoms = options?.onlyTestRoms ?? false;
+    this.noProgram = options?.noProgram ?? false;
+    this.onlyProgram = options?.onlyProgram ?? false;
     this.noAftermarket = options?.noAftermarket ?? false;
     this.onlyAftermarket = options?.onlyAftermarket ?? false;
     this.noHomebrew = options?.noHomebrew ?? false;
@@ -488,7 +496,7 @@ export default class Options implements OptionsProps {
    * The writing command that was specified.
    */
   writeString(): string | undefined {
-    return ['copy', 'move', 'symlink'].find((command) => this.getCommands().has(command));
+    return ['copy', 'move', 'link', 'symlink'].find((command) => this.getCommands().has(command));
   }
 
   /**
@@ -506,10 +514,10 @@ export default class Options implements OptionsProps {
   }
 
   /**
-   * Was the `symlink` command provided?
+   * Was the `link` command provided?
    */
-  shouldSymlink(): boolean {
-    return this.getCommands().has('symlink');
+  shouldLink(): boolean {
+    return this.getCommands().has('link');
   }
 
   /**
@@ -854,12 +862,20 @@ export default class Options implements OptionsProps {
       .filter((filePath) => !cleanExcludedFilesNormalized.has(filePath));
   }
 
+  getCleanDryRun(): boolean {
+    return this.cleanDryRun;
+  }
+
   private getZipExclude(): string {
     return this.zipExclude;
   }
 
   getZipDatName(): boolean {
     return this.zipDatName;
+  }
+
+  getSymlink(): boolean {
+    return this.symlink;
   }
 
   getSymlinkRelative(): boolean {
@@ -1028,12 +1044,12 @@ export default class Options implements OptionsProps {
     return this.onlyPrototype;
   }
 
-  getNoTestRoms(): boolean {
-    return this.noTestRoms;
+  getNoProgram(): boolean {
+    return this.noProgram;
   }
 
-  getOnlyTestRoms(): boolean {
-    return this.onlyTestRoms;
+  getOnlyProgram(): boolean {
+    return this.onlyProgram;
   }
 
   getNoAftermarket(): boolean {

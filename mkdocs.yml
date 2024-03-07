@@ -64,6 +64,7 @@ nav:
             - usage/desktop/openemu.md
             - usage/desktop/recalbox.md
             - usage/desktop/retroarch.md
+            - usage/desktop/retrodeck.md
             - usage/desktop/retropie.md
             - usage/handheld/twmenu.md
           - FPGA:
@@ -96,7 +97,9 @@ nav:
           - output/reporting.md
           - output/cleaning.md
       - Advanced:
-          - internals.md
+          - advanced/logging.md
+          - advanced/troubleshooting.md
+          - advanced/internals.md
       - Misc:
           - rom-dumping.md
       - Terms and Conditions:
@@ -130,6 +133,7 @@ plugins:
         'examples.md': 'usage/collection-sorting.md'
         'input/archives.md': 'input/reading-archives.md'
         'input/dats.md': 'dats/introduction.md'
+        'internals.md': 'advanced/internals.md'
         'output/arcade.md': 'usage/arcade.md'
         'reporting.md': 'output/reporting.md'
         'rom-filtering.md': 'roms/filtering-preferences.md'

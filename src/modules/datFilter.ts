@@ -25,24 +25,37 @@ export default class DATFilter extends Module {
   async filter(dat: DAT): Promise<DAT> {
     // Return early if there aren't any games
     if (dat.getGames().length === 0) {
-      this.progressBar.logDebug(`${dat.getNameShort()}: no games to filter`);
+      this.progressBar.logTrace(`${dat.getNameShort()}: no games to filter`);
       return dat;
     }
 
-    this.progressBar.logInfo(`${dat.getNameShort()}: filtering DAT`);
+    this.progressBar.logTrace(`${dat.getNameShort()}: filtering DAT`);
     await this.progressBar.setSymbol(ProgressBarSymbol.FILTERING);
     await this.progressBar.reset(dat.getGames().length);
 
-    const filteredGames = dat.getGames()
-      .filter((game) => this.filterGame(game));
+    const filteredGames = dat.getParents().flatMap((parent) => {
+      const games = parent.getGames().filter((game) => this.filterGame(game));
+      if (games.length === parent.getGames().length) {
+        // Nothing was filtered, return
+        return games;
+      }
+
+      // Elect a new parent in case it was filtered out
+      if (games.find((game) => game.getName() === parent.getName())) {
+        // Parent is still present, return
+        return games;
+      }
+      const newParent = games.at(0)?.getName();
+      return games.map((game) => game.withProps({ cloneOf: newParent }));
+    });
     const filteredDat = new LogiqxDAT(dat.getHeader(), filteredGames);
 
     const size = filteredDat.getGames()
       .flatMap((game) => game.getRoms())
       .reduce((sum, rom) => sum + rom.getSize(), 0);
-    this.progressBar.logDebug(`${filteredDat.getNameShort()}: filtered to ${filteredGames.length.toLocaleString()}/${dat.getGames().length.toLocaleString()} game${filteredGames.length !== 1 ? 's' : ''} (${fsPoly.sizeReadable(size)})`);
+    this.progressBar.logTrace(`${filteredDat.getNameShort()}: filtered to ${filteredGames.length.toLocaleString()}/${dat.getGames().length.toLocaleString()} game${filteredGames.length !== 1 ? 's' : ''} (${fsPoly.sizeReadable(size)})`);
 
-    this.progressBar.logInfo(`${filteredDat.getNameShort()}: done filtering DAT`);
+    this.progressBar.logTrace(`${filteredDat.getNameShort()}: done filtering DAT`);
     return filteredDat;
   }
 
@@ -80,8 +93,8 @@ export default class DATFilter extends Module {
       this.options.getOnlySample() && !game.isSample(),
       this.options.getNoPrototype() && game.isPrototype(),
       this.options.getOnlyPrototype() && !game.isPrototype(),
-      this.options.getNoTestRoms() && game.isTest(),
-      this.options.getOnlyTestRoms() && !game.isTest(),
+      this.options.getNoProgram() && game.isProgram(),
+      this.options.getOnlyProgram() && !game.isProgram(),
       this.options.getNoAftermarket() && game.isAftermarket(),
       this.options.getOnlyAftermarket() && !game.isAftermarket(),
       this.options.getNoHomebrew() && game.isHomebrew(),

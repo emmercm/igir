@@ -53,21 +53,111 @@ describe('multiple files', () => {
     await expect(createRomScanner(['test/fixtures/roms/**/*'], ['test/fixtures/roms/**/*.zip', 'test/fixtures/roms/**/*']).scan()).resolves.toHaveLength(0);
   });
 
-  it('should scan symlinked files', async () => {
+  it('should scan hard links', async () => {
     const scannedRealFiles = (await createRomScanner(['test/fixtures/roms']).scan())
       .sort((a, b) => a.getFilePath().localeCompare(b.getFilePath()));
 
+    // Given some symlinked files
+    const tempDir = await fsPoly.mkdtemp(Constants.GLOBAL_TEMP_DIR);
+    try {
+      const filesDir = path.join(tempDir, 'files');
+      await fsPoly.mkdir(filesDir);
+
+      const romFiles = await Promise.all((await fsPoly.walk('test/fixtures/roms'))
+        .map(async (romFile) => {
+          // Make a copy of the original file to ensure it's on the same drive
+          const tempFile = path.join(filesDir, romFile);
+          await fsPoly.mkdir(path.dirname(tempFile), { recursive: true });
+          await fsPoly.copyFile(romFile, tempFile);
+          return tempFile;
+        }));
+
+      const linksDir = path.join(tempDir, 'links');
+      await fsPoly.mkdir(linksDir);
+
+      await Promise.all(romFiles.map(async (romFile) => {
+        const tempLink = path.join(linksDir, path.relative(filesDir, romFile));
+        await fsPoly.mkdir(path.dirname(tempLink), { recursive: true });
+        await fsPoly.hardlink(path.resolve(romFile), tempLink);
+      }));
+
+      // When scanning symlinked files
+      const scannedSymlinks = (await createRomScanner([linksDir]).scan())
+        .sort((a, b) => a.getFilePath().localeCompare(b.getFilePath()));
+
+      // Then the files scan successfully
+      expect(scannedSymlinks).toHaveLength(scannedRealFiles.length);
+      for (const [idx, scannedSymlink] of scannedSymlinks.entries()) {
+        expect(scannedSymlink.getSize()).toEqual(scannedRealFiles[idx].getSize());
+        expect(scannedSymlink.getCrc32()).toEqual(scannedRealFiles[idx].getCrc32());
+      }
+    } finally {
+      await fsPoly.rm(tempDir, { recursive: true });
+    }
+  });
+
+  it('should scan symlinks', async () => {
+    const scannedRealFiles = (await createRomScanner(['test/fixtures/roms']).scan())
+      .sort((a, b) => a.getFilePath().localeCompare(b.getFilePath()));
+
+    // Given some symlinked files
     const tempDir = await fsPoly.mkdtemp(Constants.GLOBAL_TEMP_DIR);
     try {
       const romFiles = await fsPoly.walk('test/fixtures/roms');
-      await Promise.all(romFiles.map(async (romFile) => {
+      await Promise.all(romFiles.map(async (romFile, idx) => {
         const tempLink = path.join(tempDir, romFile);
         await fsPoly.mkdir(path.dirname(tempLink), { recursive: true });
-        await fsPoly.symlink(path.resolve(romFile), tempLink);
+        if (idx % 2 === 0) {
+          // symlink some files with absolute paths
+          await fsPoly.symlink(path.resolve(romFile), tempLink);
+        } else {
+          // symlink some files with relative paths
+          await fsPoly.symlink(await fsPoly.symlinkRelativePath(romFile, tempLink), tempLink);
+        }
       }));
+
+      // When scanning symlinked files
       const scannedSymlinks = (await createRomScanner([tempDir]).scan())
         .sort((a, b) => a.getFilePath().localeCompare(b.getFilePath()));
 
+      // Then the files scan successfully
+      expect(scannedSymlinks).toHaveLength(scannedRealFiles.length);
+      for (const [idx, scannedSymlink] of scannedSymlinks.entries()) {
+        expect(scannedSymlink.getSize()).toEqual(scannedRealFiles[idx].getSize());
+        expect(scannedSymlink.getCrc32()).toEqual(scannedRealFiles[idx].getCrc32());
+      }
+    } finally {
+      await fsPoly.rm(tempDir, { recursive: true });
+    }
+  });
+
+  it('should scan symlinked directories', async () => {
+    const realRomDir = path.join('test', 'fixtures', 'roms');
+    const romDirs = await fsPoly.dirs(realRomDir);
+
+    const scannedRealFiles = (await createRomScanner(romDirs).scan())
+      .sort((a, b) => a.getFilePath().localeCompare(b.getFilePath()));
+
+    // Given some symlinked dirs
+    const tempDir = await fsPoly.mkdtemp(Constants.GLOBAL_TEMP_DIR);
+    try {
+      await Promise.all(romDirs.map(async (romDir, idx) => {
+        const tempLink = path.join(tempDir, romDir);
+        await fsPoly.mkdir(path.dirname(tempLink), { recursive: true });
+        if (idx % 2 === 0) {
+          // symlink some files with absolute paths
+          await fsPoly.symlink(path.resolve(romDir), tempLink);
+        } else {
+          // symlink some files with relative paths
+          await fsPoly.symlink(await fsPoly.symlinkRelativePath(romDir, tempLink), tempLink);
+        }
+      }));
+
+      // When scanning symlink dirs
+      const scannedSymlinks = (await createRomScanner([tempDir]).scan())
+        .sort((a, b) => a.getFilePath().localeCompare(b.getFilePath()));
+
+      // Then the dirs scan successfully
       expect(scannedSymlinks).toHaveLength(scannedRealFiles.length);
       for (const [idx, scannedSymlink] of scannedSymlinks.entries()) {
         expect(scannedSymlink.getSize()).toEqual(scannedRealFiles[idx].getSize());

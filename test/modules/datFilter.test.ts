@@ -14,11 +14,11 @@ function buildDATFilter(options: OptionsProps = {}): DATFilter {
 async function expectFilteredDAT(
   options: OptionsProps,
   gamesArr: Game[][],
-  expectedSize: number,
+  expectedGameCount: number,
 ): Promise<void> {
   const dat = new LogiqxDAT(new Header(), gamesArr.flat());
   const filteredDat = await buildDATFilter(options).filter(dat);
-  expect(filteredDat.getGames().length).toEqual(expectedSize);
+  expect(filteredDat.getGames().length).toEqual(expectedGameCount);
 }
 
 function arrayCoerce<T>(val: T | T[] | undefined): T[] {
@@ -56,9 +56,16 @@ function buildGameWithRegionLanguage(
         releases.push(new Release(releaseName, region, language));
       }
 
-      const rom = new ROM({ name: `${romName}.rom`, size: 0, crc: '00000000' });
+      const rom = new ROM({
+        name: `${romName}.rom`,
+        size: 0,
+        crc: '00000000',
+      });
       const game = new Game({
-        name: romName, rom: [rom], release: releases, ...gameOptionsArr[idx],
+        name: `${romName}${language ? ` (${language})` : ''}`, // all games need to have unique names
+        rom: [rom],
+        release: releases,
+        ...gameOptionsArr[idx],
       });
       games.push(game);
     }
@@ -101,6 +108,38 @@ describe('filter', () => {
     await expectFilteredDAT({
       filterLanguage: ['ZH', 'DE'],
     }, [], 0);
+  });
+
+  it('should not leave children abandoned', async () => {
+    const options = new Options({
+      filterRegion: ['USA', 'WORLD'],
+    });
+    const parent = new Game({ name: 'Legend of Zelda, The (Europe) (Rev 1)' });
+    const children = [
+      'Dongfang de Chuanshuo - The Hyrule Fantasy (China) (Pirate)',
+      'Legend of Zelda, The (Europe)',
+      'Legend of Zelda, The (USA)',
+      'Legend of Zelda, The (USA) (Rev 1)',
+      'Legend of Zelda, The (USA) (Rev 1) (GameCube Edition)',
+      'Legend of Zelda, The (USA) (GameCube Edition)',
+      'Legend of Zelda, The (Europe) (Rev 1) (Virtual Console)',
+      'Legend of Zelda, The (USA) (Rev 1) (Virtual Console)',
+      'Zelda no Densetsu 1 - The Hyrule Fantasy (Japan)',
+    ].map((name) => new Game({ name, cloneOf: parent.getName() }));
+    const dat = new LogiqxDAT(new Header(), [parent, ...children]);
+    expect(dat.getParents()).toHaveLength(1);
+
+    const filteredDat = await new DATFilter(options, new ProgressBarFake()).filter(dat);
+
+    expect(filteredDat.getParents()).toHaveLength(1);
+    expect(filteredDat.getGames().map((game) => game.getName())).toEqual([
+      'Legend of Zelda, The (USA)',
+      'Legend of Zelda, The (USA) (Rev 1)',
+      'Legend of Zelda, The (USA) (Rev 1) (GameCube Edition)',
+      'Legend of Zelda, The (USA) (GameCube Edition)',
+      'Legend of Zelda, The (USA) (Rev 1) (Virtual Console)',
+    ]);
+    expect(filteredDat.getGames().every((game) => game.getParent())).toEqual(true);
   });
 
   describe('filter regex', () => {
@@ -465,7 +504,7 @@ describe('filter', () => {
         buildGameWithRegionLanguage('six (Homebrew)', 'USA', 'EN'),
         buildGameWithRegionLanguage('seven (Proto)', 'USA', 'EN'),
         buildGameWithRegionLanguage('eight (Sample)', 'USA', 'EN'),
-        buildGameWithRegionLanguage('nine (Test)', 'USA', 'EN'),
+        buildGameWithRegionLanguage('nine (Program)', 'USA', 'EN'),
         buildGameWithRegionLanguage('ten (Debug)', 'USA', 'EN'),
       ], 10);
     });
@@ -479,7 +518,7 @@ describe('filter', () => {
         buildGameWithRegionLanguage('six (Homebrew)', 'USA', 'EN'),
         buildGameWithRegionLanguage('seven (Proto)', 'USA', 'EN'),
         buildGameWithRegionLanguage('eight (Sample)', 'USA', 'EN'),
-        buildGameWithRegionLanguage('nine (Test)', 'USA', 'EN'),
+        buildGameWithRegionLanguage('nine (Program)', 'USA', 'EN'),
         buildGameWithRegionLanguage('ten (Debug)', 'USA', 'EN'),
       ], 0);
     });
@@ -494,7 +533,7 @@ describe('filter', () => {
         buildGameWithRegionLanguage('six (Homebrew)', 'USA', 'EN'),
         buildGameWithRegionLanguage('seven (Proto)', 'USA', 'EN'),
         buildGameWithRegionLanguage('eight (Sample)', 'USA', 'EN'),
-        buildGameWithRegionLanguage('nine (Test)', 'USA', 'EN'),
+        buildGameWithRegionLanguage('nine (Program)', 'USA', 'EN'),
         buildGameWithRegionLanguage('ten (Debug)', 'USA', 'EN'),
         buildGameWithRegionLanguage('gazillion', 'USA', 'EN'),
       ], 2);
@@ -708,43 +747,43 @@ describe('filter', () => {
     });
   });
 
-  describe('test roms', () => {
+  describe('program', () => {
     it('option is false', async () => {
       const parentsToCandidates = [
         buildGameWithRegionLanguage('one', 'USA', 'EN'),
-        buildGameWithRegionLanguage('two (Test)', 'USA', 'EN'),
-        buildGameWithRegionLanguage('three (Test Copy)', 'USA', 'EN'),
+        buildGameWithRegionLanguage('two (Program)', 'USA', 'EN'),
+        buildGameWithRegionLanguage('three (Test Program)', 'USA', 'EN'),
       ];
-      await expectFilteredDAT({ noTestRoms: false }, parentsToCandidates, 3);
-      await expectFilteredDAT({ onlyTestRoms: false }, parentsToCandidates, 3);
+      await expectFilteredDAT({ noProgram: false }, parentsToCandidates, 3);
+      await expectFilteredDAT({ onlyProgram: false }, parentsToCandidates, 3);
     });
 
-    it('all games are test roms', async () => {
+    it('all games are programs', async () => {
       const parentsToCandidates = [
-        buildGameWithRegionLanguage('one (Test)', 'USA', 'EN'),
-        buildGameWithRegionLanguage('two (Test Copy)', 'USA', 'EN'),
+        buildGameWithRegionLanguage('one (Program)', 'USA', 'EN'),
+        buildGameWithRegionLanguage('two (Test Program)', 'USA', 'EN'),
       ];
-      await expectFilteredDAT({ noTestRoms: true }, parentsToCandidates, 0);
-      await expectFilteredDAT({ onlyTestRoms: true }, parentsToCandidates, 2);
+      await expectFilteredDAT({ noProgram: true }, parentsToCandidates, 0);
+      await expectFilteredDAT({ onlyProgram: true }, parentsToCandidates, 2);
     });
 
-    it('some games are test roms', async () => {
+    it('some games are programs', async () => {
       const parentsToCandidates = [
-        buildGameWithRegionLanguage('one (Test Copy)', 'USA', 'EN'),
+        buildGameWithRegionLanguage('one (Test Program)', 'USA', 'EN'),
         buildGameWithRegionLanguage('two', 'USA', 'EN'),
-        buildGameWithRegionLanguage('three (Test)', 'USA', 'EN'),
+        buildGameWithRegionLanguage('three (Program)', 'USA', 'EN'),
       ];
-      await expectFilteredDAT({ noTestRoms: true }, parentsToCandidates, 1);
-      await expectFilteredDAT({ onlyTestRoms: true }, parentsToCandidates, 2);
+      await expectFilteredDAT({ noProgram: true }, parentsToCandidates, 1);
+      await expectFilteredDAT({ onlyProgram: true }, parentsToCandidates, 2);
     });
 
-    it('no games are test roms', async () => {
+    it('no games are programs', async () => {
       const parentsToCandidates = [
         buildGameWithRegionLanguage('one', 'USA', 'EN'),
         buildGameWithRegionLanguage('two', 'USA', 'EN'),
       ];
-      await expectFilteredDAT({ noTestRoms: true }, parentsToCandidates, 2);
-      await expectFilteredDAT({ onlyTestRoms: true }, parentsToCandidates, 0);
+      await expectFilteredDAT({ noProgram: true }, parentsToCandidates, 2);
+      await expectFilteredDAT({ onlyProgram: true }, parentsToCandidates, 0);
     });
   });
 

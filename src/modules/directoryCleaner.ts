@@ -32,11 +32,11 @@ export default class DirectoryCleaner extends Module {
   async clean(dirsToClean: string[], filesToExclude: File[]): Promise<string[]> {
     // If nothing was written, then don't clean anything
     if (filesToExclude.length === 0) {
-      this.progressBar.logDebug('no files were written, not cleaning output');
+      this.progressBar.logTrace('no files were written, not cleaning output');
       return [];
     }
 
-    this.progressBar.logInfo('cleaning files in output');
+    this.progressBar.logTrace('cleaning files in output');
     await this.progressBar.setSymbol(ProgressBarSymbol.SEARCHING);
     await this.progressBar.reset(0);
 
@@ -56,7 +56,7 @@ export default class DirectoryCleaner extends Module {
     await this.progressBar.setSymbol(ProgressBarSymbol.RECYCLING);
 
     try {
-      this.progressBar.logDebug(`cleaning ${filesToClean.length.toLocaleString()} file${filesToClean.length !== 1 ? 's' : ''}`);
+      this.progressBar.logTrace(`cleaning ${filesToClean.length.toLocaleString()} file${filesToClean.length !== 1 ? 's' : ''}`);
       await this.progressBar.reset(filesToClean.length);
       // TODO(cemmer): don't trash save files
       await this.trashOrDelete(filesToClean);
@@ -68,24 +68,30 @@ export default class DirectoryCleaner extends Module {
     try {
       const emptyDirs = await DirectoryCleaner.getEmptyDirs(dirsToClean);
       await this.progressBar.reset(emptyDirs.length);
-      this.progressBar.logDebug(`cleaning ${emptyDirs.length.toLocaleString()} empty director${emptyDirs.length !== 1 ? 'ies' : 'y'}`);
+      this.progressBar.logTrace(`cleaning ${emptyDirs.length.toLocaleString()} empty director${emptyDirs.length !== 1 ? 'ies' : 'y'}`);
       await this.trashOrDelete(emptyDirs);
     } catch (error) {
       this.progressBar.logError(`failed to clean empty directories: ${error}`);
     }
 
-    this.progressBar.logInfo('done cleaning files in output');
+    this.progressBar.logTrace('done cleaning files in output');
     return filesToClean.sort();
   }
 
   private async trashOrDelete(filePaths: string[]): Promise<void> {
+    if (this.options.getCleanDryRun()) {
+      this.progressBar.logInfo(`paths skipped from cleaning (dry run):\n${filePaths.map((filePath) => `  ${filePath}`).join('\n')}`);
+      return;
+    }
+
     // Prefer recycling...
     for (let i = 0; i < filePaths.length; i += Constants.OUTPUT_CLEANER_BATCH_SIZE) {
       const filePathsChunk = filePaths.slice(i, i + Constants.OUTPUT_CLEANER_BATCH_SIZE);
+      this.progressBar.logInfo(`cleaning path${filePathsChunk.length !== 1 ? 's' : ''}:\n${filePathsChunk.map((filePath) => `  ${filePath}`).join('\n')}`);
       try {
         await trash(filePathsChunk);
       } catch (error) {
-        this.progressBar.logWarn(`failed to recycle ${filePathsChunk.length} file${filePathsChunk.length !== 1 ? 's' : ''}: ${error}`);
+        this.progressBar.logWarn(`failed to recycle ${filePathsChunk.length} path${filePathsChunk.length !== 1 ? 's' : ''}: ${error}`);
       }
       await this.progressBar.update(i);
     }

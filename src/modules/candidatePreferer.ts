@@ -27,15 +27,15 @@ export default class CandidatePreferer extends Module {
     dat: DAT,
     parentsToCandidates: Map<Parent, ReleaseCandidate[]>,
   ): Promise<Map<Parent, ReleaseCandidate[]>> {
-    this.progressBar.logInfo(`${dat.getNameShort()}: preferring candidates`);
+    this.progressBar.logTrace(`${dat.getNameShort()}: preferring candidates`);
 
     if (parentsToCandidates.size === 0) {
-      this.progressBar.logDebug(`${dat.getNameShort()}: no parents, so no candidates to prefer`);
+      this.progressBar.logTrace(`${dat.getNameShort()}: no parents, so no candidates to prefer`);
       return parentsToCandidates;
     }
 
     if (!this.options.getSingle()) {
-      this.progressBar.logDebug(`${dat.getNameShort()}: not running in single/1G1R mode, not preferring candidates`);
+      this.progressBar.logTrace(`${dat.getNameShort()}: not running in single/1G1R mode, not preferring candidates`);
       return parentsToCandidates;
     }
 
@@ -43,7 +43,7 @@ export default class CandidatePreferer extends Module {
     const totalReleaseCandidates = [...parentsToCandidates.values()]
       .reduce((sum, rcs) => sum + rcs.length, 0);
     if (!totalReleaseCandidates) {
-      this.progressBar.logDebug(`${dat.getNameShort()}: no parent has candidates`);
+      this.progressBar.logTrace(`${dat.getNameShort()}: no parent has candidates`);
       return parentsToCandidates;
     }
 
@@ -57,9 +57,9 @@ export default class CandidatePreferer extends Module {
       .flatMap((releaseCandidate) => releaseCandidate.getRomsWithFiles())
       .reduce((sum, romWithFiles) => sum + romWithFiles.getRom().getSize(), 0);
     const filteredCandidates = [...output.values()].reduce((sum, rc) => sum + rc.length, 0);
-    this.progressBar.logDebug(`${dat.getNameShort()}: filtered to ${fsPoly.sizeReadable(size)} of ${filteredCandidates.toLocaleString()} candidate${filteredCandidates !== 1 ? 's' : ''} for ${output.size.toLocaleString()} parent${output.size !== 1 ? 's' : ''}`);
+    this.progressBar.logTrace(`${dat.getNameShort()}: filtered to ${fsPoly.sizeReadable(size)} of ${filteredCandidates.toLocaleString()} candidate${filteredCandidates !== 1 ? 's' : ''} for ${output.size.toLocaleString()} parent${output.size !== 1 ? 's' : ''}`);
 
-    this.progressBar.logInfo(`${dat.getNameShort()}: done preferring candidates`);
+    this.progressBar.logTrace(`${dat.getNameShort()}: done preferring candidates`);
     return output;
   }
 
@@ -74,7 +74,7 @@ export default class CandidatePreferer extends Module {
       await this.progressBar.incrementProgress();
       if (releaseCandidates.length > 1) {
         // Reduce log spam by only logging parents that can be changed
-        this.progressBar.logTrace(`${dat.getNameShort()}: ${parent.getName()}: ${releaseCandidates.length.toLocaleString()} candidate${releaseCandidates.length !== 1 ? 's' : ''} before filtering`);
+        this.progressBar.logTrace(`${dat.getNameShort()}: ${parent.getName()} (parent): ${releaseCandidates.length.toLocaleString()} candidate${releaseCandidates.length !== 1 ? 's' : ''} before filtering`);
       }
 
       const preferredReleaseCandidate = releaseCandidates

@@ -210,7 +210,7 @@ describe('token replacement', () => {
     ['Game (Pirate)', 'Pirated'],
     ['Game (Proto)', 'Prototype'],
     ['Game (Sample)', 'Sample'],
-    ['Game (Test)', 'Test'],
+    ['Game (Program)', 'Program'],
     ['Game [t]', 'Trained'],
     ['Game [T+Eng]', 'Translated'],
     ['Game (Unl)', 'Unlicensed'],
@@ -336,6 +336,47 @@ describe('token replacement', () => {
     'should throw on {batocera} for unknown extension: %s',
     async (outputRomFilename) => {
       const options = new Options({ commands: ['copy'], output: 'roms/{batocera}' });
+
+      const rom = new ROM({ name: outputRomFilename, size: 0, crc: '' });
+
+      await expect(async () => OutputFactory.getPath(
+        options,
+        dummyDat,
+        dummyGame,
+        dummyRelease,
+        rom,
+        await rom.toFile(),
+      )).rejects.toThrow(/failed to replace/);
+    },
+  );
+
+  // Output Token {es}
+  test.each([
+    ['game.a78', path.join('roms', 'atari7800', 'game.a78')],
+    ['game.gb', path.join('roms', 'gb', 'game.gb')],
+    ['game.nes', path.join('roms', 'nes', 'game.nes')],
+  ])(
+    'should replace {es} for known extension: %s',
+    async (outputRomFilename, expectedPath) => {
+      const options = new Options({ commands: ['copy'], output: 'roms/{es}' });
+      const rom = new ROM({ name: outputRomFilename, size: 0, crc: '' });
+
+      const outputPath = OutputFactory.getPath(
+        options,
+        dummyDat,
+        dummyGame,
+        dummyRelease,
+        rom,
+        await rom.toFile(),
+      );
+      expect(outputPath.format()).toEqual(expectedPath);
+    },
+  );
+
+  test.each(['game.bin', 'game.rom'])(
+    'should throw on {es} for unknown extension: %s',
+    async (outputRomFilename) => {
+      const options = new Options({ commands: ['copy'], output: 'roms/{es}' });
 
       const rom = new ROM({ name: outputRomFilename, size: 0, crc: '' });
 
@@ -703,6 +744,47 @@ describe('token replacement', () => {
     );
     expect(outputPath.format()).toEqual(expectedPath);
   });
+
+  // Output Token {retrodeck}
+  test.each([
+    ['game.a78', path.join('roms', 'atari7800', 'game.a78')],
+    ['game.gb', path.join('roms', 'gb', 'game.gb')],
+    ['game.nes', path.join('roms', 'nes', 'game.nes')],
+  ])(
+    'should replace {retrodeck} for known extension: %s',
+    async (outputRomFilename, expectedPath) => {
+      const options = new Options({ commands: ['copy'], output: 'roms/{retrodeck}' });
+      const rom = new ROM({ name: outputRomFilename, size: 0, crc: '' });
+
+      const outputPath = OutputFactory.getPath(
+        options,
+        dummyDat,
+        dummyGame,
+        dummyRelease,
+        rom,
+        await rom.toFile(),
+      );
+      expect(outputPath.format()).toEqual(expectedPath);
+    },
+  );
+
+  test.each(['game.bin', 'game.rom'])(
+    'should throw on {retrodeck} for unknown extension: %s',
+    async (outputRomFilename) => {
+      const options = new Options({ commands: ['copy'], output: 'roms/{retrodeck}' });
+
+      const rom = new ROM({ name: outputRomFilename, size: 0, crc: '' });
+
+      await expect(async () => OutputFactory.getPath(
+        options,
+        dummyDat,
+        dummyGame,
+        dummyRelease,
+        rom,
+        await rom.toFile(),
+      )).rejects.toThrow(/failed to replace/);
+    },
+  );
 
   // Output Token {twmenu}
   test.each([

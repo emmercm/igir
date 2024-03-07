@@ -64,7 +64,16 @@ export default abstract class Scanner extends Module {
     try {
       const totalKilobytes = await fsPoly.size(filePath) / 1024;
       const files = await Scanner.FILESIZE_SEMAPHORE.runExclusive(
-        async () => FileFactory.filesFrom(filePath, checksumBitmask),
+        async () => {
+          if (await fsPoly.isSymlink(filePath)) {
+            const realFilePath = await fsPoly.readlinkResolved(filePath);
+            if (!await fsPoly.exists(realFilePath)) {
+              this.progressBar.logWarn(`${filePath}: broken symlink, '${realFilePath}' doesn't exist`);
+              return [];
+            }
+          }
+          return FileFactory.filesFrom(filePath, checksumBitmask);
+        },
         totalKilobytes,
       );
 

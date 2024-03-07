@@ -8,6 +8,8 @@ import { isNotJunk } from 'junk';
 import nodeDiskInfo from 'node-disk-info';
 import semver from 'semver';
 
+import ArrayPoly from './arrayPoly.js';
+
 export type FsWalkCallback = (increment: number) => void;
 
 export default class FsPoly {
@@ -18,16 +20,19 @@ export default class FsPoly {
 
   static async canSymlink(tempDir: string): Promise<boolean> {
     const source = await this.mktemp(path.join(tempDir, 'source'));
-    await this.touch(source);
-    const target = await this.mktemp(path.join(tempDir, 'target'));
     try {
-      await this.symlink(source, target);
-      return await this.exists(target);
+      await this.touch(source);
+      const target = await this.mktemp(path.join(tempDir, 'target'));
+      try {
+        await this.symlink(source, target);
+        return await this.exists(target);
+      } finally {
+        await this.rm(target, { force: true });
+      }
     } catch {
       return false;
     } finally {
       await this.rm(source, { force: true });
-      await this.rm(target, { force: true });
     }
   }
 
@@ -56,6 +61,16 @@ export default class FsPoly {
     }
   }
 
+  static async dirs(dirPath: string): Promise<string[]> {
+    const readDir = (await util.promisify(fs.readdir)(dirPath))
+      .filter((filePath) => isNotJunk(path.basename(filePath)))
+      .map((filePath) => path.join(dirPath, filePath));
+
+    return (await Promise.all(
+      readDir.map(async (filePath) => (await this.isDirectory(filePath) ? filePath : undefined)),
+    )).filter(ArrayPoly.filterNotNullish);
+  }
+
   static disksSync(): string[] {
     return FsPoly.DRIVES
       .filter((drive) => drive.available > 0)
@@ -71,9 +86,30 @@ export default class FsPoly {
     return util.promisify(fs.exists)(pathLike);
   }
 
-  static async isDirectory(pathLike: PathLike): Promise<boolean> {
+  static async hardlink(target: string, link: string): Promise<void> {
     try {
-      return (await util.promisify(fs.lstat)(pathLike)).isDirectory();
+      // Added in: v10.0.0
+      return await util.promisify(fs.link)(target, link);
+    } catch (error) {
+      if (this.onDifferentDrives(target, link)) {
+        throw new Error(`can't hard link files on different drives: ${error}`);
+      }
+      throw error;
+    }
+  }
+
+  static async inode(pathLike: PathLike): Promise<number> {
+    return (await util.promisify(fs.stat)(pathLike)).ino;
+  }
+
+  static async isDirectory(pathLike: string): Promise<boolean> {
+    try {
+      const lstat = (await util.promisify(fs.lstat)(pathLike));
+      if (lstat.isSymbolicLink()) {
+        const link = await this.readlinkResolved(pathLike);
+        return await this.isDirectory(link);
+      }
+      return lstat.isDirectory();
     } catch {
       return false;
     }
@@ -132,7 +168,7 @@ export default class FsPoly {
     return replaced;
   }
 
-  static async mkdir(pathLike: PathLike, options: MakeDirectoryOptions): Promise<void> {
+  static async mkdir(pathLike: PathLike, options?: MakeDirectoryOptions): Promise<void> {
     await util.promisify(fs.mkdir)(pathLike, options);
   }
 
@@ -241,15 +277,33 @@ export default class FsPoly {
   }
 
   static async readlink(pathLike: PathLike): Promise<string> {
+    if (!await this.isSymlink(pathLike)) {
+      throw new Error(`can't readlink of non-symlink: ${pathLike}`);
+    }
     // Added in: v10.0.0
     return util.promisify(fs.readlink)(pathLike);
+  }
+
+  static async readlinkResolved(link: string): Promise<string> {
+    const source = await this.readlink(link);
+    if (path.isAbsolute(source)) {
+      return source;
+    }
+    return path.join(path.dirname(link), source);
+  }
+
+  static async realpath(pathLike: PathLike): Promise<string> {
+    if (!await this.exists(pathLike)) {
+      throw new Error(`can't get realpath of non-existent path: ${pathLike}`);
+    }
+    return util.promisify(fs.realpath)(pathLike);
   }
 
   /**
    * fs.rm() was added in: v14.14.0
    * util.promisify(fs.rm)() was added in: v14.14.0
    */
-  static async rm(pathLike: PathLike, options: RmOptions = {}): Promise<void> {
+  static async rm(pathLike: string, options: RmOptions = {}): Promise<void> {
     const optionsWithRetry = {
       maxRetries: 2,
       ...options,
@@ -305,8 +359,21 @@ export default class FsPoly {
     return `${Number.parseFloat((bytes / k ** i).toFixed(decimals))}${sizes[i]}`;
   }
 
-  static async symlink(file: PathLike, link: PathLike): Promise<void> {
-    return util.promisify(fs.symlink)(file, link);
+  static async symlink(target: PathLike, link: PathLike): Promise<void> {
+    return util.promisify(fs.symlink)(target, link);
+  }
+
+  static async symlinkRelativePath(target: string, link: string): Promise<string> {
+    // NOTE(cemmer): macOS can be funny with files or links in system folders such as
+    // `/var/folders/*/...` whose real path is actually `/private/var/folders/*/...`, and
+    // path.resolve() won't resolve these fully, so we need the OS to resolve them in order to
+    // generate valid relative paths
+    const realTarget = await this.realpath(target);
+    const realLink = path.join(
+      await this.realpath(path.dirname(link)),
+      path.basename(link),
+    );
+    return path.relative(path.dirname(realLink), realTarget);
   }
 
   static async touch(filePath: string): Promise<void> {
@@ -340,6 +407,7 @@ export default class FsPoly {
       callback(files.length);
     }
 
+    // TODO(cemmer): `Promise.all()` this?
     for (const file of files) {
       const fullPath = path.join(pathLike.toString(), file);
       if (await this.isDirectory(fullPath)) {
