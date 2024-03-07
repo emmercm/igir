@@ -14,11 +14,11 @@ function buildDATFilter(options: OptionsProps = {}): DATFilter {
 async function expectFilteredDAT(
   options: OptionsProps,
   gamesArr: Game[][],
-  expectedSize: number,
+  expectedGameCount: number,
 ): Promise<void> {
   const dat = new LogiqxDAT(new Header(), gamesArr.flat());
   const filteredDat = await buildDATFilter(options).filter(dat);
-  expect(filteredDat.getGames().length).toEqual(expectedSize);
+  expect(filteredDat.getGames().length).toEqual(expectedGameCount);
 }
 
 function arrayCoerce<T>(val: T | T[] | undefined): T[] {
@@ -56,9 +56,16 @@ function buildGameWithRegionLanguage(
         releases.push(new Release(releaseName, region, language));
       }
 
-      const rom = new ROM({ name: `${romName}.rom`, size: 0, crc: '00000000' });
+      const rom = new ROM({
+        name: `${romName}.rom`,
+        size: 0,
+        crc: '00000000',
+      });
       const game = new Game({
-        name: romName, rom: [rom], release: releases, ...gameOptionsArr[idx],
+        name: `${romName}${language ? ` (${language})` : ''}`, // all games need to have unique names
+        rom: [rom],
+        release: releases,
+        ...gameOptionsArr[idx],
       });
       games.push(game);
     }
