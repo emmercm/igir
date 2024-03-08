@@ -117,7 +117,7 @@ export default class Zip extends Archive {
     try {
       stream = entry.stream();
     } catch (error) {
-      throw new Error(`failed to create stream for ${this.getFilePath()}|${entryPath}: ${error}`);
+      throw new Error(`failed to read '${this.getFilePath()}|${entryPath}': ${error}`);
     }
 
     try {
@@ -208,25 +208,41 @@ export default class Zip extends Archive {
       3,
       async.asyncify(async (
         [inputFile, outputArchiveEntry]: [File, ArchiveEntry<Zip>],
-      ): Promise<void> => inputFile.createPatchedReadStream(async (stream) => {
-        // Catch stream errors such as `ENOENT: no such file or directory`
-        stream.on('error', catchError);
+      ): Promise<void> => {
+        const streamProcessor = async (stream: Readable): Promise<void> => {
+          // Catch stream errors such as `ENOENT: no such file or directory`
+          stream.on('error', catchError);
 
-        const entryName = outputArchiveEntry.getEntryPath().replace(/[\\/]/g, '/');
-        zipFile.append(stream, {
-          name: entryName,
-        });
+          const entryName = outputArchiveEntry.getEntryPath().replace(/[\\/]/g, '/');
+          zipFile.append(stream, {
+            name: entryName,
+          });
 
-        // Leave the input stream open until we're done writing it
-        await new Promise<void>((resolve) => {
-          const interval = setInterval(() => {
-            if (writtenEntries.has(entryName) || zipFileError) {
-              clearInterval(interval);
-              resolve();
-            }
-          }, 10);
-        });
-      })),
+          // Leave the input stream open until we're done writing it
+          await new Promise<void>((resolve) => {
+            const interval = setInterval(() => {
+              if (writtenEntries.has(entryName) || zipFileError) {
+                clearInterval(interval);
+                resolve();
+              }
+            }, 10);
+          });
+        };
+
+        try {
+          await inputFile.createPatchedReadStream(streamProcessor);
+        } catch (error) {
+          // Reading the file can throw an exception, so we have to handle that or the
+          // Promise+setInterval() above will run forever
+          if (error instanceof Error) {
+            catchError(error);
+          } else if (typeof error === 'string') {
+            catchError(new Error(error));
+          } else {
+            catchError(new Error(`failed to write '${inputFile.toString()}' to '${outputArchiveEntry.toString()}'`));
+          }
+        }
+      }),
     );
 
     if (zipFileError) {
