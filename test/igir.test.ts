@@ -435,6 +435,7 @@ describe('with explicit DATs', () => {
         path.join('raw', 'fizzbuzz.nes'),
         path.join('raw', 'four.rom'),
         path.join('raw', 'loremipsum.rom'),
+        path.join('raw', 'one.rom'),
         path.join('raw', 'three.rom'),
       ]);
       expect(result.cleanedFiles).toHaveLength(0);
@@ -901,8 +902,6 @@ describe('with inferred DATs', () => {
         path.join('raw', 'two.rom'),
         path.join('raw', 'unknown.rom'),
         path.join('unheadered', 'speed_test_v51.sfc.gz'),
-        path.join('zip', 'fourfive.zip'),
-        path.join('zip', 'onetwothree.zip'),
       ]);
       expect(result.cleanedFiles).toHaveLength(0);
     });
