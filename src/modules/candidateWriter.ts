@@ -296,7 +296,7 @@ export default class CandidateWriter extends Module {
     outputZip: Zip,
     inputToOutputZipEntries: [File, ArchiveEntry<Zip>][],
   ): Promise<boolean> {
-    this.progressBar.logInfo(`${dat.getNameShort()}: ${releaseCandidate.getName()}: creating zip archive '${outputZip.getFilePath()}' with the entries:\n${inputToOutputZipEntries.map(([input, output]) => `  '${input.toString()}' -> '${output.getEntryPath()}'`).join('\n')}`);
+    this.progressBar.logInfo(`${dat.getNameShort()}: ${releaseCandidate.getName()}: creating zip archive '${outputZip.getFilePath()}' with the entries:\n${inputToOutputZipEntries.map(([input, output]) => `  '${input.toString()}' (${fsPoly.sizeReadable(input.getSize())}) -> '${output.getEntryPath()}'`).join('\n')}`);
 
     try {
       await CandidateWriter.ensureOutputDirExists(outputZip.getFilePath());
@@ -410,7 +410,7 @@ export default class CandidateWriter extends Module {
       path.extname(inputRomFile.getExtractedFilePath()),
     );
 
-    this.progressBar.logInfo(`${dat.getNameShort()}: ${releaseCandidate.getName()}: copying file '${inputRomFile.toString()}' -> '${outputFilePath}'`);
+    this.progressBar.logInfo(`${dat.getNameShort()}: ${releaseCandidate.getName()}: copying file '${inputRomFile.toString()}' (${fsPoly.sizeReadable(inputRomFile.getSize())}) -> '${outputFilePath}'`);
 
     try {
       await CandidateWriter.ensureOutputDirExists(outputFilePath);
