@@ -59,7 +59,7 @@ function buildGameWithRegionLanguage(
       const rom = new ROM({
         name: `${romName}.rom`,
         size: 0,
-        crc: '00000000',
+        crc32: '00000000',
       });
       const game = new Game({
         name: `${romName}${language ? ` (${language})` : ''}`, // all games need to have unique names
