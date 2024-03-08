@@ -202,32 +202,25 @@ export default class Zip extends Archive {
       3,
       async.asyncify(async (
         [inputFile, outputArchiveEntry]: [File, ArchiveEntry<Zip>],
-      ): Promise<void> => {
-        const removeHeader = options.canRemoveHeader(
-          dat,
-          path.extname(inputFile.getExtractedFilePath()),
-        );
+      ): Promise<void> => inputFile.createPatchedReadStream(async (stream) => {
+        // Catch stream errors such as `ENOENT: no such file or directory`
+        stream.on('error', catchError);
 
-        return inputFile.createPatchedReadStream(removeHeader, async (stream) => {
-          // Catch stream errors such as `ENOENT: no such file or directory`
-          stream.on('error', catchError);
-
-          const entryName = outputArchiveEntry.getEntryPath().replace(/[\\/]/g, '/');
-          zipFile.append(stream, {
-            name: entryName,
-          });
-
-          // Leave the input stream open until we're done writing it
-          await new Promise<void>((resolve) => {
-            const interval = setInterval(() => {
-              if (writtenEntries.has(entryName) || zipFileError) {
-                clearInterval(interval);
-                resolve();
-              }
-            }, 10);
-          });
+        const entryName = outputArchiveEntry.getEntryPath().replace(/[\\/]/g, '/');
+        zipFile.append(stream, {
+          name: entryName,
         });
-      }),
+
+        // Leave the input stream open until we're done writing it
+        await new Promise<void>((resolve) => {
+          const interval = setInterval(() => {
+            if (writtenEntries.has(entryName) || zipFileError) {
+              clearInterval(interval);
+              resolve();
+            }
+          }, 10);
+        });
+      })),
     );
 
     if (zipFileError) {

@@ -207,6 +207,16 @@ export default class ArchiveEntry<A extends Archive> extends File implements Arc
     );
   }
 
+  withoutFileHeader(): ArchiveEntry<A> {
+    return new ArchiveEntry({
+      ...this,
+      fileHeader: undefined,
+      crc32WithoutHeader: this.getCrc32(),
+      md5WithoutHeader: this.getMd5(),
+      sha1WithoutHeader: this.getSha1(),
+    });
+  }
+
   withPatch(patch: Patch): ArchiveEntry<A> {
     if (patch.getCrcBefore() !== this.getCrc32()) {
       return this;

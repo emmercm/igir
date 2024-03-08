@@ -111,17 +111,50 @@ export default class CandidateGenerator extends Module {
     // For each Game's ROM, find the matching File
     const romFiles = await Promise.all(
       game.getRoms().map(async (rom) => {
-        // NOTE(cemmer): if the ROM's CRC includes a header, then this will only find headered
-        //  files. If the ROM's CRC excludes a header, this can find either a headered or non-
-        //  headered file.
-        const originalInputFile = romsToInputFiles.get(rom);
-        if (!originalInputFile) {
+        if (!romsToInputFiles.has(rom)) {
           return [rom, undefined];
         }
+        let inputFile = romsToInputFiles.get(rom) as File;
+        /**
+         * WARN(cemmer): {@link inputFile} may not be an exact match for {@link rom}. There are two
+         * situations we can be in:
+         *  - {@link rom} is headered and so is {@link inputFile}, so we have an exact match
+         *  - {@link rom} is unheadered but {@link inputFile} is headered, because we know how to
+         *    remove headers from ROMs - but we can't remove headers in all writing modes!
+         */
 
         // If we're not writing (report only) then just use the input file for the output file
         if (!this.options.shouldWrite()) {
-          return [rom, new ROMWithFiles(rom, originalInputFile, originalInputFile)];
+          return [rom, new ROMWithFiles(rom, inputFile, inputFile)];
+        }
+
+        // If the input file is headered...
+        if (inputFile.getFileHeader()
+          // ..and we want a headered ROM
+          && (inputFile.getCrc32() === rom.getCrc32()
+            || inputFile.getMd5() === rom.getMd5()
+            || inputFile.getSha1() === rom.getSha1())
+          // ...and we shouldn't remove the header
+          && !this.options.canRemoveHeader(
+            dat,
+            path.extname(inputFile.getExtractedFilePath()),
+          )
+        ) {
+          // ...then forget the input file's header, so that we don't later remove it
+          inputFile = inputFile.withoutFileHeader();
+        }
+
+        // If the input file is headered...
+        if (inputFile.getFileHeader()
+          // ...and we DON'T want a headered ROM
+          && !(inputFile.getCrc32() === rom.getCrc32()
+            || inputFile.getMd5() === rom.getMd5()
+            || inputFile.getSha1() === rom.getSha1())
+          // ...and we're writing file links
+          && this.options.shouldLink()
+        ) {
+          // ...then we can't use this file
+          return [rom, undefined];
         }
 
         /**
@@ -129,31 +162,22 @@ export default class CandidateGenerator extends Module {
          * treat the file as "raw" so it can be copied/moved as-is.
          * Matches {@link ROMHeaderProcessor.getFileWithHeader}
          */
-        let finalInputFile = originalInputFile;
-        if (originalInputFile instanceof ArchiveEntry
-          && !this.options.shouldZip(rom.getName())
+        if (inputFile instanceof ArchiveEntry
+          && !this.options.shouldZipFile(rom.getName())
           && !this.options.shouldExtract()
         ) {
-          // No automatic header removal will be performed when raw-copying an archive, so return no
-          //  match if we wanted a headerless ROM but got a headered one.
-          if (rom.hashCode() !== originalInputFile.hashCodeWithHeader()
-            && rom.hashCode() === originalInputFile.hashCodeWithoutHeader()
-          ) {
-            return [rom, undefined];
-          }
-
           if (this.options.shouldTest() || this.options.getOverwriteInvalid()) {
             // If we're testing, then we need to calculate the archive's CRC
-            finalInputFile = await originalInputFile.getArchive().asRawFile();
+            inputFile = await inputFile.getArchive().asRawFile();
           } else {
             // Otherwise, we can skip calculating the CRC for efficiency
-            finalInputFile = await originalInputFile.getArchive().asRawFileWithoutCrc();
+            inputFile = await inputFile.getArchive().asRawFileWithoutCrc();
           }
         }
 
         try {
-          const outputFile = await this.getOutputFile(dat, game, release, rom, finalInputFile);
-          const romWithFiles = new ROMWithFiles(rom, finalInputFile, outputFile);
+          const outputFile = await this.getOutputFile(dat, game, release, rom, inputFile);
+          const romWithFiles = new ROMWithFiles(rom, inputFile, outputFile);
           return [rom, romWithFiles];
         } catch (error) {
           this.progressBar.logWarn(`${dat.getNameShort()}: ${game.getName()}: ${error}`);
@@ -278,15 +302,13 @@ export default class CandidateGenerator extends Module {
     // Determine the output CRC of the file
     let outputFileCrc = inputFile.getCrc32();
     let outputFileSize = inputFile.getSize();
-    if (inputFile.getFileHeader()
-      && this.options.canRemoveHeader(dat, path.extname(outputPathParsed.entryPath))
-    ) {
+    if (inputFile.getFileHeader()) {
       outputFileCrc = inputFile.getCrc32WithoutHeader();
       outputFileSize = inputFile.getSizeWithoutHeader();
     }
 
     // Determine the output file type
-    if (this.options.shouldZip(rom.getName())) {
+    if (this.options.shouldZipFile(rom.getName())) {
       // Should zip, return an archive entry within an output zip
       return ArchiveEntry.entryOf(
         new Zip(outputFilePath),
