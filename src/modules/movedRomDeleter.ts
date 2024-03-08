@@ -78,7 +78,7 @@ export default class MovedROMDeleter extends Module {
         //  the unique set of ArchiveEntry hash codes to know if every ArchiveEntry was "consumed"
         //  during writing.
         const movedEntryHashCodes = new Set(
-          movedEntries.flatMap((file) => file.hashCodes()),
+          movedEntries.flatMap((file) => file.hashCode()),
         );
 
         const inputEntries = groupedInputRoms.get(filePath) ?? [];
@@ -94,7 +94,7 @@ export default class MovedROMDeleter extends Module {
           }
 
           // Otherwise, the entry needs to have been explicitly moved
-          return entry.hashCodes().some((hashCode) => !movedEntryHashCodes.has(hashCode));
+          return !movedEntryHashCodes.has(entry.hashCode());
         });
         if (unmovedEntries.length > 0) {
           this.progressBar.logWarn(`${filePath}: not deleting moved file, ${unmovedEntries.length.toLocaleString()} archive entr${unmovedEntries.length !== 1 ? 'ies were' : 'y was'} unmatched:\n${unmovedEntries.sort().map((entry) => `  ${entry}`).join('\n')}`);

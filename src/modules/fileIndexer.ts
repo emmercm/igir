@@ -8,6 +8,7 @@ import SevenZip from '../types/files/archives/sevenZip.js';
 import Tar from '../types/files/archives/tar.js';
 import Zip from '../types/files/archives/zip.js';
 import File from '../types/files/file.js';
+import IndexedFiles, { AllChecksums, ChecksumsToFiles } from '../types/indexedFiles.js';
 import Options from '../types/options.js';
 import Module from './module.js';
 
@@ -26,83 +27,60 @@ export default class FileIndexer extends Module {
   /**
    * Index files.
    */
-  async index(files: File[]): Promise<Map<string, File[]>> {
-    if (files.length === 0) {
-      return new Map();
-    }
-
+  async index(files: File[]): Promise<IndexedFiles> {
     this.progressBar.logTrace(`indexing ${files.length.toLocaleString()} file${files.length !== 1 ? 's' : ''}`);
     await this.progressBar.setSymbol(ProgressBarSymbol.INDEXING);
     // await this.progressBar.reset(files.length);
 
-    const results = new Map<string, File[]>();
+    // Index the files
+    const result = IndexedFiles.fromFiles(files);
+    // Then apply some sorting preferences
+    Object.keys(result).forEach((checksum) => this.sortMap(result[checksum as keyof AllChecksums]));
 
-    // TODO(cemmer): ability to index files by some other property such as name
-    files.forEach((file) => {
-      // Index on full file contents
-      FileIndexer.setFileInMap(results, file.hashCodeWithHeader(), file);
+    this.progressBar.logTrace(`found ${result.getSize()} unique file${result.getSize() !== 1 ? 's' : ''}`);
 
-      // Optionally index without a header
-      if (file.getFileHeader()) {
-        FileIndexer.setFileInMap(results, file.hashCodeWithoutHeader(), file);
-      }
-    });
+    this.progressBar.logTrace('done indexing files');
+    return result;
+  }
 
+  private sortMap(checksumsToFiles: ChecksumsToFiles): void {
     const outputDir = path.resolve(this.options.getOutputDirRoot());
     const outputDirDisk = FsPoly.disksSync().find((mount) => outputDir.startsWith(mount));
 
-    // Sort the file arrays
-    [...results.entries()]
-      .forEach(([hashCode, filesForHash]) => filesForHash.sort((fileOne, fileTwo) => {
-        // First, prefer "raw" files (files with their header)
-        const fileOneHeadered = fileOne.getFileHeader()
-          && fileOne.hashCodeWithoutHeader() === hashCode ? 1 : 0;
-        const fileTwoHeadered = fileTwo.getFileHeader()
-          && fileTwo.hashCodeWithoutHeader() === hashCode ? 1 : 0;
-        if (fileOneHeadered !== fileTwoHeadered) {
-          return fileOneHeadered - fileTwoHeadered;
-        }
-
-        // Then, prefer un-archived files
-        const fileOneArchived = FileIndexer.archiveEntryPriority(fileOne);
-        const fileTwoArchived = FileIndexer.archiveEntryPriority(fileTwo);
-        if (fileOneArchived !== fileTwoArchived) {
-          return fileOneArchived - fileTwoArchived;
-        }
-
-        // Then, prefer files that are NOT already in the output directory
-        // This is in case the output file is invalid and we're trying to overwrite it with
-        // something else. Otherwise, we'll just attempt to overwrite the invalid output file with
-        // itself, still resulting in an invalid output file.
-        const fileOneInOutput = path.resolve(fileOne.getFilePath()).startsWith(outputDir) ? 1 : 0;
-        const fileTwoInOutput = path.resolve(fileTwo.getFilePath()).startsWith(outputDir) ? 1 : 0;
-        if (fileOneInOutput !== fileTwoInOutput) {
-          return fileOneInOutput - fileTwoInOutput;
-        }
-
-        // Then, prefer files that are on the same disk for fs efficiency see {@link FsPoly#mv}
-        if (outputDirDisk) {
-          const fileOneInOutputDisk = path.resolve(fileOne.getFilePath())
-            .startsWith(outputDirDisk) ? 0 : 1;
-          const fileTwoInOutputDisk = path.resolve(fileTwo.getFilePath())
-            .startsWith(outputDirDisk) ? 0 : 1;
-          if (fileOneInOutputDisk !== fileTwoInOutputDisk) {
-            return fileOneInOutputDisk - fileTwoInOutputDisk;
+    [...checksumsToFiles.values()]
+      .forEach((files) => files
+        .sort((fileOne, fileTwo) => {
+          // Prefer un-archived files
+          const fileOneArchived = FileIndexer.archiveEntryPriority(fileOne);
+          const fileTwoArchived = FileIndexer.archiveEntryPriority(fileTwo);
+          if (fileOneArchived !== fileTwoArchived) {
+            return fileOneArchived - fileTwoArchived;
           }
-        }
 
-        // Otherwise, be deterministic
-        return fileOne.getFilePath().localeCompare(fileTwo.getFilePath());
-      }));
+          // Then, prefer files that are NOT already in the output directory
+          // This is in case the output file is invalid and we're trying to overwrite it with
+          // something else. Otherwise, we'll just attempt to overwrite the invalid output file with
+          // itself, still resulting in an invalid output file.
+          const fileOneInOutput = path.resolve(fileOne.getFilePath()).startsWith(outputDir) ? 1 : 0;
+          const fileTwoInOutput = path.resolve(fileTwo.getFilePath()).startsWith(outputDir) ? 1 : 0;
+          if (fileOneInOutput !== fileTwoInOutput) {
+            return fileOneInOutput - fileTwoInOutput;
+          }
 
-    this.progressBar.logTrace(`found ${results.size} unique file${results.size !== 1 ? 's' : ''}`);
+          // Then, prefer files that are on the same disk for fs efficiency see {@link FsPoly#mv}
+          if (outputDirDisk) {
+            const fileOneInOutputDisk = path.resolve(fileOne.getFilePath())
+              .startsWith(outputDirDisk) ? 0 : 1;
+            const fileTwoInOutputDisk = path.resolve(fileTwo.getFilePath())
+              .startsWith(outputDirDisk) ? 0 : 1;
+            if (fileOneInOutputDisk !== fileTwoInOutputDisk) {
+              return fileOneInOutputDisk - fileTwoInOutputDisk;
+            }
+          }
 
-    this.progressBar.logTrace('done indexing files');
-    return results;
-  }
-
-  private static setFileInMap<K>(map: Map<K, File[]>, key: K, file: File): void {
-    map.set(key, [...(map.get(key) ?? []), file]);
+          // Otherwise, be deterministic
+          return fileOne.getFilePath().localeCompare(fileTwo.getFilePath());
+        }));
   }
 
   /**

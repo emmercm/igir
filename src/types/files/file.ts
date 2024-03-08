@@ -437,6 +437,7 @@ export default class File implements FileProps {
    ****************************
    */
 
+  // TODO(cemmer): refactor usages of this that should use hashCode() or something else
   toString(): string {
     // TODO(cemmer): indicate if there's a patch?
     if (this.getSymlinkSource()) {
@@ -445,23 +446,13 @@ export default class File implements FileProps {
     return this.getFilePath();
   }
 
-  static hashCode(crc: string, size: number): string {
-    return `${crc}|${size}`;
-  }
-
-  hashCodeWithHeader(): string {
-    return File.hashCode(this.getCrc32(), this.getSize());
-  }
-
-  hashCodeWithoutHeader(): string {
-    return File.hashCode(this.getCrc32WithoutHeader(), this.getSizeWithoutHeader());
-  }
-
-  hashCodes(): string[] {
-    return [
-      this.hashCodeWithHeader(),
-      this.hashCodeWithoutHeader(),
-    ].reduce(ArrayPoly.reduceUnique(), []);
+  /**
+   * A string hash code to uniquely identify this {@link File}.
+   */
+  hashCode(): string {
+    return this.getSha1()
+      ?? this.getMd5()
+      ?? `${this.getCrc32()}|${this.getSize()}`;
   }
 
   equals(other: File): boolean {
