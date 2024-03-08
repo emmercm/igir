@@ -26,7 +26,7 @@ export default class ROM implements ROMProps {
   @Expose()
   readonly size: number;
 
-  @Expose()
+  @Expose({ name: 'crc' })
   readonly crc32: string;
 
   @Expose()

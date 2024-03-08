@@ -19,8 +19,8 @@ function givenDAT(): DAT {
     new Game({
       name: 'game with multiple ROMs and no releases',
       rom: [
-        new ROM({ name: 'one.rom', size: 0, crc: '00000001' }),
-        new ROM({ name: 'two.rom', size: 0, crc: '00000002' }),
+        new ROM({ name: 'one.rom', size: 0, crc32: '00000001' }),
+        new ROM({ name: 'two.rom', size: 0, crc32: '00000002' }),
       ],
     }),
     new Game({
@@ -29,7 +29,7 @@ function givenDAT(): DAT {
       release: [
         new Release('USA', 'USA', 'EN'),
       ],
-      rom: new ROM({ name: 'three.rom', size: 0, crc: '00000003' }),
+      rom: new ROM({ name: 'three.rom', size: 0, crc32: '00000003' }),
     }),
     new Game({
       name: 'game with one ROM and multiple releases',

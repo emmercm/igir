@@ -193,7 +193,7 @@ export default class CandidatePatchGenerator extends Module {
             rom = new ROM({
               name: romName,
               size: outputFile.getSize(),
-              crc: outputFile.getCrc32(),
+              crc32: outputFile.getCrc32(),
             });
 
             this.progressBar.logTrace(`${dat.getNameShort()}: ${inputFile.toString()}: patch candidate generated: ${outputFile.toString()}`);

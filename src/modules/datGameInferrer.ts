@@ -94,7 +94,7 @@ export default class DATGameInferrer extends Module {
         .map((romFile) => new ROM({
           name: path.basename(romFile.getExtractedFilePath()),
           size: romFile.getSize(),
-          crc: romFile.getCrc32(),
+          crc32: romFile.getCrc32(),
           md5: romFile.getMd5(),
           sha1: romFile.getSha1(),
         }))
