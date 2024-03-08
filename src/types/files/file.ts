@@ -346,17 +346,10 @@ export default class File implements FileProps {
     start: number,
     callback: (stream: Readable) => (Promise<T> | T),
   ): Promise<T> {
-    let stream;
-    try {
-      stream = fs.createReadStream(filePath, {
-        start,
-        highWaterMark: Constants.FILE_READING_CHUNK_SIZE,
-      });
-    } catch (error) {
-      // https://github.com/emmercm/igir/issues/991
-      throw new Error(`failed to create read stream for '${filePath}' @ start=${start}: ${error}`);
-    }
-
+    const stream = fs.createReadStream(filePath, {
+      start,
+      highWaterMark: Constants.FILE_READING_CHUNK_SIZE,
+    });
     try {
       return await callback(stream);
     } finally {
