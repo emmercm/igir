@@ -11,8 +11,6 @@ import unzipper, { Entry } from 'unzipper';
 import Constants from '../../../constants.js';
 import fsPoly from '../../../polyfill/fsPoly.js';
 import StreamPoly from '../../../polyfill/streamPoly.js';
-import DAT from '../../dats/dat.js';
-import Options from '../../options.js';
 import File from '../file.js';
 import FileChecksums, { ChecksumBitmask, ChecksumProps } from '../fileChecksums.js';
 import Archive from './archive.js';
@@ -132,11 +130,7 @@ export default class Zip extends Archive {
     }
   }
 
-  async createArchive(
-    options: Options,
-    dat: DAT,
-    inputToOutput: [File, ArchiveEntry<Zip>][],
-  ): Promise<void> {
+  async createArchive(inputToOutput: [File, ArchiveEntry<Zip>][]): Promise<void> {
     // Pipe the zip contents to disk, using an intermediate temp file because we may be trying to
     // overwrite an input zip file
     const tempZipFile = await fsPoly.mktemp(this.getFilePath());
@@ -155,7 +149,7 @@ export default class Zip extends Archive {
 
     // Write each entry
     try {
-      await Zip.addArchiveEntries(zipFile, options, dat, inputToOutput);
+      await Zip.addArchiveEntries(zipFile, inputToOutput);
     } catch (error) {
       zipFile.abort();
       await fsPoly.rm(tempZipFile, { force: true });
@@ -175,8 +169,6 @@ export default class Zip extends Archive {
 
   private static async addArchiveEntries(
     zipFile: Archiver,
-    options: Options,
-    dat: DAT,
     inputToOutput: [File, ArchiveEntry<Zip>][],
   ): Promise<void> {
     let zipFileError: Error | undefined;
@@ -232,8 +224,7 @@ export default class Zip extends Archive {
         try {
           await inputFile.createPatchedReadStream(streamProcessor);
         } catch (error) {
-          // Reading the file can throw an exception, so we have to handle that or the
-          // Promise+setInterval() above will run forever
+          // Reading the file can throw an exception, so we have to handle that or this will hang
           if (error instanceof Error) {
             catchError(error);
           } else if (typeof error === 'string') {
