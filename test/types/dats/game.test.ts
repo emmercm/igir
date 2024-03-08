@@ -27,7 +27,7 @@ describe('getReleases', () => {
 
 describe('getRoms', () => {
   it('should always return a list', () => {
-    const rom = new ROM({ name: 'name', size: 0, crc: '00000000' });
+    const rom = new ROM({ name: 'name', size: 0, crc32: '00000000' });
 
     expect(new Game({ rom: [rom] }).getRoms()).toEqual([rom]);
     expect(new Game({ rom }).getRoms()).toEqual([rom]);
@@ -79,8 +79,19 @@ describe('isBeta', () => {
 
 describe('isDemo', () => {
   test.each([
+    // No-Intro
     ['Pocket Monsters Gin (Japan) (Demo) (Spaceworld 1997) (SGB Enhanced)', true],
     ['Pocket Puyo Puyo Tsuu (Japan) (Rev 1) (SGB Enhanced) (NP)', false],
+    ['DK - King of Swing (USA) (Demo) (Kiosk)', true],
+    ['Aneboku - Onee-chan wa Bijin 3 Shimai (TG Taikenban) (Unknown)', true],
+    ['Camping Mama + Papa - Taikenban (Japan) (Demo)', true],
+    ['Ace Attorney Investigations - Miles Edgeworth - Trial Edition (USA) (Rev 1) (Demo) (Nintendo Channel)', true],
+    // Redump
+    ['Eternal Arcadia (Japan) (Disc 1) (@barai)', true],
+    ['Guitar Hero - Warriors of Rock 3.40 IDU FW Update (USA) (Kiosk Demo)', true],
+    ['PlayStation Kiosk Demo Disc Version 1.16 (USA)', true],
+    ['PS2 Kiosk Q3-Q4 2005 (USA)', true],
+    ['PSP System Kiosk Disc 1 (USA)', true],
   ])('%s', (name, expected) => {
     expect(new Game({ name }).isDemo()).toEqual(expected);
     expect(new Game({ name }).isRetail()).toEqual(!expected);
@@ -137,10 +148,25 @@ describe('isPirated', () => {
   });
 });
 
+describe('isProgram', () => {
+  test.each([
+    ['Aggressive Inline (Europe) (En,Fr,De)', false],
+    ['AGB-Parallel Interface Cartridge (Japan) (En) (Program)', true],
+    ['AGS Aging Cartridge (World) (Rev 3) (v9.0) (Test Program)', true],
+    ['Mars Check Program Version 1.0 (Unknown) (SDK Build) (Set 1)', true],
+    ['Nintendo DS - G2D Sample Program (World) (En) (2007-08-21) (SDK)', true],
+  ])('%s', (name, expected) => {
+    expect(new Game({ name }).isProgram()).toEqual(expected);
+    expect(new Game({ name }).isRetail()).toEqual(!expected);
+  });
+});
+
 describe('isPrototype', () => {
   test.each([
-    ['Popeye (USA) (Proto)', true],
-    ['Popeye 2 (Europe)', false],
+    ['Glover (Europe) (En,Fr,De)', false],
+    ['Glover 2 (USA) (Proto 1)', true],
+    ['ClayFighter 2 (USA) (Proto) (1995-04-28)', true],
+    ['Game Boy Gallery 2 (Japan) (Possible Proto) (SGB Enhanced, GB Compatible) (NP)', true],
   ])('%s', (name, expected) => {
     expect(new Game({ name }).isPrototype()).toEqual(expected);
     expect(new Game({ name }).isRetail()).toEqual(!expected);
@@ -153,16 +179,6 @@ describe('isSample', () => {
     ['Alfred Chicken (Europe)', false],
   ])('%s', (name, expected) => {
     expect(new Game({ name }).isSample()).toEqual(expected);
-    expect(new Game({ name }).isRetail()).toEqual(!expected);
-  });
-});
-
-describe('isTest', () => {
-  test.each([
-    ['Game Boy Test Cartridge (USA, Europe) (Proto) (Test Program)', true],
-    ['10-Pin Bowling (USA)', false],
-  ])('%s', (name, expected) => {
-    expect(new Game({ name }).isTest()).toEqual(expected);
     expect(new Game({ name }).isRetail()).toEqual(!expected);
   });
 });

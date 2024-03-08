@@ -30,14 +30,14 @@ const gameWithOneRom = new Game({
     new Release('game with one ROM and multiple releases', 'EUR', 'En'),
     new Release('game with one ROM and multiple releases', 'JPN', 'Ja'),
   ],
-  rom: new ROM({ name: 'one.rom', size: 1, crc: '12345678' }),
+  rom: new ROM({ name: 'one.rom', size: 1, crc32: '12345678' }),
 });
 const gameWithTwoRomsParent = new Game({
   name: 'game with two ROMs (parent)',
   release: new Release('game with two ROMs (parent)', 'WORLD'),
   rom: [
-    new ROM({ name: 'two.a', size: 2, crc: 'abcdef90' }),
-    new ROM({ name: 'two.b', size: 3, crc: '09876543' }),
+    new ROM({ name: 'two.a', size: 2, crc32: 'abcdef90' }),
+    new ROM({ name: 'two.b', size: 3, crc32: '09876543' }),
   ],
 });
 const gameWithTwoRomsClone = new Game({
@@ -45,18 +45,18 @@ const gameWithTwoRomsClone = new Game({
   cloneOf: gameWithTwoRomsParent.getName(),
   release: new Release('game with two ROMs (clone)', 'JPN'),
   rom: [
-    new ROM({ name: 'three.a', size: 4, crc: 'abcd1234' }),
-    new ROM({ name: 'three.b', size: 5, crc: '86753090' }),
+    new ROM({ name: 'three.a', size: 4, crc32: 'abcd1234' }),
+    new ROM({ name: 'three.b', size: 5, crc32: '86753090' }),
   ],
 });
 const gameWithDuplicateRoms = new Game({
   name: 'game with duplicate ROMs',
   rom: [
-    new ROM({ name: 'Disc.cue', size: 0, crc: 'a8c5c66e' }),
-    new ROM({ name: 'Disc (Track 01).cue', size: 1, crc: '22144d0f' }),
-    new ROM({ name: 'Disc (Track 02).cue', size: 2, crc: '11bf5dbd' }),
-    new ROM({ name: 'Disc (Track 03).cue', size: 3, crc: 'f9188f3a' }),
-    new ROM({ name: 'Disc (Track 04).cue', size: 4, crc: '11bf5dbd' }),
+    new ROM({ name: 'Disc.cue', size: 0, crc32: 'a8c5c66e' }),
+    new ROM({ name: 'Disc (Track 01).cue', size: 1, crc32: '22144d0f' }),
+    new ROM({ name: 'Disc (Track 02).cue', size: 2, crc32: '11bf5dbd' }),
+    new ROM({ name: 'Disc (Track 03).cue', size: 3, crc32: 'f9188f3a' }),
+    new ROM({ name: 'Disc (Track 04).cue', size: 4, crc32: '11bf5dbd' }),
   ],
 });
 const datWithFourGames = new LogiqxDAT(new Header(), [

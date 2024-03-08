@@ -91,30 +91,45 @@ export default class ArgumentsParser {
       ['clean', 'Recycle unknown files in the output directory'],
       ['report', 'Generate a CSV report on the known & unknown ROM files found in the input directories (requires --dat)'],
     ];
+    const mutuallyExclusiveCommands = [
+      // Write commands
+      ['copy', 'move', 'link', 'symlink'],
+      // Archive manipulation commands
+      ['link', 'symlink', 'extract', 'zip'],
+      // DAT writing commands
+      ['dir2dat', 'fixdat'],
+    ];
     const addCommands = (
       yargsObj: Argv,
-      commandsToAdd = commands.map((command) => command[0]),
+      previousCommands: string[] = [],
     ): Argv => {
       commands
-        // Don't show duplicate commands, i.e. don't give `igir copy copy` as an option when
-        // specifying `igir copy --help`.
-        .filter(([command]) => commandsToAdd.includes(command))
+        // Don't allow/show duplicate commands, i.e. don't give `igir copy copy` as an option
+        .filter(([command]) => !previousCommands.includes(command))
+        // Don't allow/show conflicting commands, i.e. don't give `igir copy move` as an option
+        .filter(([command]) => {
+          const incompatibleCommands = previousCommands
+            .flatMap((previousCommand) => mutuallyExclusiveCommands
+              .filter((mutuallyExclusive) => mutuallyExclusive.includes(previousCommand))
+              .flat());
+          return !incompatibleCommands.includes(command);
+        })
         .forEach(([command, description]) => {
           if (typeof description === 'string') {
             yargsObj.command(command, description, (yargsSubObj) => addCommands(
               yargsSubObj,
-              commandsToAdd.filter((c) => c !== command),
+              [...previousCommands, command],
             ));
           } else {
             // A deprecation message should be printed elsewhere
             yargsObj.command(command, false, (yargsSubObj) => addCommands(
               yargsSubObj,
-              commandsToAdd.filter((c) => c !== command),
+              [...previousCommands, command],
             ));
           }
         });
 
-      if (commandsToAdd.length === 0) {
+      if (previousCommands.length === 0) {
         // Only register the check function once
         return yargsObj;
       }
@@ -127,21 +142,6 @@ export default class ArgumentsParser {
         .check((checkArgv) => {
           if (checkArgv.help) {
             return true;
-          }
-
-          const writeCommands = ['copy', 'move', 'link', 'symlink'].filter((command) => checkArgv._.includes(command));
-          if (writeCommands.length > 1) {
-            throw new Error(`Incompatible commands: ${writeCommands.join(', ')}`);
-          }
-
-          const archiveCommands = ['link', 'symlink', 'extract', 'zip'].filter((command) => checkArgv._.includes(command));
-          if (archiveCommands.length > 1) {
-            throw new Error(`Incompatible commands: ${archiveCommands.join(', ')}`);
-          }
-
-          const datWritingCommands = ['dir2dat', 'fixdat'].filter((command) => checkArgv._.includes(command));
-          if (datWritingCommands.length > 1) {
-            throw new Error(`Incompatible commands: ${datWritingCommands.join(', ')}`);
           }
 
           ['extract', 'zip'].forEach((command) => {
@@ -575,24 +575,26 @@ export default class ArgumentsParser {
         description: 'Filter to only retail releases, enabling all the following "no" options',
         type: 'boolean',
       });
-    [
-      ['debug', 'debug ROMs'],
-      ['demo', 'demo ROMs'],
-      ['beta', 'beta ROMs'],
-      ['sample', 'sample ROMs'],
-      ['prototype', 'prototype ROMs'],
-      ['test-roms', 'test ROMs'],
-      ['aftermarket', 'aftermarket ROMs'],
-      ['homebrew', 'homebrew ROMs'],
-      ['unverified', 'unverified ROMs'],
-      ['bad', 'bad ROM dumps'],
-    ].forEach(([key, description]) => {
+    ([
+      ['debug', 'debug ROMs', false],
+      ['demo', 'demo ROMs', false],
+      ['beta', 'beta ROMs', false],
+      ['sample', 'sample ROMs', false],
+      ['prototype', 'prototype ROMs', false],
+      ['test-roms', 'test ROMs', true],
+      ['program', 'program application ROMs', false],
+      ['aftermarket', 'aftermarket ROMs', false],
+      ['homebrew', 'homebrew ROMs', false],
+      ['unverified', 'unverified ROMs', false],
+      ['bad', 'bad ROM dumps', false],
+    ] satisfies [string, string, boolean][]).forEach(([key, description, hidden]) => {
       yargsParser
         .option(`no-${key}`, {
           group: groupRomFiltering,
           description: `Filter out ${description}, opposite of --only-${key}`,
           type: 'boolean',
           conflicts: [`only-${key}`],
+          hidden,
         })
         .option(`only-${key}`, {
           type: 'boolean',
@@ -600,6 +602,22 @@ export default class ArgumentsParser {
           hidden: true,
         });
     });
+    yargsParser.middleware((middlewareArgv) => {
+      if (middlewareArgv['no-test-roms'] === true) {
+        this.logger.warn('the \'--no-test-roms\' option is deprecated, use \'--no-program\' instead');
+        if (middlewareArgv.noProgram === undefined) {
+          // eslint-disable-next-line no-param-reassign
+          middlewareArgv.noProgram = true;
+        }
+      }
+      if (middlewareArgv['only-test-roms'] === true) {
+        this.logger.warn('the \'--only-test-roms\' option is deprecated, use \'--only-program\' instead');
+        if (middlewareArgv.onlyProgram === undefined) {
+          // eslint-disable-next-line no-param-reassign
+          middlewareArgv.onlyProgram = true;
+        }
+      }
+    }, true);
 
     yargsParser
       .option('single', {
@@ -739,6 +757,11 @@ export default class ArgumentsParser {
         description: 'Enable verbose logging, can specify up to three times (-vvv)',
         type: 'count',
       })
+      .middleware((middlewareArgv) => {
+        if (middlewareArgv['clean-dry-run'] === true && (middlewareArgv.verbose ?? 0) < 1) {
+          this.logger.warn('--clean-dry-run prints INFO logs for files skipped, enable them with -v');
+        }
+      })
 
       .check((checkArgv) => {
         if (checkArgv.mergeRoms !== MergeMode[MergeMode.FULLNONMERGED].toLowerCase() && (
@@ -786,6 +809,7 @@ Advanced usage:
 
     {adam}      The ROM's emulator-specific /ROMS/* directory for the 'Adam' image (e.g. "GB")
     {batocera}  The ROM's emulator-specific /roms/* directory for Batocera (e.g. "gb")
+    {es}        The ROM's emulator-specific /roms/* directory for the 'EmulationStation' image (e.g. "gb")
     {funkeyos}  The ROM's emulator-specific /* directory for FunKey OS (e.g. "Game Boy")
     {jelos}     The ROM's emulator-specific /roms/* directory for JELOS (e.g. "gb")
     {minui}     The ROM's emulator-specific /Roms/* directory for MinUI (e.g. "Game Boy (GB)")
@@ -793,6 +817,7 @@ Advanced usage:
     {miyoocfw}  The ROM's emulator-specific /roms/* directory for MiyooCFW (e.g. "GB")
     {onion}     The ROM's emulator-specific /Roms/* directory for OnionOS/GarlicOS (e.g. "GB")
     {pocket}    The ROM's core-specific /Assets/* directory for the Analogue Pocket (e.g. "gb")
+    {retrodeck} The ROM's emulator-specific /roms/* directory for the 'RetroDECK' image (e.g. "gb")
     {twmenu}    The ROM's emulator-specific /roms/* directory for TWiLightMenu++ on the DSi/3DS (e.g. "gb")
 
 Example use cases:

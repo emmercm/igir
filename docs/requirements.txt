@@ -1,8 +1,8 @@
 mkdocs==1.5.3
-mkdocs-material==9.5.5
+mkdocs-material==9.5.11
 
 mkdocs-exclude-search==0.6.6
-mkdocs-git-revision-date-localized-plugin==1.2.2
+mkdocs-git-revision-date-localized-plugin==1.2.4
 mkdocs-htmlproofer-plugin==1.0.0
 mkdocs-redirects==1.2.1
 mkdocs-unused-files==0.2.0

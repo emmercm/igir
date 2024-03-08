@@ -260,11 +260,8 @@ export default class File implements FileProps {
     });
   }
 
-  async extractAndPatchToFile(
-    destinationPath: string,
-    removeHeader: boolean,
-  ): Promise<void> {
-    const start = removeHeader && this.getFileHeader()
+  async extractAndPatchToFile(destinationPath: string): Promise<void> {
+    const start = this.getFileHeader()
       ? this.getFileHeader()?.getDataOffsetBytes() ?? 0
       : 0;
     const patch = this.getPatch();
@@ -319,10 +316,9 @@ export default class File implements FileProps {
   }
 
   async createPatchedReadStream<T>(
-    removeHeader: boolean,
     callback: (stream: Readable) => (T | Promise<T>),
   ): Promise<T> {
-    const start = removeHeader && this.getFileHeader()
+    const start = this.getFileHeader()
       ? this.getFileHeader()?.getDataOffsetBytes() ?? 0
       : 0;
     const patch = this.getPatch();
@@ -415,6 +411,16 @@ export default class File implements FileProps {
       fileHeader,
       undefined, // don't allow a patch
     );
+  }
+
+  withoutFileHeader(): File {
+    return new File({
+      ...this,
+      fileHeader: undefined,
+      crc32WithoutHeader: this.getCrc32(),
+      md5WithoutHeader: this.getMd5(),
+      sha1WithoutHeader: this.getSha1(),
+    });
   }
 
   withPatch(patch: Patch): File {

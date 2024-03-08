@@ -13,7 +13,20 @@ import IPSPatch from '../../../src/types/patches/ipsPatch.js';
 import ProgressBarFake from '../../console/progressBarFake.js';
 
 describe('fileOf', () => {
-  // TODO(cemmer): what does it do with a file that doesn't exist
+  it('should not throw when the file doesn\'t exist', async () => {
+    const tempFile = await fsPoly.mktemp(path.join(Constants.GLOBAL_TEMP_DIR, 'file'));
+    const file = await File.fileOf(tempFile);
+    expect(file.getFilePath()).toEqual(tempFile);
+    expect(file.getSize()).toEqual(0);
+    expect(file.getSizeWithoutHeader()).toEqual(0);
+    expect(file.getExtractedFilePath()).toEqual(path.basename(tempFile));
+    expect(file.getCrc32()).toEqual('00000000');
+    expect(file.getCrc32WithoutHeader()).toEqual('00000000');
+    expect(file.getMd5()).toBeUndefined();
+    expect(file.getMd5WithoutHeader()).toBeUndefined();
+    expect(file.getSha1()).toBeUndefined();
+    expect(file.getSha1WithoutHeader()).toBeUndefined();
+  });
 });
 
 describe('getFilePath', () => {

@@ -50,7 +50,7 @@ it('should not throw on non-MAME executables', async () => {
 });
 
 describe('multiple files', () => {
-  const totalDatFiles = 5;
+  const totalDatFiles = 6;
 
   it('no files are path excluded', async () => {
     await expect(createDatScanner({ dat: [path.join(path.resolve(), 'test', 'fixtures', 'dats')] }).scan()).resolves.toHaveLength(totalDatFiles);
@@ -64,7 +64,7 @@ describe('multiple files', () => {
 
   it('some files are path excluded', async () => {
     await expect(createDatScanner({ dat: ['test/fixtures/dats'], datExclude: ['test/fixtures/**/*.dat'] }).scan()).resolves.toHaveLength(1);
-    await expect(createDatScanner({ dat: ['test/fixtures/dats'], datExclude: ['test/fixtures/**/*.zip'] }).scan()).resolves.toHaveLength(4);
+    await expect(createDatScanner({ dat: ['test/fixtures/dats'], datExclude: ['test/fixtures/**/*.zip'] }).scan()).resolves.toHaveLength(totalDatFiles - 1);
   });
 
   it('all files are path excluded', async () => {

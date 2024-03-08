@@ -17,6 +17,11 @@ import Options from '../types/options.js';
 import ReleaseCandidate from '../types/releaseCandidate.js';
 import Module from './module.js';
 
+export interface CandidateWriterResults {
+  wrote: File[],
+  moved: File[],
+}
+
 /**
  * Copy or move output ROM files, if applicable.
  *
@@ -51,14 +56,26 @@ export default class CandidateWriter extends Module {
   async write(
     dat: DAT,
     parentsToCandidates: Map<Parent, ReleaseCandidate[]>,
-  ): Promise<File[]> {
+  ): Promise<CandidateWriterResults> {
+    const writtenFiles = [...parentsToCandidates.values()]
+      .flat()
+      .flatMap((releaseCandidate) => releaseCandidate
+        .getRomsWithFiles()
+        .map((romWithFiles) => romWithFiles.getOutputFile()));
+
     if (parentsToCandidates.size === 0) {
-      return [];
+      return {
+        wrote: writtenFiles,
+        moved: [],
+      };
     }
 
     // Return early if we shouldn't write (are only reporting)
     if (!this.options.shouldWrite()) {
-      return [];
+      return {
+        wrote: writtenFiles,
+        moved: [],
+      };
     }
 
     // Filter to only the parents that actually have candidates (and therefore output)
@@ -82,20 +99,28 @@ export default class CandidateWriter extends Module {
         releaseCandidates,
       ]) => CandidateWriter.THREAD_SEMAPHORE.runExclusive(async () => {
         await this.progressBar.incrementProgress();
-        this.progressBar.logTrace(`${dat.getNameShort()}: ${parent.getName()}: writing ${releaseCandidates.length.toLocaleString()} candidate${releaseCandidates.length !== 1 ? 's' : ''}`);
+        this.progressBar.logTrace(`${dat.getNameShort()}: ${parent.getName()} (parent): writing ${releaseCandidates.length.toLocaleString()} candidate${releaseCandidates.length !== 1 ? 's' : ''}`);
 
         for (const releaseCandidate of releaseCandidates) {
           await this.writeReleaseCandidate(dat, releaseCandidate);
         }
 
-        this.progressBar.logTrace(`${dat.getNameShort()}: ${parent.getName()}: done writing ${releaseCandidates.length.toLocaleString()} candidate${releaseCandidates.length !== 1 ? 's' : ''}`);
+        this.progressBar.logTrace(`${dat.getNameShort()}: ${parent.getName()} (parent): done writing ${releaseCandidates.length.toLocaleString()} candidate${releaseCandidates.length !== 1 ? 's' : ''}`);
         await this.progressBar.incrementDone();
       }),
     ));
 
     this.progressBar.logTrace(`${dat.getNameShort()}: done writing ${totalCandidateCount.toLocaleString()} candidate${totalCandidateCount !== 1 ? 's' : ''}`);
 
-    return this.filesQueuedForDeletion;
+    const writtenFilePaths = new Set(writtenFiles.map((writtenFile) => writtenFile.getFilePath()));
+    const movedFiles = this.filesQueuedForDeletion
+      // Files that were written should not be eligible for move deletion. This protects against
+      // the same directory being used for both an input and output directory.
+      .filter((fileQueued) => !writtenFilePaths.has(fileQueued.getFilePath()));
+    return {
+      wrote: writtenFiles,
+      moved: movedFiles,
+    };
   }
 
   private async writeReleaseCandidate(
@@ -169,7 +194,7 @@ export default class CandidateWriter extends Module {
           dat,
           releaseCandidate,
           outputZip.getFilePath(),
-          inputToOutputZipEntries.map((entry) => entry[1]),
+          inputToOutputZipEntries.map(([, outputEntry]) => outputEntry),
         );
         if (!existingTest) {
           this.progressBar.logDebug(`${dat.getNameShort()}: ${releaseCandidate.getName()}: ${outputZip.getFilePath()}: not overwriting existing zip file, existing zip has the expected contents`);
@@ -271,11 +296,11 @@ export default class CandidateWriter extends Module {
     outputZip: Zip,
     inputToOutputZipEntries: [File, ArchiveEntry<Zip>][],
   ): Promise<boolean> {
-    this.progressBar.logInfo(`${dat.getNameShort()}: ${releaseCandidate.getName()}: creating zip archive '${outputZip.getFilePath()}' with the entries:\n${inputToOutputZipEntries.map(([input]) => `  ${input.toString()}`).join('\n')}`);
+    this.progressBar.logInfo(`${dat.getNameShort()}: ${releaseCandidate.getName()}: creating zip archive '${outputZip.getFilePath()}' with the entries:\n${inputToOutputZipEntries.map(([input, output]) => `  '${input.toString()}' (${fsPoly.sizeReadable(input.getSize())}) -> '${output.getEntryPath()}'`).join('\n')}`);
 
     try {
       await CandidateWriter.ensureOutputDirExists(outputZip.getFilePath());
-      await outputZip.createArchive(this.options, dat, inputToOutputZipEntries);
+      await outputZip.createArchive(inputToOutputZipEntries);
     } catch (error) {
       this.progressBar.logError(`${dat.getNameShort()}: ${releaseCandidate.getName()}: ${outputZip.getFilePath()}: failed to create zip: ${error}`);
       return false;
@@ -380,17 +405,12 @@ export default class CandidateWriter extends Module {
     inputRomFile: File,
     outputFilePath: string,
   ): Promise<boolean> {
-    const removeHeader = this.options.canRemoveHeader(
-      dat,
-      path.extname(inputRomFile.getExtractedFilePath()),
-    );
-
-    this.progressBar.logInfo(`${dat.getNameShort()}: ${releaseCandidate.getName()}: copying file '${inputRomFile.toString()}' -> '${outputFilePath}'`);
+    this.progressBar.logInfo(`${dat.getNameShort()}: ${releaseCandidate.getName()}: copying file '${inputRomFile.toString()}' (${fsPoly.sizeReadable(inputRomFile.getSize())}) -> '${outputFilePath}'`);
 
     try {
       await CandidateWriter.ensureOutputDirExists(outputFilePath);
       const tempRawFile = await fsPoly.mktemp(outputFilePath);
-      await inputRomFile.extractAndPatchToFile(tempRawFile, removeHeader);
+      await inputRomFile.extractAndPatchToFile(tempRawFile);
       await fsPoly.mv(tempRawFile, outputFilePath);
       return true;
     } catch (error) {

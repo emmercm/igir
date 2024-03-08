@@ -94,7 +94,7 @@ export default class MovedROMDeleter extends Module {
           }
 
           // Otherwise, the entry needs to have been explicitly moved
-          return entry.hashCodes().some((hashCode) => !movedEntryHashCodes.has(hashCode));
+          return !entry.hashCodes().some((hashCode) => movedEntryHashCodes.has(hashCode));
         });
         if (unmovedEntries.length > 0) {
           this.progressBar.logWarn(`${filePath}: not deleting moved file, ${unmovedEntries.length.toLocaleString()} archive entr${unmovedEntries.length !== 1 ? 'ies were' : 'y was'} unmatched:\n${unmovedEntries.sort().map((entry) => `  ${entry}`).join('\n')}`);
