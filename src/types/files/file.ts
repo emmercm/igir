@@ -6,6 +6,7 @@ import { Readable } from 'node:stream';
 import { Memoize } from 'typescript-memoize';
 
 import Constants from '../../constants.js';
+import ArrayPoly from '../../polyfill/arrayPoly.js';
 import FilePoly from '../../polyfill/filePoly.js';
 import fsPoly from '../../polyfill/fsPoly.js';
 import URLPoly from '../../polyfill/urlPoly.js';
