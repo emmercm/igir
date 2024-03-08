@@ -483,7 +483,7 @@ export default class OutputFactory {
     inputFile: File,
   ): string {
     // Determine the output path of the file
-    if (options.shouldZip(rom.getName())) {
+    if (options.shouldZipFile(rom.getName())) {
       // Should zip, generate the zip name from the game name
       return `${game.getName()}.zip`;
     }
@@ -513,7 +513,7 @@ export default class OutputFactory {
     inputFile: File,
   ): string {
     const romBasename = this.getRomBasename(options, dat, rom, inputFile);
-    if (!options.shouldZip(rom.getName())) {
+    if (!options.shouldZipFile(rom.getName())) {
       return romBasename;
     }
 
@@ -543,11 +543,7 @@ export default class OutputFactory {
     const fileHeader = inputFile.getFileHeader();
     if (parsedRomPath.ext && fileHeader) {
       // If the ROM has a header, then we're going to ignore the file extension from the DAT
-      if (options.canRemoveHeader(dat, parsedRomPath.ext)) {
-        parsedRomPath.ext = fileHeader.getUnheaderedFileExtension();
-      } else {
-        parsedRomPath.ext = fileHeader.getHeaderedFileExtension();
-      }
+      parsedRomPath.ext = fileHeader.getUnheaderedFileExtension();
     }
 
     return path.format(parsedRomPath);
