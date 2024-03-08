@@ -318,7 +318,7 @@ export default class DATScanner extends Scanner {
         .map((entry) => new ROM({
           name: entry.name ?? '',
           size: Number.parseInt(entry.size ?? '0', 10),
-          crc: entry.crc ?? '',
+          crc32: entry.crc ?? '',
           md5: entry.md5,
           sha1: entry.sha1,
         }));
@@ -373,7 +373,7 @@ export default class DATScanner extends Scanner {
       const rom = new ROM({
         name: row.name,
         size: Number.parseInt(row.size ?? '', 10),
-        crc: row.crc,
+        crc32: row.crc,
         md5: row.md5,
         sha1: row.sha1,
       });
