@@ -523,15 +523,15 @@ export default class Options implements OptionsProps {
   /**
    * Was the `zip` command provided?
    */
-  canZip(): boolean {
+  shouldZip(): boolean {
     return this.getCommands().has('zip');
   }
 
   /**
    * Should a given output file path be zipped?
    */
-  shouldZip(filePath: string): boolean {
-    return this.canZip()
+  shouldZipFile(filePath: string): boolean {
+    return this.shouldZip()
       && (!this.getZipExclude() || !micromatch.isMatch(
         filePath.replace(/^.[\\/]/, ''),
         this.getZipExclude(),

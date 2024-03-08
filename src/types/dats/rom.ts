@@ -7,12 +7,9 @@ import { ChecksumProps } from '../files/fileChecksums.js';
 
 type ROMStatus = 'baddump' | 'nodump' | 'good';
 
-export interface ROMProps {
+export interface ROMProps extends ChecksumProps {
   readonly name: string,
   readonly size: number,
-  readonly crc?: string,
-  readonly md5?: string,
-  readonly sha1?: string,
   readonly status?: ROMStatus,
   readonly merge?: string,
   readonly bios?: string,
@@ -28,8 +25,8 @@ export default class ROM implements ROMProps {
   @Expose()
   readonly size: number;
 
-  @Expose()
-  readonly crc?: string;
+  @Expose({ name: 'crc' })
+  readonly crc32?: string;
 
   @Expose()
   readonly md5?: string;
@@ -49,7 +46,7 @@ export default class ROM implements ROMProps {
   constructor(props?: ROMProps) {
     this.name = props?.name ?? '';
     this.size = props?.size ?? 0;
-    this.crc = props?.crc;
+    this.crc32 = props?.crc32;
     this.md5 = props?.md5;
     this.sha1 = props?.sha1;
     this.status = props?.status;
@@ -84,7 +81,7 @@ export default class ROM implements ROMProps {
   }
 
   getCrc32(): string {
-    return (this.crc ?? '').toLowerCase().replace(/^0x/, '').padStart(8, '0');
+    return (this.crc32 ?? '').toLowerCase().replace(/^0x/, '').padStart(8, '0');
   }
 
   getMd5(): string | undefined {
@@ -93,14 +90,6 @@ export default class ROM implements ROMProps {
 
   getSha1(): string | undefined {
     return this.sha1?.toLowerCase().replace(/^0x/, '').padStart(40, '0');
-  }
-
-  getChecksumProps(): ChecksumProps {
-    return {
-      crc32: this.getCrc32(),
-      md5: this.getMd5(),
-      sha1: this.getSha1(),
-    };
   }
 
   getStatus(): ROMStatus | undefined {
@@ -119,14 +108,14 @@ export default class ROM implements ROMProps {
    * Turn this {@link ROM} into a non-existent {@link File}.
    */
   async toFile(): Promise<File> {
-    return File.fileOf(this.getName(), this.getSize(), this.getChecksumProps());
+    return File.fileOf(this.getName(), this.getSize(), this);
   }
 
   /**
    * Turn this {@link ROM} into a non-existent {@link ArchiveEntry}, given a {@link Archive}.
    */
   async toArchiveEntry<A extends Archive>(archive: A): Promise<ArchiveEntry<A>> {
-    return ArchiveEntry.entryOf(archive, this.getName(), this.getSize(), this.getChecksumProps());
+    return ArchiveEntry.entryOf(archive, this.getName(), this.getSize(), this);
   }
 
   /**

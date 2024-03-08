@@ -59,7 +59,7 @@ function buildGameWithRegionLanguage(
       const rom = new ROM({
         name: `${romName}.rom`,
         size: 0,
-        crc: '00000000',
+        crc32: '00000000',
       });
       const game = new Game({
         name: `${romName}${language ? ` (${language})` : ''}`, // all games need to have unique names
@@ -139,7 +139,8 @@ describe('filter', () => {
       'Legend of Zelda, The (USA) (GameCube Edition)',
       'Legend of Zelda, The (USA) (Rev 1) (Virtual Console)',
     ]);
-    expect(filteredDat.getGames().every((game) => game.getParent())).toEqual(true);
+    expect(filteredDat.getGames().at(0)?.getParent()).toEqual('');
+    expect(filteredDat.getGames().slice(1).every((game) => game.getParent())).toEqual(true);
   });
 
   describe('filter regex', () => {

@@ -46,7 +46,9 @@ export default class DATFilter extends Module {
         return games;
       }
       const newParent = games.at(0)?.getName();
-      return games.map((game) => game.withProps({ cloneOf: newParent }));
+      return games.map((game) => game.withProps({
+        cloneOf: game.getName() !== newParent ? newParent : undefined,
+      }));
     });
     const filteredDat = new LogiqxDAT(dat.getHeader(), filteredGames);
 

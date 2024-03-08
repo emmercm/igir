@@ -190,6 +190,9 @@ describe('with explicit DATs', () => {
         [path.join('smdb', 'Hardware Target Game Database', 'Patchable', '3708F2C.rom'), '20891c9f'],
         [path.join('smdb', 'Hardware Target Game Database', 'Patchable', '65D1206.rom'), '20323455'],
         [path.join('smdb', 'Hardware Target Game Database', 'Patchable', 'C01173E.rom'), 'dfaebe28'],
+        [path.join('Unheadered', 'allpads.nes'), '6339abe6'],
+        [path.join('Unheadered', 'color_test.nes'), 'c9c1b7aa'],
+        [`${path.join('Unheadered', 'speed_test_v51.sfc.gz')}|speed_test_v51.sfc`, '8beffd94'],
       ]);
       expect(result.cwdFilesAndCrcs).toHaveLength(0);
       expect(result.movedFiles).toHaveLength(0);
@@ -253,6 +256,7 @@ describe('with explicit DATs', () => {
       expect(result.outputFilesAndCrcs).toEqual([
         [`${path.join('7z', 'Headered', 'diagnostic_test_cartridge.a78.7z')}|diagnostic_test_cartridge.a78`, 'f6cc9b1c'],
         [`${path.join('gz', 'Patchable', 'Best.gz')}|best.rom`, '1e3d78cf'],
+        [`${path.join('gz', 'Unheadered', 'speed_test_v51.sfc.gz')}|speed_test_v51.sfc`, '8beffd94'],
         [path.join('iso', 'four.iso'), '00000000'], // explicitly not deleted, there were no input files with the extension "iso"
         [path.join('lnx', 'One', 'Foobar.lnx'), 'b22c9747'],
         [path.join('lnx', 'smdb', 'Hardware Target Game Database', 'Dummy', 'Foobar.lnx'), 'b22c9747'],
@@ -260,6 +264,8 @@ describe('with explicit DATs', () => {
         [path.join('nes', 'Headered', 'color_test.nes'), 'c9c1b7aa'],
         [path.join('nes', 'One', 'Fizzbuzz.nes'), '370517b5'],
         [path.join('nes', 'smdb', 'Hardware Target Game Database', 'Dummy', 'Fizzbuzz.nes'), '370517b5'],
+        [path.join('nes', 'Unheadered', 'allpads.nes'), '6339abe6'],
+        [path.join('nes', 'Unheadered', 'color_test.nes'), 'c9c1b7aa'],
         ['one.rom', '00000000'], // explicitly not deleted, it is not in an extension subdirectory
         [`${path.join('rar', 'Headered', 'LCDTestROM.lnx.rar')}|LCDTestROM.lnx`, '2d251538'],
         [path.join('rom', 'One', 'Lorem Ipsum.rom'), '70856527'],
@@ -412,6 +418,12 @@ describe('with explicit DATs', () => {
         [path.join('smdb', 'Hardware Target Game Database', 'Patchable', '3708F2C.rom'), '20891c9f'],
         [path.join('smdb', 'Hardware Target Game Database', 'Patchable', '65D1206.rom'), '20323455'],
         [path.join('smdb', 'Hardware Target Game Database', 'Patchable', 'C01173E.rom'), 'dfaebe28'],
+        [path.join('Unheadered', 'allpads.nes'), '6339abe6'],
+        [path.join('Unheadered', 'color_test.nes'), 'c9c1b7aa'],
+        [path.join('Unheadered', 'diagnostic_test_cartridge.a78'), 'a1eaa7c1'],
+        [path.join('Unheadered', 'fds_joypad_test.fds'), '3ecbac61'],
+        [path.join('Unheadered', 'LCDTestROM.lyx'), '42583855'],
+        [path.join('Unheadered', 'speed_test_v51.sfc'), '8beffd94'],
       ]);
       expect(result.cwdFilesAndCrcs).toHaveLength(0);
       expect(result.movedFiles).toEqual([
@@ -435,7 +447,9 @@ describe('with explicit DATs', () => {
         path.join('raw', 'fizzbuzz.nes'),
         path.join('raw', 'four.rom'),
         path.join('raw', 'loremipsum.rom'),
+        path.join('raw', 'one.rom'),
         path.join('raw', 'three.rom'),
+        path.join('unheadered', 'speed_test_v51.sfc.gz'),
       ]);
       expect(result.cleanedFiles).toHaveLength(0);
     });
@@ -518,6 +532,12 @@ describe('with explicit DATs', () => {
         [`${path.join('smdb', 'Hardware Target Game Database', 'Patchable', '3708F2C.zip')}|3708F2C.rom`, '20891c9f'],
         [`${path.join('smdb', 'Hardware Target Game Database', 'Patchable', '65D1206.zip')}|65D1206.rom`, '20323455'],
         [`${path.join('smdb', 'Hardware Target Game Database', 'Patchable', 'C01173E.zip')}|C01173E.rom`, 'dfaebe28'],
+        [`${path.join('Unheadered', 'allpads.zip')}|allpads.nes`, '6339abe6'],
+        [`${path.join('Unheadered', 'color_test.zip')}|color_test.nes`, 'c9c1b7aa'],
+        [`${path.join('Unheadered', 'diagnostic_test_cartridge.zip')}|diagnostic_test_cartridge.a78`, 'a1eaa7c1'],
+        [`${path.join('Unheadered', 'fds_joypad_test.zip')}|fds_joypad_test.fds`, '3ecbac61'],
+        [`${path.join('Unheadered', 'LCDTestROM.zip')}|LCDTestROM.lyx`, '42583855'],
+        [`${path.join('Unheadered', 'speed_test_v51.zip')}|speed_test_v51.sfc`, '8beffd94'],
       ]);
       expect(result.cwdFilesAndCrcs).toHaveLength(0);
       expect(result.movedFiles).toHaveLength(0);
@@ -565,6 +585,12 @@ describe('with explicit DATs', () => {
         ['Patchable.zip|Best.rom', '1e3d78cf'],
         ['Patchable.zip|C01173E.rom', 'dfaebe28'],
         ['Patchable.zip|KDULVQN.rom', 'b1c303e4'],
+        ['Unheadered.zip|allpads.nes', '6339abe6'],
+        ['Unheadered.zip|color_test.nes', 'c9c1b7aa'],
+        ['Unheadered.zip|diagnostic_test_cartridge.a78', 'a1eaa7c1'],
+        ['Unheadered.zip|fds_joypad_test.fds', '3ecbac61'],
+        ['Unheadered.zip|LCDTestROM.lyx', '42583855'],
+        ['Unheadered.zip|speed_test_v51.sfc', '8beffd94'],
       ]);
       expect(result.cwdFilesAndCrcs).toHaveLength(0);
       expect(result.movedFiles).toHaveLength(0);
@@ -615,6 +641,8 @@ describe('with explicit DATs', () => {
         [`${path.join('smdb', 'Hardware Target Game Database', 'Patchable', '3708F2C.rom')} -> ${path.join('<input>', 'patchable', '3708F2C.rom')}`, '20891c9f'],
         [`${path.join('smdb', 'Hardware Target Game Database', 'Patchable', '65D1206.rom')} -> ${path.join('<input>', 'patchable', '65D1206.rom')}`, '20323455'],
         [`${path.join('smdb', 'Hardware Target Game Database', 'Patchable', 'C01173E.rom')} -> ${path.join('<input>', 'patchable', 'C01173E.rom')}`, 'dfaebe28'],
+        [`${path.join('Unheadered', 'color_test.nes')} -> ${path.join('<input>', 'headered', 'color_test.nintendoentertainmentsystem')}`, 'c9c1b7aa'],
+        [`${path.join('Unheadered', 'speed_test_v51.sfc.gz')}|speed_test_v51.sfc -> ${path.join('<input>', 'unheadered', 'speed_test_v51.sfc.gz')}|speed_test_v51.sfc`, '8beffd94'],
       ]);
       expect(result.cwdFilesAndCrcs).toHaveLength(0);
       expect(result.movedFiles).toHaveLength(0);
@@ -677,6 +705,12 @@ describe('with explicit DATs', () => {
         [path.join('smdb', 'Hardware Target Game Database', 'Patchable', '9E66269.rom'), '8bb5cc63'],
         [path.join('smdb', 'Hardware Target Game Database', 'Patchable', 'C01173E.rom'), 'dfaebe28'],
         [path.join('smdb', 'Hardware Target Game Database', 'Patchable', 'DFF7872-N64-SIMPLE.rom'), 'caaaf550'],
+        [path.join('Unheadered', 'allpads.nes'), '6339abe6'],
+        [path.join('Unheadered', 'color_test.nes'), 'c9c1b7aa'],
+        [path.join('Unheadered', 'diagnostic_test_cartridge.a78'), 'a1eaa7c1'],
+        [path.join('Unheadered', 'fds_joypad_test.fds'), '3ecbac61'],
+        [path.join('Unheadered', 'LCDTestROM.lyx'), '42583855'],
+        [path.join('Unheadered', 'speed_test_v51.sfc'), '8beffd94'],
       ]);
       expect(result.cwdFilesAndCrcs).toHaveLength(0);
       expect(result.movedFiles).toHaveLength(0);
@@ -718,9 +752,15 @@ describe('with explicit DATs', () => {
         .map(([filePath]) => filePath)
         .filter((filePath) => filePath.endsWith('.dat'));
 
-      // Only the "One" DAT should have missing ROMs (Missing.rom)
-      expect(writtenFixdats).toHaveLength(1);
+      expect(writtenFixdats).toHaveLength(2);
+      // The "One" DAT should have missing ROMs, because no fixture exists for them:
+      //  Missing.rom
       expect(writtenFixdats[0]).toMatch(/^One[\\/]One fixdat \([0-9]{8}-[0-9]{6}\)\.dat$/);
+      // The "Unheadered" DAT should have missing ROMs, because only headered versions exist them:
+      //  diagnostic_test_cartridge.a78
+      //  fds_joypad_test.fds
+      //  LCDTestROM.lyx
+      expect(writtenFixdats[1]).toMatch(/^Unheadered[\\/]Unheadered fixdat \([0-9]{8}-[0-9]{6}\)\.dat$/);
 
       expect(result.cwdFilesAndCrcs).toHaveLength(0);
       expect(result.cleanedFiles).toHaveLength(0);
@@ -742,9 +782,15 @@ describe('with explicit DATs', () => {
         .map(([filePath]) => filePath)
         .filter((filePath) => filePath.endsWith('.dat'));
 
-      // Only the "One" DAT should have missing ROMs (Missing.rom)
-      expect(writtenFixdats).toHaveLength(1);
+      expect(writtenFixdats).toHaveLength(2);
+      // The "One" DAT should have missing ROMs, because no fixture exists for them:
+      //  Missing.rom
       expect(writtenFixdats[0]).toMatch(/^One fixdat \([0-9]{8}-[0-9]{6}\)\.dat$/);
+      // The "Unheadered" DAT should have missing ROMs, because only headered versions exist them:
+      //  diagnostic_test_cartridge.a78
+      //  fds_joypad_test.fds
+      //  LCDTestROM.lyx
+      expect(writtenFixdats[1]).toMatch(/^Unheadered fixdat \([0-9]{8}-[0-9]{6}\)\.dat$/);
 
       expect(result.movedFiles).toHaveLength(0);
       expect(result.cleanedFiles).toHaveLength(0);
@@ -901,8 +947,6 @@ describe('with inferred DATs', () => {
         path.join('raw', 'two.rom'),
         path.join('raw', 'unknown.rom'),
         path.join('unheadered', 'speed_test_v51.sfc.gz'),
-        path.join('zip', 'fourfive.zip'),
-        path.join('zip', 'onetwothree.zip'),
       ]);
       expect(result.cleanedFiles).toHaveLength(0);
     });
