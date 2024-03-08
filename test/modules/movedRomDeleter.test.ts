@@ -31,7 +31,7 @@ it('should delete raw files', () => {
 });
 
 describe('should delete archives', () => {
-  describe.each(['extract', 'zip'])('command: %s', (command) => {
+  describe.each([undefined, 'zip'])('command: %s', (command) => {
     test.each(([
       // Game with duplicate ROMs
       [[
@@ -127,7 +127,7 @@ describe('should delete archives', () => {
     ]))('%s', async (games, expectedDeletedFilePaths) => {
       const inputPath = 'input';
       const options = new Options({
-        commands: ['move', command],
+        commands: ['move', ...(command ? [command] : [])],
         input: [inputPath],
         output: 'output',
       });
