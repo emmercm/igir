@@ -107,7 +107,7 @@ export default class CandidateGenerator extends Module {
     release: Release | undefined,
     indexedFiles: IndexedFiles,
   ): Promise<ReleaseCandidate | undefined> {
-    const romsToInputFiles = CandidateGenerator.getInputFilesForGame(game, indexedFiles);
+    const romsToInputFiles = this.getInputFilesForGame(game, indexedFiles);
 
     // For each Game's ROM, find the matching File
     const romFiles = await Promise.all(
@@ -193,17 +193,17 @@ export default class CandidateGenerator extends Module {
     return new ReleaseCandidate(game, release, foundRomsWithFiles);
   }
 
-  private static getInputFilesForGame(
+  private getInputFilesForGame(
     game: Game,
     indexedFiles: IndexedFiles,
   ): Map<ROM, File> {
-    let romsAndInputFiles = game.getRoms().map((rom) => ([
+    const romsAndInputFiles = game.getRoms().map((rom) => ([
       rom,
       indexedFiles.findFiles(rom) ?? [],
     ])) satisfies [ROM, File[]][];
 
     // Detect if there is one input archive that contains every ROM, and prefer to use its entries.
-    // If we don't do this, here are two situations that can happen:
+    // If we don't do this, there are two situations that can happen:
     //  1. When raw writing (i.e. `igir copy`, `igir move`) archives of games with multiple ROMs, if
     //      some of those ROMs exist in multiple input archives, then you may get a conflict warning
     //      that multiple input files want to write to the same output file - and nothing will be
@@ -229,29 +229,36 @@ export default class CandidateGenerator extends Module {
       return map;
     }, new Map<Archive, ROM[]>());
 
-    // Only filter the input files if this game has multiple ROMs, and we found some archives
-    if (game.getRoms().length > 1 && inputArchivesToRoms.size > 0) {
-      // Filter to the Archives that contain every ROM in this Game
-      const archivesWithEveryRom = [...inputArchivesToRoms.entries()]
-        .filter(([, roms]) => roms.length === game.getRoms().length)
-        .map(([archive]) => archive);
+    // Filter to the Archives that contain every ROM in this Game
+    const archivesWithEveryRom = [...inputArchivesToRoms.entries()]
+      .filter(([, roms]) => roms.length === game.getRoms().length)
+      .map(([archive]) => archive);
+    const archiveWithEveryRom = archivesWithEveryRom.at(0);
 
-      const archiveWithEveryRom = archivesWithEveryRom.at(0);
-      if (archiveWithEveryRom) {
-        // An Archive was found, use that as the only possible input file
-        // For each of this Game's ROMs, find the matching ArchiveEntry from this Archive
-        romsAndInputFiles = romsAndInputFiles.map(([rom, inputFiles]) => {
-          const archiveEntry = inputFiles.find((
-            inputFile,
-          ) => inputFile.getFilePath() === archiveWithEveryRom.getFilePath()) as File;
-          return [rom, [archiveEntry]];
-        });
-      }
+    // Do nothing if any of...
+    if (
+      // The Game has zero or one ROM, therefore, we don't really care where the file comes from,
+      //  and we should respect any previous sorting of the input files
+      game.getRoms().length <= 1
+      // No input archive contains every ROM from this Game
+      || archiveWithEveryRom === undefined
+      // We're extracting files, therefore, we don't really care where the file comes from, and we
+      //  should respect any previous sorting of the input files
+      || this.options.shouldExtract()
+    ) {
+      return new Map(romsAndInputFiles
+        .filter(([, inputFiles]) => inputFiles.length)
+        .map(([rom, inputFiles]) => [rom, inputFiles[0]]));
     }
 
-    return new Map(romsAndInputFiles
-      .filter(([, inputFiles]) => inputFiles.length)
-      .map(([rom, inputFiles]) => [rom, inputFiles[0]]));
+    // An Archive was found, use that as the only possible input file
+    // For each of this Game's ROMs, find the matching ArchiveEntry from this Archive
+    return new Map(romsAndInputFiles.map(([rom, inputFiles]) => {
+      const archiveEntry = inputFiles.find((
+        inputFile,
+      ) => inputFile.getFilePath() === archiveWithEveryRom.getFilePath()) as File;
+      return [rom, archiveEntry];
+    }));
   }
 
   private async getOutputFile(
