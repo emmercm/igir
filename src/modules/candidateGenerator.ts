@@ -107,7 +107,7 @@ export default class CandidateGenerator extends Module {
     release: Release | undefined,
     indexedFiles: IndexedFiles,
   ): Promise<ReleaseCandidate | undefined> {
-    const romsToInputFiles = this.getInputFilesForGame(game, indexedFiles);
+    const romsToInputFiles = CandidateGenerator.getInputFilesForGame(game, indexedFiles);
 
     // For each Game's ROM, find the matching File
     const romFiles = await Promise.all(
@@ -193,7 +193,7 @@ export default class CandidateGenerator extends Module {
     return new ReleaseCandidate(game, release, foundRomsWithFiles);
   }
 
-  private getInputFilesForGame(
+  private static getInputFilesForGame(
     game: Game,
     indexedFiles: IndexedFiles,
   ): Map<ROM, File> {

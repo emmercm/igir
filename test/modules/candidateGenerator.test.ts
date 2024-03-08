@@ -1,7 +1,7 @@
 import path from 'node:path';
 
 import CandidateGenerator from '../../src/modules/candidateGenerator.js';
-import FileIndexer from '../../src/modules/fileIndexer.js';
+import ROMIndexer from '../../src/modules/romIndexer.js';
 import DAT from '../../src/types/dats/dat.js';
 import Game from '../../src/types/dats/game.js';
 import Header from '../../src/types/dats/logiqx/header.js';
@@ -72,7 +72,7 @@ async function candidateGenerator(
   files: (File | Promise<File>)[],
 ): Promise<Map<Parent, ReleaseCandidate[]>> {
   const resolvedFiles = await Promise.all(files);
-  const indexedFiles = await new FileIndexer(options, new ProgressBarFake()).index(resolvedFiles);
+  const indexedFiles = await new ROMIndexer(options, new ProgressBarFake()).index(resolvedFiles);
   return new CandidateGenerator(options, new ProgressBarFake()).generate(dat, indexedFiles);
 }
 

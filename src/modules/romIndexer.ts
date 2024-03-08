@@ -16,11 +16,11 @@ import Module from './module.js';
  * This class indexes {@link File}s by their {@link File.hashCode}, and sorts duplicate files by a
  * set of preferences.
  */
-export default class FileIndexer extends Module {
+export default class ROMIndexer extends Module {
   protected readonly options: Options;
 
   constructor(options: Options, progressBar: ProgressBar) {
-    super(progressBar, FileIndexer.name);
+    super(progressBar, ROMIndexer.name);
     this.options = options;
   }
 
@@ -51,8 +51,8 @@ export default class FileIndexer extends Module {
       .forEach((files) => files
         .sort((fileOne, fileTwo) => {
           // Prefer un-archived files
-          const fileOneArchived = FileIndexer.archiveEntryPriority(fileOne);
-          const fileTwoArchived = FileIndexer.archiveEntryPriority(fileTwo);
+          const fileOneArchived = ROMIndexer.archiveEntryPriority(fileOne);
+          const fileTwoArchived = ROMIndexer.archiveEntryPriority(fileTwo);
           if (fileOneArchived !== fileTwoArchived) {
             return fileOneArchived - fileTwoArchived;
           }

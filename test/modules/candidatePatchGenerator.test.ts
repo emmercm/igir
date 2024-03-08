@@ -5,8 +5,8 @@ import CandidatePatchGenerator from '../../src/modules/candidatePatchGenerator.j
 import DATCombiner from '../../src/modules/datCombiner.js';
 import DATGameInferrer from '../../src/modules/datGameInferrer.js';
 import DATScanner from '../../src/modules/datScanner.js';
-import FileIndexer from '../../src/modules/fileIndexer.js';
 import PatchScanner from '../../src/modules/patchScanner.js';
+import ROMIndexer from '../../src/modules/romIndexer.js';
 import ROMScanner from '../../src/modules/romScanner.js';
 import DAT from '../../src/types/dats/dat.js';
 import Header from '../../src/types/dats/logiqx/header.js';
@@ -32,7 +32,7 @@ async function runPatchCandidateGenerator(
     patch: [path.join('test', 'fixtures', 'patches')],
   });
 
-  const indexedRomFiles = await new FileIndexer(options, new ProgressBarFake()).index(romFiles);
+  const indexedRomFiles = await new ROMIndexer(options, new ProgressBarFake()).index(romFiles);
   const parentsToCandidates = await new CandidateGenerator(options, new ProgressBarFake())
     .generate(dat, indexedRomFiles);
 

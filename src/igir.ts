@@ -21,12 +21,12 @@ import DATParentInferrer from './modules/datParentInferrer.js';
 import DATScanner from './modules/datScanner.js';
 import Dir2DatCreator from './modules/dir2DatCreator.js';
 import DirectoryCleaner from './modules/directoryCleaner.js';
-import FileIndexer from './modules/fileIndexer.js';
 import FixdatCreator from './modules/fixdatCreator.js';
 import MovedROMDeleter from './modules/movedRomDeleter.js';
 import PatchScanner from './modules/patchScanner.js';
 import ReportGenerator from './modules/reportGenerator.js';
 import ROMHeaderProcessor from './modules/romHeaderProcessor.js';
+import ROMIndexer from './modules/romIndexer.js';
 import ROMScanner from './modules/romScanner.js';
 import StatusGenerator from './modules/statusGenerator.js';
 import ArrayPoly from './polyfill/arrayPoly.js';
@@ -228,7 +228,7 @@ export default class Igir {
       .process(rawRomFiles);
 
     await romProgressBar.setName('Indexing ROMs');
-    const indexedRomFiles = await new FileIndexer(this.options, romProgressBar)
+    const indexedRomFiles = await new ROMIndexer(this.options, romProgressBar)
       .index(romFilesWithHeaders);
 
     await romProgressBar.setName(romScannerProgressBarName); // reset

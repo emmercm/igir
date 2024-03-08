@@ -1,8 +1,8 @@
 import path from 'node:path';
 
 import CandidateGenerator from '../../src/modules/candidateGenerator.js';
-import FileIndexer from '../../src/modules/fileIndexer.js';
 import MovedROMDeleter from '../../src/modules/movedRomDeleter.js';
+import ROMIndexer from '../../src/modules/romIndexer.js';
 import ROMScanner from '../../src/modules/romScanner.js';
 import fsPoly from '../../src/polyfill/fsPoly.js';
 import Game from '../../src/types/dats/game.js';
@@ -143,7 +143,7 @@ describe('should delete archives', () => {
         })))
         .flat();
 
-      const indexedRomFiles = await new FileIndexer(options, new ProgressBarFake())
+      const indexedRomFiles = await new ROMIndexer(options, new ProgressBarFake())
         .index(rawRomFiles);
       const parentsToCandidates = await new CandidateGenerator(options, new ProgressBarFake())
         .generate(dat, indexedRomFiles);
