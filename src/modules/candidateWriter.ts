@@ -405,17 +405,12 @@ export default class CandidateWriter extends Module {
     inputRomFile: File,
     outputFilePath: string,
   ): Promise<boolean> {
-    const removeHeader = this.options.canRemoveHeader(
-      dat,
-      path.extname(inputRomFile.getExtractedFilePath()),
-    );
-
     this.progressBar.logInfo(`${dat.getNameShort()}: ${releaseCandidate.getName()}: copying file '${inputRomFile.toString()}' (${fsPoly.sizeReadable(inputRomFile.getSize())}) -> '${outputFilePath}'`);
 
     try {
       await CandidateWriter.ensureOutputDirExists(outputFilePath);
       const tempRawFile = await fsPoly.mktemp(outputFilePath);
-      await inputRomFile.extractAndPatchToFile(tempRawFile, removeHeader);
+      await inputRomFile.extractAndPatchToFile(tempRawFile);
       await fsPoly.mv(tempRawFile, outputFilePath);
       return true;
     } catch (error) {

@@ -48,7 +48,7 @@ describe('commands', () => {
     expect(argumentsParser.parse(['move', ...dummyRequiredArgs]).shouldCopy()).toEqual(false);
     expect(argumentsParser.parse(['copy', ...dummyRequiredArgs]).shouldMove()).toEqual(false);
     expect(argumentsParser.parse(['copy', ...dummyRequiredArgs]).shouldExtract()).toEqual(false);
-    expect(argumentsParser.parse(['copy', ...dummyRequiredArgs]).shouldZip('')).toEqual(false);
+    expect(argumentsParser.parse(['copy', ...dummyRequiredArgs]).shouldZipFile('')).toEqual(false);
     expect(argumentsParser.parse(['copy', ...dummyRequiredArgs]).shouldTest()).toEqual(false);
     expect(argumentsParser.parse(['copy', ...dummyRequiredArgs]).shouldDir2Dat()).toEqual(false);
     expect(argumentsParser.parse(['copy', ...dummyRequiredArgs]).shouldFixdat()).toEqual(false);
@@ -61,7 +61,7 @@ describe('commands', () => {
     expect(argumentsParser.parse(copyExtract).shouldCopy()).toEqual(true);
     expect(argumentsParser.parse(copyExtract).shouldMove()).toEqual(false);
     expect(argumentsParser.parse(copyExtract).shouldExtract()).toEqual(true);
-    expect(argumentsParser.parse(copyExtract).shouldZip('')).toEqual(false);
+    expect(argumentsParser.parse(copyExtract).shouldZipFile('')).toEqual(false);
     expect(argumentsParser.parse(copyExtract).shouldTest()).toEqual(true);
     expect(argumentsParser.parse(copyExtract).shouldDir2Dat()).toEqual(true);
     expect(argumentsParser.parse(copyExtract).shouldFixdat()).toEqual(false);
@@ -72,7 +72,7 @@ describe('commands', () => {
     expect(argumentsParser.parse(moveZip).shouldCopy()).toEqual(false);
     expect(argumentsParser.parse(moveZip).shouldMove()).toEqual(true);
     expect(argumentsParser.parse(moveZip).shouldExtract()).toEqual(false);
-    expect(argumentsParser.parse(moveZip).shouldZip('')).toEqual(true);
+    expect(argumentsParser.parse(moveZip).shouldZipFile('')).toEqual(true);
     expect(argumentsParser.parse(moveZip).shouldTest()).toEqual(true);
     expect(argumentsParser.parse(moveZip).shouldDir2Dat()).toEqual(false);
     expect(argumentsParser.parse(moveZip).shouldFixdat()).toEqual(true);
@@ -98,7 +98,7 @@ describe('options', () => {
     expect(options.shouldMove()).toEqual(false);
     expect(options.shouldLink()).toEqual(false);
     expect(options.shouldExtract()).toEqual(false);
-    expect(options.canZip()).toEqual(false);
+    expect(options.shouldZip()).toEqual(false);
     expect(options.shouldDir2Dat()).toEqual(false);
     expect(options.shouldFixdat()).toEqual(false);
     expect(options.shouldTest()).toEqual(false);
@@ -518,11 +518,11 @@ describe('options', () => {
 
   it('should parse "zip-exclude"', () => {
     const filePath = 'roms/test.rom';
-    expect(argumentsParser.parse(['copy', 'zip', '--input', os.devNull, '--output', os.devNull]).shouldZip(filePath)).toEqual(true);
-    expect(argumentsParser.parse(['copy', 'zip', '--input', os.devNull, '--output', os.devNull, '-Z', os.devNull]).shouldZip(filePath)).toEqual(true);
-    expect(argumentsParser.parse(['copy', 'zip', '--input', os.devNull, '--output', os.devNull, '-Z', '**/*']).shouldZip(filePath)).toEqual(false);
-    expect(argumentsParser.parse(['copy', 'zip', '--input', os.devNull, '--output', os.devNull, '-Z', '**/*.rom']).shouldZip(filePath)).toEqual(false);
-    expect(argumentsParser.parse(['copy', 'zip', '--input', os.devNull, '--output', os.devNull, '--zip-exclude', '**/*.rom']).shouldZip(filePath)).toEqual(false);
+    expect(argumentsParser.parse(['copy', 'zip', '--input', os.devNull, '--output', os.devNull]).shouldZipFile(filePath)).toEqual(true);
+    expect(argumentsParser.parse(['copy', 'zip', '--input', os.devNull, '--output', os.devNull, '-Z', os.devNull]).shouldZipFile(filePath)).toEqual(true);
+    expect(argumentsParser.parse(['copy', 'zip', '--input', os.devNull, '--output', os.devNull, '-Z', '**/*']).shouldZipFile(filePath)).toEqual(false);
+    expect(argumentsParser.parse(['copy', 'zip', '--input', os.devNull, '--output', os.devNull, '-Z', '**/*.rom']).shouldZipFile(filePath)).toEqual(false);
+    expect(argumentsParser.parse(['copy', 'zip', '--input', os.devNull, '--output', os.devNull, '--zip-exclude', '**/*.rom']).shouldZipFile(filePath)).toEqual(false);
   });
 
   it('should parse "zip-dat-name"', () => {
