@@ -300,7 +300,7 @@ export default class CandidateWriter extends Module {
 
     try {
       await CandidateWriter.ensureOutputDirExists(outputZip.getFilePath());
-      await outputZip.createArchive(this.options, dat, inputToOutputZipEntries);
+      await outputZip.createArchive(inputToOutputZipEntries);
     } catch (error) {
       this.progressBar.logError(`${dat.getNameShort()}: ${releaseCandidate.getName()}: ${outputZip.getFilePath()}: failed to create zip: ${error}`);
       return false;
