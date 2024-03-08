@@ -6,7 +6,7 @@ import { clearInterval } from 'node:timers';
 import archiver, { Archiver } from 'archiver';
 import async, { AsyncResultCallback } from 'async';
 import { Memoize } from 'typescript-memoize';
-import unzipper from 'unzipper';
+import unzipper, { Entry } from 'unzipper';
 
 import Constants from '../../../constants.js';
 import fsPoly from '../../../polyfill/fsPoly.js';
@@ -113,7 +113,13 @@ export default class Zip extends Archive {
       throw new Error(`didn't find entry '${entryPath}'`);
     }
 
-    const stream = entry.stream();
+    let stream: Entry;
+    try {
+      stream = entry.stream();
+    } catch (error) {
+      throw new Error(`failed to create stream for ${this.getFilePath()}|${entryPath}: ${error}`);
+    }
+
     try {
       return await callback(stream);
     } finally {
@@ -208,25 +214,35 @@ export default class Zip extends Archive {
           path.extname(inputFile.getExtractedFilePath()),
         );
 
-        return inputFile.createPatchedReadStream(removeHeader, async (stream) => {
-          // Catch stream errors such as `ENOENT: no such file or directory`
-          stream.on('error', catchError);
+        try {
+          await inputFile.createPatchedReadStream(removeHeader, async (stream) => {
+            // Catch stream errors such as `ENOENT: no such file or directory`
+            stream.on('error', catchError);
 
-          const entryName = outputArchiveEntry.getEntryPath().replace(/[\\/]/g, '/');
-          zipFile.append(stream, {
-            name: entryName,
-          });
+            const entryName = outputArchiveEntry.getEntryPath()
+              .replace(/[\\/]/g, '/');
+            zipFile.append(stream, {
+              name: entryName,
+            });
 
-          // Leave the input stream open until we're done writing it
-          await new Promise<void>((resolve) => {
-            const interval = setInterval(() => {
-              if (writtenEntries.has(entryName) || zipFileError) {
-                clearInterval(interval);
-                resolve();
-              }
-            }, 10);
+            // Leave the input stream open until we're done writing it
+            await new Promise<void>((resolve) => {
+              const interval = setInterval(() => {
+                if (writtenEntries.has(entryName) || zipFileError) {
+                  clearInterval(interval);
+                  resolve();
+                }
+              }, 10);
+            });
           });
-        });
+        } catch (error) {
+          const prefix = `failed to create patched read stream for ${inputFile.toString()}`;
+          if (error instanceof Error || typeof error === 'string') {
+            catchError(new Error(`${prefix}: ${error}`));
+          } else {
+            catchError(new Error(prefix));
+          }
+        }
       }),
     );
 

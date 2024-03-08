@@ -6,7 +6,6 @@ import { Readable } from 'node:stream';
 import { Memoize } from 'typescript-memoize';
 
 import Constants from '../../constants.js';
-import ArrayPoly from '../../polyfill/arrayPoly.js';
 import FilePoly from '../../polyfill/filePoly.js';
 import fsPoly from '../../polyfill/fsPoly.js';
 import URLPoly from '../../polyfill/urlPoly.js';
@@ -350,10 +349,17 @@ export default class File implements FileProps {
     start: number,
     callback: (stream: Readable) => (Promise<T> | T),
   ): Promise<T> {
-    const stream = fs.createReadStream(filePath, {
-      start,
-      highWaterMark: Constants.FILE_READING_CHUNK_SIZE,
-    });
+    let stream;
+    try {
+      stream = fs.createReadStream(filePath, {
+        start,
+        highWaterMark: Constants.FILE_READING_CHUNK_SIZE,
+      });
+    } catch (error) {
+      // https://github.com/emmercm/igir/issues/991
+      throw new Error(`failed to create read stream for '${filePath}' @ start=${start}: ${error}`);
+    }
+
     try {
       return await callback(stream);
     } finally {
