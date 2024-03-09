@@ -107,7 +107,7 @@ export default class CandidateGenerator extends Module {
     release: Release | undefined,
     indexedFiles: IndexedFiles,
   ): Promise<ReleaseCandidate | undefined> {
-    const romsToInputFiles = this.getInputFilesForGame(game, indexedFiles);
+    const romsToInputFiles = this.getInputFilesForGame(dat, game, indexedFiles);
 
     // For each Game's ROM, find the matching File
     const romFiles = await Promise.all(
@@ -131,7 +131,7 @@ export default class CandidateGenerator extends Module {
 
         // If the input file is headered...
         if (inputFile.getFileHeader()
-          // ..and we want a headered ROM
+          // ...and we want a headered ROM
           && (inputFile.getCrc32() === rom.getCrc32()
             || inputFile.getMd5() === rom.getMd5()
             || inputFile.getSha1() === rom.getSha1())
@@ -142,6 +142,7 @@ export default class CandidateGenerator extends Module {
           )
         ) {
           // ...then forget the input file's header, so that we don't later remove it
+          this.progressBar.logTrace(`${dat.getNameShort()}: ${game.getName()}: not removing header, ignoring that one was found for: ${inputFile.toString()}`);
           inputFile = inputFile.withoutFileHeader();
         }
 
@@ -155,6 +156,7 @@ export default class CandidateGenerator extends Module {
           && this.options.shouldLink()
         ) {
           // ...then we can't use this file
+          this.progressBar.logTrace(`${dat.getNameShort()}: ${game.getName()}: can't use headered ROM as target for link: ${inputFile.toString()}`);
           return [rom, undefined];
         }
 
@@ -215,6 +217,7 @@ export default class CandidateGenerator extends Module {
   }
 
   private getInputFilesForGame(
+    dat: DAT,
     game: Game,
     indexedFiles: IndexedFiles,
   ): Map<ROM, File> {
@@ -275,6 +278,7 @@ export default class CandidateGenerator extends Module {
     // An Archive was found, use that as the only possible input file
     // For each of this Game's ROMs, find the matching ArchiveEntry from this Archive
     return new Map(romsAndInputFiles.map(([rom, inputFiles]) => {
+      this.progressBar.logTrace(`${dat.getNameShort()}: ${game.getName()}: preferring input archive that contains every ROM: ${archiveWithEveryRom.getFilePath()}`);
       const archiveEntry = inputFiles.find((
         inputFile,
       ) => inputFile.getFilePath() === archiveWithEveryRom.getFilePath()) as File;

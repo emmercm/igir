@@ -442,7 +442,6 @@ export default class File implements FileProps {
    ****************************
    */
 
-  // TODO(cemmer): refactor usages of this that should use hashCode() or something else
   toString(): string {
     // TODO(cemmer): indicate if there's a patch?
     if (this.getSymlinkSource()) {

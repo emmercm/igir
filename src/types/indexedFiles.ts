@@ -55,7 +55,7 @@ export default class IndexedFiles {
       }
 
       if (file.getFileHeader()) {
-        const crc32WithoutHeader = file.getCrc32WithoutHeader();
+        const crc32WithoutHeader = `${file.getCrc32WithoutHeader()}|${file.getSizeWithoutHeader()}`;
         crc32WithoutHeaderMap.set(
           crc32WithoutHeader,
           [...(crc32WithoutHeaderMap.get(crc32WithoutHeader) ?? []), file],
