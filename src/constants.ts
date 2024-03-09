@@ -22,13 +22,16 @@ function scanUpPathForFile(filePath: string, fileName: string): string | undefin
   return undefined;
 }
 
+const PACKAGE_JSON_PATH = scanUpPathForFile(
+  url.fileURLToPath(new URL('.', import.meta.url)),
+  'package.json',
+) as string;
 const PACKAGE_JSON = JSON.parse(
-  fs.readFileSync(scanUpPathForFile(
-    url.fileURLToPath(new URL('.', import.meta.url)),
-    'package.json',
-  ) as string).toString(),
+  fs.readFileSync(PACKAGE_JSON_PATH).toString(),
 );
 const COMMAND_NAME = PACKAGE_JSON.name;
+
+const ROOT_DIR = path.dirname(PACKAGE_JSON_PATH);
 
 const GLOBAL_TEMP_DIR = fsPoly.mkdtempSync(path.join(os.tmpdir(), COMMAND_NAME));
 process.once('beforeExit', async () => {
@@ -37,6 +40,10 @@ process.once('beforeExit', async () => {
     recursive: true,
   });
 });
+
+const GLOBAL_CACHE_DIR = path.resolve(ROOT_DIR).startsWith(os.tmpdir())
+  ? os.homedir()
+  : ROOT_DIR;
 
 /**
  * A static class of constants that are determined at startup, to be used widely.
@@ -53,6 +60,8 @@ export default class Constants {
   static readonly ENGINES_NODE = PACKAGE_JSON.engines?.node ?? '*';
 
   static readonly GLOBAL_TEMP_DIR = GLOBAL_TEMP_DIR;
+
+  static readonly GLOBAL_CACHE_FILE = path.join(GLOBAL_CACHE_DIR, `${COMMAND_NAME}.cache`);
 
   /**
    * A reasonable max of filesystem threads for operations such as:
