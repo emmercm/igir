@@ -12,7 +12,6 @@ interface CacheData {
 }
 
 export interface CacheProps {
-  filePath?: string,
   maxSize?: number,
 }
 
@@ -30,20 +29,11 @@ export default class Cache<V> implements CacheProps {
 
   private readonly keyMutexesMutex = new Mutex();
 
-  private loadedFromFile = false;
-
   private saveToFileTimeout?: NodeJS.Timeout;
-
-  readonly filePath?: string;
 
   readonly maxSize?: number;
 
   constructor(props?: CacheProps) {
-    this.filePath = props?.filePath;
-    if (this.filePath) {
-      process.once('beforeExit', this.saveToFile);
-    }
-
     this.maxSize = props?.maxSize;
   }
 
@@ -51,26 +41,20 @@ export default class Cache<V> implements CacheProps {
    * Return if a key exists in the cache, waiting for any existing operations to complete first.
    */
   public async has(key: string): Promise<boolean> {
-    await this.loadFromFile(); // lazy load
-
     return this.lockKey(key, () => this.keyValues.has(key));
   }
 
   /**
    * Return all the keys that exist in the cache.
    */
-  public async keys(): Promise<Set<string>> {
-    await this.loadFromFile(); // lazy load
-
+  public keys(): Set<string> {
     return new Set(this.keyValues.keys());
   }
 
   /**
    * Return the count of keys in the cache.
    */
-  public async size(): Promise<number> {
-    await this.loadFromFile(); // lazy load
-
+  public size(): number {
     return this.keyValues.size;
   }
 
@@ -78,8 +62,6 @@ export default class Cache<V> implements CacheProps {
    * Get the value of a key in the cache, waiting for any existing operations to complete first.
    */
   public async get(key: string): Promise<V | undefined> {
-    await this.loadFromFile(); // lazy load
-
     return this.lockKey(key, () => this.keyValues.get(key));
   }
 
@@ -87,15 +69,13 @@ export default class Cache<V> implements CacheProps {
    * Get the value of a key in the cache if it exists, or compute a value and set it in the cache
    * otherwise.
    */
-  public async getOrCompute(key: string, runnable: () => (V | Promise<V>)): Promise<V> {
-    await this.loadFromFile(); // lazy load
-
+  public async getOrCompute(key: string, runnable: (key: string) => (V | Promise<V>)): Promise<V> {
     return this.lockKey(key, async () => {
       if (this.keyValues.has(key)) {
         return this.keyValues.get(key) as V;
       }
 
-      const val = await runnable();
+      const val = await runnable(key);
       this.setUnsafe(key, val);
       return val;
     });
@@ -105,8 +85,6 @@ export default class Cache<V> implements CacheProps {
    * Set the value of a key in the cache.
    */
   public async set(key: string, val: V): Promise<void> {
-    await this.loadFromFile(); // lazy load
-
     return this.lockKey(key, () => this.setUnsafe(key, val));
   }
 
@@ -115,7 +93,6 @@ export default class Cache<V> implements CacheProps {
       this.keyOrder.add(key);
     }
     this.keyValues.set(key, val);
-    this.scheduleSaveToFile();
 
     // Evict old values (FIFO)
     if (this.maxSize !== undefined && this.keyValues.size > this.maxSize) {
@@ -139,36 +116,27 @@ export default class Cache<V> implements CacheProps {
     return keyMutex.runExclusive(async () => runnable());
   }
 
-  private async loadFromFile(): Promise<void> {
-    if (this.loadedFromFile
-      || this.filePath === undefined
-      || !await FsPoly.exists(this.filePath)
-    ) {
-      this.loadedFromFile = true;
-      return;
+  /**
+   * TODO
+   */
+  public async load(filePath: string): Promise<void> {
+    const cacheData = JSON.parse(
+      await util.promisify(fs.readFile)(filePath, { encoding: Cache.BUFFER_ENCODING }),
+    ) as CacheData;
+    const compressed = Buffer.from(cacheData.data, Cache.BUFFER_ENCODING);
+    const decompressed = await util.promisify(zlib.inflate)(compressed);
+    const keyValuesObject = JSON.parse(decompressed.toString(Cache.BUFFER_ENCODING));
+    const keyValuesEntries = Object.entries(keyValuesObject) as [string, V][];
+    this.keyValues = new Map(keyValuesEntries);
+    if (this.maxSize !== undefined) {
+      this.keyOrder = new Set(Object.keys(keyValuesObject));
     }
-
-    try {
-      const cacheData = JSON.parse(
-        await util.promisify(fs.readFile)(this.filePath, { encoding: Cache.BUFFER_ENCODING }),
-      ) as CacheData;
-      const compressed = Buffer.from(cacheData.data, Cache.BUFFER_ENCODING);
-      const decompressed = await util.promisify(zlib.inflate)(compressed);
-      const keyValuesObject = JSON.parse(decompressed.toString(Cache.BUFFER_ENCODING));
-      const keyValuesEntries = Object.entries(keyValuesObject) as [string, V][];
-      this.keyValues = new Map(keyValuesEntries);
-      if (this.maxSize !== undefined) {
-        this.keyOrder = new Set(Object.keys(keyValuesObject));
-      }
-    } catch { /* empty */ }
-    this.loadedFromFile = true;
   }
 
-  private async saveToFile(): Promise<void> {
-    if (this.filePath === undefined) {
-      return;
-    }
-
+  /**
+   * TODO
+   */
+  public async save(filePath: string): Promise<void> {
     // Clear any existing timeout
     if (this.saveToFileTimeout !== undefined) {
       clearTimeout(this.saveToFileTimeout);
@@ -183,29 +151,18 @@ export default class Cache<V> implements CacheProps {
     } satisfies CacheData;
 
     // Ensure the directory exists
-    const dirPath = path.dirname(this.filePath);
+    const dirPath = path.dirname(filePath);
     if (!await FsPoly.exists(dirPath)) {
       await FsPoly.mkdir(dirPath, { recursive: true });
     }
 
     // Write to a temp file first, then overwrite the old cache file
-    const tempFile = await FsPoly.mktemp(this.filePath);
+    const tempFile = await FsPoly.mktemp(filePath);
     await util.promisify(fs.writeFile)(
       tempFile,
       JSON.stringify(cacheData),
       { encoding: Cache.BUFFER_ENCODING },
     );
-    await FsPoly.mv(tempFile, this.filePath);
-  }
-
-  private scheduleSaveToFile(): void {
-    if (this.saveToFileTimeout !== undefined) {
-      // A save is already scheduled
-      return;
-    }
-
-    this.saveToFileTimeout = setTimeout(async () => {
-      await this.saveToFile();
-    }, 10_000);
+    await FsPoly.mv(tempFile, filePath);
   }
 }

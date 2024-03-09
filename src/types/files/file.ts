@@ -27,9 +27,9 @@ export interface FileProps extends ChecksumProps {
 }
 
 export default class File implements FileProps {
-  private static readonly checksumCache = new Cache<string, ChecksumProps>(
-    Constants.FILE_CHECKSUM_CACHE_SIZE,
-  );
+  private static readonly checksumCache = new Cache<ChecksumProps>({
+    maxSize: Constants.FILE_CHECKSUM_CACHE_SIZE,
+  });
 
   readonly filePath: string;
 

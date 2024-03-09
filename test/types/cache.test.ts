@@ -1,66 +1,262 @@
-import os from 'node:os';
+import path from 'node:path';
 
 import Constants from '../../src/constants.js';
 import FsPoly from '../../src/polyfill/fsPoly.js';
 import Cache from '../../src/types/cache.js';
 
-describe('eviction', () => {
-  it('should not evict keys by default', async () => {
-    const cache = new Cache<number>();
-    await expect(cache.size()).resolves.toEqual(0);
+const TEST_CACHE_SIZE = 100;
 
-    for (let i = 0; i < 100; i += 1) {
-      await cache.set(String(i), i);
-      await expect(cache.size()).resolves.toEqual(i + 1);
+describe('has', () => {
+  it('should return false with empty cache', async () => {
+    const cache = new Cache<number>();
+
+    for (let i = 0; i < TEST_CACHE_SIZE; i += 1) {
+      await expect(cache.has(String(i))).resolves.toEqual(false);
     }
   });
 
-  it('should evict keys', async () => {
-    const maxSize = 10;
-    const cache = new Cache<number>({ maxSize });
-    await expect(cache.size()).resolves.toEqual(0);
+  it('should return true after setting', async () => {
+    const cache = new Cache<number>();
 
-    for (let i = 0; i < 10; i += 1) {
+    for (let i = 0; i < TEST_CACHE_SIZE; i += 1) {
       await cache.set(String(i), i);
-      await expect(cache.size()).resolves.toEqual(i + 1);
-    }
-
-    for (let i = 0; i < 100; i += 1) {
-      await cache.set(String(i), i);
-      await expect(cache.size()).resolves.toEqual(10);
+      await expect(cache.has(String(i))).resolves.toEqual(true);
     }
   });
 });
 
-describe('serialization', () => {
-  it('should load from a nonexistent file', async () => {
-    const cache = new Cache<number>({ filePath: os.devNull });
-    await expect(cache.size()).resolves.toEqual(0);
+describe('keys', () => {
+  it('should return nothing with empty cache', () => {
+    const cache = new Cache<number>();
+    expect(cache.keys().size).toEqual(0);
+  });
 
-    for (let i = 0; i < 10; i += 1) {
+  it('should return the correct keys', async () => {
+    const cache = new Cache<number>();
+
+    for (let i = 0; i < TEST_CACHE_SIZE; i += 1) {
       await cache.set(String(i), i);
-      await expect(cache.size()).resolves.toEqual(i + 1);
+    }
+    expect(cache.keys()).toEqual(new Set(
+      Array.from({ length: TEST_CACHE_SIZE }).map((_, idx) => String(idx)),
+    ));
+  });
+});
+
+describe('size', () => {
+  it('should return zero with empty cache', () => {
+    const cache = new Cache<number>();
+    expect(cache.size()).toEqual(0);
+  });
+
+  it('should return the correct size after setting', async () => {
+    const cache = new Cache<number>();
+
+    for (let i = 0; i < TEST_CACHE_SIZE; i += 1) {
+      await cache.set(String(i), i);
+      expect(cache.size()).toEqual(i + 1);
+    }
+  });
+});
+
+describe('get', () => {
+  it('should return undefined with empty cache', async () => {
+    const cache = new Cache<number>();
+
+    for (let i = 0; i < TEST_CACHE_SIZE; i += 1) {
+      await expect(cache.get(String(i))).resolves.toBeUndefined();
     }
   });
 
-  it('should be able to read after write', async () => {
-    const tempFile = await FsPoly.mktemp(Constants.GLOBAL_TEMP_DIR);
+  it('should return the value after setting', async () => {
+    const cache = new Cache<number>();
+
+    for (let i = 0; i < TEST_CACHE_SIZE; i += 1) {
+      await cache.set(String(i), i);
+      await expect(cache.get(String(i))).resolves.toEqual(i);
+    }
+  });
+});
+
+describe('getOrCompute', () => {
+  it('should compute a value if the key is missing', async () => {
+    const cache = new Cache<number>();
+
+    let computed = 0;
+    const runnable = (key: string): number => {
+      computed += 1;
+      return Number.parseInt(key, 10);
+    };
+
+    for (let i = 0; i < TEST_CACHE_SIZE; i += 1) {
+      await expect(cache.getOrCompute(String(i), runnable)).resolves.toEqual(i);
+    }
+    expect(computed).toEqual(TEST_CACHE_SIZE);
+  });
+
+  it('should not compute a value if the key exists', async () => {
+    const cache = new Cache<number>();
+
+    for (let i = 0; i < TEST_CACHE_SIZE; i += 1) {
+      await cache.set(String(i), i);
+    }
+
+    let computed = 0;
+    const runnable = (key: string): number => {
+      computed += 1;
+      return Number.parseInt(key, 10);
+    };
+
+    for (let i = 0; i < TEST_CACHE_SIZE; i += 1) {
+      await expect(cache.getOrCompute(String(i), runnable)).resolves.toEqual(i);
+    }
+    expect(computed).toEqual(0);
+  });
+
+  it('should respect max cache size', async () => {
+    const maxSize = Math.floor(TEST_CACHE_SIZE / 2);
+    const cache = new Cache<number>({ maxSize });
+
+    for (let i = 0; i < maxSize; i += 1) {
+      await cache.getOrCompute(String(i), () => i);
+      expect(cache.size()).toEqual(i + 1);
+    }
+
+    for (let i = maxSize; i < TEST_CACHE_SIZE; i += 1) {
+      await cache.getOrCompute(String(i), () => i);
+      expect(cache.size()).toEqual(maxSize);
+    }
+  });
+});
+
+describe('set', () => {
+  it('should set a value for a key that doesn\'t exist', async () => {
+    const cache = new Cache<number>();
+
+    for (let i = 0; i < TEST_CACHE_SIZE; i += 1) {
+      await cache.set(String(i), i);
+      await expect(cache.get(String(i))).resolves.toEqual(i);
+    }
+  });
+
+  it('should set a value for a key that exists', async () => {
+    const cache = new Cache<number>();
+
+    for (let i = 0; i < TEST_CACHE_SIZE; i += 1) {
+      await cache.set(String(i), i);
+      await cache.set(String(i), i * 2);
+      await expect(cache.get(String(i))).resolves.toEqual(i * 2);
+    }
+  });
+
+  it('should respect max cache size', async () => {
+    const maxSize = Math.floor(TEST_CACHE_SIZE / 2);
+    const cache = new Cache<number>({ maxSize });
+
+    for (let i = 0; i < maxSize; i += 1) {
+      await cache.set(String(i), i);
+      expect(cache.size()).toEqual(i + 1);
+    }
+
+    for (let i = maxSize; i < TEST_CACHE_SIZE; i += 1) {
+      await cache.set(String(i), i);
+      expect(cache.size()).toEqual(maxSize);
+    }
+  });
+});
+
+describe('load', () => {
+  it('should throw on nonexistent file', async () => {
+    const tempFile = await FsPoly.mktemp(path.join(Constants.GLOBAL_TEMP_DIR, 'cache'));
+    await expect(FsPoly.exists(tempFile)).resolves.toEqual(false);
+
+    const cache = new Cache<number>();
+    await expect(cache.load(tempFile)).rejects.toThrow();
+  });
+
+  it('should throw on empty file', async () => {
+    const tempFile = await FsPoly.mktemp(path.join(Constants.GLOBAL_TEMP_DIR, 'cache'));
+    await FsPoly.touch(tempFile);
     try {
-      // Add some keys to the cache
-      const firstCache = new Cache<number>({ filePath: tempFile });
-      for (let i = 0; i < 10; i += 1) {
-        await firstCache.set(String(i), i);
-        await expect(firstCache.size()).resolves.toEqual(i + 1);
-      }
+      await expect(FsPoly.exists(tempFile)).resolves.toEqual(true);
 
-      // Wait until the cache has been flushed to disk
-      while (!await FsPoly.exists(tempFile)) {
-        await new Promise((resolve) => { setTimeout(resolve, 1000); });
-      }
+      const cache = new Cache<number>();
+      await expect(cache.load(tempFile)).rejects.toThrow();
+    } finally {
+      await FsPoly.rm(tempFile, { force: true });
+    }
+  });
 
-      // Read the cache
-      const secondCache = new Cache<number>({ filePath: tempFile });
-      await expect(secondCache.keys()).resolves.toEqual(await firstCache.keys());
+  it('should load after saving an empty cache', async () => {
+    const tempFile = await FsPoly.mktemp(path.join(Constants.GLOBAL_TEMP_DIR, 'cache'));
+
+    const firstCache = new Cache<number>();
+    await firstCache.save(tempFile);
+
+    try {
+      await expect(FsPoly.exists(tempFile)).resolves.toEqual(true);
+
+      const secondCache = new Cache<number>();
+      await secondCache.load(tempFile);
+      expect(secondCache.size()).toEqual(0);
+      expect(secondCache.keys()).toEqual(new Set());
+    } finally {
+      await FsPoly.rm(tempFile, { force: true });
+    }
+  });
+
+  it('should load after saving a populated cache', async () => {
+    const tempFile = await FsPoly.mktemp(path.join(Constants.GLOBAL_TEMP_DIR, 'cache'));
+
+    const firstCache = new Cache<number>();
+    for (let i = 0; i < TEST_CACHE_SIZE; i += 1) {
+      await firstCache.set(String(i), i);
+    }
+    await firstCache.save(tempFile);
+
+    try {
+      await expect(FsPoly.exists(tempFile)).resolves.toEqual(true);
+
+      const secondCache = new Cache<number>();
+      await secondCache.load(tempFile);
+      expect(secondCache.size()).toEqual(TEST_CACHE_SIZE);
+      expect(secondCache.keys()).toEqual(new Set(
+        Array.from({ length: TEST_CACHE_SIZE }).map((_, idx) => String(idx)),
+      ));
+      for (let i = 0; i < TEST_CACHE_SIZE; i += 1) {
+        await expect(secondCache.get(String(i))).resolves.toEqual(i);
+      }
+    } finally {
+      await FsPoly.rm(tempFile, { force: true });
+    }
+  });
+});
+
+describe('save', () => {
+  it('should save an empty cache', async () => {
+    const tempFile = await FsPoly.mktemp(path.join(Constants.GLOBAL_TEMP_DIR, 'cache'));
+
+    const cache = new Cache<number>();
+    await cache.save(tempFile);
+
+    try {
+      await expect(FsPoly.exists(tempFile)).resolves.toEqual(true);
+    } finally {
+      await FsPoly.rm(tempFile, { force: true });
+    }
+  });
+
+  it('should save a populated cache', async () => {
+    const tempFile = await FsPoly.mktemp(path.join(Constants.GLOBAL_TEMP_DIR, 'cache'));
+
+    const cache = new Cache<number>();
+    for (let i = 0; i < TEST_CACHE_SIZE; i += 1) {
+      await cache.set(String(i), i);
+    }
+    await cache.save(tempFile);
+
+    try {
+      await expect(FsPoly.exists(tempFile)).resolves.toEqual(true);
     } finally {
       await FsPoly.rm(tempFile, { force: true });
     }
