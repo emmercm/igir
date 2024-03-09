@@ -130,6 +130,8 @@ export default class ROM implements ROMProps {
    * A string hash code to uniquely identify this {@link ROM}.
    */
   hashCode(): string {
-    return File.hashCode(this.getCrc32(), this.getSize());
+    return this.getSha1()
+      ?? this.getMd5()
+      ?? `${this.getCrc32()}|${this.getSize()}`;
   }
 }

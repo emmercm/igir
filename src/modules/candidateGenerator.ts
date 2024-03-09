@@ -12,6 +12,7 @@ import Archive from '../types/files/archives/archive.js';
 import ArchiveEntry from '../types/files/archives/archiveEntry.js';
 import Zip from '../types/files/archives/zip.js';
 import File from '../types/files/file.js';
+import IndexedFiles from '../types/indexedFiles.js';
 import Options from '../types/options.js';
 import OutputFactory from '../types/outputFactory.js';
 import ReleaseCandidate from '../types/releaseCandidate.js';
@@ -37,9 +38,9 @@ export default class CandidateGenerator extends Module {
    */
   async generate(
     dat: DAT,
-    hashCodeToInputFiles: Map<string, File[]>,
+    indexedFiles: IndexedFiles,
   ): Promise<Map<Parent, ReleaseCandidate[]>> {
-    if (hashCodeToInputFiles.size === 0) {
+    if (indexedFiles.getFiles().length === 0) {
       this.progressBar.logTrace(`${dat.getNameShort()}: no input ROMs to make candidates from`);
       return new Map();
     }
@@ -71,7 +72,7 @@ export default class CandidateGenerator extends Module {
             dat,
             game,
             release,
-            hashCodeToInputFiles,
+            indexedFiles,
           );
           if (releaseCandidate) {
             releaseCandidates.push(releaseCandidate);
@@ -104,9 +105,9 @@ export default class CandidateGenerator extends Module {
     dat: DAT,
     game: Game,
     release: Release | undefined,
-    hashCodeToInputFiles: Map<string, File[]>,
+    indexedFiles: IndexedFiles,
   ): Promise<ReleaseCandidate | undefined> {
-    const romsToInputFiles = this.getInputFilesForGame(game, hashCodeToInputFiles);
+    const romsToInputFiles = this.getInputFilesForGame(dat, game, indexedFiles);
 
     // For each Game's ROM, find the matching File
     const romFiles = await Promise.all(
@@ -130,7 +131,7 @@ export default class CandidateGenerator extends Module {
 
         // If the input file is headered...
         if (inputFile.getFileHeader()
-          // ..and we want a headered ROM
+          // ...and we want a headered ROM
           && (inputFile.getCrc32() === rom.getCrc32()
             || inputFile.getMd5() === rom.getMd5()
             || inputFile.getSha1() === rom.getSha1())
@@ -141,6 +142,7 @@ export default class CandidateGenerator extends Module {
           )
         ) {
           // ...then forget the input file's header, so that we don't later remove it
+          this.progressBar.logTrace(`${dat.getNameShort()}: ${game.getName()}: not removing header, ignoring that one was found for: ${inputFile.toString()}`);
           inputFile = inputFile.withoutFileHeader();
         }
 
@@ -154,6 +156,7 @@ export default class CandidateGenerator extends Module {
           && this.options.shouldLink()
         ) {
           // ...then we can't use this file
+          this.progressBar.logTrace(`${dat.getNameShort()}: ${game.getName()}: can't use headered ROM as target for link: ${inputFile.toString()}`);
           return [rom, undefined];
         }
 
@@ -214,12 +217,13 @@ export default class CandidateGenerator extends Module {
   }
 
   private getInputFilesForGame(
+    dat: DAT,
     game: Game,
-    hashCodeToInputFiles: Map<string, File[]>,
+    indexedFiles: IndexedFiles,
   ): Map<ROM, File> {
     const romsAndInputFiles = game.getRoms().map((rom) => ([
       rom,
-      (hashCodeToInputFiles.get(rom.hashCode()) ?? []),
+      indexedFiles.findFiles(rom) ?? [],
     ])) satisfies [ROM, File[]][];
 
     // Detect if there is one input archive that contains every ROM, and prefer to use its entries.
@@ -274,6 +278,7 @@ export default class CandidateGenerator extends Module {
     // An Archive was found, use that as the only possible input file
     // For each of this Game's ROMs, find the matching ArchiveEntry from this Archive
     return new Map(romsAndInputFiles.map(([rom, inputFiles]) => {
+      this.progressBar.logTrace(`${dat.getNameShort()}: ${game.getName()}: preferring input archive that contains every ROM: ${archiveWithEveryRom.getFilePath()}`);
       const archiveEntry = inputFiles.find((
         inputFile,
       ) => inputFile.getFilePath() === archiveWithEveryRom.getFilePath()) as File;

@@ -6,7 +6,6 @@ import { Readable } from 'node:stream';
 import { Memoize } from 'typescript-memoize';
 
 import Constants from '../../constants.js';
-import ArrayPoly from '../../polyfill/arrayPoly.js';
 import FilePoly from '../../polyfill/filePoly.js';
 import fsPoly from '../../polyfill/fsPoly.js';
 import URLPoly from '../../polyfill/urlPoly.js';
@@ -451,23 +450,13 @@ export default class File implements FileProps {
     return this.getFilePath();
   }
 
-  static hashCode(crc: string, size: number): string {
-    return `${crc}|${size}`;
-  }
-
-  hashCodeWithHeader(): string {
-    return File.hashCode(this.getCrc32(), this.getSize());
-  }
-
-  hashCodeWithoutHeader(): string {
-    return File.hashCode(this.getCrc32WithoutHeader(), this.getSizeWithoutHeader());
-  }
-
-  hashCodes(): string[] {
-    return [
-      this.hashCodeWithHeader(),
-      this.hashCodeWithoutHeader(),
-    ].reduce(ArrayPoly.reduceUnique(), []);
+  /**
+   * A string hash code to uniquely identify this {@link File}.
+   */
+  hashCode(): string {
+    return this.getSha1()
+      ?? this.getMd5()
+      ?? `${this.getCrc32()}|${this.getSize()}`;
   }
 
   equals(other: File): boolean {

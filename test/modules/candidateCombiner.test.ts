@@ -4,7 +4,7 @@ import CandidateCombiner from '../../src/modules/candidateCombiner.js';
 import CandidateGenerator from '../../src/modules/candidateGenerator.js';
 import DATCombiner from '../../src/modules/datCombiner.js';
 import DATGameInferrer from '../../src/modules/datGameInferrer.js';
-import FileIndexer from '../../src/modules/fileIndexer.js';
+import ROMIndexer from '../../src/modules/romIndexer.js';
 import ROMScanner from '../../src/modules/romScanner.js';
 import Parent from '../../src/types/dats/parent.js';
 import File from '../../src/types/files/file.js';
@@ -20,7 +20,7 @@ async function runCombinedCandidateGenerator(
   const dats = new DATGameInferrer(options, new ProgressBarFake()).infer(romFiles);
   const dat = new DATCombiner(new ProgressBarFake()).combine(dats);
 
-  const indexedRomFiles = await new FileIndexer(options, new ProgressBarFake()).index(romFiles);
+  const indexedRomFiles = await new ROMIndexer(options, new ProgressBarFake()).index(romFiles);
   const parentsToCandidates = await new CandidateGenerator(options, new ProgressBarFake())
     .generate(dat, indexedRomFiles);
 
