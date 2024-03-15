@@ -3,13 +3,15 @@ import https from 'node:https';
 import path from 'node:path';
 import { Readable } from 'node:stream';
 
+import {
+  Exclude, Expose, instanceToPlain, plainToClassFromExist,
+} from 'class-transformer';
 import { Memoize } from 'typescript-memoize';
 
 import Constants from '../../constants.js';
 import FilePoly from '../../polyfill/filePoly.js';
 import fsPoly from '../../polyfill/fsPoly.js';
 import URLPoly from '../../polyfill/urlPoly.js';
-import Cache from '../cache.js';
 import Patch from '../patches/patch.js';
 import FileChecksums, { ChecksumBitmask, ChecksumProps } from './fileChecksums.js';
 import ROMHeader from './romHeader.js';
@@ -25,23 +27,24 @@ export interface FileProps extends ChecksumProps {
   readonly patch?: Patch;
 }
 
+@Exclude()
 export default class File implements FileProps {
-  private static readonly checksumCache = new Cache<ChecksumProps>({
-    maxSize: Constants.FILE_CHECKSUM_CACHE_SIZE,
-  });
-
   readonly filePath: string;
 
+  @Expose()
   readonly size: number;
 
+  @Expose()
   readonly crc32: string;
 
   readonly crc32WithoutHeader: string;
 
+  @Expose()
   readonly md5?: string;
 
   readonly md5WithoutHeader?: string;
 
+  @Expose()
   readonly sha1?: string;
 
   readonly sha1WithoutHeader?: string;
@@ -135,6 +138,24 @@ export default class File implements FileProps {
     });
   }
 
+  static async fileOfObject(filePath: string, obj: object): Promise<File> {
+    const deserialized = plainToClassFromExist(
+      new File({ filePath }),
+      obj,
+      {
+        enableImplicitConversion: true,
+        excludeExtraneousValues: true,
+      },
+    );
+    return this.fileOf(deserialized);
+  }
+
+  toObject(): object {
+    return instanceToPlain(this, {
+      exposeUnsetFields: false,
+    });
+  }
+
   // Property getters
 
   getFilePath(): string {
@@ -209,19 +230,16 @@ export default class File implements FileProps {
   ): Promise<ChecksumProps> {
     const start = fileHeader?.getDataOffsetBytes() ?? 0;
 
-    const cacheKey = `${filePath}|${start}|${checksumBitmask}`;
-    return File.checksumCache.getOrCompute(cacheKey, async () => {
-      const stream = fs.createReadStream(filePath, {
-        start,
-        highWaterMark: Constants.FILE_READING_CHUNK_SIZE,
-      });
-
-      try {
-        return await FileChecksums.hashStream(stream, checksumBitmask);
-      } finally {
-        stream.destroy();
-      }
+    const stream = fs.createReadStream(filePath, {
+      start,
+      highWaterMark: Constants.FILE_READING_CHUNK_SIZE,
     });
+
+    try {
+      return await FileChecksums.hashStream(stream, checksumBitmask);
+    } finally {
+      stream.destroy();
+    }
   }
 
   async extractToFile(destinationPath: string): Promise<void> {

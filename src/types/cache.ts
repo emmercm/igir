@@ -103,6 +103,28 @@ export default class Cache<V> implements CacheProps {
     }
   }
 
+  /**
+   * Delete a key in the cache.
+   */
+  public async delete(key: string | RegExp): Promise<void> {
+    let keys: string[];
+    if (key instanceof RegExp) {
+      keys = [...this.keys().keys()].filter((k) => k.match(key));
+    } else {
+      keys = [key];
+    }
+
+    await Promise.all(keys.map(async (k) => {
+      await this.lockKey(k, () => this.deleteUnsafe(k));
+    }));
+  }
+
+  private deleteUnsafe(key: string): void {
+    this.keyOrder.delete(key);
+    this.keyValues.delete(key);
+    this.keyMutexes.delete(key);
+  }
+
   private async lockKey<R>(key: string, runnable: () => (R | Promise<R>)): Promise<R> {
     // Get a mutex for `key`
     const keyMutex = await this.keyMutexesMutex.runExclusive(() => {

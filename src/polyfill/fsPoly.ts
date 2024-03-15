@@ -99,7 +99,7 @@ export default class FsPoly {
   }
 
   static async inode(pathLike: PathLike): Promise<number> {
-    return (await util.promisify(fs.stat)(pathLike)).ino;
+    return (await this.stat(pathLike)).ino;
   }
 
   static async isDirectory(pathLike: string): Promise<boolean> {
@@ -343,7 +343,7 @@ export default class FsPoly {
    */
   static async size(pathLike: PathLike): Promise<number> {
     try {
-      return (await util.promisify(fs.stat)(pathLike)).size;
+      return (await this.stat(pathLike)).size;
     } catch {
       return 0;
     }
@@ -374,6 +374,10 @@ export default class FsPoly {
       path.basename(link),
     );
     return path.relative(path.dirname(realLink), realTarget);
+  }
+
+  static async stat(pathLike: PathLike): Promise<fs.Stats> {
+    return util.promisify(fs.stat)(pathLike);
   }
 
   static async touch(filePath: string): Promise<void> {

@@ -1,6 +1,10 @@
 import path from 'node:path';
 import { Readable } from 'node:stream';
 
+import {
+  Exclude, Expose, instanceToPlain, plainToClassFromExist,
+} from 'class-transformer';
+
 import Constants from '../../../constants.js';
 import fsPoly from '../../../polyfill/fsPoly.js';
 import Patch from '../../patches/patch.js';
@@ -14,9 +18,11 @@ export interface ArchiveEntryProps<A extends Archive> extends Omit<FileProps, 'f
   readonly entryPath: string;
 }
 
+@Exclude()
 export default class ArchiveEntry<A extends Archive> extends File implements ArchiveEntryProps<A> {
   readonly archive: A;
 
+  @Expose()
   readonly entryPath: string;
 
   protected constructor(archiveEntryProps: ArchiveEntryProps<A>) {
@@ -97,6 +103,26 @@ export default class ArchiveEntry<A extends Archive> extends File implements Arc
       entryPath: archiveEntryProps.entryPath,
     });
   }
+
+  static async entryOfObject<A extends Archive>(archive: A, obj: object): Promise<ArchiveEntry<A>> {
+    const deserialized = plainToClassFromExist(
+      new ArchiveEntry({ archive, entryPath: '' }),
+      obj,
+      {
+        enableImplicitConversion: true,
+        excludeExtraneousValues: true,
+      },
+    );
+    return this.entryOf({ ...deserialized, archive });
+  }
+
+  toObject(): object {
+    return instanceToPlain(this, {
+      exposeUnsetFields: false,
+    });
+  }
+
+  // Property getters
 
   getArchive(): A {
     return this.archive;
