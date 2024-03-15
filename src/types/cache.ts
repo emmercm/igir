@@ -12,13 +12,16 @@ interface CacheData {
 }
 
 export interface CacheProps {
+  filePath?: string,
+  saveToFileInterval?: number,
+  saveOnExit?: boolean,
   maxSize?: number,
 }
 
 /**
  * A cache of a fixed size that ejects the oldest inserted key.
  */
-export default class Cache<V> implements CacheProps {
+export default class Cache<V> {
   private static readonly BUFFER_ENCODING: BufferEncoding = 'binary';
 
   private keyOrder: Set<string> = new Set();
@@ -29,11 +32,24 @@ export default class Cache<V> implements CacheProps {
 
   private readonly keyMutexesMutex = new Mutex();
 
+  private hasChanged: boolean = false;
+
   private saveToFileTimeout?: NodeJS.Timeout;
+
+  readonly filePath?: string;
 
   readonly maxSize?: number;
 
   constructor(props?: CacheProps) {
+    this.filePath = props?.filePath;
+    if (props?.saveToFileInterval !== undefined) {
+      const saveToFileInterval = setInterval(this.save, props?.saveToFileInterval);
+      process.once('exit', () => clearInterval(saveToFileInterval));
+    }
+    if (props?.saveOnExit) {
+      // WARN: Jest won't call this: https://github.com/jestjs/jest/issues/10927
+      process.once('beforeExit', this.save);
+    }
     this.maxSize = props?.maxSize;
   }
 
@@ -93,13 +109,12 @@ export default class Cache<V> implements CacheProps {
       this.keyOrder.add(key);
     }
     this.keyValues.set(key, val);
+    this.hasChanged = true;
 
     // Evict old values (FIFO)
     if (this.maxSize !== undefined && this.keyValues.size > this.maxSize) {
       const staleKey = this.keyOrder.keys().next().value;
-      this.keyOrder.delete(staleKey);
-      this.keyValues.delete(staleKey);
-      this.keyMutexes.delete(staleKey);
+      this.deleteUnsafe(staleKey);
     }
   }
 
@@ -123,6 +138,7 @@ export default class Cache<V> implements CacheProps {
     this.keyOrder.delete(key);
     this.keyValues.delete(key);
     this.keyMutexes.delete(key);
+    this.hasChanged = true;
   }
 
   private async lockKey<R>(key: string, runnable: () => (R | Promise<R>)): Promise<R> {
@@ -139,11 +155,15 @@ export default class Cache<V> implements CacheProps {
   }
 
   /**
-   * TODO
+   * Load the cache from a file.
    */
-  public async load(filePath: string): Promise<void> {
+  public async load(): Promise<Cache<V>> {
+    if (this.filePath === undefined) {
+      throw new Error('no cache file path was provided');
+    }
+
     const cacheData = JSON.parse(
-      await util.promisify(fs.readFile)(filePath, { encoding: Cache.BUFFER_ENCODING }),
+      await util.promisify(fs.readFile)(this.filePath, { encoding: Cache.BUFFER_ENCODING }),
     ) as CacheData;
     const compressed = Buffer.from(cacheData.data, Cache.BUFFER_ENCODING);
     const decompressed = await util.promisify(zlib.inflate)(compressed);
@@ -153,12 +173,18 @@ export default class Cache<V> implements CacheProps {
     if (this.maxSize !== undefined) {
       this.keyOrder = new Set(Object.keys(keyValuesObject));
     }
+
+    return this;
   }
 
   /**
-   * TODO
+   * Save the cache to a file.
    */
-  public async save(filePath: string): Promise<void> {
+  public async save(): Promise<Cache<V>> {
+    if (this.filePath === undefined || !this.hasChanged) {
+      return this;
+    }
+
     // Clear any existing timeout
     if (this.saveToFileTimeout !== undefined) {
       clearTimeout(this.saveToFileTimeout);
@@ -173,18 +199,21 @@ export default class Cache<V> implements CacheProps {
     } satisfies CacheData;
 
     // Ensure the directory exists
-    const dirPath = path.dirname(filePath);
+    const dirPath = path.dirname(this.filePath);
     if (!await FsPoly.exists(dirPath)) {
       await FsPoly.mkdir(dirPath, { recursive: true });
     }
 
     // Write to a temp file first, then overwrite the old cache file
-    const tempFile = await FsPoly.mktemp(filePath);
+    const tempFile = await FsPoly.mktemp(this.filePath);
     await util.promisify(fs.writeFile)(
       tempFile,
       JSON.stringify(cacheData),
       { encoding: Cache.BUFFER_ENCODING },
     );
-    await FsPoly.mv(tempFile, filePath);
+    await FsPoly.mv(tempFile, this.filePath);
+    this.hasChanged = false;
+
+    return this;
   }
 }

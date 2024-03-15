@@ -1,3 +1,4 @@
+import { Stats } from 'node:fs';
 import path from 'node:path';
 
 import FsPoly from '../../polyfill/fsPoly.js';
@@ -17,10 +18,10 @@ interface CacheValue {
   files: FileProps[] | ArchiveEntryProps<Archive>[],
 }
 
-const CACHE = new Cache<CacheValue>();
-process.once('beforeExit', async () => {
-  await CACHE.save('igir.cache');
-});
+const CACHE = new Cache<CacheValue>({
+  filePath: 'igir.cache',
+  saveToFileInterval: 30_000,
+}).load();
 
 export default class FileFactory {
   private static readonly CACHE = CACHE;
@@ -55,11 +56,19 @@ export default class FileFactory {
     checksumBitmask: number,
     runnable: () => Promise<File[]>,
   ): Promise<File[]> {
-    // TODO(cemmer): try/catch for non-existent file
-    const stat = await FsPoly.stat(filePath);
+    let stat: Stats;
+    try {
+      stat = await FsPoly.stat(filePath);
+    } catch (error) {
+      if (error && typeof error === 'object' && 'code' in error && error.code === 'ENOENT') {
+        // File doesn't exist
+        return [];
+      }
+      throw error;
+    }
     const cacheKey = String(stat.ino);
 
-    const existing = await this.CACHE.get(cacheKey);
+    const existing = await (await this.CACHE).get(cacheKey);
     const existingBitmask = (existing?.files.every((file) => file.crc32 !== undefined && file.crc32 !== '00000000') ? ChecksumBitmask.CRC32 : 0)
       | (existing?.files.every((file) => file.md5) ? ChecksumBitmask.MD5 : 0)
       | (existing?.files.every((file) => file.sha1) ? ChecksumBitmask.SHA1 : 0);
@@ -71,21 +80,35 @@ export default class FileFactory {
     ) {
       // Raw file
       if (!this.isArchive(filePath)) {
-        const file = await Promise.all(existing.files
-          .map(async (props) => File.fileOfObject(filePath, props)));
-        return file;
+        return Promise.all(existing.files.map(async (props) => File.fileOfObject(
+          filePath,
+          {
+            ...props,
+            // Only return the checksums requested
+            crc32: checksumBitmask & ChecksumBitmask.CRC32 ? props.crc32 : undefined,
+            md5: checksumBitmask & ChecksumBitmask.MD5 ? props.md5 : undefined,
+            sha1: checksumBitmask & ChecksumBitmask.SHA1 ? props.sha1 : undefined,
+          } as FileProps,
+        )));
       }
 
       // Archive
       const archive = this.archiveFrom(filePath);
-      const archiveEntries = await Promise.all(existing.files
-        .map(async (props) => ArchiveEntry.entryOfObject(archive, props)));
-      return archiveEntries;
+      return Promise.all(existing.files.map(async (props) => ArchiveEntry.entryOfObject(
+        archive,
+        {
+          ...props,
+          // Only return the checksums requested
+          crc32: checksumBitmask & ChecksumBitmask.CRC32 ? props.crc32 : undefined,
+          md5: checksumBitmask & ChecksumBitmask.MD5 ? props.md5 : undefined,
+          sha1: checksumBitmask & ChecksumBitmask.SHA1 ? props.sha1 : undefined,
+        } as ArchiveEntryProps<typeof archive>,
+      )));
     }
 
     // Cache "miss", process the files
     const files = await runnable();
-    await this.CACHE.set(cacheKey, {
+    await (await this.CACHE).set(cacheKey, {
       fileSize: stat.size,
       modifiedTimeMillis: stat.mtimeMs,
       files: files.map((file) => file.toObject() as FileProps), // TODO

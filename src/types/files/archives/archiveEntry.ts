@@ -40,11 +40,17 @@ export default class ArchiveEntry<A extends Archive> extends File implements Arc
   ): Promise<ArchiveEntry<A>> {
     let finalSize = archiveEntryProps.size;
     let finalCrcWithHeader = archiveEntryProps.crc32;
-    let finalCrcWithoutHeader = archiveEntryProps.crc32WithoutHeader;
+    let finalCrcWithoutHeader = archiveEntryProps.fileHeader
+      ? archiveEntryProps.crc32WithoutHeader
+      : archiveEntryProps.crc32;
     let finalMd5WithHeader = archiveEntryProps.md5;
-    let finalMd5WithoutHeader = archiveEntryProps.md5WithoutHeader;
+    let finalMd5WithoutHeader = archiveEntryProps.fileHeader
+      ? archiveEntryProps.md5WithoutHeader
+      : archiveEntryProps.md5;
     let finalSha1WithHeader = archiveEntryProps.sha1;
-    let finalSha1WithoutHeader = archiveEntryProps.sha1WithoutHeader;
+    let finalSha1WithoutHeader = archiveEntryProps.fileHeader
+      ? archiveEntryProps.sha1WithoutHeader
+      : archiveEntryProps.sha1;
     let finalSymlinkSource = archiveEntryProps.symlinkSource;
 
     if (await fsPoly.exists(archiveEntryProps.archive.getFilePath())) {
@@ -104,7 +110,10 @@ export default class ArchiveEntry<A extends Archive> extends File implements Arc
     });
   }
 
-  static async entryOfObject<A extends Archive>(archive: A, obj: object): Promise<ArchiveEntry<A>> {
+  static async entryOfObject<A extends Archive>(
+    archive: A,
+    obj: ArchiveEntryProps<A>,
+  ): Promise<ArchiveEntry<A>> {
     const deserialized = plainToClassFromExist(
       new ArchiveEntry({ archive, entryPath: '' }),
       obj,

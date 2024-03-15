@@ -75,11 +75,17 @@ export default class File implements FileProps {
   ): Promise<File> {
     let finalSize = fileProps.size;
     let finalCrcWithHeader = fileProps.crc32;
-    let finalCrcWithoutHeader = fileProps.crc32WithoutHeader;
+    let finalCrcWithoutHeader = fileProps.fileHeader
+      ? fileProps.crc32WithoutHeader
+      : fileProps.crc32;
     let finalMd5WithHeader = fileProps.md5;
-    let finalMd5WithoutHeader = fileProps.md5WithoutHeader;
+    let finalMd5WithoutHeader = fileProps.fileHeader
+      ? fileProps.md5WithoutHeader
+      : fileProps.md5;
     let finalSha1WithHeader = fileProps.sha1;
-    let finalSha1WithoutHeader = fileProps.sha1WithoutHeader;
+    let finalSha1WithoutHeader = fileProps.fileHeader
+      ? fileProps.sha1WithoutHeader
+      : fileProps.sha1;
     let finalSymlinkSource = fileProps.symlinkSource;
 
     if (await fsPoly.exists(fileProps.filePath)) {
@@ -138,7 +144,7 @@ export default class File implements FileProps {
     });
   }
 
-  static async fileOfObject(filePath: string, obj: object): Promise<File> {
+  static async fileOfObject(filePath: string, obj: FileProps): Promise<File> {
     const deserialized = plainToClassFromExist(
       new File({ filePath }),
       obj,

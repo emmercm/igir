@@ -35,6 +35,7 @@ const ROOT_DIR = path.dirname(PACKAGE_JSON_PATH);
 
 const GLOBAL_TEMP_DIR = fsPoly.mkdtempSync(path.join(os.tmpdir(), COMMAND_NAME));
 process.once('beforeExit', async () => {
+  // WARN: Jest won't call this: https://github.com/jestjs/jest/issues/10927
   await fsPoly.rm(GLOBAL_TEMP_DIR, {
     force: true,
     recursive: true,
