@@ -1,6 +1,7 @@
 import { Stats } from 'node:fs';
 import path from 'node:path';
 
+import Constants from '../../constants.js';
 import FsPoly from '../../polyfill/fsPoly.js';
 import Cache from '../cache.js';
 import Archive from './archives/archive.js';
@@ -19,7 +20,7 @@ interface CacheValue {
 }
 
 const CACHE = new Cache<CacheValue>({
-  filePath: 'igir.cache',
+  filePath: Constants.GLOBAL_CACHE_FILE,
   saveToFileInterval: 30_000,
 }).load();
 
