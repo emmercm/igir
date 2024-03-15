@@ -13,7 +13,7 @@ interface CacheData {
 
 export interface CacheProps {
   filePath?: string,
-  saveToFileInterval?: number,
+  fileFlushMillis?: number,
   saveOnExit?: boolean,
   maxSize?: number,
 }
@@ -38,14 +38,13 @@ export default class Cache<V> {
 
   readonly filePath?: string;
 
+  readonly fileFlushMillis?: number;
+
   readonly maxSize?: number;
 
   constructor(props?: CacheProps) {
     this.filePath = props?.filePath;
-    if (props?.saveToFileInterval !== undefined) {
-      const saveToFileInterval = setInterval(this.save, props?.saveToFileInterval);
-      process.once('exit', () => clearInterval(saveToFileInterval));
-    }
+    this.fileFlushMillis = props?.fileFlushMillis;
     if (props?.saveOnExit) {
       // WARN: Jest won't call this: https://github.com/jestjs/jest/issues/10927
       process.once('beforeExit', this.save);
@@ -109,7 +108,7 @@ export default class Cache<V> {
       this.keyOrder.add(key);
     }
     this.keyValues.set(key, val);
-    this.hasChanged = true;
+    this.saveWithTimeout();
 
     // Evict old values (FIFO)
     if (this.maxSize !== undefined && this.keyValues.size > this.maxSize) {
@@ -138,7 +137,7 @@ export default class Cache<V> {
     this.keyOrder.delete(key);
     this.keyValues.delete(key);
     this.keyMutexes.delete(key);
-    this.hasChanged = true;
+    this.saveWithTimeout();
   }
 
   private async lockKey<R>(key: string, runnable: () => (R | Promise<R>)): Promise<R> {
@@ -177,12 +176,21 @@ export default class Cache<V> {
     return this;
   }
 
+  private saveWithTimeout(): void {
+    this.hasChanged = true;
+    if (this.saveToFileTimeout !== undefined || this.fileFlushMillis === undefined) {
+      return;
+    }
+
+    this.saveToFileTimeout = setTimeout(this.save, this.fileFlushMillis);
+  }
+
   /**
    * Save the cache to a file.
    */
-  public async save(): Promise<Cache<V>> {
+  public async save(): Promise<void> {
     if (this.filePath === undefined || !this.hasChanged) {
-      return this;
+      return;
     }
 
     // Clear any existing timeout
@@ -213,7 +221,5 @@ export default class Cache<V> {
     );
     await FsPoly.mv(tempFile, this.filePath);
     this.hasChanged = false;
-
-    return this;
   }
 }

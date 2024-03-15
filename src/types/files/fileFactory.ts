@@ -21,7 +21,7 @@ interface CacheValue {
 
 const CACHE = new Cache<CacheValue>({
   filePath: Constants.GLOBAL_CACHE_FILE,
-  saveToFileInterval: 30_000,
+  fileFlushMillis: 30_000,
 }).load();
 
 export default class FileFactory {
