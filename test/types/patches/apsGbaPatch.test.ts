@@ -12,7 +12,7 @@ import APSPatch from '../../../src/types/patches/apsPatch.js';
 async function writeTemp(fileName: string, contents: string | Buffer): Promise<File> {
   const temp = await fsPoly.mktemp(path.join(Constants.GLOBAL_TEMP_DIR, fileName));
   await util.promisify(fs.writeFile)(temp, contents);
-  return File.fileOf(temp);
+  return File.fileOf({ filePath: temp });
 }
 
 describe('constructor', () => {
@@ -25,7 +25,7 @@ describe('constructor', () => {
     'ABCD12345 Bangarang.aps',
     'Bepzinky 1234567.aps',
   ])('should throw if no CRC found: %s', async (filePath) => {
-    const file = await File.fileOf(filePath);
+    const file = await File.fileOf({ filePath });
     await expect(APSGBAPatch.patchFrom(file)).rejects.toThrow(/couldn't parse/i);
   });
 

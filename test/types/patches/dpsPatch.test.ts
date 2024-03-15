@@ -12,7 +12,7 @@ import DPSPatch from '../../../src/types/patches/dpsPatch.js';
 async function writeTemp(fileName: string, contents: string | Buffer): Promise<File> {
   const temp = await fsPoly.mktemp(path.join(Constants.GLOBAL_TEMP_DIR, fileName));
   await util.promisify(fs.writeFile)(temp, contents);
-  return File.fileOf(temp);
+  return File.fileOf({ filePath: temp });
 }
 
 describe('constructor', () => {
@@ -25,7 +25,7 @@ describe('constructor', () => {
     'ABCD12345 Bangarang.dps',
     'Bepzinky 1234567.dps',
   ])('should throw if no CRC found: %s', async (filePath) => {
-    const file = await File.fileOf(filePath);
+    const file = await File.fileOf({ filePath });
     expect(() => DPSPatch.patchFrom(file)).toThrow(/couldn't parse/i);
   });
 

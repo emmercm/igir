@@ -56,16 +56,13 @@ export default class Zip extends Archive {
           }
         }
 
-        const archiveEntry = await ArchiveEntry.entryOf(
-          this,
-          entryFile.path,
-          entryFile.uncompressedSize,
-          {
-            ...checksumsWithoutCrc,
-            crc32: entryFile.crc32.toString(16),
-          },
-          checksumBitmask,
-        );
+        const archiveEntry = await ArchiveEntry.entryOf({
+          archive: this,
+          entryPath: entryFile.path,
+          size: entryFile.uncompressedSize,
+          ...checksumsWithoutCrc,
+          crc32: entryFile.crc32.toString(16),
+        }, checksumBitmask);
         callback(undefined, archiveEntry);
       },
     );

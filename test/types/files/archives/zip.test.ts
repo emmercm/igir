@@ -39,12 +39,11 @@ describe('createArchive', () => {
     // And a candidate is partially generated for that file
     const tempFiles = await FileFactory.filesFrom(tempFilePath);
     const inputToOutput = await Promise.all(tempFiles.map(async (tempFile) => {
-      const archiveEntry = await ArchiveEntry.entryOf(
-        new Zip(`${tempFile.getExtractedFilePath()}.zip`),
-        tempFile.getExtractedFilePath(),
-        tempFile.getSize(),
-        tempFile,
-      );
+      const archiveEntry = await ArchiveEntry.entryOf({
+        ...tempFile,
+        archive: new Zip(`${tempFile.getExtractedFilePath()}.zip`),
+        entryPath: tempFile.getExtractedFilePath(),
+      });
       return [tempFile, archiveEntry] as [File, ArchiveEntry<Zip>];
     }));
 

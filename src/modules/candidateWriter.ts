@@ -432,7 +432,7 @@ export default class CandidateWriter extends Module {
       this.progressBar.logWarn(`${dat.getNameShort()}: ${releaseCandidate.getName()}: ${outputFilePath}: can't test, expected CRC is unknown`);
       return undefined;
     }
-    const actualFile = await File.fileOf(outputFilePath);
+    const actualFile = await File.fileOf({ filePath: outputFilePath });
     if (actualFile.getCrc32() !== expectedFile.getCrc32()) {
       return `has the CRC ${actualFile.getCrc32()}, expected ${expectedFile.getCrc32()}`;
     }

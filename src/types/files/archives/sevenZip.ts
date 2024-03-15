@@ -89,14 +89,13 @@ export default class SevenZip extends Archive {
       filesIn7z.filter((result) => !result.attr?.startsWith('D')),
       Constants.ARCHIVE_ENTRY_SCANNER_THREADS_PER_ARCHIVE,
       async (result, callback: AsyncResultCallback<ArchiveEntry<SevenZip>, Error>) => {
-        const archiveEntry = await ArchiveEntry.entryOf(
-          this,
-          result.name,
-          Number.parseInt(result.size, 10),
-          { crc32: result.crc },
+        const archiveEntry = await ArchiveEntry.entryOf({
+          archive: this,
+          entryPath: result.name,
+          size: Number.parseInt(result.size, 10),
+          crc32: result.crc,
           // If MD5 or SHA1 is desired, this file will need to be extracted to calculate
-          checksumBitmask,
-        );
+        }, checksumBitmask);
         callback(undefined, archiveEntry);
       },
     );

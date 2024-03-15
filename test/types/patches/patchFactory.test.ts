@@ -9,7 +9,7 @@ describe('patchFromFilename', () => {
     }).scanPatchFilesWithoutExclusions();
 
     for (const inputPatchFilePath of inputPatchFilePaths) {
-      const inputPatchFile = await File.fileOf(inputPatchFilePath);
+      const inputPatchFile = await File.fileOf({ filePath: inputPatchFilePath });
       const patch = await PatchFactory.patchFromFilename(inputPatchFile);
       expect(patch).toBeUndefined();
     }
@@ -21,7 +21,7 @@ describe('patchFromFilename', () => {
     }).scanPatchFilesWithoutExclusions();
 
     for (const inputPatchFilePath of inputPatchFilePaths) {
-      const inputPatchFile = await File.fileOf(inputPatchFilePath);
+      const inputPatchFile = await File.fileOf({ filePath: inputPatchFilePath });
       const patch = await PatchFactory.patchFromFilename(inputPatchFile);
       expect(patch).toBeDefined();
     }
@@ -35,7 +35,7 @@ describe('patchFromFileContents', () => {
     }).scanPatchFilesWithoutExclusions();
 
     for (const inputPatchFilePath of inputPatchFilePaths) {
-      const inputPatchFile = await File.fileOf(inputPatchFilePath);
+      const inputPatchFile = await File.fileOf({ filePath: inputPatchFilePath });
       const patch = await PatchFactory.patchFromFileContents(inputPatchFile);
       expect(patch).toBeUndefined();
     }
@@ -47,7 +47,7 @@ describe('patchFromFileContents', () => {
     }).scanPatchFilesWithoutExclusions();
 
     for (const inputPatchFilePath of inputPatchFilePaths) {
-      const inputPatchFile = await File.fileOf(inputPatchFilePath);
+      const inputPatchFile = await File.fileOf({ filePath: inputPatchFilePath });
       const patch = await PatchFactory.patchFromFileContents(inputPatchFile);
       expect(patch).toBeDefined();
     }

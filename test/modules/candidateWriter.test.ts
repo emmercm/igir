@@ -783,7 +783,7 @@ describe('extract', () => {
       );
       expect(outputFiles).toHaveLength(1);
       expect(outputFiles[0][0]).toEqual(expectedFileName);
-      const outputFile = await File.fileOf(path.join(outputTemp, outputFiles[0][0]));
+      const outputFile = await File.fileOf({ filePath: path.join(outputTemp, outputFiles[0][0]) });
       expect(outputFile.getCrc32()).toEqual(expectedCrc);
     });
   });
@@ -816,7 +816,7 @@ describe('extract', () => {
       );
       expect(outputFiles).toHaveLength(1);
       expect(outputFiles[0][0]).toEqual(expectedFileName);
-      const outputFile = await File.fileOf(path.join(outputTemp, outputFiles[0][0]));
+      const outputFile = await File.fileOf({ filePath: path.join(outputTemp, outputFiles[0][0]) });
       expect(outputFile.getCrc32()).toEqual(expectedCrc);
     });
   });
@@ -1143,7 +1143,7 @@ describe('raw', () => {
       );
       expect(outputFiles).toHaveLength(1);
       expect(outputFiles[0][0]).toEqual(expectedFileName);
-      const outputFile = await File.fileOf(path.join(outputTemp, outputFiles[0][0]));
+      const outputFile = await File.fileOf({ filePath: path.join(outputTemp, outputFiles[0][0]) });
       expect(outputFile.getCrc32()).toEqual(expectedCrc);
     });
   });
@@ -1172,7 +1172,7 @@ describe('raw', () => {
       );
       expect(outputFiles).toHaveLength(1);
       expect(outputFiles[0][0]).toEqual(expectedFileName);
-      const outputFile = await File.fileOf(path.join(outputTemp, outputFiles[0][0]));
+      const outputFile = await File.fileOf({ filePath: path.join(outputTemp, outputFiles[0][0]) });
       expect(outputFile.getCrc32()).toEqual(expectedCrc);
     });
   });

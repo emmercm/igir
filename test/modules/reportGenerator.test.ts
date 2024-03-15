@@ -42,7 +42,7 @@ async function buildDatStatusSingle(): Promise<DATStatus> {
         game,
         undefined,
         await Promise.all(game.getRoms().map(async (rom) => {
-          const romFile = await File.fileOf(`${rom.getName()}.rom`);
+          const romFile = await File.fileOf({ filePath: `${rom.getName()}.rom` });
           return new ROMWithFiles(rom, romFile, romFile);
         })),
       )],
@@ -82,7 +82,7 @@ async function buildDatStatusMultiple(): Promise<DATStatus> {
         game,
         undefined,
         await Promise.all(game.getRoms().map(async (rom) => {
-          const romFile = await File.fileOf(`${rom.getName()}.rom`);
+          const romFile = await File.fileOf({ filePath: `${rom.getName()}.rom` });
           return new ROMWithFiles(rom, romFile, romFile);
         })),
       )],
