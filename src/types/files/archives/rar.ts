@@ -28,14 +28,13 @@ export default class Rar extends Archive {
       [...rar.getFileList().fileHeaders].filter((fileHeader) => !fileHeader.flags.directory),
       Constants.ARCHIVE_ENTRY_SCANNER_THREADS_PER_ARCHIVE,
       async (fileHeader, callback: AsyncResultCallback<ArchiveEntry<Rar>, Error>) => {
-        const archiveEntry = await ArchiveEntry.entryOf(
-          this,
-          fileHeader.name,
-          fileHeader.unpSize,
-          { crc32: fileHeader.crc.toString(16) },
+        const archiveEntry = await ArchiveEntry.entryOf({
+          archive: this,
+          entryPath: fileHeader.name,
+          size: fileHeader.unpSize,
+          crc32: fileHeader.crc.toString(16),
           // If MD5 or SHA1 is desired, this file will need to be extracted to calculate
-          checksumBitmask,
-        );
+        }, checksumBitmask);
         callback(undefined, archiveEntry);
       },
     );

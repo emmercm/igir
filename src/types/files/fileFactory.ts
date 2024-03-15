@@ -14,7 +14,7 @@ export default class FileFactory {
     checksumBitmask: number = ChecksumBitmask.CRC32,
   ): Promise<File[]> {
     if (!this.isArchive(filePath)) {
-      return [await File.fileOf(filePath, undefined, undefined, checksumBitmask)];
+      return [await File.fileOf({ filePath }, checksumBitmask)];
     }
 
     try {

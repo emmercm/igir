@@ -315,21 +315,21 @@ export default class CandidateGenerator extends Module {
     // Determine the output file type
     if (this.options.shouldZipFile(rom.getName())) {
       // Should zip, return an archive entry within an output zip
-      return ArchiveEntry.entryOf(
-        new Zip(outputFilePath),
-        outputPathParsed.entryPath,
-        outputFileSize,
+      return ArchiveEntry.entryOf({
+        archive: new Zip(outputFilePath),
+        entryPath: outputPathParsed.entryPath,
+        size: outputFileSize,
         // TODO(cemmer): calculate MD5 and SHA1 for testing purposes?
-        { crc32: outputFileCrc },
-      );
+        crc32: outputFileCrc,
+      });
     }
     // Otherwise, return a raw file
-    return File.fileOf(
-      outputFilePath,
-      outputFileSize,
+    return File.fileOf({
+      filePath: outputFilePath,
+      size: outputFileSize,
       // TODO(cemmer): calculate MD5 and SHA1 for testing purposes?
-      { crc32: outputFileCrc },
-    );
+      crc32: outputFileCrc,
+    });
   }
 
   private logMissingRomFiles(

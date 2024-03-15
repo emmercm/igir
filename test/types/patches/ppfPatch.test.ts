@@ -11,7 +11,7 @@ import PPFPatch from '../../../src/types/patches/ppfPatch.js';
 async function writeTemp(fileName: string, contents: string | Buffer): Promise<File> {
   const temp = await fsPoly.mktemp(path.join(Constants.GLOBAL_TEMP_DIR, fileName));
   await util.promisify(fs.writeFile)(temp, contents);
-  return File.fileOf(temp);
+  return File.fileOf({ filePath: temp });
 }
 
 describe('constructor', () => {
@@ -24,7 +24,7 @@ describe('constructor', () => {
     'ABCD12345 Bangarang.ppf',
     'Bepzinky 1234567.ppf',
   ])('should throw if no CRC found: %s', async (filePath) => {
-    const file = await File.fileOf(filePath, 0);
+    const file = await File.fileOf({ filePath, size: 0 });
     expect(() => PPFPatch.patchFrom(file)).toThrow(/couldn't parse/i);
   });
 
@@ -38,7 +38,7 @@ describe('constructor', () => {
     ['Ipsum#8765edcb.ppf', '8765edcb'],
     ['Dolor 7654dcba.ppf', '7654dcba'],
   ])('should find the CRC in the filename: %s', async (filePath, expectedCrc) => {
-    const file = await File.fileOf(filePath, 0);
+    const file = await File.fileOf({ filePath, size: 0 });
     const patch = PPFPatch.patchFrom(file);
     expect(patch.getCrcBefore()).toEqual(expectedCrc);
   });

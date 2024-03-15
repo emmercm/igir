@@ -158,28 +158,26 @@ export default class CandidatePatchGenerator extends Module {
             const extMatch = romWithFiles.getRom().getName().match(/[^.]+((\.[a-zA-Z0-9]+)+)$/);
             const extractedFileName = patchedRomName + (extMatch !== null ? extMatch[1] : '');
             if (outputFile instanceof ArchiveEntry) {
-              outputFile = await ArchiveEntry.entryOf(
-                await outputFile.getArchive().withFilePath(patchedRomName),
+              outputFile = await ArchiveEntry.entryOf({
+                archive: await outputFile.getArchive().withFilePath(patchedRomName),
                 // Output is an archive of a single file, the entry path should also change
-                unpatchedReleaseCandidate.getRomsWithFiles().length === 1
+                entryPath: unpatchedReleaseCandidate.getRomsWithFiles().length === 1
                   ? extractedFileName
                   : outputFile.getEntryPath(),
-                patch.getSizeAfter() ?? 0,
-                { crc32: patch.getCrcAfter() },
-                ChecksumBitmask.NONE, // don't calculate anything, the file doesn't exist
-                outputFile.getFileHeader(),
-                outputFile.getPatch(),
-              );
+                size: patch.getSizeAfter() ?? 0,
+                crc32: patch.getCrcAfter(),
+                fileHeader: outputFile.getFileHeader(),
+                patch: outputFile.getPatch(),
+              }, ChecksumBitmask.NONE); // don't calculate anything, the file doesn't exist
             } else {
               const dirName = path.dirname(outputFile.getFilePath());
-              outputFile = await File.fileOf(
-                path.join(dirName, extractedFileName),
-                patch.getSizeAfter() ?? 0,
-                { crc32: patch.getCrcAfter() },
-                ChecksumBitmask.NONE, // don't calculate anything, the file doesn't exist
-                outputFile.getFileHeader(),
-                outputFile.getPatch(),
-              );
+              outputFile = await File.fileOf({
+                filePath: path.join(dirName, extractedFileName),
+                size: patch.getSizeAfter() ?? 0,
+                crc32: patch.getCrcAfter(),
+                fileHeader: outputFile.getFileHeader(),
+                patch: outputFile.getPatch(),
+              }, ChecksumBitmask.NONE); // don't calculate anything, the file doesn't exist
             }
 
             // Build a new ROM from the output file's info

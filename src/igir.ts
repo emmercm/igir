@@ -128,7 +128,7 @@ export default class Igir {
       if (dir2DatPath) {
         datsToWrittenFiles.set(filteredDat, [
           ...(datsToWrittenFiles.get(filteredDat) ?? []),
-          await File.fileOf(dir2DatPath),
+          await File.fileOf({ filePath: dir2DatPath }),
         ]);
       }
 
@@ -138,7 +138,7 @@ export default class Igir {
       if (fixdatPath) {
         datsToWrittenFiles.set(filteredDat, [
           ...(datsToWrittenFiles.get(filteredDat) ?? []),
-          await File.fileOf(fixdatPath),
+          await File.fileOf({ filePath: fixdatPath }),
         ]);
       }
 

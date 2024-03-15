@@ -22,11 +22,11 @@ export default abstract class Archive {
    */
   async asRawFile(): Promise<File> {
     // TODO(cemmer): calculate MD5 and SHA1 for testing purposes?
-    return File.fileOf(this.getFilePath());
+    return File.fileOf({ filePath: this.getFilePath() });
   }
 
   async asRawFileWithoutCrc(): Promise<File> {
-    return File.fileOf(this.getFilePath(), undefined, undefined, ChecksumBitmask.NONE);
+    return File.fileOf({ filePath: this.getFilePath() }, ChecksumBitmask.NONE);
   }
 
   getFilePath(): string {

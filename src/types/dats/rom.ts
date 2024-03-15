@@ -108,14 +108,23 @@ export default class ROM implements ROMProps {
    * Turn this {@link ROM} into a non-existent {@link File}.
    */
   async toFile(): Promise<File> {
-    return File.fileOf(this.getName(), this.getSize(), this);
+    return File.fileOf({
+      ...this,
+      filePath: this.getName(),
+      size: this.getSize(),
+    });
   }
 
   /**
    * Turn this {@link ROM} into a non-existent {@link ArchiveEntry}, given a {@link Archive}.
    */
   async toArchiveEntry<A extends Archive>(archive: A): Promise<ArchiveEntry<A>> {
-    return ArchiveEntry.entryOf(archive, this.getName(), this.getSize(), this);
+    return ArchiveEntry.entryOf({
+      ...this,
+      archive,
+      entryPath: this.getName(),
+      size: this.getSize(),
+    });
   }
 
   /**
