@@ -33,7 +33,7 @@ interface CacheValue {
 
 export default class FileCache {
   private static readonly CACHE = new Cache<CacheValue>({
-    filePath: process.env.NODE_ENV !== undefined ? Constants.GLOBAL_CACHE_FILE : undefined,
+    filePath: process.env.NODE_ENV !== 'test' ? Constants.GLOBAL_CACHE_FILE : undefined,
     fileFlushMillis: 30_000,
   }).load();
 
