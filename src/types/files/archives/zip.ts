@@ -24,7 +24,7 @@ export default class Zip extends Archive {
     return new Zip(filePath);
   }
 
-  @FileCache.CacheArchiveEntries()
+  @FileCache.CacheArchiveEntries({ skipChecksumBitmask: ChecksumBitmask.CRC32 })
   async getArchiveEntries(checksumBitmask: number): Promise<ArchiveEntry<Zip>[]> {
     // https://github.com/ZJONSSON/node-unzipper/issues/280
     // UTF-8 entry names are not decoded correctly

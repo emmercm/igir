@@ -2,9 +2,9 @@ import fs from 'node:fs';
 import path from 'node:path';
 
 import tar from 'tar';
-import { Memoize } from 'typescript-memoize';
 
 import Constants from '../../../constants.js';
+import FileCache from '../fileCache.js';
 import FileChecksums from '../fileChecksums.js';
 import Archive from './archive.js';
 import ArchiveEntry from './archiveEntry.js';
@@ -20,7 +20,7 @@ export default class Tar extends Archive {
     return new Tar(filePath);
   }
 
-  @Memoize()
+  @FileCache.CacheArchiveEntries()
   async getArchiveEntries(checksumBitmask: number): Promise<ArchiveEntry<Tar>[]> {
     const archiveEntryPromises: Promise<ArchiveEntry<Tar>>[] = [];
 

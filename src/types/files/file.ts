@@ -6,7 +6,6 @@ import { Readable } from 'node:stream';
 import {
   Exclude, Expose, instanceToPlain, plainToClassFromExist,
 } from 'class-transformer';
-import { Memoize } from 'typescript-memoize';
 
 import Constants from '../../constants.js';
 import FilePoly from '../../polyfill/filePoly.js';
@@ -216,7 +215,6 @@ export default class File implements FileProps {
     return this.patch;
   }
 
-  @Memoize()
   isURL(): boolean {
     return URLPoly.canParse(this.getFilePath());
   }

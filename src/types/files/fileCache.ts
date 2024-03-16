@@ -7,7 +7,6 @@ import Archive from './archives/archive.js';
 import ArchiveEntry, { ArchiveEntryProps } from './archives/archiveEntry.js';
 import File from './file.js';
 import { ChecksumBitmask, ChecksumProps } from './fileChecksums.js';
-import FileFactory from './fileFactory.js';
 
 type ArchiveEntriesMethod<T extends ArchiveEntry<Archive>> = (
   checksumBitmask: number,
@@ -19,6 +18,12 @@ type ArchiveEntriesDecorator<T extends ArchiveEntry<Archive>> = (
   propertyKey: string | symbol,
   descriptor: TypedPropertyDescriptor<ArchiveEntriesMethod<T>>,
 ) => TypedPropertyDescriptor<ArchiveEntriesMethod<T>>;
+
+export interface CacheArchiveEntriesProps {
+  // An exact checksum bitmask that should skip caching, because it's easy or fast to compute.
+  // For example, zip archives have CRC32 in their central directory.
+  skipChecksumBitmask?: number,
+}
 
 interface CacheValue {
   fileSize: number,
@@ -32,14 +37,16 @@ export default class FileCache {
     fileFlushMillis: 30_000,
   }).load();
 
-  static CacheArchiveEntries <T extends ArchiveEntry<Archive>>(): ArchiveEntriesDecorator<T> {
+  static CacheArchiveEntries <T extends ArchiveEntry<Archive>>(
+    cacheProps?: CacheArchiveEntriesProps,
+  ): ArchiveEntriesDecorator<T> {
     return (
       target: object,
       propertyKey: string | symbol,
       descriptor: TypedPropertyDescriptor<ArchiveEntriesMethod<T>>,
     ): TypedPropertyDescriptor<ArchiveEntriesMethod<T>> => {
-      const original = descriptor.value;
-      if (!original) {
+      const originalMethod = descriptor.value;
+      if (!originalMethod) {
         // Should never happen, a method should always be available
         return descriptor;
       }
@@ -50,26 +57,31 @@ export default class FileCache {
         if (!(this instanceof Archive)) {
           throw new Error('@CacheArchiveEntries can only be used within Archive classes');
         }
+        const newMethod = async (): Promise<T[]> => originalMethod.call(
+          this,
+          checksumBitmask,
+          args,
+        );
+
+        if (checksumBitmask === cacheProps?.skipChecksumBitmask) {
+          return newMethod();
+        }
 
         const cachedValue = await FileCache.getCachedValue(this.getFilePath(), checksumBitmask);
         if (cachedValue) {
-          const archive = FileFactory.archiveFrom(this.getFilePath());
           return Promise.all(cachedValue.files.map(async (props) => ArchiveEntry.entryOfObject(
-            archive,
+            this,
             {
               ...props,
               // Only return the checksums requested
               crc32: checksumBitmask & ChecksumBitmask.CRC32 ? props.crc32 : undefined,
               md5: checksumBitmask & ChecksumBitmask.MD5 ? props.md5 : undefined,
               sha1: checksumBitmask & ChecksumBitmask.SHA1 ? props.sha1 : undefined,
-            } as ArchiveEntryProps<typeof archive>,
+            } as ArchiveEntryProps<Archive>,
           ) as Promise<T>));
         }
 
-        return FileCache.computeAndSet(
-          this.getFilePath(),
-          async () => original.call(this, checksumBitmask, args),
-        );
+        return FileCache.computeAndSet(this.getFilePath(), newMethod);
       };
       return descriptor;
     };

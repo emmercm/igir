@@ -99,6 +99,7 @@ export default class IndexedFiles {
     return result;
   }
 
+  // TODO(cemmer): remove and drop the dependency
   @Memoize()
   getFiles(): File[] {
     return [
