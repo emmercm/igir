@@ -1,5 +1,6 @@
 import fs from 'node:fs';
 import path from 'node:path';
+import { clearTimeout } from 'node:timers';
 import util from 'node:util';
 import * as zlib from 'node:zlib';
 
@@ -161,6 +162,11 @@ export default class Cache<V> {
       throw new Error('no cache file path was provided');
     }
 
+    if (!await FsPoly.exists(this.filePath)) {
+      // Cache doesn't exist, so there is nothing to load
+      return this;
+    }
+
     const cacheData = JSON.parse(
       await util.promisify(fs.readFile)(this.filePath, { encoding: Cache.BUFFER_ENCODING }),
     ) as CacheData;
@@ -182,21 +188,21 @@ export default class Cache<V> {
       return;
     }
 
-    this.saveToFileTimeout = setTimeout(this.save, this.fileFlushMillis);
+    this.saveToFileTimeout = setTimeout(async () => this.save(), this.fileFlushMillis);
   }
 
   /**
    * Save the cache to a file.
    */
   public async save(): Promise<void> {
-    if (this.filePath === undefined || !this.hasChanged) {
-      return;
-    }
-
     // Clear any existing timeout
     if (this.saveToFileTimeout !== undefined) {
       clearTimeout(this.saveToFileTimeout);
       this.saveToFileTimeout = undefined;
+    }
+
+    if (this.filePath === undefined || !this.hasChanged) {
+      return;
     }
 
     const keyValuesObject = Object.fromEntries(this.keyValues);

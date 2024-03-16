@@ -5,13 +5,13 @@ import { clearInterval } from 'node:timers';
 
 import archiver, { Archiver } from 'archiver';
 import async, { AsyncResultCallback } from 'async';
-import { Memoize } from 'typescript-memoize';
 import unzipper, { Entry } from 'unzipper';
 
 import Constants from '../../../constants.js';
 import fsPoly from '../../../polyfill/fsPoly.js';
 import StreamPoly from '../../../polyfill/streamPoly.js';
 import File from '../file.js';
+import FileCache from '../fileCache.js';
 import FileChecksums, { ChecksumBitmask, ChecksumProps } from '../fileChecksums.js';
 import Archive from './archive.js';
 import ArchiveEntry from './archiveEntry.js';
@@ -24,7 +24,7 @@ export default class Zip extends Archive {
     return new Zip(filePath);
   }
 
-  @Memoize()
+  @FileCache.CacheArchiveEntries()
   async getArchiveEntries(checksumBitmask: number): Promise<ArchiveEntry<Zip>[]> {
     // https://github.com/ZJONSSON/node-unzipper/issues/280
     // UTF-8 entry names are not decoded correctly

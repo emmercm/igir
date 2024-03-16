@@ -19,9 +19,9 @@ describe('getArchiveEntries', () => {
     ...Tar.SUPPORTED_EXTENSIONS,
     ...Rar.SUPPORTED_EXTENSIONS,
     ...SevenZip.SUPPORTED_EXTENSIONS,
-  ])])('should not throw when the archive doesn\'t exist: %s', async (extension) => {
+  ])])('should throw when the file doesn\'t exist: %s', async (extension) => {
     const tempFile = (await fsPoly.mktemp(path.join(Constants.GLOBAL_TEMP_DIR, 'file'))) + extension;
-    await expect(FileFactory.filesFrom(tempFile)).resolves.toEqual([]);
+    await expect(FileFactory.filesFrom(tempFile)).rejects.toThrow();
   });
 
   test.each([
