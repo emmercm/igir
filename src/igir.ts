@@ -31,6 +31,7 @@ import ROMScanner from './modules/romScanner.js';
 import StatusGenerator from './modules/statusGenerator.js';
 import ArrayPoly from './polyfill/arrayPoly.js';
 import FsPoly from './polyfill/fsPoly.js';
+import Timer from './timer.js';
 import DAT from './types/dats/dat.js';
 import Parent from './types/dats/parent.js';
 import DATStatus from './types/datStatus.js';
@@ -179,6 +180,8 @@ export default class Igir {
     await this.processReportGenerator(roms, cleanedOutputFiles, datsStatuses);
 
     await ProgressBarCLI.stop();
+
+    Timer.cancelAll();
   }
 
   private async processDATScanner(): Promise<DAT[]> {
