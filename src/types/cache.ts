@@ -158,11 +158,7 @@ export default class Cache<V> {
    * Load the cache from a file.
    */
   public async load(): Promise<Cache<V>> {
-    if (this.filePath === undefined) {
-      throw new Error('no cache file path was provided');
-    }
-
-    if (!await FsPoly.exists(this.filePath)) {
+    if (this.filePath === undefined || !await FsPoly.exists(this.filePath)) {
       // Cache doesn't exist, so there is nothing to load
       return this;
     }
@@ -184,7 +180,10 @@ export default class Cache<V> {
 
   private saveWithTimeout(): void {
     this.hasChanged = true;
-    if (this.saveToFileTimeout !== undefined || this.fileFlushMillis === undefined) {
+    if (this.filePath === undefined
+      || this.fileFlushMillis === undefined
+      || this.saveToFileTimeout !== undefined
+    ) {
       return;
     }
 
