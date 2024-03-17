@@ -1,12 +1,12 @@
 import fs from 'node:fs';
 import path from 'node:path';
-import { clearTimeout } from 'node:timers';
 import util from 'node:util';
 import * as zlib from 'node:zlib';
 
 import { Mutex } from 'async-mutex';
 
 import FsPoly from '../polyfill/fsPoly.js';
+import Timer from '../timer.js';
 
 interface CacheData {
   data: string,
@@ -35,7 +35,7 @@ export default class Cache<V> {
 
   private hasChanged: boolean = false;
 
-  private saveToFileTimeout?: NodeJS.Timeout;
+  private saveToFileTimeout?: Timer;
 
   readonly filePath?: string;
 
@@ -187,7 +187,7 @@ export default class Cache<V> {
       return;
     }
 
-    this.saveToFileTimeout = setTimeout(async () => this.save(), this.fileFlushMillis);
+    this.saveToFileTimeout = Timer.setTimeout(async () => this.save(), this.fileFlushMillis);
   }
 
   /**
@@ -196,7 +196,7 @@ export default class Cache<V> {
   public async save(): Promise<void> {
     // Clear any existing timeout
     if (this.saveToFileTimeout !== undefined) {
-      clearTimeout(this.saveToFileTimeout);
+      this.saveToFileTimeout.cancel();
       this.saveToFileTimeout = undefined;
     }
 
