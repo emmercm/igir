@@ -5,6 +5,7 @@ import tar from 'tar';
 import { Memoize } from 'typescript-memoize';
 
 import Constants from '../../../constants.js';
+import FsPoly from '../../../polyfill/fsPoly.js';
 import FileChecksums from '../fileChecksums.js';
 import Archive from './archive.js';
 import ArchiveEntry from './archiveEntry.js';
@@ -69,7 +70,7 @@ export default class Tar extends Archive {
     entryPath: string,
     extractedFilePath: string,
   ): Promise<void> {
-    return tar.extract({
+    await tar.extract({
       file: this.getFilePath(),
       cwd: path.dirname(extractedFilePath),
       strict: true,
@@ -80,5 +81,8 @@ export default class Tar extends Archive {
         return true;
       },
     }, [entryPath.replace(/[\\/]/g, '/')]);
+    if (!await FsPoly.exists(extractedFilePath)) {
+      throw new Error(`didn't find entry '${entryPath}'`);
+    }
   }
 }
