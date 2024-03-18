@@ -10,6 +10,34 @@ import ROM from '../../src/types/dats/rom.js';
 import Options, { MergeMode } from '../../src/types/options.js';
 import ProgressBarFake from '../console/progressBarFake.js';
 
+it('should do nothing if no parent/clone info is present', async () => {
+  // Given
+  const options = new Options({ mergeRoms: undefined });
+  const dat = new LogiqxDAT(new Header(), []);
+
+  // When
+  const result = await new DATMergerSplitter(options, new ProgressBarFake()).merge(dat);
+
+  // Then the original DAT was returned
+  expect(result).toEqual(dat);
+});
+
+test.each(
+  Object.keys(MergeMode)
+    .filter((mode) => Number.isNaN(Number(mode)))
+    .map((mode) => [mode.toLowerCase()]),
+)('should do nothing if no parent/clone info is present: %s', async (mergeRoms) => {
+  // Given
+  const options = new Options({ mergeRoms });
+  const dat = new LogiqxDAT(new Header(), []);
+
+  // When
+  const result = await new DATMergerSplitter(options, new ProgressBarFake()).merge(dat);
+
+  // Then the original DAT was returned
+  expect(result).toEqual(dat);
+});
+
 describe('MAME v0.258', () => {
   /* eslint-disable object-curly-newline, unicorn/numeric-separators-style */
   const dat = new LogiqxDAT(new Header(), [

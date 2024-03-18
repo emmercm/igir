@@ -13,7 +13,7 @@ export interface AllChecksums {
 }
 
 /**
- * TODO
+ * A lookup table of {@link File}s based on their checksums.
  */
 export default class IndexedFiles {
   private readonly crc32: ChecksumsToFiles;
@@ -29,7 +29,7 @@ export default class IndexedFiles {
   }
 
   /**
-   * TODO
+   * Generate a {@link IndexedFiles} based on a set of {@link File}s.
    */
   static fromFiles(files: File[]): IndexedFiles {
     const crc32RawMap = new Map<string, File[]>();
@@ -115,7 +115,7 @@ export default class IndexedFiles {
   }
 
   /**
-   * TODO
+   * Find file(s) in the index based some search criteria.
    */
   findFiles(file: File | ROM): File[] | undefined {
     const { sha1 } = file;
