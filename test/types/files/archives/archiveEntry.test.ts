@@ -2,8 +2,10 @@ import path from 'node:path';
 
 import Constants from '../../../../src/constants.js';
 import ROMScanner from '../../../../src/modules/romScanner.js';
+import ArrayPoly from '../../../../src/polyfill/arrayPoly.js';
 import bufferPoly from '../../../../src/polyfill/bufferPoly.js';
 import fsPoly from '../../../../src/polyfill/fsPoly.js';
+import Archive from '../../../../src/types/files/archives/archive.js';
 import ArchiveEntry from '../../../../src/types/files/archives/archiveEntry.js';
 import SevenZip from '../../../../src/types/files/archives/sevenZip.js';
 import Zip from '../../../../src/types/files/archives/zip.js';
@@ -420,17 +422,41 @@ describe('getSha1WithoutHeader', () => {
   });
 });
 
+describe('extractEntryToFile', () => {
+  it('should throw on invalid entry paths', async () => {
+    // Note: this will only return valid archives with at least one file
+    const archiveEntries = await new ROMScanner(new Options({
+      input: [
+        './test/fixtures/roms/7z',
+        './test/fixtures/roms/rar',
+        './test/fixtures/roms/tar',
+        './test/fixtures/roms/zip',
+      ],
+    }), new ProgressBarFake()).scan();
+    const archives = archiveEntries
+      .filter((entry): entry is ArchiveEntry<Archive> => entry instanceof ArchiveEntry)
+      .map((entry) => entry.getArchive())
+      .reduce(ArrayPoly.reduceUnique(), []);
+    expect(archives).toHaveLength(21);
+
+    for (const archive of archives) {
+      await expect(archive.extractEntryToFile('INVALID FILE', 'INVALID PATH')).rejects.toThrow();
+    }
+  });
+});
+
 describe('copyToTempFile', () => {
   it('should extract archived files', async () => {
     // Note: this will only return valid archives with at least one file
     const archiveEntries = await new ROMScanner(new Options({
       input: [
-        './test/fixtures/roms/zip',
-        './test/fixtures/roms/rar',
         './test/fixtures/roms/7z',
+        './test/fixtures/roms/rar',
+        './test/fixtures/roms/tar',
+        './test/fixtures/roms/zip',
       ],
     }), new ProgressBarFake()).scan();
-    expect(archiveEntries).toHaveLength(23);
+    expect(archiveEntries).toHaveLength(30);
 
     const temp = await fsPoly.mkdtemp(Constants.GLOBAL_TEMP_DIR);
     for (const archiveEntry of archiveEntries) {
@@ -448,12 +474,13 @@ describe('createReadStream', () => {
     // Note: this will only return valid archives with at least one file
     const archiveEntries = await new ROMScanner(new Options({
       input: [
-        './test/fixtures/roms/zip',
-        './test/fixtures/roms/rar',
         './test/fixtures/roms/7z',
+        './test/fixtures/roms/rar',
+        './test/fixtures/roms/tar',
+        './test/fixtures/roms/zip',
       ],
     }), new ProgressBarFake()).scan();
-    expect(archiveEntries).toHaveLength(23);
+    expect(archiveEntries).toHaveLength(30);
 
     const temp = await fsPoly.mkdtemp(Constants.GLOBAL_TEMP_DIR);
     for (const archiveEntry of archiveEntries) {

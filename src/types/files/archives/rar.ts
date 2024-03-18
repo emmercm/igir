@@ -57,9 +57,12 @@ export default class Rar extends Archive {
       });
       // For whatever reason, the library author decided to delay extraction until the file is
       // iterated, so we have to execute this expression, but can throw away the results
-      [...rar.extract({
+      const extracted = [...rar.extract({
         files: [entryPath.replace(/[\\/]/g, '/')],
       }).files];
+      if (extracted.length === 0) {
+        throw new Error(`didn't find entry '${entryPath}'`);
+      }
     });
   }
 }
