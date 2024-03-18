@@ -1,6 +1,5 @@
 import ProgressBar, { ProgressBarSymbol } from '../console/progressBar.js';
 import File from '../types/files/file.js';
-import { ChecksumBitmask } from '../types/files/fileChecksums.js';
 import Options from '../types/options.js';
 import Scanner from './scanner.js';
 

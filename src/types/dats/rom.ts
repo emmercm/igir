@@ -1,6 +1,5 @@
 import { Expose } from 'class-transformer';
 
-import ArrayPoly from '../../polyfill/arrayPoly.js';
 import Archive from '../files/archives/archive.js';
 import ArchiveEntry from '../files/archives/archiveEntry.js';
 import File from '../files/file.js';
@@ -143,15 +142,5 @@ export default class ROM implements ROMProps {
     return this.getSha1()
       ?? this.getMd5()
       ?? `${this.getCrc32()}|${this.getSize()}`;
-  }
-
-  hashCodes(): string[] {
-    return [
-      `${this.getCrc32()}|${this.getSize()}`,
-      this.getMd5(),
-      this.getSha1(),
-    ]
-      .filter(ArrayPoly.filterNotNullish)
-      .reduce(ArrayPoly.reduceUnique(), []);
   }
 }
