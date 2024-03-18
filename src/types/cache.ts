@@ -117,7 +117,7 @@ export default class Cache<V> implements CacheProps {
   }
 
   /**
-   * TODO
+   * Load a cache file from disk.
    */
   public async load(filePath: string): Promise<void> {
     const cacheData = JSON.parse(
@@ -134,7 +134,7 @@ export default class Cache<V> implements CacheProps {
   }
 
   /**
-   * TODO
+   * Save this cache to a file on disk.
    */
   public async save(filePath: string): Promise<void> {
     // Clear any existing timeout

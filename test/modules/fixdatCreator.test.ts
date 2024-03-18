@@ -6,6 +6,7 @@ import Game from '../../src/types/dats/game.js';
 import Header from '../../src/types/dats/logiqx/header.js';
 import LogiqxDAT from '../../src/types/dats/logiqx/logiqxDat.js';
 import Parent from '../../src/types/dats/parent.js';
+import Release from '../../src/types/dats/release.js';
 import ROM from '../../src/types/dats/rom.js';
 import Options, { OptionsProps } from '../../src/types/options.js';
 import ReleaseCandidate from '../../src/types/releaseCandidate.js';
@@ -18,6 +19,10 @@ const gameWithNoRoms = new Game({
 const gameWithOneRom = new Game({
   name: 'game with one ROM',
   rom: new ROM({ name: 'one.rom', size: 1, crc32: '12345678' }),
+  release: [
+    new Release('game with one ROM', 'USA'),
+    new Release('game with one ROM', 'EUR'),
+  ],
 });
 const gameWithTwoRoms = new Game({
   name: 'game with two ROMs',

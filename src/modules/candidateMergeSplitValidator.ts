@@ -28,7 +28,7 @@ export default class CandidateMergeSplitValidator extends Module {
   async validate(
     dat: DAT,
     parentsToCandidates: Map<Parent, ReleaseCandidate[]>,
-  ): Promise<void> {
+  ): Promise<string[]> {
     this.progressBar.logTrace(`${dat.getNameShort()}: validating merged & split ROM sets`);
 
     await this.progressBar.setSymbol(ProgressBarSymbol.VALIDATING);
@@ -48,12 +48,12 @@ export default class CandidateMergeSplitValidator extends Module {
       }, new Map<string, ReleaseCandidate>());
 
     // For every Game that has ReleaseCandidate(s) with files
-    [...parentsToCandidates.values()]
+    const missingGames = [...parentsToCandidates.values()]
       .flat()
       .filter((releaseCandidate) => releaseCandidate.getRomsWithFiles().length)
       .map((releaseCandidate) => releaseCandidate.getGame())
       .reduce(ArrayPoly.reduceUnique(), [])
-      .forEach((game) => {
+      .flatMap((game) => {
         let missingDependencies: string[] = [];
 
         // Validate dependent parent was found
@@ -89,8 +89,10 @@ export default class CandidateMergeSplitValidator extends Module {
         if (missingDependencies.length > 0) {
           this.progressBar.logWarn(`${dat.getNameShort()}: ${game.getName()}: missing dependent ROM set${missingDependencies.length !== 1 ? 's' : ''}: ${missingDependencies.join(', ')}`);
         }
+        return missingDependencies;
       });
 
     this.progressBar.logTrace(`${dat.getNameShort()}: done validating merged & split ROM sets`);
+    return missingGames;
   }
 }

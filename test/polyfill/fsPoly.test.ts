@@ -250,3 +250,14 @@ describe('rm', () => {
     await fsPoly.rm(tempFile);
   });
 });
+
+describe('realpath', () => {
+  it('should throw on non-existent path', async () => {
+    const tempFile = await fsPoly.mktemp(path.join(Constants.GLOBAL_TEMP_DIR, 'temp'));
+    await expect(fsPoly.realpath(tempFile)).rejects.toThrow();
+  });
+
+  it('should resolve existing paths', async () => {
+    await expect(fsPoly.realpath('.')).resolves.toEqual(process.cwd());
+  });
+});
