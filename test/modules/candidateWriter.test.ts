@@ -9,9 +9,9 @@ import CandidateGenerator from '../../src/modules/candidateGenerator.js';
 import CandidatePatchGenerator from '../../src/modules/candidatePatchGenerator.js';
 import CandidateWriter from '../../src/modules/candidateWriter.js';
 import DATGameInferrer from '../../src/modules/datGameInferrer.js';
-import FileIndexer from '../../src/modules/fileIndexer.js';
 import PatchScanner from '../../src/modules/patchScanner.js';
 import ROMHeaderProcessor from '../../src/modules/romHeaderProcessor.js';
+import ROMIndexer from '../../src/modules/romIndexer.js';
 import ROMScanner from '../../src/modules/romScanner.js';
 import fsPoly from '../../src/polyfill/fsPoly.js';
 import DAT from '../../src/types/dats/dat.js';
@@ -99,7 +99,7 @@ async function candidateWriter(
   const dat = datInferrer(options, romFiles);
   const romFilesWithHeaders = await new ROMHeaderProcessor(options, new ProgressBarFake())
     .process(romFiles);
-  const indexedRomFiles = await new FileIndexer(options, new ProgressBarFake())
+  const indexedRomFiles = await new ROMIndexer(options, new ProgressBarFake())
     .index(romFilesWithHeaders);
   let candidates = await new CandidateGenerator(options, new ProgressBarFake())
     .generate(dat, indexedRomFiles);
@@ -783,7 +783,7 @@ describe('extract', () => {
       );
       expect(outputFiles).toHaveLength(1);
       expect(outputFiles[0][0]).toEqual(expectedFileName);
-      const outputFile = await File.fileOf(path.join(outputTemp, outputFiles[0][0]));
+      const outputFile = await File.fileOf({ filePath: path.join(outputTemp, outputFiles[0][0]) });
       expect(outputFile.getCrc32()).toEqual(expectedCrc);
     });
   });
@@ -816,7 +816,7 @@ describe('extract', () => {
       );
       expect(outputFiles).toHaveLength(1);
       expect(outputFiles[0][0]).toEqual(expectedFileName);
-      const outputFile = await File.fileOf(path.join(outputTemp, outputFiles[0][0]));
+      const outputFile = await File.fileOf({ filePath: path.join(outputTemp, outputFiles[0][0]) });
       expect(outputFile.getCrc32()).toEqual(expectedCrc);
     });
   });
@@ -1143,7 +1143,7 @@ describe('raw', () => {
       );
       expect(outputFiles).toHaveLength(1);
       expect(outputFiles[0][0]).toEqual(expectedFileName);
-      const outputFile = await File.fileOf(path.join(outputTemp, outputFiles[0][0]));
+      const outputFile = await File.fileOf({ filePath: path.join(outputTemp, outputFiles[0][0]) });
       expect(outputFile.getCrc32()).toEqual(expectedCrc);
     });
   });
@@ -1172,7 +1172,7 @@ describe('raw', () => {
       );
       expect(outputFiles).toHaveLength(1);
       expect(outputFiles[0][0]).toEqual(expectedFileName);
-      const outputFile = await File.fileOf(path.join(outputTemp, outputFiles[0][0]));
+      const outputFile = await File.fileOf({ filePath: path.join(outputTemp, outputFiles[0][0]) });
       expect(outputFile.getCrc32()).toEqual(expectedCrc);
     });
   });

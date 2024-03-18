@@ -9,7 +9,7 @@ import FileChecksums, { ChecksumBitmask, ChecksumProps } from '../fileChecksums.
 import ROMHeader from '../romHeader.js';
 import Archive from './archive.js';
 
-interface ArchiveEntryProps<A> extends FileProps {
+export interface ArchiveEntryProps<A extends Archive> extends Omit<FileProps, 'filePath'> {
   readonly archive: A;
   readonly entryPath: string;
 }
@@ -20,30 +20,28 @@ export default class ArchiveEntry<A extends Archive> extends File implements Arc
   readonly entryPath: string;
 
   protected constructor(archiveEntryProps: ArchiveEntryProps<A>) {
-    super(archiveEntryProps);
+    super({
+      ...archiveEntryProps,
+      filePath: archiveEntryProps.archive.getFilePath(),
+    });
     this.archive = archiveEntryProps.archive;
     this.entryPath = path.normalize(archiveEntryProps.entryPath);
   }
 
   static async entryOf<A extends Archive>(
-    archive: A,
-    entryPath: string,
-    size?: number,
-    checksums?: ChecksumProps,
+    archiveEntryProps: ArchiveEntryProps<A>,
     checksumBitmask: number = ChecksumBitmask.CRC32,
-    fileHeader?: ROMHeader,
-    patch?: Patch,
   ): Promise<ArchiveEntry<A>> {
-    let finalSize = size;
-    let finalCrcWithHeader = checksums?.crc32;
-    let finalCrcWithoutHeader;
-    let finalMd5WithHeader = checksums?.md5;
-    let finalMd5WithoutHeader;
-    let finalSha1WithHeader = checksums?.sha1;
-    let finalSha1WithoutHeader;
-    let finalSymlinkSource;
+    let finalSize = archiveEntryProps.size;
+    let finalCrcWithHeader = archiveEntryProps.crc32;
+    let finalCrcWithoutHeader = archiveEntryProps.crc32WithoutHeader;
+    let finalMd5WithHeader = archiveEntryProps.md5;
+    let finalMd5WithoutHeader = archiveEntryProps.md5WithoutHeader;
+    let finalSha1WithHeader = archiveEntryProps.sha1;
+    let finalSha1WithoutHeader = archiveEntryProps.sha1WithoutHeader;
+    let finalSymlinkSource = archiveEntryProps.symlinkSource;
 
-    if (await fsPoly.exists(archive.getFilePath())) {
+    if (await fsPoly.exists(archiveEntryProps.archive.getFilePath())) {
       // Calculate size
       finalSize = finalSize ?? 0;
 
@@ -53,28 +51,28 @@ export default class ArchiveEntry<A extends Archive> extends File implements Arc
         || (!finalSha1WithHeader && (checksumBitmask & ChecksumBitmask.SHA1))
       ) {
         const headeredChecksums = await this.calculateEntryChecksums(
-          archive,
-          entryPath,
+          archiveEntryProps.archive,
+          archiveEntryProps.entryPath,
           checksumBitmask,
         );
         finalCrcWithHeader = headeredChecksums.crc32 ?? finalCrcWithHeader;
         finalMd5WithHeader = headeredChecksums.md5 ?? finalMd5WithHeader;
         finalSha1WithHeader = headeredChecksums.sha1 ?? finalSha1WithHeader;
       }
-      if (fileHeader && checksumBitmask) {
+      if (archiveEntryProps.fileHeader && checksumBitmask) {
         const unheaderedChecksums = await this.calculateEntryChecksums(
-          archive,
-          entryPath,
+          archiveEntryProps.archive,
+          archiveEntryProps.entryPath,
           checksumBitmask,
-          fileHeader,
+          archiveEntryProps.fileHeader,
         );
         finalCrcWithoutHeader = unheaderedChecksums.crc32;
         finalMd5WithoutHeader = unheaderedChecksums.md5;
         finalSha1WithoutHeader = unheaderedChecksums.sha1;
       }
 
-      if (await fsPoly.isSymlink(archive.getFilePath())) {
-        finalSymlinkSource = await fsPoly.readlink(archive.getFilePath());
+      if (await fsPoly.isSymlink(archiveEntryProps.archive.getFilePath())) {
+        finalSymlinkSource = await fsPoly.readlink(archiveEntryProps.archive.getFilePath());
       }
     } else {
       finalSize = finalSize ?? 0;
@@ -85,7 +83,6 @@ export default class ArchiveEntry<A extends Archive> extends File implements Arc
     finalSha1WithoutHeader = finalSha1WithoutHeader ?? finalSha1WithHeader;
 
     return new ArchiveEntry<A>({
-      filePath: archive.getFilePath(),
       size: finalSize,
       crc32: finalCrcWithHeader,
       crc32WithoutHeader: finalCrcWithoutHeader,
@@ -94,10 +91,10 @@ export default class ArchiveEntry<A extends Archive> extends File implements Arc
       sha1: finalSha1WithHeader,
       sha1WithoutHeader: finalSha1WithoutHeader,
       symlinkSource: finalSymlinkSource,
-      fileHeader,
-      patch,
-      archive,
-      entryPath,
+      fileHeader: archiveEntryProps.fileHeader,
+      patch: archiveEntryProps.patch,
+      archive: archiveEntryProps.archive,
+      entryPath: archiveEntryProps.entryPath,
     });
   }
 
@@ -196,15 +193,21 @@ export default class ArchiveEntry<A extends Archive> extends File implements Arc
       return this;
     }
 
-    return ArchiveEntry.entryOf(
-      this.getArchive(),
-      this.getEntryPath(),
-      this.getSize(),
-      this,
-      this.getChecksumBitmask(),
+    return ArchiveEntry.entryOf({
+      ...this,
       fileHeader,
-      undefined, // don't allow a patch
-    );
+      patch: undefined, // don't allow a patch
+    }, this.getChecksumBitmask());
+  }
+
+  withoutFileHeader(): ArchiveEntry<A> {
+    return new ArchiveEntry({
+      ...this,
+      fileHeader: undefined,
+      crc32WithoutHeader: this.getCrc32(),
+      md5WithoutHeader: this.getMd5(),
+      sha1WithoutHeader: this.getSha1(),
+    });
   }
 
   withPatch(patch: Patch): ArchiveEntry<A> {

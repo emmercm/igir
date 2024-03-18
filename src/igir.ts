@@ -21,20 +21,22 @@ import DATParentInferrer from './modules/datParentInferrer.js';
 import DATScanner from './modules/datScanner.js';
 import Dir2DatCreator from './modules/dir2DatCreator.js';
 import DirectoryCleaner from './modules/directoryCleaner.js';
-import FileIndexer from './modules/fileIndexer.js';
 import FixdatCreator from './modules/fixdatCreator.js';
 import MovedROMDeleter from './modules/movedRomDeleter.js';
 import PatchScanner from './modules/patchScanner.js';
 import ReportGenerator from './modules/reportGenerator.js';
 import ROMHeaderProcessor from './modules/romHeaderProcessor.js';
+import ROMIndexer from './modules/romIndexer.js';
 import ROMScanner from './modules/romScanner.js';
 import StatusGenerator from './modules/statusGenerator.js';
 import ArrayPoly from './polyfill/arrayPoly.js';
 import FsPoly from './polyfill/fsPoly.js';
+import Timer from './timer.js';
 import DAT from './types/dats/dat.js';
 import Parent from './types/dats/parent.js';
 import DATStatus from './types/datStatus.js';
 import File from './types/files/file.js';
+import IndexedFiles from './types/indexedFiles.js';
 import Options from './types/options.js';
 import OutputFactory from './types/outputFactory.js';
 import Patch from './types/patches/patch.js';
@@ -73,9 +75,7 @@ export default class Igir {
     // Scan and process input files
     let dats = await this.processDATScanner();
     const indexedRoms = await this.processROMScanner();
-    const roms = [...indexedRoms.values()]
-      .flat()
-      .reduce(ArrayPoly.reduceUnique(), []);
+    const roms = indexedRoms.getFiles();
     const patches = await this.processPatchScanner();
 
     // Set up progress bar and input for DAT processing
@@ -129,7 +129,7 @@ export default class Igir {
       if (dir2DatPath) {
         datsToWrittenFiles.set(filteredDat, [
           ...(datsToWrittenFiles.get(filteredDat) ?? []),
-          await File.fileOf(dir2DatPath),
+          await File.fileOf({ filePath: dir2DatPath }),
         ]);
       }
 
@@ -139,7 +139,7 @@ export default class Igir {
       if (fixdatPath) {
         datsToWrittenFiles.set(filteredDat, [
           ...(datsToWrittenFiles.get(filteredDat) ?? []),
-          await File.fileOf(fixdatPath),
+          await File.fileOf({ filePath: fixdatPath }),
         ]);
       }
 
@@ -180,6 +180,8 @@ export default class Igir {
     await this.processReportGenerator(roms, cleanedOutputFiles, datsStatuses);
 
     await ProgressBarCLI.stop();
+
+    Timer.cancelAll();
   }
 
   private async processDATScanner(): Promise<DAT[]> {
@@ -218,7 +220,7 @@ export default class Igir {
     return dats;
   }
 
-  private async processROMScanner(): Promise<Map<string, File[]>> {
+  private async processROMScanner(): Promise<IndexedFiles> {
     const romScannerProgressBarName = 'Scanning for ROMs';
     const romProgressBar = await this.logger.addProgressBar(romScannerProgressBarName);
 
@@ -229,7 +231,7 @@ export default class Igir {
       .process(rawRomFiles);
 
     await romProgressBar.setName('Indexing ROMs');
-    const indexedRomFiles = await new FileIndexer(this.options, romProgressBar)
+    const indexedRomFiles = await new ROMIndexer(this.options, romProgressBar)
       .index(romFilesWithHeaders);
 
     await romProgressBar.setName(romScannerProgressBarName); // reset
@@ -254,7 +256,7 @@ export default class Igir {
   private async generateCandidates(
     progressBar: ProgressBar,
     dat: DAT,
-    indexedRoms: Map<string, File[]>,
+    indexedRoms: IndexedFiles,
     patches: Patch[],
   ): Promise<Map<Parent, ReleaseCandidate[]>> {
     const candidates = await new CandidateGenerator(this.options, progressBar)

@@ -3,8 +3,6 @@ import path from 'node:path';
 import Constants from '../../../../src/constants.js';
 import ROMScanner from '../../../../src/modules/romScanner.js';
 import fsPoly from '../../../../src/polyfill/fsPoly.js';
-import Header from '../../../../src/types/dats/logiqx/header.js';
-import LogiqxDAT from '../../../../src/types/dats/logiqx/logiqxDat.js';
 import ArchiveEntry from '../../../../src/types/files/archives/archiveEntry.js';
 import Zip from '../../../../src/types/files/archives/zip.js';
 import File from '../../../../src/types/files/file.js';
@@ -41,12 +39,11 @@ describe('createArchive', () => {
     // And a candidate is partially generated for that file
     const tempFiles = await FileFactory.filesFrom(tempFilePath);
     const inputToOutput = await Promise.all(tempFiles.map(async (tempFile) => {
-      const archiveEntry = await ArchiveEntry.entryOf(
-        new Zip(`${tempFile.getExtractedFilePath()}.zip`),
-        tempFile.getExtractedFilePath(),
-        tempFile.getSize(),
-        tempFile,
-      );
+      const archiveEntry = await ArchiveEntry.entryOf({
+        ...tempFile,
+        archive: new Zip(`${tempFile.getExtractedFilePath()}.zip`),
+        entryPath: tempFile.getExtractedFilePath(),
+      });
       return [tempFile, archiveEntry] as [File, ArchiveEntry<Zip>];
     }));
 
@@ -58,11 +55,7 @@ describe('createArchive', () => {
     // When the file is being zipped
     // Then any underlying exception will be re-thrown
     const zip = inputToOutput[0][1].getArchive();
-    await expect(zip.createArchive(
-      new Options(),
-      new LogiqxDAT(new Header(), []),
-      inputToOutput,
-    )).rejects.toThrow();
+    await expect(zip.createArchive(inputToOutput)).rejects.toThrow();
 
     // And we were able to continue
     expect(true).toEqual(true);

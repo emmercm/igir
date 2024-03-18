@@ -28,14 +28,13 @@ export default class Rar extends Archive {
       [...rar.getFileList().fileHeaders].filter((fileHeader) => !fileHeader.flags.directory),
       Constants.ARCHIVE_ENTRY_SCANNER_THREADS_PER_ARCHIVE,
       async (fileHeader, callback: AsyncResultCallback<ArchiveEntry<Rar>, Error>) => {
-        const archiveEntry = await ArchiveEntry.entryOf(
-          this,
-          fileHeader.name,
-          fileHeader.unpSize,
-          { crc32: fileHeader.crc.toString(16) },
+        const archiveEntry = await ArchiveEntry.entryOf({
+          archive: this,
+          entryPath: fileHeader.name,
+          size: fileHeader.unpSize,
+          crc32: fileHeader.crc.toString(16),
           // If MD5 or SHA1 is desired, this file will need to be extracted to calculate
-          checksumBitmask,
-        );
+        }, checksumBitmask);
         callback(undefined, archiveEntry);
       },
     );
@@ -58,9 +57,12 @@ export default class Rar extends Archive {
       });
       // For whatever reason, the library author decided to delay extraction until the file is
       // iterated, so we have to execute this expression, but can throw away the results
-      [...rar.extract({
+      const extracted = [...rar.extract({
         files: [entryPath.replace(/[\\/]/g, '/')],
       }).files];
+      if (extracted.length === 0) {
+        throw new Error(`didn't find entry '${entryPath}'`);
+      }
     });
   }
 }

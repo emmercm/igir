@@ -5,6 +5,7 @@ import cliProgress, { MultiBar } from 'cli-progress';
 import wrapAnsi from 'wrap-ansi';
 
 import ConsolePoly from '../polyfill/consolePoly.js';
+import Timer from '../timer.js';
 import Logger from './logger.js';
 import LogLevel from './logLevel.js';
 import ProgressBar, { ProgressBarSymbol } from './progressBar.js';
@@ -33,7 +34,7 @@ export default class ProgressBarCLI extends ProgressBar {
 
   private readonly singleBarFormatted?: SingleBarFormatted;
 
-  private waitingMessageTimeout?: NodeJS.Timeout;
+  private waitingMessageTimeout?: Timer;
 
   private readonly waitingMessages: Set<string> = new Set();
 
@@ -200,6 +201,10 @@ export default class ProgressBarCLI extends ProgressBar {
    * user know that there is still something processing.
    */
   addWaitingMessage(waitingMessage: string): void {
+    if (!this.singleBarFormatted) {
+      return;
+    }
+
     this.waitingMessages.add(waitingMessage);
     this.setWaitingMessageTimeout();
   }
@@ -208,8 +213,11 @@ export default class ProgressBarCLI extends ProgressBar {
    * Remove a waiting message to let the user know some processing has finished.
    */
   removeWaitingMessage(waitingMessage: string): void {
-    this.waitingMessages.delete(waitingMessage);
+    if (!this.singleBarFormatted) {
+      return;
+    }
 
+    this.waitingMessages.delete(waitingMessage);
     if (this.payload.waitingMessage) {
       // Render immediately if the output could change
       this.setWaitingMessageTimeout(0);
@@ -217,9 +225,9 @@ export default class ProgressBarCLI extends ProgressBar {
   }
 
   private setWaitingMessageTimeout(timeout = 10_000): void {
-    clearTimeout(this.waitingMessageTimeout);
+    this.waitingMessageTimeout?.cancel();
 
-    this.waitingMessageTimeout = setTimeout(async () => {
+    this.waitingMessageTimeout = Timer.setTimeout(async () => {
       const total = this.singleBarFormatted?.getSingleBar().getTotal() ?? 0;
       if (total <= 1) {
         return;
@@ -340,6 +348,8 @@ export default class ProgressBarCLI extends ProgressBar {
    * Delete this {@link ProgressBarCLI} from the CLI.
    */
   delete(): void {
+    this.waitingMessageTimeout?.cancel();
+
     if (!this.singleBarFormatted) {
       return;
     }

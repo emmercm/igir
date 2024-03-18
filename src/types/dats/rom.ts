@@ -27,7 +27,7 @@ export default class ROM implements ROMProps {
   readonly size: number;
 
   @Expose({ name: 'crc' })
-  readonly crc32: string;
+  readonly crc32?: string;
 
   @Expose()
   readonly md5?: string;
@@ -47,9 +47,9 @@ export default class ROM implements ROMProps {
   constructor(props?: ROMProps) {
     this.name = props?.name ?? '';
     this.size = props?.size ?? 0;
-    this.crc32 = (props?.crc32 ?? '').toLowerCase().replace(/^0x/, '').padStart(8, '0');
-    this.md5 = props?.md5?.toLowerCase().replace(/^0x/, '').padStart(32, '0');
-    this.sha1 = props?.sha1?.toLowerCase().replace(/^0x/, '').padStart(40, '0');
+    this.crc32 = props?.crc32;
+    this.md5 = props?.md5;
+    this.sha1 = props?.sha1;
     this.status = props?.status;
     this.merge = props?.merge;
     this.bios = props?.bios;
@@ -82,7 +82,7 @@ export default class ROM implements ROMProps {
   }
 
   getCrc32(): string {
-    return this.crc32;
+    return (this.crc32 ?? '').toLowerCase().replace(/^0x/, '').padStart(8, '0');
   }
 
   getMd5(): string | undefined {
@@ -91,14 +91,6 @@ export default class ROM implements ROMProps {
 
   getSha1(): string | undefined {
     return this.sha1;
-  }
-
-  getChecksumProps(): ChecksumProps {
-    return {
-      crc32: this.getCrc32(),
-      md5: this.getMd5(),
-      sha1: this.getSha1(),
-    };
   }
 
   getStatus(): ROMStatus | undefined {
@@ -117,14 +109,23 @@ export default class ROM implements ROMProps {
    * Turn this {@link ROM} into a non-existent {@link File}.
    */
   async toFile(): Promise<File> {
-    return File.fileOf(this.getName(), this.getSize(), this.getChecksumProps());
+    return File.fileOf({
+      ...this,
+      filePath: this.getName(),
+      size: this.getSize(),
+    });
   }
 
   /**
    * Turn this {@link ROM} into a non-existent {@link ArchiveEntry}, given a {@link Archive}.
    */
   async toArchiveEntry<A extends Archive>(archive: A): Promise<ArchiveEntry<A>> {
-    return ArchiveEntry.entryOf(archive, this.getName(), this.getSize(), this.getChecksumProps());
+    return ArchiveEntry.entryOf({
+      ...this,
+      archive,
+      entryPath: this.getName(),
+      size: this.getSize(),
+    });
   }
 
   /**
@@ -139,7 +140,9 @@ export default class ROM implements ROMProps {
    * A string hash code to uniquely identify this {@link ROM}.
    */
   hashCode(): string {
-    return File.hashCode(this.getCrc32(), this.getSize());
+    return this.getSha1()
+      ?? this.getMd5()
+      ?? `${this.getCrc32()}|${this.getSize()}`;
   }
 
   hashCodes(): string[] {

@@ -297,11 +297,11 @@ export default class CandidateWriter extends Module {
     outputZip: Zip,
     inputToOutputZipEntries: [File, ArchiveEntry<Zip>][],
   ): Promise<boolean> {
-    this.progressBar.logInfo(`${dat.getNameShort()}: ${releaseCandidate.getName()}: creating zip archive '${outputZip.getFilePath()}' with the entries:\n${inputToOutputZipEntries.map(([input, output]) => `  '${input.toString()}' -> '${output.getEntryPath()}'`).join('\n')}`);
+    this.progressBar.logInfo(`${dat.getNameShort()}: ${releaseCandidate.getName()}: creating zip archive '${outputZip.getFilePath()}' with the entries:\n${inputToOutputZipEntries.map(([input, output]) => `  '${input.toString()}' (${fsPoly.sizeReadable(input.getSize())}) -> '${output.getEntryPath()}'`).join('\n')}`);
 
     try {
       await CandidateWriter.ensureOutputDirExists(outputZip.getFilePath());
-      await outputZip.createArchive(this.options, dat, inputToOutputZipEntries);
+      await outputZip.createArchive(inputToOutputZipEntries);
     } catch (error) {
       this.progressBar.logError(`${dat.getNameShort()}: ${releaseCandidate.getName()}: ${outputZip.getFilePath()}: failed to create zip: ${error}`);
       return false;
@@ -406,17 +406,12 @@ export default class CandidateWriter extends Module {
     inputRomFile: File,
     outputFilePath: string,
   ): Promise<boolean> {
-    const removeHeader = this.options.canRemoveHeader(
-      dat,
-      path.extname(inputRomFile.getExtractedFilePath()),
-    );
-
-    this.progressBar.logInfo(`${dat.getNameShort()}: ${releaseCandidate.getName()}: copying file '${inputRomFile.toString()}' -> '${outputFilePath}'`);
+    this.progressBar.logInfo(`${dat.getNameShort()}: ${releaseCandidate.getName()}: copying file '${inputRomFile.toString()}' (${fsPoly.sizeReadable(inputRomFile.getSize())}) -> '${outputFilePath}'`);
 
     try {
       await CandidateWriter.ensureOutputDirExists(outputFilePath);
       const tempRawFile = await fsPoly.mktemp(outputFilePath);
-      await inputRomFile.extractAndPatchToFile(tempRawFile, removeHeader);
+      await inputRomFile.extractAndPatchToFile(tempRawFile);
       await fsPoly.mv(tempRawFile, outputFilePath);
       return true;
     } catch (error) {
@@ -439,7 +434,7 @@ export default class CandidateWriter extends Module {
       return undefined;
     }
     // TODO(cemmer): test with highest checksum available
-    const actualFile = await File.fileOf(outputFilePath);
+    const actualFile = await File.fileOf({ filePath: outputFilePath });
     if (actualFile.getCrc32() !== expectedFile.getCrc32()) {
       return `has the CRC ${actualFile.getCrc32()}, expected ${expectedFile.getCrc32()}`;
     }

@@ -24,7 +24,7 @@ async function runOutputCleaner(
   await fsPoly.copyDir(ROM_FIXTURES_DIR, tempDir);
 
   const writtenRomFilesToExclude = await Promise.all(writtenFilePathsToExclude
-    .map(async (filePath) => File.fileOf(path.join(tempDir, filePath))));
+    .map(async (filePath) => File.fileOf({ filePath: path.join(tempDir, filePath) })));
 
   const before = await fsPoly.walk(tempDir);
   expect(before.length).toBeGreaterThan(0);
@@ -121,7 +121,7 @@ it('should delete hard links', async () => {
         commands: ['move', 'clean'],
       }),
       new ProgressBarFake(),
-    ).clean([linksDir], [await File.fileOf(tempLinkOne)]);
+    ).clean([linksDir], [await File.fileOf({ filePath: tempLinkOne })]);
 
     const filesRemaining = await fsPoly.walk(tempDir);
     expect(filesRemaining).toEqual([
@@ -159,7 +159,7 @@ it('should delete symlinks', async () => {
         commands: ['move', 'clean'],
       }),
       new ProgressBarFake(),
-    ).clean([linksDir], [await File.fileOf(tempLinkOne)]);
+    ).clean([linksDir], [await File.fileOf({ filePath: tempLinkOne })]);
 
     const filesRemaining = await fsPoly.walk(tempDir);
     expect(filesRemaining).toEqual([

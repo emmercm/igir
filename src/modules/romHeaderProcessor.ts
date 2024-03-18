@@ -68,7 +68,7 @@ export default class ROMHeaderProcessor extends Module {
      * Matches {@link CandidateGenerator.buildReleaseCandidateForRelease}
      */
     if (inputFile instanceof ArchiveEntry
-      && !this.options.canZip()
+      && !this.options.shouldZip()
       && !this.options.shouldExtract()
     ) {
       return inputFile;

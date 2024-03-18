@@ -1,8 +1,8 @@
 import path from 'node:path';
 
 import CandidateGenerator from '../../src/modules/candidateGenerator.js';
-import FileIndexer from '../../src/modules/fileIndexer.js';
 import MovedROMDeleter from '../../src/modules/movedRomDeleter.js';
+import ROMIndexer from '../../src/modules/romIndexer.js';
 import ROMScanner from '../../src/modules/romScanner.js';
 import fsPoly from '../../src/polyfill/fsPoly.js';
 import Game from '../../src/types/dats/game.js';
@@ -31,7 +31,7 @@ it('should delete raw files', () => {
 });
 
 describe('should delete archives', () => {
-  describe.each(['extract', 'zip'])('command: %s', (command) => {
+  describe.each([undefined, 'zip'])('command: %s', (command) => {
     test.each(([
       // Game with duplicate ROMs
       [[
@@ -127,7 +127,7 @@ describe('should delete archives', () => {
     ]))('%s', async (games, expectedDeletedFilePaths) => {
       const inputPath = 'input';
       const options = new Options({
-        commands: ['move', command],
+        commands: ['move', ...(command ? [command] : [])],
         input: [inputPath],
         output: 'output',
       });
@@ -143,7 +143,7 @@ describe('should delete archives', () => {
         })))
         .flat();
 
-      const indexedRomFiles = await new FileIndexer(options, new ProgressBarFake())
+      const indexedRomFiles = await new ROMIndexer(options, new ProgressBarFake())
         .index(rawRomFiles);
       const parentsToCandidates = await new CandidateGenerator(options, new ProgressBarFake())
         .generate(dat, indexedRomFiles);

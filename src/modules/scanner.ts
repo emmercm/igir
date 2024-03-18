@@ -54,7 +54,7 @@ export default abstract class Scanner extends Module {
   ): Promise<File[]> {
     const foundFiles = await this.getFilesFromPaths(filePaths, threads, checksumBitmask);
     return foundFiles
-      .filter(ArrayPoly.filterUniqueMapped((file) => file.hashCodes().join(',')));
+      .filter(ArrayPoly.filterUniqueMapped((file) => file.hashCode()));
   }
 
   private async getFilesFromPath(

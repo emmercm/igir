@@ -5,6 +5,7 @@ import tar from 'tar';
 import { Memoize } from 'typescript-memoize';
 
 import Constants from '../../../constants.js';
+import FsPoly from '../../../polyfill/fsPoly.js';
 import FileChecksums from '../fileChecksums.js';
 import Archive from './archive.js';
 import ArchiveEntry from './archiveEntry.js';
@@ -40,13 +41,12 @@ export default class Tar extends Archive {
     // Note: entries are read sequentially, so entry streams need to be fully read or resumed
     writeStream.on('entry', async (entry) => {
       const checksums = await FileChecksums.hashStream(entry, checksumBitmask);
-      archiveEntryPromises.push(ArchiveEntry.entryOf(
-        this,
-        entry.path,
-        entry.size ?? 0,
-        checksums,
-        checksumBitmask,
-      ));
+      archiveEntryPromises.push(ArchiveEntry.entryOf({
+        archive: this,
+        entryPath: entry.path,
+        size: entry.size ?? 0,
+        ...checksums,
+      }, checksumBitmask));
       // In case we didn't need to read the stream for hashes, resume the file reading
       entry.resume();
     });
@@ -70,7 +70,7 @@ export default class Tar extends Archive {
     entryPath: string,
     extractedFilePath: string,
   ): Promise<void> {
-    return tar.extract({
+    await tar.extract({
       file: this.getFilePath(),
       cwd: path.dirname(extractedFilePath),
       strict: true,
@@ -81,5 +81,8 @@ export default class Tar extends Archive {
         return true;
       },
     }, [entryPath.replace(/[\\/]/g, '/')]);
+    if (!await FsPoly.exists(extractedFilePath)) {
+      throw new Error(`didn't find entry '${entryPath}'`);
+    }
   }
 }

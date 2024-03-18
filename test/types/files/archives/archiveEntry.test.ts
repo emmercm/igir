@@ -2,8 +2,10 @@ import path from 'node:path';
 
 import Constants from '../../../../src/constants.js';
 import ROMScanner from '../../../../src/modules/romScanner.js';
+import ArrayPoly from '../../../../src/polyfill/arrayPoly.js';
 import bufferPoly from '../../../../src/polyfill/bufferPoly.js';
 import fsPoly from '../../../../src/polyfill/fsPoly.js';
+import Archive from '../../../../src/types/files/archives/archive.js';
 import ArchiveEntry from '../../../../src/types/files/archives/archiveEntry.js';
 import SevenZip from '../../../../src/types/files/archives/sevenZip.js';
 import Zip from '../../../../src/types/files/archives/zip.js';
@@ -21,7 +23,7 @@ describe('getEntryPath', () => {
     path.join('foo', 'bar.rom'),
   ])('should return the constructor value: %s', async (archiveEntryPath) => {
     const archive = new Zip('/some/archive.zip');
-    const archiveEntry = await ArchiveEntry.entryOf(archive, archiveEntryPath);
+    const archiveEntry = await ArchiveEntry.entryOf({ archive, entryPath: archiveEntryPath });
     expect(archiveEntry.getEntryPath()).toEqual(archiveEntryPath);
   });
 });
@@ -420,17 +422,41 @@ describe('getSha1WithoutHeader', () => {
   });
 });
 
+describe('extractEntryToFile', () => {
+  it('should throw on invalid entry paths', async () => {
+    // Note: this will only return valid archives with at least one file
+    const archiveEntries = await new ROMScanner(new Options({
+      input: [
+        './test/fixtures/roms/7z',
+        './test/fixtures/roms/rar',
+        './test/fixtures/roms/tar',
+        './test/fixtures/roms/zip',
+      ],
+    }), new ProgressBarFake()).scan();
+    const archives = archiveEntries
+      .filter((entry): entry is ArchiveEntry<Archive> => entry instanceof ArchiveEntry)
+      .map((entry) => entry.getArchive())
+      .reduce(ArrayPoly.reduceUnique(), []);
+    expect(archives).toHaveLength(21);
+
+    for (const archive of archives) {
+      await expect(archive.extractEntryToFile('INVALID FILE', 'INVALID PATH')).rejects.toThrow();
+    }
+  });
+});
+
 describe('copyToTempFile', () => {
   it('should extract archived files', async () => {
     // Note: this will only return valid archives with at least one file
     const archiveEntries = await new ROMScanner(new Options({
       input: [
-        './test/fixtures/roms/zip',
-        './test/fixtures/roms/rar',
         './test/fixtures/roms/7z',
+        './test/fixtures/roms/rar',
+        './test/fixtures/roms/tar',
+        './test/fixtures/roms/zip',
       ],
     }), new ProgressBarFake()).scan();
-    expect(archiveEntries).toHaveLength(23);
+    expect(archiveEntries).toHaveLength(30);
 
     const temp = await fsPoly.mkdtemp(Constants.GLOBAL_TEMP_DIR);
     for (const archiveEntry of archiveEntries) {
@@ -448,12 +474,13 @@ describe('createReadStream', () => {
     // Note: this will only return valid archives with at least one file
     const archiveEntries = await new ROMScanner(new Options({
       input: [
-        './test/fixtures/roms/zip',
-        './test/fixtures/roms/rar',
         './test/fixtures/roms/7z',
+        './test/fixtures/roms/rar',
+        './test/fixtures/roms/tar',
+        './test/fixtures/roms/zip',
       ],
     }), new ProgressBarFake()).scan();
-    expect(archiveEntries).toHaveLength(23);
+    expect(archiveEntries).toHaveLength(30);
 
     const temp = await fsPoly.mkdtemp(Constants.GLOBAL_TEMP_DIR);
     for (const archiveEntry of archiveEntries) {
@@ -468,15 +495,25 @@ describe('createReadStream', () => {
 
 describe('withPatch', () => {
   it('should attach a matching patch', async () => {
-    const entry = await ArchiveEntry.entryOf(new Zip('file.zip'), 'entry.rom', 0, { crc32: '00000000' });
-    const patch = IPSPatch.patchFrom(await File.fileOf('patch 00000000.ips'));
+    const entry = await ArchiveEntry.entryOf({
+      archive: new Zip('file.zip'),
+      entryPath: 'entry.rom',
+      size: 0,
+      crc32: '00000000',
+    });
+    const patch = IPSPatch.patchFrom(await File.fileOf({ filePath: 'patch 00000000.ips' }));
     const patchedEntry = entry.withPatch(patch);
     expect(patchedEntry.getPatch()).toEqual(patch);
   });
 
   it('should not attach a non-matching patch', async () => {
-    const entry = await ArchiveEntry.entryOf(new Zip('file.zip'), 'entry.rom', 0, { crc32: 'FFFFFFFF' });
-    const patch = IPSPatch.patchFrom(await File.fileOf('patch 00000000.ips'));
+    const entry = await ArchiveEntry.entryOf({
+      archive: new Zip('file.zip'),
+      entryPath: 'entry.rom',
+      size: 0,
+      crc32: 'FFFFFFFF',
+    });
+    const patch = IPSPatch.patchFrom(await File.fileOf({ filePath: 'patch 00000000.ips' }));
     const patchedEntry = entry.withPatch(patch);
     expect(patchedEntry.getPatch()).toBeUndefined();
   });
@@ -484,22 +521,27 @@ describe('withPatch', () => {
 
 describe('equals', () => {
   it('should equal itself', async () => {
-    const entry = await ArchiveEntry.entryOf(new Zip('file.zip'), 'entry.rom');
+    const entry = await ArchiveEntry.entryOf({ archive: new Zip('file.zip'), entryPath: 'entry.rom' });
     expect(entry.equals(entry)).toEqual(true);
   });
 
   it('should equal the same entry', async () => {
-    const first = await ArchiveEntry.entryOf(new Zip('file.zip'), 'entry.rom');
-    const second = await ArchiveEntry.entryOf(new Zip('file.zip'), 'entry.rom');
+    const first = await ArchiveEntry.entryOf({ archive: new Zip('file.zip'), entryPath: 'entry.rom' });
+    const second = await ArchiveEntry.entryOf({ archive: new Zip('file.zip'), entryPath: 'entry.rom' });
     expect(first.equals(second)).toEqual(true);
     expect(second.equals(first)).toEqual(true);
   });
 
   it('should not equal a different entry', async () => {
-    const first = await ArchiveEntry.entryOf(new Zip('file.zip'), 'entry.rom');
-    const second = await ArchiveEntry.entryOf(new SevenZip('file.7z'), 'entry.rom');
-    const third = await ArchiveEntry.entryOf(new Zip('file.zip'), 'other.rom');
-    const fourth = await ArchiveEntry.entryOf(new Zip('file.zip'), 'entry.rom', 0, { crc32: '12345678' });
+    const first = await ArchiveEntry.entryOf({ archive: new Zip('file.zip'), entryPath: 'entry.rom' });
+    const second = await ArchiveEntry.entryOf({ archive: new SevenZip('file.7z'), entryPath: 'entry.rom' });
+    const third = await ArchiveEntry.entryOf({ archive: new Zip('file.zip'), entryPath: 'other.rom' });
+    const fourth = await ArchiveEntry.entryOf({
+      archive: new Zip('file.zip'),
+      entryPath: 'entry.rom',
+      size: 0,
+      crc32: '12345678',
+    });
     expect(first.equals(second)).toEqual(false);
     expect(second.equals(third)).toEqual(false);
     expect(third.equals(fourth)).toEqual(false);

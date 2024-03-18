@@ -29,7 +29,7 @@ describe('extension has possible header', () => {
   it('should not throw on non-existent files', async () => {
     const tempPath = path.join(Constants.GLOBAL_TEMP_DIR, 'file.nes');
     await expect(FsPoly.exists(tempPath)).resolves.toEqual(false);
-    const inputRomFiles = [await File.fileOf(tempPath)];
+    const inputRomFiles = [await File.fileOf({ filePath: tempPath })];
 
     const processedRomFiles = await new ROMHeaderProcessor(new Options({
       commands: ['copy', 'extract'],
