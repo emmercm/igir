@@ -561,6 +561,10 @@ export default class CandidateWriter extends Module {
       return 'doesn\'t exist';
     }
 
+    if (!await fsPoly.isSymlink(linkPath)) {
+      return 'is not a symlink';
+    }
+
     const existingSourcePath = await fsPoly.readlink(linkPath);
     if (path.normalize(existingSourcePath) !== path.normalize(expectedTargetPath)) {
       return `has the target path '${existingSourcePath}', expected '${expectedTargetPath}`;
