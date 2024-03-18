@@ -3,6 +3,8 @@ import { Readable, Stream } from 'node:stream';
 
 import { crc32 } from '@node-rs/crc32';
 
+import File from './file.js';
+
 export enum ChecksumBitmask {
   NONE = 0x0_00,
   CRC32 = 0x0_01,
@@ -26,6 +28,20 @@ export default class FileChecksums {
     // eslint-disable-next-line unicorn/no-null
     readable.push(null);
     return this.hashStream(readable, checksumBitmask);
+  }
+
+  public static async hashFile(
+    filePath: string,
+    checksumBitmask: number,
+    start?: number,
+    end?: number,
+  ): Promise<ChecksumProps> {
+    return File.createStreamFromFile(
+      filePath,
+      async (stream) => FileChecksums.hashStream(stream, checksumBitmask),
+      start,
+      end,
+    );
   }
 
   public static async hashStream(

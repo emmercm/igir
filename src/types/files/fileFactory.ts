@@ -1,6 +1,7 @@
 import path from 'node:path';
 
 import Archive from './archives/archive.js';
+import Chd from './archives/chd.js';
 import Rar from './archives/rar.js';
 import SevenZip from './archives/sevenZip.js';
 import Tar from './archives/tar.js';
@@ -42,6 +43,8 @@ export default class FileFactory {
       return new Rar(filePath);
     } if (SevenZip.SUPPORTED_EXTENSIONS.some((ext) => filePath.toLowerCase().endsWith(ext))) {
       return new SevenZip(filePath);
+    } if (Chd.SUPPORTED_EXTENSIONS.some((ext) => filePath.toLowerCase().endsWith(ext))) {
+      return new Chd(filePath);
     }
 
     throw new Error(`unknown archive type: ${path.extname(filePath)}`);
@@ -53,6 +56,7 @@ export default class FileFactory {
       ...Tar.SUPPORTED_EXTENSIONS,
       ...Rar.SUPPORTED_EXTENSIONS,
       ...SevenZip.SUPPORTED_EXTENSIONS,
+      ...Chd.SUPPORTED_EXTENSIONS,
     ].some((ext) => filePath.toLowerCase().endsWith(ext));
   }
 }

@@ -98,7 +98,7 @@ export default class File implements FileProps {
         || (!finalMd5WithHeader && (checksumBitmask & ChecksumBitmask.MD5))
         || (!finalSha1WithHeader && (checksumBitmask & ChecksumBitmask.SHA1))
       ) {
-        const headeredChecksums = await this.calculateFileChecksums(
+        const headeredChecksums = await FileChecksums.hashFile(
           fileProps.filePath,
           checksumBitmask,
         );
@@ -107,10 +107,10 @@ export default class File implements FileProps {
         finalSha1WithHeader = headeredChecksums.sha1 ?? finalSha1WithHeader;
       }
       if (fileProps.fileHeader && checksumBitmask) {
-        const unheaderedChecksums = await this.calculateFileChecksums(
+        const unheaderedChecksums = await FileChecksums.hashFile(
           fileProps.filePath,
           checksumBitmask,
-          fileProps.fileHeader,
+          fileProps.fileHeader.getDataOffsetBytes(),
         );
         finalCrcWithoutHeader = unheaderedChecksums.crc32;
         finalMd5WithoutHeader = unheaderedChecksums.md5;
@@ -227,25 +227,6 @@ export default class File implements FileProps {
 
   // Other functions
 
-  private static async calculateFileChecksums(
-    filePath: string,
-    checksumBitmask: number,
-    fileHeader?: ROMHeader,
-  ): Promise<ChecksumProps> {
-    const start = fileHeader?.getDataOffsetBytes() ?? 0;
-
-    const stream = fs.createReadStream(filePath, {
-      start,
-      highWaterMark: Constants.FILE_READING_CHUNK_SIZE,
-    });
-
-    try {
-      return await FileChecksums.hashStream(stream, checksumBitmask);
-    } finally {
-      stream.destroy();
-    }
-  }
-
   async extractToFile(destinationPath: string): Promise<void> {
     await fsPoly.copyFile(this.getFilePath(), destinationPath);
   }
@@ -305,16 +286,12 @@ export default class File implements FileProps {
       // Create a patched temp file, then copy it without removing its header
       await patch.createPatchedFile(this, tempFile);
       try {
-        return await File.createStreamFromFile(
-          tempFile,
-          start,
-          async (stream) => new Promise((resolve, reject) => {
-            const writeStream = fs.createWriteStream(destinationPath);
-            writeStream.on('close', resolve);
-            writeStream.on('error', reject);
-            stream.pipe(writeStream);
-          }),
-        );
+        return await File.createStreamFromFile(tempFile, async (stream) => new Promise((resolve, reject) => {
+          const writeStream = fs.createWriteStream(destinationPath);
+          writeStream.on('close', resolve);
+          writeStream.on('error', reject);
+          stream.pipe(writeStream);
+        }), start);
       } finally {
         await fsPoly.rm(tempFile, { force: true });
       }
@@ -332,7 +309,7 @@ export default class File implements FileProps {
     callback: (stream: Readable) => (T | Promise<T>),
     start = 0,
   ): Promise<T> {
-    return File.createStreamFromFile(this.getFilePath(), start, callback);
+    return File.createStreamFromFile(this.getFilePath(), callback, start);
   }
 
   async createPatchedReadStream<T>(
@@ -355,7 +332,7 @@ export default class File implements FileProps {
     ));
     try {
       await patch.createPatchedFile(this, tempFile);
-      return await File.createStreamFromFile(tempFile, start, callback);
+      return await File.createStreamFromFile(tempFile, callback, start);
     } finally {
       await fsPoly.rm(tempFile, { force: true });
     }
@@ -363,11 +340,13 @@ export default class File implements FileProps {
 
   static async createStreamFromFile<T>(
     filePath: PathLike,
-    start: number,
     callback: (stream: Readable) => (Promise<T> | T),
+    start?: number,
+    end?: number,
   ): Promise<T> {
     const stream = fs.createReadStream(filePath, {
       start,
+      end,
       highWaterMark: Constants.FILE_READING_CHUNK_SIZE,
     });
     try {
