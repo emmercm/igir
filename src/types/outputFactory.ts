@@ -543,7 +543,7 @@ export default class OutputFactory {
     const fileHeader = inputFile.getFileHeader();
     if (parsedRomPath.ext && fileHeader) {
       // If the ROM has a header, then we're going to ignore the file extension from the DAT
-      parsedRomPath.ext = fileHeader.getUnheaderedFileExtension();
+      parsedRomPath.ext = fileHeader.getHeaderlessFileExtension();
     }
 
     return path.format(parsedRomPath);

@@ -326,7 +326,7 @@ describe('zip', () => {
   });
 
   test.each([
-    // Control group of un-headered files
+    // Control group of headerless files
     ['raw/empty.rom', 'empty.rom', '00000000'],
     ['raw/fizzbuzz.nes', 'fizzbuzz.nes', '370517b5'],
     ['raw/foobar.lnx', 'foobar.lnx', 'b22c9747'],
@@ -337,7 +337,7 @@ describe('zip', () => {
     ['headered/fds_joypad_test.fds.zip', 'fds_joypad_test.fds', '1e58456d'],
     ['headered/LCDTestROM.lnx.rar', 'LCDTestROM.lnx', '2d251538'],
     ['headered/speed_test_v51.smc', 'speed_test_v51.smc', '9adca6cc'],
-    ['unheadered/speed_test_v51.sfc.gz', 'speed_test_v51.sfc', '8beffd94'],
+    ['headerless/speed_test_v51.sfc.gz', 'speed_test_v51.sfc', '8beffd94'],
   ])('should not remove headers if not requested: %s', async (inputGlob, expectedFileName, expectedCrc) => {
     await copyFixturesToTemp(async (inputTemp, outputTemp) => {
       const options = new Options({ commands: ['copy', 'zip', 'test'] });
@@ -358,7 +358,7 @@ describe('zip', () => {
   });
 
   test.each([
-    // Control group of un-headered files
+    // Control group of headerless files
     ['raw/empty.rom', 'empty.rom', '00000000'],
     ['raw/fizzbuzz.nes', 'fizzbuzz.nes', '370517b5'],
     ['raw/foobar.lnx', 'foobar.lnx', 'b22c9747'],
@@ -369,7 +369,7 @@ describe('zip', () => {
     ['headered/fds_joypad_test.fds.zip', 'fds_joypad_test.fds', '3ecbac61'],
     ['headered/LCDTestROM.lnx.rar', 'LCDTestROM.lyx', '42583855'],
     ['headered/speed_test_v51.smc', 'speed_test_v51.sfc', '8beffd94'],
-    ['unheadered/speed_test_v51.sfc.gz', 'speed_test_v51.sfc', '8beffd94'],
+    ['headerless/speed_test_v51.sfc.gz', 'speed_test_v51.sfc', '8beffd94'],
   ])('should remove headers if requested: %s', async (inputGlob, expectedFileName, expectedCrc) => {
     await copyFixturesToTemp(async (inputTemp, outputTemp) => {
       const options = new Options({
@@ -425,7 +425,7 @@ describe('zip', () => {
 
   test.each([
     [
-      '**/!(*headered)/*',
+      '**/!(header*)/*',
       ['0F09A40.zip', '3708F2C.zip', '612644F.zip', '65D1206.zip', '92C85C9.zip', 'C01173E.zip', 'KDULVQN.zip', 'before.zip', 'best.zip', 'empty.zip', 'five.zip', 'fizzbuzz.zip', 'foobar.zip', 'four.zip', 'fourfive.zip', 'loremipsum.zip', 'one.zip', 'onetwothree.zip', 'three.zip', 'two.zip', 'unknown.zip'],
     ],
     [
@@ -475,7 +475,7 @@ describe('zip', () => {
 
   test.each([
     [
-      '**/!(*headered)/*',
+      '**/!(header*)/*',
       ['0F09A40.zip', '3708F2C.zip', '612644F.zip', '65D1206.zip', '92C85C9.zip', 'C01173E.zip', 'KDULVQN.zip', 'before.zip', 'best.zip', 'empty.zip', 'five.zip', 'fizzbuzz.zip', 'foobar.zip', 'four.zip', 'fourfive.zip', 'loremipsum.zip', 'one.zip', 'onetwothree.zip', 'three.zip', 'two.zip', 'unknown.zip'],
       ['patchable/0F09A40.rom', 'patchable/3708F2C.rom', 'patchable/612644F.rom', 'patchable/65D1206.rom', 'patchable/92C85C9.rom', 'patchable/C01173E.rom', 'patchable/KDULVQN.rom', 'patchable/before.rom', 'patchable/best.gz', 'raw/empty.rom', 'raw/fizzbuzz.nes', 'raw/foobar.lnx', 'raw/loremipsum.rom', 'raw/one.rom', 'raw/three.rom', 'raw/two.rom', 'raw/unknown.rom'],
     ],
@@ -759,7 +759,7 @@ describe('extract', () => {
   });
 
   test.each([
-    // Control group of un-headered files
+    // Control group of headerless files
     ['raw/empty.rom', 'empty.rom', '00000000'],
     ['raw/fizzbuzz.nes', 'fizzbuzz.nes', '370517b5'],
     ['raw/foobar.lnx', 'foobar.lnx', 'b22c9747'],
@@ -770,7 +770,7 @@ describe('extract', () => {
     ['headered/fds_joypad_test.fds.zip', 'fds_joypad_test.fds', '1e58456d'],
     ['headered/LCDTestROM.lnx.rar', 'LCDTestROM.lnx', '2d251538'],
     ['headered/speed_test_v51.smc', 'speed_test_v51.smc', '9adca6cc'],
-    ['unheadered/speed_test_v51.sfc.gz', 'speed_test_v51.sfc', '8beffd94'],
+    ['headerless/speed_test_v51.sfc.gz', 'speed_test_v51.sfc', '8beffd94'],
   ])('should not remove headers if not requested: %s', async (inputGlob, expectedFileName, expectedCrc) => {
     await copyFixturesToTemp(async (inputTemp, outputTemp) => {
       const options = new Options({ commands: ['copy', 'extract', 'test'] });
@@ -789,7 +789,7 @@ describe('extract', () => {
   });
 
   test.each([
-    // Control group of un-headered files
+    // Control group of headerless files
     ['raw/empty.rom', 'empty.rom', '00000000'],
     ['raw/fizzbuzz.nes', 'fizzbuzz.nes', '370517b5'],
     ['raw/foobar.lnx', 'foobar.lnx', 'b22c9747'],
@@ -800,7 +800,7 @@ describe('extract', () => {
     ['headered/fds_joypad_test.fds.zip', 'fds_joypad_test.fds', '3ecbac61'],
     ['headered/LCDTestROM.lnx.rar', 'LCDTestROM.lyx', '42583855'],
     ['headered/speed_test_v51.smc', 'speed_test_v51.sfc', '8beffd94'],
-    ['unheadered/speed_test_v51.sfc.gz', 'speed_test_v51.sfc', '8beffd94'],
+    ['headerless/speed_test_v51.sfc.gz', 'speed_test_v51.sfc', '8beffd94'],
   ])('should remove headers if requested: %s', async (inputGlob, expectedFileName, expectedCrc) => {
     await copyFixturesToTemp(async (inputTemp, outputTemp) => {
       const options = new Options({
@@ -854,7 +854,7 @@ describe('extract', () => {
 
   test.each([
     [
-      '**/!(*headered)/*',
+      '**/!(header*)/*',
       ['0F09A40.rom', '3708F2C.rom', '612644F.rom', '65D1206.rom', '92C85C9.rom', 'C01173E.rom', 'KDULVQN.rom', 'before.rom', 'best.rom', 'empty.rom', 'five.rom', 'fizzbuzz.nes', 'foobar.lnx', 'four.rom', path.join('fourfive', 'five.rom'), path.join('fourfive', 'four.rom'), 'loremipsum.rom', 'one.rom', path.join('onetwothree', 'one.rom'), path.join('onetwothree', 'three.rom'), path.join('onetwothree', 'two.rom'), 'three.rom', 'two.rom', 'unknown.rom'],
     ],
     [
@@ -907,7 +907,7 @@ describe('extract', () => {
 
   test.each([
     [
-      '**/!(*headered)/*',
+      '**/!(header*)/*',
       ['0F09A40.rom', '3708F2C.rom', '612644F.rom', '65D1206.rom', '92C85C9.rom', 'C01173E.rom', 'KDULVQN.rom', 'before.rom', 'best.rom', 'empty.rom', 'five.rom', 'fizzbuzz.nes', 'foobar.lnx', 'four.rom', path.join('fourfive', 'five.rom'), path.join('fourfive', 'four.rom'), 'loremipsum.rom', 'one.rom', path.join('onetwothree', 'one.rom'), path.join('onetwothree', 'three.rom'), path.join('onetwothree', 'two.rom'), 'three.rom', 'two.rom', 'unknown.rom'],
       ['patchable/0F09A40.rom', 'patchable/3708F2C.rom', 'patchable/612644F.rom', 'patchable/65D1206.rom', 'patchable/92C85C9.rom', 'patchable/C01173E.rom', 'patchable/KDULVQN.rom', 'patchable/before.rom', 'patchable/best.gz', 'raw/empty.rom', 'raw/fizzbuzz.nes', 'raw/foobar.lnx', 'raw/loremipsum.rom', 'raw/one.rom', 'raw/three.rom', 'raw/two.rom', 'raw/unknown.rom'],
     ],
@@ -1130,7 +1130,7 @@ describe('raw', () => {
     ['headered/diagnostic_test_cartridge.a78.7z', 'diagnostic_test_cartridge.a78.7z', '1b55e0ff'],
     ['headered/fds_joypad_test.fds.zip', 'fds_joypad_test.fds.zip', '0b94518e'],
     ['headered/LCDTestROM.lnx.rar', 'LCDTestROM.lnx.rar', '32629801'],
-    ['unheadered/speed_test_v51.sfc.gz', 'speed_test_v51.sfc.gz', '7fc0e473'],
+    ['headerless/speed_test_v51.sfc.gz', 'speed_test_v51.sfc.gz', '7fc0e473'],
   ])('should not remove headers if not requested: %s', async (inputGlob, expectedFileName, expectedCrc) => {
     await copyFixturesToTemp(async (inputTemp, outputTemp) => {
       const options = new Options({ commands: ['copy', 'test'] });
@@ -1156,7 +1156,7 @@ describe('raw', () => {
     ['headered/diagnostic_test_cartridge.a78.7z', 'diagnostic_test_cartridge.a78.7z', '1b55e0ff'],
     ['headered/fds_joypad_test.fds.zip', 'fds_joypad_test.fds.zip', '0b94518e'],
     ['headered/LCDTestROM.lnx.rar', 'LCDTestROM.lnx.rar', '32629801'],
-    ['unheadered/speed_test_v51.sfc.gz', 'speed_test_v51.sfc.gz', '7fc0e473'],
+    ['headerless/speed_test_v51.sfc.gz', 'speed_test_v51.sfc.gz', '7fc0e473'],
   ])('should not remove headers even if requested: %s', async (inputGlob, expectedFileName, expectedCrc) => {
     await copyFixturesToTemp(async (inputTemp, outputTemp) => {
       const options = new Options({
@@ -1207,7 +1207,7 @@ describe('raw', () => {
 
   test.each([
     [
-      '**/!(*headered)/*',
+      '**/!(header*)/*',
       ['0F09A40.rom', '3708F2C.rom', '612644F.rom', '65D1206.rom', '92C85C9.rom', 'C01173E.rom', 'KDULVQN.rom', 'before.rom', 'best.gz', 'empty.rom', 'five.rom', 'fizzbuzz.nes', 'foobar.lnx', 'four.rom', 'fourfive.zip', 'loremipsum.rom', 'one.rom', 'onetwothree.zip', 'three.rom', 'two.rom', 'unknown.rom'],
     ],
     [
@@ -1257,7 +1257,7 @@ describe('raw', () => {
 
   test.each([
     [
-      '**/!(*headered)/*',
+      '**/!(header*)/*',
       ['0F09A40.rom', '3708F2C.rom', '612644F.rom', '65D1206.rom', '92C85C9.rom', 'C01173E.rom', 'KDULVQN.rom', 'before.rom', 'best.gz', 'empty.rom', 'five.rom', 'fizzbuzz.nes', 'foobar.lnx', 'four.rom', 'fourfive.zip', 'loremipsum.rom', 'one.rom', 'onetwothree.zip', 'three.rom', 'two.rom', 'unknown.rom'],
       ['patchable/0F09A40.rom', 'patchable/3708F2C.rom', 'patchable/612644F.rom', 'patchable/65D1206.rom', 'patchable/92C85C9.rom', 'patchable/C01173E.rom', 'patchable/KDULVQN.rom', 'patchable/before.rom', 'patchable/best.gz', 'raw/empty.rom', 'raw/fizzbuzz.nes', 'raw/foobar.lnx', 'raw/loremipsum.rom', 'raw/one.rom', 'raw/three.rom', 'raw/two.rom', 'raw/unknown.rom'],
     ],

@@ -78,7 +78,7 @@ describe('extension has possible header', () => {
 });
 
 describe('should read file for header', () => {
-  it('should do nothing with un-headered files', async () => {
+  it('should do nothing with headerless files', async () => {
     const inputRomFiles = await new ROMScanner(new Options({
       input: ['./test/fixtures/roms/!(headered){,/}*'],
     }), new ProgressBarFake()).scan();
