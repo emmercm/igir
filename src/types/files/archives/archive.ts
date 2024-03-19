@@ -20,12 +20,11 @@ export default abstract class Archive {
    * Forget that the current file is an archive and treat it as a raw file, such that we can
    *  compute its size and CRC.
    */
-  async asRawFile(): Promise<File> {
-    // TODO(cemmer): calculate MD5 and SHA1 for testing purposes?
-    return File.fileOf({ filePath: this.getFilePath() });
+  async asRawFile(checksumBitmask: number): Promise<File> {
+    return File.fileOf({ filePath: this.getFilePath() }, checksumBitmask);
   }
 
-  async asRawFileWithoutCrc(): Promise<File> {
+  async asRawFileWithoutChecksums(): Promise<File> {
     return File.fileOf({ filePath: this.getFilePath() }, ChecksumBitmask.NONE);
   }
 

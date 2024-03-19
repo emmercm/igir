@@ -240,6 +240,7 @@ export default class CandidateWriter extends Module {
 
     let archiveEntries: ArchiveEntry<Zip>[];
     try {
+      // TODO(cemmer): test with the highest level checksum available?
       archiveEntries = await new Zip(zipFilePath).getArchiveEntries(ChecksumBitmask.CRC32);
     } catch (error) {
       return `failed to get archive contents: ${error}`;
@@ -432,9 +433,18 @@ export default class CandidateWriter extends Module {
       this.progressBar.logWarn(`${dat.getNameShort()}: ${releaseCandidate.getName()}: ${outputFilePath}: can't test, expected CRC is unknown`);
       return undefined;
     }
-    const actualFile = await File.fileOf({ filePath: outputFilePath });
-    if (actualFile.getCrc32() !== expectedFile.getCrc32()) {
-      return `has the CRC ${actualFile.getCrc32()}, expected ${expectedFile.getCrc32()}`;
+    const actualFile = await File.fileOf(
+      { filePath: outputFilePath },
+      expectedFile.getChecksumBitmask(),
+    );
+    if (actualFile.getSha1() && actualFile.getSha1() !== expectedFile.getSha1()) {
+      return `has the SHA1 ${actualFile.getSha1()}, expected ${expectedFile.getSha1()}`;
+    }
+    if (actualFile.getMd5() && actualFile.getMd5() !== expectedFile.getMd5()) {
+      return `has the MD5 ${actualFile.getMd5()}, expected ${expectedFile.getMd5()}`;
+    }
+    if (actualFile.getCrc32() && actualFile.getCrc32() !== expectedFile.getCrc32()) {
+      return `has the CRC32 ${actualFile.getCrc32()}, expected ${expectedFile.getCrc32()}`;
     }
 
     // Check size
