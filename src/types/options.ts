@@ -45,11 +45,11 @@ export enum GameSubdirMode {
 
 export interface OptionsProps {
   readonly commands?: string[],
+  readonly fixdat?: boolean;
 
   readonly input?: string[],
   readonly inputExclude?: string[],
-  readonly patch?: string[],
-  readonly patchExclude?: string[],
+  readonly inputMinChecksum?: string,
 
   readonly dat?: string[],
   readonly datExclude?: string[],
@@ -62,7 +62,8 @@ export interface OptionsProps {
   readonly datCombine?: boolean,
   readonly datIgnoreParentClone?: boolean,
 
-  readonly fixdat?: boolean;
+  readonly patch?: string[],
+  readonly patchExclude?: string[],
 
   readonly output?: string,
   readonly dirMirror?: boolean,
@@ -83,8 +84,6 @@ export interface OptionsProps {
 
   readonly symlink?: boolean,
   readonly symlinkRelative?: boolean,
-
-  readonly matchChecksum?: ChecksumBitmask,
 
   readonly header?: string,
   readonly removeHeaders?: string[],
@@ -156,13 +155,13 @@ export default class Options implements OptionsProps {
   @Expose({ name: '_' })
   readonly commands: string[];
 
+  readonly fixdat: boolean;
+
   readonly input: string[];
 
   readonly inputExclude: string[];
 
-  readonly patch: string[];
-
-  readonly patchExclude: string[];
+  readonly inputMinChecksum?: string;
 
   readonly dat: string[];
 
@@ -184,7 +183,9 @@ export default class Options implements OptionsProps {
 
   readonly datIgnoreParentClone: boolean;
 
-  readonly fixdat: boolean;
+  readonly patch: string[];
+
+  readonly patchExclude: string[];
 
   readonly output: string;
 
@@ -221,8 +222,6 @@ export default class Options implements OptionsProps {
   readonly symlinkRelative: boolean;
 
   readonly header: string;
-
-  readonly matchChecksum: ChecksumBitmask;
 
   readonly removeHeaders?: string[];
 
@@ -340,11 +339,11 @@ export default class Options implements OptionsProps {
 
   constructor(options?: OptionsProps) {
     this.commands = options?.commands ?? [];
+    this.fixdat = options?.fixdat ?? false;
 
     this.input = options?.input ?? [];
     this.inputExclude = options?.inputExclude ?? [];
-    this.patch = options?.patch ?? [];
-    this.patchExclude = options?.patchExclude ?? [];
+    this.inputMinChecksum = options?.inputMinChecksum;
 
     this.dat = options?.dat ?? [];
     this.datExclude = options?.datExclude ?? [];
@@ -357,7 +356,8 @@ export default class Options implements OptionsProps {
     this.datCombine = options?.datCombine ?? false;
     this.datIgnoreParentClone = options?.datIgnoreParentClone ?? false;
 
-    this.fixdat = options?.fixdat ?? false;
+    this.patch = options?.patch ?? [];
+    this.patchExclude = options?.patchExclude ?? [];
 
     this.output = options?.output ?? '';
     this.dirMirror = options?.dirMirror ?? false;
@@ -378,8 +378,6 @@ export default class Options implements OptionsProps {
 
     this.symlink = options?.symlink ?? false;
     this.symlinkRelative = options?.symlinkRelative ?? false;
-
-    this.matchChecksum = options?.matchChecksum ?? ChecksumBitmask.CRC32;
 
     this.header = options?.header ?? '';
     this.removeHeaders = options?.removeHeaders;
@@ -604,28 +602,6 @@ export default class Options implements OptionsProps {
       .filter((inputPath) => !inputExcludeFiles.has(inputPath));
   }
 
-  getPatchFileCount(): number {
-    return this.patch.length;
-  }
-
-  /**
-   * Scan for patch files, and patch files to exclude, and return the difference.
-   */
-  async scanPatchFilesWithoutExclusions(walkCallback?: FsWalkCallback): Promise<string[]> {
-    const patchFiles = await this.scanPatchFiles(walkCallback);
-    const patchExcludeFiles = new Set(await this.scanPatchExcludeFiles());
-    return patchFiles
-      .filter((patchPath) => !patchExcludeFiles.has(patchPath));
-  }
-
-  private async scanPatchFiles(walkCallback?: FsWalkCallback): Promise<string[]> {
-    return Options.scanPaths(this.patch, walkCallback);
-  }
-
-  private async scanPatchExcludeFiles(): Promise<string[]> {
-    return Options.scanPaths(this.patchExclude, undefined, false);
-  }
-
   private static async scanPaths(
     globPatterns: string[],
     walkCallback?: FsWalkCallback,
@@ -725,6 +701,15 @@ export default class Options implements OptionsProps {
     return paths;
   }
 
+  getInputMinChecksum(): ChecksumBitmask | undefined {
+    const checksumBitmask = Object.keys(ChecksumBitmask)
+      .find((bitmask) => bitmask.toUpperCase() === this.inputMinChecksum?.toUpperCase());
+    if (!checksumBitmask) {
+      return undefined;
+    }
+    return ChecksumBitmask[checksumBitmask as keyof typeof ChecksumBitmask];
+  }
+
   /**
    * Were any DAT paths provided?
    */
@@ -772,6 +757,28 @@ export default class Options implements OptionsProps {
 
   getDatIgnoreParentClone(): boolean {
     return this.datIgnoreParentClone;
+  }
+
+  getPatchFileCount(): number {
+    return this.patch.length;
+  }
+
+  /**
+   * Scan for patch files, and patch files to exclude, and return the difference.
+   */
+  async scanPatchFilesWithoutExclusions(walkCallback?: FsWalkCallback): Promise<string[]> {
+    const patchFiles = await this.scanPatchFiles(walkCallback);
+    const patchExcludeFiles = new Set(await this.scanPatchExcludeFiles());
+    return patchFiles
+      .filter((patchPath) => !patchExcludeFiles.has(patchPath));
+  }
+
+  private async scanPatchFiles(walkCallback?: FsWalkCallback): Promise<string[]> {
+    return Options.scanPaths(this.patch, walkCallback);
+  }
+
+  private async scanPatchExcludeFiles(): Promise<string[]> {
+    return Options.scanPaths(this.patchExclude, undefined, false);
   }
 
   getOutput(): string {
@@ -880,10 +887,6 @@ export default class Options implements OptionsProps {
 
   getSymlinkRelative(): boolean {
     return this.symlinkRelative;
-  }
-
-  getMatchChecksum(): ChecksumBitmask {
-    return this.matchChecksum;
   }
 
   private getHeader(): string {

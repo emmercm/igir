@@ -222,7 +222,7 @@ export default class Igir {
   }
 
   private determineScanningBitmask(dats: DAT[]): number {
-    let matchChecksum = this.options.getMatchChecksum();
+    let matchChecksum = this.options.getInputMinChecksum() ?? ChecksumBitmask.NONE;
 
     if (this.options.shouldDir2Dat()) {
       Object.keys(ChecksumBitmask)

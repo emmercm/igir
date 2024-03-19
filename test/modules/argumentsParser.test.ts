@@ -105,12 +105,16 @@ describe('options', () => {
     expect(options.shouldClean()).toEqual(false);
     expect(options.shouldReport()).toEqual(false);
 
+    expect(options.getInputPaths()).toEqual([]);
+
     expect(options.getDatNameRegex()).toBeUndefined();
     expect(options.getDatNameRegexExclude()).toBeUndefined();
     expect(options.getDatDescriptionRegex()).toBeUndefined();
     expect(options.getDatDescriptionRegexExclude()).toBeUndefined();
     expect(options.getDatCombine()).toEqual(false);
     expect(options.getDatIgnoreParentClone()).toEqual(false);
+
+    expect(options.getPatchFileCount()).toEqual(0);
 
     expect(options.getDirMirror()).toEqual(false);
     expect(options.getDirDatName()).toEqual(false);
@@ -184,6 +188,15 @@ describe('options', () => {
     expect(options.getHelp()).toEqual(false);
   });
 
+  it('should parse "fixdat"', () => {
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--dat', os.devNull, '--fixdat']).shouldFixdat()).toEqual(true);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--dat', os.devNull, '--fixdat', 'true']).shouldFixdat()).toEqual(true);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--dat', os.devNull, '--fixdat', 'false']).shouldFixdat()).toEqual(false);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--dat', os.devNull, '--fixdat', '--fixdat']).shouldFixdat()).toEqual(true);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--dat', os.devNull, '--fixdat', 'false', '--fixdat', 'true']).shouldFixdat()).toEqual(true);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--dat', os.devNull, '--fixdat', 'true', '--fixdat', 'false']).shouldFixdat()).toEqual(false);
+  });
+
   it('should parse "input"', async () => {
     await expect(argumentsParser.parse(['copy', '--input', 'nonexistentfile', '--output', os.devNull]).scanInputFilesWithoutExclusions()).rejects.toThrow(/no files found/i);
     await expect(argumentsParser.parse(['copy', '--input', os.devNull, '--output', os.devNull]).scanInputFilesWithoutExclusions()).resolves.toHaveLength(0);
@@ -203,27 +216,6 @@ describe('options', () => {
     expect((await argumentsParser.parse(['copy', '--input', './src', '--output', os.devNull, '-I', 'nonexistentfile']).scanInputFilesWithoutExclusions()).length).toBeGreaterThan(0);
     expect((await argumentsParser.parse(['copy', '--input', './src', '--output', os.devNull, '--input-exclude', './src']).scanInputFilesWithoutExclusions()).length).toEqual(0);
     expect((await argumentsParser.parse(['copy', '--input', './src', '--output', os.devNull, '--input-exclude', './src']).scanInputFilesWithoutExclusions()).length).toEqual(0);
-  });
-
-  it('should parse "patch"', async () => {
-    await expect(argumentsParser.parse(['copy', '--input', os.devNull, '--patch', 'nonexistentfile', '--output', os.devNull]).scanPatchFilesWithoutExclusions()).rejects.toThrow(/no files found/i);
-    await expect(argumentsParser.parse(['copy', '--input', os.devNull, '--patch', os.devNull, '--output', os.devNull]).scanPatchFilesWithoutExclusions()).resolves.toHaveLength(0);
-
-    const src = await argumentsParser.parse(['copy', '--input', os.devNull, '--patch', './src', '--output', os.devNull]).scanPatchFilesWithoutExclusions();
-    const test = await argumentsParser.parse(['copy', '--input', os.devNull, '--patch', './test', '--output', os.devNull]).scanPatchFilesWithoutExclusions();
-    const both = await argumentsParser.parse(['copy', '--input', os.devNull, '--patch', './src', '-p', './test', '--output', os.devNull]).scanPatchFilesWithoutExclusions();
-    expect(src.length).toBeGreaterThan(0);
-    expect(test.length).toBeGreaterThan(0);
-    expect(both.length).toEqual(src.length + test.length);
-    /** Note: glob patterns are tested in {@link PatchScanner} */
-  });
-
-  it('should parse "patch-exclude"', async () => {
-    expect((await argumentsParser.parse(['copy', '--input', os.devNull, '--patch', './src', '--output', os.devNull]).scanPatchFilesWithoutExclusions()).length).toBeGreaterThan(0);
-    expect((await argumentsParser.parse(['copy', '--input', os.devNull, '--patch', './src', '--output', os.devNull, '-P', os.devNull]).scanPatchFilesWithoutExclusions()).length).toBeGreaterThan(0);
-    expect((await argumentsParser.parse(['copy', '--input', os.devNull, '--patch', './src', '--output', os.devNull, '-P', 'nonexistentfile']).scanPatchFilesWithoutExclusions()).length).toBeGreaterThan(0);
-    expect((await argumentsParser.parse(['copy', '--input', os.devNull, '--patch', './src', '--output', os.devNull, '--patch-exclude', './src']).scanPatchFilesWithoutExclusions()).length).toEqual(0);
-    expect((await argumentsParser.parse(['copy', '--input', os.devNull, '--patch', './src', '--output', os.devNull, '--patch-exclude', './src']).scanPatchFilesWithoutExclusions()).length).toEqual(0);
   });
 
   it('should parse "dat"', async () => {
@@ -362,13 +354,25 @@ describe('options', () => {
     expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--dat', os.devNull, '--dat-ignore-parent-clone', 'true', '--dat-ignore-parent-clone', 'false']).getDatIgnoreParentClone()).toEqual(false);
   });
 
-  it('should parse "fixdat"', () => {
-    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--dat', os.devNull, '--fixdat']).shouldFixdat()).toEqual(true);
-    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--dat', os.devNull, '--fixdat', 'true']).shouldFixdat()).toEqual(true);
-    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--dat', os.devNull, '--fixdat', 'false']).shouldFixdat()).toEqual(false);
-    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--dat', os.devNull, '--fixdat', '--fixdat']).shouldFixdat()).toEqual(true);
-    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--dat', os.devNull, '--fixdat', 'false', '--fixdat', 'true']).shouldFixdat()).toEqual(true);
-    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--dat', os.devNull, '--fixdat', 'true', '--fixdat', 'false']).shouldFixdat()).toEqual(false);
+  it('should parse "patch"', async () => {
+    await expect(argumentsParser.parse(['copy', '--input', os.devNull, '--patch', 'nonexistentfile', '--output', os.devNull]).scanPatchFilesWithoutExclusions()).rejects.toThrow(/no files found/i);
+    await expect(argumentsParser.parse(['copy', '--input', os.devNull, '--patch', os.devNull, '--output', os.devNull]).scanPatchFilesWithoutExclusions()).resolves.toHaveLength(0);
+
+    const src = await argumentsParser.parse(['copy', '--input', os.devNull, '--patch', './src', '--output', os.devNull]).scanPatchFilesWithoutExclusions();
+    const test = await argumentsParser.parse(['copy', '--input', os.devNull, '--patch', './test', '--output', os.devNull]).scanPatchFilesWithoutExclusions();
+    const both = await argumentsParser.parse(['copy', '--input', os.devNull, '--patch', './src', '-p', './test', '--output', os.devNull]).scanPatchFilesWithoutExclusions();
+    expect(src.length).toBeGreaterThan(0);
+    expect(test.length).toBeGreaterThan(0);
+    expect(both.length).toEqual(src.length + test.length);
+    /** Note: glob patterns are tested in {@link PatchScanner} */
+  });
+
+  it('should parse "patch-exclude"', async () => {
+    expect((await argumentsParser.parse(['copy', '--input', os.devNull, '--patch', './src', '--output', os.devNull]).scanPatchFilesWithoutExclusions()).length).toBeGreaterThan(0);
+    expect((await argumentsParser.parse(['copy', '--input', os.devNull, '--patch', './src', '--output', os.devNull, '-P', os.devNull]).scanPatchFilesWithoutExclusions()).length).toBeGreaterThan(0);
+    expect((await argumentsParser.parse(['copy', '--input', os.devNull, '--patch', './src', '--output', os.devNull, '-P', 'nonexistentfile']).scanPatchFilesWithoutExclusions()).length).toBeGreaterThan(0);
+    expect((await argumentsParser.parse(['copy', '--input', os.devNull, '--patch', './src', '--output', os.devNull, '--patch-exclude', './src']).scanPatchFilesWithoutExclusions()).length).toEqual(0);
+    expect((await argumentsParser.parse(['copy', '--input', os.devNull, '--patch', './src', '--output', os.devNull, '--patch-exclude', './src']).scanPatchFilesWithoutExclusions()).length).toEqual(0);
   });
 
   it('should parse "output"', () => {
