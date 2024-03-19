@@ -311,7 +311,7 @@ describe('with ROMs with headers', () => {
       const candidateWithOneRomOutput = candidate.getRomsWithFiles()[0]
         .getOutputFile() as ArchiveEntry<Zip>;
       expect(candidateWithOneRomOutput.getFilePath()).toEqual('game with one ROM and multiple releases.zip'); // respected DAT
-      expect(candidateWithOneRomOutput.getEntryPath()).toEqual('one.nes'); // respected un-headered extension
+      expect(candidateWithOneRomOutput.getEntryPath()).toEqual('one.nes'); // respected headerless extension
     });
 
     const candidateWithTwoRoms = candidates[2];
@@ -321,7 +321,7 @@ describe('with ROMs with headers', () => {
       const candidateWithTwoRomsOutputOne = candidate.getRomsWithFiles()[0]
         .getOutputFile() as ArchiveEntry<Zip>;
       expect(candidateWithTwoRomsOutputOne.getFilePath()).toEqual('game with two ROMs (parent).zip'); // respected DAT
-      expect(candidateWithTwoRomsOutputOne.getEntryPath()).toEqual('two.sfc'); // respected un-headered extension
+      expect(candidateWithTwoRomsOutputOne.getEntryPath()).toEqual('two.sfc'); // respected headerless extension
       const candidateWithTwoRomsOutputTwo = candidate.getRomsWithFiles()[1]
         .getOutputFile() as ArchiveEntry<Zip>;
       expect(candidateWithTwoRomsOutputTwo.getFilePath()).toEqual('game with two ROMs (parent).zip'); // respected DAT
@@ -348,14 +348,14 @@ describe('with ROMs with headers', () => {
     expect(candidateWithOneRom).toHaveLength(3);
     candidateWithOneRom.forEach((candidate) => {
       expect(candidate.getRomsWithFiles()).toHaveLength(1);
-      expect(candidate.getRomsWithFiles()[0].getOutputFile().getFilePath()).toEqual('one.nes'); // respected un-headered extension
+      expect(candidate.getRomsWithFiles()[0].getOutputFile().getFilePath()).toEqual('one.nes'); // respected headerless extension
     });
 
     const candidateWithTwoRoms = candidates[2];
     expect(candidateWithTwoRoms).toHaveLength(1);
     candidateWithTwoRoms.forEach((candidate) => {
       expect(candidate.getRomsWithFiles()).toHaveLength(2);
-      expect(candidate.getRomsWithFiles()[0].getOutputFile().getFilePath()).toEqual(path.join('game with two ROMs (parent)', 'two.sfc')); // respected un-headered extension
+      expect(candidate.getRomsWithFiles()[0].getOutputFile().getFilePath()).toEqual(path.join('game with two ROMs (parent)', 'two.sfc')); // respected headerless extension
       expect(candidate.getRomsWithFiles()[1].getOutputFile().getFilePath()).toEqual(path.join('game with two ROMs (parent)', 'two.b')); // respected DAT
     });
   });
@@ -378,7 +378,7 @@ describe('with ROMs with headers', () => {
     expect(candidateWithOneRom).toHaveLength(3);
     candidateWithOneRom.forEach((candidate) => {
       expect(candidate.getRomsWithFiles()).toHaveLength(1);
-      expect(candidate.getRomsWithFiles()[0].getOutputFile().getFilePath()).toEqual('one.nes'); // respected un-headered extension
+      expect(candidate.getRomsWithFiles()[0].getOutputFile().getFilePath()).toEqual('one.nes'); // respected headerless extension
     });
 
     const candidateWithTwoRoms = candidates[2];

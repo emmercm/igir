@@ -99,14 +99,14 @@ export default class File implements FileProps {
         finalSha1WithHeader = headeredChecksums.sha1 ?? finalSha1WithHeader;
       }
       if (fileProps.fileHeader && checksumBitmask) {
-        const unheaderedChecksums = await this.calculateFileChecksums(
+        const headerlessChecksums = await this.calculateFileChecksums(
           fileProps.filePath,
           checksumBitmask,
           fileProps.fileHeader,
         );
-        finalCrcWithoutHeader = unheaderedChecksums.crc32;
-        finalMd5WithoutHeader = unheaderedChecksums.md5;
-        finalSha1WithoutHeader = unheaderedChecksums.sha1;
+        finalCrcWithoutHeader = headerlessChecksums.crc32;
+        finalMd5WithoutHeader = headerlessChecksums.md5;
+        finalSha1WithoutHeader = headerlessChecksums.sha1;
       }
 
       if (await fsPoly.isSymlink(fileProps.filePath)) {
@@ -194,7 +194,7 @@ export default class File implements FileProps {
     return URLPoly.canParse(this.getFilePath());
   }
 
-  protected getChecksumBitmask(): number {
+  public getChecksumBitmask(): number {
     return (this.getCrc32()?.replace(/^0+|0+$/, '') ? ChecksumBitmask.CRC32 : 0)
       | (this.getMd5()?.replace(/^0+|0+$/, '') ? ChecksumBitmask.MD5 : 0)
       | (this.getSha1()?.replace(/^0+|0+$/, '') ? ChecksumBitmask.SHA1 : 0);

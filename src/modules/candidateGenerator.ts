@@ -120,7 +120,7 @@ export default class CandidateGenerator extends Module {
          * WARN(cemmer): {@link inputFile} may not be an exact match for {@link rom}. There are two
          * situations we can be in:
          *  - {@link rom} is headered and so is {@link inputFile}, so we have an exact match
-         *  - {@link rom} is unheadered but {@link inputFile} is headered, because we know how to
+         *  - {@link rom} is headerless but {@link inputFile} is headered, because we know how to
          *    remove headers from ROMs - but we can't remove headers in all writing modes!
          */
 
@@ -170,11 +170,11 @@ export default class CandidateGenerator extends Module {
           && !this.options.shouldExtract()
         ) {
           if (this.options.shouldTest() || this.options.getOverwriteInvalid()) {
-            // If we're testing, then we need to calculate the archive's CRC
-            inputFile = await inputFile.getArchive().asRawFile();
+            // If we're testing, then we need to calculate the archive's checksums
+            inputFile = await inputFile.getArchive().asRawFile(inputFile.getChecksumBitmask());
           } else {
-            // Otherwise, we can skip calculating the CRC for efficiency
-            inputFile = await inputFile.getArchive().asRawFileWithoutCrc();
+            // Otherwise, we can skip calculating checksums for efficiency
+            inputFile = await inputFile.getArchive().asRawFileWithoutChecksums();
           }
         }
 
@@ -305,10 +305,14 @@ export default class CandidateGenerator extends Module {
     const outputFilePath = outputPathParsed.format();
 
     // Determine the output CRC of the file
-    let outputFileCrc = inputFile.getCrc32();
+    let outputFileCrc32 = inputFile.getCrc32();
+    let outputFileMd5 = inputFile.getMd5();
+    let outputFileSha1 = inputFile.getSha1();
     let outputFileSize = inputFile.getSize();
     if (inputFile.getFileHeader()) {
-      outputFileCrc = inputFile.getCrc32WithoutHeader();
+      outputFileCrc32 = inputFile.getCrc32WithoutHeader();
+      outputFileMd5 = inputFile.getMd5WithoutHeader();
+      outputFileSha1 = inputFile.getSha1WithoutHeader();
       outputFileSize = inputFile.getSizeWithoutHeader();
     }
 
@@ -319,16 +323,18 @@ export default class CandidateGenerator extends Module {
         archive: new Zip(outputFilePath),
         entryPath: outputPathParsed.entryPath,
         size: outputFileSize,
-        // TODO(cemmer): calculate MD5 and SHA1 for testing purposes?
-        crc32: outputFileCrc,
+        crc32: outputFileCrc32,
+        md5: outputFileMd5,
+        sha1: outputFileSha1,
       });
     }
     // Otherwise, return a raw file
     return File.fileOf({
       filePath: outputFilePath,
       size: outputFileSize,
-      // TODO(cemmer): calculate MD5 and SHA1 for testing purposes?
-      crc32: outputFileCrc,
+      crc32: outputFileCrc32,
+      md5: outputFileMd5,
+      sha1: outputFileSha1,
     });
   }
 
