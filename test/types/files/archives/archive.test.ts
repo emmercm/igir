@@ -9,6 +9,7 @@ import Rar from '../../../../src/types/files/archives/rar.js';
 import SevenZip from '../../../../src/types/files/archives/sevenZip.js';
 import Tar from '../../../../src/types/files/archives/tar.js';
 import Zip from '../../../../src/types/files/archives/zip.js';
+import { ChecksumBitmask } from '../../../../src/types/files/fileChecksums.js';
 import FileFactory from '../../../../src/types/files/fileFactory.js';
 import Options from '../../../../src/types/options.js';
 import ProgressBarFake from '../../../console/progressBarFake.js';
@@ -87,7 +88,8 @@ describe('asRawFile', () => {
       expect(file).toBeInstanceOf(ArchiveEntry);
 
       // When getting the raw file
-      const rawFile = await ((file as ArchiveEntry<never>).getArchive() as Archive).asRawFile();
+      const rawFile = await ((file as ArchiveEntry<never>).getArchive() as Archive)
+        .asRawFile(ChecksumBitmask.CRC32);
 
       // Then it should have a size and a real CRC
       expect(rawFile.getSize()).toBeGreaterThan(0);
@@ -113,7 +115,7 @@ describe('asRawFileWithoutCrc', () => {
 
       // When getting the raw file
       const rawFile = await ((file as ArchiveEntry<never>).getArchive() as Archive)
-        .asRawFileWithoutCrc();
+        .asRawFileWithoutChecksums();
 
       // Then it should have a size and a dummy CRC
       expect(rawFile.getSize()).toBeGreaterThan(0);
