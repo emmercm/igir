@@ -47,7 +47,7 @@ export default class ROM implements ROMProps {
     this.name = props?.name ?? '';
     this.size = props?.size ?? 0;
     this.crc32 = props?.crc32?.toLowerCase().replace(/^0x/, '').padStart(8, '0');
-    this.md5 = props?.md5?.toLowerCase().replace(/^0x/, '').padStart(32, '0');;
+    this.md5 = props?.md5?.toLowerCase().replace(/^0x/, '').padStart(32, '0');
     this.sha1 = props?.sha1?.toLowerCase().replace(/^0x/, '').padStart(40, '0');
     this.status = props?.status;
     this.merge = props?.merge;
