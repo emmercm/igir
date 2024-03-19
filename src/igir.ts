@@ -224,15 +224,17 @@ export default class Igir {
   private determineScanningBitmask(dats: DAT[]): number {
     let matchChecksum = this.options.getMatchChecksum();
 
-    Object.keys(ChecksumBitmask)
-      .filter((bitmask): bitmask is keyof typeof ChecksumBitmask => Number.isNaN(Number(bitmask)))
-      // Has not been enabled yet
-      .filter((bitmask) => ChecksumBitmask[bitmask] > 0)
-      .filter((bitmask) => !(matchChecksum & ChecksumBitmask[bitmask]))
-      .forEach((bitmask) => {
-        matchChecksum |= ChecksumBitmask[bitmask];
-        this.logger.trace(`generating a dir2dat, enabling ${bitmask} file checksums`);
-      });
+    if (this.options.shouldDir2Dat()) {
+      Object.keys(ChecksumBitmask)
+        .filter((bitmask): bitmask is keyof typeof ChecksumBitmask => Number.isNaN(Number(bitmask)))
+        // Has not been enabled yet
+        .filter((bitmask) => ChecksumBitmask[bitmask] > 0)
+        .filter((bitmask) => !(matchChecksum & ChecksumBitmask[bitmask]))
+        .forEach((bitmask) => {
+          matchChecksum |= ChecksumBitmask[bitmask];
+          this.logger.trace(`generating a dir2dat, enabling ${bitmask} file checksums`);
+        });
+    }
 
     dats.forEach((dat) => {
       const datMinimumBitmask = dat.getRequiredChecksumBitmask();

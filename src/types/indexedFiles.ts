@@ -46,12 +46,12 @@ export default class IndexedFiles {
 
       const md5 = file.getMd5();
       if (md5) {
-        md5RawMap.set(md5, [file, ...(crc32RawMap.get(md5) ?? [])]);
+        md5RawMap.set(md5, [file, ...(md5RawMap.get(md5) ?? [])]);
       }
 
       const sha1 = file.getSha1();
       if (sha1) {
-        sha1RawMap.set(sha1, [file, ...(crc32RawMap.get(sha1) ?? [])]);
+        sha1RawMap.set(sha1, [file, ...(sha1RawMap.get(sha1) ?? [])]);
       }
 
       if (file.getFileHeader()) {
