@@ -1,5 +1,6 @@
 import ProgressBar, { ProgressBarSymbol } from '../console/progressBar.js';
 import File from '../types/files/file.js';
+import { ChecksumBitmask } from '../types/files/fileChecksums.js';
 import Options from '../types/options.js';
 import Scanner from './scanner.js';
 
@@ -17,7 +18,7 @@ export default class ROMScanner extends Scanner {
   /**
    * Scan for ROM files.
    */
-  async scan(): Promise<File[]> {
+  async scan(checksumBitmask: number = ChecksumBitmask.CRC32): Promise<File[]> {
     this.progressBar.logTrace('scanning ROM files');
     await this.progressBar.setSymbol(ProgressBarSymbol.SEARCHING);
     await this.progressBar.reset(0);
@@ -31,7 +32,7 @@ export default class ROMScanner extends Scanner {
     const files = await this.getFilesFromPaths(
       romFilePaths,
       this.options.getReaderThreads(),
-      this.options.getMatchChecksum(),
+      checksumBitmask,
     );
 
     this.progressBar.logTrace('done scanning ROM files');

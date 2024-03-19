@@ -886,13 +886,6 @@ export default class Options implements OptionsProps {
     return this.matchChecksum;
   }
 
-  getMatchChecksumNeeded(): ChecksumBitmask {
-    if (this.shouldDir2Dat()) {
-      return ChecksumBitmask.CRC32 | ChecksumBitmask.MD5 | ChecksumBitmask.SHA1;
-    }
-    return this.getMatchChecksum();
-  }
-
   private getHeader(): string {
     return this.header;
   }
