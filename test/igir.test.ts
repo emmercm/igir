@@ -67,7 +67,7 @@ async function walkWithCrc(inputDir: string, outputDir: string): Promise<string[
       file.toString()
         .replace(inputDir, '<input>')
         .replace(outputDir + path.sep, ''),
-      file.getCrc32(),
+      file.getCrc32() ?? '',
     ]))
     .sort((a, b) => a[0].localeCompare(b[0]));
 }

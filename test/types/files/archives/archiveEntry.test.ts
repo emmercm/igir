@@ -232,9 +232,7 @@ describe('getMd5', () => {
     expect(archiveEntries).toHaveLength(1);
     const archiveEntry = archiveEntries[0];
 
-    // Some archives store CRC32, or otherwise it's defaulted to '00000000'
-    expect(archiveEntry.getCrc32()).toBeDefined();
-    expect(archiveEntry.getCrc32WithoutHeader()).toBeDefined();
+    // Some archives store CRC32, or otherwise it won't be defined
     expect(archiveEntry.getMd5()).toEqual(expectedMd5);
     expect(archiveEntry.getMd5WithoutHeader()).toEqual(expectedMd5);
     expect(archiveEntry.getSha1()).toBeUndefined();
@@ -264,8 +262,7 @@ describe('getMd5WithoutHeader', () => {
     expect(archiveEntries).toHaveLength(1);
     const archiveEntry = archiveEntries[0];
 
-    expect(archiveEntry.getCrc32()).toBeDefined();
-    expect(archiveEntry.getCrc32WithoutHeader()).toBeDefined();
+    // Some archives store CRC32, or otherwise it won't be defined
     expect(archiveEntry.getMd5()).toEqual(expectedMd5);
     expect(archiveEntry.getMd5WithoutHeader()).toEqual(expectedMd5);
     expect(archiveEntry.getSha1()).toBeUndefined();
@@ -288,8 +285,7 @@ describe('getMd5WithoutHeader', () => {
       ROMHeader.headerFromFilename(archiveEntries[0].getExtractedFilePath()) as ROMHeader,
     );
 
-    expect(archiveEntry.getCrc32()).toBeDefined();
-    expect(archiveEntry.getCrc32WithoutHeader()).toBeDefined();
+    // Some archives store CRC32, or otherwise it won't be defined
     expect(archiveEntry.getMd5()).toEqual(expectedMd5);
     expect(archiveEntry.getMd5WithoutHeader()).toEqual(expectedMd5);
     expect(archiveEntry.getSha1()).toBeUndefined();
@@ -338,9 +334,7 @@ describe('getSha1', () => {
     expect(archiveEntries).toHaveLength(1);
     const archiveEntry = archiveEntries[0];
 
-    // Some archives store CRC32, or otherwise it's defaulted to '00000000'
-    expect(archiveEntry.getCrc32()).toBeDefined();
-    expect(archiveEntry.getCrc32WithoutHeader()).toBeDefined();
+    // Some archives store CRC32, or otherwise it won't be defined
     expect(archiveEntry.getMd5()).toBeUndefined();
     expect(archiveEntry.getMd5WithoutHeader()).toBeUndefined();
     expect(archiveEntry.getSha1()).toEqual(expectedSha1);
@@ -370,8 +364,7 @@ describe('getSha1WithoutHeader', () => {
     expect(archiveEntries).toHaveLength(1);
     const archiveEntry = archiveEntries[0];
 
-    expect(archiveEntry.getCrc32()).toBeDefined();
-    expect(archiveEntry.getCrc32WithoutHeader()).toBeDefined();
+    // Some archives store CRC32, or otherwise it won't be defined
     expect(archiveEntry.getMd5()).toBeUndefined();
     expect(archiveEntry.getMd5WithoutHeader()).toBeUndefined();
     expect(archiveEntry.getSha1()).toEqual(expectedSha1);
@@ -394,8 +387,7 @@ describe('getSha1WithoutHeader', () => {
       ROMHeader.headerFromFilename(archiveEntries[0].getExtractedFilePath()) as ROMHeader,
     );
 
-    expect(archiveEntry.getCrc32()).toBeDefined();
-    expect(archiveEntry.getCrc32WithoutHeader()).toBeDefined();
+    // Some archives store CRC32, or otherwise it won't be defined
     expect(archiveEntry.getMd5()).toBeUndefined();
     expect(archiveEntry.getMd5WithoutHeader()).toBeUndefined();
     expect(archiveEntry.getSha1()).toEqual(expectedSha1);
