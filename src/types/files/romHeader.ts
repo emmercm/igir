@@ -33,20 +33,20 @@ export default class ROMHeader {
 
   private readonly headeredFileExtension: string;
 
-  private readonly unheaderedFileExtension: string;
+  private readonly headerlessFileExtension: string;
 
   private constructor(
     headerOffsetBytes: number,
     headerValue: string,
     dataOffset: number,
     headeredFileExtension: string,
-    unheaderedFileExtension?: string,
+    headerlessFileExtension?: string,
   ) {
     this.headerOffsetBytes = headerOffsetBytes;
     this.headerValue = headerValue;
     this.dataOffsetBytes = dataOffset;
     this.headeredFileExtension = headeredFileExtension;
-    this.unheaderedFileExtension = unheaderedFileExtension ?? headeredFileExtension;
+    this.headerlessFileExtension = headerlessFileExtension ?? headeredFileExtension;
   }
 
   static getSupportedExtensions(): string[] {
@@ -57,7 +57,7 @@ export default class ROMHeader {
     const headers = Object.values(this.HEADERS);
     for (const header of headers) {
       if (header.headeredFileExtension.toLowerCase() === path.extname(filePath).toLowerCase()
-        || (header.unheaderedFileExtension?.toLowerCase() ?? '') === path.extname(filePath).toLowerCase()
+        || (header.headerlessFileExtension?.toLowerCase() ?? '') === path.extname(filePath).toLowerCase()
       ) {
         return header;
       }
@@ -122,8 +122,8 @@ export default class ROMHeader {
     return this.headeredFileExtension;
   }
 
-  getUnheaderedFileExtension(): string {
-    return this.unheaderedFileExtension;
+  getHeaderlessFileExtension(): string {
+    return this.headerlessFileExtension;
   }
 
   async fileHasHeader(stream: Readable): Promise<boolean> {

@@ -99,14 +99,14 @@ export default class File implements FileProps {
         finalSha1WithHeader = headeredChecksums.sha1 ?? finalSha1WithHeader;
       }
       if (fileProps.fileHeader && checksumBitmask) {
-        const unheaderedChecksums = await this.calculateFileChecksums(
+        const headerlessChecksums = await this.calculateFileChecksums(
           fileProps.filePath,
           checksumBitmask,
           fileProps.fileHeader,
         );
-        finalCrcWithoutHeader = unheaderedChecksums.crc32;
-        finalMd5WithoutHeader = unheaderedChecksums.md5;
-        finalSha1WithoutHeader = unheaderedChecksums.sha1;
+        finalCrcWithoutHeader = headerlessChecksums.crc32;
+        finalMd5WithoutHeader = headerlessChecksums.md5;
+        finalSha1WithoutHeader = headerlessChecksums.sha1;
       }
 
       if (await fsPoly.isSymlink(fileProps.filePath)) {

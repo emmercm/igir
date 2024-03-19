@@ -22,25 +22,25 @@ Those file extensions above are the commonly accepted "correct" extensions and `
 igir [commands..] --dat <dats> --input <input> --header "*.rom"
 ```
 
-`igir` will use this detected header information to compute both "headered" and "un-headered" checksums of ROMs and use both of those to match against DAT files.
+`igir` will use this detected header information to compute both "headered" and "headerless" checksums of ROMs and use both of those to match against DAT files.
 
 !!! warning
 
-    Many DAT groups expressly only include the size and checksum information for the un-headered file, even if the header should not be removed.
+    Many DAT groups expressly only include the size and checksum information for the headerless ROM, even if the header should not be removed.
 
 ## Manual header removal
 
-Some emulators cannot parse ROMs with headers and instead need an "un-headered" version. This seems to be most common with SNES. Sometimes "un-headered" files will have a different file extension:
+Some emulators cannot parse ROMs with headers and instead need a "headerless" version. This seems to be most common with SNES. Sometimes "headerless" files will have a different file extension:
 
-| Console                        | Header        | Headered<br/>Extension | Un-headered<br/>Extension |
-|--------------------------------|---------------|------------------------|---------------------------|
-| Atari 7800                     | A78           | `.a78`                 | N/A                       |
-| Atari Lynx                     | LNX           | `.lnx`                 | `.lyx`                    |
-| Nintendo - NES                 | iNES, NES 2.0 | `.nes`                 | N/A                       |
-| Nintendo - Famicom Disk System | fsNES/FDS     | `.fds`                 | N/A                       |
-| Nintendo - SNES                | SMC           | `.smc`                 | `.sfc`                    |
+| Console                        | Header        | Headered<br/>Extension | Headerless<br/>Extension |
+|--------------------------------|---------------|------------------------|--------------------------|
+| Atari 7800                     | A78           | `.a78`                 | N/A                      |
+| Atari Lynx                     | LNX           | `.lnx`                 | `.lyx`                   |
+| Nintendo - NES                 | iNES, NES 2.0 | `.nes`                 | N/A                      |
+| Nintendo - Famicom Disk System | fsNES/FDS     | `.fds`                 | N/A                      |
+| Nintendo - SNES                | SMC           | `.smc`                 | `.sfc`                   |
 
-For every console that `igir` can understand the headers for, it can also remove them with the `--remove-headers` option. This only makes sense for the consoles above with different "un-headered" extensions, so you have to specify the extensions like this:
+For every console that `igir` can understand the headers for, it can also remove them with the `--remove-headers` option. This only makes sense for the consoles above with different "headerless" extensions, so you have to specify the extensions like this:
 
 ```shell
 igir [commands..] --dat <dats> --input <input> --remove-headers .lnx,.smc
