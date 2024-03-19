@@ -20,9 +20,9 @@
 
 **You should prefer archive formats that have CRC32 checksum information for each file.**
 
-`igir` uses CRC32 information to match ROMs to DAT entries. If an archive already contains CRC32 information for each file, then `igir` won't need to extract each file and compute its CRC32 itself. This can save a lot of time on large files, especially.
+By default, `igir` uses CRC32 information to [match ROMs](../roms/matching.md) to DAT entries. If an archive already contains CRC32 information for each file, then `igir` doesn't need to extract each file and compute its CRC32. This can save a lot of time on large archives.
 
-This is why you should use the [`igir zip` command](../output/writing-archives.md) when organizing your primary ROM collection. It is much faster to scan archives with CRC32 information, speeding up actions such as merging new ROMs into an existing collection.
+This is why you should use the [`igir zip` command](../output/writing-archives.md) when organizing your primary ROM collection. It is much faster for `igir` to scan archives with CRC32 information, speeding up actions such as merging new ROMs into an existing collection.
 
 **You should prefer archive formats that `igir` can extract natively.**
 

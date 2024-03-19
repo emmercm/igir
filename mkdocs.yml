@@ -87,6 +87,7 @@ nav:
           - input/file-scanning.md
           - input/reading-archives.md
       - ROM Processing:
+          - roms/matching.md
           - roms/filtering-preferences.md
           - roms/headers.md
           - roms/patching.md
