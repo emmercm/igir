@@ -130,7 +130,9 @@ export default class CandidatePatchGenerator extends Module {
   ): Promise<[Parent, ReleaseCandidate[]][] | undefined> {
     // Get all patch files relevant to any ROM in the ReleaseCandidate
     const releaseCandidatePatches = unpatchedReleaseCandidate.getRomsWithFiles()
-      .flatMap((romWithFiles) => crcToPatches.get(romWithFiles.getInputFile().getCrc32()))
+      .flatMap((romWithFiles) => romWithFiles.getInputFile())
+      .filter((inputFile) => inputFile.getCrc32() !== undefined)
+      .flatMap((inputFile) => crcToPatches.get(inputFile.getCrc32() as string))
       .filter(ArrayPoly.filterNotNullish);
 
     // No relevant patches found, no new candidates generated

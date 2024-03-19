@@ -117,8 +117,8 @@ describe('asRawFileWithoutCrc', () => {
 
       // Then it should have a size and a dummy CRC
       expect(rawFile.getSize()).toBeGreaterThan(0);
-      expect(rawFile.getCrc32()).toEqual('00000000');
-      expect(rawFile.getCrc32WithoutHeader()).toEqual('00000000');
+      expect(rawFile.getCrc32()).toBeUndefined();
+      expect(rawFile.getCrc32WithoutHeader()).toBeUndefined();
     }
   });
 });

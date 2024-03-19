@@ -417,7 +417,7 @@ describe('zip', () => {
       const writtenRomsAndCrcs = (await Promise.all(outputFiles
         .map(async ([outputPath]) => FileFactory.filesFrom(path.join(outputTemp, outputPath)))))
         .flat()
-        .map((entry) => [entry.toString().replace(outputTemp + path.sep, ''), entry.getCrc32()])
+        .map((entry) => [entry.toString().replace(outputTemp + path.sep, ''), entry.getCrc32() ?? ''])
         .sort((a, b) => a[0].localeCompare(b[0]));
       expect(writtenRomsAndCrcs).toEqual(expectedFilesAndCrcs);
     });
@@ -607,7 +607,7 @@ describe('zip', () => {
       expect(outputFiles).toHaveLength(1);
       const outputFile = path.join(outputTemp, outputFiles[0][0]);
       const writtenRomsAndCrcs = (await FileFactory.filesFrom(outputFile))
-        .map((entry) => [entry.toString().replace(outputTemp + path.sep, ''), entry.getCrc32()])
+        .map((entry) => [entry.toString().replace(outputTemp + path.sep, ''), entry.getCrc32() ?? ''])
         .sort((a, b) => a[0].localeCompare(b[0]));
       expect(writtenRomsAndCrcs).toEqual(expectedFilesAndCrcs);
     });
@@ -846,7 +846,7 @@ describe('extract', () => {
       const writtenRomsAndCrcs = (await Promise.all(outputFiles
         .map(async ([outputPath]) => FileFactory.filesFrom(path.join(outputTemp, outputPath)))))
         .flat()
-        .map((entry) => [entry.toString().replace(outputTemp + path.sep, ''), entry.getCrc32()])
+        .map((entry) => [entry.toString().replace(outputTemp + path.sep, ''), entry.getCrc32() ?? ''])
         .sort((a, b) => a[0].localeCompare(b[0]));
       expect(writtenRomsAndCrcs).toEqual(expectedFilesAndCrcs);
     });
@@ -1199,7 +1199,7 @@ describe('raw', () => {
       const writtenRomsAndCrcs = (await Promise.all(outputFiles
         .map(async ([outputPath]) => FileFactory.filesFrom(path.join(outputTemp, outputPath)))))
         .flat()
-        .map((entry) => [entry.toString().replace(outputTemp + path.sep, ''), entry.getCrc32()])
+        .map((entry) => [entry.toString().replace(outputTemp + path.sep, ''), entry.getCrc32() ?? ''])
         .sort((a, b) => a[0].localeCompare(b[0]));
       expect(writtenRomsAndCrcs).toEqual(expectedFilesAndCrcs);
     });
