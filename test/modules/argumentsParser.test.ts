@@ -10,6 +10,7 @@ import ArgumentsParser from '../../src/modules/argumentsParser.js';
 import FsPoly from '../../src/polyfill/fsPoly.js';
 import Header from '../../src/types/dats/logiqx/header.js';
 import LogiqxDAT from '../../src/types/dats/logiqx/logiqxDat.js';
+import { ChecksumBitmask } from '../../src/types/files/fileChecksums.js';
 import { GameSubdirMode, MergeMode } from '../../src/types/options.js';
 
 const dummyRequiredArgs = ['--input', os.devNull, '--output', os.devNull];
@@ -105,7 +106,8 @@ describe('options', () => {
     expect(options.shouldClean()).toEqual(false);
     expect(options.shouldReport()).toEqual(false);
 
-    expect(options.getInputPaths()).toEqual([]);
+    expect(options.getInputPaths()).toEqual([os.devNull]);
+    expect(options.getInputMinChecksum()).toEqual(ChecksumBitmask.CRC32);
 
     expect(options.getDatNameRegex()).toBeUndefined();
     expect(options.getDatNameRegexExclude()).toBeUndefined();
@@ -216,6 +218,16 @@ describe('options', () => {
     expect((await argumentsParser.parse(['copy', '--input', './src', '--output', os.devNull, '-I', 'nonexistentfile']).scanInputFilesWithoutExclusions()).length).toBeGreaterThan(0);
     expect((await argumentsParser.parse(['copy', '--input', './src', '--output', os.devNull, '--input-exclude', './src']).scanInputFilesWithoutExclusions()).length).toEqual(0);
     expect((await argumentsParser.parse(['copy', '--input', './src', '--output', os.devNull, '--input-exclude', './src']).scanInputFilesWithoutExclusions()).length).toEqual(0);
+  });
+
+  it('should parse "input-min-checksum', () => {
+    expect(argumentsParser.parse(dummyCommandAndRequiredArgs).getInputMinChecksum())
+      .toEqual(ChecksumBitmask.CRC32);
+    expect(() => argumentsParser.parse([...dummyCommandAndRequiredArgs, '--input-min-checksum', 'foobar']).getInputMinChecksum()).toThrow(/invalid values/i);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--input-min-checksum', 'CRC32']).getInputMinChecksum()).toEqual(ChecksumBitmask.CRC32);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--input-min-checksum', 'MD5']).getInputMinChecksum()).toEqual(ChecksumBitmask.MD5);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--input-min-checksum', 'SHA1']).getInputMinChecksum()).toEqual(ChecksumBitmask.SHA1);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--input-min-checksum', 'SHA1', '--input-min-checksum', 'CRC32']).getInputMinChecksum()).toEqual(ChecksumBitmask.CRC32);
   });
 
   it('should parse "dat"', async () => {
