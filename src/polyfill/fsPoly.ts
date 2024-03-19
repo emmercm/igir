@@ -6,7 +6,6 @@ import util from 'node:util';
 
 import { isNotJunk } from 'junk';
 import nodeDiskInfo from 'node-disk-info';
-import semver from 'semver';
 
 import ArrayPoly from './arrayPoly.js';
 
@@ -321,17 +320,11 @@ export default class FsPoly {
 
     // Added in: v10.0.0
     if (await this.isDirectory(pathLike)) {
-      // DEP0147
-      if (semver.lt(process.version, '16.0.0')) {
-        // Added in: v10.0.0
-        await util.promisify(fs.rmdir)(pathLike, optionsWithRetry);
-      } else {
-        // Added in: v14.14.0
-        await util.promisify(fs.rm)(pathLike, {
-          ...optionsWithRetry,
-          recursive: true,
-        });
-      }
+      // Added in: v14.14.0
+      await util.promisify(fs.rm)(pathLike, {
+        ...optionsWithRetry,
+        recursive: true,
+      });
     } else {
       // Added in: v10.0.0
       await util.promisify(fs.unlink)(pathLike);

@@ -1,6 +1,6 @@
 clrmamepro (
-	name "Unheadered"
-	description "Unheadered"
+	name "Headerless"
+	description "Headerless"
 	version 20240307
 	author emmercm
 )

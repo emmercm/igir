@@ -34,9 +34,9 @@ export default class File implements FileProps {
   readonly size: number;
 
   @Expose()
-  readonly crc32: string;
+  readonly crc32?: string;
 
-  readonly crc32WithoutHeader: string;
+  readonly crc32WithoutHeader?: string;
 
   @Expose()
   readonly md5?: string;
@@ -57,8 +57,8 @@ export default class File implements FileProps {
   protected constructor(fileProps: FileProps) {
     this.filePath = path.normalize(fileProps.filePath);
     this.size = fileProps.size ?? 0;
-    this.crc32 = (fileProps.crc32 ?? '').toLowerCase().replace(/^0x/, '').padStart(8, '0');
-    this.crc32WithoutHeader = (fileProps.crc32WithoutHeader ?? '').toLowerCase().replace(/^0x/, '').padStart(8, '0');
+    this.crc32 = fileProps.crc32?.toLowerCase().replace(/^0x/, '').padStart(8, '0');
+    this.crc32WithoutHeader = fileProps.crc32WithoutHeader?.toLowerCase().replace(/^0x/, '').padStart(8, '0');
     this.md5 = fileProps.md5?.toLowerCase().replace(/^0x/, '').padStart(32, '0');
     this.md5WithoutHeader = fileProps.md5WithoutHeader?.toLowerCase().replace(/^0x/, '').padStart(32, '0');
     this.sha1 = fileProps.sha1?.toLowerCase().replace(/^0x/, '').padStart(40, '0');
@@ -107,14 +107,14 @@ export default class File implements FileProps {
         finalSha1WithHeader = headeredChecksums.sha1 ?? finalSha1WithHeader;
       }
       if (fileProps.fileHeader && checksumBitmask) {
-        const unheaderedChecksums = await this.calculateFileChecksums(
+        const headerlessChecksums = await this.calculateFileChecksums(
           fileProps.filePath,
           checksumBitmask,
           fileProps.fileHeader,
         );
-        finalCrcWithoutHeader = unheaderedChecksums.crc32;
-        finalMd5WithoutHeader = unheaderedChecksums.md5;
-        finalSha1WithoutHeader = unheaderedChecksums.sha1;
+        finalCrcWithoutHeader = headerlessChecksums.crc32;
+        finalMd5WithoutHeader = headerlessChecksums.md5;
+        finalSha1WithoutHeader = headerlessChecksums.sha1;
       }
 
       if (await fsPoly.isSymlink(fileProps.filePath)) {
@@ -179,11 +179,11 @@ export default class File implements FileProps {
     return path.basename(this.filePath);
   }
 
-  getCrc32(): string {
+  getCrc32(): string | undefined {
     return this.crc32;
   }
 
-  getCrc32WithoutHeader(): string {
+  getCrc32WithoutHeader(): string | undefined {
     return this.crc32WithoutHeader;
   }
 
@@ -219,8 +219,8 @@ export default class File implements FileProps {
     return URLPoly.canParse(this.getFilePath());
   }
 
-  protected getChecksumBitmask(): number {
-    return (this.getCrc32().replace(/^0+|0+$/, '') ? ChecksumBitmask.CRC32 : 0)
+  public getChecksumBitmask(): number {
+    return (this.getCrc32()?.replace(/^0+|0+$/, '') ? ChecksumBitmask.CRC32 : 0)
       | (this.getMd5()?.replace(/^0+|0+$/, '') ? ChecksumBitmask.MD5 : 0)
       | (this.getSha1()?.replace(/^0+|0+$/, '') ? ChecksumBitmask.SHA1 : 0);
   }
