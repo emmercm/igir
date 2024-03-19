@@ -238,10 +238,14 @@ export default class CandidateWriter extends Module {
         return map;
       }, new Map<string, ArchiveEntry<Zip>>());
 
+    const checksumBitmask = expectedArchiveEntries.reduce(
+      (bitmask, entry) => bitmask | entry.getChecksumBitmask(),
+      ChecksumBitmask.CRC32,
+    );
+
     let archiveEntries: ArchiveEntry<Zip>[];
     try {
-      // TODO(cemmer): test with the highest level checksum available?
-      archiveEntries = await new Zip(zipFilePath).getArchiveEntries(ChecksumBitmask.CRC32);
+      archiveEntries = await new Zip(zipFilePath).getArchiveEntries(checksumBitmask);
     } catch (error) {
       return `failed to get archive contents: ${error}`;
     }
@@ -251,7 +255,6 @@ export default class CandidateWriter extends Module {
         map.set(entry.getEntryPath(), entry);
         return map;
       }, new Map<string, ArchiveEntry<Zip>>());
-
     if (actualEntriesByPath.size !== expectedEntriesByPath.size) {
       return `has ${actualEntriesByPath.size.toLocaleString()} files, expected ${expectedEntriesByPath.size.toLocaleString()}`;
     }
@@ -272,8 +275,23 @@ export default class CandidateWriter extends Module {
         continue;
       }
       const actualFile = actualEntriesByPath.get(entryPath) as ArchiveEntry<Zip>;
-      if (actualFile.getCrc32() !== expectedFile.getCrc32()) {
-        return `has the file ${entryPath} with the CRC ${actualFile.getCrc32()}, expected ${expectedFile.getCrc32()}`;
+      if (actualFile.getSha1()
+        && expectedFile.getSha1()
+        && actualFile.getSha1() !== expectedFile.getSha1()
+      ) {
+        return `has the SHA1 ${actualFile.getSha1()}, expected ${expectedFile.getSha1()}`;
+      }
+      if (actualFile.getMd5()
+        && expectedFile.getMd5()
+        && actualFile.getMd5() !== expectedFile.getMd5()
+      ) {
+        return `has the MD5 ${actualFile.getMd5()}, expected ${expectedFile.getMd5()}`;
+      }
+      if (actualFile.getCrc32()
+        && expectedFile.getCrc32()
+        && actualFile.getCrc32() !== expectedFile.getCrc32()
+      ) {
+        return `has the CRC32 ${actualFile.getCrc32()}, expected ${expectedFile.getCrc32()}`;
       }
 
       // Check size
