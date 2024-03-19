@@ -29,12 +29,12 @@ describe('commands', () => {
 
   it('should throw on conflicting commands', () => {
     expect(() => argumentsParser.parse(['copy', 'move', ...dummyRequiredArgs])).toThrow(/unknown command/i);
-    expect(() => argumentsParser.parse(['copy', 'symlink', ...dummyRequiredArgs])).toThrow(/unknown command/i);
-    expect(() => argumentsParser.parse(['move', 'symlink', ...dummyRequiredArgs])).toThrow(/unknown command/i);
+    expect(() => argumentsParser.parse(['copy', 'link', ...dummyRequiredArgs])).toThrow(/unknown command/i);
+    expect(() => argumentsParser.parse(['move', 'link', ...dummyRequiredArgs])).toThrow(/unknown command/i);
 
     expect(() => argumentsParser.parse(['extract', 'zip', ...dummyRequiredArgs])).toThrow(/unknown command/i);
-    expect(() => argumentsParser.parse(['extract', 'symlink', ...dummyRequiredArgs])).toThrow(/unknown command/i);
-    expect(() => argumentsParser.parse(['zip', 'symlink', ...dummyRequiredArgs])).toThrow(/unknown command/i);
+    expect(() => argumentsParser.parse(['extract', 'link', ...dummyRequiredArgs])).toThrow(/unknown command/i);
+    expect(() => argumentsParser.parse(['zip', 'link', ...dummyRequiredArgs])).toThrow(/unknown command/i);
   });
 
   it('should throw on commands requiring other commands', () => {
@@ -544,6 +544,7 @@ describe('options', () => {
     expect(argumentsParser.parse(['symlink', ...dummyRequiredArgs, '--symlink', 'false', '--symlink', 'true']).getSymlink()).toEqual(true);
     expect(argumentsParser.parse(['symlink', ...dummyRequiredArgs, '--symlink', 'true', '--symlink', 'false']).getSymlink()).toEqual(false);
 
+    expect(() => argumentsParser.parse([...dummyCommandAndRequiredArgs, '--symlink']).getSymlink()).toThrow(/missing required command/i);
     expect(argumentsParser.parse(['link', ...dummyRequiredArgs]).getSymlink()).toEqual(false);
     expect(argumentsParser.parse(['link', ...dummyRequiredArgs, '--symlink']).getSymlink()).toEqual(true);
     expect(argumentsParser.parse(['link', ...dummyRequiredArgs, '--symlink', 'true']).getSymlink()).toEqual(true);
