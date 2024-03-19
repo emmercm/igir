@@ -17,11 +17,11 @@ test.each([
   [[
     'test/fixtures/roms/headered',
     'test/fixtures/roms/patchable/*',
-    'test/fixtures/roms/unheadered/**/*',
+    'test/fixtures/roms/headerless/**/*',
   ], {
     headered: 6,
     patchable: 9,
-    unheadered: 1,
+    headerless: 1,
   }],
 ])('should infer DATs: %s', async (input, expected) => {
   // Given

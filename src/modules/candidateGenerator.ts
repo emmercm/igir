@@ -120,7 +120,7 @@ export default class CandidateGenerator extends Module {
          * WARN(cemmer): {@link inputFile} may not be an exact match for {@link rom}. There are two
          * situations we can be in:
          *  - {@link rom} is headered and so is {@link inputFile}, so we have an exact match
-         *  - {@link rom} is unheadered but {@link inputFile} is headered, because we know how to
+         *  - {@link rom} is headerless but {@link inputFile} is headered, because we know how to
          *    remove headers from ROMs - but we can't remove headers in all writing modes!
          */
 
