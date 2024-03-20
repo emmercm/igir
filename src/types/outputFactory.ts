@@ -488,7 +488,7 @@ export default class OutputFactory {
       return `${game.getName()}.zip`;
     }
 
-    const romBasename = this.getRomBasename(options, dat, rom, inputFile);
+    const romBasename = this.getRomBasename(game, rom, inputFile);
 
     if (
       !(inputFile instanceof ArchiveEntry || FileFactory.isArchive(inputFile.getFilePath()))
@@ -512,7 +512,7 @@ export default class OutputFactory {
     rom: ROM,
     inputFile: File,
   ): string {
-    const romBasename = this.getRomBasename(options, dat, rom, inputFile);
+    const romBasename = this.getRomBasename(game, rom, inputFile);
     if (!options.shouldZipFile(rom.getName())) {
       return romBasename;
     }
@@ -527,16 +527,11 @@ export default class OutputFactory {
   }
 
   private static getRomBasename(
-    options: Options,
-    dat: DAT,
+    game: Game,
     rom: ROM,
     inputFile: File,
   ): string {
-    let romNameSanitized = rom.getName();
-    if (!dat.getRomNamesContainDirectories()) {
-      romNameSanitized = romNameSanitized?.replace(/[\\/]/g, '_');
-    }
-
+    const romNameSanitized = rom.getName().replace(/[\\/]/g, path.sep);
     const { base, ...parsedRomPath } = path.parse(romNameSanitized);
 
     // Alter the output extension of the file
