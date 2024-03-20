@@ -27,7 +27,13 @@ export default abstract class DAT {
     this.getGames()
       .filter((game) => game.isParent())
       .forEach((game: Game) => {
-        gameNamesToParents.set(game.getName(), new Parent(game));
+        const parent = gameNamesToParents.get(game.getName());
+        if (parent) {
+          // Two games have the same name, assume this one is a clone
+          parent.addChild(game);
+        } else {
+          gameNamesToParents.set(game.getName(), new Parent(game));
+        }
       });
 
     // Find all clones
