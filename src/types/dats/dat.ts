@@ -88,16 +88,6 @@ export default abstract class DAT {
     return this.getHeader().getDescription();
   }
 
-  @Memoize()
-  getRomNamesContainDirectories(): boolean {
-    return this.getHeader().getRomNamesContainDirectories() ?? (
-      // Assume BIOS DATs know what they're doing with path characters
-      this.isBiosDat()
-      // At least 50% of games have at least one ROM with path characters
-      || this.getGames().filter((game) => game.getRoms().some((rom) => rom.getName().match(/[\\/]/) !== null)).length > this.getGames().length / 2
-    );
-  }
-
   /**
    * Get a No-Intro style filename.
    */
