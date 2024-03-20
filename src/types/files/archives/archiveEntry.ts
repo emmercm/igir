@@ -163,7 +163,7 @@ export default class ArchiveEntry<A extends Archive> extends File implements Arc
     // the stream start point
     if (this.getSize() > Constants.MAX_MEMORY_FILE_SIZE || start > 0) {
       return this.extractToTempFile(
-        async (tempFile) => File.createStreamFromFile(tempFile, start, callback),
+        async (tempFile) => File.createStreamFromFile(tempFile, callback, start),
       );
     }
 

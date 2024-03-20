@@ -170,7 +170,9 @@ export default class SingleBarFormatted {
 
     const etaSecondsInt = Math.ceil(etaSeconds);
     const secondsRounded = 5 * Math.round(etaSecondsInt / 5);
-    if (secondsRounded >= 3600) {
+    if (secondsRounded >= 86_400) {
+      this.lastEtaValue = SingleBarFormatted.getEtaFormattedDays(secondsRounded);
+    } else if (secondsRounded >= 3600) {
       this.lastEtaValue = SingleBarFormatted.getEtaFormattedHours(secondsRounded);
     } else if (secondsRounded >= 60) {
       this.lastEtaValue = SingleBarFormatted.getEtaFormattedMinutes(secondsRounded);
@@ -180,6 +182,14 @@ export default class SingleBarFormatted {
       this.lastEtaValue = `${etaSecondsInt}s`;
     }
     return this.lastEtaValue;
+  }
+
+  private static getEtaFormattedDays(secondsRounded: number): string {
+    const hours = Math.floor((secondsRounded % 86_400) / 3600);
+    if (hours > 0) {
+      return `${Math.floor(secondsRounded / 86_400)}d${hours}h`;
+    }
+    return `${Math.floor(secondsRounded / 86_400)}d`;
   }
 
   private static getEtaFormattedHours(secondsRounded: number): string {
