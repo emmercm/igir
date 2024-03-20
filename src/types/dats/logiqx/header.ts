@@ -78,7 +78,7 @@ export default class Header implements HeaderOptions {
   @Transform(({ value }) => value || undefined)
   readonly clrMamePro?: ClrMamePro;
 
-  readonly romNamesContainDirectories: boolean = true;
+  readonly romNamesContainDirectories?: boolean;
 
   constructor(options?: HeaderOptions) {
     this.name = options?.name ?? '';
@@ -89,10 +89,7 @@ export default class Header implements HeaderOptions {
     this.url = options?.url;
     this.comment = options?.comment;
     this.clrMamePro = options?.clrMamePro;
-
-    this.romNamesContainDirectories = options?.romNamesContainDirectories !== undefined
-      ? options?.romNamesContainDirectories
-      : false;
+    this.romNamesContainDirectories = options?.romNamesContainDirectories;
   }
 
   /**
@@ -132,7 +129,7 @@ export default class Header implements HeaderOptions {
     return this.clrMamePro;
   }
 
-  getRomNamesContainDirectories(): boolean {
+  getRomNamesContainDirectories(): boolean | undefined {
     return this.romNamesContainDirectories;
   }
 

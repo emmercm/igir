@@ -410,10 +410,12 @@ export default class ArgumentsParser {
         }
         const needOutput = ['copy', 'move', 'extract', 'zip', 'clean'].filter((command) => checkArgv._.includes(command));
         if (!checkArgv.output && needOutput.length > 0) {
-          throw new Error(`Missing required option for command${needOutput.length !== 1 ? 's' : ''} ${needOutput.join(', ')}: --output`);
+          // TODO(cememr): print help message
+          throw new Error(`Missing required option for command${needOutput.length !== 1 ? 's' : ''} ${needOutput.join(', ')}: --output <path>`);
         }
         const needClean = ['clean-exclude', 'clean-dry-run'].filter((option) => checkArgv[option]);
         if (!checkArgv._.includes('clean') && needClean.length > 0) {
+          // TODO(cememr): print help message
           throw new Error(`Missing required command for option${needClean.length !== 1 ? 's' : ''} ${needClean.join(', ')}: clean`);
         }
         return true;
