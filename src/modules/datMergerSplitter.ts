@@ -2,7 +2,6 @@ import ProgressBar, { ProgressBarSymbol } from '../console/progressBar.js';
 import ArrayPoly from '../polyfill/arrayPoly.js';
 import DAT from '../types/dats/dat.js';
 import Game from '../types/dats/game.js';
-import Header from '../types/dats/logiqx/header.js';
 import LogiqxDAT from '../types/dats/logiqx/logiqxDat.js';
 import Machine from '../types/dats/mame/machine.js';
 import Parent from '../types/dats/parent.js';
@@ -50,10 +49,7 @@ export default class DATMergerSplitter extends Module {
 
     const newGames = dat.getParents()
       .flatMap((parent) => this.mergeParent(dat, parent, gameNamesToGames));
-    const newDat = new LogiqxDAT(new Header({
-      ...dat.getHeader(),
-      romNamesContainDirectories: this.options.getMergeRoms() === MergeMode.MERGED,
-    }), newGames);
+    const newDat = new LogiqxDAT(dat.getHeader(), newGames);
     this.progressBar.logTrace(`${newDat.getNameShort()}: merged/split to ${newDat.getGames().length.toLocaleString()} game${newDat.getGames().length !== 1 ? 's' : ''}`);
 
     this.progressBar.logTrace(`${newDat.getNameShort()}: done merging & splitting`);

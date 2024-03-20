@@ -150,7 +150,7 @@ export default class CandidatePatchGenerator extends Module {
                 entryPath: unpatchedReleaseCandidate.getRomsWithFiles().length === 1
                   ? extractedFileName
                   : outputFile.getEntryPath(),
-                size: patch.getSizeAfter() ?? 0,
+                size: patch.getSizeAfter(),
                 crc32: patch.getCrcAfter(),
                 fileHeader: outputFile.getFileHeader(),
                 patch: outputFile.getPatch(),
@@ -159,7 +159,7 @@ export default class CandidatePatchGenerator extends Module {
               const dirName = path.dirname(outputFile.getFilePath());
               outputFile = await File.fileOf({
                 filePath: path.join(dirName, extractedFileName),
-                size: patch.getSizeAfter() ?? 0,
+                size: patch.getSizeAfter(),
                 crc32: patch.getCrcAfter(),
                 fileHeader: outputFile.getFileHeader(),
                 patch: outputFile.getPatch(),
@@ -167,13 +167,10 @@ export default class CandidatePatchGenerator extends Module {
             }
 
             // Build a new ROM from the output file's info
-            let romName = path.basename(outputFile.getExtractedFilePath());
-            if (dat.getRomNamesContainDirectories()) {
-              romName = path.join(
-                path.dirname(rom.getName().replace(/[\\/]/g, path.sep)),
-                romName,
-              );
-            }
+            const romName = path.join(
+              path.dirname(rom.getName().replace(/[\\/]/g, path.sep)),
+              path.basename(outputFile.getExtractedFilePath()),
+            );
             rom = new ROM({
               name: romName,
               size: outputFile.getSize(),
@@ -187,13 +184,10 @@ export default class CandidatePatchGenerator extends Module {
         }));
 
       // Build a new Game from the ROM's info
-      let gameName = patchedRomName;
-      if (dat.getRomNamesContainDirectories()) {
-        gameName = path.join(
-          path.dirname(unpatchedReleaseCandidate.getGame().getName().replace(/[\\/]/g, path.sep)),
-          gameName,
-        );
-      }
+      const gameName = path.join(
+        path.dirname(unpatchedReleaseCandidate.getGame().getName().replace(/[\\/]/g, path.sep)),
+        patchedRomName,
+      );
       const patchedGame = unpatchedReleaseCandidate.getGame().withProps({
         name: gameName,
       });

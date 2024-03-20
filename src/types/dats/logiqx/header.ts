@@ -41,11 +41,6 @@ interface HeaderOptions {
   readonly comment?: string;
   readonly clrMamePro?: ClrMamePro;
   // readonly romCenter?: RomCenter;
-
-  /**
-   * igir-custom properties.
-   */
-  readonly romNamesContainDirectories?: boolean;
 }
 
 /**
@@ -78,8 +73,6 @@ export default class Header implements HeaderOptions {
   @Transform(({ value }) => value || undefined)
   readonly clrMamePro?: ClrMamePro;
 
-  readonly romNamesContainDirectories: boolean = true;
-
   constructor(options?: HeaderOptions) {
     this.name = options?.name ?? '';
     this.description = options?.description;
@@ -89,10 +82,6 @@ export default class Header implements HeaderOptions {
     this.url = options?.url;
     this.comment = options?.comment;
     this.clrMamePro = options?.clrMamePro;
-
-    this.romNamesContainDirectories = options?.romNamesContainDirectories !== undefined
-      ? options?.romNamesContainDirectories
-      : false;
   }
 
   /**
@@ -130,10 +119,6 @@ export default class Header implements HeaderOptions {
 
   getClrMamePro(): ClrMamePro | undefined {
     return this.clrMamePro;
-  }
-
-  getRomNamesContainDirectories(): boolean {
-    return this.romNamesContainDirectories;
   }
 
   // Computed getters

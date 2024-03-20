@@ -58,63 +58,6 @@ test.each([
   });
 });
 
-describe('ROM names with directories', () => {
-  const rom = new ROM({ name: 'subdir\\file.rom', size: 0, crc32: '00000000' });
-  const game = new Game({ name: 'Game', rom: [rom] });
-
-  describe('command: zip', () => {
-    const options = new Options({ commands: ['copy', 'zip'], output: os.devNull });
-
-    test.each([
-      [true, path.join('subdir', 'file.rom')],
-      [false, 'subdir_file.rom'],
-    ])('should respect romNamesContainDirectories: %s', async (romNamesContainDirectories, expectedEntryPath) => {
-      const dat = new LogiqxDAT(new Header({ romNamesContainDirectories }), [game]);
-
-      const outputPath = OutputFactory.getPath(
-        options,
-        dat,
-        game,
-        dummyRelease,
-        rom,
-        await rom.toFile(),
-      );
-      expect(outputPath).toEqual({
-        root: '',
-        dir: os.devNull,
-        base: '',
-        name: 'Game',
-        ext: '.zip',
-        entryPath: expectedEntryPath,
-      });
-    });
-  });
-
-  describe.each([
-    [['copy']],
-    [['copy', 'extract']],
-  ])('commands: %s', (commands) => {
-    const options = new Options({ commands, output: os.devNull });
-
-    test.each([
-      [true, path.join(os.devNull, 'subdir', 'file.rom')],
-      [false, path.join(os.devNull, 'subdir_file.rom')],
-    ])('should respect romNamesContainDirectories: %s', async (romNamesContainDirectories, expectedFormattedPath) => {
-      const dat = new LogiqxDAT(new Header({ romNamesContainDirectories }), [game]);
-
-      const outputPath = OutputFactory.getPath(
-        options,
-        dat,
-        game,
-        dummyRelease,
-        rom,
-        await rom.toFile(),
-      );
-      expect(outputPath.format()).toEqual(expectedFormattedPath);
-    });
-  });
-});
-
 describe('token replacement', () => {
   test.each([
     ['foo/{datName}/bar', path.join('foo', 'DAT _ Name', 'bar', 'Dummy.rom')],
