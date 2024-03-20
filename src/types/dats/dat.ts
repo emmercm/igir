@@ -28,7 +28,13 @@ export default abstract class DAT {
     this.getGames()
       .filter((game) => game.isParent())
       .forEach((game: Game) => {
-        gameNamesToParents.set(game.getName(), new Parent(game));
+        const parent = gameNamesToParents.get(game.getName());
+        if (parent) {
+          // Two games have the same name, assume this one is a clone
+          parent.addChild(game);
+        } else {
+          gameNamesToParents.set(game.getName(), new Parent(game));
+        }
       });
 
     // Find all clones
@@ -87,16 +93,6 @@ export default abstract class DAT {
 
   getDescription(): string | undefined {
     return this.getHeader().getDescription();
-  }
-
-  @Memoize()
-  getRomNamesContainDirectories(): boolean {
-    return this.getHeader().getRomNamesContainDirectories() ?? (
-      // Assume BIOS DATs know what they're doing with path characters
-      this.isBiosDat()
-      // At least 50% of games have at least one ROM with path characters
-      || this.getGames().filter((game) => game.getRoms().some((rom) => rom.getName().match(/[\\/]/) !== null)).length > this.getGames().length / 2
-    );
   }
 
   /**

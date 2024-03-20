@@ -390,20 +390,20 @@ describe('with explicit DATs', () => {
       });
 
       expect(result.outputFilesAndCrcs).toEqual([
-        // Note: the "Headerless" DAT is alphabetically after the "Headered" DAT, so headerless
+        // Note: the "Headered" DAT is alphabetically before the "Headerless" DAT, so headered
         //  ROMs of the same name are preferred.
         [path.join('igir combined', '0F09A40.rom'), '2f943e86'],
         [path.join('igir combined', '3708F2C.rom'), '20891c9f'],
         [path.join('igir combined', '612644F.rom'), 'f7591b29'],
         [path.join('igir combined', '65D1206.rom'), '20323455'],
         [path.join('igir combined', '92C85C9.rom'), '06692159'],
-        [path.join('igir combined', 'allpads.nes'), '6339abe6'],
+        [path.join('igir combined', 'allpads.nes'), '9180a163'],
         [path.join('igir combined', 'Before.rom'), '0361b321'],
         [path.join('igir combined', 'Best.rom'), '1e3d78cf'],
         [path.join('igir combined', 'C01173E.rom'), 'dfaebe28'],
         [path.join('igir combined', 'color_test.nes'), 'c9c1b7aa'],
-        [path.join('igir combined', 'diagnostic_test_cartridge.a78'), 'a1eaa7c1'],
-        [path.join('igir combined', 'fds_joypad_test.fds'), '3ecbac61'],
+        [path.join('igir combined', 'diagnostic_test_cartridge.a78'), 'f6cc9b1c'],
+        [path.join('igir combined', 'fds_joypad_test.fds'), '1e58456d'],
         [path.join('igir combined', 'Fizzbuzz.nes'), '370517b5'],
         [path.join('igir combined', 'Foobar.lnx'), 'b22c9747'],
         [path.join('igir combined', 'Hardware Target Game Database', 'Dummy', 'Fizzbuzz.nes'), '370517b5'],
@@ -413,11 +413,13 @@ describe('with explicit DATs', () => {
         [path.join('igir combined', 'Hardware Target Game Database', 'Patchable', '65D1206.rom'), '20323455'],
         [path.join('igir combined', 'Hardware Target Game Database', 'Patchable', 'C01173E.rom'), 'dfaebe28'],
         [path.join('igir combined', 'KDULVQN.rom'), 'b1c303e4'],
+        [path.join('igir combined', 'LCDTestROM.lnx'), '2d251538'],
         [path.join('igir combined', 'LCDTestROM.lyx'), '42583855'],
         [path.join('igir combined', 'Lorem Ipsum.rom'), '70856527'],
         [path.join('igir combined', 'One Three', 'One.rom'), 'f817a89f'],
         [path.join('igir combined', 'One Three', 'Three.rom'), 'ff46c5d8'],
         [path.join('igir combined', 'speed_test_v51.sfc'), '8beffd94'],
+        [path.join('igir combined', 'speed_test_v51.smc'), '9adca6cc'],
         [path.join('igir combined', 'Three Four Five', 'Five.rom'), '3e5daf67'],
         [path.join('igir combined', 'Three Four Five', 'Four.rom'), '1cf3ca74'],
         [path.join('igir combined', 'Three Four Five', 'Three.rom'), 'ff46c5d8'],
@@ -430,6 +432,7 @@ describe('with explicit DATs', () => {
         path.join('headered', 'color_test.nintendoentertainmentsystem'),
         path.join('headered', 'diagnostic_test_cartridge.a78.7z'),
         path.join('headered', 'fds_joypad_test.fds.zip'),
+        path.join('headered', 'speed_test_v51.smc'),
         path.join('headerless', 'speed_test_v51.sfc.gz'),
         path.join('patchable', '0F09A40.rom'),
         path.join('patchable', '3708F2C.rom'),

@@ -384,7 +384,6 @@ export default class DATScanner extends Scanner {
     return new LogiqxDAT(new Header({
       name: datName,
       description: datName,
-      romNamesContainDirectories: true,
     }), games);
   }
 
