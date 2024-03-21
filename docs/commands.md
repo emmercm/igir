@@ -63,7 +63,7 @@ After performing one of the ROM writing commands, verify that the file was writt
 
 ### `clean`
 
-Files in the output directory that do not match any ROM in any [DAT](dats/introduction.md) will be deleted.
+Files in the output directory that do not [match any ROM](roms/matching.md) in any [DAT](dats/introduction.md) will be deleted.
 
 See the [output cleaning page](output/cleaning.md) for more information.
 
@@ -71,6 +71,6 @@ See the [output cleaning page](output/cleaning.md) for more information.
 
 ### `report`
 
-A report will be generated of what input files were matched by what DAT, and what games in what [DATs](dats/introduction.md) have missing ROMs.
+A report will be generated of what [input files were matched](roms/matching.md) by what [DAT](dats/introduction.md), and what games in what DATs have missing ROMs.
 
 See the [reporting page](output/reporting.md) for more information.

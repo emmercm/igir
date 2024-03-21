@@ -64,7 +64,7 @@ There have been a few DAT-like formats developed over the years. `igir` supports
           ```
 
 - [CMPro](http://www.logiqx.com/DatFAQs/CMPro.php)
-- [Hardware Target Game Database](https://github.com/frederic-mahe/Hardware-Target-Game-Database) SMDBs that contain file sizes
+- [Hardware Target Game Database](https://github.com/frederic-mahe/Hardware-Target-Game-Database) SMDBs
 
 !!! tip
 
