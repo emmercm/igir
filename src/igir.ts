@@ -231,13 +231,14 @@ export default class Igir {
   }
 
   private determineScanningBitmask(dats: DAT[]): number {
-    let matchChecksum = this.options.getInputMinChecksum() ?? ChecksumBitmask.CRC32;
+    const minimumChecksum = this.options.getInputMinChecksum() ?? ChecksumBitmask.CRC32;
+    let matchChecksum = minimumChecksum;
 
     if (this.options.shouldDir2Dat()) {
       Object.keys(ChecksumBitmask)
         .filter((bitmask): bitmask is keyof typeof ChecksumBitmask => Number.isNaN(Number(bitmask)))
         // Has not been enabled yet
-        .filter((bitmask) => ChecksumBitmask[bitmask] > 0)
+        .filter((bitmask) => ChecksumBitmask[bitmask] > minimumChecksum)
         .filter((bitmask) => !(matchChecksum & ChecksumBitmask[bitmask]))
         .forEach((bitmask) => {
           matchChecksum |= ChecksumBitmask[bitmask];
@@ -250,7 +251,7 @@ export default class Igir {
       Object.keys(ChecksumBitmask)
         .filter((bitmask): bitmask is keyof typeof ChecksumBitmask => Number.isNaN(Number(bitmask)))
         // Has not been enabled yet
-        .filter((bitmask) => ChecksumBitmask[bitmask] > 0)
+        .filter((bitmask) => ChecksumBitmask[bitmask] > minimumChecksum)
         .filter((bitmask) => !(matchChecksum & ChecksumBitmask[bitmask]))
         // Should be enabled for this DAT
         .filter((bitmask) => datMinimumBitmask & ChecksumBitmask[bitmask])
