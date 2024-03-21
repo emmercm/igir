@@ -767,6 +767,11 @@ export default class ArgumentsParser {
           middlewareArgv.datThreads = 1;
         }
       }, true)
+      .option('disable-cache', {
+        group: groupHelpDebug,
+        description: 'Disable the file and archive entry checksum cache',
+        type: 'boolean',
+      })
       .option('verbose', {
         group: groupHelpDebug,
         alias: 'v',
