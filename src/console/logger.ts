@@ -146,7 +146,7 @@ export default class Logger {
         .replace(new RegExp(`(${Constants.COMMAND_NAME}) (( ?[a-z0-9])+)`, 'g'), `$1 ${chalk.magenta('$2')}`)
 
         .replace(/(\[options\.*\])/g, chalk.cyan('$1'))
-        .replace(/([^a-zA-Z0-9-])(-[a-zA-Z0-9]+)/g, `$1${chalk.cyanBright('$2')}`)
+        .replace(/([^a-zA-Z0-9-])(-[a-zA-Z0-9]([a-zA-Z0-9]|\n[ \t]*)*)/g, `$1${chalk.cyanBright('$2')}`)
         .replace(/(--[a-zA-Z0-9][a-zA-Z0-9-]+(\n[ \t]+)?[a-zA-Z0-9-]+) ((?:[^ -])[^"][^ \n]*|"(?:[^"\\]|\\.)*")/g, `$1 ${chalk.underline('$3')}`)
         .replace(/(--[a-zA-Z0-9][a-zA-Z0-9-]+(\n[ \t]+)?[a-zA-Z0-9-]+)/g, chalk.cyan('$1'))
         .replace(/(<[a-zA-Z]+>)/g, chalk.blue('$1'))

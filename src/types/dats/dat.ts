@@ -2,6 +2,7 @@ import { Memoize } from 'typescript-memoize';
 import xml2js from 'xml2js';
 
 import FsPoly from '../../polyfill/fsPoly.js';
+import { ChecksumBitmask } from '../files/fileChecksums.js';
 import Game from './game.js';
 import Header from './logiqx/header.js';
 import Parent from './parent.js';
@@ -141,6 +142,20 @@ export default abstract class DAT {
     }
 
     return this.getName().match(/\(headerless\)/i) !== null;
+  }
+
+  getRequiredChecksumBitmask(): number {
+    let checksumBitmask = 0;
+    this.getGames().forEach((game) => game.getRoms().forEach((rom) => {
+      if (rom.getCrc32() && rom.getSize()) {
+        checksumBitmask |= ChecksumBitmask.CRC32;
+      } else if (rom.getMd5()) {
+        checksumBitmask |= ChecksumBitmask.MD5;
+      } else if (rom.getSha1()) {
+        checksumBitmask |= ChecksumBitmask.SHA1;
+      }
+    }));
+    return checksumBitmask;
   }
 
   /**

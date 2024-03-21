@@ -295,13 +295,15 @@ export default class CandidateWriter extends Module {
       }
 
       // Check size
-      if (!expectedFile.getSize()) {
-        this.progressBar.logWarn(`${dat.getNameShort()}: ${releaseCandidate.getName()}: ${expectedFile.toString()}: can't test, expected size is unknown`);
-        // eslint-disable-next-line no-continue
-        continue;
-      }
-      if (actualFile.getSize() !== expectedFile.getSize()) {
-        return `has the file ${entryPath} of size ${actualFile.getSize().toLocaleString()}B, expected ${expectedFile.getSize().toLocaleString()}B`;
+      if (actualFile.getCrc32() && expectedFile.getCrc32()) {
+        if (!expectedFile.getSize()) {
+          this.progressBar.logWarn(`${dat.getNameShort()}: ${releaseCandidate.getName()}: ${expectedFile.toString()}: can't test, expected size is unknown`);
+          // eslint-disable-next-line no-continue
+          continue;
+        }
+        if (actualFile.getSize() !== expectedFile.getSize()) {
+          return `has the file ${entryPath} of size ${actualFile.getSize().toLocaleString()}B, expected ${expectedFile.getSize().toLocaleString()}B`;
+        }
       }
     }
 
@@ -455,23 +457,34 @@ export default class CandidateWriter extends Module {
       { filePath: outputFilePath },
       expectedFile.getChecksumBitmask(),
     );
-    if (actualFile.getSha1() && actualFile.getSha1() !== expectedFile.getSha1()) {
+    if (actualFile.getSha1()
+      && expectedFile.getSha1()
+      && actualFile.getSha1() !== expectedFile.getSha1()
+    ) {
       return `has the SHA1 ${actualFile.getSha1()}, expected ${expectedFile.getSha1()}`;
     }
-    if (actualFile.getMd5() && actualFile.getMd5() !== expectedFile.getMd5()) {
+    if (actualFile.getMd5()
+      && expectedFile.getMd5()
+      && actualFile.getMd5() !== expectedFile.getMd5()
+    ) {
       return `has the MD5 ${actualFile.getMd5()}, expected ${expectedFile.getMd5()}`;
     }
-    if (actualFile.getCrc32() && actualFile.getCrc32() !== expectedFile.getCrc32()) {
+    if (actualFile.getCrc32()
+      && expectedFile.getCrc32()
+      && actualFile.getCrc32() !== expectedFile.getCrc32()
+    ) {
       return `has the CRC32 ${actualFile.getCrc32()}, expected ${expectedFile.getCrc32()}`;
     }
 
     // Check size
-    if (!expectedFile.getSize()) {
-      this.progressBar.logWarn(`${dat.getNameShort()}: ${releaseCandidate.getName()}: ${outputFilePath}: can't test, expected size is unknown`);
-      return undefined;
-    }
-    if (actualFile.getSize() !== expectedFile.getSize()) {
-      return `is of size ${actualFile.getSize().toLocaleString()}B, expected ${expectedFile.getSize().toLocaleString()}B`;
+    if (actualFile.getCrc32()) {
+      if (actualFile.getCrc32() && !expectedFile.getSize()) {
+        this.progressBar.logWarn(`${dat.getNameShort()}: ${releaseCandidate.getName()}: ${outputFilePath}: can't test, expected size is unknown`);
+        return undefined;
+      }
+      if (actualFile.getSize() !== expectedFile.getSize()) {
+        return `is of size ${actualFile.getSize().toLocaleString()}B, expected ${expectedFile.getSize().toLocaleString()}B`;
+      }
     }
 
     this.progressBar.logTrace(`${dat.getNameShort()}: ${releaseCandidate.getName()}: ${outputFilePath}: test passed`);
