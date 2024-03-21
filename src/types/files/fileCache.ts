@@ -32,6 +32,8 @@ interface CacheValue {
 }
 
 export default class FileCache {
+  private static readonly VERSION = 1;
+
   private static readonly CACHE = new Cache<CacheValue>({
     filePath: process.env.NODE_ENV !== 'test' ? Constants.GLOBAL_CACHE_FILE : undefined,
     fileFlushMillis: 30_000,
@@ -88,7 +90,7 @@ export default class FileCache {
   }
 
   private static getCacheKey(stats: Stats): string {
-    return String(stats.ino);
+    return `V${FileCache.VERSION}|${stats.ino}`;
   }
 
   private static async getCachedValue(
