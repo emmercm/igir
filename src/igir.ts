@@ -216,7 +216,7 @@ export default class Igir {
       dats = [new DATCombiner(progressBar).combine(dats)];
     }
 
-    await progressBar.doneItems(dats.length, 'unique DAT', 'found');
+    await progressBar.doneItems(dats.length, 'DAT', 'found');
     await progressBar.freeze();
     return dats;
   }
@@ -282,7 +282,7 @@ export default class Igir {
 
     const progressBar = await this.logger.addProgressBar('Scanning for patches');
     const patches = await new PatchScanner(this.options, progressBar).scan();
-    await progressBar.doneItems(patches.length, 'unique patch', 'found');
+    await progressBar.doneItems(patches.length, 'patch', 'found');
     await progressBar.freeze();
     return patches;
   }
