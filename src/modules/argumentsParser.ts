@@ -6,6 +6,7 @@ import Logger from '../console/logger.js';
 import Constants from '../constants.js';
 import ArrayPoly from '../polyfill/arrayPoly.js';
 import ConsolePoly from '../polyfill/consolePoly.js';
+import { ChecksumBitmask } from '../types/files/fileChecksums.js';
 import ROMHeader from '../types/files/romHeader.js';
 import Internationalization from '../types/internationalization.js';
 import Options, { GameSubdirMode, MergeMode } from '../types/options.js';
@@ -64,8 +65,9 @@ export default class ArgumentsParser {
   parse(argv: string[]): Options {
     this.logger.trace(`Parsing CLI arguments: ${argv}`);
 
-    const groupInput = 'Input options (supports globbing):';
+    const groupRomInput = 'ROM input options:';
     const groupDatInput = 'DAT input options:';
+    const groupPatchInput = 'Patch input options:';
     const groupRomOutput = 'ROM output options (processed in order):';
     const groupRomZip = 'ROM zip command options:';
     const groupRomLink = 'ROM link command options:';
@@ -176,33 +178,30 @@ export default class ArgumentsParser {
 
     yargsParser
       .option('input', {
-        group: groupInput,
+        group: groupRomInput,
         alias: 'i',
-        description: 'Path(s) to ROM files or archives',
+        description: 'Path(s) to ROM files or archives (supports globbing)',
         demandOption: true,
         type: 'array',
         requiresArg: true,
       })
       .option('input-exclude', {
-        group: groupInput,
+        group: groupRomInput,
         alias: 'I',
-        description: 'Path(s) to ROM files or archives to exclude from processing',
+        description: 'Path(s) to ROM files or archives to exclude from processing (supports globbing)',
         type: 'array',
         requiresArg: true,
       })
-      .option('patch', {
-        group: groupInput,
-        alias: 'p',
-        description: `Path(s) to ROM patch files or archives (supported: ${PatchFactory.getSupportedExtensions().join(', ')})`,
-        type: 'array',
+      .option('input-min-checksum', {
+        group: groupRomInput,
+        description: 'The minimum checksum level to calculate and use for matching',
+        choices: Object.keys(ChecksumBitmask)
+          .filter((bitmask) => Number.isNaN(Number(bitmask)))
+          .filter((bitmask) => ChecksumBitmask[bitmask as keyof typeof ChecksumBitmask] > 0)
+          .map((bitmask) => bitmask.toUpperCase()),
+        coerce: ArgumentsParser.getLastValue, // don't allow string[] values
         requiresArg: true,
-      })
-      .option('patch-exclude', {
-        group: groupInput,
-        alias: 'P',
-        description: 'Path(s) to ROM patch files or archives to exclude from processing',
-        type: 'array',
-        requiresArg: true,
+        default: ChecksumBitmask[ChecksumBitmask.CRC32].toUpperCase(),
       })
 
       .option('dat', {
@@ -284,6 +283,21 @@ export default class ArgumentsParser {
           throw new Error(`Missing required option for commands ${needDat.join(', ')}: --dat`);
         }
         return true;
+      })
+
+      .option('patch', {
+        group: groupPatchInput,
+        alias: 'p',
+        description: `Path(s) to ROM patch files or archives (supports globbing) (supported: ${PatchFactory.getSupportedExtensions().join(', ')})`,
+        type: 'array',
+        requiresArg: true,
+      })
+      .option('patch-exclude', {
+        group: groupPatchInput,
+        alias: 'P',
+        description: 'Path(s) to ROM patch files or archives to exclude from processing (supports globbing)',
+        type: 'array',
+        requiresArg: true,
       })
 
       .option('fixdat', {

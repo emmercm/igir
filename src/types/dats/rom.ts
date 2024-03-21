@@ -46,9 +46,9 @@ export default class ROM implements ROMProps {
   constructor(props?: ROMProps) {
     this.name = props?.name ?? '';
     this.size = props?.size ?? 0;
-    this.crc32 = props?.crc32;
-    this.md5 = props?.md5;
-    this.sha1 = props?.sha1;
+    this.crc32 = props?.crc32?.toLowerCase().replace(/^0x/, '').padStart(8, '0');
+    this.md5 = props?.md5?.toLowerCase().replace(/^0x/, '').padStart(32, '0');
+    this.sha1 = props?.sha1?.toLowerCase().replace(/^0x/, '').padStart(40, '0');
     this.status = props?.status;
     this.merge = props?.merge;
     this.bios = props?.bios;
@@ -80,16 +80,16 @@ export default class ROM implements ROMProps {
     return this.size;
   }
 
-  getCrc32(): string {
-    return (this.crc32 ?? '').toLowerCase().replace(/^0x/, '').padStart(8, '0');
+  getCrc32(): string | undefined {
+    return this.crc32;
   }
 
   getMd5(): string | undefined {
-    return this.md5?.toLowerCase().replace(/^0x/, '').padStart(32, '0');
+    return this.md5;
   }
 
   getSha1(): string | undefined {
-    return this.sha1?.toLowerCase().replace(/^0x/, '').padStart(40, '0');
+    return this.sha1;
   }
 
   getStatus(): ROMStatus | undefined {

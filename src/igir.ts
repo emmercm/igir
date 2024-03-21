@@ -36,6 +36,7 @@ import DAT from './types/dats/dat.js';
 import Parent from './types/dats/parent.js';
 import DATStatus from './types/datStatus.js';
 import File from './types/files/file.js';
+import { ChecksumBitmask } from './types/files/fileChecksums.js';
 import IndexedFiles from './types/indexedFiles.js';
 import Options from './types/options.js';
 import OutputFactory from './types/outputFactory.js';
@@ -74,7 +75,7 @@ export default class Igir {
 
     // Scan and process input files
     let dats = await this.processDATScanner();
-    const indexedRoms = await this.processROMScanner();
+    const indexedRoms = await this.processROMScanner(this.determineScanningBitmask(dats));
     const roms = indexedRoms.getFiles();
     const patches = await this.processPatchScanner();
 
@@ -220,11 +221,44 @@ export default class Igir {
     return dats;
   }
 
-  private async processROMScanner(): Promise<IndexedFiles> {
+  private determineScanningBitmask(dats: DAT[]): number {
+    let matchChecksum = this.options.getInputMinChecksum() ?? ChecksumBitmask.CRC32;
+
+    if (this.options.shouldDir2Dat()) {
+      Object.keys(ChecksumBitmask)
+        .filter((bitmask): bitmask is keyof typeof ChecksumBitmask => Number.isNaN(Number(bitmask)))
+        // Has not been enabled yet
+        .filter((bitmask) => ChecksumBitmask[bitmask] > 0)
+        .filter((bitmask) => !(matchChecksum & ChecksumBitmask[bitmask]))
+        .forEach((bitmask) => {
+          matchChecksum |= ChecksumBitmask[bitmask];
+          this.logger.trace(`generating a dir2dat, enabling ${bitmask} file checksums`);
+        });
+    }
+
+    dats.forEach((dat) => {
+      const datMinimumBitmask = dat.getRequiredChecksumBitmask();
+      Object.keys(ChecksumBitmask)
+        .filter((bitmask): bitmask is keyof typeof ChecksumBitmask => Number.isNaN(Number(bitmask)))
+        // Has not been enabled yet
+        .filter((bitmask) => ChecksumBitmask[bitmask] > 0)
+        .filter((bitmask) => !(matchChecksum & ChecksumBitmask[bitmask]))
+        // Should be enabled for this DAT
+        .filter((bitmask) => datMinimumBitmask & ChecksumBitmask[bitmask])
+        .forEach((bitmask) => {
+          matchChecksum |= ChecksumBitmask[bitmask];
+          this.logger.trace(`${dat.getNameShort()}: needs ${bitmask} file checksums, enabling`);
+        });
+    });
+
+    return matchChecksum;
+  }
+
+  private async processROMScanner(checksumBitmask: number): Promise<IndexedFiles> {
     const romScannerProgressBarName = 'Scanning for ROMs';
     const romProgressBar = await this.logger.addProgressBar(romScannerProgressBarName);
 
-    const rawRomFiles = await new ROMScanner(this.options, romProgressBar).scan();
+    const rawRomFiles = await new ROMScanner(this.options, romProgressBar).scan(checksumBitmask);
 
     await romProgressBar.setName('Detecting ROM headers');
     const romFilesWithHeaders = await new ROMHeaderProcessor(this.options, romProgressBar)
