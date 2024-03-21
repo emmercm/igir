@@ -16,7 +16,7 @@ import { JestConfigWithTsJest } from 'ts-jest';
     ?? packageJson.exports['.'].import;
   delete packageJson.exports;
 
-  fs.writeFileSync(packagePath, JSON.stringify(packageJson, null, 2));
+  fs.writeFileSync(packagePath, JSON.stringify(packageJson, undefined, 2));
 });
 
 const jestConfig: JestConfigWithTsJest = {
