@@ -1,6 +1,10 @@
 import path from 'node:path';
 import { Readable } from 'node:stream';
 
+import {
+  Exclude, Expose, instanceToPlain, plainToClassFromExist,
+} from 'class-transformer';
+
 import Constants from '../../../constants.js';
 import fsPoly from '../../../polyfill/fsPoly.js';
 import Patch from '../../patches/patch.js';
@@ -14,9 +18,11 @@ export interface ArchiveEntryProps<A extends Archive> extends Omit<FileProps, 'f
   readonly entryPath: string;
 }
 
+@Exclude()
 export default class ArchiveEntry<A extends Archive> extends File implements ArchiveEntryProps<A> {
   readonly archive: A;
 
+  @Expose()
   readonly entryPath: string;
 
   protected constructor(archiveEntryProps: ArchiveEntryProps<A>) {
@@ -34,11 +40,17 @@ export default class ArchiveEntry<A extends Archive> extends File implements Arc
   ): Promise<ArchiveEntry<A>> {
     let finalSize = archiveEntryProps.size;
     let finalCrcWithHeader = archiveEntryProps.crc32;
-    let finalCrcWithoutHeader = archiveEntryProps.crc32WithoutHeader;
+    let finalCrcWithoutHeader = archiveEntryProps.fileHeader
+      ? archiveEntryProps.crc32WithoutHeader
+      : archiveEntryProps.crc32;
     let finalMd5WithHeader = archiveEntryProps.md5;
-    let finalMd5WithoutHeader = archiveEntryProps.md5WithoutHeader;
+    let finalMd5WithoutHeader = archiveEntryProps.fileHeader
+      ? archiveEntryProps.md5WithoutHeader
+      : archiveEntryProps.md5;
     let finalSha1WithHeader = archiveEntryProps.sha1;
-    let finalSha1WithoutHeader = archiveEntryProps.sha1WithoutHeader;
+    let finalSha1WithoutHeader = archiveEntryProps.fileHeader
+      ? archiveEntryProps.sha1WithoutHeader
+      : archiveEntryProps.sha1;
     let finalSymlinkSource = archiveEntryProps.symlinkSource;
 
     if (await fsPoly.exists(archiveEntryProps.archive.getFilePath())) {
@@ -100,6 +112,29 @@ export default class ArchiveEntry<A extends Archive> extends File implements Arc
       entryPath: archiveEntryProps.entryPath,
     });
   }
+
+  static async entryOfObject<A extends Archive>(
+    archive: A,
+    obj: ArchiveEntryProps<A>,
+  ): Promise<ArchiveEntry<A>> {
+    const deserialized = plainToClassFromExist(
+      new ArchiveEntry({ archive, entryPath: '' }),
+      obj,
+      {
+        enableImplicitConversion: true,
+        excludeExtraneousValues: true,
+      },
+    );
+    return this.entryOf({ ...deserialized, archive });
+  }
+
+  toObject(): object {
+    return instanceToPlain(this, {
+      exposeUnsetFields: false,
+    });
+  }
+
+  // Property getters
 
   getArchive(): A {
     return this.archive;

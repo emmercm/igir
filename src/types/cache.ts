@@ -6,19 +6,23 @@ import * as zlib from 'node:zlib';
 import { Mutex } from 'async-mutex';
 
 import FsPoly from '../polyfill/fsPoly.js';
+import Timer from '../timer.js';
 
 interface CacheData {
   data: string,
 }
 
 export interface CacheProps {
+  filePath?: string,
+  fileFlushMillis?: number,
+  saveOnExit?: boolean,
   maxSize?: number,
 }
 
 /**
  * A cache of a fixed size that ejects the oldest inserted key.
  */
-export default class Cache<V> implements CacheProps {
+export default class Cache<V> {
   private static readonly BUFFER_ENCODING: BufferEncoding = 'binary';
 
   private keyOrder: Set<string> = new Set();
@@ -29,11 +33,23 @@ export default class Cache<V> implements CacheProps {
 
   private readonly keyMutexesMutex = new Mutex();
 
-  private saveToFileTimeout?: NodeJS.Timeout;
+  private hasChanged: boolean = false;
+
+  private saveToFileTimeout?: Timer;
+
+  readonly filePath?: string;
+
+  readonly fileFlushMillis?: number;
 
   readonly maxSize?: number;
 
   constructor(props?: CacheProps) {
+    this.filePath = props?.filePath;
+    this.fileFlushMillis = props?.fileFlushMillis;
+    if (props?.saveOnExit) {
+      // WARN: Jest won't call this: https://github.com/jestjs/jest/issues/10927
+      process.once('beforeExit', this.save);
+    }
     this.maxSize = props?.maxSize;
   }
 
@@ -93,14 +109,36 @@ export default class Cache<V> implements CacheProps {
       this.keyOrder.add(key);
     }
     this.keyValues.set(key, val);
+    this.saveWithTimeout();
 
     // Evict old values (FIFO)
     if (this.maxSize !== undefined && this.keyValues.size > this.maxSize) {
       const staleKey = this.keyOrder.keys().next().value;
-      this.keyOrder.delete(staleKey);
-      this.keyValues.delete(staleKey);
-      this.keyMutexes.delete(staleKey);
+      this.deleteUnsafe(staleKey);
     }
+  }
+
+  /**
+   * Delete a key in the cache.
+   */
+  public async delete(key: string | RegExp): Promise<void> {
+    let keys: string[];
+    if (key instanceof RegExp) {
+      keys = [...this.keys().keys()].filter((k) => k.match(key));
+    } else {
+      keys = [key];
+    }
+
+    await Promise.all(keys.map(async (k) => {
+      await this.lockKey(k, () => this.deleteUnsafe(k));
+    }));
+  }
+
+  private deleteUnsafe(key: string): void {
+    this.keyOrder.delete(key);
+    this.keyValues.delete(key);
+    this.keyMutexes.delete(key);
+    this.saveWithTimeout();
   }
 
   private async lockKey<R>(key: string, runnable: () => (R | Promise<R>)): Promise<R> {
@@ -117,11 +155,16 @@ export default class Cache<V> implements CacheProps {
   }
 
   /**
-   * Load a cache file from disk.
+   * Load the cache from a file.
    */
-  public async load(filePath: string): Promise<void> {
+  public async load(): Promise<Cache<V>> {
+    if (this.filePath === undefined || !await FsPoly.exists(this.filePath)) {
+      // Cache doesn't exist, so there is nothing to load
+      return this;
+    }
+
     const cacheData = JSON.parse(
-      await util.promisify(fs.readFile)(filePath, { encoding: Cache.BUFFER_ENCODING }),
+      await util.promisify(fs.readFile)(this.filePath, { encoding: Cache.BUFFER_ENCODING }),
     ) as CacheData;
     const compressed = Buffer.from(cacheData.data, Cache.BUFFER_ENCODING);
     const decompressed = await util.promisify(zlib.inflate)(compressed);
@@ -131,16 +174,34 @@ export default class Cache<V> implements CacheProps {
     if (this.maxSize !== undefined) {
       this.keyOrder = new Set(Object.keys(keyValuesObject));
     }
+
+    return this;
+  }
+
+  private saveWithTimeout(): void {
+    this.hasChanged = true;
+    if (this.filePath === undefined
+      || this.fileFlushMillis === undefined
+      || this.saveToFileTimeout !== undefined
+    ) {
+      return;
+    }
+
+    this.saveToFileTimeout = Timer.setTimeout(async () => this.save(), this.fileFlushMillis);
   }
 
   /**
-   * Save this cache to a file on disk.
+   * Save the cache to a file.
    */
-  public async save(filePath: string): Promise<void> {
+  public async save(): Promise<void> {
     // Clear any existing timeout
     if (this.saveToFileTimeout !== undefined) {
-      clearTimeout(this.saveToFileTimeout);
+      this.saveToFileTimeout.cancel();
       this.saveToFileTimeout = undefined;
+    }
+
+    if (this.filePath === undefined || !this.hasChanged) {
+      return;
     }
 
     const keyValuesObject = Object.fromEntries(this.keyValues);
@@ -151,18 +212,19 @@ export default class Cache<V> implements CacheProps {
     } satisfies CacheData;
 
     // Ensure the directory exists
-    const dirPath = path.dirname(filePath);
+    const dirPath = path.dirname(this.filePath);
     if (!await FsPoly.exists(dirPath)) {
       await FsPoly.mkdir(dirPath, { recursive: true });
     }
 
     // Write to a temp file first, then overwrite the old cache file
-    const tempFile = await FsPoly.mktemp(filePath);
+    const tempFile = await FsPoly.mktemp(this.filePath);
     await util.promisify(fs.writeFile)(
       tempFile,
       JSON.stringify(cacheData),
       { encoding: Cache.BUFFER_ENCODING },
     );
-    await FsPoly.mv(tempFile, filePath);
+    await FsPoly.mv(tempFile, this.filePath);
+    this.hasChanged = false;
   }
 }

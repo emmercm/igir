@@ -35,6 +35,7 @@ const ROOT_DIR = path.dirname(PACKAGE_JSON_PATH);
 
 const GLOBAL_TEMP_DIR = fsPoly.mkdtempSync(path.join(os.tmpdir(), COMMAND_NAME));
 process.once('beforeExit', async () => {
+  // WARN: Jest won't call this: https://github.com/jestjs/jest/issues/10927
   await fsPoly.rm(GLOBAL_TEMP_DIR, {
     force: true,
     recursive: true,
@@ -101,11 +102,6 @@ export default class Constants {
    * Max number of files to recycle/delete at once.
    */
   static readonly OUTPUT_CLEANER_BATCH_SIZE = 100;
-
-  /**
-   * Number of file checksums to cache in memory at once.
-   */
-  static readonly FILE_CHECKSUM_CACHE_SIZE = 128;
 
   /**
    * Max {@link fs} highWaterMark chunk size to read and write at a time.

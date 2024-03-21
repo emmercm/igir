@@ -3,13 +3,14 @@ import https from 'node:https';
 import path from 'node:path';
 import { Readable } from 'node:stream';
 
-import { Memoize } from 'typescript-memoize';
+import {
+  Exclude, Expose, instanceToPlain, plainToClassFromExist,
+} from 'class-transformer';
 
 import Constants from '../../constants.js';
 import FilePoly from '../../polyfill/filePoly.js';
 import fsPoly from '../../polyfill/fsPoly.js';
 import URLPoly from '../../polyfill/urlPoly.js';
-import Cache from '../cache.js';
 import Patch from '../patches/patch.js';
 import FileChecksums, { ChecksumBitmask, ChecksumProps } from './fileChecksums.js';
 import ROMHeader from './romHeader.js';
@@ -25,23 +26,24 @@ export interface FileProps extends ChecksumProps {
   readonly patch?: Patch;
 }
 
+@Exclude()
 export default class File implements FileProps {
-  private static readonly checksumCache = new Cache<ChecksumProps>({
-    maxSize: Constants.FILE_CHECKSUM_CACHE_SIZE,
-  });
-
   readonly filePath: string;
 
+  @Expose()
   readonly size: number;
 
+  @Expose()
   readonly crc32?: string;
 
   readonly crc32WithoutHeader?: string;
 
+  @Expose()
   readonly md5?: string;
 
   readonly md5WithoutHeader?: string;
 
+  @Expose()
   readonly sha1?: string;
 
   readonly sha1WithoutHeader?: string;
@@ -72,11 +74,17 @@ export default class File implements FileProps {
   ): Promise<File> {
     let finalSize = fileProps.size;
     let finalCrcWithHeader = fileProps.crc32;
-    let finalCrcWithoutHeader = fileProps.crc32WithoutHeader;
+    let finalCrcWithoutHeader = fileProps.fileHeader
+      ? fileProps.crc32WithoutHeader
+      : fileProps.crc32;
     let finalMd5WithHeader = fileProps.md5;
-    let finalMd5WithoutHeader = fileProps.md5WithoutHeader;
+    let finalMd5WithoutHeader = fileProps.fileHeader
+      ? fileProps.md5WithoutHeader
+      : fileProps.md5;
     let finalSha1WithHeader = fileProps.sha1;
-    let finalSha1WithoutHeader = fileProps.sha1WithoutHeader;
+    let finalSha1WithoutHeader = fileProps.fileHeader
+      ? fileProps.sha1WithoutHeader
+      : fileProps.sha1;
     let finalSymlinkSource = fileProps.symlinkSource;
 
     if (await fsPoly.exists(fileProps.filePath)) {
@@ -135,6 +143,24 @@ export default class File implements FileProps {
     });
   }
 
+  static async fileOfObject(filePath: string, obj: FileProps): Promise<File> {
+    const deserialized = plainToClassFromExist(
+      new File({ filePath }),
+      obj,
+      {
+        enableImplicitConversion: true,
+        excludeExtraneousValues: true,
+      },
+    );
+    return this.fileOf(deserialized);
+  }
+
+  toObject(): object {
+    return instanceToPlain(this, {
+      exposeUnsetFields: false,
+    });
+  }
+
   // Property getters
 
   getFilePath(): string {
@@ -189,7 +215,6 @@ export default class File implements FileProps {
     return this.patch;
   }
 
-  @Memoize()
   isURL(): boolean {
     return URLPoly.canParse(this.getFilePath());
   }

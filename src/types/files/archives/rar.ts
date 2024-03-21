@@ -3,9 +3,10 @@ import path from 'node:path';
 import async, { AsyncResultCallback } from 'async';
 import { Mutex } from 'async-mutex';
 import unrar from 'node-unrar-js';
-import { Memoize } from 'typescript-memoize';
 
 import Constants from '../../../constants.js';
+import FileCache from '../fileCache.js';
+import { ChecksumBitmask } from '../fileChecksums.js';
 import Archive from './archive.js';
 import ArchiveEntry from './archiveEntry.js';
 
@@ -19,7 +20,7 @@ export default class Rar extends Archive {
     return new Rar(filePath);
   }
 
-  @Memoize()
+  @FileCache.CacheArchiveEntries({ skipChecksumBitmask: ChecksumBitmask.CRC32 })
   async getArchiveEntries(checksumBitmask: number): Promise<ArchiveEntry<Rar>[]> {
     const rar = await unrar.createExtractorFromFile({
       filepath: this.getFilePath(),

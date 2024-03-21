@@ -18,7 +18,6 @@ import MameDAT from '../types/dats/mame/mameDat.js';
 import ROM from '../types/dats/rom.js';
 import File from '../types/files/file.js';
 import { ChecksumBitmask } from '../types/files/fileChecksums.js';
-import FileFactory from '../types/files/fileFactory.js';
 import Options from '../types/options.js';
 import Scanner from './scanner.js';
 
@@ -91,7 +90,11 @@ export default class DATScanner extends Scanner {
         this.progressBar.logTrace(`${datFile.toString()}: downloading`);
         const downloadedDatFile = await datFile.downloadToTempPath('dat');
         this.progressBar.logTrace(`${datFile.toString()}: downloaded to '${downloadedDatFile.toString()}'`);
-        return await FileFactory.filesFrom(downloadedDatFile.getFilePath(), ChecksumBitmask.NONE);
+        return await this.getFilesFromPaths(
+          [downloadedDatFile.getFilePath()],
+          this.options.getReaderThreads(),
+          ChecksumBitmask.NONE,
+        );
       } catch (error) {
         this.progressBar.logError(`${datFile.toString()}: failed to download: ${error}`);
         return [];

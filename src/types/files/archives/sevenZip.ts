@@ -3,10 +3,10 @@ import path from 'node:path';
 import _7z, { Result } from '7zip-min';
 import async, { AsyncResultCallback } from 'async';
 import { Mutex } from 'async-mutex';
-import { Memoize } from 'typescript-memoize';
 
 import Constants from '../../../constants.js';
 import fsPoly from '../../../polyfill/fsPoly.js';
+import FileCache from '../fileCache.js';
 import Archive from './archive.js';
 import ArchiveEntry from './archiveEntry.js';
 
@@ -39,7 +39,7 @@ export default class SevenZip extends Archive {
     return new SevenZip(filePath);
   }
 
-  @Memoize()
+  @FileCache.CacheArchiveEntries()
   async getArchiveEntries(checksumBitmask: number): Promise<ArchiveEntry<SevenZip>[]> {
     /**
      * WARN(cemmer): even with the above mutex, {@link _7z.list} will still sometimes return no

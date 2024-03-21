@@ -33,7 +33,7 @@ export default class FileFactory {
   /**
    * This ordering should match {@link ROMScanner#archiveEntryPriority}
    */
-  private static archiveFrom(filePath: string): Archive {
+  public static archiveFrom(filePath: string): Archive {
     if (Zip.SUPPORTED_EXTENSIONS.some((ext) => filePath.toLowerCase().endsWith(ext))) {
       return new Zip(filePath);
     } if (Tar.SUPPORTED_EXTENSIONS.some((ext) => filePath.toLowerCase().endsWith(ext))) {
