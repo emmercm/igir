@@ -144,6 +144,7 @@ export interface OptionsProps {
   readonly datThreads?: number,
   readonly readerThreads?: number,
   readonly writerThreads?: number,
+  readonly disableCache?: boolean,
   readonly verbose?: number,
   readonly help?: boolean,
 }
@@ -333,6 +334,8 @@ export default class Options implements OptionsProps {
 
   readonly writerThreads: number;
 
+  readonly disableCache: boolean;
+
   readonly verbose: number;
 
   readonly help: boolean;
@@ -438,6 +441,7 @@ export default class Options implements OptionsProps {
     this.datThreads = Math.max(options?.datThreads ?? 0, 1);
     this.readerThreads = Math.max(options?.readerThreads ?? 0, 1);
     this.writerThreads = Math.max(options?.writerThreads ?? 0, 1);
+    this.disableCache = options?.disableCache ?? false;
     this.verbose = options?.verbose ?? 0;
     this.help = options?.help ?? false;
   }
@@ -1159,6 +1163,10 @@ export default class Options implements OptionsProps {
 
   getWriterThreads(): number {
     return this.writerThreads;
+  }
+
+  getDisableCache(): boolean {
+    return this.disableCache;
   }
 
   getLogLevel(): LogLevel {
