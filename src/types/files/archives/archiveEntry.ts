@@ -62,6 +62,9 @@ export default class ArchiveEntry<A extends Archive> extends File implements Arc
         || (!finalMd5WithHeader && (checksumBitmask & ChecksumBitmask.MD5))
         || (!finalSha1WithHeader && (checksumBitmask & ChecksumBitmask.SHA1))
       ) {
+        // If any additional checksum needs to be calculated, then prefer those calculated ones
+        // over any that were supplied in {@link archiveEntryProps} that probably came from the
+        // archive's file table.
         const headeredChecksums = await this.calculateEntryChecksums(
           archiveEntryProps.archive,
           archiveEntryProps.entryPath,
@@ -72,15 +75,15 @@ export default class ArchiveEntry<A extends Archive> extends File implements Arc
         finalSha1WithHeader = headeredChecksums.sha1 ?? finalSha1WithHeader;
       }
       if (archiveEntryProps.fileHeader && checksumBitmask) {
-        const unheaderedChecksums = await this.calculateEntryChecksums(
+        const headerlessChecksums = await this.calculateEntryChecksums(
           archiveEntryProps.archive,
           archiveEntryProps.entryPath,
           checksumBitmask,
           archiveEntryProps.fileHeader,
         );
-        finalCrcWithoutHeader = unheaderedChecksums.crc32;
-        finalMd5WithoutHeader = unheaderedChecksums.md5;
-        finalSha1WithoutHeader = unheaderedChecksums.sha1;
+        finalCrcWithoutHeader = headerlessChecksums.crc32;
+        finalMd5WithoutHeader = headerlessChecksums.md5;
+        finalSha1WithoutHeader = headerlessChecksums.sha1;
       }
 
       if (await fsPoly.isSymlink(archiveEntryProps.archive.getFilePath())) {

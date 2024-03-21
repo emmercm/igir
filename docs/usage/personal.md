@@ -47,9 +47,8 @@ The `igir_library_sync.sh` script helps me keep this collection organized and me
 # @param {...string} $@ Input directories to merge into this collection
 set -euo pipefail
 
-here="$(pwd)"
 # shellcheck disable=SC2064
-trap "cd \"${here}\"" EXIT
+trap "cd \"${PWD}\"" EXIT
 cd "$(dirname "$0")"
 
 
@@ -103,9 +102,8 @@ I have this script `igir_pocket_sync.sh` at the root of my Analogue Pocket's SD 
 #!/usr/bin/env bash
 set -euo pipefail
 
-here="$(pwd)"
 # shellcheck disable=SC2064
-trap "cd \"${here}\"" EXIT
+trap "cd \"${PWD}\"" EXIT
 cd "$(dirname "$0")"
 
 

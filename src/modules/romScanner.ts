@@ -18,7 +18,7 @@ export default class ROMScanner extends Scanner {
   /**
    * Scan for ROM files.
    */
-  async scan(): Promise<File[]> {
+  async scan(checksumBitmask: number = ChecksumBitmask.CRC32): Promise<File[]> {
     this.progressBar.logTrace('scanning ROM files');
     await this.progressBar.setSymbol(ProgressBarSymbol.SEARCHING);
     await this.progressBar.reset(0);
@@ -32,9 +32,7 @@ export default class ROMScanner extends Scanner {
     const files = await this.getFilesFromPaths(
       romFilePaths,
       this.options.getReaderThreads(),
-      this.options.shouldDir2Dat()
-        ? ChecksumBitmask.CRC32 | ChecksumBitmask.MD5 | ChecksumBitmask.SHA1
-        : ChecksumBitmask.CRC32,
+      checksumBitmask,
     );
 
     this.progressBar.logTrace('done scanning ROM files');

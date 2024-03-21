@@ -14,8 +14,8 @@ Information about the inner workings of `igir`.
    - Parent/clone information is inferred if the DAT has none (see [DATs docs](../dats/processing.md#parentclone-inference))
    - Parent/clone ROMs sets are merged or split (`--merge-roms <type>`) (see [arcade docs](../usage/arcade.md))
    - ROMs in the DAT are filtered to only those desired (`--filter-*` options) (see [filtering & preference docs](../roms/filtering-preferences.md))
-   - Input files are matched to ROMs in the DAT
-   - Patch files are matched to ROMs found
+   - Input files are matched to ROMs in the DAT (see [matching docs](../roms/matching.md))
+   - Patch files are matched to ROMs found (see [patching docs](../roms/patching.md))
    - ROM preferences are applied (`--single`, see [filtering & preference docs](../roms/filtering-preferences.md#preferences-for-1g1r))
    - ROMs are combined (`--zip-dat-name`)
    - ROMs are written to the output directory, if specified (`copy`, `move`, `link`)

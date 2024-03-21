@@ -72,7 +72,9 @@ export default class FileChecksums {
       });
       stream.on('end', () => {
         resolve({
-          crc32: crc?.toString(16),
+          crc32: crc?.toString(16)
+            // Empty files won't emit any data, default to the empty file CRC32
+            ?? (checksumBitmask & ChecksumBitmask.CRC32 ? '00000000' : undefined),
           md5: md5?.digest('hex'),
           sha1: sha1?.digest('hex'),
         });

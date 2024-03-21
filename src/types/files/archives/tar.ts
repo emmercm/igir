@@ -4,6 +4,7 @@ import path from 'node:path';
 import tar from 'tar';
 
 import Constants from '../../../constants.js';
+import FsPoly from '../../../polyfill/fsPoly.js';
 import FileCache from '../fileCache.js';
 import FileChecksums from '../fileChecksums.js';
 import Archive from './archive.js';
@@ -43,7 +44,7 @@ export default class Tar extends Archive {
       archiveEntryPromises.push(ArchiveEntry.entryOf({
         archive: this,
         entryPath: entry.path,
-        size: entry.size ?? 0,
+        size: entry.size,
         ...checksums,
       }, checksumBitmask));
       // In case we didn't need to read the stream for hashes, resume the file reading
@@ -69,7 +70,7 @@ export default class Tar extends Archive {
     entryPath: string,
     extractedFilePath: string,
   ): Promise<void> {
-    return tar.extract({
+    await tar.extract({
       file: this.getFilePath(),
       cwd: path.dirname(extractedFilePath),
       strict: true,
@@ -80,5 +81,8 @@ export default class Tar extends Archive {
         return true;
       },
     }, [entryPath.replace(/[\\/]/g, '/')]);
+    if (!await FsPoly.exists(extractedFilePath)) {
+      throw new Error(`didn't find entry '${entryPath}'`);
+    }
   }
 }

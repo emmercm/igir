@@ -1,6 +1,8 @@
+import { Memoize } from 'typescript-memoize';
 import xml2js from 'xml2js';
 
 import FsPoly from '../../polyfill/fsPoly.js';
+import { ChecksumBitmask } from '../files/fileChecksums.js';
 import Game from './game.js';
 import Header from './logiqx/header.js';
 import Parent from './parent.js';
@@ -26,7 +28,13 @@ export default abstract class DAT {
     this.getGames()
       .filter((game) => game.isParent())
       .forEach((game: Game) => {
-        gameNamesToParents.set(game.getName(), new Parent(game));
+        const parent = gameNamesToParents.get(game.getName());
+        if (parent) {
+          // Two games have the same name, assume this one is a clone
+          parent.addChild(game);
+        } else {
+          gameNamesToParents.set(game.getName(), new Parent(game));
+        }
       });
 
     // Find all clones
@@ -62,6 +70,7 @@ export default abstract class DAT {
     return this.getHeader().getName();
   }
 
+  @Memoize()
   getNameShort(): string {
     return this.getName()
       // Prefixes
@@ -84,11 +93,6 @@ export default abstract class DAT {
 
   getDescription(): string | undefined {
     return this.getHeader().getDescription();
-  }
-
-  getRomNamesContainDirectories(): boolean {
-    return this.getHeader().getRomNamesContainDirectories()
-      || this.isBiosDat();
   }
 
   /**
@@ -138,6 +142,20 @@ export default abstract class DAT {
     }
 
     return this.getName().match(/\(headerless\)/i) !== null;
+  }
+
+  getRequiredChecksumBitmask(): number {
+    let checksumBitmask = 0;
+    this.getGames().forEach((game) => game.getRoms().forEach((rom) => {
+      if (rom.getCrc32() && rom.getSize()) {
+        checksumBitmask |= ChecksumBitmask.CRC32;
+      } else if (rom.getMd5()) {
+        checksumBitmask |= ChecksumBitmask.MD5;
+      } else if (rom.getSha1()) {
+        checksumBitmask |= ChecksumBitmask.SHA1;
+      }
+    }));
+    return checksumBitmask;
   }
 
   /**

@@ -58,7 +58,7 @@ $ igir --help
   | $$  | $$|    \  | $$  | $$    $$   ROM collection manager
   | $$  | $$|    \  | $$  | $$    $$   https://igir.io/
   | $$  | $$ \$$$$  | $$  | $$$$$$$\
- _| $$_ | $$__| $$ _| $$_ | $$  | $$   v2.5.2
+ _| $$_ | $$__| $$ _| $$_ | $$  | $$   v2.6.0
 |   $$ \ \$$    $$|   $$ \| $$  | $$
  \$$$$$$  \$$$$$$  \$$$$$$ \$$   \$$
 
@@ -78,12 +78,13 @@ Commands (can specify multiple):
   igir report   Generate a CSV report on the known & unknown ROM files found in the input direct
                 ories (requires --dat)
 
-Input options (supports globbing):
-  -i, --input          Path(s) to ROM files or archives                       [array] [required]
-  -I, --input-exclude  Path(s) to ROM files or archives to exclude from processing       [array]
-  -p, --patch          Path(s) to ROM patch files or archives (supported: .aps, .bps, .dps, .ebp
-                       , .ips, .ips32, .ppf, .rup, .ups, .vcdiff, .xdelta)               [array]
-  -P, --patch-exclude  Path(s) to ROM patch files or archives to exclude from processing [array]
+ROM input options:
+  -i, --input               Path(s) to ROM files or archives (supports globbing)
+                                                                              [array] [required]
+  -I, --input-exclude       Path(s) to ROM files or archives to exclude from processing (support
+                            s globbing)                                                  [array]
+      --input-min-checksum  The minimum checksum level to calculate and use for matching
+                                            [choices: "CRC32", "MD5", "SHA1"] [default: "CRC32"]
 
 DAT input options:
   -d, --dat                            Path(s) to DAT files or archives (supports globbing)
@@ -100,6 +101,13 @@ DAT input options:
                                        ne DAT                                          [boolean]
       --dat-ignore-parent-clone        Ignore any parent/clone information found in DATs
                                                                                        [boolean]
+
+Patch input options:
+  -p, --patch          Path(s) to ROM patch files or archives (supports globbing) (supported: .a
+                       ps, .bps, .dps, .ebp, .ips, .ips32, .ppf, .rup, .ups, .vcdiff, .xdelta)
+                                                                                         [array]
+  -P, --patch-exclude  Path(s) to ROM patch files or archives to exclude from processing (suppor
+                       ts globbing)                                                      [array]
 
 ROM output options (processed in order):
   -o, --output               Path to the ROM output directory (supports replaceable symbols, see
@@ -206,6 +214,7 @@ Help & debug options:
       --reader-threads  Maximum number of ROMs to read in parallel per disk
                                                                           [number] [default: 10]
       --writer-threads  Maximum number of ROMs to write in parallel       [number] [default: 10]
+      --disable-cache   Disable the file and archive entry checksum cache              [boolean]
   -v, --verbose         Enable verbose logging, can specify up to three times (-vvv)     [count]
   -h, --help            Show help                                                      [boolean]
 

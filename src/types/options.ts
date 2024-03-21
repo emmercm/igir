@@ -21,6 +21,7 @@ import fsPoly, { FsWalkCallback } from '../polyfill/fsPoly.js';
 import URLPoly from '../polyfill/urlPoly.js';
 import DAT from './dats/dat.js';
 import File from './files/file.js';
+import { ChecksumBitmask } from './files/fileChecksums.js';
 
 export enum MergeMode {
   // Clones contain all parent ROMs, all games contain BIOS & device ROMs
@@ -44,11 +45,11 @@ export enum GameSubdirMode {
 
 export interface OptionsProps {
   readonly commands?: string[],
+  readonly fixdat?: boolean;
 
   readonly input?: string[],
   readonly inputExclude?: string[],
-  readonly patch?: string[],
-  readonly patchExclude?: string[],
+  readonly inputMinChecksum?: string,
 
   readonly dat?: string[],
   readonly datExclude?: string[],
@@ -61,7 +62,8 @@ export interface OptionsProps {
   readonly datCombine?: boolean,
   readonly datIgnoreParentClone?: boolean,
 
-  readonly fixdat?: boolean;
+  readonly patch?: string[],
+  readonly patchExclude?: string[],
 
   readonly output?: string,
   readonly dirMirror?: boolean,
@@ -142,6 +144,7 @@ export interface OptionsProps {
   readonly datThreads?: number,
   readonly readerThreads?: number,
   readonly writerThreads?: number,
+  readonly disableCache?: boolean,
   readonly verbose?: number,
   readonly help?: boolean,
 }
@@ -153,13 +156,13 @@ export default class Options implements OptionsProps {
   @Expose({ name: '_' })
   readonly commands: string[];
 
+  readonly fixdat: boolean;
+
   readonly input: string[];
 
   readonly inputExclude: string[];
 
-  readonly patch: string[];
-
-  readonly patchExclude: string[];
+  readonly inputMinChecksum?: string;
 
   readonly dat: string[];
 
@@ -181,7 +184,9 @@ export default class Options implements OptionsProps {
 
   readonly datIgnoreParentClone: boolean;
 
-  readonly fixdat: boolean;
+  readonly patch: string[];
+
+  readonly patchExclude: string[];
 
   readonly output: string;
 
@@ -329,17 +334,19 @@ export default class Options implements OptionsProps {
 
   readonly writerThreads: number;
 
+  readonly disableCache: boolean;
+
   readonly verbose: number;
 
   readonly help: boolean;
 
   constructor(options?: OptionsProps) {
     this.commands = options?.commands ?? [];
+    this.fixdat = options?.fixdat ?? false;
 
     this.input = options?.input ?? [];
     this.inputExclude = options?.inputExclude ?? [];
-    this.patch = options?.patch ?? [];
-    this.patchExclude = options?.patchExclude ?? [];
+    this.inputMinChecksum = options?.inputMinChecksum;
 
     this.dat = options?.dat ?? [];
     this.datExclude = options?.datExclude ?? [];
@@ -352,7 +359,8 @@ export default class Options implements OptionsProps {
     this.datCombine = options?.datCombine ?? false;
     this.datIgnoreParentClone = options?.datIgnoreParentClone ?? false;
 
-    this.fixdat = options?.fixdat ?? false;
+    this.patch = options?.patch ?? [];
+    this.patchExclude = options?.patchExclude ?? [];
 
     this.output = options?.output ?? '';
     this.dirMirror = options?.dirMirror ?? false;
@@ -433,6 +441,7 @@ export default class Options implements OptionsProps {
     this.datThreads = Math.max(options?.datThreads ?? 0, 1);
     this.readerThreads = Math.max(options?.readerThreads ?? 0, 1);
     this.writerThreads = Math.max(options?.writerThreads ?? 0, 1);
+    this.disableCache = options?.disableCache ?? false;
     this.verbose = options?.verbose ?? 0;
     this.help = options?.help ?? false;
   }
@@ -597,28 +606,6 @@ export default class Options implements OptionsProps {
       .filter((inputPath) => !inputExcludeFiles.has(inputPath));
   }
 
-  getPatchFileCount(): number {
-    return this.patch.length;
-  }
-
-  /**
-   * Scan for patch files, and patch files to exclude, and return the difference.
-   */
-  async scanPatchFilesWithoutExclusions(walkCallback?: FsWalkCallback): Promise<string[]> {
-    const patchFiles = await this.scanPatchFiles(walkCallback);
-    const patchExcludeFiles = new Set(await this.scanPatchExcludeFiles());
-    return patchFiles
-      .filter((patchPath) => !patchExcludeFiles.has(patchPath));
-  }
-
-  private async scanPatchFiles(walkCallback?: FsWalkCallback): Promise<string[]> {
-    return Options.scanPaths(this.patch, walkCallback);
-  }
-
-  private async scanPatchExcludeFiles(): Promise<string[]> {
-    return Options.scanPaths(this.patchExclude, undefined, false);
-  }
-
   private static async scanPaths(
     globPatterns: string[],
     walkCallback?: FsWalkCallback,
@@ -718,6 +705,15 @@ export default class Options implements OptionsProps {
     return paths;
   }
 
+  getInputMinChecksum(): ChecksumBitmask | undefined {
+    const checksumBitmask = Object.keys(ChecksumBitmask)
+      .find((bitmask) => bitmask.toUpperCase() === this.inputMinChecksum?.toUpperCase());
+    if (!checksumBitmask) {
+      return undefined;
+    }
+    return ChecksumBitmask[checksumBitmask as keyof typeof ChecksumBitmask];
+  }
+
   /**
    * Were any DAT paths provided?
    */
@@ -765,6 +761,28 @@ export default class Options implements OptionsProps {
 
   getDatIgnoreParentClone(): boolean {
     return this.datIgnoreParentClone;
+  }
+
+  getPatchFileCount(): number {
+    return this.patch.length;
+  }
+
+  /**
+   * Scan for patch files, and patch files to exclude, and return the difference.
+   */
+  async scanPatchFilesWithoutExclusions(walkCallback?: FsWalkCallback): Promise<string[]> {
+    const patchFiles = await this.scanPatchFiles(walkCallback);
+    const patchExcludeFiles = new Set(await this.scanPatchExcludeFiles());
+    return patchFiles
+      .filter((patchPath) => !patchExcludeFiles.has(patchPath));
+  }
+
+  private async scanPatchFiles(walkCallback?: FsWalkCallback): Promise<string[]> {
+    return Options.scanPaths(this.patch, walkCallback);
+  }
+
+  private async scanPatchExcludeFiles(): Promise<string[]> {
+    return Options.scanPaths(this.patchExclude, undefined, false);
   }
 
   getOutput(): string {
@@ -1145,6 +1163,10 @@ export default class Options implements OptionsProps {
 
   getWriterThreads(): number {
     return this.writerThreads;
+  }
+
+  getDisableCache(): boolean {
+    return this.disableCache;
   }
 
   getLogLevel(): LogLevel {

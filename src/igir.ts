@@ -36,6 +36,8 @@ import DAT from './types/dats/dat.js';
 import Parent from './types/dats/parent.js';
 import DATStatus from './types/datStatus.js';
 import File from './types/files/file.js';
+import FileCache from './types/files/fileCache.js';
+import { ChecksumBitmask } from './types/files/fileChecksums.js';
 import IndexedFiles from './types/indexedFiles.js';
 import Options from './types/options.js';
 import OutputFactory from './types/outputFactory.js';
@@ -64,17 +66,25 @@ export default class Igir {
     if (this.options.shouldLink()
       && this.options.getSymlink()
       && process.platform === 'win32'
-      && !await FsPoly.canSymlink(Constants.GLOBAL_TEMP_DIR)
     ) {
-      if (!await isAdmin()) {
-        throw new Error(`${Constants.COMMAND_NAME} does not have permissions to create symlinks, please try running as administrator`);
+      this.logger.trace('checking Windows for symlink permissions');
+      if (!await FsPoly.canSymlink(Constants.GLOBAL_TEMP_DIR)) {
+        if (!await isAdmin()) {
+          throw new Error(`${Constants.COMMAND_NAME} does not have permissions to create symlinks, please try running as administrator`);
+        }
+        throw new Error(`${Constants.COMMAND_NAME} does not have permissions to create symlinks`);
       }
-      throw new Error(`${Constants.COMMAND_NAME} does not have permissions to create symlinks`);
+      this.logger.trace('Windows has symlink permissions');
+    }
+
+    if (this.options.getDisableCache()) {
+      this.logger.trace('disabling the file cache');
+      FileCache.disable();
     }
 
     // Scan and process input files
     let dats = await this.processDATScanner();
-    const indexedRoms = await this.processROMScanner();
+    const indexedRoms = await this.processROMScanner(this.determineScanningBitmask(dats));
     const roms = indexedRoms.getFiles();
     const patches = await this.processPatchScanner();
 
@@ -215,16 +225,50 @@ export default class Igir {
       dats = [new DATCombiner(progressBar).combine(dats)];
     }
 
-    await progressBar.doneItems(dats.length, 'unique DAT', 'found');
+    await progressBar.doneItems(dats.length, 'DAT', 'found');
     await progressBar.freeze();
     return dats;
   }
 
-  private async processROMScanner(): Promise<IndexedFiles> {
+  private determineScanningBitmask(dats: DAT[]): number {
+    const minimumChecksum = this.options.getInputMinChecksum() ?? ChecksumBitmask.CRC32;
+    let matchChecksum = minimumChecksum;
+
+    if (this.options.shouldDir2Dat()) {
+      Object.keys(ChecksumBitmask)
+        .filter((bitmask): bitmask is keyof typeof ChecksumBitmask => Number.isNaN(Number(bitmask)))
+        // Has not been enabled yet
+        .filter((bitmask) => ChecksumBitmask[bitmask] > minimumChecksum)
+        .filter((bitmask) => !(matchChecksum & ChecksumBitmask[bitmask]))
+        .forEach((bitmask) => {
+          matchChecksum |= ChecksumBitmask[bitmask];
+          this.logger.trace(`generating a dir2dat, enabling ${bitmask} file checksums`);
+        });
+    }
+
+    dats.forEach((dat) => {
+      const datMinimumBitmask = dat.getRequiredChecksumBitmask();
+      Object.keys(ChecksumBitmask)
+        .filter((bitmask): bitmask is keyof typeof ChecksumBitmask => Number.isNaN(Number(bitmask)))
+        // Has not been enabled yet
+        .filter((bitmask) => ChecksumBitmask[bitmask] > minimumChecksum)
+        .filter((bitmask) => !(matchChecksum & ChecksumBitmask[bitmask]))
+        // Should be enabled for this DAT
+        .filter((bitmask) => datMinimumBitmask & ChecksumBitmask[bitmask])
+        .forEach((bitmask) => {
+          matchChecksum |= ChecksumBitmask[bitmask];
+          this.logger.trace(`${dat.getNameShort()}: needs ${bitmask} file checksums, enabling`);
+        });
+    });
+
+    return matchChecksum;
+  }
+
+  private async processROMScanner(checksumBitmask: number): Promise<IndexedFiles> {
     const romScannerProgressBarName = 'Scanning for ROMs';
     const romProgressBar = await this.logger.addProgressBar(romScannerProgressBarName);
 
-    const rawRomFiles = await new ROMScanner(this.options, romProgressBar).scan();
+    const rawRomFiles = await new ROMScanner(this.options, romProgressBar).scan(checksumBitmask);
 
     await romProgressBar.setName('Detecting ROM headers');
     const romFilesWithHeaders = await new ROMHeaderProcessor(this.options, romProgressBar)
@@ -248,7 +292,7 @@ export default class Igir {
 
     const progressBar = await this.logger.addProgressBar('Scanning for patches');
     const patches = await new PatchScanner(this.options, progressBar).scan();
-    await progressBar.doneItems(patches.length, 'unique patch', 'found');
+    await progressBar.doneItems(patches.length, 'patch', 'found');
     await progressBar.freeze();
     return patches;
   }

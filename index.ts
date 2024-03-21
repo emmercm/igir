@@ -31,6 +31,7 @@ gracefulFs.gracefulify(realFs);
     logger.notice(`Exiting ${Constants.COMMAND_NAME} early`);
     await ProgressBarCLI.stop();
     process.exit(0);
+    // TODO(cemmer): does exit here cause cleanup not to happen?
   });
 
   // Parse CLI arguments

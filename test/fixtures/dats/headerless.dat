@@ -1,0 +1,42 @@
+clrmamepro (
+	name "Headerless"
+	description "Headerless"
+	version 20240307
+	author emmercm
+)
+
+game (
+	name "allpads"
+	description "allpads"
+	rom ( name allpads.nes size 32768 sha1 f181104ca6ea30fa166260ab29395ce1fcdaa48e )
+)
+
+game (
+	name "color_test"
+	description "color_test"
+	rom ( name color_test.nes size 40976 sha1 7f5a5f590c17b8178350f79883caa18d8df305a1 )
+)
+
+game (
+	name "diagnostic_test_cartridge"
+	description "diagnostic_test_cartridge"
+	rom ( name diagnostic_test_cartridge.a78 size 32768 sha1 76ec76c423d88bdf739e673c051c5b9c174881c6 )
+)
+
+game (
+	name "fds_joypad_test"
+	description "fds_joypad_test"
+	rom ( name fds_joypad_test.fds size 65484 sha1 7b6bd1a69bbc5d8121c72dd1eedfb6752fe11787 )
+)
+
+game (
+	name "LCDTestROM"
+	description "LCDTestROM"
+	rom ( name LCDTestROM.lyx size 5302 sha1 e2901046126153b318a09cc1476eec8afff0b698 )
+)
+
+game (
+	name "speed_test_v51"
+	description "speed_test_v51"
+	rom ( name speed_test_v51.sfc size 65536 sha1 2f2f061ee81bafb4c48b83993a56969012162d68 )
+)

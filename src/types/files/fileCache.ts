@@ -32,10 +32,18 @@ interface CacheValue {
 }
 
 export default class FileCache {
+  private static readonly VERSION = 1;
+
   private static readonly CACHE = new Cache<CacheValue>({
     filePath: process.env.NODE_ENV !== 'test' ? Constants.GLOBAL_CACHE_FILE : undefined,
     fileFlushMillis: 30_000,
   }).load();
+
+  private static enabled = true;
+
+  public static disable(): void {
+    this.enabled = false;
+  }
 
   static CacheArchiveEntries <T extends ArchiveEntry<Archive>>(
     cacheProps?: CacheArchiveEntriesProps,
@@ -47,8 +55,7 @@ export default class FileCache {
     ): TypedPropertyDescriptor<ArchiveEntriesMethod<T>> => {
       const originalMethod = descriptor.value;
       if (!originalMethod) {
-        // Should never happen, a method should always be available
-        return descriptor;
+        throw new Error('@CacheArchiveEntries couldn\'t get a method from the descriptor');
       }
 
       // eslint-disable-next-line no-param-reassign,func-names
@@ -63,7 +70,7 @@ export default class FileCache {
           args,
         );
 
-        if (checksumBitmask === cacheProps?.skipChecksumBitmask) {
+        if (!FileCache.enabled || checksumBitmask === cacheProps?.skipChecksumBitmask) {
           return newMethod();
         }
 
@@ -88,7 +95,7 @@ export default class FileCache {
   }
 
   private static getCacheKey(stats: Stats): string {
-    return String(stats.ino);
+    return `V${FileCache.VERSION}|${stats.ino}`;
   }
 
   private static async getCachedValue(

@@ -10,6 +10,7 @@ import ArgumentsParser from '../../src/modules/argumentsParser.js';
 import FsPoly from '../../src/polyfill/fsPoly.js';
 import Header from '../../src/types/dats/logiqx/header.js';
 import LogiqxDAT from '../../src/types/dats/logiqx/logiqxDat.js';
+import { ChecksumBitmask } from '../../src/types/files/fileChecksums.js';
 import { GameSubdirMode, MergeMode } from '../../src/types/options.js';
 
 const dummyRequiredArgs = ['--input', os.devNull, '--output', os.devNull];
@@ -29,12 +30,12 @@ describe('commands', () => {
 
   it('should throw on conflicting commands', () => {
     expect(() => argumentsParser.parse(['copy', 'move', ...dummyRequiredArgs])).toThrow(/unknown command/i);
-    expect(() => argumentsParser.parse(['copy', 'symlink', ...dummyRequiredArgs])).toThrow(/unknown command/i);
-    expect(() => argumentsParser.parse(['move', 'symlink', ...dummyRequiredArgs])).toThrow(/unknown command/i);
+    expect(() => argumentsParser.parse(['copy', 'link', ...dummyRequiredArgs])).toThrow(/unknown command/i);
+    expect(() => argumentsParser.parse(['move', 'link', ...dummyRequiredArgs])).toThrow(/unknown command/i);
 
     expect(() => argumentsParser.parse(['extract', 'zip', ...dummyRequiredArgs])).toThrow(/unknown command/i);
-    expect(() => argumentsParser.parse(['extract', 'symlink', ...dummyRequiredArgs])).toThrow(/unknown command/i);
-    expect(() => argumentsParser.parse(['zip', 'symlink', ...dummyRequiredArgs])).toThrow(/unknown command/i);
+    expect(() => argumentsParser.parse(['extract', 'link', ...dummyRequiredArgs])).toThrow(/unknown command/i);
+    expect(() => argumentsParser.parse(['zip', 'link', ...dummyRequiredArgs])).toThrow(/unknown command/i);
   });
 
   it('should throw on commands requiring other commands', () => {
@@ -105,12 +106,17 @@ describe('options', () => {
     expect(options.shouldClean()).toEqual(false);
     expect(options.shouldReport()).toEqual(false);
 
+    expect(options.getInputPaths()).toEqual([os.devNull]);
+    expect(options.getInputMinChecksum()).toEqual(ChecksumBitmask.CRC32);
+
     expect(options.getDatNameRegex()).toBeUndefined();
     expect(options.getDatNameRegexExclude()).toBeUndefined();
     expect(options.getDatDescriptionRegex()).toBeUndefined();
     expect(options.getDatDescriptionRegexExclude()).toBeUndefined();
     expect(options.getDatCombine()).toEqual(false);
     expect(options.getDatIgnoreParentClone()).toEqual(false);
+
+    expect(options.getPatchFileCount()).toEqual(0);
 
     expect(options.getDirMirror()).toEqual(false);
     expect(options.getDirDatName()).toEqual(false);
@@ -180,8 +186,18 @@ describe('options', () => {
     expect(options.getDatThreads()).toEqual(3);
     expect(options.getReaderThreads()).toEqual(10);
     expect(options.getWriterThreads()).toEqual(10);
+    expect(options.getDisableCache()).toEqual(false);
     expect(options.getLogLevel()).toEqual(LogLevel.WARN);
     expect(options.getHelp()).toEqual(false);
+  });
+
+  it('should parse "fixdat"', () => {
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--dat', os.devNull, '--fixdat']).shouldFixdat()).toEqual(true);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--dat', os.devNull, '--fixdat', 'true']).shouldFixdat()).toEqual(true);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--dat', os.devNull, '--fixdat', 'false']).shouldFixdat()).toEqual(false);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--dat', os.devNull, '--fixdat', '--fixdat']).shouldFixdat()).toEqual(true);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--dat', os.devNull, '--fixdat', 'false', '--fixdat', 'true']).shouldFixdat()).toEqual(true);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--dat', os.devNull, '--fixdat', 'true', '--fixdat', 'false']).shouldFixdat()).toEqual(false);
   });
 
   it('should parse "input"', async () => {
@@ -205,25 +221,14 @@ describe('options', () => {
     expect((await argumentsParser.parse(['copy', '--input', './src', '--output', os.devNull, '--input-exclude', './src']).scanInputFilesWithoutExclusions()).length).toEqual(0);
   });
 
-  it('should parse "patch"', async () => {
-    await expect(argumentsParser.parse(['copy', '--input', os.devNull, '--patch', 'nonexistentfile', '--output', os.devNull]).scanPatchFilesWithoutExclusions()).rejects.toThrow(/no files found/i);
-    await expect(argumentsParser.parse(['copy', '--input', os.devNull, '--patch', os.devNull, '--output', os.devNull]).scanPatchFilesWithoutExclusions()).resolves.toHaveLength(0);
-
-    const src = await argumentsParser.parse(['copy', '--input', os.devNull, '--patch', './src', '--output', os.devNull]).scanPatchFilesWithoutExclusions();
-    const test = await argumentsParser.parse(['copy', '--input', os.devNull, '--patch', './test', '--output', os.devNull]).scanPatchFilesWithoutExclusions();
-    const both = await argumentsParser.parse(['copy', '--input', os.devNull, '--patch', './src', '-p', './test', '--output', os.devNull]).scanPatchFilesWithoutExclusions();
-    expect(src.length).toBeGreaterThan(0);
-    expect(test.length).toBeGreaterThan(0);
-    expect(both.length).toEqual(src.length + test.length);
-    /** Note: glob patterns are tested in {@link PatchScanner} */
-  });
-
-  it('should parse "patch-exclude"', async () => {
-    expect((await argumentsParser.parse(['copy', '--input', os.devNull, '--patch', './src', '--output', os.devNull]).scanPatchFilesWithoutExclusions()).length).toBeGreaterThan(0);
-    expect((await argumentsParser.parse(['copy', '--input', os.devNull, '--patch', './src', '--output', os.devNull, '-P', os.devNull]).scanPatchFilesWithoutExclusions()).length).toBeGreaterThan(0);
-    expect((await argumentsParser.parse(['copy', '--input', os.devNull, '--patch', './src', '--output', os.devNull, '-P', 'nonexistentfile']).scanPatchFilesWithoutExclusions()).length).toBeGreaterThan(0);
-    expect((await argumentsParser.parse(['copy', '--input', os.devNull, '--patch', './src', '--output', os.devNull, '--patch-exclude', './src']).scanPatchFilesWithoutExclusions()).length).toEqual(0);
-    expect((await argumentsParser.parse(['copy', '--input', os.devNull, '--patch', './src', '--output', os.devNull, '--patch-exclude', './src']).scanPatchFilesWithoutExclusions()).length).toEqual(0);
+  it('should parse "input-min-checksum', () => {
+    expect(argumentsParser.parse(dummyCommandAndRequiredArgs).getInputMinChecksum())
+      .toEqual(ChecksumBitmask.CRC32);
+    expect(() => argumentsParser.parse([...dummyCommandAndRequiredArgs, '--input-min-checksum', 'foobar']).getInputMinChecksum()).toThrow(/invalid values/i);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--input-min-checksum', 'CRC32']).getInputMinChecksum()).toEqual(ChecksumBitmask.CRC32);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--input-min-checksum', 'MD5']).getInputMinChecksum()).toEqual(ChecksumBitmask.MD5);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--input-min-checksum', 'SHA1']).getInputMinChecksum()).toEqual(ChecksumBitmask.SHA1);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--input-min-checksum', 'SHA1', '--input-min-checksum', 'CRC32']).getInputMinChecksum()).toEqual(ChecksumBitmask.CRC32);
   });
 
   it('should parse "dat"', async () => {
@@ -362,13 +367,25 @@ describe('options', () => {
     expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--dat', os.devNull, '--dat-ignore-parent-clone', 'true', '--dat-ignore-parent-clone', 'false']).getDatIgnoreParentClone()).toEqual(false);
   });
 
-  it('should parse "fixdat"', () => {
-    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--dat', os.devNull, '--fixdat']).shouldFixdat()).toEqual(true);
-    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--dat', os.devNull, '--fixdat', 'true']).shouldFixdat()).toEqual(true);
-    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--dat', os.devNull, '--fixdat', 'false']).shouldFixdat()).toEqual(false);
-    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--dat', os.devNull, '--fixdat', '--fixdat']).shouldFixdat()).toEqual(true);
-    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--dat', os.devNull, '--fixdat', 'false', '--fixdat', 'true']).shouldFixdat()).toEqual(true);
-    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--dat', os.devNull, '--fixdat', 'true', '--fixdat', 'false']).shouldFixdat()).toEqual(false);
+  it('should parse "patch"', async () => {
+    await expect(argumentsParser.parse(['copy', '--input', os.devNull, '--patch', 'nonexistentfile', '--output', os.devNull]).scanPatchFilesWithoutExclusions()).rejects.toThrow(/no files found/i);
+    await expect(argumentsParser.parse(['copy', '--input', os.devNull, '--patch', os.devNull, '--output', os.devNull]).scanPatchFilesWithoutExclusions()).resolves.toHaveLength(0);
+
+    const src = await argumentsParser.parse(['copy', '--input', os.devNull, '--patch', './src', '--output', os.devNull]).scanPatchFilesWithoutExclusions();
+    const test = await argumentsParser.parse(['copy', '--input', os.devNull, '--patch', './test', '--output', os.devNull]).scanPatchFilesWithoutExclusions();
+    const both = await argumentsParser.parse(['copy', '--input', os.devNull, '--patch', './src', '-p', './test', '--output', os.devNull]).scanPatchFilesWithoutExclusions();
+    expect(src.length).toBeGreaterThan(0);
+    expect(test.length).toBeGreaterThan(0);
+    expect(both.length).toEqual(src.length + test.length);
+    /** Note: glob patterns are tested in {@link PatchScanner} */
+  });
+
+  it('should parse "patch-exclude"', async () => {
+    expect((await argumentsParser.parse(['copy', '--input', os.devNull, '--patch', './src', '--output', os.devNull]).scanPatchFilesWithoutExclusions()).length).toBeGreaterThan(0);
+    expect((await argumentsParser.parse(['copy', '--input', os.devNull, '--patch', './src', '--output', os.devNull, '-P', os.devNull]).scanPatchFilesWithoutExclusions()).length).toBeGreaterThan(0);
+    expect((await argumentsParser.parse(['copy', '--input', os.devNull, '--patch', './src', '--output', os.devNull, '-P', 'nonexistentfile']).scanPatchFilesWithoutExclusions()).length).toBeGreaterThan(0);
+    expect((await argumentsParser.parse(['copy', '--input', os.devNull, '--patch', './src', '--output', os.devNull, '--patch-exclude', './src']).scanPatchFilesWithoutExclusions()).length).toEqual(0);
+    expect((await argumentsParser.parse(['copy', '--input', os.devNull, '--patch', './src', '--output', os.devNull, '--patch-exclude', './src']).scanPatchFilesWithoutExclusions()).length).toEqual(0);
   });
 
   it('should parse "output"', () => {
@@ -544,6 +561,7 @@ describe('options', () => {
     expect(argumentsParser.parse(['symlink', ...dummyRequiredArgs, '--symlink', 'false', '--symlink', 'true']).getSymlink()).toEqual(true);
     expect(argumentsParser.parse(['symlink', ...dummyRequiredArgs, '--symlink', 'true', '--symlink', 'false']).getSymlink()).toEqual(false);
 
+    expect(() => argumentsParser.parse([...dummyCommandAndRequiredArgs, '--symlink']).getSymlink()).toThrow(/missing required command/i);
     expect(argumentsParser.parse(['link', ...dummyRequiredArgs]).getSymlink()).toEqual(false);
     expect(argumentsParser.parse(['link', ...dummyRequiredArgs, '--symlink']).getSymlink()).toEqual(true);
     expect(argumentsParser.parse(['link', ...dummyRequiredArgs, '--symlink', 'true']).getSymlink()).toEqual(true);
@@ -1131,6 +1149,17 @@ describe('options', () => {
     expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--writer-threads', '0']).getWriterThreads()).toEqual(1);
     expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--writer-threads', '1']).getWriterThreads()).toEqual(1);
     expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--writer-threads', '2']).getWriterThreads()).toEqual(2);
+  });
+
+  it('should parse "disable-cache"', () => {
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs]).getDisableCache())
+      .toEqual(false);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--disable-cache']).getDisableCache()).toEqual(true);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--disable-cache', 'true']).getDisableCache()).toEqual(true);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--disable-cache', 'false']).getDisableCache()).toEqual(false);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--disable-cache', '--disable-cache']).getDisableCache()).toEqual(true);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--disable-cache', 'false', '--disable-cache', 'true']).getDisableCache()).toEqual(true);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--disable-cache', 'true', '--disable-cache', 'false']).getDisableCache()).toEqual(false);
   });
 
   it('should parse "verbose"', () => {

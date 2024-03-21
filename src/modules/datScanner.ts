@@ -321,7 +321,7 @@ export default class DATScanner extends Scanner {
         .map((entry) => new ROM({
           name: entry.name ?? '',
           size: Number.parseInt(entry.size ?? '0', 10),
-          crc32: entry.crc ?? '',
+          crc32: entry.crc,
           md5: entry.md5,
           sha1: entry.sha1,
         }));
@@ -365,17 +365,12 @@ export default class DATScanner extends Scanner {
       return undefined;
     }
 
-    if (rows.some((row) => row.size === undefined || row.size.length === 0)) {
-      this.progressBar.logTrace(`${datFile.toString()}: SMDB doesn't specify ROM file sizes, can't use`);
-      return undefined;
-    }
-
     this.progressBar.logTrace(`${datFile.toString()}: parsed SMDB, deserializing to DAT`);
 
     const games = rows.map((row) => {
       const rom = new ROM({
         name: row.name,
-        size: Number.parseInt(row.size ?? '', 10),
+        size: Number.parseInt(row.size ?? '0', 10),
         crc32: row.crc,
         md5: row.md5,
         sha1: row.sha1,
@@ -392,7 +387,6 @@ export default class DATScanner extends Scanner {
     return new LogiqxDAT(new Header({
       name: datName,
       description: datName,
-      romNamesContainDirectories: true,
     }), games);
   }
 
@@ -405,13 +399,11 @@ export default class DATScanner extends Scanner {
         quote: undefined,
         headers: ['sha256', 'name', 'sha1', 'md5', 'crc', 'size'],
       })
-        .validate((row: SmdbRow) => row.name
-          && row.crc
-          && row.crc.length === 8
-          && (row.size === undefined
-            || row.size.length === 0
-            || Number.isInteger(Number.parseInt(row.size, 10))
-          ))
+        .validate((row: SmdbRow) => row.name && (
+          row.crc.match(/^[0-9a-f]{8}$/) !== null
+            || row.md5.match(/^[0-9a-f]{32}$/) !== null
+            || row.sha1.match(/^[0-9a-f]{40}$/) !== null
+        ))
         .on('error', reject)
         .on('data', (row) => {
           rows.push(row);
@@ -458,8 +450,13 @@ export default class DATScanner extends Scanner {
     const games = dat.getGames()
       .map((game) => {
         const roms = game.getRoms()
-          // ROMs have to have filenames and sizes
-          .filter((rom) => this.options.shouldDir2Dat() || (rom.name && rom.size > 0));
+          // ROMs have to have filenames and at least one non-zero checksum
+          .filter((rom) => this.options.shouldDir2Dat() || (
+            rom.getName()
+            && (rom.getCrc32() === undefined || rom.getCrc32() !== '00000000')
+            && (rom.getMd5() === undefined || rom.getMd5() !== 'd41d8cd98f00b204e9800998ecf8427e')
+            && (rom.getSha1() === undefined || rom.getSha1() !== 'da39a3ee5e6b4b0d3255bfef95601890afd80709')
+          ));
         return game.withProps({ rom: roms });
       });
 
