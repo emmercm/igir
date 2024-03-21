@@ -40,12 +40,12 @@ class OutputPath implements ParsedPathWithEntryPath {
   entryPath: string;
 
   constructor(parsedPath: ParsedPathWithEntryPath) {
-    this.base = parsedPath.base.replace(/[\\/]/g, path.sep);
-    this.dir = parsedPath.dir.replace(/[\\/]/g, path.sep);
-    this.ext = parsedPath.ext.replace(/[\\/]/g, path.sep);
-    this.name = parsedPath.name.replace(/[\\/]/g, path.sep);
-    this.root = parsedPath.root.replace(/[\\/]/g, path.sep);
-    this.entryPath = parsedPath.entryPath.replace(/[\\/]/g, path.sep);
+    this.base = parsedPath.base.replace(/[\\/]/g, path.sep).trim();
+    this.dir = parsedPath.dir.replace(/[\\/]/g, path.sep).trim();
+    this.ext = parsedPath.ext.replace(/[\\/]/g, path.sep).trim();
+    this.name = parsedPath.name.replace(/[\\/]/g, path.sep).trim();
+    this.root = parsedPath.root.replace(/[\\/]/g, path.sep).trim();
+    this.entryPath = parsedPath.entryPath.replace(/[\\/]/g, path.sep).trim();
   }
 
   /**
@@ -85,7 +85,7 @@ export default class OutputFactory {
     inputFile: File,
     romBasenames?: string[],
   ): OutputPath {
-    const name = this.getName(options, dat, game, rom, inputFile);
+    const name = this.getName(options, game, rom, inputFile);
     const ext = this.getExt(options, dat, game, rom, inputFile);
     const basename = name + ext;
 
@@ -95,7 +95,7 @@ export default class OutputFactory {
       base: '',
       name,
       ext,
-      entryPath: this.getEntryPath(options, dat, game, rom, inputFile),
+      entryPath: this.getEntryPath(options, game, rom, inputFile),
     });
   }
 
@@ -441,14 +441,12 @@ export default class OutputFactory {
 
   private static getName(
     options: Options,
-    dat: DAT,
     game: Game,
     rom: ROM,
     inputFile: File,
   ): string {
     const { dir, name, ext } = path.parse(this.getOutputFileBasename(
       options,
-      dat,
       game,
       rom,
       inputFile,
@@ -464,20 +462,19 @@ export default class OutputFactory {
         && !FileFactory.isArchive(ext))
       || options.getDirGameSubdir() === GameSubdirMode.ALWAYS
     ) {
-      output = path.join(game.getName(), output);
+      output = path.join(game.getName().replace(/[\\/]/g, '_'), output);
     }
 
     return output;
   }
 
   private static getExt(options: Options, dat: DAT, game: Game, rom: ROM, inputFile: File): string {
-    const { ext } = path.parse(this.getOutputFileBasename(options, dat, game, rom, inputFile));
+    const { ext } = path.parse(this.getOutputFileBasename(options, game, rom, inputFile));
     return ext;
   }
 
   private static getOutputFileBasename(
     options: Options,
-    dat: DAT,
     game: Game,
     rom: ROM,
     inputFile: File,
@@ -485,10 +482,10 @@ export default class OutputFactory {
     // Determine the output path of the file
     if (options.shouldZipFile(rom.getName())) {
       // Should zip, generate the zip name from the game name
-      return `${game.getName()}.zip`;
+      return `${game.getName().replace(/[\\/]/g, '_')}.zip`;
     }
 
-    const romBasename = this.getRomBasename(game, rom, inputFile);
+    const romBasename = this.getRomBasename(rom, inputFile);
 
     if (
       !(inputFile instanceof ArchiveEntry || FileFactory.isArchive(inputFile.getFilePath()))
@@ -502,17 +499,17 @@ export default class OutputFactory {
     // file's extension
     const extMatch = inputFile.getFilePath().match(/[^.]+((\.[a-zA-Z0-9]+)+)$/);
     const ext = extMatch !== null ? extMatch[1] : '';
-    return game.getName() + ext;
+    return game.getName().replace(/[\\/]/g, '_') + ext;
   }
 
   private static getEntryPath(
     options: Options,
-    dat: DAT,
     game: Game,
     rom: ROM,
     inputFile: File,
   ): string {
-    const romBasename = this.getRomBasename(game, rom, inputFile);
+    const romBasename = this.getRomBasename(rom, inputFile)
+      .replace(/\s*[\\/]\s*/g, path.sep);
     if (!options.shouldZipFile(rom.getName())) {
       return romBasename;
     }
@@ -522,12 +519,10 @@ export default class OutputFactory {
     // the entry path.
     const gameNameSanitized = game.getName().replace(/[\\/]/g, path.sep);
     return romBasename
-      .replace(/[\\/]/g, path.sep)
       .replace(`${path.dirname(gameNameSanitized)}${path.sep}`, '');
   }
 
   private static getRomBasename(
-    game: Game,
     rom: ROM,
     inputFile: File,
   ): string {

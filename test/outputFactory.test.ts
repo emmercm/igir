@@ -7,6 +7,7 @@ import Header from '../src/types/dats/logiqx/header.js';
 import LogiqxDAT from '../src/types/dats/logiqx/logiqxDat.js';
 import Release from '../src/types/dats/release.js';
 import ROM from '../src/types/dats/rom.js';
+import File from '../src/types/files/file.js';
 import Options, { GameSubdirMode } from '../src/types/options.js';
 import OutputFactory from '../src/types/outputFactory.js';
 
@@ -55,6 +56,80 @@ test.each([
     name: 'Dummy',
     ext: '.rom',
     entryPath: 'Dummy.rom',
+  });
+});
+
+describe('path separators', () => {
+  it('should sanitize game names of games with multiple ROMs', async () => {
+    const options = new Options({
+      dirGameSubdir: GameSubdirMode[GameSubdirMode.MULTIPLE].toLowerCase(),
+    });
+    const game = new Game({
+      name: 'Game / Machine',
+      rom: [
+        new ROM({ name: 'Disc.cue', size: 0 }),
+        new ROM({ name: 'Disc (Track 01).bin', size: 0 }),
+      ],
+    });
+    const dat = new LogiqxDAT(new Header(), [game]);
+
+    const outputPath = OutputFactory.getPath(
+      options,
+      dat,
+      game,
+      game.getReleases()[0],
+      game.getRoms()[0],
+      await game.getRoms()[0]?.toFile(),
+    );
+    expect(outputPath.ext).toEqual('.cue');
+    expect(outputPath.name).toEqual('Game _ Machine/Disc');
+    expect(outputPath.entryPath).toEqual('Disc.cue');
+  });
+
+  it('should sanitize game names of games when zipping', async () => {
+    const options = new Options({
+      commands: ['copy', 'zip'],
+    });
+    const game = new Game({
+      name: 'Game / Machine',
+      rom: new ROM({ name: 'Game / Machine.rom', size: 0 }),
+    });
+    const dat = new LogiqxDAT(new Header(), [game]);
+
+    const outputPath = OutputFactory.getPath(
+      options,
+      dat,
+      game,
+      game.getReleases()[0],
+      game.getRoms()[0],
+      await game.getRoms()[0]?.toFile(),
+    );
+    expect(outputPath.ext).toEqual('.zip');
+    expect(outputPath.name).toEqual('Game _ Machine');
+    expect(outputPath.entryPath).toEqual('Game/Machine.rom');
+  });
+
+  it('should sanitize game names of games when raw copying', async () => {
+    const options = new Options({
+      commands: ['copy'],
+    });
+    const game = new Game({
+      name: 'Game / Machine',
+      rom: new ROM({ name: 'Game / Machine.rom', size: 0 }),
+    });
+    const dat = new LogiqxDAT(new Header(), [game]);
+
+    const outputPath = OutputFactory.getPath(
+      options,
+      dat,
+      game,
+      game.getReleases()[0],
+      game.getRoms()[0],
+      await File.fileOf({ filePath: `${game.getName()}.zip` }),
+    );
+    expect(outputPath.ext).toEqual('.zip');
+    expect(outputPath.name).toEqual('Game _ Machine');
+    expect(outputPath.entryPath).toEqual('Game/Machine.rom');
   });
 });
 
