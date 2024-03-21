@@ -62,6 +62,9 @@ export default class ArchiveEntry<A extends Archive> extends File implements Arc
         || (!finalMd5WithHeader && (checksumBitmask & ChecksumBitmask.MD5))
         || (!finalSha1WithHeader && (checksumBitmask & ChecksumBitmask.SHA1))
       ) {
+        // If any additional checksum needs to be calculated, then prefer those calculated ones
+        // over any that were supplied in {@link archiveEntryProps} that probably came from the
+        // archive's file table.
         const headeredChecksums = await this.calculateEntryChecksums(
           archiveEntryProps.archive,
           archiveEntryProps.entryPath,
@@ -198,7 +201,7 @@ export default class ArchiveEntry<A extends Archive> extends File implements Arc
     // the stream start point
     if (this.getSize() > Constants.MAX_MEMORY_FILE_SIZE || start > 0) {
       return this.extractToTempFile(
-        async (tempFile) => File.createStreamFromFile(tempFile, start, callback),
+        async (tempFile) => File.createStreamFromFile(tempFile, callback, start),
       );
     }
 

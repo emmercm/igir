@@ -44,7 +44,7 @@ export default class Tar extends Archive {
       archiveEntryPromises.push(ArchiveEntry.entryOf({
         archive: this,
         entryPath: entry.path,
-        size: entry.size ?? 0,
+        size: entry.size,
         ...checksums,
       }, checksumBitmask));
       // In case we didn't need to read the stream for hashes, resume the file reading
