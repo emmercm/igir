@@ -186,6 +186,7 @@ describe('options', () => {
     expect(options.getDatThreads()).toEqual(3);
     expect(options.getReaderThreads()).toEqual(10);
     expect(options.getWriterThreads()).toEqual(10);
+    expect(options.getDisableCache()).toEqual(false);
     expect(options.getLogLevel()).toEqual(LogLevel.WARN);
     expect(options.getHelp()).toEqual(false);
   });
@@ -1148,6 +1149,17 @@ describe('options', () => {
     expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--writer-threads', '0']).getWriterThreads()).toEqual(1);
     expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--writer-threads', '1']).getWriterThreads()).toEqual(1);
     expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--writer-threads', '2']).getWriterThreads()).toEqual(2);
+  });
+
+  it('should parse "disable-cache"', () => {
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs]).getDisableCache())
+      .toEqual(false);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--disable-cache']).getDisableCache()).toEqual(true);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--disable-cache', 'true']).getDisableCache()).toEqual(true);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--disable-cache', 'false']).getDisableCache()).toEqual(false);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--disable-cache', '--disable-cache']).getDisableCache()).toEqual(true);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--disable-cache', 'false', '--disable-cache', 'true']).getDisableCache()).toEqual(true);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--disable-cache', 'true', '--disable-cache', 'false']).getDisableCache()).toEqual(false);
   });
 
   it('should parse "verbose"', () => {

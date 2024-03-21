@@ -29,3 +29,9 @@ This is why you should use the [`igir zip` command](../output/writing-archives.m
 Somewhat proprietary archive formats such as `.7z` and `.rar` require `igir` to use an external tool to enumerate and extract files. This can greatly slow down processing speed.
 
 This is why `igir` uses `.zip` as its output archive of choice, `.zip` files are easy and fast to read, even if they can't offer as high of compression as other formats.
+
+## Checksum cache
+
+It can be expensive to calculate checksums of files within archives, especially MD5 and SHA1. If `igir` needs to calculate a checksum that is not easily read from the archive (see above), it will cache the result in a file named `igir.cache`. This cached result will then be used as long as the input file's size and modified timestamp remain the same.
+
+Caching can be disabled with the `--disable-cache` option, or you can safely delete `igir.cache` if it becomes too large.
