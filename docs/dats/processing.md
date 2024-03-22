@@ -63,6 +63,7 @@ There have been a few DAT-like formats developed over the years. `igir` supports
           igir [commands..] --dat "$(which "mame")" --input <input>
           ```
 
+- [MAME software lists](https://docs.mamedev.org/contributing/softlist.html) (XML exported by the `mame -getsoftlist` command)
 - [CMPro](http://www.logiqx.com/DatFAQs/CMPro.php)
 - [Hardware Target Game Database](https://github.com/frederic-mahe/Hardware-Target-Game-Database) SMDBs
 
