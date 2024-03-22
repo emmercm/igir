@@ -39,9 +39,9 @@ For example, if you provide all of these DATs at once with the [`--dat <path>` o
 You can specify higher checksum algorithms with the `--input-min-checksum <algorithm>` option like this:
 
 ```shell
-$ igir [commands..] [options] --input-min-checksum MD5
-$ igir [commands..] [options] --input-min-checksum SHA1
-$ igir [commands..] [options] --input-min-checksum SHA256
+igir [commands..] [options] --input-min-checksum MD5
+igir [commands..] [options] --input-min-checksum SHA1
+igir [commands..] [options] --input-min-checksum SHA256
 ```
 
 This option defines the _minimum_ checksum that will be used based on digest size (below).  If not every ROM in every DAT provides the checksum you specify, `igir` may automatically calculate and match files based on a higher checksum (see above).
