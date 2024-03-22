@@ -144,10 +144,10 @@ export default class IndexedFiles {
    * Find file(s) in the index based some search criteria.
    */
   findFiles(file: File | ROM): File[] | undefined {
-    // const { sha256 } = file;
-    // if (sha256 && this.sha256.has(sha256)) {
-    //   return this.sha256.get(sha256);
-    // }
+    const { sha256 } = file;
+    if (sha256 && this.sha256.has(sha256)) {
+      return this.sha256.get(sha256);
+    }
 
     const { sha1 } = file;
     if (sha1 && this.sha1.has(sha1)) {
