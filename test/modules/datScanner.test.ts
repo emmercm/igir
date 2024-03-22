@@ -30,14 +30,14 @@ test.each([
   [[os.devNull]],
   [['http://completelybadurl']],
   [['https://completelybadurl']],
-])('should return empty list on no results', async (dat) => {
+])('should return empty list on no results: %s', async (dat) => {
   await expect(createDatScanner({ dat }).scan()).resolves.toHaveLength(0);
 });
 
 test.each([
   [['test/fixtures/**/empty.*']],
   [['test/fixtures/{dats,roms}/empty.*']],
-])('should not throw on empty files', async (dat) => {
+])('should not throw on empty files: %s', async (dat) => {
   await expect(createDatScanner({ dat }).scan()).resolves.toHaveLength(0);
 });
 
@@ -48,7 +48,7 @@ test.each([
   [['test/fixtures/roms/*.rom']],
   [['test/fixtures/roms/invalid.*']],
   [['test/fixtures/roms/invalid.*', 'test/fixtures/roms/invalid.*']],
-])('should not throw on non-DATs', async (dat) => {
+])('should not throw on non-DATs: %s', async (dat) => {
   await expect(createDatScanner({ dat }).scan()).resolves.toHaveLength(0);
 });
 
@@ -68,13 +68,15 @@ describe('multiple files', () => {
     [[path.join(path.resolve(), 'test', 'fixtures', '**', '*.{dat,txt,zip}')]],
     [['test/fixtures/**/*.{dat,txt,zip}']],
     [['test/fixtures/**/*.{dat,txt,zip}', 'test/fixtures/**/*.{dat,txt,zip}']],
-  ])('no files are path excluded', async (dat) => {
+  ])('no files are path excluded: %s', async (dat) => {
     await expect(createDatScanner({ dat }).scan()).resolves.toHaveLength(totalDatFiles);
   });
 
-  it('some files are path excluded', async () => {
-    await expect(createDatScanner({ dat: ['test/fixtures/dats'], datExclude: ['test/fixtures/**/*.dat'] }).scan()).resolves.toHaveLength(1);
-    await expect(createDatScanner({ dat: ['test/fixtures/dats'], datExclude: ['test/fixtures/**/*.zip'] }).scan()).resolves.toHaveLength(totalDatFiles - 1);
+  test.each([
+    [['test/fixtures/**/*.dat'], 1],
+    [['test/fixtures/**/*.zip'], totalDatFiles - 1],
+  ])('some files are path excluded: %s', async (datExclude, expectedDats) => {
+    await expect(createDatScanner({ dat: ['test/fixtures/dats'], datExclude }).scan()).resolves.toHaveLength(expectedDats);
   });
 
   test.each([
@@ -83,32 +85,40 @@ describe('multiple files', () => {
     [['test/fixtures/dats/**', 'test/fixtures/**/*.dat']],
     [['test/fixtures/**/*.{dat,txt,zip}']],
     [['test/fixtures/**/*.{dat,txt,zip}', 'test/fixtures/**/*.{dat,txt,zip}']],
-  ])('all files are path excluded', async (datExclude) => {
+  ])('all files are path excluded: %s', async (datExclude) => {
     await expect(createDatScanner({ dat: ['test/fixtures/dats'], datExclude }).scan()).resolves.toHaveLength(0);
   });
 
-  it('some files are name regex filtered', async () => {
-    await expect(createDatScanner({ dat: ['test/fixtures/dats'], datNameRegex: '/abcdefg/' }).scan()).resolves.toHaveLength(0);
-    await expect(createDatScanner({ dat: ['test/fixtures/dats'], datNameRegex: '/(one|two)/i' }).scan()).resolves.toHaveLength(3);
-    await expect(createDatScanner({ dat: ['test/fixtures/dats'], datNameRegex: '[a-z]' }).scan()).resolves.toHaveLength(totalDatFiles);
+  test.each([
+    ['/abcdefg/', 0],
+    ['/(one|two)/i', 3],
+    ['[a-z]', totalDatFiles],
+  ])('some files are name regex filtered: %s', async (datNameRegex, expectedDats) => {
+    await expect(createDatScanner({ dat: ['test/fixtures/dats'], datNameRegex }).scan()).resolves.toHaveLength(expectedDats);
   });
 
-  it('some files are name regex excluded', async () => {
-    await expect(createDatScanner({ dat: ['test/fixtures/dats'], datNameRegexExclude: '[a-z]' }).scan()).resolves.toHaveLength(0);
-    await expect(createDatScanner({ dat: ['test/fixtures/dats'], datNameRegexExclude: '/(one|two)/i' }).scan()).resolves.toHaveLength(totalDatFiles - 3);
-    await expect(createDatScanner({ dat: ['test/fixtures/dats'], datNameRegexExclude: '/abcdefg/' }).scan()).resolves.toHaveLength(totalDatFiles);
+  test.each([
+    ['[a-z]', 0],
+    ['/(one|two)/i', totalDatFiles - 3],
+    ['/abcdefg/', totalDatFiles],
+  ])('some files are name regex excluded: %s', async (datNameRegexExclude, expectedDats) => {
+    await expect(createDatScanner({ dat: ['test/fixtures/dats'], datNameRegexExclude }).scan()).resolves.toHaveLength(expectedDats);
   });
 
-  it('some files are description regex filtered', async () => {
-    await expect(createDatScanner({ dat: ['test/fixtures/dats'], datDescriptionRegex: '/abcdefg/' }).scan()).resolves.toHaveLength(0);
-    await expect(createDatScanner({ dat: ['test/fixtures/dats'], datDescriptionRegex: '/(one|two)/i' }).scan()).resolves.toHaveLength(3);
-    await expect(createDatScanner({ dat: ['test/fixtures/dats'], datDescriptionRegex: '[a-z]' }).scan()).resolves.toHaveLength(totalDatFiles);
+  test.each([
+    ['/abcdefg/', 0],
+    ['/(one|two)/i', 3],
+    ['[a-z]', totalDatFiles],
+  ])('some files are description regex filtered: %s', async (datDescriptionRegex, expectedDats) => {
+    await expect(createDatScanner({ dat: ['test/fixtures/dats'], datDescriptionRegex }).scan()).resolves.toHaveLength(expectedDats);
   });
 
-  it('some files are description regex excluded', async () => {
-    await expect(createDatScanner({ dat: ['test/fixtures/dats'], datDescriptionRegexExclude: '[a-z]' }).scan()).resolves.toHaveLength(0);
-    await expect(createDatScanner({ dat: ['test/fixtures/dats'], datDescriptionRegexExclude: '/(one|two)/i' }).scan()).resolves.toHaveLength(totalDatFiles - 3);
-    await expect(createDatScanner({ dat: ['test/fixtures/dats'], datDescriptionRegexExclude: '/abcdefg/' }).scan()).resolves.toHaveLength(totalDatFiles);
+  test.each([
+    ['[a-z]', 0],
+    ['/(one|two)/i', totalDatFiles - 3],
+    ['/abcdefg/', totalDatFiles],
+  ])('some files are description regex excluded: %s', async (datDescriptionRegexExclude, expectedDats) => {
+    await expect(createDatScanner({ dat: ['test/fixtures/dats'], datDescriptionRegexExclude }).scan()).resolves.toHaveLength(expectedDats);
   });
 });
 
