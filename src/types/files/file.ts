@@ -21,6 +21,7 @@ export interface FileProps extends ChecksumProps {
   readonly crc32WithoutHeader?: string;
   readonly md5WithoutHeader?: string;
   readonly sha1WithoutHeader?: string;
+  readonly sha256WithoutHeader?: string;
   readonly symlinkSource?: string;
   readonly fileHeader?: ROMHeader;
   readonly patch?: Patch;
@@ -48,6 +49,11 @@ export default class File implements FileProps {
 
   readonly sha1WithoutHeader?: string;
 
+  @Expose()
+  readonly sha256?: string;
+
+  readonly sha256WithoutHeader?: string;
+
   readonly symlinkSource?: string;
 
   readonly fileHeader?: ROMHeader;
@@ -63,6 +69,8 @@ export default class File implements FileProps {
     this.md5WithoutHeader = fileProps.md5WithoutHeader?.toLowerCase().replace(/^0x/, '').padStart(32, '0');
     this.sha1 = fileProps.sha1?.toLowerCase().replace(/^0x/, '').padStart(40, '0');
     this.sha1WithoutHeader = fileProps.sha1WithoutHeader?.toLowerCase().replace(/^0x/, '').padStart(40, '0');
+    this.sha256 = fileProps.sha256?.toLowerCase().replace(/^0x/, '').padStart(64, '0');
+    this.sha256WithoutHeader = fileProps.sha256WithoutHeader?.toLowerCase().replace(/^0x/, '').padStart(64, '0');
     this.symlinkSource = fileProps.symlinkSource;
     this.fileHeader = fileProps.fileHeader;
     this.patch = fileProps.patch;
@@ -85,6 +93,10 @@ export default class File implements FileProps {
     let finalSha1WithoutHeader = fileProps.fileHeader
       ? fileProps.sha1WithoutHeader
       : fileProps.sha1;
+    let finalSha256WithHeader = fileProps.sha256;
+    let finalSha256WithoutHeader = fileProps.fileHeader
+      ? fileProps.sha256WithoutHeader
+      : fileProps.sha256;
     let finalSymlinkSource = fileProps.symlinkSource;
 
     if (await fsPoly.exists(fileProps.filePath)) {
@@ -97,6 +109,7 @@ export default class File implements FileProps {
       if ((!finalCrcWithHeader && (checksumBitmask & ChecksumBitmask.CRC32))
         || (!finalMd5WithHeader && (checksumBitmask & ChecksumBitmask.MD5))
         || (!finalSha1WithHeader && (checksumBitmask & ChecksumBitmask.SHA1))
+        || (!finalSha256WithHeader && (checksumBitmask & ChecksumBitmask.SHA256))
       ) {
         const headeredChecksums = await FileChecksums.hashFile(
           fileProps.filePath,
@@ -105,6 +118,7 @@ export default class File implements FileProps {
         finalCrcWithHeader = headeredChecksums.crc32 ?? finalCrcWithHeader;
         finalMd5WithHeader = headeredChecksums.md5 ?? finalMd5WithHeader;
         finalSha1WithHeader = headeredChecksums.sha1 ?? finalSha1WithHeader;
+        finalSha256WithHeader = headeredChecksums.sha256 ?? finalSha256WithHeader;
       }
       if (fileProps.fileHeader && checksumBitmask) {
         const headerlessChecksums = await FileChecksums.hashFile(
@@ -115,6 +129,7 @@ export default class File implements FileProps {
         finalCrcWithoutHeader = headerlessChecksums.crc32;
         finalMd5WithoutHeader = headerlessChecksums.md5;
         finalSha1WithoutHeader = headerlessChecksums.sha1;
+        finalSha256WithoutHeader = headerlessChecksums.sha256;
       }
 
       if (await fsPoly.isSymlink(fileProps.filePath)) {
@@ -127,6 +142,7 @@ export default class File implements FileProps {
     finalCrcWithoutHeader = finalCrcWithoutHeader ?? finalCrcWithHeader;
     finalMd5WithoutHeader = finalMd5WithoutHeader ?? finalMd5WithHeader;
     finalSha1WithoutHeader = finalSha1WithoutHeader ?? finalSha1WithHeader;
+    finalSha256WithoutHeader = finalSha256WithoutHeader ?? finalSha256WithHeader;
 
     return new File({
       filePath: fileProps.filePath,
@@ -137,6 +153,8 @@ export default class File implements FileProps {
       md5WithoutHeader: finalMd5WithoutHeader,
       sha1: finalSha1WithHeader,
       sha1WithoutHeader: finalSha1WithoutHeader,
+      sha256: finalSha256WithHeader,
+      sha256WithoutHeader: finalSha256WithoutHeader,
       symlinkSource: finalSymlinkSource,
       fileHeader: fileProps.fileHeader,
       patch: fileProps.patch,
@@ -203,6 +221,14 @@ export default class File implements FileProps {
     return this.sha1WithoutHeader;
   }
 
+  getSha256(): string | undefined {
+    return this.sha256;
+  }
+
+  getSha256WithoutHeader(): string | undefined {
+    return this.sha256WithoutHeader;
+  }
+
   protected getSymlinkSource(): string | undefined {
     return this.symlinkSource;
   }
@@ -222,7 +248,8 @@ export default class File implements FileProps {
   public getChecksumBitmask(): number {
     return (this.getCrc32()?.replace(/^0+|0+$/, '') ? ChecksumBitmask.CRC32 : 0)
       | (this.getMd5()?.replace(/^0+|0+$/, '') ? ChecksumBitmask.MD5 : 0)
-      | (this.getSha1()?.replace(/^0+|0+$/, '') ? ChecksumBitmask.SHA1 : 0);
+      | (this.getSha1()?.replace(/^0+|0+$/, '') ? ChecksumBitmask.SHA1 : 0)
+      | (this.getSha256()?.replace(/^0+|0+$/, '') ? ChecksumBitmask.SHA256 : 0);
   }
 
   // Other functions
@@ -416,6 +443,7 @@ export default class File implements FileProps {
       crc32WithoutHeader: this.getCrc32(),
       md5WithoutHeader: this.getMd5(),
       sha1WithoutHeader: this.getSha1(),
+      sha256WithoutHeader: this.getSha256(),
     });
   }
 
@@ -451,7 +479,8 @@ export default class File implements FileProps {
    * A string hash code to uniquely identify this {@link File}.
    */
   hashCode(): string {
-    return this.getSha1()
+    return this.getSha256()
+      ?? this.getSha1()
       ?? this.getMd5()
       ?? `${this.getCrc32()}|${this.getSize()}`;
   }

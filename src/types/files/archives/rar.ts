@@ -34,7 +34,7 @@ export default class Rar extends Archive {
           entryPath: fileHeader.name,
           size: fileHeader.unpSize,
           crc32: fileHeader.crc.toString(16),
-          // If MD5 or SHA1 is desired, this file will need to be extracted to calculate
+          // If MD5, SHA1, or SHA256 is desired, this file will need to be extracted to calculate
         }, checksumBitmask);
         callback(undefined, archiveEntry);
       },

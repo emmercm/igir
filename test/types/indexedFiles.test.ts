@@ -31,6 +31,17 @@ describe('findFiles', () => {
       size: 5,
       sha1: '5555555555555555555555555555555555555555',
     }),
+    File.fileOf({
+      filePath: 'six',
+      size: 6,
+      sha1: '6666666666666666666666666666666666666666',
+      sha256: '6666666666666666666666666666666666666666666666666666666666666666',
+    }),
+    File.fileOf({
+      filePath: 'seven',
+      size: 7,
+      sha256: '7777777777777777777777777777777777777777777777777777777777777777',
+    }),
   ];
 
   it('should find files based on CRC32', async () => {
@@ -53,5 +64,12 @@ describe('findFiles', () => {
     expect(indexedFiles.findFiles(new ROM({ name: '', size: 0, sha1: '4444444444444444444444444444444444444444' }))).toHaveLength(1);
     expect(indexedFiles.findFiles(new ROM({ name: '', size: 0, sha1: '5555555555555555555555555555555555555555' }))).toHaveLength(1);
     expect(indexedFiles.findFiles(new ROM({ name: '', size: 0, sha1: 'FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF' }))).toBeUndefined();
+  });
+
+  it('should find files based on SHA256', async () => {
+    const indexedFiles = IndexedFiles.fromFiles(await Promise.all(filePromises));
+    expect(indexedFiles.findFiles(new ROM({ name: '', size: 0, sha256: '6666666666666666666666666666666666666666666666666666666666666666' }))).toHaveLength(1);
+    expect(indexedFiles.findFiles(new ROM({ name: '', size: 0, sha256: '7777777777777777777777777777777777777777777777777777777777777777' }))).toHaveLength(1);
+    expect(indexedFiles.findFiles(new ROM({ name: '', size: 0, sha256: 'FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF' }))).toBeUndefined();
   });
 });

@@ -94,7 +94,7 @@ export default class SevenZip extends Archive {
           entryPath: result.name,
           size: Number.parseInt(result.size, 10),
           crc32: result.crc,
-          // If MD5 or SHA1 is desired, this file will need to be extracted to calculate
+          // If MD5, SHA1, or SHA256 is desired, this file will need to be extracted to calculate
         }, checksumBitmask);
         callback(undefined, archiveEntry);
       },

@@ -133,6 +133,8 @@ describe('getCrc32', () => {
     expect(archiveEntry.getMd5WithoutHeader()).toBeUndefined();
     expect(archiveEntry.getSha1()).toBeUndefined();
     expect(archiveEntry.getSha1WithoutHeader()).toBeUndefined();
+    expect(archiveEntry.getSha256()).toBeUndefined();
+    expect(archiveEntry.getSha256WithoutHeader()).toBeUndefined();
   });
 });
 
@@ -164,6 +166,8 @@ describe('getCrc32WithoutHeader', () => {
     expect(archiveEntry.getMd5WithoutHeader()).toBeUndefined();
     expect(archiveEntry.getSha1()).toBeUndefined();
     expect(archiveEntry.getSha1WithoutHeader()).toBeUndefined();
+    expect(archiveEntry.getSha256()).toBeUndefined();
+    expect(archiveEntry.getSha256WithoutHeader()).toBeUndefined();
   });
 
   test.each([
@@ -188,6 +192,8 @@ describe('getCrc32WithoutHeader', () => {
     expect(archiveEntry.getMd5WithoutHeader()).toBeUndefined();
     expect(archiveEntry.getSha1()).toBeUndefined();
     expect(archiveEntry.getSha1WithoutHeader()).toBeUndefined();
+    expect(archiveEntry.getSha256()).toBeUndefined();
+    expect(archiveEntry.getSha256WithoutHeader()).toBeUndefined();
   });
 
   test.each([
@@ -207,6 +213,8 @@ describe('getCrc32WithoutHeader', () => {
     expect(archiveEntry.getMd5WithoutHeader()).toBeUndefined();
     expect(archiveEntry.getSha1()).toBeUndefined();
     expect(archiveEntry.getSha1WithoutHeader()).toBeUndefined();
+    expect(archiveEntry.getSha256()).toBeUndefined();
+    expect(archiveEntry.getSha256WithoutHeader()).toBeUndefined();
   });
 });
 
@@ -237,6 +245,8 @@ describe('getMd5', () => {
     expect(archiveEntry.getMd5WithoutHeader()).toEqual(expectedMd5);
     expect(archiveEntry.getSha1()).toBeUndefined();
     expect(archiveEntry.getSha1WithoutHeader()).toBeUndefined();
+    expect(archiveEntry.getSha256()).toBeUndefined();
+    expect(archiveEntry.getSha256WithoutHeader()).toBeUndefined();
   });
 });
 
@@ -267,6 +277,8 @@ describe('getMd5WithoutHeader', () => {
     expect(archiveEntry.getMd5WithoutHeader()).toEqual(expectedMd5);
     expect(archiveEntry.getSha1()).toBeUndefined();
     expect(archiveEntry.getSha1WithoutHeader()).toBeUndefined();
+    expect(archiveEntry.getSha256()).toBeUndefined();
+    expect(archiveEntry.getSha256WithoutHeader()).toBeUndefined();
   });
 
   test.each([
@@ -290,6 +302,8 @@ describe('getMd5WithoutHeader', () => {
     expect(archiveEntry.getMd5WithoutHeader()).toEqual(expectedMd5);
     expect(archiveEntry.getSha1()).toBeUndefined();
     expect(archiveEntry.getSha1WithoutHeader()).toBeUndefined();
+    expect(archiveEntry.getSha256()).toBeUndefined();
+    expect(archiveEntry.getSha256WithoutHeader()).toBeUndefined();
   });
 
   test.each([
@@ -309,6 +323,8 @@ describe('getMd5WithoutHeader', () => {
     expect(archiveEntry.getMd5WithoutHeader()).toEqual(expectedMd5);
     expect(archiveEntry.getSha1()).toBeUndefined();
     expect(archiveEntry.getSha1WithoutHeader()).toBeUndefined();
+    expect(archiveEntry.getSha256()).toBeUndefined();
+    expect(archiveEntry.getSha256WithoutHeader()).toBeUndefined();
   });
 });
 
@@ -339,6 +355,8 @@ describe('getSha1', () => {
     expect(archiveEntry.getMd5WithoutHeader()).toBeUndefined();
     expect(archiveEntry.getSha1()).toEqual(expectedSha1);
     expect(archiveEntry.getSha1WithoutHeader()).toEqual(expectedSha1);
+    expect(archiveEntry.getSha256()).toBeUndefined();
+    expect(archiveEntry.getSha256WithoutHeader()).toBeUndefined();
   });
 });
 
@@ -369,6 +387,8 @@ describe('getSha1WithoutHeader', () => {
     expect(archiveEntry.getMd5WithoutHeader()).toBeUndefined();
     expect(archiveEntry.getSha1()).toEqual(expectedSha1);
     expect(archiveEntry.getSha1WithoutHeader()).toEqual(expectedSha1);
+    expect(archiveEntry.getSha256()).toBeUndefined();
+    expect(archiveEntry.getSha256WithoutHeader()).toBeUndefined();
   });
 
   test.each([
@@ -392,6 +412,8 @@ describe('getSha1WithoutHeader', () => {
     expect(archiveEntry.getMd5WithoutHeader()).toBeUndefined();
     expect(archiveEntry.getSha1()).toEqual(expectedSha1);
     expect(archiveEntry.getSha1WithoutHeader()).toEqual(expectedSha1);
+    expect(archiveEntry.getSha256()).toBeUndefined();
+    expect(archiveEntry.getSha256WithoutHeader()).toBeUndefined();
   });
 
   test.each([
@@ -411,6 +433,118 @@ describe('getSha1WithoutHeader', () => {
     expect(archiveEntry.getMd5WithoutHeader()).toBeUndefined();
     expect(archiveEntry.getSha1()).not.toEqual(expectedSha1);
     expect(archiveEntry.getSha1WithoutHeader()).toEqual(expectedSha1);
+    expect(archiveEntry.getSha256()).toBeUndefined();
+    expect(archiveEntry.getSha256WithoutHeader()).toBeUndefined();
+  });
+});
+
+describe('getSha256', () => {
+  test.each([
+    ['./test/fixtures/roms/7z/fizzbuzz.7z', '6e809804766eaa4dd42a2607b789f3e4e5d32fc321ba8dd3ef39ddc1ea2888e9'],
+    ['./test/fixtures/roms/rar/fizzbuzz.rar', '6e809804766eaa4dd42a2607b789f3e4e5d32fc321ba8dd3ef39ddc1ea2888e9'],
+    ['./test/fixtures/roms/tar/fizzbuzz.tar.gz', '6e809804766eaa4dd42a2607b789f3e4e5d32fc321ba8dd3ef39ddc1ea2888e9'],
+    ['./test/fixtures/roms/zip/fizzbuzz.zip', '6e809804766eaa4dd42a2607b789f3e4e5d32fc321ba8dd3ef39ddc1ea2888e9'],
+    ['./test/fixtures/roms/7z/foobar.7z', 'aec070645fe53ee3b3763059376134f058cc337247c978add178b6ccdfb0019f'],
+    ['./test/fixtures/roms/rar/foobar.rar', 'aec070645fe53ee3b3763059376134f058cc337247c978add178b6ccdfb0019f'],
+    ['./test/fixtures/roms/tar/foobar.tar.gz', 'aec070645fe53ee3b3763059376134f058cc337247c978add178b6ccdfb0019f'],
+    ['./test/fixtures/roms/zip/foobar.zip', 'aec070645fe53ee3b3763059376134f058cc337247c978add178b6ccdfb0019f'],
+    ['./test/fixtures/roms/7z/loremipsum.7z', '9d0dc61fa60a12a9613cc32fa43fc85bea343ec3a25f27d10ed81a7f0b9ec278'],
+    ['./test/fixtures/roms/rar/loremipsum.rar', '9d0dc61fa60a12a9613cc32fa43fc85bea343ec3a25f27d10ed81a7f0b9ec278'],
+    ['./test/fixtures/roms/tar/loremipsum.tar.gz', '9d0dc61fa60a12a9613cc32fa43fc85bea343ec3a25f27d10ed81a7f0b9ec278'],
+    ['./test/fixtures/roms/zip/loremipsum.zip', '9d0dc61fa60a12a9613cc32fa43fc85bea343ec3a25f27d10ed81a7f0b9ec278'],
+    ['./test/fixtures/roms/headered/diagnostic_test_cartridge.a78.7z', '38c6f2411d1f968a96fb85aa5202283dd53ac1bdfe27b233af00b7e0303afabf'],
+    ['./test/fixtures/roms/headered/fds_joypad_test.fds.zip', 'be4bec168f7d9397454f3a0df761ed9359e82a1f98896756b6596023611fa6c1'],
+    ['./test/fixtures/roms/headered/LCDTestROM.lnx.rar', 'c83ea05dc94aa8e158ecdbf84af91d971574712d73e0ea82f25dee7eaf88a9d4'],
+  ])('should hash the full archive entry: %s', async (filePath, expectedSha256) => {
+    const archiveEntries = await FileFactory.filesFrom(filePath, ChecksumBitmask.SHA256);
+    expect(archiveEntries).toHaveLength(1);
+    const archiveEntry = archiveEntries[0];
+
+    // Some archives store CRC32, or otherwise it won't be defined
+    expect(archiveEntry.getMd5()).toBeUndefined();
+    expect(archiveEntry.getMd5WithoutHeader()).toBeUndefined();
+    expect(archiveEntry.getSha1()).toBeUndefined();
+    expect(archiveEntry.getSha1WithoutHeader()).toBeUndefined();
+    expect(archiveEntry.getSha256()).toEqual(expectedSha256);
+    expect(archiveEntry.getSha256WithoutHeader()).toEqual(expectedSha256);
+  });
+});
+
+describe('getSha256WithoutHeader', () => {
+  test.each([
+    ['./test/fixtures/roms/7z/fizzbuzz.7z', '6e809804766eaa4dd42a2607b789f3e4e5d32fc321ba8dd3ef39ddc1ea2888e9'],
+    ['./test/fixtures/roms/rar/fizzbuzz.rar', '6e809804766eaa4dd42a2607b789f3e4e5d32fc321ba8dd3ef39ddc1ea2888e9'],
+    ['./test/fixtures/roms/tar/fizzbuzz.tar.gz', '6e809804766eaa4dd42a2607b789f3e4e5d32fc321ba8dd3ef39ddc1ea2888e9'],
+    ['./test/fixtures/roms/zip/fizzbuzz.zip', '6e809804766eaa4dd42a2607b789f3e4e5d32fc321ba8dd3ef39ddc1ea2888e9'],
+    ['./test/fixtures/roms/7z/foobar.7z', 'aec070645fe53ee3b3763059376134f058cc337247c978add178b6ccdfb0019f'],
+    ['./test/fixtures/roms/rar/foobar.rar', 'aec070645fe53ee3b3763059376134f058cc337247c978add178b6ccdfb0019f'],
+    ['./test/fixtures/roms/tar/foobar.tar.gz', 'aec070645fe53ee3b3763059376134f058cc337247c978add178b6ccdfb0019f'],
+    ['./test/fixtures/roms/zip/foobar.zip', 'aec070645fe53ee3b3763059376134f058cc337247c978add178b6ccdfb0019f'],
+    ['./test/fixtures/roms/7z/loremipsum.7z', '9d0dc61fa60a12a9613cc32fa43fc85bea343ec3a25f27d10ed81a7f0b9ec278'],
+    ['./test/fixtures/roms/rar/loremipsum.rar', '9d0dc61fa60a12a9613cc32fa43fc85bea343ec3a25f27d10ed81a7f0b9ec278'],
+    ['./test/fixtures/roms/tar/loremipsum.tar.gz', '9d0dc61fa60a12a9613cc32fa43fc85bea343ec3a25f27d10ed81a7f0b9ec278'],
+    ['./test/fixtures/roms/zip/loremipsum.zip', '9d0dc61fa60a12a9613cc32fa43fc85bea343ec3a25f27d10ed81a7f0b9ec278'],
+    ['./test/fixtures/roms/headered/diagnostic_test_cartridge.a78.7z', '38c6f2411d1f968a96fb85aa5202283dd53ac1bdfe27b233af00b7e0303afabf'],
+    ['./test/fixtures/roms/headered/fds_joypad_test.fds.zip', 'be4bec168f7d9397454f3a0df761ed9359e82a1f98896756b6596023611fa6c1'],
+    ['./test/fixtures/roms/headered/LCDTestROM.lnx.rar', 'c83ea05dc94aa8e158ecdbf84af91d971574712d73e0ea82f25dee7eaf88a9d4'],
+  ])('should hash the full archive entry when no header given: %s', async (filePath, expectedSha256) => {
+    const archiveEntries = await FileFactory.filesFrom(filePath, ChecksumBitmask.SHA256);
+    expect(archiveEntries).toHaveLength(1);
+    const archiveEntry = archiveEntries[0];
+
+    // Some archives store CRC32, or otherwise it won't be defined
+    expect(archiveEntry.getMd5()).toBeUndefined();
+    expect(archiveEntry.getMd5WithoutHeader()).toBeUndefined();
+    expect(archiveEntry.getSha1()).toBeUndefined();
+    expect(archiveEntry.getSha1WithoutHeader()).toBeUndefined();
+    expect(archiveEntry.getSha256()).toEqual(expectedSha256);
+    expect(archiveEntry.getSha256WithoutHeader()).toEqual(expectedSha256);
+  });
+
+  test.each([
+    ['./test/fixtures/roms/7z/fizzbuzz.7z', '6e809804766eaa4dd42a2607b789f3e4e5d32fc321ba8dd3ef39ddc1ea2888e9'],
+    ['./test/fixtures/roms/rar/fizzbuzz.rar', '6e809804766eaa4dd42a2607b789f3e4e5d32fc321ba8dd3ef39ddc1ea2888e9'],
+    ['./test/fixtures/roms/tar/fizzbuzz.tar.gz', '6e809804766eaa4dd42a2607b789f3e4e5d32fc321ba8dd3ef39ddc1ea2888e9'],
+    ['./test/fixtures/roms/zip/fizzbuzz.zip', '6e809804766eaa4dd42a2607b789f3e4e5d32fc321ba8dd3ef39ddc1ea2888e9'],
+    ['./test/fixtures/roms/7z/foobar.7z', 'aec070645fe53ee3b3763059376134f058cc337247c978add178b6ccdfb0019f'],
+    ['./test/fixtures/roms/rar/foobar.rar', 'aec070645fe53ee3b3763059376134f058cc337247c978add178b6ccdfb0019f'],
+    ['./test/fixtures/roms/tar/foobar.tar.gz', 'aec070645fe53ee3b3763059376134f058cc337247c978add178b6ccdfb0019f'],
+    ['./test/fixtures/roms/zip/foobar.zip', 'aec070645fe53ee3b3763059376134f058cc337247c978add178b6ccdfb0019f'],
+  ])('should hash the full archive entry when header is given but not present in file: %s', async (filePath, expectedSha256) => {
+    const archiveEntries = await FileFactory.filesFrom(filePath, ChecksumBitmask.SHA256);
+    expect(archiveEntries).toHaveLength(1);
+    const archiveEntry = await archiveEntries[0].withFileHeader(
+      ROMHeader.headerFromFilename(archiveEntries[0].getExtractedFilePath()) as ROMHeader,
+    );
+
+    // Some archives store CRC32, or otherwise it won't be defined
+    expect(archiveEntry.getMd5()).toBeUndefined();
+    expect(archiveEntry.getMd5WithoutHeader()).toBeUndefined();
+    expect(archiveEntry.getSha1()).toBeUndefined();
+    expect(archiveEntry.getSha1WithoutHeader()).toBeUndefined();
+    expect(archiveEntry.getSha256()).toEqual(expectedSha256);
+    expect(archiveEntry.getSha256WithoutHeader()).toEqual(expectedSha256);
+  });
+
+  test.each([
+    ['./test/fixtures/roms/headered/diagnostic_test_cartridge.a78.7z', '248faac52d828b3542b74ff478e87afc6748949ad0f294fe75e6be94966a7558'],
+    ['./test/fixtures/roms/headered/fds_joypad_test.fds.zip', '29e56794d15ccaa79e48ec0c80004f8745cfb116cce43b99435ae8790e79c327'],
+    ['./test/fixtures/roms/headered/LCDTestROM.lnx.rar', '65da30d4d2b210d9ab0b634deb3f6f8ee38af9a338b2f9bedd4379bacfb2b07d'],
+  ])('should hash the archive entry without the header when header is given and present in file: %s', async (filePath, expectedSha256) => {
+    const archiveEntries = await FileFactory.filesFrom(filePath, ChecksumBitmask.SHA256);
+    expect(archiveEntries).toHaveLength(1);
+    const archiveEntry = await archiveEntries[0].withFileHeader(
+      ROMHeader.headerFromFilename(archiveEntries[0].getExtractedFilePath()) as ROMHeader,
+    );
+
+    expect(archiveEntry.getCrc32()).toBeDefined();
+    expect(archiveEntry.getCrc32WithoutHeader()).toBeDefined();
+    expect(archiveEntry.getMd5()).toBeUndefined();
+    expect(archiveEntry.getMd5WithoutHeader()).toBeUndefined();
+    expect(archiveEntry.getSha1()).toBeUndefined();
+    expect(archiveEntry.getSha1WithoutHeader()).toBeUndefined();
+    expect(archiveEntry.getSha256()).not.toEqual(expectedSha256);
+    expect(archiveEntry.getSha256WithoutHeader()).toEqual(expectedSha256);
   });
 });
 

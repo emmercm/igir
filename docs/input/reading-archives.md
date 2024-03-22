@@ -32,6 +32,6 @@ This is why `igir` uses `.zip` as its output archive of choice, `.zip` files are
 
 ## Checksum cache
 
-It can be expensive to calculate checksums of files within archives, especially MD5 and SHA1. If `igir` needs to calculate a checksum that is not easily read from the archive (see above), it will cache the result in a file named `igir.cache`. This cached result will then be used as long as the input file's size and modified timestamp remain the same.
+It can be expensive to calculate checksums of files within archives, especially MD5, SHA1, and SHA256. If `igir` needs to calculate a checksum that is not easily read from the archive (see above), it will cache the result in a file named `igir.cache`. This cached result will then be used as long as the input file's size and modified timestamp remain the same.
 
 Caching can be disabled with the `--disable-cache` option, or you can safely delete `igir.cache` if it becomes too large.

@@ -97,6 +97,7 @@ export default class DATGameInferrer extends Module {
           crc32: romFile.getCrc32(),
           md5: romFile.getMd5(),
           sha1: romFile.getSha1(),
+          sha256: romFile.getSha256(),
         }))
         .filter(ArrayPoly.filterUniqueMapped((rom) => rom.getName()));
       return new Game({
