@@ -2,14 +2,15 @@ import fs from 'node:fs';
 import path from 'node:path';
 import util from 'node:util';
 
-import Constants from '../../../src/constants.js';
+import Temp from '../../../src/globals/temp.js';
 import bufferPoly from '../../../src/polyfill/bufferPoly.js';
 import fsPoly from '../../../src/polyfill/fsPoly.js';
 import File from '../../../src/types/files/file.js';
 import VcdiffPatch from '../../../src/types/patches/vcdiffPatch.js';
 
 async function writeTemp(fileName: string, contents: string | Buffer): Promise<File> {
-  const temp = await fsPoly.mktemp(path.join(Constants.GLOBAL_TEMP_DIR, fileName));
+  const temp = await fsPoly.mktemp(path.join(Temp.getTempDir(), fileName));
+  await fsPoly.mkdir(path.dirname(temp), { recursive: true });
   await util.promisify(fs.writeFile)(temp, contents);
   return File.fileOf({ filePath: temp });
 }

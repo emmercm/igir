@@ -1,6 +1,6 @@
 import path from 'node:path';
 
-import Constants from '../../../src/constants.js';
+import Temp from '../../../src/globals/temp.js';
 import ROMScanner from '../../../src/modules/romScanner.js';
 import bufferPoly from '../../../src/polyfill/bufferPoly.js';
 import FilePoly from '../../../src/polyfill/filePoly.js';
@@ -14,7 +14,7 @@ import ProgressBarFake from '../../console/progressBarFake.js';
 
 describe('fileOf', () => {
   it('should not throw when the file doesn\'t exist', async () => {
-    const tempFile = await fsPoly.mktemp(path.join(Constants.GLOBAL_TEMP_DIR, 'file'));
+    const tempFile = await fsPoly.mktemp(path.join(Temp.getTempDir(), 'file'));
     const file = await File.fileOf({ filePath: tempFile });
     expect(file.getFilePath()).toEqual(tempFile);
     expect(file.getSize()).toEqual(0);
@@ -47,7 +47,7 @@ describe('getSize', () => {
     [1_000_000],
   ])('%s', (size) => {
     it('should get the file\'s size: %s', async () => {
-      const tempDir = await fsPoly.mkdtemp(Constants.GLOBAL_TEMP_DIR);
+      const tempDir = await fsPoly.mkdtemp(Temp.getTempDir());
       try {
         const tempFile = path.resolve(await fsPoly.mktemp(path.join(tempDir, 'file')));
         await (await FilePoly.fileOfSize(tempFile, 'r', size)).close(); // touch
@@ -61,7 +61,7 @@ describe('getSize', () => {
     });
 
     it('should get the hard link\'s target size: %s', async () => {
-      const tempDir = await fsPoly.mkdtemp(Constants.GLOBAL_TEMP_DIR);
+      const tempDir = await fsPoly.mkdtemp(Temp.getTempDir());
       try {
         const tempFile = path.resolve(await fsPoly.mktemp(path.join(tempDir, 'file')));
         await (await FilePoly.fileOfSize(tempFile, 'r', size)).close(); // touch
@@ -77,7 +77,7 @@ describe('getSize', () => {
     });
 
     it('should get the absolute symlink\'s target size: %s', async () => {
-      const tempDir = await fsPoly.mkdtemp(Constants.GLOBAL_TEMP_DIR);
+      const tempDir = await fsPoly.mkdtemp(Temp.getTempDir());
       try {
         const tempFile = path.resolve(await fsPoly.mktemp(path.join(tempDir, 'file')));
         await (await FilePoly.fileOfSize(tempFile, 'r', size)).close(); // touch
@@ -93,7 +93,7 @@ describe('getSize', () => {
     });
 
     it('should get the relative symlink\'s target size: %s', async () => {
-      const tempDir = await fsPoly.mkdtemp(Constants.GLOBAL_TEMP_DIR);
+      const tempDir = await fsPoly.mkdtemp(Temp.getTempDir());
       try {
         const tempFile = path.resolve(await fsPoly.mktemp(path.join(tempDir, 'file')));
         await (await FilePoly.fileOfSize(tempFile, 'r', size)).close(); // touch
@@ -407,7 +407,7 @@ describe('copyToTempFile', () => {
     }), new ProgressBarFake()).scan();
     expect(raws).toHaveLength(10);
 
-    const temp = await fsPoly.mkdtemp(Constants.GLOBAL_TEMP_DIR);
+    const temp = await fsPoly.mkdtemp(Temp.getTempDir());
     for (const raw of raws) {
       await raw.extractToTempFile(async (tempFile) => {
         await expect(fsPoly.exists(tempFile)).resolves.toEqual(true);
@@ -425,7 +425,7 @@ describe('createReadStream', () => {
     }), new ProgressBarFake()).scan();
     expect(raws).toHaveLength(9);
 
-    const temp = await fsPoly.mkdtemp(Constants.GLOBAL_TEMP_DIR);
+    const temp = await fsPoly.mkdtemp(Temp.getTempDir());
     for (const raw of raws) {
       await raw.createReadStream(async (stream) => {
         const contents = (await bufferPoly.fromReadable(stream)).toString();

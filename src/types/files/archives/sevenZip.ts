@@ -4,7 +4,8 @@ import _7z, { Result } from '7zip-min';
 import async, { AsyncResultCallback } from 'async';
 import { Mutex } from 'async-mutex';
 
-import Constants from '../../../constants.js';
+import Defaults from '../../../globals/defaults.js';
+import Temp from '../../../globals/temp.js';
 import fsPoly from '../../../polyfill/fsPoly.js';
 import FileCache from '../fileCache.js';
 import Archive from './archive.js';
@@ -87,7 +88,7 @@ export default class SevenZip extends Archive {
 
     return async.mapLimit(
       filesIn7z.filter((result) => !result.attr?.startsWith('D')),
-      Constants.ARCHIVE_ENTRY_SCANNER_THREADS_PER_ARCHIVE,
+      Defaults.ARCHIVE_ENTRY_SCANNER_THREADS_PER_ARCHIVE,
       async (result, callback: AsyncResultCallback<ArchiveEntry<SevenZip>, Error>) => {
         const archiveEntry = await ArchiveEntry.entryOf({
           archive: this,
@@ -105,7 +106,7 @@ export default class SevenZip extends Archive {
     entryPath: string,
     extractedFilePath: string,
   ): Promise<void> {
-    const tempDir = await fsPoly.mkdtemp(path.join(Constants.GLOBAL_TEMP_DIR, '7z'));
+    const tempDir = await fsPoly.mkdtemp(path.join(Temp.getTempDir(), '7z'));
     try {
       let tempFile = path.join(tempDir, entryPath);
       await new Promise<void>((resolve, reject) => {

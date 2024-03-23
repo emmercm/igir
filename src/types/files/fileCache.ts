@@ -1,6 +1,6 @@
 import { Stats } from 'node:fs';
 
-import Constants from '../../constants.js';
+import Defaults from '../../globals/defaults.js';
 import FsPoly from '../../polyfill/fsPoly.js';
 import Cache from '../cache.js';
 import Archive from './archives/archive.js';
@@ -35,7 +35,7 @@ export default class FileCache {
   private static readonly VERSION = 1;
 
   private static readonly CACHE = new Cache<CacheValue>({
-    filePath: process.env.NODE_ENV !== 'test' ? Constants.GLOBAL_CACHE_FILE : undefined,
+    filePath: process.env.NODE_ENV !== 'test' ? Defaults.GLOBAL_CACHE_FILE : undefined,
     fileFlushMillis: 30_000,
   }).load();
 

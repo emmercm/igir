@@ -1,8 +1,10 @@
 import fs from 'node:fs';
+import path from 'node:path';
 import util from 'node:util';
 
 import ProgressBar from '../console/progressBar.js';
 import ArrayPoly from '../polyfill/arrayPoly.js';
+import FsPoly from '../polyfill/fsPoly.js';
 import DATStatus, { GameStatus } from '../types/datStatus.js';
 import Options from '../types/options.js';
 import Module from './module.js';
@@ -59,6 +61,10 @@ export default class ReportGenerator extends Module {
     const cleanedCsv = await DATStatus.filesToCsv(cleanedOutputFiles, GameStatus.DELETED);
 
     this.progressBar.logInfo(`writing report '${reportPath}'`);
+    const reportPathDir = path.dirname(reportPath);
+    if (!await FsPoly.exists(reportPathDir)) {
+      await FsPoly.mkdir(reportPathDir, { recursive: true });
+    }
     const rows = [...matchedFileCsvs, unusedCsv, cleanedCsv].filter((csv) => csv);
     await util.promisify(fs.writeFile)(reportPath, rows.join('\n'));
     this.progressBar.logTrace(`wrote ${datStatuses.length.toLocaleString()} CSV row${datStatuses.length !== 1 ? 's' : ''}: ${reportPath}`);
