@@ -253,6 +253,7 @@ export default class GameConsole {
       emulationstation: 'amigacd32',
       jelos: 'amigacd32',
       mister: 'Amiga',
+      onion: 'AMIGACD',
       retrodeck: 'amigacd32',
     }),
     new GameConsole(/Amiga CDTV/i, [/* '.bin', '.cue' */], {
@@ -285,6 +286,7 @@ export default class GameConsole {
     }),
     new GameConsole(/VIC.*20/i, [], {
       emulationstation: 'vic20',
+      onion: 'VIC20',
       retrodeck: 'vic20',
     }),
     // Coleco
@@ -491,6 +493,7 @@ export default class GameConsole {
     }),
     new GameConsole(/PC-FX/i, [], {
       emulationstation: 'pcfx',
+      onion: 'PCFX',
       retrodeck: 'pcfx',
     }),
     // nesbox
@@ -592,6 +595,7 @@ export default class GameConsole {
       batocera: 'nds',
       emulationstation: 'nds',
       jelos: 'nds',
+      onion: 'NDS',
       retrodeck: 'nds',
       twmenu: 'nds',
     }),
@@ -826,6 +830,7 @@ export default class GameConsole {
       emulationstation: 'zx81',
       jelos: 'zx81',
       mister: 'ZX81',
+      onion: 'ZXEIGHTYONE',
       retrodeck: 'zx81',
     }),
     new GameConsole(/ZX[ -]?Spectrum/i, ['.scl', '.szx', '.z80'], {
