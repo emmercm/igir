@@ -1,6 +1,7 @@
 <div align="center">
   <img src="static/logo-dark.svg" height="200px" width="auto" alt="igir logo">
 </div>
+<br>
 
 <p align="center"><b>Pronounced "eager," Igir is a zero-setup ROM collection manager that sorts, filters, archives, patches, and reports on collections of any size on any OS.</b></p>
 
