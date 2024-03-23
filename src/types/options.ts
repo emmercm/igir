@@ -45,7 +45,6 @@ export enum GameSubdirMode {
 
 export interface OptionsProps {
   readonly commands?: string[],
-  readonly fixdat?: boolean;
 
   readonly input?: string[],
   readonly inputExclude?: string[],
@@ -53,9 +52,7 @@ export interface OptionsProps {
 
   readonly dat?: string[],
   readonly datExclude?: string[],
-  readonly datRegex?: string,
   readonly datNameRegex?: string,
-  readonly datRegexExclude?: string,
   readonly datNameRegexExclude?: string,
   readonly datDescriptionRegex?: string,
   readonly datDescriptionRegexExclude?: string,
@@ -94,9 +91,7 @@ export interface OptionsProps {
   readonly filterRegex?: string,
   readonly filterRegexExclude?: string,
   readonly filterLanguage?: string[],
-  readonly languageFilter?: string[],
   readonly filterRegion?: string[],
-  readonly regionFilter?: string[],
   readonly noBios?: boolean,
   readonly onlyBios?: boolean,
   readonly noDevice?: boolean,
@@ -156,8 +151,6 @@ export default class Options implements OptionsProps {
   @Expose({ name: '_' })
   readonly commands: string[];
 
-  readonly fixdat: boolean;
-
   readonly input: string[];
 
   readonly inputExclude: string[];
@@ -168,11 +161,7 @@ export default class Options implements OptionsProps {
 
   readonly datExclude: string[];
 
-  readonly datRegex: string;
-
   readonly datNameRegex: string;
-
-  readonly datRegexExclude: string;
 
   readonly datNameRegexExclude: string;
 
@@ -236,11 +225,7 @@ export default class Options implements OptionsProps {
 
   readonly filterLanguage: string[];
 
-  readonly languageFilter: string[];
-
   readonly filterRegion: string[];
-
-  readonly regionFilter: string[];
 
   readonly noBios: boolean;
 
@@ -342,7 +327,6 @@ export default class Options implements OptionsProps {
 
   constructor(options?: OptionsProps) {
     this.commands = options?.commands ?? [];
-    this.fixdat = options?.fixdat ?? false;
 
     this.input = options?.input ?? [];
     this.inputExclude = options?.inputExclude ?? [];
@@ -350,9 +334,7 @@ export default class Options implements OptionsProps {
 
     this.dat = options?.dat ?? [];
     this.datExclude = options?.datExclude ?? [];
-    this.datRegex = options?.datRegex ?? '';
     this.datNameRegex = options?.datNameRegex ?? '';
-    this.datRegexExclude = options?.datRegexExclude ?? '';
     this.datNameRegexExclude = options?.datNameRegexExclude ?? '';
     this.datDescriptionRegex = options?.datDescriptionRegex ?? '';
     this.datDescriptionRegexExclude = options?.datDescriptionRegexExclude ?? '';
@@ -391,9 +373,7 @@ export default class Options implements OptionsProps {
     this.filterRegex = options?.filterRegex ?? '';
     this.filterRegexExclude = options?.filterRegexExclude ?? '';
     this.filterLanguage = options?.filterLanguage ?? [];
-    this.languageFilter = options?.languageFilter ?? [];
     this.filterRegion = options?.filterRegion ?? [];
-    this.regionFilter = options?.regionFilter ?? [];
     this.noBios = options?.noBios ?? false;
     this.onlyBios = options?.onlyBios ?? false;
     this.noDevice = options?.noDevice ?? false;
@@ -498,7 +478,7 @@ export default class Options implements OptionsProps {
    * The writing command that was specified.
    */
   writeString(): string | undefined {
-    return ['copy', 'move', 'link', 'symlink'].find((command) => this.getCommands().has(command));
+    return ['copy', 'move', 'link'].find((command) => this.getCommands().has(command));
   }
 
   /**
@@ -558,7 +538,7 @@ export default class Options implements OptionsProps {
    * Was the 'fixdat' command provided?
    */
   shouldFixdat(): boolean {
-    return this.getCommands().has('fixdat') || this.fixdat;
+    return this.getCommands().has('fixdat');
   }
 
   /**
@@ -740,11 +720,11 @@ export default class Options implements OptionsProps {
   }
 
   getDatNameRegex(): RegExp[] | undefined {
-    return Options.getRegex(this.datNameRegex || this.datRegex);
+    return Options.getRegex(this.datNameRegex);
   }
 
   getDatNameRegexExclude(): RegExp[] | undefined {
-    return Options.getRegex(this.datNameRegexExclude || this.datRegexExclude);
+    return Options.getRegex(this.datNameRegexExclude);
   }
 
   getDatDescriptionRegex(): RegExp[] | undefined {
@@ -960,18 +940,12 @@ export default class Options implements OptionsProps {
     if (this.filterLanguage.length > 0) {
       return new Set(Options.filterUniqueUpper(this.filterLanguage));
     }
-    if (this.languageFilter.length > 0) {
-      return new Set(Options.filterUniqueUpper(this.languageFilter));
-    }
     return new Set();
   }
 
   getFilterRegion(): Set<string> {
     if (this.filterRegion.length > 0) {
       return new Set(Options.filterUniqueUpper(this.filterRegion));
-    }
-    if (this.regionFilter.length > 0) {
-      return new Set(Options.filterUniqueUpper(this.regionFilter));
     }
     return new Set();
   }
