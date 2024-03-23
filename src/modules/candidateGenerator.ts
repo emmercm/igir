@@ -132,9 +132,10 @@ export default class CandidateGenerator extends Module {
         // If the input file is headered...
         if (inputFile.getFileHeader()
           // ...and we want a headered ROM
-          && (inputFile.getCrc32() === rom.getCrc32()
-            || inputFile.getMd5() === rom.getMd5()
-            || inputFile.getSha1() === rom.getSha1())
+          && ((inputFile.getCrc32() !== undefined && inputFile.getCrc32() === rom.getCrc32())
+            || (inputFile.getMd5() !== undefined && inputFile.getMd5() === rom.getMd5())
+            || (inputFile.getSha1() !== undefined && inputFile.getSha1() === rom.getSha1())
+            || (inputFile.getSha256() !== undefined && inputFile.getSha256() === rom.getSha256()))
           // ...and we shouldn't remove the header
           && !this.options.canRemoveHeader(
             dat,
@@ -149,9 +150,10 @@ export default class CandidateGenerator extends Module {
         // If the input file is headered...
         if (inputFile.getFileHeader()
           // ...and we DON'T want a headered ROM
-          && !(inputFile.getCrc32() === rom.getCrc32()
-            || inputFile.getMd5() === rom.getMd5()
-            || inputFile.getSha1() === rom.getSha1())
+          && !((inputFile.getCrc32() !== undefined && inputFile.getCrc32() === rom.getCrc32())
+            || (inputFile.getMd5() !== undefined && inputFile.getMd5() === rom.getMd5())
+            || (inputFile.getSha1() !== undefined && inputFile.getSha1() === rom.getSha1())
+            || (inputFile.getSha256() !== undefined && inputFile.getSha256() === rom.getSha256()))
           // ...and we're writing file links
           && this.options.shouldLink()
         ) {
@@ -308,11 +310,13 @@ export default class CandidateGenerator extends Module {
     let outputFileCrc32 = inputFile.getCrc32();
     let outputFileMd5 = inputFile.getMd5();
     let outputFileSha1 = inputFile.getSha1();
+    let outputFileSha256 = inputFile.getSha256();
     let outputFileSize = inputFile.getSize();
     if (inputFile.getFileHeader()) {
       outputFileCrc32 = inputFile.getCrc32WithoutHeader();
       outputFileMd5 = inputFile.getMd5WithoutHeader();
       outputFileSha1 = inputFile.getSha1WithoutHeader();
+      outputFileSha256 = inputFile.getSha256WithoutHeader();
       outputFileSize = inputFile.getSizeWithoutHeader();
     }
 
@@ -326,6 +330,7 @@ export default class CandidateGenerator extends Module {
         crc32: outputFileCrc32,
         md5: outputFileMd5,
         sha1: outputFileSha1,
+        sha256: outputFileSha256,
       });
     }
     // Otherwise, return a raw file
@@ -335,6 +340,7 @@ export default class CandidateGenerator extends Module {
       crc32: outputFileCrc32,
       md5: outputFileMd5,
       sha1: outputFileSha1,
+      sha256: outputFileSha256,
     });
   }
 

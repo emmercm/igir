@@ -275,6 +275,12 @@ export default class CandidateWriter extends Module {
         continue;
       }
       const actualFile = actualEntriesByPath.get(entryPath) as ArchiveEntry<Zip>;
+      if (actualFile.getSha256()
+        && expectedFile.getSha256()
+        && actualFile.getSha256() !== expectedFile.getSha256()
+      ) {
+        return `has the SHA256 ${actualFile.getSha256()}, expected ${expectedFile.getSha256()}`;
+      }
       if (actualFile.getSha1()
         && expectedFile.getSha1()
         && actualFile.getSha1() !== expectedFile.getSha1()
@@ -457,6 +463,12 @@ export default class CandidateWriter extends Module {
       { filePath: outputFilePath },
       expectedFile.getChecksumBitmask(),
     );
+    if (actualFile.getSha256()
+      && expectedFile.getSha256()
+      && actualFile.getSha256() !== expectedFile.getSha256()
+    ) {
+      return `has the SHA256 ${actualFile.getSha256()}, expected ${expectedFile.getSha256()}`;
+    }
     if (actualFile.getSha1()
       && expectedFile.getSha1()
       && actualFile.getSha1() !== expectedFile.getSha1()

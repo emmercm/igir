@@ -84,6 +84,7 @@ export default class FileCache {
               crc32: checksumBitmask & ChecksumBitmask.CRC32 ? props.crc32 : undefined,
               md5: checksumBitmask & ChecksumBitmask.MD5 ? props.md5 : undefined,
               sha1: checksumBitmask & ChecksumBitmask.SHA1 ? props.sha1 : undefined,
+              sha256: checksumBitmask & ChecksumBitmask.SHA256 ? props.sha256 : undefined,
             } as ArchiveEntryProps<Archive>,
           ) as Promise<T>));
         }
@@ -129,7 +130,8 @@ export default class FileCache {
 
     const existingBitmask = (existing.files.every((file) => file.crc32 !== undefined && file.crc32 !== '00000000') ? ChecksumBitmask.CRC32 : 0)
       | (existing.files.every((file) => file.md5) ? ChecksumBitmask.MD5 : 0)
-      | (existing.files.every((file) => file.sha1) ? ChecksumBitmask.SHA1 : 0);
+      | (existing.files.every((file) => file.sha1) ? ChecksumBitmask.SHA1 : 0)
+      | (existing.files.every((file) => file.sha256) ? ChecksumBitmask.SHA256 : 0);
     const remainingBitmask = checksumBitmask ^ existingBitmask;
     if (remainingBitmask) {
       // We need checksums that haven't been cached yet

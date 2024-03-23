@@ -26,6 +26,8 @@ describe('fileOf', () => {
     expect(file.getMd5WithoutHeader()).toBeUndefined();
     expect(file.getSha1()).toBeUndefined();
     expect(file.getSha1WithoutHeader()).toBeUndefined();
+    expect(file.getSha256()).toBeUndefined();
+    expect(file.getSha256WithoutHeader()).toBeUndefined();
   });
 });
 
@@ -123,6 +125,8 @@ describe('getCrc32', () => {
     expect(file.getMd5WithoutHeader()).toBeUndefined();
     expect(file.getSha1()).toBeUndefined();
     expect(file.getSha1WithoutHeader()).toBeUndefined();
+    expect(file.getSha256()).toBeUndefined();
+    expect(file.getSha256WithoutHeader()).toBeUndefined();
   });
 
   test.each([
@@ -138,6 +142,8 @@ describe('getCrc32', () => {
     expect(file.getMd5WithoutHeader()).toBeUndefined();
     expect(file.getSha1()).toBeUndefined();
     expect(file.getSha1WithoutHeader()).toBeUndefined();
+    expect(file.getSha256()).toBeUndefined();
+    expect(file.getSha256WithoutHeader()).toBeUndefined();
   });
 });
 
@@ -153,6 +159,8 @@ describe('getCrc32WithoutHeader', () => {
     expect(file.getMd5WithoutHeader()).toBeUndefined();
     expect(file.getSha1()).toBeUndefined();
     expect(file.getSha1WithoutHeader()).toBeUndefined();
+    expect(file.getSha256()).toBeUndefined();
+    expect(file.getSha256WithoutHeader()).toBeUndefined();
   });
 
   test.each([
@@ -167,6 +175,8 @@ describe('getCrc32WithoutHeader', () => {
     expect(file.getMd5WithoutHeader()).toBeUndefined();
     expect(file.getSha1()).toBeUndefined();
     expect(file.getSha1WithoutHeader()).toBeUndefined();
+    expect(file.getSha256()).toBeUndefined();
+    expect(file.getSha256WithoutHeader()).toBeUndefined();
   });
 
   test.each([
@@ -181,6 +191,8 @@ describe('getCrc32WithoutHeader', () => {
     expect(file.getMd5WithoutHeader()).toBeUndefined();
     expect(file.getSha1()).toBeUndefined();
     expect(file.getSha1WithoutHeader()).toBeUndefined();
+    expect(file.getSha256()).toBeUndefined();
+    expect(file.getSha256WithoutHeader()).toBeUndefined();
   });
 });
 
@@ -198,6 +210,8 @@ describe('getMd5', () => {
     expect(file.getMd5WithoutHeader()).toEqual(expectedMd5);
     expect(file.getSha1()).toBeUndefined();
     expect(file.getSha1WithoutHeader()).toBeUndefined();
+    expect(file.getSha256()).toBeUndefined();
+    expect(file.getSha256WithoutHeader()).toBeUndefined();
   });
 });
 
@@ -213,6 +227,8 @@ describe('getMd5WithoutHeader', () => {
     expect(file.getMd5WithoutHeader()).toEqual(expectedMd5);
     expect(file.getSha1()).toBeUndefined();
     expect(file.getSha1WithoutHeader()).toBeUndefined();
+    expect(file.getSha256()).toBeUndefined();
+    expect(file.getSha256WithoutHeader()).toBeUndefined();
   });
 
   test.each([
@@ -227,6 +243,8 @@ describe('getMd5WithoutHeader', () => {
     expect(file.getMd5WithoutHeader()).toEqual(expectedMd5);
     expect(file.getSha1()).toBeUndefined();
     expect(file.getSha1WithoutHeader()).toBeUndefined();
+    expect(file.getSha256()).toBeUndefined();
+    expect(file.getSha256WithoutHeader()).toBeUndefined();
   });
 
   test.each([
@@ -241,6 +259,8 @@ describe('getMd5WithoutHeader', () => {
     expect(file.getMd5WithoutHeader()).toEqual(expectedMd5);
     expect(file.getSha1()).toBeUndefined();
     expect(file.getSha1WithoutHeader()).toBeUndefined();
+    expect(file.getSha256()).toBeUndefined();
+    expect(file.getSha256WithoutHeader()).toBeUndefined();
   });
 });
 
@@ -258,6 +278,8 @@ describe('getSha1', () => {
     expect(file.getMd5WithoutHeader()).toBeUndefined();
     expect(file.getSha1()).toEqual(expectedSha1);
     expect(file.getSha1WithoutHeader()).toEqual(expectedSha1);
+    expect(file.getSha256()).toBeUndefined();
+    expect(file.getSha256WithoutHeader()).toBeUndefined();
   });
 });
 
@@ -273,6 +295,8 @@ describe('getSha1WithoutHeader', () => {
     expect(file.getMd5WithoutHeader()).toBeUndefined();
     expect(file.getSha1()).toEqual(expectedSha1);
     expect(file.getSha1WithoutHeader()).toEqual(expectedSha1);
+    expect(file.getSha256()).toBeUndefined();
+    expect(file.getSha256WithoutHeader()).toBeUndefined();
   });
 
   test.each([
@@ -287,6 +311,8 @@ describe('getSha1WithoutHeader', () => {
     expect(file.getMd5WithoutHeader()).toBeUndefined();
     expect(file.getSha1()).toEqual(expectedSha1);
     expect(file.getSha1WithoutHeader()).toEqual(expectedSha1);
+    expect(file.getSha256()).toBeUndefined();
+    expect(file.getSha256WithoutHeader()).toBeUndefined();
   });
 
   test.each([
@@ -301,6 +327,76 @@ describe('getSha1WithoutHeader', () => {
     expect(file.getMd5WithoutHeader()).toBeUndefined();
     expect(file.getSha1()).not.toEqual(file.getSha1WithoutHeader());
     expect(file.getSha1WithoutHeader()).toEqual(expectedSha1);
+    expect(file.getSha256()).toBeUndefined();
+    expect(file.getSha256WithoutHeader()).toBeUndefined();
+  });
+});
+
+describe('getSha256', () => {
+  test.each([
+    ['./test/fixtures/roms/raw/empty.rom', 'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855'],
+    ['./test/fixtures/roms/raw/fizzbuzz.nes', '6e809804766eaa4dd42a2607b789f3e4e5d32fc321ba8dd3ef39ddc1ea2888e9'],
+    ['./test/fixtures/roms/raw/foobar.lnx', 'aec070645fe53ee3b3763059376134f058cc337247c978add178b6ccdfb0019f'],
+    ['./test/fixtures/roms/raw/loremipsum.rom', '9d0dc61fa60a12a9613cc32fa43fc85bea343ec3a25f27d10ed81a7f0b9ec278'],
+  ])('should hash the full file: %s', async (filePath, expectedSha256) => {
+    const file = await File.fileOf({ filePath }, ChecksumBitmask.SHA256);
+    expect(file.getCrc32()).toBeUndefined();
+    expect(file.getCrc32WithoutHeader()).toBeUndefined();
+    expect(file.getMd5()).toBeUndefined();
+    expect(file.getMd5WithoutHeader()).toBeUndefined();
+    expect(file.getSha1()).toBeUndefined();
+    expect(file.getSha1WithoutHeader()).toBeUndefined();
+    expect(file.getSha256()).toEqual(expectedSha256);
+    expect(file.getSha256WithoutHeader()).toEqual(expectedSha256);
+  });
+});
+
+describe('getSha256WithoutHeader', () => {
+  test.each([
+    ['./test/fixtures/roms/headered/allpads.nes', '9ce022805eb472e4ad9a9a7b101a685a86267c6448cc47176b14ee95d0c4afb9'],
+    ['./test/fixtures/roms/headered/speed_test_v51.smc', '48645c5d772dcdcd62f11c91bd01d5903a70a89c348cb8febd7ade27fa57130f'],
+  ])('should hash the full file when no header given: %s', async (filePath, expectedSha256) => {
+    const file = await File.fileOf({ filePath }, ChecksumBitmask.SHA256);
+    expect(file.getCrc32()).toBeUndefined();
+    expect(file.getCrc32WithoutHeader()).toBeUndefined();
+    expect(file.getMd5()).toBeUndefined();
+    expect(file.getMd5WithoutHeader()).toBeUndefined();
+    expect(file.getSha1()).toBeUndefined();
+    expect(file.getSha1WithoutHeader()).toBeUndefined();
+    expect(file.getSha256()).toEqual(expectedSha256);
+    expect(file.getSha256WithoutHeader()).toEqual(expectedSha256);
+  });
+
+  test.each([
+    ['./test/fixtures/roms/raw/fizzbuzz.nes', '6e809804766eaa4dd42a2607b789f3e4e5d32fc321ba8dd3ef39ddc1ea2888e9'],
+    ['./test/fixtures/roms/raw/foobar.lnx', 'aec070645fe53ee3b3763059376134f058cc337247c978add178b6ccdfb0019f'],
+  ])('should hash the full file when header is given but not present in file: %s', async (filePath, expectedSha256) => {
+    const file = await (await File.fileOf({ filePath }, ChecksumBitmask.SHA256))
+      .withFileHeader(ROMHeader.headerFromFilename(filePath) as ROMHeader);
+    expect(file.getCrc32()).toBeUndefined();
+    expect(file.getCrc32WithoutHeader()).toBeUndefined();
+    expect(file.getMd5()).toBeUndefined();
+    expect(file.getMd5WithoutHeader()).toBeUndefined();
+    expect(file.getSha1()).toBeUndefined();
+    expect(file.getSha1WithoutHeader()).toBeUndefined();
+    expect(file.getSha256()).toEqual(expectedSha256);
+    expect(file.getSha256WithoutHeader()).toEqual(expectedSha256);
+  });
+
+  test.each([
+    ['./test/fixtures/roms/headered/allpads.nes', '0b755904293f112d53ce159a613ef38aca68c84027ee8573a1d54f6317c3d755'],
+    ['./test/fixtures/roms/headered/speed_test_v51.smc', '21c24e4b0ec2cb32eeba25c5311aa39bd3228fc1327d2719c0b88671884c2541'],
+  ])('should hash the file without the header when header is given and present in file: %s', async (filePath, expectedSha256) => {
+    const file = await (await File.fileOf({ filePath }, ChecksumBitmask.SHA256))
+      .withFileHeader(ROMHeader.headerFromFilename(filePath) as ROMHeader);
+    expect(file.getCrc32()).toBeUndefined();
+    expect(file.getCrc32WithoutHeader()).toBeUndefined();
+    expect(file.getMd5()).toBeUndefined();
+    expect(file.getMd5WithoutHeader()).toBeUndefined();
+    expect(file.getSha1()).toBeUndefined();
+    expect(file.getSha1WithoutHeader()).toBeUndefined();
+    expect(file.getSha256()).not.toEqual(file.getSha256WithoutHeader());
+    expect(file.getSha256WithoutHeader()).toEqual(expectedSha256);
   });
 });
 
