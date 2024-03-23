@@ -2489,7 +2489,7 @@
 <p>...then <code>igir</code> will determine that SHA1 is necessary to calculate because not every ROM in every DAT includes CRC32 <em>and</em> filesize information.</p>
 <div class="admonition note">
 <p class="admonition-title">Note</p>
-<p>When generating a <a href="../../dats/dir2dat/">dir2dat</a> with the <code>igir dir2dat</code> command, <code>igir</code> will calculate CRC32, MD5, and SHA1 information for every file. This helps ensure that the generated DAT has the most complete information it can.</p>
+<p>When generating a <a href="../../dats/dir2dat/">dir2dat</a> with the <code>igir dir2dat</code> command, <code>igir</code> will calculate CRC32, MD5, and SHA1 information for every file. This helps ensure that the generated DAT has the most complete information it can. You can additionally add SHA256 information with the option <code>igir [commands..] [options] --input-min-checksum SHA256</code> (below).</p>
 </div>
 <h2 id="manually-using-other-checksum-algorithms">Manually using other checksum algorithms</h2>
 <div class="admonition danger">
@@ -2498,8 +2498,8 @@
 </div>
 <p>You can specify higher checksum algorithms with the <code>--input-min-checksum &lt;algorithm&gt;</code> option like this:</p>
 <div class="language-shell highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>igir<span class="w"> </span><span class="o">[</span>commands..<span class="o">]</span><span class="w"> </span><span class="o">[</span>options<span class="o">]</span><span class="w"> </span>--input-min-checksum<span class="w"> </span>MD5
-</span></code></pre></div>
-<div class="language-shell highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>igir<span class="w"> </span><span class="o">[</span>commands..<span class="o">]</span><span class="w"> </span><span class="o">[</span>options<span class="o">]</span><span class="w"> </span>--input-min-checksum<span class="w"> </span>SHA1
+</span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>igir<span class="w"> </span><span class="o">[</span>commands..<span class="o">]</span><span class="w"> </span><span class="o">[</span>options<span class="o">]</span><span class="w"> </span>--input-min-checksum<span class="w"> </span>SHA1
+</span><span id="__span-0-3"><a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>igir<span class="w"> </span><span class="o">[</span>commands..<span class="o">]</span><span class="w"> </span><span class="o">[</span>options<span class="o">]</span><span class="w"> </span>--input-min-checksum<span class="w"> </span>SHA256
 </span></code></pre></div>
 <p>This option defines the <em>minimum</em> checksum that will be used based on digest size (below).  If not every ROM in every DAT provides the checksum you specify, <code>igir</code> may automatically calculate and match files based on a higher checksum (see above).</p>
 <p>The reason you might want to do this is to have a higher confidence that found files <em>exactly</em> match ROMs in DATs. Just keep in mind that explicitly enabling non-CRC32 checksums will <em>greatly</em> slow down scanning of files within archives.</p>
@@ -2532,6 +2532,12 @@
 <td>2^160 = 1.46 quindecillion</td>
 <td><code>666d29a15d92f62750dd665a06ce01fbd09eb98a</code></td>
 </tr>
+<tr>
+<td>SHA256</td>
+<td>256 bits</td>
+<td>2^256 = 115.79 quattuorvigintillion</td>
+<td><code>1934e26cf69aa49978baac893ad5a890af35bdfb2c7a9393745f14dc89459137</code></td>
+</tr>
 </tbody>
 </table>
 <p>When files are <a href="../../commands/#test">tested</a> after being written, <code>igir</code> will use the highest checksum available from the scanned file to check the written file. This lets you have equal confidence that a file was written correctly as well as matched correctly.</p>
@@ -2555,7 +2561,7 @@
     <span class="md-icon" title="Last update">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1-2.1-2M12.5 7v5.2l4 2.4-1 1L11 13V7h1.5M11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2v1.8Z"/></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date">March 21, 2024</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date">March 23, 2024</span>
   </span>
 
     
