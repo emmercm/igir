@@ -1,5 +1,3 @@
-<h1 align="center" style="display:none;">🕹️ igir</h1>
-
 <div align="center">
   <img src="static/logo-dark.svg" height="200px" width="auto" alt="igir logo">
 </div>
