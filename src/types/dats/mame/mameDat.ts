@@ -14,11 +14,11 @@ export default class MameDAT extends DAT {
   @Expose()
   private readonly build?: string;
 
-  @Expose()
-  private readonly debug: 'yes' | 'no' = 'no';
+  // @Expose()
+  // private readonly debug: 'yes' | 'no' = 'no';
 
-  @Expose()
-  private readonly mameconfig: number = 0;
+  // @Expose()
+  // private readonly mameconfig: number = 0;
 
   @Expose()
   @Type(() => Machine)
@@ -34,7 +34,7 @@ export default class MameDAT extends DAT {
   /**
    * Construct a {@link DAT} from a generic object, such as one from reading an XML file.
    */
-  static fromObject(obj: object): DAT {
+  static fromObject(obj: object): MameDAT {
     return plainToInstance(MameDAT, obj, {
       enableImplicitConversion: true,
       excludeExtraneousValues: true,

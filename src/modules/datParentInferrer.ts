@@ -71,6 +71,7 @@ export default class DATParentInferrer extends Module {
 
   private static stripGameVariants(name: string): string {
     return name
+      // TODO(cemmer): strip any directories from the game name (i.e. HTGD)
       // ***** Retail types *****
       .replace(/\(Alt( [a-z0-9. ]*)?\)/i, '')
       .replace(/\([^)]*Collector's Edition\)/i, '')

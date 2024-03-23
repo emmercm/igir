@@ -38,9 +38,9 @@ export default class LogiqxDAT extends DAT {
   }
 
   /**
-   * Construct a {@link DAT} from a generic object, such as one from reading an XML file.
+   * Construct a {@link LogiqxDAT} from a generic object, such as one from reading an XML file.
    */
-  static fromObject(obj: object): DAT {
+  static fromObject(obj: object): LogiqxDAT {
     return plainToInstance(LogiqxDAT, obj, {
       enableImplicitConversion: true,
       excludeExtraneousValues: true,

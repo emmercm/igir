@@ -152,7 +152,7 @@ describe('with explicit DATs', () => {
     await copyFixturesToTemp(async (inputTemp, outputTemp) => {
       const result = await runIgir({
         commands: ['copy', 'test'],
-        dat: [path.join(inputTemp, 'dats')],
+        dat: [path.join(inputTemp, 'dats', '*')],
         input: [path.join(inputTemp, 'roms')],
         output: outputTemp,
         dirDatName: true,
@@ -246,7 +246,7 @@ describe('with explicit DATs', () => {
       // When running igir with the clean command
       const result = await runIgir({
         commands: ['copy', 'clean'],
-        dat: [path.join(inputTemp, 'dats')],
+        dat: [path.join(inputTemp, 'dats', '*')],
         input: [path.join(inputTemp, 'roms')],
         output: path.join(outputTemp, '{outputExt}'),
         dirDatName: true,
@@ -381,7 +381,7 @@ describe('with explicit DATs', () => {
     await copyFixturesToTemp(async (inputTemp, outputTemp) => {
       const result = await runIgir({
         commands: ['move', 'extract', 'test'],
-        dat: [path.join(inputTemp, 'dats')],
+        dat: [path.join(inputTemp, 'dats', '*')],
         input: [path.join(inputTemp, 'roms')],
         output: outputTemp,
         datCombine: true,
@@ -495,7 +495,7 @@ describe('with explicit DATs', () => {
     await copyFixturesToTemp(async (inputTemp, outputTemp) => {
       const result = await runIgir({
         commands: ['copy', 'zip', 'test'],
-        dat: [path.join(inputTemp, 'dats')],
+        dat: [path.join(inputTemp, 'dats', '*')],
         input: [path.join(inputTemp, 'roms')],
         output: outputTemp,
         dirDatName: true,
@@ -548,7 +548,7 @@ describe('with explicit DATs', () => {
     await copyFixturesToTemp(async (inputTemp, outputTemp) => {
       const result = await runIgir({
         commands: ['copy', 'zip', 'test'],
-        dat: [path.join(inputTemp, 'dats')],
+        dat: [path.join(inputTemp, 'dats', '*')],
         input: [path.join(inputTemp, 'roms')],
         output: outputTemp,
         zipDatName: true,
@@ -601,7 +601,7 @@ describe('with explicit DATs', () => {
     await copyFixturesToTemp(async (inputTemp, outputTemp) => {
       const result = await runIgir({
         commands: ['link', 'test'],
-        dat: [path.join(inputTemp, 'dats')],
+        dat: [path.join(inputTemp, 'dats', '*')],
         input: [path.join(inputTemp, 'roms')],
         output: outputTemp,
         dirDatName: true,
@@ -653,7 +653,7 @@ describe('with explicit DATs', () => {
     await copyFixturesToTemp(async (inputTemp, outputTemp) => {
       const result = await runIgir({
         commands: ['copy', 'extract', 'test'],
-        dat: [path.join(inputTemp, 'dats')],
+        dat: [path.join(inputTemp, 'dats', '*')],
         input: [path.join(inputTemp, 'roms')],
         patch: [path.join(inputTemp, 'patches')],
         output: outputTemp,
@@ -741,7 +741,7 @@ describe('with explicit DATs', () => {
     await copyFixturesToTemp(async (inputTemp, outputTemp) => {
       const result = await runIgir({
         commands: [command, 'fixdat', 'clean'],
-        dat: [path.join(inputTemp, 'dats')],
+        dat: [path.join(inputTemp, 'dats', '*')],
         input: [path.join(inputTemp, 'roms')],
         output: outputTemp,
         dirDatName: true,
@@ -770,7 +770,7 @@ describe('with explicit DATs', () => {
     await copyFixturesToTemp(async (inputTemp, outputTemp) => {
       const result = await runIgir({
         commands: ['fixdat', 'report'],
-        dat: [path.join(inputTemp, 'dats')],
+        dat: [path.join(inputTemp, 'dats', '*')],
         input: [path.join(inputTemp, 'roms')],
         output: outputTemp,
         dirDatName: true,

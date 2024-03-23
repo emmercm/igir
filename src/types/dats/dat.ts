@@ -21,7 +21,7 @@ export default abstract class DAT {
    * Group all {@link Game} clones together into one {@link Parent}. If no parent/clone information
    * exists, then there will be one {@link Parent} for every {@link Game}.
    */
-  protected generateGameNamesToParents(): DAT {
+  protected generateGameNamesToParents(): this {
     const gameNamesToParents: Map<string, Parent> = new Map();
 
     // Find all parents
