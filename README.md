@@ -1,6 +1,10 @@
-<h1 align="center">🕹️ igir</h1>
+<h1 align="center" style="display:none;">🕹️ igir</h1>
 
-<p align="center"><b>Pronounced "eager," <code>igir</code> is a video game ROM collection manager to help filter, sort, patch, archive, and report on collections on any OS.</b></p>
+<div align="center">
+  <img src="static/logo-dark.svg" height="200px" width="auto" alt="igir logo">
+</div>
+
+<p align="center"><b>Pronounced "eager," Igir is a zero-setup video game ROM collection manager that sorts, filters, archives, patches, and reports on collections of any size on any OS.</b></p>
 
 <p align="center">
   <a href="https://igir.io/"><img alt="CLI: Windows,macOS,Linux" src="https://img.shields.io/badge/CLI-Windows%2C%20macOS%2C%20Linux-lightgrey?logo=windows-terminal"></a>
