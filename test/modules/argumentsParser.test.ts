@@ -136,6 +136,8 @@ describe('options', () => {
     expect(options.getSymlinkRelative()).toEqual(false);
 
     expect(options.getMergeRoms()).toEqual(MergeMode.FULLNONMERGED);
+    expect(options.getAllowExcessSets()).toEqual(false);
+    expect(options.getAllowIncompleteSets()).toEqual(false);
 
     expect(options.getFilterRegex()).toBeUndefined();
     expect(options.getFilterRegexExclude()).toBeUndefined();
@@ -766,6 +768,15 @@ describe('options', () => {
     expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--merge-roms', 'split']).getMergeRoms()).toEqual(MergeMode.SPLIT);
     expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--merge-roms', 'merged']).getMergeRoms()).toEqual(MergeMode.MERGED);
     expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--merge-roms', 'merged', '--merge-roms', 'split']).getMergeRoms()).toEqual(MergeMode.SPLIT);
+  });
+
+  it('should parse "allow-excess-sets"', () => {
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--allow-excess-sets']).getAllowExcessSets()).toEqual(true);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--allow-excess-sets', 'true']).getAllowExcessSets()).toEqual(true);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--allow-excess-sets', 'false']).getAllowExcessSets()).toEqual(false);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--allow-excess-sets', '--allow-excess-sets']).getAllowExcessSets()).toEqual(true);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--allow-excess-sets', 'false', '--allow-excess-sets', 'true']).getAllowExcessSets()).toEqual(true);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--allow-excess-sets', 'true', '--allow-excess-sets', 'false']).getAllowExcessSets()).toEqual(false);
   });
 
   it('should parse "allow-incomplete-sets"', () => {

@@ -213,6 +213,14 @@ export default class CandidateGenerator extends Module {
       return undefined;
     }
 
+    if (!this.options.shouldZip()
+      && !this.options.shouldExtract()
+      && !this.options.getAllowExcessSets()
+      && this.hasExcessFiles(dat, game, foundRomsWithFiles, indexedFiles)
+    ) {
+      return undefined;
+    }
+
     return new ReleaseCandidate(game, release, foundRomsWithFiles);
   }
 
@@ -240,8 +248,8 @@ export default class CandidateGenerator extends Module {
     // Group this Game's ROMs by the input Archives that contain them
     const inputArchivesToRoms = romsAndInputFiles.reduce((map, [rom, files]) => {
       files
-        .filter((file) => file instanceof ArchiveEntry)
-        .map((file): Archive => (file as ArchiveEntry<never>).getArchive())
+        .filter((file): file is ArchiveEntry<Archive> => file instanceof ArchiveEntry)
+        .map((archive): Archive => archive.getArchive())
         .forEach((archive) => {
           const roms = map.get(archive) ?? [];
           roms.push(rom);
@@ -257,7 +265,30 @@ export default class CandidateGenerator extends Module {
     const archivesWithEveryRom = [...inputArchivesToRoms.entries()]
       .filter(([, roms]) => roms.length === game.getRoms().length)
       .map(([archive]) => archive);
-    const archiveWithEveryRom = archivesWithEveryRom.at(0);
+
+    const filesByPath = indexedFiles.getFilesByFilePath();
+    const filteredArchivesWithEveryRom = archivesWithEveryRom
+      // Sort the Archives such that the Archive with the least number of Archive Entries is
+      // preferred
+      .sort((a, b) => {
+        const aEntries = (filesByPath.get(a.getFilePath()) ?? []).length;
+        const bEntries = (filesByPath.get(b.getFilePath()) ?? []).length;
+        return aEntries - bEntries;
+      })
+      // Filter out Archives with excess entries
+      .filter((archive) => {
+        const unusedEntryPaths = this.findArchiveUnusedEntryPaths(
+          archive,
+          romsAndInputFiles.flatMap(([, inputFiles]) => inputFiles),
+          indexedFiles,
+        );
+        if (unusedEntryPaths.length > 0) {
+          this.progressBar.logTrace(`${dat.getNameShort()}: ${game.getName()}: not preferring archive that contains every ROM, plus the excess entries:\n${unusedEntryPaths.map((entryPath) => `  ${entryPath}`).join('\n')}`);
+        }
+        return unusedEntryPaths.length === 0;
+      });
+
+    const archiveWithEveryRom = filteredArchivesWithEveryRom.at(0);
 
     // Do nothing if any of...
     if (
@@ -395,5 +426,72 @@ export default class CandidateGenerator extends Module {
       }
     }
     return hasConflict;
+  }
+
+  private hasExcessFiles(
+    dat: DAT,
+    game: Game,
+    romsWithFiles: ROMWithFiles[],
+    indexedFiles: IndexedFiles,
+  ): boolean {
+    // For this Game, find every input file that is an ArchiveEntry
+    const inputArchiveEntries = romsWithFiles
+      // We need to rehydrate information from IndexedFiles because raw-copying/moving archives
+      // would have lost this information
+      .map((romWithFiles) => {
+        const inputFile = romWithFiles.getInputFile();
+        return indexedFiles.findFiles(romWithFiles.getRom())
+          ?.find((foundFile) => foundFile.getFilePath() === inputFile.getFilePath());
+      })
+      .filter((inputFile): inputFile is ArchiveEntry<Archive> => inputFile instanceof ArchiveEntry);
+    // ...then translate those ArchiveEntries into a list of unique Archives
+    const inputArchives = inputArchiveEntries
+      .map((archiveEntry) => archiveEntry.getArchive())
+      .filter(ArrayPoly.filterUniqueMapped((archive) => archive.getFilePath()));
+
+    for (const inputArchive of inputArchives) {
+      const unusedEntryPaths = this.findArchiveUnusedEntryPaths(
+        inputArchive,
+        inputArchiveEntries,
+        indexedFiles,
+      );
+      if (unusedEntryPaths.length > 0) {
+        this.progressBar.logTrace(`${dat.getNameShort()}: ${game.getName()}: cannot use '${inputArchive.getFilePath()}' as an input file, it has the excess entries:\n${unusedEntryPaths.map((entryPath) => `  ${entryPath}`).join('\n')}`);
+        return true;
+      }
+    }
+
+    return false;
+  }
+
+  /**
+   * Given an input {@link archive} and a set of {@link inputFiles} that match to a {@link ROM} from
+   * a {@link Game}, determine if every entry from the {@link archive} was matched.
+   */
+  private findArchiveUnusedEntryPaths(
+    archive: Archive,
+    inputFiles: File[],
+    indexedFiles: IndexedFiles,
+  ): ArchiveEntry<Archive>[] {
+    if (this.options.shouldZip()
+      || this.options.shouldExtract()
+      || this.options.getAllowExcessSets()
+    ) {
+      // We don't particularly care where input files come from
+      return [];
+    }
+
+    // Find the Archive's entries (all of them, not just ones that match ROMs in this Game)
+    // NOTE(cemmer): we need to use hashCode() because a Game may have duplicate ROMs that all got
+    //  matched to the same input file, so not every archive entry may be in {@link inputFiles}
+    const archiveEntryHashCodes = new Set(inputFiles
+      .filter((entry) => entry.getFilePath() === archive.getFilePath())
+      .filter((file): file is ArchiveEntry<Archive> => file instanceof ArchiveEntry)
+      .map((entry) => entry.hashCode()));
+
+    // Find which of the Archive's entries didn't match to a ROM from this Game
+    return (indexedFiles.getFilesByFilePath().get(archive.getFilePath()) ?? [])
+      .filter((file): file is ArchiveEntry<Archive> => file instanceof ArchiveEntry)
+      .filter((entry) => !archiveEntryHashCodes.has(entry.hashCode()));
   }
 }

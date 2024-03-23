@@ -172,9 +172,8 @@ describe('with explicit DATs', () => {
         [path.join('One', 'Fizzbuzz.nes'), '370517b5'],
         [path.join('One', 'Foobar.lnx'), 'b22c9747'],
         [path.join('One', 'Lorem Ipsum.rom'), '70856527'],
-        [`${path.join('One', 'One Three.zip')}|${path.join('1', 'one.rom')}`, 'f817a89f'],
-        [`${path.join('One', 'One Three.zip')}|${path.join('2', 'two.rom')}`, '96170874'],
-        [`${path.join('One', 'One Three.zip')}|${path.join('3', 'three.rom')}`, 'ff46c5d8'],
+        [path.join('One', 'One Three', 'One.rom'), 'f817a89f'],
+        [path.join('One', 'One Three', 'Three.rom'), 'ff46c5d8'],
         [path.join('One', 'Three Four Five', 'Five.rom'), '3e5daf67'],
         [path.join('One', 'Three Four Five', 'Four.rom'), '1cf3ca74'],
         [path.join('One', 'Three Four Five', 'Three.rom'), 'ff46c5d8'],
@@ -216,9 +215,8 @@ describe('with explicit DATs', () => {
         // Fizzbuzz.nes is explicitly missing!
         ['Foobar.lnx', 'b22c9747'],
         ['Lorem Ipsum.rom', '70856527'],
-        [`${path.join('One Three.zip')}|${path.join('1', 'one.rom')}`, 'f817a89f'],
-        [`${path.join('One Three.zip')}|${path.join('2', 'two.rom')}`, '96170874'],
-        [`${path.join('One Three.zip')}|${path.join('3', 'three.rom')}`, 'ff46c5d8'],
+        [path.join('One Three', 'One.rom'), 'f817a89f'],
+        [path.join('One Three', 'Three.rom'), 'ff46c5d8'],
         [path.join('Three Four Five', 'Five.rom'), '3e5daf67'],
         [path.join('Three Four Five', 'Four.rom'), '1cf3ca74'],
         [path.join('Three Four Five', 'Three.rom'), 'ff46c5d8'],
@@ -269,6 +267,8 @@ describe('with explicit DATs', () => {
         ['one.rom', '00000000'], // explicitly not deleted, it is not in an extension subdirectory
         [`${path.join('rar', 'Headered', 'LCDTestROM.lnx.rar')}|LCDTestROM.lnx`, '2d251538'],
         [path.join('rom', 'One', 'Lorem Ipsum.rom'), '70856527'],
+        [path.join('rom', 'One', 'One Three', 'One.rom'), 'f817a89f'],
+        [path.join('rom', 'One', 'One Three', 'Three.rom'), 'ff46c5d8'],
         [path.join('rom', 'One', 'Three Four Five', 'Five.rom'), '3e5daf67'],
         [path.join('rom', 'One', 'Three Four Five', 'Four.rom'), '1cf3ca74'],
         [path.join('rom', 'One', 'Three Four Five', 'Three.rom'), 'ff46c5d8'],
@@ -286,9 +286,6 @@ describe('with explicit DATs', () => {
         [path.join('rom', 'smdb', 'Hardware Target Game Database', 'Patchable', 'C01173E.rom'), 'dfaebe28'],
         [path.join('smc', 'Headered', 'speed_test_v51.smc'), '9adca6cc'],
         [`${path.join('zip', 'Headered', 'fds_joypad_test.fds.zip')}|fds_joypad_test.fds`, '1e58456d'],
-        [`${path.join('zip', 'One', 'One Three.zip')}|${path.join('1', 'one.rom')}`, 'f817a89f'],
-        [`${path.join('zip', 'One', 'One Three.zip')}|${path.join('2', 'two.rom')}`, '96170874'],
-        [`${path.join('zip', 'One', 'One Three.zip')}|${path.join('3', 'three.rom')}`, 'ff46c5d8'],
       ]);
       expect(result.cwdFilesAndCrcs).toHaveLength(0);
       expect(result.movedFiles).toHaveLength(0);
@@ -454,7 +451,7 @@ describe('with explicit DATs', () => {
     });
   });
 
-  it('should move zipped files', async () => {
+  it('should move zipped files, allowing excess sets', async () => {
     await copyFixturesToTemp(async (inputTemp, outputTemp) => {
       const result = await runIgir({
         commands: ['move'],
@@ -462,6 +459,7 @@ describe('with explicit DATs', () => {
         input: [path.join(inputTemp, 'roms', 'zip')],
         output: outputTemp,
         dirDatName: true,
+        allowExcessSets: true,
       });
 
       expect(result.outputFilesAndCrcs).toEqual([
@@ -621,9 +619,8 @@ describe('with explicit DATs', () => {
         [`${path.join('One', 'Fizzbuzz.nes')} -> ${path.join('<input>', 'raw', 'fizzbuzz.nes')}`, '370517b5'],
         [`${path.join('One', 'Foobar.lnx')} -> ${path.join('<input>', 'foobar.lnx')}`, 'b22c9747'],
         [`${path.join('One', 'Lorem Ipsum.rom')} -> ${path.join('<input>', 'raw', 'loremipsum.rom')}`, '70856527'],
-        [`${path.join('One', 'One Three.zip')}|${path.join('1', 'one.rom')} -> ${path.join('<input>', 'zip', 'onetwothree.zip')}|${path.join('1', 'one.rom')}`, 'f817a89f'],
-        [`${path.join('One', 'One Three.zip')}|${path.join('2', 'two.rom')} -> ${path.join('<input>', 'zip', 'onetwothree.zip')}|${path.join('2', 'two.rom')}`, '96170874'],
-        [`${path.join('One', 'One Three.zip')}|${path.join('3', 'three.rom')} -> ${path.join('<input>', 'zip', 'onetwothree.zip')}|${path.join('3', 'three.rom')}`, 'ff46c5d8'],
+        [`${path.join('One', 'One Three', 'One.rom')} -> ${path.join('<input>', 'raw', 'one.rom')}`, 'f817a89f'],
+        [`${path.join('One', 'One Three', 'Three.rom')} -> ${path.join('<input>', 'raw', 'three.rom')}`, 'ff46c5d8'],
         [`${path.join('One', 'Three Four Five', 'Five.rom')} -> ${path.join('<input>', 'raw', 'five.rom')}`, '3e5daf67'],
         [`${path.join('One', 'Three Four Five', 'Four.rom')} -> ${path.join('<input>', 'raw', 'four.rom')}`, '1cf3ca74'],
         [`${path.join('One', 'Three Four Five', 'Three.rom')} -> ${path.join('<input>', 'raw', 'three.rom')}`, 'ff46c5d8'],
