@@ -119,12 +119,14 @@ site/
 # ROMs
 *.7z
 *.bin
+*.chd
 *.cue
 *.dvd
 *.gb
 *.gba
 *.gbc
 *.gdi
+*.iso
 *.nes
 *.rom
 *.sfc
