@@ -19,11 +19,6 @@ import FileChecksums, { ChecksumBitmask } from '../fileChecksums.js';
 import Archive from './archive.js';
 import ArchiveEntry from './archiveEntry.js';
 
-enum EntryType {
-  RAW_DISK = 1,
-  EXTRACTED = 2,
-}
-
 export default class Chd extends Archive {
   static readonly SUPPORTED_EXTENSIONS = ['.chd'];
 
@@ -54,14 +49,14 @@ export default class Chd extends Archive {
     // MAME DAT <disk>s use the data+metadata SHA1 (vs. just the data SHA1)
     const rawEntry = await ArchiveEntry.entryOf({
       archive: this,
-      entryPath: EntryType.RAW_DISK.toString(),
+      entryPath: '',
       size: info.logicalSize,
       sha1: info.sha1,
     }, ChecksumBitmask.NONE);
 
     const extractedEntry = await ArchiveEntry.entryOf({
       archive: this,
-      entryPath: EntryType.EXTRACTED.toString(),
+      entryPath: '',
       size: info.logicalSize,
       sha1: info.dataSha1,
     }, checksumBitmask);
@@ -244,8 +239,19 @@ export default class Chd extends Archive {
   }
 
   // eslint-disable-next-line class-methods-use-this,@typescript-eslint/require-await
-  async extractEntryToFile(): Promise<void> {
-    throw new Error('unimplemented');
+  async extractEntryToFile(
+    entryPath: string,
+    extractedFilePath: string,
+  ): Promise<void> {
+    return this.extractEntryToStream(
+      entryPath,
+      async (stream) => new Promise((resolve, reject) => {
+        const writeStream = fs.createWriteStream(extractedFilePath);
+        writeStream.on('close', resolve);
+        writeStream.on('error', reject);
+        stream.pipe(writeStream);
+      }),
+    );
   }
 
   @Memoize()
