@@ -5,7 +5,7 @@ import ROMScanner from '../../../../src/modules/romScanner.js';
 import fsPoly from '../../../../src/polyfill/fsPoly.js';
 import Archive from '../../../../src/types/files/archives/archive.js';
 import ArchiveEntry from '../../../../src/types/files/archives/archiveEntry.js';
-import Chd from '../../../../src/types/files/archives/chd.js';
+import Chd from '../../../../src/types/files/archives/chd/chd.js';
 import Rar from '../../../../src/types/files/archives/rar.js';
 import SevenZip from '../../../../src/types/files/archives/sevenZip.js';
 import Tar from '../../../../src/types/files/archives/tar.js';
