@@ -367,8 +367,25 @@ export default class CandidateWriter extends Module {
       .reduce((sum, file) => sum + file.getSize(), 0);
     this.progressBar.logTrace(`${dat.getNameShort()}: ${releaseCandidate.getName()}: writing ${fsPoly.sizeReadable(totalBytes)} of ${uniqueInputToOutputEntries.length.toLocaleString()} file${uniqueInputToOutputEntries.length !== 1 ? 's' : ''}`);
 
-    for (const [inputRomFile, outputRomFile] of uniqueInputToOutputEntries) {
-      await this.writeRawSingle(dat, releaseCandidate, inputRomFile, outputRomFile);
+    // Group the input->output pairs by the input file's path. The goal is to extract entries from
+    // the same input archive at the same time, to benefit from batch extraction.
+    const uniqueInputToOutputEntriesMap = uniqueInputToOutputEntries
+      .reduce((map, [inputRomFile, outputRomFile]) => {
+        map.set(inputRomFile.getFilePath(), [
+          ...(map.get(inputRomFile.getFilePath()) ?? []),
+          [inputRomFile, outputRomFile],
+        ]);
+        return map;
+      }, new Map<string, [File, File][]>());
+    for (const groupedInputToOutput of uniqueInputToOutputEntriesMap.values()) {
+      await Promise.all(groupedInputToOutput.map(
+        async ([inputRomFile, outputRomFile]) => this.writeRawSingle(
+          dat,
+          releaseCandidate,
+          inputRomFile,
+          outputRomFile,
+        ),
+      ));
     }
   }
 
