@@ -88,7 +88,7 @@ export default class Constants {
   static readonly FILE_READER_DEFAULT_THREADS = 10;
 
   /**
-   * Max number of archive entries to process (possibly extract & MD5/SHA1 checksum) at once.
+   * Max number of archive entries to process (possibly extract & MD5/SHA1/SHA256 checksum) at once.
    */
   static readonly ARCHIVE_ENTRY_SCANNER_THREADS_PER_ARCHIVE = 5;
 

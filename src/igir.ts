@@ -238,7 +238,8 @@ export default class Igir {
       Object.keys(ChecksumBitmask)
         .filter((bitmask): bitmask is keyof typeof ChecksumBitmask => Number.isNaN(Number(bitmask)))
         // Has not been enabled yet
-        .filter((bitmask) => ChecksumBitmask[bitmask] > minimumChecksum)
+        .filter((bitmask) => ChecksumBitmask[bitmask] >= ChecksumBitmask.CRC32)
+        .filter((bitmask) => ChecksumBitmask[bitmask] <= ChecksumBitmask.SHA1)
         .filter((bitmask) => !(matchChecksum & ChecksumBitmask[bitmask]))
         .forEach((bitmask) => {
           matchChecksum |= ChecksumBitmask[bitmask];
