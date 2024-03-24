@@ -3,7 +3,7 @@ import path from 'node:path';
 
 import tar from 'tar';
 
-import Constants from '../../../constants.js';
+import Defaults from '../../../globals/defaults.js';
 import FsPoly from '../../../polyfill/fsPoly.js';
 import FileCache from '../fileCache.js';
 import FileChecksums from '../fileChecksums.js';
@@ -34,7 +34,7 @@ export default class Tar extends Archive {
       },
     });
     const readStream = fs.createReadStream(this.getFilePath(), {
-      highWaterMark: Constants.FILE_READING_CHUNK_SIZE,
+      highWaterMark: Defaults.FILE_READING_CHUNK_SIZE,
     });
     readStream.pipe(writeStream);
 

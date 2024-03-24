@@ -2,7 +2,7 @@ import path from 'node:path';
 
 import Logger from '../src/console/logger.js';
 import LogLevel from '../src/console/logLevel.js';
-import Constants from '../src/constants.js';
+import Temp from '../src/globals/temp.js';
 import Igir from '../src/igir.js';
 import ArrayPoly from '../src/polyfill/arrayPoly.js';
 import fsPoly from '../src/polyfill/fsPoly.js';
@@ -19,7 +19,7 @@ interface TestOutput {
 async function copyFixturesToTemp(
   callback: (input: string, output: string) => void | Promise<void>,
 ): Promise<void> {
-  const temp = await fsPoly.mkdtemp(path.join(Constants.GLOBAL_TEMP_DIR));
+  const temp = await fsPoly.mkdtemp(Temp.getTempDir());
 
   // Set up the input directory
   const inputTemp = path.join(temp, 'input');
@@ -75,7 +75,7 @@ async function walkWithCrc(inputDir: string, outputDir: string): Promise<string[
 async function runIgir(optionsProps: OptionsProps): Promise<TestOutput> {
   const options = new Options(optionsProps);
 
-  const tempCwd = await fsPoly.mkdtemp(path.join(Constants.GLOBAL_TEMP_DIR, 'cwd'));
+  const tempCwd = await fsPoly.mkdtemp(path.join(Temp.getTempDir(), 'cwd'));
   return chdir(tempCwd, async () => {
     const inputFilesBefore = (await Promise.all(options.getInputPaths()
       .map(async (inputPath) => fsPoly.walk(inputPath))))

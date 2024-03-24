@@ -1,6 +1,6 @@
 import path from 'node:path';
 
-import Constants from '../../../../src/constants.js';
+import Temp from '../../../../src/globals/temp.js';
 import ROMScanner from '../../../../src/modules/romScanner.js';
 import ArrayPoly from '../../../../src/polyfill/arrayPoly.js';
 import bufferPoly from '../../../../src/polyfill/bufferPoly.js';
@@ -52,7 +52,7 @@ describe('getSize', () => {
     });
 
     it('should get the hard link\'s target size', async () => {
-      const tempDir = await fsPoly.mkdtemp(Constants.GLOBAL_TEMP_DIR);
+      const tempDir = await fsPoly.mkdtemp(Temp.getTempDir());
       try {
         // Make a copy of the original file to ensure it's on the same drive
         const tempFile = path.join(tempDir, `file_${path.basename(filePath)}`);
@@ -72,7 +72,7 @@ describe('getSize', () => {
     });
 
     it('should get the absolute symlink\'s target size', async () => {
-      const tempDir = await fsPoly.mkdtemp(Constants.GLOBAL_TEMP_DIR);
+      const tempDir = await fsPoly.mkdtemp(Temp.getTempDir());
       try {
         const tempLink = path.join(tempDir, path.basename(filePath));
         await fsPoly.symlink(path.resolve(filePath), tempLink);
@@ -88,7 +88,7 @@ describe('getSize', () => {
     });
 
     it('should get the relative symlink\'s target size', async () => {
-      const tempDir = await fsPoly.mkdtemp(Constants.GLOBAL_TEMP_DIR);
+      const tempDir = await fsPoly.mkdtemp(Temp.getTempDir());
       try {
         const tempLink = path.join(tempDir, path.basename(filePath));
         await fsPoly.symlink(await fsPoly.symlinkRelativePath(filePath, tempLink), tempLink);
@@ -584,7 +584,7 @@ describe('copyToTempFile', () => {
     }), new ProgressBarFake()).scan();
     expect(archiveEntries).toHaveLength(30);
 
-    const temp = await fsPoly.mkdtemp(Constants.GLOBAL_TEMP_DIR);
+    const temp = await fsPoly.mkdtemp(Temp.getTempDir());
     for (const archiveEntry of archiveEntries) {
       await archiveEntry.extractToTempFile(async (tempFile) => {
         await expect(fsPoly.exists(tempFile)).resolves.toEqual(true);
@@ -608,7 +608,7 @@ describe('createReadStream', () => {
     }), new ProgressBarFake()).scan();
     expect(archiveEntries).toHaveLength(30);
 
-    const temp = await fsPoly.mkdtemp(Constants.GLOBAL_TEMP_DIR);
+    const temp = await fsPoly.mkdtemp(Temp.getTempDir());
     for (const archiveEntry of archiveEntries) {
       await archiveEntry.createReadStream(async (stream) => {
         const contents = (await bufferPoly.fromReadable(stream)).toString();

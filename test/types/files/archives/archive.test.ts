@@ -1,6 +1,6 @@
 import path from 'node:path';
 
-import Constants from '../../../../src/constants.js';
+import Temp from '../../../../src/globals/temp.js';
 import ROMScanner from '../../../../src/modules/romScanner.js';
 import fsPoly from '../../../../src/polyfill/fsPoly.js';
 import Archive from '../../../../src/types/files/archives/archive.js';
@@ -21,7 +21,7 @@ describe('getArchiveEntries', () => {
     ...Rar.SUPPORTED_EXTENSIONS,
     ...SevenZip.SUPPORTED_EXTENSIONS,
   ])])('should throw when the file doesn\'t exist: %s', async (extension) => {
-    const tempFile = (await fsPoly.mktemp(path.join(Constants.GLOBAL_TEMP_DIR, 'file'))) + extension;
+    const tempFile = (await fsPoly.mktemp(path.join(Temp.getTempDir(), 'file'))) + extension;
     await expect(FileFactory.filesFrom(tempFile)).rejects.toThrow();
   });
 

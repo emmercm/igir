@@ -99,6 +99,7 @@ nav:
           - output/cleaning.md
       - Advanced:
           - advanced/logging.md
+          - advanced/temp-dir.md
           - advanced/troubleshooting.md
           - advanced/internals.md
       - Misc:

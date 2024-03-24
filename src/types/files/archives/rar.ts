@@ -4,7 +4,7 @@ import async, { AsyncResultCallback } from 'async';
 import { Mutex } from 'async-mutex';
 import unrar from 'node-unrar-js';
 
-import Constants from '../../../constants.js';
+import Defaults from '../../../globals/defaults.js';
 import FileCache from '../fileCache.js';
 import { ChecksumBitmask } from '../fileChecksums.js';
 import Archive from './archive.js';
@@ -27,7 +27,7 @@ export default class Rar extends Archive {
     });
     return async.mapLimit(
       [...rar.getFileList().fileHeaders].filter((fileHeader) => !fileHeader.flags.directory),
-      Constants.ARCHIVE_ENTRY_SCANNER_THREADS_PER_ARCHIVE,
+      Defaults.ARCHIVE_ENTRY_SCANNER_THREADS_PER_ARCHIVE,
       async (fileHeader, callback: AsyncResultCallback<ArchiveEntry<Rar>, Error>) => {
         const archiveEntry = await ArchiveEntry.entryOf({
           archive: this,

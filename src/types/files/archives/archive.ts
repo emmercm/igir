@@ -1,7 +1,7 @@
 import path from 'node:path';
 import { Readable } from 'node:stream';
 
-import Constants from '../../../constants.js';
+import Temp from '../../../globals/temp.js';
 import fsPoly from '../../../polyfill/fsPoly.js';
 import File from '../file.js';
 import { ChecksumBitmask } from '../fileChecksums.js';
@@ -44,7 +44,7 @@ export default abstract class Archive {
     callback: (tempFile: string) => (T | Promise<T>),
   ): Promise<T> {
     const tempFile = await fsPoly.mktemp(path.join(
-      Constants.GLOBAL_TEMP_DIR,
+      Temp.getTempDir(),
       path.basename(entryPath),
     ));
 

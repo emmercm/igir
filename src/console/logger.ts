@@ -5,7 +5,7 @@ import chalk from 'chalk';
 import figlet from 'figlet';
 import moment from 'moment';
 
-import Constants from '../constants.js';
+import Package from '../globals/package.js';
 import LogLevel from './logLevel.js';
 import ProgressBar, { ProgressBarSymbol } from './progressBar.js';
 import ProgressBarCLI from './progressBarCli.js';
@@ -119,7 +119,7 @@ export default class Logger {
    * Print the CLI header.
    */
   printHeader(): void {
-    const logo = figlet.textSync(Constants.COMMAND_NAME.toUpperCase(), {
+    const logo = figlet.textSync(Package.NAME.toUpperCase(), {
       font: 'Big Money-se',
     }).trimEnd();
 
@@ -127,8 +127,8 @@ export default class Logger {
     const midLine = Math.min(Math.ceil(logoSplit.length / 2), logoSplit.length - 1);
     const maxLineLen = logoSplit.reduce((max, line) => Math.max(max, line.length), 0);
     logoSplit[midLine - 2] = `${logoSplit[midLine - 1].padEnd(maxLineLen, ' ')}   ROM collection manager`;
-    logoSplit[midLine - 1] = `${logoSplit[midLine - 1].padEnd(maxLineLen, ' ')}   ${Constants.HOMEPAGE}`;
-    logoSplit[midLine + 1] = `${logoSplit[midLine + 1].padEnd(maxLineLen, ' ')}   v${Constants.COMMAND_VERSION}`;
+    logoSplit[midLine - 1] = `${logoSplit[midLine - 1].padEnd(maxLineLen, ' ')}   ${Package.HOMEPAGE}`;
+    logoSplit[midLine + 1] = `${logoSplit[midLine + 1].padEnd(maxLineLen, ' ')}   v${Package.VERSION}`;
 
     this.print(LogLevel.ALWAYS, `${logoSplit.join('\n')}\n\n`);
   }
@@ -143,7 +143,7 @@ export default class Logger {
         .replace(/^(Usage:.+)/, chalk.bold('$1'))
 
         .replace(/(\[commands\.*\])/g, chalk.magenta('$1'))
-        .replace(new RegExp(`(${Constants.COMMAND_NAME}) (( ?[a-z0-9])+)`, 'g'), `$1 ${chalk.magenta('$2')}`)
+        .replace(new RegExp(`(${Package.NAME}) (( ?[a-z0-9])+)`, 'g'), `$1 ${chalk.magenta('$2')}`)
 
         .replace(/(\[options\.*\])/g, chalk.cyan('$1'))
         .replace(/([^a-zA-Z0-9-])(-[a-zA-Z0-9]([a-zA-Z0-9]|\n[ \t]*)*)/g, `$1${chalk.cyanBright('$2')}`)
@@ -157,7 +157,7 @@ export default class Logger {
 
         .replace(/(\{[a-zA-Z]+\})/g, chalk.yellow('$1'))
 
-        .replace(new RegExp(` (${Constants.COMMAND_NAME}) `, 'g'), ` ${chalk.blueBright('$1')} `),
+        .replace(new RegExp(` (${Package.NAME}) `, 'g'), ` ${chalk.blueBright('$1')} `),
     );
   }
 

@@ -5,7 +5,7 @@ import util from 'node:util';
 
 import Logger from '../../src/console/logger.js';
 import LogLevel from '../../src/console/logLevel.js';
-import Constants from '../../src/constants.js';
+import Temp from '../../src/globals/temp.js';
 import ArgumentsParser from '../../src/modules/argumentsParser.js';
 import FsPoly from '../../src/polyfill/fsPoly.js';
 import Header from '../../src/types/dats/logiqx/header.js';
@@ -269,7 +269,7 @@ describe('options', () => {
     expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--dat-regex', '/[a-z]/i']).getDatNameRegex()?.some((regex) => regex.test('UPPER'))).toEqual(true);
     expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--dat-regex', '/[a-z]/i', '--dat-regex', '[0-9]']).getDatNameRegex()?.some((regex) => regex.test('UPPER'))).toEqual(false);
 
-    const tempFile = await FsPoly.mktemp(path.join(Constants.GLOBAL_TEMP_DIR, 'temp'));
+    const tempFile = await FsPoly.mktemp(path.join(Temp.getTempDir(), 'temp'));
     try {
       await util.promisify(fs.writeFile)(tempFile, '\n/[a-z]/i\r\n[0-9]\n\n');
       expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--dat-name-regex', tempFile]).getDatNameRegex()?.some((regex) => regex.test(''))).toEqual(false);
@@ -294,7 +294,7 @@ describe('options', () => {
     expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--dat-regex-exclude', '/[a-z]/i']).getDatNameRegexExclude()?.some((regex) => regex.test('UPPER'))).toEqual(true);
     expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--dat-regex-exclude', '/[a-z]/i', '--dat-regex-exclude', '[0-9]']).getDatNameRegexExclude()?.some((regex) => regex.test('UPPER'))).toEqual(false);
 
-    const tempFile = await FsPoly.mktemp(path.join(Constants.GLOBAL_TEMP_DIR, 'temp'));
+    const tempFile = await FsPoly.mktemp(path.join(Temp.getTempDir(), 'temp'));
     try {
       await util.promisify(fs.writeFile)(tempFile, '\n/[a-z]/i\r\n[0-9]\n\n');
       expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--dat-name-regex-exclude', tempFile]).getDatNameRegexExclude()?.some((regex) => regex.test(''))).toEqual(false);
@@ -315,7 +315,7 @@ describe('options', () => {
     expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--dat-description-regex', '/[a-z]/i']).getDatDescriptionRegex()?.some((regex) => regex.test('UPPER'))).toEqual(true);
     expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--dat-description-regex', '/[a-z]/i', '--dat-description-regex', '[0-9]']).getDatDescriptionRegex()?.some((regex) => regex.test('UPPER'))).toEqual(false);
 
-    const tempFile = await FsPoly.mktemp(path.join(Constants.GLOBAL_TEMP_DIR, 'temp'));
+    const tempFile = await FsPoly.mktemp(path.join(Temp.getTempDir(), 'temp'));
     try {
       await util.promisify(fs.writeFile)(tempFile, '\n/[a-z]/i\r\n[0-9]\n\n');
       expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--dat-description-regex', tempFile]).getDatDescriptionRegex()?.some((regex) => regex.test(''))).toEqual(false);
@@ -336,7 +336,7 @@ describe('options', () => {
     expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--dat-description-regex-exclude', '/[a-z]/i']).getDatDescriptionRegexExclude()?.some((regex) => regex.test('UPPER'))).toEqual(true);
     expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--dat-description-regex-exclude', '/[a-z]/i', '--dat-description-regex-exclude', '[0-9]']).getDatDescriptionRegexExclude()?.some((regex) => regex.test('UPPER'))).toEqual(false);
 
-    const tempFile = await FsPoly.mktemp(path.join(Constants.GLOBAL_TEMP_DIR, 'temp'));
+    const tempFile = await FsPoly.mktemp(path.join(Temp.getTempDir(), 'temp'));
     try {
       await util.promisify(fs.writeFile)(tempFile, '\n/[a-z]/i\r\n[0-9]\n\n');
       expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--dat-description-regex-exclude', tempFile]).getDatDescriptionRegexExclude()?.some((regex) => regex.test(''))).toEqual(false);
@@ -396,7 +396,7 @@ describe('options', () => {
     expect(() => argumentsParser.parse(['move', '--input', os.devNull])).toThrow(/missing required option/i);
     expect(() => argumentsParser.parse(['copy', 'zip', '--input', os.devNull])).toThrow(/missing required option/i);
     expect(() => argumentsParser.parse(['copy', 'clean', '--input', os.devNull])).toThrow(/missing required option/i);
-    expect(argumentsParser.parse(['report', '--dat', os.devNull, '--input', os.devNull]).getOutput()).toContain(Constants.GLOBAL_TEMP_DIR);
+    expect(argumentsParser.parse(['report', '--dat', os.devNull, '--input', os.devNull]).getOutput()).toContain(Temp.getTempDir());
     // Test value
     expect(argumentsParser.parse(['copy', '--input', os.devNull, '-o', 'foo']).getOutput()).toEqual('foo');
     expect(argumentsParser.parse(['copy', '--input', os.devNull, '--output', 'foo']).getOutput()).toEqual('foo');
@@ -621,7 +621,7 @@ describe('options', () => {
     expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--single', '--prefer-game-regex', '/[a-z]/i']).getPreferGameRegex()?.some((regex) => regex.test('UPPER'))).toEqual(true);
     expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--single', '--prefer-game-regex', '/[a-z]/i', '--prefer-game-regex', '[0-9]']).getPreferGameRegex()?.some((regex) => regex.test('UPPER'))).toEqual(false);
 
-    const tempFile = await FsPoly.mktemp(path.join(Constants.GLOBAL_TEMP_DIR, 'temp'));
+    const tempFile = await FsPoly.mktemp(path.join(Temp.getTempDir(), 'temp'));
     try {
       await util.promisify(fs.writeFile)(tempFile, '\n/[a-z]/i\r\n[0-9]\n\n');
       expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--single', '--prefer-game-regex', tempFile]).getPreferGameRegex()?.some((regex) => regex.test(''))).toEqual(false);
@@ -641,7 +641,7 @@ describe('options', () => {
     expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--single', '--prefer-rom-regex', '/[a-z]/i']).getPreferRomRegex()?.some((regex) => regex.test('UPPER'))).toEqual(true);
     expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--single', '--prefer-rom-regex', '/[a-z]/i', '--prefer-rom-regex', '[0-9]']).getPreferRomRegex()?.some((regex) => regex.test('UPPER'))).toEqual(false);
 
-    const tempFile = await FsPoly.mktemp(path.join(Constants.GLOBAL_TEMP_DIR, 'temp'));
+    const tempFile = await FsPoly.mktemp(path.join(Temp.getTempDir(), 'temp'));
     try {
       await util.promisify(fs.writeFile)(tempFile, '\n/[a-z]/i\r\n[0-9]\n\n');
       expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--single', '--prefer-rom-regex', tempFile]).getPreferRomRegex()?.some((regex) => regex.test(''))).toEqual(false);
@@ -785,7 +785,7 @@ describe('options', () => {
     expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--filter-regex', '/[a-z]/i']).getFilterRegex()?.some((regex) => regex.test('UPPER'))).toEqual(true);
     expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--filter-regex', '/[a-z]/i', '--filter-regex', '[0-9]']).getFilterRegex()?.some((regex) => regex.test('UPPER'))).toEqual(false);
 
-    const tempFile = await FsPoly.mktemp(path.join(Constants.GLOBAL_TEMP_DIR, 'temp'));
+    const tempFile = await FsPoly.mktemp(path.join(Temp.getTempDir(), 'temp'));
     try {
       await util.promisify(fs.writeFile)(tempFile, '\n/[a-z]/i\r\n[0-9]\n\n');
       expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--filter-regex', tempFile]).getFilterRegex()?.some((regex) => regex.test(''))).toEqual(false);
@@ -806,7 +806,7 @@ describe('options', () => {
     expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--filter-regex-exclude', '/[a-z]/i']).getFilterRegexExclude()?.some((regex) => regex.test('UPPER'))).toEqual(true);
     expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--filter-regex-exclude', '/[a-z]/i', '--filter-regex-exclude', '[0-9]']).getFilterRegexExclude()?.some((regex) => regex.test('UPPER'))).toEqual(false);
 
-    const tempFile = await FsPoly.mktemp(path.join(Constants.GLOBAL_TEMP_DIR, 'temp'));
+    const tempFile = await FsPoly.mktemp(path.join(Temp.getTempDir(), 'temp'));
     try {
       await util.promisify(fs.writeFile)(tempFile, '\n/[a-z]/i\r\n[0-9]\n\n');
       expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--filter-regex-exclude', tempFile]).getFilterRegexExclude()?.some((regex) => regex.test(''))).toEqual(false);

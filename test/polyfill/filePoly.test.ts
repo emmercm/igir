@@ -1,6 +1,7 @@
 import path from 'node:path';
 
-import Constants from '../../src/constants.js';
+import Defaults from '../../src/globals/defaults.js';
+import Temp from '../../src/globals/temp.js';
 import filePoly from '../../src/polyfill/filePoly.js';
 import fsPoly from '../../src/polyfill/fsPoly.js';
 
@@ -8,7 +9,7 @@ describe('fileOfSize', () => {
   it('should delete an existing file', async () => {
     const size = 8080;
 
-    const tempFile = await fsPoly.mktemp(path.join(Constants.GLOBAL_TEMP_DIR, 'file'));
+    const tempFile = await fsPoly.mktemp(path.join(Temp.getTempDir(), 'file'));
     await fsPoly.touch(tempFile);
     await expect(fsPoly.exists(tempFile)).resolves.toEqual(true);
 
@@ -23,7 +24,7 @@ describe('fileOfSize', () => {
   });
 
   test.each([1, 42, 226, 1337, 8_675_309])('should create a file of size: %s', async (size) => {
-    const tempFile = await fsPoly.mktemp(path.join(Constants.GLOBAL_TEMP_DIR, 'file'));
+    const tempFile = await fsPoly.mktemp(path.join(Temp.getTempDir(), 'file'));
     await expect(fsPoly.exists(tempFile)).resolves.toEqual(false);
 
     try {
@@ -39,11 +40,11 @@ describe('fileOfSize', () => {
 
 describe('readAt', () => {
   it('should read a small file', async () => {
-    const tempFile = await fsPoly.mktemp(path.join(Constants.GLOBAL_TEMP_DIR, 'file'));
+    const tempFile = await fsPoly.mktemp(path.join(Temp.getTempDir(), 'file'));
     await expect(fsPoly.exists(tempFile)).resolves.toEqual(false);
 
     try {
-      const file = await filePoly.fileOfSize(tempFile, 'r', Constants.MAX_MEMORY_FILE_SIZE - 1);
+      const file = await filePoly.fileOfSize(tempFile, 'r', Defaults.MAX_MEMORY_FILE_SIZE - 1);
       await expect(file.readAt(0, 16)).resolves.toEqual(Buffer.alloc(16));
       await file.close();
     } finally {
@@ -52,11 +53,11 @@ describe('readAt', () => {
   });
 
   it('should read a large file', async () => {
-    const tempFile = await fsPoly.mktemp(path.join(Constants.GLOBAL_TEMP_DIR, 'file'));
+    const tempFile = await fsPoly.mktemp(path.join(Temp.getTempDir(), 'file'));
     await expect(fsPoly.exists(tempFile)).resolves.toEqual(false);
 
     try {
-      const file = await filePoly.fileOfSize(tempFile, 'r', Constants.MAX_MEMORY_FILE_SIZE + 1);
+      const file = await filePoly.fileOfSize(tempFile, 'r', Defaults.MAX_MEMORY_FILE_SIZE + 1);
       await expect(file.readAt(0, 16)).resolves.toEqual(Buffer.alloc(16));
       await file.close();
     } finally {
