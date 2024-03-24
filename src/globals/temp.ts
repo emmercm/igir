@@ -6,16 +6,14 @@ import moment from 'moment';
 import FsPoly from '../polyfill/fsPoly.js';
 import Package from './package.js';
 
-const DATE_TIME = moment().format('YYYYMMDD-HHmmss');
-
 /**
  * A static class of constants for temp directories, to be used widely.
  */
 export default class Temp {
-  private static globalTempDir = path.join(os.tmpdir(), Package.NAME);
+  private static globalTempDir = path.join(os.tmpdir(), Package.NAME, moment().format('YYYYMMDD-HHmmss'));
 
   public static getTempDir(): string {
-    return path.join(this.globalTempDir, DATE_TIME);
+    return this.globalTempDir;
   }
 
   public static setTempDir(globalTempDir: string): void {
