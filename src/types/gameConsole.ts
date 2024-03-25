@@ -604,7 +604,7 @@ export default class GameConsole {
       retrodeck: 'nds',
       twmenu: 'dsiware',
     }), // try to map DSiWare
-    new GameConsole(/(\W|^)NES(\W|$)|Nintendo Entertainment System/i, ['.nes', '.nez'], {
+    new GameConsole(/(\W|^)NES(\W|$)|Famicom|Nintendo Entertainment System/i, ['.nes', '.nez'], {
       adam: 'FC',
       batocera: 'nes',
       emulationstation: 'nes',
@@ -647,7 +647,7 @@ export default class GameConsole {
       onion: 'SUFAMI',
       retrodeck: 'sufami',
     }),
-    new GameConsole(/(\W|^)SNES(\W|$)|Super Nintendo Entertainment System/i, ['.sfc', '.smc'], {
+    new GameConsole(/(\W|^)SNES(\W|$)|Super (Nintendo Entertainment System|Famicom)/i, ['.sfc', '.smc'], {
       adam: 'SFC',
       batocera: 'snes',
       emulationstation: 'snes',
