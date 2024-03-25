@@ -315,6 +315,11 @@ export default class OutputFactory {
       output = output.replace('{retrodeck}', retrodeck);
     }
 
+    const rommm = gameConsole.getRomM();
+    if (rommm) {
+      output = output.replace('{rommm}', rommm);
+    }
+
     const twmenu = gameConsole.getTWMenu();
     if (twmenu) {
       output = output.replace('{twmenu}', twmenu);
