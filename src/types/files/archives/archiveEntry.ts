@@ -151,7 +151,8 @@ export default class ArchiveEntry<A extends Archive> extends File implements Arc
   }
 
   getExtractedFilePath(): string {
-    return this.entryPath;
+    // Note: {@link Chd} will stuff some extra metadata in the entry path, chop it out
+    return this.entryPath.split('|')[0];
   }
 
   getEntryPath(): string {

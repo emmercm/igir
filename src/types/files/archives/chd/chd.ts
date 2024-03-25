@@ -1,6 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { Readable } from 'node:stream';
+import util from 'node:util';
 
 import { Mutex } from 'async-mutex';
 import chdman, { CHDInfo, CHDType } from 'chdman';
@@ -13,7 +14,7 @@ import FileCache from '../../fileCache.js';
 import { ChecksumBitmask } from '../../fileChecksums.js';
 import Archive from '../archive.js';
 import ArchiveEntry from '../archiveEntry.js';
-import ChdCdParser from './chdCdParser.js';
+import ChdBinCueParser from './chdBinCueParser.js';
 import ChdGdiParser from './chdGdiParser.js';
 
 export default class Chd extends Archive {
@@ -22,6 +23,8 @@ export default class Chd extends Archive {
   private tempSingletonHandles = 0;
 
   private readonly tempSingletonMutex = new Mutex();
+
+  private tempSingletonDirPath?: string;
 
   private tempSingletonFilePath?: string;
 
@@ -34,7 +37,7 @@ export default class Chd extends Archive {
   async getArchiveEntries(checksumBitmask: number): Promise<ArchiveEntry<Chd>[]> {
     const info = await this.getInfo();
     if (info.type === CHDType.CD_ROM) {
-      return ChdCdParser.getArchiveEntriesCdRom(this, checksumBitmask);
+      return ChdBinCueParser.getArchiveEntriesBinCue(this, checksumBitmask);
     } if (info.type === CHDType.GD_ROM) {
       // TODO(cemmer): allow parsing GD-ROM to bin/cue https://github.com/mamedev/mame/issues/11903
       return ChdGdiParser.getArchiveEntriesGdRom(this, checksumBitmask);
@@ -74,13 +77,12 @@ export default class Chd extends Archive {
     start: number = 0,
   ): Promise<T> {
     await this.tempSingletonMutex.runExclusive(async () => {
-      if (this.tempSingletonFilePath !== undefined) {
+      if (this.tempSingletonDirPath !== undefined) {
         return;
       }
-      this.tempSingletonFilePath = await FsPoly.mktemp(path.join(
-        Constants.GLOBAL_TEMP_DIR,
-        path.basename(this.getFilePath()),
-      ));
+      this.tempSingletonDirPath = await FsPoly.mkdtemp(path.join(Constants.GLOBAL_TEMP_DIR, 'chd'));
+      await FsPoly.mkdir(this.tempSingletonDirPath, { recursive: true });
+      this.tempSingletonFilePath = path.join(this.tempSingletonDirPath, 'extracted');
 
       const info = await this.getInfo();
       if (info.type === CHDType.RAW) {
@@ -101,6 +103,18 @@ export default class Chd extends Archive {
           outputBinFilename: this.tempSingletonFilePath,
         });
         await FsPoly.rm(cueFile, { force: true });
+      } else if (info.type === CHDType.GD_ROM) {
+        this.tempSingletonFilePath = path.join(this.tempSingletonDirPath, 'track.gdi');
+        await chdman.extractCd({
+          inputFilename: this.getFilePath(),
+          outputFilename: this.tempSingletonFilePath,
+        });
+        // Apply TOSEC-style CRLF line separators to the .gdi file
+        await util.promisify(fs.writeFile)(
+          this.tempSingletonFilePath,
+          (await util.promisify(fs.readFile)(this.tempSingletonFilePath)).toString()
+            .replace(/\r?\n/g, '\r\n'),
+        );
       } else if (info.type === CHDType.DVD_ROM) {
         await chdman.extractDvd({
           inputFilename: this.getFilePath(),
@@ -111,16 +125,22 @@ export default class Chd extends Archive {
       }
     });
 
-    const [trackSize, trackOffset] = entryPath.split('@');
+    const [extractedEntryPath, sizeAndOffset] = entryPath.split('|');
+    let filePath = this.tempSingletonFilePath as string;
+    if (await FsPoly.exists(path.join(this.tempSingletonDirPath as string, extractedEntryPath))) {
+      filePath = path.join(this.tempSingletonDirPath as string, extractedEntryPath);
+    }
+
+    const [trackSize, trackOffset] = (sizeAndOffset ?? '').split('@');
     const streamStart = Number.parseInt(trackOffset ?? '0', 10) + start;
-    const streamEnd = trackSize === undefined
+    const streamEnd = !trackSize || Number.isNaN(Number(trackSize))
       ? undefined
       : Number.parseInt(trackOffset ?? '0', 10) + Number.parseInt(trackSize, 10) - 1;
 
     this.tempSingletonHandles += 1;
     try {
       return await File.createStreamFromFile(
-        this.tempSingletonFilePath as string,
+        filePath,
         callback,
         streamStart,
         streamEnd,
@@ -129,8 +149,8 @@ export default class Chd extends Archive {
       this.tempSingletonHandles -= 1;
       if (this.tempSingletonHandles === 0) {
         await this.tempSingletonMutex.runExclusive(async () => {
-          await FsPoly.rm(this.tempSingletonFilePath as string, { force: true });
-          this.tempSingletonFilePath = undefined;
+          await FsPoly.rm(this.tempSingletonDirPath as string, { recursive: true, force: true });
+          this.tempSingletonDirPath = undefined;
         });
       }
     }

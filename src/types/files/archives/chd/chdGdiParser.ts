@@ -20,11 +20,8 @@ export default class ChdGdiParser {
     archive: Chd,
     checksumBitmask: number,
   ): Promise<ArchiveEntry<Chd>[]> {
-    const tempFile = await FsPoly.mktemp(path.join(
-      Constants.GLOBAL_TEMP_DIR,
-      path.basename(archive.getFilePath()),
-    ));
-    const gdiFilePath = `${tempFile}.gdi`;
+    const tempDir = await FsPoly.mkdtemp(path.join(Constants.GLOBAL_TEMP_DIR, 'chd-gdi'));
+    const gdiFilePath = path.join(tempDir, 'track.gdi');
     let binRawFilePaths: string[] = [];
 
     try {
@@ -32,7 +29,7 @@ export default class ChdGdiParser {
         inputFilename: archive.getFilePath(),
         outputFilename: gdiFilePath,
       });
-      binRawFilePaths = await fg(`${fg.convertPathToPattern(tempFile)}[0-9][0-9].{bin,raw}`);
+      binRawFilePaths = await fg(`${fg.convertPathToPattern(tempDir)}/*.{bin,raw}`);
       if (binRawFilePaths.length === 0) {
         throw new Error(`failed to find bin/raw files for GD-ROM: ${archive.getFilePath()}`);
       }
@@ -49,10 +46,10 @@ export default class ChdGdiParser {
     binRawFilePaths: string[],
     checksumBitmask: number,
   ): Promise<ArchiveEntry<Chd>[]> {
-    const gdiData = await util.promisify(fs.readFile)(gdiFilePath);
+    const gdiExtractedContents = await util.promisify(fs.readFile)(gdiFilePath);
 
     const { name: filePrefix } = path.parse(gdiFilePath);
-    const tracks = `${gdiData.toString()
+    const gdiContents = `${gdiExtractedContents.toString()
       .split(/\r?\n/)
       .filter((line) => line)
       // Replace the chdman-generated track files with TOSEC-style track filenames
@@ -61,12 +58,11 @@ export default class ChdGdiParser {
         .replace(/"/g, ''))
       .join('\r\n')}\r\n`;
 
-    const { name: archiveName } = path.parse(archive.getFilePath());
     const gdiFile = await ArchiveEntry.entryOf({
       archive,
-      entryPath: `${archiveName}.gdi`,
-      size: tracks.length,
-      ...await FileChecksums.hashData(tracks, checksumBitmask),
+      entryPath: path.basename(gdiFilePath),
+      size: gdiContents.length,
+      ...await FileChecksums.hashData(gdiContents, checksumBitmask),
     });
 
     const binRawFiles = await async.mapLimit(
@@ -76,7 +72,7 @@ export default class ChdGdiParser {
         try {
           const binRawFile = await ArchiveEntry.entryOf({
             archive,
-            entryPath: binRawFilePath.replace(filePrefix, 'track'),
+            entryPath: path.basename(binRawFilePath).replace(filePrefix, 'track'),
             size: await FsPoly.size(binRawFilePath),
             ...await FileChecksums.hashFile(binRawFilePath, checksumBitmask),
           });

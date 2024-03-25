@@ -17,8 +17,8 @@ import Chd from './chd.js';
 /**
  * https://github.com/putnam/binmerge
  */
-export default class ChdCdParser {
-  public static async getArchiveEntriesCdRom(
+export default class ChdBinCueParser {
+  public static async getArchiveEntriesBinCue(
     archive: Chd,
     checksumBitmask: number,
   ): Promise<ArchiveEntry<Chd>[]> {
@@ -76,9 +76,10 @@ export default class ChdCdParser {
     if (!firstTrack) {
       return [];
     }
-    const globalBlockSize = ChdCdParser.parseCueTrackBlockSize(firstTrack);
+    const globalBlockSize = ChdBinCueParser.parseCueTrackBlockSize(firstTrack);
     let nextItemTimeOffset = Math.floor(fileSize / globalBlockSize);
 
+    const { name: archiveName } = path.parse(archive.getFilePath());
     return (await Promise.all(
       file.tracks
         .reverse()
@@ -104,7 +105,7 @@ export default class ChdCdParser {
 
           return ArchiveEntry.entryOf({
             archive,
-            entryPath: `${trackSize}@${trackOffset}`,
+            entryPath: `${archiveName} (Track ${track.trackNumber}).bin|${trackSize}@${trackOffset}`,
             size: trackSize,
             ...checksums,
           }, checksumBitmask);
