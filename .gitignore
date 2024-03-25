@@ -128,6 +128,7 @@ site/
 *.gdi
 *.iso
 *.nes
+*.raw
 *.rom
 *.sfc
 *.smc

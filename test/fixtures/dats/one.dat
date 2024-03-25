@@ -45,4 +45,20 @@
   <machine name="Device" isdevice="yes">
     <description>Device</description>
   </machine>
+
+  <machine name="CD-ROM">
+    <description>CD-ROM</description>
+    <rom name="CD-ROM (Track 1).bin" size="2352" crc="49ca35fb" md5="6f979ee72969711292f1ae0c93b3215e" sha1="16fb0dfc1cd02a3dc647b90f6bc296a15ad63c28"/>
+    <rom name="CD-ROM (Track 2).bin" size="4704" crc="0316f720" md5="f1ecd006dd3cecd85d776b70d2f93c29" sha1="ffc4027aa0321e4d989d91dd75c99e102fae7692"/>
+    <rom name="CD-ROM (Track 3).bin" size="7056" crc="a320af40" md5="19cd451b7843702561e00c300a1bc6a4" sha1="47206b45be2c9d9f30c596aa51386e1c73ead9c0"/>
+    <rom name="CD-ROM.cue" size="271" crc="4ce39e73" md5="0e1d291a58ed07e0c8104bee04581720" sha1="01ef90baf2cdd53d7e3e7d67ff767b4bdb7e3060"/>
+  </machine>
+  <machine name="GD-ROM">
+    <description>GD-ROM</description>
+    <rom name="track01.bin" size="2352" crc="9796ed9a" md5="3d91327d20ac0255be39e0685b876d76" sha1="f2a722218beb22ced54deca34156e02e2be01f06"/>
+    <rom name="track02.raw" size="2352" crc="abc178d5" md5="d40f2957600fc6e5a07a48564413cdaa" sha1="d45a600c8480ede90328b5409684423c031f530a"/>
+    <rom name="track03.bin" size="4704" crc="61a363f1" md5="44daaa5a9a5723e707446cc7b6b37952" sha1="4b743fca0cdd0a651d9dde1fd0b6c29cb32b0ea8"/>
+    <rom name="track04.bin" size="7056" crc="fc5ff5a0" md5="539cc9788b891f3eed45b425e8c7cf65" sha1="8e9df4a7572ad029e12953a81944d63240cc434c"/>
+    <rom name="GD-ROM.gdi" size="118" crc="f16f621c" md5="affd2d605738d19eea97050aa8d60f69" sha1="0194b228e847e04d51f855071cd039f290c45085"/>
+  </machine>
 </datafile>
