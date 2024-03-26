@@ -50,7 +50,7 @@ interface OutputTokens {
   // @see https://github.com/XargonWan/RetroDECK/blob/main/es-configs/es_systems.xml
   retrodeck?: string,
 
-  // RomM ROMs go in the /roms/{romm} directory:
+  // RomM ROMs go in the /romm/library/{romm} directory:
   // @see https://github.com/rommapp/romm/wiki/Supported-Platforms
   romm?: string,
 
