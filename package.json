@@ -122,7 +122,7 @@
     "auto-changelog": "2.4.0",
     "caxa": "3.0.1",
     "eslint": "8.57.0",
-    "eslint-config-airbnb-typescript": "17.1.0",
+    "eslint-config-airbnb-typescript": "18.0.0",
     "eslint-plugin-import": "2.29.1",
     "eslint-plugin-jest": "27.9.0",
     "eslint-plugin-jsdoc": "48.2.0",
