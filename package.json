@@ -110,7 +110,7 @@
     "@types/figlet": "1.5.8",
     "@types/jest": "29.5.12",
     "@types/micromatch": "4.0.6",
-    "@types/node": "20.11.20",
+    "@types/node": "20.11.30",
     "@types/semver": "7.5.8",
     "@types/tar": "6.1.11",
     "@types/unzipper": "0.10.9",
@@ -133,7 +133,7 @@
     "jest-extended": "4.0.2",
     "ts-jest": "29.1.2",
     "ts-node": "10.9.2",
-    "typescript": "5.3.3",
+    "typescript": "5.4.3",
     "which": "4.0.0"
   },
   "//engines": [
