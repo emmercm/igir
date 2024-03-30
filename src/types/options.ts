@@ -89,6 +89,7 @@ export interface OptionsProps {
   readonly removeHeaders?: string[],
 
   readonly mergeRoms?: string,
+  readonly allowExcessSets?: boolean,
   readonly allowIncompleteSets?: boolean,
 
   readonly filterRegex?: string,
@@ -227,6 +228,8 @@ export default class Options implements OptionsProps {
   readonly removeHeaders?: string[];
 
   readonly mergeRoms?: string;
+
+  readonly allowExcessSets: boolean;
 
   readonly allowIncompleteSets: boolean;
 
@@ -386,6 +389,7 @@ export default class Options implements OptionsProps {
     this.removeHeaders = options?.removeHeaders;
 
     this.mergeRoms = options?.mergeRoms;
+    this.allowExcessSets = options?.allowExcessSets ?? false;
     this.allowIncompleteSets = options?.allowIncompleteSets ?? false;
 
     this.filterRegex = options?.filterRegex ?? '';
@@ -943,9 +947,12 @@ export default class Options implements OptionsProps {
     return MergeMode[mergeMode as keyof typeof MergeMode];
   }
 
+  getAllowExcessSets(): boolean {
+    return this.allowExcessSets;
+  }
+
   getAllowIncompleteSets(): boolean {
-    // If we're only reading, then go ahead and report on incomplete sets
-    return this.allowIncompleteSets || !this.shouldWrite();
+    return this.allowIncompleteSets;
   }
 
   getFilterRegex(): RegExp[] | undefined {
