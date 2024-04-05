@@ -1,9 +1,5 @@
 # JELOS
 
-!!! info
-
-[JELOS](https://jelos.org) is based on [RetroArch](https://www.retroarch.com/) and [ES-DE](../desktop/es-de.md). If the instructions on this page don't lead to success on your device, you might want to try your luck with their documentation.
-
 [JELOS](https://jelos.org) (or **J**ust **E**nough **L**inux **OS**) is a slim open source operating system for many devices by Anbernic, Powkiddy, Hardkernel etc. While it supports many devices as an aftermarket operating system choice, vendors have started shipping their devices with JELOS, too. With powerful features like custom collections and online scraping, it can make good use of huge and well managed ROM collections.
 
 ## Different card setups
