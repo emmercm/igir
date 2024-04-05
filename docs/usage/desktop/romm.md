@@ -6,7 +6,7 @@
 
 RomM uses its own [proprietary ROM folder structure](https://github.com/rommapp/romm/wiki/Supported-Platforms), so `igir` has a replaceable `{romm}` token to sort ROMs into the right place. See the [replaceable tokens page](../../output/tokens.md) for more information.
 
-=== ":simple-linux: EmulationStation (Linux)"
+=== ":simple-linux: RomM (Linux)"
 
     You can copy ROMs from a USB drive named "USB-Drive" like this:
 
