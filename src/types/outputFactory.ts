@@ -272,7 +272,7 @@ export default class OutputFactory {
 
     const esde = gameConsole.getESDE();
     if (esde) {
-      output = output.replace('{es-de}', esde);
+      output = output.replace('{esde}', esde);
     }
 
     const pocket = gameConsole.getPocket();
