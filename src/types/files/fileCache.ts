@@ -47,7 +47,7 @@ export default class FileCache {
     filePath: string,
     checksumBitmask: number,
   ): Promise<File> {
-    if (!this.enabled) {
+    if (!this.enabled || checksumBitmask === ChecksumBitmask.NONE) {
       return File.fileOf({ filePath }, checksumBitmask);
     }
 
@@ -100,7 +100,7 @@ export default class FileCache {
     archive: T,
     checksumBitmask: number,
   ): Promise<ArchiveEntry<T>[]> {
-    if (!this.enabled) {
+    if (!this.enabled || checksumBitmask === ChecksumBitmask.NONE) {
       return archive.getArchiveEntries(checksumBitmask);
     }
 
