@@ -23,7 +23,7 @@ Other emulators may use other names for their BIOS images but all reside in the 
 
 ## ROMs
 
-ES-DE uses its own proprietary ROM folder structure, so `igir` has a replaceable `{es-de}` token to sort ROMs into the right place. See the [replaceable tokens page](../../output/tokens.md) for more information.
+ES-DE uses its own proprietary ROM folder structure, so `igir` has a replaceable `{esde}` token to sort ROMs into the right place. See the [replaceable tokens page](../../output/tokens.md) for more information.
 
 === ":simple-linux: ES-DE (Linux)"
 
@@ -33,6 +33,6 @@ ES-DE uses its own proprietary ROM folder structure, so `igir` has a replaceable
     igir copy zip test clean \
       --dat "/media/USB-Drive/No-Intro*.zip" \
       --input "/media/USB-Drive/ROMs/" \
-      --output "/userdata/roms/{es-de}" \
+      --output "/userdata/roms/{esde}" \
       --no-bios
     ```
