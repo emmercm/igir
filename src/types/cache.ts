@@ -88,12 +88,12 @@ export default class Cache<V> {
   public async getOrCompute(
     key: string,
     runnable: (key: string) => V | Promise<V>,
-    comparator?: (value: V) => boolean | Promise<boolean>,
+    shouldRecompute?: (value: V) => boolean | Promise<boolean>,
   ): Promise<V> {
     return this.lockKey(key, async () => {
       if (this.keyValues.has(key)) {
         const existingValue = this.keyValues.get(key) as V;
-        if (comparator === undefined || await comparator(existingValue)) {
+        if (shouldRecompute === undefined || !await shouldRecompute(existingValue)) {
           return existingValue;
         }
       }

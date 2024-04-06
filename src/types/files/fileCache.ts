@@ -3,33 +3,15 @@ import { Stats } from 'node:fs';
 import Constants from '../../constants.js';
 import FsPoly from '../../polyfill/fsPoly.js';
 import Cache from '../cache.js';
-import File from './file.js';
-import { ChecksumBitmask, ChecksumProps } from './fileChecksums.js';
+import Archive from './archives/archive.js';
+import ArchiveEntry, { ArchiveEntryProps } from './archives/archiveEntry.js';
+import File, { FileProps } from './file.js';
+import { ChecksumBitmask } from './fileChecksums.js';
 
 interface CacheValue {
   fileSize: number,
   modifiedTimeMillis: number,
-  value: ChecksumProps | ChecksumProps[],
-}
-
-type CachedMethod<T> = (
-  checksumBitmask: number,
-  ...args: unknown[]
-) => Promise<T>;
-
-type CacheDecorator<T> = (
-  target: object,
-  propertyKey: string | symbol,
-  descriptor: TypedPropertyDescriptor<CachedMethod<T>>,
-) => TypedPropertyDescriptor<CachedMethod<T>>;
-
-export interface CacheProps {
-  // An exact checksum bitmask that should skip caching, because it's easy or fast to compute.
-  // For example, zip archives have CRC32 in their central directory.
-  skipChecksumBitmask?: number,
-
-  serializer?: () => void,
-  deserializer?: () => void,
+  value: FileProps | ArchiveEntryProps<Archive>[],
 }
 
 enum ValueType {
@@ -46,6 +28,7 @@ export default class FileCache {
   })
     .load()
     .then(async (cache) => {
+      // Delete keys from old cache versions
       await Promise.all([...Array.from({ length: FileCache.VERSION }).keys()].slice(1)
         .map(async (prevVersion) => {
           const keyRegex = new RegExp(`^V${prevVersion}\\|`);
@@ -60,130 +43,122 @@ export default class FileCache {
     this.enabled = false;
   }
 
-  static CacheArchiveEntries <T>(
-    cacheProps?: CacheProps,
-  ): CacheDecorator<T> {
-    return (
-      target: object,
-      propertyKey: string | symbol,
-      descriptor: TypedPropertyDescriptor<CachedMethod<T>>,
-    ): TypedPropertyDescriptor<CachedMethod<T>> => {
-      const originalMethod = descriptor.value;
-      if (!originalMethod) {
-        throw new Error('@CacheArchiveEntries couldn\'t get a method from the descriptor');
-      }
-
-      // eslint-disable-next-line no-param-reassign,func-names
-      descriptor.value = async function (checksumBitmask, args): Promise<T> {
-        // NOTE(cemmer): `function` is required for `this` to bind correctly
-        if (!(this instanceof File)) {
-          throw new Error('@CacheArchiveEntries can only be used within File classes');
-        }
-        const newMethod = async (): Promise<T> => originalMethod.call(
-          this,
-          checksumBitmask,
-          args,
-        );
-
-        if (!FileCache.enabled || checksumBitmask === cacheProps?.skipChecksumBitmask) {
-          return newMethod();
-        }
-
-        return FileCache.getOrComputeFile(this, checksumBitmask, newMethod);
-      };
-      return descriptor;
-    };
-  }
-
-  private static getCacheKey(stats: Stats, valueType: ValueType): string {
-    return `V${FileCache.VERSION}|${stats.ino}|${valueType}`;
-  }
-
-  private static async getOrComputeFile(
+  static async getOrComputeFile(
     filePath: string,
     checksumBitmask: number,
-    runnable: () => Promise<File | File[]>,
   ): Promise<File> {
+    if (!this.enabled) {
+      return File.fileOf({ filePath }, checksumBitmask);
+    }
+
     // NOTE(cemmer): we're explicitly not catching ENOENT errors here, we want it to bubble up
     const stats = await FsPoly.stat(filePath);
     const cacheKey = this.getCacheKey(stats, ValueType.FILE);
 
-    let result: File | File[] | undefined;
-    const cached = await (await this.CACHE).getOrCompute(
+    // NOTE(cemmer): we're using the cache as a mutex here, so even if this function is called
+    //  multiple times concurrently, entries will only be fetched once.
+    let computedFile: File | undefined;
+    const cachedValue = await (await this.CACHE).getOrCompute(
       cacheKey,
       async () => {
-        result = await runnable();
+        computedFile = await File.fileOf({ filePath }, checksumBitmask);
         return {
           fileSize: stats.size,
           modifiedTimeMillis: stats.mtimeMs,
-          value: Array.isArray(result)
-            ? result.map((file) => file.toObject())
-            : result.toObject(),
-        } satisfies CacheValue;
+          value: computedFile.toFileProps(),
+        };
       },
-      async () => {
-        // TODO(cemmer): move the cache validation code from below to here
-        return false;
+      (cached) => {
+        if (cached.fileSize !== stats.size || cached.modifiedTimeMillis !== stats.mtimeMs) {
+          // File has changed since being cached
+          return true;
+        }
+
+        const cachedFile = cached.value as FileProps;
+        const existingBitmask = ((cachedFile.crc32 !== undefined && cachedFile.crc32 !== '00000000') ? ChecksumBitmask.CRC32 : 0)
+          | (cachedFile.md5 ? ChecksumBitmask.MD5 : 0)
+          | (cachedFile.sha1 ? ChecksumBitmask.SHA1 : 0)
+          | (cachedFile.sha256 ? ChecksumBitmask.SHA256 : 0);
+        const remainingBitmask = checksumBitmask ^ existingBitmask;
+        // We need checksums that haven't been cached yet
+        return remainingBitmask !== 0;
       },
     );
 
-    if (result) {
-      // Was computed, use the computed value
-      return result;
+    if (computedFile) {
+      // If we computed the file (cache miss), then just return that vs. needing to deserialize
+      //  what was written to the cache
+      return computedFile;
     }
-    // Otherwise, deserialize the cached value
-    return File.fileOfObject(filePath, {
-      ...cached.file,
-      filePath,
-      // Only return the checksums requested
-      crc32: checksumBitmask & ChecksumBitmask.CRC32 ? cached.file.crc32 : undefined,
-      md5: checksumBitmask & ChecksumBitmask.MD5 ? cached.file.md5 : undefined,
-      sha1: checksumBitmask & ChecksumBitmask.SHA1 ? cached.file.sha1 : undefined,
-      sha256: checksumBitmask & ChecksumBitmask.SHA256 ? cached.file.sha256 : undefined,
-    });
+
+    // We didn't compute the file (cache hit), deserialize the properties into a full object
+    const cachedFile = cachedValue.value as FileProps;
+    return File.fileOfObject(filePath, cachedFile);
   }
 
-  private static async getCachedValue(
-    filePath: string,
-    valueType: ValueType,
+  static async getOrComputeEntries<T extends Archive>(
+    archive: T,
     checksumBitmask: number,
-  ): Promise<CacheValue | undefined> {
-    let stats: Stats;
-    try {
-      stats = await FsPoly.stat(filePath);
-    } catch (error) {
-      if (error && typeof error === 'object' && 'code' in error && error.code === 'ENOENT') {
-        // File doesn't exist
-        return undefined;
-      }
-      throw error;
-    }
-    const cacheKey = this.getCacheKey(stats, valueType);
-
-    const existing = await (await this.CACHE).get(cacheKey);
-    if (!existing) {
-      // File isn't cached
-      return undefined;
+  ): Promise<ArchiveEntry<T>[]> {
+    if (!this.enabled) {
+      return archive.getArchiveEntries(checksumBitmask);
     }
 
-    if (existing.fileSize !== stats.size
-      || existing.modifiedTimeMillis !== stats.mtimeMs
-    ) {
-      // File has changed since being cached
-      return undefined;
+    // NOTE(cemmer): we're explicitly not catching ENOENT errors here, we want it to bubble up
+    const stats = await FsPoly.stat(archive.getFilePath());
+    const cacheKey = this.getCacheKey(stats, ValueType.ARCHIVE_ENTRIES);
+
+    // NOTE(cemmer): we're using the cache as a mutex here, so even if this function is called
+    //  multiple times concurrently, entries will only be fetched once.
+    let computedEntries: ArchiveEntry<T>[] | undefined;
+    const cachedValue = await (await this.CACHE).getOrCompute(
+      cacheKey,
+      async () => {
+        computedEntries = await archive.getArchiveEntries(checksumBitmask) as ArchiveEntry<T>[];
+        return {
+          fileSize: stats.size,
+          modifiedTimeMillis: stats.mtimeMs,
+          value: computedEntries.map((entry) => entry.toEntryProps()),
+        };
+      },
+      (cached) => {
+        if (cached.fileSize !== stats.size || cached.modifiedTimeMillis !== stats.mtimeMs) {
+          // File has changed since being cached
+          return true;
+        }
+
+        const cachedEntries = cached.value as ArchiveEntryProps<T>[];
+        const existingBitmask = (cachedEntries.every((props) => props.crc32 !== undefined && props.crc32 !== '00000000') ? ChecksumBitmask.CRC32 : 0)
+          | (cachedEntries.every((props) => props.md5) ? ChecksumBitmask.MD5 : 0)
+          | (cachedEntries.every((props) => props.sha1) ? ChecksumBitmask.SHA1 : 0)
+          | (cachedEntries.every((props) => props.sha256) ? ChecksumBitmask.SHA256 : 0);
+        const remainingBitmask = checksumBitmask ^ existingBitmask;
+        // We need checksums that haven't been cached yet
+        return remainingBitmask !== 0;
+      },
+    );
+
+    if (computedEntries) {
+      // If we computed the archive entries (cache miss), then just return that vs. needing to
+      //  deserialize what was written to the cache
+      return computedEntries;
     }
 
-    const checksumProps = Array.isArray(existing.value) ? existing.value : [existing.value];
-    const existingBitmask = (checksumProps.every((props) => props.crc32 !== undefined && props.crc32 !== '00000000') ? ChecksumBitmask.CRC32 : 0)
-      | (checksumProps.every((props) => props.md5) ? ChecksumBitmask.MD5 : 0)
-      | (checksumProps.every((props) => props.sha1) ? ChecksumBitmask.SHA1 : 0)
-      | (checksumProps.every((props) => props.sha256) ? ChecksumBitmask.SHA256 : 0);
-    const remainingBitmask = checksumBitmask ^ existingBitmask;
-    if (remainingBitmask) {
-      // We need checksums that haven't been cached yet
-      return undefined;
-    }
+    // We didn't compute the archive entries (cache hit), deserialize the properties into
+    //  full objects
+    const cachedEntries = cachedValue.value as ArchiveEntryProps<T>[];
+    return Promise.all(cachedEntries.map(async (props) => ArchiveEntry.entryOf({
+      ...props,
+      archive,
+      // Only return the checksums requested
+      crc32: checksumBitmask & ChecksumBitmask.CRC32 ? props.crc32 : undefined,
+      md5: checksumBitmask & ChecksumBitmask.MD5 ? props.md5 : undefined,
+      sha1: checksumBitmask & ChecksumBitmask.SHA1 ? props.sha1 : undefined,
+      sha256: checksumBitmask & ChecksumBitmask.SHA256 ? props.sha256 : undefined,
+    })));
+  }
 
-    return existing;
+  private static getCacheKey(stats: Stats, valueType: ValueType): string {
+    return `V${FileCache.VERSION}|${stats.ino}|${valueType}`;
   }
 }

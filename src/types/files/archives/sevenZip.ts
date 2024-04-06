@@ -6,7 +6,6 @@ import { Mutex } from 'async-mutex';
 
 import Constants from '../../../constants.js';
 import fsPoly from '../../../polyfill/fsPoly.js';
-import FileCache from '../fileCache.js';
 import Archive from './archive.js';
 import ArchiveEntry from './archiveEntry.js';
 
@@ -39,8 +38,7 @@ export default class SevenZip extends Archive {
     return new SevenZip(filePath);
   }
 
-  @FileCache.CacheArchiveEntries()
-  async getArchiveEntries(checksumBitmask: number): Promise<ArchiveEntry<SevenZip>[]> {
+  async getArchiveEntries(checksumBitmask: number): Promise<ArchiveEntry<this>[]> {
     /**
      * WARN(cemmer): even with the above mutex, {@link _7z.list} will still sometimes return no
      *  entries. Most archives contain at least one file, so assume this is wrong and attempt
@@ -62,7 +60,7 @@ export default class SevenZip extends Archive {
 
   private async getArchiveEntriesNotCached(
     checksumBitmask: number,
-  ): Promise<ArchiveEntry<SevenZip>[]> {
+  ): Promise<ArchiveEntry<this>[]> {
     /**
      * WARN(cemmer): {@link _7z.list} seems to have issues with any amount of real concurrency,
      *  it will return no files but also no error. Try to prevent that behavior.
@@ -88,7 +86,7 @@ export default class SevenZip extends Archive {
     return async.mapLimit(
       filesIn7z.filter((result) => !result.attr?.startsWith('D')),
       Constants.ARCHIVE_ENTRY_SCANNER_THREADS_PER_ARCHIVE,
-      async (result, callback: AsyncResultCallback<ArchiveEntry<SevenZip>, Error>) => {
+      async (result, callback: AsyncResultCallback<ArchiveEntry<this>, Error>) => {
         const archiveEntry = await ArchiveEntry.entryOf({
           archive: this,
           entryPath: result.name,

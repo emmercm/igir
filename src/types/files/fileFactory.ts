@@ -1,11 +1,13 @@
 import path from 'node:path';
 
 import Archive from './archives/archive.js';
+import ArchiveEntry from './archives/archiveEntry.js';
 import Rar from './archives/rar.js';
 import SevenZip from './archives/sevenZip.js';
 import Tar from './archives/tar.js';
 import Zip from './archives/zip.js';
 import File from './file.js';
+import FileCache from './fileCache.js';
 import { ChecksumBitmask } from './fileChecksums.js';
 
 export default class FileFactory {
@@ -14,11 +16,11 @@ export default class FileFactory {
     checksumBitmask: number = ChecksumBitmask.CRC32,
   ): Promise<File[]> {
     if (!this.isArchive(filePath)) {
-      return [await File.fileOf({ filePath }, checksumBitmask)];
+      return [await FileCache.getOrComputeFile(filePath, checksumBitmask)];
     }
 
     try {
-      return await this.archiveFrom(filePath).getArchiveEntries(checksumBitmask);
+      return await this.entriesFrom(filePath, checksumBitmask);
     } catch (error) {
       if (error && typeof error === 'object' && 'code' in error && error.code === 'ENOENT') {
         throw new Error(`file doesn't exist: ${filePath}`);
@@ -33,18 +35,24 @@ export default class FileFactory {
   /**
    * This ordering should match {@link ROMScanner#archiveEntryPriority}
    */
-  public static archiveFrom(filePath: string): Archive {
+  private static async entriesFrom(
+    filePath: string,
+    checksumBitmask: number,
+  ): Promise<ArchiveEntry<Archive>[]> {
+    let archive: Archive;
     if (Zip.SUPPORTED_EXTENSIONS.some((ext) => filePath.toLowerCase().endsWith(ext))) {
-      return new Zip(filePath);
-    } if (Tar.SUPPORTED_EXTENSIONS.some((ext) => filePath.toLowerCase().endsWith(ext))) {
-      return new Tar(filePath);
-    } if (Rar.SUPPORTED_EXTENSIONS.some((ext) => filePath.toLowerCase().endsWith(ext))) {
-      return new Rar(filePath);
-    } if (SevenZip.SUPPORTED_EXTENSIONS.some((ext) => filePath.toLowerCase().endsWith(ext))) {
-      return new SevenZip(filePath);
+      archive = new Zip(filePath);
+    } else if (Tar.SUPPORTED_EXTENSIONS.some((ext) => filePath.toLowerCase().endsWith(ext))) {
+      archive = new Tar(filePath);
+    } else if (Rar.SUPPORTED_EXTENSIONS.some((ext) => filePath.toLowerCase().endsWith(ext))) {
+      archive = new Rar(filePath);
+    } else if (SevenZip.SUPPORTED_EXTENSIONS.some((ext) => filePath.toLowerCase().endsWith(ext))) {
+      archive = new SevenZip(filePath);
+    } else {
+      throw new Error(`unknown archive type: ${path.extname(filePath)}`);
     }
 
-    throw new Error(`unknown archive type: ${path.extname(filePath)}`);
+    return FileCache.getOrComputeEntries(archive, checksumBitmask);
   }
 
   static isArchive(filePath: string): boolean {
