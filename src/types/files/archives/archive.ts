@@ -4,7 +4,6 @@ import { Readable } from 'node:stream';
 import Constants from '../../../constants.js';
 import fsPoly from '../../../polyfill/fsPoly.js';
 import File from '../file.js';
-import { ChecksumBitmask } from '../fileChecksums.js';
 import ArchiveEntry from './archiveEntry.js';
 
 export default abstract class Archive {
@@ -15,18 +14,6 @@ export default abstract class Archive {
   }
 
   protected abstract new(filePath: string): Archive;
-
-  /**
-   * Forget that the current file is an archive and treat it as a raw file, such that we can
-   *  compute its size and CRC.
-   */
-  async asRawFile(checksumBitmask: number): Promise<File> {
-    return File.fileOf({ filePath: this.getFilePath() }, checksumBitmask);
-  }
-
-  async asRawFileWithoutChecksums(): Promise<File> {
-    return File.fileOf({ filePath: this.getFilePath() }, ChecksumBitmask.NONE);
-  }
 
   getFilePath(): string {
     return this.filePath;

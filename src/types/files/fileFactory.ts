@@ -16,7 +16,7 @@ export default class FileFactory {
     checksumBitmask: number = ChecksumBitmask.CRC32,
   ): Promise<File[]> {
     if (!this.isArchive(filePath)) {
-      return [await FileCache.getOrComputeFile(filePath, checksumBitmask)];
+      return [await this.fileFrom(filePath, checksumBitmask)];
     }
 
     try {
@@ -30,6 +30,13 @@ export default class FileFactory {
       }
       throw error;
     }
+  }
+
+  public static async fileFrom(
+    filePath: string,
+    checksumBitmask: number,
+  ): Promise<File> {
+    return FileCache.getOrComputeFile(filePath, checksumBitmask);
   }
 
   /**
