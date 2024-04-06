@@ -45,6 +45,7 @@ process.once('beforeExit', async () => {
 const GLOBAL_CACHE_FILE = [
   path.resolve(ROOT_DIR),
   os.homedir(),
+  process.cwd(),
 ]
   .filter((dir) => dir && !dir.startsWith(os.tmpdir()))
   .map((dir) => path.join(dir, `${COMMAND_NAME}.cache`))
