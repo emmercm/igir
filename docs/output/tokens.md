@@ -84,7 +84,7 @@ To help sort ROMs into unique file structures for popular frontends & hardware, 
 
 - `{adam}` the ['Adam' image](../usage/handheld/adam.md) emulator's directory for the ROM
 - `{batocera}` the [Batocera](../usage/desktop/batocera.md) emulator's directory for the ROM
-- `{es-de}` the [ES-DE](../usage/desktop/es-de.md) emulator's directory for the ROM
+- `{esde}` the [ES-DE](../usage/desktop/esde.md) emulator's directory for the ROM
 - `{funkeyos}` the [FunKey OS](../usage/handheld/funkeyos.md) emulator's directory for the ROM
 - `{minui}` the [MinUI](../usage/handheld/minui.md) emulator's directory for the ROM
 - `{miyoocfw}` the [MiyooCFW](../usage/handheld/miyoocfw.md) emulator's directory for the ROM
