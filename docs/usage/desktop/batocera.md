@@ -1,6 +1,6 @@
 # Batocera
 
-[Batocera](https://batocera.org/) is a pre-configured Linux distribution for [ES-DE](es-de.md) & [RetroArch](retroarch.md). Batocera is primarily for single-board computers (SBCs) such as the [Raspberry Pi](https://www.raspberrypi.com/).
+[Batocera](https://batocera.org/) is a pre-configured Linux distribution for [ES-DE](esde.md) & [RetroArch](retroarch.md). Batocera is primarily for single-board computers (SBCs) such as the [Raspberry Pi](https://www.raspberrypi.com/).
 
 ## BIOS
 
