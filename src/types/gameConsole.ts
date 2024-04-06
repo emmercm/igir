@@ -9,7 +9,7 @@ interface OutputTokens {
   // @see https://wiki.batocera.org/systems
   batocera?: string,
 
-  // ES-DE ROMs go in the roms/{es-de} directory:
+  // ES-DE ROMs go in the roms/{esde} directory:
   // @see https://gitlab.com/es-de/emulationstation-de/-/blob/master/resources/systems/linux/es_systems.xml
   esde?: string,
 
