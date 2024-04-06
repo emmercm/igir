@@ -139,7 +139,7 @@ export default class Igir {
       if (dir2DatPath) {
         datsToWrittenFiles.set(filteredDat, [
           ...(datsToWrittenFiles.get(filteredDat) ?? []),
-          await File.fileOf({ filePath: dir2DatPath }),
+          await File.fileOf({ filePath: dir2DatPath }, ChecksumBitmask.NONE),
         ]);
       }
 
@@ -149,7 +149,7 @@ export default class Igir {
       if (fixdatPath) {
         datsToWrittenFiles.set(filteredDat, [
           ...(datsToWrittenFiles.get(filteredDat) ?? []),
-          await File.fileOf({ filePath: fixdatPath }),
+          await File.fileOf({ filePath: fixdatPath }, ChecksumBitmask.NONE),
         ]);
       }
 
