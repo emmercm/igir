@@ -48,6 +48,7 @@ jobs:
 
           NEW_TITLE="$(echo "${OLD_TITLE}" | sed -r \
             `# Strip scope` \
+            -e 's/^[a-z]+\(deps\)(!?:)/Chore:/i' \
             -e 's/^([a-z]+)\([^)]+\)(!?:)/\1\2/i' \
             `# Massage scope` \
             -e 's/^[a-z]+!:/Breaking:/i' \
