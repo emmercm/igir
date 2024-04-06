@@ -1,6 +1,6 @@
 # RetroPie
 
-[RetroPie](https://retropie.org.uk/) is an installer for [ES-DE](es-de.md) & [RetroArch](retroarch.md) on single-board computers (SBCs) such as the [Raspberry Pi](https://www.raspberrypi.com/).
+[RetroPie](https://retropie.org.uk/) is an installer for [ES-DE](esde.md) & [RetroArch](retroarch.md) on single-board computers (SBCs) such as the [Raspberry Pi](https://www.raspberrypi.com/).
 
 ## BIOS
 
