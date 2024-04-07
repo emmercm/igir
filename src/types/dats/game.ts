@@ -278,7 +278,7 @@ export default class Game implements GameProps {
    * Is this game a "cracked" release (has copy protection removed)?
    */
   isCracked(): boolean {
-    return this.name.match(/\[cr( [^\]]+)?\]/) !== null;
+    return this.name.match(/\[cr([0-9]+| [^\]]+)?\]/) !== null;
   }
 
   /**
