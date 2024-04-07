@@ -65,29 +65,27 @@ This will create all of the local directories necessary. On your host machine (n
 
 === ":simple-windowsxp: Windows"
 
-```batch
-igir copy zip test clean ^
-  --dat "No-Intro*.zip" ^
-  --input "ROMs\" ^
-  --output "romm\roms\{romm}"
-```
+    ```batch
+    igir copy zip test clean ^
+      --dat "No-Intro*.zip" ^
+      --input "ROMs\" ^
+      --output "romm\roms\{romm}"
+    ```
 
 === ":simple-apple: macOS"
 
-
-```shell
-igir copy zip test clean \
-  --dat "No-Intro*.zip" \
-  --input "ROMs/" \
-  --output "romm/roms/{romm}"
-```
+    ```shell
+    igir copy zip test clean \
+      --dat "No-Intro*.zip" \
+      --input "ROMs/" \
+      --output "romm/roms/{romm}"
+    ```
 
 === ":simple-linux: Linux"
 
-
-```shell
-igir copy zip test clean \
-  --dat "No-Intro*.zip" \
-  --input "ROMs/" \
-  --output "romm/roms/{romm}"
-```
+    ```shell
+    igir copy zip test clean \
+      --dat "No-Intro*.zip" \
+      --input "ROMs/" \
+      --output "romm/roms/{romm}"
+    ```
