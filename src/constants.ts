@@ -98,18 +98,18 @@ export default class Constants {
   /**
    * A reasonable max number of files to write at once.
    */
-  static readonly FILE_READER_DEFAULT_THREADS = 10;
+  static readonly FILE_READER_DEFAULT_THREADS = 8;
 
   /**
    * Max number of archive entries to process (possibly extract & MD5/SHA1/SHA256 checksum) at once.
    */
-  static readonly ARCHIVE_ENTRY_SCANNER_THREADS_PER_ARCHIVE = 5;
+  static readonly ARCHIVE_ENTRY_SCANNER_THREADS_PER_ARCHIVE = this.FILE_READER_DEFAULT_THREADS / 2;
 
   /**
    * A reasonable max number of ROM release candidates to write at once. This will be the limiting
    * factor for consoles with many small ROMs.
    */
-  static readonly ROM_WRITER_DEFAULT_THREADS = 10;
+  static readonly ROM_WRITER_DEFAULT_THREADS = this.FILE_READER_DEFAULT_THREADS / 2;
 
   /**
    * Max number of files to recycle/delete at once.
