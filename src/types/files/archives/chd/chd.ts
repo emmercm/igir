@@ -10,7 +10,6 @@ import { Memoize } from 'typescript-memoize';
 import Constants from '../../../../constants.js';
 import FsPoly from '../../../../polyfill/fsPoly.js';
 import File from '../../file.js';
-import FileCache from '../../fileCache.js';
 import { ChecksumBitmask } from '../../fileChecksums.js';
 import Archive from '../archive.js';
 import ArchiveEntry from '../archiveEntry.js';
@@ -33,8 +32,7 @@ export default class Chd extends Archive {
     return new Chd(filePath);
   }
 
-  @FileCache.CacheArchiveEntries()
-  async getArchiveEntries(checksumBitmask: number): Promise<ArchiveEntry<Chd>[]> {
+  async getArchiveEntries(checksumBitmask: number): Promise<ArchiveEntry<this>[]> {
     const info = await this.getInfo();
     if (info.type === CHDType.CD_ROM) {
       return ChdBinCueParser.getArchiveEntriesBinCue(this, checksumBitmask);
@@ -48,7 +46,7 @@ export default class Chd extends Archive {
   private async getArchiveEntriesSingleFile(
     info: CHDInfo,
     checksumBitmask: number,
-  ): Promise<ArchiveEntry<Chd>[]> {
+  ): Promise<ArchiveEntry<this>[]> {
     // MAME DAT <disk>s use the data+metadata SHA1 (vs. just the data SHA1)
     const rawEntry = await ArchiveEntry.entryOf({
       archive: this,

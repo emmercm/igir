@@ -9,17 +9,17 @@ import fg from 'fast-glob';
 import Constants from '../../../../constants.js';
 import FsPoly from '../../../../polyfill/fsPoly.js';
 import FileChecksums from '../../fileChecksums.js';
+import Archive from '../archive.js';
 import ArchiveEntry from '../archiveEntry.js';
-import Chd from './chd.js';
 
 /**
  * https://dreamcast.wiki/GDI_format
  */
 export default class ChdGdiParser {
-  public static async getArchiveEntriesGdRom(
-    archive: Chd,
+  public static async getArchiveEntriesGdRom<T extends Archive>(
+    archive: T,
     checksumBitmask: number,
-  ): Promise<ArchiveEntry<Chd>[]> {
+  ): Promise<ArchiveEntry<T>[]> {
     const tempDir = await FsPoly.mkdtemp(path.join(Constants.GLOBAL_TEMP_DIR, 'chd-gdi'));
     const gdiFilePath = path.join(tempDir, 'track.gdi');
     let binRawFilePaths: string[] = [];
@@ -40,12 +40,12 @@ export default class ChdGdiParser {
     }
   }
 
-  private static async parseGdi(
-    archive: Chd,
+  private static async parseGdi<T extends Archive>(
+    archive: T,
     gdiFilePath: string,
     binRawFilePaths: string[],
     checksumBitmask: number,
-  ): Promise<ArchiveEntry<Chd>[]> {
+  ): Promise<ArchiveEntry<T>[]> {
     const gdiExtractedContents = await util.promisify(fs.readFile)(gdiFilePath);
 
     const { name: filePrefix } = path.parse(gdiFilePath);
@@ -68,7 +68,7 @@ export default class ChdGdiParser {
     const binRawFiles = await async.mapLimit(
       binRawFilePaths,
       Constants.ARCHIVE_ENTRY_SCANNER_THREADS_PER_ARCHIVE,
-      async (binRawFilePath, callback: AsyncResultCallback<ArchiveEntry<Chd>, Error>) => {
+      async (binRawFilePath, callback: AsyncResultCallback<ArchiveEntry<T>, Error>) => {
         try {
           const binRawFile = await ArchiveEntry.entryOf({
             archive,

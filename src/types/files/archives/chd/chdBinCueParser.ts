@@ -11,17 +11,17 @@ import Constants from '../../../../constants.js';
 import ArrayPoly from '../../../../polyfill/arrayPoly.js';
 import FsPoly from '../../../../polyfill/fsPoly.js';
 import FileChecksums from '../../fileChecksums.js';
+import Archive from '../archive.js';
 import ArchiveEntry from '../archiveEntry.js';
-import Chd from './chd.js';
 
 /**
  * https://github.com/putnam/binmerge
  */
 export default class ChdBinCueParser {
-  public static async getArchiveEntriesBinCue(
-    archive: Chd,
+  public static async getArchiveEntriesBinCue<T extends Archive>(
+    archive: T,
     checksumBitmask: number,
-  ): Promise<ArchiveEntry<Chd>[]> {
+  ): Promise<ArchiveEntry<T>[]> {
     const tempFile = await FsPoly.mktemp(path.join(
       Constants.GLOBAL_TEMP_DIR,
       path.basename(archive.getFilePath()),
@@ -42,12 +42,12 @@ export default class ChdBinCueParser {
     }
   }
 
-  private static async parseCue(
-    archive: Chd,
+  private static async parseCue<T extends Archive>(
+    archive: T,
     cueFilePath: string,
     binFilePath: string,
     checksumBitmask: number,
-  ): Promise<ArchiveEntry<Chd>[]> {
+  ): Promise<ArchiveEntry<T>[]> {
     const cueData = await util.promisify(fs.readFile)(cueFilePath);
     const cueSheet = parse(cueData.toString(), {
       fatal: true,
@@ -63,12 +63,12 @@ export default class ChdBinCueParser {
       .filter(ArrayPoly.filterNotNullish);
   }
 
-  private static async parseCueFile(
-    archive: Chd,
+  private static async parseCueFile<T extends Archive>(
+    archive: T,
     file: CueFile,
     binFilePath: string,
     checksumBitmask: number,
-  ): Promise<ArchiveEntry<Chd>[]> {
+  ): Promise<ArchiveEntry<T>[]> {
     // Determine the global block size from the first track in the file
     const filePath = path.join(path.dirname(binFilePath), file.name);
     const fileSize = await FsPoly.size(filePath);
