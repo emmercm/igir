@@ -263,8 +263,8 @@ export default class Game implements GameProps {
       // Sometimes [!] can get mixed with [c], consider it not bad
       return false;
     }
-    return this.name.match(/\[c\]/) !== null // "known bad checksum but good dump"
-        || this.name.match(/\[x\]/) !== null; // "thought to have a bad checksum"
+    return this.name.includes('[c]') // "known bad checksum but good dump"
+        || this.name.includes('[x]'); // "thought to have a bad checksum"
   }
 
   /**
@@ -345,7 +345,7 @@ export default class Game implements GameProps {
    * Is this game a pending dump (works, but isn't a proper dump)?
    */
   isPendingDump(): boolean {
-    return this.name.match(/\[!p\]/) !== null;
+    return this.name.includes('[!p]');
   }
 
   /**
@@ -397,7 +397,7 @@ export default class Game implements GameProps {
    * Is this game an explicitly verified dump?
    */
   isVerified(): boolean {
-    return this.name.match(/\[!\]/) !== null;
+    return this.name.includes('[!]');
   }
 
   /**
