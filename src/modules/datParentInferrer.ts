@@ -137,7 +137,7 @@ export default class DATParentInferrer extends Module {
       .replace(/\(M[0-9]+\)/, '') // language
       .replace(/\((CW|CW-R|FW|GW|GW-R|LW|PD|SW|SW-R)\)/i, '') // copyright
       .replace(/\((alpha|beta|preview|pre-release|proto)\)/i, '') // development
-      .replace(/(\[(cr|f|h|m|p|t|tr|o|u|v|b|a|!)( [a-z0-9.+ -]+)?\])+/i, '')
+      .replace(/(\[(cr|f|h|m|p|t|tr|o|u|v|b|a|!)([0-9]+| [^\]]+)?\])+/i, '')
       // ***** Console-specific *****
       // Nintendo - Game Boy
       .replace(/\(SGB Enhanced\)/i, '')
