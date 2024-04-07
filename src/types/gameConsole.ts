@@ -274,6 +274,7 @@ export default class GameConsole {
       emulationstation: 'amigacd32',
       jelos: 'amigacd32',
       mister: 'Amiga',
+      onion: 'AMIGACD',
       retrodeck: 'amigacd32',
       romm: 'amiga-cd32',
     }),
@@ -312,6 +313,7 @@ export default class GameConsole {
     }),
     new GameConsole(/VIC.*20/i, [], {
       emulationstation: 'vic20',
+      onion: 'VIC20',
       retrodeck: 'vic20',
       romm: 'vic-20',
     }),
@@ -447,7 +449,7 @@ export default class GameConsole {
       emulationstation: 'msx',
       mister: 'MSX',
       onion: 'MSX',
-      retrodeck: 'msx',
+      retrodeck: 'msxturbor',
       romm: 'msx',
     }),
     new GameConsole(/Xbox/i, [/* '.iso' */], {
@@ -538,6 +540,7 @@ export default class GameConsole {
     }),
     new GameConsole(/PC-FX/i, [], {
       emulationstation: 'pcfx',
+      onion: 'PCFX',
       retrodeck: 'pcfx',
       romm: 'pc-fx',
     }),
@@ -649,6 +652,7 @@ export default class GameConsole {
       batocera: 'nds',
       emulationstation: 'nds',
       jelos: 'nds',
+      onion: 'NDS',
       retrodeck: 'nds',
       romm: 'nds',
       twmenu: 'nds',
@@ -659,7 +663,7 @@ export default class GameConsole {
       romm: 'nintendo-dsi',
       twmenu: 'dsiware',
     }), // try to map DSiWare
-    new GameConsole(/(\W|^)NES(\W|$)|Nintendo Entertainment System/i, ['.nes', '.nez'], {
+    new GameConsole(/(\W|^)NES(\W|$)|Famicom|Nintendo Entertainment System/i, ['.nes', '.nez'], {
       adam: 'FC',
       batocera: 'nes',
       emulationstation: 'nes',
@@ -705,7 +709,7 @@ export default class GameConsole {
       onion: 'SUFAMI',
       retrodeck: 'sufami',
     }),
-    new GameConsole(/(\W|^)SNES(\W|$)|Super Nintendo Entertainment System/i, ['.sfc', '.smc'], {
+    new GameConsole(/(\W|^)SNES(\W|$)|Super (Nintendo Entertainment System|Famicom)/i, ['.sfc', '.smc'], {
       adam: 'SFC',
       batocera: 'snes',
       emulationstation: 'snes',
@@ -899,6 +903,7 @@ export default class GameConsole {
     new GameConsole(/ZX[ -]?80/i, [], {
       emulationstation: 'zx81',
       mister: 'ZX81',
+      onion: 'ZXEIGHTYONE',
       retrodeck: 'zx81',
       romm: 'sinclair-zx81',
     }),
