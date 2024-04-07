@@ -173,10 +173,10 @@ export default class File implements FileProps {
     return this.fileOf(deserialized);
   }
 
-  toObject(): object {
+  toFileProps(): FileProps {
     return instanceToPlain(this, {
       exposeUnsetFields: false,
-    });
+    }) as FileProps;
   }
 
   // Property getters

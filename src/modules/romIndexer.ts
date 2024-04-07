@@ -84,7 +84,7 @@ export default class ROMIndexer extends Module {
   }
 
   /**
-   * This ordering should match {@link FileFactory#archiveFrom}
+   * This ordering should match {@link FileFactory#entriesFrom}
    */
   private static archiveEntryPriority(file: File): number {
     if (!(file instanceof ArchiveEntry)) {
