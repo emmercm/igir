@@ -85,10 +85,17 @@ export default class Cache<V> {
    * Get the value of a key in the cache if it exists, or compute a value and set it in the cache
    * otherwise.
    */
-  public async getOrCompute(key: string, runnable: (key: string) => (V | Promise<V>)): Promise<V> {
+  public async getOrCompute(
+    key: string,
+    runnable: (key: string) => V | Promise<V>,
+    shouldRecompute?: (value: V) => boolean | Promise<boolean>,
+  ): Promise<V> {
     return this.lockKey(key, async () => {
       if (this.keyValues.has(key)) {
-        return this.keyValues.get(key) as V;
+        const existingValue = this.keyValues.get(key) as V;
+        if (shouldRecompute === undefined || !await shouldRecompute(existingValue)) {
+          return existingValue;
+        }
       }
 
       const val = await runnable(key);

@@ -11,7 +11,6 @@ import Constants from '../../../constants.js';
 import fsPoly from '../../../polyfill/fsPoly.js';
 import StreamPoly from '../../../polyfill/streamPoly.js';
 import File from '../file.js';
-import FileCache from '../fileCache.js';
 import FileChecksums, { ChecksumBitmask, ChecksumProps } from '../fileChecksums.js';
 import Archive from './archive.js';
 import ArchiveEntry from './archiveEntry.js';
@@ -24,8 +23,7 @@ export default class Zip extends Archive {
     return new Zip(filePath);
   }
 
-  @FileCache.CacheArchiveEntries({ skipChecksumBitmask: ChecksumBitmask.CRC32 })
-  async getArchiveEntries(checksumBitmask: number): Promise<ArchiveEntry<Zip>[]> {
+  async getArchiveEntries(checksumBitmask: number): Promise<ArchiveEntry<this>[]> {
     // https://github.com/ZJONSSON/node-unzipper/issues/280
     // UTF-8 entry names are not decoded correctly
     // But this is mitigated by `extractEntryToStream()` and therefore `extractEntryToFile()` both
@@ -35,7 +33,7 @@ export default class Zip extends Archive {
     return async.mapLimit(
       archive.files.filter((entryFile) => entryFile.type === 'File'),
       Constants.ARCHIVE_ENTRY_SCANNER_THREADS_PER_ARCHIVE,
-      async (entryFile, callback: AsyncResultCallback<ArchiveEntry<Zip>, Error>) => {
+      async (entryFile, callback: AsyncResultCallback<ArchiveEntry<this>, Error>) => {
         let checksums: ChecksumProps = {};
         if (checksumBitmask & ~ChecksumBitmask.CRC32) {
           const entryStream = entryFile.stream()

@@ -1,7 +1,7 @@
 # The adRise/update-pr-branch action has force-pushed an empty branch to outside contributions
 #   before (e.g. https://github.com/emmercm/igir/pull/943), causing the PR to merge but no code to
 #   actually end up in the main repository. This action is to automatically disable auto-merge in
-#   case this ever gets enabled again
+#   case this ever gets enabled again.
 
 name: GitHub Auto-Merge Disabler
 
