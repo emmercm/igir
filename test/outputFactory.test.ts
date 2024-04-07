@@ -745,7 +745,7 @@ describe('token replacement', () => {
   ])(
     'should replace {romm} for known extension: %s',
     async (outputRomFilename, expectedPath) => {
-      const options = new Options({ commands: ['copy'], output: 'roms/{retrodeck}' });
+      const options = new Options({ commands: ['copy'], output: 'roms/{romm}' });
       const rom = new ROM({ name: outputRomFilename, size: 0, crc32: '' });
 
       const outputPath = OutputFactory.getPath(
