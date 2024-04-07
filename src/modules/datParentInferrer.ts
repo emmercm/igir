@@ -118,6 +118,7 @@ export default class DATParentInferrer extends Module {
       .replace(/\(Version [0-9.]+[a-z]*\)/i, '')
       // ***** Good Tools *****
       .replace(/\[!\]/, '')
+      .replace(/\[a[0-9]*\]/, '')
       .replace(/\[b[0-9]*\]/, '')
       .replace(/\[bf\]/, '')
       .replace(/\[c\]/, '')
