@@ -1,5 +1,7 @@
 import path from 'node:path';
 
+import { Semaphore } from 'async-mutex';
+
 import ProgressBar, { ProgressBarSymbol } from '../console/progressBar.js';
 import ArrayPoly from '../polyfill/arrayPoly.js';
 import fsPoly from '../polyfill/fsPoly.js';
@@ -28,11 +30,18 @@ import Module from './module.js';
  * This class may be run concurrently with other classes.
  */
 export default class CandidateGenerator extends Module {
+  private static readonly THREAD_SEMAPHORE = new Semaphore(Number.MAX_SAFE_INTEGER);
+
   private readonly options: Options;
 
   constructor(options: Options, progressBar: ProgressBar) {
     super(progressBar, CandidateGenerator.name);
     this.options = options;
+
+    // This will be the same value globally, but we can't know the value at file import time
+    if (options.getReaderThreads() < CandidateGenerator.THREAD_SEMAPHORE.getValue()) {
+      CandidateGenerator.THREAD_SEMAPHORE.setValue(options.getReaderThreads());
+    }
   }
 
   /**
@@ -55,7 +64,9 @@ export default class CandidateGenerator extends Module {
     await this.progressBar.reset(parents.length);
 
     // For each parent, try to generate a parent candidate
-    for (const parent of parents) {
+    await Promise.all(parents.map(async (
+      parent,
+    ) => CandidateGenerator.THREAD_SEMAPHORE.runExclusive(async () => {
       await this.progressBar.incrementProgress();
       const waitingMessage = `${parent.getName()} ...`;
       this.progressBar.addWaitingMessage(waitingMessage);
@@ -90,7 +101,7 @@ export default class CandidateGenerator extends Module {
 
       this.progressBar.removeWaitingMessage(waitingMessage);
       await this.progressBar.incrementDone();
-    }
+    })));
 
     const size = [...output.values()]
       .flat()
@@ -173,15 +184,20 @@ export default class CandidateGenerator extends Module {
           && !this.options.shouldZipFile(rom.getName())
           && !this.options.shouldExtract()
         ) {
-          if (this.options.shouldTest() || this.options.getOverwriteInvalid()) {
-            // If we're testing, then we need to calculate the archive's checksums
-            inputFile = await FileFactory.fileFrom(
-              inputFile.getFilePath(),
-              inputFile.getChecksumBitmask(),
-            );
-          } else {
-            // Otherwise, we can skip calculating checksums for efficiency
-            inputFile = await FileFactory.fileFrom(inputFile.getFilePath(), ChecksumBitmask.NONE);
+          try {
+            if (this.options.shouldTest() || this.options.getOverwriteInvalid()) {
+              // If we're testing, then we need to calculate the archive's checksums
+              inputFile = await FileFactory.fileFrom(
+                inputFile.getFilePath(),
+                inputFile.getChecksumBitmask(),
+              );
+            } else {
+              // Otherwise, we can skip calculating checksums for efficiency
+              inputFile = await FileFactory.fileFrom(inputFile.getFilePath(), ChecksumBitmask.NONE);
+            }
+          } catch (error) {
+            this.progressBar.logWarn(`${dat.getNameShort()}: ${game.getName()}: ${error}`);
+            return [rom, undefined];
           }
         }
 
