@@ -42,9 +42,22 @@ process.once('beforeExit', async () => {
   });
 });
 
-const GLOBAL_CACHE_DIR = path.resolve(ROOT_DIR).startsWith(os.tmpdir())
-  ? os.homedir()
-  : ROOT_DIR;
+const GLOBAL_CACHE_FILE = [
+  path.resolve(ROOT_DIR),
+  os.homedir(),
+  process.cwd(),
+]
+  .filter((dir) => dir && !dir.startsWith(os.tmpdir()))
+  .map((dir) => path.join(dir, `${COMMAND_NAME}.cache`))
+  .sort((a, b) => (fs.existsSync(a) ? 1 : 0) - (fs.existsSync(b) ? 1 : 0))
+  .find((file) => {
+    try {
+      fsPoly.touchSync(file);
+      return true;
+    } catch {
+      return false;
+    }
+  });
 
 /**
  * A static class of constants that are determined at startup, to be used widely.
@@ -62,7 +75,7 @@ export default class Constants {
 
   static readonly GLOBAL_TEMP_DIR = GLOBAL_TEMP_DIR;
 
-  static readonly GLOBAL_CACHE_FILE = path.join(GLOBAL_CACHE_DIR, `${COMMAND_NAME}.cache`);
+  static readonly GLOBAL_CACHE_FILE = GLOBAL_CACHE_FILE;
 
   /**
    * A reasonable max of filesystem threads for operations such as:
