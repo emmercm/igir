@@ -13,6 +13,7 @@ enum GameType {
   BAD = 'Bad',
   BETA = 'Beta',
   BIOS = 'BIOS',
+  CRACKED = 'Cracked',
   DEBUG = 'Debug',
   DEMO = 'Demo',
   DEVICE = 'Device',
@@ -274,6 +275,13 @@ export default class Game implements GameProps {
   }
 
   /**
+   * Is this game a "cracked" release (has copy protection removed)?
+   */
+  isCracked(): boolean {
+    return this.name.match(/\[cr( [^\]]+)?\]/) !== null;
+  }
+
+  /**
    * Does this game contain debug symbols?
    */
   isDebug(): boolean {
@@ -423,6 +431,7 @@ export default class Game implements GameProps {
         && !this.isAlpha()
         && !this.isBad()
         && !this.isBeta()
+        && !this.isCracked()
         && !this.isDebug()
         && !this.isDemo()
         && !this.isFixed()
@@ -456,6 +465,8 @@ export default class Game implements GameProps {
       return GameType.BAD;
     } if (this.isBeta()) {
       return GameType.BETA;
+    } if (this.isCracked()) {
+      return GameType.CRACKED;
     } if (this.isDebug()) {
       return GameType.DEBUG;
     } if (this.isDemo()) {
