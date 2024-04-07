@@ -389,6 +389,22 @@ export default class FsPoly {
     await util.promisify(fs.close)(file);
   }
 
+  static touchSync(filePath: string): void {
+    const dirname = path.dirname(filePath);
+    if (!fs.existsSync(dirname)) {
+      fs.mkdirSync(dirname, { recursive: true });
+    }
+
+    // Create the file if it doesn't already exist
+    const file = fs.openSync(filePath, 'a');
+
+    // Ensure the file's `atime` and `mtime` are updated
+    const date = new Date();
+    fs.futimesSync(file, date, date);
+
+    fs.closeSync(file);
+  }
+
   static async walk(pathLike: PathLike, callback?: FsWalkCallback): Promise<string[]> {
     let output: string[] = [];
 

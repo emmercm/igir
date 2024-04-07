@@ -161,6 +161,14 @@ Enables all the following `--no-*` options, as well as filtering out games that 
   Sword (Alpha) (PD) [C]
   ```
 
+- **Cracked**: games that contain `[cr]` or `[cr *]` in their name, e.g.:
+
+  ```text
+  Jet Set Willy (1984)(Software Projects)[cr]
+  Buck Rogers - Countdown to Doomsday v1.0 (1991)(SSI)(Disk 1 of 3)[cr2][FD installed]
+  Dungeon Master (1987)(FTL)[cr 42-Crew]
+  ```
+
 - **Fixed**: games that contain `[f]` or `[f#]` in their name, e.g.:
 
   ```text

@@ -13,6 +13,7 @@ enum GameType {
   BAD = 'Bad',
   BETA = 'Beta',
   BIOS = 'BIOS',
+  CRACKED = 'Cracked',
   DEBUG = 'Debug',
   DEMO = 'Demo',
   DEVICE = 'Device',
@@ -262,8 +263,8 @@ export default class Game implements GameProps {
       // Sometimes [!] can get mixed with [c], consider it not bad
       return false;
     }
-    return this.name.match(/\[c\]/) !== null // "known bad checksum but good dump"
-        || this.name.match(/\[x\]/) !== null; // "thought to have a bad checksum"
+    return this.name.includes('[c]') // "known bad checksum but good dump"
+        || this.name.includes('[x]'); // "thought to have a bad checksum"
   }
 
   /**
@@ -271,6 +272,13 @@ export default class Game implements GameProps {
    */
   isBeta(): boolean {
     return this.name.match(/\(Beta[a-z0-9. ]*\)/i) !== null;
+  }
+
+  /**
+   * Is this game a "cracked" release (has copy protection removed)?
+   */
+  isCracked(): boolean {
+    return this.name.match(/\[cr([0-9]+| [^\]]+)?\]/) !== null;
   }
 
   /**
@@ -337,7 +345,7 @@ export default class Game implements GameProps {
    * Is this game a pending dump (works, but isn't a proper dump)?
    */
   isPendingDump(): boolean {
-    return this.name.match(/\[!p\]/) !== null;
+    return this.name.includes('[!p]');
   }
 
   /**
@@ -389,7 +397,7 @@ export default class Game implements GameProps {
    * Is this game an explicitly verified dump?
    */
   isVerified(): boolean {
-    return this.name.match(/\[!\]/) !== null;
+    return this.name.includes('[!]');
   }
 
   /**
@@ -423,6 +431,7 @@ export default class Game implements GameProps {
         && !this.isAlpha()
         && !this.isBad()
         && !this.isBeta()
+        && !this.isCracked()
         && !this.isDebug()
         && !this.isDemo()
         && !this.isFixed()
@@ -456,6 +465,8 @@ export default class Game implements GameProps {
       return GameType.BAD;
     } if (this.isBeta()) {
       return GameType.BETA;
+    } if (this.isCracked()) {
+      return GameType.CRACKED;
     } if (this.isDebug()) {
       return GameType.DEBUG;
     } if (this.isDemo()) {
