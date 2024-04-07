@@ -138,10 +138,10 @@ export default class ArchiveEntry<A extends Archive> extends File implements Arc
     return this.entryOf({ ...deserialized, archive });
   }
 
-  toObject(): object {
+  toEntryProps(): ArchiveEntryProps<A> {
     return instanceToPlain(this, {
       exposeUnsetFields: false,
-    });
+    }) as ArchiveEntryProps<A>;
   }
 
   // Property getters

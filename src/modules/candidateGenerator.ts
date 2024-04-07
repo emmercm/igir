@@ -12,6 +12,8 @@ import Archive from '../types/files/archives/archive.js';
 import ArchiveEntry from '../types/files/archives/archiveEntry.js';
 import Zip from '../types/files/archives/zip.js';
 import File from '../types/files/file.js';
+import { ChecksumBitmask } from '../types/files/fileChecksums.js';
+import FileFactory from '../types/files/fileFactory.js';
 import IndexedFiles from '../types/indexedFiles.js';
 import Options from '../types/options.js';
 import OutputFactory from '../types/outputFactory.js';
@@ -173,10 +175,13 @@ export default class CandidateGenerator extends Module {
         ) {
           if (this.options.shouldTest() || this.options.getOverwriteInvalid()) {
             // If we're testing, then we need to calculate the archive's checksums
-            inputFile = await inputFile.getArchive().asRawFile(inputFile.getChecksumBitmask());
+            inputFile = await FileFactory.fileFrom(
+              inputFile.getFilePath(),
+              inputFile.getChecksumBitmask(),
+            );
           } else {
             // Otherwise, we can skip calculating checksums for efficiency
-            inputFile = await inputFile.getArchive().asRawFileWithoutChecksums();
+            inputFile = await FileFactory.fileFrom(inputFile.getFilePath(), ChecksumBitmask.NONE);
           }
         }
 
