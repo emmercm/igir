@@ -3,7 +3,7 @@
 </div>
 <br>
 
-<p align="center"><b>Pronounced "eager," Igir is a zero-setup ROM collection manager that sorts, filters, archives, patches, and reports on collections of any size on any OS.</b></p>
+<p align="center"><b>Pronounced "eager," Igir is a zero-setup ROM collection manager that sorts, filters, extracts or archives, patches, and reports on collections of any size on any OS.</b></p>
 
 <p align="center">
   <a href="https://igir.io/"><img alt="CLI: Windows,macOS,Linux" src="https://img.shields.io/badge/CLI-Windows%2C%20macOS%2C%20Linux-lightgrey?logo=windows-terminal"></a>
