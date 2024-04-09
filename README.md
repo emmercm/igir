@@ -62,7 +62,7 @@ $ igir --help
   | $$  | $$|    \  | $$  | $$    $$   ROM collection manager
   | $$  | $$|    \  | $$  | $$    $$   https://igir.io/
   | $$  | $$ \$$$$  | $$  | $$$$$$$\
- _| $$_ | $$__| $$ _| $$_ | $$  | $$   v2.6.0
+ _| $$_ | $$__| $$ _| $$_ | $$  | $$   v2.6.2
 |   $$ \ \$$    $$|   $$ \| $$  | $$
  \$$$$$$  \$$$$$$  \$$$$$$ \$$   \$$
 
@@ -88,7 +88,7 @@ ROM input options:
   -I, --input-exclude       Path(s) to ROM files or archives to exclude from processing (support
                             s globbing)                                                  [array]
       --input-min-checksum  The minimum checksum level to calculate and use for matching
-                                            [choices: "CRC32", "MD5", "SHA1"] [default: "CRC32"]
+                                  [choices: "CRC32", "MD5", "SHA1", "SHA256"] [default: "CRC32"]
 
 DAT input options:
   -d, --dat                            Path(s) to DAT files or archives (supports globbing)
@@ -251,6 +251,7 @@ Advanced usage:
     {pocket}    The ROM's core-specific /Assets/* directory for the Analogue Pocket (e.g. "gb")
     {retrodeck} The ROM's emulator-specific /roms/* directory for the 'RetroDECK' image (e.g. "g
     b")
+    {romm}      The ROM's manager-specific /roms/* directory for 'RomM' (e.g. "gb")
     {twmenu}    The ROM's emulator-specific /roms/* directory for TWiLightMenu++ on the DSi/3DS
     (e.g. "gb")
 

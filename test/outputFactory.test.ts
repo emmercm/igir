@@ -666,16 +666,23 @@ describe('token replacement', () => {
 
   test.each([
     // No unique extensions defined
-    ['Bit Corporation - Gamate', path.join('Assets', 'gamate', 'common', 'Dummy.rom')],
-    ['Emerson - Arcadia', path.join('Assets', 'arcadia', 'common', 'Dummy.rom')],
-    ['Entex - Adventure Vision', path.join('Assets', 'avision', 'common', 'Dummy.rom')],
+    ['Bit Corporation - Gamate', path.join('gamate', 'Dummy.rom')],
+    ['Emerson - Arcadia', path.join('arcadia', 'Dummy.rom')],
+    ['Entex - Adventure Vision', path.join('avision', 'Dummy.rom')],
     // Unique extensions defined
-    ['Atari - 2600', path.join('Assets', '2600', 'common', 'Dummy.rom')],
-    ['Nintendo - Game Boy', path.join('Assets', 'gb', 'common', 'Dummy.rom')],
-    ['Nintendo - Game Boy Advance', path.join('Assets', 'gba', 'common', 'Dummy.rom')],
-    ['Nintendo - Game Boy Color', path.join('Assets', 'gbc', 'common', 'Dummy.rom')],
+    ['Atari - 2600', path.join('atari2600', 'Dummy.rom')],
+    ['Nintendo - Game Boy', path.join('gb', 'Dummy.rom')],
+    ['Nintendo - Game Boy Advance', path.join('gba', 'Dummy.rom')],
+    ['Nintendo - Game Boy Color', path.join('gbc', 'Dummy.rom')],
+    // Testing priority
+    ['Nintendo - Family Computer Disk System (FDS) (Parent-Clone)', path.join('fds', 'Dummy.rom')],
+    ['Nintendo - Famicom [T-En] Collection', path.join('nes', 'Dummy.rom')],
+    ['Nintendo - Nintendo Entertainment System (Headered) (Parent-Clone)', path.join('nes', 'Dummy.rom')],
+    ['Nintendo - Nintendo Entertainment System (Headerless) (Parent-Clone)', path.join('nes', 'Dummy.rom')],
+    ['Nintendo - Super Famicom [T-En] Collection', path.join('snes', 'Dummy.rom')],
+    ['Nintendo - Super Nintendo Entertainment System (Parent-Clone)', path.join('snes', 'Dummy.rom')],
   ])('should replace {pocket} for known DAT name: %s', async (datName, expectedPath) => {
-    const options = new Options({ commands: ['copy'], output: 'Assets/{pocket}/common' });
+    const options = new Options({ commands: ['copy'], output: '{es}' });
 
     const outputPath = OutputFactory.getPath(
       options,
@@ -715,6 +722,48 @@ describe('token replacement', () => {
     'should throw on {retrodeck} for unknown extension: %s',
     async (outputRomFilename) => {
       const options = new Options({ commands: ['copy'], output: 'roms/{retrodeck}' });
+
+      const rom = new ROM({ name: outputRomFilename, size: 0, crc32: '' });
+
+      await expect(async () => OutputFactory.getPath(
+        options,
+        dummyDat,
+        dummyGame,
+        dummyRelease,
+        rom,
+        await rom.toFile(),
+      )).rejects.toThrow(/failed to replace/);
+    },
+  );
+
+  // Output Token {romm}
+  test.each([
+    ['game.d88', path.join('roms', 'pc-8800-series', 'game.d88')],
+    ['game.gb', path.join('roms', 'gb', 'game.gb')],
+    ['game.nes', path.join('roms', 'nes', 'game.nes')],
+    ['game.pqa', path.join('roms', 'palm-os', 'game.pqa')],
+  ])(
+    'should replace {romm} for known extension: %s',
+    async (outputRomFilename, expectedPath) => {
+      const options = new Options({ commands: ['copy'], output: 'roms/{romm}' });
+      const rom = new ROM({ name: outputRomFilename, size: 0, crc32: '' });
+
+      const outputPath = OutputFactory.getPath(
+        options,
+        dummyDat,
+        dummyGame,
+        dummyRelease,
+        rom,
+        await rom.toFile(),
+      );
+      expect(outputPath.format()).toEqual(expectedPath);
+    },
+  );
+
+  test.each(['game.bin', 'game.rom'])(
+    'should throw on {romm} for unknown extension: %s',
+    async (outputRomFilename) => {
+      const options = new Options({ commands: ['copy'], output: 'roms/{romm}' });
 
       const rom = new ROM({ name: outputRomFilename, size: 0, crc32: '' });
 

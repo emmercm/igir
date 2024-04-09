@@ -10,12 +10,14 @@ export enum ChecksumBitmask {
   CRC32 = 0x0_01,
   MD5 = 0x0_10,
   SHA1 = 0x1_00,
+  SHA256 = 0x10_00,
 }
 
 export interface ChecksumProps {
   crc32?: string,
   md5?: string,
   sha1?: string,
+  sha256?: string,
 }
 
 export default class FileChecksums {
@@ -58,6 +60,7 @@ export default class FileChecksums {
       let crc: number | undefined;
       const md5 = checksumBitmask & ChecksumBitmask.MD5 ? crypto.createHash('md5') : undefined;
       const sha1 = checksumBitmask & ChecksumBitmask.SHA1 ? crypto.createHash('sha1') : undefined;
+      const sha256 = checksumBitmask & ChecksumBitmask.SHA256 ? crypto.createHash('sha256') : undefined;
 
       stream.on('data', (chunk) => {
         if (checksumBitmask & ChecksumBitmask.CRC32) {
@@ -69,6 +72,9 @@ export default class FileChecksums {
         if (sha1) {
           sha1.update(chunk);
         }
+        if (sha256) {
+          sha256.update(chunk);
+        }
       });
       stream.on('end', () => {
         resolve({
@@ -77,6 +83,7 @@ export default class FileChecksums {
             ?? (checksumBitmask & ChecksumBitmask.CRC32 ? '00000000' : undefined),
           md5: md5?.digest('hex'),
           sha1: sha1?.digest('hex'),
+          sha256: sha256?.digest('hex'),
         });
       });
 
