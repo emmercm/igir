@@ -1,6 +1,6 @@
 {
   "name": "igir",
-  "version": "2.6.1",
+  "version": "2.6.2",
   "description": "🕹 A video game ROM collection manager to help filter, sort, patch, archive, and report on collections on any OS.",
   "keywords": [
     "1g1r",
@@ -70,16 +70,16 @@
   "dependencies": {
     "@fast-csv/format": "5.0.0",
     "@fast-csv/parse": "5.0.0",
-    "@node-rs/crc32": "1.9.2",
+    "@node-rs/crc32": "1.10.0",
     "7zip-min": "1.4.4",
-    "archiver": "6.0.1",
+    "archiver": "7.0.1",
     "async": "3.2.5",
-    "async-mutex": "0.4.1",
+    "async-mutex": "0.5.0",
     "chalk": "5.3.0",
     "class-transformer": "0.5.1",
     "cli-progress": "3.12.0",
     "fast-glob": "3.3.2",
-    "fast-xml-parser": "4.3.5",
+    "fast-xml-parser": "4.3.6",
     "figlet": "1.7.0",
     "graceful-fs": "4.2.11",
     "is-admin": "4.0.0",
@@ -92,8 +92,8 @@
     "semver": "7.6.0",
     "simple-statistics": "7.8.3",
     "strip-ansi": "7.1.0",
-    "tar": "6.2.0",
-    "term-size": "3.0.2",
+    "tar": "6.2.1",
+    "term-size": "4.0.0",
     "trash": "8.1.1",
     "typescript-memoize": "1.1.1",
     "unzipper": "0.10.14",
@@ -110,22 +110,22 @@
     "@types/figlet": "1.5.8",
     "@types/jest": "29.5.12",
     "@types/micromatch": "4.0.6",
-    "@types/node": "20.11.20",
+    "@types/node": "20.11.30",
     "@types/semver": "7.5.8",
     "@types/tar": "6.1.11",
     "@types/unzipper": "0.10.9",
     "@types/which": "3.0.3",
     "@types/xml2js": "0.4.14",
     "@types/yargs": "17.0.32",
-    "@typescript-eslint/eslint-plugin": "6.21.0",
-    "@typescript-eslint/parser": "6.21.0",
+    "@typescript-eslint/eslint-plugin": "7.5.0",
+    "@typescript-eslint/parser": "7.5.0",
     "auto-changelog": "2.4.0",
     "caxa": "3.0.1",
     "eslint": "8.57.0",
-    "eslint-config-airbnb-typescript": "17.1.0",
+    "eslint-config-airbnb-typescript": "18.0.0",
     "eslint-plugin-import": "2.29.1",
     "eslint-plugin-jest": "27.9.0",
-    "eslint-plugin-jsdoc": "48.2.0",
+    "eslint-plugin-jsdoc": "48.2.1",
     "eslint-plugin-simple-import-sort": "12.0.0",
     "eslint-plugin-unicorn": "51.0.1",
     "husky": "9.0.11",
@@ -133,7 +133,7 @@
     "jest-extended": "4.0.2",
     "ts-jest": "29.1.2",
     "ts-node": "10.9.2",
-    "typescript": "5.3.3",
+    "typescript": "5.4.3",
     "which": "4.0.0"
   },
   "//engines": [
@@ -142,12 +142,13 @@
     "Requires ^14.18.0 || >=16.0.0 for `node:` prefixed built-in modules that many dependencies use.",
     "Requires >=15.0.0 for npm v7 for package-lock.json v3 because Renovate stopped respecting the existing version in August 2023.",
     "Requires ^14.18.0 || >=16.3.0 for `os.devNull`.",
-    "Requires >=16.6.0 for `Array.prototype.at()`."
+    "Requires >=16.6.0 for `Array.prototype.at()`.",
+    "Requires >=16.7.0 for `fs.cp()`."
   ],
   "engines": {
-    "node": ">=16.6.0"
+    "node": ">=16.7.0"
   },
   "volta": {
-    "node": "20.11.1"
+    "node": "20.12.2"
   }
 }

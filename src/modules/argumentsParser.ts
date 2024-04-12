@@ -767,6 +767,14 @@ export default class ArgumentsParser {
           middlewareArgv.datThreads = 1;
         }
       }, true)
+      .option('write-retry', {
+        group: groupHelpDebug,
+        description: 'Number of additional retries to attempt when writing a file has failed (0 disables retries)',
+        type: 'number',
+        coerce: (val: number) => Math.max(val, 0),
+        requiresArg: true,
+        default: Constants.ROM_WRITER_ADDITIONAL_RETRIES,
+      })
       .option('disable-cache', {
         group: groupHelpDebug,
         description: 'Disable the file and archive entry checksum cache',
@@ -839,6 +847,7 @@ Advanced usage:
     {onion}     The ROM's emulator-specific /Roms/* directory for OnionOS/GarlicOS (e.g. "GB")
     {pocket}    The ROM's core-specific /Assets/* directory for the Analogue Pocket (e.g. "gb")
     {retrodeck} The ROM's emulator-specific /roms/* directory for the 'RetroDECK' image (e.g. "gb")
+    {romm}      The ROM's manager-specific /roms/* directory for 'RomM' (e.g. "gb")
     {twmenu}    The ROM's emulator-specific /roms/* directory for TWiLightMenu++ on the DSi/3DS (e.g. "gb")
 
 Example use cases:

@@ -5,8 +5,6 @@ import { Mutex } from 'async-mutex';
 import unrar from 'node-unrar-js';
 
 import Constants from '../../../constants.js';
-import FileCache from '../fileCache.js';
-import { ChecksumBitmask } from '../fileChecksums.js';
 import Archive from './archive.js';
 import ArchiveEntry from './archiveEntry.js';
 
@@ -20,15 +18,14 @@ export default class Rar extends Archive {
     return new Rar(filePath);
   }
 
-  @FileCache.CacheArchiveEntries({ skipChecksumBitmask: ChecksumBitmask.CRC32 })
-  async getArchiveEntries(checksumBitmask: number): Promise<ArchiveEntry<Rar>[]> {
+  async getArchiveEntries(checksumBitmask: number): Promise<ArchiveEntry<this>[]> {
     const rar = await unrar.createExtractorFromFile({
       filepath: this.getFilePath(),
     });
     return async.mapLimit(
       [...rar.getFileList().fileHeaders].filter((fileHeader) => !fileHeader.flags.directory),
       Constants.ARCHIVE_ENTRY_SCANNER_THREADS_PER_ARCHIVE,
-      async (fileHeader, callback: AsyncResultCallback<ArchiveEntry<Rar>, Error>) => {
+      async (fileHeader, callback: AsyncResultCallback<ArchiveEntry<this>, Error>) => {
         const archiveEntry = await ArchiveEntry.entryOf({
           archive: this,
           entryPath: fileHeader.name,

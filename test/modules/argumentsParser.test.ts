@@ -1,7 +1,6 @@
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
-import util from 'node:util';
 
 import Logger from '../../src/console/logger.js';
 import LogLevel from '../../src/console/logLevel.js';
@@ -184,8 +183,8 @@ describe('options', () => {
     expect(options.getPreferParent()).toEqual(false);
 
     expect(options.getDatThreads()).toEqual(3);
-    expect(options.getReaderThreads()).toEqual(10);
-    expect(options.getWriterThreads()).toEqual(10);
+    expect(options.getReaderThreads()).toEqual(8);
+    expect(options.getWriterThreads()).toEqual(4);
     expect(options.getDisableCache()).toEqual(false);
     expect(options.getLogLevel()).toEqual(LogLevel.WARN);
     expect(options.getHelp()).toEqual(false);
@@ -271,7 +270,7 @@ describe('options', () => {
 
     const tempFile = await FsPoly.mktemp(path.join(Constants.GLOBAL_TEMP_DIR, 'temp'));
     try {
-      await util.promisify(fs.writeFile)(tempFile, '\n/[a-z]/i\r\n[0-9]\n\n');
+      await fs.promises.writeFile(tempFile, '\n/[a-z]/i\r\n[0-9]\n\n');
       expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--dat-name-regex', tempFile]).getDatNameRegex()?.some((regex) => regex.test(''))).toEqual(false);
       expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--dat-name-regex', tempFile]).getDatNameRegex()?.some((regex) => regex.test('lower'))).toEqual(true);
       expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--dat-name-regex', tempFile]).getDatNameRegex()?.some((regex) => regex.test('UPPER'))).toEqual(true);
@@ -296,7 +295,7 @@ describe('options', () => {
 
     const tempFile = await FsPoly.mktemp(path.join(Constants.GLOBAL_TEMP_DIR, 'temp'));
     try {
-      await util.promisify(fs.writeFile)(tempFile, '\n/[a-z]/i\r\n[0-9]\n\n');
+      await fs.promises.writeFile(tempFile, '\n/[a-z]/i\r\n[0-9]\n\n');
       expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--dat-name-regex-exclude', tempFile]).getDatNameRegexExclude()?.some((regex) => regex.test(''))).toEqual(false);
       expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--dat-name-regex-exclude', tempFile]).getDatNameRegexExclude()?.some((regex) => regex.test('lower'))).toEqual(true);
       expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--dat-name-regex-exclude', tempFile]).getDatNameRegexExclude()?.some((regex) => regex.test('UPPER'))).toEqual(true);
@@ -317,7 +316,7 @@ describe('options', () => {
 
     const tempFile = await FsPoly.mktemp(path.join(Constants.GLOBAL_TEMP_DIR, 'temp'));
     try {
-      await util.promisify(fs.writeFile)(tempFile, '\n/[a-z]/i\r\n[0-9]\n\n');
+      await fs.promises.writeFile(tempFile, '\n/[a-z]/i\r\n[0-9]\n\n');
       expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--dat-description-regex', tempFile]).getDatDescriptionRegex()?.some((regex) => regex.test(''))).toEqual(false);
       expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--dat-description-regex', tempFile]).getDatDescriptionRegex()?.some((regex) => regex.test('lower'))).toEqual(true);
       expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--dat-description-regex', tempFile]).getDatDescriptionRegex()?.some((regex) => regex.test('UPPER'))).toEqual(true);
@@ -338,7 +337,7 @@ describe('options', () => {
 
     const tempFile = await FsPoly.mktemp(path.join(Constants.GLOBAL_TEMP_DIR, 'temp'));
     try {
-      await util.promisify(fs.writeFile)(tempFile, '\n/[a-z]/i\r\n[0-9]\n\n');
+      await fs.promises.writeFile(tempFile, '\n/[a-z]/i\r\n[0-9]\n\n');
       expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--dat-description-regex-exclude', tempFile]).getDatDescriptionRegexExclude()?.some((regex) => regex.test(''))).toEqual(false);
       expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--dat-description-regex-exclude', tempFile]).getDatDescriptionRegexExclude()?.some((regex) => regex.test('lower'))).toEqual(true);
       expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--dat-description-regex-exclude', tempFile]).getDatDescriptionRegexExclude()?.some((regex) => regex.test('UPPER'))).toEqual(true);
@@ -623,7 +622,7 @@ describe('options', () => {
 
     const tempFile = await FsPoly.mktemp(path.join(Constants.GLOBAL_TEMP_DIR, 'temp'));
     try {
-      await util.promisify(fs.writeFile)(tempFile, '\n/[a-z]/i\r\n[0-9]\n\n');
+      await fs.promises.writeFile(tempFile, '\n/[a-z]/i\r\n[0-9]\n\n');
       expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--single', '--prefer-game-regex', tempFile]).getPreferGameRegex()?.some((regex) => regex.test(''))).toEqual(false);
       expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--single', '--prefer-game-regex', tempFile]).getPreferGameRegex()?.some((regex) => regex.test('lower'))).toEqual(true);
       expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--single', '--prefer-game-regex', tempFile]).getPreferGameRegex()?.some((regex) => regex.test('UPPER'))).toEqual(true);
@@ -643,7 +642,7 @@ describe('options', () => {
 
     const tempFile = await FsPoly.mktemp(path.join(Constants.GLOBAL_TEMP_DIR, 'temp'));
     try {
-      await util.promisify(fs.writeFile)(tempFile, '\n/[a-z]/i\r\n[0-9]\n\n');
+      await fs.promises.writeFile(tempFile, '\n/[a-z]/i\r\n[0-9]\n\n');
       expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--single', '--prefer-rom-regex', tempFile]).getPreferRomRegex()?.some((regex) => regex.test(''))).toEqual(false);
       expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--single', '--prefer-rom-regex', tempFile]).getPreferRomRegex()?.some((regex) => regex.test('lower'))).toEqual(true);
       expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--single', '--prefer-rom-regex', tempFile]).getPreferRomRegex()?.some((regex) => regex.test('UPPER'))).toEqual(true);
@@ -787,7 +786,7 @@ describe('options', () => {
 
     const tempFile = await FsPoly.mktemp(path.join(Constants.GLOBAL_TEMP_DIR, 'temp'));
     try {
-      await util.promisify(fs.writeFile)(tempFile, '\n/[a-z]/i\r\n[0-9]\n\n');
+      await fs.promises.writeFile(tempFile, '\n/[a-z]/i\r\n[0-9]\n\n');
       expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--filter-regex', tempFile]).getFilterRegex()?.some((regex) => regex.test(''))).toEqual(false);
       expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--filter-regex', tempFile]).getFilterRegex()?.some((regex) => regex.test('lower'))).toEqual(true);
       expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--filter-regex', tempFile]).getFilterRegex()?.some((regex) => regex.test('UPPER'))).toEqual(true);
@@ -808,7 +807,7 @@ describe('options', () => {
 
     const tempFile = await FsPoly.mktemp(path.join(Constants.GLOBAL_TEMP_DIR, 'temp'));
     try {
-      await util.promisify(fs.writeFile)(tempFile, '\n/[a-z]/i\r\n[0-9]\n\n');
+      await fs.promises.writeFile(tempFile, '\n/[a-z]/i\r\n[0-9]\n\n');
       expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--filter-regex-exclude', tempFile]).getFilterRegexExclude()?.some((regex) => regex.test(''))).toEqual(false);
       expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--filter-regex-exclude', tempFile]).getFilterRegexExclude()?.some((regex) => regex.test('lower'))).toEqual(true);
       expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--filter-regex-exclude', tempFile]).getFilterRegexExclude()?.some((regex) => regex.test('UPPER'))).toEqual(true);
@@ -1137,7 +1136,7 @@ describe('options', () => {
   });
 
   it('should parse "reader-threads"', () => {
-    expect(argumentsParser.parse(dummyCommandAndRequiredArgs).getWriterThreads()).toEqual(10);
+    expect(argumentsParser.parse(dummyCommandAndRequiredArgs).getReaderThreads()).toEqual(8);
     expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--reader-threads', '-1']).getReaderThreads()).toEqual(1);
     expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--reader-threads', '0']).getReaderThreads()).toEqual(1);
     expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--reader-threads', '1']).getReaderThreads()).toEqual(1);
@@ -1145,11 +1144,19 @@ describe('options', () => {
   });
 
   it('should parse "writer-threads"', () => {
-    expect(argumentsParser.parse(dummyCommandAndRequiredArgs).getWriterThreads()).toEqual(10);
+    expect(argumentsParser.parse(dummyCommandAndRequiredArgs).getWriterThreads()).toEqual(4);
     expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--writer-threads', '-1']).getWriterThreads()).toEqual(1);
     expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--writer-threads', '0']).getWriterThreads()).toEqual(1);
     expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--writer-threads', '1']).getWriterThreads()).toEqual(1);
     expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--writer-threads', '2']).getWriterThreads()).toEqual(2);
+  });
+
+  it('should parse "write-retry"', () => {
+    expect(argumentsParser.parse(dummyCommandAndRequiredArgs).getWriteRetry()).toEqual(2);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--write-retry', '-1']).getWriteRetry()).toEqual(0);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--write-retry', '0']).getWriteRetry()).toEqual(0);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--write-retry', '1']).getWriteRetry()).toEqual(1);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--write-retry', '2']).getWriteRetry()).toEqual(2);
   });
 
   it('should parse "disable-cache"', () => {
