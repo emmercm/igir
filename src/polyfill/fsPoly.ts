@@ -57,7 +57,7 @@ export default class FsPoly {
 
     // Ensure the destination file is writable
     const stat = await this.stat(dest);
-    const chmodOwnerWrite = 0o200;
+    const chmodOwnerWrite = 0o222; // Node.js' default for file creation is 0o666 (rw)
     if (!(stat.mode & chmodOwnerWrite)) {
       await fs.promises.chmod(dest, stat.mode | chmodOwnerWrite);
     }
