@@ -767,6 +767,14 @@ export default class ArgumentsParser {
           middlewareArgv.datThreads = 1;
         }
       }, true)
+      .option('write-retry', {
+        group: groupHelpDebug,
+        description: 'Number of additional retries to attempt when writing a file has failed (0 disables retries)',
+        type: 'number',
+        coerce: (val: number) => Math.max(val, 0),
+        requiresArg: true,
+        default: Constants.ROM_WRITER_ADDITIONAL_RETRIES,
+      })
       .option('disable-cache', {
         group: groupHelpDebug,
         description: 'Disable the file and archive entry checksum cache',
