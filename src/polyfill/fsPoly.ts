@@ -405,7 +405,7 @@ export default class FsPoly {
     // TODO(cemmer): `Promise.all()` this?
     for (const file of files) {
       const fullPath = path.join(pathLike.toString(), file.name);
-      if (file.isDirectory()) {
+      if (file.isDirectory() || (file.isSymbolicLink() && await this.isDirectory(fullPath))) {
         const subDirFiles = await this.walk(fullPath);
         output = [...output, ...subDirFiles];
         if (callback) {
