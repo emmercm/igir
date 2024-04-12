@@ -1,6 +1,5 @@
 import fs from 'node:fs';
 import path from 'node:path';
-import util from 'node:util';
 
 import Logger from '../src/console/logger.js';
 import LogLevel from '../src/console/logLevel.js';
@@ -85,7 +84,7 @@ async function runIgir(optionsProps: OptionsProps): Promise<TestOutput> {
       .reduce(ArrayPoly.reduceUnique(), []);
     const outputFilesBefore = await fsPoly.walk(options.getOutputDirRoot());
 
-    await new Igir(options, new Logger(LogLevel.ALWAYS)).main();
+    await new Igir(options, new Logger(LogLevel.NEVER)).main();
 
     const outputFilesAndCrcs = (await Promise.all(options.getInputPaths()
       .map(async (inputPath) => walkWithCrc(inputPath, options.getOutputDirRoot()))))
@@ -246,7 +245,7 @@ describe('with explicit DATs', () => {
       }));
 
       const inputFiles = await fsPoly.walk(inputTemp);
-      await Promise.all(inputFiles.map(async (inputFile) => util.promisify(fs.chmod)(inputFile, '0444')));
+      await Promise.all(inputFiles.map(async (inputFile) => fs.promises.chmod(inputFile, '0444')));
 
       // When running igir with the clean command
       const result = await runIgir({
