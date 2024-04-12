@@ -335,7 +335,7 @@ export default class FsPoly {
   }
 
   static async symlink(target: PathLike, link: PathLike): Promise<void> {
-    return fs.promises.symlink(target, link);
+    return util.promisify(fs.symlink)(target, link);
   }
 
   static async symlinkRelativePath(target: string, link: string): Promise<string> {
