@@ -1,3 +1,4 @@
+import fs from 'node:fs';
 import path from 'node:path';
 
 import Constants from '../../src/constants.js';
@@ -24,7 +25,6 @@ describe('fileOfSize', () => {
 
   test.each([1, 42, 226, 1337, 8_675_309])('should create a file of size: %s', async (size) => {
     const tempFile = await fsPoly.mktemp(path.join(Constants.GLOBAL_TEMP_DIR, 'file'));
-    await expect(fsPoly.exists(tempFile)).resolves.toEqual(false);
 
     try {
       const file = await filePoly.fileOfSize(tempFile, 'r', size);
@@ -37,10 +37,102 @@ describe('fileOfSize', () => {
   });
 });
 
+describe('getSize', () => {
+  const filesWithSizes = [
+    [path.join('test', 'fixtures', 'roms', 'raw', 'empty.rom'), 0],
+    [path.join('test', 'fixtures', 'roms', 'raw', 'fizzbuzz.nes'), 9],
+    [path.join('test', 'fixtures', 'roms', 'raw', 'foobar.lnx'), 7],
+    [path.join('test', 'fixtures', 'roms', 'raw', 'loremipsum.rom'), 11],
+  ] satisfies [string, number][];
+
+  test.each(filesWithSizes)('should get size of raw file: %s', async (filePath, expectedSize) => {
+    const file = await filePoly.fileFrom(filePath, 'r');
+    try {
+      expect(file.getSize()).toEqual(expectedSize);
+    } finally {
+      await file.close();
+    }
+  });
+
+  test.each(filesWithSizes)('should get size of symlinked file: %s', async (filePath, expectedSize) => {
+    const tempSymlink = await fsPoly.mktemp(path.join(Constants.GLOBAL_TEMP_DIR, 'file'));
+    await fsPoly.symlink(path.resolve(filePath), tempSymlink);
+
+    const file = await filePoly.fileFrom(tempSymlink, 'r');
+    try {
+      expect(file.getSize()).toEqual(expectedSize);
+    } finally {
+      await file.close();
+      await fsPoly.rm(tempSymlink);
+    }
+  });
+
+  test.each(filesWithSizes)('should get size of hard linked file: %s', async (filePath, expectedSize) => {
+    const tempSymlink = await fsPoly.mktemp(path.join(Constants.GLOBAL_TEMP_DIR, 'file'));
+    await fsPoly.hardlink(path.resolve(filePath), tempSymlink);
+
+    const file = await filePoly.fileFrom(tempSymlink, 'r');
+    try {
+      expect(file.getSize()).toEqual(expectedSize);
+    } finally {
+      await file.close();
+      await fsPoly.rm(tempSymlink);
+    }
+  });
+});
+
+describe('readNext', () => {
+  it('should read from the beginning', async () => {
+    const tempFile = await fsPoly.mktemp(path.join(Constants.GLOBAL_TEMP_DIR, 'file'));
+    await fs.promises.writeFile(tempFile, 'ABCDEF0123456789');
+
+    try {
+      const file = await filePoly.fileFrom(tempFile, 'r');
+      await expect(file.readNext(2)).resolves.toEqual(Buffer.from('AB'));
+      await expect(file.readNext(3)).resolves.toEqual(Buffer.from('CDE'));
+      await expect(file.readNext(4)).resolves.toEqual(Buffer.from('F012'));
+      await file.close();
+    } finally {
+      await fsPoly.rm(tempFile);
+    }
+  });
+
+  it('should respect seek', async () => {
+    const tempFile = await fsPoly.mktemp(path.join(Constants.GLOBAL_TEMP_DIR, 'file'));
+    await fs.promises.writeFile(tempFile, 'ABCDEF0123456789');
+
+    try {
+      const file = await filePoly.fileFrom(tempFile, 'r');
+      await expect(file.readNext(2)).resolves.toEqual(Buffer.from('AB'));
+      await expect(file.readNext(3)).resolves.toEqual(Buffer.from('CDE'));
+      file.seek(0);
+      await expect(file.readNext(4)).resolves.toEqual(Buffer.from('ABCD'));
+      await file.close();
+    } finally {
+      await fsPoly.rm(tempFile);
+    }
+  });
+
+  it('should respect skipNext', async () => {
+    const tempFile = await fsPoly.mktemp(path.join(Constants.GLOBAL_TEMP_DIR, 'file'));
+    await fs.promises.writeFile(tempFile, 'ABCDEF0123456789');
+
+    try {
+      const file = await filePoly.fileFrom(tempFile, 'r');
+      await expect(file.readNext(2)).resolves.toEqual(Buffer.from('AB'));
+      await expect(file.readNext(3)).resolves.toEqual(Buffer.from('CDE'));
+      file.skipNext(4);
+      await expect(file.readNext(5)).resolves.toEqual(Buffer.from('34567'));
+      await file.close();
+    } finally {
+      await fsPoly.rm(tempFile);
+    }
+  });
+});
+
 describe('readAt', () => {
   it('should read a small file', async () => {
     const tempFile = await fsPoly.mktemp(path.join(Constants.GLOBAL_TEMP_DIR, 'file'));
-    await expect(fsPoly.exists(tempFile)).resolves.toEqual(false);
 
     try {
       const file = await filePoly.fileOfSize(tempFile, 'r', Constants.MAX_MEMORY_FILE_SIZE - 1);
@@ -53,7 +145,6 @@ describe('readAt', () => {
 
   it('should read a large file', async () => {
     const tempFile = await fsPoly.mktemp(path.join(Constants.GLOBAL_TEMP_DIR, 'file'));
-    await expect(fsPoly.exists(tempFile)).resolves.toEqual(false);
 
     try {
       const file = await filePoly.fileOfSize(tempFile, 'r', Constants.MAX_MEMORY_FILE_SIZE + 1);
@@ -62,5 +153,107 @@ describe('readAt', () => {
     } finally {
       await fsPoly.rm(tempFile);
     }
+  });
+});
+
+describe('write', () => {
+  describe('r', () => {
+    it('should throw on write', async () => {
+      const tempFile = await fsPoly.mktemp(path.join(Constants.GLOBAL_TEMP_DIR, 'file'));
+
+      try {
+        const file = await filePoly.fileOfSize(tempFile, 'r', 16);
+        await expect(file.write(Buffer.from('ABCDEF01'))).rejects.toThrow();
+        await file.close();
+
+        const contents = await fs.promises.readFile(tempFile);
+        expect(contents).toEqual(Buffer.from('\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00'));
+      } finally {
+        await fsPoly.rm(tempFile);
+      }
+    });
+  });
+
+  describe('r+', () => {
+    it('should overwrite contents', async () => {
+      const tempFile = await fsPoly.mktemp(path.join(Constants.GLOBAL_TEMP_DIR, 'file'));
+
+      try {
+        const file = await filePoly.fileOfSize(tempFile, 'r+', 16);
+        await file.write(Buffer.from('ABCDEF01'));
+        await file.close();
+
+        const contents = await fs.promises.readFile(tempFile);
+        expect(contents).toEqual(Buffer.from('ABCDEF01\x00\x00\x00\x00\x00\x00\x00\x00'));
+      } finally {
+        await fsPoly.rm(tempFile);
+      }
+    });
+
+    it('should extend the file size', async () => {
+      const tempFile = await fsPoly.mktemp(path.join(Constants.GLOBAL_TEMP_DIR, 'file'));
+
+      try {
+        const file = await filePoly.fileOfSize(tempFile, 'r+', 4);
+        await file.write(Buffer.from('ABCDEF01'));
+        await file.close();
+
+        const contents = await fs.promises.readFile(tempFile);
+        expect(contents).toEqual(Buffer.from('ABCDEF01'));
+      } finally {
+        await fsPoly.rm(tempFile);
+      }
+    });
+  });
+});
+
+describe('writeAt', () => {
+  describe('r', () => {
+    it('should throw on write', async () => {
+      const tempFile = await fsPoly.mktemp(path.join(Constants.GLOBAL_TEMP_DIR, 'file'));
+
+      try {
+        const file = await filePoly.fileOfSize(tempFile, 'r', 16);
+        await expect(file.writeAt(Buffer.from('ABCDEF01'), 4)).rejects.toThrow();
+        await file.close();
+
+        const contents = await fs.promises.readFile(tempFile);
+        expect(contents).toEqual(Buffer.from('\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00'));
+      } finally {
+        await fsPoly.rm(tempFile);
+      }
+    });
+  });
+
+  describe('r+', () => {
+    it('should overwrite contents', async () => {
+      const tempFile = await fsPoly.mktemp(path.join(Constants.GLOBAL_TEMP_DIR, 'file'));
+
+      try {
+        const file = await filePoly.fileOfSize(tempFile, 'r+', 16);
+        await file.writeAt(Buffer.from('ABCDEF01'), 6);
+        await file.close();
+
+        const contents = await fs.promises.readFile(tempFile);
+        expect(contents).toEqual(Buffer.from('\x00\x00\x00\x00\x00\x00ABCDEF01\x00\x00'));
+      } finally {
+        await fsPoly.rm(tempFile);
+      }
+    });
+
+    it('should extend the file size', async () => {
+      const tempFile = await fsPoly.mktemp(path.join(Constants.GLOBAL_TEMP_DIR, 'file'));
+
+      try {
+        const file = await filePoly.fileOfSize(tempFile, 'r+', 4);
+        await file.writeAt(Buffer.from('ABCDEF01'), 6);
+        await file.close();
+
+        const contents = await fs.promises.readFile(tempFile);
+        expect(contents).toEqual(Buffer.from('\x00\x00\x00\x00\x00\x00ABCDEF01'));
+      } finally {
+        await fsPoly.rm(tempFile);
+      }
+    });
   });
 });
