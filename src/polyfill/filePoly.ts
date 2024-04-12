@@ -1,5 +1,6 @@
 import fs, { OpenMode, PathLike } from 'node:fs';
 import { FileHandle } from 'node:fs/promises';
+import util from 'node:util';
 
 import Constants from '../constants.js';
 import fsPoly from './fsPoly.js';
@@ -37,7 +38,7 @@ export default class FilePoly {
          */
         flags.toString().startsWith('a') ? 'r+' : flags,
       ),
-      await fsPoly.size(pathLike),
+      (await util.promisify(fs.lstat)(pathLike)).size,
     );
   }
 
