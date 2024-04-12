@@ -56,7 +56,7 @@ describe('getSize', () => {
 
   test.each(filesWithSizes)('should get size of symlinked file: %s', async (filePath, expectedSize) => {
     const tempFile = await fsPoly.mktemp(path.join(Constants.GLOBAL_TEMP_DIR, 'file'));
-    await fsPoly.copyDir(filePath, tempFile);
+    await fsPoly.copyFile(filePath, tempFile);
     const tempSymlink = await fsPoly.mktemp(path.join(Constants.GLOBAL_TEMP_DIR, 'symlink'));
     await fsPoly.symlink(path.resolve(tempFile), tempSymlink);
 
@@ -72,7 +72,7 @@ describe('getSize', () => {
 
   test.each(filesWithSizes)('should get size of hard linked file: %s', async (filePath, expectedSize) => {
     const tempFile = await fsPoly.mktemp(path.join(Constants.GLOBAL_TEMP_DIR, 'file'));
-    await fsPoly.copyDir(filePath, tempFile);
+    await fsPoly.copyFile(filePath, tempFile);
     const tempLink = await fsPoly.mktemp(path.join(Constants.GLOBAL_TEMP_DIR, 'link'));
     await fsPoly.hardlink(path.resolve(tempFile), tempLink);
 
@@ -90,7 +90,7 @@ describe('getSize', () => {
 describe('readNext', () => {
   it('should read from the beginning', async () => {
     const tempFile = await fsPoly.mktemp(path.join(Constants.GLOBAL_TEMP_DIR, 'file'));
-    await fs.promises.writeFile(tempFile, 'ABCDEF0123456789');
+    await fsPoly.writeFile(tempFile, 'ABCDEF0123456789');
 
     const file = await filePoly.fileFrom(tempFile, 'r');
     try {
@@ -105,7 +105,7 @@ describe('readNext', () => {
 
   it('should respect seek', async () => {
     const tempFile = await fsPoly.mktemp(path.join(Constants.GLOBAL_TEMP_DIR, 'file'));
-    await fs.promises.writeFile(tempFile, 'ABCDEF0123456789');
+    await fsPoly.writeFile(tempFile, 'ABCDEF0123456789');
 
     const file = await filePoly.fileFrom(tempFile, 'r');
     try {
@@ -121,7 +121,7 @@ describe('readNext', () => {
 
   it('should respect skipNext', async () => {
     const tempFile = await fsPoly.mktemp(path.join(Constants.GLOBAL_TEMP_DIR, 'file'));
-    await fs.promises.writeFile(tempFile, 'ABCDEF0123456789');
+    await fsPoly.writeFile(tempFile, 'ABCDEF0123456789');
 
     const file = await filePoly.fileFrom(tempFile, 'r');
     try {
