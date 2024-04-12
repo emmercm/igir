@@ -84,7 +84,7 @@ async function runIgir(optionsProps: OptionsProps): Promise<TestOutput> {
       .reduce(ArrayPoly.reduceUnique(), []);
     const outputFilesBefore = await fsPoly.walk(options.getOutputDirRoot());
 
-    await new Igir(options, new Logger(LogLevel.ALWAYS)).main();
+    await new Igir(options, new Logger(LogLevel.NEVER)).main();
 
     const outputFilesAndCrcs = (await Promise.all(options.getInputPaths()
       .map(async (inputPath) => walkWithCrc(inputPath, options.getOutputDirRoot()))))
