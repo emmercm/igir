@@ -1,5 +1,6 @@
 import fs from 'node:fs';
 import path from 'node:path';
+import util from 'node:util';
 
 import Constants from '../../src/constants.js';
 import ReportGenerator from '../../src/modules/reportGenerator.js';
@@ -111,7 +112,7 @@ async function wrapReportGenerator(
   await new ReportGenerator(options, new ProgressBarFake())
     .generate(romFiles, cleanedOutputFiles, datStatuses);
 
-  const contents = (await fs.promises.readFile(reportOutput)).toString();
+  const contents = (await util.promisify(fs.readFile)(reportOutput)).toString();
   await callback(contents);
 
   await fsPoly.rm(reportOutput);

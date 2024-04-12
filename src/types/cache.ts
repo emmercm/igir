@@ -172,7 +172,7 @@ export default class Cache<V> {
 
     try {
       const cacheData = JSON.parse(
-        await fs.promises.readFile(this.filePath, { encoding: Cache.BUFFER_ENCODING }),
+        await util.promisify(fs.readFile)(this.filePath, { encoding: Cache.BUFFER_ENCODING }),
       ) as CacheData;
       const compressed = Buffer.from(cacheData.data, Cache.BUFFER_ENCODING);
       const decompressed = await util.promisify(zlib.inflate)(compressed);
@@ -228,7 +228,7 @@ export default class Cache<V> {
 
     // Write to a temp file first, then overwrite the old cache file
     const tempFile = await FsPoly.mktemp(this.filePath);
-    await fs.promises.writeFile(
+    await util.promisify(fs.writeFile)(
       tempFile,
       JSON.stringify(cacheData),
       { encoding: Cache.BUFFER_ENCODING },

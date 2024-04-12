@@ -36,12 +36,24 @@ export default class FsPoly {
   }
 
   static async copyDir(src: string, dest: string): Promise<void> {
-    await fs.promises.cp(src, dest, { dereference: true, recursive: true });
+    await this.mkdir(dest, { recursive: true });
+    const entries = await util.promisify(fs.readdir)(src, { withFileTypes: true });
+
+    for (const entry of entries) {
+      const srcPath = path.join(src, entry.name);
+      const destPath = path.join(dest, entry.name);
+
+      if (entry.isDirectory()) {
+        await this.copyDir(srcPath, destPath);
+      } else {
+        await this.copyFile(srcPath, destPath);
+      }
+    }
   }
 
   static async copyFile(src: string, dest: string): Promise<void> {
     const previouslyExisted = await this.exists(src);
-    await fs.promises.copyFile(src, dest);
+    await util.promisify(fs.copyFile)(src, dest);
 
     // Ensure the destination file is writable
     const stat = await this.stat(dest);
@@ -57,7 +69,7 @@ export default class FsPoly {
   }
 
   static async dirs(dirPath: string): Promise<string[]> {
-    const readDir = (await fs.promises.readdir(dirPath))
+    const readDir = (await util.promisify(fs.readdir)(dirPath))
       .filter((filePath) => isNotJunk(path.basename(filePath)))
       .map((filePath) => path.join(dirPath, filePath));
 
@@ -74,18 +86,17 @@ export default class FsPoly {
       .sort((a, b) => b.split(/[\\/]/).length - a.split(/[\\/]/).length);
   }
 
+  /**
+   * There is no promise version of existsSync()
+   */
   static async exists(pathLike: PathLike): Promise<boolean> {
-    try {
-      await fs.promises.access(pathLike);
-      return true;
-    } catch {
-      return false;
-    }
+    return util.promisify(fs.exists)(pathLike);
   }
 
   static async hardlink(target: string, link: string): Promise<void> {
     try {
-      return await fs.promises.link(target, link);
+      // Added in: v10.0.0
+      return await util.promisify(fs.link)(target, link);
     } catch (error) {
       if (this.onDifferentDrives(target, link)) {
         throw new Error(`can't hard link files on different drives: ${error}`);
@@ -100,7 +111,7 @@ export default class FsPoly {
 
   static async isDirectory(pathLike: string): Promise<boolean> {
     try {
-      const lstat = (await fs.promises.lstat(pathLike));
+      const lstat = (await util.promisify(fs.lstat)(pathLike));
       if (lstat.isSymbolicLink()) {
         const link = await this.readlinkResolved(pathLike);
         return await this.isDirectory(link);
@@ -113,7 +124,7 @@ export default class FsPoly {
 
   static async isExecutable(pathLike: PathLike): Promise<boolean> {
     try {
-      await fs.promises.access(pathLike, fs.constants.X_OK);
+      await util.promisify(fs.access)(pathLike, fs.constants.X_OK);
       return true;
     } catch {
       return false;
@@ -141,7 +152,7 @@ export default class FsPoly {
 
   static async isSymlink(pathLike: PathLike): Promise<boolean> {
     try {
-      return (await fs.promises.lstat(pathLike)).isSymbolicLink();
+      return (await util.promisify(fs.lstat)(pathLike)).isSymbolicLink();
     } catch {
       return false;
     }
@@ -165,7 +176,7 @@ export default class FsPoly {
   }
 
   static async mkdir(pathLike: PathLike, options?: MakeDirectoryOptions): Promise<void> {
-    await fs.promises.mkdir(pathLike, options);
+    await util.promisify(fs.mkdir)(pathLike, options);
   }
 
   /**
@@ -177,11 +188,15 @@ export default class FsPoly {
 
     try {
       await this.mkdir(rootDirProcessed, { recursive: true });
-      return await fs.promises.mkdtemp(rootDirProcessed);
+
+      // Added in: v10.0.0
+      return await util.promisify(fs.mkdtemp)(rootDirProcessed);
     } catch {
       const backupDir = path.join(process.cwd(), 'tmp') + path.sep;
       await this.mkdir(backupDir, { recursive: true });
-      return await fs.promises.mkdtemp(backupDir);
+
+      // Added in: v10.0.0
+      return await util.promisify(fs.mkdtemp)(backupDir);
     }
   }
 
@@ -195,11 +210,13 @@ export default class FsPoly {
     try {
       fs.mkdirSync(rootDirProcessed, { recursive: true });
 
+      // Added in: v5.10.0
       return fs.mkdtempSync(rootDirProcessed);
     } catch {
       const backupDir = path.join(process.cwd(), 'tmp') + path.sep;
       fs.mkdirSync(backupDir, { recursive: true });
 
+      // Added in: v5.10.0
       return fs.mkdtempSync(backupDir);
     }
   }
@@ -234,7 +251,7 @@ export default class FsPoly {
     }
 
     try {
-      return await fs.promises.rename(oldPath, newPath);
+      return await util.promisify(fs.rename)(oldPath, newPath);
     } catch (error) {
       // These are the same error codes that `graceful-fs` catches
       if (!['EACCES', 'EPERM', 'EBUSY'].includes((error as NodeJS.ErrnoException).code ?? '')) {
@@ -270,7 +287,8 @@ export default class FsPoly {
     if (!await this.isSymlink(pathLike)) {
       throw new Error(`can't readlink of non-symlink: ${pathLike}`);
     }
-    return fs.promises.readlink(pathLike);
+    // Added in: v10.0.0
+    return util.promisify(fs.readlink)(pathLike);
   }
 
   static async readlinkResolved(link: string): Promise<string> {
@@ -285,9 +303,13 @@ export default class FsPoly {
     if (!await this.exists(pathLike)) {
       throw new Error(`can't get realpath of non-existent path: ${pathLike}`);
     }
-    return fs.promises.realpath(pathLike);
+    return util.promisify(fs.realpath)(pathLike);
   }
 
+  /**
+   * fs.rm() was added in: v14.14.0
+   * util.promisify(fs.rm)() was added in: v14.14.0
+   */
   static async rm(pathLike: string, options: RmOptions = {}): Promise<void> {
     const optionsWithRetry = {
       maxRetries: 2,
@@ -295,7 +317,8 @@ export default class FsPoly {
     };
 
     try {
-      await fs.promises.access(pathLike); // throw if file doesn't exist
+      // Added in: v10.0.0
+      await util.promisify(fs.access)(pathLike); // throw if file doesn't exist
     } catch (error) {
       if (optionsWithRetry?.force) {
         return;
@@ -303,13 +326,16 @@ export default class FsPoly {
       throw error;
     }
 
+    // Added in: v10.0.0
     if (await this.isDirectory(pathLike)) {
-      await fs.promises.rm(pathLike, {
+      // Added in: v14.14.0
+      await util.promisify(fs.rm)(pathLike, {
         ...optionsWithRetry,
         recursive: true,
       });
     } else {
-      await fs.promises.unlink(pathLike);
+      // Added in: v10.0.0
+      await util.promisify(fs.unlink)(pathLike);
     }
   }
 
@@ -352,7 +378,7 @@ export default class FsPoly {
   }
 
   static async stat(pathLike: PathLike): Promise<fs.Stats> {
-    return fs.promises.stat(pathLike);
+    return util.promisify(fs.stat)(pathLike);
   }
 
   static async touch(filePath: string): Promise<void> {
@@ -362,13 +388,13 @@ export default class FsPoly {
     }
 
     // Create the file if it doesn't already exist
-    const file = await fs.promises.open(filePath, 'a');
+    const file = await util.promisify(fs.open)(filePath, 'a');
 
     // Ensure the file's `atime` and `mtime` are updated
     const date = new Date();
-    await util.promisify(fs.futimes)(file.fd, date, date);
+    await util.promisify(fs.futimes)(file, date, date);
 
-    await file.close();
+    await util.promisify(fs.close)(file);
   }
 
   static touchSync(filePath: string): void {
@@ -392,7 +418,7 @@ export default class FsPoly {
 
     let files: string[];
     try {
-      files = (await fs.promises.readdir(pathLike))
+      files = (await util.promisify(fs.readdir)(pathLike))
         .filter((filePath) => isNotJunk(path.basename(filePath)));
     } catch {
       return [];

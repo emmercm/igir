@@ -1,5 +1,6 @@
 import fs from 'node:fs';
 import path from 'node:path';
+import util from 'node:util';
 
 import { isNotJunk } from 'junk';
 import trash from 'trash';
@@ -122,7 +123,7 @@ export default class DirectoryCleaner extends Module {
     }
 
     // Find all subdirectories and files in the directory
-    const subPaths = (await fs.promises.readdir(dirsToClean))
+    const subPaths = (await util.promisify(fs.readdir)(dirsToClean))
       .filter((basename) => isNotJunk(basename))
       .map((basename) => path.join(dirsToClean, basename));
 
@@ -130,7 +131,7 @@ export default class DirectoryCleaner extends Module {
     const subDirs: string[] = [];
     const subFiles: string[] = [];
     await Promise.all(subPaths.map(async (subPath) => {
-      if (await fsPoly.isDirectory(subPath)) {
+      if ((await util.promisify(fs.lstat)(subPath)).isDirectory()) {
         subDirs.push(subPath);
       } else {
         subFiles.push(subPath);

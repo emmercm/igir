@@ -1,5 +1,6 @@
 import fs from 'node:fs';
 import path from 'node:path';
+import util from 'node:util';
 
 import moment from 'moment';
 
@@ -84,7 +85,7 @@ export default class FixdatCreator extends Module {
     const fixdatContents = fixdat.toXmlDat();
     const fixdatPath = path.join(fixdatDir, fixdat.getFilename());
     this.progressBar.logInfo(`${originalDat.getNameShort()}: writing fixdat to '${fixdatPath}'`);
-    await fs.promises.writeFile(fixdatPath, fixdatContents);
+    await util.promisify(fs.writeFile)(fixdatPath, fixdatContents);
 
     this.progressBar.logTrace(`${originalDat.getNameShort()}: done generating a fixdat`);
     return fixdatPath;
