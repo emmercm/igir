@@ -390,10 +390,10 @@ export default class FsPoly {
   static async walk(pathLike: PathLike, callback?: FsWalkCallback): Promise<string[]> {
     let output: string[] = [];
 
-    let files: string[];
+    let files: fs.Dirent[];
     try {
-      files = (await fs.promises.readdir(pathLike))
-        .filter((filePath) => isNotJunk(path.basename(filePath)));
+      files = (await fs.promises.readdir(pathLike, { withFileTypes: true }))
+        .filter((filePath) => isNotJunk(path.basename(filePath.name)));
     } catch {
       return [];
     }
@@ -404,8 +404,8 @@ export default class FsPoly {
 
     // TODO(cemmer): `Promise.all()` this?
     for (const file of files) {
-      const fullPath = path.join(pathLike.toString(), file);
-      if (await this.isDirectory(fullPath)) {
+      const fullPath = path.join(pathLike.toString(), file.name);
+      if (file.isDirectory()) {
         const subDirFiles = await this.walk(fullPath);
         output = [...output, ...subDirFiles];
         if (callback) {
