@@ -38,7 +38,19 @@ export default class FsPoly {
   }
 
   static async copyDir(src: string, dest: string): Promise<void> {
-    await fs.promises.cp(src, dest, { dereference: true, recursive: true });
+    await this.mkdir(dest, { recursive: true });
+    const entries = await util.promisify(fs.readdir)(src, { withFileTypes: true });
+
+    for (const entry of entries) {
+      const srcPath = path.join(src, entry.name);
+      const destPath = path.join(dest, entry.name);
+
+      if (entry.isDirectory()) {
+        await this.copyDir(srcPath, destPath);
+      } else {
+        await this.copyFile(srcPath, destPath);
+      }
+    }
   }
 
   static async copyFile(src: string, dest: string): Promise<void> {
@@ -47,7 +59,7 @@ export default class FsPoly {
 
     // Ensure the destination file is writable
     const stat = await this.stat(dest);
-    const chmodOwnerWrite = 0o200;
+    const chmodOwnerWrite = 0o222; // Node.js' default for file creation is 0o666 (rw)
     if (!(stat.mode & chmodOwnerWrite)) {
       await fs.promises.chmod(dest, stat.mode | chmodOwnerWrite);
     }
@@ -392,22 +404,22 @@ export default class FsPoly {
   static async walk(pathLike: PathLike, callback?: FsWalkCallback): Promise<string[]> {
     let output: string[] = [];
 
-    let files: fs.Dirent[];
+    let entries: fs.Dirent[];
     try {
-      files = (await fs.promises.readdir(pathLike, { withFileTypes: true }))
-        .filter((filePath) => isNotJunk(path.basename(filePath.name)));
+      entries = (await fs.promises.readdir(pathLike, { withFileTypes: true }))
+        .filter((entry) => isNotJunk(path.basename(entry.name)));
     } catch {
       return [];
     }
 
     if (callback) {
-      callback(files.length);
+      callback(entries.length);
     }
 
     // TODO(cemmer): `Promise.all()` this?
-    for (const file of files) {
-      const fullPath = path.join(pathLike.toString(), file.name);
-      if (file.isDirectory() || (file.isSymbolicLink() && await this.isDirectory(fullPath))) {
+    for (const entry of entries) {
+      const fullPath = path.join(pathLike.toString(), entry.name);
+      if (entry.isDirectory() || (entry.isSymbolicLink() && await this.isDirectory(fullPath))) {
         const subDirFiles = await this.walk(fullPath);
         output = [...output, ...subDirFiles];
         if (callback) {
