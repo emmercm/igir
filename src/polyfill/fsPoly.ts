@@ -37,13 +37,13 @@ export default class FsPoly {
 
   static async copyDir(src: string, dest: string): Promise<void> {
     await this.mkdir(dest, { recursive: true });
-    const entries = await fs.promises.readdir(src, { withFileTypes: true });
+    const entries = await util.promisify(fs.readdir)(src, { withFileTypes: true });
 
     for (const entry of entries) {
       const srcPath = path.join(src, entry.name);
       const destPath = path.join(dest, entry.name);
 
-      if (entry.isDirectory() || (entry.isSymbolicLink() && await this.isDirectory(srcPath))) {
+      if (entry.isDirectory()) {
         await this.copyDir(srcPath, destPath);
       } else {
         await this.copyFile(srcPath, destPath);
