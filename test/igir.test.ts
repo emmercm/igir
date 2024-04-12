@@ -760,7 +760,10 @@ describe('with explicit DATs', () => {
 
       const writtenFixdatsParsed = await Promise.all(writtenFixdatPaths.map(async (fixdat) => ([
         fixdat,
-        (await new DATScanner(new Options({ dat: [fixdat] }), new ProgressBarFake()).scan())[0],
+        (await new DATScanner(
+          new Options({ dat: [path.join(outputTemp, fixdat)] }),
+          new ProgressBarFake(),
+        ).scan())[0],
       ] satisfies [string, DAT])));
       // Assert the parsed fixdats, so in case this fails, we know why
       expect(writtenFixdatsParsed).toHaveLength(2);
