@@ -1,4 +1,6 @@
+import fs from 'node:fs';
 import path from 'node:path';
+import util from 'node:util';
 
 import Logger from '../src/console/logger.js';
 import LogLevel from '../src/console/logLevel.js';
@@ -83,7 +85,7 @@ async function runIgir(optionsProps: OptionsProps): Promise<TestOutput> {
       .reduce(ArrayPoly.reduceUnique(), []);
     const outputFilesBefore = await fsPoly.walk(options.getOutputDirRoot());
 
-    await new Igir(options, new Logger(LogLevel.NEVER)).main();
+    await new Igir(options, new Logger(LogLevel.ALWAYS)).main();
 
     const outputFilesAndCrcs = (await Promise.all(options.getInputPaths()
       .map(async (inputPath) => walkWithCrc(inputPath, options.getOutputDirRoot()))))
@@ -229,7 +231,7 @@ describe('with explicit DATs', () => {
     });
   });
 
-  it('should copy and clean', async () => {
+  it('should copy and clean read-only files', async () => {
     await copyFixturesToTemp(async (inputTemp, outputTemp) => {
       // Given some existing files in the output directory
       const junkFiles = [
@@ -242,6 +244,9 @@ describe('with explicit DATs', () => {
         await fsPoly.touch(junkFile);
         expect(await fsPoly.exists(junkFile)).toEqual(true);
       }));
+
+      const inputFiles = await fsPoly.walk(inputTemp);
+      await Promise.all(inputFiles.map(async (inputFile) => util.promisify(fs.chmod)(inputFile, '0444')));
 
       // When running igir with the clean command
       const result = await runIgir({
