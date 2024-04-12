@@ -8,7 +8,6 @@ import Igir from '../src/igir.js';
 import DATScanner from '../src/modules/datScanner.js';
 import ArrayPoly from '../src/polyfill/arrayPoly.js';
 import fsPoly from '../src/polyfill/fsPoly.js';
-import DAT from '../src/types/dats/dat.js';
 import FileFactory from '../src/types/files/fileFactory.js';
 import Options, { GameSubdirMode, OptionsProps } from '../src/types/options.js';
 import ProgressBarFake from './console/progressBarFake.js';
@@ -763,8 +762,8 @@ describe('with explicit DATs', () => {
         (await new DATScanner(
           new Options({ dat: [path.join(outputTemp, fixdat)] }),
           new ProgressBarFake(),
-        ).scan())[0],
-      ] satisfies [string, DAT])));
+        ).scan())[0].getGames().map((game) => game.getName()),
+      ])));
       // Assert the parsed fixdats, so in case this fails, we know why
       expect(writtenFixdatsParsed).toHaveLength(2);
 
