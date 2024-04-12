@@ -163,7 +163,7 @@ describe('readAt', () => {
 });
 
 describe('write', () => {
-  describe('r', () => {
+  describe('file mode: r', () => {
     it('should throw on write', async () => {
       const tempFile = await fsPoly.mktemp(path.join(Constants.GLOBAL_TEMP_DIR, 'file'));
 
@@ -180,12 +180,12 @@ describe('write', () => {
     });
   });
 
-  describe('r+', () => {
+  describe.each(['r+', 'a'])('file mode: %s', (openMode) => {
     it('should overwrite contents', async () => {
       const tempFile = await fsPoly.mktemp(path.join(Constants.GLOBAL_TEMP_DIR, 'file'));
 
       try {
-        const file = await filePoly.fileOfSize(tempFile, 'r+', 16);
+        const file = await filePoly.fileOfSize(tempFile, openMode, 16);
         await file.write(Buffer.from('ABCDEF01'));
         await file.close();
 
@@ -200,7 +200,7 @@ describe('write', () => {
       const tempFile = await fsPoly.mktemp(path.join(Constants.GLOBAL_TEMP_DIR, 'file'));
 
       try {
-        const file = await filePoly.fileOfSize(tempFile, 'r+', 4);
+        const file = await filePoly.fileOfSize(tempFile, openMode, 4);
         await file.write(Buffer.from('ABCDEF01'));
         await file.close();
 
@@ -214,7 +214,7 @@ describe('write', () => {
 });
 
 describe('writeAt', () => {
-  describe('r', () => {
+  describe('file mode: r', () => {
     it('should throw on write', async () => {
       const tempFile = await fsPoly.mktemp(path.join(Constants.GLOBAL_TEMP_DIR, 'file'));
 
@@ -231,12 +231,12 @@ describe('writeAt', () => {
     });
   });
 
-  describe('r+', () => {
+  describe.each(['r+', 'a'])('file mode: %s', (openMode) => {
     it('should overwrite contents', async () => {
       const tempFile = await fsPoly.mktemp(path.join(Constants.GLOBAL_TEMP_DIR, 'file'));
 
       try {
-        const file = await filePoly.fileOfSize(tempFile, 'r+', 16);
+        const file = await filePoly.fileOfSize(tempFile, openMode, 16);
         await file.writeAt(Buffer.from('ABCDEF01'), 6);
         await file.close();
 
@@ -251,7 +251,7 @@ describe('writeAt', () => {
       const tempFile = await fsPoly.mktemp(path.join(Constants.GLOBAL_TEMP_DIR, 'file'));
 
       try {
-        const file = await filePoly.fileOfSize(tempFile, 'r+', 4);
+        const file = await filePoly.fileOfSize(tempFile, openMode, 4);
         await file.writeAt(Buffer.from('ABCDEF01'), 6);
         await file.close();
 
