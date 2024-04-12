@@ -1,9 +1,7 @@
 import 'reflect-metadata';
 
-import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
-import util from 'node:util';
 
 import async, { AsyncResultCallback } from 'async';
 import {
@@ -638,7 +636,7 @@ export default class Options implements OptionsProps {
         }
 
         try {
-          callback(undefined, !(await util.promisify(fs.lstat)(file)).isDirectory());
+          callback(undefined, !(await fsPoly.isDirectory(file)));
         } catch {
           // Assume errors mean the path doesn't exist
           callback(undefined, false);
