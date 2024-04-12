@@ -5,10 +5,13 @@ import Logger from '../src/console/logger.js';
 import LogLevel from '../src/console/logLevel.js';
 import Constants from '../src/constants.js';
 import Igir from '../src/igir.js';
+import DATScanner from '../src/modules/datScanner.js';
 import ArrayPoly from '../src/polyfill/arrayPoly.js';
 import fsPoly from '../src/polyfill/fsPoly.js';
+import DAT from '../src/types/dats/dat.js';
 import FileFactory from '../src/types/files/fileFactory.js';
 import Options, { GameSubdirMode, OptionsProps } from '../src/types/options.js';
+import ProgressBarFake from './console/progressBarFake.js';
 
 interface TestOutput {
   outputFilesAndCrcs: string[][],
@@ -751,19 +754,25 @@ describe('with explicit DATs', () => {
         dirDatName: true,
       });
 
-      const writtenFixdats = result.outputFilesAndCrcs
+      const writtenFixdatPaths = result.outputFilesAndCrcs
         .map(([filePath]) => filePath)
         .filter((filePath) => filePath.endsWith('.dat'));
 
-      expect(writtenFixdats).toHaveLength(2);
+      const writtenFixdatsParsed = await Promise.all(writtenFixdatPaths.map(async (fixdat) => ([
+        fixdat,
+        (await new DATScanner(new Options({ dat: [fixdat] }), new ProgressBarFake()).scan())[0],
+      ] satisfies [string, DAT])));
+      // Assert the parsed fixdats, so in case this fails, we know why
+      expect(writtenFixdatsParsed).toHaveLength(2);
+
       // The "Headerless" DAT should have missing ROMs, because only headered versions exist them:
       //  diagnostic_test_cartridge.a78
       //  fds_joypad_test.fds
       //  LCDTestROM.lyx
-      expect(writtenFixdats[0]).toMatch(/^Headerless[\\/]Headerless fixdat \([0-9]{8}-[0-9]{6}\)\.dat$/);
+      expect(writtenFixdatPaths[0]).toMatch(/^Headerless[\\/]Headerless fixdat \([0-9]{8}-[0-9]{6}\)\.dat$/);
       // The "One" DAT should have missing ROMs, because no fixture exists for them:
       //  Missing.rom
-      expect(writtenFixdats[1]).toMatch(/^One[\\/]One fixdat \([0-9]{8}-[0-9]{6}\)\.dat$/);
+      expect(writtenFixdatPaths[1]).toMatch(/^One[\\/]One fixdat \([0-9]{8}-[0-9]{6}\)\.dat$/);
 
       expect(result.cwdFilesAndCrcs).toHaveLength(0);
       expect(result.cleanedFiles).toHaveLength(0);
