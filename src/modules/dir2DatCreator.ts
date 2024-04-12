@@ -1,4 +1,3 @@
-import fs from 'node:fs';
 import path from 'node:path';
 
 import ProgressBar, { ProgressBarSymbol } from '../console/progressBar.js';
@@ -41,7 +40,7 @@ export default class Dir2DatCreator extends Module {
 
     this.progressBar.logInfo(`${dat.getNameShort()}: creating dir2dat '${datPath}'`);
     const datContents = dat.toXmlDat();
-    await fs.promises.writeFile(datPath, datContents);
+    await fsPoly.writeFile(datPath, datContents);
 
     this.progressBar.logTrace(`${dat.getNameShort()}: done writing dir2dat`);
     return datPath;

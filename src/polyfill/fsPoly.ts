@@ -1,5 +1,7 @@
 import crypto from 'node:crypto';
-import fs, { MakeDirectoryOptions, PathLike, RmOptions } from 'node:fs';
+import fs, {
+  MakeDirectoryOptions, ObjectEncodingOptions, PathLike, RmOptions,
+} from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import util from 'node:util';
@@ -417,5 +419,16 @@ export default class FsPoly {
     }
 
     return output;
+  }
+
+  static async writeFile(
+    filePath: PathLike,
+    data: string | NodeJS.ArrayBufferView,
+    options?: ObjectEncodingOptions,
+  ): Promise<void> {
+    const file = await fs.promises.open(filePath, 'w');
+    await fs.promises.writeFile(file, data, options);
+    await file.sync(); // emulate fs.promises.writeFile() flush:true added in v21.0.0
+    await file.close();
   }
 }

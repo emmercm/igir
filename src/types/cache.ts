@@ -228,7 +228,7 @@ export default class Cache<V> {
 
     // Write to a temp file first, then overwrite the old cache file
     const tempFile = await FsPoly.mktemp(this.filePath);
-    await fs.promises.writeFile(
+    await FsPoly.writeFile(
       tempFile,
       JSON.stringify(cacheData),
       { encoding: Cache.BUFFER_ENCODING },

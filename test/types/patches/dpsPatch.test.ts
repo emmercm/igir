@@ -1,4 +1,3 @@
-import fs from 'node:fs';
 import path from 'node:path';
 
 import Constants from '../../../src/constants.js';
@@ -10,7 +9,7 @@ import DPSPatch from '../../../src/types/patches/dpsPatch.js';
 
 async function writeTemp(fileName: string, contents: string | Buffer): Promise<File> {
   const temp = await fsPoly.mktemp(path.join(Constants.GLOBAL_TEMP_DIR, fileName));
-  await fs.promises.writeFile(temp, contents);
+  await fsPoly.writeFile(temp, contents);
   return File.fileOf({ filePath: temp });
 }
 

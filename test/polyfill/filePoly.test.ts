@@ -90,7 +90,7 @@ describe('getSize', () => {
 describe('readNext', () => {
   it('should read from the beginning', async () => {
     const tempFile = await fsPoly.mktemp(path.join(Constants.GLOBAL_TEMP_DIR, 'file'));
-    await fs.promises.writeFile(tempFile, 'ABCDEF0123456789');
+    await fsPoly.writeFile(tempFile, 'ABCDEF0123456789');
 
     const file = await filePoly.fileFrom(tempFile, 'r');
     try {
@@ -105,7 +105,7 @@ describe('readNext', () => {
 
   it('should respect seek', async () => {
     const tempFile = await fsPoly.mktemp(path.join(Constants.GLOBAL_TEMP_DIR, 'file'));
-    await fs.promises.writeFile(tempFile, 'ABCDEF0123456789');
+    await fsPoly.writeFile(tempFile, 'ABCDEF0123456789');
 
     const file = await filePoly.fileFrom(tempFile, 'r');
     try {
@@ -121,7 +121,7 @@ describe('readNext', () => {
 
   it('should respect skipNext', async () => {
     const tempFile = await fsPoly.mktemp(path.join(Constants.GLOBAL_TEMP_DIR, 'file'));
-    await fs.promises.writeFile(tempFile, 'ABCDEF0123456789');
+    await fsPoly.writeFile(tempFile, 'ABCDEF0123456789');
 
     const file = await filePoly.fileFrom(tempFile, 'r');
     try {
