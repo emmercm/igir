@@ -362,13 +362,13 @@ export default class FsPoly {
     }
 
     // Create the file if it doesn't already exist
-    const file = await fs.promises.open(filePath, 'a');
+    const file = await util.promisify(fs.open)(filePath, 'a');
 
     // Ensure the file's `atime` and `mtime` are updated
     const date = new Date();
-    await util.promisify(fs.futimes)(file.fd, date, date);
+    await util.promisify(fs.futimes)(file, date, date);
 
-    await file.close();
+    await util.promisify(fs.close)(file);
   }
 
   static touchSync(filePath: string): void {
