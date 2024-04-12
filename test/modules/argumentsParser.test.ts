@@ -1152,6 +1152,14 @@ describe('options', () => {
     expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--writer-threads', '2']).getWriterThreads()).toEqual(2);
   });
 
+  it('should parse "write-retry"', () => {
+    expect(argumentsParser.parse(dummyCommandAndRequiredArgs).getWriteRetry()).toEqual(2);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--write-retry', '-1']).getWriteRetry()).toEqual(0);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--write-retry', '0']).getWriteRetry()).toEqual(0);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--write-retry', '1']).getWriteRetry()).toEqual(1);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--write-retry', '2']).getWriteRetry()).toEqual(2);
+  });
+
   it('should parse "disable-cache"', () => {
     expect(argumentsParser.parse([...dummyCommandAndRequiredArgs]).getDisableCache())
       .toEqual(false);
