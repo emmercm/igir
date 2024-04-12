@@ -41,7 +41,7 @@ export default class FsPoly {
 
   static async copyFile(src: string, dest: string): Promise<void> {
     const previouslyExisted = await this.exists(src);
-    await util.promisify(fs.copyFile)(src, dest);
+    await fs.promises.copyFile(src, dest);
 
     // Ensure the destination file is writable
     const stat = await this.stat(dest);

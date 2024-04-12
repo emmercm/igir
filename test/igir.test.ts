@@ -1,6 +1,5 @@
 import fs from 'node:fs';
 import path from 'node:path';
-import util from 'node:util';
 
 import Logger from '../src/console/logger.js';
 import LogLevel from '../src/console/logLevel.js';
@@ -246,7 +245,7 @@ describe('with explicit DATs', () => {
       }));
 
       const inputFiles = await fsPoly.walk(inputTemp);
-      await Promise.all(inputFiles.map(async (inputFile) => util.promisify(fs.chmod)(inputFile, '0444')));
+      await Promise.all(inputFiles.map(async (inputFile) => fs.promises.chmod(inputFile, '0444')));
 
       // When running igir with the clean command
       const result = await runIgir({
