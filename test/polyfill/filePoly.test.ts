@@ -55,8 +55,10 @@ describe('getSize', () => {
   });
 
   test.each(filesWithSizes)('should get size of symlinked file: %s', async (filePath, expectedSize) => {
-    const tempSymlink = await fsPoly.mktemp(path.join(Constants.GLOBAL_TEMP_DIR, 'file'));
-    await fsPoly.symlink(path.resolve(filePath), tempSymlink);
+    const tempFile = await fsPoly.mktemp(path.join(Constants.GLOBAL_TEMP_DIR, 'file'));
+    await fsPoly.copyDir(filePath, tempFile);
+    const tempSymlink = await fsPoly.mktemp(path.join(Constants.GLOBAL_TEMP_DIR, 'symlink'));
+    await fsPoly.symlink(path.resolve(tempFile), tempSymlink);
 
     const file = await filePoly.fileFrom(tempSymlink, 'r');
     try {
@@ -64,19 +66,23 @@ describe('getSize', () => {
     } finally {
       await file.close();
       await fsPoly.rm(tempSymlink);
+      await fsPoly.rm(tempFile);
     }
   });
 
   test.each(filesWithSizes)('should get size of hard linked file: %s', async (filePath, expectedSize) => {
-    const tempSymlink = await fsPoly.mktemp(path.join(Constants.GLOBAL_TEMP_DIR, 'file'));
-    await fsPoly.hardlink(path.resolve(filePath), tempSymlink);
+    const tempFile = await fsPoly.mktemp(path.join(Constants.GLOBAL_TEMP_DIR, 'file'));
+    await fsPoly.copyDir(filePath, tempFile);
+    const tempLink = await fsPoly.mktemp(path.join(Constants.GLOBAL_TEMP_DIR, 'link'));
+    await fsPoly.hardlink(path.resolve(tempFile), tempLink);
 
-    const file = await filePoly.fileFrom(tempSymlink, 'r');
+    const file = await filePoly.fileFrom(tempLink, 'r');
     try {
       expect(file.getSize()).toEqual(expectedSize);
     } finally {
       await file.close();
-      await fsPoly.rm(tempSymlink);
+      await fsPoly.rm(tempLink);
+      await fsPoly.rm(tempFile);
     }
   });
 });
@@ -86,13 +92,13 @@ describe('readNext', () => {
     const tempFile = await fsPoly.mktemp(path.join(Constants.GLOBAL_TEMP_DIR, 'file'));
     await fs.promises.writeFile(tempFile, 'ABCDEF0123456789');
 
+    const file = await filePoly.fileFrom(tempFile, 'r');
     try {
-      const file = await filePoly.fileFrom(tempFile, 'r');
       await expect(file.readNext(2)).resolves.toEqual(Buffer.from('AB'));
       await expect(file.readNext(3)).resolves.toEqual(Buffer.from('CDE'));
       await expect(file.readNext(4)).resolves.toEqual(Buffer.from('F012'));
-      await file.close();
     } finally {
+      await file.close();
       await fsPoly.rm(tempFile);
     }
   });
@@ -101,14 +107,14 @@ describe('readNext', () => {
     const tempFile = await fsPoly.mktemp(path.join(Constants.GLOBAL_TEMP_DIR, 'file'));
     await fs.promises.writeFile(tempFile, 'ABCDEF0123456789');
 
+    const file = await filePoly.fileFrom(tempFile, 'r');
     try {
-      const file = await filePoly.fileFrom(tempFile, 'r');
       await expect(file.readNext(2)).resolves.toEqual(Buffer.from('AB'));
       await expect(file.readNext(3)).resolves.toEqual(Buffer.from('CDE'));
       file.seek(0);
       await expect(file.readNext(4)).resolves.toEqual(Buffer.from('ABCD'));
-      await file.close();
     } finally {
+      await file.close();
       await fsPoly.rm(tempFile);
     }
   });
@@ -117,14 +123,14 @@ describe('readNext', () => {
     const tempFile = await fsPoly.mktemp(path.join(Constants.GLOBAL_TEMP_DIR, 'file'));
     await fs.promises.writeFile(tempFile, 'ABCDEF0123456789');
 
+    const file = await filePoly.fileFrom(tempFile, 'r');
     try {
-      const file = await filePoly.fileFrom(tempFile, 'r');
       await expect(file.readNext(2)).resolves.toEqual(Buffer.from('AB'));
       await expect(file.readNext(3)).resolves.toEqual(Buffer.from('CDE'));
       file.skipNext(4);
       await expect(file.readNext(5)).resolves.toEqual(Buffer.from('34567'));
-      await file.close();
     } finally {
+      await file.close();
       await fsPoly.rm(tempFile);
     }
   });
@@ -134,11 +140,11 @@ describe('readAt', () => {
   it('should read a small file', async () => {
     const tempFile = await fsPoly.mktemp(path.join(Constants.GLOBAL_TEMP_DIR, 'file'));
 
+    const file = await filePoly.fileOfSize(tempFile, 'r', Constants.MAX_MEMORY_FILE_SIZE - 1);
     try {
-      const file = await filePoly.fileOfSize(tempFile, 'r', Constants.MAX_MEMORY_FILE_SIZE - 1);
       await expect(file.readAt(0, 16)).resolves.toEqual(Buffer.alloc(16));
-      await file.close();
     } finally {
+      await file.close();
       await fsPoly.rm(tempFile);
     }
   });
@@ -146,11 +152,11 @@ describe('readAt', () => {
   it('should read a large file', async () => {
     const tempFile = await fsPoly.mktemp(path.join(Constants.GLOBAL_TEMP_DIR, 'file'));
 
+    const file = await filePoly.fileOfSize(tempFile, 'r', Constants.MAX_MEMORY_FILE_SIZE + 1);
     try {
-      const file = await filePoly.fileOfSize(tempFile, 'r', Constants.MAX_MEMORY_FILE_SIZE + 1);
       await expect(file.readAt(0, 16)).resolves.toEqual(Buffer.alloc(16));
-      await file.close();
     } finally {
+      await file.close();
       await fsPoly.rm(tempFile);
     }
   });
