@@ -762,7 +762,7 @@ describe('with explicit DATs', () => {
         (await new DATScanner(
           new Options({ dat: [path.join(outputTemp, fixdat)] }),
           new ProgressBarFake(),
-        ).scan())[0].getGames().map((game) => game.getName()),
+        ).scan())[0].getGames().map((game) => game.getName()).sort(),
       ])));
       // Assert the parsed fixdats, so in case this fails, we know why
       expect(writtenFixdatsParsed).toHaveLength(2);
