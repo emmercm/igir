@@ -1,8 +1,6 @@
-import fs from 'node:fs';
-import util from 'node:util';
-
 import ProgressBar from '../console/progressBar.js';
 import ArrayPoly from '../polyfill/arrayPoly.js';
+import FsPoly from '../polyfill/fsPoly.js';
 import DATStatus, { GameStatus } from '../types/datStatus.js';
 import Options from '../types/options.js';
 import Module from './module.js';
@@ -60,7 +58,7 @@ export default class ReportGenerator extends Module {
 
     this.progressBar.logInfo(`writing report '${reportPath}'`);
     const rows = [...matchedFileCsvs, unusedCsv, cleanedCsv].filter((csv) => csv);
-    await util.promisify(fs.writeFile)(reportPath, rows.join('\n'));
+    await FsPoly.writeFile(reportPath, rows.join('\n'));
     this.progressBar.logTrace(`wrote ${datStatuses.length.toLocaleString()} CSV row${datStatuses.length !== 1 ? 's' : ''}: ${reportPath}`);
 
     this.progressBar.logTrace('done generating report');

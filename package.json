@@ -1,6 +1,6 @@
 {
   "name": "igir",
-  "version": "2.6.2",
+  "version": "2.6.3",
   "description": "🕹 A video game ROM collection manager to help filter, sort, patch, archive, and report on collections on any OS.",
   "keywords": [
     "1g1r",
@@ -144,12 +144,13 @@
     "Requires ^14.18.0 || >=16.0.0 for `node:` prefixed built-in modules that many dependencies use.",
     "Requires >=15.0.0 for npm v7 for package-lock.json v3 because Renovate stopped respecting the existing version in August 2023.",
     "Requires ^14.18.0 || >=16.3.0 for `os.devNull`.",
-    "Requires >=16.6.0 for `Array.prototype.at()`."
+    "Requires >=16.6.0 for `Array.prototype.at()`.",
+    "Requires >=16.7.0 for `fs.cp()`."
   ],
   "engines": {
-    "node": ">=16.6.0"
+    "node": ">=16.7.0"
   },
   "volta": {
-    "node": "20.12.1"
+    "node": "20.12.2"
   }
 }

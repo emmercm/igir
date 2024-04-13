@@ -1,7 +1,6 @@
 import fs, { Stats } from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
-import util from 'node:util';
 
 import Constants from '../../src/constants.js';
 import CandidateCombiner from '../../src/modules/candidateCombiner.js';
@@ -55,7 +54,7 @@ async function walkAndStat(dirPath: string): Promise<[string, Stats][]> {
       .map(async (filePath) => {
         let stats: Stats;
         try {
-          stats = await util.promisify(fs.lstat)(filePath);
+          stats = await fs.promises.lstat(filePath);
           // Hard-code properties that can change with file reads
           stats.atime = new Date(0);
           stats.atimeMs = 0;

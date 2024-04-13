@@ -118,7 +118,7 @@ const fileFilter = (filters: FileFilter[]): string[] => {
     output,
     exclude: excludeGlobs,
     command: [
-      '{{caxa}}/node_modules/.bin/node',
+      `{{caxa}}/node_modules/.bin/node${process.platform === 'win32' ? '.exe' : ''}`,
       '{{caxa}}/dist/index.js',
     ],
   });

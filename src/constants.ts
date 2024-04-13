@@ -112,6 +112,11 @@ export default class Constants {
   static readonly ROM_WRITER_DEFAULT_THREADS = this.FILE_READER_DEFAULT_THREADS / 2;
 
   /**
+   * The number of additional retry attempts to write a file if the write or test fails.
+   */
+  static readonly ROM_WRITER_ADDITIONAL_RETRIES = 2;
+
+  /**
    * Max number of files to recycle/delete at once.
    */
   static readonly OUTPUT_CLEANER_BATCH_SIZE = 100;

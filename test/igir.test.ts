@@ -1,3 +1,4 @@
+import fs from 'node:fs';
 import path from 'node:path';
 
 import Logger from '../src/console/logger.js';
@@ -245,7 +246,7 @@ describe('with explicit DATs', () => {
     });
   });
 
-  it('should copy and clean', async () => {
+  it('should copy and clean read-only files', async () => {
     await copyFixturesToTemp(async (inputTemp, outputTemp) => {
       // Given some existing files in the output directory
       const junkFiles = [
@@ -258,6 +259,9 @@ describe('with explicit DATs', () => {
         await fsPoly.touch(junkFile);
         expect(await fsPoly.exists(junkFile)).toEqual(true);
       }));
+
+      const inputFiles = await fsPoly.walk(inputTemp);
+      await Promise.all(inputFiles.map(async (inputFile) => fs.promises.chmod(inputFile, '0444')));
 
       // When running igir with the clean command
       const result = await runIgir({
