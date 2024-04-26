@@ -174,14 +174,14 @@ describe('load', () => {
     await expect(cache.load()).resolves.toBeTruthy();
   });
 
-  it('should throw on empty file', async () => {
+  it('should not throw on empty file', async () => {
     const tempFile = await FsPoly.mktemp(path.join(Constants.GLOBAL_TEMP_DIR, 'cache'));
     await FsPoly.touch(tempFile);
     try {
       await expect(FsPoly.exists(tempFile)).resolves.toEqual(true);
 
       const cache = new Cache<number>({ filePath: tempFile });
-      await expect(cache.load()).rejects.toThrow();
+      await expect(cache.load()).resolves.toBeTruthy();
     } finally {
       await FsPoly.rm(tempFile, { force: true });
     }

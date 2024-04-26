@@ -58,7 +58,7 @@ $ igir --help
   | $$  | $$|    \  | $$  | $$    $$   ROM collection manager
   | $$  | $$|    \  | $$  | $$    $$   https://igir.io/
   | $$  | $$ \$$$$  | $$  | $$$$$$$\
- _| $$_ | $$__| $$ _| $$_ | $$  | $$   v2.6.1
+ _| $$_ | $$__| $$ _| $$_ | $$  | $$   v2.6.3
 |   $$ \ \$$    $$|   $$ \| $$  | $$
  \$$$$$$  \$$$$$$  \$$$$$$ \$$   \$$
 
@@ -211,9 +211,10 @@ Report options:
 
 Help & debug options:
       --dat-threads     Number of DATs to process in parallel              [number] [default: 3]
-      --reader-threads  Maximum number of ROMs to read in parallel per disk
-                                                                          [number] [default: 10]
-      --writer-threads  Maximum number of ROMs to write in parallel       [number] [default: 10]
+      --reader-threads  Maximum number of ROMs to read in parallel per disk[number] [default: 8]
+      --writer-threads  Maximum number of ROMs to write in parallel        [number] [default: 4]
+      --write-retry     Number of additional retries to attempt when writing a file has failed (
+                        0 disables retries)                                [number] [default: 2]
       --disable-cache   Disable the file and archive entry checksum cache              [boolean]
   -v, --verbose         Enable verbose logging, can specify up to three times (-vvv)     [count]
   -h, --help            Show help                                                      [boolean]
@@ -247,6 +248,7 @@ Advanced usage:
     {pocket}    The ROM's core-specific /Assets/* directory for the Analogue Pocket (e.g. "gb")
     {retrodeck} The ROM's emulator-specific /roms/* directory for the 'RetroDECK' image (e.g. "g
     b")
+    {romm}      The ROM's manager-specific /roms/* directory for 'RomM' (e.g. "gb")
     {twmenu}    The ROM's emulator-specific /roms/* directory for TWiLightMenu++ on the DSi/3DS
     (e.g. "gb")
 
