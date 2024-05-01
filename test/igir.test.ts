@@ -144,7 +144,7 @@ describe('with explicit DATs', () => {
   });
 
   it('should throw on all invalid dats', async () => {
-    await expect(async () => new Igir(new Options({
+    await expect(new Igir(new Options({
       dat: ['src/*'],
     }), new Logger(LogLevel.NEVER)).main()).rejects.toThrow(/no valid dat files/i);
   });

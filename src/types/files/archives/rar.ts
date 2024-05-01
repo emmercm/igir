@@ -1,10 +1,10 @@
 import path from 'node:path';
 
-import async, { AsyncResultCallback } from 'async';
 import { Mutex } from 'async-mutex';
 import unrar from 'node-unrar-js';
 
 import Constants from '../../../constants.js';
+import async from '../../../polyfill/async.js';
 import Archive from './archive.js';
 import ArchiveEntry from './archiveEntry.js';
 
@@ -25,16 +25,13 @@ export default class Rar extends Archive {
     return async.mapLimit(
       [...rar.getFileList().fileHeaders].filter((fileHeader) => !fileHeader.flags.directory),
       Constants.ARCHIVE_ENTRY_SCANNER_THREADS_PER_ARCHIVE,
-      async (fileHeader, callback: AsyncResultCallback<ArchiveEntry<this>, Error>) => {
-        const archiveEntry = await ArchiveEntry.entryOf({
-          archive: this,
-          entryPath: fileHeader.name,
-          size: fileHeader.unpSize,
-          crc32: fileHeader.crc.toString(16),
-          // If MD5, SHA1, or SHA256 is desired, this file will need to be extracted to calculate
-        }, checksumBitmask);
-        callback(undefined, archiveEntry);
-      },
+      async (fileHeader) => ArchiveEntry.entryOf({
+        archive: this,
+        entryPath: fileHeader.name,
+        size: fileHeader.unpSize,
+        crc32: fileHeader.crc.toString(16),
+        // If MD5, SHA1, or SHA256 is desired, this file will need to be extracted to calculate
+      }, checksumBitmask),
     );
   }
 
