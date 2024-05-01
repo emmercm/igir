@@ -3,7 +3,6 @@ import 'reflect-metadata';
 import os from 'node:os';
 import path from 'node:path';
 
-import async, { AsyncResultCallback } from 'async';
 import {
   Expose, instanceToPlain, plainToInstance, Transform,
 } from 'class-transformer';
@@ -12,6 +11,7 @@ import { isNotJunk } from 'junk';
 import micromatch from 'micromatch';
 import moment from 'moment';
 
+import async from '../../src/polyfill/async.js';
 import LogLevel from '../console/logLevel.js';
 import Constants from '../constants.js';
 import ArrayPoly from '../polyfill/arrayPoly.js';
@@ -633,17 +633,16 @@ export default class Options implements OptionsProps {
     const isNonDirectory = await async.mapLimit(
       globbedPaths,
       Constants.MAX_FS_THREADS,
-      async (file, callback: AsyncResultCallback<boolean, Error>) => {
+      async (file) => {
         if (!await fsPoly.exists(file) && URLPoly.canParse(file)) {
-          callback(undefined, true);
-          return;
+          return true;
         }
 
         try {
-          callback(undefined, !(await fsPoly.isDirectory(file)));
+          return !(await fsPoly.isDirectory(file));
         } catch {
           // Assume errors mean the path doesn't exist
-          callback(undefined, false);
+          return false;
         }
       },
     );

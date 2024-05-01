@@ -4,10 +4,10 @@ import { Readable } from 'node:stream';
 import { clearInterval } from 'node:timers';
 
 import archiver, { Archiver } from 'archiver';
-import async, { AsyncResultCallback } from 'async';
 import unzipper, { Entry } from 'unzipper';
 
 import Constants from '../../../constants.js';
+import async from '../../../polyfill/async.js';
 import fsPoly from '../../../polyfill/fsPoly.js';
 import StreamPoly from '../../../polyfill/streamPoly.js';
 import File from '../file.js';
@@ -33,7 +33,7 @@ export default class Zip extends Archive {
     return async.mapLimit(
       archive.files.filter((entryFile) => entryFile.type === 'File'),
       Constants.ARCHIVE_ENTRY_SCANNER_THREADS_PER_ARCHIVE,
-      async (entryFile, callback: AsyncResultCallback<ArchiveEntry<this>, Error>) => {
+      async (entryFile) => {
         let checksums: ChecksumProps = {};
         if (checksumBitmask & ~ChecksumBitmask.CRC32) {
           const entryStream = entryFile.stream()
@@ -54,14 +54,13 @@ export default class Zip extends Archive {
         }
         const { crc32, ...checksumsWithoutCrc } = checksums;
 
-        const archiveEntry = await ArchiveEntry.entryOf({
+        return ArchiveEntry.entryOf({
           archive: this,
           entryPath: entryFile.path,
           size: entryFile.uncompressedSize,
           crc32: crc32 ?? entryFile.crc32.toString(16),
           ...checksumsWithoutCrc,
         }, checksumBitmask);
-        callback(undefined, archiveEntry);
       },
     );
   }
@@ -193,9 +192,7 @@ export default class Zip extends Archive {
        *  also want to make sure the queue processing stays busy. Use 3 as a middle-ground.
        */
       3,
-      async.asyncify(async (
-        [inputFile, outputArchiveEntry]: [File, ArchiveEntry<Zip>],
-      ): Promise<void> => {
+      async ([inputFile, outputArchiveEntry]) => {
         const streamProcessor = async (stream: Readable): Promise<void> => {
           // Catch stream errors such as `ENOENT: no such file or directory`
           stream.on('error', catchError);
@@ -228,7 +225,7 @@ export default class Zip extends Archive {
             catchError(new Error(`failed to write '${inputFile.toString()}' to '${outputArchiveEntry.toString()}'`));
           }
         }
-      }),
+      },
     );
 
     if (zipFileError) {

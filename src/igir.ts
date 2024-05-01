@@ -1,4 +1,3 @@
-import async from 'async';
 import chalk from 'chalk';
 import isAdmin from 'is-admin';
 
@@ -30,6 +29,7 @@ import ROMIndexer from './modules/romIndexer.js';
 import ROMScanner from './modules/romScanner.js';
 import StatusGenerator from './modules/statusGenerator.js';
 import ArrayPoly from './polyfill/arrayPoly.js';
+import async from './polyfill/async.js';
 import FsPoly from './polyfill/fsPoly.js';
 import Timer from './timer.js';
 import DAT from './types/dats/dat.js';
@@ -101,7 +101,7 @@ export default class Igir {
 
     // Process every DAT
     datProcessProgressBar.logTrace(`processing ${dats.length.toLocaleString()} DAT${dats.length !== 1 ? 's' : ''}`);
-    await async.eachLimit(dats, this.options.getDatThreads(), async (dat, callback) => {
+    await async.eachLimit(dats, this.options.getDatThreads(), async (dat) => {
       await datProcessProgressBar.incrementProgress();
 
       const progressBar = await this.logger.addProgressBar(
@@ -173,7 +173,6 @@ export default class Igir {
       }
 
       await datProcessProgressBar.incrementDone();
-      callback();
     });
     datProcessProgressBar.logTrace(`done processing ${dats.length.toLocaleString()} DAT${dats.length !== 1 ? 's' : ''}`);
 

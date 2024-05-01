@@ -1,9 +1,9 @@
 import path from 'node:path';
 
-import async, { AsyncResultCallback } from 'async';
 import { Mutex, Semaphore } from 'async-mutex';
 
 import Constants from './constants.js';
+import async from './polyfill/async.js';
 import FsPoly from './polyfill/fsPoly.js';
 import File from './types/files/file.js';
 
@@ -38,17 +38,16 @@ export default class DriveSemaphore {
     return async.mapLimit(
       files,
       Constants.MAX_FS_THREADS,
-      async (file, callback: AsyncResultCallback<V, Error>) => {
+      async (file) => {
         try {
-          const val = await this.processFile(file, runnable, disks);
-          callback(undefined, val);
+          return await this.processFile(file, runnable, disks);
         } catch (error) {
           if (error instanceof Error) {
-            callback(error);
+            throw error;
           } else if (typeof error === 'string') {
-            callback(new Error(error));
+            throw new Error(error);
           } else {
-            callback(new Error('failed to execute runnable'));
+            throw new Error('failed to execute runnable');
           }
         }
       },
