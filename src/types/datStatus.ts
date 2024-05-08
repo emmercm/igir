@@ -27,7 +27,9 @@ export enum GameStatus {
   IGNORED,
   // The Game wanted to be written, but there was no matching ReleaseCandidate
   MISSING,
-  // The input File was not used in any ReleaseCandidate
+  // The input file was not used in any ReleaseCandidate, but a duplicate file was
+  DUPLICATE,
+  // The input File was not used in any ReleaseCandidate, and neither was any duplicate file
   UNUSED,
   // The output File was not from any ReleaseCandidate, so it was deleted
   DELETED,
