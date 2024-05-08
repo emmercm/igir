@@ -402,7 +402,7 @@ export default class Igir {
 
     const reportProgressBar = await this.logger.addProgressBar('Generating report', ProgressBarSymbol.WRITING);
     await new ReportGenerator(this.options, reportProgressBar).generate(
-      scannedRomFiles.map((file) => file.getFilePath()),
+      scannedRomFiles,
       cleanedOutputFiles,
       datsStatuses,
     );
