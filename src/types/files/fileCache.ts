@@ -1,6 +1,5 @@
 import { Stats } from 'node:fs';
 
-import Constants from '../../constants.js';
 import FsPoly from '../../polyfill/fsPoly.js';
 import Cache from '../cache.js';
 import Archive from './archives/archive.js';
@@ -22,25 +21,29 @@ enum ValueType {
 export default class FileCache {
   private static readonly VERSION = 2;
 
-  private static readonly CACHE = new Cache<CacheValue>({
-    filePath: process.env.NODE_ENV !== 'test' ? Constants.GLOBAL_CACHE_FILE : undefined,
-    fileFlushMillis: 30_000,
-  })
-    .load()
-    .then(async (cache) => {
-      // Delete keys from old cache versions
-      await Promise.all([...Array.from({ length: FileCache.VERSION }).keys()].slice(1)
-        .map(async (prevVersion) => {
-          const keyRegex = new RegExp(`^V${prevVersion}\\|`);
-          return cache.delete(keyRegex);
-        }));
-      return cache;
-    });
+  private static cache: Cache<CacheValue> | Promise<Cache<CacheValue>> = new Cache<CacheValue>();
 
   private static enabled = true;
 
   public static disable(): void {
     this.enabled = false;
+  }
+
+  public static loadFile(filePath: string): void {
+    this.cache = new Cache<CacheValue>({
+      filePath,
+      fileFlushMillis: 30_000,
+    })
+      .load()
+      .then(async (cache) => {
+        // Delete keys from old cache versions
+        await Promise.all([...Array.from({ length: FileCache.VERSION }).keys()].slice(1)
+          .map(async (prevVersion) => {
+            const keyRegex = new RegExp(`^V${prevVersion}\\|`);
+            return cache.delete(keyRegex);
+          }));
+        return cache;
+      });
   }
 
   static async getOrComputeFile(
@@ -58,7 +61,7 @@ export default class FileCache {
     // NOTE(cemmer): we're using the cache as a mutex here, so even if this function is called
     //  multiple times concurrently, entries will only be fetched once.
     let computedFile: File | undefined;
-    const cachedValue = await (await this.CACHE).getOrCompute(
+    const cachedValue = await (await this.cache).getOrCompute(
       cacheKey,
       async () => {
         computedFile = await File.fileOf({ filePath }, checksumBitmask);
@@ -111,7 +114,7 @@ export default class FileCache {
     // NOTE(cemmer): we're using the cache as a mutex here, so even if this function is called
     //  multiple times concurrently, entries will only be fetched once.
     let computedEntries: ArchiveEntry<T>[] | undefined;
-    const cachedValue = await (await this.CACHE).getOrCompute(
+    const cachedValue = await (await this.cache).getOrCompute(
       cacheKey,
       async () => {
         computedEntries = await archive.getArchiveEntries(checksumBitmask) as ArchiveEntry<T>[];

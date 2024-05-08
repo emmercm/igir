@@ -733,6 +733,7 @@ export default class ArgumentsParser {
         group: groupReport,
         description: 'Report output location (formatted with moment.js)',
         type: 'string',
+        coerce: ArgumentsParser.getLastValue, // don't allow string[] values
         requiresArg: true,
         default: `./${Constants.COMMAND_NAME}_%YYYY-%MM-%DDT%HH:%mm:%ss.csv`,
       })
@@ -777,8 +778,16 @@ export default class ArgumentsParser {
       })
       .option('disable-cache', {
         group: groupHelpDebug,
-        description: 'Disable the file and archive entry checksum cache',
+        description: 'Disable the file checksum cache',
         type: 'boolean',
+      })
+      .option('cache-path', {
+        group: groupHelpDebug,
+        description: 'Location for the file checksum cache',
+        type: 'string',
+        coerce: ArgumentsParser.getLastValue, // don't allow string[] values
+        requiresArg: true,
+        conflicts: ['disable-cache'],
       })
       .option('verbose', {
         group: groupHelpDebug,

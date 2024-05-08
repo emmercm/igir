@@ -144,6 +144,7 @@ export interface OptionsProps {
   readonly writerThreads?: number,
   readonly writeRetry?: number,
   readonly disableCache?: boolean,
+  readonly cachePath?: string,
   readonly verbose?: number,
   readonly help?: boolean,
 }
@@ -337,6 +338,8 @@ export default class Options implements OptionsProps {
 
   readonly disableCache: boolean;
 
+  readonly cachePath?: string;
+
   readonly verbose: number;
 
   readonly help: boolean;
@@ -444,6 +447,7 @@ export default class Options implements OptionsProps {
     this.writerThreads = Math.max(options?.writerThreads ?? 0, 1);
     this.writeRetry = Math.max(options?.writeRetry ?? 0, 0);
     this.disableCache = options?.disableCache ?? false;
+    this.cachePath = options?.cachePath;
     this.verbose = options?.verbose ?? 0;
     this.help = options?.help ?? false;
   }
@@ -1173,6 +1177,10 @@ export default class Options implements OptionsProps {
 
   getDisableCache(): boolean {
     return this.disableCache;
+  }
+
+  getCachePath(): string | undefined {
+    return this.cachePath;
   }
 
   getLogLevel(): LogLevel {
