@@ -536,8 +536,15 @@ export default class ArgumentsParser {
         alias: 'L',
         description: `List of comma-separated languages to filter to (supported: ${Internationalization.LANGUAGES.join(', ')})`,
         type: 'string',
-        coerce: (val: string) => val.split(','),
+        coerce: (val: string) => val.toUpperCase().split(','),
         requiresArg: true,
+      })
+      .check((checkArgv) => {
+        const invalidLangs = checkArgv['filter-language']?.filter((lang) => !Internationalization.LANGUAGES.includes(lang));
+        if (invalidLangs !== undefined && invalidLangs.length > 0) {
+          throw new Error(`Invalid --filter-language language${invalidLangs.length !== 1 ? 's' : ''}: ${invalidLangs.join(', ')}`);
+        }
+        return true;
       })
       .option('language-filter', {
         type: 'string',
@@ -554,8 +561,15 @@ export default class ArgumentsParser {
         alias: 'R',
         description: `List of comma-separated regions to filter to (supported: ${Internationalization.REGION_CODES.join(', ')})`,
         type: 'string',
-        coerce: (val: string) => val.split(','),
+        coerce: (val: string) => val.toUpperCase().split(','),
         requiresArg: true,
+      })
+      .check((checkArgv) => {
+        const invalidRegions = checkArgv['filter-region']?.filter((lang) => !Internationalization.REGION_CODES.includes(lang));
+        if (invalidRegions !== undefined && invalidRegions.length > 0) {
+          throw new Error(`Invalid --filter-region region${invalidRegions.length !== 1 ? 's' : ''}: ${invalidRegions.join(', ')}`);
+        }
+        return true;
       })
       .option('region-filter', {
         type: 'string',
@@ -675,18 +689,32 @@ export default class ArgumentsParser {
         alias: 'l',
         description: `List of comma-separated languages in priority order (supported: ${Internationalization.LANGUAGES.join(', ')})`,
         type: 'string',
-        coerce: (val: string) => val.split(','),
+        coerce: (val: string) => val.toUpperCase().split(','),
         requiresArg: true,
         implies: 'single',
+      })
+      .check((checkArgv) => {
+        const invalidLangs = checkArgv['prefer-language']?.filter((lang) => !Internationalization.LANGUAGES.includes(lang));
+        if (invalidLangs !== undefined && invalidLangs.length > 0) {
+          throw new Error(`Invalid --prefer-language language${invalidLangs.length !== 1 ? 's' : ''}: ${invalidLangs.join(', ')}`);
+        }
+        return true;
       })
       .option('prefer-region', {
         group: groupRomPriority,
         alias: 'r',
         description: `List of comma-separated regions in priority order (supported: ${Internationalization.REGION_CODES.join(', ')})`,
         type: 'string',
-        coerce: (val: string) => val.split(','),
+        coerce: (val: string) => val.toUpperCase().split(','),
         requiresArg: true,
         implies: 'single',
+      })
+      .check((checkArgv) => {
+        const invalidRegions = checkArgv['prefer-region']?.filter((lang) => !Internationalization.REGION_CODES.includes(lang));
+        if (invalidRegions !== undefined && invalidRegions.length > 0) {
+          throw new Error(`Invalid --prefer-region region${invalidRegions.length !== 1 ? 's' : ''}: ${invalidRegions.join(', ')}`);
+        }
+        return true;
       })
       .option('prefer-revision-newer', {
         group: groupRomPriority,
@@ -733,6 +761,7 @@ export default class ArgumentsParser {
         group: groupReport,
         description: 'Report output location (formatted with moment.js)',
         type: 'string',
+        coerce: ArgumentsParser.getLastValue, // don't allow string[] values
         requiresArg: true,
         default: `./${Constants.COMMAND_NAME}_%YYYY-%MM-%DDT%HH:%mm:%ss.csv`,
       })
@@ -777,8 +806,16 @@ export default class ArgumentsParser {
       })
       .option('disable-cache', {
         group: groupHelpDebug,
-        description: 'Disable the file and archive entry checksum cache',
+        description: 'Disable the file checksum cache',
         type: 'boolean',
+      })
+      .option('cache-path', {
+        group: groupHelpDebug,
+        description: 'Location for the file checksum cache',
+        type: 'string',
+        coerce: ArgumentsParser.getLastValue, // don't allow string[] values
+        requiresArg: true,
+        conflicts: ['disable-cache'],
       })
       .option('verbose', {
         group: groupHelpDebug,
