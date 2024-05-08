@@ -58,7 +58,7 @@ $ igir --help
   | $$  | $$|    \  | $$  | $$    $$   ROM collection manager
   | $$  | $$|    \  | $$  | $$    $$   https://igir.io/
   | $$  | $$ \$$$$  | $$  | $$$$$$$\
- _| $$_ | $$__| $$ _| $$_ | $$  | $$   v2.6.3
+ _| $$_ | $$__| $$ _| $$_ | $$  | $$   v2.7.0
 |   $$ \ \$$    $$|   $$ \| $$  | $$
  \$$$$$$  \$$$$$$  \$$$$$$ \$$   \$$
 
@@ -79,8 +79,7 @@ Commands (can specify multiple):
                 ories (requires --dat)
 
 ROM input options:
-  -i, --input               Path(s) to ROM files or archives (supports globbing)
-                                                                              [array] [required]
+  -i, --input               Path(s) to ROM files or archives (supports globbing)         [array]
   -I, --input-exclude       Path(s) to ROM files or archives to exclude from processing (support
                             s globbing)                                                  [array]
       --input-min-checksum  The minimum checksum level to calculate and use for matching
@@ -215,7 +214,8 @@ Help & debug options:
       --writer-threads  Maximum number of ROMs to write in parallel        [number] [default: 4]
       --write-retry     Number of additional retries to attempt when writing a file has failed (
                         0 disables retries)                                [number] [default: 2]
-      --disable-cache   Disable the file and archive entry checksum cache              [boolean]
+      --disable-cache   Disable the file checksum cache                                [boolean]
+      --cache-path      Location for the file checksum cache                            [string]
   -v, --verbose         Enable verbose logging, can specify up to three times (-vvv)     [count]
   -h, --help            Show help                                                      [boolean]
 
