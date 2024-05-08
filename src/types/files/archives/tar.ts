@@ -10,9 +10,14 @@ import Archive from './archive.js';
 import ArchiveEntry from './archiveEntry.js';
 
 export default class Tar extends Archive {
-  static readonly SUPPORTED_EXTENSIONS = [
-    '.tar',
-    '.tar.gz', '.tgz',
+  static readonly SUPPORTED_FILES: [string[], Buffer[]][] = [
+    [['.tar'], [
+      Buffer.from('7573746172003030', 'hex'),
+      Buffer.from('7573746172202000', 'hex'),
+    ]],
+    [['.tar.gz', '.tgz'], [
+      Buffer.from('1F8B', 'hex'),
+    ]],
   ];
 
   // eslint-disable-next-line class-methods-use-this

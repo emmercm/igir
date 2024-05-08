@@ -466,7 +466,7 @@ export default class OutputFactory {
 
     if ((options.getDirGameSubdir() === GameSubdirMode.MULTIPLE
         && game.getRoms().length > 1
-        && !FileFactory.isArchive(ext))
+        && !FileFactory.isExtensionArchive(ext))
       || options.getDirGameSubdir() === GameSubdirMode.ALWAYS
     ) {
       output = path.join(game.getName(), output);
@@ -495,9 +495,9 @@ export default class OutputFactory {
 
     const romBasename = this.getRomBasename(game, rom, inputFile);
 
-    if (
-      !(inputFile instanceof ArchiveEntry || FileFactory.isArchive(inputFile.getFilePath()))
-            || options.shouldExtract()
+    if (!(
+      inputFile instanceof ArchiveEntry || FileFactory.isExtensionArchive(inputFile.getFilePath())
+    ) || options.shouldExtract()
     ) {
       // Should extract (if needed), generate the file name from the ROM name
       return romBasename;
