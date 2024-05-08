@@ -30,9 +30,11 @@ export default class ReportGenerator extends Module {
 
     const reportPath = this.options.getReportOutput();
 
+    const anyGamesFoundAtAll = datStatuses
+      .some((datStatus) => datStatus.anyGamesFound(this.options));
     const matchedFileCsvs = (await Promise.all(
       datStatuses
-        .filter((datStatus) => datStatus.anyGamesFound(this.options))
+        .filter((datStatus) => datStatus.anyGamesFound(this.options) || !anyGamesFoundAtAll)
         .sort((a, b) => a.getDATName().localeCompare(b.getDATName()))
         .map(async (datsStatus) => datsStatus.toCsv(this.options)),
     ))
