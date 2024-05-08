@@ -595,7 +595,7 @@ export default class Options implements OptionsProps {
   }
 
   private async scanInputFiles(walkCallback?: FsWalkCallback): Promise<string[]> {
-    return Options.scanPaths(this.input, walkCallback);
+    return Options.scanPaths(this.input, walkCallback, this.shouldWrite() || !this.shouldReport());
   }
 
   private async scanInputExcludeFiles(): Promise<string[]> {

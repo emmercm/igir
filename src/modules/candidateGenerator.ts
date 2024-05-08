@@ -53,7 +53,7 @@ export default class CandidateGenerator extends Module {
   ): Promise<Map<Parent, ReleaseCandidate[]>> {
     if (indexedFiles.getFiles().length === 0) {
       this.progressBar.logTrace(`${dat.getNameShort()}: no input ROMs to make candidates from`);
-      return new Map();
+      return new Map(dat.getParents().map((parent) => ([parent, []])));
     }
 
     const output = new Map<Parent, ReleaseCandidate[]>();
