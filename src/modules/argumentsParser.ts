@@ -181,9 +181,16 @@ export default class ArgumentsParser {
         group: groupRomInput,
         alias: 'i',
         description: 'Path(s) to ROM files or archives (supports globbing)',
-        demandOption: true,
         type: 'array',
         requiresArg: true,
+      })
+      .check((checkArgv) => {
+        const needInput = ['copy', 'move', 'link', 'symlink', 'extract', 'zip', 'test', 'dir2dat', 'fixdat'].filter((command) => checkArgv._.includes(command));
+        if (!checkArgv.input && needInput.length > 0) {
+          // TODO(cememr): print help message
+          throw new Error(`Missing required argument for command${needInput.length !== 1 ? 's' : ''} ${needInput.join(', ')}: --input <path>`);
+        }
+        return true;
       })
       .option('input-exclude', {
         group: groupRomInput,
@@ -280,7 +287,7 @@ export default class ArgumentsParser {
         }
         const needDat = ['report'].filter((command) => checkArgv._.includes(command));
         if ((!checkArgv.dat || checkArgv.dat.length === 0) && needDat.length > 0) {
-          throw new Error(`Missing required option for commands ${needDat.join(', ')}: --dat`);
+          throw new Error(`Missing required argument for commands ${needDat.join(', ')}: --dat`);
         }
         return true;
       })
@@ -408,10 +415,10 @@ export default class ArgumentsParser {
         if (checkArgv.help) {
           return true;
         }
-        const needOutput = ['copy', 'move', 'extract', 'zip', 'clean'].filter((command) => checkArgv._.includes(command));
+        const needOutput = ['copy', 'move', 'link', 'symlink', 'extract', 'zip', 'clean'].filter((command) => checkArgv._.includes(command));
         if (!checkArgv.output && needOutput.length > 0) {
           // TODO(cememr): print help message
-          throw new Error(`Missing required option for command${needOutput.length !== 1 ? 's' : ''} ${needOutput.join(', ')}: --output <path>`);
+          throw new Error(`Missing required argument for command${needOutput.length !== 1 ? 's' : ''} ${needOutput.join(', ')}: --output <path>`);
         }
         const needClean = ['clean-exclude', 'clean-dry-run'].filter((option) => checkArgv[option]);
         if (!checkArgv._.includes('clean') && needClean.length > 0) {

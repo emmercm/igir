@@ -200,6 +200,14 @@ describe('options', () => {
   });
 
   it('should parse "input"', async () => {
+    expect(() => argumentsParser.parse(['copy', '--output', os.devNull])).toThrow(/missing required argument/i);
+    expect(() => argumentsParser.parse(['move', '--output', os.devNull])).toThrow(/missing required argument/i);
+    expect(() => argumentsParser.parse(['link', '--output', os.devNull])).toThrow(/missing required argument/i);
+    expect(() => argumentsParser.parse(['copy', 'extract', '--output', os.devNull])).toThrow(/missing required argument/i);
+    expect(() => argumentsParser.parse(['copy', 'zip', '--output', os.devNull])).toThrow(/missing required argument/i);
+    expect(() => argumentsParser.parse(['copy', 'test', '--output', os.devNull])).toThrow(/missing required argument/i);
+    expect(() => argumentsParser.parse(['dir2dat', '--output', os.devNull])).toThrow(/missing required argument/i);
+    expect(() => argumentsParser.parse(['fixdat', '--output', os.devNull])).toThrow(/missing required argument/i);
     await expect(argumentsParser.parse(['copy', '--input', 'nonexistentfile', '--output', os.devNull]).scanInputFilesWithoutExclusions()).rejects.toThrow(/no files found/i);
     await expect(argumentsParser.parse(['copy', '--input', os.devNull, '--output', os.devNull]).scanInputFilesWithoutExclusions()).resolves.toHaveLength(0);
 
@@ -232,7 +240,7 @@ describe('options', () => {
   });
 
   it('should parse "dat"', async () => {
-    expect(() => argumentsParser.parse(['report', '--input', os.devNull])).toThrow(/missing required option/i);
+    expect(() => argumentsParser.parse(['report', '--input', os.devNull])).toThrow(/missing required argument/i);
     expect(() => argumentsParser.parse([...dummyCommandAndRequiredArgs, '--dat'])).toThrow(/not enough arguments/i);
     await expect(argumentsParser.parse(dummyCommandAndRequiredArgs).scanDatFilesWithoutExclusions())
       .resolves.toHaveLength(0);
@@ -391,10 +399,12 @@ describe('options', () => {
   it('should parse "output"', () => {
     // Test requirements per command
     expect(() => argumentsParser.parse(['test'])).toThrow(/missing required argument/i);
-    expect(() => argumentsParser.parse(['copy', '--input', os.devNull])).toThrow(/missing required option/i);
-    expect(() => argumentsParser.parse(['move', '--input', os.devNull])).toThrow(/missing required option/i);
-    expect(() => argumentsParser.parse(['copy', 'zip', '--input', os.devNull])).toThrow(/missing required option/i);
-    expect(() => argumentsParser.parse(['copy', 'clean', '--input', os.devNull])).toThrow(/missing required option/i);
+    expect(() => argumentsParser.parse(['copy', '--input', os.devNull])).toThrow(/missing required argument/i);
+    expect(() => argumentsParser.parse(['move', '--input', os.devNull])).toThrow(/missing required argument/i);
+    expect(() => argumentsParser.parse(['link', '--input', os.devNull])).toThrow(/missing required argument/i);
+    expect(() => argumentsParser.parse(['copy', 'extract', '--input', os.devNull])).toThrow(/missing required argument/i);
+    expect(() => argumentsParser.parse(['copy', 'zip', '--input', os.devNull])).toThrow(/missing required argument/i);
+    expect(() => argumentsParser.parse(['copy', 'clean', '--input', os.devNull])).toThrow(/missing required argument/i);
     expect(argumentsParser.parse(['report', '--dat', os.devNull, '--input', os.devNull]).getOutput()).toContain(Constants.GLOBAL_TEMP_DIR);
     // Test value
     expect(argumentsParser.parse(['copy', '--input', os.devNull, '-o', 'foo']).getOutput()).toEqual('foo');
