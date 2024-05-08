@@ -185,6 +185,7 @@ describe('options', () => {
     expect(options.getReaderThreads()).toEqual(8);
     expect(options.getWriterThreads()).toEqual(4);
     expect(options.getDisableCache()).toEqual(false);
+    expect(options.getCachePath()).toBeUndefined();
     expect(options.getLogLevel()).toEqual(LogLevel.WARN);
     expect(options.getHelp()).toEqual(false);
   });
@@ -1167,6 +1168,13 @@ describe('options', () => {
     expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--disable-cache', '--disable-cache']).getDisableCache()).toEqual(true);
     expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--disable-cache', 'false', '--disable-cache', 'true']).getDisableCache()).toEqual(true);
     expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--disable-cache', 'true', '--disable-cache', 'false']).getDisableCache()).toEqual(false);
+  });
+
+  it('should parse "cache-path"', () => {
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs]).getCachePath()).toBeUndefined();
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--cache-path', os.devNull]).getCachePath()).toEqual(os.devNull);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--cache-path', os.devNull, '--cache-path', 'igir.cache']).getCachePath()).toEqual('igir.cache');
+    expect(() => argumentsParser.parse([...dummyCommandAndRequiredArgs, '--disable-cache', '--cache-path', os.devNull])).toThrow(/mutually exclusive/i);
   });
 
   it('should parse "verbose"', () => {

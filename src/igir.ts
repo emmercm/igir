@@ -77,9 +77,17 @@ export default class Igir {
       this.logger.trace('Windows has symlink permissions');
     }
 
+    // File cache options
     if (this.options.getDisableCache()) {
       this.logger.trace('disabling the file cache');
       FileCache.disable();
+    }
+    const cachePath = this.options.getCachePath() ?? Constants.GLOBAL_CACHE_FILE;
+    if (cachePath !== undefined) {
+      this.logger.trace(`setting the file cache path to '${cachePath}'`);
+      FileCache.loadFile(cachePath);
+    } else {
+      this.logger.trace('not using a file for the file cache');
     }
 
     // Scan and process input files
