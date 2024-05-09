@@ -61,11 +61,13 @@
     {
       matchPackageNames: ['node'],
       groupName: 'Node.js',
-      // Renovate's defaults for these options
+      // The Docker images (used to build executables) frequently don't get published until days
+      //  after the Node.js version was updated, so try to prevent immediately failing PRs
+      minimumReleaseAge: '7 days',
+      // Renovate's defaults for these options (overrides our global defaults)
       schedule: 'at any time',
       prCreation: 'immediate',
-      automerge: true,
-      minimumReleaseAge: '0 days'
+      automerge: true
     },
 
     // Group any/all package files in the docs/ directory
@@ -79,7 +81,7 @@
       matchUpdateTypes: ['pin'],
       commitMessageAction: 'pin',
       groupName: 'dependency ranges',
-      // Renovate's defaults for these options
+      // Renovate's defaults for these options (overrides our global defaults)
       schedule: 'at any time',
       prCreation: 'immediate',
       automerge: true,

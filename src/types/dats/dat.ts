@@ -153,6 +153,8 @@ export default abstract class DAT {
         checksumBitmask |= ChecksumBitmask.MD5;
       } else if (rom.getSha1()) {
         checksumBitmask |= ChecksumBitmask.SHA1;
+      } else if (rom.getSha256()) {
+        checksumBitmask |= ChecksumBitmask.SHA256;
       }
     }));
     return checksumBitmask;

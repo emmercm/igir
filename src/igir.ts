@@ -77,9 +77,17 @@ export default class Igir {
       this.logger.trace('Windows has symlink permissions');
     }
 
+    // File cache options
     if (this.options.getDisableCache()) {
       this.logger.trace('disabling the file cache');
       FileCache.disable();
+    }
+    const cachePath = this.options.getCachePath() ?? Constants.GLOBAL_CACHE_FILE;
+    if (cachePath !== undefined) {
+      this.logger.trace(`setting the file cache path to '${cachePath}'`);
+      FileCache.loadFile(cachePath);
+    } else {
+      this.logger.trace('not using a file for the file cache');
     }
 
     // Scan and process input files
@@ -139,7 +147,7 @@ export default class Igir {
       if (dir2DatPath) {
         datsToWrittenFiles.set(filteredDat, [
           ...(datsToWrittenFiles.get(filteredDat) ?? []),
-          await File.fileOf({ filePath: dir2DatPath }),
+          await File.fileOf({ filePath: dir2DatPath }, ChecksumBitmask.NONE),
         ]);
       }
 
@@ -149,7 +157,7 @@ export default class Igir {
       if (fixdatPath) {
         datsToWrittenFiles.set(filteredDat, [
           ...(datsToWrittenFiles.get(filteredDat) ?? []),
-          await File.fileOf({ filePath: fixdatPath }),
+          await File.fileOf({ filePath: fixdatPath }, ChecksumBitmask.NONE),
         ]);
       }
 
@@ -238,7 +246,8 @@ export default class Igir {
       Object.keys(ChecksumBitmask)
         .filter((bitmask): bitmask is keyof typeof ChecksumBitmask => Number.isNaN(Number(bitmask)))
         // Has not been enabled yet
-        .filter((bitmask) => ChecksumBitmask[bitmask] > minimumChecksum)
+        .filter((bitmask) => ChecksumBitmask[bitmask] >= ChecksumBitmask.CRC32)
+        .filter((bitmask) => ChecksumBitmask[bitmask] <= ChecksumBitmask.SHA1)
         .filter((bitmask) => !(matchChecksum & ChecksumBitmask[bitmask]))
         .forEach((bitmask) => {
           matchChecksum |= ChecksumBitmask[bitmask];
@@ -393,7 +402,7 @@ export default class Igir {
 
     const reportProgressBar = await this.logger.addProgressBar('Generating report', ProgressBarSymbol.WRITING);
     await new ReportGenerator(this.options, reportProgressBar).generate(
-      scannedRomFiles.map((file) => file.getFilePath()),
+      scannedRomFiles,
       cleanedOutputFiles,
       datsStatuses,
     );

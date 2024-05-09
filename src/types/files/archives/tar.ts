@@ -5,7 +5,6 @@ import tar from 'tar';
 
 import Constants from '../../../constants.js';
 import FsPoly from '../../../polyfill/fsPoly.js';
-import FileCache from '../fileCache.js';
 import FileChecksums from '../fileChecksums.js';
 import Archive from './archive.js';
 import ArchiveEntry from './archiveEntry.js';
@@ -21,9 +20,8 @@ export default class Tar extends Archive {
     return new Tar(filePath);
   }
 
-  @FileCache.CacheArchiveEntries()
-  async getArchiveEntries(checksumBitmask: number): Promise<ArchiveEntry<Tar>[]> {
-    const archiveEntryPromises: Promise<ArchiveEntry<Tar>>[] = [];
+  async getArchiveEntries(checksumBitmask: number): Promise<ArchiveEntry<this>[]> {
+    const archiveEntryPromises: Promise<ArchiveEntry<this>>[] = [];
 
     // WARN(cemmer): entries in tar archives don't have headers, the entire file has to be read to
     // calculate the CRCs

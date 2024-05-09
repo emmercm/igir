@@ -203,21 +203,36 @@ export default class CandidateWriter extends Module {
       }
     }
 
-    if (!await this.writeZipFile(dat, releaseCandidate, outputZip, inputToOutputZipEntries)) {
-      // It's expected that an error was already logged
-      return;
-    }
-
-    if (this.options.shouldTest()) {
-      const writtenTest = await this.testZipContents(
+    for (let i = 0; i <= this.options.getWriteRetry(); i += 1) {
+      const written = await this.writeZipFile(
         dat,
         releaseCandidate,
-        outputZip.getFilePath(),
-        inputToOutputZipEntries.map((entry) => entry[1]),
+        outputZip,
+        inputToOutputZipEntries,
       );
-      if (writtenTest) {
-        this.progressBar.logError(`${dat.getNameShort()}: ${releaseCandidate.getName()}: ${outputZip.getFilePath()}: written zip ${writtenTest}`);
-        return;
+
+      if (written && !this.options.shouldTest()) {
+        // Successfully written, unknown if valid
+        break;
+      }
+      if (written && this.options.shouldTest()) {
+        const writtenTest = await this.testZipContents(
+          dat,
+          releaseCandidate,
+          outputZip.getFilePath(),
+          inputToOutputZipEntries.map((entry) => entry[1]),
+        );
+        if (!writtenTest) {
+          // Successfully validated
+          break;
+        }
+        const message = `${dat.getNameShort()}: ${releaseCandidate.getName()}: ${outputZip.getFilePath()}: written zip ${writtenTest}`;
+        if (i < this.options.getWriteRetry()) {
+          this.progressBar.logWarn(`${message}, retrying`);
+        } else {
+          this.progressBar.logError(message);
+          return; // final error, do not continue
+        }
       }
     }
 
@@ -275,6 +290,12 @@ export default class CandidateWriter extends Module {
         continue;
       }
       const actualFile = actualEntriesByPath.get(entryPath) as ArchiveEntry<Zip>;
+      if (actualFile.getSha256()
+        && expectedFile.getSha256()
+        && actualFile.getSha256() !== expectedFile.getSha256()
+      ) {
+        return `has the SHA256 ${actualFile.getSha256()}, expected ${expectedFile.getSha256()}`;
+      }
       if (actualFile.getSha1()
         && expectedFile.getSha1()
         && actualFile.getSha1() !== expectedFile.getSha1()
@@ -361,8 +382,25 @@ export default class CandidateWriter extends Module {
       .reduce((sum, file) => sum + file.getSize(), 0);
     this.progressBar.logTrace(`${dat.getNameShort()}: ${releaseCandidate.getName()}: writing ${fsPoly.sizeReadable(totalBytes)} of ${uniqueInputToOutputEntries.length.toLocaleString()} file${uniqueInputToOutputEntries.length !== 1 ? 's' : ''}`);
 
-    for (const [inputRomFile, outputRomFile] of uniqueInputToOutputEntries) {
-      await this.writeRawSingle(dat, releaseCandidate, inputRomFile, outputRomFile);
+    // Group the input->output pairs by the input file's path. The goal is to extract entries from
+    // the same input archive at the same time, to benefit from batch extraction.
+    const uniqueInputToOutputEntriesMap = uniqueInputToOutputEntries
+      .reduce((map, [inputRomFile, outputRomFile]) => {
+        map.set(inputRomFile.getFilePath(), [
+          ...(map.get(inputRomFile.getFilePath()) ?? []),
+          [inputRomFile, outputRomFile],
+        ]);
+        return map;
+      }, new Map<string, [File, File][]>());
+    for (const groupedInputToOutput of uniqueInputToOutputEntriesMap.values()) {
+      await Promise.all(groupedInputToOutput.map(
+        async ([inputRomFile, outputRomFile]) => this.writeRawSingle(
+          dat,
+          releaseCandidate,
+          inputRomFile,
+          outputRomFile,
+        ),
+      ));
     }
   }
 
@@ -401,20 +439,31 @@ export default class CandidateWriter extends Module {
       }
     }
 
-    if (!await this.writeRawFile(dat, releaseCandidate, inputRomFile, outputFilePath)) {
-      // It's expected that an error was already logged
-      return;
-    }
-    if (this.options.shouldTest()) {
-      const writtenTest = await this.testWrittenRaw(
-        dat,
-        releaseCandidate,
-        outputFilePath,
-        outputRomFile,
-      );
-      if (writtenTest) {
-        this.progressBar.logError(`${dat.getNameShort()}: ${releaseCandidate.getName()}: ${outputFilePath}: written file ${writtenTest}`);
-        return;
+    for (let i = 0; i <= this.options.getWriteRetry(); i += 1) {
+      const written = await this.writeRawFile(dat, releaseCandidate, inputRomFile, outputFilePath);
+
+      if (written && !this.options.shouldTest()) {
+        // Successfully written, unknown if valid
+        break;
+      }
+      if (written && this.options.shouldTest()) {
+        const writtenTest = await this.testWrittenRaw(
+          dat,
+          releaseCandidate,
+          outputFilePath,
+          outputRomFile,
+        );
+        if (!writtenTest) {
+          // Successfully validated
+          break;
+        }
+        const message = `${dat.getNameShort()}: ${releaseCandidate.getName()}: ${outputFilePath}: written file ${writtenTest}`;
+        if (i < this.options.getWriteRetry()) {
+          this.progressBar.logWarn(`${message}, retrying`);
+        } else {
+          this.progressBar.logError(message);
+          return; // final error, do not continue
+        }
       }
     }
     this.enqueueFileDeletion(inputRomFile);
@@ -457,6 +506,12 @@ export default class CandidateWriter extends Module {
       { filePath: outputFilePath },
       expectedFile.getChecksumBitmask(),
     );
+    if (actualFile.getSha256()
+      && expectedFile.getSha256()
+      && actualFile.getSha256() !== expectedFile.getSha256()
+    ) {
+      return `has the SHA256 ${actualFile.getSha256()}, expected ${expectedFile.getSha256()}`;
+    }
     if (actualFile.getSha1()
       && expectedFile.getSha1()
       && actualFile.getSha1() !== expectedFile.getSha1()
@@ -564,6 +619,44 @@ export default class CandidateWriter extends Module {
       await fsPoly.rm(linkPath, { force: true });
     }
 
+    for (let i = 0; i <= this.options.getWriteRetry(); i += 1) {
+      const written = await this.writeRawLink(dat, releaseCandidate, targetPath, linkPath);
+
+      if (written && !this.options.shouldTest()) {
+        // Successfully written, unknown if valid
+        break;
+      }
+      if (written && this.options.shouldTest()) {
+        let writtenTest;
+        if (this.options.getSymlink()) {
+          writtenTest = await CandidateWriter.testWrittenSymlink(linkPath, targetPath);
+        } else {
+          writtenTest = await CandidateWriter.testWrittenHardlink(
+            linkPath,
+            inputRomFile.getFilePath(),
+          );
+        }
+        if (!writtenTest) {
+          // Successfully validated
+          break;
+        }
+        const message = `${dat.getNameShort()}: ${releaseCandidate.getName()} ${linkPath}: written link ${writtenTest}`;
+        if (i < this.options.getWriteRetry()) {
+          this.progressBar.logWarn(`${message}, retrying`);
+        } else {
+          this.progressBar.logError(message);
+          return; // final error, do not continue
+        }
+      }
+    }
+  }
+
+  private async writeRawLink(
+    dat: DAT,
+    releaseCandidate: ReleaseCandidate,
+    targetPath: string,
+    linkPath: string,
+  ): Promise<boolean> {
     try {
       await CandidateWriter.ensureOutputDirExists(linkPath);
       if (this.options.getSymlink()) {
@@ -573,24 +666,10 @@ export default class CandidateWriter extends Module {
         this.progressBar.logInfo(`${dat.getNameShort()}: ${releaseCandidate.getName()}: creating hard link '${targetPath}' -> '${linkPath}'`);
         await fsPoly.hardlink(targetPath, linkPath);
       }
+      return true;
     } catch (error) {
       this.progressBar.logError(`${dat.getNameShort()}: ${releaseCandidate.getName()}: ${linkPath}: failed to link from ${targetPath}: ${error}`);
-      return;
-    }
-
-    if (this.options.shouldTest()) {
-      let writtenTest;
-      if (this.options.getSymlink()) {
-        writtenTest = await CandidateWriter.testWrittenSymlink(linkPath, targetPath);
-      } else {
-        writtenTest = await CandidateWriter.testWrittenHardlink(
-          linkPath,
-          inputRomFile.getFilePath(),
-        );
-      }
-      if (writtenTest) {
-        this.progressBar.logError(`${dat.getNameShort()}: ${releaseCandidate.getName()} ${linkPath}: written link ${writtenTest}`);
-      }
+      return false;
     }
   }
 

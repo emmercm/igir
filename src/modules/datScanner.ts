@@ -394,6 +394,7 @@ export default class DATScanner extends Scanner {
         crc32: row.crc,
         md5: row.md5,
         sha1: row.sha1,
+        sha256: row.sha256,
       });
       const gameName = row.name.replace(/\.[^.]*$/, '');
       return new Game({
@@ -423,6 +424,7 @@ export default class DATScanner extends Scanner {
           row.crc.match(/^[0-9a-f]{8}$/) !== null
             || row.md5.match(/^[0-9a-f]{32}$/) !== null
             || row.sha1.match(/^[0-9a-f]{40}$/) !== null
+            || row.sha256.match(/^[0-9a-f]{64}$/) !== null
         ))
         .on('error', reject)
         .on('data', (row) => {
@@ -476,6 +478,7 @@ export default class DATScanner extends Scanner {
             && (rom.getCrc32() === undefined || rom.getCrc32() !== '00000000')
             && (rom.getMd5() === undefined || rom.getMd5() !== 'd41d8cd98f00b204e9800998ecf8427e')
             && (rom.getSha1() === undefined || rom.getSha1() !== 'da39a3ee5e6b4b0d3255bfef95601890afd80709')
+            && (rom.getSha256() === undefined || rom.getSha256() !== 'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855')
           ));
         return game.withProps({ rom: roms });
       });

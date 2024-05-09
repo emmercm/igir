@@ -112,6 +112,17 @@ test.each([
     'Doom 3 (USA, Asia)',
     'Doom 3 (USA, Asia) (Limited Collector\'s Edition)',
   ], 'Doom 3 (Europe) (En,Fr,Es,It)'],
+  [[
+    'All Star Tennis \'99 (Europe) (En,Fr,De,Es,It)',
+    'All Star Tennis 99 (USA)',
+  ], 'All Star Tennis 99 (USA)'],
+  // https://emulation.gametechwiki.com/index.php/GoodTools
+  [[
+    'A game (1990)(Side A).zip',
+    'A game (1990)(Side A)[a].zip',
+    'A game (1990)(Side A)[a2].zip',
+    'A game (1990)(Side A)[a3].zip',
+  ], 'A game (1990)(Side A).zip'],
   // https://www.tosecdev.org/tosec-naming-convention
   [[
     'Legend of TOSEC, The (19xx)',

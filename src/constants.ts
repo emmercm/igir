@@ -42,9 +42,22 @@ process.once('beforeExit', async () => {
   });
 });
 
-const GLOBAL_CACHE_DIR = path.resolve(ROOT_DIR).startsWith(os.tmpdir())
-  ? os.homedir()
-  : ROOT_DIR;
+const GLOBAL_CACHE_FILE = [
+  path.resolve(ROOT_DIR),
+  os.homedir(),
+  process.cwd(),
+]
+  .filter((dir) => dir && !dir.startsWith(os.tmpdir()))
+  .map((dir) => path.join(dir, `${COMMAND_NAME}.cache`))
+  .sort((a, b) => (fs.existsSync(a) ? 1 : 0) - (fs.existsSync(b) ? 1 : 0))
+  .find((file) => {
+    try {
+      fsPoly.touchSync(file);
+      return true;
+    } catch {
+      return false;
+    }
+  });
 
 /**
  * A static class of constants that are determined at startup, to be used widely.
@@ -62,7 +75,7 @@ export default class Constants {
 
   static readonly GLOBAL_TEMP_DIR = GLOBAL_TEMP_DIR;
 
-  static readonly GLOBAL_CACHE_FILE = path.join(GLOBAL_CACHE_DIR, `${COMMAND_NAME}.cache`);
+  static readonly GLOBAL_CACHE_FILE = GLOBAL_CACHE_FILE;
 
   /**
    * A reasonable max of filesystem threads for operations such as:
@@ -85,18 +98,23 @@ export default class Constants {
   /**
    * A reasonable max number of files to write at once.
    */
-  static readonly FILE_READER_DEFAULT_THREADS = 10;
+  static readonly FILE_READER_DEFAULT_THREADS = 8;
 
   /**
-   * Max number of archive entries to process (possibly extract & MD5/SHA1 checksum) at once.
+   * Max number of archive entries to process (possibly extract & MD5/SHA1/SHA256 checksum) at once.
    */
-  static readonly ARCHIVE_ENTRY_SCANNER_THREADS_PER_ARCHIVE = 5;
+  static readonly ARCHIVE_ENTRY_SCANNER_THREADS_PER_ARCHIVE = this.FILE_READER_DEFAULT_THREADS / 2;
 
   /**
    * A reasonable max number of ROM release candidates to write at once. This will be the limiting
    * factor for consoles with many small ROMs.
    */
-  static readonly ROM_WRITER_DEFAULT_THREADS = 10;
+  static readonly ROM_WRITER_DEFAULT_THREADS = this.FILE_READER_DEFAULT_THREADS / 2;
+
+  /**
+   * The number of additional retry attempts to write a file if the write or test fails.
+   */
+  static readonly ROM_WRITER_ADDITIONAL_RETRIES = 2;
 
   /**
    * Max number of files to recycle/delete at once.

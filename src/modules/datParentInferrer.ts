@@ -119,6 +119,7 @@ export default class DATParentInferrer extends Module {
       .replace(/\(Version [0-9.]+[a-z]*\)/i, '')
       // ***** Good Tools *****
       .replace(/\[!\]/, '')
+      .replace(/\[a[0-9]*\]/, '')
       .replace(/\[b[0-9]*\]/, '')
       .replace(/\[bf\]/, '')
       .replace(/\[c\]/, '')
@@ -138,7 +139,9 @@ export default class DATParentInferrer extends Module {
       .replace(/\(M[0-9]+\)/, '') // language
       .replace(/\((CW|CW-R|FW|GW|GW-R|LW|PD|SW|SW-R)\)/i, '') // copyright
       .replace(/\((alpha|beta|preview|pre-release|proto)\)/i, '') // development
-      .replace(/(\[(cr|f|h|m|p|t|tr|o|u|v|b|a|!)( [a-z0-9.+ -]+)?\])+/i, '')
+      .replace(/(\[(cr|f|h|m|p|t|tr|o|u|v|b|a|!)([0-9]+| [^\]]+)?\])+/i, '')
+      // ***** Specific cases *****
+      .replace(/'([0-9][0-9])/, '$1') // year abbreviations
       // ***** Console-specific *****
       // Nintendo - Game Boy
       .replace(/\(SGB Enhanced\)/i, '')
