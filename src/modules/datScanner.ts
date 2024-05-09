@@ -16,6 +16,8 @@ import Header from '../types/dats/logiqx/header.js';
 import LogiqxDAT from '../types/dats/logiqx/logiqxDat.js';
 import MameDAT from '../types/dats/mame/mameDat.js';
 import ROM from '../types/dats/rom.js';
+import SoftwareListDAT from '../types/dats/softwarelist/softwareListDat.js';
+import SoftwareListsDAT from '../types/dats/softwarelist/softwareListsDat.js';
 import File from '../types/files/file.js';
 import { ChecksumBitmask } from '../types/files/fileChecksums.js';
 import Options from '../types/options.js';
@@ -258,7 +260,25 @@ export default class DATScanner extends Scanner {
       try {
         return MameDAT.fromObject(datObject.mame);
       } catch (error) {
-        this.progressBar.logTrace(`${datFile.toString()}: failed to parse DAT object: ${error}`);
+        this.progressBar.logTrace(`${datFile.toString()}: failed to parse MAME DAT object: ${error}`);
+        return undefined;
+      }
+    }
+
+    if (datObject.softwarelists) {
+      try {
+        return SoftwareListsDAT.fromObject(datObject.softwarelists);
+      } catch (error) {
+        this.progressBar.logTrace(`${datFile.toString()}: failed to parse software list DAT object: ${error}`);
+        return undefined;
+      }
+    }
+
+    if (datObject.softwarelist) {
+      try {
+        return SoftwareListDAT.fromObject(datObject.softwarelist);
+      } catch (error) {
+        this.progressBar.logTrace(`${datFile.toString()}: failed to parse software list DAT object: ${error}`);
         return undefined;
       }
     }
@@ -271,7 +291,7 @@ export default class DATScanner extends Scanner {
     /**
      * Validation that this might be a CMPro file.
      */
-    if (fileContents.match(/^(clrmamepro|game|resource) \(\r?\n(\t.+\r?\n)+\)$/m) === null) {
+    if (fileContents.match(/^(clrmamepro|game|resource) \(\r?\n(\s.+\r?\n)+\)$/m) === null) {
       return undefined;
     }
 
@@ -376,7 +396,7 @@ export default class DATScanner extends Scanner {
         sha1: row.sha1,
         sha256: row.sha256,
       });
-      const gameName = row.name.replace(/\.[^\\/]+$/, '');
+      const gameName = row.name.replace(/\.[^.]*$/, '');
       return new Game({
         name: gameName,
         description: gameName,
