@@ -12,23 +12,59 @@ import ArchiveEntry from './archiveEntry.js';
 export default class SevenZip extends Archive {
   // p7zip `7za i`
   // WARNING: tar+compression doesn't work, you'll be left with a tar file output
-  static readonly SUPPORTED_EXTENSIONS = [
-    '.7z', // 7z
-    // '.bz2', '.bzip2', // bzip2
-    // '.cab', // cab
-    '.gz', '.gzip', // gzip
-    // '.lzma', // lzma
-    // '.lzma86', // lzma86
-    // '.pmd', // ppmd
-    '.zip.001', // split
-    // '.tar', '.ova', // tar
-    // '.xz', // xz
-    '.z', // z
-    '.zip', '.z01', '.zipx', // zip
-    // '.zst', // zstd
-    // '.lz4', // lz4
-    // '.lz5', // lz5
-    // '.liz', // lizard
+  static readonly SUPPORTED_FILES: [string[], Buffer[]][] = [
+    [['.7z'], [
+      Buffer.from('377ABCAF271C', 'hex'),
+    ]],
+    // [['.bz2', '.bzip2'], [
+    //   'BZh',
+    // ]],
+    // [['.cab'], [
+    //   'MSCF',
+    // ]],
+    [['.gz', '.gzip'], [
+      Buffer.from('1F8B', 'hex'),
+    ]],
+    // [['.lzma'], [
+    //   // ???
+    // ]],
+    // [['.lzma86'], [
+    //   // ???
+    // ]],
+    // [['.pmd'], [
+    //   // ???
+    // ]],
+    // [['.tar', '.ova'], [
+    //   Buffer.from('7573746172003030', 'hex'),
+    //   Buffer.from('7573746172202000', 'hex'),
+    // ]],
+    // [['.xz'], [
+    //   Buffer.from('FD377A585A00', 'hex'), // LZMA2 compression
+    // ]],
+    [['.z'], [
+      Buffer.from('1F9D', 'hex'), // LZW compression
+      Buffer.from('1FA0', 'hex'), // LZH compression
+    ]],
+    [['.zip', '.zip.001', '.z01'], [
+      Buffer.from('504B0304', 'hex'),
+      Buffer.from('504B0506', 'hex'), // empty archive
+      Buffer.from('504B0708', 'hex'), // spanned archive
+    ]],
+    [['.zipx', '.zx01'], [
+      // ???
+    ]],
+    // [['.zst'], [
+    //   Buffer.from('28B52FFD', 'hex'),
+    // ]],
+    // [['.lz4'], [
+    //   Buffer.from('04224D18', 'hex'),
+    // ]],
+    // [['.lz5'], [
+    //   // ???
+    // ]],
+    // [['.liz'], [
+    //   // ???
+    // ]],
   ];
 
   private static readonly LIST_MUTEX = new Mutex();

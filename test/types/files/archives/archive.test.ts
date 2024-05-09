@@ -12,10 +12,10 @@ import FileFactory from '../../../../src/types/files/fileFactory.js';
 
 describe('getArchiveEntries', () => {
   test.each([...new Set([
-    ...Zip.SUPPORTED_EXTENSIONS,
-    ...Tar.SUPPORTED_EXTENSIONS,
-    ...Rar.SUPPORTED_EXTENSIONS,
-    ...SevenZip.SUPPORTED_EXTENSIONS,
+    ...Zip.SUPPORTED_FILES.flatMap(([exts]) => exts),
+    ...Tar.SUPPORTED_FILES.flatMap(([exts]) => exts),
+    ...Rar.SUPPORTED_FILES.flatMap(([exts]) => exts),
+    ...SevenZip.SUPPORTED_FILES.flatMap(([exts]) => exts),
   ])])('should throw when the file doesn\'t exist: %s', async (extension) => {
     const tempFile = (await fsPoly.mktemp(path.join(Constants.GLOBAL_TEMP_DIR, 'file'))) + extension;
     await expect(FileFactory.filesFrom(tempFile)).rejects.toThrow();
