@@ -108,6 +108,7 @@ export default class FileFactory {
         stream.on('end', () => resolve(Buffer.concat(chunks)));
         stream.on('error', reject);
       });
+      stream.destroy();
     } catch {
       // Fail silently on assumed I/O errors
       return undefined;
