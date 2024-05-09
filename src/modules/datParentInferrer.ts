@@ -71,6 +71,7 @@ export default class DATParentInferrer extends Module {
 
   private static stripGameVariants(name: string): string {
     return name
+      // TODO(cemmer): strip any directories from the game name (i.e. HTGD)
       // ***** Retail types *****
       .replace(/\(Alt( [a-z0-9. ]*)?\)/i, '')
       .replace(/\([^)]*Collector's Edition\)/i, '')
@@ -139,6 +140,8 @@ export default class DATParentInferrer extends Module {
       .replace(/\((CW|CW-R|FW|GW|GW-R|LW|PD|SW|SW-R)\)/i, '') // copyright
       .replace(/\((alpha|beta|preview|pre-release|proto)\)/i, '') // development
       .replace(/(\[(cr|f|h|m|p|t|tr|o|u|v|b|a|!)([0-9]+| [^\]]+)?\])+/i, '')
+      // ***** Specific cases *****
+      .replace(/'([0-9][0-9])/, '$1') // year abbreviations
       // ***** Console-specific *****
       // Nintendo - Game Boy
       .replace(/\(SGB Enhanced\)/i, '')

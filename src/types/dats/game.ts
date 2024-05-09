@@ -96,6 +96,8 @@ export default class Game implements GameProps {
   @Expose({ name: 'cloneof' })
   readonly cloneOf?: string;
 
+  // TODO(cemmer): support cloneofid
+
   @Expose({ name: 'romof' })
   readonly romOf?: string;
 
