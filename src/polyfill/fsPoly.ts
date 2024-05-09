@@ -435,11 +435,11 @@ export default class FsPoly {
 
   static async writeFile(
     filePath: PathLike,
-    data: string | NodeJS.ArrayBufferView,
+    data: string | Uint8Array,
     options?: ObjectEncodingOptions,
   ): Promise<void> {
     const file = await fs.promises.open(filePath, 'w');
-    await fs.promises.writeFile(file, data, options);
+    await file.writeFile(data, options);
     await file.sync(); // emulate fs.promises.writeFile() flush:true added in v21.0.0
     await file.close();
   }

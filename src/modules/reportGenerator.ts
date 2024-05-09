@@ -1,7 +1,7 @@
 import ProgressBar from '../console/progressBar.js';
-import ArrayPoly from '../polyfill/arrayPoly.js';
 import FsPoly from '../polyfill/fsPoly.js';
 import DATStatus, { GameStatus } from '../types/datStatus.js';
+import File from '../types/files/file.js';
 import Options from '../types/options.js';
 import Module from './module.js';
 
@@ -22,7 +22,7 @@ export default class ReportGenerator extends Module {
    * Generate the report.
    */
   async generate(
-    scannedRomFiles: string[],
+    scannedRomFiles: File[],
     cleanedOutputFiles: string[],
     datStatuses: DATStatus[],
   ): Promise<void> {
@@ -47,19 +47,38 @@ export default class ReportGenerator extends Module {
         return csv.split('\n').slice(1).join('\n');
       });
 
-    const usedFiles = new Set(datStatuses
+    const usedFilePaths = new Set(datStatuses
       .flatMap((datStatus) => datStatus.getInputFiles())
       .map((file) => file.getFilePath()));
-    const unusedFiles = scannedRomFiles
-      .reduce(ArrayPoly.reduceUnique(), [])
-      .filter((inputFile) => !usedFiles.has(inputFile))
+    const usedHashes = new Set(datStatuses
+      .flatMap((datStatus) => datStatus.getInputFiles())
+      .map((file) => file.hashCode()));
+
+    const duplicateFilePaths = scannedRomFiles
+      .filter((inputFile) => !usedFilePaths.has(inputFile.getFilePath())
+          && usedHashes.has(inputFile.hashCode()))
+      .map((inputFile) => inputFile.getFilePath())
+      .filter((inputFile) => !usedFilePaths.has(inputFile))
       .sort();
-    const unusedCsv = await DATStatus.filesToCsv(unusedFiles, GameStatus.UNUSED);
+    const duplicateCsv = await DATStatus.filesToCsv(duplicateFilePaths, GameStatus.DUPLICATE);
+
+    const unusedFilePaths = scannedRomFiles
+      .filter((inputFile) => !usedFilePaths.has(inputFile.getFilePath())
+          && !usedHashes.has(inputFile.hashCode()))
+      .map((inputFile) => inputFile.getFilePath())
+      .filter((inputFile) => !usedFilePaths.has(inputFile))
+      .sort();
+    const unusedCsv = await DATStatus.filesToCsv(unusedFilePaths, GameStatus.UNUSED);
 
     const cleanedCsv = await DATStatus.filesToCsv(cleanedOutputFiles, GameStatus.DELETED);
 
     this.progressBar.logInfo(`writing report '${reportPath}'`);
-    const rows = [...matchedFileCsvs, unusedCsv, cleanedCsv].filter((csv) => csv);
+    const rows = [
+      ...matchedFileCsvs,
+      duplicateCsv,
+      unusedCsv,
+      cleanedCsv,
+    ].filter((csv) => csv);
     await FsPoly.writeFile(reportPath, rows.join('\n'));
     this.progressBar.logTrace(`wrote ${datStatuses.length.toLocaleString()} CSV row${datStatuses.length !== 1 ? 's' : ''}: ${reportPath}`);
 
