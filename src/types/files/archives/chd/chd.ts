@@ -17,7 +17,12 @@ import ChdBinCueParser from './chdBinCueParser.js';
 import ChdGdiParser from './chdGdiParser.js';
 
 export default class Chd extends Archive {
-  static readonly SUPPORTED_EXTENSIONS = ['.chd'];
+  static readonly SUPPORTED_FILES: [string[], Buffer[]][] = [
+    [['.chd'], [
+      // https://www.psxdev.net/forum/viewtopic.php?t=3980
+      Buffer.from('MComprHD'),
+    ]],
+  ];
 
   private tempSingletonHandles = 0;
 
