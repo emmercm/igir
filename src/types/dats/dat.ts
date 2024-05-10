@@ -80,11 +80,11 @@ export default abstract class DAT {
       .replace('Unofficial', '')
       // Suffixes
       .replace('Datfile', '')
-      .replace('Games', '')
       .replace('(Deprecated)', '')
       .replace(/\(Parent-Clone\)/g, '')
       .replace('(WIP)', '')
       // Cleanup
+      .replace(/-( +-)+/g, '- ')
       .replace(/^[ -]+/, '')
       .replace(/[ -]+$/, '')
       .replace(/  +/g, ' ')
