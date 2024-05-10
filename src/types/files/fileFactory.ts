@@ -3,6 +3,7 @@ import path from 'node:path';
 
 import Archive from './archives/archive.js';
 import ArchiveEntry from './archives/archiveEntry.js';
+import Chd from './archives/chd/chd.js';
 import Rar from './archives/rar.js';
 import SevenZip from './archives/sevenZip.js';
 import Tar from './archives/tar.js';
@@ -75,6 +76,11 @@ export default class FileFactory {
       .some((ext) => filePath.toLowerCase().endsWith(ext))
     ) {
       archive = new SevenZip(filePath);
+    } else if (Chd.SUPPORTED_FILES
+      .flatMap(([exts]) => exts)
+      .some((ext) => filePath.toLowerCase().endsWith(ext))
+    ) {
+      archive = new Chd(filePath);
     } else {
       throw new Error(`unknown archive type: ${path.extname(filePath)}`);
     }
@@ -97,6 +103,7 @@ export default class FileFactory {
       ...Tar.SUPPORTED_FILES.flatMap(([, signatures]) => signatures),
       ...Rar.SUPPORTED_FILES.flatMap(([, signatures]) => signatures),
       ...SevenZip.SUPPORTED_FILES.flatMap(([, signatures]) => signatures),
+      ...Chd.SUPPORTED_FILES.flatMap(([, signatures]) => signatures),
     ].reduce((max, signature) => Math.max(max, signature.length), 0);
 
     let fileSignature: Buffer;
@@ -135,6 +142,11 @@ export default class FileFactory {
       .some((sig) => fileSignature.subarray(0, sig.length).equals(sig))
     ) {
       archive = new SevenZip(filePath);
+    } else if (Chd.SUPPORTED_FILES
+      .flatMap(([, signatures]) => signatures)
+      .some((sig) => fileSignature.subarray(0, sig.length).equals(sig))
+    ) {
+      archive = new Chd(filePath);
     } else {
       return undefined;
     }
@@ -148,6 +160,7 @@ export default class FileFactory {
       ...Tar.SUPPORTED_FILES.flatMap(([exts]) => exts),
       ...Rar.SUPPORTED_FILES.flatMap(([exts]) => exts),
       ...SevenZip.SUPPORTED_FILES.flatMap(([exts]) => exts),
+      ...Chd.SUPPORTED_FILES.flatMap(([exts]) => exts),
     ].some((ext) => filePath.toLowerCase().endsWith(ext));
   }
 }

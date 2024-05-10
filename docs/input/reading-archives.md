@@ -8,15 +8,16 @@
 
 | Extension                | Contains file CRC32s | `igir` can extract without a third-party binary | `igir` can checksum without temporary files |
 |--------------------------|----------------------|-------------------------------------------------|---------------------------------------------|
-| `.7z`                    | ✅                    | ❌                                               | ❌                                           |
-| `.gz`, `.gzip`           | ❌ CRC16              | ❌                                               | ❌                                           |
+| `.7z`                    | ✅                    | ❌ `7za`                                         | ❌                                           |
+| `.chd`                   | ❌ SHA1               | ❌ `chdman`                                      | ❌                                           |
+| `.gz`, `.gzip`           | ❌ CRC16              | ❌ `7za`                                         | ❌                                           |
 | `.rar`                   | ✅                    | ✅                                               | ❌                                           |
 | `.tar`                   | ❌                    | ✅                                               | ✅ ≤64MiB                                    |
 | `.tar.gz`, `.tgz`        | ❌                    | ✅                                               | ✅ ≤64MiB                                    |
-| `.z01`                   | ✅                    | ❌                                               | ❌                                           |
+| `.z01`                   | ✅                    | ❌ `7za`                                         | ❌                                           |
 | `.zip` (including zip64) | ✅                    | ✅                                               | ✅ ≤64MiB                                    |
-| `.zip.001`               | ✅                    | ❌                                               | ❌                                           |
-| `.zipx`                  | ✅                    | ❌                                               | ❌                                           |
+| `.zip.001`               | ✅                    | ❌ `7za`                                         | ❌                                           |
+| `.zipx`                  | ✅                    | ❌ `7za`                                         | ❌                                           |
 
 **You should prefer archive formats that have CRC32 checksum information for each file.**
 

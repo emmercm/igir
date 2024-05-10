@@ -4,6 +4,7 @@ import Constants from '../../../../src/constants.js';
 import fsPoly from '../../../../src/polyfill/fsPoly.js';
 import Archive from '../../../../src/types/files/archives/archive.js';
 import ArchiveEntry from '../../../../src/types/files/archives/archiveEntry.js';
+import Chd from '../../../../src/types/files/archives/chd/chd.js';
 import Rar from '../../../../src/types/files/archives/rar.js';
 import SevenZip from '../../../../src/types/files/archives/sevenZip.js';
 import Tar from '../../../../src/types/files/archives/tar.js';
@@ -16,6 +17,7 @@ describe('getArchiveEntries', () => {
     ...Tar.SUPPORTED_FILES.flatMap(([exts]) => exts),
     ...Rar.SUPPORTED_FILES.flatMap(([exts]) => exts),
     ...SevenZip.SUPPORTED_FILES.flatMap(([exts]) => exts),
+    ...Chd.SUPPORTED_FILES.flatMap(([exts]) => exts),
   ])])('should throw when the file doesn\'t exist: %s', async (extension) => {
     const tempFile = (await fsPoly.mktemp(path.join(Constants.GLOBAL_TEMP_DIR, 'file'))) + extension;
     await expect(FileFactory.filesFrom(tempFile)).rejects.toThrow();
