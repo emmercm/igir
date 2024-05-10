@@ -3,10 +3,15 @@ import path from 'node:path';
 
 import Archive from './archives/archive.js';
 import ArchiveEntry from './archives/archiveEntry.js';
+import ArchiveFile from './archives/archiveFile.js';
+import Gzip from './archives/gzip.js';
 import Rar from './archives/rar.js';
 import SevenZip from './archives/sevenZip.js';
 import Tar from './archives/tar.js';
+import Z from './archives/z.js';
 import Zip from './archives/zip.js';
+import ZipSpanned from './archives/zipSpanned.js';
+import ZipX from './archives/zipX.js';
 import File from './file.js';
 import FileCache from './fileCache.js';
 import { ChecksumBitmask } from './fileChecksums.js';
@@ -44,6 +49,16 @@ export default class FileFactory {
     return FileCache.getOrComputeFile(filePath, checksumBitmask);
   }
 
+  public static async archiveFileFrom(
+    archive: Archive,
+    checksumBitmask: number,
+  ): Promise<ArchiveFile> {
+    return new ArchiveFile(
+      archive,
+      await this.fileFrom(archive.getFilePath(), checksumBitmask),
+    );
+  }
+
   /**
    * Assuming we've already checked if the file path has a valid archive extension, assume that
    * archive extension is accurate and parse the archive.
@@ -55,26 +70,22 @@ export default class FileFactory {
     checksumBitmask: number,
   ): Promise<ArchiveEntry<Archive>[]> {
     let archive: Archive;
-    if (Zip.SUPPORTED_FILES
-      .flatMap(([exts]) => exts)
-      .some((ext) => filePath.toLowerCase().endsWith(ext))
-    ) {
+    if (Zip.getExtensions().some((ext) => filePath.toLowerCase().endsWith(ext))) {
       archive = new Zip(filePath);
-    } else if (Tar.SUPPORTED_FILES
-      .flatMap(([exts]) => exts)
-      .some((ext) => filePath.toLowerCase().endsWith(ext))
-    ) {
+    } else if (Tar.getExtensions().some((ext) => filePath.toLowerCase().endsWith(ext))) {
       archive = new Tar(filePath);
-    } else if (Rar.SUPPORTED_FILES
-      .flatMap(([exts]) => exts)
-      .some((ext) => filePath.toLowerCase().endsWith(ext))
-    ) {
+    } else if (Rar.getExtensions().some((ext) => filePath.toLowerCase().endsWith(ext))) {
       archive = new Rar(filePath);
-    } else if (SevenZip.SUPPORTED_FILES
-      .flatMap(([exts]) => exts)
-      .some((ext) => filePath.toLowerCase().endsWith(ext))
-    ) {
+    } else if (Gzip.getExtensions().some((ext) => filePath.toLowerCase().endsWith(ext))) {
+      archive = new Gzip(filePath);
+    } else if (SevenZip.getExtensions().some((ext) => filePath.toLowerCase().endsWith(ext))) {
       archive = new SevenZip(filePath);
+    } else if (Z.getExtensions().some((ext) => filePath.toLowerCase().endsWith(ext))) {
+      archive = new Z(filePath);
+    } else if (ZipSpanned.getExtensions().some((ext) => filePath.toLowerCase().endsWith(ext))) {
+      archive = new ZipSpanned(filePath);
+    } else if (ZipX.getExtensions().some((ext) => filePath.toLowerCase().endsWith(ext))) {
+      archive = new ZipX(filePath);
     } else {
       throw new Error(`unknown archive type: ${path.extname(filePath)}`);
     }
@@ -93,10 +104,15 @@ export default class FileFactory {
     checksumBitmask: number,
   ): Promise<ArchiveEntry<Archive>[] | undefined> {
     const maxSignatureLengthBytes = [
-      ...Zip.SUPPORTED_FILES.flatMap(([, signatures]) => signatures),
-      ...Tar.SUPPORTED_FILES.flatMap(([, signatures]) => signatures),
-      ...Rar.SUPPORTED_FILES.flatMap(([, signatures]) => signatures),
-      ...SevenZip.SUPPORTED_FILES.flatMap(([, signatures]) => signatures),
+      ...Zip.getFileSignatures(),
+      ...Tar.getFileSignatures(),
+      ...Rar.getFileSignatures(),
+      // 7zip
+      ...Gzip.getFileSignatures(),
+      ...SevenZip.getFileSignatures(),
+      ...Z.getFileSignatures(),
+      ...ZipSpanned.getFileSignatures(),
+      ...ZipX.getFileSignatures(),
     ].reduce((max, signature) => Math.max(max, signature.length), 0);
 
     let fileSignature: Buffer;
@@ -115,26 +131,38 @@ export default class FileFactory {
     }
 
     let archive: Archive;
-    if (Zip.SUPPORTED_FILES
-      .flatMap(([, signatures]) => signatures)
+    if (Zip.getFileSignatures()
       .some((sig) => fileSignature.subarray(0, sig.length).equals(sig))
     ) {
       archive = new Zip(filePath);
-    } else if (Tar.SUPPORTED_FILES
-      .flatMap(([, signatures]) => signatures)
+    } else if (Tar.getFileSignatures()
       .some((sig) => fileSignature.subarray(0, sig.length).equals(sig))
     ) {
       archive = new Tar(filePath);
-    } else if (Rar.SUPPORTED_FILES
-      .flatMap(([, signatures]) => signatures)
+    } else if (Rar.getFileSignatures()
       .some((sig) => fileSignature.subarray(0, sig.length).equals(sig))
     ) {
       archive = new Rar(filePath);
-    } else if (SevenZip.SUPPORTED_FILES
-      .flatMap(([, signatures]) => signatures)
+    } else if (Gzip.getFileSignatures()
+      .some((sig) => fileSignature.subarray(0, sig.length).equals(sig))
+    ) {
+      archive = new Gzip(filePath);
+    } else if (SevenZip.getFileSignatures()
       .some((sig) => fileSignature.subarray(0, sig.length).equals(sig))
     ) {
       archive = new SevenZip(filePath);
+    } else if (Z.getFileSignatures()
+      .some((sig) => fileSignature.subarray(0, sig.length).equals(sig))
+    ) {
+      archive = new Z(filePath);
+    } else if (ZipSpanned.getFileSignatures()
+      .some((sig) => fileSignature.subarray(0, sig.length).equals(sig))
+    ) {
+      archive = new ZipSpanned(filePath);
+    } else if (ZipX.getFileSignatures()
+      .some((sig) => fileSignature.subarray(0, sig.length).equals(sig))
+    ) {
+      archive = new ZipX(filePath);
     } else {
       return undefined;
     }
@@ -144,10 +172,15 @@ export default class FileFactory {
 
   static isExtensionArchive(filePath: string): boolean {
     return [
-      ...Zip.SUPPORTED_FILES.flatMap(([exts]) => exts),
-      ...Tar.SUPPORTED_FILES.flatMap(([exts]) => exts),
-      ...Rar.SUPPORTED_FILES.flatMap(([exts]) => exts),
-      ...SevenZip.SUPPORTED_FILES.flatMap(([exts]) => exts),
+      ...Zip.getExtensions(),
+      ...Tar.getExtensions(),
+      ...Rar.getExtensions(),
+      // 7zip
+      ...Gzip.getExtensions(),
+      ...SevenZip.getExtensions(),
+      ...Z.getExtensions(),
+      ...ZipSpanned.getExtensions(),
+      ...ZipX.getExtensions(),
     ].some((ext) => filePath.toLowerCase().endsWith(ext));
   }
 }

@@ -15,6 +15,8 @@ export default abstract class Archive {
 
   protected abstract new(filePath: string): Archive;
 
+  abstract getExtension(): string;
+
   getFilePath(): string {
     return this.filePath;
   }

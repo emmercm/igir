@@ -9,18 +9,27 @@ import Archive from './archive.js';
 import ArchiveEntry from './archiveEntry.js';
 
 export default class Rar extends Archive {
-  static readonly SUPPORTED_FILES: [string[], Buffer[]][] = [
-    [['.rar'], [
-      Buffer.from('526172211A0700', 'hex'), // v1.50+
-      Buffer.from('526172211A070100', 'hex'), // v5.00+
-    ]],
-  ];
-
   private static readonly EXTRACT_MUTEX = new Mutex();
 
   // eslint-disable-next-line class-methods-use-this
   protected new(filePath: string): Archive {
     return new Rar(filePath);
+  }
+
+  static getExtensions(): string[] {
+    return ['.rar'];
+  }
+
+  // eslint-disable-next-line class-methods-use-this
+  getExtension(): string {
+    return Rar.getExtensions()[0];
+  }
+
+  static getFileSignatures(): Buffer[] {
+    return [
+      Buffer.from('526172211A0700', 'hex'), // v1.50+
+      Buffer.from('526172211A070100', 'hex'), // v5.00+
+    ];
   }
 
   async getArchiveEntries(checksumBitmask: number): Promise<ArchiveEntry<this>[]> {
