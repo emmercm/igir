@@ -22,7 +22,7 @@ enum ValueType {
 export default class FileCache {
   private static readonly VERSION = 3;
 
-  private static cache: Cache<CacheValue> | Promise<Cache<CacheValue>> = new Cache<CacheValue>();
+  private static cache: Cache<CacheValue> = new Cache<CacheValue>();
 
   private static enabled = true;
 
@@ -30,41 +30,44 @@ export default class FileCache {
     this.enabled = false;
   }
 
-  public static loadFile(filePath: string): void {
-    this.cache = new Cache<CacheValue>({
+  public static async loadFile(filePath: string): Promise<void> {
+    this.cache = await new Cache<CacheValue>({
       filePath,
       fileFlushMillis: 30_000,
-    })
-      .load()
-      // Cleanup the loaded cache file
-      .then(async (cache) => {
-        // Delete keys from old cache versions
-        await Promise.all([...Array.from({ length: FileCache.VERSION }).keys()].slice(1)
-          .map(async (prevVersion) => {
-            const keyRegex = new RegExp(`^V${prevVersion}\\|`);
-            return cache.delete(keyRegex);
-          }));
-        return cache;
-      })
-      .then(async (cache) => {
-        // Delete keys for deleted files
-        const disks = FsPoly.disksSync();
-        const semaphore = new Semaphore(Constants.MAX_FS_THREADS);
-        await Promise.all([...cache.keys()].map(async (cacheKey) => {
-          const cacheKeyFilePath = cacheKey.split('|')[1];
-          if (!disks.some((disk) => cacheKeyFilePath.startsWith(disk))) {
-            // Don't delete the key if it's for a disk that isn't mounted right now
-            return;
-          }
-          await semaphore.runExclusive(async () => {
-            if (!await FsPoly.exists(cacheKeyFilePath)) {
-              // If the file no longer exists then delete its key from the cache
-              await cache.delete(cacheKeyFilePath);
-            }
-          });
-        }));
-        return cache;
+    }).load();
+
+    // Cleanup the loaded cache file
+    // Delete keys from old cache versions
+    await Promise.all([...Array.from({ length: FileCache.VERSION }).keys()].slice(1)
+      .map(async (prevVersion) => {
+        const keyRegex = new RegExp(`^V${prevVersion}\\|`);
+        return this.cache.delete(keyRegex);
+      }));
+
+    // Delete keys for deleted files
+    const disks = FsPoly.disksSync();
+    const semaphore = new Semaphore(Constants.MAX_FS_THREADS);
+    await Promise.all([...this.cache.keys()].map(async (cacheKey) => {
+      const cacheKeyFilePath = cacheKey.split('|')[1];
+      if (!disks.some((disk) => cacheKeyFilePath.startsWith(disk))) {
+        // Don't delete the key if it's for a disk that isn't mounted right now
+        return;
+      }
+      await semaphore.runExclusive(async () => {
+        if (!await FsPoly.exists(cacheKeyFilePath)) {
+          // If the file no longer exists, then delete its key from the cache
+          await this.cache.delete(cacheKeyFilePath);
+        }
       });
+    }));
+  }
+
+  public static async save(): Promise<void> {
+    if (!this.enabled) {
+      return;
+    }
+
+    await this.cache.save();
   }
 
   static async getOrComputeFile(
@@ -82,7 +85,7 @@ export default class FileCache {
     // NOTE(cemmer): we're using the cache as a mutex here, so even if this function is called
     //  multiple times concurrently, entries will only be fetched once.
     let computedFile: File | undefined;
-    const cachedValue = await (await this.cache).getOrCompute(
+    const cachedValue = await this.cache.getOrCompute(
       cacheKey,
       async () => {
         computedFile = await File.fileOf({ filePath }, checksumBitmask);
@@ -117,7 +120,14 @@ export default class FileCache {
 
     // We didn't compute the file (cache hit), deserialize the properties into a full object
     const cachedFile = cachedValue.value as FileProps;
-    return File.fileOfObject(filePath, cachedFile);
+    return File.fileOfObject(filePath, {
+      ...cachedFile,
+      // Only return the checksums requested
+      crc32: checksumBitmask & ChecksumBitmask.CRC32 ? cachedFile.crc32 : undefined,
+      md5: checksumBitmask & ChecksumBitmask.MD5 ? cachedFile.md5 : undefined,
+      sha1: checksumBitmask & ChecksumBitmask.SHA1 ? cachedFile.sha1 : undefined,
+      sha256: checksumBitmask & ChecksumBitmask.SHA256 ? cachedFile.sha256 : undefined,
+    });
   }
 
   static async getOrComputeEntries<T extends Archive>(
@@ -135,7 +145,7 @@ export default class FileCache {
     // NOTE(cemmer): we're using the cache as a mutex here, so even if this function is called
     //  multiple times concurrently, entries will only be fetched once.
     let computedEntries: ArchiveEntry<T>[] | undefined;
-    const cachedValue = await (await this.cache).getOrCompute(
+    const cachedValue = await this.cache.getOrCompute(
       cacheKey,
       async () => {
         computedEntries = await archive.getArchiveEntries(checksumBitmask) as ArchiveEntry<T>[];
@@ -171,9 +181,8 @@ export default class FileCache {
     // We didn't compute the archive entries (cache hit), deserialize the properties into
     //  full objects
     const cachedEntries = cachedValue.value as ArchiveEntryProps<T>[];
-    return Promise.all(cachedEntries.map(async (props) => ArchiveEntry.entryOf({
+    return Promise.all(cachedEntries.map(async (props) => ArchiveEntry.entryOfObject(archive, {
       ...props,
-      archive,
       // Only return the checksums requested
       crc32: checksumBitmask & ChecksumBitmask.CRC32 ? props.crc32 : undefined,
       md5: checksumBitmask & ChecksumBitmask.MD5 ? props.md5 : undefined,
