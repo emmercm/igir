@@ -400,6 +400,24 @@ describe('sort', () => {
         await buildReleaseCandidatesWithRegionLanguage(['four (Europe)', 'four (USA)'], undefined, undefined),
       ], ['one (USA) (EN)', 'two (USA) (ES)', 'three (USA) (EN)', 'four (USA)']);
     });
+
+    test.each([
+      [[
+        'F1 World Grand Prix for Dreamcast v1.011 (1999)(Video System)(JP)(en)[!]',
+        'F1 World Grand Prix for Dreamcast v1.000 (1999)(Video System)(PAL)(M4)[!]',
+        'F1 World Grand Prix v1.006 (2000)(Video System)(US)(M4)[!]',
+      ], 'F1 World Grand Prix v1.006 (2000)(Video System)(US)(M4)[!]'],
+      [[
+        'Fighting Vipers 2 v1.001 (2000)(Sega)(JP)(en)[!]',
+        'Fighting Vipers 2 v1.001 (2000)(Sega)(PAL)(M6)[!]',
+      ], 'Fighting Vipers 2 v1.001 (2000)(Sega)(PAL)(M6)[!]'],
+    ])('should return the first candidate when all matching by name: %s', async (names, expectedName) => {
+      await expectPreferredCandidates(
+        { preferRegion: ['USA', 'EUR', 'JPN'], single: true },
+        [await buildReleaseCandidatesWithRegionLanguage(names)],
+        [expectedName],
+      );
+    });
   });
 
   describe('prefer revision newer', () => {
@@ -449,6 +467,11 @@ describe('sort', () => {
     test.each([
       [['one (Rev 1.1)', 'one (Rev 1.2)'], 'one (Rev 1.2)'],
       [['two (Rev 13.37)'], 'two (Rev 13.37)'],
+      [[
+        'ChuChu Rocket! v1.003 (1999)(Sega)(JP)[!]',
+        'ChuChu Rocket! v1.007 (2000)(Sega)(US)(en-ja)[!]',
+        'ChuChu Rocket! v1.014 (2000)(Sega)(PAL)(M5)[!]',
+      ], 'ChuChu Rocket! v1.014 (2000)(Sega)(PAL)(M5)[!]'],
     ])('should return the first candidate when all matching: %s', async (names, expectedName) => {
       await expectPreferredCandidates(
         { preferRevisionNewer: true, single: true },
