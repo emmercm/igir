@@ -86,8 +86,8 @@ export default class Igir {
       ? this.options.getCachePath() ?? Constants.GLOBAL_CACHE_FILE
       : undefined;
     if (cachePath !== undefined) {
-      this.logger.trace(`setting the file cache path to '${cachePath}'`);
-      FileCache.loadFile(cachePath);
+      this.logger.trace(`loading the file cache at '${cachePath}'`);
+      await FileCache.loadFile(cachePath);
     } else {
       this.logger.trace('not using a file for the file cache');
     }
@@ -322,6 +322,7 @@ export default class Igir {
 
     const preferredCandidates = await new CandidatePreferer(this.options, progressBar)
       .prefer(dat, patchedCandidates);
+    // TODO(cemmer): calculate raw checksums for archives after applying 1G1R rules
 
     const postProcessedCandidates = await new CandidatePostProcessor(this.options, progressBar)
       .process(dat, preferredCandidates);
