@@ -458,6 +458,40 @@ describe('with explicit DATs', () => {
     });
   });
 
+  it('should copy archives with bad extensions', async () => {
+    await copyFixturesToTemp(async (inputTemp, outputTemp) => {
+      const input = await Promise.all([
+        path.join(inputTemp, 'roms', '7z', 'fizzbuzz.7z'),
+        path.join(inputTemp, 'roms', 'rar', 'foobar.rar'),
+        path.join(inputTemp, 'roms', 'zip', 'loremipsum.zip'),
+      ].map(async (inputFile) => {
+        const junkFile = inputFile.replace(/((\.[a-zA-Z0-9]+)+)$/, '.junk');
+        await fsPoly.mv(inputFile, junkFile);
+        return junkFile;
+      }));
+
+      const result = await runIgir({
+        commands: ['copy'],
+        dat: [path.join(inputTemp, 'dats')],
+        input,
+        output: outputTemp,
+        dirDatName: true,
+      });
+
+      expect(result.outputFilesAndCrcs).toEqual([
+        [`${path.join('One', 'Fizzbuzz.7z')}|fizzbuzz.nes`, '370517b5'],
+        [`${path.join('One', 'Foobar.rar')}|foobar.lnx`, 'b22c9747'],
+        [`${path.join('One', 'Lorem Ipsum.zip')}|loremipsum.rom`, '70856527'],
+        [`${path.join('smdb', 'Hardware Target Game Database', 'Dummy', 'Fizzbuzz.7z')}|fizzbuzz.nes`, '370517b5'],
+        [`${path.join('smdb', 'Hardware Target Game Database', 'Dummy', 'Foobar.rar')}|foobar.lnx`, 'b22c9747'],
+        [`${path.join('smdb', 'Hardware Target Game Database', 'Dummy', 'Lorem Ipsum.zip')}|loremipsum.rom`, '70856527'],
+      ]);
+      expect(result.cwdFilesAndCrcs).toHaveLength(0);
+      expect(result.movedFiles).toHaveLength(0);
+      expect(result.cleanedFiles).toHaveLength(0);
+    });
+  });
+
   it('should move zipped files', async () => {
     await copyFixturesToTemp(async (inputTemp, outputTemp) => {
       const result = await runIgir({

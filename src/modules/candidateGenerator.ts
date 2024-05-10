@@ -185,16 +185,14 @@ export default class CandidateGenerator extends Module {
           && !this.options.shouldExtract()
         ) {
           try {
-            if (this.options.shouldTest() || this.options.getOverwriteInvalid()) {
-              // If we're testing, then we need to calculate the archive's checksums
-              inputFile = await FileFactory.fileFrom(
-                inputFile.getFilePath(),
-                inputFile.getChecksumBitmask(),
-              );
-            } else {
-              // Otherwise, we can skip calculating checksums for efficiency
-              inputFile = await FileFactory.fileFrom(inputFile.getFilePath(), ChecksumBitmask.NONE);
-            }
+            inputFile = await FileFactory.archiveFileFrom(
+              inputFile.getArchive(),
+              // If we're testing, then we need to calculate the archive's checksums, otherwise we
+              // can skip calculating checksums for efficiency
+              this.options.shouldTest() || this.options.getOverwriteInvalid()
+                ? inputFile.getChecksumBitmask()
+                : ChecksumBitmask.NONE,
+            );
           } catch (error) {
             this.progressBar.logWarn(`${dat.getNameShort()}: ${game.getName()}: ${error}`);
             return [rom, undefined];
