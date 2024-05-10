@@ -1,5 +1,6 @@
-import { Stats } from 'node:fs';
+import { Semaphore } from 'async-mutex';
 
+import Constants from '../../constants.js';
 import FsPoly from '../../polyfill/fsPoly.js';
 import Cache from '../cache.js';
 import Archive from './archives/archive.js';
@@ -19,7 +20,7 @@ enum ValueType {
 }
 
 export default class FileCache {
-  private static readonly VERSION = 2;
+  private static readonly VERSION = 3;
 
   private static cache: Cache<CacheValue> | Promise<Cache<CacheValue>> = new Cache<CacheValue>();
 
@@ -35,6 +36,7 @@ export default class FileCache {
       fileFlushMillis: 30_000,
     })
       .load()
+      // Cleanup the loaded cache file
       .then(async (cache) => {
         // Delete keys from old cache versions
         await Promise.all([...Array.from({ length: FileCache.VERSION }).keys()].slice(1)
@@ -42,6 +44,25 @@ export default class FileCache {
             const keyRegex = new RegExp(`^V${prevVersion}\\|`);
             return cache.delete(keyRegex);
           }));
+        return cache;
+      })
+      .then(async (cache) => {
+        // Delete keys for deleted files
+        const disks = FsPoly.disksSync();
+        const semaphore = new Semaphore(Constants.MAX_FS_THREADS);
+        await Promise.all([...cache.keys()].map(async (cacheKey) => {
+          const cacheKeyFilePath = cacheKey.split('|')[1];
+          if (!disks.some((disk) => cacheKeyFilePath.startsWith(disk))) {
+            // Don't delete the key if it's for a disk that isn't mounted right now
+            return;
+          }
+          await semaphore.runExclusive(async () => {
+            if (!await FsPoly.exists(cacheKeyFilePath)) {
+              // If the file no longer exists then delete its key from the cache
+              await cache.delete(cacheKeyFilePath);
+            }
+          });
+        }));
         return cache;
       });
   }
@@ -56,7 +77,7 @@ export default class FileCache {
 
     // NOTE(cemmer): we're explicitly not catching ENOENT errors here, we want it to bubble up
     const stats = await FsPoly.stat(filePath);
-    const cacheKey = this.getCacheKey(stats, ValueType.FILE);
+    const cacheKey = this.getCacheKey(filePath, ValueType.FILE);
 
     // NOTE(cemmer): we're using the cache as a mutex here, so even if this function is called
     //  multiple times concurrently, entries will only be fetched once.
@@ -109,7 +130,7 @@ export default class FileCache {
 
     // NOTE(cemmer): we're explicitly not catching ENOENT errors here, we want it to bubble up
     const stats = await FsPoly.stat(archive.getFilePath());
-    const cacheKey = this.getCacheKey(stats, ValueType.ARCHIVE_ENTRIES);
+    const cacheKey = this.getCacheKey(archive.getFilePath(), ValueType.ARCHIVE_ENTRIES);
 
     // NOTE(cemmer): we're using the cache as a mutex here, so even if this function is called
     //  multiple times concurrently, entries will only be fetched once.
@@ -161,7 +182,7 @@ export default class FileCache {
     })));
   }
 
-  private static getCacheKey(stats: Stats, valueType: ValueType): string {
-    return `V${FileCache.VERSION}|${stats.ino}|${valueType}`;
+  private static getCacheKey(filePath: string, valueType: ValueType): string {
+    return `V${FileCache.VERSION}|${filePath}|${valueType}`;
   }
 }
