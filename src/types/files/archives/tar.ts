@@ -20,6 +20,7 @@ export default class Tar extends Archive {
   }
 
   getExtension(): string {
+    // We can't reliably know the extension
     return path.parse(this.getFilePath()).ext;
   }
 
