@@ -84,6 +84,7 @@ export default class FsPoly {
     return FsPoly.DRIVES
       .filter((drive) => drive.available > 0)
       .map((drive) => drive.mounted)
+      .filter((mountPath) => mountPath !== '/')
       // Sort by mount points with the deepest number of subdirectories first
       .sort((a, b) => b.split(/[\\/]/).length - a.split(/[\\/]/).length);
   }
