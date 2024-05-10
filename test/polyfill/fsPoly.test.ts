@@ -261,3 +261,31 @@ describe('realpath', () => {
     await expect(fsPoly.realpath('.')).resolves.toEqual(process.cwd());
   });
 });
+
+describe('touch', () => {
+  it('should mkdir and touch', async () => {
+    const tempDir = await fsPoly.mkdtemp(Constants.GLOBAL_TEMP_DIR);
+    await fsPoly.rm(tempDir, { recursive: true });
+    const tempFile = await fsPoly.mktemp(path.join(tempDir, 'temp'));
+    try {
+      await fsPoly.touch(tempFile);
+      await expect(fsPoly.exists(tempFile)).resolves.toEqual(true);
+    } finally {
+      await fsPoly.rm(tempDir, { recursive: true, force: true });
+    }
+  });
+});
+
+describe('touchSync', () => {
+  it('should mkdir and touch', async () => {
+    const tempDir = await fsPoly.mkdtemp(Constants.GLOBAL_TEMP_DIR);
+    await fsPoly.rm(tempDir, { recursive: true });
+    const tempFile = await fsPoly.mktemp(path.join(tempDir, 'temp'));
+    try {
+      fsPoly.touchSync(tempFile);
+      await expect(fsPoly.exists(tempFile)).resolves.toEqual(true);
+    } finally {
+      await fsPoly.rm(tempDir, { recursive: true, force: true });
+    }
+  });
+});

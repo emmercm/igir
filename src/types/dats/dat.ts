@@ -108,17 +108,6 @@ export default abstract class DAT {
   }
 
   /**
-   * Is this a {@link LogiqxDAT} that only contains BIOS files.
-   */
-  isBiosDat(): boolean {
-    return (this.getGames().length > 0 && this.getGames().every((game) => game.isBios()))
-      // Redump-style DAT names
-      || this.getName().match(/(\W|^)BIOS(\W|$)/i) !== null
-      // libretro-style DAT comments
-      || (this.getHeader().getComment() ?? '').match(/(\W|^)BIOS(\W|$)/i) !== null;
-  }
-
-  /**
    * Does a DAT explicitly contain headered ROMs. It is possible for a DAT to be both non-headered
    *  and non-headerless.
    */
