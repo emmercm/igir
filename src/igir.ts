@@ -82,7 +82,9 @@ export default class Igir {
       this.logger.trace('disabling the file cache');
       FileCache.disable();
     }
-    const cachePath = this.options.getCachePath() ?? Constants.GLOBAL_CACHE_FILE;
+    const cachePath = process.env.NODE_ENV !== 'test'
+      ? this.options.getCachePath() ?? Constants.GLOBAL_CACHE_FILE
+      : undefined;
     if (cachePath !== undefined) {
       this.logger.trace(`setting the file cache path to '${cachePath}'`);
       FileCache.loadFile(cachePath);
