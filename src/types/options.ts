@@ -670,12 +670,9 @@ export default class Options implements OptionsProps {
       return [];
     }
 
-    // fg only uses forward-slash path separators
-    const inputPathNormalized = inputPath.replace(/\\/g, '/');
-
     // Glob the contents of directories
     if (await fsPoly.isDirectory(inputPath)) {
-      const dirPaths = (await fsPoly.walk(inputPathNormalized, walkCallback))
+      const dirPaths = (await fsPoly.walk(inputPath, walkCallback))
         .map((filePath) => path.normalize(filePath));
       if (dirPaths.length === 0) {
         if (!requireFiles) {
@@ -692,8 +689,13 @@ export default class Options implements OptionsProps {
       return [inputPath];
     }
 
+    // fg only uses forward-slash path separators
+    const inputPathNormalized = inputPath.replace(/\\/g, '/');
+    // Try to handle globs a little more intelligently (see the JSDoc below)
+    const inputPathEscaped = await this.sanitizeGlobPattern(inputPathNormalized);
+
     // Otherwise, process it as a glob pattern
-    const paths = (await fg(inputPathNormalized, { onlyFiles: true }))
+    const paths = (await fg(inputPathEscaped, { onlyFiles: true }))
       .map((filePath) => path.normalize(filePath));
     if (paths.length === 0) {
       if (URLPoly.canParse(inputPath)) {
@@ -709,6 +711,30 @@ export default class Options implements OptionsProps {
     }
     walkCallback(paths.length);
     return paths;
+  }
+
+  /**
+   * Trying to use globs with directory names that resemble glob patterns (e.g. dirs that include
+   * parentheticals) is problematic. Most of the time globs are at the tail end of the path, so try
+   * to figure out what leading part of the pattern is just a path, and escape it appropriately,
+   * and then tack on the glob at the end.
+   * Example problematic paths:
+   * ./TOSEC - DAT Pack - Complete (3983) (TOSEC-v2023-07-10)/TOSEC-ISO/Sega*
+   */
+  private static async sanitizeGlobPattern(globPattern: string): Promise<string> {
+    const pathsSplit = globPattern.split(/[\\/]/);
+    for (let i = 0; i < pathsSplit.length; i += 1) {
+      const subPath = pathsSplit.slice(0, i + 1).join('/');
+      if (subPath !== '' && !await fsPoly.exists(subPath)) {
+        const dirname = pathsSplit.slice(0, i).join('/');
+        if (dirname === '') {
+          // fg won't let you escape empty strings
+          return `${dirname}/${pathsSplit.slice(i).join('/')}`;
+        }
+        return `${fg.escapePath(dirname)}/${pathsSplit.slice(i).join('/')}`;
+      }
+    }
+    return globPattern;
   }
 
   getInputMinChecksum(): ChecksumBitmask | undefined {
