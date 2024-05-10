@@ -16,16 +16,25 @@ import Archive from './archive.js';
 import ArchiveEntry from './archiveEntry.js';
 
 export default class Zip extends Archive {
-  static readonly SUPPORTED_FILES: [string[], Buffer[]][] = [
-    [['.zip'], [
-      Buffer.from('504B0304', 'hex'),
-      Buffer.from('504B0506', 'hex'), // empty archive
-    ]],
-  ];
-
   // eslint-disable-next-line class-methods-use-this
   protected new(filePath: string): Archive {
     return new Zip(filePath);
+  }
+
+  static getExtensions(): string[] {
+    return ['.zip'];
+  }
+
+  // eslint-disable-next-line class-methods-use-this
+  getExtension(): string {
+    return Zip.getExtensions()[0];
+  }
+
+  static getFileSignatures(): Buffer[] {
+    return [
+      Buffer.from('504B0304', 'hex'),
+      Buffer.from('504B0506', 'hex'), // empty archive
+    ];
   }
 
   async getArchiveEntries(checksumBitmask: number): Promise<ArchiveEntry<this>[]> {
