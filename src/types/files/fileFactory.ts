@@ -3,6 +3,7 @@ import path from 'node:path';
 
 import Archive from './archives/archive.js';
 import ArchiveEntry from './archives/archiveEntry.js';
+import ArchiveFile from './archives/archiveFile.js';
 import Rar from './archives/rar.js';
 import SevenZip from './archives/sevenZip.js';
 import Tar from './archives/tar.js';
@@ -42,6 +43,16 @@ export default class FileFactory {
     checksumBitmask: number,
   ): Promise<File> {
     return FileCache.getOrComputeFile(filePath, checksumBitmask);
+  }
+
+  public static async archiveFileFrom(
+    archive: Archive,
+    checksumBitmask: number,
+  ): Promise<ArchiveFile> {
+    return new ArchiveFile(
+      archive,
+      await this.fileFrom(archive.getFilePath(), checksumBitmask),
+    );
   }
 
   /**
