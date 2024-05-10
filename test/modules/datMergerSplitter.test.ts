@@ -2292,3 +2292,18 @@ describe('FinalBurn Neo Neo Geo e544671', () => {
     ]);
   });
 });
+
+test.each([
+  [MergeMode.NONMERGED],
+  [MergeMode.SPLIT],
+  [MergeMode.MERGED],
+])('should handle invalid romOf attributes: %s', () => {
+  // TODO(cemmer)
+});
+
+test.each([
+  [MergeMode.SPLIT],
+  [MergeMode.MERGED],
+])('should handle invalid cloneOf attributes: %s', () => {
+  // TODO(cemmer)
+});
