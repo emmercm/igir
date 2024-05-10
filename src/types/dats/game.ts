@@ -206,15 +206,21 @@ export default class Game implements GameProps {
 
   getRevision(): number {
     // Numeric revision
-    const numberMatches = this.getName().match(/\(Rev\s*([0-9.]+)\)/i);
-    if (numberMatches && numberMatches?.length >= 2 && !Number.isNaN(numberMatches[1])) {
-      return Number(numberMatches[1]);
+    const revNumberMatches = this.getName().match(/\(Rev\s*([0-9.]+)\)/i);
+    if (revNumberMatches && revNumberMatches?.length >= 2 && !Number.isNaN(revNumberMatches[1])) {
+      return Number(revNumberMatches[1]);
     }
 
     // Letter revision
-    const letterMatches = this.getName().match(/\(Rev\s*([A-Z])\)/i);
-    if (letterMatches && letterMatches?.length >= 2) {
-      return (letterMatches[1].toUpperCase().codePointAt(0) as number) - ('A'.codePointAt(0) as number) + 1;
+    const revLetterMatches = this.getName().match(/\(Rev\s*([A-Z])\)/i);
+    if (revLetterMatches && revLetterMatches?.length >= 2) {
+      return (revLetterMatches[1].toUpperCase().codePointAt(0) as number) - ('A'.codePointAt(0) as number) + 1;
+    }
+
+    // TOSEC versions
+    const versionMatches = this.getName().match(/\Wv([0-9]+\.[0-9]+)\W/i);
+    if (versionMatches && versionMatches?.length >= 2 && !Number.isNaN(versionMatches[1])) {
+      return Number(versionMatches[1]);
     }
 
     // Ring code revision
