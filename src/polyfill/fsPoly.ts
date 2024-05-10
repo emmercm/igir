@@ -14,7 +14,7 @@ import ArrayPoly from './arrayPoly.js';
 export type FsWalkCallback = (increment: number) => void;
 
 export default class FsPoly {
-  static readonly FILE_READING_CHUNK_SIZE = 1024 * 1024; // 1MiB
+  static readonly FILE_READING_CHUNK_SIZE = 64 * 1024; // 64KiB, Node.js v22 default
 
   // Assume that all drives we're reading from or writing to were already mounted at startup
   public static readonly DRIVES = nodeDiskInfo.getDiskInfoSync();
