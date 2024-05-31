@@ -153,7 +153,7 @@ describe('with explicit DATs', () => {
     await copyFixturesToTemp(async (inputTemp, outputTemp) => {
       const result = await runIgir({
         commands: ['copy', 'test'],
-        dat: [path.join(inputTemp, 'dats')],
+        dat: [path.join(inputTemp, 'dats', '*')],
         input: [path.join(inputTemp, 'roms')],
         output: outputTemp,
         dirDatName: true,
@@ -250,7 +250,7 @@ describe('with explicit DATs', () => {
       // When running igir with the clean command
       const result = await runIgir({
         commands: ['copy', 'clean'],
-        dat: [path.join(inputTemp, 'dats')],
+        dat: [path.join(inputTemp, 'dats', '*')],
         input: [path.join(inputTemp, 'roms')],
         output: path.join(outputTemp, '{outputExt}'),
         dirDatName: true,
@@ -385,7 +385,7 @@ describe('with explicit DATs', () => {
     await copyFixturesToTemp(async (inputTemp, outputTemp) => {
       const result = await runIgir({
         commands: ['move', 'extract', 'test'],
-        dat: [path.join(inputTemp, 'dats')],
+        dat: [path.join(inputTemp, 'dats', '*')],
         input: [path.join(inputTemp, 'roms')],
         output: outputTemp,
         datCombine: true,
@@ -458,6 +458,40 @@ describe('with explicit DATs', () => {
     });
   });
 
+  it('should copy archives with bad extensions', async () => {
+    await copyFixturesToTemp(async (inputTemp, outputTemp) => {
+      const input = await Promise.all([
+        path.join(inputTemp, 'roms', '7z', 'fizzbuzz.7z'),
+        path.join(inputTemp, 'roms', 'rar', 'foobar.rar'),
+        path.join(inputTemp, 'roms', 'zip', 'loremipsum.zip'),
+      ].map(async (inputFile) => {
+        const junkFile = inputFile.replace(/((\.[a-zA-Z0-9]+)+)$/, '.junk');
+        await fsPoly.mv(inputFile, junkFile);
+        return junkFile;
+      }));
+
+      const result = await runIgir({
+        commands: ['copy'],
+        dat: [path.join(inputTemp, 'dats')],
+        input,
+        output: outputTemp,
+        dirDatName: true,
+      });
+
+      expect(result.outputFilesAndCrcs).toEqual([
+        [`${path.join('One', 'Fizzbuzz.7z')}|fizzbuzz.nes`, '370517b5'],
+        [`${path.join('One', 'Foobar.rar')}|foobar.lnx`, 'b22c9747'],
+        [`${path.join('One', 'Lorem Ipsum.zip')}|loremipsum.rom`, '70856527'],
+        [`${path.join('smdb', 'Hardware Target Game Database', 'Dummy', 'Fizzbuzz.7z')}|fizzbuzz.nes`, '370517b5'],
+        [`${path.join('smdb', 'Hardware Target Game Database', 'Dummy', 'Foobar.rar')}|foobar.lnx`, 'b22c9747'],
+        [`${path.join('smdb', 'Hardware Target Game Database', 'Dummy', 'Lorem Ipsum.zip')}|loremipsum.rom`, '70856527'],
+      ]);
+      expect(result.cwdFilesAndCrcs).toHaveLength(0);
+      expect(result.movedFiles).toHaveLength(0);
+      expect(result.cleanedFiles).toHaveLength(0);
+    });
+  });
+
   it('should move zipped files', async () => {
     await copyFixturesToTemp(async (inputTemp, outputTemp) => {
       const result = await runIgir({
@@ -499,7 +533,7 @@ describe('with explicit DATs', () => {
     await copyFixturesToTemp(async (inputTemp, outputTemp) => {
       const result = await runIgir({
         commands: ['copy', 'zip', 'test'],
-        dat: [path.join(inputTemp, 'dats')],
+        dat: [path.join(inputTemp, 'dats', '*')],
         input: [path.join(inputTemp, 'roms')],
         output: outputTemp,
         dirDatName: true,
@@ -552,7 +586,7 @@ describe('with explicit DATs', () => {
     await copyFixturesToTemp(async (inputTemp, outputTemp) => {
       const result = await runIgir({
         commands: ['copy', 'zip', 'test'],
-        dat: [path.join(inputTemp, 'dats')],
+        dat: [path.join(inputTemp, 'dats', '*')],
         input: [path.join(inputTemp, 'roms')],
         output: outputTemp,
         zipDatName: true,
@@ -605,7 +639,7 @@ describe('with explicit DATs', () => {
     await copyFixturesToTemp(async (inputTemp, outputTemp) => {
       const result = await runIgir({
         commands: ['link', 'test'],
-        dat: [path.join(inputTemp, 'dats')],
+        dat: [path.join(inputTemp, 'dats', '*')],
         input: [path.join(inputTemp, 'roms')],
         output: outputTemp,
         dirDatName: true,
@@ -657,7 +691,7 @@ describe('with explicit DATs', () => {
     await copyFixturesToTemp(async (inputTemp, outputTemp) => {
       const result = await runIgir({
         commands: ['copy', 'extract', 'test'],
-        dat: [path.join(inputTemp, 'dats')],
+        dat: [path.join(inputTemp, 'dats', '*')],
         input: [path.join(inputTemp, 'roms')],
         patch: [path.join(inputTemp, 'patches')],
         output: outputTemp,
@@ -745,7 +779,7 @@ describe('with explicit DATs', () => {
     await copyFixturesToTemp(async (inputTemp, outputTemp) => {
       const result = await runIgir({
         commands: [command, 'fixdat', 'clean'],
-        dat: [path.join(inputTemp, 'dats')],
+        dat: [path.join(inputTemp, 'dats', '*')],
         input: [path.join(inputTemp, 'roms')],
         output: outputTemp,
         dirDatName: true,
@@ -774,7 +808,7 @@ describe('with explicit DATs', () => {
     await copyFixturesToTemp(async (inputTemp, outputTemp) => {
       const result = await runIgir({
         commands: ['fixdat', 'report'],
-        dat: [path.join(inputTemp, 'dats')],
+        dat: [path.join(inputTemp, 'dats', '*')],
         input: [path.join(inputTemp, 'roms')],
         output: outputTemp,
         dirDatName: true,

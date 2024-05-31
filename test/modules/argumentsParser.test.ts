@@ -185,6 +185,7 @@ describe('options', () => {
     expect(options.getReaderThreads()).toEqual(8);
     expect(options.getWriterThreads()).toEqual(4);
     expect(options.getDisableCache()).toEqual(false);
+    expect(options.getCachePath()).toBeUndefined();
     expect(options.getLogLevel()).toEqual(LogLevel.WARN);
     expect(options.getHelp()).toEqual(false);
   });
@@ -199,6 +200,14 @@ describe('options', () => {
   });
 
   it('should parse "input"', async () => {
+    expect(() => argumentsParser.parse(['copy', '--output', os.devNull])).toThrow(/missing required argument/i);
+    expect(() => argumentsParser.parse(['move', '--output', os.devNull])).toThrow(/missing required argument/i);
+    expect(() => argumentsParser.parse(['link', '--output', os.devNull])).toThrow(/missing required argument/i);
+    expect(() => argumentsParser.parse(['copy', 'extract', '--output', os.devNull])).toThrow(/missing required argument/i);
+    expect(() => argumentsParser.parse(['copy', 'zip', '--output', os.devNull])).toThrow(/missing required argument/i);
+    expect(() => argumentsParser.parse(['copy', 'test', '--output', os.devNull])).toThrow(/missing required argument/i);
+    expect(() => argumentsParser.parse(['dir2dat', '--output', os.devNull])).toThrow(/missing required argument/i);
+    expect(() => argumentsParser.parse(['fixdat', '--output', os.devNull])).toThrow(/missing required argument/i);
     await expect(argumentsParser.parse(['copy', '--input', 'nonexistentfile', '--output', os.devNull]).scanInputFilesWithoutExclusions()).rejects.toThrow(/no files found/i);
     await expect(argumentsParser.parse(['copy', '--input', os.devNull, '--output', os.devNull]).scanInputFilesWithoutExclusions()).resolves.toHaveLength(0);
 
@@ -231,7 +240,7 @@ describe('options', () => {
   });
 
   it('should parse "dat"', async () => {
-    expect(() => argumentsParser.parse(['report', '--input', os.devNull])).toThrow(/missing required option/i);
+    expect(() => argumentsParser.parse(['report', '--input', os.devNull])).toThrow(/missing required argument/i);
     expect(() => argumentsParser.parse([...dummyCommandAndRequiredArgs, '--dat'])).toThrow(/not enough arguments/i);
     await expect(argumentsParser.parse(dummyCommandAndRequiredArgs).scanDatFilesWithoutExclusions())
       .resolves.toHaveLength(0);
@@ -390,10 +399,12 @@ describe('options', () => {
   it('should parse "output"', () => {
     // Test requirements per command
     expect(() => argumentsParser.parse(['test'])).toThrow(/missing required argument/i);
-    expect(() => argumentsParser.parse(['copy', '--input', os.devNull])).toThrow(/missing required option/i);
-    expect(() => argumentsParser.parse(['move', '--input', os.devNull])).toThrow(/missing required option/i);
-    expect(() => argumentsParser.parse(['copy', 'zip', '--input', os.devNull])).toThrow(/missing required option/i);
-    expect(() => argumentsParser.parse(['copy', 'clean', '--input', os.devNull])).toThrow(/missing required option/i);
+    expect(() => argumentsParser.parse(['copy', '--input', os.devNull])).toThrow(/missing required argument/i);
+    expect(() => argumentsParser.parse(['move', '--input', os.devNull])).toThrow(/missing required argument/i);
+    expect(() => argumentsParser.parse(['link', '--input', os.devNull])).toThrow(/missing required argument/i);
+    expect(() => argumentsParser.parse(['copy', 'extract', '--input', os.devNull])).toThrow(/missing required argument/i);
+    expect(() => argumentsParser.parse(['copy', 'zip', '--input', os.devNull])).toThrow(/missing required argument/i);
+    expect(() => argumentsParser.parse(['copy', 'clean', '--input', os.devNull])).toThrow(/missing required argument/i);
     expect(argumentsParser.parse(['report', '--dat', os.devNull, '--input', os.devNull]).getOutput()).toContain(Constants.GLOBAL_TEMP_DIR);
     // Test value
     expect(argumentsParser.parse(['copy', '--input', os.devNull, '-o', 'foo']).getOutput()).toEqual('foo');
@@ -675,21 +686,25 @@ describe('options', () => {
   it('should parse "prefer-language"', () => {
     expect(() => argumentsParser.parse([...dummyCommandAndRequiredArgs, '--prefer-language'])).toThrow(/not enough arguments/i);
     expect(() => argumentsParser.parse([...dummyCommandAndRequiredArgs, '--prefer-language', 'EN'])).toThrow(/dependent|implication/i);
-    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '-l', 'EN', '--single']).getPreferLanguages()).toEqual(['EN']);
-    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--prefer-language', 'EN', '--single']).getPreferLanguages()).toEqual(['EN']);
-    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--prefer-language', 'EN,it', '--single']).getPreferLanguages()).toEqual(['EN', 'IT']);
-    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--prefer-language', 'en,IT,JA', '--single']).getPreferLanguages()).toEqual(['EN', 'IT', 'JA']);
-    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--prefer-language', 'EN,en', '--single']).getPreferLanguages()).toEqual(['EN']);
+    expect(() => argumentsParser.parse([...dummyCommandAndRequiredArgs, '--single', '--prefer-language', 'XX'])).toThrow(/invalid/i);
+    expect(() => argumentsParser.parse([...dummyCommandAndRequiredArgs, '--single', '--prefer-language', 'EN,XX'])).toThrow(/invalid/i);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--single', '-l', 'EN']).getPreferLanguages()).toEqual(['EN']);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--single', '--prefer-language', 'EN']).getPreferLanguages()).toEqual(['EN']);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--single', '--prefer-language', 'EN,it']).getPreferLanguages()).toEqual(['EN', 'IT']);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--single', '--prefer-language', 'en,IT,JA']).getPreferLanguages()).toEqual(['EN', 'IT', 'JA']);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--single', '--prefer-language', 'EN,en']).getPreferLanguages()).toEqual(['EN']);
   });
 
   it('should parse "prefer-region"', () => {
     expect(() => argumentsParser.parse([...dummyCommandAndRequiredArgs, '--prefer-region'])).toThrow(/not enough arguments/i);
     expect(() => argumentsParser.parse([...dummyCommandAndRequiredArgs, '--prefer-region', 'USA'])).toThrow(/dependent|implication/i);
-    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '-r', 'USA', '--single']).getPreferRegions()).toEqual(['USA']);
-    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--prefer-region', 'USA', '--single']).getPreferRegions()).toEqual(['USA']);
-    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--prefer-region', 'USA,eur', '--single']).getPreferRegions()).toEqual(['USA', 'EUR']);
-    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--prefer-region', 'usa,EUR,JPN', '--single']).getPreferRegions()).toEqual(['USA', 'EUR', 'JPN']);
-    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--prefer-region', 'USA,usa', '--single']).getPreferRegions()).toEqual(['USA']);
+    expect(() => argumentsParser.parse([...dummyCommandAndRequiredArgs, '--single', '--prefer-region', 'XX'])).toThrow(/invalid/i);
+    expect(() => argumentsParser.parse([...dummyCommandAndRequiredArgs, '--single', '--prefer-region', 'EN,XX'])).toThrow(/invalid/i);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--single', '-r', 'USA']).getPreferRegions()).toEqual(['USA']);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--single', '--prefer-region', 'USA']).getPreferRegions()).toEqual(['USA']);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--single', '--prefer-region', 'USA,eur']).getPreferRegions()).toEqual(['USA', 'EUR']);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--single', '--prefer-region', 'usa,EUR,JPN']).getPreferRegions()).toEqual(['USA', 'EUR', 'JPN']);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--single', '--prefer-region', 'USA,usa']).getPreferRegions()).toEqual(['USA']);
   });
 
   it('should parse "prefer-revision-newer"', () => {
@@ -817,7 +832,16 @@ describe('options', () => {
     }
   });
 
-  it('should parse "language-filter"', () => {
+  it('should parse "filter-language"', () => {
+    expect(() => argumentsParser.parse([...dummyCommandAndRequiredArgs, '--filter-language'])).toThrow(/not enough arguments/i);
+    expect(() => argumentsParser.parse([...dummyCommandAndRequiredArgs, '--filter-language', 'XX'])).toThrow(/invalid/i);
+    expect(() => argumentsParser.parse([...dummyCommandAndRequiredArgs, '--filter-language', 'EN,XX'])).toThrow(/invalid/i);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '-L', 'EN']).getFilterLanguage()).toEqual(new Set(['EN']));
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--filter-language', 'EN']).getFilterLanguage()).toEqual(new Set(['EN']));
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--filter-language', 'EN,it']).getFilterLanguage()).toEqual(new Set(['EN', 'IT']));
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--filter-language', 'en,IT,JA']).getFilterLanguage()).toEqual(new Set(['EN', 'IT', 'JA']));
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--filter-language', 'EN,en']).getFilterLanguage()).toEqual(new Set(['EN']));
+
     expect(() => argumentsParser.parse([...dummyCommandAndRequiredArgs, '--language-filter'])).toThrow(/not enough arguments/i);
     expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '-L', 'EN']).getFilterLanguage()).toEqual(new Set(['EN']));
     expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--language-filter', 'EN']).getFilterLanguage()).toEqual(new Set(['EN']));
@@ -826,7 +850,16 @@ describe('options', () => {
     expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--language-filter', 'EN,en']).getFilterLanguage()).toEqual(new Set(['EN']));
   });
 
-  it('should parse "region-filter"', () => {
+  it('should parse "filter-region"', () => {
+    expect(() => argumentsParser.parse([...dummyCommandAndRequiredArgs, '--filter-region'])).toThrow(/not enough arguments/i);
+    expect(() => argumentsParser.parse([...dummyCommandAndRequiredArgs, '--filter-region', 'XYZ'])).toThrow(/invalid/i);
+    expect(() => argumentsParser.parse([...dummyCommandAndRequiredArgs, '--filter-region', 'USA,XYZ'])).toThrow(/invalid/i);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '-R', 'USA']).getFilterRegion()).toEqual(new Set(['USA']));
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--filter-region', 'USA']).getFilterRegion()).toEqual(new Set(['USA']));
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--filter-region', 'USA,eur']).getFilterRegion()).toEqual(new Set(['USA', 'EUR']));
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--filter-region', 'usa,EUR,JPN']).getFilterRegion()).toEqual(new Set(['USA', 'EUR', 'JPN']));
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--filter-region', 'USA,usa']).getFilterRegion()).toEqual(new Set(['USA']));
+
     expect(() => argumentsParser.parse([...dummyCommandAndRequiredArgs, '--region-filter'])).toThrow(/not enough arguments/i);
     expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '-R', 'USA']).getFilterRegion()).toEqual(new Set(['USA']));
     expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--region-filter', 'USA']).getFilterRegion()).toEqual(new Set(['USA']));
@@ -1167,6 +1200,13 @@ describe('options', () => {
     expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--disable-cache', '--disable-cache']).getDisableCache()).toEqual(true);
     expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--disable-cache', 'false', '--disable-cache', 'true']).getDisableCache()).toEqual(true);
     expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--disable-cache', 'true', '--disable-cache', 'false']).getDisableCache()).toEqual(false);
+  });
+
+  it('should parse "cache-path"', () => {
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs]).getCachePath()).toBeUndefined();
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--cache-path', os.devNull]).getCachePath()).toEqual(os.devNull);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--cache-path', os.devNull, '--cache-path', 'igir.cache']).getCachePath()).toEqual('igir.cache');
+    expect(() => argumentsParser.parse([...dummyCommandAndRequiredArgs, '--disable-cache', '--cache-path', os.devNull])).toThrow(/mutually exclusive/i);
   });
 
   it('should parse "verbose"', () => {

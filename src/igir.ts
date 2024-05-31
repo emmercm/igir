@@ -77,9 +77,19 @@ export default class Igir {
       this.logger.trace('Windows has symlink permissions');
     }
 
+    // File cache options
     if (this.options.getDisableCache()) {
       this.logger.trace('disabling the file cache');
       FileCache.disable();
+    }
+    const cachePath = process.env.NODE_ENV !== 'test'
+      ? this.options.getCachePath() ?? Constants.GLOBAL_CACHE_FILE
+      : undefined;
+    if (cachePath !== undefined) {
+      this.logger.trace(`loading the file cache at '${cachePath}'`);
+      await FileCache.loadFile(cachePath);
+    } else {
+      this.logger.trace('not using a file for the file cache');
     }
 
     // Scan and process input files
@@ -312,6 +322,7 @@ export default class Igir {
 
     const preferredCandidates = await new CandidatePreferer(this.options, progressBar)
       .prefer(dat, patchedCandidates);
+    // TODO(cemmer): calculate raw checksums for archives after applying 1G1R rules
 
     const postProcessedCandidates = await new CandidatePostProcessor(this.options, progressBar)
       .process(dat, preferredCandidates);
@@ -394,7 +405,7 @@ export default class Igir {
 
     const reportProgressBar = await this.logger.addProgressBar('Generating report', ProgressBarSymbol.WRITING);
     await new ReportGenerator(this.options, reportProgressBar).generate(
-      scannedRomFiles.map((file) => file.getFilePath()),
+      scannedRomFiles,
       cleanedOutputFiles,
       datsStatuses,
     );

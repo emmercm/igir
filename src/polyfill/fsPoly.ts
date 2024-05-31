@@ -14,7 +14,7 @@ import ArrayPoly from './arrayPoly.js';
 export type FsWalkCallback = (increment: number) => void;
 
 export default class FsPoly {
-  static readonly FILE_READING_CHUNK_SIZE = 1024 * 1024; // 1MiB
+  static readonly FILE_READING_CHUNK_SIZE = 64 * 1024; // 64KiB, Node.js v22 default
 
   // Assume that all drives we're reading from or writing to were already mounted at startup
   public static readonly DRIVES = nodeDiskInfo.getDiskInfoSync();
@@ -84,6 +84,7 @@ export default class FsPoly {
     return FsPoly.DRIVES
       .filter((drive) => drive.available > 0)
       .map((drive) => drive.mounted)
+      .filter((mountPath) => mountPath !== '/')
       // Sort by mount points with the deepest number of subdirectories first
       .sort((a, b) => b.split(/[\\/]/).length - a.split(/[\\/]/).length);
   }
@@ -435,11 +436,11 @@ export default class FsPoly {
 
   static async writeFile(
     filePath: PathLike,
-    data: string | NodeJS.ArrayBufferView,
+    data: string | Uint8Array,
     options?: ObjectEncodingOptions,
   ): Promise<void> {
     const file = await fs.promises.open(filePath, 'w');
-    await fs.promises.writeFile(file, data, options);
+    await file.writeFile(data, options);
     await file.sync(); // emulate fs.promises.writeFile() flush:true added in v21.0.0
     await file.close();
   }

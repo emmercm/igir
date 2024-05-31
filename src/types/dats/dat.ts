@@ -21,7 +21,7 @@ export default abstract class DAT {
    * Group all {@link Game} clones together into one {@link Parent}. If no parent/clone information
    * exists, then there will be one {@link Parent} for every {@link Game}.
    */
-  protected generateGameNamesToParents(): DAT {
+  protected generateGameNamesToParents(): this {
     const gameNamesToParents: Map<string, Parent> = new Map();
 
     // Find all parents
@@ -80,11 +80,11 @@ export default abstract class DAT {
       .replace('Unofficial', '')
       // Suffixes
       .replace('Datfile', '')
-      .replace('Games', '')
       .replace('(Deprecated)', '')
       .replace(/\(Parent-Clone\)/g, '')
       .replace('(WIP)', '')
       // Cleanup
+      .replace(/-( +-)+/g, '- ')
       .replace(/^[ -]+/, '')
       .replace(/[ -]+$/, '')
       .replace(/  +/g, ' ')
@@ -105,17 +105,6 @@ export default abstract class DAT {
     }
     filename += '.dat';
     return FsPoly.makeLegal(filename.trim());
-  }
-
-  /**
-   * Is this a {@link LogiqxDAT} that only contains BIOS files.
-   */
-  isBiosDat(): boolean {
-    return (this.getGames().length > 0 && this.getGames().every((game) => game.isBios()))
-      // Redump-style DAT names
-      || this.getName().match(/(\W|^)BIOS(\W|$)/i) !== null
-      // libretro-style DAT comments
-      || (this.getHeader().getComment() ?? '').match(/(\W|^)BIOS(\W|$)/i) !== null;
   }
 
   /**

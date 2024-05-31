@@ -112,6 +112,10 @@ test.each([
     'Doom 3 (USA, Asia)',
     'Doom 3 (USA, Asia) (Limited Collector\'s Edition)',
   ], 'Doom 3 (Europe) (En,Fr,Es,It)'],
+  [[
+    'All Star Tennis \'99 (Europe) (En,Fr,De,Es,It)',
+    'All Star Tennis 99 (USA)',
+  ], 'All Star Tennis 99 (USA)'],
   // https://emulation.gametechwiki.com/index.php/GoodTools
   [[
     'A game (1990)(Side A).zip',
@@ -168,6 +172,11 @@ test.each([
     'Legend of TOSEC, The (1986)(Devstudio)(US)[cr PDX][h TRSi]',
     'Legend of TOSEC, The (1986)(Devstudio)(US)[h PDX - TRSi]',
   ], 'Legend of TOSEC, The (1986)(Devstudio)(US)'],
+  [[
+    'F1 World Grand Prix for Dreamcast v1.011 (1999)(Video System)(JP)(en)[!]',
+    'F1 World Grand Prix for Dreamcast v1.000 (1999)(Video System)(PAL)(M4)[!]',
+    'F1 World Grand Prix v1.006 (2000)(Video System)(US)(M4)[!]',
+  ], 'F1 World Grand Prix for Dreamcast v1.011 (1999)(Video System)(JP)(en)[!]'],
 ])('should group similar games: %s', async (gameNames, expectedGameName) => {
   const ungroupedDat = buildDat(gameNames);
   const groupedDat = await new DATParentInferrer(new Options(), new ProgressBarFake())

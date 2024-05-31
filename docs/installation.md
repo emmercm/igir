@@ -47,6 +47,25 @@ npx igir@latest copy extract --dat *.dat --input ROMs/ --output ROMs-Sorted/ --d
     npm exec --yes -- "github:emmercm/igir#main" [commands..] [options]
     ```
 
+## Via Homebrew (macOS)
+
+[Homebrew](https://brew.sh/) is third-party package manager for macOS. You can install `igir` with these simple commands:
+
+```shell
+brew tap emmercm/igir
+brew install igir
+```
+
+You can then update `igir` with _either_ of these commands
+
+```shell
+# Update every Homebrew package
+brew update
+
+# Update only igir
+brew upgrade igir
+```
+
 ## Via downloaded executable
 
 [![GitHub: release](https://img.shields.io/github/v/release/emmercm/igir?color=%236e5494&logo=github&logoColor=white)](https://github.com/emmercm/igir/releases/latest)

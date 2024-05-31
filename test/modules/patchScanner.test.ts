@@ -56,7 +56,7 @@ describe('multiple files', () => {
 
   it('should scan multiple files of incorrect extensions', async () => {
     const patchFiles = (await new Options({ patch: ['test/fixtures/patches/*'] }).scanPatchFilesWithoutExclusions())
-      .filter((filePath) => !FileFactory.isArchive(filePath));
+      .filter((filePath) => !FileFactory.isExtensionArchive(filePath));
 
     const tempDir = await fsPoly.mkdtemp(Constants.GLOBAL_TEMP_DIR);
     try {

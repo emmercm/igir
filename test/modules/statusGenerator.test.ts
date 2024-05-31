@@ -97,10 +97,21 @@ async function candidateGenerator(
 
 describe('toConsole', () => {
   describe('no candidates', () => {
-    test.each([true, false, undefined])('should print games without ROMs as found when single:%s', async (single) => {
+    it('should print games without ROMs as found when single:true', async () => {
       const options = new Options({
         ...defaultOptions,
-        single,
+        single: true,
+        preferParent: true,
+      });
+      const map = await candidateGenerator(options, []);
+      const datStatus = new StatusGenerator(options, new ProgressBarFake())
+        .generate(dummyDat, map);
+      expect(stripAnsi(datStatus.toConsole(options))).toEqual('2/5 games, 0/1 BIOSes, 1/1 devices, 2/5 retail releases found');
+    });
+    it('should print games without ROMs as found when single:false', async () => {
+      const options = new Options({
+        ...defaultOptions,
+        single: false,
         preferParent: true,
       });
       const map = await candidateGenerator(options, []);
@@ -198,6 +209,19 @@ describe('toConsole', () => {
     expect(stripAnsi(datStatus.toConsole(options))).toEqual('6/6 games, 1/1 BIOSes, 1/1 devices, 5/5 retail releases found');
   });
 
+  it('should print only the preferred game as found when none are present and single:true', async () => {
+    const options = new Options({
+      ...defaultOptions,
+      single: true,
+      preferParent: true,
+    });
+    let map = await candidateGenerator(options, []);
+    map = await new CandidatePreferer(options, new ProgressBarFake()).prefer(dummyDat, map);
+    const datStatus = new StatusGenerator(options, new ProgressBarFake())
+      .generate(dummyDat, map);
+    expect(stripAnsi(datStatus.toConsole(options))).toEqual('2/5 games, 0/1 BIOSes, 1/1 devices, 2/5 retail releases found');
+  });
+
   it('should print only the preferred game as found when all are present and single:true', async () => {
     const options = new Options({
       ...defaultOptions,
@@ -219,10 +243,27 @@ describe('toConsole', () => {
 
 describe('toCSV', () => {
   describe('no candidates', () => {
-    test.each([true, false, undefined])('should report games without ROMs as found', async (single) => {
+    it('should report games without ROMs as found when single:true', async () => {
       const options = new Options({
         ...defaultOptions,
-        single,
+        single: true,
+        preferParent: true,
+      });
+      const map = await candidateGenerator(options, []);
+      const datStatus = new StatusGenerator(options, new ProgressBarFake())
+        .generate(dummyDat, map);
+      await expect(datStatus.toCsv(options)).resolves.toEqual(`DAT Name,Game Name,Status,ROM Files,Patched,BIOS,Retail Release,Unlicensed,Debug,Demo,Beta,Sample,Prototype,Program,Aftermarket,Homebrew,Bad
+dat,bios,MISSING,,false,true,true,false,false,false,false,false,false,false,false,false,false
+dat,device,FOUND,,false,false,true,false,false,false,false,false,false,false,false,false,false
+dat,game prototype (proto),IGNORED,,false,false,false,false,false,false,false,false,true,false,false,false,false
+dat,game with multiple roms,MISSING,,false,false,true,false,false,false,false,false,false,false,false,false,false
+dat,game with single rom,MISSING,,false,false,true,false,false,false,false,false,false,false,false,false,false
+dat,no roms,FOUND,,false,false,true,false,false,false,false,false,false,false,false,false,false`);
+    });
+    it('should report games without ROMs as found when single:false', async () => {
+      const options = new Options({
+        ...defaultOptions,
+        single: false,
         preferParent: true,
       });
       const map = await candidateGenerator(options, []);
@@ -410,6 +451,24 @@ dat,device,FOUND,,false,false,true,false,false,false,false,false,false,false,fal
 dat,game prototype (proto),FOUND,game prototype (proto).rom,false,false,false,false,false,false,false,false,true,false,false,false,false
 dat,game with multiple roms,FOUND,"one.rom|two.rom",false,false,true,false,false,false,false,false,false,false,false,false,false
 dat,game with single rom,FOUND,game.rom,false,false,true,false,false,false,false,false,false,false,false,false,false
+dat,no roms,FOUND,,false,false,true,false,false,false,false,false,false,false,false,false,false`);
+  });
+
+  it('should print only the preferred game as found when none are present and single:true', async () => {
+    const options = new Options({
+      ...defaultOptions,
+      single: true,
+      preferParent: true,
+    });
+    const map = await candidateGenerator(options, []);
+    const datStatus = new StatusGenerator(options, new ProgressBarFake())
+      .generate(dummyDat, map);
+    await expect(datStatus.toCsv(options)).resolves.toEqual(`DAT Name,Game Name,Status,ROM Files,Patched,BIOS,Retail Release,Unlicensed,Debug,Demo,Beta,Sample,Prototype,Program,Aftermarket,Homebrew,Bad
+dat,bios,MISSING,,false,true,true,false,false,false,false,false,false,false,false,false,false
+dat,device,FOUND,,false,false,true,false,false,false,false,false,false,false,false,false,false
+dat,game prototype (proto),IGNORED,,false,false,false,false,false,false,false,false,true,false,false,false,false
+dat,game with multiple roms,MISSING,,false,false,true,false,false,false,false,false,false,false,false,false,false
+dat,game with single rom,MISSING,,false,false,true,false,false,false,false,false,false,false,false,false,false
 dat,no roms,FOUND,,false,false,true,false,false,false,false,false,false,false,false,false,false`);
   });
 

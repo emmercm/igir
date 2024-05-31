@@ -10,32 +10,24 @@ import Archive from './archive.js';
 import ArchiveEntry from './archiveEntry.js';
 
 export default class SevenZip extends Archive {
-  // p7zip `7za i`
-  // WARNING: tar+compression doesn't work, you'll be left with a tar file output
-  static readonly SUPPORTED_EXTENSIONS = [
-    '.7z', // 7z
-    // '.bz2', '.bzip2', // bzip2
-    // '.cab', // cab
-    '.gz', '.gzip', // gzip
-    // '.lzma', // lzma
-    // '.lzma86', // lzma86
-    // '.pmd', // ppmd
-    '.zip.001', // split
-    // '.tar', '.ova', // tar
-    // '.xz', // xz
-    '.z', // z
-    '.zip', '.z01', '.zipx', // zip
-    // '.zst', // zstd
-    // '.lz4', // lz4
-    // '.lz5', // lz5
-    // '.liz', // lizard
-  ];
-
   private static readonly LIST_MUTEX = new Mutex();
 
   // eslint-disable-next-line class-methods-use-this
   protected new(filePath: string): Archive {
     return new SevenZip(filePath);
+  }
+
+  static getExtensions(): string[] {
+    return ['.7z'];
+  }
+
+  // eslint-disable-next-line class-methods-use-this
+  getExtension(): string {
+    return SevenZip.getExtensions()[0];
+  }
+
+  static getFileSignatures(): Buffer[] {
+    return [Buffer.from('377ABCAF271C', 'hex')];
   }
 
   async getArchiveEntries(checksumBitmask: number): Promise<ArchiveEntry<this>[]> {
