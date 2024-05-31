@@ -1,3 +1,6 @@
+import os from 'node:os';
+import path from 'node:path';
+
 import async from 'async';
 import chalk from 'chalk';
 import isAdmin from 'is-admin';
@@ -81,15 +84,14 @@ export default class Igir {
     if (this.options.getDisableCache()) {
       this.logger.trace('disabling the file cache');
       FileCache.disable();
-    }
-    const cachePath = process.env.NODE_ENV !== 'test'
-      ? this.options.getCachePath() ?? Constants.GLOBAL_CACHE_FILE
-      : undefined;
-    if (cachePath !== undefined) {
-      this.logger.trace(`loading the file cache at '${cachePath}'`);
-      await FileCache.loadFile(cachePath);
     } else {
-      this.logger.trace('not using a file for the file cache');
+      const cachePath = await this.getCachePath();
+      if (cachePath !== undefined && process.env.NODE_ENV !== 'test') {
+        this.logger.trace(`loading the file cache at '${cachePath}'`);
+        await FileCache.loadFile(cachePath);
+      } else {
+        this.logger.trace('not using a file for the file cache');
+      }
     }
 
     // Scan and process input files
@@ -202,6 +204,37 @@ export default class Igir {
     await ProgressBarCLI.stop();
 
     Timer.cancelAll();
+  }
+
+  private async getCachePath(): Promise<string | undefined> {
+    const defaultFileName = `${Constants.COMMAND_NAME}.cache`;
+
+    // Try to use the provided path
+    let cachePath = this.options.getCachePath();
+    if (cachePath !== undefined && await FsPoly.isDirectory(cachePath)) {
+      cachePath = path.join(cachePath, defaultFileName);
+      this.logger.warn(`A directory was provided for cache path instead of a file, using '${cachePath}' instead`);
+    }
+    if (cachePath !== undefined) {
+      if (await FsPoly.isWritable(cachePath)) {
+        return cachePath;
+      }
+      this.logger.warn('Provided cache path isn\'t writable, using the default path');
+    }
+
+    // Otherwise, use a default path
+    return [
+      path.join(path.resolve(Constants.ROOT_DIR), defaultFileName),
+      path.join(os.homedir(), defaultFileName),
+      path.join(process.cwd(), defaultFileName),
+    ]
+      .filter((filePath) => filePath && !filePath.startsWith(os.tmpdir()))
+      .find(async (filePath) => {
+        if (await FsPoly.exists(filePath)) {
+          return true;
+        }
+        return FsPoly.isWritable(filePath);
+      });
   }
 
   private async processDATScanner(): Promise<DAT[]> {
