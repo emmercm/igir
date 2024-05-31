@@ -818,7 +818,7 @@ export default class ArgumentsParser {
       })
       .option('cache-path', {
         group: groupHelpDebug,
-        description: 'Location for the file checksum cache',
+        description: 'Location for the file checksum cache file',
         type: 'string',
         coerce: ArgumentsParser.getLastValue, // don't allow string[] values
         requiresArg: true,
