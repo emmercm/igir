@@ -729,7 +729,7 @@ export default class Options implements OptionsProps {
         const dirname = pathsSplit.slice(0, i).join('/');
         if (dirname === '') {
           // fg won't let you escape empty strings
-          return `${dirname}/${pathsSplit.slice(i).join('/')}`;
+          return pathsSplit.slice(i).join('/');
         }
         return `${fg.escapePath(dirname)}/${pathsSplit.slice(i).join('/')}`;
       }
