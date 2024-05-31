@@ -8,7 +8,7 @@ clrmamepro (
 game (
 	name "allpads"
 	description "allpads"
-	rom ( name allpads.nes size 32784 md5 dd0b01b99083da35b096da7818223802 )
+	rom ( name allpads.nes size 32784 md5 DD0B01B99083DA35B096DA7818223802 )
 )
 
 game (
@@ -20,7 +20,7 @@ game (
 game (
 	name "diagnostic_test_cartridge"
 	description "diagnostic_test_cartridge"
-	rom ( name diagnostic_test_cartridge.a78 size 32896 md5 8df5c10517da1c001072fd5526e4a683 )
+	rom ( name diagnostic_test_cartridge.a78 size 32896 md5 8DF5C10517DA1C001072FD5526E4A683 )
 )
 
 game (

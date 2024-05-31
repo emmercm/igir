@@ -162,6 +162,20 @@ export default class FsPoly {
     }
   }
 
+  static async isWritable(filePath: string): Promise<boolean> {
+    const exists = await this.exists(filePath);
+    try {
+      await this.touch(filePath);
+      return true;
+    } catch {
+      return false;
+    } finally {
+      if (!exists) {
+        await this.rm(filePath);
+      }
+    }
+  }
+
   static makeLegal(filePath: string, pathSep = path.sep): string {
     let replaced = filePath
       // Make the filename Windows legal
