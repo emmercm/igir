@@ -19,7 +19,7 @@
   <machine name="Foobar">
     <description>Foobar</description>
     <release name="Foobar" region="USA"/>
-    <rom name="Foobar.lnx" size="7" crc="b22c9747" md5="14758f1afd44c09b7992073ccf00b43d" sha1="988881adc9fc3655077dc2d4d757d480b5ea0e11" status="verified"/>
+    <rom name="Foobar.lnx" size="7" crc="B22C9747" md5="14758F1AFD44C09B7992073CCF00B43D" sha1="988881ADC9FC3655077DC2D4D757D480B5EA0E11" status="verified"/>
   </machine>
   <machine name="Fizzbuzz" cloneof="Foobar">
     <description>Fizzbuzz</description>
@@ -33,8 +33,8 @@
   </machine>
   <machine name="One Three">
     <description>One Three</description>
-    <rom name="One.rom" size="4" crc="f817a89f" md5="5bbf5a52328e7439ae6e719dfe712200" sha1="c7059bb19433cc3cabaa6236c83d56668a843dd2" status="verified"/>
-    <rom name="Three.rom" size="6" crc="ff46c5d8" md5="febe6995bad457991331348f7b9c85fa" sha1="1e7720a3460b8a84ac4ba27880d64526a3872f1c" status="verified"/>
+    <rom name="One.rom" size="4" crc="F817A89F" md5="5BBF5A52328E7439AE6E719DFE712200" sha1="C7059BB19433CC3CABAA6236C83D56668A843DD2" status="verified"/>
+    <rom name="Three.rom" size="6" crc="FF46C5D8" md5="FEBE6995BAD457991331348F7B9C85FA" sha1="1E7720A3460B8A84AC4BA27880D64526A3872F1C" status="verified"/>
   </machine>
   <machine name="Three Four Five">
     <description>Three Four Five</description>
