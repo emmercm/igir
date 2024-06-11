@@ -323,7 +323,7 @@ export default class Igir {
       .index(romFilesWithHeaders);
 
     await romProgressBar.setName(romScannerProgressBarName); // reset
-    await romProgressBar.doneItems(rawRomFiles.length, 'file', 'found');
+    await romProgressBar.doneItems(romFilesWithHeaders.length, 'file', 'found');
     await romProgressBar.freeze();
 
     return indexedRomFiles;
