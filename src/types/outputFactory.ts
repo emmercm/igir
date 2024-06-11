@@ -10,6 +10,7 @@ import ROM from './dats/rom.js';
 import ArchiveEntry from './files/archives/archiveEntry.js';
 import ArchiveFile from './files/archives/archiveFile.js';
 import File from './files/file.js';
+import FileFactory from './files/fileFactory.js';
 import GameConsole from './gameConsole.js';
 import Options, { GameSubdirMode } from './options.js';
 
@@ -450,7 +451,7 @@ export default class OutputFactory {
     rom: ROM,
     inputFile: File,
   ): string {
-    const { dir, name } = path.parse(this.getOutputFileBasename(
+    const { dir, name, ext } = path.parse(this.getOutputFileBasename(
       options,
       game,
       rom,
@@ -464,7 +465,8 @@ export default class OutputFactory {
 
     if ((options.getDirGameSubdir() === GameSubdirMode.MULTIPLE
         && game.getRoms().length > 1
-        && !(inputFile instanceof ArchiveFile))
+        // Output file is an archive
+        && !(FileFactory.isExtensionArchive(ext) || inputFile instanceof ArchiveFile))
       || options.getDirGameSubdir() === GameSubdirMode.ALWAYS
     ) {
       output = path.join(game.getName(), output);
