@@ -164,6 +164,7 @@ export default class ProgressBarCLI extends ProgressBar {
     this.singleBarFormatted?.getSingleBar().setTotal(total);
     this.singleBarFormatted?.getSingleBar().update(0);
     this.payload.inProgress = 0;
+    this.payload.waitingMessage = undefined;
     return this.render(true);
   }
 
@@ -290,6 +291,7 @@ export default class ProgressBarCLI extends ProgressBar {
       this.singleBarFormatted?.getSingleBar().update(total + 1);
     }
 
+    this.payload.waitingMessage = undefined;
     if (finishedMessage) {
       this.payload.finishedMessage = finishedMessage;
     }

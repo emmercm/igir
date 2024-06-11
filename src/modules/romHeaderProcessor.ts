@@ -29,7 +29,7 @@ export default class ROMHeaderProcessor extends Module {
     }
 
     this.progressBar.logTrace('processing file headers');
-    await this.progressBar.setSymbol(ProgressBarSymbol.HASHING);
+    await this.progressBar.setSymbol(ProgressBarSymbol.DETECTING_HEADERS);
     await this.progressBar.reset(inputRomFiles.length);
 
     const parsedFiles = await new DriveSemaphore(this.options.getReaderThreads()).map(
