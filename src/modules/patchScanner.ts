@@ -37,6 +37,7 @@ export default class PatchScanner extends Scanner {
       this.options.getReaderThreads(),
       ChecksumBitmask.NONE,
     );
+    await this.progressBar.reset(files.length);
 
     const patches = (await new DriveSemaphore(this.options.getReaderThreads()).map(
       files,
