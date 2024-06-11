@@ -203,8 +203,9 @@ export default class CandidateWriter extends Module {
       }
     }
 
+    let written = false;
     for (let i = 0; i <= this.options.getWriteRetry(); i += 1) {
-      const written = await this.writeZipFile(
+      written = await this.writeZipFile(
         dat,
         releaseCandidate,
         outputZip,
@@ -234,6 +235,9 @@ export default class CandidateWriter extends Module {
           return; // final error, do not continue
         }
       }
+    }
+    if (!written) {
+      return;
     }
 
     inputToOutputZipEntries.forEach(([inputRomFile]) => this.enqueueFileDeletion(inputRomFile));
@@ -439,8 +443,9 @@ export default class CandidateWriter extends Module {
       }
     }
 
+    let written = false;
     for (let i = 0; i <= this.options.getWriteRetry(); i += 1) {
-      const written = await this.writeRawFile(dat, releaseCandidate, inputRomFile, outputFilePath);
+      written = await this.writeRawFile(dat, releaseCandidate, inputRomFile, outputFilePath);
 
       if (written && !this.options.shouldTest()) {
         // Successfully written, unknown if valid
@@ -466,6 +471,10 @@ export default class CandidateWriter extends Module {
         }
       }
     }
+    if (!written) {
+      return;
+    }
+
     this.enqueueFileDeletion(inputRomFile);
   }
 
