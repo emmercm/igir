@@ -47,19 +47,25 @@ export default class FileCache {
     // Delete keys for deleted files
     const disks = FsPoly.disksSync();
     const semaphore = new Semaphore(Constants.MAX_FS_THREADS);
-    await Promise.all([...this.cache.keys()].map(async (cacheKey) => {
-      const cacheKeyFilePath = cacheKey.split('|')[1];
-      if (!disks.some((disk) => cacheKeyFilePath.startsWith(disk))) {
-        // Don't delete the key if it's for a disk that isn't mounted right now
-        return;
-      }
-      await semaphore.runExclusive(async () => {
-        if (!await FsPoly.exists(cacheKeyFilePath)) {
-          // If the file no longer exists, then delete its key from the cache
-          await this.cache.delete(cacheKeyFilePath);
-        }
-      });
-    }));
+    await Promise.all(
+      [...this.cache.keys()]
+        // Only process a reasonably sized subset of the keys
+        .sort(() => Math.random() - 0.5)
+        .slice(0, Constants.MAX_FS_THREADS * 100)
+        .map(async (cacheKey) => {
+          const cacheKeyFilePath = cacheKey.split('|')[1];
+          if (!disks.some((disk) => cacheKeyFilePath.startsWith(disk))) {
+            // Don't delete the key if it's for a disk that isn't mounted right now
+            return;
+          }
+          await semaphore.runExclusive(async () => {
+            if (!await FsPoly.exists(cacheKeyFilePath)) {
+              // If the file no longer exists, then delete its key from the cache
+              await this.cache.delete(cacheKeyFilePath);
+            }
+          });
+        }),
+    );
   }
 
   public static async save(): Promise<void> {
