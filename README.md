@@ -58,7 +58,7 @@ $ igir --help
   | $$  | $$|    \  | $$  | $$    $$   ROM collection manager
   | $$  | $$|    \  | $$  | $$    $$   https://igir.io/
   | $$  | $$ \$$$$  | $$  | $$$$$$$\
- _| $$_ | $$__| $$ _| $$_ | $$  | $$   v2.7.0
+ _| $$_ | $$__| $$ _| $$_ | $$  | $$   v2.8.0
 |   $$ \ \$$    $$|   $$ \| $$  | $$
  \$$$$$$  \$$$$$$  \$$$$$$ \$$   \$$
 
@@ -73,153 +73,160 @@ Commands (can specify multiple):
   igir zip      Create zip archives of ROMs when copying or moving
   igir test     Test ROMs for accuracy after writing them to the output directory
   igir dir2dat  Generate a DAT from all input files
-  igir fixdat   Generate a fixdat of any missing games for every DAT processed (requires --dat)
+  igir fixdat   Generate a fixdat of any missing games for every DAT processed (requires --dat
+                )
   igir clean    Recycle unknown files in the output directory
-  igir report   Generate a CSV report on the known & unknown ROM files found in the input direct
-                ories (requires --dat)
+  igir report   Generate a CSV report on the known & unknown ROM files found in the input dire
+                ctories (requires --dat)
 
 ROM input options:
-  -i, --input               Path(s) to ROM files or archives (supports globbing)         [array]
-  -I, --input-exclude       Path(s) to ROM files or archives to exclude from processing (support
-                            s globbing)                                                  [array]
+  -i, --input               Path(s) to ROM files or archives (supports globbing)       [array]
+  -I, --input-exclude       Path(s) to ROM files or archives to exclude from processing (suppo
+                            rts globbing)                                              [array]
       --input-min-checksum  The minimum checksum level to calculate and use for matching
-                                  [choices: "CRC32", "MD5", "SHA1", "SHA256"] [default: "CRC32"]
+                                [choices: "CRC32", "MD5", "SHA1", "SHA256"] [default: "CRC32"]
 
 DAT input options:
   -d, --dat                            Path(s) to DAT files or archives (supports globbing)
-                                                                                         [array]
-      --dat-exclude                    Path(s) to DAT files or archives to exclude from processi
-                                       ng (supports globbing)                            [array]
-      --dat-name-regex                 Regular expression of DAT names to process       [string]
-      --dat-name-regex-exclude         Regular expression of DAT names to exclude from processin
-                                       g                                                [string]
-      --dat-description-regex          Regular expression of DAT descriptions to process[string]
-      --dat-description-regex-exclude  Regular expression of DAT descriptions to exclude from pr
-                                       ocessing                                         [string]
-      --dat-combine                    Combine every game from every found & filtered DAT into o
-                                       ne DAT                                          [boolean]
+                                                                                       [array]
+      --dat-exclude                    Path(s) to DAT files or archives to exclude from proces
+                                       sing (supports globbing)                        [array]
+      --dat-name-regex                 Regular expression of DAT names to process     [string]
+      --dat-name-regex-exclude         Regular expression of DAT names to exclude from process
+                                       ing                                            [string]
+      --dat-description-regex          Regular expression of DAT descriptions to process
+                                                                                      [string]
+      --dat-description-regex-exclude  Regular expression of DAT descriptions to exclude from
+                                       processing                                     [string]
+      --dat-combine                    Combine every game from every found & filtered DAT into
+                                        one DAT                                      [boolean]
       --dat-ignore-parent-clone        Ignore any parent/clone information found in DATs
-                                                                                       [boolean]
+                                                                                     [boolean]
 
 Patch input options:
-  -p, --patch          Path(s) to ROM patch files or archives (supports globbing) (supported: .a
-                       ps, .bps, .dps, .ebp, .ips, .ips32, .ppf, .rup, .ups, .vcdiff, .xdelta)
-                                                                                         [array]
-  -P, --patch-exclude  Path(s) to ROM patch files or archives to exclude from processing (suppor
-                       ts globbing)                                                      [array]
+  -p, --patch          Path(s) to ROM patch files or archives (supports globbing) (supported:
+                       .aps, .bps, .dps, .ebp, .ips, .ips32, .ppf, .rup, .ups, .vcdiff, .xdelt
+                       a)                                                              [array]
+  -P, --patch-exclude  Path(s) to ROM patch files or archives to exclude from processing (supp
+                       orts globbing)                                                  [array]
 
 ROM output options (processed in order):
-  -o, --output               Path to the ROM output directory (supports replaceable symbols, see
-                              below)                                                    [string]
+  -o, --output               Path to the ROM output directory (supports replaceable symbols, s
+                             ee below)                                                [string]
       --dir-mirror           Use the input subdirectory structure for the output directory
-                                                                                       [boolean]
-  -D, --dir-dat-name         Use the DAT name as the output subdirectory               [boolean]
-      --dir-dat-description  Use the DAT description as the output subdirectory        [boolean]
-      --dir-letter           Group games in an output subdirectory by the first --dir-letter-cou
-                             nt letters in their name                                  [boolean]
+                                                                                     [boolean]
+  -D, --dir-dat-name         Use the DAT name as the output subdirectory             [boolean]
+      --dir-dat-description  Use the DAT description as the output subdirectory      [boolean]
+      --dir-letter           Group games in an output subdirectory by the first --dir-letter-c
+                             ount letters in their name                              [boolean]
       --dir-letter-count     How many game name letters to use for the subdirectory name
-                                                                           [number] [default: 1]
-      --dir-letter-limit     Limit the number of games in letter subdirectories, splitting into
-                             multiple subdirectories if necessary                       [number]
-      --dir-letter-group     Group letter subdirectories into ranges, combining multiple letters
-                              together (requires --dir-letter-limit)                   [boolean]
-      --dir-game-subdir      Append the name of the game as an output subdirectory depending on
-                             its ROMs
-                                  [choices: "never", "multiple", "always"] [default: "multiple"]
-  -O, --overwrite            Overwrite any files in the output directory               [boolean]
-      --overwrite-invalid    Overwrite files in the output directory that are the wrong filesize
-                             , checksum, or zip contents                               [boolean]
+                                                                         [number] [default: 1]
+      --dir-letter-limit     Limit the number of games in letter subdirectories, splitting int
+                             o multiple subdirectories if necessary                   [number]
+      --dir-letter-group     Group letter subdirectories into ranges, combining multiple lette
+                             rs together (requires --dir-letter-limit)               [boolean]
+      --dir-game-subdir      Append the name of the game as an output subdirectory depending o
+                             n its ROMs
+                                [choices: "never", "multiple", "always"] [default: "multiple"]
+  -O, --overwrite            Overwrite any files in the output directory             [boolean]
+      --overwrite-invalid    Overwrite files in the output directory that are the wrong filesi
+                             ze, checksum, or zip contents                           [boolean]
   -C, --clean-exclude        Path(s) to files to exclude from cleaning (supports globbing)
-                                                                                         [array]
-      --clean-dry-run        Don't clean any files and instead only print what files would be cl
-                             eaned                                                     [boolean]
+                                                                                       [array]
+      --clean-dry-run        Don't clean any files and instead only print what files would be
+                             cleaned                                                 [boolean]
 
 ROM zip command options:
-  -Z, --zip-exclude   Glob pattern of files to exclude from zipping                     [string]
-      --zip-dat-name  Group all ROMs from the same DAT into the same zip archive, if not exclude
-                      d from zipping (enforces --dat-threads 1)                        [boolean]
+  -Z, --zip-exclude   Glob pattern of files to exclude from zipping                   [string]
+      --zip-dat-name  Group all ROMs from the same DAT into the same zip archive, if not exclu
+                      ded from zipping (enforces --dat-threads 1)                    [boolean]
 
 ROM link command options:
-      --symlink           Creates symbolic links instead of hard links                 [boolean]
-      --symlink-relative  Create symlinks as relative to the target path, as opposed to absolute
-                                                                                       [boolean]
+      --symlink           Creates symbolic links instead of hard links               [boolean]
+      --symlink-relative  Create symlinks as relative to the target path, as opposed to absolu
+                          te                                                         [boolean]
 
 ROM header options:
-      --header          Glob pattern of files to force header processing for            [string]
-  -H, --remove-headers  Remove known headers from ROMs, optionally limited to a list of comma-se
-                        parated file extensions (supported: .a78, .fds, .lnx, .nes, .smc)
-                                                                                        [string]
+      --header          Glob pattern of files to force header processing for          [string]
+  -H, --remove-headers  Remove known headers from ROMs, optionally limited to a list of comma-
+                        separated file extensions (supported: .a78, .fds, .lnx, .nes, .smc)
+                                                                                      [string]
 
 ROM set options:
-      --merge-roms             ROM merge/split mode (requires DATs with parent/clone information
-                               )
-           [choices: "fullnonmerged", "nonmerged", "split", "merged"] [default: "fullnonmerged"]
-      --allow-incomplete-sets  Allow writing games that don't have all of their ROMs   [boolean]
+      --merge-roms             ROM merge/split mode (requires DATs with parent/clone informati
+                               on)
+         [choices: "fullnonmerged", "nonmerged", "split", "merged"] [default: "fullnonmerged"]
+      --allow-incomplete-sets  Allow writing games that don't have all of their ROMs [boolean]
 
 ROM filtering options:
-  -x, --filter-regex          Regular expression of game names to filter to             [string]
-  -X, --filter-regex-exclude  Regular expression of game names to exclude               [string]
-  -L, --filter-language       List of comma-separated languages to filter to (supported: DA, DE,
-                               EL, EN, ES, FI, FR, IT, JA, KO, NL, NO, PT, RU, SV, ZH)  [string]
-  -R, --filter-region         List of comma-separated regions to filter to (supported: ARG, ASI,
-                               AUS, BEL, BRA, CAN, CHN, DAN, EUR, FRA, FYN, GER, GRE, HK, HOL, I
-                              TA, JPN, KOR, MEX, NOR, NZ, POR, RUS, SPA, SWE, TAI, UK, UNK, USA,
-                               WORLD)                                                   [string]
-      --no-bios               Filter out BIOS files, opposite of --only-bios           [boolean]
-      --no-device             Filter out MAME devies, opposite of --only-device        [boolean]
-      --no-unlicensed         Filter out unlicensed ROMs, opposite of --only-unlicensed[boolean]
-      --only-retail           Filter to only retail releases, enabling all the following "no" op
-                              tions                                                    [boolean]
-      --no-debug              Filter out debug ROMs, opposite of --only-debug          [boolean]
-      --no-demo               Filter out demo ROMs, opposite of --only-demo            [boolean]
-      --no-beta               Filter out beta ROMs, opposite of --only-beta            [boolean]
-      --no-sample             Filter out sample ROMs, opposite of --only-sample        [boolean]
-      --no-prototype          Filter out prototype ROMs, opposite of --only-prototype  [boolean]
+  -x, --filter-regex          Regular expression of game names to filter to           [string]
+  -X, --filter-regex-exclude  Regular expression of game names to exclude             [string]
+  -L, --filter-language       List of comma-separated languages to filter to (supported: DA, D
+                              E, EL, EN, ES, FI, FR, IT, JA, KO, NL, NO, PT, RU, SV, ZH)
+                                                                                      [string]
+  -R, --filter-region         List of comma-separated regions to filter to (supported: ARG, AS
+                              I, AUS, BEL, BRA, CAN, CHN, DAN, EUR, FRA, FYN, GER, GRE, HK, HO
+                              L, ITA, JPN, KOR, MEX, NOR, NZ, POR, RUS, SPA, SWE, TAI, UK, UNK
+                              , USA, WORLD)                                           [string]
+      --no-bios               Filter out BIOS files, opposite of --only-bios         [boolean]
+      --no-device             Filter out MAME devies, opposite of --only-device      [boolean]
+      --no-unlicensed         Filter out unlicensed ROMs, opposite of --only-unlicensed
+                                                                                     [boolean]
+      --only-retail           Filter to only retail releases, enabling all the following "no"
+                              options                                                [boolean]
+      --no-debug              Filter out debug ROMs, opposite of --only-debug        [boolean]
+      --no-demo               Filter out demo ROMs, opposite of --only-demo          [boolean]
+      --no-beta               Filter out beta ROMs, opposite of --only-beta          [boolean]
+      --no-sample             Filter out sample ROMs, opposite of --only-sample      [boolean]
+      --no-prototype          Filter out prototype ROMs, opposite of --only-prototype[boolean]
       --no-program            Filter out program application ROMs, opposite of --only-program
-                                                                                       [boolean]
+                                                                                     [boolean]
       --no-aftermarket        Filter out aftermarket ROMs, opposite of --only-aftermarket
-                                                                                       [boolean]
-      --no-homebrew           Filter out homebrew ROMs, opposite of --only-homebrew    [boolean]
-      --no-unverified         Filter out unverified ROMs, opposite of --only-unverified[boolean]
-      --no-bad                Filter out bad ROM dumps, opposite of --only-bad         [boolean]
+                                                                                     [boolean]
+      --no-homebrew           Filter out homebrew ROMs, opposite of --only-homebrew  [boolean]
+      --no-unverified         Filter out unverified ROMs, opposite of --only-unverified
+                                                                                     [boolean]
+      --no-bad                Filter out bad ROM dumps, opposite of --only-bad       [boolean]
 
 One game, one ROM (1G1R) options:
-  -s, --single                 Output only a single game per parent (1G1R) (required for all opt
-                               ions below, requires DATs with parent/clone information)[boolean]
-      --prefer-game-regex      Regular expression of game names to prefer               [string]
-      --prefer-rom-regex       Regular expression of ROM filenames to prefer            [string]
-      --prefer-verified        Prefer verified ROM dumps over unverified               [boolean]
-      --prefer-good            Prefer good ROM dumps over bad                          [boolean]
-  -l, --prefer-language        List of comma-separated languages in priority order (supported: D
-                               A, DE, EL, EN, ES, FI, FR, IT, JA, KO, NL, NO, PT, RU, SV, ZH)
-                                                                                        [string]
-  -r, --prefer-region          List of comma-separated regions in priority order (supported: ARG
-                               , ASI, AUS, BEL, BRA, CAN, CHN, DAN, EUR, FRA, FYN, GER, GRE, HK,
-                                HOL, ITA, JPN, KOR, MEX, NOR, NZ, POR, RUS, SPA, SWE, TAI, UK, U
-                               NK, USA, WORLD)                                          [string]
-      --prefer-revision-newer  Prefer newer ROM revisions over older                   [boolean]
-      --prefer-revision-older  Prefer older ROM revisions over newer                   [boolean]
-      --prefer-retail          Prefer retail releases (see --only-retail)              [boolean]
-      --prefer-ntsc            Prefer NTSC ROMs over others                            [boolean]
-      --prefer-pal             Prefer PAL ROMs over others                             [boolean]
-      --prefer-parent          Prefer parent ROMs over clones                          [boolean]
+  -s, --single                 Output only a single game per parent (1G1R) (required for all o
+                               ptions below, requires DATs with parent/clone information)
+                                                                                     [boolean]
+      --prefer-game-regex      Regular expression of game names to prefer             [string]
+      --prefer-rom-regex       Regular expression of ROM filenames to prefer          [string]
+      --prefer-verified        Prefer verified ROM dumps over unverified             [boolean]
+      --prefer-good            Prefer good ROM dumps over bad                        [boolean]
+  -l, --prefer-language        List of comma-separated languages in priority order (supported:
+                                DA, DE, EL, EN, ES, FI, FR, IT, JA, KO, NL, NO, PT, RU, SV, ZH
+                               )                                                      [string]
+  -r, --prefer-region          List of comma-separated regions in priority order (supported: A
+                               RG, ASI, AUS, BEL, BRA, CAN, CHN, DAN, EUR, FRA, FYN, GER, GRE,
+                                HK, HOL, ITA, JPN, KOR, MEX, NOR, NZ, POR, RUS, SPA, SWE, TAI,
+                                UK, UNK, USA, WORLD)                                  [string]
+      --prefer-revision-newer  Prefer newer ROM revisions over older                 [boolean]
+      --prefer-revision-older  Prefer older ROM revisions over newer                 [boolean]
+      --prefer-retail          Prefer retail releases (see --only-retail)            [boolean]
+      --prefer-ntsc            Prefer NTSC ROMs over others                          [boolean]
+      --prefer-pal             Prefer PAL ROMs over others                           [boolean]
+      --prefer-parent          Prefer parent ROMs over clones                        [boolean]
 
 Report options:
       --report-output  Report output location (formatted with moment.js)
-                                      [string] [default: "./igir_%YYYY-%MM-%DDT%HH:%mm:%ss.csv"]
+                                    [string] [default: "./igir_%YYYY-%MM-%DDT%HH:%mm:%ss.csv"]
 
 Help & debug options:
-      --dat-threads     Number of DATs to process in parallel              [number] [default: 3]
-      --reader-threads  Maximum number of ROMs to read in parallel per disk[number] [default: 8]
-      --writer-threads  Maximum number of ROMs to write in parallel        [number] [default: 4]
-      --write-retry     Number of additional retries to attempt when writing a file has failed (
-                        0 disables retries)                                [number] [default: 2]
-      --disable-cache   Disable the file checksum cache                                [boolean]
-      --cache-path      Location for the file checksum cache                            [string]
-  -v, --verbose         Enable verbose logging, can specify up to three times (-vvv)     [count]
-  -h, --help            Show help                                                      [boolean]
+      --dat-threads     Number of DATs to process in parallel            [number] [default: 3]
+      --reader-threads  Maximum number of ROMs to read in parallel per disk
+                                                                         [number] [default: 8]
+      --writer-threads  Maximum number of ROMs to write in parallel      [number] [default: 4]
+      --write-retry     Number of additional retries to attempt when writing a file has failed
+                         (0 disables retries)                            [number] [default: 2]
+      --disable-cache   Disable the file checksum cache                              [boolean]
+      --cache-path      Location for the file checksum cache file                     [string]
+  -v, --verbose         Enable verbose logging, can specify up to three times (-vvv)   [count]
+  -h, --help            Show help                                                    [boolean]
 
-------------------------------------------------------------------------------------------------
+----------------------------------------------------------------------------------------------
 
 Advanced usage:
 
@@ -237,20 +244,22 @@ Advanced usage:
 
     {adam}      The ROM's emulator-specific /ROMS/* directory for the 'Adam' image (e.g. "GB")
     {batocera}  The ROM's emulator-specific /roms/* directory for Batocera (e.g. "gb")
-    {es}        The ROM's emulator-specific /roms/* directory for the 'EmulationStation' image (
-    e.g. "gb")
+    {es}        The ROM's emulator-specific /roms/* directory for the 'EmulationStation' image
+     (e.g. "gb")
     {funkeyos}  The ROM's emulator-specific /* directory for FunKey OS (e.g. "Game Boy")
     {jelos}     The ROM's emulator-specific /roms/* directory for JELOS (e.g. "gb")
     {minui}     The ROM's emulator-specific /Roms/* directory for MinUI (e.g. "Game Boy (GB)")
-    {mister}    The ROM's core-specific /games/* directory for the MiSTer FPGA (e.g. "Gameboy")
+    {mister}    The ROM's core-specific /games/* directory for the MiSTer FPGA (e.g. "Gameboy"
+    )
     {miyoocfw}  The ROM's emulator-specific /roms/* directory for MiyooCFW (e.g. "GB")
     {onion}     The ROM's emulator-specific /Roms/* directory for OnionOS/GarlicOS (e.g. "GB")
-    {pocket}    The ROM's core-specific /Assets/* directory for the Analogue Pocket (e.g. "gb")
-    {retrodeck} The ROM's emulator-specific /roms/* directory for the 'RetroDECK' image (e.g. "g
-    b")
+    {pocket}    The ROM's core-specific /Assets/* directory for the Analogue Pocket (e.g. "gb"
+    )
+    {retrodeck} The ROM's emulator-specific /roms/* directory for the 'RetroDECK' image (e.g.
+    "gb")
     {romm}      The ROM's manager-specific /roms/* directory for 'RomM' (e.g. "gb")
-    {twmenu}    The ROM's emulator-specific /roms/* directory for TWiLightMenu++ on the DSi/3DS
-    (e.g. "gb")
+    {twmenu}    The ROM's emulator-specific /roms/* directory for TWiLightMenu++ on the DSi/3D
+    S (e.g. "gb")
 
 Example use cases:
 
@@ -264,8 +273,8 @@ Example use cases:
     igir report --dat "*.dat" --input ROMs/
 
   Produce a 1G1R set per console, preferring English ROMs from USA>WORLD>EUR>JPN:
-    igir copy --dat "*.dat" --input "**/*.zip" --output 1G1R/ --dir-dat-name --single --prefer-l
-    anguage EN --prefer-region USA,WORLD,EUR,JPN
+    igir copy --dat "*.dat" --input "**/*.zip" --output 1G1R/ --dir-dat-name --single --prefer
+    -language EN --prefer-region USA,WORLD,EUR,JPN
 
   Copy all Mario, Metroid, and Zelda games to one directory:
     igir copy --input ROMs/ --output Nintendo/ --filter-regex "/(Mario|Metroid|Zelda)/i"
@@ -280,8 +289,8 @@ Example use cases:
     igir copy zip --dat "MAME 0.258.dat" --input MAME/ --output MAME-0.258/ --merge-roms split
 
   Copy ROMs to an Analogue Pocket and test they were written correctly:
-    igir copy extract test --dat "*.dat" --input ROMs/ --output /Assets/{pocket}/common/ --dir-l
-    etter
+    igir copy extract test --dat "*.dat" --input ROMs/ --output /Assets/{pocket}/common/ --dir
+    -letter
 ```
 <!-- WARN: everything above is automatically updated! Update src/modules/argumentsParser.ts instead! -->
 
