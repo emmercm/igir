@@ -24,7 +24,7 @@ interface ParsedPathWithEntryPath extends ParsedPath {
 /**
  * A {@link ParsedPathWithEntryPath} that normalizes formatting across OSes.
  */
-class OutputPath implements ParsedPathWithEntryPath {
+export class OutputPath implements ParsedPathWithEntryPath {
   base: string;
 
   dir: string;
