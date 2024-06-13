@@ -19,8 +19,6 @@ import Module from './module.js';
  * If no {@link DAT}s are provided, implicitly create some. A {@link DAT} will be created for every
  * subdirectory that contains files, and {@link Game}s will be named after each file's extracted
  * path (without the extension).
- *
- * This class will not be run concurrently with any other class.
  */
 export default class DATGameInferrer extends Module {
   private static readonly DEFAULT_DAT_NAME = Constants.COMMAND_NAME;

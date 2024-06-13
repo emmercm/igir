@@ -10,8 +10,6 @@ import Module from './module.js';
  * After all output {@link File}s have been written, delete any input {@link File}s that were
  * "moved." This needs to happen after all writing has finished in order to guarantee we're done
  * reading input {@link File}s from disk.
- *
- * This class will not be run concurrently with any other class.
  */
 export default class MovedROMDeleter extends Module {
   constructor(progressBar: ProgressBar) {

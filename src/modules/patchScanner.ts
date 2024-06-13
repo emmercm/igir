@@ -10,8 +10,6 @@ import Scanner from './scanner.js';
 
 /**
  * Scan for {@link Patch}es and parse them into the correct supported type.
- *
- * This class will not be run concurrently with any other class.
  */
 export default class PatchScanner extends Scanner {
   constructor(options: Options, progressBar: ProgressBar) {

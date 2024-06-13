@@ -11,8 +11,6 @@ import Module from './module.js';
 /**
  * Validate un-merged, split, and merged ROM sets for playability after all generation and filtering
  * has happened.
- *
- * This class may be run concurrently with other classes.
  */
 export default class CandidateMergeSplitValidator extends Module {
   private readonly options: Options;

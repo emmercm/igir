@@ -35,8 +35,6 @@ type SmdbRow = {
 /**
  * Scan the {@link OptionsProps.dat} input directory for DAT files and return the internal model
  * representation.
- *
- * This class will not be run concurrently with any other class.
  */
 export default class DATScanner extends Scanner {
   constructor(options: Options, progressBar: ProgressBar) {
