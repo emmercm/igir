@@ -59,7 +59,7 @@ export default class FileCache {
             await this.cache.delete(cacheKeyFilePath);
           }
         }));
-    }, 10_000);
+    }, 5000);
   }
 
   public static async save(): Promise<void> {
