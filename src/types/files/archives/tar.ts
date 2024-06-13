@@ -30,7 +30,7 @@ export default class Tar extends Archive {
       Buffer.from('7573746172003030', 'hex'),
       Buffer.from('7573746172202000', 'hex'),
       // .tar.gz / .tgz
-      Buffer.from('1F8B', 'hex'),
+      Buffer.from('1F8B08', 'hex'), // deflate
     ];
   }
 

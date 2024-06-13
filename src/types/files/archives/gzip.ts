@@ -16,6 +16,8 @@ export default class Gzip extends SevenZip {
   }
 
   static getFileSignatures(): Buffer[] {
-    return [Buffer.from('1F8B', 'hex')];
+    return [
+      Buffer.from('1F8B08', 'hex'), // deflate
+    ];
   }
 }

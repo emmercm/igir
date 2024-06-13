@@ -18,6 +18,7 @@ import ROMHeader from './romHeader.js';
 export interface FileProps extends ChecksumProps {
   readonly filePath: string;
   readonly size?: number;
+  readonly checksumBitmask?: number;
   readonly crc32WithoutHeader?: string;
   readonly md5WithoutHeader?: string;
   readonly sha1WithoutHeader?: string;
@@ -33,6 +34,8 @@ export default class File implements FileProps {
 
   @Expose()
   readonly size: number;
+
+  readonly checksumBitmask?: number;
 
   @Expose()
   readonly crc32?: string;
@@ -63,6 +66,7 @@ export default class File implements FileProps {
   protected constructor(fileProps: FileProps) {
     this.filePath = path.normalize(fileProps.filePath);
     this.size = fileProps.size ?? 0;
+    this.checksumBitmask = fileProps.checksumBitmask;
     this.crc32 = fileProps.crc32?.toLowerCase().replace(/^0x/, '').padStart(8, '0');
     this.crc32WithoutHeader = fileProps.crc32WithoutHeader?.toLowerCase().replace(/^0x/, '').padStart(8, '0');
     this.md5 = fileProps.md5?.toLowerCase().replace(/^0x/, '').padStart(32, '0');
@@ -147,6 +151,7 @@ export default class File implements FileProps {
     return new File({
       filePath: fileProps.filePath,
       size: finalSize,
+      checksumBitmask,
       crc32: finalCrcWithHeader,
       crc32WithoutHeader: finalCrcWithoutHeader,
       md5: finalMd5WithHeader,
@@ -246,7 +251,7 @@ export default class File implements FileProps {
   }
 
   public getChecksumBitmask(): number {
-    return (this.getCrc32()?.replace(/^0+|0+$/, '') ? ChecksumBitmask.CRC32 : 0)
+    return this.checksumBitmask ?? (this.getCrc32()?.replace(/^0+|0+$/, '') ? ChecksumBitmask.CRC32 : 0)
       | (this.getMd5()?.replace(/^0+|0+$/, '') ? ChecksumBitmask.MD5 : 0)
       | (this.getSha1()?.replace(/^0+|0+$/, '') ? ChecksumBitmask.SHA1 : 0)
       | (this.getSha256()?.replace(/^0+|0+$/, '') ? ChecksumBitmask.SHA256 : 0);
@@ -411,6 +416,13 @@ export default class File implements FileProps {
 
     const filePath = await fsPoly.mktemp(path.join(Constants.GLOBAL_TEMP_DIR, tempPrefix));
     return this.downloadToPath(filePath);
+  }
+
+  withProps(props: Omit<FileProps, 'filePath' | 'fileHeader' | 'patch'>): File {
+    return new File({
+      ...this,
+      ...props,
+    });
   }
 
   withFilePath(filePath: string): File {
