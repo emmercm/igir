@@ -9,6 +9,7 @@ import Logger from './console/logger.js';
 import ProgressBar, { ProgressBarSymbol } from './console/progressBar.js';
 import ProgressBarCLI from './console/progressBarCli.js';
 import Constants from './constants.js';
+import CandidateArchiveFileHasher from './modules/candidateArchiveFileHasher.js';
 import CandidateCombiner from './modules/candidateCombiner.js';
 import CandidateGenerator from './modules/candidateGenerator.js';
 import CandidateMergeSplitValidator from './modules/candidateMergeSplitValidator.js';
@@ -355,10 +356,14 @@ export default class Igir {
 
     const preferredCandidates = await new CandidatePreferer(this.options, progressBar)
       .prefer(dat, patchedCandidates);
-    // TODO(cemmer): calculate raw checksums for archives after applying 1G1R rules
+
+    // Delay calculating checksums for {@link ArchiveFile}s until after {@link CandidatePreferer}
+    //  for efficiency
+    const hashedCandidates = await new CandidateArchiveFileHasher(this.options, progressBar)
+      .hash(dat, preferredCandidates);
 
     const postProcessedCandidates = await new CandidatePostProcessor(this.options, progressBar)
-      .process(dat, preferredCandidates);
+      .process(dat, hashedCandidates);
 
     await new CandidateMergeSplitValidator(this.options, progressBar)
       .validate(dat, postProcessedCandidates);
