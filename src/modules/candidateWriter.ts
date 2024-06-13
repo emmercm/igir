@@ -24,8 +24,6 @@ export interface CandidateWriterResults {
 
 /**
  * Copy or move output ROM files, if applicable.
- *
- * This class may be run concurrently with other classes.
  */
 export default class CandidateWriter extends Module {
   private static readonly THREAD_SEMAPHORE = new Semaphore(Number.MAX_SAFE_INTEGER);

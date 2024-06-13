@@ -10,8 +10,6 @@ import BufferPoly from '../polyfill/bufferPoly.js';
 
 /**
  * Check for a newer version and log if one is found.
- *
- * This class will not be run concurrently with any other class.
  */
 export default class UpdateChecker {
   private readonly logger: Logger;

@@ -7,8 +7,6 @@ import Module from './module.js';
 
 /**
  * Generate a single report file with information about every DAT processed.
- *
- * This class will not be run concurrently with any other class.
  */
 export default class ReportGenerator extends Module {
   private readonly options: Options;

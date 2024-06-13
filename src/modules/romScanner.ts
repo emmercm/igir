@@ -7,8 +7,6 @@ import Scanner from './scanner.js';
 /**
  * Scan the {@link OptionsProps.input} input directory for ROM files and return the internal model
  * representation.
- *
- * This class will not be run concurrently with any other class.
  */
 export default class ROMScanner extends Scanner {
   constructor(options: Options, progressBar: ProgressBar) {

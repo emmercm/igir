@@ -14,8 +14,6 @@ import Module from './module.js';
 
 /**
  * Recycle any unknown files in the {@link OptionsProps.output} directory, if applicable.
- *
- * This class will not be run concurrently with any other class.
  */
 export default class DirectoryCleaner extends Module {
   private readonly options: Options;

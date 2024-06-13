@@ -9,8 +9,6 @@ import Module from './module.js';
 /**
  * For every input {@link ROM} file found, attempt to find a matching {@link Header} and resolve its
  * header-less checksum.
- *
- * This class will not be run concurrently with any other class.
  */
 export default class ROMHeaderProcessor extends Module {
   private readonly options: Options;
