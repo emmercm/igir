@@ -18,7 +18,7 @@ import { ChecksumBitmask } from '../types/files/fileChecksums.js';
 import FileFactory from '../types/files/fileFactory.js';
 import IndexedFiles from '../types/indexedFiles.js';
 import Options from '../types/options.js';
-import OutputFactory from '../types/outputFactory.js';
+import OutputFactory, { OutputPath } from '../types/outputFactory.js';
 import ReleaseCandidate from '../types/releaseCandidate.js';
 import ROMWithFiles from '../types/romWithFiles.js';
 import Module from './module.js';
@@ -201,10 +201,13 @@ export default class CandidateGenerator extends Module {
 
         try {
           const outputFile = await this.getOutputFile(dat, game, release, rom, inputFile);
+          if (outputFile === undefined) {
+            return [rom, undefined];
+          }
           const romWithFiles = new ROMWithFiles(rom, inputFile, outputFile);
           return [rom, romWithFiles];
         } catch (error) {
-          this.progressBar.logWarn(`${dat.getNameShort()}: ${game.getName()}: ${error}`);
+          this.progressBar.logError(`${dat.getNameShort()}: ${game.getName()}: ${error}`);
           return [rom, undefined];
         }
       }),
@@ -313,16 +316,22 @@ export default class CandidateGenerator extends Module {
     release: Release | undefined,
     rom: ROM,
     inputFile: File,
-  ): Promise<File> {
+  ): Promise<File | undefined> {
     // Determine the output file's path
-    const outputPathParsed = OutputFactory.getPath(
-      this.options,
-      dat,
-      game,
-      release,
-      rom,
-      inputFile,
-    );
+    let outputPathParsed: OutputPath;
+    try {
+      outputPathParsed = OutputFactory.getPath(
+        this.options,
+        dat,
+        game,
+        release,
+        rom,
+        inputFile,
+      );
+    } catch (error) {
+      this.progressBar.logTrace(`${dat.getNameShort()}: ${game.getName()}: ${error}`);
+      return undefined;
+    }
     const outputFilePath = outputPathParsed.format();
 
     // Determine the output CRC of the file
