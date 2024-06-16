@@ -81,13 +81,13 @@ describe('token replacement', () => {
   });
 
   test.each([
-    ['root/{gameRegion}', 'Game (E)', [], path.join('root', 'EUR', 'Dummy.rom')],
-    ['root/{gameRegion}', 'Game (Europe)', [], path.join('root', 'EUR', 'Dummy.rom')],
-    ['root/{gameRegion}', 'Game', ['EUR'], path.join('root', 'EUR', 'Dummy.rom')],
+    ['root/{region}', 'Game (E)', [], path.join('root', 'EUR', 'Dummy.rom')],
+    ['root/{region}', 'Game (Europe)', [], path.join('root', 'EUR', 'Dummy.rom')],
+    ['root/{region}', 'Game', ['EUR'], path.join('root', 'EUR', 'Dummy.rom')],
     ['root/{gameRegion}', 'Game', ['EUR', 'JPN'], path.join('root', 'EUR', 'Dummy.rom')],
     ['root/{gameRegion}', 'Game', ['JPN'], path.join('root', 'JPN', 'Dummy.rom')],
     ['root/{gameRegion}', 'Game', ['JPN', 'EUR'], path.join('root', 'JPN', 'Dummy.rom')],
-  ])('should replace {gameRegion}: %s', async (output, gameName, regions, expectedPath) => {
+  ])('should replace {region}: %s', async (output, gameName, regions, expectedPath) => {
     const options = new Options({ commands: ['copy'], output });
     const dat = new LogiqxDAT(new Header(), []);
     const game = new Game({
@@ -107,13 +107,13 @@ describe('token replacement', () => {
   });
 
   test.each([
-    ['root/{gameLanguage}', 'Game (E)', [], path.join('root', 'EN', 'Dummy.rom')],
-    ['root/{gameLanguage}', 'Game (Europe)', [], path.join('root', 'EN', 'Dummy.rom')],
-    ['root/{gameLanguage}', 'Game', ['EUR'], path.join('root', 'EN', 'Dummy.rom')],
+    ['root/{language}', 'Game (E)', [], path.join('root', 'EN', 'Dummy.rom')],
+    ['root/{language}', 'Game (Europe)', [], path.join('root', 'EN', 'Dummy.rom')],
+    ['root/{language}', 'Game', ['EUR'], path.join('root', 'EN', 'Dummy.rom')],
     ['root/{gameLanguage}', 'Game', ['EUR', 'JPN'], path.join('root', 'EN', 'Dummy.rom')],
     ['root/{gameLanguage}', 'Game', ['JPN'], path.join('root', 'JA', 'Dummy.rom')],
     ['root/{gameLanguage}', 'Game', ['JPN', 'EUR'], path.join('root', 'JA', 'Dummy.rom')],
-  ])('should replace {gameLanguage}: %s', async (output, gameName, regions, expectedPath) => {
+  ])('should replace {language}: %s', async (output, gameName, regions, expectedPath) => {
     const options = new Options({ commands: ['copy'], output });
     const dat = new LogiqxDAT(new Header(), []);
     const game = new Game({
