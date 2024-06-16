@@ -133,6 +133,27 @@ describe('token replacement', () => {
   });
 
   test.each([
+    ['root/{genre}', 'Platform', path.join('root', 'Platform', 'Dummy.rom')],
+    ['root/{genre}', 'Sports', path.join('root', 'Sports', 'Dummy.rom')],
+  ])('should replace {genre}: %s', async (output, genre, expectedPath) => {
+    const options = new Options({ commands: ['copy'], output });
+    const dat = new LogiqxDAT(new Header(), []);
+    const game = new Game({
+      genre,
+    });
+
+    const outputPath = OutputFactory.getPath(
+      options,
+      dat,
+      game,
+      game.getReleases().find(() => true),
+      dummyRom,
+      await dummyRom.toFile(),
+    );
+    expect(outputPath.format()).toEqual(expectedPath);
+  });
+
+  test.each([
     // Highest priority
     ['Game [BIOS]', 'BIOS'],
     ['Game [!]', 'Retail'],
