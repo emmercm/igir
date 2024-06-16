@@ -333,11 +333,11 @@ export default class DATScanner extends Scanner {
           gameRoms = [game.rom];
         }
       }
+      const gameName = game.name ?? game.comment;
 
       const roms = gameRoms
-        .filter((rom) => rom.name) // we need ROM filenames
         .map((entry) => new ROM({
-          name: entry.name ?? '',
+          name: entry.name ?? `${gameName}.rom`,
           size: Number.parseInt(entry.size ?? '0', 10),
           crc32: entry.crc,
           md5: entry.md5,
@@ -345,7 +345,7 @@ export default class DATScanner extends Scanner {
         }));
 
       return new Game({
-        name: game.name,
+        name: gameName,
         category: undefined,
         description: game.description,
         bios: undefined,

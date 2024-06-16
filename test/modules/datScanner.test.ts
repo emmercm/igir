@@ -128,18 +128,18 @@ describe('single files', () => {
     'test/fixtures/dats/one.*',
     'test/fixtures/*/one.dat',
     'test/fixtures/dats/one.dat',
-  ])('should parse the single file: %s', async (dat) => {
+  ])('should parse the single DAT: %s', async (dat) => {
     await expect(createDatScanner({ dat: [dat] }).scan()).resolves.toHaveLength(1);
   });
 
   test.each([
     [path.join('test', 'fixtures', 'dats', 'snes', 'HTGD-snes-c411a8e9d909cc4b03027c115be61822af8ad842.dat'), 13_770, 13_774, 13_772],
-    [path.join('test', 'fixtures', 'dats', 'snes', 'libretro-database-snes-5cfb6cd3d742d60da99a18d5472e8c8a9791c36e.dat'), 24, 25, 25],
+    [path.join('test', 'fixtures', 'dats', 'snes', 'libretro-database-snes-b768da11d5d7075e2a721d44c74bf3dcbeeb8f98.dat'), 3851, 3851, 3851],
     [path.join('test', 'fixtures', 'dats', 'snes', 'mame0263-getsoftlist-snes.dat'), 1909, 3690, 4271],
     [path.join('test', 'fixtures', 'dats', 'snes', 'mame-hash-snes-ed45a4f2234147bde0d8ee960c118066330886b3.dat'), 1909, 3690, 4271],
     [path.join('test', 'fixtures', 'dats', 'snes', 'Nintendo - Super Nintendo Entertainment System (20240317-134803).dat'), 3952, 3952, 3953],
     [path.join('test', 'fixtures', 'dats', 'snes', 'Nintendo - Super Nintendo Entertainment System (Parent-Clone) (20240317-134803).dat'), 1959, 4110, 4111],
-  ])('should parse the single file: %s', async (datPath, expectedParents, expectedGames, expectedRoms) => {
+  ])('should parse the single SNES DAT: %s', async (datPath, expectedParents, expectedGames, expectedRoms) => {
     const dats = await createDatScanner({ dat: [datPath] }).scan();
     expect(dats).toHaveLength(1);
     const dat = dats[0];
