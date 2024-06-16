@@ -579,7 +579,7 @@ export default class GameConsole {
       retrodeck: 'gameandwatch',
       romm: 'game-and-watch',
     }),
-    new GameConsole(/GameCube/i, [/* '.iso' */], {
+    new GameConsole(/GameCube/i, ['.gcm', '.gcz'], {
       batocera: 'gc',
       emulationstation: 'gc',
       jelos: 'gamecube',
@@ -601,7 +601,7 @@ export default class GameConsole {
       romm: 'gb',
       twmenu: 'gb',
     }),
-    new GameConsole(/GBA|Game ?Boy Advance/i, ['.gba', '.srl'], {
+    new GameConsole(/GBA|Game ?Boy Advance/i, ['.gba'], {
       adam: 'GBA',
       batocera: 'gba',
       emulationstation: 'gba',
@@ -661,13 +661,13 @@ export default class GameConsole {
       romm: 'nds',
       twmenu: 'nds',
     }),
-    new GameConsole(/(\W|^)NDSi(\W|$)|Nintendo DSi([Ww]are)?/i, [], {
+    new GameConsole(/(\W|^)NDSi(\W|$)|Nintendo DSi([Ww]are)?/i, ['.dsi'], {
       emulationstation: 'nds',
       retrodeck: 'nds',
       romm: 'nintendo-dsi',
       twmenu: 'dsiware',
     }), // try to map DSiWare
-    new GameConsole(/(\W|^)NES(\W|$)|Famicom|Nintendo Entertainment System/i, ['.nes', '.nez'], {
+    new GameConsole(/(\W|^)NES(\W|$)|Famicom|Nintendo Entertainment System/i, ['.fc', '.nes', '.nez'], {
       adam: 'FC',
       batocera: 'nes',
       emulationstation: 'nes',
@@ -713,7 +713,7 @@ export default class GameConsole {
       onion: 'SUFAMI',
       retrodeck: 'sufami',
     }),
-    new GameConsole(/(\W|^)SNES(\W|$)|Super (Nintendo Entertainment System|Famicom)/i, ['.sfc', '.smc'], {
+    new GameConsole(/(\W|^)SNES(\W|$)|Super (Nintendo Entertainment System|Famicom)/i, ['.fig', '.sfc', '.smc', '.snes'], {
       adam: 'SFC',
       batocera: 'snes',
       emulationstation: 'snes',
