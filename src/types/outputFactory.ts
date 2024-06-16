@@ -223,6 +223,11 @@ export default class OutputFactory {
 
     output = output.replace('{gameType}', game.getGameType());
 
+    const gameGenre = game.getGenre();
+    if (gameGenre) {
+      output = output.replace('{genre}', gameGenre);
+    }
+
     return output;
   }
 
