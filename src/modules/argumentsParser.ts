@@ -871,9 +871,10 @@ Advanced usage:
   Tokens that are replaced when generating the output (--output) path of a ROM:
     {datName}         The name of the DAT that contains the ROM (e.g. "Nintendo - Game Boy")
     {datDescription}  The description of the DAT that contains the ROM
-    {gameRegion}      The region of the ROM release (e.g. "USA"), each ROM can have multiple
-    {gameLanguage}    The language of the ROM release (e.g. "En"), each ROM can have multiple
+    {region}          The region of the ROM release (e.g. "USA"), each ROM can have multiple
+    {language}        The language of the ROM release (e.g. "En"), each ROM can have multiple
     {gameType}        The type of the game (e.g. "Retail", "Demo", "Prototype")
+    {genre}           The DAT-defined genre of the game
 
     {inputDirname}    The input file's dirname
     {outputBasename}  Equivalent to "{outputName}.{outputExt}"

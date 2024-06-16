@@ -184,13 +184,17 @@ export default class OutputFactory {
     }
 
     let output = input;
-    output = output.replace('{gameRegion}', release.getRegion());
-    output = output.replace('{datReleaseRegion}', release.getRegion()); // deprecated
+    output = output
+      .replace('{region}', release.getRegion())
+      .replace('{gameRegion}', release.getRegion()) // deprecated
+      .replace('{datReleaseRegion}', release.getRegion()); // deprecated
 
     const releaseLanguage = release.getLanguage();
     if (releaseLanguage) {
-      output = output.replace('{gameLanguage}', releaseLanguage);
-      output = output.replace('{datReleaseLanguage}', releaseLanguage); // deprecated
+      output = output
+        .replace('{language}', releaseLanguage)
+        .replace('{gameLanguage}', releaseLanguage) // deprecated
+        .replace('{datReleaseLanguage}', releaseLanguage); // deprecated
     }
 
     return output;
@@ -200,19 +204,24 @@ export default class OutputFactory {
     if (!game) {
       return input;
     }
-
     let output = input;
-    output = output.replace('{gameType}', game.getGameType());
 
     const gameRegion = game.getRegions().find(() => true);
     if (gameRegion) {
-      output = output.replace('{gameRegion}', gameRegion);
+      // TODO(cemmer): drop the game* prefixed tokens
+      output = output
+        .replace('{region}', gameRegion)
+        .replace('{gameRegion}', gameRegion);
     }
 
     const gameLanguage = game.getLanguages().find(() => true);
     if (gameLanguage) {
-      output = output.replace('{gameLanguage}', gameLanguage);
+      output = output
+        .replace('{gameLanguage}', gameLanguage)
+        .replace('{language}', gameLanguage);
     }
+
+    output = output.replace('{gameType}', game.getGameType());
 
     return output;
   }

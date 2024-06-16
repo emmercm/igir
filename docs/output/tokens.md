@@ -12,7 +12,7 @@ For example, if you want to group all ROMs based on their region, you would spec
     igir copy extract ^
       --dat *.dat ^
       --input ROMs\ ^
-      --output "ROMs-Sorted\{gameRegion}\"
+      --output "ROMs-Sorted\{region}\"
     ```
 
 === ":simple-apple: macOS"
@@ -21,7 +21,7 @@ For example, if you want to group all ROMs based on their region, you would spec
     igir copy extract \
       --dat *.dat \
       --input ROMs/ \
-      --output "ROMs-Sorted/{gameRegion}/"
+      --output "ROMs-Sorted/{region}/"
     ```
 
 === ":simple-linux: Linux"
@@ -30,7 +30,7 @@ For example, if you want to group all ROMs based on their region, you would spec
     igir copy extract \
       --dat *.dat \
       --input ROMs/ \
-      --output "ROMs-Sorted/{gameRegion}/"
+      --output "ROMs-Sorted/{region}/"
     ```
 
 This might result in an output structure such as:
@@ -60,8 +60,8 @@ When using [DATs](../dats/introduction.md), you can make use of console & game i
 
 - `{datName}` the matching DAT's name, similar to how the [`--dir-dat-name` option](./path-options.md) works
 - `{datDescription}` the matching DAT's description, similar to how the [`--dir-dat-description` option](./path-options.md) works
-- `{gameRegion}` each of the ROM's region(s) (e.g. `USA`, `EUR`, `JPN`, `WORLD`)
-- `{gameLanguage}` each of the ROM's language(s) (e.g. `EN`, `ES`, `JA`)
+- `{region}` each of the ROM's region(s) (e.g. `USA`, `EUR`, `JPN`, `WORLD`)
+- `{language}` each of the ROM's language(s) (e.g. `EN`, `ES`, `JA`)
 
 ## Game information
 
