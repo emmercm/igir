@@ -186,15 +186,15 @@ export default class OutputFactory {
     let output = input;
     output = output
       .replace('{region}', release.getRegion())
-      .replace('{gameRegion}', release.getRegion());
-    output = output.replace('{datReleaseRegion}', release.getRegion()); // deprecated
+      .replace('{gameRegion}', release.getRegion()) // deprecated
+      .replace('{datReleaseRegion}', release.getRegion()); // deprecated
 
     const releaseLanguage = release.getLanguage();
     if (releaseLanguage) {
       output = output
         .replace('{language}', releaseLanguage)
-        .replace('{gameLanguage}', releaseLanguage);
-      output = output.replace('{datReleaseLanguage}', releaseLanguage); // deprecated
+        .replace('{gameLanguage}', releaseLanguage) // deprecated
+        .replace('{datReleaseLanguage}', releaseLanguage); // deprecated
     }
 
     return output;
@@ -222,6 +222,11 @@ export default class OutputFactory {
     }
 
     output = output.replace('{gameType}', game.getGameType());
+
+    const gameGenre = game.getGenre();
+    if (gameGenre) {
+      output = output.replace('{genre}', gameGenre);
+    }
 
     return output;
   }
