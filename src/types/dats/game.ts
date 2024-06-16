@@ -60,6 +60,7 @@ export interface GameProps {
   readonly cloneOf?: string,
   readonly romOf?: string,
   readonly sampleOf?: string,
+  readonly genre?: string,
   // readonly board?: string,
   // readonly rebuildTo?: string,
   // readonly year?: string,
@@ -104,6 +105,10 @@ export default class Game implements GameProps {
   @Expose({ name: 'sampleof' })
   readonly sampleOf?: string;
 
+  // This is non-standard, but libretro uses it
+  @Expose({ name: 'genre' })
+  readonly genre?: string;
+
   // readonly board?: string;
   // readonly rebuildto?: string;
   // readonly year?: string;
@@ -128,6 +133,7 @@ export default class Game implements GameProps {
     this.cloneOf = props?.cloneOf;
     this.romOf = props?.romOf;
     this.sampleOf = props?.sampleOf;
+    this.genre = props?.genre;
     this.release = props?.release ?? [];
     this.rom = props?.rom ?? [];
   }
@@ -182,6 +188,10 @@ export default class Game implements GameProps {
    */
   isDevice(): boolean {
     return this.device === 'yes';
+  }
+
+  getGenre(): string | undefined {
+    return this.genre;
   }
 
   getReleases(): Release[] {
