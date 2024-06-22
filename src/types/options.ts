@@ -902,7 +902,8 @@ export default class Options implements OptionsProps {
     return (await Options.scanPaths(outputDirs, walkCallback, false))
       .map((filePath) => path.normalize(filePath))
       .filter((filePath) => !writtenFilesNormalized.has(filePath))
-      .filter((filePath) => !cleanExcludedFilesNormalized.has(filePath));
+      .filter((filePath) => !cleanExcludedFilesNormalized.has(filePath))
+      .sort();
   }
 
   getCleanDryRun(): boolean {

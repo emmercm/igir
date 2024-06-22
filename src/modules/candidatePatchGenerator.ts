@@ -10,7 +10,6 @@ import ROM from '../types/dats/rom.js';
 import ArchiveEntry from '../types/files/archives/archiveEntry.js';
 import File from '../types/files/file.js';
 import { ChecksumBitmask } from '../types/files/fileChecksums.js';
-import Options from '../types/options.js';
 import Patch from '../types/patches/patch.js';
 import ReleaseCandidate from '../types/releaseCandidate.js';
 import ROMWithFiles from '../types/romWithFiles.js';
@@ -21,11 +20,8 @@ import Module from './module.js';
  * {@link ReleaseCandidate} of that {@link Game}.
  */
 export default class CandidatePatchGenerator extends Module {
-  private readonly options: Options;
-
-  constructor(options: Options, progressBar: ProgressBar) {
+  constructor(progressBar: ProgressBar) {
     super(progressBar, CandidatePatchGenerator.name);
-    this.options = options;
   }
 
   /**

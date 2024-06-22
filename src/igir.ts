@@ -351,7 +351,7 @@ export default class Igir {
     const candidates = await new CandidateGenerator(this.options, progressBar)
       .generate(dat, indexedRoms);
 
-    const patchedCandidates = await new CandidatePatchGenerator(this.options, progressBar)
+    const patchedCandidates = await new CandidatePatchGenerator(progressBar)
       .generate(dat, candidates, patches);
 
     const preferredCandidates = await new CandidatePreferer(this.options, progressBar)
