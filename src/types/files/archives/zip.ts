@@ -22,7 +22,7 @@ export default class Zip extends Archive {
   }
 
   static getExtensions(): string[] {
-    return ['.zip'];
+    return ['.zip', '.apk', '.ipa', '.jar', '.pk3'];
   }
 
   // eslint-disable-next-line class-methods-use-this

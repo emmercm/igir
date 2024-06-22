@@ -172,7 +172,7 @@ describe('with explicit DATs', () => {
         [`${path.join('Headerless', 'speed_test_v51.sfc.gz')}|speed_test_v51.sfc`, '8beffd94'],
         [path.join('One', 'Fizzbuzz.nes'), '370517b5'],
         [path.join('One', 'Foobar.lnx'), 'b22c9747'],
-        [path.join('One', 'Lorem Ipsum.rom'), '70856527'],
+        [`${path.join('One', 'Lorem Ipsum.zip')}|loremipsum.rom`, '70856527'],
         [`${path.join('One', 'One Three.zip')}|${path.join('1', 'one.rom')}`, 'f817a89f'],
         [`${path.join('One', 'One Three.zip')}|${path.join('2', 'two.rom')}`, '96170874'],
         [`${path.join('One', 'One Three.zip')}|${path.join('3', 'three.rom')}`, 'ff46c5d8'],
@@ -216,7 +216,7 @@ describe('with explicit DATs', () => {
       expect(result.outputFilesAndCrcs).toEqual([
         // Fizzbuzz.nes is explicitly missing!
         ['Foobar.lnx', 'b22c9747'],
-        ['Lorem Ipsum.rom', '70856527'],
+        ['Lorem Ipsum.zip|loremipsum.rom', '70856527'],
         [`${path.join('One Three.zip')}|${path.join('1', 'one.rom')}`, 'f817a89f'],
         [`${path.join('One Three.zip')}|${path.join('2', 'two.rom')}`, '96170874'],
         [`${path.join('One Three.zip')}|${path.join('3', 'three.rom')}`, 'ff46c5d8'],
@@ -272,7 +272,6 @@ describe('with explicit DATs', () => {
         [path.join('nes', 'smdb', 'Hardware Target Game Database', 'Dummy', 'Fizzbuzz.nes'), '370517b5'],
         ['one.rom', '00000000'], // explicitly not deleted, it is not in an extension subdirectory
         [`${path.join('rar', 'Headered', 'LCDTestROM.lnx.rar')}|LCDTestROM.lnx`, '2d251538'],
-        [path.join('rom', 'One', 'Lorem Ipsum.rom'), '70856527'],
         [path.join('rom', 'One', 'Three Four Five', 'Five.rom'), '3e5daf67'],
         [path.join('rom', 'One', 'Three Four Five', 'Four.rom'), '1cf3ca74'],
         [path.join('rom', 'One', 'Three Four Five', 'Three.rom'), 'ff46c5d8'],
@@ -290,6 +289,7 @@ describe('with explicit DATs', () => {
         [path.join('rom', 'smdb', 'Hardware Target Game Database', 'Patchable', 'C01173E.rom'), 'dfaebe28'],
         [path.join('smc', 'Headered', 'speed_test_v51.smc'), '9adca6cc'],
         [`${path.join('zip', 'Headered', 'fds_joypad_test.fds.zip')}|fds_joypad_test.fds`, '1e58456d'],
+        [`${path.join('zip', 'One', 'Lorem Ipsum.zip')}|loremipsum.rom`, '70856527'],
         [`${path.join('zip', 'One', 'One Three.zip')}|${path.join('1', 'one.rom')}`, 'f817a89f'],
         [`${path.join('zip', 'One', 'One Three.zip')}|${path.join('2', 'two.rom')}`, '96170874'],
         [`${path.join('zip', 'One', 'One Three.zip')}|${path.join('3', 'three.rom')}`, 'ff46c5d8'],
@@ -326,7 +326,6 @@ describe('with explicit DATs', () => {
       expect(result.outputFilesAndCrcs).toEqual([
         [path.join('One', 'Fizzbuzz.nes'), '370517b5'],
         [path.join('One', 'Foobar.lnx'), 'b22c9747'],
-        [path.join('One', 'Lorem Ipsum.rom'), '70856527'],
         [path.join('One', 'One Three', 'One.rom'), 'f817a89f'],
         [path.join('One', 'One Three', 'Three.rom'), 'ff46c5d8'],
         [path.join('One', 'Three Four Five', 'Five.rom'), '3e5daf67'],
@@ -365,7 +364,6 @@ describe('with explicit DATs', () => {
       expect(result.outputFilesAndCrcs).toEqual([
         [path.join('One', 'Fizzbuzz.nes'), '370517b5'],
         [path.join('One', 'Foobar.lnx'), 'b22c9747'],
-        [path.join('One', 'Lorem Ipsum.rom'), '70856527'],
         [path.join('One', 'One Three', 'One.rom'), 'f817a89f'],
         [path.join('One', 'One Three', 'Three.rom'), 'ff46c5d8'],
         [path.join('One', 'Three Four Five', 'Five.rom'), '3e5daf67'],
@@ -419,7 +417,7 @@ describe('with explicit DATs', () => {
         [path.join('igir combined', 'KDULVQN.rom'), 'b1c303e4'],
         [path.join('igir combined', 'LCDTestROM.lnx'), '2d251538'],
         [path.join('igir combined', 'LCDTestROM.lyx'), '42583855'],
-        [path.join('igir combined', 'Lorem Ipsum.rom'), '70856527'],
+        [`${path.join('igir combined', 'Lorem Ipsum.zip')}|loremipsum.rom`, '70856527'],
         [path.join('igir combined', 'One Three', 'One.rom'), 'f817a89f'],
         [path.join('igir combined', 'One Three', 'Three.rom'), 'ff46c5d8'],
         [path.join('igir combined', 'speed_test_v51.sfc'), '8beffd94'],
@@ -453,6 +451,7 @@ describe('with explicit DATs', () => {
         path.join('raw', 'loremipsum.rom'),
         path.join('raw', 'one.rom'),
         path.join('raw', 'three.rom'),
+        path.join('zip', 'loremipsum.zip'),
       ]);
       expect(result.cleanedFiles).toHaveLength(0);
     });
@@ -554,7 +553,7 @@ describe('with explicit DATs', () => {
         [`${path.join('Headerless', 'speed_test_v51.zip')}|speed_test_v51.sfc`, '8beffd94'],
         [`${path.join('One', 'Fizzbuzz.zip')}|Fizzbuzz.nes`, '370517b5'],
         [`${path.join('One', 'Foobar.zip')}|Foobar.lnx`, 'b22c9747'],
-        [`${path.join('One', 'Lorem Ipsum.zip')}|Lorem Ipsum.rom`, '70856527'],
+        [`${path.join('One', 'Lorem Ipsum.zip')}|Lorem Ipsum.zip`, '7ee77289'],
         [`${path.join('One', 'One Three.zip')}|One.rom`, 'f817a89f'],
         [`${path.join('One', 'One Three.zip')}|Three.rom`, 'ff46c5d8'],
         [`${path.join('One', 'Three Four Five.zip')}|Five.rom`, '3e5daf67'],
@@ -613,7 +612,7 @@ describe('with explicit DATs', () => {
         ['Headerless.zip|speed_test_v51.sfc', '8beffd94'],
         ['One.zip|Fizzbuzz.nes', '370517b5'],
         ['One.zip|Foobar.lnx', 'b22c9747'],
-        ['One.zip|Lorem Ipsum.rom', '70856527'],
+        ['One.zip|Lorem Ipsum.zip', '7ee77289'],
         [`One.zip|${path.join('One Three', 'One.rom')}`, 'f817a89f'],
         [`One.zip|${path.join('One Three', 'Three.rom')}`, 'ff46c5d8'],
         [`One.zip|${path.join('Three Four Five', 'Five.rom')}`, '3e5daf67'],
@@ -658,7 +657,7 @@ describe('with explicit DATs', () => {
         [`${path.join('Headerless', 'speed_test_v51.sfc.gz')}|speed_test_v51.sfc -> ${path.join('<input>', 'headerless', 'speed_test_v51.sfc.gz')}|speed_test_v51.sfc`, '8beffd94'],
         [`${path.join('One', 'Fizzbuzz.nes')} -> ${path.join('<input>', 'raw', 'fizzbuzz.nes')}`, '370517b5'],
         [`${path.join('One', 'Foobar.lnx')} -> ${path.join('<input>', 'foobar.lnx')}`, 'b22c9747'],
-        [`${path.join('One', 'Lorem Ipsum.rom')} -> ${path.join('<input>', 'raw', 'loremipsum.rom')}`, '70856527'],
+        [`${path.join('One', 'Lorem Ipsum.zip')}|loremipsum.rom -> ${path.join('<input>', 'zip', 'loremipsum.zip')}|loremipsum.rom`, '70856527'],
         [`${path.join('One', 'One Three.zip')}|${path.join('1', 'one.rom')} -> ${path.join('<input>', 'zip', 'onetwothree.zip')}|${path.join('1', 'one.rom')}`, 'f817a89f'],
         [`${path.join('One', 'One Three.zip')}|${path.join('2', 'two.rom')} -> ${path.join('<input>', 'zip', 'onetwothree.zip')}|${path.join('2', 'two.rom')}`, '96170874'],
         [`${path.join('One', 'One Three.zip')}|${path.join('3', 'three.rom')} -> ${path.join('<input>', 'zip', 'onetwothree.zip')}|${path.join('3', 'three.rom')}`, 'ff46c5d8'],
@@ -715,7 +714,7 @@ describe('with explicit DATs', () => {
         [path.join('Headerless', 'speed_test_v51.sfc'), '8beffd94'],
         [path.join('One', 'Fizzbuzz.nes'), '370517b5'],
         [path.join('One', 'Foobar.lnx'), 'b22c9747'],
-        [path.join('One', 'Lorem Ipsum.rom'), '70856527'],
+        [`${path.join('One', 'Lorem Ipsum.zip')}|loremipsum.rom`, '70856527'],
         [path.join('One', 'One Three', 'One.rom'), 'f817a89f'],
         [path.join('One', 'One Three', 'Three.rom'), 'ff46c5d8'],
         [path.join('One', 'Three Four Five', 'Five.rom'), '3e5daf67'],

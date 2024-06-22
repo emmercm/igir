@@ -4,7 +4,8 @@ import path from 'node:path';
 import Constants from '../../src/constants.js';
 import ROMScanner from '../../src/modules/romScanner.js';
 import fsPoly from '../../src/polyfill/fsPoly.js';
-import Options from '../../src/types/options.js';
+import { ChecksumBitmask } from '../../src/types/files/fileChecksums.js';
+import Options, { OptionsProps } from '../../src/types/options.js';
 import ProgressBarFake from '../console/progressBarFake.js';
 
 function createRomScanner(input: string[], inputExclude: string[] = []): ROMScanner {
@@ -38,6 +39,18 @@ describe('multiple files', () => {
     await expect(createRomScanner(['test/fixtures/roms/*', 'test/fixtures/roms/**/*']).scan()).resolves.toHaveLength(expectedRomFiles);
     await expect(createRomScanner(['test/fixtures/roms/**/*']).scan()).resolves.toHaveLength(expectedRomFiles);
     await expect(createRomScanner(['test/fixtures/roms/**/*', 'test/fixtures/roms/**/*.{rom,zip}']).scan()).resolves.toHaveLength(expectedRomFiles);
+  });
+
+  test.each([
+    [{ input: ['test/fixtures/roms'] }, 90],
+    [{ input: ['test/fixtures/roms/7z'] }, 12],
+    [{ input: ['test/fixtures/roms/rar'] }, 12],
+    [{ input: ['test/fixtures/roms/tar'] }, 12],
+    [{ input: ['test/fixtures/roms/zip'] }, 15],
+  ] satisfies [OptionsProps, number][])('should calculate checksums of archives: %s', async (optionsProps, expectedRomFiles) => {
+    const scannedFiles = await new ROMScanner(new Options(optionsProps), new ProgressBarFake())
+      .scan(ChecksumBitmask.CRC32, true);
+    expect(scannedFiles).toHaveLength(expectedRomFiles);
   });
 
   it('should scan multiple files with some file exclusions', async () => {
@@ -169,8 +182,10 @@ describe('multiple files', () => {
   });
 });
 
-it('should scan single files', async () => {
-  await expect(createRomScanner(['test/fixtures/roms/empty.*']).scan()).resolves.toHaveLength(1);
-  await expect(createRomScanner(['test/fixtures/*/empty.rom']).scan()).resolves.toHaveLength(1);
-  await expect(createRomScanner(['test/fixtures/roms/empty.rom']).scan()).resolves.toHaveLength(1);
+describe('single files', () => {
+  it('should scan single files with no exclusions', async () => {
+    await expect(createRomScanner(['test/fixtures/roms/empty.*']).scan()).resolves.toHaveLength(1);
+    await expect(createRomScanner(['test/fixtures/*/empty.rom']).scan()).resolves.toHaveLength(1);
+    await expect(createRomScanner(['test/fixtures/roms/empty.rom']).scan()).resolves.toHaveLength(1);
+  });
 });
