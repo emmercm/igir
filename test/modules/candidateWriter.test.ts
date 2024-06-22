@@ -104,7 +104,7 @@ async function candidateWriter(
     .generate(dat, indexedRomFiles);
   if (patchGlob) {
     const patches = await new PatchScanner(options, new ProgressBarFake()).scan();
-    candidates = await new CandidatePatchGenerator(options, new ProgressBarFake())
+    candidates = await new CandidatePatchGenerator(new ProgressBarFake())
       .generate(dat, candidates, patches);
   }
   candidates = await new CandidateCombiner(options, new ProgressBarFake())
