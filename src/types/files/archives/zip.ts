@@ -45,7 +45,10 @@ export default class Zip extends Archive {
     const archive = await unzipper.Open.file(this.getFilePath());
 
     return async.mapLimit(
-      archive.files.filter((entryFile) => entryFile.type === 'File'),
+      archive.files
+        .filter((entryFile) => entryFile.type === 'File')
+        // https://github.com/ZJONSSON/node-unzipper/issues/324
+        .filter((entryFile) => typeof entryFile.offsetToLocalFileHeader === 'number'),
       Constants.ARCHIVE_ENTRY_SCANNER_THREADS_PER_ARCHIVE,
       async (entryFile, callback: AsyncResultCallback<ArchiveEntry<this>, Error>) => {
         let checksums: ChecksumProps = {};
