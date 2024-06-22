@@ -61,13 +61,14 @@ export default class CandidateArchiveFileHasher extends Module {
     await this.progressBar.setSymbol(ProgressBarSymbol.HASHING);
     await this.progressBar.reset(archiveFileCount);
 
-    const hashedParentsToCandidates = this.hashArchiveFiles(parentsToCandidates);
+    const hashedParentsToCandidates = this.hashArchiveFiles(dat, parentsToCandidates);
 
     this.progressBar.logTrace(`${dat.getNameShort()}: done generating hashed ArchiveFile candidates`);
     return hashedParentsToCandidates;
   }
 
   private async hashArchiveFiles(
+    dat: DAT,
     parentsToCandidates: Map<Parent, ReleaseCandidate[]>,
   ): Promise<Map<Parent, ReleaseCandidate[]>> {
     return new Map((await Promise.all([...parentsToCandidates.entries()]
@@ -85,6 +86,7 @@ export default class CandidateArchiveFileHasher extends Module {
                   await this.progressBar.incrementProgress();
                   const waitingMessage = `${inputFile.toString()} ...`;
                   this.progressBar.addWaitingMessage(waitingMessage);
+                  this.progressBar.logTrace(`${dat.getNameShort()}: ${parent.getName()}: calculating checksums for: ${inputFile.toString()}`);
 
                   const hashedInputFile = await FileFactory.archiveFileFrom(
                     inputFile.getArchive(),
@@ -105,7 +107,7 @@ export default class CandidateArchiveFileHasher extends Module {
                     hashedOutputFile,
                   );
 
-                  this.progressBar.removeWaitingMessage('');
+                  this.progressBar.removeWaitingMessage(waitingMessage);
                   await this.progressBar.incrementDone();
                   return hashedRomWithFiles;
                 });
