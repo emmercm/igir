@@ -6,6 +6,7 @@ import gracefulFs from 'graceful-fs';
 import semver from 'semver';
 
 import Logger from './src/console/logger.js';
+import LogLevel from './src/console/logLevel.js';
 import ProgressBarCLI from './src/console/progressBarCli.js';
 import Constants from './src/constants.js';
 import Igir from './src/igir.js';
@@ -18,7 +19,7 @@ import Options from './src/types/options.js';
 gracefulFs.gracefulify(realFs);
 
 (async (): Promise<void> => {
-  const logger = new Logger();
+  const logger = new Logger(LogLevel.TRACE);
   logger.printHeader();
 
   if (!semver.satisfies(process.version, Constants.ENGINES_NODE)) {
