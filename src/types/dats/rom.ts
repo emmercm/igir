@@ -118,6 +118,13 @@ export default class ROM implements ROMProps {
   }
 
   /**
+   * Return a new copy of this {@link ROM} with some different properties.
+   */
+  withProps(props: ROMProps): ROM {
+    return new ROM({ ...this, ...props });
+  }
+
+  /**
    * Turn this {@link ROM} into a non-existent {@link File}.
    */
   async toFile(): Promise<File> {

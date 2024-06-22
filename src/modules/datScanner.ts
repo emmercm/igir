@@ -337,7 +337,7 @@ export default class DATScanner extends Scanner {
 
       const roms = gameRoms
         .map((entry) => new ROM({
-          name: entry.name ?? `${gameName}.rom`,
+          name: entry.name ?? '',
           size: Number.parseInt(entry.size ?? '0', 10),
           crc32: entry.crc,
           md5: entry.md5,

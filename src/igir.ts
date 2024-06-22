@@ -11,6 +11,7 @@ import ProgressBarCLI from './console/progressBarCli.js';
 import Constants from './constants.js';
 import CandidateArchiveFileHasher from './modules/candidateArchiveFileHasher.js';
 import CandidateCombiner from './modules/candidateCombiner.js';
+import CandidateExtensionCorrector from './modules/candidateExtensionCorrector.js';
 import CandidateGenerator from './modules/candidateGenerator.js';
 import CandidateMergeSplitValidator from './modules/candidateMergeSplitValidator.js';
 import CandidatePatchGenerator from './modules/candidatePatchGenerator.js';
@@ -357,10 +358,15 @@ export default class Igir {
     const preferredCandidates = await new CandidatePreferer(this.options, progressBar)
       .prefer(dat, patchedCandidates);
 
+    const extensionCorrectedCandidates = await new CandidateExtensionCorrector(
+      this.options,
+      progressBar,
+    ).correct(dat, preferredCandidates);
+
     // Delay calculating checksums for {@link ArchiveFile}s until after {@link CandidatePreferer}
     //  for efficiency
     const hashedCandidates = await new CandidateArchiveFileHasher(this.options, progressBar)
-      .hash(dat, preferredCandidates);
+      .hash(dat, extensionCorrectedCandidates);
 
     const postProcessedCandidates = await new CandidatePostProcessor(this.options, progressBar)
       .process(dat, hashedCandidates);
