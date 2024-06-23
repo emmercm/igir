@@ -30,6 +30,22 @@ Somewhat proprietary archive formats such as `.7z` and `.rar` require `igir` to 
 
 This is why `igir` uses `.zip` as its output archive of choice, `.zip` files are easy and fast to read, even if they can't offer as high of compression as other formats.
 
+## Exact archive matching
+
+Some DAT files such as the [libretro BIOS System.dat](https://github.com/libretro/libretro-database/blob/master/dat/System.dat) catalog archives such as zip files, rather than the contents of those archives. By default, `igir` will try to detect DATs like these and calculate checksums for all archive files, in addition to the files they contain.
+
+This adds a potentially non-trivial amount of processing time during ROM scanning, so this behavior can be turned off with the option:
+
+```text
+--input-checksum-archives never
+```
+
+If for some reason `igir` isn't identifying an input file correctly as an archive, this additional processing can be forced with the option:
+
+```text
+--input-checksum-archives always
+```
+
 ## Checksum cache
 
 It can be expensive to calculate checksums of files within archives, especially MD5, SHA1, and SHA256. If `igir` needs to calculate a checksum that is not easily read from the archive (see above), it will cache the result in a file named `igir.cache`. This cached result will then be used as long as the input file's size and modified timestamp remain the same.
