@@ -44,7 +44,7 @@ import FileCache from './types/files/fileCache.js';
 import { ChecksumBitmask } from './types/files/fileChecksums.js';
 import FileFactory from './types/files/fileFactory.js';
 import IndexedFiles from './types/indexedFiles.js';
-import Options from './types/options.js';
+import Options, { InputChecksumArchivesMode } from './types/options.js';
 import OutputFactory from './types/outputFactory.js';
 import Patch from './types/patches/patch.js';
 import ReleaseCandidate from './types/releaseCandidate.js';
@@ -314,6 +314,12 @@ export default class Igir {
   }
 
   private determineScanningChecksumArchives(dats: DAT[]): boolean {
+    if (this.options.getInputChecksumArchives() === InputChecksumArchivesMode.NEVER) {
+      return false;
+    }
+    if (this.options.getInputChecksumArchives() === InputChecksumArchivesMode.ALWAYS) {
+      return true;
+    }
     return dats
       .some((dat) => dat.getGames()
         .some((game) => game.getRoms()
