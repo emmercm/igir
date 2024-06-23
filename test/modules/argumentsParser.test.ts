@@ -241,13 +241,13 @@ describe('options', () => {
   });
 
   it('should parse "input-checksum-archives"', () => {
-    expect(() => argumentsParser.parse(dummyCommandAndRequiredArgs)).toThrow(/dependent|implication/i);
-    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--dat', os.devNull]).getInputChecksumArchives()).toEqual(InputChecksumArchivesMode.AUTO);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs]).getInputChecksumArchives())
+      .toEqual(InputChecksumArchivesMode.AUTO);
     expect(() => argumentsParser.parse([...dummyCommandAndRequiredArgs, '--input-checksum-archives', 'foobar']).getInputChecksumArchives()).toThrow(/invalid values/i);
-    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--dat', os.devNull, '--input-checksum-archives', 'never']).getInputChecksumArchives()).toEqual(InputChecksumArchivesMode.NEVER);
-    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--dat', os.devNull, '--input-checksum-archives', 'auto']).getInputChecksumArchives()).toEqual(InputChecksumArchivesMode.AUTO);
-    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--dat', os.devNull, '--input-checksum-archives', 'always']).getInputChecksumArchives()).toEqual(InputChecksumArchivesMode.ALWAYS);
-    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--dat', os.devNull, '--input-checksum-archives', 'always', '--input-checksum-archives', 'never']).getInputChecksumArchives()).toEqual(InputChecksumArchivesMode.NEVER);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--input-checksum-archives', 'never']).getInputChecksumArchives()).toEqual(InputChecksumArchivesMode.NEVER);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--input-checksum-archives', 'auto']).getInputChecksumArchives()).toEqual(InputChecksumArchivesMode.AUTO);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--input-checksum-archives', 'always']).getInputChecksumArchives()).toEqual(InputChecksumArchivesMode.ALWAYS);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--input-checksum-archives', 'always', '--input-checksum-archives', 'never']).getInputChecksumArchives()).toEqual(InputChecksumArchivesMode.NEVER);
   });
 
   it('should parse "dat"', async () => {

@@ -217,7 +217,6 @@ export default class ArgumentsParser {
         coerce: ArgumentsParser.getLastValue, // don't allow string[] values
         requiresArg: true,
         default: InputChecksumArchivesMode[InputChecksumArchivesMode.AUTO].toLowerCase(),
-        implies: 'dat',
       })
 
       .option('dat', {
