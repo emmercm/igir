@@ -63,14 +63,6 @@ export default class ArgumentsParser {
    * Parse the arguments.
    */
   parse(argv: string[]): Options {
-    const argvString = argv.map((arg) => {
-      if (!arg.includes(' ')) {
-        return arg;
-      }
-      return `"${arg.replace(/"/g, '\\"')}"`;
-    }).join(' ');
-    this.logger.trace(`Parsing CLI arguments: ${argvString}`);
-
     const groupRomInput = 'ROM input options:';
     const groupDatInput = 'DAT input options:';
     const groupPatchInput = 'Patch input options:';
@@ -965,9 +957,6 @@ Example use cases:
         }
       });
 
-    const options = Options.fromObject(yargsArgv);
-    this.logger.trace(`Parsed options: ${options.toString()}`);
-
-    return options;
+    return Options.fromObject(yargsArgv);
   }
 }

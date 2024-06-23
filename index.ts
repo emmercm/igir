@@ -6,7 +6,6 @@ import gracefulFs from 'graceful-fs';
 import semver from 'semver';
 
 import Logger from './src/console/logger.js';
-import LogLevel from './src/console/logLevel.js';
 import ProgressBarCLI from './src/console/progressBarCli.js';
 import Constants from './src/constants.js';
 import Igir from './src/igir.js';
@@ -19,7 +18,7 @@ import Options from './src/types/options.js';
 gracefulFs.gracefulify(realFs);
 
 (async (): Promise<void> => {
-  const logger = new Logger(LogLevel.TRACE);
+  const logger = new Logger();
   logger.printHeader();
 
   if (!semver.satisfies(process.version, Constants.ENGINES_NODE)) {
@@ -38,11 +37,22 @@ gracefulFs.gracefulify(realFs);
   // Parse CLI arguments
   let options: Options;
   try {
-    options = new ArgumentsParser(logger).parse(process.argv.slice(2));
+    const argv = process.argv.slice(2);
+    options = new ArgumentsParser(logger).parse(argv);
+    logger.setLogLevel(options.getLogLevel());
+
+    const argvString = argv.map((arg) => {
+      if (!arg.includes(' ')) {
+        return arg;
+      }
+      return `"${arg.replace(/"/g, '\\"')}"`;
+    }).join(' ');
+    logger.trace(`Parsing CLI arguments: ${argvString}`);
+    logger.trace(`Parsed CLI options: ${options.toString()}`);
+
     if (options.getHelp()) {
       process.exit(0);
     }
-    logger.setLogLevel(options.getLogLevel());
   } catch (error) {
     // Explicitly do not log the stack trace, for readability
     logger.error(error);
