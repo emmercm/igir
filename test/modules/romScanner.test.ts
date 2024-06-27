@@ -1,7 +1,7 @@
 import os from 'node:os';
 import path from 'node:path';
 
-import Constants from '../../src/constants.js';
+import Defaults from '../../src/constants/defaults.js';
 import ROMScanner from '../../src/modules/romScanner.js';
 import fsPoly from '../../src/polyfill/fsPoly.js';
 import Options from '../../src/types/options.js';
@@ -58,7 +58,7 @@ describe('multiple files', () => {
       .sort((a, b) => a.getFilePath().localeCompare(b.getFilePath()));
 
     // Given some hard linked files
-    const tempDir = await fsPoly.mkdtemp(Constants.GLOBAL_TEMP_DIR);
+    const tempDir = await fsPoly.mkdtemp(Defaults.GLOBAL_TEMP_DIR);
     try {
       const filesDir = path.join(tempDir, 'files');
       await fsPoly.mkdir(filesDir);
@@ -101,7 +101,7 @@ describe('multiple files', () => {
       .sort((a, b) => a.getFilePath().localeCompare(b.getFilePath()));
 
     // Given some symlinked files
-    const tempDir = await fsPoly.mkdtemp(Constants.GLOBAL_TEMP_DIR);
+    const tempDir = await fsPoly.mkdtemp(Defaults.GLOBAL_TEMP_DIR);
     try {
       const romFiles = await fsPoly.walk('test/fixtures/roms');
       await Promise.all(romFiles.map(async (romFile, idx) => {
@@ -139,7 +139,7 @@ describe('multiple files', () => {
       .sort((a, b) => a.getFilePath().localeCompare(b.getFilePath()));
 
     // Given some symlinked dirs
-    const tempDir = await fsPoly.mkdtemp(Constants.GLOBAL_TEMP_DIR);
+    const tempDir = await fsPoly.mkdtemp(Defaults.GLOBAL_TEMP_DIR);
     try {
       await Promise.all(romDirs.map(async (romDir, idx) => {
         const tempLink = path.join(tempDir, romDir);

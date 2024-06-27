@@ -1,4 +1,4 @@
-import Constants from '../../constants.js';
+import Defaults from '../../constants/defaults.js';
 import FsPoly from '../../polyfill/fsPoly.js';
 import Timer from '../../timer.js';
 import Cache from '../cache.js';
@@ -52,7 +52,7 @@ export default class FileCache {
         .filter((cacheKeyFilePath) => disks.some((disk) => cacheKeyFilePath.startsWith(disk)))
         // Only process a reasonably sized subset of the keys
         .sort(() => Math.random() - 0.5)
-        .slice(0, Constants.MAX_FS_THREADS)
+        .slice(0, Defaults.MAX_FS_THREADS)
         .map(async (cacheKeyFilePath) => {
           if (!await FsPoly.exists(cacheKeyFilePath)) {
             // If the file no longer exists, then delete its key from the cache

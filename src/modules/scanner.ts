@@ -1,5 +1,5 @@
 import ProgressBar from '../console/progressBar.js';
-import Constants from '../constants.js';
+import Defaults from '../constants/defaults.js';
 import DriveSemaphore from '../driveSemaphore.js';
 import ElasticSemaphore from '../elasticSemaphore.js';
 import ArrayPoly from '../polyfill/arrayPoly.js';
@@ -16,7 +16,7 @@ export default abstract class Scanner extends Module {
   // WARN(cemmer): there is an undocumented semaphore max value that can be used, the full
   //  4,700,372,992 bytes of a DVD+R will cause runExclusive() to never run or return.
   private static readonly FILESIZE_SEMAPHORE = new ElasticSemaphore(
-    Constants.MAX_READ_WRITE_CONCURRENT_KILOBYTES,
+    Defaults.MAX_READ_WRITE_CONCURRENT_KILOBYTES,
   );
 
   protected readonly options: Options;

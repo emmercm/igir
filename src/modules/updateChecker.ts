@@ -5,7 +5,7 @@ import semver from 'semver';
 import Logger from '../console/logger.js';
 import LogLevel from '../console/logLevel.js';
 import ProgressBarCLI from '../console/progressBarCli.js';
-import Constants from '../constants.js';
+import Package from '../constants/package.js';
 import BufferPoly from '../polyfill/bufferPoly.js';
 
 /**
@@ -24,13 +24,13 @@ export default class UpdateChecker {
   async check(): Promise<void> {
     let npmVersion;
     try {
-      npmVersion = await UpdateChecker.getVersion(Constants.COMMAND_NAME);
+      npmVersion = await UpdateChecker.getVersion(Package.NAME);
     } catch {
       return;
     }
 
-    if (npmVersion && semver.lt(Constants.COMMAND_VERSION, npmVersion)) {
-      ProgressBarCLI.log(this.logger, LogLevel.NOTICE, `An update is available for ${Constants.COMMAND_NAME}: v${npmVersion}`);
+    if (npmVersion && semver.lt(Package.VERSION, npmVersion)) {
+      ProgressBarCLI.log(this.logger, LogLevel.NOTICE, `An update is available for ${Package.NAME}: v${npmVersion}`);
     }
   }
 

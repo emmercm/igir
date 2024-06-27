@@ -3,7 +3,7 @@ import path from 'node:path';
 import async, { AsyncResultCallback } from 'async';
 import { Mutex, Semaphore } from 'async-mutex';
 
-import Constants from './constants.js';
+import Defaults from './constants/defaults.js';
 import FsPoly from './polyfill/fsPoly.js';
 import File from './types/files/file.js';
 
@@ -37,7 +37,7 @@ export default class DriveSemaphore {
     // Limit the number of ongoing threads to something reasonable
     return async.mapLimit(
       files,
-      Constants.MAX_FS_THREADS,
+      Defaults.MAX_FS_THREADS,
       async (file, callback: AsyncResultCallback<V, Error>) => {
         try {
           const val = await this.processFile(file, runnable, disks);
