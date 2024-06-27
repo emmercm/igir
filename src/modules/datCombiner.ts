@@ -1,7 +1,6 @@
 import moment from 'moment';
 
 import ProgressBar from '../console/progressBar.js';
-import Defaults from '../constants/defaults.js';
 import Package from '../constants/package.js';
 import DAT from '../types/dats/dat.js';
 import Header from '../types/dats/logiqx/header.js';
