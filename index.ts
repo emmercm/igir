@@ -7,7 +7,7 @@ import semver from 'semver';
 
 import Logger from './src/console/logger.js';
 import ProgressBarCLI from './src/console/progressBarCli.js';
-import Constants from './src/constants.js';
+import Package from './src/constants/package.js';
 import Igir from './src/igir.js';
 import ArgumentsParser from './src/modules/argumentsParser.js';
 import EndOfLifeChecker from './src/modules/endOfLifeChecker.js';
@@ -21,14 +21,14 @@ gracefulFs.gracefulify(realFs);
   const logger = new Logger();
   logger.printHeader();
 
-  if (!semver.satisfies(process.version, Constants.ENGINES_NODE)) {
-    logger.error(`${Constants.COMMAND_NAME} requires a Node.js version of ${Constants.ENGINES_NODE}`);
+  if (!semver.satisfies(process.version, Package.ENGINES_NODE)) {
+    logger.error(`${Package.NAME} requires a Node.js version of ${Package.ENGINES_NODE}`);
     process.exit(1);
   }
 
   process.once('SIGINT', async () => {
     logger.newLine();
-    logger.notice(`Exiting ${Constants.COMMAND_NAME} early`);
+    logger.notice(`Exiting ${Package.NAME} early`);
     await ProgressBarCLI.stop();
     process.exit(0);
     // TODO(cemmer): does exit here cause cleanup not to happen?

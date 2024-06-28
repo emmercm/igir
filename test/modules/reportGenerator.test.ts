@@ -1,7 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 
-import Constants from '../../src/constants.js';
+import Defaults from '../../src/constants/defaults.js';
 import ReportGenerator from '../../src/modules/reportGenerator.js';
 import fsPoly from '../../src/polyfill/fsPoly.js';
 import Game from '../../src/types/dats/game.js';
@@ -102,7 +102,7 @@ async function wrapReportGenerator(
   datStatuses: DATStatus[],
   callback: (contents: string) => void | Promise<void>,
 ): Promise<void> {
-  const reportOutput = await fsPoly.mktemp(path.join(Constants.GLOBAL_TEMP_DIR, 'report.csv'));
+  const reportOutput = await fsPoly.mktemp(path.join(Defaults.GLOBAL_TEMP_DIR, 'report.csv'));
   const options = new Options({
     ...optionsProps,
     reportOutput,

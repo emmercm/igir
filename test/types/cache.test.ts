@@ -1,6 +1,6 @@
 import path from 'node:path';
 
-import Constants from '../../src/constants.js';
+import Defaults from '../../src/constants/defaults.js';
 import FsPoly from '../../src/polyfill/fsPoly.js';
 import Cache from '../../src/types/cache.js';
 
@@ -195,7 +195,7 @@ describe('delete', () => {
 
 describe('load', () => {
   it('should not throw on nonexistent file', async () => {
-    const tempFile = await FsPoly.mktemp(path.join(Constants.GLOBAL_TEMP_DIR, 'cache'));
+    const tempFile = await FsPoly.mktemp(path.join(Defaults.GLOBAL_TEMP_DIR, 'cache'));
     await expect(FsPoly.exists(tempFile)).resolves.toEqual(false);
 
     const cache = new Cache<number>({ filePath: tempFile });
@@ -203,7 +203,7 @@ describe('load', () => {
   });
 
   it('should not throw on empty file', async () => {
-    const tempFile = await FsPoly.mktemp(path.join(Constants.GLOBAL_TEMP_DIR, 'cache'));
+    const tempFile = await FsPoly.mktemp(path.join(Defaults.GLOBAL_TEMP_DIR, 'cache'));
     await FsPoly.touch(tempFile);
     try {
       await expect(FsPoly.exists(tempFile)).resolves.toEqual(true);
@@ -216,7 +216,7 @@ describe('load', () => {
   });
 
   it('should load after saving a populated cache', async () => {
-    const tempFile = await FsPoly.mktemp(path.join(Constants.GLOBAL_TEMP_DIR, 'cache'));
+    const tempFile = await FsPoly.mktemp(path.join(Defaults.GLOBAL_TEMP_DIR, 'cache'));
 
     const firstCache = new Cache<number>({ filePath: tempFile });
     for (let i = 0; i < TEST_CACHE_SIZE; i += 1) {
@@ -244,7 +244,7 @@ describe('load', () => {
 
 describe('save', () => {
   it('should not save an empty cache', async () => {
-    const tempFile = await FsPoly.mktemp(path.join(Constants.GLOBAL_TEMP_DIR, 'cache'));
+    const tempFile = await FsPoly.mktemp(path.join(Defaults.GLOBAL_TEMP_DIR, 'cache'));
 
     const cache = new Cache<number>({ filePath: tempFile });
     await cache.save();
@@ -257,7 +257,7 @@ describe('save', () => {
   });
 
   it('should save a populated cache', async () => {
-    const tempFile = await FsPoly.mktemp(path.join(Constants.GLOBAL_TEMP_DIR, 'cache'));
+    const tempFile = await FsPoly.mktemp(path.join(Defaults.GLOBAL_TEMP_DIR, 'cache'));
 
     const cache = new Cache<number>({ filePath: tempFile });
     for (let i = 0; i < TEST_CACHE_SIZE; i += 1) {

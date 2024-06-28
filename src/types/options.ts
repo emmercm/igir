@@ -13,7 +13,7 @@ import micromatch from 'micromatch';
 import moment from 'moment';
 
 import LogLevel from '../console/logLevel.js';
-import Constants from '../constants.js';
+import Defaults from '../constants/defaults.js';
 import ArrayPoly from '../polyfill/arrayPoly.js';
 import fsPoly, { FsWalkCallback } from '../polyfill/fsPoly.js';
 import URLPoly from '../polyfill/urlPoly.js';
@@ -636,7 +636,7 @@ export default class Options implements OptionsProps {
     // Filter to non-directories
     const isNonDirectory = await async.mapLimit(
       globbedPaths,
-      Constants.MAX_FS_THREADS,
+      Defaults.MAX_FS_THREADS,
       async (file, callback: AsyncResultCallback<boolean, Error>) => {
         if (!await fsPoly.exists(file) && URLPoly.canParse(file)) {
           callback(undefined, true);
@@ -818,7 +818,7 @@ export default class Options implements OptionsProps {
   }
 
   getOutput(): string {
-    return this.shouldWrite() ? this.output : Constants.GLOBAL_TEMP_DIR;
+    return this.shouldWrite() ? this.output : Defaults.GLOBAL_TEMP_DIR;
   }
 
   /**

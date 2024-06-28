@@ -1,7 +1,7 @@
 import os from 'node:os';
 import path from 'node:path';
 
-import Constants from '../src/constants.js';
+import Defaults from '../src/constants/defaults.js';
 import Game from '../src/types/dats/game.js';
 import Header from '../src/types/dats/logiqx/header.js';
 import LogiqxDAT from '../src/types/dats/logiqx/logiqxDat.js';
@@ -31,7 +31,7 @@ test.each([
     dummyRom,
     await dummyRom.toFile(),
   );
-  expect(outputPath.dir).toEqual(Constants.GLOBAL_TEMP_DIR);
+  expect(outputPath.dir).toEqual(Defaults.GLOBAL_TEMP_DIR);
 });
 
 test.each([

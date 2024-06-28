@@ -1,6 +1,6 @@
 import path from 'node:path';
 
-import Constants from '../../src/constants.js';
+import Defaults from '../../src/constants/defaults.js';
 import DirectoryCleaner from '../../src/modules/directoryCleaner.js';
 import fsPoly from '../../src/polyfill/fsPoly.js';
 import File from '../../src/types/files/file.js';
@@ -21,7 +21,7 @@ async function runOutputCleaner(
   writtenFilePathsToExclude: string[],
 ): Promise<string[]> {
   // Copy the fixture files to a temp directory
-  const tempDir = await fsPoly.mkdtemp(Constants.GLOBAL_TEMP_DIR);
+  const tempDir = await fsPoly.mkdtemp(Defaults.GLOBAL_TEMP_DIR);
   await fsPoly.copyDir(ROM_FIXTURES_DIR, tempDir);
 
   const writtenRomFilesToExclude = await Promise.all(writtenFilePathsToExclude
@@ -113,7 +113,7 @@ it('should delete nothing if all unmatched but doing a dry run', async () => {
 });
 
 it('should delete hard links', async () => {
-  const tempDir = await fsPoly.mkdtemp(Constants.GLOBAL_TEMP_DIR);
+  const tempDir = await fsPoly.mkdtemp(Defaults.GLOBAL_TEMP_DIR);
   try {
     const filesDir = path.join(tempDir, 'files');
     await fsPoly.mkdir(filesDir);
@@ -151,7 +151,7 @@ it('should delete hard links', async () => {
 });
 
 it('should delete symlinks', async () => {
-  const tempDir = await fsPoly.mkdtemp(Constants.GLOBAL_TEMP_DIR);
+  const tempDir = await fsPoly.mkdtemp(Defaults.GLOBAL_TEMP_DIR);
   try {
     const filesDir = path.join(tempDir, 'files');
     await fsPoly.mkdir(filesDir);

@@ -1,7 +1,7 @@
 import os from 'node:os';
 import path from 'node:path';
 
-import Constants from '../../src/constants.js';
+import Defaults from '../../src/constants/defaults.js';
 import PatchScanner from '../../src/modules/patchScanner.js';
 import fsPoly from '../../src/polyfill/fsPoly.js';
 import FileFactory from '../../src/types/files/fileFactory.js';
@@ -58,7 +58,7 @@ describe('multiple files', () => {
     const patchFiles = (await new Options({ patch: ['test/fixtures/patches/*'] }).scanPatchFilesWithoutExclusions())
       .filter((filePath) => !FileFactory.isExtensionArchive(filePath));
 
-    const tempDir = await fsPoly.mkdtemp(Constants.GLOBAL_TEMP_DIR);
+    const tempDir = await fsPoly.mkdtemp(Defaults.GLOBAL_TEMP_DIR);
     try {
       const tempFiles = await Promise.all(patchFiles.map(async (patchFile) => {
         const tempFile = path.join(tempDir, `${path.basename(patchFile)}.txt`);
