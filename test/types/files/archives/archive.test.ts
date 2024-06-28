@@ -1,6 +1,6 @@
 import path from 'node:path';
 
-import Constants from '../../../../src/constants.js';
+import Defaults from '../../../../src/constants/defaults.js';
 import fsPoly from '../../../../src/polyfill/fsPoly.js';
 import Archive from '../../../../src/types/files/archives/archive.js';
 import ArchiveEntry from '../../../../src/types/files/archives/archiveEntry.js';
@@ -26,7 +26,7 @@ describe('getArchiveEntries', () => {
     ...ZipSpanned.getExtensions(),
     ...ZipX.getExtensions(),
   ])])('should throw when the file doesn\'t exist: %s', async (extension) => {
-    const tempFile = (await fsPoly.mktemp(path.join(Constants.GLOBAL_TEMP_DIR, 'file'))) + extension;
+    const tempFile = (await fsPoly.mktemp(path.join(Defaults.GLOBAL_TEMP_DIR, 'file'))) + extension;
     await expect(FileFactory.filesFrom(tempFile)).rejects.toThrow();
   });
 

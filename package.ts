@@ -10,7 +10,7 @@ import yargs from 'yargs';
 
 import Logger from './src/console/logger.js';
 import LogLevel from './src/console/logLevel.js';
-import Constants from './src/constants.js';
+import Package from './src/constants/package.js';
 import FsPoly from './src/polyfill/fsPoly.js';
 
 interface FileFilter extends GlobOptions {
@@ -61,7 +61,7 @@ const fileFilter = (filters: FileFilter[]): string[] => {
     .positional('output', {
       description: 'output file',
       type: 'string',
-      default: Constants.COMMAND_NAME + (process.platform === 'win32' ? '.exe' : ''),
+      default: Package.NAME + (process.platform === 'win32' ? '.exe' : ''),
     }).argv;
 
   const input = path.resolve(argv.input);

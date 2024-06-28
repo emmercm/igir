@@ -1,7 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 
-import Constants from '../../../src/constants.js';
+import Defaults from '../../../src/constants/defaults.js';
 import bufferPoly from '../../../src/polyfill/bufferPoly.js';
 import fsPoly from '../../../src/polyfill/fsPoly.js';
 import File from '../../../src/types/files/file.js';
@@ -9,7 +9,7 @@ import APSGBAPatch from '../../../src/types/patches/apsGbaPatch.js';
 import APSPatch from '../../../src/types/patches/apsPatch.js';
 
 async function writeTemp(fileName: string, contents: string | Buffer): Promise<File> {
-  const temp = await fsPoly.mktemp(path.join(Constants.GLOBAL_TEMP_DIR, fileName));
+  const temp = await fsPoly.mktemp(path.join(Defaults.GLOBAL_TEMP_DIR, fileName));
   await fsPoly.writeFile(temp, contents);
   return File.fileOf({ filePath: temp });
 }

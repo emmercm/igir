@@ -1,6 +1,6 @@
 import path from 'node:path';
 
-import Constants from '../../../../src/constants.js';
+import Defaults from '../../../../src/constants/defaults.js';
 import ROMScanner from '../../../../src/modules/romScanner.js';
 import fsPoly from '../../../../src/polyfill/fsPoly.js';
 import ArchiveEntry from '../../../../src/types/files/archives/archiveEntry.js';
@@ -32,7 +32,7 @@ describe('createArchive', () => {
     if (!rom) {
       throw new Error('no ROM of a non-zero size was found');
     }
-    const tempDir = await fsPoly.mkdtemp(Constants.GLOBAL_TEMP_DIR);
+    const tempDir = await fsPoly.mkdtemp(Defaults.GLOBAL_TEMP_DIR);
     const tempFilePath = path.join(tempDir, path.basename(rom.getFilePath()));
     await fsPoly.copyFile(rom.getFilePath(), tempFilePath);
 

@@ -1,7 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 
-import Constants from '../../src/constants.js';
+import Defaults from '../../src/constants/defaults.js';
 import filePoly from '../../src/polyfill/filePoly.js';
 import fsPoly from '../../src/polyfill/fsPoly.js';
 
@@ -9,7 +9,7 @@ describe('fileOfSize', () => {
   it('should delete an existing file', async () => {
     const size = 8080;
 
-    const tempFile = await fsPoly.mktemp(path.join(Constants.GLOBAL_TEMP_DIR, 'file'));
+    const tempFile = await fsPoly.mktemp(path.join(Defaults.GLOBAL_TEMP_DIR, 'file'));
     await fsPoly.touch(tempFile);
     await expect(fsPoly.exists(tempFile)).resolves.toEqual(true);
 
@@ -24,7 +24,7 @@ describe('fileOfSize', () => {
   });
 
   test.each([1, 42, 226, 1337, 8_675_309])('should create a file of size: %s', async (size) => {
-    const tempFile = await fsPoly.mktemp(path.join(Constants.GLOBAL_TEMP_DIR, 'file'));
+    const tempFile = await fsPoly.mktemp(path.join(Defaults.GLOBAL_TEMP_DIR, 'file'));
 
     try {
       const file = await filePoly.fileOfSize(tempFile, 'r', size);
@@ -55,9 +55,9 @@ describe('getSize', () => {
   });
 
   test.each(filesWithSizes)('should get size of symlinked file: %s', async (filePath, expectedSize) => {
-    const tempFile = await fsPoly.mktemp(path.join(Constants.GLOBAL_TEMP_DIR, 'file'));
+    const tempFile = await fsPoly.mktemp(path.join(Defaults.GLOBAL_TEMP_DIR, 'file'));
     await fsPoly.copyFile(filePath, tempFile);
-    const tempSymlink = await fsPoly.mktemp(path.join(Constants.GLOBAL_TEMP_DIR, 'symlink'));
+    const tempSymlink = await fsPoly.mktemp(path.join(Defaults.GLOBAL_TEMP_DIR, 'symlink'));
     await fsPoly.symlink(path.resolve(tempFile), tempSymlink);
 
     const file = await filePoly.fileFrom(tempSymlink, 'r');
@@ -71,9 +71,9 @@ describe('getSize', () => {
   });
 
   test.each(filesWithSizes)('should get size of hard linked file: %s', async (filePath, expectedSize) => {
-    const tempFile = await fsPoly.mktemp(path.join(Constants.GLOBAL_TEMP_DIR, 'file'));
+    const tempFile = await fsPoly.mktemp(path.join(Defaults.GLOBAL_TEMP_DIR, 'file'));
     await fsPoly.copyFile(filePath, tempFile);
-    const tempLink = await fsPoly.mktemp(path.join(Constants.GLOBAL_TEMP_DIR, 'link'));
+    const tempLink = await fsPoly.mktemp(path.join(Defaults.GLOBAL_TEMP_DIR, 'link'));
     await fsPoly.hardlink(path.resolve(tempFile), tempLink);
 
     const file = await filePoly.fileFrom(tempLink, 'r');
@@ -89,7 +89,7 @@ describe('getSize', () => {
 
 describe('readNext', () => {
   it('should read from the beginning', async () => {
-    const tempFile = await fsPoly.mktemp(path.join(Constants.GLOBAL_TEMP_DIR, 'file'));
+    const tempFile = await fsPoly.mktemp(path.join(Defaults.GLOBAL_TEMP_DIR, 'file'));
     await fsPoly.writeFile(tempFile, 'ABCDEF0123456789');
 
     const file = await filePoly.fileFrom(tempFile, 'r');
@@ -104,7 +104,7 @@ describe('readNext', () => {
   });
 
   it('should respect seek', async () => {
-    const tempFile = await fsPoly.mktemp(path.join(Constants.GLOBAL_TEMP_DIR, 'file'));
+    const tempFile = await fsPoly.mktemp(path.join(Defaults.GLOBAL_TEMP_DIR, 'file'));
     await fsPoly.writeFile(tempFile, 'ABCDEF0123456789');
 
     const file = await filePoly.fileFrom(tempFile, 'r');
@@ -120,7 +120,7 @@ describe('readNext', () => {
   });
 
   it('should respect skipNext', async () => {
-    const tempFile = await fsPoly.mktemp(path.join(Constants.GLOBAL_TEMP_DIR, 'file'));
+    const tempFile = await fsPoly.mktemp(path.join(Defaults.GLOBAL_TEMP_DIR, 'file'));
     await fsPoly.writeFile(tempFile, 'ABCDEF0123456789');
 
     const file = await filePoly.fileFrom(tempFile, 'r');
@@ -138,9 +138,9 @@ describe('readNext', () => {
 
 describe('readAt', () => {
   it('should read a small file', async () => {
-    const tempFile = await fsPoly.mktemp(path.join(Constants.GLOBAL_TEMP_DIR, 'file'));
+    const tempFile = await fsPoly.mktemp(path.join(Defaults.GLOBAL_TEMP_DIR, 'file'));
 
-    const file = await filePoly.fileOfSize(tempFile, 'r', Constants.MAX_MEMORY_FILE_SIZE - 1);
+    const file = await filePoly.fileOfSize(tempFile, 'r', Defaults.MAX_MEMORY_FILE_SIZE - 1);
     try {
       await expect(file.readAt(0, 16)).resolves.toEqual(Buffer.alloc(16));
     } finally {
@@ -150,9 +150,9 @@ describe('readAt', () => {
   });
 
   it('should read a large file', async () => {
-    const tempFile = await fsPoly.mktemp(path.join(Constants.GLOBAL_TEMP_DIR, 'file'));
+    const tempFile = await fsPoly.mktemp(path.join(Defaults.GLOBAL_TEMP_DIR, 'file'));
 
-    const file = await filePoly.fileOfSize(tempFile, 'r', Constants.MAX_MEMORY_FILE_SIZE + 1);
+    const file = await filePoly.fileOfSize(tempFile, 'r', Defaults.MAX_MEMORY_FILE_SIZE + 1);
     try {
       await expect(file.readAt(0, 16)).resolves.toEqual(Buffer.alloc(16));
     } finally {
@@ -165,7 +165,7 @@ describe('readAt', () => {
 describe('write', () => {
   describe('file mode: r', () => {
     it('should throw on write', async () => {
-      const tempFile = await fsPoly.mktemp(path.join(Constants.GLOBAL_TEMP_DIR, 'file'));
+      const tempFile = await fsPoly.mktemp(path.join(Defaults.GLOBAL_TEMP_DIR, 'file'));
 
       try {
         const file = await filePoly.fileOfSize(tempFile, 'r', 16);
@@ -182,7 +182,7 @@ describe('write', () => {
 
   describe.each(['r+', 'a'])('file mode: %s', (openMode) => {
     it('should overwrite contents', async () => {
-      const tempFile = await fsPoly.mktemp(path.join(Constants.GLOBAL_TEMP_DIR, 'file'));
+      const tempFile = await fsPoly.mktemp(path.join(Defaults.GLOBAL_TEMP_DIR, 'file'));
 
       try {
         const file = await filePoly.fileOfSize(tempFile, openMode, 16);
@@ -197,7 +197,7 @@ describe('write', () => {
     });
 
     it('should extend the file size', async () => {
-      const tempFile = await fsPoly.mktemp(path.join(Constants.GLOBAL_TEMP_DIR, 'file'));
+      const tempFile = await fsPoly.mktemp(path.join(Defaults.GLOBAL_TEMP_DIR, 'file'));
 
       try {
         const file = await filePoly.fileOfSize(tempFile, openMode, 4);
@@ -216,7 +216,7 @@ describe('write', () => {
 describe('writeAt', () => {
   describe('file mode: r', () => {
     it('should throw on write', async () => {
-      const tempFile = await fsPoly.mktemp(path.join(Constants.GLOBAL_TEMP_DIR, 'file'));
+      const tempFile = await fsPoly.mktemp(path.join(Defaults.GLOBAL_TEMP_DIR, 'file'));
 
       try {
         const file = await filePoly.fileOfSize(tempFile, 'r', 16);
@@ -233,7 +233,7 @@ describe('writeAt', () => {
 
   describe.each(['r+', 'a'])('file mode: %s', (openMode) => {
     it('should overwrite contents', async () => {
-      const tempFile = await fsPoly.mktemp(path.join(Constants.GLOBAL_TEMP_DIR, 'file'));
+      const tempFile = await fsPoly.mktemp(path.join(Defaults.GLOBAL_TEMP_DIR, 'file'));
 
       try {
         const file = await filePoly.fileOfSize(tempFile, openMode, 16);
@@ -248,7 +248,7 @@ describe('writeAt', () => {
     });
 
     it('should extend the file size', async () => {
-      const tempFile = await fsPoly.mktemp(path.join(Constants.GLOBAL_TEMP_DIR, 'file'));
+      const tempFile = await fsPoly.mktemp(path.join(Defaults.GLOBAL_TEMP_DIR, 'file'));
 
       try {
         const file = await filePoly.fileOfSize(tempFile, openMode, 4);
