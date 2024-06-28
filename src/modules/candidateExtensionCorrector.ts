@@ -3,10 +3,8 @@ import { Semaphore } from 'async-mutex';
 import ProgressBar, { ProgressBarSymbol } from '../console/progressBar.js';
 import DAT from '../types/dats/dat.js';
 import Parent from '../types/dats/parent.js';
-import FileFactory from '../types/files/fileFactory.js';
 import ROMSignature from '../types/files/romSignature.js';
 import Options from '../types/options.js';
-import OutputFactory from '../types/outputFactory.js';
 import ReleaseCandidate from '../types/releaseCandidate.js';
 import ROMWithFiles from '../types/romWithFiles.js';
 import Module from './module.js';
@@ -87,21 +85,22 @@ export default class CandidateExtensionCorrector extends Module {
                   this.progressBar.addWaitingMessage(waitingMessage);
                   this.progressBar.logTrace(`${dat.getNameShort()}: ${parent.getName()}: correcting extension for: ${romWithFiles.getInputFile().toString()}`);
 
-                  await romWithFiles.getInputFile().createReadStream(async (stream) => {
-                    const romSignature = await ROMSignature.signatureFromFileStream(stream);
-                    if (!romSignature) {
+                  const correctedRomWithFiles = await romWithFiles.getInputFile()
+                    .createReadStream(async (stream) => {
+                      const romSignature = await ROMSignature.signatureFromFileStream(stream);
+                      if (!romSignature) {
                       // We don't know this signature, don't correct anything
+                        return romWithFiles;
+                      }
+
+                      // TODO: correct the extension
+
                       return romWithFiles;
-                    }
-
-                    // TODO: correct the extension
-
-                    const i = 0;
-                  });
+                    });
 
                   this.progressBar.removeWaitingMessage(waitingMessage);
                   await this.progressBar.incrementDone();
-                  return romWithFiles;
+                  return correctedRomWithFiles;
                 });
               }));
 
