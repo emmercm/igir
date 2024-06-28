@@ -1,7 +1,7 @@
 import path from 'node:path';
 import { Readable } from 'node:stream';
 
-import Defaults from '../../../constants/defaults.js';
+import Defaults from '../../../globals/defaults.js';
 import fsPoly from '../../../polyfill/fsPoly.js';
 import File from '../file.js';
 import ArchiveEntry from './archiveEntry.js';

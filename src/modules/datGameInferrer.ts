@@ -3,7 +3,7 @@ import path from 'node:path';
 import moment from 'moment';
 
 import ProgressBar from '../console/progressBar.js';
-import Package from '../constants/package.js';
+import Package from '../globals/package.js';
 import ArrayPoly from '../polyfill/arrayPoly.js';
 import DAT from '../types/dats/dat.js';
 import Game from '../types/dats/game.js';

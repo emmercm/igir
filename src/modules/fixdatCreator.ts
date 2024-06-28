@@ -3,7 +3,7 @@ import path from 'node:path';
 import moment from 'moment';
 
 import ProgressBar, { ProgressBarSymbol } from '../console/progressBar.js';
-import Package from '../constants/package.js';
+import Package from '../globals/package.js';
 import fsPoly from '../polyfill/fsPoly.js';
 import DAT from '../types/dats/dat.js';
 import Header from '../types/dats/logiqx/header.js';

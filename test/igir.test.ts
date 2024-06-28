@@ -3,7 +3,7 @@ import path from 'node:path';
 
 import Logger from '../src/console/logger.js';
 import LogLevel from '../src/console/logLevel.js';
-import Defaults from '../src/constants/defaults.js';
+import Defaults from '../src/globals/defaults.js';
 import Igir from '../src/igir.js';
 import ArrayPoly from '../src/polyfill/arrayPoly.js';
 import fsPoly from '../src/polyfill/fsPoly.js';

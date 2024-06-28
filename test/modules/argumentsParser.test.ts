@@ -3,7 +3,7 @@ import path from 'node:path';
 
 import Logger from '../../src/console/logger.js';
 import LogLevel from '../../src/console/logLevel.js';
-import Defaults from '../../src/constants/defaults.js';
+import Defaults from '../../src/globals/defaults.js';
 import ArgumentsParser from '../../src/modules/argumentsParser.js';
 import FsPoly from '../../src/polyfill/fsPoly.js';
 import Header from '../../src/types/dats/logiqx/header.js';

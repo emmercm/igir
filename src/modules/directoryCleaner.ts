@@ -5,7 +5,7 @@ import { isNotJunk } from 'junk';
 import trash from 'trash';
 
 import ProgressBar, { ProgressBarSymbol } from '../console/progressBar.js';
-import Defaults from '../constants/defaults.js';
+import Defaults from '../globals/defaults.js';
 import ArrayPoly from '../polyfill/arrayPoly.js';
 import fsPoly from '../polyfill/fsPoly.js';
 import File from '../types/files/file.js';

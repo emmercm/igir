@@ -4,7 +4,7 @@ import async, { AsyncResultCallback } from 'async';
 import { Mutex } from 'async-mutex';
 import unrar from 'node-unrar-js';
 
-import Defaults from '../../../constants/defaults.js';
+import Defaults from '../../../globals/defaults.js';
 import Archive from './archive.js';
 import ArchiveEntry from './archiveEntry.js';
 

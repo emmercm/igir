@@ -1,6 +1,6 @@
 import path from 'node:path';
 
-import Defaults from '../../../../src/constants/defaults.js';
+import Defaults from '../../../../src/globals/defaults.js';
 import ROMScanner from '../../../../src/modules/romScanner.js';
 import fsPoly from '../../../../src/polyfill/fsPoly.js';
 import ArchiveEntry from '../../../../src/types/files/archives/archiveEntry.js';

@@ -5,7 +5,7 @@ import {
   Exclude, Expose, instanceToPlain, plainToClassFromExist,
 } from 'class-transformer';
 
-import Defaults from '../../../constants/defaults.js';
+import Defaults from '../../../globals/defaults.js';
 import fsPoly from '../../../polyfill/fsPoly.js';
 import Patch from '../../patches/patch.js';
 import File, { FileProps } from '../file.js';

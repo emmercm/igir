@@ -10,7 +10,7 @@ import yargs from 'yargs';
 
 import Logger from './src/console/logger.js';
 import LogLevel from './src/console/logLevel.js';
-import Package from './src/constants/package.js';
+import Package from './src/globals/package.js';
 import FsPoly from './src/polyfill/fsPoly.js';
 
 interface FileFilter extends GlobOptions {

@@ -1,7 +1,7 @@
 import os from 'node:os';
 import path from 'node:path';
 
-import Defaults from '../../src/constants/defaults.js';
+import Defaults from '../../src/globals/defaults.js';
 import PatchScanner from '../../src/modules/patchScanner.js';
 import fsPoly from '../../src/polyfill/fsPoly.js';
 import FileFactory from '../../src/types/files/fileFactory.js';

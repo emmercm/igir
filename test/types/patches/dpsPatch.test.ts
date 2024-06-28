@@ -1,6 +1,6 @@
 import path from 'node:path';
 
-import Defaults from '../../../src/constants/defaults.js';
+import Defaults from '../../../src/globals/defaults.js';
 import fsPoly from '../../../src/polyfill/fsPoly.js';
 import File from '../../../src/types/files/file.js';
 import DPSPatch from '../../../src/types/patches/dpsPatch.js';

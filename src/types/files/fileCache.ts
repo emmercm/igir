@@ -1,4 +1,4 @@
-import Defaults from '../../constants/defaults.js';
+import Defaults from '../../globals/defaults.js';
 import FsPoly from '../../polyfill/fsPoly.js';
 import Timer from '../../timer.js';
 import Cache from '../cache.js';

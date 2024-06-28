@@ -13,7 +13,7 @@ import micromatch from 'micromatch';
 import moment from 'moment';
 
 import LogLevel from '../console/logLevel.js';
-import Defaults from '../constants/defaults.js';
+import Defaults from '../globals/defaults.js';
 import ArrayPoly from '../polyfill/arrayPoly.js';
 import fsPoly, { FsWalkCallback } from '../polyfill/fsPoly.js';
 import URLPoly from '../polyfill/urlPoly.js';

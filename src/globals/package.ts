@@ -28,7 +28,7 @@ const PACKAGE_JSON = JSON.parse(
 );
 
 /**
- * A static class of constants that are parsed from `package.json` at startup, to be used widely.
+ * A static class of globals that are parsed from `package.json` at startup, to be used widely.
  */
 export default class Package {
   static readonly DIRECTORY = path.dirname(PACKAGE_JSON_PATH);

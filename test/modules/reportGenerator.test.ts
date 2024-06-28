@@ -1,7 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 
-import Defaults from '../../src/constants/defaults.js';
+import Defaults from '../../src/globals/defaults.js';
 import ReportGenerator from '../../src/modules/reportGenerator.js';
 import fsPoly from '../../src/polyfill/fsPoly.js';
 import Game from '../../src/types/dats/game.js';

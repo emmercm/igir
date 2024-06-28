@@ -4,7 +4,7 @@ import _7z, { Result } from '7zip-min';
 import async, { AsyncResultCallback } from 'async';
 import { Mutex } from 'async-mutex';
 
-import Defaults from '../../../constants/defaults.js';
+import Defaults from '../../../globals/defaults.js';
 import fsPoly from '../../../polyfill/fsPoly.js';
 import Archive from './archive.js';
 import ArchiveEntry from './archiveEntry.js';

@@ -1,7 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 
-import Defaults from '../../src/constants/defaults.js';
+import Defaults from '../../src/globals/defaults.js';
 import filePoly from '../../src/polyfill/filePoly.js';
 import fsPoly from '../../src/polyfill/fsPoly.js';
 
