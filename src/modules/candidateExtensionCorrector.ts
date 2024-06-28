@@ -1,3 +1,5 @@
+import path from 'node:path';
+
 import { Semaphore } from 'async-mutex';
 
 import ProgressBar, { ProgressBarSymbol } from '../console/progressBar.js';
@@ -5,6 +7,7 @@ import DAT from '../types/dats/dat.js';
 import Parent from '../types/dats/parent.js';
 import ROMSignature from '../types/files/romSignature.js';
 import Options from '../types/options.js';
+import OutputFactory from '../types/outputFactory.js';
 import ReleaseCandidate from '../types/releaseCandidate.js';
 import ROMWithFiles from '../types/romWithFiles.js';
 import Module from './module.js';
@@ -60,7 +63,7 @@ export default class CandidateExtensionCorrector extends Module {
   }
 
   private romNeedsCorrecting(romWithFiles: ROMWithFiles): boolean {
-    return true;
+    // return true;
     return !this.options.usingDats()
       || romWithFiles.getRom().getName().trim() === '';
   }
@@ -89,13 +92,33 @@ export default class CandidateExtensionCorrector extends Module {
                     .createReadStream(async (stream) => {
                       const romSignature = await ROMSignature.signatureFromFileStream(stream);
                       if (!romSignature) {
-                      // We don't know this signature, don't correct anything
+                        // We don't know this signature, don't correct anything
                         return romWithFiles;
                       }
 
-                      // TODO: correct the extension
+                      const { dir, name } = path.parse(romWithFiles.getRom().getName());
+                      const correctedRomName = path.format({
+                        dir,
+                        name: name + romSignature.getExtension(),
+                      });
+                      const correctedRom = romWithFiles.getRom().withName(correctedRomName);
 
-                      return romWithFiles;
+                      const correctedOutputPath = OutputFactory.getPath(
+                        this.options,
+                        dat,
+                        releaseCandidate.getGame(),
+                        releaseCandidate.getRelease(),
+                        correctedRom,
+                        romWithFiles.getInputFile(),
+                      ).format();
+                      const correctedOutputFile = romWithFiles.getOutputFile()
+                        .withFilePath(correctedOutputPath);
+
+                      return new ROMWithFiles(
+                        correctedRom,
+                        romWithFiles.getInputFile(),
+                        correctedOutputFile,
+                      );
                     });
 
                   this.progressBar.removeWaitingMessage(waitingMessage);

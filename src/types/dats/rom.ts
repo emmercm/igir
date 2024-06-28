@@ -118,10 +118,10 @@ export default class ROM implements ROMProps {
   }
 
   /**
-   * Return a new copy of this {@link ROM} with some different properties.
+   * Return a new copy of this {@link ROM} with a different name.
    */
-  withProps(props: ROMProps): ROM {
-    return new ROM({ ...this, ...props });
+  withName(name: string): ROM {
+    return new ROM({ ...this, name });
   }
 
   /**

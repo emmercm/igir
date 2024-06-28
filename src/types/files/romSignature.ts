@@ -123,4 +123,8 @@ export default class ROMSignature {
 
     return undefined;
   }
+
+  getExtension(): string {
+    return this.extension;
+  }
 }
