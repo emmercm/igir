@@ -7,7 +7,7 @@ import archiver, { Archiver } from 'archiver';
 import async, { AsyncResultCallback } from 'async';
 import unzipper, { Entry } from 'unzipper';
 
-import Defaults from '../../../constants/defaults.js';
+import Defaults from '../../../globals/defaults.js';
 import fsPoly from '../../../polyfill/fsPoly.js';
 import StreamPoly from '../../../polyfill/streamPoly.js';
 import File from '../file.js';

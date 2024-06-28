@@ -1,6 +1,6 @@
 import path from 'node:path';
 
-import Defaults from '../../../src/constants/defaults.js';
+import Defaults from '../../../src/globals/defaults.js';
 import FsPoly from '../../../src/polyfill/fsPoly.js';
 import Zip from '../../../src/types/files/archives/zip.js';
 import FileCache from '../../../src/types/files/fileCache.js';

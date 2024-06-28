@@ -5,7 +5,7 @@ import chalk from 'chalk';
 import figlet from 'figlet';
 import moment from 'moment';
 
-import Package from '../constants/package.js';
+import Package from '../globals/package.js';
 import LogLevel from './logLevel.js';
 import ProgressBar, { ProgressBarSymbol } from './progressBar.js';
 import ProgressBarCLI from './progressBarCli.js';

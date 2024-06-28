@@ -14,7 +14,7 @@ process.once('beforeExit', async () => {
 });
 
 /**
- * A static class of constants that are determined at startup, to be used widely.
+ * A static class of globals that are determined at startup, to be used widely.
  */
 export default class Defaults {
   static readonly GLOBAL_TEMP_DIR = GLOBAL_TEMP_DIR;

@@ -3,8 +3,8 @@ import fs from 'node:fs';
 import yargs, { Argv } from 'yargs';
 
 import Logger from '../console/logger.js';
-import Defaults from '../constants/defaults.js';
-import Package from '../constants/package.js';
+import Defaults from '../globals/defaults.js';
+import Package from '../globals/package.js';
 import ArrayPoly from '../polyfill/arrayPoly.js';
 import ConsolePoly from '../polyfill/consolePoly.js';
 import { ChecksumBitmask } from '../types/files/fileChecksums.js';

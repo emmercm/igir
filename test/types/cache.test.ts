@@ -1,6 +1,6 @@
 import path from 'node:path';
 
-import Defaults from '../../src/constants/defaults.js';
+import Defaults from '../../src/globals/defaults.js';
 import FsPoly from '../../src/polyfill/fsPoly.js';
 import Cache from '../../src/types/cache.js';
 

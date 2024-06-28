@@ -1,6 +1,6 @@
 import path from 'node:path';
 
-import Defaults from '../../../../src/constants/defaults.js';
+import Defaults from '../../../../src/globals/defaults.js';
 import fsPoly from '../../../../src/polyfill/fsPoly.js';
 import Archive from '../../../../src/types/files/archives/archive.js';
 import ArchiveEntry from '../../../../src/types/files/archives/archiveEntry.js';

@@ -3,7 +3,7 @@ import path from 'node:path';
 
 import tar from 'tar';
 
-import Defaults from '../../../constants/defaults.js';
+import Defaults from '../../../globals/defaults.js';
 import FsPoly from '../../../polyfill/fsPoly.js';
 import FileChecksums from '../fileChecksums.js';
 import Archive from './archive.js';

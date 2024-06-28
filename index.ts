@@ -7,7 +7,7 @@ import semver from 'semver';
 
 import Logger from './src/console/logger.js';
 import ProgressBarCLI from './src/console/progressBarCli.js';
-import Package from './src/constants/package.js';
+import Package from './src/globals/package.js';
 import Igir from './src/igir.js';
 import ArgumentsParser from './src/modules/argumentsParser.js';
 import EndOfLifeChecker from './src/modules/endOfLifeChecker.js';

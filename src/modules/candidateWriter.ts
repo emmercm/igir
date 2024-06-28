@@ -3,8 +3,8 @@ import path from 'node:path';
 import { Semaphore } from 'async-mutex';
 
 import ProgressBar, { ProgressBarSymbol } from '../console/progressBar.js';
-import Defaults from '../constants/defaults.js';
 import ElasticSemaphore from '../elasticSemaphore.js';
+import Defaults from '../globals/defaults.js';
 import ArrayPoly from '../polyfill/arrayPoly.js';
 import fsPoly from '../polyfill/fsPoly.js';
 import DAT from '../types/dats/dat.js';
