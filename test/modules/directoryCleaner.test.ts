@@ -4,7 +4,7 @@ import Temp from '../../src/globals/temp.js';
 import DirectoryCleaner from '../../src/modules/directoryCleaner.js';
 import fsPoly from '../../src/polyfill/fsPoly.js';
 import File from '../../src/types/files/file.js';
-import Options from '../../src/types/options.js';
+import Options, { OptionsProps } from '../../src/types/options.js';
 import ProgressBarFake from '../console/progressBarFake.js';
 
 const ROM_FIXTURES_DIR = path.join('test', 'fixtures', 'roms');
@@ -16,6 +16,7 @@ const ROM_FIXTURES_DIR = path.join('test', 'fixtures', 'roms');
  * so it's fine if we implement some workarounds here.
  */
 async function runOutputCleaner(
+  optionsProps: OptionsProps,
   cleanExclude: string[],
   writtenFilePathsToExclude: string[],
 ): Promise<string[]> {
@@ -31,6 +32,7 @@ async function runOutputCleaner(
 
   await new DirectoryCleaner(
     new Options({
+      ...optionsProps,
       commands: ['move', 'clean'],
       cleanExclude: cleanExclude.map((filePath) => path.join(tempDir, filePath)),
     }),
@@ -50,7 +52,7 @@ it('should delete nothing if nothing written', async () => {
   const existingFiles = (await fsPoly.walk(ROM_FIXTURES_DIR))
     .map((filePath) => filePath.replace(/^test[\\/]fixtures[\\/]roms[\\/]/, ''))
     .sort();
-  const filesRemaining = await runOutputCleaner([], []);
+  const filesRemaining = await runOutputCleaner({}, [], []);
   expect(filesRemaining).toEqual(existingFiles);
 });
 
@@ -58,12 +60,12 @@ it('should delete nothing if no excess files', async () => {
   const existingFiles = (await fsPoly.walk(ROM_FIXTURES_DIR))
     .map((filePath) => filePath.replace(/^test[\\/]fixtures[\\/]roms[\\/]/, ''))
     .sort();
-  const filesRemaining = await runOutputCleaner([], existingFiles);
+  const filesRemaining = await runOutputCleaner({}, [], existingFiles);
   expect(filesRemaining).toEqual(existingFiles);
 });
 
 it('should delete some if all unmatched and some excluded', async () => {
-  const filesRemaining = await runOutputCleaner([
+  const filesRemaining = await runOutputCleaner({}, [
     path.join('**', 'foobar.*'),
   ], [
     'non-existent file',
@@ -79,7 +81,7 @@ it('should delete some if all unmatched and some excluded', async () => {
 });
 
 it('should delete some if some matched and nothing excluded', async () => {
-  const filesRemaining = await runOutputCleaner([], [
+  const filesRemaining = await runOutputCleaner({}, [], [
     path.join('7z', 'empty.7z'),
     path.join('raw', 'fizzbuzz.nes'),
     path.join('zip', 'foobar.zip'),
@@ -93,9 +95,21 @@ it('should delete some if some matched and nothing excluded', async () => {
 });
 
 it('should delete everything if all unmatched and nothing excluded', async () => {
-  await expect(runOutputCleaner([], [
+  await expect(runOutputCleaner({}, [], [
     'non-existent file',
   ])).resolves.toHaveLength(0);
+});
+
+it('should delete nothing if all unmatched but doing a dry run', async () => {
+  const existingFiles = (await fsPoly.walk(ROM_FIXTURES_DIR))
+    .map((filePath) => filePath.replace(/^test[\\/]fixtures[\\/]roms[\\/]/, ''))
+    .sort();
+  const filesRemaining = await runOutputCleaner({
+    cleanDryRun: true,
+  }, [], [
+    'non-existent file',
+  ]);
+  expect(filesRemaining).toEqual(existingFiles);
 });
 
 it('should delete hard links', async () => {

@@ -38,7 +38,7 @@ async function runPatchCandidateGenerator(
 
   const patches = await new PatchScanner(options, new ProgressBarFake()).scan();
 
-  return new CandidatePatchGenerator(options, new ProgressBarFake())
+  return new CandidatePatchGenerator(new ProgressBarFake())
     .generate(dat, parentsToCandidates, patches);
 }
 

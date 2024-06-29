@@ -8,6 +8,7 @@ import Game from './dats/game.js';
 import Release from './dats/release.js';
 import ROM from './dats/rom.js';
 import ArchiveEntry from './files/archives/archiveEntry.js';
+import ArchiveFile from './files/archives/archiveFile.js';
 import File from './files/file.js';
 import FileFactory from './files/fileFactory.js';
 import GameConsole from './gameConsole.js';
@@ -23,7 +24,7 @@ interface ParsedPathWithEntryPath extends ParsedPath {
 /**
  * A {@link ParsedPathWithEntryPath} that normalizes formatting across OSes.
  */
-class OutputPath implements ParsedPathWithEntryPath {
+export class OutputPath implements ParsedPathWithEntryPath {
   base: string;
 
   dir: string;
@@ -85,8 +86,8 @@ export default class OutputFactory {
     inputFile: File,
     romBasenames?: string[],
   ): OutputPath {
-    const name = this.getName(options, dat, game, rom, inputFile);
-    const ext = this.getExt(options, dat, game, rom, inputFile);
+    const name = this.getName(options, game, rom, inputFile);
+    const ext = this.getExt(options, game, rom, inputFile);
     const basename = name + ext;
 
     return new OutputPath({
@@ -95,7 +96,7 @@ export default class OutputFactory {
       base: '',
       name,
       ext,
-      entryPath: this.getEntryPath(options, dat, game, rom, inputFile),
+      entryPath: this.getEntryPath(options, game, rom, inputFile),
     });
   }
 
@@ -183,13 +184,17 @@ export default class OutputFactory {
     }
 
     let output = input;
-    output = output.replace('{gameRegion}', release.getRegion());
-    output = output.replace('{datReleaseRegion}', release.getRegion()); // deprecated
+    output = output
+      .replace('{region}', release.getRegion())
+      .replace('{gameRegion}', release.getRegion()) // deprecated
+      .replace('{datReleaseRegion}', release.getRegion()); // deprecated
 
     const releaseLanguage = release.getLanguage();
     if (releaseLanguage) {
-      output = output.replace('{gameLanguage}', releaseLanguage);
-      output = output.replace('{datReleaseLanguage}', releaseLanguage); // deprecated
+      output = output
+        .replace('{language}', releaseLanguage)
+        .replace('{gameLanguage}', releaseLanguage) // deprecated
+        .replace('{datReleaseLanguage}', releaseLanguage); // deprecated
     }
 
     return output;
@@ -199,18 +204,28 @@ export default class OutputFactory {
     if (!game) {
       return input;
     }
-
     let output = input;
-    output = output.replace('{gameType}', game.getGameType());
 
     const gameRegion = game.getRegions().find(() => true);
     if (gameRegion) {
-      output = output.replace('{gameRegion}', gameRegion);
+      // TODO(cemmer): drop the game* prefixed tokens
+      output = output
+        .replace('{region}', gameRegion)
+        .replace('{gameRegion}', gameRegion);
     }
 
     const gameLanguage = game.getLanguages().find(() => true);
     if (gameLanguage) {
-      output = output.replace('{gameLanguage}', gameLanguage);
+      output = output
+        .replace('{gameLanguage}', gameLanguage)
+        .replace('{language}', gameLanguage);
+    }
+
+    output = output.replace('{gameType}', game.getGameType());
+
+    const gameGenre = game.getGenre();
+    if (gameGenre) {
+      output = output.replace('{genre}', gameGenre);
     }
 
     return output;
@@ -313,6 +328,11 @@ export default class OutputFactory {
     const retrodeck = gameConsole.getRetroDECK();
     if (retrodeck) {
       output = output.replace('{retrodeck}', retrodeck);
+    }
+
+    const romm = gameConsole.getRomM();
+    if (romm) {
+      output = output.replace('{romm}', romm);
     }
 
     const twmenu = gameConsole.getTWMenu();
@@ -441,14 +461,12 @@ export default class OutputFactory {
 
   private static getName(
     options: Options,
-    dat: DAT,
     game: Game,
     rom: ROM,
     inputFile: File,
   ): string {
     const { dir, name, ext } = path.parse(this.getOutputFileBasename(
       options,
-      dat,
       game,
       rom,
       inputFile,
@@ -461,7 +479,8 @@ export default class OutputFactory {
 
     if ((options.getDirGameSubdir() === GameSubdirMode.MULTIPLE
         && game.getRoms().length > 1
-        && !FileFactory.isArchive(ext))
+        // Output file is an archive
+        && !(FileFactory.isExtensionArchive(ext) || inputFile instanceof ArchiveFile))
       || options.getDirGameSubdir() === GameSubdirMode.ALWAYS
     ) {
       output = path.join(game.getName(), output);
@@ -470,14 +489,13 @@ export default class OutputFactory {
     return output;
   }
 
-  private static getExt(options: Options, dat: DAT, game: Game, rom: ROM, inputFile: File): string {
-    const { ext } = path.parse(this.getOutputFileBasename(options, dat, game, rom, inputFile));
+  private static getExt(options: Options, game: Game, rom: ROM, inputFile: File): string {
+    const { ext } = path.parse(this.getOutputFileBasename(options, game, rom, inputFile));
     return ext;
   }
 
   private static getOutputFileBasename(
     options: Options,
-    dat: DAT,
     game: Game,
     rom: ROM,
     inputFile: File,
@@ -488,31 +506,34 @@ export default class OutputFactory {
       return `${game.getName()}.zip`;
     }
 
-    const romBasename = this.getRomBasename(game, rom, inputFile);
+    const romBasename = this.getRomBasename(rom, inputFile);
 
-    if (
-      !(inputFile instanceof ArchiveEntry || FileFactory.isArchive(inputFile.getFilePath()))
-            || options.shouldExtract()
+    if (!(inputFile instanceof ArchiveEntry || inputFile instanceof ArchiveFile)
+      || options.shouldExtract()
     ) {
       // Should extract (if needed), generate the file name from the ROM name
       return romBasename;
     }
 
-    // Should leave archived, generate the archive name from the game name, but use the input
-    // file's extension
+    // Should leave archived, generate the archive name from the game name
+    // The regex is to preserve filenames that use 2+ extensions, e.g. "rom.nes.zip"
     const extMatch = inputFile.getFilePath().match(/[^.]+((\.[a-zA-Z0-9]+)+)$/);
     const ext = extMatch !== null ? extMatch[1] : '';
-    return game.getName() + ext;
+    return path.format({
+      ...path.parse(game.getName() + ext),
+      // Use the archive's canonical extension
+      base: undefined,
+      ext: inputFile.getArchive().getExtension(),
+    });
   }
 
   private static getEntryPath(
     options: Options,
-    dat: DAT,
     game: Game,
     rom: ROM,
     inputFile: File,
   ): string {
-    const romBasename = this.getRomBasename(game, rom, inputFile);
+    const romBasename = this.getRomBasename(rom, inputFile);
     if (!options.shouldZipFile(rom.getName())) {
       return romBasename;
     }
@@ -527,7 +548,6 @@ export default class OutputFactory {
   }
 
   private static getRomBasename(
-    game: Game,
     rom: ROM,
     inputFile: File,
   ): string {

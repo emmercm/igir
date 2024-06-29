@@ -10,10 +10,19 @@ on:
       - opened
       - reopened
       - synchronize  # PR's branch was edited (i.e. new commits)
+  workflow_dispatch:
+    inputs:
+      ref:
+        description: 'Git ref or SHA'
+        required: true
+        type: string
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
+
+env:
+  ref: ${{ inputs.ref || github.sha || github.ref }}
 
 jobs:
   path-filter:
@@ -24,6 +33,8 @@ jobs:
       changes: ${{ steps.filter.outputs.changes }}
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ env.ref }}
       - id: filter
         uses: dorny/paths-filter@v2
         with:
@@ -42,6 +53,8 @@ jobs:
     steps:
       # Setup and install
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ env.ref }}
       - uses: volta-cli/action@v4
       - run: npm ci
       # Lint the source files
@@ -59,10 +72,12 @@ jobs:
     strategy:
       matrix:
         os: [ ubuntu, macos, windows ]
-        node-version: [ lts, 18, 16.6.0 ]
+        node-version: [ lts, 18, 16.7.0 ]
     steps:
       # Setup and install
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ env.ref }}
       - uses: volta-cli/action@v4
         with:
           node-version: ${{ matrix.node-version }}
@@ -77,10 +92,12 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        node-version: [ lts, 18, 16.6.0 ]
+        node-version: [ lts, 18, 16.7.0 ]
     steps:
       # Setup and install
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ env.ref }}
       - uses: volta-cli/action@v4
         with:
           node-version: ${{ matrix.node-version }}
@@ -100,6 +117,8 @@ jobs:
     steps:
       # Setup and install
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ env.ref }}
       - uses: volta-cli/action@v4
       - run: npm ci
       # Test building
@@ -112,10 +131,12 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        node-version: [ lts, 18, 16.6.0 ]
+        node-version: [ lts, 18, 16.7.0 ]
     steps:
       # Setup and install
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ env.ref }}
       - uses: volta-cli/action@v4
         with:
           node-version: ${{ matrix.node-version }}

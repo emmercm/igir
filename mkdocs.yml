@@ -66,6 +66,7 @@ nav:
             - usage/desktop/retroarch.md
             - usage/desktop/retrodeck.md
             - usage/desktop/retropie.md
+            - usage/desktop/romm.md
             - usage/handheld/twmenu.md
           - FPGA:
             - usage/hardware/mister.md
@@ -181,5 +182,5 @@ extra:
       link: https://github.com/emmercm/igir
     - icon: simple/npm
       link: https://www.npmjs.com/package/igir
-    - icon: simple/twitter
-      link: https://twitter.com/emmercm
+    - icon: simple/x
+      link: https://x.com/emmercm

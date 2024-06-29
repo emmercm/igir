@@ -37,11 +37,22 @@ gracefulFs.gracefulify(realFs);
   // Parse CLI arguments
   let options: Options;
   try {
-    options = new ArgumentsParser(logger).parse(process.argv.slice(2));
+    const argv = process.argv.slice(2);
+    options = new ArgumentsParser(logger).parse(argv);
+    logger.setLogLevel(options.getLogLevel());
+
+    const argvString = argv.map((arg) => {
+      if (!arg.includes(' ')) {
+        return arg;
+      }
+      return `"${arg.replace(/"/g, '\\"')}"`;
+    }).join(' ');
+    logger.trace(`Parsing CLI arguments: ${argvString}`);
+    logger.trace(`Parsed CLI options: ${options.toString()}`);
+
     if (options.getHelp()) {
       process.exit(0);
     }
-    logger.setLogLevel(options.getLogLevel());
   } catch (error) {
     // Explicitly do not log the stack trace, for readability
     logger.error(error);

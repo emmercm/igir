@@ -5,14 +5,10 @@ import { Mutex } from 'async-mutex';
 import unrar from 'node-unrar-js';
 
 import Defaults from '../../../globals/defaults.js';
-import FileCache from '../fileCache.js';
-import { ChecksumBitmask } from '../fileChecksums.js';
 import Archive from './archive.js';
 import ArchiveEntry from './archiveEntry.js';
 
 export default class Rar extends Archive {
-  static readonly SUPPORTED_EXTENSIONS = ['.rar'];
-
   private static readonly EXTRACT_MUTEX = new Mutex();
 
   // eslint-disable-next-line class-methods-use-this
@@ -20,15 +16,30 @@ export default class Rar extends Archive {
     return new Rar(filePath);
   }
 
-  @FileCache.CacheArchiveEntries({ skipChecksumBitmask: ChecksumBitmask.CRC32 })
-  async getArchiveEntries(checksumBitmask: number): Promise<ArchiveEntry<Rar>[]> {
+  static getExtensions(): string[] {
+    return ['.rar'];
+  }
+
+  // eslint-disable-next-line class-methods-use-this
+  getExtension(): string {
+    return Rar.getExtensions()[0];
+  }
+
+  static getFileSignatures(): Buffer[] {
+    return [
+      Buffer.from('526172211A0700', 'hex'), // v1.50+
+      Buffer.from('526172211A070100', 'hex'), // v5.00+
+    ];
+  }
+
+  async getArchiveEntries(checksumBitmask: number): Promise<ArchiveEntry<this>[]> {
     const rar = await unrar.createExtractorFromFile({
       filepath: this.getFilePath(),
     });
     return async.mapLimit(
       [...rar.getFileList().fileHeaders].filter((fileHeader) => !fileHeader.flags.directory),
       Defaults.ARCHIVE_ENTRY_SCANNER_THREADS_PER_ARCHIVE,
-      async (fileHeader, callback: AsyncResultCallback<ArchiveEntry<Rar>, Error>) => {
+      async (fileHeader, callback: AsyncResultCallback<ArchiveEntry<this>, Error>) => {
         const archiveEntry = await ArchiveEntry.entryOf({
           archive: this,
           entryPath: fileHeader.name,

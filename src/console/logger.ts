@@ -80,14 +80,14 @@ export default class Logger {
     }
 
     const chalkFuncs = {
-      [LogLevel.ALWAYS]: (msg) => msg,
+      [LogLevel.ALWAYS]: (msg): string => msg,
       [LogLevel.TRACE]: chalk.grey,
       [LogLevel.DEBUG]: chalk.magenta,
       [LogLevel.INFO]: chalk.cyan,
       [LogLevel.WARN]: chalk.yellow,
       [LogLevel.ERROR]: chalk.red,
       [LogLevel.NOTICE]: chalk.underline,
-      [LogLevel.NEVER]: (msg) => msg,
+      [LogLevel.NEVER]: (msg): string => msg,
     } satisfies { [key in LogLevel]: (message: string) => string };
     const chalkFunc = chalkFuncs[logLevel];
 

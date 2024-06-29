@@ -77,6 +77,19 @@ describe('isBeta', () => {
   });
 });
 
+describe('isCracked', () => {
+  test.each([
+    ['Grand Prix 500 2 (1990)(Microids)(FR)(Disk 1 of 2)[cr]', true],
+    ['Buck Rogers - Countdown to Doomsday v1.0 (1991)(SSI)(Disk 1 of 3)[cr2][FD installed]', true],
+    ['Dungeon Master (1987)(FTL)[cr 42-Crew]', true],
+    ['221B Baker Street (1986)(Datasoft)(Side B)[cr Digital Gang]', true],
+    ['221B Baker Street (1986)(Datasoft)(Side B)', false],
+  ])('%s', (name, expected) => {
+    expect(new Game({ name }).isCracked()).toEqual(expected);
+    expect(new Game({ name }).isRetail()).toEqual(!expected);
+  });
+});
+
 describe('isDemo', () => {
   test.each([
     // No-Intro

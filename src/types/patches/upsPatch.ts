@@ -70,6 +70,7 @@ export default class UPSPatch extends Patch {
     outputRomPath: string,
     patchFile: FilePoly,
   ): Promise<void> {
+    // TODO(cemmer): we don't actually need a temp file, we're not modifying the input
     return inputRomFile.extractToTempFile(async (tempRomFile) => {
       const sourceFile = await FilePoly.fileFrom(tempRomFile, 'r');
 

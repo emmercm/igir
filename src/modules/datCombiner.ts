@@ -9,8 +9,6 @@ import Module from './module.js';
 
 /**
  * Combine every {@link DAT} into a single {@link DAT}.
- *
- * This class may be run concurrently with other classes.
  */
 export default class DATCombiner extends Module {
   constructor(progressBar: ProgressBar) {

@@ -165,6 +165,34 @@ describe('set', () => {
   });
 });
 
+describe('delete', () => {
+  it('should delete a single key', async () => {
+    const cache = new Cache<string>();
+
+    await cache.set('key', 'value');
+    await expect(cache.has('key')).resolves.toEqual(true);
+
+    await cache.delete('key');
+    await expect(cache.has('key')).resolves.toEqual(false);
+  });
+
+  it('should delete regex-matched keys', async () => {
+    const cache = new Cache<string>();
+
+    await cache.set('key1', 'value');
+    await expect(cache.has('key1')).resolves.toEqual(true);
+    await cache.set('key2', 'value');
+    await expect(cache.has('key2')).resolves.toEqual(true);
+    await cache.set('key3', 'value');
+    await expect(cache.has('key3')).resolves.toEqual(true);
+
+    await cache.delete(/key[12]/);
+    await expect(cache.has('key1')).resolves.toEqual(false);
+    await expect(cache.has('key2')).resolves.toEqual(false);
+    await expect(cache.has('key3')).resolves.toEqual(true);
+  });
+});
+
 describe('load', () => {
   it('should not throw on nonexistent file', async () => {
     const tempFile = await FsPoly.mktemp(path.join(Temp.getTempDir(), 'cache'));
@@ -174,14 +202,14 @@ describe('load', () => {
     await expect(cache.load()).resolves.toBeTruthy();
   });
 
-  it('should throw on empty file', async () => {
+  it('should not throw on empty file', async () => {
     const tempFile = await FsPoly.mktemp(path.join(Temp.getTempDir(), 'cache'));
     await FsPoly.touch(tempFile);
     try {
       await expect(FsPoly.exists(tempFile)).resolves.toEqual(true);
 
       const cache = new Cache<number>({ filePath: tempFile });
-      await expect(cache.load()).rejects.toThrow();
+      await expect(cache.load()).resolves.toBeTruthy();
     } finally {
       await FsPoly.rm(tempFile, { force: true });
     }

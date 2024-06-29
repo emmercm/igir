@@ -13,6 +13,7 @@ enum GameType {
   BAD = 'Bad',
   BETA = 'Beta',
   BIOS = 'BIOS',
+  CRACKED = 'Cracked',
   DEBUG = 'Debug',
   DEMO = 'Demo',
   DEVICE = 'Device',
@@ -59,6 +60,7 @@ export interface GameProps {
   readonly cloneOf?: string,
   readonly romOf?: string,
   readonly sampleOf?: string,
+  readonly genre?: string,
   // readonly board?: string,
   // readonly rebuildTo?: string,
   // readonly year?: string,
@@ -95,11 +97,17 @@ export default class Game implements GameProps {
   @Expose({ name: 'cloneof' })
   readonly cloneOf?: string;
 
+  // TODO(cemmer): support cloneofid
+
   @Expose({ name: 'romof' })
   readonly romOf?: string;
 
   @Expose({ name: 'sampleof' })
   readonly sampleOf?: string;
+
+  // This is non-standard, but libretro uses it
+  @Expose({ name: 'genre' })
+  readonly genre?: string;
 
   // readonly board?: string;
   // readonly rebuildto?: string;
@@ -125,6 +133,7 @@ export default class Game implements GameProps {
     this.cloneOf = props?.cloneOf;
     this.romOf = props?.romOf;
     this.sampleOf = props?.sampleOf;
+    this.genre = props?.genre;
     this.release = props?.release ?? [];
     this.rom = props?.rom ?? [];
   }
@@ -181,6 +190,10 @@ export default class Game implements GameProps {
     return this.device === 'yes';
   }
 
+  getGenre(): string | undefined {
+    return this.genre;
+  }
+
   getReleases(): Release[] {
     if (Array.isArray(this.release)) {
       return this.release;
@@ -203,15 +216,21 @@ export default class Game implements GameProps {
 
   getRevision(): number {
     // Numeric revision
-    const numberMatches = this.getName().match(/\(Rev\s*([0-9.]+)\)/i);
-    if (numberMatches && numberMatches?.length >= 2 && !Number.isNaN(numberMatches[1])) {
-      return Number(numberMatches[1]);
+    const revNumberMatches = this.getName().match(/\(Rev\s*([0-9.]+)\)/i);
+    if (revNumberMatches && revNumberMatches?.length >= 2 && !Number.isNaN(revNumberMatches[1])) {
+      return Number(revNumberMatches[1]);
     }
 
     // Letter revision
-    const letterMatches = this.getName().match(/\(Rev\s*([A-Z])\)/i);
-    if (letterMatches && letterMatches?.length >= 2) {
-      return (letterMatches[1].toUpperCase().codePointAt(0) as number) - ('A'.codePointAt(0) as number) + 1;
+    const revLetterMatches = this.getName().match(/\(Rev\s*([A-Z])\)/i);
+    if (revLetterMatches && revLetterMatches?.length >= 2) {
+      return (revLetterMatches[1].toUpperCase().codePointAt(0) as number) - ('A'.codePointAt(0) as number) + 1;
+    }
+
+    // TOSEC versions
+    const versionMatches = this.getName().match(/\Wv([0-9]+\.[0-9]+)\W/i);
+    if (versionMatches && versionMatches?.length >= 2 && !Number.isNaN(versionMatches[1])) {
+      return Number(versionMatches[1]);
     }
 
     // Ring code revision
@@ -262,8 +281,8 @@ export default class Game implements GameProps {
       // Sometimes [!] can get mixed with [c], consider it not bad
       return false;
     }
-    return this.name.match(/\[c\]/) !== null // "known bad checksum but good dump"
-        || this.name.match(/\[x\]/) !== null; // "thought to have a bad checksum"
+    return this.name.includes('[c]') // "known bad checksum but good dump"
+        || this.name.includes('[x]'); // "thought to have a bad checksum"
   }
 
   /**
@@ -271,6 +290,13 @@ export default class Game implements GameProps {
    */
   isBeta(): boolean {
     return this.name.match(/\(Beta[a-z0-9. ]*\)/i) !== null;
+  }
+
+  /**
+   * Is this game a "cracked" release (has copy protection removed)?
+   */
+  isCracked(): boolean {
+    return this.name.match(/\[cr([0-9]+| [^\]]+)?\]/) !== null;
   }
 
   /**
@@ -337,7 +363,7 @@ export default class Game implements GameProps {
    * Is this game a pending dump (works, but isn't a proper dump)?
    */
   isPendingDump(): boolean {
-    return this.name.match(/\[!p\]/) !== null;
+    return this.name.includes('[!p]');
   }
 
   /**
@@ -389,7 +415,7 @@ export default class Game implements GameProps {
    * Is this game an explicitly verified dump?
    */
   isVerified(): boolean {
-    return this.name.match(/\[!\]/) !== null;
+    return this.name.includes('[!]');
   }
 
   /**
@@ -423,6 +449,7 @@ export default class Game implements GameProps {
         && !this.isAlpha()
         && !this.isBad()
         && !this.isBeta()
+        && !this.isCracked()
         && !this.isDebug()
         && !this.isDemo()
         && !this.isFixed()
@@ -456,6 +483,8 @@ export default class Game implements GameProps {
       return GameType.BAD;
     } if (this.isBeta()) {
       return GameType.BETA;
+    } if (this.isCracked()) {
+      return GameType.CRACKED;
     } if (this.isDebug()) {
       return GameType.DEBUG;
     } if (this.isDemo()) {

@@ -1,6 +1,5 @@
 import fs from 'node:fs';
 import path from 'node:path';
-import util from 'node:util';
 
 import { isNotJunk } from 'junk';
 import trash from 'trash';
@@ -15,8 +14,6 @@ import Module from './module.js';
 
 /**
  * Recycle any unknown files in the {@link OptionsProps.output} directory, if applicable.
- *
- * This class will not be run concurrently with any other class.
  */
 export default class DirectoryCleaner extends Module {
   private readonly options: Options;
@@ -123,7 +120,7 @@ export default class DirectoryCleaner extends Module {
     }
 
     // Find all subdirectories and files in the directory
-    const subPaths = (await util.promisify(fs.readdir)(dirsToClean))
+    const subPaths = (await fs.promises.readdir(dirsToClean))
       .filter((basename) => isNotJunk(basename))
       .map((basename) => path.join(dirsToClean, basename));
 
@@ -131,7 +128,7 @@ export default class DirectoryCleaner extends Module {
     const subDirs: string[] = [];
     const subFiles: string[] = [];
     await Promise.all(subPaths.map(async (subPath) => {
-      if ((await util.promisify(fs.lstat)(subPath)).isDirectory()) {
+      if (await fsPoly.isDirectory(subPath)) {
         subDirs.push(subPath);
       } else {
         subFiles.push(subPath);

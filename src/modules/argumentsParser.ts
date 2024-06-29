@@ -64,8 +64,6 @@ export default class ArgumentsParser {
    * Parse the arguments.
    */
   parse(argv: string[]): Options {
-    this.logger.trace(`Parsing CLI arguments: ${argv}`);
-
     const groupRomInput = 'ROM input options:';
     const groupDatInput = 'DAT input options:';
     const groupPatchInput = 'Patch input options:';
@@ -182,9 +180,16 @@ export default class ArgumentsParser {
         group: groupRomInput,
         alias: 'i',
         description: 'Path(s) to ROM files or archives (supports globbing)',
-        demandOption: true,
         type: 'array',
         requiresArg: true,
+      })
+      .check((checkArgv) => {
+        const needInput = ['copy', 'move', 'link', 'symlink', 'extract', 'zip', 'test', 'dir2dat', 'fixdat'].filter((command) => checkArgv._.includes(command));
+        if (!checkArgv.input && needInput.length > 0) {
+          // TODO(cememr): print help message
+          throw new Error(`Missing required argument for command${needInput.length !== 1 ? 's' : ''} ${needInput.join(', ')}: --input <path>`);
+        }
+        return true;
       })
       .option('input-exclude', {
         group: groupRomInput,
@@ -281,7 +286,7 @@ export default class ArgumentsParser {
         }
         const needDat = ['report'].filter((command) => checkArgv._.includes(command));
         if ((!checkArgv.dat || checkArgv.dat.length === 0) && needDat.length > 0) {
-          throw new Error(`Missing required option for commands ${needDat.join(', ')}: --dat`);
+          throw new Error(`Missing required argument for commands ${needDat.join(', ')}: --dat`);
         }
         return true;
       })
@@ -409,10 +414,10 @@ export default class ArgumentsParser {
         if (checkArgv.help) {
           return true;
         }
-        const needOutput = ['copy', 'move', 'extract', 'zip', 'clean'].filter((command) => checkArgv._.includes(command));
+        const needOutput = ['copy', 'move', 'link', 'symlink', 'extract', 'zip', 'clean'].filter((command) => checkArgv._.includes(command));
         if (!checkArgv.output && needOutput.length > 0) {
           // TODO(cememr): print help message
-          throw new Error(`Missing required option for command${needOutput.length !== 1 ? 's' : ''} ${needOutput.join(', ')}: --output <path>`);
+          throw new Error(`Missing required argument for command${needOutput.length !== 1 ? 's' : ''} ${needOutput.join(', ')}: --output <path>`);
         }
         const needClean = ['clean-exclude', 'clean-dry-run'].filter((option) => checkArgv[option]);
         if (!checkArgv._.includes('clean') && needClean.length > 0) {
@@ -537,8 +542,15 @@ export default class ArgumentsParser {
         alias: 'L',
         description: `List of comma-separated languages to filter to (supported: ${Internationalization.LANGUAGES.join(', ')})`,
         type: 'string',
-        coerce: (val: string) => val.split(','),
+        coerce: (val: string) => val.toUpperCase().split(','),
         requiresArg: true,
+      })
+      .check((checkArgv) => {
+        const invalidLangs = checkArgv['filter-language']?.filter((lang) => !Internationalization.LANGUAGES.includes(lang));
+        if (invalidLangs !== undefined && invalidLangs.length > 0) {
+          throw new Error(`Invalid --filter-language language${invalidLangs.length !== 1 ? 's' : ''}: ${invalidLangs.join(', ')}`);
+        }
+        return true;
       })
       .option('language-filter', {
         type: 'string',
@@ -555,8 +567,15 @@ export default class ArgumentsParser {
         alias: 'R',
         description: `List of comma-separated regions to filter to (supported: ${Internationalization.REGION_CODES.join(', ')})`,
         type: 'string',
-        coerce: (val: string) => val.split(','),
+        coerce: (val: string) => val.toUpperCase().split(','),
         requiresArg: true,
+      })
+      .check((checkArgv) => {
+        const invalidRegions = checkArgv['filter-region']?.filter((lang) => !Internationalization.REGION_CODES.includes(lang));
+        if (invalidRegions !== undefined && invalidRegions.length > 0) {
+          throw new Error(`Invalid --filter-region region${invalidRegions.length !== 1 ? 's' : ''}: ${invalidRegions.join(', ')}`);
+        }
+        return true;
       })
       .option('region-filter', {
         type: 'string',
@@ -676,18 +695,32 @@ export default class ArgumentsParser {
         alias: 'l',
         description: `List of comma-separated languages in priority order (supported: ${Internationalization.LANGUAGES.join(', ')})`,
         type: 'string',
-        coerce: (val: string) => val.split(','),
+        coerce: (val: string) => val.toUpperCase().split(','),
         requiresArg: true,
         implies: 'single',
+      })
+      .check((checkArgv) => {
+        const invalidLangs = checkArgv['prefer-language']?.filter((lang) => !Internationalization.LANGUAGES.includes(lang));
+        if (invalidLangs !== undefined && invalidLangs.length > 0) {
+          throw new Error(`Invalid --prefer-language language${invalidLangs.length !== 1 ? 's' : ''}: ${invalidLangs.join(', ')}`);
+        }
+        return true;
       })
       .option('prefer-region', {
         group: groupRomPriority,
         alias: 'r',
         description: `List of comma-separated regions in priority order (supported: ${Internationalization.REGION_CODES.join(', ')})`,
         type: 'string',
-        coerce: (val: string) => val.split(','),
+        coerce: (val: string) => val.toUpperCase().split(','),
         requiresArg: true,
         implies: 'single',
+      })
+      .check((checkArgv) => {
+        const invalidRegions = checkArgv['prefer-region']?.filter((lang) => !Internationalization.REGION_CODES.includes(lang));
+        if (invalidRegions !== undefined && invalidRegions.length > 0) {
+          throw new Error(`Invalid --prefer-region region${invalidRegions.length !== 1 ? 's' : ''}: ${invalidRegions.join(', ')}`);
+        }
+        return true;
       })
       .option('prefer-revision-newer', {
         group: groupRomPriority,
@@ -734,6 +767,7 @@ export default class ArgumentsParser {
         group: groupReport,
         description: 'Report output location (formatted with moment.js)',
         type: 'string',
+        coerce: ArgumentsParser.getLastValue, // don't allow string[] values
         requiresArg: true,
         default: `./${Package.NAME}_%YYYY-%MM-%DDT%HH:%mm:%ss.csv`,
       })
@@ -768,6 +802,14 @@ export default class ArgumentsParser {
           middlewareArgv.datThreads = 1;
         }
       }, true)
+      .option('write-retry', {
+        group: groupHelpDebug,
+        description: 'Number of additional retries to attempt when writing a file has failed (0 disables retries)',
+        type: 'number',
+        coerce: (val: number) => Math.max(val, 0),
+        requiresArg: true,
+        default: Defaults.ROM_WRITER_ADDITIONAL_RETRIES,
+      })
       .options('temp-dir', {
         group: groupHelpDebug,
         description: 'Path to a directory for temporary files',
@@ -777,8 +819,16 @@ export default class ArgumentsParser {
       })
       .option('disable-cache', {
         group: groupHelpDebug,
-        description: 'Disable the file and archive entry checksum cache',
+        description: 'Disable the file checksum cache',
         type: 'boolean',
+      })
+      .option('cache-path', {
+        group: groupHelpDebug,
+        description: 'Location for the file checksum cache file',
+        type: 'string',
+        coerce: ArgumentsParser.getLastValue, // don't allow string[] values
+        requiresArg: true,
+        conflicts: ['disable-cache'],
       })
       .option('verbose', {
         group: groupHelpDebug,
@@ -827,9 +877,10 @@ Advanced usage:
   Tokens that are replaced when generating the output (--output) path of a ROM:
     {datName}         The name of the DAT that contains the ROM (e.g. "Nintendo - Game Boy")
     {datDescription}  The description of the DAT that contains the ROM
-    {gameRegion}      The region of the ROM release (e.g. "USA"), each ROM can have multiple
-    {gameLanguage}    The language of the ROM release (e.g. "En"), each ROM can have multiple
+    {region}          The region of the ROM release (e.g. "USA"), each ROM can have multiple
+    {language}        The language of the ROM release (e.g. "En"), each ROM can have multiple
     {gameType}        The type of the game (e.g. "Retail", "Demo", "Prototype")
+    {genre}           The DAT-defined genre of the game
 
     {inputDirname}    The input file's dirname
     {outputBasename}  Equivalent to "{outputName}.{outputExt}"
@@ -847,6 +898,7 @@ Advanced usage:
     {onion}     The ROM's emulator-specific /Roms/* directory for OnionOS/GarlicOS (e.g. "GB")
     {pocket}    The ROM's core-specific /Assets/* directory for the Analogue Pocket (e.g. "gb")
     {retrodeck} The ROM's emulator-specific /roms/* directory for the 'RetroDECK' image (e.g. "gb")
+    {romm}      The ROM's manager-specific /roms/* directory for 'RomM' (e.g. "gb")
     {twmenu}    The ROM's emulator-specific /roms/* directory for TWiLightMenu++ on the DSi/3DS (e.g. "gb")
 
 Example use cases:
@@ -902,9 +954,6 @@ Example use cases:
         }
       });
 
-    const options = Options.fromObject(yargsArgv);
-    this.logger.trace(`Parsed options: ${options.toString()}`);
-
-    return options;
+    return Options.fromObject(yargsArgv);
   }
 }

@@ -7,32 +7,10 @@ import { Mutex } from 'async-mutex';
 import Defaults from '../../../globals/defaults.js';
 import Temp from '../../../globals/temp.js';
 import fsPoly from '../../../polyfill/fsPoly.js';
-import FileCache from '../fileCache.js';
 import Archive from './archive.js';
 import ArchiveEntry from './archiveEntry.js';
 
 export default class SevenZip extends Archive {
-  // p7zip `7za i`
-  // WARNING: tar+compression doesn't work, you'll be left with a tar file output
-  static readonly SUPPORTED_EXTENSIONS = [
-    '.7z', // 7z
-    // '.bz2', '.bzip2', // bzip2
-    // '.cab', // cab
-    '.gz', '.gzip', // gzip
-    // '.lzma', // lzma
-    // '.lzma86', // lzma86
-    // '.pmd', // ppmd
-    '.zip.001', // split
-    // '.tar', '.ova', // tar
-    // '.xz', // xz
-    '.z', // z
-    '.zip', '.z01', '.zipx', // zip
-    // '.zst', // zstd
-    // '.lz4', // lz4
-    // '.lz5', // lz5
-    // '.liz', // lizard
-  ];
-
   private static readonly LIST_MUTEX = new Mutex();
 
   // eslint-disable-next-line class-methods-use-this
@@ -40,8 +18,20 @@ export default class SevenZip extends Archive {
     return new SevenZip(filePath);
   }
 
-  @FileCache.CacheArchiveEntries()
-  async getArchiveEntries(checksumBitmask: number): Promise<ArchiveEntry<SevenZip>[]> {
+  static getExtensions(): string[] {
+    return ['.7z'];
+  }
+
+  // eslint-disable-next-line class-methods-use-this
+  getExtension(): string {
+    return SevenZip.getExtensions()[0];
+  }
+
+  static getFileSignatures(): Buffer[] {
+    return [Buffer.from('377ABCAF271C', 'hex')];
+  }
+
+  async getArchiveEntries(checksumBitmask: number): Promise<ArchiveEntry<this>[]> {
     /**
      * WARN(cemmer): even with the above mutex, {@link _7z.list} will still sometimes return no
      *  entries. Most archives contain at least one file, so assume this is wrong and attempt
@@ -63,7 +53,7 @@ export default class SevenZip extends Archive {
 
   private async getArchiveEntriesNotCached(
     checksumBitmask: number,
-  ): Promise<ArchiveEntry<SevenZip>[]> {
+  ): Promise<ArchiveEntry<this>[]> {
     /**
      * WARN(cemmer): {@link _7z.list} seems to have issues with any amount of real concurrency,
      *  it will return no files but also no error. Try to prevent that behavior.
@@ -89,7 +79,7 @@ export default class SevenZip extends Archive {
     return async.mapLimit(
       filesIn7z.filter((result) => !result.attr?.startsWith('D')),
       Defaults.ARCHIVE_ENTRY_SCANNER_THREADS_PER_ARCHIVE,
-      async (result, callback: AsyncResultCallback<ArchiveEntry<SevenZip>, Error>) => {
+      async (result, callback: AsyncResultCallback<ArchiveEntry<this>, Error>) => {
         const archiveEntry = await ArchiveEntry.entryOf({
           archive: this,
           entryPath: result.name,

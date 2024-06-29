@@ -1,6 +1,5 @@
 import fs from 'node:fs';
 import path from 'node:path';
-import util from 'node:util';
 
 import Temp from '../../../src/globals/temp.js';
 import bufferPoly from '../../../src/polyfill/bufferPoly.js';
@@ -11,7 +10,7 @@ import BPSPatch from '../../../src/types/patches/bpsPatch.js';
 async function writeTemp(fileName: string, contents: string | Buffer): Promise<File> {
   const temp = await fsPoly.mktemp(path.join(Temp.getTempDir(), fileName));
   await fsPoly.mkdir(path.dirname(temp), { recursive: true });
-  await util.promisify(fs.writeFile)(temp, contents);
+  await fsPoly.writeFile(temp, contents);
   return File.fileOf({ filePath: temp });
 }
 
