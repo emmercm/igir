@@ -10,6 +10,8 @@ import Package from './package.js';
  * A static class of constants for temp directories, to be used widely.
  */
 export default class Temp {
+  // Note: this default path is explicitly not created immediately in case it gets changed by CLI
+  // options
   private static globalTempDir = path.join(os.tmpdir(), Package.NAME, moment().format('YYYYMMDD-HHmmss'));
 
   public static getTempDir(): string {

@@ -1,19 +1,9 @@
-import os from 'node:os';
-import path from 'node:path';
-
 import fsPoly from '../polyfill/fsPoly.js';
-import Package from './package.js';
-
-const GLOBAL_CACHE_DIR = path.resolve(Package.DIRECTORY).startsWith(os.tmpdir())
-  ? os.homedir()
-  : Package.DIRECTORY;
 
 /**
  * A static class of globals that are determined at startup, to be used widely.
  */
 export default class Defaults {
-  static readonly GLOBAL_CACHE_FILE = path.join(GLOBAL_CACHE_DIR, `${Package.NAME}.cache`);
-
   /**
    * A reasonable max of filesystem threads for operations such as:
    * @example

@@ -57,7 +57,7 @@ describe('multiple files', () => {
     const scannedRealFiles = (await createRomScanner(['test/fixtures/roms']).scan())
       .sort((a, b) => a.getFilePath().localeCompare(b.getFilePath()));
 
-    // Given some symlinked files
+    // Given some hard linked files
     const tempDir = await fsPoly.mkdtemp(Temp.getTempDir());
     try {
       const filesDir = path.join(tempDir, 'files');
