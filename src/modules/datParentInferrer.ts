@@ -8,8 +8,6 @@ import Module from './module.js';
 
 /**
  * Infer {@link Parent}s for all {@link DAT}s, even those that already have some parents.
- *
- * This class may be run concurrently with other classes.
  */
 export default class DATParentInferrer extends Module {
   private readonly options: Options;

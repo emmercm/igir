@@ -2,7 +2,9 @@ import ProgressBar, { ProgressBarSymbol } from '../console/progressBar.js';
 import ArrayPoly from '../polyfill/arrayPoly.js';
 import fsPoly from '../polyfill/fsPoly.js';
 import DAT from '../types/dats/dat.js';
+import Archive from '../types/files/archives/archive.js';
 import ArchiveEntry from '../types/files/archives/archiveEntry.js';
+import ArchiveFile from '../types/files/archives/archiveFile.js';
 import File from '../types/files/file.js';
 import Module from './module.js';
 
@@ -10,8 +12,6 @@ import Module from './module.js';
  * After all output {@link File}s have been written, delete any input {@link File}s that were
  * "moved." This needs to happen after all writing has finished in order to guarantee we're done
  * reading input {@link File}s from disk.
- *
- * This class will not be run concurrently with any other class.
  */
 export default class MovedROMDeleter extends Module {
   constructor(progressBar: ProgressBar) {
@@ -81,21 +81,41 @@ export default class MovedROMDeleter extends Module {
           movedEntries.flatMap((file) => file.hashCode()),
         );
 
-        const inputEntries = groupedInputRoms.get(filePath) ?? [];
+        const inputFilesForPath = groupedInputRoms.get(filePath) ?? [];
+        const inputFileIsArchive = inputFilesForPath
+          .some((inputFile) => inputFile instanceof ArchiveEntry);
 
-        const unmovedEntries = inputEntries.filter((entry) => {
-          if (entry instanceof ArchiveEntry
-            && movedEntries.length === 1
-            && !(movedEntries[0] instanceof ArchiveEntry)
-            && movedEntries[0].getFilePath() === entry.getFilePath()
-          ) {
-            // If the input archive entry was written as a raw archive, then consider it moved
-            return false;
-          }
+        const unmovedFiles = inputFilesForPath
+          .filter((inputFile) => !(inputFile instanceof ArchiveEntry))
+          // The input archive entry needs to have been explicitly moved
+          .filter((inputFile) => !movedEntryHashCodes.has(inputFile.hashCode()));
 
-          // Otherwise, the entry needs to have been explicitly moved
-          return !movedEntryHashCodes.has(entry.hashCode());
-        });
+        if (inputFileIsArchive && unmovedFiles.length === 0) {
+          // The input file is an archive, and it was fully extracted OR the archive file itself was
+          // an exact match and was moved as-is
+          return filePath;
+        }
+
+        const unmovedArchiveEntries = inputFilesForPath
+          .filter((
+            inputFile,
+          ): inputFile is ArchiveEntry<Archive> => inputFile instanceof ArchiveEntry)
+          .filter((inputEntry) => {
+            if (movedEntries.length === 1 && movedEntries[0] instanceof ArchiveFile) {
+              // If the input archive was written as a raw archive, then consider it moved
+              return false;
+            }
+
+            // Otherwise, the input archive entry needs to have been explicitly moved
+            return !movedEntryHashCodes.has(inputEntry.hashCode());
+          });
+
+        if (inputFileIsArchive && unmovedArchiveEntries.length === 0) {
+          // The input file is an archive and it was fully zipped
+          return filePath;
+        }
+
+        const unmovedEntries = [...unmovedFiles, ...unmovedArchiveEntries];
         if (unmovedEntries.length > 0) {
           this.progressBar.logWarn(`${filePath}: not deleting moved file, ${unmovedEntries.length.toLocaleString()} archive entr${unmovedEntries.length !== 1 ? 'ies were' : 'y was'} unmatched:\n${unmovedEntries.sort().map((entry) => `  ${entry}`).join('\n')}`);
           return undefined;

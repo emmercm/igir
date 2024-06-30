@@ -1,3 +1,6 @@
+import os from 'node:os';
+import path from 'node:path';
+
 import async from 'async';
 import chalk from 'chalk';
 import isAdmin from 'is-admin';
@@ -5,7 +8,9 @@ import isAdmin from 'is-admin';
 import Logger from './console/logger.js';
 import ProgressBar, { ProgressBarSymbol } from './console/progressBar.js';
 import ProgressBarCLI from './console/progressBarCli.js';
-import Constants from './constants.js';
+import Package from './globals/package.js';
+import Temp from './globals/temp.js';
+import CandidateArchiveFileHasher from './modules/candidateArchiveFileHasher.js';
 import CandidateCombiner from './modules/candidateCombiner.js';
 import CandidateGenerator from './modules/candidateGenerator.js';
 import CandidateMergeSplitValidator from './modules/candidateMergeSplitValidator.js';
@@ -38,8 +43,9 @@ import DATStatus from './types/datStatus.js';
 import File from './types/files/file.js';
 import FileCache from './types/files/fileCache.js';
 import { ChecksumBitmask } from './types/files/fileChecksums.js';
+import FileFactory from './types/files/fileFactory.js';
 import IndexedFiles from './types/indexedFiles.js';
-import Options from './types/options.js';
+import Options, { InputChecksumArchivesMode } from './types/options.js';
 import OutputFactory from './types/outputFactory.js';
 import Patch from './types/patches/patch.js';
 import ReleaseCandidate from './types/releaseCandidate.js';
@@ -61,6 +67,8 @@ export default class Igir {
    * The main method for this application.
    */
   async main(): Promise<void> {
+    Temp.setTempDir(this.options.getTempDir());
+
     // Windows 10 may require admin privileges to symlink at all
     // @see https://github.com/nodejs/node/issues/18518
     if (this.options.shouldLink()
@@ -68,11 +76,11 @@ export default class Igir {
       && process.platform === 'win32'
     ) {
       this.logger.trace('checking Windows for symlink permissions');
-      if (!await FsPoly.canSymlink(Constants.GLOBAL_TEMP_DIR)) {
+      if (!await FsPoly.canSymlink(Temp.getTempDir())) {
         if (!await isAdmin()) {
-          throw new Error(`${Constants.COMMAND_NAME} does not have permissions to create symlinks, please try running as administrator`);
+          throw new Error(`${Package.NAME} does not have permissions to create symlinks, please try running as administrator`);
         }
-        throw new Error(`${Constants.COMMAND_NAME} does not have permissions to create symlinks`);
+        throw new Error(`${Package.NAME} does not have permissions to create symlinks`);
       }
       this.logger.trace('Windows has symlink permissions');
     }
@@ -81,20 +89,22 @@ export default class Igir {
     if (this.options.getDisableCache()) {
       this.logger.trace('disabling the file cache');
       FileCache.disable();
-    }
-    const cachePath = process.env.NODE_ENV !== 'test'
-      ? this.options.getCachePath() ?? Constants.GLOBAL_CACHE_FILE
-      : undefined;
-    if (cachePath !== undefined) {
-      this.logger.trace(`loading the file cache at '${cachePath}'`);
-      await FileCache.loadFile(cachePath);
     } else {
-      this.logger.trace('not using a file for the file cache');
+      const cachePath = await this.getCachePath();
+      if (cachePath !== undefined && process.env.NODE_ENV !== 'test') {
+        this.logger.trace(`loading the file cache at '${cachePath}'`);
+        await FileCache.loadFile(cachePath);
+      } else {
+        this.logger.trace('not using a file for the file cache');
+      }
     }
 
     // Scan and process input files
     let dats = await this.processDATScanner();
-    const indexedRoms = await this.processROMScanner(this.determineScanningBitmask(dats));
+    const indexedRoms = await this.processROMScanner(
+      this.determineScanningBitmask(dats),
+      this.determineScanningChecksumArchives(dats),
+    );
     const roms = indexedRoms.getFiles();
     const patches = await this.processPatchScanner();
 
@@ -204,6 +214,37 @@ export default class Igir {
     Timer.cancelAll();
   }
 
+  private async getCachePath(): Promise<string | undefined> {
+    const defaultFileName = `${Package.NAME}.cache`;
+
+    // Try to use the provided path
+    let cachePath = this.options.getCachePath();
+    if (cachePath !== undefined && await FsPoly.isDirectory(cachePath)) {
+      cachePath = path.join(cachePath, defaultFileName);
+      this.logger.warn(`A directory was provided for cache path instead of a file, using '${cachePath}' instead`);
+    }
+    if (cachePath !== undefined) {
+      if (await FsPoly.isWritable(cachePath)) {
+        return cachePath;
+      }
+      this.logger.warn('Provided cache path isn\'t writable, using the default path');
+    }
+
+    // Otherwise, use a default path
+    return [
+      path.join(path.resolve(Package.DIRECTORY), defaultFileName),
+      path.join(os.homedir(), defaultFileName),
+      path.join(process.cwd(), defaultFileName),
+    ]
+      .filter((filePath) => filePath && !filePath.startsWith(os.tmpdir()))
+      .find(async (filePath) => {
+        if (await FsPoly.exists(filePath)) {
+          return true;
+        }
+        return FsPoly.isWritable(filePath);
+      });
+  }
+
   private async processDATScanner(): Promise<DAT[]> {
     if (this.options.shouldDir2Dat()) {
       return [];
@@ -275,11 +316,34 @@ export default class Igir {
     return matchChecksum;
   }
 
-  private async processROMScanner(checksumBitmask: number): Promise<IndexedFiles> {
+  private determineScanningChecksumArchives(dats: DAT[]): boolean {
+    if (this.options.getInputChecksumArchives() === InputChecksumArchivesMode.NEVER) {
+      return false;
+    }
+    if (this.options.getInputChecksumArchives() === InputChecksumArchivesMode.ALWAYS) {
+      return true;
+    }
+    return dats
+      .some((dat) => dat.getGames()
+        .some((game) => game.getRoms()
+          .some((rom) => {
+            const isArchive = FileFactory.isExtensionArchive(rom.getName());
+            if (isArchive) {
+              this.logger.trace(`${dat.getNameShort()}: contains archives, enabling checksum calculation of raw archive contents`);
+            }
+            return isArchive;
+          })));
+  }
+
+  private async processROMScanner(
+    checksumBitmask: number,
+    checksumArchives: boolean,
+  ): Promise<IndexedFiles> {
     const romScannerProgressBarName = 'Scanning for ROMs';
     const romProgressBar = await this.logger.addProgressBar(romScannerProgressBarName);
 
-    const rawRomFiles = await new ROMScanner(this.options, romProgressBar).scan(checksumBitmask);
+    const rawRomFiles = await new ROMScanner(this.options, romProgressBar)
+      .scan(checksumBitmask, checksumArchives);
 
     await romProgressBar.setName('Detecting ROM headers');
     const romFilesWithHeaders = await new ROMHeaderProcessor(this.options, romProgressBar)
@@ -290,7 +354,7 @@ export default class Igir {
       .index(romFilesWithHeaders);
 
     await romProgressBar.setName(romScannerProgressBarName); // reset
-    await romProgressBar.doneItems(rawRomFiles.length, 'file', 'found');
+    await romProgressBar.doneItems(romFilesWithHeaders.length, 'file', 'found');
     await romProgressBar.freeze();
 
     return indexedRomFiles;
@@ -317,15 +381,19 @@ export default class Igir {
     const candidates = await new CandidateGenerator(this.options, progressBar)
       .generate(dat, indexedRoms);
 
-    const patchedCandidates = await new CandidatePatchGenerator(this.options, progressBar)
+    const patchedCandidates = await new CandidatePatchGenerator(progressBar)
       .generate(dat, candidates, patches);
 
     const preferredCandidates = await new CandidatePreferer(this.options, progressBar)
       .prefer(dat, patchedCandidates);
-    // TODO(cemmer): calculate raw checksums for archives after applying 1G1R rules
+
+    // Delay calculating checksums for {@link ArchiveFile}s until after {@link CandidatePreferer}
+    //  for efficiency
+    const hashedCandidates = await new CandidateArchiveFileHasher(this.options, progressBar)
+      .hash(dat, preferredCandidates);
 
     const postProcessedCandidates = await new CandidatePostProcessor(this.options, progressBar)
-      .process(dat, preferredCandidates);
+      .process(dat, hashedCandidates);
 
     await new CandidateMergeSplitValidator(this.options, progressBar)
       .validate(dat, postProcessedCandidates);

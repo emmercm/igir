@@ -29,7 +29,8 @@
   <machine name="Lorem Ipsum">
     <description>Lorem Ipsum</description>
     <release name="Lorem Ipsum" region="JPN"/>
-    <rom name="Lorem Ipsum.rom" size="11" crc="70856527" md5="fffcb698d88fbc9425a636ba7e4712a3" sha1="1d913738eb363a4056c19e158aa81189a1eb7a55" status="verified"/>
+    <!--<rom name="Lorem Ipsum.rom" size="11" crc="70856527" md5="fffcb698d88fbc9425a636ba7e4712a3" sha1="1d913738eb363a4056c19e158aa81189a1eb7a55" status="verified"/>-->
+    <rom name="Lorem Ipsum.zip" size="203" crc="7ee77289" md5="9d4f876e42a8da0d4ae6f24c665476d9" sha1="25265aea64c1a5809d1b06cb5294a8293fb7027a" status="verified"/>
   </machine>
   <machine name="One Three">
     <description>One Three</description>

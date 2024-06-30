@@ -5,7 +5,7 @@ import { isNotJunk } from 'junk';
 import trash from 'trash';
 
 import ProgressBar, { ProgressBarSymbol } from '../console/progressBar.js';
-import Constants from '../constants.js';
+import Defaults from '../globals/defaults.js';
 import ArrayPoly from '../polyfill/arrayPoly.js';
 import fsPoly from '../polyfill/fsPoly.js';
 import File from '../types/files/file.js';
@@ -14,8 +14,6 @@ import Module from './module.js';
 
 /**
  * Recycle any unknown files in the {@link OptionsProps.output} directory, if applicable.
- *
- * This class will not be run concurrently with any other class.
  */
 export default class DirectoryCleaner extends Module {
   private readonly options: Options;
@@ -84,8 +82,8 @@ export default class DirectoryCleaner extends Module {
     }
 
     // Prefer recycling...
-    for (let i = 0; i < filePaths.length; i += Constants.OUTPUT_CLEANER_BATCH_SIZE) {
-      const filePathsChunk = filePaths.slice(i, i + Constants.OUTPUT_CLEANER_BATCH_SIZE);
+    for (let i = 0; i < filePaths.length; i += Defaults.OUTPUT_CLEANER_BATCH_SIZE) {
+      const filePathsChunk = filePaths.slice(i, i + Defaults.OUTPUT_CLEANER_BATCH_SIZE);
       this.progressBar.logInfo(`cleaning path${filePathsChunk.length !== 1 ? 's' : ''}:\n${filePathsChunk.map((filePath) => `  ${filePath}`).join('\n')}`);
       try {
         await trash(filePathsChunk);

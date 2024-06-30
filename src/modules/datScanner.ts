@@ -35,8 +35,6 @@ type SmdbRow = {
 /**
  * Scan the {@link OptionsProps.dat} input directory for DAT files and return the internal model
  * representation.
- *
- * This class will not be run concurrently with any other class.
  */
 export default class DATScanner extends Scanner {
   constructor(options: Options, progressBar: ProgressBar) {
@@ -335,11 +333,11 @@ export default class DATScanner extends Scanner {
           gameRoms = [game.rom];
         }
       }
+      const gameName = game.name ?? game.comment;
 
       const roms = gameRoms
-        .filter((rom) => rom.name) // we need ROM filenames
         .map((entry) => new ROM({
-          name: entry.name ?? '',
+          name: entry.name ?? `${gameName}.rom`,
           size: Number.parseInt(entry.size ?? '0', 10),
           crc32: entry.crc,
           md5: entry.md5,
@@ -347,7 +345,7 @@ export default class DATScanner extends Scanner {
         }));
 
       return new Game({
-        name: game.name,
+        name: gameName,
         category: undefined,
         description: game.description,
         bios: undefined,
@@ -355,6 +353,7 @@ export default class DATScanner extends Scanner {
         cloneOf: game.cloneof,
         romOf: game.romof,
         sampleOf: undefined,
+        genre: game.genre?.toString(),
         release: undefined,
         rom: roms,
       });

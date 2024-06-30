@@ -1,7 +1,7 @@
 import fs, { OpenMode, PathLike } from 'node:fs';
 import { FileHandle } from 'node:fs/promises';
 
-import Constants from '../constants.js';
+import Defaults from '../globals/defaults.js';
 import fsPoly from './fsPoly.js';
 
 export default class FilePoly {
@@ -21,7 +21,7 @@ export default class FilePoly {
     this.pathLike = pathLike;
     this.fd = fd;
     this.size = size;
-    this.tempBuffer = Buffer.allocUnsafe(Math.min(this.size, Constants.FILE_READING_CHUNK_SIZE));
+    this.tempBuffer = Buffer.allocUnsafe(Math.min(this.size, Defaults.FILE_READING_CHUNK_SIZE));
   }
 
   static async fileFrom(pathLike: PathLike, flags: OpenMode): Promise<FilePoly> {
@@ -49,7 +49,7 @@ export default class FilePoly {
     const write = await this.fileFrom(pathLike, 'wx');
     let written = 0;
     while (written < size) {
-      const buffer = Buffer.alloc(Math.min(size - written, Constants.FILE_READING_CHUNK_SIZE));
+      const buffer = Buffer.alloc(Math.min(size - written, Defaults.FILE_READING_CHUNK_SIZE));
       await write.write(buffer);
       written += buffer.length;
     }
@@ -98,7 +98,7 @@ export default class FilePoly {
     }
 
     // If the file is small, read the entire file to memory and "read" from there
-    if (this.size <= Constants.MAX_MEMORY_FILE_SIZE) {
+    if (this.size <= Defaults.MAX_MEMORY_FILE_SIZE) {
       if (!this.fileBuffer) {
         this.tempBuffer = Buffer.alloc(0);
         this.fileBuffer = await fs.promises.readFile(this.fd);

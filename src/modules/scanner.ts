@@ -1,9 +1,10 @@
 import ProgressBar from '../console/progressBar.js';
-import Constants from '../constants.js';
 import DriveSemaphore from '../driveSemaphore.js';
 import ElasticSemaphore from '../elasticSemaphore.js';
+import Defaults from '../globals/defaults.js';
 import ArrayPoly from '../polyfill/arrayPoly.js';
 import fsPoly from '../polyfill/fsPoly.js';
+import ArchiveEntry from '../types/files/archives/archiveEntry.js';
 import File from '../types/files/file.js';
 import FileFactory from '../types/files/fileFactory.js';
 import Options from '../types/options.js';
@@ -16,7 +17,7 @@ export default abstract class Scanner extends Module {
   // WARN(cemmer): there is an undocumented semaphore max value that can be used, the full
   //  4,700,372,992 bytes of a DVD+R will cause runExclusive() to never run or return.
   private static readonly FILESIZE_SEMAPHORE = new ElasticSemaphore(
-    Constants.MAX_READ_WRITE_CONCURRENT_KILOBYTES,
+    Defaults.MAX_READ_WRITE_CONCURRENT_KILOBYTES,
   );
 
   protected readonly options: Options;
@@ -30,6 +31,7 @@ export default abstract class Scanner extends Module {
     filePaths: string[],
     threads: number,
     checksumBitmask: number,
+    checksumArchives = false,
   ): Promise<File[]> {
     return (await new DriveSemaphore(threads).map(
       filePaths,
@@ -38,7 +40,7 @@ export default abstract class Scanner extends Module {
         const waitingMessage = `${inputFile} ...`;
         this.progressBar.addWaitingMessage(waitingMessage);
 
-        const files = await this.getFilesFromPath(inputFile, checksumBitmask);
+        const files = await this.getFilesFromPath(inputFile, checksumBitmask, checksumArchives);
 
         this.progressBar.removeWaitingMessage(waitingMessage);
         await this.progressBar.incrementDone();
@@ -60,6 +62,7 @@ export default abstract class Scanner extends Module {
   private async getFilesFromPath(
     filePath: string,
     checksumBitmask: number,
+    checksumArchives = false,
   ): Promise<File[]> {
     try {
       const totalKilobytes = await fsPoly.size(filePath) / 1024;
@@ -72,7 +75,15 @@ export default abstract class Scanner extends Module {
               return [];
             }
           }
-          return FileFactory.filesFrom(filePath, checksumBitmask);
+
+          const filesFromPath = await FileFactory.filesFrom(filePath, checksumBitmask);
+
+          const fileIsArchive = filesFromPath.some((file) => file instanceof ArchiveEntry);
+          if (checksumArchives && fileIsArchive) {
+            filesFromPath.push(await FileFactory.fileFrom(filePath, checksumBitmask));
+          }
+
+          return filesFromPath;
         },
         totalKilobytes,
       );

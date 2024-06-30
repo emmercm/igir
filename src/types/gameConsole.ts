@@ -73,6 +73,9 @@ export default class GameConsole {
    */
   private static readonly CONSOLES: GameConsole[] = [
     // Acorn
+    new GameConsole(/Archimedes/i, [], {
+      mister: 'ARCHIE',
+    }),
     new GameConsole(/Atom/i, [], {
       batocera: 'atom',
       mister: 'AcornAtom',
@@ -124,7 +127,7 @@ export default class GameConsole {
       batocera: 'atari800',
       emulationstation: 'atari800',
       jelos: 'atari800',
-      mister: 'ATARI800',
+      mister: 'Atari800',
       onion: 'EIGHTHUNDRED',
       retrodeck: 'atari800',
       romm: 'atari8bit',
@@ -311,7 +314,7 @@ export default class GameConsole {
       retrodeck: 'plus4',
       romm: 'c-plus-4',
     }),
-    new GameConsole(/VIC.*20/i, [], {
+    new GameConsole(/VIC[ -]?20/i, [], {
       emulationstation: 'vic20',
       onion: 'VIC20',
       retrodeck: 'vic20',
@@ -376,6 +379,7 @@ export default class GameConsole {
       mister: 'Vectrex',
       miyoocfw: 'VECTREX',
       onion: 'VECTREX',
+      pocket: 'vectrex',
       retrodeck: 'vectrex',
       romm: 'vectrex',
     }),
@@ -419,7 +423,7 @@ export default class GameConsole {
       batocera: 'msx1',
       emulationstation: 'msx',
       jelos: 'msx',
-      mister: 'MSX',
+      mister: 'MSX1',
       onion: 'MSX',
       retrodeck: 'msx',
       romm: 'msx',
@@ -504,7 +508,7 @@ export default class GameConsole {
       emulationstation: 'pcenginecd',
       jelos: 'tg16cd',
       minui: 'TurboGrafx-16 CD (PCE)',
-      mister: 'TGFX16',
+      mister: 'TGFX16-CD',
       miyoocfw: 'PCE',
       onion: 'PCECD',
       pocket: 'pcecd',
@@ -521,7 +525,7 @@ export default class GameConsole {
       retrodeck: 'supergrafx',
       romm: 'supergrafx',
     }),
-    new GameConsole(/PC-88/i, ['.d88'], {
+    new GameConsole(/PC[ -]?88(01)?/i, ['.d88'], {
       batocera: 'pc88',
       emulationstation: 'pc88',
       jelos: 'pc88',
@@ -575,7 +579,7 @@ export default class GameConsole {
       retrodeck: 'gameandwatch',
       romm: 'game-and-watch',
     }),
-    new GameConsole(/GameCube/i, [/* '.iso' */], {
+    new GameConsole(/GameCube/i, ['.gcm', '.gcz'], {
       batocera: 'gc',
       emulationstation: 'gc',
       jelos: 'gamecube',
@@ -596,8 +600,8 @@ export default class GameConsole {
       retrodeck: 'gb',
       romm: 'gb',
       twmenu: 'gb',
-    }), // pocket:sgb for spiritualized1997
-    new GameConsole(/GBA|Game ?Boy Advance/i, ['.gba', '.srl'], {
+    }),
+    new GameConsole(/GBA|Game ?Boy Advance/i, ['.gba'], {
       adam: 'GBA',
       batocera: 'gba',
       emulationstation: 'gba',
@@ -657,13 +661,13 @@ export default class GameConsole {
       romm: 'nds',
       twmenu: 'nds',
     }),
-    new GameConsole(/(\W|^)NDSi(\W|$)|Nintendo DSi([Ww]are)?/i, [], {
+    new GameConsole(/(\W|^)NDSi(\W|$)|Nintendo DSi([Ww]are)?/i, ['.dsi'], {
       emulationstation: 'nds',
       retrodeck: 'nds',
       romm: 'nintendo-dsi',
       twmenu: 'dsiware',
     }), // try to map DSiWare
-    new GameConsole(/(\W|^)NES(\W|$)|Famicom|Nintendo Entertainment System/i, ['.nes', '.nez'], {
+    new GameConsole(/(\W|^)NES(\W|$)|Famicom|Nintendo Entertainment System/i, ['.fc', '.nes', '.nez'], {
       adam: 'FC',
       batocera: 'nes',
       emulationstation: 'nes',
@@ -709,7 +713,7 @@ export default class GameConsole {
       onion: 'SUFAMI',
       retrodeck: 'sufami',
     }),
-    new GameConsole(/(\W|^)SNES(\W|$)|Super (Nintendo Entertainment System|Famicom)/i, ['.sfc', '.smc'], {
+    new GameConsole(/(\W|^)SNES(\W|$)|Super (Nintendo Entertainment System|Famicom)/i, ['.fig', '.sfc', '.smc', '.snes'], {
       adam: 'SFC',
       batocera: 'snes',
       emulationstation: 'snes',
@@ -931,7 +935,7 @@ export default class GameConsole {
       batocera: 'neogeo',
       emulationstation: 'neogeo',
       jelos: 'neogeo',
-      mister: 'NeoGeo',
+      mister: 'NeoGeo', // AES & MVS
       miyoocfw: 'NEOGEO',
       onion: 'NEOGEO',
       pocket: 'ng',
@@ -1017,8 +1021,9 @@ export default class GameConsole {
       twmenu: 'm5',
     }),
     // Texas Instruments
-    new GameConsole(/TI-?99-?4A/i, ['.rpk'], {
+    new GameConsole(/TI[ -]?99[ -]?4A/i, ['.rpk'], {
       emulationstation: 'ti99',
+      mister: 'TI-99_4A',
       retrodeck: 'ti99',
       romm: 'ti-99',
     }),

@@ -13,13 +13,23 @@ import micromatch from 'micromatch';
 import moment from 'moment';
 
 import LogLevel from '../console/logLevel.js';
-import Constants from '../constants.js';
+import Defaults from '../globals/defaults.js';
+import Temp from '../globals/temp.js';
 import ArrayPoly from '../polyfill/arrayPoly.js';
 import fsPoly, { FsWalkCallback } from '../polyfill/fsPoly.js';
 import URLPoly from '../polyfill/urlPoly.js';
 import DAT from './dats/dat.js';
 import File from './files/file.js';
 import { ChecksumBitmask } from './files/fileChecksums.js';
+
+export enum InputChecksumArchivesMode {
+  // Never calculate the checksum of archive files
+  NEVER = 1,
+  // Calculate the checksum of archive files if DATs reference archives
+  AUTO = 2,
+  // Always calculate the checksum of archive files
+  ALWAYS = 3,
+}
 
 export enum MergeMode {
   // Clones contain all parent ROMs, all games contain BIOS & device ROMs
@@ -48,6 +58,7 @@ export interface OptionsProps {
   readonly input?: string[],
   readonly inputExclude?: string[],
   readonly inputMinChecksum?: string,
+  readonly inputChecksumArchives?: string,
 
   readonly dat?: string[],
   readonly datExclude?: string[],
@@ -143,6 +154,7 @@ export interface OptionsProps {
   readonly readerThreads?: number,
   readonly writerThreads?: number,
   readonly writeRetry?: number,
+  readonly tempDir?: string,
   readonly disableCache?: boolean,
   readonly cachePath?: string,
   readonly verbose?: number,
@@ -163,6 +175,8 @@ export default class Options implements OptionsProps {
   readonly inputExclude: string[];
 
   readonly inputMinChecksum?: string;
+
+  readonly inputChecksumArchives?: string;
 
   readonly dat: string[];
 
@@ -336,6 +350,8 @@ export default class Options implements OptionsProps {
 
   readonly writeRetry: number;
 
+  readonly tempDir: string;
+
   readonly disableCache: boolean;
 
   readonly cachePath?: string;
@@ -351,6 +367,7 @@ export default class Options implements OptionsProps {
     this.input = options?.input ?? [];
     this.inputExclude = options?.inputExclude ?? [];
     this.inputMinChecksum = options?.inputMinChecksum;
+    this.inputChecksumArchives = options?.inputChecksumArchives;
 
     this.dat = options?.dat ?? [];
     this.datExclude = options?.datExclude ?? [];
@@ -446,6 +463,7 @@ export default class Options implements OptionsProps {
     this.readerThreads = Math.max(options?.readerThreads ?? 0, 1);
     this.writerThreads = Math.max(options?.writerThreads ?? 0, 1);
     this.writeRetry = Math.max(options?.writeRetry ?? 0, 0);
+    this.tempDir = options?.tempDir ?? Temp.getTempDir();
     this.disableCache = options?.disableCache ?? false;
     this.cachePath = options?.cachePath;
     this.verbose = options?.verbose ?? 0;
@@ -636,7 +654,7 @@ export default class Options implements OptionsProps {
     // Filter to non-directories
     const isNonDirectory = await async.mapLimit(
       globbedPaths,
-      Constants.MAX_FS_THREADS,
+      Defaults.MAX_FS_THREADS,
       async (file, callback: AsyncResultCallback<boolean, Error>) => {
         if (!await fsPoly.exists(file) && URLPoly.canParse(file)) {
           callback(undefined, true);
@@ -729,7 +747,7 @@ export default class Options implements OptionsProps {
         const dirname = pathsSplit.slice(0, i).join('/');
         if (dirname === '') {
           // fg won't let you escape empty strings
-          return `${dirname}/${pathsSplit.slice(i).join('/')}`;
+          return pathsSplit.slice(i).join('/');
         }
         return `${fg.escapePath(dirname)}/${pathsSplit.slice(i).join('/')}`;
       }
@@ -744,6 +762,15 @@ export default class Options implements OptionsProps {
       return undefined;
     }
     return ChecksumBitmask[checksumBitmask as keyof typeof ChecksumBitmask];
+  }
+
+  getInputChecksumArchives(): InputChecksumArchivesMode | undefined {
+    const checksumMode = Object.keys(InputChecksumArchivesMode)
+      .find((mode) => mode.toLowerCase() === this.inputChecksumArchives?.toLowerCase());
+    if (!checksumMode) {
+      return undefined;
+    }
+    return InputChecksumArchivesMode[checksumMode as keyof typeof InputChecksumArchivesMode];
   }
 
   /**
@@ -818,7 +845,7 @@ export default class Options implements OptionsProps {
   }
 
   getOutput(): string {
-    return this.shouldWrite() ? this.output : Constants.GLOBAL_TEMP_DIR;
+    return this.shouldWrite() ? this.output : this.getTempDir();
   }
 
   /**
@@ -902,7 +929,8 @@ export default class Options implements OptionsProps {
     return (await Options.scanPaths(outputDirs, walkCallback, false))
       .map((filePath) => path.normalize(filePath))
       .filter((filePath) => !writtenFilesNormalized.has(filePath))
-      .filter((filePath) => !cleanExcludedFilesNormalized.has(filePath));
+      .filter((filePath) => !cleanExcludedFilesNormalized.has(filePath))
+      .sort();
   }
 
   getCleanDryRun(): boolean {
@@ -1199,6 +1227,10 @@ export default class Options implements OptionsProps {
 
   getWriteRetry(): number {
     return this.writeRetry;
+  }
+
+  getTempDir(): string {
+    return this.tempDir;
   }
 
   getDisableCache(): boolean {
