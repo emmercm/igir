@@ -13,7 +13,7 @@ import ROMWithFiles from '../types/romWithFiles.js';
 import Module from './module.js';
 
 /**
- * TODO
+ * TODO(cemmer)
  */
 export default class CandidateExtensionCorrector extends Module {
   private static readonly THREAD_SEMAPHORE = new Semaphore(Number.MAX_SAFE_INTEGER);
@@ -31,7 +31,7 @@ export default class CandidateExtensionCorrector extends Module {
   }
 
   /**
-   * TODO
+   * TODO(cemmer)
    */
   async correct(
     dat: DAT,
@@ -42,19 +42,19 @@ export default class CandidateExtensionCorrector extends Module {
       return parentsToCandidates;
     }
 
-    const romsWithNullishNamesCount = [...parentsToCandidates.values()]
+    const romsThatNeedCorrecting = [...parentsToCandidates.values()]
       .flat()
       .flatMap((releaseCandidate) => releaseCandidate.getRomsWithFiles())
       .filter((romWithFiles) => this.romNeedsCorrecting(romWithFiles))
       .length;
-    if (romsWithNullishNamesCount === 0) {
+    if (romsThatNeedCorrecting === 0) {
       this.progressBar.logTrace(`${dat.getNameShort()}: all DAT ROMs have filenames`);
       return parentsToCandidates;
     }
 
-    this.progressBar.logTrace(`${dat.getNameShort()}: correcting ${romsWithNullishNamesCount.toLocaleString()} output file extension${romsWithNullishNamesCount !== 1 ? 's' : ''}`);
+    this.progressBar.logTrace(`${dat.getNameShort()}: correcting ${romsThatNeedCorrecting.toLocaleString()} output file extension${romsThatNeedCorrecting !== 1 ? 's' : ''}`);
     await this.progressBar.setSymbol(ProgressBarSymbol.HASHING);
-    await this.progressBar.reset(romsWithNullishNamesCount);
+    await this.progressBar.reset(romsThatNeedCorrecting);
 
     const correctedParentsToCandidates = await this.correctExtensions(dat, parentsToCandidates);
 
@@ -94,7 +94,7 @@ export default class CandidateExtensionCorrector extends Module {
 
                       if (correctedRom.getName().trim() === '') {
                         // The ROM doesn't have any filename, default it
-                        correctedRom = correctedRom.withName(`${releaseCandidate.getGame()}${releaseCandidate.getRomsWithFiles().length > 1 ? ` (File ${romWithFilesIdx + 1})` : ''}.rom`);
+                        correctedRom = correctedRom.withName(`${releaseCandidate.getGame().getName()}${releaseCandidate.getRomsWithFiles().length > 1 ? ` (File ${romWithFilesIdx + 1})` : ''}.rom`);
                       }
 
                       const romSignature = await ROMSignature.signatureFromFileStream(stream);
