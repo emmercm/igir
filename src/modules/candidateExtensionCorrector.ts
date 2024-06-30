@@ -91,7 +91,7 @@ export default class CandidateExtensionCorrector extends Module {
                   const correctedRomWithFiles = await romWithFiles.getInputFile()
                     .createReadStream(async (stream) => {
                       const romSignature = await ROMSignature.signatureFromFileStream(stream);
-                      if (!romSignature) {
+                      if (!romSignature && romWithFiles.getRom().getName().trim() !== '') {
                         // We don't know this signature, don't correct anything
                         return romWithFiles;
                       }
@@ -99,7 +99,7 @@ export default class CandidateExtensionCorrector extends Module {
                       const { dir, name } = path.parse(romWithFiles.getRom().getName());
                       const correctedRomName = path.format({
                         dir,
-                        name: name + romSignature.getExtension(),
+                        name: name + (romSignature?.getExtension() ?? '.rom'),
                       });
                       const correctedRom = romWithFiles.getRom().withName(correctedRomName);
 
