@@ -10,7 +10,7 @@ import ConsolePoly from '../polyfill/consolePoly.js';
 import { ChecksumBitmask } from '../types/files/fileChecksums.js';
 import ROMHeader from '../types/files/romHeader.js';
 import Internationalization from '../types/internationalization.js';
-import Options, { GameSubdirMode, MergeMode } from '../types/options.js';
+import Options, { GameSubdirMode, InputChecksumArchivesMode, MergeMode } from '../types/options.js';
 import PatchFactory from '../types/patches/patchFactory.js';
 
 /**
@@ -208,6 +208,16 @@ export default class ArgumentsParser {
         coerce: ArgumentsParser.getLastValue, // don't allow string[] values
         requiresArg: true,
         default: ChecksumBitmask[ChecksumBitmask.CRC32].toUpperCase(),
+      })
+      .option('input-checksum-archives', {
+        group: groupRomInput,
+        description: 'Calculate checksums of archive files themselves, allowing them to match files in DATs',
+        choices: Object.keys(InputChecksumArchivesMode)
+          .filter((mode) => Number.isNaN(Number(mode)))
+          .map((mode) => mode.toLowerCase()),
+        coerce: ArgumentsParser.getLastValue, // don't allow string[] values
+        requiresArg: true,
+        default: InputChecksumArchivesMode[InputChecksumArchivesMode.AUTO].toLowerCase(),
       })
 
       .option('dat', {

@@ -43,8 +43,9 @@ import DATStatus from './types/datStatus.js';
 import File from './types/files/file.js';
 import FileCache from './types/files/fileCache.js';
 import { ChecksumBitmask } from './types/files/fileChecksums.js';
+import FileFactory from './types/files/fileFactory.js';
 import IndexedFiles from './types/indexedFiles.js';
-import Options from './types/options.js';
+import Options, { InputChecksumArchivesMode } from './types/options.js';
 import OutputFactory from './types/outputFactory.js';
 import Patch from './types/patches/patch.js';
 import ReleaseCandidate from './types/releaseCandidate.js';
@@ -100,7 +101,10 @@ export default class Igir {
 
     // Scan and process input files
     let dats = await this.processDATScanner();
-    const indexedRoms = await this.processROMScanner(this.determineScanningBitmask(dats));
+    const indexedRoms = await this.processROMScanner(
+      this.determineScanningBitmask(dats),
+      this.determineScanningChecksumArchives(dats),
+    );
     const roms = indexedRoms.getFiles();
     const patches = await this.processPatchScanner();
 
@@ -312,11 +316,34 @@ export default class Igir {
     return matchChecksum;
   }
 
-  private async processROMScanner(checksumBitmask: number): Promise<IndexedFiles> {
+  private determineScanningChecksumArchives(dats: DAT[]): boolean {
+    if (this.options.getInputChecksumArchives() === InputChecksumArchivesMode.NEVER) {
+      return false;
+    }
+    if (this.options.getInputChecksumArchives() === InputChecksumArchivesMode.ALWAYS) {
+      return true;
+    }
+    return dats
+      .some((dat) => dat.getGames()
+        .some((game) => game.getRoms()
+          .some((rom) => {
+            const isArchive = FileFactory.isExtensionArchive(rom.getName());
+            if (isArchive) {
+              this.logger.trace(`${dat.getNameShort()}: contains archives, enabling checksum calculation of raw archive contents`);
+            }
+            return isArchive;
+          })));
+  }
+
+  private async processROMScanner(
+    checksumBitmask: number,
+    checksumArchives: boolean,
+  ): Promise<IndexedFiles> {
     const romScannerProgressBarName = 'Scanning for ROMs';
     const romProgressBar = await this.logger.addProgressBar(romScannerProgressBarName);
 
-    const rawRomFiles = await new ROMScanner(this.options, romProgressBar).scan(checksumBitmask);
+    const rawRomFiles = await new ROMScanner(this.options, romProgressBar)
+      .scan(checksumBitmask, checksumArchives);
 
     await romProgressBar.setName('Detecting ROM headers');
     const romFilesWithHeaders = await new ROMHeaderProcessor(this.options, romProgressBar)

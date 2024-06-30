@@ -9,7 +9,7 @@ import FsPoly from '../../src/polyfill/fsPoly.js';
 import Header from '../../src/types/dats/logiqx/header.js';
 import LogiqxDAT from '../../src/types/dats/logiqx/logiqxDat.js';
 import { ChecksumBitmask } from '../../src/types/files/fileChecksums.js';
-import { GameSubdirMode, MergeMode } from '../../src/types/options.js';
+import { GameSubdirMode, InputChecksumArchivesMode, MergeMode } from '../../src/types/options.js';
 
 const dummyRequiredArgs = ['--input', os.devNull, '--output', os.devNull];
 const dummyCommandAndRequiredArgs = ['copy', ...dummyRequiredArgs];
@@ -106,6 +106,7 @@ describe('options', () => {
 
     expect(options.getInputPaths()).toEqual([os.devNull]);
     expect(options.getInputMinChecksum()).toEqual(ChecksumBitmask.CRC32);
+    expect(options.getInputChecksumArchives()).toEqual(InputChecksumArchivesMode.AUTO);
 
     expect(options.getDatNameRegex()).toBeUndefined();
     expect(options.getDatNameRegexExclude()).toBeUndefined();
@@ -237,6 +238,16 @@ describe('options', () => {
     expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--input-min-checksum', 'SHA1']).getInputMinChecksum()).toEqual(ChecksumBitmask.SHA1);
     expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--input-min-checksum', 'SHA256']).getInputMinChecksum()).toEqual(ChecksumBitmask.SHA256);
     expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--input-min-checksum', 'SHA256', '--input-min-checksum', 'CRC32']).getInputMinChecksum()).toEqual(ChecksumBitmask.CRC32);
+  });
+
+  it('should parse "input-checksum-archives"', () => {
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs]).getInputChecksumArchives())
+      .toEqual(InputChecksumArchivesMode.AUTO);
+    expect(() => argumentsParser.parse([...dummyCommandAndRequiredArgs, '--input-checksum-archives', 'foobar']).getInputChecksumArchives()).toThrow(/invalid values/i);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--input-checksum-archives', 'never']).getInputChecksumArchives()).toEqual(InputChecksumArchivesMode.NEVER);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--input-checksum-archives', 'auto']).getInputChecksumArchives()).toEqual(InputChecksumArchivesMode.AUTO);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--input-checksum-archives', 'always']).getInputChecksumArchives()).toEqual(InputChecksumArchivesMode.ALWAYS);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--input-checksum-archives', 'always', '--input-checksum-archives', 'never']).getInputChecksumArchives()).toEqual(InputChecksumArchivesMode.NEVER);
   });
 
   it('should parse "dat"', async () => {

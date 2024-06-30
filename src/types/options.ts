@@ -22,6 +22,15 @@ import DAT from './dats/dat.js';
 import File from './files/file.js';
 import { ChecksumBitmask } from './files/fileChecksums.js';
 
+export enum InputChecksumArchivesMode {
+  // Never calculate the checksum of archive files
+  NEVER = 1,
+  // Calculate the checksum of archive files if DATs reference archives
+  AUTO = 2,
+  // Always calculate the checksum of archive files
+  ALWAYS = 3,
+}
+
 export enum MergeMode {
   // Clones contain all parent ROMs, all games contain BIOS & device ROMs
   FULLNONMERGED = 1,
@@ -49,6 +58,7 @@ export interface OptionsProps {
   readonly input?: string[],
   readonly inputExclude?: string[],
   readonly inputMinChecksum?: string,
+  readonly inputChecksumArchives?: string,
 
   readonly dat?: string[],
   readonly datExclude?: string[],
@@ -165,6 +175,8 @@ export default class Options implements OptionsProps {
   readonly inputExclude: string[];
 
   readonly inputMinChecksum?: string;
+
+  readonly inputChecksumArchives?: string;
 
   readonly dat: string[];
 
@@ -355,6 +367,7 @@ export default class Options implements OptionsProps {
     this.input = options?.input ?? [];
     this.inputExclude = options?.inputExclude ?? [];
     this.inputMinChecksum = options?.inputMinChecksum;
+    this.inputChecksumArchives = options?.inputChecksumArchives;
 
     this.dat = options?.dat ?? [];
     this.datExclude = options?.datExclude ?? [];
@@ -749,6 +762,15 @@ export default class Options implements OptionsProps {
       return undefined;
     }
     return ChecksumBitmask[checksumBitmask as keyof typeof ChecksumBitmask];
+  }
+
+  getInputChecksumArchives(): InputChecksumArchivesMode | undefined {
+    const checksumMode = Object.keys(InputChecksumArchivesMode)
+      .find((mode) => mode.toLowerCase() === this.inputChecksumArchives?.toLowerCase());
+    if (!checksumMode) {
+      return undefined;
+    }
+    return InputChecksumArchivesMode[checksumMode as keyof typeof InputChecksumArchivesMode];
   }
 
   /**
