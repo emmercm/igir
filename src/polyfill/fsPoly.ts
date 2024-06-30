@@ -214,25 +214,6 @@ export default class FsPoly {
     }
   }
 
-  /**
-   * mkdtempSync() takes a path "prefix" that's concatenated with random characters. Ignore that
-   * behavior and instead assume we always want to specify a root temp directory.
-   */
-  static mkdtempSync(rootDir: string): string {
-    const rootDirProcessed = rootDir.replace(/[\\/]+$/, '') + path.sep;
-
-    try {
-      fs.mkdirSync(rootDirProcessed, { recursive: true });
-
-      return fs.mkdtempSync(rootDirProcessed);
-    } catch {
-      const backupDir = path.join(process.cwd(), 'tmp') + path.sep;
-      fs.mkdirSync(backupDir, { recursive: true });
-
-      return fs.mkdtempSync(backupDir);
-    }
-  }
-
   static async mktemp(prefix: string): Promise<string> {
     for (let i = 0; i < 10; i += 1) {
       const randomExtension = crypto.randomBytes(4).readUInt32LE().toString(36);

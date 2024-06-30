@@ -2,7 +2,7 @@ import fs, { Stats } from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 
-import Defaults from '../../src/globals/defaults.js';
+import Temp from '../../src/globals/temp.js';
 import CandidateCombiner from '../../src/modules/candidateCombiner.js';
 import CandidateGenerator from '../../src/modules/candidateGenerator.js';
 import CandidatePatchGenerator from '../../src/modules/candidatePatchGenerator.js';
@@ -27,11 +27,11 @@ async function copyFixturesToTemp(
   callback: (input: string, output: string) => void | Promise<void>,
 ): Promise<void> {
   // Set up the input directory
-  const inputTemp = await fsPoly.mkdtemp(path.join(Defaults.GLOBAL_TEMP_DIR, 'input'));
+  const inputTemp = await fsPoly.mkdtemp(path.join(Temp.getTempDir(), 'input'));
   await fsPoly.copyDir('./test/fixtures', inputTemp);
 
   // Set up the output directory, but delete it so ROMWriter can make it
-  const outputTemp = await fsPoly.mkdtemp(path.join(Defaults.GLOBAL_TEMP_DIR, 'output'));
+  const outputTemp = await fsPoly.mkdtemp(path.join(Temp.getTempDir(), 'output'));
   await fsPoly.rm(outputTemp, { force: true, recursive: true });
 
   try {

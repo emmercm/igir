@@ -1,24 +1,9 @@
-import os from 'node:os';
-import path from 'node:path';
-
 import fsPoly from '../polyfill/fsPoly.js';
-import Package from './package.js';
-
-const GLOBAL_TEMP_DIR = fsPoly.mkdtempSync(path.join(os.tmpdir(), Package.NAME));
-process.once('beforeExit', async () => {
-  // WARN: Jest won't call this: https://github.com/jestjs/jest/issues/10927
-  await fsPoly.rm(GLOBAL_TEMP_DIR, {
-    force: true,
-    recursive: true,
-  });
-});
 
 /**
  * A static class of globals that are determined at startup, to be used widely.
  */
 export default class Defaults {
-  static readonly GLOBAL_TEMP_DIR = GLOBAL_TEMP_DIR;
-
   /**
    * A reasonable max of filesystem threads for operations such as:
    * @example

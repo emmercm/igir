@@ -1,6 +1,6 @@
 import path from 'node:path';
 
-import Defaults from '../../src/globals/defaults.js';
+import Temp from '../../src/globals/temp.js';
 import ROMHeaderProcessor from '../../src/modules/romHeaderProcessor.js';
 import ROMScanner from '../../src/modules/romScanner.js';
 import FsPoly from '../../src/polyfill/fsPoly.js';
@@ -27,7 +27,7 @@ describe('extension has possible header', () => {
   });
 
   it('should not throw on non-existent files', async () => {
-    const tempPath = path.join(Defaults.GLOBAL_TEMP_DIR, 'file.nes');
+    const tempPath = path.join(Temp.getTempDir(), 'file.nes');
     await expect(FsPoly.exists(tempPath)).resolves.toEqual(false);
     const inputRomFiles = [await File.fileOf({ filePath: tempPath })];
 

@@ -5,6 +5,7 @@ import async, { AsyncResultCallback } from 'async';
 import { Mutex } from 'async-mutex';
 
 import Defaults from '../../../globals/defaults.js';
+import Temp from '../../../globals/temp.js';
 import fsPoly from '../../../polyfill/fsPoly.js';
 import Archive from './archive.js';
 import ArchiveEntry from './archiveEntry.js';
@@ -95,7 +96,7 @@ export default class SevenZip extends Archive {
     entryPath: string,
     extractedFilePath: string,
   ): Promise<void> {
-    const tempDir = await fsPoly.mkdtemp(path.join(Defaults.GLOBAL_TEMP_DIR, '7z'));
+    const tempDir = await fsPoly.mkdtemp(path.join(Temp.getTempDir(), '7z'));
     try {
       let tempFile = path.join(tempDir, entryPath);
       await new Promise<void>((resolve, reject) => {

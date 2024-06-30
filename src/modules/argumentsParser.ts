@@ -810,6 +810,13 @@ export default class ArgumentsParser {
         requiresArg: true,
         default: Defaults.ROM_WRITER_ADDITIONAL_RETRIES,
       })
+      .options('temp-dir', {
+        group: groupHelpDebug,
+        description: 'Path to a directory for temporary files',
+        type: 'string',
+        coerce: ArgumentsParser.getLastValue, // don't allow string[] values
+        requiresArg: true,
+      })
       .option('disable-cache', {
         group: groupHelpDebug,
         description: 'Disable the file checksum cache',

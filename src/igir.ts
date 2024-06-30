@@ -8,8 +8,8 @@ import isAdmin from 'is-admin';
 import Logger from './console/logger.js';
 import ProgressBar, { ProgressBarSymbol } from './console/progressBar.js';
 import ProgressBarCLI from './console/progressBarCli.js';
-import Defaults from './globals/defaults.js';
 import Package from './globals/package.js';
+import Temp from './globals/temp.js';
 import CandidateArchiveFileHasher from './modules/candidateArchiveFileHasher.js';
 import CandidateCombiner from './modules/candidateCombiner.js';
 import CandidateGenerator from './modules/candidateGenerator.js';
@@ -66,6 +66,8 @@ export default class Igir {
    * The main method for this application.
    */
   async main(): Promise<void> {
+    Temp.setTempDir(this.options.getTempDir());
+
     // Windows 10 may require admin privileges to symlink at all
     // @see https://github.com/nodejs/node/issues/18518
     if (this.options.shouldLink()
@@ -73,7 +75,7 @@ export default class Igir {
       && process.platform === 'win32'
     ) {
       this.logger.trace('checking Windows for symlink permissions');
-      if (!await FsPoly.canSymlink(Defaults.GLOBAL_TEMP_DIR)) {
+      if (!await FsPoly.canSymlink(Temp.getTempDir())) {
         if (!await isAdmin()) {
           throw new Error(`${Package.NAME} does not have permissions to create symlinks, please try running as administrator`);
         }
