@@ -20,7 +20,7 @@
       
       
       <link rel="icon" href="../../logo-dark.svg">
-      <meta name="generator" content="mkdocs-1.6.0, mkdocs-material-9.5.24">
+      <meta name="generator" content="mkdocs-1.6.0, mkdocs-material-9.5.27">
     
     
       
@@ -184,7 +184,7 @@
       
     </form>
     <div class="md-search__output">
-      <div class="md-search__scrollwrap" data-md-scrollfix>
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
         <div class="md-search-result" data-md-component="search-result">
           <div class="md-search-result__meta">
             Initializing search
@@ -1744,6 +1744,15 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#exact-archive-matching" class="md-nav__link">
+    <span class="md-ellipsis">
+      Exact archive matching
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#checksum-cache" class="md-nav__link">
     <span class="md-ellipsis">
       Checksum cache
@@ -2097,6 +2106,8 @@
       
         
       
+        
+      
     
     
       
@@ -2145,6 +2156,27 @@
   
   <span class="md-ellipsis">
     Logging
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../advanced/temp-dir/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Temp Directory
   </span>
   
 
@@ -2565,6 +2597,14 @@
 <p><strong>You should prefer archive formats that <code>igir</code> can extract natively.</strong></p>
 <p>Somewhat proprietary archive formats such as <code>.7z</code> and <code>.rar</code> require <code>igir</code> to use an external tool to enumerate and extract files. This can greatly slow down processing speed.</p>
 <p>This is why <code>igir</code> uses <code>.zip</code> as its output archive of choice, <code>.zip</code> files are easy and fast to read, even if they can't offer as high of compression as other formats.</p>
+<h2 id="exact-archive-matching">Exact archive matching</h2>
+<p>Some DAT files such as the <a href="https://github.com/libretro/libretro-database/blob/master/dat/System.dat">libretro BIOS System.dat</a> catalog archives such as zip files, rather than the contents of those archives. By default, <code>igir</code> will try to detect DATs like these and calculate checksums for all archive files, in addition to the files they contain.</p>
+<p>This adds a potentially non-trivial amount of processing time during ROM scanning, so this behavior can be turned off with the option:</p>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>--input-checksum-archives never
+</span></code></pre></div>
+<p>If for some reason <code>igir</code> isn't identifying an input file correctly as an archive, this additional processing can be forced with the option:</p>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>--input-checksum-archives always
+</span></code></pre></div>
 <h2 id="checksum-cache">Checksum cache</h2>
 <p>It can be expensive to calculate checksums of files within archives, especially MD5, SHA1, and SHA256. If <code>igir</code> needs to calculate a checksum that is not easily read from the archive (see above), it will cache the result in a file named <code>igir.cache</code>. This cached result will then be used as long as the input file's size and modified timestamp remain the same.</p>
 <p>The location of this cache file can be controlled with the <code>--cache-path &lt;path&gt;</code> option, or caching can be disabled entirely with the <code>--disable-cache</code> option. You can safely delete <code>igir.cache</code> when <code>igir</code> isn't running if the file becomes too large for you.</p>
@@ -2588,7 +2628,7 @@
     <span class="md-icon" title="Last update">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1-2.1-2M12.5 7v5.2l4 2.4-1 1L11 13V7h1.5M11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2v1.8Z"/></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date">May 10, 2024</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date">June 30, 2024</span>
   </span>
 
     
@@ -2700,8 +2740,8 @@
       
       
     
-    <a href="https://twitter.com/emmercm" target="_blank" rel="noopener" title="twitter.com" class="md-social__link">
-      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21.543 7.104c.015.211.015.423.015.636 0 6.507-4.954 14.01-14.01 14.01v-.003A13.94 13.94 0 0 1 0 19.539a9.88 9.88 0 0 0 7.287-2.041 4.93 4.93 0 0 1-4.6-3.42 4.916 4.916 0 0 0 2.223-.084A4.926 4.926 0 0 1 .96 9.167v-.062a4.887 4.887 0 0 0 2.235.616A4.928 4.928 0 0 1 1.67 3.148a13.98 13.98 0 0 0 10.15 5.144 4.929 4.929 0 0 1 8.39-4.49 9.868 9.868 0 0 0 3.128-1.196 4.941 4.941 0 0 1-2.165 2.724A9.828 9.828 0 0 0 24 4.555a10.019 10.019 0 0 1-2.457 2.549z"/></svg>
+    <a href="https://x.com/emmercm" target="_blank" rel="noopener" title="x.com" class="md-social__link">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M18.901 1.153h3.68l-8.04 9.19L24 22.846h-7.406l-5.8-7.584-6.638 7.584H.474l8.6-9.83L0 1.154h7.594l5.243 6.932ZM17.61 20.644h2.039L6.486 3.24H4.298Z"/></svg>
     </a>
   
 </div>
@@ -2719,7 +2759,7 @@
     <script id="__config" type="application/json">{"base": "../..", "features": ["search.suggest", "search.highlight", "navigation.tabs", "navigation.tabs.sticky", "navigation.indexes", "navigation.sections", "navigation.path", "navigation.instant", "navigation.instant.prefetch", "navigation.footer", "toc.follow", "toc.integrate", "content.action.edit", "content.code.copy", "content.tabs.link"], "search": "../../assets/javascripts/workers/search.b8dbb3d2.min.js", "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}}</script>
     
     
-      <script src="../../assets/javascripts/bundle.081f42fc.min.js"></script>
+      <script src="../../assets/javascripts/bundle.ad660dcc.min.js"></script>
       
     
   </body>
