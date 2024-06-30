@@ -62,6 +62,7 @@ describe('filesFrom', () => {
       ['test/fixtures/roms/zip/unknown.zip', 1],
     ])('should read the entries of non-empty archives with junk extensions: %s', async (filePath, expectedCount) => {
       const tempFile = await FsPoly.mktemp(path.join(Temp.getTempDir(), 'file'));
+      await FsPoly.mkdir(path.dirname(tempFile), { recursive: true });
       await FsPoly.copyFile(filePath, tempFile);
       try {
         const archiveEntries = await FileFactory.filesFrom(tempFile);

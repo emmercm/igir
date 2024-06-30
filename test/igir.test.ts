@@ -1,6 +1,8 @@
 import fs from 'node:fs';
 import path from 'node:path';
 
+import { Mutex } from 'async-mutex';
+
 import Logger from '../src/console/logger.js';
 import LogLevel from '../src/console/logLevel.js';
 import Temp from '../src/globals/temp.js';
@@ -39,19 +41,22 @@ async function copyFixturesToTemp(
   }
 }
 
+const CHDIR_MUTEX = new Mutex();
 async function chdir<T>(dir: string, runnable: () => (T | Promise<T>)): Promise<T> {
-  const cwd = process.cwd();
+  return CHDIR_MUTEX.runExclusive(async () => {
+    const cwd = process.cwd();
 
-  if (!await fsPoly.exists(dir)) {
-    await fsPoly.mkdir(dir, { recursive: true });
-  }
-  process.chdir(dir);
+    if (!await fsPoly.exists(dir)) {
+      await fsPoly.mkdir(dir, { recursive: true });
+    }
+    process.chdir(dir);
 
-  try {
-    return await runnable();
-  } finally {
-    process.chdir(cwd);
-  }
+    try {
+      return await runnable();
+    } finally {
+      process.chdir(cwd);
+    }
+  });
 }
 
 async function walkWithCrc(inputDir: string, outputDir: string): Promise<string[][]> {
