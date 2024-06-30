@@ -77,7 +77,7 @@ export default class CandidateExtensionCorrector extends Module {
         const hashedReleaseCandidates = await Promise.all(releaseCandidates
           .map(async (releaseCandidate) => {
             const hashedRomsWithFiles = await Promise.all(releaseCandidate.getRomsWithFiles()
-              .map(async (romWithFiles) => {
+              .map(async (romWithFiles, romWithFilesIdx) => {
                 if (!this.romNeedsCorrecting(romWithFiles)) {
                   return romWithFiles;
                 }
@@ -90,18 +90,23 @@ export default class CandidateExtensionCorrector extends Module {
 
                   const correctedRomWithFiles = await romWithFiles.getInputFile()
                     .createReadStream(async (stream) => {
-                      const romSignature = await ROMSignature.signatureFromFileStream(stream);
-                      if (!romSignature && romWithFiles.getRom().getName().trim() !== '') {
-                        // We don't know this signature, don't correct anything
-                        return romWithFiles;
+                      let correctedRom = romWithFiles.getRom();
+
+                      if (correctedRom.getName().trim() === '') {
+                        // The ROM doesn't have any filename, default it
+                        correctedRom = correctedRom.withName(`${releaseCandidate.getGame()}${releaseCandidate.getRomsWithFiles().length > 1 ? ` (File ${romWithFilesIdx + 1})` : ''}.rom`);
                       }
 
-                      const { dir, name } = path.parse(romWithFiles.getRom().getName());
-                      const correctedRomName = path.format({
-                        dir,
-                        name: name + (romSignature?.getExtension() ?? '.rom'),
-                      });
-                      const correctedRom = romWithFiles.getRom().withName(correctedRomName);
+                      const romSignature = await ROMSignature.signatureFromFileStream(stream);
+                      if (romSignature) {
+                        // ROM file signature found, use the appropriate extension
+                        const { dir, name } = path.parse(correctedRom.getName());
+                        const correctedRomName = path.format({
+                          dir,
+                          name: name + romSignature.getExtension(),
+                        });
+                        correctedRom = correctedRom.withName(correctedRomName);
+                      }
 
                       const correctedOutputPath = OutputFactory.getPath(
                         this.options,
