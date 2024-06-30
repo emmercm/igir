@@ -3,8 +3,8 @@ import path from 'node:path';
 import { Semaphore } from 'async-mutex';
 
 import ProgressBar, { ProgressBarSymbol } from '../console/progressBar.js';
-import Constants from '../constants.js';
 import ElasticSemaphore from '../elasticSemaphore.js';
+import Defaults from '../globals/defaults.js';
 import ArrayPoly from '../polyfill/arrayPoly.js';
 import fsPoly from '../polyfill/fsPoly.js';
 import DAT from '../types/dats/dat.js';
@@ -31,7 +31,7 @@ export default class CandidateWriter extends Module {
   // WARN(cemmer): there is an undocumented semaphore max value that can be used, the full
   //  4,700,372,992 bytes of a DVD+R will cause runExclusive() to never run or return.
   private static readonly FILESIZE_SEMAPHORE = new ElasticSemaphore(
-    Constants.MAX_READ_WRITE_CONCURRENT_KILOBYTES,
+    Defaults.MAX_READ_WRITE_CONCURRENT_KILOBYTES,
   );
 
   private readonly options: Options;

@@ -1,6 +1,6 @@
 import path from 'node:path';
 
-import Constants from '../../../src/constants.js';
+import Temp from '../../../src/globals/temp.js';
 import FsPoly from '../../../src/polyfill/fsPoly.js';
 import ArchiveEntry from '../../../src/types/files/archives/archiveEntry.js';
 import FileFactory from '../../../src/types/files/fileFactory.js';
@@ -61,7 +61,8 @@ describe('filesFrom', () => {
       ['test/fixtures/roms/zip/onetwothree.zip', 3],
       ['test/fixtures/roms/zip/unknown.zip', 1],
     ])('should read the entries of non-empty archives with junk extensions: %s', async (filePath, expectedCount) => {
-      const tempFile = await FsPoly.mktemp(path.join(Constants.GLOBAL_TEMP_DIR, 'file'));
+      const tempFile = await FsPoly.mktemp(path.join(Temp.getTempDir(), 'file'));
+      await FsPoly.mkdir(path.dirname(tempFile), { recursive: true });
       await FsPoly.copyFile(filePath, tempFile);
       try {
         const archiveEntries = await FileFactory.filesFrom(tempFile);

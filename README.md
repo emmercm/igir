@@ -58,7 +58,7 @@ $ igir --help
   | $$  | $$|    \  | $$  | $$    $$   ROM collection manager
   | $$  | $$|    \  | $$  | $$    $$   https://igir.io/
   | $$  | $$ \$$$$  | $$  | $$$$$$$\
- _| $$_ | $$__| $$ _| $$_ | $$  | $$   v2.8.1
+ _| $$_ | $$__| $$ _| $$_ | $$  | $$   v2.9.0
 |   $$ \ \$$    $$|   $$ \| $$  | $$
  \$$$$$$  \$$$$$$  \$$$$$$ \$$   \$$
 
@@ -80,11 +80,14 @@ Commands (can specify multiple):
                 ctories (requires --dat)
 
 ROM input options:
-  -i, --input               Path(s) to ROM files or archives (supports globbing)       [array]
-  -I, --input-exclude       Path(s) to ROM files or archives to exclude from processing (suppo
-                            rts globbing)                                              [array]
-      --input-min-checksum  The minimum checksum level to calculate and use for matching
+  -i, --input                    Path(s) to ROM files or archives (supports globbing)  [array]
+  -I, --input-exclude            Path(s) to ROM files or archives to exclude from processing (
+                                 supports globbing)                                    [array]
+      --input-min-checksum       The minimum checksum level to calculate and use for matching
                                 [choices: "CRC32", "MD5", "SHA1", "SHA256"] [default: "CRC32"]
+      --input-checksum-archives  Calculate checksums of archive files themselves, allowing the
+                                 m to match files in DATs
+                                        [choices: "never", "auto", "always"] [default: "auto"]
 
 DAT input options:
   -d, --dat                            Path(s) to DAT files or archives (supports globbing)
@@ -221,6 +224,7 @@ Help & debug options:
       --writer-threads  Maximum number of ROMs to write in parallel      [number] [default: 4]
       --write-retry     Number of additional retries to attempt when writing a file has failed
                          (0 disables retries)                            [number] [default: 2]
+      --temp-dir        Path to a directory for temporary files                       [string]
       --disable-cache   Disable the file checksum cache                              [boolean]
       --cache-path      Location for the file checksum cache file                     [string]
   -v, --verbose         Enable verbose logging, can specify up to three times (-vvv)   [count]

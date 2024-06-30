@@ -8,7 +8,8 @@ import isAdmin from 'is-admin';
 import Logger from './console/logger.js';
 import ProgressBar, { ProgressBarSymbol } from './console/progressBar.js';
 import ProgressBarCLI from './console/progressBarCli.js';
-import Constants from './constants.js';
+import Package from './globals/package.js';
+import Temp from './globals/temp.js';
 import CandidateArchiveFileHasher from './modules/candidateArchiveFileHasher.js';
 import CandidateCombiner from './modules/candidateCombiner.js';
 import CandidateExtensionCorrector from './modules/candidateExtensionCorrector.js';
@@ -43,8 +44,9 @@ import DATStatus from './types/datStatus.js';
 import File from './types/files/file.js';
 import FileCache from './types/files/fileCache.js';
 import { ChecksumBitmask } from './types/files/fileChecksums.js';
+import FileFactory from './types/files/fileFactory.js';
 import IndexedFiles from './types/indexedFiles.js';
-import Options from './types/options.js';
+import Options, { InputChecksumArchivesMode } from './types/options.js';
 import OutputFactory from './types/outputFactory.js';
 import Patch from './types/patches/patch.js';
 import ReleaseCandidate from './types/releaseCandidate.js';
@@ -66,6 +68,8 @@ export default class Igir {
    * The main method for this application.
    */
   async main(): Promise<void> {
+    Temp.setTempDir(this.options.getTempDir());
+
     // Windows 10 may require admin privileges to symlink at all
     // @see https://github.com/nodejs/node/issues/18518
     if (this.options.shouldLink()
@@ -73,11 +77,11 @@ export default class Igir {
       && process.platform === 'win32'
     ) {
       this.logger.trace('checking Windows for symlink permissions');
-      if (!await FsPoly.canSymlink(Constants.GLOBAL_TEMP_DIR)) {
+      if (!await FsPoly.canSymlink(Temp.getTempDir())) {
         if (!await isAdmin()) {
-          throw new Error(`${Constants.COMMAND_NAME} does not have permissions to create symlinks, please try running as administrator`);
+          throw new Error(`${Package.NAME} does not have permissions to create symlinks, please try running as administrator`);
         }
-        throw new Error(`${Constants.COMMAND_NAME} does not have permissions to create symlinks`);
+        throw new Error(`${Package.NAME} does not have permissions to create symlinks`);
       }
       this.logger.trace('Windows has symlink permissions');
     }
@@ -98,7 +102,10 @@ export default class Igir {
 
     // Scan and process input files
     let dats = await this.processDATScanner();
-    const indexedRoms = await this.processROMScanner(this.determineScanningBitmask(dats));
+    const indexedRoms = await this.processROMScanner(
+      this.determineScanningBitmask(dats),
+      this.determineScanningChecksumArchives(dats),
+    );
     const roms = indexedRoms.getFiles();
     const patches = await this.processPatchScanner();
 
@@ -209,7 +216,7 @@ export default class Igir {
   }
 
   private async getCachePath(): Promise<string | undefined> {
-    const defaultFileName = `${Constants.COMMAND_NAME}.cache`;
+    const defaultFileName = `${Package.NAME}.cache`;
 
     // Try to use the provided path
     let cachePath = this.options.getCachePath();
@@ -226,7 +233,7 @@ export default class Igir {
 
     // Otherwise, use a default path
     return [
-      path.join(path.resolve(Constants.ROOT_DIR), defaultFileName),
+      path.join(path.resolve(Package.DIRECTORY), defaultFileName),
       path.join(os.homedir(), defaultFileName),
       path.join(process.cwd(), defaultFileName),
     ]
@@ -310,11 +317,34 @@ export default class Igir {
     return matchChecksum;
   }
 
-  private async processROMScanner(checksumBitmask: number): Promise<IndexedFiles> {
+  private determineScanningChecksumArchives(dats: DAT[]): boolean {
+    if (this.options.getInputChecksumArchives() === InputChecksumArchivesMode.NEVER) {
+      return false;
+    }
+    if (this.options.getInputChecksumArchives() === InputChecksumArchivesMode.ALWAYS) {
+      return true;
+    }
+    return dats
+      .some((dat) => dat.getGames()
+        .some((game) => game.getRoms()
+          .some((rom) => {
+            const isArchive = FileFactory.isExtensionArchive(rom.getName());
+            if (isArchive) {
+              this.logger.trace(`${dat.getNameShort()}: contains archives, enabling checksum calculation of raw archive contents`);
+            }
+            return isArchive;
+          })));
+  }
+
+  private async processROMScanner(
+    checksumBitmask: number,
+    checksumArchives: boolean,
+  ): Promise<IndexedFiles> {
     const romScannerProgressBarName = 'Scanning for ROMs';
     const romProgressBar = await this.logger.addProgressBar(romScannerProgressBarName);
 
-    const rawRomFiles = await new ROMScanner(this.options, romProgressBar).scan(checksumBitmask);
+    const rawRomFiles = await new ROMScanner(this.options, romProgressBar)
+      .scan(checksumBitmask, checksumArchives);
 
     await romProgressBar.setName('Detecting ROM headers');
     const romFilesWithHeaders = await new ROMHeaderProcessor(this.options, romProgressBar)

@@ -3,13 +3,14 @@ import fs from 'node:fs';
 import yargs, { Argv } from 'yargs';
 
 import Logger from '../console/logger.js';
-import Constants from '../constants.js';
+import Defaults from '../globals/defaults.js';
+import Package from '../globals/package.js';
 import ArrayPoly from '../polyfill/arrayPoly.js';
 import ConsolePoly from '../polyfill/consolePoly.js';
 import { ChecksumBitmask } from '../types/files/fileChecksums.js';
 import ROMHeader from '../types/files/romHeader.js';
 import Internationalization from '../types/internationalization.js';
-import Options, { GameSubdirMode, MergeMode } from '../types/options.js';
+import Options, { GameSubdirMode, InputChecksumArchivesMode, MergeMode } from '../types/options.js';
 import PatchFactory from '../types/patches/patchFactory.js';
 
 /**
@@ -63,14 +64,6 @@ export default class ArgumentsParser {
    * Parse the arguments.
    */
   parse(argv: string[]): Options {
-    const argvString = argv.map((arg) => {
-      if (!arg.includes(' ')) {
-        return arg;
-      }
-      return `"${arg.replace(/"/g, '\\"')}"`;
-    }).join(' ');
-    this.logger.trace(`Parsing CLI arguments: ${argvString}`);
-
     const groupRomInput = 'ROM input options:';
     const groupDatInput = 'DAT input options:';
     const groupPatchInput = 'Patch input options:';
@@ -173,7 +166,7 @@ export default class ArgumentsParser {
         'boolean-negation': false,
       })
       .locale('en')
-      .scriptName(Constants.COMMAND_NAME)
+      .scriptName(Package.NAME)
       .usage('Usage: $0 [commands..] [options]')
       .updateStrings({
         'Commands:': 'Commands (can specify multiple):',
@@ -215,6 +208,16 @@ export default class ArgumentsParser {
         coerce: ArgumentsParser.getLastValue, // don't allow string[] values
         requiresArg: true,
         default: ChecksumBitmask[ChecksumBitmask.CRC32].toUpperCase(),
+      })
+      .option('input-checksum-archives', {
+        group: groupRomInput,
+        description: 'Calculate checksums of archive files themselves, allowing them to match files in DATs',
+        choices: Object.keys(InputChecksumArchivesMode)
+          .filter((mode) => Number.isNaN(Number(mode)))
+          .map((mode) => mode.toLowerCase()),
+        coerce: ArgumentsParser.getLastValue, // don't allow string[] values
+        requiresArg: true,
+        default: InputChecksumArchivesMode[InputChecksumArchivesMode.AUTO].toLowerCase(),
       })
 
       .option('dat', {
@@ -776,7 +779,7 @@ export default class ArgumentsParser {
         type: 'string',
         coerce: ArgumentsParser.getLastValue, // don't allow string[] values
         requiresArg: true,
-        default: `./${Constants.COMMAND_NAME}_%YYYY-%MM-%DDT%HH:%mm:%ss.csv`,
+        default: `./${Package.NAME}_%YYYY-%MM-%DDT%HH:%mm:%ss.csv`,
       })
 
       .option('dat-threads', {
@@ -785,7 +788,7 @@ export default class ArgumentsParser {
         type: 'number',
         coerce: (val: number) => Math.max(val, 1),
         requiresArg: true,
-        default: Constants.DAT_DEFAULT_THREADS,
+        default: Defaults.DAT_DEFAULT_THREADS,
       })
       .option('reader-threads', {
         group: groupHelpDebug,
@@ -793,7 +796,7 @@ export default class ArgumentsParser {
         type: 'number',
         coerce: (val: number) => Math.max(val, 1),
         requiresArg: true,
-        default: Constants.FILE_READER_DEFAULT_THREADS,
+        default: Defaults.FILE_READER_DEFAULT_THREADS,
       })
       .option('writer-threads', {
         group: groupHelpDebug,
@@ -801,7 +804,7 @@ export default class ArgumentsParser {
         type: 'number',
         coerce: (val: number) => Math.max(val, 1),
         requiresArg: true,
-        default: Constants.ROM_WRITER_DEFAULT_THREADS,
+        default: Defaults.ROM_WRITER_DEFAULT_THREADS,
       })
       .middleware((middlewareArgv) => {
         if (middlewareArgv.zipDatName) {
@@ -815,7 +818,14 @@ export default class ArgumentsParser {
         type: 'number',
         coerce: (val: number) => Math.max(val, 0),
         requiresArg: true,
-        default: Constants.ROM_WRITER_ADDITIONAL_RETRIES,
+        default: Defaults.ROM_WRITER_ADDITIONAL_RETRIES,
+      })
+      .options('temp-dir', {
+        group: groupHelpDebug,
+        description: 'Path to a directory for temporary files',
+        type: 'string',
+        coerce: ArgumentsParser.getLastValue, // don't allow string[] values
+        requiresArg: true,
       })
       .option('disable-cache', {
         group: groupHelpDebug,
@@ -954,9 +964,6 @@ Example use cases:
         }
       });
 
-    const options = Options.fromObject(yargsArgv);
-    this.logger.trace(`Parsed options: ${options.toString()}`);
-
-    return options;
+    return Options.fromObject(yargsArgv);
   }
 }

@@ -210,26 +210,7 @@ export default class FsPoly {
     } catch {
       const backupDir = path.join(process.cwd(), 'tmp') + path.sep;
       await this.mkdir(backupDir, { recursive: true });
-      return await fs.promises.mkdtemp(backupDir);
-    }
-  }
-
-  /**
-   * mkdtempSync() takes a path "prefix" that's concatenated with random characters. Ignore that
-   * behavior and instead assume we always want to specify a root temp directory.
-   */
-  static mkdtempSync(rootDir: string): string {
-    const rootDirProcessed = rootDir.replace(/[\\/]+$/, '') + path.sep;
-
-    try {
-      fs.mkdirSync(rootDirProcessed, { recursive: true });
-
-      return fs.mkdtempSync(rootDirProcessed);
-    } catch {
-      const backupDir = path.join(process.cwd(), 'tmp') + path.sep;
-      fs.mkdirSync(backupDir, { recursive: true });
-
-      return fs.mkdtempSync(backupDir);
+      return fs.promises.mkdtemp(backupDir);
     }
   }
 
@@ -280,7 +261,7 @@ export default class FsPoly {
 
       // Attempt to resolve Windows' "EBUSY: resource busy or locked"
       await this.rm(newPath, { force: true });
-      return await this.mv(oldPath, newPath, attempt + 1);
+      return this.mv(oldPath, newPath, attempt + 1);
     }
   }
 
