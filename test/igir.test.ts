@@ -1,8 +1,6 @@
 import fs from 'node:fs';
 import path from 'node:path';
 
-import { Mutex } from 'async-mutex';
-
 import Logger from '../src/console/logger.js';
 import LogLevel from '../src/console/logLevel.js';
 import Temp from '../src/globals/temp.js';
@@ -41,22 +39,19 @@ async function copyFixturesToTemp(
   }
 }
 
-const CHDIR_MUTEX = new Mutex();
 async function chdir<T>(dir: string, runnable: () => (T | Promise<T>)): Promise<T> {
-  return CHDIR_MUTEX.runExclusive(async () => {
-    const cwd = process.cwd();
+  const cwd = process.cwd();
 
-    if (!await fsPoly.exists(dir)) {
-      await fsPoly.mkdir(dir, { recursive: true });
-    }
-    process.chdir(dir);
+  if (!await fsPoly.exists(dir)) {
+    await fsPoly.mkdir(dir, { recursive: true });
+  }
+  process.chdir(dir);
 
-    try {
-      return await runnable();
-    } finally {
-      process.chdir(cwd);
-    }
-  });
+  try {
+    return await runnable();
+  } finally {
+    process.chdir(cwd);
+  }
 }
 
 async function walkWithCrc(inputDir: string, outputDir: string): Promise<string[][]> {
@@ -87,15 +82,19 @@ async function runIgir(optionsProps: OptionsProps): Promise<TestOutput> {
       .map(async (inputPath) => fsPoly.walk(inputPath))))
       .flat()
       .reduce(ArrayPoly.reduceUnique(), []);
-    const outputFilesBefore = await fsPoly.walk(options.getOutputDirRoot());
+    const outputFilesBefore = options.getOutput() !== Temp.getTempDir()
+      ? await fsPoly.walk(options.getOutputDirRoot())
+      : []; // the output dir is a parent of the input dir, ignore all output
 
     await new Igir(options, new Logger(LogLevel.NEVER)).main();
 
-    const outputFilesAndCrcs = (await Promise.all(options.getInputPaths()
-      .map(async (inputPath) => walkWithCrc(inputPath, options.getOutputDirRoot()))))
-      .flat()
-      .filter((tuple, idx, tuples) => tuples.findIndex((dupe) => dupe[0] === tuple[0]) === idx)
-      .sort((a, b) => a[0].localeCompare(b[0]));
+    const outputFilesAndCrcs = options.getOutput() !== Temp.getTempDir()
+      ? (await Promise.all(options.getInputPaths()
+        .map(async (inputPath) => walkWithCrc(inputPath, options.getOutputDirRoot()))))
+        .flat()
+        .filter((tuple, idx, tuples) => tuples.findIndex((dupe) => dupe[0] === tuple[0]) === idx)
+        .sort((a, b) => a[0].localeCompare(b[0]))
+      : []; // the output dir is a parent of the input dir, ignore all output
     const cwdFilesAndCrcs = (await Promise.all(options.getInputPaths()
       .map(async (inputPath) => walkWithCrc(inputPath, tempCwd))))
       .flat()
@@ -116,7 +115,9 @@ async function runIgir(optionsProps: OptionsProps): Promise<TestOutput> {
       })
       .sort();
 
-    const outputFilesAfter = await fsPoly.walk(options.getOutputDirRoot());
+    const outputFilesAfter = options.getOutput() !== Temp.getTempDir()
+      ? await fsPoly.walk(options.getOutputDirRoot())
+      : []; // the output dir is a parent of the input dir, ignore all output
     const cleanedFiles = outputFilesBefore
       .filter((filePath) => !outputFilesAfter.includes(filePath))
       .map((filePath) => filePath.replace(options.getOutputDirRoot() + path.sep, ''))
@@ -770,6 +771,7 @@ describe('with explicit DATs', () => {
         reportOutput: 'report.csv',
       });
 
+      expect(result.outputFilesAndCrcs).toHaveLength(0);
       expect(result.cwdFilesAndCrcs).toHaveLength(1);
       expect(result.movedFiles).toHaveLength(0);
       expect(result.cleanedFiles).toHaveLength(0);
@@ -805,6 +807,7 @@ describe('with explicit DATs', () => {
       expect(writtenFixdats[1]).toMatch(/^One[\\/]One fixdat \([0-9]{8}-[0-9]{6}\)\.dat$/);
 
       expect(result.cwdFilesAndCrcs).toHaveLength(0);
+      // Note: explicitly not testing `result.movedFiles`
       expect(result.cleanedFiles).toHaveLength(0);
     });
   });
@@ -835,6 +838,7 @@ describe('with explicit DATs', () => {
       expect(writtenFixdats[1]).toMatch(/^One fixdat \([0-9]{8}-[0-9]{6}\)\.dat$/);
 
       expect(result.movedFiles).toHaveLength(0);
+      // Note: explicitly not testing `result.movedFiles`
       expect(result.cleanedFiles).toHaveLength(0);
     });
   });
@@ -1138,6 +1142,7 @@ describe('with inferred DATs', () => {
       expect(writtenDir2Dats).toHaveLength(1);
       expect(writtenDir2Dats[0]).toMatch(/^roms \([0-9]{8}-[0-9]{6}\)\.dat$/);
 
+      expect(result.outputFilesAndCrcs).toHaveLength(0);
       expect(result.movedFiles).toHaveLength(0);
       expect(result.cleanedFiles).toHaveLength(0);
     });
@@ -1166,6 +1171,7 @@ describe('with inferred DATs', () => {
       expect(writtenDir2Dats[0]).toMatch(/^roms[\\/]roms \([0-9]{8}-[0-9]{6}\)\.dat$/);
 
       expect(result.cwdFilesAndCrcs).toHaveLength(0);
+      // Note: explicitly not testing `result.movedFiles`
       expect(result.cleanedFiles).toHaveLength(0);
     });
   });
