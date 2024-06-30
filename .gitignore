@@ -119,30 +119,51 @@ site/
 # ROMs
 *.7z
 *.bin
+*.cd1
+*.cd2
 *.cue
 *.dvd
 *.gb
 *.gba
 *.gbc
 *.gdi
+*.gg
+*.ic1
+*.img
+*.jar
+*.lo
+*.min
 *.nes
+*.pce
+*.pk3
 *.rom
 *.sfc
 *.smc
+*.sms
+*.szx
+*.wad
+*.x1
+*.x1t
+*.zim
 *.zip
 
 # ROM pack excess
+*.bmp
 *.csv
+*.db
 *.desktop
+*.fnt
 *.jpg
 *.png
 *.sa1
 *.sav
 *.sg1
+*.sha
 *.sgm
 *.sqlite
 *.torrent
 *.txt
+*.wav
 *.xml
 
 # ROM patches
