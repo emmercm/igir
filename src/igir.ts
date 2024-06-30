@@ -8,7 +8,8 @@ import isAdmin from 'is-admin';
 import Logger from './console/logger.js';
 import ProgressBar, { ProgressBarSymbol } from './console/progressBar.js';
 import ProgressBarCLI from './console/progressBarCli.js';
-import Constants from './constants.js';
+import Package from './globals/package.js';
+import Temp from './globals/temp.js';
 import CandidateArchiveFileHasher from './modules/candidateArchiveFileHasher.js';
 import CandidateCombiner from './modules/candidateCombiner.js';
 import CandidateGenerator from './modules/candidateGenerator.js';
@@ -66,6 +67,8 @@ export default class Igir {
    * The main method for this application.
    */
   async main(): Promise<void> {
+    Temp.setTempDir(this.options.getTempDir());
+
     // Windows 10 may require admin privileges to symlink at all
     // @see https://github.com/nodejs/node/issues/18518
     if (this.options.shouldLink()
@@ -73,11 +76,11 @@ export default class Igir {
       && process.platform === 'win32'
     ) {
       this.logger.trace('checking Windows for symlink permissions');
-      if (!await FsPoly.canSymlink(Constants.GLOBAL_TEMP_DIR)) {
+      if (!await FsPoly.canSymlink(Temp.getTempDir())) {
         if (!await isAdmin()) {
-          throw new Error(`${Constants.COMMAND_NAME} does not have permissions to create symlinks, please try running as administrator`);
+          throw new Error(`${Package.NAME} does not have permissions to create symlinks, please try running as administrator`);
         }
-        throw new Error(`${Constants.COMMAND_NAME} does not have permissions to create symlinks`);
+        throw new Error(`${Package.NAME} does not have permissions to create symlinks`);
       }
       this.logger.trace('Windows has symlink permissions');
     }
@@ -212,7 +215,7 @@ export default class Igir {
   }
 
   private async getCachePath(): Promise<string | undefined> {
-    const defaultFileName = `${Constants.COMMAND_NAME}.cache`;
+    const defaultFileName = `${Package.NAME}.cache`;
 
     // Try to use the provided path
     let cachePath = this.options.getCachePath();
@@ -229,7 +232,7 @@ export default class Igir {
 
     // Otherwise, use a default path
     return [
-      path.join(path.resolve(Constants.ROOT_DIR), defaultFileName),
+      path.join(path.resolve(Package.DIRECTORY), defaultFileName),
       path.join(os.homedir(), defaultFileName),
       path.join(process.cwd(), defaultFileName),
     ]

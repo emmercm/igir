@@ -7,7 +7,8 @@ import {
   Exclude, Expose, instanceToPlain, plainToClassFromExist,
 } from 'class-transformer';
 
-import Constants from '../../constants.js';
+import Defaults from '../../globals/defaults.js';
+import Temp from '../../globals/temp.js';
 import FilePoly from '../../polyfill/filePoly.js';
 import fsPoly from '../../polyfill/fsPoly.js';
 import URLPoly from '../../polyfill/urlPoly.js';
@@ -267,9 +268,13 @@ export default class File implements FileProps {
     callback: (tempFile: string) => (T | Promise<T>),
   ): Promise<T> {
     const tempFile = await fsPoly.mktemp(path.join(
-      Constants.GLOBAL_TEMP_DIR,
+      Temp.getTempDir(),
       path.basename(this.getFilePath()),
     ));
+    const tempDir = path.dirname(tempFile);
+    if (!await fsPoly.exists(tempDir)) {
+      await fsPoly.mkdir(tempDir, { recursive: true });
+    }
     await fsPoly.copyFile(this.getFilePath(), tempFile);
 
     try {
@@ -309,7 +314,7 @@ export default class File implements FileProps {
 
     // Complex case: create a temp file with the header removed
     const tempFile = await fsPoly.mktemp(path.join(
-      Constants.GLOBAL_TEMP_DIR,
+      Temp.getTempDir(),
       path.basename(this.getExtractedFilePath()),
     ));
     if (patch) {
@@ -359,7 +364,7 @@ export default class File implements FileProps {
 
     // Complex case: create a temp patched file and then create read stream at an offset
     const tempFile = await fsPoly.mktemp(path.join(
-      Constants.GLOBAL_TEMP_DIR,
+      Temp.getTempDir(),
       path.basename(this.getExtractedFilePath()),
     ));
     try {
@@ -379,7 +384,7 @@ export default class File implements FileProps {
     const stream = fs.createReadStream(filePath, {
       start,
       end,
-      highWaterMark: Constants.FILE_READING_CHUNK_SIZE,
+      highWaterMark: Defaults.FILE_READING_CHUNK_SIZE,
     });
     try {
       return await callback(stream);
@@ -414,7 +419,7 @@ export default class File implements FileProps {
       return this;
     }
 
-    const filePath = await fsPoly.mktemp(path.join(Constants.GLOBAL_TEMP_DIR, tempPrefix));
+    const filePath = await fsPoly.mktemp(path.join(Temp.getTempDir(), tempPrefix));
     return this.downloadToPath(filePath);
   }
 

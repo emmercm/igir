@@ -1,63 +1,9 @@
-import fs from 'node:fs';
-import os from 'node:os';
-import path from 'node:path';
-import url from 'node:url';
-
-import fsPoly from './polyfill/fsPoly.js';
+import fsPoly from '../polyfill/fsPoly.js';
 
 /**
- * Search for a {@link fileName} in {@link filePath} or any of its parent directories.
+ * A static class of globals that are determined at startup, to be used widely.
  */
-function scanUpPathForFile(filePath: string, fileName: string): string | undefined {
-  const fullPath = path.join(filePath, fileName);
-  if (fs.existsSync(fullPath)) {
-    return fullPath;
-  }
-
-  const parentPath = path.dirname(filePath);
-  if (parentPath !== filePath) {
-    return scanUpPathForFile(path.dirname(filePath), fileName);
-  }
-
-  return undefined;
-}
-
-const PACKAGE_JSON_PATH = scanUpPathForFile(
-  url.fileURLToPath(new URL('.', import.meta.url)),
-  'package.json',
-) as string;
-const PACKAGE_JSON = JSON.parse(
-  fs.readFileSync(PACKAGE_JSON_PATH).toString(),
-);
-const COMMAND_NAME = PACKAGE_JSON.name;
-
-const ROOT_DIR = path.dirname(PACKAGE_JSON_PATH);
-
-const GLOBAL_TEMP_DIR = fsPoly.mkdtempSync(path.join(os.tmpdir(), COMMAND_NAME));
-process.once('beforeExit', async () => {
-  // WARN: Jest won't call this: https://github.com/jestjs/jest/issues/10927
-  await fsPoly.rm(GLOBAL_TEMP_DIR, {
-    force: true,
-    recursive: true,
-  });
-});
-
-/**
- * A static class of constants that are determined at startup, to be used widely.
- */
-export default class Constants {
-  static readonly ROOT_DIR = ROOT_DIR;
-
-  static readonly COMMAND_NAME = COMMAND_NAME;
-
-  static readonly HOMEPAGE = PACKAGE_JSON.homepage;
-
-  static readonly COMMAND_VERSION = PACKAGE_JSON.version;
-
-  static readonly ENGINES_NODE = PACKAGE_JSON.engines?.node ?? '*';
-
-  static readonly GLOBAL_TEMP_DIR = GLOBAL_TEMP_DIR;
-
+export default class Defaults {
   /**
    * A reasonable max of filesystem threads for operations such as:
    * @example

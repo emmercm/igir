@@ -1,6 +1,6 @@
 import path from 'node:path';
 
-import Constants from '../../../src/constants.js';
+import Temp from '../../../src/globals/temp.js';
 import FsPoly from '../../../src/polyfill/fsPoly.js';
 import Zip from '../../../src/types/files/archives/zip.js';
 import FileCache from '../../../src/types/files/fileCache.js';
@@ -8,7 +8,7 @@ import { ChecksumBitmask } from '../../../src/types/files/fileChecksums.js';
 
 describe('loadFile', () => {
   it('should load after saving', async () => {
-    const tempCache = await FsPoly.mktemp(path.join(Constants.GLOBAL_TEMP_DIR, 'cache'));
+    const tempCache = await FsPoly.mktemp(path.join(Temp.getTempDir(), 'cache'));
     await FileCache.loadFile(tempCache);
 
     // Compute some values

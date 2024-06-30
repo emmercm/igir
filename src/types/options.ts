@@ -13,7 +13,8 @@ import micromatch from 'micromatch';
 import moment from 'moment';
 
 import LogLevel from '../console/logLevel.js';
-import Constants from '../constants.js';
+import Defaults from '../globals/defaults.js';
+import Temp from '../globals/temp.js';
 import ArrayPoly from '../polyfill/arrayPoly.js';
 import fsPoly, { FsWalkCallback } from '../polyfill/fsPoly.js';
 import URLPoly from '../polyfill/urlPoly.js';
@@ -153,6 +154,7 @@ export interface OptionsProps {
   readonly readerThreads?: number,
   readonly writerThreads?: number,
   readonly writeRetry?: number,
+  readonly tempDir?: string,
   readonly disableCache?: boolean,
   readonly cachePath?: string,
   readonly verbose?: number,
@@ -348,6 +350,8 @@ export default class Options implements OptionsProps {
 
   readonly writeRetry: number;
 
+  readonly tempDir: string;
+
   readonly disableCache: boolean;
 
   readonly cachePath?: string;
@@ -459,6 +463,7 @@ export default class Options implements OptionsProps {
     this.readerThreads = Math.max(options?.readerThreads ?? 0, 1);
     this.writerThreads = Math.max(options?.writerThreads ?? 0, 1);
     this.writeRetry = Math.max(options?.writeRetry ?? 0, 0);
+    this.tempDir = options?.tempDir ?? Temp.getTempDir();
     this.disableCache = options?.disableCache ?? false;
     this.cachePath = options?.cachePath;
     this.verbose = options?.verbose ?? 0;
@@ -649,7 +654,7 @@ export default class Options implements OptionsProps {
     // Filter to non-directories
     const isNonDirectory = await async.mapLimit(
       globbedPaths,
-      Constants.MAX_FS_THREADS,
+      Defaults.MAX_FS_THREADS,
       async (file, callback: AsyncResultCallback<boolean, Error>) => {
         if (!await fsPoly.exists(file) && URLPoly.canParse(file)) {
           callback(undefined, true);
@@ -840,7 +845,7 @@ export default class Options implements OptionsProps {
   }
 
   getOutput(): string {
-    return this.shouldWrite() ? this.output : Constants.GLOBAL_TEMP_DIR;
+    return this.shouldWrite() ? this.output : this.getTempDir();
   }
 
   /**
@@ -1222,6 +1227,10 @@ export default class Options implements OptionsProps {
 
   getWriteRetry(): number {
     return this.writeRetry;
+  }
+
+  getTempDir(): string {
+    return this.tempDir;
   }
 
   getDisableCache(): boolean {
