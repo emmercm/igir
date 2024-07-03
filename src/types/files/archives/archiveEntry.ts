@@ -226,10 +226,10 @@ export default class ArchiveEntry<A extends Archive> extends File implements Arc
   }
 
   withEntryPath(entryPath: string): ArchiveEntry<A> {
-    return new ArchiveEntry({
-      ...this,
-      entryPath,
-    });
+    if (entryPath === this.entryPath) {
+      return this;
+    }
+    return new ArchiveEntry({ ...this, entryPath });
   }
 
   async withFileHeader(fileHeader: ROMHeader): Promise<ArchiveEntry<A>> {
@@ -249,6 +249,9 @@ export default class ArchiveEntry<A extends Archive> extends File implements Arc
   }
 
   withoutFileHeader(): ArchiveEntry<A> {
+    if (this.fileHeader === undefined) {
+      return this;
+    }
     return new ArchiveEntry({
       ...this,
       fileHeader: undefined,

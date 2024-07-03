@@ -61,6 +61,10 @@ export default abstract class Archive {
   }
 
   withFilePath(filePath: string): Archive {
+    if (filePath === this.filePath) {
+      return this;
+    }
+
     const { base, ...parsedFilePath } = path.parse(this.getFilePath());
     parsedFilePath.name = path.parse(filePath).name;
 
