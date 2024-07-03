@@ -63,10 +63,14 @@ export default class DirectoryCleaner extends Module {
     }
 
     try {
-      const emptyDirs = await DirectoryCleaner.getEmptyDirs(dirsToClean);
-      await this.progressBar.reset(emptyDirs.length);
-      this.progressBar.logTrace(`cleaning ${emptyDirs.length.toLocaleString()} empty director${emptyDirs.length !== 1 ? 'ies' : 'y'}`);
-      await this.trashOrDelete(emptyDirs);
+      let emptyDirs = await DirectoryCleaner.getEmptyDirs(dirsToClean);
+      while (emptyDirs.length > 0) {
+        await this.progressBar.reset(emptyDirs.length);
+        this.progressBar.logTrace(`cleaning ${emptyDirs.length.toLocaleString()} empty director${emptyDirs.length !== 1 ? 'ies' : 'y'}`);
+        await this.trashOrDelete(emptyDirs);
+        // Deleting some empty directories could leave others newly empty
+        emptyDirs = await DirectoryCleaner.getEmptyDirs(dirsToClean);
+      }
     } catch (error) {
       this.progressBar.logError(`failed to clean empty directories: ${error}`);
     }
