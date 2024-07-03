@@ -1,3 +1,5 @@
+import 'jest-extended';
+
 import path from 'node:path';
 
 import Temp from '../../src/globals/temp.js';
@@ -56,8 +58,50 @@ it('should do nothing when no ROMs need correcting', async () => {
   expect(correctedParentsToCandidates).toBe(parentsToCandidates);
 });
 
-it('should correct ROMs with missing filenames', async () => {
+function expectCorrectedCandidates(
+  parentsToCandidates: Map<Parent, ReleaseCandidate[]>,
+  correctedParentsToCandidates: Map<Parent, ReleaseCandidate[]>,
+): void {
+  expect(correctedParentsToCandidates).not.toBe(parentsToCandidates);
+
+  // The parents haven't changed
+  expect([...correctedParentsToCandidates.keys()])
+    .toIncludeSameMembers([...parentsToCandidates.keys()]);
+  for (const parent of [...parentsToCandidates.keys()]) {
+    const candidates = parentsToCandidates.get(parent);
+    const correctedCandidates = correctedParentsToCandidates.get(parent);
+
+    // The parent has the same number of candidates
+    expect(correctedCandidates).toHaveLength(candidates?.length ?? -1);
+
+    for (let i = 0; i < (candidates?.length ?? 0); i += 1) {
+      const candidate = candidates?.at(i);
+      const correctedCandidate = correctedCandidates?.at(i);
+
+      const romsWithFiles = candidate?.getRomsWithFiles();
+      const correctedRomsWithFiles = correctedCandidate?.getRomsWithFiles();
+
+      // The candidate has the same number of ROMWithFiles
+      expect(correctedRomsWithFiles).toHaveLength(romsWithFiles?.length ?? -1);
+
+      for (let j = 0; j < (romsWithFiles?.length ?? 0); j += 1) {
+        const romWithFiles = romsWithFiles?.at(j);
+        const correctedRomWithFiles = correctedRomsWithFiles?.at(j);
+
+        // The input file hasn't changed
+        expect(correctedRomWithFiles?.getInputFile()).toBe(romWithFiles?.getInputFile());
+
+        // The output file path has changed
+        expect(correctedRomWithFiles?.getOutputFile().getFilePath())
+          .not.toEqual(romWithFiles?.getOutputFile().getFilePath());
+      }
+    }
+  }
+}
+
+it('should correct ROMs without DATs', async () => {
   const options = new Options({
+    // No DAT has been provided, therefore all ROMs should be corrected
     input: [path.join('test', 'fixtures', 'roms', 'headered')],
   });
   const dat = new LogiqxDAT(new Header(), []);
@@ -72,7 +116,10 @@ it('should correct ROMs with missing filenames', async () => {
     }));
 
     const parentsToCandidates = new Map(tempFiles.map((tempFile) => {
-      const roms = [new ROM({ name: '', size: 123 })];
+      const roms = [new ROM({
+        name: path.basename(tempFile.getFilePath()),
+        size: tempFile.getSize(),
+      })];
       const game = new Game({
         name: path.parse(tempFile.getFilePath()).name,
         rom: roms,
@@ -80,6 +127,7 @@ it('should correct ROMs with missing filenames', async () => {
       const parent = new Parent(game);
       const romsWithFiles = roms.map((rom) => {
         const { dir, name } = path.parse(tempFile.getFilePath());
+        // Use a dummy path for the output, so we can know if it changed or not
         const outputFile = tempFile.withFilePath(`${path.format({ dir, name })}.rom`);
         return new ROMWithFiles(rom, tempFile, outputFile);
       });
@@ -92,11 +140,52 @@ it('should correct ROMs with missing filenames', async () => {
       new ProgressBarFake(),
     ).correct(dat, parentsToCandidates);
 
-    expect(correctedParentsToCandidates).not.toBe(parentsToCandidates);
-    // TODO(cemmer): scan both maps at the same time and check:
-    //  - the parent hasn't changed
-    //  - the input files haven't changed
-    //  - the output filenames differ
+    expectCorrectedCandidates(parentsToCandidates, correctedParentsToCandidates);
+  } finally {
+    await FsPoly.rm(tempDir, { recursive: true, force: true });
+  }
+});
+
+it('should correct ROMs with missing filenames', async () => {
+  const options = new Options({
+    dat: [path.join('test', 'fixtures', 'dats')],
+    input: [path.join('test', 'fixtures', 'roms', 'headered')],
+  });
+  const dat = new LogiqxDAT(new Header(), []);
+  const inputFiles = await new ROMScanner(options, new ProgressBarFake()).scan();
+
+  const tempDir = await FsPoly.mkdtemp(Temp.getTempDir());
+  try {
+    const tempFiles = await Promise.all(inputFiles.map(async (inputFile) => {
+      const tempFile = path.join(tempDir, path.basename(inputFile.getExtractedFilePath()));
+      await inputFile.extractToFile(tempFile);
+      return File.fileOf({ filePath: tempFile });
+    }));
+
+    const parentsToCandidates = new Map(tempFiles.map((tempFile) => {
+      // No ROM in the DAT has a filename, therefore all of them should be corrected
+      const roms = [new ROM({ name: '', size: tempFile.getSize() })];
+      const game = new Game({
+        name: path.parse(tempFile.getFilePath()).name,
+        rom: roms,
+      });
+      const parent = new Parent(game);
+      const romsWithFiles = roms.map((rom) => {
+        const { dir, name } = path.parse(tempFile.getFilePath());
+        // Use a dummy path for the output, so we can know if it changed or not
+        const outputFile = tempFile.withFilePath(`${path.format({ dir, name })}.rom`);
+        return new ROMWithFiles(rom, tempFile, outputFile);
+      });
+      const releaseCandidate = new ReleaseCandidate(game, undefined, romsWithFiles);
+      return [parent, [releaseCandidate]] satisfies [Parent, ReleaseCandidate[]];
+    }));
+
+    const correctedParentsToCandidates = await new CandidateExtensionCorrector(
+      options,
+      new ProgressBarFake(),
+    ).correct(dat, parentsToCandidates);
+
+    expectCorrectedCandidates(parentsToCandidates, correctedParentsToCandidates);
   } finally {
     await FsPoly.rm(tempDir, { recursive: true, force: true });
   }
