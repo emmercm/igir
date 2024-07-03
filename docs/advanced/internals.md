@@ -17,6 +17,8 @@ Information about the inner workings of `igir`.
    - Input files are matched to ROMs in the DAT (see [matching docs](../roms/matching.md))
    - Patch files are matched to ROMs found (see [patching docs](../roms/patching.md))
    - ROM preferences are applied (`--single`, see [filtering & preference docs](../roms/filtering-preferences.md#preferences-for-1g1r))
+   - ROMs without a potentially bad extension have their extension corrected using its file signature
+   - ROM archives that aren't being extracted have their checksums calculated
    - ROMs are combined (`--zip-dat-name`)
    - ROMs are written to the output directory, if specified (`copy`, `move`, `link`)
      - Written ROMs are tested for accuracy, if specified (`test`)
