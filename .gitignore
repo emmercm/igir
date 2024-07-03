@@ -118,9 +118,11 @@ site/
 
 # ROMs
 *.7z
+*.a52
 *.bin
 *.cd1
 *.cd2
+*.col
 *.cue
 *.dvd
 *.gb
@@ -132,8 +134,10 @@ site/
 *.img
 *.jar
 *.lo
+*.lyx
 *.min
 *.nes
+*.ngp
 *.pce
 *.pk3
 *.rom
@@ -145,6 +149,7 @@ site/
 *.x1
 *.x1t
 *.zim
+*.z64
 *.zip
 
 # ROM pack excess
