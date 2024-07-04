@@ -5,10 +5,12 @@ import Logger from '../src/console/logger.js';
 import LogLevel from '../src/console/logLevel.js';
 import Temp from '../src/globals/temp.js';
 import Igir from '../src/igir.js';
+import DATScanner from '../src/modules/datScanner.js';
 import ArrayPoly from '../src/polyfill/arrayPoly.js';
 import fsPoly from '../src/polyfill/fsPoly.js';
 import FileFactory from '../src/types/files/fileFactory.js';
 import Options, { GameSubdirMode, OptionsProps } from '../src/types/options.js';
+import ProgressBarFake from './console/progressBarFake.js';
 
 interface TestOutput {
   outputFilesAndCrcs: string[][],
@@ -98,6 +100,7 @@ async function runIgir(optionsProps: OptionsProps): Promise<TestOutput> {
     const cwdFilesAndCrcs = (await Promise.all(options.getInputPaths()
       .map(async (inputPath) => walkWithCrc(inputPath, tempCwd))))
       .flat()
+      .map(([cwdPath, crc]) => ([path.join(tempCwd, cwdPath), crc]))
       .sort((a, b) => a[0].localeCompare(b[0]));
 
     const inputFilesAfter = (await Promise.all(options.getInputPaths()
@@ -831,10 +834,10 @@ describe('with explicit DATs', () => {
       //  diagnostic_test_cartridge.a78
       //  fds_joypad_test.fds
       //  LCDTestROM.lyx
-      expect(writtenFixdats[0]).toMatch(/^Headerless fixdat \([0-9]{8}-[0-9]{6}\)\.dat$/);
+      expect(writtenFixdats[0]).toMatch(/[\\/]Headerless fixdat \([0-9]{8}-[0-9]{6}\)\.dat$/);
       // The "One" DAT should have missing ROMs, because no fixture exists for them:
       //  Missing.rom
-      expect(writtenFixdats[1]).toMatch(/^One fixdat \([0-9]{8}-[0-9]{6}\)\.dat$/);
+      expect(writtenFixdats[1]).toMatch(/[\\/]One fixdat \([0-9]{8}-[0-9]{6}\)\.dat$/);
 
       expect(result.movedFiles).toHaveLength(0);
       // Note: explicitly not testing `result.movedFiles`
@@ -1127,7 +1130,6 @@ describe('with inferred DATs', () => {
     await copyFixturesToTemp(async (inputTemp, outputTemp) => {
       const result = await runIgir({
         commands: ['dir2dat'],
-        dat: [path.join(inputTemp, 'dats')],
         input: [path.join(inputTemp, 'roms')],
         output: outputTemp,
         dirDatName: true,
@@ -1139,11 +1141,53 @@ describe('with inferred DATs', () => {
 
       // Only the "roms" input path was provided
       expect(writtenDir2Dats).toHaveLength(1);
-      expect(writtenDir2Dats[0]).toMatch(/^roms \([0-9]{8}-[0-9]{6}\)\.dat$/);
+      expect(writtenDir2Dats[0]).toMatch(/[\\/]roms \([0-9]{8}-[0-9]{6}\)\.dat$/);
 
       expect(result.outputFilesAndCrcs).toHaveLength(0);
       expect(result.movedFiles).toHaveLength(0);
       expect(result.cleanedFiles).toHaveLength(0);
+
+      const dats = await new DATScanner(
+        new Options({ dat: writtenDir2Dats }),
+        new ProgressBarFake(),
+      ).scan();
+      expect(dats).toHaveLength(1);
+      const roms = dats[0].getGames()
+        .flatMap((game) => game.getRoms())
+        .map((rom) => rom.getName())
+        .sort();
+      expect(roms).toEqual([
+        '0F09A40.rom',
+        '3708F2C.rom',
+        '612644F.rom',
+        '65D1206.rom',
+        '92C85C9.rom',
+        'C01173E.rom',
+        'KDULVQN.rom',
+        'LCDTestROM.lnx',
+        'allpads.nes',
+        'before.rom',
+        'best.rom',
+        'color_test.nes',
+        'diagnostic_test_cartridge.a78',
+        'fds_joypad_test.fds',
+        'five.rom',
+        'five.rom',
+        'fizzbuzz.nes',
+        'foobar.lnx',
+        'four.rom',
+        'four.rom',
+        'loremipsum.rom',
+        'one.rom',
+        'one.rom',
+        'speed_test_v51.sfc',
+        'speed_test_v51.smc',
+        'three.rom',
+        'three.rom',
+        'two.rom',
+        'two.rom',
+        'unknown.rom',
+      ]);
     });
   });
 
