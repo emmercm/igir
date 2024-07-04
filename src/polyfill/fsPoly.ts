@@ -306,11 +306,11 @@ export default class FsPoly {
 
     try {
       await fs.promises.access(pathLike); // throw if file doesn't exist
-    } catch (error) {
+    } catch {
       if (optionsWithRetry?.force) {
         return;
       }
-      throw error;
+      throw new Error(`can't rm, path doesn't exist: ${pathLike}`);
     }
 
     if (await this.isDirectory(pathLike)) {
