@@ -483,7 +483,7 @@ export default class GameConsole {
     // Funtech
     new GameConsole(/Super A'?Can/i, [/* '.bin' */], {
       consoleBrand: 'Funtech',
-      consoleName: 'Super A'Can',
+      consoleName: 'Super A\'Can',
       consoleAbbrName: 's-acan',
       emulationstation: 'supracan',
       batocera: 'supracan',
