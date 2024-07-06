@@ -57,6 +57,12 @@ interface OutputTokens {
   // TWiLightMenu++ Roms go into the /roms subfolder on the 3DS/DSi SD card
   // @see https://github.com/DS-Homebrew/TWiLightMenu/tree/master/7zfile/roms
   twmenu?: string,
+  
+  // Console brand, name and abbrevited name
+  // @see https://wiki.no-intro.org/index.php?title=Systems
+  consoleBrand?: string,
+  consoleName?: string,
+  consoleAbbrName?: string,
 }
 
 /**
