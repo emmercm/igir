@@ -897,6 +897,10 @@ Advanced usage:
     {outputName}      The output file's filename without extension
     {outputExt}       The output file's extension
 
+    {consoleBrand}    The console brand name (e.g. "Nintendo")
+    {consoleName}     The console complete name (e.g. "Game Boy")
+    {consoleAbbrName} The console abbreviated name (e.g. "gb")
+
     {adam}      The ROM's emulator-specific /ROMS/* directory for the 'Adam' image (e.g. "GB")
     {batocera}  The ROM's emulator-specific /roms/* directory for Batocera (e.g. "gb")
     {es}        The ROM's emulator-specific /roms/* directory for the 'EmulationStation' image (e.g. "gb")
