@@ -1,6 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 
+import ExpectedError from '../expectedError.js';
 import Archive from './archives/archive.js';
 import ArchiveEntry from './archives/archiveEntry.js';
 import ArchiveFile from './archives/archiveFile.js';
@@ -33,7 +34,7 @@ export default class FileFactory {
       return await this.entriesFromArchiveExtension(filePath, checksumBitmask);
     } catch (error) {
       if (error && typeof error === 'object' && 'code' in error && error.code === 'ENOENT') {
-        throw new Error(`file doesn't exist: ${filePath}`);
+        throw new ExpectedError(`file doesn't exist: ${filePath}`);
       }
       if (typeof error === 'string') {
         throw new Error(error);
@@ -87,7 +88,7 @@ export default class FileFactory {
     } else if (ZipX.getExtensions().some((ext) => filePath.toLowerCase().endsWith(ext))) {
       archive = new ZipX(filePath);
     } else {
-      throw new Error(`unknown archive type: ${path.extname(filePath)}`);
+      throw new ExpectedError(`unknown archive type: ${path.extname(filePath)}`);
     }
 
     return FileCache.getOrComputeEntries(archive, checksumBitmask);
