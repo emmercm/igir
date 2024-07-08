@@ -7,6 +7,7 @@ import Defaults from '../globals/defaults.js';
 import Package from '../globals/package.js';
 import ArrayPoly from '../polyfill/arrayPoly.js';
 import ConsolePoly from '../polyfill/consolePoly.js';
+import ExpectedError from '../types/expectedError.js';
 import { ChecksumBitmask } from '../types/files/fileChecksums.js';
 import ROMHeader from '../types/files/romHeader.js';
 import Internationalization from '../types/internationalization.js';
@@ -147,13 +148,13 @@ export default class ArgumentsParser {
 
           ['extract', 'zip'].forEach((command) => {
             if (checkArgv._.includes(command) && ['copy', 'move'].every((write) => !checkArgv._.includes(write))) {
-              throw new Error(`Command "${command}" also requires the commands copy or move`);
+              throw new ExpectedError(`Command "${command}" also requires the commands copy or move`);
             }
           });
 
           ['test', 'clean'].forEach((command) => {
             if (checkArgv._.includes(command) && ['copy', 'move', 'link', 'symlink'].every((write) => !checkArgv._.includes(write))) {
-              throw new Error(`Command "${command}" requires one of the commands: copy, move, or link`);
+              throw new ExpectedError(`Command "${command}" requires one of the commands: copy, move, or link`);
             }
           });
 
@@ -187,7 +188,7 @@ export default class ArgumentsParser {
         const needInput = ['copy', 'move', 'link', 'symlink', 'extract', 'zip', 'test', 'dir2dat', 'fixdat'].filter((command) => checkArgv._.includes(command));
         if (!checkArgv.input && needInput.length > 0) {
           // TODO(cememr): print help message
-          throw new Error(`Missing required argument for command${needInput.length !== 1 ? 's' : ''} ${needInput.join(', ')}: --input <path>`);
+          throw new ExpectedError(`Missing required argument for command${needInput.length !== 1 ? 's' : ''} ${needInput.join(', ')}: --input <path>`);
         }
         return true;
       })
@@ -227,6 +228,7 @@ export default class ArgumentsParser {
         type: 'array',
         requiresArg: true,
       })
+      // TODO(cemmer): don't allow dir2dat & --dat
       .option('dat-exclude', {
         group: groupDatInput,
         description: 'Path(s) to DAT files or archives to exclude from processing (supports globbing)',
@@ -296,7 +298,7 @@ export default class ArgumentsParser {
         }
         const needDat = ['report'].filter((command) => checkArgv._.includes(command));
         if ((!checkArgv.dat || checkArgv.dat.length === 0) && needDat.length > 0) {
-          throw new Error(`Missing required argument for commands ${needDat.join(', ')}: --dat`);
+          throw new ExpectedError(`Missing required argument for commands ${needDat.join(', ')}: --dat`);
         }
         return true;
       })
@@ -369,7 +371,7 @@ export default class ArgumentsParser {
       .check((checkArgv) => {
         // Re-implement `implies: 'dir-letter'`, which isn't possible with a default value
         if (checkArgv['dir-letter-count'] > 1 && !checkArgv['dir-letter']) {
-          throw new Error('Missing dependent arguments:\n dir-letter-count -> dir-letter');
+          throw new ExpectedError('Missing dependent arguments:\n dir-letter-count -> dir-letter');
         }
         return true;
       })
@@ -427,12 +429,12 @@ export default class ArgumentsParser {
         const needOutput = ['copy', 'move', 'link', 'symlink', 'extract', 'zip', 'clean'].filter((command) => checkArgv._.includes(command));
         if (!checkArgv.output && needOutput.length > 0) {
           // TODO(cememr): print help message
-          throw new Error(`Missing required argument for command${needOutput.length !== 1 ? 's' : ''} ${needOutput.join(', ')}: --output <path>`);
+          throw new ExpectedError(`Missing required argument for command${needOutput.length !== 1 ? 's' : ''} ${needOutput.join(', ')}: --output <path>`);
         }
         const needClean = ['clean-exclude', 'clean-dry-run'].filter((option) => checkArgv[option]);
         if (!checkArgv._.includes('clean') && needClean.length > 0) {
           // TODO(cememr): print help message
-          throw new Error(`Missing required command for option${needClean.length !== 1 ? 's' : ''} ${needClean.join(', ')}: clean`);
+          throw new ExpectedError(`Missing required command for option${needClean.length !== 1 ? 's' : ''} ${needClean.join(', ')}: clean`);
         }
         return true;
       })
@@ -456,7 +458,7 @@ export default class ArgumentsParser {
         }
         const needZip = ['zip-exclude', 'zip-dat-name'].filter((option) => checkArgv[option]);
         if (!checkArgv._.includes('zip') && needZip.length > 0) {
-          throw new Error(`Missing required command for option${needZip.length !== 1 ? 's' : ''} ${needZip.join(', ')}: zip`);
+          throw new ExpectedError(`Missing required command for option${needZip.length !== 1 ? 's' : ''} ${needZip.join(', ')}: zip`);
         }
         return true;
       })
@@ -487,7 +489,7 @@ export default class ArgumentsParser {
         }
         const needLinkCommand = ['symlink'].filter((option) => checkArgv[option]);
         if (!checkArgv._.includes('link') && !checkArgv._.includes('symlink') && needLinkCommand.length > 0) {
-          throw new Error(`Missing required command for option${needLinkCommand.length !== 1 ? 's' : ''} ${needLinkCommand.join(', ')}: link`);
+          throw new ExpectedError(`Missing required command for option${needLinkCommand.length !== 1 ? 's' : ''} ${needLinkCommand.join(', ')}: link`);
         }
         return true;
       })
@@ -558,7 +560,7 @@ export default class ArgumentsParser {
       .check((checkArgv) => {
         const invalidLangs = checkArgv['filter-language']?.filter((lang) => !Internationalization.LANGUAGES.includes(lang));
         if (invalidLangs !== undefined && invalidLangs.length > 0) {
-          throw new Error(`Invalid --filter-language language${invalidLangs.length !== 1 ? 's' : ''}: ${invalidLangs.join(', ')}`);
+          throw new ExpectedError(`Invalid --filter-language language${invalidLangs.length !== 1 ? 's' : ''}: ${invalidLangs.join(', ')}`);
         }
         return true;
       })
@@ -583,7 +585,7 @@ export default class ArgumentsParser {
       .check((checkArgv) => {
         const invalidRegions = checkArgv['filter-region']?.filter((lang) => !Internationalization.REGION_CODES.includes(lang));
         if (invalidRegions !== undefined && invalidRegions.length > 0) {
-          throw new Error(`Invalid --filter-region region${invalidRegions.length !== 1 ? 's' : ''}: ${invalidRegions.join(', ')}`);
+          throw new ExpectedError(`Invalid --filter-region region${invalidRegions.length !== 1 ? 's' : ''}: ${invalidRegions.join(', ')}`);
         }
         return true;
       })
@@ -712,7 +714,7 @@ export default class ArgumentsParser {
       .check((checkArgv) => {
         const invalidLangs = checkArgv['prefer-language']?.filter((lang) => !Internationalization.LANGUAGES.includes(lang));
         if (invalidLangs !== undefined && invalidLangs.length > 0) {
-          throw new Error(`Invalid --prefer-language language${invalidLangs.length !== 1 ? 's' : ''}: ${invalidLangs.join(', ')}`);
+          throw new ExpectedError(`Invalid --prefer-language language${invalidLangs.length !== 1 ? 's' : ''}: ${invalidLangs.join(', ')}`);
         }
         return true;
       })
@@ -728,7 +730,7 @@ export default class ArgumentsParser {
       .check((checkArgv) => {
         const invalidRegions = checkArgv['prefer-region']?.filter((lang) => !Internationalization.REGION_CODES.includes(lang));
         if (invalidRegions !== undefined && invalidRegions.length > 0) {
-          throw new Error(`Invalid --prefer-region region${invalidRegions.length !== 1 ? 's' : ''}: ${invalidRegions.join(', ')}`);
+          throw new ExpectedError(`Invalid --prefer-region region${invalidRegions.length !== 1 ? 's' : ''}: ${invalidRegions.join(', ')}`);
         }
         return true;
       })
@@ -953,7 +955,7 @@ Example use cases:
           throw err;
         }
         this.logger.colorizeYargs(`${_yargs.help().toString().trimEnd()}\n`);
-        throw new Error(msg);
+        throw new ExpectedError(msg);
       });
 
     const yargsArgv = yargsParser

@@ -5,6 +5,7 @@ import { Mutex } from 'async-mutex';
 import unrar from 'node-unrar-js';
 
 import Defaults from '../../../globals/defaults.js';
+import ExpectedError from '../../expectedError.js';
 import Archive from './archive.js';
 import ArchiveEntry from './archiveEntry.js';
 
@@ -73,7 +74,7 @@ export default class Rar extends Archive {
         files: [entryPath.replace(/[\\/]/g, '/')],
       }).files];
       if (extracted.length === 0) {
-        throw new Error(`didn't find entry '${entryPath}'`);
+        throw new ExpectedError(`didn't find entry '${entryPath}'`);
       }
     });
   }

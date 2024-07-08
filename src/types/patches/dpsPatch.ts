@@ -1,5 +1,6 @@
 import FilePoly from '../../polyfill/filePoly.js';
 import fsPoly from '../../polyfill/fsPoly.js';
+import ExpectedError from '../expectedError.js';
 import File from '../files/file.js';
 import Patch from './patch.js';
 
@@ -25,7 +26,7 @@ export default class DPSPatch extends Patch {
 
       const originalSize = (await patchFile.readNext(4)).readUInt32LE();
       if (inputRomFile.getSize() !== originalSize) {
-        throw new Error(`DPS patch expected ROM size of ${fsPoly.sizeReadable(originalSize)}: ${this.getFile().toString()}`);
+        throw new ExpectedError(`DPS patch expected ROM size of ${fsPoly.sizeReadable(originalSize)}: ${this.getFile().toString()}`);
       }
 
       return DPSPatch.writeOutputFile(inputRomFile, outputRomPath, patchFile);
@@ -70,7 +71,7 @@ export default class DPSPatch extends Patch {
         const dataLength = (await patchFile.readNext(4)).readUInt32LE();
         data = await patchFile.readNext(dataLength);
       } else {
-        throw new Error(`DPS patch mode type ${mode} isn't supported: ${patchFile.getPathLike()}`);
+        throw new ExpectedError(`DPS patch mode type ${mode} isn't supported: ${patchFile.getPathLike()}`);
       }
 
       await targetFile.writeAt(data, outputOffset);

@@ -1,3 +1,5 @@
+import ExpectedError from '../../expectedError.js';
+
 export interface DATProps extends CMProObject {
   clrmamepro?: ClrMameProProps,
   game?: GameProps | GameProps[],
@@ -172,7 +174,7 @@ export default class CMProParser {
 
   private parseQuotedString(): string {
     if (this.contents.charAt(this.pos) !== '"') {
-      throw new Error('invalid quoted string');
+      throw new ExpectedError('invalid quoted string');
     }
     this.pos += 1;
 
@@ -193,7 +195,7 @@ export default class CMProParser {
       }
     }
 
-    throw new Error('invalid quoted string');
+    throw new ExpectedError('invalid quoted string');
   }
 
   private parseUnquotedString(): string {
