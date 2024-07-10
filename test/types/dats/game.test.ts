@@ -35,6 +35,50 @@ describe('getRoms', () => {
   });
 });
 
+describe('getRevision', () => {
+  test.each([
+    // No-Intro
+    ['Pikmin (Japan) (Rev 1)', 1],
+    ['Pikmin (Japan) (Rev 2)', 2],
+    ['Pikmin (USA)', 0],
+    ['Pikmin (USA) (Rev 1)', 1],
+  ])('should parse numeric revisions: %s', (gameName, expectedRevision) => {
+    expect(new Game({ name: gameName }).getRevision()).toEqual(expectedRevision);
+  });
+
+  test.each([
+    // Redump
+    ['Sonic Adventure (USA) (En,Ja,Fr,De,Es) (Rev A)', 1],
+    ['Phantasy Star Online (USA) (En,Ja,Fr,De,Es) (Rev B)', 2],
+  ])('should parse letter revisions: %s', (gameName, expectedRevision) => {
+    expect(new Game({ name: gameName }).getRevision()).toEqual(expectedRevision);
+  });
+
+  test.each([
+    // TOSEC
+    ['F1 World Grand Prix for Dreamcast v1.011 (1999)(Video System)(JP)(en)[!]', 1.011],
+    ['F1 World Grand Prix for Dreamcast v1.000 (1999)(Video System)(PAL)(M4)[!]', 1],
+    ['F1 World Grand Prix v1.006 (2000)(Video System)(US)(M4)[!]', 1.006],
+    // No-Intro PS3
+    ['[BIOS] PS3 System Software Update (World) (v4.88)', 4.88],
+    ['[BIOS] PS3 System Software Update (World) (v3.41) (Patch)', 3.41],
+    ['[BIOS] PS3 System Software Update (World) (v0.90) (Tool)', 0.9],
+    ['[BIOS] PS3 System Software Update (World) (v0.91-005) (Tool)', 0.91],
+    ['[BIOS] PS3 System Software Update (World) (v3.41) (Shop)', 3.41],
+    ['[BIOS] PS3 System Software Update (World) (v3.41-1)', 3.41],
+  ])('should parse version numbers: %s', (gameName, expectedRevision) => {
+    expect(new Game({ name: gameName }).getRevision()).toEqual(expectedRevision);
+  });
+
+  test.each([
+    // Redump
+    ['Sol-Feace (USA) (RE2)', 2],
+    ['Sonic CD (USA) (RE125)', 125],
+  ])('should parse ring code revisions: %s', (gameName, expectedRevision) => {
+    expect(new Game({ name: gameName }).getRevision()).toEqual(expectedRevision);
+  });
+});
+
 describe('isAftermarket', () => {
   test.each([
     ['Game Boy Camera (USA, Europe) (SGB Enhanced)', false],
