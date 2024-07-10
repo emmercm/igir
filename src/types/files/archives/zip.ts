@@ -10,6 +10,7 @@ import unzipper, { Entry } from 'unzipper';
 import Defaults from '../../../globals/defaults.js';
 import fsPoly from '../../../polyfill/fsPoly.js';
 import StreamPoly from '../../../polyfill/streamPoly.js';
+import ExpectedError from '../../expectedError.js';
 import File from '../file.js';
 import FileChecksums, { ChecksumBitmask, ChecksumProps } from '../fileChecksums.js';
 import Archive from './archive.js';
@@ -120,7 +121,7 @@ export default class Zip extends Archive {
       .find((entryFile) => entryFile.path === entryPath.replace(/[\\/]/g, '/'));
     if (!entry) {
       // This should never happen, this likely means the zip file was modified after scanning
-      throw new Error(`didn't find entry '${entryPath}'`);
+      throw new ExpectedError(`didn't find entry '${entryPath}'`);
     }
 
     let stream: Entry;

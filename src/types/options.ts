@@ -19,6 +19,7 @@ import ArrayPoly from '../polyfill/arrayPoly.js';
 import fsPoly, { FsWalkCallback } from '../polyfill/fsPoly.js';
 import URLPoly from '../polyfill/urlPoly.js';
 import DAT from './dats/dat.js';
+import ExpectedError from './expectedError.js';
 import File from './files/file.js';
 import { ChecksumBitmask } from './files/fileChecksums.js';
 
@@ -696,7 +697,7 @@ export default class Options implements OptionsProps {
         if (!requireFiles) {
           return [];
         }
-        throw new Error(`${inputPath}: directory doesn't contain any files`);
+        throw new ExpectedError(`${inputPath}: directory doesn't contain any files`);
       }
       return dirPaths;
     }
@@ -725,7 +726,7 @@ export default class Options implements OptionsProps {
       if (!requireFiles) {
         return [];
       }
-      throw new Error(`${inputPath}: no files found`);
+      throw new ExpectedError(`no files found in directory: ${inputPath}`);
     }
     walkCallback(paths.length);
     return paths;

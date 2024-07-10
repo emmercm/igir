@@ -7,6 +7,7 @@ import { Mutex } from 'async-mutex';
 import Defaults from '../../../globals/defaults.js';
 import Temp from '../../../globals/temp.js';
 import fsPoly from '../../../polyfill/fsPoly.js';
+import ExpectedError from '../../expectedError.js';
 import Archive from './archive.js';
 import ArchiveEntry from './archiveEntry.js';
 
@@ -124,9 +125,9 @@ export default class SevenZip extends Archive {
       if (process.platform === 'win32' && !await fsPoly.exists(tempFile)) {
         const files = await fsPoly.walk(tempDir);
         if (files.length === 0) {
-          throw new Error('failed to extract any files');
+          throw new ExpectedError('failed to extract any files');
         } else if (files.length > 1) {
-          throw new Error('extracted too many files');
+          throw new ExpectedError('extracted too many files');
         }
         [tempFile] = files;
       }

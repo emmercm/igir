@@ -1,6 +1,7 @@
 import path from 'node:path';
 
 import FilePoly from '../../polyfill/filePoly.js';
+import ExpectedError from '../expectedError.js';
 import File from '../files/file.js';
 
 export default abstract class Patch {
@@ -25,7 +26,7 @@ export default abstract class Patch {
       return matches[2].toLowerCase();
     }
 
-    throw new Error(`couldn't parse base file CRC for patch: ${fileBasename}`);
+    throw new ExpectedError(`couldn't parse base file CRC for patch: ${fileBasename}`);
   }
 
   getFile(): File {

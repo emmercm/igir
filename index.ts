@@ -12,6 +12,7 @@ import Igir from './src/igir.js';
 import ArgumentsParser from './src/modules/argumentsParser.js';
 import EndOfLifeChecker from './src/modules/endOfLifeChecker.js';
 import UpdateChecker from './src/modules/updateChecker.js';
+import ExpectedError from './src/types/expectedError.js';
 import Options from './src/types/options.js';
 
 // Monkey-patch 'fs' to help prevent Windows EMFILE errors
@@ -69,7 +70,9 @@ gracefulFs.gracefulify(realFs);
     await ProgressBarCLI.stop();
   } catch (error) {
     await ProgressBarCLI.stop();
-    if (error instanceof Error && error.stack) {
+    if (error instanceof ExpectedError) {
+      logger.error(error);
+    } else if (error instanceof Error && error.stack) {
       // Log the stack trace to help with bug reports
       logger.error(error.stack);
     } else {

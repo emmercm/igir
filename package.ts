@@ -12,6 +12,7 @@ import Logger from './src/console/logger.js';
 import LogLevel from './src/console/logLevel.js';
 import Package from './src/globals/package.js';
 import FsPoly from './src/polyfill/fsPoly.js';
+import ExpectedError from './src/types/expectedError.js';
 
 interface FileFilter extends GlobOptions {
   include?: string,
@@ -25,7 +26,7 @@ const fileFilter = (filters: FileFilter[]): string[] => {
       const include = fg.globSync(filter.include.replace(/\\/g, '/'), filter)
         .map((file) => path.resolve(file));
       if (include.length === 0) {
-        throw new Error(`glob pattern '${filter.include}' returned no paths`);
+        throw new ExpectedError(`glob pattern '${filter.include}' returned no paths`);
       }
       results = [...results, ...include];
     }
@@ -33,7 +34,7 @@ const fileFilter = (filters: FileFilter[]): string[] => {
       const exclude = new Set(fg.globSync(filter.exclude.replace(/\\/g, '/'), filter)
         .map((file) => path.resolve(file)));
       if (exclude.size === 0) {
-        throw new Error(`glob pattern '${filter.exclude}' returned no paths`);
+        throw new ExpectedError(`glob pattern '${filter.exclude}' returned no paths`);
       }
       results = results.filter((result) => !exclude.has(result));
     }
@@ -54,7 +55,7 @@ const fileFilter = (filters: FileFilter[]): string[] => {
     })
     .check((_argv) => {
       if (!_argv.input || !fs.existsSync(_argv.input)) {
-        throw new Error(`input directory '${_argv.input}' doesn't exist`);
+        throw new ExpectedError(`input directory '${_argv.input}' doesn't exist`);
       }
       return true;
     })
@@ -121,7 +122,7 @@ const fileFilter = (filters: FileFilter[]): string[] => {
   });
 
   if (!await FsPoly.exists(output)) {
-    throw new Error(`output file '${output}' doesn't exist`);
+    throw new ExpectedError(`output file '${output}' doesn't exist`);
   }
   logger.info(`Output: ${FsPoly.sizeReadable(await FsPoly.size(output))}`);
 

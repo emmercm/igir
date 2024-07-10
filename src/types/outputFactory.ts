@@ -7,6 +7,7 @@ import DAT from './dats/dat.js';
 import Game from './dats/game.js';
 import Release from './dats/release.js';
 import ROM from './dats/rom.js';
+import ExpectedError from './expectedError.js';
 import ArchiveEntry from './files/archives/archiveEntry.js';
 import ArchiveFile from './files/archives/archiveFile.js';
 import File from './files/file.js';
@@ -172,7 +173,7 @@ export default class OutputFactory {
 
     const leftoverTokens = result.match(/\{[a-zA-Z]+\}/g);
     if (leftoverTokens !== null && leftoverTokens.length > 0) {
-      throw new Error(`failed to replace output token${leftoverTokens.length !== 1 ? 's' : ''}: ${leftoverTokens.join(', ')}`);
+      throw new ExpectedError(`failed to replace output token${leftoverTokens.length !== 1 ? 's' : ''}: ${leftoverTokens.join(', ')}`);
     }
 
     return result;

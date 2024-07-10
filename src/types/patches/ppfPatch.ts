@@ -1,6 +1,7 @@
 // eslint-disable-next-line max-classes-per-file
 import FilePoly from '../../polyfill/filePoly.js';
 import fsPoly from '../../polyfill/fsPoly.js';
+import ExpectedError from '../expectedError.js';
 import File from '../files/file.js';
 import Patch from './patch.js';
 
@@ -19,12 +20,12 @@ class PPFHeader {
   static async fromFilePoly(inputRomFile: File, patchFile: FilePoly): Promise<PPFHeader> {
     const header = (await patchFile.readNext(5)).toString();
     if (!header.startsWith(PPFHeader.FILE_SIGNATURE.toString())) {
-      throw new Error(`PPF patch header is invalid: ${patchFile.getPathLike()}`);
+      throw new ExpectedError(`PPF patch header is invalid: ${patchFile.getPathLike()}`);
     }
     const encoding = (await patchFile.readNext(1)).readUInt8();
     const version = encoding + 1;
     if (!header.endsWith(`${version}0`)) {
-      throw new Error(`PPF patch header has an invalid version: ${patchFile.getPathLike()}`);
+      throw new ExpectedError(`PPF patch header has an invalid version: ${patchFile.getPathLike()}`);
     }
     patchFile.skipNext(50); // description
 
@@ -33,7 +34,7 @@ class PPFHeader {
     if (version === 2) {
       const sourceSize = (await patchFile.readNext(4)).readUInt32LE();
       if (inputRomFile.getSize() !== sourceSize) {
-        throw new Error(`PPF patch expected ROM size of ${fsPoly.sizeReadable(sourceSize)}: ${patchFile.getPathLike()}`);
+        throw new ExpectedError(`PPF patch expected ROM size of ${fsPoly.sizeReadable(sourceSize)}: ${patchFile.getPathLike()}`);
       }
       blockCheckEnabled = true;
     } else if (version === 3) {
@@ -42,7 +43,7 @@ class PPFHeader {
       undoDataAvailable = (await patchFile.readNext(1)).readUInt8() === 0x01;
       patchFile.skipNext(1); // dummy
     } else {
-      throw new Error(`PPF v${version} isn't supported: ${patchFile.getPathLike()}`);
+      throw new ExpectedError(`PPF v${version} isn't supported: ${patchFile.getPathLike()}`);
     }
     if (blockCheckEnabled) {
       patchFile.skipNext(1024);
