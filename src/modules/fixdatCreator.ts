@@ -10,7 +10,6 @@ import Header from '../types/dats/logiqx/header.js';
 import LogiqxDAT from '../types/dats/logiqx/logiqxDat.js';
 import Parent from '../types/dats/parent.js';
 import Options from '../types/options.js';
-import OutputFactory from '../types/outputFactory.js';
 import ReleaseCandidate from '../types/releaseCandidate.js';
 import Module from './module.js';
 
@@ -47,7 +46,7 @@ export default class FixdatCreator extends Module {
       .flatMap((releaseCandidate) => releaseCandidate.getRomsWithFiles())
       .map((romWithFiles) => romWithFiles.getRom())
       .map((rom) => rom.hashCode()));
-    // Find all the games who have at least one missing ROM
+    // Find all the games that have at least one missing ROM
     const gamesWithMissingRoms = originalDat.getGames()
       .filter((game) => !game.getRoms().every((rom) => writtenRomHashCodes.has(rom.hashCode())));
     if (gamesWithMissingRoms.length === 0) {
@@ -55,9 +54,14 @@ export default class FixdatCreator extends Module {
       return undefined;
     }
 
-    const fixdatDir = this.options.shouldWrite()
-      ? OutputFactory.getDir(this.options, originalDat)
-      : process.cwd();
+    let fixdatDir = process.cwd();
+    if (this.options.shouldWrite()) {
+      try {
+        fixdatDir = this.options.getOutputDirRoot();
+      } catch (error) {
+        this.progressBar.logWarn(`failed to: ${error}`);
+      }
+    }
     if (!await fsPoly.exists(fixdatDir)) {
       await fsPoly.mkdir(fixdatDir, { recursive: true });
     }
