@@ -132,8 +132,7 @@ export default class OutputFactory {
 
     if (options.getDirMirror() && inputFile?.getFilePath()) {
       const mirroredDir = path.dirname(inputFile.getFilePath())
-        .replace(/[\\/]/g, path.sep)
-        .split(path.sep)
+        .split(/[\\/]/)
         .splice(1)
         .join(path.sep);
       output = path.join(output, mirroredDir);
