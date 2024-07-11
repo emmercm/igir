@@ -3,7 +3,7 @@ import ExpectedError from '../../expectedError.js';
 export interface DATProps extends CMProObject {
   clrmamepro?: ClrMameProProps,
   game?: GameProps | GameProps[],
-  resource?: GameProps | Resource[],
+  resource?: ResourceProps | ResourceProps[],
 }
 
 export interface ClrMameProProps extends CMProObject {
@@ -34,6 +34,7 @@ export interface GameProps extends CMProObject {
   disk?: DiskProps | DiskProps[],
   sample?: SampleProps | SampleProps[],
   // NON-STANDARD PROPERTIES
+  comment?: string,
   serial?: string,
   publisher?: string,
   releaseyear?: string,
@@ -61,7 +62,7 @@ export interface SampleProps extends CMProObject {
   name: string,
 }
 
-export interface Resource extends GameProps {}
+export interface ResourceProps extends GameProps {}
 
 type CMProValue = CMProObject | string | undefined;
 
