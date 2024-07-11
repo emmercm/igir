@@ -656,7 +656,7 @@ export default class Game implements GameProps {
    */
   hashCode(): string {
     let hashCode = this.getName();
-    hashCode += `|${this.getRoms().map((rom) => rom.hashCode()).join(',')}`;
+    hashCode += `|${this.getRoms().map((rom) => rom.hashCode()).sort().join(',')}`;
     return hashCode;
   }
 
