@@ -853,9 +853,9 @@ export default class Options implements OptionsProps {
    * Get the "root" sub-path of the output dir, the sub-path up until the first replaceable token.
    */
   getOutputDirRoot(): string {
-    const outputSplit = path.normalize(this.getOutput()).split(path.sep);
+    const outputSplit = path.normalize(this.getOutput()).split(/[\\/]/);
     for (let i = 0; i < outputSplit.length; i += 1) {
-      if (outputSplit[i].match(/\{[a-zA-Z]+\}/g) !== null) {
+      if (outputSplit[i].match(/\{[a-zA-Z]+\}/) !== null) {
         return path.normalize(outputSplit.slice(0, i).join(path.sep));
       }
     }

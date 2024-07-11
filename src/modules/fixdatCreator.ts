@@ -10,6 +10,7 @@ import Header from '../types/dats/logiqx/header.js';
 import LogiqxDAT from '../types/dats/logiqx/logiqxDat.js';
 import Parent from '../types/dats/parent.js';
 import Options from '../types/options.js';
+import OutputFactory from '../types/outputFactory.js';
 import ReleaseCandidate from '../types/releaseCandidate.js';
 import Module from './module.js';
 
@@ -57,7 +58,7 @@ export default class FixdatCreator extends Module {
     let fixdatDir = process.cwd();
     if (this.options.shouldWrite()) {
       try {
-        fixdatDir = this.options.getOutputDirRoot();
+        fixdatDir = this.getDatOutputDirRoot(originalDat);
       } catch (error) {
         this.progressBar.logWarn(`failed to: ${error}`);
       }
@@ -91,5 +92,17 @@ export default class FixdatCreator extends Module {
 
     this.progressBar.logTrace(`${originalDat.getNameShort()}: done generating a fixdat`);
     return fixdatPath;
+  }
+
+  private getDatOutputDirRoot(dat: DAT): string {
+    return OutputFactory.getDir(
+      new Options({
+        ...this.options,
+        // Chop off any path slugs that contain replaceable tokens, such that OutputFactory won't
+        // throw an exception
+        output: this.options.getOutputDirRoot(),
+      }),
+      dat,
+    );
   }
 }
