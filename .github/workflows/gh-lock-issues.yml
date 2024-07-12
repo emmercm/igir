@@ -5,13 +5,12 @@ on:
     - cron: '30 1 * * *'
   workflow_dispatch:
 
-permissions:
-  issues: write
-  pull-requests: write
-  discussions: write
-
 jobs:
   action:
+    permissions:
+      issues: write
+      pull-requests: write
+      discussions: write
     runs-on: ubuntu-latest
     steps:
       - uses: dessant/lock-threads@v5

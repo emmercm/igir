@@ -14,9 +14,9 @@ concurrency:
 
 jobs:
   repo-update:
-    runs-on: ubuntu-latest
     permissions:
       repository-projects: write
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - run: |
