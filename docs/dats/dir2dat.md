@@ -81,6 +81,16 @@ Once DATs have been generated from input files, they are processed the same as a
 
   If your input files are in some kind of standard naming convention (e.g. [No-Intro](https://wiki.no-intro.org/index.php?title=Naming_Convention), [Redump](https://datomatic.no-intro.org/stuff/The%20Official%20No-Intro%20Convention%20(20071030).pdf), or [TOSEC](https://www.tosecdev.org/tosec-naming-convention)) that contains region, language, or other tags, then [ROM filter options](../roms/filtering-preferences.md) can be applied.
 
+- **Filename extensions can be corrected.**
+
+    Input files will have their [file signature](https://en.wikipedia.org/wiki/List_of_file_signatures) read and matched against a list of known signatures for ROMs in order to fix any incorrect file extensions. Here's a table of example "bad" file extensions and what they will be corrected:
+
+   | Bad extensions                                                         | Correct extension                    |
+   |------------------------------------------------------------------------|--------------------------------------|
+   | `.fc` Nintendo Family Computer<br>`.nez` Nintendo Entertainment System | `.nes` Nintendo Entertainment System |
+   | `.sgb` Nintendo Super Game Boy                                         | `.gbc` Nintendo Game Boy Color       |
+   | `.gen` Sega Genesis<br>`.smd` Sega Mega Drive                          | `.md` Sega Mega Drive                |
+
 ## Alternative tools
 
 It is unlikely that any ROM tool, including `igir`, will ever meet every person's exact DAT creation needs.
