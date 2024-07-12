@@ -56,16 +56,27 @@ describe('commands', () => {
   });
 
   it('should parse multiple commands', () => {
-    const copyExtract = ['copy', 'extract', 'test', 'dir2dat', 'clean', 'report', ...dummyRequiredArgs, '--dat', os.devNull];
-    expect(argumentsParser.parse(copyExtract).shouldCopy()).toEqual(true);
-    expect(argumentsParser.parse(copyExtract).shouldMove()).toEqual(false);
-    expect(argumentsParser.parse(copyExtract).shouldExtract()).toEqual(true);
-    expect(argumentsParser.parse(copyExtract).shouldZipFile('')).toEqual(false);
-    expect(argumentsParser.parse(copyExtract).shouldTest()).toEqual(true);
-    expect(argumentsParser.parse(copyExtract).shouldDir2Dat()).toEqual(true);
-    expect(argumentsParser.parse(copyExtract).shouldFixdat()).toEqual(false);
-    expect(argumentsParser.parse(copyExtract).shouldClean()).toEqual(true);
-    expect(argumentsParser.parse(copyExtract).shouldReport()).toEqual(true);
+    const datCommands = ['copy', 'extract', 'test', 'clean', 'report', ...dummyRequiredArgs, '--dat', os.devNull];
+    expect(argumentsParser.parse(datCommands).shouldCopy()).toEqual(true);
+    expect(argumentsParser.parse(datCommands).shouldMove()).toEqual(false);
+    expect(argumentsParser.parse(datCommands).shouldExtract()).toEqual(true);
+    expect(argumentsParser.parse(datCommands).shouldZipFile('')).toEqual(false);
+    expect(argumentsParser.parse(datCommands).shouldTest()).toEqual(true);
+    expect(argumentsParser.parse(datCommands).shouldDir2Dat()).toEqual(false);
+    expect(argumentsParser.parse(datCommands).shouldFixdat()).toEqual(false);
+    expect(argumentsParser.parse(datCommands).shouldClean()).toEqual(true);
+    expect(argumentsParser.parse(datCommands).shouldReport()).toEqual(true);
+
+    const nonDatCommands = ['copy', 'extract', 'test', 'dir2dat', 'clean', ...dummyRequiredArgs];
+    expect(argumentsParser.parse(nonDatCommands).shouldCopy()).toEqual(true);
+    expect(argumentsParser.parse(nonDatCommands).shouldMove()).toEqual(false);
+    expect(argumentsParser.parse(nonDatCommands).shouldExtract()).toEqual(true);
+    expect(argumentsParser.parse(nonDatCommands).shouldZipFile('')).toEqual(false);
+    expect(argumentsParser.parse(nonDatCommands).shouldTest()).toEqual(true);
+    expect(argumentsParser.parse(nonDatCommands).shouldDir2Dat()).toEqual(true);
+    expect(argumentsParser.parse(nonDatCommands).shouldFixdat()).toEqual(false);
+    expect(argumentsParser.parse(nonDatCommands).shouldClean()).toEqual(true);
+    expect(argumentsParser.parse(nonDatCommands).shouldReport()).toEqual(false);
 
     const moveZip = ['move', 'zip', 'test', 'fixdat', 'clean', 'report', ...dummyRequiredArgs, '--dat', os.devNull];
     expect(argumentsParser.parse(moveZip).shouldCopy()).toEqual(false);
@@ -253,6 +264,7 @@ describe('options', () => {
   it('should parse "dat"', async () => {
     expect(() => argumentsParser.parse(['report', '--input', os.devNull])).toThrow(/missing required argument/i);
     expect(() => argumentsParser.parse([...dummyCommandAndRequiredArgs, '--dat'])).toThrow(/not enough arguments/i);
+    expect(() => argumentsParser.parse([...dummyCommandAndRequiredArgs, 'dir2dat', '--dat', os.devNull])).toThrow();
     await expect(argumentsParser.parse(dummyCommandAndRequiredArgs).scanDatFilesWithoutExclusions())
       .resolves.toHaveLength(0);
     await expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--dat', 'nonexistentfile']).scanDatFilesWithoutExclusions()).rejects.toThrow(/no files found/i);

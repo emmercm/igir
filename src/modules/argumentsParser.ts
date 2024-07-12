@@ -228,7 +228,15 @@ export default class ArgumentsParser {
         type: 'array',
         requiresArg: true,
       })
-      // TODO(cemmer): don't allow dir2dat & --dat
+      .check((checkArgv) => {
+        if (checkArgv.help) {
+          return true;
+        }
+        if (checkArgv.dat && checkArgv.dat.length > 0 && checkArgv._.includes('dir2dat')) {
+          throw new ExpectedError('Argument "--dat" cannot be used with the command "dir2dat"');
+        }
+        return true;
+      })
       .option('dat-exclude', {
         group: groupDatInput,
         description: 'Path(s) to DAT files or archives to exclude from processing (supports globbing)',
