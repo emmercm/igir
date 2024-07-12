@@ -63,7 +63,6 @@ export default class CandidateExtensionCorrector extends Module {
   }
 
   private romNeedsCorrecting(romWithFiles: ROMWithFiles): boolean {
-    // return true;
     return !this.options.usingDats()
       || romWithFiles.getRom().getName().trim() === '';
   }
