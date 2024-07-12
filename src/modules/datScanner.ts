@@ -153,15 +153,23 @@ export default class DATScanner extends Scanner {
       return dat;
     }
 
-    // Special case: if the DAT has only one game but a large number of ROMs, assume each of those
-    //  ROMs should be a separate game. This is to help parse the libretro BIOS System.dat file
-    //  which only has one game for every BIOS file, even though there are 90+ consoles.
-    if (dat.getGames().length === 1 && dat.getGames()[0].getRoms().length > 10) {
+    // Special case: if the DAT has only one BIOS game with a large number of ROMs, assume each of
+    //  those ROMs should be a separate game. This is to help parse the libretro BIOS System.dat
+    //  file which only has one game for every BIOS file, even though there are 90+ consoles.
+    if (dat.getGames().length === 1
+      && dat.getGames()[0].isBios()
+      && dat.getGames()[0].getRoms().length > 10
+    ) {
       const game = dat.getGames()[0];
-      dat = new LogiqxDAT(dat.getHeader(), dat.getGames()[0].getRoms().map((rom) => game.withProps({
-        name: rom.getName(),
-        rom: [rom],
-      })));
+      dat = new LogiqxDAT(dat.getHeader(), dat.getGames()[0].getRoms().map((rom) => {
+        // Use the ROM's filename without its extension as the game name
+        const { dir, name } = path.parse(rom.getName());
+        const gameName = path.format({ dir, name });
+        return game.withProps({
+          name: gameName,
+          rom: [rom],
+        });
+      }));
     }
 
     const size = dat.getGames()
@@ -348,7 +356,8 @@ export default class DATScanner extends Scanner {
         name: gameName,
         category: undefined,
         description: game.description,
-        bios: undefined,
+        bios: cmproDat.clrmamepro?.author?.toLowerCase() === 'libretro'
+          && cmproDat.clrmamepro?.name?.toLowerCase() === 'system' ? 'yes' : 'no',
         device: undefined,
         cloneOf: game.cloneof,
         romOf: game.romof,

@@ -1,4 +1,5 @@
 import FilePoly from '../../polyfill/filePoly.js';
+import ExpectedError from '../expectedError.js';
 import File from '../files/file.js';
 import Patch from './patch.js';
 
@@ -38,11 +39,11 @@ export default class NinjaPatch extends Patch {
     return this.getFile().extractToTempFilePoly('r', async (patchFile) => {
       const header = await patchFile.readNext(5);
       if (!header.equals(NinjaPatch.FILE_SIGNATURE)) {
-        throw new Error(`NINJA patch header is invalid: ${this.getFile().toString()}`);
+        throw new ExpectedError(`NINJA patch header is invalid: ${this.getFile().toString()}`);
       }
       const version = Number.parseInt((await patchFile.readNext(1)).toString(), 10);
       if (version !== 2) {
-        throw new Error(`NINJA v${version} isn't supported: ${this.getFile().toString()}`);
+        throw new ExpectedError(`NINJA v${version} isn't supported: ${this.getFile().toString()}`);
       }
 
       patchFile.skipNext(1); // encoding
@@ -91,7 +92,7 @@ export default class NinjaPatch extends Patch {
   private async applyCommandOpen(patchFile: FilePoly, targetFile: FilePoly): Promise<void> {
     const multiFile = (await patchFile.readNext(1)).readUInt8();
     if (multiFile > 0) {
-      throw new Error(`Multi-file NINJA patches aren't supported: ${this.getFile().toString()}`);
+      throw new ExpectedError(`Multi-file NINJA patches aren't supported: ${this.getFile().toString()}`);
     }
 
     const fileNameLength = multiFile > 0
@@ -100,7 +101,7 @@ export default class NinjaPatch extends Patch {
     patchFile.skipNext(fileNameLength); // file name
     const fileType = (await patchFile.readNext(1)).readUInt8();
     if (fileType > 0) {
-      throw new Error(`unsupported NINJA file type ${NinjaFileType[fileType]}: ${this.getFile().toString()}`);
+      throw new ExpectedError(`unsupported NINJA file type ${NinjaFileType[fileType]}: ${this.getFile().toString()}`);
     }
     const sourceFileSizeLength = (await patchFile.readNext(1)).readUInt8();
     const sourceFileSize = (await patchFile.readNext(sourceFileSizeLength))

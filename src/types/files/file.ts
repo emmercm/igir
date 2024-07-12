@@ -398,6 +398,11 @@ export default class File implements FileProps {
       return this;
     }
 
+    const fileDir = path.dirname(filePath);
+    if (!await fsPoly.exists(fileDir)) {
+      await fsPoly.mkdir(fileDir, { recursive: true });
+    }
+
     return new Promise((resolve, reject) => {
       https.get(this.getFilePath(), {
         timeout: 30_000,

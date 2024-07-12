@@ -41,6 +41,7 @@ import Timer from './timer.js';
 import DAT from './types/dats/dat.js';
 import Parent from './types/dats/parent.js';
 import DATStatus from './types/datStatus.js';
+import ExpectedError from './types/expectedError.js';
 import File from './types/files/file.js';
 import FileCache from './types/files/fileCache.js';
 import { ChecksumBitmask } from './types/files/fileChecksums.js';
@@ -79,9 +80,9 @@ export default class Igir {
       this.logger.trace('checking Windows for symlink permissions');
       if (!await FsPoly.canSymlink(Temp.getTempDir())) {
         if (!await isAdmin()) {
-          throw new Error(`${Package.NAME} does not have permissions to create symlinks, please try running as administrator`);
+          throw new ExpectedError(`${Package.NAME} does not have permissions to create symlinks, please try running as administrator`);
         }
-        throw new Error(`${Package.NAME} does not have permissions to create symlinks`);
+        throw new ExpectedError(`${Package.NAME} does not have permissions to create symlinks`);
       }
       this.logger.trace('Windows has symlink permissions');
     }
@@ -258,7 +259,7 @@ export default class Igir {
     const progressBar = await this.logger.addProgressBar('Scanning for DATs');
     let dats = await new DATScanner(this.options, progressBar).scan();
     if (dats.length === 0) {
-      throw new Error('No valid DAT files found!');
+      throw new ExpectedError('No valid DAT files found!');
     }
 
     if (dats.length === 1) {

@@ -41,7 +41,7 @@ async function runOutputCleaner(
   const after = await fsPoly.walk(tempDir);
 
   // Test cleanup
-  await fsPoly.rm(tempDir, { recursive: true });
+  await fsPoly.rm(tempDir, { recursive: true, force: true });
 
   return after
     .map((pathLike) => pathLike.replace(tempDir + path.sep, ''))

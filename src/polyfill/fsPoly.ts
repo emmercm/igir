@@ -9,6 +9,7 @@ import util from 'node:util';
 import { isNotJunk } from 'junk';
 import nodeDiskInfo from 'node-disk-info';
 
+import ExpectedError from '../types/expectedError.js';
 import ArrayPoly from './arrayPoly.js';
 
 export type FsWalkCallback = (increment: number) => void;
@@ -103,7 +104,7 @@ export default class FsPoly {
       return await fs.promises.link(target, link);
     } catch (error) {
       if (this.onDifferentDrives(target, link)) {
-        throw new Error(`can't hard link files on different drives: ${error}`);
+        throw new ExpectedError(`can't hard link files on different drives: ${error}`);
       }
       throw error;
     }
@@ -222,7 +223,7 @@ export default class FsPoly {
         return filePath;
       }
     }
-    throw new Error('failed to generate non-existent temp file');
+    throw new ExpectedError('failed to generate non-existent temp file');
   }
 
   static async mv(oldPath: string, newPath: string, attempt = 1): Promise<void> {
@@ -278,7 +279,7 @@ export default class FsPoly {
 
   static async readlink(pathLike: PathLike): Promise<string> {
     if (!await this.isSymlink(pathLike)) {
-      throw new Error(`can't readlink of non-symlink: ${pathLike}`);
+      throw new ExpectedError(`can't readlink of non-symlink: ${pathLike}`);
     }
     return fs.promises.readlink(pathLike);
   }
@@ -293,7 +294,7 @@ export default class FsPoly {
 
   static async realpath(pathLike: PathLike): Promise<string> {
     if (!await this.exists(pathLike)) {
-      throw new Error(`can't get realpath of non-existent path: ${pathLike}`);
+      throw new ExpectedError(`can't get realpath of non-existent path: ${pathLike}`);
     }
     return fs.promises.realpath(pathLike);
   }
@@ -306,11 +307,11 @@ export default class FsPoly {
 
     try {
       await fs.promises.access(pathLike); // throw if file doesn't exist
-    } catch (error) {
+    } catch {
       if (optionsWithRetry?.force) {
         return;
       }
-      throw error;
+      throw new Error(`can't rm, path doesn't exist: ${pathLike}`);
     }
 
     if (await this.isDirectory(pathLike)) {

@@ -1,5 +1,6 @@
 import FilePoly from '../../polyfill/filePoly.js';
 import fsPoly from '../../polyfill/fsPoly.js';
+import ExpectedError from '../expectedError.js';
 import File from '../files/file.js';
 import Patch from './patch.js';
 
@@ -27,12 +28,12 @@ export default class APSGBAPatch extends Patch {
     return this.getFile().extractToTempFilePoly('r', async (patchFile) => {
       const header = await patchFile.readNext(APSGBAPatch.FILE_SIGNATURE.length);
       if (!header.equals(APSGBAPatch.FILE_SIGNATURE)) {
-        throw new Error(`APS (GBA) patch header is invalid: ${this.getFile().toString()}`);
+        throw new ExpectedError(`APS (GBA) patch header is invalid: ${this.getFile().toString()}`);
       }
 
       const originalSize = (await patchFile.readNext(4)).readUInt32LE();
       if (inputRomFile.getSize() !== originalSize) {
-        throw new Error(`APS (GBA) patch expected ROM size of ${fsPoly.sizeReadable(originalSize)}: ${this.getFile().toString()}`);
+        throw new ExpectedError(`APS (GBA) patch expected ROM size of ${fsPoly.sizeReadable(originalSize)}: ${this.getFile().toString()}`);
       }
 
       patchFile.skipNext(4); // patched size

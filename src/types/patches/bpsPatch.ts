@@ -1,5 +1,6 @@
 import FilePoly from '../../polyfill/filePoly.js';
 import fsPoly from '../../polyfill/fsPoly.js';
+import ExpectedError from '../expectedError.js';
 import File from '../files/file.js';
 import FileChecksums, { ChecksumBitmask } from '../files/fileChecksums.js';
 import Patch from './patch.js';
@@ -40,12 +41,12 @@ export default class BPSPatch extends Patch {
       const patchData = await patchFile.readNext(patchFile.getSize() - 4);
       const patchChecksumsActual = await FileChecksums.hashData(patchData, ChecksumBitmask.CRC32);
       if (patchChecksumsActual.crc32 !== patchChecksumExpected) {
-        throw new Error(`BPS patch is invalid, CRC of contents (${patchChecksumsActual.crc32}) doesn't match expected (${patchChecksumExpected}): ${file.toString()}`);
+        throw new ExpectedError(`BPS patch is invalid, CRC of contents (${patchChecksumsActual.crc32}) doesn't match expected (${patchChecksumExpected}): ${file.toString()}`);
       }
     });
 
     if (crcBefore.length !== 8 || crcAfter.length !== 8) {
-      throw new Error(`couldn't parse base file CRC for patch: ${file.toString()}`);
+      throw new ExpectedError(`couldn't parse base file CRC for patch: ${file.toString()}`);
     }
 
     return new BPSPatch(file, crcBefore, crcAfter, targetSize);
@@ -55,12 +56,12 @@ export default class BPSPatch extends Patch {
     return this.getFile().extractToTempFilePoly('r', async (patchFile) => {
       const header = await patchFile.readNext(4);
       if (!header.equals(BPSPatch.FILE_SIGNATURE)) {
-        throw new Error(`BPS patch header is invalid: ${this.getFile().toString()}`);
+        throw new ExpectedError(`BPS patch header is invalid: ${this.getFile().toString()}`);
       }
 
       const sourceSize = await Patch.readUpsUint(patchFile);
       if (inputRomFile.getSize() !== sourceSize) {
-        throw new Error(`BPS patch expected ROM size of ${fsPoly.sizeReadable(sourceSize)}: ${this.getFile().toString()}`);
+        throw new ExpectedError(`BPS patch expected ROM size of ${fsPoly.sizeReadable(sourceSize)}: ${this.getFile().toString()}`);
       }
       await Patch.readUpsUint(patchFile); // target size
 
@@ -123,7 +124,7 @@ export default class BPSPatch extends Patch {
           targetRelativeOffset += 1;
         }
       } else {
-        throw new Error(`BPS action ${action} isn't supported`);
+        throw new ExpectedError(`BPS action ${action} isn't supported`);
       }
     }
   }
