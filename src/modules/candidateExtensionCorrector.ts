@@ -13,7 +13,9 @@ import ROMWithFiles from '../types/romWithFiles.js';
 import Module from './module.js';
 
 /**
- * TODO(cemmer)
+ * Correct the extensions of output {@link File}s when:
+ *  1. Not using any DATs (i.e. there's no correction already happening elsewhere)
+ *  2. The DAT-supplied ROM name is falsey
  */
 export default class CandidateExtensionCorrector extends Module {
   private static readonly THREAD_SEMAPHORE = new Semaphore(Number.MAX_SAFE_INTEGER);
@@ -31,7 +33,7 @@ export default class CandidateExtensionCorrector extends Module {
   }
 
   /**
-   * TODO(cemmer)
+   * Correct the file extensions.
    */
   async correct(
     dat: DAT,
