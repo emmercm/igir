@@ -1168,7 +1168,7 @@ describe('with inferred DATs', () => {
         'allpads.nes',
         'before.rom',
         'best.rom',
-        'color_test.nes', // TODO(cemmer)
+        'color_test.nes',
         'diagnostic_test_cartridge.a78',
         'fds_joypad_test.fds',
         'five.rom',
