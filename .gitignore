@@ -140,6 +140,7 @@ site/
 *.ngp
 *.pce
 *.pk3
+*.pup
 *.rom
 *.sfc
 *.smc
