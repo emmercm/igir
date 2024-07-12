@@ -42,7 +42,6 @@ export interface GameProps extends CMProObject {
   developer?: string,
   users?: string,
   esrbrating?: string,
-  comment?: string,
   genre?: string,
 }
 
