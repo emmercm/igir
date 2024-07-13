@@ -52,6 +52,35 @@ export default class ROMSignature {
     // Nintendo - Super Nintendo Entertainment System
     new ROMSignature('.smc', [{ offset: 3, value: Buffer.from('00'.repeat(509), 'hex') }]),
     new ROMSignature('.smc', [{ offset: 0, value: Buffer.from('00014D4520444F43544F522053462033', 'hex') }]),
+    // Sega - 32X
+    // @see https://github.com/jcfieldsdev/genesis-rom-utility/blob/31826bca66c8c6c467c37c1b711943eb5464e7e8/genesis_rom.chm
+    // @see https://plutiedev.com/rom-header
+    new ROMSignature('.32x', [{ offset: 0x1_00, value: Buffer.from('SEGA 32X') }]),
+    // Sega - Mega Drive / Genesis
+    // @see https://github.com/jcfieldsdev/genesis-rom-utility/blob/31826bca66c8c6c467c37c1b711943eb5464e7e8/genesis_rom.chm
+    // @see https://plutiedev.com/rom-header
+    // @see https://www.romhacking.net/forum/index.php?topic=32880.msg415017#msg415017
+    new ROMSignature('.md', [{ offset: 0x1_00, value: Buffer.from('SEGA            ') }]),
+    new ROMSignature('.md', [{ offset: 0x1_00, value: Buffer.from('SEGA IS A REGISTERED') }]),
+    new ROMSignature('.md', [{ offset: 0x1_00, value: Buffer.from('SEGA IS A TRADEMARK ') }]),
+    new ROMSignature('.md', [{ offset: 0x1_00, value: Buffer.from('SEGA GENESIS') }]),
+    new ROMSignature('.md', [{ offset: 0x1_00, value: Buffer.from(' SEGA GENESIS') }]),
+    new ROMSignature('.md', [{ offset: 0x1_00, value: Buffer.from('SEGA_GENESIS') }]),
+    new ROMSignature('.md', [{ offset: 0x1_00, value: Buffer.from('SEGA MEGADRIVE') }]),
+    new ROMSignature('.md', [{ offset: 0x1_00, value: Buffer.from('SEGA MEGA DRIVE') }]),
+    new ROMSignature('.md', [{ offset: 0x1_00, value: Buffer.from(' SEGA MEGA DRIVE') }]),
+    new ROMSignature('.md', [{ offset: 0x1_00, value: Buffer.from('SEGA_MEGA_DRIVE') }]),
+    new ROMSignature('.md', [{ offset: 0x1_00, value: Buffer.from(' SEGA_MEGA_DRIVE') }]),
+    new ROMSignature('.md', [{ offset: 0x1_00, value: Buffer.from('SEGASEGASEGA') }]),
+    new ROMSignature('.smd', [{ offset: 0x2_80, value: Buffer.from('EAGNSS  ') }]),
+    new ROMSignature('.smd', [{ offset: 0x2_80, value: Buffer.from('EAMG RV') }]),
+    new ROMSignature('.smd', [{ offset: 0x2_80, value: Buffer.from('EAMG_RV') }]),
+    new ROMSignature('.smd', [{ offset: 0x2_80, value: Buffer.from('EAMGDIE') }]),
+    new ROMSignature('.smd', [{ offset: 0x2_80, value: Buffer.from('SG EEI  ') }]),
+    // Sega - PICO
+    // @see https://github.com/jcfieldsdev/genesis-rom-utility/blob/31826bca66c8c6c467c37c1b711943eb5464e7e8/genesis_rom.chm
+    // @see https://plutiedev.com/rom-header
+    new ROMSignature('.md', [{ offset: 0x1_00, value: Buffer.from('SEGA PICO') }]),
     // Sony - PlayStation Portable
     new ROMSignature('pbp', [{ offset: 0, value: Buffer.from('0050425000000100', 'hex') }]),
   ];

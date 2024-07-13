@@ -89,7 +89,7 @@ Once DATs have been generated from input files, they are processed the same as a
    |------------------------------------------------------------------------|--------------------------------------|
    | `.fc` Nintendo Family Computer<br>`.nez` Nintendo Entertainment System | `.nes` Nintendo Entertainment System |
    | `.sgb` Nintendo Super Game Boy                                         | `.gbc` Nintendo Game Boy Color       |
-   | `.gen` Sega Genesis<br>`.smd` Sega Mega Drive                          | `.md` Sega Mega Drive                |
+   | `.bin` Sega Mega Drive / Genesis<br>`.gen` Sega Genesis                | `.md` Sega Mega Drive                |
 
 ## Alternative tools
 
