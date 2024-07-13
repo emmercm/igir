@@ -17,6 +17,7 @@
     ```batch
     igir copy extract test clean ^
       --dat "Redump*.zip" ^
+      --dat-name-regex '/playstation 2/i' ^
       --input "ISOs" ^
       --output "E:\DVD" ^
       --dir-letter ^
@@ -30,6 +31,7 @@
     ```shell
     igir copy extract test clean \
       --dat "Redump*.zip" \
+      --dat-name-regex '/playstation 2/i' \
       --input "ISOs/" \
       --output "/Volumes/PS2/DVD/" \
       --dir-letter \
@@ -43,6 +45,7 @@
     ```shell
     igir copy extract test clean \
       --dat "Redump*.zip" \
+      --dat-name-regex '/playstation 2/i' \
       --input "ISOs/" \
       --output "/media/PS2/DVD/" \
       --dir-letter \
