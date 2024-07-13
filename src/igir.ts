@@ -157,7 +157,7 @@ export default class Igir {
 
       // Write a dir2dat
       const dir2DatPath = await new Dir2DatCreator(this.options, progressBar)
-        .create(filteredDat);
+        .create(filteredDat, parentsToCandidates);
       if (dir2DatPath) {
         datsToWrittenFiles.set(filteredDat, [
           ...(datsToWrittenFiles.get(filteredDat) ?? []),
