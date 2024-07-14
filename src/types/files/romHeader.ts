@@ -1,6 +1,8 @@
 import path from 'node:path';
 import { Readable } from 'node:stream';
 
+import ArrayPoly from '../../polyfill/arrayPoly.js';
+
 export default class ROMHeader {
   private static readonly HEADERS: { [key: string]:ROMHeader } = {
     // http://7800.8bitdev.org/index.php/A78_Header_Specification
@@ -50,7 +52,10 @@ export default class ROMHeader {
   }
 
   static getSupportedExtensions(): string[] {
-    return Object.values(this.HEADERS).map((header) => header.headeredFileExtension).sort();
+    return Object.values(this.HEADERS)
+      .map((header) => header.headeredFileExtension)
+      .reduce(ArrayPoly.reduceUnique(), [])
+      .sort();
   }
 
   static headerFromFilename(filePath: string): ROMHeader | undefined {
