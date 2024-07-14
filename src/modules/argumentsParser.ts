@@ -69,13 +69,14 @@ export default class ArgumentsParser {
     const groupDatInput = 'DAT input options:';
     const groupPatchInput = 'Patch input options:';
     const groupRomOutput = 'ROM output options (processed in order):';
-    const groupRomZip = 'ROM zip command options:';
-    const groupRomLink = 'ROM link command options:';
+    const groupRomClean = 'clean command options:';
+    const groupRomZip = 'zip command options:';
+    const groupRomLink = 'link command options:';
     const groupRomHeader = 'ROM header options:';
     const groupRomSet = 'ROM set options:';
     const groupRomFiltering = 'ROM filtering options:';
     const groupRomPriority = 'One game, one ROM (1G1R) options:';
-    const groupReport = 'Report options:';
+    const groupReport = 'report command options:';
     const groupHelpDebug = 'Help & debug options:';
 
     // Add every command to a yargs object, recursively, resulting in the ability to specify
@@ -410,26 +411,33 @@ export default class ArgumentsParser {
         description: 'Overwrite files in the output directory that are the wrong filesize, checksum, or zip contents',
         type: 'boolean',
       })
+      .check((checkArgv) => {
+        if (checkArgv.help) {
+          return true;
+        }
+        const needClean = ['clean-exclude', 'clean-dry-run'].filter((option) => checkArgv[option]);
+        if (!checkArgv._.includes('clean') && needClean.length > 0) {
+          // TODO(cememr): print help message
+          throw new ExpectedError(`Missing required command for option${needClean.length !== 1 ? 's' : ''} ${needClean.join(', ')}: clean`);
+        }
+        return true;
+      })
+
       .option('clean-exclude', {
-        group: groupRomOutput,
+        group: groupRomClean,
         alias: 'C',
         description: 'Path(s) to files to exclude from cleaning (supports globbing)',
         type: 'array',
         requiresArg: true,
       })
       .option('clean-dry-run', {
-        group: groupRomOutput,
+        group: groupRomClean,
         description: 'Don\'t clean any files and instead only print what files would be cleaned',
         type: 'boolean',
       })
       .check((checkArgv) => {
         if (checkArgv.help) {
           return true;
-        }
-        const needOutput = ['copy', 'move', 'link', 'symlink', 'extract', 'zip', 'clean'].filter((command) => checkArgv._.includes(command));
-        if (!checkArgv.output && needOutput.length > 0) {
-          // TODO(cememr): print help message
-          throw new ExpectedError(`Missing required argument for command${needOutput.length !== 1 ? 's' : ''} ${needOutput.join(', ')}: --output <path>`);
         }
         const needClean = ['clean-exclude', 'clean-dry-run'].filter((option) => checkArgv[option]);
         if (!checkArgv._.includes('clean') && needClean.length > 0) {
