@@ -86,6 +86,7 @@ export interface OptionsProps {
   readonly dirGameSubdir?: string,
   readonly overwrite?: boolean,
   readonly overwriteInvalid?: boolean,
+
   readonly cleanExclude?: string[],
   readonly cleanDryRun?: boolean,
 
