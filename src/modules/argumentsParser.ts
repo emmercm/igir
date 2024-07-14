@@ -415,10 +415,10 @@ export default class ArgumentsParser {
         if (checkArgv.help) {
           return true;
         }
-        const needClean = ['clean-exclude', 'clean-dry-run'].filter((option) => checkArgv[option]);
-        if (!checkArgv._.includes('clean') && needClean.length > 0) {
+        const needOutput = ['copy', 'move', 'link', 'symlink', 'extract', 'zip', 'clean'].filter((command) => checkArgv._.includes(command));
+        if (!checkArgv.output && needOutput.length > 0) {
           // TODO(cememr): print help message
-          throw new ExpectedError(`Missing required command for option${needClean.length !== 1 ? 's' : ''} ${needClean.join(', ')}: clean`);
+          throw new ExpectedError(`Missing required argument for command${needOutput.length !== 1 ? 's' : ''} ${needOutput.join(', ')}: --output <path>`);
         }
         return true;
       })
