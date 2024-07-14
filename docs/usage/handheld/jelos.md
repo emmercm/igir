@@ -17,7 +17,7 @@ We will assume the single card variant here. If you use a card just for roms, pl
 | Component     | single SD card (OS+ROMs) | separate SD card (ROMs only) |
 |---------------|--------------------------|------------------------------|
 | BIOS          | `<SD>/roms/bios/`        | `<SD>/bios/`                 |
-| GameBoy ROMs  | `<SD>/roms/gb`           | `<SD>/gb`                    |
+| Game Boy ROMs | `<SD>/roms/gb`           | `<SD>/gb`                    |
 | ...           |                          |                              |
 
 The OS can also be installed on other media than SD cards. Still we will call them OS SD card and ROM SD card.

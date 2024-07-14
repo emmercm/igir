@@ -17,8 +17,9 @@
     ```batch
     igir copy extract test clean ^
       --dat "Redump*.zip" ^
+      --dat-name-regex '/gamecube/i' ^
       --input "ISOs" ^
-      --output "E:\ISOs" ^
+      --output "E:\Games" ^
       --dir-letter ^
       --writer-threads 1
     ```
@@ -30,8 +31,9 @@
     ```shell
     igir copy extract test clean \
       --dat "Redump*.zip" \
+      --dat-name-regex '/gamecube/i' \
       --input "ISOs/" \
-      --output "/Volumes/SD2SP2/ISOs/" \
+      --output "/Volumes/SD2SP2/Games/" \
       --dir-letter \
       --writer-threads 1
     ```
@@ -43,8 +45,9 @@
     ```shell
     igir copy extract test clean \
       --dat "Redump*.zip" \
+      --dat-name-regex '/gamecube/i' \
       --input "ISOs/" \
-      --output "/media/SD2SP2/ISOs/" \
+      --output "/media/SD2SP2/Games/" \
       --dir-letter \
       --writer-threads 1
     ```

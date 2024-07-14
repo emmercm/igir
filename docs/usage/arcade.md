@@ -12,7 +12,7 @@ This page is written to give users just enough context to build & re-build arcad
 
 Unlike traditional console emulators that only have to emulate a small set of hardware, arcade emulators have the monumental task of emulating a wildly varying number of hardware chips, inputs, and outputs. This results in each version of an emulator having a very specific set of games it can emulate, and newer emulator versions will likely add more games to this set.
 
-Due to arcade machines being more complicated and rarer, arcade ROM dumps are sometimes imperfect. Because of this, newer emulator versions may expect different ROM files than older versions. This makes ROM sets potentially incompatible between different emulator versions.
+Due to arcade machines being more complicated and rarer than games for home consoles, arcade ROM dumps are sometimes imperfect. Because of this, newer emulator versions may expect different ROM files than older versions. This makes ROM sets potentially incompatible between different emulator versions.
 
 Because of all of these reasons, each arcade emulator version usually comes with a companion [DAT](../dats/introduction.md#arcade-dats) that details the _exact_ set of ROM files supported by that _exact_ emulator version. Emulators such as [MAME](https://www.mamedev.org/) take this a step further and expect an _exact_ zip file name for each game.
 

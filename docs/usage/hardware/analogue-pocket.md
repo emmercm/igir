@@ -97,11 +97,11 @@ Your SD card should look like this, likely with more cores:
 │   │       ├── ROM1.sms
 │   │       ├── ROM2.sms
 │   │       └── ROM3.sms
-│   ├── snes
-│   │   └── common
-│   │       ├── ROM1.snes
-│   │       ├── ROM2.snes
-│   │       └── ROM3.snes
+│   └── snes
+│       └── common
+│           ├── ROM1.snes
+│           ├── ROM2.snes
+│           └── ROM3.snes
 ├── Cores
 ├── Platforms
 └── Presets
