@@ -73,14 +73,8 @@ export default class ROMSignature {
     // Nintendo - Super Nintendo Entertainment System
     // @see https://snes.nesdev.org/wiki/ROM_header
     // @see https://en.wikibooks.org/wiki/Super_NES_Programming/SNES_memory_map
-    new ROMSignature('.smc', [
-      { offset: 3, value: Buffer.from('00'.repeat(509), 'hex') },
-      { offset: 0x81_D5, value: Buffer.from('00100000', 'binary') }, // LoROM
-    ]),
-    new ROMSignature('.smc', [
-      { offset: 3, value: Buffer.from('00'.repeat(509), 'hex') },
-      { offset: 0x81_D5, value: Buffer.from('00110000', 'binary') }, // LoROM + FastROM
-    ]),
+    // TODO(cemmer): add checks from LoROM, HiROM, etc.
+    new ROMSignature('.smc', [{ offset: 3, value: Buffer.from('00'.repeat(509), 'hex') }]),
     // @see https://file-extension.net/seeker/file_extension_smc
     // @see https://wiki.superfamicom.org/game-doctor
     new ROMSignature('.smc', [{ offset: 0, value: Buffer.from('00014D4520444F43544F522053462033', 'hex') }]), // Game Doctor SF3?
