@@ -12,7 +12,7 @@ import LogiqxDAT from '../../src/types/dats/logiqx/logiqxDat.js';
 import Parent from '../../src/types/dats/parent.js';
 import ROM from '../../src/types/dats/rom.js';
 import File from '../../src/types/files/file.js';
-import Options from '../../src/types/options.js';
+import Options, { RomFixExtension } from '../../src/types/options.js';
 import ReleaseCandidate from '../../src/types/releaseCandidate.js';
 import ROMWithFiles from '../../src/types/romWithFiles.js';
 import ProgressBarFake from '../console/progressBarFake.js';
@@ -31,7 +31,9 @@ it('should do nothing with no parents', async () => {
 });
 
 it('should do nothing when no ROMs need correcting', async () => {
-  const options = new Options();
+  const options = new Options({
+    romFixExtension: RomFixExtension[RomFixExtension.AUTO].toLowerCase(),
+  });
   const dat = new LogiqxDAT(new Header(), [
     new Game({
       name: 'game with no ROMs',
@@ -103,6 +105,7 @@ it('should correct ROMs without DATs', async () => {
   const options = new Options({
     // No DAT has been provided, therefore all ROMs should be corrected
     input: [path.join('test', 'fixtures', 'roms', 'headered')],
+    romFixExtension: RomFixExtension[RomFixExtension.AUTO].toLowerCase(),
   });
   const dat = new LogiqxDAT(new Header(), []);
   const inputFiles = await new ROMScanner(options, new ProgressBarFake()).scan();
@@ -150,6 +153,7 @@ it('should correct ROMs with missing filenames', async () => {
   const options = new Options({
     dat: [path.join('test', 'fixtures', 'dats')],
     input: [path.join('test', 'fixtures', 'roms', 'headered')],
+    romFixExtension: RomFixExtension[RomFixExtension.AUTO].toLowerCase(),
   });
   const dat = new LogiqxDAT(new Header(), []);
   const inputFiles = await new ROMScanner(options, new ProgressBarFake()).scan();

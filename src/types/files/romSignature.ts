@@ -117,7 +117,7 @@ export default class ROMSignature {
     new ROMSignature('.md', [{ offset: 0x1_00, value: Buffer.from('SEGA PICO') }]),
 
     // Sony - PlayStation Portable
-    new ROMSignature('pbp', [{ offset: 0, value: Buffer.from('0050425000000100', 'hex') }]),
+    new ROMSignature('.pbp', [{ offset: 0, value: Buffer.from('0050425000000100', 'hex') }]),
   ];
 
   private static readonly MAX_HEADER_LENGTH_BYTES = Object.values(ROMSignature.SIGNATURES)
@@ -142,6 +142,7 @@ export default class ROMSignature {
   static getSupportedExtensions(): string[] {
     return Object.values(this.SIGNATURES)
       .map((signature) => signature.extension)
+      .filter((extension) => !['.bin'].includes(extension))
       .reduce(ArrayPoly.reduceUnique(), [])
       .sort();
   }
