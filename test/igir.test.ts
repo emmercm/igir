@@ -9,7 +9,7 @@ import DATScanner from '../src/modules/datScanner.js';
 import ArrayPoly from '../src/polyfill/arrayPoly.js';
 import fsPoly from '../src/polyfill/fsPoly.js';
 import FileFactory from '../src/types/files/fileFactory.js';
-import Options, { GameSubdirMode, OptionsProps } from '../src/types/options.js';
+import Options, { GameSubdirMode, OptionsProps, RomFixExtension } from '../src/types/options.js';
 import ProgressBarFake from './console/progressBarFake.js';
 
 interface TestOutput {
@@ -167,6 +167,7 @@ describe('with explicit DATs', () => {
         output: outputTemp,
         dirDatName: true,
         dirGameSubdir: GameSubdirMode[GameSubdirMode.MULTIPLE].toLowerCase(),
+        romFixExtension: RomFixExtension[RomFixExtension.AUTO].toLowerCase(),
       });
 
       expect(result.outputFilesAndCrcs).toEqual([
@@ -264,6 +265,7 @@ describe('with explicit DATs', () => {
         output: path.join(outputTemp, '{outputExt}'),
         dirDatName: true,
         dirGameSubdir: GameSubdirMode[GameSubdirMode.MULTIPLE].toLowerCase(),
+        romFixExtension: RomFixExtension[RomFixExtension.AUTO].toLowerCase(),
       });
 
       expect(result.outputFilesAndCrcs).toEqual([
@@ -398,6 +400,7 @@ describe('with explicit DATs', () => {
         datCombine: true,
         dirDatName: true,
         dirGameSubdir: GameSubdirMode[GameSubdirMode.MULTIPLE].toLowerCase(),
+        romFixExtension: RomFixExtension[RomFixExtension.AUTO].toLowerCase(),
       });
 
       expect(result.outputFilesAndCrcs).toEqual([
@@ -545,6 +548,7 @@ describe('with explicit DATs', () => {
         input: [path.join(inputTemp, 'roms')],
         output: outputTemp,
         dirDatName: true,
+        romFixExtension: RomFixExtension[RomFixExtension.AUTO].toLowerCase(),
       });
 
       expect(result.outputFilesAndCrcs).toEqual([
@@ -598,6 +602,7 @@ describe('with explicit DATs', () => {
         input: [path.join(inputTemp, 'roms')],
         output: outputTemp,
         zipDatName: true,
+        romFixExtension: RomFixExtension[RomFixExtension.NEVER].toLowerCase(),
       });
 
       expect(result.outputFilesAndCrcs).toEqual([
@@ -607,12 +612,12 @@ describe('with explicit DATs', () => {
         [`${path.join('Hardware Target Game Database', 'Dummy', 'smdb.zip')}|Fizzbuzz.nes`, '370517b5'],
         [`${path.join('Hardware Target Game Database', 'Dummy', 'smdb.zip')}|Foobar.lnx`, 'b22c9747'],
         [`${path.join('Hardware Target Game Database', 'Dummy', 'smdb.zip')}|Lorem Ipsum.rom`, '70856527'],
-        ['Headered.zip|allpads.nes', '9180a163'],
-        ['Headered.zip|color_test.nes', 'c9c1b7aa'],
-        ['Headered.zip|diagnostic_test_cartridge.a78', 'f6cc9b1c'],
-        ['Headered.zip|fds_joypad_test.fds', '1e58456d'],
-        ['Headered.zip|LCDTestROM.lnx', '2d251538'],
-        ['Headered.zip|speed_test_v51.smc', '9adca6cc'],
+        ['Headered.zip|allpads.rom', '9180a163'],
+        ['Headered.zip|color_test.rom', 'c9c1b7aa'],
+        ['Headered.zip|diagnostic_test_cartridge.rom', 'f6cc9b1c'],
+        ['Headered.zip|fds_joypad_test.rom', '1e58456d'],
+        ['Headered.zip|LCDTestROM.rom', '2d251538'],
+        ['Headered.zip|speed_test_v51.rom', '9adca6cc'],
         ['Headerless.zip|allpads.nes', '6339abe6'],
         ['Headerless.zip|color_test.nes', 'c9c1b7aa'],
         ['Headerless.zip|diagnostic_test_cartridge.a78', 'a1eaa7c1'],
@@ -652,6 +657,7 @@ describe('with explicit DATs', () => {
         output: outputTemp,
         dirDatName: true,
         dirGameSubdir: GameSubdirMode[GameSubdirMode.MULTIPLE].toLowerCase(),
+        romFixExtension: RomFixExtension[RomFixExtension.AUTO].toLowerCase(),
         symlink: true,
       });
 
@@ -705,6 +711,7 @@ describe('with explicit DATs', () => {
         output: outputTemp,
         dirDatName: true,
         dirGameSubdir: GameSubdirMode[GameSubdirMode.MULTIPLE].toLowerCase(),
+        romFixExtension: RomFixExtension[RomFixExtension.AUTO].toLowerCase(),
         removeHeaders: [''], // all
       });
 
@@ -792,6 +799,7 @@ describe('with explicit DATs', () => {
         input: [path.join(inputTemp, 'roms')],
         output: outputTemp,
         dirDatName: true,
+        romFixExtension: RomFixExtension[RomFixExtension.AUTO].toLowerCase(),
       });
 
       const writtenFixdats = result.outputFilesAndCrcs
@@ -822,6 +830,7 @@ describe('with explicit DATs', () => {
         input: [path.join(inputTemp, 'roms')],
         output: outputTemp,
         dirDatName: true,
+        romFixExtension: RomFixExtension[RomFixExtension.AUTO].toLowerCase(),
         reportOutput: 'report.csv',
       });
 
@@ -868,6 +877,7 @@ describe('with inferred DATs', () => {
         commands: ['copy', 'test'],
         input: [path.join(inputTemp, 'roms')],
         output: outputTemp,
+        romFixExtension: RomFixExtension[RomFixExtension.AUTO].toLowerCase(),
       });
 
       expect(result.outputFilesAndCrcs).toEqual([
@@ -932,6 +942,7 @@ describe('with inferred DATs', () => {
         input: [path.join(inputTemp, 'roms')],
         output: outputTemp,
         dirGameSubdir: GameSubdirMode[GameSubdirMode.MULTIPLE].toLowerCase(),
+        romFixExtension: RomFixExtension[RomFixExtension.AUTO].toLowerCase(),
       });
 
       expect(result.outputFilesAndCrcs).toEqual([
@@ -1053,6 +1064,7 @@ describe('with inferred DATs', () => {
         commands: ['link', 'test'],
         input: [path.join(inputTemp, 'roms')],
         output: outputTemp,
+        romFixExtension: RomFixExtension[RomFixExtension.AUTO].toLowerCase(),
         symlink: true,
         symlinkRelative: true,
       });
@@ -1102,6 +1114,7 @@ describe('with inferred DATs', () => {
         commands: ['move', 'extract', 'test'],
         input: [path.join(inputTemp, 'roms', 'headered')],
         output: outputTemp,
+        romFixExtension: RomFixExtension[RomFixExtension.AUTO].toLowerCase(),
         removeHeaders: [''], // all
       });
 
@@ -1133,6 +1146,7 @@ describe('with inferred DATs', () => {
         input: [path.join(inputTemp, 'roms')],
         output: outputTemp,
         dirDatName: true,
+        romFixExtension: RomFixExtension[RomFixExtension.AUTO].toLowerCase(),
       });
 
       const writtenDir2Dats = result.cwdFilesAndCrcs
