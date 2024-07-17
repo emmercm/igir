@@ -83,13 +83,7 @@ Once DATs have been generated from input files, they are processed the same as a
 
 - **Filename extensions can be corrected.**
 
-    Input files will have their [file signature](https://en.wikipedia.org/wiki/List_of_file_signatures) read and matched against a list of known signatures for ROMs in order to fix any incorrect file extensions. Here's a table of example "bad" file extensions and what they will be corrected:
-
-   | Bad extensions                                                         | Correct extension                    |
-   |------------------------------------------------------------------------|--------------------------------------|
-   | `.fc` Nintendo Family Computer<br>`.nez` Nintendo Entertainment System | `.nes` Nintendo Entertainment System |
-   | `.sgb` Nintendo Super Game Boy                                         | `.gbc` Nintendo Game Boy Color       |
-   | `.bin` Sega Mega Drive / Genesis<br>`.gen` Sega Genesis                | `.md` Sega Mega Drive                |
+    See [ROM Output Options](../output/options.md#fixing-rom-extensions) for more information.
 
 ## Alternative tools
 
