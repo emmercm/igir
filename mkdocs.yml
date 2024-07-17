@@ -95,6 +95,7 @@ nav:
       - File Outputs:
           - output/path-options.md
           - output/tokens.md
+          - output/options.md
           - output/writing-archives.md
           - output/reporting.md
           - output/cleaning.md

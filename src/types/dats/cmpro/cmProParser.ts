@@ -23,8 +23,8 @@ export interface ClrMameProProps extends CMProObject {
 }
 
 export interface GameProps extends CMProObject {
-  name: string,
-  description: string,
+  name?: string,
+  description?: string,
   year?: string,
   manufacturer?: string,
   cloneof?: string,
@@ -42,10 +42,11 @@ export interface GameProps extends CMProObject {
   developer?: string,
   users?: string,
   esrbrating?: string,
+  genre?: string,
 }
 
 export interface ROMProps extends CMProObject {
-  name: string,
+  name?: string,
   merge?: string,
   size?: string,
   crc?: string,

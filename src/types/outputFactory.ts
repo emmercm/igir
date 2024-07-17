@@ -13,7 +13,7 @@ import ArchiveFile from './files/archives/archiveFile.js';
 import File from './files/file.js';
 import FileFactory from './files/fileFactory.js';
 import GameConsole from './gameConsole.js';
-import Options, { GameSubdirMode } from './options.js';
+import Options, { GameSubdirMode, RomFixExtension } from './options.js';
 
 /**
  * A {@link ParsedPath} that carries {@link ArchiveEntry} path information.
@@ -122,6 +122,7 @@ export default class OutputFactory {
 
     // Replace all {token}s in the output path
     output = fsPoly.makeLegal(OutputFactory.replaceTokensInOutputPath(
+      options,
       output,
       dat,
       inputFile?.getFilePath(),
@@ -154,6 +155,7 @@ export default class OutputFactory {
   }
 
   private static replaceTokensInOutputPath(
+    options: Options,
     outputPath: string,
     dat: DAT,
     inputRomPath?: string,
@@ -167,7 +169,7 @@ export default class OutputFactory {
     result = this.replaceGameTokens(result, game);
     result = this.replaceDatTokens(result, dat);
     result = this.replaceInputTokens(result, inputRomPath);
-    result = this.replaceOutputTokens(result, outputRomFilename);
+    result = this.replaceOutputTokens(result, options, outputRomFilename);
     result = this.replaceOutputGameConsoleTokens(result, dat, outputRomFilename);
 
     const leftoverTokens = result.match(/\{[a-zA-Z]+\}/g);
@@ -251,12 +253,18 @@ export default class OutputFactory {
     return input.replace('{inputDirname}', path.parse(inputRomPath).dir);
   }
 
-  private static replaceOutputTokens(input: string, outputRomFilename?: string): string {
-    if (!outputRomFilename) {
+  private static replaceOutputTokens(
+    input: string,
+    options: Options,
+    outputRomFilename?: string,
+  ): string {
+    if (!outputRomFilename && options.getRomFixExtension() === RomFixExtension.NEVER) {
+      // No output ROM filename was provided and we won't know it later from correction, don't
+      // replace any of the output filename tokens
       return input;
     }
 
-    const outputRom = path.parse(outputRomFilename);
+    const outputRom = path.parse(outputRomFilename ?? '');
     return input
       .replace('{outputBasename}', outputRom.base)
       .replace('{outputName}', outputRom.name)
