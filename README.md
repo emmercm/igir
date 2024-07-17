@@ -58,7 +58,7 @@ $ igir --help
   | $$  | $$|    \  | $$  | $$    $$   ROM collection manager
   | $$  | $$|    \  | $$  | $$    $$   https://igir.io/
   | $$  | $$ \$$$$  | $$  | $$$$$$$\
- _| $$_ | $$__| $$ _| $$_ | $$  | $$   v2.9.2
+ _| $$_ | $$__| $$ _| $$_ | $$  | $$   v2.10.0
 |   $$ \ \$$    $$|   $$ \| $$  | $$
  \$$$$$$  \$$$$$$  \$$$$$$ \$$   \$$
 
@@ -113,7 +113,7 @@ Patch input options:
   -P, --patch-exclude  Path(s) to ROM patch files or archives to exclude from processing (supp
                        orts globbing)                                                  [array]
 
-ROM output options (processed in order):
+ROM output path options (processed in order):
   -o, --output               Path to the ROM output directory (supports replaceable symbols, s
                              ee below)                                                [string]
       --dir-mirror           Use the input subdirectory structure for the output directory
@@ -131,20 +131,27 @@ ROM output options (processed in order):
       --dir-game-subdir      Append the name of the game as an output subdirectory depending o
                              n its ROMs
                                 [choices: "never", "multiple", "always"] [default: "multiple"]
-  -O, --overwrite            Overwrite any files in the output directory             [boolean]
-      --overwrite-invalid    Overwrite files in the output directory that are the wrong filesi
-                             ze, checksum, or zip contents                           [boolean]
-  -C, --clean-exclude        Path(s) to files to exclude from cleaning (supports globbing)
-                                                                                       [array]
-      --clean-dry-run        Don't clean any files and instead only print what files would be
-                             cleaned                                                 [boolean]
 
-ROM zip command options:
+ROM writing options:
+      --rom-fix-extension  Read ROMs for known file signatures and use the correct extension (
+                           also affects dir2dat) (supported: .32x, .3dsx, .a78, .fds, .gb, .gb
+                           a, .gbc, .gg, .lnx, .md, .n64, .ndd, .nds, .nes, .pbp, .smc, .smd,
+                           .v64, .z64)  [choices: "never", "auto", "always"] [default: "auto"]
+  -O, --overwrite          Overwrite any files in the output directory               [boolean]
+      --overwrite-invalid  Overwrite files in the output directory that are the wrong filesize
+                           , checksum, or zip contents                               [boolean]
+
+clean command options:
+  -C, --clean-exclude  Path(s) to files to exclude from cleaning (supports globbing)   [array]
+      --clean-dry-run  Don't clean any files and instead only print what files would be cleane
+                       d                                                             [boolean]
+
+zip command options:
   -Z, --zip-exclude   Glob pattern of files to exclude from zipping                   [string]
       --zip-dat-name  Group all ROMs from the same DAT into the same zip archive, if not exclu
                       ded from zipping (enforces --dat-threads 1)                    [boolean]
 
-ROM link command options:
+link command options:
       --symlink           Creates symbolic links instead of hard links               [boolean]
       --symlink-relative  Create symlinks as relative to the target path, as opposed to absolu
                           te                                                         [boolean]
@@ -213,7 +220,7 @@ One game, one ROM (1G1R) options:
       --prefer-pal             Prefer PAL ROMs over others                           [boolean]
       --prefer-parent          Prefer parent ROMs over clones                        [boolean]
 
-Report options:
+report command options:
       --report-output  Report output location (formatted with moment.js)
                                     [string] [default: "./igir_%YYYY-%MM-%DDT%HH:%mm:%ss.csv"]
 
