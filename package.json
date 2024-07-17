@@ -96,7 +96,7 @@
     "term-size": "4.0.0",
     "trash": "8.1.1",
     "typescript-memoize": "1.1.1",
-    "unzipper": "0.12.1",
+    "unzipper": "0.12.2",
     "wrap-ansi": "8.1.0",
     "xml2js": "0.6.2",
     "yargs": "17.7.2"
