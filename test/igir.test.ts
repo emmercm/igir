@@ -396,6 +396,7 @@ describe('with explicit DATs', () => {
       const result = await runIgir({
         commands: ['move', 'extract', 'test'],
         dat: [path.join(inputTemp, 'dats', '*')],
+        datExclude: [path.join(inputTemp, 'dats', 'headerless.*')],
         input: [path.join(inputTemp, 'roms')],
         output: outputTemp,
         datCombine: true,
@@ -405,8 +406,6 @@ describe('with explicit DATs', () => {
       });
 
       expect(result.outputFilesAndCrcs).toEqual([
-        // Note: the "Headered" DAT is alphabetically before the "Headerless" DAT, so headered
-        //  ROMs of the same name are preferred.
         [path.join('igir combined', '0F09A40.rom'), '2f943e86'],
         [path.join('igir combined', '3708F2C.rom'), '20891c9f'],
         [path.join('igir combined', '612644F.rom'), 'f7591b29'],
@@ -429,11 +428,9 @@ describe('with explicit DATs', () => {
         [path.join('igir combined', 'Hardware Target Game Database', 'Patchable', 'C01173E.rom'), 'dfaebe28'],
         [path.join('igir combined', 'KDULVQN.rom'), 'b1c303e4'],
         [path.join('igir combined', 'LCDTestROM.lnx'), '2d251538'],
-        [path.join('igir combined', 'LCDTestROM.lyx'), '42583855'],
         [`${path.join('igir combined', 'Lorem Ipsum.zip')}|loremipsum.rom`, '70856527'],
         [path.join('igir combined', 'One Three', 'One.rom'), 'f817a89f'],
         [path.join('igir combined', 'One Three', 'Three.rom'), 'ff46c5d8'],
-        [path.join('igir combined', 'speed_test_v51.sfc'), '8beffd94'],
         [path.join('igir combined', 'speed_test_v51.smc'), '9adca6cc'],
         [path.join('igir combined', 'Three Four Five', 'Five.rom'), '3e5daf67'],
         [path.join('igir combined', 'Three Four Five', 'Four.rom'), '1cf3ca74'],
@@ -448,7 +445,6 @@ describe('with explicit DATs', () => {
         path.join('headered', 'diagnostic_test_cartridge.a78.7z'),
         path.join('headered', 'fds_joypad_test.fds.zip'),
         path.join('headered', 'speed_test_v51.smc'),
-        path.join('headerless', 'speed_test_v51.sfc.gz'),
         path.join('patchable', '0F09A40.rom'),
         path.join('patchable', '3708F2C.rom'),
         path.join('patchable', '612644F.rom'),

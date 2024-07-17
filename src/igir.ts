@@ -18,6 +18,7 @@ import CandidateMergeSplitValidator from './modules/candidateMergeSplitValidator
 import CandidatePatchGenerator from './modules/candidatePatchGenerator.js';
 import CandidatePostProcessor from './modules/candidatePostProcessor.js';
 import CandidatePreferer from './modules/candidatePreferer.js';
+import CandidateValidator from './modules/candidateValidator.js';
 import CandidateWriter from './modules/candidateWriter.js';
 import DATCombiner from './modules/datCombiner.js';
 import DATFilter from './modules/datFilter.js';
@@ -407,6 +408,13 @@ export default class Igir {
     const postProcessedCandidates = await new CandidatePostProcessor(this.options, progressBar)
       .process(dat, hashedCandidates);
 
+    const invalidCandidates = await new CandidateValidator(progressBar)
+      .validate(dat, postProcessedCandidates);
+    if (invalidCandidates.length > 0) {
+      // Return zero candidates if any candidates failed to validate
+      return new Map();
+    }
+
     await new CandidateMergeSplitValidator(this.options, progressBar)
       .validate(dat, postProcessedCandidates);
 
@@ -460,7 +468,10 @@ export default class Igir {
     dirsToClean: string[],
     datsToWrittenFiles: Map<DAT, File[]>,
   ): Promise<string[]> {
-    if (!this.options.shouldWrite() || !this.options.shouldClean()) {
+    if (!this.options.shouldWrite()
+      || !this.options.shouldClean()
+      || dirsToClean.length === 0
+    ) {
       return [];
     }
 

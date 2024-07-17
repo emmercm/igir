@@ -228,7 +228,7 @@ export default class CandidateGenerator extends Module {
     }
 
     // Ignore the Game with conflicting input->output files
-    if (this.hasConflictingOutputFiles(foundRomsWithFiles)) {
+    if (this.hasConflictingOutputFiles(dat, foundRomsWithFiles)) {
       return undefined;
     }
 
@@ -384,7 +384,7 @@ export default class CandidateGenerator extends Module {
     this.progressBar.logTrace(message);
   }
 
-  private hasConflictingOutputFiles(romsWithFiles: ROMWithFiles[]): boolean {
+  private hasConflictingOutputFiles(dat: DAT, romsWithFiles: ROMWithFiles[]): boolean {
     // If we're not writing, then don't bother looking for conflicts
     if (!this.options.shouldWrite()) {
       return false;
@@ -418,7 +418,7 @@ export default class CandidateGenerator extends Module {
         .reduce(ArrayPoly.reduceUnique(), []);
       if (conflictedInputFiles.length > 1) {
         hasConflict = true;
-        let message = `No single archive contains all necessary files, cannot ${this.options.writeString()} these different input files to: ${duplicateOutput}:`;
+        let message = `${dat.getNameShort()}: no single archive contains all necessary files, cannot ${this.options.writeString()} these different input files to: ${duplicateOutput}:`;
         conflictedInputFiles.forEach((conflictedInputFile) => { message += `\n  ${conflictedInputFile}`; });
         this.progressBar.logWarn(message);
       }
