@@ -52,6 +52,12 @@ export enum GameSubdirMode {
   ALWAYS,
 }
 
+export enum RomFixExtension {
+  NEVER = 1,
+  AUTO = 2,
+  ALWAYS = 3,
+}
+
 export interface OptionsProps {
   readonly commands?: string[],
   readonly fixdat?: boolean;
@@ -84,8 +90,10 @@ export interface OptionsProps {
   readonly dirLetterLimit?: number,
   readonly dirLetterGroup?: boolean,
   readonly dirGameSubdir?: string,
+  readonly romFixExtension?: string,
   readonly overwrite?: boolean,
   readonly overwriteInvalid?: boolean,
+
   readonly cleanExclude?: string[],
   readonly cleanDryRun?: boolean,
 
@@ -220,6 +228,8 @@ export default class Options implements OptionsProps {
   readonly dirLetterGroup: boolean;
 
   readonly dirGameSubdir?: string;
+
+  readonly romFixExtension?: string;
 
   readonly overwrite: boolean;
 
@@ -393,6 +403,7 @@ export default class Options implements OptionsProps {
     this.dirLetterLimit = options?.dirLetterLimit ?? 0;
     this.dirLetterGroup = options?.dirLetterGroup ?? false;
     this.dirGameSubdir = options?.dirGameSubdir;
+    this.romFixExtension = options?.romFixExtension;
     this.overwrite = options?.overwrite ?? false;
     this.overwriteInvalid = options?.overwriteInvalid ?? false;
     this.cleanExclude = options?.cleanExclude ?? [];
@@ -897,6 +908,15 @@ export default class Options implements OptionsProps {
       return undefined;
     }
     return GameSubdirMode[subdirMode as keyof typeof GameSubdirMode];
+  }
+
+  getRomFixExtension(): RomFixExtension | undefined {
+    const fixExtensionMode = Object.keys(RomFixExtension)
+      .find((mode) => mode.toLowerCase() === this.romFixExtension?.toLowerCase());
+    if (!fixExtensionMode) {
+      return undefined;
+    }
+    return RomFixExtension[fixExtensionMode as keyof typeof RomFixExtension];
   }
 
   getOverwrite(): boolean {

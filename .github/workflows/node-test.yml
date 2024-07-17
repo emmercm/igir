@@ -26,9 +26,9 @@ env:
 
 jobs:
   path-filter:
-    runs-on: ubuntu-latest
     permissions:
       pull-requests: read
+    runs-on: ubuntu-latest
     outputs:
       changes: ${{ steps.filter.outputs.changes }}
     steps:

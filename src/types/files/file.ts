@@ -436,10 +436,10 @@ export default class File implements FileProps {
   }
 
   withFilePath(filePath: string): File {
-    return new File({
-      ...this,
-      filePath,
-    });
+    if (filePath === this.filePath) {
+      return this;
+    }
+    return new File({ ...this, filePath });
   }
 
   async withFileHeader(fileHeader: ROMHeader): Promise<File> {
@@ -459,6 +459,9 @@ export default class File implements FileProps {
   }
 
   withoutFileHeader(): File {
+    if (this.fileHeader === undefined) {
+      return this;
+    }
     return new File({
       ...this,
       fileHeader: undefined,

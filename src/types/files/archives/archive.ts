@@ -61,13 +61,18 @@ export default abstract class Archive {
   }
 
   withFilePath(filePath: string): Archive {
+    if (filePath === this.filePath) {
+      return this;
+    }
+
     const { base, ...parsedFilePath } = path.parse(this.getFilePath());
-    parsedFilePath.name = path.parse(filePath).name;
 
-    const extMatch = this.getFilePath().match(/[^.]+((\.[a-zA-Z0-9]+)+)$/);
-    parsedFilePath.ext = extMatch !== null ? extMatch[1] : '';
+    const newNameMatch = filePath.match(/^(.+[\\/])?(.+?[^.])((\.[a-zA-Z][a-zA-Z0-9]*)*)$/);
+    parsedFilePath.name = newNameMatch !== null ? newNameMatch[2] : '';
 
-    const newFilePath = path.format(parsedFilePath);
-    return this.new(newFilePath);
+    const oldExtMatch = this.getFilePath().match(/^(.+[\\/])?(.+?[^.])((\.[a-zA-Z][a-zA-Z0-9]*)*)$/);
+    parsedFilePath.ext = oldExtMatch !== null ? oldExtMatch[3] : '';
+
+    return this.new(path.format(parsedFilePath));
   }
 }

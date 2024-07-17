@@ -5,10 +5,13 @@ import Logger from '../src/console/logger.js';
 import LogLevel from '../src/console/logLevel.js';
 import Temp from '../src/globals/temp.js';
 import Igir from '../src/igir.js';
+import DATScanner from '../src/modules/datScanner.js';
 import ArrayPoly from '../src/polyfill/arrayPoly.js';
 import fsPoly from '../src/polyfill/fsPoly.js';
+import { ChecksumBitmask } from '../src/types/files/fileChecksums.js';
 import FileFactory from '../src/types/files/fileFactory.js';
-import Options, { GameSubdirMode, OptionsProps } from '../src/types/options.js';
+import Options, { GameSubdirMode, OptionsProps, RomFixExtension } from '../src/types/options.js';
+import ProgressBarFake from './console/progressBarFake.js';
 
 interface TestOutput {
   outputFilesAndCrcs: string[][],
@@ -98,6 +101,7 @@ async function runIgir(optionsProps: OptionsProps): Promise<TestOutput> {
     const cwdFilesAndCrcs = (await Promise.all(options.getInputPaths()
       .map(async (inputPath) => walkWithCrc(inputPath, tempCwd))))
       .flat()
+      .map(([cwdPath, crc]) => ([path.join(tempCwd, cwdPath), crc]))
       .sort((a, b) => a[0].localeCompare(b[0]));
 
     const inputFilesAfter = (await Promise.all(options.getInputPaths()
@@ -164,6 +168,7 @@ describe('with explicit DATs', () => {
         output: outputTemp,
         dirDatName: true,
         dirGameSubdir: GameSubdirMode[GameSubdirMode.MULTIPLE].toLowerCase(),
+        romFixExtension: RomFixExtension[RomFixExtension.AUTO].toLowerCase(),
       });
 
       expect(result.outputFilesAndCrcs).toEqual([
@@ -261,6 +266,7 @@ describe('with explicit DATs', () => {
         output: path.join(outputTemp, '{outputExt}'),
         dirDatName: true,
         dirGameSubdir: GameSubdirMode[GameSubdirMode.MULTIPLE].toLowerCase(),
+        romFixExtension: RomFixExtension[RomFixExtension.AUTO].toLowerCase(),
       });
 
       expect(result.outputFilesAndCrcs).toEqual([
@@ -396,6 +402,7 @@ describe('with explicit DATs', () => {
         datCombine: true,
         dirDatName: true,
         dirGameSubdir: GameSubdirMode[GameSubdirMode.MULTIPLE].toLowerCase(),
+        romFixExtension: RomFixExtension[RomFixExtension.AUTO].toLowerCase(),
       });
 
       expect(result.outputFilesAndCrcs).toEqual([
@@ -538,6 +545,7 @@ describe('with explicit DATs', () => {
         input: [path.join(inputTemp, 'roms')],
         output: outputTemp,
         dirDatName: true,
+        romFixExtension: RomFixExtension[RomFixExtension.AUTO].toLowerCase(),
       });
 
       expect(result.outputFilesAndCrcs).toEqual([
@@ -591,6 +599,7 @@ describe('with explicit DATs', () => {
         input: [path.join(inputTemp, 'roms')],
         output: outputTemp,
         zipDatName: true,
+        romFixExtension: RomFixExtension[RomFixExtension.NEVER].toLowerCase(),
       });
 
       expect(result.outputFilesAndCrcs).toEqual([
@@ -600,12 +609,12 @@ describe('with explicit DATs', () => {
         [`${path.join('Hardware Target Game Database', 'Dummy', 'smdb.zip')}|Fizzbuzz.nes`, '370517b5'],
         [`${path.join('Hardware Target Game Database', 'Dummy', 'smdb.zip')}|Foobar.lnx`, 'b22c9747'],
         [`${path.join('Hardware Target Game Database', 'Dummy', 'smdb.zip')}|Lorem Ipsum.rom`, '70856527'],
-        ['Headered.zip|allpads.nes', '9180a163'],
-        ['Headered.zip|color_test.nes', 'c9c1b7aa'],
-        ['Headered.zip|diagnostic_test_cartridge.a78', 'f6cc9b1c'],
-        ['Headered.zip|fds_joypad_test.fds', '1e58456d'],
-        ['Headered.zip|LCDTestROM.lnx', '2d251538'],
-        ['Headered.zip|speed_test_v51.smc', '9adca6cc'],
+        ['Headered.zip|allpads.rom', '9180a163'],
+        ['Headered.zip|color_test.rom', 'c9c1b7aa'],
+        ['Headered.zip|diagnostic_test_cartridge.rom', 'f6cc9b1c'],
+        ['Headered.zip|fds_joypad_test.rom', '1e58456d'],
+        ['Headered.zip|LCDTestROM.rom', '2d251538'],
+        ['Headered.zip|speed_test_v51.rom', '9adca6cc'],
         ['Headerless.zip|allpads.nes', '6339abe6'],
         ['Headerless.zip|color_test.nes', 'c9c1b7aa'],
         ['Headerless.zip|diagnostic_test_cartridge.a78', 'a1eaa7c1'],
@@ -645,6 +654,7 @@ describe('with explicit DATs', () => {
         output: outputTemp,
         dirDatName: true,
         dirGameSubdir: GameSubdirMode[GameSubdirMode.MULTIPLE].toLowerCase(),
+        romFixExtension: RomFixExtension[RomFixExtension.AUTO].toLowerCase(),
         symlink: true,
       });
 
@@ -694,10 +704,12 @@ describe('with explicit DATs', () => {
         commands: ['copy', 'extract', 'test'],
         dat: [path.join(inputTemp, 'dats', '*')],
         input: [path.join(inputTemp, 'roms')],
+        inputMinChecksum: ChecksumBitmask[ChecksumBitmask.MD5].toLowerCase(),
         patch: [path.join(inputTemp, 'patches')],
         output: outputTemp,
         dirDatName: true,
         dirGameSubdir: GameSubdirMode[GameSubdirMode.MULTIPLE].toLowerCase(),
+        romFixExtension: RomFixExtension[RomFixExtension.AUTO].toLowerCase(),
         removeHeaders: [''], // all
       });
 
@@ -785,6 +797,7 @@ describe('with explicit DATs', () => {
         input: [path.join(inputTemp, 'roms')],
         output: outputTemp,
         dirDatName: true,
+        romFixExtension: RomFixExtension[RomFixExtension.AUTO].toLowerCase(),
       });
 
       const writtenFixdats = result.outputFilesAndCrcs
@@ -815,6 +828,7 @@ describe('with explicit DATs', () => {
         input: [path.join(inputTemp, 'roms')],
         output: outputTemp,
         dirDatName: true,
+        romFixExtension: RomFixExtension[RomFixExtension.AUTO].toLowerCase(),
         reportOutput: 'report.csv',
       });
 
@@ -827,10 +841,10 @@ describe('with explicit DATs', () => {
       //  diagnostic_test_cartridge.a78
       //  fds_joypad_test.fds
       //  LCDTestROM.lyx
-      expect(writtenFixdats[0]).toMatch(/^Headerless fixdat \([0-9]{8}-[0-9]{6}\)\.dat$/);
+      expect(writtenFixdats[0]).toMatch(/[\\/]Headerless fixdat \([0-9]{8}-[0-9]{6}\)\.dat$/);
       // The "One" DAT should have missing ROMs, because no fixture exists for them:
       //  Missing.rom
-      expect(writtenFixdats[1]).toMatch(/^One fixdat \([0-9]{8}-[0-9]{6}\)\.dat$/);
+      expect(writtenFixdats[1]).toMatch(/[\\/]One fixdat \([0-9]{8}-[0-9]{6}\)\.dat$/);
 
       expect(result.movedFiles).toHaveLength(0);
       // Note: explicitly not testing `result.movedFiles`
@@ -861,6 +875,7 @@ describe('with inferred DATs', () => {
         commands: ['copy', 'test'],
         input: [path.join(inputTemp, 'roms')],
         output: outputTemp,
+        romFixExtension: RomFixExtension[RomFixExtension.AUTO].toLowerCase(),
       });
 
       expect(result.outputFilesAndCrcs).toEqual([
@@ -873,7 +888,7 @@ describe('with inferred DATs', () => {
         ['before.rom', '0361b321'],
         ['best.gz|best.rom', '1e3d78cf'],
         ['C01173E.rom', 'dfaebe28'],
-        ['color_test.nintendoentertainmentsystem', 'c9c1b7aa'],
+        ['color_test.nes', 'c9c1b7aa'],
         ['diagnostic_test_cartridge.a78.7z|diagnostic_test_cartridge.a78', 'f6cc9b1c'],
         ['empty.rom', '00000000'],
         ['fds_joypad_test.fds.zip|fds_joypad_test.fds', '1e58456d'],
@@ -925,6 +940,7 @@ describe('with inferred DATs', () => {
         input: [path.join(inputTemp, 'roms')],
         output: outputTemp,
         dirGameSubdir: GameSubdirMode[GameSubdirMode.MULTIPLE].toLowerCase(),
+        romFixExtension: RomFixExtension[RomFixExtension.AUTO].toLowerCase(),
       });
 
       expect(result.outputFilesAndCrcs).toEqual([
@@ -937,7 +953,7 @@ describe('with inferred DATs', () => {
         ['before.rom', '0361b321'],
         ['best.rom', '1e3d78cf'],
         ['C01173E.rom', 'dfaebe28'],
-        ['color_test.nintendoentertainmentsystem', 'c9c1b7aa'],
+        ['color_test.nes', 'c9c1b7aa'],
         ['diagnostic_test_cartridge.a78', 'f6cc9b1c'],
         ['empty.rom', '00000000'],
         ['fds_joypad_test.fds', '1e58456d'],
@@ -1046,6 +1062,7 @@ describe('with inferred DATs', () => {
         commands: ['link', 'test'],
         input: [path.join(inputTemp, 'roms')],
         output: outputTemp,
+        romFixExtension: RomFixExtension[RomFixExtension.AUTO].toLowerCase(),
         symlink: true,
         symlinkRelative: true,
       });
@@ -1060,7 +1077,7 @@ describe('with inferred DATs', () => {
         [`before.rom -> ${path.join('..', 'input', 'roms', 'patchable', 'before.rom')}`, '0361b321'],
         [`best.gz|best.rom -> ${path.join('..', 'input', 'roms', 'patchable', 'best.gz')}|best.rom`, '1e3d78cf'],
         [`C01173E.rom -> ${path.join('..', 'input', 'roms', 'patchable', 'C01173E.rom')}`, 'dfaebe28'],
-        [`color_test.nintendoentertainmentsystem -> ${path.join('..', 'input', 'roms', 'headered', 'color_test.nintendoentertainmentsystem')}`, 'c9c1b7aa'],
+        [`color_test.nes -> ${path.join('..', 'input', 'roms', 'headered', 'color_test.nintendoentertainmentsystem')}`, 'c9c1b7aa'],
         [`diagnostic_test_cartridge.a78.7z|diagnostic_test_cartridge.a78 -> ${path.join('..', 'input', 'roms', 'headered', 'diagnostic_test_cartridge.a78.7z')}|diagnostic_test_cartridge.a78`, 'f6cc9b1c'],
         [`empty.rom -> ${path.join('..', 'input', 'roms', 'empty.rom')}`, '00000000'],
         [`fds_joypad_test.fds.zip|fds_joypad_test.fds -> ${path.join('..', 'input', 'roms', 'headered', 'fds_joypad_test.fds.zip')}|fds_joypad_test.fds`, '1e58456d'],
@@ -1095,12 +1112,13 @@ describe('with inferred DATs', () => {
         commands: ['move', 'extract', 'test'],
         input: [path.join(inputTemp, 'roms', 'headered')],
         output: outputTemp,
+        romFixExtension: RomFixExtension[RomFixExtension.AUTO].toLowerCase(),
         removeHeaders: [''], // all
       });
 
       expect(result.outputFilesAndCrcs).toEqual([
         ['allpads.nes', '6339abe6'],
-        ['color_test.nintendoentertainmentsystem', 'c9c1b7aa'], // no header
+        ['color_test.nes', 'c9c1b7aa'], // no header
         ['diagnostic_test_cartridge.a78', 'a1eaa7c1'],
         ['fds_joypad_test.fds', '3ecbac61'],
         ['LCDTestROM.lyx', '42583855'],
@@ -1123,10 +1141,10 @@ describe('with inferred DATs', () => {
     await copyFixturesToTemp(async (inputTemp, outputTemp) => {
       const result = await runIgir({
         commands: ['dir2dat'],
-        dat: [path.join(inputTemp, 'dats')],
         input: [path.join(inputTemp, 'roms')],
         output: outputTemp,
         dirDatName: true,
+        romFixExtension: RomFixExtension[RomFixExtension.AUTO].toLowerCase(),
       });
 
       const writtenDir2Dats = result.cwdFilesAndCrcs
@@ -1135,11 +1153,53 @@ describe('with inferred DATs', () => {
 
       // Only the "roms" input path was provided
       expect(writtenDir2Dats).toHaveLength(1);
-      expect(writtenDir2Dats[0]).toMatch(/^roms \([0-9]{8}-[0-9]{6}\)\.dat$/);
+      expect(writtenDir2Dats[0]).toMatch(/[\\/]roms \([0-9]{8}-[0-9]{6}\)\.dat$/);
 
       expect(result.outputFilesAndCrcs).toHaveLength(0);
       expect(result.movedFiles).toHaveLength(0);
       expect(result.cleanedFiles).toHaveLength(0);
+
+      const dats = await new DATScanner(
+        new Options({ dat: writtenDir2Dats }),
+        new ProgressBarFake(),
+      ).scan();
+      expect(dats).toHaveLength(1);
+      const roms = dats[0].getGames()
+        .flatMap((game) => game.getRoms())
+        .map((rom) => rom.getName())
+        .sort();
+      expect(roms).toEqual([
+        '0F09A40.rom',
+        '3708F2C.rom',
+        '612644F.rom',
+        '65D1206.rom',
+        '92C85C9.rom',
+        'C01173E.rom',
+        'KDULVQN.rom',
+        'LCDTestROM.lnx',
+        'allpads.nes',
+        'before.rom',
+        'best.rom',
+        'color_test.nes',
+        'diagnostic_test_cartridge.a78',
+        'fds_joypad_test.fds',
+        'five.rom',
+        'five.rom',
+        'fizzbuzz.nes',
+        'foobar.lnx',
+        'four.rom',
+        'four.rom',
+        'loremipsum.rom',
+        'one.rom',
+        'one.rom',
+        'speed_test_v51.sfc',
+        'speed_test_v51.smc',
+        'three.rom',
+        'three.rom',
+        'two.rom',
+        'two.rom',
+        'unknown.rom',
+      ]);
     });
   });
 
