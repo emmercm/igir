@@ -1,4 +1,4 @@
-# Fixdats
+# Writing Fixdats
 
 "Fixdats" are DATs that contain only ROMs that are missing from your collection. Fixdats are derived from some other DAT (see the [DATs introduction docs](introduction.md) for how to obtain DATs), containing only a subset of the ROMs. Fixdats are specific to the state of each person's ROM collection, so they aren't necessarily meaningful to other people.
 
