@@ -10,8 +10,14 @@ import ConsolePoly from '../polyfill/consolePoly.js';
 import ExpectedError from '../types/expectedError.js';
 import { ChecksumBitmask } from '../types/files/fileChecksums.js';
 import ROMHeader from '../types/files/romHeader.js';
+import ROMSignature from '../types/files/romSignature.js';
 import Internationalization from '../types/internationalization.js';
-import Options, { GameSubdirMode, InputChecksumArchivesMode, MergeMode } from '../types/options.js';
+import Options, {
+  GameSubdirMode,
+  InputChecksumArchivesMode,
+  MergeMode,
+  RomFixExtension,
+} from '../types/options.js';
 import PatchFactory from '../types/patches/patchFactory.js';
 
 /**
@@ -68,7 +74,8 @@ export default class ArgumentsParser {
     const groupRomInput = 'ROM input options:';
     const groupDatInput = 'DAT input options:';
     const groupPatchInput = 'Patch input options:';
-    const groupRomOutput = 'ROM output options (processed in order):';
+    const groupRomOutputPath = 'ROM output path options (processed in order):';
+    const groupRomOutput = 'ROM writing options:';
     const groupRomClean = 'clean command options:';
     const groupRomZip = 'zip command options:';
     const groupRomLink = 'link command options:';
@@ -229,7 +236,15 @@ export default class ArgumentsParser {
         type: 'array',
         requiresArg: true,
       })
-      // TODO(cemmer): don't allow dir2dat & --dat
+      .check((checkArgv) => {
+        if (checkArgv.help) {
+          return true;
+        }
+        if (checkArgv.dat && checkArgv.dat.length > 0 && checkArgv._.includes('dir2dat')) {
+          throw new ExpectedError('Argument "--dat" cannot be used with the command "dir2dat"');
+        }
+        return true;
+      })
       .option('dat-exclude', {
         group: groupDatInput,
         description: 'Path(s) to DAT files or archives to exclude from processing (supports globbing)',
@@ -331,7 +346,7 @@ export default class ArgumentsParser {
       })
 
       .option('output', {
-        group: groupRomOutput,
+        group: groupRomOutputPath,
         alias: 'o',
         description: 'Path to the ROM output directory (supports replaceable symbols, see below)',
         type: 'string',
@@ -339,30 +354,30 @@ export default class ArgumentsParser {
         requiresArg: true,
       })
       .option('dir-mirror', {
-        group: groupRomOutput,
+        group: groupRomOutputPath,
         description: 'Use the input subdirectory structure for the output directory',
         type: 'boolean',
       })
       .option('dir-dat-name', {
-        group: groupRomOutput,
+        group: groupRomOutputPath,
         alias: 'D',
         description: 'Use the DAT name as the output subdirectory',
         type: 'boolean',
         implies: 'dat',
       })
       .option('dir-dat-description', {
-        group: groupRomOutput,
+        group: groupRomOutputPath,
         description: 'Use the DAT description as the output subdirectory',
         type: 'boolean',
         implies: 'dat',
       })
       .option('dir-letter', {
-        group: groupRomOutput,
+        group: groupRomOutputPath,
         description: 'Group games in an output subdirectory by the first --dir-letter-count letters in their name',
         type: 'boolean',
       })
       .option('dir-letter-count', {
-        group: groupRomOutput,
+        group: groupRomOutputPath,
         description: 'How many game name letters to use for the subdirectory name',
         type: 'number',
         coerce: (val: number) => Math.max(ArgumentsParser.getLastValue(val), 1),
@@ -377,7 +392,7 @@ export default class ArgumentsParser {
         return true;
       })
       .option('dir-letter-limit', {
-        group: groupRomOutput,
+        group: groupRomOutputPath,
         description: 'Limit the number of games in letter subdirectories, splitting into multiple subdirectories if necessary',
         type: 'number',
         coerce: (val: number) => Math.max(ArgumentsParser.getLastValue(val), 1),
@@ -385,13 +400,13 @@ export default class ArgumentsParser {
         implies: 'dir-letter',
       })
       .option('dir-letter-group', {
-        group: groupRomOutput,
+        group: groupRomOutputPath,
         description: 'Group letter subdirectories into ranges, combining multiple letters together (requires --dir-letter-limit)',
         type: 'boolean',
         implies: 'dir-letter-limit',
       })
       .option('dir-game-subdir', {
-        group: groupRomOutput,
+        group: groupRomOutputPath,
         description: 'Append the name of the game as an output subdirectory depending on its ROMs',
         choices: Object.keys(GameSubdirMode)
           .filter((mode) => Number.isNaN(Number(mode)))
@@ -399,6 +414,17 @@ export default class ArgumentsParser {
         coerce: ArgumentsParser.getLastValue, // don't allow string[] values
         requiresArg: true,
         default: GameSubdirMode[GameSubdirMode.MULTIPLE].toLowerCase(),
+      })
+
+      .option('rom-fix-extension', {
+        group: groupRomOutput,
+        description: `Read ROMs for known file signatures and use the correct extension (also affects dir2dat) (supported: ${ROMSignature.getSupportedExtensions().join(', ')})`,
+        choices: Object.keys(RomFixExtension)
+          .filter((mode) => Number.isNaN(Number(mode)))
+          .map((mode) => mode.toLowerCase()),
+        coerce: ArgumentsParser.getLastValue, // don't allow string[] values
+        requiresArg: true,
+        default: RomFixExtension[RomFixExtension.AUTO].toLowerCase(),
       })
       .option('overwrite', {
         group: groupRomOutput,

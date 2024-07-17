@@ -9,7 +9,12 @@ import FsPoly from '../../src/polyfill/fsPoly.js';
 import Header from '../../src/types/dats/logiqx/header.js';
 import LogiqxDAT from '../../src/types/dats/logiqx/logiqxDat.js';
 import { ChecksumBitmask } from '../../src/types/files/fileChecksums.js';
-import { GameSubdirMode, InputChecksumArchivesMode, MergeMode } from '../../src/types/options.js';
+import {
+  GameSubdirMode,
+  InputChecksumArchivesMode,
+  MergeMode,
+  RomFixExtension,
+} from '../../src/types/options.js';
 
 const dummyRequiredArgs = ['--input', os.devNull, '--output', os.devNull];
 const dummyCommandAndRequiredArgs = ['copy', ...dummyRequiredArgs];
@@ -56,16 +61,27 @@ describe('commands', () => {
   });
 
   it('should parse multiple commands', () => {
-    const copyExtract = ['copy', 'extract', 'test', 'dir2dat', 'clean', 'report', ...dummyRequiredArgs, '--dat', os.devNull];
-    expect(argumentsParser.parse(copyExtract).shouldCopy()).toEqual(true);
-    expect(argumentsParser.parse(copyExtract).shouldMove()).toEqual(false);
-    expect(argumentsParser.parse(copyExtract).shouldExtract()).toEqual(true);
-    expect(argumentsParser.parse(copyExtract).shouldZipFile('')).toEqual(false);
-    expect(argumentsParser.parse(copyExtract).shouldTest()).toEqual(true);
-    expect(argumentsParser.parse(copyExtract).shouldDir2Dat()).toEqual(true);
-    expect(argumentsParser.parse(copyExtract).shouldFixdat()).toEqual(false);
-    expect(argumentsParser.parse(copyExtract).shouldClean()).toEqual(true);
-    expect(argumentsParser.parse(copyExtract).shouldReport()).toEqual(true);
+    const datCommands = ['copy', 'extract', 'test', 'clean', 'report', ...dummyRequiredArgs, '--dat', os.devNull];
+    expect(argumentsParser.parse(datCommands).shouldCopy()).toEqual(true);
+    expect(argumentsParser.parse(datCommands).shouldMove()).toEqual(false);
+    expect(argumentsParser.parse(datCommands).shouldExtract()).toEqual(true);
+    expect(argumentsParser.parse(datCommands).shouldZipFile('')).toEqual(false);
+    expect(argumentsParser.parse(datCommands).shouldTest()).toEqual(true);
+    expect(argumentsParser.parse(datCommands).shouldDir2Dat()).toEqual(false);
+    expect(argumentsParser.parse(datCommands).shouldFixdat()).toEqual(false);
+    expect(argumentsParser.parse(datCommands).shouldClean()).toEqual(true);
+    expect(argumentsParser.parse(datCommands).shouldReport()).toEqual(true);
+
+    const nonDatCommands = ['copy', 'extract', 'test', 'dir2dat', 'clean', ...dummyRequiredArgs];
+    expect(argumentsParser.parse(nonDatCommands).shouldCopy()).toEqual(true);
+    expect(argumentsParser.parse(nonDatCommands).shouldMove()).toEqual(false);
+    expect(argumentsParser.parse(nonDatCommands).shouldExtract()).toEqual(true);
+    expect(argumentsParser.parse(nonDatCommands).shouldZipFile('')).toEqual(false);
+    expect(argumentsParser.parse(nonDatCommands).shouldTest()).toEqual(true);
+    expect(argumentsParser.parse(nonDatCommands).shouldDir2Dat()).toEqual(true);
+    expect(argumentsParser.parse(nonDatCommands).shouldFixdat()).toEqual(false);
+    expect(argumentsParser.parse(nonDatCommands).shouldClean()).toEqual(true);
+    expect(argumentsParser.parse(nonDatCommands).shouldReport()).toEqual(false);
 
     const moveZip = ['move', 'zip', 'test', 'fixdat', 'clean', 'report', ...dummyRequiredArgs, '--dat', os.devNull];
     expect(argumentsParser.parse(moveZip).shouldCopy()).toEqual(false);
@@ -127,6 +143,8 @@ describe('options', () => {
     expect(options.getDirGameSubdir()).toEqual(GameSubdirMode.MULTIPLE);
     expect(options.getOverwrite()).toEqual(false);
     expect(options.getOverwriteInvalid()).toEqual(false);
+    expect(options.getRomFixExtension()).toEqual(RomFixExtension.AUTO);
+
     expect(options.getCleanDryRun()).toEqual(false);
 
     expect(options.getZipDatName()).toEqual(false);
@@ -253,6 +271,7 @@ describe('options', () => {
   it('should parse "dat"', async () => {
     expect(() => argumentsParser.parse(['report', '--input', os.devNull])).toThrow(/missing required argument/i);
     expect(() => argumentsParser.parse([...dummyCommandAndRequiredArgs, '--dat'])).toThrow(/not enough arguments/i);
+    expect(() => argumentsParser.parse([...dummyCommandAndRequiredArgs, 'dir2dat', '--dat', os.devNull])).toThrow();
     await expect(argumentsParser.parse(dummyCommandAndRequiredArgs).scanDatFilesWithoutExclusions())
       .resolves.toHaveLength(0);
     await expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--dat', 'nonexistentfile']).scanDatFilesWithoutExclusions()).rejects.toThrow(/no files found/i);
@@ -505,6 +524,16 @@ describe('options', () => {
     expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--dir-game-subdir', 'multiple']).getDirGameSubdir()).toEqual(GameSubdirMode.MULTIPLE);
     expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--dir-game-subdir', 'always']).getDirGameSubdir()).toEqual(GameSubdirMode.ALWAYS);
     expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--dir-game-subdir', 'always', '--dir-game-subdir', 'never']).getDirGameSubdir()).toEqual(GameSubdirMode.NEVER);
+  });
+
+  it('should parse "rom-fix-extension"', () => {
+    expect(argumentsParser.parse(dummyCommandAndRequiredArgs).getDirGameSubdir())
+      .toEqual(GameSubdirMode.MULTIPLE);
+    expect(() => argumentsParser.parse([...dummyCommandAndRequiredArgs, '--rom-fix-extension', 'foobar']).getRomFixExtension()).toThrow(/invalid values/i);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--rom-fix-extension', 'never']).getRomFixExtension()).toEqual(RomFixExtension.NEVER);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--rom-fix-extension', 'auto']).getRomFixExtension()).toEqual(RomFixExtension.AUTO);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--rom-fix-extension', 'always']).getRomFixExtension()).toEqual(RomFixExtension.ALWAYS);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--rom-fix-extension', 'always', '--rom-fix-extension', 'never']).getRomFixExtension()).toEqual(RomFixExtension.NEVER);
   });
 
   it('should parse "single"', () => {

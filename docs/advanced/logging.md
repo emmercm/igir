@@ -31,7 +31,7 @@ There are additional levels of verbosity that can be enabled with the `-v` flag:
   This includes:
 
   - Everything from the `INFO` level above
-  - Files skipped from being copied, zipped, or linked because the output file exists and an `--overwrite` option wasn't provided
+  - Files skipped from being copied, zipped, or linked because the output file exists and an [`--overwrite` option](../output/options.md#overwriting-files) wasn't provided
   - [Fixdat](../dats/fixdats.md) files skipped from being created because all games were found
 
   Usage:
