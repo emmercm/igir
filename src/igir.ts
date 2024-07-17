@@ -286,6 +286,11 @@ export default class Igir {
     const minimumChecksum = this.options.getInputMinChecksum() ?? ChecksumBitmask.CRC32;
     let matchChecksum = minimumChecksum;
 
+    if (this.options.getPatchFileCount() > 0) {
+      matchChecksum |= ChecksumBitmask.CRC32;
+      this.logger.trace('using patch files, enabling CRC32 file checksums');
+    }
+
     if (this.options.shouldDir2Dat()) {
       Object.keys(ChecksumBitmask)
         .filter((bitmask): bitmask is keyof typeof ChecksumBitmask => Number.isNaN(Number(bitmask)))

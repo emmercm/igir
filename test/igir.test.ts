@@ -7,6 +7,7 @@ import Temp from '../src/globals/temp.js';
 import Igir from '../src/igir.js';
 import ArrayPoly from '../src/polyfill/arrayPoly.js';
 import fsPoly from '../src/polyfill/fsPoly.js';
+import { ChecksumBitmask } from '../src/types/files/fileChecksums.js';
 import FileFactory from '../src/types/files/fileFactory.js';
 import Options, { GameSubdirMode, OptionsProps } from '../src/types/options.js';
 
@@ -698,6 +699,7 @@ describe('with explicit DATs', () => {
         commands: ['copy', 'extract', 'test'],
         dat: [path.join(inputTemp, 'dats', '*')],
         input: [path.join(inputTemp, 'roms')],
+        inputMinChecksum: ChecksumBitmask[ChecksumBitmask.MD5].toLowerCase(),
         patch: [path.join(inputTemp, 'patches')],
         output: outputTemp,
         dirDatName: true,
