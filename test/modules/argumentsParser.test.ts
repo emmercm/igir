@@ -145,6 +145,7 @@ describe('options', () => {
     expect(options.getOverwriteInvalid()).toEqual(false);
     expect(options.getRomFixExtension()).toEqual(RomFixExtension.AUTO);
 
+    expect(options.getCleanBackup()).toBeUndefined();
     expect(options.getCleanDryRun()).toEqual(false);
 
     expect(options.getZipDatName()).toEqual(false);
@@ -575,6 +576,12 @@ describe('options', () => {
     expect((await argumentsParser.parse([...argv, 'clean', '-C', 'nonexistentfile']).scanOutputFilesWithoutCleanExclusions([outputDir], [])).length).toBeGreaterThan(0);
     expect((await argumentsParser.parse([...argv, 'clean', '--clean-exclude', outputDir]).scanOutputFilesWithoutCleanExclusions([outputDir], [])).length).toEqual(0);
     expect((await argumentsParser.parse([...argv, 'clean', '--clean-exclude', outputDir]).scanOutputFilesWithoutCleanExclusions([outputDir], [])).length).toEqual(0);
+  });
+
+  it('should parse "clean-backup"', () => {
+    expect(() => argumentsParser.parse([...dummyCommandAndRequiredArgs, '--clean-backup', 'foo'])).toThrow(/missing required command/i);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, 'clean', '--clean-backup', 'foo']).getCleanBackup()).toEqual('foo');
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, 'clean', '--clean-backup', 'foo', '--clean-backup', 'bar']).getCleanBackup()).toEqual('bar');
   });
 
   it('should parse "clean-dry-run"', () => {
