@@ -24,7 +24,7 @@
     
     
       
-        <title>Output Cleaning - igir</title>
+        <title>Output Directory Cleaning - igir</title>
       
     
     
@@ -69,7 +69,7 @@
       
         <meta  property="og:type"  content="website" >
       
-        <meta  property="og:title"  content="Output Cleaning - igir" >
+        <meta  property="og:title"  content="Output Directory Cleaning - igir" >
       
         <meta  property="og:description"  content="None" >
       
@@ -85,7 +85,7 @@
       
         <meta  name="twitter:card"  content="summary_large_image" >
       
-        <meta  name="twitter:title"  content="Output Cleaning - igir" >
+        <meta  name="twitter:title"  content="Output Directory Cleaning - igir" >
       
         <meta  name="twitter:description"  content="None" >
       
@@ -110,7 +110,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#output-cleaning" class="md-skip">
+        <a href="#output-directory-cleaning" class="md-skip">
           Skip to content
         </a>
       
@@ -145,7 +145,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Output Cleaning
+              Output Directory Cleaning
             
           </span>
         </div>
@@ -2038,7 +2038,7 @@
           
   
   <span class="md-ellipsis">
-    Output Cleaning
+    Output Directory Cleaning
   </span>
   
 
@@ -2049,7 +2049,7 @@
         
   
   <span class="md-ellipsis">
-    Output Cleaning
+    Output Directory Cleaning
   </span>
   
 
@@ -2083,6 +2083,15 @@
   <a href="#exclusions" class="md-nav__link">
     <span class="md-ellipsis">
       Exclusions
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#backing-up-cleaned-files" class="md-nav__link">
+    <span class="md-ellipsis">
+      Backing up cleaned files
     </span>
   </a>
   
@@ -2544,7 +2553,7 @@
   
 
 
-<h1 id="output-cleaning">Output Cleaning</h1>
+<h1 id="output-directory-cleaning">Output Directory Cleaning</h1>
 <p>The <code>igir clean</code> <a href="../../commands/">command</a> can be used when writing (<code>igir copy</code>, <code>igir move</code>, and <code>igir link</code>) to delete files from the <code>--output &lt;path&gt;</code> directory that are either:</p>
 <ul>
 <li>Not contained in any provided <a href="../../dats/introduction/">DAT</a> (the <a href="../../dats/processing/#scanning-for-dats"><code>--dat &lt;path&gt;</code> option</a>).</li>
@@ -2577,6 +2586,9 @@
 <h2 id="exclusions">Exclusions</h2>
 <p>The <code>--clean-exclude &lt;path&gt;</code> option exists so that one or more paths (with support for <a href="../../input/file-scanning/">globbing</a>) can be excluded from deletion.</p>
 <p>See the <a href="../../usage/hardware/analogue-pocket/">Analogue Pocket</a> page for a practical example.</p>
+<h2 id="backing-up-cleaned-files">Backing up cleaned files</h2>
+<p>By default, <code>igir</code> will recycle cleaned files, and if recycle fails then it will delete them. This is potentially destructive, so a <code>--clean-backup &lt;path&gt;</code> option is provided to instead move files to a backup directory.</p>
+<p>The input directory structure is not maintained, no subdirectories will be created in the backup directory. Files of conflicting names will have a number appended to their name, e.g. <code>File (1).rom</code>.</p>
 <h2 id="dry-run">Dry run</h2>
 <p>The <code>--clean-dry-run</code> option exists to see what paths <code>igir clean</code> would delete, without <em>actually</em> deleting them.</p>
 <div class="admonition note">
@@ -2620,7 +2632,7 @@
     <span class="md-icon" title="Last update">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1-2.1-2M12.5 7v5.2l4 2.4-1 1L11 13V7h1.5M11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2v1.8Z"/></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date">February 24, 2024</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date">July 19, 2024</span>
   </span>
 
     
