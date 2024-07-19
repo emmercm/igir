@@ -130,8 +130,8 @@ export default class DirectoryCleaner extends Module {
         let increment = 0;
         while (await fsPoly.exists(backupPath)) {
           increment += 1;
-          const { dir, name, ext } = path.parse(filePath);
-          backupPath = path.join(backupDir, dir, `${name} (${increment})${ext}`);
+          const { name, ext } = path.parse(filePath);
+          backupPath = path.join(backupDir, `${name} (${increment})${ext}`);
         }
 
         this.progressBar.logInfo(`moving cleaned path: ${filePath} -> ${backupPath}`);
