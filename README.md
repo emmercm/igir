@@ -58,7 +58,7 @@ $ igir --help
   | $$  | $$|    \  | $$  | $$    $$   ROM collection manager
   | $$  | $$|    \  | $$  | $$    $$   https://igir.io/
   | $$  | $$ \$$$$  | $$  | $$$$$$$\
- _| $$_ | $$__| $$ _| $$_ | $$  | $$   v2.10.0
+ _| $$_ | $$__| $$ _| $$_ | $$  | $$   v2.10.1
 |   $$ \ \$$    $$|   $$ \| $$  | $$
  \$$$$$$  \$$$$$$  \$$$$$$ \$$   \$$
 
@@ -143,6 +143,7 @@ ROM writing options:
 
 clean command options:
   -C, --clean-exclude  Path(s) to files to exclude from cleaning (supports globbing)   [array]
+      --clean-backup   Move cleaned files to a directory for backup                   [string]
       --clean-dry-run  Don't clean any files and instead only print what files would be cleane
                        d                                                             [boolean]
 
