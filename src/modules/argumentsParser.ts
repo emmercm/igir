@@ -456,6 +456,13 @@ export default class ArgumentsParser {
         type: 'array',
         requiresArg: true,
       })
+      .option('clean-backup', {
+        group: groupRomClean,
+        description: 'Move cleaned files to a directory for backup',
+        type: 'string',
+        coerce: ArgumentsParser.getLastValue, // don't allow string[] values
+        requiresArg: true,
+      })
       .option('clean-dry-run', {
         group: groupRomClean,
         description: 'Don\'t clean any files and instead only print what files would be cleaned',
@@ -465,7 +472,7 @@ export default class ArgumentsParser {
         if (checkArgv.help) {
           return true;
         }
-        const needClean = ['clean-exclude', 'clean-dry-run'].filter((option) => checkArgv[option]);
+        const needClean = ['clean-exclude', 'clean-backup', 'clean-dry-run'].filter((option) => checkArgv[option]);
         if (!checkArgv._.includes('clean') && needClean.length > 0) {
           // TODO(cememr): print help message
           throw new ExpectedError(`Missing required command for option${needClean.length !== 1 ? 's' : ''} ${needClean.join(', ')}: clean`);
