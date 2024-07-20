@@ -33,21 +33,25 @@ describe('getArchiveEntries', () => {
   test.each([
     // fizzbuzz
     ['./test/fixtures/roms/7z/fizzbuzz.7z', 'fizzbuzz.nes', '370517b5'],
+    ['./test/fixtures/roms/gz/fizzbuzz.gz', 'fizzbuzz.nes', '370517b5'],
     ['./test/fixtures/roms/rar/fizzbuzz.rar', 'fizzbuzz.nes', '370517b5'],
     ['./test/fixtures/roms/tar/fizzbuzz.tar.gz', 'fizzbuzz.nes', '370517b5'],
     ['./test/fixtures/roms/zip/fizzbuzz.zip', 'fizzbuzz.nes', '370517b5'],
     // foobar
     ['./test/fixtures/roms/7z/foobar.7z', 'foobar.lnx', 'b22c9747'],
+    ['./test/fixtures/roms/gz/foobar.gz', 'foobar.lnx', 'b22c9747'],
     ['./test/fixtures/roms/rar/foobar.rar', 'foobar.lnx', 'b22c9747'],
     ['./test/fixtures/roms/tar/foobar.tar.gz', 'foobar.lnx', 'b22c9747'],
     ['./test/fixtures/roms/zip/foobar.zip', 'foobar.lnx', 'b22c9747'],
     // loremipsum
     ['./test/fixtures/roms/7z/loremipsum.7z', 'loremipsum.rom', '70856527'],
+    ['./test/fixtures/roms/gz/loremipsum.gz', 'loremipsum.rom', '70856527'],
     ['./test/fixtures/roms/rar/loremipsum.rar', 'loremipsum.rom', '70856527'],
     ['./test/fixtures/roms/tar/loremipsum.tar.gz', 'loremipsum.rom', '70856527'],
     ['./test/fixtures/roms/zip/loremipsum.zip', 'loremipsum.rom', '70856527'],
     // unknown
     ['./test/fixtures/roms/7z/unknown.7z', 'unknown.rom', '377a7727'],
+    ['./test/fixtures/roms/gz/unknown.gz', 'unknown.rom', '377a7727'],
     ['./test/fixtures/roms/rar/unknown.rar', 'unknown.rom', '377a7727'],
     ['./test/fixtures/roms/tar/unknown.tar.gz', 'unknown.rom', '377a7727'],
     ['./test/fixtures/roms/zip/unknown.zip', 'unknown.rom', '377a7727'],

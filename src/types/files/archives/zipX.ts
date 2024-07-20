@@ -21,8 +21,4 @@ export default class ZipX extends SevenZip {
     }
     return path.parse(this.getFilePath()).ext;
   }
-
-  static getFileSignatures(): Buffer[] {
-    return [];
-  }
 }

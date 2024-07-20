@@ -26,13 +26,6 @@ export default class Rar extends Archive {
     return Rar.getExtensions()[0];
   }
 
-  static getFileSignatures(): Buffer[] {
-    return [
-      Buffer.from('526172211A0700', 'hex'), // v1.50+
-      Buffer.from('526172211A070100', 'hex'), // v5.00+
-    ];
-  }
-
   async getArchiveEntries(checksumBitmask: number): Promise<ArchiveEntry<this>[]> {
     const rar = await unrar.createExtractorFromFile({
       filepath: this.getFilePath(),

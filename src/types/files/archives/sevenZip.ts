@@ -28,11 +28,7 @@ export default class SevenZip extends Archive {
     return SevenZip.getExtensions()[0];
   }
 
-  static getFileSignatures(): Buffer[] {
-    return [Buffer.from('377ABCAF271C', 'hex')];
-  }
-
-  async getArchiveEntries(checksumBitmask: number): Promise<ArchiveEntry<this>[]> {
+  async getArchiveEntries(checksumBitmask: number): Promise<ArchiveEntry<Archive>[]> {
     /**
      * WARN(cemmer): even with the above mutex, {@link _7z.list} will still sometimes return no
      *  entries. Most archives contain at least one file, so assume this is wrong and attempt

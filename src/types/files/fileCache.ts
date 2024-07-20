@@ -133,7 +133,7 @@ export default class FileCache {
   static async getOrComputeEntries<T extends Archive>(
     archive: T,
     checksumBitmask: number,
-  ): Promise<ArchiveEntry<T>[]> {
+  ): Promise<ArchiveEntry<Archive>[]> {
     if (!this.enabled || checksumBitmask === ChecksumBitmask.NONE) {
       return archive.getArchiveEntries(checksumBitmask);
     }

@@ -31,14 +31,17 @@ describe('getEntryPath', () => {
 describe('getSize', () => {
   describe.each([
     ['./test/fixtures/roms/7z/fizzbuzz.7z', 9],
+    ['./test/fixtures/roms/gz/fizzbuzz.gz', 9],
     ['./test/fixtures/roms/rar/fizzbuzz.rar', 9],
     ['./test/fixtures/roms/tar/fizzbuzz.tar.gz', 9],
     ['./test/fixtures/roms/zip/fizzbuzz.zip', 9],
     ['./test/fixtures/roms/7z/foobar.7z', 7],
+    ['./test/fixtures/roms/gz/foobar.gz', 7],
     ['./test/fixtures/roms/rar/foobar.rar', 7],
     ['./test/fixtures/roms/tar/foobar.tar.gz', 7],
     ['./test/fixtures/roms/zip/foobar.zip', 7],
     ['./test/fixtures/roms/7z/loremipsum.7z', 11],
+    ['./test/fixtures/roms/gz/loremipsum.gz', 11],
     ['./test/fixtures/roms/rar/loremipsum.rar', 11],
     ['./test/fixtures/roms/tar/loremipsum.tar.gz', 11],
     ['./test/fixtures/roms/zip/loremipsum.zip', 11],
@@ -108,14 +111,17 @@ describe('getSize', () => {
 describe('getCrc32', () => {
   test.each([
     ['./test/fixtures/roms/7z/fizzbuzz.7z', '370517b5'],
+    ['./test/fixtures/roms/gz/fizzbuzz.gz', '370517b5'],
     ['./test/fixtures/roms/rar/fizzbuzz.rar', '370517b5'],
     ['./test/fixtures/roms/tar/fizzbuzz.tar.gz', '370517b5'],
     ['./test/fixtures/roms/zip/fizzbuzz.zip', '370517b5'],
     ['./test/fixtures/roms/7z/foobar.7z', 'b22c9747'],
+    ['./test/fixtures/roms/gz/foobar.gz', 'b22c9747'],
     ['./test/fixtures/roms/rar/foobar.rar', 'b22c9747'],
     ['./test/fixtures/roms/tar/foobar.tar.gz', 'b22c9747'],
     ['./test/fixtures/roms/zip/foobar.zip', 'b22c9747'],
     ['./test/fixtures/roms/7z/loremipsum.7z', '70856527'],
+    ['./test/fixtures/roms/gz/loremipsum.gz', '70856527'],
     ['./test/fixtures/roms/rar/loremipsum.rar', '70856527'],
     ['./test/fixtures/roms/tar/loremipsum.tar.gz', '70856527'],
     ['./test/fixtures/roms/zip/loremipsum.zip', '70856527'],
@@ -141,14 +147,17 @@ describe('getCrc32', () => {
 describe('getCrc32WithoutHeader', () => {
   test.each([
     ['./test/fixtures/roms/7z/fizzbuzz.7z', '370517b5'],
+    ['./test/fixtures/roms/gz/fizzbuzz.gz', '370517b5'],
     ['./test/fixtures/roms/rar/fizzbuzz.rar', '370517b5'],
     ['./test/fixtures/roms/tar/fizzbuzz.tar.gz', '370517b5'],
     ['./test/fixtures/roms/zip/fizzbuzz.zip', '370517b5'],
     ['./test/fixtures/roms/7z/foobar.7z', 'b22c9747'],
+    ['./test/fixtures/roms/gz/foobar.gz', 'b22c9747'],
     ['./test/fixtures/roms/rar/foobar.rar', 'b22c9747'],
     ['./test/fixtures/roms/tar/foobar.tar.gz', 'b22c9747'],
     ['./test/fixtures/roms/zip/foobar.zip', 'b22c9747'],
     ['./test/fixtures/roms/7z/loremipsum.7z', '70856527'],
+    ['./test/fixtures/roms/gz/loremipsum.gz', '70856527'],
     ['./test/fixtures/roms/rar/loremipsum.rar', '70856527'],
     ['./test/fixtures/roms/tar/loremipsum.tar.gz', '70856527'],
     ['./test/fixtures/roms/zip/loremipsum.zip', '70856527'],
@@ -172,10 +181,12 @@ describe('getCrc32WithoutHeader', () => {
 
   test.each([
     ['./test/fixtures/roms/7z/fizzbuzz.7z', '370517b5'],
+    ['./test/fixtures/roms/gz/fizzbuzz.gz', '370517b5'],
     ['./test/fixtures/roms/rar/fizzbuzz.rar', '370517b5'],
     ['./test/fixtures/roms/tar/fizzbuzz.tar.gz', '370517b5'],
     ['./test/fixtures/roms/zip/fizzbuzz.zip', '370517b5'],
     ['./test/fixtures/roms/7z/foobar.7z', 'b22c9747'],
+    ['./test/fixtures/roms/gz/foobar.gz', 'b22c9747'],
     ['./test/fixtures/roms/rar/foobar.rar', 'b22c9747'],
     ['./test/fixtures/roms/tar/foobar.tar.gz', 'b22c9747'],
     ['./test/fixtures/roms/zip/foobar.zip', 'b22c9747'],
@@ -221,14 +232,17 @@ describe('getCrc32WithoutHeader', () => {
 describe('getMd5', () => {
   test.each([
     ['./test/fixtures/roms/7z/fizzbuzz.7z', 'cbe8410861130a91609295349918c2c2'],
+    ['./test/fixtures/roms/gz/fizzbuzz.gz', 'cbe8410861130a91609295349918c2c2'],
     ['./test/fixtures/roms/rar/fizzbuzz.rar', 'cbe8410861130a91609295349918c2c2'],
     ['./test/fixtures/roms/tar/fizzbuzz.tar.gz', 'cbe8410861130a91609295349918c2c2'],
     ['./test/fixtures/roms/zip/fizzbuzz.zip', 'cbe8410861130a91609295349918c2c2'],
     ['./test/fixtures/roms/7z/foobar.7z', '14758f1afd44c09b7992073ccf00b43d'],
+    ['./test/fixtures/roms/gz/foobar.gz', '14758f1afd44c09b7992073ccf00b43d'],
     ['./test/fixtures/roms/rar/foobar.rar', '14758f1afd44c09b7992073ccf00b43d'],
     ['./test/fixtures/roms/tar/foobar.tar.gz', '14758f1afd44c09b7992073ccf00b43d'],
     ['./test/fixtures/roms/zip/foobar.zip', '14758f1afd44c09b7992073ccf00b43d'],
     ['./test/fixtures/roms/7z/loremipsum.7z', 'fffcb698d88fbc9425a636ba7e4712a3'],
+    ['./test/fixtures/roms/gz/loremipsum.gz', 'fffcb698d88fbc9425a636ba7e4712a3'],
     ['./test/fixtures/roms/rar/loremipsum.rar', 'fffcb698d88fbc9425a636ba7e4712a3'],
     ['./test/fixtures/roms/tar/loremipsum.tar.gz', 'fffcb698d88fbc9425a636ba7e4712a3'],
     ['./test/fixtures/roms/zip/loremipsum.zip', 'fffcb698d88fbc9425a636ba7e4712a3'],
@@ -253,14 +267,17 @@ describe('getMd5', () => {
 describe('getMd5WithoutHeader', () => {
   test.each([
     ['./test/fixtures/roms/7z/fizzbuzz.7z', 'cbe8410861130a91609295349918c2c2'],
+    ['./test/fixtures/roms/gz/fizzbuzz.gz', 'cbe8410861130a91609295349918c2c2'],
     ['./test/fixtures/roms/rar/fizzbuzz.rar', 'cbe8410861130a91609295349918c2c2'],
     ['./test/fixtures/roms/tar/fizzbuzz.tar.gz', 'cbe8410861130a91609295349918c2c2'],
     ['./test/fixtures/roms/zip/fizzbuzz.zip', 'cbe8410861130a91609295349918c2c2'],
     ['./test/fixtures/roms/7z/foobar.7z', '14758f1afd44c09b7992073ccf00b43d'],
+    ['./test/fixtures/roms/gz/foobar.gz', '14758f1afd44c09b7992073ccf00b43d'],
     ['./test/fixtures/roms/rar/foobar.rar', '14758f1afd44c09b7992073ccf00b43d'],
     ['./test/fixtures/roms/tar/foobar.tar.gz', '14758f1afd44c09b7992073ccf00b43d'],
     ['./test/fixtures/roms/zip/foobar.zip', '14758f1afd44c09b7992073ccf00b43d'],
     ['./test/fixtures/roms/7z/loremipsum.7z', 'fffcb698d88fbc9425a636ba7e4712a3'],
+    ['./test/fixtures/roms/gz/loremipsum.gz', 'fffcb698d88fbc9425a636ba7e4712a3'],
     ['./test/fixtures/roms/rar/loremipsum.rar', 'fffcb698d88fbc9425a636ba7e4712a3'],
     ['./test/fixtures/roms/tar/loremipsum.tar.gz', 'fffcb698d88fbc9425a636ba7e4712a3'],
     ['./test/fixtures/roms/zip/loremipsum.zip', 'fffcb698d88fbc9425a636ba7e4712a3'],
@@ -283,10 +300,12 @@ describe('getMd5WithoutHeader', () => {
 
   test.each([
     ['./test/fixtures/roms/7z/fizzbuzz.7z', 'cbe8410861130a91609295349918c2c2'],
+    ['./test/fixtures/roms/gz/fizzbuzz.gz', 'cbe8410861130a91609295349918c2c2'],
     ['./test/fixtures/roms/rar/fizzbuzz.rar', 'cbe8410861130a91609295349918c2c2'],
     ['./test/fixtures/roms/tar/fizzbuzz.tar.gz', 'cbe8410861130a91609295349918c2c2'],
     ['./test/fixtures/roms/zip/fizzbuzz.zip', 'cbe8410861130a91609295349918c2c2'],
     ['./test/fixtures/roms/7z/foobar.7z', '14758f1afd44c09b7992073ccf00b43d'],
+    ['./test/fixtures/roms/gz/foobar.gz', '14758f1afd44c09b7992073ccf00b43d'],
     ['./test/fixtures/roms/rar/foobar.rar', '14758f1afd44c09b7992073ccf00b43d'],
     ['./test/fixtures/roms/tar/foobar.tar.gz', '14758f1afd44c09b7992073ccf00b43d'],
     ['./test/fixtures/roms/zip/foobar.zip', '14758f1afd44c09b7992073ccf00b43d'],
@@ -331,14 +350,17 @@ describe('getMd5WithoutHeader', () => {
 describe('getSha1', () => {
   test.each([
     ['./test/fixtures/roms/7z/fizzbuzz.7z', '5a316d9f0e06964d94cdd62a933803d7147ddadb'],
+    ['./test/fixtures/roms/gz/fizzbuzz.gz', '5a316d9f0e06964d94cdd62a933803d7147ddadb'],
     ['./test/fixtures/roms/rar/fizzbuzz.rar', '5a316d9f0e06964d94cdd62a933803d7147ddadb'],
     ['./test/fixtures/roms/tar/fizzbuzz.tar.gz', '5a316d9f0e06964d94cdd62a933803d7147ddadb'],
     ['./test/fixtures/roms/zip/fizzbuzz.zip', '5a316d9f0e06964d94cdd62a933803d7147ddadb'],
     ['./test/fixtures/roms/7z/foobar.7z', '988881adc9fc3655077dc2d4d757d480b5ea0e11'],
+    ['./test/fixtures/roms/gz/foobar.gz', '988881adc9fc3655077dc2d4d757d480b5ea0e11'],
     ['./test/fixtures/roms/rar/foobar.rar', '988881adc9fc3655077dc2d4d757d480b5ea0e11'],
     ['./test/fixtures/roms/tar/foobar.tar.gz', '988881adc9fc3655077dc2d4d757d480b5ea0e11'],
     ['./test/fixtures/roms/zip/foobar.zip', '988881adc9fc3655077dc2d4d757d480b5ea0e11'],
     ['./test/fixtures/roms/7z/loremipsum.7z', '1d913738eb363a4056c19e158aa81189a1eb7a55'],
+    ['./test/fixtures/roms/gz/loremipsum.gz', '1d913738eb363a4056c19e158aa81189a1eb7a55'],
     ['./test/fixtures/roms/rar/loremipsum.rar', '1d913738eb363a4056c19e158aa81189a1eb7a55'],
     ['./test/fixtures/roms/tar/loremipsum.tar.gz', '1d913738eb363a4056c19e158aa81189a1eb7a55'],
     ['./test/fixtures/roms/zip/loremipsum.zip', '1d913738eb363a4056c19e158aa81189a1eb7a55'],
@@ -363,14 +385,17 @@ describe('getSha1', () => {
 describe('getSha1WithoutHeader', () => {
   test.each([
     ['./test/fixtures/roms/7z/fizzbuzz.7z', '5a316d9f0e06964d94cdd62a933803d7147ddadb'],
+    ['./test/fixtures/roms/gz/fizzbuzz.gz', '5a316d9f0e06964d94cdd62a933803d7147ddadb'],
     ['./test/fixtures/roms/rar/fizzbuzz.rar', '5a316d9f0e06964d94cdd62a933803d7147ddadb'],
     ['./test/fixtures/roms/tar/fizzbuzz.tar.gz', '5a316d9f0e06964d94cdd62a933803d7147ddadb'],
     ['./test/fixtures/roms/zip/fizzbuzz.zip', '5a316d9f0e06964d94cdd62a933803d7147ddadb'],
     ['./test/fixtures/roms/7z/foobar.7z', '988881adc9fc3655077dc2d4d757d480b5ea0e11'],
+    ['./test/fixtures/roms/gz/foobar.gz', '988881adc9fc3655077dc2d4d757d480b5ea0e11'],
     ['./test/fixtures/roms/rar/foobar.rar', '988881adc9fc3655077dc2d4d757d480b5ea0e11'],
     ['./test/fixtures/roms/tar/foobar.tar.gz', '988881adc9fc3655077dc2d4d757d480b5ea0e11'],
     ['./test/fixtures/roms/zip/foobar.zip', '988881adc9fc3655077dc2d4d757d480b5ea0e11'],
     ['./test/fixtures/roms/7z/loremipsum.7z', '1d913738eb363a4056c19e158aa81189a1eb7a55'],
+    ['./test/fixtures/roms/gz/loremipsum.gz', '1d913738eb363a4056c19e158aa81189a1eb7a55'],
     ['./test/fixtures/roms/rar/loremipsum.rar', '1d913738eb363a4056c19e158aa81189a1eb7a55'],
     ['./test/fixtures/roms/tar/loremipsum.tar.gz', '1d913738eb363a4056c19e158aa81189a1eb7a55'],
     ['./test/fixtures/roms/zip/loremipsum.zip', '1d913738eb363a4056c19e158aa81189a1eb7a55'],
@@ -393,10 +418,12 @@ describe('getSha1WithoutHeader', () => {
 
   test.each([
     ['./test/fixtures/roms/7z/fizzbuzz.7z', '5a316d9f0e06964d94cdd62a933803d7147ddadb'],
+    ['./test/fixtures/roms/gz/fizzbuzz.gz', '5a316d9f0e06964d94cdd62a933803d7147ddadb'],
     ['./test/fixtures/roms/rar/fizzbuzz.rar', '5a316d9f0e06964d94cdd62a933803d7147ddadb'],
     ['./test/fixtures/roms/tar/fizzbuzz.tar.gz', '5a316d9f0e06964d94cdd62a933803d7147ddadb'],
     ['./test/fixtures/roms/zip/fizzbuzz.zip', '5a316d9f0e06964d94cdd62a933803d7147ddadb'],
     ['./test/fixtures/roms/7z/foobar.7z', '988881adc9fc3655077dc2d4d757d480b5ea0e11'],
+    ['./test/fixtures/roms/gz/foobar.gz', '988881adc9fc3655077dc2d4d757d480b5ea0e11'],
     ['./test/fixtures/roms/rar/foobar.rar', '988881adc9fc3655077dc2d4d757d480b5ea0e11'],
     ['./test/fixtures/roms/tar/foobar.tar.gz', '988881adc9fc3655077dc2d4d757d480b5ea0e11'],
     ['./test/fixtures/roms/zip/foobar.zip', '988881adc9fc3655077dc2d4d757d480b5ea0e11'],
@@ -441,14 +468,17 @@ describe('getSha1WithoutHeader', () => {
 describe('getSha256', () => {
   test.each([
     ['./test/fixtures/roms/7z/fizzbuzz.7z', '6e809804766eaa4dd42a2607b789f3e4e5d32fc321ba8dd3ef39ddc1ea2888e9'],
+    ['./test/fixtures/roms/gz/fizzbuzz.gz', '6e809804766eaa4dd42a2607b789f3e4e5d32fc321ba8dd3ef39ddc1ea2888e9'],
     ['./test/fixtures/roms/rar/fizzbuzz.rar', '6e809804766eaa4dd42a2607b789f3e4e5d32fc321ba8dd3ef39ddc1ea2888e9'],
     ['./test/fixtures/roms/tar/fizzbuzz.tar.gz', '6e809804766eaa4dd42a2607b789f3e4e5d32fc321ba8dd3ef39ddc1ea2888e9'],
     ['./test/fixtures/roms/zip/fizzbuzz.zip', '6e809804766eaa4dd42a2607b789f3e4e5d32fc321ba8dd3ef39ddc1ea2888e9'],
     ['./test/fixtures/roms/7z/foobar.7z', 'aec070645fe53ee3b3763059376134f058cc337247c978add178b6ccdfb0019f'],
+    ['./test/fixtures/roms/gz/foobar.gz', 'aec070645fe53ee3b3763059376134f058cc337247c978add178b6ccdfb0019f'],
     ['./test/fixtures/roms/rar/foobar.rar', 'aec070645fe53ee3b3763059376134f058cc337247c978add178b6ccdfb0019f'],
     ['./test/fixtures/roms/tar/foobar.tar.gz', 'aec070645fe53ee3b3763059376134f058cc337247c978add178b6ccdfb0019f'],
     ['./test/fixtures/roms/zip/foobar.zip', 'aec070645fe53ee3b3763059376134f058cc337247c978add178b6ccdfb0019f'],
     ['./test/fixtures/roms/7z/loremipsum.7z', '9d0dc61fa60a12a9613cc32fa43fc85bea343ec3a25f27d10ed81a7f0b9ec278'],
+    ['./test/fixtures/roms/gz/loremipsum.gz', '9d0dc61fa60a12a9613cc32fa43fc85bea343ec3a25f27d10ed81a7f0b9ec278'],
     ['./test/fixtures/roms/rar/loremipsum.rar', '9d0dc61fa60a12a9613cc32fa43fc85bea343ec3a25f27d10ed81a7f0b9ec278'],
     ['./test/fixtures/roms/tar/loremipsum.tar.gz', '9d0dc61fa60a12a9613cc32fa43fc85bea343ec3a25f27d10ed81a7f0b9ec278'],
     ['./test/fixtures/roms/zip/loremipsum.zip', '9d0dc61fa60a12a9613cc32fa43fc85bea343ec3a25f27d10ed81a7f0b9ec278'],
@@ -473,14 +503,17 @@ describe('getSha256', () => {
 describe('getSha256WithoutHeader', () => {
   test.each([
     ['./test/fixtures/roms/7z/fizzbuzz.7z', '6e809804766eaa4dd42a2607b789f3e4e5d32fc321ba8dd3ef39ddc1ea2888e9'],
+    ['./test/fixtures/roms/gz/fizzbuzz.gz', '6e809804766eaa4dd42a2607b789f3e4e5d32fc321ba8dd3ef39ddc1ea2888e9'],
     ['./test/fixtures/roms/rar/fizzbuzz.rar', '6e809804766eaa4dd42a2607b789f3e4e5d32fc321ba8dd3ef39ddc1ea2888e9'],
     ['./test/fixtures/roms/tar/fizzbuzz.tar.gz', '6e809804766eaa4dd42a2607b789f3e4e5d32fc321ba8dd3ef39ddc1ea2888e9'],
     ['./test/fixtures/roms/zip/fizzbuzz.zip', '6e809804766eaa4dd42a2607b789f3e4e5d32fc321ba8dd3ef39ddc1ea2888e9'],
     ['./test/fixtures/roms/7z/foobar.7z', 'aec070645fe53ee3b3763059376134f058cc337247c978add178b6ccdfb0019f'],
+    ['./test/fixtures/roms/gz/foobar.gz', 'aec070645fe53ee3b3763059376134f058cc337247c978add178b6ccdfb0019f'],
     ['./test/fixtures/roms/rar/foobar.rar', 'aec070645fe53ee3b3763059376134f058cc337247c978add178b6ccdfb0019f'],
     ['./test/fixtures/roms/tar/foobar.tar.gz', 'aec070645fe53ee3b3763059376134f058cc337247c978add178b6ccdfb0019f'],
     ['./test/fixtures/roms/zip/foobar.zip', 'aec070645fe53ee3b3763059376134f058cc337247c978add178b6ccdfb0019f'],
     ['./test/fixtures/roms/7z/loremipsum.7z', '9d0dc61fa60a12a9613cc32fa43fc85bea343ec3a25f27d10ed81a7f0b9ec278'],
+    ['./test/fixtures/roms/gz/loremipsum.gz', '9d0dc61fa60a12a9613cc32fa43fc85bea343ec3a25f27d10ed81a7f0b9ec278'],
     ['./test/fixtures/roms/rar/loremipsum.rar', '9d0dc61fa60a12a9613cc32fa43fc85bea343ec3a25f27d10ed81a7f0b9ec278'],
     ['./test/fixtures/roms/tar/loremipsum.tar.gz', '9d0dc61fa60a12a9613cc32fa43fc85bea343ec3a25f27d10ed81a7f0b9ec278'],
     ['./test/fixtures/roms/zip/loremipsum.zip', '9d0dc61fa60a12a9613cc32fa43fc85bea343ec3a25f27d10ed81a7f0b9ec278'],
@@ -503,10 +536,12 @@ describe('getSha256WithoutHeader', () => {
 
   test.each([
     ['./test/fixtures/roms/7z/fizzbuzz.7z', '6e809804766eaa4dd42a2607b789f3e4e5d32fc321ba8dd3ef39ddc1ea2888e9'],
+    ['./test/fixtures/roms/gz/fizzbuzz.gz', '6e809804766eaa4dd42a2607b789f3e4e5d32fc321ba8dd3ef39ddc1ea2888e9'],
     ['./test/fixtures/roms/rar/fizzbuzz.rar', '6e809804766eaa4dd42a2607b789f3e4e5d32fc321ba8dd3ef39ddc1ea2888e9'],
     ['./test/fixtures/roms/tar/fizzbuzz.tar.gz', '6e809804766eaa4dd42a2607b789f3e4e5d32fc321ba8dd3ef39ddc1ea2888e9'],
     ['./test/fixtures/roms/zip/fizzbuzz.zip', '6e809804766eaa4dd42a2607b789f3e4e5d32fc321ba8dd3ef39ddc1ea2888e9'],
     ['./test/fixtures/roms/7z/foobar.7z', 'aec070645fe53ee3b3763059376134f058cc337247c978add178b6ccdfb0019f'],
+    ['./test/fixtures/roms/gz/foobar.gz', 'aec070645fe53ee3b3763059376134f058cc337247c978add178b6ccdfb0019f'],
     ['./test/fixtures/roms/rar/foobar.rar', 'aec070645fe53ee3b3763059376134f058cc337247c978add178b6ccdfb0019f'],
     ['./test/fixtures/roms/tar/foobar.tar.gz', 'aec070645fe53ee3b3763059376134f058cc337247c978add178b6ccdfb0019f'],
     ['./test/fixtures/roms/zip/foobar.zip', 'aec070645fe53ee3b3763059376134f058cc337247c978add178b6ccdfb0019f'],
@@ -554,6 +589,7 @@ describe('extractEntryToFile', () => {
     const archiveEntries = await new ROMScanner(new Options({
       input: [
         './test/fixtures/roms/7z',
+        './test/fixtures/roms/gz',
         './test/fixtures/roms/rar',
         './test/fixtures/roms/tar',
         './test/fixtures/roms/zip',
@@ -563,7 +599,7 @@ describe('extractEntryToFile', () => {
       .filter((entry): entry is ArchiveEntry<Archive> => entry instanceof ArchiveEntry)
       .map((entry) => entry.getArchive())
       .reduce(ArrayPoly.reduceUnique(), []);
-    expect(archives).toHaveLength(21);
+    expect(archives).toHaveLength(28);
 
     for (const archive of archives) {
       await expect(archive.extractEntryToFile('INVALID FILE', 'INVALID PATH')).rejects.toThrow();
@@ -577,12 +613,13 @@ describe('copyToTempFile', () => {
     const archiveEntries = await new ROMScanner(new Options({
       input: [
         './test/fixtures/roms/7z',
+        './test/fixtures/roms/gz',
         './test/fixtures/roms/rar',
         './test/fixtures/roms/tar',
         './test/fixtures/roms/zip',
       ],
     }), new ProgressBarFake()).scan();
-    expect(archiveEntries).toHaveLength(30);
+    expect(archiveEntries).toHaveLength(37);
 
     const temp = await fsPoly.mkdtemp(Temp.getTempDir());
     for (const archiveEntry of archiveEntries) {
@@ -601,12 +638,13 @@ describe('createReadStream', () => {
     const archiveEntries = await new ROMScanner(new Options({
       input: [
         './test/fixtures/roms/7z',
+        './test/fixtures/roms/gz',
         './test/fixtures/roms/rar',
         './test/fixtures/roms/tar',
         './test/fixtures/roms/zip',
       ],
     }), new ProgressBarFake()).scan();
-    expect(archiveEntries).toHaveLength(30);
+    expect(archiveEntries).toHaveLength(37);
 
     const temp = await fsPoly.mkdtemp(Temp.getTempDir());
     for (const archiveEntry of archiveEntries) {

@@ -1,4 +1,7 @@
+import Archive from './archive.js';
+import ArchiveEntry from './archiveEntry.js';
 import SevenZip from './sevenZip.js';
+import Tar from './tar.js';
 
 export default class Gzip extends SevenZip {
   // eslint-disable-next-line class-methods-use-this
@@ -15,9 +18,12 @@ export default class Gzip extends SevenZip {
     return Gzip.getExtensions()[0];
   }
 
-  static getFileSignatures(): Buffer[] {
-    return [
-      Buffer.from('1F8B08', 'hex'), // deflate
-    ];
+  async getArchiveEntries(checksumBitmask: number): Promise<ArchiveEntry<Archive>[]> {
+    // See if this file is actually a .tar.gz
+    try {
+      return await new Tar(this.getFilePath()).getArchiveEntries(checksumBitmask);
+    } catch { /* empty */ }
+
+    return super.getArchiveEntries(checksumBitmask);
   }
 }

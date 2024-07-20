@@ -7,8 +7,8 @@ import DAT from '../types/dats/dat.js';
 import Parent from '../types/dats/parent.js';
 import ROM from '../types/dats/rom.js';
 import ArchiveEntry from '../types/files/archives/archiveEntry.js';
-import ROMSignature from '../types/files/romSignature.js';
-import Options, { RomFixExtension } from '../types/options.js';
+import FileSignature from '../types/files/fileSignature.js';
+import Options, { FixExtension } from '../types/options.js';
 import OutputFactory from '../types/outputFactory.js';
 import ReleaseCandidate from '../types/releaseCandidate.js';
 import ROMWithFiles from '../types/romWithFiles.js';
@@ -62,8 +62,8 @@ export default class CandidateExtensionCorrector extends Module {
   }
 
   private romNeedsCorrecting(romWithFiles: ROMWithFiles): boolean {
-    return this.options.getRomFixExtension() === RomFixExtension.ALWAYS
-      || (this.options.getRomFixExtension() === RomFixExtension.AUTO && (
+    return this.options.getFixExtension() === FixExtension.ALWAYS
+      || (this.options.getFixExtension() === FixExtension.AUTO && (
         !this.options.usingDats()
           || romWithFiles.getRom().getName().trim() === ''
       ));
@@ -149,7 +149,7 @@ export default class CandidateExtensionCorrector extends Module {
         .toString()}`);
 
       await romWithFiles.getInputFile().createReadStream(async (stream) => {
-        const romSignature = await ROMSignature.signatureFromFileStream(stream);
+        const romSignature = await FileSignature.signatureFromFileStream(stream);
         if (!romSignature) {
           // No signature was found, so we can't perform any correction
           return;

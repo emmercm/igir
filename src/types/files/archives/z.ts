@@ -14,11 +14,4 @@ export default class Z extends SevenZip {
   getExtension(): string {
     return Z.getExtensions()[0];
   }
-
-  static getFileSignatures(): Buffer[] {
-    return [
-      Buffer.from('1F9D', 'hex'), // LZW compression
-      Buffer.from('1FA0', 'hex'), // LZH compression
-    ];
-  }
 }

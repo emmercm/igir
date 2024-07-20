@@ -1,6 +1,3 @@
-import fs from 'node:fs';
-import path from 'node:path';
-
 import ExpectedError from '../expectedError.js';
 import Archive from './archives/archive.js';
 import ArchiveEntry from './archives/archiveEntry.js';
@@ -16,6 +13,7 @@ import ZipX from './archives/zipX.js';
 import File from './file.js';
 import FileCache from './fileCache.js';
 import { ChecksumBitmask } from './fileChecksums.js';
+import FileSignature from './fileSignature.js';
 
 export default class FileFactory {
   static async filesFrom(
@@ -31,7 +29,11 @@ export default class FileFactory {
     }
 
     try {
-      return await this.entriesFromArchiveExtension(filePath, checksumBitmask);
+      const entries = await this.entriesFromArchiveExtension(filePath, checksumBitmask);
+      if (entries !== undefined) {
+        return entries;
+      }
+      return [await this.fileFrom(filePath, checksumBitmask)];
     } catch (error) {
       if (error && typeof error === 'object' && 'code' in error && error.code === 'ENOENT') {
         throw new ExpectedError(`file doesn't exist: ${filePath}`);
@@ -69,26 +71,27 @@ export default class FileFactory {
   private static async entriesFromArchiveExtension(
     filePath: string,
     checksumBitmask: number,
-  ): Promise<ArchiveEntry<Archive>[]> {
+    fileExt = filePath.replace(/.+?(?=(\.[a-zA-Z0-9]+)+)/, ''),
+  ): Promise<ArchiveEntry<Archive>[] | undefined> {
     let archive: Archive;
-    if (Zip.getExtensions().some((ext) => filePath.toLowerCase().endsWith(ext))) {
+    if (Zip.getExtensions().some((ext) => fileExt.toLowerCase().endsWith(ext))) {
       archive = new Zip(filePath);
-    } else if (Tar.getExtensions().some((ext) => filePath.toLowerCase().endsWith(ext))) {
+    } else if (Tar.getExtensions().some((ext) => fileExt.toLowerCase().endsWith(ext))) {
       archive = new Tar(filePath);
-    } else if (Rar.getExtensions().some((ext) => filePath.toLowerCase().endsWith(ext))) {
+    } else if (Rar.getExtensions().some((ext) => fileExt.toLowerCase().endsWith(ext))) {
       archive = new Rar(filePath);
-    } else if (Gzip.getExtensions().some((ext) => filePath.toLowerCase().endsWith(ext))) {
+    } else if (Gzip.getExtensions().some((ext) => fileExt.toLowerCase().endsWith(ext))) {
       archive = new Gzip(filePath);
-    } else if (SevenZip.getExtensions().some((ext) => filePath.toLowerCase().endsWith(ext))) {
+    } else if (SevenZip.getExtensions().some((ext) => fileExt.toLowerCase().endsWith(ext))) {
       archive = new SevenZip(filePath);
-    } else if (Z.getExtensions().some((ext) => filePath.toLowerCase().endsWith(ext))) {
+    } else if (Z.getExtensions().some((ext) => fileExt.toLowerCase().endsWith(ext))) {
       archive = new Z(filePath);
-    } else if (ZipSpanned.getExtensions().some((ext) => filePath.toLowerCase().endsWith(ext))) {
+    } else if (ZipSpanned.getExtensions().some((ext) => fileExt.toLowerCase().endsWith(ext))) {
       archive = new ZipSpanned(filePath);
-    } else if (ZipX.getExtensions().some((ext) => filePath.toLowerCase().endsWith(ext))) {
+    } else if (ZipX.getExtensions().some((ext) => fileExt.toLowerCase().endsWith(ext))) {
       archive = new ZipX(filePath);
     } else {
-      throw new ExpectedError(`unknown archive type: ${path.extname(filePath)}`);
+      return undefined;
     }
 
     return FileCache.getOrComputeEntries(archive, checksumBitmask);
@@ -104,71 +107,25 @@ export default class FileFactory {
     filePath: string,
     checksumBitmask: number,
   ): Promise<ArchiveEntry<Archive>[] | undefined> {
-    const maxSignatureLengthBytes = [
-      ...Zip.getFileSignatures(),
-      ...Tar.getFileSignatures(),
-      ...Rar.getFileSignatures(),
-      // 7zip
-      ...Gzip.getFileSignatures(),
-      ...SevenZip.getFileSignatures(),
-      ...Z.getFileSignatures(),
-      ...ZipSpanned.getFileSignatures(),
-      ...ZipX.getFileSignatures(),
-    ].reduce((max, signature) => Math.max(max, signature.length), 0);
-
-    let fileSignature: Buffer;
+    let signature: FileSignature | undefined;
     try {
-      const stream = fs.createReadStream(filePath, { end: maxSignatureLengthBytes });
-      fileSignature = await new Promise<Buffer>((resolve, reject) => {
-        const chunks: Buffer[] = [];
-        stream.on('data', (chunk) => chunks.push(Buffer.from(chunk)));
-        stream.on('end', () => resolve(Buffer.concat(chunks)));
-        stream.on('error', reject);
-      });
-      stream.destroy();
+      const file = await File.fileOf({ filePath });
+      signature = await file.createReadStream(
+        async (stream) => FileSignature.signatureFromFileStream(stream),
+      );
     } catch {
       // Fail silently on assumed I/O errors
       return undefined;
     }
-
-    let archive: Archive;
-    if (Zip.getFileSignatures()
-      .some((sig) => fileSignature.subarray(0, sig.length).equals(sig))
-    ) {
-      archive = new Zip(filePath);
-    } else if (Tar.getFileSignatures()
-      .some((sig) => fileSignature.subarray(0, sig.length).equals(sig))
-    ) {
-      archive = new Tar(filePath);
-    } else if (Rar.getFileSignatures()
-      .some((sig) => fileSignature.subarray(0, sig.length).equals(sig))
-    ) {
-      archive = new Rar(filePath);
-    } else if (Gzip.getFileSignatures()
-      .some((sig) => fileSignature.subarray(0, sig.length).equals(sig))
-    ) {
-      archive = new Gzip(filePath);
-    } else if (SevenZip.getFileSignatures()
-      .some((sig) => fileSignature.subarray(0, sig.length).equals(sig))
-    ) {
-      archive = new SevenZip(filePath);
-    } else if (Z.getFileSignatures()
-      .some((sig) => fileSignature.subarray(0, sig.length).equals(sig))
-    ) {
-      archive = new Z(filePath);
-    } else if (ZipSpanned.getFileSignatures()
-      .some((sig) => fileSignature.subarray(0, sig.length).equals(sig))
-    ) {
-      archive = new ZipSpanned(filePath);
-    } else if (ZipX.getFileSignatures()
-      .some((sig) => fileSignature.subarray(0, sig.length).equals(sig))
-    ) {
-      archive = new ZipX(filePath);
-    } else {
+    if (!signature) {
       return undefined;
     }
 
-    return FileCache.getOrComputeEntries(archive, checksumBitmask);
+    return this.entriesFromArchiveExtension(
+      filePath,
+      checksumBitmask,
+      signature.getExtension(),
+    );
   }
 
   static isExtensionArchive(filePath: string): boolean {

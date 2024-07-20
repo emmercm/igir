@@ -3,7 +3,6 @@ import path, { ParsedPath } from 'node:path';
 
 import ArrayPoly from '../polyfill/arrayPoly.js';
 import fsPoly from '../polyfill/fsPoly.js';
-import StringPoly from '../polyfill/stringPoly.js';
 import DAT from './dats/dat.js';
 import Game from './dats/game.js';
 import Release from './dats/release.js';
@@ -14,7 +13,7 @@ import ArchiveFile from './files/archives/archiveFile.js';
 import File from './files/file.js';
 import FileFactory from './files/fileFactory.js';
 import GameConsole from './gameConsole.js';
-import Options, { GameSubdirMode, RomFixExtension } from './options.js';
+import Options, { FixExtension, GameSubdirMode } from './options.js';
 
 /**
  * A {@link ParsedPath} that carries {@link ArchiveEntry} path information.
@@ -259,7 +258,7 @@ export default class OutputFactory {
     options: Options,
     outputRomFilename?: string,
   ): string {
-    if (!outputRomFilename && options.getRomFixExtension() === RomFixExtension.NEVER) {
+    if (!outputRomFilename && options.getFixExtension() === FixExtension.NEVER) {
       // No output ROM filename was provided and we won't know it later from correction, don't
       // replace any of the output filename tokens
       return input;
@@ -527,18 +526,12 @@ export default class OutputFactory {
     // Should leave archived, generate the archive name from the game name
     // The regex is to preserve filenames that use 2+ extensions, e.g. "rom.nes.zip"
     const oldExtMatch = inputFile.getFilePath().match(/[^.]+((\.[a-zA-Z0-9]+)+)$/);
-    const oldExt = oldExtMatch !== null ? oldExtMatch[1] : '';
-    const gameNameWithoutExt = StringPoly.replaceInsensitive(
-      path.basename(game.getName()) + oldExt,
-      inputFile.getArchive().getExtension(),
-      '',
-    );
-    return path.format({
-      dir: path.dirname(game.getName()),
-      name: gameNameWithoutExt,
-      // Use the archive's canonical extension
-      ext: inputFile.getArchive().getExtension(),
-    });
+    const oldExt = oldExtMatch !== null
+      // Respect the input file's extension
+      ? oldExtMatch[1]
+      // The input file has no extension, get the canonical extension from the {@link Archive}
+      : inputFile.getArchive().getExtension();
+    return game.getName() + oldExt;
   }
 
   private static getEntryPath(
