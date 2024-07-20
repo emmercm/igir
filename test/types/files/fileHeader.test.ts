@@ -46,6 +46,7 @@ describe('headerFromFileStream', () => {
   it('should not get a file header for dummy files', async () => {
     const headeredRoms = await new ROMScanner(new Options({
       input: ['./test/fixtures/roms/!(headered){,/}*'],
+      inputExclude: ['./test/fixtures/roms/nkit'],
     }), new ProgressBarFake()).scan();
     expect(headeredRoms.length).toBeGreaterThan(0);
 

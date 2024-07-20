@@ -128,10 +128,12 @@ site/
 *.gb
 *.gba
 *.gbc
+*.gcz
 *.gdi
 *.gg
 *.ic1
 *.img
+*.iso
 *.jar
 *.lo
 *.lyx
@@ -143,11 +145,13 @@ site/
 *.pk3
 *.pup
 *.rom
+*.rvz
 *.sfc
 *.smc
 *.sms
 *.szx
 *.wad
+*.wia
 *.x1
 *.x1t
 *.zim

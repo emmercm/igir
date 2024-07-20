@@ -91,6 +91,7 @@ async function candidateWriter(
   const options = new Options({
     ...optionsProps,
     input: [path.join(inputTemp, 'roms', inputGlob)],
+    inputExclude: [path.join(inputTemp, 'roms', '**', '*.nkit.*')],
     ...(patchGlob ? { patch: [path.join(inputTemp, patchGlob)] } : {}),
     output: outputTemp,
   });

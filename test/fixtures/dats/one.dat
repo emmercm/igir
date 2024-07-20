@@ -46,4 +46,8 @@
   <machine name="Device" isdevice="yes">
     <description>Device</description>
   </machine>
+  <machine name="GameCube NKit ISO">
+    <description>GameCube NKit ISO</description>
+    <rom name="GameCube NKit ISO.nkit.iso" size="1459978240" crc="5bc2ce5b" status="verified"/>
+  </machine>
 </datafile>
