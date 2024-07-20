@@ -10,13 +10,12 @@ import ConsolePoly from '../polyfill/consolePoly.js';
 import ExpectedError from '../types/expectedError.js';
 import { ChecksumBitmask } from '../types/files/fileChecksums.js';
 import ROMHeader from '../types/files/romHeader.js';
-import ROMSignature from '../types/files/romSignature.js';
 import Internationalization from '../types/internationalization.js';
 import Options, {
+  FixExtension,
   GameSubdirMode,
   InputChecksumArchivesMode,
   MergeMode,
-  RomFixExtension,
 } from '../types/options.js';
 import PatchFactory from '../types/patches/patchFactory.js';
 
@@ -416,15 +415,15 @@ export default class ArgumentsParser {
         default: GameSubdirMode[GameSubdirMode.MULTIPLE].toLowerCase(),
       })
 
-      .option('rom-fix-extension', {
+      .option('fix-extension', {
         group: groupRomOutput,
-        description: `Read ROMs for known file signatures and use the correct extension (also affects dir2dat) (supported: ${ROMSignature.getSupportedExtensions().join(', ')})`,
-        choices: Object.keys(RomFixExtension)
+        description: 'Read files for known signatures and use the correct extension (also affects dir2dat)',
+        choices: Object.keys(FixExtension)
           .filter((mode) => Number.isNaN(Number(mode)))
           .map((mode) => mode.toLowerCase()),
         coerce: ArgumentsParser.getLastValue, // don't allow string[] values
         requiresArg: true,
-        default: RomFixExtension[RomFixExtension.AUTO].toLowerCase(),
+        default: FixExtension[FixExtension.AUTO].toLowerCase(),
       })
       .option('overwrite', {
         group: groupRomOutput,

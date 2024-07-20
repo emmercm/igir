@@ -22,15 +22,15 @@ Here are some examples of common mistakes:
 
 This correction behavior can be controlled with the following option:
 
-- `--rom-fix-extension never`
+- `--fix-extension never`
 
   Don't correct any ROM filename extensions. If a DAT doesn't provide a ROM filename, a default name of `<game name>.rom` will be used.
 
-- `--rom-fix-extension auto` (default)
+- `--fix-extension auto` (default)
 
   When not using DATs (no [`--dat <path>` option](../dats/processing.md) was provided), or when a DAT doesn't specify the filename for a ROM, then try to correct the filename extension.
 
-- `--rom-fix-extension always`
+- `--fix-extension always`
 
   Always try to correct filename extensions, ignoring the information provided by DATs. You likely don't want this option.
 

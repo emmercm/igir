@@ -10,10 +10,10 @@ import Header from '../../src/types/dats/logiqx/header.js';
 import LogiqxDAT from '../../src/types/dats/logiqx/logiqxDat.js';
 import { ChecksumBitmask } from '../../src/types/files/fileChecksums.js';
 import {
+  FixExtension,
   GameSubdirMode,
   InputChecksumArchivesMode,
   MergeMode,
-  RomFixExtension,
 } from '../../src/types/options.js';
 
 const dummyRequiredArgs = ['--input', os.devNull, '--output', os.devNull];
@@ -143,7 +143,7 @@ describe('options', () => {
     expect(options.getDirGameSubdir()).toEqual(GameSubdirMode.MULTIPLE);
     expect(options.getOverwrite()).toEqual(false);
     expect(options.getOverwriteInvalid()).toEqual(false);
-    expect(options.getRomFixExtension()).toEqual(RomFixExtension.AUTO);
+    expect(options.getFixExtension()).toEqual(FixExtension.AUTO);
 
     expect(options.getCleanBackup()).toBeUndefined();
     expect(options.getCleanDryRun()).toEqual(false);
@@ -527,14 +527,14 @@ describe('options', () => {
     expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--dir-game-subdir', 'always', '--dir-game-subdir', 'never']).getDirGameSubdir()).toEqual(GameSubdirMode.NEVER);
   });
 
-  it('should parse "rom-fix-extension"', () => {
+  it('should parse "fix-extension"', () => {
     expect(argumentsParser.parse(dummyCommandAndRequiredArgs).getDirGameSubdir())
       .toEqual(GameSubdirMode.MULTIPLE);
-    expect(() => argumentsParser.parse([...dummyCommandAndRequiredArgs, '--rom-fix-extension', 'foobar']).getRomFixExtension()).toThrow(/invalid values/i);
-    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--rom-fix-extension', 'never']).getRomFixExtension()).toEqual(RomFixExtension.NEVER);
-    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--rom-fix-extension', 'auto']).getRomFixExtension()).toEqual(RomFixExtension.AUTO);
-    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--rom-fix-extension', 'always']).getRomFixExtension()).toEqual(RomFixExtension.ALWAYS);
-    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--rom-fix-extension', 'always', '--rom-fix-extension', 'never']).getRomFixExtension()).toEqual(RomFixExtension.NEVER);
+    expect(() => argumentsParser.parse([...dummyCommandAndRequiredArgs, '--fix-extension', 'foobar']).getFixExtension()).toThrow(/invalid values/i);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--fix-extension', 'never']).getFixExtension()).toEqual(FixExtension.NEVER);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--fix-extension', 'auto']).getFixExtension()).toEqual(FixExtension.AUTO);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--fix-extension', 'always']).getFixExtension()).toEqual(FixExtension.ALWAYS);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--fix-extension', 'always', '--fix-extension', 'never']).getFixExtension()).toEqual(FixExtension.NEVER);
   });
 
   it('should parse "single"', () => {
