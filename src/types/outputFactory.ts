@@ -3,6 +3,7 @@ import path, { ParsedPath } from 'node:path';
 
 import ArrayPoly from '../polyfill/arrayPoly.js';
 import fsPoly from '../polyfill/fsPoly.js';
+import StringPoly from '../polyfill/stringPoly.js';
 import DAT from './dats/dat.js';
 import Game from './dats/game.js';
 import Release from './dats/release.js';
@@ -525,12 +526,17 @@ export default class OutputFactory {
 
     // Should leave archived, generate the archive name from the game name
     // The regex is to preserve filenames that use 2+ extensions, e.g. "rom.nes.zip"
-    const extMatch = inputFile.getFilePath().match(/[^.]+((\.[a-zA-Z0-9]+)+)$/);
-    const ext = extMatch !== null ? extMatch[1] : '';
+    const oldExtMatch = inputFile.getFilePath().match(/[^.]+((\.[a-zA-Z0-9]+)+)$/);
+    const oldExt = oldExtMatch !== null ? oldExtMatch[1] : '';
+    const gameNameWithoutExt = StringPoly.replaceInsensitive(
+      path.basename(game.getName()) + oldExt,
+      inputFile.getArchive().getExtension(),
+      '',
+    );
     return path.format({
-      ...path.parse(game.getName() + ext),
+      dir: path.dirname(game.getName()),
+      name: gameNameWithoutExt,
       // Use the archive's canonical extension
-      base: undefined,
       ext: inputFile.getArchive().getExtension(),
     });
   }

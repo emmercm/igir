@@ -473,7 +473,7 @@ describe('with explicit DATs', () => {
         path.join(inputTemp, 'roms', 'rar', 'foobar.rar'),
         path.join(inputTemp, 'roms', 'zip', 'loremipsum.zip'),
       ].map(async (inputFile) => {
-        const junkFile = inputFile.replace(/((\.[a-zA-Z0-9]+)+)$/, '.junk');
+        const junkFile = inputFile.replace(/((\.[a-zA-Z0-9]+)+)$/, '');
         await fsPoly.mv(inputFile, junkFile);
         return junkFile;
       }));
