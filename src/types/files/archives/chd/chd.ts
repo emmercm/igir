@@ -7,7 +7,7 @@ import { Mutex } from 'async-mutex';
 import chdman, { CHDInfo, CHDType } from 'chdman';
 import { Memoize } from 'typescript-memoize';
 
-import Constants from '../../../../constants.js';
+import Temp from '../../../../globals/temp.js';
 import FsPoly from '../../../../polyfill/fsPoly.js';
 import File from '../../file.js';
 import { ChecksumBitmask } from '../../fileChecksums.js';
@@ -17,13 +17,6 @@ import ChdBinCueParser from './chdBinCueParser.js';
 import ChdGdiParser from './chdGdiParser.js';
 
 export default class Chd extends Archive {
-  static readonly SUPPORTED_FILES: [string[], Buffer[]][] = [
-    [['.chd'], [
-      // https://www.psxdev.net/forum/viewtopic.php?t=3980
-      Buffer.from('MComprHD'),
-    ]],
-  ];
-
   private tempSingletonHandles = 0;
 
   private readonly tempSingletonMutex = new Mutex();
@@ -35,6 +28,15 @@ export default class Chd extends Archive {
   // eslint-disable-next-line class-methods-use-this
   protected new(filePath: string): Archive {
     return new Chd(filePath);
+  }
+
+  static getExtensions(): string[] {
+    return ['.chd'];
+  }
+
+  // eslint-disable-next-line class-methods-use-this
+  getExtension(): string {
+    return Chd.getExtensions()[0];
   }
 
   async getArchiveEntries(checksumBitmask: number): Promise<ArchiveEntry<this>[]> {
@@ -83,7 +85,7 @@ export default class Chd extends Archive {
       if (this.tempSingletonDirPath !== undefined) {
         return;
       }
-      this.tempSingletonDirPath = await FsPoly.mkdtemp(path.join(Constants.GLOBAL_TEMP_DIR, 'chd'));
+      this.tempSingletonDirPath = await FsPoly.mkdtemp(path.join(Temp.getTempDir(), 'chd'));
       await FsPoly.mkdir(this.tempSingletonDirPath, { recursive: true });
       this.tempSingletonFilePath = path.join(this.tempSingletonDirPath, 'extracted');
 

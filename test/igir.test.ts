@@ -1347,7 +1347,6 @@ describe('with inferred DATs', () => {
         'speed_test_v51.sfc',
         'speed_test_v51.smc',
         'three.rom',
-        'three.rom',
         'track.gdi',
         'track01.bin',
         'track02.raw',

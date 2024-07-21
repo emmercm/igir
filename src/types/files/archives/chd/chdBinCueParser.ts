@@ -7,7 +7,7 @@ import {
 } from '@gplane/cue';
 import chdman from 'chdman';
 
-import Constants from '../../../../constants.js';
+import Temp from '../../../../globals/temp.js';
 import ArrayPoly from '../../../../polyfill/arrayPoly.js';
 import FsPoly from '../../../../polyfill/fsPoly.js';
 import FileChecksums from '../../fileChecksums.js';
@@ -23,9 +23,15 @@ export default class ChdBinCueParser {
     checksumBitmask: number,
   ): Promise<ArchiveEntry<T>[]> {
     const tempFile = await FsPoly.mktemp(path.join(
-      Constants.GLOBAL_TEMP_DIR,
+      Temp.getTempDir(),
       path.basename(archive.getFilePath()),
     ));
+
+    const tempDir = path.dirname(tempFile);
+    if (!await FsPoly.exists(tempDir)) {
+      await FsPoly.mkdir(tempDir, { recursive: true });
+    }
+
     const cueFile = `${tempFile}.cue`;
     const binFile = `${tempFile}.bin`;
 

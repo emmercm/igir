@@ -6,7 +6,8 @@ import async, { AsyncResultCallback } from 'async';
 import chdman from 'chdman';
 import fg from 'fast-glob';
 
-import Constants from '../../../../constants.js';
+import Defaults from '../../../../globals/defaults.js';
+import Temp from '../../../../globals/temp.js';
 import FsPoly from '../../../../polyfill/fsPoly.js';
 import FileChecksums from '../../fileChecksums.js';
 import Archive from '../archive.js';
@@ -20,7 +21,7 @@ export default class ChdGdiParser {
     archive: T,
     checksumBitmask: number,
   ): Promise<ArchiveEntry<T>[]> {
-    const tempDir = await FsPoly.mkdtemp(path.join(Constants.GLOBAL_TEMP_DIR, 'chd-gdi'));
+    const tempDir = await FsPoly.mkdtemp(path.join(Temp.getTempDir(), 'chd-gdi'));
     const gdiFilePath = path.join(tempDir, 'track.gdi');
     let binRawFilePaths: string[] = [];
 
@@ -67,7 +68,7 @@ export default class ChdGdiParser {
 
     const binRawFiles = await async.mapLimit(
       binRawFilePaths,
-      Constants.ARCHIVE_ENTRY_SCANNER_THREADS_PER_ARCHIVE,
+      Defaults.ARCHIVE_ENTRY_SCANNER_THREADS_PER_ARCHIVE,
       async (binRawFilePath, callback: AsyncResultCallback<ArchiveEntry<T>, Error>) => {
         try {
           const binRawFile = await ArchiveEntry.entryOf({
