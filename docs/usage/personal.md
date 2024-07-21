@@ -151,7 +151,7 @@ cd "$(dirname "$0")"
 
 SOURCE=/Volumes/WDPassport4
 
-npx --yes igir@latest move test clean report \
+npx --yes igir@latest copy test clean report \
   --dat "${SOURCE}/Redump*.zip" \
   --dat-name-regex '/gamecube/i' \
   --input "${SOURCE}/Redump/Nintendo - GameCube" \
