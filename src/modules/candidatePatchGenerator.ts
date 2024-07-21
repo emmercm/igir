@@ -9,7 +9,6 @@ import Release from '../types/dats/release.js';
 import ROM from '../types/dats/rom.js';
 import ArchiveEntry from '../types/files/archives/archiveEntry.js';
 import File from '../types/files/file.js';
-import { ChecksumBitmask } from '../types/files/fileChecksums.js';
 import Patch from '../types/patches/patch.js';
 import ReleaseCandidate from '../types/releaseCandidate.js';
 import ROMWithFiles from '../types/romWithFiles.js';
@@ -148,7 +147,7 @@ export default class CandidatePatchGenerator extends Module {
                 crc32: patch.getCrcAfter(),
                 fileHeader: outputFile.getFileHeader(),
                 patch: outputFile.getPatch(),
-              }, ChecksumBitmask.NONE); // don't calculate anything, the file doesn't exist
+              });
             } else {
               const dirName = path.dirname(outputFile.getFilePath());
               outputFile = await File.fileOf({
@@ -157,7 +156,7 @@ export default class CandidatePatchGenerator extends Module {
                 crc32: patch.getCrcAfter(),
                 fileHeader: outputFile.getFileHeader(),
                 patch: outputFile.getPatch(),
-              }, ChecksumBitmask.NONE); // don't calculate anything, the file doesn't exist
+              });
             }
 
             // Build a new ROM from the output file's info
