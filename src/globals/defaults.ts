@@ -13,9 +13,9 @@ export default class Defaults {
 
   /**
    * Default max semaphore filesize of files to read (and checksum) and write (and test) at once.
-   * This will be the limiting factor for consoles with large ROMs. 4.7GiB DVD+R.
+   * This will be the limiting factor for consoles with large ROMs. 734MiB CDs.
    */
-  static readonly MAX_READ_WRITE_CONCURRENT_KILOBYTES = Math.ceil(4_700_372_992 / 1024);
+  static readonly MAX_READ_WRITE_CONCURRENT_KILOBYTES = Math.ceil(734_003_200 / 1024);
 
   /**
    * Default number of DATs to process at once.
