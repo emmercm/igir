@@ -19,6 +19,7 @@ import LogiqxDAT from '../../src/types/dats/logiqx/logiqxDat.js';
 import Archive from '../../src/types/files/archives/archive.js';
 import ArchiveEntry from '../../src/types/files/archives/archiveEntry.js';
 import File from '../../src/types/files/file.js';
+import { ChecksumBitmask } from '../../src/types/files/fileChecksums.js';
 import FileFactory from '../../src/types/files/fileFactory.js';
 import Options, { GameSubdirMode, OptionsProps } from '../../src/types/options.js';
 import ProgressBarFake from '../console/progressBarFake.js';
@@ -782,7 +783,10 @@ describe('extract', () => {
       );
       expect(outputFiles).toHaveLength(1);
       expect(outputFiles[0][0]).toEqual(expectedFileName);
-      const outputFile = await File.fileOf({ filePath: path.join(outputTemp, outputFiles[0][0]) });
+      const outputFile = await File.fileOf(
+        { filePath: path.join(outputTemp, outputFiles[0][0]) },
+        ChecksumBitmask.CRC32,
+      );
       expect(outputFile.getCrc32()).toEqual(expectedCrc);
     });
   });
@@ -815,7 +819,10 @@ describe('extract', () => {
       );
       expect(outputFiles).toHaveLength(1);
       expect(outputFiles[0][0]).toEqual(expectedFileName);
-      const outputFile = await File.fileOf({ filePath: path.join(outputTemp, outputFiles[0][0]) });
+      const outputFile = await File.fileOf(
+        { filePath: path.join(outputTemp, outputFiles[0][0]) },
+        ChecksumBitmask.CRC32,
+      );
       expect(outputFile.getCrc32()).toEqual(expectedCrc);
     });
   });
@@ -1142,7 +1149,10 @@ describe('raw', () => {
       );
       expect(outputFiles).toHaveLength(1);
       expect(outputFiles[0][0]).toEqual(expectedFileName);
-      const outputFile = await File.fileOf({ filePath: path.join(outputTemp, outputFiles[0][0]) });
+      const outputFile = await File.fileOf(
+        { filePath: path.join(outputTemp, outputFiles[0][0]) },
+        ChecksumBitmask.CRC32,
+      );
       expect(outputFile.getCrc32()).toEqual(expectedCrc);
     });
   });
@@ -1171,7 +1181,10 @@ describe('raw', () => {
       );
       expect(outputFiles).toHaveLength(1);
       expect(outputFiles[0][0]).toEqual(expectedFileName);
-      const outputFile = await File.fileOf({ filePath: path.join(outputTemp, outputFiles[0][0]) });
+      const outputFile = await File.fileOf(
+        { filePath: path.join(outputTemp, outputFiles[0][0]) },
+        ChecksumBitmask.CRC32,
+      );
       expect(outputFile.getCrc32()).toEqual(expectedCrc);
     });
   });
