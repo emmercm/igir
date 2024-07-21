@@ -3,26 +3,30 @@ import path from 'node:path';
 
 import tar from 'tar';
 
-import Constants from '../../../constants.js';
+import Defaults from '../../../globals/defaults.js';
 import FsPoly from '../../../polyfill/fsPoly.js';
+import ExpectedError from '../../expectedError.js';
 import FileChecksums from '../fileChecksums.js';
 import Archive from './archive.js';
 import ArchiveEntry from './archiveEntry.js';
 
 export default class Tar extends Archive {
-  static readonly SUPPORTED_FILES: [string[], Buffer[]][] = [
-    [['.tar'], [
-      Buffer.from('7573746172003030', 'hex'),
-      Buffer.from('7573746172202000', 'hex'),
-    ]],
-    [['.tar.gz', '.tgz'], [
-      Buffer.from('1F8B', 'hex'),
-    ]],
-  ];
-
   // eslint-disable-next-line class-methods-use-this
   protected new(filePath: string): Archive {
     return new Tar(filePath);
+  }
+
+  static getExtensions(): string[] {
+    return ['.tar', '.tar.gz', '.tgz'];
+  }
+
+  getExtension(): string {
+    for (const ext of Tar.getExtensions()) {
+      if (this.getFilePath().toLowerCase().endsWith(ext)) {
+        return ext;
+      }
+    }
+    return path.parse(this.getFilePath()).ext;
   }
 
   async getArchiveEntries(checksumBitmask: number): Promise<ArchiveEntry<this>[]> {
@@ -37,7 +41,7 @@ export default class Tar extends Archive {
       },
     });
     const readStream = fs.createReadStream(this.getFilePath(), {
-      highWaterMark: Constants.FILE_READING_CHUNK_SIZE,
+      highWaterMark: Defaults.FILE_READING_CHUNK_SIZE,
     });
     readStream.pipe(writeStream);
 
@@ -85,7 +89,7 @@ export default class Tar extends Archive {
       },
     }, [entryPath.replace(/[\\/]/g, '/')]);
     if (!await FsPoly.exists(extractedFilePath)) {
-      throw new Error(`didn't find entry '${entryPath}'`);
+      throw new ExpectedError(`didn't find extracted file '${entryPath}'`);
     }
   }
 }

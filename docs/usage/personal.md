@@ -1,6 +1,6 @@
-# Personal Usage
+# Creator's Usage
 
-`igir` has many options available to fit almost any use case, but the number of options can be overwhelming. So that begs a question: _how do I, the author of `igir`, use `igir` in the real world?_
+`igir` has many options available to fit almost any use case, but the number of options can be overwhelming. So that begs a question: _how do I, the creator of `igir`, use `igir` in the real world?_
 
 ## Primary ROM library
 

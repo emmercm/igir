@@ -3,8 +3,8 @@ import path from 'node:path';
 import { Semaphore } from 'async-mutex';
 
 import ProgressBar, { ProgressBarSymbol } from '../console/progressBar.js';
-import Constants from '../constants.js';
 import ElasticSemaphore from '../elasticSemaphore.js';
+import Defaults from '../globals/defaults.js';
 import ArrayPoly from '../polyfill/arrayPoly.js';
 import fsPoly from '../polyfill/fsPoly.js';
 import DAT from '../types/dats/dat.js';
@@ -24,8 +24,6 @@ export interface CandidateWriterResults {
 
 /**
  * Copy or move output ROM files, if applicable.
- *
- * This class may be run concurrently with other classes.
  */
 export default class CandidateWriter extends Module {
   private static readonly THREAD_SEMAPHORE = new Semaphore(Number.MAX_SAFE_INTEGER);
@@ -33,7 +31,7 @@ export default class CandidateWriter extends Module {
   // WARN(cemmer): there is an undocumented semaphore max value that can be used, the full
   //  4,700,372,992 bytes of a DVD+R will cause runExclusive() to never run or return.
   private static readonly FILESIZE_SEMAPHORE = new ElasticSemaphore(
-    Constants.MAX_READ_WRITE_CONCURRENT_KILOBYTES,
+    Defaults.MAX_READ_WRITE_CONCURRENT_KILOBYTES,
   );
 
   private readonly options: Options;
@@ -203,8 +201,9 @@ export default class CandidateWriter extends Module {
       }
     }
 
+    let written = false;
     for (let i = 0; i <= this.options.getWriteRetry(); i += 1) {
-      const written = await this.writeZipFile(
+      written = await this.writeZipFile(
         dat,
         releaseCandidate,
         outputZip,
@@ -234,6 +233,9 @@ export default class CandidateWriter extends Module {
           return; // final error, do not continue
         }
       }
+    }
+    if (!written) {
+      return;
     }
 
     inputToOutputZipEntries.forEach(([inputRomFile]) => this.enqueueFileDeletion(inputRomFile));
@@ -439,8 +441,9 @@ export default class CandidateWriter extends Module {
       }
     }
 
+    let written = false;
     for (let i = 0; i <= this.options.getWriteRetry(); i += 1) {
-      const written = await this.writeRawFile(dat, releaseCandidate, inputRomFile, outputFilePath);
+      written = await this.writeRawFile(dat, releaseCandidate, inputRomFile, outputFilePath);
 
       if (written && !this.options.shouldTest()) {
         // Successfully written, unknown if valid
@@ -466,6 +469,10 @@ export default class CandidateWriter extends Module {
         }
       }
     }
+    if (!written) {
+      return;
+    }
+
     this.enqueueFileDeletion(inputRomFile);
   }
 

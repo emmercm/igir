@@ -1,4 +1,4 @@
-import { Expose } from 'class-transformer';
+import { Expose, Transform } from 'class-transformer';
 
 import Archive from '../files/archives/archive.js';
 import ArchiveEntry from '../files/archives/archiveEntry.js';
@@ -26,15 +26,19 @@ export default class ROM implements ROMProps {
   readonly size: number;
 
   @Expose({ name: 'crc' })
+  @Transform(({ value }) => value?.toLowerCase().replace(/^0x/, '').padStart(8, '0'))
   readonly crc32?: string;
 
   @Expose()
+  @Transform(({ value }) => value?.toLowerCase().replace(/^0x/, '').padStart(32, '0'))
   readonly md5?: string;
 
   @Expose()
+  @Transform(({ value }) => value?.toLowerCase().replace(/^0x/, '').padStart(40, '0'))
   readonly sha1?: string;
 
   @Expose()
+  @Transform(({ value }) => value?.toLowerCase().replace(/^0x/, '').padStart(64, '0'))
   readonly sha256?: string;
 
   @Expose()
@@ -111,6 +115,16 @@ export default class ROM implements ROMProps {
 
   getBios(): string | undefined {
     return this.bios;
+  }
+
+  /**
+   * Return a new copy of this {@link ROM} with a different name.
+   */
+  withName(name: string): ROM {
+    if (name === this.name) {
+      return this;
+    }
+    return new ROM({ ...this, name });
   }
 
   /**

@@ -8,8 +8,6 @@ import Module from './module.js';
 
 /**
  * Generate the status for a DAT, and print a short status to the progress bar.
- *
- * This class may be run concurrently with other classes.
  */
 export default class StatusGenerator extends Module {
   private readonly options: Options;

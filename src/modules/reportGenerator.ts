@@ -1,3 +1,5 @@
+import path from 'node:path';
+
 import ProgressBar from '../console/progressBar.js';
 import FsPoly from '../polyfill/fsPoly.js';
 import DATStatus, { GameStatus } from '../types/datStatus.js';
@@ -7,8 +9,6 @@ import Module from './module.js';
 
 /**
  * Generate a single report file with information about every DAT processed.
- *
- * This class will not be run concurrently with any other class.
  */
 export default class ReportGenerator extends Module {
   private readonly options: Options;
@@ -73,6 +73,10 @@ export default class ReportGenerator extends Module {
     const cleanedCsv = await DATStatus.filesToCsv(cleanedOutputFiles, GameStatus.DELETED);
 
     this.progressBar.logInfo(`writing report '${reportPath}'`);
+    const reportPathDir = path.dirname(reportPath);
+    if (!await FsPoly.exists(reportPathDir)) {
+      await FsPoly.mkdir(reportPathDir, { recursive: true });
+    }
     const rows = [
       ...matchedFileCsvs,
       duplicateCsv,

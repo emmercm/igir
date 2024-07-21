@@ -8,35 +8,35 @@ clrmamepro (
 game (
 	name "allpads"
 	description "allpads"
-	rom ( name allpads.nes size 32784 md5 dd0b01b99083da35b096da7818223802 )
+	rom ( size 32784 md5 DD0B01B99083DA35B096DA7818223802 )
 )
 
 game (
 	name "color_test"
 	description "color_test"
-	rom ( name color_test.nes size 40976 md5 0c09743a41d469c1da119316a23f15ba )
+	rom ( size 40976 md5 0c09743a41d469c1da119316a23f15ba )
 )
 
 game (
 	name "diagnostic_test_cartridge"
 	description "diagnostic_test_cartridge"
-	rom ( name diagnostic_test_cartridge.a78 size 32896 md5 8df5c10517da1c001072fd5526e4a683 )
+	rom ( size 32896 md5 8DF5C10517DA1C001072FD5526E4A683 )
 )
 
 game (
 	name "fds_joypad_test"
 	description "fds_joypad_test"
-	rom ( name fds_joypad_test.fds size 65500 md5 74362ca7d47e67e2d3e62f6283ecf879 )
+	rom ( size 65500 md5 74362ca7d47e67e2d3e62f6283ecf879 )
 )
 
 game (
 	name "LCDTestROM"
 	description "LCDTestROM"
-	rom ( name LCDTestROM.lnx size 5366 md5 1ea102719a2fc3b767df0d2d367a8371 )
+	rom ( size 5366 md5 1ea102719a2fc3b767df0d2d367a8371 )
 )
 
 game (
 	name "speed_test_v51"
 	description "speed_test_v51"
-	rom ( name speed_test_v51.smc size 66048 md5 472f75cef1da864a0b8839ea887eeebc )
+	rom ( size 66048 md5 472f75cef1da864a0b8839ea887eeebc )
 )

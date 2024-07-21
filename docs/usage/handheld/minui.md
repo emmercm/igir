@@ -12,16 +12,16 @@ MinUI is strictly *bring your own BIOS*. You can find information on the require
 
 Place these files under `/Bios/<PAK-name>/<Filename>`:
 
-| Console | PAK | File | MD5 |
-|:--------|:---:|:-----|:---:|
-| NEC TurboGrafx-16 | PCE | `syscard3.pce` | `38179df8f4ac870017db21ebcbf53114` |
-| Nintendo GameBoy | GB | `gb_bios.bin` | `32fbbd84168d3482956eb3c5051637f5` |
-| Nintendo GameBoy Color | GBC | `gbc_bios.bin` | `dbfce9db9deaa2567f6a84fde55f9680` |
-| Nintendo GameBoy Advance | GBA | `gba_bios.bin` | `a860e8c0b6d573d191e4ec7db1b1e4f6` |
-| Nintendo GameBoy Advance | MGBA | `gba_bios.bin` | `a860e8c0b6d573d191e4ec7db1b1e4f6` |
-| Nintendo Pokemon Mini | PKM | `bios.min` | `1e4fb124a3a886865acb574f388c803d` |
-| Nintendo Super GameBoy | SGB | `sgb.bios` | `d574d4f9c12f305074798f54c091a8b4` |
-| Sony PlayStation | PS | `scph1001.bin` | `924e392ed05558ffdb115408c263dccf` |
+| Console                   | PAK | File | MD5 |
+|:--------------------------|:---:|:-----|:---:|
+| NEC TurboGrafx-16         | PCE | `syscard3.pce` | `38179df8f4ac870017db21ebcbf53114` |
+| Nintendo Game Boy         | GB | `gb_bios.bin` | `32fbbd84168d3482956eb3c5051637f5` |
+| Nintendo Game Boy Color   | GBC | `gbc_bios.bin` | `dbfce9db9deaa2567f6a84fde55f9680` |
+| Nintendo Game Boy Advance | GBA | `gba_bios.bin` | `a860e8c0b6d573d191e4ec7db1b1e4f6` |
+| Nintendo Game Boy Advance | MGBA | `gba_bios.bin` | `a860e8c0b6d573d191e4ec7db1b1e4f6` |
+| Nintendo Pokemon Mini     | PKM | `bios.min` | `1e4fb124a3a886865acb574f388c803d` |
+| Nintendo Super Game Boy   | SGB | `sgb.bios` | `d574d4f9c12f305074798f54c091a8b4` |
+| Sony PlayStation          | PS | `scph1001.bin` | `924e392ed05558ffdb115408c263dccf` |
 
 ## ROMs
 

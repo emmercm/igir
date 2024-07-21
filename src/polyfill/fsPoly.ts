@@ -9,12 +9,13 @@ import util from 'node:util';
 import { isNotJunk } from 'junk';
 import nodeDiskInfo from 'node-disk-info';
 
+import ExpectedError from '../types/expectedError.js';
 import ArrayPoly from './arrayPoly.js';
 
 export type FsWalkCallback = (increment: number) => void;
 
 export default class FsPoly {
-  static readonly FILE_READING_CHUNK_SIZE = 1024 * 1024; // 1MiB
+  static readonly FILE_READING_CHUNK_SIZE = 64 * 1024; // 64KiB, Node.js v22 default
 
   // Assume that all drives we're reading from or writing to were already mounted at startup
   public static readonly DRIVES = nodeDiskInfo.getDiskInfoSync();
@@ -84,6 +85,7 @@ export default class FsPoly {
     return FsPoly.DRIVES
       .filter((drive) => drive.available > 0)
       .map((drive) => drive.mounted)
+      .filter((mountPath) => mountPath !== '/')
       // Sort by mount points with the deepest number of subdirectories first
       .sort((a, b) => b.split(/[\\/]/).length - a.split(/[\\/]/).length);
   }
@@ -102,7 +104,7 @@ export default class FsPoly {
       return await fs.promises.link(target, link);
     } catch (error) {
       if (this.onDifferentDrives(target, link)) {
-        throw new Error(`can't hard link files on different drives: ${error}`);
+        throw new ExpectedError(`can't hard link files on different drives: ${error}`);
       }
       throw error;
     }
@@ -161,6 +163,20 @@ export default class FsPoly {
     }
   }
 
+  static async isWritable(filePath: string): Promise<boolean> {
+    const exists = await this.exists(filePath);
+    try {
+      await this.touch(filePath);
+      return true;
+    } catch {
+      return false;
+    } finally {
+      if (!exists) {
+        await this.rm(filePath);
+      }
+    }
+  }
+
   static makeLegal(filePath: string, pathSep = path.sep): string {
     let replaced = filePath
       // Make the filename Windows legal
@@ -195,26 +211,7 @@ export default class FsPoly {
     } catch {
       const backupDir = path.join(process.cwd(), 'tmp') + path.sep;
       await this.mkdir(backupDir, { recursive: true });
-      return await fs.promises.mkdtemp(backupDir);
-    }
-  }
-
-  /**
-   * mkdtempSync() takes a path "prefix" that's concatenated with random characters. Ignore that
-   * behavior and instead assume we always want to specify a root temp directory.
-   */
-  static mkdtempSync(rootDir: string): string {
-    const rootDirProcessed = rootDir.replace(/[\\/]+$/, '') + path.sep;
-
-    try {
-      fs.mkdirSync(rootDirProcessed, { recursive: true });
-
-      return fs.mkdtempSync(rootDirProcessed);
-    } catch {
-      const backupDir = path.join(process.cwd(), 'tmp') + path.sep;
-      fs.mkdirSync(backupDir, { recursive: true });
-
-      return fs.mkdtempSync(backupDir);
+      return fs.promises.mkdtemp(backupDir);
     }
   }
 
@@ -226,7 +223,7 @@ export default class FsPoly {
         return filePath;
       }
     }
-    throw new Error('failed to generate non-existent temp file');
+    throw new ExpectedError('failed to generate non-existent temp file');
   }
 
   static async mv(oldPath: string, newPath: string, attempt = 1): Promise<void> {
@@ -265,7 +262,7 @@ export default class FsPoly {
 
       // Attempt to resolve Windows' "EBUSY: resource busy or locked"
       await this.rm(newPath, { force: true });
-      return await this.mv(oldPath, newPath, attempt + 1);
+      return this.mv(oldPath, newPath, attempt + 1);
     }
   }
 
@@ -282,7 +279,7 @@ export default class FsPoly {
 
   static async readlink(pathLike: PathLike): Promise<string> {
     if (!await this.isSymlink(pathLike)) {
-      throw new Error(`can't readlink of non-symlink: ${pathLike}`);
+      throw new ExpectedError(`can't readlink of non-symlink: ${pathLike}`);
     }
     return fs.promises.readlink(pathLike);
   }
@@ -297,7 +294,7 @@ export default class FsPoly {
 
   static async realpath(pathLike: PathLike): Promise<string> {
     if (!await this.exists(pathLike)) {
-      throw new Error(`can't get realpath of non-existent path: ${pathLike}`);
+      throw new ExpectedError(`can't get realpath of non-existent path: ${pathLike}`);
     }
     return fs.promises.realpath(pathLike);
   }
@@ -310,11 +307,11 @@ export default class FsPoly {
 
     try {
       await fs.promises.access(pathLike); // throw if file doesn't exist
-    } catch (error) {
+    } catch {
       if (optionsWithRetry?.force) {
         return;
       }
-      throw error;
+      throw new Error(`can't rm, path doesn't exist: ${pathLike}`);
     }
 
     if (await this.isDirectory(pathLike)) {

@@ -19,9 +19,9 @@ concurrency:
 
 jobs:
   path-filter:
-    runs-on: ubuntu-latest
     permissions:
       pull-requests: read
+    runs-on: ubuntu-latest
     outputs:
       changes: ${{ steps.filter.outputs.changes }}
     steps:
@@ -82,9 +82,9 @@ jobs:
 
   deploy:
     if: github.event_name == 'release'
-    runs-on: ubuntu-latest
     permissions:
       contents: write
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
         with:

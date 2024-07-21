@@ -12,14 +12,13 @@ import Release from '../types/dats/release.js';
 import ROM from '../types/dats/rom.js';
 import Archive from '../types/files/archives/archive.js';
 import ArchiveEntry from '../types/files/archives/archiveEntry.js';
+import ArchiveFile from '../types/files/archives/archiveFile.js';
 import Chd from '../types/files/archives/chd/chd.js';
 import Zip from '../types/files/archives/zip.js';
 import File from '../types/files/file.js';
-import { ChecksumBitmask } from '../types/files/fileChecksums.js';
-import FileFactory from '../types/files/fileFactory.js';
 import IndexedFiles from '../types/indexedFiles.js';
 import Options from '../types/options.js';
-import OutputFactory from '../types/outputFactory.js';
+import OutputFactory, { OutputPath } from '../types/outputFactory.js';
 import ReleaseCandidate from '../types/releaseCandidate.js';
 import ROMWithFiles from '../types/romWithFiles.js';
 import Module from './module.js';
@@ -27,8 +26,6 @@ import Module from './module.js';
 /**
  * For every {@link Parent} in the {@link DAT}, look for its {@link ROM}s in the scanned ROM list,
  * and return a set of candidate files.
- *
- * This class may be run concurrently with other classes.
  */
 export default class CandidateGenerator extends Module {
   private static readonly THREAD_SEMAPHORE = new Semaphore(Number.MAX_SAFE_INTEGER);
@@ -190,16 +187,12 @@ export default class CandidateGenerator extends Module {
           && !this.options.shouldExtract()
         ) {
           try {
-            if (this.options.shouldTest() || this.options.getOverwriteInvalid()) {
-              // If we're testing, then we need to calculate the archive's checksums
-              inputFile = await FileFactory.fileFrom(
-                inputFile.getFilePath(),
-                inputFile.getChecksumBitmask(),
-              );
-            } else {
-              // Otherwise, we can skip calculating checksums for efficiency
-              inputFile = await FileFactory.fileFrom(inputFile.getFilePath(), ChecksumBitmask.NONE);
-            }
+            // Note: we're delaying checksum calculation for now, {@link CandidateArchiveFileHasher}
+            //  will handle it later
+            inputFile = new ArchiveFile(
+              inputFile.getArchive(),
+              { checksumBitmask: inputFile.getChecksumBitmask() },
+            );
           } catch (error) {
             this.progressBar.logWarn(`${dat.getNameShort()}: ${game.getName()}: ${error}`);
             return [rom, undefined];
@@ -208,10 +201,13 @@ export default class CandidateGenerator extends Module {
 
         try {
           const outputFile = await this.getOutputFile(dat, game, release, rom, inputFile);
+          if (outputFile === undefined) {
+            return [rom, undefined];
+          }
           const romWithFiles = new ROMWithFiles(rom, inputFile, outputFile);
           return [rom, romWithFiles];
         } catch (error) {
-          this.progressBar.logWarn(`${dat.getNameShort()}: ${game.getName()}: ${error}`);
+          this.progressBar.logError(`${dat.getNameShort()}: ${game.getName()}: ${error}`);
           return [rom, undefined];
         }
       }),
@@ -260,7 +256,7 @@ export default class CandidateGenerator extends Module {
     }
 
     // Ignore the Game with conflicting input->output files
-    if (this.hasConflictingOutputFiles(foundRomsWithFiles)) {
+    if (this.hasConflictingOutputFiles(dat, foundRomsWithFiles)) {
       return undefined;
     }
 
@@ -353,16 +349,22 @@ export default class CandidateGenerator extends Module {
     release: Release | undefined,
     rom: ROM,
     inputFile: File,
-  ): Promise<File> {
+  ): Promise<File | undefined> {
     // Determine the output file's path
-    const outputPathParsed = OutputFactory.getPath(
-      this.options,
-      dat,
-      game,
-      release,
-      rom,
-      inputFile,
-    );
+    let outputPathParsed: OutputPath;
+    try {
+      outputPathParsed = OutputFactory.getPath(
+        this.options,
+        dat,
+        game,
+        release,
+        rom,
+        inputFile,
+      );
+    } catch (error) {
+      this.progressBar.logTrace(`${dat.getNameShort()}: ${game.getName()}: ${error}`);
+      return undefined;
+    }
     const outputFilePath = outputPathParsed.format();
 
     // Determine the output CRC of the file
@@ -420,7 +422,7 @@ export default class CandidateGenerator extends Module {
     this.progressBar.logTrace(message);
   }
 
-  private hasConflictingOutputFiles(romsWithFiles: ROMWithFiles[]): boolean {
+  private hasConflictingOutputFiles(dat: DAT, romsWithFiles: ROMWithFiles[]): boolean {
     // If we're not writing, then don't bother looking for conflicts
     if (!this.options.shouldWrite()) {
       return false;
@@ -454,7 +456,7 @@ export default class CandidateGenerator extends Module {
         .reduce(ArrayPoly.reduceUnique(), []);
       if (conflictedInputFiles.length > 1) {
         hasConflict = true;
-        let message = `No single archive contains all necessary files, cannot ${this.options.writeString()} these different input files to: ${duplicateOutput}:`;
+        let message = `${dat.getNameShort()}: no single archive contains all necessary files, cannot ${this.options.writeString()} these different input files to: ${duplicateOutput}:`;
         conflictedInputFiles.forEach((conflictedInputFile) => { message += `\n  ${conflictedInputFile}`; });
         this.progressBar.logWarn(message);
       }

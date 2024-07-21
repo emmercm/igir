@@ -5,7 +5,7 @@ import {
   Exclude, Expose, instanceToPlain, plainToClassFromExist,
 } from 'class-transformer';
 
-import Constants from '../../../constants.js';
+import Defaults from '../../../globals/defaults.js';
 import fsPoly from '../../../polyfill/fsPoly.js';
 import Patch from '../../patches/patch.js';
 import File, { FileProps } from '../file.js';
@@ -210,7 +210,7 @@ export default class ArchiveEntry<A extends Archive> extends File implements Arc
   ): Promise<T> {
     // Don't extract to memory if this archive entry size is too large, or if we need to manipulate
     // the stream start point
-    if (this.getSize() > Constants.MAX_MEMORY_FILE_SIZE || start > 0) {
+    if (this.getSize() > Defaults.MAX_MEMORY_FILE_SIZE || start > 0) {
       return this.extractToTempFile(
         async (tempFile) => File.createStreamFromFile(tempFile, callback, start),
       );
@@ -227,10 +227,10 @@ export default class ArchiveEntry<A extends Archive> extends File implements Arc
   }
 
   withEntryPath(entryPath: string): ArchiveEntry<A> {
-    return new ArchiveEntry({
-      ...this,
-      entryPath,
-    });
+    if (entryPath === this.entryPath) {
+      return this;
+    }
+    return new ArchiveEntry({ ...this, entryPath });
   }
 
   async withFileHeader(fileHeader: ROMHeader): Promise<ArchiveEntry<A>> {
@@ -250,6 +250,9 @@ export default class ArchiveEntry<A extends Archive> extends File implements Arc
   }
 
   withoutFileHeader(): ArchiveEntry<A> {
+    if (this.fileHeader === undefined) {
+      return this;
+    }
     return new ArchiveEntry({
       ...this,
       fileHeader: undefined,

@@ -4,69 +4,14 @@ import _7z, { Result } from '7zip-min';
 import async, { AsyncResultCallback } from 'async';
 import { Mutex } from 'async-mutex';
 
-import Constants from '../../../constants.js';
+import Defaults from '../../../globals/defaults.js';
+import Temp from '../../../globals/temp.js';
 import fsPoly from '../../../polyfill/fsPoly.js';
+import ExpectedError from '../../expectedError.js';
 import Archive from './archive.js';
 import ArchiveEntry from './archiveEntry.js';
 
 export default class SevenZip extends Archive {
-  // p7zip `7za i`
-  // WARNING: tar+compression doesn't work, you'll be left with a tar file output
-  static readonly SUPPORTED_FILES: [string[], Buffer[]][] = [
-    [['.7z'], [
-      Buffer.from('377ABCAF271C', 'hex'),
-    ]],
-    // [['.bz2', '.bzip2'], [
-    //   'BZh',
-    // ]],
-    // [['.cab'], [
-    //   'MSCF',
-    // ]],
-    [['.gz', '.gzip'], [
-      Buffer.from('1F8B', 'hex'),
-    ]],
-    // [['.lzma'], [
-    //   // ???
-    // ]],
-    // [['.lzma86'], [
-    //   // ???
-    // ]],
-    // [['.pmd'], [
-    //   // ???
-    // ]],
-    // [['.tar', '.ova'], [
-    //   Buffer.from('7573746172003030', 'hex'),
-    //   Buffer.from('7573746172202000', 'hex'),
-    // ]],
-    // [['.xz'], [
-    //   Buffer.from('FD377A585A00', 'hex'), // LZMA2 compression
-    // ]],
-    [['.z'], [
-      Buffer.from('1F9D', 'hex'), // LZW compression
-      Buffer.from('1FA0', 'hex'), // LZH compression
-    ]],
-    [['.zip', '.zip.001', '.z01'], [
-      Buffer.from('504B0304', 'hex'),
-      Buffer.from('504B0506', 'hex'), // empty archive
-      Buffer.from('504B0708', 'hex'), // spanned archive
-    ]],
-    [['.zipx', '.zx01'], [
-      // ???
-    ]],
-    // [['.zst'], [
-    //   Buffer.from('28B52FFD', 'hex'),
-    // ]],
-    // [['.lz4'], [
-    //   Buffer.from('04224D18', 'hex'),
-    // ]],
-    // [['.lz5'], [
-    //   // ???
-    // ]],
-    // [['.liz'], [
-    //   // ???
-    // ]],
-  ];
-
   private static readonly LIST_MUTEX = new Mutex();
 
   // eslint-disable-next-line class-methods-use-this
@@ -74,7 +19,16 @@ export default class SevenZip extends Archive {
     return new SevenZip(filePath);
   }
 
-  async getArchiveEntries(checksumBitmask: number): Promise<ArchiveEntry<this>[]> {
+  static getExtensions(): string[] {
+    return ['.7z'];
+  }
+
+  // eslint-disable-next-line class-methods-use-this
+  getExtension(): string {
+    return SevenZip.getExtensions()[0];
+  }
+
+  async getArchiveEntries(checksumBitmask: number): Promise<ArchiveEntry<Archive>[]> {
     /**
      * WARN(cemmer): even with the above mutex, {@link _7z.list} will still sometimes return no
      *  entries. Most archives contain at least one file, so assume this is wrong and attempt
@@ -121,7 +75,7 @@ export default class SevenZip extends Archive {
 
     return async.mapLimit(
       filesIn7z.filter((result) => !result.attr?.startsWith('D')),
-      Constants.ARCHIVE_ENTRY_SCANNER_THREADS_PER_ARCHIVE,
+      Defaults.ARCHIVE_ENTRY_SCANNER_THREADS_PER_ARCHIVE,
       async (result, callback: AsyncResultCallback<ArchiveEntry<this>, Error>) => {
         const archiveEntry = await ArchiveEntry.entryOf({
           archive: this,
@@ -139,7 +93,7 @@ export default class SevenZip extends Archive {
     entryPath: string,
     extractedFilePath: string,
   ): Promise<void> {
-    const tempDir = await fsPoly.mkdtemp(path.join(Constants.GLOBAL_TEMP_DIR, '7z'));
+    const tempDir = await fsPoly.mkdtemp(path.join(Temp.getTempDir(), '7z'));
     try {
       let tempFile = path.join(tempDir, entryPath);
       await new Promise<void>((resolve, reject) => {
@@ -167,9 +121,9 @@ export default class SevenZip extends Archive {
       if (process.platform === 'win32' && !await fsPoly.exists(tempFile)) {
         const files = await fsPoly.walk(tempDir);
         if (files.length === 0) {
-          throw new Error('failed to extract any files');
+          throw new ExpectedError('failed to extract any files');
         } else if (files.length > 1) {
-          throw new Error('extracted too many files');
+          throw new ExpectedError('extracted too many files');
         }
         [tempFile] = files;
       }

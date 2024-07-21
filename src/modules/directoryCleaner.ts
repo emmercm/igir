@@ -1,11 +1,12 @@
 import fs from 'node:fs';
 import path from 'node:path';
 
+import { Semaphore } from 'async-mutex';
 import { isNotJunk } from 'junk';
 import trash from 'trash';
 
 import ProgressBar, { ProgressBarSymbol } from '../console/progressBar.js';
-import Constants from '../constants.js';
+import Defaults from '../globals/defaults.js';
 import ArrayPoly from '../polyfill/arrayPoly.js';
 import fsPoly from '../polyfill/fsPoly.js';
 import File from '../types/files/file.js';
@@ -14,8 +15,6 @@ import Module from './module.js';
 
 /**
  * Recycle any unknown files in the {@link OptionsProps.output} directory, if applicable.
- *
- * This class will not be run concurrently with any other class.
  */
 export default class DirectoryCleaner extends Module {
   private readonly options: Options;
@@ -57,18 +56,34 @@ export default class DirectoryCleaner extends Module {
     try {
       this.progressBar.logTrace(`cleaning ${filesToClean.length.toLocaleString()} file${filesToClean.length !== 1 ? 's' : ''}`);
       await this.progressBar.reset(filesToClean.length);
-      // TODO(cemmer): don't trash save files
-      await this.trashOrDelete(filesToClean);
+      if (this.options.getCleanDryRun()) {
+        this.progressBar.logInfo(`paths skipped from cleaning (dry run):\n${filesToClean.map((filePath) => `  ${filePath}`).join('\n')}`);
+      } else {
+        const cleanBackupDir = this.options.getCleanBackup();
+        if (cleanBackupDir !== undefined) {
+          await this.backupFiles(cleanBackupDir, filesToClean);
+        } else {
+          await this.trashOrDelete(filesToClean);
+        }
+      }
     } catch (error) {
       this.progressBar.logError(`failed to clean unmatched files: ${error}`);
       return [];
     }
 
     try {
-      const emptyDirs = await DirectoryCleaner.getEmptyDirs(dirsToClean);
-      await this.progressBar.reset(emptyDirs.length);
-      this.progressBar.logTrace(`cleaning ${emptyDirs.length.toLocaleString()} empty director${emptyDirs.length !== 1 ? 'ies' : 'y'}`);
-      await this.trashOrDelete(emptyDirs);
+      let emptyDirs = await DirectoryCleaner.getEmptyDirs(dirsToClean);
+      while (emptyDirs.length > 0) {
+        await this.progressBar.reset(emptyDirs.length);
+        this.progressBar.logTrace(`cleaning ${emptyDirs.length.toLocaleString()} empty director${emptyDirs.length !== 1 ? 'ies' : 'y'}`);
+        if (this.options.getCleanDryRun()) {
+          this.progressBar.logInfo(`paths skipped from cleaning (dry run):\n${emptyDirs.map((filePath) => `  ${filePath}`).join('\n')}`);
+        } else {
+          await this.trashOrDelete(emptyDirs);
+        }
+        // Deleting some empty directories could leave others newly empty
+        emptyDirs = await DirectoryCleaner.getEmptyDirs(dirsToClean);
+      }
     } catch (error) {
       this.progressBar.logError(`failed to clean empty directories: ${error}`);
     }
@@ -78,15 +93,10 @@ export default class DirectoryCleaner extends Module {
   }
 
   private async trashOrDelete(filePaths: string[]): Promise<void> {
-    if (this.options.getCleanDryRun()) {
-      this.progressBar.logInfo(`paths skipped from cleaning (dry run):\n${filePaths.map((filePath) => `  ${filePath}`).join('\n')}`);
-      return;
-    }
-
     // Prefer recycling...
-    for (let i = 0; i < filePaths.length; i += Constants.OUTPUT_CLEANER_BATCH_SIZE) {
-      const filePathsChunk = filePaths.slice(i, i + Constants.OUTPUT_CLEANER_BATCH_SIZE);
-      this.progressBar.logInfo(`cleaning path${filePathsChunk.length !== 1 ? 's' : ''}:\n${filePathsChunk.map((filePath) => `  ${filePath}`).join('\n')}`);
+    for (let i = 0; i < filePaths.length; i += Defaults.OUTPUT_CLEANER_BATCH_SIZE) {
+      const filePathsChunk = filePaths.slice(i, i + Defaults.OUTPUT_CLEANER_BATCH_SIZE);
+      this.progressBar.logInfo(`recycling cleaned path${filePathsChunk.length !== 1 ? 's' : ''}:\n${filePathsChunk.map((filePath) => `  ${filePath}`).join('\n')}`);
       try {
         await trash(filePathsChunk);
       } catch (error) {
@@ -96,20 +106,47 @@ export default class DirectoryCleaner extends Module {
     }
 
     // ...but if that doesn't work, delete the leftovers
-    const filePathsExist = await Promise.all(
-      filePaths.map(async (filePath) => fsPoly.exists(filePath)),
-    );
-    await Promise.all(
-      filePaths
-        .filter((filePath, idx) => filePathsExist.at(idx))
-        .map(async (filePath) => {
-          try {
-            await fsPoly.rm(filePath, { force: true });
-          } catch (error) {
-            this.progressBar.logError(`failed to delete ${filePath}: ${error}`);
-          }
-        }),
-    );
+    const existSemaphore = new Semaphore(Defaults.OUTPUT_CLEANER_BATCH_SIZE);
+    const existingFilePathsCheck = await Promise.all(filePaths
+      .map(async (filePath) => existSemaphore.runExclusive(async () => fsPoly.exists(filePath))));
+    const existingFilePaths = filePaths.filter((filePath, idx) => existingFilePathsCheck.at(idx));
+    for (let i = 0; i < existingFilePaths.length; i += Defaults.OUTPUT_CLEANER_BATCH_SIZE) {
+      const filePathsChunk = existingFilePaths.slice(i, i + Defaults.OUTPUT_CLEANER_BATCH_SIZE);
+      this.progressBar.logInfo(`deleting cleaned path${filePathsChunk.length !== 1 ? 's' : ''}:\n${filePathsChunk.map((filePath) => `  ${filePath}`).join('\n')}`);
+      try {
+        await Promise.all(filePathsChunk
+          .map(async (filePath) => fsPoly.rm(filePath, { force: true })));
+      } catch (error) {
+        this.progressBar.logWarn(`failed to delete ${filePathsChunk.length} path${filePathsChunk.length !== 1 ? 's' : ''}: ${error}`);
+      }
+    }
+  }
+
+  private async backupFiles(backupDir: string, filePaths: string[]): Promise<void> {
+    const semaphore = new Semaphore(this.options.getWriterThreads());
+    await Promise.all(filePaths.map(async (filePath) => {
+      await semaphore.runExclusive(async () => {
+        let backupPath = path.join(backupDir, path.basename(filePath));
+        let increment = 0;
+        while (await fsPoly.exists(backupPath)) {
+          increment += 1;
+          const { name, ext } = path.parse(filePath);
+          backupPath = path.join(backupDir, `${name} (${increment})${ext}`);
+        }
+
+        this.progressBar.logInfo(`moving cleaned path: ${filePath} -> ${backupPath}`);
+        const backupPathDir = path.dirname(backupPath);
+        if (!await fsPoly.exists(backupPathDir)) {
+          await fsPoly.mkdir(backupPathDir, { recursive: true });
+        }
+        try {
+          await fsPoly.mv(filePath, backupPath);
+        } catch (error) {
+          this.progressBar.logWarn(`failed to move ${filePath} -> ${backupPath}: ${error}`);
+        }
+        await this.progressBar.incrementProgress();
+      });
+    }));
   }
 
   private static async getEmptyDirs(dirsToClean: string | string[]): Promise<string[]> {

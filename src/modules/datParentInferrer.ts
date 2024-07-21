@@ -8,8 +8,6 @@ import Module from './module.js';
 
 /**
  * Infer {@link Parent}s for all {@link DAT}s, even those that already have some parents.
- *
- * This class may be run concurrently with other classes.
  */
 export default class DATParentInferrer extends Module {
   private readonly options: Options;
@@ -71,7 +69,6 @@ export default class DATParentInferrer extends Module {
 
   private static stripGameVariants(name: string): string {
     return name
-      // TODO(cemmer): strip any directories from the game name (i.e. HTGD)
       // ***** Retail types *****
       .replace(/\(Alt( [a-z0-9. ]*)?\)/i, '')
       .replace(/\([^)]*Collector's Edition\)/i, '')
@@ -115,7 +112,7 @@ export default class DATParentInferrer extends Module {
       .replace(/\([^)]*Sample[a-z0-9. ]*\)/i, '')
       .replace(/\(Spaceworld[a-z0-9. ]*\)/i, '')
       .replace(/\(Unl[a-z0-9. ]*\)/i, '')
-      .replace(/\(v[0-9.]+[a-z]*\)/i, '')
+      .replace(/\(v[0-9.-]+[a-z]*\)/i, '')
       .replace(/\(Version [0-9.]+[a-z]*\)/i, '')
       // ***** Good Tools *****
       .replace(/\[!\]/, '')
@@ -133,6 +130,8 @@ export default class DATParentInferrer extends Module {
       .replace(/\[T[+-][^\]]+\]/, '')
       .replace(/\[x\]/, '')
       // ***** TOSEC *****
+      .replace(/\((AE|AL|AS|AT|AU|BA|BE|BG|BR|CA|CH|CL|CN|CS|CY|CZ|DE|DK|EE|EG|ES|EU|FI|FR|GB|GR|HK|HR|HU|ID|IE|IL|IN|IR|IS|IT|JO|JP|KR|LT|LU|LV|MN|MX|MY|NL|NO|NP|NZ|OM|PE|PH|PL|PT|QA|RO|RU|SE|SG|SI|SK|TH|TR|TW|US|VN|YU|ZA)\)/, '') // region
+      .replace(/\((ar|bg|bs|cs|cy|da|de|el|en|eo|es|et|fa|fi|fr|ga|gu|he|hi|hr|hu|is|it|ja|ko|lt|lv|ms|nl|no|pl|pt|ro|ru|sk|sl|sq|sr|sv|th|tr|ur|vi|yi|zh)\)/, '') // language
       .replace(/\((demo|demo-kiosk|demo-playable|demo-rolling|demo-slideshow)\)/, '') // demo
       .replace(/\([0-9x]{4}(-[0-9x]{2}(-[0-9x]{2})?)?\)/, '') // YYYY-MM-DD
       .replace(/\((CGA|EGA|HGC|MCGA|MDA|NTSC|NTSC-PAL|PAL|PAL-60|PAL-NTSC|SVGA|VGA|XGA)\)/i, '') // video
@@ -140,6 +139,7 @@ export default class DATParentInferrer extends Module {
       .replace(/\((CW|CW-R|FW|GW|GW-R|LW|PD|SW|SW-R)\)/i, '') // copyright
       .replace(/\((alpha|beta|preview|pre-release|proto)\)/i, '') // development
       .replace(/(\[(cr|f|h|m|p|t|tr|o|u|v|b|a|!)([0-9]+| [^\]]+)?\])+/i, '')
+      .replace(/(\W)v[0-9]+\.[0-9]+(\W)/i, '$1 $2')
       // ***** Specific cases *****
       .replace(/'([0-9][0-9])/, '$1') // year abbreviations
       // ***** Console-specific *****
@@ -151,6 +151,10 @@ export default class DATParentInferrer extends Module {
       .replace(/\(GameCube\)/i, '')
       // Nintendo - Super Nintendo Entertainment System
       .replace(/\(NP\)/i, '') // "Nintendo Power"
+      // Sega - Dreamcast
+      .replace(/\[[0-9]+S\]/, '') // boxcode
+      .replace(/\[[0-9]+MM?[0-9]+(, [0-9]+MM?[0-9]+)*\]/, '')
+      .replace(/for Dreamcast/i, '')
       // Sega - Mega Drive / Genesis
       .replace(/\(MP\)/i, '') // "MegaPlay version"
       // Sega - Sega/Mega CD
@@ -158,7 +162,11 @@ export default class DATParentInferrer extends Module {
       // Sony - PlayStation 1
       .replace(/\(EDC\)/i, '') // copy protection
       .replace(/\(PSone Books\)/i, '')
-      .replace(/\((SCES|SCUS|SLES|SLUS)-[0-9]+\)/i, '')
+      .replace(/[(\]](SCES|SCUS|SLES|SLUS)-[0-9]+[(\]]/i, '')
+      // Sony - PlayStation 3
+      .replace(/\((Arcade|AVTool|Debug|Disc|Patch|Shop|Tool)\)/, '') // BIOS
+      // Sony - PlayStation Portable
+      .replace(/[(\]][UN][CLP][AEJKU][BFGHJMSXZ]-[0-9]+[(\]]/i, '')
       // ***** Cleanup *****
       .replace(/  +/g, ' ')
       .trim();

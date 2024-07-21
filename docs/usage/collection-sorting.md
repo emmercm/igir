@@ -100,7 +100,7 @@ Now we have new ROMs that we want to merge into our collection, and we want to g
       --dir-dat-name
     ```
 
-Any new ROMs in `~/Downloads/` that we didn't already have in `ROMs-Sorted/` will be moved, and a report will be generated for us.
+Any new ROMs in `ROMs-New/` that we didn't already have in `ROMs-Sorted/` will be moved, and a report will be generated for us.
 
 `ROMs-Sorted/` then might look something like this, with new ROMs added:
 

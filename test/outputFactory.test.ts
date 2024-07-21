@@ -1,7 +1,7 @@
 import os from 'node:os';
 import path from 'node:path';
 
-import Constants from '../src/constants.js';
+import Temp from '../src/globals/temp.js';
 import Game from '../src/types/dats/game.js';
 import Header from '../src/types/dats/logiqx/header.js';
 import LogiqxDAT from '../src/types/dats/logiqx/logiqxDat.js';
@@ -31,7 +31,7 @@ test.each([
     dummyRom,
     await dummyRom.toFile(),
   );
-  expect(outputPath.dir).toEqual(Constants.GLOBAL_TEMP_DIR);
+  expect(outputPath.dir).toEqual(Temp.getTempDir());
 });
 
 test.each([
@@ -81,13 +81,13 @@ describe('token replacement', () => {
   });
 
   test.each([
-    ['root/{gameRegion}', 'Game (E)', [], path.join('root', 'EUR', 'Dummy.rom')],
-    ['root/{gameRegion}', 'Game (Europe)', [], path.join('root', 'EUR', 'Dummy.rom')],
-    ['root/{gameRegion}', 'Game', ['EUR'], path.join('root', 'EUR', 'Dummy.rom')],
+    ['root/{region}', 'Game (E)', [], path.join('root', 'EUR', 'Dummy.rom')],
+    ['root/{region}', 'Game (Europe)', [], path.join('root', 'EUR', 'Dummy.rom')],
+    ['root/{region}', 'Game', ['EUR'], path.join('root', 'EUR', 'Dummy.rom')],
     ['root/{gameRegion}', 'Game', ['EUR', 'JPN'], path.join('root', 'EUR', 'Dummy.rom')],
     ['root/{gameRegion}', 'Game', ['JPN'], path.join('root', 'JPN', 'Dummy.rom')],
     ['root/{gameRegion}', 'Game', ['JPN', 'EUR'], path.join('root', 'JPN', 'Dummy.rom')],
-  ])('should replace {gameRegion}: %s', async (output, gameName, regions, expectedPath) => {
+  ])('should replace {region}: %s', async (output, gameName, regions, expectedPath) => {
     const options = new Options({ commands: ['copy'], output });
     const dat = new LogiqxDAT(new Header(), []);
     const game = new Game({
@@ -107,18 +107,39 @@ describe('token replacement', () => {
   });
 
   test.each([
-    ['root/{gameLanguage}', 'Game (E)', [], path.join('root', 'EN', 'Dummy.rom')],
-    ['root/{gameLanguage}', 'Game (Europe)', [], path.join('root', 'EN', 'Dummy.rom')],
-    ['root/{gameLanguage}', 'Game', ['EUR'], path.join('root', 'EN', 'Dummy.rom')],
+    ['root/{language}', 'Game (E)', [], path.join('root', 'EN', 'Dummy.rom')],
+    ['root/{language}', 'Game (Europe)', [], path.join('root', 'EN', 'Dummy.rom')],
+    ['root/{language}', 'Game', ['EUR'], path.join('root', 'EN', 'Dummy.rom')],
     ['root/{gameLanguage}', 'Game', ['EUR', 'JPN'], path.join('root', 'EN', 'Dummy.rom')],
     ['root/{gameLanguage}', 'Game', ['JPN'], path.join('root', 'JA', 'Dummy.rom')],
     ['root/{gameLanguage}', 'Game', ['JPN', 'EUR'], path.join('root', 'JA', 'Dummy.rom')],
-  ])('should replace {gameLanguage}: %s', async (output, gameName, regions, expectedPath) => {
+  ])('should replace {language}: %s', async (output, gameName, regions, expectedPath) => {
     const options = new Options({ commands: ['copy'], output });
     const dat = new LogiqxDAT(new Header(), []);
     const game = new Game({
       name: gameName,
       release: regions.map((region) => new Release(gameName, region)),
+    });
+
+    const outputPath = OutputFactory.getPath(
+      options,
+      dat,
+      game,
+      game.getReleases().find(() => true),
+      dummyRom,
+      await dummyRom.toFile(),
+    );
+    expect(outputPath.format()).toEqual(expectedPath);
+  });
+
+  test.each([
+    ['root/{genre}', 'Platform', path.join('root', 'Platform', 'Dummy.rom')],
+    ['root/{genre}', 'Sports', path.join('root', 'Sports', 'Dummy.rom')],
+  ])('should replace {genre}: %s', async (output, genre, expectedPath) => {
+    const options = new Options({ commands: ['copy'], output });
+    const dat = new LogiqxDAT(new Header(), []);
+    const game = new Game({
+      genre,
     });
 
     const outputPath = OutputFactory.getPath(
@@ -448,7 +469,6 @@ describe('token replacement', () => {
     ['game.gb', path.join('Roms', 'Game Boy (GB)', 'game.gb')],
     ['game.sgb', path.join('Roms', 'Game Boy (GB)', 'game.sgb')],
     ['game.gba', path.join('Roms', 'Game Boy Advance (GBA)', 'game.gba')],
-    ['game.srl', path.join('Roms', 'Game Boy Advance (GBA)', 'game.srl')],
     ['game.gbc', path.join('Roms', 'Game Boy Color (GBC)', 'game.gbc')],
     ['game.nes', path.join('Roms', 'Nintendo Entertainment System (FC)', 'game.nes')],
     ['game.nez', path.join('Roms', 'Nintendo Entertainment System (FC)', 'game.nez')],
@@ -550,7 +570,6 @@ describe('token replacement', () => {
     ['game.sgb', path.join('roms', 'GB', 'game.sgb')],
     ['game.gbc', path.join('roms', 'GB', 'game.gbc')],
     ['game.gba', path.join('roms', 'GBA', 'game.gba')],
-    ['game.srl', path.join('roms', 'GBA', 'game.srl')],
     ['game.nes', path.join('roms', 'NES', 'game.nes')],
     ['game.fds', path.join('roms', 'NES', 'game.fds')],
     ['game.sfc', path.join('roms', 'SNES', 'game.sfc')],
@@ -791,7 +810,6 @@ describe('token replacement', () => {
     ['game.sgb', path.join('roms', 'gb', 'game.sgb')],
     ['game.gbc', path.join('roms', 'gb', 'game.gbc')],
     ['game.gba', path.join('roms', 'gba', 'game.gba')],
-    ['game.srl', path.join('roms', 'gba', 'game.srl')],
     ['game.nds', path.join('roms', 'nds', 'game.nds')],
     ['game.nes', path.join('roms', 'nes', 'game.nes')],
     ['game.sfc', path.join('roms', 'snes', 'game.sfc')],

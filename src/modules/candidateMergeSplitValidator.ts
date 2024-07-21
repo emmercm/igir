@@ -11,8 +11,6 @@ import Module from './module.js';
 /**
  * Validate un-merged, split, and merged ROM sets for playability after all generation and filtering
  * has happened.
- *
- * This class may be run concurrently with other classes.
  */
 export default class CandidateMergeSplitValidator extends Module {
   private readonly options: Options;
@@ -23,14 +21,18 @@ export default class CandidateMergeSplitValidator extends Module {
   }
 
   /**
-   * Validate the {@link ReleaseCandidate}s
+   * Validate the {@link ReleaseCandidate}s.
    */
   async validate(
     dat: DAT,
     parentsToCandidates: Map<Parent, ReleaseCandidate[]>,
   ): Promise<string[]> {
-    this.progressBar.logTrace(`${dat.getNameShort()}: validating merged & split ROM sets`);
+    if (parentsToCandidates.size === 0) {
+      this.progressBar.logTrace(`${dat.getNameShort()}: no parents to validate merged & split ROM sets for`);
+      return [];
+    }
 
+    this.progressBar.logTrace(`${dat.getNameShort()}: validating merged & split ROM sets`);
     await this.progressBar.setSymbol(ProgressBarSymbol.VALIDATING);
     await this.progressBar.reset(parentsToCandidates.size);
 

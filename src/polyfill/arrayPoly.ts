@@ -28,12 +28,14 @@ export default class ArrayPoly {
   public static filterUniqueMapped<T, V>(
     mapper: (arg: T) => V,
   ): (value: T, idx: number, values: T[]) => boolean {
-    let mappedValues: V[] | undefined;
-    return (value: T, idx: number, values: T[]): boolean => {
-      if (!mappedValues) {
-        mappedValues = values.map((val) => mapper(val));
+    const seenMappedValues = new Set<V>();
+    return (value: T): boolean => {
+      const mapped = mapper(value);
+      if (!seenMappedValues.has(mapped)) {
+        seenMappedValues.add(mapped);
+        return true;
       }
-      return mappedValues.indexOf(mapper(value)) === idx;
+      return false;
     };
   }
 

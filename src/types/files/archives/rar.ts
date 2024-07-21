@@ -4,23 +4,26 @@ import async, { AsyncResultCallback } from 'async';
 import { Mutex } from 'async-mutex';
 import unrar from 'node-unrar-js';
 
-import Constants from '../../../constants.js';
+import Defaults from '../../../globals/defaults.js';
+import ExpectedError from '../../expectedError.js';
 import Archive from './archive.js';
 import ArchiveEntry from './archiveEntry.js';
 
 export default class Rar extends Archive {
-  static readonly SUPPORTED_FILES: [string[], Buffer[]][] = [
-    [['.rar'], [
-      Buffer.from('526172211A0700', 'hex'), // v1.50+
-      Buffer.from('526172211A070100', 'hex'), // v5.00+
-    ]],
-  ];
-
   private static readonly EXTRACT_MUTEX = new Mutex();
 
   // eslint-disable-next-line class-methods-use-this
   protected new(filePath: string): Archive {
     return new Rar(filePath);
+  }
+
+  static getExtensions(): string[] {
+    return ['.rar'];
+  }
+
+  // eslint-disable-next-line class-methods-use-this
+  getExtension(): string {
+    return Rar.getExtensions()[0];
   }
 
   async getArchiveEntries(checksumBitmask: number): Promise<ArchiveEntry<this>[]> {
@@ -29,7 +32,7 @@ export default class Rar extends Archive {
     });
     return async.mapLimit(
       [...rar.getFileList().fileHeaders].filter((fileHeader) => !fileHeader.flags.directory),
-      Constants.ARCHIVE_ENTRY_SCANNER_THREADS_PER_ARCHIVE,
+      Defaults.ARCHIVE_ENTRY_SCANNER_THREADS_PER_ARCHIVE,
       async (fileHeader, callback: AsyncResultCallback<ArchiveEntry<this>, Error>) => {
         const archiveEntry = await ArchiveEntry.entryOf({
           archive: this,
@@ -64,7 +67,7 @@ export default class Rar extends Archive {
         files: [entryPath.replace(/[\\/]/g, '/')],
       }).files];
       if (extracted.length === 0) {
-        throw new Error(`didn't find entry '${entryPath}'`);
+        throw new ExpectedError(`didn't find entry '${entryPath}'`);
       }
     });
   }

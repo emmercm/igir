@@ -13,13 +13,24 @@ import micromatch from 'micromatch';
 import moment from 'moment';
 
 import LogLevel from '../console/logLevel.js';
-import Constants from '../constants.js';
+import Defaults from '../globals/defaults.js';
+import Temp from '../globals/temp.js';
 import ArrayPoly from '../polyfill/arrayPoly.js';
 import fsPoly, { FsWalkCallback } from '../polyfill/fsPoly.js';
 import URLPoly from '../polyfill/urlPoly.js';
 import DAT from './dats/dat.js';
+import ExpectedError from './expectedError.js';
 import File from './files/file.js';
 import { ChecksumBitmask } from './files/fileChecksums.js';
+
+export enum InputChecksumArchivesMode {
+  // Never calculate the checksum of archive files
+  NEVER = 1,
+  // Calculate the checksum of archive files if DATs reference archives
+  AUTO = 2,
+  // Always calculate the checksum of archive files
+  ALWAYS = 3,
+}
 
 export enum MergeMode {
   // Clones contain all parent ROMs, all games contain BIOS & device ROMs
@@ -41,6 +52,12 @@ export enum GameSubdirMode {
   ALWAYS,
 }
 
+export enum FixExtension {
+  NEVER = 1,
+  AUTO = 2,
+  ALWAYS = 3,
+}
+
 export interface OptionsProps {
   readonly commands?: string[],
   readonly fixdat?: boolean;
@@ -48,6 +65,7 @@ export interface OptionsProps {
   readonly input?: string[],
   readonly inputExclude?: string[],
   readonly inputMinChecksum?: string,
+  readonly inputChecksumArchives?: string,
 
   readonly dat?: string[],
   readonly datExclude?: string[],
@@ -72,9 +90,12 @@ export interface OptionsProps {
   readonly dirLetterLimit?: number,
   readonly dirLetterGroup?: boolean,
   readonly dirGameSubdir?: string,
+  readonly fixExtension?: string,
   readonly overwrite?: boolean,
   readonly overwriteInvalid?: boolean,
+
   readonly cleanExclude?: string[],
+  readonly cleanBackup?: string,
   readonly cleanDryRun?: boolean,
 
   readonly zipExclude?: string,
@@ -143,6 +164,7 @@ export interface OptionsProps {
   readonly readerThreads?: number,
   readonly writerThreads?: number,
   readonly writeRetry?: number,
+  readonly tempDir?: string,
   readonly disableCache?: boolean,
   readonly cachePath?: string,
   readonly verbose?: number,
@@ -163,6 +185,8 @@ export default class Options implements OptionsProps {
   readonly inputExclude: string[];
 
   readonly inputMinChecksum?: string;
+
+  readonly inputChecksumArchives?: string;
 
   readonly dat: string[];
 
@@ -206,11 +230,15 @@ export default class Options implements OptionsProps {
 
   readonly dirGameSubdir?: string;
 
+  readonly fixExtension?: string;
+
   readonly overwrite: boolean;
 
   readonly overwriteInvalid: boolean;
 
   readonly cleanExclude: string[];
+
+  readonly cleanBackup?: string;
 
   readonly cleanDryRun: boolean;
 
@@ -336,6 +364,8 @@ export default class Options implements OptionsProps {
 
   readonly writeRetry: number;
 
+  readonly tempDir: string;
+
   readonly disableCache: boolean;
 
   readonly cachePath?: string;
@@ -351,6 +381,7 @@ export default class Options implements OptionsProps {
     this.input = options?.input ?? [];
     this.inputExclude = options?.inputExclude ?? [];
     this.inputMinChecksum = options?.inputMinChecksum;
+    this.inputChecksumArchives = options?.inputChecksumArchives;
 
     this.dat = options?.dat ?? [];
     this.datExclude = options?.datExclude ?? [];
@@ -375,9 +406,11 @@ export default class Options implements OptionsProps {
     this.dirLetterLimit = options?.dirLetterLimit ?? 0;
     this.dirLetterGroup = options?.dirLetterGroup ?? false;
     this.dirGameSubdir = options?.dirGameSubdir;
+    this.fixExtension = options?.fixExtension;
     this.overwrite = options?.overwrite ?? false;
     this.overwriteInvalid = options?.overwriteInvalid ?? false;
     this.cleanExclude = options?.cleanExclude ?? [];
+    this.cleanBackup = options?.cleanBackup;
     this.cleanDryRun = options?.cleanDryRun ?? false;
 
     this.zipExclude = options?.zipExclude ?? '';
@@ -446,6 +479,7 @@ export default class Options implements OptionsProps {
     this.readerThreads = Math.max(options?.readerThreads ?? 0, 1);
     this.writerThreads = Math.max(options?.writerThreads ?? 0, 1);
     this.writeRetry = Math.max(options?.writeRetry ?? 0, 0);
+    this.tempDir = options?.tempDir ?? Temp.getTempDir();
     this.disableCache = options?.disableCache ?? false;
     this.cachePath = options?.cachePath;
     this.verbose = options?.verbose ?? 0;
@@ -636,7 +670,7 @@ export default class Options implements OptionsProps {
     // Filter to non-directories
     const isNonDirectory = await async.mapLimit(
       globbedPaths,
-      Constants.MAX_FS_THREADS,
+      Defaults.MAX_FS_THREADS,
       async (file, callback: AsyncResultCallback<boolean, Error>) => {
         if (!await fsPoly.exists(file) && URLPoly.canParse(file)) {
           callback(undefined, true);
@@ -670,18 +704,15 @@ export default class Options implements OptionsProps {
       return [];
     }
 
-    // fg only uses forward-slash path separators
-    const inputPathNormalized = inputPath.replace(/\\/g, '/');
-
     // Glob the contents of directories
     if (await fsPoly.isDirectory(inputPath)) {
-      const dirPaths = (await fsPoly.walk(inputPathNormalized, walkCallback))
+      const dirPaths = (await fsPoly.walk(inputPath, walkCallback))
         .map((filePath) => path.normalize(filePath));
       if (dirPaths.length === 0) {
         if (!requireFiles) {
           return [];
         }
-        throw new Error(`${inputPath}: directory doesn't contain any files`);
+        throw new ExpectedError(`${inputPath}: directory doesn't contain any files`);
       }
       return dirPaths;
     }
@@ -692,8 +723,13 @@ export default class Options implements OptionsProps {
       return [inputPath];
     }
 
+    // fg only uses forward-slash path separators
+    const inputPathNormalized = inputPath.replace(/\\/g, '/');
+    // Try to handle globs a little more intelligently (see the JSDoc below)
+    const inputPathEscaped = await this.sanitizeGlobPattern(inputPathNormalized);
+
     // Otherwise, process it as a glob pattern
-    const paths = (await fg(inputPathNormalized, { onlyFiles: true }))
+    const paths = (await fg(inputPathEscaped, { onlyFiles: true }))
       .map((filePath) => path.normalize(filePath));
     if (paths.length === 0) {
       if (URLPoly.canParse(inputPath)) {
@@ -705,10 +741,34 @@ export default class Options implements OptionsProps {
       if (!requireFiles) {
         return [];
       }
-      throw new Error(`${inputPath}: no files found`);
+      throw new ExpectedError(`no files found in directory: ${inputPath}`);
     }
     walkCallback(paths.length);
     return paths;
+  }
+
+  /**
+   * Trying to use globs with directory names that resemble glob patterns (e.g. dirs that include
+   * parentheticals) is problematic. Most of the time globs are at the tail end of the path, so try
+   * to figure out what leading part of the pattern is just a path, and escape it appropriately,
+   * and then tack on the glob at the end.
+   * Example problematic paths:
+   * ./TOSEC - DAT Pack - Complete (3983) (TOSEC-v2023-07-10)/TOSEC-ISO/Sega*
+   */
+  private static async sanitizeGlobPattern(globPattern: string): Promise<string> {
+    const pathsSplit = globPattern.split(/[\\/]/);
+    for (let i = 0; i < pathsSplit.length; i += 1) {
+      const subPath = pathsSplit.slice(0, i + 1).join('/');
+      if (subPath !== '' && !await fsPoly.exists(subPath)) {
+        const dirname = pathsSplit.slice(0, i).join('/');
+        if (dirname === '') {
+          // fg won't let you escape empty strings
+          return pathsSplit.slice(i).join('/');
+        }
+        return `${fg.escapePath(dirname)}/${pathsSplit.slice(i).join('/')}`;
+      }
+    }
+    return globPattern;
   }
 
   getInputMinChecksum(): ChecksumBitmask | undefined {
@@ -718,6 +778,15 @@ export default class Options implements OptionsProps {
       return undefined;
     }
     return ChecksumBitmask[checksumBitmask as keyof typeof ChecksumBitmask];
+  }
+
+  getInputChecksumArchives(): InputChecksumArchivesMode | undefined {
+    const checksumMode = Object.keys(InputChecksumArchivesMode)
+      .find((mode) => mode.toLowerCase() === this.inputChecksumArchives?.toLowerCase());
+    if (!checksumMode) {
+      return undefined;
+    }
+    return InputChecksumArchivesMode[checksumMode as keyof typeof InputChecksumArchivesMode];
   }
 
   /**
@@ -792,16 +861,16 @@ export default class Options implements OptionsProps {
   }
 
   getOutput(): string {
-    return this.shouldWrite() ? this.output : Constants.GLOBAL_TEMP_DIR;
+    return this.shouldWrite() ? this.output : this.getTempDir();
   }
 
   /**
    * Get the "root" sub-path of the output dir, the sub-path up until the first replaceable token.
    */
   getOutputDirRoot(): string {
-    const outputSplit = path.normalize(this.getOutput()).split(path.sep);
+    const outputSplit = path.normalize(this.getOutput()).split(/[\\/]/);
     for (let i = 0; i < outputSplit.length; i += 1) {
-      if (outputSplit[i].match(/\{[a-zA-Z]+\}/g) !== null) {
+      if (outputSplit[i].match(/\{[a-zA-Z]+\}/) !== null) {
         return path.normalize(outputSplit.slice(0, i).join(path.sep));
       }
     }
@@ -845,6 +914,15 @@ export default class Options implements OptionsProps {
     return GameSubdirMode[subdirMode as keyof typeof GameSubdirMode];
   }
 
+  getFixExtension(): FixExtension | undefined {
+    const fixExtensionMode = Object.keys(FixExtension)
+      .find((mode) => mode.toLowerCase() === this.fixExtension?.toLowerCase());
+    if (!fixExtensionMode) {
+      return undefined;
+    }
+    return FixExtension[fixExtensionMode as keyof typeof FixExtension];
+  }
+
   getOverwrite(): boolean {
     return this.overwrite;
   }
@@ -876,7 +954,12 @@ export default class Options implements OptionsProps {
     return (await Options.scanPaths(outputDirs, walkCallback, false))
       .map((filePath) => path.normalize(filePath))
       .filter((filePath) => !writtenFilesNormalized.has(filePath))
-      .filter((filePath) => !cleanExcludedFilesNormalized.has(filePath));
+      .filter((filePath) => !cleanExcludedFilesNormalized.has(filePath))
+      .sort();
+  }
+
+  getCleanBackup(): string | undefined {
+    return this.cleanBackup;
   }
 
   getCleanDryRun(): boolean {
@@ -1173,6 +1256,10 @@ export default class Options implements OptionsProps {
 
   getWriteRetry(): number {
     return this.writeRetry;
+  }
+
+  getTempDir(): string {
+    return this.tempDir;
   }
 
   getDisableCache(): boolean {

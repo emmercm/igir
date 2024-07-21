@@ -60,6 +60,7 @@ export interface GameProps {
   readonly cloneOf?: string,
   readonly romOf?: string,
   readonly sampleOf?: string,
+  readonly genre?: string,
   // readonly board?: string,
   // readonly rebuildTo?: string,
   // readonly year?: string,
@@ -104,6 +105,10 @@ export default class Game implements GameProps {
   @Expose({ name: 'sampleof' })
   readonly sampleOf?: string;
 
+  // This is non-standard, but libretro uses it
+  @Expose({ name: 'genre' })
+  readonly genre?: string;
+
   // readonly board?: string;
   // readonly rebuildto?: string;
   // readonly year?: string;
@@ -128,6 +133,7 @@ export default class Game implements GameProps {
     this.cloneOf = props?.cloneOf;
     this.romOf = props?.romOf;
     this.sampleOf = props?.sampleOf;
+    this.genre = props?.genre;
     this.release = props?.release ?? [];
     this.rom = props?.rom ?? [];
   }
@@ -184,6 +190,10 @@ export default class Game implements GameProps {
     return this.device === 'yes';
   }
 
+  getGenre(): string | undefined {
+    return this.genre;
+  }
+
   getReleases(): Release[] {
     if (Array.isArray(this.release)) {
       return this.release;
@@ -206,15 +216,21 @@ export default class Game implements GameProps {
 
   getRevision(): number {
     // Numeric revision
-    const numberMatches = this.getName().match(/\(Rev\s*([0-9.]+)\)/i);
-    if (numberMatches && numberMatches?.length >= 2 && !Number.isNaN(numberMatches[1])) {
-      return Number(numberMatches[1]);
+    const revNumberMatches = this.getName().match(/\(Rev\s*([0-9.]+)\)/i);
+    if (revNumberMatches && revNumberMatches?.length >= 2 && !Number.isNaN(revNumberMatches[1])) {
+      return Number(revNumberMatches[1]);
     }
 
     // Letter revision
-    const letterMatches = this.getName().match(/\(Rev\s*([A-Z])\)/i);
-    if (letterMatches && letterMatches?.length >= 2) {
-      return (letterMatches[1].toUpperCase().codePointAt(0) as number) - ('A'.codePointAt(0) as number) + 1;
+    const revLetterMatches = this.getName().match(/\(Rev\s*([A-Z])\)/i);
+    if (revLetterMatches && revLetterMatches?.length >= 2) {
+      return (revLetterMatches[1].toUpperCase().codePointAt(0) as number) - ('A'.codePointAt(0) as number) + 1;
+    }
+
+    // TOSEC versions
+    const versionMatches = this.getName().match(/\Wv([0-9]+\.[0-9]+)\W/i);
+    if (versionMatches && versionMatches?.length >= 2 && !Number.isNaN(versionMatches[1])) {
+      return Number(versionMatches[1]);
     }
 
     // Ring code revision
@@ -640,7 +656,7 @@ export default class Game implements GameProps {
    */
   hashCode(): string {
     let hashCode = this.getName();
-    hashCode += `|${this.getRoms().map((rom) => rom.hashCode()).join(',')}`;
+    hashCode += `|${this.getRoms().map((rom) => rom.hashCode()).sort().join(',')}`;
     return hashCode;
   }
 
