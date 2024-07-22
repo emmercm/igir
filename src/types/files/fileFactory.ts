@@ -3,6 +3,7 @@ import Archive from './archives/archive.js';
 import ArchiveEntry from './archives/archiveEntry.js';
 import ArchiveFile from './archives/archiveFile.js';
 import Gzip from './archives/gzip.js';
+import NkitIso from './archives/nkitIso.js';
 import Rar from './archives/rar.js';
 import SevenZip from './archives/sevenZip.js';
 import Tar from './archives/tar.js';
@@ -90,6 +91,8 @@ export default class FileFactory {
       archive = new ZipSpanned(filePath);
     } else if (ZipX.getExtensions().some((ext) => fileExt.toLowerCase().endsWith(ext))) {
       archive = new ZipX(filePath);
+    } else if (NkitIso.getExtensions().some((ext) => fileExt.toLowerCase().endsWith(ext))) {
+      archive = new NkitIso(filePath);
     } else {
       return undefined;
     }
@@ -139,6 +142,8 @@ export default class FileFactory {
       ...Z.getExtensions(),
       ...ZipSpanned.getExtensions(),
       ...ZipX.getExtensions(),
+      // Compressed images
+      ...NkitIso.getExtensions(),
     ].some((ext) => filePath.toLowerCase().endsWith(ext));
   }
 }

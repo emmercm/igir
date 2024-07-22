@@ -11,6 +11,11 @@ export default class FileSignature {
   // @see https://file-extension.net/seeker/
   // @see https://gbatemp.net/threads/help-with-rom-iso-console-identification.611378/
   private static readonly SIGNATURES = [
+    // ********** GENERAL **********
+
+    // @see https://en.wikipedia.org/wiki/List_of_file_signatures
+    new FileSignature('.elf', [{ value: Buffer.from('\x7FELF') }]),
+
     // ********** ARCHIVES **********
 
     // @see https://en.wikipedia.org/wiki/List_of_file_signatures
@@ -110,6 +115,13 @@ export default class FileSignature {
     // Nintendo - Game & Watch
     new FileSignature('.bin', [{ value: Buffer.from('main.bs') }]),
 
+    // Nintendo - GameCube
+    // @see https://wiki.gbatemp.net/wiki/NKit/NKitFormat
+    new FileSignature('.nkit.iso', [{ offset: 0x2_00, value: Buffer.from('NKIT') }]),
+    // @see https://github.com/dolphin-emu/dolphin/blob/master/docs/WiaAndRvz.md
+    new FileSignature('.rvz', [{ value: Buffer.from('RVZ\x01') }]), // "RVZ\x01"
+    new FileSignature('.wia', [{ value: Buffer.from('WIA\x01') }]), // "WIA\x01"
+
     // Nintendo - Game Boy
     // @see https://gbdev.io/pandocs/The_Cartridge_Header.html
     new FileSignature('.gb', [
@@ -152,6 +164,10 @@ export default class FileSignature {
     new FileSignature('.smc', [{ value: Buffer.from('\x00\x01ME DOCTOR SF 3') }]), // Game Doctor SF3?
     new FileSignature('.smc', [{ value: Buffer.from('GAME DOCTOR SF 3') }]), // Game Doctor SF3/SF6/SF7
 
+    // Nintendo - Wii U
+    // @see https://github.com/cemu-project/Cemu/blob/7522c8470ee27d50a68ba662ae721b69018f3a8f/src/Cafe/Filesystem/WUD/wud.h#L25
+    new FileSignature('.wux', [{ value: Buffer.from('WUX0\x2E\xD0\x99\x10') }]),
+
     // Sega - 32X
     // @see https://github.com/jcfieldsdev/genesis-rom-utility/blob/31826bca66c8c6c467c37c1b711943eb5464e7e8/genesis_rom.chm
     // @see https://plutiedev.com/rom-header
@@ -189,7 +205,9 @@ export default class FileSignature {
     new FileSignature('.md', [{ offset: 0x1_00, value: Buffer.from('SEGA PICO') }]),
 
     // Sony - PlayStation Portable
+    // @see https://www.psdevwiki.com/ps3/Eboot.PBP
     new FileSignature('.pbp', [{ value: Buffer.from('\x00PBP\x00\x00\x01\x00') }]),
+    new FileSignature('.pbp', [{ value: Buffer.from('\x00PBP\x01\x00\x01\x00') }]),
   ].sort((a, b) => {
     // 1. Prefer files that check multiple signatures
     const sigsCountDiff = b.fileSignatures.length - a.fileSignatures.length;
