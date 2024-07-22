@@ -652,14 +652,11 @@ export default class Options implements OptionsProps {
     requireFiles = true,
   ): Promise<string[]> {
     // Limit to scanning one glob pattern at a time to keep memory in check
-    const uniqueGlobPatterns = globPatterns
-      .filter((pattern) => pattern)
-      .reduce(ArrayPoly.reduceUnique(), []);
+    const uniqueGlobPatterns = globPatterns.reduce(ArrayPoly.reduceUnique(), []);
     let globbedPaths: string[] = [];
     for (const uniqueGlobPattern of uniqueGlobPatterns) {
       const paths = await this.globPath(
         uniqueGlobPattern,
-        requireFiles,
         walkCallback ?? ((): void => {}),
       );
       // NOTE(cemmer): if `paths` is really large, `globbedPaths.push(...paths)` can hit a stack
@@ -689,6 +686,10 @@ export default class Options implements OptionsProps {
       .filter((inputPath, idx) => isNonDirectory[idx])
       .filter((inputPath) => isNotJunk(path.basename(inputPath)));
 
+    if (requireFiles && globbedFiles.length === 0) {
+      throw new ExpectedError(`no files found in director${globPatterns.length !== 1 ? 'ies' : 'y'}: ${globPatterns.map((p) => `'${p}'`).join(', ')}`);
+    }
+
     // Remove duplicates
     return globbedFiles
       .reduce(ArrayPoly.reduceUnique(), []);
@@ -696,7 +697,6 @@ export default class Options implements OptionsProps {
 
   private static async globPath(
     inputPath: string,
-    requireFiles: boolean,
     walkCallback: FsWalkCallback,
   ): Promise<string[]> {
     // Windows will report that \\.\nul doesn't exist, catch it explicitly
@@ -706,15 +706,8 @@ export default class Options implements OptionsProps {
 
     // Glob the contents of directories
     if (await fsPoly.isDirectory(inputPath)) {
-      const dirPaths = (await fsPoly.walk(inputPath, walkCallback))
+      return (await fsPoly.walk(inputPath, walkCallback))
         .map((filePath) => path.normalize(filePath));
-      if (dirPaths.length === 0) {
-        if (!requireFiles) {
-          return [];
-        }
-        throw new ExpectedError(`${inputPath}: directory doesn't contain any files`);
-      }
-      return dirPaths;
     }
 
     // If the file exists, don't process it as a glob pattern
@@ -728,6 +721,11 @@ export default class Options implements OptionsProps {
     // Try to handle globs a little more intelligently (see the JSDoc below)
     const inputPathEscaped = await this.sanitizeGlobPattern(inputPathNormalized);
 
+    if (!inputPathEscaped) {
+      // fast-glob will throw with empty-ish inputs
+      return [];
+    }
+
     // Otherwise, process it as a glob pattern
     const paths = (await fg(inputPathEscaped, { onlyFiles: true }))
       .map((filePath) => path.normalize(filePath));
@@ -737,11 +735,7 @@ export default class Options implements OptionsProps {
         walkCallback(1);
         return [inputPath];
       }
-
-      if (!requireFiles) {
-        return [];
-      }
-      throw new ExpectedError(`no files found in directory: ${inputPath}`);
+      return [];
     }
     walkCallback(paths.length);
     return paths;

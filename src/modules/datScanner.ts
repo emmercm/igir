@@ -18,6 +18,7 @@ import MameDAT from '../types/dats/mame/mameDat.js';
 import ROM from '../types/dats/rom.js';
 import SoftwareListDAT from '../types/dats/softwarelist/softwareListDat.js';
 import SoftwareListsDAT from '../types/dats/softwarelist/softwareListsDat.js';
+import ExpectedError from '../types/expectedError.js';
 import File from '../types/files/file.js';
 import { ChecksumBitmask } from '../types/files/fileChecksums.js';
 import Options from '../types/options.js';
@@ -96,8 +97,7 @@ export default class DATScanner extends Scanner {
           ChecksumBitmask.NONE,
         );
       } catch (error) {
-        this.progressBar.logError(`${datFile.toString()}: failed to download: ${error}`);
-        return [];
+        throw new ExpectedError(`failed to download '${datFile.toString()}': ${error}`);
       }
     }))).flat();
   }

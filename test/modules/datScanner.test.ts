@@ -17,7 +17,6 @@ function createDatScanner(props: OptionsProps): DATScanner {
 test.each([
   [['/completely/invalid/path']],
   [['/completely/invalid/path', os.devNull]],
-  [['/completely/invalid/path', 'test/fixtures/dats']],
   [['test/fixtures/**/*.tmp']],
   [['test/fixtures/dats/*foo*/*bar*']],
 ])('should throw on nonexistent paths: %s', async (dat) => {
@@ -28,10 +27,15 @@ test.each([
   [[]],
   [['']],
   [[os.devNull]],
+])('should throw on no results: %s', async (dat) => {
+  await expect(createDatScanner({ dat }).scan()).rejects.toThrow(/no files found/i);
+});
+
+test.each([
   [['http://completelybadurl']],
   [['https://completelybadurl']],
-])('should return empty list on no results: %s', async (dat) => {
-  await expect(createDatScanner({ dat }).scan()).resolves.toHaveLength(0);
+])('should throw on bad URLs: %s', async (dat) => {
+  await expect(createDatScanner({ dat }).scan()).rejects.toThrow(/failed to download/i);
 });
 
 test.each([
