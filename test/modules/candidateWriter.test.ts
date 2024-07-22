@@ -247,8 +247,8 @@ describe('zip', () => {
 
   it('should not write anything if the output is expected and overwriting invalid', async () => {
     await copyFixturesToTemp(async (inputTemp, outputTemp) => {
-      // Note: need to de-conflict headered & headerless ROMs due to duplicate output paths
-      const inputGlob = '**/!(headerless)/*';
+      // Note: need to exclude some ROMs to prevent duplicate output paths
+      const inputGlob = '**/!(headerless|discs)/*';
 
       // Given
       const options = new Options({ commands: ['copy', 'zip'] });
@@ -874,9 +874,9 @@ describe('extract', () => {
     [
       '**/!(header*)/*',
       ['0F09A40.rom', '3708F2C.rom', '612644F.rom', '65D1206.rom', '92C85C9.rom', 'C01173E.rom',
-        'CD-ROM (Track 1).bin', 'CD-ROM (Track 2).bin', 'CD-ROM (Track 3).bin',
-        path.join('CD-ROM', 'CD-ROM (Track 1).bin'), path.join('CD-ROM', 'CD-ROM (Track 2).bin'), path.join('CD-ROM', 'CD-ROM (Track 3).bin'), path.join('CD-ROM', 'CD-ROM.cue'),
-        path.join('GD-ROM', 'GD-ROM.gdi'), path.join('GD-ROM', 'track.gdi'), path.join('GD-ROM', 'track01.bin'), path.join('GD-ROM', 'track02.raw'), path.join('GD-ROM', 'track03.bin'), path.join('GD-ROM', 'track04.bin'),
+        'CD-ROM (Track 1).bin', 'CD-ROM (Track 2).bin', 'CD-ROM (Track 3).bin', 'CD-ROM.cue',
+        path.join('CD-ROM', 'CD-ROM (Track 1).bin'), path.join('CD-ROM', 'CD-ROM (Track 2).bin'), path.join('CD-ROM', 'CD-ROM (Track 3).bin'),
+        'GD-ROM.gdi', path.join('GD-ROM', 'track.gdi'), path.join('GD-ROM', 'track01.bin'), path.join('GD-ROM', 'track02.raw'), path.join('GD-ROM', 'track03.bin'), path.join('GD-ROM', 'track04.bin'),
         'KDULVQN.rom', 'before.rom', 'best.rom', 'empty.rom', 'five.rom', 'fizzbuzz.nes', 'foobar.lnx', 'four.rom', path.join('fourfive', 'five.rom'), path.join('fourfive', 'four.rom'), 'loremipsum.rom', 'one.rom', path.join('onetwothree', 'one.rom'), path.join('onetwothree', 'three.rom'), path.join('onetwothree', 'two.rom'), 'three.rom',
         'track01.bin', 'track02.raw', 'track03.bin', 'track04.bin',
         'two.rom', 'unknown.rom'],
@@ -933,9 +933,9 @@ describe('extract', () => {
     [
       '**/!(header*)/*',
       ['0F09A40.rom', '3708F2C.rom', '612644F.rom', '65D1206.rom', '92C85C9.rom', 'C01173E.rom',
-        'CD-ROM (Track 1).bin', 'CD-ROM (Track 2).bin', 'CD-ROM (Track 3).bin',
-        path.join('CD-ROM', 'CD-ROM (Track 1).bin'), path.join('CD-ROM', 'CD-ROM (Track 2).bin'), path.join('CD-ROM', 'CD-ROM (Track 3).bin'), path.join('CD-ROM', 'CD-ROM.cue'),
-        path.join('GD-ROM', 'GD-ROM.gdi'), path.join('GD-ROM', 'track.gdi'), path.join('GD-ROM', 'track01.bin'), path.join('GD-ROM', 'track02.raw'), path.join('GD-ROM', 'track03.bin'), path.join('GD-ROM', 'track04.bin'),
+        'CD-ROM (Track 1).bin', 'CD-ROM (Track 2).bin', 'CD-ROM (Track 3).bin', 'CD-ROM.cue',
+        path.join('CD-ROM', 'CD-ROM (Track 1).bin'), path.join('CD-ROM', 'CD-ROM (Track 2).bin'), path.join('CD-ROM', 'CD-ROM (Track 3).bin'),
+        'GD-ROM.gdi', path.join('GD-ROM', 'track.gdi'), path.join('GD-ROM', 'track01.bin'), path.join('GD-ROM', 'track02.raw'), path.join('GD-ROM', 'track03.bin'), path.join('GD-ROM', 'track04.bin'),
         'KDULVQN.rom', 'before.rom', 'best.rom', 'empty.rom', 'five.rom', 'fizzbuzz.nes', 'foobar.lnx', 'four.rom', path.join('fourfive', 'five.rom'), path.join('fourfive', 'four.rom'), 'loremipsum.rom', 'one.rom', path.join('onetwothree', 'one.rom'), path.join('onetwothree', 'three.rom'), path.join('onetwothree', 'two.rom'), 'three.rom',
         'track01.bin', 'track02.raw', 'track03.bin', 'track04.bin',
         'two.rom', 'unknown.rom'],
@@ -1245,8 +1245,8 @@ describe('raw', () => {
     [
       '**/!(header*)/*',
       ['0F09A40.rom', '3708F2C.rom', '612644F.rom', '65D1206.rom', '92C85C9.rom', 'C01173E.rom',
-        'CD-ROM (Track 1).bin', 'CD-ROM (Track 2).bin', 'CD-ROM (Track 3).bin', 'CD-ROM.chd',
-        'GD-ROM.chd',
+        'CD-ROM (Track 1).bin', 'CD-ROM (Track 2).bin', 'CD-ROM (Track 3).bin', 'CD-ROM.chd', 'CD-ROM.cue',
+        'GD-ROM.chd', 'GD-ROM.gdi',
         'KDULVQN.rom', 'before.rom', 'best.gz', 'empty.rom', 'five.rom', 'fizzbuzz.nes', 'foobar.lnx', 'four.rom', 'fourfive.zip', 'loremipsum.rom', 'one.rom', 'onetwothree.zip', 'three.rom',
         'track01.bin', 'track02.raw', 'track03.bin', 'track04.bin',
         'two.rom', 'unknown.rom'],
@@ -1300,8 +1300,8 @@ describe('raw', () => {
     [
       '**/!(header*)/*',
       ['0F09A40.rom', '3708F2C.rom', '612644F.rom', '65D1206.rom', '92C85C9.rom', 'C01173E.rom',
-        'CD-ROM (Track 1).bin', 'CD-ROM (Track 2).bin', 'CD-ROM (Track 3).bin', 'CD-ROM.chd',
-        'GD-ROM.chd',
+        'CD-ROM (Track 1).bin', 'CD-ROM (Track 2).bin', 'CD-ROM (Track 3).bin', 'CD-ROM.chd', 'CD-ROM.cue',
+        'GD-ROM.chd', 'GD-ROM.gdi',
         'KDULVQN.rom', 'before.rom', 'best.gz', 'empty.rom', 'five.rom', 'fizzbuzz.nes', 'foobar.lnx', 'four.rom', 'fourfive.zip', 'loremipsum.rom', 'one.rom', 'onetwothree.zip', 'three.rom',
         'track01.bin', 'track02.raw', 'track03.bin', 'track04.bin',
         'two.rom', 'unknown.rom'],
