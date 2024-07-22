@@ -129,6 +129,7 @@ export default class Chd extends Archive {
         throw new Error(`couldn't detect CHD type for: ${this.getFilePath()}`);
       }
     });
+    this.tempSingletonHandles += 1;
 
     const [extractedEntryPath, sizeAndOffset] = entryPath.split('|');
     let filePath = this.tempSingletonFilePath as string;
@@ -142,7 +143,6 @@ export default class Chd extends Archive {
       ? undefined
       : Number.parseInt(trackOffset ?? '0', 10) + Number.parseInt(trackSize, 10) - 1;
 
-    this.tempSingletonHandles += 1;
     try {
       return await File.createStreamFromFile(
         filePath,
@@ -152,7 +152,7 @@ export default class Chd extends Archive {
       );
     } finally {
       this.tempSingletonHandles -= 1;
-      if (this.tempSingletonHandles === 0) {
+      if (this.tempSingletonHandles <= 0) {
         await this.tempSingletonMutex.runExclusive(async () => {
           await FsPoly.rm(this.tempSingletonDirPath as string, { recursive: true, force: true });
           this.tempSingletonDirPath = undefined;
