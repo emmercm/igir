@@ -15,15 +15,14 @@ function createPatchScanner(patch: string[], patchExclude: string[] = []): Patch
 it('should throw on nonexistent paths', async () => {
   await expect(createPatchScanner(['/completely/invalid/path']).scan()).rejects.toThrow(/no files found/i);
   await expect(createPatchScanner(['/completely/invalid/path', os.devNull]).scan()).rejects.toThrow(/no files found/i);
-  await expect(createPatchScanner(['/completely/invalid/path', 'test/fixtures/roms']).scan()).rejects.toThrow(/no files found/i);
   await expect(createPatchScanner(['test/fixtures/**/*.tmp']).scan()).rejects.toThrow(/no files found/i);
   await expect(createPatchScanner(['test/fixtures/roms/*foo*/*bar*']).scan()).rejects.toThrow(/no files found/i);
 });
 
-it('should return empty list on no results', async () => {
-  await expect(createPatchScanner([]).scan()).resolves.toHaveLength(0);
-  await expect(createPatchScanner(['']).scan()).resolves.toHaveLength(0);
-  await expect(createPatchScanner([os.devNull]).scan()).resolves.toHaveLength(0);
+it('should throw on no results', async () => {
+  await expect(createPatchScanner([]).scan()).rejects.toThrow(/no files found/i);
+  await expect(createPatchScanner(['']).scan()).rejects.toThrow(/no files found/i);
+  await expect(createPatchScanner([os.devNull]).scan()).rejects.toThrow(/no files found/i);
 });
 
 it('should return empty list on non-patches', async () => {

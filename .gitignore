@@ -129,6 +129,7 @@ site/
 *.gb
 *.gba
 *.gbc
+*.gcz
 *.gdi
 *.gg
 *.ic1
@@ -146,11 +147,13 @@ site/
 *.pup
 *.raw
 *.rom
+*.rvz
 *.sfc
 *.smc
 *.sms
 *.szx
 *.wad
+*.wia
 *.x1
 *.x1t
 *.zim

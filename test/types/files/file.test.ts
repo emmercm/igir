@@ -5,6 +5,9 @@ import ROMScanner from '../../../src/modules/romScanner.js';
 import bufferPoly from '../../../src/polyfill/bufferPoly.js';
 import FilePoly from '../../../src/polyfill/filePoly.js';
 import fsPoly from '../../../src/polyfill/fsPoly.js';
+import ArchiveEntry from '../../../src/types/files/archives/archiveEntry.js';
+import ArchiveFile from '../../../src/types/files/archives/archiveFile.js';
+import Zip from '../../../src/types/files/archives/zip.js';
 import File from '../../../src/types/files/file.js';
 import { ChecksumBitmask } from '../../../src/types/files/fileChecksums.js';
 import ROMHeader from '../../../src/types/files/romHeader.js';
@@ -20,8 +23,8 @@ describe('fileOf', () => {
     expect(file.getSize()).toEqual(0);
     expect(file.getSizeWithoutHeader()).toEqual(0);
     expect(file.getExtractedFilePath()).toEqual(path.basename(tempFile));
-    expect(file.getCrc32()).toEqual('00000000');
-    expect(file.getCrc32WithoutHeader()).toEqual('00000000');
+    expect(file.getCrc32()).toBeUndefined();
+    expect(file.getCrc32WithoutHeader()).toBeUndefined();
     expect(file.getMd5()).toBeUndefined();
     expect(file.getMd5WithoutHeader()).toBeUndefined();
     expect(file.getSha1()).toBeUndefined();
@@ -472,5 +475,15 @@ describe('equals', () => {
     expect(first.equals(second)).toEqual(false);
     expect(second.equals(third)).toEqual(false);
     expect(third.equals(first)).toEqual(false);
+  });
+
+  it('should equal an ArchiveFile', async () => {
+    const filePath = 'file.zip';
+    const file = await File.fileOf({ filePath });
+
+    const entry = await ArchiveEntry.entryOf({ archive: new Zip(filePath), entryPath: 'entry.rom' });
+    const archiveFile = new ArchiveFile(entry.getArchive(), {});
+
+    expect(file.equals(archiveFile)).toEqual(true);
   });
 });

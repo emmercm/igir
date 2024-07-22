@@ -182,7 +182,7 @@ export default class Cache<V> {
       if (this.maxSize !== undefined) {
         this.keyOrder = new Set(Object.keys(keyValuesObject));
       }
-    } catch { /* empty */ }
+    } catch { /* ignored */ }
 
     return this;
   }

@@ -58,6 +58,8 @@ describe('getArchiveEntries', () => {
     ['./test/fixtures/roms/rar/unknown.rar', 'unknown.rom', '377a7727'],
     ['./test/fixtures/roms/tar/unknown.tar.gz', 'unknown.rom', '377a7727'],
     ['./test/fixtures/roms/zip/unknown.zip', 'unknown.rom', '377a7727'],
+    // other
+    ['./test/fixtures/roms/nkit/5bc2ce5b.nkit.iso', '5bc2ce5b.iso', '5bc2ce5b'],
   ])('should enumerate the single file archive: %s', async (filePath, expectedEntryPath, expectedCrc) => {
     const entries = await FileFactory.filesFrom(filePath);
     expect(entries).toHaveLength(1);

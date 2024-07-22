@@ -92,10 +92,16 @@ async function candidateWriter(
   const options = new Options({
     ...optionsProps,
     input: [path.join(inputTemp, 'roms', inputGlob)],
+    inputExclude: [path.join(inputTemp, 'roms', '**', '*.nkit.*')],
     ...(patchGlob ? { patch: [path.join(inputTemp, patchGlob)] } : {}),
     output: outputTemp,
   });
-  const romFiles = await new ROMScanner(options, new ProgressBarFake()).scan();
+
+  let romFiles: File[] = [];
+  try {
+    romFiles = await new ROMScanner(options, new ProgressBarFake()).scan();
+  } catch { /* ignored */ }
+
   const dat = datInferrer(options, romFiles);
   const romFilesWithHeaders = await new ROMHeaderProcessor(options, new ProgressBarFake())
     .process(romFiles);
