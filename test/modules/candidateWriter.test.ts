@@ -247,13 +247,16 @@ describe('zip', () => {
 
   it('should not write anything if the output is expected and overwriting invalid', async () => {
     await copyFixturesToTemp(async (inputTemp, outputTemp) => {
+      // Note: need to de-conflict headered & headerless ROMs due to duplicate output paths
+      const inputGlob = '**/!(headerless)/*';
+
       // Given
       const options = new Options({ commands: ['copy', 'zip'] });
       const inputFilesBefore = await walkAndStat(inputTemp);
       await expect(walkAndStat(outputTemp)).resolves.toHaveLength(0);
 
       // And we've written once
-      await candidateWriter(options, inputTemp, '**/*', undefined, outputTemp);
+      await candidateWriter(options, inputTemp, inputGlob, undefined, outputTemp);
 
       // And files were written
       const outputFilesBefore = await walkAndStat(outputTemp);
@@ -264,7 +267,7 @@ describe('zip', () => {
       await candidateWriter({
         ...options,
         overwriteInvalid: true,
-      }, inputTemp, '**/*', undefined, outputTemp);
+      }, inputTemp, inputGlob, undefined, outputTemp);
 
       // Then the output wasn't touched
       await expect(walkAndStat(outputTemp)).resolves.toEqual(outputFilesBefore);
@@ -570,8 +573,8 @@ describe('zip', () => {
       [`ROMWriter Test.zip|${path.join('onetwothree', 'one.rom')}`, 'f817a89f'],
       [`ROMWriter Test.zip|${path.join('onetwothree', 'three.rom')}`, 'ff46c5d8'],
       [`ROMWriter Test.zip|${path.join('onetwothree', 'two.rom')}`, '96170874'],
-      [`ROMWriter Test.zip|${path.join('speed_test_v51', 'speed_test_v51.sfc')}`, '8beffd94'],
-      [`ROMWriter Test.zip|${path.join('speed_test_v51', 'speed_test_v51.smc')}`, '9adca6cc'],
+      ['ROMWriter Test.zip|speed_test_v51.sfc', '8beffd94'],
+      ['ROMWriter Test.zip|speed_test_v51.smc', '9adca6cc'],
       ['ROMWriter Test.zip|three.rom', 'ff46c5d8'],
       ['ROMWriter Test.zip|two.rom', '96170874'],
       ['ROMWriter Test.zip|unknown.rom', '377a7727'],

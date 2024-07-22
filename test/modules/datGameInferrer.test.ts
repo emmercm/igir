@@ -7,7 +7,7 @@ test.each([
   // No input paths
   [[], {}],
   // One input path
-  [['test/fixtures/roms/**/*'], { roms: 27 }],
+  [['test/fixtures/roms/**/*'], { roms: 28 }],
   [['test/fixtures/roms/7z/*'], { '7z': 5 }],
   [['test/fixtures/roms/gz/*'], { gz: 7 }],
   [['test/fixtures/roms/rar/*'], { rar: 5 }],

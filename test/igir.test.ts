@@ -970,8 +970,8 @@ describe('with inferred DATs', () => {
         [path.join('onetwothree', 'one.rom'), 'f817a89f'],
         [path.join('onetwothree', 'three.rom'), 'ff46c5d8'],
         [path.join('onetwothree', 'two.rom'), '96170874'],
-        [path.join('speed_test_v51', 'speed_test_v51.sfc'), '8beffd94'],
-        [path.join('speed_test_v51', 'speed_test_v51.smc'), '9adca6cc'],
+        ['speed_test_v51.sfc', '8beffd94'],
+        ['speed_test_v51.smc', '9adca6cc'],
         ['three.rom', 'ff46c5d8'],
         ['two.rom', '96170874'],
         ['unknown.rom', '377a7727'],
@@ -1014,6 +1014,8 @@ describe('with inferred DATs', () => {
       const result = await runIgir({
         commands: ['copy', 'zip', 'test'],
         input: [path.join(inputTemp, 'roms')],
+        // Note: need to de-conflict headered & headerless ROMs due to duplicate output paths
+        inputExclude: [path.join(inputTemp, 'roms', 'headerless')],
         output: outputTemp,
       });
 
@@ -1044,7 +1046,6 @@ describe('with inferred DATs', () => {
         ['onetwothree.zip|one.rom', 'f817a89f'],
         ['onetwothree.zip|three.rom', 'ff46c5d8'],
         ['onetwothree.zip|two.rom', '96170874'],
-        ['speed_test_v51.zip|speed_test_v51.sfc', '8beffd94'],
         ['speed_test_v51.zip|speed_test_v51.smc', '9adca6cc'],
         ['three.zip|three.rom', 'ff46c5d8'],
         ['two.zip|two.rom', '96170874'],

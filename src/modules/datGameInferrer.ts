@@ -10,6 +10,7 @@ import Game from '../types/dats/game.js';
 import Header from '../types/dats/logiqx/header.js';
 import LogiqxDAT from '../types/dats/logiqx/logiqxDat.js';
 import ROM from '../types/dats/rom.js';
+import Archive from '../types/files/archives/archive.js';
 import ArchiveEntry from '../types/files/archives/archiveEntry.js';
 import File from '../types/files/file.js';
 import Options from '../types/options.js';
@@ -79,31 +80,52 @@ export default class DATGameInferrer extends Module {
       ].join('\n'),
     });
 
-    const gameNamesToRomFiles = romFiles.reduce((map, file) => {
-      const gameName = DATGameInferrer.getGameName(file);
-      const gameRomFiles = map.get(gameName) ?? [];
-      gameRomFiles.push(file);
-      map.set(gameName, gameRomFiles);
-      return map;
-    }, new Map<string, File[]>());
+    // For all non-archived files, group files of the same filename without extension together
+    const gameNamesToRawFiles = romFiles
+      .filter((file) => !(file instanceof ArchiveEntry))
+      .reduce((map, file) => {
+        const gameName = DATGameInferrer.getGameName(file);
+        map.set(gameName, [...(map.get(gameName) ?? []), file]);
+        return map;
+      }, new Map<string, File[]>());
 
-    const games = [...gameNamesToRomFiles.entries()].map(([gameName, gameRomFiles]) => {
-      const roms = gameRomFiles
-        .map((romFile) => new ROM({
-          name: path.basename(romFile.getExtractedFilePath()),
-          size: romFile.getSize(),
-          crc32: romFile.getCrc32(),
-          md5: romFile.getMd5(),
-          sha1: romFile.getSha1(),
-          sha256: romFile.getSha256(),
-        }))
-        .filter(ArrayPoly.filterUniqueMapped((rom) => rom.getName()));
-      return new Game({
-        name: gameName,
-        description: gameName,
-        rom: roms,
+    // For archives, assume the entire archive is one game
+    const archivePathsToArchiveEntries = romFiles
+      .filter((file) => file instanceof ArchiveEntry)
+      .reduce((map, file) => {
+        const archivePath = file.getFilePath();
+        map.set(archivePath, [...(map.get(archivePath) ?? []), file]);
+        return map;
+      }, new Map<string, ArchiveEntry<Archive>[]>());
+    const gameNamesToArchiveEntries = [...archivePathsToArchiveEntries.values()]
+      .map((archiveEntries) => {
+        const gameName = DATGameInferrer.getGameName(archiveEntries[0]);
+        return [gameName, archiveEntries] satisfies [string, ArchiveEntry<Archive>[]];
       });
-    });
+
+    const games = [
+      ...gameNamesToRawFiles.entries(),
+      ...gameNamesToArchiveEntries,
+    ]
+      .map(([gameName, gameRomFiles]) => {
+        const roms = gameRomFiles
+          .map((romFile) => new ROM({
+            name: path.basename(romFile.getExtractedFilePath()),
+            size: romFile.getSize(),
+            crc32: romFile.getCrc32(),
+            md5: romFile.getMd5(),
+            sha1: romFile.getSha1(),
+            sha256: romFile.getSha256(),
+          }))
+          .filter(ArrayPoly.filterUniqueMapped((rom) => rom.getName()));
+        return new Game({
+          name: gameName,
+          description: gameName,
+          rom: roms,
+        });
+      })
+      // Filter out duplicate games
+      .filter(ArrayPoly.filterUniqueMapped((game) => game.hashCode()));
 
     return new LogiqxDAT(header, games);
   }
