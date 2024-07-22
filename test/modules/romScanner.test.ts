@@ -15,15 +15,14 @@ function createRomScanner(input: string[], inputExclude: string[] = []): ROMScan
 it('should throw on nonexistent paths', async () => {
   await expect(createRomScanner(['/completely/invalid/path']).scan()).rejects.toThrow(/no files found/i);
   await expect(createRomScanner(['/completely/invalid/path', os.devNull]).scan()).rejects.toThrow(/no files found/i);
-  await expect(createRomScanner(['/completely/invalid/path', 'test/fixtures/roms']).scan()).rejects.toThrow(/no files found/i);
   await expect(createRomScanner(['test/fixtures/**/*.tmp']).scan()).rejects.toThrow(/no files found/i);
   await expect(createRomScanner(['test/fixtures/roms/*foo*/*bar*']).scan()).rejects.toThrow(/no files found/i);
 });
 
-it('should return empty list on no results', async () => {
-  await expect(createRomScanner([]).scan()).resolves.toHaveLength(0);
-  await expect(createRomScanner(['']).scan()).resolves.toHaveLength(0);
-  await expect(createRomScanner([os.devNull]).scan()).resolves.toHaveLength(0);
+it('should throw on no results', async () => {
+  await expect(createRomScanner([]).scan()).rejects.toThrow(/no files found/i);
+  await expect(createRomScanner(['']).scan()).rejects.toThrow(/no files found/i);
+  await expect(createRomScanner([os.devNull]).scan()).rejects.toThrow(/no files found/i);
 });
 
 it('should not throw on bad archives', async () => {

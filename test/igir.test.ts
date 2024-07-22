@@ -137,22 +137,6 @@ async function runIgir(optionsProps: OptionsProps): Promise<TestOutput> {
 }
 
 describe('with explicit DATs', () => {
-  it('should do nothing with no roms', async () => {
-    await copyFixturesToTemp(async (inputTemp, outputTemp) => {
-      const result = await runIgir({
-        commands: ['copy'],
-        dat: [path.join(inputTemp, 'dats')],
-        input: [],
-        output: outputTemp,
-      });
-
-      expect(result.outputFilesAndCrcs).toHaveLength(0);
-      expect(result.cwdFilesAndCrcs).toHaveLength(0);
-      expect(result.movedFiles).toHaveLength(0);
-      expect(result.cleanedFiles).toHaveLength(0);
-    });
-  });
-
   it('should throw on all invalid dats', async () => {
     await expect(async () => new Igir(new Options({
       dat: ['src/*'],
@@ -854,21 +838,6 @@ describe('with explicit DATs', () => {
 });
 
 describe('with inferred DATs', () => {
-  it('should do nothing with no roms', async () => {
-    await copyFixturesToTemp(async (inputTemp, outputTemp) => {
-      const result = await runIgir({
-        commands: ['copy'],
-        input: [],
-        output: outputTemp,
-      });
-
-      expect(result.outputFilesAndCrcs).toHaveLength(0);
-      expect(result.cwdFilesAndCrcs).toHaveLength(0);
-      expect(result.movedFiles).toHaveLength(0);
-      expect(result.cleanedFiles).toHaveLength(0);
-    });
-  });
-
   it('should copy and test', async () => {
     await copyFixturesToTemp(async (inputTemp, outputTemp) => {
       const result = await runIgir({

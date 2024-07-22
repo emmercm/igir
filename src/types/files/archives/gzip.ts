@@ -22,7 +22,7 @@ export default class Gzip extends SevenZip {
     // See if this file is actually a .tar.gz
     try {
       return await new Tar(this.getFilePath()).getArchiveEntries(checksumBitmask);
-    } catch { /* empty */ }
+    } catch { /* ignored */ }
 
     return super.getArchiveEntries(checksumBitmask);
   }
