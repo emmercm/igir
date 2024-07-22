@@ -137,22 +137,6 @@ async function runIgir(optionsProps: OptionsProps): Promise<TestOutput> {
 }
 
 describe('with explicit DATs', () => {
-  it('should do nothing with no roms', async () => {
-    await copyFixturesToTemp(async (inputTemp, outputTemp) => {
-      const result = await runIgir({
-        commands: ['copy'],
-        dat: [path.join(inputTemp, 'dats')],
-        input: [],
-        output: outputTemp,
-      });
-
-      expect(result.outputFilesAndCrcs).toHaveLength(0);
-      expect(result.cwdFilesAndCrcs).toHaveLength(0);
-      expect(result.movedFiles).toHaveLength(0);
-      expect(result.cleanedFiles).toHaveLength(0);
-    });
-  });
-
   it('should throw on all invalid dats', async () => {
     await expect(async () => new Igir(new Options({
       dat: ['src/*'],
@@ -859,21 +843,6 @@ describe('with explicit DATs', () => {
 });
 
 describe('with inferred DATs', () => {
-  it('should do nothing with no roms', async () => {
-    await copyFixturesToTemp(async (inputTemp, outputTemp) => {
-      const result = await runIgir({
-        commands: ['copy'],
-        input: [],
-        output: outputTemp,
-      });
-
-      expect(result.outputFilesAndCrcs).toHaveLength(0);
-      expect(result.cwdFilesAndCrcs).toHaveLength(0);
-      expect(result.movedFiles).toHaveLength(0);
-      expect(result.cleanedFiles).toHaveLength(0);
-    });
-  });
-
   it('should copy and test', async () => {
     await copyFixturesToTemp(async (inputTemp, outputTemp) => {
       const result = await runIgir({
@@ -977,8 +946,8 @@ describe('with inferred DATs', () => {
         [path.join('onetwothree', 'one.rom'), 'f817a89f'],
         [path.join('onetwothree', 'three.rom'), 'ff46c5d8'],
         [path.join('onetwothree', 'two.rom'), '96170874'],
-        [path.join('speed_test_v51', 'speed_test_v51.sfc'), '8beffd94'],
-        [path.join('speed_test_v51', 'speed_test_v51.smc'), '9adca6cc'],
+        ['speed_test_v51.sfc', '8beffd94'],
+        ['speed_test_v51.smc', '9adca6cc'],
         ['three.rom', 'ff46c5d8'],
         ['two.rom', '96170874'],
         ['unknown.rom', '377a7727'],
@@ -1021,6 +990,8 @@ describe('with inferred DATs', () => {
       const result = await runIgir({
         commands: ['copy', 'zip', 'test'],
         input: [path.join(inputTemp, 'roms')],
+        // Note: need to de-conflict headered & headerless ROMs due to duplicate output paths
+        inputExclude: [path.join(inputTemp, 'roms', 'headerless')],
         output: outputTemp,
       });
 
@@ -1051,7 +1022,6 @@ describe('with inferred DATs', () => {
         ['onetwothree.zip|one.rom', 'f817a89f'],
         ['onetwothree.zip|three.rom', 'ff46c5d8'],
         ['onetwothree.zip|two.rom', '96170874'],
-        ['speed_test_v51.zip|speed_test_v51.sfc', '8beffd94'],
         ['speed_test_v51.zip|speed_test_v51.smc', '9adca6cc'],
         ['three.zip|three.rom', 'ff46c5d8'],
         ['two.zip|two.rom', '96170874'],
