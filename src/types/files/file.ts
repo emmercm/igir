@@ -142,7 +142,6 @@ export default class File implements FileProps {
       }
     } else {
       finalSize = finalSize ?? 0;
-      finalCrcWithHeader = finalCrcWithHeader ?? '';
     }
     finalCrcWithoutHeader = finalCrcWithoutHeader ?? finalCrcWithHeader;
     finalMd5WithoutHeader = finalMd5WithoutHeader ?? finalMd5WithHeader;
@@ -517,8 +516,7 @@ export default class File implements FileProps {
       return true;
     }
     return this.getFilePath() === other.getFilePath()
-        && this.getSize() === other.getSize()
-        && this.getCrc32() === other.getCrc32()
-        && this.getCrc32WithoutHeader() === other.getCrc32WithoutHeader();
+        && this.hashCode() === other.hashCode()
+        && this.getFileHeader() === other.getFileHeader();
   }
 }
