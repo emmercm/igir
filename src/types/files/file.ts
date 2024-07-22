@@ -83,7 +83,7 @@ export default class File implements FileProps {
 
   static async fileOf(
     fileProps: FileProps,
-    checksumBitmask: number = ChecksumBitmask.CRC32,
+    checksumBitmask: number = ChecksumBitmask.NONE,
   ): Promise<File> {
     let finalSize = fileProps.size;
     let finalCrcWithHeader = fileProps.crc32;
@@ -152,7 +152,9 @@ export default class File implements FileProps {
     return new File({
       filePath: fileProps.filePath,
       size: finalSize,
-      checksumBitmask,
+      // We were told not to calculate any checksums (default behavior), but some might have been
+      // provided, so let {@link getChecksumBitmask()} figure it out
+      checksumBitmask: checksumBitmask !== ChecksumBitmask.NONE ? checksumBitmask : undefined,
       crc32: finalCrcWithHeader,
       crc32WithoutHeader: finalCrcWithoutHeader,
       md5: finalMd5WithHeader,

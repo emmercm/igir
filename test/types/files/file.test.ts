@@ -135,7 +135,7 @@ describe('getCrc32', () => {
     ['./test/fixtures/roms/raw/foobar.lnx', 'b22c9747'],
     ['./test/fixtures/roms/raw/loremipsum.rom', '70856527'],
   ])('should hash the full file: %s', async (filePath, expectedCrc) => {
-    const file = await File.fileOf({ filePath });
+    const file = await File.fileOf({ filePath }, ChecksumBitmask.CRC32);
     expect(file.getCrc32()).toEqual(expectedCrc);
     expect(file.getCrc32WithoutHeader()).toEqual(expectedCrc);
     expect(file.getMd5()).toBeUndefined();
@@ -152,7 +152,7 @@ describe('getCrc32WithoutHeader', () => {
     ['./test/fixtures/roms/headered/allpads.nes', '9180a163'],
     ['./test/fixtures/roms/headered/speed_test_v51.smc', '9adca6cc'],
   ])('should hash the full file when no header given: %s', async (filePath, expectedCrc) => {
-    const file = await File.fileOf({ filePath });
+    const file = await File.fileOf({ filePath }, ChecksumBitmask.CRC32);
     expect(file.getCrc32()).toEqual(expectedCrc);
     expect(file.getCrc32WithoutHeader()).toEqual(expectedCrc);
     expect(file.getMd5()).toBeUndefined();
@@ -167,7 +167,7 @@ describe('getCrc32WithoutHeader', () => {
     ['./test/fixtures/roms/raw/fizzbuzz.nes', '370517b5'],
     ['./test/fixtures/roms/raw/foobar.lnx', 'b22c9747'],
   ])('should hash the full file when header is given but not present in file: %s', async (filePath, expectedCrc) => {
-    const file = await (await File.fileOf({ filePath }))
+    const file = await (await File.fileOf({ filePath }, ChecksumBitmask.CRC32))
       .withFileHeader(ROMHeader.headerFromFilename(filePath) as ROMHeader);
     expect(file.getCrc32()).toEqual(expectedCrc);
     expect(file.getCrc32WithoutHeader()).toEqual(expectedCrc);
@@ -183,7 +183,7 @@ describe('getCrc32WithoutHeader', () => {
     ['./test/fixtures/roms/headered/allpads.nes', '6339abe6'],
     ['./test/fixtures/roms/headered/speed_test_v51.smc', '8beffd94'],
   ])('should hash the file without the header when header is given and present in file: %s', async (filePath, expectedCrc) => {
-    const file = await (await File.fileOf({ filePath }))
+    const file = await (await File.fileOf({ filePath }, ChecksumBitmask.CRC32))
       .withFileHeader(ROMHeader.headerFromFilename(filePath) as ROMHeader);
     expect(file.getCrc32()).not.toEqual(file.getCrc32WithoutHeader());
     expect(file.getCrc32WithoutHeader()).toEqual(expectedCrc);
