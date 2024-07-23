@@ -18,8 +18,6 @@ import ChdBinCueParser from './chdBinCueParser.js';
 import ChdGdiParser from './chdGdiParser.js';
 
 export default class Chd extends Archive {
-  private static readonly INFO_MUTEX = new Mutex();
-
   private tempSingletonHandles = 0;
 
   private readonly tempSingletonMutex = new Mutex();
@@ -43,20 +41,15 @@ export default class Chd extends Archive {
   }
 
   async getArchiveEntries(checksumBitmask: number): Promise<ArchiveEntry<this>[]> {
-    try {
-      const info = await this.getInfo();
-      if (info.type === CHDType.CD_ROM) {
-        return await ChdBinCueParser.getArchiveEntriesBinCue(this, checksumBitmask);
-      }
-      if (info.type === CHDType.GD_ROM) {
-        // TODO(cemmer): allow parsing GD-ROM to bin/cue https://github.com/mamedev/mame/issues/11903
-        return await ChdGdiParser.getArchiveEntriesGdRom(this, checksumBitmask);
-      }
-      return await this.getArchiveEntriesSingleFile(info, checksumBitmask);
-    } catch (error) {
-      console.log(`DEBUG: ${error}`);
-      return [];
+    const info = await this.getInfo();
+    if (info.type === CHDType.CD_ROM) {
+      return ChdBinCueParser.getArchiveEntriesBinCue(this, checksumBitmask);
     }
+    if (info.type === CHDType.GD_ROM) {
+      // TODO(cemmer): allow parsing GD-ROM to bin/cue https://github.com/mamedev/mame/issues/11903
+      return ChdGdiParser.getArchiveEntriesGdRom(this, checksumBitmask);
+    }
+    return this.getArchiveEntriesSingleFile(info, checksumBitmask);
   }
 
   private async getArchiveEntriesSingleFile(
@@ -92,13 +85,8 @@ export default class Chd extends Archive {
   ): Promise<T> {
     await this.tempSingletonMutex.runExclusive(async () => {
       this.tempSingletonHandles += 1;
-      console.log(`HANDLES: ${this.getFilePath()}: ${this.tempSingletonHandles}`);
 
       if (this.tempSingletonDirPath !== undefined) {
-        if (!await FsPoly.exists(this.tempSingletonDirPath)) {
-          console.log(`DEBUG: ${this.tempSingletonDirPath} doesn't exist. handles: ${this.tempSingletonHandles}`);
-        }
-
         return;
       }
       this.tempSingletonDirPath = await FsPoly.mkdtemp(path.join(Temp.getTempDir(), 'chd'));
@@ -154,7 +142,6 @@ export default class Chd extends Archive {
     if (await FsPoly.exists(path.join(this.tempSingletonDirPath as string, extractedEntryPath))) {
       filePath = path.join(this.tempSingletonDirPath as string, extractedEntryPath);
     }
-    console.log(`EXISTS?: ${filePath}: ${await FsPoly.exists(filePath)}`);
 
     const [trackSize, trackOffset] = (sizeAndOffset ?? '').split('@');
     const streamStart = Number.parseInt(trackOffset ?? '0', 10) + start;
@@ -170,12 +157,10 @@ export default class Chd extends Archive {
         streamEnd,
       );
     } catch (error) {
-      console.log(`ERROR: ${error}`);
-      throw new ExpectedError(`failed to read ${this.getFilePath()}|${entryPath} at ${filePath}`);
+      throw new ExpectedError(`failed to read ${this.getFilePath()}|${entryPath} at ${filePath}: ${error}`);
     } finally {
       await this.tempSingletonMutex.runExclusive(async () => {
         this.tempSingletonHandles -= 1;
-        console.log(`HANDLES: ${this.getFilePath()}: ${this.tempSingletonHandles}`);
         if (this.tempSingletonHandles <= 0) {
           await FsPoly.rm(this.tempSingletonDirPath as string, { recursive: true, force: true });
           this.tempSingletonDirPath = undefined;
@@ -207,8 +192,6 @@ export default class Chd extends Archive {
 
   @Memoize()
   private async getInfo(): Promise<CHDInfo> {
-    return Chd.INFO_MUTEX.runExclusive(
-      async () => chdman.info({ inputFilename: this.getFilePath() }),
-    );
+    return chdman.info({ inputFilename: this.getFilePath() });
   }
 }

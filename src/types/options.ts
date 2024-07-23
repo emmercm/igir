@@ -687,7 +687,7 @@ export default class Options implements OptionsProps {
       .filter((inputPath) => isNotJunk(path.basename(inputPath)));
 
     if (requireFiles && globbedFiles.length === 0) {
-      throw new ExpectedError(`no files found in director${globPatterns.length !== 1 ? 'ies' : 'y'}: ${globPatterns.map((p) => `'${path.resolve(p)}'`).join(', ')}`);
+      throw new ExpectedError(`no files found in director${globPatterns.length !== 1 ? 'ies' : 'y'}: ${globPatterns.map((p) => `'${p}'`).join(', ')}`);
     }
 
     // Remove duplicates
