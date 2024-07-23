@@ -108,6 +108,7 @@ jobs:
           node_modules\chdman\bin\win32\x64\chdman.exe info --input test/fixtures/roms/chd/GD-ROM.chd
 
       # Test the source files
+      - run: node --experimental-vm-modules ./node_modules/jest/bin/jest.js --verbose -i "test/igir.test.ts" -t "with inferred DATs.should dir2dat"
       - run: npm run test:unit
 
   node-e2e:
