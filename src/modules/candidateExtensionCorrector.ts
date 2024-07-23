@@ -7,6 +7,7 @@ import DAT from '../types/dats/dat.js';
 import Parent from '../types/dats/parent.js';
 import ROM from '../types/dats/rom.js';
 import ArchiveEntry from '../types/files/archives/archiveEntry.js';
+import Chd from '../types/files/archives/chd/chd.js';
 import FileSignature from '../types/files/fileSignature.js';
 import Options, { FixExtension } from '../types/options.js';
 import OutputFactory from '../types/outputFactory.js';
@@ -62,6 +63,12 @@ export default class CandidateExtensionCorrector extends Module {
   }
 
   private romNeedsCorrecting(romWithFiles: ROMWithFiles): boolean {
+    const inputFile = romWithFiles.getInputFile();
+    if (inputFile instanceof ArchiveEntry && inputFile.getArchive() instanceof Chd) {
+      // Files within CHDs never need extension correction
+      // return false;
+    }
+
     return this.options.getFixExtension() === FixExtension.ALWAYS
       || (this.options.getFixExtension() === FixExtension.AUTO && (
         !this.options.usingDats()
@@ -148,24 +155,28 @@ export default class CandidateExtensionCorrector extends Module {
       this.progressBar.logTrace(`${dat.getNameShort()}: ${parent.getName()}: correcting extension for: ${romWithFiles.getInputFile()
         .toString()}`);
 
-      await romWithFiles.getInputFile().createReadStream(async (stream) => {
-        const romSignature = await FileSignature.signatureFromFileStream(stream);
-        if (!romSignature) {
-          // No signature was found, so we can't perform any correction
-          return;
-        }
+      try {
+        await romWithFiles.getInputFile().createReadStream(async (stream) => {
+          const romSignature = await FileSignature.signatureFromFileStream(stream);
+          if (!romSignature) {
+            // No signature was found, so we can't perform any correction
+            return;
+          }
 
-        // ROM file signature found, use the appropriate extension
-        const { dir, name } = path.parse(correctedRom.getName());
-        const correctedRomName = path.format({
-          dir,
-          name: name + romSignature.getExtension(),
+          // ROM file signature found, use the appropriate extension
+          const { dir, name } = path.parse(correctedRom.getName());
+          const correctedRomName = path.format({
+            dir,
+            name: name + romSignature.getExtension(),
+          });
+          correctedRom = correctedRom.withName(correctedRomName);
         });
-        correctedRom = correctedRom.withName(correctedRomName);
-      });
-
-      this.progressBar.removeWaitingMessage(waitingMessage);
-      await this.progressBar.incrementDone();
+      } catch (error) {
+        this.progressBar.logError(`${dat.getNameShort()}: failed to correct file extension for '${romWithFiles.getInputFile()}': ${error}`);
+      } finally {
+        this.progressBar.removeWaitingMessage(waitingMessage);
+        await this.progressBar.incrementDone();
+      }
     });
 
     return correctedRom;
