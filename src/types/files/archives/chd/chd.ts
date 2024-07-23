@@ -88,7 +88,13 @@ export default class Chd extends Archive {
     start: number = 0,
   ): Promise<T> {
     await this.tempSingletonMutex.runExclusive(async () => {
+      this.tempSingletonHandles += 1;
+
       if (this.tempSingletonDirPath !== undefined) {
+        if (!await FsPoly.exists(this.tempSingletonDirPath)) {
+          console.log(`DEBUG: ${this.tempSingletonDirPath} doesn't exist. handles: ${this.tempSingletonHandles}`);
+        }
+
         return;
       }
       this.tempSingletonDirPath = await FsPoly.mkdtemp(path.join(Temp.getTempDir(), 'chd'));
@@ -133,9 +139,6 @@ export default class Chd extends Archive {
       } else {
         throw new Error(`couldn't detect CHD type for: ${this.getFilePath()}`);
       }
-    });
-    await this.tempSingletonMutex.runExclusive(() => {
-      this.tempSingletonHandles += 1;
     });
 
     const [extractedEntryPath, sizeAndOffset] = entryPath.split('|');
