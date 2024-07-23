@@ -109,6 +109,7 @@ jobs:
     if: ${{ needs.path-filter.outputs.changes == 'true' }}
     runs-on: ubuntu-latest
     strategy:
+      fail-fast: false  # DEBUG
       matrix:
         node-version: [ lts, 18, 16.7.0 ]
     steps:
@@ -120,6 +121,9 @@ jobs:
         with:
           node-version: ${{ matrix.node-version }}
       - run: npm ci
+      - run: |
+          sudo apt-get update
+          sudo apt-get install -y libsdl2-2.0-0 libsdl2-ttf-2.0-0
       # Test the built files
       - run: npm run build
       - run: ./test/endToEndTest.sh
