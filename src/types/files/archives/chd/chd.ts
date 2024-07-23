@@ -87,58 +87,56 @@ export default class Chd extends Archive {
     callback: (stream: Readable) => (Promise<T> | T),
     start: number = 0,
   ): Promise<T> {
-    try {
-      await this.tempSingletonMutex.runExclusive(async () => {
-        if (this.tempSingletonDirPath !== undefined) {
-          return;
-        }
-        this.tempSingletonDirPath = await FsPoly.mkdtemp(path.join(Temp.getTempDir(), 'chd'));
-        this.tempSingletonFilePath = path.join(this.tempSingletonDirPath, 'extracted');
+    await this.tempSingletonMutex.runExclusive(async () => {
+      if (this.tempSingletonDirPath !== undefined) {
+        return;
+      }
+      this.tempSingletonDirPath = await FsPoly.mkdtemp(path.join(Temp.getTempDir(), 'chd'));
+      this.tempSingletonFilePath = path.join(this.tempSingletonDirPath, 'extracted');
 
-        const info = await this.getInfo();
-        if (info.type === CHDType.RAW) {
-          await chdman.extractRaw({
-            inputFilename: this.getFilePath(),
-            outputFilename: this.tempSingletonFilePath,
-          });
-        } else if (info.type === CHDType.HARD_DISK) {
-          await chdman.extractHd({
-            inputFilename: this.getFilePath(),
-            outputFilename: this.tempSingletonFilePath,
-          });
-        } else if (info.type === CHDType.CD_ROM) {
-          const cueFile = `${this.tempSingletonFilePath}.cue`;
-          await chdman.extractCd({
-            inputFilename: this.getFilePath(),
-            outputFilename: cueFile,
-            outputBinFilename: this.tempSingletonFilePath,
-          });
-          await FsPoly.rm(cueFile, { force: true });
-        } else if (info.type === CHDType.GD_ROM) {
-          this.tempSingletonFilePath = path.join(this.tempSingletonDirPath, 'track.gdi');
-          await chdman.extractCd({
-            inputFilename: this.getFilePath(),
-            outputFilename: this.tempSingletonFilePath,
-          });
-          // Apply TOSEC-style CRLF line separators to the .gdi file
-          await util.promisify(fs.writeFile)(
-            this.tempSingletonFilePath,
-            (await util.promisify(fs.readFile)(this.tempSingletonFilePath)).toString()
-              .replace(/\r?\n/g, '\r\n'),
-          );
-        } else if (info.type === CHDType.DVD_ROM) {
-          await chdman.extractDvd({
-            inputFilename: this.getFilePath(),
-            outputFilename: this.tempSingletonFilePath,
-          });
-        } else {
-          throw new Error(`couldn't detect CHD type for: ${this.getFilePath()}`);
-        }
-      });
-    } catch (error) {
-      console.log(`DEBUG: ${error}`);
-    }
-    this.tempSingletonHandles += 1;
+      const info = await this.getInfo();
+      if (info.type === CHDType.RAW) {
+        await chdman.extractRaw({
+          inputFilename: this.getFilePath(),
+          outputFilename: this.tempSingletonFilePath,
+        });
+      } else if (info.type === CHDType.HARD_DISK) {
+        await chdman.extractHd({
+          inputFilename: this.getFilePath(),
+          outputFilename: this.tempSingletonFilePath,
+        });
+      } else if (info.type === CHDType.CD_ROM) {
+        const cueFile = `${this.tempSingletonFilePath}.cue`;
+        await chdman.extractCd({
+          inputFilename: this.getFilePath(),
+          outputFilename: cueFile,
+          outputBinFilename: this.tempSingletonFilePath,
+        });
+        await FsPoly.rm(cueFile, { force: true });
+      } else if (info.type === CHDType.GD_ROM) {
+        this.tempSingletonFilePath = path.join(this.tempSingletonDirPath, 'track.gdi');
+        await chdman.extractCd({
+          inputFilename: this.getFilePath(),
+          outputFilename: this.tempSingletonFilePath,
+        });
+        // Apply TOSEC-style CRLF line separators to the .gdi file
+        await util.promisify(fs.writeFile)(
+          this.tempSingletonFilePath,
+          (await util.promisify(fs.readFile)(this.tempSingletonFilePath)).toString()
+            .replace(/\r?\n/g, '\r\n'),
+        );
+      } else if (info.type === CHDType.DVD_ROM) {
+        await chdman.extractDvd({
+          inputFilename: this.getFilePath(),
+          outputFilename: this.tempSingletonFilePath,
+        });
+      } else {
+        throw new Error(`couldn't detect CHD type for: ${this.getFilePath()}`);
+      }
+    });
+    await this.tempSingletonMutex.runExclusive(() => {
+      this.tempSingletonHandles += 1;
+    });
 
     const [extractedEntryPath, sizeAndOffset] = entryPath.split('|');
     let filePath = this.tempSingletonFilePath as string;
@@ -160,13 +158,15 @@ export default class Chd extends Archive {
         streamEnd,
       );
     } finally {
-      this.tempSingletonHandles -= 1;
-      if (this.tempSingletonHandles <= 0) {
-        await this.tempSingletonMutex.runExclusive(async () => {
-          await FsPoly.rm(this.tempSingletonDirPath as string, { recursive: true, force: true });
-          this.tempSingletonDirPath = undefined;
-        });
-      }
+      await this.tempSingletonMutex.runExclusive(async () => {
+        this.tempSingletonHandles -= 1;
+        if (this.tempSingletonHandles <= 0) {
+          await this.tempSingletonMutex.runExclusive(async () => {
+            await FsPoly.rm(this.tempSingletonDirPath as string, { recursive: true, force: true });
+            this.tempSingletonDirPath = undefined;
+          });
+        }
+      });
     }
   }
 
