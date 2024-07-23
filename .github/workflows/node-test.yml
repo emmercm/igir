@@ -74,6 +74,8 @@ jobs:
         os: [ ubuntu, macos, windows ]
         node-version: [ lts, 18, 16.7.0 ]
     steps:
+      # DEBUG
+      - run: tree -apsF --du --dirsfirst
       # Setup and install
       - uses: actions/checkout@v4
         with:
