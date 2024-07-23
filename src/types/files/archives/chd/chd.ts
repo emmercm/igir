@@ -150,6 +150,7 @@ export default class Chd extends Archive {
     if (await FsPoly.exists(path.join(this.tempSingletonDirPath as string, extractedEntryPath))) {
       filePath = path.join(this.tempSingletonDirPath as string, extractedEntryPath);
     }
+    console.log(`EXISTS?: ${filePath}: ${await FsPoly.exists(filePath)}`);
 
     const [trackSize, trackOffset] = (sizeAndOffset ?? '').split('@');
     const streamStart = Number.parseInt(trackOffset ?? '0', 10) + start;
@@ -166,16 +167,11 @@ export default class Chd extends Archive {
       );
     } catch (error) {
       console.log(`ERROR: ${error}`);
-      throw error;
+      throw new ExpectedError(`failed to read ${this.getFilePath()}|${entryPath} at ${filePath}`);
     } finally {
       await this.tempSingletonMutex.runExclusive(async () => {
         this.tempSingletonHandles -= 1;
         console.log(`HANDLES: ${this.getFilePath()}: ${this.tempSingletonHandles}`);
-
-        // Grace period before checking for deletion
-        await new Promise((resolve) => { setTimeout(resolve, 1000); });
-
-        console.log(`HANDLES AFTER GRACE: ${this.getFilePath()}: ${this.tempSingletonHandles}`);
         if (this.tempSingletonHandles <= 0) {
           await FsPoly.rm(this.tempSingletonDirPath as string, { recursive: true, force: true });
           this.tempSingletonDirPath = undefined;
