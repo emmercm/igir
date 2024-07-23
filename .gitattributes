@@ -1,7 +1,4 @@
 # Stop `core.autocrlf true`
-*.bin binary
-*.chd binary
-*.gdi binary
-*.lnx binary
-*.nes binary
-*.rom binary
+test/fixtures/roms/**  binary
+*.cue  text
+*.gdi  text eol=crlf
