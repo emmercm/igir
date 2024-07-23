@@ -100,10 +100,12 @@ jobs:
         run: |
           ./node_modules/chdman/bin/darwin/arm64/chdman info --input test/fixtures/roms/chd/CD-ROM.chd
           ./node_modules/chdman/bin/darwin/arm64/chdman extractcd --input test/fixtures/roms/chd/CD-ROM.chd --output $(mktemp -d)/CD-ROM.cue
-      - if: ${{ matrix.os == 'macos' }}
-        run: |
           ./node_modules/chdman/bin/darwin/arm64/chdman info --input test/fixtures/roms/chd/GD-ROM.chd
           ./node_modules/chdman/bin/darwin/arm64/chdman extractcd --input test/fixtures/roms/chd/GD-ROM.chd --output $(mktemp -d)/GD-ROM.gdi
+      - if: ${{ matrix.os == 'windows' }}
+        run: |
+          node_modules\chdman\bin\win32\x64\chdman.exe info --input test/fixtures/roms/chd/CD-ROM.chd
+          node_modules\chdman\bin\win32\x64\chdman.exe info --input test/fixtures/roms/chd/GD-ROM.chd
 
       # Test the source files
       - run: npm run test:unit
