@@ -104,7 +104,7 @@ export default class Chd extends Archive {
         });
       } else if (info.type === CHDType.CD_ROM) {
         const cueFile = `${this.tempSingletonFilePath}.cue`;
-        this.tempSingletonDirPath += '.bin';
+        this.tempSingletonFilePath += '.bin';
         await chdman.extractCd({
           inputFilename: this.getFilePath(),
           outputFilename: cueFile,
