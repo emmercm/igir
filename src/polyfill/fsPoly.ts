@@ -311,7 +311,7 @@ export default class FsPoly {
       if (optionsWithRetry?.force) {
         return;
       }
-      throw new Error(`can't rm, path doesn't exist: ${pathLike}`);
+      throw new ExpectedError(`can't rm, path doesn't exist: ${pathLike}`);
     }
 
     if (await this.isDirectory(pathLike)) {

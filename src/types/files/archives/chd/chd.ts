@@ -9,6 +9,7 @@ import { Memoize } from 'typescript-memoize';
 
 import Temp from '../../../../globals/temp.js';
 import FsPoly from '../../../../polyfill/fsPoly.js';
+import ExpectedError from '../../../expectedError.js';
 import File from '../../file.js';
 import { ChecksumBitmask } from '../../fileChecksums.js';
 import Archive from '../archive.js';
@@ -137,7 +138,7 @@ export default class Chd extends Archive {
           outputFilename: this.tempSingletonFilePath,
         });
       } else {
-        throw new Error(`couldn't detect CHD type for: ${this.getFilePath()}`);
+        throw new ExpectedError(`couldn't detect CHD type for: ${this.getFilePath()}`);
       }
     });
 

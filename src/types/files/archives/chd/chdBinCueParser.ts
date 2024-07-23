@@ -10,6 +10,7 @@ import chdman from 'chdman';
 import Temp from '../../../../globals/temp.js';
 import ArrayPoly from '../../../../polyfill/arrayPoly.js';
 import FsPoly from '../../../../polyfill/fsPoly.js';
+import ExpectedError from '../../../expectedError.js';
 import FileChecksums from '../../fileChecksums.js';
 import Archive from '../archive.js';
 import ArchiveEntry from '../archiveEntry.js';
@@ -135,7 +136,7 @@ export default class ChdBinCueParser {
       case TrackDataType['Cdi/2336']:
         return 2336;
       default:
-        throw new Error(`unknown track type ${TrackDataType[firstTrack.dataType]}`);
+        throw new ExpectedError(`unknown track type ${TrackDataType[firstTrack.dataType]}`);
     }
   }
 }

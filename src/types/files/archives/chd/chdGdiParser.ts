@@ -9,6 +9,7 @@ import fg from 'fast-glob';
 import Defaults from '../../../../globals/defaults.js';
 import Temp from '../../../../globals/temp.js';
 import FsPoly from '../../../../polyfill/fsPoly.js';
+import ExpectedError from '../../../expectedError.js';
 import FileChecksums from '../../fileChecksums.js';
 import Archive from '../archive.js';
 import ArchiveEntry from '../archiveEntry.js';
@@ -32,7 +33,7 @@ export default class ChdGdiParser {
       });
       binRawFilePaths = await fg(`${fg.convertPathToPattern(tempDir)}/*.{bin,raw}`);
       if (binRawFilePaths.length === 0) {
-        throw new Error(`failed to find bin/raw files for GD-ROM: ${archive.getFilePath()}`);
+        throw new ExpectedError(`failed to find bin/raw files for GD-ROM: ${archive.getFilePath()}`);
       }
       return await this.parseGdi(archive, gdiFilePath, binRawFilePaths, checksumBitmask);
     } finally {
