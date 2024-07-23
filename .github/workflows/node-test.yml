@@ -75,7 +75,7 @@ jobs:
         node-version: [ lts, 18, 16.7.0 ]
     steps:
       # DEBUG
-      - run: tree -apsF --du --dirsfirst
+      - run: find . -type f -print0 | xargs -0 ls -lh
       # Setup and install
       - uses: actions/checkout@v4
         with:
