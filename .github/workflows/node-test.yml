@@ -74,12 +74,14 @@ jobs:
         os: [ ubuntu, macos, windows ]
         node-version: [ lts, 18, 16.7.0 ]
     steps:
-      # DEBUG
-      - run: find . -type f -print0 | xargs -0 ls -lh
       # Setup and install
       - uses: actions/checkout@v4
         with:
           ref: ${{ env.ref }}
+
+      # DEBUG
+      - run: find . -type f -print0 | xargs -0 ls -lh
+
       - uses: volta-cli/action@v4
         with:
           node-version: ${{ matrix.node-version }}
