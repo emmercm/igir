@@ -70,7 +70,6 @@ jobs:
     if: ${{ needs.path-filter.outputs.changes == 'true' }}
     runs-on: ${{ matrix.os }}-latest
     strategy:
-      fail-fast: false
       matrix:
         os: [ ubuntu, macos, windows ]
         node-version: [ lts, 18, 16.7.0 ]
@@ -91,8 +90,6 @@ jobs:
           sudo apt-get install -y libsdl2-2.0-0 libsdl2-ttf-2.0-0
 
       # Test the source files
-      - run: node --experimental-vm-modules ./node_modules/jest/bin/jest.js --verbose -i "test/igir.test.ts" -t "with inferred DATs.should dir2dat"
-      - run: node --experimental-vm-modules ./node_modules/jest/bin/jest.js --verbose -i "test/igir.test.ts" -t "with inferred DATs.should copy, zip, and test"
       - run: npm run test:unit
 
   node-e2e:

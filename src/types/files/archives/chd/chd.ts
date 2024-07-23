@@ -110,10 +110,6 @@ export default class Chd extends Archive {
           outputFilename: cueFile,
           outputBinFilename: this.tempSingletonFilePath,
         });
-
-        console.log(`INFO: extracted ${cueFile}, ${this.tempSingletonFilePath} ?`);
-        console.log(`INFO: ${(await FsPoly.walk(this.tempSingletonDirPath)).join('\n')}`);
-
         await FsPoly.rm(cueFile, { force: true });
       } else if (info.type === CHDType.GD_ROM) {
         this.tempSingletonFilePath = path.join(this.tempSingletonDirPath, 'track.gdi');
@@ -137,10 +133,7 @@ export default class Chd extends Archive {
       }
 
       if (!await FsPoly.exists(this.tempSingletonFilePath)) {
-        console.log(`ERROR: failed to extract ${this.getFilePath()}|${entryPath} to ${this.tempSingletonFilePath}`);
         throw new ExpectedError(`failed to extract ${this.getFilePath()}|${entryPath} to ${this.tempSingletonFilePath}`);
-      } else {
-        console.log(`INFO: succeeded to extract ${this.getFilePath()}|${entryPath} to ${this.tempSingletonFilePath}`);
       }
     });
 

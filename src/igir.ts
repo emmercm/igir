@@ -353,8 +353,6 @@ export default class Igir {
     const rawRomFiles = await new ROMScanner(this.options, romProgressBar)
       .scan(checksumBitmask, checksumArchives);
 
-    console.log(rawRomFiles.map((f) => `${f.toString()}: ${f.hashCode()}`).join('\n'));
-
     await romProgressBar.setName('Detecting ROM headers');
     const romFilesWithHeaders = await new ROMHeaderProcessor(this.options, romProgressBar)
       .process(rawRomFiles);
