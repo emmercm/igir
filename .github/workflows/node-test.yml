@@ -70,6 +70,7 @@ jobs:
     if: ${{ needs.path-filter.outputs.changes == 'true' }}
     runs-on: ${{ matrix.os }}-latest
     strategy:
+      fail-fast: false  # DEBUG
       matrix:
         os: [ ubuntu, macos, windows ]
         node-version: [ lts, 18, 16.7.0 ]
@@ -96,9 +97,13 @@ jobs:
 
       # DEBUG
       - if: ${{ matrix.os == 'macos' }}
-        run: ./node_modules/chdman/bin/darwin/arm64/chdman info --input test/fixtures/roms/chd/CD-ROM.chd
+        run: |
+          ./node_modules/chdman/bin/darwin/arm64/chdman info --input test/fixtures/roms/chd/CD-ROM.chd
+          ./node_modules/chdman/bin/darwin/arm64/chdman extractcd --input test/fixtures/roms/chd/CD-ROM.chd --output $(mktemp -d)/CD-ROM.cue
       - if: ${{ matrix.os == 'macos' }}
-        run: ./node_modules/chdman/bin/darwin/arm64/chdman info --input test/fixtures/roms/chd/GD-ROM.chd
+        run: |
+          ./node_modules/chdman/bin/darwin/arm64/chdman info --input test/fixtures/roms/chd/GD-ROM.chd
+          ./node_modules/chdman/bin/darwin/arm64/chdman extractcd --input test/fixtures/roms/chd/GD-ROM.chd --output $(mktemp -d)/GD-ROM.gdi
 
       # Test the source files
       - run: npm run test:unit
@@ -109,7 +114,6 @@ jobs:
     if: ${{ needs.path-filter.outputs.changes == 'true' }}
     runs-on: ubuntu-latest
     strategy:
-      fail-fast: false  # DEBUG
       matrix:
         node-version: [ lts, 18, 16.7.0 ]
     steps:
