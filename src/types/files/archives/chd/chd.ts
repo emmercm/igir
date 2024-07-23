@@ -164,6 +164,9 @@ export default class Chd extends Archive {
         streamStart,
         streamEnd,
       );
+    } catch (error) {
+      console.log(`ERROR: ${error}`);
+      throw error;
     } finally {
       await this.tempSingletonMutex.runExclusive(async () => {
         this.tempSingletonHandles -= 1;
