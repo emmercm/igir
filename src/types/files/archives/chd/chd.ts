@@ -161,10 +161,8 @@ export default class Chd extends Archive {
       await this.tempSingletonMutex.runExclusive(async () => {
         this.tempSingletonHandles -= 1;
         if (this.tempSingletonHandles <= 0) {
-          await this.tempSingletonMutex.runExclusive(async () => {
-            await FsPoly.rm(this.tempSingletonDirPath as string, { recursive: true, force: true });
-            this.tempSingletonDirPath = undefined;
-          });
+          await FsPoly.rm(this.tempSingletonDirPath as string, { recursive: true, force: true });
+          this.tempSingletonDirPath = undefined;
         }
       });
     }
