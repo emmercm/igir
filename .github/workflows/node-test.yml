@@ -70,6 +70,7 @@ jobs:
     if: ${{ needs.path-filter.outputs.changes == 'true' }}
     runs-on: ${{ matrix.os }}-latest
     strategy:
+      fail-fast: false
       matrix:
         os: [ ubuntu, macos, windows ]
         node-version: [ lts, 18, 16.7.0 ]
