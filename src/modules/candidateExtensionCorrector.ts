@@ -66,7 +66,7 @@ export default class CandidateExtensionCorrector extends Module {
     const inputFile = romWithFiles.getInputFile();
     if (inputFile instanceof ArchiveEntry && inputFile.getArchive() instanceof Chd) {
       // Files within CHDs never need extension correction
-      // return false;
+      return false;
     }
 
     return this.options.getFixExtension() === FixExtension.ALWAYS
