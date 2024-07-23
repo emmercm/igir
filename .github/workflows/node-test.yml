@@ -89,6 +89,13 @@ jobs:
       - run: npm ci
       - if: ${{ startsWith(matrix.os, 'macos') }}
         run: brew install --overwrite sdl2
+
+      # DEBUG
+      - if: ${{ startsWith(matrix.os, 'macos') }}
+        run: ./node_modules/chdman/bin/darwin/arm64/chdman info --input test/fixtures/roms/chd/CD-ROM.chd
+      - if: ${{ startsWith(matrix.os, 'macos') }}
+        run: ./node_modules/chdman/bin/darwin/arm64/chdman info --input test/fixtures/roms/chd/GD-ROM.chd
+
       # Test the source files
       - run: npm run test:unit
 
