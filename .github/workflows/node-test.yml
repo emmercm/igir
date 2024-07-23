@@ -92,6 +92,7 @@ jobs:
 
       # Test the source files
       - run: node --experimental-vm-modules ./node_modules/jest/bin/jest.js --verbose -i "test/igir.test.ts" -t "with inferred DATs.should dir2dat"
+      - run: node --experimental-vm-modules ./node_modules/jest/bin/jest.js --verbose -i "test/igir.test.ts" -t "with inferred DATs.should copy, zip, and test"
       - run: npm run test:unit
 
   node-e2e:
