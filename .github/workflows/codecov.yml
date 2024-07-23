@@ -35,6 +35,8 @@ jobs:
       - uses: actions/checkout@v4
       - uses: volta-cli/action@v4
       - run: npm ci
+      - if: ${{ startsWith(matrix.os, 'macos') }}
+        run: brew install --overwrite sdl2
 
       # Run test coverage
       - run: npm run test:coverage
