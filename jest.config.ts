@@ -26,7 +26,7 @@ const jestConfig: JestConfigWithTsJest = {
   setupFilesAfterEnv: ['jest-extended/all'],
 
   // Most tests are I/O-bound, increase the test timeout globally
-  testTimeout: 20_000,
+  testTimeout: 60_000,
 
   // BEGIN https://kulshekhar.github.io/ts-jest/docs/guides/esm-support
   extensionsToTreatAsEsm: ['.ts'],
