@@ -143,6 +143,10 @@ export default class Chd extends Archive {
       } else {
         throw new ExpectedError(`couldn't detect CHD type for: ${this.getFilePath()}`);
       }
+
+      if (!await FsPoly.exists(this.tempSingletonFilePath)) {
+        throw new ExpectedError(`failed to extract ${this.getFilePath()}|${entryPath} to ${this.tempSingletonFilePath}`);
+      }
     });
 
     const [extractedEntryPath, sizeAndOffset] = entryPath.split('|');
