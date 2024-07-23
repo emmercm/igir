@@ -176,6 +176,11 @@ export default class Chd extends Archive {
     entryPath: string,
     extractedFilePath: string,
   ): Promise<void> {
+    const extractedDir = path.dirname(extractedFilePath);
+    if (!await FsPoly.exists(extractedDir)) {
+      await FsPoly.mkdir(extractedDir, { recursive: true });
+    }
+
     return this.extractEntryToStream(
       entryPath,
       async (stream) => new Promise((resolve, reject) => {
