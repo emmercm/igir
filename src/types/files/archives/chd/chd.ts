@@ -171,6 +171,11 @@ export default class Chd extends Archive {
       await this.tempSingletonMutex.runExclusive(async () => {
         this.tempSingletonHandles -= 1;
         console.log(`HANDLES: ${this.getFilePath()}: ${this.tempSingletonHandles}`);
+
+        // Grace period before checking for deletion
+        await new Promise((resolve) => { setTimeout(resolve, 1000); });
+
+        console.log(`HANDLES AFTER GRACE: ${this.getFilePath()}: ${this.tempSingletonHandles}`);
         if (this.tempSingletonHandles <= 0) {
           await FsPoly.rm(this.tempSingletonDirPath as string, { recursive: true, force: true });
           this.tempSingletonDirPath = undefined;
