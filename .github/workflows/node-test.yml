@@ -81,7 +81,7 @@ jobs:
 
       # DEBUG
       - run: find . -type f -print0 | xargs -0 ls -l
-      - run: find . -not -type d -exec file "{}" ";"
+      #- run: find . -not -type d -exec file "{}" ";"
 
       - uses: volta-cli/action@v4
         with:
