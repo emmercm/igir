@@ -18,6 +18,8 @@ import ChdBinCueParser from './chdBinCueParser.js';
 import ChdGdiParser from './chdGdiParser.js';
 
 export default class Chd extends Archive {
+  private static readonly INFO_MUTEX = new Mutex();
+
   private tempSingletonHandles = 0;
 
   private readonly tempSingletonMutex = new Mutex();
@@ -195,6 +197,8 @@ export default class Chd extends Archive {
 
   @Memoize()
   private async getInfo(): Promise<CHDInfo> {
-    return chdman.info({ inputFilename: this.getFilePath() });
+    return Chd.INFO_MUTEX.runExclusive(
+      async () => chdman.info({ inputFilename: this.getFilePath() }),
+    );
   }
 }
