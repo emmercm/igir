@@ -80,7 +80,8 @@ jobs:
           ref: ${{ env.ref }}
 
       # DEBUG
-      - run: find . -type f -print0 | xargs -0 ls -lh
+      - run: find . -type f -print0 | xargs -0 ls -l
+      - run: find . -not -type d -exec file "{}" ";"
 
       - uses: volta-cli/action@v4
         with:
