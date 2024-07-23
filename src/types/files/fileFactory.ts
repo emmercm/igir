@@ -1,3 +1,5 @@
+import path from 'node:path';
+
 import ExpectedError from '../expectedError.js';
 import Archive from './archives/archive.js';
 import ArchiveEntry from './archives/archiveEntry.js';
@@ -38,7 +40,7 @@ export default class FileFactory {
       return [await this.fileFrom(filePath, checksumBitmask)];
     } catch (error) {
       if (error && typeof error === 'object' && 'code' in error && error.code === 'ENOENT') {
-        throw new ExpectedError(`file doesn't exist: ${filePath}`);
+        throw new ExpectedError(`file doesn't exist: ${path.resolve(filePath)}`);
       }
       if (typeof error === 'string') {
         throw new Error(error);
