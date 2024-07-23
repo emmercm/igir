@@ -134,6 +134,8 @@ export default class Chd extends Archive {
       if (!await FsPoly.exists(this.tempSingletonFilePath)) {
         console.log(`ERROR: failed to extract ${this.getFilePath()}|${entryPath} to ${this.tempSingletonFilePath}`);
         throw new ExpectedError(`failed to extract ${this.getFilePath()}|${entryPath} to ${this.tempSingletonFilePath}`);
+      } else {
+        console.log(`INFO: succeeded to extract ${this.getFilePath()}|${entryPath} to ${this.tempSingletonFilePath}`);
       }
     });
 
