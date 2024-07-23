@@ -92,6 +92,7 @@ export default class Chd extends Archive {
   ): Promise<T> {
     await this.tempSingletonMutex.runExclusive(async () => {
       this.tempSingletonHandles += 1;
+      console.log(`HANDLES: ${this.getFilePath()}: ${this.tempSingletonHandles}`);
 
       if (this.tempSingletonDirPath !== undefined) {
         if (!await FsPoly.exists(this.tempSingletonDirPath)) {
@@ -166,6 +167,7 @@ export default class Chd extends Archive {
     } finally {
       await this.tempSingletonMutex.runExclusive(async () => {
         this.tempSingletonHandles -= 1;
+        console.log(`HANDLES: ${this.getFilePath()}: ${this.tempSingletonHandles}`);
         if (this.tempSingletonHandles <= 0) {
           await FsPoly.rm(this.tempSingletonDirPath as string, { recursive: true, force: true });
           this.tempSingletonDirPath = undefined;
