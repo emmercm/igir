@@ -44,8 +44,7 @@ export default class Chd extends Archive {
     const info = await this.getInfo();
     if (info.type === CHDType.CD_ROM) {
       return ChdBinCueParser.getArchiveEntriesBinCue(this, checksumBitmask);
-    }
-    if (info.type === CHDType.GD_ROM) {
+    } if (info.type === CHDType.GD_ROM) {
       // TODO(cemmer): allow parsing GD-ROM to bin/cue https://github.com/mamedev/mame/issues/11903
       return ChdGdiParser.getArchiveEntriesGdRom(this, checksumBitmask);
     }
@@ -174,11 +173,6 @@ export default class Chd extends Archive {
     entryPath: string,
     extractedFilePath: string,
   ): Promise<void> {
-    const extractedDir = path.dirname(extractedFilePath);
-    if (!await FsPoly.exists(extractedDir)) {
-      await FsPoly.mkdir(extractedDir, { recursive: true });
-    }
-
     return this.extractEntryToStream(
       entryPath,
       async (stream) => new Promise((resolve, reject) => {

@@ -173,10 +173,10 @@ export default class CandidateExtensionCorrector extends Module {
         });
       } catch (error) {
         this.progressBar.logError(`${dat.getNameShort()}: failed to correct file extension for '${romWithFiles.getInputFile()}': ${error}`);
-      } finally {
-        this.progressBar.removeWaitingMessage(waitingMessage);
-        await this.progressBar.incrementDone();
       }
+
+      this.progressBar.removeWaitingMessage(waitingMessage);
+      await this.progressBar.incrementDone();
     });
 
     return correctedRom;
