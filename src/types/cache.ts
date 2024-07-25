@@ -25,11 +25,15 @@ export interface CacheProps {
 export default class Cache<V> {
   private static readonly BUFFER_ENCODING: BufferEncoding = 'binary';
 
+  private static readonly KEY_MUTEXES_MAX_COUNT = 1000;
+
   private keyOrder: Set<string> = new Set();
 
   private keyValues = new Map<string, V>();
 
   private readonly keyMutexes = new Map<string, Mutex>();
+
+  private keyMutexesLru: Set<string> = new Set();
 
   private readonly keyMutexesMutex = new Mutex();
 
@@ -48,7 +52,9 @@ export default class Cache<V> {
     this.fileFlushMillis = props?.fileFlushMillis;
     if (props?.saveOnExit) {
       // WARN: Jest won't call this: https://github.com/jestjs/jest/issues/10927
-      process.once('beforeExit', this.save);
+      process.once('beforeExit', async () => {
+        await this.save();
+      });
     }
     this.maxSize = props?.maxSize;
   }
@@ -145,6 +151,7 @@ export default class Cache<V> {
     this.keyOrder.delete(key);
     this.keyValues.delete(key);
     this.keyMutexes.delete(key);
+    this.keyMutexesLru.delete(key);
     this.saveWithTimeout();
   }
 
@@ -153,7 +160,22 @@ export default class Cache<V> {
     const keyMutex = await this.keyMutexesMutex.runExclusive(() => {
       if (!this.keyMutexes.has(key)) {
         this.keyMutexes.set(key, new Mutex());
+        this.keyMutexesLru = new Set([key, ...this.keyMutexesLru]);
+
+        // Expire least recently used keys
+        [...this.keyMutexesLru]
+          .filter((lruKey) => !this.keyMutexes.get(lruKey)?.isLocked())
+          .slice(Cache.KEY_MUTEXES_MAX_COUNT)
+          .forEach((lruKey) => {
+            this.keyMutexes.delete(lruKey);
+            this.keyMutexesLru.delete(lruKey);
+          });
       }
+
+      // Mark this key as recently used
+      this.keyMutexesLru.delete(key);
+      this.keyMutexesLru = new Set([key, ...this.keyMutexesLru]);
+
       return this.keyMutexes.get(key) as Mutex;
     });
 
