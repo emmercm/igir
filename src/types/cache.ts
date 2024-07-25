@@ -48,7 +48,9 @@ export default class Cache<V> {
     this.fileFlushMillis = props?.fileFlushMillis;
     if (props?.saveOnExit) {
       // WARN: Jest won't call this: https://github.com/jestjs/jest/issues/10927
-      process.once('beforeExit', this.save);
+      process.once('beforeExit', async () => {
+        await this.save();
+      });
     }
     this.maxSize = props?.maxSize;
   }
