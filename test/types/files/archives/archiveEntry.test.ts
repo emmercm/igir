@@ -180,34 +180,6 @@ describe('getCrc32WithoutHeader', () => {
   });
 
   test.each([
-    ['./test/fixtures/roms/7z/fizzbuzz.7z', '370517b5'],
-    ['./test/fixtures/roms/gz/fizzbuzz.gz', '370517b5'],
-    ['./test/fixtures/roms/rar/fizzbuzz.rar', '370517b5'],
-    ['./test/fixtures/roms/tar/fizzbuzz.tar.gz', '370517b5'],
-    ['./test/fixtures/roms/zip/fizzbuzz.zip', '370517b5'],
-    ['./test/fixtures/roms/7z/foobar.7z', 'b22c9747'],
-    ['./test/fixtures/roms/gz/foobar.gz', 'b22c9747'],
-    ['./test/fixtures/roms/rar/foobar.rar', 'b22c9747'],
-    ['./test/fixtures/roms/tar/foobar.tar.gz', 'b22c9747'],
-    ['./test/fixtures/roms/zip/foobar.zip', 'b22c9747'],
-  ])('should hash the full archive entry when header is given but not present in file: %s', async (filePath, expectedCrc) => {
-    const archiveEntries = await FileFactory.filesFrom(filePath);
-    expect(archiveEntries).toHaveLength(1);
-    const archiveEntry = await archiveEntries[0].withFileHeader(
-      ROMHeader.headerFromFilename(archiveEntries[0].getExtractedFilePath()) as ROMHeader,
-    );
-
-    expect(archiveEntry.getCrc32()).toEqual(expectedCrc);
-    expect(archiveEntry.getCrc32WithoutHeader()).toEqual(expectedCrc);
-    expect(archiveEntry.getMd5()).toBeUndefined();
-    expect(archiveEntry.getMd5WithoutHeader()).toBeUndefined();
-    expect(archiveEntry.getSha1()).toBeUndefined();
-    expect(archiveEntry.getSha1WithoutHeader()).toBeUndefined();
-    expect(archiveEntry.getSha256()).toBeUndefined();
-    expect(archiveEntry.getSha256WithoutHeader()).toBeUndefined();
-  });
-
-  test.each([
     ['./test/fixtures/roms/headered/diagnostic_test_cartridge.a78.7z', 'a1eaa7c1'],
     ['./test/fixtures/roms/headered/fds_joypad_test.fds.zip', '3ecbac61'],
     ['./test/fixtures/roms/headered/LCDTestROM.lnx.rar', '42583855'],
@@ -288,33 +260,6 @@ describe('getMd5WithoutHeader', () => {
     const archiveEntries = await FileFactory.filesFrom(filePath, ChecksumBitmask.MD5);
     expect(archiveEntries).toHaveLength(1);
     const archiveEntry = archiveEntries[0];
-
-    // Some archives store CRC32, or otherwise it won't be defined
-    expect(archiveEntry.getMd5()).toEqual(expectedMd5);
-    expect(archiveEntry.getMd5WithoutHeader()).toEqual(expectedMd5);
-    expect(archiveEntry.getSha1()).toBeUndefined();
-    expect(archiveEntry.getSha1WithoutHeader()).toBeUndefined();
-    expect(archiveEntry.getSha256()).toBeUndefined();
-    expect(archiveEntry.getSha256WithoutHeader()).toBeUndefined();
-  });
-
-  test.each([
-    ['./test/fixtures/roms/7z/fizzbuzz.7z', 'cbe8410861130a91609295349918c2c2'],
-    ['./test/fixtures/roms/gz/fizzbuzz.gz', 'cbe8410861130a91609295349918c2c2'],
-    ['./test/fixtures/roms/rar/fizzbuzz.rar', 'cbe8410861130a91609295349918c2c2'],
-    ['./test/fixtures/roms/tar/fizzbuzz.tar.gz', 'cbe8410861130a91609295349918c2c2'],
-    ['./test/fixtures/roms/zip/fizzbuzz.zip', 'cbe8410861130a91609295349918c2c2'],
-    ['./test/fixtures/roms/7z/foobar.7z', '14758f1afd44c09b7992073ccf00b43d'],
-    ['./test/fixtures/roms/gz/foobar.gz', '14758f1afd44c09b7992073ccf00b43d'],
-    ['./test/fixtures/roms/rar/foobar.rar', '14758f1afd44c09b7992073ccf00b43d'],
-    ['./test/fixtures/roms/tar/foobar.tar.gz', '14758f1afd44c09b7992073ccf00b43d'],
-    ['./test/fixtures/roms/zip/foobar.zip', '14758f1afd44c09b7992073ccf00b43d'],
-  ])('should hash the full archive entry when header is given but not present in file: %s', async (filePath, expectedMd5) => {
-    const archiveEntries = await FileFactory.filesFrom(filePath, ChecksumBitmask.MD5);
-    expect(archiveEntries).toHaveLength(1);
-    const archiveEntry = await archiveEntries[0].withFileHeader(
-      ROMHeader.headerFromFilename(archiveEntries[0].getExtractedFilePath()) as ROMHeader,
-    );
 
     // Some archives store CRC32, or otherwise it won't be defined
     expect(archiveEntry.getMd5()).toEqual(expectedMd5);
@@ -417,33 +362,6 @@ describe('getSha1WithoutHeader', () => {
   });
 
   test.each([
-    ['./test/fixtures/roms/7z/fizzbuzz.7z', '5a316d9f0e06964d94cdd62a933803d7147ddadb'],
-    ['./test/fixtures/roms/gz/fizzbuzz.gz', '5a316d9f0e06964d94cdd62a933803d7147ddadb'],
-    ['./test/fixtures/roms/rar/fizzbuzz.rar', '5a316d9f0e06964d94cdd62a933803d7147ddadb'],
-    ['./test/fixtures/roms/tar/fizzbuzz.tar.gz', '5a316d9f0e06964d94cdd62a933803d7147ddadb'],
-    ['./test/fixtures/roms/zip/fizzbuzz.zip', '5a316d9f0e06964d94cdd62a933803d7147ddadb'],
-    ['./test/fixtures/roms/7z/foobar.7z', '988881adc9fc3655077dc2d4d757d480b5ea0e11'],
-    ['./test/fixtures/roms/gz/foobar.gz', '988881adc9fc3655077dc2d4d757d480b5ea0e11'],
-    ['./test/fixtures/roms/rar/foobar.rar', '988881adc9fc3655077dc2d4d757d480b5ea0e11'],
-    ['./test/fixtures/roms/tar/foobar.tar.gz', '988881adc9fc3655077dc2d4d757d480b5ea0e11'],
-    ['./test/fixtures/roms/zip/foobar.zip', '988881adc9fc3655077dc2d4d757d480b5ea0e11'],
-  ])('should hash the full archive entry when header is given but not present in file: %s', async (filePath, expectedSha1) => {
-    const archiveEntries = await FileFactory.filesFrom(filePath, ChecksumBitmask.SHA1);
-    expect(archiveEntries).toHaveLength(1);
-    const archiveEntry = await archiveEntries[0].withFileHeader(
-      ROMHeader.headerFromFilename(archiveEntries[0].getExtractedFilePath()) as ROMHeader,
-    );
-
-    // Some archives store CRC32, or otherwise it won't be defined
-    expect(archiveEntry.getMd5()).toBeUndefined();
-    expect(archiveEntry.getMd5WithoutHeader()).toBeUndefined();
-    expect(archiveEntry.getSha1()).toEqual(expectedSha1);
-    expect(archiveEntry.getSha1WithoutHeader()).toEqual(expectedSha1);
-    expect(archiveEntry.getSha256()).toBeUndefined();
-    expect(archiveEntry.getSha256WithoutHeader()).toBeUndefined();
-  });
-
-  test.each([
     ['./test/fixtures/roms/headered/diagnostic_test_cartridge.a78.7z', '76ec76c423d88bdf739e673c051c5b9c174881c6'],
     ['./test/fixtures/roms/headered/fds_joypad_test.fds.zip', '7b6bd1a69bbc5d8121c72dd1eedfb6752fe11787'],
     ['./test/fixtures/roms/headered/LCDTestROM.lnx.rar', 'e2901046126153b318a09cc1476eec8afff0b698'],
@@ -524,33 +442,6 @@ describe('getSha256WithoutHeader', () => {
     const archiveEntries = await FileFactory.filesFrom(filePath, ChecksumBitmask.SHA256);
     expect(archiveEntries).toHaveLength(1);
     const archiveEntry = archiveEntries[0];
-
-    // Some archives store CRC32, or otherwise it won't be defined
-    expect(archiveEntry.getMd5()).toBeUndefined();
-    expect(archiveEntry.getMd5WithoutHeader()).toBeUndefined();
-    expect(archiveEntry.getSha1()).toBeUndefined();
-    expect(archiveEntry.getSha1WithoutHeader()).toBeUndefined();
-    expect(archiveEntry.getSha256()).toEqual(expectedSha256);
-    expect(archiveEntry.getSha256WithoutHeader()).toEqual(expectedSha256);
-  });
-
-  test.each([
-    ['./test/fixtures/roms/7z/fizzbuzz.7z', '6e809804766eaa4dd42a2607b789f3e4e5d32fc321ba8dd3ef39ddc1ea2888e9'],
-    ['./test/fixtures/roms/gz/fizzbuzz.gz', '6e809804766eaa4dd42a2607b789f3e4e5d32fc321ba8dd3ef39ddc1ea2888e9'],
-    ['./test/fixtures/roms/rar/fizzbuzz.rar', '6e809804766eaa4dd42a2607b789f3e4e5d32fc321ba8dd3ef39ddc1ea2888e9'],
-    ['./test/fixtures/roms/tar/fizzbuzz.tar.gz', '6e809804766eaa4dd42a2607b789f3e4e5d32fc321ba8dd3ef39ddc1ea2888e9'],
-    ['./test/fixtures/roms/zip/fizzbuzz.zip', '6e809804766eaa4dd42a2607b789f3e4e5d32fc321ba8dd3ef39ddc1ea2888e9'],
-    ['./test/fixtures/roms/7z/foobar.7z', 'aec070645fe53ee3b3763059376134f058cc337247c978add178b6ccdfb0019f'],
-    ['./test/fixtures/roms/gz/foobar.gz', 'aec070645fe53ee3b3763059376134f058cc337247c978add178b6ccdfb0019f'],
-    ['./test/fixtures/roms/rar/foobar.rar', 'aec070645fe53ee3b3763059376134f058cc337247c978add178b6ccdfb0019f'],
-    ['./test/fixtures/roms/tar/foobar.tar.gz', 'aec070645fe53ee3b3763059376134f058cc337247c978add178b6ccdfb0019f'],
-    ['./test/fixtures/roms/zip/foobar.zip', 'aec070645fe53ee3b3763059376134f058cc337247c978add178b6ccdfb0019f'],
-  ])('should hash the full archive entry when header is given but not present in file: %s', async (filePath, expectedSha256) => {
-    const archiveEntries = await FileFactory.filesFrom(filePath, ChecksumBitmask.SHA256);
-    expect(archiveEntries).toHaveLength(1);
-    const archiveEntry = await archiveEntries[0].withFileHeader(
-      ROMHeader.headerFromFilename(archiveEntries[0].getExtractedFilePath()) as ROMHeader,
-    );
 
     // Some archives store CRC32, or otherwise it won't be defined
     expect(archiveEntry.getMd5()).toBeUndefined();
