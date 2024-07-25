@@ -444,14 +444,9 @@ export default class File implements FileProps {
   }
 
   async withFileHeader(fileHeader: ROMHeader): Promise<File> {
-    // Make sure the file actually has the right file signature
-    const hasHeader = await this.createReadStream(
-      async (stream) => fileHeader.fileHasHeader(stream),
-    );
-    if (!hasHeader) {
+    if (fileHeader === this.fileHeader) {
       return this;
     }
-
     return File.fileOf({
       ...this,
       fileHeader,

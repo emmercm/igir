@@ -1,6 +1,8 @@
 import path from 'node:path';
 import { Readable } from 'node:stream';
 
+import { Memoize } from 'typescript-memoize';
+
 import ArrayPoly from '../../polyfill/arrayPoly.js';
 
 export default class ROMHeader {
@@ -60,6 +62,10 @@ export default class ROMHeader {
       .map((header) => header.headeredFileExtension)
       .reduce(ArrayPoly.reduceUnique(), [])
       .sort();
+  }
+
+  static headerFromName(name: string): ROMHeader | undefined {
+    return this.HEADERS[name];
   }
 
   static headerFromFilename(filePath: string): ROMHeader | undefined {
@@ -123,6 +129,12 @@ export default class ROMHeader {
     return undefined;
   }
 
+  @Memoize()
+  getName(): string {
+    return Object.keys(ROMHeader.HEADERS)
+      .find((name) => ROMHeader.HEADERS[name] === this) as string;
+  }
+
   getDataOffsetBytes(): number {
     return this.dataOffsetBytes;
   }
@@ -133,14 +145,5 @@ export default class ROMHeader {
 
   getHeaderlessFileExtension(): string {
     return this.headerlessFileExtension;
-  }
-
-  async fileHasHeader(stream: Readable): Promise<boolean> {
-    const header = await ROMHeader.readHeaderHex(
-      stream,
-      this.headerOffsetBytes,
-      this.headerOffsetBytes + this.headerValue.length / 2,
-    );
-    return header.toUpperCase() === this.headerValue.toUpperCase();
   }
 }

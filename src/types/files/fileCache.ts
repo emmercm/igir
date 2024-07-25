@@ -6,16 +6,18 @@ import Archive from './archives/archive.js';
 import ArchiveEntry, { ArchiveEntryProps } from './archives/archiveEntry.js';
 import File, { FileProps } from './file.js';
 import { ChecksumBitmask } from './fileChecksums.js';
+import ROMHeader from './romHeader.js';
 
 interface CacheValue {
   fileSize: number,
   modifiedTimeMillis: number,
-  value: FileProps | ArchiveEntryProps<Archive>[],
+  value: FileProps | ArchiveEntryProps<Archive>[] | string | undefined,
 }
 
 enum ValueType {
-  FILE = 'F',
-  ARCHIVE_ENTRIES = 'A',
+  FILE_CHECKSUMS = 'F',
+  ARCHIVE_CHECKSUMS = 'A',
+  FILE_HEADER = 'H',
 }
 
 export default class FileCache {
@@ -42,6 +44,7 @@ export default class FileCache {
         const keyRegex = new RegExp(`^V${prevVersion}\\|`);
         return this.cache.delete(keyRegex);
       }));
+    // await this.cache.delete(new RegExp(`\\|[^${Object.values(ValueType).join()}]$`));
 
     // Delete keys for deleted files
     const disks = FsPoly.disksSync();
@@ -70,7 +73,7 @@ export default class FileCache {
     await this.cache.save();
   }
 
-  static async getOrComputeFile(
+  static async getOrComputeFileChecksums(
     filePath: string,
     checksumBitmask: number,
   ): Promise<File> {
@@ -80,7 +83,7 @@ export default class FileCache {
 
     // NOTE(cemmer): we're explicitly not catching ENOENT errors here, we want it to bubble up
     const stats = await FsPoly.stat(filePath);
-    const cacheKey = this.getCacheKey(filePath, ValueType.FILE);
+    const cacheKey = this.getCacheKey(filePath, ValueType.FILE_CHECKSUMS);
 
     // NOTE(cemmer): we're using the cache as a mutex here, so even if this function is called
     //  multiple times concurrently, entries will only be fetched once.
@@ -130,7 +133,7 @@ export default class FileCache {
     });
   }
 
-  static async getOrComputeEntries<T extends Archive>(
+  static async getOrComputeArchiveChecksums<T extends Archive>(
     archive: T,
     checksumBitmask: number,
   ): Promise<ArchiveEntry<Archive>[]> {
@@ -140,7 +143,7 @@ export default class FileCache {
 
     // NOTE(cemmer): we're explicitly not catching ENOENT errors here, we want it to bubble up
     const stats = await FsPoly.stat(archive.getFilePath());
-    const cacheKey = this.getCacheKey(archive.getFilePath(), ValueType.ARCHIVE_ENTRIES);
+    const cacheKey = this.getCacheKey(archive.getFilePath(), ValueType.ARCHIVE_CHECKSUMS);
 
     // NOTE(cemmer): we're using the cache as a mutex here, so even if this function is called
     //  multiple times concurrently, entries will only be fetched once.
@@ -189,6 +192,39 @@ export default class FileCache {
       sha1: checksumBitmask & ChecksumBitmask.SHA1 ? props.sha1 : undefined,
       sha256: checksumBitmask & ChecksumBitmask.SHA256 ? props.sha256 : undefined,
     })));
+  }
+
+  static async getOrComputeFileHeader(file: File): Promise<ROMHeader | undefined> {
+    // NOTE(cemmer): we're explicitly not catching ENOENT errors here, we want it to bubble up
+    const stats = await FsPoly.stat(file.getFilePath());
+    const cacheKey = this.getCacheKey(file.toString(), ValueType.FILE_HEADER);
+
+    const cachedValue = await this.cache.getOrCompute(
+      cacheKey,
+      async () => {
+        const header = await file.createReadStream(
+          async (stream) => ROMHeader.headerFromFileStream(stream),
+        );
+        return {
+          fileSize: stats.size,
+          modifiedTimeMillis: stats.mtimeMs,
+          value: header?.getName(),
+        };
+      },
+      (cached) => {
+        if (cached.fileSize !== stats.size || cached.modifiedTimeMillis !== stats.mtimeMs) {
+          // File has changed since being cached
+          return true;
+        }
+        return false;
+      },
+    );
+
+    const cachedHeaderName = cachedValue.value as string | undefined;
+    if (!cachedHeaderName) {
+      return undefined;
+    }
+    return ROMHeader.headerFromName(cachedHeaderName);
   }
 
   private static getCacheKey(filePath: string, valueType: ValueType): string {

@@ -49,7 +49,7 @@ export default class FileFactory {
     filePath: string,
     checksumBitmask: number,
   ): Promise<File> {
-    return FileCache.getOrComputeFile(filePath, checksumBitmask);
+    return FileCache.getOrComputeFileChecksums(filePath, checksumBitmask);
   }
 
   public static async archiveFileFrom(
@@ -94,7 +94,7 @@ export default class FileFactory {
       return undefined;
     }
 
-    return FileCache.getOrComputeEntries(archive, checksumBitmask);
+    return FileCache.getOrComputeArchiveChecksums(archive, checksumBitmask);
   }
 
   /**
