@@ -35,6 +35,7 @@ export default class FileCache {
     this.cache = await new Cache<CacheValue>({
       filePath,
       fileFlushMillis: 30_000,
+      saveOnExit: true,
     }).load();
 
     // Cleanup the loaded cache file
