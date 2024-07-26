@@ -2,6 +2,7 @@ import ExpectedError from '../expectedError.js';
 import Archive from './archives/archive.js';
 import ArchiveEntry from './archives/archiveEntry.js';
 import ArchiveFile from './archives/archiveFile.js';
+import Chd from './archives/chd/chd.js';
 import Gzip from './archives/gzip.js';
 import NkitIso from './archives/nkitIso.js';
 import Rar from './archives/rar.js';
@@ -91,6 +92,8 @@ export default class FileFactory {
       archive = new ZipSpanned(filePath);
     } else if (ZipX.getExtensions().some((ext) => fileExt.toLowerCase().endsWith(ext))) {
       archive = new ZipX(filePath);
+    } else if (Chd.getExtensions().some((ext) => fileExt.toLowerCase().endsWith(ext))) {
+      archive = new Chd(filePath);
     } else if (NkitIso.getExtensions().some((ext) => fileExt.toLowerCase().endsWith(ext))) {
       archive = new NkitIso(filePath);
     } else {
@@ -120,6 +123,7 @@ export default class FileFactory {
       // Fail silently on assumed I/O errors
       return undefined;
     }
+
     if (!signature) {
       return undefined;
     }
@@ -143,6 +147,7 @@ export default class FileFactory {
       ...ZipSpanned.getExtensions(),
       ...ZipX.getExtensions(),
       // Compressed images
+      ...Chd.getExtensions(),
       ...NkitIso.getExtensions(),
     ].some((ext) => filePath.toLowerCase().endsWith(ext));
   }

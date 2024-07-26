@@ -79,6 +79,8 @@ export default class FileSignature {
 
     // ********** ROMs - GENERAL **********
 
+    new FileSignature('.chd', [{ value: Buffer.from('MComprHD') }]),
+
     // @see https://docs.fileformat.com/disc-and-media/cso/
     new FileSignature('.cso', [{ value: Buffer.from('CISO') }]),
 

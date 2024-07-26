@@ -1,6 +1,7 @@
 import path from 'node:path';
 
 import FilePoly from '../../../polyfill/filePoly.js';
+import ExpectedError from '../../expectedError.js';
 import Archive from './archive.js';
 import ArchiveEntry from './archiveEntry.js';
 
@@ -22,7 +23,7 @@ export default class NkitIso extends Archive {
 
   // eslint-disable-next-line class-methods-use-this,@typescript-eslint/require-await
   async extractEntryToFile(): Promise<void> {
-    throw new Error('extraction isn\'t supported for NKit ISO files');
+    throw new ExpectedError('extraction isn\'t supported for NKit ISO files');
   }
 
   async getArchiveEntries(): Promise<ArchiveEntry<this>[]> {

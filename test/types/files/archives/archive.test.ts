@@ -4,7 +4,9 @@ import Temp from '../../../../src/globals/temp.js';
 import fsPoly from '../../../../src/polyfill/fsPoly.js';
 import Archive from '../../../../src/types/files/archives/archive.js';
 import ArchiveEntry from '../../../../src/types/files/archives/archiveEntry.js';
+import Chd from '../../../../src/types/files/archives/chd/chd.js';
 import Gzip from '../../../../src/types/files/archives/gzip.js';
+import NkitIso from '../../../../src/types/files/archives/nkitIso.js';
 import Rar from '../../../../src/types/files/archives/rar.js';
 import SevenZip from '../../../../src/types/files/archives/sevenZip.js';
 import Tar from '../../../../src/types/files/archives/tar.js';
@@ -25,6 +27,9 @@ describe('getArchiveEntries', () => {
     ...Z.getExtensions(),
     ...ZipSpanned.getExtensions(),
     ...ZipX.getExtensions(),
+    // Compressed images
+    ...Chd.getExtensions(),
+    ...NkitIso.getExtensions(),
   ])])('should throw when the file doesn\'t exist: %s', async (extension) => {
     const tempFile = (await fsPoly.mktemp(path.join(Temp.getTempDir(), 'file'))) + extension;
     await expect(FileFactory.filesFrom(tempFile)).rejects.toThrow();
