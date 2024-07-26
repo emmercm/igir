@@ -232,6 +232,7 @@ export default class CandidateGenerator extends Module {
       return undefined;
     }
 
+    // If the found files have excess and we aren't allowing it, then return no candidate
     if (!this.options.shouldZip()
       && !this.options.shouldExtract()
       && !this.options.getAllowExcessSets()
@@ -287,8 +288,7 @@ export default class CandidateGenerator extends Module {
 
     const filesByPath = indexedFiles.getFilesByFilePath();
     const filteredArchivesWithEveryRom = archivesWithEveryRom
-      // Sort the Archives such that the Archive with the least number of Archive Entries is
-      // preferred
+      // Sort the Archives such that the Archive with the least number of entries is preferred
       .sort((a, b) => {
         const aEntries = (filesByPath.get(a.getFilePath()) ?? []).length;
         const bEntries = (filesByPath.get(b.getFilePath()) ?? []).length;
