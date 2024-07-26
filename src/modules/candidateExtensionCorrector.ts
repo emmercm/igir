@@ -7,7 +7,7 @@ import DAT from '../types/dats/dat.js';
 import Parent from '../types/dats/parent.js';
 import ROM from '../types/dats/rom.js';
 import ArchiveEntry from '../types/files/archives/archiveEntry.js';
-import FileSignature from '../types/files/fileSignature.js';
+import FileCache from '../types/files/fileCache.js';
 import Options, { FixExtension } from '../types/options.js';
 import OutputFactory from '../types/outputFactory.js';
 import ReleaseCandidate from '../types/releaseCandidate.js';
@@ -52,7 +52,7 @@ export default class CandidateExtensionCorrector extends Module {
       .filter((romWithFiles) => this.romNeedsCorrecting(romWithFiles))
       .length;
     this.progressBar.logTrace(`${dat.getNameShort()}: correcting ${romsThatNeedCorrecting.toLocaleString()} output file extension${romsThatNeedCorrecting !== 1 ? 's' : ''}`);
-    await this.progressBar.setSymbol(ProgressBarSymbol.HASHING);
+    await this.progressBar.setSymbol(ProgressBarSymbol.EXTENSION_CORRECTION);
     await this.progressBar.reset(romsThatNeedCorrecting);
 
     const correctedParentsToCandidates = await this.correctExtensions(dat, parentsToCandidates);
@@ -148,13 +148,8 @@ export default class CandidateExtensionCorrector extends Module {
       this.progressBar.logTrace(`${dat.getNameShort()}: ${parent.getName()}: correcting extension for: ${romWithFiles.getInputFile()
         .toString()}`);
 
-      await romWithFiles.getInputFile().createReadStream(async (stream) => {
-        const romSignature = await FileSignature.signatureFromFileStream(stream);
-        if (!romSignature) {
-          // No signature was found, so we can't perform any correction
-          return;
-        }
-
+      const romSignature = await FileCache.getOrComputeFileSignature(romWithFiles.getInputFile());
+      if (romSignature) {
         // ROM file signature found, use the appropriate extension
         const { dir, name } = path.parse(correctedRom.getName());
         const correctedRomName = path.format({
@@ -162,7 +157,7 @@ export default class CandidateExtensionCorrector extends Module {
           name: name + romSignature.getExtension(),
         });
         correctedRom = correctedRom.withName(correctedRomName);
-      });
+      }
 
       this.progressBar.removeWaitingMessage(waitingMessage);
       await this.progressBar.incrementDone();

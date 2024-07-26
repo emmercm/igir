@@ -135,16 +135,17 @@ export default class Cache<V> {
    * Delete a key in the cache.
    */
   public async delete(key: string | RegExp): Promise<void> {
-    let keys: string[];
+    let keysToDelete: string[];
     if (key instanceof RegExp) {
-      keys = [...this.keys().keys()].filter((k) => k.match(key));
+      keysToDelete = [...this.keys().keys()].filter((k) => k.match(key));
     } else {
-      keys = [key];
+      keysToDelete = [key];
     }
 
-    await Promise.all(keys.map(async (k) => {
-      await this.lockKey(k, () => this.deleteUnsafe(k));
-    }));
+    // Note: avoiding lockKey() because it could get expensive with many keys to delete
+    await this.keyMutexesMutex.runExclusive(() => {
+      keysToDelete.forEach((k) => this.deleteUnsafe(k));
+    });
   }
 
   private deleteUnsafe(key: string): void {

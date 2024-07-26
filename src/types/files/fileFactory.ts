@@ -110,9 +110,7 @@ export default class FileFactory {
     let signature: FileSignature | undefined;
     try {
       const file = await File.fileOf({ filePath });
-      signature = await file.createReadStream(
-        async (stream) => FileSignature.signatureFromFileStream(stream),
-      );
+      signature = await FileCache.getOrComputeFileSignature(file);
     } catch {
       // Fail silently on assumed I/O errors
       return undefined;

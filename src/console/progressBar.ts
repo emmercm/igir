@@ -23,6 +23,7 @@ export const ProgressBarSymbol = {
   // Candidates
   GENERATING: chalk.cyan('Σ'),
   FILTERING: chalk.cyan('∆'),
+  EXTENSION_CORRECTION: chalk.cyan('.'),
   HASHING: chalk.cyan('#'),
   VALIDATING: chalk.cyan(process.platform === 'win32' ? '?' : '≟'),
   COMBINING_ALL: chalk.cyan(process.platform === 'win32' ? 'U' : '∪'),

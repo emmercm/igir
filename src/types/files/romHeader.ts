@@ -6,7 +6,7 @@ import { Memoize } from 'typescript-memoize';
 import ArrayPoly from '../../polyfill/arrayPoly.js';
 
 export default class ROMHeader {
-  private static readonly HEADERS: { [key: string]:ROMHeader } = {
+  private static readonly HEADERS: { [key: string]: ROMHeader } = {
     // http://7800.8bitdev.org/index.php/A78_Header_Specification
     'No-Intro_A7800.xml': new ROMHeader(1, '415441524937383030', 128, '.a78'),
 
@@ -62,6 +62,10 @@ export default class ROMHeader {
       .map((header) => header.headeredFileExtension)
       .reduce(ArrayPoly.reduceUnique(), [])
       .sort();
+  }
+
+  static getKnownHeaderCount(): number {
+    return Object.keys(this.HEADERS).length;
   }
 
   static headerFromName(name: string): ROMHeader | undefined {
