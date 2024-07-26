@@ -225,13 +225,14 @@ export default class CandidateGenerator extends Module {
       .filter(([, romWithFiles]) => !romWithFiles)
       .map(([rom]) => rom);
 
+    // If there is a CHD with every .bin file, then assume its .cue file is accurate
     if (missingRoms.length > 0 && CandidateGenerator.onlyCueFilesMissingFromChd(
       game,
       foundRomsWithFiles.map((romWithFiles) => romWithFiles.getRom()),
     )) {
       const inputChds = foundRomsWithFiles
         .map((romWithFiles) => romWithFiles.getOutputFile())
-        .filter((file) => path.extname(file.getFilePath()).toLowerCase() === '.chd')
+        .filter((file) => file.getFilePath().toLowerCase().endsWith('.chd'))
         .filter(ArrayPoly.filterUniqueMapped((file) => file.hashCode()));
       if (inputChds.length === 1) {
         this.progressBar.logTrace(`${dat.getNameShort()}: ${game.getName()}: `);
