@@ -567,6 +567,11 @@ export default class ArgumentsParser {
         requiresArg: true,
         default: MergeMode[MergeMode.FULLNONMERGED].toLowerCase(),
       })
+      .option('allow-excess-sets', {
+        group: groupRomSet,
+        description: 'Allow writing archives that have excess files when not extracting or zipping',
+        type: 'boolean',
+      })
       .option('allow-incomplete-sets', {
         group: groupRomSet,
         description: 'Allow writing games that don\'t have all of their ROMs',
