@@ -27,7 +27,9 @@ export enum GameStatus {
   IGNORED,
   // The Game wanted to be written, but there was no matching ReleaseCandidate
   MISSING,
-  // The input File was not used in any ReleaseCandidate
+  // The input file was not used in any ReleaseCandidate, but a duplicate file was
+  DUPLICATE,
+  // The input File was not used in any ReleaseCandidate, and neither was any duplicate file
   UNUSED,
   // The output File was not from any ReleaseCandidate, so it was deleted
   DELETED,
@@ -63,7 +65,7 @@ export default class DATStatus {
     [...parentsToReleaseCandidates.entries()]
       .filter(([, releaseCandidates]) => releaseCandidates.every((rc) => !rc.isPatched()))
       .forEach(([parent, releaseCandidates]) => {
-        parent.getGames().forEach((game) => {
+        parent.getGames().forEach((game, gameIdx) => {
           DATStatus.pushValueIntoMap(this.allRomTypesToGames, game, game);
 
           const gameReleaseCandidates = releaseCandidates
@@ -95,11 +97,15 @@ export default class DATStatus {
             return;
           }
 
-          // When running in 1G1R mode, if this Parent has at least one ReleaseCandidate, but no
-          // matching ReleaseCandidate was found for this Game (above), then report it as IGNORED.
+          // When running in 1G1R mode, if no ReleaseCandidate was found for this Game (would have
+          // already returned above), and:
+          //  1. This Parent has at least one ReleaseCandidate, then one of the other Games must
+          //      have a ReleaseCandidate, so this Game should be considered IGNORED
+          //  2. This parent has zero ReleaseCandidates and this Game is not the first Game, then
+          //      consider this Game IGNORED (only the first Game should be considered MISSING)
           // We can't know if this Game had matching input files, they would have already been
           // discarded, so those files will be reported as UNUSED.
-          if (options.getSingle() && releaseCandidates.length > 0) {
+          if (options.getSingle() && (releaseCandidates.length > 0 || gameIdx > 0)) {
             this.ignoredHashCodesToGames.set(game.hashCode(), game);
           }
         });

@@ -8,8 +8,6 @@ import Module from './module.js';
 
 /**
  * Apply any specified filter options to the {@link Game}s in a {@link DAT}.
- *
- * This class may be run concurrently with other classes.
  */
 export default class DATFilter extends Module {
   private readonly options: Options;

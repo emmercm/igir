@@ -6,6 +6,10 @@ import { XMLParser } from 'fast-xml-parser';
 export interface DATObjectProps {
   datafile?: object
   mame?: object
+  softwarelists?: {
+    softwarelist?: object | object[]
+  }
+  softwarelist?: object
 }
 
 /**

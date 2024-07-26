@@ -1,12 +1,14 @@
-import fs from 'node:fs';
 import path from 'node:path';
-import util from 'node:util';
 
 import ProgressBar, { ProgressBarSymbol } from '../console/progressBar.js';
 import fsPoly from '../polyfill/fsPoly.js';
 import DAT from '../types/dats/dat.js';
+import Game from '../types/dats/game.js';
+import LogiqxDAT from '../types/dats/logiqx/logiqxDat.js';
+import Parent from '../types/dats/parent.js';
 import Options from '../types/options.js';
 import OutputFactory from '../types/outputFactory.js';
+import ReleaseCandidate from '../types/releaseCandidate.js';
 import Module from './module.js';
 
 /**
@@ -23,7 +25,10 @@ export default class Dir2DatCreator extends Module {
   /**
    * Write the DAT.
    */
-  async create(dat: DAT): Promise<string | undefined> {
+  async create(
+    dat: DAT,
+    parentsToCandidates: Map<Parent, ReleaseCandidate[]>,
+  ): Promise<string | undefined> {
     if (!this.options.shouldDir2Dat()) {
       return undefined;
     }
@@ -40,11 +45,29 @@ export default class Dir2DatCreator extends Module {
     }
     const datPath = path.join(datDir, dat.getFilename());
 
-    this.progressBar.logInfo(`${dat.getNameShort()}: creating dir2dat '${datPath}'`);
-    const datContents = dat.toXmlDat();
-    await util.promisify(fs.writeFile)(datPath, datContents);
+    // It is possible that the {@link ROM} embedded within {@link ReleaseCandidate}s has been
+    // manipulated, such as from {@link CandidateExtensionCorrector}. Use the {@link Game}s and
+    // {@link ROM}s from the {@link ReleaseCandidate}s instead of the original {@link DAT}.
+    const gamesToCandidates = [...parentsToCandidates.values()]
+      .flat()
+      .reduce((map, releaseCandidate) => {
+        const key = releaseCandidate.getGame();
+        map.set(key, [...(map.get(key) ?? []), releaseCandidate]);
+        return map;
+      }, new Map<Game, ReleaseCandidate[]>());
+    const gamesFromCandidates = [...gamesToCandidates.entries()]
+      .map(([game, releaseCandidates]) => {
+        const roms = releaseCandidates.at(0)?.getRomsWithFiles()
+          .map((romWithFiles) => romWithFiles.getRom());
+        return game.withProps({ rom: roms });
+      });
+    const datFromCandidates = new LogiqxDAT(dat.getHeader(), gamesFromCandidates);
 
-    this.progressBar.logTrace(`${dat.getNameShort()}: done writing dir2dat`);
+    this.progressBar.logInfo(`${datFromCandidates.getNameShort()}: creating dir2dat '${datPath}'`);
+    const datContents = datFromCandidates.toXmlDat();
+    await fsPoly.writeFile(datPath, datContents);
+
+    this.progressBar.logTrace(`${datFromCandidates.getNameShort()}: done writing dir2dat`);
     return datPath;
   }
 }

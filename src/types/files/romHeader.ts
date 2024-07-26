@@ -1,6 +1,8 @@
 import path from 'node:path';
 import { Readable } from 'node:stream';
 
+import ArrayPoly from '../../polyfill/arrayPoly.js';
+
 export default class ROMHeader {
   private static readonly HEADERS: { [key: string]:ROMHeader } = {
     // http://7800.8bitdev.org/index.php/A78_Header_Specification
@@ -17,6 +19,10 @@ export default class ROMHeader {
 
     // https://en.wikibooks.org/wiki/Super_NES_Programming/SNES_memory_map#The_SNES_header
     SMC: new ROMHeader(3, '00'.repeat(509), 512, '.smc', '.sfc'),
+    // https://file-extension.net/seeker/file_extension_smc
+    // https://wiki.superfamicom.org/game-doctor
+    SMC_GAME_DOCTOR_1: new ROMHeader(0, '00014D4520444F43544F522053462033', 512, '.smc', '.sfc'),
+    SMC_GAME_DOCTOR_2: new ROMHeader(0, '47414D4520444F43544F522053462033', 512, '.smc', '.sfc'),
   };
 
   private static readonly MAX_HEADER_LENGTH_BYTES = Object.values(ROMHeader.HEADERS)
@@ -50,7 +56,10 @@ export default class ROMHeader {
   }
 
   static getSupportedExtensions(): string[] {
-    return Object.values(this.HEADERS).map((header) => header.headeredFileExtension).sort();
+    return Object.values(this.HEADERS)
+      .map((header) => header.headeredFileExtension)
+      .reduce(ArrayPoly.reduceUnique(), [])
+      .sort();
   }
 
   static headerFromFilename(filePath: string): ROMHeader | undefined {

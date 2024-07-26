@@ -1,5 +1,7 @@
 import path from 'node:path';
 
+import { Semaphore } from 'async-mutex';
+
 import ProgressBar, { ProgressBarSymbol } from '../console/progressBar.js';
 import ArrayPoly from '../polyfill/arrayPoly.js';
 import fsPoly from '../polyfill/fsPoly.js';
@@ -10,11 +12,12 @@ import Release from '../types/dats/release.js';
 import ROM from '../types/dats/rom.js';
 import Archive from '../types/files/archives/archive.js';
 import ArchiveEntry from '../types/files/archives/archiveEntry.js';
+import ArchiveFile from '../types/files/archives/archiveFile.js';
 import Zip from '../types/files/archives/zip.js';
 import File from '../types/files/file.js';
 import IndexedFiles from '../types/indexedFiles.js';
 import Options from '../types/options.js';
-import OutputFactory from '../types/outputFactory.js';
+import OutputFactory, { OutputPath } from '../types/outputFactory.js';
 import ReleaseCandidate from '../types/releaseCandidate.js';
 import ROMWithFiles from '../types/romWithFiles.js';
 import Module from './module.js';
@@ -22,15 +25,20 @@ import Module from './module.js';
 /**
  * For every {@link Parent} in the {@link DAT}, look for its {@link ROM}s in the scanned ROM list,
  * and return a set of candidate files.
- *
- * This class may be run concurrently with other classes.
  */
 export default class CandidateGenerator extends Module {
+  private static readonly THREAD_SEMAPHORE = new Semaphore(Number.MAX_SAFE_INTEGER);
+
   private readonly options: Options;
 
   constructor(options: Options, progressBar: ProgressBar) {
     super(progressBar, CandidateGenerator.name);
     this.options = options;
+
+    // This will be the same value globally, but we can't know the value at file import time
+    if (options.getReaderThreads() < CandidateGenerator.THREAD_SEMAPHORE.getValue()) {
+      CandidateGenerator.THREAD_SEMAPHORE.setValue(options.getReaderThreads());
+    }
   }
 
   /**
@@ -42,7 +50,7 @@ export default class CandidateGenerator extends Module {
   ): Promise<Map<Parent, ReleaseCandidate[]>> {
     if (indexedFiles.getFiles().length === 0) {
       this.progressBar.logTrace(`${dat.getNameShort()}: no input ROMs to make candidates from`);
-      return new Map();
+      return new Map(dat.getParents().map((parent) => ([parent, []])));
     }
 
     const output = new Map<Parent, ReleaseCandidate[]>();
@@ -53,7 +61,9 @@ export default class CandidateGenerator extends Module {
     await this.progressBar.reset(parents.length);
 
     // For each parent, try to generate a parent candidate
-    for (const parent of parents) {
+    await Promise.all(parents.map(async (
+      parent,
+    ) => CandidateGenerator.THREAD_SEMAPHORE.runExclusive(async () => {
       await this.progressBar.incrementProgress();
       const waitingMessage = `${parent.getName()} ...`;
       this.progressBar.addWaitingMessage(waitingMessage);
@@ -88,7 +98,7 @@ export default class CandidateGenerator extends Module {
 
       this.progressBar.removeWaitingMessage(waitingMessage);
       await this.progressBar.incrementDone();
-    }
+    })));
 
     const size = [...output.values()]
       .flat()
@@ -132,9 +142,10 @@ export default class CandidateGenerator extends Module {
         // If the input file is headered...
         if (inputFile.getFileHeader()
           // ...and we want a headered ROM
-          && (inputFile.getCrc32() === rom.getCrc32()
-            || inputFile.getMd5() === rom.getMd5()
-            || inputFile.getSha1() === rom.getSha1())
+          && ((inputFile.getCrc32() !== undefined && inputFile.getCrc32() === rom.getCrc32())
+            || (inputFile.getMd5() !== undefined && inputFile.getMd5() === rom.getMd5())
+            || (inputFile.getSha1() !== undefined && inputFile.getSha1() === rom.getSha1())
+            || (inputFile.getSha256() !== undefined && inputFile.getSha256() === rom.getSha256()))
           // ...and we shouldn't remove the header
           && !this.options.canRemoveHeader(
             dat,
@@ -149,9 +160,10 @@ export default class CandidateGenerator extends Module {
         // If the input file is headered...
         if (inputFile.getFileHeader()
           // ...and we DON'T want a headered ROM
-          && !(inputFile.getCrc32() === rom.getCrc32()
-            || inputFile.getMd5() === rom.getMd5()
-            || inputFile.getSha1() === rom.getSha1())
+          && !((inputFile.getCrc32() !== undefined && inputFile.getCrc32() === rom.getCrc32())
+            || (inputFile.getMd5() !== undefined && inputFile.getMd5() === rom.getMd5())
+            || (inputFile.getSha1() !== undefined && inputFile.getSha1() === rom.getSha1())
+            || (inputFile.getSha256() !== undefined && inputFile.getSha256() === rom.getSha256()))
           // ...and we're writing file links
           && this.options.shouldLink()
         ) {
@@ -169,21 +181,28 @@ export default class CandidateGenerator extends Module {
           && !this.options.shouldZipFile(rom.getName())
           && !this.options.shouldExtract()
         ) {
-          if (this.options.shouldTest() || this.options.getOverwriteInvalid()) {
-            // If we're testing, then we need to calculate the archive's checksums
-            inputFile = await inputFile.getArchive().asRawFile(inputFile.getChecksumBitmask());
-          } else {
-            // Otherwise, we can skip calculating checksums for efficiency
-            inputFile = await inputFile.getArchive().asRawFileWithoutChecksums();
+          try {
+            // Note: we're delaying checksum calculation for now, {@link CandidateArchiveFileHasher}
+            //  will handle it later
+            inputFile = new ArchiveFile(
+              inputFile.getArchive(),
+              { checksumBitmask: inputFile.getChecksumBitmask() },
+            );
+          } catch (error) {
+            this.progressBar.logWarn(`${dat.getNameShort()}: ${game.getName()}: ${error}`);
+            return [rom, undefined];
           }
         }
 
         try {
           const outputFile = await this.getOutputFile(dat, game, release, rom, inputFile);
+          if (outputFile === undefined) {
+            return [rom, undefined];
+          }
           const romWithFiles = new ROMWithFiles(rom, inputFile, outputFile);
           return [rom, romWithFiles];
         } catch (error) {
-          this.progressBar.logWarn(`${dat.getNameShort()}: ${game.getName()}: ${error}`);
+          this.progressBar.logError(`${dat.getNameShort()}: ${game.getName()}: ${error}`);
           return [rom, undefined];
         }
       }),
@@ -209,7 +228,7 @@ export default class CandidateGenerator extends Module {
     }
 
     // Ignore the Game with conflicting input->output files
-    if (this.hasConflictingOutputFiles(foundRomsWithFiles)) {
+    if (this.hasConflictingOutputFiles(dat, foundRomsWithFiles)) {
       return undefined;
     }
 
@@ -323,27 +342,35 @@ export default class CandidateGenerator extends Module {
     release: Release | undefined,
     rom: ROM,
     inputFile: File,
-  ): Promise<File> {
+  ): Promise<File | undefined> {
     // Determine the output file's path
-    const outputPathParsed = OutputFactory.getPath(
-      this.options,
-      dat,
-      game,
-      release,
-      rom,
-      inputFile,
-    );
+    let outputPathParsed: OutputPath;
+    try {
+      outputPathParsed = OutputFactory.getPath(
+        this.options,
+        dat,
+        game,
+        release,
+        rom,
+        inputFile,
+      );
+    } catch (error) {
+      this.progressBar.logTrace(`${dat.getNameShort()}: ${game.getName()}: ${error}`);
+      return undefined;
+    }
     const outputFilePath = outputPathParsed.format();
 
     // Determine the output CRC of the file
     let outputFileCrc32 = inputFile.getCrc32();
     let outputFileMd5 = inputFile.getMd5();
     let outputFileSha1 = inputFile.getSha1();
+    let outputFileSha256 = inputFile.getSha256();
     let outputFileSize = inputFile.getSize();
     if (inputFile.getFileHeader()) {
       outputFileCrc32 = inputFile.getCrc32WithoutHeader();
       outputFileMd5 = inputFile.getMd5WithoutHeader();
       outputFileSha1 = inputFile.getSha1WithoutHeader();
+      outputFileSha256 = inputFile.getSha256WithoutHeader();
       outputFileSize = inputFile.getSizeWithoutHeader();
     }
 
@@ -357,6 +384,7 @@ export default class CandidateGenerator extends Module {
         crc32: outputFileCrc32,
         md5: outputFileMd5,
         sha1: outputFileSha1,
+        sha256: outputFileSha256,
       });
     }
     // Otherwise, return a raw file
@@ -366,6 +394,7 @@ export default class CandidateGenerator extends Module {
       crc32: outputFileCrc32,
       md5: outputFileMd5,
       sha1: outputFileSha1,
+      sha256: outputFileSha256,
     });
   }
 
@@ -386,7 +415,7 @@ export default class CandidateGenerator extends Module {
     this.progressBar.logTrace(message);
   }
 
-  private hasConflictingOutputFiles(romsWithFiles: ROMWithFiles[]): boolean {
+  private hasConflictingOutputFiles(dat: DAT, romsWithFiles: ROMWithFiles[]): boolean {
     // If we're not writing, then don't bother looking for conflicts
     if (!this.options.shouldWrite()) {
       return false;
@@ -420,7 +449,7 @@ export default class CandidateGenerator extends Module {
         .reduce(ArrayPoly.reduceUnique(), []);
       if (conflictedInputFiles.length > 1) {
         hasConflict = true;
-        let message = `No single archive contains all necessary files, cannot ${this.options.writeString()} these different input files to: ${duplicateOutput}:`;
+        let message = `${dat.getNameShort()}: no single archive contains all necessary files, cannot ${this.options.writeString()} these different input files to: ${duplicateOutput}:`;
         conflictedInputFiles.forEach((conflictedInputFile) => { message += `\n  ${conflictedInputFile}`; });
         this.progressBar.logWarn(message);
       }

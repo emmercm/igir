@@ -1,4 +1,4 @@
-# Output Cleaning
+# Output Directory Cleaning
 
 The `igir clean` [command](../commands.md) can be used when writing (`igir copy`, `igir move`, and `igir link`) to delete files from the `--output <path>` directory that are either:
 
@@ -44,6 +44,12 @@ If you want to clean _every_ directory in `games/`, you could specify it as both
 The `--clean-exclude <path>` option exists so that one or more paths (with support for [globbing](../input/file-scanning.md)) can be excluded from deletion.
 
 See the [Analogue Pocket](../usage/hardware/analogue-pocket.md) page for a practical example.
+
+## Backing up cleaned files
+
+By default, `igir` will recycle cleaned files, and if recycle fails then it will delete them. This is potentially destructive, so a `--clean-backup <path>` option is provided to instead move files to a backup directory.
+
+The input directory structure is not maintained, no subdirectories will be created in the backup directory. Files of conflicting names will have a number appended to their name, e.g. `File (1).rom`.
 
 ## Dry run
 

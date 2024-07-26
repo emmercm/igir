@@ -1,4 +1,4 @@
-import { Expose } from 'class-transformer';
+import { Expose, Transform } from 'class-transformer';
 
 import Archive from '../files/archives/archive.js';
 import ArchiveEntry from '../files/archives/archiveEntry.js';
@@ -26,13 +26,20 @@ export default class ROM implements ROMProps {
   readonly size: number;
 
   @Expose({ name: 'crc' })
+  @Transform(({ value }) => value?.toLowerCase().replace(/^0x/, '').padStart(8, '0'))
   readonly crc32?: string;
 
   @Expose()
+  @Transform(({ value }) => value?.toLowerCase().replace(/^0x/, '').padStart(32, '0'))
   readonly md5?: string;
 
   @Expose()
+  @Transform(({ value }) => value?.toLowerCase().replace(/^0x/, '').padStart(40, '0'))
   readonly sha1?: string;
+
+  @Expose()
+  @Transform(({ value }) => value?.toLowerCase().replace(/^0x/, '').padStart(64, '0'))
+  readonly sha256?: string;
 
   @Expose()
   readonly status?: ROMStatus;
@@ -49,6 +56,7 @@ export default class ROM implements ROMProps {
     this.crc32 = props?.crc32?.toLowerCase().replace(/^0x/, '').padStart(8, '0');
     this.md5 = props?.md5?.toLowerCase().replace(/^0x/, '').padStart(32, '0');
     this.sha1 = props?.sha1?.toLowerCase().replace(/^0x/, '').padStart(40, '0');
+    this.sha256 = props?.sha256?.toLowerCase().replace(/^0x/, '').padStart(64, '0');
     this.status = props?.status;
     this.merge = props?.merge;
     this.bios = props?.bios;
@@ -65,6 +73,7 @@ export default class ROM implements ROMProps {
         crc: this.getCrc32(),
         md5: this.getMd5(),
         sha1: this.getSha1(),
+        sha256: this.getSha256(),
         status: this.getStatus(),
       },
     };
@@ -92,6 +101,10 @@ export default class ROM implements ROMProps {
     return this.sha1;
   }
 
+  getSha256(): string | undefined {
+    return this.sha256;
+  }
+
   getStatus(): ROMStatus | undefined {
     return this.status;
   }
@@ -102,6 +115,16 @@ export default class ROM implements ROMProps {
 
   getBios(): string | undefined {
     return this.bios;
+  }
+
+  /**
+   * Return a new copy of this {@link ROM} with a different name.
+   */
+  withName(name: string): ROM {
+    if (name === this.name) {
+      return this;
+    }
+    return new ROM({ ...this, name });
   }
 
   /**
@@ -139,7 +162,8 @@ export default class ROM implements ROMProps {
    * A string hash code to uniquely identify this {@link ROM}.
    */
   hashCode(): string {
-    return this.getSha1()
+    return this.getSha256()
+      ?? this.getSha1()
       ?? this.getMd5()
       ?? `${this.getCrc32()}|${this.getSize()}`;
   }

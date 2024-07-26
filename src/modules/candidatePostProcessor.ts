@@ -10,8 +10,6 @@ import Module from './module.js';
 /**
  * Perform any {@link Parent} and {@link ReleaseCandidate} manipulations needed after candidates
  * have had patches attached and have been filtered.
- *
- * This class may be run concurrently with other classes.
  */
 export default class CandidatePostProcessor extends Module {
   private readonly options: Options;

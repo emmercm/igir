@@ -100,7 +100,10 @@ describe.each(['zip', 'extract', 'raw'])('command: %s', (command) => {
     const parentsToCandidates = await candidateGenerator(options, datWithGamesWithNoRoms, []);
 
     // Then
-    expect(parentsToCandidates.size).toEqual(0);
+    expect(parentsToCandidates.size).toEqual(1);
+    const totalReleaseCandidates = [...parentsToCandidates.values()]
+      .reduce((sum, releaseCandidates) => sum + releaseCandidates.length, 0);
+    expect(totalReleaseCandidates).toEqual(0);
   });
 
   test.each([

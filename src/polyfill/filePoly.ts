@@ -1,13 +1,13 @@
 import fs, { OpenMode, PathLike } from 'node:fs';
-import util from 'node:util';
+import { FileHandle } from 'node:fs/promises';
 
-import Constants from '../constants.js';
+import Defaults from '../globals/defaults.js';
 import fsPoly from './fsPoly.js';
 
 export default class FilePoly {
   private readonly pathLike: PathLike;
 
-  private readonly fd: number;
+  private readonly fd: FileHandle;
 
   private readonly size: number;
 
@@ -17,17 +17,17 @@ export default class FilePoly {
 
   private fileBuffer?: Buffer;
 
-  private constructor(pathLike: PathLike, fd: number, size: number) {
+  private constructor(pathLike: PathLike, fd: FileHandle, size: number) {
     this.pathLike = pathLike;
     this.fd = fd;
     this.size = size;
-    this.tempBuffer = Buffer.allocUnsafe(Math.min(this.size, Constants.FILE_READING_CHUNK_SIZE));
+    this.tempBuffer = Buffer.allocUnsafe(Math.min(this.size, Defaults.FILE_READING_CHUNK_SIZE));
   }
 
   static async fileFrom(pathLike: PathLike, flags: OpenMode): Promise<FilePoly> {
     return new FilePoly(
       pathLike,
-      await util.promisify(fs.open)(
+      await fs.promises.open(
         pathLike,
         /**
          * "On Linux, positional writes don't work when the file is opened in append mode. The
@@ -37,7 +37,7 @@ export default class FilePoly {
          */
         flags.toString().startsWith('a') ? 'r+' : flags,
       ),
-      (await util.promisify(fs.lstat)(pathLike)).size,
+      await fsPoly.size(pathLike),
     );
   }
 
@@ -49,7 +49,7 @@ export default class FilePoly {
     const write = await this.fileFrom(pathLike, 'wx');
     let written = 0;
     while (written < size) {
-      const buffer = Buffer.alloc(Math.min(size - written, Constants.FILE_READING_CHUNK_SIZE));
+      const buffer = Buffer.alloc(Math.min(size - written, Defaults.FILE_READING_CHUNK_SIZE));
       await write.write(buffer);
       written += buffer.length;
     }
@@ -98,10 +98,10 @@ export default class FilePoly {
     }
 
     // If the file is small, read the entire file to memory and "read" from there
-    if (this.size <= Constants.MAX_MEMORY_FILE_SIZE) {
+    if (this.size <= Defaults.MAX_MEMORY_FILE_SIZE) {
       if (!this.fileBuffer) {
         this.tempBuffer = Buffer.alloc(0);
-        this.fileBuffer = await util.promisify(fs.readFile)(this.fd);
+        this.fileBuffer = await fs.promises.readFile(this.fd);
       }
       return Buffer.from(this.fileBuffer.subarray(offset, offset + size));
     }
@@ -109,8 +109,7 @@ export default class FilePoly {
     // If the file is large, read from the open file handle
     let bytesRead = 0;
     try {
-      bytesRead = (await util.promisify(fs.read)(
-        this.fd,
+      bytesRead = (await this.fd.read(
         this.tempBuffer,
         0,
         size,
@@ -132,8 +131,7 @@ export default class FilePoly {
   }
 
   async writeAt(buffer: Buffer, offset: number): Promise<number> {
-    const { bytesWritten } = await util.promisify(fs.write)(
-      this.fd,
+    const { bytesWritten } = await this.fd.write(
       buffer,
       0,
       buffer.length,
@@ -156,6 +154,6 @@ export default class FilePoly {
   }
 
   async close(): Promise<void> {
-    return util.promisify(fs.close)(this.fd);
+    return this.fd.close();
   }
 }

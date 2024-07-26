@@ -10,6 +10,7 @@ export interface AllChecksums {
   crc32: ChecksumsToFiles,
   md5: ChecksumsToFiles,
   sha1: ChecksumsToFiles,
+  sha256: ChecksumsToFiles,
 }
 
 /**
@@ -22,10 +23,18 @@ export default class IndexedFiles {
 
   private readonly sha1: ChecksumsToFiles;
 
-  private constructor(crc32: ChecksumsToFiles, md5: ChecksumsToFiles, sha1: ChecksumsToFiles) {
+  private readonly sha256: ChecksumsToFiles;
+
+  private constructor(
+    crc32: ChecksumsToFiles,
+    md5: ChecksumsToFiles,
+    sha1: ChecksumsToFiles,
+    sha256: ChecksumsToFiles,
+  ) {
     this.crc32 = crc32;
     this.md5 = md5;
     this.sha1 = sha1;
+    this.sha256 = sha256;
   }
 
   /**
@@ -38,6 +47,8 @@ export default class IndexedFiles {
     const md5WithoutHeaderMap = new Map<string, File[]>();
     const sha1RawMap = new Map<string, File[]>();
     const sha1WithoutHeaderMap = new Map<string, File[]>();
+    const sha256RawMap = new Map<string, File[]>();
+    const sha256WithoutHeaderMap = new Map<string, File[]>();
 
     // Build the maps
     files.forEach((file) => {
@@ -52,6 +63,11 @@ export default class IndexedFiles {
       const sha1 = file.getSha1();
       if (sha1) {
         sha1RawMap.set(sha1, [file, ...(sha1RawMap.get(sha1) ?? [])]);
+      }
+
+      const sha256 = file.getSha256();
+      if (sha256) {
+        sha256RawMap.set(sha256, [file, ...(sha256RawMap.get(sha256) ?? [])]);
       }
 
       if (file.getFileHeader()) {
@@ -76,13 +92,22 @@ export default class IndexedFiles {
             [...(sha1WithoutHeaderMap.get(sha1WithoutHeader) ?? []), file],
           );
         }
+
+        const sha256WithoutHeader = file.getSha256WithoutHeader();
+        if (sha256WithoutHeader) {
+          sha256WithoutHeaderMap.set(
+            sha256WithoutHeader,
+            [...(sha256WithoutHeaderMap.get(sha256WithoutHeader) ?? []), file],
+          );
+        }
       }
     });
 
     const crc32Map = this.combineMaps(crc32RawMap, crc32WithoutHeaderMap);
     const md5Map = this.combineMaps(md5RawMap, md5WithoutHeaderMap);
     const sha1Map = this.combineMaps(sha1RawMap, sha1WithoutHeaderMap);
-    return new IndexedFiles(crc32Map, md5Map, sha1Map);
+    const sha256Map = this.combineMaps(sha256RawMap, sha256WithoutHeaderMap);
+    return new IndexedFiles(crc32Map, md5Map, sha1Map, sha256Map);
   }
 
   private static combineMaps(
@@ -105,6 +130,7 @@ export default class IndexedFiles {
       ...this.crc32.values(),
       ...this.md5.values(),
       ...this.sha1.values(),
+      ...this.sha256.values(),
     ]
       .flat()
       .filter(ArrayPoly.filterUniqueMapped((file) => file.toString()));
@@ -127,6 +153,11 @@ export default class IndexedFiles {
    * Find file(s) in the index based some search criteria.
    */
   findFiles(file: File | ROM): File[] | undefined {
+    const { sha256 } = file;
+    if (sha256 && this.sha256.has(sha256)) {
+      return this.sha256.get(sha256);
+    }
+
     const { sha1 } = file;
     if (sha1 && this.sha1.has(sha1)) {
       return this.sha1.get(sha1);

@@ -54,3 +54,6 @@
 - name: stale
   description: Issues that haven't had recent activity that will be automatically closed
   color: 'ffffff'
+- name: ongoing
+  description: Discussions to be kept open
+  color: 'ffffff'

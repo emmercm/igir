@@ -5,7 +5,7 @@ import {
   Exclude, Expose, instanceToPlain, plainToClassFromExist,
 } from 'class-transformer';
 
-import Constants from '../../../constants.js';
+import Defaults from '../../../globals/defaults.js';
 import fsPoly from '../../../polyfill/fsPoly.js';
 import Patch from '../../patches/patch.js';
 import File, { FileProps } from '../file.js';
@@ -51,6 +51,10 @@ export default class ArchiveEntry<A extends Archive> extends File implements Arc
     let finalSha1WithoutHeader = archiveEntryProps.fileHeader
       ? archiveEntryProps.sha1WithoutHeader
       : archiveEntryProps.sha1;
+    let finalSha256WithHeader = archiveEntryProps.sha256;
+    let finalSha256WithoutHeader = archiveEntryProps.fileHeader
+      ? archiveEntryProps.sha256WithoutHeader
+      : archiveEntryProps.sha256;
     let finalSymlinkSource = archiveEntryProps.symlinkSource;
 
     if (await fsPoly.exists(archiveEntryProps.archive.getFilePath())) {
@@ -61,6 +65,7 @@ export default class ArchiveEntry<A extends Archive> extends File implements Arc
       if ((!finalCrcWithHeader && (checksumBitmask & ChecksumBitmask.CRC32))
         || (!finalMd5WithHeader && (checksumBitmask & ChecksumBitmask.MD5))
         || (!finalSha1WithHeader && (checksumBitmask & ChecksumBitmask.SHA1))
+        || (!finalSha256WithHeader && (checksumBitmask & ChecksumBitmask.SHA256))
       ) {
         // If any additional checksum needs to be calculated, then prefer those calculated ones
         // over any that were supplied in {@link archiveEntryProps} that probably came from the
@@ -73,6 +78,7 @@ export default class ArchiveEntry<A extends Archive> extends File implements Arc
         finalCrcWithHeader = headeredChecksums.crc32 ?? finalCrcWithHeader;
         finalMd5WithHeader = headeredChecksums.md5 ?? finalMd5WithHeader;
         finalSha1WithHeader = headeredChecksums.sha1 ?? finalSha1WithHeader;
+        finalSha256WithHeader = headeredChecksums.sha256 ?? finalSha256WithHeader;
       }
       if (archiveEntryProps.fileHeader && checksumBitmask) {
         const headerlessChecksums = await this.calculateEntryChecksums(
@@ -84,6 +90,7 @@ export default class ArchiveEntry<A extends Archive> extends File implements Arc
         finalCrcWithoutHeader = headerlessChecksums.crc32;
         finalMd5WithoutHeader = headerlessChecksums.md5;
         finalSha1WithoutHeader = headerlessChecksums.sha1;
+        finalSha256WithoutHeader = headerlessChecksums.sha256;
       }
 
       if (await fsPoly.isSymlink(archiveEntryProps.archive.getFilePath())) {
@@ -96,6 +103,7 @@ export default class ArchiveEntry<A extends Archive> extends File implements Arc
     finalCrcWithoutHeader = finalCrcWithoutHeader ?? finalCrcWithHeader;
     finalMd5WithoutHeader = finalMd5WithoutHeader ?? finalMd5WithHeader;
     finalSha1WithoutHeader = finalSha1WithoutHeader ?? finalSha1WithHeader;
+    finalSha256WithoutHeader = finalSha256WithoutHeader ?? finalSha256WithHeader;
 
     return new ArchiveEntry<A>({
       size: finalSize,
@@ -105,6 +113,8 @@ export default class ArchiveEntry<A extends Archive> extends File implements Arc
       md5WithoutHeader: finalMd5WithoutHeader,
       sha1: finalSha1WithHeader,
       sha1WithoutHeader: finalSha1WithoutHeader,
+      sha256: finalSha256WithHeader,
+      sha256WithoutHeader: finalSha256WithoutHeader,
       symlinkSource: finalSymlinkSource,
       fileHeader: archiveEntryProps.fileHeader,
       patch: archiveEntryProps.patch,
@@ -128,10 +138,10 @@ export default class ArchiveEntry<A extends Archive> extends File implements Arc
     return this.entryOf({ ...deserialized, archive });
   }
 
-  toObject(): object {
+  toEntryProps(): ArchiveEntryProps<A> {
     return instanceToPlain(this, {
       exposeUnsetFields: false,
-    });
+    }) as ArchiveEntryProps<A>;
   }
 
   // Property getters
@@ -199,7 +209,7 @@ export default class ArchiveEntry<A extends Archive> extends File implements Arc
   ): Promise<T> {
     // Don't extract to memory if this archive entry size is too large, or if we need to manipulate
     // the stream start point
-    if (this.getSize() > Constants.MAX_MEMORY_FILE_SIZE || start > 0) {
+    if (this.getSize() > Defaults.MAX_MEMORY_FILE_SIZE || start > 0) {
       return this.extractToTempFile(
         async (tempFile) => File.createStreamFromFile(tempFile, callback, start),
       );
@@ -216,10 +226,10 @@ export default class ArchiveEntry<A extends Archive> extends File implements Arc
   }
 
   withEntryPath(entryPath: string): ArchiveEntry<A> {
-    return new ArchiveEntry({
-      ...this,
-      entryPath,
-    });
+    if (entryPath === this.entryPath) {
+      return this;
+    }
+    return new ArchiveEntry({ ...this, entryPath });
   }
 
   async withFileHeader(fileHeader: ROMHeader): Promise<ArchiveEntry<A>> {
@@ -239,12 +249,16 @@ export default class ArchiveEntry<A extends Archive> extends File implements Arc
   }
 
   withoutFileHeader(): ArchiveEntry<A> {
+    if (this.fileHeader === undefined) {
+      return this;
+    }
     return new ArchiveEntry({
       ...this,
       fileHeader: undefined,
       crc32WithoutHeader: this.getCrc32(),
       md5WithoutHeader: this.getMd5(),
       sha1WithoutHeader: this.getSha1(),
+      sha256WithoutHeader: this.getSha256(),
     });
   }
 
