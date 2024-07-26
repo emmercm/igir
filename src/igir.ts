@@ -114,7 +114,7 @@ export default class Igir {
     // Set up progress bar and input for DAT processing
     const datProcessProgressBar = await this.logger.addProgressBar(chalk.underline('Processing DATs'), ProgressBarSymbol.NONE, dats.length);
     if (dats.length === 0) {
-      dats = new DATGameInferrer(this.options, datProcessProgressBar).infer(roms);
+      dats = await new DATGameInferrer(this.options, datProcessProgressBar).infer(roms);
     }
 
     const datsToWrittenFiles = new Map<DAT, File[]>();

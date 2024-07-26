@@ -5,10 +5,10 @@ import ProgressBarFake from '../console/progressBarFake.js';
 
 test.each([
   // One input path
-  [['test/fixtures/roms/**/*'], { roms: 40 }],
+  [['test/fixtures/roms/**/*'], { roms: 37 }],
   [['test/fixtures/roms/7z/*'], { '7z': 5 }],
   [['test/fixtures/roms/chd/*'], { chd: 2 }],
-  [['test/fixtures/roms/discs/*'], { discs: 9 }],
+  [['test/fixtures/roms/discs/*'], { discs: 6 }],
   [['test/fixtures/roms/gz/*'], { gz: 7 }],
   [['test/fixtures/roms/headered/*'], { headered: 6 }],
   [['test/fixtures/roms/headerless/*'], { headerless: 1 }],
@@ -33,7 +33,7 @@ test.each([
   const romFiles = await new ROMScanner(options, new ProgressBarFake()).scan();
 
   // When
-  const dats = new DATGameInferrer(options, new ProgressBarFake()).infer(romFiles);
+  const dats = await new DATGameInferrer(options, new ProgressBarFake()).infer(romFiles);
 
   // Then
   const datNameToGameCount = Object.fromEntries(
