@@ -50,6 +50,7 @@ export default class FileCache {
         const keyRegex = new RegExp(`^V${prevVersion}\\|`);
         return this.cache.delete(keyRegex);
       }));
+    // Delete keys from old value types
     await this.cache.delete(new RegExp(`\\|(?!(${Object.values(ValueType).join('|')}))[^|]+$`));
 
     // Delete keys for deleted files
