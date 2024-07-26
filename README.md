@@ -58,7 +58,7 @@ $ igir --help
   | $$  | $$|    \  | $$  | $$    $$   ROM collection manager
   | $$  | $$|    \  | $$  | $$    $$   https://igir.io/
   | $$  | $$ \$$$$  | $$  | $$$$$$$\
- _| $$_ | $$__| $$ _| $$_ | $$  | $$   v2.10.1
+ _| $$_ | $$__| $$ _| $$_ | $$  | $$   v2.11.0
 |   $$ \ \$$    $$|   $$ \| $$  | $$
  \$$$$$$  \$$$$$$  \$$$$$$ \$$   \$$
 
@@ -133,10 +133,9 @@ ROM output path options (processed in order):
                                 [choices: "never", "multiple", "always"] [default: "multiple"]
 
 ROM writing options:
-      --rom-fix-extension  Read ROMs for known file signatures and use the correct extension (
-                           also affects dir2dat) (supported: .32x, .3dsx, .a78, .fds, .gb, .gb
-                           a, .gbc, .gg, .lnx, .md, .n64, .ndd, .nds, .nes, .pbp, .smc, .smd,
-                           .v64, .z64)  [choices: "never", "auto", "always"] [default: "auto"]
+      --fix-extension      Read files for known signatures and use the correct extension (also
+                            affects dir2dat)
+                                        [choices: "never", "auto", "always"] [default: "auto"]
   -O, --overwrite          Overwrite any files in the output directory               [boolean]
       --overwrite-invalid  Overwrite files in the output directory that are the wrong filesize
                            , checksum, or zip contents                               [boolean]
