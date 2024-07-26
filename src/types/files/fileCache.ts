@@ -6,6 +6,7 @@ import Archive from './archives/archive.js';
 import ArchiveEntry, { ArchiveEntryProps } from './archives/archiveEntry.js';
 import File, { FileProps } from './file.js';
 import { ChecksumBitmask } from './fileChecksums.js';
+import FileSignature from './fileSignature.js';
 import ROMHeader from './romHeader.js';
 
 interface CacheValue {
@@ -14,11 +15,15 @@ interface CacheValue {
   value: FileProps | ArchiveEntryProps<Archive>[] | string | undefined,
 }
 
-enum ValueType {
-  FILE_CHECKSUMS = 'F',
-  ARCHIVE_CHECKSUMS = 'A',
-  FILE_HEADER = 'H',
-}
+const ValueType = {
+  FILE_CHECKSUMS: 'F',
+  ARCHIVE_CHECKSUMS: 'A',
+  // ROM headers and file signatures may not be found for files, and that is a valid result that
+  // gets cached. But when the list of known headers or signatures changes, we may be able to find
+  // a non-undefined result. So these dynamic values help with cache busting.
+  ROM_HEADER: `H${ROMHeader.getKnownHeaderCount()}`,
+  FILE_SIGNATURE: `S${FileSignature.getKnownSignatureCount()}`,
+};
 
 export default class FileCache {
   private static readonly VERSION = 3;
@@ -45,7 +50,7 @@ export default class FileCache {
         const keyRegex = new RegExp(`^V${prevVersion}\\|`);
         return this.cache.delete(keyRegex);
       }));
-    // await this.cache.delete(new RegExp(`\\|[^${Object.values(ValueType).join()}]$`));
+    await this.cache.delete(new RegExp(`\\|(?!(${Object.values(ValueType).join('|')}))[^|]+$`));
 
     // Delete keys for deleted files
     const disks = FsPoly.disksSync();
@@ -198,7 +203,7 @@ export default class FileCache {
   static async getOrComputeFileHeader(file: File): Promise<ROMHeader | undefined> {
     // NOTE(cemmer): we're explicitly not catching ENOENT errors here, we want it to bubble up
     const stats = await FsPoly.stat(file.getFilePath());
-    const cacheKey = this.getCacheKey(file.toString(), ValueType.FILE_HEADER);
+    const cacheKey = this.getCacheKey(file.toString(), ValueType.ROM_HEADER);
 
     const cachedValue = await this.cache.getOrCompute(
       cacheKey,
@@ -214,10 +219,11 @@ export default class FileCache {
       },
       (cached) => {
         if (cached.fileSize !== stats.size || cached.modifiedTimeMillis !== stats.mtimeMs) {
-          // File has changed since being cached
+          // Recompute if the file has changed since being cached
           return true;
         }
-        return false;
+        // Recompute if the cached value isn't known
+        return typeof cached.value === 'string' && !ROMHeader.headerFromName(cached.value);
       },
     );
 
@@ -228,7 +234,41 @@ export default class FileCache {
     return ROMHeader.headerFromName(cachedHeaderName);
   }
 
-  private static getCacheKey(filePath: string, valueType: ValueType): string {
+  static async getOrComputeFileSignature(file: File): Promise<FileSignature | undefined> {
+    // NOTE(cemmer): we're explicitly not catching ENOENT errors here, we want it to bubble up
+    const stats = await FsPoly.stat(file.getFilePath());
+    const cacheKey = this.getCacheKey(file.toString(), ValueType.FILE_SIGNATURE);
+
+    const cachedValue = await this.cache.getOrCompute(
+      cacheKey,
+      async () => {
+        const signature = await file.createReadStream(
+          async (stream) => FileSignature.signatureFromFileStream(stream),
+        );
+        return {
+          fileSize: stats.size,
+          modifiedTimeMillis: stats.mtimeMs,
+          value: signature?.getName(),
+        };
+      },
+      (cached) => {
+        if (cached.fileSize !== stats.size || cached.modifiedTimeMillis !== stats.mtimeMs) {
+          // File has changed since being cached
+          return true;
+        }
+        // Recompute if the cached value isn't known
+        return typeof cached.value === 'string' && !FileSignature.signatureFromName(cached.value);
+      },
+    );
+
+    const cachedSignatureName = cachedValue.value as string | undefined;
+    if (!cachedSignatureName) {
+      return undefined;
+    }
+    return FileSignature.signatureFromName(cachedSignatureName);
+  }
+
+  private static getCacheKey(filePath: string, valueType: string): string {
     return `V${FileCache.VERSION}|${filePath}|${valueType}`;
   }
 }
