@@ -122,6 +122,7 @@ site/
 *.bin
 *.cd1
 *.cd2
+*.chd
 *.col
 *.cue
 *.dvd
@@ -144,6 +145,7 @@ site/
 *.pce
 *.pk3
 *.pup
+*.raw
 *.rom
 *.rvz
 *.sfc
