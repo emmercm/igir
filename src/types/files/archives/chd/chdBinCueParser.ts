@@ -11,7 +11,7 @@ import Temp from '../../../../globals/temp.js';
 import ArrayPoly from '../../../../polyfill/arrayPoly.js';
 import FsPoly from '../../../../polyfill/fsPoly.js';
 import ExpectedError from '../../../expectedError.js';
-import FileChecksums from '../../fileChecksums.js';
+import FileChecksums, { ChecksumBitmask } from '../../fileChecksums.js';
 import Archive from '../archive.js';
 import ArchiveEntry from '../archiveEntry.js';
 
@@ -60,14 +60,25 @@ export default class ChdBinCueParser {
       fatal: true,
     }).sheet;
 
-    return (await Promise.all(cueSheet.files.flatMap(async (file) => this.parseCueFile(
+    const binFiles = (await Promise.all(cueSheet.files.flatMap(async (file) => this.parseCueFile(
       archive,
       file,
       binFilePath,
       checksumBitmask,
-    ))))
-      .flat()
-      .filter(ArrayPoly.filterNotNullish);
+    )))).flat();
+
+    const cueFile = await ArchiveEntry.entryOf({
+      archive,
+      entryPath: `${path.parse(archive.getFilePath()).name}.cue`,
+      // Junk size and checksums because we don't know what it should be
+      size: 0,
+      crc32: checksumBitmask & ChecksumBitmask.CRC32 ? 'x'.repeat(8) : undefined,
+      md5: checksumBitmask & ChecksumBitmask.CRC32 ? 'x'.repeat(32) : undefined,
+      sha1: checksumBitmask & ChecksumBitmask.CRC32 ? 'x'.repeat(40) : undefined,
+      sha256: checksumBitmask & ChecksumBitmask.CRC32 ? 'x'.repeat(64) : undefined,
+    });
+
+    return [cueFile, ...binFiles];
   }
 
   private static async parseCueFile<T extends Archive>(

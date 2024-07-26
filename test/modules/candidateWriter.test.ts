@@ -254,7 +254,7 @@ describe('zip', () => {
   it('should not write anything if the output is expected and overwriting invalid', async () => {
     await copyFixturesToTemp(async (inputTemp, outputTemp) => {
       // Note: need to exclude some ROMs to prevent duplicate output paths
-      const inputGlob = '**/!(headerless|discs)/*';
+      const inputGlob = '**/!(chd|headerless)/*';
 
       // Given
       const options = new Options({ commands: ['copy', 'zip'] });
@@ -710,13 +710,16 @@ describe('extract', () => {
 
   it('should not write anything if the output is expected and overwriting invalid', async () => {
     await copyFixturesToTemp(async (inputTemp, outputTemp) => {
+      // Note: need to exclude some ROMs to prevent duplicate output paths
+      const inputGlob = '**/!(chd)/*';
+
       // Given
       const options = new Options({ commands: ['copy', 'extract'] });
       const inputFilesBefore = await walkAndStat(inputTemp);
       await expect(walkAndStat(outputTemp)).resolves.toHaveLength(0);
 
       // And we've written once
-      await candidateWriter(options, inputTemp, '**/*', undefined, outputTemp);
+      await candidateWriter(options, inputTemp, inputGlob, undefined, outputTemp);
 
       // And files were written
       const outputFilesBefore = await walkAndStat(outputTemp);
@@ -727,7 +730,7 @@ describe('extract', () => {
       await candidateWriter({
         ...options,
         overwriteInvalid: true,
-      }, inputTemp, '**/*', undefined, outputTemp);
+      }, inputTemp, inputGlob, undefined, outputTemp);
 
       // Then the output wasn't touched
       await expect(walkAndStat(outputTemp)).resolves.toEqual(outputFilesBefore);
@@ -881,7 +884,7 @@ describe('extract', () => {
       '**/!(header*)/*',
       ['0F09A40.rom', '3708F2C.rom', '612644F.rom', '65D1206.rom', '92C85C9.rom', 'C01173E.rom',
         'CD-ROM (Track 1).bin', 'CD-ROM (Track 2).bin', 'CD-ROM (Track 3).bin', 'CD-ROM.cue',
-        path.join('CD-ROM', 'CD-ROM (Track 1).bin'), path.join('CD-ROM', 'CD-ROM (Track 2).bin'), path.join('CD-ROM', 'CD-ROM (Track 3).bin'),
+        path.join('CD-ROM', 'CD-ROM (Track 1).bin'), path.join('CD-ROM', 'CD-ROM (Track 2).bin'), path.join('CD-ROM', 'CD-ROM (Track 3).bin'), path.join('CD-ROM', 'CD-ROM.cue'),
         'GD-ROM.gdi', path.join('GD-ROM', 'track.gdi'), path.join('GD-ROM', 'track01.bin'), path.join('GD-ROM', 'track02.raw'), path.join('GD-ROM', 'track03.bin'), path.join('GD-ROM', 'track04.bin'),
         'KDULVQN.rom', 'before.rom', 'best.rom', 'empty.rom', 'five.rom', 'fizzbuzz.nes', 'foobar.lnx', 'four.rom', path.join('fourfive', 'five.rom'), path.join('fourfive', 'four.rom'), 'loremipsum.rom', 'one.rom', path.join('onetwothree', 'one.rom'), path.join('onetwothree', 'three.rom'), path.join('onetwothree', 'two.rom'), 'three.rom',
         'track01.bin', 'track02.raw', 'track03.bin', 'track04.bin',
@@ -940,7 +943,7 @@ describe('extract', () => {
       '**/!(header*)/*',
       ['0F09A40.rom', '3708F2C.rom', '612644F.rom', '65D1206.rom', '92C85C9.rom', 'C01173E.rom',
         'CD-ROM (Track 1).bin', 'CD-ROM (Track 2).bin', 'CD-ROM (Track 3).bin', 'CD-ROM.cue',
-        path.join('CD-ROM', 'CD-ROM (Track 1).bin'), path.join('CD-ROM', 'CD-ROM (Track 2).bin'), path.join('CD-ROM', 'CD-ROM (Track 3).bin'),
+        path.join('CD-ROM', 'CD-ROM (Track 1).bin'), path.join('CD-ROM', 'CD-ROM (Track 2).bin'), path.join('CD-ROM', 'CD-ROM (Track 3).bin'), path.join('CD-ROM', 'CD-ROM.cue'),
         'GD-ROM.gdi', path.join('GD-ROM', 'track.gdi'), path.join('GD-ROM', 'track01.bin'), path.join('GD-ROM', 'track02.raw'), path.join('GD-ROM', 'track03.bin'), path.join('GD-ROM', 'track04.bin'),
         'KDULVQN.rom', 'before.rom', 'best.rom', 'empty.rom', 'five.rom', 'fizzbuzz.nes', 'foobar.lnx', 'four.rom', path.join('fourfive', 'five.rom'), path.join('fourfive', 'four.rom'), 'loremipsum.rom', 'one.rom', path.join('onetwothree', 'one.rom'), path.join('onetwothree', 'three.rom'), path.join('onetwothree', 'two.rom'), 'three.rom',
         'track01.bin', 'track02.raw', 'track03.bin', 'track04.bin',
