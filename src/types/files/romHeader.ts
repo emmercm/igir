@@ -1,10 +1,12 @@
 import path from 'node:path';
 import { Readable } from 'node:stream';
 
+import { Memoize } from 'typescript-memoize';
+
 import ArrayPoly from '../../polyfill/arrayPoly.js';
 
 export default class ROMHeader {
-  private static readonly HEADERS: { [key: string]:ROMHeader } = {
+  private static readonly HEADERS: { [key: string]: ROMHeader } = {
     // http://7800.8bitdev.org/index.php/A78_Header_Specification
     'No-Intro_A7800.xml': new ROMHeader(1, '415441524937383030', 128, '.a78'),
 
@@ -60,6 +62,14 @@ export default class ROMHeader {
       .map((header) => header.headeredFileExtension)
       .reduce(ArrayPoly.reduceUnique(), [])
       .sort();
+  }
+
+  static getKnownHeaderCount(): number {
+    return Object.keys(this.HEADERS).length;
+  }
+
+  static headerFromName(name: string): ROMHeader | undefined {
+    return this.HEADERS[name];
   }
 
   static headerFromFilename(filePath: string): ROMHeader | undefined {
@@ -123,6 +133,12 @@ export default class ROMHeader {
     return undefined;
   }
 
+  @Memoize()
+  getName(): string {
+    return Object.keys(ROMHeader.HEADERS)
+      .find((name) => ROMHeader.HEADERS[name] === this) as string;
+  }
+
   getDataOffsetBytes(): number {
     return this.dataOffsetBytes;
   }
@@ -133,14 +149,5 @@ export default class ROMHeader {
 
   getHeaderlessFileExtension(): string {
     return this.headerlessFileExtension;
-  }
-
-  async fileHasHeader(stream: Readable): Promise<boolean> {
-    const header = await ROMHeader.readHeaderHex(
-      stream,
-      this.headerOffsetBytes,
-      this.headerOffsetBytes + this.headerValue.length / 2,
-    );
-    return header.toUpperCase() === this.headerValue.toUpperCase();
   }
 }
