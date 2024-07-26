@@ -12,8 +12,8 @@ describe('loadFile', () => {
     await FileCache.loadFile(tempCache);
 
     // Compute some values
-    await FileCache.getOrComputeFile(path.join('test', 'fixtures', 'roms', 'raw', 'fizzbuzz.nes'), ChecksumBitmask.CRC32);
-    await FileCache.getOrComputeEntries(new Zip(path.join('test', 'fixtures', 'roms', 'zip', 'foobar.zip')), ChecksumBitmask.CRC32);
+    await FileCache.getOrComputeFileChecksums(path.join('test', 'fixtures', 'roms', 'raw', 'fizzbuzz.nes'), ChecksumBitmask.CRC32);
+    await FileCache.getOrComputeArchiveChecksums(new Zip(path.join('test', 'fixtures', 'roms', 'zip', 'foobar.zip')), ChecksumBitmask.CRC32);
 
     await FileCache.save();
     await FileCache.loadFile(tempCache);
