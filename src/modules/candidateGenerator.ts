@@ -233,7 +233,7 @@ export default class CandidateGenerator extends Module {
       const inputChds = foundRomsWithFiles
         .map((romWithFiles) => romWithFiles.getOutputFile())
         .filter((file) => file.getFilePath().toLowerCase().endsWith('.chd'))
-        .filter(ArrayPoly.filterUniqueMapped((file) => file.hashCode()));
+        .filter(ArrayPoly.filterUniqueMapped((file) => file.getFilePath()));
       if (inputChds.length === 1) {
         this.progressBar.logTrace(`${dat.getNameShort()}: ${game.getName()}: `);
         return new ReleaseCandidate(game, release, foundRomsWithFiles);
@@ -305,7 +305,7 @@ export default class CandidateGenerator extends Module {
     // Filter to the Archives that contain every ROM in this Game
     const archivesWithEveryRom = [...inputArchivesToRoms.entries()]
       .filter(([archive, roms]) => {
-        if (roms.length === game.getRoms().length) {
+        if (roms.map((rom) => rom.hashCode()).join(',') === game.getRoms().map((rom) => rom.hashCode()).join(',')) {
           return true;
         }
         // If there is a CHD with every .bin file, and we're raw-copying it, then assume its .cue
@@ -313,7 +313,8 @@ export default class CandidateGenerator extends Module {
         return archive instanceof Chd
           && !game.getRoms().some((rom) => this.options.shouldZipFile(rom.getName()))
           && !this.options.shouldExtract()
-          && CandidateGenerator.onlyCueFilesMissingFromChd(game, roms);
+          && CandidateGenerator.onlyCueFilesMissingFromChd(game, roms)
+          && this.options.getAllowExcessSets();
       })
       .map(([archive]) => archive);
 
