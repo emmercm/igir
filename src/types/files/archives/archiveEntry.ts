@@ -237,14 +237,9 @@ export default class ArchiveEntry<A extends Archive> extends File implements Arc
   }
 
   async withFileHeader(fileHeader: ROMHeader): Promise<ArchiveEntry<A>> {
-    // Make sure the file actually has the right file signature
-    const hasHeader = await this.createReadStream(
-      async (stream) => fileHeader.fileHasHeader(stream),
-    );
-    if (!hasHeader) {
+    if (fileHeader === this.fileHeader) {
       return this;
     }
-
     return ArchiveEntry.entryOf({
       ...this,
       fileHeader,

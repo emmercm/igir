@@ -254,7 +254,7 @@ describe('zip', () => {
   it('should not write anything if the output is expected and overwriting invalid', async () => {
     await copyFixturesToTemp(async (inputTemp, outputTemp) => {
       // Note: need to exclude some ROMs to prevent duplicate output paths
-      const inputGlob = '**/!(headerless|discs)/*';
+      const inputGlob = '**/!(chd|headerless)/*';
 
       // Given
       const options = new Options({ commands: ['copy', 'zip'] });
@@ -710,13 +710,16 @@ describe('extract', () => {
 
   it('should not write anything if the output is expected and overwriting invalid', async () => {
     await copyFixturesToTemp(async (inputTemp, outputTemp) => {
+      // Note: need to exclude some ROMs to prevent duplicate output paths
+      const inputGlob = '**/!(chd)/*';
+
       // Given
       const options = new Options({ commands: ['copy', 'extract'] });
       const inputFilesBefore = await walkAndStat(inputTemp);
       await expect(walkAndStat(outputTemp)).resolves.toHaveLength(0);
 
       // And we've written once
-      await candidateWriter(options, inputTemp, '**/*', undefined, outputTemp);
+      await candidateWriter(options, inputTemp, inputGlob, undefined, outputTemp);
 
       // And files were written
       const outputFilesBefore = await walkAndStat(outputTemp);
@@ -727,7 +730,7 @@ describe('extract', () => {
       await candidateWriter({
         ...options,
         overwriteInvalid: true,
-      }, inputTemp, '**/*', undefined, outputTemp);
+      }, inputTemp, inputGlob, undefined, outputTemp);
 
       // Then the output wasn't touched
       await expect(walkAndStat(outputTemp)).resolves.toEqual(outputFilesBefore);

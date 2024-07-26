@@ -236,15 +236,7 @@ export default class CandidateGenerator extends Module {
         .filter(ArrayPoly.filterUniqueMapped((file) => file.hashCode()));
       if (inputChds.length === 1) {
         this.progressBar.logTrace(`${dat.getNameShort()}: ${game.getName()}: `);
-        return new ReleaseCandidate(game, release, [
-          ...foundRomsWithFiles,
-          // Fill in missing .cue files for reporting reasons
-          ...missingRoms.map((rom) => new ROMWithFiles(
-            rom,
-            foundRomsWithFiles[0].getInputFile(),
-            foundRomsWithFiles[0].getOutputFile(),
-          )),
-        ]);
+        return new ReleaseCandidate(game, release, foundRomsWithFiles);
       }
     }
 
@@ -541,7 +533,7 @@ export default class CandidateGenerator extends Module {
         return indexedFiles.findFiles(romWithFiles.getRom())
           ?.find((foundFile) => foundFile.getFilePath() === inputFile.getFilePath());
       })
-      .filter((inputFile): inputFile is ArchiveEntry<Archive> => inputFile instanceof ArchiveEntry);
+      .filter((inputFile) => inputFile instanceof ArchiveEntry || inputFile instanceof ArchiveFile);
     // ...then translate those ArchiveEntries into a list of unique Archives
     const inputArchives = inputArchiveEntries
       .map((archiveEntry) => archiveEntry.getArchive())
@@ -590,6 +582,7 @@ export default class CandidateGenerator extends Module {
     // Find which of the Archive's entries didn't match to a ROM from this Game
     return (indexedFiles.getFilesByFilePath().get(archive.getFilePath()) ?? [])
       .filter((file): file is ArchiveEntry<Archive> => file instanceof ArchiveEntry)
+      .filter((file) => !(archive instanceof Chd) || !file.getExtractedFilePath().toLowerCase().endsWith('.cue'))
       .filter((entry) => !archiveEntryHashCodes.has(entry.hashCode()));
   }
 }

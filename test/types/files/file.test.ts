@@ -167,22 +167,6 @@ describe('getCrc32WithoutHeader', () => {
   });
 
   test.each([
-    ['./test/fixtures/roms/raw/fizzbuzz.nes', '370517b5'],
-    ['./test/fixtures/roms/raw/foobar.lnx', 'b22c9747'],
-  ])('should hash the full file when header is given but not present in file: %s', async (filePath, expectedCrc) => {
-    const file = await (await File.fileOf({ filePath }, ChecksumBitmask.CRC32))
-      .withFileHeader(ROMHeader.headerFromFilename(filePath) as ROMHeader);
-    expect(file.getCrc32()).toEqual(expectedCrc);
-    expect(file.getCrc32WithoutHeader()).toEqual(expectedCrc);
-    expect(file.getMd5()).toBeUndefined();
-    expect(file.getMd5WithoutHeader()).toBeUndefined();
-    expect(file.getSha1()).toBeUndefined();
-    expect(file.getSha1WithoutHeader()).toBeUndefined();
-    expect(file.getSha256()).toBeUndefined();
-    expect(file.getSha256WithoutHeader()).toBeUndefined();
-  });
-
-  test.each([
     ['./test/fixtures/roms/headered/allpads.nes', '6339abe6'],
     ['./test/fixtures/roms/headered/speed_test_v51.smc', '8beffd94'],
   ])('should hash the file without the header when header is given and present in file: %s', async (filePath, expectedCrc) => {
@@ -224,22 +208,6 @@ describe('getMd5WithoutHeader', () => {
     ['./test/fixtures/roms/headered/speed_test_v51.smc', '472f75cef1da864a0b8839ea887eeebc'],
   ])('should hash the full file when no header given: %s', async (filePath, expectedMd5) => {
     const file = await File.fileOf({ filePath }, ChecksumBitmask.MD5);
-    expect(file.getCrc32()).toBeUndefined();
-    expect(file.getCrc32WithoutHeader()).toBeUndefined();
-    expect(file.getMd5()).toEqual(expectedMd5);
-    expect(file.getMd5WithoutHeader()).toEqual(expectedMd5);
-    expect(file.getSha1()).toBeUndefined();
-    expect(file.getSha1WithoutHeader()).toBeUndefined();
-    expect(file.getSha256()).toBeUndefined();
-    expect(file.getSha256WithoutHeader()).toBeUndefined();
-  });
-
-  test.each([
-    ['./test/fixtures/roms/raw/fizzbuzz.nes', 'cbe8410861130a91609295349918c2c2'],
-    ['./test/fixtures/roms/raw/foobar.lnx', '14758f1afd44c09b7992073ccf00b43d'],
-  ])('should hash the full file when header is given but not present in file: %s', async (filePath, expectedMd5) => {
-    const file = await (await File.fileOf({ filePath }, ChecksumBitmask.MD5))
-      .withFileHeader(ROMHeader.headerFromFilename(filePath) as ROMHeader);
     expect(file.getCrc32()).toBeUndefined();
     expect(file.getCrc32WithoutHeader()).toBeUndefined();
     expect(file.getMd5()).toEqual(expectedMd5);
@@ -303,22 +271,6 @@ describe('getSha1WithoutHeader', () => {
   });
 
   test.each([
-    ['./test/fixtures/roms/raw/fizzbuzz.nes', '5a316d9f0e06964d94cdd62a933803d7147ddadb'],
-    ['./test/fixtures/roms/raw/foobar.lnx', '988881adc9fc3655077dc2d4d757d480b5ea0e11'],
-  ])('should hash the full file when header is given but not present in file: %s', async (filePath, expectedSha1) => {
-    const file = await (await File.fileOf({ filePath }, ChecksumBitmask.SHA1))
-      .withFileHeader(ROMHeader.headerFromFilename(filePath) as ROMHeader);
-    expect(file.getCrc32()).toBeUndefined();
-    expect(file.getCrc32WithoutHeader()).toBeUndefined();
-    expect(file.getMd5()).toBeUndefined();
-    expect(file.getMd5WithoutHeader()).toBeUndefined();
-    expect(file.getSha1()).toEqual(expectedSha1);
-    expect(file.getSha1WithoutHeader()).toEqual(expectedSha1);
-    expect(file.getSha256()).toBeUndefined();
-    expect(file.getSha256WithoutHeader()).toBeUndefined();
-  });
-
-  test.each([
     ['./test/fixtures/roms/headered/allpads.nes', 'f181104ca6ea30fa166260ab29395ce1fcdaa48e'],
     ['./test/fixtures/roms/headered/speed_test_v51.smc', '2f2f061ee81bafb4c48b83993a56969012162d68'],
   ])('should hash the file without the header when header is given and present in file: %s', async (filePath, expectedSha1) => {
@@ -360,22 +312,6 @@ describe('getSha256WithoutHeader', () => {
     ['./test/fixtures/roms/headered/speed_test_v51.smc', '48645c5d772dcdcd62f11c91bd01d5903a70a89c348cb8febd7ade27fa57130f'],
   ])('should hash the full file when no header given: %s', async (filePath, expectedSha256) => {
     const file = await File.fileOf({ filePath }, ChecksumBitmask.SHA256);
-    expect(file.getCrc32()).toBeUndefined();
-    expect(file.getCrc32WithoutHeader()).toBeUndefined();
-    expect(file.getMd5()).toBeUndefined();
-    expect(file.getMd5WithoutHeader()).toBeUndefined();
-    expect(file.getSha1()).toBeUndefined();
-    expect(file.getSha1WithoutHeader()).toBeUndefined();
-    expect(file.getSha256()).toEqual(expectedSha256);
-    expect(file.getSha256WithoutHeader()).toEqual(expectedSha256);
-  });
-
-  test.each([
-    ['./test/fixtures/roms/raw/fizzbuzz.nes', '6e809804766eaa4dd42a2607b789f3e4e5d32fc321ba8dd3ef39ddc1ea2888e9'],
-    ['./test/fixtures/roms/raw/foobar.lnx', 'aec070645fe53ee3b3763059376134f058cc337247c978add178b6ccdfb0019f'],
-  ])('should hash the full file when header is given but not present in file: %s', async (filePath, expectedSha256) => {
-    const file = await (await File.fileOf({ filePath }, ChecksumBitmask.SHA256))
-      .withFileHeader(ROMHeader.headerFromFilename(filePath) as ROMHeader);
     expect(file.getCrc32()).toBeUndefined();
     expect(file.getCrc32WithoutHeader()).toBeUndefined();
     expect(file.getMd5()).toBeUndefined();
