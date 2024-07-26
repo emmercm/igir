@@ -280,9 +280,9 @@ export default class ArchiveEntry<A extends Archive> extends File implements Arc
 
   toString(): string {
     if (this.getSymlinkSource()) {
-      return `${this.getFilePath()}|${this.getEntryPath()} -> ${this.getSymlinkSource()}|${this.getEntryPath()}`;
+      return `${this.getFilePath()}|${this.getExtractedFilePath()} -> ${this.getSymlinkSource()}|${this.getExtractedFilePath()}`;
     }
-    return `${this.getFilePath()}|${this.getEntryPath()}`;
+    return `${this.getFilePath()}|${this.getExtractedFilePath()}`;
   }
 
   equals(other: File): boolean {

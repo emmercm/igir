@@ -6,19 +6,19 @@
 
 `igir` supports most common archive formats:
 
-| Extension                                                    | Contains file CRC32s | `igir` can extract without a third-party binary | `igir` can checksum without temporary files |
-|--------------------------------------------------------------|----------------------|-------------------------------------------------|---------------------------------------------|
-| `.7z`                                                        | ✅                    | ❌ `7za`                                         | ❌                                           |
-| `.chd`                                                       | ❌ SHA1               | ❌ `chdman`                                      | ❌                                           |
-| `.nkit` ([GameCube docs](../usage/console/gamecube.md#nkit)) | ✅                    | ❌ no extraction support                         | ✅                                           |
-| `.gz`, `.gzip`                                               | ❌ CRC16              | ❌ `7za`                                         | ❌                                           |
-| `.rar`                                                       | ✅                    | ✅                                               | ❌                                           |
-| `.tar`                                                       | ❌                    | ✅                                               | ✅ ≤64MiB                                    |
-| `.tar.gz`, `.tgz`                                            | ❌                    | ✅                                               | ✅ ≤64MiB                                    |
-| `.z01`                                                       | ✅                    | ❌ `7za`                                         | ❌                                           |
-| `.zip` (including zip64)                                     | ✅                    | ✅                                               | ✅ ≤64MiB                                    |
-| `.zip.001`                                                   | ✅                    | ❌ `7za`                                         | ❌                                           |
-| `.zipx`                                                      | ✅                    | ❌ `7za`                                         | ❌                                           |
+| Extension                                                        | Contains file CRC32s | `igir` can extract without a third-party binary | `igir` can checksum without temporary files |
+|------------------------------------------------------------------|----------------------|-------------------------------------------------|---------------------------------------------|
+| `.7z`                                                            | ✅                    | ❌ `7za`                                         | ❌                                           |
+| `.chd`                                                           | ❌ SHA1               | ❌ `chdman`                                      | ❌                                           |
+| `.gz`, `.gzip`                                                   | ❌ CRC16              | ❌ `7za`                                         | ❌                                           |
+| `.nkit.iso` ([GameCube docs](../usage/console/gamecube.md#nkit)) | ✅                    | ❌ no extraction support                         | ✅                                           |
+| `.rar`                                                           | ✅                    | ✅                                               | ❌                                           |
+| `.tar`                                                           | ❌                    | ✅                                               | ✅ ≤64MiB                                    |
+| `.tar.gz`, `.tgz`                                                | ❌                    | ✅                                               | ✅ ≤64MiB                                    |
+| `.z01`                                                           | ✅                    | ❌ `7za`                                         | ❌                                           |
+| `.zip` (including zip64)                                         | ✅                    | ✅                                               | ✅ ≤64MiB                                    |
+| `.zip.001`                                                       | ✅                    | ❌ `7za`                                         | ❌                                           |
+| `.zipx`                                                          | ✅                    | ❌ `7za`                                         | ❌                                           |
 
 **You should prefer archive formats that have CRC32 checksum information for each file.**
 
