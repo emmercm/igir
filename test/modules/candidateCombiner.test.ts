@@ -17,7 +17,7 @@ async function runCombinedCandidateGenerator(
   romFiles: File[],
 ): Promise<Map<Parent, ReleaseCandidate[]>> {
   // Run DATGameInferrer, but condense all DATs down to one
-  const dats = new DATGameInferrer(options, new ProgressBarFake()).infer(romFiles);
+  const dats = await new DATGameInferrer(options, new ProgressBarFake()).infer(romFiles);
   const dat = new DATCombiner(new ProgressBarFake()).combine(dats);
 
   const indexedRomFiles = await new ROMIndexer(options, new ProgressBarFake()).index(romFiles);
@@ -54,7 +54,7 @@ it('should do nothing with no parents', async () => {
   expect(parentsToCandidates.size).toEqual(romFiles.length);
 });
 
-it('should', async () => {
+it('should combine candidates', async () => {
   // Given
   const options = new Options({ zipDatName: true });
   const romFiles = await new ROMScanner(new Options({

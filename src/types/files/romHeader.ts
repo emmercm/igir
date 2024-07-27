@@ -1,8 +1,12 @@
 import path from 'node:path';
 import { Readable } from 'node:stream';
 
+import { Memoize } from 'typescript-memoize';
+
+import ArrayPoly from '../../polyfill/arrayPoly.js';
+
 export default class ROMHeader {
-  private static readonly HEADERS: { [key: string]:ROMHeader } = {
+  private static readonly HEADERS: { [key: string]: ROMHeader } = {
     // http://7800.8bitdev.org/index.php/A78_Header_Specification
     'No-Intro_A7800.xml': new ROMHeader(1, '415441524937383030', 128, '.a78'),
 
@@ -17,6 +21,10 @@ export default class ROMHeader {
 
     // https://en.wikibooks.org/wiki/Super_NES_Programming/SNES_memory_map#The_SNES_header
     SMC: new ROMHeader(3, '00'.repeat(509), 512, '.smc', '.sfc'),
+    // https://file-extension.net/seeker/file_extension_smc
+    // https://wiki.superfamicom.org/game-doctor
+    SMC_GAME_DOCTOR_1: new ROMHeader(0, '00014D4520444F43544F522053462033', 512, '.smc', '.sfc'),
+    SMC_GAME_DOCTOR_2: new ROMHeader(0, '47414D4520444F43544F522053462033', 512, '.smc', '.sfc'),
   };
 
   private static readonly MAX_HEADER_LENGTH_BYTES = Object.values(ROMHeader.HEADERS)
@@ -50,7 +58,18 @@ export default class ROMHeader {
   }
 
   static getSupportedExtensions(): string[] {
-    return Object.values(this.HEADERS).map((header) => header.headeredFileExtension).sort();
+    return Object.values(this.HEADERS)
+      .map((header) => header.headeredFileExtension)
+      .reduce(ArrayPoly.reduceUnique(), [])
+      .sort();
+  }
+
+  static getKnownHeaderCount(): number {
+    return Object.keys(this.HEADERS).length;
+  }
+
+  static headerFromName(name: string): ROMHeader | undefined {
+    return this.HEADERS[name];
   }
 
   static headerFromFilename(filePath: string): ROMHeader | undefined {
@@ -114,6 +133,12 @@ export default class ROMHeader {
     return undefined;
   }
 
+  @Memoize()
+  getName(): string {
+    return Object.keys(ROMHeader.HEADERS)
+      .find((name) => ROMHeader.HEADERS[name] === this) as string;
+  }
+
   getDataOffsetBytes(): number {
     return this.dataOffsetBytes;
   }
@@ -124,14 +149,5 @@ export default class ROMHeader {
 
   getHeaderlessFileExtension(): string {
     return this.headerlessFileExtension;
-  }
-
-  async fileHasHeader(stream: Readable): Promise<boolean> {
-    const header = await ROMHeader.readHeaderHex(
-      stream,
-      this.headerOffsetBytes,
-      this.headerOffsetBytes + this.headerValue.length / 2,
-    );
-    return header.toUpperCase() === this.headerValue.toUpperCase();
   }
 }

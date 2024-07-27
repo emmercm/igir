@@ -1,17 +1,20 @@
-import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
-import util from 'node:util';
 
 import Logger from '../../src/console/logger.js';
 import LogLevel from '../../src/console/logLevel.js';
-import Constants from '../../src/constants.js';
+import Temp from '../../src/globals/temp.js';
 import ArgumentsParser from '../../src/modules/argumentsParser.js';
 import FsPoly from '../../src/polyfill/fsPoly.js';
 import Header from '../../src/types/dats/logiqx/header.js';
 import LogiqxDAT from '../../src/types/dats/logiqx/logiqxDat.js';
 import { ChecksumBitmask } from '../../src/types/files/fileChecksums.js';
-import { GameSubdirMode, MergeMode } from '../../src/types/options.js';
+import {
+  FixExtension,
+  GameSubdirMode,
+  InputChecksumArchivesMode,
+  MergeMode,
+} from '../../src/types/options.js';
 
 const dummyRequiredArgs = ['--input', os.devNull, '--output', os.devNull];
 const dummyCommandAndRequiredArgs = ['copy', ...dummyRequiredArgs];
@@ -58,16 +61,27 @@ describe('commands', () => {
   });
 
   it('should parse multiple commands', () => {
-    const copyExtract = ['copy', 'extract', 'test', 'dir2dat', 'clean', 'report', ...dummyRequiredArgs, '--dat', os.devNull];
-    expect(argumentsParser.parse(copyExtract).shouldCopy()).toEqual(true);
-    expect(argumentsParser.parse(copyExtract).shouldMove()).toEqual(false);
-    expect(argumentsParser.parse(copyExtract).shouldExtract()).toEqual(true);
-    expect(argumentsParser.parse(copyExtract).shouldZipFile('')).toEqual(false);
-    expect(argumentsParser.parse(copyExtract).shouldTest()).toEqual(true);
-    expect(argumentsParser.parse(copyExtract).shouldDir2Dat()).toEqual(true);
-    expect(argumentsParser.parse(copyExtract).shouldFixdat()).toEqual(false);
-    expect(argumentsParser.parse(copyExtract).shouldClean()).toEqual(true);
-    expect(argumentsParser.parse(copyExtract).shouldReport()).toEqual(true);
+    const datCommands = ['copy', 'extract', 'test', 'clean', 'report', ...dummyRequiredArgs, '--dat', os.devNull];
+    expect(argumentsParser.parse(datCommands).shouldCopy()).toEqual(true);
+    expect(argumentsParser.parse(datCommands).shouldMove()).toEqual(false);
+    expect(argumentsParser.parse(datCommands).shouldExtract()).toEqual(true);
+    expect(argumentsParser.parse(datCommands).shouldZipFile('')).toEqual(false);
+    expect(argumentsParser.parse(datCommands).shouldTest()).toEqual(true);
+    expect(argumentsParser.parse(datCommands).shouldDir2Dat()).toEqual(false);
+    expect(argumentsParser.parse(datCommands).shouldFixdat()).toEqual(false);
+    expect(argumentsParser.parse(datCommands).shouldClean()).toEqual(true);
+    expect(argumentsParser.parse(datCommands).shouldReport()).toEqual(true);
+
+    const nonDatCommands = ['copy', 'extract', 'test', 'dir2dat', 'clean', ...dummyRequiredArgs];
+    expect(argumentsParser.parse(nonDatCommands).shouldCopy()).toEqual(true);
+    expect(argumentsParser.parse(nonDatCommands).shouldMove()).toEqual(false);
+    expect(argumentsParser.parse(nonDatCommands).shouldExtract()).toEqual(true);
+    expect(argumentsParser.parse(nonDatCommands).shouldZipFile('')).toEqual(false);
+    expect(argumentsParser.parse(nonDatCommands).shouldTest()).toEqual(true);
+    expect(argumentsParser.parse(nonDatCommands).shouldDir2Dat()).toEqual(true);
+    expect(argumentsParser.parse(nonDatCommands).shouldFixdat()).toEqual(false);
+    expect(argumentsParser.parse(nonDatCommands).shouldClean()).toEqual(true);
+    expect(argumentsParser.parse(nonDatCommands).shouldReport()).toEqual(false);
 
     const moveZip = ['move', 'zip', 'test', 'fixdat', 'clean', 'report', ...dummyRequiredArgs, '--dat', os.devNull];
     expect(argumentsParser.parse(moveZip).shouldCopy()).toEqual(false);
@@ -108,6 +122,7 @@ describe('options', () => {
 
     expect(options.getInputPaths()).toEqual([os.devNull]);
     expect(options.getInputMinChecksum()).toEqual(ChecksumBitmask.CRC32);
+    expect(options.getInputChecksumArchives()).toEqual(InputChecksumArchivesMode.AUTO);
 
     expect(options.getDatNameRegex()).toBeUndefined();
     expect(options.getDatNameRegexExclude()).toBeUndefined();
@@ -128,6 +143,9 @@ describe('options', () => {
     expect(options.getDirGameSubdir()).toEqual(GameSubdirMode.MULTIPLE);
     expect(options.getOverwrite()).toEqual(false);
     expect(options.getOverwriteInvalid()).toEqual(false);
+    expect(options.getFixExtension()).toEqual(FixExtension.AUTO);
+
+    expect(options.getCleanBackup()).toBeUndefined();
     expect(options.getCleanDryRun()).toEqual(false);
 
     expect(options.getZipDatName()).toEqual(false);
@@ -136,6 +154,8 @@ describe('options', () => {
     expect(options.getSymlinkRelative()).toEqual(false);
 
     expect(options.getMergeRoms()).toEqual(MergeMode.FULLNONMERGED);
+    expect(options.getAllowExcessSets()).toEqual(false);
+    expect(options.getAllowIncompleteSets()).toEqual(false);
 
     expect(options.getFilterRegex()).toBeUndefined();
     expect(options.getFilterRegexExclude()).toBeUndefined();
@@ -187,6 +207,7 @@ describe('options', () => {
     expect(options.getReaderThreads()).toEqual(8);
     expect(options.getWriterThreads()).toEqual(4);
     expect(options.getDisableCache()).toEqual(false);
+    expect(options.getCachePath()).toBeUndefined();
     expect(options.getLogLevel()).toEqual(LogLevel.WARN);
     expect(options.getHelp()).toEqual(false);
   });
@@ -201,8 +222,16 @@ describe('options', () => {
   });
 
   it('should parse "input"', async () => {
+    expect(() => argumentsParser.parse(['copy', '--output', os.devNull])).toThrow(/missing required argument/i);
+    expect(() => argumentsParser.parse(['move', '--output', os.devNull])).toThrow(/missing required argument/i);
+    expect(() => argumentsParser.parse(['link', '--output', os.devNull])).toThrow(/missing required argument/i);
+    expect(() => argumentsParser.parse(['copy', 'extract', '--output', os.devNull])).toThrow(/missing required argument/i);
+    expect(() => argumentsParser.parse(['copy', 'zip', '--output', os.devNull])).toThrow(/missing required argument/i);
+    expect(() => argumentsParser.parse(['copy', 'test', '--output', os.devNull])).toThrow(/missing required argument/i);
+    expect(() => argumentsParser.parse(['dir2dat', '--output', os.devNull])).toThrow(/missing required argument/i);
+    expect(() => argumentsParser.parse(['fixdat', '--output', os.devNull])).toThrow(/missing required argument/i);
     await expect(argumentsParser.parse(['copy', '--input', 'nonexistentfile', '--output', os.devNull]).scanInputFilesWithoutExclusions()).rejects.toThrow(/no files found/i);
-    await expect(argumentsParser.parse(['copy', '--input', os.devNull, '--output', os.devNull]).scanInputFilesWithoutExclusions()).resolves.toHaveLength(0);
+    await expect(argumentsParser.parse(['copy', '--input', os.devNull, '--output', os.devNull]).scanInputFilesWithoutExclusions()).rejects.toThrow(/no files found/i);
 
     const src = await argumentsParser.parse(['copy', '--input', './src', '--output', os.devNull]).scanInputFilesWithoutExclusions();
     const test = await argumentsParser.parse(['copy', '--input', './test', '--output', os.devNull]).scanInputFilesWithoutExclusions();
@@ -232,13 +261,24 @@ describe('options', () => {
     expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--input-min-checksum', 'SHA256', '--input-min-checksum', 'CRC32']).getInputMinChecksum()).toEqual(ChecksumBitmask.CRC32);
   });
 
+  it('should parse "input-checksum-archives"', () => {
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs]).getInputChecksumArchives())
+      .toEqual(InputChecksumArchivesMode.AUTO);
+    expect(() => argumentsParser.parse([...dummyCommandAndRequiredArgs, '--input-checksum-archives', 'foobar']).getInputChecksumArchives()).toThrow(/invalid values/i);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--input-checksum-archives', 'never']).getInputChecksumArchives()).toEqual(InputChecksumArchivesMode.NEVER);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--input-checksum-archives', 'auto']).getInputChecksumArchives()).toEqual(InputChecksumArchivesMode.AUTO);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--input-checksum-archives', 'always']).getInputChecksumArchives()).toEqual(InputChecksumArchivesMode.ALWAYS);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--input-checksum-archives', 'always', '--input-checksum-archives', 'never']).getInputChecksumArchives()).toEqual(InputChecksumArchivesMode.NEVER);
+  });
+
   it('should parse "dat"', async () => {
-    expect(() => argumentsParser.parse(['report', '--input', os.devNull])).toThrow(/missing required option/i);
+    expect(() => argumentsParser.parse(['report', '--input', os.devNull])).toThrow(/missing required argument/i);
     expect(() => argumentsParser.parse([...dummyCommandAndRequiredArgs, '--dat'])).toThrow(/not enough arguments/i);
+    expect(() => argumentsParser.parse([...dummyCommandAndRequiredArgs, 'dir2dat', '--dat', os.devNull])).toThrow();
     await expect(argumentsParser.parse(dummyCommandAndRequiredArgs).scanDatFilesWithoutExclusions())
-      .resolves.toHaveLength(0);
+      .rejects.toThrow(/no files found/i);
     await expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--dat', 'nonexistentfile']).scanDatFilesWithoutExclusions()).rejects.toThrow(/no files found/i);
-    await expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--dat', os.devNull]).scanDatFilesWithoutExclusions()).resolves.toHaveLength(0);
+    await expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--dat', os.devNull]).scanDatFilesWithoutExclusions()).rejects.toThrow(/no files found/i);
 
     const src = await argumentsParser.parse([...dummyCommandAndRequiredArgs, '-d', './src']).scanDatFilesWithoutExclusions();
     const test = await argumentsParser.parse([...dummyCommandAndRequiredArgs, '--dat', './test']).scanDatFilesWithoutExclusions();
@@ -269,9 +309,10 @@ describe('options', () => {
     expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--dat-regex', '/[a-z]/i']).getDatNameRegex()?.some((regex) => regex.test('UPPER'))).toEqual(true);
     expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--dat-regex', '/[a-z]/i', '--dat-regex', '[0-9]']).getDatNameRegex()?.some((regex) => regex.test('UPPER'))).toEqual(false);
 
-    const tempFile = await FsPoly.mktemp(path.join(Constants.GLOBAL_TEMP_DIR, 'temp'));
+    const tempFile = await FsPoly.mktemp(path.join(Temp.getTempDir(), 'temp'));
+    await FsPoly.mkdir(path.dirname(tempFile), { recursive: true });
     try {
-      await util.promisify(fs.writeFile)(tempFile, '\n/[a-z]/i\r\n[0-9]\n\n');
+      await FsPoly.writeFile(tempFile, '\n/[a-z]/i\r\n[0-9]\n\n');
       expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--dat-name-regex', tempFile]).getDatNameRegex()?.some((regex) => regex.test(''))).toEqual(false);
       expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--dat-name-regex', tempFile]).getDatNameRegex()?.some((regex) => regex.test('lower'))).toEqual(true);
       expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--dat-name-regex', tempFile]).getDatNameRegex()?.some((regex) => regex.test('UPPER'))).toEqual(true);
@@ -294,9 +335,10 @@ describe('options', () => {
     expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--dat-regex-exclude', '/[a-z]/i']).getDatNameRegexExclude()?.some((regex) => regex.test('UPPER'))).toEqual(true);
     expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--dat-regex-exclude', '/[a-z]/i', '--dat-regex-exclude', '[0-9]']).getDatNameRegexExclude()?.some((regex) => regex.test('UPPER'))).toEqual(false);
 
-    const tempFile = await FsPoly.mktemp(path.join(Constants.GLOBAL_TEMP_DIR, 'temp'));
+    const tempFile = await FsPoly.mktemp(path.join(Temp.getTempDir(), 'temp'));
+    await FsPoly.mkdir(path.dirname(tempFile), { recursive: true });
     try {
-      await util.promisify(fs.writeFile)(tempFile, '\n/[a-z]/i\r\n[0-9]\n\n');
+      await FsPoly.writeFile(tempFile, '\n/[a-z]/i\r\n[0-9]\n\n');
       expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--dat-name-regex-exclude', tempFile]).getDatNameRegexExclude()?.some((regex) => regex.test(''))).toEqual(false);
       expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--dat-name-regex-exclude', tempFile]).getDatNameRegexExclude()?.some((regex) => regex.test('lower'))).toEqual(true);
       expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--dat-name-regex-exclude', tempFile]).getDatNameRegexExclude()?.some((regex) => regex.test('UPPER'))).toEqual(true);
@@ -315,9 +357,10 @@ describe('options', () => {
     expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--dat-description-regex', '/[a-z]/i']).getDatDescriptionRegex()?.some((regex) => regex.test('UPPER'))).toEqual(true);
     expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--dat-description-regex', '/[a-z]/i', '--dat-description-regex', '[0-9]']).getDatDescriptionRegex()?.some((regex) => regex.test('UPPER'))).toEqual(false);
 
-    const tempFile = await FsPoly.mktemp(path.join(Constants.GLOBAL_TEMP_DIR, 'temp'));
+    const tempFile = await FsPoly.mktemp(path.join(Temp.getTempDir(), 'temp'));
+    await FsPoly.mkdir(path.dirname(tempFile), { recursive: true });
     try {
-      await util.promisify(fs.writeFile)(tempFile, '\n/[a-z]/i\r\n[0-9]\n\n');
+      await FsPoly.writeFile(tempFile, '\n/[a-z]/i\r\n[0-9]\n\n');
       expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--dat-description-regex', tempFile]).getDatDescriptionRegex()?.some((regex) => regex.test(''))).toEqual(false);
       expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--dat-description-regex', tempFile]).getDatDescriptionRegex()?.some((regex) => regex.test('lower'))).toEqual(true);
       expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--dat-description-regex', tempFile]).getDatDescriptionRegex()?.some((regex) => regex.test('UPPER'))).toEqual(true);
@@ -336,9 +379,10 @@ describe('options', () => {
     expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--dat-description-regex-exclude', '/[a-z]/i']).getDatDescriptionRegexExclude()?.some((regex) => regex.test('UPPER'))).toEqual(true);
     expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--dat-description-regex-exclude', '/[a-z]/i', '--dat-description-regex-exclude', '[0-9]']).getDatDescriptionRegexExclude()?.some((regex) => regex.test('UPPER'))).toEqual(false);
 
-    const tempFile = await FsPoly.mktemp(path.join(Constants.GLOBAL_TEMP_DIR, 'temp'));
+    const tempFile = await FsPoly.mktemp(path.join(Temp.getTempDir(), 'temp'));
+    await FsPoly.mkdir(path.dirname(tempFile), { recursive: true });
     try {
-      await util.promisify(fs.writeFile)(tempFile, '\n/[a-z]/i\r\n[0-9]\n\n');
+      await FsPoly.writeFile(tempFile, '\n/[a-z]/i\r\n[0-9]\n\n');
       expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--dat-description-regex-exclude', tempFile]).getDatDescriptionRegexExclude()?.some((regex) => regex.test(''))).toEqual(false);
       expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--dat-description-regex-exclude', tempFile]).getDatDescriptionRegexExclude()?.some((regex) => regex.test('lower'))).toEqual(true);
       expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--dat-description-regex-exclude', tempFile]).getDatDescriptionRegexExclude()?.some((regex) => regex.test('UPPER'))).toEqual(true);
@@ -370,7 +414,7 @@ describe('options', () => {
 
   it('should parse "patch"', async () => {
     await expect(argumentsParser.parse(['copy', '--input', os.devNull, '--patch', 'nonexistentfile', '--output', os.devNull]).scanPatchFilesWithoutExclusions()).rejects.toThrow(/no files found/i);
-    await expect(argumentsParser.parse(['copy', '--input', os.devNull, '--patch', os.devNull, '--output', os.devNull]).scanPatchFilesWithoutExclusions()).resolves.toHaveLength(0);
+    await expect(argumentsParser.parse(['copy', '--input', os.devNull, '--patch', os.devNull, '--output', os.devNull]).scanPatchFilesWithoutExclusions()).rejects.toThrow(/no files found/i);
 
     const src = await argumentsParser.parse(['copy', '--input', os.devNull, '--patch', './src', '--output', os.devNull]).scanPatchFilesWithoutExclusions();
     const test = await argumentsParser.parse(['copy', '--input', os.devNull, '--patch', './test', '--output', os.devNull]).scanPatchFilesWithoutExclusions();
@@ -392,11 +436,13 @@ describe('options', () => {
   it('should parse "output"', () => {
     // Test requirements per command
     expect(() => argumentsParser.parse(['test'])).toThrow(/missing required argument/i);
-    expect(() => argumentsParser.parse(['copy', '--input', os.devNull])).toThrow(/missing required option/i);
-    expect(() => argumentsParser.parse(['move', '--input', os.devNull])).toThrow(/missing required option/i);
-    expect(() => argumentsParser.parse(['copy', 'zip', '--input', os.devNull])).toThrow(/missing required option/i);
-    expect(() => argumentsParser.parse(['copy', 'clean', '--input', os.devNull])).toThrow(/missing required option/i);
-    expect(argumentsParser.parse(['report', '--dat', os.devNull, '--input', os.devNull]).getOutput()).toContain(Constants.GLOBAL_TEMP_DIR);
+    expect(() => argumentsParser.parse(['copy', '--input', os.devNull])).toThrow(/missing required argument/i);
+    expect(() => argumentsParser.parse(['move', '--input', os.devNull])).toThrow(/missing required argument/i);
+    expect(() => argumentsParser.parse(['link', '--input', os.devNull])).toThrow(/missing required argument/i);
+    expect(() => argumentsParser.parse(['copy', 'extract', '--input', os.devNull])).toThrow(/missing required argument/i);
+    expect(() => argumentsParser.parse(['copy', 'zip', '--input', os.devNull])).toThrow(/missing required argument/i);
+    expect(() => argumentsParser.parse(['copy', 'clean', '--input', os.devNull])).toThrow(/missing required argument/i);
+    expect(argumentsParser.parse(['report', '--dat', os.devNull, '--input', os.devNull]).getOutput()).toContain(Temp.getTempDir());
     // Test value
     expect(argumentsParser.parse(['copy', '--input', os.devNull, '-o', 'foo']).getOutput()).toEqual('foo');
     expect(argumentsParser.parse(['copy', '--input', os.devNull, '--output', 'foo']).getOutput()).toEqual('foo');
@@ -483,6 +529,16 @@ describe('options', () => {
     expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--dir-game-subdir', 'always', '--dir-game-subdir', 'never']).getDirGameSubdir()).toEqual(GameSubdirMode.NEVER);
   });
 
+  it('should parse "fix-extension"', () => {
+    expect(argumentsParser.parse(dummyCommandAndRequiredArgs).getDirGameSubdir())
+      .toEqual(GameSubdirMode.MULTIPLE);
+    expect(() => argumentsParser.parse([...dummyCommandAndRequiredArgs, '--fix-extension', 'foobar']).getFixExtension()).toThrow(/invalid values/i);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--fix-extension', 'never']).getFixExtension()).toEqual(FixExtension.NEVER);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--fix-extension', 'auto']).getFixExtension()).toEqual(FixExtension.AUTO);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--fix-extension', 'always']).getFixExtension()).toEqual(FixExtension.ALWAYS);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--fix-extension', 'always', '--fix-extension', 'never']).getFixExtension()).toEqual(FixExtension.NEVER);
+  });
+
   it('should parse "single"', () => {
     expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--dat', os.devNull, '-s']).getSingle()).toEqual(true);
     expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--dat', os.devNull, '--single']).getSingle()).toEqual(true);
@@ -522,6 +578,12 @@ describe('options', () => {
     expect((await argumentsParser.parse([...argv, 'clean', '-C', 'nonexistentfile']).scanOutputFilesWithoutCleanExclusions([outputDir], [])).length).toBeGreaterThan(0);
     expect((await argumentsParser.parse([...argv, 'clean', '--clean-exclude', outputDir]).scanOutputFilesWithoutCleanExclusions([outputDir], [])).length).toEqual(0);
     expect((await argumentsParser.parse([...argv, 'clean', '--clean-exclude', outputDir]).scanOutputFilesWithoutCleanExclusions([outputDir], [])).length).toEqual(0);
+  });
+
+  it('should parse "clean-backup"', () => {
+    expect(() => argumentsParser.parse([...dummyCommandAndRequiredArgs, '--clean-backup', 'foo'])).toThrow(/missing required command/i);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, 'clean', '--clean-backup', 'foo']).getCleanBackup()).toEqual('foo');
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, 'clean', '--clean-backup', 'foo', '--clean-backup', 'bar']).getCleanBackup()).toEqual('bar');
   });
 
   it('should parse "clean-dry-run"', () => {
@@ -621,9 +683,10 @@ describe('options', () => {
     expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--single', '--prefer-game-regex', '/[a-z]/i']).getPreferGameRegex()?.some((regex) => regex.test('UPPER'))).toEqual(true);
     expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--single', '--prefer-game-regex', '/[a-z]/i', '--prefer-game-regex', '[0-9]']).getPreferGameRegex()?.some((regex) => regex.test('UPPER'))).toEqual(false);
 
-    const tempFile = await FsPoly.mktemp(path.join(Constants.GLOBAL_TEMP_DIR, 'temp'));
+    const tempFile = await FsPoly.mktemp(path.join(Temp.getTempDir(), 'temp'));
+    await FsPoly.mkdir(path.dirname(tempFile), { recursive: true });
     try {
-      await util.promisify(fs.writeFile)(tempFile, '\n/[a-z]/i\r\n[0-9]\n\n');
+      await FsPoly.writeFile(tempFile, '\n/[a-z]/i\r\n[0-9]\n\n');
       expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--single', '--prefer-game-regex', tempFile]).getPreferGameRegex()?.some((regex) => regex.test(''))).toEqual(false);
       expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--single', '--prefer-game-regex', tempFile]).getPreferGameRegex()?.some((regex) => regex.test('lower'))).toEqual(true);
       expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--single', '--prefer-game-regex', tempFile]).getPreferGameRegex()?.some((regex) => regex.test('UPPER'))).toEqual(true);
@@ -641,9 +704,10 @@ describe('options', () => {
     expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--single', '--prefer-rom-regex', '/[a-z]/i']).getPreferRomRegex()?.some((regex) => regex.test('UPPER'))).toEqual(true);
     expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--single', '--prefer-rom-regex', '/[a-z]/i', '--prefer-rom-regex', '[0-9]']).getPreferRomRegex()?.some((regex) => regex.test('UPPER'))).toEqual(false);
 
-    const tempFile = await FsPoly.mktemp(path.join(Constants.GLOBAL_TEMP_DIR, 'temp'));
+    const tempFile = await FsPoly.mktemp(path.join(Temp.getTempDir(), 'temp'));
+    await FsPoly.mkdir(path.dirname(tempFile), { recursive: true });
     try {
-      await util.promisify(fs.writeFile)(tempFile, '\n/[a-z]/i\r\n[0-9]\n\n');
+      await FsPoly.writeFile(tempFile, '\n/[a-z]/i\r\n[0-9]\n\n');
       expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--single', '--prefer-rom-regex', tempFile]).getPreferRomRegex()?.some((regex) => regex.test(''))).toEqual(false);
       expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--single', '--prefer-rom-regex', tempFile]).getPreferRomRegex()?.some((regex) => regex.test('lower'))).toEqual(true);
       expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--single', '--prefer-rom-regex', tempFile]).getPreferRomRegex()?.some((regex) => regex.test('UPPER'))).toEqual(true);
@@ -677,21 +741,25 @@ describe('options', () => {
   it('should parse "prefer-language"', () => {
     expect(() => argumentsParser.parse([...dummyCommandAndRequiredArgs, '--prefer-language'])).toThrow(/not enough arguments/i);
     expect(() => argumentsParser.parse([...dummyCommandAndRequiredArgs, '--prefer-language', 'EN'])).toThrow(/dependent|implication/i);
-    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '-l', 'EN', '--single']).getPreferLanguages()).toEqual(['EN']);
-    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--prefer-language', 'EN', '--single']).getPreferLanguages()).toEqual(['EN']);
-    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--prefer-language', 'EN,it', '--single']).getPreferLanguages()).toEqual(['EN', 'IT']);
-    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--prefer-language', 'en,IT,JA', '--single']).getPreferLanguages()).toEqual(['EN', 'IT', 'JA']);
-    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--prefer-language', 'EN,en', '--single']).getPreferLanguages()).toEqual(['EN']);
+    expect(() => argumentsParser.parse([...dummyCommandAndRequiredArgs, '--single', '--prefer-language', 'XX'])).toThrow(/invalid/i);
+    expect(() => argumentsParser.parse([...dummyCommandAndRequiredArgs, '--single', '--prefer-language', 'EN,XX'])).toThrow(/invalid/i);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--single', '-l', 'EN']).getPreferLanguages()).toEqual(['EN']);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--single', '--prefer-language', 'EN']).getPreferLanguages()).toEqual(['EN']);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--single', '--prefer-language', 'EN,it']).getPreferLanguages()).toEqual(['EN', 'IT']);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--single', '--prefer-language', 'en,IT,JA']).getPreferLanguages()).toEqual(['EN', 'IT', 'JA']);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--single', '--prefer-language', 'EN,en']).getPreferLanguages()).toEqual(['EN']);
   });
 
   it('should parse "prefer-region"', () => {
     expect(() => argumentsParser.parse([...dummyCommandAndRequiredArgs, '--prefer-region'])).toThrow(/not enough arguments/i);
     expect(() => argumentsParser.parse([...dummyCommandAndRequiredArgs, '--prefer-region', 'USA'])).toThrow(/dependent|implication/i);
-    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '-r', 'USA', '--single']).getPreferRegions()).toEqual(['USA']);
-    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--prefer-region', 'USA', '--single']).getPreferRegions()).toEqual(['USA']);
-    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--prefer-region', 'USA,eur', '--single']).getPreferRegions()).toEqual(['USA', 'EUR']);
-    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--prefer-region', 'usa,EUR,JPN', '--single']).getPreferRegions()).toEqual(['USA', 'EUR', 'JPN']);
-    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--prefer-region', 'USA,usa', '--single']).getPreferRegions()).toEqual(['USA']);
+    expect(() => argumentsParser.parse([...dummyCommandAndRequiredArgs, '--single', '--prefer-region', 'XX'])).toThrow(/invalid/i);
+    expect(() => argumentsParser.parse([...dummyCommandAndRequiredArgs, '--single', '--prefer-region', 'EN,XX'])).toThrow(/invalid/i);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--single', '-r', 'USA']).getPreferRegions()).toEqual(['USA']);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--single', '--prefer-region', 'USA']).getPreferRegions()).toEqual(['USA']);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--single', '--prefer-region', 'USA,eur']).getPreferRegions()).toEqual(['USA', 'EUR']);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--single', '--prefer-region', 'usa,EUR,JPN']).getPreferRegions()).toEqual(['USA', 'EUR', 'JPN']);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--single', '--prefer-region', 'USA,usa']).getPreferRegions()).toEqual(['USA']);
   });
 
   it('should parse "prefer-revision-newer"', () => {
@@ -769,6 +837,15 @@ describe('options', () => {
     expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--merge-roms', 'merged', '--merge-roms', 'split']).getMergeRoms()).toEqual(MergeMode.SPLIT);
   });
 
+  it('should parse "allow-excess-sets"', () => {
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--allow-excess-sets']).getAllowExcessSets()).toEqual(true);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--allow-excess-sets', 'true']).getAllowExcessSets()).toEqual(true);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--allow-excess-sets', 'false']).getAllowExcessSets()).toEqual(false);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--allow-excess-sets', '--allow-excess-sets']).getAllowExcessSets()).toEqual(true);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--allow-excess-sets', 'false', '--allow-excess-sets', 'true']).getAllowExcessSets()).toEqual(true);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--allow-excess-sets', 'true', '--allow-excess-sets', 'false']).getAllowExcessSets()).toEqual(false);
+  });
+
   it('should parse "allow-incomplete-sets"', () => {
     expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--allow-incomplete-sets']).getAllowIncompleteSets()).toEqual(true);
     expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--allow-incomplete-sets', 'true']).getAllowIncompleteSets()).toEqual(true);
@@ -785,9 +862,10 @@ describe('options', () => {
     expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--filter-regex', '/[a-z]/i']).getFilterRegex()?.some((regex) => regex.test('UPPER'))).toEqual(true);
     expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--filter-regex', '/[a-z]/i', '--filter-regex', '[0-9]']).getFilterRegex()?.some((regex) => regex.test('UPPER'))).toEqual(false);
 
-    const tempFile = await FsPoly.mktemp(path.join(Constants.GLOBAL_TEMP_DIR, 'temp'));
+    const tempFile = await FsPoly.mktemp(path.join(Temp.getTempDir(), 'temp'));
+    await FsPoly.mkdir(path.dirname(tempFile), { recursive: true });
     try {
-      await util.promisify(fs.writeFile)(tempFile, '\n/[a-z]/i\r\n[0-9]\n\n');
+      await FsPoly.writeFile(tempFile, '\n/[a-z]/i\r\n[0-9]\n\n');
       expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--filter-regex', tempFile]).getFilterRegex()?.some((regex) => regex.test(''))).toEqual(false);
       expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--filter-regex', tempFile]).getFilterRegex()?.some((regex) => regex.test('lower'))).toEqual(true);
       expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--filter-regex', tempFile]).getFilterRegex()?.some((regex) => regex.test('UPPER'))).toEqual(true);
@@ -806,9 +884,10 @@ describe('options', () => {
     expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--filter-regex-exclude', '/[a-z]/i']).getFilterRegexExclude()?.some((regex) => regex.test('UPPER'))).toEqual(true);
     expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--filter-regex-exclude', '/[a-z]/i', '--filter-regex-exclude', '[0-9]']).getFilterRegexExclude()?.some((regex) => regex.test('UPPER'))).toEqual(false);
 
-    const tempFile = await FsPoly.mktemp(path.join(Constants.GLOBAL_TEMP_DIR, 'temp'));
+    const tempFile = await FsPoly.mktemp(path.join(Temp.getTempDir(), 'temp'));
+    await FsPoly.mkdir(path.dirname(tempFile), { recursive: true });
     try {
-      await util.promisify(fs.writeFile)(tempFile, '\n/[a-z]/i\r\n[0-9]\n\n');
+      await FsPoly.writeFile(tempFile, '\n/[a-z]/i\r\n[0-9]\n\n');
       expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--filter-regex-exclude', tempFile]).getFilterRegexExclude()?.some((regex) => regex.test(''))).toEqual(false);
       expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--filter-regex-exclude', tempFile]).getFilterRegexExclude()?.some((regex) => regex.test('lower'))).toEqual(true);
       expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--filter-regex-exclude', tempFile]).getFilterRegexExclude()?.some((regex) => regex.test('UPPER'))).toEqual(true);
@@ -819,7 +898,16 @@ describe('options', () => {
     }
   });
 
-  it('should parse "language-filter"', () => {
+  it('should parse "filter-language"', () => {
+    expect(() => argumentsParser.parse([...dummyCommandAndRequiredArgs, '--filter-language'])).toThrow(/not enough arguments/i);
+    expect(() => argumentsParser.parse([...dummyCommandAndRequiredArgs, '--filter-language', 'XX'])).toThrow(/invalid/i);
+    expect(() => argumentsParser.parse([...dummyCommandAndRequiredArgs, '--filter-language', 'EN,XX'])).toThrow(/invalid/i);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '-L', 'EN']).getFilterLanguage()).toEqual(new Set(['EN']));
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--filter-language', 'EN']).getFilterLanguage()).toEqual(new Set(['EN']));
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--filter-language', 'EN,it']).getFilterLanguage()).toEqual(new Set(['EN', 'IT']));
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--filter-language', 'en,IT,JA']).getFilterLanguage()).toEqual(new Set(['EN', 'IT', 'JA']));
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--filter-language', 'EN,en']).getFilterLanguage()).toEqual(new Set(['EN']));
+
     expect(() => argumentsParser.parse([...dummyCommandAndRequiredArgs, '--language-filter'])).toThrow(/not enough arguments/i);
     expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '-L', 'EN']).getFilterLanguage()).toEqual(new Set(['EN']));
     expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--language-filter', 'EN']).getFilterLanguage()).toEqual(new Set(['EN']));
@@ -828,7 +916,16 @@ describe('options', () => {
     expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--language-filter', 'EN,en']).getFilterLanguage()).toEqual(new Set(['EN']));
   });
 
-  it('should parse "region-filter"', () => {
+  it('should parse "filter-region"', () => {
+    expect(() => argumentsParser.parse([...dummyCommandAndRequiredArgs, '--filter-region'])).toThrow(/not enough arguments/i);
+    expect(() => argumentsParser.parse([...dummyCommandAndRequiredArgs, '--filter-region', 'XYZ'])).toThrow(/invalid/i);
+    expect(() => argumentsParser.parse([...dummyCommandAndRequiredArgs, '--filter-region', 'USA,XYZ'])).toThrow(/invalid/i);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '-R', 'USA']).getFilterRegion()).toEqual(new Set(['USA']));
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--filter-region', 'USA']).getFilterRegion()).toEqual(new Set(['USA']));
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--filter-region', 'USA,eur']).getFilterRegion()).toEqual(new Set(['USA', 'EUR']));
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--filter-region', 'usa,EUR,JPN']).getFilterRegion()).toEqual(new Set(['USA', 'EUR', 'JPN']));
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--filter-region', 'USA,usa']).getFilterRegion()).toEqual(new Set(['USA']));
+
     expect(() => argumentsParser.parse([...dummyCommandAndRequiredArgs, '--region-filter'])).toThrow(/not enough arguments/i);
     expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '-R', 'USA']).getFilterRegion()).toEqual(new Set(['USA']));
     expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--region-filter', 'USA']).getFilterRegion()).toEqual(new Set(['USA']));
@@ -1152,6 +1249,14 @@ describe('options', () => {
     expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--writer-threads', '2']).getWriterThreads()).toEqual(2);
   });
 
+  it('should parse "write-retry"', () => {
+    expect(argumentsParser.parse(dummyCommandAndRequiredArgs).getWriteRetry()).toEqual(2);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--write-retry', '-1']).getWriteRetry()).toEqual(0);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--write-retry', '0']).getWriteRetry()).toEqual(0);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--write-retry', '1']).getWriteRetry()).toEqual(1);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--write-retry', '2']).getWriteRetry()).toEqual(2);
+  });
+
   it('should parse "disable-cache"', () => {
     expect(argumentsParser.parse([...dummyCommandAndRequiredArgs]).getDisableCache())
       .toEqual(false);
@@ -1161,6 +1266,13 @@ describe('options', () => {
     expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--disable-cache', '--disable-cache']).getDisableCache()).toEqual(true);
     expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--disable-cache', 'false', '--disable-cache', 'true']).getDisableCache()).toEqual(true);
     expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--disable-cache', 'true', '--disable-cache', 'false']).getDisableCache()).toEqual(false);
+  });
+
+  it('should parse "cache-path"', () => {
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs]).getCachePath()).toBeUndefined();
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--cache-path', os.devNull]).getCachePath()).toEqual(os.devNull);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--cache-path', os.devNull, '--cache-path', 'igir.cache']).getCachePath()).toEqual('igir.cache');
+    expect(() => argumentsParser.parse([...dummyCommandAndRequiredArgs, '--disable-cache', '--cache-path', os.devNull])).toThrow(/mutually exclusive/i);
   });
 
   it('should parse "verbose"', () => {

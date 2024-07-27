@@ -5,7 +5,7 @@ import {
   Exclude, Expose, instanceToPlain, plainToClassFromExist,
 } from 'class-transformer';
 
-import Constants from '../../../constants.js';
+import Defaults from '../../../globals/defaults.js';
 import fsPoly from '../../../polyfill/fsPoly.js';
 import Patch from '../../patches/patch.js';
 import File, { FileProps } from '../file.js';
@@ -151,7 +151,8 @@ export default class ArchiveEntry<A extends Archive> extends File implements Arc
   }
 
   getExtractedFilePath(): string {
-    return this.entryPath;
+    // Note: {@link Chd} will stuff some extra metadata in the entry path, chop it out
+    return this.entryPath.split('|')[0];
   }
 
   getEntryPath(): string {
@@ -209,7 +210,7 @@ export default class ArchiveEntry<A extends Archive> extends File implements Arc
   ): Promise<T> {
     // Don't extract to memory if this archive entry size is too large, or if we need to manipulate
     // the stream start point
-    if (this.getSize() > Constants.MAX_MEMORY_FILE_SIZE || start > 0) {
+    if (this.getSize() > Defaults.MAX_MEMORY_FILE_SIZE || start > 0) {
       return this.extractToTempFile(
         async (tempFile) => File.createStreamFromFile(tempFile, callback, start),
       );
@@ -219,6 +220,9 @@ export default class ArchiveEntry<A extends Archive> extends File implements Arc
   }
 
   withFilePath(filePath: string): ArchiveEntry<Archive> {
+    if (this.getArchive().getFilePath() === filePath) {
+      return this;
+    }
     return new ArchiveEntry({
       ...this,
       archive: this.getArchive().withFilePath(filePath),
@@ -226,21 +230,16 @@ export default class ArchiveEntry<A extends Archive> extends File implements Arc
   }
 
   withEntryPath(entryPath: string): ArchiveEntry<A> {
-    return new ArchiveEntry({
-      ...this,
-      entryPath,
-    });
+    if (entryPath === this.entryPath) {
+      return this;
+    }
+    return new ArchiveEntry({ ...this, entryPath });
   }
 
   async withFileHeader(fileHeader: ROMHeader): Promise<ArchiveEntry<A>> {
-    // Make sure the file actually has the right file signature
-    const hasHeader = await this.createReadStream(
-      async (stream) => fileHeader.fileHasHeader(stream),
-    );
-    if (!hasHeader) {
+    if (fileHeader === this.fileHeader) {
       return this;
     }
-
     return ArchiveEntry.entryOf({
       ...this,
       fileHeader,
@@ -249,6 +248,9 @@ export default class ArchiveEntry<A extends Archive> extends File implements Arc
   }
 
   withoutFileHeader(): ArchiveEntry<A> {
+    if (this.fileHeader === undefined) {
+      return this;
+    }
     return new ArchiveEntry({
       ...this,
       fileHeader: undefined,
@@ -273,9 +275,9 @@ export default class ArchiveEntry<A extends Archive> extends File implements Arc
 
   toString(): string {
     if (this.getSymlinkSource()) {
-      return `${this.getFilePath()}|${this.getEntryPath()} -> ${this.getSymlinkSource()}|${this.getEntryPath()}`;
+      return `${this.getFilePath()}|${this.getExtractedFilePath()} -> ${this.getSymlinkSource()}|${this.getExtractedFilePath()}`;
     }
-    return `${this.getFilePath()}|${this.getEntryPath()}`;
+    return `${this.getFilePath()}|${this.getExtractedFilePath()}`;
   }
 
   equals(other: File): boolean {

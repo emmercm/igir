@@ -8,7 +8,7 @@
 
     OPL is sensitive to files being fragmented on USB drives and SD cards (MX4SIO/SIO2SD). This means that you should only write one ISO at a time!
 
-`igir` has a `--writer-threads` option to limit the number of files being written at once. You can use the option like this:
+`igir` has a `--writer-threads <threads>` option to limit the number of files being written at once. You can use the option like this:
 
 === ":simple-windowsxp: Windows"
 
@@ -17,6 +17,7 @@
     ```batch
     igir copy extract test clean ^
       --dat "Redump*.zip" ^
+      --dat-name-regex '/playstation 2/i' ^
       --input "ISOs" ^
       --output "E:\DVD" ^
       --dir-letter ^
@@ -30,6 +31,7 @@
     ```shell
     igir copy extract test clean \
       --dat "Redump*.zip" \
+      --dat-name-regex '/playstation 2/i' \
       --input "ISOs/" \
       --output "/Volumes/PS2/DVD/" \
       --dir-letter \
@@ -43,6 +45,7 @@
     ```shell
     igir copy extract test clean \
       --dat "Redump*.zip" \
+      --dat-name-regex '/playstation 2/i' \
       --input "ISOs/" \
       --output "/media/PS2/DVD/" \
       --dir-letter \

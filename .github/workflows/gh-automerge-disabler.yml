@@ -10,16 +10,15 @@ on:
     types:
       - edited
 
-permissions:
-  # actions/checkout@v4, `gh` CLI
-  contents: write
-  # `gh` CLI
-  repository-projects: read
-  pull-requests: write
-
 jobs:
   disable-auto-merge:
     if: ${{ github.event.pull_request.auto_merge && github.event.pull_request.head.repo.full_name != github.event.pull_request.base.repo.full_name }}
+    permissions:
+      # actions/checkout@v4, `gh` CLI
+      contents: write
+      # `gh` CLI
+      repository-projects: read
+      pull-requests: write
     runs-on: ubuntu-latest
     steps:
       # Required for `gh` CLI
@@ -39,6 +38,8 @@ jobs:
 
   remove-comment:
     if: ${{ !github.event.pull_request.auto_merge || github.event.pull_request.head.repo.full_name != github.event.pull_request.base.repo.full_name }}
+    permissions:
+      pull-requests: write
     runs-on: ubuntu-latest
     steps:
       - uses: thollander/actions-comment-pull-request@v2

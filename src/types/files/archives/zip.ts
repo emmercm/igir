@@ -7,20 +7,28 @@ import archiver, { Archiver } from 'archiver';
 import async, { AsyncResultCallback } from 'async';
 import unzipper, { Entry } from 'unzipper';
 
-import Constants from '../../../constants.js';
+import Defaults from '../../../globals/defaults.js';
 import fsPoly from '../../../polyfill/fsPoly.js';
 import StreamPoly from '../../../polyfill/streamPoly.js';
+import ExpectedError from '../../expectedError.js';
 import File from '../file.js';
 import FileChecksums, { ChecksumBitmask, ChecksumProps } from '../fileChecksums.js';
 import Archive from './archive.js';
 import ArchiveEntry from './archiveEntry.js';
 
 export default class Zip extends Archive {
-  static readonly SUPPORTED_EXTENSIONS = ['.zip'];
-
   // eslint-disable-next-line class-methods-use-this
   protected new(filePath: string): Archive {
     return new Zip(filePath);
+  }
+
+  static getExtensions(): string[] {
+    return ['.zip', '.apk', '.ipa', '.jar', '.pk3'];
+  }
+
+  // eslint-disable-next-line class-methods-use-this
+  getExtension(): string {
+    return Zip.getExtensions()[0];
   }
 
   async getArchiveEntries(checksumBitmask: number): Promise<ArchiveEntry<this>[]> {
@@ -32,7 +40,7 @@ export default class Zip extends Archive {
 
     return async.mapLimit(
       archive.files.filter((entryFile) => entryFile.type === 'File'),
-      Constants.ARCHIVE_ENTRY_SCANNER_THREADS_PER_ARCHIVE,
+      Defaults.ARCHIVE_ENTRY_SCANNER_THREADS_PER_ARCHIVE,
       async (entryFile, callback: AsyncResultCallback<ArchiveEntry<this>, Error>) => {
         let checksums: ChecksumProps = {};
         if (checksumBitmask & ~ChecksumBitmask.CRC32) {
@@ -70,9 +78,9 @@ export default class Zip extends Archive {
     entryPath: string,
     extractedFilePath: string,
   ): Promise<void> {
-    const localDir = path.dirname(extractedFilePath);
-    if (!await fsPoly.exists(localDir)) {
-      await fsPoly.mkdir(localDir, { recursive: true });
+    const extractedDir = path.dirname(extractedFilePath);
+    if (!await fsPoly.exists(extractedDir)) {
+      await fsPoly.mkdir(extractedDir, { recursive: true });
     }
 
     return this.extractEntryToStream(
@@ -103,7 +111,7 @@ export default class Zip extends Archive {
       .find((entryFile) => entryFile.path === entryPath.replace(/[\\/]/g, '/'));
     if (!entry) {
       // This should never happen, this likely means the zip file was modified after scanning
-      throw new Error(`didn't find entry '${entryPath}'`);
+      throw new ExpectedError(`didn't find entry '${entryPath}'`);
     }
 
     let stream: Entry;
@@ -133,7 +141,7 @@ export default class Zip extends Archive {
 
     // Start writing the zip file
     const zipFile = archiver('zip', {
-      highWaterMark: Constants.FILE_READING_CHUNK_SIZE,
+      highWaterMark: Defaults.FILE_READING_CHUNK_SIZE,
       zlib: {
         chunkSize: 256 * 1024, // 256KiB buffer to/from zlib, defaults to 16KiB
         level: 9,

@@ -1,6 +1,6 @@
 import path from 'node:path';
 
-import Constants from '../../src/constants.js';
+import Temp from '../../src/globals/temp.js';
 import FsPoly from '../../src/polyfill/fsPoly.js';
 import Cache from '../../src/types/cache.js';
 
@@ -165,9 +165,37 @@ describe('set', () => {
   });
 });
 
+describe('delete', () => {
+  it('should delete a single key', async () => {
+    const cache = new Cache<string>();
+
+    await cache.set('key', 'value');
+    await expect(cache.has('key')).resolves.toEqual(true);
+
+    await cache.delete('key');
+    await expect(cache.has('key')).resolves.toEqual(false);
+  });
+
+  it('should delete regex-matched keys', async () => {
+    const cache = new Cache<string>();
+
+    await cache.set('key1', 'value');
+    await expect(cache.has('key1')).resolves.toEqual(true);
+    await cache.set('key2', 'value');
+    await expect(cache.has('key2')).resolves.toEqual(true);
+    await cache.set('key3', 'value');
+    await expect(cache.has('key3')).resolves.toEqual(true);
+
+    await cache.delete(/key[12]/);
+    await expect(cache.has('key1')).resolves.toEqual(false);
+    await expect(cache.has('key2')).resolves.toEqual(false);
+    await expect(cache.has('key3')).resolves.toEqual(true);
+  });
+});
+
 describe('load', () => {
   it('should not throw on nonexistent file', async () => {
-    const tempFile = await FsPoly.mktemp(path.join(Constants.GLOBAL_TEMP_DIR, 'cache'));
+    const tempFile = await FsPoly.mktemp(path.join(Temp.getTempDir(), 'cache'));
     await expect(FsPoly.exists(tempFile)).resolves.toEqual(false);
 
     const cache = new Cache<number>({ filePath: tempFile });
@@ -175,7 +203,7 @@ describe('load', () => {
   });
 
   it('should not throw on empty file', async () => {
-    const tempFile = await FsPoly.mktemp(path.join(Constants.GLOBAL_TEMP_DIR, 'cache'));
+    const tempFile = await FsPoly.mktemp(path.join(Temp.getTempDir(), 'cache'));
     await FsPoly.touch(tempFile);
     try {
       await expect(FsPoly.exists(tempFile)).resolves.toEqual(true);
@@ -188,7 +216,7 @@ describe('load', () => {
   });
 
   it('should load after saving a populated cache', async () => {
-    const tempFile = await FsPoly.mktemp(path.join(Constants.GLOBAL_TEMP_DIR, 'cache'));
+    const tempFile = await FsPoly.mktemp(path.join(Temp.getTempDir(), 'cache'));
 
     const firstCache = new Cache<number>({ filePath: tempFile });
     for (let i = 0; i < TEST_CACHE_SIZE; i += 1) {
@@ -216,7 +244,7 @@ describe('load', () => {
 
 describe('save', () => {
   it('should not save an empty cache', async () => {
-    const tempFile = await FsPoly.mktemp(path.join(Constants.GLOBAL_TEMP_DIR, 'cache'));
+    const tempFile = await FsPoly.mktemp(path.join(Temp.getTempDir(), 'cache'));
 
     const cache = new Cache<number>({ filePath: tempFile });
     await cache.save();
@@ -229,7 +257,7 @@ describe('save', () => {
   });
 
   it('should save a populated cache', async () => {
-    const tempFile = await FsPoly.mktemp(path.join(Constants.GLOBAL_TEMP_DIR, 'cache'));
+    const tempFile = await FsPoly.mktemp(path.join(Temp.getTempDir(), 'cache'));
 
     const cache = new Cache<number>({ filePath: tempFile });
     for (let i = 0; i < TEST_CACHE_SIZE; i += 1) {

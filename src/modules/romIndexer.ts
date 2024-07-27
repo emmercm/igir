@@ -30,7 +30,7 @@ export default class ROMIndexer extends Module {
   async index(files: File[]): Promise<IndexedFiles> {
     this.progressBar.logTrace(`indexing ${files.length.toLocaleString()} file${files.length !== 1 ? 's' : ''}`);
     await this.progressBar.setSymbol(ProgressBarSymbol.INDEXING);
-    // await this.progressBar.reset(files.length);
+    await this.progressBar.reset(files.length);
 
     // Index the files
     const result = IndexedFiles.fromFiles(files);
@@ -84,7 +84,7 @@ export default class ROMIndexer extends Module {
   }
 
   /**
-   * This ordering should match {@link FileFactory#entriesFrom}
+   * This ordering should match {@link FileFactory#entriesFromArchiveExtension}
    */
   private static archiveEntryPriority(file: File): number {
     if (!(file instanceof ArchiveEntry)) {

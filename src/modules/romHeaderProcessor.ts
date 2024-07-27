@@ -2,6 +2,7 @@ import ProgressBar, { ProgressBarSymbol } from '../console/progressBar.js';
 import DriveSemaphore from '../driveSemaphore.js';
 import ArchiveEntry from '../types/files/archives/archiveEntry.js';
 import File from '../types/files/file.js';
+import FileCache from '../types/files/fileCache.js';
 import ROMHeader from '../types/files/romHeader.js';
 import Options from '../types/options.js';
 import Module from './module.js';
@@ -9,8 +10,6 @@ import Module from './module.js';
 /**
  * For every input {@link ROM} file found, attempt to find a matching {@link Header} and resolve its
  * header-less checksum.
- *
- * This class will not be run concurrently with any other class.
  */
 export default class ROMHeaderProcessor extends Module {
   private readonly options: Options;
@@ -29,7 +28,7 @@ export default class ROMHeaderProcessor extends Module {
     }
 
     this.progressBar.logTrace('processing file headers');
-    await this.progressBar.setSymbol(ProgressBarSymbol.HASHING);
+    await this.progressBar.setSymbol(ProgressBarSymbol.DETECTING_HEADERS);
     await this.progressBar.reset(inputRomFiles.length);
 
     const parsedFiles = await new DriveSemaphore(this.options.getReaderThreads()).map(
@@ -74,30 +73,17 @@ export default class ROMHeaderProcessor extends Module {
       return inputFile;
     }
 
-    // Can get FileHeader from extension, use that
-    const headerForFilename = ROMHeader.headerFromFilename(inputFile.getExtractedFilePath());
-    if (headerForFilename) {
-      this.progressBar.logTrace(`${inputFile.toString()}: reading potentially headered file by filename: ${headerForFilename.getHeaderedFileExtension()}`);
-      const fileWithHeader = await inputFile.withFileHeader(headerForFilename);
-      if (fileWithHeader.getFileHeader()) {
-        this.progressBar.logTrace(`${inputFile.toString()}: found header by filename: ${headerForFilename.getHeaderedFileExtension()}`);
-      } else {
-        this.progressBar.logTrace(`${inputFile.toString()}: found non-applicable header by filename: ${headerForFilename.getHeaderedFileExtension()}`);
-      }
-      return fileWithHeader;
-    }
-
     // Should get FileHeader from File, try to
-    if (this.options.shouldReadFileForHeader(inputFile.getExtractedFilePath())) {
+    if (ROMHeader.headerFromFilename(inputFile.getExtractedFilePath()) !== undefined
+      || this.options.shouldReadFileForHeader(inputFile.getExtractedFilePath())
+    ) {
       this.progressBar.logTrace(`${inputFile.toString()}: reading potentially headered file by file contents`);
-      const headerForFileStream = await inputFile.createReadStream(
-        async (stream) => ROMHeader.headerFromFileStream(stream),
-      );
+      const headerForFileStream = await FileCache.getOrComputeFileHeader(inputFile);
       if (headerForFileStream) {
         this.progressBar.logTrace(`${inputFile.toString()}: found header by file contents: ${headerForFileStream.getHeaderedFileExtension()}`);
         return inputFile.withFileHeader(headerForFileStream);
       }
-      this.progressBar.logWarn(`${inputFile.toString()}: didn't find header by file contents`);
+      this.progressBar.logTrace(`${inputFile.toString()}: didn't find header by file contents`);
     }
 
     // Should not get FileHeader

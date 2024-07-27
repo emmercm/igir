@@ -11,8 +11,6 @@ import Module from './module.js';
 
 /**
  * Process a {@link DAT} with the ROM merge mode specified.
- *
- * This class may be run concurrently with other classes.
  */
 export default class DATMergerSplitter extends Module {
   private readonly options: Options;

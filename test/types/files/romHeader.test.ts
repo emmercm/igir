@@ -14,6 +14,7 @@ describe('headerFromFilename', () => {
   ])('should get a file header for extension: %s', (filePath) => {
     const fileHeader = ROMHeader.headerFromFilename(filePath);
     expect(fileHeader).toBeDefined();
+    expect(fileHeader?.getName()).toBeTruthy();
   });
 
   test.each([
@@ -39,6 +40,7 @@ describe('headerFromFileStream', () => {
       await headeredRom.createReadStream(async (stream) => {
         const fileHeader = await ROMHeader.headerFromFileStream(stream);
         expect(fileHeader).toBeDefined();
+        expect(fileHeader?.getName()).toBeTruthy();
       });
     }
   });
@@ -46,6 +48,10 @@ describe('headerFromFileStream', () => {
   it('should not get a file header for dummy files', async () => {
     const headeredRoms = await new ROMScanner(new Options({
       input: ['./test/fixtures/roms/!(headered){,/}*'],
+      inputExclude: [
+        './test/fixtures/roms/chd',
+        './test/fixtures/roms/nkit',
+      ],
     }), new ProgressBarFake()).scan();
     expect(headeredRoms.length).toBeGreaterThan(0);
 

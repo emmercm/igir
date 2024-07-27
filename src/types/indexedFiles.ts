@@ -136,6 +136,15 @@ export default class IndexedFiles {
       .filter(ArrayPoly.filterUniqueMapped((file) => file.toString()));
   }
 
+  @Memoize()
+  getFilesByFilePath(): Map<string, File[]> {
+    return this.getFiles().reduce((map, file) => {
+      const existingFiles = map.get(file.getFilePath()) ?? [];
+      map.set(file.getFilePath(), [...existingFiles, file]);
+      return map;
+    }, new Map<string, File[]>());
+  }
+
   getSize(): number {
     return this.getFiles().length;
   }

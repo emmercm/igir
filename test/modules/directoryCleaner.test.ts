@@ -1,13 +1,19 @@
 import path from 'node:path';
 
-import Constants from '../../src/constants.js';
+import Temp from '../../src/globals/temp.js';
 import DirectoryCleaner from '../../src/modules/directoryCleaner.js';
 import fsPoly from '../../src/polyfill/fsPoly.js';
 import File from '../../src/types/files/file.js';
-import Options from '../../src/types/options.js';
+import Options, { OptionsProps } from '../../src/types/options.js';
 import ProgressBarFake from '../console/progressBarFake.js';
 
 const ROM_FIXTURES_DIR = path.join('test', 'fixtures', 'roms');
+
+interface CleanResult {
+  cleanedPaths: string[],
+  remainingPaths: string[],
+  movedPaths: string[],
+}
 
 /**
  * NOTE(cemmer): for some entirely unexplainable reason, these tests will start to fail on Windows
@@ -16,61 +22,77 @@ const ROM_FIXTURES_DIR = path.join('test', 'fixtures', 'roms');
  * so it's fine if we implement some workarounds here.
  */
 async function runOutputCleaner(
+  optionsProps: OptionsProps,
   cleanExclude: string[],
   writtenFilePathsToExclude: string[],
-): Promise<string[]> {
+): Promise<CleanResult> {
   // Copy the fixture files to a temp directory
-  const tempDir = await fsPoly.mkdtemp(Constants.GLOBAL_TEMP_DIR);
-  await fsPoly.copyDir(ROM_FIXTURES_DIR, tempDir);
+  const tempInputDir = await fsPoly.mkdtemp(Temp.getTempDir());
+  await fsPoly.copyDir(ROM_FIXTURES_DIR, tempInputDir);
 
-  const writtenRomFilesToExclude = await Promise.all(writtenFilePathsToExclude
-    .map(async (filePath) => File.fileOf({ filePath: path.join(tempDir, filePath) })));
+  try {
+    const writtenRomFilesToExclude = await Promise.all(writtenFilePathsToExclude
+      .map(async (filePath) => File.fileOf({ filePath: path.join(tempInputDir, filePath) })));
 
-  const before = await fsPoly.walk(tempDir);
-  expect(before.length).toBeGreaterThan(0);
+    const before = await fsPoly.walk(tempInputDir);
+    expect(before.length).toBeGreaterThan(0);
 
-  await new DirectoryCleaner(
-    new Options({
-      commands: ['move', 'clean'],
-      cleanExclude: cleanExclude.map((filePath) => path.join(tempDir, filePath)),
-    }),
-    new ProgressBarFake(),
-  ).clean([tempDir], writtenRomFilesToExclude);
-  const after = await fsPoly.walk(tempDir);
+    const cleanedPaths = (await new DirectoryCleaner(
+      new Options({
+        ...optionsProps,
+        commands: ['move', 'clean'],
+        cleanExclude: cleanExclude.map((filePath) => path.join(tempInputDir, filePath)),
+      }),
+      new ProgressBarFake(),
+    ).clean([tempInputDir], writtenRomFilesToExclude))
+      .map((pathLike) => pathLike.replace(tempInputDir + path.sep, ''))
+      .sort();
 
-  // Test cleanup
-  await fsPoly.rm(tempDir, { recursive: true });
+    const after = await fsPoly.walk(tempInputDir);
+    const remainingPaths = after
+      .map((pathLike) => pathLike.replace(tempInputDir + path.sep, ''))
+      .sort();
 
-  return after
-    .map((pathLike) => pathLike.replace(tempDir + path.sep, ''))
-    .sort();
+    const movedPaths = optionsProps.cleanBackup !== undefined
+      ? await fsPoly.walk(optionsProps.cleanBackup)
+      : [];
+
+    return {
+      cleanedPaths,
+      remainingPaths,
+      movedPaths,
+    };
+  } finally {
+    await fsPoly.rm(tempInputDir, { recursive: true, force: true });
+  }
 }
 
 it('should delete nothing if nothing written', async () => {
   const existingFiles = (await fsPoly.walk(ROM_FIXTURES_DIR))
     .map((filePath) => filePath.replace(/^test[\\/]fixtures[\\/]roms[\\/]/, ''))
     .sort();
-  const filesRemaining = await runOutputCleaner([], []);
-  expect(filesRemaining).toEqual(existingFiles);
+  const { remainingPaths } = await runOutputCleaner({}, [], []);
+  expect(remainingPaths).toEqual(existingFiles);
 });
 
 it('should delete nothing if no excess files', async () => {
   const existingFiles = (await fsPoly.walk(ROM_FIXTURES_DIR))
     .map((filePath) => filePath.replace(/^test[\\/]fixtures[\\/]roms[\\/]/, ''))
     .sort();
-  const filesRemaining = await runOutputCleaner([], existingFiles);
-  expect(filesRemaining).toEqual(existingFiles);
+  const { remainingPaths } = await runOutputCleaner({}, [], existingFiles);
+  expect(remainingPaths).toEqual(existingFiles);
 });
 
 it('should delete some if all unmatched and some excluded', async () => {
-  const filesRemaining = await runOutputCleaner([
+  const { remainingPaths } = await runOutputCleaner({}, [
     path.join('**', 'foobar.*'),
   ], [
     'non-existent file',
   ]);
-  expect(filesRemaining).toEqual([
+  expect(remainingPaths).toEqual([
     path.join('7z', 'foobar.7z'),
     'foobar.lnx',
+    path.join('gz', 'foobar.gz'),
     path.join('rar', 'foobar.rar'),
     path.join('raw', 'foobar.lnx'),
     path.join('tar', 'foobar.tar.gz'),
@@ -79,13 +101,13 @@ it('should delete some if all unmatched and some excluded', async () => {
 });
 
 it('should delete some if some matched and nothing excluded', async () => {
-  const filesRemaining = await runOutputCleaner([], [
+  const { remainingPaths } = await runOutputCleaner({}, [], [
     path.join('7z', 'empty.7z'),
     path.join('raw', 'fizzbuzz.nes'),
     path.join('zip', 'foobar.zip'),
     'non-existent file',
   ]);
-  expect(filesRemaining).toEqual([
+  expect(remainingPaths).toEqual([
     path.join('7z', 'empty.7z'),
     path.join('raw', 'fizzbuzz.nes'),
     path.join('zip', 'foobar.zip'),
@@ -93,13 +115,44 @@ it('should delete some if some matched and nothing excluded', async () => {
 });
 
 it('should delete everything if all unmatched and nothing excluded', async () => {
-  await expect(runOutputCleaner([], [
+  const { cleanedPaths, remainingPaths, movedPaths } = await runOutputCleaner({}, [], [
     'non-existent file',
-  ])).resolves.toHaveLength(0);
+  ]);
+  expect(cleanedPaths.length).toBeGreaterThan(0);
+  expect(remainingPaths).toHaveLength(0);
+  expect(movedPaths).toHaveLength(0);
+});
+
+it('should move everything if all unmatched and nothing excluded', async () => {
+  const tempMoveDir = await fsPoly.mkdtemp(Temp.getTempDir());
+  try {
+    const { cleanedPaths, remainingPaths, movedPaths } = await runOutputCleaner({
+      cleanBackup: tempMoveDir,
+    }, [], [
+      'non-existent file',
+    ]);
+    expect(cleanedPaths.length).toBeGreaterThan(0);
+    expect(remainingPaths).toHaveLength(0);
+    expect(movedPaths).toHaveLength(cleanedPaths.length);
+  } finally {
+    await fsPoly.rm(tempMoveDir, { recursive: true, force: true });
+  }
+});
+
+it('should delete nothing if all unmatched but doing a dry run', async () => {
+  const existingFiles = (await fsPoly.walk(ROM_FIXTURES_DIR))
+    .map((filePath) => filePath.replace(/^test[\\/]fixtures[\\/]roms[\\/]/, ''))
+    .sort();
+  const { remainingPaths } = await runOutputCleaner({
+    cleanDryRun: true,
+  }, [], [
+    'non-existent file',
+  ]);
+  expect(remainingPaths).toEqual(existingFiles);
 });
 
 it('should delete hard links', async () => {
-  const tempDir = await fsPoly.mkdtemp(Constants.GLOBAL_TEMP_DIR);
+  const tempDir = await fsPoly.mkdtemp(Temp.getTempDir());
   try {
     const filesDir = path.join(tempDir, 'files');
     await fsPoly.mkdir(filesDir);
@@ -123,8 +176,8 @@ it('should delete hard links', async () => {
       new ProgressBarFake(),
     ).clean([linksDir], [await File.fileOf({ filePath: tempLinkOne })]);
 
-    const filesRemaining = await fsPoly.walk(tempDir);
-    expect(filesRemaining).toEqual([
+    const remainingPaths = await fsPoly.walk(tempDir);
+    expect(remainingPaths).toEqual([
       // Original files were preserved
       tempFileOne,
       tempFileTwo,
@@ -137,7 +190,7 @@ it('should delete hard links', async () => {
 });
 
 it('should delete symlinks', async () => {
-  const tempDir = await fsPoly.mkdtemp(Constants.GLOBAL_TEMP_DIR);
+  const tempDir = await fsPoly.mkdtemp(Temp.getTempDir());
   try {
     const filesDir = path.join(tempDir, 'files');
     await fsPoly.mkdir(filesDir);
@@ -161,8 +214,8 @@ it('should delete symlinks', async () => {
       new ProgressBarFake(),
     ).clean([linksDir], [await File.fileOf({ filePath: tempLinkOne })]);
 
-    const filesRemaining = await fsPoly.walk(tempDir);
-    expect(filesRemaining).toEqual([
+    const remainingPaths = await fsPoly.walk(tempDir);
+    expect(remainingPaths).toEqual([
       // Original files were preserved
       tempFileOne,
       tempFileTwo,

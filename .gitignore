@@ -118,31 +118,65 @@ site/
 
 # ROMs
 *.7z
+*.a52
 *.bin
+*.cd1
+*.cd2
+*.chd
+*.col
 *.cue
 *.dvd
 *.gb
 *.gba
 *.gbc
+*.gcz
 *.gdi
+*.gg
+*.ic1
+*.img
+*.iso
+*.jar
+*.lo
+*.lyx
+*.min
+*.nds
 *.nes
+*.ngp
+*.pce
+*.pk3
+*.pup
+*.raw
 *.rom
+*.rvz
 *.sfc
 *.smc
+*.sms
+*.szx
+*.wad
+*.wia
+*.x1
+*.x1t
+*.zim
+*.z64
 *.zip
 
 # ROM pack excess
+*.bmp
 *.csv
+*.db
 *.desktop
+*.fnt
 *.jpg
 *.png
 *.sa1
 *.sav
 *.sg1
+*.sha
 *.sgm
 *.sqlite
 *.torrent
 *.txt
+*.wav
 *.xml
 
 # ROM patches

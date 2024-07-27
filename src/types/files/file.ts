@@ -7,7 +7,8 @@ import {
   Exclude, Expose, instanceToPlain, plainToClassFromExist,
 } from 'class-transformer';
 
-import Constants from '../../constants.js';
+import Defaults from '../../globals/defaults.js';
+import Temp from '../../globals/temp.js';
 import FilePoly from '../../polyfill/filePoly.js';
 import fsPoly from '../../polyfill/fsPoly.js';
 import URLPoly from '../../polyfill/urlPoly.js';
@@ -18,6 +19,7 @@ import ROMHeader from './romHeader.js';
 export interface FileProps extends ChecksumProps {
   readonly filePath: string;
   readonly size?: number;
+  readonly checksumBitmask?: number;
   readonly crc32WithoutHeader?: string;
   readonly md5WithoutHeader?: string;
   readonly sha1WithoutHeader?: string;
@@ -33,6 +35,8 @@ export default class File implements FileProps {
 
   @Expose()
   readonly size: number;
+
+  readonly checksumBitmask?: number;
 
   @Expose()
   readonly crc32?: string;
@@ -63,6 +67,7 @@ export default class File implements FileProps {
   protected constructor(fileProps: FileProps) {
     this.filePath = path.normalize(fileProps.filePath);
     this.size = fileProps.size ?? 0;
+    this.checksumBitmask = fileProps.checksumBitmask;
     this.crc32 = fileProps.crc32?.toLowerCase().replace(/^0x/, '').padStart(8, '0');
     this.crc32WithoutHeader = fileProps.crc32WithoutHeader?.toLowerCase().replace(/^0x/, '').padStart(8, '0');
     this.md5 = fileProps.md5?.toLowerCase().replace(/^0x/, '').padStart(32, '0');
@@ -78,7 +83,7 @@ export default class File implements FileProps {
 
   static async fileOf(
     fileProps: FileProps,
-    checksumBitmask: number = ChecksumBitmask.CRC32,
+    checksumBitmask: number = ChecksumBitmask.NONE,
   ): Promise<File> {
     let finalSize = fileProps.size;
     let finalCrcWithHeader = fileProps.crc32;
@@ -137,7 +142,6 @@ export default class File implements FileProps {
       }
     } else {
       finalSize = finalSize ?? 0;
-      finalCrcWithHeader = finalCrcWithHeader ?? '';
     }
     finalCrcWithoutHeader = finalCrcWithoutHeader ?? finalCrcWithHeader;
     finalMd5WithoutHeader = finalMd5WithoutHeader ?? finalMd5WithHeader;
@@ -147,6 +151,9 @@ export default class File implements FileProps {
     return new File({
       filePath: fileProps.filePath,
       size: finalSize,
+      // We were told not to calculate any checksums (default behavior), but some might have been
+      // provided, so let {@link getChecksumBitmask()} figure it out
+      checksumBitmask: checksumBitmask !== ChecksumBitmask.NONE ? checksumBitmask : undefined,
       crc32: finalCrcWithHeader,
       crc32WithoutHeader: finalCrcWithoutHeader,
       md5: finalMd5WithHeader,
@@ -246,7 +253,7 @@ export default class File implements FileProps {
   }
 
   public getChecksumBitmask(): number {
-    return (this.getCrc32()?.replace(/^0+|0+$/, '') ? ChecksumBitmask.CRC32 : 0)
+    return this.checksumBitmask ?? (this.getCrc32()?.replace(/^0+|0+$/, '') ? ChecksumBitmask.CRC32 : 0)
       | (this.getMd5()?.replace(/^0+|0+$/, '') ? ChecksumBitmask.MD5 : 0)
       | (this.getSha1()?.replace(/^0+|0+$/, '') ? ChecksumBitmask.SHA1 : 0)
       | (this.getSha256()?.replace(/^0+|0+$/, '') ? ChecksumBitmask.SHA256 : 0);
@@ -262,9 +269,13 @@ export default class File implements FileProps {
     callback: (tempFile: string) => (T | Promise<T>),
   ): Promise<T> {
     const tempFile = await fsPoly.mktemp(path.join(
-      Constants.GLOBAL_TEMP_DIR,
+      Temp.getTempDir(),
       path.basename(this.getFilePath()),
     ));
+    const tempDir = path.dirname(tempFile);
+    if (!await fsPoly.exists(tempDir)) {
+      await fsPoly.mkdir(tempDir, { recursive: true });
+    }
     await fsPoly.copyFile(this.getFilePath(), tempFile);
 
     try {
@@ -304,7 +315,7 @@ export default class File implements FileProps {
 
     // Complex case: create a temp file with the header removed
     const tempFile = await fsPoly.mktemp(path.join(
-      Constants.GLOBAL_TEMP_DIR,
+      Temp.getTempDir(),
       path.basename(this.getExtractedFilePath()),
     ));
     if (patch) {
@@ -354,7 +365,7 @@ export default class File implements FileProps {
 
     // Complex case: create a temp patched file and then create read stream at an offset
     const tempFile = await fsPoly.mktemp(path.join(
-      Constants.GLOBAL_TEMP_DIR,
+      Temp.getTempDir(),
       path.basename(this.getExtractedFilePath()),
     ));
     try {
@@ -374,7 +385,7 @@ export default class File implements FileProps {
     const stream = fs.createReadStream(filePath, {
       start,
       end,
-      highWaterMark: Constants.FILE_READING_CHUNK_SIZE,
+      highWaterMark: Defaults.FILE_READING_CHUNK_SIZE,
     });
     try {
       return await callback(stream);
@@ -386,6 +397,11 @@ export default class File implements FileProps {
   async downloadToPath(filePath: string): Promise<File> {
     if (await fsPoly.exists(this.getFilePath())) {
       return this;
+    }
+
+    const fileDir = path.dirname(filePath);
+    if (!await fsPoly.exists(fileDir)) {
+      await fsPoly.mkdir(fileDir, { recursive: true });
     }
 
     return new Promise((resolve, reject) => {
@@ -409,26 +425,28 @@ export default class File implements FileProps {
       return this;
     }
 
-    const filePath = await fsPoly.mktemp(path.join(Constants.GLOBAL_TEMP_DIR, tempPrefix));
+    const filePath = await fsPoly.mktemp(path.join(Temp.getTempDir(), tempPrefix));
     return this.downloadToPath(filePath);
   }
 
-  withFilePath(filePath: string): File {
+  withProps(props: Omit<FileProps, 'filePath' | 'fileHeader' | 'patch'>): File {
     return new File({
       ...this,
-      filePath,
+      ...props,
     });
   }
 
-  async withFileHeader(fileHeader: ROMHeader): Promise<File> {
-    // Make sure the file actually has the right file signature
-    const hasHeader = await this.createReadStream(
-      async (stream) => fileHeader.fileHasHeader(stream),
-    );
-    if (!hasHeader) {
+  withFilePath(filePath: string): File {
+    if (filePath === this.filePath) {
       return this;
     }
+    return new File({ ...this, filePath });
+  }
 
+  async withFileHeader(fileHeader: ROMHeader): Promise<File> {
+    if (fileHeader === this.fileHeader) {
+      return this;
+    }
     return File.fileOf({
       ...this,
       fileHeader,
@@ -437,6 +455,9 @@ export default class File implements FileProps {
   }
 
   withoutFileHeader(): File {
+    if (this.fileHeader === undefined) {
+      return this;
+    }
     return new File({
       ...this,
       fileHeader: undefined,
@@ -490,8 +511,7 @@ export default class File implements FileProps {
       return true;
     }
     return this.getFilePath() === other.getFilePath()
-        && this.getSize() === other.getSize()
-        && this.getCrc32() === other.getCrc32()
-        && this.getCrc32WithoutHeader() === other.getCrc32WithoutHeader();
+        && this.hashCode() === other.hashCode()
+        && this.getFileHeader() === other.getFileHeader();
   }
 }

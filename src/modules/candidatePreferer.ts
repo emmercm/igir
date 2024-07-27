@@ -9,8 +9,6 @@ import Module from './module.js';
 /**
  * Apply any specified preference options to the {@link ReleaseCandidate}s for each
  * {@link Parent}.
- *
- * This class may be run concurrently with other classes.
  */
 export default class CandidatePreferer extends Module {
   private readonly options: Options;
