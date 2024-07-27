@@ -212,15 +212,6 @@ describe('options', () => {
     expect(options.getHelp()).toEqual(false);
   });
 
-  it('should parse "fixdat"', () => {
-    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--dat', os.devNull, '--fixdat']).shouldFixdat()).toEqual(true);
-    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--dat', os.devNull, '--fixdat', 'true']).shouldFixdat()).toEqual(true);
-    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--dat', os.devNull, '--fixdat', 'false']).shouldFixdat()).toEqual(false);
-    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--dat', os.devNull, '--fixdat', '--fixdat']).shouldFixdat()).toEqual(true);
-    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--dat', os.devNull, '--fixdat', 'false', '--fixdat', 'true']).shouldFixdat()).toEqual(true);
-    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--dat', os.devNull, '--fixdat', 'true', '--fixdat', 'false']).shouldFixdat()).toEqual(false);
-  });
-
   it('should parse "input"', async () => {
     expect(() => argumentsParser.parse(['copy', '--output', os.devNull])).toThrow(/missing required argument/i);
     expect(() => argumentsParser.parse(['move', '--output', os.devNull])).toThrow(/missing required argument/i);
@@ -304,10 +295,6 @@ describe('options', () => {
     expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--dat-name-regex', '[a-z]']).getDatNameRegex()?.some((regex) => regex.test('UPPER'))).toEqual(false);
     expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--dat-name-regex', '/[a-z]/i']).getDatNameRegex()?.some((regex) => regex.test('UPPER'))).toEqual(true);
     expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--dat-name-regex', '/[a-z]/i', '--dat-name-regex', '[0-9]']).getDatNameRegex()?.some((regex) => regex.test('UPPER'))).toEqual(false);
-    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--dat-regex', '[a-z]']).getDatNameRegex()?.some((regex) => regex.test('lower'))).toEqual(true);
-    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--dat-regex', '[a-z]']).getDatNameRegex()?.some((regex) => regex.test('UPPER'))).toEqual(false);
-    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--dat-regex', '/[a-z]/i']).getDatNameRegex()?.some((regex) => regex.test('UPPER'))).toEqual(true);
-    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--dat-regex', '/[a-z]/i', '--dat-regex', '[0-9]']).getDatNameRegex()?.some((regex) => regex.test('UPPER'))).toEqual(false);
 
     const tempFile = await FsPoly.mktemp(path.join(Temp.getTempDir(), 'temp'));
     await FsPoly.mkdir(path.dirname(tempFile), { recursive: true });
@@ -330,10 +317,6 @@ describe('options', () => {
     expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--dat-name-regex-exclude', '[a-z]']).getDatNameRegexExclude()?.some((regex) => regex.test('UPPER'))).toEqual(false);
     expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--dat-name-regex-exclude', '/[a-z]/i']).getDatNameRegexExclude()?.some((regex) => regex.test('UPPER'))).toEqual(true);
     expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--dat-name-regex-exclude', '/[a-z]/i', '--dat-name-regex-exclude', '[0-9]']).getDatNameRegexExclude()?.some((regex) => regex.test('UPPER'))).toEqual(false);
-    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--dat-regex-exclude', '[a-z]']).getDatNameRegexExclude()?.some((regex) => regex.test('lower'))).toEqual(true);
-    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--dat-regex-exclude', '[a-z]']).getDatNameRegexExclude()?.some((regex) => regex.test('UPPER'))).toEqual(false);
-    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--dat-regex-exclude', '/[a-z]/i']).getDatNameRegexExclude()?.some((regex) => regex.test('UPPER'))).toEqual(true);
-    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--dat-regex-exclude', '/[a-z]/i', '--dat-regex-exclude', '[0-9]']).getDatNameRegexExclude()?.some((regex) => regex.test('UPPER'))).toEqual(false);
 
     const tempFile = await FsPoly.mktemp(path.join(Temp.getTempDir(), 'temp'));
     await FsPoly.mkdir(path.dirname(tempFile), { recursive: true });
@@ -616,14 +599,6 @@ describe('options', () => {
   });
 
   it('should parse "symlink"', () => {
-    expect(argumentsParser.parse(['symlink', ...dummyRequiredArgs]).getSymlink()).toEqual(true);
-    expect(argumentsParser.parse(['symlink', ...dummyRequiredArgs, '--symlink']).getSymlink()).toEqual(true);
-    expect(argumentsParser.parse(['symlink', ...dummyRequiredArgs, '--symlink', 'true']).getSymlink()).toEqual(true);
-    expect(argumentsParser.parse(['symlink', ...dummyRequiredArgs, '--symlink', 'false']).getSymlink()).toEqual(false);
-    expect(argumentsParser.parse(['symlink', ...dummyRequiredArgs, '--symlink', '--symlink']).getSymlink()).toEqual(true);
-    expect(argumentsParser.parse(['symlink', ...dummyRequiredArgs, '--symlink', 'false', '--symlink', 'true']).getSymlink()).toEqual(true);
-    expect(argumentsParser.parse(['symlink', ...dummyRequiredArgs, '--symlink', 'true', '--symlink', 'false']).getSymlink()).toEqual(false);
-
     expect(() => argumentsParser.parse([...dummyCommandAndRequiredArgs, '--symlink']).getSymlink()).toThrow(/missing required command/i);
     expect(argumentsParser.parse(['link', ...dummyRequiredArgs]).getSymlink()).toEqual(false);
     expect(argumentsParser.parse(['link', ...dummyRequiredArgs, '--symlink']).getSymlink()).toEqual(true);
@@ -635,14 +610,6 @@ describe('options', () => {
   });
 
   it('should parse "symlink-relative"', () => {
-    expect(() => argumentsParser.parse([...dummyCommandAndRequiredArgs, '--symlink-relative'])).toThrow(/dependent|implication/i);
-    expect(argumentsParser.parse(['symlink', ...dummyRequiredArgs, '--symlink-relative']).getSymlinkRelative()).toEqual(true);
-    expect(argumentsParser.parse(['symlink', ...dummyRequiredArgs, '--symlink-relative', 'true']).getSymlinkRelative()).toEqual(true);
-    expect(argumentsParser.parse(['symlink', ...dummyRequiredArgs, '--symlink-relative', 'false']).getSymlinkRelative()).toEqual(false);
-    expect(argumentsParser.parse(['symlink', ...dummyRequiredArgs, '--symlink-relative', '--symlink-relative']).getSymlinkRelative()).toEqual(true);
-    expect(argumentsParser.parse(['symlink', ...dummyRequiredArgs, '--symlink-relative', 'false', '--symlink-relative', 'true']).getSymlinkRelative()).toEqual(true);
-    expect(argumentsParser.parse(['symlink', ...dummyRequiredArgs, '--symlink-relative', 'true', '--symlink-relative', 'false']).getSymlinkRelative()).toEqual(false);
-
     expect(() => argumentsParser.parse(['link', ...dummyRequiredArgs, '--symlink-relative'])).toThrow(/dependent|implication/i);
     expect(argumentsParser.parse(['link', ...dummyRequiredArgs, '--symlink', '--symlink-relative']).getSymlinkRelative()).toEqual(true);
     expect(argumentsParser.parse(['link', ...dummyRequiredArgs, '--symlink', '--symlink-relative', 'true']).getSymlinkRelative()).toEqual(true);
@@ -907,13 +874,6 @@ describe('options', () => {
     expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--filter-language', 'EN,it']).getFilterLanguage()).toEqual(new Set(['EN', 'IT']));
     expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--filter-language', 'en,IT,JA']).getFilterLanguage()).toEqual(new Set(['EN', 'IT', 'JA']));
     expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--filter-language', 'EN,en']).getFilterLanguage()).toEqual(new Set(['EN']));
-
-    expect(() => argumentsParser.parse([...dummyCommandAndRequiredArgs, '--language-filter'])).toThrow(/not enough arguments/i);
-    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '-L', 'EN']).getFilterLanguage()).toEqual(new Set(['EN']));
-    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--language-filter', 'EN']).getFilterLanguage()).toEqual(new Set(['EN']));
-    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--language-filter', 'EN,it']).getFilterLanguage()).toEqual(new Set(['EN', 'IT']));
-    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--language-filter', 'en,IT,JA']).getFilterLanguage()).toEqual(new Set(['EN', 'IT', 'JA']));
-    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--language-filter', 'EN,en']).getFilterLanguage()).toEqual(new Set(['EN']));
   });
 
   it('should parse "filter-region"', () => {
@@ -925,13 +885,6 @@ describe('options', () => {
     expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--filter-region', 'USA,eur']).getFilterRegion()).toEqual(new Set(['USA', 'EUR']));
     expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--filter-region', 'usa,EUR,JPN']).getFilterRegion()).toEqual(new Set(['USA', 'EUR', 'JPN']));
     expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--filter-region', 'USA,usa']).getFilterRegion()).toEqual(new Set(['USA']));
-
-    expect(() => argumentsParser.parse([...dummyCommandAndRequiredArgs, '--region-filter'])).toThrow(/not enough arguments/i);
-    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '-R', 'USA']).getFilterRegion()).toEqual(new Set(['USA']));
-    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--region-filter', 'USA']).getFilterRegion()).toEqual(new Set(['USA']));
-    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--region-filter', 'USA,eur']).getFilterRegion()).toEqual(new Set(['USA', 'EUR']));
-    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--region-filter', 'usa,EUR,JPN']).getFilterRegion()).toEqual(new Set(['USA', 'EUR', 'JPN']));
-    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--region-filter', 'USA,usa']).getFilterRegion()).toEqual(new Set(['USA']));
   });
 
   it('should parse "no-bios"', () => {
@@ -1104,14 +1057,6 @@ describe('options', () => {
   });
 
   it('should parse "no-program-roms"', () => {
-    expect(() => argumentsParser.parse([...dummyCommandAndRequiredArgs, '--no-test-roms', '--only-test-roms'])).toThrow(/mutually exclusive/i);
-    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--no-test-roms']).getNoProgram()).toEqual(true);
-    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--no-test-roms', 'true']).getNoProgram()).toEqual(true);
-    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--no-test-roms', 'false']).getNoProgram()).toEqual(false);
-    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--no-test-roms', '--no-test-roms']).getNoProgram()).toEqual(true);
-    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--no-test-roms', 'false', '--no-test-roms', 'true']).getNoProgram()).toEqual(true);
-    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--no-test-roms', 'true', '--no-test-roms', 'false']).getNoProgram()).toEqual(false);
-
     expect(() => argumentsParser.parse([...dummyCommandAndRequiredArgs, '--no-program', '--only-program'])).toThrow(/mutually exclusive/i);
     expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--no-program']).getNoProgram()).toEqual(true);
     expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--no-program', 'true']).getNoProgram()).toEqual(true);
@@ -1122,14 +1067,6 @@ describe('options', () => {
   });
 
   it('should parse "only-program"', () => {
-    expect(() => argumentsParser.parse([...dummyCommandAndRequiredArgs, '--only-test-roms', '--no-test-roms'])).toThrow(/mutually exclusive/i);
-    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--only-test-roms']).getOnlyProgram()).toEqual(true);
-    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--only-test-roms', 'true']).getOnlyProgram()).toEqual(true);
-    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--only-test-roms', 'false']).getOnlyProgram()).toEqual(false);
-    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--only-test-roms', '--only-test-roms']).getOnlyProgram()).toEqual(true);
-    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--only-test-roms', 'false', '--only-test-roms', 'true']).getOnlyProgram()).toEqual(true);
-    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--only-test-roms', 'true', '--only-test-roms', 'false']).getOnlyProgram()).toEqual(false);
-
     expect(() => argumentsParser.parse([...dummyCommandAndRequiredArgs, '--only-program', '--no-program'])).toThrow(/mutually exclusive/i);
     expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--only-program']).getOnlyProgram()).toEqual(true);
     expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--only-program', 'true']).getOnlyProgram()).toEqual(true);
