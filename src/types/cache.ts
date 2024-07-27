@@ -25,11 +25,15 @@ export interface CacheProps {
 export default class Cache<V> {
   private static readonly BUFFER_ENCODING: BufferEncoding = 'binary';
 
+  private static readonly KEY_MUTEXES_MAX_COUNT = 1000;
+
   private keyOrder: Set<string> = new Set();
 
   private keyValues = new Map<string, V>();
 
   private readonly keyMutexes = new Map<string, Mutex>();
+
+  private keyMutexesLru: Set<string> = new Set();
 
   private readonly keyMutexesMutex = new Mutex();
 
@@ -48,7 +52,9 @@ export default class Cache<V> {
     this.fileFlushMillis = props?.fileFlushMillis;
     if (props?.saveOnExit) {
       // WARN: Jest won't call this: https://github.com/jestjs/jest/issues/10927
-      process.once('beforeExit', this.save);
+      process.once('beforeExit', async () => {
+        await this.save();
+      });
     }
     this.maxSize = props?.maxSize;
   }
@@ -85,10 +91,17 @@ export default class Cache<V> {
    * Get the value of a key in the cache if it exists, or compute a value and set it in the cache
    * otherwise.
    */
-  public async getOrCompute(key: string, runnable: (key: string) => (V | Promise<V>)): Promise<V> {
+  public async getOrCompute(
+    key: string,
+    runnable: (key: string) => V | Promise<V>,
+    shouldRecompute?: (value: V) => boolean | Promise<boolean>,
+  ): Promise<V> {
     return this.lockKey(key, async () => {
       if (this.keyValues.has(key)) {
-        return this.keyValues.get(key) as V;
+        const existingValue = this.keyValues.get(key) as V;
+        if (shouldRecompute === undefined || !await shouldRecompute(existingValue)) {
+          return existingValue;
+        }
       }
 
       const val = await runnable(key);
@@ -122,22 +135,24 @@ export default class Cache<V> {
    * Delete a key in the cache.
    */
   public async delete(key: string | RegExp): Promise<void> {
-    let keys: string[];
+    let keysToDelete: string[];
     if (key instanceof RegExp) {
-      keys = [...this.keys().keys()].filter((k) => k.match(key));
+      keysToDelete = [...this.keys().keys()].filter((k) => k.match(key));
     } else {
-      keys = [key];
+      keysToDelete = [key];
     }
 
-    await Promise.all(keys.map(async (k) => {
-      await this.lockKey(k, () => this.deleteUnsafe(k));
-    }));
+    // Note: avoiding lockKey() because it could get expensive with many keys to delete
+    await this.keyMutexesMutex.runExclusive(() => {
+      keysToDelete.forEach((k) => this.deleteUnsafe(k));
+    });
   }
 
   private deleteUnsafe(key: string): void {
     this.keyOrder.delete(key);
     this.keyValues.delete(key);
     this.keyMutexes.delete(key);
+    this.keyMutexesLru.delete(key);
     this.saveWithTimeout();
   }
 
@@ -146,7 +161,22 @@ export default class Cache<V> {
     const keyMutex = await this.keyMutexesMutex.runExclusive(() => {
       if (!this.keyMutexes.has(key)) {
         this.keyMutexes.set(key, new Mutex());
+        this.keyMutexesLru = new Set([key, ...this.keyMutexesLru]);
+
+        // Expire least recently used keys
+        [...this.keyMutexesLru]
+          .filter((lruKey) => !this.keyMutexes.get(lruKey)?.isLocked())
+          .slice(Cache.KEY_MUTEXES_MAX_COUNT)
+          .forEach((lruKey) => {
+            this.keyMutexes.delete(lruKey);
+            this.keyMutexesLru.delete(lruKey);
+          });
       }
+
+      // Mark this key as recently used
+      this.keyMutexesLru.delete(key);
+      this.keyMutexesLru = new Set([key, ...this.keyMutexesLru]);
+
       return this.keyMutexes.get(key) as Mutex;
     });
 
@@ -163,17 +193,19 @@ export default class Cache<V> {
       return this;
     }
 
-    const cacheData = JSON.parse(
-      await util.promisify(fs.readFile)(this.filePath, { encoding: Cache.BUFFER_ENCODING }),
-    ) as CacheData;
-    const compressed = Buffer.from(cacheData.data, Cache.BUFFER_ENCODING);
-    const decompressed = await util.promisify(zlib.inflate)(compressed);
-    const keyValuesObject = JSON.parse(decompressed.toString(Cache.BUFFER_ENCODING));
-    const keyValuesEntries = Object.entries(keyValuesObject) as [string, V][];
-    this.keyValues = new Map(keyValuesEntries);
-    if (this.maxSize !== undefined) {
-      this.keyOrder = new Set(Object.keys(keyValuesObject));
-    }
+    try {
+      const cacheData = JSON.parse(
+        await fs.promises.readFile(this.filePath, { encoding: Cache.BUFFER_ENCODING }),
+      ) as CacheData;
+      const compressed = Buffer.from(cacheData.data, Cache.BUFFER_ENCODING);
+      const decompressed = await util.promisify(zlib.inflate)(compressed);
+      const keyValuesObject = JSON.parse(decompressed.toString(Cache.BUFFER_ENCODING));
+      const keyValuesEntries = Object.entries(keyValuesObject) as [string, V][];
+      this.keyValues = new Map(keyValuesEntries);
+      if (this.maxSize !== undefined) {
+        this.keyOrder = new Set(Object.keys(keyValuesObject));
+      }
+    } catch { /* ignored */ }
 
     return this;
   }
@@ -219,7 +251,7 @@ export default class Cache<V> {
 
     // Write to a temp file first, then overwrite the old cache file
     const tempFile = await FsPoly.mktemp(this.filePath);
-    await util.promisify(fs.writeFile)(
+    await FsPoly.writeFile(
       tempFile,
       JSON.stringify(cacheData),
       { encoding: Cache.BUFFER_ENCODING },

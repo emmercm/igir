@@ -6,8 +6,6 @@ import ProgressBarCLI from '../console/progressBarCli.js';
 
 /**
  * Check if the current Node.js version has reached EOL and log if it has.
- *
- * This class will not be run concurrently with any other class.
  */
 export default class EndOfLifeChecker {
   private static readonly END_OF_LIFE_DATES = [
@@ -29,6 +27,7 @@ export default class EndOfLifeChecker {
     [19, new Date('2023-06-01')],
     [20, new Date('2026-04-30')],
     [21, new Date('2024-06-01')],
+    [22, new Date('2027-04-30')],
   ] satisfies [number, Date][];
 
   private readonly logger: Logger;

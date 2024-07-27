@@ -1,6 +1,7 @@
 // eslint-disable-next-line max-classes-per-file
 import FilePoly from '../../polyfill/filePoly.js';
 import fsPoly from '../../polyfill/fsPoly.js';
+import ExpectedError from '../expectedError.js';
 import File from '../files/file.js';
 import Patch from './patch.js';
 
@@ -126,7 +127,7 @@ class VcdiffHeader {
     const header = await patchFile.readNext(3);
     if (!header.equals(VcdiffHeader.FILE_SIGNATURE)) {
       await patchFile.close();
-      throw new Error(`Vcdiff patch header is invalid: ${patchFile.getPathLike()}`);
+      throw new ExpectedError(`Vcdiff patch header is invalid: ${patchFile.getPathLike()}`);
     }
     patchFile.skipNext(1); // version
 
@@ -143,7 +144,7 @@ class VcdiffHeader {
          *    bytes "59 5A", only the starting bytes "FD 37 7A 58 5A 00" (after the above number)
          */
         await patchFile.close();
-        throw new Error(`unsupported Vcdiff secondary decompressor ${VcdiffSecondaryCompression[secondaryDecompressorId]}: ${patchFile.getPathLike()}`);
+        throw new ExpectedError(`unsupported Vcdiff secondary decompressor ${VcdiffSecondaryCompression[secondaryDecompressorId]}: ${patchFile.getPathLike()}`);
       }
     }
 
@@ -152,7 +153,7 @@ class VcdiffHeader {
       const codeTableLength = await Patch.readVcdiffUintFromFile(patchFile);
       if (codeTableLength) {
         await patchFile.close();
-        throw new Error(`can't parse Vcdiff application-defined code table: ${patchFile.getPathLike()}`);
+        throw new ExpectedError(`can't parse Vcdiff application-defined code table: ${patchFile.getPathLike()}`);
       }
     }
 

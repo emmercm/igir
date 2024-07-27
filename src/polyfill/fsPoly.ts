@@ -1,5 +1,7 @@
 import crypto from 'node:crypto';
-import fs, { MakeDirectoryOptions, PathLike, RmOptions } from 'node:fs';
+import fs, {
+  MakeDirectoryOptions, ObjectEncodingOptions, PathLike, RmOptions,
+} from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import util from 'node:util';
@@ -7,12 +9,13 @@ import util from 'node:util';
 import { isNotJunk } from 'junk';
 import nodeDiskInfo from 'node-disk-info';
 
+import ExpectedError from '../types/expectedError.js';
 import ArrayPoly from './arrayPoly.js';
 
 export type FsWalkCallback = (increment: number) => void;
 
 export default class FsPoly {
-  static readonly FILE_READING_CHUNK_SIZE = 1024 * 1024; // 1MiB
+  static readonly FILE_READING_CHUNK_SIZE = 64 * 1024; // 64KiB, Node.js v22 default
 
   // Assume that all drives we're reading from or writing to were already mounted at startup
   public static readonly DRIVES = nodeDiskInfo.getDiskInfoSync();
@@ -53,7 +56,15 @@ export default class FsPoly {
 
   static async copyFile(src: string, dest: string): Promise<void> {
     const previouslyExisted = await this.exists(src);
-    await util.promisify(fs.copyFile)(src, dest);
+    await fs.promises.copyFile(src, dest);
+
+    // Ensure the destination file is writable
+    const stat = await this.stat(dest);
+    const chmodOwnerWrite = 0o222; // Node.js' default for file creation is 0o666 (rw)
+    if (!(stat.mode & chmodOwnerWrite)) {
+      await fs.promises.chmod(dest, stat.mode | chmodOwnerWrite);
+    }
+
     if (previouslyExisted) {
       // Windows doesn't update mtime on overwrite?
       await this.touch(dest);
@@ -61,7 +72,7 @@ export default class FsPoly {
   }
 
   static async dirs(dirPath: string): Promise<string[]> {
-    const readDir = (await util.promisify(fs.readdir)(dirPath))
+    const readDir = (await fs.promises.readdir(dirPath))
       .filter((filePath) => isNotJunk(path.basename(filePath)))
       .map((filePath) => path.join(dirPath, filePath));
 
@@ -74,24 +85,26 @@ export default class FsPoly {
     return FsPoly.DRIVES
       .filter((drive) => drive.available > 0)
       .map((drive) => drive.mounted)
+      .filter((mountPath) => mountPath !== '/')
       // Sort by mount points with the deepest number of subdirectories first
       .sort((a, b) => b.split(/[\\/]/).length - a.split(/[\\/]/).length);
   }
 
-  /**
-   * There is no promise version of existsSync()
-   */
   static async exists(pathLike: PathLike): Promise<boolean> {
-    return util.promisify(fs.exists)(pathLike);
+    try {
+      await fs.promises.access(pathLike);
+      return true;
+    } catch {
+      return false;
+    }
   }
 
   static async hardlink(target: string, link: string): Promise<void> {
     try {
-      // Added in: v10.0.0
-      return await util.promisify(fs.link)(target, link);
+      return await fs.promises.link(target, link);
     } catch (error) {
       if (this.onDifferentDrives(target, link)) {
-        throw new Error(`can't hard link files on different drives: ${error}`);
+        throw new ExpectedError(`can't hard link files on different drives: ${error}`);
       }
       throw error;
     }
@@ -103,7 +116,7 @@ export default class FsPoly {
 
   static async isDirectory(pathLike: string): Promise<boolean> {
     try {
-      const lstat = (await util.promisify(fs.lstat)(pathLike));
+      const lstat = (await fs.promises.lstat(pathLike));
       if (lstat.isSymbolicLink()) {
         const link = await this.readlinkResolved(pathLike);
         return await this.isDirectory(link);
@@ -116,7 +129,7 @@ export default class FsPoly {
 
   static async isExecutable(pathLike: PathLike): Promise<boolean> {
     try {
-      await util.promisify(fs.access)(pathLike, fs.constants.X_OK);
+      await fs.promises.access(pathLike, fs.constants.X_OK);
       return true;
     } catch {
       return false;
@@ -144,9 +157,23 @@ export default class FsPoly {
 
   static async isSymlink(pathLike: PathLike): Promise<boolean> {
     try {
-      return (await util.promisify(fs.lstat)(pathLike)).isSymbolicLink();
+      return (await fs.promises.lstat(pathLike)).isSymbolicLink();
     } catch {
       return false;
+    }
+  }
+
+  static async isWritable(filePath: string): Promise<boolean> {
+    const exists = await this.exists(filePath);
+    try {
+      await this.touch(filePath);
+      return true;
+    } catch {
+      return false;
+    } finally {
+      if (!exists) {
+        await this.rm(filePath);
+      }
     }
   }
 
@@ -168,7 +195,7 @@ export default class FsPoly {
   }
 
   static async mkdir(pathLike: PathLike, options?: MakeDirectoryOptions): Promise<void> {
-    await util.promisify(fs.mkdir)(pathLike, options);
+    await fs.promises.mkdir(pathLike, options);
   }
 
   /**
@@ -180,36 +207,11 @@ export default class FsPoly {
 
     try {
       await this.mkdir(rootDirProcessed, { recursive: true });
-
-      // Added in: v10.0.0
-      return await util.promisify(fs.mkdtemp)(rootDirProcessed);
+      return await fs.promises.mkdtemp(rootDirProcessed);
     } catch {
       const backupDir = path.join(process.cwd(), 'tmp') + path.sep;
       await this.mkdir(backupDir, { recursive: true });
-
-      // Added in: v10.0.0
-      return await util.promisify(fs.mkdtemp)(backupDir);
-    }
-  }
-
-  /**
-   * mkdtempSync() takes a path "prefix" that's concatenated with random characters. Ignore that
-   * behavior and instead assume we always want to specify a root temp directory.
-   */
-  static mkdtempSync(rootDir: string): string {
-    const rootDirProcessed = rootDir.replace(/[\\/]+$/, '') + path.sep;
-
-    try {
-      fs.mkdirSync(rootDirProcessed, { recursive: true });
-
-      // Added in: v5.10.0
-      return fs.mkdtempSync(rootDirProcessed);
-    } catch {
-      const backupDir = path.join(process.cwd(), 'tmp') + path.sep;
-      fs.mkdirSync(backupDir, { recursive: true });
-
-      // Added in: v5.10.0
-      return fs.mkdtempSync(backupDir);
+      return fs.promises.mkdtemp(backupDir);
     }
   }
 
@@ -221,7 +223,7 @@ export default class FsPoly {
         return filePath;
       }
     }
-    throw new Error('failed to generate non-existent temp file');
+    throw new ExpectedError('failed to generate non-existent temp file');
   }
 
   static async mv(oldPath: string, newPath: string, attempt = 1): Promise<void> {
@@ -243,7 +245,7 @@ export default class FsPoly {
     }
 
     try {
-      return await util.promisify(fs.rename)(oldPath, newPath);
+      return await fs.promises.rename(oldPath, newPath);
     } catch (error) {
       // These are the same error codes that `graceful-fs` catches
       if (!['EACCES', 'EPERM', 'EBUSY'].includes((error as NodeJS.ErrnoException).code ?? '')) {
@@ -260,7 +262,7 @@ export default class FsPoly {
 
       // Attempt to resolve Windows' "EBUSY: resource busy or locked"
       await this.rm(newPath, { force: true });
-      return await this.mv(oldPath, newPath, attempt + 1);
+      return this.mv(oldPath, newPath, attempt + 1);
     }
   }
 
@@ -277,10 +279,9 @@ export default class FsPoly {
 
   static async readlink(pathLike: PathLike): Promise<string> {
     if (!await this.isSymlink(pathLike)) {
-      throw new Error(`can't readlink of non-symlink: ${pathLike}`);
+      throw new ExpectedError(`can't readlink of non-symlink: ${pathLike}`);
     }
-    // Added in: v10.0.0
-    return util.promisify(fs.readlink)(pathLike);
+    return fs.promises.readlink(pathLike);
   }
 
   static async readlinkResolved(link: string): Promise<string> {
@@ -293,15 +294,11 @@ export default class FsPoly {
 
   static async realpath(pathLike: PathLike): Promise<string> {
     if (!await this.exists(pathLike)) {
-      throw new Error(`can't get realpath of non-existent path: ${pathLike}`);
+      throw new ExpectedError(`can't get realpath of non-existent path: ${pathLike}`);
     }
-    return util.promisify(fs.realpath)(pathLike);
+    return fs.promises.realpath(pathLike);
   }
 
-  /**
-   * fs.rm() was added in: v14.14.0
-   * util.promisify(fs.rm)() was added in: v14.14.0
-   */
   static async rm(pathLike: string, options: RmOptions = {}): Promise<void> {
     const optionsWithRetry = {
       maxRetries: 2,
@@ -309,25 +306,21 @@ export default class FsPoly {
     };
 
     try {
-      // Added in: v10.0.0
-      await util.promisify(fs.access)(pathLike); // throw if file doesn't exist
-    } catch (error) {
+      await fs.promises.access(pathLike); // throw if file doesn't exist
+    } catch {
       if (optionsWithRetry?.force) {
         return;
       }
-      throw error;
+      throw new ExpectedError(`can't rm, path doesn't exist: ${pathLike}`);
     }
 
-    // Added in: v10.0.0
     if (await this.isDirectory(pathLike)) {
-      // Added in: v14.14.0
-      await util.promisify(fs.rm)(pathLike, {
+      await fs.promises.rm(pathLike, {
         ...optionsWithRetry,
         recursive: true,
       });
     } else {
-      // Added in: v10.0.0
-      await util.promisify(fs.unlink)(pathLike);
+      await fs.promises.unlink(pathLike);
     }
   }
 
@@ -370,7 +363,7 @@ export default class FsPoly {
   }
 
   static async stat(pathLike: PathLike): Promise<fs.Stats> {
-    return util.promisify(fs.stat)(pathLike);
+    return fs.promises.stat(pathLike);
   }
 
   static async touch(filePath: string): Promise<void> {
@@ -380,34 +373,50 @@ export default class FsPoly {
     }
 
     // Create the file if it doesn't already exist
-    const file = await util.promisify(fs.open)(filePath, 'a');
+    const file = await fs.promises.open(filePath, 'a');
 
     // Ensure the file's `atime` and `mtime` are updated
     const date = new Date();
-    await util.promisify(fs.futimes)(file, date, date);
+    await util.promisify(fs.futimes)(file.fd, date, date);
 
-    await util.promisify(fs.close)(file);
+    await file.close();
+  }
+
+  static touchSync(filePath: string): void {
+    const dirname = path.dirname(filePath);
+    if (!fs.existsSync(dirname)) {
+      fs.mkdirSync(dirname, { recursive: true });
+    }
+
+    // Create the file if it doesn't already exist
+    const file = fs.openSync(filePath, 'a');
+
+    // Ensure the file's `atime` and `mtime` are updated
+    const date = new Date();
+    fs.futimesSync(file, date, date);
+
+    fs.closeSync(file);
   }
 
   static async walk(pathLike: PathLike, callback?: FsWalkCallback): Promise<string[]> {
     let output: string[] = [];
 
-    let files: string[];
+    let entries: fs.Dirent[];
     try {
-      files = (await util.promisify(fs.readdir)(pathLike))
-        .filter((filePath) => isNotJunk(path.basename(filePath)));
+      entries = (await fs.promises.readdir(pathLike, { withFileTypes: true }))
+        .filter((entry) => isNotJunk(path.basename(entry.name)));
     } catch {
       return [];
     }
 
     if (callback) {
-      callback(files.length);
+      callback(entries.length);
     }
 
     // TODO(cemmer): `Promise.all()` this?
-    for (const file of files) {
-      const fullPath = path.join(pathLike.toString(), file);
-      if (await this.isDirectory(fullPath)) {
+    for (const entry of entries) {
+      const fullPath = path.join(pathLike.toString(), entry.name);
+      if (entry.isDirectory() || (entry.isSymbolicLink() && await this.isDirectory(fullPath))) {
         const subDirFiles = await this.walk(fullPath);
         output = [...output, ...subDirFiles];
         if (callback) {
@@ -419,5 +428,16 @@ export default class FsPoly {
     }
 
     return output;
+  }
+
+  static async writeFile(
+    filePath: PathLike,
+    data: string | Uint8Array,
+    options?: ObjectEncodingOptions,
+  ): Promise<void> {
+    const file = await fs.promises.open(filePath, 'w');
+    await file.writeFile(data, options);
+    await file.sync(); // emulate fs.promises.writeFile() flush:true added in v21.0.0
+    await file.close();
   }
 }

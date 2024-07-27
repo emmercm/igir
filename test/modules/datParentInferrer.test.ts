@@ -57,117 +57,146 @@ it('should not do anything if the DAT has no games', async () => {
   expect(inferredDat === dat).toEqual(true);
 });
 
-test.each([
-  [[
-    'Pikmin (Europe) (En,Fr,De,Es,It)',
-    'Pikmin (Japan) (Jitsuen-you Sample)',
-    'Pikmin (Japan) (Rev 1)',
-    'Pikmin (Japan) (Rev 2)',
-    'Pikmin (USA)',
-    'Pikmin (USA) (Rev 1)',
-  ], 'Pikmin (Europe) (En,Fr,De,Es,It)'],
-  [[
-    'Compton\'s Interactive Encyclopedia (USA) (Version 2.00S)',
-    'Compton\'s Interactive Encyclopedia (USA) (Version 2.01R)',
-    'Compton\'s Interactive Encyclopedia (USA) (Version 2.01S)',
-    'Compton\'s Interactive Encyclopedia (USA) (Version 2.10) (RE2)',
-  ], 'Compton\'s Interactive Encyclopedia (USA) (Version 2.00S)'],
-  [[
-    'Spyro the Dragon (Europe) (En,Fr,De,Es,It)',
-    'Spyro the Dragon (Japan)',
-    'Spyro the Dragon (Japan) (Demo)',
-    'Spyro the Dragon (Japan) (Shokai Genteiban)',
-    'Spyro the Dragon (USA)',
-    'Spyro the Dragon (USA) (Beta) (1998-06-15)',
-    'Spyro the Dragon (USA) (Beta) (1998-07-18)',
-    'Spyro the Dragon (USA) (Demo 1)',
-    'Spyro the Dragon (USA) (Demo 2)',
-  ], 'Spyro the Dragon (Europe) (En,Fr,De,Es,It)'],
-  [[
-    'Dead or Alive (Europe)',
-    'Dead or Alive (Europe) (Beta) (Alt)',
-    'Dead or Alive (Japan)',
-    'Dead or Alive (UK) (Demo)',
-    'Dead or Alive (USA)',
-    'Dead or Alive (USA) (Beta 1)',
-    'Dead or Alive (USA) (Beta 2)',
-    'Dead or Alive (USA) (En,Ja) (Demo)',
-  ], 'Dead or Alive (Europe)'],
-  [[
-    'Secret of Monkey Island, The (Japan)',
-    'Secret of Monkey Island, The (USA) (Limited Run Games)',
-    'Secret of Monkey Island, The (USA) (RE)',
-  ], 'Secret of Monkey Island, The (Japan)'],
-  [[
-    'Sewer Shark (Europe)',
-    'Sewer Shark (USA)',
-    'Sewer Shark (USA) (Not for Resale)',
-    'Sewer Shark (USA) (Not for Resale) (Alt 1)',
-    'Sewer Shark (USA) (Not for Resale) (Alt 2)',
-    'Sewer Shark (USA) (Rev 1)',
-  ], 'Sewer Shark (Europe)'],
-  [[
-    'Doom 3 (Europe) (En,Fr,Es,It)',
-    'Doom 3 (Europe) (En,Fr,Es,It) (Limited Collector\'s Edition)',
-    'Doom 3 (USA, Asia)',
-    'Doom 3 (USA, Asia) (Limited Collector\'s Edition)',
-  ], 'Doom 3 (Europe) (En,Fr,Es,It)'],
-  // https://www.tosecdev.org/tosec-naming-convention
-  [[
-    'Legend of TOSEC, The (19xx)',
-    'Legend of TOSEC, The (200x)',
-    'Legend of TOSEC, The (1986)',
-    'Legend of TOSEC, The (199x)',
-    'Legend of TOSEC, The (2001-01)',
-    'Legend of TOSEC, The (1986-06-21)',
-    'Legend of TOSEC, The (19xx-12)',
-    'Legend of TOSEC, The (19xx-12-25)',
-    'Legend of TOSEC, The (19xx-12-2x)',
-  ], 'Legend of TOSEC, The (19xx)'],
-  [[
-    'Legend of TOSEC, The (1986)(Devstudio)(PAL)',
-    'Legend of TOSEC, The (1986)(Devstudio)(NTSC)',
-  ], 'Legend of TOSEC, The (1986)(Devstudio)(PAL)'],
-  [[
-    'Legend of TOSEC, The (1986)(Devstudio)(de)',
-    'Legend of TOSEC, The (1986)(Devstudio)(pt)',
-    'Legend of TOSEC, The (1986)(Devstudio)(de-fr)',
-  ], 'Legend of TOSEC, The (1986)(Devstudio)(de)'],
-  [[
-    'Legend of TOSEC, The (1986)(Devstudio)(PD)',
-    'Legend of TOSEC, The (1986)(Devstudio)(FR)(SW)',
-  ], 'Legend of TOSEC, The (1986)(Devstudio)(PD)'],
-  [[
-    'Legend of TOSEC, The (1986)(Devstudio)(US)',
-    'Legend of TOSEC, The (1986)(Devstudio)(US)(beta)',
-    'Legend of TOSEC, The (1986)(Devstudio)(US)(proto)',
-  ], 'Legend of TOSEC, The (1986)(Devstudio)(US)'],
-  [[
-    'Legend of TOSEC, The (1986)(Devstudio)(US)',
-    'Legend of TOSEC, The (1986)(Devstudio)(US)[a]',
-    'Legend of TOSEC, The (1986)(Devstudio)(US)[b]',
-    'Legend of TOSEC, The (1986)(Devstudio)(US)[f]',
-    'Legend of TOSEC, The (1986)(Devstudio)(US)[f NTSC]',
-    'Legend of TOSEC, The (1986)(Devstudio)(US)[u]',
-    'Legend of TOSEC, The (1986)(Devstudio)(US)[cr]',
-    'Legend of TOSEC, The (1986)(Devstudio)(US)[tr fr]',
-    'Legend of TOSEC, The (1986)(Devstudio)(US)[tr de-partial someguy]',
-    'Legend of TOSEC, The (1986)(Devstudio)(US)[h Fairlight]',
-    'Legend of TOSEC, The (1986)(Devstudio)(US)[m save game]',
-    'Legend of TOSEC, The (1986)(Devstudio)(US)[o]',
-  ], 'Legend of TOSEC, The (1986)(Devstudio)(US)'],
-  [[
-    'Legend of TOSEC, The (1986)(Devstudio)(US)',
-    'Legend of TOSEC, The (1986)(Devstudio)(US)[cr PDX][h TRSi]',
-    'Legend of TOSEC, The (1986)(Devstudio)(US)[h PDX - TRSi]',
-  ], 'Legend of TOSEC, The (1986)(Devstudio)(US)'],
-])('should group similar games: %s', async (gameNames, expectedGameName) => {
-  const ungroupedDat = buildDat(gameNames);
-  const groupedDat = await new DATParentInferrer(new Options(), new ProgressBarFake())
-    .infer(ungroupedDat);
-  expect(groupedDat.getParents()).toHaveLength(1);
-  expect(groupedDat.getParents()[0].getGames()).toHaveLength(ungroupedDat.getGames().length);
-  expect(groupedDat.getParents()[0].getName()).toEqual(expectedGameName);
+describe('similar games', () => {
+  test.each([
+    [[
+      'Pikmin (Europe) (En,Fr,De,Es,It)',
+      'Pikmin (Japan) (Jitsuen-you Sample)',
+      'Pikmin (Japan) (Rev 1)',
+      'Pikmin (Japan) (Rev 2)',
+      'Pikmin (USA)',
+      'Pikmin (USA) (Rev 1)',
+    ], 'Pikmin (Europe) (En,Fr,De,Es,It)'],
+    [[
+      'Compton\'s Interactive Encyclopedia (USA) (Version 2.00S)',
+      'Compton\'s Interactive Encyclopedia (USA) (Version 2.01R)',
+      'Compton\'s Interactive Encyclopedia (USA) (Version 2.01S)',
+      'Compton\'s Interactive Encyclopedia (USA) (Version 2.10) (RE2)',
+    ], 'Compton\'s Interactive Encyclopedia (USA) (Version 2.00S)'],
+    [[
+      'Spyro the Dragon (Europe) (En,Fr,De,Es,It)',
+      'Spyro the Dragon (Japan)',
+      'Spyro the Dragon (Japan) (Demo)',
+      'Spyro the Dragon (Japan) (Shokai Genteiban)',
+      'Spyro the Dragon (USA)',
+      'Spyro the Dragon (USA) (Beta) (1998-06-15)',
+      'Spyro the Dragon (USA) (Beta) (1998-07-18)',
+      'Spyro the Dragon (USA) (Demo 1)',
+      'Spyro the Dragon (USA) (Demo 2)',
+    ], 'Spyro the Dragon (Europe) (En,Fr,De,Es,It)'],
+    [[
+      'Dead or Alive (Europe)',
+      'Dead or Alive (Europe) (Beta) (Alt)',
+      'Dead or Alive (Japan)',
+      'Dead or Alive (UK) (Demo)',
+      'Dead or Alive (USA)',
+      'Dead or Alive (USA) (Beta 1)',
+      'Dead or Alive (USA) (Beta 2)',
+      'Dead or Alive (USA) (En,Ja) (Demo)',
+    ], 'Dead or Alive (Europe)'],
+    [[
+      'Secret of Monkey Island, The (Japan)',
+      'Secret of Monkey Island, The (USA) (Limited Run Games)',
+      'Secret of Monkey Island, The (USA) (RE)',
+    ], 'Secret of Monkey Island, The (Japan)'],
+    [[
+      'Sewer Shark (Europe)',
+      'Sewer Shark (USA)',
+      'Sewer Shark (USA) (Not for Resale)',
+      'Sewer Shark (USA) (Not for Resale) (Alt 1)',
+      'Sewer Shark (USA) (Not for Resale) (Alt 2)',
+      'Sewer Shark (USA) (Rev 1)',
+    ], 'Sewer Shark (Europe)'],
+    [[
+      'Doom 3 (Europe) (En,Fr,Es,It)',
+      'Doom 3 (Europe) (En,Fr,Es,It) (Limited Collector\'s Edition)',
+      'Doom 3 (USA, Asia)',
+      'Doom 3 (USA, Asia) (Limited Collector\'s Edition)',
+    ], 'Doom 3 (Europe) (En,Fr,Es,It)'],
+    [[
+      'All Star Tennis \'99 (Europe) (En,Fr,De,Es,It)',
+      'All Star Tennis 99 (USA)',
+    ], 'All Star Tennis 99 (USA)'],
+    // https://emulation.gametechwiki.com/index.php/GoodTools
+    [[
+      'A game (1990)(Side A).zip',
+      'A game (1990)(Side A)[a].zip',
+      'A game (1990)(Side A)[a2].zip',
+      'A game (1990)(Side A)[a3].zip',
+    ], 'A game (1990)(Side A).zip'],
+    // https://www.tosecdev.org/tosec-naming-convention
+    [[
+      'Legend of TOSEC, The (19xx)',
+      'Legend of TOSEC, The (200x)',
+      'Legend of TOSEC, The (1986)',
+      'Legend of TOSEC, The (199x)',
+      'Legend of TOSEC, The (2001-01)',
+      'Legend of TOSEC, The (1986-06-21)',
+      'Legend of TOSEC, The (19xx-12)',
+      'Legend of TOSEC, The (19xx-12-25)',
+      'Legend of TOSEC, The (19xx-12-2x)',
+    ], 'Legend of TOSEC, The (19xx)'],
+    [[
+      'Legend of TOSEC, The (1986)(Devstudio)(PAL)',
+      'Legend of TOSEC, The (1986)(Devstudio)(NTSC)',
+    ], 'Legend of TOSEC, The (1986)(Devstudio)(PAL)'],
+    [[
+      'Legend of TOSEC, The (1986)(Devstudio)(de)',
+      'Legend of TOSEC, The (1986)(Devstudio)(pt)',
+      'Legend of TOSEC, The (1986)(Devstudio)(de-fr)',
+    ], 'Legend of TOSEC, The (1986)(Devstudio)(de)'],
+    [[
+      'Legend of TOSEC, The (1986)(Devstudio)(PD)',
+      'Legend of TOSEC, The (1986)(Devstudio)(FR)(SW)',
+    ], 'Legend of TOSEC, The (1986)(Devstudio)(PD)'],
+    [[
+      'Legend of TOSEC, The (1986)(Devstudio)(US)',
+      'Legend of TOSEC, The (1986)(Devstudio)(US)(beta)',
+      'Legend of TOSEC, The (1986)(Devstudio)(US)(proto)',
+    ], 'Legend of TOSEC, The (1986)(Devstudio)(US)'],
+    [[
+      'Legend of TOSEC, The (1986)(Devstudio)(US)',
+      'Legend of TOSEC, The (1986)(Devstudio)(US)[a]',
+      'Legend of TOSEC, The (1986)(Devstudio)(US)[b]',
+      'Legend of TOSEC, The (1986)(Devstudio)(US)[f]',
+      'Legend of TOSEC, The (1986)(Devstudio)(US)[f NTSC]',
+      'Legend of TOSEC, The (1986)(Devstudio)(US)[u]',
+      'Legend of TOSEC, The (1986)(Devstudio)(US)[cr]',
+      'Legend of TOSEC, The (1986)(Devstudio)(US)[tr fr]',
+      'Legend of TOSEC, The (1986)(Devstudio)(US)[tr de-partial someguy]',
+      'Legend of TOSEC, The (1986)(Devstudio)(US)[h Fairlight]',
+      'Legend of TOSEC, The (1986)(Devstudio)(US)[m save game]',
+      'Legend of TOSEC, The (1986)(Devstudio)(US)[o]',
+    ], 'Legend of TOSEC, The (1986)(Devstudio)(US)'],
+    [[
+      'Legend of TOSEC, The (1986)(Devstudio)(US)',
+      'Legend of TOSEC, The (1986)(Devstudio)(US)[cr PDX][h TRSi]',
+      'Legend of TOSEC, The (1986)(Devstudio)(US)[h PDX - TRSi]',
+    ], 'Legend of TOSEC, The (1986)(Devstudio)(US)'],
+    [[
+      'F1 World Grand Prix for Dreamcast v1.011 (1999)(Video System)(JP)(en)[!]',
+      'F1 World Grand Prix for Dreamcast v1.000 (1999)(Video System)(PAL)(M4)[!]',
+      'F1 World Grand Prix v1.006 (2000)(Video System)(US)(M4)[!]',
+    ], 'F1 World Grand Prix for Dreamcast v1.011 (1999)(Video System)(JP)(en)[!]'],
+    [[
+      '[BIOS] PS3 System Software Update (World) (v4.88)',
+      '[BIOS] PS3 System Software Update (World) (v3.41) (Patch)',
+      '[BIOS] PS3 System Software Update (World) (v0.90) (Tool)',
+      '[BIOS] PS3 System Software Update (World) (v0.91-005) (Tool)',
+      '[BIOS] PS3 System Software Update (World) (v3.41) (Shop)',
+      '[BIOS] PS3 System Software Update (World) (v3.41-1)',
+      '[BIOS] PS3 System Software Update (World) (v1.60) (Debug) [b]',
+      '[BIOS] PS3 System Software Update (World) (v1.00) (Disc)',
+      '[BIOS] PS3 System Software Update (World) (v4.70) (Arcade)',
+    ], '[BIOS] PS3 System Software Update (World) (v4.88)'],
+  ])('should group similar games: %s', async (gameNames, expectedGameName) => {
+    const ungroupedDat = buildDat(gameNames);
+    const groupedDat = await new DATParentInferrer(new Options(), new ProgressBarFake())
+      .infer(ungroupedDat);
+    expect(groupedDat.getParents()).toHaveLength(1);
+    expect(groupedDat.getParents()[0].getGames()).toHaveLength(ungroupedDat.getGames().length);
+    expect(groupedDat.getParents()[0].getName()).toEqual(expectedGameName);
+  });
 });
 
 describe('dissimilar games', () => {

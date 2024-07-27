@@ -1,8 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
-import util from 'node:util';
 
-import Constants from '../../src/constants.js';
+import Temp from '../../src/globals/temp.js';
 import ReportGenerator from '../../src/modules/reportGenerator.js';
 import fsPoly from '../../src/polyfill/fsPoly.js';
 import Game from '../../src/types/dats/game.js';
@@ -31,7 +30,7 @@ const datStatusEmpty = new DATStatus(
 const gamesSingle = [
   new Game({
     name: 'One',
-    rom: [new ROM({ name: 'One', size: 123, crc32: 'abcdef01' })],
+    rom: [new ROM({ name: 'One.rom', size: 123, crc32: 'abcdef01' })],
   }),
 ];
 async function buildDatStatusSingle(): Promise<DATStatus> {
@@ -42,7 +41,7 @@ async function buildDatStatusSingle(): Promise<DATStatus> {
         game,
         undefined,
         await Promise.all(game.getRoms().map(async (rom) => {
-          const romFile = await File.fileOf({ filePath: `${rom.getName()}.rom` });
+          const romFile = await rom.toFile();
           return new ROMWithFiles(rom, romFile, romFile);
         })),
       )],
@@ -59,15 +58,15 @@ async function buildDatStatusSingle(): Promise<DATStatus> {
 const gamesMultiple = [
   new Game({
     name: 'Two',
-    rom: [new ROM({ name: 'Two', size: 234, crc32: 'bcdef012' })],
+    rom: [new ROM({ name: 'Two.rom', size: 234, crc32: 'bcdef012' })],
   }),
   new Game({
     name: 'Three',
-    rom: [new ROM({ name: 'Three', size: 345, crc32: 'cdef0123' })],
+    rom: [new ROM({ name: 'Three.rom', size: 345, crc32: 'cdef0123' })],
   }),
   new Game({
     name: 'Four',
-    rom: [new ROM({ name: 'Four', size: 456, crc32: 'def01234' })],
+    rom: [new ROM({ name: 'Four.rom', size: 456, crc32: 'def01234' })],
   }),
   new Game({
     name: 'Five',
@@ -82,7 +81,7 @@ async function buildDatStatusMultiple(): Promise<DATStatus> {
         game,
         undefined,
         await Promise.all(game.getRoms().map(async (rom) => {
-          const romFile = await File.fileOf({ filePath: `${rom.getName()}.rom` });
+          const romFile = await rom.toFile();
           return new ROMWithFiles(rom, romFile, romFile);
         })),
       )],
@@ -98,69 +97,109 @@ async function buildDatStatusMultiple(): Promise<DATStatus> {
 
 async function wrapReportGenerator(
   optionsProps: OptionsProps,
-  romFiles: string[],
+  romFiles: File[],
   cleanedOutputFiles: string[],
   datStatuses: DATStatus[],
   callback: (contents: string) => void | Promise<void>,
 ): Promise<void> {
-  const reportOutput = await fsPoly.mktemp(path.join(Constants.GLOBAL_TEMP_DIR, 'report.csv'));
+  const reportOutput = await fsPoly.mktemp(path.join(Temp.getTempDir(), 'report.csv'));
   const options = new Options({
     ...optionsProps,
     reportOutput,
   });
 
-  await new ReportGenerator(options, new ProgressBarFake())
-    .generate(romFiles, cleanedOutputFiles, datStatuses);
+  await new ReportGenerator(options, new ProgressBarFake()).generate(
+    romFiles,
+    cleanedOutputFiles,
+    datStatuses,
+  );
 
-  const contents = (await util.promisify(fs.readFile)(reportOutput)).toString();
-  await callback(contents);
-
-  await fsPoly.rm(reportOutput);
+  try {
+    const contents = (await fs.promises.readFile(reportOutput)).toString();
+    await callback(contents);
+  } finally {
+    await fsPoly.rm(reportOutput);
+  }
 }
 
 it('should return empty contents for an empty DAT', async () => {
-  await wrapReportGenerator(new Options(), [], [], [datStatusEmpty], (contents) => {
-    expect(contents).toEqual('');
-  });
+  await wrapReportGenerator(
+    new Options(),
+    [],
+    [],
+    [datStatusEmpty],
+    (contents) => {
+      expect(contents).toEqual('');
+    },
+  );
 });
 
 it('should return one row for every game in a single game DAT', async () => {
-  await wrapReportGenerator(new Options(), [], [], [await buildDatStatusSingle()], (contents) => {
-    expect(contents).toEqual(`DAT Name,Game Name,Status,ROM Files,Patched,BIOS,Retail Release,Unlicensed,Debug,Demo,Beta,Sample,Prototype,Program,Aftermarket,Homebrew,Bad
+  await wrapReportGenerator(
+    new Options(),
+    [],
+    [],
+    [await buildDatStatusSingle()],
+    (contents) => {
+      expect(contents).toEqual(`DAT Name,Game Name,Status,ROM Files,Patched,BIOS,Retail Release,Unlicensed,Debug,Demo,Beta,Sample,Prototype,Program,Aftermarket,Homebrew,Bad
 Single,One,FOUND,One.rom,false,false,true,false,false,false,false,false,false,false,false,false,false`);
-  });
+    },
+  );
 });
 
 it('should return one row for every game in a multiple game DAT', async () => {
-  await wrapReportGenerator(new Options(), [], [], [await buildDatStatusMultiple()], (contents) => {
-    expect(contents).toEqual(`DAT Name,Game Name,Status,ROM Files,Patched,BIOS,Retail Release,Unlicensed,Debug,Demo,Beta,Sample,Prototype,Program,Aftermarket,Homebrew,Bad
+  await wrapReportGenerator(
+    new Options(),
+    [],
+    [],
+    [await buildDatStatusMultiple()],
+    (contents) => {
+      expect(contents).toEqual(`DAT Name,Game Name,Status,ROM Files,Patched,BIOS,Retail Release,Unlicensed,Debug,Demo,Beta,Sample,Prototype,Program,Aftermarket,Homebrew,Bad
 Multiple,Five,FOUND,,false,false,true,false,false,false,false,false,false,false,false,false,false
 Multiple,Four,FOUND,Four.rom,false,false,true,false,false,false,false,false,false,false,false,false,false
 Multiple,Three,FOUND,Three.rom,false,false,true,false,false,false,false,false,false,false,false,false,false
 Multiple,Two,FOUND,Two.rom,false,false,true,false,false,false,false,false,false,false,false,false,false`);
-  });
+    },
+  );
 });
 
-it('should return one row for every unused file in a multiple game DAT', async () => {
-  await wrapReportGenerator(new Options(), [
-    'One.rom',
-    'Two.rom',
-    'Three.rom',
-    'Four.rom',
-  ], [], [await buildDatStatusMultiple()], (contents) => {
-    expect(contents).toEqual(`DAT Name,Game Name,Status,ROM Files,Patched,BIOS,Retail Release,Unlicensed,Debug,Demo,Beta,Sample,Prototype,Program,Aftermarket,Homebrew,Bad
+it('should return one row for every duplicate and unused file in a multiple game DAT', async () => {
+  await wrapReportGenerator(
+    new Options(),
+    [
+      await File.fileOf({ filePath: 'One.rom', size: 123, crc32: 'abcdef01' }),
+      await File.fileOf({ filePath: 'One (Duplicate).rom', size: 123, crc32: 'abcdef01' }),
+      await File.fileOf({ filePath: 'Two (Duplicate).rom', size: 234, crc32: 'bcdef012' }),
+      await File.fileOf({ filePath: 'Two.rom', size: 234, crc32: 'bcdef012' }),
+      await File.fileOf({ filePath: 'Three.rom', size: 345, crc32: 'cdef0123' }),
+      await File.fileOf({ filePath: 'Four.rom', size: 456, crc32: 'def01234' }),
+      await File.fileOf({ filePath: 'Four (Duplicate).rom', size: 456, crc32: 'def01234' }),
+      await File.fileOf({ filePath: 'Five.rom', size: 567, crc32: 'ef012345' }),
+    ],
+    [],
+    [await buildDatStatusMultiple()],
+    (contents) => {
+      expect(contents).toEqual(`DAT Name,Game Name,Status,ROM Files,Patched,BIOS,Retail Release,Unlicensed,Debug,Demo,Beta,Sample,Prototype,Program,Aftermarket,Homebrew,Bad
 Multiple,Five,FOUND,,false,false,true,false,false,false,false,false,false,false,false,false,false
 Multiple,Four,FOUND,Four.rom,false,false,true,false,false,false,false,false,false,false,false,false,false
 Multiple,Three,FOUND,Three.rom,false,false,true,false,false,false,false,false,false,false,false,false,false
 Multiple,Two,FOUND,Two.rom,false,false,true,false,false,false,false,false,false,false,false,false,false
+,,DUPLICATE,Four (Duplicate).rom,false,false,false,false,false,false,false,false,false,false,false,false,false
+,,DUPLICATE,Two (Duplicate).rom,false,false,false,false,false,false,false,false,false,false,false,false,false
+,,UNUSED,Five.rom,false,false,false,false,false,false,false,false,false,false,false,false,false
+,,UNUSED,One (Duplicate).rom,false,false,false,false,false,false,false,false,false,false,false,false,false
 ,,UNUSED,One.rom,false,false,false,false,false,false,false,false,false,false,false,false,false`);
-  });
+    },
+  );
 });
 
 it('should return one row for every cleaned file in a multiple game DAT', async () => {
   await wrapReportGenerator(
     new Options(),
-    ['One.rom', 'Two.rom'],
+    [
+      await File.fileOf({ filePath: 'One.rom', size: 123, crc32: 'abcdef01' }),
+      await File.fileOf({ filePath: 'Two.rom', size: 234, crc32: 'bcdef012' }),
+    ],
     ['Three.rom', 'Four.rom'],
     [await buildDatStatusMultiple()],
     (contents) => {
@@ -177,16 +216,22 @@ Multiple,Two,FOUND,Two.rom,false,false,true,false,false,false,false,false,false,
 });
 
 it('should return one row for every game in multiple DATs', async () => {
-  await wrapReportGenerator(new Options(), [], [], [
-    datStatusEmpty,
-    await buildDatStatusSingle(),
-    await buildDatStatusMultiple(),
-  ], (contents) => {
-    expect(contents).toEqual(`DAT Name,Game Name,Status,ROM Files,Patched,BIOS,Retail Release,Unlicensed,Debug,Demo,Beta,Sample,Prototype,Program,Aftermarket,Homebrew,Bad
+  await wrapReportGenerator(
+    new Options(),
+    [],
+    [],
+    [
+      datStatusEmpty,
+      await buildDatStatusSingle(),
+      await buildDatStatusMultiple(),
+    ],
+    (contents) => {
+      expect(contents).toEqual(`DAT Name,Game Name,Status,ROM Files,Patched,BIOS,Retail Release,Unlicensed,Debug,Demo,Beta,Sample,Prototype,Program,Aftermarket,Homebrew,Bad
 Multiple,Five,FOUND,,false,false,true,false,false,false,false,false,false,false,false,false,false
 Multiple,Four,FOUND,Four.rom,false,false,true,false,false,false,false,false,false,false,false,false,false
 Multiple,Three,FOUND,Three.rom,false,false,true,false,false,false,false,false,false,false,false,false,false
 Multiple,Two,FOUND,Two.rom,false,false,true,false,false,false,false,false,false,false,false,false,false
 Single,One,FOUND,One.rom,false,false,true,false,false,false,false,false,false,false,false,false,false`);
-  });
+    },
+  );
 });

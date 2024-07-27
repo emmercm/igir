@@ -1,6 +1,6 @@
-# Personal Usage
+# Creator's Usage
 
-`igir` has many options available to fit almost any use case, but the number of options can be overwhelming. So that begs a question: _how do I, the author of `igir`, use `igir` in the real world?_
+`igir` has many options available to fit almost any use case, but the number of options can be overwhelming. So that begs a question: _how do I, the creator of `igir`, use `igir` in the real world?_
 
 ## Primary ROM library
 
@@ -144,16 +144,29 @@ I have this script `sd2sp2_pocket_sync.sh` at the root of my GameCube [SD2SP2](h
 #!/usr/bin/env bash
 set -euo pipefail
 
+# shellcheck disable=SC2064
+trap "cd \"${PWD}\"" EXIT
+cd "$(dirname "$0")"
+
+
 SOURCE=/Volumes/WDPassport4
 
-npx --yes igir@latest copy extract test clean \
+npx --yes igir@latest copy test clean report \
+  --dat "${SOURCE}/Redump*.zip" \
+  --dat-name-regex '/gamecube/i' \
   --input "${SOURCE}/Redump/Nintendo - GameCube" \
-  --output "./ISOs/" \
+  --output "./Games/" \
   --dir-letter \
+  --filter-regex-exclude "/(Baseball|Basketball|Cabela|Disney|F1|FIFA|Football|Golf|Madden|MLB|MLS|NASCAR|NBA|NCAA|NFL|NHL|Nickelodeon|PGA|Soccer|Tennis|UFC|WWE)/i" \
   --no-bios \
   --only-retail \
-  --filter-regex-exclude "/(Baseball|Cabela|F1|FIFA|Football|Golf|Madden|MLB|NASCAR|NBA|NCAA|NFL|NHL|PGA|Soccer|Tennis|UFC|WWE)/i" \
-  --writer-threads 1
+  --single \
+  --prefer-language EN \
+  --prefer-region USA,WORLD,EUR,JPN \
+  --prefer-revision-newer \
+  --overwrite-invalid \
+  --writer-threads 1 \
+  -v
 ```
 
-It doesn't use DATs because I have the ISOs in a trimmed NKit format (see [Swiss](https://github.com/emukidid/swiss-gc)), so they won't match the checksums in DATs. I also exclude some games due to limited SD card size.
+I use the trimmed [NKit format](https://wiki.gbatemp.net/wiki/NKit) for ISOs, which `igir` can't extract, so they're copied as-is. I also exclude some games due to limited SD card size.

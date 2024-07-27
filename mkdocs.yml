@@ -66,6 +66,7 @@ nav:
             - usage/desktop/retroarch.md
             - usage/desktop/retrodeck.md
             - usage/desktop/retropie.md
+            - usage/desktop/romm.md
             - usage/handheld/twmenu.md
           - FPGA:
             - usage/hardware/mister.md
@@ -94,11 +95,13 @@ nav:
       - File Outputs:
           - output/path-options.md
           - output/tokens.md
+          - output/options.md
           - output/writing-archives.md
           - output/reporting.md
           - output/cleaning.md
       - Advanced:
           - advanced/logging.md
+          - advanced/temp-dir.md
           - advanced/troubleshooting.md
           - advanced/internals.md
       - Misc:
@@ -180,5 +183,5 @@ extra:
       link: https://github.com/emmercm/igir
     - icon: simple/npm
       link: https://www.npmjs.com/package/igir
-    - icon: simple/twitter
-      link: https://twitter.com/emmercm
+    - icon: simple/x
+      link: https://x.com/emmercm

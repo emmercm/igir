@@ -7,25 +7,32 @@ import Header from '../../src/types/dats/logiqx/header.js';
 import LogiqxDAT from '../../src/types/dats/logiqx/logiqxDat.js';
 import ProgressBarFake from '../console/progressBarFake.js';
 
+const GAME_COUNT = 100;
+
 function generateDummyDats(count: number): DAT[] {
   return [...Array.from({ length: count }).keys()]
     .map((dat) => new LogiqxDAT(
       new Header({ name: `DAT ${dat}` }),
-      [...Array.from({ length: 100 }).keys()]
+      [...Array.from({ length: GAME_COUNT }).keys()]
         .map((game) => new Game({ name: `Game ${game}` })),
     ));
 }
 
+test('should do nothing with no DATs', () => {
+  const combinedDat = new DATCombiner(new ProgressBarFake()).combine([]);
+
+  expect(combinedDat.getGames()).toHaveLength(0);
+});
+
 test.each([
-  [generateDummyDats(0)],
-  [generateDummyDats(1)],
-  [generateDummyDats(10)],
-  [generateDummyDats(100)],
-])('should combine with any number of dats: %s', (dats) => {
+  [1],
+  [10],
+  [100],
+])('should combine with any number of DATs: %s', (datCount) => {
+  const dats = generateDummyDats(datCount);
   const combinedDat = new DATCombiner(new ProgressBarFake()).combine(dats);
 
-  expect(combinedDat.getGames())
-    .toHaveLength(dats.reduce((sum, dat) => sum + dat.getGames().length, 0));
+  expect(combinedDat.getGames()).toHaveLength(GAME_COUNT);
 
   const expectedGameNames = dats.flatMap((dat) => dat.getGames().map((game) => game.getName()));
   expect(combinedDat.getGames().map((game) => game.getName()))

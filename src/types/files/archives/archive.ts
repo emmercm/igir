@@ -1,10 +1,9 @@
 import path from 'node:path';
 import { Readable } from 'node:stream';
 
-import Constants from '../../../constants.js';
+import Temp from '../../../globals/temp.js';
 import fsPoly from '../../../polyfill/fsPoly.js';
 import File from '../file.js';
-import { ChecksumBitmask } from '../fileChecksums.js';
 import ArchiveEntry from './archiveEntry.js';
 
 export default abstract class Archive {
@@ -16,17 +15,7 @@ export default abstract class Archive {
 
   protected abstract new(filePath: string): Archive;
 
-  /**
-   * Forget that the current file is an archive and treat it as a raw file, such that we can
-   *  compute its size and CRC.
-   */
-  async asRawFile(checksumBitmask: number): Promise<File> {
-    return File.fileOf({ filePath: this.getFilePath() }, checksumBitmask);
-  }
-
-  async asRawFileWithoutChecksums(): Promise<File> {
-    return File.fileOf({ filePath: this.getFilePath() }, ChecksumBitmask.NONE);
-  }
+  abstract getExtension(): string;
 
   getFilePath(): string {
     return this.filePath;
@@ -44,7 +33,7 @@ export default abstract class Archive {
     callback: (tempFile: string) => (T | Promise<T>),
   ): Promise<T> {
     const tempFile = await fsPoly.mktemp(path.join(
-      Constants.GLOBAL_TEMP_DIR,
+      Temp.getTempDir(),
       path.basename(entryPath),
     ));
 
@@ -72,13 +61,18 @@ export default abstract class Archive {
   }
 
   withFilePath(filePath: string): Archive {
+    if (filePath === this.filePath) {
+      return this;
+    }
+
     const { base, ...parsedFilePath } = path.parse(this.getFilePath());
-    parsedFilePath.name = path.parse(filePath).name;
 
-    const extMatch = this.getFilePath().match(/[^.]+((\.[a-zA-Z0-9]+)+)$/);
-    parsedFilePath.ext = extMatch !== null ? extMatch[1] : '';
+    const newNameMatch = filePath.match(/^(.+[\\/])?(.+?[^.])((\.[a-zA-Z][a-zA-Z0-9]*)*)$/);
+    parsedFilePath.name = newNameMatch !== null ? newNameMatch[2] : '';
 
-    const newFilePath = path.format(parsedFilePath);
-    return this.new(newFilePath);
+    const oldExtMatch = this.getFilePath().match(/^(.+[\\/])?(.+?[^.])((\.[a-zA-Z][a-zA-Z0-9]*)*)$/);
+    parsedFilePath.ext = oldExtMatch !== null ? oldExtMatch[3] : '';
+
+    return this.new(path.format(parsedFilePath));
   }
 }

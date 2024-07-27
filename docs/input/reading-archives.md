@@ -6,17 +6,19 @@
 
 `igir` supports most common archive formats:
 
-| Extension                | Contains file CRC32s | `igir` can extract without a third-party binary | `igir` can checksum without temporary files |
-|--------------------------|----------------------|-------------------------------------------------|---------------------------------------------|
-| `.7z`                    | ✅                    | ❌                                               | ❌                                           |
-| `.gz`, `.gzip`           | ❌ CRC16              | ❌                                               | ❌                                           |
-| `.rar`                   | ✅                    | ✅                                               | ❌                                           |
-| `.tar`                   | ❌                    | ✅                                               | ✅ ≤64MiB                                    |
-| `.tar.gz`, `.tgz`        | ❌                    | ✅                                               | ✅ ≤64MiB                                    |
-| `.z01`                   | ✅                    | ❌                                               | ❌                                           |
-| `.zip` (including zip64) | ✅                    | ✅                                               | ✅ ≤64MiB                                    |
-| `.zip.001`               | ✅                    | ❌                                               | ❌                                           |
-| `.zipx`                  | ✅                    | ❌                                               | ❌                                           |
+| Extension                                                        | Contains file CRC32s | `igir` can extract without a third-party binary | `igir` can checksum without temporary files |
+|------------------------------------------------------------------|----------------------|-------------------------------------------------|---------------------------------------------|
+| `.7z`                                                            | ✅                    | ❌ `7za`                                         | ❌                                           |
+| `.chd`                                                           | ❌ SHA1               | ❌ `chdman`                                      | ❌                                           |
+| `.gz`, `.gzip`                                                   | ❌ CRC16              | ❌ `7za`                                         | ❌                                           |
+| `.nkit.iso` ([GameCube docs](../usage/console/gamecube.md#nkit)) | ✅                    | ❌ no extraction support                         | ✅                                           |
+| `.rar`                                                           | ✅                    | ✅                                               | ❌                                           |
+| `.tar`                                                           | ❌                    | ✅                                               | ✅ ≤64MiB                                    |
+| `.tar.gz`, `.tgz`                                                | ❌                    | ✅                                               | ✅ ≤64MiB                                    |
+| `.z01`                                                           | ✅                    | ❌ `7za`                                         | ❌                                           |
+| `.zip` (including zip64)                                         | ✅                    | ✅                                               | ✅ ≤64MiB                                    |
+| `.zip.001`                                                       | ✅                    | ❌ `7za`                                         | ❌                                           |
+| `.zipx`                                                          | ✅                    | ❌ `7za`                                         | ❌                                           |
 
 **You should prefer archive formats that have CRC32 checksum information for each file.**
 
@@ -30,8 +32,24 @@ Somewhat proprietary archive formats such as `.7z` and `.rar` require `igir` to 
 
 This is why `igir` uses `.zip` as its output archive of choice, `.zip` files are easy and fast to read, even if they can't offer as high of compression as other formats.
 
+## Exact archive matching
+
+Some DAT files such as the [libretro BIOS System.dat](https://github.com/libretro/libretro-database/blob/master/dat/System.dat) catalog archives such as zip files, rather than the contents of those archives. By default, `igir` will try to detect DATs like these and calculate checksums for all archive files, in addition to the files they contain.
+
+This adds a potentially non-trivial amount of processing time during ROM scanning, so this behavior can be turned off with the option:
+
+```text
+--input-checksum-archives never
+```
+
+If for some reason `igir` isn't identifying an input file correctly as an archive, this additional processing can be forced with the option:
+
+```text
+--input-checksum-archives always
+```
+
 ## Checksum cache
 
-It can be expensive to calculate checksums of files within archives, especially MD5 and SHA1. If `igir` needs to calculate a checksum that is not easily read from the archive (see above), it will cache the result in a file named `igir.cache`. This cached result will then be used as long as the input file's size and modified timestamp remain the same.
+It can be expensive to calculate checksums of files within archives, especially MD5, SHA1, and SHA256. If `igir` needs to calculate a checksum that is not easily read from the archive (see above), it will cache the result in a file named `igir.cache`. This cached result will then be used as long as the input file's size and modified timestamp remain the same.
 
-Caching can be disabled with the `--disable-cache` option, or you can safely delete `igir.cache` if it becomes too large.
+The location of this cache file can be controlled with the `--cache-path <path>` option, or caching can be disabled entirely with the `--disable-cache` option. You can safely delete `igir.cache` when `igir` isn't running if the file becomes too large for you.

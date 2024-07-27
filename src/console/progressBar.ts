@@ -10,12 +10,12 @@ import LogLevel from './logLevel.js';
 export const ProgressBarSymbol = {
   NONE: '',
   WAITING: chalk.grey(process.platform === 'win32' ? '…' : '⋯'),
-  PROCESSING: chalk.cyan(process.platform === 'win32' ? '¤' : '⚙'),
+  DONE: chalk.green(process.platform === 'win32' ? '√' : '✓'),
   // Files
   SEARCHING: chalk.magenta(process.platform === 'win32' ? '○' : '↻'),
   DOWNLOADING: chalk.magenta('↓'),
   PARSING_CONTENTS: chalk.magenta('Σ'),
-  HASHING: chalk.magenta('#'),
+  DETECTING_HEADERS: chalk.magenta('^'),
   INDEXING: chalk.magenta('#'),
   // Processing a single DAT
   GROUPING_SIMILAR: chalk.cyan('∩'),
@@ -23,12 +23,13 @@ export const ProgressBarSymbol = {
   // Candidates
   GENERATING: chalk.cyan('Σ'),
   FILTERING: chalk.cyan('∆'),
+  EXTENSION_CORRECTION: chalk.cyan('.'),
+  HASHING: chalk.cyan('#'),
   VALIDATING: chalk.cyan(process.platform === 'win32' ? '?' : '≟'),
   COMBINING_ALL: chalk.cyan(process.platform === 'win32' ? 'U' : '∪'),
   WRITING: chalk.yellow(process.platform === 'win32' ? '»' : '✎'),
-  RECYCLING: chalk.blue(process.platform === 'win32' ? '≠' : '♻'),
+  RECYCLING: chalk.blue(process.platform === 'win32' ? '»' : '♻'),
   DELETING: chalk.red(process.platform === 'win32' ? 'X' : '✕'),
-  DONE: chalk.green(process.platform === 'win32' ? '√' : '✓'),
 };
 
 /**
