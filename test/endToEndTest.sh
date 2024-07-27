@@ -1,9 +1,8 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-here="${PWD}"
 # shellcheck disable=SC2064
-trap "cd \"${here}\"" EXIT
+trap "cd \"${PWD}\"" EXIT
 
 # @param {string} $1 Directory to start from
 # @param {string} $2 Filename
