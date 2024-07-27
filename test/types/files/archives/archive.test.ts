@@ -5,6 +5,9 @@ import fsPoly from '../../../../src/polyfill/fsPoly.js';
 import Archive from '../../../../src/types/files/archives/archive.js';
 import ArchiveEntry from '../../../../src/types/files/archives/archiveEntry.js';
 import Chd from '../../../../src/types/files/archives/chd/chd.js';
+import Cso from '../../../../src/types/files/archives/maxcso/cso.js';
+import Dax from '../../../../src/types/files/archives/maxcso/dax.js';
+import Zso from '../../../../src/types/files/archives/maxcso/zso.js';
 import NkitIso from '../../../../src/types/files/archives/nkitIso.js';
 import Rar from '../../../../src/types/files/archives/rar.js';
 import Gzip from '../../../../src/types/files/archives/sevenZip/gzip.js';
@@ -29,6 +32,9 @@ describe('getArchiveEntries', () => {
     ...ZipX.getExtensions(),
     // Compressed images
     ...Chd.getExtensions(),
+    ...Cso.getExtensions(),
+    ...Dax.getExtensions(),
+    ...Zso.getExtensions(),
     ...NkitIso.getExtensions(),
   ])])('should throw when the file doesn\'t exist: %s', async (extension) => {
     const tempFile = (await fsPoly.mktemp(path.join(Temp.getTempDir(), 'file'))) + extension;

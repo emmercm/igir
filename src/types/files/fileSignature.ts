@@ -86,6 +86,8 @@ export default class FileSignature {
     // @see https://docs.fileformat.com/disc-and-media/cso/
     cso: new FileSignature('.cso', [{ value: Buffer.from('CISO') }]),
 
+    dax: new FileSignature('.dax', [{ value: Buffer.from('DAX') }]),
+
     // @see https://en.wikipedia.org/wiki/List_of_file_signatures
     isz: new FileSignature('.isz', [{ value: Buffer.from('IsZ!') }]),
 

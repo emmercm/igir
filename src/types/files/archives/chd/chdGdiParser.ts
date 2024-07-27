@@ -23,7 +23,7 @@ export default class ChdGdiParser {
     checksumBitmask: number,
   ): Promise<ArchiveEntry<T>[]> {
     const tempDir = await FsPoly.mkdtemp(path.join(Temp.getTempDir(), 'chd-gdi'));
-    const gdiFilePath = path.join(tempDir, 'track.gdi');
+    const gdiFilePath = path.join(tempDir, `${path.parse(archive.getFilePath()).name}.gdi`);
     let binRawFilePaths: string[] = [];
 
     try {

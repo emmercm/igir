@@ -3,6 +3,9 @@ import Archive from './archives/archive.js';
 import ArchiveEntry from './archives/archiveEntry.js';
 import ArchiveFile from './archives/archiveFile.js';
 import Chd from './archives/chd/chd.js';
+import Cso from './archives/maxcso/cso.js';
+import Dax from './archives/maxcso/dax.js';
+import Zso from './archives/maxcso/zso.js';
 import NkitIso from './archives/nkitIso.js';
 import Rar from './archives/rar.js';
 import Gzip from './archives/sevenZip/gzip.js';
@@ -94,6 +97,12 @@ export default class FileFactory {
       archive = new ZipX(filePath);
     } else if (Chd.getExtensions().some((ext) => fileExt.toLowerCase().endsWith(ext))) {
       archive = new Chd(filePath);
+    } else if (Cso.getExtensions().some((ext) => fileExt.toLowerCase().endsWith(ext))) {
+      archive = new Cso(filePath);
+    } else if (Dax.getExtensions().some((ext) => fileExt.toLowerCase().endsWith(ext))) {
+      archive = new Dax(filePath);
+    } else if (Zso.getExtensions().some((ext) => fileExt.toLowerCase().endsWith(ext))) {
+      archive = new Zso(filePath);
     } else if (NkitIso.getExtensions().some((ext) => fileExt.toLowerCase().endsWith(ext))) {
       archive = new NkitIso(filePath);
     } else {
@@ -146,6 +155,9 @@ export default class FileFactory {
       ...ZipX.getExtensions(),
       // Compressed images
       ...Chd.getExtensions(),
+      ...Cso.getExtensions(),
+      ...Dax.getExtensions(),
+      ...Zso.getExtensions(),
       ...NkitIso.getExtensions(),
     ].some((ext) => filePath.toLowerCase().endsWith(ext));
   }

@@ -5,10 +5,11 @@ import ProgressBarFake from '../console/progressBarFake.js';
 
 test.each([
   // One input path
-  [['test/fixtures/roms/**/*'], { roms: 32 }],
+  [['test/fixtures/roms/**/*'], { roms: 33 }],
   [['test/fixtures/roms/7z/*'], { '7z': 5 }],
   [['test/fixtures/roms/chd/*'], { chd: 2 }],
-  [['test/fixtures/roms/discs/*'], { discs: 2 }],
+  [['test/fixtures/roms/cso/*'], { cso: 1 }],
+  [['test/fixtures/roms/discs/*'], { discs: 3 }],
   [['test/fixtures/roms/gz/*'], { gz: 7 }],
   [['test/fixtures/roms/headered/*'], { headered: 6 }],
   [['test/fixtures/roms/headerless/*'], { headerless: 1 }],

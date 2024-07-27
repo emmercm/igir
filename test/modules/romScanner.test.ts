@@ -33,7 +33,7 @@ it('should not throw on bad archives', async () => {
 
 describe('multiple files', () => {
   it('should scan multiple files with no exclusions', async () => {
-    const expectedRomFiles = 87;
+    const expectedRomFiles = 90;
     await expect(createRomScanner(['test/fixtures/roms']).scan()).resolves.toHaveLength(expectedRomFiles);
     await expect(createRomScanner(['test/fixtures/roms/*', 'test/fixtures/roms/**/*']).scan()).resolves.toHaveLength(expectedRomFiles);
     await expect(createRomScanner(['test/fixtures/roms/**/*']).scan()).resolves.toHaveLength(expectedRomFiles);
@@ -41,7 +41,7 @@ describe('multiple files', () => {
   });
 
   test.each([
-    [{ input: [path.join('test', 'fixtures', 'roms')] }, 126],
+    [{ input: [path.join('test', 'fixtures', 'roms')] }, 131],
     [{ input: [path.join('test', 'fixtures', 'roms', '7z')] }, 12],
     [{ input: [path.join('test', 'fixtures', 'roms', 'gz')] }, 14],
     [{ input: [path.join('test', 'fixtures', 'roms', 'rar')] }, 12],
@@ -54,9 +54,9 @@ describe('multiple files', () => {
   });
 
   it('should scan multiple files with some file exclusions', async () => {
-    await expect(createRomScanner(['test/fixtures/roms/**/*'], ['test/fixtures/roms/**/*.rom']).scan()).resolves.toHaveLength(70);
-    await expect(createRomScanner(['test/fixtures/roms/**/*'], ['test/fixtures/roms/**/*.rom', 'test/fixtures/roms/**/*.rom']).scan()).resolves.toHaveLength(70);
-    await expect(createRomScanner(['test/fixtures/roms/**/*'], ['test/fixtures/roms/**/*.rom', 'test/fixtures/roms/**/*.zip']).scan()).resolves.toHaveLength(59);
+    await expect(createRomScanner(['test/fixtures/roms/**/*'], ['test/fixtures/roms/**/*.rom']).scan()).resolves.toHaveLength(73);
+    await expect(createRomScanner(['test/fixtures/roms/**/*'], ['test/fixtures/roms/**/*.rom', 'test/fixtures/roms/**/*.rom']).scan()).resolves.toHaveLength(73);
+    await expect(createRomScanner(['test/fixtures/roms/**/*'], ['test/fixtures/roms/**/*.rom', 'test/fixtures/roms/**/*.zip']).scan()).resolves.toHaveLength(62);
   });
 
   it('should scan multiple files with every file excluded', async () => {

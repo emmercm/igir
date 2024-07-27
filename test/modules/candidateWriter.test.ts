@@ -435,7 +435,7 @@ describe('zip', () => {
   test.each([
     [
       '**/!(header*)/*',
-      ['0F09A40.zip', '3708F2C.zip', '612644F.zip', '65D1206.zip', '92C85C9.zip', 'C01173E.zip', 'CD-ROM.zip', 'GD-ROM.zip', 'KDULVQN.zip', 'before.zip', 'best.zip', 'empty.zip', 'five.zip', 'fizzbuzz.zip', 'foobar.zip', 'four.zip', 'fourfive.zip', 'loremipsum.zip', 'one.zip', 'onetwothree.zip', 'three.zip', 'two.zip', 'unknown.zip'],
+      ['0F09A40.zip', '3708F2C.zip', '612644F.zip', '65D1206.zip', '92C85C9.zip', 'C01173E.zip', 'CD-ROM.zip', 'GD-ROM.zip', 'KDULVQN.zip', 'UMD.zip', 'before.zip', 'best.zip', 'empty.zip', 'five.zip', 'fizzbuzz.zip', 'foobar.zip', 'four.zip', 'fourfive.zip', 'loremipsum.zip', 'one.zip', 'onetwothree.zip', 'three.zip', 'two.zip', 'unknown.zip'],
     ],
     [
       '7z/*',
@@ -485,7 +485,7 @@ describe('zip', () => {
   test.each([
     [
       '**/!(header*)/*',
-      ['0F09A40.zip', '3708F2C.zip', '612644F.zip', '65D1206.zip', '92C85C9.zip', 'C01173E.zip', 'CD-ROM.zip', 'GD-ROM.zip', 'KDULVQN.zip', 'before.zip', 'best.zip', 'empty.zip', 'five.zip', 'fizzbuzz.zip', 'foobar.zip', 'four.zip', 'fourfive.zip', 'loremipsum.zip', 'one.zip', 'onetwothree.zip', 'three.zip', 'two.zip', 'unknown.zip'],
+      ['0F09A40.zip', '3708F2C.zip', '612644F.zip', '65D1206.zip', '92C85C9.zip', 'C01173E.zip', 'CD-ROM.zip', 'GD-ROM.zip', 'KDULVQN.zip', 'UMD.zip', 'before.zip', 'best.zip', 'empty.zip', 'five.zip', 'fizzbuzz.zip', 'foobar.zip', 'four.zip', 'fourfive.zip', 'loremipsum.zip', 'one.zip', 'onetwothree.zip', 'three.zip', 'two.zip', 'unknown.zip'],
       ['patchable/0F09A40.rom', 'patchable/3708F2C.rom', 'patchable/612644F.rom', 'patchable/65D1206.rom', 'patchable/92C85C9.rom', 'patchable/C01173E.rom', 'patchable/KDULVQN.rom', 'patchable/before.rom', 'patchable/best.gz', 'raw/empty.rom', 'raw/fizzbuzz.nes', 'raw/foobar.lnx', 'raw/loremipsum.rom', 'raw/one.rom', 'raw/three.rom', 'raw/two.rom', 'raw/unknown.rom'],
     ],
     [
@@ -592,6 +592,7 @@ describe('zip', () => {
       ['ROMWriter Test.zip|speed_test_v51.smc', '9adca6cc'],
       ['ROMWriter Test.zip|three.rom', 'ff46c5d8'],
       ['ROMWriter Test.zip|two.rom', '96170874'],
+      ['ROMWriter Test.zip|UMD.iso', 'e90f7cf5'],
       ['ROMWriter Test.zip|unknown.rom', '377a7727'],
     ]],
     ['raw/*', [
@@ -884,8 +885,8 @@ describe('extract', () => {
       '**/!(header*)/*',
       ['0F09A40.rom', '3708F2C.rom', '612644F.rom', '65D1206.rom', '92C85C9.rom', 'C01173E.rom',
         path.join('CD-ROM', 'CD-ROM (Track 1).bin'), path.join('CD-ROM', 'CD-ROM (Track 2).bin'), path.join('CD-ROM', 'CD-ROM (Track 3).bin'), path.join('CD-ROM', 'CD-ROM.cue'),
-        path.join('GD-ROM', 'track.gdi'), path.join('GD-ROM', 'track01.bin'), path.join('GD-ROM', 'track02.raw'), path.join('GD-ROM', 'track03.bin'), path.join('GD-ROM', 'track04.bin'),
-        'KDULVQN.rom', 'before.rom', 'best.rom', 'empty.rom', 'five.rom', 'fizzbuzz.nes', 'foobar.lnx', 'four.rom', path.join('fourfive', 'five.rom'), path.join('fourfive', 'four.rom'), 'loremipsum.rom', 'one.rom', path.join('onetwothree', 'one.rom'), path.join('onetwothree', 'three.rom'), path.join('onetwothree', 'two.rom'), 'three.rom',
+        path.join('GD-ROM', 'GD-ROM.gdi'), path.join('GD-ROM', 'track01.bin'), path.join('GD-ROM', 'track02.raw'), path.join('GD-ROM', 'track03.bin'), path.join('GD-ROM', 'track04.bin'),
+        'KDULVQN.rom', 'UMD.iso', 'before.rom', 'best.rom', 'empty.rom', 'five.rom', 'fizzbuzz.nes', 'foobar.lnx', 'four.rom', path.join('fourfive', 'five.rom'), path.join('fourfive', 'four.rom'), 'loremipsum.rom', 'one.rom', path.join('onetwothree', 'one.rom'), path.join('onetwothree', 'three.rom'), path.join('onetwothree', 'two.rom'), 'three.rom',
         'two.rom', 'unknown.rom'],
     ],
     [
@@ -941,8 +942,8 @@ describe('extract', () => {
       '**/!(header*)/*',
       ['0F09A40.rom', '3708F2C.rom', '612644F.rom', '65D1206.rom', '92C85C9.rom', 'C01173E.rom',
         path.join('CD-ROM', 'CD-ROM (Track 1).bin'), path.join('CD-ROM', 'CD-ROM (Track 2).bin'), path.join('CD-ROM', 'CD-ROM (Track 3).bin'), path.join('CD-ROM', 'CD-ROM.cue'),
-        path.join('GD-ROM', 'track.gdi'), path.join('GD-ROM', 'track01.bin'), path.join('GD-ROM', 'track02.raw'), path.join('GD-ROM', 'track03.bin'), path.join('GD-ROM', 'track04.bin'),
-        'KDULVQN.rom', 'before.rom', 'best.rom', 'empty.rom', 'five.rom', 'fizzbuzz.nes', 'foobar.lnx', 'four.rom', path.join('fourfive', 'five.rom'), path.join('fourfive', 'four.rom'), 'loremipsum.rom', 'one.rom', path.join('onetwothree', 'one.rom'), path.join('onetwothree', 'three.rom'), path.join('onetwothree', 'two.rom'), 'three.rom',
+        path.join('GD-ROM', 'GD-ROM.gdi'), path.join('GD-ROM', 'track01.bin'), path.join('GD-ROM', 'track02.raw'), path.join('GD-ROM', 'track03.bin'), path.join('GD-ROM', 'track04.bin'),
+        'KDULVQN.rom', 'UMD.iso', 'before.rom', 'best.rom', 'empty.rom', 'five.rom', 'fizzbuzz.nes', 'foobar.lnx', 'four.rom', path.join('fourfive', 'five.rom'), path.join('fourfive', 'four.rom'), 'loremipsum.rom', 'one.rom', path.join('onetwothree', 'one.rom'), path.join('onetwothree', 'three.rom'), path.join('onetwothree', 'two.rom'), 'three.rom',
         'two.rom', 'unknown.rom'],
       ['patchable/0F09A40.rom', 'patchable/3708F2C.rom', 'patchable/612644F.rom', 'patchable/65D1206.rom', 'patchable/92C85C9.rom', 'patchable/C01173E.rom', 'patchable/KDULVQN.rom', 'patchable/before.rom', 'patchable/best.gz', 'raw/empty.rom', 'raw/fizzbuzz.nes', 'raw/foobar.lnx', 'raw/loremipsum.rom', 'raw/one.rom', 'raw/three.rom', 'raw/two.rom', 'raw/unknown.rom'],
     ],
@@ -1252,7 +1253,7 @@ describe('raw', () => {
       ['0F09A40.rom', '3708F2C.rom', '612644F.rom', '65D1206.rom', '92C85C9.rom', 'C01173E.rom',
         'CD-ROM (Track 1).bin', 'CD-ROM (Track 2).bin', 'CD-ROM (Track 3).bin', 'CD-ROM.chd', 'CD-ROM.cue',
         'GD-ROM.chd',
-        'KDULVQN.rom', 'before.rom', 'best.gz', 'empty.rom', 'five.rom', 'fizzbuzz.nes', 'foobar.lnx', 'four.rom', 'fourfive.zip', 'loremipsum.rom', 'one.rom', 'onetwothree.zip', 'three.rom',
+        'KDULVQN.rom', 'UMD.iso', 'before.rom', 'best.gz', 'empty.rom', 'five.rom', 'fizzbuzz.nes', 'foobar.lnx', 'four.rom', 'fourfive.zip', 'loremipsum.rom', 'one.rom', 'onetwothree.zip', 'three.rom',
         'two.rom', 'unknown.rom'],
     ],
     [
@@ -1306,7 +1307,7 @@ describe('raw', () => {
       ['0F09A40.rom', '3708F2C.rom', '612644F.rom', '65D1206.rom', '92C85C9.rom', 'C01173E.rom',
         'CD-ROM (Track 1).bin', 'CD-ROM (Track 2).bin', 'CD-ROM (Track 3).bin', 'CD-ROM.chd', 'CD-ROM.cue',
         'GD-ROM.chd',
-        'KDULVQN.rom', 'before.rom', 'best.gz', 'empty.rom', 'five.rom', 'fizzbuzz.nes', 'foobar.lnx', 'four.rom', 'fourfive.zip', 'loremipsum.rom', 'one.rom', 'onetwothree.zip', 'three.rom',
+        'KDULVQN.rom', 'UMD.iso', 'before.rom', 'best.gz', 'empty.rom', 'five.rom', 'fizzbuzz.nes', 'foobar.lnx', 'four.rom', 'fourfive.zip', 'loremipsum.rom', 'one.rom', 'onetwothree.zip', 'three.rom',
         'two.rom', 'unknown.rom'],
       ['patchable/0F09A40.rom', 'patchable/3708F2C.rom', 'patchable/612644F.rom', 'patchable/65D1206.rom', 'patchable/92C85C9.rom', 'patchable/C01173E.rom', 'patchable/KDULVQN.rom', 'patchable/before.rom', 'patchable/best.gz', 'raw/empty.rom', 'raw/fizzbuzz.nes', 'raw/foobar.lnx', 'raw/loremipsum.rom', 'raw/one.rom', 'raw/three.rom', 'raw/two.rom', 'raw/unknown.rom'],
     ],
