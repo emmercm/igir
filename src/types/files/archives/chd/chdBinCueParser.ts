@@ -73,9 +73,9 @@ export default class ChdBinCueParser {
       // Junk size and checksums because we don't know what it should be
       size: 0,
       crc32: checksumBitmask & ChecksumBitmask.CRC32 ? 'x'.repeat(8) : undefined,
-      md5: checksumBitmask & ChecksumBitmask.CRC32 ? 'x'.repeat(32) : undefined,
-      sha1: checksumBitmask & ChecksumBitmask.CRC32 ? 'x'.repeat(40) : undefined,
-      sha256: checksumBitmask & ChecksumBitmask.CRC32 ? 'x'.repeat(64) : undefined,
+      md5: checksumBitmask & ChecksumBitmask.MD5 ? 'x'.repeat(32) : undefined,
+      sha1: checksumBitmask & ChecksumBitmask.SHA1 ? 'x'.repeat(40) : undefined,
+      sha256: checksumBitmask & ChecksumBitmask.SHA256 ? 'x'.repeat(64) : undefined,
     });
 
     return [cueFile, ...binFiles];

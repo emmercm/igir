@@ -22,7 +22,7 @@ it('should do nothing if dir2dat command not provided', async () => {
   const files = await new ROMScanner(options, new ProgressBarFake()).scan();
 
   // And a DAT
-  const inferredDats = new DATGameInferrer(options, new ProgressBarFake()).infer(files);
+  const inferredDats = await new DATGameInferrer(options, new ProgressBarFake()).infer(files);
   expect(inferredDats).toHaveLength(1);
   const [inferredDat] = inferredDats;
 
@@ -49,7 +49,7 @@ it('should write a valid DAT', async () => {
   const files = await new ROMScanner(options, new ProgressBarFake()).scan();
 
   // And a DAT
-  const inferredDats = new DATGameInferrer(options, new ProgressBarFake()).infer(files);
+  const inferredDats = await new DATGameInferrer(options, new ProgressBarFake()).infer(files);
   expect(inferredDats).toHaveLength(1);
   const [inferredDat] = inferredDats;
 
@@ -102,7 +102,7 @@ it('should use the candidates for games and ROMs', async () => {
   const files = await new ROMScanner(options, new ProgressBarFake()).scan();
 
   // And a DAT
-  const inferredDats = new DATGameInferrer(options, new ProgressBarFake()).infer(files);
+  const inferredDats = await new DATGameInferrer(options, new ProgressBarFake()).infer(files);
   expect(inferredDats).toHaveLength(1);
   const [inferredDat] = inferredDats;
 

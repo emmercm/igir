@@ -1,5 +1,8 @@
+import fs from 'node:fs';
 import path from 'node:path';
+import util from 'node:util';
 
+import { parse } from '@gplane/cue';
 import moment from 'moment';
 
 import ProgressBar from '../console/progressBar.js';
@@ -34,7 +37,7 @@ export default class DATGameInferrer extends Module {
   /**
    * Infer {@link Game}s from input files.
    */
-  infer(romFiles: File[]): DAT[] {
+  async infer(romFiles: File[]): Promise<DAT[]> {
     this.progressBar.logTrace(`inferring DATs for ${romFiles.length.toLocaleString()} ROM${romFiles.length !== 1 ? 's' : ''}`);
 
     const normalizedInputPaths = this.options.getInputPaths()
@@ -57,14 +60,14 @@ export default class DATGameInferrer extends Module {
     }, new Map<string, File[]>());
     this.progressBar.logTrace(`inferred ${inputPathsToRomFiles.size.toLocaleString()} DAT${inputPathsToRomFiles.size !== 1 ? 's' : ''}`);
 
-    const dats = [...inputPathsToRomFiles.entries()]
-      .map(([inputPath, datRomFiles]) => DATGameInferrer.createDAT(inputPath, datRomFiles));
+    const dats = await Promise.all([...inputPathsToRomFiles.entries()]
+      .map(async ([inputPath, datRomFiles]) => this.createDAT(inputPath, datRomFiles)));
 
     this.progressBar.logTrace('done inferring DATs');
     return dats;
   }
 
-  private static createDAT(inputPath: string, romFiles: File[]): DAT {
+  private async createDAT(inputPath: string, romFiles: File[]): Promise<DAT> {
     const datName = path.basename(inputPath);
     const date = moment().format('YYYYMMDD-HHmmss');
     const header = new Header({
@@ -80,50 +83,46 @@ export default class DATGameInferrer extends Module {
       ].join('\n'),
     });
 
-    // For all non-archived files, group files of the same filename without extension together
-    const gameNamesToRawFiles = romFiles
-      .filter((file) => !(file instanceof ArchiveEntry))
-      .reduce((map, file) => {
-        const gameName = DATGameInferrer.getGameName(file);
-        map.set(gameName, [...(map.get(gameName) ?? []), file]);
-        return map;
-      }, new Map<string, File[]>());
+    let remainingRomFiles = romFiles;
+    let gameNamesToRomFiles: [string, File[]][] = [];
 
-    // For archives, assume the entire archive is one game
-    const archivePathsToArchiveEntries = romFiles
-      .filter((file) => file instanceof ArchiveEntry)
-      .reduce((map, file) => {
-        const archivePath = file.getFilePath();
-        map.set(archivePath, [...(map.get(archivePath) ?? []), file]);
-        return map;
-      }, new Map<string, ArchiveEntry<Archive>[]>());
-    const gameNamesToArchiveEntries = [...archivePathsToArchiveEntries.values()]
-      .map((archiveEntries) => {
-        const gameName = DATGameInferrer.getGameName(archiveEntries[0]);
-        return [gameName, archiveEntries] satisfies [string, ArchiveEntry<Archive>[]];
+    // For each inference strategy
+    const inferFunctions = [
+      this.inferArchiveEntries,
+      this.inferBinCueFiles,
+      this.inferRawFiles,
+    ];
+    for (const inferFunction of inferFunctions) {
+      // Infer the games and their files)
+      const result = await inferFunction.bind(this)(remainingRomFiles);
+
+      // Update the list of results
+      gameNamesToRomFiles = [...gameNamesToRomFiles, ...result];
+
+      // Remove the consumed files from further inference
+      const consumedFiles = new Set(result
+        .flatMap(([, resultFiles]) => resultFiles)
+        .map((file) => file.toString()));
+      remainingRomFiles = remainingRomFiles.filter((file) => !consumedFiles.has(file.toString()));
+    }
+
+    const games = gameNamesToRomFiles.map(([gameName, gameRomFiles]) => {
+      const roms = gameRomFiles
+        .map((romFile) => new ROM({
+          name: path.basename(romFile.getExtractedFilePath()),
+          size: romFile.getSize(),
+          crc32: romFile.getCrc32(),
+          md5: romFile.getMd5(),
+          sha1: romFile.getSha1(),
+          sha256: romFile.getSha256(),
+        }))
+        .filter(ArrayPoly.filterUniqueMapped((rom) => rom.getName()));
+      return new Game({
+        name: gameName,
+        description: gameName,
+        rom: roms,
       });
-
-    const games = [
-      ...gameNamesToRawFiles.entries(),
-      ...gameNamesToArchiveEntries,
-    ]
-      .map(([gameName, gameRomFiles]) => {
-        const roms = gameRomFiles
-          .map((romFile) => new ROM({
-            name: path.basename(romFile.getExtractedFilePath()),
-            size: romFile.getSize(),
-            crc32: romFile.getCrc32(),
-            md5: romFile.getMd5(),
-            sha1: romFile.getSha1(),
-            sha256: romFile.getSha256(),
-          }))
-          .filter(ArrayPoly.filterUniqueMapped((rom) => rom.getName()));
-        return new Game({
-          name: gameName,
-          description: gameName,
-          rom: roms,
-        });
-      })
+    })
       // Filter out duplicate games
       .filter(ArrayPoly.filterUniqueMapped((game) => game.hashCode()));
 
@@ -142,5 +141,80 @@ export default class DATGameInferrer extends Module {
       // Chop off the extension
       .replace(/(\.[a-z0-9]+)+$/, '')
       .trim();
+  }
+
+  private inferArchiveEntries(romFiles: File[]): [string, ArchiveEntry<Archive>[]][] {
+    this.progressBar.logTrace(`inferring games from archives from ${romFiles.length.toLocaleString()} file${romFiles.length !== 1 ? 's' : ''}`);
+
+    // For archives, assume the entire archive is one game
+    const archivePathsToArchiveEntries = romFiles
+      .filter((file) => file instanceof ArchiveEntry)
+      .reduce((map, file) => {
+        const archivePath = file.getFilePath();
+        map.set(archivePath, [...(map.get(archivePath) ?? []), file]);
+        return map;
+      }, new Map<string, ArchiveEntry<Archive>[]>());
+
+    const results = [...archivePathsToArchiveEntries.values()]
+      .map((archiveEntries) => {
+        const gameName = DATGameInferrer.getGameName(archiveEntries[0]);
+        return [gameName, archiveEntries] satisfies [string, ArchiveEntry<Archive>[]];
+      });
+
+    this.progressBar.logTrace(`inferred ${results.length.toLocaleString()} games from archives`);
+    return results;
+  }
+
+  private async inferBinCueFiles(romFiles: File[]): Promise<[string, File[]][]> {
+    const rawFiles = romFiles.filter((file) => !(file instanceof ArchiveEntry));
+    this.progressBar.logTrace(`inferring games from cue files from ${rawFiles.length.toLocaleString()} non-archive${rawFiles.length !== 1 ? 's' : ''}`);
+
+    const rawFilePathsToFiles = rawFiles
+      .reduce((map, file) => {
+        map.set(file.getFilePath(), file);
+        return map;
+      }, new Map<string, File>());
+
+    const results = (await Promise.all(rawFiles
+      .filter((file) => file.getExtractedFilePath().toLowerCase().endsWith('.cue'))
+      .map(async (cueFile): Promise<[string, File[]] | undefined> => {
+        try {
+          const cueData = await util.promisify(fs.readFile)(cueFile.getFilePath());
+          const cueSheet = parse(cueData.toString(), {
+            fatal: true,
+          }).sheet;
+
+          const binFiles = cueSheet.files
+            .map((binFile) => path.join(path.dirname(cueFile.getFilePath()), binFile.name))
+            .map((binFilePath) => rawFilePathsToFiles.get(binFilePath))
+            .filter(ArrayPoly.filterNotNullish);
+
+          if (binFiles.length > 0) {
+            const gameName = DATGameInferrer.getGameName(cueFile);
+            return [gameName, [cueFile, ...binFiles]];
+          }
+          return undefined;
+        } catch {
+          return undefined;
+        }
+      }))).filter(ArrayPoly.filterNotNullish);
+
+    this.progressBar.logTrace(`inferred ${results.length.toLocaleString()} games from cue files`);
+    return results;
+  }
+
+  private inferRawFiles(romFiles: File[]): [string, File[]][] {
+    this.progressBar.logTrace(`inferring games from raw files from ${romFiles.length.toLocaleString()} file${romFiles.length !== 1 ? 's' : ''}`);
+
+    const results = romFiles
+      .filter((file) => !(file instanceof ArchiveEntry))
+      .reduce((map, file) => {
+        const gameName = DATGameInferrer.getGameName(file);
+        map.set(gameName, [...(map.get(gameName) ?? []), file]);
+        return map;
+      }, new Map<string, File[]>());
+
+    this.progressBar.logTrace(`inferred ${results.size.toLocaleString()} games from raw files`);
+    return [...results.entries()];
   }
 }
