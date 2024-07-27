@@ -4,7 +4,7 @@ The [EZ-FLASH](https://www.ezflash.cn/) flash carts for Nintendo handhelds are a
 
 ## ROMs
 
-Because flash carts are specific to a specific console, you can provide specific input directories & [DATs](../../dats/introduction.md) when you run `igir`. For example:
+Because flash carts are specific to a specific console, you can provide specific input directories & [DATs](../../dats/introduction.md) when you run Igir. For example:
 
 === ":simple-windowsxp: Windows"
 

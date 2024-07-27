@@ -106,7 +106,7 @@ Let's say we want to build an arcade ROM set that's compatible with the most rec
 
     Let's say we care first and foremost that the arcade games "just work," and then we would like to conserve disk space. A "split" ROM set makes a good choice because RetroArch should be able to automatically index every game, including both parents and clones.
 
-6. **Run `igir`.**
+6. **Run Igir.**
 
   !!! note
 
@@ -160,9 +160,9 @@ Most other ROM managers use the terms "re-build" & "fix" when talking about taki
 
 !!! note
 
-    A game's required ROM files may change between emulator versions. This usually occurs when bad ROM dumps are replaced with better dumps. `igir` cannot magically deal with these ROM differences, and `igir` will only write complete ROM sets, so you may see games disappear when re-building. You will need to source the differing ROM files in order to keep your full game set.
+    A game's required ROM files may change between emulator versions. This usually occurs when bad ROM dumps are replaced with better dumps. Igir cannot magically deal with these ROM differences, and Igir will only write complete ROM sets, so you may see games disappear when re-building. You will need to source the differing ROM files in order to keep your full game set.
 
-A major reason `igir` was created was to help disambiguate what it means to build & re-build ROM sets. `igir` explicitly requires users to choose whether ROM files are copied or moved, so that users know what decision they are making. To "re-build" a ROM set, a user just needs to `igir move` ROMs from an input directory to the same directory specified again as the output.
+A major reason Igir was created was to help disambiguate what it means to build & re-build ROM sets. Igir explicitly requires users to choose whether ROM files are copied or moved, so that users know what decision they are making. To "re-build" a ROM set, a user just needs to `igir move` ROMs from an input directory to the same directory specified again as the output.
 
 Taking the MAME v0.258 set we created above, let's say we want to "downgrade" it to MAME 2003 (v0.78) because an under-powered device requires it. The steps would look like this:
 
@@ -176,7 +176,7 @@ Taking the MAME v0.258 set we created above, let's say we want to "downgrade" it
 
    This is left as an exercise for the reader.
 
-3. **Run `igir`.**
+3. **Run Igir.**
 
   === ":simple-windowsxp: Windows (64-bit)"
 

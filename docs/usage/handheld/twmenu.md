@@ -12,7 +12,7 @@ TWiLightMenu++ ships with most emulators not needing BIOS files. No exceptions a
 
 ## ROMs
 
-TWiLightMenu uses its own proprietary [ROM folder structure](https://github.com/DS-Homebrew/TWiLightMenu/tree/master/7zfile/roms) based in the root of the SD card, so `igir` has a replaceable `{twmenu}` token to sort ROMs into the right place. See the [replaceable tokens page](../../output/tokens.md) for more information.
+TWiLightMenu uses its own proprietary [ROM folder structure](https://github.com/DS-Homebrew/TWiLightMenu/tree/master/7zfile/roms) based in the root of the SD card, so Igir has a replaceable `{twmenu}` token to sort ROMs into the right place. See the [replaceable tokens page](../../output/tokens.md) for more information.
 
 === ":simple-windowsxp: Windows"
 

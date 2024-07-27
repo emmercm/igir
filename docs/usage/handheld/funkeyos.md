@@ -17,7 +17,7 @@ To sum up the documentation, two files need to be copied:
 
 ## ROMs
 
-Funkey OS uses its own proprietary [ROM folder structure](https://github.com/FunKey-Project/FunKey-OS/tree/master/FunKey/board/funkey/rootfs-overlay/usr/games/collections) based in the root of the SD card, so `igir` has a replaceable `{funkeyos}` token to sort ROMs into the right place. See the [replaceable tokens page](../../output/tokens.md) for more information.
+Funkey OS uses its own proprietary [ROM folder structure](https://github.com/FunKey-Project/FunKey-OS/tree/master/FunKey/board/funkey/rootfs-overlay/usr/games/collections) based in the root of the SD card, so Igir has a replaceable `{funkeyos}` token to sort ROMs into the right place. See the [replaceable tokens page](../../output/tokens.md) for more information.
 
 === ":simple-windowsxp: Windows"
 
