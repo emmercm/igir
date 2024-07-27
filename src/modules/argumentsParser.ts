@@ -152,7 +152,7 @@ export default class ArgumentsParser {
 
           ['test', 'clean'].forEach((command) => {
             if (checkArgv._.includes(command) && ['copy', 'move', 'link'].every((write) => !checkArgv._.includes(write))) {
-              throw new Error(`Command "${command}" requires one of the commands: copy, move, or link`);
+              throw new ExpectedError(`Command "${command}" requires one of the commands: copy, move, or link`);
             }
           });
 
@@ -183,7 +183,7 @@ export default class ArgumentsParser {
         requiresArg: true,
       })
       .check((checkArgv) => {
-        const needInput = ['copy', 'move', 'link', 'symlink', 'extract', 'zip', 'test', 'dir2dat', 'fixdat'].filter((command) => checkArgv._.includes(command));
+        const needInput = ['copy', 'move', 'link', 'extract', 'zip', 'test', 'dir2dat', 'fixdat'].filter((command) => checkArgv._.includes(command));
         if (!checkArgv.input && needInput.length > 0) {
           // TODO(cememr): print help message
           throw new ExpectedError(`Missing required argument for command${needInput.length !== 1 ? 's' : ''} ${needInput.join(', ')}: --input <path>`);
@@ -402,7 +402,7 @@ export default class ArgumentsParser {
         if (checkArgv.help) {
           return true;
         }
-        const needOutput = ['copy', 'move', 'link', 'symlink', 'extract', 'zip', 'clean'].filter((command) => checkArgv._.includes(command));
+        const needOutput = ['copy', 'move', 'link', 'extract', 'zip', 'clean'].filter((command) => checkArgv._.includes(command));
         if (!checkArgv.output && needOutput.length > 0) {
           // TODO(cememr): print help message
           throw new ExpectedError(`Missing required argument for command${needOutput.length !== 1 ? 's' : ''} ${needOutput.join(', ')}: --output <path>`);
@@ -482,7 +482,7 @@ export default class ArgumentsParser {
         }
         const needLinkCommand = ['symlink'].filter((option) => checkArgv[option]);
         if (!checkArgv._.includes('link') && needLinkCommand.length > 0) {
-          throw new Error(`Missing required command for option${needLinkCommand.length !== 1 ? 's' : ''} ${needLinkCommand.join(', ')}: link`);
+          throw new ExpectedError(`Missing required command for option${needLinkCommand.length !== 1 ? 's' : ''} ${needLinkCommand.join(', ')}: link`);
         }
         return true;
       })
