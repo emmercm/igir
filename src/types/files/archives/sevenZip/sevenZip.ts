@@ -4,12 +4,12 @@ import _7z, { Result } from '7zip-min';
 import async, { AsyncResultCallback } from 'async';
 import { Mutex } from 'async-mutex';
 
-import Defaults from '../../../globals/defaults.js';
-import Temp from '../../../globals/temp.js';
-import fsPoly from '../../../polyfill/fsPoly.js';
-import ExpectedError from '../../expectedError.js';
-import Archive from './archive.js';
-import ArchiveEntry from './archiveEntry.js';
+import Defaults from '../../../../globals/defaults.js';
+import Temp from '../../../../globals/temp.js';
+import fsPoly from '../../../../polyfill/fsPoly.js';
+import ExpectedError from '../../../expectedError.js';
+import Archive from '../archive.js';
+import ArchiveEntry from '../archiveEntry.js';
 
 export default class SevenZip extends Archive {
   private static readonly LIST_MUTEX = new Mutex();
