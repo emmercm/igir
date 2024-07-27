@@ -4,7 +4,7 @@ import ProgressBar, { ProgressBarSymbol } from '../console/progressBar.js';
 import FsPoly from '../polyfill/fsPoly.js';
 import ArchiveEntry from '../types/files/archives/archiveEntry.js';
 import Rar from '../types/files/archives/rar.js';
-import SevenZip from '../types/files/archives/sevenZip.js';
+import SevenZip from '../types/files/archives/sevenZip/sevenZip.js';
 import Tar from '../types/files/archives/tar.js';
 import Zip from '../types/files/archives/zip.js';
 import File from '../types/files/file.js';

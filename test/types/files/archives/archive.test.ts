@@ -5,15 +5,15 @@ import fsPoly from '../../../../src/polyfill/fsPoly.js';
 import Archive from '../../../../src/types/files/archives/archive.js';
 import ArchiveEntry from '../../../../src/types/files/archives/archiveEntry.js';
 import Chd from '../../../../src/types/files/archives/chd/chd.js';
-import Gzip from '../../../../src/types/files/archives/gzip.js';
 import NkitIso from '../../../../src/types/files/archives/nkitIso.js';
 import Rar from '../../../../src/types/files/archives/rar.js';
-import SevenZip from '../../../../src/types/files/archives/sevenZip.js';
+import Gzip from '../../../../src/types/files/archives/sevenZip/gzip.js';
+import SevenZip from '../../../../src/types/files/archives/sevenZip/sevenZip.js';
+import Z from '../../../../src/types/files/archives/sevenZip/z.js';
+import ZipSpanned from '../../../../src/types/files/archives/sevenZip/zipSpanned.js';
+import ZipX from '../../../../src/types/files/archives/sevenZip/zipX.js';
 import Tar from '../../../../src/types/files/archives/tar.js';
-import Z from '../../../../src/types/files/archives/z.js';
 import Zip from '../../../../src/types/files/archives/zip.js';
-import ZipSpanned from '../../../../src/types/files/archives/zipSpanned.js';
-import ZipX from '../../../../src/types/files/archives/zipX.js';
 import FileFactory from '../../../../src/types/files/fileFactory.js';
 
 describe('getArchiveEntries', () => {

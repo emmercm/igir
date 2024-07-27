@@ -1,7 +1,7 @@
-import Archive from './archive.js';
-import ArchiveEntry from './archiveEntry.js';
+import Archive from '../archive.js';
+import ArchiveEntry from '../archiveEntry.js';
+import Tar from '../tar.js';
 import SevenZip from './sevenZip.js';
-import Tar from './tar.js';
 
 export default class Gzip extends SevenZip {
   // eslint-disable-next-line class-methods-use-this
