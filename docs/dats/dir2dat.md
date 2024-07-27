@@ -2,7 +2,7 @@
 
 "dir2dat" refers to DATs that have been automatically created based on files in an input directory. [DATs](./introduction.md) generated this way are not typically useful as-is, they usually require some hand editing after creation.
 
-`igir` has the ability to create these DATs with the `igir dir2dat` command. Example:
+Igir has the ability to create these DATs with the `igir dir2dat` command. Example:
 
 ```shell
 igir dir2dat --input <path> [--input <path>..]
@@ -10,7 +10,7 @@ igir dir2dat --input <path> [--input <path>..]
 
 ## dir2dat rules
 
-`igir` uses the following rules when creating dir2dat DAT files:
+Igir uses the following rules when creating dir2dat DAT files:
 
 - **A DAT file will be created for every input path.**
 
@@ -87,6 +87,6 @@ Once DATs have been generated from input files, they are processed the same as a
 
 ## Alternative tools
 
-It is unlikely that any ROM tool, including `igir`, will ever meet every person's exact DAT creation needs.
+It is unlikely that any ROM tool, including Igir, will ever meet every person's exact DAT creation needs.
 
 [SabreTools](https://github.com/SabreTools/SabreTools) is a great tool for DAT management that offers many complex options for DAT creation, filtering, merging, and splitting.

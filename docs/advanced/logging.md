@@ -1,6 +1,6 @@
 # Logging
 
-By default, `igir` will print the following log levels:
+By default, Igir will print the following log levels:
 
 - `ERROR`: an unexpected error has prevented an intended [command](../commands.md)
 - `WARN`: a preventable error has prevented an intended [command](../commands.md)
