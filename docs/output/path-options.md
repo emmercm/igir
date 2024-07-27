@@ -1,6 +1,6 @@
 # Output Path Options
 
-`igir` offer many options to control how ROMs are sorted in the specified output directory.
+Igir offer many options to control how ROMs are sorted in the specified output directory.
 
 All `--dir-*` options append subdirectories to whatever is specified in the `--output <path>` option. Many `--dir-*` options have an [output path token](./tokens.md) equivalent, which also controls how ROMs are sorted.
 

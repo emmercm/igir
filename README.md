@@ -23,13 +23,13 @@
 
 <br>
 
-## What does `igir` do?
+## What does Igir do?
 
 A video of an example use case:
 
 [![asciicast](https://asciinema.org/a/Sum1WBdZRsSTvbZvVuP5Ho1N9.svg)](https://asciinema.org/a/Sum1WBdZRsSTvbZvVuP5Ho1N9)
 
-With `igir` you can manage a ROM collection of any size:
+With Igir you can manage a ROM collection of any size:
 
 - 🔍 Scan for DATs, ROMs, and ROM patches - including those in archives (see [scanning](https://igir.io/input/file-scanning) & [archive docs](https://igir.io/input/reading-archives))
 - 📂 Organize ROM files by console (see [DAT docs](https://igir.io/dats/overview))
@@ -41,7 +41,7 @@ With `igir` you can manage a ROM collection of any size:
 - ↔️ Build & re-build (un-merge, split, or merge) MAME ROM sets (see [arcade docs](https://igir.io/usage/arcade))
 - 🔮 Report on what ROMs are present or missing for each console, and create fixdats for missing ROMs (see [reporting](https://igir.io/output/reporting) & [DAT docs](https://igir.io/dats/overview))
 
-## How do I run `igir`?
+## How do I run Igir?
 
 Either download the latest version for your OS from the [releases page](https://github.com/emmercm/igir/releases/latest), or if you have Node.js installed you can use [`npx`](https://docs.npmjs.com/cli/v9/commands/npx) to always run the latest version from the command line:
 

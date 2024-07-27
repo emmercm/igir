@@ -4,4 +4,4 @@
 
 !!! failure
 
-    OpenEmu has its own ROM importing mechanism that copies files to `~/Library/Application Support/OpenEmu/Game Library/roms` and adds them to a database. OpenEmu will _not_ automatically scan files you place into this folder, so `igir` is unable to help sort them.
+    OpenEmu has its own ROM importing mechanism that copies files to `~/Library/Application Support/OpenEmu/Game Library/roms` and adds them to a database. OpenEmu will _not_ automatically scan files you place into this folder, so Igir is unable to help sort them.

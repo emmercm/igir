@@ -1,8 +1,8 @@
 # ROM Matching
 
-When `igir` [scans ROM files](../input/file-scanning.md) in the input directory, it calculates a number of checksums to uniquely identify each file. These checksums are then matched to ones found in [DATs](../dats/introduction.md).
+When Igir [scans ROM files](../input/file-scanning.md) in the input directory, it calculates a number of checksums to uniquely identify each file. These checksums are then matched to ones found in [DATs](../dats/introduction.md).
 
-By default, `igir` will use CRC32 + filesize to match input files to ROMs found in DATs. CRC32 checksums are fast to calculate, and many [archive formats](../input/reading-archives.md) include them in their directory of files, which greatly speeds up scanning.
+By default, Igir will use CRC32 + filesize to match input files to ROMs found in DATs. CRC32 checksums are fast to calculate, and many [archive formats](../input/reading-archives.md) include them in their directory of files, which greatly speeds up scanning.
 
 !!! note
 
@@ -16,7 +16,7 @@ And some DAT release groups do not include filesize information for every file, 
 
 !!! success
 
-    For situations like these, `igir` will automatically detect what combination of checksums it needs to calculate for input files to be able to match them to DATs. This has the chance of greatly slowing down file scanning, especially with archives.
+    For situations like these, Igir will automatically detect what combination of checksums it needs to calculate for input files to be able to match them to DATs. This has the chance of greatly slowing down file scanning, especially with archives.
 
 For example, if you provide all of these DATs at once with the [`--dat <path>` option](../dats/processing.md):
 
@@ -24,11 +24,11 @@ For example, if you provide all of these DATs at once with the [`--dat <path>` o
 - Hardware Target Game Database's Atari Lynx SMBD (which includes CRC32, MD5, SHA1, and SHA256 information but _not_ filesize)
 - MAME ListXML (which only includes SHA1 information for CHD "disks")
 
-...then `igir` will determine that SHA1 is necessary to calculate because not every ROM in every DAT includes CRC32 _and_ filesize information.
+...then Igir will determine that SHA1 is necessary to calculate because not every ROM in every DAT includes CRC32 _and_ filesize information.
 
 !!! note
 
-    When generating a [dir2dat](../dats/dir2dat.md) with the `igir dir2dat` command, `igir` will calculate CRC32, MD5, and SHA1 information for every file. This helps ensure that the generated DAT has the most complete information it can. You can additionally add SHA256 information with the option `igir [commands..] [options] --input-min-checksum SHA256` (below).
+    When generating a [dir2dat](../dats/dir2dat.md) with the `igir dir2dat` command, Igir will calculate CRC32, MD5, and SHA1 information for every file. This helps ensure that the generated DAT has the most complete information it can. You can additionally add SHA256 information with the option `igir [commands..] [options] --input-min-checksum SHA256` (below).
 
 ## Manually using other checksum algorithms
 
@@ -44,7 +44,7 @@ igir [commands..] [options] --input-min-checksum SHA1
 igir [commands..] [options] --input-min-checksum SHA256
 ```
 
-This option defines the _minimum_ checksum that will be used based on digest size (below).  If not every ROM in every DAT provides the checksum you specify, `igir` may automatically calculate and match files based on a higher checksum (see above).
+This option defines the _minimum_ checksum that will be used based on digest size (below).  If not every ROM in every DAT provides the checksum you specify, Igir may automatically calculate and match files based on a higher checksum (see above).
 
 The reason you might want to do this is to have a higher confidence that found files _exactly_ match ROMs in DATs. Just keep in mind that explicitly enabling non-CRC32 checksums will _greatly_ slow down scanning of files within archives.
 
@@ -57,4 +57,4 @@ Here is a table that shows the keyspace for each checksum algorithm, where the h
 | SHA1      | 160 bits    | 2^160 = 1.46 quindecillion          | `666d29a15d92f62750dd665a06ce01fbd09eb98a`                         |
 | SHA256    | 256 bits    | 2^256 = 115.79 quattuorvigintillion | `1934e26cf69aa49978baac893ad5a890af35bdfb2c7a9393745f14dc89459137` |
 
-When files are [tested](../commands.md#test) after being written, `igir` will use the highest checksum available from the scanned file to check the written file. This lets you have equal confidence that a file was written correctly as well as matched correctly.
+When files are [tested](../commands.md#test) after being written, Igir will use the highest checksum available from the scanned file to check the written file. This lets you have equal confidence that a file was written correctly as well as matched correctly.
