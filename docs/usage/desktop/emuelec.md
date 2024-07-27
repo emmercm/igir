@@ -21,4 +21,4 @@ Because EmuELEC is mostly Libretro under the hood, the instructions are generall
 
 !!! failure
 
-    EmuELEC uses its own proprietary [ROM folder structure](https://github.com/EmuELEC/EmuELEC/wiki/Supported-Platforms-And--Correct-Rom-Path). `igir` does not support this folder structure, yet.
+    EmuELEC uses its own proprietary [ROM folder structure](https://github.com/EmuELEC/EmuELEC/wiki/Supported-Platforms-And--Correct-Rom-Path). Igir does not support this folder structure, yet.

@@ -1,6 +1,6 @@
 # Creator's Usage
 
-`igir` has many options available to fit almost any use case, but the number of options can be overwhelming. So that begs a question: _how do I, the creator of `igir`, use `igir` in the real world?_
+Igir has many options available to fit almost any use case, but the number of options can be overwhelming. So that begs a question: _how do I, the creator of Igir, use Igir in the real world?_
 
 ## Primary ROM library
 
@@ -169,4 +169,4 @@ npx --yes igir@latest copy test clean report \
   -v
 ```
 
-I use the trimmed [NKit format](https://wiki.gbatemp.net/wiki/NKit) for ISOs, which `igir` can't extract, so they're copied as-is. I also exclude some games due to limited SD card size.
+I use the trimmed [NKit format](https://wiki.gbatemp.net/wiki/NKit) for ISOs, which Igir can't extract, so they're copied as-is. I also exclude some games due to limited SD card size.

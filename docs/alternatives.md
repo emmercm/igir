@@ -40,7 +40,7 @@ There are a few different popular ROM managers that have similar features:
 
 !!! note
 
-    Just like `igir`, other ROM managers that are in active development are likely to release new features often. The above table is not guaranteed to be perfectly up-to-date, it is just a best effort.
+    Just like Igir, other ROM managers that are in active development are likely to release new features often. The above table is not guaranteed to be perfectly up-to-date, it is just a best effort.
 
 Other alternative ROM managers can be found in a number of other wikis, such as:
 

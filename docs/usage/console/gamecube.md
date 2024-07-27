@@ -8,7 +8,7 @@
 
     Swiss is sensitive to files being fragmented on SD cards ([swiss-gc#763](https://github.com/emukidid/swiss-gc/issues/763), [swiss-gc#122](https://github.com/emukidid/swiss-gc/issues/122), etc.). This means that you should only write one ISO at a time!
 
-`igir` has a `--writer-threads <threads>` option to limit the number of files being written at once. You can use the option like this:
+Igir has a `--writer-threads <threads>` option to limit the number of files being written at once. You can use the option like this:
 
 === ":simple-windowsxp: Windows"
 
@@ -56,4 +56,4 @@
 
 Swiss supports ISOs in the trimmed [NKit format](https://wiki.gbatemp.net/wiki/NKit), which can save significant space on your SD card. Some games such as Animal Crossing can be compressed as small as 28MB, while other games such as Wave Race: Blue Storm don't compress much at all.
 
-`igir` can read the original ISO's CRC32 information stored in `.nkit.iso` files, which means it can match files to DATs (as long as you don't raise the minimum checksum level!). However, `igir` can't extract NKit ISOs, you'll need to use Nanook's [NKit tool](https://wiki.gbatemp.net/wiki/NKit#Download) instead.
+Igir can read the original ISO's CRC32 information stored in `.nkit.iso` files, which means it can match files to DATs (as long as you don't raise the minimum checksum level!). However, Igir can't extract NKit ISOs, you'll need to use Nanook's [NKit tool](https://wiki.gbatemp.net/wiki/NKit#Download) instead.
