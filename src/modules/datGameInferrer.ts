@@ -90,6 +90,7 @@ export default class DATGameInferrer extends Module {
     const inferFunctions = [
       this.inferArchiveEntries,
       this.inferBinCueFiles,
+      this.inferGdiFiles,
       this.inferRawFiles,
     ];
     for (const inferFunction of inferFunctions) {
@@ -180,6 +181,7 @@ export default class DATGameInferrer extends Module {
       .map(async (cueFile): Promise<[string, File[]] | undefined> => {
         try {
           const cueData = await util.promisify(fs.readFile)(cueFile.getFilePath());
+
           const cueSheet = parse(cueData.toString(), {
             fatal: true,
           }).sheet;
@@ -192,6 +194,55 @@ export default class DATGameInferrer extends Module {
           if (binFiles.length > 0) {
             const gameName = DATGameInferrer.getGameName(cueFile);
             return [gameName, [cueFile, ...binFiles]];
+          }
+          return undefined;
+        } catch {
+          return undefined;
+        }
+      }))).filter(ArrayPoly.filterNotNullish);
+
+    this.progressBar.logTrace(`inferred ${results.length.toLocaleString()} games from cue files`);
+    return results;
+  }
+
+  private async inferGdiFiles(romFiles: File[]): Promise<[string, File[]][]> {
+    const rawFiles = romFiles.filter((file) => !(file instanceof ArchiveEntry));
+    this.progressBar.logTrace(`inferring games from gdi files from ${rawFiles.length.toLocaleString()} non-archive${rawFiles.length !== 1 ? 's' : ''}`);
+
+    const rawFilePathsToFiles = rawFiles
+      .reduce((map, file) => {
+        map.set(file.getFilePath(), file);
+        return map;
+      }, new Map<string, File>());
+
+    const results = (await Promise.all(rawFiles
+      .filter((file) => file.getExtractedFilePath().toLowerCase().endsWith('.gdi'))
+      .map(async (gdiFile): Promise<[string, File[]] | undefined> => {
+        try {
+          const cueData = await util.promisify(fs.readFile)(gdiFile.getFilePath());
+
+          const { name: filePrefix } = path.parse(gdiFile.getFilePath());
+          const gdiContents = `${cueData.toString()
+            .split(/\r?\n/)
+            .filter((line) => line)
+            // Replace the chdman-generated track files with TOSEC-style track filenames
+            .map((line) => line
+              .replace(filePrefix, 'track')
+              .replace(/"/g, ''))
+            .join('\r\n')}\r\n`;
+
+          const trackFilePaths = gdiContents.trim()
+            .split(/\r?\n/)
+            .slice(1)
+            .map((line) => line.split(' ')[4]);
+          const trackFiles = trackFilePaths
+            .map((trackFilePath) => path.join(path.dirname(gdiFile.getFilePath()), trackFilePath))
+            .map((trackFilePath) => rawFilePathsToFiles.get(trackFilePath))
+            .filter(ArrayPoly.filterNotNullish);
+
+          if (trackFiles.length > 0) {
+            const gameName = DATGameInferrer.getGameName(gdiFile);
+            return [gameName, [gdiFile, ...trackFiles]];
           }
           return undefined;
         } catch {
