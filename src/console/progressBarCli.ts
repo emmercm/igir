@@ -140,6 +140,7 @@ export default class ProgressBarCLI extends ProgressBar {
               // ...and if we manually wrap lines, we also need to deal with overwriting existing
               //  progress bar output.
               .split('\n')
+              // TODO(cemmer): this appears to only overwrite the last line, not any others?
               .join(`\n${this.logger.isTTY() ? '\x1b[K' : ''}`))
             .join('\n');
           ProgressBarCLI.multiBar.log(`${logMessage}\n`);
@@ -219,8 +220,10 @@ export default class ProgressBarCLI extends ProgressBar {
     }
 
     this.waitingMessages.delete(waitingMessage);
-    if (this.payload.waitingMessage) {
-      // Render immediately if the output could change
+    if (this.payload.waitingMessage === waitingMessage
+      || (this.payload.waitingMessage && this.waitingMessages.size === 0)
+    ) {
+      // Render immediately if the output should change
       this.setWaitingMessageTimeout(0);
     }
   }

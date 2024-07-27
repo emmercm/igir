@@ -60,6 +60,7 @@ export default class DATParentInferrer extends Module {
       // ***** Regions *****
       .replace(new RegExp(`\\(((${Internationalization.REGION_CODES.join('|')})[,+-]? ?)+\\)`, 'i'), '')
       .replace(new RegExp(`\\(((${Internationalization.REGION_NAMES.join('|')})[,+-]? ?)+\\)`, 'i'), '')
+      .replace(/\(Latin America\)/i, '')
       // ***** Languages *****
       .replace(new RegExp(`\\(((${Internationalization.LANGUAGES.join('|')})[,+-]? ?)+\\)`, 'i'), '')
       // ***** Cleanup *****
@@ -73,6 +74,7 @@ export default class DATParentInferrer extends Module {
       .replace(/\(Alt( [a-z0-9. ]*)?\)/i, '')
       .replace(/\([^)]*Collector's Edition\)/i, '')
       .replace(/\(Extra Box\)/i, '')
+      .replace(/ - European Version/i, '')
       .replace(/\(Fukkokuban\)/i, '') // "reprint"
       .replace(/\([^)]*Genteiban\)/i, '') // "limited edition"
       .replace(/\(Limited[^)]+Edition\)/i, '')
