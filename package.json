@@ -1,7 +1,7 @@
 {
   "name": "igir",
   "version": "2.11.0",
-  "description": "🕹 A video game ROM collection manager to help filter, sort, patch, archive, and report on collections on any OS.",
+  "description": "🕹 A zero-setup ROM collection manager that sorts, filters, extracts or archives, patches, and reports on collections of any size on any OS.",
   "keywords": [
     "1g1r",
     "analogue-pocket",
