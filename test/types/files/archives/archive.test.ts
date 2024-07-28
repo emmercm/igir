@@ -31,10 +31,10 @@ describe('getArchiveEntries', () => {
     ...ZipSpanned.getExtensions(),
     ...ZipX.getExtensions(),
     // Compressed images
-    ...Chd.getExtensions(),
     ...Cso.getExtensions(),
     ...Dax.getExtensions(),
     ...Zso.getExtensions(),
+    ...Chd.getExtensions(),
     ...NkitIso.getExtensions(),
   ])])('should throw when the file doesn\'t exist: %s', async (extension) => {
     const tempFile = (await fsPoly.mktemp(path.join(Temp.getTempDir(), 'file'))) + extension;
