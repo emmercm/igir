@@ -154,10 +154,10 @@ export default class FileFactory {
       ...ZipSpanned.getExtensions(),
       ...ZipX.getExtensions(),
       // Compressed images
-      ...Chd.getExtensions(),
       ...Cso.getExtensions(),
       ...Dax.getExtensions(),
       ...Zso.getExtensions(),
+      ...Chd.getExtensions(),
       ...NkitIso.getExtensions(),
     ].some((ext) => filePath.toLowerCase().endsWith(ext));
   }
