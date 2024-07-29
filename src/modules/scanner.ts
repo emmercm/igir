@@ -1,7 +1,5 @@
 import ProgressBar from '../console/progressBar.js';
 import DriveSemaphore from '../driveSemaphore.js';
-import ElasticSemaphore from '../elasticSemaphore.js';
-import Defaults from '../globals/defaults.js';
 import ArrayPoly from '../polyfill/arrayPoly.js';
 import fsPoly from '../polyfill/fsPoly.js';
 import ArchiveEntry from '../types/files/archives/archiveEntry.js';
@@ -14,12 +12,6 @@ import Module from './module.js';
  * The base class for every input file scanner class.
  */
 export default abstract class Scanner extends Module {
-  // WARN(cemmer): there is an undocumented semaphore max value that can be used, the full
-  //  4,700,372,992 bytes of a DVD+R will cause runExclusive() to never run or return.
-  private static readonly FILESIZE_SEMAPHORE = new ElasticSemaphore(
-    Defaults.MAX_READ_WRITE_CONCURRENT_KILOBYTES,
-  );
-
   protected readonly options: Options;
 
   protected constructor(options: Options, progressBar: ProgressBar, loggerPrefix: string) {
@@ -65,33 +57,25 @@ export default abstract class Scanner extends Module {
     checksumArchives = false,
   ): Promise<File[]> {
     try {
-      const totalKilobytes = await fsPoly.size(filePath) / 1024;
-      const files = await Scanner.FILESIZE_SEMAPHORE.runExclusive(
-        async () => {
-          if (await fsPoly.isSymlink(filePath)) {
-            const realFilePath = await fsPoly.readlinkResolved(filePath);
-            if (!await fsPoly.exists(realFilePath)) {
-              this.progressBar.logWarn(`${filePath}: broken symlink, '${realFilePath}' doesn't exist`);
-              return [];
-            }
-          }
+      if (await fsPoly.isSymlink(filePath)) {
+        const realFilePath = await fsPoly.readlinkResolved(filePath);
+        if (!await fsPoly.exists(realFilePath)) {
+          this.progressBar.logWarn(`${filePath}: broken symlink, '${realFilePath}' doesn't exist`);
+          return [];
+        }
+      }
 
-          const filesFromPath = await FileFactory.filesFrom(filePath, checksumBitmask);
+      const filesFromPath = await FileFactory.filesFrom(filePath, checksumBitmask);
 
-          const fileIsArchive = filesFromPath.some((file) => file instanceof ArchiveEntry);
-          if (checksumArchives && fileIsArchive) {
-            filesFromPath.push(await FileFactory.fileFrom(filePath, checksumBitmask));
-          }
+      const fileIsArchive = filesFromPath.some((file) => file instanceof ArchiveEntry);
+      if (checksumArchives && fileIsArchive) {
+        filesFromPath.push(await FileFactory.fileFrom(filePath, checksumBitmask));
+      }
 
-          return filesFromPath;
-        },
-        totalKilobytes,
-      );
-
-      if (files.length === 0) {
+      if (filesFromPath.length === 0) {
         this.progressBar.logWarn(`${filePath}: found no files in path`);
       }
-      return files;
+      return filesFromPath;
     } catch (error) {
       this.progressBar.logError(`${filePath}: failed to parse file: ${error}`);
       return [];
