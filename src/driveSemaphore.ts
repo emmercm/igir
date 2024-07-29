@@ -85,16 +85,21 @@ export default class DriveSemaphore {
   ): Promise<V[]> {
     // Sort the files, then "stripe" them by their disk path for fair processing among disks
     const disksToFiles = files
-      .sort()
-      .reverse() // so that .pop() below puts files back in their order
-      .reduce((map, file) => {
+      // Remember the original ordering of the files by its index
+      .map((file, idx) => ([file, idx] satisfies [K, number]))
+      .sort(([a], [b]) => {
+        const aPath = a instanceof File ? a.getFilePath() : a.toString();
+        const bPath = b instanceof File ? b.getFilePath() : b.toString();
+        return bPath.localeCompare(aPath); // reverse so that .pop() below puts files back in order
+      })
+      .reduce((map, [file, idx]) => {
         const key = DriveSemaphore.getDiskForFile(file);
-        map.set(key, [...(map.get(key) ?? []), file]);
+        map.set(key, [...(map.get(key) ?? []), [file, idx]]);
         return map;
-      }, new Map<string, K[]>());
+      }, new Map<string, [K, number][]>());
     const maxFilesOnAnyDisk = [...disksToFiles.values()]
       .reduce((max, filesForDisk) => Math.max(max, filesForDisk.length), 0);
-    let filesStriped: K[] = [];
+    let filesStriped: [K, number][] = [];
     for (let i = 0; i < maxFilesOnAnyDisk; i += 1) {
       const batch = [...disksToFiles.values()]
         .map((filesForDisk) => filesForDisk.pop())
@@ -103,13 +108,13 @@ export default class DriveSemaphore {
     }
 
     // Limit the number of ongoing threads to something reasonable
-    return async.mapLimit(
+    const results = await async.mapLimit(
       filesStriped,
       Defaults.MAX_FS_THREADS,
-      async (file, callback: AsyncResultCallback<V, Error>) => {
+      async ([file, idx], callback: AsyncResultCallback<[V, number], Error>) => {
         try {
           const val = await this.runExclusive(file, async () => runnable(file));
-          callback(undefined, val);
+          callback(undefined, [val, idx]);
         } catch (error) {
           if (error instanceof Error) {
             callback(error);
@@ -121,6 +126,11 @@ export default class DriveSemaphore {
         }
       },
     );
+
+    // Put the values back in order
+    return results
+      .sort(([, aIdx], [, bIdx]) => aIdx - bIdx)
+      .map(([result]) => result);
   }
 
   private static getDiskForFile(file: File | string): string {
