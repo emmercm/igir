@@ -23,6 +23,7 @@ parent_find() {
 cd "$(parent_find . "package.json")"
 
 test_igir() {
+  echo "--------------------------------------------------"
   temp="$(mktemp -d)"
   ./dist/index.js "$@" \
     --dat test/fixtures/dats/* \
@@ -33,4 +34,5 @@ test_igir() {
 }
 
 test_igir copy test
+test_igir copy extract test
 test_igir copy zip test
