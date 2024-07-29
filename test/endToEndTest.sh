@@ -28,7 +28,7 @@ test_igir() {
     --dat test/fixtures/dats/* \
     --input test/fixtures/roms/* \
     --output "${temp}"
-  ls "${temp}"/* &> /dev/null
+  ls -al "${temp}"/*
   rm -rf "${temp}"
 }
 
