@@ -4,6 +4,7 @@ import path, { ParsedPath } from 'node:path';
 import ArrayPoly from '../polyfill/arrayPoly.js';
 import fsPoly from '../polyfill/fsPoly.js';
 import DAT from './dats/dat.js';
+import Disk from './dats/disk.js';
 import Game from './dats/game.js';
 import Release from './dats/release.js';
 import ROM from './dats/rom.js';
@@ -488,8 +489,10 @@ export default class OutputFactory {
     if ((options.getDirGameSubdir() === GameSubdirMode.MULTIPLE
         && game.getRoms().length > 1
         // Output file is an archive
-        && !(FileFactory.isExtensionArchive(ext) || inputFile instanceof ArchiveFile))
+        && !FileFactory.isExtensionArchive(ext)
+        && !(inputFile instanceof ArchiveFile))
       || options.getDirGameSubdir() === GameSubdirMode.ALWAYS
+      || rom instanceof Disk
     ) {
       output = path.join(game.getName(), output);
     }

@@ -560,6 +560,16 @@ export default class Options implements OptionsProps {
   }
 
   /**
+   * Should a given ROM be extracted?
+   */
+  shouldExtractRom(rom: ROM): boolean {
+    if (rom instanceof Disk) {
+      return false;
+    }
+    return this.shouldExtract();
+  }
+
+  /**
    * Was the `zip` command provided?
    */
   shouldZip(): boolean {

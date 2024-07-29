@@ -59,9 +59,9 @@ export default class Chd extends Archive {
     const rawEntry = await ArchiveEntry.entryOf({
       archive: this,
       entryPath: '',
-      size: info.logicalSize,
       sha1: info.sha1,
       // There isn't a way for us to calculate these other checksums, so fill it in with garbage
+      size: 0,
       crc32: checksumBitmask & ChecksumBitmask.CRC32 ? 'x'.repeat(8) : undefined,
       md5: checksumBitmask & ChecksumBitmask.MD5 ? 'x'.repeat(32) : undefined,
       sha256: checksumBitmask & ChecksumBitmask.SHA256 ? 'x'.repeat(64) : undefined,

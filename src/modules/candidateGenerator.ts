@@ -189,14 +189,17 @@ export default class CandidateGenerator extends Module {
          */
         if (inputFile instanceof ArchiveEntry
           && !this.options.shouldZipRom(rom)
-          && !this.options.shouldExtract()
+          && !this.options.shouldExtractRom(rom)
         ) {
           try {
             // Note: we're delaying checksum calculation for now, {@link CandidateArchiveFileHasher}
             //  will handle it later
             inputFile = new ArchiveFile(
               inputFile.getArchive(),
-              { checksumBitmask: inputFile.getChecksumBitmask() },
+              {
+                size: await fsPoly.size(inputFile.getFilePath()),
+                checksumBitmask: inputFile.getChecksumBitmask(),
+              },
             );
           } catch (error) {
             this.progressBar.logWarn(`${dat.getNameShort()}: ${game.getName()}: ${error}`);
@@ -322,7 +325,7 @@ export default class CandidateGenerator extends Module {
         // file is accurate
         return archive instanceof Chd
           && !game.getRoms().some((rom) => this.options.shouldZipRom(rom))
-          && !this.options.shouldExtract()
+          && !game.getRoms().some((rom) => this.options.shouldExtractRom(rom))
           && CandidateGenerator.onlyCueFilesMissingFromChd(game, roms)
           && this.options.getAllowExcessSets();
       })
