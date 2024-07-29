@@ -8,6 +8,7 @@ import ArgumentsParser from '../../src/modules/argumentsParser.js';
 import FsPoly from '../../src/polyfill/fsPoly.js';
 import Header from '../../src/types/dats/logiqx/header.js';
 import LogiqxDAT from '../../src/types/dats/logiqx/logiqxDat.js';
+import ROM from '../../src/types/dats/rom.js';
 import { ChecksumBitmask } from '../../src/types/files/fileChecksums.js';
 import {
   FixExtension,
@@ -52,7 +53,7 @@ describe('commands', () => {
     expect(argumentsParser.parse(['move', ...dummyRequiredArgs]).shouldCopy()).toEqual(false);
     expect(argumentsParser.parse(['copy', ...dummyRequiredArgs]).shouldMove()).toEqual(false);
     expect(argumentsParser.parse(['copy', ...dummyRequiredArgs]).shouldExtract()).toEqual(false);
-    expect(argumentsParser.parse(['copy', ...dummyRequiredArgs]).shouldZipFile('')).toEqual(false);
+    expect(argumentsParser.parse(['copy', ...dummyRequiredArgs]).shouldZipRom(new ROM({ name: '', size: 0 }))).toEqual(false);
     expect(argumentsParser.parse(['copy', ...dummyRequiredArgs]).shouldTest()).toEqual(false);
     expect(argumentsParser.parse(['copy', ...dummyRequiredArgs]).shouldDir2Dat()).toEqual(false);
     expect(argumentsParser.parse(['copy', ...dummyRequiredArgs]).shouldFixdat()).toEqual(false);
@@ -65,7 +66,7 @@ describe('commands', () => {
     expect(argumentsParser.parse(datCommands).shouldCopy()).toEqual(true);
     expect(argumentsParser.parse(datCommands).shouldMove()).toEqual(false);
     expect(argumentsParser.parse(datCommands).shouldExtract()).toEqual(true);
-    expect(argumentsParser.parse(datCommands).shouldZipFile('')).toEqual(false);
+    expect(argumentsParser.parse(datCommands).shouldZipRom(new ROM({ name: '', size: 0 }))).toEqual(false);
     expect(argumentsParser.parse(datCommands).shouldTest()).toEqual(true);
     expect(argumentsParser.parse(datCommands).shouldDir2Dat()).toEqual(false);
     expect(argumentsParser.parse(datCommands).shouldFixdat()).toEqual(false);
@@ -76,7 +77,7 @@ describe('commands', () => {
     expect(argumentsParser.parse(nonDatCommands).shouldCopy()).toEqual(true);
     expect(argumentsParser.parse(nonDatCommands).shouldMove()).toEqual(false);
     expect(argumentsParser.parse(nonDatCommands).shouldExtract()).toEqual(true);
-    expect(argumentsParser.parse(nonDatCommands).shouldZipFile('')).toEqual(false);
+    expect(argumentsParser.parse(nonDatCommands).shouldZipRom(new ROM({ name: '', size: 0 }))).toEqual(false);
     expect(argumentsParser.parse(nonDatCommands).shouldTest()).toEqual(true);
     expect(argumentsParser.parse(nonDatCommands).shouldDir2Dat()).toEqual(true);
     expect(argumentsParser.parse(nonDatCommands).shouldFixdat()).toEqual(false);
@@ -87,7 +88,7 @@ describe('commands', () => {
     expect(argumentsParser.parse(moveZip).shouldCopy()).toEqual(false);
     expect(argumentsParser.parse(moveZip).shouldMove()).toEqual(true);
     expect(argumentsParser.parse(moveZip).shouldExtract()).toEqual(false);
-    expect(argumentsParser.parse(moveZip).shouldZipFile('')).toEqual(true);
+    expect(argumentsParser.parse(moveZip).shouldZipRom(new ROM({ name: '', size: 0 }))).toEqual(true);
     expect(argumentsParser.parse(moveZip).shouldTest()).toEqual(true);
     expect(argumentsParser.parse(moveZip).shouldDir2Dat()).toEqual(false);
     expect(argumentsParser.parse(moveZip).shouldFixdat()).toEqual(true);
@@ -154,6 +155,7 @@ describe('options', () => {
     expect(options.getSymlinkRelative()).toEqual(false);
 
     expect(options.getMergeRoms()).toEqual(MergeMode.FULLNONMERGED);
+    expect(options.getIncludeDisks()).toEqual(false);
     expect(options.getAllowExcessSets()).toEqual(false);
     expect(options.getAllowIncompleteSets()).toEqual(false);
 
@@ -580,12 +582,12 @@ describe('options', () => {
   });
 
   it('should parse "zip-exclude"', () => {
-    const filePath = 'roms/test.rom';
-    expect(argumentsParser.parse(['copy', 'zip', '--input', os.devNull, '--output', os.devNull]).shouldZipFile(filePath)).toEqual(true);
-    expect(argumentsParser.parse(['copy', 'zip', '--input', os.devNull, '--output', os.devNull, '-Z', os.devNull]).shouldZipFile(filePath)).toEqual(true);
-    expect(argumentsParser.parse(['copy', 'zip', '--input', os.devNull, '--output', os.devNull, '-Z', '**/*']).shouldZipFile(filePath)).toEqual(false);
-    expect(argumentsParser.parse(['copy', 'zip', '--input', os.devNull, '--output', os.devNull, '-Z', '**/*.rom']).shouldZipFile(filePath)).toEqual(false);
-    expect(argumentsParser.parse(['copy', 'zip', '--input', os.devNull, '--output', os.devNull, '--zip-exclude', '**/*.rom']).shouldZipFile(filePath)).toEqual(false);
+    const rom = new ROM({ name: 'roms/test.rom', size: 0 });
+    expect(argumentsParser.parse(['copy', 'zip', '--input', os.devNull, '--output', os.devNull]).shouldZipRom(rom)).toEqual(true);
+    expect(argumentsParser.parse(['copy', 'zip', '--input', os.devNull, '--output', os.devNull, '-Z', os.devNull]).shouldZipRom(rom)).toEqual(true);
+    expect(argumentsParser.parse(['copy', 'zip', '--input', os.devNull, '--output', os.devNull, '-Z', '**/*']).shouldZipRom(rom)).toEqual(false);
+    expect(argumentsParser.parse(['copy', 'zip', '--input', os.devNull, '--output', os.devNull, '-Z', '**/*.rom']).shouldZipRom(rom)).toEqual(false);
+    expect(argumentsParser.parse(['copy', 'zip', '--input', os.devNull, '--output', os.devNull, '--zip-exclude', '**/*.rom']).shouldZipRom(rom)).toEqual(false);
   });
 
   it('should parse "zip-dat-name"', () => {
@@ -802,6 +804,15 @@ describe('options', () => {
     expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--merge-roms', 'split']).getMergeRoms()).toEqual(MergeMode.SPLIT);
     expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--merge-roms', 'merged']).getMergeRoms()).toEqual(MergeMode.MERGED);
     expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--merge-roms', 'merged', '--merge-roms', 'split']).getMergeRoms()).toEqual(MergeMode.SPLIT);
+  });
+
+  it('should parse "include-disks"', () => {
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--include-disks']).getIncludeDisks()).toEqual(true);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--include-disks', 'true']).getIncludeDisks()).toEqual(true);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--include-disks', 'false']).getIncludeDisks()).toEqual(false);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--include-disks', '--include-disks']).getIncludeDisks()).toEqual(true);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--include-disks', 'false', '--include-disks', 'true']).getIncludeDisks()).toEqual(true);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--include-disks', 'true', '--include-disks', 'false']).getIncludeDisks()).toEqual(false);
   });
 
   it('should parse "allow-excess-sets"', () => {

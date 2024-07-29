@@ -61,7 +61,11 @@ export default class Chd extends Archive {
       entryPath: '',
       size: info.logicalSize,
       sha1: info.sha1,
-    }, ChecksumBitmask.NONE);
+      // There isn't a way for us to calculate these other checksums, so fill it in with garbage
+      crc32: checksumBitmask & ChecksumBitmask.CRC32 ? 'x'.repeat(8) : undefined,
+      md5: checksumBitmask & ChecksumBitmask.MD5 ? 'x'.repeat(32) : undefined,
+      sha256: checksumBitmask & ChecksumBitmask.SHA256 ? 'x'.repeat(64) : undefined,
+    }, checksumBitmask);
 
     const extractedEntry = await ArchiveEntry.entryOf({
       archive: this,
@@ -77,10 +81,24 @@ export default class Chd extends Archive {
     return [rawEntry, extractedEntry];
   }
 
-  async extractEntryToStream<T>(
+  async extractEntryToFile(
+    entryPath: string,
+    extractedFilePath: string,
+  ): Promise<void> {
+    return this.extractEntryToStreamCached(
+      entryPath,
+      async (stream) => new Promise((resolve, reject) => {
+        const writeStream = fs.createWriteStream(extractedFilePath);
+        writeStream.on('close', resolve);
+        writeStream.on('error', reject);
+        stream.pipe(writeStream);
+      }),
+    );
+  }
+
+  private async extractEntryToStreamCached<T>(
     entryPath: string,
     callback: (stream: Readable) => (Promise<T> | T),
-    start: number = 0,
   ): Promise<T> {
     await this.tempSingletonMutex.runExclusive(async () => {
       this.tempSingletonHandles += 1;
@@ -139,12 +157,17 @@ export default class Chd extends Archive {
 
     const [extractedEntryPath, sizeAndOffset] = entryPath.split('|');
     let filePath = this.tempSingletonFilePath as string;
-    if (await FsPoly.exists(path.join(this.tempSingletonDirPath as string, extractedEntryPath))) {
+    if (extractedEntryPath
+      && extractedEntryPath !== '.'
+      && await FsPoly.exists(path.join(this.tempSingletonDirPath as string, extractedEntryPath))
+    ) {
+      // The entry path is the name of a real extracted file, use that
       filePath = path.join(this.tempSingletonDirPath as string, extractedEntryPath);
     }
 
+    // Parse the entry path for any extra start/stop parameters
     const [trackSize, trackOffset] = (sizeAndOffset ?? '').split('@');
-    const streamStart = Number.parseInt(trackOffset ?? '0', 10) + start;
+    const streamStart = Number.parseInt(trackOffset ?? '0', 10);
     const streamEnd = !trackSize || Number.isNaN(Number(trackSize))
       ? undefined
       : Number.parseInt(trackOffset ?? '0', 10) + Number.parseInt(trackSize, 10) - 1;
@@ -159,30 +182,17 @@ export default class Chd extends Archive {
     } catch (error) {
       throw new ExpectedError(`failed to read ${this.getFilePath()}|${entryPath} at ${filePath}: ${error}`);
     } finally {
-      await this.tempSingletonMutex.runExclusive(async () => {
-        this.tempSingletonHandles -= 1;
-        if (this.tempSingletonHandles <= 0) {
-          await FsPoly.rm(this.tempSingletonDirPath as string, { recursive: true, force: true });
-          this.tempSingletonDirPath = undefined;
-        }
-      });
+      // Give a grace period before deleting the temp file, the next read may be of the same file
+      setTimeout(async () => {
+        await this.tempSingletonMutex.runExclusive(async () => {
+          this.tempSingletonHandles -= 1;
+          if (this.tempSingletonHandles <= 0) {
+            await FsPoly.rm(this.tempSingletonDirPath as string, { recursive: true, force: true });
+            this.tempSingletonDirPath = undefined;
+          }
+        });
+      }, 5000);
     }
-  }
-
-  // eslint-disable-next-line class-methods-use-this,@typescript-eslint/require-await
-  async extractEntryToFile(
-    entryPath: string,
-    extractedFilePath: string,
-  ): Promise<void> {
-    return this.extractEntryToStream(
-      entryPath,
-      async (stream) => new Promise((resolve, reject) => {
-        const writeStream = fs.createWriteStream(extractedFilePath);
-        writeStream.on('close', resolve);
-        writeStream.on('error', reject);
-        stream.pipe(writeStream);
-      }),
-    );
   }
 
   @Memoize()

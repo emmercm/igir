@@ -120,9 +120,14 @@ export default class CandidateGenerator extends Module {
   ): Promise<ReleaseCandidate | undefined> {
     const romsToInputFiles = this.getInputFilesForGame(dat, game, indexedFiles);
 
+    const gameRoms = [
+      ...game.getRoms(),
+      ...(this.options.includeDisks ? game.getDisks() : []),
+    ];
+
     // For each Game's ROM, find the matching File
     const romFiles = await Promise.all(
-      game.getRoms().map(async (rom) => {
+      gameRoms.map(async (rom) => {
         if (!romsToInputFiles.has(rom)) {
           return [rom, undefined];
         }
@@ -183,7 +188,7 @@ export default class CandidateGenerator extends Module {
          * Matches {@link ROMHeaderProcessor.getFileWithHeader}
          */
         if (inputFile instanceof ArchiveEntry
-          && !this.options.shouldZipFile(rom.getName())
+          && !this.options.shouldZipRom(rom)
           && !this.options.shouldExtract()
         ) {
           try {
@@ -270,7 +275,12 @@ export default class CandidateGenerator extends Module {
     game: Game,
     indexedFiles: IndexedFiles,
   ): Map<ROM, File> {
-    const romsAndInputFiles = game.getRoms().map((rom) => ([
+    const gameRoms = [
+      ...game.getRoms(),
+      ...(this.options.includeDisks ? game.getDisks() : []),
+    ];
+
+    const romsAndInputFiles = gameRoms.map((rom) => ([
       rom,
       indexedFiles.findFiles(rom) ?? [],
     ])) satisfies [ROM, File[]][];
@@ -311,7 +321,7 @@ export default class CandidateGenerator extends Module {
         // If there is a CHD with every .bin file, and we're raw-copying it, then assume its .cue
         // file is accurate
         return archive instanceof Chd
-          && !game.getRoms().some((rom) => this.options.shouldZipFile(rom.getName()))
+          && !game.getRoms().some((rom) => this.options.shouldZipRom(rom))
           && !this.options.shouldExtract()
           && CandidateGenerator.onlyCueFilesMissingFromChd(game, roms)
           && this.options.getAllowExcessSets();
@@ -407,7 +417,7 @@ export default class CandidateGenerator extends Module {
     }
 
     // Determine the output file type
-    if (this.options.shouldZipFile(rom.getName())) {
+    if (this.options.shouldZipRom(rom)) {
       // Should zip, return an archive entry within an output zip
       return ArchiveEntry.entryOf({
         archive: new Zip(outputFilePath),

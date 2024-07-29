@@ -520,6 +520,11 @@ export default class ArgumentsParser {
         requiresArg: true,
         default: MergeMode[MergeMode.FULLNONMERGED].toLowerCase(),
       })
+      .option('include-disks', {
+        group: groupRomSet,
+        description: 'Process & write CHD disks from DATs',
+        type: 'boolean',
+      })
       .option('allow-excess-sets', {
         group: groupRomSet,
         description: 'Allow writing archives that have excess files when not extracting or zipping',

@@ -509,7 +509,7 @@ export default class OutputFactory {
     inputFile: File,
   ): string {
     // Determine the output path of the file
-    if (options.shouldZipFile(rom.getName())) {
+    if (options.shouldZipRom(rom)) {
       // Should zip, generate the zip name from the game name
       return `${game.getName()}.zip`;
     }
@@ -541,7 +541,7 @@ export default class OutputFactory {
     inputFile: File,
   ): string {
     const romBasename = this.getRomBasename(rom, inputFile);
-    if (!options.shouldZipFile(rom.getName())) {
+    if (!options.shouldZipRom(rom)) {
       return romBasename;
     }
 
