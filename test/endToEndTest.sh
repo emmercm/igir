@@ -28,6 +28,7 @@ test_igir() {
   ./dist/index.js "$@" \
     --dat test/fixtures/dats/* \
     --input test/fixtures/roms/* \
+    --input-exclude test/fixtures/roms/discs/* \
     --output "${temp}"
   ls -al "${temp}"/*
   rm -rf "${temp}"
