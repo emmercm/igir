@@ -122,7 +122,7 @@ export default class CandidateGenerator extends Module {
 
     const gameRoms = [
       ...game.getRoms(),
-      ...(this.options.includeDisks ? game.getDisks() : []),
+      ...(this.options.getExcludeDisks() ? [] : game.getDisks()),
     ];
 
     // For each Game's ROM, find the matching File
@@ -280,7 +280,7 @@ export default class CandidateGenerator extends Module {
   ): Map<ROM, File> {
     const gameRoms = [
       ...game.getRoms(),
-      ...(this.options.includeDisks ? game.getDisks() : []),
+      ...(this.options.getExcludeDisks() ? [] : game.getDisks()),
     ];
 
     const romsAndInputFiles = gameRoms.map((rom) => ([

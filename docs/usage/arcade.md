@@ -82,6 +82,12 @@ The ROM merge type can be specified with the `--merge-roms <type>` option:
       --merge-roms split
     ```
 
+## CHD disks
+
+As arcade machines got more complicated, their storage requirements grew beyond what ROM chips can handle cost effectively. Cabinets started embedding hard drives, optical drives, laser disc drives, and more. Because backup images of these media types can get large, the MAME developers created a new compression format called "compressed hunks of data" (CHD).
+
+MAME DATs catalog these "disks" separately from "ROMs", which lets users choose whether to care about them or not. Typically, games that require disks will not run without them, so Igir requires them for a game to be considered present/complete. You can use the `--exclude-disks` option to exclude disks and only process ROMs to save some space.
+
 ## Example: building a new ROM set
 
 Let's say we want to build an arcade ROM set that's compatible with the most recent version of [RetroArch](desktop/retroarch.md). The steps would look like this:

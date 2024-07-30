@@ -180,6 +180,8 @@ describe('with explicit DATs', () => {
         [`${path.join('One', 'Lorem Ipsum.zip')}|loremipsum.rom`, '70856527'],
         [path.join('One', 'One Three', 'One.rom'), 'f817a89f'],
         [path.join('One', 'One Three', 'Three.rom'), 'ff46c5d8'],
+        [`${path.join('One', 'Three Four Five', '2048')}|`, 'xxxxxxxx'], // hard disk
+        [`${path.join('One', 'Three Four Five', '4096')}|`, 'xxxxxxxx'], // hard disk
         [path.join('One', 'Three Four Five', 'Five.rom'), '3e5daf67'],
         [path.join('One', 'Three Four Five', 'Four.rom'), '1cf3ca74'],
         [path.join('One', 'Three Four Five', 'Three.rom'), 'ff46c5d8'],
@@ -233,6 +235,8 @@ describe('with explicit DATs', () => {
         ['Lorem Ipsum.zip|loremipsum.rom', '70856527'],
         [path.join('One Three', 'One.rom'), 'f817a89f'],
         [path.join('One Three', 'Three.rom'), 'ff46c5d8'],
+        [`${path.join('Three Four Five', '2048')}|`, 'xxxxxxxx'], // hard disk
+        [`${path.join('Three Four Five', '4096')}|`, 'xxxxxxxx'], // hard disk
         [path.join('Three Four Five', 'Five.rom'), '3e5daf67'],
         [path.join('Three Four Five', 'Four.rom'), '1cf3ca74'],
         [path.join('Three Four Five', 'Three.rom'), 'ff46c5d8'],
@@ -272,6 +276,8 @@ describe('with explicit DATs', () => {
       });
 
       expect(result.outputFilesAndCrcs).toEqual([
+        [`${path.join('-', 'One', 'Three Four Five', '2048')}|`, 'xxxxxxxx'], // hard disk
+        [`${path.join('-', 'One', 'Three Four Five', '4096')}|`, 'xxxxxxxx'], // hard disk
         [`${path.join('7z', 'Headered', 'diagnostic_test_cartridge.a78.7z')}|diagnostic_test_cartridge.a78`, 'f6cc9b1c'],
         [path.join('bin', 'One', 'CD-ROM', 'CD-ROM (Track 1).bin'), '49ca35fb'],
         [path.join('bin', 'One', 'CD-ROM', 'CD-ROM (Track 2).bin'), '0316f720'],
@@ -344,6 +350,7 @@ describe('with explicit DATs', () => {
         output: outputTemp,
         dirDatName: true,
         dirGameSubdir: GameSubdirMode[GameSubdirMode.MULTIPLE].toLowerCase(),
+        excludeDisks: true,
       });
 
       expect(result.outputFilesAndCrcs).toEqual([
@@ -382,6 +389,7 @@ describe('with explicit DATs', () => {
         output: outputTemp,
         dirDatName: true,
         dirGameSubdir: GameSubdirMode[GameSubdirMode.MULTIPLE].toLowerCase(),
+        excludeDisks: true,
       });
 
       expect(result.outputFilesAndCrcs).toEqual([
@@ -402,7 +410,7 @@ describe('with explicit DATs', () => {
     });
   });
 
-  it('should combine DATs, move, extract and test ROMs and disks', async () => {
+  it('should combine DATs, move, extract and test', async () => {
     await copyFixturesToTemp(async (inputTemp, outputTemp) => {
       const result = await runIgir({
         commands: ['move', 'extract', 'test'],
@@ -414,7 +422,6 @@ describe('with explicit DATs', () => {
         dirDatName: true,
         dirGameSubdir: GameSubdirMode[GameSubdirMode.MULTIPLE].toLowerCase(),
         fixExtension: FixExtension[FixExtension.AUTO].toLowerCase(),
-        includeDisks: true,
       });
 
       expect(result.outputFilesAndCrcs).toEqual([
@@ -572,7 +579,7 @@ describe('with explicit DATs', () => {
     });
   });
 
-  it('should copy, zip, and test ROMs and disks', async () => {
+  it('should copy, zip, and test', async () => {
     await copyFixturesToTemp(async (inputTemp, outputTemp) => {
       const result = await runIgir({
         commands: ['copy', 'zip', 'test'],
@@ -581,7 +588,6 @@ describe('with explicit DATs', () => {
         output: outputTemp,
         dirDatName: true,
         fixExtension: FixExtension[FixExtension.AUTO].toLowerCase(),
-        includeDisks: true,
       });
 
       expect(result.outputFilesAndCrcs).toEqual([
@@ -695,6 +701,8 @@ describe('with explicit DATs', () => {
         ['Patchable.zip|Best.rom', '1e3d78cf'],
         ['Patchable.zip|C01173E.rom', 'dfaebe28'],
         ['Patchable.zip|KDULVQN.rom', 'b1c303e4'],
+        [`${path.join('Three Four Five', '2048')}|`, 'xxxxxxxx'], // hard disk
+        [`${path.join('Three Four Five', '4096')}|`, 'xxxxxxxx'], // hard disk
       ]);
       expect(result.cwdFilesAndCrcs).toHaveLength(0);
       expect(result.movedFiles).toHaveLength(0);
@@ -739,6 +747,8 @@ describe('with explicit DATs', () => {
         [`${path.join('One', 'Lorem Ipsum.zip')}|loremipsum.rom -> ${path.join('<input>', 'zip', 'loremipsum.zip')}|loremipsum.rom`, '70856527'],
         [`${path.join('One', 'One Three', 'One.rom')} -> ${path.join('<input>', 'raw', 'one.rom')}`, 'f817a89f'],
         [`${path.join('One', 'One Three', 'Three.rom')} -> ${path.join('<input>', 'raw', 'three.rom')}`, 'ff46c5d8'],
+        [`${path.join('One', 'Three Four Five', '2048')}| -> ${path.join('<input>', 'chd', '2048.chd')}|`, 'xxxxxxxx'], // hard disk
+        [`${path.join('One', 'Three Four Five', '4096')}| -> ${path.join('<input>', 'chd', '4096.chd')}|`, 'xxxxxxxx'], // hard disk
         [`${path.join('One', 'Three Four Five', 'Five.rom')} -> ${path.join('<input>', 'raw', 'five.rom')}`, '3e5daf67'],
         [`${path.join('One', 'Three Four Five', 'Four.rom')} -> ${path.join('<input>', 'raw', 'four.rom')}`, '1cf3ca74'],
         [`${path.join('One', 'Three Four Five', 'Three.rom')} -> ${path.join('<input>', 'raw', 'three.rom')}`, 'ff46c5d8'],
@@ -806,6 +816,8 @@ describe('with explicit DATs', () => {
         [`${path.join('One', 'Lorem Ipsum.zip')}|loremipsum.rom`, '70856527'],
         [path.join('One', 'One Three', 'One.rom'), 'f817a89f'],
         [path.join('One', 'One Three', 'Three.rom'), 'ff46c5d8'],
+        [`${path.join('One', 'Three Four Five', '2048')}|`, 'xxxxxxxx'], // hard disk
+        [`${path.join('One', 'Three Four Five', '4096')}|`, 'xxxxxxxx'], // hard disk
         [path.join('One', 'Three Four Five', 'Five.rom'), '3e5daf67'],
         [path.join('One', 'Three Four Five', 'Four.rom'), '1cf3ca74'],
         [path.join('One', 'Three Four Five', 'Three.rom'), 'ff46c5d8'],

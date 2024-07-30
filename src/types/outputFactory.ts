@@ -170,7 +170,7 @@ export default class OutputFactory {
     result = this.replaceGameTokens(result, game);
     result = this.replaceDatTokens(result, dat);
     result = this.replaceInputTokens(result, inputRomPath);
-    result = this.replaceOutputTokens(result, options, outputRomFilename);
+    result = this.replaceOutputTokens(result, options, game, outputRomFilename);
     result = this.replaceOutputGameConsoleTokens(result, dat, outputRomFilename);
 
     const leftoverTokens = result.match(/\{[a-zA-Z]+\}/g);
@@ -257,6 +257,7 @@ export default class OutputFactory {
   private static replaceOutputTokens(
     input: string,
     options: Options,
+    game?: Game,
     outputRomFilename?: string,
   ): string {
     if (!outputRomFilename && options.getFixExtension() === FixExtension.NEVER) {
@@ -269,7 +270,7 @@ export default class OutputFactory {
     return input
       .replace('{outputBasename}', outputRom.base)
       .replace('{outputName}', outputRom.name)
-      .replace('{outputExt}', outputRom.ext.replace(/^\./, ''));
+      .replace('{outputExt}', outputRom.ext.replace(/^\./, '') || '-');
   }
 
   private static replaceOutputGameConsoleTokens(

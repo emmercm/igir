@@ -527,9 +527,9 @@ export default class ArgumentsParser {
         }
         return true;
       })
-      .option('include-disks', {
+      .option('exclude-disks', {
         group: groupRomSet,
-        description: 'Process & write CHD disks from DATs',
+        description: 'Exclude CHD disks in DATs from processing & writing',
         type: 'boolean',
         implies: 'dat',
       })

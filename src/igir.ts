@@ -320,6 +320,9 @@ export default class Igir {
           this.logger.trace(`${dat.getNameShort()}: needs ${bitmask} file checksums for ROMs, enabling`);
         });
 
+      if (this.options.getExcludeDisks()) {
+        return;
+      }
       const datMinimumDiskBitmask = dat.getRequiredDiskChecksumBitmask();
       Object.keys(ChecksumBitmask)
         .filter((bitmask): bitmask is keyof typeof ChecksumBitmask => Number.isNaN(Number(bitmask)))

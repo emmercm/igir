@@ -155,7 +155,7 @@ describe('options', () => {
     expect(options.getSymlinkRelative()).toEqual(false);
 
     expect(options.getMergeRoms()).toEqual(MergeMode.FULLNONMERGED);
-    expect(options.getIncludeDisks()).toEqual(false);
+    expect(options.getExcludeDisks()).toEqual(false);
     expect(options.getAllowExcessSets()).toEqual(false);
     expect(options.getAllowIncompleteSets()).toEqual(false);
 
@@ -807,14 +807,14 @@ describe('options', () => {
     expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--dat', os.devNull, '--merge-roms', 'merged', '--merge-roms', 'split']).getMergeRoms()).toEqual(MergeMode.SPLIT);
   });
 
-  it('should parse "include-disks"', () => {
-    expect(() => argumentsParser.parse([...dummyCommandAndRequiredArgs, '--include-disks'])).toThrow(/dependent|implication/i);
-    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--dat', os.devNull, '--include-disks']).getIncludeDisks()).toEqual(true);
-    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--dat', os.devNull, '--include-disks', 'true']).getIncludeDisks()).toEqual(true);
-    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--dat', os.devNull, '--include-disks', 'false']).getIncludeDisks()).toEqual(false);
-    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--dat', os.devNull, '--include-disks', '--include-disks']).getIncludeDisks()).toEqual(true);
-    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--dat', os.devNull, '--include-disks', 'false', '--include-disks', 'true']).getIncludeDisks()).toEqual(true);
-    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--dat', os.devNull, '--include-disks', 'true', '--include-disks', 'false']).getIncludeDisks()).toEqual(false);
+  it('should parse "exclude-disks"', () => {
+    expect(() => argumentsParser.parse([...dummyCommandAndRequiredArgs, '--exclude-disks'])).toThrow(/dependent|implication/i);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--dat', os.devNull, '--exclude-disks']).getExcludeDisks()).toEqual(true);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--dat', os.devNull, '--exclude-disks', 'true']).getExcludeDisks()).toEqual(true);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--dat', os.devNull, '--exclude-disks', 'false']).getExcludeDisks()).toEqual(false);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--dat', os.devNull, '--exclude-disks', '--exclude-disks']).getExcludeDisks()).toEqual(true);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--dat', os.devNull, '--exclude-disks', 'false', '--exclude-disks', 'true']).getExcludeDisks()).toEqual(true);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--dat', os.devNull, '--exclude-disks', 'true', '--exclude-disks', 'false']).getExcludeDisks()).toEqual(false);
   });
 
   it('should parse "allow-excess-sets"', () => {

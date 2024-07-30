@@ -761,44 +761,10 @@ describe('MAME v0.260', () => {
     .then((files) => files.filter(ArrayPoly.filterUniqueMapped((file) => file.hashCode())))
     .then((files) => IndexedFiles.fromFiles(files));
 
-  it('should not include disks by default', async () => {
-    const options = new Options({
-      commands: ['copy'],
-      dirGameSubdir: GameSubdirMode[GameSubdirMode.MULTIPLE].toLowerCase(),
-    });
-
-    const candidates = await new CandidateGenerator(options, new ProgressBarFake())
-      .generate(mameDat, await mameIndexedFiles);
-
-    const outputFiles = [...candidates.values()]
-      .flat()
-      .flatMap((releaseCandidate) => releaseCandidate.getRomsWithFiles())
-      .map((romWithFiles) => romWithFiles.getOutputFile().toString())
-      .sort();
-    expect(outputFiles).toEqual([
-      path.join('2spicy', '6.0.0009.bin'),
-      path.join('2spicy', '6.0.0010.bin'),
-      path.join('2spicy', '6.0.0010a.bin'),
-      path.join('2spicy', 'fpr-24370b.ic6'),
-      path.join('2spicy', 'vid_bios.u504'),
-      path.join('a51mxr3k', '1.0_r3k_max-a51_kit_hh.hh'),
-      path.join('a51mxr3k', '1.0_r3k_max-a51_kit_hl.hl'),
-      path.join('a51mxr3k', '1.0_r3k_max-a51_kit_lh.lh'),
-      path.join('a51mxr3k', '1.0_r3k_max-a51_kit_ll.ll'),
-      path.join('a51mxr3k', 'jagwave.rom'),
-      path.join('area51mx', '2.0_68020_max-a51_kit_3h.3h'),
-      path.join('area51mx', '2.0_68020_max-a51_kit_3k.3k'),
-      path.join('area51mx', '2.0_68020_max-a51_kit_3m.3m'),
-      path.join('area51mx', '2.0_68020_max-a51_kit_3p.3p'),
-      path.join('area51mx', 'jagwave.rom'),
-    ]);
-  });
-
-  it('should include disks', async () => {
+  it('should include disks by default', async () => {
     const options = new Options({
       commands: ['copy', 'zip'],
       dirGameSubdir: GameSubdirMode[GameSubdirMode.MULTIPLE].toLowerCase(),
-      includeDisks: true,
     });
 
     const candidates = await new CandidateGenerator(options, new ProgressBarFake())
@@ -829,6 +795,40 @@ describe('MAME v0.260', () => {
       'area51mx.zip|2.0_68020_max-a51_kit_3p.3p',
       'area51mx.zip|jagwave.rom',
       path.join('area51mx', 'area51mx'),
+    ]);
+  });
+
+  it('should not include disks', async () => {
+    const options = new Options({
+      commands: ['copy'],
+      dirGameSubdir: GameSubdirMode[GameSubdirMode.MULTIPLE].toLowerCase(),
+      excludeDisks: true,
+    });
+
+    const candidates = await new CandidateGenerator(options, new ProgressBarFake())
+      .generate(mameDat, await mameIndexedFiles);
+
+    const outputFiles = [...candidates.values()]
+      .flat()
+      .flatMap((releaseCandidate) => releaseCandidate.getRomsWithFiles())
+      .map((romWithFiles) => romWithFiles.getOutputFile().toString())
+      .sort();
+    expect(outputFiles).toEqual([
+      path.join('2spicy', '6.0.0009.bin'),
+      path.join('2spicy', '6.0.0010.bin'),
+      path.join('2spicy', '6.0.0010a.bin'),
+      path.join('2spicy', 'fpr-24370b.ic6'),
+      path.join('2spicy', 'vid_bios.u504'),
+      path.join('a51mxr3k', '1.0_r3k_max-a51_kit_hh.hh'),
+      path.join('a51mxr3k', '1.0_r3k_max-a51_kit_hl.hl'),
+      path.join('a51mxr3k', '1.0_r3k_max-a51_kit_lh.lh'),
+      path.join('a51mxr3k', '1.0_r3k_max-a51_kit_ll.ll'),
+      path.join('a51mxr3k', 'jagwave.rom'),
+      path.join('area51mx', '2.0_68020_max-a51_kit_3h.3h'),
+      path.join('area51mx', '2.0_68020_max-a51_kit_3k.3k'),
+      path.join('area51mx', '2.0_68020_max-a51_kit_3m.3m'),
+      path.join('area51mx', '2.0_68020_max-a51_kit_3p.3p'),
+      path.join('area51mx', 'jagwave.rom'),
     ]);
   });
 });
