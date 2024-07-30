@@ -1,5 +1,7 @@
 import 'jest-extended';
 
+import path from 'node:path';
+
 import CandidateGenerator from '../../src/modules/candidateGenerator.js';
 import DATGameInferrer from '../../src/modules/datGameInferrer.js';
 import DATScanner from '../../src/modules/datScanner.js';
@@ -97,7 +99,7 @@ it('should use the candidates for games and ROMs', async () => {
   // Given some input ROMs
   const options = new Options({
     commands: ['dir2dat'],
-    input: ['test/fixtures/roms'],
+    input: [path.join('test', 'fixtures', 'roms')],
   });
   const files = await new ROMScanner(options, new ProgressBarFake()).scan();
 

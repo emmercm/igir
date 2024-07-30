@@ -253,11 +253,11 @@ export default class FsPoly {
       }
 
       // Backoff with jitter
-      if (attempt >= 3) {
+      if (attempt >= 5) {
         throw error;
       }
       await new Promise((resolve) => {
-        setTimeout(resolve, Math.random() * (2 ** (attempt - 1) * 100));
+        setTimeout(resolve, Math.random() * (2 ** (attempt - 1) * 10));
       });
 
       // Attempt to resolve Windows' "EBUSY: resource busy or locked"
