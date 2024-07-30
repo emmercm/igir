@@ -93,7 +93,7 @@
     "simple-statistics": "7.8.3",
     "strip-ansi": "7.1.0",
     "tar": "6.2.1",
-    "term-size": "4.0.0",
+    "terminal-size": "4.0.0",
     "trash": "8.1.1",
     "typescript-memoize": "1.1.1",
     "unzipper": "0.12.2",
