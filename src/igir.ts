@@ -307,17 +307,33 @@ export default class Igir {
     }
 
     dats.forEach((dat) => {
-      const datMinimumBitmask = dat.getRequiredChecksumBitmask();
+      const datMinimumRomBitmask = dat.getRequiredRomChecksumBitmask();
       Object.keys(ChecksumBitmask)
         .filter((bitmask): bitmask is keyof typeof ChecksumBitmask => Number.isNaN(Number(bitmask)))
         // Has not been enabled yet
         .filter((bitmask) => ChecksumBitmask[bitmask] > minimumChecksum)
         .filter((bitmask) => !(matchChecksum & ChecksumBitmask[bitmask]))
         // Should be enabled for this DAT
-        .filter((bitmask) => datMinimumBitmask & ChecksumBitmask[bitmask])
+        .filter((bitmask) => datMinimumRomBitmask & ChecksumBitmask[bitmask])
         .forEach((bitmask) => {
           matchChecksum |= ChecksumBitmask[bitmask];
-          this.logger.trace(`${dat.getNameShort()}: needs ${bitmask} file checksums, enabling`);
+          this.logger.trace(`${dat.getNameShort()}: needs ${bitmask} file checksums for ROMs, enabling`);
+        });
+
+      if (this.options.getExcludeDisks()) {
+        return;
+      }
+      const datMinimumDiskBitmask = dat.getRequiredDiskChecksumBitmask();
+      Object.keys(ChecksumBitmask)
+        .filter((bitmask): bitmask is keyof typeof ChecksumBitmask => Number.isNaN(Number(bitmask)))
+        // Has not been enabled yet
+        .filter((bitmask) => ChecksumBitmask[bitmask] > minimumChecksum)
+        .filter((bitmask) => !(matchChecksum & ChecksumBitmask[bitmask]))
+        // Should be enabled for this DAT
+        .filter((bitmask) => datMinimumDiskBitmask & ChecksumBitmask[bitmask])
+        .forEach((bitmask) => {
+          matchChecksum |= ChecksumBitmask[bitmask];
+          this.logger.trace(`${dat.getNameShort()}: needs ${bitmask} file checksums for disks, enabling`);
         });
     });
 

@@ -19,6 +19,8 @@ import ArrayPoly from '../polyfill/arrayPoly.js';
 import fsPoly, { FsWalkCallback } from '../polyfill/fsPoly.js';
 import URLPoly from '../polyfill/urlPoly.js';
 import DAT from './dats/dat.js';
+import Disk from './dats/disk.js';
+import ROM from './dats/rom.js';
 import ExpectedError from './expectedError.js';
 import File from './files/file.js';
 import { ChecksumBitmask } from './files/fileChecksums.js';
@@ -105,6 +107,7 @@ export interface OptionsProps {
   readonly removeHeaders?: string[],
 
   readonly mergeRoms?: string,
+  readonly excludeDisks?: boolean,
   readonly allowExcessSets?: boolean,
   readonly allowIncompleteSets?: boolean,
 
@@ -245,6 +248,8 @@ export default class Options implements OptionsProps {
   readonly removeHeaders?: string[];
 
   readonly mergeRoms?: string;
+
+  readonly excludeDisks: boolean;
 
   readonly allowExcessSets: boolean;
 
@@ -408,6 +413,7 @@ export default class Options implements OptionsProps {
     this.removeHeaders = options?.removeHeaders;
 
     this.mergeRoms = options?.mergeRoms;
+    this.excludeDisks = options?.excludeDisks ?? false;
     this.allowExcessSets = options?.allowExcessSets ?? false;
     this.allowIncompleteSets = options?.allowIncompleteSets ?? false;
 
@@ -554,6 +560,16 @@ export default class Options implements OptionsProps {
   }
 
   /**
+   * Should a given ROM be extracted?
+   */
+  shouldExtractRom(rom: ROM): boolean {
+    if (rom instanceof Disk) {
+      return false;
+    }
+    return this.shouldExtract();
+  }
+
+  /**
    * Was the `zip` command provided?
    */
   shouldZip(): boolean {
@@ -563,10 +579,14 @@ export default class Options implements OptionsProps {
   /**
    * Should a given output file path be zipped?
    */
-  shouldZipFile(filePath: string): boolean {
+  shouldZipRom(rom: ROM): boolean {
+    if (rom instanceof Disk) {
+      return false;
+    }
+
     return this.shouldZip()
       && (!this.getZipExclude() || !micromatch.isMatch(
-        filePath.replace(/^.[\\/]/, ''),
+        rom.getName().replace(/^.[\\/]/, ''),
         this.getZipExclude(),
       ));
   }
@@ -1008,6 +1028,10 @@ export default class Options implements OptionsProps {
       return undefined;
     }
     return MergeMode[mergeMode as keyof typeof MergeMode];
+  }
+
+  getExcludeDisks(): boolean {
+    return this.excludeDisks;
   }
 
   getAllowExcessSets(): boolean {

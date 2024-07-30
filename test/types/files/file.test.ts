@@ -49,7 +49,7 @@ describe('getSize', () => {
     [10_000],
     [1_000_000],
   ])('%s', (size) => {
-    it('should get the file\'s size: %s', async () => {
+    it('should get the file\'s size', async () => {
       const tempDir = await fsPoly.mkdtemp(Temp.getTempDir());
       try {
         const tempFile = path.resolve(await fsPoly.mktemp(path.join(tempDir, 'file')));

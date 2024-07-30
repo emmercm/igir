@@ -181,6 +181,8 @@ describe('with explicit DATs', () => {
         [`${path.join('One', 'Lorem Ipsum.zip')}|loremipsum.rom`, '70856527'],
         [path.join('One', 'One Three', 'One.rom'), 'f817a89f'],
         [path.join('One', 'One Three', 'Three.rom'), 'ff46c5d8'],
+        [`${path.join('One', 'Three Four Five', '2048')}|`, 'xxxxxxxx'], // hard disk
+        [`${path.join('One', 'Three Four Five', '4096')}|`, 'xxxxxxxx'], // hard disk
         [path.join('One', 'Three Four Five', 'Five.rom'), '3e5daf67'],
         [path.join('One', 'Three Four Five', 'Four.rom'), '1cf3ca74'],
         [path.join('One', 'Three Four Five', 'Three.rom'), 'ff46c5d8'],
@@ -235,6 +237,8 @@ describe('with explicit DATs', () => {
         ['Lorem Ipsum.zip|loremipsum.rom', '70856527'],
         [path.join('One Three', 'One.rom'), 'f817a89f'],
         [path.join('One Three', 'Three.rom'), 'ff46c5d8'],
+        [`${path.join('Three Four Five', '2048')}|`, 'xxxxxxxx'], // hard disk
+        [`${path.join('Three Four Five', '4096')}|`, 'xxxxxxxx'], // hard disk
         [path.join('Three Four Five', 'Five.rom'), '3e5daf67'],
         [path.join('Three Four Five', 'Four.rom'), '1cf3ca74'],
         [path.join('Three Four Five', 'Three.rom'), 'ff46c5d8'],
@@ -275,6 +279,8 @@ describe('with explicit DATs', () => {
       });
 
       expect(result.outputFilesAndCrcs).toEqual([
+        [`${path.join('-', 'One', 'Three Four Five', '2048')}|`, 'xxxxxxxx'], // hard disk
+        [`${path.join('-', 'One', 'Three Four Five', '4096')}|`, 'xxxxxxxx'], // hard disk
         [`${path.join('7z', 'Headered', 'diagnostic_test_cartridge.a78.7z')}|diagnostic_test_cartridge.a78`, 'f6cc9b1c'],
         [path.join('bin', 'One', 'CD-ROM', 'CD-ROM (Track 1).bin'), '49ca35fb'],
         [path.join('bin', 'One', 'CD-ROM', 'CD-ROM (Track 2).bin'), '0316f720'],
@@ -348,6 +354,7 @@ describe('with explicit DATs', () => {
         output: outputTemp,
         dirDatName: true,
         dirGameSubdir: GameSubdirMode[GameSubdirMode.MULTIPLE].toLowerCase(),
+        excludeDisks: true,
       });
 
       expect(result.outputFilesAndCrcs).toEqual([
@@ -386,6 +393,7 @@ describe('with explicit DATs', () => {
         output: outputTemp,
         dirDatName: true,
         dirGameSubdir: GameSubdirMode[GameSubdirMode.MULTIPLE].toLowerCase(),
+        excludeDisks: true,
       });
 
       expect(result.outputFilesAndCrcs).toEqual([
@@ -453,6 +461,8 @@ describe('with explicit DATs', () => {
         [path.join('igir combined', 'One Three', 'One.rom'), 'f817a89f'],
         [path.join('igir combined', 'One Three', 'Three.rom'), 'ff46c5d8'],
         [path.join('igir combined', 'speed_test_v51.smc'), '9adca6cc'],
+        [`${path.join('igir combined', 'Three Four Five', '2048')}|`, 'xxxxxxxx'], // hard disk
+        [`${path.join('igir combined', 'Three Four Five', '4096')}|`, 'xxxxxxxx'], // hard disk
         [path.join('igir combined', 'Three Four Five', 'Five.rom'), '3e5daf67'],
         [path.join('igir combined', 'Three Four Five', 'Four.rom'), '1cf3ca74'],
         [path.join('igir combined', 'Three Four Five', 'Three.rom'), 'ff46c5d8'],
@@ -460,6 +470,8 @@ describe('with explicit DATs', () => {
       ]);
       expect(result.cwdFilesAndCrcs).toHaveLength(0);
       expect(result.movedFiles).toEqual([
+        path.join('chd', '2048.chd'),
+        path.join('chd', '4096.chd'),
         path.join('chd', 'GD-ROM.chd'),
         path.join('cso', 'UMD.cso'),
         'foobar.lnx',
@@ -603,6 +615,8 @@ describe('with explicit DATs', () => {
         [`${path.join('One', 'Three Four Five.zip')}|Five.rom`, '3e5daf67'],
         [`${path.join('One', 'Three Four Five.zip')}|Four.rom`, '1cf3ca74'],
         [`${path.join('One', 'Three Four Five.zip')}|Three.rom`, 'ff46c5d8'],
+        [`${path.join('One', 'Three Four Five', '2048')}|`, 'xxxxxxxx'], // hard disk
+        [`${path.join('One', 'Three Four Five', '4096')}|`, 'xxxxxxxx'], // hard disk
         [`${path.join('One', 'UMD.zip')}|UMD.iso`, 'e90f7cf5'],
         [`${path.join('Patchable', '0F09A40.zip')}|0F09A40.rom`, '2f943e86'],
         [`${path.join('Patchable', '3708F2C.zip')}|3708F2C.rom`, '20891c9f'],
@@ -684,6 +698,8 @@ describe('with explicit DATs', () => {
         ['Patchable.zip|Best.rom', '1e3d78cf'],
         ['Patchable.zip|C01173E.rom', 'dfaebe28'],
         ['Patchable.zip|KDULVQN.rom', 'b1c303e4'],
+        [`${path.join('Three Four Five', '2048')}|`, 'xxxxxxxx'], // hard disk
+        [`${path.join('Three Four Five', '4096')}|`, 'xxxxxxxx'], // hard disk
       ]);
       expect(result.cwdFilesAndCrcs).toHaveLength(0);
       expect(result.movedFiles).toHaveLength(0);
@@ -728,6 +744,8 @@ describe('with explicit DATs', () => {
         [`${path.join('One', 'Lorem Ipsum.zip')}|loremipsum.rom -> ${path.join('<input>', 'zip', 'loremipsum.zip')}|loremipsum.rom`, '70856527'],
         [`${path.join('One', 'One Three', 'One.rom')} -> ${path.join('<input>', 'raw', 'one.rom')}`, 'f817a89f'],
         [`${path.join('One', 'One Three', 'Three.rom')} -> ${path.join('<input>', 'raw', 'three.rom')}`, 'ff46c5d8'],
+        [`${path.join('One', 'Three Four Five', '2048')}| -> ${path.join('<input>', 'chd', '2048.chd')}|`, 'xxxxxxxx'], // hard disk
+        [`${path.join('One', 'Three Four Five', '4096')}| -> ${path.join('<input>', 'chd', '4096.chd')}|`, 'xxxxxxxx'], // hard disk
         [`${path.join('One', 'Three Four Five', 'Five.rom')} -> ${path.join('<input>', 'raw', 'five.rom')}`, '3e5daf67'],
         [`${path.join('One', 'Three Four Five', 'Four.rom')} -> ${path.join('<input>', 'raw', 'four.rom')}`, '1cf3ca74'],
         [`${path.join('One', 'Three Four Five', 'Three.rom')} -> ${path.join('<input>', 'raw', 'three.rom')}`, 'ff46c5d8'],
@@ -796,6 +814,8 @@ describe('with explicit DATs', () => {
         [`${path.join('One', 'Lorem Ipsum.zip')}|loremipsum.rom`, '70856527'],
         [path.join('One', 'One Three', 'One.rom'), 'f817a89f'],
         [path.join('One', 'One Three', 'Three.rom'), 'ff46c5d8'],
+        [`${path.join('One', 'Three Four Five', '2048')}|`, 'xxxxxxxx'], // hard disk
+        [`${path.join('One', 'Three Four Five', '4096')}|`, 'xxxxxxxx'], // hard disk
         [path.join('One', 'Three Four Five', 'Five.rom'), '3e5daf67'],
         [path.join('One', 'Three Four Five', 'Four.rom'), '1cf3ca74'],
         [path.join('One', 'Three Four Five', 'Three.rom'), 'ff46c5d8'],
@@ -932,7 +952,9 @@ describe('with inferred DATs', () => {
 
       expect(result.outputFilesAndCrcs).toEqual([
         ['0F09A40.rom', '2f943e86'],
+        ['2048.chd|', 'xxxxxxxx'], // hard disk
         ['3708F2C.rom', '20891c9f'],
+        ['4096.chd|', 'xxxxxxxx'], // hard disk
         ['5bc2ce5b.nkit.iso|5bc2ce5b.iso', '5bc2ce5b'],
         ['612644F.rom', 'f7591b29'],
         ['65D1206.rom', '20323455'],
@@ -1101,7 +1123,9 @@ describe('with inferred DATs', () => {
 
       expect(result.outputFilesAndCrcs).toEqual([
         ['0F09A40.zip|0F09A40.rom', '2f943e86'],
+        ['2048.zip|2048.rom', 'd774f042'],
         ['3708F2C.zip|3708F2C.rom', '20891c9f'],
+        ['4096.zip|4096.rom', '2e19ca09'],
         ['612644F.zip|612644F.rom', 'f7591b29'],
         ['65D1206.zip|65D1206.rom', '20323455'],
         ['92C85C9.zip|92C85C9.rom', '06692159'],
@@ -1160,7 +1184,9 @@ describe('with inferred DATs', () => {
 
       expect(result.outputFilesAndCrcs).toEqual([
         [`0F09A40.rom -> ${path.join('..', 'input', 'roms', 'patchable', '0F09A40.rom')}`, '2f943e86'],
+        [`2048.chd| -> ${path.join('..', 'input', 'roms', 'chd', '2048.chd|')}`, 'xxxxxxxx'], // hard disk
         [`3708F2C.rom -> ${path.join('..', 'input', 'roms', 'patchable', '3708F2C.rom')}`, '20891c9f'],
+        [`4096.chd| -> ${path.join('..', 'input', 'roms', 'chd', '4096.chd|')}`, 'xxxxxxxx'], // hard disk
         [`5bc2ce5b.nkit.iso|5bc2ce5b.iso -> ${path.join('..', 'input', 'roms', 'nkit', '5bc2ce5b.nkit.iso')}|5bc2ce5b.iso`, '5bc2ce5b'],
         [`612644F.rom -> ${path.join('..', 'input', 'roms', 'patchable', '612644F.rom')}`, 'f7591b29'],
         [`65D1206.rom -> ${path.join('..', 'input', 'roms', 'patchable', '65D1206.rom')}`, '20323455'],
@@ -1278,7 +1304,9 @@ describe('with inferred DATs', () => {
         .sort();
       expect(roms).toEqual([
         '0F09A40.rom',
+        '2048.rom',
         '3708F2C.rom',
+        '4096.rom',
         '612644F.rom',
         '65D1206.rom',
         '92C85C9.rom',

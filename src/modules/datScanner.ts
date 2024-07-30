@@ -8,9 +8,15 @@ import DriveSemaphore from '../driveSemaphore.js';
 import ArrayPoly from '../polyfill/arrayPoly.js';
 import bufferPoly from '../polyfill/bufferPoly.js';
 import fsPoly from '../polyfill/fsPoly.js';
-import CMProParser, { DATProps, GameProps, ROMProps } from '../types/dats/cmpro/cmProParser.js';
+import CMProParser, {
+  DATProps,
+  DiskProps,
+  GameProps,
+  ROMProps,
+} from '../types/dats/cmpro/cmProParser.js';
 import DAT from '../types/dats/dat.js';
 import DATObject, { DATObjectProps } from '../types/dats/datObject.js';
+import Disk from '../types/dats/disk.js';
 import Game from '../types/dats/game.js';
 import Header from '../types/dats/logiqx/header.js';
 import LogiqxDAT from '../types/dats/logiqx/logiqxDat.js';
@@ -333,6 +339,8 @@ export default class DATScanner extends Scanner {
     }
 
     const games = cmproDatGames.flatMap((game) => {
+      const gameName = game.name ?? game.comment;
+
       let gameRoms: ROMProps[] = [];
       if (game.rom) {
         if (Array.isArray(game.rom)) {
@@ -341,16 +349,29 @@ export default class DATScanner extends Scanner {
           gameRoms = [game.rom];
         }
       }
-      const gameName = game.name ?? game.comment;
+      const roms = gameRoms.map((entry) => new ROM({
+        name: entry.name ?? '',
+        size: Number.parseInt(entry.size ?? '0', 10),
+        crc32: entry.crc,
+        md5: entry.md5,
+        sha1: entry.sha1,
+      }));
 
-      const roms = gameRoms
-        .map((entry) => new ROM({
-          name: entry.name ?? '',
-          size: Number.parseInt(entry.size ?? '0', 10),
-          crc32: entry.crc,
-          md5: entry.md5,
-          sha1: entry.sha1,
-        }));
+      let gameDisks: DiskProps[] = [];
+      if (game.disk) {
+        if (Array.isArray(game.disk)) {
+          gameDisks = game.disk;
+        } else {
+          gameDisks = [game.disk];
+        }
+      }
+      const disks = gameDisks.map((entry) => new Disk({
+        name: entry.name ?? '',
+        size: Number.parseInt(entry.size ?? '0', 10),
+        crc32: entry.crc,
+        md5: entry.md5,
+        sha1: entry.sha1,
+      }));
 
       return new Game({
         name: gameName,
@@ -365,6 +386,7 @@ export default class DATScanner extends Scanner {
         genre: game.genre?.toString(),
         release: undefined,
         rom: roms,
+        disk: disks,
       });
     });
 
