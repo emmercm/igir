@@ -364,7 +364,7 @@ describe('with explicit DATs', () => {
     });
   });
 
-  it('should copy and extract symlinked files', async () => {
+  it('should copy and extract symlinked ROMs and sisks', async () => {
     await copyFixturesToTemp(async (inputTemp, outputTemp) => {
       // Given some symlinks
       const inputDir = path.join(inputTemp, 'roms', 'raw');
@@ -382,6 +382,7 @@ describe('with explicit DATs', () => {
         output: outputTemp,
         dirDatName: true,
         dirGameSubdir: GameSubdirMode[GameSubdirMode.MULTIPLE].toLowerCase(),
+        includeDisks: true,
       });
 
       expect(result.outputFilesAndCrcs).toEqual([
@@ -567,7 +568,7 @@ describe('with explicit DATs', () => {
     });
   });
 
-  it('should copy, zip, and test', async () => {
+  it('should copy, zip, and test ROMs and disks', async () => {
     await copyFixturesToTemp(async (inputTemp, outputTemp) => {
       const result = await runIgir({
         commands: ['copy', 'zip', 'test'],
@@ -576,6 +577,7 @@ describe('with explicit DATs', () => {
         output: outputTemp,
         dirDatName: true,
         fixExtension: FixExtension[FixExtension.AUTO].toLowerCase(),
+        includeDisks: true,
       });
 
       expect(result.outputFilesAndCrcs).toEqual([
@@ -608,6 +610,8 @@ describe('with explicit DATs', () => {
         [`${path.join('One', 'Three Four Five.zip')}|Five.rom`, '3e5daf67'],
         [`${path.join('One', 'Three Four Five.zip')}|Four.rom`, '1cf3ca74'],
         [`${path.join('One', 'Three Four Five.zip')}|Three.rom`, 'ff46c5d8'],
+        [`${path.join('One', 'Three Four Five', '2048')}|`, 'xxxxxxxx'], // hard disk
+        [`${path.join('One', 'Three Four Five', '4096')}|`, 'xxxxxxxx'], // hard disk
         [`${path.join('Patchable', '0F09A40.zip')}|0F09A40.rom`, '2f943e86'],
         [`${path.join('Patchable', '3708F2C.zip')}|3708F2C.rom`, '20891c9f'],
         [`${path.join('Patchable', '612644F.zip')}|612644F.rom`, 'f7591b29'],
@@ -932,7 +936,9 @@ describe('with inferred DATs', () => {
 
       expect(result.outputFilesAndCrcs).toEqual([
         ['0F09A40.rom', '2f943e86'],
+        ['2048.chd|', 'xxxxxxxx'], // hard disk
         ['3708F2C.rom', '20891c9f'],
+        ['4096.chd|', 'xxxxxxxx'], // hard disk
         ['5bc2ce5b.nkit.iso|5bc2ce5b.iso', '5bc2ce5b'],
         ['612644F.rom', 'f7591b29'],
         ['65D1206.rom', '20323455'],
@@ -1112,7 +1118,9 @@ describe('with inferred DATs', () => {
 
       expect(result.outputFilesAndCrcs).toEqual([
         ['0F09A40.zip|0F09A40.rom', '2f943e86'],
+        ['2048.zip|2048.rom', 'd774f042'],
         ['3708F2C.zip|3708F2C.rom', '20891c9f'],
+        ['4096.zip|4096.rom', '2e19ca09'],
         ['612644F.zip|612644F.rom', 'f7591b29'],
         ['65D1206.zip|65D1206.rom', '20323455'],
         ['92C85C9.zip|92C85C9.rom', '06692159'],
@@ -1170,7 +1178,9 @@ describe('with inferred DATs', () => {
 
       expect(result.outputFilesAndCrcs).toEqual([
         [`0F09A40.rom -> ${path.join('..', 'input', 'roms', 'patchable', '0F09A40.rom')}`, '2f943e86'],
+        [`2048.chd| -> ${path.join('..', 'input', 'roms', 'chd', '2048.chd|')}`, 'xxxxxxxx'], // hard disk
         [`3708F2C.rom -> ${path.join('..', 'input', 'roms', 'patchable', '3708F2C.rom')}`, '20891c9f'],
+        [`4096.chd| -> ${path.join('..', 'input', 'roms', 'chd', '4096.chd|')}`, 'xxxxxxxx'], // hard disk
         [`5bc2ce5b.nkit.iso|5bc2ce5b.iso -> ${path.join('..', 'input', 'roms', 'nkit', '5bc2ce5b.nkit.iso')}|5bc2ce5b.iso`, '5bc2ce5b'],
         [`612644F.rom -> ${path.join('..', 'input', 'roms', 'patchable', '612644F.rom')}`, 'f7591b29'],
         [`65D1206.rom -> ${path.join('..', 'input', 'roms', 'patchable', '65D1206.rom')}`, '20323455'],
@@ -1287,7 +1297,9 @@ describe('with inferred DATs', () => {
         .sort();
       expect(roms).toEqual([
         '0F09A40.rom',
+        '2048.rom',
         '3708F2C.rom',
+        '4096.rom',
         '612644F.rom',
         '65D1206.rom',
         '92C85C9.rom',

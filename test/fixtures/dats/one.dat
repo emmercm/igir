@@ -42,8 +42,8 @@
     <rom name="Three.rom" size="6" crc="ff46c5d8" md5="febe6995bad457991331348f7b9c85fa" sha1="1e7720a3460b8a84ac4ba27880d64526a3872f1c" status="verified"/>
     <rom name="Four.rom" size="5" crc="1cf3ca74" md5="75ffdb827341e578959bfcabde3789d8" sha1="4a4121ecd766ed16943a0c7b54c18f743e90c3f6" status="verified"/>
     <rom name="Five.rom" size="5" crc="3e5daf67" md5="014835e36358e38c7f7897d6571e4529" sha1="4430bb02f6ed700d4408eb307b25f8b1a25d93de" status="verified"/>
-    <disk name="Six.rom" size="4" sha1="798eda635719e9656e5af20eb1bb68170d437798"/>
-    <disk name="Seven.rom" size="6" sha1="f06e20a31abfdb1b68a991b386abcc6304c83d9b"/>
+    <disk name="2048" sha1="807bc3058951d6aebc6373637b771b87fee217fa"/>
+    <disk name="4096" sha1="67ce4e136aedba59c34f0bc227ee34b61e4e91b7"/>
   </machine>
   <machine name="Device" isdevice="yes">
     <description>Device</description>

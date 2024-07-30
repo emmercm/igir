@@ -4,6 +4,7 @@ import path from 'node:path';
 
 import Temp from '../../src/globals/temp.js';
 import CandidateCombiner from '../../src/modules/candidateCombiner.js';
+import CandidateExtensionCorrector from '../../src/modules/candidateExtensionCorrector.js';
 import CandidateGenerator from '../../src/modules/candidateGenerator.js';
 import CandidatePatchGenerator from '../../src/modules/candidatePatchGenerator.js';
 import CandidateWriter from '../../src/modules/candidateWriter.js';
@@ -114,6 +115,8 @@ async function candidateWriter(
     candidates = await new CandidatePatchGenerator(new ProgressBarFake())
       .generate(dat, candidates, patches);
   }
+  candidates = await new CandidateExtensionCorrector(options, new ProgressBarFake())
+    .correct(dat, candidates);
   candidates = await new CandidateCombiner(options, new ProgressBarFake())
     .combine(dat, candidates);
 
@@ -743,7 +746,7 @@ describe('extract', () => {
   it('should write if the output is not expected and overwriting invalid', async () => {
     await copyFixturesToTemp(async (inputTemp, outputTemp) => {
       // Given
-      const options = new Options({ commands: ['copy', 'extract'] });
+      const options = new Options({ commands: ['copy', 'extract'], writerThreads: 1 });
       const inputFilesBefore = await walkAndStat(inputTemp);
       await expect(walkAndStat(outputTemp)).resolves.toHaveLength(0);
 
@@ -1249,7 +1252,7 @@ describe('raw', () => {
   test.each([
     [
       '**/!(header*)/*',
-      ['0F09A40.rom', '3708F2C.rom', '612644F.rom', '65D1206.rom', '92C85C9.rom', 'C01173E.rom',
+      ['0F09A40.rom', '2048.chd', '3708F2C.rom', '4096.chd', '612644F.rom', '65D1206.rom', '92C85C9.rom', 'C01173E.rom',
         'CD-ROM (Track 1).bin', 'CD-ROM (Track 2).bin', 'CD-ROM (Track 3).bin', 'CD-ROM.chd', 'CD-ROM.cue',
         'GD-ROM.chd',
         'KDULVQN.rom', 'before.rom', 'best.gz', 'empty.rom', 'five.rom', 'fizzbuzz.nes', 'foobar.lnx', 'four.rom', 'fourfive.zip', 'loremipsum.rom', 'one.rom', 'onetwothree.zip', 'three.rom',
@@ -1303,7 +1306,7 @@ describe('raw', () => {
   test.each([
     [
       '**/!(header*)/*',
-      ['0F09A40.rom', '3708F2C.rom', '612644F.rom', '65D1206.rom', '92C85C9.rom', 'C01173E.rom',
+      ['0F09A40.rom', '2048.chd', '3708F2C.rom', '4096.chd', '612644F.rom', '65D1206.rom', '92C85C9.rom', 'C01173E.rom',
         'CD-ROM (Track 1).bin', 'CD-ROM (Track 2).bin', 'CD-ROM (Track 3).bin', 'CD-ROM.chd', 'CD-ROM.cue',
         'GD-ROM.chd',
         'KDULVQN.rom', 'before.rom', 'best.gz', 'empty.rom', 'five.rom', 'fizzbuzz.nes', 'foobar.lnx', 'four.rom', 'fourfive.zip', 'loremipsum.rom', 'one.rom', 'onetwothree.zip', 'three.rom',

@@ -158,7 +158,6 @@ export default class Chd extends Archive {
     const [extractedEntryPath, sizeAndOffset] = entryPath.split('|');
     let filePath = this.tempSingletonFilePath as string;
     if (extractedEntryPath
-      && extractedEntryPath !== '.'
       && await FsPoly.exists(path.join(this.tempSingletonDirPath as string, extractedEntryPath))
     ) {
       // The entry path is the name of a real extracted file, use that

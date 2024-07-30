@@ -521,6 +521,7 @@ export default class OutputFactory {
 
     if (!(inputFile instanceof ArchiveEntry || inputFile instanceof ArchiveFile)
       || options.shouldExtract()
+      || rom instanceof Disk
     ) {
       // Should extract (if needed), generate the file name from the ROM name
       return romBasename;
