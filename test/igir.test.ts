@@ -149,6 +149,7 @@ describe('with explicit DATs', () => {
         commands: ['copy', 'test'],
         dat: [path.join(inputTemp, 'dats', '*')],
         input: [path.join(inputTemp, 'roms')],
+        inputExclude: [path.join(inputTemp, 'roms', 'discs')], // test archive scanning + matching
         output: outputTemp,
         dirDatName: true,
         dirGameSubdir: GameSubdirMode[GameSubdirMode.MULTIPLE].toLowerCase(),
@@ -165,14 +166,14 @@ describe('with explicit DATs', () => {
         [path.join('Headerless', 'allpads.nes'), '6339abe6'],
         [path.join('Headerless', 'color_test.nes'), 'c9c1b7aa'],
         [`${path.join('Headerless', 'speed_test_v51.sfc.gz')}|speed_test_v51.sfc`, '8beffd94'],
-        [path.join('One', 'CD-ROM', 'CD-ROM (Track 1).bin'), '49ca35fb'],
-        [path.join('One', 'CD-ROM', 'CD-ROM (Track 2).bin'), '0316f720'],
-        [path.join('One', 'CD-ROM', 'CD-ROM (Track 3).bin'), 'a320af40'],
-        [path.join('One', 'CD-ROM', 'CD-ROM.cue'), '4ce39e73'],
+        [`${path.join('One', 'CD-ROM.chd')}|CD-ROM (Track 1).bin`, '49ca35fb'],
+        [`${path.join('One', 'CD-ROM.chd')}|CD-ROM (Track 2).bin`, '0316f720'],
+        [`${path.join('One', 'CD-ROM.chd')}|CD-ROM (Track 3).bin`, 'a320af40'],
+        [`${path.join('One', 'CD-ROM.chd')}|CD-ROM.cue`, 'xxxxxxxx'],
         [path.join('One', 'Fizzbuzz.nes'), '370517b5'],
         [path.join('One', 'Foobar.lnx'), 'b22c9747'],
         [`${path.join('One', 'GameCube NKit ISO.nkit.iso')}|GameCube NKit ISO.iso`, '5bc2ce5b'],
-        [`${path.join('One', 'GD-ROM.chd')}|track.gdi`, 'f16f621c'],
+        [`${path.join('One', 'GD-ROM.chd')}|GD-ROM.gdi`, 'f16f621c'],
         [`${path.join('One', 'GD-ROM.chd')}|track01.bin`, '9796ed9a'],
         [`${path.join('One', 'GD-ROM.chd')}|track02.raw`, 'abc178d5'],
         [`${path.join('One', 'GD-ROM.chd')}|track03.bin`, '61a363f1'],
@@ -185,6 +186,7 @@ describe('with explicit DATs', () => {
         [path.join('One', 'Three Four Five', 'Five.rom'), '3e5daf67'],
         [path.join('One', 'Three Four Five', 'Four.rom'), '1cf3ca74'],
         [path.join('One', 'Three Four Five', 'Three.rom'), 'ff46c5d8'],
+        [`${path.join('One', 'UMD.cso')}|UMD.iso`, 'e90f7cf5'],
         [path.join('Patchable', '0F09A40.rom'), '2f943e86'],
         [path.join('Patchable', '3708F2C.rom'), '20891c9f'],
         [path.join('Patchable', '612644F.rom'), 'f7591b29'],
@@ -220,14 +222,14 @@ describe('with explicit DATs', () => {
       });
 
       expect(result.outputFilesAndCrcs).toEqual([
-        [path.join('CD-ROM', 'CD-ROM (Track 1).bin'), '49ca35fb'],
-        [path.join('CD-ROM', 'CD-ROM (Track 2).bin'), '0316f720'],
-        [path.join('CD-ROM', 'CD-ROM (Track 3).bin'), 'a320af40'],
-        [path.join('CD-ROM', 'CD-ROM.cue'), '4ce39e73'],
+        ['CD-ROM.chd|CD-ROM (Track 1).bin', '49ca35fb'],
+        ['CD-ROM.chd|CD-ROM (Track 2).bin', '0316f720'],
+        ['CD-ROM.chd|CD-ROM (Track 3).bin', 'a320af40'],
+        ['CD-ROM.chd|CD-ROM.cue', 'xxxxxxxx'],
         // Fizzbuzz.nes is explicitly missing!
         ['Foobar.lnx', 'b22c9747'],
         ['GameCube NKit ISO.nkit.iso|GameCube NKit ISO.iso', '5bc2ce5b'],
-        ['GD-ROM.chd|track.gdi', 'f16f621c'],
+        ['GD-ROM.chd|GD-ROM.gdi', 'f16f621c'],
         ['GD-ROM.chd|track01.bin', '9796ed9a'],
         ['GD-ROM.chd|track02.raw', 'abc178d5'],
         ['GD-ROM.chd|track03.bin', '61a363f1'],
@@ -240,6 +242,7 @@ describe('with explicit DATs', () => {
         [path.join('Three Four Five', 'Five.rom'), '3e5daf67'],
         [path.join('Three Four Five', 'Four.rom'), '1cf3ca74'],
         [path.join('Three Four Five', 'Three.rom'), 'ff46c5d8'],
+        ['UMD.iso', 'e90f7cf5'],
       ]);
       expect(result.cwdFilesAndCrcs).toHaveLength(0);
       expect(result.movedFiles).toHaveLength(0);
@@ -254,7 +257,7 @@ describe('with explicit DATs', () => {
         path.join(outputTemp, 'one.rom'),
         path.join(outputTemp, 'rom', 'two.rom'),
         path.join(outputTemp, 'zip', 'three.zip'),
-        path.join(outputTemp, 'cso', 'four.cso'),
+        path.join(outputTemp, 'cso', 'four.rvz'),
       ];
       await Promise.all(junkFiles.map(async (junkFile) => {
         await fsPoly.touch(junkFile);
@@ -279,19 +282,20 @@ describe('with explicit DATs', () => {
         [`${path.join('-', 'One', 'Three Four Five', '2048')}|`, 'xxxxxxxx'], // hard disk
         [`${path.join('-', 'One', 'Three Four Five', '4096')}|`, 'xxxxxxxx'], // hard disk
         [`${path.join('7z', 'Headered', 'diagnostic_test_cartridge.a78.7z')}|diagnostic_test_cartridge.a78`, 'f6cc9b1c'],
-        [path.join('bin', 'One', 'CD-ROM', 'CD-ROM (Track 1).bin'), '49ca35fb'],
-        [path.join('bin', 'One', 'CD-ROM', 'CD-ROM (Track 2).bin'), '0316f720'],
-        [path.join('bin', 'One', 'CD-ROM', 'CD-ROM (Track 3).bin'), 'a320af40'],
-        [`${path.join('chd', 'One', 'GD-ROM.chd')}|track.gdi`, 'f16f621c'],
+        [`${path.join('chd', 'One', 'CD-ROM.chd')}|CD-ROM (Track 1).bin`, '49ca35fb'],
+        [`${path.join('chd', 'One', 'CD-ROM.chd')}|CD-ROM (Track 2).bin`, '0316f720'],
+        [`${path.join('chd', 'One', 'CD-ROM.chd')}|CD-ROM (Track 3).bin`, 'a320af40'],
+        [`${path.join('chd', 'One', 'CD-ROM.chd')}|CD-ROM.cue`, 'xxxxxxxx'],
+        [`${path.join('chd', 'One', 'GD-ROM.chd')}|GD-ROM.gdi`, 'f16f621c'],
         [`${path.join('chd', 'One', 'GD-ROM.chd')}|track01.bin`, '9796ed9a'],
         [`${path.join('chd', 'One', 'GD-ROM.chd')}|track02.raw`, 'abc178d5'],
         [`${path.join('chd', 'One', 'GD-ROM.chd')}|track03.bin`, '61a363f1'],
         [`${path.join('chd', 'One', 'GD-ROM.chd')}|track04.bin`, 'fc5ff5a0'],
-        [path.join('cso', 'four.cso'), '00000000'], // explicitly not deleted, there were no input files with the extension "cso"
-        [path.join('cue', 'One', 'CD-ROM', 'CD-ROM.cue'), '4ce39e73'],
+        [path.join('cso', 'four.rvz'), '00000000'], // explicitly not deleted, there were no input files with the extension "cso"
         [`${path.join('gz', 'Headerless', 'speed_test_v51.sfc.gz')}|speed_test_v51.sfc`, '8beffd94'],
         [`${path.join('gz', 'Patchable', 'Best.gz')}|best.rom`, '1e3d78cf'],
         [`${path.join('iso', 'One', 'GameCube NKit ISO.nkit.iso')}|GameCube NKit ISO.iso`, '5bc2ce5b'],
+        [path.join('iso', 'One', 'UMD.iso'), 'e90f7cf5'],
         [path.join('lnx', 'One', 'Foobar.lnx'), 'b22c9747'],
         [path.join('lnx', 'smdb', 'Hardware Target Game Database', 'Dummy', 'Foobar.lnx'), 'b22c9747'],
         [path.join('nes', 'Headered', 'allpads.nes'), '9180a163'],
@@ -417,6 +421,7 @@ describe('with explicit DATs', () => {
         dat: [path.join(inputTemp, 'dats', '*')],
         datExclude: [path.join(inputTemp, 'dats', 'headerless.*')],
         input: [path.join(inputTemp, 'roms')],
+        inputExclude: [path.join(inputTemp, 'roms', 'discs')], // test archive scanning + matching
         output: outputTemp,
         datCombine: true,
         dirDatName: true,
@@ -434,10 +439,6 @@ describe('with explicit DATs', () => {
         [path.join('igir combined', 'Before.rom'), '0361b321'],
         [path.join('igir combined', 'Best.rom'), '1e3d78cf'],
         [path.join('igir combined', 'C01173E.rom'), 'dfaebe28'],
-        [path.join('igir combined', 'CD-ROM', 'CD-ROM (Track 1).bin'), '49ca35fb'],
-        [path.join('igir combined', 'CD-ROM', 'CD-ROM (Track 2).bin'), '0316f720'],
-        [path.join('igir combined', 'CD-ROM', 'CD-ROM (Track 3).bin'), 'a320af40'],
-        [path.join('igir combined', 'CD-ROM', 'CD-ROM.cue'), '4ce39e73'],
         [path.join('igir combined', 'color_test.nes'), 'c9c1b7aa'],
         [path.join('igir combined', 'diagnostic_test_cartridge.a78'), 'f6cc9b1c'],
         [path.join('igir combined', 'fds_joypad_test.fds'), '1e58456d'],
@@ -465,21 +466,15 @@ describe('with explicit DATs', () => {
         [path.join('igir combined', 'Three Four Five', 'Five.rom'), '3e5daf67'],
         [path.join('igir combined', 'Three Four Five', 'Four.rom'), '1cf3ca74'],
         [path.join('igir combined', 'Three Four Five', 'Three.rom'), 'ff46c5d8'],
+        [path.join('igir combined', 'UMD.iso'), 'e90f7cf5'],
       ]);
       expect(result.cwdFilesAndCrcs).toHaveLength(0);
       expect(result.movedFiles).toEqual([
         path.join('chd', '2048.chd'),
         path.join('chd', '4096.chd'),
-        path.join('discs', 'CD-ROM (Track 1).bin'),
-        path.join('discs', 'CD-ROM (Track 2).bin'),
-        path.join('discs', 'CD-ROM (Track 3).bin'),
-        path.join('discs', 'CD-ROM.cue'),
-        path.join('discs', 'GD-ROM.gdi'),
-        path.join('discs', 'track01.bin'),
-        path.join('discs', 'track02.raw'),
-        path.join('discs', 'track03.bin'),
-        path.join('discs', 'track04.bin'),
-        path.join('foobar.lnx'),
+        path.join('chd', 'GD-ROM.chd'),
+        path.join('cso', 'UMD.cso'),
+        'foobar.lnx',
         path.join('headered', 'LCDTestROM.lnx.rar'),
         path.join('headered', 'allpads.nes'),
         path.join('headered', 'color_test.nintendoentertainmentsystem'),
@@ -622,6 +617,7 @@ describe('with explicit DATs', () => {
         [`${path.join('One', 'Three Four Five.zip')}|Three.rom`, 'ff46c5d8'],
         [`${path.join('One', 'Three Four Five', '2048')}|`, 'xxxxxxxx'], // hard disk
         [`${path.join('One', 'Three Four Five', '4096')}|`, 'xxxxxxxx'], // hard disk
+        [`${path.join('One', 'UMD.zip')}|UMD.iso`, 'e90f7cf5'],
         [`${path.join('Patchable', '0F09A40.zip')}|0F09A40.rom`, '2f943e86'],
         [`${path.join('Patchable', '3708F2C.zip')}|3708F2C.rom`, '20891c9f'],
         [`${path.join('Patchable', '612644F.zip')}|612644F.rom`, 'f7591b29'],
@@ -650,7 +646,7 @@ describe('with explicit DATs', () => {
         commands: ['copy', 'zip', 'test'],
         dat: [path.join(inputTemp, 'dats', '*')],
         input: [path.join(inputTemp, 'roms')],
-        inputExclude: [path.join(inputTemp, 'roms', 'nkit')],
+        inputExclude: [path.join(inputTemp, 'roms', 'nkit')], // will throw an error, preventing everything
         output: outputTemp,
         zipDatName: true,
         fixExtension: FixExtension[FixExtension.NEVER].toLowerCase(),
@@ -692,6 +688,7 @@ describe('with explicit DATs', () => {
         [`One.zip|${path.join('Three Four Five', 'Five.rom')}`, '3e5daf67'],
         [`One.zip|${path.join('Three Four Five', 'Four.rom')}`, '1cf3ca74'],
         [`One.zip|${path.join('Three Four Five', 'Three.rom')}`, 'ff46c5d8'],
+        ['One.zip|UMD.iso', 'e90f7cf5'],
         ['Patchable.zip|0F09A40.rom', '2f943e86'],
         ['Patchable.zip|3708F2C.rom', '20891c9f'],
         ['Patchable.zip|612644F.rom', 'f7591b29'],
@@ -732,14 +729,14 @@ describe('with explicit DATs', () => {
         [`${path.join('Headered', 'speed_test_v51.smc')} -> ${path.join('<input>', 'headered', 'speed_test_v51.smc')}`, '9adca6cc'],
         [`${path.join('Headerless', 'color_test.nes')} -> ${path.join('<input>', 'headered', 'color_test.nintendoentertainmentsystem')}`, 'c9c1b7aa'],
         [`${path.join('Headerless', 'speed_test_v51.sfc.gz')}|speed_test_v51.sfc -> ${path.join('<input>', 'headerless', 'speed_test_v51.sfc.gz')}|speed_test_v51.sfc`, '8beffd94'],
-        [`${path.join('One', 'CD-ROM', 'CD-ROM (Track 1).bin')} -> ${path.join('<input>', 'discs', 'CD-ROM (Track 1).bin')}`, '49ca35fb'],
-        [`${path.join('One', 'CD-ROM', 'CD-ROM (Track 2).bin')} -> ${path.join('<input>', 'discs', 'CD-ROM (Track 2).bin')}`, '0316f720'],
-        [`${path.join('One', 'CD-ROM', 'CD-ROM (Track 3).bin')} -> ${path.join('<input>', 'discs', 'CD-ROM (Track 3).bin')}`, 'a320af40'],
-        [`${path.join('One', 'CD-ROM', 'CD-ROM.cue')} -> ${path.join('<input>', 'discs', 'CD-ROM.cue')}`, '4ce39e73'],
+        [`${path.join('One', 'CD-ROM.chd')}|CD-ROM (Track 1).bin -> ${path.join('<input>', 'chd', 'CD-ROM.chd')}|CD-ROM (Track 1).bin`, '49ca35fb'],
+        [`${path.join('One', 'CD-ROM.chd')}|CD-ROM (Track 2).bin -> ${path.join('<input>', 'chd', 'CD-ROM.chd')}|CD-ROM (Track 2).bin`, '0316f720'],
+        [`${path.join('One', 'CD-ROM.chd')}|CD-ROM (Track 3).bin -> ${path.join('<input>', 'chd', 'CD-ROM.chd')}|CD-ROM (Track 3).bin`, 'a320af40'],
+        [`${path.join('One', 'CD-ROM.chd')}|CD-ROM.cue -> ${path.join('<input>', 'chd', 'CD-ROM.chd')}|CD-ROM.cue`, 'xxxxxxxx'],
         [`${path.join('One', 'Fizzbuzz.nes')} -> ${path.join('<input>', 'raw', 'fizzbuzz.nes')}`, '370517b5'],
         [`${path.join('One', 'Foobar.lnx')} -> ${path.join('<input>', 'foobar.lnx')}`, 'b22c9747'],
         [`${path.join('One', 'GameCube NKit ISO.nkit.iso')}|GameCube NKit ISO.iso -> ${path.join('<input>', 'nkit', '5bc2ce5b.nkit.iso')}|GameCube NKit ISO.iso`, '5bc2ce5b'],
-        [`${path.join('One', 'GD-ROM.chd')}|track.gdi -> ${path.join('<input>', 'chd', 'GD-ROM.chd')}|track.gdi`, 'f16f621c'],
+        [`${path.join('One', 'GD-ROM.chd')}|GD-ROM.gdi -> ${path.join('<input>', 'chd', 'GD-ROM.chd')}|GD-ROM.gdi`, 'f16f621c'],
         [`${path.join('One', 'GD-ROM.chd')}|track01.bin -> ${path.join('<input>', 'chd', 'GD-ROM.chd')}|track01.bin`, '9796ed9a'],
         [`${path.join('One', 'GD-ROM.chd')}|track02.raw -> ${path.join('<input>', 'chd', 'GD-ROM.chd')}|track02.raw`, 'abc178d5'],
         [`${path.join('One', 'GD-ROM.chd')}|track03.bin -> ${path.join('<input>', 'chd', 'GD-ROM.chd')}|track03.bin`, '61a363f1'],
@@ -752,6 +749,7 @@ describe('with explicit DATs', () => {
         [`${path.join('One', 'Three Four Five', 'Five.rom')} -> ${path.join('<input>', 'raw', 'five.rom')}`, '3e5daf67'],
         [`${path.join('One', 'Three Four Five', 'Four.rom')} -> ${path.join('<input>', 'raw', 'four.rom')}`, '1cf3ca74'],
         [`${path.join('One', 'Three Four Five', 'Three.rom')} -> ${path.join('<input>', 'raw', 'three.rom')}`, 'ff46c5d8'],
+        [`${path.join('One', 'UMD.iso')} -> ${path.join('<input>', 'discs', 'UMD.iso')}`, 'e90f7cf5'],
         [`${path.join('Patchable', '0F09A40.rom')} -> ${path.join('<input>', 'patchable', '0F09A40.rom')}`, '2f943e86'],
         [`${path.join('Patchable', '3708F2C.rom')} -> ${path.join('<input>', 'patchable', '3708F2C.rom')}`, '20891c9f'],
         [`${path.join('Patchable', '612644F.rom')} -> ${path.join('<input>', 'patchable', '612644F.rom')}`, 'f7591b29'],
@@ -821,6 +819,7 @@ describe('with explicit DATs', () => {
         [path.join('One', 'Three Four Five', 'Five.rom'), '3e5daf67'],
         [path.join('One', 'Three Four Five', 'Four.rom'), '1cf3ca74'],
         [path.join('One', 'Three Four Five', 'Three.rom'), 'ff46c5d8'],
+        [path.join('One', 'UMD.iso'), 'e90f7cf5'],
         [path.join('Patchable', '04C896D-GBA.rom'), 'b13eb478'],
         [path.join('Patchable', '0F09A40.rom'), '2f943e86'],
         [path.join('Patchable', '3708F2C.rom'), '20891c9f'],
@@ -946,6 +945,7 @@ describe('with inferred DATs', () => {
       const result = await runIgir({
         commands: ['copy', 'test'],
         input: [path.join(inputTemp, 'roms')],
+        inputExclude: [path.join(inputTemp, 'roms', 'discs')], // test archive scanning + matching
         output: outputTemp,
         fixExtension: FixExtension[FixExtension.AUTO].toLowerCase(),
       });
@@ -963,14 +963,10 @@ describe('with inferred DATs', () => {
         ['before.rom', '0361b321'],
         ['best.gz|best.rom', '1e3d78cf'],
         ['C01173E.rom', 'dfaebe28'],
-        ['CD-ROM (Track 1).bin', '49ca35fb'],
-        ['CD-ROM (Track 2).bin', '0316f720'],
-        ['CD-ROM (Track 3).bin', 'a320af40'],
         ['CD-ROM.chd|CD-ROM (Track 1).bin', '49ca35fb'],
         ['CD-ROM.chd|CD-ROM (Track 2).bin', '0316f720'],
         ['CD-ROM.chd|CD-ROM (Track 3).bin', 'a320af40'],
         ['CD-ROM.chd|CD-ROM.cue', 'xxxxxxxx'],
-        ['CD-ROM.cue', '4ce39e73'],
         ['color_test.nes', 'c9c1b7aa'],
         ['diagnostic_test_cartridge.a78.7z|diagnostic_test_cartridge.a78', 'f6cc9b1c'],
         ['empty.rom', '00000000'],
@@ -981,7 +977,7 @@ describe('with inferred DATs', () => {
         ['four.rom', '1cf3ca74'],
         ['fourfive.zip|five.rom', '3e5daf67'],
         ['fourfive.zip|four.rom', '1cf3ca74'],
-        ['GD-ROM.chd|track.gdi', 'f16f621c'],
+        ['GD-ROM.chd|GD-ROM.gdi', 'f16f621c'],
         ['GD-ROM.chd|track01.bin', '9796ed9a'],
         ['GD-ROM.chd|track02.raw', 'abc178d5'],
         ['GD-ROM.chd|track03.bin', '61a363f1'],
@@ -997,6 +993,7 @@ describe('with inferred DATs', () => {
         ['speed_test_v51.smc', '9adca6cc'],
         ['three.rom', 'ff46c5d8'],
         ['two.rom', '96170874'],
+        ['UMD.cso|UMD.iso', 'e90f7cf5'],
         ['unknown.rom', '377a7727'],
       ]);
       expect(result.cwdFilesAndCrcs).toHaveLength(0);
@@ -1026,10 +1023,7 @@ describe('with inferred DATs', () => {
       const result = await runIgir({
         commands: ['move', 'extract', 'test'],
         input: [path.join(inputTemp, 'roms')],
-        inputExclude: [
-          path.join(inputTemp, 'roms', 'chd'),
-          path.join(inputTemp, 'roms', 'nkit'),
-        ],
+        inputExclude: [path.join(inputTemp, 'roms', 'discs')], // test archive scanning + matching
         output: outputTemp,
         dirGameSubdir: GameSubdirMode[GameSubdirMode.MULTIPLE].toLowerCase(),
         fixExtension: FixExtension[FixExtension.AUTO].toLowerCase(),
@@ -1037,7 +1031,9 @@ describe('with inferred DATs', () => {
 
       expect(result.outputFilesAndCrcs).toEqual([
         ['0F09A40.rom', '2f943e86'],
+        ['2048.rom', 'd774f042'],
         ['3708F2C.rom', '20891c9f'],
+        ['4096.rom', '2e19ca09'],
         ['612644F.rom', 'f7591b29'],
         ['65D1206.rom', '20323455'],
         ['92C85C9.rom', '06692159'],
@@ -1045,10 +1041,6 @@ describe('with inferred DATs', () => {
         ['before.rom', '0361b321'],
         ['best.rom', '1e3d78cf'],
         ['C01173E.rom', 'dfaebe28'],
-        [path.join('CD-ROM', 'CD-ROM (Track 1).bin'), '49ca35fb'],
-        [path.join('CD-ROM', 'CD-ROM (Track 2).bin'), '0316f720'],
-        [path.join('CD-ROM', 'CD-ROM (Track 3).bin'), 'a320af40'],
-        [path.join('CD-ROM', 'CD-ROM.cue'), '4ce39e73'],
         ['color_test.nes', 'c9c1b7aa'],
         ['diagnostic_test_cartridge.a78', 'f6cc9b1c'],
         ['empty.rom', '00000000'],
@@ -1059,7 +1051,7 @@ describe('with inferred DATs', () => {
         ['four.rom', '1cf3ca74'],
         [path.join('fourfive', 'five.rom'), '3e5daf67'],
         [path.join('fourfive', 'four.rom'), '1cf3ca74'],
-        [path.join('GD-ROM', 'GD-ROM.gdi'), 'f16f621c'],
+        [path.join('GD-ROM', 'GD-ROM.gdi'), 'f16f621c'], // TODO(cemmer)
         [path.join('GD-ROM', 'track01.bin'), '9796ed9a'],
         [path.join('GD-ROM', 'track02.raw'), 'abc178d5'],
         [path.join('GD-ROM', 'track03.bin'), '61a363f1'],
@@ -1075,21 +1067,15 @@ describe('with inferred DATs', () => {
         ['speed_test_v51.smc', '9adca6cc'],
         ['three.rom', 'ff46c5d8'],
         ['two.rom', '96170874'],
+        ['UMD.iso', 'e90f7cf5'],
         ['unknown.rom', '377a7727'],
       ]);
       expect(result.cwdFilesAndCrcs).toHaveLength(0);
       expect(result.movedFiles).toEqual([
-        path.join('discs', 'CD-ROM (Track 1).bin'),
-        path.join('discs', 'CD-ROM (Track 2).bin'),
-        path.join('discs', 'CD-ROM (Track 3).bin'),
-        path.join('discs', 'CD-ROM.cue'),
-        path.join('discs', 'GD-ROM.gdi'),
-        path.join('discs', 'track01.bin'),
-        path.join('discs', 'track02.raw'),
-        path.join('discs', 'track03.bin'),
-        path.join('discs', 'track04.bin'),
-        path.join('empty.rom'),
-        path.join('foobar.lnx'),
+        path.join('chd', 'GD-ROM.chd'),
+        path.join('cso', 'UMD.cso'),
+        'empty.rom',
+        'foobar.lnx',
         path.join('headered', 'LCDTestROM.lnx.rar'),
         path.join('headered', 'allpads.nes'),
         path.join('headered', 'color_test.nintendoentertainmentsystem'),
@@ -1126,7 +1112,6 @@ describe('with inferred DATs', () => {
         input: [path.join(inputTemp, 'roms')],
         inputExclude: [
           // Note: need to exclude some ROMs to prevent duplicate output paths
-          path.join(inputTemp, 'roms', 'discs'), // de-conflict chds & discs
           path.join(inputTemp, 'roms', 'headerless'), // de-conflict headered & headerless
         ],
         output: outputTemp,
@@ -1147,7 +1132,7 @@ describe('with inferred DATs', () => {
         ['CD-ROM.zip|CD-ROM (Track 1).bin', '49ca35fb'],
         ['CD-ROM.zip|CD-ROM (Track 2).bin', '0316f720'],
         ['CD-ROM.zip|CD-ROM (Track 3).bin', 'a320af40'],
-        ['CD-ROM.zip|CD-ROM.cue', '03924922'], // doesn't match the DAT CRC
+        ['CD-ROM.zip|CD-ROM.cue', '4ce39e73'],
         ['color_test.zip|color_test.nintendoentertainmentsystem', 'c9c1b7aa'],
         ['diagnostic_test_cartridge.zip|diagnostic_test_cartridge.a78', 'f6cc9b1c'],
         ['empty.zip|empty.rom', '00000000'],
@@ -1158,7 +1143,7 @@ describe('with inferred DATs', () => {
         ['four.zip|four.rom', '1cf3ca74'],
         ['fourfive.zip|five.rom', '3e5daf67'],
         ['fourfive.zip|four.rom', '1cf3ca74'],
-        ['GD-ROM.zip|track.gdi', 'f16f621c'],
+        ['GD-ROM.zip|GD-ROM.gdi', 'f16f621c'],
         ['GD-ROM.zip|track01.bin', '9796ed9a'],
         ['GD-ROM.zip|track02.raw', 'abc178d5'],
         ['GD-ROM.zip|track03.bin', '61a363f1'],
@@ -1173,6 +1158,7 @@ describe('with inferred DATs', () => {
         ['speed_test_v51.zip|speed_test_v51.smc', '9adca6cc'],
         ['three.zip|three.rom', 'ff46c5d8'],
         ['two.zip|two.rom', '96170874'],
+        ['UMD.zip|UMD.iso', 'e90f7cf5'],
         ['unknown.zip|unknown.rom', '377a7727'],
       ]);
       expect(result.cwdFilesAndCrcs).toHaveLength(0);
@@ -1186,6 +1172,10 @@ describe('with inferred DATs', () => {
       const result = await runIgir({
         commands: ['link', 'test'],
         input: [path.join(inputTemp, 'roms')],
+        inputExclude: [
+          // Note: need to exclude some ROMs to prevent duplicate output paths
+          path.join(inputTemp, 'roms', 'discs'), // de-conflict chd & discs
+        ],
         output: outputTemp,
         fixExtension: FixExtension[FixExtension.AUTO].toLowerCase(),
         symlink: true,
@@ -1205,14 +1195,10 @@ describe('with inferred DATs', () => {
         [`before.rom -> ${path.join('..', 'input', 'roms', 'patchable', 'before.rom')}`, '0361b321'],
         [`best.gz|best.rom -> ${path.join('..', 'input', 'roms', 'patchable', 'best.gz')}|best.rom`, '1e3d78cf'],
         [`C01173E.rom -> ${path.join('..', 'input', 'roms', 'patchable', 'C01173E.rom')}`, 'dfaebe28'],
-        [`CD-ROM (Track 1).bin -> ${path.join('..', 'input', 'roms', 'discs', 'CD-ROM (Track 1).bin')}`, '49ca35fb'],
-        [`CD-ROM (Track 2).bin -> ${path.join('..', 'input', 'roms', 'discs', 'CD-ROM (Track 2).bin')}`, '0316f720'],
-        [`CD-ROM (Track 3).bin -> ${path.join('..', 'input', 'roms', 'discs', 'CD-ROM (Track 3).bin')}`, 'a320af40'],
-        [`CD-ROM.chd|CD-ROM (Track 1).bin -> ${path.join('..', 'input', 'roms', 'chd', 'CD-ROM.chd|CD-ROM (Track 1).bin')}`, '49ca35fb'],
-        [`CD-ROM.chd|CD-ROM (Track 2).bin -> ${path.join('..', 'input', 'roms', 'chd', 'CD-ROM.chd|CD-ROM (Track 2).bin')}`, '0316f720'],
-        [`CD-ROM.chd|CD-ROM (Track 3).bin -> ${path.join('..', 'input', 'roms', 'chd', 'CD-ROM.chd|CD-ROM (Track 3).bin')}`, 'a320af40'],
-        [`CD-ROM.chd|CD-ROM.cue -> ${path.join('..', 'input', 'roms', 'chd', 'CD-ROM.chd|CD-ROM.cue')}`, 'xxxxxxxx'],
-        [`CD-ROM.cue -> ${path.join('..', 'input', 'roms', 'discs', 'CD-ROM.cue')}`, '4ce39e73'],
+        [`CD-ROM.chd|CD-ROM (Track 1).bin -> ${path.join('..', 'input', 'roms', 'chd', 'CD-ROM.chd')}|CD-ROM (Track 1).bin`, '49ca35fb'],
+        [`CD-ROM.chd|CD-ROM (Track 2).bin -> ${path.join('..', 'input', 'roms', 'chd', 'CD-ROM.chd')}|CD-ROM (Track 2).bin`, '0316f720'],
+        [`CD-ROM.chd|CD-ROM (Track 3).bin -> ${path.join('..', 'input', 'roms', 'chd', 'CD-ROM.chd')}|CD-ROM (Track 3).bin`, 'a320af40'],
+        [`CD-ROM.chd|CD-ROM.cue -> ${path.join('..', 'input', 'roms', 'chd', 'CD-ROM.chd')}|CD-ROM.cue`, 'xxxxxxxx'],
         [`color_test.nes -> ${path.join('..', 'input', 'roms', 'headered', 'color_test.nintendoentertainmentsystem')}`, 'c9c1b7aa'],
         [`diagnostic_test_cartridge.a78.7z|diagnostic_test_cartridge.a78 -> ${path.join('..', 'input', 'roms', 'headered', 'diagnostic_test_cartridge.a78.7z')}|diagnostic_test_cartridge.a78`, 'f6cc9b1c'],
         [`empty.rom -> ${path.join('..', 'input', 'roms', 'empty.rom')}`, '00000000'],
@@ -1223,7 +1209,7 @@ describe('with inferred DATs', () => {
         [`four.rom -> ${path.join('..', 'input', 'roms', 'raw', 'four.rom')}`, '1cf3ca74'],
         [`fourfive.zip|five.rom -> ${path.join('..', 'input', 'roms', 'zip', 'fourfive.zip')}|five.rom`, '3e5daf67'],
         [`fourfive.zip|four.rom -> ${path.join('..', 'input', 'roms', 'zip', 'fourfive.zip')}|four.rom`, '1cf3ca74'],
-        [`GD-ROM.chd|track.gdi -> ${path.join('..', 'input', 'roms', 'chd', 'GD-ROM.chd|track.gdi')}`, 'f16f621c'],
+        [`GD-ROM.chd|GD-ROM.gdi -> ${path.join('..', 'input', 'roms', 'chd', 'GD-ROM.chd|GD-ROM.gdi')}`, 'f16f621c'],
         [`GD-ROM.chd|track01.bin -> ${path.join('..', 'input', 'roms', 'chd', 'GD-ROM.chd|track01.bin')}`, '9796ed9a'],
         [`GD-ROM.chd|track02.raw -> ${path.join('..', 'input', 'roms', 'chd', 'GD-ROM.chd|track02.raw')}`, 'abc178d5'],
         [`GD-ROM.chd|track03.bin -> ${path.join('..', 'input', 'roms', 'chd', 'GD-ROM.chd|track03.bin')}`, '61a363f1'],
@@ -1239,6 +1225,7 @@ describe('with inferred DATs', () => {
         [`speed_test_v51.smc -> ${path.join('..', 'input', 'roms', 'headered', 'speed_test_v51.smc')}`, '9adca6cc'],
         [`three.rom -> ${path.join('..', 'input', 'roms', 'raw', 'three.rom')}`, 'ff46c5d8'],
         [`two.rom -> ${path.join('..', 'input', 'roms', 'raw', 'two.rom')}`, '96170874'],
+        [`UMD.cso|UMD.iso -> ${path.join('..', 'input', 'roms', 'cso', 'UMD.cso')}|UMD.iso`, 'e90f7cf5'],
         [`unknown.rom -> ${path.join('..', 'input', 'roms', 'raw', 'unknown.rom')}`, '377a7727'],
       ]);
       expect(result.cwdFilesAndCrcs).toHaveLength(0);
@@ -1283,7 +1270,11 @@ describe('with inferred DATs', () => {
       const result = await runIgir({
         commands: ['dir2dat'],
         input: [path.join(inputTemp, 'roms')],
-        inputExclude: [path.join(inputTemp, 'roms', 'nkit')],
+        inputExclude: [
+          // Note: need to exclude some ROMs to prevent duplicate output paths
+          path.join(inputTemp, 'roms', 'discs'), // de-conflict chd & discs
+          path.join(inputTemp, 'roms', 'nkit'), // will throw an error, preventing everything
+        ],
         output: outputTemp,
         dirDatName: true,
         fixExtension: FixExtension[FixExtension.AUTO].toLowerCase(),
@@ -1324,8 +1315,10 @@ describe('with inferred DATs', () => {
         'CD-ROM (Track 2).bin',
         'CD-ROM (Track 3).bin',
         'CD-ROM.cue',
+        'GD-ROM.gdi',
         'KDULVQN.rom',
         'LCDTestROM.lnx',
+        'UMD.iso',
         'allpads.nes',
         'before.rom',
         'best.rom',
@@ -1341,7 +1334,6 @@ describe('with inferred DATs', () => {
         'speed_test_v51.sfc',
         'speed_test_v51.smc',
         'three.rom',
-        'track.gdi',
         'track01.bin',
         'track02.raw',
         'track03.bin',

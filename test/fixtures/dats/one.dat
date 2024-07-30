@@ -64,6 +64,10 @@
     <rom name="track04.bin" size="7056" crc="fc5ff5a0" md5="539cc9788b891f3eed45b425e8c7cf65" sha1="8e9df4a7572ad029e12953a81944d63240cc434c"/>
     <rom name="GD-ROM.gdi" size="118" crc="f16f621c" md5="affd2d605738d19eea97050aa8d60f69" sha1="0194b228e847e04d51f855071cd039f290c45085"/>
   </machine>
+  <machine name="UMD">
+    <description>UMD</description>
+    <rom name="UMD.iso" size="4096" crc="e90f7cf5" md5="ad8d77b7012f9ea808e2c1f5cdc25839" sha1="9cef9e2161dfd7dbdfd63a774d66c7f2c801b453" status="verified"/>
+  </machine>
   <machine name="GameCube NKit ISO">
     <description>GameCube NKit ISO</description>
     <rom name="GameCube NKit ISO.nkit.iso" size="1459978240" crc="5bc2ce5b" status="verified"/>

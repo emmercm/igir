@@ -318,16 +318,15 @@ export default class CandidateGenerator extends Module {
     // Filter to the Archives that contain every ROM in this Game
     const archivesWithEveryRom = [...inputArchivesToRoms.entries()]
       .filter(([archive, roms]) => {
-        if (roms.map((rom) => rom.hashCode()).join(',') === game.getRoms().map((rom) => rom.hashCode()).join(',')) {
+        if (roms.map((rom) => rom.hashCode()).join(',') === gameRoms.map((rom) => rom.hashCode()).join(',')) {
           return true;
         }
         // If there is a CHD with every .bin file, and we're raw-copying it, then assume its .cue
         // file is accurate
         return archive instanceof Chd
-          && !game.getRoms().some((rom) => this.options.shouldZipRom(rom))
-          && !game.getRoms().some((rom) => this.options.shouldExtractRom(rom))
-          && CandidateGenerator.onlyCueFilesMissingFromChd(game, roms)
-          && this.options.getAllowExcessSets();
+          && !gameRoms.some((rom) => this.options.shouldZipRom(rom))
+          && !gameRoms.some((rom) => this.options.shouldExtractRom(rom))
+          && CandidateGenerator.onlyCueFilesMissingFromChd(game, roms);
       })
       .map(([archive]) => archive);
 
@@ -358,7 +357,7 @@ export default class CandidateGenerator extends Module {
     if (
       // The Game has zero or one ROM, therefore, we don't really care where the file comes from,
       //  and we should respect any previous sorting of the input files
-      game.getRoms().length <= 1
+      gameRoms.length <= 1
       // No input archive contains every ROM from this Game
       || archiveWithEveryRom === undefined
       // We're extracting files, therefore, we don't really care where the file comes from, and we
@@ -374,10 +373,19 @@ export default class CandidateGenerator extends Module {
     // For each of this Game's ROMs, find the matching ArchiveEntry from this Archive
     return new Map(romsAndInputFiles.map(([rom, inputFiles]) => {
       this.progressBar.logTrace(`${dat.getNameShort()}: ${game.getName()}: preferring input archive that contains every ROM: ${archiveWithEveryRom.getFilePath()}`);
-      const archiveEntry = inputFiles.find((
-        inputFile,
-      ) => inputFile.getFilePath() === archiveWithEveryRom.getFilePath()) as File;
-      return [rom, archiveEntry];
+      let archiveEntry = inputFiles
+        .find((inputFile) => inputFile.getFilePath() === archiveWithEveryRom.getFilePath());
+
+      if (!archiveEntry
+        && rom.getName().toLowerCase().endsWith('.cue')
+        && archiveWithEveryRom instanceof Chd
+      ) {
+        // We assumed this CHD was fine above, find its .cue file
+        archiveEntry = (filesByPath.get(archiveWithEveryRom.getFilePath()) ?? [])
+          .find((file) => file.getExtractedFilePath().toLowerCase().endsWith('.cue'));
+      }
+
+      return [rom, archiveEntry as File];
     }));
   }
 

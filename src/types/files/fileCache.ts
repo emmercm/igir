@@ -202,6 +202,12 @@ export default class FileCache {
   }
 
   static async getOrComputeFileHeader(file: File): Promise<ROMHeader | undefined> {
+    if (!this.enabled) {
+      return file.createReadStream(
+        async (stream) => ROMHeader.headerFromFileStream(stream),
+      );
+    }
+
     // NOTE(cemmer): we're explicitly not catching ENOENT errors here, we want it to bubble up
     const stats = await FsPoly.stat(file.getFilePath());
     const cacheKey = this.getCacheKey(file.toString(), ValueType.ROM_HEADER);
@@ -236,6 +242,12 @@ export default class FileCache {
   }
 
   static async getOrComputeFileSignature(file: File): Promise<FileSignature | undefined> {
+    if (!this.enabled) {
+      return file.createReadStream(
+        async (stream) => FileSignature.signatureFromFileStream(stream),
+      );
+    }
+
     // NOTE(cemmer): we're explicitly not catching ENOENT errors here, we want it to bubble up
     const stats = await FsPoly.stat(file.getFilePath());
     const cacheKey = this.getCacheKey(file.toString(), ValueType.FILE_SIGNATURE);
