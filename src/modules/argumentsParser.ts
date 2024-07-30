@@ -79,7 +79,7 @@ export default class ArgumentsParser {
     const groupRomZip = 'zip command options:';
     const groupRomLink = 'link command options:';
     const groupRomHeader = 'ROM header options:';
-    const groupRomSet = 'ROM set options:';
+    const groupRomSet = 'ROM set options (requires DATs):';
     const groupRomFiltering = 'ROM filtering options:';
     const groupRomPriority = 'One game, one ROM (1G1R) options:';
     const groupReport = 'report command options:';
@@ -520,20 +520,30 @@ export default class ArgumentsParser {
         requiresArg: true,
         default: MergeMode[MergeMode.FULLNONMERGED].toLowerCase(),
       })
+      .check((checkArgv) => {
+        // Re-implement `implies: 'dat'`, which isn't possible with a default value
+        if (checkArgv['merge-roms'] !== MergeMode[MergeMode.FULLNONMERGED].toLowerCase() && !checkArgv.dat) {
+          throw new ExpectedError('Missing dependent arguments:\n merge-roms -> dat');
+        }
+        return true;
+      })
       .option('include-disks', {
         group: groupRomSet,
         description: 'Process & write CHD disks from DATs',
         type: 'boolean',
+        implies: 'dat',
       })
       .option('allow-excess-sets', {
         group: groupRomSet,
         description: 'Allow writing archives that have excess files when not extracting or zipping',
         type: 'boolean',
+        implies: 'dat',
       })
       .option('allow-incomplete-sets', {
         group: groupRomSet,
         description: 'Allow writing games that don\'t have all of their ROMs',
         type: 'boolean',
+        implies: 'dat',
       })
 
       .option('filter-regex', {

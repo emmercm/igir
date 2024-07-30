@@ -796,41 +796,45 @@ describe('options', () => {
   });
 
   it('should parse "merge-roms"', () => {
+    expect(() => argumentsParser.parse([...dummyCommandAndRequiredArgs, '--merge-roms', 'merged'])).toThrow(/dependent|implication/i);
     expect(argumentsParser.parse(dummyCommandAndRequiredArgs).getMergeRoms())
       .toEqual(MergeMode.FULLNONMERGED);
     expect(() => argumentsParser.parse([...dummyCommandAndRequiredArgs, '--merge-roms', 'foobar']).getMergeRoms()).toThrow(/invalid values/i);
-    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--merge-roms', 'fullnonmerged']).getMergeRoms()).toEqual(MergeMode.FULLNONMERGED);
-    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--merge-roms', 'nonmerged']).getMergeRoms()).toEqual(MergeMode.NONMERGED);
-    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--merge-roms', 'split']).getMergeRoms()).toEqual(MergeMode.SPLIT);
-    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--merge-roms', 'merged']).getMergeRoms()).toEqual(MergeMode.MERGED);
-    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--merge-roms', 'merged', '--merge-roms', 'split']).getMergeRoms()).toEqual(MergeMode.SPLIT);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--dat', os.devNull, '--merge-roms', 'fullnonmerged']).getMergeRoms()).toEqual(MergeMode.FULLNONMERGED);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--dat', os.devNull, '--merge-roms', 'nonmerged']).getMergeRoms()).toEqual(MergeMode.NONMERGED);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--dat', os.devNull, '--merge-roms', 'split']).getMergeRoms()).toEqual(MergeMode.SPLIT);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--dat', os.devNull, '--merge-roms', 'merged']).getMergeRoms()).toEqual(MergeMode.MERGED);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--dat', os.devNull, '--merge-roms', 'merged', '--merge-roms', 'split']).getMergeRoms()).toEqual(MergeMode.SPLIT);
   });
 
   it('should parse "include-disks"', () => {
-    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--include-disks']).getIncludeDisks()).toEqual(true);
-    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--include-disks', 'true']).getIncludeDisks()).toEqual(true);
-    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--include-disks', 'false']).getIncludeDisks()).toEqual(false);
-    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--include-disks', '--include-disks']).getIncludeDisks()).toEqual(true);
-    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--include-disks', 'false', '--include-disks', 'true']).getIncludeDisks()).toEqual(true);
-    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--include-disks', 'true', '--include-disks', 'false']).getIncludeDisks()).toEqual(false);
+    expect(() => argumentsParser.parse([...dummyCommandAndRequiredArgs, '--include-disks'])).toThrow(/dependent|implication/i);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--dat', os.devNull, '--include-disks']).getIncludeDisks()).toEqual(true);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--dat', os.devNull, '--include-disks', 'true']).getIncludeDisks()).toEqual(true);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--dat', os.devNull, '--include-disks', 'false']).getIncludeDisks()).toEqual(false);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--dat', os.devNull, '--include-disks', '--include-disks']).getIncludeDisks()).toEqual(true);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--dat', os.devNull, '--include-disks', 'false', '--include-disks', 'true']).getIncludeDisks()).toEqual(true);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--dat', os.devNull, '--include-disks', 'true', '--include-disks', 'false']).getIncludeDisks()).toEqual(false);
   });
 
   it('should parse "allow-excess-sets"', () => {
-    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--allow-excess-sets']).getAllowExcessSets()).toEqual(true);
-    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--allow-excess-sets', 'true']).getAllowExcessSets()).toEqual(true);
-    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--allow-excess-sets', 'false']).getAllowExcessSets()).toEqual(false);
-    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--allow-excess-sets', '--allow-excess-sets']).getAllowExcessSets()).toEqual(true);
-    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--allow-excess-sets', 'false', '--allow-excess-sets', 'true']).getAllowExcessSets()).toEqual(true);
-    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--allow-excess-sets', 'true', '--allow-excess-sets', 'false']).getAllowExcessSets()).toEqual(false);
+    expect(() => argumentsParser.parse([...dummyCommandAndRequiredArgs, '--allow-excess-sets'])).toThrow(/dependent|implication/i);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--dat', os.devNull, '--allow-excess-sets']).getAllowExcessSets()).toEqual(true);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--dat', os.devNull, '--allow-excess-sets', 'true']).getAllowExcessSets()).toEqual(true);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--dat', os.devNull, '--allow-excess-sets', 'false']).getAllowExcessSets()).toEqual(false);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--dat', os.devNull, '--allow-excess-sets', '--allow-excess-sets']).getAllowExcessSets()).toEqual(true);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--dat', os.devNull, '--allow-excess-sets', 'false', '--allow-excess-sets', 'true']).getAllowExcessSets()).toEqual(true);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--dat', os.devNull, '--allow-excess-sets', 'true', '--allow-excess-sets', 'false']).getAllowExcessSets()).toEqual(false);
   });
 
   it('should parse "allow-incomplete-sets"', () => {
-    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--allow-incomplete-sets']).getAllowIncompleteSets()).toEqual(true);
-    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--allow-incomplete-sets', 'true']).getAllowIncompleteSets()).toEqual(true);
-    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--allow-incomplete-sets', 'false']).getAllowIncompleteSets()).toEqual(false);
-    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--allow-incomplete-sets', '--allow-incomplete-sets']).getAllowIncompleteSets()).toEqual(true);
-    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--allow-incomplete-sets', 'false', '--allow-incomplete-sets', 'true']).getAllowIncompleteSets()).toEqual(true);
-    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--allow-incomplete-sets', 'true', '--allow-incomplete-sets', 'false']).getAllowIncompleteSets()).toEqual(false);
+    expect(() => argumentsParser.parse([...dummyCommandAndRequiredArgs, '--allow-incomplete-sets'])).toThrow(/dependent|implication/i);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--dat', os.devNull, '--allow-incomplete-sets']).getAllowIncompleteSets()).toEqual(true);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--dat', os.devNull, '--allow-incomplete-sets', 'true']).getAllowIncompleteSets()).toEqual(true);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--dat', os.devNull, '--allow-incomplete-sets', 'false']).getAllowIncompleteSets()).toEqual(false);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--dat', os.devNull, '--allow-incomplete-sets', '--allow-incomplete-sets']).getAllowIncompleteSets()).toEqual(true);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--dat', os.devNull, '--allow-incomplete-sets', 'false', '--allow-incomplete-sets', 'true']).getAllowIncompleteSets()).toEqual(true);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--dat', os.devNull, '--allow-incomplete-sets', 'true', '--allow-incomplete-sets', 'false']).getAllowIncompleteSets()).toEqual(false);
   });
 
   it('should parse "filter-regex"', async () => {
