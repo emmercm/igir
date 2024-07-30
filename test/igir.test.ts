@@ -364,7 +364,7 @@ describe('with explicit DATs', () => {
     });
   });
 
-  it('should copy and extract symlinked ROMs and sisks', async () => {
+  it('should copy and extract symlinked files', async () => {
     await copyFixturesToTemp(async (inputTemp, outputTemp) => {
       // Given some symlinks
       const inputDir = path.join(inputTemp, 'roms', 'raw');
@@ -382,7 +382,6 @@ describe('with explicit DATs', () => {
         output: outputTemp,
         dirDatName: true,
         dirGameSubdir: GameSubdirMode[GameSubdirMode.MULTIPLE].toLowerCase(),
-        includeDisks: true,
       });
 
       expect(result.outputFilesAndCrcs).toEqual([
@@ -403,7 +402,7 @@ describe('with explicit DATs', () => {
     });
   });
 
-  it('should combine DATs, move, extract and test', async () => {
+  it('should combine DATs, move, extract and test ROMs and disks', async () => {
     await copyFixturesToTemp(async (inputTemp, outputTemp) => {
       const result = await runIgir({
         commands: ['move', 'extract', 'test'],
@@ -415,6 +414,7 @@ describe('with explicit DATs', () => {
         dirDatName: true,
         dirGameSubdir: GameSubdirMode[GameSubdirMode.MULTIPLE].toLowerCase(),
         fixExtension: FixExtension[FixExtension.AUTO].toLowerCase(),
+        includeDisks: true,
       });
 
       expect(result.outputFilesAndCrcs).toEqual([
@@ -453,12 +453,16 @@ describe('with explicit DATs', () => {
         [path.join('igir combined', 'One Three', 'One.rom'), 'f817a89f'],
         [path.join('igir combined', 'One Three', 'Three.rom'), 'ff46c5d8'],
         [path.join('igir combined', 'speed_test_v51.smc'), '9adca6cc'],
+        [`${path.join('igir combined', 'Three Four Five', '2048')}|`, 'xxxxxxxx'], // hard disk
+        [`${path.join('igir combined', 'Three Four Five', '4096')}|`, 'xxxxxxxx'], // hard disk
         [path.join('igir combined', 'Three Four Five', 'Five.rom'), '3e5daf67'],
         [path.join('igir combined', 'Three Four Five', 'Four.rom'), '1cf3ca74'],
         [path.join('igir combined', 'Three Four Five', 'Three.rom'), 'ff46c5d8'],
       ]);
       expect(result.cwdFilesAndCrcs).toHaveLength(0);
       expect(result.movedFiles).toEqual([
+        path.join('chd', '2048.chd'),
+        path.join('chd', '4096.chd'),
         path.join('discs', 'CD-ROM (Track 1).bin'),
         path.join('discs', 'CD-ROM (Track 2).bin'),
         path.join('discs', 'CD-ROM (Track 3).bin'),
