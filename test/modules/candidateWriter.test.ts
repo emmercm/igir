@@ -1254,7 +1254,7 @@ describe('raw', () => {
     [
       '**/!(header*)/*',
       ['0F09A40.rom', '2048.chd', '3708F2C.rom', '4096.chd', '612644F.rom', '65D1206.rom', '92C85C9.rom', 'C01173E.rom',
-        'CD-ROM (Track 1).bin', 'CD-ROM (Track 2).bin', 'CD-ROM (Track 3).bin', 'CD-ROM.chd', 'CD-ROM.cue',
+        'CD-ROM.chd',
         'GD-ROM.chd',
         'KDULVQN.rom', 'UMD.iso', 'before.rom', 'best.gz', 'empty.rom', 'five.rom', 'fizzbuzz.nes', 'foobar.lnx', 'four.rom', 'fourfive.zip', 'loremipsum.rom', 'one.rom', 'onetwothree.zip', 'three.rom',
         'two.rom', 'unknown.rom'],
@@ -1308,7 +1308,7 @@ describe('raw', () => {
     [
       '**/!(header*)/*',
       ['0F09A40.rom', '2048.chd', '3708F2C.rom', '4096.chd', '612644F.rom', '65D1206.rom', '92C85C9.rom', 'C01173E.rom',
-        'CD-ROM (Track 1).bin', 'CD-ROM (Track 2).bin', 'CD-ROM (Track 3).bin', 'CD-ROM.chd', 'CD-ROM.cue',
+        'CD-ROM.chd',
         'GD-ROM.chd',
         'KDULVQN.rom', 'UMD.iso', 'before.rom', 'best.gz', 'empty.rom', 'five.rom', 'fizzbuzz.nes', 'foobar.lnx', 'four.rom', 'fourfive.zip', 'loremipsum.rom', 'one.rom', 'onetwothree.zip', 'three.rom',
         'two.rom', 'unknown.rom'],
