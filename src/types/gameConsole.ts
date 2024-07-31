@@ -61,7 +61,7 @@ interface OutputTokens {
   // Console brand, name and abbrevited name
   // @see https://wiki.no-intro.org/index.php?title=Systems
   consoleBrand: string,
-  consoleName?: string,
+  consoleName: string,
   consoleAbbrName?: string,
 }
 
