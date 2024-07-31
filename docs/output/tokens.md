@@ -78,6 +78,16 @@ You can use some information about the input and output file's name & location:
 - `{outputName}` the output file's filename without its extension
 - `{outputExt}` the output file's extension
 
+## Console information
+
+You can use some information about the console:
+
+- `{consoleBrand}` the console brand name
+- `{consoleName}` the console complete name
+- `{consoleAbbrName}` the console abbreviated name
+
+
+
 ## Specific hardware
 
 To help sort ROMs into unique file structures for popular frontends & hardware, `igir` offers a few specific tokens:
