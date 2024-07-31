@@ -1,4 +1,4 @@
-# dir2dat
+# Writing dir2dats
 
 "dir2dat" refers to DATs that have been automatically created based on files in an input directory. [DATs](./introduction.md) generated this way are not typically useful as-is, they usually require some hand editing after creation.
 
@@ -80,6 +80,10 @@ Once DATs have been generated from input files, they are processed the same as a
 - **[ROM filter options](../roms/filtering-preferences.md) can be applied.**
 
   If your input files are in some kind of standard naming convention (e.g. [No-Intro](https://wiki.no-intro.org/index.php?title=Naming_Convention), [Redump](https://datomatic.no-intro.org/stuff/The%20Official%20No-Intro%20Convention%20(20071030).pdf), or [TOSEC](https://www.tosecdev.org/tosec-naming-convention)) that contains region, language, or other tags, then [ROM filter options](../roms/filtering-preferences.md) can be applied.
+
+- **Filename extensions can be corrected.**
+
+    See [ROM Output Options](../output/options.md#fixing-rom-extensions) for more information.
 
 ## Alternative tools
 

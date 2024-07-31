@@ -1,10 +1,10 @@
 # EverDrive
 
-The [EverDrive](https://krikzz.com/) flash carts by Krikzz are some of the high quality, highest rate of compatability, and most often recommended flash carts available on the market today.
+The [EverDrive](https://krikzz.com/) flash carts by Krikzz are some of the highest quality, highest rate of compatability, and most often recommended flash carts available on the market today.
 
 ## ROMs
 
-Because flash carts are specific to a specific console, you can provide specific input directories & [DATs](../../dats/introduction.md) when you run `igir`. For example:
+Because flash carts are specific to a specific console, you can provide specific input directories and [DATs](../../dats/introduction.md) when you run `igir`. For example:
 
 === ":simple-windowsxp: Windows"
 

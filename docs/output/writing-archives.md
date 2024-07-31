@@ -1,4 +1,4 @@
-# Writing Archives
+# Writing Zip Archives
 
 `igir` supports creating `.zip` archives with the `igir zip` [command](../commands.md).
 

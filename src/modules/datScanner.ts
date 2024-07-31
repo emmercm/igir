@@ -18,6 +18,7 @@ import MameDAT from '../types/dats/mame/mameDat.js';
 import ROM from '../types/dats/rom.js';
 import SoftwareListDAT from '../types/dats/softwarelist/softwareListDat.js';
 import SoftwareListsDAT from '../types/dats/softwarelist/softwareListsDat.js';
+import ExpectedError from '../types/expectedError.js';
 import File from '../types/files/file.js';
 import { ChecksumBitmask } from '../types/files/fileChecksums.js';
 import Options from '../types/options.js';
@@ -96,8 +97,7 @@ export default class DATScanner extends Scanner {
           ChecksumBitmask.NONE,
         );
       } catch (error) {
-        this.progressBar.logError(`${datFile.toString()}: failed to download: ${error}`);
-        return [];
+        throw new ExpectedError(`failed to download '${datFile.toString()}': ${error}`);
       }
     }))).flat();
   }
@@ -153,15 +153,23 @@ export default class DATScanner extends Scanner {
       return dat;
     }
 
-    // Special case: if the DAT has only one game but a large number of ROMs, assume each of those
-    //  ROMs should be a separate game. This is to help parse the libretro BIOS System.dat file
-    //  which only has one game for every BIOS file, even though there are 90+ consoles.
-    if (dat.getGames().length === 1 && dat.getGames()[0].getRoms().length > 10) {
+    // Special case: if the DAT has only one BIOS game with a large number of ROMs, assume each of
+    //  those ROMs should be a separate game. This is to help parse the libretro BIOS System.dat
+    //  file which only has one game for every BIOS file, even though there are 90+ consoles.
+    if (dat.getGames().length === 1
+      && dat.getGames()[0].isBios()
+      && dat.getGames()[0].getRoms().length > 10
+    ) {
       const game = dat.getGames()[0];
-      dat = new LogiqxDAT(dat.getHeader(), dat.getGames()[0].getRoms().map((rom) => game.withProps({
-        name: rom.getName(),
-        rom: [rom],
-      })));
+      dat = new LogiqxDAT(dat.getHeader(), dat.getGames()[0].getRoms().map((rom) => {
+        // Use the ROM's filename without its extension as the game name
+        const { dir, name } = path.parse(rom.getName());
+        const gameName = path.format({ dir, name });
+        return game.withProps({
+          name: gameName,
+          rom: [rom],
+        });
+      }));
     }
 
     const size = dat.getGames()
@@ -337,7 +345,7 @@ export default class DATScanner extends Scanner {
 
       const roms = gameRoms
         .map((entry) => new ROM({
-          name: entry.name ?? `${gameName}.rom`,
+          name: entry.name ?? '',
           size: Number.parseInt(entry.size ?? '0', 10),
           crc32: entry.crc,
           md5: entry.md5,
@@ -348,7 +356,8 @@ export default class DATScanner extends Scanner {
         name: gameName,
         category: undefined,
         description: game.description,
-        bios: undefined,
+        bios: cmproDat.clrmamepro?.author?.toLowerCase() === 'libretro'
+          && cmproDat.clrmamepro?.name?.toLowerCase() === 'system' ? 'yes' : 'no',
         device: undefined,
         cloneOf: game.cloneof,
         romOf: game.romof,
@@ -471,10 +480,9 @@ export default class DATScanner extends Scanner {
     const games = dat.getGames()
       .map((game) => {
         const roms = game.getRoms()
-          // ROMs have to have filenames and at least one non-zero checksum
+          // ROMs have to have and at least one non-empty checksum
           .filter((rom) => this.options.shouldDir2Dat() || (
-            rom.getName()
-            && (rom.getCrc32() === undefined || rom.getCrc32() !== '00000000')
+            (rom.getCrc32() === undefined || rom.getCrc32() !== '00000000')
             && (rom.getMd5() === undefined || rom.getMd5() !== 'd41d8cd98f00b204e9800998ecf8427e')
             && (rom.getSha1() === undefined || rom.getSha1() !== 'da39a3ee5e6b4b0d3255bfef95601890afd80709')
             && (rom.getSha256() === undefined || rom.getSha256() !== 'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855')

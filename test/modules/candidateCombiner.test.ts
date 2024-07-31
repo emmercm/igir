@@ -54,7 +54,7 @@ it('should do nothing with no parents', async () => {
   expect(parentsToCandidates.size).toEqual(romFiles.length);
 });
 
-it('should', async () => {
+it('should combine candidates', async () => {
   // Given
   const options = new Options({ zipDatName: true });
   const romFiles = await new ROMScanner(new Options({

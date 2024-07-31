@@ -19,6 +19,7 @@ import LogiqxDAT from '../../src/types/dats/logiqx/logiqxDat.js';
 import Archive from '../../src/types/files/archives/archive.js';
 import ArchiveEntry from '../../src/types/files/archives/archiveEntry.js';
 import File from '../../src/types/files/file.js';
+import { ChecksumBitmask } from '../../src/types/files/fileChecksums.js';
 import FileFactory from '../../src/types/files/fileFactory.js';
 import Options, { GameSubdirMode, OptionsProps } from '../../src/types/options.js';
 import ProgressBarFake from '../console/progressBarFake.js';
@@ -94,7 +95,12 @@ async function candidateWriter(
     ...(patchGlob ? { patch: [path.join(inputTemp, patchGlob)] } : {}),
     output: outputTemp,
   });
-  const romFiles = await new ROMScanner(options, new ProgressBarFake()).scan();
+
+  let romFiles: File[] = [];
+  try {
+    romFiles = await new ROMScanner(options, new ProgressBarFake()).scan();
+  } catch { /* ignored */ }
+
   const dat = datInferrer(options, romFiles);
   const romFilesWithHeaders = await new ROMHeaderProcessor(options, new ProgressBarFake())
     .process(romFiles);
@@ -246,13 +252,16 @@ describe('zip', () => {
 
   it('should not write anything if the output is expected and overwriting invalid', async () => {
     await copyFixturesToTemp(async (inputTemp, outputTemp) => {
+      // Note: need to de-conflict headered & headerless ROMs due to duplicate output paths
+      const inputGlob = '**/!(headerless)/*';
+
       // Given
       const options = new Options({ commands: ['copy', 'zip'] });
       const inputFilesBefore = await walkAndStat(inputTemp);
       await expect(walkAndStat(outputTemp)).resolves.toHaveLength(0);
 
       // And we've written once
-      await candidateWriter(options, inputTemp, '**/*', undefined, outputTemp);
+      await candidateWriter(options, inputTemp, inputGlob, undefined, outputTemp);
 
       // And files were written
       const outputFilesBefore = await walkAndStat(outputTemp);
@@ -263,7 +272,7 @@ describe('zip', () => {
       await candidateWriter({
         ...options,
         overwriteInvalid: true,
-      }, inputTemp, '**/*', undefined, outputTemp);
+      }, inputTemp, inputGlob, undefined, outputTemp);
 
       // Then the output wasn't touched
       await expect(walkAndStat(outputTemp)).resolves.toEqual(outputFilesBefore);
@@ -569,8 +578,8 @@ describe('zip', () => {
       [`ROMWriter Test.zip|${path.join('onetwothree', 'one.rom')}`, 'f817a89f'],
       [`ROMWriter Test.zip|${path.join('onetwothree', 'three.rom')}`, 'ff46c5d8'],
       [`ROMWriter Test.zip|${path.join('onetwothree', 'two.rom')}`, '96170874'],
-      [`ROMWriter Test.zip|${path.join('speed_test_v51', 'speed_test_v51.sfc')}`, '8beffd94'],
-      [`ROMWriter Test.zip|${path.join('speed_test_v51', 'speed_test_v51.smc')}`, '9adca6cc'],
+      ['ROMWriter Test.zip|speed_test_v51.sfc', '8beffd94'],
+      ['ROMWriter Test.zip|speed_test_v51.smc', '9adca6cc'],
       ['ROMWriter Test.zip|three.rom', 'ff46c5d8'],
       ['ROMWriter Test.zip|two.rom', '96170874'],
       ['ROMWriter Test.zip|unknown.rom', '377a7727'],
@@ -782,7 +791,10 @@ describe('extract', () => {
       );
       expect(outputFiles).toHaveLength(1);
       expect(outputFiles[0][0]).toEqual(expectedFileName);
-      const outputFile = await File.fileOf({ filePath: path.join(outputTemp, outputFiles[0][0]) });
+      const outputFile = await File.fileOf(
+        { filePath: path.join(outputTemp, outputFiles[0][0]) },
+        ChecksumBitmask.CRC32,
+      );
       expect(outputFile.getCrc32()).toEqual(expectedCrc);
     });
   });
@@ -815,7 +827,10 @@ describe('extract', () => {
       );
       expect(outputFiles).toHaveLength(1);
       expect(outputFiles[0][0]).toEqual(expectedFileName);
-      const outputFile = await File.fileOf({ filePath: path.join(outputTemp, outputFiles[0][0]) });
+      const outputFile = await File.fileOf(
+        { filePath: path.join(outputTemp, outputFiles[0][0]) },
+        ChecksumBitmask.CRC32,
+      );
       expect(outputFile.getCrc32()).toEqual(expectedCrc);
     });
   });
@@ -1142,7 +1157,10 @@ describe('raw', () => {
       );
       expect(outputFiles).toHaveLength(1);
       expect(outputFiles[0][0]).toEqual(expectedFileName);
-      const outputFile = await File.fileOf({ filePath: path.join(outputTemp, outputFiles[0][0]) });
+      const outputFile = await File.fileOf(
+        { filePath: path.join(outputTemp, outputFiles[0][0]) },
+        ChecksumBitmask.CRC32,
+      );
       expect(outputFile.getCrc32()).toEqual(expectedCrc);
     });
   });
@@ -1171,7 +1189,10 @@ describe('raw', () => {
       );
       expect(outputFiles).toHaveLength(1);
       expect(outputFiles[0][0]).toEqual(expectedFileName);
-      const outputFile = await File.fileOf({ filePath: path.join(outputTemp, outputFiles[0][0]) });
+      const outputFile = await File.fileOf(
+        { filePath: path.join(outputTemp, outputFiles[0][0]) },
+        ChecksumBitmask.CRC32,
+      );
       expect(outputFile.getCrc32()).toEqual(expectedCrc);
     });
   });

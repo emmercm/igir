@@ -14,10 +14,11 @@ export default class ZipX extends SevenZip {
 
   // eslint-disable-next-line class-methods-use-this
   getExtension(): string {
+    for (const ext of ZipX.getExtensions()) {
+      if (this.getFilePath().toLowerCase().endsWith(ext)) {
+        return ext;
+      }
+    }
     return path.parse(this.getFilePath()).ext;
-  }
-
-  static getFileSignatures(): Buffer[] {
-    return [];
   }
 }

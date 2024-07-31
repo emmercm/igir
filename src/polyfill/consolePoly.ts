@@ -1,4 +1,4 @@
-import terminalSize from 'term-size';
+import terminalSize from 'terminal-size';
 
 export default {
   consoleWidth(): number {

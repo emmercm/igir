@@ -83,7 +83,7 @@ export default class File implements FileProps {
 
   static async fileOf(
     fileProps: FileProps,
-    checksumBitmask: number = ChecksumBitmask.CRC32,
+    checksumBitmask: number = ChecksumBitmask.NONE,
   ): Promise<File> {
     let finalSize = fileProps.size;
     let finalCrcWithHeader = fileProps.crc32;
@@ -142,7 +142,6 @@ export default class File implements FileProps {
       }
     } else {
       finalSize = finalSize ?? 0;
-      finalCrcWithHeader = finalCrcWithHeader ?? '';
     }
     finalCrcWithoutHeader = finalCrcWithoutHeader ?? finalCrcWithHeader;
     finalMd5WithoutHeader = finalMd5WithoutHeader ?? finalMd5WithHeader;
@@ -152,7 +151,9 @@ export default class File implements FileProps {
     return new File({
       filePath: fileProps.filePath,
       size: finalSize,
-      checksumBitmask,
+      // We were told not to calculate any checksums (default behavior), but some might have been
+      // provided, so let {@link getChecksumBitmask()} figure it out
+      checksumBitmask: checksumBitmask !== ChecksumBitmask.NONE ? checksumBitmask : undefined,
       crc32: finalCrcWithHeader,
       crc32WithoutHeader: finalCrcWithoutHeader,
       md5: finalMd5WithHeader,
@@ -436,21 +437,16 @@ export default class File implements FileProps {
   }
 
   withFilePath(filePath: string): File {
-    return new File({
-      ...this,
-      filePath,
-    });
+    if (filePath === this.filePath) {
+      return this;
+    }
+    return new File({ ...this, filePath });
   }
 
   async withFileHeader(fileHeader: ROMHeader): Promise<File> {
-    // Make sure the file actually has the right file signature
-    const hasHeader = await this.createReadStream(
-      async (stream) => fileHeader.fileHasHeader(stream),
-    );
-    if (!hasHeader) {
+    if (fileHeader === this.fileHeader) {
       return this;
     }
-
     return File.fileOf({
       ...this,
       fileHeader,
@@ -459,6 +455,9 @@ export default class File implements FileProps {
   }
 
   withoutFileHeader(): File {
+    if (this.fileHeader === undefined) {
+      return this;
+    }
     return new File({
       ...this,
       fileHeader: undefined,
@@ -512,8 +511,7 @@ export default class File implements FileProps {
       return true;
     }
     return this.getFilePath() === other.getFilePath()
-        && this.getSize() === other.getSize()
-        && this.getCrc32() === other.getCrc32()
-        && this.getCrc32WithoutHeader() === other.getCrc32WithoutHeader();
+        && this.hashCode() === other.hashCode()
+        && this.getFileHeader() === other.getFileHeader();
   }
 }

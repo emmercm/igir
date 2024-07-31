@@ -14,8 +14,4 @@ export default class ZipSpanned extends SevenZip {
   getExtension(): string {
     return ZipSpanned.getExtensions()[0];
   }
-
-  static getFileSignatures(): Buffer[] {
-    return [Buffer.from('504B0708', 'hex')];
-  }
 }

@@ -69,7 +69,6 @@ export default class DATParentInferrer extends Module {
 
   private static stripGameVariants(name: string): string {
     return name
-      // TODO(cemmer): strip any directories from the game name (i.e. HTGD)
       // ***** Retail types *****
       .replace(/\(Alt( [a-z0-9. ]*)?\)/i, '')
       .replace(/\([^)]*Collector's Edition\)/i, '')
@@ -113,7 +112,7 @@ export default class DATParentInferrer extends Module {
       .replace(/\([^)]*Sample[a-z0-9. ]*\)/i, '')
       .replace(/\(Spaceworld[a-z0-9. ]*\)/i, '')
       .replace(/\(Unl[a-z0-9. ]*\)/i, '')
-      .replace(/\(v[0-9.]+[a-z]*\)/i, '')
+      .replace(/\(v[0-9.-]+[a-z]*\)/i, '')
       .replace(/\(Version [0-9.]+[a-z]*\)/i, '')
       // ***** Good Tools *****
       .replace(/\[!\]/, '')
@@ -164,6 +163,8 @@ export default class DATParentInferrer extends Module {
       .replace(/\(EDC\)/i, '') // copy protection
       .replace(/\(PSone Books\)/i, '')
       .replace(/[(\]](SCES|SCUS|SLES|SLUS)-[0-9]+[(\]]/i, '')
+      // Sony - PlayStation 3
+      .replace(/\((Arcade|AVTool|Debug|Disc|Patch|Shop|Tool)\)/, '') // BIOS
       // Sony - PlayStation Portable
       .replace(/[(\]][UN][CLP][AEJKU][BFGHJMSXZ]-[0-9]+[(\]]/i, '')
       // ***** Cleanup *****

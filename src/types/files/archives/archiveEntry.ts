@@ -226,21 +226,16 @@ export default class ArchiveEntry<A extends Archive> extends File implements Arc
   }
 
   withEntryPath(entryPath: string): ArchiveEntry<A> {
-    return new ArchiveEntry({
-      ...this,
-      entryPath,
-    });
+    if (entryPath === this.entryPath) {
+      return this;
+    }
+    return new ArchiveEntry({ ...this, entryPath });
   }
 
   async withFileHeader(fileHeader: ROMHeader): Promise<ArchiveEntry<A>> {
-    // Make sure the file actually has the right file signature
-    const hasHeader = await this.createReadStream(
-      async (stream) => fileHeader.fileHasHeader(stream),
-    );
-    if (!hasHeader) {
+    if (fileHeader === this.fileHeader) {
       return this;
     }
-
     return ArchiveEntry.entryOf({
       ...this,
       fileHeader,
@@ -249,6 +244,9 @@ export default class ArchiveEntry<A extends Archive> extends File implements Arc
   }
 
   withoutFileHeader(): ArchiveEntry<A> {
+    if (this.fileHeader === undefined) {
+      return this;
+    }
     return new ArchiveEntry({
       ...this,
       fileHeader: undefined,

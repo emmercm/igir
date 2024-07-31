@@ -31,13 +31,6 @@ export default class Zip extends Archive {
     return Zip.getExtensions()[0];
   }
 
-  static getFileSignatures(): Buffer[] {
-    return [
-      Buffer.from('504B0304', 'hex'),
-      Buffer.from('504B0506', 'hex'), // empty archive
-    ];
-  }
-
   async getArchiveEntries(checksumBitmask: number): Promise<ArchiveEntry<this>[]> {
     // https://github.com/ZJONSSON/node-unzipper/issues/280
     // UTF-8 entry names are not decoded correctly
@@ -46,10 +39,7 @@ export default class Zip extends Archive {
     const archive = await unzipper.Open.file(this.getFilePath());
 
     return async.mapLimit(
-      archive.files
-        .filter((entryFile) => entryFile.type === 'File')
-        // https://github.com/ZJONSSON/node-unzipper/issues/324
-        .filter((entryFile) => typeof entryFile.offsetToLocalFileHeader === 'number'),
+      archive.files.filter((entryFile) => entryFile.type === 'File'),
       Defaults.ARCHIVE_ENTRY_SCANNER_THREADS_PER_ARCHIVE,
       async (entryFile, callback: AsyncResultCallback<ArchiveEntry<this>, Error>) => {
         let checksums: ChecksumProps = {};

@@ -5,10 +5,13 @@ import Logger from '../src/console/logger.js';
 import LogLevel from '../src/console/logLevel.js';
 import Temp from '../src/globals/temp.js';
 import Igir from '../src/igir.js';
+import DATScanner from '../src/modules/datScanner.js';
 import ArrayPoly from '../src/polyfill/arrayPoly.js';
 import fsPoly from '../src/polyfill/fsPoly.js';
+import { ChecksumBitmask } from '../src/types/files/fileChecksums.js';
 import FileFactory from '../src/types/files/fileFactory.js';
-import Options, { GameSubdirMode, OptionsProps } from '../src/types/options.js';
+import Options, { FixExtension, GameSubdirMode, OptionsProps } from '../src/types/options.js';
+import ProgressBarFake from './console/progressBarFake.js';
 
 interface TestOutput {
   outputFilesAndCrcs: string[][],
@@ -98,6 +101,7 @@ async function runIgir(optionsProps: OptionsProps): Promise<TestOutput> {
     const cwdFilesAndCrcs = (await Promise.all(options.getInputPaths()
       .map(async (inputPath) => walkWithCrc(inputPath, tempCwd))))
       .flat()
+      .map(([cwdPath, crc]) => ([path.join(tempCwd, cwdPath), crc]))
       .sort((a, b) => a[0].localeCompare(b[0]));
 
     const inputFilesAfter = (await Promise.all(options.getInputPaths()
@@ -133,22 +137,6 @@ async function runIgir(optionsProps: OptionsProps): Promise<TestOutput> {
 }
 
 describe('with explicit DATs', () => {
-  it('should do nothing with no roms', async () => {
-    await copyFixturesToTemp(async (inputTemp, outputTemp) => {
-      const result = await runIgir({
-        commands: ['copy'],
-        dat: [path.join(inputTemp, 'dats')],
-        input: [],
-        output: outputTemp,
-      });
-
-      expect(result.outputFilesAndCrcs).toHaveLength(0);
-      expect(result.cwdFilesAndCrcs).toHaveLength(0);
-      expect(result.movedFiles).toHaveLength(0);
-      expect(result.cleanedFiles).toHaveLength(0);
-    });
-  });
-
   it('should throw on all invalid dats', async () => {
     await expect(async () => new Igir(new Options({
       dat: ['src/*'],
@@ -164,6 +152,7 @@ describe('with explicit DATs', () => {
         output: outputTemp,
         dirDatName: true,
         dirGameSubdir: GameSubdirMode[GameSubdirMode.MULTIPLE].toLowerCase(),
+        fixExtension: FixExtension[FixExtension.AUTO].toLowerCase(),
       });
 
       expect(result.outputFilesAndCrcs).toEqual([
@@ -261,6 +250,7 @@ describe('with explicit DATs', () => {
         output: path.join(outputTemp, '{outputExt}'),
         dirDatName: true,
         dirGameSubdir: GameSubdirMode[GameSubdirMode.MULTIPLE].toLowerCase(),
+        fixExtension: FixExtension[FixExtension.AUTO].toLowerCase(),
       });
 
       expect(result.outputFilesAndCrcs).toEqual([
@@ -390,16 +380,16 @@ describe('with explicit DATs', () => {
       const result = await runIgir({
         commands: ['move', 'extract', 'test'],
         dat: [path.join(inputTemp, 'dats', '*')],
+        datExclude: [path.join(inputTemp, 'dats', 'headerless.*')],
         input: [path.join(inputTemp, 'roms')],
         output: outputTemp,
         datCombine: true,
         dirDatName: true,
         dirGameSubdir: GameSubdirMode[GameSubdirMode.MULTIPLE].toLowerCase(),
+        fixExtension: FixExtension[FixExtension.AUTO].toLowerCase(),
       });
 
       expect(result.outputFilesAndCrcs).toEqual([
-        // Note: the "Headered" DAT is alphabetically before the "Headerless" DAT, so headered
-        //  ROMs of the same name are preferred.
         [path.join('igir combined', '0F09A40.rom'), '2f943e86'],
         [path.join('igir combined', '3708F2C.rom'), '20891c9f'],
         [path.join('igir combined', '612644F.rom'), 'f7591b29'],
@@ -422,11 +412,9 @@ describe('with explicit DATs', () => {
         [path.join('igir combined', 'Hardware Target Game Database', 'Patchable', 'C01173E.rom'), 'dfaebe28'],
         [path.join('igir combined', 'KDULVQN.rom'), 'b1c303e4'],
         [path.join('igir combined', 'LCDTestROM.lnx'), '2d251538'],
-        [path.join('igir combined', 'LCDTestROM.lyx'), '42583855'],
         [`${path.join('igir combined', 'Lorem Ipsum.zip')}|loremipsum.rom`, '70856527'],
         [path.join('igir combined', 'One Three', 'One.rom'), 'f817a89f'],
         [path.join('igir combined', 'One Three', 'Three.rom'), 'ff46c5d8'],
-        [path.join('igir combined', 'speed_test_v51.sfc'), '8beffd94'],
         [path.join('igir combined', 'speed_test_v51.smc'), '9adca6cc'],
         [path.join('igir combined', 'Three Four Five', 'Five.rom'), '3e5daf67'],
         [path.join('igir combined', 'Three Four Five', 'Four.rom'), '1cf3ca74'],
@@ -441,7 +429,6 @@ describe('with explicit DATs', () => {
         path.join('headered', 'diagnostic_test_cartridge.a78.7z'),
         path.join('headered', 'fds_joypad_test.fds.zip'),
         path.join('headered', 'speed_test_v51.smc'),
-        path.join('headerless', 'speed_test_v51.sfc.gz'),
         path.join('patchable', '0F09A40.rom'),
         path.join('patchable', '3708F2C.rom'),
         path.join('patchable', '612644F.rom'),
@@ -470,7 +457,7 @@ describe('with explicit DATs', () => {
         path.join(inputTemp, 'roms', 'rar', 'foobar.rar'),
         path.join(inputTemp, 'roms', 'zip', 'loremipsum.zip'),
       ].map(async (inputFile) => {
-        const junkFile = inputFile.replace(/((\.[a-zA-Z0-9]+)+)$/, '.junk');
+        const junkFile = inputFile.replace(/((\.[a-zA-Z0-9]+)+)$/, '');
         await fsPoly.mv(inputFile, junkFile);
         return junkFile;
       }));
@@ -542,6 +529,7 @@ describe('with explicit DATs', () => {
         input: [path.join(inputTemp, 'roms')],
         output: outputTemp,
         dirDatName: true,
+        fixExtension: FixExtension[FixExtension.AUTO].toLowerCase(),
       });
 
       expect(result.outputFilesAndCrcs).toEqual([
@@ -595,6 +583,7 @@ describe('with explicit DATs', () => {
         input: [path.join(inputTemp, 'roms')],
         output: outputTemp,
         zipDatName: true,
+        fixExtension: FixExtension[FixExtension.NEVER].toLowerCase(),
       });
 
       expect(result.outputFilesAndCrcs).toEqual([
@@ -604,12 +593,12 @@ describe('with explicit DATs', () => {
         [`${path.join('Hardware Target Game Database', 'Dummy', 'smdb.zip')}|Fizzbuzz.nes`, '370517b5'],
         [`${path.join('Hardware Target Game Database', 'Dummy', 'smdb.zip')}|Foobar.lnx`, 'b22c9747'],
         [`${path.join('Hardware Target Game Database', 'Dummy', 'smdb.zip')}|Lorem Ipsum.rom`, '70856527'],
-        ['Headered.zip|allpads.nes', '9180a163'],
-        ['Headered.zip|color_test.nes', 'c9c1b7aa'],
-        ['Headered.zip|diagnostic_test_cartridge.a78', 'f6cc9b1c'],
-        ['Headered.zip|fds_joypad_test.fds', '1e58456d'],
-        ['Headered.zip|LCDTestROM.lnx', '2d251538'],
-        ['Headered.zip|speed_test_v51.smc', '9adca6cc'],
+        ['Headered.zip|allpads.rom', '9180a163'],
+        ['Headered.zip|color_test.rom', 'c9c1b7aa'],
+        ['Headered.zip|diagnostic_test_cartridge.rom', 'f6cc9b1c'],
+        ['Headered.zip|fds_joypad_test.rom', '1e58456d'],
+        ['Headered.zip|LCDTestROM.rom', '2d251538'],
+        ['Headered.zip|speed_test_v51.rom', '9adca6cc'],
         ['Headerless.zip|allpads.nes', '6339abe6'],
         ['Headerless.zip|color_test.nes', 'c9c1b7aa'],
         ['Headerless.zip|diagnostic_test_cartridge.a78', 'a1eaa7c1'],
@@ -649,6 +638,7 @@ describe('with explicit DATs', () => {
         output: outputTemp,
         dirDatName: true,
         dirGameSubdir: GameSubdirMode[GameSubdirMode.MULTIPLE].toLowerCase(),
+        fixExtension: FixExtension[FixExtension.AUTO].toLowerCase(),
         symlink: true,
       });
 
@@ -698,10 +688,12 @@ describe('with explicit DATs', () => {
         commands: ['copy', 'extract', 'test'],
         dat: [path.join(inputTemp, 'dats', '*')],
         input: [path.join(inputTemp, 'roms')],
+        inputMinChecksum: ChecksumBitmask[ChecksumBitmask.MD5].toLowerCase(),
         patch: [path.join(inputTemp, 'patches')],
         output: outputTemp,
         dirDatName: true,
         dirGameSubdir: GameSubdirMode[GameSubdirMode.MULTIPLE].toLowerCase(),
+        fixExtension: FixExtension[FixExtension.AUTO].toLowerCase(),
         removeHeaders: [''], // all
       });
 
@@ -789,6 +781,7 @@ describe('with explicit DATs', () => {
         input: [path.join(inputTemp, 'roms')],
         output: outputTemp,
         dirDatName: true,
+        fixExtension: FixExtension[FixExtension.AUTO].toLowerCase(),
       });
 
       const writtenFixdats = result.outputFilesAndCrcs
@@ -819,6 +812,7 @@ describe('with explicit DATs', () => {
         input: [path.join(inputTemp, 'roms')],
         output: outputTemp,
         dirDatName: true,
+        fixExtension: FixExtension[FixExtension.AUTO].toLowerCase(),
         reportOutput: 'report.csv',
       });
 
@@ -831,10 +825,10 @@ describe('with explicit DATs', () => {
       //  diagnostic_test_cartridge.a78
       //  fds_joypad_test.fds
       //  LCDTestROM.lyx
-      expect(writtenFixdats[0]).toMatch(/^Headerless fixdat \([0-9]{8}-[0-9]{6}\)\.dat$/);
+      expect(writtenFixdats[0]).toMatch(/[\\/]Headerless fixdat \([0-9]{8}-[0-9]{6}\)\.dat$/);
       // The "One" DAT should have missing ROMs, because no fixture exists for them:
       //  Missing.rom
-      expect(writtenFixdats[1]).toMatch(/^One fixdat \([0-9]{8}-[0-9]{6}\)\.dat$/);
+      expect(writtenFixdats[1]).toMatch(/[\\/]One fixdat \([0-9]{8}-[0-9]{6}\)\.dat$/);
 
       expect(result.movedFiles).toHaveLength(0);
       // Note: explicitly not testing `result.movedFiles`
@@ -844,27 +838,13 @@ describe('with explicit DATs', () => {
 });
 
 describe('with inferred DATs', () => {
-  it('should do nothing with no roms', async () => {
-    await copyFixturesToTemp(async (inputTemp, outputTemp) => {
-      const result = await runIgir({
-        commands: ['copy'],
-        input: [],
-        output: outputTemp,
-      });
-
-      expect(result.outputFilesAndCrcs).toHaveLength(0);
-      expect(result.cwdFilesAndCrcs).toHaveLength(0);
-      expect(result.movedFiles).toHaveLength(0);
-      expect(result.cleanedFiles).toHaveLength(0);
-    });
-  });
-
   it('should copy and test', async () => {
     await copyFixturesToTemp(async (inputTemp, outputTemp) => {
       const result = await runIgir({
         commands: ['copy', 'test'],
         input: [path.join(inputTemp, 'roms')],
         output: outputTemp,
+        fixExtension: FixExtension[FixExtension.AUTO].toLowerCase(),
       });
 
       expect(result.outputFilesAndCrcs).toEqual([
@@ -877,7 +857,7 @@ describe('with inferred DATs', () => {
         ['before.rom', '0361b321'],
         ['best.gz|best.rom', '1e3d78cf'],
         ['C01173E.rom', 'dfaebe28'],
-        ['color_test.nintendoentertainmentsystem', 'c9c1b7aa'],
+        ['color_test.nes', 'c9c1b7aa'],
         ['diagnostic_test_cartridge.a78.7z|diagnostic_test_cartridge.a78', 'f6cc9b1c'],
         ['empty.rom', '00000000'],
         ['fds_joypad_test.fds.zip|fds_joypad_test.fds', '1e58456d'],
@@ -929,6 +909,7 @@ describe('with inferred DATs', () => {
         input: [path.join(inputTemp, 'roms')],
         output: outputTemp,
         dirGameSubdir: GameSubdirMode[GameSubdirMode.MULTIPLE].toLowerCase(),
+        fixExtension: FixExtension[FixExtension.AUTO].toLowerCase(),
       });
 
       expect(result.outputFilesAndCrcs).toEqual([
@@ -941,7 +922,7 @@ describe('with inferred DATs', () => {
         ['before.rom', '0361b321'],
         ['best.rom', '1e3d78cf'],
         ['C01173E.rom', 'dfaebe28'],
-        ['color_test.nintendoentertainmentsystem', 'c9c1b7aa'],
+        ['color_test.nes', 'c9c1b7aa'],
         ['diagnostic_test_cartridge.a78', 'f6cc9b1c'],
         ['empty.rom', '00000000'],
         ['fds_joypad_test.fds', '1e58456d'],
@@ -958,8 +939,8 @@ describe('with inferred DATs', () => {
         [path.join('onetwothree', 'one.rom'), 'f817a89f'],
         [path.join('onetwothree', 'three.rom'), 'ff46c5d8'],
         [path.join('onetwothree', 'two.rom'), '96170874'],
-        [path.join('speed_test_v51', 'speed_test_v51.sfc'), '8beffd94'],
-        [path.join('speed_test_v51', 'speed_test_v51.smc'), '9adca6cc'],
+        ['speed_test_v51.sfc', '8beffd94'],
+        ['speed_test_v51.smc', '9adca6cc'],
         ['three.rom', 'ff46c5d8'],
         ['two.rom', '96170874'],
         ['unknown.rom', '377a7727'],
@@ -1002,6 +983,8 @@ describe('with inferred DATs', () => {
       const result = await runIgir({
         commands: ['copy', 'zip', 'test'],
         input: [path.join(inputTemp, 'roms')],
+        // Note: need to de-conflict headered & headerless ROMs due to duplicate output paths
+        inputExclude: [path.join(inputTemp, 'roms', 'headerless')],
         output: outputTemp,
       });
 
@@ -1032,7 +1015,6 @@ describe('with inferred DATs', () => {
         ['onetwothree.zip|one.rom', 'f817a89f'],
         ['onetwothree.zip|three.rom', 'ff46c5d8'],
         ['onetwothree.zip|two.rom', '96170874'],
-        ['speed_test_v51.zip|speed_test_v51.sfc', '8beffd94'],
         ['speed_test_v51.zip|speed_test_v51.smc', '9adca6cc'],
         ['three.zip|three.rom', 'ff46c5d8'],
         ['two.zip|two.rom', '96170874'],
@@ -1050,6 +1032,7 @@ describe('with inferred DATs', () => {
         commands: ['link', 'test'],
         input: [path.join(inputTemp, 'roms')],
         output: outputTemp,
+        fixExtension: FixExtension[FixExtension.AUTO].toLowerCase(),
         symlink: true,
         symlinkRelative: true,
       });
@@ -1064,7 +1047,7 @@ describe('with inferred DATs', () => {
         [`before.rom -> ${path.join('..', 'input', 'roms', 'patchable', 'before.rom')}`, '0361b321'],
         [`best.gz|best.rom -> ${path.join('..', 'input', 'roms', 'patchable', 'best.gz')}|best.rom`, '1e3d78cf'],
         [`C01173E.rom -> ${path.join('..', 'input', 'roms', 'patchable', 'C01173E.rom')}`, 'dfaebe28'],
-        [`color_test.nintendoentertainmentsystem -> ${path.join('..', 'input', 'roms', 'headered', 'color_test.nintendoentertainmentsystem')}`, 'c9c1b7aa'],
+        [`color_test.nes -> ${path.join('..', 'input', 'roms', 'headered', 'color_test.nintendoentertainmentsystem')}`, 'c9c1b7aa'],
         [`diagnostic_test_cartridge.a78.7z|diagnostic_test_cartridge.a78 -> ${path.join('..', 'input', 'roms', 'headered', 'diagnostic_test_cartridge.a78.7z')}|diagnostic_test_cartridge.a78`, 'f6cc9b1c'],
         [`empty.rom -> ${path.join('..', 'input', 'roms', 'empty.rom')}`, '00000000'],
         [`fds_joypad_test.fds.zip|fds_joypad_test.fds -> ${path.join('..', 'input', 'roms', 'headered', 'fds_joypad_test.fds.zip')}|fds_joypad_test.fds`, '1e58456d'],
@@ -1099,12 +1082,13 @@ describe('with inferred DATs', () => {
         commands: ['move', 'extract', 'test'],
         input: [path.join(inputTemp, 'roms', 'headered')],
         output: outputTemp,
+        fixExtension: FixExtension[FixExtension.AUTO].toLowerCase(),
         removeHeaders: [''], // all
       });
 
       expect(result.outputFilesAndCrcs).toEqual([
         ['allpads.nes', '6339abe6'],
-        ['color_test.nintendoentertainmentsystem', 'c9c1b7aa'], // no header
+        ['color_test.nes', 'c9c1b7aa'], // no header
         ['diagnostic_test_cartridge.a78', 'a1eaa7c1'],
         ['fds_joypad_test.fds', '3ecbac61'],
         ['LCDTestROM.lyx', '42583855'],
@@ -1127,10 +1111,10 @@ describe('with inferred DATs', () => {
     await copyFixturesToTemp(async (inputTemp, outputTemp) => {
       const result = await runIgir({
         commands: ['dir2dat'],
-        dat: [path.join(inputTemp, 'dats')],
         input: [path.join(inputTemp, 'roms')],
         output: outputTemp,
         dirDatName: true,
+        fixExtension: FixExtension[FixExtension.AUTO].toLowerCase(),
       });
 
       const writtenDir2Dats = result.cwdFilesAndCrcs
@@ -1139,11 +1123,53 @@ describe('with inferred DATs', () => {
 
       // Only the "roms" input path was provided
       expect(writtenDir2Dats).toHaveLength(1);
-      expect(writtenDir2Dats[0]).toMatch(/^roms \([0-9]{8}-[0-9]{6}\)\.dat$/);
+      expect(writtenDir2Dats[0]).toMatch(/[\\/]roms \([0-9]{8}-[0-9]{6}\)\.dat$/);
 
       expect(result.outputFilesAndCrcs).toHaveLength(0);
       expect(result.movedFiles).toHaveLength(0);
       expect(result.cleanedFiles).toHaveLength(0);
+
+      const dats = await new DATScanner(
+        new Options({ dat: writtenDir2Dats }),
+        new ProgressBarFake(),
+      ).scan();
+      expect(dats).toHaveLength(1);
+      const roms = dats[0].getGames()
+        .flatMap((game) => game.getRoms())
+        .map((rom) => rom.getName())
+        .sort();
+      expect(roms).toEqual([
+        '0F09A40.rom',
+        '3708F2C.rom',
+        '612644F.rom',
+        '65D1206.rom',
+        '92C85C9.rom',
+        'C01173E.rom',
+        'KDULVQN.rom',
+        'LCDTestROM.lnx',
+        'allpads.nes',
+        'before.rom',
+        'best.rom',
+        'color_test.nes',
+        'diagnostic_test_cartridge.a78',
+        'fds_joypad_test.fds',
+        'five.rom',
+        'five.rom',
+        'fizzbuzz.nes',
+        'foobar.lnx',
+        'four.rom',
+        'four.rom',
+        'loremipsum.rom',
+        'one.rom',
+        'one.rom',
+        'speed_test_v51.sfc',
+        'speed_test_v51.smc',
+        'three.rom',
+        'three.rom',
+        'two.rom',
+        'two.rom',
+        'unknown.rom',
+      ]);
     });
   });
 

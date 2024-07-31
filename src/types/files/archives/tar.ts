@@ -21,18 +21,12 @@ export default class Tar extends Archive {
   }
 
   getExtension(): string {
-    // We can't reliably know the extension
+    for (const ext of Tar.getExtensions()) {
+      if (this.getFilePath().toLowerCase().endsWith(ext)) {
+        return ext;
+      }
+    }
     return path.parse(this.getFilePath()).ext;
-  }
-
-  static getFileSignatures(): Buffer[] {
-    return [
-      // .tar
-      Buffer.from('7573746172003030', 'hex'),
-      Buffer.from('7573746172202000', 'hex'),
-      // .tar.gz / .tgz
-      Buffer.from('1F8B08', 'hex'), // deflate
-    ];
   }
 
   async getArchiveEntries(checksumBitmask: number): Promise<ArchiveEntry<this>[]> {

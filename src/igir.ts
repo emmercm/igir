@@ -12,11 +12,13 @@ import Package from './globals/package.js';
 import Temp from './globals/temp.js';
 import CandidateArchiveFileHasher from './modules/candidateArchiveFileHasher.js';
 import CandidateCombiner from './modules/candidateCombiner.js';
+import CandidateExtensionCorrector from './modules/candidateExtensionCorrector.js';
 import CandidateGenerator from './modules/candidateGenerator.js';
 import CandidateMergeSplitValidator from './modules/candidateMergeSplitValidator.js';
 import CandidatePatchGenerator from './modules/candidatePatchGenerator.js';
 import CandidatePostProcessor from './modules/candidatePostProcessor.js';
 import CandidatePreferer from './modules/candidatePreferer.js';
+import CandidateValidator from './modules/candidateValidator.js';
 import CandidateWriter from './modules/candidateWriter.js';
 import DATCombiner from './modules/datCombiner.js';
 import DATFilter from './modules/datFilter.js';
@@ -156,11 +158,11 @@ export default class Igir {
 
       // Write a dir2dat
       const dir2DatPath = await new Dir2DatCreator(this.options, progressBar)
-        .create(filteredDat);
+        .create(filteredDat, parentsToCandidates);
       if (dir2DatPath) {
         datsToWrittenFiles.set(filteredDat, [
           ...(datsToWrittenFiles.get(filteredDat) ?? []),
-          await File.fileOf({ filePath: dir2DatPath }, ChecksumBitmask.NONE),
+          await File.fileOf({ filePath: dir2DatPath }),
         ]);
       }
 
@@ -170,7 +172,7 @@ export default class Igir {
       if (fixdatPath) {
         datsToWrittenFiles.set(filteredDat, [
           ...(datsToWrittenFiles.get(filteredDat) ?? []),
-          await File.fileOf({ filePath: fixdatPath }, ChecksumBitmask.NONE),
+          await File.fileOf({ filePath: fixdatPath }),
         ]);
       }
 
@@ -286,6 +288,11 @@ export default class Igir {
     const minimumChecksum = this.options.getInputMinChecksum() ?? ChecksumBitmask.CRC32;
     let matchChecksum = minimumChecksum;
 
+    if (this.options.getPatchFileCount() > 0) {
+      matchChecksum |= ChecksumBitmask.CRC32;
+      this.logger.trace('using patch files, enabling CRC32 file checksums');
+    }
+
     if (this.options.shouldDir2Dat()) {
       Object.keys(ChecksumBitmask)
         .filter((bitmask): bitmask is keyof typeof ChecksumBitmask => Number.isNaN(Number(bitmask)))
@@ -388,13 +395,25 @@ export default class Igir {
     const preferredCandidates = await new CandidatePreferer(this.options, progressBar)
       .prefer(dat, patchedCandidates);
 
+    const extensionCorrectedCandidates = await new CandidateExtensionCorrector(
+      this.options,
+      progressBar,
+    ).correct(dat, preferredCandidates);
+
     // Delay calculating checksums for {@link ArchiveFile}s until after {@link CandidatePreferer}
     //  for efficiency
     const hashedCandidates = await new CandidateArchiveFileHasher(this.options, progressBar)
-      .hash(dat, preferredCandidates);
+      .hash(dat, extensionCorrectedCandidates);
 
     const postProcessedCandidates = await new CandidatePostProcessor(this.options, progressBar)
       .process(dat, hashedCandidates);
+
+    const invalidCandidates = await new CandidateValidator(progressBar)
+      .validate(dat, postProcessedCandidates);
+    if (invalidCandidates.length > 0) {
+      // Return zero candidates if any candidates failed to validate
+      return new Map();
+    }
 
     await new CandidateMergeSplitValidator(this.options, progressBar)
       .validate(dat, postProcessedCandidates);
@@ -449,7 +468,10 @@ export default class Igir {
     dirsToClean: string[],
     datsToWrittenFiles: Map<DAT, File[]>,
   ): Promise<string[]> {
-    if (!this.options.shouldWrite() || !this.options.shouldClean()) {
+    if (!this.options.shouldWrite()
+      || !this.options.shouldClean()
+      || dirsToClean.length === 0
+    ) {
       return [];
     }
 

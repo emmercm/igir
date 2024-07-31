@@ -1,6 +1,9 @@
 import { Semaphore } from 'async-mutex';
 
 import ProgressBar, { ProgressBarSymbol } from '../console/progressBar.js';
+import ElasticSemaphore from '../elasticSemaphore.js';
+import Defaults from '../globals/defaults.js';
+import FsPoly from '../polyfill/fsPoly.js';
 import DAT from '../types/dats/dat.js';
 import Parent from '../types/dats/parent.js';
 import ArchiveFile from '../types/files/archives/archiveFile.js';
@@ -17,6 +20,12 @@ import Module from './module.js';
  */
 export default class CandidateArchiveFileHasher extends Module {
   private static readonly THREAD_SEMAPHORE = new Semaphore(Number.MAX_SAFE_INTEGER);
+
+  // WARN(cemmer): there is an undocumented semaphore max value that can be used, the full
+  //  4,700,372,992 bytes of a DVD+R will cause runExclusive() to never run or return.
+  private static readonly FILESIZE_SEMAPHORE = new ElasticSemaphore(
+    Defaults.MAX_READ_WRITE_CONCURRENT_KILOBYTES,
+  );
 
   private readonly options: Options;
 
@@ -83,33 +92,36 @@ export default class CandidateArchiveFileHasher extends Module {
                 }
 
                 return CandidateArchiveFileHasher.THREAD_SEMAPHORE.runExclusive(async () => {
-                  await this.progressBar.incrementProgress();
-                  const waitingMessage = `${inputFile.toString()} ...`;
-                  this.progressBar.addWaitingMessage(waitingMessage);
-                  this.progressBar.logTrace(`${dat.getNameShort()}: ${parent.getName()}: calculating checksums for: ${inputFile.toString()}`);
+                  const totalKilobytes = await FsPoly.size(inputFile.getFilePath()) / 1024;
+                  return CandidateArchiveFileHasher.FILESIZE_SEMAPHORE.runExclusive(async () => {
+                    await this.progressBar.incrementProgress();
+                    const waitingMessage = `${inputFile.toString()} ...`;
+                    this.progressBar.addWaitingMessage(waitingMessage);
+                    this.progressBar.logTrace(`${dat.getNameShort()}: ${parent.getName()}: calculating checksums for: ${inputFile.toString()}`);
 
-                  const hashedInputFile = await FileFactory.archiveFileFrom(
-                    inputFile.getArchive(),
-                    inputFile.getChecksumBitmask(),
-                  );
-                  // {@link CandidateGenerator} would have copied undefined values from the input
-                  //  file, so we need to modify the expected output file as well for testing
-                  const hashedOutputFile = romWithFiles.getOutputFile().withProps({
-                    size: hashedInputFile.getSize(),
-                    crc32: hashedInputFile.getCrc32(),
-                    md5: hashedInputFile.getMd5(),
-                    sha1: hashedInputFile.getSha1(),
-                    sha256: hashedInputFile.getSha256(),
-                  });
-                  const hashedRomWithFiles = new ROMWithFiles(
-                    romWithFiles.getRom(),
-                    hashedInputFile,
-                    hashedOutputFile,
-                  );
+                    const hashedInputFile = await FileFactory.archiveFileFrom(
+                      inputFile.getArchive(),
+                      inputFile.getChecksumBitmask(),
+                    );
+                    // {@link CandidateGenerator} would have copied undefined values from the input
+                    //  file, so we need to modify the expected output file as well for testing
+                    const hashedOutputFile = romWithFiles.getOutputFile().withProps({
+                      size: hashedInputFile.getSize(),
+                      crc32: hashedInputFile.getCrc32(),
+                      md5: hashedInputFile.getMd5(),
+                      sha1: hashedInputFile.getSha1(),
+                      sha256: hashedInputFile.getSha256(),
+                    });
+                    const hashedRomWithFiles = new ROMWithFiles(
+                      romWithFiles.getRom(),
+                      hashedInputFile,
+                      hashedOutputFile,
+                    );
 
-                  this.progressBar.removeWaitingMessage(waitingMessage);
-                  await this.progressBar.incrementDone();
-                  return hashedRomWithFiles;
+                    this.progressBar.removeWaitingMessage(waitingMessage);
+                    await this.progressBar.incrementDone();
+                    return hashedRomWithFiles;
+                  }, totalKilobytes);
                 });
               }));
 

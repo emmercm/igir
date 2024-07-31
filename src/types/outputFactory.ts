@@ -13,7 +13,7 @@ import ArchiveFile from './files/archives/archiveFile.js';
 import File from './files/file.js';
 import FileFactory from './files/fileFactory.js';
 import GameConsole from './gameConsole.js';
-import Options, { GameSubdirMode } from './options.js';
+import Options, { FixExtension, GameSubdirMode } from './options.js';
 
 /**
  * A {@link ParsedPath} that carries {@link ArchiveEntry} path information.
@@ -122,6 +122,7 @@ export default class OutputFactory {
 
     // Replace all {token}s in the output path
     output = fsPoly.makeLegal(OutputFactory.replaceTokensInOutputPath(
+      options,
       output,
       dat,
       inputFile?.getFilePath(),
@@ -132,8 +133,7 @@ export default class OutputFactory {
 
     if (options.getDirMirror() && inputFile?.getFilePath()) {
       const mirroredDir = path.dirname(inputFile.getFilePath())
-        .replace(/[\\/]/g, path.sep)
-        .split(path.sep)
+        .split(/[\\/]/)
         .splice(1)
         .join(path.sep);
       output = path.join(output, mirroredDir);
@@ -155,6 +155,7 @@ export default class OutputFactory {
   }
 
   private static replaceTokensInOutputPath(
+    options: Options,
     outputPath: string,
     dat: DAT,
     inputRomPath?: string,
@@ -168,7 +169,7 @@ export default class OutputFactory {
     result = this.replaceGameTokens(result, game);
     result = this.replaceDatTokens(result, dat);
     result = this.replaceInputTokens(result, inputRomPath);
-    result = this.replaceOutputTokens(result, outputRomFilename);
+    result = this.replaceOutputTokens(result, options, outputRomFilename);
     result = this.replaceOutputGameConsoleTokens(result, dat, outputRomFilename);
 
     const leftoverTokens = result.match(/\{[a-zA-Z]+\}/g);
@@ -252,12 +253,18 @@ export default class OutputFactory {
     return input.replace('{inputDirname}', path.parse(inputRomPath).dir);
   }
 
-  private static replaceOutputTokens(input: string, outputRomFilename?: string): string {
-    if (!outputRomFilename) {
+  private static replaceOutputTokens(
+    input: string,
+    options: Options,
+    outputRomFilename?: string,
+  ): string {
+    if (!outputRomFilename && options.getFixExtension() === FixExtension.NEVER) {
+      // No output ROM filename was provided and we won't know it later from correction, don't
+      // replace any of the output filename tokens
       return input;
     }
 
-    const outputRom = path.parse(outputRomFilename);
+    const outputRom = path.parse(outputRomFilename ?? '');
     return input
       .replace('{outputBasename}', outputRom.base)
       .replace('{outputName}', outputRom.name)
@@ -518,14 +525,13 @@ export default class OutputFactory {
 
     // Should leave archived, generate the archive name from the game name
     // The regex is to preserve filenames that use 2+ extensions, e.g. "rom.nes.zip"
-    const extMatch = inputFile.getFilePath().match(/[^.]+((\.[a-zA-Z0-9]+)+)$/);
-    const ext = extMatch !== null ? extMatch[1] : '';
-    return path.format({
-      ...path.parse(game.getName() + ext),
-      // Use the archive's canonical extension
-      base: undefined,
-      ext: inputFile.getArchive().getExtension(),
-    });
+    const oldExtMatch = inputFile.getFilePath().match(/[^.]+((\.[a-zA-Z0-9]+)+)$/);
+    const oldExt = oldExtMatch !== null
+      // Respect the input file's extension
+      ? oldExtMatch[1]
+      // The input file has no extension, get the canonical extension from the {@link Archive}
+      : inputFile.getArchive().getExtension();
+    return game.getName() + oldExt;
   }
 
   private static getEntryPath(

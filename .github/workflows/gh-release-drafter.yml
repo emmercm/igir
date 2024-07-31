@@ -24,6 +24,11 @@ env:
 
 jobs:
   release:
+    permissions:
+      # actions/checkout@v4
+      contents: read
+      # thollander/actions-comment-pull-request@v2
+      pull-requests: write
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -36,7 +41,6 @@ jobs:
       - id: check
         uses: EndBug/version-check@v2
         with:
-          token: ${{ secrets.GITHUB_TOKEN }}
           # NOTE: `diff-search:true` is preferred so that only the exact commit that bumps the
           #   version triggers this workflow, but `workflow_dispatch` doesn't carry commit or
           #   commit ref info that's needed for it.

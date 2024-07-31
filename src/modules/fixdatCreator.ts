@@ -47,7 +47,7 @@ export default class FixdatCreator extends Module {
       .flatMap((releaseCandidate) => releaseCandidate.getRomsWithFiles())
       .map((romWithFiles) => romWithFiles.getRom())
       .map((rom) => rom.hashCode()));
-    // Find all the games who have at least one missing ROM
+    // Find all the games that have at least one missing ROM
     const gamesWithMissingRoms = originalDat.getGames()
       .filter((game) => !game.getRoms().every((rom) => writtenRomHashCodes.has(rom.hashCode())));
     if (gamesWithMissingRoms.length === 0) {
@@ -55,9 +55,14 @@ export default class FixdatCreator extends Module {
       return undefined;
     }
 
-    const fixdatDir = this.options.shouldWrite()
-      ? OutputFactory.getDir(this.options, originalDat)
-      : process.cwd();
+    let fixdatDir = process.cwd();
+    if (this.options.shouldWrite()) {
+      try {
+        fixdatDir = this.getDatOutputDirRoot(originalDat);
+      } catch (error) {
+        this.progressBar.logWarn(`failed to: ${error}`);
+      }
+    }
     if (!await fsPoly.exists(fixdatDir)) {
       await fsPoly.mkdir(fixdatDir, { recursive: true });
     }
@@ -87,5 +92,17 @@ export default class FixdatCreator extends Module {
 
     this.progressBar.logTrace(`${originalDat.getNameShort()}: done generating a fixdat`);
     return fixdatPath;
+  }
+
+  private getDatOutputDirRoot(dat: DAT): string {
+    return OutputFactory.getDir(
+      new Options({
+        ...this.options,
+        // Chop off any path slugs that contain replaceable tokens, such that OutputFactory won't
+        // throw an exception
+        output: this.options.getOutputDirRoot(),
+      }),
+      dat,
+    );
   }
 }
