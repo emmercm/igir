@@ -197,7 +197,19 @@ export default class ArgumentsParser {
         type: 'array',
         requiresArg: true,
       })
-      .option('input-min-checksum', {
+      .option('input-checksum-quick', {
+        group: groupRomInput,
+        description: 'Only read checksums from archive headers, don\'t decompress to calculate',
+        type: 'boolean',
+      })
+      .check((checkArgv) => {
+        // Re-implement `conflicts: 'input-checksum-min'`, which isn't possible with a default value
+        if (checkArgv['input-checksum-quick'] && checkArgv['input-checksum-min'] !== ChecksumBitmask[ChecksumBitmask.CRC32].toUpperCase()) {
+          throw new ExpectedError('Arguments input-checksum-quick and input-checksum-min are mutually exclusive');
+        }
+        return true;
+      })
+      .option('input-checksum-min', {
         group: groupRomInput,
         description: 'The minimum checksum level to calculate and use for matching',
         choices: Object.keys(ChecksumBitmask)

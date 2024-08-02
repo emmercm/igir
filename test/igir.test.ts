@@ -827,7 +827,7 @@ describe('with explicit DATs', () => {
         commands: ['copy', 'extract', 'test'],
         dat: [path.join(inputTemp, 'dats', '*')],
         input: [path.join(inputTemp, 'roms')],
-        inputMinChecksum: ChecksumBitmask[ChecksumBitmask.MD5].toLowerCase(),
+        inputChecksumMin: ChecksumBitmask[ChecksumBitmask.MD5].toLowerCase(),
         patch: [path.join(inputTemp, 'patches')],
         output: outputTemp,
         dirDatName: true,

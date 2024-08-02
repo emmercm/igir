@@ -122,7 +122,8 @@ describe('options', () => {
     expect(options.shouldReport()).toEqual(false);
 
     expect(options.getInputPaths()).toEqual([os.devNull]);
-    expect(options.getInputMinChecksum()).toEqual(ChecksumBitmask.CRC32);
+    expect(options.getInputChecksumQuick()).toEqual(false);
+    expect(options.getInputChecksumMin()).toEqual(ChecksumBitmask.CRC32);
     expect(options.getInputChecksumArchives()).toEqual(InputChecksumArchivesMode.AUTO);
 
     expect(options.getDatNameRegex()).toBeUndefined();
@@ -244,15 +245,27 @@ describe('options', () => {
     expect((await argumentsParser.parse(['copy', '--input', './src', '--output', os.devNull, '--input-exclude', './src']).scanInputFilesWithoutExclusions()).length).toEqual(0);
   });
 
-  it('should parse "input-min-checksum', () => {
-    expect(argumentsParser.parse(dummyCommandAndRequiredArgs).getInputMinChecksum())
+  it('should parse "input-checksum-quick"', () => {
+    expect(() => argumentsParser.parse([...dummyCommandAndRequiredArgs, '--input-checksum-quick', '--input-checksum-min', 'MD5'])).toThrow(/mutually exclusive/i);
+    expect(() => argumentsParser.parse([...dummyCommandAndRequiredArgs, '--input-checksum-quick', '--input-checksum-min', 'SHA1'])).toThrow(/mutually exclusive/i);
+    expect(() => argumentsParser.parse([...dummyCommandAndRequiredArgs, '--input-checksum-quick', '--input-checksum-min', 'SHA256'])).toThrow(/mutually exclusive/i);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--input-checksum-quick']).getInputChecksumQuick()).toEqual(true);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--input-checksum-quick', 'true']).getInputChecksumQuick()).toEqual(true);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--input-checksum-quick', 'false']).getInputChecksumQuick()).toEqual(false);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--input-checksum-quick', '--input-checksum-quick']).getInputChecksumQuick()).toEqual(true);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--input-checksum-quick', 'false', '--input-checksum-quick', 'true']).getInputChecksumQuick()).toEqual(true);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--input-checksum-quick', 'true', '--input-checksum-quick', 'false']).getInputChecksumQuick()).toEqual(false);
+  });
+
+  it('should parse "input-checksum-min', () => {
+    expect(argumentsParser.parse(dummyCommandAndRequiredArgs).getInputChecksumMin())
       .toEqual(ChecksumBitmask.CRC32);
-    expect(() => argumentsParser.parse([...dummyCommandAndRequiredArgs, '--input-min-checksum', 'foobar']).getInputMinChecksum()).toThrow(/invalid values/i);
-    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--input-min-checksum', 'CRC32']).getInputMinChecksum()).toEqual(ChecksumBitmask.CRC32);
-    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--input-min-checksum', 'MD5']).getInputMinChecksum()).toEqual(ChecksumBitmask.MD5);
-    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--input-min-checksum', 'SHA1']).getInputMinChecksum()).toEqual(ChecksumBitmask.SHA1);
-    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--input-min-checksum', 'SHA256']).getInputMinChecksum()).toEqual(ChecksumBitmask.SHA256);
-    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--input-min-checksum', 'SHA256', '--input-min-checksum', 'CRC32']).getInputMinChecksum()).toEqual(ChecksumBitmask.CRC32);
+    expect(() => argumentsParser.parse([...dummyCommandAndRequiredArgs, '--input-checksum-min', 'foobar']).getInputChecksumMin()).toThrow(/invalid values/i);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--input-checksum-min', 'CRC32']).getInputChecksumMin()).toEqual(ChecksumBitmask.CRC32);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--input-checksum-min', 'MD5']).getInputChecksumMin()).toEqual(ChecksumBitmask.MD5);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--input-checksum-min', 'SHA1']).getInputChecksumMin()).toEqual(ChecksumBitmask.SHA1);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--input-checksum-min', 'SHA256']).getInputChecksumMin()).toEqual(ChecksumBitmask.SHA256);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--input-checksum-min', 'SHA256', '--input-checksum-min', 'CRC32']).getInputChecksumMin()).toEqual(ChecksumBitmask.CRC32);
   });
 
   it('should parse "input-checksum-archives"', () => {

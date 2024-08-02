@@ -16,7 +16,7 @@ And some DAT release groups do not include filesize information for every file, 
 
 !!! success
 
-    For situations like these, Igir will automatically detect what combination of checksums it needs to calculate for input files to be able to match them to DATs. This has the chance of greatly slowing down file scanning, especially with archives.
+    For situations like these, Igir will automatically detect what combination of checksums it needs to calculate for input files to be able to match them to DATs. This _does_ have the chance of greatly slowing down file scanning, especially with archives, so you can use the `--input-checksum-quick` (below) option to keep processing faster.
 
 For example, if you provide all of these DATs at once with the [`--dat <path>` option](../dats/processing.md):
 
@@ -29,6 +29,20 @@ For example, if you provide all of these DATs at once with the [`--dat <path>` o
 !!! note
 
     When generating a [dir2dat](../dats/dir2dat.md) with the `igir dir2dat` command, Igir will calculate CRC32, MD5, and SHA1 information for every file. This helps ensure that the generated DAT has the most complete information it can. You can additionally add SHA256 information with the option `igir [commands..] [options] --input-min-checksum SHA256` (below).
+
+## Quick scanning files
+
+A number of archives formats require the extraction of files to calculate their checksums, and this extraction can greatly increase scanning time and add hard drive wear & tear. Igir's default settings will give you the best chance of matching input files to DATs, but there may be situations where you want to make scanning faster.
+
+The `--input-checksum-quick` option will prevent the extraction of archives (either in memory _or_ using temporary files) to calculate checksums of files contained inside. This means that Igir will rely solely on the information available in the archive's file directory. Non-archive files will still have their checksum calculated as normal. See the [archive formats](../input/reading-archives.md) page for more information about what file types contain what checksum information.
+
+!!! warning
+
+    If an archive format doesn't contain any checksum information (e.g. `.cso`, `.tar.gz`), then there is no way to match those input files to DATs! Only use quick scanning when all input archives store checksums of their files!
+
+!!! warning
+
+    Different DAT groups catalog CHDs of CDs (`.bin` & `.cue`) and GDIs (`.gdi` & `.bin`/`.raw`) that use a track sheet plus one or more track files differnetly. Take the Sega Dreamcast for example, Redump catalogs `.bin` & `.cue` files (which is [problematic with CHDs](https://github.com/mamedev/mame/issues/11903)), [MAME Redump](https://github.com/MetalSlug/MAMERedump) catalogs `.chd` CD files, and TOSEC catalogs `.gdi` & `.bin`/`.raw` files. Quick scanning of CHDs means only the SHA1 stored in its header will be used for matching, which may or may not work depending on the DATs you use.
 
 ## Manually using other checksum algorithms
 
@@ -44,9 +58,9 @@ igir [commands..] [options] --input-min-checksum SHA1
 igir [commands..] [options] --input-min-checksum SHA256
 ```
 
-This option defines the _minimum_ checksum that will be used based on digest size (below).  If not every ROM in every DAT provides the checksum you specify, Igir may automatically calculate and match files based on a higher checksum (see above).
+This option defines the _minimum_ checksum that will be used based on digest size (below). If not every ROM in every DAT provides the checksum you specify, Igir may automatically calculate and match files based on a higher checksum (see above), but never lower.
 
-The reason you might want to do this is to have a higher confidence that found files _exactly_ match ROMs in DATs. Just keep in mind that explicitly enabling non-CRC32 checksums will _greatly_ slow down scanning of files within archives.
+The reason you might want to do this is to have a higher confidence that found files _exactly_ match ROMs in DATs. Just keep in mind that explicitly enabling non-CRC32 checksums will _greatly_ slow down scanning of files within archives (see "quick scanning" above).
 
 Here is a table that shows the keyspace for each checksum algorithm, where the higher number of bits reduces the chances of collisions:
 

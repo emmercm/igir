@@ -42,12 +42,19 @@ export default class Chd extends Archive {
 
   async getArchiveEntries(checksumBitmask: number): Promise<ArchiveEntry<this>[]> {
     const info = await this.getInfo();
+
+    if (checksumBitmask === ChecksumBitmask.NONE) {
+      // Doing a quick scan
+      return this.getArchiveEntriesSingleFile(info, checksumBitmask);
+    }
+
     if (info.type === CHDType.CD_ROM) {
       return ChdBinCueParser.getArchiveEntriesBinCue(this, checksumBitmask);
     } if (info.type === CHDType.GD_ROM) {
       // TODO(cemmer): allow parsing GD-ROM to bin/cue https://github.com/mamedev/mame/issues/11903
       return ChdGdiParser.getArchiveEntriesGdRom(this, checksumBitmask);
     }
+
     return this.getArchiveEntriesSingleFile(info, checksumBitmask);
   }
 
