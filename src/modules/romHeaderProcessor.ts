@@ -14,9 +14,12 @@ import Module from './module.js';
 export default class ROMHeaderProcessor extends Module {
   private readonly options: Options;
 
+  private readonly driveSemaphore: DriveSemaphore;
+
   constructor(options: Options, progressBar: ProgressBar) {
     super(progressBar, ROMHeaderProcessor.name);
     this.options = options;
+    this.driveSemaphore = new DriveSemaphore(this.options.getReaderThreads());
   }
 
   /**
@@ -27,31 +30,35 @@ export default class ROMHeaderProcessor extends Module {
       return inputRomFiles;
     }
 
-    this.progressBar.logTrace('processing file headers');
+    const filesThatNeedProcessing = inputRomFiles
+      .filter((inputFile) => this.fileNeedsProcessing(inputFile))
+      .length;
+    this.progressBar.logTrace(`processing headers in ${filesThatNeedProcessing.toLocaleString()} ROM${filesThatNeedProcessing !== 1 ? 's' : ''}`);
     await this.progressBar.setSymbol(ProgressBarSymbol.DETECTING_HEADERS);
-    await this.progressBar.reset(inputRomFiles.length);
+    await this.progressBar.reset(filesThatNeedProcessing);
 
-    const parsedFiles = await new DriveSemaphore(this.options.getReaderThreads()).map(
-      inputRomFiles,
-      async (inputFile) => {
-        await this.progressBar.incrementProgress();
-        const waitingMessage = `${inputFile.toString()} ...`;
-        this.progressBar.addWaitingMessage(waitingMessage);
+    const parsedFiles = await Promise.all(inputRomFiles.map(async (inputFile) => {
+      if (!this.fileNeedsProcessing(inputFile)) {
+        return inputFile;
+      }
 
-        let fileWithHeader: File | undefined;
-        try {
-          fileWithHeader = await this.getFileWithHeader(inputFile);
-        } catch (error) {
-          this.progressBar.logError(`${inputFile.toString()}: failed to process ROM header: ${error}`);
-          fileWithHeader = inputFile;
-        }
+      await this.progressBar.incrementProgress();
+      const waitingMessage = `${inputFile.toString()} ...`;
+      this.progressBar.addWaitingMessage(waitingMessage);
 
-        this.progressBar.removeWaitingMessage(waitingMessage);
-        await this.progressBar.incrementDone();
+      let fileWithHeader: File | undefined;
+      try {
+        fileWithHeader = await this.getFileWithHeader(inputFile);
+      } catch (error) {
+        this.progressBar.logError(`${inputFile.toString()}: failed to process ROM header: ${error}`);
+        fileWithHeader = inputFile;
+      }
 
-        return fileWithHeader;
-      },
-    );
+      this.progressBar.removeWaitingMessage(waitingMessage);
+      await this.progressBar.incrementDone();
+
+      return fileWithHeader;
+    }));
 
     const headeredRomsCount = parsedFiles.filter((romFile) => romFile.getFileHeader()).length;
     this.progressBar.logTrace(`found headers in ${headeredRomsCount.toLocaleString()} ROM${headeredRomsCount !== 1 ? 's' : ''}`);
@@ -60,7 +67,7 @@ export default class ROMHeaderProcessor extends Module {
     return parsedFiles;
   }
 
-  private async getFileWithHeader(inputFile: File): Promise<File> {
+  private fileNeedsProcessing(inputFile: File): boolean {
     /**
      * If the input file is from an archive, and we're not zipping or extracting, then we have no
      * chance to remove the header, so we shouldn't bother detecting one.
@@ -70,13 +77,15 @@ export default class ROMHeaderProcessor extends Module {
       && !this.options.shouldZip()
       && !this.options.shouldExtract()
     ) {
-      return inputFile;
+      return false;
     }
 
-    // Should get FileHeader from File, try to
-    if (ROMHeader.headerFromFilename(inputFile.getExtractedFilePath()) !== undefined
-      || this.options.shouldReadFileForHeader(inputFile.getExtractedFilePath())
-    ) {
+    return ROMHeader.headerFromFilename(inputFile.getExtractedFilePath()) !== undefined
+      || this.options.shouldReadFileForHeader(inputFile.getExtractedFilePath());
+  }
+
+  private async getFileWithHeader(inputFile: File): Promise<File> {
+    return this.driveSemaphore.runExclusive(inputFile, async () => {
       this.progressBar.logTrace(`${inputFile.toString()}: reading potentially headered file by file contents`);
       const headerForFileStream = await FileCache.getOrComputeFileHeader(inputFile);
       if (headerForFileStream) {
@@ -84,9 +93,7 @@ export default class ROMHeaderProcessor extends Module {
         return inputFile.withFileHeader(headerForFileStream);
       }
       this.progressBar.logTrace(`${inputFile.toString()}: didn't find header by file contents`);
-    }
-
-    // Should not get FileHeader
-    return inputFile;
+      return inputFile;
+    });
   }
 }
