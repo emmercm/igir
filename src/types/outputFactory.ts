@@ -187,17 +187,11 @@ export default class OutputFactory {
     }
 
     let output = input;
-    output = output
-      .replace('{region}', release.getRegion())
-      .replace('{gameRegion}', release.getRegion()) // deprecated
-      .replace('{datReleaseRegion}', release.getRegion()); // deprecated
+    output = output.replace('{region}', release.getRegion());
 
     const releaseLanguage = release.getLanguage();
     if (releaseLanguage) {
-      output = output
-        .replace('{language}', releaseLanguage)
-        .replace('{gameLanguage}', releaseLanguage) // deprecated
-        .replace('{datReleaseLanguage}', releaseLanguage); // deprecated
+      output = output.replace('{language}', releaseLanguage);
     }
 
     return output;
