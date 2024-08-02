@@ -60,14 +60,10 @@ When using [DATs](../dats/introduction.md), you can make use of console & game i
 
 - `{datName}` the matching DAT's name, similar to how the [`--dir-dat-name` option](./path-options.md) works
 - `{datDescription}` the matching DAT's description, similar to how the [`--dir-dat-description` option](./path-options.md) works
-- `{region}` each of the ROM's region(s) (e.g. `USA`, `EUR`, `JPN`, `WORLD`)
-- `{language}` each of the ROM's language(s) (e.g. `EN`, `ES`, `JA`)
-
-## Game information
-
-You can use some information about each game:
-
-- `{gameType}` the game's "type," one of: `Aftermarket`, `Alpha`, `Bad`, `Beta`, `BIOS`, `Demo`, `Device`, `Fixed`, `Hacked`, `Homebrew`, `Overdump`, `Pending Dump`, `Pirated`, `Prototype`, `Retail` (most games will be this), `Sample`, `Test`, `Trained`, `Translated`, `Unlicensed`
+- `{region}` each of the game's region(s) (e.g. `USA`, `EUR`, `JPN`, `WORLD`)
+- `{language}` each of the game's language(s) (e.g. `EN`, `ES`, `JA`)
+- `{type}` the game's "type," one of: `Aftermarket`, `Alpha`, `Bad`, `Beta`, `BIOS`, `Demo`, `Device`, `Fixed`, `Hacked`, `Homebrew`, `Overdump`, `Pending Dump`, `Pirated`, `Prototype`, `Retail` (most games will be this), `Sample`, `Test`, `Trained`, `Translated`, `Unlicensed`
+- `{genre}` the game's "genre" (most DATs don't provide this)
 
 ## File information
 
