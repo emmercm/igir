@@ -136,6 +136,14 @@ export default class FsPoly {
     }
   }
 
+  static async isHardlink(pathLike: PathLike): Promise<boolean> {
+    try {
+      return (await this.stat(pathLike)).nlink > 1;
+    } catch {
+      return false;
+    }
+  }
+
   static isSamba(filePath: string): boolean {
     const normalizedPath = filePath.replace(/[\\/]/g, path.sep);
     if (normalizedPath.startsWith(`${path.sep}${path.sep}`) && normalizedPath !== os.devNull) {

@@ -250,6 +250,47 @@ describe('with explicit DATs', () => {
     });
   });
 
+  it('should move-hardlink and test', async () => {
+    await copyFixturesToTemp(async (inputTemp, outputTemp) => {
+      const result = await runIgir({
+        commands: ['move', 'test'],
+        dat: [path.join(inputTemp, 'dats', '*')],
+        input: [path.join(inputTemp, 'roms', 'raw')], // only files that can be move-hardlinked
+        output: outputTemp,
+        dirDatName: true,
+        dirGameSubdir: GameSubdirMode[GameSubdirMode.MULTIPLE].toLowerCase(),
+        fixExtension: FixExtension[FixExtension.AUTO].toLowerCase(),
+        moveHardlink: true,
+      });
+
+      // No output files should still be hardlinked
+      const outputFilesStats = await Promise.all(result.outputFilesAndCrcs
+        .map(([outputFile]) => outputFile.replace(/\|.*$/, ''))
+        .map(async (outputFile) => fsPoly.stat(path.join(outputTemp, outputFile))));
+      expect(outputFilesStats.length).toBeGreaterThan(0);
+      expect(outputFilesStats.every((stat) => stat.nlink === 1)).toEqual(true);
+
+      expect(result.outputFilesAndCrcs).toEqual([
+        [path.join('One', 'Fizzbuzz.nes'), '370517b5'],
+        [path.join('One', 'Foobar.lnx'), 'b22c9747'],
+        [path.join('One', 'One Three', 'One.rom'), 'f817a89f'],
+        [path.join('One', 'One Three', 'Three.rom'), 'ff46c5d8'],
+        [path.join('smdb', 'Hardware Target Game Database', 'Dummy', 'Fizzbuzz.nes'), '370517b5'],
+        [path.join('smdb', 'Hardware Target Game Database', 'Dummy', 'Foobar.lnx'), 'b22c9747'],
+        [path.join('smdb', 'Hardware Target Game Database', 'Dummy', 'Lorem Ipsum.rom'), '70856527'],
+      ]);
+      expect(result.cwdFilesAndCrcs).toHaveLength(0);
+      expect(result.movedFiles).toEqual([
+        'fizzbuzz.nes',
+        'foobar.lnx',
+        'loremipsum.rom',
+        'one.rom',
+        'three.rom',
+      ]);
+      expect(result.cleanedFiles).toHaveLength(0);
+    });
+  });
+
   it('should copy and clean read-only files', async () => {
     await copyFixturesToTemp(async (inputTemp, outputTemp) => {
       // Given some existing files in the output directory
@@ -536,7 +577,7 @@ describe('with explicit DATs', () => {
     });
   });
 
-  it('should move zipped files, allowing excess sets', async () => {
+  it('should move-hardlink zipped files, allowing excess sets', async () => {
     await copyFixturesToTemp(async (inputTemp, outputTemp) => {
       const result = await runIgir({
         commands: ['move'],
@@ -544,8 +585,16 @@ describe('with explicit DATs', () => {
         input: [path.join(inputTemp, 'roms', 'zip')],
         output: outputTemp,
         dirDatName: true,
+        moveHardlink: true,
         allowExcessSets: true,
       });
+
+      // No output files should still be hardlinked
+      const outputFilesStats = await Promise.all(result.outputFilesAndCrcs
+        .map(([outputFile]) => outputFile.replace(/\|.*$/, ''))
+        .map(async (outputFile) => fsPoly.stat(path.join(outputTemp, outputFile))));
+      expect(outputFilesStats.length).toBeGreaterThan(0);
+      expect(outputFilesStats.every((stat) => stat.nlink === 1)).toEqual(true);
 
       expect(result.outputFilesAndCrcs).toEqual([
         [`${path.join('One', 'Fizzbuzz.zip')}|fizzbuzz.nes`, '370517b5'],

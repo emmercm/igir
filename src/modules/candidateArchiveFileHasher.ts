@@ -83,6 +83,12 @@ export default class CandidateArchiveFileHasher extends Module {
                   return romWithFiles;
                 }
 
+                if (inputFile.equals(romWithFiles.getOutputFile())) {
+                  // There's no need to calculate the checksum, {@link CandidateWriter} will skip
+                  // writing over itself
+                  return romWithFiles;
+                }
+
                 return CandidateArchiveFileHasher.DRIVE_SEMAPHORE.runExclusive(
                   inputFile,
                   async () => {
