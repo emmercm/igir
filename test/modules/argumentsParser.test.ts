@@ -142,6 +142,7 @@ describe('options', () => {
     expect(options.getDirLetterLimit()).toEqual(0);
     expect(options.getDirLetterGroup()).toEqual(false);
     expect(options.getDirGameSubdir()).toEqual(GameSubdirMode.MULTIPLE);
+    expect(options.getMoveHardlink()).toEqual(false);
     expect(options.getOverwrite()).toEqual(false);
     expect(options.getOverwriteInvalid()).toEqual(false);
     expect(options.getFixExtension()).toEqual(FixExtension.AUTO);
