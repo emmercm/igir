@@ -142,6 +142,7 @@ describe('options', () => {
     expect(options.getDirLetterLimit()).toEqual(0);
     expect(options.getDirLetterGroup()).toEqual(false);
     expect(options.getDirGameSubdir()).toEqual(GameSubdirMode.MULTIPLE);
+    expect(options.getMoveHardlink()).toEqual(false);
     expect(options.getOverwrite()).toEqual(false);
     expect(options.getOverwriteInvalid()).toEqual(false);
     expect(options.getFixExtension()).toEqual(FixExtension.AUTO);
@@ -532,6 +533,17 @@ describe('options', () => {
     expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--dat', os.devNull, '--single', '--single']).getSingle()).toEqual(true);
     expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--dat', os.devNull, '--single', 'false', '--single', 'true']).getSingle()).toEqual(true);
     expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--dat', os.devNull, '--single', 'true', '--single', 'false']).getSingle()).toEqual(false);
+  });
+
+  it('should parse "move-hardlink"', () => {
+    expect(() => argumentsParser.parse([...dummyCommandAndRequiredArgs, '--dat', os.devNull, '--move-hardlink', '--allow-excess-sets'])).toThrow(/mutually exclusive/i);
+    expect(() => argumentsParser.parse([...dummyCommandAndRequiredArgs, '--dat', os.devNull, '--move-hardlink', '--allow-incomplete-sets'])).toThrow(/mutually exclusive/i);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--move-hardlink']).getMoveHardlink()).toEqual(true);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--move-hardlink', 'true']).getMoveHardlink()).toEqual(true);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--move-hardlink', 'false']).getMoveHardlink()).toEqual(false);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--move-hardlink', '--move-hardlink']).getMoveHardlink()).toEqual(true);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--move-hardlink', 'false', '--move-hardlink', 'true']).getMoveHardlink()).toEqual(true);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--move-hardlink', 'true', '--move-hardlink', 'false']).getMoveHardlink()).toEqual(false);
   });
 
   it('should parse "overwrite"', () => {
