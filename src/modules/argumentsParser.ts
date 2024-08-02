@@ -884,7 +884,7 @@ Advanced usage:
     {datDescription}  The description of the DAT that contains the ROM
     {region}          The region of the ROM release (e.g. "USA"), each ROM can have multiple
     {language}        The language of the ROM release (e.g. "En"), each ROM can have multiple
-    {gameType}        The type of the game (e.g. "Retail", "Demo", "Prototype")
+    {type}            The type of the game (e.g. "Retail", "Demo", "Prototype")
     {genre}           The DAT-defined genre of the game
 
     {inputDirname}    The input file's dirname

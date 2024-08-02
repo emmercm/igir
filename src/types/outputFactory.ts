@@ -211,20 +211,15 @@ export default class OutputFactory {
 
     const gameRegion = game.getRegions().find(() => true);
     if (gameRegion) {
-      // TODO(cemmer): drop the game* prefixed tokens
-      output = output
-        .replace('{region}', gameRegion)
-        .replace('{gameRegion}', gameRegion);
+      output = output.replace('{region}', gameRegion);
     }
 
     const gameLanguage = game.getLanguages().find(() => true);
     if (gameLanguage) {
-      output = output
-        .replace('{gameLanguage}', gameLanguage)
-        .replace('{language}', gameLanguage);
+      output = output.replace('{language}', gameLanguage);
     }
 
-    output = output.replace('{gameType}', game.getGameType());
+    output = output.replace('{type}', game.getGameType());
 
     const gameGenre = game.getGenre();
     if (gameGenre) {
