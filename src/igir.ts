@@ -285,7 +285,7 @@ export default class Igir {
   }
 
   private determineScanningBitmask(dats: DAT[]): number {
-    const minimumChecksum = this.options.getInputMinChecksum() ?? ChecksumBitmask.CRC32;
+    const minimumChecksum = this.options.getInputChecksumMin() ?? ChecksumBitmask.CRC32;
     let matchChecksum = minimumChecksum;
 
     if (this.options.getPatchFileCount() > 0) {

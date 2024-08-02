@@ -4,6 +4,7 @@ import ArrayPoly from '../polyfill/arrayPoly.js';
 import fsPoly from '../polyfill/fsPoly.js';
 import ArchiveEntry from '../types/files/archives/archiveEntry.js';
 import File from '../types/files/file.js';
+import { ChecksumBitmask } from '../types/files/fileChecksums.js';
 import FileFactory from '../types/files/fileFactory.js';
 import Options from '../types/options.js';
 import Module from './module.js';
@@ -65,7 +66,11 @@ export default abstract class Scanner extends Module {
         }
       }
 
-      const filesFromPath = await FileFactory.filesFrom(filePath, checksumBitmask);
+      const filesFromPath = await FileFactory.filesFrom(
+        filePath,
+        checksumBitmask,
+        this.options.getInputChecksumQuick() ? ChecksumBitmask.NONE : checksumBitmask,
+      );
 
       const fileIsArchive = filesFromPath.some((file) => file instanceof ArchiveEntry);
       if (checksumArchives && fileIsArchive) {

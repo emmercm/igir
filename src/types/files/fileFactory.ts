@@ -23,22 +23,23 @@ import FileSignature from './fileSignature.js';
 export default class FileFactory {
   static async filesFrom(
     filePath: string,
-    checksumBitmask: number = ChecksumBitmask.CRC32,
+    fileChecksumBitmask: number = ChecksumBitmask.CRC32,
+    archiveChecksumBitmask = fileChecksumBitmask,
   ): Promise<File[]> {
     if (!this.isExtensionArchive(filePath)) {
-      const entries = await this.entriesFromArchiveSignature(filePath, checksumBitmask);
+      const entries = await this.entriesFromArchiveSignature(filePath, archiveChecksumBitmask);
       if (entries !== undefined) {
         return entries;
       }
-      return [await this.fileFrom(filePath, checksumBitmask)];
+      return [await this.fileFrom(filePath, fileChecksumBitmask)];
     }
 
     try {
-      const entries = await this.entriesFromArchiveExtension(filePath, checksumBitmask);
+      const entries = await this.entriesFromArchiveExtension(filePath, archiveChecksumBitmask);
       if (entries !== undefined) {
         return entries;
       }
-      return [await this.fileFrom(filePath, checksumBitmask)];
+      return [await this.fileFrom(filePath, fileChecksumBitmask)];
     } catch (error) {
       if (error && typeof error === 'object' && 'code' in error && error.code === 'ENOENT') {
         throw new ExpectedError(`file doesn't exist: ${filePath}`);
