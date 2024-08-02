@@ -784,7 +784,7 @@ describe('with explicit DATs', () => {
         [`${path.join('One', 'CD-ROM.chd')}|CD-ROM.cue -> ${path.join('<input>', 'chd', 'CD-ROM.chd')}|CD-ROM.cue`, 'xxxxxxxx'],
         [`${path.join('One', 'Fizzbuzz.nes')} -> ${path.join('<input>', 'raw', 'fizzbuzz.nes')}`, '370517b5'],
         [`${path.join('One', 'Foobar.lnx')} -> ${path.join('<input>', 'foobar.lnx')}`, 'b22c9747'],
-        [`${path.join('One', 'GameCube NKit ISO.nkit.iso')}|GameCube NKit ISO.iso -> ${path.join('<input>', 'nkit', '5bc2ce5b.nkit.iso')}|GameCube NKit ISO.iso`, '5bc2ce5b'],
+        [`${path.join('One', 'GameCube NKit ISO.nkit.iso')}|5bc2ce5b.iso -> ${path.join('<input>', 'nkit', '5bc2ce5b.nkit.iso')}|5bc2ce5b.iso`, '5bc2ce5b'],
         [`${path.join('One', 'GD-ROM.chd')}|GD-ROM.gdi -> ${path.join('<input>', 'chd', 'GD-ROM.chd')}|GD-ROM.gdi`, 'f16f621c'],
         [`${path.join('One', 'GD-ROM.chd')}|track01.bin -> ${path.join('<input>', 'chd', 'GD-ROM.chd')}|track01.bin`, '9796ed9a'],
         [`${path.join('One', 'GD-ROM.chd')}|track02.raw -> ${path.join('<input>', 'chd', 'GD-ROM.chd')}|track02.raw`, 'abc178d5'],
