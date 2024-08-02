@@ -29,6 +29,39 @@ describe('isDirectory', () => {
   });
 });
 
+describe('hardlink', () => {
+  it('should create a hardlink', async () => {
+    const tempFileTarget = await fsPoly.mktemp(path.join(Temp.getTempDir(), 'target'));
+    const tempFileLink = await fsPoly.mktemp(path.join(Temp.getTempDir(), 'link'));
+
+    try {
+      await fsPoly.touch(tempFileTarget);
+
+      await fsPoly.hardlink(tempFileTarget, tempFileLink);
+      await expect(fsPoly.isHardlink(tempFileLink)).resolves.toEqual(true);
+      await expect(fsPoly.isHardlink(tempFileTarget)).resolves.toEqual(true);
+    } finally {
+      await fsPoly.rm(tempFileTarget, { force: true });
+      await fsPoly.rm(tempFileLink, { force: true });
+    }
+  });
+
+  it('should not overwrite an existing file', async () => {
+    const tempFileTarget = await fsPoly.mktemp(path.join(Temp.getTempDir(), 'target'));
+    const tempFileLink = await fsPoly.mktemp(path.join(Temp.getTempDir(), 'link'));
+
+    try {
+      await fsPoly.touch(tempFileTarget);
+      await fsPoly.touch(tempFileLink);
+
+      await expect(fsPoly.hardlink(tempFileTarget, tempFileLink)).rejects.toThrow();
+    } finally {
+      await fsPoly.rm(tempFileTarget, { force: true });
+      await fsPoly.rm(tempFileLink, { force: true });
+    }
+  });
+});
+
 describe('isSamba', () => {
   test.each([
     '.',

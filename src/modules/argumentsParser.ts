@@ -399,6 +399,12 @@ export default class ArgumentsParser {
         requiresArg: true,
         default: FixExtension[FixExtension.AUTO].toLowerCase(),
       })
+      .option('move-hardlink', {
+        group: groupRomOutput,
+        description: 'Move files on the same disk drive by creating hard links',
+        type: 'boolean',
+        conflicts: ['allow-excess-sets', 'allow-incomplete-sets'],
+      })
       .option('overwrite', {
         group: groupRomOutput,
         alias: 'O',
@@ -456,7 +462,7 @@ export default class ArgumentsParser {
       .option('zip-exclude', {
         group: groupRomZip,
         alias: 'Z',
-        description: 'Glob pattern of files to exclude from zipping',
+        description: 'Glob pattern of ROM filenames to exclude from zipping',
         type: 'string',
         coerce: ArgumentsParser.getLastValue, // don't allow string[] values
         requiresArg: true,
@@ -501,7 +507,7 @@ export default class ArgumentsParser {
 
       .option('header', {
         group: groupRomHeader,
-        description: 'Glob pattern of files to force header processing for',
+        description: 'Glob pattern of input filenames to force header processing for',
         type: 'string',
         coerce: ArgumentsParser.getLastValue, // don't allow string[] values
         requiresArg: true,
