@@ -534,6 +534,17 @@ describe('options', () => {
     expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--dat', os.devNull, '--single', 'true', '--single', 'false']).getSingle()).toEqual(false);
   });
 
+  it('should parse "move-hardlink"', () => {
+    expect(() => argumentsParser.parse([...dummyCommandAndRequiredArgs, '--dat', os.devNull, '--move-hardlink', '--allow-excess-sets'])).toThrow(/mutually exclusive/i);
+    expect(() => argumentsParser.parse([...dummyCommandAndRequiredArgs, '--dat', os.devNull, '--move-hardlink', '--allow-incomplete-sets'])).toThrow(/mutually exclusive/i);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--move-hardlink']).getMoveHardlink()).toEqual(true);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--move-hardlink', 'true']).getMoveHardlink()).toEqual(true);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--move-hardlink', 'false']).getMoveHardlink()).toEqual(false);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--move-hardlink', '--move-hardlink']).getMoveHardlink()).toEqual(true);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--move-hardlink', 'false', '--move-hardlink', 'true']).getMoveHardlink()).toEqual(true);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--move-hardlink', 'true', '--move-hardlink', 'false']).getMoveHardlink()).toEqual(false);
+  });
+
   it('should parse "overwrite"', () => {
     expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '-O']).getOverwrite()).toEqual(true);
     expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--overwrite']).getOverwrite()).toEqual(true);
