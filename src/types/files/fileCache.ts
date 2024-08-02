@@ -219,7 +219,7 @@ export default class FileCache {
 
     // NOTE(cemmer): we're explicitly not catching ENOENT errors here, we want it to bubble up
     const stats = await FsPoly.stat(file.getFilePath());
-    const cacheKey = await this.getCacheKey(file.toString(), ValueType.ROM_HEADER);
+    const cacheKey = await this.getCacheKey(file.getFilePath(), ValueType.ROM_HEADER);
 
     const cachedValue = await this.cache.getOrCompute(
       cacheKey,
@@ -259,7 +259,7 @@ export default class FileCache {
 
     // NOTE(cemmer): we're explicitly not catching ENOENT errors here, we want it to bubble up
     const stats = await FsPoly.stat(file.getFilePath());
-    const cacheKey = await this.getCacheKey(file.toString(), ValueType.FILE_SIGNATURE);
+    const cacheKey = await this.getCacheKey(file.getFilePath(), ValueType.FILE_SIGNATURE);
 
     const cachedValue = await this.cache.getOrCompute(
       cacheKey,
