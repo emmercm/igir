@@ -3,8 +3,10 @@ import path from 'node:path';
 import ProgressBar, { ProgressBarSymbol } from '../console/progressBar.js';
 import FsPoly from '../polyfill/fsPoly.js';
 import ArchiveEntry from '../types/files/archives/archiveEntry.js';
+import Chd from '../types/files/archives/chd/chd.js';
+import Maxcso from '../types/files/archives/maxcso/maxcso.js';
 import Rar from '../types/files/archives/rar.js';
-import SevenZip from '../types/files/archives/sevenZip.js';
+import SevenZip from '../types/files/archives/sevenZip/sevenZip.js';
 import Tar from '../types/files/archives/tar.js';
 import Zip from '../types/files/archives/zip.js';
 import File from '../types/files/file.js';
@@ -50,7 +52,7 @@ export default class ROMIndexer extends Module {
     [...checksumsToFiles.values()]
       .forEach((files) => files
         .sort((fileOne, fileTwo) => {
-          // Prefer un-archived files
+          // Prefer un-archived files because they're less expensive to process
           const fileOneArchived = ROMIndexer.archiveEntryPriority(fileOne);
           const fileTwoArchived = ROMIndexer.archiveEntryPriority(fileTwo);
           if (fileOneArchived !== fileTwoArchived) {
@@ -97,6 +99,10 @@ export default class ROMIndexer extends Module {
       return 3;
     } if (file.getArchive() instanceof SevenZip) {
       return 4;
+    } if (file.getArchive() instanceof Maxcso) {
+      return 5;
+    } if (file.getArchive() instanceof Chd) {
+      return 6;
     }
     return 99;
   }

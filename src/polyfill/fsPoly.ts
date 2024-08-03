@@ -136,6 +136,14 @@ export default class FsPoly {
     }
   }
 
+  static async isHardlink(pathLike: PathLike): Promise<boolean> {
+    try {
+      return (await this.stat(pathLike)).nlink > 1;
+    } catch {
+      return false;
+    }
+  }
+
   static isSamba(filePath: string): boolean {
     const normalizedPath = filePath.replace(/[\\/]/g, path.sep);
     if (normalizedPath.startsWith(`${path.sep}${path.sep}`) && normalizedPath !== os.devNull) {
@@ -253,11 +261,11 @@ export default class FsPoly {
       }
 
       // Backoff with jitter
-      if (attempt >= 3) {
+      if (attempt >= 5) {
         throw error;
       }
       await new Promise((resolve) => {
-        setTimeout(resolve, Math.random() * (2 ** (attempt - 1) * 100));
+        setTimeout(resolve, Math.random() * (2 ** (attempt - 1) * 10));
       });
 
       // Attempt to resolve Windows' "EBUSY: resource busy or locked"
@@ -311,7 +319,7 @@ export default class FsPoly {
       if (optionsWithRetry?.force) {
         return;
       }
-      throw new Error(`can't rm, path doesn't exist: ${pathLike}`);
+      throw new ExpectedError(`can't rm, path doesn't exist: ${pathLike}`);
     }
 
     if (await this.isDirectory(pathLike)) {

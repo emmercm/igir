@@ -69,7 +69,7 @@ JELOS has its BIOS folder at `roms/bios/`, and it uses the RetroArch filenames. 
 
 ## ROMs
 
-JELOS supports many many systems and ROM formats. Check sections under the `Systems` menu in the [JELOS Wiki](https://jelos.org/) for more precise instructions about the indivudual systems. Most supported systems and their ROMS can be automatically sorted by `igir` using the `{jelos}` output token. See the [replaceable tokens page](../../output/tokens.md) for more information.
+JELOS supports many many systems and ROM formats. Check sections under the `Systems` menu in the [JELOS Wiki](https://jelos.org/) for more precise instructions about the indivudual systems. Most supported systems and their ROMS can be automatically sorted by Igir using the `{jelos}` output token. See the [replaceable tokens page](../../output/tokens.md) for more information.
 
 === ":simple-windowsxp: Windows"
 

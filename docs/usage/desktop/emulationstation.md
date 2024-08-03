@@ -23,7 +23,7 @@ Other emulators may use other names for their BIOS images but all reside in the 
 
 ## ROMs
 
-EmulationStation uses its own proprietary ROM folder structure, so `igir` has a replaceable `{es}` token to sort ROMs into the right place. See the [replaceable tokens page](../../output/tokens.md) for more information.
+EmulationStation uses its own proprietary ROM folder structure, so Igir has a replaceable `{es}` token to sort ROMs into the right place. See the [replaceable tokens page](../../output/tokens.md) for more information.
 
 === ":simple-linux: EmulationStation (Linux)"
 

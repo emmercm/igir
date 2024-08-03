@@ -482,16 +482,73 @@ export default class CandidateWriter extends Module {
     inputRomFile: File,
     outputFilePath: string,
   ): Promise<boolean> {
-    this.progressBar.logInfo(`${dat.getNameShort()}: ${releaseCandidate.getName()}: copying file '${inputRomFile.toString()}' (${fsPoly.sizeReadable(inputRomFile.getSize())}) -> '${outputFilePath}'`);
+    this.progressBar.logInfo(`${dat.getNameShort()}: ${releaseCandidate.getName()}: ${inputRomFile instanceof ArchiveEntry ? 'extracting' : 'copying'} file '${inputRomFile.toString()}' (${fsPoly.sizeReadable(inputRomFile.getSize())}) -> '${outputFilePath}'`);
 
     try {
       await CandidateWriter.ensureOutputDirExists(outputFilePath);
+
+      const moveHardLinked = await this.moveHardLink(
+        dat,
+        releaseCandidate,
+        inputRomFile,
+        outputFilePath,
+      );
+      if (moveHardLinked) {
+        return true;
+      }
+
       const tempRawFile = await fsPoly.mktemp(outputFilePath);
       await inputRomFile.extractAndPatchToFile(tempRawFile);
       await fsPoly.mv(tempRawFile, outputFilePath);
       return true;
     } catch (error) {
       this.progressBar.logError(`${dat.getNameShort()}: ${releaseCandidate.getName()}: ${outputFilePath}: failed to copy from ${inputRomFile.toString()}: ${error}`);
+      return false;
+    }
+  }
+
+  private async moveHardLink(
+    dat: DAT,
+    releaseCandidate: ReleaseCandidate,
+    inputRomFile: File,
+    outputFilePath: string,
+  ): Promise<boolean> {
+    if (!this.options.shouldMove() || !this.options.getMoveHardlink()) {
+      return false;
+    }
+
+    if (inputRomFile instanceof ArchiveEntry) {
+      this.progressBar.logTrace(`${dat.getNameShort()}: ${releaseCandidate.getName()}: can't move-hardlink an archived file`);
+      return false;
+    }
+    if (inputRomFile.getFileHeader()) {
+      this.progressBar.logTrace(`${dat.getNameShort()}: ${releaseCandidate.getName()}: can't move-hardlink a file with a header that's being removed`);
+      return false;
+    }
+    if (inputRomFile.getPatch()) {
+      this.progressBar.logTrace(`${dat.getNameShort()}: ${releaseCandidate.getName()}: can't move-hardlink a file that's being patched`);
+      return false;
+    }
+
+    if (await fsPoly.isHardlink(inputRomFile.getFilePath())) {
+      // It's unsafe to add a third or more link to an inode. We don't know if the input file was
+      // already move-hardlinked, or if it was hardlinked for some other reason. But if we don't do
+      // this, then we may end up with files in the output directory that are hardlinked even though
+      // the command wasn't specified.
+      this.progressBar.logTrace(`${dat.getNameShort()}: ${releaseCandidate.getName()}: can't move-hardlink a file that's already hardlinked`);
+      return false;
+    }
+
+    if (await fsPoly.exists(outputFilePath)) {
+      // {@link fsPoly#hardlink()} will throw if the link already exists
+      await fsPoly.rm(outputFilePath);
+    }
+
+    try {
+      await fsPoly.hardlink(inputRomFile.getFilePath(), outputFilePath);
+      return true;
+    } catch (error) {
+      this.progressBar.logTrace(`${dat.getNameShort()}: ${releaseCandidate.getName()}: error when move-hardlinking: ${error}`);
       return false;
     }
   }

@@ -82,6 +82,13 @@ jobs:
         with:
           node-version: ${{ matrix.node-version }}
       - run: npm ci
+      - if: ${{ matrix.os == 'macos' }}
+        run: brew install --overwrite sdl2
+      - if: ${{ matrix.os == 'ubuntu' }}
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libsdl2-2.0-0 libsdl2-ttf-2.0-0
+
       # Test the source files
       - run: npm run test:unit
 
@@ -102,6 +109,9 @@ jobs:
         with:
           node-version: ${{ matrix.node-version }}
       - run: npm ci
+      - run: |
+          sudo apt-get update
+          sudo apt-get install -y libsdl2-2.0-0 libsdl2-ttf-2.0-0
       # Test the built files
       - run: npm run build
       - run: ./test/endToEndTest.sh

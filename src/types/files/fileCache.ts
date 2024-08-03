@@ -12,10 +12,17 @@ import ROMHeader from './romHeader.js';
 interface CacheValue {
   fileSize: number,
   modifiedTimeMillis: number,
-  value: FileProps | ArchiveEntryProps<Archive>[] | string | undefined,
+  value: number
+  // getOrComputeFileChecksums()
+  | FileProps
+  // getOrComputeArchiveChecksums()
+  | ArchiveEntryProps<Archive>[]
+  // getOrComputeFileHeader(), getOrComputeFileSignature()
+  | string | undefined,
 }
 
 const ValueType = {
+  INODE: 'I',
   FILE_CHECKSUMS: 'F',
   ARCHIVE_CHECKSUMS: 'A',
   // ROM headers and file signatures may not be found for files, and that is a valid result that
@@ -26,7 +33,7 @@ const ValueType = {
 };
 
 export default class FileCache {
-  private static readonly VERSION = 3;
+  private static readonly VERSION = 4;
 
   private static cache: Cache<CacheValue> = new Cache<CacheValue>();
 
@@ -36,39 +43,41 @@ export default class FileCache {
     this.enabled = false;
   }
 
-  public static async loadFile(filePath: string): Promise<void> {
+  public static async loadFile(cacheFilePath: string): Promise<void> {
     this.cache = await new Cache<CacheValue>({
-      filePath,
+      filePath: cacheFilePath,
       fileFlushMillis: 30_000,
       saveOnExit: true,
     }).load();
 
     // Cleanup the loaded cache file
     // Delete keys from old cache versions
-    await Promise.all([...Array.from({ length: FileCache.VERSION }).keys()].slice(1)
-      .map(async (prevVersion) => {
-        const keyRegex = new RegExp(`^V${prevVersion}\\|`);
-        return this.cache.delete(keyRegex);
-      }));
+    await this.cache.delete(new RegExp(`^V(${[...Array.from({ length: FileCache.VERSION }).keys()].slice(1).join('|')})\\|`));
     // Delete keys from old value types
     await this.cache.delete(new RegExp(`\\|(?!(${Object.values(ValueType).join('|')}))[^|]+$`));
 
     // Delete keys for deleted files
     const disks = FsPoly.disksSync();
     Timer.setTimeout(async () => {
-      await Promise.all([...this.cache.keys()]
-        .map((cacheKey) => cacheKey.split('|')[1])
+      const cacheKeyFilePaths = [...this.cache.keys()]
+        .filter((cacheKey) => cacheKey.endsWith(`|${ValueType.INODE}`))
+        .map((cacheKey) => ([cacheKey, cacheKey.split('|')[1]]))
         // Don't delete the key if it's for a disk that isn't mounted right now
-        .filter((cacheKeyFilePath) => disks.some((disk) => cacheKeyFilePath.startsWith(disk)))
+        .filter(([, filePath]) => disks.some((disk) => filePath.startsWith(disk)))
         // Only process a reasonably sized subset of the keys
         .sort(() => Math.random() - 0.5)
-        .slice(0, Defaults.MAX_FS_THREADS)
-        .map(async (cacheKeyFilePath) => {
-          if (!await FsPoly.exists(cacheKeyFilePath)) {
-            // If the file no longer exists, then delete its key from the cache
-            await this.cache.delete(cacheKeyFilePath);
-          }
-        }));
+        .slice(0, Defaults.MAX_FS_THREADS);
+
+      await Promise.all(cacheKeyFilePaths.map(async ([cacheKey, filePath]) => {
+        if (!await FsPoly.exists(filePath)) {
+          // Delete the related cache keys
+          const inode = (await this.cache.get(cacheKey))?.value as number;
+          await this.cache.delete(new RegExp(`^V${this.VERSION}\\|${inode}\\|`));
+
+          // Delete the inode key from the cache
+          await this.cache.delete(cacheKey);
+        }
+      }));
     }, 5000);
   }
 
@@ -90,7 +99,7 @@ export default class FileCache {
 
     // NOTE(cemmer): we're explicitly not catching ENOENT errors here, we want it to bubble up
     const stats = await FsPoly.stat(filePath);
-    const cacheKey = this.getCacheKey(filePath, ValueType.FILE_CHECKSUMS);
+    const cacheKey = await this.getCacheKey(filePath, ValueType.FILE_CHECKSUMS);
 
     // NOTE(cemmer): we're using the cache as a mutex here, so even if this function is called
     //  multiple times concurrently, entries will only be fetched once.
@@ -150,7 +159,7 @@ export default class FileCache {
 
     // NOTE(cemmer): we're explicitly not catching ENOENT errors here, we want it to bubble up
     const stats = await FsPoly.stat(archive.getFilePath());
-    const cacheKey = this.getCacheKey(archive.getFilePath(), ValueType.ARCHIVE_CHECKSUMS);
+    const cacheKey = await this.getCacheKey(archive.getFilePath(), ValueType.ARCHIVE_CHECKSUMS);
 
     // NOTE(cemmer): we're using the cache as a mutex here, so even if this function is called
     //  multiple times concurrently, entries will only be fetched once.
@@ -202,9 +211,15 @@ export default class FileCache {
   }
 
   static async getOrComputeFileHeader(file: File): Promise<ROMHeader | undefined> {
+    if (!this.enabled) {
+      return file.createReadStream(
+        async (stream) => ROMHeader.headerFromFileStream(stream),
+      );
+    }
+
     // NOTE(cemmer): we're explicitly not catching ENOENT errors here, we want it to bubble up
     const stats = await FsPoly.stat(file.getFilePath());
-    const cacheKey = this.getCacheKey(file.toString(), ValueType.ROM_HEADER);
+    const cacheKey = await this.getCacheKey(file.getFilePath(), ValueType.ROM_HEADER);
 
     const cachedValue = await this.cache.getOrCompute(
       cacheKey,
@@ -236,9 +251,15 @@ export default class FileCache {
   }
 
   static async getOrComputeFileSignature(file: File): Promise<FileSignature | undefined> {
+    if (!this.enabled) {
+      return file.createReadStream(
+        async (stream) => FileSignature.signatureFromFileStream(stream),
+      );
+    }
+
     // NOTE(cemmer): we're explicitly not catching ENOENT errors here, we want it to bubble up
     const stats = await FsPoly.stat(file.getFilePath());
-    const cacheKey = this.getCacheKey(file.toString(), ValueType.FILE_SIGNATURE);
+    const cacheKey = await this.getCacheKey(file.getFilePath(), ValueType.FILE_SIGNATURE);
 
     const cachedValue = await this.cache.getOrCompute(
       cacheKey,
@@ -269,7 +290,15 @@ export default class FileCache {
     return FileSignature.signatureFromName(cachedSignatureName);
   }
 
-  private static getCacheKey(filePath: string, valueType: string): string {
-    return `V${FileCache.VERSION}|${filePath}|${valueType}`;
+  private static async getCacheKey(filePath: string, valueType: string): Promise<string> {
+    const stats = await FsPoly.stat(filePath);
+    const inodeKey = `V${FileCache.VERSION}|${filePath}|${ValueType.INODE}`;
+    await this.cache.set(inodeKey, {
+      fileSize: stats.size,
+      modifiedTimeMillis: stats.mtimeMs,
+      value: stats.ino,
+    });
+
+    return `V${FileCache.VERSION}|${stats.ino}|${valueType}`;
   }
 }

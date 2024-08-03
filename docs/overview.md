@@ -23,18 +23,18 @@ Most ROM managers can automatically read & write many different ROM types includ
 
 Most ROM managers rely on [DATs](dats/introduction.md), files that catalog every known ROM that exists per game system. DATs are published by release groups dedicated to keeping these catalogs accurate and up-to-date. DATs help ROM collectors name their ROMs in a consistent way as well as understand what ROMs may be missing from their collection.
 
-## What is `igir`?
+## What is Igir?
 
-`igir` is a ROM manager for the modern age.
+Igir is a ROM manager for the modern age.
 
-Most ROM managers are only built for Windows, and some offer workarounds for running on macOS and Linux. Most of these managers have confusing GUIs that make batch-able, repeatable actions difficult. `igir` is a command line tool that works on any OS.
+Most ROM managers are only built for Windows, and some offer workarounds for running on macOS and Linux. Most of these managers have confusing GUIs that make batch-able, repeatable actions difficult. Igir is a command line tool that works on any OS.
 
-In addition, `igir` has features that aren't found in any other ROM managers, such as [ROM patching](roms/patching.md).
+In addition, Igir has features that aren't found in any other ROM managers, such as [ROM patching](roms/patching.md).
 
 !!! info
 
-    See the [alternative managers](alternatives.md) page for a feature comparison between `igir` and other ROM managers.
+    See the [alternative managers](alternatives.md) page for a feature comparison between Igir and other ROM managers.
 
 ## Next steps
 
-See the [installation](installation.md) page for instructions on getting `igir` installed.
+See the [installation](installation.md) page for instructions on getting Igir installed.

@@ -114,7 +114,7 @@ export default class Igir {
     // Set up progress bar and input for DAT processing
     const datProcessProgressBar = await this.logger.addProgressBar(chalk.underline('Processing DATs'), ProgressBarSymbol.NONE, dats.length);
     if (dats.length === 0) {
-      dats = new DATGameInferrer(this.options, datProcessProgressBar).infer(roms);
+      dats = await new DATGameInferrer(this.options, datProcessProgressBar).infer(roms);
     }
 
     const datsToWrittenFiles = new Map<DAT, File[]>();
@@ -285,7 +285,7 @@ export default class Igir {
   }
 
   private determineScanningBitmask(dats: DAT[]): number {
-    const minimumChecksum = this.options.getInputMinChecksum() ?? ChecksumBitmask.CRC32;
+    const minimumChecksum = this.options.getInputChecksumMin() ?? ChecksumBitmask.CRC32;
     let matchChecksum = minimumChecksum;
 
     if (this.options.getPatchFileCount() > 0) {
@@ -307,17 +307,33 @@ export default class Igir {
     }
 
     dats.forEach((dat) => {
-      const datMinimumBitmask = dat.getRequiredChecksumBitmask();
+      const datMinimumRomBitmask = dat.getRequiredRomChecksumBitmask();
       Object.keys(ChecksumBitmask)
         .filter((bitmask): bitmask is keyof typeof ChecksumBitmask => Number.isNaN(Number(bitmask)))
         // Has not been enabled yet
         .filter((bitmask) => ChecksumBitmask[bitmask] > minimumChecksum)
         .filter((bitmask) => !(matchChecksum & ChecksumBitmask[bitmask]))
         // Should be enabled for this DAT
-        .filter((bitmask) => datMinimumBitmask & ChecksumBitmask[bitmask])
+        .filter((bitmask) => datMinimumRomBitmask & ChecksumBitmask[bitmask])
         .forEach((bitmask) => {
           matchChecksum |= ChecksumBitmask[bitmask];
-          this.logger.trace(`${dat.getNameShort()}: needs ${bitmask} file checksums, enabling`);
+          this.logger.trace(`${dat.getNameShort()}: needs ${bitmask} file checksums for ROMs, enabling`);
+        });
+
+      if (this.options.getExcludeDisks()) {
+        return;
+      }
+      const datMinimumDiskBitmask = dat.getRequiredDiskChecksumBitmask();
+      Object.keys(ChecksumBitmask)
+        .filter((bitmask): bitmask is keyof typeof ChecksumBitmask => Number.isNaN(Number(bitmask)))
+        // Has not been enabled yet
+        .filter((bitmask) => ChecksumBitmask[bitmask] > minimumChecksum)
+        .filter((bitmask) => !(matchChecksum & ChecksumBitmask[bitmask]))
+        // Should be enabled for this DAT
+        .filter((bitmask) => datMinimumDiskBitmask & ChecksumBitmask[bitmask])
+        .forEach((bitmask) => {
+          matchChecksum |= ChecksumBitmask[bitmask];
+          this.logger.trace(`${dat.getNameShort()}: needs ${bitmask} file checksums for disks, enabling`);
         });
     });
 

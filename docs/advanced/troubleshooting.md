@@ -34,7 +34,7 @@ FATAL ERROR: Reached heap limit Allocation failed - JavaScript heap out of memor
 11: 0x7fe14fed9ef6
 ```
 
-The issue is that `igir` ran out of memory likely due to low system limits, large DAT packs, or large ROM collections.
+The issue is that Igir ran out of memory likely due to low system limits, large DAT packs, or large ROM collections.
 
 You likely need to process your ROM collection in batches, just be careful when using the [`igir clean` command](../commands.md). If you don't need every DAT from a pack, you can try reducing the number of DATs being processed with the [`--dat-*-regex <pattern>` and `--dat-*-regex-exclude <pattern>` options](../dats/processing.md#dat-filtering) like this:
 

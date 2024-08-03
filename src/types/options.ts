@@ -19,6 +19,8 @@ import ArrayPoly from '../polyfill/arrayPoly.js';
 import fsPoly, { FsWalkCallback } from '../polyfill/fsPoly.js';
 import URLPoly from '../polyfill/urlPoly.js';
 import DAT from './dats/dat.js';
+import Disk from './dats/disk.js';
+import ROM from './dats/rom.js';
 import ExpectedError from './expectedError.js';
 import File from './files/file.js';
 import { ChecksumBitmask } from './files/fileChecksums.js';
@@ -60,18 +62,16 @@ export enum FixExtension {
 
 export interface OptionsProps {
   readonly commands?: string[],
-  readonly fixdat?: boolean;
 
   readonly input?: string[],
   readonly inputExclude?: string[],
-  readonly inputMinChecksum?: string,
+  readonly inputChecksumQuick?: boolean,
+  readonly inputChecksumMin?: string,
   readonly inputChecksumArchives?: string,
 
   readonly dat?: string[],
   readonly datExclude?: string[],
-  readonly datRegex?: string,
   readonly datNameRegex?: string,
-  readonly datRegexExclude?: string,
   readonly datNameRegexExclude?: string,
   readonly datDescriptionRegex?: string,
   readonly datDescriptionRegexExclude?: string,
@@ -91,6 +91,7 @@ export interface OptionsProps {
   readonly dirLetterGroup?: boolean,
   readonly dirGameSubdir?: string,
   readonly fixExtension?: string,
+  readonly moveHardlink?: boolean,
   readonly overwrite?: boolean,
   readonly overwriteInvalid?: boolean,
 
@@ -108,14 +109,14 @@ export interface OptionsProps {
   readonly removeHeaders?: string[],
 
   readonly mergeRoms?: string,
+  readonly excludeDisks?: boolean,
+  readonly allowExcessSets?: boolean,
   readonly allowIncompleteSets?: boolean,
 
   readonly filterRegex?: string,
   readonly filterRegexExclude?: string,
   readonly filterLanguage?: string[],
-  readonly languageFilter?: string[],
   readonly filterRegion?: string[],
-  readonly regionFilter?: string[],
   readonly noBios?: boolean,
   readonly onlyBios?: boolean,
   readonly noDevice?: boolean,
@@ -178,13 +179,13 @@ export default class Options implements OptionsProps {
   @Expose({ name: '_' })
   readonly commands: string[];
 
-  readonly fixdat: boolean;
-
   readonly input: string[];
 
   readonly inputExclude: string[];
 
-  readonly inputMinChecksum?: string;
+  readonly inputChecksumQuick: boolean;
+
+  readonly inputChecksumMin?: string;
 
   readonly inputChecksumArchives?: string;
 
@@ -192,11 +193,7 @@ export default class Options implements OptionsProps {
 
   readonly datExclude: string[];
 
-  readonly datRegex: string;
-
   readonly datNameRegex: string;
-
-  readonly datRegexExclude: string;
 
   readonly datNameRegexExclude: string;
 
@@ -232,6 +229,8 @@ export default class Options implements OptionsProps {
 
   readonly fixExtension?: string;
 
+  readonly moveHardlink: boolean;
+
   readonly overwrite: boolean;
 
   readonly overwriteInvalid: boolean;
@@ -256,6 +255,10 @@ export default class Options implements OptionsProps {
 
   readonly mergeRoms?: string;
 
+  readonly excludeDisks: boolean;
+
+  readonly allowExcessSets: boolean;
+
   readonly allowIncompleteSets: boolean;
 
   readonly filterRegex: string;
@@ -264,11 +267,7 @@ export default class Options implements OptionsProps {
 
   readonly filterLanguage: string[];
 
-  readonly languageFilter: string[];
-
   readonly filterRegion: string[];
-
-  readonly regionFilter: string[];
 
   readonly noBios: boolean;
 
@@ -376,18 +375,16 @@ export default class Options implements OptionsProps {
 
   constructor(options?: OptionsProps) {
     this.commands = options?.commands ?? [];
-    this.fixdat = options?.fixdat ?? false;
 
     this.input = options?.input ?? [];
     this.inputExclude = options?.inputExclude ?? [];
-    this.inputMinChecksum = options?.inputMinChecksum;
+    this.inputChecksumQuick = options?.inputChecksumQuick ?? false;
+    this.inputChecksumMin = options?.inputChecksumMin;
     this.inputChecksumArchives = options?.inputChecksumArchives;
 
     this.dat = options?.dat ?? [];
     this.datExclude = options?.datExclude ?? [];
-    this.datRegex = options?.datRegex ?? '';
     this.datNameRegex = options?.datNameRegex ?? '';
-    this.datRegexExclude = options?.datRegexExclude ?? '';
     this.datNameRegexExclude = options?.datNameRegexExclude ?? '';
     this.datDescriptionRegex = options?.datDescriptionRegex ?? '';
     this.datDescriptionRegexExclude = options?.datDescriptionRegexExclude ?? '';
@@ -406,9 +403,12 @@ export default class Options implements OptionsProps {
     this.dirLetterLimit = options?.dirLetterLimit ?? 0;
     this.dirLetterGroup = options?.dirLetterGroup ?? false;
     this.dirGameSubdir = options?.dirGameSubdir;
+
     this.fixExtension = options?.fixExtension;
+    this.moveHardlink = options?.moveHardlink ?? false;
     this.overwrite = options?.overwrite ?? false;
     this.overwriteInvalid = options?.overwriteInvalid ?? false;
+
     this.cleanExclude = options?.cleanExclude ?? [];
     this.cleanBackup = options?.cleanBackup;
     this.cleanDryRun = options?.cleanDryRun ?? false;
@@ -423,14 +423,14 @@ export default class Options implements OptionsProps {
     this.removeHeaders = options?.removeHeaders;
 
     this.mergeRoms = options?.mergeRoms;
+    this.excludeDisks = options?.excludeDisks ?? false;
+    this.allowExcessSets = options?.allowExcessSets ?? false;
     this.allowIncompleteSets = options?.allowIncompleteSets ?? false;
 
     this.filterRegex = options?.filterRegex ?? '';
     this.filterRegexExclude = options?.filterRegexExclude ?? '';
     this.filterLanguage = options?.filterLanguage ?? [];
-    this.languageFilter = options?.languageFilter ?? [];
     this.filterRegion = options?.filterRegion ?? [];
-    this.regionFilter = options?.regionFilter ?? [];
     this.noBios = options?.noBios ?? false;
     this.onlyBios = options?.onlyBios ?? false;
     this.noDevice = options?.noDevice ?? false;
@@ -538,7 +538,7 @@ export default class Options implements OptionsProps {
    * The writing command that was specified.
    */
   writeString(): string | undefined {
-    return ['copy', 'move', 'link', 'symlink'].find((command) => this.getCommands().has(command));
+    return ['copy', 'move', 'link'].find((command) => this.getCommands().has(command));
   }
 
   /**
@@ -570,6 +570,16 @@ export default class Options implements OptionsProps {
   }
 
   /**
+   * Should a given ROM be extracted?
+   */
+  shouldExtractRom(rom: ROM): boolean {
+    if (rom instanceof Disk) {
+      return false;
+    }
+    return this.shouldExtract();
+  }
+
+  /**
    * Was the `zip` command provided?
    */
   shouldZip(): boolean {
@@ -579,10 +589,14 @@ export default class Options implements OptionsProps {
   /**
    * Should a given output file path be zipped?
    */
-  shouldZipFile(filePath: string): boolean {
+  shouldZipRom(rom: ROM): boolean {
+    if (rom instanceof Disk) {
+      return false;
+    }
+
     return this.shouldZip()
       && (!this.getZipExclude() || !micromatch.isMatch(
-        filePath.replace(/^.[\\/]/, ''),
+        rom.getName().replace(/^.[\\/]/, ''),
         this.getZipExclude(),
       ));
   }
@@ -598,7 +612,7 @@ export default class Options implements OptionsProps {
    * Was the 'fixdat' command provided?
    */
   shouldFixdat(): boolean {
-    return this.getCommands().has('fixdat') || this.fixdat;
+    return this.getCommands().has('fixdat');
   }
 
   /**
@@ -765,9 +779,13 @@ export default class Options implements OptionsProps {
     return globPattern;
   }
 
-  getInputMinChecksum(): ChecksumBitmask | undefined {
+  getInputChecksumQuick(): boolean {
+    return this.inputChecksumQuick;
+  }
+
+  getInputChecksumMin(): ChecksumBitmask | undefined {
     const checksumBitmask = Object.keys(ChecksumBitmask)
-      .find((bitmask) => bitmask.toUpperCase() === this.inputMinChecksum?.toUpperCase());
+      .find((bitmask) => bitmask.toUpperCase() === this.inputChecksumMin?.toUpperCase());
     if (!checksumBitmask) {
       return undefined;
     }
@@ -809,11 +827,11 @@ export default class Options implements OptionsProps {
   }
 
   getDatNameRegex(): RegExp[] | undefined {
-    return Options.getRegex(this.datNameRegex || this.datRegex);
+    return Options.getRegex(this.datNameRegex);
   }
 
   getDatNameRegexExclude(): RegExp[] | undefined {
-    return Options.getRegex(this.datNameRegexExclude || this.datRegexExclude);
+    return Options.getRegex(this.datNameRegexExclude);
   }
 
   getDatDescriptionRegex(): RegExp[] | undefined {
@@ -915,6 +933,10 @@ export default class Options implements OptionsProps {
       return undefined;
     }
     return FixExtension[fixExtensionMode as keyof typeof FixExtension];
+  }
+
+  getMoveHardlink(): boolean {
+    return this.moveHardlink;
   }
 
   getOverwrite(): boolean {
@@ -1026,9 +1048,16 @@ export default class Options implements OptionsProps {
     return MergeMode[mergeMode as keyof typeof MergeMode];
   }
 
+  getExcludeDisks(): boolean {
+    return this.excludeDisks;
+  }
+
+  getAllowExcessSets(): boolean {
+    return this.allowExcessSets;
+  }
+
   getAllowIncompleteSets(): boolean {
-    // If we're only reading, then go ahead and report on incomplete sets
-    return this.allowIncompleteSets || !this.shouldWrite();
+    return this.allowIncompleteSets;
   }
 
   getFilterRegex(): RegExp[] | undefined {
@@ -1043,18 +1072,12 @@ export default class Options implements OptionsProps {
     if (this.filterLanguage.length > 0) {
       return new Set(Options.filterUniqueUpper(this.filterLanguage));
     }
-    if (this.languageFilter.length > 0) {
-      return new Set(Options.filterUniqueUpper(this.languageFilter));
-    }
     return new Set();
   }
 
   getFilterRegion(): Set<string> {
     if (this.filterRegion.length > 0) {
       return new Set(Options.filterUniqueUpper(this.filterRegion));
-    }
-    if (this.regionFilter.length > 0) {
-      return new Set(Options.filterUniqueUpper(this.regionFilter));
     }
     return new Set();
   }

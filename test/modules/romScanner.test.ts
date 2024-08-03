@@ -3,7 +3,9 @@ import path from 'node:path';
 
 import Temp from '../../src/globals/temp.js';
 import ROMScanner from '../../src/modules/romScanner.js';
+import ArrayPoly from '../../src/polyfill/arrayPoly.js';
 import fsPoly from '../../src/polyfill/fsPoly.js';
+import ArchiveEntry from '../../src/types/files/archives/archiveEntry.js';
 import { ChecksumBitmask } from '../../src/types/files/fileChecksums.js';
 import Options, { OptionsProps } from '../../src/types/options.js';
 import ProgressBarFake from '../console/progressBarFake.js';
@@ -33,7 +35,7 @@ it('should not throw on bad archives', async () => {
 
 describe('multiple files', () => {
   it('should scan multiple files with no exclusions', async () => {
-    const expectedRomFiles = 68;
+    const expectedRomFiles = 94;
     await expect(createRomScanner(['test/fixtures/roms']).scan()).resolves.toHaveLength(expectedRomFiles);
     await expect(createRomScanner(['test/fixtures/roms/*', 'test/fixtures/roms/**/*']).scan()).resolves.toHaveLength(expectedRomFiles);
     await expect(createRomScanner(['test/fixtures/roms/**/*']).scan()).resolves.toHaveLength(expectedRomFiles);
@@ -41,22 +43,69 @@ describe('multiple files', () => {
   });
 
   test.each([
-    [{ input: [path.join('test', 'fixtures', 'roms')] }, 104],
+    [{ input: [path.join('test', 'fixtures', 'roms')] }, 137],
     [{ input: [path.join('test', 'fixtures', 'roms', '7z')] }, 12],
     [{ input: [path.join('test', 'fixtures', 'roms', 'gz')] }, 14],
     [{ input: [path.join('test', 'fixtures', 'roms', 'rar')] }, 12],
     [{ input: [path.join('test', 'fixtures', 'roms', 'tar')] }, 12],
     [{ input: [path.join('test', 'fixtures', 'roms', 'zip')] }, 15],
   ] satisfies [OptionsProps, number][])('should calculate checksums of archives: %s', async (optionsProps, expectedRomFiles) => {
+    const checksumBitmask = Object.keys(ChecksumBitmask)
+      .filter((bitmask): bitmask is keyof typeof ChecksumBitmask => Number.isNaN(Number(bitmask)))
+      .reduce((allBitmasks, bitmask) => allBitmasks | ChecksumBitmask[bitmask], 0);
     const scannedFiles = await new ROMScanner(new Options(optionsProps), new ProgressBarFake())
-      .scan(ChecksumBitmask.CRC32, true);
+      .scan(checksumBitmask, true);
     expect(scannedFiles).toHaveLength(expectedRomFiles);
   });
 
+  it('should scan quickly', async () => {
+    const options = new Options({
+      input: [path.join('test', 'fixtures', 'roms')],
+      inputChecksumQuick: true,
+    });
+
+    const scannedFiles = await new ROMScanner(options, new ProgressBarFake())
+      .scan(ChecksumBitmask.CRC32, false);
+
+    const extensionsWithoutCrc32 = scannedFiles
+      .filter((file) => file instanceof ArchiveEntry)
+      .filter((file) => !file.getCrc32())
+      .map((file) => {
+        const match = file.getFilePath().match(/[^.]+((\.[a-zA-Z0-9]+)+)$/);
+        return match ? match[1] : undefined;
+      })
+      .filter(ArrayPoly.filterNotNullish)
+      .reduce(ArrayPoly.reduceUnique(), [])
+      .sort();
+    expect(extensionsWithoutCrc32).toEqual(['.chd', '.tar.gz']);
+
+    const entriesWithMd5 = scannedFiles
+      .filter((file) => file instanceof ArchiveEntry)
+      .filter((file) => file.getMd5());
+    expect(entriesWithMd5).toHaveLength(0);
+
+    const extensionsWithSha1 = scannedFiles
+      .filter((file) => file instanceof ArchiveEntry)
+      .filter((file) => file.getSha1())
+      .map((file) => {
+        const match = file.getFilePath().match(/[^.]+((\.[a-zA-Z0-9]+)+)$/);
+        return match ? match[1] : undefined;
+      })
+      .filter(ArrayPoly.filterNotNullish)
+      .reduce(ArrayPoly.reduceUnique(), [])
+      .sort();
+    expect(extensionsWithSha1).toEqual(['.chd']);
+
+    const entriesWithSha256 = scannedFiles
+      .filter((file) => file instanceof ArchiveEntry)
+      .filter((file) => file.getSha256());
+    expect(entriesWithSha256).toHaveLength(0);
+  });
+
   it('should scan multiple files with some file exclusions', async () => {
-    await expect(createRomScanner(['test/fixtures/roms/**/*'], ['test/fixtures/roms/**/*.rom']).scan()).resolves.toHaveLength(51);
-    await expect(createRomScanner(['test/fixtures/roms/**/*'], ['test/fixtures/roms/**/*.rom', 'test/fixtures/roms/**/*.rom']).scan()).resolves.toHaveLength(51);
-    await expect(createRomScanner(['test/fixtures/roms/**/*'], ['test/fixtures/roms/**/*.rom', 'test/fixtures/roms/**/*.zip']).scan()).resolves.toHaveLength(40);
+    await expect(createRomScanner(['test/fixtures/roms/**/*'], ['test/fixtures/roms/**/*.rom']).scan()).resolves.toHaveLength(77);
+    await expect(createRomScanner(['test/fixtures/roms/**/*'], ['test/fixtures/roms/**/*.rom', 'test/fixtures/roms/**/*.rom']).scan()).resolves.toHaveLength(77);
+    await expect(createRomScanner(['test/fixtures/roms/**/*'], ['test/fixtures/roms/**/*.rom', 'test/fixtures/roms/**/*.zip']).scan()).resolves.toHaveLength(66);
   });
 
   it('should scan multiple files with every file excluded', async () => {

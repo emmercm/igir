@@ -1,10 +1,10 @@
 # Internal Operations
 
-Information about the inner workings of `igir`.
+Information about the inner workings of Igir.
 
 ## Order of operations
 
-`igir` runs these steps in the following order:
+Igir runs these steps in the following order:
 
 1. Scan each DAT input path for every file and parse them, if provided (`--dat <path>`)
 2. Scan each ROM input path for every file (`--input <path>`)

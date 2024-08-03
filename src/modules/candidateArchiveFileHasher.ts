@@ -1,9 +1,5 @@
-import { Semaphore } from 'async-mutex';
-
 import ProgressBar, { ProgressBarSymbol } from '../console/progressBar.js';
-import ElasticSemaphore from '../elasticSemaphore.js';
-import Defaults from '../globals/defaults.js';
-import FsPoly from '../polyfill/fsPoly.js';
+import DriveSemaphore from '../driveSemaphore.js';
 import DAT from '../types/dats/dat.js';
 import Parent from '../types/dats/parent.js';
 import ArchiveFile from '../types/files/archives/archiveFile.js';
@@ -19,12 +15,8 @@ import Module from './module.js';
  * {@link CandidatePreferer}.
  */
 export default class CandidateArchiveFileHasher extends Module {
-  private static readonly THREAD_SEMAPHORE = new Semaphore(Number.MAX_SAFE_INTEGER);
-
-  // WARN(cemmer): there is an undocumented semaphore max value that can be used, the full
-  //  4,700,372,992 bytes of a DVD+R will cause runExclusive() to never run or return.
-  private static readonly FILESIZE_SEMAPHORE = new ElasticSemaphore(
-    Defaults.MAX_READ_WRITE_CONCURRENT_KILOBYTES,
+  private static readonly DRIVE_SEMAPHORE = new DriveSemaphore(
+    Number.MAX_SAFE_INTEGER,
   );
 
   private readonly options: Options;
@@ -34,8 +26,8 @@ export default class CandidateArchiveFileHasher extends Module {
     this.options = options;
 
     // This will be the same value globally, but we can't know the value at file import time
-    if (options.getReaderThreads() < CandidateArchiveFileHasher.THREAD_SEMAPHORE.getValue()) {
-      CandidateArchiveFileHasher.THREAD_SEMAPHORE.setValue(options.getReaderThreads());
+    if (options.getReaderThreads() < CandidateArchiveFileHasher.DRIVE_SEMAPHORE.getValue()) {
+      CandidateArchiveFileHasher.DRIVE_SEMAPHORE.setValue(options.getReaderThreads());
     }
   }
 
@@ -91,9 +83,15 @@ export default class CandidateArchiveFileHasher extends Module {
                   return romWithFiles;
                 }
 
-                return CandidateArchiveFileHasher.THREAD_SEMAPHORE.runExclusive(async () => {
-                  const totalKilobytes = await FsPoly.size(inputFile.getFilePath()) / 1024;
-                  return CandidateArchiveFileHasher.FILESIZE_SEMAPHORE.runExclusive(async () => {
+                if (inputFile.equals(romWithFiles.getOutputFile())) {
+                  // There's no need to calculate the checksum, {@link CandidateWriter} will skip
+                  // writing over itself
+                  return romWithFiles;
+                }
+
+                return CandidateArchiveFileHasher.DRIVE_SEMAPHORE.runExclusive(
+                  inputFile,
+                  async () => {
                     await this.progressBar.incrementProgress();
                     const waitingMessage = `${inputFile.toString()} ...`;
                     this.progressBar.addWaitingMessage(waitingMessage);
@@ -121,8 +119,8 @@ export default class CandidateArchiveFileHasher extends Module {
                     this.progressBar.removeWaitingMessage(waitingMessage);
                     await this.progressBar.incrementDone();
                     return hashedRomWithFiles;
-                  }, totalKilobytes);
-                });
+                  },
+                );
               }));
 
             return new ReleaseCandidate(

@@ -7,7 +7,9 @@ import DAT from '../types/dats/dat.js';
 import Parent from '../types/dats/parent.js';
 import ROM from '../types/dats/rom.js';
 import ArchiveEntry from '../types/files/archives/archiveEntry.js';
+import Chd from '../types/files/archives/chd/chd.js';
 import FileCache from '../types/files/fileCache.js';
+import FileSignature from '../types/files/fileSignature.js';
 import Options, { FixExtension } from '../types/options.js';
 import OutputFactory from '../types/outputFactory.js';
 import ReleaseCandidate from '../types/releaseCandidate.js';
@@ -62,6 +64,12 @@ export default class CandidateExtensionCorrector extends Module {
   }
 
   private romNeedsCorrecting(romWithFiles: ROMWithFiles): boolean {
+    const inputFile = romWithFiles.getInputFile();
+    if (inputFile instanceof ArchiveEntry && inputFile.getArchive() instanceof Chd) {
+      // Files within CHDs never need extension correction
+      return false;
+    }
+
     return this.options.getFixExtension() === FixExtension.ALWAYS
       || (this.options.getFixExtension() === FixExtension.AUTO && (
         !this.options.usingDats()
@@ -148,7 +156,12 @@ export default class CandidateExtensionCorrector extends Module {
       this.progressBar.logTrace(`${dat.getNameShort()}: ${parent.getName()}: correcting extension for: ${romWithFiles.getInputFile()
         .toString()}`);
 
-      const romSignature = await FileCache.getOrComputeFileSignature(romWithFiles.getInputFile());
+      let romSignature: FileSignature | undefined;
+      try {
+        romSignature = await FileCache.getOrComputeFileSignature(romWithFiles.getInputFile());
+      } catch (error) {
+        this.progressBar.logError(`${dat.getNameShort()}: failed to correct file extension for '${romWithFiles.getInputFile()}': ${error}`);
+      }
       if (romSignature) {
         // ROM file signature found, use the appropriate extension
         const { dir, name } = path.parse(correctedRom.getName());

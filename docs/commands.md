@@ -1,6 +1,6 @@
 # Commands
 
-`igir` takes actions based on commands you specify. Each command has a clear input and output, and `igir` will never take surprise actions you did not specify. Multiple commands can (and will likely) be specified at once.
+Igir takes actions based on commands you specify. Each command has a clear input and output, and Igir will never take surprise actions you did not specify. Multiple commands can (and will likely) be specified at once.
 
 !!! tip
 
@@ -8,7 +8,7 @@
 
 ## ROM writing
 
-`igir` has three writing commands. Only one writing command can be specified at a time, and all require the `--output <path>` option.
+Igir has three writing commands. Only one writing command can be specified at a time, and all require the `--output <path>` option.
 
 ### `copy`
 
@@ -30,7 +30,7 @@ By default, hard links are created, similar to [ln(1)](https://linux.die.net/man
 
 ## ROM archiving
 
-`igir` has two ROM archive commands. Archive commands require either the `copy` or `move` write command. Only one archive command can be specified at a time.
+Igir has two ROM archive commands. Archive commands require either the `copy` or `move` write command. Only one archive command can be specified at a time.
 
 If no archive command is specified, files will be left as-is. If they are already extracted, then they will stay extracted. If they are already archived (including non-`.zip` archives), then they will stay archived.
 
