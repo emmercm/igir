@@ -27,7 +27,7 @@ export default class ProgressBarFake extends ProgressBar {
     return Promise.resolve();
   }
 
-  withLoggerPrefix(): ProgressBar {
+  setLoggerPrefix(): ProgressBar {
     return this;
   }
 

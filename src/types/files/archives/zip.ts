@@ -1,7 +1,6 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { Readable } from 'node:stream';
-import { clearInterval } from 'node:timers';
 
 import archiver, { Archiver } from 'archiver';
 import async, { AsyncResultCallback } from 'async';
@@ -10,6 +9,7 @@ import unzipper, { Entry } from 'unzipper';
 import Defaults from '../../../globals/defaults.js';
 import fsPoly from '../../../polyfill/fsPoly.js';
 import StreamPoly from '../../../polyfill/streamPoly.js';
+import Timer from '../../../timer.js';
 import ExpectedError from '../../expectedError.js';
 import File from '../file.js';
 import FileChecksums, { ChecksumBitmask, ChecksumProps } from '../fileChecksums.js';
@@ -215,9 +215,9 @@ export default class Zip extends Archive {
 
           // Leave the input stream open until we're done writing it
           await new Promise<void>((resolve) => {
-            const interval = setInterval(() => {
+            const timer = Timer.setInterval(() => {
               if (writtenEntries.has(entryName) || zipFileError) {
-                clearInterval(interval);
+                timer.cancel();
                 resolve();
               }
             }, 10);
