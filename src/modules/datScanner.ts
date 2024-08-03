@@ -53,7 +53,7 @@ export default class DATScanner extends Scanner {
    */
   async scan(): Promise<DAT[]> {
     this.progressBar.logTrace('scanning DAT files');
-    await this.progressBar.setSymbol(ProgressBarSymbol.SEARCHING);
+    await this.progressBar.setSymbol(ProgressBarSymbol.FILE_SCANNING);
     await this.progressBar.reset(0);
 
     const datFilePaths = await this.options.scanDatFilesWithoutExclusions(async (increment) => {
@@ -86,7 +86,7 @@ export default class DATScanner extends Scanner {
     }
 
     this.progressBar.logTrace('downloading DATs from URLs');
-    await this.progressBar.setSymbol(ProgressBarSymbol.DOWNLOADING);
+    await this.progressBar.setSymbol(ProgressBarSymbol.FILE_DOWNLOADING);
 
     return (await Promise.all(datFiles.map(async (datFile) => {
       if (!datFile.isURL()) {
@@ -111,7 +111,7 @@ export default class DATScanner extends Scanner {
   // Parse each file into a DAT
   private async parseDatFiles(datFiles: File[]): Promise<DAT[]> {
     this.progressBar.logTrace(`parsing ${datFiles.length.toLocaleString()} DAT file${datFiles.length !== 1 ? 's' : ''}`);
-    await this.progressBar.setSymbol(ProgressBarSymbol.PARSING_CONTENTS);
+    await this.progressBar.setSymbol(ProgressBarSymbol.DAT_PARSING);
 
     return (await new DriveSemaphore(this.options.getReaderThreads()).map(
       datFiles,
