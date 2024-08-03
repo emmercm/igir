@@ -59,7 +59,7 @@ export default class CandidateArchiveFileHasher extends Module {
     }
 
     this.progressBar.logTrace(`${dat.getNameShort()}: generating ${archiveFileCount.toLocaleString()} hashed ArchiveFile candidate${archiveFileCount !== 1 ? 's' : ''}`);
-    await this.progressBar.setSymbol(ProgressBarSymbol.HASHING);
+    await this.progressBar.setSymbol(ProgressBarSymbol.CANDIDATE_HASHING);
     await this.progressBar.reset(archiveFileCount);
 
     const hashedParentsToCandidates = this.hashArchiveFiles(dat, parentsToCandidates);

@@ -34,7 +34,7 @@ export default class ROMHeaderProcessor extends Module {
       .filter((inputFile) => this.fileNeedsProcessing(inputFile))
       .length;
     this.progressBar.logTrace(`processing headers in ${filesThatNeedProcessing.toLocaleString()} ROM${filesThatNeedProcessing !== 1 ? 's' : ''}`);
-    await this.progressBar.setSymbol(ProgressBarSymbol.DETECTING_HEADERS);
+    await this.progressBar.setSymbol(ProgressBarSymbol.ROM_HEADER_DETECTION);
     await this.progressBar.reset(filesThatNeedProcessing);
 
     const parsedFiles = await Promise.all(inputRomFiles.map(async (inputFile) => {
