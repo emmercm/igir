@@ -28,11 +28,11 @@ Create a link in the output directory to a ROM in the input directory.
 
 By default, hard links are created, similar to [ln(1)](https://linux.die.net/man/1/ln). Use the `--symlink` option to create symbolic links.
 
-## ROM archiving
+## ROM extracting & zipping
 
 Igir has two ROM archive commands. Archive commands require either the `copy` or `move` write command. Only one archive command can be specified at a time.
 
-If no archive command is specified, files will be left as-is. If they are already extracted, then they will stay extracted. If they are already archived (including non-`.zip` archives), then they will stay archived.
+If no archive command is specified, files will be left as-is. If they are already extracted, then they will stay extracted. If they are already archived (including non-`.zip` archives), then they will stay archived in their original format.
 
 !!! note
 
@@ -50,11 +50,15 @@ ROMs will be archived into a `.zip` file as they are being copied or moved. ROMs
 
 ROMs that are already in an archive will be re-archived.
 
+!!! note
+
+    You can use the [`--dat-combine` option](dats/processing.md#dat-combining) to cause every ROM in a DAT to be zipped together.
+
 ## ROM verification
 
 ### `test`
 
-After performing one of the ROM writing commands, verify that the file was written correctly.
+After performing one of the ROM writing commands (above), verify that the file was written correctly.
 
 - `extract test` tests that each ROM file written has the correct size & checksum
 - `zip test` tests that the `.zip` file has all the correct archive entry sizes & checksums, and contains no excess entries

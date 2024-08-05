@@ -255,7 +255,7 @@ describe('with explicit DATs', () => {
       const result = await runIgir({
         commands: ['move', 'test'],
         dat: [path.join(inputTemp, 'dats', '*')],
-        input: [path.join(inputTemp, 'roms', 'raw')], // only files that can be move-hardlinked
+        input: [path.join(inputTemp, 'roms', 'raw')], // only files that can be move-hard-linked
         output: outputTemp,
         dirDatName: true,
         dirGameSubdir: GameSubdirMode[GameSubdirMode.MULTIPLE].toLowerCase(),
@@ -263,7 +263,7 @@ describe('with explicit DATs', () => {
         moveHardlink: true,
       });
 
-      // No output files should still be hardlinked
+      // No output files should still be hard-linked
       const outputFilesStats = await Promise.all(result.outputFilesAndCrcs
         .map(([outputFile]) => outputFile.replace(/\|.*$/, ''))
         .map(async (outputFile) => fsPoly.stat(path.join(outputTemp, outputFile))));
@@ -589,7 +589,7 @@ describe('with explicit DATs', () => {
         allowExcessSets: true,
       });
 
-      // No output files should still be hardlinked
+      // No output files should still be hard-linked
       const outputFilesStats = await Promise.all(result.outputFilesAndCrcs
         .map(([outputFile]) => outputFile.replace(/\|.*$/, ''))
         .map(async (outputFile) => fsPoly.stat(path.join(outputTemp, outputFile))));
@@ -1100,7 +1100,7 @@ describe('with inferred DATs', () => {
         ['four.rom', '1cf3ca74'],
         [path.join('fourfive', 'five.rom'), '3e5daf67'],
         [path.join('fourfive', 'four.rom'), '1cf3ca74'],
-        [path.join('GD-ROM', 'GD-ROM.gdi'), 'f16f621c'], // TODO(cemmer)
+        [path.join('GD-ROM', 'GD-ROM.gdi'), 'f16f621c'],
         [path.join('GD-ROM', 'track01.bin'), '9796ed9a'],
         [path.join('GD-ROM', 'track02.raw'), 'abc178d5'],
         [path.join('GD-ROM', 'track03.bin'), '61a363f1'],

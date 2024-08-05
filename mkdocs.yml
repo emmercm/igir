@@ -47,8 +47,11 @@ nav:
         - installation.md
         - commands.md
         - alternatives.md
-      - Example Usage:
+      - Standard Usage:
           - usage/collection-sorting.md
+          - usage/personal.md
+          - usage/best-practices.md
+      - Hardware-Specific Usage:
           - Emulator Frontends:
             - usage/handheld/adam.md
             - usage/desktop/batocera.md
@@ -78,7 +81,6 @@ nav:
             - usage/console/gamecube.md
             - usage/console/ps2.md
           - usage/arcade.md
-          - usage/personal.md
       - DATs:
           - dats/introduction.md
           - dats/processing.md

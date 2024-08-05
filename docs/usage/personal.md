@@ -1,4 +1,4 @@
-# Creator's Usage
+# Creator's Usage Example
 
 Igir has many options available to fit almost any use case, but the number of options can be overwhelming. So that begs a question: _how do I, the creator of Igir, use Igir in the real world?_
 
@@ -111,8 +111,11 @@ SOURCE=/Volumes/WDPassport4
 
 npx igir@latest copy extract test clean \
   --dat "${SOURCE}/No-Intro*.zip" \
-  --dat-name-regex-exclude "/headerless/i" \
+  --dat-name-regex-exclude "/headerless|OSTs/i" \
   --input "${SOURCE}/No-Intro/" \
+  --input-exclude "${SOURCE}/No-Intro/Atari - 7800 (BIN)/" \
+  --input-exclude "${SOURCE}/No-Intro/Commodore - Amiga*/**" \
+  --input-exclude "${SOURCE}/No-Intro/Nintendo - Nintendo - Family Computer Disk System (QD)/" \
   --input-exclude "${SOURCE}/No-Intro/Nintendo - Game Boy Advance (e-Reader)/" \
   --patch "${SOURCE}/Patches/" \
   --output "./Assets/{pocket}/common/" \
@@ -120,6 +123,7 @@ npx igir@latest copy extract test clean \
   --dir-letter-limit 1000 \
   `# Leave BIOS files alone` \
   --clean-exclude "./Assets/*/common/*.*" \
+  --clean-exclude "./Assets/*/common/Palettes/**" \
   --overwrite-invalid \
   --no-bios \
   --no-bad \
@@ -127,7 +131,8 @@ npx igir@latest copy extract test clean \
   --prefer-language EN \
   --prefer-region USA,WORLD,EUR,JPN \
   --prefer-revision-newer \
-  --prefer-retail
+  --prefer-retail \
+  -v
 ```
 
 That lets me create an EN+USA preferred 1G1R set for my Pocket on the fly, making sure I don't delete BIOS files needed for each core.
@@ -153,20 +158,21 @@ SOURCE=/Volumes/WDPassport4
 
 npx --yes igir@latest copy test clean report \
   --dat "${SOURCE}/Redump*.zip" \
-  --dat-name-regex '/gamecube/i' \
+  --dat-name-regex "/gamecube/i" \
   --input "${SOURCE}/Redump/Nintendo - GameCube" \
+  --patch "${SOURCE}/Patches" \
   --output "./Games/" \
   --dir-letter \
-  --filter-regex-exclude "/(Baseball|Basketball|Cabela|Disney|F1|FIFA|Football|Golf|Madden|MLB|MLS|NASCAR|NBA|NCAA|NFL|NHL|Nickelodeon|PGA|Soccer|Tennis|UFC|WWE)/i" \
+  --overwrite-invalid \
+  --filter-regex-exclude "/(Angler|Baseball|Basketball|Bass|Bonus Disc|Cabela|Disney|ESPN|F1|FIFA|Football|Golf|Madden|MLB|MLS|NASCAR|NBA|NCAA|NFL|NHL|Nickelodeon|Nick Jr|Nicktoons|PGA|Poker|Soccer|Tennis|Tonka|UFC|WWE)/i" \
   --no-bios \
   --only-retail \
   --single \
   --prefer-language EN \
   --prefer-region USA,WORLD,EUR,JPN \
   --prefer-revision-newer \
-  --overwrite-invalid \
   --writer-threads 1 \
   -v
 ```
 
-I use the trimmed [NKit format](https://wiki.gbatemp.net/wiki/NKit) for ISOs, which Igir can't extract, so they're copied as-is. I also exclude some games due to limited SD card size.
+I use the trimmed [NKit format](https://wiki.gbatemp.net/wiki/NKit) for ISOs, which don't make sense to extract, so they're copied as-is. I also exclude some games due to limited SD card size.

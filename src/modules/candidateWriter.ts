@@ -532,9 +532,9 @@ export default class CandidateWriter extends Module {
 
     if (await fsPoly.isHardlink(inputRomFile.getFilePath())) {
       // It's unsafe to add a third or more link to an inode. We don't know if the input file was
-      // already move-hardlinked, or if it was hardlinked for some other reason. But if we don't do
-      // this, then we may end up with files in the output directory that are hardlinked even though
-      // the command wasn't specified.
+      // already move-hard-linked, or if it was hard-linked for some other reason. But if we don't
+      // do this, then we may end up with files in the output directory that are hard-linked even
+      // though the command wasn't specified.
       this.progressBar.logTrace(`${dat.getNameShort()}: ${releaseCandidate.getName()}: can't move-hardlink a file that's already hardlinked`);
       return false;
     }

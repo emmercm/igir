@@ -52,6 +52,8 @@ export default class ROMIndexer extends Module {
     [...checksumsToFiles.values()]
       .forEach((files) => files
         .sort((fileOne, fileTwo) => {
+          // TODO(cemmer): if move-hard-linking, prefer files that aren't already hard-linked
+
           // Prefer un-archived files because they're less expensive to process
           const fileOneArchived = ROMIndexer.archiveEntryPriority(fileOne);
           const fileTwoArchived = ROMIndexer.archiveEntryPriority(fileTwo);
@@ -63,6 +65,7 @@ export default class ROMIndexer extends Module {
           // This is in case the output file is invalid and we're trying to overwrite it with
           // something else. Otherwise, we'll just attempt to overwrite the invalid output file with
           // itself, still resulting in an invalid output file.
+          // TODO(cemmer): only do this when overwriting files in some way?
           const fileOneInOutput = path.resolve(fileOne.getFilePath()).startsWith(outputDir) ? 1 : 0;
           const fileTwoInOutput = path.resolve(fileTwo.getFilePath()).startsWith(outputDir) ? 1 : 0;
           if (fileOneInOutput !== fileTwoInOutput) {
@@ -71,6 +74,7 @@ export default class ROMIndexer extends Module {
 
           // Then, prefer files that are on the same disk for fs efficiency see {@link FsPoly#mv}
           if (outputDirDisk) {
+            // TODO(cemmer): only do this when not copying files?
             const fileOneInOutputDisk = path.resolve(fileOne.getFilePath())
               .startsWith(outputDirDisk) ? 0 : 1;
             const fileTwoInOutputDisk = path.resolve(fileTwo.getFilePath())

@@ -30,7 +30,7 @@ describe('isDirectory', () => {
 });
 
 describe('hardlink', () => {
-  it('should create a hardlink', async () => {
+  it('should create a hard link', async () => {
     const tempFileTarget = await fsPoly.mktemp(path.join(Temp.getTempDir(), 'target'));
     const tempFileLink = await fsPoly.mktemp(path.join(Temp.getTempDir(), 'link'));
 
