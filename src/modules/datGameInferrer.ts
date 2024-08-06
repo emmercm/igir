@@ -190,12 +190,12 @@ export default class DATGameInferrer extends Module {
             .map((binFile) => path.join(path.dirname(cueFile.getFilePath()), binFile.name))
             .map((binFilePath) => rawFilePathsToFiles.get(binFilePath))
             .filter(ArrayPoly.filterNotNullish);
-
-          if (binFiles.length > 0) {
-            const gameName = DATGameInferrer.getGameName(cueFile);
-            return [gameName, [cueFile, ...binFiles]];
+          if (binFiles.length === 0) {
+            return undefined;
           }
-          return undefined;
+
+          const gameName = DATGameInferrer.getGameName(cueFile);
+          return [gameName, [cueFile, ...binFiles]];
         } catch {
           return undefined;
         }
@@ -239,12 +239,12 @@ export default class DATGameInferrer extends Module {
             .map((trackFilePath) => path.join(path.dirname(gdiFile.getFilePath()), trackFilePath))
             .map((trackFilePath) => rawFilePathsToFiles.get(trackFilePath))
             .filter(ArrayPoly.filterNotNullish);
-
-          if (trackFiles.length > 0) {
-            const gameName = DATGameInferrer.getGameName(gdiFile);
-            return [gameName, [gdiFile, ...trackFiles]];
+          if (trackFiles.length === 0) {
+            return undefined;
           }
-          return undefined;
+
+          const gameName = DATGameInferrer.getGameName(gdiFile);
+          return [gameName, [gdiFile, ...trackFiles]];
         } catch {
           return undefined;
         }
