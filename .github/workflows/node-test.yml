@@ -69,6 +69,7 @@ jobs:
       - path-filter
     if: ${{ needs.path-filter.outputs.changes == 'true' }}
     runs-on: ${{ matrix.os }}-latest
+    timeout-minutes: 10
     strategy:
       matrix:
         os: [ ubuntu, macos, windows ]
@@ -97,6 +98,7 @@ jobs:
       - path-filter
     if: ${{ needs.path-filter.outputs.changes == 'true' }}
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     strategy:
       matrix:
         node-version: [ lts, 18, 16.7.0 ]
