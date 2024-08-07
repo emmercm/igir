@@ -233,21 +233,6 @@ export default class CandidateGenerator extends Module {
       .filter(([, romWithFiles]) => !romWithFiles)
       .map(([rom]) => rom);
 
-    // If there is a CHD with every .bin file, then assume its .cue file is accurate
-    if (missingRoms.length > 0 && CandidateGenerator.onlyCueFilesMissingFromChd(
-      game,
-      foundRomsWithFiles.map((romWithFiles) => romWithFiles.getRom()),
-    )) {
-      const inputChds = foundRomsWithFiles
-        .map((romWithFiles) => romWithFiles.getOutputFile())
-        .filter((file) => file.getFilePath().toLowerCase().endsWith('.chd'))
-        .filter(ArrayPoly.filterUniqueMapped((file) => file.getFilePath()));
-      if (inputChds.length === 1) {
-        this.progressBar.logTrace(`${dat.getNameShort()}: ${game.getName()}: `);
-        return new ReleaseCandidate(game, release, foundRomsWithFiles);
-      }
-    }
-
     // Ignore the Game if not every File is present
     if (missingRoms.length > 0 && !this.options.getAllowIncompleteSets()) {
       if (foundRomsWithFiles.length > 0) {
@@ -317,13 +302,13 @@ export default class CandidateGenerator extends Module {
 
     // Filter to the Archives that contain every ROM in this Game
     const archivesWithEveryRom = [...inputArchivesToRoms.entries()]
-      .filter(([archive, roms]) => {
+      .filter(([inputArchive, roms]) => {
         if (roms.map((rom) => rom.hashCode()).join(',') === gameRoms.map((rom) => rom.hashCode()).join(',')) {
           return true;
         }
         // If there is a CHD with every .bin file, and we're raw-copying it, then assume its .cue
         // file is accurate
-        return archive instanceof Chd
+        return inputArchive instanceof Chd
           && !gameRoms.some((rom) => this.options.shouldZipRom(rom))
           && !gameRoms.some((rom) => this.options.shouldExtractRom(rom))
           && CandidateGenerator.onlyCueFilesMissingFromChd(game, roms);

@@ -29,6 +29,52 @@ describe('isDirectory', () => {
   });
 });
 
+describe('isHardlink', () => {
+  it('should return true for a hardlink', async () => {
+    const tempFileTarget = await fsPoly.mktemp(path.join(Temp.getTempDir(), 'target'));
+    const tempFileLink = await fsPoly.mktemp(path.join(Temp.getTempDir(), 'link'));
+
+    try {
+      await fsPoly.touch(tempFileTarget);
+
+      await fsPoly.hardlink(tempFileTarget, tempFileLink);
+      await expect(fsPoly.isHardlink(tempFileLink)).resolves.toEqual(true);
+      await expect(fsPoly.isHardlink(tempFileTarget)).resolves.toEqual(true);
+    } finally {
+      await fsPoly.rm(tempFileTarget, { force: true });
+      await fsPoly.rm(tempFileLink, { force: true });
+    }
+  });
+
+  it('should return false for a symlink', async () => {
+    const tempFileTarget = await fsPoly.mktemp(path.join(Temp.getTempDir(), 'target'));
+    const tempFileLink = await fsPoly.mktemp(path.join(Temp.getTempDir(), 'link'));
+
+    try {
+      await fsPoly.touch(tempFileTarget);
+
+      await fsPoly.symlink(tempFileTarget, tempFileLink);
+      await expect(fsPoly.isHardlink(tempFileLink)).resolves.toEqual(false);
+      await expect(fsPoly.isHardlink(tempFileTarget)).resolves.toEqual(false);
+    } finally {
+      await fsPoly.rm(tempFileTarget, { force: true });
+      await fsPoly.rm(tempFileLink, { force: true });
+    }
+  });
+
+  it('should return false for a file', async () => {
+    const tempFile = await fsPoly.mktemp(path.join(Temp.getTempDir(), 'temp'));
+    await fsPoly.touch(tempFile);
+    await expect(fsPoly.isHardlink(tempFile)).resolves.toEqual(false);
+    await fsPoly.rm(tempFile);
+  });
+
+  it('should return false for non-existent file', async () => {
+    const tempFile = await fsPoly.mktemp(path.join(Temp.getTempDir(), 'temp'));
+    await expect(fsPoly.isHardlink(tempFile)).resolves.toEqual(false);
+  });
+});
+
 describe('hardlink', () => {
   it('should create a hardlink', async () => {
     const tempFileTarget = await fsPoly.mktemp(path.join(Temp.getTempDir(), 'target'));
