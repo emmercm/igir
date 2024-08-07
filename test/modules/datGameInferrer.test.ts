@@ -1,5 +1,7 @@
 import DATGameInferrer from '../../src/modules/datGameInferrer.js';
 import ROMScanner from '../../src/modules/romScanner.js';
+import FileCache from '../../src/types/files/fileCache.js';
+import FileFactory from '../../src/types/files/fileFactory.js';
 import Options from '../../src/types/options.js';
 import ProgressBarFake from '../console/progressBarFake.js';
 
@@ -31,7 +33,11 @@ test.each([
 ])('should infer DATs: %s', async (input, expected) => {
   // Given
   const options = new Options({ input });
-  const romFiles = await new ROMScanner(options, new ProgressBarFake()).scan();
+  const romFiles = await new ROMScanner(
+    options,
+    new ProgressBarFake(),
+    new FileFactory(new FileCache()),
+  ).scan();
 
   // When
   const dats = await new DATGameInferrer(options, new ProgressBarFake()).infer(romFiles);

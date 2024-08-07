@@ -17,6 +17,7 @@ import ZipSpanned from '../../../../src/types/files/archives/sevenZip/zipSpanned
 import ZipX from '../../../../src/types/files/archives/sevenZip/zipX.js';
 import Tar from '../../../../src/types/files/archives/tar.js';
 import Zip from '../../../../src/types/files/archives/zip.js';
+import FileCache from '../../../../src/types/files/fileCache.js';
 import FileFactory from '../../../../src/types/files/fileFactory.js';
 
 describe('getArchiveEntries', () => {
@@ -38,7 +39,7 @@ describe('getArchiveEntries', () => {
     ...NkitIso.getExtensions(),
   ])])('should throw when the file doesn\'t exist: %s', async (extension) => {
     const tempFile = (await fsPoly.mktemp(path.join(Temp.getTempDir(), 'file'))) + extension;
-    await expect(FileFactory.filesFrom(tempFile)).rejects.toThrow();
+    await expect(new FileFactory(new FileCache()).filesFrom(tempFile)).rejects.toThrow();
   });
 
   test.each([
@@ -69,7 +70,7 @@ describe('getArchiveEntries', () => {
     // other
     ['./test/fixtures/roms/nkit/5bc2ce5b.nkit.iso', '5bc2ce5b.iso', '5bc2ce5b'],
   ])('should enumerate the single file archive: %s', async (filePath, expectedEntryPath, expectedCrc) => {
-    const entries = await FileFactory.filesFrom(filePath);
+    const entries = await new FileFactory(new FileCache()).filesFrom(filePath);
     expect(entries).toHaveLength(1);
 
     const entry = entries[0];
@@ -83,7 +84,7 @@ describe('getArchiveEntries', () => {
     ['./test/fixtures/roms/tar/onetwothree.tar.gz', [['1/one.rom', 'f817a89f'], ['2/two.rom', '96170874'], ['3/three.rom', 'ff46c5d8']]],
     ['./test/fixtures/roms/zip/onetwothree.zip', [['1/one.rom', 'f817a89f'], ['2/two.rom', '96170874'], ['3/three.rom', 'ff46c5d8']]],
   ])('should enumerate the multi file archive: %s', async (filePath, expectedEntries) => {
-    const entries = await FileFactory.filesFrom(filePath);
+    const entries = await new FileFactory(new FileCache()).filesFrom(filePath);
     expect(entries).toHaveLength(expectedEntries.length);
 
     for (const [idx, entry] of entries.entries()) {

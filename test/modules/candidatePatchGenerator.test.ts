@@ -13,6 +13,8 @@ import Header from '../../src/types/dats/logiqx/header.js';
 import LogiqxDAT from '../../src/types/dats/logiqx/logiqxDat.js';
 import Parent from '../../src/types/dats/parent.js';
 import File from '../../src/types/files/file.js';
+import FileCache from '../../src/types/files/fileCache.js';
+import FileFactory from '../../src/types/files/fileFactory.js';
 import Options from '../../src/types/options.js';
 import ReleaseCandidate from '../../src/types/releaseCandidate.js';
 import ProgressBarFake from '../console/progressBarFake.js';
@@ -36,7 +38,11 @@ async function runPatchCandidateGenerator(
   const parentsToCandidates = await new CandidateGenerator(options, new ProgressBarFake())
     .generate(dat, indexedRomFiles);
 
-  const patches = await new PatchScanner(options, new ProgressBarFake()).scan();
+  const patches = await new PatchScanner(
+    options,
+    new ProgressBarFake(),
+    new FileFactory(new FileCache()),
+  ).scan();
 
   return new CandidatePatchGenerator(new ProgressBarFake())
     .generate(dat, parentsToCandidates, patches);
@@ -59,7 +65,11 @@ describe('with inferred DATs', () => {
     const options = new Options({
       input: [path.join('test', 'fixtures', 'roms', 'headered')],
     });
-    const romFiles = await new ROMScanner(options, new ProgressBarFake()).scan();
+    const romFiles = await new ROMScanner(
+      options,
+      new ProgressBarFake(),
+      new FileFactory(new FileCache()),
+    ).scan();
     const dat = await buildInferredDat(options, romFiles);
 
     // When
@@ -76,7 +86,11 @@ describe('with inferred DATs', () => {
     const options = new Options({
       input: [path.join('test', 'fixtures', 'roms', 'patchable')],
     });
-    const romFiles = await new ROMScanner(options, new ProgressBarFake()).scan();
+    const romFiles = await new ROMScanner(
+      options,
+      new ProgressBarFake(),
+      new FileFactory(new FileCache()),
+    ).scan();
     const dat = await buildInferredDat(options, romFiles);
 
     // When
@@ -96,8 +110,16 @@ describe('with explicit DATs', () => {
       dat: [path.join('test', 'fixtures', 'dats', 'smdb*')],
       input: [path.join('test', 'fixtures', 'roms', 'patchable')],
     });
-    const dat = (await new DATScanner(options, new ProgressBarFake()).scan())[0];
-    const romFiles = await new ROMScanner(options, new ProgressBarFake()).scan();
+    const dat = (await new DATScanner(
+      options,
+      new ProgressBarFake(),
+      new FileFactory(new FileCache()),
+    ).scan())[0];
+    const romFiles = await new ROMScanner(
+      options,
+      new ProgressBarFake(),
+      new FileFactory(new FileCache()),
+    ).scan();
 
     // And pre-assert all Game names and ROM names have path separators in them
     const totalRoms = dat.getGames().reduce((gameSum, game) => gameSum + game.getRoms().length, 0);

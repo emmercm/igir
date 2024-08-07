@@ -10,6 +10,7 @@ import ArchiveEntry from '../../../../src/types/files/archives/archiveEntry.js';
 import SevenZip from '../../../../src/types/files/archives/sevenZip/sevenZip.js';
 import Zip from '../../../../src/types/files/archives/zip.js';
 import File from '../../../../src/types/files/file.js';
+import FileCache from '../../../../src/types/files/fileCache.js';
 import { ChecksumBitmask } from '../../../../src/types/files/fileChecksums.js';
 import FileFactory from '../../../../src/types/files/fileFactory.js';
 import ROMHeader from '../../../../src/types/files/romHeader.js';
@@ -52,7 +53,7 @@ describe('getSize', () => {
     ['./test/fixtures/roms/nkit/5bc2ce5b.nkit.iso', 1_459_978_240],
   ])('%s', (filePath, expectedSize) => {
     it('should get the file\'s size', async () => {
-      const archiveEntries = await FileFactory.filesFrom(filePath);
+      const archiveEntries = await new FileFactory(new FileCache()).filesFrom(filePath);
       expect(archiveEntries).toHaveLength(1);
       const archiveEntry = archiveEntries[0];
 
@@ -69,7 +70,7 @@ describe('getSize', () => {
         const tempLink = path.join(tempDir, `link_${path.basename(filePath)}`);
         await fsPoly.hardlink(path.resolve(tempFile), tempLink);
 
-        const archiveEntries = await FileFactory.filesFrom(tempLink);
+        const archiveEntries = await new FileFactory(new FileCache()).filesFrom(tempLink);
         expect(archiveEntries).toHaveLength(1);
         const archiveEntry = archiveEntries[0];
 
@@ -85,7 +86,7 @@ describe('getSize', () => {
         const tempLink = path.join(tempDir, path.basename(filePath));
         await fsPoly.symlink(path.resolve(filePath), tempLink);
 
-        const archiveEntries = await FileFactory.filesFrom(tempLink);
+        const archiveEntries = await new FileFactory(new FileCache()).filesFrom(tempLink);
         expect(archiveEntries).toHaveLength(1);
         const archiveEntry = archiveEntries[0];
 
@@ -101,7 +102,7 @@ describe('getSize', () => {
         const tempLink = path.join(tempDir, path.basename(filePath));
         await fsPoly.symlink(await fsPoly.symlinkRelativePath(filePath, tempLink), tempLink);
 
-        const archiveEntries = await FileFactory.filesFrom(tempLink);
+        const archiveEntries = await new FileFactory(new FileCache()).filesFrom(tempLink);
         expect(archiveEntries).toHaveLength(1);
         const archiveEntry = archiveEntries[0];
 
@@ -140,7 +141,7 @@ describe('getCrc32', () => {
     // other
     ['./test/fixtures/roms/nkit/5bc2ce5b.nkit.iso', '5bc2ce5b'],
   ])('should hash the full archive entry: %s', async (filePath, expectedCrc) => {
-    const archiveEntries = await FileFactory.filesFrom(filePath);
+    const archiveEntries = await new FileFactory(new FileCache()).filesFrom(filePath);
     expect(archiveEntries).toHaveLength(1);
     const archiveEntry = archiveEntries[0];
 
@@ -182,7 +183,7 @@ describe('getCrc32WithoutHeader', () => {
     // other
     ['./test/fixtures/roms/nkit/5bc2ce5b.nkit.iso', '5bc2ce5b'],
   ])('should hash the full archive entry when no header given: %s', async (filePath, expectedCrc) => {
-    const archiveEntries = await FileFactory.filesFrom(filePath);
+    const archiveEntries = await new FileFactory(new FileCache()).filesFrom(filePath);
     expect(archiveEntries).toHaveLength(1);
     const archiveEntry = archiveEntries[0];
 
@@ -201,7 +202,7 @@ describe('getCrc32WithoutHeader', () => {
     ['./test/fixtures/roms/headered/fds_joypad_test.fds.zip', '3ecbac61'],
     ['./test/fixtures/roms/headered/LCDTestROM.lnx.rar', '42583855'],
   ])('should hash the archive entry without the header when header is given and present in file: %s', async (filePath, expectedCrc) => {
-    const archiveEntries = await FileFactory.filesFrom(filePath);
+    const archiveEntries = await new FileFactory(new FileCache()).filesFrom(filePath);
     expect(archiveEntries).toHaveLength(1);
     const archiveEntry = await archiveEntries[0].withFileHeader(
       ROMHeader.headerFromFilename(archiveEntries[0].getExtractedFilePath()) as ROMHeader,
@@ -245,7 +246,8 @@ describe('getMd5', () => {
     // other
     ['./test/fixtures/roms/nkit/5bc2ce5b.nkit.iso', undefined],
   ])('should hash the full archive entry: %s', async (filePath, expectedMd5) => {
-    const archiveEntries = await FileFactory.filesFrom(filePath, ChecksumBitmask.MD5);
+    const archiveEntries = await new FileFactory(new FileCache())
+      .filesFrom(filePath, ChecksumBitmask.MD5);
     expect(archiveEntries).toHaveLength(1);
     const archiveEntry = archiveEntries[0];
 
@@ -286,7 +288,8 @@ describe('getMd5WithoutHeader', () => {
     // other
     ['./test/fixtures/roms/nkit/5bc2ce5b.nkit.iso', undefined],
   ])('should hash the full archive entry when no header given: %s', async (filePath, expectedMd5) => {
-    const archiveEntries = await FileFactory.filesFrom(filePath, ChecksumBitmask.MD5);
+    const archiveEntries = await new FileFactory(new FileCache())
+      .filesFrom(filePath, ChecksumBitmask.MD5);
     expect(archiveEntries).toHaveLength(1);
     const archiveEntry = archiveEntries[0];
 
@@ -304,7 +307,8 @@ describe('getMd5WithoutHeader', () => {
     ['./test/fixtures/roms/headered/fds_joypad_test.fds.zip', '26df56a7e5b096577338bcc4c334ec7d'],
     ['./test/fixtures/roms/headered/LCDTestROM.lnx.rar', '294a07b07ce67a9b492e4b6e77d6d2f7'],
   ])('should hash the archive entry without the header when header is given and present in file: %s', async (filePath, expectedMd5) => {
-    const archiveEntries = await FileFactory.filesFrom(filePath, ChecksumBitmask.MD5);
+    const archiveEntries = await new FileFactory(new FileCache())
+      .filesFrom(filePath, ChecksumBitmask.MD5);
     expect(archiveEntries).toHaveLength(1);
     const archiveEntry = await archiveEntries[0].withFileHeader(
       ROMHeader.headerFromFilename(archiveEntries[0].getExtractedFilePath()) as ROMHeader,
@@ -348,7 +352,8 @@ describe('getSha1', () => {
     // other
     ['./test/fixtures/roms/nkit/5bc2ce5b.nkit.iso', undefined],
   ])('should hash the full archive entry: %s', async (filePath, expectedSha1) => {
-    const archiveEntries = await FileFactory.filesFrom(filePath, ChecksumBitmask.SHA1);
+    const archiveEntries = await new FileFactory(new FileCache())
+      .filesFrom(filePath, ChecksumBitmask.SHA1);
     expect(archiveEntries).toHaveLength(1);
     const archiveEntry = archiveEntries[0];
 
@@ -389,7 +394,8 @@ describe('getSha1WithoutHeader', () => {
     // other
     ['./test/fixtures/roms/nkit/5bc2ce5b.nkit.iso', undefined],
   ])('should hash the full archive entry when no header given: %s', async (filePath, expectedSha1) => {
-    const archiveEntries = await FileFactory.filesFrom(filePath, ChecksumBitmask.SHA1);
+    const archiveEntries = await new FileFactory(new FileCache())
+      .filesFrom(filePath, ChecksumBitmask.SHA1);
     expect(archiveEntries).toHaveLength(1);
     const archiveEntry = archiveEntries[0];
 
@@ -407,7 +413,8 @@ describe('getSha1WithoutHeader', () => {
     ['./test/fixtures/roms/headered/fds_joypad_test.fds.zip', '7b6bd1a69bbc5d8121c72dd1eedfb6752fe11787'],
     ['./test/fixtures/roms/headered/LCDTestROM.lnx.rar', 'e2901046126153b318a09cc1476eec8afff0b698'],
   ])('should hash the archive entry without the header when header is given and present in file: %s', async (filePath, expectedSha1) => {
-    const archiveEntries = await FileFactory.filesFrom(filePath, ChecksumBitmask.SHA1);
+    const archiveEntries = await new FileFactory(new FileCache())
+      .filesFrom(filePath, ChecksumBitmask.SHA1);
     expect(archiveEntries).toHaveLength(1);
     const archiveEntry = await archiveEntries[0].withFileHeader(
       ROMHeader.headerFromFilename(archiveEntries[0].getExtractedFilePath()) as ROMHeader,
@@ -451,7 +458,8 @@ describe('getSha256', () => {
     // other
     ['./test/fixtures/roms/nkit/5bc2ce5b.nkit.iso', undefined],
   ])('should hash the full archive entry: %s', async (filePath, expectedSha256) => {
-    const archiveEntries = await FileFactory.filesFrom(filePath, ChecksumBitmask.SHA256);
+    const archiveEntries = await new FileFactory(new FileCache())
+      .filesFrom(filePath, ChecksumBitmask.SHA256);
     expect(archiveEntries).toHaveLength(1);
     const archiveEntry = archiveEntries[0];
 
@@ -492,7 +500,8 @@ describe('getSha256WithoutHeader', () => {
     // other
     ['./test/fixtures/roms/nkit/5bc2ce5b.nkit.iso', undefined],
   ])('should hash the full archive entry when no header given: %s', async (filePath, expectedSha256) => {
-    const archiveEntries = await FileFactory.filesFrom(filePath, ChecksumBitmask.SHA256);
+    const archiveEntries = await new FileFactory(new FileCache())
+      .filesFrom(filePath, ChecksumBitmask.SHA256);
     expect(archiveEntries).toHaveLength(1);
     const archiveEntry = archiveEntries[0];
 
@@ -510,7 +519,8 @@ describe('getSha256WithoutHeader', () => {
     ['./test/fixtures/roms/headered/fds_joypad_test.fds.zip', '29e56794d15ccaa79e48ec0c80004f8745cfb116cce43b99435ae8790e79c327'],
     ['./test/fixtures/roms/headered/LCDTestROM.lnx.rar', '65da30d4d2b210d9ab0b634deb3f6f8ee38af9a338b2f9bedd4379bacfb2b07d'],
   ])('should hash the archive entry without the header when header is given and present in file: %s', async (filePath, expectedSha256) => {
-    const archiveEntries = await FileFactory.filesFrom(filePath, ChecksumBitmask.SHA256);
+    const archiveEntries = await new FileFactory(new FileCache())
+      .filesFrom(filePath, ChecksumBitmask.SHA256);
     expect(archiveEntries).toHaveLength(1);
     const archiveEntry = await archiveEntries[0].withFileHeader(
       ROMHeader.headerFromFilename(archiveEntries[0].getExtractedFilePath()) as ROMHeader,
@@ -538,7 +548,7 @@ describe('extractEntryToFile', () => {
         './test/fixtures/roms/tar',
         './test/fixtures/roms/zip',
       ],
-    }), new ProgressBarFake()).scan();
+    }), new ProgressBarFake(), new FileFactory(new FileCache())).scan();
     const archives = archiveEntries
       .filter((entry): entry is ArchiveEntry<Archive> => entry instanceof ArchiveEntry)
       .map((entry) => entry.getArchive())
@@ -562,7 +572,7 @@ describe('copyToTempFile', () => {
         './test/fixtures/roms/tar',
         './test/fixtures/roms/zip',
       ],
-    }), new ProgressBarFake()).scan();
+    }), new ProgressBarFake(), new FileFactory(new FileCache())).scan();
     expect(archiveEntries).toHaveLength(37);
 
     const temp = await fsPoly.mkdtemp(Temp.getTempDir());
@@ -587,7 +597,7 @@ describe('createReadStream', () => {
         './test/fixtures/roms/tar',
         './test/fixtures/roms/zip',
       ],
-    }), new ProgressBarFake()).scan();
+    }), new ProgressBarFake(), new FileFactory(new FileCache())).scan();
     expect(archiveEntries).toHaveLength(37);
 
     const temp = await fsPoly.mkdtemp(Temp.getTempDir());

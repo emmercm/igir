@@ -1,6 +1,7 @@
 import ProgressBar, { ProgressBarSymbol } from '../console/progressBar.js';
 import File from '../types/files/file.js';
 import { ChecksumBitmask } from '../types/files/fileChecksums.js';
+import FileFactory from '../types/files/fileFactory.js';
 import Options from '../types/options.js';
 import Scanner from './scanner.js';
 
@@ -9,8 +10,8 @@ import Scanner from './scanner.js';
  * representation.
  */
 export default class ROMScanner extends Scanner {
-  constructor(options: Options, progressBar: ProgressBar) {
-    super(options, progressBar, ROMScanner.name);
+  constructor(options: Options, progressBar: ProgressBar, fileFactory: FileFactory) {
+    super(options, progressBar, fileFactory, ROMScanner.name);
   }
 
   /**

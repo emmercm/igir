@@ -9,13 +9,14 @@ import { ChecksumBitmask } from '../../../src/types/files/fileChecksums.js';
 describe('loadFile', () => {
   it('should load after saving', async () => {
     const tempCache = await FsPoly.mktemp(path.join(Temp.getTempDir(), 'cache'));
-    await FileCache.loadFile(tempCache);
+    const fileCache = new FileCache();
+    await fileCache.loadFile(tempCache);
 
     // Compute some values
-    await FileCache.getOrComputeFileChecksums(path.join('test', 'fixtures', 'roms', 'raw', 'fizzbuzz.nes'), ChecksumBitmask.CRC32);
-    await FileCache.getOrComputeArchiveChecksums(new Zip(path.join('test', 'fixtures', 'roms', 'zip', 'foobar.zip')), ChecksumBitmask.CRC32);
+    await fileCache.getOrComputeFileChecksums(path.join('test', 'fixtures', 'roms', 'raw', 'fizzbuzz.nes'), ChecksumBitmask.CRC32);
+    await fileCache.getOrComputeArchiveChecksums(new Zip(path.join('test', 'fixtures', 'roms', 'zip', 'foobar.zip')), ChecksumBitmask.CRC32);
 
-    await FileCache.save();
-    await FileCache.loadFile(tempCache);
+    await fileCache.save();
+    await fileCache.loadFile(tempCache);
   });
 });

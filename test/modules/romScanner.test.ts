@@ -6,12 +6,18 @@ import ROMScanner from '../../src/modules/romScanner.js';
 import ArrayPoly from '../../src/polyfill/arrayPoly.js';
 import fsPoly from '../../src/polyfill/fsPoly.js';
 import ArchiveEntry from '../../src/types/files/archives/archiveEntry.js';
+import FileCache from '../../src/types/files/fileCache.js';
 import { ChecksumBitmask } from '../../src/types/files/fileChecksums.js';
+import FileFactory from '../../src/types/files/fileFactory.js';
 import Options, { OptionsProps } from '../../src/types/options.js';
 import ProgressBarFake from '../console/progressBarFake.js';
 
 function createRomScanner(input: string[], inputExclude: string[] = []): ROMScanner {
-  return new ROMScanner(new Options({ input, inputExclude }), new ProgressBarFake());
+  return new ROMScanner(
+    new Options({ input, inputExclude }),
+    new ProgressBarFake(),
+    new FileFactory(new FileCache()),
+  );
 }
 
 it('should throw on nonexistent paths', async () => {
@@ -53,8 +59,11 @@ describe('multiple files', () => {
     const checksumBitmask = Object.keys(ChecksumBitmask)
       .filter((bitmask): bitmask is keyof typeof ChecksumBitmask => Number.isNaN(Number(bitmask)))
       .reduce((allBitmasks, bitmask) => allBitmasks | ChecksumBitmask[bitmask], 0);
-    const scannedFiles = await new ROMScanner(new Options(optionsProps), new ProgressBarFake())
-      .scan(checksumBitmask, true);
+    const scannedFiles = await new ROMScanner(
+      new Options(optionsProps),
+      new ProgressBarFake(),
+      new FileFactory(new FileCache()),
+    ).scan(checksumBitmask, true);
     expect(scannedFiles).toHaveLength(expectedRomFiles);
   });
 
@@ -64,8 +73,11 @@ describe('multiple files', () => {
       inputChecksumQuick: true,
     });
 
-    const scannedFiles = await new ROMScanner(options, new ProgressBarFake())
-      .scan(ChecksumBitmask.CRC32, false);
+    const scannedFiles = await new ROMScanner(
+      options,
+      new ProgressBarFake(),
+      new FileFactory(new FileCache()),
+    ).scan(ChecksumBitmask.CRC32, false);
 
     const extensionsWithoutCrc32 = scannedFiles
       .filter((file) => file instanceof ArchiveEntry)
