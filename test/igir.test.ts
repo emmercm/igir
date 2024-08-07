@@ -10,7 +10,12 @@ import ArrayPoly from '../src/polyfill/arrayPoly.js';
 import fsPoly from '../src/polyfill/fsPoly.js';
 import { ChecksumBitmask } from '../src/types/files/fileChecksums.js';
 import FileFactory from '../src/types/files/fileFactory.js';
-import Options, { FixExtension, GameSubdirMode, OptionsProps } from '../src/types/options.js';
+import Options, {
+  FixExtension,
+  GameSubdirMode,
+  InputChecksumArchivesMode,
+  OptionsProps,
+} from '../src/types/options.js';
 import ProgressBarFake from './console/progressBarFake.js';
 
 interface TestOutput {
@@ -143,17 +148,20 @@ describe('with explicit DATs', () => {
     }), new Logger(LogLevel.NEVER)).main()).rejects.toThrow(/no valid dat files/i);
   });
 
-  it('should copy and test', async () => {
+  it('should copy and test, without caching', async () => {
     await copyFixturesToTemp(async (inputTemp, outputTemp) => {
       const result = await runIgir({
         commands: ['copy', 'test'],
         dat: [path.join(inputTemp, 'dats', '*')],
         input: [path.join(inputTemp, 'roms')],
         inputExclude: [path.join(inputTemp, 'roms', 'discs')], // test archive scanning + matching
+        inputChecksumArchives: InputChecksumArchivesMode[InputChecksumArchivesMode.NEVER]
+          .toLowerCase(),
         output: outputTemp,
         dirDatName: true,
         dirGameSubdir: GameSubdirMode[GameSubdirMode.MULTIPLE].toLowerCase(),
         fixExtension: FixExtension[FixExtension.AUTO].toLowerCase(),
+        disableCache: true,
       });
 
       expect(result.outputFilesAndCrcs).toEqual([
@@ -178,7 +186,6 @@ describe('with explicit DATs', () => {
         [`${path.join('One', 'GD-ROM.chd')}|track02.raw`, 'abc178d5'],
         [`${path.join('One', 'GD-ROM.chd')}|track03.bin`, '61a363f1'],
         [`${path.join('One', 'GD-ROM.chd')}|track04.bin`, 'fc5ff5a0'],
-        [`${path.join('One', 'Lorem Ipsum.zip')}|loremipsum.rom`, '70856527'],
         [path.join('One', 'One Three', 'One.rom'), 'f817a89f'],
         [path.join('One', 'One Three', 'Three.rom'), 'ff46c5d8'],
         [`${path.join('One', 'Three Four Five', '2048')}|`, 'xxxxxxxx'], // hard disk
@@ -209,16 +216,19 @@ describe('with explicit DATs', () => {
     });
   });
 
-  it('should copy a 1G1R set', async () => {
+  it('should copy a 1G1R set, with a custom cache path', async () => {
     await copyFixturesToTemp(async (inputTemp, outputTemp) => {
       const result = await runIgir({
         commands: ['copy'],
         dat: [path.join(inputTemp, 'dats', 'one.dat')],
         input: [path.join(inputTemp, 'roms')],
+        inputChecksumArchives: InputChecksumArchivesMode[InputChecksumArchivesMode.ALWAYS]
+          .toLowerCase(),
         output: outputTemp,
         dirGameSubdir: GameSubdirMode[GameSubdirMode.MULTIPLE].toLowerCase(),
         single: true,
         preferParent: true,
+        cachePath: inputTemp,
       });
 
       expect(result.outputFilesAndCrcs).toEqual([
@@ -784,7 +794,7 @@ describe('with explicit DATs', () => {
         [`${path.join('One', 'CD-ROM.chd')}|CD-ROM.cue -> ${path.join('<input>', 'chd', 'CD-ROM.chd')}|CD-ROM.cue`, 'xxxxxxxx'],
         [`${path.join('One', 'Fizzbuzz.nes')} -> ${path.join('<input>', 'raw', 'fizzbuzz.nes')}`, '370517b5'],
         [`${path.join('One', 'Foobar.lnx')} -> ${path.join('<input>', 'foobar.lnx')}`, 'b22c9747'],
-        [`${path.join('One', 'GameCube NKit ISO.nkit.iso')}|5bc2ce5b.iso -> ${path.join('<input>', 'nkit', '5bc2ce5b.nkit.iso')}|5bc2ce5b.iso`, '5bc2ce5b'],
+        [`${path.join('One', 'GameCube NKit ISO.nkit.iso')}|GameCube NKit ISO.iso -> ${path.join('<input>', 'nkit', '5bc2ce5b.nkit.iso')}|GameCube NKit ISO.iso`, '5bc2ce5b'],
         [`${path.join('One', 'GD-ROM.chd')}|GD-ROM.gdi -> ${path.join('<input>', 'chd', 'GD-ROM.chd')}|GD-ROM.gdi`, 'f16f621c'],
         [`${path.join('One', 'GD-ROM.chd')}|track01.bin -> ${path.join('<input>', 'chd', 'GD-ROM.chd')}|track01.bin`, '9796ed9a'],
         [`${path.join('One', 'GD-ROM.chd')}|track02.raw -> ${path.join('<input>', 'chd', 'GD-ROM.chd')}|track02.raw`, 'abc178d5'],
@@ -1053,13 +1063,13 @@ describe('with inferred DATs', () => {
 
   it('should move to the same directory', async () => {
     await copyFixturesToTemp(async (inputTemp, outputTemp) => {
-      const inputDir = path.join(inputTemp, 'roms', 'raw');
+      const inputDir = path.join(inputTemp, 'roms');
       const inputBefore = await walkWithCrc(inputDir, inputDir);
 
       await runIgir({
         commands: ['move', 'test'],
         input: [inputDir],
-        output: inputDir,
+        output: '{inputDirname}',
       });
 
       await expect(walkWithCrc(inputDir, inputDir)).resolves.toEqual(inputBefore);
