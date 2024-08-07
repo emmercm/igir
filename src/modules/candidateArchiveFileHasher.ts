@@ -83,7 +83,8 @@ export default class CandidateArchiveFileHasher extends Module {
                   return romWithFiles;
                 }
 
-                if (inputFile.equals(romWithFiles.getOutputFile())) {
+                const outputFile = romWithFiles.getOutputFile();
+                if (inputFile.equals(outputFile)) {
                   // There's no need to calculate the checksum, {@link CandidateWriter} will skip
                   // writing over itself
                   return romWithFiles;
@@ -103,7 +104,7 @@ export default class CandidateArchiveFileHasher extends Module {
                     );
                     // {@link CandidateGenerator} would have copied undefined values from the input
                     //  file, so we need to modify the expected output file as well for testing
-                    const hashedOutputFile = romWithFiles.getOutputFile().withProps({
+                    const hashedOutputFile = outputFile.withProps({
                       size: hashedInputFile.getSize(),
                       crc32: hashedInputFile.getCrc32(),
                       md5: hashedInputFile.getMd5(),
