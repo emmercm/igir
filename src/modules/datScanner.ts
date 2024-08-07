@@ -203,7 +203,7 @@ export default class DATScanner extends Scanner {
           output += chunk.toString();
         });
 
-        proc.on('exit', (code) => {
+        proc.on('close', (code) => {
           if (code !== null && code > 0) {
             reject(new Error(`exit code ${code}`));
             return;
