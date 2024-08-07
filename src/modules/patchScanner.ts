@@ -30,15 +30,15 @@ export default class PatchScanner extends Scanner {
     this.progressBar.logTrace(`found ${patchFilePaths.length.toLocaleString()} patch file${patchFilePaths.length !== 1 ? 's' : ''}`);
     await this.progressBar.reset(patchFilePaths.length);
 
-    const files = await this.getUniqueFilesFromPaths(
+    const patchFiles = await this.getUniqueFilesFromPaths(
       patchFilePaths,
       this.options.getReaderThreads(),
       ChecksumBitmask.NONE,
     );
-    await this.progressBar.reset(files.length);
+    await this.progressBar.reset(patchFiles.length);
 
     const patches = (await new DriveSemaphore(this.options.getReaderThreads()).map(
-      files,
+      patchFiles,
       async (file) => {
         await this.progressBar.incrementProgress();
         const waitingMessage = `${file.toString()} ...`;

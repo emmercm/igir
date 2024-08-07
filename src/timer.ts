@@ -8,14 +8,8 @@ export default class Timer {
 
   private readonly timeoutId: NodeJS.Timeout;
 
-  private constructor(
-    runnable: (...args: unknown[]) => void,
-    timeoutMillis: number,
-  ) {
-    this.timeoutId = setTimeout(() => {
-      runnable();
-      Timer.TIMERS.delete(this);
-    }, timeoutMillis);
+  private constructor(timeoutId: NodeJS.Timeout) {
+    this.timeoutId = timeoutId;
     Timer.TIMERS.add(this);
   }
 
@@ -23,7 +17,22 @@ export default class Timer {
     runnable: (...args: unknown[]) => void,
     timeoutMillis: number,
   ): Timer {
-    return new Timer(runnable, timeoutMillis);
+    const timer = new Timer(setTimeout(() => {
+      runnable();
+      Timer.TIMERS.delete(timer);
+    }, timeoutMillis));
+    return timer;
+  }
+
+  static setInterval(
+    runnable: (...args: unknown[]) => void,
+    timeoutMillis: number,
+  ): Timer {
+    const timer = new Timer(setInterval(() => {
+      runnable();
+      Timer.TIMERS.delete(timer);
+    }, timeoutMillis));
+    return timer;
   }
 
   /**
