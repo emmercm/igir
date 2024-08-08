@@ -6,7 +6,6 @@ import ArchiveFile from '../types/files/archives/archiveFile.js';
 import FileFactory from '../types/files/fileFactory.js';
 import Options from '../types/options.js';
 import ReleaseCandidate from '../types/releaseCandidate.js';
-import ROMWithFiles from '../types/romWithFiles.js';
 import Module from './module.js';
 
 /**
@@ -114,11 +113,9 @@ export default class CandidateArchiveFileHasher extends Module {
                       sha1: hashedInputFile.getSha1(),
                       sha256: hashedInputFile.getSha256(),
                     });
-                    const hashedRomWithFiles = new ROMWithFiles(
-                      romWithFiles.getRom(),
-                      hashedInputFile,
-                      hashedOutputFile,
-                    );
+                    const hashedRomWithFiles = romWithFiles
+                      .withInputFile(hashedInputFile)
+                      .withOutputFile(hashedOutputFile);
 
                     this.progressBar.removeWaitingMessage(waitingMessage);
                     await this.progressBar.incrementDone();
@@ -127,11 +124,7 @@ export default class CandidateArchiveFileHasher extends Module {
                 );
               }));
 
-            return new ReleaseCandidate(
-              releaseCandidate.getGame(),
-              releaseCandidate.getRelease(),
-              hashedRomsWithFiles,
-            );
+            return releaseCandidate.withRomsWithFiles(hashedRomsWithFiles);
           }));
 
         return [parent, hashedReleaseCandidates];

@@ -44,7 +44,7 @@
       "contexts": [
         "ClassDeclaration",
         // TODO(cemmer): require private methods as well
-        "MethodDefinition[accessibility!=private][key.name!=/^(get|set)[A-Z][a-zA-Z]+/]"
+        "MethodDefinition[accessibility!=private][key.name!=/^(get|set|with)[A-Z][a-zA-Z]+/]"
       ]
     }],
     "jsdoc/require-param": "off",

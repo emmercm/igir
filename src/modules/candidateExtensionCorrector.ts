@@ -113,18 +113,12 @@ export default class CandidateExtensionCorrector extends Module {
                     .withEntryPath(correctedOutputPath.entryPath);
                 }
 
-                return new ROMWithFiles(
-                  correctedRom,
-                  romWithFiles.getInputFile(),
-                  correctedOutputFile,
-                );
+                return romWithFiles
+                  .withRom(correctedRom)
+                  .withOutputFile(correctedOutputFile);
               }));
 
-            return new ReleaseCandidate(
-              releaseCandidate.getGame(),
-              releaseCandidate.getRelease(),
-              hashedRomsWithFiles,
-            );
+            return releaseCandidate.withRomsWithFiles(hashedRomsWithFiles);
           }));
 
         return [parent, hashedReleaseCandidates];

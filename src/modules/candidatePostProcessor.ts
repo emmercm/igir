@@ -78,11 +78,7 @@ export default class CandidatePostProcessor extends Module {
       outputFileBasenames,
     );
 
-    return new ReleaseCandidate(
-      releaseCandidate.getGame(),
-      releaseCandidate.getRelease(),
-      newRomsWithFiles,
-    );
+    return releaseCandidate.withRomsWithFiles(newRomsWithFiles);
   }
 
   private mapRomsWithFiles(
@@ -106,11 +102,7 @@ export default class CandidatePostProcessor extends Module {
       }
 
       const newOutputFile = romWithFiles.getOutputFile().withFilePath(newOutputPath);
-      return new ROMWithFiles(
-        romWithFiles.getRom(),
-        romWithFiles.getInputFile(),
-        newOutputFile,
-      );
+      return romWithFiles.withOutputFile(newOutputFile);
     });
   }
 }

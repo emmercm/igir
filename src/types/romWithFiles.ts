@@ -29,4 +29,27 @@ export default class ROMWithFiles {
   getOutputFile(): File {
     return this.outputFile;
   }
+
+  // Immutable setters
+
+  withRom(rom: ROM): ROMWithFiles {
+    if (rom === this.rom) {
+      return this;
+    }
+    return new ROMWithFiles(rom, this.inputFile, this.outputFile);
+  }
+
+  withInputFile(inputFile: File): ROMWithFiles {
+    if (inputFile === this.inputFile) {
+      return this;
+    }
+    return new ROMWithFiles(this.rom, inputFile, this.outputFile);
+  }
+
+  withOutputFile(outputFile: File): ROMWithFiles {
+    if (outputFile === this.outputFile) {
+      return this;
+    }
+    return new ROMWithFiles(this.rom, this.inputFile, outputFile);
+  }
 }
