@@ -74,7 +74,7 @@ export default class ReleaseCandidate {
   withRomsWithFiles(romsWithFiles: ROMWithFiles[]): ReleaseCandidate {
     if (romsWithFiles === this.romsWithFiles
       || (romsWithFiles.length === this.romsWithFiles.length
-        && romsWithFiles.some((rwf, idx) => this.romsWithFiles[idx] !== rwf)
+        && romsWithFiles.every((rwf, idx) => this.romsWithFiles[idx] === rwf)
       )
     ) {
       return this;
