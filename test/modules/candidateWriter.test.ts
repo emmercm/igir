@@ -61,7 +61,7 @@ async function walkAndStat(dirPath: string): Promise<[string, Stats][]> {
           // Hard-code properties that can change with file reads
           stats.atime = new Date(0);
           stats.atimeMs = 0;
-          // Hard-code properties that can change with hardlinking
+          // Hard-code properties that can change with hard-linking
           stats.ctimeMs = 0;
           stats.nlink = 0;
         } catch {

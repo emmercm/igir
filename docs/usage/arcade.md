@@ -31,7 +31,7 @@ Here is a chart of instructions for various setups:
 | [FinalBurn Neo](https://github.com/finalburnneo/FBNeo)                                                                                                                                                                             | FinalBurn Neo doesn't provide an obvious way to find the correct DAT for each version. But it is likely that you are using FinalBurn Neo through a frontend, so use the above instructions.                                                                                                                       | N/A                                                                                                                                                                                                                 |
 | [FinalBurn Alpha](https://www.fbalpha.com/)                                                                                                                                                                                        | FinalBurn Alpha was forked into FinalBurn Neo, so you should use that if possible. Otherwise, hopefully your frontend's documentation has links to download the correct DAT.                                                                                                                                      | N/A                                                                                                                                                                                                                 |
 
-## ROM set types
+## ROM set merge types
 
 There are three broadly accepted types of ROM sets, with one extra variation, resulting in four types.
 

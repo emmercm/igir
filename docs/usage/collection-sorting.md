@@ -1,4 +1,4 @@
-# Example Collection Sorting
+# Collection Sorting Example
 
 A walkthrough of an example way to sort your ROM collection.
 

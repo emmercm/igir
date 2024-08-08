@@ -92,12 +92,12 @@ Headerless|Encrypted
 
 !!! tip
 
-    `--dat-name-regex-exclude` is particularly helpful for excluding some No-Intro DATs versions such as "encrypted" and "headerless".
+    `--dat-name-regex-exclude <pattern|filename>` is particularly helpful for excluding some No-Intro DATs versions such as "encrypted" and "headerless".
 
 ### DAT description regex filtering
 
 ```text
---dat-description-regex, --dat-description-regex-exclude
+--dat-description-regex <pattern|filename>, --dat-description-regex-exclude <pattern|filename>
 ```
 
 These options limit which DATs are processed. The regex is applied to the DAT's description found within its file contents.
@@ -107,6 +107,12 @@ These options limit which DATs are processed. The regex is applied to the DAT's 
 The `--dat-combine` option lets you combine every game from every parsed DAT into one file.
 
 This may be desirable when creating a [dir2dat](./dir2dat.md), a [fixdat](fixdats.md), or other complicated situations.
+
+!!! note
+
+    Using this option with the [`igir zip` command](../output/writing-archives.md) will result in all ROMs in a DAT being archived into one file. This can work great for archiving older, cartridge-based consoles with smaller ROM sizes, but will likely not work well with larger ROMs.
+
+    To keep files organized in a human-readable way, it is _not_ recommended to use the [`--dir-game-subdir never`](../output/path-options.md#append-the-game-name) option along with `igir zip --dat-combine`.
 
 ## Parent/clone inference
 
