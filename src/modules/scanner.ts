@@ -15,9 +15,17 @@ import Module from './module.js';
 export default abstract class Scanner extends Module {
   protected readonly options: Options;
 
-  protected constructor(options: Options, progressBar: ProgressBar, loggerPrefix: string) {
+  private readonly fileFactory: FileFactory;
+
+  protected constructor(
+    options: Options,
+    progressBar: ProgressBar,
+    fileFactory: FileFactory,
+    loggerPrefix: string,
+  ) {
     super(progressBar, loggerPrefix);
     this.options = options;
+    this.fileFactory = fileFactory;
   }
 
   protected async getFilesFromPaths(
@@ -66,7 +74,7 @@ export default abstract class Scanner extends Module {
         }
       }
 
-      const filesFromPath = await FileFactory.filesFrom(
+      const filesFromPath = await this.fileFactory.filesFrom(
         filePath,
         checksumBitmask,
         this.options.getInputChecksumQuick() ? ChecksumBitmask.NONE : checksumBitmask,
@@ -74,7 +82,7 @@ export default abstract class Scanner extends Module {
 
       const fileIsArchive = filesFromPath.some((file) => file instanceof ArchiveEntry);
       if (checksumArchives && fileIsArchive) {
-        filesFromPath.push(await FileFactory.fileFrom(filePath, checksumBitmask));
+        filesFromPath.push(await this.fileFactory.fileFrom(filePath, checksumBitmask));
       }
 
       if (filesFromPath.length === 0) {

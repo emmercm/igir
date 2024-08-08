@@ -137,7 +137,7 @@ const fileFilter = (filters: FileFilter[]): string[] => {
   proc.stdout.on('data', (chunk) => { procOutput += chunk.toString(); });
   proc.stderr.on('data', (chunk) => { procOutput += chunk.toString(); });
   await new Promise((resolve, reject) => {
-    proc.on('exit', resolve);
+    proc.on('close', resolve);
     proc.on('error', reject);
   });
   logger.trace(procOutput);

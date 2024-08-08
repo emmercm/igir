@@ -8,7 +8,7 @@ import Parent from '../types/dats/parent.js';
 import ROM from '../types/dats/rom.js';
 import ArchiveEntry from '../types/files/archives/archiveEntry.js';
 import Chd from '../types/files/archives/chd/chd.js';
-import FileCache from '../types/files/fileCache.js';
+import FileFactory from '../types/files/fileFactory.js';
 import FileSignature from '../types/files/fileSignature.js';
 import Options, { FixExtension } from '../types/options.js';
 import OutputFactory from '../types/outputFactory.js';
@@ -26,9 +26,12 @@ export default class CandidateExtensionCorrector extends Module {
 
   private readonly options: Options;
 
-  constructor(options: Options, progressBar: ProgressBar) {
+  private readonly fileFactory: FileFactory;
+
+  constructor(options: Options, progressBar: ProgressBar, fileFactory: FileFactory) {
     super(progressBar, CandidateExtensionCorrector.name);
     this.options = options;
+    this.fileFactory = fileFactory;
 
     // This will be the same value globally, but we can't know the value at file import time
     if (options.getReaderThreads() < CandidateExtensionCorrector.THREAD_SEMAPHORE.getValue()) {
@@ -158,7 +161,7 @@ export default class CandidateExtensionCorrector extends Module {
 
       let romSignature: FileSignature | undefined;
       try {
-        romSignature = await FileCache.getOrComputeFileSignature(romWithFiles.getInputFile());
+        romSignature = await this.fileFactory.signatureFrom(romWithFiles.getInputFile());
       } catch (error) {
         this.progressBar.logError(`${dat.getNameShort()}: failed to correct file extension for '${romWithFiles.getInputFile()}': ${error}`);
       }

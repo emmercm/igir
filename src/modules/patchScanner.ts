@@ -3,6 +3,7 @@ import DriveSemaphore from '../driveSemaphore.js';
 import ArrayPoly from '../polyfill/arrayPoly.js';
 import File from '../types/files/file.js';
 import { ChecksumBitmask } from '../types/files/fileChecksums.js';
+import FileFactory from '../types/files/fileFactory.js';
 import Options from '../types/options.js';
 import Patch from '../types/patches/patch.js';
 import PatchFactory from '../types/patches/patchFactory.js';
@@ -12,8 +13,8 @@ import Scanner from './scanner.js';
  * Scan for {@link Patch}es and parse them into the correct supported type.
  */
 export default class PatchScanner extends Scanner {
-  constructor(options: Options, progressBar: ProgressBar) {
-    super(options, progressBar, PatchScanner.name);
+  constructor(options: Options, progressBar: ProgressBar, fileFactory: FileFactory) {
+    super(options, progressBar, fileFactory, PatchScanner.name);
   }
 
   /**
@@ -30,15 +31,15 @@ export default class PatchScanner extends Scanner {
     this.progressBar.logTrace(`found ${patchFilePaths.length.toLocaleString()} patch file${patchFilePaths.length !== 1 ? 's' : ''}`);
     await this.progressBar.reset(patchFilePaths.length);
 
-    const files = await this.getUniqueFilesFromPaths(
+    const patchFiles = await this.getUniqueFilesFromPaths(
       patchFilePaths,
       this.options.getReaderThreads(),
       ChecksumBitmask.NONE,
     );
-    await this.progressBar.reset(files.length);
+    await this.progressBar.reset(patchFiles.length);
 
     const patches = (await new DriveSemaphore(this.options.getReaderThreads()).map(
-      files,
+      patchFiles,
       async (file) => {
         await this.progressBar.incrementProgress();
         const waitingMessage = `${file.toString()} ...`;

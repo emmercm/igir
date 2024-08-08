@@ -10,6 +10,8 @@ import ROMIndexer from '../../src/modules/romIndexer.js';
 import ROMScanner from '../../src/modules/romScanner.js';
 import FsPoly from '../../src/polyfill/fsPoly.js';
 import DAT from '../../src/types/dats/dat.js';
+import FileCache from '../../src/types/files/fileCache.js';
+import FileFactory from '../../src/types/files/fileFactory.js';
 import Options from '../../src/types/options.js';
 import ReleaseCandidate from '../../src/types/releaseCandidate.js';
 import ROMWithFiles from '../../src/types/romWithFiles.js';
@@ -21,7 +23,11 @@ it('should do nothing if dir2dat command not provided', async () => {
     // No command provided
     input: ['test/fixtures/roms'],
   });
-  const files = await new ROMScanner(options, new ProgressBarFake()).scan();
+  const files = await new ROMScanner(
+    options,
+    new ProgressBarFake(),
+    new FileFactory(new FileCache()),
+  ).scan();
 
   // And a DAT
   const inferredDats = await new DATGameInferrer(options, new ProgressBarFake()).infer(files);
@@ -48,7 +54,11 @@ it('should write a valid DAT', async () => {
     commands: ['dir2dat'],
     input: ['test/fixtures/roms'],
   });
-  const files = await new ROMScanner(options, new ProgressBarFake()).scan();
+  const files = await new ROMScanner(
+    options,
+    new ProgressBarFake(),
+    new FileFactory(new FileCache()),
+  ).scan();
 
   // And a DAT
   const inferredDats = await new DATGameInferrer(options, new ProgressBarFake()).infer(files);
@@ -77,7 +87,7 @@ it('should write a valid DAT', async () => {
     const writtenDats = await new DATScanner(new Options({
       ...options,
       dat: [dir2dat],
-    }), new ProgressBarFake()).scan();
+    }), new ProgressBarFake(), new FileFactory(new FileCache())).scan();
     expect(writtenDats).toHaveLength(1);
     [writtenDat] = writtenDats;
   } finally {
@@ -101,7 +111,11 @@ it('should use the candidates for games and ROMs', async () => {
     commands: ['dir2dat'],
     input: [path.join('test', 'fixtures', 'roms')],
   });
-  const files = await new ROMScanner(options, new ProgressBarFake()).scan();
+  const files = await new ROMScanner(
+    options,
+    new ProgressBarFake(),
+    new FileFactory(new FileCache()),
+  ).scan();
 
   // And a DAT
   const inferredDats = await new DATGameInferrer(options, new ProgressBarFake()).infer(files);
@@ -143,7 +157,7 @@ it('should use the candidates for games and ROMs', async () => {
     const writtenDats = await new DATScanner(new Options({
       ...options,
       dat: [dir2dat],
-    }), new ProgressBarFake()).scan();
+    }), new ProgressBarFake(), new FileFactory(new FileCache())).scan();
     expect(writtenDats).toHaveLength(1);
     [writtenDat] = writtenDats;
   } finally {

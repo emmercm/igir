@@ -73,7 +73,7 @@ export default abstract class ProgressBar {
     return this.done(`${count.toLocaleString()} ${noun.trim()}${count !== 1 ? pluralSuffix : ''} ${verb}`);
   }
 
-  abstract withLoggerPrefix(prefix: string): ProgressBar;
+  abstract setLoggerPrefix(prefix: string): void;
 
   abstract log(logLevel: LogLevel, message: string): void;
 

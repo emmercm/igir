@@ -1,4 +1,6 @@
 import ROMScanner from '../../../src/modules/romScanner.js';
+import FileCache from '../../../src/types/files/fileCache.js';
+import FileFactory from '../../../src/types/files/fileFactory.js';
 import ROMHeader from '../../../src/types/files/romHeader.js';
 import Options from '../../../src/types/options.js';
 import ProgressBarFake from '../../console/progressBarFake.js';
@@ -33,7 +35,7 @@ describe('headerFromFileStream', () => {
   it('should get a file header for headered files', async () => {
     const headeredRoms = await new ROMScanner(new Options({
       input: ['./test/fixtures/roms/headered'],
-    }), new ProgressBarFake()).scan();
+    }), new ProgressBarFake(), new FileFactory(new FileCache())).scan();
     expect(headeredRoms).toHaveLength(6);
 
     for (const headeredRom of headeredRoms) {
@@ -52,7 +54,7 @@ describe('headerFromFileStream', () => {
         './test/fixtures/roms/chd',
         './test/fixtures/roms/nkit',
       ],
-    }), new ProgressBarFake()).scan();
+    }), new ProgressBarFake(), new FileFactory(new FileCache())).scan();
     expect(headeredRoms.length).toBeGreaterThan(0);
 
     for (const headeredRom of headeredRoms) {
