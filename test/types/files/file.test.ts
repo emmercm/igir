@@ -9,7 +9,9 @@ import ArchiveEntry from '../../../src/types/files/archives/archiveEntry.js';
 import ArchiveFile from '../../../src/types/files/archives/archiveFile.js';
 import Zip from '../../../src/types/files/archives/zip.js';
 import File from '../../../src/types/files/file.js';
+import FileCache from '../../../src/types/files/fileCache.js';
 import { ChecksumBitmask } from '../../../src/types/files/fileChecksums.js';
+import FileFactory from '../../../src/types/files/fileFactory.js';
 import ROMHeader from '../../../src/types/files/romHeader.js';
 import Options from '../../../src/types/options.js';
 import IPSPatch from '../../../src/types/patches/ipsPatch.js';
@@ -343,7 +345,7 @@ describe('copyToTempFile', () => {
   it('should do nothing with no archive entry path', async () => {
     const raws = await new ROMScanner(new Options({
       input: ['./test/fixtures/roms/raw'],
-    }), new ProgressBarFake()).scan();
+    }), new ProgressBarFake(), new FileFactory(new FileCache())).scan();
     expect(raws).toHaveLength(10);
 
     const temp = await fsPoly.mkdtemp(Temp.getTempDir());
@@ -361,7 +363,7 @@ describe('createReadStream', () => {
   it('should do nothing with no archive entry path', async () => {
     const raws = await new ROMScanner(new Options({
       input: ['./test/fixtures/roms/raw/!(empty).*'],
-    }), new ProgressBarFake()).scan();
+    }), new ProgressBarFake(), new FileFactory(new FileCache())).scan();
     expect(raws).toHaveLength(9);
 
     const temp = await fsPoly.mkdtemp(Temp.getTempDir());

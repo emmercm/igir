@@ -89,27 +89,30 @@ export default class Igir {
     }
 
     // File cache options
+    const fileCache = new FileCache();
     if (this.options.getDisableCache()) {
       this.logger.trace('disabling the file cache');
-      FileCache.disable();
+      fileCache.disable();
     } else {
       const cachePath = await this.getCachePath();
       if (cachePath !== undefined && process.env.NODE_ENV !== 'test') {
         this.logger.trace(`loading the file cache at '${cachePath}'`);
-        await FileCache.loadFile(cachePath);
+        await fileCache.loadFile(cachePath);
       } else {
         this.logger.trace('not using a file for the file cache');
       }
     }
+    const fileFactory = new FileFactory(fileCache);
 
     // Scan and process input files
-    let dats = await this.processDATScanner();
+    let dats = await this.processDATScanner(fileFactory);
     const indexedRoms = await this.processROMScanner(
+      fileFactory,
       this.determineScanningBitmask(dats),
       this.determineScanningChecksumArchives(dats),
     );
     const roms = indexedRoms.getFiles();
-    const patches = await this.processPatchScanner();
+    const patches = await this.processPatchScanner(fileFactory);
 
     // Set up progress bar and input for DAT processing
     const datProcessProgressBar = await this.logger.addProgressBar(chalk.underline('Processing DATs'), ProgressBarSymbol.NONE, dats.length);
@@ -141,6 +144,7 @@ export default class Igir {
       // Generate and filter ROM candidates
       const parentsToCandidates = await this.generateCandidates(
         progressBar,
+        fileFactory,
         filteredDat,
         indexedRoms,
         patches,
@@ -248,7 +252,7 @@ export default class Igir {
       });
   }
 
-  private async processDATScanner(): Promise<DAT[]> {
+  private async processDATScanner(fileFactory: FileFactory): Promise<DAT[]> {
     if (this.options.shouldDir2Dat()) {
       return [];
     }
@@ -258,7 +262,7 @@ export default class Igir {
     }
 
     const progressBar = await this.logger.addProgressBar('Scanning for DATs');
-    let dats = await new DATScanner(this.options, progressBar).scan();
+    let dats = await new DATScanner(this.options, progressBar, fileFactory).scan();
     if (dats.length === 0) {
       throw new ExpectedError('No valid DAT files found!');
     }
@@ -360,18 +364,22 @@ export default class Igir {
   }
 
   private async processROMScanner(
+    fileFactory: FileFactory,
     checksumBitmask: number,
     checksumArchives: boolean,
   ): Promise<IndexedFiles> {
     const romScannerProgressBarName = 'Scanning for ROMs';
     const romProgressBar = await this.logger.addProgressBar(romScannerProgressBarName);
 
-    const rawRomFiles = await new ROMScanner(this.options, romProgressBar)
+    const rawRomFiles = await new ROMScanner(this.options, romProgressBar, fileFactory)
       .scan(checksumBitmask, checksumArchives);
 
     await romProgressBar.setName('Detecting ROM headers');
-    const romFilesWithHeaders = await new ROMHeaderProcessor(this.options, romProgressBar)
-      .process(rawRomFiles);
+    const romFilesWithHeaders = await new ROMHeaderProcessor(
+      this.options,
+      romProgressBar,
+      fileFactory,
+    ).process(rawRomFiles);
 
     await romProgressBar.setName('Indexing ROMs');
     const indexedRomFiles = await new ROMIndexer(this.options, romProgressBar)
@@ -384,13 +392,13 @@ export default class Igir {
     return indexedRomFiles;
   }
 
-  private async processPatchScanner(): Promise<Patch[]> {
+  private async processPatchScanner(fileFactory: FileFactory): Promise<Patch[]> {
     if (!this.options.getPatchFileCount()) {
       return [];
     }
 
     const progressBar = await this.logger.addProgressBar('Scanning for patches');
-    const patches = await new PatchScanner(this.options, progressBar).scan();
+    const patches = await new PatchScanner(this.options, progressBar, fileFactory).scan();
     await progressBar.doneItems(patches.length, 'patch', 'found');
     await progressBar.freeze();
     return patches;
@@ -398,6 +406,7 @@ export default class Igir {
 
   private async generateCandidates(
     progressBar: ProgressBar,
+    fileFactory: FileFactory,
     dat: DAT,
     indexedRoms: IndexedFiles,
     patches: Patch[],
@@ -414,12 +423,16 @@ export default class Igir {
     const extensionCorrectedCandidates = await new CandidateExtensionCorrector(
       this.options,
       progressBar,
+      fileFactory,
     ).correct(dat, preferredCandidates);
 
     // Delay calculating checksums for {@link ArchiveFile}s until after {@link CandidatePreferer}
     //  for efficiency
-    const hashedCandidates = await new CandidateArchiveFileHasher(this.options, progressBar)
-      .hash(dat, extensionCorrectedCandidates);
+    const hashedCandidates = await new CandidateArchiveFileHasher(
+      this.options,
+      progressBar,
+      fileFactory,
+    ).hash(dat, extensionCorrectedCandidates);
 
     const postProcessedCandidates = await new CandidatePostProcessor(this.options, progressBar)
       .process(dat, hashedCandidates);

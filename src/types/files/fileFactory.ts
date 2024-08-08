@@ -19,14 +19,21 @@ import File from './file.js';
 import FileCache from './fileCache.js';
 import { ChecksumBitmask } from './fileChecksums.js';
 import FileSignature from './fileSignature.js';
+import ROMHeader from './romHeader.js';
 
 export default class FileFactory {
-  static async filesFrom(
+  private readonly fileCache: FileCache;
+
+  constructor(fileCache: FileCache) {
+    this.fileCache = fileCache;
+  }
+
+  async filesFrom(
     filePath: string,
     fileChecksumBitmask: number = ChecksumBitmask.CRC32,
     archiveChecksumBitmask = fileChecksumBitmask,
   ): Promise<File[]> {
-    if (!this.isExtensionArchive(filePath)) {
+    if (!FileFactory.isExtensionArchive(filePath)) {
       const entries = await this.entriesFromArchiveSignature(filePath, archiveChecksumBitmask);
       if (entries !== undefined) {
         return entries;
@@ -51,14 +58,14 @@ export default class FileFactory {
     }
   }
 
-  public static async fileFrom(
+  async fileFrom(
     filePath: string,
     checksumBitmask: number,
   ): Promise<File> {
-    return FileCache.getOrComputeFileChecksums(filePath, checksumBitmask);
+    return this.fileCache.getOrComputeFileChecksums(filePath, checksumBitmask);
   }
 
-  public static async archiveFileFrom(
+  async archiveFileFrom(
     archive: Archive,
     checksumBitmask: number,
   ): Promise<ArchiveFile> {
@@ -74,7 +81,7 @@ export default class FileFactory {
    *
    * This ordering should match {@link ROMScanner#archiveEntryPriority}
    */
-  private static async entriesFromArchiveExtension(
+  private async entriesFromArchiveExtension(
     filePath: string,
     checksumBitmask: number,
     fileExt = filePath.replace(/.+?(?=(\.[a-zA-Z0-9]+)+)/, ''),
@@ -110,7 +117,7 @@ export default class FileFactory {
       return undefined;
     }
 
-    return FileCache.getOrComputeArchiveChecksums(archive, checksumBitmask);
+    return this.fileCache.getOrComputeArchiveChecksums(archive, checksumBitmask);
   }
 
   /**
@@ -119,14 +126,14 @@ export default class FileFactory {
    *
    * This ordering should match {@link ROMScanner#archiveEntryPriority}
    */
-  private static async entriesFromArchiveSignature(
+  private async entriesFromArchiveSignature(
     filePath: string,
     checksumBitmask: number,
   ): Promise<ArchiveEntry<Archive>[] | undefined> {
     let signature: FileSignature | undefined;
     try {
       const file = await File.fileOf({ filePath });
-      signature = await FileCache.getOrComputeFileSignature(file);
+      signature = await this.fileCache.getOrComputeFileSignature(file);
     } catch {
       // Fail silently on assumed I/O errors
       return undefined;
@@ -161,5 +168,13 @@ export default class FileFactory {
       ...Chd.getExtensions(),
       ...NkitIso.getExtensions(),
     ].some((ext) => filePath.toLowerCase().endsWith(ext));
+  }
+
+  async headerFrom(file: File): Promise<ROMHeader | undefined> {
+    return this.fileCache.getOrComputeFileHeader(file);
+  }
+
+  async signatureFrom(file: File): Promise<FileSignature | undefined> {
+    return this.fileCache.getOrComputeFileSignature(file);
   }
 }

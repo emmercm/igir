@@ -35,15 +35,15 @@ const ValueType = {
 export default class FileCache {
   private static readonly VERSION = 4;
 
-  private static cache: Cache<CacheValue> = new Cache<CacheValue>();
+  private cache: Cache<CacheValue> = new Cache<CacheValue>();
 
-  private static enabled = true;
+  private enabled = true;
 
-  public static disable(): void {
+  disable(): void {
     this.enabled = false;
   }
 
-  public static async loadFile(cacheFilePath: string): Promise<void> {
+  async loadFile(cacheFilePath: string): Promise<void> {
     this.cache = await new Cache<CacheValue>({
       filePath: cacheFilePath,
       fileFlushMillis: 30_000,
@@ -72,7 +72,7 @@ export default class FileCache {
         if (!await FsPoly.exists(filePath)) {
           // Delete the related cache keys
           const inode = (await this.cache.get(cacheKey))?.value as number;
-          await this.cache.delete(new RegExp(`^V${this.VERSION}\\|${inode}\\|`));
+          await this.cache.delete(new RegExp(`^V${FileCache.VERSION}\\|${inode}\\|`));
 
           // Delete the inode key from the cache
           await this.cache.delete(cacheKey);
@@ -81,7 +81,7 @@ export default class FileCache {
     }, 5000);
   }
 
-  public static async save(): Promise<void> {
+  async save(): Promise<void> {
     if (!this.enabled) {
       return;
     }
@@ -89,7 +89,7 @@ export default class FileCache {
     await this.cache.save();
   }
 
-  static async getOrComputeFileChecksums(
+  async getOrComputeFileChecksums(
     filePath: string,
     checksumBitmask: number,
   ): Promise<File> {
@@ -149,7 +149,7 @@ export default class FileCache {
     });
   }
 
-  static async getOrComputeArchiveChecksums<T extends Archive>(
+  async getOrComputeArchiveChecksums<T extends Archive>(
     archive: T,
     checksumBitmask: number,
   ): Promise<ArchiveEntry<Archive>[]> {
@@ -210,7 +210,7 @@ export default class FileCache {
     })));
   }
 
-  static async getOrComputeFileHeader(file: File): Promise<ROMHeader | undefined> {
+  async getOrComputeFileHeader(file: File): Promise<ROMHeader | undefined> {
     if (!this.enabled) {
       return file.createReadStream(
         async (stream) => ROMHeader.headerFromFileStream(stream),
@@ -250,7 +250,7 @@ export default class FileCache {
     return ROMHeader.headerFromName(cachedHeaderName);
   }
 
-  static async getOrComputeFileSignature(file: File): Promise<FileSignature | undefined> {
+  async getOrComputeFileSignature(file: File): Promise<FileSignature | undefined> {
     if (!this.enabled) {
       return file.createReadStream(
         async (stream) => FileSignature.signatureFromFileStream(stream),
@@ -290,7 +290,7 @@ export default class FileCache {
     return FileSignature.signatureFromName(cachedSignatureName);
   }
 
-  private static async getCacheKey(filePath: string, valueType: string): Promise<string> {
+  private async getCacheKey(filePath: string, valueType: string): Promise<string> {
     const stats = await FsPoly.stat(filePath);
     const inodeKey = `V${FileCache.VERSION}|${filePath}|${ValueType.INODE}`;
     await this.cache.set(inodeKey, {

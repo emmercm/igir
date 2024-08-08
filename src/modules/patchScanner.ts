@@ -3,6 +3,7 @@ import DriveSemaphore from '../driveSemaphore.js';
 import ArrayPoly from '../polyfill/arrayPoly.js';
 import File from '../types/files/file.js';
 import { ChecksumBitmask } from '../types/files/fileChecksums.js';
+import FileFactory from '../types/files/fileFactory.js';
 import Options from '../types/options.js';
 import Patch from '../types/patches/patch.js';
 import PatchFactory from '../types/patches/patchFactory.js';
@@ -12,8 +13,8 @@ import Scanner from './scanner.js';
  * Scan for {@link Patch}es and parse them into the correct supported type.
  */
 export default class PatchScanner extends Scanner {
-  constructor(options: Options, progressBar: ProgressBar) {
-    super(options, progressBar, PatchScanner.name);
+  constructor(options: Options, progressBar: ProgressBar, fileFactory: FileFactory) {
+    super(options, progressBar, fileFactory, PatchScanner.name);
   }
 
   /**
