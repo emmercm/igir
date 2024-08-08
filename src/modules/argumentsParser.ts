@@ -79,7 +79,7 @@ export default class ArgumentsParser {
     const groupRomZip = 'zip command options:';
     const groupRomLink = 'link command options:';
     const groupRomHeader = 'ROM header options:';
-    const groupRomSet = 'ROM set options:';
+    const groupRomSet = 'ROM set options (requires DATs):';
     const groupRomFiltering = 'ROM filtering options:';
     const groupRomPriority = 'One game, one ROM (1G1R) options:';
     const groupReport = 'report command options:';
@@ -87,11 +87,10 @@ export default class ArgumentsParser {
 
     // Add every command to a yargs object, recursively, resulting in the ability to specify
     // multiple commands
-    const commands: [string, string | boolean][] = [
+    const commands = [
       ['copy', 'Copy ROM files from the input to output directory'],
       ['move', 'Move ROM files from the input to output directory'],
       ['link', 'Create links in the output directory to ROM files in the input directory'],
-      ['symlink', false],
       ['extract', 'Extract ROM files in archives when copying or moving'],
       ['zip', 'Create zip archives of ROMs when copying or moving'],
       ['test', 'Test ROMs for accuracy after writing them to the output directory'],
@@ -102,9 +101,9 @@ export default class ArgumentsParser {
     ];
     const mutuallyExclusiveCommands = [
       // Write commands
-      ['copy', 'move', 'link', 'symlink'],
+      ['copy', 'move', 'link'],
       // Archive manipulation commands
-      ['link', 'symlink', 'extract', 'zip'],
+      ['link', 'extract', 'zip'],
       // DAT writing commands
       ['dir2dat', 'fixdat'],
     ];
@@ -124,18 +123,10 @@ export default class ArgumentsParser {
           return !incompatibleCommands.includes(command);
         })
         .forEach(([command, description]) => {
-          if (typeof description === 'string') {
-            yargsObj.command(command, description, (yargsSubObj) => addCommands(
-              yargsSubObj,
-              [...previousCommands, command],
-            ));
-          } else {
-            // A deprecation message should be printed elsewhere
-            yargsObj.command(command, false, (yargsSubObj) => addCommands(
-              yargsSubObj,
-              [...previousCommands, command],
-            ));
-          }
+          yargsObj.command(command, description, (yargsSubObj) => addCommands(
+            yargsSubObj,
+            [...previousCommands, command],
+          ));
         });
 
       if (previousCommands.length === 0) {
@@ -160,7 +151,7 @@ export default class ArgumentsParser {
           });
 
           ['test', 'clean'].forEach((command) => {
-            if (checkArgv._.includes(command) && ['copy', 'move', 'link', 'symlink'].every((write) => !checkArgv._.includes(write))) {
+            if (checkArgv._.includes(command) && ['copy', 'move', 'link'].every((write) => !checkArgv._.includes(write))) {
               throw new ExpectedError(`Command "${command}" requires one of the commands: copy, move, or link`);
             }
           });
@@ -192,7 +183,7 @@ export default class ArgumentsParser {
         requiresArg: true,
       })
       .check((checkArgv) => {
-        const needInput = ['copy', 'move', 'link', 'symlink', 'extract', 'zip', 'test', 'dir2dat', 'fixdat'].filter((command) => checkArgv._.includes(command));
+        const needInput = ['copy', 'move', 'link', 'extract', 'zip', 'test', 'dir2dat', 'fixdat'].filter((command) => checkArgv._.includes(command));
         if (!checkArgv.input && needInput.length > 0) {
           // TODO(cememr): print help message
           throw new ExpectedError(`Missing required argument for command${needInput.length !== 1 ? 's' : ''} ${needInput.join(', ')}: --input <path>`);
@@ -206,7 +197,19 @@ export default class ArgumentsParser {
         type: 'array',
         requiresArg: true,
       })
-      .option('input-min-checksum', {
+      .option('input-checksum-quick', {
+        group: groupRomInput,
+        description: 'Only read checksums from archive headers, don\'t decompress to calculate',
+        type: 'boolean',
+      })
+      .check((checkArgv) => {
+        // Re-implement `conflicts: 'input-checksum-min'`, which isn't possible with a default value
+        if (checkArgv['input-checksum-quick'] && checkArgv['input-checksum-min'] !== ChecksumBitmask[ChecksumBitmask.CRC32].toUpperCase()) {
+          throw new ExpectedError('Arguments input-checksum-quick and input-checksum-min are mutually exclusive');
+        }
+        return true;
+      })
+      .option('input-checksum-min', {
         group: groupRomInput,
         description: 'The minimum checksum level to calculate and use for matching',
         choices: Object.keys(ChecksumBitmask)
@@ -257,30 +260,12 @@ export default class ArgumentsParser {
         coerce: ArgumentsParser.readRegexFile,
         requiresArg: true,
       })
-      .option('dat-regex', {
-        type: 'string',
-        coerce: (val) => {
-          this.logger.warn('the \'--dat-regex\' option is deprecated, use \'--dat-name-regex\' instead');
-          return ArgumentsParser.readRegexFile(val);
-        },
-        requiresArg: true,
-        hidden: true,
-      })
       .option('dat-name-regex-exclude', {
         group: groupDatInput,
         description: 'Regular expression of DAT names to exclude from processing',
         type: 'string',
         coerce: ArgumentsParser.readRegexFile,
         requiresArg: true,
-      })
-      .option('dat-regex-exclude', {
-        type: 'string',
-        coerce: (val) => {
-          this.logger.warn('the \'--dat-regex-exclude\' option is deprecated, use \'--dat-name-regex-exclude\' instead');
-          return ArgumentsParser.readRegexFile(val);
-        },
-        requiresArg: true,
-        hidden: true,
       })
       .option('dat-description-regex', {
         group: groupDatInput,
@@ -331,17 +316,6 @@ export default class ArgumentsParser {
         description: 'Path(s) to ROM patch files or archives to exclude from processing (supports globbing)',
         type: 'array',
         requiresArg: true,
-      })
-
-      .option('fixdat', {
-        type: 'boolean',
-        coerce: (val: boolean) => {
-          this.logger.warn('the \'--fixdat\' option is deprecated, use the \'fixdat\' command instead');
-          return val;
-        },
-        implies: 'dat',
-        deprecated: true,
-        hidden: true,
       })
 
       .option('output', {
@@ -425,6 +399,12 @@ export default class ArgumentsParser {
         requiresArg: true,
         default: FixExtension[FixExtension.AUTO].toLowerCase(),
       })
+      .option('move-hardlink', {
+        group: groupRomOutput,
+        description: 'Move files on the same disk drive by creating hard links',
+        type: 'boolean',
+        conflicts: ['allow-excess-sets', 'allow-incomplete-sets'],
+      })
       .option('overwrite', {
         group: groupRomOutput,
         alias: 'O',
@@ -440,7 +420,7 @@ export default class ArgumentsParser {
         if (checkArgv.help) {
           return true;
         }
-        const needOutput = ['copy', 'move', 'link', 'symlink', 'extract', 'zip', 'clean'].filter((command) => checkArgv._.includes(command));
+        const needOutput = ['copy', 'move', 'link', 'extract', 'zip', 'clean'].filter((command) => checkArgv._.includes(command));
         if (!checkArgv.output && needOutput.length > 0) {
           // TODO(cememr): print help message
           throw new ExpectedError(`Missing required argument for command${needOutput.length !== 1 ? 's' : ''} ${needOutput.join(', ')}: --output <path>`);
@@ -482,7 +462,7 @@ export default class ArgumentsParser {
       .option('zip-exclude', {
         group: groupRomZip,
         alias: 'Z',
-        description: 'Glob pattern of files to exclude from zipping',
+        description: 'Glob pattern of ROM filenames to exclude from zipping',
         type: 'string',
         coerce: ArgumentsParser.getLastValue, // don't allow string[] values
         requiresArg: true,
@@ -508,15 +488,6 @@ export default class ArgumentsParser {
         description: 'Creates symbolic links instead of hard links',
         type: 'boolean',
       })
-      .middleware((middlewareArgv) => {
-        if (middlewareArgv._.includes('symlink')) {
-          this.logger.warn('the \'symlink\' command is deprecated, use \'link --symlink\' instead');
-          if (middlewareArgv.symlink === undefined) {
-            // eslint-disable-next-line no-param-reassign
-            middlewareArgv.symlink = true;
-          }
-        }
-      }, true)
       .option('symlink-relative', {
         group: groupRomLink,
         description: 'Create symlinks as relative to the target path, as opposed to absolute',
@@ -528,7 +499,7 @@ export default class ArgumentsParser {
           return true;
         }
         const needLinkCommand = ['symlink'].filter((option) => checkArgv[option]);
-        if (!checkArgv._.includes('link') && !checkArgv._.includes('symlink') && needLinkCommand.length > 0) {
+        if (!checkArgv._.includes('link') && needLinkCommand.length > 0) {
           throw new ExpectedError(`Missing required command for option${needLinkCommand.length !== 1 ? 's' : ''} ${needLinkCommand.join(', ')}: link`);
         }
         return true;
@@ -536,7 +507,7 @@ export default class ArgumentsParser {
 
       .option('header', {
         group: groupRomHeader,
-        description: 'Glob pattern of files to force header processing for',
+        description: 'Glob pattern of input filenames to force header processing for',
         type: 'string',
         coerce: ArgumentsParser.getLastValue, // don't allow string[] values
         requiresArg: true,
@@ -567,10 +538,30 @@ export default class ArgumentsParser {
         requiresArg: true,
         default: MergeMode[MergeMode.FULLNONMERGED].toLowerCase(),
       })
+      .check((checkArgv) => {
+        // Re-implement `implies: 'dat'`, which isn't possible with a default value
+        if (checkArgv['merge-roms'] !== MergeMode[MergeMode.FULLNONMERGED].toLowerCase() && !checkArgv.dat) {
+          throw new ExpectedError('Missing dependent arguments:\n merge-roms -> dat');
+        }
+        return true;
+      })
+      .option('exclude-disks', {
+        group: groupRomSet,
+        description: 'Exclude CHD disks in DATs from processing & writing',
+        type: 'boolean',
+        implies: 'dat',
+      })
+      .option('allow-excess-sets', {
+        group: groupRomSet,
+        description: 'Allow writing archives that have excess files when not extracting or zipping',
+        type: 'boolean',
+        implies: 'dat',
+      })
       .option('allow-incomplete-sets', {
         group: groupRomSet,
         description: 'Allow writing games that don\'t have all of their ROMs',
         type: 'boolean',
+        implies: 'dat',
       })
 
       .option('filter-regex', {
@@ -604,16 +595,6 @@ export default class ArgumentsParser {
         }
         return true;
       })
-      .option('language-filter', {
-        type: 'string',
-        coerce: (val: string) => {
-          this.logger.warn('the \'--language-filter\' option is deprecated, use \'--filter-language\' instead');
-          return val.split(',');
-        },
-        requiresArg: true,
-        deprecated: true,
-        hidden: true,
-      })
       .option('filter-region', {
         group: groupRomFiltering,
         alias: 'R',
@@ -628,16 +609,6 @@ export default class ArgumentsParser {
           throw new ExpectedError(`Invalid --filter-region region${invalidRegions.length !== 1 ? 's' : ''}: ${invalidRegions.join(', ')}`);
         }
         return true;
-      })
-      .option('region-filter', {
-        type: 'string',
-        coerce: (val: string) => {
-          this.logger.warn('the \'--region-filter\' option is deprecated, use \'--filter-region\' instead');
-          return val.split(',');
-        },
-        requiresArg: true,
-        deprecated: true,
-        hidden: true,
       });
     [
       ['bios', 'BIOS files'],
@@ -664,25 +635,23 @@ export default class ArgumentsParser {
         type: 'boolean',
       });
     ([
-      ['debug', 'debug ROMs', false],
-      ['demo', 'demo ROMs', false],
-      ['beta', 'beta ROMs', false],
-      ['sample', 'sample ROMs', false],
-      ['prototype', 'prototype ROMs', false],
-      ['test-roms', 'test ROMs', true],
-      ['program', 'program application ROMs', false],
-      ['aftermarket', 'aftermarket ROMs', false],
-      ['homebrew', 'homebrew ROMs', false],
-      ['unverified', 'unverified ROMs', false],
-      ['bad', 'bad ROM dumps', false],
-    ] satisfies [string, string, boolean][]).forEach(([key, description, hidden]) => {
+      ['debug', 'debug ROMs'],
+      ['demo', 'demo ROMs'],
+      ['beta', 'beta ROMs'],
+      ['sample', 'sample ROMs'],
+      ['prototype', 'prototype ROMs'],
+      ['program', 'program application ROMs'],
+      ['aftermarket', 'aftermarket ROMs'],
+      ['homebrew', 'homebrew ROMs'],
+      ['unverified', 'unverified ROMs'],
+      ['bad', 'bad ROM dumps'],
+    ]).forEach(([key, description]) => {
       yargsParser
         .option(`no-${key}`, {
           group: groupRomFiltering,
           description: `Filter out ${description}, opposite of --only-${key}`,
           type: 'boolean',
           conflicts: [`only-${key}`],
-          hidden,
         })
         .option(`only-${key}`, {
           type: 'boolean',
@@ -690,22 +659,6 @@ export default class ArgumentsParser {
           hidden: true,
         });
     });
-    yargsParser.middleware((middlewareArgv) => {
-      if (middlewareArgv['no-test-roms'] === true) {
-        this.logger.warn('the \'--no-test-roms\' option is deprecated, use \'--no-program\' instead');
-        if (middlewareArgv.noProgram === undefined) {
-          // eslint-disable-next-line no-param-reassign
-          middlewareArgv.noProgram = true;
-        }
-      }
-      if (middlewareArgv['only-test-roms'] === true) {
-        this.logger.warn('the \'--only-test-roms\' option is deprecated, use \'--only-program\' instead');
-        if (middlewareArgv.onlyProgram === undefined) {
-          // eslint-disable-next-line no-param-reassign
-          middlewareArgv.onlyProgram = true;
-        }
-      }
-    }, true);
 
     yargsParser
       .option('single', {
@@ -931,7 +884,7 @@ Advanced usage:
     {datDescription}  The description of the DAT that contains the ROM
     {region}          The region of the ROM release (e.g. "USA"), each ROM can have multiple
     {language}        The language of the ROM release (e.g. "En"), each ROM can have multiple
-    {gameType}        The type of the game (e.g. "Retail", "Demo", "Prototype")
+    {type}            The type of the game (e.g. "Retail", "Demo", "Prototype")
     {genre}           The DAT-defined genre of the game
 
     {inputDirname}    The input file's dirname

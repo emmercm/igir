@@ -15,9 +15,9 @@ In practical terms, this means:
 
 **2. If [tokens](tokens.md) are used with the `--output <path>` option, only subdirectories that are written to will be considered for cleaning.**
 
-For example, if the output directory is specified as `--output "games/{mister}"`, and only Game Boy Color games are found in `--input <path>`, then only the `games/Gameboy/` directory would be considered for cleaning. Other directories that may already exist such as `games/GBA/` and `games/NES/` would _not_ be considered for cleaning, as `igir` did not write there.
+For example, if the output directory is specified as `--output "games/{mister}"`, and only Game Boy Color games are found in `--input <path>`, then only the `games/Gameboy/` directory would be considered for cleaning. Other directories that may already exist such as `games/GBA/` and `games/NES/` would _not_ be considered for cleaning, as Igir did not write there.
 
-In other words, `games/{mister}` is _not_ equivalent to `games/*`. `igir` will _not_ indiscriminately delete files in `games/`.
+In other words, `games/{mister}` is _not_ equivalent to `games/*`. Igir will _not_ indiscriminately delete files in `games/`.
 
 If you want to clean _every_ directory in `games/`, you could specify it as both the `--input <path>` and `--output <path>`:
 
@@ -47,7 +47,7 @@ See the [Analogue Pocket](../usage/hardware/analogue-pocket.md) page for a pract
 
 ## Backing up cleaned files
 
-By default, `igir` will recycle cleaned files, and if recycle fails then it will delete them. This is potentially destructive, so a `--clean-backup <path>` option is provided to instead move files to a backup directory.
+By default, Igir will recycle cleaned files, and if recycle fails then it will delete them. This is potentially destructive, so a `--clean-backup <path>` option is provided to instead move files to a backup directory.
 
 The input directory structure is not maintained, no subdirectories will be created in the backup directory. Files of conflicting names will have a number appended to their name, e.g. `File (1).rom`.
 

@@ -2,7 +2,7 @@ site_name: igir
 # https://github.com/mkdocs/mkdocs/issues/1783: site_url required for sitemap.xml
 site_url: https://igir.io
 site_author: Christian Emmer
-# site_description: TODO
+site_description: Igir is a zero-setup ROM collection manager that sorts, filters, extracts or archives, patches, and reports on collections of any size on any OS.
 
 repo_name: emmercm/igir
 repo_url: https://github.com/emmercm/igir
@@ -11,8 +11,8 @@ edit_uri: edit/main/docs/
 remote_branch: gh-pages
 
 theme:
-  logo: logo-light.svg
-  favicon: logo-dark.svg
+  logo: static/logo-light.svg
+  favicon: static/favicon.svg
   name: material
 
   palette:
@@ -47,8 +47,11 @@ nav:
         - installation.md
         - commands.md
         - alternatives.md
-      - Example Usage:
+      - Standard Usage:
           - usage/collection-sorting.md
+          - usage/personal.md
+          - usage/best-practices.md
+      - Hardware-Specific Usage:
           - Emulator Frontends:
             - usage/handheld/adam.md
             - usage/desktop/batocera.md
@@ -78,7 +81,6 @@ nav:
             - usage/console/gamecube.md
             - usage/console/ps2.md
           - usage/arcade.md
-          - usage/personal.md
       - DATs:
           - dats/introduction.md
           - dats/processing.md

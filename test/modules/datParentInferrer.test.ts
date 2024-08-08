@@ -117,6 +117,17 @@ describe('similar games', () => {
       'All Star Tennis \'99 (Europe) (En,Fr,De,Es,It)',
       'All Star Tennis 99 (USA)',
     ], 'All Star Tennis 99 (USA)'],
+    [[
+      '[BIOS] PS3 System Software Update (World) (v4.88)',
+      '[BIOS] PS3 System Software Update (World) (v3.41) (Patch)',
+      '[BIOS] PS3 System Software Update (World) (v0.90) (Tool)',
+      '[BIOS] PS3 System Software Update (World) (v0.91-005) (Tool)',
+      '[BIOS] PS3 System Software Update (World) (v3.41) (Shop)',
+      '[BIOS] PS3 System Software Update (World) (v3.41-1)',
+      '[BIOS] PS3 System Software Update (World) (v1.60) (Debug) [b]',
+      '[BIOS] PS3 System Software Update (World) (v1.00) (Disc)',
+      '[BIOS] PS3 System Software Update (World) (v4.70) (Arcade)',
+    ], '[BIOS] PS3 System Software Update (World) (v4.88)'],
     // https://emulation.gametechwiki.com/index.php/GoodTools
     [[
       'A game (1990)(Side A).zip',
@@ -179,16 +190,45 @@ describe('similar games', () => {
       'F1 World Grand Prix v1.006 (2000)(Video System)(US)(M4)[!]',
     ], 'F1 World Grand Prix for Dreamcast v1.011 (1999)(Video System)(JP)(en)[!]'],
     [[
-      '[BIOS] PS3 System Software Update (World) (v4.88)',
-      '[BIOS] PS3 System Software Update (World) (v3.41) (Patch)',
-      '[BIOS] PS3 System Software Update (World) (v0.90) (Tool)',
-      '[BIOS] PS3 System Software Update (World) (v0.91-005) (Tool)',
-      '[BIOS] PS3 System Software Update (World) (v3.41) (Shop)',
-      '[BIOS] PS3 System Software Update (World) (v3.41-1)',
-      '[BIOS] PS3 System Software Update (World) (v1.60) (Debug) [b]',
-      '[BIOS] PS3 System Software Update (World) (v1.00) (Disc)',
-      '[BIOS] PS3 System Software Update (World) (v4.70) (Arcade)',
-    ], '[BIOS] PS3 System Software Update (World) (v4.88)'],
+      '18 Wheeler - American Pro Trucker (2001)(Sega)(US)',
+      '18 Wheeler - American Pro Trucker v1.006 (2000)(Sega)(JP)(en)[!]',
+      '18 Wheeler - American Pro Trucker v1.500 (2001)(Sega)(US)[!]',
+      '18 Wheeler - American Pro Trucker v1.700 (2001)(Sega)(PAL)(M4)[!]',
+    ], '18 Wheeler - American Pro Trucker (2001)(Sega)(US)'],
+    [[
+      'Airforce Delta v1.000 (1999)(Konami)(US)[!][1S]',
+      'Airforce Delta v1.000 (1999)(Konami)(US)[!][2S]',
+      'Airforce Delta v1.000 (1999)(Konami)(US)[3S]',
+      'Airforce Delta v1.002 (1999)(Konami)(JP)[!]',
+    ], 'Airforce Delta v1.000 (1999)(Konami)(US)[!][1S]'],
+    [[
+      'Biohazard - Code Veronica Shokai Genteiban v1.002 (1999)(Capcom)(JP)(Disc 1 of 2)[!][2, 3]',
+      'Biohazard - Code Veronica Shokai Genteiban v1.002 (1999)(Capcom)(JP)(Disc 1 of 2)[!][2M1, 2M3, 2MB1]',
+      'Biohazard - Code Veronica Shokai Genteiban v1.002 (1999)(Capcom)(JP)(Disc 1 of 2)[!][HK112D, HK112E]',
+    ], 'Biohazard - Code Veronica Shokai Genteiban v1.002 (1999)(Capcom)(JP)(Disc 1 of 2)[!][2, 3]'],
+    [[
+      'Comic Party v2.001 (2001)(Aqua Plus)(JP)(Disc 1 of 2)[!][10MM1]',
+      'Comic Party v2.001 (2001)(Aqua Plus)(JP)(Disc 1 of 2)[!][12MM1]',
+      'Comic Party v2.001 (2001)(Aqua Plus)(JP)(Disc 1 of 2)[!][14M1]',
+      'Comic Party v2.001 (2001)(Aqua Plus)(JP)(Disc 1 of 2)[!][15M1, 15M2]',
+      'Comic Party v3.004 (2001)(Aqua Plus)(JP)(Disc 1 of 2)[!]',
+    ], 'Comic Party v2.001 (2001)(Aqua Plus)(JP)(Disc 1 of 2)[!][10MM1]'],
+    [[
+      'Generator Vol. 1 v1.002 (1999)(Sega)(US)[!][14S]',
+      'Generator Vol. 1 v1.002 (1999)(Sega)(US)[!][1M5, 1MM1]',
+      'Generator Vol. 1 v1.002 (1999)(Sega)(US)[!][2MB13, 2MB14, 2MB32]',
+      'Generator Vol. 1 v1.002 (1999)(Sega)(US)[!][2MB3, 7MM1]',
+      'Generator Vol. 1 v1.002 (1999)(Sega)(US)[!][5M2, 5M3]',
+      'Generator Vol. 1 v1.002 (1999)(Sega)(US)[!][8MB1, 8MB4]',
+      'Generator Vol. 1 v1.002 (1999)(Sega)(US)[3MM1]',
+      'Generator Vol. 1 v1.010 (1999)(Sega)(JP)(en)[!]',
+    ], 'Generator Vol. 1 v1.002 (1999)(Sega)(US)[!][14S]'],
+    [[
+      'NFL 2K v1.007 (1999)(Sega)(US)[!][10S]',
+      'NFL 2K v1.007 (1999)(Sega)(US)[!][13S]',
+      'NFL 2K v1.007 (1999)(Sega)(US)[!][9S]',
+      'NFL 2K v1.007 (1999)(Sega)(US)[!][MT B08, B13, B17, B19, B20]',
+    ], 'NFL 2K v1.007 (1999)(Sega)(US)[!][10S]'],
   ])('should group similar games: %s', async (gameNames, expectedGameName) => {
     const ungroupedDat = buildDat(gameNames);
     const groupedDat = await new DATParentInferrer(new Options(), new ProgressBarFake())

@@ -1,12 +1,12 @@
 # Writing Zip Archives
 
-`igir` supports creating `.zip` archives with the `igir zip` [command](../commands.md).
+Igir supports creating `.zip` archives with the `igir zip` [command](../commands.md).
 
 !!! note
 
-    It is intentional that `igir` only supports `.zip` archives right now.
+    It is intentional that Igir only supports `.zip` archives right now.
 
-    `.zip` archives store CRC32 information in their "central directory" which helps drastically speed up `igir`'s file scanning, and they are easy to create without proprietary tools (e.g. 7-Zip, Rar).
+    `.zip` archives store CRC32 information in their "central directory" which helps drastically speed up Igir's file scanning, and they are easy to create without proprietary tools (e.g. 7-Zip, Rar).
 
 See the [reading archives](../input/reading-archives.md) page for more information on archive formats and their capabilities.
 

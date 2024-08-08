@@ -12,6 +12,8 @@ import LogiqxDAT from '../../src/types/dats/logiqx/logiqxDat.js';
 import Parent from '../../src/types/dats/parent.js';
 import ROM from '../../src/types/dats/rom.js';
 import File from '../../src/types/files/file.js';
+import FileCache from '../../src/types/files/fileCache.js';
+import FileFactory from '../../src/types/files/fileFactory.js';
 import Options, { FixExtension } from '../../src/types/options.js';
 import ReleaseCandidate from '../../src/types/releaseCandidate.js';
 import ROMWithFiles from '../../src/types/romWithFiles.js';
@@ -25,6 +27,7 @@ it('should do nothing with no parents', async () => {
   const correctedParentsToCandidates = await new CandidateExtensionCorrector(
     options,
     new ProgressBarFake(),
+    new FileFactory(new FileCache()),
   ).correct(dat, parentsToCandidates);
 
   expect(correctedParentsToCandidates).toBe(parentsToCandidates);
@@ -55,6 +58,7 @@ it('should do nothing when no ROMs need correcting', async () => {
   const correctedParentsToCandidates = await new CandidateExtensionCorrector(
     options,
     new ProgressBarFake(),
+    new FileFactory(new FileCache()),
   ).correct(dat, parentsToCandidates);
 
   expect(correctedParentsToCandidates).toBe(parentsToCandidates);
@@ -108,7 +112,11 @@ it('should correct ROMs without DATs', async () => {
     fixExtension: FixExtension[FixExtension.AUTO].toLowerCase(),
   });
   const dat = new LogiqxDAT(new Header(), []);
-  const inputFiles = await new ROMScanner(options, new ProgressBarFake()).scan();
+  const inputFiles = await new ROMScanner(
+    options,
+    new ProgressBarFake(),
+    new FileFactory(new FileCache()),
+  ).scan();
 
   const tempDir = await FsPoly.mkdtemp(Temp.getTempDir());
   try {
@@ -141,6 +149,7 @@ it('should correct ROMs without DATs', async () => {
     const correctedParentsToCandidates = await new CandidateExtensionCorrector(
       options,
       new ProgressBarFake(),
+      new FileFactory(new FileCache()),
     ).correct(dat, parentsToCandidates);
 
     expectCorrectedCandidates(parentsToCandidates, correctedParentsToCandidates);
@@ -156,7 +165,11 @@ it('should correct ROMs with missing filenames', async () => {
     fixExtension: FixExtension[FixExtension.AUTO].toLowerCase(),
   });
   const dat = new LogiqxDAT(new Header(), []);
-  const inputFiles = await new ROMScanner(options, new ProgressBarFake()).scan();
+  const inputFiles = await new ROMScanner(
+    options,
+    new ProgressBarFake(),
+    new FileFactory(new FileCache()),
+  ).scan();
 
   const tempDir = await FsPoly.mkdtemp(Temp.getTempDir());
   try {
@@ -187,6 +200,7 @@ it('should correct ROMs with missing filenames', async () => {
     const correctedParentsToCandidates = await new CandidateExtensionCorrector(
       options,
       new ProgressBarFake(),
+      new FileFactory(new FileCache()),
     ).correct(dat, parentsToCandidates);
 
     expectCorrectedCandidates(parentsToCandidates, correctedParentsToCandidates);

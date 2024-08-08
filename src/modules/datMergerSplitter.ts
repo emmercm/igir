@@ -65,6 +65,9 @@ export default class DATMergerSplitter extends Module {
         // Get rid of duplicate ROMs. MAME will sometimes duplicate a file with the exact same
         // name, size, and checksum but with a different "region" (e.g. neogeo).
         .filter(ArrayPoly.filterUniqueMapped((rom) => rom.getName())),
+      disk: game.getDisks()
+        // Get rid of ROMs that haven't been dumped yet
+        .filter((disk) => disk.getStatus() !== 'nodump'),
     }));
 
     // 'full' types expect device ROMs to be included
@@ -115,33 +118,33 @@ export default class DATMergerSplitter extends Module {
           }
 
           return game.withProps({
-            rom: DATMergerSplitter.diffGameRoms(biosGame, game),
+            rom: DATMergerSplitter.diffGameRoms(biosGame.getRoms(), game.getRoms()),
           });
         });
     }
 
-    // 'split' and 'merged' types should exclude ROMs found in their parent
+    // 'split' and 'merged' types should exclude ROMs & disks found in their parent
     if (this.options.getMergeRoms() === MergeMode.SPLIT
       || this.options.getMergeRoms() === MergeMode.MERGED
     ) {
-      games = games
-        .map((game) => {
-          if (!game.getParent()) {
-            // This game doesn't have a parent
-            return game;
-          }
+      games = games.map((game) => {
+        if (!game.getParent()) {
+          // This game doesn't have a parent
+          return game;
+        }
 
-          const parentGame = gameNamesToGames.get(game.getParent());
-          if (!parentGame) {
-            // Invalid cloneOf attribute, parent not found
-            this.progressBar.logTrace(`${dat.getNameShort()}: ${game.getName()} references an invalid parent: ${game.getParent()}`);
-            return game;
-          }
+        const parentGame = gameNamesToGames.get(game.getParent());
+        if (!parentGame) {
+          // Invalid cloneOf attribute, parent not found
+          this.progressBar.logTrace(`${dat.getNameShort()}: ${game.getName()} references an invalid parent: ${game.getParent()}`);
+          return game;
+        }
 
-          return game.withProps({
-            rom: DATMergerSplitter.diffGameRoms(parentGame, game),
-          });
+        return game.withProps({
+          rom: DATMergerSplitter.diffGameRoms(parentGame.getRoms(), game.getRoms()),
+          disk: DATMergerSplitter.diffGameRoms(parentGame.getDisks(), game.getDisks()),
         });
+      });
     }
 
     const parentGame = games.find((game) => game.isParent());
@@ -173,13 +176,13 @@ export default class DATMergerSplitter extends Module {
     })];
   }
 
-  private static diffGameRoms(parent: Game, child: Game): ROM[] {
-    const parentRomNamesToHashCodes = parent.getRoms().reduce((map, rom) => {
+  private static diffGameRoms(parentRoms: ROM[], childRoms: ROM[]): ROM[] {
+    const parentRomNamesToHashCodes = parentRoms.reduce((map, rom) => {
       map.set(rom.getName(), rom.hashCode());
       return map;
     }, new Map<string, string>());
 
-    return child.getRoms().filter((rom) => {
+    return childRoms.filter((rom) => {
       const parentName = rom.getMerge() ?? rom.getName();
       const parentHashCode = parentRomNamesToHashCodes.get(parentName);
       if (!parentHashCode) {

@@ -35,7 +35,7 @@ export default class DirectoryCleaner extends Module {
     }
 
     this.progressBar.logTrace('cleaning files in output');
-    await this.progressBar.setSymbol(ProgressBarSymbol.SEARCHING);
+    await this.progressBar.setSymbol(ProgressBarSymbol.FILE_SCANNING);
     await this.progressBar.reset(0);
 
     // If there is nothing to clean, then don't do anything

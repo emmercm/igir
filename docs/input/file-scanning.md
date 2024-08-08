@@ -1,6 +1,6 @@
 # File Scanning
 
-`igir` has a few options to specify input files, as well as files to exclude:
+Igir has a few options to specify input files, as well as files to exclude:
 
 - ROMs: `--input <path>` (required), `--input-exclude <path>`
 - [DATs](../dats/processing.md): `--dat <path>`, `--dat-exclude <path>`
@@ -8,7 +8,7 @@
 
 ## Archive files
 
-`igir` can scan archives for DATs, ROMs, and patches. See the [archives](reading-archives.md) page for more information on supported formats.
+Igir can scan archives for DATs, ROMs, and patches. See the [archives](reading-archives.md) page for more information on supported formats.
 
 ## Glob patterns
 

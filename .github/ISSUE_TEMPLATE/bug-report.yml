@@ -15,7 +15,7 @@ body:
     attributes:
       label: Paste the command
       description: |
-        The exact `igir` command you ran when you experienced a bug.
+        The exact Igir command you ran when you experienced a bug.
 
         Include the full `node`, `npm`, or `npx` command when not running the standalone `igir` executable.
     validations:
@@ -53,12 +53,12 @@ body:
     attributes:
       label: DAT(s) used
       description: |
-        Links to the DATs that were used for this `igir` command, if any.
+        Links to the DATs that were used for this Igir command, if any.
 
   - type: input
     attributes:
       label: igir version
-      description: What version of `igir` are you running? This is visible in the output header.
+      description: What version of Igir are you running? This is visible in the output header.
     validations:
       required: true
 
@@ -68,7 +68,7 @@ body:
       description: |
         What version of Node.js are you running? This can be seen with the `node --version` command.
 
-        You can specify "N/A" when using a standalone version of `igir` (one downloaded from GitHub).
+        You can specify "N/A" when using a standalone version of Igir (one downloaded from GitHub).
     validations:
       required: true
 

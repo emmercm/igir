@@ -2,7 +2,7 @@
 
 Welcome! If you're viewing this, it means that you are likely interested in contributing to the project. That's marvelous!
 
-The following is a set of guidelines for contributing to `igir`. These guidelines are published in order to clarify expectations and reduce potential conflict of opinions.
+The following is a set of guidelines for contributing to Igir. These guidelines are published in order to clarify expectations and reduce potential conflict of opinions.
 
 ## Feature requests & bug reports
 
@@ -16,7 +16,7 @@ If you are experiencing an issues, please submit a detailed [bug report](https:/
 
 [GitHub discussions](https://github.com/emmercm/igir/discussions) are a great tool for a number of topics:
 
-- Getting help with `igir` CLI syntax or usage
+- Getting help with Igir CLI syntax or usage
 - Clarifying support for specific features or scenarios
 - Brainstorming new feature requests
 - ...and more!
@@ -27,13 +27,13 @@ Discussions are intended to be low-pressure spaces for questions and collaborati
 
 ### Environment setup
 
-First, you will want to check out `igir`'s source code from GitHub:
+First, you will want to check out Igir's source code from GitHub:
 
 ```shell
 git clone https://github.com/emmercm/igir.git
 ```
 
-`igir` is written in TypeScript for the Node.js runtime. The current version of Node.js that `igir` uses is defined under the `"volta"` object in the `package.json` file. After [installing](https://docs.volta.sh/guide/getting-started), Volta will make sure you're always using the correct Node.js version.
+Igir is written in TypeScript for the Node.js runtime. The current version of Node.js that Igir uses is defined under the `"volta"` object in the `package.json` file. After [installing](https://docs.volta.sh/guide/getting-started), Volta will make sure you're always using the correct Node.js version.
 
 Third-party dependencies are managed and easily installed with npm:
 
@@ -51,7 +51,7 @@ npm pack
 
 ### Running code
 
-A script has been defined for the `npm start` command to easily run `igir`:
+A script has been defined for the `npm start` command to easily run Igir:
 
 ```shell
 npm start -- [commands..] [options]
@@ -65,25 +65,25 @@ npm start -- report --dat *.dat --input ROMs/
 
 ### Code style
 
-`igir` uses [ESLint](https://eslint.org/) as its linter and style enforcer. Rules have been specifically chosen to increase code consistency, safety, readability, and maintainability.
+Igir uses [ESLint](https://eslint.org/) as its linter and style enforcer. Rules have been specifically chosen to increase code consistency, safety, readability, and maintainability.
 
 All code changes must pass the existing ESLint rules. Discussions on adding, removing, and changing ESLint rules should happen outside of pull requests that contain code changes, in their own dedicated pull request or discussion thread (above).
 
 ### Automated tests
 
-`igir` uses [Jest](https://jestjs.io/) as its testing framework, and it uses [Codecov](https://about.codecov.io/) to ensure a minimum amount of test coverage.
+Igir uses [Jest](https://jestjs.io/) as its testing framework, and it uses [Codecov](https://about.codecov.io/) to ensure a minimum amount of test coverage.
 
 All code changes must come with appropriate automated tests in order to prove correctness and to protect against future regressions.
 
 ### Docs
 
-`igir` uses [MkDocs](https://www.mkdocs.org/) to turn Markdown files into a documentation website.
+Igir uses [MkDocs](https://www.mkdocs.org/) to turn Markdown files into a documentation website.
 
 Appropriate updates must be made to all relevant documentation pages if functionality is added, removed, or changed.
 
 ### Git commit messages
 
-`igir` is configured to squash-merge all pull requests, such that only the pull request title ends up in the commit history of the main branch. This means that individual commit messages are less important, and it puts more emphasis on quality pull request titles & descriptions.
+Igir is configured to squash-merge all pull requests, such that only the pull request title ends up in the commit history of the main branch. This means that individual commit messages are less important, and it puts more emphasis on quality pull request titles & descriptions.
 
 That said, quality commit messages help future maintainers understand past intentions. Please use your best judgement on descriptive, clear, and concise commit messages.
 
@@ -91,7 +91,7 @@ That said, quality commit messages help future maintainers understand past inten
 
 Here are steps that should be completed prior to submitting a pull request:
 
-- [ ] Validate your change works as expected locally by running `igir` (not just the unit tests)
+- [ ] Validate your change works as expected locally by running Igir (not just the unit tests)
 - [ ] Unit tests have been added to cover your change
 - [ ] `npm test` has been run locally for your change, to validate:
   - Your added & changed tests are passing
@@ -113,8 +113,8 @@ To contribute code changes, you will need to:
 
 ## License
 
-`igir` is licensed under [GNU General Public License v3.0](https://github.com/emmercm/igir/blob/main/LICENSE).
+Igir is licensed under [GNU General Public License v3.0](https://github.com/emmercm/igir/blob/main/LICENSE).
 
-✅ That means that `igir` can be used for free commercially, can be modified, can be distributed, and can be used for private use.
+✅ That means that Igir can be used for free commercially, can be modified, can be distributed, and can be used for private use.
 
 ⚠️ But it also means that distribution of closed-source versions is _not_ allowed.

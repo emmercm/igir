@@ -4,12 +4,17 @@ import path from 'node:path';
 import Temp from '../../src/globals/temp.js';
 import PatchScanner from '../../src/modules/patchScanner.js';
 import fsPoly from '../../src/polyfill/fsPoly.js';
+import FileCache from '../../src/types/files/fileCache.js';
 import FileFactory from '../../src/types/files/fileFactory.js';
 import Options from '../../src/types/options.js';
 import ProgressBarFake from '../console/progressBarFake.js';
 
 function createPatchScanner(patch: string[], patchExclude: string[] = []): PatchScanner {
-  return new PatchScanner(new Options({ patch, patchExclude }), new ProgressBarFake());
+  return new PatchScanner(
+    new Options({ patch, patchExclude }),
+    new ProgressBarFake(),
+    new FileFactory(new FileCache()),
+  );
 }
 
 it('should throw on nonexistent paths', async () => {

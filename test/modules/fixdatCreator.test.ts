@@ -8,6 +8,8 @@ import LogiqxDAT from '../../src/types/dats/logiqx/logiqxDat.js';
 import Parent from '../../src/types/dats/parent.js';
 import Release from '../../src/types/dats/release.js';
 import ROM from '../../src/types/dats/rom.js';
+import FileCache from '../../src/types/files/fileCache.js';
+import FileFactory from '../../src/types/files/fileFactory.js';
 import Options, { OptionsProps } from '../../src/types/options.js';
 import ReleaseCandidate from '../../src/types/releaseCandidate.js';
 import ROMWithFiles from '../../src/types/romWithFiles.js';
@@ -70,7 +72,7 @@ async function runFixdatCreator(
   const fixdat = (await new DATScanner(new Options({
     ...optionsProps,
     dat: [fixdatPath],
-  }), new ProgressBarFake()).scan())[0];
+  }), new ProgressBarFake(), new FileFactory(new FileCache())).scan())[0];
 
   await fsPoly.rm(fixdatPath, { force: true });
 

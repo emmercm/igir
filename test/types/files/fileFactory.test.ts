@@ -3,6 +3,7 @@ import path from 'node:path';
 import Temp from '../../../src/globals/temp.js';
 import FsPoly from '../../../src/polyfill/fsPoly.js';
 import ArchiveEntry from '../../../src/types/files/archives/archiveEntry.js';
+import FileCache from '../../../src/types/files/fileCache.js';
 import FileFactory from '../../../src/types/files/fileFactory.js';
 
 describe('filesFrom', () => {
@@ -19,6 +20,7 @@ describe('filesFrom', () => {
     ['test/fixtures/roms/gz/three.gz', 1],
     ['test/fixtures/roms/gz/two.gz', 1],
     ['test/fixtures/roms/gz/unknown.gz', 1],
+    ['test/fixtures/roms/nkit/5bc2ce5b.nkit.iso', 1],
     ['test/fixtures/roms/rar/fizzbuzz.rar', 1],
     ['test/fixtures/roms/rar/foobar.rar', 1],
     ['test/fixtures/roms/rar/loremipsum.rar', 1],
@@ -37,7 +39,7 @@ describe('filesFrom', () => {
     ['test/fixtures/roms/zip/unknown.zip', 1],
   ])('%s', (filePath, expectedCount) => {
     it('should read the entries of archives with valid extensions: %s', async () => {
-      const archiveEntries = await FileFactory.filesFrom(filePath);
+      const archiveEntries = await new FileFactory(new FileCache()).filesFrom(filePath);
       expect(archiveEntries.every((archiveEntry) => archiveEntry instanceof ArchiveEntry))
         .toEqual(true);
       expect(archiveEntries).toHaveLength(expectedCount);
@@ -48,7 +50,7 @@ describe('filesFrom', () => {
       await FsPoly.mkdir(path.dirname(tempFile), { recursive: true });
       await FsPoly.copyFile(filePath, tempFile);
       try {
-        const archiveEntries = await FileFactory.filesFrom(tempFile);
+        const archiveEntries = await new FileFactory(new FileCache()).filesFrom(tempFile);
         expect(archiveEntries.every((archiveEntry) => archiveEntry instanceof ArchiveEntry))
           .toEqual(true);
         expect(archiveEntries).toHaveLength(expectedCount);

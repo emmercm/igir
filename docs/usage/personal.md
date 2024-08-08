@@ -1,6 +1,6 @@
-# Creator's Usage
+# Creator's Usage Example
 
-`igir` has many options available to fit almost any use case, but the number of options can be overwhelming. So that begs a question: _how do I, the creator of `igir`, use `igir` in the real world?_
+Igir has many options available to fit almost any use case, but the number of options can be overwhelming. So that begs a question: _how do I, the creator of Igir, use Igir in the real world?_
 
 ## Primary ROM library
 
@@ -111,8 +111,11 @@ SOURCE=/Volumes/WDPassport4
 
 npx igir@latest copy extract test clean \
   --dat "${SOURCE}/No-Intro*.zip" \
-  --dat-name-regex-exclude "/headerless/i" \
+  --dat-name-regex-exclude "/headerless|OSTs/i" \
   --input "${SOURCE}/No-Intro/" \
+  --input-exclude "${SOURCE}/No-Intro/Atari - 7800 (BIN)/" \
+  --input-exclude "${SOURCE}/No-Intro/Commodore - Amiga*/**" \
+  --input-exclude "${SOURCE}/No-Intro/Nintendo - Nintendo - Family Computer Disk System (QD)/" \
   --input-exclude "${SOURCE}/No-Intro/Nintendo - Game Boy Advance (e-Reader)/" \
   --patch "${SOURCE}/Patches/" \
   --output "./Assets/{pocket}/common/" \
@@ -120,6 +123,7 @@ npx igir@latest copy extract test clean \
   --dir-letter-limit 1000 \
   `# Leave BIOS files alone` \
   --clean-exclude "./Assets/*/common/*.*" \
+  --clean-exclude "./Assets/*/common/Palettes/**" \
   --overwrite-invalid \
   --no-bios \
   --no-bad \
@@ -127,7 +131,8 @@ npx igir@latest copy extract test clean \
   --prefer-language EN \
   --prefer-region USA,WORLD,EUR,JPN \
   --prefer-revision-newer \
-  --prefer-retail
+  --prefer-retail \
+  -v
 ```
 
 That lets me create an EN+USA preferred 1G1R set for my Pocket on the fly, making sure I don't delete BIOS files needed for each core.
@@ -144,16 +149,30 @@ I have this script `sd2sp2_pocket_sync.sh` at the root of my GameCube [SD2SP2](h
 #!/usr/bin/env bash
 set -euo pipefail
 
+# shellcheck disable=SC2064
+trap "cd \"${PWD}\"" EXIT
+cd "$(dirname "$0")"
+
+
 SOURCE=/Volumes/WDPassport4
 
-npx --yes igir@latest copy extract test clean \
+npx --yes igir@latest copy test clean report \
+  --dat "${SOURCE}/Redump*.zip" \
+  --dat-name-regex "/gamecube/i" \
   --input "${SOURCE}/Redump/Nintendo - GameCube" \
-  --output "./ISOs/" \
+  --patch "${SOURCE}/Patches" \
+  --output "./Games/" \
   --dir-letter \
+  --overwrite-invalid \
+  --filter-regex-exclude "/(Angler|Baseball|Basketball|Bass|Bonus Disc|Cabela|Disney|ESPN|F1|FIFA|Football|Golf|Madden|MLB|MLS|NASCAR|NBA|NCAA|NFL|NHL|Nickelodeon|Nick Jr|Nicktoons|PGA|Poker|Soccer|Tennis|Tonka|UFC|WWE)/i" \
   --no-bios \
   --only-retail \
-  --filter-regex-exclude "/(Baseball|Cabela|F1|FIFA|Football|Golf|Madden|MLB|NASCAR|NBA|NCAA|NFL|NHL|PGA|Soccer|Tennis|UFC|WWE)/i" \
-  --writer-threads 1
+  --single \
+  --prefer-language EN \
+  --prefer-region USA,WORLD,EUR,JPN \
+  --prefer-revision-newer \
+  --writer-threads 1 \
+  -v
 ```
 
-It doesn't use DATs because I have the ISOs in a trimmed NKit format (see [Swiss](https://github.com/emukidid/swiss-gc)), so they won't match the checksums in DATs. I also exclude some games due to limited SD card size.
+I use the trimmed [NKit format](https://wiki.gbatemp.net/wiki/NKit) for ISOs, which don't make sense to extract, so they're copied as-is. I also exclude some games due to limited SD card size.

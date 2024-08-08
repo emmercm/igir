@@ -5,6 +5,7 @@ import cliProgress, { MultiBar } from 'cli-progress';
 import wrapAnsi from 'wrap-ansi';
 
 import ConsolePoly from '../polyfill/consolePoly.js';
+import TimePoly from '../polyfill/timePoly.js';
 import Timer from '../timer.js';
 import Logger from './logger.js';
 import LogLevel from './logLevel.js';
@@ -28,7 +29,7 @@ export default class ProgressBarCLI extends ProgressBar {
 
   private static logQueue: string[] = [];
 
-  private readonly logger: Logger;
+  private logger: Logger;
 
   private readonly payload: ProgressBarPayload;
 
@@ -36,7 +37,7 @@ export default class ProgressBarCLI extends ProgressBar {
 
   private waitingMessageTimeout?: Timer;
 
-  private readonly waitingMessages: Set<string> = new Set();
+  private readonly waitingMessages: Map<string, number> = new Map();
 
   private constructor(
     logger: Logger,
@@ -64,7 +65,7 @@ export default class ProgressBarCLI extends ProgressBar {
     if (!ProgressBarCLI.multiBar) {
       ProgressBarCLI.multiBar = new cliProgress.MultiBar({
         stream: logger.getLogLevel() < LogLevel.NEVER ? logger.getStream() : new PassThrough(),
-        barsize: 25,
+        barsize: 20,
         fps: 1 / 60, // limit the automatic redraws
         forceRedraw: true,
         emptyOnZero: true,
@@ -140,6 +141,7 @@ export default class ProgressBarCLI extends ProgressBar {
               // ...and if we manually wrap lines, we also need to deal with overwriting existing
               //  progress bar output.
               .split('\n')
+              // TODO(cemmer): this appears to only overwrite the last line, not any others?
               .join(`\n${this.logger.isTTY() ? '\x1b[K' : ''}`))
             .join('\n');
           ProgressBarCLI.multiBar.log(`${logMessage}\n`);
@@ -205,9 +207,24 @@ export default class ProgressBarCLI extends ProgressBar {
     if (!this.singleBarFormatted) {
       return;
     }
+    this.waitingMessages.set(waitingMessage, TimePoly.hrtimeMillis());
 
-    this.waitingMessages.add(waitingMessage);
-    this.setWaitingMessageTimeout();
+    if (!this.waitingMessageTimeout) {
+      this.waitingMessageTimeout = Timer.setInterval(async () => {
+        const currentMillis = TimePoly.hrtimeMillis();
+        const newWaitingMessagePair = [...this.waitingMessages]
+          .find(([, ms]) => currentMillis - ms >= 5000);
+
+        const newWaitingMessage = newWaitingMessagePair !== undefined
+          ? newWaitingMessagePair[0]
+          : undefined;
+
+        if (newWaitingMessage !== this.payload.waitingMessage) {
+          this.payload.waitingMessage = newWaitingMessage;
+          await this.render(true);
+        }
+      }, 1000 / ProgressBarCLI.FPS);
+    }
   }
 
   /**
@@ -217,26 +234,7 @@ export default class ProgressBarCLI extends ProgressBar {
     if (!this.singleBarFormatted) {
       return;
     }
-
     this.waitingMessages.delete(waitingMessage);
-    if (this.payload.waitingMessage) {
-      // Render immediately if the output could change
-      this.setWaitingMessageTimeout(0);
-    }
-  }
-
-  private setWaitingMessageTimeout(timeout = 10_000): void {
-    this.waitingMessageTimeout?.cancel();
-
-    this.waitingMessageTimeout = Timer.setTimeout(async () => {
-      const total = this.singleBarFormatted?.getSingleBar().getTotal() ?? 0;
-      if (total <= 1) {
-        return;
-      }
-
-      [this.payload.waitingMessage] = this.waitingMessages;
-      await this.render(true);
-    }, timeout);
   }
 
   /**
@@ -302,12 +300,8 @@ export default class ProgressBarCLI extends ProgressBar {
   /**
    * Return a copy of this {@link ProgressBar} with a new string prefix.
    */
-  withLoggerPrefix(prefix: string): ProgressBar {
-    return new ProgressBarCLI(
-      this.logger.withLoggerPrefix(prefix),
-      this.payload,
-      this.singleBarFormatted,
-    );
+  setLoggerPrefix(prefix: string): void {
+    this.logger = this.logger.withLoggerPrefix(prefix);
   }
 
   /**

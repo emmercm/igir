@@ -25,7 +25,7 @@ MiyooCFW doesn't seem to have a centralized folder for putting BIOS files so it'
 
 ## ROMs
 
-MiyooCFW supports many many systems and ROM formats. Check the table on the [MiyooCFW Wiki](https://github.com/TriForceX/MiyooCFW/wiki/Emulator-Info) for more precise instructions about the indivudual systems. Most supported systems and their ROMS can be automatically sorted by `igir` using the `{miyoocfw}` output token. See the [replaceable tokens page](../../output/tokens.md) for more information.
+MiyooCFW supports many many systems and ROM formats. Check the table on the [MiyooCFW Wiki](https://github.com/TriForceX/MiyooCFW/wiki/Emulator-Info) for more precise instructions about the indivudual systems. Most supported systems and their ROMS can be automatically sorted by Igir using the `{miyoocfw}` output token. See the [replaceable tokens page](../../output/tokens.md) for more information.
 
 === ":simple-windowsxp: Windows"
 

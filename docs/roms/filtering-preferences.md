@@ -1,6 +1,6 @@
 # ROM Filtering & Preferences
 
-`igir` offers many options for filtering as well as 1G1R preferences/priorities (when combined with the `--single` option).
+Igir offers many options for filtering as well as 1G1R preferences/priorities (when combined with the `--single` option).
 
 ROM filters cut down the list of games desired for a set, and any games filtered out will not appear in [reports](../output/reporting.md). ROM preferences decide what duplicates to eliminate (1G1R).
 
@@ -52,7 +52,7 @@ Languages are two-letter codes, and multiple languages can be specified with com
 
 If a game does not have language information specified, it will be inferred from the region.
 
-Here are some example game names that `igir` can parse languages from, including ones with multiple languages:
+Here are some example game names that Igir can parse languages from, including ones with multiple languages:
 
 ```text
 English:
@@ -82,7 +82,7 @@ A game can have many languages, and all of them are considered during filtering.
 
 Regions are two or three-letter codes, and you can specify multiple regions with commas between them. See the `--help` message for the full list of understood regions.
 
-Here are some example game names that `igir` can parse regions from:
+Here are some example game names that Igir can parse regions from:
 
 ```text
 USA:

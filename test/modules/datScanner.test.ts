@@ -4,6 +4,8 @@ import path from 'node:path';
 import which from 'which';
 
 import DATScanner from '../../src/modules/datScanner.js';
+import FileCache from '../../src/types/files/fileCache.js';
+import FileFactory from '../../src/types/files/fileFactory.js';
 import Options, { OptionsProps } from '../../src/types/options.js';
 import ProgressBarFake from '../console/progressBarFake.js';
 
@@ -11,6 +13,7 @@ function createDatScanner(props: OptionsProps): DATScanner {
   return new DATScanner(
     new Options(props),
     new ProgressBarFake(),
+    new FileFactory(new FileCache()),
   );
 }
 

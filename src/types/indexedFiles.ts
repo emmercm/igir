@@ -136,6 +136,15 @@ export default class IndexedFiles {
       .filter(ArrayPoly.filterUniqueMapped((file) => file.toString()));
   }
 
+  @Memoize()
+  getFilesByFilePath(): Map<string, File[]> {
+    return this.getFiles().reduce((map, file) => {
+      const existingFiles = map.get(file.getFilePath()) ?? [];
+      map.set(file.getFilePath(), [...existingFiles, file]);
+      return map;
+    }, new Map<string, File[]>());
+  }
+
   getSize(): number {
     return this.getFiles().length;
   }
@@ -144,22 +153,22 @@ export default class IndexedFiles {
    * Find file(s) in the index based some search criteria.
    */
   findFiles(file: File | ROM): File[] | undefined {
-    const { sha256 } = file;
+    const sha256 = file.sha256?.replace(/[^0-9a-f]/ig, '');
     if (sha256 && this.sha256.has(sha256)) {
       return this.sha256.get(sha256);
     }
 
-    const { sha1 } = file;
+    const sha1 = file.sha1?.replace(/[^0-9a-f]/ig, '');
     if (sha1 && this.sha1.has(sha1)) {
       return this.sha1.get(sha1);
     }
 
-    const { md5 } = file;
+    const md5 = file.md5?.replace(/[^0-9a-f]/ig, '');
     if (md5 && this.md5.has(md5)) {
       return this.md5.get(md5);
     }
 
-    const { crc32 } = file;
+    const crc32 = file.crc32?.replace(/[^0-9a-f]/ig, '');
     if (crc32) {
       const crc32WithSize = `${crc32}|${file.getSize()}`;
       if (this.crc32.has(crc32WithSize)) {

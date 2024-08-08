@@ -1,6 +1,6 @@
 # Output Path Options
 
-`igir` offer many options to control how ROMs are sorted in the specified output directory.
+Igir offer many options to control how ROMs are sorted in the specified output directory.
 
 All `--dir-*` options append subdirectories to whatever is specified in the `--output <path>` option. Many `--dir-*` options have an [output path token](./tokens.md) equivalent, which also controls how ROMs are sorted.
 
@@ -485,3 +485,67 @@ You can also combine this option with `--dir-letter-count <count>` for ranges wi
 ```text
 --dir-game-subdir <mode>
 ```
+
+By default, games with multiple ROMs are grouped together into their own output subdirectory. This is because emulators typically expect these files to be next to each other, but also because different games may have duplicate filenames (e.g. Sega Dreamcast GDIs all have a `track01.bin`).
+
+```text
+ROMS-Output/
+└── TOSEC
+    ├── Sega Dreamcast - Games - US
+    │   ├── Sonic Adventure 2 v1.008 (2001)(Sega)(US)(M5)[!][3S]
+    │   │   ├── Sonic Adventure 2 v1.008 (2001)(Sega)(US)(M5)[!][3S].gdi
+    │   │   ├── track01.bin
+    │   │   ├── track02.raw
+    │   │   └── track03.bin
+    │   └── Sonic Adventure v1.005 (1999)(Sega)(US)(M5)[!][26S]
+    │       ├── Sonic Adventure v1.005 (1999)(Sega)(US)(M5)[!][26S].gdi
+    │       ├── track01.bin
+    │       ├── track02.raw
+    │       └── track03.bin
+    └── Sega Mega-CD & Sega CD - CD - Games - [ISO]
+        └── Sonic CD (1993)(Sega)(NTSC)(US)[!][SEGA4407RE152 R7D]
+            ├── Sonic CD (1993)(Sega)(NTSC)(US)(Track 01 of 35)[!][SEGA4407RE152 R7D].iso
+            ├── Sonic CD (1993)(Sega)(NTSC)(US)(Track 02 of 35)[!][SEGA4407RE152 R7D].wav
+            ├── Sonic CD (1993)(Sega)(NTSC)(US)(Track 03 of 35)[!][SEGA4407RE152 R7D].wav
+            ├── Sonic CD (1993)(Sega)(NTSC)(US)(Track 04 of 35)[!][SEGA4407RE152 R7D].wav
+            ├── Sonic CD (1993)(Sega)(NTSC)(US)(Track 05 of 35)[!][SEGA4407RE152 R7D].wav
+            ├── Sonic CD (1993)(Sega)(NTSC)(US)(Track 06 of 35)[!][SEGA4407RE152 R7D].wav
+            ├── Sonic CD (1993)(Sega)(NTSC)(US)(Track 07 of 35)[!][SEGA4407RE152 R7D].wav
+            ├── Sonic CD (1993)(Sega)(NTSC)(US)(Track 08 of 35)[!][SEGA4407RE152 R7D].wav
+            ├── Sonic CD (1993)(Sega)(NTSC)(US)(Track 09 of 35)[!][SEGA4407RE152 R7D].wav
+            ├── Sonic CD (1993)(Sega)(NTSC)(US)(Track 10 of 35)[!][SEGA4407RE152 R7D].wav
+            ├── Sonic CD (1993)(Sega)(NTSC)(US)(Track 11 of 35)[!][SEGA4407RE152 R7D].wav
+            ├── Sonic CD (1993)(Sega)(NTSC)(US)(Track 12 of 35)[!][SEGA4407RE152 R7D].wav
+            ├── Sonic CD (1993)(Sega)(NTSC)(US)(Track 13 of 35)[!][SEGA4407RE152 R7D].wav
+            ├── Sonic CD (1993)(Sega)(NTSC)(US)(Track 14 of 35)[!][SEGA4407RE152 R7D].wav
+            ├── Sonic CD (1993)(Sega)(NTSC)(US)(Track 15 of 35)[!][SEGA4407RE152 R7D].wav
+            ├── Sonic CD (1993)(Sega)(NTSC)(US)(Track 16 of 35)[!][SEGA4407RE152 R7D].wav
+            ├── Sonic CD (1993)(Sega)(NTSC)(US)(Track 17 of 35)[!][SEGA4407RE152 R7D].wav
+            ├── Sonic CD (1993)(Sega)(NTSC)(US)(Track 18 of 35)[!][SEGA4407RE152 R7D].wav
+            ├── Sonic CD (1993)(Sega)(NTSC)(US)(Track 19 of 35)[!][SEGA4407RE152 R7D].wav
+            ├── Sonic CD (1993)(Sega)(NTSC)(US)(Track 20 of 35)[!][SEGA4407RE152 R7D].wav
+            ├── Sonic CD (1993)(Sega)(NTSC)(US)(Track 21 of 35)[!][SEGA4407RE152 R7D].wav
+            ├── Sonic CD (1993)(Sega)(NTSC)(US)(Track 22 of 35)[!][SEGA4407RE152 R7D].wav
+            ├── Sonic CD (1993)(Sega)(NTSC)(US)(Track 23 of 35)[!][SEGA4407RE152 R7D].wav
+            ├── Sonic CD (1993)(Sega)(NTSC)(US)(Track 24 of 35)[!][SEGA4407RE152 R7D].wav
+            ├── Sonic CD (1993)(Sega)(NTSC)(US)(Track 25 of 35)[!][SEGA4407RE152 R7D].wav
+            ├── Sonic CD (1993)(Sega)(NTSC)(US)(Track 26 of 35)[!][SEGA4407RE152 R7D].wav
+            ├── Sonic CD (1993)(Sega)(NTSC)(US)(Track 27 of 35)[!][SEGA4407RE152 R7D].wav
+            ├── Sonic CD (1993)(Sega)(NTSC)(US)(Track 28 of 35)[!][SEGA4407RE152 R7D].wav
+            ├── Sonic CD (1993)(Sega)(NTSC)(US)(Track 29 of 35)[!][SEGA4407RE152 R7D].wav
+            ├── Sonic CD (1993)(Sega)(NTSC)(US)(Track 30 of 35)[!][SEGA4407RE152 R7D].wav
+            ├── Sonic CD (1993)(Sega)(NTSC)(US)(Track 31 of 35)[!][SEGA4407RE152 R7D].wav
+            ├── Sonic CD (1993)(Sega)(NTSC)(US)(Track 32 of 35)[!][SEGA4407RE152 R7D].wav
+            ├── Sonic CD (1993)(Sega)(NTSC)(US)(Track 33 of 35)[!][SEGA4407RE152 R7D].wav
+            ├── Sonic CD (1993)(Sega)(NTSC)(US)(Track 34 of 35)[!][SEGA4407RE152 R7D].wav
+            ├── Sonic CD (1993)(Sega)(NTSC)(US)(Track 35 of 35)[!][SEGA4407RE152 R7D].wav
+            └── Sonic CD (1993)(Sega)(NTSC)(US)[!][SEGA4407RE152 R7D].cue
+```
+
+You can change this behavior with the `--dir-game-subdir <mode>` option:
+
+| Mode                               | Outcome                                                                                                          |
+|------------------------------------|------------------------------------------------------------------------------------------------------------------|
+| `--dir-game-subdir never`          | Games with multiple ROMs are never grouped into their own subdirectory, which may cause conflicting output files |
+| `--dir-game-subdir auto` (default) | Games with multiple ROMs are grouped into their own subdirectory, games with a single ROM are not                |
+| `--dir-game-subdir always`         | Every game is grouped into its on subdirectory, no matter the number of ROMs it has                              |

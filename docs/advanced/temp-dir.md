@@ -1,13 +1,13 @@
 # Temp Directory
 
-`igir` needs to write some temporary files to disk for a few reasons:
+Igir needs to write some temporary files to disk for a few reasons:
 
 - Downloading [DAT URLs](../dats/processing.md#scanning-for-dats) to disk before parsing
 - Extracting [some archives](../input/reading-archives.md) to disk during scanning, and when reading when extracting or [zipping](../output/writing-archives.md)
 
-Temporary files are ones that are deleted as soon as `igir` no longer needs them for processing. `igir` will also delete any leftover temporary files on exit.
+Temporary files are ones that are deleted as soon as Igir no longer needs them for processing. Igir will also delete any leftover temporary files on exit.
 
-`igir` will use your operating system's temporary directory for these files by default.  The option `--temp-dir <path>` is provided to let you change the directory, and you may want to do this for a few reasons:
+Igir will use your operating system's temporary directory for these files by default.  The option `--temp-dir <path>` is provided to let you change the directory, and you may want to do this for a few reasons:
 
 - Your operating system drive has minimal space available
 - You want to protect your operating system drive from excess wear and tear

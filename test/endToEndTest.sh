@@ -1,9 +1,8 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-here="${PWD}"
 # shellcheck disable=SC2064
-trap "cd \"${here}\"" EXIT
+trap "cd \"${PWD}\"" EXIT
 
 # @param {string} $1 Directory to start from
 # @param {string} $2 Filename
@@ -24,14 +23,17 @@ parent_find() {
 cd "$(parent_find . "package.json")"
 
 test_igir() {
+  echo "--------------------------------------------------"
   temp="$(mktemp -d)"
   ./dist/index.js "$@" \
     --dat test/fixtures/dats/* \
     --input test/fixtures/roms/* \
+    --input-exclude test/fixtures/roms/discs/* \
     --output "${temp}"
-  ls "${temp}"/* &> /dev/null
+  ls -al "${temp}"/*
   rm -rf "${temp}"
 }
 
 test_igir copy test
+test_igir copy extract test
 test_igir copy zip test

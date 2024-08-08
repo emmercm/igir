@@ -3,8 +3,10 @@ import path from 'node:path';
 import ProgressBar, { ProgressBarSymbol } from '../console/progressBar.js';
 import FsPoly from '../polyfill/fsPoly.js';
 import ArchiveEntry from '../types/files/archives/archiveEntry.js';
+import Chd from '../types/files/archives/chd/chd.js';
+import Maxcso from '../types/files/archives/maxcso/maxcso.js';
 import Rar from '../types/files/archives/rar.js';
-import SevenZip from '../types/files/archives/sevenZip.js';
+import SevenZip from '../types/files/archives/sevenZip/sevenZip.js';
 import Tar from '../types/files/archives/tar.js';
 import Zip from '../types/files/archives/zip.js';
 import File from '../types/files/file.js';
@@ -29,7 +31,7 @@ export default class ROMIndexer extends Module {
    */
   async index(files: File[]): Promise<IndexedFiles> {
     this.progressBar.logTrace(`indexing ${files.length.toLocaleString()} file${files.length !== 1 ? 's' : ''}`);
-    await this.progressBar.setSymbol(ProgressBarSymbol.INDEXING);
+    await this.progressBar.setSymbol(ProgressBarSymbol.FILE_INDEXING);
     await this.progressBar.reset(files.length);
 
     // Index the files
@@ -50,7 +52,9 @@ export default class ROMIndexer extends Module {
     [...checksumsToFiles.values()]
       .forEach((files) => files
         .sort((fileOne, fileTwo) => {
-          // Prefer un-archived files
+          // TODO(cemmer): if move-hard-linking, prefer files that aren't already hard-linked
+
+          // Prefer un-archived files because they're less expensive to process
           const fileOneArchived = ROMIndexer.archiveEntryPriority(fileOne);
           const fileTwoArchived = ROMIndexer.archiveEntryPriority(fileTwo);
           if (fileOneArchived !== fileTwoArchived) {
@@ -61,6 +65,7 @@ export default class ROMIndexer extends Module {
           // This is in case the output file is invalid and we're trying to overwrite it with
           // something else. Otherwise, we'll just attempt to overwrite the invalid output file with
           // itself, still resulting in an invalid output file.
+          // TODO(cemmer): only do this when overwriting files in some way?
           const fileOneInOutput = path.resolve(fileOne.getFilePath()).startsWith(outputDir) ? 1 : 0;
           const fileTwoInOutput = path.resolve(fileTwo.getFilePath()).startsWith(outputDir) ? 1 : 0;
           if (fileOneInOutput !== fileTwoInOutput) {
@@ -69,6 +74,7 @@ export default class ROMIndexer extends Module {
 
           // Then, prefer files that are on the same disk for fs efficiency see {@link FsPoly#mv}
           if (outputDirDisk) {
+            // TODO(cemmer): only do this when not copying files?
             const fileOneInOutputDisk = path.resolve(fileOne.getFilePath())
               .startsWith(outputDirDisk) ? 0 : 1;
             const fileTwoInOutputDisk = path.resolve(fileTwo.getFilePath())
@@ -97,6 +103,10 @@ export default class ROMIndexer extends Module {
       return 3;
     } if (file.getArchive() instanceof SevenZip) {
       return 4;
+    } if (file.getArchive() instanceof Maxcso) {
+      return 5;
+    } if (file.getArchive() instanceof Chd) {
+      return 6;
     }
     return 99;
   }

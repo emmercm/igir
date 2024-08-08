@@ -4,6 +4,7 @@ import path, { ParsedPath } from 'node:path';
 import ArrayPoly from '../polyfill/arrayPoly.js';
 import fsPoly from '../polyfill/fsPoly.js';
 import DAT from './dats/dat.js';
+import Disk from './dats/disk.js';
 import Game from './dats/game.js';
 import Release from './dats/release.js';
 import ROM from './dats/rom.js';
@@ -169,7 +170,7 @@ export default class OutputFactory {
     result = this.replaceGameTokens(result, game);
     result = this.replaceDatTokens(result, dat);
     result = this.replaceInputTokens(result, inputRomPath);
-    result = this.replaceOutputTokens(result, options, outputRomFilename);
+    result = this.replaceOutputTokens(result, options, game, outputRomFilename);
     result = this.replaceOutputGameConsoleTokens(result, dat, outputRomFilename);
 
     const leftoverTokens = result.match(/\{[a-zA-Z]+\}/g);
@@ -186,17 +187,11 @@ export default class OutputFactory {
     }
 
     let output = input;
-    output = output
-      .replace('{region}', release.getRegion())
-      .replace('{gameRegion}', release.getRegion()) // deprecated
-      .replace('{datReleaseRegion}', release.getRegion()); // deprecated
+    output = output.replace('{region}', release.getRegion());
 
     const releaseLanguage = release.getLanguage();
     if (releaseLanguage) {
-      output = output
-        .replace('{language}', releaseLanguage)
-        .replace('{gameLanguage}', releaseLanguage) // deprecated
-        .replace('{datReleaseLanguage}', releaseLanguage); // deprecated
+      output = output.replace('{language}', releaseLanguage);
     }
 
     return output;
@@ -210,20 +205,15 @@ export default class OutputFactory {
 
     const gameRegion = game.getRegions().find(() => true);
     if (gameRegion) {
-      // TODO(cemmer): drop the game* prefixed tokens
-      output = output
-        .replace('{region}', gameRegion)
-        .replace('{gameRegion}', gameRegion);
+      output = output.replace('{region}', gameRegion);
     }
 
     const gameLanguage = game.getLanguages().find(() => true);
     if (gameLanguage) {
-      output = output
-        .replace('{gameLanguage}', gameLanguage)
-        .replace('{language}', gameLanguage);
+      output = output.replace('{language}', gameLanguage);
     }
 
-    output = output.replace('{gameType}', game.getGameType());
+    output = output.replace('{type}', game.getGameType());
 
     const gameGenre = game.getGenre();
     if (gameGenre) {
@@ -256,6 +246,7 @@ export default class OutputFactory {
   private static replaceOutputTokens(
     input: string,
     options: Options,
+    game?: Game,
     outputRomFilename?: string,
   ): string {
     if (!outputRomFilename && options.getFixExtension() === FixExtension.NEVER) {
@@ -268,7 +259,7 @@ export default class OutputFactory {
     return input
       .replace('{outputBasename}', outputRom.base)
       .replace('{outputName}', outputRom.name)
-      .replace('{outputExt}', outputRom.ext.replace(/^\./, ''));
+      .replace('{outputExt}', outputRom.ext.replace(/^\./, '') || '-');
   }
 
   private static replaceOutputGameConsoleTokens(
@@ -488,8 +479,10 @@ export default class OutputFactory {
     if ((options.getDirGameSubdir() === GameSubdirMode.MULTIPLE
         && game.getRoms().length > 1
         // Output file is an archive
-        && !(FileFactory.isExtensionArchive(ext) || inputFile instanceof ArchiveFile))
+        && !FileFactory.isExtensionArchive(ext)
+        && !(inputFile instanceof ArchiveFile))
       || options.getDirGameSubdir() === GameSubdirMode.ALWAYS
+      || rom instanceof Disk
     ) {
       output = path.join(game.getName(), output);
     }
@@ -509,7 +502,7 @@ export default class OutputFactory {
     inputFile: File,
   ): string {
     // Determine the output path of the file
-    if (options.shouldZipFile(rom.getName())) {
+    if (options.shouldZipRom(rom)) {
       // Should zip, generate the zip name from the game name
       return `${game.getName()}.zip`;
     }
@@ -518,6 +511,7 @@ export default class OutputFactory {
 
     if (!(inputFile instanceof ArchiveEntry || inputFile instanceof ArchiveFile)
       || options.shouldExtract()
+      || rom instanceof Disk
     ) {
       // Should extract (if needed), generate the file name from the ROM name
       return romBasename;
@@ -541,7 +535,7 @@ export default class OutputFactory {
     inputFile: File,
   ): string {
     const romBasename = this.getRomBasename(rom, inputFile);
-    if (!options.shouldZipFile(rom.getName())) {
+    if (!options.shouldZipRom(rom)) {
       return romBasename;
     }
 

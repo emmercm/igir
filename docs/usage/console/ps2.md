@@ -8,7 +8,7 @@
 
     OPL is sensitive to files being fragmented on USB drives and SD cards (MX4SIO/SIO2SD). This means that you should only write one ISO at a time!
 
-`igir` has a `--writer-threads` option to limit the number of files being written at once. You can use the option like this:
+Igir has a `--writer-threads <threads>` option to limit the number of files being written at once. You can use the option like this:
 
 === ":simple-windowsxp: Windows"
 

@@ -14,7 +14,7 @@ Most Pocket updater utilities will download BIOS files required for each core fo
 
 ## ROMs
 
-`igir` has support for replaceable "tokens" in the `--output <path>` option. This makes it easier to sort ROMs on devices that have an expected directory structure. The `{pocket}` token exists to help sort ROMs on the Analogue pocket. See the [replaceable tokens page](../../output/tokens.md) for more information.
+Igir has support for replaceable "tokens" in the `--output <path>` option. This makes it easier to sort ROMs on devices that have an expected directory structure. The `{pocket}` token exists to help sort ROMs on the Analogue pocket. See the [replaceable tokens page](../../output/tokens.md) for more information.
 
 This token can be used to reference each core's specific directory in the SD card's `Assets` directory. ROMs go in the `Assets/{pocket}/common` directory.
 

@@ -10,7 +10,7 @@
 
 First, RetroArch needs a number of [BIOS files](https://docs.libretro.com/library/bios/). Thankfully, the libretro team maintains a DAT of these "system" files, so we don't have to guess at the correct filenames.
 
-With `igir`'s support for [DAT URLs](../../dats/processing.md#scanning-for-dats) we don't even have to download the DAT! Locate your "System/BIOS" directory as configured in the RetroArch UI and use it as your output directory:
+With Igir's support for [DAT URLs](../../dats/processing.md#scanning-for-dats) we don't even have to download the DAT! Locate your "System/BIOS" directory as configured in the RetroArch UI and use it as your output directory:
 
 === ":simple-windowsxp: Windows (64-bit)"
 
