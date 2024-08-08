@@ -6,6 +6,7 @@ import fsPoly from '../../../../src/polyfill/fsPoly.js';
 import ArchiveEntry from '../../../../src/types/files/archives/archiveEntry.js';
 import Zip from '../../../../src/types/files/archives/zip.js';
 import File from '../../../../src/types/files/file.js';
+import FileCache from '../../../../src/types/files/fileCache.js';
 import FileFactory from '../../../../src/types/files/fileFactory.js';
 import Options from '../../../../src/types/options.js';
 import ProgressBarFake from '../../../console/progressBarFake.js';
@@ -13,7 +14,7 @@ import ProgressBarFake from '../../../console/progressBarFake.js';
 async function findRoms(input: string): Promise<File[]> {
   return new ROMScanner(new Options({
     input: [input],
-  }), new ProgressBarFake()).scan();
+  }), new ProgressBarFake(), new FileFactory(new FileCache())).scan();
 }
 
 describe('createArchive', () => {
@@ -37,7 +38,7 @@ describe('createArchive', () => {
     await fsPoly.copyFile(rom.getFilePath(), tempFilePath);
 
     // And a candidate is partially generated for that file
-    const tempFiles = await FileFactory.filesFrom(tempFilePath);
+    const tempFiles = await new FileFactory(new FileCache()).filesFrom(tempFilePath);
     const inputToOutput = await Promise.all(tempFiles.map(async (tempFile) => {
       const archiveEntry = await ArchiveEntry.entryOf({
         ...tempFile,

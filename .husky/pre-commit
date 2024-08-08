@@ -1,4 +1,3 @@
-#!/usr/bin/env sh
 
 # Change to the project's root directory
 cd "$(dirname -- "$0")/.." || exit 1

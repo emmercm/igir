@@ -8,6 +8,7 @@ import Igir from '../src/igir.js';
 import DATScanner from '../src/modules/datScanner.js';
 import ArrayPoly from '../src/polyfill/arrayPoly.js';
 import fsPoly from '../src/polyfill/fsPoly.js';
+import FileCache from '../src/types/files/fileCache.js';
 import { ChecksumBitmask } from '../src/types/files/fileChecksums.js';
 import FileFactory from '../src/types/files/fileFactory.js';
 import Options, {
@@ -66,7 +67,7 @@ async function walkWithCrc(inputDir: string, outputDir: string): Promise<string[
   return (await Promise.all((await fsPoly.walk(outputDir))
     .map(async (filePath) => {
       try {
-        return await FileFactory.filesFrom(filePath);
+        return await new FileFactory(new FileCache()).filesFrom(filePath);
       } catch {
         return [];
       }
@@ -1354,6 +1355,7 @@ describe('with inferred DATs', () => {
       const dats = await new DATScanner(
         new Options({ dat: writtenDir2Dats }),
         new ProgressBarFake(),
+        new FileFactory(new FileCache()),
       ).scan();
       expect(dats).toHaveLength(1);
       const roms = dats[0].getGames()

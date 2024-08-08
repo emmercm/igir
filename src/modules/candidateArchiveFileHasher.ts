@@ -21,9 +21,12 @@ export default class CandidateArchiveFileHasher extends Module {
 
   private readonly options: Options;
 
-  constructor(options: Options, progressBar: ProgressBar) {
+  private readonly fileFactory: FileFactory;
+
+  constructor(options: Options, progressBar: ProgressBar, fileFactory: FileFactory) {
     super(progressBar, CandidateArchiveFileHasher.name);
     this.options = options;
+    this.fileFactory = fileFactory;
 
     // This will be the same value globally, but we can't know the value at file import time
     if (options.getReaderThreads() < CandidateArchiveFileHasher.DRIVE_SEMAPHORE.getValue()) {
@@ -98,7 +101,7 @@ export default class CandidateArchiveFileHasher extends Module {
                     this.progressBar.addWaitingMessage(waitingMessage);
                     this.progressBar.logTrace(`${dat.getNameShort()}: ${parent.getName()}: calculating checksums for: ${inputFile.toString()}`);
 
-                    const hashedInputFile = await FileFactory.archiveFileFrom(
+                    const hashedInputFile = await this.fileFactory.archiveFileFrom(
                       inputFile.getArchive(),
                       inputFile.getChecksumBitmask(),
                     );

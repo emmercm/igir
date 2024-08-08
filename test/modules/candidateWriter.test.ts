@@ -20,6 +20,7 @@ import LogiqxDAT from '../../src/types/dats/logiqx/logiqxDat.js';
 import Archive from '../../src/types/files/archives/archive.js';
 import ArchiveEntry from '../../src/types/files/archives/archiveEntry.js';
 import File from '../../src/types/files/file.js';
+import FileCache from '../../src/types/files/fileCache.js';
 import { ChecksumBitmask } from '../../src/types/files/fileChecksums.js';
 import FileFactory from '../../src/types/files/fileFactory.js';
 import Options, { GameSubdirMode, OptionsProps } from '../../src/types/options.js';
@@ -100,23 +101,37 @@ async function candidateWriter(
 
   let romFiles: File[] = [];
   try {
-    romFiles = await new ROMScanner(options, new ProgressBarFake()).scan();
+    romFiles = await new ROMScanner(
+      options,
+      new ProgressBarFake(),
+      new FileFactory(new FileCache()),
+    ).scan();
   } catch { /* ignored */ }
 
   const dat = await datInferrer(options, romFiles);
-  const romFilesWithHeaders = await new ROMHeaderProcessor(options, new ProgressBarFake())
-    .process(romFiles);
+  const romFilesWithHeaders = await new ROMHeaderProcessor(
+    options,
+    new ProgressBarFake(),
+    new FileFactory(new FileCache()),
+  ).process(romFiles);
   const indexedRomFiles = await new ROMIndexer(options, new ProgressBarFake())
     .index(romFilesWithHeaders);
   let candidates = await new CandidateGenerator(options, new ProgressBarFake())
     .generate(dat, indexedRomFiles);
   if (patchGlob) {
-    const patches = await new PatchScanner(options, new ProgressBarFake()).scan();
+    const patches = await new PatchScanner(
+      options,
+      new ProgressBarFake(),
+      new FileFactory(new FileCache()),
+    ).scan();
     candidates = await new CandidatePatchGenerator(new ProgressBarFake())
       .generate(dat, candidates, patches);
   }
-  candidates = await new CandidateExtensionCorrector(options, new ProgressBarFake())
-    .correct(dat, candidates);
+  candidates = await new CandidateExtensionCorrector(
+    options,
+    new ProgressBarFake(),
+    new FileFactory(new FileCache()),
+  ).correct(dat, candidates);
   candidates = await new CandidateCombiner(options, new ProgressBarFake())
     .combine(dat, candidates);
 
@@ -361,7 +376,8 @@ describe('zip', () => {
         outputTemp,
       );
       expect(outputFiles).toHaveLength(1);
-      const archiveEntries = await FileFactory.filesFrom(path.join(outputTemp, outputFiles[0][0]));
+      const archiveEntries = await new FileFactory(new FileCache())
+        .filesFrom(path.join(outputTemp, outputFiles[0][0]));
       expect(archiveEntries).toHaveLength(1);
       const archiveEntry = archiveEntries[0] as ArchiveEntry<Archive>;
       expect(archiveEntry.getEntryPath()).toEqual(expectedFileName);
@@ -396,7 +412,8 @@ describe('zip', () => {
         outputTemp,
       );
       expect(outputFiles).toHaveLength(1);
-      const archiveEntries = await FileFactory.filesFrom(path.join(outputTemp, outputFiles[0][0]));
+      const archiveEntries = await new FileFactory(new FileCache())
+        .filesFrom(path.join(outputTemp, outputFiles[0][0]));
       expect(archiveEntries).toHaveLength(1);
       const archiveEntry = archiveEntries[0] as ArchiveEntry<Archive>;
       expect(archiveEntry.getEntryPath()).toEqual(expectedFileName);
@@ -427,7 +444,8 @@ describe('zip', () => {
       const outputFiles = (await candidateWriter(options, inputTemp, inputGlob, 'patches', outputTemp));
 
       const writtenRomsAndCrcs = (await Promise.all(outputFiles
-        .map(async ([outputPath]) => FileFactory.filesFrom(path.join(outputTemp, outputPath)))))
+        .map(async ([outputPath]) => new FileFactory(new FileCache())
+          .filesFrom(path.join(outputTemp, outputPath)))))
         .flat()
         .map((entry) => [entry.toString().replace(outputTemp + path.sep, ''), entry.getCrc32() ?? ''])
         .sort((a, b) => a[0].localeCompare(b[0]));
@@ -628,7 +646,7 @@ describe('zip', () => {
       // Then
       expect(outputFiles).toHaveLength(1);
       const outputFile = path.join(outputTemp, outputFiles[0][0]);
-      const writtenRomsAndCrcs = (await FileFactory.filesFrom(outputFile))
+      const writtenRomsAndCrcs = (await new FileFactory(new FileCache()).filesFrom(outputFile))
         .map((entry) => [entry.toString().replace(outputTemp + path.sep, ''), entry.getCrc32() ?? ''])
         .sort((a, b) => a[0].localeCompare(b[0]));
       expect(writtenRomsAndCrcs).toEqual(expectedFilesAndCrcs);
@@ -875,7 +893,8 @@ describe('extract', () => {
       const outputFiles = (await candidateWriter(options, inputTemp, inputGlob, 'patches', outputTemp));
 
       const writtenRomsAndCrcs = (await Promise.all(outputFiles
-        .map(async ([outputPath]) => FileFactory.filesFrom(path.join(outputTemp, outputPath)))))
+        .map(async ([outputPath]) => new FileFactory(new FileCache())
+          .filesFrom(path.join(outputTemp, outputPath)))))
         .flat()
         .map((entry) => [entry.toString().replace(outputTemp + path.sep, ''), entry.getCrc32() ?? ''])
         .sort((a, b) => a[0].localeCompare(b[0]));
@@ -1242,7 +1261,8 @@ describe('raw', () => {
       const outputFiles = await candidateWriter(options, inputTemp, inputGlob, 'patches', outputTemp);
 
       const writtenRomsAndCrcs = (await Promise.all(outputFiles
-        .map(async ([outputPath]) => FileFactory.filesFrom(path.join(outputTemp, outputPath)))))
+        .map(async ([outputPath]) => new FileFactory(new FileCache())
+          .filesFrom(path.join(outputTemp, outputPath)))))
         .flat()
         .map((entry) => [entry.toString().replace(outputTemp + path.sep, ''), entry.getCrc32() ?? ''])
         .sort((a, b) => a[0].localeCompare(b[0]));

@@ -27,6 +27,7 @@ import SoftwareListsDAT from '../types/dats/softwarelist/softwareListsDat.js';
 import ExpectedError from '../types/expectedError.js';
 import File from '../types/files/file.js';
 import { ChecksumBitmask } from '../types/files/fileChecksums.js';
+import FileFactory from '../types/files/fileFactory.js';
 import Options from '../types/options.js';
 import Scanner from './scanner.js';
 
@@ -44,8 +45,8 @@ type SmdbRow = {
  * representation.
  */
 export default class DATScanner extends Scanner {
-  constructor(options: Options, progressBar: ProgressBar) {
-    super(options, progressBar, DATScanner.name);
+  constructor(options: Options, progressBar: ProgressBar, fileFactory: FileFactory) {
+    super(options, progressBar, fileFactory, DATScanner.name);
   }
 
   /**
@@ -202,7 +203,7 @@ export default class DATScanner extends Scanner {
           output += chunk.toString();
         });
 
-        proc.on('exit', (code) => {
+        proc.on('close', (code) => {
           if (code !== null && code > 0) {
             reject(new Error(`exit code ${code}`));
             return;

@@ -2,7 +2,7 @@ import ProgressBar, { ProgressBarSymbol } from '../console/progressBar.js';
 import DriveSemaphore from '../driveSemaphore.js';
 import ArchiveEntry from '../types/files/archives/archiveEntry.js';
 import File from '../types/files/file.js';
-import FileCache from '../types/files/fileCache.js';
+import FileFactory from '../types/files/fileFactory.js';
 import ROMHeader from '../types/files/romHeader.js';
 import Options from '../types/options.js';
 import Module from './module.js';
@@ -14,11 +14,14 @@ import Module from './module.js';
 export default class ROMHeaderProcessor extends Module {
   private readonly options: Options;
 
+  private readonly fileFactory: FileFactory;
+
   private readonly driveSemaphore: DriveSemaphore;
 
-  constructor(options: Options, progressBar: ProgressBar) {
+  constructor(options: Options, progressBar: ProgressBar, fileFactory: FileFactory) {
     super(progressBar, ROMHeaderProcessor.name);
     this.options = options;
+    this.fileFactory = fileFactory;
     this.driveSemaphore = new DriveSemaphore(this.options.getReaderThreads());
   }
 
@@ -87,7 +90,7 @@ export default class ROMHeaderProcessor extends Module {
   private async getFileWithHeader(inputFile: File): Promise<File> {
     return this.driveSemaphore.runExclusive(inputFile, async () => {
       this.progressBar.logTrace(`${inputFile.toString()}: reading potentially headered file by file contents`);
-      const headerForFileStream = await FileCache.getOrComputeFileHeader(inputFile);
+      const headerForFileStream = await this.fileFactory.headerFrom(inputFile);
       if (headerForFileStream) {
         this.progressBar.logTrace(`${inputFile.toString()}: found header by file contents: ${headerForFileStream.getHeaderedFileExtension()}`);
         return inputFile.withFileHeader(headerForFileStream);
