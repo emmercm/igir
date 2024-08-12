@@ -40,7 +40,11 @@ export default class DATParentInferrer extends Module {
       let strippedGameName = game.getName();
       strippedGameName = DATParentInferrer.stripGameRegionAndLanguage(strippedGameName);
       strippedGameName = DATParentInferrer.stripGameVariants(strippedGameName);
-      map.set(strippedGameName, [...(map.get(strippedGameName) ?? []), game]);
+      if (!map.has(strippedGameName)) {
+        map.set(strippedGameName, [game]);
+      } else {
+        map.get(strippedGameName)?.push(game);
+      }
       return map;
     }, new Map<string, Game[]>());
     const groupedGames = [...strippedNamesToGames.entries()]
