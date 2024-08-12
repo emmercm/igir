@@ -111,7 +111,7 @@
     // TypeScript doesn't do a good job of reporting indexed values as potentially undefined, such as `[1,2,3][999]`
     "unicorn/prefer-at": "error",
     // Try to enforce early terminations of loops, rather than statements such as `.find(x=>x)[0]`
-    "unicorn/prefer-array-find": "error",
+    "unicorn/prefer-array-find": ["error", {"checkFromLast": false}],
     "unicorn/prefer-array-flat": "error",
     "unicorn/prefer-array-flat-map": "error",
     "unicorn/prefer-includes": "error",

@@ -51,10 +51,12 @@ export default class CandidatePatchGenerator extends Module {
 
   private static indexPatchesByCrcBefore(patches: Patch[]): Map<string, Patch[]> {
     return patches.reduce((map, patch) => {
-      map.set(patch.getCrcBefore(), [
-        ...(map.get(patch.getCrcBefore()) ?? []),
-        patch,
-      ]);
+      const key = patch.getCrcBefore();
+      if (!map.has(key)) {
+        map.set(key, [patch]);
+      } else {
+        map.get(key)?.push(patch);
+      }
       return map;
     }, new Map<string, Patch[]>());
   }
