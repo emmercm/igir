@@ -37,6 +37,11 @@ export default abstract class Archive {
       fsPoly.makeLegal(path.basename(entryPath) || path.parse(this.getFilePath()).name),
     ));
 
+    const tempDir = path.dirname(tempFile);
+    if (!await fsPoly.exists(tempDir)) {
+      await fsPoly.mkdir(tempDir, { recursive: true });
+    }
+
     try {
       await this.extractEntryToFile(entryPath, tempFile);
       return await callback(tempFile);
