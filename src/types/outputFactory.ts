@@ -386,7 +386,11 @@ export default class OutputFactory {
           const subPathsToFilenames = [...filenames]
             .reduce((subPathMap, filename) => {
               const subPath = filename.replace(/[\\/].+$/, '');
-              subPathMap.set(subPath, [...subPathMap.get(subPath) ?? [], filename]);
+              if (!subPathMap.has(subPath)) {
+                subPathMap.set(subPath, [filename]);
+              } else {
+                subPathMap.get(subPath)?.push(filename);
+              }
               return subPathMap;
             }, new Map<string, string[]>());
           const tuples = [...subPathsToFilenames.entries()]
@@ -421,7 +425,11 @@ export default class OutputFactory {
           const subPathsToFilenames = [...filenames]
             .reduce((subPathMap, filename) => {
               const subPath = filename.replace(/[\\/].+$/, '');
-              subPathMap.set(subPath, [...subPathMap.get(subPath) ?? [], filename]);
+              if (!subPathMap.has(subPath)) {
+                subPathMap.set(subPath, [filename]);
+              } else {
+                subPathMap.get(subPath)?.push(filename);
+              }
               return subPathMap;
             }, new Map<string, string[]>());
 

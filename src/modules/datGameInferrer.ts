@@ -53,8 +53,11 @@ export default class DATGameInferrer extends Module {
         .filter((inputPath) => normalizedPath.startsWith(inputPath));
       (matchedInputPaths.length > 0 ? matchedInputPaths : [DATGameInferrer.DEFAULT_DAT_NAME])
         .forEach((inputPath) => {
-          const datRomFiles = [...(map.get(inputPath) ?? []), file];
-          map.set(inputPath, datRomFiles);
+          if (!map.has(inputPath)) {
+            map.set(inputPath, [file]);
+          } else {
+            map.get(inputPath)?.push(file);
+          }
         });
       return map;
     }, new Map<string, File[]>());
@@ -152,7 +155,11 @@ export default class DATGameInferrer extends Module {
       .filter((file) => file instanceof ArchiveEntry)
       .reduce((map, file) => {
         const archivePath = file.getFilePath();
-        map.set(archivePath, [...(map.get(archivePath) ?? []), file]);
+        if (!map.has(archivePath)) {
+          map.set(archivePath, [file]);
+        } else {
+          map.get(archivePath)?.push(file);
+        }
         return map;
       }, new Map<string, ArchiveEntry<Archive>[]>());
 
@@ -261,7 +268,11 @@ export default class DATGameInferrer extends Module {
       .filter((file) => !(file instanceof ArchiveEntry))
       .reduce((map, file) => {
         const gameName = DATGameInferrer.getGameName(file);
-        map.set(gameName, [...(map.get(gameName) ?? []), file]);
+        if (!map.has(gameName)) {
+          map.set(gameName, [file]);
+        } else {
+          map.get(gameName)?.push(file);
+        }
         return map;
       }, new Map<string, File[]>());
 

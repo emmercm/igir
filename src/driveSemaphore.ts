@@ -90,19 +90,24 @@ export default class DriveSemaphore {
       .sort(([a], [b]) => {
         const aPath = a instanceof File ? a.getFilePath() : a.toString();
         const bPath = b instanceof File ? b.getFilePath() : b.toString();
-        return bPath.localeCompare(aPath); // reverse so that .pop() below puts files back in order
+        return aPath.localeCompare(bPath);
       })
       .reduce((map, [file, idx]) => {
         const key = DriveSemaphore.getDiskForFile(file);
-        map.set(key, [...(map.get(key) ?? []), [file, idx]]);
+        if (!map.has(key)) {
+          map.set(key, [[file, idx]]);
+        } else {
+          map.get(key)?.push([file, idx]);
+        }
         return map;
       }, new Map<string, [K, number][]>());
     const maxFilesOnAnyDisk = [...disksToFiles.values()]
       .reduce((max, filesForDisk) => Math.max(max, filesForDisk.length), 0);
     let filesStriped: [K, number][] = [];
-    for (let i = 0; i < maxFilesOnAnyDisk; i += 1) {
+    const chunkSize = 5;
+    for (let i = 0; i < maxFilesOnAnyDisk; i += chunkSize) {
       const batch = [...disksToFiles.values()]
-        .map((filesForDisk) => filesForDisk.pop())
+        .flatMap((filesForDisk) => filesForDisk.splice(0, chunkSize))
         .filter(ArrayPoly.filterNotNullish);
       filesStriped = [...filesStriped, ...batch];
     }
@@ -139,16 +144,17 @@ export default class DriveSemaphore {
     const filePathResolved = path.resolve(filePathNormalized);
 
     // Try to get the path of the drive this file is on
-    let filePathDisk = this.DISKS.find((disk) => filePathResolved.startsWith(disk)) ?? '';
-
-    if (!filePathDisk) {
-      // If a drive couldn't be found, try to parse a samba server name
-      const sambaMatches = filePathNormalized.match(/^([\\/]{2}[^\\/]+)/);
-      if (sambaMatches !== null) {
-        [, filePathDisk] = sambaMatches;
-      }
+    const filePathDisk = this.DISKS.find((disk) => filePathResolved.startsWith(disk));
+    if (filePathDisk !== undefined) {
+      return filePathDisk;
     }
 
-    return filePathDisk;
+    // If a drive couldn't be found, try to parse a samba server name
+    const sambaMatches = filePathNormalized.match(/^([\\/]{2}[^\\/]+)/);
+    if (sambaMatches !== null) {
+      return sambaMatches[1];
+    }
+
+    return '';
   }
 }

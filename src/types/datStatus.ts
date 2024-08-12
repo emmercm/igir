@@ -144,9 +144,11 @@ export default class DATStatus {
   }
 
   private static append<T>(map: Map<ROMType, T[]>, romType: ROMType, val: T): void {
-    const arr = map.get(romType) ?? [];
-    arr.push(val);
-    map.set(romType, arr);
+    if (!map.has(romType)) {
+      map.set(romType, [val]);
+    } else {
+      map.get(romType)?.push(val);
+    }
   }
 
   getDATName(): string {
@@ -170,8 +172,8 @@ export default class DATStatus {
   anyGamesFound(options: Options): boolean {
     return DATStatus.getAllowedTypes(options)
       .reduce((result, romType) => {
-        const foundReleaseCandidates = (
-          this.foundRomTypesToReleaseCandidates.get(romType) ?? []).length;
+        const foundReleaseCandidates = this.foundRomTypesToReleaseCandidates
+          .get(romType)?.length ?? 0;
         return result || foundReleaseCandidates > 0;
       }, false);
   }

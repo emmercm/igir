@@ -47,7 +47,11 @@ export default class CandidateValidator extends Module {
       .reduce((map, releaseCandidate) => {
         releaseCandidate.getRomsWithFiles().forEach((romWithFiles) => {
           const key = romWithFiles.getOutputFile().getFilePath();
-          map.set(key, [...(map.get(key) ?? []), releaseCandidate]);
+          if (!map.has(key)) {
+            map.set(key, [releaseCandidate]);
+          } else {
+            map.get(key)?.push(releaseCandidate);
+          }
         });
         return map;
       }, new Map<string, ReleaseCandidate[]>());
