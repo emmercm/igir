@@ -10,13 +10,15 @@ By default, Igir will use CRC32 + filesize to match input files to ROMs found in
 
 ## Automatically using other checksum algorithms
 
-Some DAT release groups do not include every checksum for every file. For example, MAME CHDs only include SHA1 checksums and nothing else, not even filesize information.
+Some DAT release groups do not include every checksum for every file. For example, CHDs in MAME DATs only include SHA1 checksums and nothing else, not even filesize information.
 
 And some DAT release groups do not include filesize information for every file, preventing a safe use of CRC32. For example, not every [Hardware Target Game Database SMDB](https://github.com/frederic-mahe/Hardware-Target-Game-Database/tree/master/EverDrive%20Pack%20SMDBs) includes file sizes, but they typically include all the normal checksums.
 
-!!! success
+!!! warning
 
-    For situations like these, Igir will automatically detect what combination of checksums it needs to calculate for input files to be able to match them to DATs. This _does_ have the chance of greatly slowing down file scanning, especially with archives, so you can use the `--input-checksum-quick` (below) option to keep processing faster.
+    For situations like these, Igir will automatically detect what combination of checksums it needs to calculate for input files to be able to match them to DATs. This _does_ have the chance of greatly slowing down file scanning, especially with archives.
+
+    To constrain what checksums are calculated, you can use the `--input-checksum-quick` option (below), or `--input-checksum-max <algorithm>` which accepts the same algorithm options as `--input-checksum-min <algorithm>` (also below).
 
 For example, if you provide all of these DATs at once with the [`--dat <path>` option](../dats/processing.md):
 
@@ -24,11 +26,11 @@ For example, if you provide all of these DATs at once with the [`--dat <path>` o
 - Hardware Target Game Database's Atari Lynx SMBD (which includes CRC32, MD5, SHA1, and SHA256 information but _not_ filesize)
 - MAME ListXML (which only includes SHA1 information for CHD "disks")
 
-...then Igir will determine that SHA1 is necessary to calculate because not every ROM in every DAT includes CRC32 _and_ filesize information.
+...then Igir will determine that SHA1 is the minimum necessary checksum to calculate because not every ROM in every DAT includes CRC32 _and_ filesize information.
 
 !!! note
 
-    When generating a [dir2dat](../dats/dir2dat.md) with the `igir dir2dat` command, Igir will calculate CRC32, MD5, and SHA1 information for every file. This helps ensure that the generated DAT has the most complete information it can. You can additionally add SHA256 information with the option `igir [commands..] [options] --input-min-checksum SHA256` (below).
+    When generating a [dir2dat](../dats/dir2dat.md) with the `igir dir2dat` command, Igir will calculate CRC32, MD5, and SHA1 information for every file. This helps ensure that the generated DAT has the most complete information it can. You can additionally add SHA256 information with the option `igir [commands..] [options] --input-checksum-min SHA256` (below).
 
 ## Quick scanning files
 
@@ -38,11 +40,11 @@ The `--input-checksum-quick` option will prevent the extraction of archives (eit
 
 !!! warning
 
-    If an archive format doesn't contain any checksum information (e.g. `.cso`, `.tar.gz`), then there is no way to match those input files to DATs! Only use quick scanning when all input archives store checksums of their files!
+    If an archive format doesn't contain any checksum information (e.g. `.cso`, `.tar.gz`), then there will be no way to match those input files to DATs when quick scanning! Only use quick scanning when all input archives store checksums of their files!
 
 !!! warning
 
-    Different DAT groups catalog CHDs of CDs (`.bin` & `.cue`) and GDIs (`.gdi` & `.bin`/`.raw`) that use a track sheet plus one or more track files differnetly. Take the Sega Dreamcast for example, Redump catalogs `.bin` & `.cue` files (which is [problematic with CHDs](https://github.com/mamedev/mame/issues/11903)), [MAME Redump](https://github.com/MetalSlug/MAMERedump) catalogs `.chd` CD files, and TOSEC catalogs `.gdi` & `.bin`/`.raw` files. Quick scanning of CHDs means only the SHA1 stored in its header will be used for matching, which may or may not work depending on the DATs you use.
+    Different DAT groups catalog CHDs of CD-ROMs (`.bin` & `.cue`) and GD-ROMs (`.gdi` & `.bin`/`.raw`) that use a track sheet plus one or more track files differnetly. Take the Sega Dreamcast for example, Redump catalogs `.bin` & `.cue` files (which is [problematic with CHDs](https://github.com/mamedev/mame/issues/11903)), [MAME Redump](https://github.com/MetalSlug/MAMERedump) catalogs `.chd` CD files, and TOSEC catalogs `.gdi` & `.bin`/`.raw` files. Quick scanning of CHDs means only the SHA1 stored in its header will be used for matching, which may or may not work depending on the DATs you use.
 
 ## Manually using other checksum algorithms
 
@@ -50,12 +52,12 @@ The `--input-checksum-quick` option will prevent the extraction of archives (eit
 
     Most people do not need to calculate checksums above CRC32. CRC32 + filesize is sufficient to match ROMs and test written files in the gross majority of cases. The below information is for people that _truly_ know they need higher checksums.
 
-You can specify higher checksum algorithms with the `--input-min-checksum <algorithm>` option like this:
+You can specify higher checksum algorithms with the `--input-checksum-min <algorithm>` option like this:
 
 ```shell
-igir [commands..] [options] --input-min-checksum MD5
-igir [commands..] [options] --input-min-checksum SHA1
-igir [commands..] [options] --input-min-checksum SHA256
+igir [commands..] [options] --input-checksum-min MD5
+igir [commands..] [options] --input-checksum-min SHA1
+igir [commands..] [options] --input-checksum-min SHA256
 ```
 
 This option defines the _minimum_ checksum that will be used based on digest size (below). If not every ROM in every DAT provides the checksum you specify, Igir may automatically calculate and match files based on a higher checksum (see above), but never lower.
