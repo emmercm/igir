@@ -75,6 +75,7 @@ export default class DATScanner extends Scanner {
     await this.progressBar.reset(datFiles.length);
 
     const downloadedDats = await this.downloadDats(datFiles);
+    await this.progressBar.reset(downloadedDats.length);
     const parsedDats = await this.parseDatFiles(downloadedDats);
 
     this.progressBar.logTrace('done scanning DAT files');
@@ -96,6 +97,7 @@ export default class DATScanner extends Scanner {
 
       try {
         this.progressBar.logTrace(`${datFile.toString()}: downloading`);
+        // TODO(cemmer): these never get deleted?
         const downloadedDatFile = await datFile.downloadToTempPath('dat');
         this.progressBar.logTrace(`${datFile.toString()}: downloaded to '${downloadedDatFile.toString()}'`);
         return await this.getFilesFromPaths(
