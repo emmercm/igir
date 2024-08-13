@@ -295,7 +295,7 @@ export default class Igir {
         .filter((bitmask): bitmask is keyof typeof ChecksumBitmask => Number.isNaN(Number(bitmask)))
         .map((bitmask) => ChecksumBitmask[bitmask])
         .at(-1)
-      ?? ChecksumBitmask.CRC32;
+      ?? minimumChecksum;
 
     let matchChecksum = minimumChecksum;
 
@@ -349,6 +349,11 @@ export default class Igir {
           this.logger.trace(`${dat.getNameShort()}: needs ${bitmask} file checksums for disks, enabling`);
         });
     });
+
+    if (matchChecksum === ChecksumBitmask.NONE) {
+      matchChecksum |= ChecksumBitmask.CRC32;
+      this.logger.trace('at least one checksum algorithm is required, enabling CRC32 file checksums');
+    }
 
     return matchChecksum;
   }
