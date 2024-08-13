@@ -1,5 +1,6 @@
 import Defaults from '../../globals/defaults.js';
 import FsPoly from '../../polyfill/fsPoly.js';
+import URLPoly from '../../polyfill/urlPoly.js';
 import Timer from '../../timer.js';
 import Cache from '../cache.js';
 import Archive from './archives/archive.js';
@@ -93,7 +94,7 @@ export default class FileCache {
     filePath: string,
     checksumBitmask: number,
   ): Promise<File> {
-    if (!this.enabled) {
+    if (!this.enabled || URLPoly.canParse(filePath)) {
       return File.fileOf({ filePath }, checksumBitmask);
     }
 
