@@ -67,6 +67,7 @@ export interface OptionsProps {
   readonly inputExclude?: string[],
   readonly inputChecksumQuick?: boolean,
   readonly inputChecksumMin?: string,
+  readonly inputChecksumMax?: string,
   readonly inputChecksumArchives?: string,
 
   readonly dat?: string[],
@@ -186,6 +187,8 @@ export default class Options implements OptionsProps {
   readonly inputChecksumQuick: boolean;
 
   readonly inputChecksumMin?: string;
+
+  readonly inputChecksumMax?: string;
 
   readonly inputChecksumArchives?: string;
 
@@ -380,6 +383,7 @@ export default class Options implements OptionsProps {
     this.inputExclude = options?.inputExclude ?? [];
     this.inputChecksumQuick = options?.inputChecksumQuick ?? false;
     this.inputChecksumMin = options?.inputChecksumMin;
+    this.inputChecksumMax = options?.inputChecksumMax;
     this.inputChecksumArchives = options?.inputChecksumArchives;
 
     this.dat = options?.dat ?? [];
@@ -786,6 +790,15 @@ export default class Options implements OptionsProps {
   getInputChecksumMin(): ChecksumBitmask | undefined {
     const checksumBitmask = Object.keys(ChecksumBitmask)
       .find((bitmask) => bitmask.toUpperCase() === this.inputChecksumMin?.toUpperCase());
+    if (!checksumBitmask) {
+      return undefined;
+    }
+    return ChecksumBitmask[checksumBitmask as keyof typeof ChecksumBitmask];
+  }
+
+  getInputChecksumMax(): ChecksumBitmask | undefined {
+    const checksumBitmask = Object.keys(ChecksumBitmask)
+      .find((bitmask) => bitmask.toUpperCase() === this.inputChecksumMax?.toUpperCase());
     if (!checksumBitmask) {
       return undefined;
     }

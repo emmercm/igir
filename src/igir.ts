@@ -289,7 +289,14 @@ export default class Igir {
   }
 
   private determineScanningBitmask(dats: DAT[]): number {
-    const minimumChecksum = this.options.getInputChecksumMin() ?? ChecksumBitmask.CRC32;
+    const minimumChecksum = this.options.getInputChecksumMin() ?? ChecksumBitmask.NONE;
+    const maximumChecksum = this.options.getInputChecksumMax()
+      ?? Object.keys(ChecksumBitmask)
+        .filter((bitmask): bitmask is keyof typeof ChecksumBitmask => Number.isNaN(Number(bitmask)))
+        .map((bitmask) => ChecksumBitmask[bitmask])
+        .at(-1)
+      ?? minimumChecksum;
+
     let matchChecksum = minimumChecksum;
 
     if (this.options.getPatchFileCount() > 0) {
@@ -315,7 +322,8 @@ export default class Igir {
       Object.keys(ChecksumBitmask)
         .filter((bitmask): bitmask is keyof typeof ChecksumBitmask => Number.isNaN(Number(bitmask)))
         // Has not been enabled yet
-        .filter((bitmask) => ChecksumBitmask[bitmask] > minimumChecksum)
+        .filter((bitmask) => ChecksumBitmask[bitmask] > minimumChecksum
+          && ChecksumBitmask[bitmask] <= maximumChecksum)
         .filter((bitmask) => !(matchChecksum & ChecksumBitmask[bitmask]))
         // Should be enabled for this DAT
         .filter((bitmask) => datMinimumRomBitmask & ChecksumBitmask[bitmask])
@@ -331,7 +339,8 @@ export default class Igir {
       Object.keys(ChecksumBitmask)
         .filter((bitmask): bitmask is keyof typeof ChecksumBitmask => Number.isNaN(Number(bitmask)))
         // Has not been enabled yet
-        .filter((bitmask) => ChecksumBitmask[bitmask] > minimumChecksum)
+        .filter((bitmask) => ChecksumBitmask[bitmask] > minimumChecksum
+          && ChecksumBitmask[bitmask] <= maximumChecksum)
         .filter((bitmask) => !(matchChecksum & ChecksumBitmask[bitmask]))
         // Should be enabled for this DAT
         .filter((bitmask) => datMinimumDiskBitmask & ChecksumBitmask[bitmask])
@@ -340,6 +349,11 @@ export default class Igir {
           this.logger.trace(`${dat.getNameShort()}: needs ${bitmask} file checksums for disks, enabling`);
         });
     });
+
+    if (matchChecksum === ChecksumBitmask.NONE) {
+      matchChecksum |= ChecksumBitmask.CRC32;
+      this.logger.trace('at least one checksum algorithm is required, enabling CRC32 file checksums');
+    }
 
     return matchChecksum;
   }

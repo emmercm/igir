@@ -42,7 +42,7 @@ The default settings for Igir will have the best chance for you to match input f
 
 **Don't increase the minimum checksum level unless you absolutely need it.**
 
-The default settings for Igir will cause accurate file matching for the gross majority of cases with the minimum amount of processing. Additionally, most [archive formats](../input/reading-archives.md) only store CRC32 checksums, so forcing any others will greatly increase scanning time. Use the `--input-checksum-min <algorithm>` option with caution.
+The default settings for Igir will cause accurate file matching for the gross majority of cases with the least amount of processing. Additionally, most [archive formats](../input/reading-archives.md) only store CRC32 checksums, so forcing any others will greatly increase scanning time. Use the `--input-checksum-min <algorithm>` option with caution.
 
 ## File Outputs
 

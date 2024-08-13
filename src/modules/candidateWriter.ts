@@ -568,10 +568,15 @@ export default class CandidateWriter extends Module {
       this.progressBar.logWarn(`${dat.getNameShort()}: ${releaseCandidate.getName()}: ${outputFilePath}: can't test, expected CRC is unknown`);
       return undefined;
     }
-    const actualFile = await File.fileOf(
-      { filePath: outputFilePath },
-      expectedFile.getChecksumBitmask(),
-    );
+    let actualFile: File;
+    try {
+      actualFile = await File.fileOf(
+        { filePath: outputFilePath },
+        expectedFile.getChecksumBitmask(),
+      );
+    } catch (error) {
+      return `failed to parse: ${error}`;
+    }
     if (actualFile.getSha256()
       && expectedFile.getSha256()
       && actualFile.getSha256() !== expectedFile.getSha256()

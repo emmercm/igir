@@ -1,5 +1,6 @@
 import Defaults from '../../globals/defaults.js';
 import FsPoly from '../../polyfill/fsPoly.js';
+import URLPoly from '../../polyfill/urlPoly.js';
 import Timer from '../../timer.js';
 import Cache from '../cache.js';
 import Archive from './archives/archive.js';
@@ -93,7 +94,7 @@ export default class FileCache {
     filePath: string,
     checksumBitmask: number,
   ): Promise<File> {
-    if (!this.enabled || checksumBitmask === ChecksumBitmask.NONE) {
+    if (!this.enabled || URLPoly.canParse(filePath)) {
       return File.fileOf({ filePath }, checksumBitmask);
     }
 
@@ -125,9 +126,9 @@ export default class FileCache {
           | (cachedFile.md5 ? ChecksumBitmask.MD5 : 0)
           | (cachedFile.sha1 ? ChecksumBitmask.SHA1 : 0)
           | (cachedFile.sha256 ? ChecksumBitmask.SHA256 : 0);
-        const remainingBitmask = checksumBitmask ^ existingBitmask;
+        const remainingBitmask = checksumBitmask - (checksumBitmask & existingBitmask);
         // We need checksums that haven't been cached yet
-        return remainingBitmask !== 0;
+        return remainingBitmask > 0;
       },
     );
 
@@ -139,21 +140,14 @@ export default class FileCache {
 
     // We didn't compute the file (cache hit), deserialize the properties into a full object
     const cachedFile = cachedValue.value as FileProps;
-    return File.fileOfObject(filePath, {
-      ...cachedFile,
-      // Only return the checksums requested
-      crc32: checksumBitmask & ChecksumBitmask.CRC32 ? cachedFile.crc32 : undefined,
-      md5: checksumBitmask & ChecksumBitmask.MD5 ? cachedFile.md5 : undefined,
-      sha1: checksumBitmask & ChecksumBitmask.SHA1 ? cachedFile.sha1 : undefined,
-      sha256: checksumBitmask & ChecksumBitmask.SHA256 ? cachedFile.sha256 : undefined,
-    });
+    return File.fileOfObject(filePath, cachedFile);
   }
 
   async getOrComputeArchiveChecksums<T extends Archive>(
     archive: T,
     checksumBitmask: number,
   ): Promise<ArchiveEntry<Archive>[]> {
-    if (!this.enabled || checksumBitmask === ChecksumBitmask.NONE) {
+    if (!this.enabled) {
       return archive.getArchiveEntries(checksumBitmask);
     }
 
@@ -185,9 +179,9 @@ export default class FileCache {
           | (cachedEntries.every((props) => props.md5) ? ChecksumBitmask.MD5 : 0)
           | (cachedEntries.every((props) => props.sha1) ? ChecksumBitmask.SHA1 : 0)
           | (cachedEntries.every((props) => props.sha256) ? ChecksumBitmask.SHA256 : 0);
-        const remainingBitmask = checksumBitmask ^ existingBitmask;
+        const remainingBitmask = checksumBitmask - (checksumBitmask & existingBitmask);
         // We need checksums that haven't been cached yet
-        return remainingBitmask !== 0;
+        return remainingBitmask > 0;
       },
     );
 
@@ -200,14 +194,8 @@ export default class FileCache {
     // We didn't compute the archive entries (cache hit), deserialize the properties into
     //  full objects
     const cachedEntries = cachedValue.value as ArchiveEntryProps<T>[];
-    return Promise.all(cachedEntries.map(async (props) => ArchiveEntry.entryOfObject(archive, {
-      ...props,
-      // Only return the checksums requested
-      crc32: checksumBitmask & ChecksumBitmask.CRC32 ? props.crc32 : undefined,
-      md5: checksumBitmask & ChecksumBitmask.MD5 ? props.md5 : undefined,
-      sha1: checksumBitmask & ChecksumBitmask.SHA1 ? props.sha1 : undefined,
-      sha256: checksumBitmask & ChecksumBitmask.SHA256 ? props.sha256 : undefined,
-    })));
+    return Promise.all(cachedEntries
+      .map(async (props) => ArchiveEntry.entryOfObject(archive, props)));
   }
 
   async getOrComputeFileHeader(file: File): Promise<ROMHeader | undefined> {

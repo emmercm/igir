@@ -140,10 +140,6 @@ export default class ArgumentsParser {
           middlewareArgv._ = middlewareArgv._.reduce(ArrayPoly.reduceUnique(), []);
         }, true)
         .check((checkArgv) => {
-          if (checkArgv.help) {
-            return true;
-          }
-
           ['extract', 'zip'].forEach((command) => {
             if (checkArgv._.includes(command) && ['copy', 'move'].every((write) => !checkArgv._.includes(write))) {
               throw new ExpectedError(`Command "${command}" also requires the commands copy or move`);
@@ -207,6 +203,9 @@ export default class ArgumentsParser {
         if (checkArgv['input-checksum-quick'] && checkArgv['input-checksum-min'] !== ChecksumBitmask[ChecksumBitmask.CRC32].toUpperCase()) {
           throw new ExpectedError('Arguments input-checksum-quick and input-checksum-min are mutually exclusive');
         }
+        if (checkArgv['input-checksum-quick'] && checkArgv['input-checksum-max']) {
+          throw new ExpectedError('Arguments input-checksum-quick and input-checksum-max are mutually exclusive');
+        }
         return true;
       })
       .option('input-checksum-min', {
@@ -219,6 +218,28 @@ export default class ArgumentsParser {
         coerce: ArgumentsParser.getLastValue, // don't allow string[] values
         requiresArg: true,
         default: ChecksumBitmask[ChecksumBitmask.CRC32].toUpperCase(),
+      })
+      .option('input-checksum-max', {
+        group: groupRomInput,
+        description: 'The maximum checksum level to calculate and use for matching',
+        choices: Object.keys(ChecksumBitmask)
+          .filter((bitmask) => Number.isNaN(Number(bitmask)))
+          .filter((bitmask) => ChecksumBitmask[bitmask as keyof typeof ChecksumBitmask] > 0)
+          .map((bitmask) => bitmask.toUpperCase()),
+        coerce: ArgumentsParser.getLastValue, // don't allow string[] values
+        requiresArg: true,
+      })
+      .check((checkArgv) => {
+        const options = Options.fromObject(checkArgv);
+        const inputChecksumMin = options.getInputChecksumMin();
+        const inputChecksumMax = options.getInputChecksumMax();
+        if (inputChecksumMin !== undefined
+          && inputChecksumMax !== undefined
+          && inputChecksumMin > inputChecksumMax
+        ) {
+          throw new ExpectedError('Invalid --input-checksum-min & --input-checksum-max, the min must be less than the max');
+        }
+        return true;
       })
       .option('input-checksum-archives', {
         group: groupRomInput,
@@ -417,9 +438,6 @@ export default class ArgumentsParser {
         type: 'boolean',
       })
       .check((checkArgv) => {
-        if (checkArgv.help) {
-          return true;
-        }
         const needOutput = ['copy', 'move', 'link', 'extract', 'zip', 'clean'].filter((command) => checkArgv._.includes(command));
         if (!checkArgv.output && needOutput.length > 0) {
           // TODO(cememr): print help message
@@ -448,9 +466,6 @@ export default class ArgumentsParser {
         type: 'boolean',
       })
       .check((checkArgv) => {
-        if (checkArgv.help) {
-          return true;
-        }
         const needClean = ['clean-exclude', 'clean-backup', 'clean-dry-run'].filter((option) => checkArgv[option]);
         if (!checkArgv._.includes('clean') && needClean.length > 0) {
           // TODO(cememr): print help message
@@ -473,9 +488,6 @@ export default class ArgumentsParser {
         type: 'boolean',
       })
       .check((checkArgv) => {
-        if (checkArgv.help) {
-          return true;
-        }
         const needZip = ['zip-exclude', 'zip-dat-name'].filter((option) => checkArgv[option]);
         if (!checkArgv._.includes('zip') && needZip.length > 0) {
           throw new ExpectedError(`Missing required command for option${needZip.length !== 1 ? 's' : ''} ${needZip.join(', ')}: zip`);
@@ -495,9 +507,6 @@ export default class ArgumentsParser {
         implies: 'symlink',
       })
       .check((checkArgv) => {
-        if (checkArgv.help) {
-          return true;
-        }
         const needLinkCommand = ['symlink'].filter((option) => checkArgv[option]);
         if (!checkArgv._.includes('link') && needLinkCommand.length > 0) {
           throw new ExpectedError(`Missing required command for option${needLinkCommand.length !== 1 ? 's' : ''} ${needLinkCommand.join(', ')}: link`);
