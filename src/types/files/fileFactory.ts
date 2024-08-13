@@ -1,3 +1,4 @@
+import URLPoly from '../../polyfill/urlPoly.js';
 import ExpectedError from '../expectedError.js';
 import Archive from './archives/archive.js';
 import ArchiveEntry from './archives/archiveEntry.js';
@@ -33,6 +34,10 @@ export default class FileFactory {
     fileChecksumBitmask: number = ChecksumBitmask.CRC32,
     archiveChecksumBitmask = fileChecksumBitmask,
   ): Promise<File[]> {
+    if (URLPoly.canParse(filePath)) {
+      return [await File.fileOf({ filePath })];
+    }
+
     if (!FileFactory.isExtensionArchive(filePath)) {
       const entries = await this.entriesFromArchiveSignature(filePath, archiveChecksumBitmask);
       if (entries !== undefined) {

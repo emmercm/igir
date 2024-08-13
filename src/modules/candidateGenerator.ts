@@ -319,8 +319,8 @@ export default class CandidateGenerator extends Module {
     const filteredArchivesWithEveryRom = archivesWithEveryRom
       // Sort the Archives such that the Archive with the least number of entries is preferred
       .sort((a, b) => {
-        const aEntries = (filesByPath.get(a.getFilePath()) ?? []).length;
-        const bEntries = (filesByPath.get(b.getFilePath()) ?? []).length;
+        const aEntries = filesByPath.get(a.getFilePath())?.length ?? 0;
+        const bEntries = filesByPath.get(b.getFilePath())?.length ?? 0;
         return aEntries - bEntries;
       })
       // Filter out Archives with excess entries
@@ -366,8 +366,8 @@ export default class CandidateGenerator extends Module {
         && archiveWithEveryRom instanceof Chd
       ) {
         // We assumed this CHD was fine above, find its .cue file
-        archiveEntry = (filesByPath.get(archiveWithEveryRom.getFilePath()) ?? [])
-          .find((file) => file.getExtractedFilePath().toLowerCase().endsWith('.cue'));
+        archiveEntry = filesByPath.get(archiveWithEveryRom.getFilePath())
+          ?.find((file) => file.getExtractedFilePath().toLowerCase().endsWith('.cue'));
       }
 
       return [rom, archiveEntry as File];

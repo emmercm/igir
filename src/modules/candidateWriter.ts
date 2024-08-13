@@ -388,10 +388,12 @@ export default class CandidateWriter extends Module {
     // the same input archive at the same time, to benefit from batch extraction.
     const uniqueInputToOutputEntriesMap = uniqueInputToOutputEntries
       .reduce((map, [inputRomFile, outputRomFile]) => {
-        map.set(inputRomFile.getFilePath(), [
-          ...(map.get(inputRomFile.getFilePath()) ?? []),
-          [inputRomFile, outputRomFile],
-        ]);
+        const key = inputRomFile.getFilePath();
+        if (!map.has(key)) {
+          map.set(key, [[inputRomFile, outputRomFile]]);
+        } else {
+          map.get(key)?.push([inputRomFile, outputRomFile]);
+        }
         return map;
       }, new Map<string, [File, File][]>());
     for (const groupedInputToOutput of uniqueInputToOutputEntriesMap.values()) {

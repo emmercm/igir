@@ -8,7 +8,6 @@ import ROM from '../types/dats/rom.js';
 import ArchiveEntry from '../types/files/archives/archiveEntry.js';
 import Options from '../types/options.js';
 import ReleaseCandidate from '../types/releaseCandidate.js';
-import ROMWithFiles from '../types/romWithFiles.js';
 import Module from './module.js';
 
 /**
@@ -104,11 +103,7 @@ export default class CandidateCombiner extends Module {
             ));
           }
 
-          return new ROMWithFiles(
-            romWithFiles.getRom(),
-            romWithFiles.getInputFile(),
-            outputEntry,
-          );
+          return romWithFiles.withOutputFile(outputEntry);
         }));
 
     return new ReleaseCandidate(game, undefined, romsWithFiles);
