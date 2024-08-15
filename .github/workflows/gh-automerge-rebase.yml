@@ -12,6 +12,8 @@ on:
   push:
     branches:
       - 'main'
+      - '*feature*'
+      - '**/*feature*'
   schedule:
     # Every hour
     - cron: '0 * * * *'
