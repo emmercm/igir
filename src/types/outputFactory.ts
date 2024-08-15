@@ -110,7 +110,7 @@ export default class OutputFactory {
    * *************************
    */
 
-  public static getDir(
+  static getDir(
     options: Options,
     dat: DAT,
     game?: Game,

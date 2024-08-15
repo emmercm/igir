@@ -128,9 +128,6 @@ export default class CandidateGenerator extends Module {
     // For each Game's ROM, find the matching File
     const romFiles = await Promise.all(
       gameRoms.map(async (rom) => {
-        if (!romsToInputFiles.has(rom)) {
-          return [rom, undefined];
-        }
         let inputFile = romsToInputFiles.get(rom);
         if (inputFile === undefined) {
           return [rom, undefined];
@@ -183,17 +180,15 @@ export default class CandidateGenerator extends Module {
         }
 
         /**
-         * If the matched input file is from an archive, and we're not zipping or extracting, then
-         * treat the file as "raw" so it can be copied/moved as-is.
-         * Matches {@link ROMHeaderProcessor.getFileWithHeader}
+         * If the matched input file is from an archive, and we can raw-copy that entire archive,
+         * then treat the file as "raw" so it can be copied/moved as-is.
          */
         if (inputFile instanceof ArchiveEntry
-          && !this.options.shouldZipRom(rom)
-          && !this.options.shouldExtractRom(rom)
+          && this.shouldGenerateArchiveFile(dat, game, release, rom, romsToInputFiles)
         ) {
           try {
-            // Note: we're delaying checksum calculation for now, {@link CandidateArchiveFileHasher}
-            //  will handle it later
+            // Note: we're delaying checksum calculations for now,
+            // {@link CandidateArchiveFileHasher} will handle it later
             inputFile = new ArchiveFile(
               inputFile.getArchive(),
               {
@@ -372,6 +367,53 @@ export default class CandidateGenerator extends Module {
 
       return [rom, archiveEntry as File];
     }));
+  }
+
+  private shouldGenerateArchiveFile(
+    dat: DAT,
+    game: Game,
+    release: Release | undefined,
+    rom: ROM,
+    romsToInputFiles: Map<ROM, File>,
+  ): boolean {
+    if ([...romsToInputFiles.values()].some((inputFile) => inputFile.getFileHeader()
+      ?? inputFile.getPatch())
+    ) {
+      // At least one output file won't exactly match its input file, don't generate an archive
+      // file
+      return false;
+    }
+
+    if (romsToInputFiles.get(rom) instanceof ArchiveEntry
+      && !this.options.shouldZipRom(rom)
+      && !this.options.shouldExtractRom(rom)
+    ) {
+      // This ROM's input file is already archived, and we're not [re-]zipping or extracting, so
+      // we want to leave it as-is. We'll check later if the input archive has excess files.
+      return true;
+    }
+
+    if (!this.options.getZipDatName()
+      && [...romsToInputFiles.entries()]
+        .every(([inputRom, inputFile]) => inputFile instanceof ArchiveEntry
+          && inputFile.getArchive() instanceof Zip
+          && this.options.shouldZipRom(inputRom)
+          && OutputFactory.getPath(
+            this.options,
+            dat,
+            game,
+            release,
+            inputRom,
+            inputFile,
+          ).entryPath === inputFile.getExtractedFilePath())
+    ) {
+      // Every ROM should be zipped, and every input file is already in a zip, and the archive entry
+      // paths match, so it's safe to copy the zip as-is
+      return true;
+    }
+
+    // Return false by default
+    return false;
   }
 
   private async getOutputFile(
