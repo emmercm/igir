@@ -1,6 +1,5 @@
 import Defaults from '../../globals/defaults.js';
 import FsPoly from '../../polyfill/fsPoly.js';
-import URLPoly from '../../polyfill/urlPoly.js';
 import Timer from '../../timer.js';
 import Cache from '../cache.js';
 import Archive from './archives/archive.js';
@@ -94,10 +93,6 @@ export default class FileCache {
     filePath: string,
     checksumBitmask: number,
   ): Promise<File> {
-    if (!this.enabled || URLPoly.canParse(filePath)) {
-      return File.fileOf({ filePath }, checksumBitmask);
-    }
-
     // NOTE(cemmer): we're explicitly not catching ENOENT errors here, we want it to bubble up
     const stats = await FsPoly.stat(filePath);
     const cacheKey = await this.getCacheKey(filePath, ValueType.FILE_CHECKSUMS);
@@ -147,10 +142,6 @@ export default class FileCache {
     archive: T,
     checksumBitmask: number,
   ): Promise<ArchiveEntry<Archive>[]> {
-    if (!this.enabled) {
-      return archive.getArchiveEntries(checksumBitmask);
-    }
-
     // NOTE(cemmer): we're explicitly not catching ENOENT errors here, we want it to bubble up
     const stats = await FsPoly.stat(archive.getFilePath());
     const cacheKey = await this.getCacheKey(archive.getFilePath(), ValueType.ARCHIVE_CHECKSUMS);
@@ -199,12 +190,6 @@ export default class FileCache {
   }
 
   async getOrComputeFileHeader(file: File): Promise<ROMHeader | undefined> {
-    if (!this.enabled) {
-      return file.createReadStream(
-        async (stream) => ROMHeader.headerFromFileStream(stream),
-      );
-    }
-
     // NOTE(cemmer): we're explicitly not catching ENOENT errors here, we want it to bubble up
     const stats = await FsPoly.stat(file.getFilePath());
     const cacheKey = await this.getCacheKey(file.getFilePath(), ValueType.ROM_HEADER);
@@ -239,12 +224,6 @@ export default class FileCache {
   }
 
   async getOrComputeFileSignature(file: File): Promise<FileSignature | undefined> {
-    if (!this.enabled) {
-      return file.createReadStream(
-        async (stream) => FileSignature.signatureFromFileStream(stream),
-      );
-    }
-
     // NOTE(cemmer): we're explicitly not catching ENOENT errors here, we want it to bubble up
     const stats = await FsPoly.stat(file.getFilePath());
     const cacheKey = await this.getCacheKey(file.getFilePath(), ValueType.FILE_SIGNATURE);

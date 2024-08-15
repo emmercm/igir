@@ -833,12 +833,12 @@ export default class ArgumentsParser {
       })
       .option('disable-cache', {
         group: groupHelpDebug,
-        description: 'Disable the file checksum cache',
+        description: 'Disable loading or saving the cache file',
         type: 'boolean',
       })
       .option('cache-path', {
         group: groupHelpDebug,
-        description: 'Location for the file checksum cache file',
+        description: 'Location for the cache file',
         type: 'string',
         coerce: ArgumentsParser.getLastValue, // don't allow string[] values
         requiresArg: true,
