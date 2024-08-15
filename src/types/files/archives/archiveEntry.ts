@@ -38,7 +38,7 @@ export default class ArchiveEntry<A extends Archive> extends File implements Arc
 
   static async entryOf<A extends Archive>(
     archiveEntryProps: ArchiveEntryProps<A>,
-    checksumBitmask: number = ChecksumBitmask.CRC32,
+    checksumBitmask: number = ChecksumBitmask.NONE,
   ): Promise<ArchiveEntry<A>> {
     let finalSize = archiveEntryProps.size;
     let finalCrcWithHeader = archiveEntryProps.crc32;
