@@ -390,14 +390,7 @@ describe('with ROMs with headers', () => {
     });
 
     const candidateWithTwoRoms = candidates[2];
-    expect(candidateWithTwoRoms).toHaveLength(1);
-    candidateWithTwoRoms.forEach((candidate) => {
-      expect(candidate.getRomsWithFiles()).toHaveLength(2);
-      const candidateWithTwoRomsOutputOne = candidate.getRomsWithFiles()[0].getOutputFile();
-      expect(candidateWithTwoRomsOutputOne.getFilePath()).toEqual('game with two ROMs (parent).7z'); // respected DAT and input extension
-      const candidateWithTwoRomsOutputTwo = candidate.getRomsWithFiles()[1].getOutputFile();
-      expect(candidateWithTwoRomsOutputTwo.getFilePath()).toEqual('game with two ROMs (parent).7z'); // respected DAT and input extension
-    });
+    expect(candidateWithTwoRoms).toHaveLength(0); // can't remove headers & leave the archive as-is
   });
 });
 
