@@ -41,10 +41,11 @@ export default class SingleBarFormatted {
         const progressWrapped = this.getProgress(options, params, payload)
           .split('\n')
           .map((line, idx) => {
+            // Wrapping is broken: https://github.com/npkgz/cli-progress/issues/142
             let lineTrimmed = line;
             const maxLineLength = ConsolePoly.consoleWidth() - stripAnsi(symbolAndName).length - 2;
             if (line.length > maxLineLength) {
-              lineTrimmed = `...${line.slice(line.length - maxLineLength - 3)}`;
+              lineTrimmed = `${line.slice(0, maxLineLength - 3)}...`;
             }
 
             if (idx === 0) {

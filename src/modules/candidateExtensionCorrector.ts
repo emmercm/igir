@@ -56,6 +56,11 @@ export default class CandidateExtensionCorrector extends Module {
       .flatMap((releaseCandidate) => releaseCandidate.getRomsWithFiles())
       .filter((romWithFiles) => this.romNeedsCorrecting(romWithFiles))
       .length;
+    if (romsThatNeedCorrecting === 0) {
+      this.progressBar.logTrace(`${dat.getNameShort()}: no output files need their extension corrected`);
+      return parentsToCandidates;
+    }
+
     this.progressBar.logTrace(`${dat.getNameShort()}: correcting ${romsThatNeedCorrecting.toLocaleString()} output file extension${romsThatNeedCorrecting !== 1 ? 's' : ''}`);
     await this.progressBar.setSymbol(ProgressBarSymbol.EXTENSION_CORRECTION);
     await this.progressBar.reset(romsThatNeedCorrecting);
@@ -67,6 +72,10 @@ export default class CandidateExtensionCorrector extends Module {
   }
 
   private romNeedsCorrecting(romWithFiles: ROMWithFiles): boolean {
+    if (romWithFiles.getRom().getName().trim() === '') {
+      return true;
+    }
+
     const inputFile = romWithFiles.getInputFile();
     if (inputFile instanceof ArchiveEntry && inputFile.getArchive() instanceof Chd) {
       // Files within CHDs never need extension correction
