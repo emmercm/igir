@@ -1,7 +1,6 @@
 import path from 'node:path';
 
 import ProgressBar, { ProgressBarSymbol } from '../console/progressBar.js';
-import ArrayPoly from '../polyfill/arrayPoly.js';
 import DAT from '../types/dats/dat.js';
 import Game from '../types/dats/game.js';
 import Parent from '../types/dats/parent.js';
@@ -112,7 +111,7 @@ export default class CandidatePatchGenerator extends Module {
       .flatMap((romWithFiles) => romWithFiles.getInputFile())
       .filter((inputFile) => inputFile.getCrc32() !== undefined)
       .flatMap((inputFile) => crcToPatches.get(inputFile.getCrc32() as string))
-      .filter(ArrayPoly.filterNotNullish);
+      .filter((patch) => patch !== undefined);
 
     // No relevant patches found, no new candidates generated
     if (releaseCandidatePatches.length === 0) {

@@ -86,7 +86,7 @@ describe('multiple files', () => {
         const match = file.getFilePath().match(/[^.]+((\.[a-zA-Z0-9]+)+)$/);
         return match ? match[1] : undefined;
       })
-      .filter(ArrayPoly.filterNotNullish)
+      .filter((ext) => ext !== undefined)
       .reduce(ArrayPoly.reduceUnique(), [])
       .sort();
     expect(extensionsWithoutCrc32).toEqual(['.chd', '.tar.gz']);
@@ -103,7 +103,7 @@ describe('multiple files', () => {
         const match = file.getFilePath().match(/[^.]+((\.[a-zA-Z0-9]+)+)$/);
         return match ? match[1] : undefined;
       })
-      .filter(ArrayPoly.filterNotNullish)
+      .filter((ext) => ext !== undefined)
       .reduce(ArrayPoly.reduceUnique(), [])
       .sort();
     expect(extensionsWithSha1).toEqual(['.chd']);

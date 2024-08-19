@@ -10,7 +10,6 @@ import { isNotJunk } from 'junk';
 import nodeDiskInfo from 'node-disk-info';
 
 import ExpectedError from '../types/expectedError.js';
-import ArrayPoly from './arrayPoly.js';
 
 export type FsWalkCallback = (increment: number) => void;
 
@@ -78,7 +77,8 @@ export default class FsPoly {
 
     return (await Promise.all(
       readDir.map(async (filePath) => (await this.isDirectory(filePath) ? filePath : undefined)),
-    )).filter(ArrayPoly.filterNotNullish);
+    ))
+      .filter((childDir) => childDir !== undefined);
   }
 
   static disksSync(): string[] {

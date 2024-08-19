@@ -123,7 +123,7 @@ export default class MovedROMDeleter extends Module {
 
         return filePath;
       })
-      .filter(ArrayPoly.filterNotNullish);
+      .filter((filePath) => filePath !== undefined);
   }
 
   private static groupFilesByFilePath(files: File[]): Map<string, File[]> {

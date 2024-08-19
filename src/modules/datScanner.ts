@@ -5,7 +5,6 @@ import { parse } from '@fast-csv/parse';
 
 import ProgressBar, { ProgressBarSymbol } from '../console/progressBar.js';
 import DriveSemaphore from '../driveSemaphore.js';
-import ArrayPoly from '../polyfill/arrayPoly.js';
 import bufferPoly from '../polyfill/bufferPoly.js';
 import fsPoly from '../polyfill/fsPoly.js';
 import CMProParser, {
@@ -139,7 +138,7 @@ export default class DATScanner extends Scanner {
         return dat;
       },
     ))
-      .filter(ArrayPoly.filterNotNullish)
+      .filter((dat) => dat !== undefined)
       .map((dat) => this.sanitizeDat(dat))
       .sort((a, b) => a.getNameShort().localeCompare(b.getNameShort()));
   }

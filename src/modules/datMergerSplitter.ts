@@ -84,7 +84,7 @@ export default class DATMergerSplitter extends Module {
               .reduce(ArrayPoly.reduceUnique(), [])
               // Get ROMs from the DeviceRef
               .map((deviceRefName) => gameNamesToGames.get(deviceRefName))
-              .filter(ArrayPoly.filterNotNullish)
+              .filter((deviceGame) => deviceGame !== undefined)
               .flatMap((deviceGame) => deviceGame.getRoms()
                 .filter((rom) => rom.getStatus() !== 'nodump')),
             ...game.getRoms(),

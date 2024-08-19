@@ -5,7 +5,6 @@ import { Mutex, Semaphore } from 'async-mutex';
 
 import ElasticSemaphore from './elasticSemaphore.js';
 import Defaults from './globals/defaults.js';
-import ArrayPoly from './polyfill/arrayPoly.js';
 import FsPoly from './polyfill/fsPoly.js';
 import File from './types/files/file.js';
 
@@ -107,8 +106,7 @@ export default class DriveSemaphore {
     const chunkSize = 5;
     for (let i = 0; i < maxFilesOnAnyDisk; i += chunkSize) {
       const batch = [...disksToFiles.values()]
-        .flatMap((filesForDisk) => filesForDisk.splice(0, chunkSize))
-        .filter(ArrayPoly.filterNotNullish);
+        .flatMap((filesForDisk) => filesForDisk.splice(0, chunkSize));
       filesStriped = [...filesStriped, ...batch];
     }
 

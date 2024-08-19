@@ -1,6 +1,5 @@
 import ProgressBar, { ProgressBarSymbol } from '../console/progressBar.js';
 import DriveSemaphore from '../driveSemaphore.js';
-import ArrayPoly from '../polyfill/arrayPoly.js';
 import File from '../types/files/file.js';
 import { ChecksumBitmask } from '../types/files/fileChecksums.js';
 import FileFactory from '../types/files/fileFactory.js';
@@ -55,7 +54,8 @@ export default class PatchScanner extends Scanner {
           this.progressBar.removeWaitingMessage(waitingMessage);
         }
       },
-    )).filter(ArrayPoly.filterNotNullish);
+    ))
+      .filter((patch) => patch !== undefined);
 
     this.progressBar.logTrace('done scanning patch files');
     return patches;

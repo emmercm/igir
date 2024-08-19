@@ -161,7 +161,7 @@ export default class DATStatus {
       ...this.incompleteRomTypesToReleaseCandidates.values(),
     ]
       .flat()
-      .filter(ArrayPoly.filterNotNullish)
+      .filter((releaseCandidate) => releaseCandidate !== undefined)
       .flatMap((releaseCandidate) => releaseCandidate.getRomsWithFiles())
       .map((romWithFiles) => romWithFiles.getInputFile());
   }
@@ -363,7 +363,7 @@ export default class DATStatus {
   ): T[] {
     return DATStatus.getAllowedTypes(options)
       .flatMap((type) => romTypesToValues.get(type))
-      .filter(ArrayPoly.filterNotNullish)
+      .filter((value) => value !== undefined)
       .reduce(ArrayPoly.reduceUnique(), [])
       .sort();
   }
@@ -379,6 +379,6 @@ export default class DATStatus {
       options.getOnlyRetail() || (!options.getOnlyBios() && !options.getOnlyDevice())
         ? ROMType.RETAIL : undefined,
       ROMType.PATCHED,
-    ].filter(ArrayPoly.filterNotNullish);
+    ].filter((romType) => romType !== undefined);
   }
 }
