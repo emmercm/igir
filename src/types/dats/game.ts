@@ -594,7 +594,7 @@ export default class Game implements GameProps {
 
     const releaseLanguages = this.getReleases()
       .map((release) => release.getLanguage())
-      .filter(ArrayPoly.filterNotNullish);
+      .filter((language) => language !== undefined);
     if (releaseLanguages.length > 0) {
       return releaseLanguages;
     }
@@ -631,7 +631,7 @@ export default class Game implements GameProps {
         .map((lang) => lang.toUpperCase())
         .map((lang) => Internationalization.LANGUAGE_OPTIONS
           .find((langOpt) => langOpt.long?.toUpperCase() === lang.toUpperCase())?.short)
-        .filter(ArrayPoly.filterNotNullish)
+        .filter((lang) => lang !== undefined)
         .filter((lang) => Internationalization.LANGUAGES.includes(lang)) // is known
         .reduce(ArrayPoly.reduceUnique(), []);
       if (threeMatchesParsed.length > 0) {
@@ -653,7 +653,7 @@ export default class Game implements GameProps {
         }
         return undefined;
       })
-      .filter(ArrayPoly.filterNotNullish);
+      .filter((language) => language !== undefined);
   }
 
   // Immutable setters

@@ -218,7 +218,7 @@ export default class CandidateGenerator extends Module {
 
     const foundRomsWithFiles = romFiles
       .map(([, romWithFiles]) => romWithFiles)
-      .filter(ArrayPoly.filterNotNullish);
+      .filter((romWithFiles) => romWithFiles !== undefined);
     if (romFiles.length > 0 && foundRomsWithFiles.length === 0) {
       // The Game has ROMs, but none were found
       return undefined;
@@ -285,20 +285,20 @@ export default class CandidateGenerator extends Module {
         .filter((file): file is ArchiveEntry<Archive> => file instanceof ArchiveEntry)
         .map((archive): Archive => archive.getArchive())
         .forEach((archive) => {
-          const roms = map.get(archive) ?? [];
-          roms.push(rom);
           // We need to filter out duplicate ROMs because of Games that contain duplicate ROMs, e.g.
           //  optical media games that have the same track multiple times.
-          const uniqueRoms = roms.reduce(ArrayPoly.reduceUnique(), []);
-          map.set(archive, uniqueRoms);
+          if (!map.has(archive)) {
+            map.set(archive, new Set());
+          }
+          map.get(archive)?.add(rom);
         });
       return map;
-    }, new Map<Archive, ROM[]>());
+    }, new Map<Archive, Set<ROM>>());
 
     // Filter to the Archives that contain every ROM in this Game
     const archivesWithEveryRom = [...inputArchivesToRoms.entries()]
       .filter(([inputArchive, roms]) => {
-        if (roms.map((rom) => rom.hashCode()).join(',') === gameRoms.map((rom) => rom.hashCode()).join(',')) {
+        if ([...roms].map((rom) => rom.hashCode()).join(',') === gameRoms.map((rom) => rom.hashCode()).join(',')) {
           return true;
         }
         // If there is a CHD with every .bin file, and we're raw-copying it, then assume its .cue
@@ -306,7 +306,7 @@ export default class CandidateGenerator extends Module {
         return inputArchive instanceof Chd
           && !gameRoms.some((rom) => this.options.shouldZipRom(rom))
           && !gameRoms.some((rom) => this.options.shouldExtractRom(rom))
-          && CandidateGenerator.onlyCueFilesMissingFromChd(game, roms);
+          && CandidateGenerator.onlyCueFilesMissingFromChd(game, [...roms]);
       })
       .map(([archive]) => archive);
 

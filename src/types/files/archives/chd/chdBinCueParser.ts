@@ -8,7 +8,6 @@ import {
 import chdman from 'chdman';
 
 import Temp from '../../../../globals/temp.js';
-import ArrayPoly from '../../../../polyfill/arrayPoly.js';
 import FsPoly from '../../../../polyfill/fsPoly.js';
 import ExpectedError from '../../../expectedError.js';
 import FileChecksums, { ChecksumBitmask } from '../../fileChecksums.js';
@@ -129,7 +128,8 @@ export default class ChdBinCueParser {
           }, checksumBitmask);
         })
         .reverse(),
-    )).filter(ArrayPoly.filterNotNullish);
+    ))
+      .filter((entry) => entry !== undefined);
   }
 
   private static parseCueTrackBlockSize(firstTrack: Track): number {

@@ -72,7 +72,7 @@ export default class CandidateMergeSplitValidator extends Module {
         ) {
           const missingDeviceGames = game.getDeviceRefs()
             .map((deviceRef) => datGamesIndexed.get(deviceRef.getName()))
-            .filter(ArrayPoly.filterNotNullish)
+            .filter((deviceGame) => deviceGame !== undefined)
             // Dependent device has ROM files
             .filter((deviceGame) => deviceGame.getRoms().length)
             .map((deviceGame) => {
@@ -83,7 +83,7 @@ export default class CandidateMergeSplitValidator extends Module {
               }
               return deviceGame.getName();
             })
-            .filter(ArrayPoly.filterNotNullish)
+            .filter((deviceGameName) => deviceGameName !== undefined)
             .sort();
           missingDependencies = [...missingDependencies, ...missingDeviceGames];
         }
