@@ -28,7 +28,7 @@ jobs:
         with:
           # GitHub won't run workflows off of code commits+pushes from the `github-actions` user
           token: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
-          base: 'main'
+          base: ${{ github.event.push.ref || 'main' }}
           required_approval_count: 0
           require_passed_checks: false
           # Oldest pull request
