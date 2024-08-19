@@ -196,7 +196,7 @@ export default class DATGameInferrer extends Module {
           const binFiles = cueSheet.files
             .map((binFile) => path.join(path.dirname(cueFile.getFilePath()), binFile.name))
             .map((binFilePath) => rawFilePathsToFiles.get(binFilePath))
-            .filter(ArrayPoly.filterNotNullish);
+            .filter((file) => file !== undefined);
           if (binFiles.length === 0) {
             return undefined;
           }
@@ -206,7 +206,8 @@ export default class DATGameInferrer extends Module {
         } catch {
           return undefined;
         }
-      }))).filter(ArrayPoly.filterNotNullish);
+      })))
+      .filter((result) => result !== undefined);
 
     this.progressBar.logTrace(`inferred ${results.length.toLocaleString()} games from cue files`);
     return results;
@@ -245,7 +246,7 @@ export default class DATGameInferrer extends Module {
           const trackFiles = trackFilePaths
             .map((trackFilePath) => path.join(path.dirname(gdiFile.getFilePath()), trackFilePath))
             .map((trackFilePath) => rawFilePathsToFiles.get(trackFilePath))
-            .filter(ArrayPoly.filterNotNullish);
+            .filter((file) => file !== undefined);
           if (trackFiles.length === 0) {
             return undefined;
           }
@@ -255,7 +256,8 @@ export default class DATGameInferrer extends Module {
         } catch {
           return undefined;
         }
-      }))).filter(ArrayPoly.filterNotNullish);
+      })))
+      .filter((result) => result !== undefined);
 
     this.progressBar.logTrace(`inferred ${results.length.toLocaleString()} games from cue files`);
     return results;
