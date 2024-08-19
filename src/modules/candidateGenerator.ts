@@ -406,9 +406,13 @@ export default class CandidateGenerator extends Module {
             inputRom,
             inputFile,
           ).entryPath === inputFile.getExtractedFilePath())
+    && [...romsToInputFiles.values()]
+      .map((inputFile) => inputFile.getFilePath())
+      .reduce(ArrayPoly.reduceUnique(), [])
+      .length === 1
     ) {
-      // Every ROM should be zipped, and every input file is already in a zip, and the archive entry
-      // paths match, so it's safe to copy the zip as-is
+      // Every ROM should be zipped, and every input file is already in the same zip, and the
+      // archive entry paths match, so it's safe to copy the zip as-is
       return true;
     }
 
@@ -455,7 +459,7 @@ export default class CandidateGenerator extends Module {
     }
 
     // Determine the output file type
-    if (this.options.shouldZipRom(rom)) {
+    if (this.options.shouldZipRom(rom) && !(inputFile instanceof ArchiveFile)) {
       // Should zip, return an archive entry within an output zip
       return ArchiveEntry.entryOf({
         archive: new Zip(outputFilePath),
