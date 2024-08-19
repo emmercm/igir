@@ -36,6 +36,11 @@ export default class ROMHeaderProcessor extends Module {
     const filesThatNeedProcessing = inputRomFiles
       .filter((inputFile) => this.fileNeedsProcessing(inputFile))
       .length;
+    if (filesThatNeedProcessing === 0) {
+      this.progressBar.logTrace('no ROMs need their header processed');
+      return inputRomFiles;
+    }
+
     this.progressBar.logTrace(`processing headers in ${filesThatNeedProcessing.toLocaleString()} ROM${filesThatNeedProcessing !== 1 ? 's' : ''}`);
     await this.progressBar.setSymbol(ProgressBarSymbol.ROM_HEADER_DETECTION);
     await this.progressBar.reset(filesThatNeedProcessing);
