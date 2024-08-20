@@ -417,23 +417,30 @@ export default class FsPoly {
       return [];
     }
 
-    if (callback) {
-      callback(entries.length);
+    const entryIsDirectory = await Promise.all(entries.map(async (entry) => {
+      const fullPath = path.join(pathLike.toString(), entry.name);
+      return entry.isDirectory() || (entry.isSymbolicLink() && await this.isDirectory(fullPath));
+    }));
+
+    // Depth-first search directories first
+    const directories = entries
+      .filter((entry, idx) => entryIsDirectory[idx])
+      .map((entry) => path.join(pathLike.toString(), entry.name));
+    for (const directory of directories) {
+      const subDirFiles = await this.walk(directory);
+      if (callback) {
+        callback(subDirFiles.length);
+      }
+      output = [...output, ...subDirFiles];
     }
 
-    // TODO(cemmer): `Promise.all()` this?
-    for (const entry of entries) {
-      const fullPath = path.join(pathLike.toString(), entry.name);
-      if (entry.isDirectory() || (entry.isSymbolicLink() && await this.isDirectory(fullPath))) {
-        const subDirFiles = await this.walk(fullPath);
-        output = [...output, ...subDirFiles];
-        if (callback) {
-          callback(subDirFiles.length - 1);
-        }
-      } else {
-        output = [...output, fullPath];
-      }
+    const files = entries
+      .filter((entry, idx) => !entryIsDirectory[idx])
+      .map((entry) => path.join(pathLike.toString(), entry.name));
+    if (callback) {
+      callback(files.length);
     }
+    output = [...output, ...files];
 
     return output;
   }
