@@ -154,10 +154,7 @@ export default class CandidateGenerator extends Module {
             || (inputFile.getSha1() !== undefined && inputFile.getSha1() === rom.getSha1())
             || (inputFile.getSha256() !== undefined && inputFile.getSha256() === rom.getSha256()))
           // ...and we shouldn't remove the header
-          && !this.options.canRemoveHeader(
-            dat,
-            path.extname(inputFile.getExtractedFilePath()),
-          )
+          && !this.options.canRemoveHeader(path.extname(inputFile.getExtractedFilePath()))
         ) {
           // ...then forget the input file's header, so that we don't later remove it
           this.progressBar.logTrace(`${dat.getNameShort()}: ${game.getName()}: not removing header, ignoring that one was found for: ${inputFile.toString()}`);
@@ -312,11 +309,18 @@ export default class CandidateGenerator extends Module {
 
     const filesByPath = indexedFiles.getFilesByFilePath();
     const filteredArchivesWithEveryRom = archivesWithEveryRom
-      // Sort the Archives such that the Archive with the least number of entries is preferred
       .sort((a, b) => {
+        // First, prefer the archive with the least number of entries
         const aEntries = filesByPath.get(a.getFilePath())?.length ?? 0;
         const bEntries = filesByPath.get(b.getFilePath())?.length ?? 0;
-        return aEntries - bEntries;
+        if (aEntries !== bEntries) {
+          return aEntries - bEntries;
+        }
+
+        // Then, prefer archives whose filename contains the game name
+        const aGameName = path.basename(a.getFilePath()).includes(game.getName()) ? 1 : 0;
+        const bGameName = path.basename(b.getFilePath()).includes(game.getName()) ? 1 : 0;
+        return aGameName - bGameName;
       })
       // Filter out Archives with excess entries
       .filter((archive) => {

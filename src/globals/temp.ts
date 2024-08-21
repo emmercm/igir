@@ -23,9 +23,8 @@ export default class Temp {
   }
 }
 
-process.once('beforeExit', async () => {
-  // WARN: Jest won't call this: https://github.com/jestjs/jest/issues/10927
-  await FsPoly.rm(Temp.getTempDir(), {
+process.once('exit', () => {
+  FsPoly.rmSync(Temp.getTempDir(), {
     force: true,
     recursive: true,
   });
