@@ -50,22 +50,24 @@ export default class ROMHeaderProcessor extends Module {
         return inputFile;
       }
 
-      await this.progressBar.incrementProgress();
-      const waitingMessage = `${inputFile.toString()} ...`;
-      this.progressBar.addWaitingMessage(waitingMessage);
+      return this.driveSemaphore.runExclusive(inputFile, async () => {
+        await this.progressBar.incrementProgress();
+        const waitingMessage = `${inputFile.toString()} ...`;
+        this.progressBar.addWaitingMessage(waitingMessage);
 
-      let fileWithHeader: File | undefined;
-      try {
-        fileWithHeader = await this.getFileWithHeader(inputFile);
-      } catch (error) {
-        this.progressBar.logError(`${inputFile.toString()}: failed to process ROM header: ${error}`);
-        fileWithHeader = inputFile;
-      }
+        let fileWithHeader: File | undefined;
+        try {
+          fileWithHeader = await this.getFileWithHeader(inputFile);
+        } catch (error) {
+          this.progressBar.logError(`${inputFile.toString()}: failed to process ROM header: ${error}`);
+          fileWithHeader = inputFile;
+        }
 
-      this.progressBar.removeWaitingMessage(waitingMessage);
-      await this.progressBar.incrementDone();
+        this.progressBar.removeWaitingMessage(waitingMessage);
+        await this.progressBar.incrementDone();
 
-      return fileWithHeader;
+        return fileWithHeader;
+      });
     }));
 
     const headeredRomsCount = parsedFiles.filter((romFile) => romFile.getFileHeader()).length;
@@ -93,15 +95,13 @@ export default class ROMHeaderProcessor extends Module {
   }
 
   private async getFileWithHeader(inputFile: File): Promise<File> {
-    return this.driveSemaphore.runExclusive(inputFile, async () => {
-      this.progressBar.logTrace(`${inputFile.toString()}: reading potentially headered file by file contents`);
-      const headerForFileStream = await this.fileFactory.headerFrom(inputFile);
-      if (headerForFileStream) {
-        this.progressBar.logTrace(`${inputFile.toString()}: found header by file contents: ${headerForFileStream.getHeaderedFileExtension()}`);
-        return inputFile.withFileHeader(headerForFileStream);
-      }
-      this.progressBar.logTrace(`${inputFile.toString()}: didn't find header by file contents`);
-      return inputFile;
-    });
+    this.progressBar.logTrace(`${inputFile.toString()}: reading potentially headered file by file contents`);
+    const headerForFileStream = await this.fileFactory.headerFrom(inputFile);
+    if (headerForFileStream) {
+      this.progressBar.logTrace(`${inputFile.toString()}: found header by file contents: ${headerForFileStream.getHeaderedFileExtension()}`);
+      return inputFile.withFileHeader(headerForFileStream);
+    }
+    this.progressBar.logTrace(`${inputFile.toString()}: didn't find header by file contents`);
+    return inputFile;
   }
 }

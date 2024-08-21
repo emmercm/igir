@@ -18,7 +18,6 @@ import Temp from '../globals/temp.js';
 import ArrayPoly from '../polyfill/arrayPoly.js';
 import fsPoly, { FsWalkCallback } from '../polyfill/fsPoly.js';
 import URLPoly from '../polyfill/urlPoly.js';
-import DAT from './dats/dat.js';
 import Disk from './dats/disk.js';
 import ROM from './dats/rom.js';
 import ExpectedError from './expectedError.js';
@@ -1028,17 +1027,7 @@ export default class Options implements OptionsProps {
   /**
    * Can the {@link Header} be removed for a {@link extension} during writing?
    */
-  canRemoveHeader(dat: DAT, extension: string): boolean {
-    // ROMs in "headered" DATs shouldn't have their header removed
-    if (dat.isHeadered()) {
-      return false;
-    }
-
-    // ROMs in "headerless" DATs should have their header removed
-    if (dat.isHeaderless()) {
-      return true;
-    }
-
+  canRemoveHeader(extension: string): boolean {
     if (this.removeHeaders === undefined) {
       // Option wasn't provided, we shouldn't remove headers
       return false;
