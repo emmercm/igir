@@ -508,7 +508,7 @@ export default class DATScanner extends Scanner {
     const games = dat.getGames()
       .map((game) => {
         const roms = game.getRoms()
-          // ROMs have to have and at least one non-empty checksum
+          // Games have to have at least one ROM with a non-empty checksum
           .filter((rom) => this.options.shouldDir2Dat() || (
             (rom.getCrc32() === undefined || rom.getCrc32() !== '00000000')
             && (rom.getMd5() === undefined || rom.getMd5() !== 'd41d8cd98f00b204e9800998ecf8427e')
