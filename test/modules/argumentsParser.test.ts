@@ -652,22 +652,20 @@ describe('options', () => {
   });
 
   it('should parse "remove-headers"', () => {
-    const dat = new LogiqxDAT(new Header(), []);
-
     // False
-    expect(argumentsParser.parse(dummyCommandAndRequiredArgs).canRemoveHeader(dat, '.smc')).toEqual(false);
-    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, 'extract', '--remove-headers', '.smc']).canRemoveHeader(dat, '.rom')).toEqual(false);
+    expect(argumentsParser.parse(dummyCommandAndRequiredArgs).canRemoveHeader('.smc')).toEqual(false);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, 'extract', '--remove-headers', '.smc']).canRemoveHeader('.rom')).toEqual(false);
 
     // True
-    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, 'extract', '-H']).canRemoveHeader(dat, '')).toEqual(true);
-    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, 'extract', '--remove-headers']).canRemoveHeader(dat, '')).toEqual(true);
-    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, 'extract', '--remove-headers']).canRemoveHeader(dat, '.rom')).toEqual(true);
-    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, 'extract', '--remove-headers']).canRemoveHeader(dat, '.smc')).toEqual(true);
-    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, 'extract', '-H', '.smc']).canRemoveHeader(dat, 'filepath.smc')).toEqual(false);
-    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, 'zip', '--remove-headers', 'smc']).canRemoveHeader(dat, '.smc')).toEqual(true);
-    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, 'zip', '--remove-headers', '.smc']).canRemoveHeader(dat, '.SMC')).toEqual(true);
-    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, 'zip', '-H', 'LNX,.smc']).canRemoveHeader(dat, '.smc')).toEqual(true);
-    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, 'zip', '--remove-headers', 'lnx,.LNX']).canRemoveHeader(dat, '.LnX')).toEqual(true);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, 'extract', '-H']).canRemoveHeader('')).toEqual(true);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, 'extract', '--remove-headers']).canRemoveHeader('')).toEqual(true);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, 'extract', '--remove-headers']).canRemoveHeader('.rom')).toEqual(true);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, 'extract', '--remove-headers']).canRemoveHeader('.smc')).toEqual(true);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, 'extract', '-H', '.smc']).canRemoveHeader('filepath.smc')).toEqual(false);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, 'zip', '--remove-headers', 'smc']).canRemoveHeader('.smc')).toEqual(true);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, 'zip', '--remove-headers', '.smc']).canRemoveHeader('.SMC')).toEqual(true);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, 'zip', '-H', 'LNX,.smc']).canRemoveHeader('.smc')).toEqual(true);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, 'zip', '--remove-headers', 'lnx,.LNX']).canRemoveHeader('.LnX')).toEqual(true);
   });
 
   it('should parse "prefer-game-regex"', async () => {
