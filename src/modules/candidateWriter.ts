@@ -286,11 +286,6 @@ export default class CandidateWriter extends Module {
       }
 
       // Check checksum
-      if (expectedFile.getCrc32() === '00000000') {
-        this.progressBar.logWarn(`${dat.getNameShort()}: ${releaseCandidate.getName()}: ${expectedFile.toString()}: can't test, expected CRC is unknown`);
-        // eslint-disable-next-line no-continue
-        continue;
-      }
       const actualFile = actualEntriesByPath.get(entryPath) as ArchiveEntry<Zip>;
       if (actualFile.getSha256()
         && expectedFile.getSha256()
@@ -312,6 +307,7 @@ export default class CandidateWriter extends Module {
       }
       if (actualFile.getCrc32()
         && expectedFile.getCrc32()
+        && expectedFile.getCrc32() !== '00000000'
         && actualFile.getCrc32() !== expectedFile.getCrc32()
       ) {
         return `has the CRC32 ${actualFile.getCrc32()}, expected ${expectedFile.getCrc32()}`;
@@ -564,10 +560,6 @@ export default class CandidateWriter extends Module {
     this.progressBar.logTrace(`${dat.getNameShort()}: ${releaseCandidate.getName()}: ${outputFilePath}: testing raw file`);
 
     // Check checksum
-    if (expectedFile.getCrc32() === '00000000') {
-      this.progressBar.logWarn(`${dat.getNameShort()}: ${releaseCandidate.getName()}: ${outputFilePath}: can't test, expected CRC is unknown`);
-      return undefined;
-    }
     let actualFile: File;
     try {
       actualFile = await File.fileOf(
@@ -597,6 +589,7 @@ export default class CandidateWriter extends Module {
     }
     if (actualFile.getCrc32()
       && expectedFile.getCrc32()
+      && expectedFile.getCrc32() !== '00000000'
       && actualFile.getCrc32() !== expectedFile.getCrc32()
     ) {
       return `has the CRC32 ${actualFile.getCrc32()}, expected ${expectedFile.getCrc32()}`;
