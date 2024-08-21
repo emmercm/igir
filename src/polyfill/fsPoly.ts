@@ -127,6 +127,19 @@ export default class FsPoly {
     }
   }
 
+  static isDirectorySync(pathLike: string): boolean {
+    try {
+      const lstat = fs.lstatSync(pathLike);
+      if (lstat.isSymbolicLink()) {
+        const link = this.readlinkResolvedSync(pathLike);
+        return this.isDirectorySync(link);
+      }
+      return lstat.isDirectory();
+    } catch {
+      return false;
+    }
+  }
+
   static async isExecutable(pathLike: PathLike): Promise<boolean> {
     try {
       await fs.promises.access(pathLike, fs.constants.X_OK);
@@ -166,6 +179,14 @@ export default class FsPoly {
   static async isSymlink(pathLike: PathLike): Promise<boolean> {
     try {
       return (await fs.promises.lstat(pathLike)).isSymbolicLink();
+    } catch {
+      return false;
+    }
+  }
+
+  static isSymlinkSync(pathLike: PathLike): boolean {
+    try {
+      return fs.lstatSync(pathLike).isSymbolicLink();
     } catch {
       return false;
     }
@@ -292,8 +313,23 @@ export default class FsPoly {
     return fs.promises.readlink(pathLike);
   }
 
+  static readlinkSync(pathLike: PathLike): string {
+    if (!this.isSymlinkSync(pathLike)) {
+      throw new ExpectedError(`can't readlink of non-symlink: ${pathLike}`);
+    }
+    return fs.readlinkSync(pathLike);
+  }
+
   static async readlinkResolved(link: string): Promise<string> {
     const source = await this.readlink(link);
+    if (path.isAbsolute(source)) {
+      return source;
+    }
+    return path.join(path.dirname(link), source);
+  }
+
+  static readlinkResolvedSync(link: string): string {
+    const source = this.readlinkSync(link);
     if (path.isAbsolute(source)) {
       return source;
     }
@@ -329,6 +365,31 @@ export default class FsPoly {
       });
     } else {
       await fs.promises.unlink(pathLike);
+    }
+  }
+
+  static rmSync(pathLike: string, options: RmOptions = {}): void {
+    const optionsWithRetry = {
+      maxRetries: 2,
+      ...options,
+    };
+
+    try {
+      fs.accessSync(pathLike);
+    } catch {
+      if (optionsWithRetry?.force) {
+        return;
+      }
+      throw new ExpectedError(`can't rmSync, path doesn't exist: ${pathLike}`);
+    }
+
+    if (this.isDirectorySync(pathLike)) {
+      fs.rmSync(pathLike, {
+        ...optionsWithRetry,
+        recursive: true,
+      });
+    } else {
+      fs.unlinkSync(pathLike);
     }
   }
 
@@ -388,22 +449,6 @@ export default class FsPoly {
     await util.promisify(fs.futimes)(file.fd, date, date);
 
     await file.close();
-  }
-
-  static touchSync(filePath: string): void {
-    const dirname = path.dirname(filePath);
-    if (!fs.existsSync(dirname)) {
-      fs.mkdirSync(dirname, { recursive: true });
-    }
-
-    // Create the file if it doesn't already exist
-    const file = fs.openSync(filePath, 'a');
-
-    // Ensure the file's `atime` and `mtime` are updated
-    const date = new Date();
-    fs.futimesSync(file, date, date);
-
-    fs.closeSync(file);
   }
 
   static async walk(pathLike: PathLike, callback?: FsWalkCallback): Promise<string[]> {
