@@ -122,6 +122,7 @@ describe('options', () => {
     expect(options.getInputPaths()).toEqual([os.devNull]);
     expect(options.getInputChecksumQuick()).toEqual(false);
     expect(options.getInputChecksumMin()).toEqual(ChecksumBitmask.CRC32);
+    expect(options.getInputChecksumMax()).toBeUndefined();
     expect(options.getInputChecksumArchives()).toEqual(InputChecksumArchivesMode.AUTO);
 
     expect(options.getDatNameRegex()).toBeUndefined();
@@ -256,14 +257,27 @@ describe('options', () => {
   });
 
   it('should parse "input-checksum-min', () => {
-    expect(argumentsParser.parse(dummyCommandAndRequiredArgs).getInputChecksumMin())
-      .toEqual(ChecksumBitmask.CRC32);
     expect(() => argumentsParser.parse([...dummyCommandAndRequiredArgs, '--input-checksum-min', 'foobar']).getInputChecksumMin()).toThrow(/invalid values/i);
+    expect(() => argumentsParser.parse([...dummyCommandAndRequiredArgs, '--input-checksum-min', 'MD5', '--input-checksum-max', 'CRC32']).getInputChecksumMin()).toThrow(/min.+max/i);
+    expect(() => argumentsParser.parse([...dummyCommandAndRequiredArgs, '--input-checksum-min', 'SHA1', '--input-checksum-max', 'CRC32']).getInputChecksumMin()).toThrow(/min.+max/i);
+    expect(() => argumentsParser.parse([...dummyCommandAndRequiredArgs, '--input-checksum-min', 'SHA256', '--input-checksum-max', 'CRC32']).getInputChecksumMin()).toThrow(/min.+max/i);
     expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--input-checksum-min', 'CRC32']).getInputChecksumMin()).toEqual(ChecksumBitmask.CRC32);
     expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--input-checksum-min', 'MD5']).getInputChecksumMin()).toEqual(ChecksumBitmask.MD5);
     expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--input-checksum-min', 'SHA1']).getInputChecksumMin()).toEqual(ChecksumBitmask.SHA1);
     expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--input-checksum-min', 'SHA256']).getInputChecksumMin()).toEqual(ChecksumBitmask.SHA256);
     expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--input-checksum-min', 'SHA256', '--input-checksum-min', 'CRC32']).getInputChecksumMin()).toEqual(ChecksumBitmask.CRC32);
+  });
+
+  it('should parse "input-checksum-max', () => {
+    expect(() => argumentsParser.parse([...dummyCommandAndRequiredArgs, '--input-checksum-max', 'foobar']).getInputChecksumMax()).toThrow(/invalid values/i);
+    expect(() => argumentsParser.parse([...dummyCommandAndRequiredArgs, '--input-checksum-min', 'SHA256', '--input-checksum-max', 'CRC32']).getInputChecksumMax()).toThrow(/min.+max/i);
+    expect(() => argumentsParser.parse([...dummyCommandAndRequiredArgs, '--input-checksum-min', 'SHA256', '--input-checksum-max', 'MD5']).getInputChecksumMax()).toThrow(/min.+max/i);
+    expect(() => argumentsParser.parse([...dummyCommandAndRequiredArgs, '--input-checksum-min', 'SHA256', '--input-checksum-max', 'SHA1']).getInputChecksumMax()).toThrow(/min.+max/i);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--input-checksum-max', 'CRC32']).getInputChecksumMax()).toEqual(ChecksumBitmask.CRC32);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--input-checksum-max', 'MD5']).getInputChecksumMax()).toEqual(ChecksumBitmask.MD5);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--input-checksum-max', 'SHA1']).getInputChecksumMax()).toEqual(ChecksumBitmask.SHA1);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--input-checksum-max', 'SHA256']).getInputChecksumMax()).toEqual(ChecksumBitmask.SHA256);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--input-checksum-max', 'SHA256', '--input-checksum-max', 'CRC32']).getInputChecksumMax()).toEqual(ChecksumBitmask.CRC32);
   });
 
   it('should parse "input-checksum-archives"', () => {

@@ -117,7 +117,7 @@ export default class FileCache {
         }
 
         const cachedFile = cached.value as FileProps;
-        const existingBitmask = ((cachedFile.crc32 !== undefined && cachedFile.crc32 !== '00000000') ? ChecksumBitmask.CRC32 : 0)
+        const existingBitmask = ((cachedFile.crc32) ? ChecksumBitmask.CRC32 : 0)
           | (cachedFile.md5 ? ChecksumBitmask.MD5 : 0)
           | (cachedFile.sha1 ? ChecksumBitmask.SHA1 : 0)
           | (cachedFile.sha256 ? ChecksumBitmask.SHA256 : 0);
@@ -166,7 +166,8 @@ export default class FileCache {
         }
 
         const cachedEntries = cached.value as ArchiveEntryProps<T>[];
-        const existingBitmask = (cachedEntries.every((props) => props.crc32 !== undefined && props.crc32 !== '00000000') ? ChecksumBitmask.CRC32 : 0)
+        const existingBitmask = (cachedEntries
+          .every((props) => props.crc32) ? ChecksumBitmask.CRC32 : 0)
           | (cachedEntries.every((props) => props.md5) ? ChecksumBitmask.MD5 : 0)
           | (cachedEntries.every((props) => props.sha1) ? ChecksumBitmask.SHA1 : 0)
           | (cachedEntries.every((props) => props.sha256) ? ChecksumBitmask.SHA256 : 0);
