@@ -88,7 +88,11 @@ export default class CandidateWriter extends Module {
 
     const totalCandidateCount = [...parentsToWritableCandidates.values()].flat().length;
     this.progressBar.logTrace(`${dat.getNameShort()}: writing ${totalCandidateCount.toLocaleString()} candidate${totalCandidateCount !== 1 ? 's' : ''}`);
-    await this.progressBar.setSymbol(ProgressBarSymbol.WRITING);
+    if (this.options.shouldTest() && !this.options.getOverwrite()) {
+      await this.progressBar.setSymbol(ProgressBarSymbol.TESTING);
+    } else {
+      await this.progressBar.setSymbol(ProgressBarSymbol.WRITING);
+    }
     await this.progressBar.reset(parentsToWritableCandidates.size);
 
     await Promise.all([...parentsToWritableCandidates.entries()].map(
@@ -201,6 +205,7 @@ export default class CandidateWriter extends Module {
       }
     }
 
+    await this.progressBar.setSymbol(ProgressBarSymbol.WRITING);
     let written = false;
     for (let i = 0; i <= this.options.getWriteRetry(); i += 1) {
       written = await this.writeZipFile(
@@ -340,7 +345,7 @@ export default class CandidateWriter extends Module {
     outputZip: Zip,
     inputToOutputZipEntries: [File, ArchiveEntry<Zip>][],
   ): Promise<boolean> {
-    this.progressBar.logInfo(`${dat.getNameShort()}: ${releaseCandidate.getName()}: creating zip archive '${outputZip.getFilePath()}' with the entries:\n${inputToOutputZipEntries.map(([input, output]) => `  '${input.toString()}' (${fsPoly.sizeReadable(input.getSize())}) -> '${output.getEntryPath()}'`).join('\n')}`);
+    this.progressBar.logInfo(`${dat.getNameShort()}: ${releaseCandidate.getName()}: creating zip archive '${outputZip.getFilePath()}' with the entries:\n${inputToOutputZipEntries.map(([input, output]) => `  '${input.toString()}' (${fsPoly.sizeReadable(input.getSize())}) → '${output.getEntryPath()}'`).join('\n')}`);
 
     try {
       await CandidateWriter.ensureOutputDirExists(outputZip.getFilePath());
@@ -443,6 +448,7 @@ export default class CandidateWriter extends Module {
       }
     }
 
+    await this.progressBar.setSymbol(ProgressBarSymbol.WRITING);
     let written = false;
     for (let i = 0; i <= this.options.getWriteRetry(); i += 1) {
       written = await this.writeRawFile(dat, releaseCandidate, inputRomFile, outputFilePath);
@@ -484,7 +490,7 @@ export default class CandidateWriter extends Module {
     inputRomFile: File,
     outputFilePath: string,
   ): Promise<boolean> {
-    this.progressBar.logInfo(`${dat.getNameShort()}: ${releaseCandidate.getName()}: ${inputRomFile instanceof ArchiveEntry ? 'extracting' : 'copying'} file '${inputRomFile.toString()}' (${fsPoly.sizeReadable(inputRomFile.getSize())}) -> '${outputFilePath}'`);
+    this.progressBar.logInfo(`${dat.getNameShort()}: ${releaseCandidate.getName()}: ${inputRomFile instanceof ArchiveEntry ? 'extracting' : 'copying'} file '${inputRomFile.toString()}' (${fsPoly.sizeReadable(inputRomFile.getSize())}) → '${outputFilePath}'`);
 
     try {
       await CandidateWriter.ensureOutputDirExists(outputFilePath);
@@ -690,6 +696,7 @@ export default class CandidateWriter extends Module {
       await fsPoly.rm(linkPath, { force: true });
     }
 
+    await this.progressBar.setSymbol(ProgressBarSymbol.WRITING);
     for (let i = 0; i <= this.options.getWriteRetry(); i += 1) {
       const written = await this.writeRawLink(dat, releaseCandidate, targetPath, linkPath);
 
@@ -731,10 +738,10 @@ export default class CandidateWriter extends Module {
     try {
       await CandidateWriter.ensureOutputDirExists(linkPath);
       if (this.options.getSymlink()) {
-        this.progressBar.logInfo(`${dat.getNameShort()}: ${releaseCandidate.getName()}: creating symlink '${targetPath}' -> '${linkPath}'`);
+        this.progressBar.logInfo(`${dat.getNameShort()}: ${releaseCandidate.getName()}: creating symlink '${targetPath}' → '${linkPath}'`);
         await fsPoly.symlink(targetPath, linkPath);
       } else {
-        this.progressBar.logInfo(`${dat.getNameShort()}: ${releaseCandidate.getName()}: creating hard link '${targetPath}' -> '${linkPath}'`);
+        this.progressBar.logInfo(`${dat.getNameShort()}: ${releaseCandidate.getName()}: creating hard link '${targetPath}' → '${linkPath}'`);
         await fsPoly.hardlink(targetPath, linkPath);
       }
       return true;
