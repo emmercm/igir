@@ -24,6 +24,7 @@ import ROM from '../types/dats/rom.js';
 import SoftwareListDAT from '../types/dats/softwarelist/softwareListDat.js';
 import SoftwareListsDAT from '../types/dats/softwarelist/softwareListsDat.js';
 import ExpectedError from '../types/expectedError.js';
+import ArchiveEntry from '../types/files/archives/archiveEntry.js';
 import File from '../types/files/file.js';
 import { ChecksumBitmask } from '../types/files/fileChecksums.js';
 import FileFactory from '../types/files/fileFactory.js';
@@ -146,7 +147,10 @@ export default class DATScanner extends Scanner {
   private async parseDatFile(datFile: File): Promise<DAT | undefined> {
     let dat: DAT | undefined;
 
-    if (!dat && await fsPoly.isExecutable(datFile.getFilePath())) {
+    if (!dat
+      && !(datFile instanceof ArchiveEntry)
+      && await fsPoly.isExecutable(datFile.getFilePath())
+    ) {
       dat = await this.parseMameListxml(datFile);
     }
 
