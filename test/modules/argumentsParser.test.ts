@@ -6,8 +6,6 @@ import LogLevel from '../../src/console/logLevel.js';
 import Temp from '../../src/globals/temp.js';
 import ArgumentsParser from '../../src/modules/argumentsParser.js';
 import FsPoly from '../../src/polyfill/fsPoly.js';
-import Header from '../../src/types/dats/logiqx/header.js';
-import LogiqxDAT from '../../src/types/dats/logiqx/logiqxDat.js';
 import ROM from '../../src/types/dats/rom.js';
 import { ChecksumBitmask } from '../../src/types/files/fileChecksums.js';
 import {
