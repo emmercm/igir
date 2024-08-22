@@ -35,27 +35,3 @@ This correction behavior can be controlled with the following option:
   Always try to correct filename extensions, ignoring the information provided by DATs. You likely don't want this option.
 
 See the `igir --help` message for the list of all known file types.
-
-## Hard-linking when moving files
-
-!!! warning
-
-    This is a relatively advanced feature and you should understand the implications of [hard links](https://en.wikipedia.org/wiki/Hard_link) before using it!
-
-Normally when moving ROMs (the [`igir move` command](../commands.md)) Igir will first copy all files from an input directory to the output directory, and then later once all DATs are done writing it will delete files from the input directory that have been "moved."
-
-You can speed up this copying of files between locations on the same hard drive using hard links with the `--move-hardlink` option. At write time, instead of copying the file, a hard link will be created. This is typically much faster than copying a file, especially for large files such as ISOs and CHDs. Then at the end after all DATs have finished writing, the original file's directory entry will be deleted, leaving only one link to the inode.
-
-!!! warning
-
-    Because the original directory entry isn't cleaned up until after writing has fully finished, if Igir is stopped prematurely (i.e. a CTRL-C), hard links will remain between the input and output directories!
-
-!!! note
-
-    There are some limitations with hard link moving. If any of the following are true, files will be copied as normal:
-
-    - The file is being extracted or zipped
-    - The file has a [header](../roms/headers.md) that is being removed
-    - The file has a [patch](../roms/patching.md) that is being applied
-    - The input file is already hard linked (it is assumed unsafe to copy it with yet another a hard link)
-      - This also means that if one input file is being used in multiple output files it will only be hard linked once, all other transfers will be a normal copy
