@@ -52,8 +52,6 @@ export default class ROMIndexer extends Module {
     [...checksumsToFiles.values()]
       .forEach((files) => files
         .sort((fileOne, fileTwo) => {
-          // TODO(cemmer): if move-hard-linking, prefer files that aren't already hard-linked
-
           // Prefer un-archived files because they're less expensive to process
           const fileOneArchived = ROMIndexer.archiveEntryPriority(fileOne);
           const fileTwoArchived = ROMIndexer.archiveEntryPriority(fileTwo);
