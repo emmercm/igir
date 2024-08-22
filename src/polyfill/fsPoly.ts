@@ -19,11 +19,29 @@ export default class FsPoly {
   // Assume that all drives we're reading from or writing to were already mounted at startup
   public static readonly DRIVES = nodeDiskInfo.getDiskInfoSync();
 
-  static async canSymlink(tempDir: string): Promise<boolean> {
-    const source = await this.mktemp(path.join(tempDir, 'source'));
+  static async canHardlink(dirPath: string): Promise<boolean> {
+    const source = await this.mktemp(path.join(dirPath, 'source'));
     try {
       await this.touch(source);
-      const target = await this.mktemp(path.join(tempDir, 'target'));
+      const target = await this.mktemp(path.join(dirPath, 'target'));
+      try {
+        await this.hardlink(source, target);
+        return await this.exists(target);
+      } finally {
+        await this.rm(target, { force: true });
+      }
+    } catch {
+      return false;
+    } finally {
+      await this.rm(source, { force: true });
+    }
+  }
+
+  static async canSymlink(dirPath: string): Promise<boolean> {
+    const source = await this.mktemp(path.join(dirPath, 'source'));
+    try {
+      await this.touch(source);
+      const target = await this.mktemp(path.join(dirPath, 'target'));
       try {
         await this.symlink(source, target);
         return await this.exists(target);
