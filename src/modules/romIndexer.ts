@@ -47,7 +47,7 @@ export default class ROMIndexer extends Module {
 
   private sortMap(checksumsToFiles: ChecksumsToFiles): void {
     const outputDir = path.resolve(this.options.getOutputDirRoot());
-    const outputDirDisk = FsPoly.disksSync().find((mount) => outputDir.startsWith(mount));
+    const outputDirDisk = FsPoly.diskResolved(outputDir);
 
     [...checksumsToFiles.values()]
       .forEach((files) => files

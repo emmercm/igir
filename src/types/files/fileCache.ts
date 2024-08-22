@@ -57,13 +57,12 @@ export default class FileCache {
     await this.cache.delete(new RegExp(`\\|(?!(${Object.values(ValueType).join('|')}))[^|]+$`));
 
     // Delete keys for deleted files
-    const disks = FsPoly.disksSync();
     Timer.setTimeout(async () => {
       const cacheKeyFilePaths = [...this.cache.keys()]
         .filter((cacheKey) => cacheKey.endsWith(`|${ValueType.INODE}`))
         .map((cacheKey) => ([cacheKey, cacheKey.split('|')[1]]))
         // Don't delete the key if it's for a disk that isn't mounted right now
-        .filter(([, filePath]) => disks.some((disk) => filePath.startsWith(disk)))
+        .filter(([, filePath]) => FsPoly.diskResolved(filePath))
         // Only process a reasonably sized subset of the keys
         .sort(() => Math.random() - 0.5)
         .slice(0, Defaults.MAX_FS_THREADS);
@@ -144,6 +143,10 @@ export default class FileCache {
   ): Promise<ArchiveEntry<Archive>[]> {
     // NOTE(cemmer): we're explicitly not catching ENOENT errors here, we want it to bubble up
     const stats = await FsPoly.stat(archive.getFilePath());
+    if (stats.size === 0) {
+      // An empty file can't have entries
+      return [];
+    }
     const cacheKey = await this.getCacheKey(archive.getFilePath(), ValueType.ARCHIVE_CHECKSUMS);
 
     // NOTE(cemmer): we're using the cache as a mutex here, so even if this function is called
@@ -193,6 +196,10 @@ export default class FileCache {
   async getOrComputeFileHeader(file: File): Promise<ROMHeader | undefined> {
     // NOTE(cemmer): we're explicitly not catching ENOENT errors here, we want it to bubble up
     const stats = await FsPoly.stat(file.getFilePath());
+    if (stats.size === 0) {
+      // An empty file can't have a header
+      return undefined;
+    }
     const cacheKey = await this.getCacheKey(file.getFilePath(), ValueType.ROM_HEADER);
 
     const cachedValue = await this.cache.getOrCompute(
@@ -227,6 +234,10 @@ export default class FileCache {
   async getOrComputeFileSignature(file: File): Promise<FileSignature | undefined> {
     // NOTE(cemmer): we're explicitly not catching ENOENT errors here, we want it to bubble up
     const stats = await FsPoly.stat(file.getFilePath());
+    if (stats.size === 0) {
+      // An empty file can't have a signature
+      return undefined;
+    }
     const cacheKey = await this.getCacheKey(file.getFilePath(), ValueType.FILE_SIGNATURE);
 
     const cachedValue = await this.cache.getOrCompute(
