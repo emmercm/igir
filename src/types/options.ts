@@ -91,7 +91,6 @@ export interface OptionsProps {
   readonly dirLetterGroup?: boolean,
   readonly dirGameSubdir?: string,
   readonly fixExtension?: string,
-  readonly moveHardlink?: boolean,
   readonly overwrite?: boolean,
   readonly overwriteInvalid?: boolean,
 
@@ -230,8 +229,6 @@ export default class Options implements OptionsProps {
   readonly dirGameSubdir?: string;
 
   readonly fixExtension?: string;
-
-  readonly moveHardlink: boolean;
 
   readonly overwrite: boolean;
 
@@ -408,7 +405,6 @@ export default class Options implements OptionsProps {
     this.dirGameSubdir = options?.dirGameSubdir;
 
     this.fixExtension = options?.fixExtension;
-    this.moveHardlink = options?.moveHardlink ?? false;
     this.overwrite = options?.overwrite ?? false;
     this.overwriteInvalid = options?.overwriteInvalid ?? false;
 
@@ -945,10 +941,6 @@ export default class Options implements OptionsProps {
       return undefined;
     }
     return FixExtension[fixExtensionMode as keyof typeof FixExtension];
-  }
-
-  getMoveHardlink(): boolean {
-    return this.moveHardlink;
   }
 
   getOverwrite(): boolean {

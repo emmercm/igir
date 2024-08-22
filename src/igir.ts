@@ -88,9 +88,7 @@ export default class Igir {
       this.logger.trace('Windows has symlink permissions');
     }
 
-    if ((this.options.shouldLink() && !this.options.getSymlink())
-      || this.options.getMoveHardlink()
-    ) {
+    if (this.options.shouldLink() && !this.options.getSymlink()) {
       const outputDirRoot = this.options.getOutputDirRoot();
       if (!await FsPoly.canHardlink(outputDirRoot)) {
         const outputDisk = FsPoly.diskResolved(outputDirRoot);

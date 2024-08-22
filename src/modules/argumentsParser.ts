@@ -420,12 +420,6 @@ export default class ArgumentsParser {
         requiresArg: true,
         default: FixExtension[FixExtension.AUTO].toLowerCase(),
       })
-      .option('move-hardlink', {
-        group: groupRomOutput,
-        description: 'Move files on the same disk drive by creating hard links',
-        type: 'boolean',
-        conflicts: ['allow-excess-sets', 'allow-incomplete-sets'],
-      })
       .option('overwrite', {
         group: groupRomOutput,
         alias: 'O',
