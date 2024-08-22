@@ -13,8 +13,6 @@ import File from './types/files/file.js';
  * once per hard drive.
  */
 export default class DriveSemaphore {
-  private static readonly DISKS = FsPoly.disksSync();
-
   private readonly driveSemaphores = new Map<string, ElasticSemaphore>();
 
   private readonly driveSemaphoresMutex = new Mutex();
@@ -139,10 +137,9 @@ export default class DriveSemaphore {
   private static getDiskForFile(file: File | string): string {
     const filePath = file instanceof File ? file.getFilePath() : file as string;
     const filePathNormalized = filePath.replace(/[\\/]/g, path.sep);
-    const filePathResolved = path.resolve(filePathNormalized);
 
     // Try to get the path of the drive this file is on
-    const filePathDisk = this.DISKS.find((disk) => filePathResolved.startsWith(disk));
+    const filePathDisk = FsPoly.diskResolved(filePathNormalized);
     if (filePathDisk !== undefined) {
       return filePathDisk;
     }

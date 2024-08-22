@@ -202,7 +202,7 @@ export default class Chd extends Archive {
   }
 
   @Memoize()
-  private async getInfo(): Promise<CHDInfo> {
+  async getInfo(): Promise<CHDInfo> {
     return chdman.info({ inputFilename: this.getFilePath() });
   }
 }
