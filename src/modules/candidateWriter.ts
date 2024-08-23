@@ -291,11 +291,6 @@ export default class CandidateWriter extends Module {
       }
 
       // Check checksum
-      if (expectedFile.getCrc32() === '00000000') {
-        this.progressBar.logWarn(`${dat.getNameShort()}: ${releaseCandidate.getName()}: ${expectedFile.toString()}: can't test, expected CRC is unknown`);
-        // eslint-disable-next-line no-continue
-        continue;
-      }
       const actualFile = actualEntriesByPath.get(entryPath) as ArchiveEntry<Zip>;
       if (actualFile.getSha256()
         && expectedFile.getSha256()
@@ -317,6 +312,7 @@ export default class CandidateWriter extends Module {
       }
       if (actualFile.getCrc32()
         && expectedFile.getCrc32()
+        && expectedFile.getCrc32() !== '00000000'
         && actualFile.getCrc32() !== expectedFile.getCrc32()
       ) {
         return `has the CRC32 ${actualFile.getCrc32()}, expected ${expectedFile.getCrc32()}`;
@@ -495,68 +491,12 @@ export default class CandidateWriter extends Module {
     try {
       await CandidateWriter.ensureOutputDirExists(outputFilePath);
 
-      const moveHardLinked = await this.moveHardLink(
-        dat,
-        releaseCandidate,
-        inputRomFile,
-        outputFilePath,
-      );
-      if (moveHardLinked) {
-        return true;
-      }
-
       const tempRawFile = await fsPoly.mktemp(outputFilePath);
       await inputRomFile.extractAndPatchToFile(tempRawFile);
       await fsPoly.mv(tempRawFile, outputFilePath);
       return true;
     } catch (error) {
       this.progressBar.logError(`${dat.getNameShort()}: ${releaseCandidate.getName()}: ${outputFilePath}: failed to copy from ${inputRomFile.toString()}: ${error}`);
-      return false;
-    }
-  }
-
-  private async moveHardLink(
-    dat: DAT,
-    releaseCandidate: ReleaseCandidate,
-    inputRomFile: File,
-    outputFilePath: string,
-  ): Promise<boolean> {
-    if (!this.options.shouldMove() || !this.options.getMoveHardlink()) {
-      return false;
-    }
-
-    if (inputRomFile instanceof ArchiveEntry) {
-      this.progressBar.logTrace(`${dat.getNameShort()}: ${releaseCandidate.getName()}: can't move-hardlink an archived file`);
-      return false;
-    }
-    if (inputRomFile.getFileHeader()) {
-      this.progressBar.logTrace(`${dat.getNameShort()}: ${releaseCandidate.getName()}: can't move-hardlink a file with a header that's being removed`);
-      return false;
-    }
-    if (inputRomFile.getPatch()) {
-      this.progressBar.logTrace(`${dat.getNameShort()}: ${releaseCandidate.getName()}: can't move-hardlink a file that's being patched`);
-      return false;
-    }
-
-    if (await fsPoly.isHardlink(inputRomFile.getFilePath())) {
-      // It's unsafe to add a third or more link to an inode. We don't know if the input file was
-      // already move-hard-linked, or if it was hard-linked for some other reason. But if we don't
-      // do this, then we may end up with files in the output directory that are hard-linked even
-      // though the command wasn't specified.
-      this.progressBar.logTrace(`${dat.getNameShort()}: ${releaseCandidate.getName()}: can't move-hardlink a file that's already hardlinked`);
-      return false;
-    }
-
-    if (await fsPoly.exists(outputFilePath)) {
-      // {@link fsPoly#hardlink()} will throw if the link already exists
-      await fsPoly.rm(outputFilePath);
-    }
-
-    try {
-      await fsPoly.hardlink(inputRomFile.getFilePath(), outputFilePath);
-      return true;
-    } catch (error) {
-      this.progressBar.logTrace(`${dat.getNameShort()}: ${releaseCandidate.getName()}: error when move-hardlinking: ${error}`);
       return false;
     }
   }
@@ -570,10 +510,6 @@ export default class CandidateWriter extends Module {
     this.progressBar.logTrace(`${dat.getNameShort()}: ${releaseCandidate.getName()}: ${outputFilePath}: testing raw file`);
 
     // Check checksum
-    if (expectedFile.getCrc32() === '00000000') {
-      this.progressBar.logWarn(`${dat.getNameShort()}: ${releaseCandidate.getName()}: ${outputFilePath}: can't test, expected CRC is unknown`);
-      return undefined;
-    }
     let actualFile: File;
     try {
       actualFile = await File.fileOf(
@@ -603,6 +539,7 @@ export default class CandidateWriter extends Module {
     }
     if (actualFile.getCrc32()
       && expectedFile.getCrc32()
+      && expectedFile.getCrc32() !== '00000000'
       && actualFile.getCrc32() !== expectedFile.getCrc32()
     ) {
       return `has the CRC32 ${actualFile.getCrc32()}, expected ${expectedFile.getCrc32()}`;

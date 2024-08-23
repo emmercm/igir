@@ -397,7 +397,9 @@ export default class CandidateGenerator extends Module {
       return true;
     }
 
-    if (!this.options.getZipDatName()
+    // TODO(cemmer): delay this until after CandidatePatchGenerator
+    if (this.options.getPatchFileCount() === 0
+      && !this.options.getZipDatName()
       && [...romsToInputFiles.entries()]
         .every(([inputRom, inputFile]) => inputFile instanceof ArchiveEntry
           && inputFile.getArchive() instanceof Zip

@@ -28,9 +28,9 @@ gracefulFs.gracefulify(realFs);
   }
 
   process.once('SIGINT', async () => {
+    await ProgressBarCLI.stop();
     logger.newLine();
     logger.notice(`Exiting ${Package.NAME} early`);
-    await ProgressBarCLI.stop();
     process.exit(0);
   });
 

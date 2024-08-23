@@ -47,13 +47,11 @@ export default class ROMIndexer extends Module {
 
   private sortMap(checksumsToFiles: ChecksumsToFiles): void {
     const outputDir = path.resolve(this.options.getOutputDirRoot());
-    const outputDirDisk = FsPoly.disksSync().find((mount) => outputDir.startsWith(mount));
+    const outputDirDisk = FsPoly.diskResolved(outputDir);
 
     [...checksumsToFiles.values()]
       .forEach((files) => files
         .sort((fileOne, fileTwo) => {
-          // TODO(cemmer): if move-hard-linking, prefer files that aren't already hard-linked
-
           // Prefer un-archived files because they're less expensive to process
           const fileOneArchived = ROMIndexer.archiveEntryPriority(fileOne);
           const fileTwoArchived = ROMIndexer.archiveEntryPriority(fileTwo);

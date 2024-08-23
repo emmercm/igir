@@ -88,6 +88,14 @@ export default class Igir {
       this.logger.trace('Windows has symlink permissions');
     }
 
+    if (this.options.shouldLink() && !this.options.getSymlink()) {
+      const outputDirRoot = this.options.getOutputDirRoot();
+      if (!await FsPoly.canHardlink(outputDirRoot)) {
+        const outputDisk = FsPoly.diskResolved(outputDirRoot);
+        throw new ExpectedError(`${outputDisk} does not support hard-linking`);
+      }
+    }
+
     // File cache options
     const fileCache = new FileCache();
     if (this.options.getDisableCache()) {

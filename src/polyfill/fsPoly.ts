@@ -8,6 +8,7 @@ import util from 'node:util';
 
 import { isNotJunk } from 'junk';
 import nodeDiskInfo from 'node-disk-info';
+import { Memoize } from 'typescript-memoize';
 
 import ExpectedError from '../types/expectedError.js';
 
@@ -17,13 +18,31 @@ export default class FsPoly {
   static readonly FILE_READING_CHUNK_SIZE = 64 * 1024; // 64KiB, Node.js v22 default
 
   // Assume that all drives we're reading from or writing to were already mounted at startup
-  public static readonly DRIVES = nodeDiskInfo.getDiskInfoSync();
+  private static readonly DRIVES = nodeDiskInfo.getDiskInfoSync();
 
-  static async canSymlink(tempDir: string): Promise<boolean> {
-    const source = await this.mktemp(path.join(tempDir, 'source'));
+  static async canHardlink(dirPath: string): Promise<boolean> {
+    const source = await this.mktemp(path.join(dirPath, 'source'));
     try {
       await this.touch(source);
-      const target = await this.mktemp(path.join(tempDir, 'target'));
+      const target = await this.mktemp(path.join(dirPath, 'target'));
+      try {
+        await this.hardlink(source, target);
+        return await this.exists(target);
+      } finally {
+        await this.rm(target, { force: true });
+      }
+    } catch {
+      return false;
+    } finally {
+      await this.rm(source, { force: true });
+    }
+  }
+
+  static async canSymlink(dirPath: string): Promise<boolean> {
+    const source = await this.mktemp(path.join(dirPath, 'source'));
+    try {
+      await this.touch(source);
+      const target = await this.mktemp(path.join(dirPath, 'target'));
       try {
         await this.symlink(source, target);
         return await this.exists(target);
@@ -81,7 +100,13 @@ export default class FsPoly {
       .filter((childDir) => childDir !== undefined);
   }
 
-  static disksSync(): string[] {
+  static diskResolved(filePath: string): string | undefined {
+    const filePathResolved = path.resolve(filePath);
+    return this.disksSync().find((mountPath) => filePathResolved.startsWith(mountPath));
+  }
+
+  @Memoize()
+  private static disksSync(): string[] {
     return FsPoly.DRIVES
       .filter((drive) => drive.available > 0)
       .map((drive) => drive.mounted)
@@ -296,14 +321,10 @@ export default class FsPoly {
   }
 
   private static onDifferentDrives(one: string, two: string): boolean {
-    const oneResolved = path.resolve(one);
-    const twoResolved = path.resolve(two);
-    if (path.dirname(oneResolved) === path.dirname(twoResolved)) {
+    if (path.dirname(one) === path.dirname(two)) {
       return false;
     }
-    const driveMounts = this.disksSync();
-    return driveMounts.find((mount) => oneResolved.startsWith(mount))
-      !== driveMounts.find((mount) => twoResolved.startsWith(mount));
+    return this.diskResolved(one) !== this.diskResolved(two);
   }
 
   static async readlink(pathLike: PathLike): Promise<string> {

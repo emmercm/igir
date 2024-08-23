@@ -122,6 +122,7 @@ describe('options', () => {
     expect(options.getInputPaths()).toEqual([os.devNull]);
     expect(options.getInputChecksumQuick()).toEqual(false);
     expect(options.getInputChecksumMin()).toEqual(ChecksumBitmask.CRC32);
+    expect(options.getInputChecksumMax()).toBeUndefined();
     expect(options.getInputChecksumArchives()).toEqual(InputChecksumArchivesMode.AUTO);
 
     expect(options.getDatNameRegex()).toBeUndefined();
@@ -141,10 +142,10 @@ describe('options', () => {
     expect(options.getDirLetterLimit()).toEqual(0);
     expect(options.getDirLetterGroup()).toEqual(false);
     expect(options.getDirGameSubdir()).toEqual(GameSubdirMode.MULTIPLE);
-    expect(options.getMoveHardlink()).toEqual(false);
+
+    expect(options.getFixExtension()).toEqual(FixExtension.AUTO);
     expect(options.getOverwrite()).toEqual(false);
     expect(options.getOverwriteInvalid()).toEqual(false);
-    expect(options.getFixExtension()).toEqual(FixExtension.AUTO);
 
     expect(options.getCleanBackup()).toBeUndefined();
     expect(options.getCleanDryRun()).toEqual(false);
@@ -256,14 +257,27 @@ describe('options', () => {
   });
 
   it('should parse "input-checksum-min', () => {
-    expect(argumentsParser.parse(dummyCommandAndRequiredArgs).getInputChecksumMin())
-      .toEqual(ChecksumBitmask.CRC32);
     expect(() => argumentsParser.parse([...dummyCommandAndRequiredArgs, '--input-checksum-min', 'foobar']).getInputChecksumMin()).toThrow(/invalid values/i);
+    expect(() => argumentsParser.parse([...dummyCommandAndRequiredArgs, '--input-checksum-min', 'MD5', '--input-checksum-max', 'CRC32']).getInputChecksumMin()).toThrow(/min.+max/i);
+    expect(() => argumentsParser.parse([...dummyCommandAndRequiredArgs, '--input-checksum-min', 'SHA1', '--input-checksum-max', 'CRC32']).getInputChecksumMin()).toThrow(/min.+max/i);
+    expect(() => argumentsParser.parse([...dummyCommandAndRequiredArgs, '--input-checksum-min', 'SHA256', '--input-checksum-max', 'CRC32']).getInputChecksumMin()).toThrow(/min.+max/i);
     expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--input-checksum-min', 'CRC32']).getInputChecksumMin()).toEqual(ChecksumBitmask.CRC32);
     expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--input-checksum-min', 'MD5']).getInputChecksumMin()).toEqual(ChecksumBitmask.MD5);
     expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--input-checksum-min', 'SHA1']).getInputChecksumMin()).toEqual(ChecksumBitmask.SHA1);
     expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--input-checksum-min', 'SHA256']).getInputChecksumMin()).toEqual(ChecksumBitmask.SHA256);
     expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--input-checksum-min', 'SHA256', '--input-checksum-min', 'CRC32']).getInputChecksumMin()).toEqual(ChecksumBitmask.CRC32);
+  });
+
+  it('should parse "input-checksum-max', () => {
+    expect(() => argumentsParser.parse([...dummyCommandAndRequiredArgs, '--input-checksum-max', 'foobar']).getInputChecksumMax()).toThrow(/invalid values/i);
+    expect(() => argumentsParser.parse([...dummyCommandAndRequiredArgs, '--input-checksum-min', 'SHA256', '--input-checksum-max', 'CRC32']).getInputChecksumMax()).toThrow(/min.+max/i);
+    expect(() => argumentsParser.parse([...dummyCommandAndRequiredArgs, '--input-checksum-min', 'SHA256', '--input-checksum-max', 'MD5']).getInputChecksumMax()).toThrow(/min.+max/i);
+    expect(() => argumentsParser.parse([...dummyCommandAndRequiredArgs, '--input-checksum-min', 'SHA256', '--input-checksum-max', 'SHA1']).getInputChecksumMax()).toThrow(/min.+max/i);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--input-checksum-max', 'CRC32']).getInputChecksumMax()).toEqual(ChecksumBitmask.CRC32);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--input-checksum-max', 'MD5']).getInputChecksumMax()).toEqual(ChecksumBitmask.MD5);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--input-checksum-max', 'SHA1']).getInputChecksumMax()).toEqual(ChecksumBitmask.SHA1);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--input-checksum-max', 'SHA256']).getInputChecksumMax()).toEqual(ChecksumBitmask.SHA256);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--input-checksum-max', 'SHA256', '--input-checksum-max', 'CRC32']).getInputChecksumMax()).toEqual(ChecksumBitmask.CRC32);
   });
 
   it('should parse "input-checksum-archives"', () => {
@@ -536,27 +550,6 @@ describe('options', () => {
     expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--fix-extension', 'always', '--fix-extension', 'never']).getFixExtension()).toEqual(FixExtension.NEVER);
   });
 
-  it('should parse "single"', () => {
-    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--dat', os.devNull, '-s']).getSingle()).toEqual(true);
-    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--dat', os.devNull, '--single']).getSingle()).toEqual(true);
-    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--dat', os.devNull, '--single', 'true']).getSingle()).toEqual(true);
-    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--dat', os.devNull, '--single', 'false']).getSingle()).toEqual(false);
-    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--dat', os.devNull, '--single', '--single']).getSingle()).toEqual(true);
-    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--dat', os.devNull, '--single', 'false', '--single', 'true']).getSingle()).toEqual(true);
-    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--dat', os.devNull, '--single', 'true', '--single', 'false']).getSingle()).toEqual(false);
-  });
-
-  it('should parse "move-hardlink"', () => {
-    expect(() => argumentsParser.parse([...dummyCommandAndRequiredArgs, '--dat', os.devNull, '--move-hardlink', '--allow-excess-sets'])).toThrow(/mutually exclusive/i);
-    expect(() => argumentsParser.parse([...dummyCommandAndRequiredArgs, '--dat', os.devNull, '--move-hardlink', '--allow-incomplete-sets'])).toThrow(/mutually exclusive/i);
-    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--move-hardlink']).getMoveHardlink()).toEqual(true);
-    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--move-hardlink', 'true']).getMoveHardlink()).toEqual(true);
-    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--move-hardlink', 'false']).getMoveHardlink()).toEqual(false);
-    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--move-hardlink', '--move-hardlink']).getMoveHardlink()).toEqual(true);
-    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--move-hardlink', 'false', '--move-hardlink', 'true']).getMoveHardlink()).toEqual(true);
-    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--move-hardlink', 'true', '--move-hardlink', 'false']).getMoveHardlink()).toEqual(false);
-  });
-
   it('should parse "overwrite"', () => {
     expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '-O']).getOverwrite()).toEqual(true);
     expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--overwrite']).getOverwrite()).toEqual(true);
@@ -664,6 +657,16 @@ describe('options', () => {
     expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, 'zip', '--remove-headers', '.smc']).canRemoveHeader('.SMC')).toEqual(true);
     expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, 'zip', '-H', 'LNX,.smc']).canRemoveHeader('.smc')).toEqual(true);
     expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, 'zip', '--remove-headers', 'lnx,.LNX']).canRemoveHeader('.LnX')).toEqual(true);
+  });
+
+  it('should parse "single"', () => {
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--dat', os.devNull, '-s']).getSingle()).toEqual(true);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--dat', os.devNull, '--single']).getSingle()).toEqual(true);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--dat', os.devNull, '--single', 'true']).getSingle()).toEqual(true);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--dat', os.devNull, '--single', 'false']).getSingle()).toEqual(false);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--dat', os.devNull, '--single', '--single']).getSingle()).toEqual(true);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--dat', os.devNull, '--single', 'false', '--single', 'true']).getSingle()).toEqual(true);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--dat', os.devNull, '--single', 'true', '--single', 'false']).getSingle()).toEqual(false);
   });
 
   it('should parse "prefer-game-regex"', async () => {
