@@ -71,6 +71,9 @@ export default class ProgressBarCLI extends ProgressBar {
         emptyOnZero: true,
         hideCursor: true,
       }, cliProgress.Presets.shades_grey);
+      process.on('exit', () => {
+        this.multiBar?.stop();
+      });
     }
 
     const initialPayload: ProgressBarPayload = {
