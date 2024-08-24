@@ -32,11 +32,11 @@ export default class DriveSemaphore {
   }
 
   /**
-   * Run a {@link runnable} for the given {@link file}.
+   * Run a {@link runnable} exclusively for the given {@link file}.
    */
   async runExclusive<V>(
     file: File | string,
-    runnable: () => (V | Promise<V>),
+    runnable: () => V | Promise<V>,
   ): Promise<V> {
     const filePathDisk = DriveSemaphore.getDiskForFile(file);
     const driveSemaphore = await this.driveSemaphoresMutex.runExclusive(() => {
@@ -78,7 +78,7 @@ export default class DriveSemaphore {
    */
   async map<K extends File | string, V>(
     files: K[],
-    runnable: (file: K) => (V | Promise<V>),
+    runnable: (file: K) => V | Promise<V>,
   ): Promise<V[]> {
     // Sort the files, then "stripe" them by their disk path for fair processing among disks
     const disksToFiles = files

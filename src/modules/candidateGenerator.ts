@@ -380,8 +380,8 @@ export default class CandidateGenerator extends Module {
     rom: ROM,
     romsToInputFiles: Map<ROM, File>,
   ): boolean {
-    if ([...romsToInputFiles.values()].some((inputFile) => inputFile.getFileHeader()
-      ?? inputFile.getPatch())
+    if ([...romsToInputFiles.values()].some((inputFile) => inputFile.getFileHeader() !== undefined
+      || inputFile.getPatch() !== undefined)
     ) {
       // At least one output file won't exactly match its input file, don't generate an archive
       // file

@@ -12,19 +12,19 @@ Igir has three writing commands. Only one writing command can be specified at a 
 
 ### `copy`
 
-Copy ROMs from an input directory to the output directory.
+Copy files from an input directory to the output directory.
 
 Files in the input directories will be left alone, they will _not_ be modified or deleted.
 
 ### `move`
 
-Move ROMs from an input directory to the output directory. The same directory can be specified for both input & output, resulting in ROMs being renamed as their names change in [DATs](dats/introduction.md).
+Move files from an input directory to the output directory. The same directory can be specified for both input & output, resulting in ROMs being renamed as their names change in [DATs](dats/introduction.md).
 
-ROMs will be deleted from their input directory after _all_ ROMs for _every_ [DAT](dats/introduction.md) have been written.
+Files that match to multiple ROMs in [DATs](dats/introduction.md) will be copied as needed.
 
 ### `link`
 
-Create a link in the output directory to a ROM in the input directory.
+Create a link in the output directory to a file in the input directory.
 
 By default, hard links are created, similar to [ln(1)](https://linux.die.net/man/1/ln). Use the `--symlink` option to create symbolic links.
 

@@ -14,7 +14,7 @@ There are additional levels of verbosity that can be enabled with the `-v` flag:
   - Files being copied, zipped, and linked
   - [dir2dat](../dats/dir2dat.md) files being created
   - [Fixdat](../dats/fixdats.md) files being created
-  - Input files deleted after being moved
+  - Leftover input files deleted after being moved
   - Output files being [cleaned](../output/cleaning.md) (including files skipped due to `--clean-dry-run`)
   - [Report](../output/reporting.md) files being created
 
