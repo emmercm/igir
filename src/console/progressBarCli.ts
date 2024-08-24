@@ -82,19 +82,17 @@ export default class ProgressBarCLI extends ProgressBar {
       inProgress: 0,
     };
 
-    let progressBarCLI: ProgressBarCLI;
-    if (logger.isTTY()) {
+    if (!logger.isTTY()) {
       // Only create progress bars for TTY consoles
-      const singleBarFormatted = new SingleBarFormatted(
-        ProgressBarCLI.multiBar,
-        initialTotal,
-        initialPayload,
-      );
-      progressBarCLI = new ProgressBarCLI(logger, initialPayload, singleBarFormatted);
-    } else {
-      progressBarCLI = new ProgressBarCLI(logger, initialPayload);
+      return new ProgressBarCLI(logger, initialPayload);
     }
 
+    const singleBarFormatted = new SingleBarFormatted(
+      ProgressBarCLI.multiBar,
+      initialTotal,
+      initialPayload,
+    );
+    const progressBarCLI = new ProgressBarCLI(logger, initialPayload, singleBarFormatted);
     await progressBarCLI.render(true);
     return progressBarCLI;
   }
