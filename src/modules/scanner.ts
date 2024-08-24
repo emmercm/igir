@@ -1,8 +1,13 @@
+import { CHDInfo, CHDType } from 'chdman';
+
 import ProgressBar from '../console/progressBar.js';
 import DriveSemaphore from '../driveSemaphore.js';
 import ArrayPoly from '../polyfill/arrayPoly.js';
 import fsPoly from '../polyfill/fsPoly.js';
 import ArchiveEntry from '../types/files/archives/archiveEntry.js';
+import Chd from '../types/files/archives/chd/chd.js';
+import Gzip from '../types/files/archives/sevenZip/gzip.js';
+import Tar from '../types/files/archives/tar.js';
 import File from '../types/files/file.js';
 import { ChecksumBitmask } from '../types/files/fileChecksums.js';
 import FileFactory from '../types/files/fileFactory.js';
@@ -42,6 +47,7 @@ export default abstract class Scanner extends Module {
         this.progressBar.addWaitingMessage(waitingMessage);
 
         const files = await this.getFilesFromPath(inputFile, checksumBitmask, checksumArchives);
+        await this.logWarnings(files);
 
         this.progressBar.removeWaitingMessage(waitingMessage);
         await this.progressBar.incrementDone();
@@ -92,6 +98,36 @@ export default abstract class Scanner extends Module {
     } catch (error) {
       this.progressBar.logError(`${filePath}: failed to parse file: ${error}`);
       return [];
+    }
+  }
+
+  private async logWarnings(files: File[]): Promise<void> {
+    if (this.options.getInputChecksumQuick()) {
+      const archiveWithoutChecksums = files
+        .filter((file) => file instanceof ArchiveEntry)
+        .map((archiveEntry) => archiveEntry.getArchive())
+        .find((archive) => archive instanceof Gzip || Tar);
+      if (archiveWithoutChecksums !== undefined) {
+        this.progressBar.logWarn(`${archiveWithoutChecksums.getFilePath()}: quick checksums will skip ${archiveWithoutChecksums.getExtension()} files`);
+        return;
+      }
+
+      const chdInfos = await Promise.all(files
+        .filter((file) => file instanceof ArchiveEntry)
+        .map((archiveEntry) => archiveEntry.getArchive())
+        .filter((archive) => archive instanceof Chd)
+        .map(async (chd) => ([chd, await chd.getInfo()] satisfies [Chd, CHDInfo])));
+
+      const cdRom = chdInfos.find(([, info]) => info.type === CHDType.CD_ROM);
+      if (cdRom !== undefined) {
+        this.progressBar.logWarn(`${cdRom[0].getFilePath()}: quick checksums will skip .cue/.bin files in CD-ROM CHDs`);
+        return;
+      }
+
+      const gdRom = chdInfos.find(([, info]) => info.type === CHDType.GD_ROM);
+      if (gdRom !== undefined) {
+        this.progressBar.logWarn(`${gdRom[0].getFilePath()}: quick checksums will skip .gdi/.bin/.raw files in GD-ROM CHDs`);
+      }
     }
   }
 }
