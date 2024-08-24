@@ -113,12 +113,13 @@ export default class DirectoryCleaner extends Module {
     for (let i = 0; i < existingFilePaths.length; i += Defaults.OUTPUT_CLEANER_BATCH_SIZE) {
       const filePathsChunk = existingFilePaths.slice(i, i + Defaults.OUTPUT_CLEANER_BATCH_SIZE);
       this.progressBar.logInfo(`deleting cleaned path${filePathsChunk.length !== 1 ? 's' : ''}:\n${filePathsChunk.map((filePath) => `  ${filePath}`).join('\n')}`);
-      try {
-        await Promise.all(filePathsChunk
-          .map(async (filePath) => fsPoly.rm(filePath, { force: true })));
-      } catch (error) {
-        this.progressBar.logWarn(`failed to delete ${filePathsChunk.length} path${filePathsChunk.length !== 1 ? 's' : ''}: ${error}`);
-      }
+      await Promise.all(filePathsChunk.map(async (filePath) => {
+        try {
+          await fsPoly.rm(filePath, { force: true });
+        } catch (error) {
+          this.progressBar.logError(`${filePath}: failed to delete: ${error}`);
+        }
+      }));
     }
   }
 
