@@ -1,4 +1,5 @@
 import ProgressBar, { ProgressBarSymbol } from '../console/progressBar.js';
+import Defaults from '../globals/defaults.js';
 import ArrayPoly from '../polyfill/arrayPoly.js';
 import fsPoly from '../polyfill/fsPoly.js';
 import DAT from '../types/dats/dat.js';
@@ -45,14 +46,18 @@ export default class MovedROMDeleter extends Module {
     await this.progressBar.reset(filePathsToDelete.length);
     this.progressBar.logTrace(`deleting ${filePathsToDelete.length.toLocaleString()} moved file${filePathsToDelete.length !== 1 ? 's' : ''}`);
 
-    await Promise.all(filePathsToDelete.map(async (filePath) => {
-      this.progressBar.logInfo(`deleting moved file: ${filePath}`);
-      try {
-        await fsPoly.rm(filePath, { force: true });
-      } catch {
-        this.progressBar.logError(`${filePath}: failed to delete`);
-      }
-    }));
+    const filePathChunks = filePathsToDelete
+      .reduce(ArrayPoly.reduceChunk(Defaults.OUTPUT_CLEANER_BATCH_SIZE), []);
+    for (const filePathChunk of filePathChunks) {
+      this.progressBar.logInfo(`deleting moved file${filePathChunk.length !== 1 ? 's' : ''}:\n${filePathChunk.map((filePath) => `  ${filePath}`).join('\n')}`);
+      await Promise.all(filePathChunk.map(async (filePath) => {
+        try {
+          await fsPoly.rm(filePath, { force: true });
+        } catch (error) {
+          this.progressBar.logError(`${filePath}: failed to delete: ${error}`);
+        }
+      }));
+    }
 
     this.progressBar.logTrace('done deleting moved ROMs');
     return filePathsToDelete;
