@@ -110,6 +110,9 @@ export default class DirectoryCleaner extends Module {
     const existingFilePathsCheck = await Promise.all(filePaths
       .map(async (filePath) => existSemaphore.runExclusive(async () => fsPoly.exists(filePath))));
     const existingFilePaths = filePaths.filter((filePath, idx) => existingFilePathsCheck.at(idx));
+    if (existingFilePaths.length > 0) {
+      await this.progressBar.setSymbol(ProgressBarSymbol.DELETING);
+    }
     for (let i = 0; i < existingFilePaths.length; i += Defaults.OUTPUT_CLEANER_BATCH_SIZE) {
       const filePathsChunk = existingFilePaths.slice(i, i + Defaults.OUTPUT_CLEANER_BATCH_SIZE);
       this.progressBar.logInfo(`deleting cleaned path${filePathsChunk.length !== 1 ? 's' : ''}:\n${filePathsChunk.map((filePath) => `  ${filePath}`).join('\n')}`);

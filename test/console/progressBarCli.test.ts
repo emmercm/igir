@@ -37,7 +37,7 @@ describe('setSymbol', () => {
     Object.keys(ProgressBarSymbol),
   )('should change the symbol to non-empty; %s', async (symbol) => {
     const spy = new ProgressBarCLISpy();
-    const progressBar = await ProgressBarCLI.new(spy.getLogger(), 'name', stripAnsi(ProgressBarSymbol.DONE));
+    const progressBar = await ProgressBarCLI.new(spy.getLogger(), 'name', 'DEFAULT');
 
     await progressBar.setSymbol(symbol);
     expect(spy.getLastLine()).toMatch(new RegExp(`^${symbol} +name`));
@@ -122,7 +122,7 @@ describe('update', () => {
 describe('done', () => {
   it('should update the symbol', async () => {
     const spy = new ProgressBarCLISpy();
-    const progressBar = await ProgressBarCLI.new(spy.getLogger(), 'name', stripAnsi(ProgressBarSymbol.DONE));
+    const progressBar = await ProgressBarCLI.new(spy.getLogger(), 'name', stripAnsi(ProgressBarSymbol.WAITING));
     expect(spy.getLineCount()).toEqual(1);
 
     await progressBar.done();
@@ -134,7 +134,7 @@ describe('done', () => {
 
   it('should update the symbol and message', async () => {
     const spy = new ProgressBarCLISpy();
-    const progressBar = await ProgressBarCLI.new(spy.getLogger(), 'name', stripAnsi(ProgressBarSymbol.DONE));
+    const progressBar = await ProgressBarCLI.new(spy.getLogger(), 'name', stripAnsi(ProgressBarSymbol.WAITING));
     expect(spy.getLineCount()).toEqual(1);
 
     await progressBar.done('done message');

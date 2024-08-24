@@ -28,6 +28,7 @@ export const ProgressBarSymbol = {
   CANDIDATE_HASHING: chalk.cyan('#'),
   VALIDATING: chalk.cyan(process.platform === 'win32' ? '?' : '≟'),
   COMBINING_ALL: chalk.cyan(process.platform === 'win32' ? 'U' : '∪'),
+  TESTING: chalk.yellow(process.platform === 'win32' ? '?' : '≟'),
   WRITING: chalk.yellow(process.platform === 'win32' ? '»' : '✎'),
   RECYCLING: chalk.blue(process.platform === 'win32' ? '»' : '♻'),
   DELETING: chalk.red(process.platform === 'win32' ? 'X' : '✕'),
