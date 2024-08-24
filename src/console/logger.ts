@@ -46,12 +46,12 @@ export default class Logger {
    * Determine if this {@link Logger}'s underlying stream is a TTY stream or not.
    */
   isTTY(): boolean {
+    if (this.stream instanceof WriteStream) {
+      return (this.stream satisfies WriteStream).isTTY;
+    }
     if (this.stream instanceof PassThrough) {
       // Testing streams should be treated as TTY
       return true;
-    }
-    if (this.stream instanceof WriteStream) {
-      return (this.stream satisfies WriteStream).isTTY;
     }
     return false;
   }
