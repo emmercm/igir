@@ -196,6 +196,7 @@ export default class ProgressBarCLI extends ProgressBar {
 
   async setName(name: string): Promise<void> {
     if (this.payload.name === name) {
+      console.log(`not setting name to: ${name}`);
       return;
     }
     this.payload.name = name;
@@ -204,6 +205,7 @@ export default class ProgressBarCLI extends ProgressBar {
 
   async setSymbol(symbol: string): Promise<void> {
     if (this.payload.symbol === symbol) {
+      console.log(`not setting symbol to: ${symbol}`);
       return;
     }
     this.payload.symbol = symbol;
