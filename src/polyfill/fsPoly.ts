@@ -281,23 +281,6 @@ export default class FsPoly {
   }
 
   static async mv(oldPath: string, newPath: string, attempt = 1): Promise<void> {
-    /**
-     * WARN(cemmer): {@link fs.rename} appears to be VERY memory intensive when copying across
-     * drives! Instead, we'll use stream piping to keep memory usage low.
-     */
-    if (this.onDifferentDrives(oldPath, newPath)) {
-      const read = fs.createReadStream(oldPath, {
-        highWaterMark: this.FILE_READING_CHUNK_SIZE,
-      });
-      await new Promise((resolve, reject) => {
-        const write = fs.createWriteStream(newPath);
-        write.on('close', resolve);
-        write.on('error', reject);
-        read.pipe(write);
-      });
-      return this.rm(oldPath, { force: true });
-    }
-
     try {
       return await fs.promises.rename(oldPath, newPath);
     } catch (error) {
