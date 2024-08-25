@@ -148,7 +148,8 @@ describe('should delete archives', () => {
           })))
           .flat();
 
-        const indexedRomFiles = new ROMIndexer(options, new ProgressBarFake()).index(rawRomFiles);
+        const indexedRomFiles = await new ROMIndexer(options, new ProgressBarFake())
+          .index(rawRomFiles);
         const parentsToCandidates = await new CandidateGenerator(options, new ProgressBarFake())
           .generate(dat, indexedRomFiles);
 
