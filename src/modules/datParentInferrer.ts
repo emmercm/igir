@@ -20,7 +20,7 @@ export default class DATParentInferrer extends Module {
   /**
    * Infer {@link Parent}s from {@link Game}s.
    */
-  async infer(dat: DAT): Promise<DAT> {
+  infer(dat: DAT): DAT {
     if (dat.hasParentCloneInfo() && !this.options.getDatIgnoreParentClone()) {
       this.progressBar.logTrace(`${dat.getNameShort()}: DAT has parent/clone info, skipping`);
       return dat;
@@ -32,8 +32,8 @@ export default class DATParentInferrer extends Module {
     }
 
     this.progressBar.logTrace(`${dat.getNameShort()}: inferring parents for ${dat.getGames().length.toLocaleString()} game${dat.getGames().length !== 1 ? 's' : ''}`);
-    await this.progressBar.setSymbol(ProgressBarSymbol.GROUPING_SIMILAR);
-    await this.progressBar.reset(dat.getGames().length);
+    this.progressBar.setSymbol(ProgressBarSymbol.GROUPING_SIMILAR);
+    this.progressBar.reset(dat.getGames().length);
 
     // Group games by their stripped names
     const strippedNamesToGames = dat.getGames().reduce((map, game) => {

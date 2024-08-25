@@ -58,14 +58,14 @@ export default class CandidateGenerator extends Module {
     const parents = dat.getParents();
 
     this.progressBar.logTrace(`${dat.getNameShort()}: generating candidates`);
-    await this.progressBar.setSymbol(ProgressBarSymbol.GENERATING);
-    await this.progressBar.reset(parents.length);
+    this.progressBar.setSymbol(ProgressBarSymbol.GENERATING);
+    this.progressBar.reset(parents.length);
 
     // For each parent, try to generate a parent candidate
     await Promise.all(parents.map(async (
       parent,
     ) => CandidateGenerator.THREAD_SEMAPHORE.runExclusive(async () => {
-      await this.progressBar.incrementProgress();
+      this.progressBar.incrementProgress();
       const waitingMessage = `${parent.getName()} ...`;
       this.progressBar.addWaitingMessage(waitingMessage);
 
@@ -98,7 +98,7 @@ export default class CandidateGenerator extends Module {
       output.set(parent, releaseCandidates);
 
       this.progressBar.removeWaitingMessage(waitingMessage);
-      await this.progressBar.incrementDone();
+      this.progressBar.incrementDone();
     })));
 
     const size = [...output.values()]

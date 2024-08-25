@@ -34,7 +34,7 @@ async function runPatchCandidateGenerator(
     patch: [path.join('test', 'fixtures', 'patches')],
   });
 
-  const indexedRomFiles = await new ROMIndexer(options, new ProgressBarFake()).index(romFiles);
+  const indexedRomFiles = new ROMIndexer(options, new ProgressBarFake()).index(romFiles);
   const parentsToCandidates = await new CandidateGenerator(options, new ProgressBarFake())
     .generate(dat, indexedRomFiles);
 

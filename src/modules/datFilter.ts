@@ -20,7 +20,7 @@ export default class DATFilter extends Module {
   /**
    * Create a new DAT after filtering.
    */
-  async filter(dat: DAT): Promise<DAT> {
+  filter(dat: DAT): DAT {
     // Return early if there aren't any games
     if (dat.getGames().length === 0) {
       this.progressBar.logTrace(`${dat.getNameShort()}: no games to filter`);
@@ -28,8 +28,8 @@ export default class DATFilter extends Module {
     }
 
     this.progressBar.logTrace(`${dat.getNameShort()}: filtering DAT`);
-    await this.progressBar.setSymbol(ProgressBarSymbol.FILTERING);
-    await this.progressBar.reset(dat.getGames().length);
+    this.progressBar.setSymbol(ProgressBarSymbol.FILTERING);
+    this.progressBar.reset(dat.getGames().length);
 
     const filteredGames = dat.getParents().flatMap((parent) => {
       const games = parent.getGames().filter((game) => this.filterGame(game));

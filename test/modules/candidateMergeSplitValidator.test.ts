@@ -55,7 +55,7 @@ describe('missing parents', () => {
     const options = new Options({ mergeRoms });
     const parentsToCandidates = await datToCandidates(dat);
 
-    const missingGames = await new CandidateMergeSplitValidator(options, new ProgressBarFake())
+    const missingGames = new CandidateMergeSplitValidator(options, new ProgressBarFake())
       .validate(dat, parentsToCandidates);
     expect(missingGames).toEqual([]);
   });
@@ -66,7 +66,7 @@ describe('missing parents', () => {
     });
     const parentsToCandidates = await datToCandidates(dat);
 
-    const missingGames = await new CandidateMergeSplitValidator(options, new ProgressBarFake())
+    const missingGames = new CandidateMergeSplitValidator(options, new ProgressBarFake())
       .validate(dat, parentsToCandidates);
     expect(missingGames).toEqual(['grandparent']);
   });
@@ -103,7 +103,7 @@ describe('device refs', () => {
         .filter(([, candidate]) => candidate.some((rc) => !rc.getGame().isDevice())),
     );
 
-    const missingGames = await new CandidateMergeSplitValidator(options, new ProgressBarFake())
+    const missingGames = new CandidateMergeSplitValidator(options, new ProgressBarFake())
       .validate(dat, parentsToCandidates);
     expect(missingGames).toEqual([]);
   });
@@ -121,7 +121,7 @@ describe('device refs', () => {
         .filter(([, candidate]) => candidate.some((rc) => !rc.getGame().isDevice())),
     );
 
-    const missingGames = await new CandidateMergeSplitValidator(options, new ProgressBarFake())
+    const missingGames = new CandidateMergeSplitValidator(options, new ProgressBarFake())
       .validate(dat, parentsToCandidates);
     expect(missingGames).toEqual(['screen']);
   });

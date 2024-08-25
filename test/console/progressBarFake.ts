@@ -5,27 +5,17 @@ import ProgressBar from '../../src/console/progressBar.js';
 export default class ProgressBarFake extends ProgressBar {
   delete(): void {}
 
-  async done(): Promise<void> {
-    return Promise.resolve();
-  }
+  done(): void {}
 
   addWaitingMessage(): void {}
 
-  async removeWaitingMessage(): Promise<void> {
-    return Promise.resolve();
-  }
+  removeWaitingMessage(): void {}
 
-  async incrementTotal(): Promise<void> {
-    return Promise.resolve();
-  }
+  incrementTotal(): void {}
 
-  async incrementProgress(): Promise<void> {
-    return Promise.resolve();
-  }
+  incrementProgress(): void {}
 
-  async incrementDone(): Promise<void> {
-    return Promise.resolve();
-  }
+  incrementDone(): void {}
 
   setLoggerPrefix(): ProgressBar {
     return this;
@@ -33,23 +23,13 @@ export default class ProgressBarFake extends ProgressBar {
 
   log(): void {}
 
-  async reset(): Promise<void> {
-    return Promise.resolve();
-  }
+  reset(): void {}
 
-  async setName(): Promise<void> {
-    return Promise.resolve();
-  }
+  setName(): void {}
 
-  async setSymbol(): Promise<void> {
-    return Promise.resolve();
-  }
+  setSymbol(): void {}
 
-  async freeze(): Promise<void> {
-    return Promise.resolve();
-  }
+  freeze(): void {}
 
-  async update(): Promise<void> {
-    return Promise.resolve();
-  }
+  update(): void {}
 }

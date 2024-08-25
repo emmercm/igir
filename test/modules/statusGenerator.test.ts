@@ -216,7 +216,7 @@ describe('toConsole', () => {
       preferParent: true,
     });
     let map = await candidateGenerator(options, []);
-    map = await new CandidatePreferer(options, new ProgressBarFake()).prefer(dummyDat, map);
+    map = new CandidatePreferer(options, new ProgressBarFake()).prefer(dummyDat, map);
     const datStatus = new StatusGenerator(options, new ProgressBarFake())
       .generate(dummyDat, map);
     expect(stripAnsi(datStatus.toConsole(options))).toEqual('2/5 games, 0/1 BIOSes, 1/1 devices, 2/5 retail releases found');
@@ -234,7 +234,7 @@ describe('toConsole', () => {
       gameNameSingleRom,
       gameNameMultipleRoms,
     ]);
-    map = await new CandidatePreferer(options, new ProgressBarFake()).prefer(dummyDat, map);
+    map = new CandidatePreferer(options, new ProgressBarFake()).prefer(dummyDat, map);
     const datStatus = new StatusGenerator(options, new ProgressBarFake())
       .generate(dummyDat, map);
     expect(stripAnsi(datStatus.toConsole(options))).toEqual('5/5 games, 1/1 BIOSes, 1/1 devices, 5/5 retail releases found');

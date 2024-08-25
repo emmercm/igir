@@ -22,15 +22,15 @@ export default class ROMScanner extends Scanner {
     checksumArchives = false,
   ): Promise<File[]> {
     this.progressBar.logTrace('scanning ROM files');
-    await this.progressBar.setSymbol(ProgressBarSymbol.FILE_SCANNING);
-    await this.progressBar.reset(0);
+    this.progressBar.setSymbol(ProgressBarSymbol.FILE_SCANNING);
+    this.progressBar.reset(0);
 
-    const romFilePaths = await this.options.scanInputFilesWithoutExclusions(async (increment) => {
-      await this.progressBar.incrementTotal(increment);
+    const romFilePaths = await this.options.scanInputFilesWithoutExclusions((increment) => {
+      this.progressBar.incrementTotal(increment);
     });
     this.progressBar.logTrace(`found ${romFilePaths.length.toLocaleString()} ROM file${romFilePaths.length !== 1 ? 's' : ''}`);
-    await this.progressBar.setSymbol(ProgressBarSymbol.FILE_HASHING);
-    await this.progressBar.reset(romFilePaths.length);
+    this.progressBar.setSymbol(ProgressBarSymbol.FILE_HASHING);
+    this.progressBar.reset(romFilePaths.length);
 
     const files = await this.getFilesFromPaths(
       romFilePaths,

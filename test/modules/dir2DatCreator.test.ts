@@ -36,7 +36,7 @@ it('should do nothing if dir2dat command not provided', async () => {
   // And candidates
   const candidates = await new CandidateGenerator(options, new ProgressBarFake()).generate(
     inferredDat,
-    await new ROMIndexer(options, new ProgressBarFake()).index(files),
+    new ROMIndexer(options, new ProgressBarFake()).index(files),
   );
 
   // When writing the DAT to disk
@@ -67,7 +67,7 @@ it('should write a valid DAT', async () => {
   // And candidates
   const candidates = await new CandidateGenerator(options, new ProgressBarFake()).generate(
     inferredDat,
-    await new ROMIndexer(options, new ProgressBarFake()).index(files),
+    new ROMIndexer(options, new ProgressBarFake()).index(files),
   );
 
   // When writing the DAT to disk
@@ -124,7 +124,7 @@ it('should use the candidates for games and ROMs', async () => {
   // And candidates
   const candidates = await new CandidateGenerator(options, new ProgressBarFake()).generate(
     inferredDat,
-    await new ROMIndexer(options, new ProgressBarFake()).index(files),
+    new ROMIndexer(options, new ProgressBarFake()).index(files),
   );
 
   // When manipulating the candidates

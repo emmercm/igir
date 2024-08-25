@@ -42,7 +42,7 @@ export default abstract class Scanner extends Module {
     return (await new DriveSemaphore(threads).map(
       filePaths,
       async (inputFile) => {
-        await this.progressBar.incrementProgress();
+        this.progressBar.incrementProgress();
         const waitingMessage = `${inputFile} ...`;
         this.progressBar.addWaitingMessage(waitingMessage);
 
@@ -50,7 +50,7 @@ export default abstract class Scanner extends Module {
         await this.logWarnings(files);
 
         this.progressBar.removeWaitingMessage(waitingMessage);
-        await this.progressBar.incrementDone();
+        this.progressBar.incrementDone();
         return files;
       },
     )).flat();

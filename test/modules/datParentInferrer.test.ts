@@ -13,7 +13,7 @@ function buildDat(gameNames: string[]): DAT {
   );
 }
 
-it('should not do anything if the DAT has parent/clone info', async () => {
+it('should not do anything if the DAT has parent/clone info', () => {
   // Given
   const dat = new LogiqxDAT(new Header(), [
     new Game({ name: 'game one' }),
@@ -21,13 +21,13 @@ it('should not do anything if the DAT has parent/clone info', async () => {
   ]);
 
   // When
-  const inferredDat = await new DATParentInferrer(new Options(), new ProgressBarFake()).infer(dat);
+  const inferredDat = new DATParentInferrer(new Options(), new ProgressBarFake()).infer(dat);
 
   // Then
   expect(inferredDat === dat).toEqual(true);
 });
 
-it('should ignore the DAT\'s parent/clone info if specified', async () => {
+it('should ignore the DAT\'s parent/clone info if specified', () => {
   // Given
   const options = new Options({
     datIgnoreParentClone: true,
@@ -38,7 +38,7 @@ it('should ignore the DAT\'s parent/clone info if specified', async () => {
   ]);
 
   // When
-  const inferredDat = await new DATParentInferrer(options, new ProgressBarFake()).infer(dat);
+  const inferredDat = new DATParentInferrer(options, new ProgressBarFake()).infer(dat);
 
   // Then
   expect(inferredDat === dat).toEqual(false);
@@ -46,12 +46,12 @@ it('should ignore the DAT\'s parent/clone info if specified', async () => {
   expect(inferredDat.getParents().every((parent) => parent.getGames().length === 1)).toEqual(true);
 });
 
-it('should not do anything if the DAT has no games', async () => {
+it('should not do anything if the DAT has no games', () => {
   // Given
   const dat = new LogiqxDAT(new Header(), []);
 
   // When
-  const inferredDat = await new DATParentInferrer(new Options(), new ProgressBarFake()).infer(dat);
+  const inferredDat = new DATParentInferrer(new Options(), new ProgressBarFake()).infer(dat);
 
   // Then
   expect(inferredDat === dat).toEqual(true);
@@ -229,9 +229,9 @@ describe('similar games', () => {
       'NFL 2K v1.007 (1999)(Sega)(US)[!][9S]',
       'NFL 2K v1.007 (1999)(Sega)(US)[!][MT B08, B13, B17, B19, B20]',
     ], 'NFL 2K v1.007 (1999)(Sega)(US)[!][10S]'],
-  ])('should group similar games: %s', async (gameNames, expectedGameName) => {
+  ])('should group similar games: %s', (gameNames, expectedGameName) => {
     const ungroupedDat = buildDat(gameNames);
-    const groupedDat = await new DATParentInferrer(new Options(), new ProgressBarFake())
+    const groupedDat = new DATParentInferrer(new Options(), new ProgressBarFake())
       .infer(ungroupedDat);
     expect(groupedDat.getParents()).toHaveLength(1);
     expect(groupedDat.getParents()[0].getGames()).toHaveLength(ungroupedDat.getGames().length);
@@ -256,9 +256,9 @@ describe('dissimilar games', () => {
       'Final Fantasy VII (USA) (Interactive Sampler CD)',
       'Final Fantasy VII (USA) (Square Soft on PlayStation Previews)',
     ]],
-  ])('should not group different discs', async (gameNames) => {
+  ])('should not group different discs', (gameNames) => {
     const ungroupedDat = buildDat(gameNames);
-    const groupedDat = await new DATParentInferrer(new Options(), new ProgressBarFake())
+    const groupedDat = new DATParentInferrer(new Options(), new ProgressBarFake())
       .infer(ungroupedDat);
     expect(groupedDat.getParents()).toHaveLength(gameNames.length);
     expect(groupedDat.getParents().every((parent) => parent.getGames().length === 1)).toEqual(true);
@@ -275,9 +275,9 @@ describe('dissimilar games', () => {
       'Madden NFL 2004 (USA)',
       'Madden NFL 2005 (USA)',
     ]],
-  ])('should not group different years', async (gameNames) => {
+  ])('should not group different years', (gameNames) => {
     const ungroupedDat = buildDat(gameNames);
-    const groupedDat = await new DATParentInferrer(new Options(), new ProgressBarFake())
+    const groupedDat = new DATParentInferrer(new Options(), new ProgressBarFake())
       .infer(ungroupedDat);
     expect(groupedDat.getParents()).toHaveLength(gameNames.length);
     expect(groupedDat.getParents().every((parent) => parent.getGames().length === 1)).toEqual(true);
@@ -289,9 +289,9 @@ describe('dissimilar games', () => {
       'Hitman - Contracts (Europe)',
       'Hitman - Silent Assassin (Japan)',
     ]],
-  ])('should not group different taglines', async (gameNames) => {
+  ])('should not group different taglines', (gameNames) => {
     const ungroupedDat = buildDat(gameNames);
-    const groupedDat = await new DATParentInferrer(new Options(), new ProgressBarFake())
+    const groupedDat = new DATParentInferrer(new Options(), new ProgressBarFake())
       .infer(ungroupedDat);
     expect(groupedDat.getParents()).toHaveLength(gameNames.length);
     expect(groupedDat.getParents().every((parent) => parent.getGames().length === 1)).toEqual(true);

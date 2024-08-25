@@ -116,8 +116,7 @@ async function candidateWriter(
     new ProgressBarFake(),
     new FileFactory(new FileCache()),
   ).process(romFiles);
-  const indexedRomFiles = await new ROMIndexer(options, new ProgressBarFake())
-    .index(romFilesWithHeaders);
+  const indexedRomFiles = new ROMIndexer(options, new ProgressBarFake()).index(romFilesWithHeaders);
   let candidates = await new CandidateGenerator(options, new ProgressBarFake())
     .generate(dat, indexedRomFiles);
   if (patchGlob) {
@@ -134,7 +133,7 @@ async function candidateWriter(
     new ProgressBarFake(),
     new FileFactory(new FileCache()),
   ).correct(dat, candidates);
-  candidates = await new CandidateCombiner(options, new ProgressBarFake())
+  candidates = new CandidateCombiner(options, new ProgressBarFake())
     .combine(dat, candidates);
 
   // When

@@ -97,18 +97,18 @@ export default class CandidateWriter extends Module {
     const totalCandidateCount = [...parentsToWritableCandidates.values()].flat().length;
     this.progressBar.logTrace(`${dat.getNameShort()}: writing ${totalCandidateCount.toLocaleString()} candidate${totalCandidateCount !== 1 ? 's' : ''}`);
     if (this.options.shouldTest() && !this.options.getOverwrite()) {
-      await this.progressBar.setSymbol(ProgressBarSymbol.TESTING);
+      this.progressBar.setSymbol(ProgressBarSymbol.TESTING);
     } else {
-      await this.progressBar.setSymbol(ProgressBarSymbol.WRITING);
+      this.progressBar.setSymbol(ProgressBarSymbol.WRITING);
     }
-    await this.progressBar.reset(parentsToWritableCandidates.size);
+    this.progressBar.reset(parentsToWritableCandidates.size);
 
     await Promise.all([...parentsToWritableCandidates.entries()].map(
       async ([
         parent,
         releaseCandidates,
       ]) => CandidateWriter.THREAD_SEMAPHORE.runExclusive(async () => {
-        await this.progressBar.incrementProgress();
+        this.progressBar.incrementProgress();
         this.progressBar.logTrace(`${dat.getNameShort()}: ${parent.getName()} (parent): writing ${releaseCandidates.length.toLocaleString()} candidate${releaseCandidates.length !== 1 ? 's' : ''}`);
 
         for (const releaseCandidate of releaseCandidates) {
@@ -116,7 +116,7 @@ export default class CandidateWriter extends Module {
         }
 
         this.progressBar.logTrace(`${dat.getNameShort()}: ${parent.getName()} (parent): done writing ${releaseCandidates.length.toLocaleString()} candidate${releaseCandidates.length !== 1 ? 's' : ''}`);
-        await this.progressBar.incrementDone();
+        this.progressBar.incrementDone();
       }),
     ));
 
@@ -213,7 +213,7 @@ export default class CandidateWriter extends Module {
       }
     }
 
-    await this.progressBar.setSymbol(ProgressBarSymbol.WRITING);
+    this.progressBar.setSymbol(ProgressBarSymbol.WRITING);
     let written = false;
     for (let i = 0; i <= this.options.getWriteRetry(); i += 1) {
       written = await this.writeZipFile(
@@ -452,7 +452,7 @@ export default class CandidateWriter extends Module {
       }
     }
 
-    await this.progressBar.setSymbol(ProgressBarSymbol.WRITING);
+    this.progressBar.setSymbol(ProgressBarSymbol.WRITING);
     let written = false;
     for (let i = 0; i <= this.options.getWriteRetry(); i += 1) {
       if (this.options.shouldMove()) {
@@ -687,7 +687,7 @@ export default class CandidateWriter extends Module {
       await fsPoly.rm(linkPath, { force: true });
     }
 
-    await this.progressBar.setSymbol(ProgressBarSymbol.WRITING);
+    this.progressBar.setSymbol(ProgressBarSymbol.WRITING);
     for (let i = 0; i <= this.options.getWriteRetry(); i += 1) {
       const written = await this.writeRawLink(dat, releaseCandidate, targetPath, linkPath);
 

@@ -39,31 +39,31 @@ export const ProgressBarSymbol = {
  * information about an operation.
  */
 export default abstract class ProgressBar {
-  abstract reset(total: number): Promise<void>;
+  abstract reset(total: number): void;
 
-  abstract setName(name: string): Promise<void>;
+  abstract setName(name: string): void;
 
-  abstract setSymbol(symbol: string): Promise<void>;
+  abstract setSymbol(symbol: string): void;
 
   abstract addWaitingMessage(waitingMessage: string): void;
 
   abstract removeWaitingMessage(waitingMessage: string): void;
 
-  abstract incrementTotal(increment: number): Promise<void>;
+  abstract incrementTotal(increment: number): void;
 
-  abstract incrementProgress(): Promise<void>;
+  abstract incrementProgress(): void;
 
-  abstract incrementDone(message?: string): Promise<void>;
+  abstract incrementDone(message?: string): void;
 
-  abstract update(current: number, message?: string): Promise<void>;
+  abstract update(current: number, message?: string): void;
 
-  abstract done(finishedMessage?: string): Promise<void>;
+  abstract done(finishedMessage?: string): void;
 
   /**
    * Call the `done()` method with a completion message that indicates how many items were
    * processed.
    */
-  async doneItems(count: number, noun: string, verb: string): Promise<void> {
+  doneItems(count: number, noun: string, verb: string): void {
     let pluralSuffix = 's';
     if (noun.toLowerCase().endsWith('ch')
       || noun.toLowerCase().endsWith('s')
@@ -71,7 +71,7 @@ export default abstract class ProgressBar {
       pluralSuffix = 'es';
     }
 
-    return this.done(`${count.toLocaleString()} ${noun.trim()}${count !== 1 ? pluralSuffix : ''} ${verb}`);
+    this.done(`${count.toLocaleString()} ${noun.trim()}${count !== 1 ? pluralSuffix : ''} ${verb}`);
   }
 
   abstract setLoggerPrefix(prefix: string): void;
@@ -122,7 +122,7 @@ export default abstract class ProgressBar {
     return this.log(LogLevel.ERROR, message);
   }
 
-  abstract freeze(): Promise<void>;
+  abstract freeze(): void;
 
   abstract delete(): void;
 }

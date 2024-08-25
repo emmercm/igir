@@ -21,26 +21,26 @@ export default class PatchScanner extends Scanner {
    */
   async scan(): Promise<Patch[]> {
     this.progressBar.logTrace('scanning patch files');
-    await this.progressBar.setSymbol(ProgressBarSymbol.FILE_SCANNING);
-    await this.progressBar.reset(0);
+    this.progressBar.setSymbol(ProgressBarSymbol.FILE_SCANNING);
+    this.progressBar.reset(0);
 
-    const patchFilePaths = await this.options.scanPatchFilesWithoutExclusions(async (increment) => {
-      await this.progressBar.incrementTotal(increment);
+    const patchFilePaths = await this.options.scanPatchFilesWithoutExclusions((increment) => {
+      this.progressBar.incrementTotal(increment);
     });
     this.progressBar.logTrace(`found ${patchFilePaths.length.toLocaleString()} patch file${patchFilePaths.length !== 1 ? 's' : ''}`);
-    await this.progressBar.reset(patchFilePaths.length);
+    this.progressBar.reset(patchFilePaths.length);
 
     const patchFiles = await this.getUniqueFilesFromPaths(
       patchFilePaths,
       this.options.getReaderThreads(),
       ChecksumBitmask.NONE,
     );
-    await this.progressBar.reset(patchFiles.length);
+    this.progressBar.reset(patchFiles.length);
 
     const patches = (await new DriveSemaphore(this.options.getReaderThreads()).map(
       patchFiles,
       async (file) => {
-        await this.progressBar.incrementProgress();
+        this.progressBar.incrementProgress();
         const waitingMessage = `${file.toString()} ...`;
         this.progressBar.addWaitingMessage(waitingMessage);
 
@@ -50,7 +50,7 @@ export default class PatchScanner extends Scanner {
           this.progressBar.logWarn(`${file.toString()}: failed to parse patch: ${error}`);
           return undefined;
         } finally {
-          await this.progressBar.incrementDone();
+          this.progressBar.incrementDone();
           this.progressBar.removeWaitingMessage(waitingMessage);
         }
       },
