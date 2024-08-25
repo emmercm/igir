@@ -22,7 +22,7 @@ async function runCombinedCandidateGenerator(
   const dats = await new DATGameInferrer(options, new ProgressBarFake()).infer(romFiles);
   const dat = new DATCombiner(new ProgressBarFake()).combine(dats);
 
-  const indexedRomFiles = await new ROMIndexer(options, new ProgressBarFake()).index(romFiles);
+  const indexedRomFiles = new ROMIndexer(options, new ProgressBarFake()).index(romFiles);
   const parentsToCandidates = await new CandidateGenerator(options, new ProgressBarFake())
     .generate(dat, indexedRomFiles);
 

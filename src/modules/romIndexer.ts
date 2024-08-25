@@ -29,10 +29,10 @@ export default class ROMIndexer extends Module {
   /**
    * Index files.
    */
-  async index(files: File[]): Promise<IndexedFiles> {
+  index(files: File[]): IndexedFiles {
     this.progressBar.logTrace(`indexing ${files.length.toLocaleString()} file${files.length !== 1 ? 's' : ''}`);
-    await this.progressBar.setSymbol(ProgressBarSymbol.FILE_INDEXING);
-    await this.progressBar.reset(files.length);
+    this.progressBar.setSymbol(ProgressBarSymbol.FILE_INDEXING);
+    this.progressBar.reset(files.length);
 
     // Index the files
     const result = IndexedFiles.fromFiles(files);

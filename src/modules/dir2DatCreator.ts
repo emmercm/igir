@@ -34,8 +34,8 @@ export default class Dir2DatCreator extends Module {
     }
 
     this.progressBar.logTrace(`${dat.getNameShort()}: writing dir2dat`);
-    await this.progressBar.setSymbol(ProgressBarSymbol.WRITING);
-    await this.progressBar.reset(1);
+    this.progressBar.setSymbol(ProgressBarSymbol.WRITING);
+    this.progressBar.reset(1);
 
     const datDir = this.options.shouldWrite()
       ? OutputFactory.getDir(this.options, dat)

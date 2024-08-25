@@ -22,18 +22,18 @@ export default class CandidatePostProcessor extends Module {
   /**
    * Post-process the candidates.
    */
-  async process(
+  process(
     dat: DAT,
     parentsToCandidates: Map<Parent, ReleaseCandidate[]>,
-  ): Promise<Map<Parent, ReleaseCandidate[]>> {
+  ): Map<Parent, ReleaseCandidate[]> {
     if (parentsToCandidates.size === 0) {
       this.progressBar.logTrace(`${dat.getNameShort()}: no parents, so no candidates to process`);
       return parentsToCandidates;
     }
 
     this.progressBar.logTrace(`${dat.getNameShort()}: processing candidates`);
-    await this.progressBar.setSymbol(ProgressBarSymbol.GENERATING);
-    await this.progressBar.reset(parentsToCandidates.size);
+    this.progressBar.setSymbol(ProgressBarSymbol.GENERATING);
+    this.progressBar.reset(parentsToCandidates.size);
 
     // Get the output basename of every ROM
     const outputFileBasenames = [...parentsToCandidates.values()]

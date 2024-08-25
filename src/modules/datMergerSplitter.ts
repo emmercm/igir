@@ -23,7 +23,7 @@ export default class DATMergerSplitter extends Module {
   /**
    * Un-merge, split, or merge the {@link Game}s within a {@link DAT}.
    */
-  async merge(dat: DAT): Promise<DAT> {
+  merge(dat: DAT): DAT {
     // Don't do anything if no type provided
     if (this.options.getMergeRoms() === undefined) {
       this.progressBar.logTrace(`${dat.getNameShort()}: no ROM merge option provided, doing nothing`);
@@ -42,8 +42,8 @@ export default class DATMergerSplitter extends Module {
     }, new Map<string, Game>());
 
     this.progressBar.logTrace(`${dat.getNameShort()}: merging & splitting ${dat.getGames().length.toLocaleString()} game${dat.getGames().length !== 1 ? 's' : ''}`);
-    await this.progressBar.setSymbol(ProgressBarSymbol.MERGE_SPLIT);
-    await this.progressBar.reset(dat.getGames().length);
+    this.progressBar.setSymbol(ProgressBarSymbol.MERGE_SPLIT);
+    this.progressBar.reset(dat.getGames().length);
 
     const newGames = dat.getParents()
       .flatMap((parent) => this.mergeParent(dat, parent, gameNamesToGames));

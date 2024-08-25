@@ -27,8 +27,8 @@ gracefulFs.gracefulify(realFs);
     process.exit(1);
   }
 
-  process.once('SIGINT', async () => {
-    await ProgressBarCLI.stop();
+  process.once('SIGINT', () => {
+    ProgressBarCLI.stop();
     logger.newLine();
     logger.notice(`Exiting ${Package.NAME} early`);
     process.exit(0);
@@ -66,9 +66,9 @@ gracefulFs.gracefulify(realFs);
     new UpdateChecker(logger).check();
 
     await new Igir(options, logger).main();
-    await ProgressBarCLI.stop();
+    ProgressBarCLI.stop();
   } catch (error) {
-    await ProgressBarCLI.stop();
+    ProgressBarCLI.stop();
     if (error instanceof ExpectedError) {
       logger.error(error);
     } else if (error instanceof Error && error.stack) {

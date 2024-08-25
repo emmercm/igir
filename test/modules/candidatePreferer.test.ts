@@ -29,14 +29,14 @@ async function expectFilteredCandidates(
   expect(totalCandidates).toEqual(expectedSize);
 }
 
-async function expectPreferredCandidates(
+function expectPreferredCandidates(
   options: OptionsProps,
   parentsToCandidates: [Parent, ReleaseCandidate[]][],
   expectedNames: string[],
-): Promise<void> {
+): void {
   const dat = new LogiqxDAT(new Header(), []);
 
-  const filteredParentsToCandidates = await buildCandidateFilter(options)
+  const filteredParentsToCandidates = buildCandidateFilter(options)
     .prefer(dat, new Map(parentsToCandidates));
   // Assert CandidateFilter doesn't affect the number of parents
   expect(filteredParentsToCandidates.size).toEqual(parentsToCandidates.length);
@@ -136,7 +136,7 @@ it('should return nothing if no parent has release candidates', async () => {
 describe('sort', () => {
   describe('prefer game regex', () => {
     it('should return the first candidate when option is empty', async () => {
-      await expectPreferredCandidates({ preferGameRegex: undefined, single: true }, [
+      expectPreferredCandidates({ preferGameRegex: undefined, single: true }, [
         await buildReleaseCandidatesWithRegionLanguage(['one'], [], 'EN'),
         await buildReleaseCandidatesWithRegionLanguage(['two', 'three'], [], 'EN'),
         await buildReleaseCandidatesWithRegionLanguage(['four', 'five', 'six'], [], 'EN'),
@@ -144,7 +144,7 @@ describe('sort', () => {
     });
 
     it('should return the first candidate when none matching', async () => {
-      await expectPreferredCandidates({ preferGameRegex: 'NINE', single: true }, [
+      expectPreferredCandidates({ preferGameRegex: 'NINE', single: true }, [
         await buildReleaseCandidatesWithRegionLanguage(['one'], [], 'EN'),
         await buildReleaseCandidatesWithRegionLanguage(['two', 'three'], [], 'EN'),
         await buildReleaseCandidatesWithRegionLanguage(['four', 'five', 'six'], [], 'EN'),
@@ -152,7 +152,7 @@ describe('sort', () => {
     });
 
     it('should return the first matching candidate when some matching', async () => {
-      await expectPreferredCandidates({ preferGameRegex: '/THREE|five/i', single: true }, [
+      expectPreferredCandidates({ preferGameRegex: '/THREE|five/i', single: true }, [
         await buildReleaseCandidatesWithRegionLanguage(['one'], [], 'EN'),
         await buildReleaseCandidatesWithRegionLanguage(['two', 'three'], [], 'EN'),
         await buildReleaseCandidatesWithRegionLanguage(['four', 'five', 'six'], [], 'EN'),
@@ -160,7 +160,7 @@ describe('sort', () => {
     });
 
     it('should return the first candidate when all matching', async () => {
-      await expectPreferredCandidates({ preferGameRegex: '[aeiou]', single: true }, [
+      expectPreferredCandidates({ preferGameRegex: '[aeiou]', single: true }, [
         await buildReleaseCandidatesWithRegionLanguage(['one'], [], 'EN'),
         await buildReleaseCandidatesWithRegionLanguage(['two', 'three'], [], 'EN'),
         await buildReleaseCandidatesWithRegionLanguage(['four', 'five', 'six'], [], 'EN'),
@@ -170,7 +170,7 @@ describe('sort', () => {
 
   describe('prefer rom regex', () => {
     it('should return the first candidate when option is empty', async () => {
-      await expectPreferredCandidates({ preferRomRegex: undefined, single: true }, [
+      expectPreferredCandidates({ preferRomRegex: undefined, single: true }, [
         await buildReleaseCandidatesWithRegionLanguage(['one'], [], 'EN'),
         await buildReleaseCandidatesWithRegionLanguage(['two', 'three'], [], 'EN'),
         await buildReleaseCandidatesWithRegionLanguage(['four', 'five', 'six'], [], 'EN'),
@@ -178,7 +178,7 @@ describe('sort', () => {
     });
 
     it('should return the first candidate when none matching', async () => {
-      await expectPreferredCandidates({ preferRomRegex: '/five\\.nes/i', single: true }, [
+      expectPreferredCandidates({ preferRomRegex: '/five\\.nes/i', single: true }, [
         await buildReleaseCandidatesWithRegionLanguage(['one'], [], 'EN'),
         await buildReleaseCandidatesWithRegionLanguage(['two', 'three'], [], 'EN'),
         await buildReleaseCandidatesWithRegionLanguage(['four', 'five', 'six'], [], 'EN'),
@@ -186,7 +186,7 @@ describe('sort', () => {
     });
 
     it('should return the first matching candidate when some matching', async () => {
-      await expectPreferredCandidates({ preferRomRegex: '/THREE|five\\.rom/i', single: true }, [
+      expectPreferredCandidates({ preferRomRegex: '/THREE|five\\.rom/i', single: true }, [
         await buildReleaseCandidatesWithRegionLanguage(['one'], [], 'EN'),
         await buildReleaseCandidatesWithRegionLanguage(['two', 'three'], [], 'EN'),
         await buildReleaseCandidatesWithRegionLanguage(['four', 'five', 'six'], [], 'EN'),
@@ -194,7 +194,7 @@ describe('sort', () => {
     });
 
     it('should return the first candidate when all matching', async () => {
-      await expectPreferredCandidates({ preferRomRegex: '[aeiou]', single: true }, [
+      expectPreferredCandidates({ preferRomRegex: '[aeiou]', single: true }, [
         await buildReleaseCandidatesWithRegionLanguage(['one'], [], 'EN'),
         await buildReleaseCandidatesWithRegionLanguage(['two', 'three'], [], 'EN'),
         await buildReleaseCandidatesWithRegionLanguage(['four', 'five', 'six'], [], 'EN'),
@@ -204,7 +204,7 @@ describe('sort', () => {
 
   describe('prefer verified', () => {
     it('should return the first candidate when option is false', async () => {
-      await expectPreferredCandidates({ preferVerified: false, single: true }, [
+      expectPreferredCandidates({ preferVerified: false, single: true }, [
         await buildReleaseCandidatesWithRegionLanguage(['one'], [], 'EN'),
         await buildReleaseCandidatesWithRegionLanguage(['two', 'two [!]'], [], 'EN'),
         await buildReleaseCandidatesWithRegionLanguage(['three [!]', 'three'], [], 'EN'),
@@ -212,7 +212,7 @@ describe('sort', () => {
     });
 
     it('should return the first candidate when none matching', async () => {
-      await expectPreferredCandidates({ preferVerified: true, single: true }, [
+      expectPreferredCandidates({ preferVerified: true, single: true }, [
         await buildReleaseCandidatesWithRegionLanguage(['one'], [], 'EN'),
         await buildReleaseCandidatesWithRegionLanguage(['two', 'two two'], [], 'EN'),
         await buildReleaseCandidatesWithRegionLanguage(['three', 'three three'], [], 'EN'),
@@ -220,7 +220,7 @@ describe('sort', () => {
     });
 
     it('should return the first matching candidate when some matching', async () => {
-      await expectPreferredCandidates({ preferVerified: true, single: true }, [
+      expectPreferredCandidates({ preferVerified: true, single: true }, [
         await buildReleaseCandidatesWithRegionLanguage(['one'], [], 'EN'),
         await buildReleaseCandidatesWithRegionLanguage(['two', 'two [!]'], [], 'EN'),
         await buildReleaseCandidatesWithRegionLanguage(['three [!]', 'three'], [], 'EN'),
@@ -228,7 +228,7 @@ describe('sort', () => {
     });
 
     it('should return the first candidate when all matching', async () => {
-      await expectPreferredCandidates({ preferVerified: true, single: true }, [
+      expectPreferredCandidates({ preferVerified: true, single: true }, [
         await buildReleaseCandidatesWithRegionLanguage(['one [!]'], [], 'EN'),
         await buildReleaseCandidatesWithRegionLanguage(['two [!]', 'two two [!]'], [], 'EN'),
         await buildReleaseCandidatesWithRegionLanguage(['three [!]', 'three three [!]'], [], 'EN'),
@@ -238,7 +238,7 @@ describe('sort', () => {
 
   describe('prefer good', () => {
     it('should return the first candidate when option is false', async () => {
-      await expectPreferredCandidates({ preferGood: false, single: true }, [
+      expectPreferredCandidates({ preferGood: false, single: true }, [
         await buildReleaseCandidatesWithRegionLanguage(['one'], 'USA', 'EN'),
         await buildReleaseCandidatesWithRegionLanguage(['two', 'two [b]'], 'USA', 'EN'),
         await buildReleaseCandidatesWithRegionLanguage(['three [b]', 'three'], 'USA', 'EN'),
@@ -246,7 +246,7 @@ describe('sort', () => {
     });
 
     it('should return the first candidate when none matching', async () => {
-      await expectPreferredCandidates({ preferGood: true, single: true }, [
+      expectPreferredCandidates({ preferGood: true, single: true }, [
         await buildReleaseCandidatesWithRegionLanguage(['one'], 'USA', 'EN'),
         await buildReleaseCandidatesWithRegionLanguage(['two', 'two two'], 'USA', 'EN'),
         await buildReleaseCandidatesWithRegionLanguage(['three', 'three three'], 'USA', 'EN'),
@@ -254,7 +254,7 @@ describe('sort', () => {
     });
 
     it('should return the first matching candidate when some matching', async () => {
-      await expectPreferredCandidates({ preferGood: true, single: true }, [
+      expectPreferredCandidates({ preferGood: true, single: true }, [
         await buildReleaseCandidatesWithRegionLanguage(['one'], 'USA', 'EN'),
         await buildReleaseCandidatesWithRegionLanguage(['two', 'two [b]'], 'USA', 'EN'),
         await buildReleaseCandidatesWithRegionLanguage(['three [b]', 'three'], 'USA', 'EN'),
@@ -262,7 +262,7 @@ describe('sort', () => {
     });
 
     it('should return the first candidate when all matching', async () => {
-      await expectPreferredCandidates({ preferGood: true, single: true }, [
+      expectPreferredCandidates({ preferGood: true, single: true }, [
         await buildReleaseCandidatesWithRegionLanguage(['one [b]'], 'USA', 'EN'),
         await buildReleaseCandidatesWithRegionLanguage(['two [b]', 'two two [b]'], 'USA', 'EN'),
         await buildReleaseCandidatesWithRegionLanguage(['three [b]', 'three three [b]'], 'USA', 'EN'),
@@ -272,7 +272,7 @@ describe('sort', () => {
 
   describe('prefer languages', () => {
     it('should return the first candidate when option is empty', async () => {
-      await expectPreferredCandidates({ preferLanguage: [], single: true }, [
+      expectPreferredCandidates({ preferLanguage: [], single: true }, [
         await buildReleaseCandidatesWithRegionLanguage('one', 'USA', 'EN'),
         await buildReleaseCandidatesWithRegionLanguage('two', 'USA', ['ES', 'EN']),
         await buildReleaseCandidatesWithRegionLanguage('three', 'JPN', 'JA'),
@@ -283,7 +283,7 @@ describe('sort', () => {
     });
 
     it('should return the first candidate when none matching', async () => {
-      await expectPreferredCandidates({ preferLanguage: ['EN'], single: true }, [
+      expectPreferredCandidates({ preferLanguage: ['EN'], single: true }, [
         await buildReleaseCandidatesWithRegionLanguage('one', 'SPA', 'ES'),
         await buildReleaseCandidatesWithRegionLanguage('two', 'JPN', 'JA'),
         await buildReleaseCandidatesWithRegionLanguage('three', 'EUR', ['DE', 'IT']),
@@ -292,7 +292,7 @@ describe('sort', () => {
     });
 
     it('should return the first matching candidate when some matching', async () => {
-      await expectPreferredCandidates({ preferLanguage: ['EN', 'JA'], single: true }, [
+      expectPreferredCandidates({ preferLanguage: ['EN', 'JA'], single: true }, [
         await buildReleaseCandidatesWithRegionLanguage('one', 'USA', 'EN'),
         await buildReleaseCandidatesWithRegionLanguage('two', 'USA', ['ES', 'EN']),
         await buildReleaseCandidatesWithRegionLanguage('three', 'JPN', 'JA'),
@@ -302,7 +302,7 @@ describe('sort', () => {
       ], ['one (USA) (EN)', 'two (USA) (EN)', 'three (JPN) (JA)', 'four (JPN) (EN)', 'five (EUR) (DE)', 'six (EUR)']);
     });
 
-    it('should treat "World" as English', async () => {
+    it('should treat "World" as English', () => {
       const gameParent = new Game({ name: 'Akumajou Special - Boku Dracula-kun (Japan)', release: new Release('Akumajou Special - Boku Dracula-kun (Japan)', 'JPN') });
       const gameWorldJa = new Game({ name: 'Akumajou Special - Boku Dracula-kun (World) (Ja) (Castlevania Anniversary Collection)' });
       const gameWorld = new Game({ name: 'Kid Dracula (World) (Castlevania Anniversary Collection)' });
@@ -310,7 +310,7 @@ describe('sort', () => {
       const parent = new Parent(gameParent, games);
       const releaseCandidates = games
         .map((game) => new ReleaseCandidate(game, game.getReleases()[0], []));
-      await expectPreferredCandidates({ single: true, preferLanguage: ['EN'] }, [[parent, releaseCandidates]], [gameWorld.getName()]);
+      expectPreferredCandidates({ single: true, preferLanguage: ['EN'] }, [[parent, releaseCandidates]], [gameWorld.getName()]);
     });
 
     test.each([
@@ -338,17 +338,17 @@ describe('sort', () => {
         ['SV', 'DE'],
         'Tintin in Tibet (Europe) (En,Es,Sv)',
       ],
-    ])('should rank candidates by all preferred languages: %s', async (gameNames, preferLanguage, expectedName) => {
+    ])('should rank candidates by all preferred languages: %s', (gameNames, preferLanguage, expectedName) => {
       const games = gameNames.map((gameName) => new Game({ name: gameName }));
       const parent = new Parent(games[0], games);
       const releaseCandidates = games.map((game) => new ReleaseCandidate(game, undefined, []));
-      await expectPreferredCandidates({ preferLanguage, single: true }, [
+      expectPreferredCandidates({ preferLanguage, single: true }, [
         [parent, releaseCandidates],
       ], [expectedName]);
     });
 
     it('should return the first candidate when all matching', async () => {
-      await expectPreferredCandidates({ preferLanguage: ['EN', 'JA'], single: true }, [
+      expectPreferredCandidates({ preferLanguage: ['EN', 'JA'], single: true }, [
         await buildReleaseCandidatesWithRegionLanguage('one', 'USA', 'EN'),
         await buildReleaseCandidatesWithRegionLanguage('two', 'USA', ['ES', 'EN']),
         await buildReleaseCandidatesWithRegionLanguage('three', 'JPN', 'JA'),
@@ -360,7 +360,7 @@ describe('sort', () => {
 
   describe('prefer regions', () => {
     it('should return the first candidate when option is false', async () => {
-      await expectPreferredCandidates({ preferRegion: [], single: true }, [
+      expectPreferredCandidates({ preferRegion: [], single: true }, [
         await buildReleaseCandidatesWithRegionLanguage('one', 'USA', 'EN'),
         await buildReleaseCandidatesWithRegionLanguage('two', 'USA', ['ES', 'EN']),
         await buildReleaseCandidatesWithRegionLanguage('three', ['EUR', 'USA'], 'EN'),
@@ -372,7 +372,7 @@ describe('sort', () => {
     });
 
     it('should return the first candidate when none matching', async () => {
-      await expectPreferredCandidates({ preferRegion: ['USA', 'EUR'], single: true }, [
+      expectPreferredCandidates({ preferRegion: ['USA', 'EUR'], single: true }, [
         await buildReleaseCandidatesWithRegionLanguage('one', 'EUR', ['DE', 'IT']),
         await buildReleaseCandidatesWithRegionLanguage('two', ['TAI', 'CHN'], 'ZH'),
         await buildReleaseCandidatesWithRegionLanguage('three (Japan)', undefined, undefined),
@@ -381,7 +381,7 @@ describe('sort', () => {
     });
 
     it('should return the first matching candidate when some matching', async () => {
-      await expectPreferredCandidates({ preferRegion: ['USA', 'EUR'], single: true }, [
+      expectPreferredCandidates({ preferRegion: ['USA', 'EUR'], single: true }, [
         await buildReleaseCandidatesWithRegionLanguage('one', 'USA', 'EN'),
         await buildReleaseCandidatesWithRegionLanguage('two', 'USA', ['ES', 'EN']),
         await buildReleaseCandidatesWithRegionLanguage('three', ['EUR', 'USA'], 'EN'),
@@ -393,7 +393,7 @@ describe('sort', () => {
     });
 
     it('should return the first candidate when all matching', async () => {
-      await expectPreferredCandidates({ preferRegion: ['USA', 'EUR'], single: true }, [
+      expectPreferredCandidates({ preferRegion: ['USA', 'EUR'], single: true }, [
         await buildReleaseCandidatesWithRegionLanguage('one', 'USA', 'EN'),
         await buildReleaseCandidatesWithRegionLanguage('two', 'USA', ['ES', 'EN']),
         await buildReleaseCandidatesWithRegionLanguage('three', ['EUR', 'USA'], 'EN'),
@@ -412,7 +412,7 @@ describe('sort', () => {
         'Fighting Vipers 2 v1.001 (2000)(Sega)(PAL)(M6)[!]',
       ], 'Fighting Vipers 2 v1.001 (2000)(Sega)(PAL)(M6)[!]'],
     ])('should return the first candidate when all matching by name: %s', async (names, expectedName) => {
-      await expectPreferredCandidates(
+      expectPreferredCandidates(
         { preferRegion: ['USA', 'EUR', 'JPN'], single: true },
         [await buildReleaseCandidatesWithRegionLanguage(names)],
         [expectedName],
@@ -430,7 +430,7 @@ describe('sort', () => {
       [['six (Rev B)', 'six (Rev A)', 'six (Rev C)'], 'six (Rev B)'],
       [['seven (RE2)', 'seven (RE3)', 'seven'], 'seven (RE2)'],
     ])('should return the first candidate when option is false: %s', async (names, expectedName) => {
-      await expectPreferredCandidates(
+      expectPreferredCandidates(
         { preferRevisionNewer: false, single: true },
         [await buildReleaseCandidatesWithRegionLanguage(names)],
         [expectedName],
@@ -441,7 +441,7 @@ describe('sort', () => {
       [['one'], 'one'],
       [['two', 'two two'], 'two'],
     ])('should return the first candidate when none matching: %s', async (names, expectedName) => {
-      await expectPreferredCandidates(
+      expectPreferredCandidates(
         { preferRevisionNewer: true, single: true },
         [await buildReleaseCandidatesWithRegionLanguage(names)],
         [expectedName],
@@ -457,7 +457,7 @@ describe('sort', () => {
       [['six (Rev B)', 'six (Rev A)', 'six (Rev C)'], 'six (Rev C)'],
       [['seven (RE2)', 'seven (RE3)', 'seven'], 'seven (RE3)'],
     ])('should return the first matching candidate when some matching: %s', async (names, expectedName) => {
-      await expectPreferredCandidates(
+      expectPreferredCandidates(
         { preferRevisionNewer: true, single: true },
         [await buildReleaseCandidatesWithRegionLanguage(names)],
         [expectedName],
@@ -473,7 +473,7 @@ describe('sort', () => {
         'ChuChu Rocket! v1.014 (2000)(Sega)(PAL)(M5)[!]',
       ], 'ChuChu Rocket! v1.014 (2000)(Sega)(PAL)(M5)[!]'],
     ])('should return the first candidate when all matching: %s', async (names, expectedName) => {
-      await expectPreferredCandidates(
+      expectPreferredCandidates(
         { preferRevisionNewer: true, single: true },
         [await buildReleaseCandidatesWithRegionLanguage(names)],
         [expectedName],
@@ -491,7 +491,7 @@ describe('sort', () => {
       [['six (Rev B)', 'six (Rev A)', 'six (Rev C)'], 'six (Rev B)'],
       [['seven (RE2)', 'seven (RE3)', 'seven'], 'seven (RE2)'],
     ])('should return the first candidate when option is false: %s', async (names, expectedName) => {
-      await expectPreferredCandidates(
+      expectPreferredCandidates(
         { preferRevisionOlder: false, single: true },
         [await buildReleaseCandidatesWithRegionLanguage(names)],
         [expectedName],
@@ -502,7 +502,7 @@ describe('sort', () => {
       [['one'], 'one'],
       [['two', 'two two'], 'two'],
     ])('should return the first candidate when none matching: %s', async (names, expectedName) => {
-      await expectPreferredCandidates(
+      expectPreferredCandidates(
         { preferRevisionOlder: true, single: true },
         [await buildReleaseCandidatesWithRegionLanguage(names)],
         [expectedName],
@@ -518,7 +518,7 @@ describe('sort', () => {
       [['six (Rev B)', 'six (Rev A)', 'six (Rev C)'], 'six (Rev A)'],
       [['seven (RE2)', 'seven (RE3)', 'seven'], 'seven'],
     ])('should return the first matching candidate when some matching: %s', async (names, expectedName) => {
-      await expectPreferredCandidates(
+      expectPreferredCandidates(
         { preferRevisionOlder: true, single: true },
         [await buildReleaseCandidatesWithRegionLanguage(names)],
         [expectedName],
@@ -529,7 +529,7 @@ describe('sort', () => {
       [['one (Rev 1.2)', 'one (Rev 1.1)'], 'one (Rev 1.1)'],
       [['two (Rev 13.37)'], 'two (Rev 13.37)'],
     ])('should return the first candidate when all matching: %s', async (names, expectedName) => {
-      await expectPreferredCandidates(
+      expectPreferredCandidates(
         { preferRevisionOlder: true, single: true },
         [await buildReleaseCandidatesWithRegionLanguage(names)],
         [expectedName],
@@ -539,7 +539,7 @@ describe('sort', () => {
 
   describe('prefer retail', () => {
     it('should return the first candidate when option is false', async () => {
-      await expectPreferredCandidates({ preferRetail: false, single: true }, [
+      expectPreferredCandidates({ preferRetail: false, single: true }, [
         await buildReleaseCandidatesWithRegionLanguage(['one'], 'USA', 'EN'),
         await buildReleaseCandidatesWithRegionLanguage(['two (Aftermarket)', 'two'], 'USA', 'EN'),
         await buildReleaseCandidatesWithRegionLanguage(['three [b]', 'three'], 'USA', 'EN'),
@@ -554,7 +554,7 @@ describe('sort', () => {
     });
 
     it('should return the first candidate when none matching', async () => {
-      await expectPreferredCandidates({ preferRetail: true, single: true }, [
+      expectPreferredCandidates({ preferRetail: true, single: true }, [
         await buildReleaseCandidatesWithRegionLanguage(['one'], 'USA', 'EN'),
         await buildReleaseCandidatesWithRegionLanguage(['two', 'two two'], 'USA', 'EN'),
         await buildReleaseCandidatesWithRegionLanguage(['three', 'three three', 'three three three'], 'USA', 'EN'),
@@ -562,7 +562,7 @@ describe('sort', () => {
     });
 
     it('should return the first matching candidate when some matching', async () => {
-      await expectPreferredCandidates({ preferRetail: true, single: true }, [
+      expectPreferredCandidates({ preferRetail: true, single: true }, [
         await buildReleaseCandidatesWithRegionLanguage(['one'], 'USA', 'EN'),
         await buildReleaseCandidatesWithRegionLanguage(['two (Aftermarket)', 'two'], 'USA', 'EN'),
         await buildReleaseCandidatesWithRegionLanguage(['three [b]', 'three'], 'USA', 'EN'),
@@ -577,7 +577,7 @@ describe('sort', () => {
     });
 
     it('should return the first candidate when all matching', async () => {
-      await expectPreferredCandidates({ preferRetail: true, single: true }, [
+      expectPreferredCandidates({ preferRetail: true, single: true }, [
         await buildReleaseCandidatesWithRegionLanguage(['two (Aftermarket)', 'two'], 'USA', 'EN'),
         await buildReleaseCandidatesWithRegionLanguage(['three [b]', 'three'], 'USA', 'EN'),
         await buildReleaseCandidatesWithRegionLanguage(['four (Beta)', 'four (Proto)', 'four'], 'USA', 'EN'),
@@ -593,7 +593,7 @@ describe('sort', () => {
 
   describe('prefer NTSC', () => {
     it('should return the first candidate when option is false', async () => {
-      await expectPreferredCandidates({ preferNTSC: false, single: true }, [
+      expectPreferredCandidates({ preferNTSC: false, single: true }, [
         await buildReleaseCandidatesWithRegionLanguage(['one']),
         await buildReleaseCandidatesWithRegionLanguage(['two', 'two (NTSC)']),
         await buildReleaseCandidatesWithRegionLanguage(['three (NTSC)', 'three']),
@@ -601,14 +601,14 @@ describe('sort', () => {
     });
 
     it('should return the first candidate when none matching', async () => {
-      await expectPreferredCandidates({ preferNTSC: true, single: true }, [
+      expectPreferredCandidates({ preferNTSC: true, single: true }, [
         await buildReleaseCandidatesWithRegionLanguage(['one']),
         await buildReleaseCandidatesWithRegionLanguage(['four', 'four (Demo)']),
       ], ['one', 'four']);
     });
 
     it('should return the first matching candidate when some matching', async () => {
-      await expectPreferredCandidates({ preferNTSC: true, single: true }, [
+      expectPreferredCandidates({ preferNTSC: true, single: true }, [
         await buildReleaseCandidatesWithRegionLanguage(['one']),
         await buildReleaseCandidatesWithRegionLanguage(['two', 'two (NTSC)']),
         await buildReleaseCandidatesWithRegionLanguage(['three (NTSC)', 'three']),
@@ -616,7 +616,7 @@ describe('sort', () => {
     });
 
     it('should return the first candidate when all matching', async () => {
-      await expectPreferredCandidates({ preferNTSC: true, single: true }, [
+      expectPreferredCandidates({ preferNTSC: true, single: true }, [
         await buildReleaseCandidatesWithRegionLanguage(['two', 'two (NTSC)']),
         await buildReleaseCandidatesWithRegionLanguage(['three (NTSC)', 'three']),
       ], ['two (NTSC)', 'three (NTSC)']);
@@ -625,7 +625,7 @@ describe('sort', () => {
 
   describe('prefer PAL', () => {
     it('should return the first candidate when option is false', async () => {
-      await expectPreferredCandidates({ preferPAL: false, single: true }, [
+      expectPreferredCandidates({ preferPAL: false, single: true }, [
         await buildReleaseCandidatesWithRegionLanguage(['one']),
         await buildReleaseCandidatesWithRegionLanguage(['two', 'two (PAL)']),
         await buildReleaseCandidatesWithRegionLanguage(['three', 'three (PAL 60Hz)']),
@@ -634,14 +634,14 @@ describe('sort', () => {
     });
 
     it('should return the first candidate when none matching', async () => {
-      await expectPreferredCandidates({ preferPAL: true, single: true }, [
+      expectPreferredCandidates({ preferPAL: true, single: true }, [
         await buildReleaseCandidatesWithRegionLanguage(['one']),
         await buildReleaseCandidatesWithRegionLanguage(['five', 'five (Demo)']),
       ], ['one', 'five']);
     });
 
     it('should return the first matching candidate when some matching', async () => {
-      await expectPreferredCandidates({ preferPAL: true, single: true }, [
+      expectPreferredCandidates({ preferPAL: true, single: true }, [
         await buildReleaseCandidatesWithRegionLanguage(['one']),
         await buildReleaseCandidatesWithRegionLanguage(['two', 'two (PAL)']),
         await buildReleaseCandidatesWithRegionLanguage(['three', 'three (PAL 60Hz)']),
@@ -650,7 +650,7 @@ describe('sort', () => {
     });
 
     it('should return the first candidate when all matching', async () => {
-      await expectPreferredCandidates({ preferPAL: true, single: true }, [
+      expectPreferredCandidates({ preferPAL: true, single: true }, [
         await buildReleaseCandidatesWithRegionLanguage(['two', 'two (PAL)']),
         await buildReleaseCandidatesWithRegionLanguage(['three', 'three (PAL 60Hz)']),
         await buildReleaseCandidatesWithRegionLanguage(['four (PAL)', 'four']),
@@ -660,7 +660,7 @@ describe('sort', () => {
 
   describe('prefer parent', () => {
     it('should return the first candidate when option is false', async () => {
-      await expectPreferredCandidates({ preferParent: false, single: true }, [
+      expectPreferredCandidates({ preferParent: false, single: true }, [
         await buildReleaseCandidatesWithRegionLanguage('one', 'USA', 'EN'),
         await buildReleaseCandidatesWithRegionLanguage(['two', 'two two'], 'USA', 'EN'),
         await buildReleaseCandidatesWithRegionLanguage('three', 'USA', 'EN', { cloneOf: 'zero' }),
@@ -671,14 +671,14 @@ describe('sort', () => {
     });
 
     it('should return the first candidate when none matching', async () => {
-      await expectPreferredCandidates({ preferParent: true, single: true }, [
+      expectPreferredCandidates({ preferParent: true, single: true }, [
         await buildReleaseCandidatesWithRegionLanguage('one', 'USA', 'EN'),
         await buildReleaseCandidatesWithRegionLanguage(['two', 'two two'], 'USA', 'EN'),
       ], ['one (USA) (EN)', 'two (USA) (EN)']);
     });
 
     it('should return the first matching candidate when some matching', async () => {
-      await expectPreferredCandidates({ preferParent: true, single: true }, [
+      expectPreferredCandidates({ preferParent: true, single: true }, [
         await buildReleaseCandidatesWithRegionLanguage('one', 'USA', 'EN'),
         await buildReleaseCandidatesWithRegionLanguage(['two', 'two two'], 'USA', 'EN'),
         await buildReleaseCandidatesWithRegionLanguage('three', 'USA', 'EN', { cloneOf: 'zero' }),
@@ -689,7 +689,7 @@ describe('sort', () => {
     });
 
     it('should return the first candidate when all matching', async () => {
-      await expectPreferredCandidates({ preferParent: true, single: true }, [
+      expectPreferredCandidates({ preferParent: true, single: true }, [
         await buildReleaseCandidatesWithRegionLanguage('one', 'USA', 'EN', { cloneOf: 'zero' }),
         await buildReleaseCandidatesWithRegionLanguage(['two (Parent)', 'two (Clone)'], 'USA', 'EN', [{}, { cloneOf: 'zero' }]),
         await buildReleaseCandidatesWithRegionLanguage(['three (Clone)', 'three (Parent)'], 'USA', 'EN', [{ cloneOf: 'zero' }, {}]),

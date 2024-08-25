@@ -11,13 +11,13 @@ import ROM from '../../src/types/dats/rom.js';
 import Options, { MergeMode } from '../../src/types/options.js';
 import ProgressBarFake from '../console/progressBarFake.js';
 
-it('should do nothing if no parent/clone info is present', async () => {
+it('should do nothing if no parent/clone info is present', () => {
   // Given
   const options = new Options({ mergeRoms: undefined });
   const dat = new LogiqxDAT(new Header(), []);
 
   // When
-  const result = await new DATMergerSplitter(options, new ProgressBarFake()).merge(dat);
+  const result = new DATMergerSplitter(options, new ProgressBarFake()).merge(dat);
 
   // Then the original DAT was returned
   expect(result).toEqual(dat);
@@ -27,13 +27,13 @@ test.each(
   Object.keys(MergeMode)
     .filter((mode) => Number.isNaN(Number(mode)))
     .map((mode) => [mode.toLowerCase()]),
-)('should do nothing if no parent/clone info is present: %s', async (mergeRoms) => {
+)('should do nothing if no parent/clone info is present: %s', (mergeRoms) => {
   // Given
   const options = new Options({ mergeRoms });
   const dat = new LogiqxDAT(new Header(), []);
 
   // When
-  const result = await new DATMergerSplitter(options, new ProgressBarFake()).merge(dat);
+  const result = new DATMergerSplitter(options, new ProgressBarFake()).merge(dat);
 
   // Then the original DAT was returned
   expect(result).toEqual(dat);
@@ -1711,14 +1711,14 @@ describe('MAME v0.258', () => {
     new Machine({ name: 'z80', device: 'yes' }),
   ]);
 
-  it('should full-non-merged', async () => {
+  it('should full-non-merged', () => {
     // Given
     const options = new Options({
       mergeRoms: MergeMode[MergeMode.FULLNONMERGED].toLowerCase(),
     });
 
     // When
-    const result = await new DATMergerSplitter(options, new ProgressBarFake()).merge(dat);
+    const result = new DATMergerSplitter(options, new ProgressBarFake()).merge(dat);
 
     // Then nothing was merged
     expect(result.getParents()).toHaveLength(dat.getParents().length);
@@ -1923,14 +1923,14 @@ describe('MAME v0.258', () => {
     expect(gameNamesToRomNames.get('neogeo')).toHaveLength(34);
   });
 
-  it('should non-merged', async () => {
+  it('should non-merged', () => {
     // Given
     const options = new Options({
       mergeRoms: MergeMode[MergeMode.NONMERGED].toLowerCase(),
     });
 
     // When
-    const result = await new DATMergerSplitter(options, new ProgressBarFake()).merge(dat);
+    const result = new DATMergerSplitter(options, new ProgressBarFake()).merge(dat);
 
     // Then nothing was merged
     expect(result.getParents()).toHaveLength(dat.getParents().length);
@@ -2074,14 +2074,14 @@ describe('MAME v0.258', () => {
     expect(gameNamesToRomNames.get('neogeo')).toHaveLength(34);
   });
 
-  it('should split', async () => {
+  it('should split', () => {
     // Given
     const options = new Options({
       mergeRoms: MergeMode[MergeMode.SPLIT].toLowerCase(),
     });
 
     // When
-    const result = await new DATMergerSplitter(options, new ProgressBarFake()).merge(dat);
+    const result = new DATMergerSplitter(options, new ProgressBarFake()).merge(dat);
 
     // Then nothing was merged
     expect(result.getParents()).toHaveLength(dat.getParents().length);
@@ -2207,14 +2207,14 @@ describe('MAME v0.258', () => {
     expect(gameNamesToRomNames.get('neogeo')).toHaveLength(34);
   });
 
-  it('should merged', async () => {
+  it('should merged', () => {
     // Given
     const options = new Options({
       mergeRoms: MergeMode[MergeMode.MERGED].toLowerCase(),
     });
 
     // When
-    const result = await new DATMergerSplitter(options, new ProgressBarFake()).merge(dat);
+    const result = new DATMergerSplitter(options, new ProgressBarFake()).merge(dat);
 
     // Then clones were merged
     expect(result.getParents()).toHaveLength(dat.getParents().length);
@@ -2484,14 +2484,14 @@ describe('FinalBurn Neo Neo Geo e544671', () => {
     }),
   ]);
 
-  it('should split', async () => {
+  it('should split', () => {
     // Given
     const options = new Options({
       mergeRoms: MergeMode[MergeMode.SPLIT].toLowerCase(),
     });
 
     // When
-    const result = await new DATMergerSplitter(options, new ProgressBarFake()).merge(dat);
+    const result = new DATMergerSplitter(options, new ProgressBarFake()).merge(dat);
 
     // Then nothing was merged
     expect(result.getParents()).toHaveLength(dat.getParents().length);

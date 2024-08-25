@@ -35,15 +35,15 @@ export default class DirectoryCleaner extends Module {
     }
 
     this.progressBar.logTrace('cleaning files in output');
-    await this.progressBar.setSymbol(ProgressBarSymbol.FILE_SCANNING);
-    await this.progressBar.reset(0);
+    this.progressBar.setSymbol(ProgressBarSymbol.FILE_SCANNING);
+    this.progressBar.reset(0);
 
     // If there is nothing to clean, then don't do anything
     const filesToClean = await this.options.scanOutputFilesWithoutCleanExclusions(
       dirsToClean,
       filesToExclude,
-      async (increment) => {
-        await this.progressBar.incrementTotal(increment);
+      (increment) => {
+        this.progressBar.incrementTotal(increment);
       },
     );
     if (filesToClean.length === 0) {
@@ -51,11 +51,11 @@ export default class DirectoryCleaner extends Module {
       return [];
     }
 
-    await this.progressBar.setSymbol(ProgressBarSymbol.RECYCLING);
+    this.progressBar.setSymbol(ProgressBarSymbol.RECYCLING);
 
     try {
       this.progressBar.logTrace(`cleaning ${filesToClean.length.toLocaleString()} file${filesToClean.length !== 1 ? 's' : ''}`);
-      await this.progressBar.reset(filesToClean.length);
+      this.progressBar.reset(filesToClean.length);
       if (this.options.getCleanDryRun()) {
         this.progressBar.logInfo(`paths skipped from cleaning (dry run):\n${filesToClean.map((filePath) => `  ${filePath}`).join('\n')}`);
       } else {
@@ -74,7 +74,7 @@ export default class DirectoryCleaner extends Module {
     try {
       let emptyDirs = await DirectoryCleaner.getEmptyDirs(dirsToClean);
       while (emptyDirs.length > 0) {
-        await this.progressBar.reset(emptyDirs.length);
+        this.progressBar.reset(emptyDirs.length);
         this.progressBar.logTrace(`cleaning ${emptyDirs.length.toLocaleString()} empty director${emptyDirs.length !== 1 ? 'ies' : 'y'}`);
         if (this.options.getCleanDryRun()) {
           this.progressBar.logInfo(`paths skipped from cleaning (dry run):\n${emptyDirs.map((filePath) => `  ${filePath}`).join('\n')}`);
@@ -102,7 +102,7 @@ export default class DirectoryCleaner extends Module {
       } catch (error) {
         this.progressBar.logWarn(`failed to recycle ${filePathsChunk.length} path${filePathsChunk.length !== 1 ? 's' : ''}: ${error}`);
       }
-      await this.progressBar.update(i);
+      this.progressBar.update(i);
     }
 
     // ...but if that doesn't work, delete the leftovers
@@ -111,7 +111,7 @@ export default class DirectoryCleaner extends Module {
       .map(async (filePath) => existSemaphore.runExclusive(async () => fsPoly.exists(filePath))));
     const existingFilePaths = filePaths.filter((filePath, idx) => existingFilePathsCheck.at(idx));
     if (existingFilePaths.length > 0) {
-      await this.progressBar.setSymbol(ProgressBarSymbol.DELETING);
+      this.progressBar.setSymbol(ProgressBarSymbol.DELETING);
     }
     for (let i = 0; i < existingFilePaths.length; i += Defaults.OUTPUT_CLEANER_BATCH_SIZE) {
       const filePathsChunk = existingFilePaths.slice(i, i + Defaults.OUTPUT_CLEANER_BATCH_SIZE);
@@ -148,7 +148,7 @@ export default class DirectoryCleaner extends Module {
         } catch (error) {
           this.progressBar.logWarn(`failed to move ${filePath} -> ${backupPath}: ${error}`);
         }
-        await this.progressBar.incrementProgress();
+        this.progressBar.incrementProgress();
       });
     }));
   }
