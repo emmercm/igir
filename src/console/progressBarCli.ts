@@ -56,12 +56,12 @@ export default class ProgressBarCLI extends ProgressBar {
   /**
    * Create a new {@link ProgressBarCLI}, and initialize the {@link MultiBar} if it hasn't been yet.
    */
-  static async new(
+  static new(
     logger: Logger,
     name: string,
     symbol: string,
     initialTotal = 0,
-  ): Promise<ProgressBarCLI> {
+  ): ProgressBarCLI {
     if (!ProgressBarCLI.multiBar) {
       ProgressBarCLI.multiBar = new cliProgress.MultiBar({
         stream: logger.getLogLevel() < LogLevel.NEVER ? logger.getStream() : new PassThrough(),
@@ -93,17 +93,17 @@ export default class ProgressBarCLI extends ProgressBar {
       initialPayload,
     );
     const progressBarCLI = new ProgressBarCLI(logger, initialPayload, singleBarFormatted);
-    await progressBarCLI.render(true);
+    progressBarCLI.render(true);
     return progressBarCLI;
   }
 
   /**
    * Stop the {@link MultiBar} (and therefore everyProgressBar).
    */
-  static async stop(): Promise<void> {
+  static stop(): void {
     // Freeze (and delete) any lingering progress bars
     const progressBarsCopy = ProgressBarCLI.progressBars.slice();
-    await Promise.all(progressBarsCopy.map(async (progressBar) => progressBar.freeze()));
+    progressBarsCopy.forEach((progressBar) => progressBar.freeze());
 
     // Clear the last deleted, non-frozen progress bar
     ProgressBarCLI.multiBar?.log(' ');
@@ -121,59 +121,66 @@ export default class ProgressBarCLI extends ProgressBar {
    * cli-progress clears previous output.
    * @see https://github.com/npkgz/cli-progress/issues/79
    */
-  async render(force = false): Promise<void> {
+  render(force = false): void {
     this.singleBarFormatted?.getSingleBar().update(this.payload);
 
-    if (!force) {
-      // Limit the frequency of redrawing
-      const [elapsedSec, elapsedNano] = process.hrtime(ProgressBarCLI.lastRedraw);
-      const elapsedMs = (elapsedSec * 1_000_000_000 + elapsedNano) / 1_000_000;
-      if (elapsedMs < (1000 / ProgressBarCLI.FPS)) {
-        return;
+    const callback = (): void => {
+      // Dequeue all log messages
+      if (ProgressBarCLI.multiBar && ProgressBarCLI.logQueue.length > 0) {
+        const consoleWidth = ConsolePoly.consoleWidth();
+        const logMessage = ProgressBarCLI.logQueue
+          // Wrapping is broken: https://github.com/npkgz/cli-progress/issues/142
+          .map((msg) => wrapAnsi(msg, consoleWidth, { trim: false })
+            // ...and if we manually wrap lines, we also need to deal with overwriting existing
+            //  progress bar output.
+            .split('\n')
+            // TODO(cemmer): this appears to only overwrite the last line, not any others?
+            .join(`\n${this.logger.isTTY() ? '\x1b[K' : ''}`))
+          .join('\n');
+        ProgressBarCLI.multiBar.log(`${logMessage}\n`);
+        ProgressBarCLI.logQueue = [];
       }
+
+      ProgressBarCLI.multiBar?.update();
+      ProgressBarCLI.lastRedraw = process.hrtime();
+      ProgressBarCLI.RENDER_MUTEX.cancel(); // cancel all waiting locks, we just redrew
+    };
+
+    if (force) {
+      callback();
+      return;
     }
 
-    try {
-      await ProgressBarCLI.RENDER_MUTEX.runExclusive(() => {
-        // Dequeue all log messages
-        if (ProgressBarCLI.multiBar && ProgressBarCLI.logQueue.length > 0) {
-          const consoleWidth = ConsolePoly.consoleWidth();
-          const logMessage = ProgressBarCLI.logQueue
-            // Wrapping is broken: https://github.com/npkgz/cli-progress/issues/142
-            .map((msg) => wrapAnsi(msg, consoleWidth, { trim: false })
-              // ...and if we manually wrap lines, we also need to deal with overwriting existing
-              //  progress bar output.
-              .split('\n')
-              // TODO(cemmer): this appears to only overwrite the last line, not any others?
-              .join(`\n${this.logger.isTTY() ? '\x1b[K' : ''}`))
-            .join('\n');
-          ProgressBarCLI.multiBar.log(`${logMessage}\n`);
-          ProgressBarCLI.logQueue = [];
+    // Limit the frequency of redrawing
+    const [elapsedSec, elapsedNano] = process.hrtime(ProgressBarCLI.lastRedraw);
+    const elapsedMs = (elapsedSec * 1_000_000_000 + elapsedNano) / 1_000_000;
+    if (elapsedMs < (1000 / ProgressBarCLI.FPS)) {
+      return;
+    }
+
+    setImmediate(async () => {
+      try {
+        await ProgressBarCLI.RENDER_MUTEX.runExclusive(callback);
+      } catch (error) {
+        if (error !== E_CANCELED) {
+          throw error;
         }
-
-        ProgressBarCLI.multiBar?.update();
-        ProgressBarCLI.lastRedraw = process.hrtime();
-        ProgressBarCLI.RENDER_MUTEX.cancel(); // cancel all waiting locks, we just redrew
-      });
-    } catch (error) {
-      if (error !== E_CANCELED) {
-        throw error;
       }
-    }
+    });
   }
 
   /**
    * Reset the {@link ProgressBar}'s progress to zero and change its total.
    */
-  async reset(total: number): Promise<void> {
+  reset(total: number): void {
     this.singleBarFormatted?.getSingleBar().setTotal(total);
     this.singleBarFormatted?.getSingleBar().update(0);
     this.payload.inProgress = 0;
     this.payload.waitingMessage = undefined;
-    return this.render(true);
+    this.render(true);
   }
 
-  private async logPayload(): Promise<void> {
+  private logPayload(): void {
     const name = this.payload.name ?? '';
     const finishedMessageWrapped = this.payload.finishedMessage
       ?.split('\n')
@@ -189,23 +196,23 @@ export default class ProgressBarCLI extends ProgressBar {
       LogLevel.ALWAYS,
       `${name}${finishedMessageWrapped ? ` ... ${finishedMessageWrapped}` : ''}`,
     );
-    await this.render(true);
+    this.render(true);
   }
 
-  async setName(name: string): Promise<void> {
+  setName(name: string): void {
     if (this.payload.name === name) {
       return;
     }
     this.payload.name = name;
-    await this.render(true);
+    this.render(true);
   }
 
-  async setSymbol(symbol: string): Promise<void> {
+  setSymbol(symbol: string): void {
     if (this.payload.symbol === symbol) {
       return;
     }
     this.payload.symbol = symbol;
-    await this.render(true);
+    this.render(true);
   }
 
   /**
@@ -219,7 +226,7 @@ export default class ProgressBarCLI extends ProgressBar {
     this.waitingMessages.set(waitingMessage, TimePoly.hrtimeMillis());
 
     if (!this.waitingMessageTimeout) {
-      this.waitingMessageTimeout = Timer.setInterval(async () => {
+      this.waitingMessageTimeout = Timer.setInterval(() => {
         const currentMillis = TimePoly.hrtimeMillis();
         const newWaitingMessagePair = [...this.waitingMessages]
           .find(([, ms]) => currentMillis - ms >= 5000);
@@ -230,7 +237,7 @@ export default class ProgressBarCLI extends ProgressBar {
 
         if (newWaitingMessage !== this.payload.waitingMessage) {
           this.payload.waitingMessage = newWaitingMessage;
-          await this.render(true);
+          this.render(true);
         }
       }, 1000 / ProgressBarCLI.FPS);
     }
@@ -249,7 +256,7 @@ export default class ProgressBarCLI extends ProgressBar {
   /**
    * Increment the total by some amount.
    */
-  async incrementTotal(increment: number): Promise<void> {
+  incrementTotal(increment: number): void {
     if (!this.singleBarFormatted) {
       return;
     }
@@ -257,39 +264,39 @@ export default class ProgressBarCLI extends ProgressBar {
     this.singleBarFormatted.getSingleBar().setTotal(
       this.singleBarFormatted.getSingleBar().getTotal() + increment,
     );
-    await this.render();
+    this.render();
   }
 
   /**
    * Increment the in-progress count by one.
    */
-  async incrementProgress(): Promise<void> {
+  incrementProgress(): void {
     this.payload.inProgress = Math.max(this.payload.inProgress ?? 0, 0) + 1;
-    return this.render();
+    this.render();
   }
 
   /**
    * Decrement the in-progress count by one, and increment the completed count by one.
    */
-  async incrementDone(): Promise<void> {
+  incrementDone(): void {
     this.payload.inProgress = Math.max((this.payload.inProgress ?? 0) - 1, 0);
     this.singleBarFormatted?.getSingleBar().increment();
-    return this.render();
+    this.render();
   }
 
   /**
    * Set the completed count.
    */
-  async update(current: number): Promise<void> {
+  update(current: number): void {
     this.singleBarFormatted?.getSingleBar().update(current);
-    return this.render();
+    this.render();
   }
 
   /**
    * Set the completed count to the total, and render any completion message.
    */
-  async done(finishedMessage?: string): Promise<void> {
-    await this.setSymbol(ProgressBarSymbol.DONE);
+  done(finishedMessage?: string): void {
+    this.setSymbol(ProgressBarSymbol.DONE);
 
     const total = this.singleBarFormatted?.getSingleBar().getTotal() ?? 0;
     if (total > 0) {
@@ -303,7 +310,7 @@ export default class ProgressBarCLI extends ProgressBar {
       this.payload.finishedMessage = finishedMessage;
     }
 
-    await this.render(true);
+    this.render(true);
   }
 
   /**
@@ -338,13 +345,13 @@ export default class ProgressBarCLI extends ProgressBar {
    * at once.
    * @see https://github.com/npkgz/cli-progress/issues/59
    */
-  async freeze(): Promise<void> {
+  freeze(): void {
     if (!this.singleBarFormatted) {
-      await this.logPayload();
+      this.logPayload();
       return;
     }
 
-    await this.render(true);
+    this.render(true);
     ProgressBarCLI.multiBar?.log(`${this.singleBarFormatted?.getLastOutput()}\n`);
     this.delete();
   }
