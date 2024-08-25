@@ -46,7 +46,7 @@ export default class FileCache {
   async loadFile(cacheFilePath: string): Promise<void> {
     this.cache = await new Cache<CacheValue>({
       filePath: cacheFilePath,
-      fileFlushMillis: 30_000,
+      fileFlushMillis: 60_000,
       saveOnExit: true,
     }).load();
 
