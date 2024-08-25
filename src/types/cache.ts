@@ -3,6 +3,8 @@ import path from 'node:path';
 import util from 'node:util';
 import * as zlib from 'node:zlib';
 
+import { E_CANCELED, Mutex } from 'async-mutex';
+
 import KeyedMutex from '../keyedMutex.js';
 import FsPoly from '../polyfill/fsPoly.js';
 import Timer from '../timer.js';
@@ -34,6 +36,8 @@ export default class Cache<V> {
   readonly filePath?: string;
 
   readonly fileFlushMillis?: number;
+
+  private readonly saveMutex = new Mutex();
 
   constructor(props?: CacheProps) {
     this.filePath = props?.filePath;
@@ -170,37 +174,56 @@ export default class Cache<V> {
    * Save the cache to a file.
    */
   public async save(): Promise<void> {
-    // Clear any existing timeout
-    if (this.saveToFileTimeout !== undefined) {
-      this.saveToFileTimeout.cancel();
-      this.saveToFileTimeout = undefined;
+    try {
+      await this.saveMutex.runExclusive(async () => {
+        // Clear any existing timeout
+        if (this.saveToFileTimeout !== undefined) {
+          this.saveToFileTimeout.cancel();
+          this.saveToFileTimeout = undefined;
+        }
+
+        if (this.filePath === undefined || !this.hasChanged) {
+          return;
+        }
+
+        const keyValuesObject = Object.fromEntries(this.keyValues);
+        const decompressed = JSON.stringify(keyValuesObject);
+        const compressed = await util.promisify(zlib.deflate)(decompressed);
+        const cacheData = {
+          data: compressed.toString(Cache.BUFFER_ENCODING),
+        } satisfies CacheData;
+
+        // Ensure the directory exists
+        const dirPath = path.dirname(this.filePath);
+        if (!await FsPoly.exists(dirPath)) {
+          await FsPoly.mkdir(dirPath, { recursive: true });
+        }
+
+        // Write to a temp file first
+        const tempFile = await FsPoly.mktemp(this.filePath);
+        await FsPoly.writeFile(
+          tempFile,
+          JSON.stringify(cacheData),
+          { encoding: Cache.BUFFER_ENCODING },
+        );
+
+        // Validate the file was written correctly
+        const tempFileCache = await new Cache({ filePath: tempFile }).load();
+        if (tempFileCache.size() !== Object.keys(keyValuesObject).length) {
+          // The written file is bad, don't use it
+          await FsPoly.rm(tempFile, { force: true });
+          return;
+        }
+
+        // Overwrite the real file with the temp file
+        await FsPoly.mv(tempFile, this.filePath);
+        this.hasChanged = false;
+        this.saveMutex.cancel(); // cancel all waiting locks, we just saved
+      });
+    } catch (error) {
+      if (error !== E_CANCELED) {
+        throw error;
+      }
     }
-
-    if (this.filePath === undefined || !this.hasChanged) {
-      return;
-    }
-
-    const keyValuesObject = Object.fromEntries(this.keyValues);
-    const decompressed = JSON.stringify(keyValuesObject);
-    const compressed = await util.promisify(zlib.deflate)(decompressed);
-    const cacheData = {
-      data: compressed.toString(Cache.BUFFER_ENCODING),
-    } satisfies CacheData;
-
-    // Ensure the directory exists
-    const dirPath = path.dirname(this.filePath);
-    if (!await FsPoly.exists(dirPath)) {
-      await FsPoly.mkdir(dirPath, { recursive: true });
-    }
-
-    // Write to a temp file first, then overwrite the old cache file
-    const tempFile = await FsPoly.mktemp(this.filePath);
-    await FsPoly.writeFile(
-      tempFile,
-      JSON.stringify(cacheData),
-      { encoding: Cache.BUFFER_ENCODING },
-    );
-    await FsPoly.mv(tempFile, this.filePath);
-    this.hasChanged = false;
   }
 }
