@@ -5,6 +5,7 @@ import { Semaphore } from 'async-mutex';
 import ProgressBar, { ProgressBarSymbol } from '../console/progressBar.js';
 import ElasticSemaphore from '../elasticSemaphore.js';
 import Defaults from '../globals/defaults.js';
+import KeyedMutex from '../keyedMutex.js';
 import ArrayPoly from '../polyfill/arrayPoly.js';
 import fsPoly from '../polyfill/fsPoly.js';
 import DAT from '../types/dats/dat.js';
@@ -26,6 +27,7 @@ export interface CandidateWriterResults {
  * Copy or move output ROM files, if applicable.
  */
 export default class CandidateWriter extends Module {
+  // The maximum number of candidates that can be written at once
   private static readonly THREAD_SEMAPHORE = new Semaphore(Number.MAX_SAFE_INTEGER);
 
   // WARN(cemmer): there is an undocumented semaphore max value that can be used, the full
@@ -33,6 +35,12 @@ export default class CandidateWriter extends Module {
   private static readonly FILESIZE_SEMAPHORE = new ElasticSemaphore(
     Defaults.MAX_READ_WRITE_CONCURRENT_KILOBYTES,
   );
+
+  // When moving input files, process input file paths exclusively
+  private static readonly MOVE_MUTEX = new KeyedMutex(1000);
+
+  // When moving input files, keep track of files that have been moved
+  private static readonly FILE_PATH_MOVES = new Map<string, string>();
 
   private readonly options: Options;
 
@@ -447,7 +455,11 @@ export default class CandidateWriter extends Module {
     await this.progressBar.setSymbol(ProgressBarSymbol.WRITING);
     let written = false;
     for (let i = 0; i <= this.options.getWriteRetry(); i += 1) {
-      written = await this.writeRawFile(dat, releaseCandidate, inputRomFile, outputFilePath);
+      if (this.options.shouldMove()) {
+        written = await this.moveRawFile(dat, releaseCandidate, inputRomFile, outputFilePath);
+      } else {
+        written = await this.copyRawFile(dat, releaseCandidate, inputRomFile, outputFilePath);
+      }
 
       if (written && !this.options.shouldTest()) {
         // Successfully written, unknown if valid
@@ -480,7 +492,49 @@ export default class CandidateWriter extends Module {
     this.enqueueFileDeletion(inputRomFile);
   }
 
-  private async writeRawFile(
+  private async moveRawFile(
+    dat: DAT,
+    releaseCandidate: ReleaseCandidate,
+    inputRomFile: File,
+    outputFilePath: string,
+  ): Promise<boolean> {
+    // Lock the input file, we can't handle concurrent moves
+    return CandidateWriter.MOVE_MUTEX.runExclusiveForKey(inputRomFile.getFilePath(), async () => {
+      const movedFilePath = CandidateWriter.FILE_PATH_MOVES.get(inputRomFile.getFilePath());
+      if (movedFilePath) {
+        // The file was already moved, we shouldn't move it again
+        return this.copyRawFile(
+          dat,
+          releaseCandidate,
+          inputRomFile.withFilePath(movedFilePath),
+          outputFilePath,
+        );
+      }
+
+      if (inputRomFile instanceof ArchiveEntry
+        || inputRomFile.getFileHeader() !== undefined
+        || inputRomFile.getPatch() !== undefined
+      ) {
+        // The file can't be moved as-is, it needs to get copied
+        return this.copyRawFile(dat, releaseCandidate, inputRomFile, outputFilePath);
+      }
+
+      this.progressBar.logInfo(`${dat.getNameShort()}: ${releaseCandidate.getName()}: moving file '${inputRomFile.toString()}' (${fsPoly.sizeReadable(inputRomFile.getSize())}) → '${outputFilePath}'`);
+
+      try {
+        await CandidateWriter.ensureOutputDirExists(outputFilePath);
+
+        await fsPoly.mv(inputRomFile.getFilePath(), outputFilePath);
+        CandidateWriter.FILE_PATH_MOVES.set(inputRomFile.getFilePath(), outputFilePath);
+        return true;
+      } catch (error) {
+        this.progressBar.logError(`${dat.getNameShort()}: ${releaseCandidate.getName()}: failed to move file '${inputRomFile.toString()}' → '${outputFilePath}': ${error}`);
+        return false;
+      }
+    });
+  }
+
+  private async copyRawFile(
     dat: DAT,
     releaseCandidate: ReleaseCandidate,
     inputRomFile: File,
@@ -496,7 +550,7 @@ export default class CandidateWriter extends Module {
       await fsPoly.mv(tempRawFile, outputFilePath);
       return true;
     } catch (error) {
-      this.progressBar.logError(`${dat.getNameShort()}: ${releaseCandidate.getName()}: ${outputFilePath}: failed to copy from ${inputRomFile.toString()}: ${error}`);
+      this.progressBar.logError(`${dat.getNameShort()}: ${releaseCandidate.getName()}: failed to ${inputRomFile instanceof ArchiveEntry ? 'extract' : 'copy'} file '${inputRomFile.toString()}' → '${outputFilePath}': ${error}`);
       return false;
     }
   }

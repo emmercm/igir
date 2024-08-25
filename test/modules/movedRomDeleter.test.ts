@@ -1,5 +1,6 @@
 import path from 'node:path';
 
+import Temp from '../../src/globals/temp.js';
 import CandidateGenerator from '../../src/modules/candidateGenerator.js';
 import MovedROMDeleter from '../../src/modules/movedRomDeleter.js';
 import ROMIndexer from '../../src/modules/romIndexer.js';
@@ -127,49 +128,54 @@ describe('should delete archives', () => {
         'Zero 4 Champ II (Japan).zip',
       ]],
     ]))('%s', async (games, expectedDeletedFilePaths) => {
-      const inputPath = 'input';
-      const options = new Options({
-        commands: ['move', ...(command ? [command] : [])],
-        input: [inputPath],
-        output: 'output',
-      });
+      const inputPath = await fsPoly.mkdtemp(path.join(Temp.getTempDir(), 'input'));
+      try {
+        const options = new Options({
+          commands: ['move', ...(command ? [command] : [])],
+          input: [inputPath],
+          output: 'output',
+        });
 
-      const dat = new LogiqxDAT(new Header(), games);
+        const dat = new LogiqxDAT(new Header(), games);
 
-      const rawRomFiles = (await Promise.all(dat.getParents()
-        .flatMap((parent) => parent.getGames())
-        .map(async (game): Promise<File[]> => {
-          // A path that should not exist
-          const zip = new Zip(path.join(inputPath, `${game.getName()}.zip`));
-          return Promise.all(game.getRoms().map(async (rom) => rom.toArchiveEntry(zip)));
-        })))
-        .flat();
+        const rawRomFiles = (await Promise.all(dat.getParents()
+          .flatMap((parent) => parent.getGames())
+          .map(async (game): Promise<File[]> => {
+            const zipPath = path.join(inputPath, `${game.getName()}.zip`);
+            await fsPoly.touch(zipPath);
+            const zip = new Zip(zipPath);
+            return Promise.all(game.getRoms().map(async (rom) => rom.toArchiveEntry(zip)));
+          })))
+          .flat();
 
-      const indexedRomFiles = await new ROMIndexer(options, new ProgressBarFake())
-        .index(rawRomFiles);
-      const parentsToCandidates = await new CandidateGenerator(options, new ProgressBarFake())
-        .generate(dat, indexedRomFiles);
+        const indexedRomFiles = await new ROMIndexer(options, new ProgressBarFake())
+          .index(rawRomFiles);
+        const parentsToCandidates = await new CandidateGenerator(options, new ProgressBarFake())
+          .generate(dat, indexedRomFiles);
 
-      const inputRoms = rawRomFiles;
-      const movedRoms = [...parentsToCandidates.values()]
-        .flat()
-        .flatMap((releaseCandidate) => releaseCandidate.getRomsWithFiles())
-        .map((romWithFiles) => romWithFiles.getInputFile());
+        const inputRoms = rawRomFiles;
+        const movedRoms = [...parentsToCandidates.values()]
+          .flat()
+          .flatMap((releaseCandidate) => releaseCandidate.getRomsWithFiles())
+          .map((romWithFiles) => romWithFiles.getInputFile());
 
-      const writtenRoms = [...parentsToCandidates.values()]
-        .flat()
-        .flatMap((releaseCanddiate) => releaseCanddiate.getRomsWithFiles())
-        .map((romWithFiles) => romWithFiles.getOutputFile());
-      const datsToWrittenRoms = new Map([[dat, writtenRoms]]);
+        const writtenRoms = [...parentsToCandidates.values()]
+          .flat()
+          .flatMap((releaseCanddiate) => releaseCanddiate.getRomsWithFiles())
+          .map((romWithFiles) => romWithFiles.getOutputFile());
+        const datsToWrittenRoms = new Map([[dat, writtenRoms]]);
 
-      const deletedFilePaths = (
-        await new MovedROMDeleter(new ProgressBarFake())
-          .delete(inputRoms, movedRoms, datsToWrittenRoms)
-      )
-        .map((filePath) => filePath.replace(inputPath + path.sep, ''))
-        .sort();
+        const deletedFilePaths = (
+          await new MovedROMDeleter(new ProgressBarFake())
+            .delete(inputRoms, movedRoms, datsToWrittenRoms)
+        )
+          .map((filePath) => filePath.replace(inputPath + path.sep, ''))
+          .sort();
 
-      expect(deletedFilePaths).toEqual(expectedDeletedFilePaths);
+        expect(deletedFilePaths).toEqual(expectedDeletedFilePaths);
+      } finally {
+        await fsPoly.rm(inputPath, { recursive: true });
+      }
     });
   });
 });

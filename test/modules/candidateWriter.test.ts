@@ -1,3 +1,5 @@
+import 'jest-extended';
+
 import fs, { Stats } from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
@@ -507,32 +509,32 @@ describe('zip', () => {
     [
       '**/!(header*)/*',
       ['0F09A40.zip', '2048.zip', '3708F2C.zip', '4096.zip', '612644F.zip', '65D1206.zip', '92C85C9.zip', 'C01173E.zip', 'CD-ROM.zip', 'GD-ROM.zip', 'KDULVQN.zip', 'UMD.zip', 'before.zip', 'best.zip', 'empty.zip', 'five.zip', 'fizzbuzz.zip', 'foobar.zip', 'four.zip', 'fourfive.zip', 'loremipsum.zip', 'one.zip', 'onetwothree.zip', 'three.zip', 'two.zip', 'unknown.zip'],
-      ['patchable/0F09A40.rom', 'patchable/3708F2C.rom', 'patchable/612644F.rom', 'patchable/65D1206.rom', 'patchable/92C85C9.rom', 'patchable/C01173E.rom', 'patchable/KDULVQN.rom', 'patchable/before.rom', 'patchable/best.gz', 'raw/empty.rom', 'raw/fizzbuzz.nes', 'raw/foobar.lnx', 'raw/loremipsum.rom', 'raw/one.rom', 'raw/three.rom', 'raw/two.rom', 'raw/unknown.rom'],
+      ['zip/fourfive.zip'],
     ],
     [
       '7z/*',
       ['fizzbuzz.zip', 'foobar.zip', 'loremipsum.zip', 'onetwothree.zip', 'unknown.zip'],
-      ['7z/fizzbuzz.7z', '7z/foobar.7z', '7z/loremipsum.7z', '7z/onetwothree.7z', '7z/unknown.7z'],
+      [],
     ],
     [
       'rar/*',
       ['fizzbuzz.zip', 'foobar.zip', 'loremipsum.zip', 'onetwothree.zip', 'unknown.zip'],
-      ['rar/fizzbuzz.rar', 'rar/foobar.rar', 'rar/loremipsum.rar', 'rar/onetwothree.rar', 'rar/unknown.rar'],
+      [],
     ],
     [
       'raw/*',
       ['empty.zip', 'five.zip', 'fizzbuzz.zip', 'foobar.zip', 'four.zip', 'loremipsum.zip', 'one.zip', 'three.zip', 'two.zip', 'unknown.zip'],
-      ['raw/empty.rom', 'raw/fizzbuzz.nes', 'raw/foobar.lnx', 'raw/loremipsum.rom', 'raw/one.rom', 'raw/three.rom', 'raw/two.rom', 'raw/unknown.rom'],
+      [],
     ],
     [
       'tar/*',
       ['fizzbuzz.zip', 'foobar.zip', 'loremipsum.zip', 'onetwothree.zip', 'unknown.zip'],
-      ['tar/fizzbuzz.tar.gz', 'tar/foobar.tar.gz', 'tar/loremipsum.tar.gz', 'tar/onetwothree.tar.gz', 'tar/unknown.tar.gz'],
+      [],
     ],
     [
       'zip/*',
       ['fizzbuzz.zip', 'foobar.zip', 'fourfive.zip', 'loremipsum.zip', 'onetwothree.zip', 'unknown.zip'],
-      ['zip/fizzbuzz.zip', 'zip/foobar.zip', 'zip/loremipsum.zip', 'zip/onetwothree.zip', 'zip/unknown.zip'],
+      ['zip/fizzbuzz.zip', 'zip/foobar.zip', 'zip/fourfive.zip', 'zip/loremipsum.zip', 'zip/unknown.zip'],
     ],
   ])('should move, zip, and test: %s', async (inputGlob, expectedOutputPaths, expectedDeletedInputPaths) => {
     await copyFixturesToTemp(async (inputTemp, outputTemp) => {
@@ -563,12 +565,10 @@ describe('zip', () => {
           // File wasn't deleted, ensure it wasn't touched
           expect(statsAfter).toEqual(statsBefore);
         });
-      romFilesBefore
+      expect(romFilesBefore
         .filter(([inputFile]) => !romFilesAfter.has(inputFile))
-        .forEach(([inputFile]) => {
-          // File was deleted, ensure it was expected
-          expect(expectedDeletedInputPaths).toContain(inputFile.replace(/[\\/]/g, '/'));
-        });
+        .map(([inputFile]) => inputFile.replace(/[\\/]/g, '/')))
+        .toIncludeSameMembers(expectedDeletedInputPaths);
     });
   });
 
@@ -967,32 +967,32 @@ describe('extract', () => {
         path.join('GD-ROM', 'GD-ROM.gdi'), path.join('GD-ROM', 'track01.bin'), path.join('GD-ROM', 'track02.raw'), path.join('GD-ROM', 'track03.bin'), path.join('GD-ROM', 'track04.bin'),
         'KDULVQN.rom', 'UMD.iso', 'before.rom', 'best.rom', 'empty.rom', 'five.rom', 'fizzbuzz.nes', 'foobar.lnx', 'four.rom', path.join('fourfive', 'five.rom'), path.join('fourfive', 'four.rom'), 'loremipsum.rom', 'one.rom', path.join('onetwothree', 'one.rom'), path.join('onetwothree', 'three.rom'), path.join('onetwothree', 'two.rom'), 'three.rom',
         'two.rom', 'unknown.rom'],
-      ['patchable/0F09A40.rom', 'patchable/3708F2C.rom', 'patchable/612644F.rom', 'patchable/65D1206.rom', 'patchable/92C85C9.rom', 'patchable/C01173E.rom', 'patchable/KDULVQN.rom', 'patchable/before.rom', 'patchable/best.gz', 'raw/empty.rom', 'raw/fizzbuzz.nes', 'raw/foobar.lnx', 'raw/loremipsum.rom', 'raw/one.rom', 'raw/three.rom', 'raw/two.rom', 'raw/unknown.rom'],
+      ['discs/CD-ROM (Track 1).bin', 'discs/CD-ROM (Track 2).bin', 'discs/CD-ROM (Track 3).bin', 'discs/CD-ROM.cue', 'discs/GD-ROM.gdi', 'discs/UMD.iso', 'discs/track01.bin', 'discs/track02.raw', 'discs/track03.bin', 'discs/track04.bin', 'patchable/0F09A40.rom', 'patchable/3708F2C.rom', 'patchable/612644F.rom', 'patchable/65D1206.rom', 'patchable/92C85C9.rom', 'patchable/C01173E.rom', 'patchable/KDULVQN.rom', 'patchable/before.rom', 'raw/empty.rom', 'raw/five.rom', 'raw/fizzbuzz.nes', 'raw/foobar.lnx', 'raw/four.rom', 'raw/loremipsum.rom', 'raw/one.rom', 'raw/three.rom', 'raw/two.rom', 'raw/unknown.rom'],
     ],
     [
       '7z/*',
       ['fizzbuzz.nes', 'foobar.lnx', 'loremipsum.rom', path.join('onetwothree', 'one.rom'), path.join('onetwothree', 'three.rom'), path.join('onetwothree', 'two.rom'), 'unknown.rom'],
-      ['7z/fizzbuzz.7z', '7z/foobar.7z', '7z/loremipsum.7z', '7z/onetwothree.7z', '7z/unknown.7z'],
+      [],
     ],
     [
       'rar/*',
       ['fizzbuzz.nes', 'foobar.lnx', 'loremipsum.rom', path.join('onetwothree', 'one.rom'), path.join('onetwothree', 'three.rom'), path.join('onetwothree', 'two.rom'), 'unknown.rom'],
-      ['rar/fizzbuzz.rar', 'rar/foobar.rar', 'rar/loremipsum.rar', 'rar/onetwothree.rar', 'rar/unknown.rar'],
+      [],
     ],
     [
       'raw/*',
       ['empty.rom', 'five.rom', 'fizzbuzz.nes', 'foobar.lnx', 'four.rom', 'loremipsum.rom', 'one.rom', 'three.rom', 'two.rom', 'unknown.rom'],
-      ['raw/empty.rom', 'raw/fizzbuzz.nes', 'raw/foobar.lnx', 'raw/loremipsum.rom', 'raw/one.rom', 'raw/three.rom', 'raw/two.rom', 'raw/unknown.rom'],
+      ['raw/empty.rom', 'raw/five.rom', 'raw/fizzbuzz.nes', 'raw/foobar.lnx', 'raw/four.rom', 'raw/loremipsum.rom', 'raw/one.rom', 'raw/three.rom', 'raw/two.rom', 'raw/unknown.rom'],
     ],
     [
       'tar/*',
       ['fizzbuzz.nes', 'foobar.lnx', 'loremipsum.rom', path.join('onetwothree', 'one.rom'), path.join('onetwothree', 'three.rom'), path.join('onetwothree', 'two.rom'), 'unknown.rom'],
-      ['tar/fizzbuzz.tar.gz', 'tar/foobar.tar.gz', 'tar/loremipsum.tar.gz', 'tar/onetwothree.tar.gz', 'tar/unknown.tar.gz'],
+      [],
     ],
     [
       'zip/*',
       ['fizzbuzz.nes', 'foobar.lnx', path.join('fourfive', 'five.rom'), path.join('fourfive', 'four.rom'), 'loremipsum.rom', path.join('onetwothree', 'one.rom'), path.join('onetwothree', 'three.rom'), path.join('onetwothree', 'two.rom'), 'unknown.rom'],
-      ['zip/fizzbuzz.zip', 'zip/foobar.zip', 'zip/loremipsum.zip', 'zip/onetwothree.zip', 'zip/unknown.zip'],
+      [],
     ],
   ])('should move, extract, and test: %s', async (inputGlob, expectedOutputPaths, expectedDeletedInputPaths) => {
     await copyFixturesToTemp(async (inputTemp, outputTemp) => {
@@ -1026,12 +1026,10 @@ describe('extract', () => {
           // File wasn't deleted, ensure it wasn't touched
           expect(statsAfter).toEqual(statsBefore);
         });
-      romFilesBefore
+      expect(romFilesBefore
         .filter(([inputFile]) => !romFilesAfter.has(inputFile))
-        .forEach(([inputFile]) => {
-          // File was deleted, ensure it was expected
-          expect(expectedDeletedInputPaths).toContain(inputFile.replace(/[\\/]/g, '/'));
-        });
+        .map(([inputFile]) => inputFile.replace(/[\\/]/g, '/')))
+        .toIncludeSameMembers(expectedDeletedInputPaths);
     });
   });
 });
@@ -1332,7 +1330,7 @@ describe('raw', () => {
         'GD-ROM.chd',
         'KDULVQN.rom', 'UMD.iso', 'before.rom', 'best.gz', 'empty.rom', 'five.rom', 'fizzbuzz.nes', 'foobar.lnx', 'four.rom', 'fourfive.zip', 'loremipsum.rom', 'one.rom', 'onetwothree.zip', 'three.rom',
         'two.rom', 'unknown.rom'],
-      ['patchable/0F09A40.rom', 'patchable/3708F2C.rom', 'patchable/612644F.rom', 'patchable/65D1206.rom', 'patchable/92C85C9.rom', 'patchable/C01173E.rom', 'patchable/KDULVQN.rom', 'patchable/before.rom', 'patchable/best.gz', 'raw/empty.rom', 'raw/fizzbuzz.nes', 'raw/foobar.lnx', 'raw/loremipsum.rom', 'raw/one.rom', 'raw/three.rom', 'raw/two.rom', 'raw/unknown.rom'],
+      ['chd/2048.chd', 'chd/4096.chd', 'chd/CD-ROM.chd', 'chd/GD-ROM.chd', 'discs/UMD.iso', 'patchable/0F09A40.rom', 'patchable/3708F2C.rom', 'patchable/612644F.rom', 'patchable/65D1206.rom', 'patchable/92C85C9.rom', 'patchable/C01173E.rom', 'patchable/KDULVQN.rom', 'patchable/before.rom', 'patchable/best.gz', 'raw/empty.rom', 'raw/five.rom', 'raw/fizzbuzz.nes', 'raw/foobar.lnx', 'raw/four.rom', 'raw/loremipsum.rom', 'raw/one.rom', 'raw/three.rom', 'raw/two.rom', 'raw/unknown.rom', 'zip/fourfive.zip', 'zip/onetwothree.zip'],
     ],
     [
       '7z/*',
@@ -1347,7 +1345,7 @@ describe('raw', () => {
     [
       'raw/*',
       ['empty.rom', 'five.rom', 'fizzbuzz.nes', 'foobar.lnx', 'four.rom', 'loremipsum.rom', 'one.rom', 'three.rom', 'two.rom', 'unknown.rom'],
-      ['raw/empty.rom', 'raw/fizzbuzz.nes', 'raw/foobar.lnx', 'raw/loremipsum.rom', 'raw/one.rom', 'raw/three.rom', 'raw/two.rom', 'raw/unknown.rom'],
+      ['raw/empty.rom', 'raw/five.rom', 'raw/fizzbuzz.nes', 'raw/foobar.lnx', 'raw/four.rom', 'raw/loremipsum.rom', 'raw/one.rom', 'raw/three.rom', 'raw/two.rom', 'raw/unknown.rom'],
     ],
     [
       'tar/*',
@@ -1357,7 +1355,7 @@ describe('raw', () => {
     [
       'zip/*',
       ['fizzbuzz.zip', 'foobar.zip', 'fourfive.zip', 'loremipsum.zip', 'onetwothree.zip', 'unknown.zip'],
-      ['zip/fizzbuzz.zip', 'zip/foobar.zip', 'zip/loremipsum.zip', 'zip/onetwothree.zip', 'zip/unknown.zip'],
+      ['zip/fizzbuzz.zip', 'zip/foobar.zip', 'zip/fourfive.zip', 'zip/loremipsum.zip', 'zip/onetwothree.zip', 'zip/unknown.zip'],
     ],
   ])('should move raw and test: %s', async (inputGlob, expectedOutputPaths, expectedDeletedInputPaths) => {
     await copyFixturesToTemp(async (inputTemp, outputTemp) => {
@@ -1388,12 +1386,10 @@ describe('raw', () => {
           // File wasn't deleted, ensure it wasn't touched
           expect(statsAfter).toEqual(statsBefore);
         });
-      romFilesBefore
+      expect(romFilesBefore
         .filter(([inputFile]) => !romFilesAfter.has(inputFile))
-        .forEach(([inputFile]) => {
-          // File was deleted, ensure it was expected
-          expect(expectedDeletedInputPaths).toContain(inputFile.replace(/[\\/]/g, '/'));
-        });
+        .map(([inputFile]) => inputFile.replace(/[\\/]/g, '/')))
+        .toIncludeSameMembers(expectedDeletedInputPaths);
     });
   });
 });
