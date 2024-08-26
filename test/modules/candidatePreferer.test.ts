@@ -5,7 +5,7 @@ import LogiqxDAT from '../../src/types/dats/logiqx/logiqxDat.js';
 import Parent from '../../src/types/dats/parent.js';
 import Release from '../../src/types/dats/release.js';
 import ROM from '../../src/types/dats/rom.js';
-import Options, { OptionsProps } from '../../src/types/options.js';
+import Options, { OptionsProps, PreferRevision } from '../../src/types/options.js';
 import ReleaseCandidate from '../../src/types/releaseCandidate.js';
 import ROMWithFiles from '../../src/types/romWithFiles.js';
 import ProgressBarFake from '../console/progressBarFake.js';
@@ -423,26 +423,10 @@ describe('sort', () => {
   describe('prefer revision newer', () => {
     test.each([
       [['one'], 'one'],
-      [['two', 'two (Rev 1)'], 'two'],
-      [['three', 'three (Rev 1)', 'three (Rev2)'], 'three'],
-      [['four (Rev 1.1)', 'four (Rev 1.2)'], 'four (Rev 1.1)'],
-      [['five (Rev 13.37)'], 'five (Rev 13.37)'],
-      [['six (Rev B)', 'six (Rev A)', 'six (Rev C)'], 'six (Rev B)'],
-      [['seven (RE2)', 'seven (RE3)', 'seven'], 'seven (RE2)'],
-    ])('should return the first candidate when option is false: %s', async (names, expectedName) => {
-      expectPreferredCandidates(
-        { preferRevisionNewer: false, single: true },
-        [await buildReleaseCandidatesWithRegionLanguage(names)],
-        [expectedName],
-      );
-    });
-
-    test.each([
-      [['one'], 'one'],
       [['two', 'two two'], 'two'],
     ])('should return the first candidate when none matching: %s', async (names, expectedName) => {
       expectPreferredCandidates(
-        { preferRevisionNewer: true, single: true },
+        { preferRevision: PreferRevision[PreferRevision.NEWER].toLowerCase(), single: true },
         [await buildReleaseCandidatesWithRegionLanguage(names)],
         [expectedName],
       );
@@ -458,7 +442,7 @@ describe('sort', () => {
       [['seven (RE2)', 'seven (RE3)', 'seven'], 'seven (RE3)'],
     ])('should return the first matching candidate when some matching: %s', async (names, expectedName) => {
       expectPreferredCandidates(
-        { preferRevisionNewer: true, single: true },
+        { preferRevision: PreferRevision[PreferRevision.NEWER].toLowerCase(), single: true },
         [await buildReleaseCandidatesWithRegionLanguage(names)],
         [expectedName],
       );
@@ -474,7 +458,7 @@ describe('sort', () => {
       ], 'ChuChu Rocket! v1.014 (2000)(Sega)(PAL)(M5)[!]'],
     ])('should return the first candidate when all matching: %s', async (names, expectedName) => {
       expectPreferredCandidates(
-        { preferRevisionNewer: true, single: true },
+        { preferRevision: PreferRevision[PreferRevision.NEWER].toLowerCase(), single: true },
         [await buildReleaseCandidatesWithRegionLanguage(names)],
         [expectedName],
       );
@@ -484,26 +468,10 @@ describe('sort', () => {
   describe('prefer revision older', () => {
     test.each([
       [['one'], 'one'],
-      [['two', 'two (Rev 1)'], 'two'],
-      [['three', 'three (Rev 1)', 'three (Rev2)'], 'three'],
-      [['four (Rev 1.1)', 'four (Rev 1.2)'], 'four (Rev 1.1)'],
-      [['five (Rev 13.37)'], 'five (Rev 13.37)'],
-      [['six (Rev B)', 'six (Rev A)', 'six (Rev C)'], 'six (Rev B)'],
-      [['seven (RE2)', 'seven (RE3)', 'seven'], 'seven (RE2)'],
-    ])('should return the first candidate when option is false: %s', async (names, expectedName) => {
-      expectPreferredCandidates(
-        { preferRevisionOlder: false, single: true },
-        [await buildReleaseCandidatesWithRegionLanguage(names)],
-        [expectedName],
-      );
-    });
-
-    test.each([
-      [['one'], 'one'],
       [['two', 'two two'], 'two'],
     ])('should return the first candidate when none matching: %s', async (names, expectedName) => {
       expectPreferredCandidates(
-        { preferRevisionOlder: true, single: true },
+        { preferRevision: PreferRevision[PreferRevision.OLDER].toLowerCase(), single: true },
         [await buildReleaseCandidatesWithRegionLanguage(names)],
         [expectedName],
       );
@@ -519,7 +487,7 @@ describe('sort', () => {
       [['seven (RE2)', 'seven (RE3)', 'seven'], 'seven'],
     ])('should return the first matching candidate when some matching: %s', async (names, expectedName) => {
       expectPreferredCandidates(
-        { preferRevisionOlder: true, single: true },
+        { preferRevision: PreferRevision[PreferRevision.OLDER].toLowerCase(), single: true },
         [await buildReleaseCandidatesWithRegionLanguage(names)],
         [expectedName],
       );
@@ -530,7 +498,7 @@ describe('sort', () => {
       [['two (Rev 13.37)'], 'two (Rev 13.37)'],
     ])('should return the first candidate when all matching: %s', async (names, expectedName) => {
       expectPreferredCandidates(
-        { preferRevisionOlder: true, single: true },
+        { preferRevision: PreferRevision[PreferRevision.OLDER].toLowerCase(), single: true },
         [await buildReleaseCandidatesWithRegionLanguage(names)],
         [expectedName],
       );

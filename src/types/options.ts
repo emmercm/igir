@@ -57,6 +57,11 @@ export enum FixExtension {
   ALWAYS = 3,
 }
 
+export enum PreferRevision {
+  OLDER = 1,
+  NEWER = 2,
+}
+
 export interface OptionsProps {
   readonly commands?: string[],
 
@@ -149,8 +154,7 @@ export interface OptionsProps {
   readonly preferGood?: boolean,
   readonly preferLanguage?: string[],
   readonly preferRegion?: string[],
-  readonly preferRevisionNewer?: boolean,
-  readonly preferRevisionOlder?: boolean,
+  readonly preferRevision?: string,
   readonly preferRetail?: boolean,
   readonly preferParent?: boolean,
 
@@ -332,9 +336,7 @@ export default class Options implements OptionsProps {
 
   readonly preferRegion: string[];
 
-  readonly preferRevisionNewer: boolean;
-
-  readonly preferRevisionOlder: boolean;
+  readonly preferRevision?: string;
 
   readonly preferRetail: boolean;
 
@@ -453,8 +455,7 @@ export default class Options implements OptionsProps {
     this.preferGood = options?.preferGood ?? false;
     this.preferLanguage = options?.preferLanguage ?? [];
     this.preferRegion = options?.preferRegion ?? [];
-    this.preferRevisionNewer = options?.preferRevisionNewer ?? false;
-    this.preferRevisionOlder = options?.preferRevisionOlder ?? false;
+    this.preferRevision = options?.preferRevision;
     this.preferRetail = options?.preferRetail ?? false;
     this.preferParent = options?.preferParent ?? false;
 
@@ -1198,12 +1199,13 @@ export default class Options implements OptionsProps {
     return Options.filterUniqueUpper(this.preferRegion);
   }
 
-  getPreferRevisionNewer(): boolean {
-    return this.preferRevisionNewer;
-  }
-
-  getPreferRevisionOlder(): boolean {
-    return this.preferRevisionOlder;
+  getPreferRevision(): PreferRevision | undefined {
+    const preferRevision = Object.keys(PreferRevision)
+      .find((mode) => mode.toLowerCase() === this.preferRevision?.toLowerCase());
+    if (!preferRevision) {
+      return undefined;
+    }
+    return PreferRevision[preferRevision as keyof typeof PreferRevision];
   }
 
   getPreferRetail(): boolean {
