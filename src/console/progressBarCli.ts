@@ -25,7 +25,7 @@ export default class ProgressBarCLI extends ProgressBar {
 
   private static progressBars: ProgressBarCLI[] = [];
 
-  private static lastRedraw: [number, number] = [0, 0];
+  private static lastRedraw: number = 0;
 
   private static logQueue: string[] = [];
 
@@ -142,7 +142,7 @@ export default class ProgressBarCLI extends ProgressBar {
       }
 
       ProgressBarCLI.multiBar?.update();
-      ProgressBarCLI.lastRedraw = process.hrtime();
+      ProgressBarCLI.lastRedraw = TimePoly.hrtimeMillis();
       ProgressBarCLI.RENDER_MUTEX.cancel(); // cancel all waiting locks, we just redrew
     };
 
@@ -152,8 +152,7 @@ export default class ProgressBarCLI extends ProgressBar {
     }
 
     // Limit the frequency of redrawing
-    const [elapsedSec, elapsedNano] = process.hrtime(ProgressBarCLI.lastRedraw);
-    const elapsedMs = (elapsedSec * 1_000_000_000 + elapsedNano) / 1_000_000;
+    const elapsedMs = TimePoly.hrtimeMillis(ProgressBarCLI.lastRedraw);
     if (elapsedMs < (1000 / ProgressBarCLI.FPS)) {
       return;
     }
