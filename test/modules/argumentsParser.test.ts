@@ -12,7 +12,7 @@ import {
   FixExtension,
   GameSubdirMode,
   InputChecksumArchivesMode,
-  MergeMode,
+  MergeMode, PreferRevision,
 } from '../../src/types/options.js';
 
 const dummyRequiredArgs = ['--input', os.devNull, '--output', os.devNull];
@@ -199,8 +199,7 @@ describe('options', () => {
     expect(options.getPreferGood()).toEqual(false);
     expect(options.getPreferLanguages()).toHaveLength(0);
     expect(options.getPreferRegions()).toHaveLength(0);
-    expect(options.getPreferRevisionNewer()).toEqual(false);
-    expect(options.getPreferRevisionOlder()).toEqual(false);
+    expect(options.getPreferRevision()).toBeUndefined();
     expect(options.getPreferRetail()).toEqual(false);
     expect(options.getPreferParent()).toEqual(false);
 
@@ -753,26 +752,13 @@ describe('options', () => {
     expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--single', '--prefer-region', 'USA,usa']).getPreferRegions()).toEqual(['USA']);
   });
 
-  it('should parse "prefer-revision-newer"', () => {
-    expect(() => argumentsParser.parse([...dummyCommandAndRequiredArgs, '--prefer-revision-newer', '--prefer-revision-older', '--single'])).toThrow(/mutually exclusive/i);
-    expect(() => argumentsParser.parse([...dummyCommandAndRequiredArgs, '--prefer-revision-newer'])).toThrow(/dependent|implication/i);
-    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--prefer-revision-newer', '--single']).getPreferRevisionNewer()).toEqual(true);
-    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--prefer-revision-newer', 'true', '--single']).getPreferRevisionNewer()).toEqual(true);
-    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--prefer-revision-newer', 'false', '--single']).getPreferRevisionNewer()).toEqual(false);
-    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--prefer-revision-newer', '--prefer-revision-newer', '--single']).getPreferRevisionNewer()).toEqual(true);
-    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--prefer-revision-newer', 'false', '--prefer-revision-newer', 'true', '--single']).getPreferRevisionNewer()).toEqual(true);
-    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--prefer-revision-newer', 'true', '--prefer-revision-newer', 'false', '--single']).getPreferRevisionNewer()).toEqual(false);
-  });
-
-  it('should parse "prefer-revision-older"', () => {
-    expect(() => argumentsParser.parse([...dummyCommandAndRequiredArgs, '--prefer-revision-older', '--prefer-revision-newer', '--single'])).toThrow(/mutually exclusive/i);
-    expect(() => argumentsParser.parse([...dummyCommandAndRequiredArgs, '--prefer-revision-older'])).toThrow(/dependent|implication/i);
-    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--prefer-revision-older', '--single']).getPreferRevisionOlder()).toEqual(true);
-    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--prefer-revision-older', 'true', '--single']).getPreferRevisionOlder()).toEqual(true);
-    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--prefer-revision-older', 'false', '--single']).getPreferRevisionOlder()).toEqual(false);
-    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--prefer-revision-older', '--prefer-revision-older', '--single']).getPreferRevisionOlder()).toEqual(true);
-    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--prefer-revision-older', 'false', '--prefer-revision-older', 'true', '--single']).getPreferRevisionOlder()).toEqual(true);
-    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--prefer-revision-older', 'true', '--prefer-revision-older', 'false', '--single']).getPreferRevisionOlder()).toEqual(false);
+  it('should parse "prefer-revision"', () => {
+    expect(() => argumentsParser.parse([...dummyCommandAndRequiredArgs, '--prefer-revision', 'newer'])).toThrow(/dependent|implication/i);
+    expect(() => argumentsParser.parse([...dummyCommandAndRequiredArgs, '--prefer-revision', 'foobar']).getMergeRoms()).toThrow(/invalid values/i);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--single', '--prefer-revision', 'older']).getPreferRevision()).toEqual(PreferRevision.OLDER);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--single', '--prefer-revision', 'older', '--prefer-revision', 'newer']).getPreferRevision()).toEqual(PreferRevision.NEWER);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--single', '--prefer-revision', 'newer']).getPreferRevision()).toEqual(PreferRevision.NEWER);
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--single', '--prefer-revision', 'newer', '--prefer-revision', 'older']).getPreferRevision()).toEqual(PreferRevision.OLDER);
   });
 
   it('should parse "prefer-retail"', () => {

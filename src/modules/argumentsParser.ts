@@ -15,7 +15,7 @@ import Options, {
   FixExtension,
   GameSubdirMode,
   InputChecksumArchivesMode,
-  MergeMode,
+  MergeMode, PreferRevision,
 } from '../types/options.js';
 import PatchFactory from '../types/patches/patchFactory.js';
 
@@ -730,18 +730,14 @@ export default class ArgumentsParser {
         }
         return true;
       })
-      .option('prefer-revision-newer', {
+      .option('prefer-revision', {
         group: groupRomPriority,
-        description: 'Prefer newer ROM revisions over older',
-        type: 'boolean',
-        conflicts: ['prefer-revision-older'],
-        implies: 'single',
-      })
-      .option('prefer-revision-older', {
-        group: groupRomPriority,
-        description: 'Prefer older ROM revisions over newer',
-        type: 'boolean',
-        conflicts: ['prefer-revision-newer'],
+        description: 'Prefer older or newer revisions, versions, or ring codes',
+        choices: Object.keys(PreferRevision)
+          .filter((mode) => Number.isNaN(Number(mode)))
+          .map((mode) => mode.toLowerCase()),
+        coerce: ArgumentsParser.getLastValue, // don't allow string[] values
+        requiresArg: true,
         implies: 'single',
       })
       .option('prefer-retail', {

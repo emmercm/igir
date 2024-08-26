@@ -475,10 +475,10 @@ For example, to prefer games from: USA (highest priority), "world," and then Eur
 ### Prefer revision
 
 ```text
---prefer-revision-newer, --prefer-revision-older
+--prefer-revision <older|newer>
 ```
 
-Prefer newer or older revisions of a game.
+Prefer newer or older revisions, versions, or ring codes of a game.
 
 Revisions can be numeric:
 
@@ -494,6 +494,21 @@ or alphabetical:
 MSR - Metropolis Street Racer (Europe) (En,Fr,De,Es)
 MSR - Metropolis Street Racer (Europe) (En,Fr,De,Es) (Rev A)
 MSR - Metropolis Street Racer (Europe) (En,Fr,De,Es) (Rev B)
+```
+
+Versions can be semantic:
+
+```text
+F1 World Grand Prix for Dreamcast v1.011 (1999)(Video System)(JP)(en)[!]
+F1 World Grand Prix for Dreamcast v1.000 (1999)(Video System)(PAL)(M4)[!]
+F1 World Grand Prix v1.006 (2000)(Video System)(US)(M4)[!]
+```
+
+Ring codes can be numeric:
+
+```text
+Sonic CD (USA) (RE125)
+Sonic CD (USA) (RE125) (Alt)
 ```
 
 ### Prefer retail

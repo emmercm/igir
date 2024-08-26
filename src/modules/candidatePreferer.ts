@@ -2,7 +2,7 @@ import ProgressBar, { ProgressBarSymbol } from '../console/progressBar.js';
 import fsPoly from '../polyfill/fsPoly.js';
 import DAT from '../types/dats/dat.js';
 import Parent from '../types/dats/parent.js';
-import Options from '../types/options.js';
+import Options, { PreferRevision } from '../types/options.js';
 import ReleaseCandidate from '../types/releaseCandidate.js';
 import Module from './module.js';
 
@@ -188,9 +188,9 @@ export default class CandidatePreferer extends Module {
   }
 
   private preferRevisionSort(a: ReleaseCandidate, b: ReleaseCandidate): number {
-    if (this.options.getPreferRevisionNewer()) {
+    if (this.options.getPreferRevision() === PreferRevision.NEWER) {
       return b.getGame().getRevision() - a.getGame().getRevision();
-    } if (this.options.getPreferRevisionOlder()) {
+    } if (this.options.getPreferRevision() === PreferRevision.OLDER) {
       return a.getGame().getRevision() - b.getGame().getRevision();
     }
     return 0;
