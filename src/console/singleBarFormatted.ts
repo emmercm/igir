@@ -6,6 +6,7 @@ import { linearRegression, linearRegressionLine } from 'simple-statistics';
 import stripAnsi from 'strip-ansi';
 
 import ConsolePoly from '../polyfill/consolePoly.js';
+import TimePoly from '../polyfill/timePoly.js';
 import ProgressBarPayload from './progressBarPayload.js';
 
 /**
@@ -28,7 +29,7 @@ export default class SingleBarFormatted {
 
   private valueTimeBuffer: number[][] = [];
 
-  private lastEtaTime: [number, number] = [0, 0];
+  private lastEtaTime: number = 0;
 
   private lastEtaValue = 'infinity';
 
@@ -165,12 +166,11 @@ export default class SingleBarFormatted {
   private getEtaFormatted(etaSeconds: number): string {
     // Rate limit how often the ETA can change
     //  Update only every 5s if the ETA is >60s
-    const [elapsedSec, elapsedNano] = process.hrtime(this.lastEtaTime);
-    const elapsedMs = (elapsedSec * 1_000_000_000 + elapsedNano) / 1_000_000;
+    const elapsedMs = TimePoly.hrtimeMillis(this.lastEtaTime);
     if (etaSeconds > 60 && elapsedMs < 5000) {
       return this.lastEtaValue;
     }
-    this.lastEtaTime = process.hrtime();
+    this.lastEtaTime = TimePoly.hrtimeMillis();
 
     if (etaSeconds < 0) {
       this.lastEtaValue = 'infinity';
