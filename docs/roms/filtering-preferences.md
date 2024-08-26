@@ -506,18 +506,6 @@ Prefer games that are considered "retail" releases over those that aren't.
 
 See the [only retail](#only-retail) section for more information on what games are considered "retail."
 
-### Prefer NTSC, PAL
-
-```text
---prefer-ntsc, --prefer-pal
-```
-
-Prefer games that are explicitly labeled as NTSC or PAL, over those that aren't.
-
-!!! note
-
-    Most DAT groups do not label games with this information, generally games are labeled by region instead.
-
 ### Prefer parent
 
 ```text

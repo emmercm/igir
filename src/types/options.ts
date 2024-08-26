@@ -4,9 +4,7 @@ import os from 'node:os';
 import path from 'node:path';
 
 import async, { AsyncResultCallback } from 'async';
-import {
-  Expose, instanceToPlain, plainToInstance, Transform,
-} from 'class-transformer';
+import { Expose, instanceToPlain, plainToInstance } from 'class-transformer';
 import fg from 'fast-glob';
 import { isNotJunk } from 'junk';
 import micromatch from 'micromatch';
@@ -154,8 +152,6 @@ export interface OptionsProps {
   readonly preferRevisionNewer?: boolean,
   readonly preferRevisionOlder?: boolean,
   readonly preferRetail?: boolean,
-  readonly preferNTSC?: boolean,
-  readonly preferPAL?: boolean,
   readonly preferParent?: boolean,
 
   readonly reportOutput?: string,
@@ -342,14 +338,6 @@ export default class Options implements OptionsProps {
 
   readonly preferRetail: boolean;
 
-  @Expose({ name: 'preferNtsc' })
-  @Transform(({ value }) => !!value)
-  readonly preferNTSC: boolean;
-
-  @Expose({ name: 'preferPal' })
-  @Transform(({ value }) => !!value)
-  readonly preferPAL: boolean;
-
   readonly preferParent: boolean;
 
   readonly reportOutput: string;
@@ -468,8 +456,6 @@ export default class Options implements OptionsProps {
     this.preferRevisionNewer = options?.preferRevisionNewer ?? false;
     this.preferRevisionOlder = options?.preferRevisionOlder ?? false;
     this.preferRetail = options?.preferRetail ?? false;
-    this.preferNTSC = options?.preferNTSC ?? false;
-    this.preferPAL = options?.preferPAL ?? false;
     this.preferParent = options?.preferParent ?? false;
 
     this.reportOutput = options?.reportOutput ?? '';
@@ -1222,14 +1208,6 @@ export default class Options implements OptionsProps {
 
   getPreferRetail(): boolean {
     return this.preferRetail;
-  }
-
-  getPreferNTSC(): boolean {
-    return this.preferNTSC;
-  }
-
-  getPreferPAL(): boolean {
-    return this.preferPAL;
   }
 
   getPreferParent(): boolean {
