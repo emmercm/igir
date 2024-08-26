@@ -202,8 +202,6 @@ describe('options', () => {
     expect(options.getPreferRevisionNewer()).toEqual(false);
     expect(options.getPreferRevisionOlder()).toEqual(false);
     expect(options.getPreferRetail()).toEqual(false);
-    expect(options.getPreferNTSC()).toEqual(false);
-    expect(options.getPreferPAL()).toEqual(false);
     expect(options.getPreferParent()).toEqual(false);
 
     expect(options.getDatThreads()).toEqual(3);
@@ -785,28 +783,6 @@ describe('options', () => {
     expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--prefer-retail', '--prefer-retail', '--single']).getPreferRetail()).toEqual(true);
     expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--prefer-retail', 'false', '--prefer-retail', 'true', '--single']).getPreferRetail()).toEqual(true);
     expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--prefer-retail', 'true', '--prefer-retail', 'false', '--single']).getPreferRetail()).toEqual(false);
-  });
-
-  it('should parse "prefer-ntsc"', () => {
-    expect(() => argumentsParser.parse([...dummyCommandAndRequiredArgs, '--prefer-ntsc'])).toThrow(/dependent|implication/i);
-    expect(() => argumentsParser.parse([...dummyCommandAndRequiredArgs, '--dat', os.devNull, '--prefer-ntsc', '--prefer-pal', '--single']).getPreferNTSC()).toThrow(/mutually exclusive/i);
-    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--dat', os.devNull, '--prefer-ntsc', '--single']).getPreferNTSC()).toEqual(true);
-    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--dat', os.devNull, '--prefer-ntsc', 'true', '--single']).getPreferNTSC()).toEqual(true);
-    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--dat', os.devNull, '--prefer-ntsc', 'false', '--single']).getPreferNTSC()).toEqual(false);
-    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--dat', os.devNull, '--prefer-ntsc', '--prefer-ntsc', '--single']).getPreferNTSC()).toEqual(true);
-    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--dat', os.devNull, '--prefer-ntsc', 'false', '--prefer-ntsc', 'true', '--single']).getPreferNTSC()).toEqual(true);
-    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--dat', os.devNull, '--prefer-ntsc', 'true', '--prefer-ntsc', 'false', '--single']).getPreferNTSC()).toEqual(false);
-  });
-
-  it('should parse "prefer-pal"', () => {
-    expect(() => argumentsParser.parse([...dummyCommandAndRequiredArgs, '--prefer-pal'])).toThrow(/dependent|implication/i);
-    expect(() => argumentsParser.parse([...dummyCommandAndRequiredArgs, '--dat', os.devNull, '--prefer-pal', '--prefer-ntsc', '--single']).getPreferPAL()).toThrow(/mutually exclusive/i);
-    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--dat', os.devNull, '--prefer-pal', '--single']).getPreferPAL()).toEqual(true);
-    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--dat', os.devNull, '--prefer-pal', 'true', '--single']).getPreferPAL()).toEqual(true);
-    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--dat', os.devNull, '--prefer-pal', 'false', '--single']).getPreferPAL()).toEqual(false);
-    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--dat', os.devNull, '--prefer-pal', '--prefer-pal', '--single']).getPreferPAL()).toEqual(true);
-    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--dat', os.devNull, '--prefer-pal', 'false', '--prefer-pal', 'true', '--single']).getPreferPAL()).toEqual(true);
-    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '--dat', os.devNull, '--prefer-pal', 'true', '--prefer-pal', 'false', '--single']).getPreferPAL()).toEqual(false);
   });
 
   it('should parse "prefer-parent"', () => {
