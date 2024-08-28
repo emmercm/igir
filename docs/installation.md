@@ -21,7 +21,7 @@ for example:
 npx igir@latest copy extract --dat *.dat --input ROMs/ --output ROMs-Sorted/ --dir-dat-name
 ```
 
-[![asciicast](https://asciinema.org/a/hjMOlN3DwSgo9NGHzPtncOoq9.svg)](https://asciinema.org/a/hjMOlN3DwSgo9NGHzPtncOoq9)
+[![asciicast](https://asciinema.org/a/IFU8rU8k800TMVWb9xXv4Jbsv.svg)](https://asciinema.org/a/IFU8rU8k800TMVWb9xXv4Jbsv)
 
 !!! tip
 

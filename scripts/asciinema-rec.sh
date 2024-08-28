@@ -22,22 +22,20 @@ if [[ "${1:-}" == "play" ]]; then
   # shellcheck disable=SC2317
   npx() {
     shift # discard "igir@latest"
-    node ../dist/index.js "$@" --dat-name-regex-exclude "/encrypted|headerless/i"
+    node ../dist/index.js "$@" --dat-name-regex-exclude "/encrypted|headerless|3ds/i"
   }
   # shellcheck disable=SC2317
   tree() {
-    command tree -N -I -- *.rsl* "$@"
+    command tree -N "$@"
   }
   # BEGIN PLAYBACK
 
   # ts-node ./index.ts copy zip clean -d demo/No-Intro*.zip -i GB/ -i NES/ -o demo/roms/ -D
-  pei "ls -gn"
+  pei "tree -L 1 ."
   echo "" && sleep 2
-  pei "unzip -l No-Intro*.zip | head -10" || true
+  pei "npx igir@latest copy zip report --dat 'No-Intro*.zip' --input ROMs/ --output ROMs-Sorted/ --dir-dat-name --only-retail"
   echo "" && sleep 2
-  pei "npx igir@latest copy zip report --dat No-Intro*.zip --input roms/ --output roms-sorted/ --dir-dat-name --only-retail"
-  echo ""
-  pei "ls -gn roms-sorted/"
+  pei "tree -L 1 ROMs-Sorted/"
 
   # END PLAYBACK
   exit 0
@@ -82,9 +80,8 @@ npm --version &> /dev/null || exit 1
 npm run build
 
 # Clean any previous output
-if [[ -d "${DEMO_DIR}/roms-sorted" ]]; then
-  rm -rf "${DEMO_DIR}/roms-sorted"
-fi
+rm -rf "${DEMO_DIR}/roms-sorted"
+rm -rf "${DEMO_DIR}/*.csv"
 
 clear
 if [[ "${1:-}" == "rec" ]]; then
