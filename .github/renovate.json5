@@ -151,7 +151,9 @@
           '^@typescript-eslint',
           '^eslint',
         ],
-        groupName: 'ESLint'
+        groupName: 'ESLint',
+        // Only group non-major updates
+        matchUpdateTypes: ['patch', 'minor']
       },
       {
         // Group Jest together because of peerDependencies
@@ -162,6 +164,8 @@
           'ts-jest',
         ],
         groupName: 'Jest',
+        // Only group non-major updates
+        matchUpdateTypes: ['patch', 'minor']
       },
       {
         // Separate TypeScript because upgrades are dependent on support by other dependencies
