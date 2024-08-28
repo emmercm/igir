@@ -106,7 +106,7 @@ export default abstract class Scanner extends Module {
       const archiveWithoutChecksums = files
         .filter((file) => file instanceof ArchiveEntry)
         .map((archiveEntry) => archiveEntry.getArchive())
-        .find((archive) => archive instanceof Gzip || Tar);
+        .find((archive) => archive instanceof Gzip || archive instanceof Tar);
       if (archiveWithoutChecksums !== undefined) {
         this.progressBar.logWarn(`${archiveWithoutChecksums.getFilePath()}: quick checksums will skip ${archiveWithoutChecksums.getExtension()} files`);
         return;
