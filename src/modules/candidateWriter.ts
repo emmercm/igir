@@ -423,10 +423,18 @@ export default class CandidateWriter extends Module {
     inputRomFile: File,
     outputRomFile: File,
   ): Promise<void> {
-    // Input and output are the exact same, do nothing
+    // Input and output are the exact same, maybe do nothing
     if (outputRomFile.equals(inputRomFile)) {
-      this.progressBar.logDebug(`${dat.getNameShort()}: ${releaseCandidate.getName()}: ${outputRomFile}: input and output file is the same, skipping`);
-      return;
+      const wasMoved = this.options.shouldMove()
+        && await CandidateWriter.MOVE_MUTEX.runExclusiveForKey(
+          inputRomFile.getFilePath(),
+          () => CandidateWriter.FILE_PATH_MOVES.get(inputRomFile.getFilePath()),
+        ) !== undefined;
+
+      if (!wasMoved) {
+        this.progressBar.logDebug(`${dat.getNameShort()}: ${releaseCandidate.getName()}: ${outputRomFile}: input and output file is the same, skipping`);
+        return;
+      }
     }
 
     const outputFilePath = outputRomFile.getFilePath();
