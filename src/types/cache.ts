@@ -216,7 +216,11 @@ export default class Cache<V> {
         }
 
         // Overwrite the real file with the temp file
-        await FsPoly.mv(tempFile, this.filePath);
+        try {
+          await FsPoly.mv(tempFile, this.filePath);
+        } catch {
+          return;
+        }
         this.hasChanged = false;
         this.saveMutex.cancel(); // cancel all waiting locks, we just saved
       });
