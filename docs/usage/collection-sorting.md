@@ -59,7 +59,7 @@ ROMs-Sorted
     └── Pokemon Pinball (USA, Australia) (Rumble Version) (SGB Enhanced) (GB Compatible).zip
 ```
 
-[![asciicast](https://asciinema.org/a/rOWJwgbbODaXuQeQY4B6uWc4i.svg)](https://asciinema.org/a/rOWJwgbbODaXuQeQY4B6uWc4i)
+[![asciicast](https://asciinema.org/a/J6RnpFif6QJrkageFvKH39btk.svg)](https://asciinema.org/a/J6RnpFif6QJrkageFvKH39btk)
 
 ## Subsequent collection sorts
 
@@ -119,7 +119,7 @@ ROMs-Sorted
     └── Pokemon Pinball (USA, Australia) (Rumble Version) (SGB Enhanced) (GB Compatible).zip
 ```
 
-[![asciicast](https://asciinema.org/a/PWAfBcvCikzJ7wObLcdFGtZbI.svg)](https://asciinema.org/a/PWAfBcvCikzJ7wObLcdFGtZbI)
+[![asciicast](https://asciinema.org/a/WAip4pJrNIKk0IGamov7Js4ba.svg)](https://asciinema.org/a/WAip4pJrNIKk0IGamov7Js4ba)
 
 ## Flash cart 1G1R
 
@@ -185,7 +185,7 @@ Your flash cart might then look something like this:
     └── Pokemon - Yellow Version - Special Pikachu Edition (USA, Europe) (CGB+SGB Enhanced).gb
 ```
 
-[![asciicast](https://asciinema.org/a/K8ROFbX8c4NJfUue3lwbe7d8V.svg)](https://asciinema.org/a/K8ROFbX8c4NJfUue3lwbe7d8V)
+[![asciicast](https://asciinema.org/a/GxXyngUlZ5Xg8pCh6GhJdDc4t.svg)](https://asciinema.org/a/GxXyngUlZ5Xg8pCh6GhJdDc4t)
 
 !!! info
 
