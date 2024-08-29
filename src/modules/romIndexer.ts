@@ -31,7 +31,7 @@ export default class ROMIndexer extends Module {
    */
   index(files: File[]): IndexedFiles {
     this.progressBar.logTrace(`indexing ${files.length.toLocaleString()} file${files.length !== 1 ? 's' : ''}`);
-    this.progressBar.setSymbol(ProgressBarSymbol.FILE_INDEXING);
+    this.progressBar.setSymbol(ProgressBarSymbol.ROM_INDEXING);
     this.progressBar.reset(files.length);
 
     // Index the files

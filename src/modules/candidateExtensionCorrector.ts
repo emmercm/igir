@@ -62,7 +62,7 @@ export default class CandidateExtensionCorrector extends Module {
     }
 
     this.progressBar.logTrace(`${dat.getNameShort()}: correcting ${romsThatNeedCorrecting.toLocaleString()} output file extension${romsThatNeedCorrecting !== 1 ? 's' : ''}`);
-    this.progressBar.setSymbol(ProgressBarSymbol.EXTENSION_CORRECTION);
+    this.progressBar.setSymbol(ProgressBarSymbol.CANDIDATE_EXTENSION_CORRECTION);
     this.progressBar.reset(romsThatNeedCorrecting);
 
     const correctedParentsToCandidates = await this.correctExtensions(dat, parentsToCandidates);

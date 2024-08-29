@@ -88,7 +88,7 @@ export default class DATScanner extends Scanner {
     }
 
     this.progressBar.logTrace('downloading DATs from URLs');
-    this.progressBar.setSymbol(ProgressBarSymbol.FILE_DOWNLOADING);
+    this.progressBar.setSymbol(ProgressBarSymbol.DAT_DOWNLOADING);
 
     return (await Promise.all(datFiles.map(async (datFile) => {
       if (!datFile.isURL()) {
