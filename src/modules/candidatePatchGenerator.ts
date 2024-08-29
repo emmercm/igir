@@ -36,7 +36,7 @@ export default class CandidatePatchGenerator extends Module {
     }
 
     this.progressBar.logTrace(`${dat.getNameShort()}: generating patched candidates`);
-    this.progressBar.setSymbol(ProgressBarSymbol.GENERATING);
+    this.progressBar.setSymbol(ProgressBarSymbol.CANDIDATE_GENERATING);
     this.progressBar.reset(parentsToCandidates.size);
 
     const crcToPatches = CandidatePatchGenerator.indexPatchesByCrcBefore(patches);

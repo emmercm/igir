@@ -32,7 +32,7 @@ export default class DATParentInferrer extends Module {
     }
 
     this.progressBar.logTrace(`${dat.getNameShort()}: inferring parents for ${dat.getGames().length.toLocaleString()} game${dat.getGames().length !== 1 ? 's' : ''}`);
-    this.progressBar.setSymbol(ProgressBarSymbol.GROUPING_SIMILAR);
+    this.progressBar.setSymbol(ProgressBarSymbol.DAT_GROUPING_SIMILAR);
     this.progressBar.reset(dat.getGames().length);
 
     // Group games by their stripped names

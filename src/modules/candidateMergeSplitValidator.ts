@@ -33,7 +33,7 @@ export default class CandidateMergeSplitValidator extends Module {
     }
 
     this.progressBar.logTrace(`${dat.getNameShort()}: validating merged & split ROM sets`);
-    this.progressBar.setSymbol(ProgressBarSymbol.VALIDATING);
+    this.progressBar.setSymbol(ProgressBarSymbol.CANDIDATE_VALIDATING);
     this.progressBar.reset(parentsToCandidates.size);
 
     const datGamesIndexed = dat.getGames().reduce((map, game) => {
