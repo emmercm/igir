@@ -230,13 +230,17 @@ export default class Igir {
   }
 
   private async getCachePath(): Promise<string | undefined> {
-    const defaultFileName = `${Package.NAME}.cache`;
+    const defaultFileName = process.versions.bun
+      // As of v1.1.26, Bun uses a different serializer than V8, making cache files incompatible
+      // @see https://bun.sh/docs/runtime/nodejs-apis
+      ? `${Package.NAME}.bun.cache`
+      : `${Package.NAME}.cache`;
 
-    // Try to use the provided path
+    // First, try to use the provided path
     let cachePath = this.options.getCachePath();
     if (cachePath !== undefined && await FsPoly.isDirectory(cachePath)) {
       cachePath = path.join(cachePath, defaultFileName);
-      this.logger.warn(`A directory was provided for cache path instead of a file, using '${cachePath}' instead`);
+      this.logger.warn(`A directory was provided for the cache path instead of a file, using '${cachePath}' instead`);
     }
     if (cachePath !== undefined) {
       if (await FsPoly.isWritable(cachePath)) {
@@ -245,19 +249,31 @@ export default class Igir {
       this.logger.warn('Provided cache path isn\'t writable, using the default path');
     }
 
-    // Otherwise, use a default path
-    return [
+    const cachePathCandidates = [
       path.join(path.resolve(Package.DIRECTORY), defaultFileName),
       path.join(os.homedir(), defaultFileName),
       path.join(process.cwd(), defaultFileName),
-    ]
-      .filter((filePath) => filePath && !filePath.startsWith(os.tmpdir()))
-      .find(async (filePath) => {
-        if (await FsPoly.exists(filePath)) {
-          return true;
-        }
-        return FsPoly.isWritable(filePath);
-      });
+    ].filter((filePath) => filePath && !filePath.startsWith(os.tmpdir()));
+
+    // Next, try to use an already existing path
+    const exists = await Promise.all(
+      cachePathCandidates.map(async (pathCandidate) => FsPoly.exists(pathCandidate)),
+    );
+    const existsCachePath = cachePathCandidates.find((_, idx) => exists[idx]);
+    if (existsCachePath !== undefined) {
+      return existsCachePath;
+    }
+
+    // Next, try to find a writable path
+    const writable = await Promise.all(
+      cachePathCandidates.map(async (pathCandidate) => FsPoly.isWritable(pathCandidate)),
+    );
+    const writableCachePath = cachePathCandidates.find((_, idx) => writable[idx]);
+    if (writableCachePath !== undefined) {
+      return writableCachePath;
+    }
+
+    return undefined;
   }
 
   private async processDATScanner(fileFactory: FileFactory): Promise<DAT[]> {

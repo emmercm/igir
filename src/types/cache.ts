@@ -1,6 +1,6 @@
 import fs from 'node:fs';
 import path from 'node:path';
-import util from 'node:util';
+import * as v8 from 'node:v8';
 import * as zlib from 'node:zlib';
 
 import { E_CANCELED, Mutex } from 'async-mutex';
@@ -8,10 +8,6 @@ import { E_CANCELED, Mutex } from 'async-mutex';
 import KeyedMutex from '../keyedMutex.js';
 import FsPoly from '../polyfill/fsPoly.js';
 import Timer from '../timer.js';
-
-interface CacheData {
-  data: string,
-}
 
 export interface CacheProps {
   filePath?: string,
@@ -109,8 +105,11 @@ export default class Cache<V> {
   }
 
   private setUnsafe(key: string, val: V): void {
+    const oldVal = this.keyValues.get(key);
     this.keyValues.set(key, val);
-    this.saveWithTimeout();
+    if (val !== oldVal) {
+      this.saveWithTimeout();
+    }
   }
 
   /**
@@ -145,12 +144,13 @@ export default class Cache<V> {
     }
 
     try {
-      const cacheData = JSON.parse(
-        await fs.promises.readFile(this.filePath, { encoding: Cache.BUFFER_ENCODING }),
-      ) as CacheData;
-      const compressed = Buffer.from(cacheData.data, Cache.BUFFER_ENCODING);
-      const decompressed = await util.promisify(zlib.inflate)(compressed);
-      const keyValuesObject = JSON.parse(decompressed.toString(Cache.BUFFER_ENCODING));
+      const compressed = await fs.promises.readFile(this.filePath);
+      if (compressed.length === 0) {
+        return this;
+      }
+      // NOTE(cemmer): util.promisify(zlib.inflate) seems to have issues not throwing correctly
+      const decompressed = zlib.inflateSync(compressed);
+      const keyValuesObject = v8.deserialize(decompressed);
       const keyValuesEntries = Object.entries(keyValuesObject) as [string, V][];
       this.keyValues = new Map(keyValuesEntries);
     } catch { /* ignored */ }
@@ -187,11 +187,9 @@ export default class Cache<V> {
         }
 
         const keyValuesObject = Object.fromEntries(this.keyValues);
-        const decompressed = JSON.stringify(keyValuesObject);
-        const compressed = await util.promisify(zlib.deflate)(decompressed);
-        const cacheData = {
-          data: compressed.toString(Cache.BUFFER_ENCODING),
-        } satisfies CacheData;
+        const decompressed = v8.serialize(keyValuesObject);
+        // NOTE(cemmer): util.promisify(zlib.deflate) seems to have issues not throwing correctly
+        const compressed = zlib.deflateSync(decompressed);
 
         // Ensure the directory exists
         const dirPath = path.dirname(this.filePath);
@@ -203,7 +201,7 @@ export default class Cache<V> {
         const tempFile = await FsPoly.mktemp(this.filePath);
         await FsPoly.writeFile(
           tempFile,
-          JSON.stringify(cacheData),
+          compressed,
           { encoding: Cache.BUFFER_ENCODING },
         );
 
