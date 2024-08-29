@@ -32,7 +32,7 @@ export default class CandidatePostProcessor extends Module {
     }
 
     this.progressBar.logTrace(`${dat.getNameShort()}: processing candidates`);
-    this.progressBar.setSymbol(ProgressBarSymbol.GENERATING);
+    this.progressBar.setSymbol(ProgressBarSymbol.CANDIDATE_GENERATING);
     this.progressBar.reset(parentsToCandidates.size);
 
     // Get the output basename of every ROM

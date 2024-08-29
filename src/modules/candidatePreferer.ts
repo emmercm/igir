@@ -45,7 +45,7 @@ export default class CandidatePreferer extends Module {
       return parentsToCandidates;
     }
 
-    this.progressBar.setSymbol(ProgressBarSymbol.FILTERING);
+    this.progressBar.setSymbol(ProgressBarSymbol.CANDIDATE_FILTERING);
     this.progressBar.reset(parentsToCandidates.size);
 
     const output = this.sortAndFilter(dat, parentsToCandidates);

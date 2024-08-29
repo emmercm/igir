@@ -58,7 +58,7 @@ export default class CandidateGenerator extends Module {
     const parents = dat.getParents();
 
     this.progressBar.logTrace(`${dat.getNameShort()}: generating candidates`);
-    this.progressBar.setSymbol(ProgressBarSymbol.GENERATING);
+    this.progressBar.setSymbol(ProgressBarSymbol.CANDIDATE_GENERATING);
     this.progressBar.reset(parents.length);
 
     // For each parent, try to generate a parent candidate
