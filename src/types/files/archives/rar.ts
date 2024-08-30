@@ -34,22 +34,22 @@ export default class Rar extends Archive {
       [...rar.getFileList().fileHeaders].filter((fileHeader) => !fileHeader.flags.directory),
       Defaults.ARCHIVE_ENTRY_SCANNER_THREADS_PER_ARCHIVE,
       async (fileHeader, callback: AsyncResultCallback<ArchiveEntry<this>, Error>) => {
-        const archiveEntry = await ArchiveEntry.entryOf({
-          archive: this,
-          entryPath: fileHeader.name,
-          size: fileHeader.unpSize,
-          crc32: fileHeader.crc.toString(16),
-          // If MD5, SHA1, or SHA256 is desired, this file will need to be extracted to calculate
-        }, checksumBitmask);
+        const archiveEntry = await ArchiveEntry.entryOf(
+          {
+            archive: this,
+            entryPath: fileHeader.name,
+            size: fileHeader.unpSize,
+            crc32: fileHeader.crc.toString(16),
+            // If MD5, SHA1, or SHA256 is desired, this file will need to be extracted to calculate
+          },
+          checksumBitmask,
+        );
         callback(undefined, archiveEntry);
       },
     );
   }
 
-  async extractEntryToFile(
-    entryPath: string,
-    extractedFilePath: string,
-  ): Promise<void> {
+  async extractEntryToFile(entryPath: string, extractedFilePath: string): Promise<void> {
     /**
      * WARN(cemmer): {@link unrar.extract} seems to have issues with extracting files to different
      * directories at the same time, it will sometimes extract to the wrong directory. Try to
@@ -63,9 +63,11 @@ export default class Rar extends Archive {
       });
       // For whatever reason, the library author decided to delay extraction until the file is
       // iterated, so we have to execute this expression, but can throw away the results
-      const extracted = [...rar.extract({
-        files: [entryPath.replace(/[\\/]/g, '/')],
-      }).files];
+      const extracted = [
+        ...rar.extract({
+          files: [entryPath.replace(/[\\/]/g, '/')],
+        }).files,
+      ];
       if (extracted.length === 0) {
         throw new ExpectedError(`didn't find entry '${entryPath}'`);
       }

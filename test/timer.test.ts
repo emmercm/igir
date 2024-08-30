@@ -3,7 +3,9 @@ import Timer from '../src/timer.js';
 describe('setTimeout', () => {
   it('should resolve', async () => {
     await expect(
-      new Promise((resolve) => { Timer.setTimeout(resolve, 100); }),
+      new Promise((resolve) => {
+        Timer.setTimeout(resolve, 100);
+      }),
     ).resolves.toBeUndefined();
   });
 

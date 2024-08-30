@@ -27,7 +27,9 @@ export default class PatchScanner extends Scanner {
     const patchFilePaths = await this.options.scanPatchFilesWithoutExclusions((increment) => {
       this.progressBar.incrementTotal(increment);
     });
-    this.progressBar.logTrace(`found ${patchFilePaths.length.toLocaleString()} patch file${patchFilePaths.length !== 1 ? 's' : ''}`);
+    this.progressBar.logTrace(
+      `found ${patchFilePaths.length.toLocaleString()} patch file${patchFilePaths.length !== 1 ? 's' : ''}`,
+    );
     this.progressBar.reset(patchFilePaths.length);
 
     const patchFiles = await this.getUniqueFilesFromPaths(
@@ -37,9 +39,8 @@ export default class PatchScanner extends Scanner {
     );
     this.progressBar.reset(patchFiles.length);
 
-    const patches = (await new DriveSemaphore(this.options.getReaderThreads()).map(
-      patchFiles,
-      async (file) => {
+    const patches = (
+      await new DriveSemaphore(this.options.getReaderThreads()).map(patchFiles, async (file) => {
         this.progressBar.incrementProgress();
         const waitingMessage = `${file.toString()} ...`;
         this.progressBar.addWaitingMessage(waitingMessage);
@@ -53,9 +54,8 @@ export default class PatchScanner extends Scanner {
           this.progressBar.incrementDone();
           this.progressBar.removeWaitingMessage(waitingMessage);
         }
-      },
-    ))
-      .filter((patch) => patch !== undefined);
+      })
+    ).filter((patch) => patch !== undefined);
 
     this.progressBar.logTrace('done scanning patch files');
     return patches;
@@ -64,13 +64,17 @@ export default class PatchScanner extends Scanner {
   private async patchFromFile(file: File): Promise<Patch | undefined> {
     const patchForFilename = await PatchFactory.patchFromFilename(file);
     if (patchForFilename) {
-      this.progressBar.logTrace(`${file.toString()}: found patch by extension: ${typeof patchForFilename}`);
+      this.progressBar.logTrace(
+        `${file.toString()}: found patch by extension: ${typeof patchForFilename}`,
+      );
       return patchForFilename;
     }
 
     const patchForFileContents = await PatchFactory.patchFromFileContents(file);
     if (patchForFileContents) {
-      this.progressBar.logTrace(`${file.toString()}: found patch by contents: ${typeof patchForFileContents}`);
+      this.progressBar.logTrace(
+        `${file.toString()}: found patch by contents: ${typeof patchForFileContents}`,
+      );
       return patchForFileContents;
     }
 

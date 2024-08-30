@@ -54,14 +54,17 @@ export default class CandidateExtensionCorrector extends Module {
     const romsThatNeedCorrecting = [...parentsToCandidates.values()]
       .flat()
       .flatMap((releaseCandidate) => releaseCandidate.getRomsWithFiles())
-      .filter((romWithFiles) => this.romNeedsCorrecting(romWithFiles))
-      .length;
+      .filter((romWithFiles) => this.romNeedsCorrecting(romWithFiles)).length;
     if (romsThatNeedCorrecting === 0) {
-      this.progressBar.logTrace(`${dat.getNameShort()}: no output files need their extension corrected`);
+      this.progressBar.logTrace(
+        `${dat.getNameShort()}: no output files need their extension corrected`,
+      );
       return parentsToCandidates;
     }
 
-    this.progressBar.logTrace(`${dat.getNameShort()}: correcting ${romsThatNeedCorrecting.toLocaleString()} output file extension${romsThatNeedCorrecting !== 1 ? 's' : ''}`);
+    this.progressBar.logTrace(
+      `${dat.getNameShort()}: correcting ${romsThatNeedCorrecting.toLocaleString()} output file extension${romsThatNeedCorrecting !== 1 ? 's' : ''}`,
+    );
     this.progressBar.setSymbol(ProgressBarSymbol.CANDIDATE_EXTENSION_CORRECTION);
     this.progressBar.reset(romsThatNeedCorrecting);
 
@@ -82,56 +85,63 @@ export default class CandidateExtensionCorrector extends Module {
       return false;
     }
 
-    return this.options.getFixExtension() === FixExtension.ALWAYS
-      || (this.options.getFixExtension() === FixExtension.AUTO && (
-        !this.options.usingDats()
-          || romWithFiles.getRom().getName().trim() === ''
-      ));
+    return (
+      this.options.getFixExtension() === FixExtension.ALWAYS ||
+      (this.options.getFixExtension() === FixExtension.AUTO &&
+        (!this.options.usingDats() || romWithFiles.getRom().getName().trim() === ''))
+    );
   }
 
   private async correctExtensions(
     dat: DAT,
     parentsToCandidates: Map<Parent, ReleaseCandidate[]>,
   ): Promise<Map<Parent, ReleaseCandidate[]>> {
-    return new Map((await Promise.all([...parentsToCandidates.entries()]
-      .map(async ([parent, releaseCandidates]): Promise<[Parent, ReleaseCandidate[]]> => {
-        const hashedReleaseCandidates = await Promise.all(releaseCandidates
-          .map(async (releaseCandidate) => {
-            const hashedRomsWithFiles = await Promise.all(releaseCandidate.getRomsWithFiles()
-              .map(async (romWithFiles) => {
-                const correctedRom = await this.buildCorrectedRom(
-                  dat,
-                  parent,
-                  releaseCandidate,
-                  romWithFiles,
+    return new Map(
+      await Promise.all(
+        [...parentsToCandidates.entries()].map(
+          async ([parent, releaseCandidates]): Promise<[Parent, ReleaseCandidate[]]> => {
+            const hashedReleaseCandidates = await Promise.all(
+              releaseCandidates.map(async (releaseCandidate) => {
+                const hashedRomsWithFiles = await Promise.all(
+                  releaseCandidate.getRomsWithFiles().map(async (romWithFiles) => {
+                    const correctedRom = await this.buildCorrectedRom(
+                      dat,
+                      parent,
+                      releaseCandidate,
+                      romWithFiles,
+                    );
+
+                    // Using the corrected ROM name, build a new output path
+                    const correctedOutputPath = OutputFactory.getPath(
+                      this.options,
+                      dat,
+                      releaseCandidate.getGame(),
+                      releaseCandidate.getRelease(),
+                      correctedRom,
+                      romWithFiles.getInputFile(),
+                    );
+                    let correctedOutputFile = romWithFiles
+                      .getOutputFile()
+                      .withFilePath(correctedOutputPath.format());
+                    if (correctedOutputFile instanceof ArchiveEntry) {
+                      correctedOutputFile = correctedOutputFile.withEntryPath(
+                        correctedOutputPath.entryPath,
+                      );
+                    }
+
+                    return romWithFiles.withRom(correctedRom).withOutputFile(correctedOutputFile);
+                  }),
                 );
 
-                // Using the corrected ROM name, build a new output path
-                const correctedOutputPath = OutputFactory.getPath(
-                  this.options,
-                  dat,
-                  releaseCandidate.getGame(),
-                  releaseCandidate.getRelease(),
-                  correctedRom,
-                  romWithFiles.getInputFile(),
-                );
-                let correctedOutputFile = romWithFiles.getOutputFile()
-                  .withFilePath(correctedOutputPath.format());
-                if (correctedOutputFile instanceof ArchiveEntry) {
-                  correctedOutputFile = correctedOutputFile
-                    .withEntryPath(correctedOutputPath.entryPath);
-                }
+                return releaseCandidate.withRomsWithFiles(hashedRomsWithFiles);
+              }),
+            );
 
-                return romWithFiles
-                  .withRom(correctedRom)
-                  .withOutputFile(correctedOutputFile);
-              }));
-
-            return releaseCandidate.withRomsWithFiles(hashedRomsWithFiles);
-          }));
-
-        return [parent, hashedReleaseCandidates];
-      }))));
+            return [parent, hashedReleaseCandidates];
+          },
+        ),
+      ),
+    );
   }
 
   private async buildCorrectedRom(
@@ -146,8 +156,11 @@ export default class CandidateExtensionCorrector extends Module {
       // The ROM doesn't have any filename, default it. Because we never knew a file extension,
       // doing this isn't considered "correction".
       const romWithFilesIdx = releaseCandidate.getRomsWithFiles().indexOf(romWithFiles);
-      correctedRom = correctedRom.withName(`${releaseCandidate.getGame()
-        .getName()}${releaseCandidate.getRomsWithFiles().length > 1 ? ` (File ${romWithFilesIdx + 1})` : ''}.rom`);
+      correctedRom = correctedRom.withName(
+        `${releaseCandidate
+          .getGame()
+          .getName()}${releaseCandidate.getRomsWithFiles().length > 1 ? ` (File ${romWithFilesIdx + 1})` : ''}.rom`,
+      );
     }
 
     if (!this.romNeedsCorrecting(romWithFiles)) {
@@ -159,14 +172,19 @@ export default class CandidateExtensionCorrector extends Module {
       this.progressBar.incrementProgress();
       const waitingMessage = `${releaseCandidate.getName()} ...`;
       this.progressBar.addWaitingMessage(waitingMessage);
-      this.progressBar.logTrace(`${dat.getNameShort()}: ${parent.getName()}: correcting extension for: ${romWithFiles.getInputFile()
-        .toString()}`);
+      this.progressBar.logTrace(
+        `${dat.getNameShort()}: ${parent.getName()}: correcting extension for: ${romWithFiles
+          .getInputFile()
+          .toString()}`,
+      );
 
       let romSignature: FileSignature | undefined;
       try {
         romSignature = await this.fileFactory.signatureFrom(romWithFiles.getInputFile());
       } catch (error) {
-        this.progressBar.logError(`${dat.getNameShort()}: failed to correct file extension for '${romWithFiles.getInputFile()}': ${error}`);
+        this.progressBar.logError(
+          `${dat.getNameShort()}: failed to correct file extension for '${romWithFiles.getInputFile()}': ${error}`,
+        );
       }
       if (romSignature) {
         // ROM file signature found, use the appropriate extension

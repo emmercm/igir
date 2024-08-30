@@ -91,9 +91,11 @@ export default class Logger {
     } satisfies { [key in LogLevel]: (message: string) => string };
     const chalkFunc = chalkFuncs[logLevel];
 
-    const loggerTime = this.logLevel <= LogLevel.TRACE ? `[${moment().format('HH:mm:ss.SSS')}] ` : '';
+    const loggerTime =
+      this.logLevel <= LogLevel.TRACE ? `[${moment().format('HH:mm:ss.SSS')}] ` : '';
     const levelPrefix = `${chalkFunc(LogLevel[logLevel])}:${' '.repeat(Math.max(5 - LogLevel[logLevel].length, 0))} `;
-    const loggerPrefix = this.logLevel <= LogLevel.TRACE && this.loggerPrefix ? `${this.loggerPrefix}: ` : '';
+    const loggerPrefix =
+      this.logLevel <= LogLevel.TRACE && this.loggerPrefix ? `${this.loggerPrefix}: ` : '';
 
     return message
       .replace(/Error: /, '') // strip `new Error()` prefix
@@ -119,16 +121,21 @@ export default class Logger {
    * Print the CLI header.
    */
   printHeader(): void {
-    const logo = figlet.textSync(Package.NAME.toUpperCase(), {
-      font: 'Big Money-se',
-    }).trimEnd();
+    const logo = figlet
+      .textSync(Package.NAME.toUpperCase(), {
+        font: 'Big Money-se',
+      })
+      .trimEnd();
 
     const logoSplit = logo.split('\n');
     const midLine = Math.min(Math.ceil(logoSplit.length / 2), logoSplit.length - 1);
     const maxLineLen = logoSplit.reduce((max, line) => Math.max(max, line.length), 0);
-    logoSplit[midLine - 2] = `${logoSplit[midLine - 1].padEnd(maxLineLen, ' ')}   ROM collection manager`;
-    logoSplit[midLine - 1] = `${logoSplit[midLine - 1].padEnd(maxLineLen, ' ')}   ${Package.HOMEPAGE}`;
-    logoSplit[midLine + 1] = `${logoSplit[midLine + 1].padEnd(maxLineLen, ' ')}   v${Package.VERSION}`;
+    logoSplit[midLine - 2] =
+      `${logoSplit[midLine - 1].padEnd(maxLineLen, ' ')}   ROM collection manager`;
+    logoSplit[midLine - 1] =
+      `${logoSplit[midLine - 1].padEnd(maxLineLen, ' ')}   ${Package.HOMEPAGE}`;
+    logoSplit[midLine + 1] =
+      `${logoSplit[midLine + 1].padEnd(maxLineLen, ' ')}   v${Package.VERSION}`;
 
     this.print(LogLevel.ALWAYS, `${logoSplit.join('\n')}\n\n`);
   }
@@ -146,8 +153,14 @@ export default class Logger {
         .replace(new RegExp(`(${Package.NAME}) (( ?[a-z0-9])+)`, 'g'), `$1 ${chalk.magenta('$2')}`)
 
         .replace(/(\[options\.*\])/g, chalk.cyan('$1'))
-        .replace(/([^a-zA-Z0-9-])(-[a-zA-Z0-9]([a-zA-Z0-9]|\n[ \t]*)*)/g, `$1${chalk.cyanBright('$2')}`)
-        .replace(/(--[a-zA-Z0-9][a-zA-Z0-9-]+(\n[ \t]+)?[a-zA-Z0-9-]+) ((?:[^ -])[^"][^ \n]*|"(?:[^"\\]|\\.)*")/g, `$1 ${chalk.underline('$3')}`)
+        .replace(
+          /([^a-zA-Z0-9-])(-[a-zA-Z0-9]([a-zA-Z0-9]|\n[ \t]*)*)/g,
+          `$1${chalk.cyanBright('$2')}`,
+        )
+        .replace(
+          /(--[a-zA-Z0-9][a-zA-Z0-9-]+(\n[ \t]+)?[a-zA-Z0-9-]+) ((?:[^ -])[^"][^ \n]*|"(?:[^"\\]|\\.)*")/g,
+          `$1 ${chalk.underline('$3')}`,
+        )
         .replace(/(--[a-zA-Z0-9][a-zA-Z0-9-]+(\n[ \t]+)?[a-zA-Z0-9-]+)/g, chalk.cyan('$1'))
         .replace(/(<[a-zA-Z]+>)/g, chalk.blue('$1'))
 
@@ -164,11 +177,7 @@ export default class Logger {
   /**
    * Create a {@link ProgressBar} with a reference to this {@link Logger}.
    */
-  addProgressBar(
-    name: string,
-    symbol = ProgressBarSymbol.WAITING,
-    initialTotal = 0,
-  ): ProgressBar {
+  addProgressBar(name: string, symbol = ProgressBarSymbol.WAITING, initialTotal = 0): ProgressBar {
     return ProgressBarCLI.new(this, name, symbol, initialTotal);
   }
 

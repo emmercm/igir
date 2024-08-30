@@ -1,6 +1,4 @@
-import {
-  Expose, plainToInstance, Transform, Type,
-} from 'class-transformer';
+import { Expose, plainToInstance, Transform, Type } from 'class-transformer';
 
 import DAT from '../dat.js';
 import Game from '../game.js';
@@ -24,30 +22,31 @@ export default class SoftwareListsDAT extends DAT {
     return plainToInstance(SoftwareListsDAT, obj, {
       enableImplicitConversion: true,
       excludeExtraneousValues: true,
-    })
-      .generateGameNamesToParents();
+    }).generateGameNamesToParents();
   }
 
   getHeader(): Header {
     return new Header({
       name: this.getSoftwareLists()
-        .map((softwareList) => softwareList.getName()).join(', '),
+        .map((softwareList) => softwareList.getName())
+        .join(', '),
       description: this.getSoftwareLists()
-        .map((softwareList) => softwareList.getDescription()).join(', '),
+        .map((softwareList) => softwareList.getDescription())
+        .join(', '),
     });
   }
 
   private getSoftwareLists(): SoftwareListDAT[] {
     if (Array.isArray(this.softwarelist)) {
       return this.softwarelist;
-    } if (this.softwarelist) {
+    }
+    if (this.softwarelist) {
       return [this.softwarelist];
     }
     return [];
   }
 
   getGames(): Game[] {
-    return this.getSoftwareLists()
-      .flatMap((softwareList) => softwareList.getGames());
+    return this.getSoftwareLists().flatMap((softwareList) => softwareList.getGames());
   }
 }

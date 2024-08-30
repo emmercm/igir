@@ -34,26 +34,32 @@ describe('getRegion', () => {
     expect(releaseCandidate.getRegion()).toEqual(expectedRegion);
   });
 
-  it('should return null when region can\'t be inferred', () => {
+  it("should return null when region can't be inferred", () => {
     const releaseCandidate = new ReleaseCandidate(new Game({ name: 'game' }), undefined, []);
     expect(releaseCandidate.getRegion()).toBeUndefined();
   });
 });
 
 describe('getLanguages', () => {
-  test.each(Internationalization.LANGUAGES)('should return the release language: %s', (language) => {
-    const release = new Release('release', 'UNK', language);
-    const releaseCandidate = new ReleaseCandidate(new Game(), release, []);
-    expect(releaseCandidate.getLanguages()).toEqual([language]);
-  });
+  test.each(Internationalization.LANGUAGES)(
+    'should return the release language: %s',
+    (language) => {
+      const release = new Release('release', 'UNK', language);
+      const releaseCandidate = new ReleaseCandidate(new Game(), release, []);
+      expect(releaseCandidate.getLanguages()).toEqual([language]);
+    },
+  );
 
   test.each([
     // No-Intro style
     ['Sa-Ga 2 - Hihou Densetsu (World) (Ja) (Rev 1) (Collection of SaGa)', ['JA']],
     ['Smurfs, The (USA, Europe) (En,Fr,De) (Rev 1) (SGB Enhanced)', ['EN', 'FR', 'DE']],
     ['Dr. Franken (Europe) (En,Fr,De,Es,It,Nl,Sv)', ['EN', 'FR', 'DE', 'ES', 'IT', 'NL', 'SV']],
-    ['2 Games in 1 - Disney Princesas + Hermano Oso (Spain) (Es+En,Fr,De,Es,It,Nl,Sv,Da)', ['ES', 'EN', 'FR', 'DE', 'IT', 'NL', 'SV', 'DA']],
-    ['Bob the Builder - Bob\'s Busy Day (Europe) (En-GB).bin', ['EN']],
+    [
+      '2 Games in 1 - Disney Princesas + Hermano Oso (Spain) (Es+En,Fr,De,Es,It,Nl,Sv,Da)',
+      ['ES', 'EN', 'FR', 'DE', 'IT', 'NL', 'SV', 'DA'],
+    ],
+    ["Bob the Builder - Bob's Busy Day (Europe) (En-GB).bin", ['EN']],
     ['Thomas & Friends - Engines Working Together (USA) (En-US).bin', ['EN']],
     // GoodTools style
     ['Atlantis - The Lost Empire (E) (M3) (Eng-Spa-Ita) [C][!]', ['EN', 'ES', 'IT']],
@@ -74,7 +80,7 @@ describe('getLanguages', () => {
     expect(releaseCandidate.getLanguages()).toEqual([expectedLanguage]);
   });
 
-  it('should return an empty list when languages can\'t be inferred', () => {
+  it("should return an empty list when languages can't be inferred", () => {
     const releaseCandidate = new ReleaseCandidate(new Game({ name: 'game' }), undefined, []);
     expect(releaseCandidate.getLanguages()).toHaveLength(0);
   });

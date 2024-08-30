@@ -34,10 +34,7 @@ export default class DriveSemaphore {
   /**
    * Run a {@link runnable} exclusively for the given {@link file}.
    */
-  async runExclusive<V>(
-    file: File | string,
-    runnable: () => V | Promise<V>,
-  ): Promise<V> {
+  async runExclusive<V>(file: File | string, runnable: () => V | Promise<V>): Promise<V> {
     const filePathDisk = DriveSemaphore.getDiskForFile(file);
     const driveSemaphore = await this.driveSemaphoresMutex.runExclusive(() => {
       if (!this.driveSemaphores.has(filePathDisk)) {
@@ -57,18 +54,16 @@ export default class DriveSemaphore {
       return this.driveSemaphores.get(filePathDisk) as ElasticSemaphore;
     });
 
-    const fileSizeKilobytes = (file instanceof File && file.getSize() > 0
-      ? file.getSize()
-      : await FsPoly.size(file instanceof File ? file.getFilePath() : file)
-    ) / 1024;
+    const fileSizeKilobytes =
+      (file instanceof File && file.getSize() > 0
+        ? file.getSize()
+        : await FsPoly.size(file instanceof File ? file.getFilePath() : file)) / 1024;
 
     // First, limit the number of threads per drive, which will better balance the processing of
     // files on different drives vs. processing files sequentially
     return driveSemaphore.runExclusive(
       // Second, limit the overall number of threads
-      async () => this.threadsSemaphore.runExclusive(
-        async () => runnable(),
-      ),
+      async () => this.threadsSemaphore.runExclusive(async () => runnable()),
       fileSizeKilobytes,
     );
   }
@@ -83,7 +78,7 @@ export default class DriveSemaphore {
     // Sort the files, then "stripe" them by their disk path for fair processing among disks
     const disksToFiles = files
       // Remember the original ordering of the files by its index
-      .map((file, idx) => ([file, idx] satisfies [K, number]))
+      .map((file, idx) => [file, idx] satisfies [K, number])
       .sort(([a], [b]) => {
         const aPath = a instanceof File ? a.getFilePath() : a.toString();
         const bPath = b instanceof File ? b.getFilePath() : b.toString();
@@ -98,13 +93,16 @@ export default class DriveSemaphore {
         }
         return map;
       }, new Map<string, [K, number][]>());
-    const maxFilesOnAnyDisk = [...disksToFiles.values()]
-      .reduce((max, filesForDisk) => Math.max(max, filesForDisk.length), 0);
+    const maxFilesOnAnyDisk = [...disksToFiles.values()].reduce(
+      (max, filesForDisk) => Math.max(max, filesForDisk.length),
+      0,
+    );
     let filesStriped: [K, number][] = [];
     const chunkSize = 5;
     for (let i = 0; i < maxFilesOnAnyDisk; i += chunkSize) {
-      const batch = [...disksToFiles.values()]
-        .flatMap((filesForDisk) => filesForDisk.splice(0, chunkSize));
+      const batch = [...disksToFiles.values()].flatMap((filesForDisk) =>
+        filesForDisk.splice(0, chunkSize),
+      );
       filesStriped = [...filesStriped, ...batch];
     }
 
@@ -129,13 +127,11 @@ export default class DriveSemaphore {
     );
 
     // Put the values back in order
-    return results
-      .sort(([, aIdx], [, bIdx]) => aIdx - bIdx)
-      .map(([result]) => result);
+    return results.sort(([, aIdx], [, bIdx]) => aIdx - bIdx).map(([result]) => result);
   }
 
   private static getDiskForFile(file: File | string): string {
-    const filePath = file instanceof File ? file.getFilePath() : file as string;
+    const filePath = file instanceof File ? file.getFilePath() : (file as string);
     const filePathNormalized = filePath.replace(/[\\/]/g, path.sep);
 
     // Try to get the path of the drive this file is on

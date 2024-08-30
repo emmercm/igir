@@ -23,19 +23,24 @@ async function runCombinedCandidateGenerator(
   const dat = new DATCombiner(new ProgressBarFake()).combine(dats);
 
   const indexedRomFiles = new ROMIndexer(options, new ProgressBarFake()).index(romFiles);
-  const parentsToCandidates = await new CandidateGenerator(options, new ProgressBarFake())
-    .generate(dat, indexedRomFiles);
+  const parentsToCandidates = await new CandidateGenerator(options, new ProgressBarFake()).generate(
+    dat,
+    indexedRomFiles,
+  );
 
-  return new CandidateCombiner(options, new ProgressBarFake())
-    .combine(dat, parentsToCandidates);
+  return new CandidateCombiner(options, new ProgressBarFake()).combine(dat, parentsToCandidates);
 }
 
 it('should do nothing if option not specified', async () => {
   // Given
   const options = new Options();
-  const romFiles = await new ROMScanner(new Options({
-    input: [path.join('test', 'fixtures', 'roms', 'raw')],
-  }), new ProgressBarFake(), new FileFactory(new FileCache())).scan();
+  const romFiles = await new ROMScanner(
+    new Options({
+      input: [path.join('test', 'fixtures', 'roms', 'raw')],
+    }),
+    new ProgressBarFake(),
+    new FileFactory(new FileCache()),
+  ).scan();
 
   // When
   const parentsToCandidates = await runCombinedCandidateGenerator(options, romFiles);
@@ -59,9 +64,13 @@ it('should do nothing with no parents', async () => {
 it('should combine candidates', async () => {
   // Given
   const options = new Options({ zipDatName: true });
-  const romFiles = await new ROMScanner(new Options({
-    input: [path.join('test', 'fixtures', 'roms', 'raw')],
-  }), new ProgressBarFake(), new FileFactory(new FileCache())).scan();
+  const romFiles = await new ROMScanner(
+    new Options({
+      input: [path.join('test', 'fixtures', 'roms', 'raw')],
+    }),
+    new ProgressBarFake(),
+    new FileFactory(new FileCache()),
+  ).scan();
 
   // When
   const parentsToCandidates = await runCombinedCandidateGenerator(options, romFiles);

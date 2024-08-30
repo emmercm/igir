@@ -26,13 +26,17 @@ export default class DATMergerSplitter extends Module {
   merge(dat: DAT): DAT {
     // Don't do anything if no type provided
     if (this.options.getMergeRoms() === undefined) {
-      this.progressBar.logTrace(`${dat.getNameShort()}: no ROM merge option provided, doing nothing`);
+      this.progressBar.logTrace(
+        `${dat.getNameShort()}: no ROM merge option provided, doing nothing`,
+      );
       return dat;
     }
 
     // Parent/clone information is required to merge & split
     if (!dat.hasParentCloneInfo()) {
-      this.progressBar.logTrace(`${dat.getNameShort()}: DAT doesn't have parent/clone info, doing nothing`);
+      this.progressBar.logTrace(
+        `${dat.getNameShort()}: DAT doesn't have parent/clone info, doing nothing`,
+      );
       return dat;
     }
 
@@ -41,14 +45,19 @@ export default class DATMergerSplitter extends Module {
       return map;
     }, new Map<string, Game>());
 
-    this.progressBar.logTrace(`${dat.getNameShort()}: merging & splitting ${dat.getGames().length.toLocaleString()} game${dat.getGames().length !== 1 ? 's' : ''}`);
+    this.progressBar.logTrace(
+      `${dat.getNameShort()}: merging & splitting ${dat.getGames().length.toLocaleString()} game${dat.getGames().length !== 1 ? 's' : ''}`,
+    );
     this.progressBar.setSymbol(ProgressBarSymbol.DAT_MERGE_SPLIT);
     this.progressBar.reset(dat.getGames().length);
 
-    const newGames = dat.getParents()
+    const newGames = dat
+      .getParents()
       .flatMap((parent) => this.mergeParent(dat, parent, gameNamesToGames));
     const newDat = new LogiqxDAT(dat.getHeader(), newGames);
-    this.progressBar.logTrace(`${newDat.getNameShort()}: merged/split to ${newDat.getGames().length.toLocaleString()} game${newDat.getGames().length !== 1 ? 's' : ''}`);
+    this.progressBar.logTrace(
+      `${newDat.getNameShort()}: merged/split to ${newDat.getGames().length.toLocaleString()} game${newDat.getGames().length !== 1 ? 's' : ''}`,
+    );
 
     this.progressBar.logTrace(`${newDat.getNameShort()}: done merging & splitting`);
     return newDat;
@@ -58,17 +67,21 @@ export default class DATMergerSplitter extends Module {
     let games = parent.getGames();
 
     // Sanitization
-    games = games.map((game) => game.withProps({
-      rom: game.getRoms()
-        // Get rid of ROMs that haven't been dumped yet
-        .filter((rom) => rom.getStatus() !== 'nodump')
-        // Get rid of duplicate ROMs. MAME will sometimes duplicate a file with the exact same
-        // name, size, and checksum but with a different "region" (e.g. neogeo).
-        .filter(ArrayPoly.filterUniqueMapped((rom) => rom.getName())),
-      disk: game.getDisks()
-        // Get rid of ROMs that haven't been dumped yet
-        .filter((disk) => disk.getStatus() !== 'nodump'),
-    }));
+    games = games.map((game) =>
+      game.withProps({
+        rom: game
+          .getRoms()
+          // Get rid of ROMs that haven't been dumped yet
+          .filter((rom) => rom.getStatus() !== 'nodump')
+          // Get rid of duplicate ROMs. MAME will sometimes duplicate a file with the exact same
+          // name, size, and checksum but with a different "region" (e.g. neogeo).
+          .filter(ArrayPoly.filterUniqueMapped((rom) => rom.getName())),
+        disk: game
+          .getDisks()
+          // Get rid of ROMs that haven't been dumped yet
+          .filter((disk) => disk.getStatus() !== 'nodump'),
+      }),
+    );
 
     // 'full' types expect device ROMs to be included
     if (this.options.getMergeRoms() === MergeMode.FULLNONMERGED) {
@@ -78,15 +91,17 @@ export default class DATMergerSplitter extends Module {
         }
         return game.withProps({
           rom: [
-            ...game.getDeviceRefs()
+            ...game
+              .getDeviceRefs()
               // De-duplicate DeviceRef names
               .map((deviceRef) => deviceRef.getName())
               .reduce(ArrayPoly.reduceUnique(), [])
               // Get ROMs from the DeviceRef
               .map((deviceRefName) => gameNamesToGames.get(deviceRefName))
               .filter((deviceGame) => deviceGame !== undefined)
-              .flatMap((deviceGame) => deviceGame.getRoms()
-                .filter((rom) => rom.getStatus() !== 'nodump')),
+              .flatMap((deviceGame) =>
+                deviceGame.getRoms().filter((rom) => rom.getStatus() !== 'nodump'),
+              ),
             ...game.getRoms(),
           ],
         });
@@ -95,37 +110,39 @@ export default class DATMergerSplitter extends Module {
 
     // Non-'full' types expect BIOS files to be in their own set
     if (this.options.getMergeRoms() !== MergeMode.FULLNONMERGED) {
-      games = games
-        .map((game) => {
-          if (!game.getBios()) {
-            // This game doesn't use an external BIOS
-            return game;
-          }
+      games = games.map((game) => {
+        if (!game.getBios()) {
+          // This game doesn't use an external BIOS
+          return game;
+        }
 
-          let biosGame = gameNamesToGames.get(game.getBios());
-          if (!biosGame) {
-            // Invalid romOf attribute, external BIOS not found
-            this.progressBar.logTrace(`${dat.getNameShort()}: ${game.getName()} references an invalid BIOS: ${game.getBios()}`);
-            return game;
-          }
-          // If the referenced `romOf` game is not a BIOS, then it must be a parent game.
-          // Reduce the non-BIOS parent to only its BIOS ROMs, so that they can be excluded from
-          // the child.
-          if (!biosGame.isBios()) {
-            biosGame = biosGame.withProps({
-              rom: biosGame.getRoms().filter((rom) => rom.getBios()),
-            });
-          }
-
-          return game.withProps({
-            rom: DATMergerSplitter.diffGameRoms(biosGame.getRoms(), game.getRoms()),
+        let biosGame = gameNamesToGames.get(game.getBios());
+        if (!biosGame) {
+          // Invalid romOf attribute, external BIOS not found
+          this.progressBar.logTrace(
+            `${dat.getNameShort()}: ${game.getName()} references an invalid BIOS: ${game.getBios()}`,
+          );
+          return game;
+        }
+        // If the referenced `romOf` game is not a BIOS, then it must be a parent game.
+        // Reduce the non-BIOS parent to only its BIOS ROMs, so that they can be excluded from
+        // the child.
+        if (!biosGame.isBios()) {
+          biosGame = biosGame.withProps({
+            rom: biosGame.getRoms().filter((rom) => rom.getBios()),
           });
+        }
+
+        return game.withProps({
+          rom: DATMergerSplitter.diffGameRoms(biosGame.getRoms(), game.getRoms()),
         });
+      });
     }
 
     // 'split' and 'merged' types should exclude ROMs & disks found in their parent
-    if (this.options.getMergeRoms() === MergeMode.SPLIT
-      || this.options.getMergeRoms() === MergeMode.MERGED
+    if (
+      this.options.getMergeRoms() === MergeMode.SPLIT ||
+      this.options.getMergeRoms() === MergeMode.MERGED
     ) {
       games = games.map((game) => {
         if (!game.getParent()) {
@@ -136,7 +153,9 @@ export default class DATMergerSplitter extends Module {
         const parentGame = gameNamesToGames.get(game.getParent());
         if (!parentGame) {
           // Invalid cloneOf attribute, parent not found
-          this.progressBar.logTrace(`${dat.getNameShort()}: ${game.getName()} references an invalid parent: ${game.getParent()}`);
+          this.progressBar.logTrace(
+            `${dat.getNameShort()}: ${game.getName()} references an invalid parent: ${game.getParent()}`,
+          );
           return game;
         }
 
@@ -148,8 +167,7 @@ export default class DATMergerSplitter extends Module {
     }
 
     const parentGame = games.find((game) => game.isParent());
-    const cloneGames = games
-      .filter((game) => game.isClone());
+    const cloneGames = games.filter((game) => game.isClone());
 
     // For everything other than 'merged' we keep the same number of games
     if (this.options.getMergeRoms() !== MergeMode.MERGED) {
@@ -160,20 +178,26 @@ export default class DATMergerSplitter extends Module {
     }
 
     // For 'merged' we reduce to one game
-    const cloneRoms = cloneGames
-      .flatMap((game) => game.getRoms()
-        .map((rom) => new ROM({
-          ...rom,
-          name: `${game.getName()}\\${rom.getName()}`,
-        })));
+    const cloneRoms = cloneGames.flatMap((game) =>
+      game.getRoms().map(
+        (rom) =>
+          new ROM({
+            ...rom,
+            name: `${game.getName()}\\${rom.getName()}`,
+          }),
+      ),
+    );
     const allRoms = [...cloneRoms, ...(parentGame ? parentGame.getRoms() : [])];
     // And remove any duplicate ROMs, even if the duplicates exist only in clones and not the parent
-    const allRomsDeduplicated = allRoms
-      .filter(ArrayPoly.filterUniqueMapped((rom) => rom.hashCode()));
-    return [new Machine({
-      ...parentGame,
-      rom: allRomsDeduplicated,
-    })];
+    const allRomsDeduplicated = allRoms.filter(
+      ArrayPoly.filterUniqueMapped((rom) => rom.hashCode()),
+    );
+    return [
+      new Machine({
+        ...parentGame,
+        rom: allRomsDeduplicated,
+      }),
+    ];
   }
 
   private static diffGameRoms(parentRoms: ROM[], childRoms: ROM[]): ROM[] {

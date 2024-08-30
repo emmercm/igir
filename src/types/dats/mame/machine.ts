@@ -4,7 +4,7 @@ import Game, { GameProps } from '../game.js';
 import DeviceRef from './deviceRef.js';
 
 export interface MachineProps extends GameProps {
-  readonly deviceRef?: DeviceRef | DeviceRef[],
+  readonly deviceRef?: DeviceRef | DeviceRef[];
 }
 
 /**
@@ -24,7 +24,8 @@ export default class Machine extends Game implements MachineProps {
   getDeviceRefs(): DeviceRef[] {
     if (Array.isArray(this.deviceRef)) {
       return this.deviceRef;
-    } if (this.deviceRef) {
+    }
+    if (this.deviceRef) {
       return [this.deviceRef];
     }
     return [];

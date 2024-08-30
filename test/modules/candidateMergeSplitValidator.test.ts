@@ -14,18 +14,20 @@ import ProgressBarFake from '../console/progressBarFake.js';
 
 async function datToCandidates(dat: DAT): Promise<Map<Parent, ReleaseCandidate[]>> {
   const dummyFile = await File.fileOf({ filePath: '' });
-  return dat.getParents()
-    .reduce((map, parent) => {
-      const releaseCandidates = parent.getGames()
-        .flatMap((game) => (game.getReleases().length > 0 ? game.getReleases() : [undefined])
-          .map((release) => new ReleaseCandidate(
+  return dat.getParents().reduce((map, parent) => {
+    const releaseCandidates = parent.getGames().flatMap((game) =>
+      (game.getReleases().length > 0 ? game.getReleases() : [undefined]).map(
+        (release) =>
+          new ReleaseCandidate(
             game,
             release,
             game.getRoms().map((rom) => new ROMWithFiles(rom, dummyFile, dummyFile)),
-          )));
-      map.set(parent, releaseCandidates);
-      return map;
-    }, new Map<Parent, ReleaseCandidate[]>());
+          ),
+      ),
+    );
+    map.set(parent, releaseCandidates);
+    return map;
+  }, new Map<Parent, ReleaseCandidate[]>());
 }
 
 describe('missing parents', () => {
@@ -55,8 +57,10 @@ describe('missing parents', () => {
     const options = new Options({ mergeRoms });
     const parentsToCandidates = await datToCandidates(dat);
 
-    const missingGames = new CandidateMergeSplitValidator(options, new ProgressBarFake())
-      .validate(dat, parentsToCandidates);
+    const missingGames = new CandidateMergeSplitValidator(options, new ProgressBarFake()).validate(
+      dat,
+      parentsToCandidates,
+    );
     expect(missingGames).toEqual([]);
   });
 
@@ -66,8 +70,10 @@ describe('missing parents', () => {
     });
     const parentsToCandidates = await datToCandidates(dat);
 
-    const missingGames = new CandidateMergeSplitValidator(options, new ProgressBarFake())
-      .validate(dat, parentsToCandidates);
+    const missingGames = new CandidateMergeSplitValidator(options, new ProgressBarFake()).validate(
+      dat,
+      parentsToCandidates,
+    );
     expect(missingGames).toEqual(['grandparent']);
   });
 });
@@ -103,8 +109,10 @@ describe('device refs', () => {
         .filter(([, candidate]) => candidate.some((rc) => !rc.getGame().isDevice())),
     );
 
-    const missingGames = new CandidateMergeSplitValidator(options, new ProgressBarFake())
-      .validate(dat, parentsToCandidates);
+    const missingGames = new CandidateMergeSplitValidator(options, new ProgressBarFake()).validate(
+      dat,
+      parentsToCandidates,
+    );
     expect(missingGames).toEqual([]);
   });
 
@@ -121,8 +129,10 @@ describe('device refs', () => {
         .filter(([, candidate]) => candidate.some((rc) => !rc.getGame().isDevice())),
     );
 
-    const missingGames = new CandidateMergeSplitValidator(options, new ProgressBarFake())
-      .validate(dat, parentsToCandidates);
+    const missingGames = new CandidateMergeSplitValidator(options, new ProgressBarFake()).validate(
+      dat,
+      parentsToCandidates,
+    );
     expect(missingGames).toEqual(['screen']);
   });
 });

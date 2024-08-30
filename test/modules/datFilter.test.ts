@@ -79,35 +79,47 @@ it('should return nothing if no parents exist', () => {
 });
 
 it('should return nothing if no parent has release candidates', () => {
-  expectFilteredDAT({}, [
-    buildGameWithRegionLanguage(['one', 'two', 'three'], [], []),
-  ], 0);
+  expectFilteredDAT({}, [buildGameWithRegionLanguage(['one', 'two', 'three'], [], [])], 0);
 });
 
 describe('filter', () => {
   it('should return all candidates if no filter', () => {
-    expectFilteredDAT({}, [
-      buildGameWithRegionLanguage('one', 'USA', 'EN'),
-    ], 1);
+    expectFilteredDAT({}, [buildGameWithRegionLanguage('one', 'USA', 'EN')], 1);
 
-    expectFilteredDAT({}, [
-      buildGameWithRegionLanguage('one', 'USA', 'EN'),
-      buildGameWithRegionLanguage('two', 'JPN', 'JA'),
-    ], 2);
+    expectFilteredDAT(
+      {},
+      [
+        buildGameWithRegionLanguage('one', 'USA', 'EN'),
+        buildGameWithRegionLanguage('two', 'JPN', 'JA'),
+      ],
+      2,
+    );
   });
 
   it('should return no candidates if none given', () => {
-    expectFilteredDAT({
-      filterLanguage: [],
-    }, [], 0);
+    expectFilteredDAT(
+      {
+        filterLanguage: [],
+      },
+      [],
+      0,
+    );
 
-    expectFilteredDAT({
-      filterLanguage: ['ZH'],
-    }, [], 0);
+    expectFilteredDAT(
+      {
+        filterLanguage: ['ZH'],
+      },
+      [],
+      0,
+    );
 
-    expectFilteredDAT({
-      filterLanguage: ['ZH', 'DE'],
-    }, [], 0);
+    expectFilteredDAT(
+      {
+        filterLanguage: ['ZH', 'DE'],
+      },
+      [],
+      0,
+    );
   });
 
   it('should not re-elect a new parent if not filtered out', () => {
@@ -138,9 +150,12 @@ describe('filter', () => {
       'Legend of Zelda, The (Europe) (Rev 1) (Virtual Console)',
     ]);
     expect(filteredDat.getGames().at(0)?.getParent()).toEqual('');
-    expect(filteredDat.getGames()
-      .slice(1)
-      .every((game) => game.getParent() === 'Legend of Zelda, The (Europe) (Rev 1)')).toEqual(true);
+    expect(
+      filteredDat
+        .getGames()
+        .slice(1)
+        .every((game) => game.getParent() === 'Legend of Zelda, The (Europe) (Rev 1)'),
+    ).toEqual(true);
   });
 
   it('should not leave children abandoned', () => {
@@ -173,239 +188,326 @@ describe('filter', () => {
       'Legend of Zelda, The (USA) (Rev 1) (Virtual Console)',
     ]);
     expect(filteredDat.getGames().at(0)?.getParent()).toEqual('');
-    expect(filteredDat.getGames()
-      .slice(1)
-      .every((game) => game.getParent() === 'Legend of Zelda, The (USA)')).toEqual(true);
+    expect(
+      filteredDat
+        .getGames()
+        .slice(1)
+        .every((game) => game.getParent() === 'Legend of Zelda, The (USA)'),
+    ).toEqual(true);
   });
 
   describe('filter regex', () => {
-    test.each([
-      'ONE',
-      'four',
-      '[xyz]',
-    ])('should return no candidates if none matching: %s', (filterRegex) => {
-      expectFilteredDAT({ filterRegex }, [
-        buildGameWithRegionLanguage('one'),
-        buildGameWithRegionLanguage('two'),
-        buildGameWithRegionLanguage('three'),
-      ], 0);
-    });
+    test.each(['ONE', 'four', '[xyz]'])(
+      'should return no candidates if none matching: %s',
+      (filterRegex) => {
+        expectFilteredDAT(
+          { filterRegex },
+          [
+            buildGameWithRegionLanguage('one'),
+            buildGameWithRegionLanguage('two'),
+            buildGameWithRegionLanguage('three'),
+          ],
+          0,
+        );
+      },
+    );
 
-    test.each([
-      '/ONE/i',
-      'two',
-      'o$',
-    ])('should return one candidate if one matching: %s', (filterRegex) => {
-      expectFilteredDAT({ filterRegex }, [
-        buildGameWithRegionLanguage('one'),
-        buildGameWithRegionLanguage('two'),
-        buildGameWithRegionLanguage('three'),
-      ], 1);
-    });
+    test.each(['/ONE/i', 'two', 'o$'])(
+      'should return one candidate if one matching: %s',
+      (filterRegex) => {
+        expectFilteredDAT(
+          { filterRegex },
+          [
+            buildGameWithRegionLanguage('one'),
+            buildGameWithRegionLanguage('two'),
+            buildGameWithRegionLanguage('three'),
+          ],
+          1,
+        );
+      },
+    );
 
-    test.each([
-      '(one|two|three)',
-      '[aeiou]',
-    ])('should return all candidates if all matching: %s', (filterRegex) => {
-      expectFilteredDAT({ filterRegex }, [
-        buildGameWithRegionLanguage('one'),
-        buildGameWithRegionLanguage('two'),
-        buildGameWithRegionLanguage('three'),
-      ], 3);
-    });
+    test.each(['(one|two|three)', '[aeiou]'])(
+      'should return all candidates if all matching: %s',
+      (filterRegex) => {
+        expectFilteredDAT(
+          { filterRegex },
+          [
+            buildGameWithRegionLanguage('one'),
+            buildGameWithRegionLanguage('two'),
+            buildGameWithRegionLanguage('three'),
+          ],
+          3,
+        );
+      },
+    );
   });
 
   describe('filter regex exclude', () => {
-    test.each([
-      '(one|two|three)',
-      '[aeiou]',
-    ])('should return no candidates if all matching: %s', (filterRegexExclude) => {
-      expectFilteredDAT({ filterRegexExclude }, [
-        buildGameWithRegionLanguage('one'),
-        buildGameWithRegionLanguage('two'),
-        buildGameWithRegionLanguage('three'),
-      ], 0);
-    });
+    test.each(['(one|two|three)', '[aeiou]'])(
+      'should return no candidates if all matching: %s',
+      (filterRegexExclude) => {
+        expectFilteredDAT(
+          { filterRegexExclude },
+          [
+            buildGameWithRegionLanguage('one'),
+            buildGameWithRegionLanguage('two'),
+            buildGameWithRegionLanguage('three'),
+          ],
+          0,
+        );
+      },
+    );
 
-    test.each([
-      '(two|three)',
-      't',
-      '/E/i',
-    ])('should return one candidate if two matching: %s', (filterRegexExclude) => {
-      expectFilteredDAT({ filterRegexExclude }, [
-        buildGameWithRegionLanguage('one'),
-        buildGameWithRegionLanguage('two'),
-        buildGameWithRegionLanguage('three'),
-      ], 1);
-    });
+    test.each(['(two|three)', 't', '/E/i'])(
+      'should return one candidate if two matching: %s',
+      (filterRegexExclude) => {
+        expectFilteredDAT(
+          { filterRegexExclude },
+          [
+            buildGameWithRegionLanguage('one'),
+            buildGameWithRegionLanguage('two'),
+            buildGameWithRegionLanguage('three'),
+          ],
+          1,
+        );
+      },
+    );
 
-    test.each([
-      'ONE',
-      'four',
-      '[xyz]',
-    ])('should return all candidates if none matching: %s', (filterRegexExclude) => {
-      expectFilteredDAT({ filterRegexExclude }, [
-        buildGameWithRegionLanguage('one'),
-        buildGameWithRegionLanguage('two'),
-        buildGameWithRegionLanguage('three'),
-      ], 3);
-    });
+    test.each(['ONE', 'four', '[xyz]'])(
+      'should return all candidates if none matching: %s',
+      (filterRegexExclude) => {
+        expectFilteredDAT(
+          { filterRegexExclude },
+          [
+            buildGameWithRegionLanguage('one'),
+            buildGameWithRegionLanguage('two'),
+            buildGameWithRegionLanguage('three'),
+          ],
+          3,
+        );
+      },
+    );
   });
 
   describe('language filter', () => {
     it('should return no candidates if none matching', () => {
-      expectFilteredDAT({
-        filterLanguage: ['ZH'],
-      }, [
-        buildGameWithRegionLanguage('one', 'USA', 'EN'),
-      ], 0);
+      expectFilteredDAT(
+        {
+          filterLanguage: ['ZH'],
+        },
+        [buildGameWithRegionLanguage('one', 'USA', 'EN')],
+        0,
+      );
 
-      expectFilteredDAT({
-        filterLanguage: ['ZH'],
-      }, [
-        buildGameWithRegionLanguage('one', 'EUR', undefined),
-      ], 0);
+      expectFilteredDAT(
+        {
+          filterLanguage: ['ZH'],
+        },
+        [buildGameWithRegionLanguage('one', 'EUR', undefined)],
+        0,
+      );
 
-      expectFilteredDAT({
-        filterLanguage: ['ZH'],
-      }, [
-        buildGameWithRegionLanguage('one (En,Fr,De)', 'EUR', undefined),
-      ], 0);
+      expectFilteredDAT(
+        {
+          filterLanguage: ['ZH'],
+        },
+        [buildGameWithRegionLanguage('one (En,Fr,De)', 'EUR', undefined)],
+        0,
+      );
 
-      expectFilteredDAT({
-        filterLanguage: ['ZH'],
-      }, [
-        buildGameWithRegionLanguage('one', 'USA', 'EN'),
-        buildGameWithRegionLanguage('two', 'JPN', 'JA'),
-        buildGameWithRegionLanguage('three', 'EUR', ['DE', 'IT', 'EN']),
-      ], 0);
+      expectFilteredDAT(
+        {
+          filterLanguage: ['ZH'],
+        },
+        [
+          buildGameWithRegionLanguage('one', 'USA', 'EN'),
+          buildGameWithRegionLanguage('two', 'JPN', 'JA'),
+          buildGameWithRegionLanguage('three', 'EUR', ['DE', 'IT', 'EN']),
+        ],
+        0,
+      );
     });
 
     it('should return some candidates if some matching', () => {
-      expectFilteredDAT({
-        filterLanguage: ['ZH'],
-      }, [
-        buildGameWithRegionLanguage('one', 'USA', 'EN'),
-        buildGameWithRegionLanguage('two', 'CHN', 'ZH'),
-        buildGameWithRegionLanguage('three', 'EUR', ['DE', 'IT', 'EN']),
-      ], 1);
+      expectFilteredDAT(
+        {
+          filterLanguage: ['ZH'],
+        },
+        [
+          buildGameWithRegionLanguage('one', 'USA', 'EN'),
+          buildGameWithRegionLanguage('two', 'CHN', 'ZH'),
+          buildGameWithRegionLanguage('three', 'EUR', ['DE', 'IT', 'EN']),
+        ],
+        1,
+      );
 
-      expectFilteredDAT({
-        filterLanguage: ['ZH'],
-      }, [
-        buildGameWithRegionLanguage('one', 'USA', undefined),
-        buildGameWithRegionLanguage('two', 'CHN', undefined),
-        buildGameWithRegionLanguage('three', 'EUR', undefined),
-      ], 1);
+      expectFilteredDAT(
+        {
+          filterLanguage: ['ZH'],
+        },
+        [
+          buildGameWithRegionLanguage('one', 'USA', undefined),
+          buildGameWithRegionLanguage('two', 'CHN', undefined),
+          buildGameWithRegionLanguage('three', 'EUR', undefined),
+        ],
+        1,
+      );
 
-      expectFilteredDAT({
-        filterLanguage: ['EN', 'ZH'],
-      }, [
-        buildGameWithRegionLanguage('one', 'USA', 'EN'),
-        buildGameWithRegionLanguage('two', 'JPN', 'JA'),
-        buildGameWithRegionLanguage('three', 'ASI', ['JA', 'KO', 'ZH']),
-      ], 2);
+      expectFilteredDAT(
+        {
+          filterLanguage: ['EN', 'ZH'],
+        },
+        [
+          buildGameWithRegionLanguage('one', 'USA', 'EN'),
+          buildGameWithRegionLanguage('two', 'JPN', 'JA'),
+          buildGameWithRegionLanguage('three', 'ASI', ['JA', 'KO', 'ZH']),
+        ],
+        2,
+      );
     });
 
     it('should return all candidates if all matching', () => {
-      expectFilteredDAT({
-        filterLanguage: ['EN'],
-      }, [
-        buildGameWithRegionLanguage('one', 'USA', 'EN'),
-      ], 1);
+      expectFilteredDAT(
+        {
+          filterLanguage: ['EN'],
+        },
+        [buildGameWithRegionLanguage('one', 'USA', 'EN')],
+        1,
+      );
 
-      expectFilteredDAT({
-        filterLanguage: ['EN'],
-      }, [
-        buildGameWithRegionLanguage('one', 'EUR', undefined),
-      ], 1);
+      expectFilteredDAT(
+        {
+          filterLanguage: ['EN'],
+        },
+        [buildGameWithRegionLanguage('one', 'EUR', undefined)],
+        1,
+      );
 
-      expectFilteredDAT({
-        filterLanguage: ['EN'],
-      }, [
-        buildGameWithRegionLanguage('one (En,Fr,De)', 'EUR', undefined),
-      ], 1);
+      expectFilteredDAT(
+        {
+          filterLanguage: ['EN'],
+        },
+        [buildGameWithRegionLanguage('one (En,Fr,De)', 'EUR', undefined)],
+        1,
+      );
 
-      expectFilteredDAT({
-        filterLanguage: ['EN', 'ZH'],
-      }, [
-        buildGameWithRegionLanguage('one', 'USA', 'EN'),
-        buildGameWithRegionLanguage('two', 'CHN', 'ZH'),
-      ], 2);
+      expectFilteredDAT(
+        {
+          filterLanguage: ['EN', 'ZH'],
+        },
+        [
+          buildGameWithRegionLanguage('one', 'USA', 'EN'),
+          buildGameWithRegionLanguage('two', 'CHN', 'ZH'),
+        ],
+        2,
+      );
 
-      expectFilteredDAT({
-        filterLanguage: ['EN', 'ZH'],
-      }, [
-        buildGameWithRegionLanguage('one', 'USA', undefined),
-        buildGameWithRegionLanguage('two', 'CHN', undefined),
-      ], 2);
+      expectFilteredDAT(
+        {
+          filterLanguage: ['EN', 'ZH'],
+        },
+        [
+          buildGameWithRegionLanguage('one', 'USA', undefined),
+          buildGameWithRegionLanguage('two', 'CHN', undefined),
+        ],
+        2,
+      );
 
-      expectFilteredDAT({
-        filterLanguage: ['EN', 'JA'],
-      }, [
-        buildGameWithRegionLanguage('one', 'USA', 'EN'),
-        buildGameWithRegionLanguage('two', 'JPN', 'JA'),
-        buildGameWithRegionLanguage('three', 'ASI', ['JA', 'KO', 'ZH']),
-      ], 3);
+      expectFilteredDAT(
+        {
+          filterLanguage: ['EN', 'JA'],
+        },
+        [
+          buildGameWithRegionLanguage('one', 'USA', 'EN'),
+          buildGameWithRegionLanguage('two', 'JPN', 'JA'),
+          buildGameWithRegionLanguage('three', 'ASI', ['JA', 'KO', 'ZH']),
+        ],
+        3,
+      );
     });
   });
 
   describe('region filter', () => {
     it('should return no candidates if none matching', () => {
-      expectFilteredDAT({
-        filterRegion: ['EUR'],
-      }, [
-        buildGameWithRegionLanguage('one', 'USA', 'EN'),
-      ], 0);
+      expectFilteredDAT(
+        {
+          filterRegion: ['EUR'],
+        },
+        [buildGameWithRegionLanguage('one', 'USA', 'EN')],
+        0,
+      );
 
-      expectFilteredDAT({
-        filterRegion: ['CHN'],
-      }, [
-        buildGameWithRegionLanguage('one', ['USA', 'CAN'], 'EN'),
-        buildGameWithRegionLanguage('two', 'JPN', 'JA'),
-        buildGameWithRegionLanguage('three', 'EUR', ['DE', 'IT', 'EN']),
-      ], 0);
+      expectFilteredDAT(
+        {
+          filterRegion: ['CHN'],
+        },
+        [
+          buildGameWithRegionLanguage('one', ['USA', 'CAN'], 'EN'),
+          buildGameWithRegionLanguage('two', 'JPN', 'JA'),
+          buildGameWithRegionLanguage('three', 'EUR', ['DE', 'IT', 'EN']),
+        ],
+        0,
+      );
     });
 
     it('should return some candidates if some matching', () => {
-      expectFilteredDAT({
-        filterRegion: ['USA'],
-      }, [
-        buildGameWithRegionLanguage('one', 'USA', 'EN'),
-        buildGameWithRegionLanguage('two', 'CHN', 'ZH'),
-        buildGameWithRegionLanguage('three', 'EUR', ['DE', 'IT', 'EN']),
-      ], 1);
+      expectFilteredDAT(
+        {
+          filterRegion: ['USA'],
+        },
+        [
+          buildGameWithRegionLanguage('one', 'USA', 'EN'),
+          buildGameWithRegionLanguage('two', 'CHN', 'ZH'),
+          buildGameWithRegionLanguage('three', 'EUR', ['DE', 'IT', 'EN']),
+        ],
+        1,
+      );
 
-      expectFilteredDAT({
-        filterRegion: ['CAN', 'ASI'],
-      }, [
-        buildGameWithRegionLanguage('one', ['USA', 'CAN'], 'EN'),
-        buildGameWithRegionLanguage('two', 'JPN', 'JA'),
-        buildGameWithRegionLanguage('three', 'ASI', ['JA', 'KO', 'ZH']),
-      ], 4);
+      expectFilteredDAT(
+        {
+          filterRegion: ['CAN', 'ASI'],
+        },
+        [
+          buildGameWithRegionLanguage('one', ['USA', 'CAN'], 'EN'),
+          buildGameWithRegionLanguage('two', 'JPN', 'JA'),
+          buildGameWithRegionLanguage('three', 'ASI', ['JA', 'KO', 'ZH']),
+        ],
+        4,
+      );
     });
 
     it('should return all candidates if all matching', () => {
-      expectFilteredDAT({
-        filterRegion: ['USA'],
-      }, [
-        buildGameWithRegionLanguage('one', 'USA', 'EN'),
-      ], 1);
+      expectFilteredDAT(
+        {
+          filterRegion: ['USA'],
+        },
+        [buildGameWithRegionLanguage('one', 'USA', 'EN')],
+        1,
+      );
 
-      expectFilteredDAT({
-        filterRegion: ['USA', 'CHN'],
-      }, [
-        buildGameWithRegionLanguage('one', 'USA', 'EN'),
-        buildGameWithRegionLanguage('two', 'CHN', 'ZH'),
-      ], 2);
+      expectFilteredDAT(
+        {
+          filterRegion: ['USA', 'CHN'],
+        },
+        [
+          buildGameWithRegionLanguage('one', 'USA', 'EN'),
+          buildGameWithRegionLanguage('two', 'CHN', 'ZH'),
+        ],
+        2,
+      );
 
-      expectFilteredDAT({
-        filterRegion: ['USA', 'JPN'],
-      }, [
-        buildGameWithRegionLanguage('one', 'USA', 'EN'),
-        buildGameWithRegionLanguage('two', 'JPN', 'JA'),
-        buildGameWithRegionLanguage('three', ['ASI', 'JPN'], ['JA', 'KO', 'ZH']),
-      ], 5);
+      expectFilteredDAT(
+        {
+          filterRegion: ['USA', 'JPN'],
+        },
+        [
+          buildGameWithRegionLanguage('one', 'USA', 'EN'),
+          buildGameWithRegionLanguage('two', 'JPN', 'JA'),
+          buildGameWithRegionLanguage('three', ['ASI', 'JPN'], ['JA', 'KO', 'ZH']),
+        ],
+        5,
+      );
     });
   });
 
@@ -531,55 +633,71 @@ describe('filter', () => {
 
   describe('only retail', () => {
     it('should return all candidates when option is false', () => {
-      expectFilteredDAT({ onlyRetail: false }, [
-        buildGameWithRegionLanguage('one', 'USA', 'EN'),
-        buildGameWithRegionLanguage('two (Aftermarket)', 'USA', 'EN'),
-        buildGameWithRegionLanguage('three [b]', 'USA', 'EN'),
-        buildGameWithRegionLanguage('four (Beta)', 'USA', 'EN'),
-        buildGameWithRegionLanguage('five (Demo)', 'USA', 'EN'),
-        buildGameWithRegionLanguage('six (Homebrew)', 'USA', 'EN'),
-        buildGameWithRegionLanguage('seven (Proto)', 'USA', 'EN'),
-        buildGameWithRegionLanguage('eight (Sample)', 'USA', 'EN'),
-        buildGameWithRegionLanguage('nine (Program)', 'USA', 'EN'),
-        buildGameWithRegionLanguage('ten (Debug)', 'USA', 'EN'),
-      ], 10);
+      expectFilteredDAT(
+        { onlyRetail: false },
+        [
+          buildGameWithRegionLanguage('one', 'USA', 'EN'),
+          buildGameWithRegionLanguage('two (Aftermarket)', 'USA', 'EN'),
+          buildGameWithRegionLanguage('three [b]', 'USA', 'EN'),
+          buildGameWithRegionLanguage('four (Beta)', 'USA', 'EN'),
+          buildGameWithRegionLanguage('five (Demo)', 'USA', 'EN'),
+          buildGameWithRegionLanguage('six (Homebrew)', 'USA', 'EN'),
+          buildGameWithRegionLanguage('seven (Proto)', 'USA', 'EN'),
+          buildGameWithRegionLanguage('eight (Sample)', 'USA', 'EN'),
+          buildGameWithRegionLanguage('nine (Program)', 'USA', 'EN'),
+          buildGameWithRegionLanguage('ten (Debug)', 'USA', 'EN'),
+        ],
+        10,
+      );
     });
 
     it('should return no candidates if none matching', () => {
-      expectFilteredDAT({ onlyRetail: true }, [
-        buildGameWithRegionLanguage('two (Aftermarket)', 'USA', 'EN'),
-        buildGameWithRegionLanguage('three [b]', 'USA', 'EN'),
-        buildGameWithRegionLanguage('four (Beta)', 'USA', 'EN'),
-        buildGameWithRegionLanguage('five (Demo)', 'USA', 'EN'),
-        buildGameWithRegionLanguage('six (Homebrew)', 'USA', 'EN'),
-        buildGameWithRegionLanguage('seven (Proto)', 'USA', 'EN'),
-        buildGameWithRegionLanguage('eight (Sample)', 'USA', 'EN'),
-        buildGameWithRegionLanguage('nine (Program)', 'USA', 'EN'),
-        buildGameWithRegionLanguage('ten (Debug)', 'USA', 'EN'),
-      ], 0);
+      expectFilteredDAT(
+        { onlyRetail: true },
+        [
+          buildGameWithRegionLanguage('two (Aftermarket)', 'USA', 'EN'),
+          buildGameWithRegionLanguage('three [b]', 'USA', 'EN'),
+          buildGameWithRegionLanguage('four (Beta)', 'USA', 'EN'),
+          buildGameWithRegionLanguage('five (Demo)', 'USA', 'EN'),
+          buildGameWithRegionLanguage('six (Homebrew)', 'USA', 'EN'),
+          buildGameWithRegionLanguage('seven (Proto)', 'USA', 'EN'),
+          buildGameWithRegionLanguage('eight (Sample)', 'USA', 'EN'),
+          buildGameWithRegionLanguage('nine (Program)', 'USA', 'EN'),
+          buildGameWithRegionLanguage('ten (Debug)', 'USA', 'EN'),
+        ],
+        0,
+      );
     });
 
     it('should return some candidates if some matching', () => {
-      expectFilteredDAT({ onlyRetail: true }, [
-        buildGameWithRegionLanguage('one', 'USA', 'EN'),
-        buildGameWithRegionLanguage('two (Aftermarket)', 'USA', 'EN'),
-        buildGameWithRegionLanguage('three [b]', 'USA', 'EN'),
-        buildGameWithRegionLanguage('four (Beta)', 'USA', 'EN'),
-        buildGameWithRegionLanguage('five (Demo)', 'USA', 'EN'),
-        buildGameWithRegionLanguage('six (Homebrew)', 'USA', 'EN'),
-        buildGameWithRegionLanguage('seven (Proto)', 'USA', 'EN'),
-        buildGameWithRegionLanguage('eight (Sample)', 'USA', 'EN'),
-        buildGameWithRegionLanguage('nine (Program)', 'USA', 'EN'),
-        buildGameWithRegionLanguage('ten (Debug)', 'USA', 'EN'),
-        buildGameWithRegionLanguage('gazillion', 'USA', 'EN'),
-      ], 2);
+      expectFilteredDAT(
+        { onlyRetail: true },
+        [
+          buildGameWithRegionLanguage('one', 'USA', 'EN'),
+          buildGameWithRegionLanguage('two (Aftermarket)', 'USA', 'EN'),
+          buildGameWithRegionLanguage('three [b]', 'USA', 'EN'),
+          buildGameWithRegionLanguage('four (Beta)', 'USA', 'EN'),
+          buildGameWithRegionLanguage('five (Demo)', 'USA', 'EN'),
+          buildGameWithRegionLanguage('six (Homebrew)', 'USA', 'EN'),
+          buildGameWithRegionLanguage('seven (Proto)', 'USA', 'EN'),
+          buildGameWithRegionLanguage('eight (Sample)', 'USA', 'EN'),
+          buildGameWithRegionLanguage('nine (Program)', 'USA', 'EN'),
+          buildGameWithRegionLanguage('ten (Debug)', 'USA', 'EN'),
+          buildGameWithRegionLanguage('gazillion', 'USA', 'EN'),
+        ],
+        2,
+      );
     });
 
     it('should return all candidates if all matching', () => {
-      expectFilteredDAT({ onlyRetail: true }, [
-        buildGameWithRegionLanguage('one', 'USA', 'EN'),
-        buildGameWithRegionLanguage('two', 'USA', 'EN'),
-      ], 2);
+      expectFilteredDAT(
+        { onlyRetail: true },
+        [
+          buildGameWithRegionLanguage('one', 'USA', 'EN'),
+          buildGameWithRegionLanguage('two', 'USA', 'EN'),
+        ],
+        2,
+      );
     });
   });
 

@@ -12,14 +12,22 @@ import ProgressBarFake from '../console/progressBarFake.js';
 
 describe('extension has possible header', () => {
   it('should do nothing if extension not found', async () => {
-    const inputRomFiles = await new ROMScanner(new Options({
-      input: ['./test/fixtures/roms/{,**/}*.rom'],
-    }), new ProgressBarFake(), new FileFactory(new FileCache())).scan();
+    const inputRomFiles = await new ROMScanner(
+      new Options({
+        input: ['./test/fixtures/roms/{,**/}*.rom'],
+      }),
+      new ProgressBarFake(),
+      new FileFactory(new FileCache()),
+    ).scan();
     expect(inputRomFiles.length).toBeGreaterThan(0);
 
-    const processedRomFiles = await new ROMHeaderProcessor(new Options({
-      commands: ['copy', 'extract'],
-    }), new ProgressBarFake(), new FileFactory(new FileCache())).process(inputRomFiles);
+    const processedRomFiles = await new ROMHeaderProcessor(
+      new Options({
+        commands: ['copy', 'extract'],
+      }),
+      new ProgressBarFake(),
+      new FileFactory(new FileCache()),
+    ).process(inputRomFiles);
 
     expect(processedRomFiles).toHaveLength(inputRomFiles.length);
     for (const [idx, processedRomFile] of processedRomFiles.entries()) {
@@ -33,23 +41,35 @@ describe('extension has possible header', () => {
     await expect(FsPoly.exists(tempPath)).resolves.toEqual(false);
     const inputRomFiles = [await File.fileOf({ filePath: tempPath })];
 
-    const processedRomFiles = await new ROMHeaderProcessor(new Options({
-      commands: ['copy', 'extract'],
-    }), new ProgressBarFake(), new FileFactory(new FileCache())).process(inputRomFiles);
+    const processedRomFiles = await new ROMHeaderProcessor(
+      new Options({
+        commands: ['copy', 'extract'],
+      }),
+      new ProgressBarFake(),
+      new FileFactory(new FileCache()),
+    ).process(inputRomFiles);
 
     expect(processedRomFiles).toHaveLength(1);
     expect(processedRomFiles[0].getFileHeader()).toBeUndefined();
   });
 
   it('should process raw headered files', async () => {
-    const inputRomFiles = await new ROMScanner(new Options({
-      input: ['./test/fixtures/roms/headered/*{.a78,.lnx,.nes,.fds,.smc}*'],
-    }), new ProgressBarFake(), new FileFactory(new FileCache())).scan();
+    const inputRomFiles = await new ROMScanner(
+      new Options({
+        input: ['./test/fixtures/roms/headered/*{.a78,.lnx,.nes,.fds,.smc}*'],
+      }),
+      new ProgressBarFake(),
+      new FileFactory(new FileCache()),
+    ).scan();
     expect(inputRomFiles.length).toBeGreaterThan(0);
 
-    const processedRomFiles = await new ROMHeaderProcessor(new Options({
-      commands: ['copy', 'extract'],
-    }), new ProgressBarFake(), new FileFactory(new FileCache())).process(inputRomFiles);
+    const processedRomFiles = await new ROMHeaderProcessor(
+      new Options({
+        commands: ['copy', 'extract'],
+      }),
+      new ProgressBarFake(),
+      new FileFactory(new FileCache()),
+    ).process(inputRomFiles);
 
     expect(processedRomFiles).toHaveLength(inputRomFiles.length);
     for (const [idx, processedRomFile] of processedRomFiles.entries()) {
@@ -60,9 +80,13 @@ describe('extension has possible header', () => {
   });
 
   it('should not process archived headered files if not manipulating', async () => {
-    const inputRomFiles = await new ROMScanner(new Options({
-      input: ['./test/fixtures/roms/headered/*{.7z,.rar,.zip}'],
-    }), new ProgressBarFake(), new FileFactory(new FileCache())).scan();
+    const inputRomFiles = await new ROMScanner(
+      new Options({
+        input: ['./test/fixtures/roms/headered/*{.7z,.rar,.zip}'],
+      }),
+      new ProgressBarFake(),
+      new FileFactory(new FileCache()),
+    ).scan();
     expect(inputRomFiles.length).toBeGreaterThan(0);
 
     const processedRomFiles = await new ROMHeaderProcessor(
@@ -82,15 +106,23 @@ describe('extension has possible header', () => {
 
 describe('should read file for header', () => {
   it('should do nothing with headerless files', async () => {
-    const inputRomFiles = await new ROMScanner(new Options({
-      input: ['./test/fixtures/roms/!(headered){,/}*'],
-    }), new ProgressBarFake(), new FileFactory(new FileCache())).scan();
+    const inputRomFiles = await new ROMScanner(
+      new Options({
+        input: ['./test/fixtures/roms/!(headered){,/}*'],
+      }),
+      new ProgressBarFake(),
+      new FileFactory(new FileCache()),
+    ).scan();
     expect(inputRomFiles.length).toBeGreaterThan(0);
 
-    const processedRomFiles = await new ROMHeaderProcessor(new Options({
-      commands: ['copy', 'extract'],
-      header: '**/*',
-    }), new ProgressBarFake(), new FileFactory(new FileCache())).process(inputRomFiles);
+    const processedRomFiles = await new ROMHeaderProcessor(
+      new Options({
+        commands: ['copy', 'extract'],
+        header: '**/*',
+      }),
+      new ProgressBarFake(),
+      new FileFactory(new FileCache()),
+    ).process(inputRomFiles);
 
     expect(processedRomFiles).toHaveLength(inputRomFiles.length);
     for (const [idx, processedRomFile] of processedRomFiles.entries()) {
@@ -101,15 +133,23 @@ describe('should read file for header', () => {
   });
 
   it('should process headered files', async () => {
-    const inputRomFiles = await new ROMScanner(new Options({
-      input: ['./test/fixtures/roms/headered/!(*{.a78,.lnx,.nes,.fds,.smc}*)'],
-    }), new ProgressBarFake(), new FileFactory(new FileCache())).scan();
+    const inputRomFiles = await new ROMScanner(
+      new Options({
+        input: ['./test/fixtures/roms/headered/!(*{.a78,.lnx,.nes,.fds,.smc}*)'],
+      }),
+      new ProgressBarFake(),
+      new FileFactory(new FileCache()),
+    ).scan();
     expect(inputRomFiles.length).toBeGreaterThan(0);
 
-    const processedRomFiles = await new ROMHeaderProcessor(new Options({
-      commands: ['copy', 'extract'],
-      header: '**/*',
-    }), new ProgressBarFake(), new FileFactory(new FileCache())).process(inputRomFiles);
+    const processedRomFiles = await new ROMHeaderProcessor(
+      new Options({
+        commands: ['copy', 'extract'],
+        header: '**/*',
+      }),
+      new ProgressBarFake(),
+      new FileFactory(new FileCache()),
+    ).process(inputRomFiles);
 
     expect(processedRomFiles).toHaveLength(inputRomFiles.length);
     for (const [idx, processedRomFile] of processedRomFiles.entries()) {

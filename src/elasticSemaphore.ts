@@ -17,10 +17,7 @@ export default class ElasticSemaphore {
   /**
    * Run some {@link callback} with a required {@link weight}.
    */
-  async runExclusive<T>(
-    callback: (value: number) => Promise<T> | T,
-    weight: number,
-  ): Promise<T> {
+  async runExclusive<T>(callback: (value: number) => Promise<T> | T, weight: number): Promise<T> {
     const weightNormalized = Math.max(1, Math.ceil(weight));
 
     // NOTE(cemmer): this semaphore can take a measurable amount of time to actually call the

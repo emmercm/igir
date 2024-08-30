@@ -14,10 +14,10 @@ export enum ChecksumBitmask {
 }
 
 export interface ChecksumProps {
-  crc32?: string,
-  md5?: string,
-  sha1?: string,
-  sha256?: string,
+  crc32?: string;
+  md5?: string;
+  sha1?: string;
+  sha256?: string;
 }
 
 export default class FileChecksums {
@@ -46,10 +46,7 @@ export default class FileChecksums {
     );
   }
 
-  public static async hashStream(
-    stream: Stream,
-    checksumBitmask: number,
-  ): Promise<ChecksumProps> {
+  public static async hashStream(stream: Stream, checksumBitmask: number): Promise<ChecksumProps> {
     // Not calculating any checksums, do nothing
     if (!checksumBitmask) {
       // WARN(cemmer): this may leave the stream un-drained and therefore some file handles open!
@@ -60,7 +57,8 @@ export default class FileChecksums {
       let crc: number | undefined;
       const md5 = checksumBitmask & ChecksumBitmask.MD5 ? crypto.createHash('md5') : undefined;
       const sha1 = checksumBitmask & ChecksumBitmask.SHA1 ? crypto.createHash('sha1') : undefined;
-      const sha256 = checksumBitmask & ChecksumBitmask.SHA256 ? crypto.createHash('sha256') : undefined;
+      const sha256 =
+        checksumBitmask & ChecksumBitmask.SHA256 ? crypto.createHash('sha256') : undefined;
 
       stream.on('data', (chunk) => {
         if (checksumBitmask & ChecksumBitmask.CRC32) {
@@ -78,9 +76,10 @@ export default class FileChecksums {
       });
       stream.on('end', () => {
         resolve({
-          crc32: crc?.toString(16)
+          crc32:
+            crc?.toString(16) ??
             // Empty files won't emit any data, default to the empty file CRC32
-            ?? (checksumBitmask & ChecksumBitmask.CRC32 ? '00000000' : undefined),
+            (checksumBitmask & ChecksumBitmask.CRC32 ? '00000000' : undefined),
           md5: md5?.digest('hex'),
           sha1: sha1?.digest('hex'),
           sha256: sha256?.digest('hex'),

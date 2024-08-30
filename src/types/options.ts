@@ -63,112 +63,112 @@ export enum PreferRevision {
 }
 
 export interface OptionsProps {
-  readonly commands?: string[],
+  readonly commands?: string[];
 
-  readonly input?: string[],
-  readonly inputExclude?: string[],
-  readonly inputChecksumQuick?: boolean,
-  readonly inputChecksumMin?: string,
-  readonly inputChecksumMax?: string,
-  readonly inputChecksumArchives?: string,
+  readonly input?: string[];
+  readonly inputExclude?: string[];
+  readonly inputChecksumQuick?: boolean;
+  readonly inputChecksumMin?: string;
+  readonly inputChecksumMax?: string;
+  readonly inputChecksumArchives?: string;
 
-  readonly dat?: string[],
-  readonly datExclude?: string[],
-  readonly datNameRegex?: string,
-  readonly datNameRegexExclude?: string,
-  readonly datDescriptionRegex?: string,
-  readonly datDescriptionRegexExclude?: string,
-  readonly datCombine?: boolean,
-  readonly datIgnoreParentClone?: boolean,
+  readonly dat?: string[];
+  readonly datExclude?: string[];
+  readonly datNameRegex?: string;
+  readonly datNameRegexExclude?: string;
+  readonly datDescriptionRegex?: string;
+  readonly datDescriptionRegexExclude?: string;
+  readonly datCombine?: boolean;
+  readonly datIgnoreParentClone?: boolean;
 
-  readonly patch?: string[],
-  readonly patchExclude?: string[],
+  readonly patch?: string[];
+  readonly patchExclude?: string[];
 
-  readonly output?: string,
-  readonly dirMirror?: boolean,
-  readonly dirDatName?: boolean,
-  readonly dirDatDescription?: boolean,
-  readonly dirLetter?: boolean,
-  readonly dirLetterCount?: number,
-  readonly dirLetterLimit?: number,
-  readonly dirLetterGroup?: boolean,
-  readonly dirGameSubdir?: string,
-  readonly fixExtension?: string,
-  readonly overwrite?: boolean,
-  readonly overwriteInvalid?: boolean,
+  readonly output?: string;
+  readonly dirMirror?: boolean;
+  readonly dirDatName?: boolean;
+  readonly dirDatDescription?: boolean;
+  readonly dirLetter?: boolean;
+  readonly dirLetterCount?: number;
+  readonly dirLetterLimit?: number;
+  readonly dirLetterGroup?: boolean;
+  readonly dirGameSubdir?: string;
+  readonly fixExtension?: string;
+  readonly overwrite?: boolean;
+  readonly overwriteInvalid?: boolean;
 
-  readonly cleanExclude?: string[],
-  readonly cleanBackup?: string,
-  readonly cleanDryRun?: boolean,
+  readonly cleanExclude?: string[];
+  readonly cleanBackup?: string;
+  readonly cleanDryRun?: boolean;
 
-  readonly zipExclude?: string,
-  readonly zipDatName?: boolean,
+  readonly zipExclude?: string;
+  readonly zipDatName?: boolean;
 
-  readonly symlink?: boolean,
-  readonly symlinkRelative?: boolean,
+  readonly symlink?: boolean;
+  readonly symlinkRelative?: boolean;
 
-  readonly header?: string,
-  readonly removeHeaders?: string[],
+  readonly header?: string;
+  readonly removeHeaders?: string[];
 
-  readonly mergeRoms?: string,
-  readonly excludeDisks?: boolean,
-  readonly allowExcessSets?: boolean,
-  readonly allowIncompleteSets?: boolean,
+  readonly mergeRoms?: string;
+  readonly excludeDisks?: boolean;
+  readonly allowExcessSets?: boolean;
+  readonly allowIncompleteSets?: boolean;
 
-  readonly filterRegex?: string,
-  readonly filterRegexExclude?: string,
-  readonly filterLanguage?: string[],
-  readonly filterRegion?: string[],
-  readonly noBios?: boolean,
-  readonly onlyBios?: boolean,
-  readonly noDevice?: boolean,
-  readonly onlyDevice?: boolean,
-  readonly noUnlicensed?: boolean,
-  readonly onlyUnlicensed?: boolean,
-  readonly onlyRetail?: boolean,
-  readonly noDebug?: boolean,
-  readonly onlyDebug?: boolean,
-  readonly noDemo?: boolean,
-  readonly onlyDemo?: boolean,
-  readonly noBeta?: boolean,
-  readonly onlyBeta?: boolean,
-  readonly noSample?: boolean,
-  readonly onlySample?: boolean,
-  readonly noPrototype?: boolean,
-  readonly onlyPrototype?: boolean,
-  readonly noProgram?: boolean,
-  readonly onlyProgram?: boolean,
-  readonly noAftermarket?: boolean,
-  readonly onlyAftermarket?: boolean,
-  readonly noHomebrew?: boolean,
-  readonly onlyHomebrew?: boolean,
-  readonly noUnverified?: boolean,
-  readonly onlyUnverified?: boolean,
-  readonly noBad?: boolean,
-  readonly onlyBad?: boolean,
+  readonly filterRegex?: string;
+  readonly filterRegexExclude?: string;
+  readonly filterLanguage?: string[];
+  readonly filterRegion?: string[];
+  readonly noBios?: boolean;
+  readonly onlyBios?: boolean;
+  readonly noDevice?: boolean;
+  readonly onlyDevice?: boolean;
+  readonly noUnlicensed?: boolean;
+  readonly onlyUnlicensed?: boolean;
+  readonly onlyRetail?: boolean;
+  readonly noDebug?: boolean;
+  readonly onlyDebug?: boolean;
+  readonly noDemo?: boolean;
+  readonly onlyDemo?: boolean;
+  readonly noBeta?: boolean;
+  readonly onlyBeta?: boolean;
+  readonly noSample?: boolean;
+  readonly onlySample?: boolean;
+  readonly noPrototype?: boolean;
+  readonly onlyPrototype?: boolean;
+  readonly noProgram?: boolean;
+  readonly onlyProgram?: boolean;
+  readonly noAftermarket?: boolean;
+  readonly onlyAftermarket?: boolean;
+  readonly noHomebrew?: boolean;
+  readonly onlyHomebrew?: boolean;
+  readonly noUnverified?: boolean;
+  readonly onlyUnverified?: boolean;
+  readonly noBad?: boolean;
+  readonly onlyBad?: boolean;
 
-  readonly single?: boolean,
-  readonly preferGameRegex?: string,
-  readonly preferRomRegex?: string,
-  readonly preferVerified?: boolean,
-  readonly preferGood?: boolean,
-  readonly preferLanguage?: string[],
-  readonly preferRegion?: string[],
-  readonly preferRevision?: string,
-  readonly preferRetail?: boolean,
-  readonly preferParent?: boolean,
+  readonly single?: boolean;
+  readonly preferGameRegex?: string;
+  readonly preferRomRegex?: string;
+  readonly preferVerified?: boolean;
+  readonly preferGood?: boolean;
+  readonly preferLanguage?: string[];
+  readonly preferRegion?: string[];
+  readonly preferRevision?: string;
+  readonly preferRetail?: boolean;
+  readonly preferParent?: boolean;
 
-  readonly reportOutput?: string,
+  readonly reportOutput?: string;
 
-  readonly datThreads?: number,
-  readonly readerThreads?: number,
-  readonly writerThreads?: number,
-  readonly writeRetry?: number,
-  readonly tempDir?: string,
-  readonly disableCache?: boolean,
-  readonly cachePath?: string,
-  readonly verbose?: number,
-  readonly help?: boolean,
+  readonly datThreads?: number;
+  readonly readerThreads?: number;
+  readonly writerThreads?: number;
+  readonly writeRetry?: number;
+  readonly tempDir?: string;
+  readonly disableCache?: boolean;
+  readonly cachePath?: string;
+  readonly verbose?: number;
+  readonly help?: boolean;
 }
 
 /**
@@ -580,11 +580,11 @@ export default class Options implements OptionsProps {
       return false;
     }
 
-    return this.shouldZip()
-      && (!this.getZipExclude() || !micromatch.isMatch(
-        rom.getName().replace(/^.[\\/]/, ''),
-        this.getZipExclude(),
-      ));
+    return (
+      this.shouldZip() &&
+      (!this.getZipExclude() ||
+        !micromatch.isMatch(rom.getName().replace(/^.[\\/]/, ''), this.getZipExclude()))
+    );
   }
 
   /**
@@ -642,8 +642,7 @@ export default class Options implements OptionsProps {
   async scanInputFilesWithoutExclusions(walkCallback?: FsWalkCallback): Promise<string[]> {
     const inputFiles = await this.scanInputFiles(walkCallback);
     const inputExcludeFiles = new Set(await this.scanInputExcludeFiles());
-    return inputFiles
-      .filter((inputPath) => !inputExcludeFiles.has(inputPath));
+    return inputFiles.filter((inputPath) => !inputExcludeFiles.has(inputPath));
   }
 
   private static async scanPaths(
@@ -655,10 +654,7 @@ export default class Options implements OptionsProps {
     const uniqueGlobPatterns = globPatterns.reduce(ArrayPoly.reduceUnique(), []);
     let globbedPaths: string[] = [];
     for (const uniqueGlobPattern of uniqueGlobPatterns) {
-      const paths = await this.globPath(
-        uniqueGlobPattern,
-        walkCallback ?? ((): void => {}),
-      );
+      const paths = await this.globPath(uniqueGlobPattern, walkCallback ?? ((): void => {}));
       // NOTE(cemmer): if `paths` is really large, `globbedPaths.push(...paths)` can hit a stack
       // size limit
       globbedPaths = [...globbedPaths, ...paths];
@@ -669,7 +665,7 @@ export default class Options implements OptionsProps {
       globbedPaths,
       Defaults.MAX_FS_THREADS,
       async (file, callback: AsyncResultCallback<boolean, Error>) => {
-        if (!await fsPoly.exists(file) && URLPoly.canParse(file)) {
+        if (!(await fsPoly.exists(file)) && URLPoly.canParse(file)) {
           callback(undefined, true);
           return;
         }
@@ -687,12 +683,13 @@ export default class Options implements OptionsProps {
       .filter((inputPath) => isNotJunk(path.basename(inputPath)));
 
     if (requireFiles && globbedFiles.length === 0) {
-      throw new ExpectedError(`no files found in director${globPatterns.length !== 1 ? 'ies' : 'y'}: ${globPatterns.map((p) => `'${p}'`).join(', ')}`);
+      throw new ExpectedError(
+        `no files found in director${globPatterns.length !== 1 ? 'ies' : 'y'}: ${globPatterns.map((p) => `'${p}'`).join(', ')}`,
+      );
     }
 
     // Remove duplicates
-    return globbedFiles
-      .reduce(ArrayPoly.reduceUnique(), []);
+    return globbedFiles.reduce(ArrayPoly.reduceUnique(), []);
   }
 
   private static async globPath(
@@ -706,8 +703,9 @@ export default class Options implements OptionsProps {
 
     // Glob the contents of directories
     if (await fsPoly.isDirectory(inputPath)) {
-      return (await fsPoly.walk(inputPath, walkCallback))
-        .map((filePath) => path.normalize(filePath));
+      return (await fsPoly.walk(inputPath, walkCallback)).map((filePath) =>
+        path.normalize(filePath),
+      );
     }
 
     // If the file exists, don't process it as a glob pattern
@@ -727,8 +725,9 @@ export default class Options implements OptionsProps {
     }
 
     // Otherwise, process it as a glob pattern
-    const paths = (await fg(inputPathEscaped, { onlyFiles: true }))
-      .map((filePath) => path.normalize(filePath));
+    const paths = (await fg(inputPathEscaped, { onlyFiles: true })).map((filePath) =>
+      path.normalize(filePath),
+    );
     if (paths.length === 0) {
       if (URLPoly.canParse(inputPath)) {
         // Allow URLs, let the scanner modules deal with them
@@ -753,7 +752,7 @@ export default class Options implements OptionsProps {
     const pathsSplit = globPattern.split(/[\\/]/);
     for (let i = 0; i < pathsSplit.length; i += 1) {
       const subPath = pathsSplit.slice(0, i + 1).join('/');
-      if (subPath !== '' && !await fsPoly.exists(subPath)) {
+      if (subPath !== '' && !(await fsPoly.exists(subPath))) {
         const dirname = pathsSplit.slice(0, i).join('/');
         if (dirname === '') {
           // fg won't let you escape empty strings
@@ -770,8 +769,9 @@ export default class Options implements OptionsProps {
   }
 
   getInputChecksumMin(): ChecksumBitmask | undefined {
-    const checksumBitmask = Object.keys(ChecksumBitmask)
-      .find((bitmask) => bitmask.toUpperCase() === this.inputChecksumMin?.toUpperCase());
+    const checksumBitmask = Object.keys(ChecksumBitmask).find(
+      (bitmask) => bitmask.toUpperCase() === this.inputChecksumMin?.toUpperCase(),
+    );
     if (!checksumBitmask) {
       return undefined;
     }
@@ -779,8 +779,9 @@ export default class Options implements OptionsProps {
   }
 
   getInputChecksumMax(): ChecksumBitmask | undefined {
-    const checksumBitmask = Object.keys(ChecksumBitmask)
-      .find((bitmask) => bitmask.toUpperCase() === this.inputChecksumMax?.toUpperCase());
+    const checksumBitmask = Object.keys(ChecksumBitmask).find(
+      (bitmask) => bitmask.toUpperCase() === this.inputChecksumMax?.toUpperCase(),
+    );
     if (!checksumBitmask) {
       return undefined;
     }
@@ -788,8 +789,9 @@ export default class Options implements OptionsProps {
   }
 
   getInputChecksumArchives(): InputChecksumArchivesMode | undefined {
-    const checksumMode = Object.keys(InputChecksumArchivesMode)
-      .find((mode) => mode.toLowerCase() === this.inputChecksumArchives?.toLowerCase());
+    const checksumMode = Object.keys(InputChecksumArchivesMode).find(
+      (mode) => mode.toLowerCase() === this.inputChecksumArchives?.toLowerCase(),
+    );
     if (!checksumMode) {
       return undefined;
     }
@@ -817,8 +819,7 @@ export default class Options implements OptionsProps {
   async scanDatFilesWithoutExclusions(walkCallback?: FsWalkCallback): Promise<string[]> {
     const datFiles = await this.scanDatFiles(walkCallback);
     const datExcludeFiles = new Set(await this.scanDatExcludeFiles());
-    return datFiles
-      .filter((inputPath) => !datExcludeFiles.has(inputPath));
+    return datFiles.filter((inputPath) => !datExcludeFiles.has(inputPath));
   }
 
   getDatNameRegex(): RegExp[] | undefined {
@@ -855,8 +856,7 @@ export default class Options implements OptionsProps {
   async scanPatchFilesWithoutExclusions(walkCallback?: FsWalkCallback): Promise<string[]> {
     const patchFiles = await this.scanPatchFiles(walkCallback);
     const patchExcludeFiles = new Set(await this.scanPatchExcludeFiles());
-    return patchFiles
-      .filter((patchPath) => !patchExcludeFiles.has(patchPath));
+    return patchFiles.filter((patchPath) => !patchExcludeFiles.has(patchPath));
   }
 
   private async scanPatchFiles(walkCallback?: FsWalkCallback): Promise<string[]> {
@@ -913,8 +913,9 @@ export default class Options implements OptionsProps {
   }
 
   getDirGameSubdir(): GameSubdirMode | undefined {
-    const subdirMode = Object.keys(GameSubdirMode)
-      .find((mode) => mode.toLowerCase() === this.dirGameSubdir?.toLowerCase());
+    const subdirMode = Object.keys(GameSubdirMode).find(
+      (mode) => mode.toLowerCase() === this.dirGameSubdir?.toLowerCase(),
+    );
     if (!subdirMode) {
       return undefined;
     }
@@ -922,8 +923,9 @@ export default class Options implements OptionsProps {
   }
 
   getFixExtension(): FixExtension | undefined {
-    const fixExtensionMode = Object.keys(FixExtension)
-      .find((mode) => mode.toLowerCase() === this.fixExtension?.toLowerCase());
+    const fixExtensionMode = Object.keys(FixExtension).find(
+      (mode) => mode.toLowerCase() === this.fixExtension?.toLowerCase(),
+    );
     if (!fixExtensionMode) {
       return undefined;
     }
@@ -951,12 +953,14 @@ export default class Options implements OptionsProps {
     walkCallback?: FsWalkCallback,
   ): Promise<string[]> {
     // Written files that shouldn't be cleaned
-    const writtenFilesNormalized = new Set(writtenFiles
-      .map((file) => path.normalize(file.getFilePath())));
+    const writtenFilesNormalized = new Set(
+      writtenFiles.map((file) => path.normalize(file.getFilePath())),
+    );
 
     // Files excluded from cleaning
-    const cleanExcludedFilesNormalized = new Set((await this.scanCleanExcludeFiles())
-      .map((filePath) => path.normalize(filePath)));
+    const cleanExcludedFilesNormalized = new Set(
+      (await this.scanCleanExcludeFiles()).map((filePath) => path.normalize(filePath)),
+    );
 
     return (await Options.scanPaths(outputDirs, walkCallback, false))
       .map((filePath) => path.normalize(filePath))
@@ -997,9 +1001,9 @@ export default class Options implements OptionsProps {
    * Should a file have its contents read to detect any {@link Header}?
    */
   shouldReadFileForHeader(filePath: string): boolean {
-    return this.getHeader().length > 0 && micromatch.isMatch(
-      filePath.replace(/^.[\\/]/, ''),
-      this.getHeader(),
+    return (
+      this.getHeader().length > 0 &&
+      micromatch.isMatch(filePath.replace(/^.[\\/]/, ''), this.getHeader())
     );
   }
 
@@ -1016,13 +1020,15 @@ export default class Options implements OptionsProps {
       return true;
     }
     // Option was provided with extensions, we should remove headers on name match
-    return this.removeHeaders
-      .some((removeHeader) => removeHeader.toLowerCase() === extension.toLowerCase());
+    return this.removeHeaders.some(
+      (removeHeader) => removeHeader.toLowerCase() === extension.toLowerCase(),
+    );
   }
 
   getMergeRoms(): MergeMode | undefined {
-    const mergeMode = Object.keys(MergeMode)
-      .find((mode) => mode.toLowerCase() === this.mergeRoms?.toLowerCase());
+    const mergeMode = Object.keys(MergeMode).find(
+      (mode) => mode.toLowerCase() === this.mergeRoms?.toLowerCase(),
+    );
     if (!mergeMode) {
       return undefined;
     }
@@ -1200,8 +1206,9 @@ export default class Options implements OptionsProps {
   }
 
   getPreferRevision(): PreferRevision | undefined {
-    const preferRevision = Object.keys(PreferRevision)
-      .find((mode) => mode.toLowerCase() === this.preferRevision?.toLowerCase());
+    const preferRevision = Object.keys(PreferRevision).find(
+      (mode) => mode.toLowerCase() === this.preferRevision?.toLowerCase(),
+    );
     if (!preferRevision) {
       return undefined;
     }
@@ -1222,12 +1229,10 @@ export default class Options implements OptionsProps {
     // Replace date & time tokens
     const symbolMatches = reportOutput.match(/%([a-zA-Z])(\1|o)*/g);
     if (symbolMatches) {
-      symbolMatches
-        .reduce(ArrayPoly.reduceUnique(), [])
-        .forEach((match) => {
-          const val = moment().format(match.replace(/^%/, ''));
-          reportOutput = reportOutput.replace(match, val);
-        });
+      symbolMatches.reduce(ArrayPoly.reduceUnique(), []).forEach((match) => {
+        const val = moment().format(match.replace(/^%/, ''));
+        reportOutput = reportOutput.replace(match, val);
+      });
     }
 
     return fsPoly.makeLegal(path.resolve(reportOutput));
@@ -1264,9 +1269,11 @@ export default class Options implements OptionsProps {
   getLogLevel(): LogLevel {
     if (this.verbose === 1) {
       return LogLevel.INFO;
-    } if (this.verbose === 2) {
+    }
+    if (this.verbose === 2) {
       return LogLevel.DEBUG;
-    } if (this.verbose >= 3) {
+    }
+    if (this.verbose >= 3) {
       return LogLevel.TRACE;
     }
     return LogLevel.WARN;
@@ -1277,8 +1284,6 @@ export default class Options implements OptionsProps {
   }
 
   private static filterUniqueUpper(array: string[]): string[] {
-    return array
-      .map((value) => value.toUpperCase())
-      .reduce(ArrayPoly.reduceUnique(), []);
+    return array.map((value) => value.toUpperCase()).reduce(ArrayPoly.reduceUnique(), []);
   }
 }

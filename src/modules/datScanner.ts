@@ -63,7 +63,9 @@ export default class DATScanner extends Scanner {
     if (datFilePaths.length === 0) {
       return [];
     }
-    this.progressBar.logTrace(`found ${datFilePaths.length.toLocaleString()} DAT file${datFilePaths.length !== 1 ? 's' : ''}`);
+    this.progressBar.logTrace(
+      `found ${datFilePaths.length.toLocaleString()} DAT file${datFilePaths.length !== 1 ? 's' : ''}`,
+    );
     this.progressBar.reset(datFilePaths.length);
 
     this.progressBar.logTrace('enumerating DAT archives');
@@ -90,35 +92,42 @@ export default class DATScanner extends Scanner {
     this.progressBar.logTrace('downloading DATs from URLs');
     this.progressBar.setSymbol(ProgressBarSymbol.DAT_DOWNLOADING);
 
-    return (await Promise.all(datFiles.map(async (datFile) => {
-      if (!datFile.isURL()) {
-        return datFile;
-      }
+    return (
+      await Promise.all(
+        datFiles.map(async (datFile) => {
+          if (!datFile.isURL()) {
+            return datFile;
+          }
 
-      try {
-        this.progressBar.logTrace(`${datFile.toString()}: downloading`);
-        // TODO(cemmer): these never get deleted?
-        const downloadedDatFile = await datFile.downloadToTempPath('dat');
-        this.progressBar.logTrace(`${datFile.toString()}: downloaded to '${downloadedDatFile.toString()}'`);
-        return await this.getFilesFromPaths(
-          [downloadedDatFile.getFilePath()],
-          this.options.getReaderThreads(),
-          ChecksumBitmask.NONE,
-        );
-      } catch (error) {
-        throw new ExpectedError(`failed to download '${datFile.toString()}': ${error}`);
-      }
-    }))).flat();
+          try {
+            this.progressBar.logTrace(`${datFile.toString()}: downloading`);
+            // TODO(cemmer): these never get deleted?
+            const downloadedDatFile = await datFile.downloadToTempPath('dat');
+            this.progressBar.logTrace(
+              `${datFile.toString()}: downloaded to '${downloadedDatFile.toString()}'`,
+            );
+            return await this.getFilesFromPaths(
+              [downloadedDatFile.getFilePath()],
+              this.options.getReaderThreads(),
+              ChecksumBitmask.NONE,
+            );
+          } catch (error) {
+            throw new ExpectedError(`failed to download '${datFile.toString()}': ${error}`);
+          }
+        }),
+      )
+    ).flat();
   }
 
   // Parse each file into a DAT
   private async parseDatFiles(datFiles: File[]): Promise<DAT[]> {
-    this.progressBar.logTrace(`parsing ${datFiles.length.toLocaleString()} DAT file${datFiles.length !== 1 ? 's' : ''}`);
+    this.progressBar.logTrace(
+      `parsing ${datFiles.length.toLocaleString()} DAT file${datFiles.length !== 1 ? 's' : ''}`,
+    );
     this.progressBar.setSymbol(ProgressBarSymbol.DAT_PARSING);
 
-    return (await new DriveSemaphore(this.options.getReaderThreads()).map(
-      datFiles,
-      async (datFile) => {
+    return (
+      await new DriveSemaphore(this.options.getReaderThreads()).map(datFiles, async (datFile) => {
         this.progressBar.incrementProgress();
         const waitingMessage = `${datFile.toString()} ...`;
         this.progressBar.addWaitingMessage(waitingMessage);
@@ -137,8 +146,8 @@ export default class DATScanner extends Scanner {
           return undefined;
         }
         return dat;
-      },
-    ))
+      })
+    )
       .filter((dat) => dat !== undefined)
       .map((dat) => this.sanitizeDat(dat))
       .sort((a, b) => a.getNameShort().localeCompare(b.getNameShort()));
@@ -147,9 +156,10 @@ export default class DATScanner extends Scanner {
   private async parseDatFile(datFile: File): Promise<DAT | undefined> {
     let dat: DAT | undefined;
 
-    if (!dat
-      && !(datFile instanceof ArchiveEntry)
-      && await fsPoly.isExecutable(datFile.getFilePath())
+    if (
+      !dat &&
+      !(datFile instanceof ArchiveEntry) &&
+      (await fsPoly.isExecutable(datFile.getFilePath()))
     ) {
       dat = await this.parseMameListxml(datFile);
     }
@@ -168,37 +178,51 @@ export default class DATScanner extends Scanner {
     // Special case: if the DAT has only one BIOS game with a large number of ROMs, assume each of
     //  those ROMs should be a separate game. This is to help parse the libretro BIOS System.dat
     //  file which only has one game for every BIOS file, even though there are 90+ consoles.
-    if (dat.getGames().length === 1
-      && dat.getGames()[0].isBios()
-      && dat.getGames()[0].getRoms().length > 10
+    if (
+      dat.getGames().length === 1 &&
+      dat.getGames()[0].isBios() &&
+      dat.getGames()[0].getRoms().length > 10
     ) {
       const game = dat.getGames()[0];
-      dat = new LogiqxDAT(dat.getHeader(), dat.getGames()[0].getRoms().map((rom) => {
-        // Use the ROM's filename without its extension as the game name
-        const { dir, name } = path.parse(rom.getName());
-        const gameName = path.format({ dir, name });
-        return game.withProps({
-          name: gameName,
-          rom: [rom],
-        });
-      }));
+      dat = new LogiqxDAT(
+        dat.getHeader(),
+        dat
+          .getGames()[0]
+          .getRoms()
+          .map((rom) => {
+            // Use the ROM's filename without its extension as the game name
+            const { dir, name } = path.parse(rom.getName());
+            const gameName = path.format({ dir, name });
+            return game.withProps({
+              name: gameName,
+              rom: [rom],
+            });
+          }),
+      );
     }
 
-    const size = dat.getGames()
+    const size = dat
+      .getGames()
       .flatMap((game) => game.getRoms())
       .reduce((sum, rom) => sum + rom.getSize(), 0);
-    this.progressBar.logTrace(`${datFile.toString()}: ${fsPoly.sizeReadable(size)} of ${dat.getGames().length.toLocaleString()} game${dat.getGames().length !== 1 ? 's' : ''}, ${dat.getParents().length.toLocaleString()} parent${dat.getParents().length !== 1 ? 's' : ''} parsed`);
+    this.progressBar.logTrace(
+      `${datFile.toString()}: ${fsPoly.sizeReadable(size)} of ${dat.getGames().length.toLocaleString()} game${dat.getGames().length !== 1 ? 's' : ''}, ${dat.getParents().length.toLocaleString()} parent${dat.getParents().length !== 1 ? 's' : ''} parsed`,
+    );
 
     return dat;
   }
 
   private async parseMameListxml(mameExecutable: File): Promise<DAT | undefined> {
-    this.progressBar.logTrace(`${mameExecutable.toString()}: attempting to get ListXML from MAME executable`);
+    this.progressBar.logTrace(
+      `${mameExecutable.toString()}: attempting to get ListXML from MAME executable`,
+    );
 
     let fileContents: string;
     try {
       fileContents = await new Promise((resolve, reject) => {
-        const proc = child_process.spawn(mameExecutable.getFilePath(), ['-listxml'], { windowsHide: true });
+        const proc = child_process.spawn(mameExecutable.getFilePath(), ['-listxml'], {
+          windowsHide: true,
+        });
 
         let output = '';
         proc.stdout.on('data', (chunk) => {
@@ -219,7 +243,9 @@ export default class DATScanner extends Scanner {
         proc.on('error', reject);
       });
     } catch (error) {
-      this.progressBar.logTrace(`${mameExecutable.toString()}: failed to get ListXML from MAME executable: ${error}`);
+      this.progressBar.logTrace(
+        `${mameExecutable.toString()}: failed to get ListXML from MAME executable: ${error}`,
+      );
       return undefined;
     }
 
@@ -252,7 +278,9 @@ export default class DATScanner extends Scanner {
   }
 
   private parseXmlDat(datFile: File, fileContents: string): DAT | undefined {
-    this.progressBar.logTrace(`${datFile.toString()}: attempting to parse ${fsPoly.sizeReadable(fileContents.length)} of XML`);
+    this.progressBar.logTrace(
+      `${datFile.toString()}: attempting to parse ${fsPoly.sizeReadable(fileContents.length)} of XML`,
+    );
 
     let datObject: DATObjectProps;
     try {
@@ -278,7 +306,9 @@ export default class DATScanner extends Scanner {
       try {
         return MameDAT.fromObject(datObject.mame);
       } catch (error) {
-        this.progressBar.logTrace(`${datFile.toString()}: failed to parse MAME DAT object: ${error}`);
+        this.progressBar.logTrace(
+          `${datFile.toString()}: failed to parse MAME DAT object: ${error}`,
+        );
         return undefined;
       }
     }
@@ -287,7 +317,9 @@ export default class DATScanner extends Scanner {
       try {
         return SoftwareListsDAT.fromObject(datObject.softwarelists);
       } catch (error) {
-        this.progressBar.logTrace(`${datFile.toString()}: failed to parse software list DAT object: ${error}`);
+        this.progressBar.logTrace(
+          `${datFile.toString()}: failed to parse software list DAT object: ${error}`,
+        );
         return undefined;
       }
     }
@@ -296,12 +328,16 @@ export default class DATScanner extends Scanner {
       try {
         return SoftwareListDAT.fromObject(datObject.softwarelist);
       } catch (error) {
-        this.progressBar.logTrace(`${datFile.toString()}: failed to parse software list DAT object: ${error}`);
+        this.progressBar.logTrace(
+          `${datFile.toString()}: failed to parse software list DAT object: ${error}`,
+        );
         return undefined;
       }
     }
 
-    this.progressBar.logTrace(`${datFile.toString()}: parsed XML, but failed to find a known DAT root`);
+    this.progressBar.logTrace(
+      `${datFile.toString()}: parsed XML, but failed to find a known DAT root`,
+    );
     return undefined;
   }
 
@@ -355,13 +391,16 @@ export default class DATScanner extends Scanner {
           gameRoms = [game.rom];
         }
       }
-      const roms = gameRoms.map((entry) => new ROM({
-        name: entry.name ?? '',
-        size: Number.parseInt(entry.size ?? '0', 10),
-        crc32: entry.crc,
-        md5: entry.md5,
-        sha1: entry.sha1,
-      }));
+      const roms = gameRoms.map(
+        (entry) =>
+          new ROM({
+            name: entry.name ?? '',
+            size: Number.parseInt(entry.size ?? '0', 10),
+            crc32: entry.crc,
+            md5: entry.md5,
+            sha1: entry.sha1,
+          }),
+      );
 
       let gameDisks: DiskProps[] = [];
       if (game.disk) {
@@ -371,20 +410,26 @@ export default class DATScanner extends Scanner {
           gameDisks = [game.disk];
         }
       }
-      const disks = gameDisks.map((entry) => new Disk({
-        name: entry.name ?? '',
-        size: Number.parseInt(entry.size ?? '0', 10),
-        crc32: entry.crc,
-        md5: entry.md5,
-        sha1: entry.sha1,
-      }));
+      const disks = gameDisks.map(
+        (entry) =>
+          new Disk({
+            name: entry.name ?? '',
+            size: Number.parseInt(entry.size ?? '0', 10),
+            crc32: entry.crc,
+            md5: entry.md5,
+            sha1: entry.sha1,
+          }),
+      );
 
       return new Game({
         name: gameName,
         category: undefined,
         description: game.description,
-        bios: cmproDat.clrmamepro?.author?.toLowerCase() === 'libretro'
-          && cmproDat.clrmamepro?.name?.toLowerCase() === 'system' ? 'yes' : 'no',
+        bios:
+          cmproDat.clrmamepro?.author?.toLowerCase() === 'libretro' &&
+          cmproDat.clrmamepro?.name?.toLowerCase() === 'system'
+            ? 'yes'
+            : 'no',
         device: undefined,
         cloneOf: game.cloneof,
         romOf: game.romof,
@@ -441,10 +486,13 @@ export default class DATScanner extends Scanner {
     });
 
     const datName = path.parse(datFile.getExtractedFilePath()).name;
-    return new LogiqxDAT(new Header({
-      name: datName,
-      description: datName,
-    }), games);
+    return new LogiqxDAT(
+      new Header({
+        name: datName,
+        description: datName,
+      }),
+      games,
+    );
   }
 
   private static async parseSourceMaterialTsv(fileContents: string): Promise<SmdbRow[]> {
@@ -456,12 +504,14 @@ export default class DATScanner extends Scanner {
         quote: undefined,
         headers: ['sha256', 'name', 'sha1', 'md5', 'crc', 'size'],
       })
-        .validate((row: SmdbRow) => row.name && (
-          row.crc.match(/^[0-9a-f]{8}$/) !== null
-            || row.md5.match(/^[0-9a-f]{32}$/) !== null
-            || row.sha1.match(/^[0-9a-f]{40}$/) !== null
-            || row.sha256.match(/^[0-9a-f]{64}$/) !== null
-        ))
+        .validate(
+          (row: SmdbRow) =>
+            row.name &&
+            (row.crc.match(/^[0-9a-f]{8}$/) !== null ||
+              row.md5.match(/^[0-9a-f]{32}$/) !== null ||
+              row.sha1.match(/^[0-9a-f]{40}$/) !== null ||
+              row.sha256.match(/^[0-9a-f]{64}$/) !== null),
+        )
         .on('error', reject)
         .on('data', (row) => {
           rows.push(row);
@@ -486,17 +536,19 @@ export default class DATScanner extends Scanner {
     const datDescription = dat.getDescription();
 
     const datDescriptionRegex = this.options.getDatDescriptionRegex();
-    if (datDescription
-      && datDescriptionRegex
-      && !datDescriptionRegex.some((regex) => regex.test(datDescription))
+    if (
+      datDescription &&
+      datDescriptionRegex &&
+      !datDescriptionRegex.some((regex) => regex.test(datDescription))
     ) {
       return true;
     }
 
     const datDescriptionRegexExclude = this.options.getDatDescriptionRegexExclude();
-    if (datDescription
-      && datDescriptionRegexExclude
-      && datDescriptionRegexExclude.some((regex) => regex.test(datDescription))
+    if (
+      datDescription &&
+      datDescriptionRegexExclude &&
+      datDescriptionRegexExclude.some((regex) => regex.test(datDescription))
     ) {
       return true;
     }
@@ -505,18 +557,23 @@ export default class DATScanner extends Scanner {
   }
 
   private sanitizeDat(dat: DAT): DAT {
-    const games = dat.getGames()
-      .map((game) => {
-        const roms = game.getRoms()
-          // Games have to have at least one ROM with a non-empty checksum
-          .filter((rom) => this.options.shouldDir2Dat() || (
-            (rom.getCrc32() === undefined || rom.getCrc32() !== '00000000')
-            && (rom.getMd5() === undefined || rom.getMd5() !== 'd41d8cd98f00b204e9800998ecf8427e')
-            && (rom.getSha1() === undefined || rom.getSha1() !== 'da39a3ee5e6b4b0d3255bfef95601890afd80709')
-            && (rom.getSha256() === undefined || rom.getSha256() !== 'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855')
-          ));
-        return game.withProps({ rom: roms });
-      });
+    const games = dat.getGames().map((game) => {
+      const roms = game
+        .getRoms()
+        // Games have to have at least one ROM with a non-empty checksum
+        .filter(
+          (rom) =>
+            this.options.shouldDir2Dat() ||
+            ((rom.getCrc32() === undefined || rom.getCrc32() !== '00000000') &&
+              (rom.getMd5() === undefined || rom.getMd5() !== 'd41d8cd98f00b204e9800998ecf8427e') &&
+              (rom.getSha1() === undefined ||
+                rom.getSha1() !== 'da39a3ee5e6b4b0d3255bfef95601890afd80709') &&
+              (rom.getSha256() === undefined ||
+                rom.getSha256() !==
+                  'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855')),
+        );
+      return game.withProps({ rom: roms });
+    });
 
     return new LogiqxDAT(dat.getHeader(), games);
   }

@@ -25,7 +25,9 @@ class PPFHeader {
     const encoding = (await patchFile.readNext(1)).readUInt8();
     const version = encoding + 1;
     if (!header.endsWith(`${version}0`)) {
-      throw new ExpectedError(`PPF patch header has an invalid version: ${patchFile.getPathLike()}`);
+      throw new ExpectedError(
+        `PPF patch header has an invalid version: ${patchFile.getPathLike()}`,
+      );
     }
     patchFile.skipNext(50); // description
 
@@ -34,7 +36,9 @@ class PPFHeader {
     if (version === 2) {
       const sourceSize = (await patchFile.readNext(4)).readUInt32LE();
       if (inputRomFile.getSize() !== sourceSize) {
-        throw new ExpectedError(`PPF patch expected ROM size of ${fsPoly.sizeReadable(sourceSize)}: ${patchFile.getPathLike()}`);
+        throw new ExpectedError(
+          `PPF patch expected ROM size of ${fsPoly.sizeReadable(sourceSize)}: ${patchFile.getPathLike()}`,
+        );
       }
       blockCheckEnabled = true;
     } else if (version === 3) {
@@ -112,8 +116,9 @@ export default class PPFPatch extends Patch {
     if (header.version === 2) {
       offset = (await patchFile.readNext(4)).readUInt32LE();
     } else if (header.version === 3) {
-      offset = (await patchFile.readNext(4)).readUInt32LE()
-        + ((await patchFile.readNext(4)).readUInt32LE() * 0x1_00_00_00_00);
+      offset =
+        (await patchFile.readNext(4)).readUInt32LE() +
+        (await patchFile.readNext(4)).readUInt32LE() * 0x1_00_00_00_00;
     }
 
     const bytesToChange = (await patchFile.readNext(1)).readUInt8();

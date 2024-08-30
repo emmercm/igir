@@ -38,8 +38,8 @@ export default class CandidatePostProcessor extends Module {
     // Get the output basename of every ROM
     const outputFileBasenames = [...parentsToCandidates.values()]
       .flat()
-      .flatMap((releaseCandidate) => releaseCandidate.getRomsWithFiles()
-        .map((romWithFiles) => {
+      .flatMap((releaseCandidate) =>
+        releaseCandidate.getRomsWithFiles().map((romWithFiles) => {
           const outputPathParsed = OutputFactory.getPath(
             this.options,
             dat,
@@ -49,18 +49,19 @@ export default class CandidatePostProcessor extends Module {
             romWithFiles.getInputFile(),
           );
           return outputPathParsed.name + outputPathParsed.ext;
-        }));
+        }),
+      );
 
-    const processedCandidates = new Map([...parentsToCandidates.entries()]
-      .map(([parent, releaseCandidates]): [Parent, ReleaseCandidate[]] => {
-        const newReleaseCandidates = releaseCandidates
-          .map((releaseCandidate) => this.mapReleaseCandidate(
-            dat,
-            releaseCandidate,
-            outputFileBasenames,
-          ));
-        return [parent, newReleaseCandidates];
-      }));
+    const processedCandidates = new Map(
+      [...parentsToCandidates.entries()].map(
+        ([parent, releaseCandidates]): [Parent, ReleaseCandidate[]] => {
+          const newReleaseCandidates = releaseCandidates.map((releaseCandidate) =>
+            this.mapReleaseCandidate(dat, releaseCandidate, outputFileBasenames),
+          );
+          return [parent, newReleaseCandidates];
+        },
+      ),
+    );
 
     this.progressBar.logTrace(`${dat.getNameShort()}: done processing candidates`);
     return processedCandidates;

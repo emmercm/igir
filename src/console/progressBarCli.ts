@@ -56,21 +56,19 @@ export default class ProgressBarCLI extends ProgressBar {
   /**
    * Create a new {@link ProgressBarCLI}, and initialize the {@link MultiBar} if it hasn't been yet.
    */
-  static new(
-    logger: Logger,
-    name: string,
-    symbol: string,
-    initialTotal = 0,
-  ): ProgressBarCLI {
+  static new(logger: Logger, name: string, symbol: string, initialTotal = 0): ProgressBarCLI {
     if (!ProgressBarCLI.multiBar) {
-      ProgressBarCLI.multiBar = new cliProgress.MultiBar({
-        stream: logger.getLogLevel() < LogLevel.NEVER ? logger.getStream() : new PassThrough(),
-        barsize: 20,
-        fps: 1 / 60, // limit the automatic redraws
-        forceRedraw: true,
-        emptyOnZero: true,
-        hideCursor: true,
-      }, cliProgress.Presets.shades_grey);
+      ProgressBarCLI.multiBar = new cliProgress.MultiBar(
+        {
+          stream: logger.getLogLevel() < LogLevel.NEVER ? logger.getStream() : new PassThrough(),
+          barsize: 20,
+          fps: 1 / 60, // limit the automatic redraws
+          forceRedraw: true,
+          emptyOnZero: true,
+          hideCursor: true,
+        },
+        cliProgress.Presets.shades_grey,
+      );
       process.on('exit', () => {
         this.multiBar?.stop();
       });
@@ -130,12 +128,14 @@ export default class ProgressBarCLI extends ProgressBar {
         const consoleWidth = ConsolePoly.consoleWidth();
         const logMessage = ProgressBarCLI.logQueue
           // Wrapping is broken: https://github.com/npkgz/cli-progress/issues/142
-          .map((msg) => wrapAnsi(msg, consoleWidth, { trim: false })
-            // ...and if we manually wrap lines, we also need to deal with overwriting existing
-            //  progress bar output.
-            .split('\n')
-            // TODO(cemmer): this appears to only overwrite the last line, not any others?
-            .join(`\n${this.logger.isTTY() ? '\x1b[K' : ''}`))
+          .map((msg) =>
+            wrapAnsi(msg, consoleWidth, { trim: false })
+              // ...and if we manually wrap lines, we also need to deal with overwriting existing
+              //  progress bar output.
+              .split('\n')
+              // TODO(cemmer): this appears to only overwrite the last line, not any others?
+              .join(`\n${this.logger.isTTY() ? '\x1b[K' : ''}`),
+          )
           .join('\n');
         ProgressBarCLI.multiBar.log(`${logMessage}\n`);
         ProgressBarCLI.logQueue = [];
@@ -153,7 +153,7 @@ export default class ProgressBarCLI extends ProgressBar {
 
     // Limit the frequency of redrawing
     const elapsedMs = TimePoly.hrtimeMillis(ProgressBarCLI.lastRedraw);
-    if (elapsedMs < (1000 / ProgressBarCLI.FPS)) {
+    if (elapsedMs < 1000 / ProgressBarCLI.FPS) {
       return;
     }
 
@@ -227,12 +227,12 @@ export default class ProgressBarCLI extends ProgressBar {
     if (!this.waitingMessageTimeout) {
       this.waitingMessageTimeout = Timer.setInterval(() => {
         const currentMillis = TimePoly.hrtimeMillis();
-        const newWaitingMessagePair = [...this.waitingMessages]
-          .find(([, ms]) => currentMillis - ms >= 5000);
+        const newWaitingMessagePair = [...this.waitingMessages].find(
+          ([, ms]) => currentMillis - ms >= 5000,
+        );
 
-        const newWaitingMessage = newWaitingMessagePair !== undefined
-          ? newWaitingMessagePair[0]
-          : undefined;
+        const newWaitingMessage =
+          newWaitingMessagePair !== undefined ? newWaitingMessagePair[0] : undefined;
 
         if (newWaitingMessage !== this.payload.waitingMessage) {
           this.payload.waitingMessage = newWaitingMessage;
@@ -260,9 +260,9 @@ export default class ProgressBarCLI extends ProgressBar {
       return;
     }
 
-    this.singleBarFormatted.getSingleBar().setTotal(
-      this.singleBarFormatted.getSingleBar().getTotal() + increment,
-    );
+    this.singleBarFormatted
+      .getSingleBar()
+      .setTotal(this.singleBarFormatted.getSingleBar().getTotal() + increment);
     this.render();
   }
 
@@ -366,7 +366,8 @@ export default class ProgressBarCLI extends ProgressBar {
     }
 
     ProgressBarCLI.multiBar?.remove(this.singleBarFormatted.getSingleBar());
-    ProgressBarCLI.progressBars = ProgressBarCLI.progressBars
-      .filter((singleBar) => singleBar.singleBarFormatted !== this.singleBarFormatted);
+    ProgressBarCLI.progressBars = ProgressBarCLI.progressBars.filter(
+      (singleBar) => singleBar.singleBarFormatted !== this.singleBarFormatted,
+    );
   }
 }

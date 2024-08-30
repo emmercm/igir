@@ -38,7 +38,9 @@ export default class UPSPatch extends Patch {
       const patchData = await patchFile.readNext(patchFile.getSize() - 4);
       const patchChecksumsActual = await FileChecksums.hashData(patchData, ChecksumBitmask.CRC32);
       if (patchChecksumsActual.crc32 !== patchChecksumExpected) {
-        throw new ExpectedError(`UPS patch is invalid, CRC of contents (${patchChecksumsActual.crc32}) doesn't match expected (${patchChecksumExpected}): ${file.toString()}`);
+        throw new ExpectedError(
+          `UPS patch is invalid, CRC of contents (${patchChecksumsActual.crc32}) doesn't match expected (${patchChecksumExpected}): ${file.toString()}`,
+        );
       }
     });
 
@@ -58,7 +60,9 @@ export default class UPSPatch extends Patch {
 
       const sourceSize = await Patch.readUpsUint(patchFile);
       if (inputRomFile.getSize() !== sourceSize) {
-        throw new ExpectedError(`UPS patch expected ROM size of ${fsPoly.sizeReadable(sourceSize)}: ${patchFile.getPathLike()}`);
+        throw new ExpectedError(
+          `UPS patch expected ROM size of ${fsPoly.sizeReadable(sourceSize)}: ${patchFile.getPathLike()}`,
+        );
       }
       await Patch.readUpsUint(patchFile); // target size
 
@@ -105,24 +109,22 @@ export default class UPSPatch extends Patch {
     }
   }
 
-  private static async readPatchBlock(
-    patchFile: FilePoly,
-    sourceFile: FilePoly,
-  ): Promise<Buffer> {
+  private static async readPatchBlock(patchFile: FilePoly, sourceFile: FilePoly): Promise<Buffer> {
     const buffer: Buffer[] = [];
 
     while (patchFile.getPosition() < patchFile.getSize() - 12) {
       const xorByte = (await patchFile.readNext(1)).readUInt8();
-      if (!xorByte) { // terminating byte 0x00
+      if (!xorByte) {
+        // terminating byte 0x00
         return Buffer.concat(buffer);
       }
 
-      const sourceByte = sourceFile.isEOF()
-        ? 0x00
-        : (await sourceFile.readNext(1)).readUInt8();
+      const sourceByte = sourceFile.isEOF() ? 0x00 : (await sourceFile.readNext(1)).readUInt8();
       buffer.push(Buffer.of(sourceByte ^ xorByte));
     }
 
-    throw new ExpectedError(`UPS patch failed to read 0x00 block termination: ${patchFile.getPathLike()}`);
+    throw new ExpectedError(
+      `UPS patch failed to read 0x00 block termination: ${patchFile.getPathLike()}`,
+    );
   }
 }

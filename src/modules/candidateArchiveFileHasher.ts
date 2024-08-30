@@ -14,9 +14,7 @@ import Module from './module.js';
  * {@link CandidatePreferer}.
  */
 export default class CandidateArchiveFileHasher extends Module {
-  private static readonly DRIVE_SEMAPHORE = new DriveSemaphore(
-    Number.MAX_SAFE_INTEGER,
-  );
+  private static readonly DRIVE_SEMAPHORE = new DriveSemaphore(Number.MAX_SAFE_INTEGER);
 
   private readonly options: Options;
 
@@ -46,27 +44,32 @@ export default class CandidateArchiveFileHasher extends Module {
     }
 
     if (!this.options.shouldTest() && !this.options.getOverwriteInvalid()) {
-      this.progressBar.logTrace(`${dat.getNameShort()}: not testing or overwriting invalid files, no need`);
+      this.progressBar.logTrace(
+        `${dat.getNameShort()}: not testing or overwriting invalid files, no need`,
+      );
       return parentsToCandidates;
     }
 
     const archiveFileCount = [...parentsToCandidates.values()]
       .flat()
       .flatMap((candidate) => candidate.getRomsWithFiles())
-      .filter((romWithFiles) => romWithFiles.getInputFile() instanceof ArchiveFile)
-      .length;
+      .filter((romWithFiles) => romWithFiles.getInputFile() instanceof ArchiveFile).length;
     if (archiveFileCount === 0) {
       this.progressBar.logTrace(`${dat.getNameShort()}: no ArchiveFiles to hash`);
       return parentsToCandidates;
     }
 
-    this.progressBar.logTrace(`${dat.getNameShort()}: generating ${archiveFileCount.toLocaleString()} hashed ArchiveFile candidate${archiveFileCount !== 1 ? 's' : ''}`);
+    this.progressBar.logTrace(
+      `${dat.getNameShort()}: generating ${archiveFileCount.toLocaleString()} hashed ArchiveFile candidate${archiveFileCount !== 1 ? 's' : ''}`,
+    );
     this.progressBar.setSymbol(ProgressBarSymbol.CANDIDATE_HASHING);
     this.progressBar.reset(archiveFileCount);
 
     const hashedParentsToCandidates = this.hashArchiveFiles(dat, parentsToCandidates);
 
-    this.progressBar.logTrace(`${dat.getNameShort()}: done generating hashed ArchiveFile candidates`);
+    this.progressBar.logTrace(
+      `${dat.getNameShort()}: done generating hashed ArchiveFile candidates`,
+    );
     return hashedParentsToCandidates;
   }
 
@@ -74,60 +77,69 @@ export default class CandidateArchiveFileHasher extends Module {
     dat: DAT,
     parentsToCandidates: Map<Parent, ReleaseCandidate[]>,
   ): Promise<Map<Parent, ReleaseCandidate[]>> {
-    return new Map((await Promise.all([...parentsToCandidates.entries()]
-      .map(async ([parent, releaseCandidates]): Promise<[Parent, ReleaseCandidate[]]> => {
-        const hashedReleaseCandidates = await Promise.all(releaseCandidates
-          .map(async (releaseCandidate) => {
-            const hashedRomsWithFiles = await Promise.all(releaseCandidate.getRomsWithFiles()
-              .map(async (romWithFiles) => {
-                const inputFile = romWithFiles.getInputFile();
-                if (!(inputFile instanceof ArchiveFile)) {
-                  return romWithFiles;
-                }
+    return new Map(
+      await Promise.all(
+        [...parentsToCandidates.entries()].map(
+          async ([parent, releaseCandidates]): Promise<[Parent, ReleaseCandidate[]]> => {
+            const hashedReleaseCandidates = await Promise.all(
+              releaseCandidates.map(async (releaseCandidate) => {
+                const hashedRomsWithFiles = await Promise.all(
+                  releaseCandidate.getRomsWithFiles().map(async (romWithFiles) => {
+                    const inputFile = romWithFiles.getInputFile();
+                    if (!(inputFile instanceof ArchiveFile)) {
+                      return romWithFiles;
+                    }
 
-                const outputFile = romWithFiles.getOutputFile();
-                if (inputFile.equals(outputFile)) {
-                  // There's no need to calculate the checksum, {@link CandidateWriter} will skip
-                  // writing over itself
-                  return romWithFiles;
-                }
+                    const outputFile = romWithFiles.getOutputFile();
+                    if (inputFile.equals(outputFile)) {
+                      // There's no need to calculate the checksum, {@link CandidateWriter} will skip
+                      // writing over itself
+                      return romWithFiles;
+                    }
 
-                return CandidateArchiveFileHasher.DRIVE_SEMAPHORE.runExclusive(
-                  inputFile,
-                  async () => {
-                    this.progressBar.incrementProgress();
-                    const waitingMessage = `${inputFile.toString()} ...`;
-                    this.progressBar.addWaitingMessage(waitingMessage);
-                    this.progressBar.logTrace(`${dat.getNameShort()}: ${parent.getName()}: calculating checksums for: ${inputFile.toString()}`);
+                    return CandidateArchiveFileHasher.DRIVE_SEMAPHORE.runExclusive(
+                      inputFile,
+                      async () => {
+                        this.progressBar.incrementProgress();
+                        const waitingMessage = `${inputFile.toString()} ...`;
+                        this.progressBar.addWaitingMessage(waitingMessage);
+                        this.progressBar.logTrace(
+                          `${dat.getNameShort()}: ${parent.getName()}: calculating checksums for: ${inputFile.toString()}`,
+                        );
 
-                    const hashedInputFile = await this.fileFactory.archiveFileFrom(
-                      inputFile.getArchive(),
-                      inputFile.getChecksumBitmask(),
+                        const hashedInputFile = await this.fileFactory.archiveFileFrom(
+                          inputFile.getArchive(),
+                          inputFile.getChecksumBitmask(),
+                        );
+                        // {@link CandidateGenerator} would have copied undefined values from the input
+                        //  file, so we need to modify the expected output file as well for testing
+                        const hashedOutputFile = outputFile.withProps({
+                          size: hashedInputFile.getSize(),
+                          crc32: hashedInputFile.getCrc32(),
+                          md5: hashedInputFile.getMd5(),
+                          sha1: hashedInputFile.getSha1(),
+                          sha256: hashedInputFile.getSha256(),
+                        });
+                        const hashedRomWithFiles = romWithFiles
+                          .withInputFile(hashedInputFile)
+                          .withOutputFile(hashedOutputFile);
+
+                        this.progressBar.removeWaitingMessage(waitingMessage);
+                        this.progressBar.incrementDone();
+                        return hashedRomWithFiles;
+                      },
                     );
-                    // {@link CandidateGenerator} would have copied undefined values from the input
-                    //  file, so we need to modify the expected output file as well for testing
-                    const hashedOutputFile = outputFile.withProps({
-                      size: hashedInputFile.getSize(),
-                      crc32: hashedInputFile.getCrc32(),
-                      md5: hashedInputFile.getMd5(),
-                      sha1: hashedInputFile.getSha1(),
-                      sha256: hashedInputFile.getSha256(),
-                    });
-                    const hashedRomWithFiles = romWithFiles
-                      .withInputFile(hashedInputFile)
-                      .withOutputFile(hashedOutputFile);
-
-                    this.progressBar.removeWaitingMessage(waitingMessage);
-                    this.progressBar.incrementDone();
-                    return hashedRomWithFiles;
-                  },
+                  }),
                 );
-              }));
 
-            return releaseCandidate.withRomsWithFiles(hashedRomsWithFiles);
-          }));
+                return releaseCandidate.withRomsWithFiles(hashedRomsWithFiles);
+              }),
+            );
 
-        return [parent, hashedReleaseCandidates];
-      }))));
+            return [parent, hashedReleaseCandidates];
+          },
+        ),
+      ),
+    );
   }
 }

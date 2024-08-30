@@ -49,8 +49,16 @@ describe('apply', () => {
     // Standard vcdiff with no secondary compression (xdelta3 -S -n -A ...)
     ['AAAAA', Buffer.from('d6c3c40000000d0a000502014142434441061504', 'hex'), 'ABCDAAAAAA'],
     ['AAAAAAAAAA', Buffer.from('d6c3c40000000d0a000502014142434441061504', 'hex'), 'ABCDAAAAAA'],
-    ['AAAAAAAAAA', Buffer.from('d6c3c4000000100a000a01004142434445464748494a0b', 'hex'), 'ABCDEFGHIJ'],
-    ['AAAAAAAAAAAAAAAAAAAA', Buffer.from('d6c3c40000001414000b0400414243444546414545454507000a05', 'hex'), 'ABCDEFAAAAAAAAAAEEEE'],
+    [
+      'AAAAAAAAAA',
+      Buffer.from('d6c3c4000000100a000a01004142434445464748494a0b', 'hex'),
+      'ABCDEFGHIJ',
+    ],
+    [
+      'AAAAAAAAAAAAAAAAAAAA',
+      Buffer.from('d6c3c40000001414000b0400414243444546414545454507000a05', 'hex'),
+      'ABCDEFAAAAAAAAAAEEEE',
+    ],
   ])('should apply the patch #%#: %s', async (baseContents, patchContents, expectedContents) => {
     const inputRom = await writeTemp('ROM', baseContents);
     const outputRom = await fsPoly.mktemp('ROM');

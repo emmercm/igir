@@ -15,7 +15,8 @@ import Options, {
   FixExtension,
   GameSubdirMode,
   InputChecksumArchivesMode,
-  MergeMode, PreferRevision,
+  MergeMode,
+  PreferRevision,
 } from '../types/options.js';
 import PatchFactory from '../types/patches/patchFactory.js';
 
@@ -97,7 +98,10 @@ export default class ArgumentsParser {
       ['dir2dat', 'Generate a DAT from all input files'],
       ['fixdat', 'Generate a fixdat of any missing games for every DAT processed (requires --dat)'],
       ['clean', 'Recycle unknown files in the output directory'],
-      ['report', 'Generate a CSV report on the known & unknown ROM files found in the input directories (requires --dat)'],
+      [
+        'report',
+        'Generate a CSV report on the known & unknown ROM files found in the input directories (requires --dat)',
+      ],
     ];
     const mutuallyExclusiveCommands = [
       // Write commands
@@ -107,26 +111,23 @@ export default class ArgumentsParser {
       // DAT writing commands
       ['dir2dat', 'fixdat'],
     ];
-    const addCommands = (
-      yargsObj: Argv,
-      previousCommands: string[] = [],
-    ): Argv => {
+    const addCommands = (yargsObj: Argv, previousCommands: string[] = []): Argv => {
       commands
         // Don't allow/show duplicate commands, i.e. don't give `igir copy copy` as an option
         .filter(([command]) => !previousCommands.includes(command))
         // Don't allow/show conflicting commands, i.e. don't give `igir copy move` as an option
         .filter(([command]) => {
-          const incompatibleCommands = previousCommands
-            .flatMap((previousCommand) => mutuallyExclusiveCommands
+          const incompatibleCommands = previousCommands.flatMap((previousCommand) =>
+            mutuallyExclusiveCommands
               .filter((mutuallyExclusive) => mutuallyExclusive.includes(previousCommand))
-              .flat());
+              .flat(),
+          );
           return !incompatibleCommands.includes(command);
         })
         .forEach(([command, description]) => {
-          yargsObj.command(command, description, (yargsSubObj) => addCommands(
-            yargsSubObj,
-            [...previousCommands, command],
-          ));
+          yargsObj.command(command, description, (yargsSubObj) =>
+            addCommands(yargsSubObj, [...previousCommands, command]),
+          );
         });
 
       if (previousCommands.length === 0) {
@@ -141,14 +142,24 @@ export default class ArgumentsParser {
         }, true)
         .check((checkArgv) => {
           ['extract', 'zip'].forEach((command) => {
-            if (checkArgv._.includes(command) && ['copy', 'move'].every((write) => !checkArgv._.includes(write))) {
-              throw new ExpectedError(`Command "${command}" also requires the commands copy or move`);
+            if (
+              checkArgv._.includes(command) &&
+              ['copy', 'move'].every((write) => !checkArgv._.includes(write))
+            ) {
+              throw new ExpectedError(
+                `Command "${command}" also requires the commands copy or move`,
+              );
             }
           });
 
           ['test', 'clean'].forEach((command) => {
-            if (checkArgv._.includes(command) && ['copy', 'move', 'link'].every((write) => !checkArgv._.includes(write))) {
-              throw new ExpectedError(`Command "${command}" requires one of the commands: copy, move, or link`);
+            if (
+              checkArgv._.includes(command) &&
+              ['copy', 'move', 'link'].every((write) => !checkArgv._.includes(write))
+            ) {
+              throw new ExpectedError(
+                `Command "${command}" requires one of the commands: copy, move, or link`,
+              );
             }
           });
 
@@ -179,32 +190,51 @@ export default class ArgumentsParser {
         requiresArg: true,
       })
       .check((checkArgv) => {
-        const needInput = ['copy', 'move', 'link', 'extract', 'zip', 'test', 'dir2dat', 'fixdat'].filter((command) => checkArgv._.includes(command));
+        const needInput = [
+          'copy',
+          'move',
+          'link',
+          'extract',
+          'zip',
+          'test',
+          'dir2dat',
+          'fixdat',
+        ].filter((command) => checkArgv._.includes(command));
         if (!checkArgv.input && needInput.length > 0) {
           // TODO(cememr): print help message
-          throw new ExpectedError(`Missing required argument for command${needInput.length !== 1 ? 's' : ''} ${needInput.join(', ')}: --input <path>`);
+          throw new ExpectedError(
+            `Missing required argument for command${needInput.length !== 1 ? 's' : ''} ${needInput.join(', ')}: --input <path>`,
+          );
         }
         return true;
       })
       .option('input-exclude', {
         group: groupRomInput,
         alias: 'I',
-        description: 'Path(s) to ROM files or archives to exclude from processing (supports globbing)',
+        description:
+          'Path(s) to ROM files or archives to exclude from processing (supports globbing)',
         type: 'array',
         requiresArg: true,
       })
       .option('input-checksum-quick', {
         group: groupRomInput,
-        description: 'Only read checksums from archive headers, don\'t decompress to calculate',
+        description: "Only read checksums from archive headers, don't decompress to calculate",
         type: 'boolean',
       })
       .check((checkArgv) => {
         // Re-implement `conflicts: 'input-checksum-min'`, which isn't possible with a default value
-        if (checkArgv['input-checksum-quick'] && checkArgv['input-checksum-min'] !== ChecksumBitmask[ChecksumBitmask.CRC32].toUpperCase()) {
-          throw new ExpectedError('Arguments input-checksum-quick and input-checksum-min are mutually exclusive');
+        if (
+          checkArgv['input-checksum-quick'] &&
+          checkArgv['input-checksum-min'] !== ChecksumBitmask[ChecksumBitmask.CRC32].toUpperCase()
+        ) {
+          throw new ExpectedError(
+            'Arguments input-checksum-quick and input-checksum-min are mutually exclusive',
+          );
         }
         if (checkArgv['input-checksum-quick'] && checkArgv['input-checksum-max']) {
-          throw new ExpectedError('Arguments input-checksum-quick and input-checksum-max are mutually exclusive');
+          throw new ExpectedError(
+            'Arguments input-checksum-quick and input-checksum-max are mutually exclusive',
+          );
         }
         return true;
       })
@@ -233,17 +263,21 @@ export default class ArgumentsParser {
         const options = Options.fromObject(checkArgv);
         const inputChecksumMin = options.getInputChecksumMin();
         const inputChecksumMax = options.getInputChecksumMax();
-        if (inputChecksumMin !== undefined
-          && inputChecksumMax !== undefined
-          && inputChecksumMin > inputChecksumMax
+        if (
+          inputChecksumMin !== undefined &&
+          inputChecksumMax !== undefined &&
+          inputChecksumMin > inputChecksumMax
         ) {
-          throw new ExpectedError('Invalid --input-checksum-min & --input-checksum-max, the min must be less than the max');
+          throw new ExpectedError(
+            'Invalid --input-checksum-min & --input-checksum-max, the min must be less than the max',
+          );
         }
         return true;
       })
       .option('input-checksum-archives', {
         group: groupRomInput,
-        description: 'Calculate checksums of archive files themselves, allowing them to match files in DATs',
+        description:
+          'Calculate checksums of archive files themselves, allowing them to match files in DATs',
         choices: Object.keys(InputChecksumArchivesMode)
           .filter((mode) => Number.isNaN(Number(mode)))
           .map((mode) => mode.toLowerCase()),
@@ -270,7 +304,8 @@ export default class ArgumentsParser {
       })
       .option('dat-exclude', {
         group: groupDatInput,
-        description: 'Path(s) to DAT files or archives to exclude from processing (supports globbing)',
+        description:
+          'Path(s) to DAT files or archives to exclude from processing (supports globbing)',
         type: 'array',
         requiresArg: true,
       })
@@ -319,7 +354,9 @@ export default class ArgumentsParser {
         }
         const needDat = ['report'].filter((command) => checkArgv._.includes(command));
         if ((!checkArgv.dat || checkArgv.dat.length === 0) && needDat.length > 0) {
-          throw new ExpectedError(`Missing required argument for commands ${needDat.join(', ')}: --dat`);
+          throw new ExpectedError(
+            `Missing required argument for commands ${needDat.join(', ')}: --dat`,
+          );
         }
         return true;
       })
@@ -334,7 +371,8 @@ export default class ArgumentsParser {
       .option('patch-exclude', {
         group: groupPatchInput,
         alias: 'P',
-        description: 'Path(s) to ROM patch files or archives to exclude from processing (supports globbing)',
+        description:
+          'Path(s) to ROM patch files or archives to exclude from processing (supports globbing)',
         type: 'array',
         requiresArg: true,
       })
@@ -367,7 +405,8 @@ export default class ArgumentsParser {
       })
       .option('dir-letter', {
         group: groupRomOutputPath,
-        description: 'Group games in an output subdirectory by the first --dir-letter-count letters in their name',
+        description:
+          'Group games in an output subdirectory by the first --dir-letter-count letters in their name',
         type: 'boolean',
       })
       .option('dir-letter-count', {
@@ -387,7 +426,8 @@ export default class ArgumentsParser {
       })
       .option('dir-letter-limit', {
         group: groupRomOutputPath,
-        description: 'Limit the number of games in letter subdirectories, splitting into multiple subdirectories if necessary',
+        description:
+          'Limit the number of games in letter subdirectories, splitting into multiple subdirectories if necessary',
         type: 'number',
         coerce: (val: number) => Math.max(ArgumentsParser.getLastValue(val), 1),
         requiresArg: true,
@@ -395,7 +435,8 @@ export default class ArgumentsParser {
       })
       .option('dir-letter-group', {
         group: groupRomOutputPath,
-        description: 'Group letter subdirectories into ranges, combining multiple letters together (requires --dir-letter-limit)',
+        description:
+          'Group letter subdirectories into ranges, combining multiple letters together (requires --dir-letter-limit)',
         type: 'boolean',
         implies: 'dir-letter-limit',
       })
@@ -412,7 +453,8 @@ export default class ArgumentsParser {
 
       .option('fix-extension', {
         group: groupRomOutput,
-        description: 'Read files for known signatures and use the correct extension (also affects dir2dat)',
+        description:
+          'Read files for known signatures and use the correct extension (also affects dir2dat)',
         choices: Object.keys(FixExtension)
           .filter((mode) => Number.isNaN(Number(mode)))
           .map((mode) => mode.toLowerCase()),
@@ -428,14 +470,19 @@ export default class ArgumentsParser {
       })
       .option('overwrite-invalid', {
         group: groupRomOutput,
-        description: 'Overwrite files in the output directory that are the wrong filesize, checksum, or zip contents',
+        description:
+          'Overwrite files in the output directory that are the wrong filesize, checksum, or zip contents',
         type: 'boolean',
       })
       .check((checkArgv) => {
-        const needOutput = ['copy', 'move', 'link', 'extract', 'zip', 'clean'].filter((command) => checkArgv._.includes(command));
+        const needOutput = ['copy', 'move', 'link', 'extract', 'zip', 'clean'].filter((command) =>
+          checkArgv._.includes(command),
+        );
         if (!checkArgv.output && needOutput.length > 0) {
           // TODO(cememr): print help message
-          throw new ExpectedError(`Missing required argument for command${needOutput.length !== 1 ? 's' : ''} ${needOutput.join(', ')}: --output <path>`);
+          throw new ExpectedError(
+            `Missing required argument for command${needOutput.length !== 1 ? 's' : ''} ${needOutput.join(', ')}: --output <path>`,
+          );
         }
         return true;
       })
@@ -456,14 +503,18 @@ export default class ArgumentsParser {
       })
       .option('clean-dry-run', {
         group: groupRomClean,
-        description: 'Don\'t clean any files and instead only print what files would be cleaned',
+        description: "Don't clean any files and instead only print what files would be cleaned",
         type: 'boolean',
       })
       .check((checkArgv) => {
-        const needClean = ['clean-exclude', 'clean-backup', 'clean-dry-run'].filter((option) => checkArgv[option]);
+        const needClean = ['clean-exclude', 'clean-backup', 'clean-dry-run'].filter(
+          (option) => checkArgv[option],
+        );
         if (!checkArgv._.includes('clean') && needClean.length > 0) {
           // TODO(cememr): print help message
-          throw new ExpectedError(`Missing required command for option${needClean.length !== 1 ? 's' : ''} ${needClean.join(', ')}: clean`);
+          throw new ExpectedError(
+            `Missing required command for option${needClean.length !== 1 ? 's' : ''} ${needClean.join(', ')}: clean`,
+          );
         }
         return true;
       })
@@ -478,13 +529,16 @@ export default class ArgumentsParser {
       })
       .option('zip-dat-name', {
         group: groupRomZip,
-        description: 'Group all ROMs from the same DAT into the same zip archive, if not excluded from zipping (enforces --dat-threads 1)',
+        description:
+          'Group all ROMs from the same DAT into the same zip archive, if not excluded from zipping (enforces --dat-threads 1)',
         type: 'boolean',
       })
       .check((checkArgv) => {
         const needZip = ['zip-exclude', 'zip-dat-name'].filter((option) => checkArgv[option]);
         if (!checkArgv._.includes('zip') && needZip.length > 0) {
-          throw new ExpectedError(`Missing required command for option${needZip.length !== 1 ? 's' : ''} ${needZip.join(', ')}: zip`);
+          throw new ExpectedError(
+            `Missing required command for option${needZip.length !== 1 ? 's' : ''} ${needZip.join(', ')}: zip`,
+          );
         }
         return true;
       })
@@ -503,7 +557,9 @@ export default class ArgumentsParser {
       .check((checkArgv) => {
         const needLinkCommand = ['symlink'].filter((option) => checkArgv[option]);
         if (!checkArgv._.includes('link') && needLinkCommand.length > 0) {
-          throw new ExpectedError(`Missing required command for option${needLinkCommand.length !== 1 ? 's' : ''} ${needLinkCommand.join(', ')}: link`);
+          throw new ExpectedError(
+            `Missing required command for option${needLinkCommand.length !== 1 ? 's' : ''} ${needLinkCommand.join(', ')}: link`,
+          );
         }
         return true;
       })
@@ -520,9 +576,8 @@ export default class ArgumentsParser {
         alias: 'H',
         description: `Remove known headers from ROMs, optionally limited to a list of comma-separated file extensions (supported: ${ROMHeader.getSupportedExtensions().join(', ')})`,
         type: 'string',
-        coerce: (vals: string) => vals
-          .split(',')
-          .map((val) => {
+        coerce: (vals: string) =>
+          vals.split(',').map((val) => {
             if (val === '') {
               // Flag was provided without any extensions
               return val;
@@ -543,7 +598,10 @@ export default class ArgumentsParser {
       })
       .check((checkArgv) => {
         // Re-implement `implies: 'dat'`, which isn't possible with a default value
-        if (checkArgv['merge-roms'] !== MergeMode[MergeMode.FULLNONMERGED].toLowerCase() && !checkArgv.dat) {
+        if (
+          checkArgv['merge-roms'] !== MergeMode[MergeMode.FULLNONMERGED].toLowerCase() &&
+          !checkArgv.dat
+        ) {
           throw new ExpectedError('Missing dependent arguments:\n merge-roms -> dat');
         }
         return true;
@@ -562,7 +620,7 @@ export default class ArgumentsParser {
       })
       .option('allow-incomplete-sets', {
         group: groupRomSet,
-        description: 'Allow writing games that don\'t have all of their ROMs',
+        description: "Allow writing games that don't have all of their ROMs",
         type: 'boolean',
         implies: 'dat',
       })
@@ -592,9 +650,13 @@ export default class ArgumentsParser {
         requiresArg: true,
       })
       .check((checkArgv) => {
-        const invalidLangs = checkArgv['filter-language']?.filter((lang) => !Internationalization.LANGUAGES.includes(lang));
+        const invalidLangs = checkArgv['filter-language']?.filter(
+          (lang) => !Internationalization.LANGUAGES.includes(lang),
+        );
         if (invalidLangs !== undefined && invalidLangs.length > 0) {
-          throw new ExpectedError(`Invalid --filter-language language${invalidLangs.length !== 1 ? 's' : ''}: ${invalidLangs.join(', ')}`);
+          throw new ExpectedError(
+            `Invalid --filter-language language${invalidLangs.length !== 1 ? 's' : ''}: ${invalidLangs.join(', ')}`,
+          );
         }
         return true;
       })
@@ -607,9 +669,13 @@ export default class ArgumentsParser {
         requiresArg: true,
       })
       .check((checkArgv) => {
-        const invalidRegions = checkArgv['filter-region']?.filter((lang) => !Internationalization.REGION_CODES.includes(lang));
+        const invalidRegions = checkArgv['filter-region']?.filter(
+          (lang) => !Internationalization.REGION_CODES.includes(lang),
+        );
         if (invalidRegions !== undefined && invalidRegions.length > 0) {
-          throw new ExpectedError(`Invalid --filter-region region${invalidRegions.length !== 1 ? 's' : ''}: ${invalidRegions.join(', ')}`);
+          throw new ExpectedError(
+            `Invalid --filter-region region${invalidRegions.length !== 1 ? 's' : ''}: ${invalidRegions.join(', ')}`,
+          );
         }
         return true;
       });
@@ -631,13 +697,12 @@ export default class ArgumentsParser {
           hidden: true,
         });
     });
-    yargsParser
-      .option('only-retail', {
-        group: groupRomFiltering,
-        description: 'Filter to only retail releases, enabling all the following "no" options',
-        type: 'boolean',
-      });
-    ([
+    yargsParser.option('only-retail', {
+      group: groupRomFiltering,
+      description: 'Filter to only retail releases, enabling all the following "no" options',
+      type: 'boolean',
+    });
+    [
       ['debug', 'debug ROMs'],
       ['demo', 'demo ROMs'],
       ['beta', 'beta ROMs'],
@@ -648,7 +713,7 @@ export default class ArgumentsParser {
       ['homebrew', 'homebrew ROMs'],
       ['unverified', 'unverified ROMs'],
       ['bad', 'bad ROM dumps'],
-    ]).forEach(([key, description]) => {
+    ].forEach(([key, description]) => {
       yargsParser
         .option(`no-${key}`, {
           group: groupRomFiltering,
@@ -667,7 +732,8 @@ export default class ArgumentsParser {
       .option('single', {
         group: groupRomPriority,
         alias: 's',
-        description: 'Output only a single game per parent (1G1R) (required for all options below, requires DATs with parent/clone information)',
+        description:
+          'Output only a single game per parent (1G1R) (required for all options below, requires DATs with parent/clone information)',
         type: 'boolean',
       })
       .option('prefer-game-regex', {
@@ -708,9 +774,13 @@ export default class ArgumentsParser {
         implies: 'single',
       })
       .check((checkArgv) => {
-        const invalidLangs = checkArgv['prefer-language']?.filter((lang) => !Internationalization.LANGUAGES.includes(lang));
+        const invalidLangs = checkArgv['prefer-language']?.filter(
+          (lang) => !Internationalization.LANGUAGES.includes(lang),
+        );
         if (invalidLangs !== undefined && invalidLangs.length > 0) {
-          throw new ExpectedError(`Invalid --prefer-language language${invalidLangs.length !== 1 ? 's' : ''}: ${invalidLangs.join(', ')}`);
+          throw new ExpectedError(
+            `Invalid --prefer-language language${invalidLangs.length !== 1 ? 's' : ''}: ${invalidLangs.join(', ')}`,
+          );
         }
         return true;
       })
@@ -724,9 +794,13 @@ export default class ArgumentsParser {
         implies: 'single',
       })
       .check((checkArgv) => {
-        const invalidRegions = checkArgv['prefer-region']?.filter((lang) => !Internationalization.REGION_CODES.includes(lang));
+        const invalidRegions = checkArgv['prefer-region']?.filter(
+          (lang) => !Internationalization.REGION_CODES.includes(lang),
+        );
         if (invalidRegions !== undefined && invalidRegions.length > 0) {
-          throw new ExpectedError(`Invalid --prefer-region region${invalidRegions.length !== 1 ? 's' : ''}: ${invalidRegions.join(', ')}`);
+          throw new ExpectedError(
+            `Invalid --prefer-region region${invalidRegions.length !== 1 ? 's' : ''}: ${invalidRegions.join(', ')}`,
+          );
         }
         return true;
       })
@@ -794,7 +868,8 @@ export default class ArgumentsParser {
       }, true)
       .option('write-retry', {
         group: groupHelpDebug,
-        description: 'Number of additional retries to attempt when writing a file has failed (0 disables retries)',
+        description:
+          'Number of additional retries to attempt when writing a file has failed (0 disables retries)',
         type: 'number',
         coerce: (val: number) => Math.max(val, 0),
         requiresArg: true,
@@ -828,29 +903,39 @@ export default class ArgumentsParser {
       })
       .middleware((middlewareArgv) => {
         if (middlewareArgv['clean-dry-run'] === true && (middlewareArgv.verbose ?? 0) < 1) {
-          this.logger.warn('--clean-dry-run prints INFO logs for files skipped, enable them with -v');
+          this.logger.warn(
+            '--clean-dry-run prints INFO logs for files skipped, enable them with -v',
+          );
         }
       })
 
       .check((checkArgv) => {
-        if (checkArgv.mergeRoms !== MergeMode[MergeMode.FULLNONMERGED].toLowerCase() && (
-          checkArgv.dirMirror
-          || checkArgv.dirLetter
-        )) {
-          this.logger.warn(`at least one --dir-* option was provided, be careful about how you organize non-'${MergeMode[MergeMode.FULLNONMERGED].toLowerCase()}' ROM sets into different subdirectories`);
-        }
-
-        if (checkArgv.mergeRoms !== MergeMode[MergeMode.FULLNONMERGED].toLowerCase() && (
-          checkArgv.noBios
-          || checkArgv.noDevice
-        )) {
-          this.logger.warn(`--no-bios and --no-device may leave non-'${MergeMode[MergeMode.FULLNONMERGED].toLowerCase()}' ROM sets in an unplayable state`);
-        }
-
-        if ((checkArgv.single && !checkArgv.preferParent)
-          && checkArgv.mergeRoms === MergeMode[MergeMode.SPLIT].toLowerCase()
+        if (
+          checkArgv.mergeRoms !== MergeMode[MergeMode.FULLNONMERGED].toLowerCase() &&
+          (checkArgv.dirMirror || checkArgv.dirLetter)
         ) {
-          this.logger.warn(`--single may leave '${MergeMode[MergeMode.SPLIT].toLowerCase()}' ROM sets in an unplayable state`);
+          this.logger.warn(
+            `at least one --dir-* option was provided, be careful about how you organize non-'${MergeMode[MergeMode.FULLNONMERGED].toLowerCase()}' ROM sets into different subdirectories`,
+          );
+        }
+
+        if (
+          checkArgv.mergeRoms !== MergeMode[MergeMode.FULLNONMERGED].toLowerCase() &&
+          (checkArgv.noBios || checkArgv.noDevice)
+        ) {
+          this.logger.warn(
+            `--no-bios and --no-device may leave non-'${MergeMode[MergeMode.FULLNONMERGED].toLowerCase()}' ROM sets in an unplayable state`,
+          );
+        }
+
+        if (
+          checkArgv.single &&
+          !checkArgv.preferParent &&
+          checkArgv.mergeRoms === MergeMode[MergeMode.SPLIT].toLowerCase()
+        ) {
+          this.logger.warn(
+            `--single may leave '${MergeMode[MergeMode.SPLIT].toLowerCase()}' ROM sets in an unplayable state`,
+          );
         }
 
         return true;
@@ -860,7 +945,8 @@ export default class ArgumentsParser {
       .version(false)
 
       // NOTE(cemmer): the .epilogue() renders after .example() but I want them switched
-      .epilogue(`${'-'.repeat(ArgumentsParser.getHelpWidth(argv))}
+      .epilogue(
+        `${'-'.repeat(ArgumentsParser.getHelpWidth(argv))}
 
 Advanced usage:
 
@@ -918,7 +1004,8 @@ Example use cases:
     $0 copy zip --dat "MAME 0.258.dat" --input MAME/ --output MAME-0.258/ --merge-roms split
 
   Copy ROMs to an Analogue Pocket and test they were written correctly:
-    $0 copy extract test --dat "*.dat" --input ROMs/ --output /Assets/{pocket}/common/ --dir-letter`)
+    $0 copy extract test --dat "*.dat" --input ROMs/ --output /Assets/{pocket}/common/ --dir-letter`,
+      )
 
       // Colorize help output
       .option('help', {
@@ -936,13 +1023,11 @@ Example use cases:
         throw new ExpectedError(msg);
       });
 
-    const yargsArgv = yargsParser
-      .strictOptions(true)
-      .parse(argv, {}, (err, parsedArgv, output) => {
-        if (output) {
-          this.logger.colorizeYargs(`${output.trimEnd()}\n`);
-        }
-      });
+    const yargsArgv = yargsParser.strictOptions(true).parse(argv, {}, (err, parsedArgv, output) => {
+      if (output) {
+        this.logger.colorizeYargs(`${output.trimEnd()}\n`);
+      }
+    });
 
     return Options.fromObject(yargsArgv);
   }

@@ -144,7 +144,9 @@ class VcdiffHeader {
          *    bytes "59 5A", only the starting bytes "FD 37 7A 58 5A 00" (after the above number)
          */
         await patchFile.close();
-        throw new ExpectedError(`unsupported Vcdiff secondary decompressor ${VcdiffSecondaryCompression[secondaryDecompressorId]}: ${patchFile.getPathLike()}`);
+        throw new ExpectedError(
+          `unsupported Vcdiff secondary decompressor ${VcdiffSecondaryCompression[secondaryDecompressorId]}: ${patchFile.getPathLike()}`,
+        );
       }
     }
 
@@ -153,7 +155,9 @@ class VcdiffHeader {
       const codeTableLength = await Patch.readVcdiffUintFromFile(patchFile);
       if (codeTableLength) {
         await patchFile.close();
-        throw new ExpectedError(`can't parse Vcdiff application-defined code table: ${patchFile.getPathLike()}`);
+        throw new ExpectedError(
+          `can't parse Vcdiff application-defined code table: ${patchFile.getPathLike()}`,
+        );
       }
     }
 
@@ -258,8 +262,9 @@ class VcdiffWindow {
   }
 
   readInstructionIndex(): number {
-    const instructionCodeIdx = this.instructionsAndSizesData
-      .readUInt8(this.instructionsAndSizeOffset);
+    const instructionCodeIdx = this.instructionsAndSizesData.readUInt8(
+      this.instructionsAndSizeOffset,
+    );
     this.instructionsAndSizeOffset += 1;
     return instructionCodeIdx;
   }
@@ -279,8 +284,10 @@ class VcdiffWindow {
     size: number,
   ): Promise<void> {
     // Read
-    const data = this.addsAndRunsData
-      .subarray(this.addsAndRunsOffset, this.addsAndRunsOffset + size);
+    const data = this.addsAndRunsData.subarray(
+      this.addsAndRunsOffset,
+      this.addsAndRunsOffset + size,
+    );
     this.addsAndRunsOffset += size;
     // Write
     await targetFile.writeAt(data, targetWindowPosition + this.targetWindowOffset);
@@ -293,10 +300,13 @@ class VcdiffWindow {
     size: number,
   ): Promise<void> {
     // Read
-    const data = Buffer.from(this.addsAndRunsData
-      .subarray(this.targetWindowOffset, this.targetWindowOffset + 1)
-      .toString('hex')
-      .repeat(size), 'hex');
+    const data = Buffer.from(
+      this.addsAndRunsData
+        .subarray(this.targetWindowOffset, this.targetWindowOffset + 1)
+        .toString('hex')
+        .repeat(size),
+      'hex',
+    );
     this.addsAndRunsOffset += 1;
     // Write
     await targetFile.writeAt(data, targetWindowPosition + this.targetWindowOffset);
@@ -337,10 +347,7 @@ class VcdiffWindow {
           1,
         );
       }
-      await targetFile.writeAt(
-        byte,
-        targetWindowPosition + this.targetWindowOffset + byteNum,
-      );
+      await targetFile.writeAt(byte, targetWindowPosition + this.targetWindowOffset + byteNum);
     }
     this.targetWindowOffset += size;
   }
@@ -441,13 +448,7 @@ export default class VcdiffPatch extends Patch {
       const copyCache = new VcdiffCache();
       const header = await VcdiffHeader.fromFilePoly(patchFile);
 
-      return VcdiffPatch.writeOutputFile(
-        inputRomFile,
-        outputRomPath,
-        patchFile,
-        header,
-        copyCache,
-      );
+      return VcdiffPatch.writeOutputFile(inputRomFile, outputRomPath, patchFile, header, copyCache);
     });
   }
 
