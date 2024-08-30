@@ -22,7 +22,7 @@ if [[ "${1:-}" == "play" ]]; then
   # shellcheck disable=SC2317
   npx() {
     shift # discard "igir@latest"
-    node ../dist/index.js "$@" --dat-name-regex-exclude "/encrypted|headerless|3ds/i"
+    node ../dist/index.js "$@" --dat-name-regex-exclude "/encrypted|headerless|3ds/i" --disable-cache
   }
   # shellcheck disable=SC2317
   tree() {
@@ -31,11 +31,11 @@ if [[ "${1:-}" == "play" ]]; then
   # BEGIN PLAYBACK
 
   # ts-node ./index.ts copy zip clean -d demo/No-Intro*.zip -i GB/ -i NES/ -o demo/roms/ -D
-  pei "tree -L 1 ."
+  pei 'tree -L 1 .'
   echo "" && sleep 2
-  pei "npx igir@latest copy zip report --dat 'No-Intro*.zip' --input ROMs/ --output ROMs-Sorted/ --dir-dat-name --only-retail"
+  pei 'npx igir@latest copy zip report --dat "No-Intro*.zip" --input ROMs/ --output ROMs-Sorted/ --dir-dat-name --only-retail'
   echo "" && sleep 2
-  pei "tree -L 1 ROMs-Sorted/"
+  pei 'tree -L 1 ROMs-Sorted/'
 
   # END PLAYBACK
   exit 0

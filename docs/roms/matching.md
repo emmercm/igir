@@ -62,7 +62,7 @@ igir [commands..] [options] --input-checksum-min SHA256
 
 This option defines the _minimum_ checksum that will be used based on digest size (below). If not every ROM in every DAT provides the checksum you specify, Igir may automatically calculate and match files based on a higher checksum (see above), but never lower.
 
-The reason you might want to do this is to have a higher confidence that found files _exactly_ match ROMs in DATs. Just keep in mind that explicitly enabling non-CRC32 checksums will _greatly_ slow down scanning of files within archives (see "quick scanning" above).
+The reason you might want to do this is to have a higher confidence that found files _exactly_ match ROMs in DATs. Keep in mind that explicitly enabling non-CRC32 checksums will _greatly_ slow down scanning of files within archives (see "quick scanning" above).
 
 Here is a table that shows the keyspace for each checksum algorithm, where the higher number of bits reduces the chances of collisions:
 
