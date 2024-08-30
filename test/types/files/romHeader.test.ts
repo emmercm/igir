@@ -1,4 +1,4 @@
-import ROMScanner from '../../../src/modules/romScanner.js';
+import ROMScanner from '../../../src/modules/roms/romScanner.js';
 import FileCache from '../../../src/types/files/fileCache.js';
 import FileFactory from '../../../src/types/files/fileFactory.js';
 import ROMHeader from '../../../src/types/files/romHeader.js';

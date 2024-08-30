@@ -1,4 +1,4 @@
-import DATScanner from '../../src/modules/datScanner.js';
+import DATScanner from '../../src/modules/dats/datScanner.js';
 import FixdatCreator from '../../src/modules/fixdatCreator.js';
 import fsPoly from '../../src/polyfill/fsPoly.js';
 import DAT from '../../src/types/dats/dat.js';

@@ -1,7 +1,7 @@
 import path from 'node:path';
 
 import Temp from '../../../src/globals/temp.js';
-import ROMScanner from '../../../src/modules/romScanner.js';
+import ROMScanner from '../../../src/modules/roms/romScanner.js';
 import bufferPoly from '../../../src/polyfill/bufferPoly.js';
 import FilePoly from '../../../src/polyfill/filePoly.js';
 import fsPoly from '../../../src/polyfill/fsPoly.js';

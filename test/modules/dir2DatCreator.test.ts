@@ -2,12 +2,12 @@ import 'jest-extended';
 
 import path from 'node:path';
 
-import CandidateGenerator from '../../src/modules/candidateGenerator.js';
-import DATGameInferrer from '../../src/modules/datGameInferrer.js';
-import DATScanner from '../../src/modules/datScanner.js';
+import CandidateGenerator from '../../src/modules/candidates/candidateGenerator.js';
+import DATGameInferrer from '../../src/modules/dats/datGameInferrer.js';
+import DATScanner from '../../src/modules/dats/datScanner.js';
 import Dir2DatCreator from '../../src/modules/dir2DatCreator.js';
-import ROMIndexer from '../../src/modules/romIndexer.js';
-import ROMScanner from '../../src/modules/romScanner.js';
+import ROMIndexer from '../../src/modules/roms/romIndexer.js';
+import ROMScanner from '../../src/modules/roms/romScanner.js';
 import FsPoly from '../../src/polyfill/fsPoly.js';
 import DAT from '../../src/types/dats/dat.js';
 import FileCache from '../../src/types/files/fileCache.js';
