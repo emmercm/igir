@@ -226,7 +226,7 @@ export default class FsPoly {
       return false;
     } finally {
       if (!exists) {
-        await this.rm(filePath);
+        await this.rm(filePath, { force: true });
       }
     }
   }

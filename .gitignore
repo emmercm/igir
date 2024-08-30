@@ -108,7 +108,7 @@ dist
 dist/
 site/
 *.bat
-*.cache
+*.cache*
 *.sh
 !test/*.sh
 
