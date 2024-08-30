@@ -8,7 +8,6 @@ import ROM from '../types/dats/rom.js';
 import ArchiveEntry from '../types/files/archives/archiveEntry.js';
 import Options from '../types/options.js';
 import ReleaseCandidate from '../types/releaseCandidate.js';
-import ROMWithFiles from '../types/romWithFiles.js';
 import Module from './module.js';
 
 /**
@@ -26,10 +25,10 @@ export default class CandidateCombiner extends Module {
   /**
    * Combine the candidates.
    */
-  async combine(
+  combine(
     dat: DAT,
     parentsToCandidates: Map<Parent, ReleaseCandidate[]>,
-  ): Promise<Map<Parent, ReleaseCandidate[]>> {
+  ): Map<Parent, ReleaseCandidate[]> {
     if (!this.options.getZipDatName()) {
       return parentsToCandidates;
     }
@@ -40,8 +39,8 @@ export default class CandidateCombiner extends Module {
     }
 
     this.progressBar.logTrace(`${dat.getNameShort()}: generating consolidated candidate`);
-    await this.progressBar.setSymbol(ProgressBarSymbol.COMBINING_ALL);
-    await this.progressBar.reset(parentsToCandidates.size);
+    this.progressBar.setSymbol(ProgressBarSymbol.CANDIDATE_COMBINING);
+    this.progressBar.reset(parentsToCandidates.size);
 
     const game = CandidateCombiner.buildGame(dat, parentsToCandidates);
     const parent = new Parent(game);
@@ -104,11 +103,7 @@ export default class CandidateCombiner extends Module {
             ));
           }
 
-          return new ROMWithFiles(
-            romWithFiles.getRom(),
-            romWithFiles.getInputFile(),
-            outputEntry,
-          );
+          return romWithFiles.withOutputFile(outputEntry);
         }));
 
     return new ReleaseCandidate(game, undefined, romsWithFiles);

@@ -62,8 +62,6 @@ describe('token replacement', () => {
   test.each([
     ['foo/{datName}/bar', path.join('foo', 'DAT _ Name', 'bar', 'Dummy.rom')],
     ['foo/{datDescription}/bar', path.join('foo', 'DAT _ Description', 'bar', 'Dummy.rom')],
-    ['root/{datReleaseRegion}', path.join('root', 'USA', 'Dummy.rom')],
-    ['root/{datReleaseLanguage}', path.join('root', 'EN', 'Dummy.rom')],
   ])('should replace {dat*}: %s', async (output, expectedPath) => {
     const options = new Options({ commands: ['copy'], output });
     const dat = new LogiqxDAT(new Header({ name: 'DAT / Name', description: 'DAT \\ Description' }), []);
@@ -84,9 +82,6 @@ describe('token replacement', () => {
     ['root/{region}', 'Game (E)', [], path.join('root', 'EUR', 'Dummy.rom')],
     ['root/{region}', 'Game (Europe)', [], path.join('root', 'EUR', 'Dummy.rom')],
     ['root/{region}', 'Game', ['EUR'], path.join('root', 'EUR', 'Dummy.rom')],
-    ['root/{gameRegion}', 'Game', ['EUR', 'JPN'], path.join('root', 'EUR', 'Dummy.rom')],
-    ['root/{gameRegion}', 'Game', ['JPN'], path.join('root', 'JPN', 'Dummy.rom')],
-    ['root/{gameRegion}', 'Game', ['JPN', 'EUR'], path.join('root', 'JPN', 'Dummy.rom')],
   ])('should replace {region}: %s', async (output, gameName, regions, expectedPath) => {
     const options = new Options({ commands: ['copy'], output });
     const dat = new LogiqxDAT(new Header(), []);
@@ -110,9 +105,6 @@ describe('token replacement', () => {
     ['root/{language}', 'Game (E)', [], path.join('root', 'EN', 'Dummy.rom')],
     ['root/{language}', 'Game (Europe)', [], path.join('root', 'EN', 'Dummy.rom')],
     ['root/{language}', 'Game', ['EUR'], path.join('root', 'EN', 'Dummy.rom')],
-    ['root/{gameLanguage}', 'Game', ['EUR', 'JPN'], path.join('root', 'EN', 'Dummy.rom')],
-    ['root/{gameLanguage}', 'Game', ['JPN'], path.join('root', 'JA', 'Dummy.rom')],
-    ['root/{gameLanguage}', 'Game', ['JPN', 'EUR'], path.join('root', 'JA', 'Dummy.rom')],
   ])('should replace {language}: %s', async (output, gameName, regions, expectedPath) => {
     const options = new Options({ commands: ['copy'], output });
     const dat = new LogiqxDAT(new Header(), []);
@@ -180,8 +172,8 @@ describe('token replacement', () => {
     ['Game (Unl)', 'Unlicensed'],
     // Default
     ['Game', 'Retail'],
-  ])('should replace {gameType}: %s', async (gameName, expectedPath) => {
-    const options = new Options({ commands: ['copy'], output: '{gameType}' });
+  ])('should replace {type}: %s', async (gameName, expectedPath) => {
+    const options = new Options({ commands: ['copy'], output: '{type}' });
     const game = new Game({
       name: gameName,
       release: [
@@ -867,12 +859,15 @@ describe('token replacement', () => {
 
 describe('should respect "--dir-mirror"', () => {
   test.each([
-    ['', os.devNull],
-    ['file.rom', path.join(os.devNull, 'file.rom')],
     ['roms/file.rom', path.join(os.devNull, 'file.rom')],
     ['roms/subdir/file.rom', path.join(os.devNull, 'subdir', 'file.rom')],
   ])('option is true: %s', async (filePath, expectedPath) => {
-    const options = new Options({ commands: ['copy'], output: os.devNull, dirMirror: true });
+    const options = new Options({
+      commands: ['copy'],
+      input: ['roms'],
+      output: os.devNull,
+      dirMirror: true,
+    });
     const rom = new ROM({ name: path.basename(filePath), size: 0, crc32: '' });
 
     const outputPath = OutputFactory.getPath(

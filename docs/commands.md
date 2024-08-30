@@ -1,6 +1,6 @@
 # Commands
 
-`igir` takes actions based on commands you specify. Each command has a clear input and output, and `igir` will never take surprise actions you did not specify. Multiple commands can (and will likely) be specified at once.
+Igir takes actions based on commands you specify. Each command has a clear input and output, and Igir will never take surprise actions you did not specify. Multiple commands can (and will likely) be specified at once.
 
 !!! tip
 
@@ -8,31 +8,31 @@
 
 ## ROM writing
 
-`igir` has three writing commands. Only one writing command can be specified at a time, and all require the `--output <path>` option.
+Igir has three writing commands. Only one writing command can be specified at a time, and all require the `--output <path>` option.
 
 ### `copy`
 
-Copy ROMs from an input directory to the output directory.
+Copy files from an input directory to the output directory.
 
 Files in the input directories will be left alone, they will _not_ be modified or deleted.
 
 ### `move`
 
-Move ROMs from an input directory to the output directory. The same directory can be specified for both input & output, resulting in ROMs being renamed as their names change in [DATs](dats/introduction.md).
+Move files from an input directory to the output directory. The same directory can be specified for both input & output, resulting in ROMs being renamed as their names change in [DATs](dats/introduction.md).
 
-ROMs will be deleted from their input directory after _all_ ROMs for _every_ [DAT](dats/introduction.md) have been written.
+Files that match to multiple ROMs in [DATs](dats/introduction.md) will be copied as needed.
 
 ### `link`
 
-Create a link in the output directory to a ROM in the input directory.
+Create a link in the output directory to a file in the input directory.
 
 By default, hard links are created, similar to [ln(1)](https://linux.die.net/man/1/ln). Use the `--symlink` option to create symbolic links.
 
-## ROM archiving
+## ROM extracting & zipping
 
-`igir` has two ROM archive commands. Archive commands require either the `copy` or `move` write command. Only one archive command can be specified at a time.
+Igir has two ROM archive commands. Archive commands require either the `copy` or `move` write command. Only one archive command can be specified at a time.
 
-If no archive command is specified, files will be left as-is. If they are already extracted, then they will stay extracted. If they are already archived (including non-`.zip` archives), then they will stay archived.
+If no archive command is specified, files will be left as-is. If they are already extracted, then they will stay extracted. If they are already archived (including non-`.zip` archives), then they will stay archived in their original format.
 
 !!! note
 
@@ -50,11 +50,15 @@ ROMs will be archived into a `.zip` file as they are being copied or moved. ROMs
 
 ROMs that are already in an archive will be re-archived.
 
+!!! note
+
+    You can use the [`--dat-combine` option](dats/processing.md#dat-combining) to cause every ROM in a DAT to be zipped together.
+
 ## ROM verification
 
 ### `test`
 
-After performing one of the ROM writing commands, verify that the file was written correctly.
+After performing one of the ROM writing commands (above), verify that the file was written correctly.
 
 - `extract test` tests that each ROM file written has the correct size & checksum
 - `zip test` tests that the `.zip` file has all the correct archive entry sizes & checksums, and contains no excess entries

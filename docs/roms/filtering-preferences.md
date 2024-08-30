@@ -1,6 +1,6 @@
 # ROM Filtering & Preferences
 
-`igir` offers many options for filtering as well as 1G1R preferences/priorities (when combined with the `--single` option).
+Igir offers many options for filtering as well as 1G1R preferences/priorities (when combined with the `--single` option).
 
 ROM filters cut down the list of games desired for a set, and any games filtered out will not appear in [reports](../output/reporting.md). ROM preferences decide what duplicates to eliminate (1G1R).
 
@@ -14,7 +14,7 @@ Multiple filter options can be specified at once.
 --filter-regex <pattern|filename>, --filter-regex-exclude <pattern|filename>
 ```
 
-Only include, or exclude games based if their DAT name (or filename if not using DATs) matches a regular expression.
+Only include or exclude games based if their DAT name (or filename if not using DATs) matches a regular expression.
 
 Regex flags can be optionally provided in the form `/<pattern>/<flags>`, for example:
 
@@ -50,9 +50,9 @@ Wario Land II (USA, Europe) (SGB Enhanced)
 
 Languages are two-letter codes, and multiple languages can be specified with commas between them. See the `--help` message for the full list of understood languages.
 
-If a game does not have language information specified, it will be inferred from the region.
+If a game doesn’t have language information specified, it will be inferred from the region.
 
-Here are some example game names that `igir` can parse languages from, including ones with multiple languages:
+Here are some example game names that Igir can parse languages from, including ones with multiple languages:
 
 ```text
 English:
@@ -82,7 +82,7 @@ A game can have many languages, and all of them are considered during filtering.
 
 Regions are two or three-letter codes, and you can specify multiple regions with commas between them. See the `--help` message for the full list of understood regions.
 
-Here are some example game names that `igir` can parse regions from:
+Here are some example game names that Igir can parse regions from:
 
 ```text
 USA:
@@ -129,7 +129,7 @@ Filter out, or only include games that are marked `bios="yes"` in the DAT, or co
 --no-device, --only-device
 ```
 
-Filter out, or only include [MAME devices](https://wiki.mamedev.org/index.php/MAME_Device_Basics). MAME devices typically represent physical devices, such as microcontrollers, video display controllers, sounds boards, and more. Many MAME devices don't have any associated ROM files.
+Filter out or only include [MAME devices](https://wiki.mamedev.org/index.php/MAME_Device_Basics). MAME devices typically represent physical devices, such as microcontrollers, video display controllers, sounds boards, and more. Many MAME devices don't have any associated ROM files.
 
 ### Unlicensed
 
@@ -245,7 +245,7 @@ Perfect Dark (USA) (2000-03-22) (Debug)
 --no-demo, --only-demo
 ```
 
-Filter out, or only include games that contain one of the following in their name:
+Filter out or only include games that contain one of the following in their name:
 
 - `(Demo[a-z0-9. -]*)` (regex)
 - `@barai`
@@ -310,7 +310,7 @@ Sword of Hope, The (Europe) (Proto)
 --no-program, --only-program
 ```
 
-Filter out, or only include games that contain one of the following in their name
+Filter out or only include games that contain one of the following in their name
 
 - `([a-z0-9. ]*Program)` (regex)
 - `Check Program`
@@ -450,7 +450,7 @@ See the [bad dumps](#bad-dumps) section for more information about "good" and "b
 
 Prefer games of certain languages over those in other languages. Multiple languages can be specified, in priority order, with commas between them. See the `--help` message for the full list of understood languages.
 
-If a game does not have language information specified, it will be inferred from the region.
+If a game doesn’t have language information specified, it will be inferred from the region.
 
 For example, to prefer games in English and _then_ Japanese, the command would be:
 
@@ -475,10 +475,10 @@ For example, to prefer games from: USA (highest priority), "world," and then Eur
 ### Prefer revision
 
 ```text
---prefer-revision-newer, --prefer-revision-older
+--prefer-revision <older|newer>
 ```
 
-Prefer newer or older revisions of a game.
+Prefer newer or older revisions, versions, or ring codes of a game.
 
 Revisions can be numeric:
 
@@ -496,6 +496,21 @@ MSR - Metropolis Street Racer (Europe) (En,Fr,De,Es) (Rev A)
 MSR - Metropolis Street Racer (Europe) (En,Fr,De,Es) (Rev B)
 ```
 
+Versions can be semantic:
+
+```text
+F1 World Grand Prix for Dreamcast v1.011 (1999)(Video System)(JP)(en)[!]
+F1 World Grand Prix for Dreamcast v1.000 (1999)(Video System)(PAL)(M4)[!]
+F1 World Grand Prix v1.006 (2000)(Video System)(US)(M4)[!]
+```
+
+Ring codes can be numeric:
+
+```text
+Sonic CD (USA) (RE125)
+Sonic CD (USA) (RE125) (Alt)
+```
+
 ### Prefer retail
 
 ```text
@@ -505,18 +520,6 @@ MSR - Metropolis Street Racer (Europe) (En,Fr,De,Es) (Rev B)
 Prefer games that are considered "retail" releases over those that aren't.
 
 See the [only retail](#only-retail) section for more information on what games are considered "retail."
-
-### Prefer NTSC, PAL
-
-```text
---prefer-ntsc, --prefer-pal
-```
-
-Prefer games that are explicitly labeled as NTSC or PAL, over those that aren't.
-
-!!! note
-
-    Most DAT groups do not label games with this information, generally games are labeled by region instead.
 
 ### Prefer parent
 

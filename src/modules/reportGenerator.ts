@@ -87,7 +87,7 @@ export default class ReportGenerator extends Module {
     this.progressBar.logTrace(`wrote ${datStatuses.length.toLocaleString()} CSV row${datStatuses.length !== 1 ? 's' : ''}: ${reportPath}`);
 
     this.progressBar.logTrace('done generating report');
-    await this.progressBar.done(reportPath);
-    await this.progressBar.freeze();
+    this.progressBar.done(reportPath);
+    this.progressBar.freeze();
   }
 }

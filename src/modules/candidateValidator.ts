@@ -16,18 +16,18 @@ export default class CandidateValidator extends Module {
   /**
    * Validate the {@link ReleaseCandidate}s.
    */
-  async validate(
+  validate(
     dat: DAT,
     parentsToCandidates: Map<Parent, ReleaseCandidate[]>,
-  ): Promise<ReleaseCandidate[]> {
+  ): ReleaseCandidate[] {
     if (parentsToCandidates.size === 0) {
       this.progressBar.logTrace(`${dat.getNameShort()}: no parents to validate candidates for`);
       return [];
     }
 
     this.progressBar.logTrace(`${dat.getNameShort()}: validating candidates`);
-    await this.progressBar.setSymbol(ProgressBarSymbol.VALIDATING);
-    await this.progressBar.reset(parentsToCandidates.size);
+    this.progressBar.setSymbol(ProgressBarSymbol.CANDIDATE_VALIDATING);
+    this.progressBar.reset(parentsToCandidates.size);
 
     const conflictedOutputPaths = this.validateUniqueOutputPaths(dat, parentsToCandidates);
     if (conflictedOutputPaths.length > 0) {
@@ -47,7 +47,11 @@ export default class CandidateValidator extends Module {
       .reduce((map, releaseCandidate) => {
         releaseCandidate.getRomsWithFiles().forEach((romWithFiles) => {
           const key = romWithFiles.getOutputFile().getFilePath();
-          map.set(key, [...(map.get(key) ?? []), releaseCandidate]);
+          if (!map.has(key)) {
+            map.set(key, [releaseCandidate]);
+          } else {
+            map.get(key)?.push(releaseCandidate);
+          }
         });
         return map;
       }, new Map<string, ReleaseCandidate[]>());

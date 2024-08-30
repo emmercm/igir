@@ -20,7 +20,7 @@ export default class DATParentInferrer extends Module {
   /**
    * Infer {@link Parent}s from {@link Game}s.
    */
-  async infer(dat: DAT): Promise<DAT> {
+  infer(dat: DAT): DAT {
     if (dat.hasParentCloneInfo() && !this.options.getDatIgnoreParentClone()) {
       this.progressBar.logTrace(`${dat.getNameShort()}: DAT has parent/clone info, skipping`);
       return dat;
@@ -32,15 +32,19 @@ export default class DATParentInferrer extends Module {
     }
 
     this.progressBar.logTrace(`${dat.getNameShort()}: inferring parents for ${dat.getGames().length.toLocaleString()} game${dat.getGames().length !== 1 ? 's' : ''}`);
-    await this.progressBar.setSymbol(ProgressBarSymbol.GROUPING_SIMILAR);
-    await this.progressBar.reset(dat.getGames().length);
+    this.progressBar.setSymbol(ProgressBarSymbol.DAT_GROUPING_SIMILAR);
+    this.progressBar.reset(dat.getGames().length);
 
     // Group games by their stripped names
     const strippedNamesToGames = dat.getGames().reduce((map, game) => {
       let strippedGameName = game.getName();
       strippedGameName = DATParentInferrer.stripGameRegionAndLanguage(strippedGameName);
       strippedGameName = DATParentInferrer.stripGameVariants(strippedGameName);
-      map.set(strippedGameName, [...(map.get(strippedGameName) ?? []), game]);
+      if (!map.has(strippedGameName)) {
+        map.set(strippedGameName, [game]);
+      } else {
+        map.get(strippedGameName)?.push(game);
+      }
       return map;
     }, new Map<string, Game[]>());
     const groupedGames = [...strippedNamesToGames.entries()]
@@ -60,6 +64,7 @@ export default class DATParentInferrer extends Module {
       // ***** Regions *****
       .replace(new RegExp(`\\(((${Internationalization.REGION_CODES.join('|')})[,+-]? ?)+\\)`, 'i'), '')
       .replace(new RegExp(`\\(((${Internationalization.REGION_NAMES.join('|')})[,+-]? ?)+\\)`, 'i'), '')
+      .replace(/\(Latin America\)/i, '')
       // ***** Languages *****
       .replace(new RegExp(`\\(((${Internationalization.LANGUAGES.join('|')})[,+-]? ?)+\\)`, 'i'), '')
       // ***** Cleanup *****
@@ -73,6 +78,7 @@ export default class DATParentInferrer extends Module {
       .replace(/\(Alt( [a-z0-9. ]*)?\)/i, '')
       .replace(/\([^)]*Collector's Edition\)/i, '')
       .replace(/\(Extra Box\)/i, '')
+      .replace(/ - European Version/i, '')
       .replace(/\(Fukkokuban\)/i, '') // "reprint"
       .replace(/\([^)]*Genteiban\)/i, '') // "limited edition"
       .replace(/\(Limited[^)]+Edition\)/i, '')
@@ -152,8 +158,8 @@ export default class DATParentInferrer extends Module {
       // Nintendo - Super Nintendo Entertainment System
       .replace(/\(NP\)/i, '') // "Nintendo Power"
       // Sega - Dreamcast
-      .replace(/\[[0-9]+S\]/, '') // boxcode
-      .replace(/\[[0-9]+MM?[0-9]+(, [0-9]+MM?[0-9]+)*\]/, '')
+      .replace(/\[([0-9A-Z ]+(, )?)+\]$/, '') // TOSEC boxcode
+      .replace(/\[(compilation|data identical to retail|fixed version|keyboard|limited edition|req\. microphone|scrambled|unscrambled|white label)\]/ig, '') // TOSEC
       .replace(/for Dreamcast/i, '')
       // Sega - Mega Drive / Genesis
       .replace(/\(MP\)/i, '') // "MegaPlay version"

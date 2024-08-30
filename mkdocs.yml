@@ -2,7 +2,7 @@ site_name: igir
 # https://github.com/mkdocs/mkdocs/issues/1783: site_url required for sitemap.xml
 site_url: https://igir.io
 site_author: Christian Emmer
-# site_description: TODO
+site_description: Igir is a zero-setup ROM collection manager that sorts, filters, extracts or archives, patches, and reports on collections of any size on any OS.
 
 repo_name: emmercm/igir
 repo_url: https://github.com/emmercm/igir
@@ -11,8 +11,8 @@ edit_uri: edit/main/docs/
 remote_branch: gh-pages
 
 theme:
-  logo: logo-light.svg
-  favicon: logo-dark.svg
+  logo: static/logo-light.svg
+  favicon: static/favicon.svg
   name: material
 
   palette:
@@ -41,79 +41,82 @@ theme:
 
 nav:
   - Documentation:
-      - index.md
-      - Getting Started:
-        - overview.md
-        - installation.md
-        - commands.md
-        - alternatives.md
-      - Example Usage:
-          - usage/collection-sorting.md
-          - Emulator Frontends:
-            - usage/handheld/adam.md
-            - usage/desktop/batocera.md
-            - usage/desktop/emuelec.md
-            - usage/desktop/emulationstation.md
-            - usage/handheld/funkeyos.md
-            - usage/handheld/jelos.md
-            - usage/desktop/lakka.md
-            - usage/desktop/launchbox.md
-            - usage/handheld/minui.md
-            - usage/handheld/miyoocfw.md
-            - usage/handheld/onionos.md
-            - usage/desktop/openemu.md
-            - usage/desktop/recalbox.md
-            - usage/desktop/retroarch.md
-            - usage/desktop/retrodeck.md
-            - usage/desktop/retropie.md
-            - usage/desktop/romm.md
-            - usage/handheld/twmenu.md
-          - FPGA:
-            - usage/hardware/mister.md
-            - usage/hardware/analogue-pocket.md
-          - Flash Carts:
-            - usage/hardware/everdrive.md
-            - usage/hardware/ezflash.md
-          - Game Consoles:
-            - usage/console/gamecube.md
-            - usage/console/ps2.md
-          - usage/arcade.md
-          - usage/personal.md
-      - DATs:
-          - dats/introduction.md
-          - dats/processing.md
-          - dats/dir2dat.md
-          - dats/fixdats.md
-      - File Inputs:
-          - input/file-scanning.md
-          - input/reading-archives.md
-      - ROM Processing:
-          - roms/matching.md
-          - roms/filtering-preferences.md
-          - roms/headers.md
-          - roms/patching.md
-      - File Outputs:
-          - output/path-options.md
-          - output/tokens.md
-          - output/options.md
-          - output/writing-archives.md
-          - output/reporting.md
-          - output/cleaning.md
-      - Advanced:
-          - advanced/logging.md
-          - advanced/temp-dir.md
-          - advanced/troubleshooting.md
-          - advanced/internals.md
-      - Misc:
-          - rom-dumping.md
-      - Terms and Conditions:
-          - contributing.md
-          - license.md
+    - index.md
+    - Getting Started:
+      - introduction.md
+      - installation.md
+      - commands.md
+      - cli.md
+      - alternatives.md
+    - General Usage:
+      - usage/basic.md
+      - usage/personal.md
+      - usage/best-practices.md
+    - Hardware-Specific Usage:
+      - Emulator Frontends:
+        - usage/handheld/adam.md
+        - usage/desktop/batocera.md
+        - usage/desktop/emuelec.md
+        - usage/desktop/emulationstation.md
+        - usage/handheld/funkeyos.md
+        - usage/handheld/jelos.md
+        - usage/desktop/lakka.md
+        - usage/desktop/launchbox.md
+        - usage/handheld/minui.md
+        - usage/handheld/miyoocfw.md
+        - usage/handheld/onionos.md
+        - usage/desktop/openemu.md
+        - usage/desktop/recalbox.md
+        - usage/desktop/retroarch.md
+        - usage/desktop/retrodeck.md
+        - usage/desktop/retropie.md
+        - usage/desktop/romm.md
+        - usage/handheld/twmenu.md
+      - FPGA:
+        - usage/hardware/mister.md
+        - usage/hardware/analogue-pocket.md
+      - Flash Carts:
+        - usage/hardware/everdrive.md
+        - usage/hardware/ezflash.md
+      - Game Consoles:
+        - usage/console/gamecube.md
+        - usage/console/ps2.md
+      - usage/arcade.md
+    - DATs:
+      - dats/introduction.md
+      - dats/processing.md
+      - dats/dir2dat.md
+      - dats/fixdats.md
+    - File Inputs:
+      - input/file-scanning.md
+      - input/reading-archives.md
+    - ROM Processing:
+      - roms/matching.md
+      - roms/filtering-preferences.md
+      - roms/headers.md
+      - roms/patching.md
+    - File Outputs:
+      - output/path-options.md
+      - output/tokens.md
+      - output/options.md
+      - output/writing-archives.md
+      - output/reporting.md
+      - output/cleaning.md
+    - Advanced:
+      - advanced/logging.md
+      - advanced/temp-dir.md
+      - advanced/troubleshooting.md
+      - advanced/internals.md
+    - Misc:
+      - rom-dumping.md
+    - Terms and Conditions:
+      - contributing.md
+      - license.md
   # https://github.com/squidfunk/mkdocs-material/issues/889#issuecomment-582297142: how-to open nav links in new tabs
   - Download ↗: https://github.com/emmercm/igir/releases/latest" target="_blank
-  - Donate ↗: https://github.com/sponsors/emmercm" target="_blank
-  - Issues ↗: https://github.com/emmercm/igir/issues?q=is%3Aopen+is%3Aissue+label%3Abug" target="_blank
   - Discuss ↗: https://github.com/emmercm/igir/discussions" target="_blank
+  - Issues ↗: https://github.com/emmercm/igir/issues?q=is%3Aopen+is%3Aissue+label%3Abug" target="_blank
+  - Donate ↗: https://github.com/sponsors/emmercm" target="_blank
 
 plugins:
   - unused_files:
@@ -134,15 +137,17 @@ plugins:
         'archives.md': 'input/reading-archives.md'
         'dats.md': 'dats/introduction.md'
         'dats/overview.md': 'dats/introduction.md'
-        'examples.md': 'usage/collection-sorting.md'
+        'examples.md': 'usage/basic.md'
         'input/archives.md': 'input/reading-archives.md'
         'input/dats.md': 'dats/introduction.md'
         'internals.md': 'advanced/internals.md'
         'output/arcade.md': 'usage/arcade.md'
+        'overview.md': 'introduction.md'
         'reporting.md': 'output/reporting.md'
         'rom-filtering.md': 'roms/filtering-preferences.md'
         'rom-headers.md': 'roms/headers.md'
         'rom-patching.md': 'roms/patching.md'
+        'usage/collection-sorting.md': 'usage/basic.md'
   #- htmlproofer:
   #    raise_error_excludes:
   #      '-1': [ 'http://www.logiqx.com' ]

@@ -164,11 +164,11 @@ export default class Logger {
   /**
    * Create a {@link ProgressBar} with a reference to this {@link Logger}.
    */
-  async addProgressBar(
+  addProgressBar(
     name: string,
     symbol = ProgressBarSymbol.WAITING,
     initialTotal = 0,
-  ): Promise<ProgressBar> {
+  ): ProgressBar {
     return ProgressBarCLI.new(this, name, symbol, initialTotal);
   }
 

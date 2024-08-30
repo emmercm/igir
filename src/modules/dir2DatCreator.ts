@@ -34,8 +34,8 @@ export default class Dir2DatCreator extends Module {
     }
 
     this.progressBar.logTrace(`${dat.getNameShort()}: writing dir2dat`);
-    await this.progressBar.setSymbol(ProgressBarSymbol.WRITING);
-    await this.progressBar.reset(1);
+    this.progressBar.setSymbol(ProgressBarSymbol.WRITING);
+    this.progressBar.reset(1);
 
     const datDir = this.options.shouldWrite()
       ? OutputFactory.getDir(this.options, dat)
@@ -52,7 +52,11 @@ export default class Dir2DatCreator extends Module {
       .flat()
       .reduce((map, releaseCandidate) => {
         const key = releaseCandidate.getGame();
-        map.set(key, [...(map.get(key) ?? []), releaseCandidate]);
+        if (!map.has(key)) {
+          map.set(key, [releaseCandidate]);
+        } else {
+          map.get(key)?.push(releaseCandidate);
+        }
         return map;
       }, new Map<Game, ReleaseCandidate[]>());
     const gamesFromCandidates = [...gamesToCandidates.entries()]

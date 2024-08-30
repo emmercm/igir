@@ -4,6 +4,7 @@ import { Expose, Transform, Type } from 'class-transformer';
 
 import ArrayPoly from '../../polyfill/arrayPoly.js';
 import Internationalization from '../internationalization.js';
+import Disk from './disk.js';
 import Release from './release.js';
 import ROM from './rom.js';
 
@@ -67,7 +68,7 @@ export interface GameProps {
   // readonly manufacturer?: string,
   readonly release?: Release | Release[],
   readonly rom?: ROM | ROM[],
-  // readonly disk?: Disk | Disk[],
+  readonly disk?: Disk | Disk[],
 }
 
 /**
@@ -124,6 +125,11 @@ export default class Game implements GameProps {
   @Transform(({ value }) => value || [])
   readonly rom?: ROM | ROM[];
 
+  @Expose()
+  @Type(() => Disk)
+  @Transform(({ value }) => value || [])
+  readonly disk?: Disk | Disk[];
+
   constructor(props?: GameProps) {
     this.name = props?.name ?? '';
     this.category = props?.category ?? '';
@@ -134,8 +140,9 @@ export default class Game implements GameProps {
     this.romOf = props?.romOf;
     this.sampleOf = props?.sampleOf;
     this.genre = props?.genre;
-    this.release = props?.release ?? [];
-    this.rom = props?.rom ?? [];
+    this.release = props?.release;
+    this.rom = props?.rom;
+    this.disk = props?.disk;
   }
 
   /**
@@ -208,6 +215,15 @@ export default class Game implements GameProps {
       return this.rom;
     } if (this.rom) {
       return [this.rom];
+    }
+    return [];
+  }
+
+  getDisks(): Disk[] {
+    if (Array.isArray(this.disk)) {
+      return this.disk;
+    } if (this.disk) {
+      return [this.disk];
     }
     return [];
   }
@@ -578,7 +594,7 @@ export default class Game implements GameProps {
 
     const releaseLanguages = this.getReleases()
       .map((release) => release.getLanguage())
-      .filter(ArrayPoly.filterNotNullish);
+      .filter((language) => language !== undefined);
     if (releaseLanguages.length > 0) {
       return releaseLanguages;
     }
@@ -615,7 +631,7 @@ export default class Game implements GameProps {
         .map((lang) => lang.toUpperCase())
         .map((lang) => Internationalization.LANGUAGE_OPTIONS
           .find((langOpt) => langOpt.long?.toUpperCase() === lang.toUpperCase())?.short)
-        .filter(ArrayPoly.filterNotNullish)
+        .filter((lang) => lang !== undefined)
         .filter((lang) => Internationalization.LANGUAGES.includes(lang)) // is known
         .reduce(ArrayPoly.reduceUnique(), []);
       if (threeMatchesParsed.length > 0) {
@@ -637,7 +653,7 @@ export default class Game implements GameProps {
         }
         return undefined;
       })
-      .filter(ArrayPoly.filterNotNullish);
+      .filter((language) => language !== undefined);
   }
 
   // Immutable setters

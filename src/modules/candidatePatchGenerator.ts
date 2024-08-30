@@ -1,7 +1,6 @@
 import path from 'node:path';
 
 import ProgressBar, { ProgressBarSymbol } from '../console/progressBar.js';
-import ArrayPoly from '../polyfill/arrayPoly.js';
 import DAT from '../types/dats/dat.js';
 import Game from '../types/dats/game.js';
 import Parent from '../types/dats/parent.js';
@@ -37,8 +36,8 @@ export default class CandidatePatchGenerator extends Module {
     }
 
     this.progressBar.logTrace(`${dat.getNameShort()}: generating patched candidates`);
-    await this.progressBar.setSymbol(ProgressBarSymbol.GENERATING);
-    await this.progressBar.reset(parentsToCandidates.size);
+    this.progressBar.setSymbol(ProgressBarSymbol.CANDIDATE_GENERATING);
+    this.progressBar.reset(parentsToCandidates.size);
 
     const crcToPatches = CandidatePatchGenerator.indexPatchesByCrcBefore(patches);
     this.progressBar.logTrace(`${dat.getNameShort()}: ${crcToPatches.size} unique patch${crcToPatches.size !== 1 ? 'es' : ''} found`);
@@ -51,10 +50,12 @@ export default class CandidatePatchGenerator extends Module {
 
   private static indexPatchesByCrcBefore(patches: Patch[]): Map<string, Patch[]> {
     return patches.reduce((map, patch) => {
-      map.set(patch.getCrcBefore(), [
-        ...(map.get(patch.getCrcBefore()) ?? []),
-        patch,
-      ]);
+      const key = patch.getCrcBefore();
+      if (!map.has(key)) {
+        map.set(key, [patch]);
+      } else {
+        map.get(key)?.push(patch);
+      }
       return map;
     }, new Map<string, Patch[]>());
   }
@@ -110,7 +111,7 @@ export default class CandidatePatchGenerator extends Module {
       .flatMap((romWithFiles) => romWithFiles.getInputFile())
       .filter((inputFile) => inputFile.getCrc32() !== undefined)
       .flatMap((inputFile) => crcToPatches.get(inputFile.getCrc32() as string))
-      .filter(ArrayPoly.filterNotNullish);
+      .filter((patch) => patch !== undefined);
 
     // No relevant patches found, no new candidates generated
     if (releaseCandidatePatches.length === 0) {

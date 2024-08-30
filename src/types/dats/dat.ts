@@ -107,33 +107,7 @@ export default abstract class DAT {
     return FsPoly.makeLegal(filename.trim());
   }
 
-  /**
-   * Does a DAT explicitly contain headered ROMs. It is possible for a DAT to be both non-headered
-   *  and non-headerless.
-   */
-  isHeadered(): boolean {
-    // No-Intro "headerless" DATs have this field set
-    if (this.getHeader().getClrMamePro()?.getHeader()) {
-      return false;
-    }
-
-    return this.getName().match(/\(headered\)/i) !== null;
-  }
-
-  /**
-   * Does a DAT explicitly contain headerless ROMs. It is possible for a DAT to be both non-headered
-   * and non-headerless.
-   */
-  isHeaderless(): boolean {
-    // No-Intro "headerless" DATs have this field set
-    if (this.getHeader().getClrMamePro()?.getHeader()) {
-      return true;
-    }
-
-    return this.getName().match(/\(headerless\)/i) !== null;
-  }
-
-  getRequiredChecksumBitmask(): number {
+  getRequiredRomChecksumBitmask(): number {
     let checksumBitmask = 0;
     this.getGames().forEach((game) => game.getRoms().forEach((rom) => {
       if (rom.getCrc32() && rom.getSize()) {
@@ -143,6 +117,22 @@ export default abstract class DAT {
       } else if (rom.getSha1()) {
         checksumBitmask |= ChecksumBitmask.SHA1;
       } else if (rom.getSha256()) {
+        checksumBitmask |= ChecksumBitmask.SHA256;
+      }
+    }));
+    return checksumBitmask;
+  }
+
+  getRequiredDiskChecksumBitmask(): number {
+    let checksumBitmask = 0;
+    this.getGames().forEach((game) => game.getDisks().forEach((disk) => {
+      if (disk.getCrc32() && disk.getSize()) {
+        checksumBitmask |= ChecksumBitmask.CRC32;
+      } else if (disk.getMd5()) {
+        checksumBitmask |= ChecksumBitmask.MD5;
+      } else if (disk.getSha1()) {
+        checksumBitmask |= ChecksumBitmask.SHA1;
+      } else if (disk.getSha256()) {
         checksumBitmask |= ChecksumBitmask.SHA256;
       }
     }));

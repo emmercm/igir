@@ -108,7 +108,7 @@ dist
 dist/
 site/
 *.bat
-*.cache
+*.cache*
 *.sh
 !test/*.sh
 
@@ -122,16 +122,21 @@ site/
 *.bin
 *.cd1
 *.cd2
+*.chd
 *.col
+*.cso
 *.cue
+*.dax
 *.dvd
 *.gb
 *.gba
 *.gbc
+*.gcz
 *.gdi
 *.gg
 *.ic1
 *.img
+*.iso
 *.jar
 *.lo
 *.lyx
@@ -142,17 +147,21 @@ site/
 *.pce
 *.pk3
 *.pup
+*.raw
 *.rom
+*.rvz
 *.sfc
 *.smc
 *.sms
 *.szx
 *.wad
+*.wia
 *.x1
 *.x1t
 *.zim
 *.z64
 *.zip
+*.zso
 
 # ROM pack excess
 *.bmp

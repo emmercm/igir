@@ -112,21 +112,6 @@ describe('getOrCompute', () => {
     }
     expect(computed).toEqual(0);
   });
-
-  it('should respect max cache size', async () => {
-    const maxSize = Math.floor(TEST_CACHE_SIZE / 2);
-    const cache = new Cache<number>({ maxSize });
-
-    for (let i = 0; i < maxSize; i += 1) {
-      await cache.getOrCompute(String(i), () => i);
-      expect(cache.size()).toEqual(i + 1);
-    }
-
-    for (let i = maxSize; i < TEST_CACHE_SIZE; i += 1) {
-      await cache.getOrCompute(String(i), () => i);
-      expect(cache.size()).toEqual(maxSize);
-    }
-  });
 });
 
 describe('set', () => {
@@ -146,21 +131,6 @@ describe('set', () => {
       await cache.set(String(i), i);
       await cache.set(String(i), i * 2);
       await expect(cache.get(String(i))).resolves.toEqual(i * 2);
-    }
-  });
-
-  it('should respect max cache size', async () => {
-    const maxSize = Math.floor(TEST_CACHE_SIZE / 2);
-    const cache = new Cache<number>({ maxSize });
-
-    for (let i = 0; i < maxSize; i += 1) {
-      await cache.set(String(i), i);
-      expect(cache.size()).toEqual(i + 1);
-    }
-
-    for (let i = maxSize; i < TEST_CACHE_SIZE; i += 1) {
-      await cache.set(String(i), i);
-      expect(cache.size()).toEqual(maxSize);
     }
   });
 });

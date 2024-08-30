@@ -3,7 +3,7 @@ import DriveSemaphore from '../src/driveSemaphore.js';
 describe('map', () => {
   it('should handle thrown errors', async () => {
     await expect(
-      new DriveSemaphore().map(
+      new DriveSemaphore(1).map(
         ['file'],
         () => { throw new Error('error'); },
       ),
@@ -12,7 +12,7 @@ describe('map', () => {
 
   it('should handle thrown literals', async () => {
     await expect(
-      new DriveSemaphore().map(
+      new DriveSemaphore(1).map(
         ['file'],
         // eslint-disable-next-line @typescript-eslint/no-throw-literal
         () => { throw 'message'; },

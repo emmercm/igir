@@ -1,23 +1,5 @@
 export default class ArrayPoly {
   /**
-   * Filter out nullish values from an array, in a way that TypeScript can understand how the
-   * resulting element type has changed. For example, TypeScript (as of v5.1.3) will tell you that:
-   *
-   * <code>
-   * [1, 2, undefined, 4, undefined].filter((val) => val);
-   * </code
-   *
-   * has the resulting type `(number | undefined)[]`. Instead, use:
-   *
-   * <code>
-   * [1, 2, undefined, 4, undefined].filter(ArrayPoly.filterNotNullish);
-   * </code>
-   */
-  public static filterNotNullish<T>(value: T | null | undefined): value is T {
-    return value !== null && value !== undefined;
-  }
-
-  /**
    * Filter elements in an array to only unique values, using the result of a mapper function to
    * test for equality. Usage:
    *
@@ -29,7 +11,12 @@ export default class ArrayPoly {
     mapper: (arg: T) => V,
   ): (value: T, idx: number, values: T[]) => boolean {
     const seenMappedValues = new Set<V>();
-    return (value: T): boolean => {
+    return (value, idx, values): boolean => {
+      if (values.length <= 1) {
+        // Arrays that are empty or only have one element are already unique
+        return true;
+      }
+
       const mapped = mapper(value);
       if (!seenMappedValues.has(mapped)) {
         seenMappedValues.add(mapped);
@@ -76,6 +63,11 @@ export default class ArrayPoly {
    */
   public static reduceUnique<T>(): (previous: T[], current: T, idx: number, array: T[]) => T[] {
     return (previous: T[], current: T, idx: number, array: T[]): T[] => {
+      if (array.length <= 1) {
+        // Arrays that are empty or only have one element are already unique
+        return array;
+      }
+
       if (idx === 0) {
         return [...new Set(array)];
       }

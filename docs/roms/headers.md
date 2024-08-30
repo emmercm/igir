@@ -6,7 +6,7 @@ Some of these headers are used to tell the emulator information about how to emu
 
 ## Header detection
 
-`igir` can detect headers for the following consoles and file extensions:
+Igir can detect headers for the following consoles and file extensions:
 
 | Console                        | Header        | Extension |
 |--------------------------------|---------------|-----------|
@@ -16,13 +16,13 @@ Some of these headers are used to tell the emulator information about how to emu
 | Nintendo - Famicom Disk System | fsNES/FDS     | `.fds`    |
 | Nintendo - SNES                | SMC           | `.smc`    |
 
-Those file extensions above are the commonly accepted "correct" extensions and `igir` will attempt to detect if a header is present in those ROM files automatically. If for some reason your files don't have the right extension (e.g. `.rom`) you can force header detection with the `--header` glob option:
+Those file extensions above are the commonly accepted "correct" extensions, and Igir will attempt to detect if a header is present in those ROM files automatically. If for some reason your files don't have the right extension (e.g. `.rom`) you can force header detection with the `--header` glob option:
 
 ```shell
 igir [commands..] --dat <dats> --input <input> --header "*.rom"
 ```
 
-`igir` will use this detected header information to compute both "headered" and "headerless" checksums of ROMs and use both of those to match against DAT files.
+Igir will use this detected header information to compute both "headered" and "headerless" checksums of ROMs and use both of those to match against DAT files.
 
 !!! warning
 
@@ -30,7 +30,7 @@ igir [commands..] --dat <dats> --input <input> --header "*.rom"
 
 ## Manual header removal
 
-Some emulators cannot parse ROMs with headers and instead need a "headerless" version. This seems to be most common with SNES. Sometimes "headerless" files will have a different file extension:
+Some emulators cannot parse ROMs with headers and instead need a "headerless" version. This seems most common with SNES. Sometimes "headerless" files will have a different file extension:
 
 | Console                        | Header        | Headered<br/>Extension | Headerless<br/>Extension |
 |--------------------------------|---------------|------------------------|--------------------------|
@@ -40,7 +40,7 @@ Some emulators cannot parse ROMs with headers and instead need a "headerless" ve
 | Nintendo - Famicom Disk System | fsNES/FDS     | `.fds`                 | N/A                      |
 | Nintendo - SNES                | SMC           | `.smc`                 | `.sfc`                   |
 
-For every console that `igir` can understand the headers for, it can also remove them with the `--remove-headers` option. This only makes sense for the consoles above with different "headerless" extensions, so you have to specify the extensions like this:
+For every console that Igir can understand the headers for, it can also remove them with the `--remove-headers` option. This only makes sense for the consoles above with different "headerless" extensions, so you have to specify the extensions like this:
 
 ```shell
 igir [commands..] --dat <dats> --input <input> --remove-headers .lnx,.smc
@@ -54,6 +54,6 @@ igir [commands..] --dat <dats> --input <input> --remove-headers
 
 ## Automatic header removal
 
-Some DAT groups such as No-Intro publish "headered" and "headerless" DATs for the same console, such as NES. `igir` will treat these DATs differently, it will automatically remove headers (if present) for "headerless" DATs, and leave the header intact for "headered" DATs (ignoring the `--remove-headers` option completely).
+Some DAT groups such as No-Intro publish "headered" and "headerless" DATs for the same console, such as NES. Igir will treat these DATs differently, it will automatically remove headers (if present) for "headerless" DATs, and leave the header intact for "headered" DATs (ignoring the `--remove-headers` option completely).
 
 As explained above, you almost always want the "headered" version. It's only in very specific circumstances that you might need the "headerless" version.

@@ -31,7 +31,7 @@ Here is a chart of instructions for various setups:
 | [FinalBurn Neo](https://github.com/finalburnneo/FBNeo)                                                                                                                                                                             | FinalBurn Neo doesn't provide an obvious way to find the correct DAT for each version. But it is likely that you are using FinalBurn Neo through a frontend, so use the above instructions.                                                                                                                       | N/A                                                                                                                                                                                                                 |
 | [FinalBurn Alpha](https://www.fbalpha.com/)                                                                                                                                                                                        | FinalBurn Alpha was forked into FinalBurn Neo, so you should use that if possible. Otherwise, hopefully your frontend's documentation has links to download the correct DAT.                                                                                                                                      | N/A                                                                                                                                                                                                                 |
 
-## ROM set types
+## ROM set merge types
 
 There are three broadly accepted types of ROM sets, with one extra variation, resulting in four types.
 
@@ -82,6 +82,12 @@ The ROM merge type can be specified with the `--merge-roms <type>` option:
       --merge-roms split
     ```
 
+## CHD disks
+
+As arcade machines got more complicated, their storage requirements grew beyond what ROM chips can handle cost effectively. Cabinets started embedding hard drives, optical drives, laser disc drives, and more. Because backup images of these media types can get large, the MAME developers created a new compression format called "compressed hunks of data" (CHD).
+
+MAME DATs catalog these "disks" separately from "ROMs," which lets users choose whether to care about them or not. Typically, games that require disks will not run without them, so Igir requires them for a game to be considered present/complete. You can use the `--exclude-disks` option to exclude disks and only process ROMs to save some space.
+
 ## Example: building a new ROM set
 
 Let's say we want to build an arcade ROM set that's compatible with the most recent version of [RetroArch](desktop/retroarch.md). The steps would look like this:
@@ -106,7 +112,7 @@ Let's say we want to build an arcade ROM set that's compatible with the most rec
 
     Let's say we care first and foremost that the arcade games "just work," and then we would like to conserve disk space. A "split" ROM set makes a good choice because RetroArch should be able to automatically index every game, including both parents and clones.
 
-6. **Run `igir`.**
+6. **Run Igir.**
 
   !!! note
 
@@ -160,11 +166,11 @@ Most other ROM managers use the terms "re-build" & "fix" when talking about taki
 
 !!! note
 
-    A game's required ROM files may change between emulator versions. This usually occurs when bad ROM dumps are replaced with better dumps. `igir` cannot magically deal with these ROM differences, and `igir` will only write complete ROM sets, so you may see games disappear when re-building. You will need to source the differing ROM files in order to keep your full game set.
+    A game's required ROM files may change between emulator versions. This usually occurs when bad ROM dumps are replaced with better dumps. Igir cannot magically deal with these ROM differences, and Igir will only write complete ROM sets, so you may see games disappear when re-building. You will need to source the differing ROM files in order to keep your full game set.
 
-A major reason `igir` was created was to help disambiguate what it means to build & re-build ROM sets. `igir` explicitly requires users to choose whether ROM files are copied or moved, so that users know what decision they are making. To "re-build" a ROM set, a user just needs to `igir move` ROMs from an input directory to the same directory specified again as the output.
+A major reason Igir was created was to help disambiguate what it means to build & re-build ROM sets. Igir explicitly requires users to choose whether ROM files are copied or moved, so that users know what decision they’re making. To "re-build" a ROM set, a user just needs to `igir move` ROMs from an input directory to the same directory specified again as the output.
 
-Taking the MAME v0.258 set we created above, let's say we want to "downgrade" it to MAME 2003 (v0.78) because an under-powered device requires it. The steps would look like this:
+Taking the MAME v0.258 set we created above, let's say we want to "downgrade" it to MAME 2003 (v0.78) because an underpowered device requires it. The steps would look like this:
 
 1. **Locate or download the emulator version's DAT.**
 
@@ -176,7 +182,7 @@ Taking the MAME v0.258 set we created above, let's say we want to "downgrade" it
 
    This is left as an exercise for the reader.
 
-3. **Run `igir`.**
+3. **Run Igir.**
 
   === ":simple-windowsxp: Windows (64-bit)"
 

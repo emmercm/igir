@@ -35,26 +35,26 @@ export interface GameProps extends CMProObject {
   sample?: SampleProps | SampleProps[],
   // NON-STANDARD PROPERTIES
   comment?: string,
-  serial?: string,
-  publisher?: string,
-  releaseyear?: string,
-  releasemonth?: string,
-  developer?: string,
-  users?: string,
-  esrbrating?: string,
+  // serial?: string,
+  // publisher?: string,
+  // releaseyear?: string,
+  // releasemonth?: string,
+  // developer?: string,
+  // users?: string,
+  // esrbrating?: string,
   genre?: string,
 }
 
 export interface ROMProps extends CMProObject {
   name?: string,
-  merge?: string,
+  // merge?: string,
   size?: string,
   crc?: string,
-  flags?: string,
+  // flags?: string,
   md5?: string,
   sha1?: string,
   // NON-STANDARD PROPERTIES
-  serial?: string,
+  // serial?: string,
 }
 
 export interface DiskProps extends ROMProps {}

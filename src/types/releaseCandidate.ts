@@ -68,4 +68,17 @@ export default class ReleaseCandidate {
   isPatched(): boolean {
     return this.getRomsWithFiles().some((romWithFiles) => romWithFiles.getInputFile().getPatch());
   }
+
+  // Immutable setters
+
+  withRomsWithFiles(romsWithFiles: ROMWithFiles[]): ReleaseCandidate {
+    if (romsWithFiles === this.romsWithFiles
+      || (romsWithFiles.length === this.romsWithFiles.length
+        && romsWithFiles.every((rwf, idx) => this.romsWithFiles[idx] === rwf)
+      )
+    ) {
+      return this;
+    }
+    return new ReleaseCandidate(this.game, this.release, romsWithFiles);
+  }
 }

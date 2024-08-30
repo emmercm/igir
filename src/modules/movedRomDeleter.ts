@@ -1,4 +1,7 @@
+import { Semaphore } from 'async-mutex';
+
 import ProgressBar, { ProgressBarSymbol } from '../console/progressBar.js';
+import Defaults from '../globals/defaults.js';
 import ArrayPoly from '../polyfill/arrayPoly.js';
 import fsPoly from '../polyfill/fsPoly.js';
 import DAT from '../types/dats/dat.js';
@@ -31,8 +34,8 @@ export default class MovedROMDeleter extends Module {
     }
 
     this.progressBar.logTrace('deleting moved ROMs');
-    await this.progressBar.setSymbol(ProgressBarSymbol.FILTERING);
-    await this.progressBar.reset(movedRoms.length);
+    this.progressBar.setSymbol(ProgressBarSymbol.CANDIDATE_FILTERING);
+    this.progressBar.reset(movedRoms.length);
 
     const fullyConsumedFiles = this.filterOutPartiallyConsumedArchives(movedRoms, inputRoms);
 
@@ -41,21 +44,31 @@ export default class MovedROMDeleter extends Module {
       datsToWrittenFiles,
     );
 
-    await this.progressBar.setSymbol(ProgressBarSymbol.DELETING);
-    await this.progressBar.reset(filePathsToDelete.length);
-    this.progressBar.logTrace(`deleting ${filePathsToDelete.length.toLocaleString()} moved file${filePathsToDelete.length !== 1 ? 's' : ''}`);
+    const existSemaphore = new Semaphore(Defaults.OUTPUT_CLEANER_BATCH_SIZE);
+    const existingFilePathsCheck = await Promise.all(filePathsToDelete
+      .map(async (filePath) => existSemaphore.runExclusive(async () => fsPoly.exists(filePath))));
+    const existingFilePaths = filePathsToDelete
+      .filter((filePath, idx) => existingFilePathsCheck.at(idx));
 
-    await Promise.all(filePathsToDelete.map(async (filePath) => {
-      this.progressBar.logInfo(`deleting moved file: ${filePath}`);
-      try {
-        await fsPoly.rm(filePath, { force: true });
-      } catch {
-        this.progressBar.logError(`${filePath}: failed to delete`);
-      }
-    }));
+    this.progressBar.setSymbol(ProgressBarSymbol.DELETING);
+    this.progressBar.reset(existingFilePaths.length);
+    this.progressBar.logTrace(`deleting ${existingFilePaths.length.toLocaleString()} moved file${existingFilePaths.length !== 1 ? 's' : ''}`);
+
+    const filePathChunks = existingFilePaths
+      .reduce(ArrayPoly.reduceChunk(Defaults.OUTPUT_CLEANER_BATCH_SIZE), []);
+    for (const filePathChunk of filePathChunks) {
+      this.progressBar.logInfo(`deleting moved file${filePathChunk.length !== 1 ? 's' : ''}:\n${filePathChunk.map((filePath) => `  ${filePath}`).join('\n')}`);
+      await Promise.all(filePathChunk.map(async (filePath) => {
+        try {
+          await fsPoly.rm(filePath, { force: true });
+        } catch (error) {
+          this.progressBar.logError(`${filePath}: failed to delete: ${error}`);
+        }
+      }));
+    }
 
     this.progressBar.logTrace('done deleting moved ROMs');
-    return filePathsToDelete;
+    return existingFilePaths;
   }
 
   /**
@@ -123,7 +136,7 @@ export default class MovedROMDeleter extends Module {
 
         return filePath;
       })
-      .filter(ArrayPoly.filterNotNullish);
+      .filter((filePath) => filePath !== undefined);
   }
 
   private static groupFilesByFilePath(files: File[]): Map<string, File[]> {

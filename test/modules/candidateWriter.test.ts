@@ -1,9 +1,12 @@
+import 'jest-extended';
+
 import fs, { Stats } from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 
 import Temp from '../../src/globals/temp.js';
 import CandidateCombiner from '../../src/modules/candidateCombiner.js';
+import CandidateExtensionCorrector from '../../src/modules/candidateExtensionCorrector.js';
 import CandidateGenerator from '../../src/modules/candidateGenerator.js';
 import CandidatePatchGenerator from '../../src/modules/candidatePatchGenerator.js';
 import CandidateWriter from '../../src/modules/candidateWriter.js';
@@ -19,6 +22,7 @@ import LogiqxDAT from '../../src/types/dats/logiqx/logiqxDat.js';
 import Archive from '../../src/types/files/archives/archive.js';
 import ArchiveEntry from '../../src/types/files/archives/archiveEntry.js';
 import File from '../../src/types/files/file.js';
+import FileCache from '../../src/types/files/fileCache.js';
 import { ChecksumBitmask } from '../../src/types/files/fileChecksums.js';
 import FileFactory from '../../src/types/files/fileFactory.js';
 import Options, { GameSubdirMode, OptionsProps } from '../../src/types/options.js';
@@ -59,7 +63,7 @@ async function walkAndStat(dirPath: string): Promise<[string, Stats][]> {
           // Hard-code properties that can change with file reads
           stats.atime = new Date(0);
           stats.atimeMs = 0;
-          // Hard-code properties that can change with hardlinking
+          // Hard-code properties that can change with hard-linking
           stats.ctimeMs = 0;
           stats.nlink = 0;
         } catch {
@@ -73,9 +77,9 @@ async function walkAndStat(dirPath: string): Promise<[string, Stats][]> {
   );
 }
 
-function datInferrer(options: Options, romFiles: File[]): DAT {
+async function datInferrer(options: Options, romFiles: File[]): Promise<DAT> {
   // Run DATGameInferrer, but condense all DATs down to one
-  const datGames = new DATGameInferrer(options, new ProgressBarFake()).infer(romFiles)
+  const datGames = (await new DATGameInferrer(options, new ProgressBarFake()).infer(romFiles))
     .flatMap((dat) => dat.getGames());
   // TODO(cemmer): filter to unique games / remove duplicates
   return new LogiqxDAT(new Header({ name: 'ROMWriter Test' }), datGames);
@@ -92,28 +96,44 @@ async function candidateWriter(
   const options = new Options({
     ...optionsProps,
     input: [path.join(inputTemp, 'roms', inputGlob)],
+    inputExclude: [path.join(inputTemp, 'roms', '**', '*.nkit.*')],
     ...(patchGlob ? { patch: [path.join(inputTemp, patchGlob)] } : {}),
     output: outputTemp,
   });
 
   let romFiles: File[] = [];
   try {
-    romFiles = await new ROMScanner(options, new ProgressBarFake()).scan();
+    romFiles = await new ROMScanner(
+      options,
+      new ProgressBarFake(),
+      new FileFactory(new FileCache()),
+    ).scan();
   } catch { /* ignored */ }
 
-  const dat = datInferrer(options, romFiles);
-  const romFilesWithHeaders = await new ROMHeaderProcessor(options, new ProgressBarFake())
-    .process(romFiles);
-  const indexedRomFiles = await new ROMIndexer(options, new ProgressBarFake())
-    .index(romFilesWithHeaders);
+  const dat = await datInferrer(options, romFiles);
+  const romFilesWithHeaders = await new ROMHeaderProcessor(
+    options,
+    new ProgressBarFake(),
+    new FileFactory(new FileCache()),
+  ).process(romFiles);
+  const indexedRomFiles = new ROMIndexer(options, new ProgressBarFake()).index(romFilesWithHeaders);
   let candidates = await new CandidateGenerator(options, new ProgressBarFake())
     .generate(dat, indexedRomFiles);
   if (patchGlob) {
-    const patches = await new PatchScanner(options, new ProgressBarFake()).scan();
+    const patches = await new PatchScanner(
+      options,
+      new ProgressBarFake(),
+      new FileFactory(new FileCache()),
+    ).scan();
     candidates = await new CandidatePatchGenerator(new ProgressBarFake())
       .generate(dat, candidates, patches);
   }
-  candidates = await new CandidateCombiner(options, new ProgressBarFake())
+  candidates = await new CandidateExtensionCorrector(
+    options,
+    new ProgressBarFake(),
+    new FileFactory(new FileCache()),
+  ).correct(dat, candidates);
+  candidates = new CandidateCombiner(options, new ProgressBarFake())
     .combine(dat, candidates);
 
   // When
@@ -252,8 +272,8 @@ describe('zip', () => {
 
   it('should not write anything if the output is expected and overwriting invalid', async () => {
     await copyFixturesToTemp(async (inputTemp, outputTemp) => {
-      // Note: need to de-conflict headered & headerless ROMs due to duplicate output paths
-      const inputGlob = '**/!(headerless)/*';
+      // Note: need to exclude some ROMs to prevent duplicate output paths
+      const inputGlob = '**/!(chd|headerless)/*';
 
       // Given
       const options = new Options({ commands: ['copy', 'zip'] });
@@ -357,7 +377,8 @@ describe('zip', () => {
         outputTemp,
       );
       expect(outputFiles).toHaveLength(1);
-      const archiveEntries = await FileFactory.filesFrom(path.join(outputTemp, outputFiles[0][0]));
+      const archiveEntries = await new FileFactory(new FileCache())
+        .filesFrom(path.join(outputTemp, outputFiles[0][0]));
       expect(archiveEntries).toHaveLength(1);
       const archiveEntry = archiveEntries[0] as ArchiveEntry<Archive>;
       expect(archiveEntry.getEntryPath()).toEqual(expectedFileName);
@@ -392,7 +413,8 @@ describe('zip', () => {
         outputTemp,
       );
       expect(outputFiles).toHaveLength(1);
-      const archiveEntries = await FileFactory.filesFrom(path.join(outputTemp, outputFiles[0][0]));
+      const archiveEntries = await new FileFactory(new FileCache())
+        .filesFrom(path.join(outputTemp, outputFiles[0][0]));
       expect(archiveEntries).toHaveLength(1);
       const archiveEntry = archiveEntries[0] as ArchiveEntry<Archive>;
       expect(archiveEntry.getEntryPath()).toEqual(expectedFileName);
@@ -423,7 +445,8 @@ describe('zip', () => {
       const outputFiles = (await candidateWriter(options, inputTemp, inputGlob, 'patches', outputTemp));
 
       const writtenRomsAndCrcs = (await Promise.all(outputFiles
-        .map(async ([outputPath]) => FileFactory.filesFrom(path.join(outputTemp, outputPath)))))
+        .map(async ([outputPath]) => new FileFactory(new FileCache())
+          .filesFrom(path.join(outputTemp, outputPath)))))
         .flat()
         .map((entry) => [entry.toString().replace(outputTemp + path.sep, ''), entry.getCrc32() ?? ''])
         .sort((a, b) => a[0].localeCompare(b[0]));
@@ -434,7 +457,7 @@ describe('zip', () => {
   test.each([
     [
       '**/!(header*)/*',
-      ['0F09A40.zip', '3708F2C.zip', '612644F.zip', '65D1206.zip', '92C85C9.zip', 'C01173E.zip', 'KDULVQN.zip', 'before.zip', 'best.zip', 'empty.zip', 'five.zip', 'fizzbuzz.zip', 'foobar.zip', 'four.zip', 'fourfive.zip', 'loremipsum.zip', 'one.zip', 'onetwothree.zip', 'three.zip', 'two.zip', 'unknown.zip'],
+      ['0F09A40.zip', '2048.zip', '3708F2C.zip', '4096.zip', '612644F.zip', '65D1206.zip', '92C85C9.zip', 'C01173E.zip', 'CD-ROM.zip', 'GD-ROM.zip', 'KDULVQN.zip', 'UMD.zip', 'before.zip', 'best.zip', 'empty.zip', 'five.zip', 'fizzbuzz.zip', 'foobar.zip', 'four.zip', 'fourfive.zip', 'loremipsum.zip', 'one.zip', 'onetwothree.zip', 'three.zip', 'two.zip', 'unknown.zip'],
     ],
     [
       '7z/*',
@@ -484,33 +507,33 @@ describe('zip', () => {
   test.each([
     [
       '**/!(header*)/*',
-      ['0F09A40.zip', '3708F2C.zip', '612644F.zip', '65D1206.zip', '92C85C9.zip', 'C01173E.zip', 'KDULVQN.zip', 'before.zip', 'best.zip', 'empty.zip', 'five.zip', 'fizzbuzz.zip', 'foobar.zip', 'four.zip', 'fourfive.zip', 'loremipsum.zip', 'one.zip', 'onetwothree.zip', 'three.zip', 'two.zip', 'unknown.zip'],
-      ['patchable/0F09A40.rom', 'patchable/3708F2C.rom', 'patchable/612644F.rom', 'patchable/65D1206.rom', 'patchable/92C85C9.rom', 'patchable/C01173E.rom', 'patchable/KDULVQN.rom', 'patchable/before.rom', 'patchable/best.gz', 'raw/empty.rom', 'raw/fizzbuzz.nes', 'raw/foobar.lnx', 'raw/loremipsum.rom', 'raw/one.rom', 'raw/three.rom', 'raw/two.rom', 'raw/unknown.rom'],
+      ['0F09A40.zip', '2048.zip', '3708F2C.zip', '4096.zip', '612644F.zip', '65D1206.zip', '92C85C9.zip', 'C01173E.zip', 'CD-ROM.zip', 'GD-ROM.zip', 'KDULVQN.zip', 'UMD.zip', 'before.zip', 'best.zip', 'empty.zip', 'five.zip', 'fizzbuzz.zip', 'foobar.zip', 'four.zip', 'fourfive.zip', 'loremipsum.zip', 'one.zip', 'onetwothree.zip', 'three.zip', 'two.zip', 'unknown.zip'],
+      ['zip/fourfive.zip'],
     ],
     [
       '7z/*',
       ['fizzbuzz.zip', 'foobar.zip', 'loremipsum.zip', 'onetwothree.zip', 'unknown.zip'],
-      ['7z/fizzbuzz.7z', '7z/foobar.7z', '7z/loremipsum.7z', '7z/onetwothree.7z', '7z/unknown.7z'],
+      [],
     ],
     [
       'rar/*',
       ['fizzbuzz.zip', 'foobar.zip', 'loremipsum.zip', 'onetwothree.zip', 'unknown.zip'],
-      ['rar/fizzbuzz.rar', 'rar/foobar.rar', 'rar/loremipsum.rar', 'rar/onetwothree.rar', 'rar/unknown.rar'],
+      [],
     ],
     [
       'raw/*',
       ['empty.zip', 'five.zip', 'fizzbuzz.zip', 'foobar.zip', 'four.zip', 'loremipsum.zip', 'one.zip', 'three.zip', 'two.zip', 'unknown.zip'],
-      ['raw/empty.rom', 'raw/fizzbuzz.nes', 'raw/foobar.lnx', 'raw/loremipsum.rom', 'raw/one.rom', 'raw/three.rom', 'raw/two.rom', 'raw/unknown.rom'],
+      [],
     ],
     [
       'tar/*',
       ['fizzbuzz.zip', 'foobar.zip', 'loremipsum.zip', 'onetwothree.zip', 'unknown.zip'],
-      ['tar/fizzbuzz.tar.gz', 'tar/foobar.tar.gz', 'tar/loremipsum.tar.gz', 'tar/onetwothree.tar.gz', 'tar/unknown.tar.gz'],
+      [],
     ],
     [
       'zip/*',
       ['fizzbuzz.zip', 'foobar.zip', 'fourfive.zip', 'loremipsum.zip', 'onetwothree.zip', 'unknown.zip'],
-      ['zip/fizzbuzz.zip', 'zip/foobar.zip', 'zip/loremipsum.zip', 'zip/onetwothree.zip', 'zip/unknown.zip'],
+      ['zip/fizzbuzz.zip', 'zip/foobar.zip', 'zip/fourfive.zip', 'zip/loremipsum.zip', 'zip/unknown.zip'],
     ],
   ])('should move, zip, and test: %s', async (inputGlob, expectedOutputPaths, expectedDeletedInputPaths) => {
     await copyFixturesToTemp(async (inputTemp, outputTemp) => {
@@ -541,17 +564,15 @@ describe('zip', () => {
           // File wasn't deleted, ensure it wasn't touched
           expect(statsAfter).toEqual(statsBefore);
         });
-      romFilesBefore
+      expect(romFilesBefore
         .filter(([inputFile]) => !romFilesAfter.has(inputFile))
-        .forEach(([inputFile]) => {
-          // File was deleted, ensure it was expected
-          expect(expectedDeletedInputPaths).toContain(inputFile.replace(/[\\/]/g, '/'));
-        });
+        .map(([inputFile]) => inputFile.replace(/[\\/]/g, '/')))
+        .toIncludeSameMembers(expectedDeletedInputPaths);
     });
   });
 
   test.each([
-    ['**/*', [
+    ['**/!(chd)/*', [
       ['ROMWriter Test.zip|0F09A40.rom', '2f943e86'],
       ['ROMWriter Test.zip|3708F2C.rom', '20891c9f'],
       ['ROMWriter Test.zip|612644F.rom', 'f7591b29'],
@@ -561,6 +582,10 @@ describe('zip', () => {
       ['ROMWriter Test.zip|before.rom', '0361b321'],
       ['ROMWriter Test.zip|best.rom', '1e3d78cf'],
       ['ROMWriter Test.zip|C01173E.rom', 'dfaebe28'],
+      [`ROMWriter Test.zip|${path.join('CD-ROM', 'CD-ROM (Track 1).bin')}`, '49ca35fb'],
+      [`ROMWriter Test.zip|${path.join('CD-ROM', 'CD-ROM (Track 2).bin')}`, '0316f720'],
+      [`ROMWriter Test.zip|${path.join('CD-ROM', 'CD-ROM (Track 3).bin')}`, 'a320af40'],
+      [`ROMWriter Test.zip|${path.join('CD-ROM', 'CD-ROM.cue')}`, '4ce39e73'],
       ['ROMWriter Test.zip|color_test.nintendoentertainmentsystem', 'c9c1b7aa'],
       ['ROMWriter Test.zip|diagnostic_test_cartridge.a78', 'f6cc9b1c'],
       ['ROMWriter Test.zip|empty.rom', '00000000'],
@@ -571,6 +596,11 @@ describe('zip', () => {
       ['ROMWriter Test.zip|four.rom', '1cf3ca74'],
       [`ROMWriter Test.zip|${path.join('fourfive', 'five.rom')}`, '3e5daf67'],
       [`ROMWriter Test.zip|${path.join('fourfive', 'four.rom')}`, '1cf3ca74'],
+      [`ROMWriter Test.zip|${path.join('GD-ROM', 'GD-ROM.gdi')}`, 'f16f621c'],
+      [`ROMWriter Test.zip|${path.join('GD-ROM', 'track01.bin')}`, '9796ed9a'],
+      [`ROMWriter Test.zip|${path.join('GD-ROM', 'track02.raw')}`, 'abc178d5'],
+      [`ROMWriter Test.zip|${path.join('GD-ROM', 'track03.bin')}`, '61a363f1'],
+      [`ROMWriter Test.zip|${path.join('GD-ROM', 'track04.bin')}`, 'fc5ff5a0'],
       ['ROMWriter Test.zip|KDULVQN.rom', 'b1c303e4'],
       ['ROMWriter Test.zip|LCDTestROM.lnx', '2d251538'],
       ['ROMWriter Test.zip|loremipsum.rom', '70856527'],
@@ -582,6 +612,7 @@ describe('zip', () => {
       ['ROMWriter Test.zip|speed_test_v51.smc', '9adca6cc'],
       ['ROMWriter Test.zip|three.rom', 'ff46c5d8'],
       ['ROMWriter Test.zip|two.rom', '96170874'],
+      ['ROMWriter Test.zip|UMD.iso', 'e90f7cf5'],
       ['ROMWriter Test.zip|unknown.rom', '377a7727'],
     ]],
     ['raw/*', [
@@ -614,7 +645,7 @@ describe('zip', () => {
       // Then
       expect(outputFiles).toHaveLength(1);
       const outputFile = path.join(outputTemp, outputFiles[0][0]);
-      const writtenRomsAndCrcs = (await FileFactory.filesFrom(outputFile))
+      const writtenRomsAndCrcs = (await new FileFactory(new FileCache()).filesFrom(outputFile))
         .map((entry) => [entry.toString().replace(outputTemp + path.sep, ''), entry.getCrc32() ?? ''])
         .sort((a, b) => a[0].localeCompare(b[0]));
       expect(writtenRomsAndCrcs).toEqual(expectedFilesAndCrcs);
@@ -700,13 +731,16 @@ describe('extract', () => {
 
   it('should not write anything if the output is expected and overwriting invalid', async () => {
     await copyFixturesToTemp(async (inputTemp, outputTemp) => {
+      // Note: need to exclude some ROMs to prevent duplicate output paths
+      const inputGlob = '**/!(chd)/*';
+
       // Given
       const options = new Options({ commands: ['copy', 'extract'] });
       const inputFilesBefore = await walkAndStat(inputTemp);
       await expect(walkAndStat(outputTemp)).resolves.toHaveLength(0);
 
       // And we've written once
-      await candidateWriter(options, inputTemp, '**/*', undefined, outputTemp);
+      await candidateWriter(options, inputTemp, inputGlob, undefined, outputTemp);
 
       // And files were written
       const outputFilesBefore = await walkAndStat(outputTemp);
@@ -717,7 +751,7 @@ describe('extract', () => {
       await candidateWriter({
         ...options,
         overwriteInvalid: true,
-      }, inputTemp, '**/*', undefined, outputTemp);
+      }, inputTemp, inputGlob, undefined, outputTemp);
 
       // Then the output wasn't touched
       await expect(walkAndStat(outputTemp)).resolves.toEqual(outputFilesBefore);
@@ -730,7 +764,7 @@ describe('extract', () => {
   it('should write if the output is not expected and overwriting invalid', async () => {
     await copyFixturesToTemp(async (inputTemp, outputTemp) => {
       // Given
-      const options = new Options({ commands: ['copy', 'extract'] });
+      const options = new Options({ commands: ['copy', 'extract'], writerThreads: 1 });
       const inputFilesBefore = await walkAndStat(inputTemp);
       await expect(walkAndStat(outputTemp)).resolves.toHaveLength(0);
 
@@ -858,7 +892,8 @@ describe('extract', () => {
       const outputFiles = (await candidateWriter(options, inputTemp, inputGlob, 'patches', outputTemp));
 
       const writtenRomsAndCrcs = (await Promise.all(outputFiles
-        .map(async ([outputPath]) => FileFactory.filesFrom(path.join(outputTemp, outputPath)))))
+        .map(async ([outputPath]) => new FileFactory(new FileCache())
+          .filesFrom(path.join(outputTemp, outputPath)))))
         .flat()
         .map((entry) => [entry.toString().replace(outputTemp + path.sep, ''), entry.getCrc32() ?? ''])
         .sort((a, b) => a[0].localeCompare(b[0]));
@@ -869,7 +904,11 @@ describe('extract', () => {
   test.each([
     [
       '**/!(header*)/*',
-      ['0F09A40.rom', '3708F2C.rom', '612644F.rom', '65D1206.rom', '92C85C9.rom', 'C01173E.rom', 'KDULVQN.rom', 'before.rom', 'best.rom', 'empty.rom', 'five.rom', 'fizzbuzz.nes', 'foobar.lnx', 'four.rom', path.join('fourfive', 'five.rom'), path.join('fourfive', 'four.rom'), 'loremipsum.rom', 'one.rom', path.join('onetwothree', 'one.rom'), path.join('onetwothree', 'three.rom'), path.join('onetwothree', 'two.rom'), 'three.rom', 'two.rom', 'unknown.rom'],
+      ['0F09A40.rom', '2048.rom', '3708F2C.rom', '4096.rom', '612644F.rom', '65D1206.rom', '92C85C9.rom', 'C01173E.rom',
+        path.join('CD-ROM', 'CD-ROM (Track 1).bin'), path.join('CD-ROM', 'CD-ROM (Track 2).bin'), path.join('CD-ROM', 'CD-ROM (Track 3).bin'), path.join('CD-ROM', 'CD-ROM.cue'),
+        path.join('GD-ROM', 'GD-ROM.gdi'), path.join('GD-ROM', 'track01.bin'), path.join('GD-ROM', 'track02.raw'), path.join('GD-ROM', 'track03.bin'), path.join('GD-ROM', 'track04.bin'),
+        'KDULVQN.rom', 'UMD.iso', 'before.rom', 'best.rom', 'empty.rom', 'five.rom', 'fizzbuzz.nes', 'foobar.lnx', 'four.rom', path.join('fourfive', 'five.rom'), path.join('fourfive', 'four.rom'), 'loremipsum.rom', 'one.rom', path.join('onetwothree', 'one.rom'), path.join('onetwothree', 'three.rom'), path.join('onetwothree', 'two.rom'), 'three.rom',
+        'two.rom', 'unknown.rom'],
     ],
     [
       '7z/*',
@@ -922,33 +961,37 @@ describe('extract', () => {
   test.each([
     [
       '**/!(header*)/*',
-      ['0F09A40.rom', '3708F2C.rom', '612644F.rom', '65D1206.rom', '92C85C9.rom', 'C01173E.rom', 'KDULVQN.rom', 'before.rom', 'best.rom', 'empty.rom', 'five.rom', 'fizzbuzz.nes', 'foobar.lnx', 'four.rom', path.join('fourfive', 'five.rom'), path.join('fourfive', 'four.rom'), 'loremipsum.rom', 'one.rom', path.join('onetwothree', 'one.rom'), path.join('onetwothree', 'three.rom'), path.join('onetwothree', 'two.rom'), 'three.rom', 'two.rom', 'unknown.rom'],
-      ['patchable/0F09A40.rom', 'patchable/3708F2C.rom', 'patchable/612644F.rom', 'patchable/65D1206.rom', 'patchable/92C85C9.rom', 'patchable/C01173E.rom', 'patchable/KDULVQN.rom', 'patchable/before.rom', 'patchable/best.gz', 'raw/empty.rom', 'raw/fizzbuzz.nes', 'raw/foobar.lnx', 'raw/loremipsum.rom', 'raw/one.rom', 'raw/three.rom', 'raw/two.rom', 'raw/unknown.rom'],
+      ['0F09A40.rom', '2048.rom', '3708F2C.rom', '4096.rom', '612644F.rom', '65D1206.rom', '92C85C9.rom', 'C01173E.rom',
+        path.join('CD-ROM', 'CD-ROM (Track 1).bin'), path.join('CD-ROM', 'CD-ROM (Track 2).bin'), path.join('CD-ROM', 'CD-ROM (Track 3).bin'), path.join('CD-ROM', 'CD-ROM.cue'),
+        path.join('GD-ROM', 'GD-ROM.gdi'), path.join('GD-ROM', 'track01.bin'), path.join('GD-ROM', 'track02.raw'), path.join('GD-ROM', 'track03.bin'), path.join('GD-ROM', 'track04.bin'),
+        'KDULVQN.rom', 'UMD.iso', 'before.rom', 'best.rom', 'empty.rom', 'five.rom', 'fizzbuzz.nes', 'foobar.lnx', 'four.rom', path.join('fourfive', 'five.rom'), path.join('fourfive', 'four.rom'), 'loremipsum.rom', 'one.rom', path.join('onetwothree', 'one.rom'), path.join('onetwothree', 'three.rom'), path.join('onetwothree', 'two.rom'), 'three.rom',
+        'two.rom', 'unknown.rom'],
+      ['discs/CD-ROM (Track 1).bin', 'discs/CD-ROM (Track 2).bin', 'discs/CD-ROM (Track 3).bin', 'discs/CD-ROM.cue', 'discs/GD-ROM.gdi', 'discs/UMD.iso', 'discs/track01.bin', 'discs/track02.raw', 'discs/track03.bin', 'discs/track04.bin', 'patchable/0F09A40.rom', 'patchable/3708F2C.rom', 'patchable/612644F.rom', 'patchable/65D1206.rom', 'patchable/92C85C9.rom', 'patchable/C01173E.rom', 'patchable/KDULVQN.rom', 'patchable/before.rom', 'raw/empty.rom', 'raw/five.rom', 'raw/fizzbuzz.nes', 'raw/foobar.lnx', 'raw/four.rom', 'raw/loremipsum.rom', 'raw/one.rom', 'raw/three.rom', 'raw/two.rom', 'raw/unknown.rom'],
     ],
     [
       '7z/*',
       ['fizzbuzz.nes', 'foobar.lnx', 'loremipsum.rom', path.join('onetwothree', 'one.rom'), path.join('onetwothree', 'three.rom'), path.join('onetwothree', 'two.rom'), 'unknown.rom'],
-      ['7z/fizzbuzz.7z', '7z/foobar.7z', '7z/loremipsum.7z', '7z/onetwothree.7z', '7z/unknown.7z'],
+      [],
     ],
     [
       'rar/*',
       ['fizzbuzz.nes', 'foobar.lnx', 'loremipsum.rom', path.join('onetwothree', 'one.rom'), path.join('onetwothree', 'three.rom'), path.join('onetwothree', 'two.rom'), 'unknown.rom'],
-      ['rar/fizzbuzz.rar', 'rar/foobar.rar', 'rar/loremipsum.rar', 'rar/onetwothree.rar', 'rar/unknown.rar'],
+      [],
     ],
     [
       'raw/*',
       ['empty.rom', 'five.rom', 'fizzbuzz.nes', 'foobar.lnx', 'four.rom', 'loremipsum.rom', 'one.rom', 'three.rom', 'two.rom', 'unknown.rom'],
-      ['raw/empty.rom', 'raw/fizzbuzz.nes', 'raw/foobar.lnx', 'raw/loremipsum.rom', 'raw/one.rom', 'raw/three.rom', 'raw/two.rom', 'raw/unknown.rom'],
+      ['raw/empty.rom', 'raw/five.rom', 'raw/fizzbuzz.nes', 'raw/foobar.lnx', 'raw/four.rom', 'raw/loremipsum.rom', 'raw/one.rom', 'raw/three.rom', 'raw/two.rom', 'raw/unknown.rom'],
     ],
     [
       'tar/*',
       ['fizzbuzz.nes', 'foobar.lnx', 'loremipsum.rom', path.join('onetwothree', 'one.rom'), path.join('onetwothree', 'three.rom'), path.join('onetwothree', 'two.rom'), 'unknown.rom'],
-      ['tar/fizzbuzz.tar.gz', 'tar/foobar.tar.gz', 'tar/loremipsum.tar.gz', 'tar/onetwothree.tar.gz', 'tar/unknown.tar.gz'],
+      [],
     ],
     [
       'zip/*',
       ['fizzbuzz.nes', 'foobar.lnx', path.join('fourfive', 'five.rom'), path.join('fourfive', 'four.rom'), 'loremipsum.rom', path.join('onetwothree', 'one.rom'), path.join('onetwothree', 'three.rom'), path.join('onetwothree', 'two.rom'), 'unknown.rom'],
-      ['zip/fizzbuzz.zip', 'zip/foobar.zip', 'zip/loremipsum.zip', 'zip/onetwothree.zip', 'zip/unknown.zip'],
+      [],
     ],
   ])('should move, extract, and test: %s', async (inputGlob, expectedOutputPaths, expectedDeletedInputPaths) => {
     await copyFixturesToTemp(async (inputTemp, outputTemp) => {
@@ -982,12 +1025,10 @@ describe('extract', () => {
           // File wasn't deleted, ensure it wasn't touched
           expect(statsAfter).toEqual(statsBefore);
         });
-      romFilesBefore
+      expect(romFilesBefore
         .filter(([inputFile]) => !romFilesAfter.has(inputFile))
-        .forEach(([inputFile]) => {
-          // File was deleted, ensure it was expected
-          expect(expectedDeletedInputPaths).toContain(inputFile.replace(/[\\/]/g, '/'));
-        });
+        .map(([inputFile]) => inputFile.replace(/[\\/]/g, '/')))
+        .toIncludeSameMembers(expectedDeletedInputPaths);
     });
   });
 });
@@ -1217,7 +1258,8 @@ describe('raw', () => {
       const outputFiles = await candidateWriter(options, inputTemp, inputGlob, 'patches', outputTemp);
 
       const writtenRomsAndCrcs = (await Promise.all(outputFiles
-        .map(async ([outputPath]) => FileFactory.filesFrom(path.join(outputTemp, outputPath)))))
+        .map(async ([outputPath]) => new FileFactory(new FileCache())
+          .filesFrom(path.join(outputTemp, outputPath)))))
         .flat()
         .map((entry) => [entry.toString().replace(outputTemp + path.sep, ''), entry.getCrc32() ?? ''])
         .sort((a, b) => a[0].localeCompare(b[0]));
@@ -1228,7 +1270,11 @@ describe('raw', () => {
   test.each([
     [
       '**/!(header*)/*',
-      ['0F09A40.rom', '3708F2C.rom', '612644F.rom', '65D1206.rom', '92C85C9.rom', 'C01173E.rom', 'KDULVQN.rom', 'before.rom', 'best.gz', 'empty.rom', 'five.rom', 'fizzbuzz.nes', 'foobar.lnx', 'four.rom', 'fourfive.zip', 'loremipsum.rom', 'one.rom', 'onetwothree.zip', 'three.rom', 'two.rom', 'unknown.rom'],
+      ['0F09A40.rom', '2048.chd', '3708F2C.rom', '4096.chd', '612644F.rom', '65D1206.rom', '92C85C9.rom', 'C01173E.rom',
+        'CD-ROM.chd',
+        'GD-ROM.chd',
+        'KDULVQN.rom', 'UMD.iso', 'before.rom', 'best.gz', 'empty.rom', 'five.rom', 'fizzbuzz.nes', 'foobar.lnx', 'four.rom', 'fourfive.zip', 'loremipsum.rom', 'one.rom', 'onetwothree.zip', 'three.rom',
+        'two.rom', 'unknown.rom'],
     ],
     [
       '7z/*',
@@ -1278,8 +1324,12 @@ describe('raw', () => {
   test.each([
     [
       '**/!(header*)/*',
-      ['0F09A40.rom', '3708F2C.rom', '612644F.rom', '65D1206.rom', '92C85C9.rom', 'C01173E.rom', 'KDULVQN.rom', 'before.rom', 'best.gz', 'empty.rom', 'five.rom', 'fizzbuzz.nes', 'foobar.lnx', 'four.rom', 'fourfive.zip', 'loremipsum.rom', 'one.rom', 'onetwothree.zip', 'three.rom', 'two.rom', 'unknown.rom'],
-      ['patchable/0F09A40.rom', 'patchable/3708F2C.rom', 'patchable/612644F.rom', 'patchable/65D1206.rom', 'patchable/92C85C9.rom', 'patchable/C01173E.rom', 'patchable/KDULVQN.rom', 'patchable/before.rom', 'patchable/best.gz', 'raw/empty.rom', 'raw/fizzbuzz.nes', 'raw/foobar.lnx', 'raw/loremipsum.rom', 'raw/one.rom', 'raw/three.rom', 'raw/two.rom', 'raw/unknown.rom'],
+      ['0F09A40.rom', '2048.chd', '3708F2C.rom', '4096.chd', '612644F.rom', '65D1206.rom', '92C85C9.rom', 'C01173E.rom',
+        'CD-ROM.chd',
+        'GD-ROM.chd',
+        'KDULVQN.rom', 'UMD.iso', 'before.rom', 'best.gz', 'empty.rom', 'five.rom', 'fizzbuzz.nes', 'foobar.lnx', 'four.rom', 'fourfive.zip', 'loremipsum.rom', 'one.rom', 'onetwothree.zip', 'three.rom',
+        'two.rom', 'unknown.rom'],
+      ['chd/2048.chd', 'chd/4096.chd', 'chd/CD-ROM.chd', 'chd/GD-ROM.chd', 'discs/UMD.iso', 'patchable/0F09A40.rom', 'patchable/3708F2C.rom', 'patchable/612644F.rom', 'patchable/65D1206.rom', 'patchable/92C85C9.rom', 'patchable/C01173E.rom', 'patchable/KDULVQN.rom', 'patchable/before.rom', 'patchable/best.gz', 'raw/empty.rom', 'raw/five.rom', 'raw/fizzbuzz.nes', 'raw/foobar.lnx', 'raw/four.rom', 'raw/loremipsum.rom', 'raw/one.rom', 'raw/three.rom', 'raw/two.rom', 'raw/unknown.rom', 'zip/fourfive.zip', 'zip/onetwothree.zip'],
     ],
     [
       '7z/*',
@@ -1294,7 +1344,7 @@ describe('raw', () => {
     [
       'raw/*',
       ['empty.rom', 'five.rom', 'fizzbuzz.nes', 'foobar.lnx', 'four.rom', 'loremipsum.rom', 'one.rom', 'three.rom', 'two.rom', 'unknown.rom'],
-      ['raw/empty.rom', 'raw/fizzbuzz.nes', 'raw/foobar.lnx', 'raw/loremipsum.rom', 'raw/one.rom', 'raw/three.rom', 'raw/two.rom', 'raw/unknown.rom'],
+      ['raw/empty.rom', 'raw/five.rom', 'raw/fizzbuzz.nes', 'raw/foobar.lnx', 'raw/four.rom', 'raw/loremipsum.rom', 'raw/one.rom', 'raw/three.rom', 'raw/two.rom', 'raw/unknown.rom'],
     ],
     [
       'tar/*',
@@ -1304,7 +1354,7 @@ describe('raw', () => {
     [
       'zip/*',
       ['fizzbuzz.zip', 'foobar.zip', 'fourfive.zip', 'loremipsum.zip', 'onetwothree.zip', 'unknown.zip'],
-      ['zip/fizzbuzz.zip', 'zip/foobar.zip', 'zip/loremipsum.zip', 'zip/onetwothree.zip', 'zip/unknown.zip'],
+      ['zip/fizzbuzz.zip', 'zip/foobar.zip', 'zip/fourfive.zip', 'zip/loremipsum.zip', 'zip/onetwothree.zip', 'zip/unknown.zip'],
     ],
   ])('should move raw and test: %s', async (inputGlob, expectedOutputPaths, expectedDeletedInputPaths) => {
     await copyFixturesToTemp(async (inputTemp, outputTemp) => {
@@ -1335,12 +1385,10 @@ describe('raw', () => {
           // File wasn't deleted, ensure it wasn't touched
           expect(statsAfter).toEqual(statsBefore);
         });
-      romFilesBefore
+      expect(romFilesBefore
         .filter(([inputFile]) => !romFilesAfter.has(inputFile))
-        .forEach(([inputFile]) => {
-          // File was deleted, ensure it was expected
-          expect(expectedDeletedInputPaths).toContain(inputFile.replace(/[\\/]/g, '/'));
-        });
+        .map(([inputFile]) => inputFile.replace(/[\\/]/g, '/')))
+        .toIncludeSameMembers(expectedDeletedInputPaths);
     });
   });
 });

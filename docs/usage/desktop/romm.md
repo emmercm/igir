@@ -4,7 +4,7 @@
 
 ## ROMs
 
-RomM uses its own [proprietary ROM folder structure](https://github.com/rommapp/romm/wiki/Supported-Platforms), so `igir` has a replaceable `{romm}` token to sort ROMs into the right place. See the [replaceable tokens page](../../output/tokens.md) for more information.
+RomM uses its own [proprietary ROM folder structure](https://github.com/rommapp/romm/wiki/Supported-Platforms), so Igir has a replaceable `{romm}` token to sort ROMs into the right place. See the [replaceable tokens page](../../output/tokens.md) for more information.
 
 You can run RomM using [Docker Compose](https://docs.docker.com/compose/). Create a file named `docker-compose.yml` with the following contents, but change all of the environment variables with the value of `CHANGEME!`:
 
