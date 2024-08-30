@@ -859,12 +859,15 @@ describe('token replacement', () => {
 
 describe('should respect "--dir-mirror"', () => {
   test.each([
-    ['', os.devNull],
-    ['file.rom', path.join(os.devNull, 'file.rom')],
     ['roms/file.rom', path.join(os.devNull, 'file.rom')],
     ['roms/subdir/file.rom', path.join(os.devNull, 'subdir', 'file.rom')],
   ])('option is true: %s', async (filePath, expectedPath) => {
-    const options = new Options({ commands: ['copy'], output: os.devNull, dirMirror: true });
+    const options = new Options({
+      commands: ['copy'],
+      input: ['roms'],
+      output: os.devNull,
+      dirMirror: true,
+    });
     const rom = new ROM({ name: path.basename(filePath), size: 0, crc32: '' });
 
     const outputPath = OutputFactory.getPath(
