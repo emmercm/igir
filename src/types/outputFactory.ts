@@ -133,11 +133,14 @@ export default class OutputFactory {
     ));
 
     if (options.getDirMirror() && inputFile?.getFilePath()) {
-      const mirroredDir = path.dirname(inputFile.getFilePath())
-        .split(/[\\/]/)
-        .splice(1)
-        .join(path.sep);
-      output = path.join(output, mirroredDir);
+      const mirroredFilePath = options.getInputPaths()
+        .map((inputPath) => path.resolve(inputPath))
+        .reduce((inputFilePath, inputPath) => {
+          const inputPathRegex = new RegExp(`^${inputPath.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}[\\/]?`);
+          return inputFilePath.replace(inputPathRegex, '');
+        }, path.resolve(inputFile.getFilePath()));
+      const mirroredDirPath = path.dirname(mirroredFilePath);
+      output = path.join(output, mirroredDirPath);
     }
 
     if (options.getDirDatName() && dat.getNameShort()) {
