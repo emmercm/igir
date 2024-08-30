@@ -287,13 +287,13 @@ export default class FileCache {
     valueType: string,
   ): Promise<string> {
     const stats = await FsPoly.stat(filePath);
-    const inodeKey = `V${FileCache.VERSION}|${filePath}|${entryPath ?? ''}|${ValueType.INODE}`;
+    const inodeKey = `V${FileCache.VERSION}|${filePath}|${ValueType.INODE}`;
     await this.cache.set(inodeKey, {
       fileSize: stats.size,
       modifiedTimeMillis: stats.mtimeMs,
       value: stats.ino,
     });
 
-    return `V${FileCache.VERSION}|${stats.ino}|${valueType}`;
+    return `V${FileCache.VERSION}|${stats.ino}|${entryPath ?? ''}|${valueType}`;
   }
 }
