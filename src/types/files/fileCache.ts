@@ -94,7 +94,7 @@ export default class FileCache {
   ): Promise<File> {
     // NOTE(cemmer): we're explicitly not catching ENOENT errors here, we want it to bubble up
     const stats = await FsPoly.stat(filePath);
-    const cacheKey = await this.getCacheKey(filePath, ValueType.FILE_CHECKSUMS);
+    const cacheKey = await this.getCacheKey(filePath, undefined, ValueType.FILE_CHECKSUMS);
 
     // NOTE(cemmer): we're using the cache as a mutex here, so even if this function is called
     //  multiple times concurrently, entries will only be fetched once.
@@ -147,7 +147,11 @@ export default class FileCache {
       // An empty file can't have entries
       return [];
     }
-    const cacheKey = await this.getCacheKey(archive.getFilePath(), ValueType.ARCHIVE_CHECKSUMS);
+    const cacheKey = await this.getCacheKey(
+      archive.getFilePath(),
+      undefined,
+      ValueType.ARCHIVE_CHECKSUMS,
+    );
 
     // NOTE(cemmer): we're using the cache as a mutex here, so even if this function is called
     //  multiple times concurrently, entries will only be fetched once.
@@ -200,7 +204,11 @@ export default class FileCache {
       // An empty file can't have a header
       return undefined;
     }
-    const cacheKey = await this.getCacheKey(file.getFilePath(), ValueType.ROM_HEADER);
+    const cacheKey = await this.getCacheKey(
+      file.getFilePath(),
+      file instanceof ArchiveEntry ? file.getEntryPath() : undefined,
+      ValueType.ROM_HEADER,
+    );
 
     const cachedValue = await this.cache.getOrCompute(
       cacheKey,
@@ -238,7 +246,11 @@ export default class FileCache {
       // An empty file can't have a signature
       return undefined;
     }
-    const cacheKey = await this.getCacheKey(file.getFilePath(), ValueType.FILE_SIGNATURE);
+    const cacheKey = await this.getCacheKey(
+      file.getFilePath(),
+      file instanceof ArchiveEntry ? file.getEntryPath() : undefined,
+      ValueType.FILE_SIGNATURE,
+    );
 
     const cachedValue = await this.cache.getOrCompute(
       cacheKey,
@@ -269,7 +281,11 @@ export default class FileCache {
     return FileSignature.signatureFromName(cachedSignatureName);
   }
 
-  private async getCacheKey(filePath: string, valueType: string): Promise<string> {
+  private async getCacheKey(
+    filePath: string,
+    entryPath: string | undefined,
+    valueType: string,
+  ): Promise<string> {
     const stats = await FsPoly.stat(filePath);
     const inodeKey = `V${FileCache.VERSION}|${filePath}|${ValueType.INODE}`;
     await this.cache.set(inodeKey, {
@@ -278,6 +294,6 @@ export default class FileCache {
       value: stats.ino,
     });
 
-    return `V${FileCache.VERSION}|${stats.ino}|${valueType}`;
+    return `V${FileCache.VERSION}|${stats.ino}|${entryPath ?? ''}|${valueType}`;
   }
 }
