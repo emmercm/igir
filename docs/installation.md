@@ -21,7 +21,7 @@ for example:
 npx igir@latest copy extract --dat *.dat --input ROMs/ --output ROMs-Sorted/ --dir-dat-name
 ```
 
-[![asciicast](https://asciinema.org/a/IFU8rU8k800TMVWb9xXv4Jbsv.svg)](https://asciinema.org/a/IFU8rU8k800TMVWb9xXv4Jbsv)
+<script src="https://asciinema.org/a/IFU8rU8k800TMVWb9xXv4Jbsv.js" id="asciicast-IFU8rU8k800TMVWb9xXv4Jbsv" async="true"></script>
 
 !!! tip
 
@@ -49,7 +49,7 @@ npx igir@latest copy extract --dat *.dat --input ROMs/ --output ROMs-Sorted/ --d
 
 ## Via Homebrew (macOS)
 
-[Homebrew](https://brew.sh/) is third-party package manager for macOS. You can install Igir with these simple commands:
+[Homebrew](https://brew.sh/) is a third-party package manager for macOS. You can install Igir with these simple commands:
 
 ```shell
 brew tap emmercm/igir

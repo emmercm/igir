@@ -2,7 +2,7 @@
 
 "dir2dat" refers to DATs that have been automatically created based on files in an input directory. [DATs](./introduction.md) generated this way are not typically useful as-is, they usually require some hand editing after creation.
 
-Igir has the ability to create these DATs with the `igir dir2dat` command. Example:
+Igir can create these DATs with the `igir dir2dat` command. Example:
 
 ```shell
 igir dir2dat --input <path> [--input <path>..]

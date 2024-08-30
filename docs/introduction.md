@@ -1,4 +1,4 @@
-# Overview
+# Introduction
 
 ## What is a ROM?
 
@@ -8,7 +8,7 @@ From [Wikipedia](https://en.wikipedia.org/wiki/ROM_image):
 
 ROMs are complete copies of game data stored in cartridges or on discs.
 
-A game may consist of multiple ROMs. For example, arcade cabinets that contain multiple chips, or disc-based games that have multiple tracks on the disc.
+A game may consist of multiple ROMs. For example, arcade cabinets, which contain multiple chips, or disc-based games that have multiple tracks on the disc.
 
 ## What is a ROM manager?
 
@@ -19,9 +19,9 @@ ROM managers are applications that serve two main purposes:
 
 all additional features help serve these two purposes.
 
-Most ROM managers can automatically read & write many different ROM types including those in [archives](input/reading-archives.md) and those with [headers](roms/headers.md) so that you don't have to do much pre-work.
+Most ROM managers can automatically read & write many different ROM types, including those in [archives](input/reading-archives.md) and those with [headers](roms/headers.md) so that you don't have to do much pre-work.
 
-Most ROM managers rely on [DATs](dats/introduction.md), files that catalog every known ROM that exists per game system. DATs are published by release groups dedicated to keeping these catalogs accurate and up-to-date. DATs help ROM collectors name their ROMs in a consistent way as well as understand what ROMs may be missing from their collection.
+Most ROM managers rely on [DATs](dats/introduction.md), files that catalog every known ROM that exists per game system. DATs are published by release groups dedicated to keeping these catalogs accurate and up to date. DATs help ROM collectors name their ROMs consistently as well as understand what ROMs may be missing from their collection.
 
 ## What is Igir?
 

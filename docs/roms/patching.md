@@ -2,7 +2,7 @@
 
 Patches contain a set of changes that can be applied to a file, turning that file into something different. Common examples for patching ROMs are: translating text to a different language but keeping game logic the same, and fan-made creations such as new levels for an existing game.
 
-Games and their ROMs are protected under copyrights, so patches are used in order to not share copyrighted code online. A person needs the original ROM file plus a patch file in order to get the resulting patched ROM that will be played with an emulator.
+Games and their ROMs are protected under copyrights, so patches are used to not share copyrighted code online. A person needs the original ROM file plus a patch file to get the resulting patched ROM that will be played with an emulator.
 
 ## Specifying patch files
 
