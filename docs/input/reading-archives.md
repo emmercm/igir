@@ -51,6 +51,6 @@ If for some reason Igir isn't identifying an input file correctly as an archive,
 
 ## Checksum cache
 
-It can be expensive to calculate checksums of files within archives, especially MD5, SHA1, and SHA256. If Igir needs to calculate a checksum that is not easily read from the archive (see above), it will cache the result in a file named `igir.cache`. This cached result will then be used as long as the input file's size and modified timestamp remain the same.
+It can be expensive to calculate checksums of files within archives, especially MD5, SHA1, and SHA256. If Igir needs to calculate a checksum not easily read from the archive (see above), it will cache the result in a file named `igir.cache`. This cached result will then be used as long as the input file's size and modified timestamp remain the same.
 
 The location of this cache file can be controlled with the `--cache-path <path>` option, or caching can be disabled entirely with the `--disable-cache` option. You can safely delete `igir.cache` when Igir isn't running if the file becomes too large for you.

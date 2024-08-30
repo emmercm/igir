@@ -47,7 +47,7 @@ See the [Analogue Pocket](../usage/hardware/analogue-pocket.md) page for a pract
 
 ## Backing up cleaned files
 
-By default, Igir will recycle cleaned files, and if recycle fails then it will delete them. This is potentially destructive, so a `--clean-backup <path>` option is provided to instead move files to a backup directory.
+By default, Igir will recycle cleaned files, and if recycle fails, then it will delete them. This is potentially destructive, so a `--clean-backup <path>` option is provided to instead move files to a backup directory.
 
 The input directory structure is not maintained, no subdirectories will be created in the backup directory. Files of conflicting names will have a number appended to their name, e.g. `File (1).rom`.
 

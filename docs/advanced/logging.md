@@ -40,7 +40,7 @@ There are additional levels of verbosity that can be enabled with the `-v` flag:
   igir [commands..] [options] -vv
   ```
 
-  This level is helpful to turn on if you want debug why an action didn't take place.
+  This level is helpful to turn on if you want to debug why an action didn't take place.
 
 - **`TRACE` (`-vvv`): print information about actions taken, skipped, and additional information that can be helpful to debug issues.**
 

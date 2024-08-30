@@ -14,7 +14,7 @@ Multiple filter options can be specified at once.
 --filter-regex <pattern|filename>, --filter-regex-exclude <pattern|filename>
 ```
 
-Only include, or exclude games based if their DAT name (or filename if not using DATs) matches a regular expression.
+Only include or exclude games based if their DAT name (or filename if not using DATs) matches a regular expression.
 
 Regex flags can be optionally provided in the form `/<pattern>/<flags>`, for example:
 
@@ -50,7 +50,7 @@ Wario Land II (USA, Europe) (SGB Enhanced)
 
 Languages are two-letter codes, and multiple languages can be specified with commas between them. See the `--help` message for the full list of understood languages.
 
-If a game does not have language information specified, it will be inferred from the region.
+If a game doesn’t have language information specified, it will be inferred from the region.
 
 Here are some example game names that Igir can parse languages from, including ones with multiple languages:
 
@@ -129,7 +129,7 @@ Filter out, or only include games that are marked `bios="yes"` in the DAT, or co
 --no-device, --only-device
 ```
 
-Filter out, or only include [MAME devices](https://wiki.mamedev.org/index.php/MAME_Device_Basics). MAME devices typically represent physical devices, such as microcontrollers, video display controllers, sounds boards, and more. Many MAME devices don't have any associated ROM files.
+Filter out or only include [MAME devices](https://wiki.mamedev.org/index.php/MAME_Device_Basics). MAME devices typically represent physical devices, such as microcontrollers, video display controllers, sounds boards, and more. Many MAME devices don't have any associated ROM files.
 
 ### Unlicensed
 
@@ -245,7 +245,7 @@ Perfect Dark (USA) (2000-03-22) (Debug)
 --no-demo, --only-demo
 ```
 
-Filter out, or only include games that contain one of the following in their name:
+Filter out or only include games that contain one of the following in their name:
 
 - `(Demo[a-z0-9. -]*)` (regex)
 - `@barai`
@@ -310,7 +310,7 @@ Sword of Hope, The (Europe) (Proto)
 --no-program, --only-program
 ```
 
-Filter out, or only include games that contain one of the following in their name
+Filter out or only include games that contain one of the following in their name
 
 - `([a-z0-9. ]*Program)` (regex)
 - `Check Program`
@@ -450,7 +450,7 @@ See the [bad dumps](#bad-dumps) section for more information about "good" and "b
 
 Prefer games of certain languages over those in other languages. Multiple languages can be specified, in priority order, with commas between them. See the `--help` message for the full list of understood languages.
 
-If a game does not have language information specified, it will be inferred from the region.
+If a game doesn’t have language information specified, it will be inferred from the region.
 
 For example, to prefer games in English and _then_ Japanese, the command would be:
 

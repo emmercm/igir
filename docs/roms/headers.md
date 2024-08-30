@@ -16,7 +16,7 @@ Igir can detect headers for the following consoles and file extensions:
 | Nintendo - Famicom Disk System | fsNES/FDS     | `.fds`    |
 | Nintendo - SNES                | SMC           | `.smc`    |
 
-Those file extensions above are the commonly accepted "correct" extensions and Igir will attempt to detect if a header is present in those ROM files automatically. If for some reason your files don't have the right extension (e.g. `.rom`) you can force header detection with the `--header` glob option:
+Those file extensions above are the commonly accepted "correct" extensions, and Igir will attempt to detect if a header is present in those ROM files automatically. If for some reason your files don't have the right extension (e.g. `.rom`) you can force header detection with the `--header` glob option:
 
 ```shell
 igir [commands..] --dat <dats> --input <input> --header "*.rom"
@@ -30,7 +30,7 @@ Igir will use this detected header information to compute both "headered" and "h
 
 ## Manual header removal
 
-Some emulators cannot parse ROMs with headers and instead need a "headerless" version. This seems to be most common with SNES. Sometimes "headerless" files will have a different file extension:
+Some emulators cannot parse ROMs with headers and instead need a "headerless" version. This seems most common with SNES. Sometimes "headerless" files will have a different file extension:
 
 | Console                        | Header        | Headered<br/>Extension | Headerless<br/>Extension |
 |--------------------------------|---------------|------------------------|--------------------------|

@@ -4,7 +4,7 @@ Igir has a number of ways it can process [DATs](./introduction.md), and it proce
 
 ## Just tell me what to do
 
-[DATs](./introduction.md) can get fairly complicated, and there are many release groups each with their own focus areas and naming patterns. If all you want to do is organize your ROMs with Igir in some sane way, follow these instructions:
+[DATs](./introduction.md) can get fairly complicated, and there are many release groups, each with their own focus areas and naming patterns. If all you want to do is organize your ROMs with Igir in some consistent way, follow these instructions:
 
 1. Go to the No-Intro DAT-o-MATIC [daily download page](https://datomatic.no-intro.org/index.php?page=download&s=64&op=daily)
 2. Select the "P/C XML" radio option (as opposed to "standard DAT") and download the `.zip` to wherever you store your ROMs

@@ -10,7 +10,7 @@
 
     [Dumping.Guide](https://dumping.guide/start) and [Emulation General Wiki](https://emulation.gametechwiki.com/index.php/Ripping_games) are some of the best resources for legally creating ROM files from games you own.
 
-Here is a condensed version that isn't guaranteed to be up-to-date.
+Here is a condensed version that isn't guaranteed to be up to date.
 
 ## Generation 1-5 cartridge-based consoles
 
