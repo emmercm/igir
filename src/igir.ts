@@ -529,7 +529,11 @@ export default class Igir {
     const deletedFilePaths = await new MovedROMDeleter(progressBar)
       .delete(rawRomFiles, movedRomsToDelete, datsToWrittenFiles);
     progressBar.doneItems(deletedFilePaths.length, 'moved file', 'deleted');
-    progressBar.freeze();
+    if (deletedFilePaths.length > 0) {
+      progressBar.freeze();
+    } else {
+      progressBar.delete();
+    }
   }
 
   private async processOutputCleaner(
