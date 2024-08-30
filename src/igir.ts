@@ -253,7 +253,9 @@ export default class Igir {
       path.join(path.resolve(Package.DIRECTORY), defaultFileName),
       path.join(os.homedir(), defaultFileName),
       path.join(process.cwd(), defaultFileName),
-    ].filter((filePath) => filePath && !filePath.startsWith(os.tmpdir()));
+    ]
+      .filter((filePath) => filePath && !filePath.startsWith(os.tmpdir()))
+      .reduce(ArrayPoly.reduceUnique(), []);
 
     // Next, try to use an already existing path
     const exists = await Promise.all(
