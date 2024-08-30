@@ -5,12 +5,17 @@ import { parse } from '@fast-csv/parse';
 
 import ProgressBar, { ProgressBarSymbol } from '../console/progressBar.js';
 import DriveSemaphore from '../driveSemaphore.js';
-import ArrayPoly from '../polyfill/arrayPoly.js';
 import bufferPoly from '../polyfill/bufferPoly.js';
 import fsPoly from '../polyfill/fsPoly.js';
-import CMProParser, { DATProps, GameProps, ROMProps } from '../types/dats/cmpro/cmProParser.js';
+import CMProParser, {
+  DATProps,
+  DiskProps,
+  GameProps,
+  ROMProps,
+} from '../types/dats/cmpro/cmProParser.js';
 import DAT from '../types/dats/dat.js';
 import DATObject, { DATObjectProps } from '../types/dats/datObject.js';
+import Disk from '../types/dats/disk.js';
 import Game from '../types/dats/game.js';
 import Header from '../types/dats/logiqx/header.js';
 import LogiqxDAT from '../types/dats/logiqx/logiqxDat.js';
@@ -19,8 +24,10 @@ import ROM from '../types/dats/rom.js';
 import SoftwareListDAT from '../types/dats/softwarelist/softwareListDat.js';
 import SoftwareListsDAT from '../types/dats/softwarelist/softwareListsDat.js';
 import ExpectedError from '../types/expectedError.js';
+import ArchiveEntry from '../types/files/archives/archiveEntry.js';
 import File from '../types/files/file.js';
 import { ChecksumBitmask } from '../types/files/fileChecksums.js';
+import FileFactory from '../types/files/fileFactory.js';
 import Options from '../types/options.js';
 import Scanner from './scanner.js';
 
@@ -38,8 +45,8 @@ type SmdbRow = {
  * representation.
  */
 export default class DATScanner extends Scanner {
-  constructor(options: Options, progressBar: ProgressBar) {
-    super(options, progressBar, DATScanner.name);
+  constructor(options: Options, progressBar: ProgressBar, fileFactory: FileFactory) {
+    super(options, progressBar, fileFactory, DATScanner.name);
   }
 
   /**
@@ -47,17 +54,17 @@ export default class DATScanner extends Scanner {
    */
   async scan(): Promise<DAT[]> {
     this.progressBar.logTrace('scanning DAT files');
-    await this.progressBar.setSymbol(ProgressBarSymbol.SEARCHING);
-    await this.progressBar.reset(0);
+    this.progressBar.setSymbol(ProgressBarSymbol.FILE_SCANNING);
+    this.progressBar.reset(0);
 
-    const datFilePaths = await this.options.scanDatFilesWithoutExclusions(async (increment) => {
-      await this.progressBar.incrementTotal(increment);
+    const datFilePaths = await this.options.scanDatFilesWithoutExclusions((increment) => {
+      this.progressBar.incrementTotal(increment);
     });
     if (datFilePaths.length === 0) {
       return [];
     }
     this.progressBar.logTrace(`found ${datFilePaths.length.toLocaleString()} DAT file${datFilePaths.length !== 1 ? 's' : ''}`);
-    await this.progressBar.reset(datFilePaths.length);
+    this.progressBar.reset(datFilePaths.length);
 
     this.progressBar.logTrace('enumerating DAT archives');
     const datFiles = await this.getUniqueFilesFromPaths(
@@ -65,9 +72,10 @@ export default class DATScanner extends Scanner {
       this.options.getReaderThreads(),
       ChecksumBitmask.NONE,
     );
-    await this.progressBar.reset(datFiles.length);
+    this.progressBar.reset(datFiles.length);
 
     const downloadedDats = await this.downloadDats(datFiles);
+    this.progressBar.reset(downloadedDats.length);
     const parsedDats = await this.parseDatFiles(downloadedDats);
 
     this.progressBar.logTrace('done scanning DAT files');
@@ -80,7 +88,7 @@ export default class DATScanner extends Scanner {
     }
 
     this.progressBar.logTrace('downloading DATs from URLs');
-    await this.progressBar.setSymbol(ProgressBarSymbol.DOWNLOADING);
+    this.progressBar.setSymbol(ProgressBarSymbol.DAT_DOWNLOADING);
 
     return (await Promise.all(datFiles.map(async (datFile) => {
       if (!datFile.isURL()) {
@@ -89,6 +97,7 @@ export default class DATScanner extends Scanner {
 
       try {
         this.progressBar.logTrace(`${datFile.toString()}: downloading`);
+        // TODO(cemmer): these never get deleted?
         const downloadedDatFile = await datFile.downloadToTempPath('dat');
         this.progressBar.logTrace(`${datFile.toString()}: downloaded to '${downloadedDatFile.toString()}'`);
         return await this.getFilesFromPaths(
@@ -105,12 +114,12 @@ export default class DATScanner extends Scanner {
   // Parse each file into a DAT
   private async parseDatFiles(datFiles: File[]): Promise<DAT[]> {
     this.progressBar.logTrace(`parsing ${datFiles.length.toLocaleString()} DAT file${datFiles.length !== 1 ? 's' : ''}`);
-    await this.progressBar.setSymbol(ProgressBarSymbol.PARSING_CONTENTS);
+    this.progressBar.setSymbol(ProgressBarSymbol.DAT_PARSING);
 
     return (await new DriveSemaphore(this.options.getReaderThreads()).map(
       datFiles,
       async (datFile) => {
-        await this.progressBar.incrementProgress();
+        this.progressBar.incrementProgress();
         const waitingMessage = `${datFile.toString()} ...`;
         this.progressBar.addWaitingMessage(waitingMessage);
 
@@ -121,7 +130,7 @@ export default class DATScanner extends Scanner {
           this.progressBar.logWarn(`${datFile.toString()}: failed to parse DAT file: ${error}`);
         }
 
-        await this.progressBar.incrementDone();
+        this.progressBar.incrementDone();
         this.progressBar.removeWaitingMessage(waitingMessage);
 
         if (dat && this.shouldFilterOut(dat)) {
@@ -130,7 +139,7 @@ export default class DATScanner extends Scanner {
         return dat;
       },
     ))
-      .filter(ArrayPoly.filterNotNullish)
+      .filter((dat) => dat !== undefined)
       .map((dat) => this.sanitizeDat(dat))
       .sort((a, b) => a.getNameShort().localeCompare(b.getNameShort()));
   }
@@ -138,7 +147,10 @@ export default class DATScanner extends Scanner {
   private async parseDatFile(datFile: File): Promise<DAT | undefined> {
     let dat: DAT | undefined;
 
-    if (!dat && await fsPoly.isExecutable(datFile.getFilePath())) {
+    if (!dat
+      && !(datFile instanceof ArchiveEntry)
+      && await fsPoly.isExecutable(datFile.getFilePath())
+    ) {
       dat = await this.parseMameListxml(datFile);
     }
 
@@ -196,7 +208,7 @@ export default class DATScanner extends Scanner {
           output += chunk.toString();
         });
 
-        proc.on('exit', (code) => {
+        proc.on('close', (code) => {
           if (code !== null && code > 0) {
             reject(new Error(`exit code ${code}`));
             return;
@@ -333,6 +345,8 @@ export default class DATScanner extends Scanner {
     }
 
     const games = cmproDatGames.flatMap((game) => {
+      const gameName = game.name ?? game.comment;
+
       let gameRoms: ROMProps[] = [];
       if (game.rom) {
         if (Array.isArray(game.rom)) {
@@ -341,16 +355,29 @@ export default class DATScanner extends Scanner {
           gameRoms = [game.rom];
         }
       }
-      const gameName = game.name ?? game.comment;
+      const roms = gameRoms.map((entry) => new ROM({
+        name: entry.name ?? '',
+        size: Number.parseInt(entry.size ?? '0', 10),
+        crc32: entry.crc,
+        md5: entry.md5,
+        sha1: entry.sha1,
+      }));
 
-      const roms = gameRoms
-        .map((entry) => new ROM({
-          name: entry.name ?? '',
-          size: Number.parseInt(entry.size ?? '0', 10),
-          crc32: entry.crc,
-          md5: entry.md5,
-          sha1: entry.sha1,
-        }));
+      let gameDisks: DiskProps[] = [];
+      if (game.disk) {
+        if (Array.isArray(game.disk)) {
+          gameDisks = game.disk;
+        } else {
+          gameDisks = [game.disk];
+        }
+      }
+      const disks = gameDisks.map((entry) => new Disk({
+        name: entry.name ?? '',
+        size: Number.parseInt(entry.size ?? '0', 10),
+        crc32: entry.crc,
+        md5: entry.md5,
+        sha1: entry.sha1,
+      }));
 
       return new Game({
         name: gameName,
@@ -365,6 +392,7 @@ export default class DATScanner extends Scanner {
         genre: game.genre?.toString(),
         release: undefined,
         rom: roms,
+        disk: disks,
       });
     });
 
@@ -480,7 +508,7 @@ export default class DATScanner extends Scanner {
     const games = dat.getGames()
       .map((game) => {
         const roms = game.getRoms()
-          // ROMs have to have and at least one non-empty checksum
+          // Games have to have at least one ROM with a non-empty checksum
           .filter((rom) => this.options.shouldDir2Dat() || (
             (rom.getCrc32() === undefined || rom.getCrc32() !== '00000000')
             && (rom.getMd5() === undefined || rom.getMd5() !== 'd41d8cd98f00b204e9800998ecf8427e')

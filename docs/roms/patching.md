@@ -2,7 +2,7 @@
 
 Patches contain a set of changes that can be applied to a file, turning that file into something different. Common examples for patching ROMs are: translating text to a different language but keeping game logic the same, and fan-made creations such as new levels for an existing game.
 
-Games and their ROMs are protected under copyrights, so patches are used in order to not share copyrighted code online. A person needs the original ROM file plus a patch file in order to get the resulting patched ROM that will be played with an emulator.
+Games and their ROMs are protected under copyrights, so patches are used to not share copyrighted code online. A person needs the original ROM file plus a patch file to get the resulting patched ROM that will be played with an emulator.
 
 ## Specifying patch files
 
@@ -12,7 +12,7 @@ Patch files can be specified with the `--patch <path>` option. See the [file sca
 
 There are many, _many_ patch types that ROM hackers use to distribute their changes on the internet ([xkcd "Standards"](https://xkcd.com/927/)). Typically, a patch will only be distributed in one format, so gamers are entirely at the mercy of the ROM hacker's choice.
 
-Not all patch types are created equal. Here are some tables of some existing formats, whether `igir` supports them, and what the patch supports.
+Not all patch types are created equal. Here are some tables of some existing formats, whether Igir supports them, and what the patch supports.
 
 **Common patch types:**
 
@@ -46,7 +46,7 @@ If you have a choice in patch format, choose one that contains CRC32 checksums i
 
 ## ROM checksums
 
-`igir` needs to be able to know what source ROM each patch file applies to, and it does this using CRC32 checksums.
+Igir needs to be able to know what source ROM each patch file applies to, and it does this using CRC32 checksums.
 
 A few patch formats include the source ROM's CRC32 checksum in the patch's file contents. This is the most accurate and therefore the best way to get source ROM information. `.bps` is a great example of an efficient and simple patch format that includes this information.
 

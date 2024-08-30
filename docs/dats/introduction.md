@@ -8,7 +8,7 @@ From the [RetroPie docs](https://retropie.org.uk/docs/Validating%2C-Rebuilding%2
 
 DATs are catalog files of every known ROM that exists per game system, complete with enough information to identify each file.
 
-These DAT files ("DATs") help `igir` distinguish known ROM files in input directories from other files. Because DATs typically contain the complete catalog for a console, `igir` also uses them to generate reports for you on what ROMs were found and which are missing.
+These DAT files ("DATs") help Igir distinguish known ROM files in input directories from other files. Because DATs typically contain the complete catalog for a console, Igir also uses them to generate reports for you on what ROMs were found and which are missing.
 
 The location to your DAT files are specified with the [`--dat <path>` option](./processing.md#scanning-for-dats):
 
@@ -22,7 +22,7 @@ you can even specify archives that can contain multiple DATs (such as No-Intro's
 igir [commands..] --dat "No-Intro*.zip" --input <input>
 ```
 
-See the [DAT processing page](./processing.md) for information on how `igir` scans for and processes DATs.
+See the [DAT processing page](./processing.md) for information on how Igir scans for and processes DATs.
 
 ## DAT release groups
 
@@ -46,9 +46,9 @@ And some less popular release groups are:
 
 ## Parent/clone (P/C) DATs
 
-DATs that include "parent" and "clone" information help `igir` understand what game releases are actually the same game (are "clones" of each other). Frequently a game will be released in many regions or with different revisions, usually with only language translations and minor bug fixes. For example, No-Intro has 6+ "clones" of Pokémon Blue cataloged.
+DATs that include "parent" and "clone" information help Igir understand what game releases are actually the same game (are "clones" of each other). Frequently, a game will be released in many regions or with different revisions, usually with only language translations and minor bug fixes. For example, No-Intro has 6+ "clones" of Pokémon Blue cataloged.
 
-Being able to know that many releases are actually the same game gives `igir` the ability to produce "one game, one ROM" (1G1R) sets with the [`--single` option](../roms/filtering-preferences.md#preferences-for-1g1r). 1G1R sets include only one of these "clone" releases, usually filtered to a language and region, because many people don't care about ROMs they can't understand.
+Being able to know that many releases are actually the same game gives Igir the ability to produce "one game, one ROM" (1G1R) sets with the [`--single` option](../roms/filtering-preferences.md#preferences-for-1g1r). 1G1R sets include only one of these "clone" releases, usually filtered to a language and region, because many people don't care about ROMs they can't understand.
 
 !!! note
 
@@ -73,4 +73,4 @@ See the [arcade usage page](../usage/arcade.md) for more information on building
 
 ## Next steps
 
-See the [DAT processing page](./processing.md) for information on how `igir` scans for and processes DATs.
+See the [DAT processing page](./processing.md) for information on how Igir scans for and processes DATs.

@@ -408,6 +408,19 @@ export default class File implements FileProps {
       https.get(this.getFilePath(), {
         timeout: 30_000,
       }, (res) => {
+        if (res.statusCode !== undefined
+          && res.statusCode >= 300 && res.statusCode < 400
+          && res.headers.location
+        ) {
+          // Handle redirects
+          File.fileOf({ filePath: res.headers.location })
+            .then(async (file) => file.downloadToPath(filePath))
+            .then(resolve)
+            .catch(reject);
+          res.destroy();
+          return;
+        }
+
         const writeStream = fs.createWriteStream(filePath);
         res.pipe(writeStream);
         writeStream.on('finish', async () => {

@@ -38,8 +38,8 @@ export default class FixdatCreator extends Module {
     }
 
     this.progressBar.logTrace(`${originalDat.getNameShort()}: generating a fixdat`);
-    await this.progressBar.setSymbol(ProgressBarSymbol.WRITING);
-    await this.progressBar.reset(1);
+    this.progressBar.setSymbol(ProgressBarSymbol.WRITING);
+    this.progressBar.reset(1);
 
     // Create an easily searchable index of every ROM that has a ReleaseCandidate
     const writtenRomHashCodes = new Set([...parentsToCandidates.values()]
@@ -60,7 +60,7 @@ export default class FixdatCreator extends Module {
       try {
         fixdatDir = this.getDatOutputDirRoot(originalDat);
       } catch (error) {
-        this.progressBar.logWarn(`failed to: ${error}`);
+        this.progressBar.logWarn(`${originalDat.getNameShort()}: failed to get output directory: ${error}`);
       }
     }
     if (!await fsPoly.exists(fixdatDir)) {

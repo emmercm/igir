@@ -8,6 +8,8 @@ import ROMIndexer from '../../src/modules/romIndexer.js';
 import ROMScanner from '../../src/modules/romScanner.js';
 import Parent from '../../src/types/dats/parent.js';
 import File from '../../src/types/files/file.js';
+import FileCache from '../../src/types/files/fileCache.js';
+import FileFactory from '../../src/types/files/fileFactory.js';
 import Options from '../../src/types/options.js';
 import ReleaseCandidate from '../../src/types/releaseCandidate.js';
 import ProgressBarFake from '../console/progressBarFake.js';
@@ -17,10 +19,10 @@ async function runCombinedCandidateGenerator(
   romFiles: File[],
 ): Promise<Map<Parent, ReleaseCandidate[]>> {
   // Run DATGameInferrer, but condense all DATs down to one
-  const dats = new DATGameInferrer(options, new ProgressBarFake()).infer(romFiles);
+  const dats = await new DATGameInferrer(options, new ProgressBarFake()).infer(romFiles);
   const dat = new DATCombiner(new ProgressBarFake()).combine(dats);
 
-  const indexedRomFiles = await new ROMIndexer(options, new ProgressBarFake()).index(romFiles);
+  const indexedRomFiles = new ROMIndexer(options, new ProgressBarFake()).index(romFiles);
   const parentsToCandidates = await new CandidateGenerator(options, new ProgressBarFake())
     .generate(dat, indexedRomFiles);
 
@@ -33,7 +35,7 @@ it('should do nothing if option not specified', async () => {
   const options = new Options();
   const romFiles = await new ROMScanner(new Options({
     input: [path.join('test', 'fixtures', 'roms', 'raw')],
-  }), new ProgressBarFake()).scan();
+  }), new ProgressBarFake(), new FileFactory(new FileCache())).scan();
 
   // When
   const parentsToCandidates = await runCombinedCandidateGenerator(options, romFiles);
@@ -59,7 +61,7 @@ it('should combine candidates', async () => {
   const options = new Options({ zipDatName: true });
   const romFiles = await new ROMScanner(new Options({
     input: [path.join('test', 'fixtures', 'roms', 'raw')],
-  }), new ProgressBarFake()).scan();
+  }), new ProgressBarFake(), new FileFactory(new FileCache())).scan();
 
   // When
   const parentsToCandidates = await runCombinedCandidateGenerator(options, romFiles);

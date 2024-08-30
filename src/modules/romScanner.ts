@@ -1,6 +1,7 @@
 import ProgressBar, { ProgressBarSymbol } from '../console/progressBar.js';
 import File from '../types/files/file.js';
 import { ChecksumBitmask } from '../types/files/fileChecksums.js';
+import FileFactory from '../types/files/fileFactory.js';
 import Options from '../types/options.js';
 import Scanner from './scanner.js';
 
@@ -9,8 +10,8 @@ import Scanner from './scanner.js';
  * representation.
  */
 export default class ROMScanner extends Scanner {
-  constructor(options: Options, progressBar: ProgressBar) {
-    super(options, progressBar, ROMScanner.name);
+  constructor(options: Options, progressBar: ProgressBar, fileFactory: FileFactory) {
+    super(options, progressBar, fileFactory, ROMScanner.name);
   }
 
   /**
@@ -21,14 +22,15 @@ export default class ROMScanner extends Scanner {
     checksumArchives = false,
   ): Promise<File[]> {
     this.progressBar.logTrace('scanning ROM files');
-    await this.progressBar.setSymbol(ProgressBarSymbol.SEARCHING);
-    await this.progressBar.reset(0);
+    this.progressBar.setSymbol(ProgressBarSymbol.FILE_SCANNING);
+    this.progressBar.reset(0);
 
-    const romFilePaths = await this.options.scanInputFilesWithoutExclusions(async (increment) => {
-      await this.progressBar.incrementTotal(increment);
+    const romFilePaths = await this.options.scanInputFilesWithoutExclusions((increment) => {
+      this.progressBar.incrementTotal(increment);
     });
     this.progressBar.logTrace(`found ${romFilePaths.length.toLocaleString()} ROM file${romFilePaths.length !== 1 ? 's' : ''}`);
-    await this.progressBar.reset(romFilePaths.length);
+    this.progressBar.setSymbol(ProgressBarSymbol.ROM_HASHING);
+    this.progressBar.reset(romFilePaths.length);
 
     const files = await this.getFilesFromPaths(
       romFilePaths,

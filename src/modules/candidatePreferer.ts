@@ -2,7 +2,7 @@ import ProgressBar, { ProgressBarSymbol } from '../console/progressBar.js';
 import fsPoly from '../polyfill/fsPoly.js';
 import DAT from '../types/dats/dat.js';
 import Parent from '../types/dats/parent.js';
-import Options from '../types/options.js';
+import Options, { PreferRevision } from '../types/options.js';
 import ReleaseCandidate from '../types/releaseCandidate.js';
 import Module from './module.js';
 
@@ -21,10 +21,10 @@ export default class CandidatePreferer extends Module {
   /**
    * Prefer some candidates.
    */
-  async prefer(
+  prefer(
     dat: DAT,
     parentsToCandidates: Map<Parent, ReleaseCandidate[]>,
-  ): Promise<Map<Parent, ReleaseCandidate[]>> {
+  ): Map<Parent, ReleaseCandidate[]> {
     this.progressBar.logTrace(`${dat.getNameShort()}: preferring candidates`);
 
     if (parentsToCandidates.size === 0) {
@@ -45,10 +45,10 @@ export default class CandidatePreferer extends Module {
       return parentsToCandidates;
     }
 
-    await this.progressBar.setSymbol(ProgressBarSymbol.FILTERING);
-    await this.progressBar.reset(parentsToCandidates.size);
+    this.progressBar.setSymbol(ProgressBarSymbol.CANDIDATE_FILTERING);
+    this.progressBar.reset(parentsToCandidates.size);
 
-    const output = await this.sortAndFilter(dat, parentsToCandidates);
+    const output = this.sortAndFilter(dat, parentsToCandidates);
 
     const size = [...output.values()]
       .flat()
@@ -61,15 +61,15 @@ export default class CandidatePreferer extends Module {
     return output;
   }
 
-  private async sortAndFilter(
+  private sortAndFilter(
     dat: DAT,
     parentsToCandidates: Map<Parent, ReleaseCandidate[]>,
-  ): Promise<Map<Parent, ReleaseCandidate[]>> {
+  ): Map<Parent, ReleaseCandidate[]> {
     const output = new Map<Parent, ReleaseCandidate[]>();
 
     for (let i = 0; i < [...parentsToCandidates.entries()].length; i += 1) {
       const [parent, releaseCandidates] = [...parentsToCandidates.entries()][i];
-      await this.progressBar.incrementProgress();
+      this.progressBar.incrementProgress();
       if (releaseCandidates.length > 1) {
         // Reduce log spam by only logging parents that can be changed
         this.progressBar.logTrace(`${dat.getNameShort()}: ${parent.getName()} (parent): ${releaseCandidates.length.toLocaleString()} candidate${releaseCandidates.length !== 1 ? 's' : ''} before filtering`);
@@ -86,7 +86,7 @@ export default class CandidatePreferer extends Module {
         output.set(parent, []);
       }
 
-      await this.progressBar.incrementDone();
+      this.progressBar.incrementDone();
     }
 
     return output;
@@ -109,8 +109,6 @@ export default class CandidatePreferer extends Module {
         || this.preferRegionsSort(a, b)
         || this.preferRevisionSort(a, b)
         || this.preferRetailSort(a, b)
-        || this.preferNTSCSort(a, b)
-        || this.preferPALSort(a, b)
         || this.preferParentSort(a, b);
   }
 
@@ -190,9 +188,9 @@ export default class CandidatePreferer extends Module {
   }
 
   private preferRevisionSort(a: ReleaseCandidate, b: ReleaseCandidate): number {
-    if (this.options.getPreferRevisionNewer()) {
+    if (this.options.getPreferRevision() === PreferRevision.NEWER) {
       return b.getGame().getRevision() - a.getGame().getRevision();
-    } if (this.options.getPreferRevisionOlder()) {
+    } if (this.options.getPreferRevision() === PreferRevision.OLDER) {
       return a.getGame().getRevision() - b.getGame().getRevision();
     }
     return 0;
@@ -203,20 +201,6 @@ export default class CandidatePreferer extends Module {
       return 0;
     }
     return (a.getGame().isRetail() ? 0 : 1) - (b.getGame().isRetail() ? 0 : 1);
-  }
-
-  private preferNTSCSort(a: ReleaseCandidate, b: ReleaseCandidate): number {
-    if (!this.options.getPreferNTSC()) {
-      return 0;
-    }
-    return (a.getGame().isNTSC() ? 0 : 1) - (b.getGame().isNTSC() ? 0 : 1);
-  }
-
-  private preferPALSort(a: ReleaseCandidate, b: ReleaseCandidate): number {
-    if (!this.options.getPreferPAL()) {
-      return 0;
-    }
-    return (a.getGame().isPAL() ? 0 : 1) - (b.getGame().isPAL() ? 0 : 1);
   }
 
   private preferParentSort(a: ReleaseCandidate, b: ReleaseCandidate): number {

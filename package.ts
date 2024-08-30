@@ -86,6 +86,12 @@ const fileFilter = (filters: FileFilter[]): string[] => {
     // Only include the exact 7zip-bin we need
     { exclude: 'node_modules/{**/,}7zip-bin/**/7z*' },
     { include: path7za },
+    // Only include the exact chdman bin we need
+    { exclude: 'node_modules/{**/,}chdman/bin/*/*/chdman*' },
+    { include: `node_modules/{**/,}chdman/bin/${process.platform}/${process.arch}/chdman*` },
+    // Only include the exact maxcso bin we need
+    { exclude: 'node_modules/{**/,}maxcso/bin/*/*/maxcso*' },
+    { include: `node_modules/{**/,}maxcso/bin/${process.platform}/${process.arch}/maxcso*` },
   ]));
   const includeSize = (await Promise.all([...include].map(async (file) => {
     if (await FsPoly.isDirectory(file)) {
@@ -131,7 +137,7 @@ const fileFilter = (filters: FileFilter[]): string[] => {
   proc.stdout.on('data', (chunk) => { procOutput += chunk.toString(); });
   proc.stderr.on('data', (chunk) => { procOutput += chunk.toString(); });
   await new Promise((resolve, reject) => {
-    proc.on('exit', resolve);
+    proc.on('close', resolve);
     proc.on('error', reject);
   });
   logger.trace(procOutput);

@@ -1,16 +1,11 @@
-import { Semaphore } from 'async-mutex';
-
 import ProgressBar, { ProgressBarSymbol } from '../console/progressBar.js';
-import ElasticSemaphore from '../elasticSemaphore.js';
-import Defaults from '../globals/defaults.js';
-import FsPoly from '../polyfill/fsPoly.js';
+import DriveSemaphore from '../driveSemaphore.js';
 import DAT from '../types/dats/dat.js';
 import Parent from '../types/dats/parent.js';
 import ArchiveFile from '../types/files/archives/archiveFile.js';
 import FileFactory from '../types/files/fileFactory.js';
 import Options from '../types/options.js';
 import ReleaseCandidate from '../types/releaseCandidate.js';
-import ROMWithFiles from '../types/romWithFiles.js';
 import Module from './module.js';
 
 /**
@@ -19,23 +14,22 @@ import Module from './module.js';
  * {@link CandidatePreferer}.
  */
 export default class CandidateArchiveFileHasher extends Module {
-  private static readonly THREAD_SEMAPHORE = new Semaphore(Number.MAX_SAFE_INTEGER);
-
-  // WARN(cemmer): there is an undocumented semaphore max value that can be used, the full
-  //  4,700,372,992 bytes of a DVD+R will cause runExclusive() to never run or return.
-  private static readonly FILESIZE_SEMAPHORE = new ElasticSemaphore(
-    Defaults.MAX_READ_WRITE_CONCURRENT_KILOBYTES,
+  private static readonly DRIVE_SEMAPHORE = new DriveSemaphore(
+    Number.MAX_SAFE_INTEGER,
   );
 
   private readonly options: Options;
 
-  constructor(options: Options, progressBar: ProgressBar) {
+  private readonly fileFactory: FileFactory;
+
+  constructor(options: Options, progressBar: ProgressBar, fileFactory: FileFactory) {
     super(progressBar, CandidateArchiveFileHasher.name);
     this.options = options;
+    this.fileFactory = fileFactory;
 
     // This will be the same value globally, but we can't know the value at file import time
-    if (options.getReaderThreads() < CandidateArchiveFileHasher.THREAD_SEMAPHORE.getValue()) {
-      CandidateArchiveFileHasher.THREAD_SEMAPHORE.setValue(options.getReaderThreads());
+    if (options.getReaderThreads() < CandidateArchiveFileHasher.DRIVE_SEMAPHORE.getValue()) {
+      CandidateArchiveFileHasher.DRIVE_SEMAPHORE.setValue(options.getReaderThreads());
     }
   }
 
@@ -67,8 +61,8 @@ export default class CandidateArchiveFileHasher extends Module {
     }
 
     this.progressBar.logTrace(`${dat.getNameShort()}: generating ${archiveFileCount.toLocaleString()} hashed ArchiveFile candidate${archiveFileCount !== 1 ? 's' : ''}`);
-    await this.progressBar.setSymbol(ProgressBarSymbol.HASHING);
-    await this.progressBar.reset(archiveFileCount);
+    this.progressBar.setSymbol(ProgressBarSymbol.CANDIDATE_HASHING);
+    this.progressBar.reset(archiveFileCount);
 
     const hashedParentsToCandidates = this.hashArchiveFiles(dat, parentsToCandidates);
 
@@ -91,45 +85,46 @@ export default class CandidateArchiveFileHasher extends Module {
                   return romWithFiles;
                 }
 
-                return CandidateArchiveFileHasher.THREAD_SEMAPHORE.runExclusive(async () => {
-                  const totalKilobytes = await FsPoly.size(inputFile.getFilePath()) / 1024;
-                  return CandidateArchiveFileHasher.FILESIZE_SEMAPHORE.runExclusive(async () => {
-                    await this.progressBar.incrementProgress();
+                const outputFile = romWithFiles.getOutputFile();
+                if (inputFile.equals(outputFile)) {
+                  // There's no need to calculate the checksum, {@link CandidateWriter} will skip
+                  // writing over itself
+                  return romWithFiles;
+                }
+
+                return CandidateArchiveFileHasher.DRIVE_SEMAPHORE.runExclusive(
+                  inputFile,
+                  async () => {
+                    this.progressBar.incrementProgress();
                     const waitingMessage = `${inputFile.toString()} ...`;
                     this.progressBar.addWaitingMessage(waitingMessage);
                     this.progressBar.logTrace(`${dat.getNameShort()}: ${parent.getName()}: calculating checksums for: ${inputFile.toString()}`);
 
-                    const hashedInputFile = await FileFactory.archiveFileFrom(
+                    const hashedInputFile = await this.fileFactory.archiveFileFrom(
                       inputFile.getArchive(),
                       inputFile.getChecksumBitmask(),
                     );
                     // {@link CandidateGenerator} would have copied undefined values from the input
                     //  file, so we need to modify the expected output file as well for testing
-                    const hashedOutputFile = romWithFiles.getOutputFile().withProps({
+                    const hashedOutputFile = outputFile.withProps({
                       size: hashedInputFile.getSize(),
                       crc32: hashedInputFile.getCrc32(),
                       md5: hashedInputFile.getMd5(),
                       sha1: hashedInputFile.getSha1(),
                       sha256: hashedInputFile.getSha256(),
                     });
-                    const hashedRomWithFiles = new ROMWithFiles(
-                      romWithFiles.getRom(),
-                      hashedInputFile,
-                      hashedOutputFile,
-                    );
+                    const hashedRomWithFiles = romWithFiles
+                      .withInputFile(hashedInputFile)
+                      .withOutputFile(hashedOutputFile);
 
                     this.progressBar.removeWaitingMessage(waitingMessage);
-                    await this.progressBar.incrementDone();
+                    this.progressBar.incrementDone();
                     return hashedRomWithFiles;
-                  }, totalKilobytes);
-                });
+                  },
+                );
               }));
 
-            return new ReleaseCandidate(
-              releaseCandidate.getGame(),
-              releaseCandidate.getRelease(),
-              hashedRomsWithFiles,
-            );
+            return releaseCandidate.withRomsWithFiles(hashedRomsWithFiles);
           }));
 
         return [parent, hashedReleaseCandidates];

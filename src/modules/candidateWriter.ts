@@ -5,6 +5,7 @@ import { Semaphore } from 'async-mutex';
 import ProgressBar, { ProgressBarSymbol } from '../console/progressBar.js';
 import ElasticSemaphore from '../elasticSemaphore.js';
 import Defaults from '../globals/defaults.js';
+import KeyedMutex from '../keyedMutex.js';
 import ArrayPoly from '../polyfill/arrayPoly.js';
 import fsPoly from '../polyfill/fsPoly.js';
 import DAT from '../types/dats/dat.js';
@@ -26,6 +27,7 @@ export interface CandidateWriterResults {
  * Copy or move output ROM files, if applicable.
  */
 export default class CandidateWriter extends Module {
+  // The maximum number of candidates that can be written at once
   private static readonly THREAD_SEMAPHORE = new Semaphore(Number.MAX_SAFE_INTEGER);
 
   // WARN(cemmer): there is an undocumented semaphore max value that can be used, the full
@@ -33,6 +35,12 @@ export default class CandidateWriter extends Module {
   private static readonly FILESIZE_SEMAPHORE = new ElasticSemaphore(
     Defaults.MAX_READ_WRITE_CONCURRENT_KILOBYTES,
   );
+
+  // When moving input files, process input file paths exclusively
+  private static readonly MOVE_MUTEX = new KeyedMutex(1000);
+
+  // When moving input files, keep track of files that have been moved
+  private static readonly FILE_PATH_MOVES = new Map<string, string>();
 
   private readonly options: Options;
 
@@ -88,15 +96,19 @@ export default class CandidateWriter extends Module {
 
     const totalCandidateCount = [...parentsToWritableCandidates.values()].flat().length;
     this.progressBar.logTrace(`${dat.getNameShort()}: writing ${totalCandidateCount.toLocaleString()} candidate${totalCandidateCount !== 1 ? 's' : ''}`);
-    await this.progressBar.setSymbol(ProgressBarSymbol.WRITING);
-    await this.progressBar.reset(parentsToWritableCandidates.size);
+    if (this.options.shouldTest() && !this.options.getOverwrite()) {
+      this.progressBar.setSymbol(ProgressBarSymbol.TESTING);
+    } else {
+      this.progressBar.setSymbol(ProgressBarSymbol.WRITING);
+    }
+    this.progressBar.reset(parentsToWritableCandidates.size);
 
     await Promise.all([...parentsToWritableCandidates.entries()].map(
       async ([
         parent,
         releaseCandidates,
       ]) => CandidateWriter.THREAD_SEMAPHORE.runExclusive(async () => {
-        await this.progressBar.incrementProgress();
+        this.progressBar.incrementProgress();
         this.progressBar.logTrace(`${dat.getNameShort()}: ${parent.getName()} (parent): writing ${releaseCandidates.length.toLocaleString()} candidate${releaseCandidates.length !== 1 ? 's' : ''}`);
 
         for (const releaseCandidate of releaseCandidates) {
@@ -104,7 +116,7 @@ export default class CandidateWriter extends Module {
         }
 
         this.progressBar.logTrace(`${dat.getNameShort()}: ${parent.getName()} (parent): done writing ${releaseCandidates.length.toLocaleString()} candidate${releaseCandidates.length !== 1 ? 's' : ''}`);
-        await this.progressBar.incrementDone();
+        this.progressBar.incrementDone();
       }),
     ));
 
@@ -201,6 +213,7 @@ export default class CandidateWriter extends Module {
       }
     }
 
+    this.progressBar.setSymbol(ProgressBarSymbol.WRITING);
     let written = false;
     for (let i = 0; i <= this.options.getWriteRetry(); i += 1) {
       written = await this.writeZipFile(
@@ -286,11 +299,6 @@ export default class CandidateWriter extends Module {
       }
 
       // Check checksum
-      if (expectedFile.getCrc32() === '00000000') {
-        this.progressBar.logWarn(`${dat.getNameShort()}: ${releaseCandidate.getName()}: ${expectedFile.toString()}: can't test, expected CRC is unknown`);
-        // eslint-disable-next-line no-continue
-        continue;
-      }
       const actualFile = actualEntriesByPath.get(entryPath) as ArchiveEntry<Zip>;
       if (actualFile.getSha256()
         && expectedFile.getSha256()
@@ -312,6 +320,7 @@ export default class CandidateWriter extends Module {
       }
       if (actualFile.getCrc32()
         && expectedFile.getCrc32()
+        && expectedFile.getCrc32() !== '00000000'
         && actualFile.getCrc32() !== expectedFile.getCrc32()
       ) {
         return `has the CRC32 ${actualFile.getCrc32()}, expected ${expectedFile.getCrc32()}`;
@@ -340,7 +349,7 @@ export default class CandidateWriter extends Module {
     outputZip: Zip,
     inputToOutputZipEntries: [File, ArchiveEntry<Zip>][],
   ): Promise<boolean> {
-    this.progressBar.logInfo(`${dat.getNameShort()}: ${releaseCandidate.getName()}: creating zip archive '${outputZip.getFilePath()}' with the entries:\n${inputToOutputZipEntries.map(([input, output]) => `  '${input.toString()}' (${fsPoly.sizeReadable(input.getSize())}) -> '${output.getEntryPath()}'`).join('\n')}`);
+    this.progressBar.logInfo(`${dat.getNameShort()}: ${releaseCandidate.getName()}: creating zip archive '${outputZip.getFilePath()}' with the entries:\n${inputToOutputZipEntries.map(([input, output]) => `  '${input.toString()}' (${fsPoly.sizeReadable(input.getSize())}) → '${output.getEntryPath()}'`).join('\n')}`);
 
     try {
       await CandidateWriter.ensureOutputDirExists(outputZip.getFilePath());
@@ -388,10 +397,12 @@ export default class CandidateWriter extends Module {
     // the same input archive at the same time, to benefit from batch extraction.
     const uniqueInputToOutputEntriesMap = uniqueInputToOutputEntries
       .reduce((map, [inputRomFile, outputRomFile]) => {
-        map.set(inputRomFile.getFilePath(), [
-          ...(map.get(inputRomFile.getFilePath()) ?? []),
-          [inputRomFile, outputRomFile],
-        ]);
+        const key = inputRomFile.getFilePath();
+        if (!map.has(key)) {
+          map.set(key, [[inputRomFile, outputRomFile]]);
+        } else {
+          map.get(key)?.push([inputRomFile, outputRomFile]);
+        }
         return map;
       }, new Map<string, [File, File][]>());
     for (const groupedInputToOutput of uniqueInputToOutputEntriesMap.values()) {
@@ -412,10 +423,18 @@ export default class CandidateWriter extends Module {
     inputRomFile: File,
     outputRomFile: File,
   ): Promise<void> {
-    // Input and output are the exact same, do nothing
+    // Input and output are the exact same, maybe do nothing
     if (outputRomFile.equals(inputRomFile)) {
-      this.progressBar.logDebug(`${dat.getNameShort()}: ${releaseCandidate.getName()}: ${outputRomFile}: input and output file is the same, skipping`);
-      return;
+      const wasMoved = this.options.shouldMove()
+        && await CandidateWriter.MOVE_MUTEX.runExclusiveForKey(
+          inputRomFile.getFilePath(),
+          () => CandidateWriter.FILE_PATH_MOVES.get(inputRomFile.getFilePath()),
+        ) !== undefined;
+
+      if (!wasMoved) {
+        this.progressBar.logDebug(`${dat.getNameShort()}: ${releaseCandidate.getName()}: ${outputRomFile}: input and output file is the same, skipping`);
+        return;
+      }
     }
 
     const outputFilePath = outputRomFile.getFilePath();
@@ -441,9 +460,14 @@ export default class CandidateWriter extends Module {
       }
     }
 
+    this.progressBar.setSymbol(ProgressBarSymbol.WRITING);
     let written = false;
     for (let i = 0; i <= this.options.getWriteRetry(); i += 1) {
-      written = await this.writeRawFile(dat, releaseCandidate, inputRomFile, outputFilePath);
+      if (this.options.shouldMove()) {
+        written = await this.moveRawFile(dat, releaseCandidate, inputRomFile, outputFilePath);
+      } else {
+        written = await this.copyRawFile(dat, releaseCandidate, inputRomFile, outputFilePath);
+      }
 
       if (written && !this.options.shouldTest()) {
         // Successfully written, unknown if valid
@@ -476,22 +500,65 @@ export default class CandidateWriter extends Module {
     this.enqueueFileDeletion(inputRomFile);
   }
 
-  private async writeRawFile(
+  private async moveRawFile(
     dat: DAT,
     releaseCandidate: ReleaseCandidate,
     inputRomFile: File,
     outputFilePath: string,
   ): Promise<boolean> {
-    this.progressBar.logInfo(`${dat.getNameShort()}: ${releaseCandidate.getName()}: copying file '${inputRomFile.toString()}' (${fsPoly.sizeReadable(inputRomFile.getSize())}) -> '${outputFilePath}'`);
+    // Lock the input file, we can't handle concurrent moves
+    return CandidateWriter.MOVE_MUTEX.runExclusiveForKey(inputRomFile.getFilePath(), async () => {
+      const movedFilePath = CandidateWriter.FILE_PATH_MOVES.get(inputRomFile.getFilePath());
+      if (movedFilePath) {
+        // The file was already moved, we shouldn't move it again
+        return this.copyRawFile(
+          dat,
+          releaseCandidate,
+          inputRomFile.withFilePath(movedFilePath),
+          outputFilePath,
+        );
+      }
+
+      if (inputRomFile instanceof ArchiveEntry
+        || inputRomFile.getFileHeader() !== undefined
+        || inputRomFile.getPatch() !== undefined
+      ) {
+        // The file can't be moved as-is, it needs to get copied
+        return this.copyRawFile(dat, releaseCandidate, inputRomFile, outputFilePath);
+      }
+
+      this.progressBar.logInfo(`${dat.getNameShort()}: ${releaseCandidate.getName()}: moving file '${inputRomFile.toString()}' (${fsPoly.sizeReadable(inputRomFile.getSize())}) → '${outputFilePath}'`);
+
+      try {
+        await CandidateWriter.ensureOutputDirExists(outputFilePath);
+
+        await fsPoly.mv(inputRomFile.getFilePath(), outputFilePath);
+        CandidateWriter.FILE_PATH_MOVES.set(inputRomFile.getFilePath(), outputFilePath);
+        return true;
+      } catch (error) {
+        this.progressBar.logError(`${dat.getNameShort()}: ${releaseCandidate.getName()}: failed to move file '${inputRomFile.toString()}' → '${outputFilePath}': ${error}`);
+        return false;
+      }
+    });
+  }
+
+  private async copyRawFile(
+    dat: DAT,
+    releaseCandidate: ReleaseCandidate,
+    inputRomFile: File,
+    outputFilePath: string,
+  ): Promise<boolean> {
+    this.progressBar.logInfo(`${dat.getNameShort()}: ${releaseCandidate.getName()}: ${inputRomFile instanceof ArchiveEntry ? 'extracting' : 'copying'} file '${inputRomFile.toString()}' (${fsPoly.sizeReadable(inputRomFile.getSize())}) → '${outputFilePath}'`);
 
     try {
       await CandidateWriter.ensureOutputDirExists(outputFilePath);
+
       const tempRawFile = await fsPoly.mktemp(outputFilePath);
       await inputRomFile.extractAndPatchToFile(tempRawFile);
       await fsPoly.mv(tempRawFile, outputFilePath);
       return true;
     } catch (error) {
-      this.progressBar.logError(`${dat.getNameShort()}: ${releaseCandidate.getName()}: ${outputFilePath}: failed to copy from ${inputRomFile.toString()}: ${error}`);
+      this.progressBar.logError(`${dat.getNameShort()}: ${releaseCandidate.getName()}: failed to ${inputRomFile instanceof ArchiveEntry ? 'extract' : 'copy'} file '${inputRomFile.toString()}' → '${outputFilePath}': ${error}`);
       return false;
     }
   }
@@ -505,14 +572,15 @@ export default class CandidateWriter extends Module {
     this.progressBar.logTrace(`${dat.getNameShort()}: ${releaseCandidate.getName()}: ${outputFilePath}: testing raw file`);
 
     // Check checksum
-    if (expectedFile.getCrc32() === '00000000') {
-      this.progressBar.logWarn(`${dat.getNameShort()}: ${releaseCandidate.getName()}: ${outputFilePath}: can't test, expected CRC is unknown`);
-      return undefined;
+    let actualFile: File;
+    try {
+      actualFile = await File.fileOf(
+        { filePath: outputFilePath },
+        expectedFile.getChecksumBitmask(),
+      );
+    } catch (error) {
+      return `failed to parse: ${error}`;
     }
-    const actualFile = await File.fileOf(
-      { filePath: outputFilePath },
-      expectedFile.getChecksumBitmask(),
-    );
     if (actualFile.getSha256()
       && expectedFile.getSha256()
       && actualFile.getSha256() !== expectedFile.getSha256()
@@ -533,6 +601,7 @@ export default class CandidateWriter extends Module {
     }
     if (actualFile.getCrc32()
       && expectedFile.getCrc32()
+      && expectedFile.getCrc32() !== '00000000'
       && actualFile.getCrc32() !== expectedFile.getCrc32()
     ) {
       return `has the CRC32 ${actualFile.getCrc32()}, expected ${expectedFile.getCrc32()}`;
@@ -626,6 +695,7 @@ export default class CandidateWriter extends Module {
       await fsPoly.rm(linkPath, { force: true });
     }
 
+    this.progressBar.setSymbol(ProgressBarSymbol.WRITING);
     for (let i = 0; i <= this.options.getWriteRetry(); i += 1) {
       const written = await this.writeRawLink(dat, releaseCandidate, targetPath, linkPath);
 
@@ -667,10 +737,10 @@ export default class CandidateWriter extends Module {
     try {
       await CandidateWriter.ensureOutputDirExists(linkPath);
       if (this.options.getSymlink()) {
-        this.progressBar.logInfo(`${dat.getNameShort()}: ${releaseCandidate.getName()}: creating symlink '${targetPath}' -> '${linkPath}'`);
+        this.progressBar.logInfo(`${dat.getNameShort()}: ${releaseCandidate.getName()}: creating symlink '${targetPath}' → '${linkPath}'`);
         await fsPoly.symlink(targetPath, linkPath);
       } else {
-        this.progressBar.logInfo(`${dat.getNameShort()}: ${releaseCandidate.getName()}: creating hard link '${targetPath}' -> '${linkPath}'`);
+        this.progressBar.logInfo(`${dat.getNameShort()}: ${releaseCandidate.getName()}: creating hard link '${targetPath}' → '${linkPath}'`);
         await fsPoly.hardlink(targetPath, linkPath);
       }
       return true;

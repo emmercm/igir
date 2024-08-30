@@ -13,6 +13,11 @@ export default class FileSignature {
   // @see https://file-extension.net/seeker/
   // @see https://gbatemp.net/threads/help-with-rom-iso-console-identification.611378/
   private static readonly SIGNATURES: { [key: string]: FileSignature } = {
+    // ********** GENERAL **********
+
+    // @see https://en.wikipedia.org/wiki/List_of_file_signatures
+    elf: new FileSignature('.elf', [{ value: Buffer.from('\x7FELF') }]),
+
     // ********** ARCHIVES **********
 
     // @see https://en.wikipedia.org/wiki/List_of_file_signatures
@@ -76,8 +81,12 @@ export default class FileSignature {
 
     // ********** ROMs - GENERAL **********
 
+    chd: new FileSignature('.chd', [{ value: Buffer.from('MComprHD') }]),
+
     // @see https://docs.fileformat.com/disc-and-media/cso/
     cso: new FileSignature('.cso', [{ value: Buffer.from('CISO') }]),
+
+    dax: new FileSignature('.dax', [{ value: Buffer.from('DAX') }]),
 
     // @see https://en.wikipedia.org/wiki/List_of_file_signatures
     isz: new FileSignature('.isz', [{ value: Buffer.from('IsZ!') }]),
@@ -111,6 +120,15 @@ export default class FileSignature {
 
     // Nintendo - Game & Watch
     gw: new FileSignature('.bin', [{ value: Buffer.from('main.bs') }]),
+
+    // Nintendo - GameCube
+    // @see https://github.com/dolphin-emu/dolphin/blob/1f5e100a0e6dd4f9ab3784fd6373d452054d08bf/Source/Core/DiscIO/CompressedBlob.h#L25 (reversed)
+    gcz: new FileSignature('.gcz', [{ value: Buffer.from('01C00BB1', 'hex') }]),
+    // @see https://wiki.gbatemp.net/wiki/NKit/NKitFormat
+    nkit_iso: new FileSignature('.nkit.iso', [{ offset: 0x2_00, value: Buffer.from('NKIT') }]),
+    // @see https://github.com/dolphin-emu/dolphin/blob/master/docs/WiaAndRvz.md
+    rvz: new FileSignature('.rvz', [{ value: Buffer.from('RVZ\x01') }]), // "RVZ\x01"
+    wia: new FileSignature('.wia', [{ value: Buffer.from('WIA\x01') }]), // "WIA\x01"
 
     // Nintendo - Game Boy
     // @see https://gbdev.io/pandocs/The_Cartridge_Header.html
@@ -154,6 +172,14 @@ export default class FileSignature {
     smc_gd3_1: new FileSignature('.smc', [{ value: Buffer.from('\x00\x01ME DOCTOR SF 3') }]), // Game Doctor SF3?
     smc_gd3_2: new FileSignature('.smc', [{ value: Buffer.from('GAME DOCTOR SF 3') }]), // Game Doctor SF3/SF6/SF7
 
+    // Nintendo - Wii
+    // @see https://wit.wiimm.de/info/wdf.html
+    wdf: new FileSignature('.wdf', [{ value: Buffer.from('WII\x01DISC') }]),
+
+    // Nintendo - Wii U
+    // @see https://github.com/cemu-project/Cemu/blob/7522c8470ee27d50a68ba662ae721b69018f3a8f/src/Cafe/Filesystem/WUD/wud.h#L25
+    wux: new FileSignature('.wux', [{ value: Buffer.from('WUX0\x2E\xD0\x99\x10') }]),
+
     // Sega - 32X
     // @see https://github.com/jcfieldsdev/genesis-rom-utility/blob/31826bca66c8c6c467c37c1b711943eb5464e7e8/genesis_rom.chm
     // @see https://plutiedev.com/rom-header
@@ -191,6 +217,7 @@ export default class FileSignature {
     pico: new FileSignature('.md', [{ offset: 0x1_00, value: Buffer.from('SEGA PICO') }]),
 
     // Sony - PlayStation Portable
+    // @see https://www.psdevwiki.com/ps3/Eboot.PBP
     pbp: new FileSignature('.pbp', [{ value: Buffer.from('\x00PBP\x00\x00\x01\x00') }]),
   };
 

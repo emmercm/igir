@@ -13,6 +13,7 @@ import ROM from '../types/dats/rom.js';
 import Archive from '../types/files/archives/archive.js';
 import ArchiveEntry from '../types/files/archives/archiveEntry.js';
 import ArchiveFile from '../types/files/archives/archiveFile.js';
+import Chd from '../types/files/archives/chd/chd.js';
 import Zip from '../types/files/archives/zip.js';
 import File from '../types/files/file.js';
 import IndexedFiles from '../types/indexedFiles.js';
@@ -57,14 +58,14 @@ export default class CandidateGenerator extends Module {
     const parents = dat.getParents();
 
     this.progressBar.logTrace(`${dat.getNameShort()}: generating candidates`);
-    await this.progressBar.setSymbol(ProgressBarSymbol.GENERATING);
-    await this.progressBar.reset(parents.length);
+    this.progressBar.setSymbol(ProgressBarSymbol.CANDIDATE_GENERATING);
+    this.progressBar.reset(parents.length);
 
     // For each parent, try to generate a parent candidate
     await Promise.all(parents.map(async (
       parent,
     ) => CandidateGenerator.THREAD_SEMAPHORE.runExclusive(async () => {
-      await this.progressBar.incrementProgress();
+      this.progressBar.incrementProgress();
       const waitingMessage = `${parent.getName()} ...`;
       this.progressBar.addWaitingMessage(waitingMessage);
 
@@ -97,7 +98,7 @@ export default class CandidateGenerator extends Module {
       output.set(parent, releaseCandidates);
 
       this.progressBar.removeWaitingMessage(waitingMessage);
-      await this.progressBar.incrementDone();
+      this.progressBar.incrementDone();
     })));
 
     const size = [...output.values()]
@@ -119,13 +120,19 @@ export default class CandidateGenerator extends Module {
   ): Promise<ReleaseCandidate | undefined> {
     const romsToInputFiles = this.getInputFilesForGame(dat, game, indexedFiles);
 
+    const gameRoms = [
+      ...game.getRoms(),
+      ...(this.options.getExcludeDisks() ? [] : game.getDisks()),
+    ];
+
     // For each Game's ROM, find the matching File
     const romFiles = await Promise.all(
-      game.getRoms().map(async (rom) => {
-        if (!romsToInputFiles.has(rom)) {
+      gameRoms.map(async (rom) => {
+        let inputFile = romsToInputFiles.get(rom);
+        if (inputFile === undefined) {
           return [rom, undefined];
         }
-        let inputFile = romsToInputFiles.get(rom) as File;
+
         /**
          * WARN(cemmer): {@link inputFile} may not be an exact match for {@link rom}. There are two
          * situations we can be in:
@@ -147,10 +154,7 @@ export default class CandidateGenerator extends Module {
             || (inputFile.getSha1() !== undefined && inputFile.getSha1() === rom.getSha1())
             || (inputFile.getSha256() !== undefined && inputFile.getSha256() === rom.getSha256()))
           // ...and we shouldn't remove the header
-          && !this.options.canRemoveHeader(
-            dat,
-            path.extname(inputFile.getExtractedFilePath()),
-          )
+          && !this.options.canRemoveHeader(path.extname(inputFile.getExtractedFilePath()))
         ) {
           // ...then forget the input file's header, so that we don't later remove it
           this.progressBar.logTrace(`${dat.getNameShort()}: ${game.getName()}: not removing header, ignoring that one was found for: ${inputFile.toString()}`);
@@ -173,20 +177,21 @@ export default class CandidateGenerator extends Module {
         }
 
         /**
-         * If the matched input file is from an archive, and we're not zipping or extracting, then
-         * treat the file as "raw" so it can be copied/moved as-is.
-         * Matches {@link ROMHeaderProcessor.getFileWithHeader}
+         * If the matched input file is from an archive, and we can raw-copy that entire archive,
+         * then treat the file as "raw" so it can be copied/moved as-is.
          */
         if (inputFile instanceof ArchiveEntry
-          && !this.options.shouldZipFile(rom.getName())
-          && !this.options.shouldExtract()
+          && this.shouldGenerateArchiveFile(dat, game, release, rom, romsToInputFiles)
         ) {
           try {
-            // Note: we're delaying checksum calculation for now, {@link CandidateArchiveFileHasher}
-            //  will handle it later
+            // Note: we're delaying checksum calculations for now,
+            // {@link CandidateArchiveFileHasher} will handle it later
             inputFile = new ArchiveFile(
               inputFile.getArchive(),
-              { checksumBitmask: inputFile.getChecksumBitmask() },
+              {
+                size: await fsPoly.size(inputFile.getFilePath()),
+                checksumBitmask: inputFile.getChecksumBitmask(),
+              },
             );
           } catch (error) {
             this.progressBar.logWarn(`${dat.getNameShort()}: ${game.getName()}: ${error}`);
@@ -210,16 +215,17 @@ export default class CandidateGenerator extends Module {
 
     const foundRomsWithFiles = romFiles
       .map(([, romWithFiles]) => romWithFiles)
-      .filter(ArrayPoly.filterNotNullish);
+      .filter((romWithFiles) => romWithFiles !== undefined);
     if (romFiles.length > 0 && foundRomsWithFiles.length === 0) {
       // The Game has ROMs, but none were found
       return undefined;
     }
 
-    // Ignore the Game if not every File is present
     const missingRoms = romFiles
       .filter(([, romWithFiles]) => !romWithFiles)
       .map(([rom]) => rom);
+
+    // Ignore the Game if not every File is present
     if (missingRoms.length > 0 && !this.options.getAllowIncompleteSets()) {
       if (foundRomsWithFiles.length > 0) {
         this.logMissingRomFiles(dat, game, release, foundRomsWithFiles, missingRoms);
@@ -232,6 +238,15 @@ export default class CandidateGenerator extends Module {
       return undefined;
     }
 
+    // If the found files have excess and we aren't allowing it, then return no candidate
+    if (!this.options.shouldZip()
+      && !this.options.shouldExtract()
+      && !this.options.getAllowExcessSets()
+      && this.hasExcessFiles(dat, game, foundRomsWithFiles, indexedFiles)
+    ) {
+      return undefined;
+    }
+
     return new ReleaseCandidate(game, release, foundRomsWithFiles);
   }
 
@@ -240,7 +255,12 @@ export default class CandidateGenerator extends Module {
     game: Game,
     indexedFiles: IndexedFiles,
   ): Map<ROM, File> {
-    const romsAndInputFiles = game.getRoms().map((rom) => ([
+    const gameRoms = [
+      ...game.getRoms(),
+      ...(this.options.getExcludeDisks() ? [] : game.getDisks()),
+    ];
+
+    const romsAndInputFiles = gameRoms.map((rom) => ([
       rom,
       indexedFiles.findFiles(rom) ?? [],
     ])) satisfies [ROM, File[]][];
@@ -259,30 +279,69 @@ export default class CandidateGenerator extends Module {
     // Group this Game's ROMs by the input Archives that contain them
     const inputArchivesToRoms = romsAndInputFiles.reduce((map, [rom, files]) => {
       files
-        .filter((file) => file instanceof ArchiveEntry)
-        .map((file): Archive => (file as ArchiveEntry<never>).getArchive())
+        .filter((file): file is ArchiveEntry<Archive> => file instanceof ArchiveEntry)
+        .map((archive): Archive => archive.getArchive())
         .forEach((archive) => {
-          const roms = map.get(archive) ?? [];
-          roms.push(rom);
           // We need to filter out duplicate ROMs because of Games that contain duplicate ROMs, e.g.
           //  optical media games that have the same track multiple times.
-          const uniqueRoms = roms.reduce(ArrayPoly.reduceUnique(), []);
-          map.set(archive, uniqueRoms);
+          if (!map.has(archive)) {
+            map.set(archive, new Set());
+          }
+          map.get(archive)?.add(rom);
         });
       return map;
-    }, new Map<Archive, ROM[]>());
+    }, new Map<Archive, Set<ROM>>());
 
     // Filter to the Archives that contain every ROM in this Game
     const archivesWithEveryRom = [...inputArchivesToRoms.entries()]
-      .filter(([, roms]) => roms.length === game.getRoms().length)
+      .filter(([inputArchive, roms]) => {
+        if ([...roms].map((rom) => rom.hashCode()).join(',') === gameRoms.map((rom) => rom.hashCode()).join(',')) {
+          return true;
+        }
+        // If there is a CHD with every .bin file, and we're raw-copying it, then assume its .cue
+        // file is accurate
+        return inputArchive instanceof Chd
+          && !gameRoms.some((rom) => this.options.shouldZipRom(rom))
+          && !gameRoms.some((rom) => this.options.shouldExtractRom(rom))
+          && CandidateGenerator.onlyCueFilesMissingFromChd(game, [...roms]);
+      })
       .map(([archive]) => archive);
-    const archiveWithEveryRom = archivesWithEveryRom.at(0);
+
+    const filesByPath = indexedFiles.getFilesByFilePath();
+    const filteredArchivesWithEveryRom = archivesWithEveryRom
+      .sort((a, b) => {
+        // First, prefer the archive with the least number of entries
+        const aEntries = filesByPath.get(a.getFilePath())?.length ?? 0;
+        const bEntries = filesByPath.get(b.getFilePath())?.length ?? 0;
+        if (aEntries !== bEntries) {
+          return aEntries - bEntries;
+        }
+
+        // Then, prefer archives whose filename contains the game name
+        const aGameName = path.basename(a.getFilePath()).includes(game.getName()) ? 1 : 0;
+        const bGameName = path.basename(b.getFilePath()).includes(game.getName()) ? 1 : 0;
+        return aGameName - bGameName;
+      })
+      // Filter out Archives with excess entries
+      .filter((archive) => {
+        const unusedEntryPaths = this.findArchiveUnusedEntryPaths(
+          archive,
+          romsAndInputFiles.flatMap(([, inputFiles]) => inputFiles),
+          indexedFiles,
+        );
+        if (unusedEntryPaths.length > 0) {
+          this.progressBar.logTrace(`${dat.getNameShort()}: ${game.getName()}: not preferring archive that contains every ROM, plus the excess entries:\n${unusedEntryPaths.map((entryPath) => `  ${entryPath}`).join('\n')}`);
+        }
+        return unusedEntryPaths.length === 0;
+      });
+
+    const archiveWithEveryRom = filteredArchivesWithEveryRom.at(0);
 
     // Do nothing if any of...
     if (
       // The Game has zero or one ROM, therefore, we don't really care where the file comes from,
       //  and we should respect any previous sorting of the input files
-      game.getRoms().length <= 1
+      gameRoms.length <= 1
       // No input archive contains every ROM from this Game
       || archiveWithEveryRom === undefined
       // We're extracting files, therefore, we don't really care where the file comes from, and we
@@ -298,11 +357,73 @@ export default class CandidateGenerator extends Module {
     // For each of this Game's ROMs, find the matching ArchiveEntry from this Archive
     return new Map(romsAndInputFiles.map(([rom, inputFiles]) => {
       this.progressBar.logTrace(`${dat.getNameShort()}: ${game.getName()}: preferring input archive that contains every ROM: ${archiveWithEveryRom.getFilePath()}`);
-      const archiveEntry = inputFiles.find((
-        inputFile,
-      ) => inputFile.getFilePath() === archiveWithEveryRom.getFilePath()) as File;
-      return [rom, archiveEntry];
+      let archiveEntry = inputFiles
+        .find((inputFile) => inputFile.getFilePath() === archiveWithEveryRom.getFilePath());
+
+      if (!archiveEntry
+        && rom.getName().toLowerCase().endsWith('.cue')
+        && archiveWithEveryRom instanceof Chd
+      ) {
+        // We assumed this CHD was fine above, find its .cue file
+        archiveEntry = filesByPath.get(archiveWithEveryRom.getFilePath())
+          ?.find((file) => file.getExtractedFilePath().toLowerCase().endsWith('.cue'));
+      }
+
+      return [rom, archiveEntry as File];
     }));
+  }
+
+  private shouldGenerateArchiveFile(
+    dat: DAT,
+    game: Game,
+    release: Release | undefined,
+    rom: ROM,
+    romsToInputFiles: Map<ROM, File>,
+  ): boolean {
+    if ([...romsToInputFiles.values()].some((inputFile) => inputFile.getFileHeader() !== undefined
+      || inputFile.getPatch() !== undefined)
+    ) {
+      // At least one output file won't exactly match its input file, don't generate an archive
+      // file
+      return false;
+    }
+
+    if (romsToInputFiles.get(rom) instanceof ArchiveEntry
+      && !this.options.shouldZipRom(rom)
+      && !this.options.shouldExtractRom(rom)
+    ) {
+      // This ROM's input file is already archived, and we're not [re-]zipping or extracting, so
+      // we want to leave it as-is. We'll check later if the input archive has excess files.
+      return true;
+    }
+
+    // TODO(cemmer): delay this until after CandidatePatchGenerator
+    if (this.options.getPatchFileCount() === 0
+      && !this.options.getZipDatName()
+      && [...romsToInputFiles.entries()]
+        .every(([inputRom, inputFile]) => inputFile instanceof ArchiveEntry
+          && inputFile.getArchive() instanceof Zip
+          && this.options.shouldZipRom(inputRom)
+          && OutputFactory.getPath(
+            this.options,
+            dat,
+            game,
+            release,
+            inputRom,
+            inputFile,
+          ).entryPath === inputFile.getExtractedFilePath())
+    && [...romsToInputFiles.values()]
+      .map((inputFile) => inputFile.getFilePath())
+      .reduce(ArrayPoly.reduceUnique(), [])
+      .length === 1
+    ) {
+      // Every ROM should be zipped, and every input file is already in the same zip, and the
+      // archive entry paths match, so it's safe to copy the zip as-is
+      return true;
+    }
+
+    // Return false by default
+    return false;
   }
 
   private async getOutputFile(
@@ -344,7 +465,7 @@ export default class CandidateGenerator extends Module {
     }
 
     // Determine the output file type
-    if (this.options.shouldZipFile(rom.getName())) {
+    if (this.options.shouldZipRom(rom) && !(inputFile instanceof ArchiveFile)) {
       // Should zip, return an archive entry within an output zip
       return ArchiveEntry.entryOf({
         archive: new Zip(outputFilePath),
@@ -424,5 +545,103 @@ export default class CandidateGenerator extends Module {
       }
     }
     return hasConflict;
+  }
+
+  /**
+   * Given a {@link Game}, return true if all conditions are met:
+   * - The {@link Game} only has .bin and .cue files
+   * - Out of the {@link ROM}s that were found in an input directory for the {@link Game}, every
+   *    .bin was found but at least one .cue file is missing
+   * This is only relevant when we are raw-copying CHD files, where it is difficult to ensure that
+   * the .cue file is accurate.
+   */
+  private static onlyCueFilesMissingFromChd(
+    game: Game,
+    foundRoms: ROM[],
+  ): boolean {
+    // Only games with only bin/cue files can have only a cue file missing
+    const allCueBin = game.getRoms()
+      .flat()
+      .every((rom) => ['.bin', '.cue'].includes(path.extname(rom.getName()).toLowerCase()));
+    if (foundRoms.length === 0 || !allCueBin) {
+      return false;
+    }
+
+    const foundRomNames = new Set(foundRoms.map((rom) => rom.getName()));
+    const missingCueRoms = game.getRoms()
+      .filter((rom) => !foundRomNames.has(rom.getName()))
+      .filter((rom) => path.extname(rom.getName()).toLowerCase() === '.cue');
+    const missingNonCueRoms = game.getRoms()
+      .filter((rom) => !foundRomNames.has(rom.getName()))
+      .filter((rom) => path.extname(rom.getName()).toLowerCase() !== '.cue');
+    return missingCueRoms.length > 0 && missingNonCueRoms.length === 0;
+  }
+
+  private hasExcessFiles(
+    dat: DAT,
+    game: Game,
+    romsWithFiles: ROMWithFiles[],
+    indexedFiles: IndexedFiles,
+  ): boolean {
+    // For this Game, find every input file that is an ArchiveEntry
+    const inputArchiveEntries = romsWithFiles
+      // We need to rehydrate information from IndexedFiles because raw-copying/moving archives
+      // would have lost this information
+      .map((romWithFiles) => {
+        const inputFile = romWithFiles.getInputFile();
+        return indexedFiles.findFiles(romWithFiles.getRom())
+          ?.find((foundFile) => foundFile.getFilePath() === inputFile.getFilePath());
+      })
+      .filter((inputFile) => inputFile instanceof ArchiveEntry || inputFile instanceof ArchiveFile);
+    // ...then translate those ArchiveEntries into a list of unique Archives
+    const inputArchives = inputArchiveEntries
+      .map((archiveEntry) => archiveEntry.getArchive())
+      .filter(ArrayPoly.filterUniqueMapped((archive) => archive.getFilePath()));
+
+    for (const inputArchive of inputArchives) {
+      const unusedEntryPaths = this.findArchiveUnusedEntryPaths(
+        inputArchive,
+        inputArchiveEntries,
+        indexedFiles,
+      );
+      if (unusedEntryPaths.length > 0) {
+        this.progressBar.logTrace(`${dat.getNameShort()}: ${game.getName()}: cannot use '${inputArchive.getFilePath()}' as an input file, it has the excess entries:\n${unusedEntryPaths.map((entryPath) => `  ${entryPath}`).join('\n')}`);
+        return true;
+      }
+    }
+
+    return false;
+  }
+
+  /**
+   * Given an input {@link archive} and a set of {@link inputFiles} that match to a {@link ROM} from
+   * a {@link Game}, determine if every entry from the {@link archive} was matched.
+   */
+  private findArchiveUnusedEntryPaths(
+    archive: Archive,
+    inputFiles: File[],
+    indexedFiles: IndexedFiles,
+  ): ArchiveEntry<Archive>[] {
+    if (this.options.shouldZip()
+      || this.options.shouldExtract()
+      || this.options.getAllowExcessSets()
+    ) {
+      // We don't particularly care where input files come from
+      return [];
+    }
+
+    // Find the Archive's entries (all of them, not just ones that match ROMs in this Game)
+    // NOTE(cemmer): we need to use hashCode() because a Game may have duplicate ROMs that all got
+    //  matched to the same input file, so not every archive entry may be in {@link inputFiles}
+    const archiveEntryHashCodes = new Set(inputFiles
+      .filter((entry) => entry.getFilePath() === archive.getFilePath())
+      .filter((file): file is ArchiveEntry<Archive> => file instanceof ArchiveEntry)
+      .map((entry) => entry.hashCode()));
+
+    // Find which of the Archive's entries didn't match to a ROM from this Game
+    return (indexedFiles.getFilesByFilePath().get(archive.getFilePath()) ?? [])
+      .filter((file): file is ArchiveEntry<Archive> => file instanceof ArchiveEntry)
+      .filter((file) => !(archive instanceof Chd) || !file.getExtractedFilePath().toLowerCase().endsWith('.cue'))
+      .filter((entry) => !archiveEntryHashCodes.has(entry.hashCode()));
   }
 }

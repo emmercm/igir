@@ -144,9 +144,11 @@ export default class DATStatus {
   }
 
   private static append<T>(map: Map<ROMType, T[]>, romType: ROMType, val: T): void {
-    const arr = map.get(romType) ?? [];
-    arr.push(val);
-    map.set(romType, arr);
+    if (!map.has(romType)) {
+      map.set(romType, [val]);
+    } else {
+      map.get(romType)?.push(val);
+    }
   }
 
   getDATName(): string {
@@ -159,7 +161,7 @@ export default class DATStatus {
       ...this.incompleteRomTypesToReleaseCandidates.values(),
     ]
       .flat()
-      .filter(ArrayPoly.filterNotNullish)
+      .filter((releaseCandidate) => releaseCandidate !== undefined)
       .flatMap((releaseCandidate) => releaseCandidate.getRomsWithFiles())
       .map((romWithFiles) => romWithFiles.getInputFile());
   }
@@ -170,8 +172,8 @@ export default class DATStatus {
   anyGamesFound(options: Options): boolean {
     return DATStatus.getAllowedTypes(options)
       .reduce((result, romType) => {
-        const foundReleaseCandidates = (
-          this.foundRomTypesToReleaseCandidates.get(romType) ?? []).length;
+        const foundReleaseCandidates = this.foundRomTypesToReleaseCandidates
+          .get(romType)?.length ?? 0;
         return result || foundReleaseCandidates > 0;
       }, false);
   }
@@ -361,7 +363,7 @@ export default class DATStatus {
   ): T[] {
     return DATStatus.getAllowedTypes(options)
       .flatMap((type) => romTypesToValues.get(type))
-      .filter(ArrayPoly.filterNotNullish)
+      .filter((value) => value !== undefined)
       .reduce(ArrayPoly.reduceUnique(), [])
       .sort();
   }
@@ -377,6 +379,6 @@ export default class DATStatus {
       options.getOnlyRetail() || (!options.getOnlyBios() && !options.getOnlyDevice())
         ? ROMType.RETAIL : undefined,
       ROMType.PATCHED,
-    ].filter(ArrayPoly.filterNotNullish);
+    ].filter((romType) => romType !== undefined);
   }
 }

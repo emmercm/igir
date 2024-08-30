@@ -19,7 +19,7 @@ Because Batocera uses RetroArch under the hood, the instructions are generally t
 
 ## ROMs
 
-Batocera uses its own proprietary [ROM folder structure](https://wiki.batocera.org/systems), so `igir` has a replaceable `{batocera}` token to sort ROMs into the right place. See the [replaceable tokens page](../../output/tokens.md) for more information.
+Batocera uses its own proprietary [ROM folder structure](https://wiki.batocera.org/systems), so Igir has a replaceable `{batocera}` token to sort ROMs into the right place. See the [replaceable tokens page](../../output/tokens.md) for more information.
 
 === ":simple-linux: Batocera (Linux)"
 

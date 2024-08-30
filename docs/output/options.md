@@ -2,7 +2,7 @@
 
 ## Overwriting files
 
-By default, `igir` will _not_ overwrite or delete any files already in the output directory.
+By default, Igir will _not_ overwrite or delete any files already in the output directory.
 
 To change this behavior, the `--overwrite` option will force overwriting files in the output directory as necessary. Be careful with this option as it can cause unnecessary wear and tear on your hard drives.
 
@@ -10,7 +10,7 @@ The `--overwrite-invalid` option can also overwrite files in the output director
 
 ## Fixing ROM extensions
 
-ROM dumpers don't always do a good job of using the generally accepted filename extension when writing files. In situations where DATs aren't provided, or information in DATs is incomplete, `igir` has some ability to find the correct extension that filenames should have. This is done using [file signatures](https://en.wikipedia.org/wiki/List_of_file_signatures), pieces of data that are common to every file of a certain format.
+ROM dumpers don't always do a good job of using the generally accepted filename extension when writing files. In situations where DATs aren't provided, or information in DATs is incomplete, Igir has some ability to find the correct extension that filenames should have. This is done using [file signatures](https://en.wikipedia.org/wiki/List_of_file_signatures), pieces of data that are common to every file of a certain format.
 
 Here are some examples of common mistakes:
 

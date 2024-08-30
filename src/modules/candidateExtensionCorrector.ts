@@ -7,7 +7,9 @@ import DAT from '../types/dats/dat.js';
 import Parent from '../types/dats/parent.js';
 import ROM from '../types/dats/rom.js';
 import ArchiveEntry from '../types/files/archives/archiveEntry.js';
-import FileCache from '../types/files/fileCache.js';
+import Chd from '../types/files/archives/chd/chd.js';
+import FileFactory from '../types/files/fileFactory.js';
+import FileSignature from '../types/files/fileSignature.js';
 import Options, { FixExtension } from '../types/options.js';
 import OutputFactory from '../types/outputFactory.js';
 import ReleaseCandidate from '../types/releaseCandidate.js';
@@ -24,9 +26,12 @@ export default class CandidateExtensionCorrector extends Module {
 
   private readonly options: Options;
 
-  constructor(options: Options, progressBar: ProgressBar) {
+  private readonly fileFactory: FileFactory;
+
+  constructor(options: Options, progressBar: ProgressBar, fileFactory: FileFactory) {
     super(progressBar, CandidateExtensionCorrector.name);
     this.options = options;
+    this.fileFactory = fileFactory;
 
     // This will be the same value globally, but we can't know the value at file import time
     if (options.getReaderThreads() < CandidateExtensionCorrector.THREAD_SEMAPHORE.getValue()) {
@@ -51,9 +56,14 @@ export default class CandidateExtensionCorrector extends Module {
       .flatMap((releaseCandidate) => releaseCandidate.getRomsWithFiles())
       .filter((romWithFiles) => this.romNeedsCorrecting(romWithFiles))
       .length;
+    if (romsThatNeedCorrecting === 0) {
+      this.progressBar.logTrace(`${dat.getNameShort()}: no output files need their extension corrected`);
+      return parentsToCandidates;
+    }
+
     this.progressBar.logTrace(`${dat.getNameShort()}: correcting ${romsThatNeedCorrecting.toLocaleString()} output file extension${romsThatNeedCorrecting !== 1 ? 's' : ''}`);
-    await this.progressBar.setSymbol(ProgressBarSymbol.EXTENSION_CORRECTION);
-    await this.progressBar.reset(romsThatNeedCorrecting);
+    this.progressBar.setSymbol(ProgressBarSymbol.CANDIDATE_EXTENSION_CORRECTION);
+    this.progressBar.reset(romsThatNeedCorrecting);
 
     const correctedParentsToCandidates = await this.correctExtensions(dat, parentsToCandidates);
 
@@ -62,6 +72,16 @@ export default class CandidateExtensionCorrector extends Module {
   }
 
   private romNeedsCorrecting(romWithFiles: ROMWithFiles): boolean {
+    if (romWithFiles.getRom().getName().trim() === '') {
+      return true;
+    }
+
+    const inputFile = romWithFiles.getInputFile();
+    if (inputFile instanceof ArchiveEntry && inputFile.getArchive() instanceof Chd) {
+      // Files within CHDs never need extension correction
+      return false;
+    }
+
     return this.options.getFixExtension() === FixExtension.ALWAYS
       || (this.options.getFixExtension() === FixExtension.AUTO && (
         !this.options.usingDats()
@@ -102,18 +122,12 @@ export default class CandidateExtensionCorrector extends Module {
                     .withEntryPath(correctedOutputPath.entryPath);
                 }
 
-                return new ROMWithFiles(
-                  correctedRom,
-                  romWithFiles.getInputFile(),
-                  correctedOutputFile,
-                );
+                return romWithFiles
+                  .withRom(correctedRom)
+                  .withOutputFile(correctedOutputFile);
               }));
 
-            return new ReleaseCandidate(
-              releaseCandidate.getGame(),
-              releaseCandidate.getRelease(),
-              hashedRomsWithFiles,
-            );
+            return releaseCandidate.withRomsWithFiles(hashedRomsWithFiles);
           }));
 
         return [parent, hashedReleaseCandidates];
@@ -142,13 +156,18 @@ export default class CandidateExtensionCorrector extends Module {
     }
 
     await CandidateExtensionCorrector.THREAD_SEMAPHORE.runExclusive(async () => {
-      await this.progressBar.incrementProgress();
+      this.progressBar.incrementProgress();
       const waitingMessage = `${releaseCandidate.getName()} ...`;
       this.progressBar.addWaitingMessage(waitingMessage);
       this.progressBar.logTrace(`${dat.getNameShort()}: ${parent.getName()}: correcting extension for: ${romWithFiles.getInputFile()
         .toString()}`);
 
-      const romSignature = await FileCache.getOrComputeFileSignature(romWithFiles.getInputFile());
+      let romSignature: FileSignature | undefined;
+      try {
+        romSignature = await this.fileFactory.signatureFrom(romWithFiles.getInputFile());
+      } catch (error) {
+        this.progressBar.logError(`${dat.getNameShort()}: failed to correct file extension for '${romWithFiles.getInputFile()}': ${error}`);
+      }
       if (romSignature) {
         // ROM file signature found, use the appropriate extension
         const { dir, name } = path.parse(correctedRom.getName());
@@ -160,7 +179,7 @@ export default class CandidateExtensionCorrector extends Module {
       }
 
       this.progressBar.removeWaitingMessage(waitingMessage);
-      await this.progressBar.incrementDone();
+      this.progressBar.incrementDone();
     });
 
     return correctedRom;

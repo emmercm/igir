@@ -5,13 +5,15 @@ import {
 import { linearRegression, linearRegressionLine } from 'simple-statistics';
 import stripAnsi from 'strip-ansi';
 
+import ConsolePoly from '../polyfill/consolePoly.js';
+import TimePoly from '../polyfill/timePoly.js';
 import ProgressBarPayload from './progressBarPayload.js';
 
 /**
  * A wrapper class for a cli-progress {@link SingleBar} that formats the output.
  */
 export default class SingleBarFormatted {
-  public static readonly MAX_NAME_LENGTH = 30;
+  public static readonly MAX_NAME_LENGTH = 35;
 
   public static readonly BAR_COMPLETE_CHAR = '\u2588';
 
@@ -27,7 +29,7 @@ export default class SingleBarFormatted {
 
   private valueTimeBuffer: number[][] = [];
 
-  private lastEtaTime: [number, number] = [0, 0];
+  private lastEtaTime: number = 0;
 
   private lastEtaValue = 'infinity';
 
@@ -35,18 +37,26 @@ export default class SingleBarFormatted {
     this.multiBar = multiBar;
     this.singleBar = this.multiBar.create(initialTotal, 0, initialPayload, {
       format: (options, params, payload: ProgressBarPayload): string => {
-        const symbolAndName = SingleBarFormatted.getSymbolAndName(payload);
+        const symbolAndName = `${SingleBarFormatted.getSymbolAndName(payload)} | `;
+
         const progressWrapped = this.getProgress(options, params, payload)
           .split('\n')
           .map((line, idx) => {
-            if (idx === 0) {
-              return line;
+            // Wrapping is broken: https://github.com/npkgz/cli-progress/issues/142
+            let lineTrimmed = line;
+            const maxLineLength = ConsolePoly.consoleWidth() - stripAnsi(symbolAndName).length - 2;
+            if (line.length > maxLineLength) {
+              lineTrimmed = `${line.slice(0, maxLineLength - 3)}...`;
             }
-            return ' '.repeat(stripAnsi(symbolAndName).length + 3) + line;
+
+            if (idx === 0) {
+              return lineTrimmed;
+            }
+            return ' '.repeat(stripAnsi(symbolAndName).length) + lineTrimmed;
           })
           .join('\n\x1b[K');
 
-        this.lastOutput = `${symbolAndName} | ${progressWrapped}`.trim();
+        this.lastOutput = `${symbolAndName}${progressWrapped}`.trim();
         return this.lastOutput
           // cli-progress doesn't handle multi-line progress bars, collapse to one line. The multi-
           // line message will get logged correctly when the progress bar is frozen & logged.
@@ -156,12 +166,11 @@ export default class SingleBarFormatted {
   private getEtaFormatted(etaSeconds: number): string {
     // Rate limit how often the ETA can change
     //  Update only every 5s if the ETA is >60s
-    const [elapsedSec, elapsedNano] = process.hrtime(this.lastEtaTime);
-    const elapsedMs = (elapsedSec * 1_000_000_000 + elapsedNano) / 1_000_000;
+    const elapsedMs = TimePoly.hrtimeMillis(this.lastEtaTime);
     if (etaSeconds > 60 && elapsedMs < 5000) {
       return this.lastEtaValue;
     }
-    this.lastEtaTime = process.hrtime();
+    this.lastEtaTime = TimePoly.hrtimeMillis();
 
     if (etaSeconds < 0) {
       this.lastEtaValue = 'infinity';

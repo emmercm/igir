@@ -22,18 +22,18 @@ export default class CandidatePostProcessor extends Module {
   /**
    * Post-process the candidates.
    */
-  async process(
+  process(
     dat: DAT,
     parentsToCandidates: Map<Parent, ReleaseCandidate[]>,
-  ): Promise<Map<Parent, ReleaseCandidate[]>> {
+  ): Map<Parent, ReleaseCandidate[]> {
     if (parentsToCandidates.size === 0) {
       this.progressBar.logTrace(`${dat.getNameShort()}: no parents, so no candidates to process`);
       return parentsToCandidates;
     }
 
     this.progressBar.logTrace(`${dat.getNameShort()}: processing candidates`);
-    await this.progressBar.setSymbol(ProgressBarSymbol.GENERATING);
-    await this.progressBar.reset(parentsToCandidates.size);
+    this.progressBar.setSymbol(ProgressBarSymbol.CANDIDATE_GENERATING);
+    this.progressBar.reset(parentsToCandidates.size);
 
     // Get the output basename of every ROM
     const outputFileBasenames = [...parentsToCandidates.values()]
@@ -78,11 +78,7 @@ export default class CandidatePostProcessor extends Module {
       outputFileBasenames,
     );
 
-    return new ReleaseCandidate(
-      releaseCandidate.getGame(),
-      releaseCandidate.getRelease(),
-      newRomsWithFiles,
-    );
+    return releaseCandidate.withRomsWithFiles(newRomsWithFiles);
   }
 
   private mapRomsWithFiles(
@@ -106,11 +102,7 @@ export default class CandidatePostProcessor extends Module {
       }
 
       const newOutputFile = romWithFiles.getOutputFile().withFilePath(newOutputPath);
-      return new ROMWithFiles(
-        romWithFiles.getRom(),
-        romWithFiles.getInputFile(),
-        newOutputFile,
-      );
+      return romWithFiles.withOutputFile(newOutputFile);
     });
   }
 }

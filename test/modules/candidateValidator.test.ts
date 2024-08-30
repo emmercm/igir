@@ -32,7 +32,7 @@ it('should do nothing with no candidates', async () => {
   const dat = new LogiqxDAT(new Header(), []);
   const parentsToCandidates = await datToCandidates(dat);
 
-  const invalidCandidates = await new CandidateValidator(new ProgressBarFake())
+  const invalidCandidates = new CandidateValidator(new ProgressBarFake())
     .validate(dat, parentsToCandidates);
 
   expect(invalidCandidates).toHaveLength(0);
@@ -59,7 +59,7 @@ it('should return nothing if all candidates have unique paths', async () => {
   ]);
   const parentsToCandidates = await datToCandidates(dat);
 
-  const invalidCandidates = await new CandidateValidator(new ProgressBarFake())
+  const invalidCandidates = new CandidateValidator(new ProgressBarFake())
     .validate(dat, parentsToCandidates);
 
   expect(invalidCandidates).toHaveLength(0);
@@ -100,7 +100,7 @@ it('should return something if some candidates have conflicting paths', async ()
   ]);
   const parentsToCandidates = await datToCandidates(dat);
 
-  const invalidCandidates = await new CandidateValidator(new ProgressBarFake())
+  const invalidCandidates = new CandidateValidator(new ProgressBarFake())
     .validate(dat, parentsToCandidates);
 
   const invalidCandidateNames = invalidCandidates

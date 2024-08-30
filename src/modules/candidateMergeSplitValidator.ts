@@ -23,18 +23,18 @@ export default class CandidateMergeSplitValidator extends Module {
   /**
    * Validate the {@link ReleaseCandidate}s.
    */
-  async validate(
+  validate(
     dat: DAT,
     parentsToCandidates: Map<Parent, ReleaseCandidate[]>,
-  ): Promise<string[]> {
+  ): string[] {
     if (parentsToCandidates.size === 0) {
       this.progressBar.logTrace(`${dat.getNameShort()}: no parents to validate merged & split ROM sets for`);
       return [];
     }
 
     this.progressBar.logTrace(`${dat.getNameShort()}: validating merged & split ROM sets`);
-    await this.progressBar.setSymbol(ProgressBarSymbol.VALIDATING);
-    await this.progressBar.reset(parentsToCandidates.size);
+    this.progressBar.setSymbol(ProgressBarSymbol.CANDIDATE_VALIDATING);
+    this.progressBar.reset(parentsToCandidates.size);
 
     const datGamesIndexed = dat.getGames().reduce((map, game) => {
       map.set(game.getName(), game);
@@ -72,7 +72,7 @@ export default class CandidateMergeSplitValidator extends Module {
         ) {
           const missingDeviceGames = game.getDeviceRefs()
             .map((deviceRef) => datGamesIndexed.get(deviceRef.getName()))
-            .filter(ArrayPoly.filterNotNullish)
+            .filter((deviceGame) => deviceGame !== undefined)
             // Dependent device has ROM files
             .filter((deviceGame) => deviceGame.getRoms().length)
             .map((deviceGame) => {
@@ -83,7 +83,7 @@ export default class CandidateMergeSplitValidator extends Module {
               }
               return deviceGame.getName();
             })
-            .filter(ArrayPoly.filterNotNullish)
+            .filter((deviceGameName) => deviceGameName !== undefined)
             .sort();
           missingDependencies = [...missingDependencies, ...missingDeviceGames];
         }

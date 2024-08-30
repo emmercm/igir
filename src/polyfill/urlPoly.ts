@@ -4,9 +4,9 @@ export default {
    */
   canParse(input: string, base?: string): boolean {
     try {
-      // eslint-disable-next-line no-new
-      new URL(input, base);
-      return true;
+      const url = new URL(input, base);
+      // Try to detect and ignore Windows drive letters
+      return process.platform !== 'win32' || url.protocol.length > 2;
     } catch {
       return false;
     }

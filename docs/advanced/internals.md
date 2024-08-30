@@ -1,10 +1,10 @@
 # Internal Operations
 
-Information about the inner workings of `igir`.
+Information about the inner workings of Igir.
 
 ## Order of operations
 
-`igir` runs these steps in the following order:
+Igir runs these steps in the following order:
 
 1. Scan each DAT input path for every file and parse them, if provided (`--dat <path>`)
 2. Scan each ROM input path for every file (`--input <path>`)
@@ -24,6 +24,6 @@ Information about the inner workings of `igir`.
      - Written ROMs are tested for accuracy, if specified (`test`)
    - A "dir2dat" DAT is created, if specified (`dir2dat`) (see [dir2dat docs](../dats/dir2dat.md))
    - A "fixdat" is created, if specified (`fixdat`) (see [fixdats docs](../dats/fixdats.md))
-5. "Moved" input ROMs are deleted (`move`)
+5. Leftover "moved" input ROMs are deleted (`move`)
 6. Unknown files are recycled from the output directory, if specified (`clean`, see [cleaning docs](../output/cleaning.md))
 7. An output report is written to the output directory, if specified (`report`, see [reporting docs](../output/reporting.md))
