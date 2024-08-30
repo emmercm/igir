@@ -114,7 +114,7 @@ describe('isBad', () => {
 describe('isBeta', () => {
   test.each([
     ['Garfield Labyrinth (Europe) (Beta)', true],
-    ['Gargoyle\'s Quest (Europe) (Rev 1)', false],
+    ["Gargoyle's Quest (Europe) (Rev 1)", false],
   ])('%s', (name, expected) => {
     expect(new Game({ name }).isBeta()).toEqual(expected);
     expect(new Game({ name }).isRetail()).toEqual(!expected);
@@ -142,7 +142,10 @@ describe('isDemo', () => {
     ['DK - King of Swing (USA) (Demo) (Kiosk)', true],
     ['Aneboku - Onee-chan wa Bijin 3 Shimai (TG Taikenban) (Unknown)', true],
     ['Camping Mama + Papa - Taikenban (Japan) (Demo)', true],
-    ['Ace Attorney Investigations - Miles Edgeworth - Trial Edition (USA) (Rev 1) (Demo) (Nintendo Channel)', true],
+    [
+      'Ace Attorney Investigations - Miles Edgeworth - Trial Edition (USA) (Rev 1) (Demo) (Nintendo Channel)',
+      true,
+    ],
     // Redump
     ['Eternal Arcadia (Japan) (Disc 1) (@barai)', true],
     ['Guitar Hero - Warriors of Rock 3.40 IDU FW Update (USA) (Kiosk Demo)', true],
@@ -275,7 +278,7 @@ describe('isVerified', () => {
 describe('hasBungFix', () => {
   test.each([
     ['Gamera - Daikai Jukuchuu Kessen (J) [S][BF]', true],
-    ['Gargoyle\'s Quest - Ghosts\'n Goblins (UE) [BF]', true],
+    ["Gargoyle's Quest - Ghosts'n Goblins (UE) [BF]", true],
     ['Gauntlet II (U) [!]', false],
   ])('%s', (name, expected) => {
     expect(new Game({ name }).hasBungFix()).toEqual(expected);
@@ -348,10 +351,7 @@ describe('getLanguages', () => {
       }),
       ['EN'],
     ],
-    [
-      new Game({ name: 'Mike Tyson\'s Punch-Out!! (Japan, USA) (En) (Rev 1)' }),
-      ['EN'],
-    ],
+    [new Game({ name: "Mike Tyson's Punch-Out!! (Japan, USA) (En) (Rev 1)" }), ['EN']],
     [
       new Game({
         name: 'Legend of Zelda, The - A Link to the Past (Germany)',

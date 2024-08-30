@@ -7,10 +7,10 @@ import ROM from './dats/rom.js';
 export type ChecksumsToFiles = Map<string, File[]>;
 
 export interface AllChecksums {
-  crc32: ChecksumsToFiles,
-  md5: ChecksumsToFiles,
-  sha1: ChecksumsToFiles,
-  sha256: ChecksumsToFiles,
+  crc32: ChecksumsToFiles;
+  md5: ChecksumsToFiles;
+  sha1: ChecksumsToFiles;
+  sha256: ChecksumsToFiles;
 }
 
 /**
@@ -177,22 +177,22 @@ export default class IndexedFiles {
    * Find file(s) in the index based some search criteria.
    */
   findFiles(file: File | ROM): File[] | undefined {
-    const sha256 = file.sha256?.replace(/[^0-9a-f]/ig, '');
+    const sha256 = file.sha256?.replace(/[^0-9a-f]/gi, '');
     if (sha256 && this.sha256.has(sha256)) {
       return this.sha256.get(sha256);
     }
 
-    const sha1 = file.sha1?.replace(/[^0-9a-f]/ig, '');
+    const sha1 = file.sha1?.replace(/[^0-9a-f]/gi, '');
     if (sha1 && this.sha1.has(sha1)) {
       return this.sha1.get(sha1);
     }
 
-    const md5 = file.md5?.replace(/[^0-9a-f]/ig, '');
+    const md5 = file.md5?.replace(/[^0-9a-f]/gi, '');
     if (md5 && this.md5.has(md5)) {
       return this.md5.get(md5);
     }
 
-    const crc32 = file.crc32?.replace(/[^0-9a-f]/ig, '');
+    const crc32 = file.crc32?.replace(/[^0-9a-f]/gi, '');
     if (crc32) {
       const crc32WithSize = `${crc32}|${file.getSize()}`;
       if (this.crc32.has(crc32WithSize)) {

@@ -15,12 +15,17 @@ export default abstract class Maxcso extends Archive {
       crc32 = await maxcso.uncompressedCrc32(this.getFilePath());
     }
 
-    return [await ArchiveEntry.entryOf({
-      archive: this,
-      entryPath,
-      size: Number(size),
-      crc32,
-    }, checksumBitmask)];
+    return [
+      await ArchiveEntry.entryOf(
+        {
+          archive: this,
+          entryPath,
+          size: Number(size),
+          crc32,
+        },
+        checksumBitmask,
+      ),
+    ];
   }
 
   async extractEntryToFile(entryPath: string, extractedFilePath: string): Promise<void> {

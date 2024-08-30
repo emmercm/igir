@@ -10,9 +10,9 @@ import FsPoly from '../polyfill/fsPoly.js';
 import Timer from '../timer.js';
 
 export interface CacheProps {
-  filePath?: string,
-  fileFlushMillis?: number,
-  saveOnExit?: boolean,
+  filePath?: string;
+  fileFlushMillis?: number;
+  saveOnExit?: boolean;
 }
 
 /**
@@ -86,7 +86,7 @@ export default class Cache<V> {
     return this.keyedMutex.runExclusiveForKey(key, async () => {
       if (this.keyValues.has(key)) {
         const existingValue = this.keyValues.get(key) as V;
-        if (shouldRecompute === undefined || !await shouldRecompute(existingValue)) {
+        if (shouldRecompute === undefined || !(await shouldRecompute(existingValue))) {
           return existingValue;
         }
       }
@@ -138,7 +138,7 @@ export default class Cache<V> {
    * Load the cache from a file.
    */
   public async load(): Promise<Cache<V>> {
-    if (this.filePath === undefined || !await FsPoly.exists(this.filePath)) {
+    if (this.filePath === undefined || !(await FsPoly.exists(this.filePath))) {
       // Cache doesn't exist, so there is nothing to load
       return this;
     }
@@ -153,16 +153,19 @@ export default class Cache<V> {
       const keyValuesObject = v8.deserialize(decompressed);
       const keyValuesEntries = Object.entries(keyValuesObject) as [string, V][];
       this.keyValues = new Map(keyValuesEntries);
-    } catch { /* ignored */ }
+    } catch {
+      /* ignored */
+    }
 
     return this;
   }
 
   private saveWithTimeout(): void {
     this.hasChanged = true;
-    if (this.filePath === undefined
-      || this.fileFlushMillis === undefined
-      || this.saveToFileTimeout !== undefined
+    if (
+      this.filePath === undefined ||
+      this.fileFlushMillis === undefined ||
+      this.saveToFileTimeout !== undefined
     ) {
       return;
     }
@@ -193,17 +196,13 @@ export default class Cache<V> {
 
         // Ensure the directory exists
         const dirPath = path.dirname(this.filePath);
-        if (!await FsPoly.exists(dirPath)) {
+        if (!(await FsPoly.exists(dirPath))) {
           await FsPoly.mkdir(dirPath, { recursive: true });
         }
 
         // Write to a temp file first
         const tempFile = await FsPoly.mktemp(this.filePath);
-        await FsPoly.writeFile(
-          tempFile,
-          compressed,
-          { encoding: Cache.BUFFER_ENCODING },
-        );
+        await FsPoly.writeFile(tempFile, compressed, { encoding: Cache.BUFFER_ENCODING });
 
         // Validate the file was written correctly
         const tempFileCache = await new Cache({ filePath: tempFile }).load();

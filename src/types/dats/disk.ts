@@ -1,7 +1,7 @@
 import ROM, { ROMProps } from './rom.js';
 
 interface DiskProps extends Omit<ROMProps, 'size'> {
-  size?: number,
+  size?: number;
   // region?: string,
   // index?: number,
   // writable?: 'yes' | 'no',
@@ -14,9 +14,13 @@ interface DiskProps extends Omit<ROMProps, 'size'> {
  */
 export default class Disk extends ROM implements DiskProps {
   constructor(props?: DiskProps) {
-    super(props ? {
-      ...props,
-      size: props?.size ?? 0,
-    } : undefined);
+    super(
+      props
+        ? {
+            ...props,
+            size: props?.size ?? 0,
+          }
+        : undefined,
+    );
   }
 }

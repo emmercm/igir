@@ -41,7 +41,9 @@ export default class BPSPatch extends Patch {
       const patchData = await patchFile.readNext(patchFile.getSize() - 4);
       const patchChecksumsActual = await FileChecksums.hashData(patchData, ChecksumBitmask.CRC32);
       if (patchChecksumsActual.crc32 !== patchChecksumExpected) {
-        throw new ExpectedError(`BPS patch is invalid, CRC of contents (${patchChecksumsActual.crc32}) doesn't match expected (${patchChecksumExpected}): ${file.toString()}`);
+        throw new ExpectedError(
+          `BPS patch is invalid, CRC of contents (${patchChecksumsActual.crc32}) doesn't match expected (${patchChecksumExpected}): ${file.toString()}`,
+        );
       }
     });
 
@@ -61,7 +63,9 @@ export default class BPSPatch extends Patch {
 
       const sourceSize = await Patch.readUpsUint(patchFile);
       if (inputRomFile.getSize() !== sourceSize) {
-        throw new ExpectedError(`BPS patch expected ROM size of ${fsPoly.sizeReadable(sourceSize)}: ${this.getFile().toString()}`);
+        throw new ExpectedError(
+          `BPS patch expected ROM size of ${fsPoly.sizeReadable(sourceSize)}: ${this.getFile().toString()}`,
+        );
       }
       await Patch.readUpsUint(patchFile); // target size
 
@@ -80,7 +84,11 @@ export default class BPSPatch extends Patch {
     patchFile: FilePoly,
   ): Promise<void> {
     return inputRomFile.extractToTempFilePoly('r', async (inputRomFilePoly) => {
-      const targetFile = await FilePoly.fileOfSize(outputRomPath, 'r+', this.getSizeAfter() as number);
+      const targetFile = await FilePoly.fileOfSize(
+        outputRomPath,
+        'r+',
+        this.getSizeAfter() as number,
+      );
 
       try {
         await BPSPatch.applyPatch(patchFile, inputRomFilePoly, targetFile);

@@ -21,7 +21,8 @@ export default class Software extends Game {
   private getParts(): Part[] {
     if (Array.isArray(this.part)) {
       return this.part;
-    } if (this.part) {
+    }
+    if (this.part) {
       return [this.part];
     }
     return [];

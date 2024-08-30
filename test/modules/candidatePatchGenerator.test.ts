@@ -35,8 +35,10 @@ async function runPatchCandidateGenerator(
   });
 
   const indexedRomFiles = new ROMIndexer(options, new ProgressBarFake()).index(romFiles);
-  const parentsToCandidates = await new CandidateGenerator(options, new ProgressBarFake())
-    .generate(dat, indexedRomFiles);
+  const parentsToCandidates = await new CandidateGenerator(options, new ProgressBarFake()).generate(
+    dat,
+    indexedRomFiles,
+  );
 
   const patches = await new PatchScanner(
     options,
@@ -44,8 +46,11 @@ async function runPatchCandidateGenerator(
     new FileFactory(new FileCache()),
   ).scan();
 
-  return new CandidatePatchGenerator(new ProgressBarFake())
-    .generate(dat, parentsToCandidates, patches);
+  return new CandidatePatchGenerator(new ProgressBarFake()).generate(
+    dat,
+    parentsToCandidates,
+    patches,
+  );
 }
 
 it('should do nothing with no parents', async () => {
@@ -77,8 +82,9 @@ describe('with inferred DATs', () => {
 
     // Then
     expect(parentsToCandidates.size).toEqual(6);
-    [...parentsToCandidates.values()]
-      .forEach((releaseCandidates) => expect(releaseCandidates).toHaveLength(1));
+    [...parentsToCandidates.values()].forEach((releaseCandidates) =>
+      expect(releaseCandidates).toHaveLength(1),
+    );
   });
 
   it('should create patch candidates with relevant patches', async () => {
@@ -98,8 +104,9 @@ describe('with inferred DATs', () => {
 
     // Then parents have doubled
     expect(parentsToCandidates.size).toEqual(romFiles.length * 2);
-    [...parentsToCandidates.values()]
-      .forEach((releaseCandidates) => expect(releaseCandidates).toHaveLength(1));
+    [...parentsToCandidates.values()].forEach((releaseCandidates) =>
+      expect(releaseCandidates).toHaveLength(1),
+    );
   });
 });
 
@@ -110,11 +117,9 @@ describe('with explicit DATs', () => {
       dat: [path.join('test', 'fixtures', 'dats', 'smdb*')],
       input: [path.join('test', 'fixtures', 'roms', 'patchable')],
     });
-    const dat = (await new DATScanner(
-      options,
-      new ProgressBarFake(),
-      new FileFactory(new FileCache()),
-    ).scan())[0];
+    const dat = (
+      await new DATScanner(options, new ProgressBarFake(), new FileFactory(new FileCache())).scan()
+    )[0];
     const romFiles = await new ROMScanner(
       options,
       new ProgressBarFake(),

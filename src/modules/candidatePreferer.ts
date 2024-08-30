@@ -33,13 +33,17 @@ export default class CandidatePreferer extends Module {
     }
 
     if (!this.options.getSingle()) {
-      this.progressBar.logTrace(`${dat.getNameShort()}: not running in single/1G1R mode, not preferring candidates`);
+      this.progressBar.logTrace(
+        `${dat.getNameShort()}: not running in single/1G1R mode, not preferring candidates`,
+      );
       return parentsToCandidates;
     }
 
     // Return early if there aren't any candidates
-    const totalReleaseCandidates = [...parentsToCandidates.values()]
-      .reduce((sum, rcs) => sum + rcs.length, 0);
+    const totalReleaseCandidates = [...parentsToCandidates.values()].reduce(
+      (sum, rcs) => sum + rcs.length,
+      0,
+    );
     if (!totalReleaseCandidates) {
       this.progressBar.logTrace(`${dat.getNameShort()}: no parent has candidates`);
       return parentsToCandidates;
@@ -55,7 +59,9 @@ export default class CandidatePreferer extends Module {
       .flatMap((releaseCandidate) => releaseCandidate.getRomsWithFiles())
       .reduce((sum, romWithFiles) => sum + romWithFiles.getRom().getSize(), 0);
     const filteredCandidates = [...output.values()].reduce((sum, rc) => sum + rc.length, 0);
-    this.progressBar.logTrace(`${dat.getNameShort()}: filtered to ${fsPoly.sizeReadable(size)} of ${filteredCandidates.toLocaleString()} candidate${filteredCandidates !== 1 ? 's' : ''} for ${output.size.toLocaleString()} parent${output.size !== 1 ? 's' : ''}`);
+    this.progressBar.logTrace(
+      `${dat.getNameShort()}: filtered to ${fsPoly.sizeReadable(size)} of ${filteredCandidates.toLocaleString()} candidate${filteredCandidates !== 1 ? 's' : ''} for ${output.size.toLocaleString()} parent${output.size !== 1 ? 's' : ''}`,
+    );
 
     this.progressBar.logTrace(`${dat.getNameShort()}: done preferring candidates`);
     return output;
@@ -72,14 +78,18 @@ export default class CandidatePreferer extends Module {
       this.progressBar.incrementProgress();
       if (releaseCandidates.length > 1) {
         // Reduce log spam by only logging parents that can be changed
-        this.progressBar.logTrace(`${dat.getNameShort()}: ${parent.getName()} (parent): ${releaseCandidates.length.toLocaleString()} candidate${releaseCandidates.length !== 1 ? 's' : ''} before filtering`);
+        this.progressBar.logTrace(
+          `${dat.getNameShort()}: ${parent.getName()} (parent): ${releaseCandidates.length.toLocaleString()} candidate${releaseCandidates.length !== 1 ? 's' : ''} before filtering`,
+        );
       }
 
       const preferredReleaseCandidate = releaseCandidates
         .sort((a, b) => this.sort(a, b))
         .find(() => true);
       if (preferredReleaseCandidate) {
-        this.progressBar.logTrace(`${dat.getNameShort()}: ${parent.getName()}: preferred ${preferredReleaseCandidate.getName()}`);
+        this.progressBar.logTrace(
+          `${dat.getNameShort()}: ${parent.getName()}: preferred ${preferredReleaseCandidate.getName()}`,
+        );
         output.set(parent, [preferredReleaseCandidate]);
       } else {
         // The parent didn't have any candidates
@@ -101,15 +111,17 @@ export default class CandidatePreferer extends Module {
    */
 
   private sort(a: ReleaseCandidate, b: ReleaseCandidate): number {
-    return this.preferGameRegexSort(a, b)
-        || this.preferRomRegexSort(a, b)
-        || this.preferVerifiedSort(a, b)
-        || this.preferGoodSort(a, b)
-        || this.preferLanguagesSort(a, b)
-        || this.preferRegionsSort(a, b)
-        || this.preferRevisionSort(a, b)
-        || this.preferRetailSort(a, b)
-        || this.preferParentSort(a, b);
+    return (
+      this.preferGameRegexSort(a, b) ||
+      this.preferRomRegexSort(a, b) ||
+      this.preferVerifiedSort(a, b) ||
+      this.preferGoodSort(a, b) ||
+      this.preferLanguagesSort(a, b) ||
+      this.preferRegionsSort(a, b) ||
+      this.preferRevisionSort(a, b) ||
+      this.preferRetailSort(a, b) ||
+      this.preferParentSort(a, b)
+    );
   }
 
   private preferGameRegexSort(a: ReleaseCandidate, b: ReleaseCandidate): number {
@@ -129,10 +141,22 @@ export default class CandidatePreferer extends Module {
       return 0;
     }
 
-    const aMatched = romRegex
-      .some((regex) => a.getGame().getRoms().some((rom) => regex.test(rom.getName()))) ? 0 : 1;
-    const bMatched = romRegex
-      .some((regex) => b.getGame().getRoms().some((rom) => regex.test(rom.getName()))) ? 0 : 1;
+    const aMatched = romRegex.some((regex) =>
+      a
+        .getGame()
+        .getRoms()
+        .some((rom) => regex.test(rom.getName())),
+    )
+      ? 0
+      : 1;
+    const bMatched = romRegex.some((regex) =>
+      b
+        .getGame()
+        .getRoms()
+        .some((rom) => regex.test(rom.getName())),
+    )
+      ? 0
+      : 1;
     return aMatched - bMatched;
   }
 
@@ -190,7 +214,8 @@ export default class CandidatePreferer extends Module {
   private preferRevisionSort(a: ReleaseCandidate, b: ReleaseCandidate): number {
     if (this.options.getPreferRevision() === PreferRevision.NEWER) {
       return b.getGame().getRevision() - a.getGame().getRevision();
-    } if (this.options.getPreferRevision() === PreferRevision.OLDER) {
+    }
+    if (this.options.getPreferRevision() === PreferRevision.OLDER) {
       return a.getGame().getRevision() - b.getGame().getRevision();
     }
     return 0;

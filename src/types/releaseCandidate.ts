@@ -72,10 +72,10 @@ export default class ReleaseCandidate {
   // Immutable setters
 
   withRomsWithFiles(romsWithFiles: ROMWithFiles[]): ReleaseCandidate {
-    if (romsWithFiles === this.romsWithFiles
-      || (romsWithFiles.length === this.romsWithFiles.length
-        && romsWithFiles.every((rwf, idx) => this.romsWithFiles[idx] === rwf)
-      )
+    if (
+      romsWithFiles === this.romsWithFiles ||
+      (romsWithFiles.length === this.romsWithFiles.length &&
+        romsWithFiles.every((rwf, idx) => this.romsWithFiles[idx] === rwf))
     ) {
       return this;
     }

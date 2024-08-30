@@ -13,25 +13,23 @@ export default class Timer {
     Timer.TIMERS.add(this);
   }
 
-  static setTimeout(
-    runnable: (...args: unknown[]) => void,
-    timeoutMillis: number,
-  ): Timer {
-    const timer = new Timer(setTimeout(() => {
-      runnable();
-      Timer.TIMERS.delete(timer);
-    }, timeoutMillis));
+  static setTimeout(runnable: (...args: unknown[]) => void, timeoutMillis: number): Timer {
+    const timer = new Timer(
+      setTimeout(() => {
+        runnable();
+        Timer.TIMERS.delete(timer);
+      }, timeoutMillis),
+    );
     return timer;
   }
 
-  static setInterval(
-    runnable: (...args: unknown[]) => void,
-    timeoutMillis: number,
-  ): Timer {
-    const timer = new Timer(setInterval(() => {
-      runnable();
-      Timer.TIMERS.delete(timer);
-    }, timeoutMillis));
+  static setInterval(runnable: (...args: unknown[]) => void, timeoutMillis: number): Timer {
+    const timer = new Timer(
+      setInterval(() => {
+        runnable();
+        Timer.TIMERS.delete(timer);
+      }, timeoutMillis),
+    );
     return timer;
   }
 

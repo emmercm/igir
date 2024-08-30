@@ -47,10 +47,7 @@ it('should do nothing when no ROMs need correcting', async () => {
     }),
     new Game({
       name: 'game with two ROMs',
-      rom: [
-        new ROM({ name: 'two.rom', size: 2 }),
-        new ROM({ name: 'three.rom', size: 3 }),
-      ],
+      rom: [new ROM({ name: 'two.rom', size: 2 }), new ROM({ name: 'three.rom', size: 3 })],
     }),
   ]);
   const parentsToCandidates = new Map<Parent, ReleaseCandidate[]>();
@@ -71,8 +68,9 @@ function expectCorrectedCandidates(
   expect(correctedParentsToCandidates).not.toBe(parentsToCandidates);
 
   // The parents haven't changed
-  expect([...correctedParentsToCandidates.keys()])
-    .toIncludeSameMembers([...parentsToCandidates.keys()]);
+  expect([...correctedParentsToCandidates.keys()]).toIncludeSameMembers([
+    ...parentsToCandidates.keys(),
+  ]);
   for (const parent of [...parentsToCandidates.keys()]) {
     const candidates = parentsToCandidates.get(parent);
     const correctedCandidates = correctedParentsToCandidates.get(parent);
@@ -98,8 +96,9 @@ function expectCorrectedCandidates(
         expect(correctedRomWithFiles?.getInputFile()).toBe(romWithFiles?.getInputFile());
 
         // The output file path has changed
-        expect(correctedRomWithFiles?.getOutputFile().getFilePath())
-          .not.toEqual(romWithFiles?.getOutputFile().getFilePath());
+        expect(correctedRomWithFiles?.getOutputFile().getFilePath()).not.toEqual(
+          romWithFiles?.getOutputFile().getFilePath(),
+        );
       }
     }
   }
@@ -120,31 +119,37 @@ it('should correct ROMs without DATs', async () => {
 
   const tempDir = await FsPoly.mkdtemp(Temp.getTempDir());
   try {
-    const tempFiles = await Promise.all(inputFiles.map(async (inputFile) => {
-      const tempFile = path.join(tempDir, path.basename(inputFile.getExtractedFilePath()));
-      await inputFile.extractToFile(tempFile);
-      return File.fileOf({ filePath: tempFile });
-    }));
+    const tempFiles = await Promise.all(
+      inputFiles.map(async (inputFile) => {
+        const tempFile = path.join(tempDir, path.basename(inputFile.getExtractedFilePath()));
+        await inputFile.extractToFile(tempFile);
+        return File.fileOf({ filePath: tempFile });
+      }),
+    );
 
-    const parentsToCandidates = new Map(tempFiles.map((tempFile) => {
-      const roms = [new ROM({
-        name: path.basename(tempFile.getFilePath()),
-        size: tempFile.getSize(),
-      })];
-      const game = new Game({
-        name: path.parse(tempFile.getFilePath()).name,
-        rom: roms,
-      });
-      const parent = new Parent(game);
-      const romsWithFiles = roms.map((rom) => {
-        const { dir, name } = path.parse(tempFile.getFilePath());
-        // Use a dummy path for the output, so we can know if it changed or not
-        const outputFile = tempFile.withFilePath(`${path.format({ dir, name })}.rom`);
-        return new ROMWithFiles(rom, tempFile, outputFile);
-      });
-      const releaseCandidate = new ReleaseCandidate(game, undefined, romsWithFiles);
-      return [parent, [releaseCandidate]] satisfies [Parent, ReleaseCandidate[]];
-    }));
+    const parentsToCandidates = new Map(
+      tempFiles.map((tempFile) => {
+        const roms = [
+          new ROM({
+            name: path.basename(tempFile.getFilePath()),
+            size: tempFile.getSize(),
+          }),
+        ];
+        const game = new Game({
+          name: path.parse(tempFile.getFilePath()).name,
+          rom: roms,
+        });
+        const parent = new Parent(game);
+        const romsWithFiles = roms.map((rom) => {
+          const { dir, name } = path.parse(tempFile.getFilePath());
+          // Use a dummy path for the output, so we can know if it changed or not
+          const outputFile = tempFile.withFilePath(`${path.format({ dir, name })}.rom`);
+          return new ROMWithFiles(rom, tempFile, outputFile);
+        });
+        const releaseCandidate = new ReleaseCandidate(game, undefined, romsWithFiles);
+        return [parent, [releaseCandidate]] satisfies [Parent, ReleaseCandidate[]];
+      }),
+    );
 
     const correctedParentsToCandidates = await new CandidateExtensionCorrector(
       options,
@@ -173,29 +178,33 @@ it('should correct ROMs with missing filenames', async () => {
 
   const tempDir = await FsPoly.mkdtemp(Temp.getTempDir());
   try {
-    const tempFiles = await Promise.all(inputFiles.map(async (inputFile) => {
-      const tempFile = path.join(tempDir, path.basename(inputFile.getExtractedFilePath()));
-      await inputFile.extractToFile(tempFile);
-      return File.fileOf({ filePath: tempFile });
-    }));
+    const tempFiles = await Promise.all(
+      inputFiles.map(async (inputFile) => {
+        const tempFile = path.join(tempDir, path.basename(inputFile.getExtractedFilePath()));
+        await inputFile.extractToFile(tempFile);
+        return File.fileOf({ filePath: tempFile });
+      }),
+    );
 
-    const parentsToCandidates = new Map(tempFiles.map((tempFile) => {
-      // No ROM in the DAT has a filename, therefore all of them should be corrected
-      const roms = [new ROM({ name: '', size: tempFile.getSize() })];
-      const game = new Game({
-        name: path.parse(tempFile.getFilePath()).name,
-        rom: roms,
-      });
-      const parent = new Parent(game);
-      const romsWithFiles = roms.map((rom) => {
-        const { dir, name } = path.parse(tempFile.getFilePath());
-        // Use a dummy path for the output, so we can know if it changed or not
-        const outputFile = tempFile.withFilePath(`${path.format({ dir, name })}.rom`);
-        return new ROMWithFiles(rom, tempFile, outputFile);
-      });
-      const releaseCandidate = new ReleaseCandidate(game, undefined, romsWithFiles);
-      return [parent, [releaseCandidate]] satisfies [Parent, ReleaseCandidate[]];
-    }));
+    const parentsToCandidates = new Map(
+      tempFiles.map((tempFile) => {
+        // No ROM in the DAT has a filename, therefore all of them should be corrected
+        const roms = [new ROM({ name: '', size: tempFile.getSize() })];
+        const game = new Game({
+          name: path.parse(tempFile.getFilePath()).name,
+          rom: roms,
+        });
+        const parent = new Parent(game);
+        const romsWithFiles = roms.map((rom) => {
+          const { dir, name } = path.parse(tempFile.getFilePath());
+          // Use a dummy path for the output, so we can know if it changed or not
+          const outputFile = tempFile.withFilePath(`${path.format({ dir, name })}.rom`);
+          return new ROMWithFiles(rom, tempFile, outputFile);
+        });
+        const releaseCandidate = new ReleaseCandidate(game, undefined, romsWithFiles);
+        return [parent, [releaseCandidate]] satisfies [Parent, ReleaseCandidate[]];
+      }),
+    );
 
     const correctedParentsToCandidates = await new CandidateExtensionCorrector(
       options,

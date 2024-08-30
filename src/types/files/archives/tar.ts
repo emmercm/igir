@@ -48,12 +48,17 @@ export default class Tar extends Archive {
     // Note: entries are read sequentially, so entry streams need to be fully read or resumed
     writeStream.on('entry', async (entry) => {
       const checksums = await FileChecksums.hashStream(entry, checksumBitmask);
-      archiveEntryPromises.push(ArchiveEntry.entryOf({
-        archive: this,
-        entryPath: entry.path,
-        size: entry.size,
-        ...checksums,
-      }, checksumBitmask));
+      archiveEntryPromises.push(
+        ArchiveEntry.entryOf(
+          {
+            archive: this,
+            entryPath: entry.path,
+            size: entry.size,
+            ...checksums,
+          },
+          checksumBitmask,
+        ),
+      );
       // In case we didn't need to read the stream for hashes, resume the file reading
       entry.resume();
     });
@@ -73,22 +78,22 @@ export default class Tar extends Archive {
     return Promise.all(archiveEntryPromises);
   }
 
-  async extractEntryToFile(
-    entryPath: string,
-    extractedFilePath: string,
-  ): Promise<void> {
-    await tar.extract({
-      file: this.getFilePath(),
-      cwd: path.dirname(extractedFilePath),
-      strict: true,
-      filter: (_, stat) => {
-        // @ts-expect-error the type is wrong: https://github.com/isaacs/node-tar/issues/357#issuecomment-1416806436
-        // eslint-disable-next-line no-param-reassign
-        stat.path = path.basename(extractedFilePath);
-        return true;
+  async extractEntryToFile(entryPath: string, extractedFilePath: string): Promise<void> {
+    await tar.extract(
+      {
+        file: this.getFilePath(),
+        cwd: path.dirname(extractedFilePath),
+        strict: true,
+        filter: (_, stat) => {
+          // @ts-expect-error the type is wrong: https://github.com/isaacs/node-tar/issues/357#issuecomment-1416806436
+          // eslint-disable-next-line no-param-reassign
+          stat.path = path.basename(extractedFilePath);
+          return true;
+        },
       },
-    }, [entryPath.replace(/[\\/]/g, '/')]);
-    if (!await FsPoly.exists(extractedFilePath)) {
+      [entryPath.replace(/[\\/]/g, '/')],
+    );
+    if (!(await FsPoly.exists(extractedFilePath))) {
       throw new ExpectedError(`didn't find extracted file '${entryPath}'`);
     }
   }

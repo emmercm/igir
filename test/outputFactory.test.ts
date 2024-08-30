@@ -15,29 +15,24 @@ const dummyGame = new Game({ name: 'Dummy Game' });
 const dummyRelease = undefined;
 const dummyRom = new ROM({ name: 'Dummy.rom', size: 0, crc32: '00000000' });
 
-test.each([
-  'test',
-  'report',
-  'zip',
-  'clean',
-])('should use temp dir for non-writing commands: %s', async (command) => {
-  const options = new Options({ commands: [command] });
+test.each(['test', 'report', 'zip', 'clean'])(
+  'should use temp dir for non-writing commands: %s',
+  async (command) => {
+    const options = new Options({ commands: [command] });
 
-  const outputPath = OutputFactory.getPath(
-    options,
-    dummyDat,
-    dummyGame,
-    dummyRelease,
-    dummyRom,
-    await dummyRom.toFile(),
-  );
-  expect(outputPath.dir).toEqual(Temp.getTempDir());
-});
+    const outputPath = OutputFactory.getPath(
+      options,
+      dummyDat,
+      dummyGame,
+      dummyRelease,
+      dummyRom,
+      await dummyRom.toFile(),
+    );
+    expect(outputPath.dir).toEqual(Temp.getTempDir());
+  },
+);
 
-test.each([
-  'copy',
-  'move',
-])('should echo the option with no arguments: %s', async (command) => {
+test.each(['copy', 'move'])('should echo the option with no arguments: %s', async (command) => {
   const options = new Options({ commands: [command], output: os.devNull });
 
   const outputPath = OutputFactory.getPath(
@@ -64,7 +59,10 @@ describe('token replacement', () => {
     ['foo/{datDescription}/bar', path.join('foo', 'DAT _ Description', 'bar', 'Dummy.rom')],
   ])('should replace {dat*}: %s', async (output, expectedPath) => {
     const options = new Options({ commands: ['copy'], output });
-    const dat = new LogiqxDAT(new Header({ name: 'DAT / Name', description: 'DAT \\ Description' }), []);
+    const dat = new LogiqxDAT(
+      new Header({ name: 'DAT / Name', description: 'DAT \\ Description' }),
+      [],
+    );
     const release = new Release('Game Name', 'USA', 'En');
 
     const outputPath = OutputFactory.getPath(
@@ -253,17 +251,17 @@ describe('token replacement', () => {
     expect(outputPath.format()).toEqual(expectedPath);
   });
 
-  test.each([
-    'game.n64',
-    'game.bs',
-    'game.bin',
-    'game.rom',
-  ])('should throw on {adam} for unknown extension: %s', async (outputRomFilename) => {
-    const options = new Options({ commands: ['copy'], output: 'games/{adam}' });
-    const rom = new ROM({ name: outputRomFilename, size: 0, crc32: '' });
+  test.each(['game.n64', 'game.bs', 'game.bin', 'game.rom'])(
+    'should throw on {adam} for unknown extension: %s',
+    async (outputRomFilename) => {
+      const options = new Options({ commands: ['copy'], output: 'games/{adam}' });
+      const rom = new ROM({ name: outputRomFilename, size: 0, crc32: '' });
 
-    await expect(async () => OutputFactory.getPath(options, dummyDat, dummyGame, dummyRelease, rom, await rom.toFile())).rejects.toThrow(/failed to replace/);
-  });
+      await expect(async () =>
+        OutputFactory.getPath(options, dummyDat, dummyGame, dummyRelease, rom, await rom.toFile()),
+      ).rejects.toThrow(/failed to replace/);
+    },
+  );
 
   // Output Token {batocera}
   test.each([
@@ -295,14 +293,9 @@ describe('token replacement', () => {
 
       const rom = new ROM({ name: outputRomFilename, size: 0, crc32: '' });
 
-      await expect(async () => OutputFactory.getPath(
-        options,
-        dummyDat,
-        dummyGame,
-        dummyRelease,
-        rom,
-        await rom.toFile(),
-      )).rejects.toThrow(/failed to replace/);
+      await expect(async () =>
+        OutputFactory.getPath(options, dummyDat, dummyGame, dummyRelease, rom, await rom.toFile()),
+      ).rejects.toThrow(/failed to replace/);
     },
   );
 
@@ -311,23 +304,20 @@ describe('token replacement', () => {
     ['game.a78', path.join('roms', 'atari7800', 'game.a78')],
     ['game.gb', path.join('roms', 'gb', 'game.gb')],
     ['game.nes', path.join('roms', 'nes', 'game.nes')],
-  ])(
-    'should replace {es} for known extension: %s',
-    async (outputRomFilename, expectedPath) => {
-      const options = new Options({ commands: ['copy'], output: 'roms/{es}' });
-      const rom = new ROM({ name: outputRomFilename, size: 0, crc32: '' });
+  ])('should replace {es} for known extension: %s', async (outputRomFilename, expectedPath) => {
+    const options = new Options({ commands: ['copy'], output: 'roms/{es}' });
+    const rom = new ROM({ name: outputRomFilename, size: 0, crc32: '' });
 
-      const outputPath = OutputFactory.getPath(
-        options,
-        dummyDat,
-        dummyGame,
-        dummyRelease,
-        rom,
-        await rom.toFile(),
-      );
-      expect(outputPath.format()).toEqual(expectedPath);
-    },
-  );
+    const outputPath = OutputFactory.getPath(
+      options,
+      dummyDat,
+      dummyGame,
+      dummyRelease,
+      rom,
+      await rom.toFile(),
+    );
+    expect(outputPath.format()).toEqual(expectedPath);
+  });
 
   test.each(['game.bin', 'game.rom'])(
     'should throw on {es} for unknown extension: %s',
@@ -336,14 +326,9 @@ describe('token replacement', () => {
 
       const rom = new ROM({ name: outputRomFilename, size: 0, crc32: '' });
 
-      await expect(async () => OutputFactory.getPath(
-        options,
-        dummyDat,
-        dummyGame,
-        dummyRelease,
-        rom,
-        await rom.toFile(),
-      )).rejects.toThrow(/failed to replace/);
+      await expect(async () =>
+        OutputFactory.getPath(options, dummyDat, dummyGame, dummyRelease, rom, await rom.toFile()),
+      ).rejects.toThrow(/failed to replace/);
     },
   );
 
@@ -395,46 +380,35 @@ describe('token replacement', () => {
     'game.rom',
     // satellaview is not supported by https://github.com/FunKey-Project/FunKey-OS/blob/master/FunKey/board/funkey/rootfs-overlay/usr/games/collections/SNES/settings.conf
     'game.bs',
-  ])(
-    'should throw on {funkeyos} for unknown extension: %s',
-    async (outputRomFilename) => {
-      const options = new Options({ commands: ['copy'], output: '{funkeyos}' });
+  ])('should throw on {funkeyos} for unknown extension: %s', async (outputRomFilename) => {
+    const options = new Options({ commands: ['copy'], output: '{funkeyos}' });
 
-      const rom = new ROM({ name: outputRomFilename, size: 0, crc32: '' });
+    const rom = new ROM({ name: outputRomFilename, size: 0, crc32: '' });
 
-      await expect(async () => OutputFactory.getPath(
-        options,
-        dummyDat,
-        dummyGame,
-        dummyRelease,
-        rom,
-        await rom.toFile(),
-      )).rejects.toThrow(/failed to replace/);
-    },
-  );
+    await expect(async () =>
+      OutputFactory.getPath(options, dummyDat, dummyGame, dummyRelease, rom, await rom.toFile()),
+    ).rejects.toThrow(/failed to replace/);
+  });
 
   // Output Token {jelos}
   test.each([
     ['game.a78', path.join('roms', 'atari7800', 'game.a78')],
     ['game.gb', path.join('roms', 'gb', 'game.gb')],
     ['game.nes', path.join('roms', 'nes', 'game.nes')],
-  ])(
-    'should replace {jelos} for known extension: %s',
-    async (outputRomFilename, expectedPath) => {
-      const options = new Options({ commands: ['copy'], output: 'roms/{jelos}' });
-      const rom = new ROM({ name: outputRomFilename, size: 0, crc32: '' });
+  ])('should replace {jelos} for known extension: %s', async (outputRomFilename, expectedPath) => {
+    const options = new Options({ commands: ['copy'], output: 'roms/{jelos}' });
+    const rom = new ROM({ name: outputRomFilename, size: 0, crc32: '' });
 
-      const outputPath = OutputFactory.getPath(
-        options,
-        dummyDat,
-        dummyGame,
-        dummyRelease,
-        rom,
-        await rom.toFile(),
-      );
-      expect(outputPath.format()).toEqual(expectedPath);
-    },
-  );
+    const outputPath = OutputFactory.getPath(
+      options,
+      dummyDat,
+      dummyGame,
+      dummyRelease,
+      rom,
+      await rom.toFile(),
+    );
+    expect(outputPath.format()).toEqual(expectedPath);
+  });
 
   test.each(['game.bin', 'game.rom'])(
     'should throw on {jelos} for unknown extension: %s',
@@ -443,14 +417,9 @@ describe('token replacement', () => {
 
       const rom = new ROM({ name: outputRomFilename, size: 0, crc32: '' });
 
-      await expect(async () => OutputFactory.getPath(
-        options,
-        dummyDat,
-        dummyGame,
-        dummyRelease,
-        rom,
-        await rom.toFile(),
-      )).rejects.toThrow(/failed to replace/);
+      await expect(async () =>
+        OutputFactory.getPath(options, dummyDat, dummyGame, dummyRelease, rom, await rom.toFile()),
+      ).rejects.toThrow(/failed to replace/);
     },
   );
 
@@ -479,42 +448,30 @@ describe('token replacement', () => {
     ['game.smd', path.join('Roms', 'Sega Genesis (MD)', 'game.smd')],
     ['game.ngp', path.join('Roms', 'Neo Geo Pocket (NGPC)', 'game.ngp')],
     ['game.ngc', path.join('Roms', 'Neo Geo Pocket Color (NGPC)', 'game.ngc')],
-  ])(
-    'should replace {minui} for known extension: %s',
-    async (outputRomFilename, expectedPath) => {
-      const options = new Options({ commands: ['copy'], output: 'Roms/{minui}' });
-      const rom = new ROM({ name: outputRomFilename, size: 0, crc32: '' });
+  ])('should replace {minui} for known extension: %s', async (outputRomFilename, expectedPath) => {
+    const options = new Options({ commands: ['copy'], output: 'Roms/{minui}' });
+    const rom = new ROM({ name: outputRomFilename, size: 0, crc32: '' });
 
-      const outputPath = OutputFactory.getPath(
-        options,
-        dummyDat,
-        dummyGame,
-        dummyRelease,
-        rom,
-        await rom.toFile(),
-      );
-      expect(outputPath.format()).toEqual(expectedPath);
-    },
-  );
+    const outputPath = OutputFactory.getPath(
+      options,
+      dummyDat,
+      dummyGame,
+      dummyRelease,
+      rom,
+      await rom.toFile(),
+    );
+    expect(outputPath.format()).toEqual(expectedPath);
+  });
 
-  test.each([
-    'game.bin',
-    'game.rom',
-    'game.mgw',
-  ])(
+  test.each(['game.bin', 'game.rom', 'game.mgw'])(
     'should throw on {minui} for unknown extension: %s',
     async (outputRomFilename) => {
       const options = new Options({ commands: ['copy'], output: 'roms/{minui}' });
       const rom = new ROM({ name: outputRomFilename, size: 0, crc32: '' });
 
-      await expect(async () => OutputFactory.getPath(
-        options,
-        dummyDat,
-        dummyGame,
-        dummyRelease,
-        rom,
-        await rom.toFile(),
-      )).rejects.toThrow(/failed to replace/);
+      await expect(async () =>
+        OutputFactory.getPath(options, dummyDat, dummyGame, dummyRelease, rom, await rom.toFile()),
+      ).rejects.toThrow(/failed to replace/);
     },
   );
 
@@ -538,17 +495,17 @@ describe('token replacement', () => {
     expect(outputPath.format()).toEqual(expectedPath);
   });
 
-  test.each([
-    'game.bin',
-    'game.ngc',
-    'game.ngp',
-    'game.rom',
-  ])('should throw on {mister} for unknown extension: %s', async (outputRomFilename) => {
-    const options = new Options({ commands: ['copy'], output: 'games/{mister}' });
-    const rom = new ROM({ name: outputRomFilename, size: 0, crc32: '' });
+  test.each(['game.bin', 'game.ngc', 'game.ngp', 'game.rom'])(
+    'should throw on {mister} for unknown extension: %s',
+    async (outputRomFilename) => {
+      const options = new Options({ commands: ['copy'], output: 'games/{mister}' });
+      const rom = new ROM({ name: outputRomFilename, size: 0, crc32: '' });
 
-    await expect(async () => OutputFactory.getPath(options, dummyDat, dummyGame, dummyRelease, rom, await rom.toFile())).rejects.toThrow(/failed to replace/);
-  });
+      await expect(async () =>
+        OutputFactory.getPath(options, dummyDat, dummyGame, dummyRelease, rom, await rom.toFile()),
+      ).rejects.toThrow(/failed to replace/);
+    },
+  );
 
   // Output Token {miyoocfw}
   test.each([
@@ -595,22 +552,14 @@ describe('token replacement', () => {
     'game.rom',
     // satellaview is not supported by https://github.com/TriForceX/MiyooCFW/wiki/Emulator-Info
     'game.bs',
-  ])(
-    'should throw on {miyoocfw} for unknown extension: %s',
-    async (outputRomFilename) => {
-      const options = new Options({ commands: ['copy'], output: 'roms/{miyoocfw}' });
-      const rom = new ROM({ name: outputRomFilename, size: 0, crc32: '' });
+  ])('should throw on {miyoocfw} for unknown extension: %s', async (outputRomFilename) => {
+    const options = new Options({ commands: ['copy'], output: 'roms/{miyoocfw}' });
+    const rom = new ROM({ name: outputRomFilename, size: 0, crc32: '' });
 
-      await expect(async () => OutputFactory.getPath(
-        options,
-        dummyDat,
-        dummyGame,
-        dummyRelease,
-        rom,
-        await rom.toFile(),
-      )).rejects.toThrow(/failed to replace/);
-    },
-  );
+    await expect(async () =>
+      OutputFactory.getPath(options, dummyDat, dummyGame, dummyRelease, rom, await rom.toFile()),
+    ).rejects.toThrow(/failed to replace/);
+  });
 
   // Output Token {onion}
   test.each([
@@ -632,16 +581,17 @@ describe('token replacement', () => {
     expect(outputPath.format()).toEqual(expectedPath);
   });
 
-  test.each([
-    'game.arduboy',
-    'game.bin',
-    'game.rom',
-  ])('should throw on {onion} for unknown extension: %s', async (outputRomFilename) => {
-    const options = new Options({ commands: ['copy'], output: 'Roms/{onion}' });
-    const rom = new ROM({ name: outputRomFilename, size: 0, crc32: '' });
+  test.each(['game.arduboy', 'game.bin', 'game.rom'])(
+    'should throw on {onion} for unknown extension: %s',
+    async (outputRomFilename) => {
+      const options = new Options({ commands: ['copy'], output: 'Roms/{onion}' });
+      const rom = new ROM({ name: outputRomFilename, size: 0, crc32: '' });
 
-    await expect(async () => OutputFactory.getPath(options, dummyDat, dummyGame, dummyRelease, rom, await rom.toFile())).rejects.toThrow(/failed to replace/);
-  });
+      await expect(async () =>
+        OutputFactory.getPath(options, dummyDat, dummyGame, dummyRelease, rom, await rom.toFile()),
+      ).rejects.toThrow(/failed to replace/);
+    },
+  );
 
   // Output Token {pocket}
   test.each([
@@ -664,16 +614,17 @@ describe('token replacement', () => {
     expect(outputPath.format()).toEqual(expectedPath);
   });
 
-  test.each([
-    'game.bin',
-    'game.ngp',
-    'game.rom',
-  ])('should throw on {pocket} for unknown extension: %s', async (outputRomFilename) => {
-    const options = new Options({ commands: ['copy'], output: 'Assets/{pocket}/common' });
-    const rom = new ROM({ name: outputRomFilename, size: 0, crc32: '' });
+  test.each(['game.bin', 'game.ngp', 'game.rom'])(
+    'should throw on {pocket} for unknown extension: %s',
+    async (outputRomFilename) => {
+      const options = new Options({ commands: ['copy'], output: 'Assets/{pocket}/common' });
+      const rom = new ROM({ name: outputRomFilename, size: 0, crc32: '' });
 
-    await expect(async () => OutputFactory.getPath(options, dummyDat, dummyGame, dummyRelease, rom, await rom.toFile())).rejects.toThrow(/failed to replace/);
-  });
+      await expect(async () =>
+        OutputFactory.getPath(options, dummyDat, dummyGame, dummyRelease, rom, await rom.toFile()),
+      ).rejects.toThrow(/failed to replace/);
+    },
+  );
 
   test.each([
     // No unique extensions defined
@@ -688,10 +639,19 @@ describe('token replacement', () => {
     // Testing priority
     ['Nintendo - Family Computer Disk System (FDS) (Parent-Clone)', path.join('fds', 'Dummy.rom')],
     ['Nintendo - Famicom [T-En] Collection', path.join('nes', 'Dummy.rom')],
-    ['Nintendo - Nintendo Entertainment System (Headered) (Parent-Clone)', path.join('nes', 'Dummy.rom')],
-    ['Nintendo - Nintendo Entertainment System (Headerless) (Parent-Clone)', path.join('nes', 'Dummy.rom')],
+    [
+      'Nintendo - Nintendo Entertainment System (Headered) (Parent-Clone)',
+      path.join('nes', 'Dummy.rom'),
+    ],
+    [
+      'Nintendo - Nintendo Entertainment System (Headerless) (Parent-Clone)',
+      path.join('nes', 'Dummy.rom'),
+    ],
     ['Nintendo - Super Famicom [T-En] Collection', path.join('snes', 'Dummy.rom')],
-    ['Nintendo - Super Nintendo Entertainment System (Parent-Clone)', path.join('snes', 'Dummy.rom')],
+    [
+      'Nintendo - Super Nintendo Entertainment System (Parent-Clone)',
+      path.join('snes', 'Dummy.rom'),
+    ],
   ])('should replace {pocket} for known DAT name: %s', async (datName, expectedPath) => {
     const options = new Options({ commands: ['copy'], output: '{es}' });
 
@@ -736,14 +696,9 @@ describe('token replacement', () => {
 
       const rom = new ROM({ name: outputRomFilename, size: 0, crc32: '' });
 
-      await expect(async () => OutputFactory.getPath(
-        options,
-        dummyDat,
-        dummyGame,
-        dummyRelease,
-        rom,
-        await rom.toFile(),
-      )).rejects.toThrow(/failed to replace/);
+      await expect(async () =>
+        OutputFactory.getPath(options, dummyDat, dummyGame, dummyRelease, rom, await rom.toFile()),
+      ).rejects.toThrow(/failed to replace/);
     },
   );
 
@@ -753,23 +708,20 @@ describe('token replacement', () => {
     ['game.gb', path.join('roms', 'gb', 'game.gb')],
     ['game.nes', path.join('roms', 'nes', 'game.nes')],
     ['game.pqa', path.join('roms', 'palm-os', 'game.pqa')],
-  ])(
-    'should replace {romm} for known extension: %s',
-    async (outputRomFilename, expectedPath) => {
-      const options = new Options({ commands: ['copy'], output: 'roms/{romm}' });
-      const rom = new ROM({ name: outputRomFilename, size: 0, crc32: '' });
+  ])('should replace {romm} for known extension: %s', async (outputRomFilename, expectedPath) => {
+    const options = new Options({ commands: ['copy'], output: 'roms/{romm}' });
+    const rom = new ROM({ name: outputRomFilename, size: 0, crc32: '' });
 
-      const outputPath = OutputFactory.getPath(
-        options,
-        dummyDat,
-        dummyGame,
-        dummyRelease,
-        rom,
-        await rom.toFile(),
-      );
-      expect(outputPath.format()).toEqual(expectedPath);
-    },
-  );
+    const outputPath = OutputFactory.getPath(
+      options,
+      dummyDat,
+      dummyGame,
+      dummyRelease,
+      rom,
+      await rom.toFile(),
+    );
+    expect(outputPath.format()).toEqual(expectedPath);
+  });
 
   test.each(['game.bin', 'game.rom'])(
     'should throw on {romm} for unknown extension: %s',
@@ -778,14 +730,9 @@ describe('token replacement', () => {
 
       const rom = new ROM({ name: outputRomFilename, size: 0, crc32: '' });
 
-      await expect(async () => OutputFactory.getPath(
-        options,
-        dummyDat,
-        dummyGame,
-        dummyRelease,
-        rom,
-        await rom.toFile(),
-      )).rejects.toThrow(/failed to replace/);
+      await expect(async () =>
+        OutputFactory.getPath(options, dummyDat, dummyGame, dummyRelease, rom, await rom.toFile()),
+      ).rejects.toThrow(/failed to replace/);
     },
   );
 
@@ -815,46 +762,34 @@ describe('token replacement', () => {
     ['game.sg', path.join('roms', 'sg', 'game.sg')],
     ['game.ngp', path.join('roms', 'ngp', 'game.ngp')],
     ['game.ngc', path.join('roms', 'ngp', 'game.ngc')],
+  ])('should replace {twmenu} for known extension: %s', async (outputRomFilename, expectedPath) => {
+    const options = new Options({ commands: ['copy'], output: 'roms/{twmenu}' });
+    const rom = new ROM({ name: outputRomFilename, size: 0, crc32: '' });
 
-  ])(
-    'should replace {twmenu} for known extension: %s',
-    async (outputRomFilename, expectedPath) => {
-      const options = new Options({ commands: ['copy'], output: 'roms/{twmenu}' });
-      const rom = new ROM({ name: outputRomFilename, size: 0, crc32: '' });
-
-      const outputPath = OutputFactory.getPath(
-        options,
-        dummyDat,
-        dummyGame,
-        dummyRelease,
-        rom,
-        await rom.toFile(),
-      );
-      expect(outputPath.format()).toEqual(expectedPath);
-    },
-  );
+    const outputPath = OutputFactory.getPath(
+      options,
+      dummyDat,
+      dummyGame,
+      dummyRelease,
+      rom,
+      await rom.toFile(),
+    );
+    expect(outputPath.format()).toEqual(expectedPath);
+  });
 
   test.each([
     'game.bin',
     'game.rom',
     // satellaview is not supported by https://github.com/DS-Homebrew/TWiLightMenu/tree/master/7zfile/roms/snes
     'game.bs',
-  ])(
-    'should throw on {twmenu} for unknown extension: %s',
-    async (outputRomFilename) => {
-      const options = new Options({ commands: ['copy'], output: 'roms/{twmenu}' });
-      const rom = new ROM({ name: outputRomFilename, size: 0, crc32: '' });
+  ])('should throw on {twmenu} for unknown extension: %s', async (outputRomFilename) => {
+    const options = new Options({ commands: ['copy'], output: 'roms/{twmenu}' });
+    const rom = new ROM({ name: outputRomFilename, size: 0, crc32: '' });
 
-      await expect(async () => OutputFactory.getPath(
-        options,
-        dummyDat,
-        dummyGame,
-        dummyRelease,
-        rom,
-        await rom.toFile(),
-      )).rejects.toThrow(/failed to replace/);
-    },
-  );
+    await expect(async () =>
+      OutputFactory.getPath(options, dummyDat, dummyGame, dummyRelease, rom, await rom.toFile()),
+    ).rejects.toThrow(/failed to replace/);
+  });
 });
 
 describe('should respect "--dir-mirror"', () => {
@@ -881,22 +816,23 @@ describe('should respect "--dir-mirror"', () => {
     expect(outputPath.format()).toEqual(expectedPath);
   });
 
-  test.each([
-    ['roms/subdir/file.rom', path.join(os.devNull, 'file.rom')],
-  ])('option is false: %s', async (filePath, expectedPath) => {
-    const options = new Options({ commands: ['copy'], output: os.devNull, dirMirror: false });
-    const rom = new ROM({ name: path.basename(filePath), size: 0, crc32: '' });
+  test.each([['roms/subdir/file.rom', path.join(os.devNull, 'file.rom')]])(
+    'option is false: %s',
+    async (filePath, expectedPath) => {
+      const options = new Options({ commands: ['copy'], output: os.devNull, dirMirror: false });
+      const rom = new ROM({ name: path.basename(filePath), size: 0, crc32: '' });
 
-    const outputPath = OutputFactory.getPath(
-      options,
-      dummyDat,
-      dummyGame,
-      dummyRelease,
-      rom,
-      (await rom.toFile()).withFilePath(filePath),
-    );
-    expect(outputPath.format()).toEqual(expectedPath);
-  });
+      const outputPath = OutputFactory.getPath(
+        options,
+        dummyDat,
+        dummyGame,
+        dummyRelease,
+        rom,
+        (await rom.toFile()).withFilePath(filePath),
+      );
+      expect(outputPath.format()).toEqual(expectedPath);
+    },
+  );
 });
 
 describe('should respect "--dir-dat-name"', () => {
@@ -918,22 +854,23 @@ describe('should respect "--dir-dat-name"', () => {
     expect(outputPath.format()).toEqual(expectedPath);
   });
 
-  test.each([
-    ['name', path.join(os.devNull, 'Dummy.rom')],
-  ])('option is false: %s', async (datName, expectedPath) => {
-    const options = new Options({ commands: ['copy'], output: os.devNull, dirDatName: false });
-    const dat = new LogiqxDAT(new Header({ name: datName, description: 'description' }), []);
+  test.each([['name', path.join(os.devNull, 'Dummy.rom')]])(
+    'option is false: %s',
+    async (datName, expectedPath) => {
+      const options = new Options({ commands: ['copy'], output: os.devNull, dirDatName: false });
+      const dat = new LogiqxDAT(new Header({ name: datName, description: 'description' }), []);
 
-    const outputPath = OutputFactory.getPath(
-      options,
-      dat,
-      dummyGame,
-      dummyRelease,
-      dummyRom,
-      await dummyRom.toFile(),
-    );
-    expect(outputPath.format()).toEqual(expectedPath);
-  });
+      const outputPath = OutputFactory.getPath(
+        options,
+        dat,
+        dummyGame,
+        dummyRelease,
+        dummyRom,
+        await dummyRom.toFile(),
+      );
+      expect(outputPath.format()).toEqual(expectedPath);
+    },
+  );
 });
 
 describe('should respect "--dir-dat-description"', () => {
@@ -941,7 +878,11 @@ describe('should respect "--dir-dat-description"', () => {
     [undefined, path.join(os.devNull, 'Dummy.rom')],
     ['description', path.join(os.devNull, 'description', 'Dummy.rom')],
   ])('option is true: %s', async (datDescription, expectedPath) => {
-    const options = new Options({ commands: ['copy'], output: os.devNull, dirDatDescription: true });
+    const options = new Options({
+      commands: ['copy'],
+      output: os.devNull,
+      dirDatDescription: true,
+    });
     const dat = new LogiqxDAT(new Header({ name: 'name', description: datDescription }), []);
 
     const outputPath = OutputFactory.getPath(
@@ -955,22 +896,27 @@ describe('should respect "--dir-dat-description"', () => {
     expect(outputPath.format()).toEqual(expectedPath);
   });
 
-  test.each([
-    ['description', path.join(os.devNull, 'Dummy.rom')],
-  ])('option is false: %s', async (datDescription, expectedPath) => {
-    const options = new Options({ commands: ['copy'], output: os.devNull, dirDatDescription: false });
-    const dat = new LogiqxDAT(new Header({ name: 'name', description: datDescription }), []);
+  test.each([['description', path.join(os.devNull, 'Dummy.rom')]])(
+    'option is false: %s',
+    async (datDescription, expectedPath) => {
+      const options = new Options({
+        commands: ['copy'],
+        output: os.devNull,
+        dirDatDescription: false,
+      });
+      const dat = new LogiqxDAT(new Header({ name: 'name', description: datDescription }), []);
 
-    const outputPath = OutputFactory.getPath(
-      options,
-      dat,
-      dummyGame,
-      dummyRelease,
-      dummyRom,
-      await dummyRom.toFile(),
-    );
-    expect(outputPath.format()).toEqual(expectedPath);
-  });
+      const outputPath = OutputFactory.getPath(
+        options,
+        dat,
+        dummyGame,
+        dummyRelease,
+        dummyRom,
+        await dummyRom.toFile(),
+      );
+      expect(outputPath.format()).toEqual(expectedPath);
+    },
+  );
 });
 
 describe('should respect "--dir-letter"', () => {
@@ -1009,22 +955,23 @@ describe('should respect "--dir-letter"', () => {
       expect(outputPath.format()).toEqual(expectedPath);
     });
 
-    test.each([
-      ['🙂.rom', path.join(os.devNull, '🙂.rom')],
-    ])('option is false: %s', async (romName, expectedPath) => {
-      const options = new Options({ commands: ['copy'], output: os.devNull, dirLetter: false });
-      const rom = new ROM({ name: romName, size: 0, crc32: '' });
+    test.each([['🙂.rom', path.join(os.devNull, '🙂.rom')]])(
+      'option is false: %s',
+      async (romName, expectedPath) => {
+        const options = new Options({ commands: ['copy'], output: os.devNull, dirLetter: false });
+        const rom = new ROM({ name: romName, size: 0, crc32: '' });
 
-      const outputPath = OutputFactory.getPath(
-        options,
-        dummyDat,
-        dummyGame,
-        dummyRelease,
-        rom,
-        await rom.toFile(),
-      );
-      expect(outputPath.format()).toEqual(expectedPath);
-    });
+        const outputPath = OutputFactory.getPath(
+          options,
+          dummyDat,
+          dummyGame,
+          dummyRelease,
+          rom,
+          await rom.toFile(),
+        );
+        expect(outputPath.format()).toEqual(expectedPath);
+      },
+    );
   });
 
   describe('game with multiple ROMs', () => {
@@ -1045,14 +992,13 @@ describe('should respect "--dir-letter"', () => {
         dirGameSubdir: GameSubdirMode[GameSubdirMode.MULTIPLE].toLowerCase(),
       });
 
-      const outputPaths = await Promise.all(game.getRoms().map(async (rom) => OutputFactory.getPath(
-        options,
-        dummyDat,
-        game,
-        dummyRelease,
-        rom,
-        await rom.toFile(),
-      )));
+      const outputPaths = await Promise.all(
+        game
+          .getRoms()
+          .map(async (rom) =>
+            OutputFactory.getPath(options, dummyDat, game, dummyRelease, rom, await rom.toFile()),
+          ),
+      );
 
       expect(
         outputPaths.every((outputPath) => outputPath.dir === path.join(options.getOutput(), 'A')),

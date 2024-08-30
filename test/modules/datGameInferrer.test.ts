@@ -21,15 +21,18 @@ test.each([
   [['test/fixtures/roms/tar/*'], { tar: 5 }],
   [['test/fixtures/roms/zip/*'], { zip: 6 }],
   // Multiple input paths
-  [[
-    'test/fixtures/roms/headered',
-    'test/fixtures/roms/patchable/*',
-    'test/fixtures/roms/headerless/**/*',
-  ], {
-    headered: 6,
-    patchable: 9,
-    headerless: 1,
-  }],
+  [
+    [
+      'test/fixtures/roms/headered',
+      'test/fixtures/roms/patchable/*',
+      'test/fixtures/roms/headerless/**/*',
+    ],
+    {
+      headered: 6,
+      patchable: 9,
+      headerless: 1,
+    },
+  ],
 ])('should infer DATs: %s', async (input, expected) => {
   // Given
   const options = new Options({ input });

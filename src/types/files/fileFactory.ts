@@ -63,21 +63,12 @@ export default class FileFactory {
     }
   }
 
-  async fileFrom(
-    filePath: string,
-    checksumBitmask: number,
-  ): Promise<File> {
+  async fileFrom(filePath: string, checksumBitmask: number): Promise<File> {
     return this.fileCache.getOrComputeFileChecksums(filePath, checksumBitmask);
   }
 
-  async archiveFileFrom(
-    archive: Archive,
-    checksumBitmask: number,
-  ): Promise<ArchiveFile> {
-    return new ArchiveFile(
-      archive,
-      await this.fileFrom(archive.getFilePath(), checksumBitmask),
-    );
+  async archiveFileFrom(archive: Archive, checksumBitmask: number): Promise<ArchiveFile> {
+    return new ArchiveFile(archive, await this.fileFrom(archive.getFilePath(), checksumBitmask));
   }
 
   /**
@@ -148,11 +139,7 @@ export default class FileFactory {
       return undefined;
     }
 
-    return this.entriesFromArchiveExtension(
-      filePath,
-      checksumBitmask,
-      signature.getExtension(),
-    );
+    return this.entriesFromArchiveExtension(filePath, checksumBitmask, signature.getExtension());
   }
 
   static isExtensionArchive(filePath: string): boolean {

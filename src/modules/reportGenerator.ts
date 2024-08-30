@@ -30,14 +30,17 @@ export default class ReportGenerator extends Module {
 
     const reportPath = this.options.getReportOutput();
 
-    const anyGamesFoundAtAll = datStatuses
-      .some((datStatus) => datStatus.anyGamesFound(this.options));
-    const matchedFileCsvs = (await Promise.all(
-      datStatuses
-        .filter((datStatus) => datStatus.anyGamesFound(this.options) || !anyGamesFoundAtAll)
-        .sort((a, b) => a.getDATName().localeCompare(b.getDATName()))
-        .map(async (datsStatus) => datsStatus.toCsv(this.options)),
-    ))
+    const anyGamesFoundAtAll = datStatuses.some((datStatus) =>
+      datStatus.anyGamesFound(this.options),
+    );
+    const matchedFileCsvs = (
+      await Promise.all(
+        datStatuses
+          .filter((datStatus) => datStatus.anyGamesFound(this.options) || !anyGamesFoundAtAll)
+          .sort((a, b) => a.getDATName().localeCompare(b.getDATName()))
+          .map(async (datsStatus) => datsStatus.toCsv(this.options)),
+      )
+    )
       .filter((csv) => csv)
       .map((csv, idx) => {
         // Strip the CSV header from everything except the first file
@@ -47,24 +50,30 @@ export default class ReportGenerator extends Module {
         return csv.split('\n').slice(1).join('\n');
       });
 
-    const usedFilePaths = new Set(datStatuses
-      .flatMap((datStatus) => datStatus.getInputFiles())
-      .map((file) => file.getFilePath()));
-    const usedHashes = new Set(datStatuses
-      .flatMap((datStatus) => datStatus.getInputFiles())
-      .map((file) => file.hashCode()));
+    const usedFilePaths = new Set(
+      datStatuses
+        .flatMap((datStatus) => datStatus.getInputFiles())
+        .map((file) => file.getFilePath()),
+    );
+    const usedHashes = new Set(
+      datStatuses.flatMap((datStatus) => datStatus.getInputFiles()).map((file) => file.hashCode()),
+    );
 
     const duplicateFilePaths = scannedRomFiles
-      .filter((inputFile) => !usedFilePaths.has(inputFile.getFilePath())
-          && usedHashes.has(inputFile.hashCode()))
+      .filter(
+        (inputFile) =>
+          !usedFilePaths.has(inputFile.getFilePath()) && usedHashes.has(inputFile.hashCode()),
+      )
       .map((inputFile) => inputFile.getFilePath())
       .filter((inputFile) => !usedFilePaths.has(inputFile))
       .sort();
     const duplicateCsv = await DATStatus.filesToCsv(duplicateFilePaths, GameStatus.DUPLICATE);
 
     const unusedFilePaths = scannedRomFiles
-      .filter((inputFile) => !usedFilePaths.has(inputFile.getFilePath())
-          && !usedHashes.has(inputFile.hashCode()))
+      .filter(
+        (inputFile) =>
+          !usedFilePaths.has(inputFile.getFilePath()) && !usedHashes.has(inputFile.hashCode()),
+      )
       .map((inputFile) => inputFile.getFilePath())
       .filter((inputFile) => !usedFilePaths.has(inputFile))
       .sort();
@@ -74,17 +83,14 @@ export default class ReportGenerator extends Module {
 
     this.progressBar.logInfo(`writing report '${reportPath}'`);
     const reportPathDir = path.dirname(reportPath);
-    if (!await FsPoly.exists(reportPathDir)) {
+    if (!(await FsPoly.exists(reportPathDir))) {
       await FsPoly.mkdir(reportPathDir, { recursive: true });
     }
-    const rows = [
-      ...matchedFileCsvs,
-      duplicateCsv,
-      unusedCsv,
-      cleanedCsv,
-    ].filter((csv) => csv);
+    const rows = [...matchedFileCsvs, duplicateCsv, unusedCsv, cleanedCsv].filter((csv) => csv);
     await FsPoly.writeFile(reportPath, rows.join('\n'));
-    this.progressBar.logTrace(`wrote ${datStatuses.length.toLocaleString()} CSV row${datStatuses.length !== 1 ? 's' : ''}: ${reportPath}`);
+    this.progressBar.logTrace(
+      `wrote ${datStatuses.length.toLocaleString()} CSV row${datStatuses.length !== 1 ? 's' : ''}: ${reportPath}`,
+    );
 
     this.progressBar.logTrace('done generating report');
     this.progressBar.done(reportPath);

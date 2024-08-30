@@ -21,23 +21,25 @@ import FileCache from '../../../../src/types/files/fileCache.js';
 import FileFactory from '../../../../src/types/files/fileFactory.js';
 
 describe('getArchiveEntries', () => {
-  test.each([...new Set([
-    ...Zip.getExtensions(),
-    ...Tar.getExtensions(),
-    ...Rar.getExtensions(),
-    // 7zip
-    ...Gzip.getExtensions(),
-    ...SevenZip.getExtensions(),
-    ...Z.getExtensions(),
-    ...ZipSpanned.getExtensions(),
-    ...ZipX.getExtensions(),
-    // Compressed images
-    ...Cso.getExtensions(),
-    ...Dax.getExtensions(),
-    ...Zso.getExtensions(),
-    ...Chd.getExtensions(),
-    ...NkitIso.getExtensions(),
-  ])])('should throw when the file doesn\'t exist: %s', async (extension) => {
+  test.each([
+    ...new Set([
+      ...Zip.getExtensions(),
+      ...Tar.getExtensions(),
+      ...Rar.getExtensions(),
+      // 7zip
+      ...Gzip.getExtensions(),
+      ...SevenZip.getExtensions(),
+      ...Z.getExtensions(),
+      ...ZipSpanned.getExtensions(),
+      ...ZipX.getExtensions(),
+      // Compressed images
+      ...Cso.getExtensions(),
+      ...Dax.getExtensions(),
+      ...Zso.getExtensions(),
+      ...Chd.getExtensions(),
+      ...NkitIso.getExtensions(),
+    ]),
+  ])("should throw when the file doesn't exist: %s", async (extension) => {
     const tempFile = (await fsPoly.mktemp(path.join(Temp.getTempDir(), 'file'))) + extension;
     await expect(new FileFactory(new FileCache()).filesFrom(tempFile)).rejects.toThrow();
   });
@@ -69,28 +71,60 @@ describe('getArchiveEntries', () => {
     ['./test/fixtures/roms/zip/unknown.zip', 'unknown.rom', '377a7727'],
     // other
     ['./test/fixtures/roms/nkit/5bc2ce5b.nkit.iso', '5bc2ce5b.iso', '5bc2ce5b'],
-  ])('should enumerate the single file archive: %s', async (filePath, expectedEntryPath, expectedCrc) => {
-    const entries = await new FileFactory(new FileCache()).filesFrom(filePath);
-    expect(entries).toHaveLength(1);
+  ])(
+    'should enumerate the single file archive: %s',
+    async (filePath, expectedEntryPath, expectedCrc) => {
+      const entries = await new FileFactory(new FileCache()).filesFrom(filePath);
+      expect(entries).toHaveLength(1);
 
-    const entry = entries[0];
-    expect((entry as ArchiveEntry<Archive>).getEntryPath()).toEqual(expectedEntryPath);
-    expect(entry.getCrc32()).toEqual(expectedCrc);
-  });
+      const entry = entries[0];
+      expect((entry as ArchiveEntry<Archive>).getEntryPath()).toEqual(expectedEntryPath);
+      expect(entry.getCrc32()).toEqual(expectedCrc);
+    },
+  );
 
   test.each([
-    ['./test/fixtures/roms/7z/onetwothree.7z', [['1/one.rom', 'f817a89f'], ['2/two.rom', '96170874'], ['3/three.rom', 'ff46c5d8']]],
-    ['./test/fixtures/roms/rar/onetwothree.rar', [['1/one.rom', 'f817a89f'], ['2/two.rom', '96170874'], ['3/three.rom', 'ff46c5d8']]],
-    ['./test/fixtures/roms/tar/onetwothree.tar.gz', [['1/one.rom', 'f817a89f'], ['2/two.rom', '96170874'], ['3/three.rom', 'ff46c5d8']]],
-    ['./test/fixtures/roms/zip/onetwothree.zip', [['1/one.rom', 'f817a89f'], ['2/two.rom', '96170874'], ['3/three.rom', 'ff46c5d8']]],
+    [
+      './test/fixtures/roms/7z/onetwothree.7z',
+      [
+        ['1/one.rom', 'f817a89f'],
+        ['2/two.rom', '96170874'],
+        ['3/three.rom', 'ff46c5d8'],
+      ],
+    ],
+    [
+      './test/fixtures/roms/rar/onetwothree.rar',
+      [
+        ['1/one.rom', 'f817a89f'],
+        ['2/two.rom', '96170874'],
+        ['3/three.rom', 'ff46c5d8'],
+      ],
+    ],
+    [
+      './test/fixtures/roms/tar/onetwothree.tar.gz',
+      [
+        ['1/one.rom', 'f817a89f'],
+        ['2/two.rom', '96170874'],
+        ['3/three.rom', 'ff46c5d8'],
+      ],
+    ],
+    [
+      './test/fixtures/roms/zip/onetwothree.zip',
+      [
+        ['1/one.rom', 'f817a89f'],
+        ['2/two.rom', '96170874'],
+        ['3/three.rom', 'ff46c5d8'],
+      ],
+    ],
   ])('should enumerate the multi file archive: %s', async (filePath, expectedEntries) => {
     const entries = await new FileFactory(new FileCache()).filesFrom(filePath);
     expect(entries).toHaveLength(expectedEntries.length);
 
     for (const [idx, entry] of entries.entries()) {
       const expectedEntry = expectedEntries[idx];
-      expect((entry as ArchiveEntry<Archive>).getEntryPath())
-        .toEqual(path.normalize(expectedEntry[0]));
+      expect((entry as ArchiveEntry<Archive>).getEntryPath()).toEqual(
+        path.normalize(expectedEntry[0]),
+      );
       expect(entry.getCrc32()).toEqual(expectedEntry[1]);
     }
   });

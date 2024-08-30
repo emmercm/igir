@@ -27,11 +27,11 @@ export default class ROMHeader {
     SMC_GAME_DOCTOR_2: new ROMHeader(0, '47414D4520444F43544F522053462033', 512, '.smc', '.sfc'),
   };
 
-  private static readonly MAX_HEADER_LENGTH_BYTES = Object.values(ROMHeader.HEADERS)
-    .reduce((max, fileHeader) => Math.max(
-      max,
-      fileHeader.headerOffsetBytes + fileHeader.headerValue.length / 2,
-    ), 0);
+  private static readonly MAX_HEADER_LENGTH_BYTES = Object.values(ROMHeader.HEADERS).reduce(
+    (max, fileHeader) =>
+      Math.max(max, fileHeader.headerOffsetBytes + fileHeader.headerValue.length / 2),
+    0,
+  );
 
   private readonly headerOffsetBytes: number;
 
@@ -75,8 +75,10 @@ export default class ROMHeader {
   static headerFromFilename(filePath: string): ROMHeader | undefined {
     const headers = Object.values(this.HEADERS);
     for (const header of headers) {
-      if (header.headeredFileExtension.toLowerCase() === path.extname(filePath).toLowerCase()
-        || (header.headerlessFileExtension?.toLowerCase() ?? '') === path.extname(filePath).toLowerCase()
+      if (
+        header.headeredFileExtension.toLowerCase() === path.extname(filePath).toLowerCase() ||
+        (header.headerlessFileExtension?.toLowerCase() ?? '') ===
+          path.extname(filePath).toLowerCase()
       ) {
         return header;
       }
@@ -94,10 +96,7 @@ export default class ROMHeader {
 
       const chunks: Buffer[] = [];
       const resolveHeader: () => void = () => {
-        const header = Buffer.concat(chunks)
-          .subarray(start, end)
-          .toString('hex')
-          .toUpperCase();
+        const header = Buffer.concat(chunks).subarray(start, end).toString('hex').toUpperCase();
         resolve(header);
       };
 
@@ -135,8 +134,9 @@ export default class ROMHeader {
 
   @Memoize()
   getName(): string {
-    return Object.keys(ROMHeader.HEADERS)
-      .find((name) => ROMHeader.HEADERS[name] === this) as string;
+    return Object.keys(ROMHeader.HEADERS).find(
+      (name) => ROMHeader.HEADERS[name] === this,
+    ) as string;
   }
 
   getDataOffsetBytes(): number {

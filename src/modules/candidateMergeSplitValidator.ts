@@ -23,12 +23,11 @@ export default class CandidateMergeSplitValidator extends Module {
   /**
    * Validate the {@link ReleaseCandidate}s.
    */
-  validate(
-    dat: DAT,
-    parentsToCandidates: Map<Parent, ReleaseCandidate[]>,
-  ): string[] {
+  validate(dat: DAT, parentsToCandidates: Map<Parent, ReleaseCandidate[]>): string[] {
     if (parentsToCandidates.size === 0) {
-      this.progressBar.logTrace(`${dat.getNameShort()}: no parents to validate merged & split ROM sets for`);
+      this.progressBar.logTrace(
+        `${dat.getNameShort()}: no parents to validate merged & split ROM sets for`,
+      );
       return [];
     }
 
@@ -59,18 +58,18 @@ export default class CandidateMergeSplitValidator extends Module {
         let missingDependencies: string[] = [];
 
         // Validate dependent parent was found
-        if (this.options.getMergeRoms() === MergeMode.SPLIT
-          && game.isClone()
-          && !releaseCandidatesIndexed.has(game.getParent())
+        if (
+          this.options.getMergeRoms() === MergeMode.SPLIT &&
+          game.isClone() &&
+          !releaseCandidatesIndexed.has(game.getParent())
         ) {
           missingDependencies = [game.getParent(), ...missingDependencies];
         }
 
         // Validate dependent devices were found
-        if (this.options.getMergeRoms() !== MergeMode.FULLNONMERGED
-            && game instanceof Machine
-        ) {
-          const missingDeviceGames = game.getDeviceRefs()
+        if (this.options.getMergeRoms() !== MergeMode.FULLNONMERGED && game instanceof Machine) {
+          const missingDeviceGames = game
+            .getDeviceRefs()
             .map((deviceRef) => datGamesIndexed.get(deviceRef.getName()))
             .filter((deviceGame) => deviceGame !== undefined)
             // Dependent device has ROM files
@@ -89,7 +88,9 @@ export default class CandidateMergeSplitValidator extends Module {
         }
 
         if (missingDependencies.length > 0) {
-          this.progressBar.logWarn(`${dat.getNameShort()}: ${game.getName()}: missing dependent ROM set${missingDependencies.length !== 1 ? 's' : ''}: ${missingDependencies.join(', ')}`);
+          this.progressBar.logWarn(
+            `${dat.getNameShort()}: ${game.getName()}: missing dependent ROM set${missingDependencies.length !== 1 ? 's' : ''}: ${missingDependencies.join(', ')}`,
+          );
         }
         return missingDependencies;
       });

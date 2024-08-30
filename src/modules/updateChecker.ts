@@ -30,26 +30,35 @@ export default class UpdateChecker {
     }
 
     if (npmVersion && semver.lt(Package.VERSION, npmVersion)) {
-      ProgressBarCLI.log(this.logger, LogLevel.NOTICE, `An update is available for ${Package.NAME}: v${npmVersion}`);
+      ProgressBarCLI.log(
+        this.logger,
+        LogLevel.NOTICE,
+        `An update is available for ${Package.NAME}: v${npmVersion}`,
+      );
     }
   }
 
   private static async getVersion(packageName: string): Promise<string> {
     return new Promise((resolve, reject) => {
-      https.get(`https://registry.npmjs.org/${packageName}/latest`, {
-        timeout: 5000,
-      }, async (res) => {
-        const data = await BufferPoly.fromReadable(res);
-        let json;
-        try {
-          json = JSON.parse(data.toString()) || {};
-        } catch (error) {
-          reject(error);
-          return;
-        }
+      https
+        .get(
+          `https://registry.npmjs.org/${packageName}/latest`,
+          {
+            timeout: 5000,
+          },
+          async (res) => {
+            const data = await BufferPoly.fromReadable(res);
+            let json;
+            try {
+              json = JSON.parse(data.toString()) || {};
+            } catch (error) {
+              reject(error);
+              return;
+            }
 
-        resolve(json.version);
-      })
+            resolve(json.version);
+          },
+        )
         .on('error', reject)
         .on('timeout', reject);
     });

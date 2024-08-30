@@ -40,8 +40,9 @@ describe('filesFrom', () => {
   ])('%s', (filePath, expectedCount) => {
     it('should read the entries of archives with valid extensions: %s', async () => {
       const archiveEntries = await new FileFactory(new FileCache()).filesFrom(filePath);
-      expect(archiveEntries.every((archiveEntry) => archiveEntry instanceof ArchiveEntry))
-        .toEqual(true);
+      expect(archiveEntries.every((archiveEntry) => archiveEntry instanceof ArchiveEntry)).toEqual(
+        true,
+      );
       expect(archiveEntries).toHaveLength(expectedCount);
     });
 
@@ -51,8 +52,9 @@ describe('filesFrom', () => {
       await FsPoly.copyFile(filePath, tempFile);
       try {
         const archiveEntries = await new FileFactory(new FileCache()).filesFrom(tempFile);
-        expect(archiveEntries.every((archiveEntry) => archiveEntry instanceof ArchiveEntry))
-          .toEqual(true);
+        expect(
+          archiveEntries.every((archiveEntry) => archiveEntry instanceof ArchiveEntry),
+        ).toEqual(true);
         expect(archiveEntries).toHaveLength(expectedCount);
       } finally {
         await FsPoly.rm(tempFile, { force: true });

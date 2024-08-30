@@ -109,12 +109,7 @@ export default class FilePoly {
     // If the file is large, read from the open file handle
     let bytesRead = 0;
     try {
-      bytesRead = (await this.fd.read(
-        this.tempBuffer,
-        0,
-        size,
-        offset,
-      )).bytesRead;
+      bytesRead = (await this.fd.read(this.tempBuffer, 0, size, offset)).bytesRead;
     } catch {
       // NOTE(cemmer): Windows will give "EINVAL: invalid argument, read" when reading out of
       //  bounds, but other OSes don't. Swallow the error.
@@ -131,12 +126,7 @@ export default class FilePoly {
   }
 
   async writeAt(buffer: Buffer, offset: number): Promise<number> {
-    const { bytesWritten } = await this.fd.write(
-      buffer,
-      0,
-      buffer.length,
-      offset,
-    );
+    const { bytesWritten } = await this.fd.write(buffer, 0, buffer.length, offset);
 
     if (this.fileBuffer) {
       if (offset + bytesWritten > this.fileBuffer.length) {

@@ -46,8 +46,8 @@ export default class DATStatus {
 
   // eslint-disable-next-line no-spaced-func
   private readonly foundRomTypesToReleaseCandidates = new Map<
-  ROMType,
-  (ReleaseCandidate | undefined)[]
+    ROMType,
+    (ReleaseCandidate | undefined)[]
   >();
 
   private readonly incompleteRomTypesToReleaseCandidates = new Map<ROMType, ReleaseCandidate[]>();
@@ -76,8 +76,9 @@ export default class DATStatus {
             // multiple regions, but DATStatus doesn't care about regions.
             const gameReleaseCandidate = gameReleaseCandidates.find(() => true);
 
-            if (gameReleaseCandidate
-              && gameReleaseCandidate.getRomsWithFiles().length !== game.getRoms().length
+            if (
+              gameReleaseCandidate &&
+              gameReleaseCandidate.getRomsWithFiles().length !== game.getRoms().length
             ) {
               // The found ReleaseCandidate is incomplete
               DATStatus.pushValueIntoMap(
@@ -170,12 +171,11 @@ export default class DATStatus {
    * If any {@link Game} in the entire {@link DAT} was found in the input files.
    */
   anyGamesFound(options: Options): boolean {
-    return DATStatus.getAllowedTypes(options)
-      .reduce((result, romType) => {
-        const foundReleaseCandidates = this.foundRomTypesToReleaseCandidates
-          .get(romType)?.length ?? 0;
-        return result || foundReleaseCandidates > 0;
-      }, false);
+    return DATStatus.getAllowedTypes(options).reduce((result, romType) => {
+      const foundReleaseCandidates =
+        this.foundRomTypesToReleaseCandidates.get(romType)?.length ?? 0;
+      return result || foundReleaseCandidates > 0;
+    }, false);
   }
 
   /**
@@ -245,14 +245,16 @@ export default class DATStatus {
           status = GameStatus.IGNORED;
         }
 
-        const incompleteReleaseCandidate = incompleteReleaseCandidates
-          .find((rc) => rc.getGame().equals(game));
+        const incompleteReleaseCandidate = incompleteReleaseCandidates.find((rc) =>
+          rc.getGame().equals(game),
+        );
         if (incompleteReleaseCandidate) {
           status = GameStatus.INCOMPLETE;
         }
 
-        const foundReleaseCandidate = foundReleaseCandidates
-          .find((rc) => rc && rc.getGame().equals(game));
+        const foundReleaseCandidate = foundReleaseCandidates.find(
+          (rc) => rc && rc.getGame().equals(game),
+        );
         if (foundReleaseCandidate !== undefined || game.getRoms().length === 0) {
           status = GameStatus.FOUND;
         }
@@ -261,9 +263,9 @@ export default class DATStatus {
           ...(incompleteReleaseCandidate ? incompleteReleaseCandidate.getRomsWithFiles() : []),
           ...(foundReleaseCandidate ? foundReleaseCandidate.getRomsWithFiles() : []),
         ]
-          .map((romWithFiles) => (options.shouldWrite()
-            ? romWithFiles.getOutputFile()
-            : romWithFiles.getInputFile()))
+          .map((romWithFiles) =>
+            options.shouldWrite() ? romWithFiles.getOutputFile() : romWithFiles.getInputFile(),
+          )
           .map((file) => file.getFilePath())
           .reduce(ArrayPoly.reduceUnique(), []);
 
@@ -371,13 +373,17 @@ export default class DATStatus {
   private static getAllowedTypes(options: Options): ROMType[] {
     return [
       !options.getOnlyBios() && !options.getOnlyDevice() && !options.getOnlyRetail()
-        ? ROMType.GAME : undefined,
+        ? ROMType.GAME
+        : undefined,
       options.getOnlyBios() || (!options.getNoBios() && !options.getOnlyDevice())
-        ? ROMType.BIOS : undefined,
+        ? ROMType.BIOS
+        : undefined,
       options.getOnlyDevice() || (!options.getOnlyBios() && !options.getNoDevice())
-        ? ROMType.DEVICE : undefined,
+        ? ROMType.DEVICE
+        : undefined,
       options.getOnlyRetail() || (!options.getOnlyBios() && !options.getOnlyDevice())
-        ? ROMType.RETAIL : undefined,
+        ? ROMType.RETAIL
+        : undefined,
       ROMType.PATCHED,
     ].filter((romType) => romType !== undefined);
   }

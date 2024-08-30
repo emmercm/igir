@@ -1,40 +1,40 @@
 import ExpectedError from '../../expectedError.js';
 
 export interface DATProps extends CMProObject {
-  clrmamepro?: ClrMameProProps,
-  game?: GameProps | GameProps[],
-  resource?: ResourceProps | ResourceProps[],
+  clrmamepro?: ClrMameProProps;
+  game?: GameProps | GameProps[];
+  resource?: ResourceProps | ResourceProps[];
 }
 
 export interface ClrMameProProps extends CMProObject {
-  name?: string,
-  description?: string,
-  category?: string,
-  version?: string,
-  forcemerging?: 'none' | 'split' | 'full',
-  forcezipping?: 'yes' | 'no',
-  sampleOf?: string,
+  name?: string;
+  description?: string;
+  category?: string;
+  version?: string;
+  forcemerging?: 'none' | 'split' | 'full';
+  forcezipping?: 'yes' | 'no';
+  sampleOf?: string;
   // NON-STANDARD PROPERTIES
-  date?: string,
-  author?: string,
-  homepage?: string,
-  url?: string,
-  comment?: string,
+  date?: string;
+  author?: string;
+  homepage?: string;
+  url?: string;
+  comment?: string;
 }
 
 export interface GameProps extends CMProObject {
-  name?: string,
-  description?: string,
-  year?: string,
-  manufacturer?: string,
-  cloneof?: string,
-  romof?: string,
-  sampleof?: string,
-  rom?: ROMProps | ROMProps[],
-  disk?: DiskProps | DiskProps[],
-  sample?: SampleProps | SampleProps[],
+  name?: string;
+  description?: string;
+  year?: string;
+  manufacturer?: string;
+  cloneof?: string;
+  romof?: string;
+  sampleof?: string;
+  rom?: ROMProps | ROMProps[];
+  disk?: DiskProps | DiskProps[];
+  sample?: SampleProps | SampleProps[];
   // NON-STANDARD PROPERTIES
-  comment?: string,
+  comment?: string;
   // serial?: string,
   // publisher?: string,
   // releaseyear?: string,
@@ -42,17 +42,17 @@ export interface GameProps extends CMProObject {
   // developer?: string,
   // users?: string,
   // esrbrating?: string,
-  genre?: string,
+  genre?: string;
 }
 
 export interface ROMProps extends CMProObject {
-  name?: string,
+  name?: string;
   // merge?: string,
-  size?: string,
-  crc?: string,
+  size?: string;
+  crc?: string;
   // flags?: string,
-  md5?: string,
-  sha1?: string,
+  md5?: string;
+  sha1?: string;
   // NON-STANDARD PROPERTIES
   // serial?: string,
 }
@@ -60,7 +60,7 @@ export interface ROMProps extends CMProObject {
 export interface DiskProps extends ROMProps {}
 
 export interface SampleProps extends CMProObject {
-  name: string,
+  name: string;
 }
 
 export interface ResourceProps extends GameProps {}

@@ -8,11 +8,11 @@ import { ChecksumProps } from '../files/fileChecksums.js';
 type ROMStatus = 'baddump' | 'nodump' | 'good';
 
 export interface ROMProps extends ChecksumProps {
-  readonly name: string,
-  readonly size: number,
-  readonly status?: ROMStatus,
-  readonly merge?: string,
-  readonly bios?: string,
+  readonly name: string;
+  readonly size: number;
+  readonly status?: ROMStatus;
+  readonly merge?: string;
+  readonly bios?: string;
 }
 
 /**
@@ -162,9 +162,8 @@ export default class ROM implements ROMProps {
    * A string hash code to uniquely identify this {@link ROM}.
    */
   hashCode(): string {
-    return this.getSha256()
-      ?? this.getSha1()
-      ?? this.getMd5()
-      ?? `${this.getCrc32()}|${this.getSize()}`;
+    return (
+      this.getSha256() ?? this.getSha1() ?? this.getMd5() ?? `${this.getCrc32()}|${this.getSize()}`
+    );
   }
 }

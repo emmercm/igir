@@ -16,10 +16,7 @@ export default class CandidateValidator extends Module {
   /**
    * Validate the {@link ReleaseCandidate}s.
    */
-  validate(
-    dat: DAT,
-    parentsToCandidates: Map<Parent, ReleaseCandidate[]>,
-  ): ReleaseCandidate[] {
+  validate(dat: DAT, parentsToCandidates: Map<Parent, ReleaseCandidate[]>): ReleaseCandidate[] {
     if (parentsToCandidates.size === 0) {
       this.progressBar.logTrace(`${dat.getNameShort()}: no parents to validate candidates for`);
       return [];
@@ -66,7 +63,9 @@ export default class CandidateValidator extends Module {
         }
 
         let message = `${dat.getNameShort()}: multiple games writing to the same output path: ${outputPath}`;
-        uniqueCandidates.forEach((candidate) => { message += `\n  ${candidate.getName()}`; });
+        uniqueCandidates.forEach((candidate) => {
+          message += `\n  ${candidate.getName()}`;
+        });
         this.progressBar.logError(message);
         return true;
       })

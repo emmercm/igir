@@ -1,6 +1,4 @@
-import {
-  Expose, plainToInstance, Transform, Type,
-} from 'class-transformer';
+import { Expose, plainToInstance, Transform, Type } from 'class-transformer';
 
 import DAT from '../dat.js';
 import Game from '../game.js';
@@ -38,8 +36,7 @@ export default class MameDAT extends DAT {
     return plainToInstance(MameDAT, obj, {
       enableImplicitConversion: true,
       excludeExtraneousValues: true,
-    })
-      .generateGameNamesToParents();
+    }).generateGameNamesToParents();
   }
 
   getHeader(): Header {

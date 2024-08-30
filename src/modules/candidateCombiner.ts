@@ -52,23 +52,24 @@ export default class CandidateCombiner extends Module {
     return new Map([[parent, [releaseCandidate]]]);
   }
 
-  private static buildGame(
-    dat: DAT,
-    parentsToCandidates: Map<Parent, ReleaseCandidate[]>,
-  ): Game {
+  private static buildGame(dat: DAT, parentsToCandidates: Map<Parent, ReleaseCandidate[]>): Game {
     const name = dat.getNameShort();
 
     const roms = [...parentsToCandidates.values()]
       .flat()
       .flatMap((releaseCandidate) => releaseCandidate.getRomsWithFiles())
       .map((romWithFiles) => romWithFiles.getRom());
-    const uniqueRoms = [...roms.reduce((map, rom) => {
-      const key = rom.getName();
-      if (!map.has(key)) {
-        map.set(key, rom);
-      }
-      return map;
-    }, new Map<string, ROM>()).values()];
+    const uniqueRoms = [
+      ...roms
+        .reduce((map, rom) => {
+          const key = rom.getName();
+          if (!map.has(key)) {
+            map.set(key, rom);
+          }
+          return map;
+        }, new Map<string, ROM>())
+        .values(),
+    ];
 
     return new Game({
       name,
@@ -81,30 +82,28 @@ export default class CandidateCombiner extends Module {
     game: Game,
     parentsToCandidates: Map<Parent, ReleaseCandidate[]>,
   ): ReleaseCandidate {
-    const romsWithFiles = [...parentsToCandidates.values()]
-      .flat()
-      .flatMap((releaseCandidate) => releaseCandidate.getRomsWithFiles()
-        .map((romWithFiles) => {
-          // If the output isn't an archive then it must have been excluded (e.g. --zip-exclude),
-          //  don't manipulate it.
-          const outputFile = romWithFiles.getOutputFile();
-          if (!(outputFile instanceof ArchiveEntry)) {
-            return romWithFiles;
-          }
+    const romsWithFiles = [...parentsToCandidates.values()].flat().flatMap((releaseCandidate) =>
+      releaseCandidate.getRomsWithFiles().map((romWithFiles) => {
+        // If the output isn't an archive then it must have been excluded (e.g. --zip-exclude),
+        //  don't manipulate it.
+        const outputFile = romWithFiles.getOutputFile();
+        if (!(outputFile instanceof ArchiveEntry)) {
+          return romWithFiles;
+        }
 
-          // Combine all output ArchiveEntry to a single archive of the DAT name
-          let outputEntry = outputFile.withFilePath(dat.getNameShort());
+        // Combine all output ArchiveEntry to a single archive of the DAT name
+        let outputEntry = outputFile.withFilePath(dat.getNameShort());
 
-          // If the game has multiple ROMs, then group them in a folder in the archive
-          if (releaseCandidate.getGame().getRoms().length > 1) {
-            outputEntry = outputEntry.withEntryPath(path.join(
-              releaseCandidate.getGame().getName(),
-              outputEntry.getEntryPath(),
-            ));
-          }
+        // If the game has multiple ROMs, then group them in a folder in the archive
+        if (releaseCandidate.getGame().getRoms().length > 1) {
+          outputEntry = outputEntry.withEntryPath(
+            path.join(releaseCandidate.getGame().getName(), outputEntry.getEntryPath()),
+          );
+        }
 
-          return romWithFiles.withOutputFile(outputEntry);
-        }));
+        return romWithFiles.withOutputFile(outputEntry);
+      }),
+    );
 
     return new ReleaseCandidate(game, undefined, romsWithFiles);
   }

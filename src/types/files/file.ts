@@ -3,9 +3,7 @@ import https from 'node:https';
 import path from 'node:path';
 import { Readable } from 'node:stream';
 
-import {
-  Exclude, Expose, instanceToPlain, plainToClassFromExist,
-} from 'class-transformer';
+import { Exclude, Expose, instanceToPlain, plainToClassFromExist } from 'class-transformer';
 
 import Defaults from '../../globals/defaults.js';
 import Temp from '../../globals/temp.js';
@@ -69,13 +67,25 @@ export default class File implements FileProps {
     this.size = fileProps.size ?? 0;
     this.checksumBitmask = fileProps.checksumBitmask;
     this.crc32 = fileProps.crc32?.toLowerCase().replace(/^0x/, '').padStart(8, '0');
-    this.crc32WithoutHeader = fileProps.crc32WithoutHeader?.toLowerCase().replace(/^0x/, '').padStart(8, '0');
+    this.crc32WithoutHeader = fileProps.crc32WithoutHeader
+      ?.toLowerCase()
+      .replace(/^0x/, '')
+      .padStart(8, '0');
     this.md5 = fileProps.md5?.toLowerCase().replace(/^0x/, '').padStart(32, '0');
-    this.md5WithoutHeader = fileProps.md5WithoutHeader?.toLowerCase().replace(/^0x/, '').padStart(32, '0');
+    this.md5WithoutHeader = fileProps.md5WithoutHeader
+      ?.toLowerCase()
+      .replace(/^0x/, '')
+      .padStart(32, '0');
     this.sha1 = fileProps.sha1?.toLowerCase().replace(/^0x/, '').padStart(40, '0');
-    this.sha1WithoutHeader = fileProps.sha1WithoutHeader?.toLowerCase().replace(/^0x/, '').padStart(40, '0');
+    this.sha1WithoutHeader = fileProps.sha1WithoutHeader
+      ?.toLowerCase()
+      .replace(/^0x/, '')
+      .padStart(40, '0');
     this.sha256 = fileProps.sha256?.toLowerCase().replace(/^0x/, '').padStart(64, '0');
-    this.sha256WithoutHeader = fileProps.sha256WithoutHeader?.toLowerCase().replace(/^0x/, '').padStart(64, '0');
+    this.sha256WithoutHeader = fileProps.sha256WithoutHeader
+      ?.toLowerCase()
+      .replace(/^0x/, '')
+      .padStart(64, '0');
     this.symlinkSource = fileProps.symlinkSource;
     this.fileHeader = fileProps.fileHeader;
     this.patch = fileProps.patch;
@@ -91,9 +101,7 @@ export default class File implements FileProps {
       ? fileProps.crc32WithoutHeader
       : fileProps.crc32;
     let finalMd5WithHeader = fileProps.md5;
-    let finalMd5WithoutHeader = fileProps.fileHeader
-      ? fileProps.md5WithoutHeader
-      : fileProps.md5;
+    let finalMd5WithoutHeader = fileProps.fileHeader ? fileProps.md5WithoutHeader : fileProps.md5;
     let finalSha1WithHeader = fileProps.sha1;
     let finalSha1WithoutHeader = fileProps.fileHeader
       ? fileProps.sha1WithoutHeader
@@ -111,15 +119,13 @@ export default class File implements FileProps {
       }
 
       // Calculate checksums
-      if ((!finalCrcWithHeader && (checksumBitmask & ChecksumBitmask.CRC32))
-        || (!finalMd5WithHeader && (checksumBitmask & ChecksumBitmask.MD5))
-        || (!finalSha1WithHeader && (checksumBitmask & ChecksumBitmask.SHA1))
-        || (!finalSha256WithHeader && (checksumBitmask & ChecksumBitmask.SHA256))
+      if (
+        (!finalCrcWithHeader && checksumBitmask & ChecksumBitmask.CRC32) ||
+        (!finalMd5WithHeader && checksumBitmask & ChecksumBitmask.MD5) ||
+        (!finalSha1WithHeader && checksumBitmask & ChecksumBitmask.SHA1) ||
+        (!finalSha256WithHeader && checksumBitmask & ChecksumBitmask.SHA256)
       ) {
-        const headeredChecksums = await FileChecksums.hashFile(
-          fileProps.filePath,
-          checksumBitmask,
-        );
+        const headeredChecksums = await FileChecksums.hashFile(fileProps.filePath, checksumBitmask);
         finalCrcWithHeader = headeredChecksums.crc32 ?? finalCrcWithHeader;
         finalMd5WithHeader = headeredChecksums.md5 ?? finalMd5WithHeader;
         finalSha1WithHeader = headeredChecksums.sha1 ?? finalSha1WithHeader;
@@ -169,14 +175,10 @@ export default class File implements FileProps {
   }
 
   static async fileOfObject(filePath: string, obj: FileProps): Promise<File> {
-    const deserialized = plainToClassFromExist(
-      new File({ filePath }),
-      obj,
-      {
-        enableImplicitConversion: true,
-        excludeExtraneousValues: true,
-      },
-    );
+    const deserialized = plainToClassFromExist(new File({ filePath }), obj, {
+      enableImplicitConversion: true,
+      excludeExtraneousValues: true,
+    });
     return this.fileOf(deserialized);
   }
 
@@ -253,10 +255,13 @@ export default class File implements FileProps {
   }
 
   public getChecksumBitmask(): number {
-    return this.checksumBitmask ?? (this.getCrc32()?.replace(/^0+|0+$/, '') ? ChecksumBitmask.CRC32 : 0)
-      | (this.getMd5()?.replace(/^0+|0+$/, '') ? ChecksumBitmask.MD5 : 0)
-      | (this.getSha1()?.replace(/^0+|0+$/, '') ? ChecksumBitmask.SHA1 : 0)
-      | (this.getSha256()?.replace(/^0+|0+$/, '') ? ChecksumBitmask.SHA256 : 0);
+    return (
+      this.checksumBitmask ??
+      (this.getCrc32()?.replace(/^0+|0+$/, '') ? ChecksumBitmask.CRC32 : 0) |
+        (this.getMd5()?.replace(/^0+|0+$/, '') ? ChecksumBitmask.MD5 : 0) |
+        (this.getSha1()?.replace(/^0+|0+$/, '') ? ChecksumBitmask.SHA1 : 0) |
+        (this.getSha256()?.replace(/^0+|0+$/, '') ? ChecksumBitmask.SHA256 : 0)
+    );
   }
 
   // Other functions
@@ -265,15 +270,12 @@ export default class File implements FileProps {
     await fsPoly.copyFile(this.getFilePath(), destinationPath);
   }
 
-  async extractToTempFile<T>(
-    callback: (tempFile: string) => (T | Promise<T>),
-  ): Promise<T> {
-    const tempFile = await fsPoly.mktemp(path.join(
-      Temp.getTempDir(),
-      path.basename(this.getFilePath()),
-    ));
+  async extractToTempFile<T>(callback: (tempFile: string) => T | Promise<T>): Promise<T> {
+    const tempFile = await fsPoly.mktemp(
+      path.join(Temp.getTempDir(), path.basename(this.getFilePath())),
+    );
     const tempDir = path.dirname(tempFile);
-    if (!await fsPoly.exists(tempDir)) {
+    if (!(await fsPoly.exists(tempDir))) {
       await fsPoly.mkdir(tempDir, { recursive: true });
     }
     await fsPoly.copyFile(this.getFilePath(), tempFile);
@@ -287,7 +289,7 @@ export default class File implements FileProps {
 
   async extractToTempFilePoly<T>(
     flags: OpenMode,
-    callback: (filePoly: FilePoly) => (T | Promise<T>),
+    callback: (filePoly: FilePoly) => T | Promise<T>,
   ): Promise<T> {
     return this.extractToTempFile(async (tempFile) => {
       const filePoly = await FilePoly.fileFrom(tempFile, flags);
@@ -314,22 +316,22 @@ export default class File implements FileProps {
     }
 
     // Complex case: create a temp file with the header removed
-    const tempFile = await fsPoly.mktemp(path.join(
-      Temp.getTempDir(),
-      path.basename(this.getExtractedFilePath()),
-    ));
+    const tempFile = await fsPoly.mktemp(
+      path.join(Temp.getTempDir(), path.basename(this.getExtractedFilePath())),
+    );
     if (patch) {
       // Create a patched temp file, then copy it without removing its header
       await patch.createPatchedFile(this, tempFile);
       try {
         return await File.createStreamFromFile(
           tempFile,
-          async (stream) => new Promise((resolve, reject) => {
-            const writeStream = fs.createWriteStream(destinationPath);
-            writeStream.on('close', resolve);
-            writeStream.on('error', reject);
-            stream.pipe(writeStream);
-          }),
+          async (stream) =>
+            new Promise((resolve, reject) => {
+              const writeStream = fs.createWriteStream(destinationPath);
+              writeStream.on('close', resolve);
+              writeStream.on('error', reject);
+              stream.pipe(writeStream);
+            }),
           start,
         );
       } finally {
@@ -337,24 +339,23 @@ export default class File implements FileProps {
       }
     }
     // Extract this file removing its header
-    return this.createReadStream(async (stream) => new Promise((resolve, reject) => {
-      const writeStream = fs.createWriteStream(destinationPath);
-      writeStream.on('close', resolve);
-      writeStream.on('error', reject);
-      stream.pipe(writeStream);
-    }), start);
+    return this.createReadStream(
+      async (stream) =>
+        new Promise((resolve, reject) => {
+          const writeStream = fs.createWriteStream(destinationPath);
+          writeStream.on('close', resolve);
+          writeStream.on('error', reject);
+          stream.pipe(writeStream);
+        }),
+      start,
+    );
   }
 
-  async createReadStream<T>(
-    callback: (stream: Readable) => (T | Promise<T>),
-    start = 0,
-  ): Promise<T> {
+  async createReadStream<T>(callback: (stream: Readable) => T | Promise<T>, start = 0): Promise<T> {
     return File.createStreamFromFile(this.getFilePath(), callback, start);
   }
 
-  async createPatchedReadStream<T>(
-    callback: (stream: Readable) => (T | Promise<T>),
-  ): Promise<T> {
+  async createPatchedReadStream<T>(callback: (stream: Readable) => T | Promise<T>): Promise<T> {
     const start = this.getFileHeader()?.getDataOffsetBytes() ?? 0;
     const patch = this.getPatch();
 
@@ -364,10 +365,9 @@ export default class File implements FileProps {
     }
 
     // Complex case: create a temp patched file and then create read stream at an offset
-    const tempFile = await fsPoly.mktemp(path.join(
-      Temp.getTempDir(),
-      path.basename(this.getExtractedFilePath()),
-    ));
+    const tempFile = await fsPoly.mktemp(
+      path.join(Temp.getTempDir(), path.basename(this.getExtractedFilePath())),
+    );
     try {
       await patch.createPatchedFile(this, tempFile);
       return await File.createStreamFromFile(tempFile, callback, start);
@@ -378,7 +378,7 @@ export default class File implements FileProps {
 
   static async createStreamFromFile<T>(
     filePath: PathLike,
-    callback: (stream: Readable) => (Promise<T> | T),
+    callback: (stream: Readable) => Promise<T> | T,
     start?: number,
     end?: number,
   ): Promise<T> {
@@ -400,34 +400,41 @@ export default class File implements FileProps {
     }
 
     const fileDir = path.dirname(filePath);
-    if (!await fsPoly.exists(fileDir)) {
+    if (!(await fsPoly.exists(fileDir))) {
       await fsPoly.mkdir(fileDir, { recursive: true });
     }
 
     return new Promise((resolve, reject) => {
-      https.get(this.getFilePath(), {
-        timeout: 30_000,
-      }, (res) => {
-        if (res.statusCode !== undefined
-          && res.statusCode >= 300 && res.statusCode < 400
-          && res.headers.location
-        ) {
-          // Handle redirects
-          File.fileOf({ filePath: res.headers.location })
-            .then(async (file) => file.downloadToPath(filePath))
-            .then(resolve)
-            .catch(reject);
-          res.destroy();
-          return;
-        }
+      https
+        .get(
+          this.getFilePath(),
+          {
+            timeout: 30_000,
+          },
+          (res) => {
+            if (
+              res.statusCode !== undefined &&
+              res.statusCode >= 300 &&
+              res.statusCode < 400 &&
+              res.headers.location
+            ) {
+              // Handle redirects
+              File.fileOf({ filePath: res.headers.location })
+                .then(async (file) => file.downloadToPath(filePath))
+                .then(resolve)
+                .catch(reject);
+              res.destroy();
+              return;
+            }
 
-        const writeStream = fs.createWriteStream(filePath);
-        res.pipe(writeStream);
-        writeStream.on('finish', async () => {
-          writeStream.close();
-          resolve(await File.fileOf({ filePath }, this.getChecksumBitmask()));
-        });
-      })
+            const writeStream = fs.createWriteStream(filePath);
+            res.pipe(writeStream);
+            writeStream.on('finish', async () => {
+              writeStream.close();
+              resolve(await File.fileOf({ filePath }, this.getChecksumBitmask()));
+            });
+          },
+        )
         .on('error', reject)
         .on('timeout', reject);
     });
@@ -460,11 +467,14 @@ export default class File implements FileProps {
     if (fileHeader === this.fileHeader) {
       return this;
     }
-    return File.fileOf({
-      ...this,
-      fileHeader,
-      patch: undefined, // don't allow a patch
-    }, this.getChecksumBitmask());
+    return File.fileOf(
+      {
+        ...this,
+        fileHeader,
+        patch: undefined, // don't allow a patch
+      },
+      this.getChecksumBitmask(),
+    );
   }
 
   withoutFileHeader(): File {
@@ -513,18 +523,19 @@ export default class File implements FileProps {
    * A string hash code to uniquely identify this {@link File}.
    */
   hashCode(): string {
-    return this.getSha256()
-      ?? this.getSha1()
-      ?? this.getMd5()
-      ?? `${this.getCrc32()}|${this.getSize()}`;
+    return (
+      this.getSha256() ?? this.getSha1() ?? this.getMd5() ?? `${this.getCrc32()}|${this.getSize()}`
+    );
   }
 
   equals(other: File): boolean {
     if (this === other) {
       return true;
     }
-    return this.getFilePath() === other.getFilePath()
-        && this.hashCode() === other.hashCode()
-        && this.getFileHeader() === other.getFileHeader();
+    return (
+      this.getFilePath() === other.getFilePath() &&
+      this.hashCode() === other.hashCode() &&
+      this.getFileHeader() === other.getFileHeader()
+    );
   }
 }

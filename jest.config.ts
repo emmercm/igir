@@ -12,8 +12,7 @@ import { JestConfigWithTsJest } from 'ts-jest';
   const packagePath = path.join(modulePath, 'package.json');
   const packageJson = JSON.parse(fs.readFileSync(packagePath).toString());
 
-  packageJson.main = packageJson.main
-    ?? packageJson.exports['.'].import;
+  packageJson.main = packageJson.main ?? packageJson.exports['.'].import;
   delete packageJson.exports;
 
   fs.writeFileSync(packagePath, JSON.stringify(packageJson, undefined, 2));

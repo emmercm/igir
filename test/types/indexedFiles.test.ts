@@ -49,30 +49,86 @@ describe('findFiles', () => {
 
   it('should find files based on CRC32', async () => {
     const indexedFiles = IndexedFiles.fromFiles(await Promise.all(filePromises));
-    expect(indexedFiles.findFiles(new ROM({ name: '', size: 1, crc32: '11111111' }))).toHaveLength(1);
-    expect(indexedFiles.findFiles(new ROM({ name: '', size: 2, crc32: '22222222' }))).toHaveLength(1);
-    expect(indexedFiles.findFiles(new ROM({ name: '', size: 999_999, crc32: '22222222' }))).toBeUndefined();
-    expect(indexedFiles.findFiles(new ROM({ name: '', size: 0, crc32: 'FFFFFFFF' }))).toBeUndefined();
+    expect(indexedFiles.findFiles(new ROM({ name: '', size: 1, crc32: '11111111' }))).toHaveLength(
+      1,
+    );
+    expect(indexedFiles.findFiles(new ROM({ name: '', size: 2, crc32: '22222222' }))).toHaveLength(
+      1,
+    );
+    expect(
+      indexedFiles.findFiles(new ROM({ name: '', size: 999_999, crc32: '22222222' })),
+    ).toBeUndefined();
+    expect(
+      indexedFiles.findFiles(new ROM({ name: '', size: 0, crc32: 'FFFFFFFF' })),
+    ).toBeUndefined();
   });
 
   it('should find files based on MD5', async () => {
     const indexedFiles = IndexedFiles.fromFiles(await Promise.all(filePromises));
-    expect(indexedFiles.findFiles(new ROM({ name: '', size: 0, md5: '33333333333333333333333333333333' }))).toHaveLength(1);
-    expect(indexedFiles.findFiles(new ROM({ name: '', size: 0, md5: '44444444444444444444444444444444' }))).toHaveLength(1);
-    expect(indexedFiles.findFiles(new ROM({ name: '', size: 0, md5: 'FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF' }))).toBeUndefined();
+    expect(
+      indexedFiles.findFiles(
+        new ROM({ name: '', size: 0, md5: '33333333333333333333333333333333' }),
+      ),
+    ).toHaveLength(1);
+    expect(
+      indexedFiles.findFiles(
+        new ROM({ name: '', size: 0, md5: '44444444444444444444444444444444' }),
+      ),
+    ).toHaveLength(1);
+    expect(
+      indexedFiles.findFiles(
+        new ROM({ name: '', size: 0, md5: 'FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF' }),
+      ),
+    ).toBeUndefined();
   });
 
   it('should find files based on SHA1', async () => {
     const indexedFiles = IndexedFiles.fromFiles(await Promise.all(filePromises));
-    expect(indexedFiles.findFiles(new ROM({ name: '', size: 0, sha1: '4444444444444444444444444444444444444444' }))).toHaveLength(1);
-    expect(indexedFiles.findFiles(new ROM({ name: '', size: 0, sha1: '5555555555555555555555555555555555555555' }))).toHaveLength(1);
-    expect(indexedFiles.findFiles(new ROM({ name: '', size: 0, sha1: 'FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF' }))).toBeUndefined();
+    expect(
+      indexedFiles.findFiles(
+        new ROM({ name: '', size: 0, sha1: '4444444444444444444444444444444444444444' }),
+      ),
+    ).toHaveLength(1);
+    expect(
+      indexedFiles.findFiles(
+        new ROM({ name: '', size: 0, sha1: '5555555555555555555555555555555555555555' }),
+      ),
+    ).toHaveLength(1);
+    expect(
+      indexedFiles.findFiles(
+        new ROM({ name: '', size: 0, sha1: 'FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF' }),
+      ),
+    ).toBeUndefined();
   });
 
   it('should find files based on SHA256', async () => {
     const indexedFiles = IndexedFiles.fromFiles(await Promise.all(filePromises));
-    expect(indexedFiles.findFiles(new ROM({ name: '', size: 0, sha256: '6666666666666666666666666666666666666666666666666666666666666666' }))).toHaveLength(1);
-    expect(indexedFiles.findFiles(new ROM({ name: '', size: 0, sha256: '7777777777777777777777777777777777777777777777777777777777777777' }))).toHaveLength(1);
-    expect(indexedFiles.findFiles(new ROM({ name: '', size: 0, sha256: 'FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF' }))).toBeUndefined();
+    expect(
+      indexedFiles.findFiles(
+        new ROM({
+          name: '',
+          size: 0,
+          sha256: '6666666666666666666666666666666666666666666666666666666666666666',
+        }),
+      ),
+    ).toHaveLength(1);
+    expect(
+      indexedFiles.findFiles(
+        new ROM({
+          name: '',
+          size: 0,
+          sha256: '7777777777777777777777777777777777777777777777777777777777777777',
+        }),
+      ),
+    ).toHaveLength(1);
+    expect(
+      indexedFiles.findFiles(
+        new ROM({
+          name: '',
+          size: 0,
+          sha256: 'FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF',
+        }),
+      ),
+    ).toBeUndefined();
   });
 });

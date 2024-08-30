@@ -1,7 +1,5 @@
 import crypto from 'node:crypto';
-import fs, {
-  MakeDirectoryOptions, ObjectEncodingOptions, PathLike, RmOptions,
-} from 'node:fs';
+import fs, { MakeDirectoryOptions, ObjectEncodingOptions, PathLike, RmOptions } from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import util from 'node:util';
@@ -94,10 +92,13 @@ export default class FsPoly {
       .filter((filePath) => isNotJunk(path.basename(filePath)))
       .map((filePath) => path.join(dirPath, filePath));
 
-    return (await Promise.all(
-      readDir.map(async (filePath) => (await this.isDirectory(filePath) ? filePath : undefined)),
-    ))
-      .filter((childDir) => childDir !== undefined);
+    return (
+      await Promise.all(
+        readDir.map(async (filePath) =>
+          (await this.isDirectory(filePath)) ? filePath : undefined,
+        ),
+      )
+    ).filter((childDir) => childDir !== undefined);
   }
 
   static diskResolved(filePath: string): string | undefined {
@@ -107,12 +108,13 @@ export default class FsPoly {
 
   @Memoize()
   private static disksSync(): string[] {
-    return FsPoly.DRIVES
-      .filter((drive) => drive.available > 0)
-      .map((drive) => drive.mounted)
-      .filter((mountPath) => mountPath !== '/')
-      // Sort by mount points with the deepest number of subdirectories first
-      .sort((a, b) => b.split(/[\\/]/).length - a.split(/[\\/]/).length);
+    return (
+      FsPoly.DRIVES.filter((drive) => drive.available > 0)
+        .map((drive) => drive.mounted)
+        .filter((mountPath) => mountPath !== '/')
+        // Sort by mount points with the deepest number of subdirectories first
+        .sort((a, b) => b.split(/[\\/]/).length - a.split(/[\\/]/).length)
+    );
   }
 
   static async exists(pathLike: PathLike): Promise<boolean> {
@@ -141,7 +143,7 @@ export default class FsPoly {
 
   static async isDirectory(pathLike: string): Promise<boolean> {
     try {
-      const lstat = (await fs.promises.lstat(pathLike));
+      const lstat = await fs.promises.lstat(pathLike);
       if (lstat.isSymbolicLink()) {
         const link = await this.readlinkResolved(pathLike);
         return await this.isDirectory(link);
@@ -198,7 +200,9 @@ export default class FsPoly {
       // Assume 'false' by default
       return false;
     }
-    return filePathDrive.filesystem.replace(/[\\/]/g, path.sep).startsWith(`${path.sep}${path.sep}`);
+    return filePathDrive.filesystem
+      .replace(/[\\/]/g, path.sep)
+      .startsWith(`${path.sep}${path.sep}`);
   }
 
   static async isSymlink(pathLike: PathLike): Promise<boolean> {
@@ -273,7 +277,7 @@ export default class FsPoly {
     for (let i = 0; i < 10; i += 1) {
       const randomExtension = crypto.randomBytes(4).readUInt32LE().toString(36);
       const filePath = `${prefix.replace(/\.+$/, '')}.${randomExtension}`;
-      if (!await this.exists(filePath)) {
+      if (!(await this.exists(filePath))) {
         return filePath;
       }
     }
@@ -311,7 +315,7 @@ export default class FsPoly {
   }
 
   static async readlink(pathLike: PathLike): Promise<string> {
-    if (!await this.isSymlink(pathLike)) {
+    if (!(await this.isSymlink(pathLike))) {
       throw new ExpectedError(`can't readlink of non-symlink: ${pathLike}`);
     }
     return fs.promises.readlink(pathLike);
@@ -341,7 +345,7 @@ export default class FsPoly {
   }
 
   static async realpath(pathLike: PathLike): Promise<string> {
-    if (!await this.exists(pathLike)) {
+    if (!(await this.exists(pathLike))) {
       throw new ExpectedError(`can't get realpath of non-existent path: ${pathLike}`);
     }
     return fs.promises.realpath(pathLike);
@@ -428,10 +432,7 @@ export default class FsPoly {
     // path.resolve() won't resolve these fully, so we need the OS to resolve them in order to
     // generate valid relative paths
     const realTarget = await this.realpath(target);
-    const realLink = path.join(
-      await this.realpath(path.dirname(link)),
-      path.basename(link),
-    );
+    const realLink = path.join(await this.realpath(path.dirname(link)), path.basename(link));
     return path.relative(path.dirname(realLink), realTarget);
   }
 
@@ -441,7 +442,7 @@ export default class FsPoly {
 
   static async touch(filePath: string): Promise<void> {
     const dirname = path.dirname(filePath);
-    if (!await this.exists(dirname)) {
+    if (!(await this.exists(dirname))) {
       await this.mkdir(dirname, { recursive: true });
     }
 
@@ -460,16 +461,21 @@ export default class FsPoly {
 
     let entries: fs.Dirent[];
     try {
-      entries = (await fs.promises.readdir(pathLike, { withFileTypes: true }))
-        .filter((entry) => isNotJunk(path.basename(entry.name)));
+      entries = (await fs.promises.readdir(pathLike, { withFileTypes: true })).filter((entry) =>
+        isNotJunk(path.basename(entry.name)),
+      );
     } catch {
       return [];
     }
 
-    const entryIsDirectory = await Promise.all(entries.map(async (entry) => {
-      const fullPath = path.join(pathLike.toString(), entry.name);
-      return entry.isDirectory() || (entry.isSymbolicLink() && await this.isDirectory(fullPath));
-    }));
+    const entryIsDirectory = await Promise.all(
+      entries.map(async (entry) => {
+        const fullPath = path.join(pathLike.toString(), entry.name);
+        return (
+          entry.isDirectory() || (entry.isSymbolicLink() && (await this.isDirectory(fullPath)))
+        );
+      }),
+    );
 
     // Depth-first search directories first
     const directories = entries

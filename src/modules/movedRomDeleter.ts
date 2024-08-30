@@ -45,26 +45,38 @@ export default class MovedROMDeleter extends Module {
     );
 
     const existSemaphore = new Semaphore(Defaults.OUTPUT_CLEANER_BATCH_SIZE);
-    const existingFilePathsCheck = await Promise.all(filePathsToDelete
-      .map(async (filePath) => existSemaphore.runExclusive(async () => fsPoly.exists(filePath))));
-    const existingFilePaths = filePathsToDelete
-      .filter((filePath, idx) => existingFilePathsCheck.at(idx));
+    const existingFilePathsCheck = await Promise.all(
+      filePathsToDelete.map(async (filePath) =>
+        existSemaphore.runExclusive(async () => fsPoly.exists(filePath)),
+      ),
+    );
+    const existingFilePaths = filePathsToDelete.filter((filePath, idx) =>
+      existingFilePathsCheck.at(idx),
+    );
 
     this.progressBar.setSymbol(ProgressBarSymbol.DELETING);
     this.progressBar.reset(existingFilePaths.length);
-    this.progressBar.logTrace(`deleting ${existingFilePaths.length.toLocaleString()} moved file${existingFilePaths.length !== 1 ? 's' : ''}`);
+    this.progressBar.logTrace(
+      `deleting ${existingFilePaths.length.toLocaleString()} moved file${existingFilePaths.length !== 1 ? 's' : ''}`,
+    );
 
-    const filePathChunks = existingFilePaths
-      .reduce(ArrayPoly.reduceChunk(Defaults.OUTPUT_CLEANER_BATCH_SIZE), []);
+    const filePathChunks = existingFilePaths.reduce(
+      ArrayPoly.reduceChunk(Defaults.OUTPUT_CLEANER_BATCH_SIZE),
+      [],
+    );
     for (const filePathChunk of filePathChunks) {
-      this.progressBar.logInfo(`deleting moved file${filePathChunk.length !== 1 ? 's' : ''}:\n${filePathChunk.map((filePath) => `  ${filePath}`).join('\n')}`);
-      await Promise.all(filePathChunk.map(async (filePath) => {
-        try {
-          await fsPoly.rm(filePath, { force: true });
-        } catch (error) {
-          this.progressBar.logError(`${filePath}: failed to delete: ${error}`);
-        }
-      }));
+      this.progressBar.logInfo(
+        `deleting moved file${filePathChunk.length !== 1 ? 's' : ''}:\n${filePathChunk.map((filePath) => `  ${filePath}`).join('\n')}`,
+      );
+      await Promise.all(
+        filePathChunk.map(async (filePath) => {
+          try {
+            await fsPoly.rm(filePath, { force: true });
+          } catch (error) {
+            this.progressBar.logError(`${filePath}: failed to delete: ${error}`);
+          }
+        }),
+      );
     }
 
     this.progressBar.logTrace('done deleting moved ROMs');
@@ -75,10 +87,7 @@ export default class MovedROMDeleter extends Module {
    * Archives that do not have all of their file entries matched should not be deleted during
    *  moving.
    */
-  private filterOutPartiallyConsumedArchives(
-    movedRoms: File[],
-    inputRoms: File[],
-  ): string[] {
+  private filterOutPartiallyConsumedArchives(movedRoms: File[], inputRoms: File[]): string[] {
     const groupedInputRoms = MovedROMDeleter.groupFilesByFilePath(inputRoms);
     const groupedMovedRoms = MovedROMDeleter.groupFilesByFilePath(movedRoms);
 
@@ -90,13 +99,12 @@ export default class MovedROMDeleter extends Module {
         //  duplicate files in the Archive not being considered "moved." Therefore, we should use
         //  the unique set of ArchiveEntry hash codes to know if every ArchiveEntry was "consumed"
         //  during writing.
-        const movedEntryHashCodes = new Set(
-          movedEntries.flatMap((file) => file.hashCode()),
-        );
+        const movedEntryHashCodes = new Set(movedEntries.flatMap((file) => file.hashCode()));
 
         const inputFilesForPath = groupedInputRoms.get(filePath) ?? [];
-        const inputFileIsArchive = inputFilesForPath
-          .some((inputFile) => inputFile instanceof ArchiveEntry);
+        const inputFileIsArchive = inputFilesForPath.some(
+          (inputFile) => inputFile instanceof ArchiveEntry,
+        );
 
         const unmovedFiles = inputFilesForPath
           .filter((inputFile) => !(inputFile instanceof ArchiveEntry))
@@ -110,9 +118,9 @@ export default class MovedROMDeleter extends Module {
         }
 
         const unmovedArchiveEntries = inputFilesForPath
-          .filter((
-            inputFile,
-          ): inputFile is ArchiveEntry<Archive> => inputFile instanceof ArchiveEntry)
+          .filter(
+            (inputFile): inputFile is ArchiveEntry<Archive> => inputFile instanceof ArchiveEntry,
+          )
           .filter((inputEntry) => {
             if (movedEntries.length === 1 && movedEntries[0] instanceof ArchiveFile) {
               // If the input archive was written as a raw archive, then consider it moved
@@ -130,7 +138,12 @@ export default class MovedROMDeleter extends Module {
 
         const unmovedEntries = [...unmovedFiles, ...unmovedArchiveEntries];
         if (unmovedEntries.length > 0) {
-          this.progressBar.logWarn(`${filePath}: not deleting moved file, ${unmovedEntries.length.toLocaleString()} archive entr${unmovedEntries.length !== 1 ? 'ies were' : 'y was'} unmatched:\n${unmovedEntries.sort().map((entry) => `  ${entry}`).join('\n')}`);
+          this.progressBar.logWarn(
+            `${filePath}: not deleting moved file, ${unmovedEntries.length.toLocaleString()} archive entr${unmovedEntries.length !== 1 ? 'ies were' : 'y was'} unmatched:\n${unmovedEntries
+              .sort()
+              .map((entry) => `  ${entry}`)
+              .join('\n')}`,
+          );
           return undefined;
         }
 
@@ -145,8 +158,9 @@ export default class MovedROMDeleter extends Module {
       const filesForKey = map.get(key) ?? [];
 
       filesForKey.push(file);
-      const uniqueFilesForKey = filesForKey
-        .filter(ArrayPoly.filterUniqueMapped((fileForKey) => fileForKey.toString()));
+      const uniqueFilesForKey = filesForKey.filter(
+        ArrayPoly.filterUniqueMapped((fileForKey) => fileForKey.toString()),
+      );
 
       map.set(key, uniqueFilesForKey);
       return map;
@@ -161,9 +175,9 @@ export default class MovedROMDeleter extends Module {
     movedRoms: string[],
     datsToWrittenFiles: Map<DAT, File[]>,
   ): string[] {
-    const writtenFilePaths = new Set([...datsToWrittenFiles.values()]
-      .flat()
-      .map((file) => file.getFilePath()));
+    const writtenFilePaths = new Set(
+      [...datsToWrittenFiles.values()].flat().map((file) => file.getFilePath()),
+    );
 
     return movedRoms.filter((filePath) => !writtenFilePaths.has(filePath));
   }

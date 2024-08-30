@@ -21,10 +21,7 @@ const gameWithNoRoms = new Game({
 const gameWithOneRom = new Game({
   name: 'game with one ROM',
   rom: new ROM({ name: 'one.rom', size: 1, crc32: '12345678' }),
-  release: [
-    new Release('game with one ROM', 'USA'),
-    new Release('game with one ROM', 'EUR'),
-  ],
+  release: [new Release('game with one ROM', 'USA'), new Release('game with one ROM', 'EUR')],
 });
 const gameWithTwoRoms = new Game({
   name: 'game with two ROMs',
@@ -41,18 +38,22 @@ const dat = new LogiqxDAT(new Header(), [gameWithNoRoms, gameWithOneRom, gameWit
 async function generateParentsToCandidates(
   games: Game[],
 ): Promise<Map<Parent, ReleaseCandidate[]>> {
-  const entries = await Promise.all(games.map(async (game) => [
-    new Parent(game),
-    [new ReleaseCandidate(
-      game,
-      undefined,
-      await Promise.all(game.getRoms().map(async (rom) => new ROMWithFiles(
-        rom,
-        await rom.toFile(),
-        await rom.toFile(),
-      ))),
-    )],
-  ])) as [[Parent, ReleaseCandidate[]]];
+  const entries = (await Promise.all(
+    games.map(async (game) => [
+      new Parent(game),
+      [
+        new ReleaseCandidate(
+          game,
+          undefined,
+          await Promise.all(
+            game
+              .getRoms()
+              .map(async (rom) => new ROMWithFiles(rom, await rom.toFile(), await rom.toFile())),
+          ),
+        ),
+      ],
+    ]),
+  )) as [[Parent, ReleaseCandidate[]]];
 
   return new Map(entries);
 }
@@ -61,18 +62,26 @@ async function runFixdatCreator(
   optionsProps: OptionsProps,
   parentsToCandidates: Map<Parent, ReleaseCandidate[]>,
 ): Promise<DAT | undefined> {
-  const fixdatPath = await new FixdatCreator(new Options(optionsProps), new ProgressBarFake())
-    .create(dat, parentsToCandidates);
+  const fixdatPath = await new FixdatCreator(
+    new Options(optionsProps),
+    new ProgressBarFake(),
+  ).create(dat, parentsToCandidates);
   if (!fixdatPath) {
     return undefined;
   }
 
   await expect(fsPoly.exists(fixdatPath)).resolves.toEqual(true);
 
-  const fixdat = (await new DATScanner(new Options({
-    ...optionsProps,
-    dat: [fixdatPath],
-  }), new ProgressBarFake(), new FileFactory(new FileCache())).scan())[0];
+  const fixdat = (
+    await new DATScanner(
+      new Options({
+        ...optionsProps,
+        dat: [fixdatPath],
+      }),
+      new ProgressBarFake(),
+      new FileFactory(new FileCache()),
+    ).scan()
+  )[0];
 
   await fsPoly.rm(fixdatPath, { force: true });
 
@@ -84,10 +93,7 @@ it('should do nothing if the option is false', async () => {
   const parentsToCandidates = await generateParentsToCandidates([]);
 
   // When a fixdat is generated, but the option isn't provided
-  const fixdat = await runFixdatCreator(
-    { commands: [] },
-    parentsToCandidates,
-  );
+  const fixdat = await runFixdatCreator({ commands: [] }, parentsToCandidates);
 
   // Then no fixdat was written
   expect(fixdat).toBeUndefined();
@@ -98,10 +104,7 @@ it('should do nothing if no ROMs are missing', async () => {
   const parentsToCandidates = await generateParentsToCandidates([gameWithOneRom, gameWithTwoRoms]);
 
   // When a fixdat is generated
-  const fixdat = await runFixdatCreator(
-    { commands: ['fixdat'] },
-    parentsToCandidates,
-  );
+  const fixdat = await runFixdatCreator({ commands: ['fixdat'] }, parentsToCandidates);
 
   // Then no fixdat was written
   expect(fixdat).toBeUndefined();
@@ -112,10 +115,7 @@ it('should write some ROMs if some ROMs are missing', async () => {
   const parentsToCandidates = await generateParentsToCandidates([gameWithTwoRoms]);
 
   // When a fixdat is generated
-  const fixdat = await runFixdatCreator(
-    { commands: ['fixdat'] },
-    parentsToCandidates,
-  );
+  const fixdat = await runFixdatCreator({ commands: ['fixdat'] }, parentsToCandidates);
 
   // Then only the game with no ROMs present should exist in the fixdat
   expect(fixdat).toBeDefined();
@@ -129,10 +129,7 @@ it('should write all ROMs if all ROMs are missing', async () => {
   const parentsToCandidates = await generateParentsToCandidates([]);
 
   // When a fixdat is generated
-  const fixdat = await runFixdatCreator(
-    { commands: ['fixdat'] },
-    parentsToCandidates,
-  );
+  const fixdat = await runFixdatCreator({ commands: ['fixdat'] }, parentsToCandidates);
 
   // Then only the game with no ROMs present should exist in the fixdat
   expect(fixdat).toBeDefined();

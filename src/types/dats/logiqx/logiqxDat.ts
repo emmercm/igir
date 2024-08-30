@@ -1,8 +1,6 @@
 import 'reflect-metadata';
 
-import {
-  Expose, plainToInstance, Transform, Type,
-} from 'class-transformer';
+import { Expose, plainToInstance, Transform, Type } from 'class-transformer';
 
 import DAT from '../dat.js';
 import Game from '../game.js';
@@ -44,8 +42,7 @@ export default class LogiqxDAT extends DAT {
     return plainToInstance(LogiqxDAT, obj, {
       enableImplicitConversion: true,
       excludeExtraneousValues: true,
-    })
-      .generateGameNamesToParents();
+    }).generateGameNamesToParents();
   }
 
   // Property getters

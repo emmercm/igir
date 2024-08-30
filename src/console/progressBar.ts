@@ -65,9 +65,7 @@ export default abstract class ProgressBar {
    */
   doneItems(count: number, noun: string, verb: string): void {
     let pluralSuffix = 's';
-    if (noun.toLowerCase().endsWith('ch')
-      || noun.toLowerCase().endsWith('s')
-    ) {
+    if (noun.toLowerCase().endsWith('ch') || noun.toLowerCase().endsWith('s')) {
       pluralSuffix = 'es';
     }
 
