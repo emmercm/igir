@@ -6,6 +6,8 @@
       <meta charset="utf-8">
       <meta name="viewport" content="width=device-width,initial-scale=1">
       
+        <meta name="description" content="Igir is a zero-setup ROM collection manager that sorts, filters, extracts or archives, patches, and reports on collections of any size on any OS.">
+      
       
         <meta name="author" content="Christian Emmer">
       
@@ -13,14 +15,14 @@
         <link rel="canonical" href="https://igir.io/alternatives/">
       
       
-        <link rel="prev" href="../commands/">
+        <link rel="prev" href="../cli/">
       
       
-        <link rel="next" href="../usage/collection-sorting/">
+        <link rel="next" href="../usage/basic/">
       
       
-      <link rel="icon" href="../logo-dark.svg">
-      <meta name="generator" content="mkdocs-1.6.0, mkdocs-material-9.5.27">
+      <link rel="icon" href="../static/favicon.svg">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.5.33">
     
     
       
@@ -28,7 +30,7 @@
       
     
     
-      <link rel="stylesheet" href="../assets/stylesheets/main.6543a935.min.css">
+      <link rel="stylesheet" href="../assets/stylesheets/main.3cba04c6.min.css">
       
         
         <link rel="stylesheet" href="../assets/stylesheets/palette.06af60db.min.css">
@@ -71,7 +73,7 @@
       
         <meta  property="og:title"  content="Alternative Managers - igir" >
       
-        <meta  property="og:description"  content="None" >
+        <meta  property="og:description"  content="Igir is a zero-setup ROM collection manager that sorts, filters, extracts or archives, patches, and reports on collections of any size on any OS." >
       
         <meta  property="og:image"  content="https://igir.io/assets/images/social/alternatives.png" >
       
@@ -87,7 +89,7 @@
       
         <meta  name="twitter:title"  content="Alternative Managers - igir" >
       
-        <meta  name="twitter:description"  content="None" >
+        <meta  name="twitter:description"  content="Igir is a zero-setup ROM collection manager that sorts, filters, extracts or archives, patches, and reports on collections of any size on any OS." >
       
         <meta  name="twitter:image"  content="https://igir.io/assets/images/social/alternatives.png" >
       
@@ -128,7 +130,7 @@
   <nav class="md-header__inner md-grid" aria-label="Header">
     <a href=".." title="igir" class="md-header__button md-logo" aria-label="igir" data-md-component="logo">
       
-  <img src="../logo-light.svg" alt="logo">
+  <img src="../static/logo-light.svg" alt="logo">
 
     </a>
     <label class="md-header__button md-icon" for="__drawer">
@@ -201,7 +203,7 @@
         <a href="https://github.com/emmercm/igir" title="Go to repository" class="md-source" data-md-component="source">
   <div class="md-source__icon md-icon">
     
-    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 496 512"><!--! Font Awesome Free 6.5.2 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2024 Fonticons, Inc.--><path d="M165.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6zm-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3zm44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9zM244.8 8C106.1 8 0 113.3 0 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C428.2 457.8 496 362.9 496 252 496 113.3 383.5 8 244.8 8zM97.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1zm-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7zm32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1zm-11.4-14.7c-1.6 1-1.6 3.6 0 5.9 1.6 2.3 4.3 3.3 5.6 2.3 1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2z"/></svg>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 496 512"><!--! Font Awesome Free 6.6.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2024 Fonticons, Inc.--><path d="M165.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6zm-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3zm44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9zM244.8 8C106.1 8 0 113.3 0 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C428.2 457.8 496 362.9 496 252 496 113.3 383.5 8 244.8 8zM97.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1zm-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7zm32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1zm-11.4-14.7c-1.6 1-1.6 3.6 0 5.9 1.6 2.3 4.3 3.3 5.6 2.3 1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2z"/></svg>
   </div>
   <div class="md-source__repository">
     emmercm/igir
@@ -261,12 +263,12 @@
   
   
     <li class="md-tabs__item">
-      <a href="https://github.com/sponsors/emmercm" target="_blank" class="md-tabs__link">
+      <a href="https://github.com/emmercm/igir/discussions" target="_blank" class="md-tabs__link">
         
   
     
   
-  Donate ↗
+  Discuss ↗
 
       </a>
     </li>
@@ -295,12 +297,12 @@
   
   
     <li class="md-tabs__item">
-      <a href="https://github.com/emmercm/igir/discussions" target="_blank" class="md-tabs__link">
+      <a href="https://github.com/sponsors/emmercm" target="_blank" class="md-tabs__link">
         
   
     
   
-  Discuss ↗
+  Donate ↗
 
       </a>
     </li>
@@ -339,7 +341,7 @@
   <label class="md-nav__title" for="__drawer">
     <a href=".." title="igir" class="md-nav__button md-logo" aria-label="igir" data-md-component="logo">
       
-  <img src="../logo-light.svg" alt="logo">
+  <img src="../static/logo-light.svg" alt="logo">
 
     </a>
     igir
@@ -349,7 +351,7 @@
       <a href="https://github.com/emmercm/igir" title="Go to repository" class="md-source" data-md-component="source">
   <div class="md-source__icon md-icon">
     
-    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 496 512"><!--! Font Awesome Free 6.5.2 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2024 Fonticons, Inc.--><path d="M165.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6zm-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3zm44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9zM244.8 8C106.1 8 0 113.3 0 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C428.2 457.8 496 362.9 496 252 496 113.3 383.5 8 244.8 8zM97.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1zm-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7zm32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1zm-11.4-14.7c-1.6 1-1.6 3.6 0 5.9 1.6 2.3 4.3 3.3 5.6 2.3 1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2z"/></svg>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 496 512"><!--! Font Awesome Free 6.6.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2024 Fonticons, Inc.--><path d="M165.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6zm-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3zm44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9zM244.8 8C106.1 8 0 113.3 0 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C428.2 457.8 496 362.9 496 252 496 113.3 383.5 8 244.8 8zM97.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1zm-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7zm32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1zm-11.4-14.7c-1.6 1-1.6 3.6 0 5.9 1.6 2.3 4.3 3.3 5.6 2.3 1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2z"/></svg>
   </div>
   <div class="md-source__repository">
     emmercm/igir
@@ -372,6 +374,8 @@
       
         
           
+        
+      
         
       
         
@@ -457,6 +461,8 @@
       
         
       
+        
+      
     
     
       
@@ -500,11 +506,11 @@
   
   
     <li class="md-nav__item">
-      <a href="../overview/" class="md-nav__link">
+      <a href="../introduction/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
-    Overview
+    Introduction
   </span>
   
 
@@ -547,6 +553,27 @@
   
   <span class="md-ellipsis">
     Commands
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../cli/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    CLI Overview
   </span>
   
 
@@ -610,6 +637,124 @@
       
         
       
+    
+    
+      
+      
+        
+          
+          
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_1_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_1_3" id="__nav_1_3_label" tabindex="">
+            
+  
+  <span class="md-ellipsis">
+    General Usage
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_1_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_1_3">
+            <span class="md-nav__icon md-icon"></span>
+            General Usage
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../usage/basic/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Basic Usage Examples
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../usage/personal/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Maintainer's Usage Example
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../usage/best-practices/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Best Practices
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
         
       
         
@@ -633,47 +778,26 @@
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_1_3" >
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_1_4" >
         
           
-          <label class="md-nav__link" for="__nav_1_3" id="__nav_1_3_label" tabindex="">
+          <label class="md-nav__link" for="__nav_1_4" id="__nav_1_4_label" tabindex="">
             
   
   <span class="md-ellipsis">
-    Example Usage
+    Hardware-Specific Usage
   </span>
   
 
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_1_3_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_1_3">
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_1_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_1_4">
             <span class="md-nav__icon md-icon"></span>
-            Example Usage
+            Hardware-Specific Usage
           </label>
           <ul class="md-nav__list" data-md-scrollfix>
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../usage/collection-sorting/" class="md-nav__link">
-        
-  
-  <span class="md-ellipsis">
-    Example Collection Sorting
-  </span>
-  
-
-      </a>
-    </li>
-  
-
-              
             
               
                 
@@ -732,10 +856,10 @@
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_1_3_2" >
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_1_4_1" >
         
           
-          <label class="md-nav__link" for="__nav_1_3_2" id="__nav_1_3_2_label" tabindex="0">
+          <label class="md-nav__link" for="__nav_1_4_1" id="__nav_1_4_1_label" tabindex="0">
             
   
   <span class="md-ellipsis">
@@ -746,8 +870,8 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_1_3_2_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_1_3_2">
+        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_1_4_1_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_1_4_1">
             <span class="md-nav__icon md-icon"></span>
             Emulator Frontends
           </label>
@@ -1164,10 +1288,10 @@
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_1_3_3" >
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_1_4_2" >
         
           
-          <label class="md-nav__link" for="__nav_1_3_3" id="__nav_1_3_3_label" tabindex="0">
+          <label class="md-nav__link" for="__nav_1_4_2" id="__nav_1_4_2_label" tabindex="0">
             
   
   <span class="md-ellipsis">
@@ -1178,8 +1302,8 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_1_3_3_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_1_3_3">
+        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_1_4_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_1_4_2">
             <span class="md-nav__icon md-icon"></span>
             FPGA
           </label>
@@ -1260,10 +1384,10 @@
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_1_3_4" >
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_1_4_3" >
         
           
-          <label class="md-nav__link" for="__nav_1_3_4" id="__nav_1_3_4_label" tabindex="0">
+          <label class="md-nav__link" for="__nav_1_4_3" id="__nav_1_4_3_label" tabindex="0">
             
   
   <span class="md-ellipsis">
@@ -1274,8 +1398,8 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_1_3_4_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_1_3_4">
+        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_1_4_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_1_4_3">
             <span class="md-nav__icon md-icon"></span>
             Flash Carts
           </label>
@@ -1356,10 +1480,10 @@
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_1_3_5" >
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_1_4_4" >
         
           
-          <label class="md-nav__link" for="__nav_1_3_5" id="__nav_1_3_5_label" tabindex="0">
+          <label class="md-nav__link" for="__nav_1_4_4" id="__nav_1_4_4_label" tabindex="0">
             
   
   <span class="md-ellipsis">
@@ -1370,8 +1494,8 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_1_3_5_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_1_3_5">
+        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_1_4_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_1_4_4">
             <span class="md-nav__icon md-icon"></span>
             Game Consoles
           </label>
@@ -1448,27 +1572,6 @@
 
               
             
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../usage/personal/" class="md-nav__link">
-        
-  
-  <span class="md-ellipsis">
-    Creator's Usage
-  </span>
-  
-
-      </a>
-    </li>
-  
-
-              
-            
           </ul>
         </nav>
       
@@ -1509,10 +1612,10 @@
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_1_4" >
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_1_5" >
         
           
-          <label class="md-nav__link" for="__nav_1_4" id="__nav_1_4_label" tabindex="">
+          <label class="md-nav__link" for="__nav_1_5" id="__nav_1_5_label" tabindex="">
             
   
   <span class="md-ellipsis">
@@ -1523,8 +1626,8 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_1_4_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_1_4">
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_1_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_1_5">
             <span class="md-nav__icon md-icon"></span>
             DATs
           </label>
@@ -1650,10 +1753,10 @@
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_1_5" >
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_1_6" >
         
           
-          <label class="md-nav__link" for="__nav_1_5" id="__nav_1_5_label" tabindex="">
+          <label class="md-nav__link" for="__nav_1_6" id="__nav_1_6_label" tabindex="">
             
   
   <span class="md-ellipsis">
@@ -1664,8 +1767,8 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_1_5_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_1_5">
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_1_6_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_1_6">
             <span class="md-nav__icon md-icon"></span>
             File Inputs
           </label>
@@ -1753,10 +1856,10 @@
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_1_6" >
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_1_7" >
         
           
-          <label class="md-nav__link" for="__nav_1_6" id="__nav_1_6_label" tabindex="">
+          <label class="md-nav__link" for="__nav_1_7" id="__nav_1_7_label" tabindex="">
             
   
   <span class="md-ellipsis">
@@ -1767,8 +1870,8 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_1_6_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_1_6">
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_1_7_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_1_7">
             <span class="md-nav__icon md-icon"></span>
             ROM Processing
           </label>
@@ -1902,10 +2005,10 @@
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_1_7" >
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_1_8" >
         
           
-          <label class="md-nav__link" for="__nav_1_7" id="__nav_1_7_label" tabindex="">
+          <label class="md-nav__link" for="__nav_1_8" id="__nav_1_8_label" tabindex="">
             
   
   <span class="md-ellipsis">
@@ -1916,8 +2019,8 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_1_7_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_1_7">
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_1_8_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_1_8">
             <span class="md-nav__icon md-icon"></span>
             File Outputs
           </label>
@@ -2089,10 +2192,10 @@
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_1_8" >
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_1_9" >
         
           
-          <label class="md-nav__link" for="__nav_1_8" id="__nav_1_8_label" tabindex="">
+          <label class="md-nav__link" for="__nav_1_9" id="__nav_1_9_label" tabindex="">
             
   
   <span class="md-ellipsis">
@@ -2103,8 +2206,8 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_1_8_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_1_8">
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_1_9_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_1_9">
             <span class="md-nav__icon md-icon"></span>
             Advanced
           </label>
@@ -2228,10 +2331,10 @@
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_1_9" >
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_1_10" >
         
           
-          <label class="md-nav__link" for="__nav_1_9" id="__nav_1_9_label" tabindex="">
+          <label class="md-nav__link" for="__nav_1_10" id="__nav_1_10_label" tabindex="">
             
   
   <span class="md-ellipsis">
@@ -2242,8 +2345,8 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_1_9_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_1_9">
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_1_10_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_1_10">
             <span class="md-nav__icon md-icon"></span>
             Misc
           </label>
@@ -2306,10 +2409,10 @@
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_1_10" >
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_1_11" >
         
           
-          <label class="md-nav__link" for="__nav_1_10" id="__nav_1_10_label" tabindex="">
+          <label class="md-nav__link" for="__nav_1_11" id="__nav_1_11_label" tabindex="">
             
   
   <span class="md-ellipsis">
@@ -2320,8 +2423,8 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_1_10_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_1_10">
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_1_11_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_1_11">
             <span class="md-nav__icon md-icon"></span>
             Terms and Conditions
           </label>
@@ -2411,11 +2514,11 @@
   
   
     <li class="md-nav__item">
-      <a href="https://github.com/sponsors/emmercm" target="_blank" class="md-nav__link">
+      <a href="https://github.com/emmercm/igir/discussions" target="_blank" class="md-nav__link">
         
   
   <span class="md-ellipsis">
-    Donate ↗
+    Discuss ↗
   </span>
   
 
@@ -2451,11 +2554,11 @@
   
   
     <li class="md-nav__item">
-      <a href="https://github.com/emmercm/igir/discussions" target="_blank" class="md-nav__link">
+      <a href="https://github.com/sponsors/emmercm" target="_blank" class="md-nav__link">
         
   
   <span class="md-ellipsis">
-    Discuss ↗
+    Donate ↗
   </span>
   
 
@@ -2494,59 +2597,59 @@
 <tr>
 <th>Feature</th>
 <th><a href="../">igir</a></th>
-<th><a href="https://mamedev.emulab.it/clrmamepro/">clrmamepro</a></th>
 <th><a href="https://www.romvault.com/">RomVault</a></th>
+<th><a href="https://mamedev.emulab.it/clrmamepro/">clrmamepro</a></th>
 <th><a href="http://www.romcenter.com/">RomCenter</a></th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td>Code: still in development</td>
+<td>App: still in development</td>
 <td>✅</td>
 <td>✅</td>
 <td>✅</td>
 <td>❓</td>
 </tr>
 <tr>
-<td>Code: open source</td>
+<td>App: OS compatibility</td>
+<td>✅ anything <a href="https://nodejs.org/en/download">Node.js supports</a></td>
+<td>⚠️ Windows, Linux via <a href="https://www.mono-project.com/">Mono</a></td>
+<td>⚠️ Windows, macOS &amp; Linux via <a href="https://www.winehq.org/">Wine</a></td>
+<td>❌ Windows only</td>
+</tr>
+<tr>
+<td>App: UI or CLI</td>
+<td>CLI only by design</td>
+<td>Separate UI &amp; CLI versions</td>
+<td>UI only</td>
+<td>UI only</td>
+</tr>
+<tr>
+<td>App: required setup steps</td>
+<td>✅ no setup required</td>
+<td>⚠️ if specifying DAT &amp; ROM dirs</td>
+<td>❌ requires "profile" setup per DAT</td>
+<td>❌ requires per-DAT DB setup</td>
+</tr>
+<tr>
+<td>App: open source</td>
 <td>✅ GPL</td>
 <td>❌</td>
 <td>❌</td>
 <td>❌</td>
 </tr>
 <tr>
-<td>App: OS compatibility</td>
-<td>✅ anything <a href="https://nodejs.org/en/download">Node.js supports</a></td>
-<td>⚠️ Windows, macOS &amp; Linux via <a href="https://www.winehq.org/">Wine</a></td>
-<td>⚠️ Windows, Linux via <a href="https://www.mono-project.com/">Mono</a></td>
-<td>❌ Windows only</td>
-</tr>
-<tr>
-<td>App: UI or CLI</td>
-<td>CLI only by design</td>
-<td>UI only</td>
-<td>Separate UI &amp; CLI versions</td>
-<td>UI only</td>
-</tr>
-<tr>
-<td>App: required setup steps</td>
-<td>✅ no setup required</td>
-<td>❌ requires "profile" setup per DAT</td>
-<td>⚠️ if specifying DAT &amp; ROM dirs</td>
-<td>❌ requires per-DAT DB setup</td>
-</tr>
-<tr>
 <td>DATs: supported formats</td>
 <td>Logiqx XML, MAME ListXML, MAME Software List, CMPro, HTGD SMDB (<a href="../dats/processing/">DATs docs</a>)</td>
-<td>Logiqx XML, MAME ListXML, MAME Software List, CMPro</td>
 <td>Logiqx XML, MAME ListXML, CMPro, RomCenter, HTGD SMDB</td>
+<td>Logiqx XML, MAME ListXML, MAME Software List, CMPro</td>
 <td>Logiqx XML, CMPro, RomCenter</td>
 </tr>
 <tr>
 <td>DATs: process multiple at once</td>
 <td>✅</td>
-<td>⚠️ via the batcher</td>
 <td>✅</td>
+<td>⚠️ via the batcher</td>
 <td>❌</td>
 </tr>
 <tr>
@@ -2559,8 +2662,8 @@
 <tr>
 <td>DATs: built-in download manager</td>
 <td>❌</td>
-<td>❌</td>
 <td>⚠️ via <a href="https://www.datvault.com/">DatVault</a></td>
+<td>❌</td>
 <td>❌</td>
 </tr>
 <tr>
@@ -2573,8 +2676,8 @@
 <tr>
 <td>DATs: create from files (dir2dat)</td>
 <td>✅ <a href="../dats/dir2dat/">dir2dat docs</a></td>
-<td>✅</td>
 <td>❓</td>
+<td>✅</td>
 <td>❌</td>
 </tr>
 <tr>
@@ -2587,30 +2690,37 @@
 <tr>
 <td>DATs: combine multiple</td>
 <td>✅</td>
-<td>❌</td>
-<td>✅</td>
-<td>❌</td>
-</tr>
-<tr>
-<td>Archives: extraction formats</td>
-<td>✅ many formats (<a href="../input/reading-archives/">reading archives docs</a>)</td>
-<td>✅ <code>.zip</code>, <code>.7z</code>, <code>.rar</code></td>
-<td>⚠️ <code>.zip</code>, <code>.7z</code></td>
-<td>⚠️ <code>.zip</code>, <code>.7z</code></td>
-</tr>
-<tr>
-<td>Archives: creation formats</td>
-<td>❌ <code>.zip</code> only by design (<a href="../output/writing-archives/">writing archives docs</a>)</td>
-<td>✅ <code>.zip</code>, <code>.7z</code>, <code>.rar</code></td>
-<td>⚠️ <code>.zip</code> (TorrentZip), <code>.7z</code></td>
-<td>⚠️ <code>.zip</code>, <code>.7z</code></td>
-</tr>
-<tr>
-<td>Archives: automatic extension correction</td>
 <td>✅</td>
 <td>❌</td>
 <td>❌</td>
+</tr>
+<tr>
+<td>ROM Scanning: parallel scanning</td>
+<td>✅</td>
 <td>❌</td>
+<td>❓</td>
+<td>❓</td>
+</tr>
+<tr>
+<td>ROM Scanning: scanning exclusions</td>
+<td>✅</td>
+<td>❌</td>
+<td>❓</td>
+<td>❓</td>
+</tr>
+<tr>
+<td>ROM Scanning: quick scanning</td>
+<td>✅ <a href="../roms/matching/">matching docs</a></td>
+<td>✅</td>
+<td>⚠️ by default</td>
+<td>❓</td>
+</tr>
+<tr>
+<td>ROM Scanning: scan/checksum caching</td>
+<td>✅</td>
+<td>✅</td>
+<td>❌</td>
+<td>✅</td>
 </tr>
 <tr>
 <td>ROMs: checksum matching strategies</td>
@@ -2620,24 +2730,10 @@
 <td>❓</td>
 </tr>
 <tr>
-<td>ROMs: CHD scanning</td>
-<td>❌</td>
-<td>⚠️ via chdman</td>
-<td>✅ v1-5 natively</td>
-<td>⚠️ v1-4 natively</td>
-</tr>
-<tr>
-<td>ROMs: scan/checksum caching</td>
-<td>✅</td>
-<td>❌</td>
+<td>ROMs: header detection</td>
 <td>✅</td>
 <td>✅</td>
-</tr>
-<tr>
-<td>ROMs: header parsing</td>
-<td>✅</td>
-<td>✅</td>
-<td>✅</td>
+<td>⚠️ via supplemental XMLs</td>
 <td>⚠️ via plugins</td>
 </tr>
 <tr>
@@ -2655,31 +2751,94 @@
 <td>❌</td>
 </tr>
 <tr>
-<td>ROMs: supported merge types</td>
-<td>✅ full non-merged, non-merged, split, merged</td>
-<td>✅ full non-merged, non-merged, split, merged</td>
+<td>ROMs: patching support</td>
+<td>✅ <a href="../roms/patching/">patching docs</a></td>
+<td>⚠️ SNES SuperDAT</td>
+<td>❌</td>
+<td>❌</td>
+</tr>
+<tr>
+<td>Arcade: supported merge types</td>
+<td>✅ full non-merged, non-merged, split, merged (<a href="../usage/arcade/">arcade docs</a>)</td>
 <td>⚠️ full non-merged, split, merged</td>
+<td>✅ full non-merged, non-merged, split, merged</td>
 <td>⚠️ full non-merged, split, merged</td>
 </tr>
 <tr>
-<td>ROMs: patching support</td>
-<td>✅ <a href="../roms/patching/">patching docs</a></td>
+<td>Arcade: CHD disk inclusion</td>
+<td>✅ by default, can be turned off (<a href="../usage/arcade/">arcade docs</a>)</td>
+<td>✅ by default, can be turned off</td>
+<td>❓</td>
+<td>❓</td>
+</tr>
+<tr>
+<td>Arcade: sample inclusion</td>
 <td>❌</td>
-<td>⚠️ SNES SuperDAT</td>
+<td>❌</td>
+<td>✅</td>
+<td>❓</td>
+</tr>
+<tr>
+<td>Archives: extraction formats</td>
+<td>✅ many formats (<a href="../input/reading-archives/">reading archives docs</a>)</td>
+<td>⚠️ <code>.zip</code>, <code>.7z</code> (natively)</td>
+<td>✅ <code>.zip</code>, <code>.7z</code> (via <code>7z</code>), <code>.rar</code> (via <code>rar</code>)</td>
+<td>⚠️ <code>.zip</code>, <code>.7z</code></td>
+</tr>
+<tr>
+<td>Archives: <code>.chd</code> support</td>
+<td>⚠️ via <code>chdman</code> (bundled)</td>
+<td>✅ v1-5 natively</td>
+<td>⚠️ via <code>chdman</code></td>
+<td>⚠️ v1-4 natively</td>
+</tr>
+<tr>
+<td>Archives: <code>.cso</code> &amp; <code>.zso</code> support</td>
+<td>⚠️ via <code>maxcso</code> (bundled)</td>
+<td>❌</td>
+<td>❌</td>
+<td>❌</td>
+</tr>
+<tr>
+<td>Archives: <code>.nkit.iso</code> support</td>
+<td>⚠️ matching but no extraction <a href="../usage/console/gamecube/#nkit">GameCube docs</a></td>
+<td>❌</td>
+<td>❌</td>
+<td>❌</td>
+</tr>
+<tr>
+<td>Archives: creation formats</td>
+<td>❌ <code>.zip</code> only by design (<a href="../output/writing-archives/">writing archives docs</a>)</td>
+<td>⚠️ <code>.zip</code> (TorrentZip), <code>.7z</code> (RV7Z)</td>
+<td>✅ <code>.zip</code>, <code>.7z</code>, <code>.rar</code></td>
+<td>⚠️ <code>.zip</code>, <code>.7z</code></td>
+</tr>
+<tr>
+<td>Archives: contents checksums</td>
+<td>✅ when needed (<a href="../input/reading-archives/">reading archives docs</a>)</td>
+<td>⚠️ requires "files only" mode</td>
+<td>⚠️ if DAT has forcepacking=unzip</td>
+<td>❓</td>
+</tr>
+<tr>
+<td>Archives: automatic extension correction</td>
+<td>✅</td>
+<td>❌</td>
+<td>❌</td>
 <td>❌</td>
 </tr>
 <tr>
 <td>Filtering: region, language, type, etc.</td>
 <td>✅ <a href="../roms/filtering-preferences/#filters">many options</a></td>
-<td>❌ only 1G1R options</td>
 <td>❌</td>
+<td>❌ only 1G1R options</td>
 <td>⚠️ only at DB setup</td>
 </tr>
 <tr>
 <td>Filtering: 1G1R support</td>
 <td>✅ <a href="../roms/filtering-preferences/#preferences-for-1g1r">many options</a></td>
-<td>⚠️ region &amp; language only</td>
 <td>❌</td>
+<td>⚠️ region &amp; language only</td>
 <td>⚠️ only at DB setup</td>
 </tr>
 <tr>
@@ -2692,8 +2851,8 @@
 <tr>
 <td>Reports: easily parseable</td>
 <td>✅ CSV</td>
-<td>⚠️ newline-separated "have" &amp; "miss" lists</td>
 <td>⚠️ newline-separated "full" &amp; "fix" reports</td>
+<td>⚠️ newline-separated "have" &amp; "miss" lists</td>
 <td>⚠️ newline-separated "have" &amp; "miss" lists</td>
 </tr>
 <tr>
@@ -2706,29 +2865,29 @@
 <tr>
 <td>Output: separate input &amp; output dirs</td>
 <td>✅</td>
-<td>❌</td>
 <td>⚠️ yes but files are always moved</td>
+<td>❌</td>
 <td>❌</td>
 </tr>
 <tr>
 <td>Output: subdirectory customization</td>
 <td>✅ <a href="../output/path-options/">many options</a></td>
-<td>❌</td>
 <td>⚠️ depends on DAT organization</td>
+<td>❌</td>
 <td>❌</td>
 </tr>
 <tr>
 <td>Output: create single archive for DAT</td>
 <td>✅</td>
-<td>❌</td>
 <td>✅</td>
+<td>❌</td>
 <td>❌</td>
 </tr>
 </tbody>
 </table>
 <div class="admonition note">
 <p class="admonition-title">Note</p>
-<p>Just like <code>igir</code>, other ROM managers that are in active development are likely to release new features often. The above table is not guaranteed to be perfectly up-to-date, it is just a best effort.</p>
+<p>Just like Igir, other ROM managers that are in active development are likely to release new features often. The above table is not guaranteed to be perfectly up-to-date, it is just a best effort.</p>
 </div>
 <p>Other alternative ROM managers can be found in a number of other wikis, such as:</p>
 <ul>
@@ -2757,7 +2916,7 @@
     <span class="md-icon" title="Last update">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1-2.1-2M12.5 7v5.2l4 2.4-1 1L11 13V7h1.5M11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2v1.8Z"/></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date">July 19, 2024</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date">August 22, 2024</span>
   </span>
 
     
@@ -2791,7 +2950,7 @@
       <nav class="md-footer__inner md-grid" aria-label="Footer" >
         
           
-          <a href="../commands/" class="md-footer__link md-footer__link--prev" aria-label="Previous: Commands">
+          <a href="../cli/" class="md-footer__link md-footer__link--prev" aria-label="Previous: CLI Overview">
             <div class="md-footer__button md-icon">
               
               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12Z"/></svg>
@@ -2801,20 +2960,20 @@
                 Previous
               </span>
               <div class="md-ellipsis">
-                Commands
+                CLI Overview
               </div>
             </div>
           </a>
         
         
           
-          <a href="../usage/collection-sorting/" class="md-footer__link md-footer__link--next" aria-label="Next: Example Collection Sorting">
+          <a href="../usage/basic/" class="md-footer__link md-footer__link--next" aria-label="Next: Basic Usage Examples">
             <div class="md-footer__title">
               <span class="md-footer__direction">
                 Next
               </span>
               <div class="md-ellipsis">
-                Example Collection Sorting
+                Basic Usage Examples
               </div>
             </div>
             <div class="md-footer__button md-icon">
@@ -2888,7 +3047,7 @@
     <script id="__config" type="application/json">{"base": "..", "features": ["search.suggest", "search.highlight", "navigation.tabs", "navigation.tabs.sticky", "navigation.indexes", "navigation.sections", "navigation.path", "navigation.instant", "navigation.instant.prefetch", "navigation.footer", "toc.follow", "toc.integrate", "content.action.edit", "content.code.copy", "content.tabs.link"], "search": "../assets/javascripts/workers/search.b8dbb3d2.min.js", "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}}</script>
     
     
-      <script src="../assets/javascripts/bundle.ad660dcc.min.js"></script>
+      <script src="../assets/javascripts/bundle.af256bd8.min.js"></script>
       
     
   </body>
