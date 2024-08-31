@@ -1,10 +1,10 @@
 import path from 'node:path';
 
 import Temp from '../../src/globals/temp.js';
-import CandidateGenerator from '../../src/modules/candidateGenerator.js';
+import CandidateGenerator from '../../src/modules/candidates/candidateGenerator.js';
 import MovedROMDeleter from '../../src/modules/movedRomDeleter.js';
-import ROMIndexer from '../../src/modules/romIndexer.js';
-import ROMScanner from '../../src/modules/romScanner.js';
+import ROMIndexer from '../../src/modules/roms/romIndexer.js';
+import ROMScanner from '../../src/modules/roms/romScanner.js';
 import fsPoly from '../../src/polyfill/fsPoly.js';
 import Game from '../../src/types/dats/game.js';
 import Header from '../../src/types/dats/logiqx/header.js';

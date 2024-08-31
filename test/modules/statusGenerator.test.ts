@@ -1,6 +1,6 @@
 import stripAnsi from 'strip-ansi';
 
-import CandidatePreferer from '../../src/modules/candidatePreferer.js';
+import CandidatePreferer from '../../src/modules/candidates/candidatePreferer.js';
 import StatusGenerator from '../../src/modules/statusGenerator.js';
 import Game from '../../src/types/dats/game.js';
 import Header from '../../src/types/dats/logiqx/header.js';

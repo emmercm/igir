@@ -1,7 +1,7 @@
 import path from 'node:path';
 
 import Temp from '../../../../src/globals/temp.js';
-import ROMScanner from '../../../../src/modules/romScanner.js';
+import ROMScanner from '../../../../src/modules/roms/romScanner.js';
 import fsPoly from '../../../../src/polyfill/fsPoly.js';
 import ArchiveEntry from '../../../../src/types/files/archives/archiveEntry.js';
 import Zip from '../../../../src/types/files/archives/zip.js';
