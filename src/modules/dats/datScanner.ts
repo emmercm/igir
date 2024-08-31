@@ -7,12 +7,7 @@ import ProgressBar, { ProgressBarSymbol } from '../../console/progressBar.js';
 import DriveSemaphore from '../../driveSemaphore.js';
 import bufferPoly from '../../polyfill/bufferPoly.js';
 import fsPoly from '../../polyfill/fsPoly.js';
-import CMProParser, {
-  DATProps,
-  DiskProps,
-  GameProps,
-  ROMProps,
-} from '../../types/dats/cmpro/cmProParser.js';
+import CMProParser, { DATProps, GameProps, ROMProps } from '../../types/dats/cmpro/cmProParser.js';
 import DAT from '../../types/dats/dat.js';
 import DATObject, { DATObjectProps } from '../../types/dats/datObject.js';
 import Disk from '../../types/dats/disk.js';
@@ -402,7 +397,7 @@ export default class DATScanner extends Scanner {
           }),
       );
 
-      let gameDisks: DiskProps[] = [];
+      let gameDisks: ROMProps[] = [];
       if (game.disk) {
         if (Array.isArray(game.disk)) {
           gameDisks = game.disk;
