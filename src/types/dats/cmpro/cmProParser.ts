@@ -3,7 +3,7 @@ import ExpectedError from '../../expectedError.js';
 export interface DATProps extends CMProObject {
   clrmamepro?: ClrMameProProps;
   game?: GameProps | GameProps[];
-  resource?: ResourceProps | ResourceProps[];
+  resource?: ROMProps | ROMProps[];
 }
 
 export interface ClrMameProProps extends CMProObject {
@@ -31,7 +31,7 @@ export interface GameProps extends CMProObject {
   romof?: string;
   sampleof?: string;
   rom?: ROMProps | ROMProps[];
-  disk?: DiskProps | DiskProps[];
+  disk?: ROMProps | ROMProps[];
   sample?: SampleProps | SampleProps[];
   // NON-STANDARD PROPERTIES
   comment?: string;
@@ -57,13 +57,9 @@ export interface ROMProps extends CMProObject {
   // serial?: string,
 }
 
-export interface DiskProps extends ROMProps {}
-
 export interface SampleProps extends CMProObject {
   name: string;
 }
-
-export interface ResourceProps extends GameProps {}
 
 type CMProValue = CMProObject | string | undefined;
 
