@@ -61,7 +61,7 @@ $ igir --help
   | $$  | $$|    \  | $$  | $$    $$   ROM collection manager
   | $$  | $$|    \  | $$  | $$    $$   https://igir.io/
   | $$  | $$ \$$$$  | $$  | $$$$$$$\
- _| $$_ | $$__| $$ _| $$_ | $$  | $$   v2.11.0
+ _| $$_ | $$__| $$ _| $$_ | $$  | $$   v3.0.0
 |   $$ \ \$$    $$|   $$ \| $$  | $$
  \$$$$$$  \$$$$$$  \$$$$$$ \$$   \$$
 
@@ -86,8 +86,12 @@ ROM input options:
   -i, --input                    Path(s) to ROM files or archives (supports globbing)  [array]
   -I, --input-exclude            Path(s) to ROM files or archives to exclude from processing (
                                  supports globbing)                                    [array]
-      --input-min-checksum       The minimum checksum level to calculate and use for matching
+      --input-checksum-quick     Only read checksums from archive headers, don't decompress to
+                                  calculate                                          [boolean]
+      --input-checksum-min       The minimum checksum level to calculate and use for matching
                                 [choices: "CRC32", "MD5", "SHA1", "SHA256"] [default: "CRC32"]
+      --input-checksum-max       The maximum checksum level to calculate and use for matching
+                                                   [choices: "CRC32", "MD5", "SHA1", "SHA256"]
       --input-checksum-archives  Calculate checksums of archive files themselves, allowing the
                                  m to match files in DATs
                                         [choices: "never", "auto", "always"] [default: "auto"]
@@ -150,7 +154,7 @@ clean command options:
                        d                                                             [boolean]
 
 zip command options:
-  -Z, --zip-exclude   Glob pattern of files to exclude from zipping                   [string]
+  -Z, --zip-exclude   Glob pattern of ROM filenames to exclude from zipping           [string]
       --zip-dat-name  Group all ROMs from the same DAT into the same zip archive, if not exclu
                       ded from zipping (enforces --dat-threads 1)                    [boolean]
 
@@ -160,15 +164,18 @@ link command options:
                           te                                                         [boolean]
 
 ROM header options:
-      --header          Glob pattern of files to force header processing for          [string]
+      --header          Glob pattern of input filenames to force header processing for[string]
   -H, --remove-headers  Remove known headers from ROMs, optionally limited to a list of comma-
                         separated file extensions (supported: .a78, .fds, .lnx, .nes, .smc)
                                                                                       [string]
 
-ROM set options:
+ROM set options (requires DATs):
       --merge-roms             ROM merge/split mode (requires DATs with parent/clone informati
                                on)
          [choices: "fullnonmerged", "nonmerged", "split", "merged"] [default: "fullnonmerged"]
+      --exclude-disks          Exclude CHD disks in DATs from processing & writing   [boolean]
+      --allow-excess-sets      Allow writing archives that have excess files when not extracti
+                               ng or zipping                                         [boolean]
       --allow-incomplete-sets  Allow writing games that don't have all of their ROMs [boolean]
 
 ROM filtering options:
@@ -202,26 +209,23 @@ ROM filtering options:
       --no-bad                Filter out bad ROM dumps, opposite of --only-bad       [boolean]
 
 One game, one ROM (1G1R) options:
-  -s, --single                 Output only a single game per parent (1G1R) (required for all o
-                               ptions below, requires DATs with parent/clone information)
-                                                                                     [boolean]
-      --prefer-game-regex      Regular expression of game names to prefer             [string]
-      --prefer-rom-regex       Regular expression of ROM filenames to prefer          [string]
-      --prefer-verified        Prefer verified ROM dumps over unverified             [boolean]
-      --prefer-good            Prefer good ROM dumps over bad                        [boolean]
-  -l, --prefer-language        List of comma-separated languages in priority order (supported:
-                                DA, DE, EL, EN, ES, FI, FR, IT, JA, KO, NL, NO, PT, RU, SV, ZH
-                               )                                                      [string]
-  -r, --prefer-region          List of comma-separated regions in priority order (supported: A
-                               RG, ASI, AUS, BEL, BRA, CAN, CHN, DAN, EUR, FRA, FYN, GER, GRE,
-                                HK, HOL, ITA, JPN, KOR, MEX, NOR, NZ, POR, RUS, SPA, SWE, TAI,
-                                UK, UNK, USA, WORLD)                                  [string]
-      --prefer-revision-newer  Prefer newer ROM revisions over older                 [boolean]
-      --prefer-revision-older  Prefer older ROM revisions over newer                 [boolean]
-      --prefer-retail          Prefer retail releases (see --only-retail)            [boolean]
-      --prefer-ntsc            Prefer NTSC ROMs over others                          [boolean]
-      --prefer-pal             Prefer PAL ROMs over others                           [boolean]
-      --prefer-parent          Prefer parent ROMs over clones                        [boolean]
+  -s, --single             Output only a single game per parent (1G1R) (required for all optio
+                           ns below, requires DATs with parent/clone information)    [boolean]
+      --prefer-game-regex  Regular expression of game names to prefer                 [string]
+      --prefer-rom-regex   Regular expression of ROM filenames to prefer              [string]
+      --prefer-verified    Prefer verified ROM dumps over unverified                 [boolean]
+      --prefer-good        Prefer good ROM dumps over bad                            [boolean]
+  -l, --prefer-language    List of comma-separated languages in priority order (supported: DA,
+                            DE, EL, EN, ES, FI, FR, IT, JA, KO, NL, NO, PT, RU, SV, ZH)
+                                                                                      [string]
+  -r, --prefer-region      List of comma-separated regions in priority order (supported: ARG,
+                           ASI, AUS, BEL, BRA, CAN, CHN, DAN, EUR, FRA, FYN, GER, GRE, HK, HOL
+                           , ITA, JPN, KOR, MEX, NOR, NZ, POR, RUS, SPA, SWE, TAI, UK, UNK, US
+                           A, WORLD)                                                  [string]
+      --prefer-revision    Prefer older or newer revisions, versions, or ring codes
+                                                                   [choices: "older", "newer"]
+      --prefer-retail      Prefer retail releases (see --only-retail)                [boolean]
+      --prefer-parent      Prefer parent ROMs over clones                            [boolean]
 
 report command options:
       --report-output  Report output location (formatted with moment.js)
@@ -235,8 +239,8 @@ Help & debug options:
       --write-retry     Number of additional retries to attempt when writing a file has failed
                          (0 disables retries)                            [number] [default: 2]
       --temp-dir        Path to a directory for temporary files                       [string]
-      --disable-cache   Disable the file checksum cache                              [boolean]
-      --cache-path      Location for the file checksum cache file                     [string]
+      --disable-cache   Disable loading or saving the cache file                     [boolean]
+      --cache-path      Location for the cache file                                   [string]
   -v, --verbose         Enable verbose logging, can specify up to three times (-vvv)   [count]
   -h, --help            Show help                                                    [boolean]
 
@@ -249,7 +253,7 @@ Advanced usage:
     {datDescription}  The description of the DAT that contains the ROM
     {region}          The region of the ROM release (e.g. "USA"), each ROM can have multiple
     {language}        The language of the ROM release (e.g. "En"), each ROM can have multiple
-    {gameType}        The type of the game (e.g. "Retail", "Demo", "Prototype")
+    {type}            The type of the game (e.g. "Retail", "Demo", "Prototype")
     {genre}           The DAT-defined genre of the game
 
     {inputDirname}    The input file's dirname
