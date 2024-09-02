@@ -15,14 +15,14 @@ Igir will use your operating system's temporary directory for these files by def
 
 ## RAM disks
 
-### :simple-windowsxp: Windows
+### :fontawesome-brands-windows: Windows
 
 There are no tools built-in to Windows that can create a RAM disk. The open source [ImDisk Toolkit](https://sourceforge.net/projects/imdisk-toolkit/) is a popular option.
 
-### :simple-apple: macOS
+### :fontawesome-brands-apple: macOS
 
 The built-in `diskutil` and `hdiutil` tools can be used to create and mount a RAM disk. Alex T has some instructions in a [GitHub gist](https://gist.github.com/htr3n/344f06ba2bb20b1056d7d5570fe7f596).
 
-### :simple-linux: Linux
+### :fontawesome-brands-linux: Linux
 
 `tmpfs` is a tool that comes with most Linux distributions that is used for creating RAM disks. Oracle has [a guide](https://docs.oracle.com/cd/E18752_01/html/817-5093/fscreate-99040.html) on the tool.

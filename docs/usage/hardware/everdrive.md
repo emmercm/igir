@@ -6,7 +6,7 @@ The [EverDrive](https://krikzz.com/) flash carts by Krikzz are some of the highe
 
 Because flash carts are specific to a specific console, you can provide specific input directories and [DATs](../../dats/introduction.md) when you run Igir. For example:
 
-=== ":simple-windowsxp: Windows"
+=== ":fontawesome-brands-windows: Windows"
 
     Replace the `E:\` drive letter with wherever your SD card is:
 
@@ -18,7 +18,7 @@ Because flash carts are specific to a specific console, you can provide specific
       --no-bios
     ```
 
-=== ":simple-apple: macOS"
+=== ":fontawesome-brands-apple: macOS"
 
     Replace the `/Volumes/EverDrive` drive name with whatever your SD card is named:
 
@@ -46,7 +46,7 @@ you can then add some other output options such as the [`--dir-letter` option](.
 
 Alternatively, Igir supports [Hardware Target Game Database SMDB files](https://github.com/frederic-mahe/Hardware-Target-Game-Database/tree/master/EverDrive%20Pack%20SMDBs) as [DATs](../../dats/introduction.md). Unlike typical DATs, Hardware Target Game Database SMDBs typically have an opinionated directory structure to help sort ROMs by language, category, genre, and more. Example usage:
 
-=== ":simple-windowsxp: Windows"
+=== ":fontawesome-brands-windows: Windows"
 
     Replace the `E:\` drive letter with wherever your SD card is:
 
@@ -57,7 +57,7 @@ Alternatively, Igir supports [Hardware Target Game Database SMDB files](https://
       --output E:\
     ```
 
-=== ":simple-apple: macOS"
+=== ":fontawesome-brands-apple: macOS"
 
     Replace the `/Volumes/EverDrive` drive name with whatever your SD card is named:
 

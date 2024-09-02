@@ -21,13 +21,13 @@ In other words, `games/{mister}` is _not_ equivalent to `games/*`. Igir will _no
 
 If you want to clean _every_ directory in `games/`, you could specify it as both the `--input <path>` and `--output <path>`:
 
-=== ":simple-windowsxp: Windows"
+=== ":fontawesome-brands-windows: Windows"
 
     ```batch
     igir move clean --dat "*.dat" --input "games\" --output "games\{mister}\"
     ```
 
-=== ":simple-apple: macOS"
+=== ":fontawesome-brands-apple: macOS"
 
     ```shell
     igir move clean --dat "*.dat" --input "games/" --output "games/{mister}/"
@@ -61,13 +61,13 @@ The `--clean-dry-run` option exists to see what paths `igir clean` would delete,
 
 Usage:
 
-=== ":simple-windowsxp: Windows"
+=== ":fontawesome-brands-windows: Windows"
 
     ```batch
     igir [commands..] clean [options] --clean-dry-run -vv
     ```
 
-=== ":simple-apple: macOS"
+=== ":fontawesome-brands-apple: macOS"
 
     ```shell
     igir [commands..] clean [options] --clean-dry-run -vv

@@ -6,7 +6,7 @@ The [EZ-FLASH](https://www.ezflash.cn/) flash carts for Nintendo handhelds are a
 
 Because flash carts are specific to a specific console, you can provide specific input directories & [DATs](../../dats/introduction.md) when you run Igir. For example:
 
-=== ":simple-windowsxp: Windows"
+=== ":fontawesome-brands-windows: Windows"
 
     Replace the `E:\` drive letter with wherever your SD card is:
 
@@ -18,7 +18,7 @@ Because flash carts are specific to a specific console, you can provide specific
       --no-bios
     ```
 
-=== ":simple-apple: macOS"
+=== ":fontawesome-brands-apple: macOS"
 
     Replace the `/Volumes/EZFLASH` drive name with whatever your SD card is named:
 

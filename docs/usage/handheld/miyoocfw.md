@@ -27,7 +27,7 @@ MiyooCFW doesn't seem to have a centralized folder for putting BIOS files so it'
 
 MiyooCFW supports many many systems and ROM formats. Check the table on the [MiyooCFW Wiki](https://github.com/TriForceX/MiyooCFW/wiki/Emulator-Info) for more precise instructions about the indivudual systems. Most supported systems and their ROMS can be automatically sorted by Igir using the `{miyoocfw}` output token. See the [replaceable tokens page](../../output/tokens.md) for more information.
 
-=== ":simple-windowsxp: Windows"
+=== ":fontawesome-brands-windows: Windows"
 
     Replace the `E:\` drive letter with wherever your SD card is:
 
@@ -40,7 +40,7 @@ MiyooCFW supports many many systems and ROM formats. Check the table on the [Miy
       --no-bios
     ```
 
-=== ":simple-apple: macOS"
+=== ":fontawesome-brands-apple: macOS"
 
     Replace the `/Volumes/MiyooCFW` drive name with whatever your SD card is named:
 

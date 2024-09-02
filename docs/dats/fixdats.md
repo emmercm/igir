@@ -8,7 +8,7 @@ The `fixdat` command creates a [Logiqx XML](http://www.logiqx.com/DatFAQs/) DAT 
 
 For example:
 
-=== ":simple-windowsxp: Windows"
+=== ":fontawesome-brands-windows: Windows"
 
     ```batch
     igir copy zip fixdat ^
@@ -20,7 +20,7 @@ For example:
       --fixdat
     ```
 
-=== ":simple-apple: macOS"
+=== ":fontawesome-brands-apple: macOS"
 
     ```shell
     igir copy zip fixdat \

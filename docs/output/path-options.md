@@ -30,7 +30,7 @@ ROMs-Input/
 
 When combined with a [DAT](../dats/introduction.md), the ROMs will be written with a standardized name, but the output subdirectory structure will match the input:
 
-=== ":simple-windowsxp: Windows"
+=== ":fontawesome-brands-windows: Windows"
 
     ```batch
     igir copy ^
@@ -40,7 +40,7 @@ When combined with a [DAT](../dats/introduction.md), the ROMs will be written wi
       --dir-mirror
     ```
 
-=== ":simple-apple: macOS"
+=== ":fontawesome-brands-apple: macOS"
 
     ```shell
     igir copy \
@@ -101,7 +101,7 @@ ROMs-Input/
 
 The ROMs will be grouped by their DAT name in the output directory:
 
-=== ":simple-windowsxp: Windows"
+=== ":fontawesome-brands-windows: Windows"
 
     ```batch
     igir copy ^
@@ -111,7 +111,7 @@ The ROMs will be grouped by their DAT name in the output directory:
       --dir-dat-name
     ```
 
-=== ":simple-apple: macOS"
+=== ":fontawesome-brands-apple: macOS"
 
     ```shell
     igir copy \
@@ -159,7 +159,7 @@ ROMs-Output/
 
 Similar to `--dir-dat-name`, this option will append the matching [DAT](../dats/introduction.md)'s description to each file.
 
-=== ":simple-windowsxp: Windows"
+=== ":fontawesome-brands-windows: Windows"
 
     ```batch
     igir copy ^
@@ -169,7 +169,7 @@ Similar to `--dir-dat-name`, this option will append the matching [DAT](../dats/
       --dir-dat-description
     ```
 
-=== ":simple-apple: macOS"
+=== ":fontawesome-brands-apple: macOS"
 
     ```shell
     igir copy \
@@ -218,7 +218,7 @@ ROMs-Input/
 
 The ROMs will be grouped together by their first letter in the output directory:
 
-=== ":simple-windowsxp: Windows"
+=== ":fontawesome-brands-windows: Windows"
 
     ```batch
     igir copy ^
@@ -227,7 +227,7 @@ The ROMs will be grouped together by their first letter in the output directory:
       --dir-letter
     ```
 
-=== ":simple-apple: macOS"
+=== ":fontawesome-brands-apple: macOS"
 
     ```shell
     igir copy \
@@ -273,7 +273,7 @@ This option controls the number of leading letters to use for the `--dir-letter`
 
 For example, if we increase the number of letters used for subdirectory names from the above example, then the output would be:
 
-=== ":simple-windowsxp: Windows"
+=== ":fontawesome-brands-windows: Windows"
 
     ```batch
     igir copy ^
@@ -283,7 +283,7 @@ For example, if we increase the number of letters used for subdirectory names fr
       --dir-letter-count 3
     ```
 
-=== ":simple-apple: macOS"
+=== ":fontawesome-brands-apple: macOS"
 
     ```shell
     igir copy \
@@ -346,7 +346,7 @@ ROMs-Input/
 
 If we limit the number of files per letter folder, then the output would be:
 
-=== ":simple-windowsxp: Windows"
+=== ":fontawesome-brands-windows: Windows"
 
     ```batch
     igir copy ^
@@ -356,7 +356,7 @@ If we limit the number of files per letter folder, then the output would be:
       --dir-letter-limit 5
     ```
 
-=== ":simple-apple: macOS"
+=== ":fontawesome-brands-apple: macOS"
 
     ```shell
     igir copy \
@@ -418,7 +418,7 @@ ROMs-Input/
 
 We can group the games into letter ranges, with a max of 10 games in each subdirectory like this:
 
-=== ":simple-windowsxp: Windows"
+=== ":fontawesome-brands-windows: Windows"
 
     ```batch
     igir copy ^
@@ -429,7 +429,7 @@ We can group the games into letter ranges, with a max of 10 games in each subdir
       --dir-letter-group
     ```
 
-=== ":simple-apple: macOS"
+=== ":fontawesome-brands-apple: macOS"
 
     ```shell
     igir copy \

@@ -39,7 +39,7 @@ There have been a few DAT-like formats developed over the years. Igir supports t
 
       Instead of exporting the ListXML to a file yourself, you can also specify a MAME executable for the DAT path and then Igir is smart enough to parse it:
 
-      === ":simple-windowsxp: Windows"
+      === ":fontawesome-brands-windows: Windows"
 
           Windows is fairly easy, MAME is officially compiled for Windows and downloads can be found on many mirror sites.
 
@@ -47,7 +47,7 @@ There have been a few DAT-like formats developed over the years. Igir supports t
           igir [commands..] --dat "mame0258b_64bit.exe" --input <input>
           ```
 
-      === ":simple-apple: macOS"
+      === ":fontawesome-brands-apple: macOS"
 
           MAME isn't officially compiled for macOS, you will have to use a third-party release such as [SDL MAME](https://sdlmame.lngn.net/).
 

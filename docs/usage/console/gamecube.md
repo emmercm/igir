@@ -10,7 +10,7 @@
 
 Igir has a `--writer-threads <threads>` option to limit the number of files being written at once. You can use the option like this:
 
-=== ":simple-windowsxp: Windows"
+=== ":fontawesome-brands-windows: Windows"
 
     Replace the `E:\` drive letter with wherever your SD card is:
 
@@ -24,7 +24,7 @@ Igir has a `--writer-threads <threads>` option to limit the number of files bein
       --writer-threads 1
     ```
 
-=== ":simple-apple: macOS"
+=== ":fontawesome-brands-apple: macOS"
 
     Replace the `/Volumes/SD2SP2` drive name with whatever your SD card is named:
 
