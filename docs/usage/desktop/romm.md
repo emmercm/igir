@@ -63,7 +63,7 @@ docker compose up
 
 This will create all of the local directories necessary. On your host machine (not from inside the container) you can sort your ROMs into the correct directories like this:
 
-=== ":simple-windowsxp: Windows"
+=== ":fontawesome-brands-windows: Windows"
 
     ```batch
     igir copy zip test clean ^
@@ -72,7 +72,7 @@ This will create all of the local directories necessary. On your host machine (n
       --output "romm\roms\{romm}"
     ```
 
-=== ":simple-apple: macOS"
+=== ":fontawesome-brands-apple: macOS"
 
     ```shell
     igir copy zip test clean \

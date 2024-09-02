@@ -14,7 +14,7 @@ TWiLightMenu++ ships with most emulators not needing BIOS files. No exceptions a
 
 TWiLightMenu uses its own proprietary [ROM folder structure](https://github.com/DS-Homebrew/TWiLightMenu/tree/master/7zfile/roms) based in the root of the SD card, so Igir has a replaceable `{twmenu}` token to sort ROMs into the right place. See the [replaceable tokens page](../../output/tokens.md) for more information.
 
-=== ":simple-windowsxp: Windows"
+=== ":fontawesome-brands-windows: Windows"
 
     Replace the `E:\` drive letter with wherever your SD card is:
 
@@ -27,7 +27,7 @@ TWiLightMenu uses its own proprietary [ROM folder structure](https://github.com/
       --no-bios
     ```
 
-=== ":simple-apple: macOS"
+=== ":fontawesome-brands-apple: macOS"
 
     Replace the `/Volumes/DSCard` drive name with whatever your SD card is named:
 

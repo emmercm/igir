@@ -16,7 +16,7 @@ First, you need to download a set of [DATs](../dats/introduction.md). For these 
 
 Let's say that you have a directory named `ROMs/` that contains ROMs for many different systems, and it needs some organization. To make sure we're alright with the output, we'll have Igir copy these files to a different directory rather than move them. We'll also [zip](../output/writing-archives.md) them to reduce disk space & speed up future scans.
 
-=== ":simple-windowsxp: Windows"
+=== ":fontawesome-brands-windows: Windows"
 
     ```batch
     igir copy zip test ^
@@ -26,7 +26,7 @@ Let's say that you have a directory named `ROMs/` that contains ROMs for many di
       --dir-dat-name
     ```
 
-=== ":simple-apple: macOS"
+=== ":fontawesome-brands-apple: macOS"
 
     ```shell
     igir copy zip test \
@@ -75,7 +75,7 @@ Let's say that we've done the above first time sort and were happy with the resu
 
 We now have new ROMs that we want to newly merge into our collection, and we want to generate a [report](../output/reporting.md) of what ROMs are still missing. We also want to "[clean](../output/cleaning.md)" or delete any unknown files that may have made their way into our collection.
 
-=== ":simple-windowsxp: Windows"
+=== ":fontawesome-brands-windows: Windows"
 
     ```batch
     igir move zip test clean report ^
@@ -86,7 +86,7 @@ We now have new ROMs that we want to newly merge into our collection, and we wan
       --dir-dat-name
     ```
 
-=== ":simple-apple: macOS"
+=== ":fontawesome-brands-apple: macOS"
 
     ```shell
     igir move zip test clean report \
@@ -141,7 +141,7 @@ Let's say we've done the above sorting we want to copy some ROMs from `ROMs-Sort
 
 We would prefer having only one copy of every game ([1G1R](../roms/filtering-preferences.md#preferences-for-1g1r)), because we have a preferred language, and so there is less to scroll through to find what game we want. Our flash cart can't read `.zip` files, so we'll need to extract our ROMs during copying.
 
-=== ":simple-windowsxp: Windows"
+=== ":fontawesome-brands-windows: Windows"
 
     Replace the `E:\` drive letter with wherever your SD card is:
 
@@ -157,7 +157,7 @@ We would prefer having only one copy of every game ([1G1R](../roms/filtering-pre
       --prefer-region USA,WORLD,EUR,JPN
     ```
 
-=== ":simple-apple: macOS"
+=== ":fontawesome-brands-apple: macOS"
 
     Replace the `/Volumes/FlashCart` drive name with whatever your SD card is named:
 
@@ -217,7 +217,7 @@ ROM organization is very opinion-based, and your opinion may not match that of D
 
 It is possible to extract or zip your ROM files en masse without complicated Bash or Batch scripts, and you can do this without DATs because the root of the filename won't change.
 
-=== ":simple-windowsxp: Windows"
+=== ":fontawesome-brands-windows: Windows"
 
     ```batch
     igir move extract test ^
@@ -226,7 +226,7 @@ It is possible to extract or zip your ROM files en masse without complicated Bas
       --dir-mirror
     ```
 
-=== ":simple-apple: macOS"
+=== ":fontawesome-brands-apple: macOS"
 
     ```shell
     igir move extract test \
@@ -250,7 +250,7 @@ It is possible to extract or zip your ROM files en masse without complicated Bas
 
 Igir is able to detect more than 50 ROM and archive file types and automatically correct file extensions when needed during writing. See the [writing options](../output/options.md#fixing-rom-extensions) page for more information.
 
-=== ":simple-windowsxp: Windows"
+=== ":fontawesome-brands-windows: Windows"
 
     ```batch
     igir move extract test ^
@@ -260,7 +260,7 @@ Igir is able to detect more than 50 ROM and archive file types and automatically
       --fix-extension always
     ```
 
-=== ":simple-apple: macOS"
+=== ":fontawesome-brands-apple: macOS"
 
     ```shell
     igir move extract test \

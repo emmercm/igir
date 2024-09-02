@@ -14,13 +14,13 @@ See the [reading archives](../input/reading-archives.md) page for more informati
 
 One aspect of organizing a ROM collection is to ensure a consistent archive format. You can ensure all ROMs in a collection are in a `.zip` archive like this:
 
-=== ":simple-windowsxp: Windows"
+=== ":fontawesome-brands-windows: Windows"
 
     ```batch
     igir move zip --dat "*.dat" --input "ROMs\" --output "ROMs\"
     ```
 
-=== ":simple-apple: macOS"
+=== ":fontawesome-brands-apple: macOS"
 
     ```shell
     igir move zip --dat "*.dat" --input "ROMs/" --output "ROMs/"
@@ -44,7 +44,7 @@ You can exclude files from being zipped with the `--zip-exclude <glob>` option. 
 
 You can exclude some disc images like this:
 
-=== ":simple-windowsxp: Windows"
+=== ":fontawesome-brands-windows: Windows"
 
     ```batch
     igir copy zip ^
@@ -54,7 +54,7 @@ You can exclude some disc images like this:
       --zip-exclude "**/*.{iso,bin,cue,chd}"
     ```
 
-=== ":simple-apple: macOS"
+=== ":fontawesome-brands-apple: macOS"
 
     ```shell
     igir copy zip \
@@ -76,7 +76,7 @@ You can exclude some disc images like this:
 
 You can exclude some BIOS files like this:
 
-=== ":simple-windowsxp: Windows"
+=== ":fontawesome-brands-windows: Windows"
 
     ```batch
     igir copy zip ^
@@ -86,7 +86,7 @@ You can exclude some BIOS files like this:
       --zip-exclude "**/*[BIOS]*"
     ```
 
-=== ":simple-apple: macOS"
+=== ":fontawesome-brands-apple: macOS"
 
     ```shell
     igir copy zip \

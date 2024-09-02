@@ -18,7 +18,7 @@ Igir has support for replaceable "tokens" in the `--output <path>` option. This 
 
 This token can be used to reference each core's specific directory in the SD card's `Assets` directory. ROMs go in the `Assets/{pocket}/common` directory.
 
-=== ":simple-windowsxp: Windows"
+=== ":fontawesome-brands-windows: Windows"
 
     Replace the `E:\` drive letter with wherever your SD card is:
 
@@ -34,7 +34,7 @@ This token can be used to reference each core's specific directory in the SD car
       --no-bios
     ```
 
-=== ":simple-apple: macOS"
+=== ":fontawesome-brands-apple: macOS"
 
     Replace the `/Volumes/POCKET` drive name with whatever your SD card is named:
 

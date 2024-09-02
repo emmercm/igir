@@ -9,7 +9,7 @@ Igir supports most common archive formats:
 | Extension                                                        | Contains file CRC32s | Igir can extract without a third-party binary | Igir can checksum without temporary files |
 |------------------------------------------------------------------|----------------------|-----------------------------------------------|-------------------------------------------|
 | `.7z`                                                            | ✅                    | ❌ `7za`                                       | ❌                                         |
-| `.chd`                                                           | ❌ SHA1               | ❌ `chdman`                                    | ❌                                         |
+| `.chd`                                                           | ❌ SHA1               | ❌ `chdman`<sup>1</sup>                        | ❌                                         |
 | `.cso`, `.zso`, `.dax`                                           | ❌                    | ❌ `maxcso`                                    | ⚠️ CRC32 only                             |
 | `.gz`, `.gzip`                                                   | ❌ CRC16              | ❌ `7za`                                       | ❌                                         |
 | `.nkit.iso` ([GameCube docs](../usage/console/gamecube.md#nkit)) | ✅                    | ❌ no extraction support                       | ✅                                         |
@@ -20,6 +20,10 @@ Igir supports most common archive formats:
 | `.zip` (including zip64)                                         | ✅                    | ✅                                             | ✅ ≤64MiB                                  |
 | `.zip.001`                                                       | ✅                    | ❌ `7za`                                       | ❌                                         |
 | `.zipx`                                                          | ✅                    | ❌ `7za`                                       | ❌                                         |
+
+<small>
+<sup>1</sup> requires you to install SDL2 manually, see the [chdman-js README](https://github.com/emmercm/chdman-js#readme).
+</small>
 
 **You should prefer archive formats that have CRC32 checksum information for each file.**
 

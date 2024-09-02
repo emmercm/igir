@@ -18,7 +18,7 @@ This ensures that the card already has the correct folder structures and is reco
 
 The Adam image does not come with BIOS files. Where you have to put which of your own BIOS files is [documented in the image's wiki](https://github.com/eduardofilo/RG350_adam_image/wiki/En:-3.-Content-installation#bios). Most of the BIOS files have to be stored in the `BIOS` subfolder of the second SD card (TF2) and the libretro System.dat can be used to put them there
 
-=== ":simple-windowsxp: Windows"
+=== ":fontawesome-brands-windows: Windows"
 
     Replace the `E:\` drive letter with wherever your SD card is:
 
@@ -29,7 +29,7 @@ The Adam image does not come with BIOS files. Where you have to put which of you
       --output E:\BIOS
     ```
 
-=== ":simple-apple: macOS"
+=== ":fontawesome-brands-apple: macOS"
 
     Replace the `/Volumes/JELOS` drive name with whatever your SD card is named:
 
@@ -59,7 +59,7 @@ Adam supports many different ROM formats in subfolders of `ROMS` on the second S
 
       Please note that sorting the supported Arcade machine releases (MAME, CPS, FBA) in a single pass is not supported by Igir at this time. Try the [Arcade docs](../arcade.md) docs for help with this.
 
-=== ":simple-windowsxp: Windows"
+=== ":fontawesome-brands-windows: Windows"
 
     Replace the `E:\` drive letter with wherever your SD card is:
 
@@ -72,7 +72,7 @@ Adam supports many different ROM formats in subfolders of `ROMS` on the second S
       --no-bios
     ```
 
-=== ":simple-apple: macOS"
+=== ":fontawesome-brands-apple: macOS"
 
     Replace the `/Volumes/ADAM` drive name with whatever your SD card is named:
 

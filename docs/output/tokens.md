@@ -6,7 +6,7 @@ See [output path tokens](./path-options.md) for other options that will further 
 
 For example, if you want to group all ROMs based on their region, you would specify:
 
-=== ":simple-windowsxp: Windows"
+=== ":fontawesome-brands-windows: Windows"
 
     ```batch
     igir copy extract ^
@@ -15,7 +15,7 @@ For example, if you want to group all ROMs based on their region, you would spec
       --output "ROMs-Sorted\{region}\"
     ```
 
-=== ":simple-apple: macOS"
+=== ":fontawesome-brands-apple: macOS"
 
     ```shell
     igir copy extract \

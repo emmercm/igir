@@ -52,7 +52,7 @@ Here is a comparison chart:
 
 The ROM merge type can be specified with the `--merge-roms <type>` option:
 
-=== ":simple-windowsxp: Windows"
+=== ":fontawesome-brands-windows: Windows"
 
     ```batch
     igir copy zip ^
@@ -62,7 +62,7 @@ The ROM merge type can be specified with the `--merge-roms <type>` option:
       --merge-roms split
     ```
 
-=== ":simple-apple: macOS"
+=== ":fontawesome-brands-apple: macOS"
 
     ```shell
     igir copy zip \
@@ -120,7 +120,7 @@ Let's say we want to build an arcade ROM set that's compatible with the most rec
 
   After determining where we want to put our ROMs, we can build our MAME v0.258 ROM set like this:
 
-  === ":simple-windowsxp: Windows (64-bit)"
+  === ":fontawesome-brands-windows: Windows (64-bit)"
 
       ```batch
       igir copy zip ^
@@ -130,7 +130,7 @@ Let's say we want to build an arcade ROM set that's compatible with the most rec
         --merge-roms split
       ```
 
-  === ":simple-windowsxp: Windows (32-bit)"
+  === ":fontawesome-brands-windows: Windows (32-bit)"
 
       ```batch
       igir copy zip ^
@@ -140,7 +140,7 @@ Let's say we want to build an arcade ROM set that's compatible with the most rec
         --merge-roms split
       ```
 
-  === ":simple-apple: macOS"
+  === ":fontawesome-brands-apple: macOS"
 
       ```shell
       igir copy zip \
@@ -184,7 +184,7 @@ Taking the MAME v0.258 set we created above, let's say we want to "downgrade" it
 
 3. **Run Igir.**
 
-  === ":simple-windowsxp: Windows (64-bit)"
+  === ":fontawesome-brands-windows: Windows (64-bit)"
 
       ```batch
       igir copy zip ^
@@ -195,7 +195,7 @@ Taking the MAME v0.258 set we created above, let's say we want to "downgrade" it
         --merge-roms split
       ```
 
-  === ":simple-windowsxp: Windows (32-bit)"
+  === ":fontawesome-brands-windows: Windows (32-bit)"
 
       ```batch
       igir copy zip ^
@@ -206,7 +206,7 @@ Taking the MAME v0.258 set we created above, let's say we want to "downgrade" it
         --merge-roms split
       ```
 
-  === ":simple-apple: macOS"
+  === ":fontawesome-brands-apple: macOS"
 
       ```shell
       igir copy zip \
@@ -236,7 +236,7 @@ Sometimes people have a need to build very specific sets. Here are some instruct
 
 Build a set of only BIOS files, with each in its own `.zip` file:
 
-=== ":simple-windowsxp: Windows"
+=== ":fontawesome-brands-windows: Windows"
 
     ```batch
     igir copy zip ^
@@ -246,7 +246,7 @@ Build a set of only BIOS files, with each in its own `.zip` file:
       --only-bios
     ```
 
-=== ":simple-apple: macOS"
+=== ":fontawesome-brands-apple: macOS"
 
     ```shell
     igir copy zip \
@@ -270,7 +270,7 @@ Build a set of only BIOS files, with each in its own `.zip` file:
 
 Build a set of only device files, with each in its own `.zip` file:
 
-=== ":simple-windowsxp: Windows"
+=== ":fontawesome-brands-windows: Windows"
 
     ```batch
     igir copy zip ^
@@ -280,7 +280,7 @@ Build a set of only device files, with each in its own `.zip` file:
       --only-device
     ```
 
-=== ":simple-apple: macOS"
+=== ":fontawesome-brands-apple: macOS"
 
     ```shell
     igir copy zip \
