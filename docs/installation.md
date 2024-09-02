@@ -9,7 +9,6 @@ There are a few different installation options offered for Igir with varying lev
 [![npm: version](https://img.shields.io/npm/v/igir?color=%23cc3534&label=version&logo=npm&logoColor=white)](https://www.npmjs.com/package/igir)
 [![Node.js](https://img.shields.io/node/v/igir?label=Node.js&logo=node.js&logoColor=white)](https://nodejs.org/en/download/)
 
-
 The best way to ensure that you are always running the most up-to-date version of Igir is to run it via [`npx`](https://docs.npmjs.com/cli/v9/commands/npx) which comes installed with [Node.js](https://nodejs.org/en/download/):
 
 ```shell
