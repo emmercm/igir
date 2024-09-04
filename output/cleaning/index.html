@@ -2657,11 +2657,22 @@
 
 
 <h1 id="output-directory-cleaning">Output Directory Cleaning</h1>
-<p>The <code>igir clean</code> <a href="../../commands/">command</a> can be used when writing (<code>igir copy</code>, <code>igir move</code>, and <code>igir link</code>) to delete files from the <code>--output &lt;path&gt;</code> directory that are either:</p>
+<p>The <code>igir clean</code> <a href="../../commands/">command</a> can be used when writing (<code>igir copy</code>, <code>igir move</code>, and <code>igir link</code>) to delete files from the <code>--output &lt;path&gt;</code> directory that were <em>not</em> considered for writing.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>The term "considered" is used here because output files that already exist won't be <a href="../options/#overwriting-files">overwritten</a> by default. These output file paths were <em>considered</em> for writing, but then Igir chose <em>not</em> to write them.</p>
+</div>
+<p>Only files from <a href="../../input/file-scanning/"><code>--input &lt;path&gt;</code> directories</a> can be used when writing to the <code>--output &lt;path&gt;</code> directory. Therefore, the output files that will be cleaned (because they <em>weren't</em> considered for writing) are files that:</p>
 <ul>
-<li>Not contained in any provided <a href="../../dats/introduction/">DAT</a> (the <a href="../../dats/processing/#scanning-for-dats"><code>--dat &lt;path&gt;</code> option</a>).</li>
-<li>Contained in a <a href="../../dats/introduction/">DAT</a> (the <a href="../../dats/processing/#scanning-for-dats"><code>--dat &lt;path&gt;</code> option</a>), but the file is in the incorrect location.</li>
+<li>(When using <a href="../../dats/introduction/">DATs</a>) Don't <a href="../../roms/matching/">match</a> any ROM in any DAT</li>
+<li>Were filtered out by <a href="../../roms/filtering-preferences/#filters">filter options</a></li>
+<li>Were filtered out by <a href="../../roms/filtering-preferences/#preferences-for-1g1r">1G1R preferences</a></li>
 </ul>
+<div class="admonition warning">
+<p class="admonition-title">Warning</p>
+<p>Because only input files will be considered for writing to the output directory, you will want your input files to be a superset of your output files. In other words, if a file isn't in your input files, it will be cleaned from your output directory.</p>
+<p>It is a <a href="../../usage/best-practices/#file-inputs">best practice</a> to include your output directory as an input directory when cleaning files. This will ensure any previously written valid files won't be cleaned.</p>
+</div>
 <h2 id="the-golden-rule">The golden rule</h2>
 <p>The golden rule of the <code>igir clean</code> command is it will <em>not</em> delete files in any directory tree that it did not write to.</p>
 <p>In practical terms, this means:</p>
@@ -2735,7 +2746,7 @@
     <span class="md-icon" title="Last update">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1-2.1-2M12.5 7v5.2l4 2.4-1 1L11 13V7h1.5M11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2v1.8Z"/></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date">September 2, 2024</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date">September 4, 2024</span>
   </span>
 
     

@@ -2674,7 +2674,7 @@
 <p><strong>Choose DAT groups with parent/clone information.</strong></p>
 <p><a href="../../dats/introduction/#parentclone-pc-dats">Parent/clone information</a> lets you apply <a href="../../roms/filtering-preferences/">1G1R preference rules</a>. For example, prefer No-Intro's Game Boy DAT over TOSEC's, as TOSEC doesn't provide parent/clone information.</p>
 <p><strong>Use consistent versions across all devices.</strong></p>
-<p>DATs work best if you store them alongside your primary ROM collection, and when you use the same DAT versions across all devices (i.e. your primary collection, handhelds, flash carts, etc.). Some DAT groups release new versions as often as daily, so keeping your collection in sync is easier with consistent DATs.</p>
+<p>DATs work best if you store them alongside your primary ROM collection and when you use the same DAT versions across all devices (i.e. your primary collection, handhelds, flash carts, etc.). Some DAT groups release new versions as often as daily, so keeping your collection in sync is easier with consistent DATs.</p>
 <p><strong>Process DATs from different groups separately.</strong></p>
 <p>DAT groups have some overlap between them, so using DATs from multiple groups at the same time may cause duplicate files or filename collisions. Different groups also have different conventions that may require different settings, such as <a href="../../roms/filtering-preferences/#filters">filters</a> and <a href="../../roms/filtering-preferences/#preferences-for-1g1r">1G1R preferences</a>.</p>
 <p>Also, keep ROM sets organized by DATs from different groups in separate directories. For example, create different directories for No-Intro, Redump, and TOSEC-organized ROM sets.</p>
@@ -2682,6 +2682,12 @@
 <p><strong>Keep one primary collection and then copy to other sub-collections.</strong></p>
 <p>Provide your output directory as one of the input directories, and then any other input directories you wish to copy or move into your primary collection. Doing so will let you <a href="../../output/cleaning/">clean the output directory</a> safely.</p>
 <p>Then, create sub-collections by copying files from your main collection to other devices, optionally applying <a href="../../roms/filtering-preferences/">filtering and preference rules</a>.</p>
+<p><strong>Provide the output directory as an input directory when moving or cleaning.</strong></p>
+<p>This is for a few reasons:</p>
+<ul>
+<li><a href="../../roms/filtering-preferences/#preferences-for-1g1r">1G1R rules</a> are only applied to files found &amp; matched in the input directories, so moving files out of the input directories may change your 1G1R results on subsequent runs. Providing the output directory as an input directory will make sure you keep your preferred files.</li>
+<li>The <a href="../../output/cleaning/"><code>igir clean</code> command</a> excludes files considered for writing (either written or <em>not</em> <a href="../../output/options/#overwriting-files">overwritten</a>). Providing the output directory as an input directory will ensure no DAT-matched files are deleted.</li>
+</ul>
 <p><strong>Prefer ROMs with headers.</strong></p>
 <p>Igir can <a href="../../roms/headers/#automatic-header-removal">remove headers automatically</a> when needed, but it cannot add them back. Keep ROMs with headers in your primary collection and then modify them when copying to other devices as needed.</p>
 <p><strong>Don't use quick scanning unless you absolutely need it.</strong></p>
@@ -2693,7 +2699,7 @@
 <p>Zip files generally save file space and are faster to scan, at the expense of more time to create them. For collections that will be read from more often than written to, such as a primary collection, prefer to eat the cost of <a href="../../output/writing-archives/">archiving files</a> once with the <code>igir zip</code> command.</p>
 <p><strong>Organize ROM sets by DAT name or description.</strong></p>
 <p>Ignoring <a href="../arcade/">arcade ROM sets</a>, one purpose of sorting your ROM collection using DATs is to organize them in some human-understandable manner. A common way to help with this is to group ROMs from the same console together using <a href="../../output/path-options/#append-dat-name"><code>--dir-dat-name</code></a> or <a href="../../output/path-options/#append-dat-description"><code>--dir-dat-description</code></a>`</p>
-<p>Alternatively, you can <a href="../../dats/processing/#dat-filtering">filter to only the DATs</a> you want, and then <a href="../../dats/processing/#dat-combining">combine them together</a> and write the resulting ROMs to one directory.</p>
+<p>Alternatively, you can <a href="../../dats/processing/#dat-filtering">filter to only the DATs</a> you want and then <a href="../../dats/processing/#dat-combining">combine them</a> and write the resulting ROMs to one directory.</p>
 <p><strong>Organize ROMs by letter for non-keyboard &amp; mouse devices.</strong></p>
 <p>Devices that only have a D-pad to browse through files can make ROM selection tedious. Use the <a href="../../output/path-options/#append-game-letters"><code>--dir-letter</code> option</a> and its <code>--dir-letter-*</code> modifier options to make this easier with large collections.</p>
 <p><strong>Use the default game name appending option.</strong></p>
@@ -2704,7 +2710,7 @@
 <p><strong>Use the right DAT version for your emulator version.</strong></p>
 <p>You must choose the right DAT for your emulator (e.g. MAME) and emulator version (e.g. MAME 0.258) or your ROMs may not work correctly. See the <a href="../arcade/#emulator-versions--dats">arcade ROM sets page</a> for more information.</p>
 <p><strong>For MAME, use the official DATs or ones from progetto-SNAPS.</strong></p>
-<p>These DATs provide the most flexibility (i.e. can use any merge type) and the most amount of metadata (i.e. <a href="../../dats/introduction/#parentclone-pc-dats">parent/clone information</a>, ROMs and CHDs together in one DAT) for Igir to use for processing. Other DAT groups such as pleasuredome modify the official DATs quite heavily by pre-applying filters.</p>
+<p>These DATs provide the most flexibility (i.e. can use any merge type) and the most amount of metadata (i.e. <a href="../../dats/introduction/#parentclone-pc-dats">parent/clone information</a>, ROMs &amp; CHDs together in one DAT) for Igir to use for processing. Other DAT groups such as pleasuredome modify the official DATs quite heavily by pre-applying filters.</p>
 <p><strong>Pick a ROM merge type intentionally.</strong></p>
 <p>Igir will produce full non-merged sets by default for the highest level of compatability. However, you should understand the difference between the supported <a href="../arcade/#rom-set-merge-types">merge types</a> and choose one that best suits your needs.</p>
 <h2 id="advanced">Advanced</h2>
@@ -2730,7 +2736,7 @@
     <span class="md-icon" title="Last update">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1-2.1-2M12.5 7v5.2l4 2.4-1 1L11 13V7h1.5M11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2v1.8Z"/></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date">August 13, 2024</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date">September 4, 2024</span>
   </span>
 
     
