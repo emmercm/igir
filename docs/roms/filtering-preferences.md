@@ -390,6 +390,12 @@ The `--single` option is required for all `--prefer-*` options, otherwise there 
 
 Multiple `--prefer-*` options can be specified at once, and they will be applied in the following order of importance (most important to least important).
 
+!!! warning
+
+    Be careful when using the `igir move` command! 1G1R preferences are only applied to files found & matched in the input directories. Because moving files will change what files are in your input directories, different games may be preferred if you run the same command multiple times.
+
+    It is a [best practice](../usage/best-practices.md#file-inputs) to include your output directory as an input directory when moving files. This will ensure any previously moved games remain the preferred version when applying 1G1R rules again.
+
 ### Prefer game names
 
 ```text
