@@ -92,12 +92,6 @@ const fileFilter = (filters: FileFilter[]): string[] => {
       // Only include the exact 7zip-bin we need
       { exclude: 'node_modules/{**/,}7zip-bin/**/7z*' },
       { include: path7za },
-      // Only include the exact chdman bin we need
-      { exclude: 'node_modules/{**/,}chdman/bin/*/*/chdman*' },
-      { include: `node_modules/{**/,}chdman/bin/${process.platform}/${process.arch}/chdman*` },
-      // Only include the exact maxcso bin we need
-      { exclude: 'node_modules/{**/,}maxcso/bin/*/*/maxcso*' },
-      { include: `node_modules/{**/,}maxcso/bin/${process.platform}/${process.arch}/maxcso*` },
     ]),
   );
   const includeSize = (
