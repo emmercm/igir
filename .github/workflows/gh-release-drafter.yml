@@ -105,7 +105,7 @@ jobs:
               | jq --raw-output '.[0].number')
           echo "PR_NUMBER=${PR_NUMBER}" >> "${GITHUB_OUTPUT}"
       - if: ${{ steps.release-drafter.outputs.id }}
-        uses: thollander/actions-comment-pull-request@v2
+        uses: thollander/actions-comment-pull-request@v3
         with:
           message: |
             ## :octocat: GitHub release
