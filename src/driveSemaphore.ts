@@ -1,6 +1,6 @@
 import path from 'node:path';
 
-import async, { AsyncResultCallback } from 'async';
+import async from 'async';
 import { Mutex, Semaphore } from 'async-mutex';
 
 import ElasticSemaphore from './elasticSemaphore.js';
@@ -110,17 +110,17 @@ export default class DriveSemaphore {
     const results = await async.mapLimit(
       filesStriped,
       Defaults.MAX_FS_THREADS,
-      async ([file, idx], callback: AsyncResultCallback<[V, number], Error>) => {
+      async ([file, idx]: [K, number]): Promise<[V, number]> => {
         try {
           const val = await this.runExclusive(file, async () => runnable(file));
-          callback(undefined, [val, idx]);
+          return [val, idx];
         } catch (error) {
           if (error instanceof Error) {
-            callback(error);
+            throw error;
           } else if (typeof error === 'string') {
-            callback(new Error(error));
+            throw new Error(error);
           } else {
-            callback(new Error('failed to execute runnable'));
+            throw new Error('failed to execute runnable');
           }
         }
       },

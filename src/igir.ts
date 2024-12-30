@@ -140,7 +140,7 @@ export default class Igir {
     datProcessProgressBar.logTrace(
       `processing ${dats.length.toLocaleString()} DAT${dats.length !== 1 ? 's' : ''}`,
     );
-    await async.eachLimit(dats, this.options.getDatThreads(), async (dat, callback) => {
+    await async.eachLimit(dats, this.options.getDatThreads(), async (dat: DAT): Promise<void> => {
       datProcessProgressBar.incrementProgress();
 
       const progressBar = this.logger.addProgressBar(
@@ -226,7 +226,6 @@ export default class Igir {
       }
 
       datProcessProgressBar.incrementDone();
-      callback();
     });
     datProcessProgressBar.logTrace(
       `done processing ${dats.length.toLocaleString()} DAT${dats.length !== 1 ? 's' : ''}`,

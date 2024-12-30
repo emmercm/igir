@@ -3,8 +3,8 @@ import path from 'node:path';
 import { Readable } from 'node:stream';
 
 import archiver, { Archiver } from 'archiver';
-import async, { AsyncResultCallback } from 'async';
-import unzipper, { Entry } from 'unzipper';
+import async from 'async';
+import unzipper, { Entry, File as ZipFile } from 'unzipper';
 
 import Defaults from '../../../globals/defaults.js';
 import fsPoly from '../../../polyfill/fsPoly.js';
@@ -39,7 +39,7 @@ export default class Zip extends Archive {
     return async.mapLimit(
       archive.files.filter((entryFile) => entryFile.type === 'File'),
       Defaults.ARCHIVE_ENTRY_SCANNER_THREADS_PER_ARCHIVE,
-      async (entryFile, callback: AsyncResultCallback<ArchiveEntry<this>, Error>) => {
+      async (entryFile: ZipFile): Promise<ArchiveEntry<this>> => {
         let checksums: ChecksumProps = {};
         if (checksumBitmask & ~ChecksumBitmask.CRC32) {
           const entryStream = entryFile
@@ -61,7 +61,7 @@ export default class Zip extends Archive {
         }
         const { crc32, ...checksumsWithoutCrc } = checksums;
 
-        const archiveEntry = await ArchiveEntry.entryOf(
+        return ArchiveEntry.entryOf(
           {
             archive: this,
             entryPath: entryFile.path,
@@ -71,7 +71,6 @@ export default class Zip extends Archive {
           },
           checksumBitmask,
         );
-        callback(undefined, archiveEntry);
       },
     );
   }
@@ -201,46 +200,44 @@ export default class Zip extends Archive {
        *  also want to make sure the queue processing stays busy. Use 3 as a middle-ground.
        */
       3,
-      async.asyncify(
-        async ([inputFile, outputArchiveEntry]: [File, ArchiveEntry<Zip>]): Promise<void> => {
-          const streamProcessor = async (stream: Readable): Promise<void> => {
-            // Catch stream errors such as `ENOENT: no such file or directory`
-            stream.on('error', catchError);
+      async ([inputFile, outputArchiveEntry]: [File, ArchiveEntry<Zip>]): Promise<void> => {
+        const streamProcessor = async (stream: Readable): Promise<void> => {
+          // Catch stream errors such as `ENOENT: no such file or directory`
+          stream.on('error', catchError);
 
-            const entryName = outputArchiveEntry.getEntryPath().replace(/[\\/]/g, '/');
-            zipFile.append(stream, {
-              name: entryName,
-            });
+          const entryName = outputArchiveEntry.getEntryPath().replace(/[\\/]/g, '/');
+          zipFile.append(stream, {
+            name: entryName,
+          });
 
-            // Leave the input stream open until we're done writing it
-            await new Promise<void>((resolve) => {
-              const timer = Timer.setInterval(() => {
-                if (writtenEntries.has(entryName) || zipFileError) {
-                  timer.cancel();
-                  resolve();
-                }
-              }, 10);
-            });
-          };
+          // Leave the input stream open until we're done writing it
+          await new Promise<void>((resolve) => {
+            const timer = Timer.setInterval(() => {
+              if (writtenEntries.has(entryName) || zipFileError) {
+                timer.cancel();
+                resolve();
+              }
+            }, 10);
+          });
+        };
 
-          try {
-            await inputFile.createPatchedReadStream(streamProcessor);
-          } catch (error) {
-            // Reading the file can throw an exception, so we have to handle that or this will hang
-            if (error instanceof Error) {
-              catchError(error);
-            } else if (typeof error === 'string') {
-              catchError(new Error(error));
-            } else {
-              catchError(
-                new Error(
-                  `failed to write '${inputFile.toString()}' to '${outputArchiveEntry.toString()}'`,
-                ),
-              );
-            }
+        try {
+          await inputFile.createPatchedReadStream(streamProcessor);
+        } catch (error) {
+          // Reading the file can throw an exception, so we have to handle that or this will hang
+          if (error instanceof Error) {
+            catchError(error);
+          } else if (typeof error === 'string') {
+            catchError(new Error(error));
+          } else {
+            catchError(
+              new Error(
+                `failed to write '${inputFile.toString()}' to '${outputArchiveEntry.toString()}'`,
+              ),
+            );
           }
-        },
-      ),
+        }
+      },
     );
 
     if (zipFileError) {

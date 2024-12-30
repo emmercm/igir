@@ -3,7 +3,7 @@ import 'reflect-metadata';
 import os from 'node:os';
 import path from 'node:path';
 
-import async, { AsyncResultCallback } from 'async';
+import async from 'async';
 import { Expose, instanceToPlain, plainToInstance } from 'class-transformer';
 import fg from 'fast-glob';
 import { isNotJunk } from 'junk';
@@ -664,17 +664,16 @@ export default class Options implements OptionsProps {
     const isNonDirectory = await async.mapLimit(
       globbedPaths,
       Defaults.MAX_FS_THREADS,
-      async (file, callback: AsyncResultCallback<boolean, Error>) => {
+      async (file: string): Promise<boolean> => {
         if (!(await fsPoly.exists(file)) && URLPoly.canParse(file)) {
-          callback(undefined, true);
-          return;
+          return true;
         }
 
         try {
-          callback(undefined, !(await fsPoly.isDirectory(file)));
+          return !(await fsPoly.isDirectory(file));
         } catch {
           // Assume errors mean the path doesn't exist
-          callback(undefined, false);
+          return false;
         }
       },
     );
