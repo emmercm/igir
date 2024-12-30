@@ -1,8 +1,8 @@
 import path from 'node:path';
 
-import async, { AsyncResultCallback } from 'async';
+import async from 'async';
 import { Mutex } from 'async-mutex';
-import unrar from 'node-unrar-js';
+import unrar, { FileHeader } from 'node-unrar-js';
 
 import Defaults from '../../../globals/defaults.js';
 import ExpectedError from '../../expectedError.js';
@@ -12,7 +12,6 @@ import ArchiveEntry from './archiveEntry.js';
 export default class Rar extends Archive {
   private static readonly EXTRACT_MUTEX = new Mutex();
 
-  // eslint-disable-next-line class-methods-use-this
   protected new(filePath: string): Archive {
     return new Rar(filePath);
   }
@@ -21,7 +20,6 @@ export default class Rar extends Archive {
     return ['.rar'];
   }
 
-  // eslint-disable-next-line class-methods-use-this
   getExtension(): string {
     return Rar.getExtensions()[0];
   }
@@ -33,8 +31,8 @@ export default class Rar extends Archive {
     return async.mapLimit(
       [...rar.getFileList().fileHeaders].filter((fileHeader) => !fileHeader.flags.directory),
       Defaults.ARCHIVE_ENTRY_SCANNER_THREADS_PER_ARCHIVE,
-      async (fileHeader, callback: AsyncResultCallback<ArchiveEntry<this>, Error>) => {
-        const archiveEntry = await ArchiveEntry.entryOf(
+      async (fileHeader: FileHeader): Promise<ArchiveEntry<this>> => {
+        return ArchiveEntry.entryOf(
           {
             archive: this,
             entryPath: fileHeader.name,
@@ -44,7 +42,6 @@ export default class Rar extends Archive {
           },
           checksumBitmask,
         );
-        callback(undefined, archiveEntry);
       },
     );
   }

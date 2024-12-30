@@ -1,7 +1,7 @@
 import path from 'node:path';
 
 import _7z, { Result } from '7zip-min';
-import async, { AsyncResultCallback } from 'async';
+import async from 'async';
 import { Mutex } from 'async-mutex';
 
 import Defaults from '../../../../globals/defaults.js';
@@ -14,7 +14,6 @@ import ArchiveEntry from '../archiveEntry.js';
 export default class SevenZip extends Archive {
   private static readonly LIST_MUTEX = new Mutex();
 
-  // eslint-disable-next-line class-methods-use-this
   protected new(filePath: string): Archive {
     return new SevenZip(filePath);
   }
@@ -23,7 +22,6 @@ export default class SevenZip extends Archive {
     return ['.7z'];
   }
 
-  // eslint-disable-next-line class-methods-use-this
   getExtension(): string {
     return SevenZip.getExtensions()[0];
   }
@@ -78,8 +76,8 @@ export default class SevenZip extends Archive {
     return async.mapLimit(
       filesIn7z.filter((result) => !result.attr?.startsWith('D')),
       Defaults.ARCHIVE_ENTRY_SCANNER_THREADS_PER_ARCHIVE,
-      async (result, callback: AsyncResultCallback<ArchiveEntry<this>, Error>) => {
-        const archiveEntry = await ArchiveEntry.entryOf(
+      async (result: Result): Promise<ArchiveEntry<this>> => {
+        return ArchiveEntry.entryOf(
           {
             archive: this,
             entryPath: result.name,
@@ -89,7 +87,6 @@ export default class SevenZip extends Archive {
           },
           checksumBitmask,
         );
-        callback(undefined, archiveEntry);
       },
     );
   }
