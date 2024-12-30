@@ -17,7 +17,6 @@ import Archive from './archive.js';
 import ArchiveEntry from './archiveEntry.js';
 
 export default class Zip extends Archive {
-  // eslint-disable-next-line class-methods-use-this
   protected new(filePath: string): Archive {
     return new Zip(filePath);
   }
@@ -26,7 +25,6 @@ export default class Zip extends Archive {
     return ['.zip', '.apk', '.ipa', '.jar', '.pk3'];
   }
 
-  // eslint-disable-next-line class-methods-use-this
   getExtension(): string {
     return Zip.getExtensions()[0];
   }
