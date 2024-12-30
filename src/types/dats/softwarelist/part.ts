@@ -24,7 +24,8 @@ export default class Part {
   getDataAreas(): DataArea[] {
     if (Array.isArray(this.dataarea)) {
       return this.dataarea;
-    } if (this.dataarea) {
+    }
+    if (this.dataarea) {
       return [this.dataarea];
     }
     return [];

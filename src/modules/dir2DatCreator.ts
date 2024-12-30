@@ -40,7 +40,7 @@ export default class Dir2DatCreator extends Module {
     const datDir = this.options.shouldWrite()
       ? OutputFactory.getDir(this.options, dat)
       : process.cwd();
-    if (!await fsPoly.exists(datDir)) {
+    if (!(await fsPoly.exists(datDir))) {
       await fsPoly.mkdir(datDir, { recursive: true });
     }
     const datPath = path.join(datDir, dat.getFilename());
@@ -59,12 +59,15 @@ export default class Dir2DatCreator extends Module {
         }
         return map;
       }, new Map<Game, ReleaseCandidate[]>());
-    const gamesFromCandidates = [...gamesToCandidates.entries()]
-      .map(([game, releaseCandidates]) => {
-        const roms = releaseCandidates.at(0)?.getRomsWithFiles()
+    const gamesFromCandidates = [...gamesToCandidates.entries()].map(
+      ([game, releaseCandidates]) => {
+        const roms = releaseCandidates
+          .at(0)
+          ?.getRomsWithFiles()
           .map((romWithFiles) => romWithFiles.getRom());
         return game.withProps({ rom: roms });
-      });
+      },
+    );
     const datFromCandidates = new LogiqxDAT(dat.getHeader(), gamesFromCandidates);
 
     this.progressBar.logInfo(`${datFromCandidates.getNameShort()}: creating dir2dat '${datPath}'`);

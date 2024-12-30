@@ -15,7 +15,7 @@ At least one DAT is required for the `igir report` command to work, otherwise Ig
 
 The `igir report` command can be specified on its own without any [writing command](../commands.md) (i.e. `igir copy`, `igir move`, etc.) to report on an existing collection. This causes Igir to operate in a _read-only_ mode, no files will be copied, moved, or deleted. For example:
 
-=== ":simple-windowsxp: Windows"
+=== ":fontawesome-brands-windows: Windows"
 
     ```batch
     > igir.exe report --dat *.dat --input ROMs\
@@ -24,7 +24,7 @@ The `igir report` command can be specified on its own without any [writing comma
     igir_2023-03-29T18;26;00-04;00.csv
     ```
 
-=== ":simple-apple: macOS"
+=== ":fontawesome-brands-apple: macOS"
 
     ```shell
     $ igir report --dat *.dat --input ROMs/
@@ -72,7 +72,7 @@ The report output filename supports a version of [Moment.js symbols](https://mom
 
 Here are some example usages:
 
-=== ":simple-windowsxp: Windows"
+=== ":fontawesome-brands-windows: Windows"
 
     ```batch
     > igir.exe report --dat *.dat --input ROMs\ --report-output ".\report.csv"
@@ -84,7 +84,7 @@ Here are some example usages:
     REM /igir/1681515048.csv
     ```
 
-=== ":simple-apple: macOS"
+=== ":fontawesome-brands-apple: macOS"
 
     ```shell
     $ igir report --dat *.dat --input ROMs/ --report-output "./report.csv"

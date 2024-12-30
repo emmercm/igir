@@ -19,7 +19,7 @@ Because RetroPie uses RetroArch under the hood, the instructions are generally t
 
 The [RetroPie docs](https://retropie.org.uk/docs/Transferring-Roms/) recommend creating a `retropie/roms` directory at the root of a USB drive. You can then load up this USB drive with your ROMs from a different computer:
 
-=== ":simple-windowsxp: Windows"
+=== ":fontawesome-brands-windows: Windows"
 
     Replace the `E:\` drive letter with wherever your SD card is:
 
@@ -33,7 +33,7 @@ The [RetroPie docs](https://retropie.org.uk/docs/Transferring-Roms/) recommend c
       --no-bios
     ```
 
-=== ":simple-apple: macOS"
+=== ":fontawesome-brands-apple: macOS"
 
     Replace the `/Volumes/RETROPIE` drive name with whatever your SD card is named:
 

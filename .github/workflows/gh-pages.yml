@@ -12,10 +12,20 @@ on:
   release:
     types:
       - published
+  workflow_dispatch:
+    inputs:
+      ref:
+        description: 'Git ref (refs/heads/<branch>, refs/tags/<tag>, etc.) or SHA'
+        required: true
+        type: string
+        default: 'refs/heads/main'
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
+
+env:
+  ref: ${{ inputs.ref || github.ref }}
 
 jobs:
   path-filter:
@@ -26,6 +36,8 @@ jobs:
       changes: ${{ steps.filter.outputs.changes }}
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ env.ref }}
       - id: filter
         uses: dorny/paths-filter@v2
         with:
@@ -42,6 +54,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ env.ref }}
       - run: docker run --rm --volume "${PWD}:/workdir" ghcr.io/igorshubovych/markdownlint-cli:latest --disable MD013 MD033 MD041 MD046 -- "**/*.md"
 
   build:
@@ -52,6 +66,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
+          ref: ${{ env.ref }}
           # the `git-revision-date-localized` plugin needs full history to find page creation date
           fetch-depth: 0
       - uses: actions/setup-python@v5
@@ -59,7 +74,7 @@ jobs:
           python-version: 3.x
       - uses: actions/cache@v4
         with:
-          key: ${{ github.ref }}
+          key: ${{ env.ref }}
           path: .cache
       - run: |
           pip install --requirement docs/requirements.txt
@@ -81,13 +96,14 @@ jobs:
           jobs: ${{ toJSON(needs) }}
 
   deploy:
-    if: github.event_name == 'release'
+    if: ${{ github.event_name != 'pull_request' }}
     permissions:
       contents: write
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
         with:
+          ref: ${{ env.ref }}
           # the `git-revision-date-localized` plugin needs full history to find page creation date
           fetch-depth: 0
       - uses: actions/setup-python@v5
@@ -95,7 +111,7 @@ jobs:
           python-version: 3.x
       - uses: actions/cache@v4
         with:
-          key: ${{ github.ref }}
+          key: ${{ env.ref }}
           path: .cache
       - run: |
           pip install --requirement docs/requirements.txt

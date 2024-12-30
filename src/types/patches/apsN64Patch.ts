@@ -47,7 +47,9 @@ export default class APSN64Patch extends Patch {
         patchFile.skipNext(5); // padding
         targetSize = (await patchFile.readNext(4)).readUInt32LE();
       } else {
-        throw new ExpectedError(`APS (N64) patch type ${patchType} isn't supported: ${patchFile.getPathLike()}`);
+        throw new ExpectedError(
+          `APS (N64) patch type ${patchType} isn't supported: ${patchFile.getPathLike()}`,
+        );
       }
     });
 
@@ -66,7 +68,9 @@ export default class APSN64Patch extends Patch {
       } else if (this.patchType === APSN64PatchType.N64) {
         patchFile.seek(78);
       } else {
-        throw new ExpectedError(`APS (N64) patch type ${this.patchType} isn't supported: ${patchFile.getPathLike()}`);
+        throw new ExpectedError(
+          `APS (N64) patch type ${this.patchType} isn't supported: ${patchFile.getPathLike()}`,
+        );
       }
 
       return APSN64Patch.writeOutputFile(inputRomFile, outputRomPath, patchFile);

@@ -1,7 +1,5 @@
 import chalk from 'chalk';
-import {
-  MultiBar, Options, Params, SingleBar,
-} from 'cli-progress';
+import { MultiBar, Options, Params, SingleBar } from 'cli-progress';
 import { linearRegression, linearRegressionLine } from 'simple-statistics';
 import stripAnsi from 'strip-ansi';
 
@@ -57,10 +55,12 @@ export default class SingleBarFormatted {
           .join('\n\x1b[K');
 
         this.lastOutput = `${symbolAndName}${progressWrapped}`.trim();
-        return this.lastOutput
-          // cli-progress doesn't handle multi-line progress bars, collapse to one line. The multi-
-          // line message will get logged correctly when the progress bar is frozen & logged.
-          .replace(/\n\S*\s+/g, ' ');
+        return (
+          this.lastOutput
+            // cli-progress doesn't handle multi-line progress bars, collapse to one line. The multi-
+            // line message will get logged correctly when the progress bar is frozen & logged.
+            .replace(/\n\S*\s+/g, ' ')
+        );
       },
     });
   }
@@ -80,8 +80,8 @@ export default class SingleBarFormatted {
     const namePadded = `${name} ${'·'.repeat(SingleBarFormatted.MAX_NAME_LENGTH)}`.trim();
     const symbolAndName = `${symbol} ${namePadded}`;
 
-    const excessLength = stripAnsi(symbolAndName).trimStart().length
-        - SingleBarFormatted.MAX_NAME_LENGTH;
+    const excessLength =
+      stripAnsi(symbolAndName).trimStart().length - SingleBarFormatted.MAX_NAME_LENGTH;
     const nameTrimmed = namePadded.slice(
       0,
       namePadded.length - (excessLength > 0 ? excessLength : 0),
@@ -117,11 +117,8 @@ export default class SingleBarFormatted {
   }
 
   private calculateEta(params: Params): number {
-    const clamp = (
-      val: number,
-      min: number,
-      max: number,
-    ): number => Math.min(Math.max(val, min), max);
+    const clamp = (val: number, min: number, max: number): number =>
+      Math.min(Math.max(val, min), max);
     const MAX_BUFFER_SIZE = clamp(Math.floor(params.total / 10), 25, 50);
 
     this.valueTimeBuffer = [
@@ -147,20 +144,20 @@ export default class SingleBarFormatted {
       return '';
     }
 
-    const clamp = (
-      val: number | undefined,
-      min: number,
-      max: number,
-    ): number => Math.min(Math.max(val ?? 0, min), max);
+    const clamp = (val: number | undefined, min: number, max: number): number =>
+      Math.min(Math.max(val ?? 0, min), max);
     const completeSize = Math.floor(clamp(params.progress, 0, 1) * barSize);
-    const inProgressSize = params.total > 0
-      ? Math.ceil((clamp(payload.inProgress, 0, params.total) / params.total) * barSize)
-      : 0;
+    const inProgressSize =
+      params.total > 0
+        ? Math.ceil((clamp(payload.inProgress, 0, params.total) / params.total) * barSize)
+        : 0;
     const incompleteSize = barSize - inProgressSize - completeSize;
 
-    return SingleBarFormatted.BAR_COMPLETE_CHAR.repeat(Math.max(completeSize, 0))
-      + SingleBarFormatted.BAR_IN_PROGRESS_CHAR.repeat(Math.max(inProgressSize, 0))
-      + SingleBarFormatted.BAR_INCOMPLETE_CHAR.repeat(Math.max(incompleteSize, 0));
+    return (
+      SingleBarFormatted.BAR_COMPLETE_CHAR.repeat(Math.max(completeSize, 0)) +
+      SingleBarFormatted.BAR_IN_PROGRESS_CHAR.repeat(Math.max(inProgressSize, 0)) +
+      SingleBarFormatted.BAR_INCOMPLETE_CHAR.repeat(Math.max(incompleteSize, 0))
+    );
   }
 
   private getEtaFormatted(etaSeconds: number): string {

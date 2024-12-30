@@ -50,7 +50,8 @@ export default class Chd extends Archive {
 
     if (info.type === CHDType.CD_ROM) {
       return ChdBinCueParser.getArchiveEntriesBinCue(this, checksumBitmask);
-    } if (info.type === CHDType.GD_ROM) {
+    }
+    if (info.type === CHDType.GD_ROM) {
       // TODO(cemmer): allow parsing GD-ROM to bin/cue https://github.com/mamedev/mame/issues/11903
       return ChdGdiParser.getArchiveEntriesGdRom(this, checksumBitmask);
     }
@@ -63,49 +64,53 @@ export default class Chd extends Archive {
     checksumBitmask: number,
   ): Promise<ArchiveEntry<this>[]> {
     // MAME DAT <disk>s use the data+metadata SHA1 (vs. just the data SHA1)
-    const rawEntry = await ArchiveEntry.entryOf({
-      archive: this,
-      entryPath: '',
-      sha1: info.sha1,
-      // There isn't a way for us to calculate these other checksums, so fill it in with garbage
-      size: 0,
-      crc32: checksumBitmask & ChecksumBitmask.CRC32 ? 'x'.repeat(8) : undefined,
-      md5: checksumBitmask & ChecksumBitmask.MD5 ? 'x'.repeat(32) : undefined,
-      sha256: checksumBitmask & ChecksumBitmask.SHA256 ? 'x'.repeat(64) : undefined,
-    }, checksumBitmask);
+    const rawEntry = await ArchiveEntry.entryOf(
+      {
+        archive: this,
+        entryPath: '',
+        sha1: info.sha1,
+        // There isn't a way for us to calculate these other checksums, so fill it in with garbage
+        size: 0,
+        crc32: checksumBitmask & ChecksumBitmask.CRC32 ? 'x'.repeat(8) : undefined,
+        md5: checksumBitmask & ChecksumBitmask.MD5 ? 'x'.repeat(32) : undefined,
+        sha256: checksumBitmask & ChecksumBitmask.SHA256 ? 'x'.repeat(64) : undefined,
+      },
+      checksumBitmask,
+    );
 
-    const extractedEntry = await ArchiveEntry.entryOf({
-      archive: this,
-      entryPath: '',
-      size: info.logicalSize,
-      /**
-       * NOTE(cemmer): the "data SHA1" equals the original input file in these tested cases:
-       *  - PSP .iso -> .chd with createdvd (and NOT createcd)
-       */
-      sha1: info.dataSha1,
-    }, checksumBitmask);
+    const extractedEntry = await ArchiveEntry.entryOf(
+      {
+        archive: this,
+        entryPath: '',
+        size: info.logicalSize,
+        /**
+         * NOTE(cemmer): the "data SHA1" equals the original input file in these tested cases:
+         *  - PSP .iso -> .chd with createdvd (and NOT createcd)
+         */
+        sha1: info.dataSha1,
+      },
+      checksumBitmask,
+    );
 
     return [rawEntry, extractedEntry];
   }
 
-  async extractEntryToFile(
-    entryPath: string,
-    extractedFilePath: string,
-  ): Promise<void> {
+  async extractEntryToFile(entryPath: string, extractedFilePath: string): Promise<void> {
     return this.extractEntryToStreamCached(
       entryPath,
-      async (stream) => new Promise((resolve, reject) => {
-        const writeStream = fs.createWriteStream(extractedFilePath);
-        writeStream.on('close', resolve);
-        writeStream.on('error', reject);
-        stream.pipe(writeStream);
-      }),
+      async (stream) =>
+        new Promise((resolve, reject) => {
+          const writeStream = fs.createWriteStream(extractedFilePath);
+          writeStream.on('close', resolve);
+          writeStream.on('error', reject);
+          stream.pipe(writeStream);
+        }),
     );
   }
 
   private async extractEntryToStreamCached<T>(
     entryPath: string,
-    callback: (stream: Readable) => (Promise<T> | T),
+    callback: (stream: Readable) => Promise<T> | T,
   ): Promise<T> {
     await this.tempSingletonMutex.runExclusive(async () => {
       this.tempSingletonHandles += 1;
@@ -145,7 +150,8 @@ export default class Chd extends Archive {
         // Apply TOSEC-style CRLF line separators to the .gdi file
         await util.promisify(fs.writeFile)(
           this.tempSingletonFilePath,
-          (await util.promisify(fs.readFile)(this.tempSingletonFilePath)).toString()
+          (await util.promisify(fs.readFile)(this.tempSingletonFilePath))
+            .toString()
             .replace(/\r?\n/g, '\r\n'),
         );
       } else if (info.type === CHDType.DVD_ROM) {
@@ -157,15 +163,18 @@ export default class Chd extends Archive {
         throw new ExpectedError(`couldn't detect CHD type for: ${this.getFilePath()}`);
       }
 
-      if (!await FsPoly.exists(this.tempSingletonFilePath)) {
-        throw new ExpectedError(`failed to extract ${this.getFilePath()}|${entryPath} to ${this.tempSingletonFilePath}`);
+      if (!(await FsPoly.exists(this.tempSingletonFilePath))) {
+        throw new ExpectedError(
+          `failed to extract ${this.getFilePath()}|${entryPath} to ${this.tempSingletonFilePath}`,
+        );
       }
     });
 
     const [extractedEntryPath, sizeAndOffset] = entryPath.split('|');
     let filePath = this.tempSingletonFilePath as string;
-    if (extractedEntryPath
-      && await FsPoly.exists(path.join(this.tempSingletonDirPath as string, extractedEntryPath))
+    if (
+      extractedEntryPath &&
+      (await FsPoly.exists(path.join(this.tempSingletonDirPath as string, extractedEntryPath)))
     ) {
       // The entry path is the name of a real extracted file, use that
       filePath = path.join(this.tempSingletonDirPath as string, extractedEntryPath);
@@ -174,19 +183,17 @@ export default class Chd extends Archive {
     // Parse the entry path for any extra start/stop parameters
     const [trackSize, trackOffset] = (sizeAndOffset ?? '').split('@');
     const streamStart = Number.parseInt(trackOffset ?? '0', 10);
-    const streamEnd = !trackSize || Number.isNaN(Number(trackSize))
-      ? undefined
-      : Number.parseInt(trackOffset ?? '0', 10) + Number.parseInt(trackSize, 10) - 1;
+    const streamEnd =
+      !trackSize || Number.isNaN(Number(trackSize))
+        ? undefined
+        : Number.parseInt(trackOffset ?? '0', 10) + Number.parseInt(trackSize, 10) - 1;
 
     try {
-      return await File.createStreamFromFile(
-        filePath,
-        callback,
-        streamStart,
-        streamEnd,
-      );
+      return await File.createStreamFromFile(filePath, callback, streamStart, streamEnd);
     } catch (error) {
-      throw new ExpectedError(`failed to read ${this.getFilePath()}|${entryPath} at ${filePath}: ${error}`);
+      throw new ExpectedError(
+        `failed to read ${this.getFilePath()}|${entryPath} at ${filePath}: ${error}`,
+      );
     } finally {
       // Give a grace period before deleting the temp file, the next read may be of the same file
       setTimeout(async () => {

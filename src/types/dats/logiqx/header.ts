@@ -88,15 +88,17 @@ export default class Header implements HeaderOptions {
    * Create an XML object, to be used by the owning {@link DAT}.
    */
   toXmlDatObj(): object {
-    return Object.fromEntries(Object.entries({
-      name: this.name,
-      description: this.description,
-      version: this.version,
-      date: this.date,
-      author: this.author,
-      url: this.url,
-      comment: this.comment,
-    }).filter(([, val]) => val));
+    return Object.fromEntries(
+      Object.entries({
+        name: this.name,
+        description: this.description,
+        version: this.version,
+        date: this.date,
+        author: this.author,
+        url: this.url,
+        comment: this.comment,
+      }).filter(([, val]) => val),
+    );
   }
 
   // Property getters
@@ -127,7 +129,6 @@ export default class Header implements HeaderOptions {
    * Return a string representation of this {@link Header}.
    */
   toString(): string {
-    return JSON.stringify(this, undefined, '  ')
-      .replace(/\n +/g, ' ');
+    return JSON.stringify(this, undefined, '  ').replace(/\n +/g, ' ');
   }
 }

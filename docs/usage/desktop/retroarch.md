@@ -12,7 +12,7 @@ First, RetroArch needs a number of [BIOS files](https://docs.libretro.com/librar
 
 With Igir's support for [DAT URLs](../../dats/processing.md#scanning-for-dats) we don't even have to download the DAT! Locate your "System/BIOS" directory as configured in the RetroArch UI and use it as your output directory:
 
-=== ":simple-windowsxp: Windows (64-bit)"
+=== ":fontawesome-brands-windows: Windows (64-bit)"
 
     The root directory is based on where you installed RetroArch, but by default it is:
 
@@ -23,7 +23,7 @@ With Igir's support for [DAT URLs](../../dats/processing.md#scanning-for-dats) w
       --output C:\RetroArch-Win64\system
     ```
 
-=== ":simple-windowsxp: Windows (32-bit)"
+=== ":fontawesome-brands-windows: Windows (32-bit)"
 
     The root directory is based on where you installed RetroArch, but by default it is:
 
@@ -34,7 +34,7 @@ With Igir's support for [DAT URLs](../../dats/processing.md#scanning-for-dats) w
       --output C:\RetroArch-Win32\system
     ```
 
-=== ":simple-apple: macOS"
+=== ":fontawesome-brands-apple: macOS"
 
     ```shell
     igir copy extract test clean \
@@ -58,7 +58,7 @@ RetroArch is less opinionated about where your ROMs can live, you have to specif
 
 If you want to store your ROMs in the RetroArch folder, you could co-locate them near your BIOS files:
 
-=== ":simple-windowsxp: Windows (64-bit)"
+=== ":fontawesome-brands-windows: Windows (64-bit)"
 
     The root directory is based on where you installed RetroArch, but by default it is:
 
@@ -71,7 +71,7 @@ If you want to store your ROMs in the RetroArch folder, you could co-locate them
       --no-bios
     ```
 
-=== ":simple-windowsxp: Windows (32-bit)"
+=== ":fontawesome-brands-windows: Windows (32-bit)"
 
     The root directory is based on where you installed RetroArch, but by default it is:
 
@@ -84,7 +84,7 @@ If you want to store your ROMs in the RetroArch folder, you could co-locate them
       --no-bios
     ```
 
-=== ":simple-apple: macOS"
+=== ":fontawesome-brands-apple: macOS"
 
     ```shell
     igir copy zip test \

@@ -16,7 +16,7 @@ Igir uses the following rules when creating dir2dat DAT files:
 
     If multiple input paths overlap, such as:
 
-  === ":simple-windowsxp: Windows"
+  === ":fontawesome-brands-windows: Windows"
 
       ```batch
       igir dir2dat ^
@@ -24,7 +24,7 @@ Igir uses the following rules when creating dir2dat DAT files:
         --input "C:\ROMs\NES"
       ```
 
-  === ":simple-apple: macOS"
+  === ":fontawesome-brands-apple: macOS"
 
       ```shell
       igir dir2dat \

@@ -52,23 +52,23 @@ enum GameType {
  * @see http://www.logiqx.com/DatFAQs/CMPro.php
  */
 export interface GameProps {
-  readonly name?: string,
-  readonly category?: string,
-  readonly description?: string,
+  readonly name?: string;
+  readonly category?: string;
+  readonly description?: string;
   // readonly sourceFile?: string,
-  readonly bios?: 'yes' | 'no',
-  readonly device?: 'yes' | 'no',
-  readonly cloneOf?: string,
-  readonly romOf?: string,
-  readonly sampleOf?: string,
-  readonly genre?: string,
+  readonly bios?: 'yes' | 'no';
+  readonly device?: 'yes' | 'no';
+  readonly cloneOf?: string;
+  readonly romOf?: string;
+  readonly sampleOf?: string;
+  readonly genre?: string;
   // readonly board?: string,
   // readonly rebuildTo?: string,
   // readonly year?: string,
   // readonly manufacturer?: string,
-  readonly release?: Release | Release[],
-  readonly rom?: ROM | ROM[],
-  readonly disk?: Disk | Disk[],
+  readonly release?: Release | Release[];
+  readonly rom?: ROM | ROM[];
+  readonly disk?: Disk | Disk[];
 }
 
 /**
@@ -154,12 +154,9 @@ export default class Game implements GameProps {
         name: this.getName(),
         isbios: this.isBios() ? 'yes' : undefined,
         isdevice: this.isDevice() ? 'yes' : undefined,
-        cloneof: this.getParent() && parentNames.has(this.getParent())
-          ? this.getParent()
-          : undefined,
-        romof: this.getBios() && parentNames.has(this.getBios())
-          ? this.getBios()
-          : undefined,
+        cloneof:
+          this.getParent() && parentNames.has(this.getParent()) ? this.getParent() : undefined,
+        romof: this.getBios() && parentNames.has(this.getBios()) ? this.getBios() : undefined,
       },
       description: {
         _: this.getDescription(),
@@ -204,7 +201,8 @@ export default class Game implements GameProps {
   getReleases(): Release[] {
     if (Array.isArray(this.release)) {
       return this.release;
-    } if (this.release) {
+    }
+    if (this.release) {
       return [this.release];
     }
     return [];
@@ -213,7 +211,8 @@ export default class Game implements GameProps {
   getRoms(): ROM[] {
     if (Array.isArray(this.rom)) {
       return this.rom;
-    } if (this.rom) {
+    }
+    if (this.rom) {
       return [this.rom];
     }
     return [];
@@ -222,7 +221,8 @@ export default class Game implements GameProps {
   getDisks(): Disk[] {
     if (Array.isArray(this.disk)) {
       return this.disk;
-    } if (this.disk) {
+    }
+    if (this.disk) {
       return [this.disk];
     }
     return [];
@@ -240,7 +240,11 @@ export default class Game implements GameProps {
     // Letter revision
     const revLetterMatches = this.getName().match(/\(Rev\s*([A-Z])\)/i);
     if (revLetterMatches && revLetterMatches?.length >= 2) {
-      return (revLetterMatches[1].toUpperCase().codePointAt(0) as number) - ('A'.codePointAt(0) as number) + 1;
+      return (
+        (revLetterMatches[1].toUpperCase().codePointAt(0) as number) -
+        ('A'.codePointAt(0) as number) +
+        1
+      );
     }
 
     // TOSEC versions
@@ -297,8 +301,10 @@ export default class Game implements GameProps {
       // Sometimes [!] can get mixed with [c], consider it not bad
       return false;
     }
-    return this.name.includes('[c]') // "known bad checksum but good dump"
-        || this.name.includes('[x]'); // "thought to have a bad checksum"
+    return (
+      this.name.includes('[c]') || // "known bad checksum but good dump"
+      this.name.includes('[x]')
+    ); // "thought to have a bad checksum"
   }
 
   /**
@@ -322,25 +328,27 @@ export default class Game implements GameProps {
     return this.name.match(/\(Debug[a-z0-9. ]*\)/i) !== null;
   }
 
-  public static readonly DEMO_REGEX = new RegExp([
-    '\\(Demo[a-z0-9. -]*\\)',
-    '@barai',
-    '\\(Kiosk[a-z0-9. -]*\\)',
-    '\\(Preview\\)',
-    'GameCube Preview',
-    'Kiosk Demo Disc',
-    'PS2 Kiosk',
-    'PSP System Kiosk',
-    'Taikenban', // "trial"
-    'Trial Edition',
-  ].join('|'), 'i');
+  public static readonly DEMO_REGEX = new RegExp(
+    [
+      '\\(Demo[a-z0-9. -]*\\)',
+      '@barai',
+      '\\(Kiosk[a-z0-9. -]*\\)',
+      '\\(Preview\\)',
+      'GameCube Preview',
+      'Kiosk Demo Disc',
+      'PS2 Kiosk',
+      'PSP System Kiosk',
+      'Taikenban', // "trial"
+      'Trial Edition',
+    ].join('|'),
+    'i',
+  );
 
   /**
    * Is this game a demo?
    */
   isDemo(): boolean {
-    return this.name.match(Game.DEMO_REGEX) !== null
-      || this.getCategory() === 'Demos';
+    return this.name.match(Game.DEMO_REGEX) !== null || this.getCategory() === 'Demos';
   }
 
   /**
@@ -386,24 +394,29 @@ export default class Game implements GameProps {
    * Is this game pirated (probably has copyright information removed)?
    */
   isPirated(): boolean {
-    return this.name.match(/\(Pirate[a-z0-9. ]*\)/i) !== null
-        || this.name.match(/\[p[0-9]*\]/) !== null;
+    return (
+      this.name.match(/\(Pirate[a-z0-9. ]*\)/i) !== null || this.name.match(/\[p[0-9]*\]/) !== null
+    );
   }
 
   /**
    * Is this game a "program" application?
    */
   isProgram(): boolean {
-    return this.name.match(/\([a-z0-9. ]*Program\)|(Check|Sample) Program/i) !== null
-        || this.getCategory() === 'Applications';
+    return (
+      this.name.match(/\([a-z0-9. ]*Program\)|(Check|Sample) Program/i) !== null ||
+      this.getCategory() === 'Applications'
+    );
   }
 
   /**
    * Is this game a prototype?
    */
   isPrototype(): boolean {
-    return this.name.match(/\([^)]*Proto[a-z0-9. ]*\)/i) !== null
-        || this.getCategory() === 'Preproduction';
+    return (
+      this.name.match(/\([^)]*Proto[a-z0-9. ]*\)/i) !== null ||
+      this.getCategory() === 'Preproduction'
+    );
   }
 
   /**
@@ -446,8 +459,7 @@ export default class Game implements GameProps {
    * Does this game have a community hack?
    */
   hasHack(): boolean {
-    return this.name.match(/\(Hack\)/i) !== null
-        || this.name.match(/\[h[a-zA-Z90-9+]*\]/) !== null;
+    return this.name.match(/\(Hack\)/i) !== null || this.name.match(/\[h[a-zA-Z90-9+]*\]/) !== null;
   }
 
   /**
@@ -461,75 +473,97 @@ export default class Game implements GameProps {
    * Is this game "retail"?
    */
   isRetail(): boolean {
-    return !this.isAftermarket()
-        && !this.isAlpha()
-        && !this.isBad()
-        && !this.isBeta()
-        && !this.isCracked()
-        && !this.isDebug()
-        && !this.isDemo()
-        && !this.isFixed()
-        && !this.isHomebrew()
-        && !this.isMIA()
-        && !this.isOverdump()
-        && !this.isPendingDump()
-        && !this.isPirated()
-        && !this.isProgram()
-        && !this.isPrototype()
-        && !this.isSample()
-        && !this.isTranslated()
-        && !this.hasBungFix()
-        && !this.hasHack()
-        && !this.hasTrainer();
+    return (
+      !this.isAftermarket() &&
+      !this.isAlpha() &&
+      !this.isBad() &&
+      !this.isBeta() &&
+      !this.isCracked() &&
+      !this.isDebug() &&
+      !this.isDemo() &&
+      !this.isFixed() &&
+      !this.isHomebrew() &&
+      !this.isMIA() &&
+      !this.isOverdump() &&
+      !this.isPendingDump() &&
+      !this.isPirated() &&
+      !this.isProgram() &&
+      !this.isPrototype() &&
+      !this.isSample() &&
+      !this.isTranslated() &&
+      !this.hasBungFix() &&
+      !this.hasHack() &&
+      !this.hasTrainer()
+    );
   }
 
   getGameType(): GameType {
     // NOTE(cemmer): priority here matters!
     if (this.isBios()) {
       return GameType.BIOS;
-    } if (this.isVerified()) {
+    }
+    if (this.isVerified()) {
       return GameType.RETAIL;
     }
 
     if (this.isAftermarket()) {
       return GameType.AFTERMARKET;
-    } if (this.isAlpha()) {
+    }
+    if (this.isAlpha()) {
       return GameType.ALPHA;
-    } if (this.isBad()) {
+    }
+    if (this.isBad()) {
       return GameType.BAD;
-    } if (this.isBeta()) {
+    }
+    if (this.isBeta()) {
       return GameType.BETA;
-    } if (this.isCracked()) {
+    }
+    if (this.isCracked()) {
       return GameType.CRACKED;
-    } if (this.isDebug()) {
+    }
+    if (this.isDebug()) {
       return GameType.DEBUG;
-    } if (this.isDemo()) {
+    }
+    if (this.isDemo()) {
       return GameType.DEMO;
-    } if (this.isDevice()) {
+    }
+    if (this.isDevice()) {
       return GameType.DEVICE;
-    } if (this.isFixed()) {
+    }
+    if (this.isFixed()) {
       return GameType.FIXED;
-    } if (this.hasHack()) {
+    }
+    if (this.hasHack()) {
       return GameType.HACKED;
-    } if (this.isHomebrew()) {
+    }
+    if (this.isHomebrew()) {
       return GameType.HOMEBREW;
-    } if (this.isOverdump()) {
+    }
+    if (this.isOverdump()) {
       return GameType.OVERDUMP;
-    } if (this.isPendingDump()) {
+    }
+    if (this.isPendingDump()) {
       return GameType.PENDING_DUMP;
-    } if (this.isPirated()) {
+    }
+    if (this.isPirated()) {
       return GameType.PIRATED;
-    } if (this.isProgram()) {
+    }
+    if (this.isProgram()) {
       return GameType.PROGRAM;
-    } if (this.isPrototype()) {
+    }
+    if (this.isPrototype()) {
       return GameType.PROTOTYPE;
-    } if (this.isSample()) {
+    }
+    if (this.isSample()) {
       return GameType.SAMPLE;
-    } if (this.hasTrainer()) {
+    }
+    if (this.hasTrainer()) {
       return GameType.TRAINED;
-    } if (this.isTranslated()) {
+    }
+    if (this.isTranslated()) {
       return GameType.TRANSLATED;
-    } if (this.isUnlicensed()) {
+    }
+    if (this.isUnlicensed()) {
       return GameType.UNLICENSED;
     }
 
@@ -561,16 +595,16 @@ export default class Game implements GameProps {
   // Internationalization
 
   getRegions(): string[] {
-    const releaseRegions = this.getReleases()
-      .map((release) => release.getRegion().toUpperCase());
+    const releaseRegions = this.getReleases().map((release) => release.getRegion().toUpperCase());
     if (releaseRegions.length > 0) {
       return releaseRegions;
     }
 
     for (let i = 0; i < Internationalization.REGION_OPTIONS.length; i += 1) {
       const regionOption = Internationalization.REGION_OPTIONS[i];
-      if (regionOption.long
-        && this.getName().match(new RegExp(`\\(${regionOption.long}(,[ a-z]+)*\\)`, 'i'))
+      if (
+        regionOption.long &&
+        this.getName().match(new RegExp(`\\(${regionOption.long}(,[ a-z]+)*\\)`, 'i'))
       ) {
         return [regionOption.region.toUpperCase()];
       }
@@ -627,10 +661,15 @@ export default class Game implements GameProps {
     // Get language from long languages in the game name
     const threeMatches = this.getName().match(/\(([a-zA-Z]{3}(-[a-zA-Z]{3})*)\)/);
     if (threeMatches && threeMatches.length >= 2) {
-      const threeMatchesParsed = threeMatches[1].split('-')
+      const threeMatchesParsed = threeMatches[1]
+        .split('-')
         .map((lang) => lang.toUpperCase())
-        .map((lang) => Internationalization.LANGUAGE_OPTIONS
-          .find((langOpt) => langOpt.long?.toUpperCase() === lang.toUpperCase())?.short)
+        .map(
+          (lang) =>
+            Internationalization.LANGUAGE_OPTIONS.find(
+              (langOpt) => langOpt.long?.toUpperCase() === lang.toUpperCase(),
+            )?.short,
+        )
         .filter((lang) => lang !== undefined)
         .filter((lang) => Internationalization.LANGUAGES.includes(lang)) // is known
         .reduce(ArrayPoly.reduceUnique(), []);
@@ -672,7 +711,10 @@ export default class Game implements GameProps {
    */
   hashCode(): string {
     let hashCode = this.getName();
-    hashCode += `|${this.getRoms().map((rom) => rom.hashCode()).sort().join(',')}`;
+    hashCode += `|${this.getRoms()
+      .map((rom) => rom.hashCode())
+      .sort()
+      .join(',')}`;
     return hashCode;
   }
 
@@ -683,8 +725,10 @@ export default class Game implements GameProps {
     if (this === other) {
       return true;
     }
-    return this.getName() === other.getName()
-      && this.getReleases().length === other.getReleases().length
-      && this.getRoms().length === other.getRoms().length;
+    return (
+      this.getName() === other.getName() &&
+      this.getReleases().length === other.getReleases().length &&
+      this.getRoms().length === other.getRoms().length
+    );
   }
 }

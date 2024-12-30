@@ -2,10 +2,9 @@
   "extends": [
     "eslint:recommended",
     "plugin:@typescript-eslint/recommended",
-    "airbnb-base",
-    "airbnb-typescript/base",
     "plugin:jsdoc/recommended-typescript-error",
-    "plugin:jest/recommended"
+    "plugin:jest/recommended",
+    "plugin:prettier/recommended" // MUST BE LAST!
   ],
   "plugins": [
     "@typescript-eslint",
@@ -100,7 +99,6 @@
       // Allow the use of destructuring to remove keys from an object
       "ignoreRestSiblings": true
     }],
-    "unicorn/empty-brace-spaces": "error",
 
     // ***** Arrays *****
     "no-restricted-syntax": ["error", {
@@ -119,7 +117,6 @@
 
     // ***** Numbers *****
     "unicorn/no-zero-fractions": "error",
-    "unicorn/number-literal-case": "error",
     "unicorn/numeric-separators-style": "error",
     "unicorn/prefer-number-properties": "error",
 

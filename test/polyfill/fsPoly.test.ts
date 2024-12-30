@@ -128,19 +128,14 @@ describe('hardlink', () => {
 });
 
 describe('isSamba', () => {
-  test.each([
-    '.',
-    os.devNull,
-    'test',
-    path.resolve('test'),
-  ])('should return false: %s', (filePath) => {
-    expect(fsPoly.isSamba(filePath)).toEqual(false);
-  });
+  test.each(['.', os.devNull, 'test', path.resolve('test')])(
+    'should return false: %s',
+    (filePath) => {
+      expect(fsPoly.isSamba(filePath)).toEqual(false);
+    },
+  );
 
-  test.each([
-    '//foo/bar',
-    '\\\\foo\\bar',
-  ])('should return true: %s', (filePath) => {
+  test.each(['//foo/bar', '\\\\foo\\bar'])('should return true: %s', (filePath) => {
     expect(fsPoly.isSamba(filePath)).toEqual(true);
   });
 });
@@ -469,7 +464,7 @@ describe('rm', () => {
     await expect(fsPoly.exists(tempDir)).resolves.toEqual(false);
   });
 
-  it('should not delete a symlink\'s target', async () => {
+  it("should not delete a symlink's target", async () => {
     const tempFile = await fsPoly.mktemp(path.join(Temp.getTempDir(), 'temp'));
     await fsPoly.touch(tempFile);
     const tempLink = await fsPoly.mktemp(path.join(Temp.getTempDir(), 'link'));
@@ -510,7 +505,7 @@ describe('rmSync', () => {
     await expect(fsPoly.exists(tempDir)).resolves.toEqual(false);
   });
 
-  it('should not delete a symlink\'s target', async () => {
+  it("should not delete a symlink's target", async () => {
     const tempFile = await fsPoly.mktemp(path.join(Temp.getTempDir(), 'temp'));
     await fsPoly.touch(tempFile);
     const tempLink = await fsPoly.mktemp(path.join(Temp.getTempDir(), 'link'));

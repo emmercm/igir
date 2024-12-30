@@ -3,8 +3,8 @@ import { Readable } from 'node:stream';
 import { Memoize } from 'typescript-memoize';
 
 type SignaturePiece = {
-  offset?: number,
-  value: Buffer,
+  offset?: number;
+  value: Buffer;
 };
 
 export default class FileSignature {
@@ -133,30 +133,61 @@ export default class FileSignature {
     // Nintendo - Game Boy
     // @see https://gbdev.io/pandocs/The_Cartridge_Header.html
     gb: new FileSignature('.gb', [
-      { offset: 0x01_04, value: Buffer.from('CEED6666CC0D000B03730083000C000D0008111F8889000EDCCC6EE6DDDDD999BBBB67636E0EECCCDDDC999FBBB9333E', 'hex') }, // logo
+      {
+        offset: 0x01_04,
+        value: Buffer.from(
+          'CEED6666CC0D000B03730083000C000D0008111F8889000EDCCC6EE6DDDDD999BBBB67636E0EECCCDDDC999FBBB9333E',
+          'hex',
+        ),
+      }, // logo
       { offset: 0x01_43, value: Buffer.from('00', 'hex') }, // non-color
     ]),
 
     // Nintendo - Game Boy Advance
     // @see http://problemkaputt.de/gbatek.htm#gbacartridges
-    gba: new FileSignature('.gba', [{ offset: 0x04, value: Buffer.from('24FFAE51699AA2213D84820A84E409AD11248B98C0817F21A352BE199309CE2010464A4AF82731EC58C7E83382E3CEBF85F4DF94CE4B09C194568AC01372A7FC9F844D73A3CA9A615897A327FC039876231DC7610304AE56BF38840040A70EFDFF52FE036F9530F197FBC08560D68025A963BE03014E38E2F9A234FFBB3E0344780090CB88113A9465C07C6387F03CAFD625E48B380AAC7221D4F807', 'hex') }]), // logo
+    gba: new FileSignature('.gba', [
+      {
+        offset: 0x04,
+        value: Buffer.from(
+          '24FFAE51699AA2213D84820A84E409AD11248B98C0817F21A352BE199309CE2010464A4AF82731EC58C7E83382E3CEBF85F4DF94CE4B09C194568AC01372A7FC9F844D73A3CA9A615897A327FC039876231DC7610304AE56BF38840040A70EFDFF52FE036F9530F197FBC08560D68025A963BE03014E38E2F9A234FFBB3E0344780090CB88113A9465C07C6387F03CAFD625E48B380AAC7221D4F807',
+          'hex',
+        ),
+      },
+    ]), // logo
 
     // Nintendo - Game Boy Color
     // @see https://gbdev.io/pandocs/The_Cartridge_Header.html
     gb_dx: new FileSignature('.gbc', [
-      { offset: 0x01_04, value: Buffer.from('CEED6666CC0D000B03730083000C000D0008111F8889000EDCCC6EE6DDDDD999BBBB67636E0EECCCDDDC999FBBB9333E', 'hex') }, // logo
+      {
+        offset: 0x01_04,
+        value: Buffer.from(
+          'CEED6666CC0D000B03730083000C000D0008111F8889000EDCCC6EE6DDDDD999BBBB67636E0EECCCDDDC999FBBB9333E',
+          'hex',
+        ),
+      }, // logo
       { offset: 0x01_43, value: Buffer.from('80', 'hex') }, // backwards compatible
     ]),
     gbc: new FileSignature('.gbc', [
-      { offset: 0x01_04, value: Buffer.from('CEED6666CC0D000B03730083000C000D0008111F8889000EDCCC6EE6DDDDD999BBBB67636E0EECCCDDDC999FBBB9333E', 'hex') }, // logo
+      {
+        offset: 0x01_04,
+        value: Buffer.from(
+          'CEED6666CC0D000B03730083000C000D0008111F8889000EDCCC6EE6DDDDD999BBBB67636E0EECCCDDDC999FBBB9333E',
+          'hex',
+        ),
+      }, // logo
       { offset: 0x01_43, value: Buffer.from('C0', 'hex') }, // color only
     ]),
 
     // Nintendo - Nintendo DS (Decrypted)
     // @see http://dsibrew.org/wiki/DSi_cartridge_header
     nds: new FileSignature('.nds', [
-      { offset: 0xC0, value: Buffer.from('24FFAE51699AA2213D84820A84E409AD11248B98C0817F21A352BE199309CE2010464A4AF82731EC58C7E83382E3CEBF85F4DF94CE4B09C194568AC01372A7FC9F844D73A3CA9A615897A327FC039876231DC7610304AE56BF38840040A70EFDFF52FE036F9530F197FBC08560D68025A963BE03014E38E2F9A234FFBB3E0344780090CB88113A9465C07C6387F03CAFD625E48B380AAC7221D4F807') }, // logo
-      { offset: 0x1_5C, value: Buffer.from('56CF', 'hex') }, // logo checksum
+      {
+        offset: 0xc0,
+        value: Buffer.from(
+          '24FFAE51699AA2213D84820A84E409AD11248B98C0817F21A352BE199309CE2010464A4AF82731EC58C7E83382E3CEBF85F4DF94CE4B09C194568AC01372A7FC9F844D73A3CA9A615897A327FC039876231DC7610304AE56BF38840040A70EFDFF52FE036F9530F197FBC08560D68025A963BE03014E38E2F9A234FFBB3E0344780090CB88113A9465C07C6387F03CAFD625E48B380AAC7221D4F807',
+        ),
+      }, // logo
+      { offset: 0x1_5c, value: Buffer.from('56CF', 'hex') }, // logo checksum
     ]),
 
     // Nintendo - Nintendo Entertainment System
@@ -187,14 +218,18 @@ export default class FileSignature {
 
     // Sega - Game Gear
     // @see https://gbatemp.net/threads/help-with-rom-iso-console-identification.611378/
-    gg: new FileSignature('.gg', [{ offset: 0x7F_F0, value: Buffer.from('TMR SEGA') }]),
+    gg: new FileSignature('.gg', [{ offset: 0x7f_f0, value: Buffer.from('TMR SEGA') }]),
 
     // Sega - Mega Drive / Genesis
     // @see https://github.com/jcfieldsdev/genesis-rom-utility/blob/31826bca66c8c6c467c37c1b711943eb5464e7e8/genesis_rom.chm
     // @see https://plutiedev.com/rom-header
     md_1: new FileSignature('.md', [{ offset: 0x1_00, value: Buffer.from('SEGA            ') }]),
-    md_2: new FileSignature('.md', [{ offset: 0x1_00, value: Buffer.from('SEGA IS A REGISTERED') }]),
-    md_3: new FileSignature('.md', [{ offset: 0x1_00, value: Buffer.from('SEGA IS A TRADEMARK ') }]),
+    md_2: new FileSignature('.md', [
+      { offset: 0x1_00, value: Buffer.from('SEGA IS A REGISTERED') },
+    ]),
+    md_3: new FileSignature('.md', [
+      { offset: 0x1_00, value: Buffer.from('SEGA IS A TRADEMARK ') },
+    ]),
     md_4: new FileSignature('.md', [{ offset: 0x1_00, value: Buffer.from('SEGA GENESIS') }]),
     md_5: new FileSignature('.md', [{ offset: 0x1_00, value: Buffer.from(' SEGA GENESIS') }]),
     md_6: new FileSignature('.md', [{ offset: 0x1_00, value: Buffer.from('SEGA_GENESIS') }]),
@@ -221,8 +256,8 @@ export default class FileSignature {
     pbp: new FileSignature('.pbp', [{ value: Buffer.from('\x00PBP\x00\x00\x01\x00') }]),
   };
 
-  private static readonly SIGNATURES_SORTED = Object.values(FileSignature.SIGNATURES)
-    .sort((a, b) => {
+  private static readonly SIGNATURES_SORTED = Object.values(FileSignature.SIGNATURES).sort(
+    (a, b) => {
       // 1. Prefer files that check multiple signatures
       const sigsCountDiff = b.fileSignatures.length - a.fileSignatures.length;
       if (sigsCountDiff !== 0) {
@@ -230,25 +265,26 @@ export default class FileSignature {
       }
 
       // 2. Prefer signatures of longer length
-      return b.fileSignatures.reduce((sum, sig) => sum + sig.value.length, 0)
-        - a.fileSignatures.reduce((sum, sig) => sum + sig.value.length, 0);
-    });
+      return (
+        b.fileSignatures.reduce((sum, sig) => sum + sig.value.length, 0) -
+        a.fileSignatures.reduce((sum, sig) => sum + sig.value.length, 0)
+      );
+    },
+  );
 
   private static readonly MAX_HEADER_LENGTH_BYTES = Object.values(FileSignature.SIGNATURES)
     .flatMap((romSignature) => romSignature.fileSignatures)
-    .reduce((max, fileSignature) => Math.max(
-      max,
-      (fileSignature.offset ?? 0) + fileSignature.value.length,
-    ), 0);
+    .reduce(
+      (max, fileSignature) =>
+        Math.max(max, (fileSignature.offset ?? 0) + fileSignature.value.length),
+      0,
+    );
 
   private readonly extension: string;
 
   private readonly fileSignatures: SignaturePiece[];
 
-  constructor(
-    extension: string,
-    fileSignatures: SignaturePiece[],
-  ) {
+  constructor(extension: string, fileSignatures: SignaturePiece[]) {
     this.extension = extension;
     this.fileSignatures = fileSignatures;
   }
@@ -267,8 +303,7 @@ export default class FileSignature {
 
       const chunks: Buffer[] = [];
       const resolveHeader: () => void = () => {
-        const header = Buffer.concat(chunks)
-          .subarray(start, end);
+        const header = Buffer.concat(chunks).subarray(start, end);
         resolve(header);
       };
 
@@ -292,8 +327,11 @@ export default class FileSignature {
   }
 
   static async signatureFromFileStream(stream: Readable): Promise<FileSignature | undefined> {
-    const fileHeader = await FileSignature
-      .readHeaderBuffer(stream, 0, this.MAX_HEADER_LENGTH_BYTES);
+    const fileHeader = await FileSignature.readHeaderBuffer(
+      stream,
+      0,
+      this.MAX_HEADER_LENGTH_BYTES,
+    );
 
     for (const romSignature of this.SIGNATURES_SORTED) {
       const signatureMatch = romSignature.fileSignatures.every((fileSignature) => {
@@ -313,8 +351,9 @@ export default class FileSignature {
 
   @Memoize()
   getName(): string {
-    return Object.keys(FileSignature.SIGNATURES)
-      .find((name) => FileSignature.SIGNATURES[name] === this) as string;
+    return Object.keys(FileSignature.SIGNATURES).find(
+      (name) => FileSignature.SIGNATURES[name] === this,
+    ) as string;
   }
 
   getExtension(): string {

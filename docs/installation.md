@@ -1,6 +1,6 @@
 # Installation
 
-Igir is supported on :simple-windowsxp: Windows, :simple-apple: macOS, :simple-linux: Linux, and every other operating system that [Node.js](https://nodejs.org) supports.
+Igir is supported on :fontawesome-brands-windows: Windows, :fontawesome-brands-apple: macOS,:fontawesome-brands-linux: Linux, and every other operating system that [Node.js](https://nodejs.org) supports.
 
 There are a few different installation options offered for Igir with varying levels of technical complexity. Every option will require some baseline understanding of command-line interfaces (CLIs).
 
@@ -27,7 +27,7 @@ npx igir@latest copy extract --dat *.dat --input ROMs/ --output ROMs-Sorted/ --d
 
     You can alias the `npx` command in your macOS or Linux [dotfiles](https://missing.csail.mit.edu/2019/dotfiles/) like this:
 
-    === ":simple-apple: macOS"
+    === ":fontawesome-brands-apple: macOS"
 
         ```bash
         alias igir="npx igir@latest"
@@ -69,5 +69,6 @@ brew upgrade igir
 ## Via downloaded executable
 
 [![GitHub: release](https://img.shields.io/github/v/release/emmercm/igir?color=%236e5494&logo=github&logoColor=white)](https://github.com/emmercm/igir/releases/latest)
+![Node.js](https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fregistry.npmjs.org%2Figir%2Flatest&query=volta.node&logo=node.js&logoColor=white&label=Node.js&color=66cc33)
 
 If you don't want to download Node.js, you can download executables for various OSes from the [GitHub releases](https://github.com/emmercm/igir/releases) page.

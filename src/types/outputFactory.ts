@@ -55,12 +55,15 @@ export class OutputPath implements ParsedPathWithEntryPath {
    * Format this {@link OutputPath}, similar to {@link path#format}.
    */
   format(): string {
-    return path.format(this)
-      // No double slashes / empty subdir name
-      .replace(/\/{2,}/g, path.sep) // unix
-      .replace(/(?<!^\\*)\\{2,}/, path.sep) // windows, preserving network paths
-      // No trailing slashes
-      .replace(/[\\/]+$/, '');
+    return (
+      path
+        .format(this)
+        // No double slashes / empty subdir name
+        .replace(/\/{2,}/g, path.sep) // unix
+        .replace(/(?<!^\\*)\\{2,}/, path.sep) // windows, preserving network paths
+        // No trailing slashes
+        .replace(/[\\/]+$/, '')
+    );
   }
 }
 
@@ -122,21 +125,26 @@ export default class OutputFactory {
     let output = options.getOutput();
 
     // Replace all {token}s in the output path
-    output = fsPoly.makeLegal(OutputFactory.replaceTokensInOutputPath(
-      options,
-      output,
-      dat,
-      inputFile?.getFilePath(),
-      game,
-      release,
-      romBasename,
-    ));
+    output = fsPoly.makeLegal(
+      OutputFactory.replaceTokensInOutputPath(
+        options,
+        output,
+        dat,
+        inputFile?.getFilePath(),
+        game,
+        release,
+        romBasename,
+      ),
+    );
 
     if (options.getDirMirror() && inputFile?.getFilePath()) {
-      const mirroredFilePath = options.getInputPaths()
+      const mirroredFilePath = options
+        .getInputPaths()
         .map((inputPath) => path.resolve(inputPath))
         .reduce((inputFilePath, inputPath) => {
-          const inputPathRegex = new RegExp(`^${inputPath.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}[\\/]?`);
+          const inputPathRegex = new RegExp(
+            `^${inputPath.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}[\\/]?`,
+          );
           return inputFilePath.replace(inputPathRegex, '');
         }, path.resolve(inputFile.getFilePath()));
       const mirroredDirPath = path.dirname(mirroredFilePath);
@@ -178,7 +186,9 @@ export default class OutputFactory {
 
     const leftoverTokens = result.match(/\{[a-zA-Z]+\}/g);
     if (leftoverTokens !== null && leftoverTokens.length > 0) {
-      throw new ExpectedError(`failed to replace output token${leftoverTokens.length !== 1 ? 's' : ''}: ${leftoverTokens.join(', ')}`);
+      throw new ExpectedError(
+        `failed to replace output token${leftoverTokens.length !== 1 ? 's' : ''}: ${leftoverTokens.join(', ')}`,
+      );
     }
 
     return result;
@@ -274,8 +284,9 @@ export default class OutputFactory {
       return input;
     }
 
-    const gameConsole = GameConsole.getForDatName(dat?.getName() ?? '')
-        ?? GameConsole.getForFilename(outputRomFilename);
+    const gameConsole =
+      GameConsole.getForDatName(dat?.getName() ?? '') ??
+      GameConsole.getForFilename(outputRomFilename);
     if (!gameConsole) {
       return input;
     }
@@ -381,13 +392,13 @@ export default class OutputFactory {
       lettersToFilenames = [...lettersToFilenames.entries()]
         .sort((a, b) => a[0].localeCompare(b[0]))
         // Generate a tuple of [letter, Set(filenames)] for every subpath
-        .reduce((arr, [letter, filenames]) => {
-          // ROMs may have been grouped together into a subdirectory. For example, when a game has
-          // multiple ROMs, they get grouped by their game name. Therefore, we have to understand
-          // what the "sub-path" should be within the letter directory: the dirname if the ROM has a
-          // subdir, or just the ROM's basename otherwise.
-          const subPathsToFilenames = [...filenames]
-            .reduce((subPathMap, filename) => {
+        .reduce(
+          (arr, [letter, filenames]) => {
+            // ROMs may have been grouped together into a subdirectory. For example, when a game has
+            // multiple ROMs, they get grouped by their game name. Therefore, we have to understand
+            // what the "sub-path" should be within the letter directory: the dirname if the ROM has a
+            // subdir, or just the ROM's basename otherwise.
+            const subPathsToFilenames = [...filenames].reduce((subPathMap, filename) => {
               const subPath = filename.replace(/[\\/].+$/, '');
               if (!subPathMap.has(subPath)) {
                 subPathMap.set(subPath, [filename]);
@@ -396,14 +407,16 @@ export default class OutputFactory {
               }
               return subPathMap;
             }, new Map<string, string[]>());
-          const tuples = [...subPathsToFilenames.entries()]
-            .sort(([subPathOne], [subPathTwo]) => subPathOne.localeCompare(subPathTwo))
-            .map(([, subPathFilenames]) => [
-              letter,
-              new Set(subPathFilenames),
-            ] satisfies [string, Set<string>]);
-          return [...arr, ...tuples];
-        }, [] as [string, Set<string>][])
+            const tuples = [...subPathsToFilenames.entries()]
+              .sort(([subPathOne], [subPathTwo]) => subPathOne.localeCompare(subPathTwo))
+              .map(
+                ([, subPathFilenames]) =>
+                  [letter, new Set(subPathFilenames)] satisfies [string, Set<string>],
+              );
+            return [...arr, ...tuples];
+          },
+          [] as [string, Set<string>][],
+        )
         // Group letters together to create letter ranges
         .reduce(ArrayPoly.reduceChunk(options.getDirLetterLimit()), [])
         .reduce((map, tuples) => {
@@ -419,22 +432,21 @@ export default class OutputFactory {
 
     // Split the letter directories, if needed
     if (options.getDirLetterLimit()) {
-      lettersToFilenames = [...lettersToFilenames.entries()]
-        .reduce((lettersMap, [letter, filenames]) => {
+      lettersToFilenames = [...lettersToFilenames.entries()].reduce(
+        (lettersMap, [letter, filenames]) => {
           // ROMs may have been grouped together into a subdirectory. For example, when a game has
           // multiple ROMs, they get grouped by their game name. Therefore, we have to understand
           // what the "sub-path" should be within the letter directory: the dirname if the ROM has a
           // subdir, or just the ROM's basename otherwise.
-          const subPathsToFilenames = [...filenames]
-            .reduce((subPathMap, filename) => {
-              const subPath = filename.replace(/[\\/].+$/, '');
-              if (!subPathMap.has(subPath)) {
-                subPathMap.set(subPath, [filename]);
-              } else {
-                subPathMap.get(subPath)?.push(filename);
-              }
-              return subPathMap;
-            }, new Map<string, string[]>());
+          const subPathsToFilenames = [...filenames].reduce((subPathMap, filename) => {
+            const subPath = filename.replace(/[\\/].+$/, '');
+            if (!subPathMap.has(subPath)) {
+              subPathMap.set(subPath, [filename]);
+            } else {
+              subPathMap.get(subPath)?.push(filename);
+            }
+            return subPathMap;
+          }, new Map<string, string[]>());
 
           if (subPathsToFilenames.size <= options.getDirLetterLimit()) {
             lettersMap.set(letter, new Set(filenames));
@@ -453,11 +465,14 @@ export default class OutputFactory {
           }
 
           return lettersMap;
-        }, new Map<string, Set<string>>());
+        },
+        new Map<string, Set<string>>(),
+      );
     }
 
-    const foundEntry = [...lettersToFilenames.entries()]
-      .find(([, filenames]) => filenames.has(romBasename));
+    const foundEntry = [...lettersToFilenames.entries()].find(([, filenames]) =>
+      filenames.has(romBasename),
+    );
     return foundEntry ? foundEntry[0] : undefined;
   }
 
@@ -469,31 +484,24 @@ export default class OutputFactory {
    * *********************************
    */
 
-  private static getName(
-    options: Options,
-    game: Game,
-    rom: ROM,
-    inputFile: File,
-  ): string {
-    const { dir, name, ext } = path.parse(this.getOutputFileBasename(
-      options,
-      game,
-      rom,
-      inputFile,
-    ));
+  private static getName(options: Options, game: Game, rom: ROM, inputFile: File): string {
+    const { dir, name, ext } = path.parse(
+      this.getOutputFileBasename(options, game, rom, inputFile),
+    );
 
     let output = name;
     if (dir.trim() !== '') {
       output = path.join(dir, output);
     }
 
-    if ((options.getDirGameSubdir() === GameSubdirMode.MULTIPLE
-        && game.getRoms().length > 1
+    if (
+      (options.getDirGameSubdir() === GameSubdirMode.MULTIPLE &&
+        game.getRoms().length > 1 &&
         // Output file is an archive
-        && !FileFactory.isExtensionArchive(ext)
-        && !(inputFile instanceof ArchiveFile))
-      || options.getDirGameSubdir() === GameSubdirMode.ALWAYS
-      || rom instanceof Disk
+        !FileFactory.isExtensionArchive(ext) &&
+        !(inputFile instanceof ArchiveFile)) ||
+      options.getDirGameSubdir() === GameSubdirMode.ALWAYS ||
+      rom instanceof Disk
     ) {
       output = path.join(game.getName(), output);
     }
@@ -520,9 +528,10 @@ export default class OutputFactory {
 
     const romBasename = this.getRomBasename(rom, inputFile);
 
-    if (!(inputFile instanceof ArchiveEntry || inputFile instanceof ArchiveFile)
-      || options.shouldExtract()
-      || rom instanceof Disk
+    if (
+      !(inputFile instanceof ArchiveEntry || inputFile instanceof ArchiveFile) ||
+      options.shouldExtract() ||
+      rom instanceof Disk
     ) {
       // Should extract (if needed), generate the file name from the ROM name
       return romBasename;
@@ -531,20 +540,16 @@ export default class OutputFactory {
     // Should leave archived, generate the archive name from the game name
     // The regex is to preserve filenames that use 2+ extensions, e.g. "rom.nes.zip"
     const oldExtMatch = inputFile.getFilePath().match(/[^.]+((\.[a-zA-Z0-9]+)+)$/);
-    const oldExt = oldExtMatch !== null
-      // Respect the input file's extension
-      ? oldExtMatch[1]
-      // The input file has no extension, get the canonical extension from the {@link Archive}
-      : inputFile.getArchive().getExtension();
+    const oldExt =
+      oldExtMatch !== null
+        ? // Respect the input file's extension
+          oldExtMatch[1]
+        : // The input file has no extension, get the canonical extension from the {@link Archive}
+          inputFile.getArchive().getExtension();
     return game.getName() + oldExt;
   }
 
-  private static getEntryPath(
-    options: Options,
-    game: Game,
-    rom: ROM,
-    inputFile: File,
-  ): string {
+  private static getEntryPath(options: Options, game: Game, rom: ROM, inputFile: File): string {
     const romBasename = this.getRomBasename(rom, inputFile);
     if (!options.shouldZipRom(rom)) {
       return romBasename;
@@ -559,10 +564,7 @@ export default class OutputFactory {
       .replace(`${path.dirname(gameNameSanitized)}${path.sep}`, '');
   }
 
-  private static getRomBasename(
-    rom: ROM,
-    inputFile: File,
-  ): string {
+  private static getRomBasename(rom: ROM, inputFile: File): string {
     const romNameSanitized = rom.getName().replace(/[\\/]/g, path.sep);
     const { base, ...parsedRomPath } = path.parse(romNameSanitized);
 

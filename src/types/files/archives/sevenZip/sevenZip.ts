@@ -54,77 +54,76 @@ export default class SevenZip extends Archive {
     return [];
   }
 
-  private async getArchiveEntriesNotCached(
-    checksumBitmask: number,
-  ): Promise<ArchiveEntry<this>[]> {
+  private async getArchiveEntriesNotCached(checksumBitmask: number): Promise<ArchiveEntry<this>[]> {
     /**
      * WARN(cemmer): {@link _7z.list} seems to have issues with any amount of real concurrency,
      *  it will return no files but also no error. Try to prevent that behavior.
      */
     const filesIn7z = await SevenZip.LIST_MUTEX.runExclusive(
-      async () => new Promise<Result[]>((resolve, reject) => {
-        _7z.list(this.getFilePath(), (err, result) => {
-          if (err) {
-            const msg = err.toString()
-              .replace(/\n\n+/g, '\n')
-              .replace(/^/gm, '   ')
-              .trim();
-            reject(msg);
-          } else {
-            // https://github.com/onikienko/7zip-min/issues/70
-            // If `7zip-min.list()` failed to parse the entry name then ignore it
-            resolve(result.filter((entry) => entry.name));
-          }
-        });
-      }),
+      async () =>
+        new Promise<Result[]>((resolve, reject) => {
+          _7z.list(this.getFilePath(), (err, result) => {
+            if (err) {
+              const msg = err.toString().replace(/\n\n+/g, '\n').replace(/^/gm, '   ').trim();
+              reject(msg);
+            } else {
+              // https://github.com/onikienko/7zip-min/issues/70
+              // If `7zip-min.list()` failed to parse the entry name then ignore it
+              resolve(result.filter((entry) => entry.name));
+            }
+          });
+        }),
     );
 
     return async.mapLimit(
       filesIn7z.filter((result) => !result.attr?.startsWith('D')),
       Defaults.ARCHIVE_ENTRY_SCANNER_THREADS_PER_ARCHIVE,
       async (result, callback: AsyncResultCallback<ArchiveEntry<this>, Error>) => {
-        const archiveEntry = await ArchiveEntry.entryOf({
-          archive: this,
-          entryPath: result.name,
-          size: Number.parseInt(result.size, 10),
-          crc32: result.crc,
-          // If MD5, SHA1, or SHA256 is desired, this file will need to be extracted to calculate
-        }, checksumBitmask);
+        const archiveEntry = await ArchiveEntry.entryOf(
+          {
+            archive: this,
+            entryPath: result.name,
+            size: Number.parseInt(result.size, 10),
+            crc32: result.crc,
+            // If MD5, SHA1, or SHA256 is desired, this file will need to be extracted to calculate
+          },
+          checksumBitmask,
+        );
         callback(undefined, archiveEntry);
       },
     );
   }
 
-  async extractEntryToFile(
-    entryPath: string,
-    extractedFilePath: string,
-  ): Promise<void> {
+  async extractEntryToFile(entryPath: string, extractedFilePath: string): Promise<void> {
     const tempDir = await fsPoly.mkdtemp(path.join(Temp.getTempDir(), '7z'));
     try {
       let tempFile = path.join(tempDir, entryPath);
       await new Promise<void>((resolve, reject) => {
-        _7z.cmd([
-          // _7z.unpack() flags
-          'x',
-          this.getFilePath(),
-          '-y',
-          `-o${tempDir}`,
-          // https://github.com/onikienko/7zip-min/issues/71
-          // Extract only the single archive entry
-          entryPath,
-          '-r',
-        ], (err) => {
-          if (err) {
-            reject(err);
-          } else {
-            resolve();
-          }
-        });
+        _7z.cmd(
+          [
+            // _7z.unpack() flags
+            'x',
+            this.getFilePath(),
+            '-y',
+            `-o${tempDir}`,
+            // https://github.com/onikienko/7zip-min/issues/71
+            // Extract only the single archive entry
+            entryPath,
+            '-r',
+          ],
+          (err) => {
+            if (err) {
+              reject(err);
+            } else {
+              resolve();
+            }
+          },
+        );
       });
 
       // https://github.com/onikienko/7zip-min/issues/86
       // Fix `7zip-min.list()` returning unicode entry names as � on Windows
-      if (process.platform === 'win32' && !await fsPoly.exists(tempFile)) {
+      if (process.platform === 'win32' && !(await fsPoly.exists(tempFile))) {
         const files = await fsPoly.walk(tempDir);
         if (files.length === 0) {
           throw new ExpectedError('failed to extract any files');

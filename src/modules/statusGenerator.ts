@@ -20,10 +20,7 @@ export default class StatusGenerator extends Module {
   /**
    * Generate a {@link DATStatus} for the {@link DAT}.
    */
-  generate(
-    dat: DAT,
-    parentsToReleaseCandidates: Map<Parent, ReleaseCandidate[]>,
-  ): DATStatus {
+  generate(dat: DAT, parentsToReleaseCandidates: Map<Parent, ReleaseCandidate[]>): DATStatus {
     this.progressBar.logTrace(`${dat.getNameShort()}: generating ROM statuses`);
 
     const datStatus = new DATStatus(dat, this.options, parentsToReleaseCandidates);

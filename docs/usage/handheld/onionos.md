@@ -10,7 +10,7 @@
 
 OnionOS has its BIOS folder at the root of the SD card at `/BIOS/`, and it uses the [RetroArch filenames](https://onionui.github.io/docs/installation/fresh#step-3-copy-over-your-bios-and-rom-files):
 
-=== ":simple-windowsxp: Windows"
+=== ":fontawesome-brands-windows: Windows"
 
     Replace the `E:\` drive letter with wherever your SD card is:
 
@@ -21,7 +21,7 @@ OnionOS has its BIOS folder at the root of the SD card at `/BIOS/`, and it uses 
       --output E:\BIOS
     ```
 
-=== ":simple-apple: macOS"
+=== ":fontawesome-brands-apple: macOS"
 
     Replace the `/Volumes/OnionOS` drive name with whatever your SD card is named:
 
@@ -47,7 +47,7 @@ OnionOS has its BIOS folder at the root of the SD card at `/BIOS/`, and it uses 
 
 OnionOS uses its own proprietary [ROM folder structure](https://github.com/OnionUI/Onion/wiki/Emulators#rom-folders---quick-reference), so Igir has a replaceable `{onion}` token to sort ROMs into the right place. See the [replaceable tokens page](../../output/tokens.md) for more information.
 
-=== ":simple-windowsxp: Windows"
+=== ":fontawesome-brands-windows: Windows"
 
     Replace the `E:\` drive letter with wherever your SD card is:
 
@@ -60,7 +60,7 @@ OnionOS uses its own proprietary [ROM folder structure](https://github.com/Onion
       --no-bios
     ```
 
-=== ":simple-apple: macOS"
+=== ":fontawesome-brands-apple: macOS"
 
     Replace the `/Volumes/OnionOS` drive name with whatever your SD card is named:
 

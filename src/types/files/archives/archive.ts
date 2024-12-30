@@ -23,22 +23,21 @@ export default abstract class Archive {
 
   abstract getArchiveEntries(checksumBitmask: number): Promise<ArchiveEntry<Archive>[]>;
 
-  abstract extractEntryToFile(
-    entryPath: string,
-    extractedFilePath: string,
-  ): Promise<void>;
+  abstract extractEntryToFile(entryPath: string, extractedFilePath: string): Promise<void>;
 
   async extractEntryToTempFile<T>(
     entryPath: string,
-    callback: (tempFile: string) => (T | Promise<T>),
+    callback: (tempFile: string) => T | Promise<T>,
   ): Promise<T> {
-    const tempFile = await fsPoly.mktemp(path.join(
-      Temp.getTempDir(),
-      fsPoly.makeLegal(path.basename(entryPath) || path.parse(this.getFilePath()).name),
-    ));
+    const tempFile = await fsPoly.mktemp(
+      path.join(
+        Temp.getTempDir(),
+        fsPoly.makeLegal(path.basename(entryPath) || path.parse(this.getFilePath()).name),
+      ),
+    );
 
     const tempDir = path.dirname(tempFile);
-    if (!await fsPoly.exists(tempDir)) {
+    if (!(await fsPoly.exists(tempDir))) {
       await fsPoly.mkdir(tempDir, { recursive: true });
     }
 
@@ -56,12 +55,11 @@ export default abstract class Archive {
    */
   async extractEntryToStream<T>(
     entryPath: string,
-    callback: (stream: Readable) => (Promise<T> | T),
+    callback: (stream: Readable) => Promise<T> | T,
     start = 0,
   ): Promise<T> {
-    return this.extractEntryToTempFile(
-      entryPath,
-      async (tempFile) => File.createStreamFromFile(tempFile, callback, start),
+    return this.extractEntryToTempFile(entryPath, async (tempFile) =>
+      File.createStreamFromFile(tempFile, callback, start),
     );
   }
 
@@ -75,7 +73,9 @@ export default abstract class Archive {
     const newNameMatch = filePath.match(/^(.+[\\/])?(.+?[^.])((\.[a-zA-Z][a-zA-Z0-9]*)*)$/);
     parsedFilePath.name = newNameMatch !== null ? newNameMatch[2] : '';
 
-    const oldExtMatch = this.getFilePath().match(/^(.+[\\/])?(.+?[^.])((\.[a-zA-Z][a-zA-Z0-9]*)*)$/);
+    const oldExtMatch = this.getFilePath().match(
+      /^(.+[\\/])?(.+?[^.])((\.[a-zA-Z][a-zA-Z0-9]*)*)$/,
+    );
     parsedFilePath.ext = oldExtMatch !== null ? oldExtMatch[3] : '';
 
     return this.new(path.format(parsedFilePath));

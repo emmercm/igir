@@ -10,15 +10,17 @@ import FileSignature from './fileSignature.js';
 import ROMHeader from './romHeader.js';
 
 interface CacheValue {
-  fileSize: number,
-  modifiedTimeMillis: number,
-  value: number
-  // getOrComputeFileChecksums()
-  | FileProps
-  // getOrComputeArchiveChecksums()
-  | ArchiveEntryProps<Archive>[]
-  // getOrComputeFileHeader(), getOrComputeFileSignature()
-  | string | undefined,
+  fileSize: number;
+  modifiedTimeMillis: number;
+  value:
+    | number
+    // getOrComputeFileChecksums()
+    | FileProps
+    // getOrComputeArchiveChecksums()
+    | ArchiveEntryProps<Archive>[]
+    // getOrComputeFileHeader(), getOrComputeFileSignature()
+    | string
+    | undefined;
 }
 
 const ValueType = {
@@ -52,7 +54,11 @@ export default class FileCache {
 
     // Cleanup the loaded cache file
     // Delete keys from old cache versions
-    await this.cache.delete(new RegExp(`^V(${[...Array.from({ length: FileCache.VERSION }).keys()].slice(1).join('|')})\\|`));
+    await this.cache.delete(
+      new RegExp(
+        `^V(${[...Array.from({ length: FileCache.VERSION }).keys()].slice(1).join('|')})\\|`,
+      ),
+    );
     // Delete keys from old value types
     await this.cache.delete(new RegExp(`\\|(?!(${Object.values(ValueType).join('|')}))[^|]+$`));
 
@@ -60,23 +66,25 @@ export default class FileCache {
     Timer.setTimeout(async () => {
       const cacheKeyFilePaths = [...this.cache.keys()]
         .filter((cacheKey) => cacheKey.endsWith(`|${ValueType.INODE}`))
-        .map((cacheKey) => ([cacheKey, cacheKey.split('|')[1]]))
+        .map((cacheKey) => [cacheKey, cacheKey.split('|')[1]])
         // Don't delete the key if it's for a disk that isn't mounted right now
         .filter(([, filePath]) => FsPoly.diskResolved(filePath))
         // Only process a reasonably sized subset of the keys
         .sort(() => Math.random() - 0.5)
         .slice(0, Defaults.MAX_FS_THREADS);
 
-      await Promise.all(cacheKeyFilePaths.map(async ([cacheKey, filePath]) => {
-        if (!await FsPoly.exists(filePath)) {
-          // Delete the related cache keys
-          const inode = (await this.cache.get(cacheKey))?.value as number;
-          await this.cache.delete(new RegExp(`^V${FileCache.VERSION}\\|${inode}\\|`));
+      await Promise.all(
+        cacheKeyFilePaths.map(async ([cacheKey, filePath]) => {
+          if (!(await FsPoly.exists(filePath))) {
+            // Delete the related cache keys
+            const inode = (await this.cache.get(cacheKey))?.value as number;
+            await this.cache.delete(new RegExp(`^V${FileCache.VERSION}\\|${inode}\\|`));
 
-          // Delete the inode key from the cache
-          await this.cache.delete(cacheKey);
-        }
-      }));
+            // Delete the inode key from the cache
+            await this.cache.delete(cacheKey);
+          }
+        }),
+      );
     }, 5000);
   }
 
@@ -88,10 +96,7 @@ export default class FileCache {
     await this.cache.save();
   }
 
-  async getOrComputeFileChecksums(
-    filePath: string,
-    checksumBitmask: number,
-  ): Promise<File> {
+  async getOrComputeFileChecksums(filePath: string, checksumBitmask: number): Promise<File> {
     // NOTE(cemmer): we're explicitly not catching ENOENT errors here, we want it to bubble up
     const stats = await FsPoly.stat(filePath);
     const cacheKey = await this.getCacheKey(filePath, undefined, ValueType.FILE_CHECKSUMS);
@@ -116,10 +121,11 @@ export default class FileCache {
         }
 
         const cachedFile = cached.value as FileProps;
-        const existingBitmask = ((cachedFile.crc32) ? ChecksumBitmask.CRC32 : 0)
-          | (cachedFile.md5 ? ChecksumBitmask.MD5 : 0)
-          | (cachedFile.sha1 ? ChecksumBitmask.SHA1 : 0)
-          | (cachedFile.sha256 ? ChecksumBitmask.SHA256 : 0);
+        const existingBitmask =
+          (cachedFile.crc32 ? ChecksumBitmask.CRC32 : 0) |
+          (cachedFile.md5 ? ChecksumBitmask.MD5 : 0) |
+          (cachedFile.sha1 ? ChecksumBitmask.SHA1 : 0) |
+          (cachedFile.sha256 ? ChecksumBitmask.SHA256 : 0);
         const remainingBitmask = checksumBitmask - (checksumBitmask & existingBitmask);
         // We need checksums that haven't been cached yet
         return remainingBitmask > 0;
@@ -159,7 +165,7 @@ export default class FileCache {
     const cachedValue = await this.cache.getOrCompute(
       cacheKey,
       async () => {
-        computedEntries = await archive.getArchiveEntries(checksumBitmask) as ArchiveEntry<T>[];
+        computedEntries = (await archive.getArchiveEntries(checksumBitmask)) as ArchiveEntry<T>[];
         return {
           fileSize: stats.size,
           modifiedTimeMillis: stats.mtimeMs,
@@ -173,11 +179,11 @@ export default class FileCache {
         }
 
         const cachedEntries = cached.value as ArchiveEntryProps<T>[];
-        const existingBitmask = (cachedEntries
-          .every((props) => props.crc32) ? ChecksumBitmask.CRC32 : 0)
-          | (cachedEntries.every((props) => props.md5) ? ChecksumBitmask.MD5 : 0)
-          | (cachedEntries.every((props) => props.sha1) ? ChecksumBitmask.SHA1 : 0)
-          | (cachedEntries.every((props) => props.sha256) ? ChecksumBitmask.SHA256 : 0);
+        const existingBitmask =
+          (cachedEntries.every((props) => props.crc32) ? ChecksumBitmask.CRC32 : 0) |
+          (cachedEntries.every((props) => props.md5) ? ChecksumBitmask.MD5 : 0) |
+          (cachedEntries.every((props) => props.sha1) ? ChecksumBitmask.SHA1 : 0) |
+          (cachedEntries.every((props) => props.sha256) ? ChecksumBitmask.SHA256 : 0);
         const remainingBitmask = checksumBitmask - (checksumBitmask & existingBitmask);
         // We need checksums that haven't been cached yet
         return remainingBitmask > 0;
@@ -193,8 +199,9 @@ export default class FileCache {
     // We didn't compute the archive entries (cache hit), deserialize the properties into
     //  full objects
     const cachedEntries = cachedValue.value as ArchiveEntryProps<T>[];
-    return Promise.all(cachedEntries
-      .map(async (props) => ArchiveEntry.entryOfObject(archive, props)));
+    return Promise.all(
+      cachedEntries.map(async (props) => ArchiveEntry.entryOfObject(archive, props)),
+    );
   }
 
   async getOrComputeFileHeader(file: File): Promise<ROMHeader | undefined> {
@@ -213,8 +220,8 @@ export default class FileCache {
     const cachedValue = await this.cache.getOrCompute(
       cacheKey,
       async () => {
-        const header = await file.createReadStream(
-          async (stream) => ROMHeader.headerFromFileStream(stream),
+        const header = await file.createReadStream(async (stream) =>
+          ROMHeader.headerFromFileStream(stream),
         );
         return {
           fileSize: stats.size,
@@ -255,8 +262,8 @@ export default class FileCache {
     const cachedValue = await this.cache.getOrCompute(
       cacheKey,
       async () => {
-        const signature = await file.createReadStream(
-          async (stream) => FileSignature.signatureFromFileStream(stream),
+        const signature = await file.createReadStream(async (stream) =>
+          FileSignature.signatureFromFileStream(stream),
         );
         return {
           fileSize: stats.size,

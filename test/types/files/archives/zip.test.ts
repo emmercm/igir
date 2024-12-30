@@ -1,7 +1,7 @@
 import path from 'node:path';
 
 import Temp from '../../../../src/globals/temp.js';
-import ROMScanner from '../../../../src/modules/romScanner.js';
+import ROMScanner from '../../../../src/modules/roms/romScanner.js';
 import fsPoly from '../../../../src/polyfill/fsPoly.js';
 import ArchiveEntry from '../../../../src/types/files/archives/archiveEntry.js';
 import Zip from '../../../../src/types/files/archives/zip.js';
@@ -12,9 +12,13 @@ import Options from '../../../../src/types/options.js';
 import ProgressBarFake from '../../../console/progressBarFake.js';
 
 async function findRoms(input: string): Promise<File[]> {
-  return new ROMScanner(new Options({
-    input: [input],
-  }), new ProgressBarFake(), new FileFactory(new FileCache())).scan();
+  return new ROMScanner(
+    new Options({
+      input: [input],
+    }),
+    new ProgressBarFake(),
+    new FileFactory(new FileCache()),
+  ).scan();
 }
 
 describe('createArchive', () => {
@@ -28,8 +32,7 @@ describe('createArchive', () => {
     expect.assertions(2);
 
     // Given a temp ROM file copied from fixtures
-    const rom = (await findRoms(input))
-      .find((file) => file.getSize());
+    const rom = (await findRoms(input)).find((file) => file.getSize());
     if (!rom) {
       throw new Error('no ROM of a non-zero size was found');
     }
@@ -39,19 +42,23 @@ describe('createArchive', () => {
 
     // And a candidate is partially generated for that file
     const tempFiles = await new FileFactory(new FileCache()).filesFrom(tempFilePath);
-    const inputToOutput = await Promise.all(tempFiles.map(async (tempFile) => {
-      const archiveEntry = await ArchiveEntry.entryOf({
-        ...tempFile,
-        archive: new Zip(`${tempFile.getExtractedFilePath()}.zip`),
-        entryPath: tempFile.getExtractedFilePath(),
-      });
-      return [tempFile, archiveEntry] as [File, ArchiveEntry<Zip>];
-    }));
+    const inputToOutput = await Promise.all(
+      tempFiles.map(async (tempFile) => {
+        const archiveEntry = await ArchiveEntry.entryOf({
+          ...tempFile,
+          archive: new Zip(`${tempFile.getExtractedFilePath()}.zip`),
+          entryPath: tempFile.getExtractedFilePath(),
+        });
+        return [tempFile, archiveEntry] as [File, ArchiveEntry<Zip>];
+      }),
+    );
 
     // And the input files have been deleted
-    await Promise.all(inputToOutput.map(async ([tempInputFile]) => {
-      await fsPoly.rm(tempInputFile.getFilePath(), { force: true });
-    }));
+    await Promise.all(
+      inputToOutput.map(async ([tempInputFile]) => {
+        await fsPoly.rm(tempInputFile.getFilePath(), { force: true });
+      }),
+    );
 
     // When the file is being zipped
     // Then any underlying exception will be re-thrown

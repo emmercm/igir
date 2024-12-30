@@ -19,7 +19,7 @@ To sum up the documentation, two files need to be copied:
 
 Funkey OS uses its own proprietary [ROM folder structure](https://github.com/FunKey-Project/FunKey-OS/tree/master/FunKey/board/funkey/rootfs-overlay/usr/games/collections) based in the root of the SD card, so Igir has a replaceable `{funkeyos}` token to sort ROMs into the right place. See the [replaceable tokens page](../../output/tokens.md) for more information.
 
-=== ":simple-windowsxp: Windows"
+=== ":fontawesome-brands-windows: Windows"
 
     Replace the `E:\` drive letter with wherever your SD card is:
 
@@ -32,7 +32,7 @@ Funkey OS uses its own proprietary [ROM folder structure](https://github.com/Fun
       --no-bios
     ```
 
-=== ":simple-apple: macOS"
+=== ":fontawesome-brands-apple: macOS"
 
     Replace the `/Volumes/FunKeyS` drive name with whatever your SD card is named:
 

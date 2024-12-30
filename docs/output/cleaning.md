@@ -1,9 +1,22 @@
 # Output Directory Cleaning
 
-The `igir clean` [command](../commands.md) can be used when writing (`igir copy`, `igir move`, and `igir link`) to delete files from the `--output <path>` directory that are either:
+The `igir clean` [command](../commands.md) can be used when writing (`igir copy`, `igir move`, and `igir link`) to delete files from the `--output <path>` directory that were _not_ considered for writing.
 
-- Not contained in any provided [DAT](../dats/introduction.md) (the [`--dat <path>` option](../dats/processing.md#scanning-for-dats)).
-- Contained in a [DAT](../dats/introduction.md) (the [`--dat <path>` option](../dats/processing.md#scanning-for-dats)), but the file is in the incorrect location.
+!!! note
+
+    The term "considered" is used here because output files that already exist won't be [overwritten](options.md#overwriting-files) by default. These output file paths were _considered_ for writing, but then Igir chose _not_ to write them.
+
+Only files from [`--input <path>` directories](../input/file-scanning.md) can be used when writing to the `--output <path>` directory. Therefore, the output files that will be cleaned (because they _weren't_ considered for writing) are files that:
+
+- (When using [DATs](../dats/introduction.md)) Don't [match](../roms/matching.md) any ROM in any DAT
+- Were filtered out by [filter options](../roms/filtering-preferences.md#filters)
+- Were filtered out by [1G1R preferences](../roms/filtering-preferences.md#preferences-for-1g1r)
+
+!!! warning
+
+    Because only input files will be considered for writing to the output directory, you will want your input files to be a superset of your output files. In other words, if a file isn't in your input files, it will be cleaned from your output directory.
+
+    It is a [best practice](../usage/best-practices.md#file-inputs) to include your output directory as an input directory when cleaning files. This will ensure any previously written valid files won't be cleaned.
 
 ## The golden rule
 
@@ -21,13 +34,13 @@ In other words, `games/{mister}` is _not_ equivalent to `games/*`. Igir will _no
 
 If you want to clean _every_ directory in `games/`, you could specify it as both the `--input <path>` and `--output <path>`:
 
-=== ":simple-windowsxp: Windows"
+=== ":fontawesome-brands-windows: Windows"
 
     ```batch
     igir move clean --dat "*.dat" --input "games\" --output "games\{mister}\"
     ```
 
-=== ":simple-apple: macOS"
+=== ":fontawesome-brands-apple: macOS"
 
     ```shell
     igir move clean --dat "*.dat" --input "games/" --output "games/{mister}/"
@@ -61,13 +74,13 @@ The `--clean-dry-run` option exists to see what paths `igir clean` would delete,
 
 Usage:
 
-=== ":simple-windowsxp: Windows"
+=== ":fontawesome-brands-windows: Windows"
 
     ```batch
     igir [commands..] clean [options] --clean-dry-run -vv
     ```
 
-=== ":simple-apple: macOS"
+=== ":fontawesome-brands-apple: macOS"
 
     ```shell
     igir [commands..] clean [options] --clean-dry-run -vv

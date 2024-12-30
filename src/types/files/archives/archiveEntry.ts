@@ -1,9 +1,7 @@
 import path from 'node:path';
 import { Readable } from 'node:stream';
 
-import {
-  Exclude, Expose, instanceToPlain, plainToClassFromExist,
-} from 'class-transformer';
+import { Exclude, Expose, instanceToPlain, plainToClassFromExist } from 'class-transformer';
 
 import Defaults from '../../../globals/defaults.js';
 import fsPoly from '../../../polyfill/fsPoly.js';
@@ -64,10 +62,11 @@ export default class ArchiveEntry<A extends Archive> extends File implements Arc
       finalSize = finalSize ?? 0;
 
       // Calculate checksums
-      if ((!finalCrcWithHeader && (checksumBitmask & ChecksumBitmask.CRC32))
-        || (!finalMd5WithHeader && (checksumBitmask & ChecksumBitmask.MD5))
-        || (!finalSha1WithHeader && (checksumBitmask & ChecksumBitmask.SHA1))
-        || (!finalSha256WithHeader && (checksumBitmask & ChecksumBitmask.SHA256))
+      if (
+        (!finalCrcWithHeader && checksumBitmask & ChecksumBitmask.CRC32) ||
+        (!finalMd5WithHeader && checksumBitmask & ChecksumBitmask.MD5) ||
+        (!finalSha1WithHeader && checksumBitmask & ChecksumBitmask.SHA1) ||
+        (!finalSha256WithHeader && checksumBitmask & ChecksumBitmask.SHA256)
       ) {
         // If any additional checksum needs to be calculated, then prefer those calculated ones
         // over any that were supplied in {@link archiveEntryProps} that probably came from the
@@ -129,14 +128,10 @@ export default class ArchiveEntry<A extends Archive> extends File implements Arc
     archive: A,
     obj: ArchiveEntryProps<A>,
   ): Promise<ArchiveEntry<A>> {
-    const deserialized = plainToClassFromExist(
-      new ArchiveEntry({ archive, entryPath: '' }),
-      obj,
-      {
-        enableImplicitConversion: true,
-        excludeExtraneousValues: true,
-      },
-    );
+    const deserialized = plainToClassFromExist(new ArchiveEntry({ archive, entryPath: '' }), obj, {
+      enableImplicitConversion: true,
+      excludeExtraneousValues: true,
+    });
     return this.entryOf({ ...deserialized, archive });
   }
 
@@ -161,9 +156,7 @@ export default class ArchiveEntry<A extends Archive> extends File implements Arc
     return this.entryPath;
   }
 
-  async extractToFile(
-    extractedFilePath: string,
-  ): Promise<void> {
+  async extractToFile(extractedFilePath: string): Promise<void> {
     return ArchiveEntry.extractEntryToFile(
       this.getArchive(),
       this.getEntryPath(),
@@ -192,29 +185,24 @@ export default class ArchiveEntry<A extends Archive> extends File implements Arc
     return archive.extractEntryToFile(entryPath, extractedFilePath);
   }
 
-  async extractToTempFile<T>(
-    callback: (tempFile: string) => (T | Promise<T>),
-  ): Promise<T> {
+  async extractToTempFile<T>(callback: (tempFile: string) => T | Promise<T>): Promise<T> {
     return ArchiveEntry.extractEntryToTempFile(this.getArchive(), this.getEntryPath(), callback);
   }
 
   private static async extractEntryToTempFile<T>(
     archive: Archive,
     entryPath: string,
-    callback: (tempFile: string) => (T | Promise<T>),
+    callback: (tempFile: string) => T | Promise<T>,
   ): Promise<T> {
     return archive.extractEntryToTempFile(entryPath, callback);
   }
 
-  async createReadStream<T>(
-    callback: (stream: Readable) => (T | Promise<T>),
-    start = 0,
-  ): Promise<T> {
+  async createReadStream<T>(callback: (stream: Readable) => T | Promise<T>, start = 0): Promise<T> {
     // Don't extract to memory if this archive entry size is too large, or if we need to manipulate
     // the stream start point
     if (this.getSize() > Defaults.MAX_MEMORY_FILE_SIZE || start > 0) {
-      return this.extractToTempFile(
-        async (tempFile) => File.createStreamFromFile(tempFile, callback, start),
+      return this.extractToTempFile(async (tempFile) =>
+        File.createStreamFromFile(tempFile, callback, start),
       );
     }
 
@@ -242,11 +230,14 @@ export default class ArchiveEntry<A extends Archive> extends File implements Arc
     if (fileHeader === this.fileHeader) {
       return this;
     }
-    return ArchiveEntry.entryOf({
-      ...this,
-      fileHeader,
-      patch: undefined, // don't allow a patch
-    }, this.getChecksumBitmask());
+    return ArchiveEntry.entryOf(
+      {
+        ...this,
+        fileHeader,
+        patch: undefined, // don't allow a patch
+      },
+      this.getChecksumBitmask(),
+    );
   }
 
   withoutFileHeader(): ArchiveEntry<A> {

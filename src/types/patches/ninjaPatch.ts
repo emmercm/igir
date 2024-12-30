@@ -92,35 +92,42 @@ export default class NinjaPatch extends Patch {
   private async applyCommandOpen(patchFile: FilePoly, targetFile: FilePoly): Promise<void> {
     const multiFile = (await patchFile.readNext(1)).readUInt8();
     if (multiFile > 0) {
-      throw new ExpectedError(`Multi-file NINJA patches aren't supported: ${this.getFile().toString()}`);
+      throw new ExpectedError(
+        `Multi-file NINJA patches aren't supported: ${this.getFile().toString()}`,
+      );
     }
 
-    const fileNameLength = multiFile > 0
-      ? (await patchFile.readNext(multiFile)).readUIntLE(0, multiFile)
-      : 0;
+    const fileNameLength =
+      multiFile > 0 ? (await patchFile.readNext(multiFile)).readUIntLE(0, multiFile) : 0;
     patchFile.skipNext(fileNameLength); // file name
     const fileType = (await patchFile.readNext(1)).readUInt8();
     if (fileType > 0) {
-      throw new ExpectedError(`unsupported NINJA file type ${NinjaFileType[fileType]}: ${this.getFile().toString()}`);
+      throw new ExpectedError(
+        `unsupported NINJA file type ${NinjaFileType[fileType]}: ${this.getFile().toString()}`,
+      );
     }
     const sourceFileSizeLength = (await patchFile.readNext(1)).readUInt8();
-    const sourceFileSize = (await patchFile.readNext(sourceFileSizeLength))
-      .readUIntLE(0, sourceFileSizeLength);
+    const sourceFileSize = (await patchFile.readNext(sourceFileSizeLength)).readUIntLE(
+      0,
+      sourceFileSizeLength,
+    );
     const modifiedFileSizeLength = (await patchFile.readNext(1)).readUInt8();
-    const modifiedFileSize = (await patchFile.readNext(modifiedFileSizeLength))
-      .readUIntLE(0, modifiedFileSizeLength);
+    const modifiedFileSize = (await patchFile.readNext(modifiedFileSizeLength)).readUIntLE(
+      0,
+      modifiedFileSizeLength,
+    );
     patchFile.skipNext(16); // source MD5
     patchFile.skipNext(16); // modified MD5
 
     if (sourceFileSize !== modifiedFileSize) {
       patchFile.skipNext(1); // "M" or "A"
       const overflowSizeLength = (await patchFile.readNext(1)).readUInt8();
-      const overflowSize = overflowSizeLength > 0
-        ? (await patchFile.readNext(overflowSizeLength)).readUIntLE(0, overflowSizeLength)
-        : 0;
-      const overflow = overflowSize > 0
-        ? await patchFile.readNext(overflowSize)
-        : Buffer.alloc(overflowSize);
+      const overflowSize =
+        overflowSizeLength > 0
+          ? (await patchFile.readNext(overflowSizeLength)).readUIntLE(0, overflowSizeLength)
+          : 0;
+      const overflow =
+        overflowSize > 0 ? await patchFile.readNext(overflowSize) : Buffer.alloc(overflowSize);
       for (let i = 0; i < overflow.length; i += 1) {
         overflow[i] ^= 255; // NOTE(cemmer): this isn't documented anywhere
       }

@@ -33,7 +33,7 @@ MinUI requires multi-file releases to be grouped into subdirectories (bin/cue re
 
 More details about these features can be found [here](https://github.com/shauninman/MinUI/tree/main/skeleton/BASE) under the sections `Roms` and `Disc-based games`.
 
-=== ":simple-windowsxp: Windows"
+=== ":fontawesome-brands-windows: Windows"
 
     Replace the `E:\` drive letter with wherever your SD card is:
 
@@ -46,7 +46,7 @@ More details about these features can be found [here](https://github.com/shaunin
       --no-bios
     ```
 
-=== ":simple-apple: macOS"
+=== ":fontawesome-brands-apple: macOS"
 
     Replace the `/Volumes/MinUI` drive name with whatever your SD card is named:
 

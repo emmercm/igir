@@ -37,9 +37,9 @@ describe('keys', () => {
     for (let i = 0; i < TEST_CACHE_SIZE; i += 1) {
       await cache.set(String(i), i);
     }
-    expect(cache.keys()).toEqual(new Set(
-      Array.from({ length: TEST_CACHE_SIZE }).map((_, idx) => String(idx)),
-    ));
+    expect(cache.keys()).toEqual(
+      new Set(Array.from({ length: TEST_CACHE_SIZE }).map((_, idx) => String(idx))),
+    );
   });
 });
 
@@ -115,7 +115,7 @@ describe('getOrCompute', () => {
 });
 
 describe('set', () => {
-  it('should set a value for a key that doesn\'t exist', async () => {
+  it("should set a value for a key that doesn't exist", async () => {
     const cache = new Cache<number>();
 
     for (let i = 0; i < TEST_CACHE_SIZE; i += 1) {
@@ -200,9 +200,9 @@ describe('load', () => {
       const secondCache = new Cache<number>({ filePath: tempFile });
       await secondCache.load();
       expect(secondCache.size()).toEqual(TEST_CACHE_SIZE);
-      expect(secondCache.keys()).toEqual(new Set(
-        Array.from({ length: TEST_CACHE_SIZE }).map((_, idx) => String(idx)),
-      ));
+      expect(secondCache.keys()).toEqual(
+        new Set(Array.from({ length: TEST_CACHE_SIZE }).map((_, idx) => String(idx))),
+      );
       for (let i = 0; i < TEST_CACHE_SIZE; i += 1) {
         await expect(secondCache.get(String(i))).resolves.toEqual(i);
       }

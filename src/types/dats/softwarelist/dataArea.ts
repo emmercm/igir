@@ -24,7 +24,8 @@ export default class DataArea {
   getRoms(): ROM[] {
     if (Array.isArray(this.rom)) {
       return this.rom;
-    } if (this.rom) {
+    }
+    if (this.rom) {
       return [this.rom];
     }
     return [];

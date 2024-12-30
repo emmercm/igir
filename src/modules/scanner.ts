@@ -39,9 +39,8 @@ export default abstract class Scanner extends Module {
     checksumBitmask: number,
     checksumArchives = false,
   ): Promise<File[]> {
-    return (await new DriveSemaphore(threads).map(
-      filePaths,
-      async (inputFile) => {
+    return (
+      await new DriveSemaphore(threads).map(filePaths, async (inputFile) => {
         this.progressBar.incrementProgress();
         const waitingMessage = `${inputFile} ...`;
         this.progressBar.addWaitingMessage(waitingMessage);
@@ -52,8 +51,8 @@ export default abstract class Scanner extends Module {
         this.progressBar.removeWaitingMessage(waitingMessage);
         this.progressBar.incrementDone();
         return files;
-      },
-    )).flat();
+      })
+    ).flat();
   }
 
   protected async getUniqueFilesFromPaths(
@@ -62,8 +61,7 @@ export default abstract class Scanner extends Module {
     checksumBitmask: number,
   ): Promise<File[]> {
     const foundFiles = await this.getFilesFromPaths(filePaths, threads, checksumBitmask);
-    return foundFiles
-      .filter(ArrayPoly.filterUniqueMapped((file) => file.hashCode()));
+    return foundFiles.filter(ArrayPoly.filterUniqueMapped((file) => file.hashCode()));
   }
 
   private async getFilesFromPath(
@@ -74,7 +72,7 @@ export default abstract class Scanner extends Module {
     try {
       if (await fsPoly.isSymlink(filePath)) {
         const realFilePath = await fsPoly.readlinkResolved(filePath);
-        if (!await fsPoly.exists(realFilePath)) {
+        if (!(await fsPoly.exists(realFilePath))) {
           this.progressBar.logWarn(`${filePath}: broken symlink, '${realFilePath}' doesn't exist`);
           return [];
         }
@@ -108,25 +106,33 @@ export default abstract class Scanner extends Module {
         .map((archiveEntry) => archiveEntry.getArchive())
         .find((archive) => archive instanceof Gzip || archive instanceof Tar);
       if (archiveWithoutChecksums !== undefined) {
-        this.progressBar.logWarn(`${archiveWithoutChecksums.getFilePath()}: quick checksums will skip ${archiveWithoutChecksums.getExtension()} files`);
+        this.progressBar.logWarn(
+          `${archiveWithoutChecksums.getFilePath()}: quick checksums will skip ${archiveWithoutChecksums.getExtension()} files`,
+        );
         return;
       }
 
-      const chdInfos = await Promise.all(files
-        .filter((file) => file instanceof ArchiveEntry)
-        .map((archiveEntry) => archiveEntry.getArchive())
-        .filter((archive) => archive instanceof Chd)
-        .map(async (chd) => ([chd, await chd.getInfo()] satisfies [Chd, CHDInfo])));
+      const chdInfos = await Promise.all(
+        files
+          .filter((file) => file instanceof ArchiveEntry)
+          .map((archiveEntry) => archiveEntry.getArchive())
+          .filter((archive) => archive instanceof Chd)
+          .map(async (chd) => [chd, await chd.getInfo()] satisfies [Chd, CHDInfo]),
+      );
 
       const cdRom = chdInfos.find(([, info]) => info.type === CHDType.CD_ROM);
       if (cdRom !== undefined) {
-        this.progressBar.logWarn(`${cdRom[0].getFilePath()}: quick checksums will skip .cue/.bin files in CD-ROM CHDs`);
+        this.progressBar.logWarn(
+          `${cdRom[0].getFilePath()}: quick checksums will skip .cue/.bin files in CD-ROM CHDs`,
+        );
         return;
       }
 
       const gdRom = chdInfos.find(([, info]) => info.type === CHDType.GD_ROM);
       if (gdRom !== undefined) {
-        this.progressBar.logWarn(`${gdRom[0].getFilePath()}: quick checksums will skip .gdi/.bin/.raw files in GD-ROM CHDs`);
+        this.progressBar.logWarn(
+          `${gdRom[0].getFilePath()}: quick checksums will skip .gdi/.bin/.raw files in GD-ROM CHDs`,
+        );
       }
     }
   }

@@ -44,7 +44,8 @@ export default class Zip extends Archive {
       async (entryFile, callback: AsyncResultCallback<ArchiveEntry<this>, Error>) => {
         let checksums: ChecksumProps = {};
         if (checksumBitmask & ~ChecksumBitmask.CRC32) {
-          const entryStream = entryFile.stream()
+          const entryStream = entryFile
+            .stream()
             // Ignore FILE_ENDED exceptions. This may cause entries to have an empty path, which
             // may lead to unexpected behavior, but at least this won't crash because of an
             // unhandled exception on the stream.
@@ -62,41 +63,42 @@ export default class Zip extends Archive {
         }
         const { crc32, ...checksumsWithoutCrc } = checksums;
 
-        const archiveEntry = await ArchiveEntry.entryOf({
-          archive: this,
-          entryPath: entryFile.path,
-          size: entryFile.uncompressedSize,
-          crc32: crc32 ?? entryFile.crc32.toString(16),
-          ...checksumsWithoutCrc,
-        }, checksumBitmask);
+        const archiveEntry = await ArchiveEntry.entryOf(
+          {
+            archive: this,
+            entryPath: entryFile.path,
+            size: entryFile.uncompressedSize,
+            crc32: crc32 ?? entryFile.crc32.toString(16),
+            ...checksumsWithoutCrc,
+          },
+          checksumBitmask,
+        );
         callback(undefined, archiveEntry);
       },
     );
   }
 
-  async extractEntryToFile(
-    entryPath: string,
-    extractedFilePath: string,
-  ): Promise<void> {
+  async extractEntryToFile(entryPath: string, extractedFilePath: string): Promise<void> {
     const extractedDir = path.dirname(extractedFilePath);
-    if (!await fsPoly.exists(extractedDir)) {
+    if (!(await fsPoly.exists(extractedDir))) {
       await fsPoly.mkdir(extractedDir, { recursive: true });
     }
 
     return this.extractEntryToStream(
       entryPath,
-      async (stream) => new Promise((resolve, reject) => {
-        const writeStream = fs.createWriteStream(extractedFilePath);
-        writeStream.on('close', resolve);
-        writeStream.on('error', reject);
-        stream.pipe(writeStream);
-      }),
+      async (stream) =>
+        new Promise((resolve, reject) => {
+          const writeStream = fs.createWriteStream(extractedFilePath);
+          writeStream.on('close', resolve);
+          writeStream.on('error', reject);
+          stream.pipe(writeStream);
+        }),
     );
   }
 
   async extractEntryToStream<T>(
     entryPath: string,
-    callback: (stream: Readable) => (Promise<T> | T),
+    callback: (stream: Readable) => Promise<T> | T,
     start = 0,
   ): Promise<T> {
     if (start > 0) {
@@ -201,42 +203,46 @@ export default class Zip extends Archive {
        *  also want to make sure the queue processing stays busy. Use 3 as a middle-ground.
        */
       3,
-      async.asyncify(async (
-        [inputFile, outputArchiveEntry]: [File, ArchiveEntry<Zip>],
-      ): Promise<void> => {
-        const streamProcessor = async (stream: Readable): Promise<void> => {
-          // Catch stream errors such as `ENOENT: no such file or directory`
-          stream.on('error', catchError);
+      async.asyncify(
+        async ([inputFile, outputArchiveEntry]: [File, ArchiveEntry<Zip>]): Promise<void> => {
+          const streamProcessor = async (stream: Readable): Promise<void> => {
+            // Catch stream errors such as `ENOENT: no such file or directory`
+            stream.on('error', catchError);
 
-          const entryName = outputArchiveEntry.getEntryPath().replace(/[\\/]/g, '/');
-          zipFile.append(stream, {
-            name: entryName,
-          });
+            const entryName = outputArchiveEntry.getEntryPath().replace(/[\\/]/g, '/');
+            zipFile.append(stream, {
+              name: entryName,
+            });
 
-          // Leave the input stream open until we're done writing it
-          await new Promise<void>((resolve) => {
-            const timer = Timer.setInterval(() => {
-              if (writtenEntries.has(entryName) || zipFileError) {
-                timer.cancel();
-                resolve();
-              }
-            }, 10);
-          });
-        };
+            // Leave the input stream open until we're done writing it
+            await new Promise<void>((resolve) => {
+              const timer = Timer.setInterval(() => {
+                if (writtenEntries.has(entryName) || zipFileError) {
+                  timer.cancel();
+                  resolve();
+                }
+              }, 10);
+            });
+          };
 
-        try {
-          await inputFile.createPatchedReadStream(streamProcessor);
-        } catch (error) {
-          // Reading the file can throw an exception, so we have to handle that or this will hang
-          if (error instanceof Error) {
-            catchError(error);
-          } else if (typeof error === 'string') {
-            catchError(new Error(error));
-          } else {
-            catchError(new Error(`failed to write '${inputFile.toString()}' to '${outputArchiveEntry.toString()}'`));
+          try {
+            await inputFile.createPatchedReadStream(streamProcessor);
+          } catch (error) {
+            // Reading the file can throw an exception, so we have to handle that or this will hang
+            if (error instanceof Error) {
+              catchError(error);
+            } else if (typeof error === 'string') {
+              catchError(new Error(error));
+            } else {
+              catchError(
+                new Error(
+                  `failed to write '${inputFile.toString()}' to '${outputArchiveEntry.toString()}'`,
+                ),
+              );
+            }
           }
-        }
-      }),
+        },
+      ),
     );
 
     if (zipFileError) {

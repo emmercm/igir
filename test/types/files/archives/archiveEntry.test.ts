@@ -1,7 +1,7 @@
 import path from 'node:path';
 
 import Temp from '../../../../src/globals/temp.js';
-import ROMScanner from '../../../../src/modules/romScanner.js';
+import ROMScanner from '../../../../src/modules/roms/romScanner.js';
 import ArrayPoly from '../../../../src/polyfill/arrayPoly.js';
 import bufferPoly from '../../../../src/polyfill/bufferPoly.js';
 import fsPoly from '../../../../src/polyfill/fsPoly.js';
@@ -19,14 +19,14 @@ import IPSPatch from '../../../../src/types/patches/ipsPatch.js';
 import ProgressBarFake from '../../../console/progressBarFake.js';
 
 describe('getEntryPath', () => {
-  test.each([
-    'something.rom',
-    path.join('foo', 'bar.rom'),
-  ])('should return the constructor value: %s', async (archiveEntryPath) => {
-    const archive = new Zip('/some/archive.zip');
-    const archiveEntry = await ArchiveEntry.entryOf({ archive, entryPath: archiveEntryPath });
-    expect(archiveEntry.getEntryPath()).toEqual(archiveEntryPath);
-  });
+  test.each(['something.rom', path.join('foo', 'bar.rom')])(
+    'should return the constructor value: %s',
+    async (archiveEntryPath) => {
+      const archive = new Zip('/some/archive.zip');
+      const archiveEntry = await ArchiveEntry.entryOf({ archive, entryPath: archiveEntryPath });
+      expect(archiveEntry.getEntryPath()).toEqual(archiveEntryPath);
+    },
+  );
 });
 
 describe('getSize', () => {
@@ -52,7 +52,7 @@ describe('getSize', () => {
     // other
     ['./test/fixtures/roms/nkit/5bc2ce5b.nkit.iso', 1_459_978_240],
   ])('%s', (filePath, expectedSize) => {
-    it('should get the file\'s size', async () => {
+    it("should get the file's size", async () => {
       const archiveEntries = await new FileFactory(new FileCache()).filesFrom(filePath);
       expect(archiveEntries).toHaveLength(1);
       const archiveEntry = archiveEntries[0];
@@ -60,7 +60,7 @@ describe('getSize', () => {
       expect(archiveEntry.getSize()).toEqual(expectedSize);
     });
 
-    it('should get the hard link\'s target size', async () => {
+    it("should get the hard link's target size", async () => {
       const tempDir = await fsPoly.mkdtemp(Temp.getTempDir());
       try {
         // Make a copy of the original file to ensure it's on the same drive
@@ -80,7 +80,7 @@ describe('getSize', () => {
       }
     });
 
-    it('should get the absolute symlink\'s target size', async () => {
+    it("should get the absolute symlink's target size", async () => {
       const tempDir = await fsPoly.mkdtemp(Temp.getTempDir());
       try {
         const tempLink = path.join(tempDir, path.basename(filePath));
@@ -96,7 +96,7 @@ describe('getSize', () => {
       }
     });
 
-    it('should get the relative symlink\'s target size', async () => {
+    it("should get the relative symlink's target size", async () => {
       const tempDir = await fsPoly.mkdtemp(Temp.getTempDir());
       try {
         const tempLink = path.join(tempDir, path.basename(filePath));
@@ -182,41 +182,47 @@ describe('getCrc32WithoutHeader', () => {
     ['./test/fixtures/roms/headered/LCDTestROM.lnx.rar', '2d251538'],
     // other
     ['./test/fixtures/roms/nkit/5bc2ce5b.nkit.iso', '5bc2ce5b'],
-  ])('should hash the full archive entry when no header given: %s', async (filePath, expectedCrc) => {
-    const archiveEntries = await new FileFactory(new FileCache()).filesFrom(filePath);
-    expect(archiveEntries).toHaveLength(1);
-    const archiveEntry = archiveEntries[0];
+  ])(
+    'should hash the full archive entry when no header given: %s',
+    async (filePath, expectedCrc) => {
+      const archiveEntries = await new FileFactory(new FileCache()).filesFrom(filePath);
+      expect(archiveEntries).toHaveLength(1);
+      const archiveEntry = archiveEntries[0];
 
-    expect(archiveEntry.getCrc32()).toEqual(expectedCrc);
-    expect(archiveEntry.getCrc32WithoutHeader()).toEqual(expectedCrc);
-    expect(archiveEntry.getMd5()).toBeUndefined();
-    expect(archiveEntry.getMd5WithoutHeader()).toBeUndefined();
-    expect(archiveEntry.getSha1()).toBeUndefined();
-    expect(archiveEntry.getSha1WithoutHeader()).toBeUndefined();
-    expect(archiveEntry.getSha256()).toBeUndefined();
-    expect(archiveEntry.getSha256WithoutHeader()).toBeUndefined();
-  });
+      expect(archiveEntry.getCrc32()).toEqual(expectedCrc);
+      expect(archiveEntry.getCrc32WithoutHeader()).toEqual(expectedCrc);
+      expect(archiveEntry.getMd5()).toBeUndefined();
+      expect(archiveEntry.getMd5WithoutHeader()).toBeUndefined();
+      expect(archiveEntry.getSha1()).toBeUndefined();
+      expect(archiveEntry.getSha1WithoutHeader()).toBeUndefined();
+      expect(archiveEntry.getSha256()).toBeUndefined();
+      expect(archiveEntry.getSha256WithoutHeader()).toBeUndefined();
+    },
+  );
 
   test.each([
     ['./test/fixtures/roms/headered/diagnostic_test_cartridge.a78.7z', 'a1eaa7c1'],
     ['./test/fixtures/roms/headered/fds_joypad_test.fds.zip', '3ecbac61'],
     ['./test/fixtures/roms/headered/LCDTestROM.lnx.rar', '42583855'],
-  ])('should hash the archive entry without the header when header is given and present in file: %s', async (filePath, expectedCrc) => {
-    const archiveEntries = await new FileFactory(new FileCache()).filesFrom(filePath);
-    expect(archiveEntries).toHaveLength(1);
-    const archiveEntry = await archiveEntries[0].withFileHeader(
-      ROMHeader.headerFromFilename(archiveEntries[0].getExtractedFilePath()) as ROMHeader,
-    );
+  ])(
+    'should hash the archive entry without the header when header is given and present in file: %s',
+    async (filePath, expectedCrc) => {
+      const archiveEntries = await new FileFactory(new FileCache()).filesFrom(filePath);
+      expect(archiveEntries).toHaveLength(1);
+      const archiveEntry = await archiveEntries[0].withFileHeader(
+        ROMHeader.headerFromFilename(archiveEntries[0].getExtractedFilePath()) as ROMHeader,
+      );
 
-    expect(archiveEntry.getCrc32()).not.toEqual(expectedCrc);
-    expect(archiveEntry.getCrc32WithoutHeader()).toEqual(expectedCrc);
-    expect(archiveEntry.getMd5()).toBeUndefined();
-    expect(archiveEntry.getMd5WithoutHeader()).toBeUndefined();
-    expect(archiveEntry.getSha1()).toBeUndefined();
-    expect(archiveEntry.getSha1WithoutHeader()).toBeUndefined();
-    expect(archiveEntry.getSha256()).toBeUndefined();
-    expect(archiveEntry.getSha256WithoutHeader()).toBeUndefined();
-  });
+      expect(archiveEntry.getCrc32()).not.toEqual(expectedCrc);
+      expect(archiveEntry.getCrc32WithoutHeader()).toEqual(expectedCrc);
+      expect(archiveEntry.getMd5()).toBeUndefined();
+      expect(archiveEntry.getMd5WithoutHeader()).toBeUndefined();
+      expect(archiveEntry.getSha1()).toBeUndefined();
+      expect(archiveEntry.getSha1WithoutHeader()).toBeUndefined();
+      expect(archiveEntry.getSha256()).toBeUndefined();
+      expect(archiveEntry.getSha256WithoutHeader()).toBeUndefined();
+    },
+  );
 });
 
 describe('getMd5', () => {
@@ -240,14 +246,19 @@ describe('getMd5', () => {
     ['./test/fixtures/roms/tar/loremipsum.tar.gz', 'fffcb698d88fbc9425a636ba7e4712a3'],
     ['./test/fixtures/roms/zip/loremipsum.zip', 'fffcb698d88fbc9425a636ba7e4712a3'],
     // headered
-    ['./test/fixtures/roms/headered/diagnostic_test_cartridge.a78.7z', '8df5c10517da1c001072fd5526e4a683'],
+    [
+      './test/fixtures/roms/headered/diagnostic_test_cartridge.a78.7z',
+      '8df5c10517da1c001072fd5526e4a683',
+    ],
     ['./test/fixtures/roms/headered/fds_joypad_test.fds.zip', '74362ca7d47e67e2d3e62f6283ecf879'],
     ['./test/fixtures/roms/headered/LCDTestROM.lnx.rar', '1ea102719a2fc3b767df0d2d367a8371'],
     // other
     ['./test/fixtures/roms/nkit/5bc2ce5b.nkit.iso', undefined],
   ])('should hash the full archive entry: %s', async (filePath, expectedMd5) => {
-    const archiveEntries = await new FileFactory(new FileCache())
-      .filesFrom(filePath, ChecksumBitmask.MD5);
+    const archiveEntries = await new FileFactory(new FileCache()).filesFrom(
+      filePath,
+      ChecksumBitmask.MD5,
+    );
     expect(archiveEntries).toHaveLength(1);
     const archiveEntry = archiveEntries[0];
 
@@ -282,47 +293,63 @@ describe('getMd5WithoutHeader', () => {
     ['./test/fixtures/roms/tar/loremipsum.tar.gz', 'fffcb698d88fbc9425a636ba7e4712a3'],
     ['./test/fixtures/roms/zip/loremipsum.zip', 'fffcb698d88fbc9425a636ba7e4712a3'],
     // headered
-    ['./test/fixtures/roms/headered/diagnostic_test_cartridge.a78.7z', '8df5c10517da1c001072fd5526e4a683'],
+    [
+      './test/fixtures/roms/headered/diagnostic_test_cartridge.a78.7z',
+      '8df5c10517da1c001072fd5526e4a683',
+    ],
     ['./test/fixtures/roms/headered/fds_joypad_test.fds.zip', '74362ca7d47e67e2d3e62f6283ecf879'],
     ['./test/fixtures/roms/headered/LCDTestROM.lnx.rar', '1ea102719a2fc3b767df0d2d367a8371'],
     // other
     ['./test/fixtures/roms/nkit/5bc2ce5b.nkit.iso', undefined],
-  ])('should hash the full archive entry when no header given: %s', async (filePath, expectedMd5) => {
-    const archiveEntries = await new FileFactory(new FileCache())
-      .filesFrom(filePath, ChecksumBitmask.MD5);
-    expect(archiveEntries).toHaveLength(1);
-    const archiveEntry = archiveEntries[0];
+  ])(
+    'should hash the full archive entry when no header given: %s',
+    async (filePath, expectedMd5) => {
+      const archiveEntries = await new FileFactory(new FileCache()).filesFrom(
+        filePath,
+        ChecksumBitmask.MD5,
+      );
+      expect(archiveEntries).toHaveLength(1);
+      const archiveEntry = archiveEntries[0];
 
-    // Some archives store CRC32, or otherwise it won't be defined
-    expect(archiveEntry.getMd5()).toEqual(expectedMd5);
-    expect(archiveEntry.getMd5WithoutHeader()).toEqual(expectedMd5);
-    expect(archiveEntry.getSha1()).toBeUndefined();
-    expect(archiveEntry.getSha1WithoutHeader()).toBeUndefined();
-    expect(archiveEntry.getSha256()).toBeUndefined();
-    expect(archiveEntry.getSha256WithoutHeader()).toBeUndefined();
-  });
+      // Some archives store CRC32, or otherwise it won't be defined
+      expect(archiveEntry.getMd5()).toEqual(expectedMd5);
+      expect(archiveEntry.getMd5WithoutHeader()).toEqual(expectedMd5);
+      expect(archiveEntry.getSha1()).toBeUndefined();
+      expect(archiveEntry.getSha1WithoutHeader()).toBeUndefined();
+      expect(archiveEntry.getSha256()).toBeUndefined();
+      expect(archiveEntry.getSha256WithoutHeader()).toBeUndefined();
+    },
+  );
 
   test.each([
-    ['./test/fixtures/roms/headered/diagnostic_test_cartridge.a78.7z', '91041aadd1700a7a4076f4005f2c362f'],
+    [
+      './test/fixtures/roms/headered/diagnostic_test_cartridge.a78.7z',
+      '91041aadd1700a7a4076f4005f2c362f',
+    ],
     ['./test/fixtures/roms/headered/fds_joypad_test.fds.zip', '26df56a7e5b096577338bcc4c334ec7d'],
     ['./test/fixtures/roms/headered/LCDTestROM.lnx.rar', '294a07b07ce67a9b492e4b6e77d6d2f7'],
-  ])('should hash the archive entry without the header when header is given and present in file: %s', async (filePath, expectedMd5) => {
-    const archiveEntries = await new FileFactory(new FileCache())
-      .filesFrom(filePath, ChecksumBitmask.MD5);
-    expect(archiveEntries).toHaveLength(1);
-    const archiveEntry = await archiveEntries[0].withFileHeader(
-      ROMHeader.headerFromFilename(archiveEntries[0].getExtractedFilePath()) as ROMHeader,
-    );
+  ])(
+    'should hash the archive entry without the header when header is given and present in file: %s',
+    async (filePath, expectedMd5) => {
+      const archiveEntries = await new FileFactory(new FileCache()).filesFrom(
+        filePath,
+        ChecksumBitmask.MD5,
+      );
+      expect(archiveEntries).toHaveLength(1);
+      const archiveEntry = await archiveEntries[0].withFileHeader(
+        ROMHeader.headerFromFilename(archiveEntries[0].getExtractedFilePath()) as ROMHeader,
+      );
 
-    expect(archiveEntry.getCrc32()).toBeDefined();
-    expect(archiveEntry.getCrc32WithoutHeader()).toBeDefined();
-    expect(archiveEntry.getMd5()).not.toEqual(expectedMd5);
-    expect(archiveEntry.getMd5WithoutHeader()).toEqual(expectedMd5);
-    expect(archiveEntry.getSha1()).toBeUndefined();
-    expect(archiveEntry.getSha1WithoutHeader()).toBeUndefined();
-    expect(archiveEntry.getSha256()).toBeUndefined();
-    expect(archiveEntry.getSha256WithoutHeader()).toBeUndefined();
-  });
+      expect(archiveEntry.getCrc32()).toBeDefined();
+      expect(archiveEntry.getCrc32WithoutHeader()).toBeDefined();
+      expect(archiveEntry.getMd5()).not.toEqual(expectedMd5);
+      expect(archiveEntry.getMd5WithoutHeader()).toEqual(expectedMd5);
+      expect(archiveEntry.getSha1()).toBeUndefined();
+      expect(archiveEntry.getSha1WithoutHeader()).toBeUndefined();
+      expect(archiveEntry.getSha256()).toBeUndefined();
+      expect(archiveEntry.getSha256WithoutHeader()).toBeUndefined();
+    },
+  );
 });
 
 describe('getSha1', () => {
@@ -346,14 +373,25 @@ describe('getSha1', () => {
     ['./test/fixtures/roms/tar/loremipsum.tar.gz', '1d913738eb363a4056c19e158aa81189a1eb7a55'],
     ['./test/fixtures/roms/zip/loremipsum.zip', '1d913738eb363a4056c19e158aa81189a1eb7a55'],
     // headered
-    ['./test/fixtures/roms/headered/diagnostic_test_cartridge.a78.7z', 'f1da35db85f99db8803ae088499cb9dc148fe0c6'],
-    ['./test/fixtures/roms/headered/fds_joypad_test.fds.zip', 'f7b31cc2b6ef841cc51df1711462c07b0994db98'],
-    ['./test/fixtures/roms/headered/LCDTestROM.lnx.rar', '3882fcc1c94579a47a213224c572c006d62867f0'],
+    [
+      './test/fixtures/roms/headered/diagnostic_test_cartridge.a78.7z',
+      'f1da35db85f99db8803ae088499cb9dc148fe0c6',
+    ],
+    [
+      './test/fixtures/roms/headered/fds_joypad_test.fds.zip',
+      'f7b31cc2b6ef841cc51df1711462c07b0994db98',
+    ],
+    [
+      './test/fixtures/roms/headered/LCDTestROM.lnx.rar',
+      '3882fcc1c94579a47a213224c572c006d62867f0',
+    ],
     // other
     ['./test/fixtures/roms/nkit/5bc2ce5b.nkit.iso', undefined],
   ])('should hash the full archive entry: %s', async (filePath, expectedSha1) => {
-    const archiveEntries = await new FileFactory(new FileCache())
-      .filesFrom(filePath, ChecksumBitmask.SHA1);
+    const archiveEntries = await new FileFactory(new FileCache()).filesFrom(
+      filePath,
+      ChecksumBitmask.SHA1,
+    );
     expect(archiveEntries).toHaveLength(1);
     const archiveEntry = archiveEntries[0];
 
@@ -388,78 +426,162 @@ describe('getSha1WithoutHeader', () => {
     ['./test/fixtures/roms/tar/loremipsum.tar.gz', '1d913738eb363a4056c19e158aa81189a1eb7a55'],
     ['./test/fixtures/roms/zip/loremipsum.zip', '1d913738eb363a4056c19e158aa81189a1eb7a55'],
     // headered
-    ['./test/fixtures/roms/headered/diagnostic_test_cartridge.a78.7z', 'f1da35db85f99db8803ae088499cb9dc148fe0c6'],
-    ['./test/fixtures/roms/headered/fds_joypad_test.fds.zip', 'f7b31cc2b6ef841cc51df1711462c07b0994db98'],
-    ['./test/fixtures/roms/headered/LCDTestROM.lnx.rar', '3882fcc1c94579a47a213224c572c006d62867f0'],
+    [
+      './test/fixtures/roms/headered/diagnostic_test_cartridge.a78.7z',
+      'f1da35db85f99db8803ae088499cb9dc148fe0c6',
+    ],
+    [
+      './test/fixtures/roms/headered/fds_joypad_test.fds.zip',
+      'f7b31cc2b6ef841cc51df1711462c07b0994db98',
+    ],
+    [
+      './test/fixtures/roms/headered/LCDTestROM.lnx.rar',
+      '3882fcc1c94579a47a213224c572c006d62867f0',
+    ],
     // other
     ['./test/fixtures/roms/nkit/5bc2ce5b.nkit.iso', undefined],
-  ])('should hash the full archive entry when no header given: %s', async (filePath, expectedSha1) => {
-    const archiveEntries = await new FileFactory(new FileCache())
-      .filesFrom(filePath, ChecksumBitmask.SHA1);
-    expect(archiveEntries).toHaveLength(1);
-    const archiveEntry = archiveEntries[0];
+  ])(
+    'should hash the full archive entry when no header given: %s',
+    async (filePath, expectedSha1) => {
+      const archiveEntries = await new FileFactory(new FileCache()).filesFrom(
+        filePath,
+        ChecksumBitmask.SHA1,
+      );
+      expect(archiveEntries).toHaveLength(1);
+      const archiveEntry = archiveEntries[0];
 
-    // Some archives store CRC32, or otherwise it won't be defined
-    expect(archiveEntry.getMd5()).toBeUndefined();
-    expect(archiveEntry.getMd5WithoutHeader()).toBeUndefined();
-    expect(archiveEntry.getSha1()).toEqual(expectedSha1);
-    expect(archiveEntry.getSha1WithoutHeader()).toEqual(expectedSha1);
-    expect(archiveEntry.getSha256()).toBeUndefined();
-    expect(archiveEntry.getSha256WithoutHeader()).toBeUndefined();
-  });
+      // Some archives store CRC32, or otherwise it won't be defined
+      expect(archiveEntry.getMd5()).toBeUndefined();
+      expect(archiveEntry.getMd5WithoutHeader()).toBeUndefined();
+      expect(archiveEntry.getSha1()).toEqual(expectedSha1);
+      expect(archiveEntry.getSha1WithoutHeader()).toEqual(expectedSha1);
+      expect(archiveEntry.getSha256()).toBeUndefined();
+      expect(archiveEntry.getSha256WithoutHeader()).toBeUndefined();
+    },
+  );
 
   test.each([
-    ['./test/fixtures/roms/headered/diagnostic_test_cartridge.a78.7z', '76ec76c423d88bdf739e673c051c5b9c174881c6'],
-    ['./test/fixtures/roms/headered/fds_joypad_test.fds.zip', '7b6bd1a69bbc5d8121c72dd1eedfb6752fe11787'],
-    ['./test/fixtures/roms/headered/LCDTestROM.lnx.rar', 'e2901046126153b318a09cc1476eec8afff0b698'],
-  ])('should hash the archive entry without the header when header is given and present in file: %s', async (filePath, expectedSha1) => {
-    const archiveEntries = await new FileFactory(new FileCache())
-      .filesFrom(filePath, ChecksumBitmask.SHA1);
-    expect(archiveEntries).toHaveLength(1);
-    const archiveEntry = await archiveEntries[0].withFileHeader(
-      ROMHeader.headerFromFilename(archiveEntries[0].getExtractedFilePath()) as ROMHeader,
-    );
+    [
+      './test/fixtures/roms/headered/diagnostic_test_cartridge.a78.7z',
+      '76ec76c423d88bdf739e673c051c5b9c174881c6',
+    ],
+    [
+      './test/fixtures/roms/headered/fds_joypad_test.fds.zip',
+      '7b6bd1a69bbc5d8121c72dd1eedfb6752fe11787',
+    ],
+    [
+      './test/fixtures/roms/headered/LCDTestROM.lnx.rar',
+      'e2901046126153b318a09cc1476eec8afff0b698',
+    ],
+  ])(
+    'should hash the archive entry without the header when header is given and present in file: %s',
+    async (filePath, expectedSha1) => {
+      const archiveEntries = await new FileFactory(new FileCache()).filesFrom(
+        filePath,
+        ChecksumBitmask.SHA1,
+      );
+      expect(archiveEntries).toHaveLength(1);
+      const archiveEntry = await archiveEntries[0].withFileHeader(
+        ROMHeader.headerFromFilename(archiveEntries[0].getExtractedFilePath()) as ROMHeader,
+      );
 
-    expect(archiveEntry.getCrc32()).toBeDefined();
-    expect(archiveEntry.getCrc32WithoutHeader()).toBeDefined();
-    expect(archiveEntry.getMd5()).toBeUndefined();
-    expect(archiveEntry.getMd5WithoutHeader()).toBeUndefined();
-    expect(archiveEntry.getSha1()).not.toEqual(expectedSha1);
-    expect(archiveEntry.getSha1WithoutHeader()).toEqual(expectedSha1);
-    expect(archiveEntry.getSha256()).toBeUndefined();
-    expect(archiveEntry.getSha256WithoutHeader()).toBeUndefined();
-  });
+      expect(archiveEntry.getCrc32()).toBeDefined();
+      expect(archiveEntry.getCrc32WithoutHeader()).toBeDefined();
+      expect(archiveEntry.getMd5()).toBeUndefined();
+      expect(archiveEntry.getMd5WithoutHeader()).toBeUndefined();
+      expect(archiveEntry.getSha1()).not.toEqual(expectedSha1);
+      expect(archiveEntry.getSha1WithoutHeader()).toEqual(expectedSha1);
+      expect(archiveEntry.getSha256()).toBeUndefined();
+      expect(archiveEntry.getSha256WithoutHeader()).toBeUndefined();
+    },
+  );
 });
 
 describe('getSha256', () => {
   test.each([
     // fizzbuzz
-    ['./test/fixtures/roms/7z/fizzbuzz.7z', '6e809804766eaa4dd42a2607b789f3e4e5d32fc321ba8dd3ef39ddc1ea2888e9'],
-    ['./test/fixtures/roms/gz/fizzbuzz.gz', '6e809804766eaa4dd42a2607b789f3e4e5d32fc321ba8dd3ef39ddc1ea2888e9'],
-    ['./test/fixtures/roms/rar/fizzbuzz.rar', '6e809804766eaa4dd42a2607b789f3e4e5d32fc321ba8dd3ef39ddc1ea2888e9'],
-    ['./test/fixtures/roms/tar/fizzbuzz.tar.gz', '6e809804766eaa4dd42a2607b789f3e4e5d32fc321ba8dd3ef39ddc1ea2888e9'],
-    ['./test/fixtures/roms/zip/fizzbuzz.zip', '6e809804766eaa4dd42a2607b789f3e4e5d32fc321ba8dd3ef39ddc1ea2888e9'],
+    [
+      './test/fixtures/roms/7z/fizzbuzz.7z',
+      '6e809804766eaa4dd42a2607b789f3e4e5d32fc321ba8dd3ef39ddc1ea2888e9',
+    ],
+    [
+      './test/fixtures/roms/gz/fizzbuzz.gz',
+      '6e809804766eaa4dd42a2607b789f3e4e5d32fc321ba8dd3ef39ddc1ea2888e9',
+    ],
+    [
+      './test/fixtures/roms/rar/fizzbuzz.rar',
+      '6e809804766eaa4dd42a2607b789f3e4e5d32fc321ba8dd3ef39ddc1ea2888e9',
+    ],
+    [
+      './test/fixtures/roms/tar/fizzbuzz.tar.gz',
+      '6e809804766eaa4dd42a2607b789f3e4e5d32fc321ba8dd3ef39ddc1ea2888e9',
+    ],
+    [
+      './test/fixtures/roms/zip/fizzbuzz.zip',
+      '6e809804766eaa4dd42a2607b789f3e4e5d32fc321ba8dd3ef39ddc1ea2888e9',
+    ],
     // foobar
-    ['./test/fixtures/roms/7z/foobar.7z', 'aec070645fe53ee3b3763059376134f058cc337247c978add178b6ccdfb0019f'],
-    ['./test/fixtures/roms/gz/foobar.gz', 'aec070645fe53ee3b3763059376134f058cc337247c978add178b6ccdfb0019f'],
-    ['./test/fixtures/roms/rar/foobar.rar', 'aec070645fe53ee3b3763059376134f058cc337247c978add178b6ccdfb0019f'],
-    ['./test/fixtures/roms/tar/foobar.tar.gz', 'aec070645fe53ee3b3763059376134f058cc337247c978add178b6ccdfb0019f'],
-    ['./test/fixtures/roms/zip/foobar.zip', 'aec070645fe53ee3b3763059376134f058cc337247c978add178b6ccdfb0019f'],
+    [
+      './test/fixtures/roms/7z/foobar.7z',
+      'aec070645fe53ee3b3763059376134f058cc337247c978add178b6ccdfb0019f',
+    ],
+    [
+      './test/fixtures/roms/gz/foobar.gz',
+      'aec070645fe53ee3b3763059376134f058cc337247c978add178b6ccdfb0019f',
+    ],
+    [
+      './test/fixtures/roms/rar/foobar.rar',
+      'aec070645fe53ee3b3763059376134f058cc337247c978add178b6ccdfb0019f',
+    ],
+    [
+      './test/fixtures/roms/tar/foobar.tar.gz',
+      'aec070645fe53ee3b3763059376134f058cc337247c978add178b6ccdfb0019f',
+    ],
+    [
+      './test/fixtures/roms/zip/foobar.zip',
+      'aec070645fe53ee3b3763059376134f058cc337247c978add178b6ccdfb0019f',
+    ],
     // loremipsum
-    ['./test/fixtures/roms/7z/loremipsum.7z', '9d0dc61fa60a12a9613cc32fa43fc85bea343ec3a25f27d10ed81a7f0b9ec278'],
-    ['./test/fixtures/roms/gz/loremipsum.gz', '9d0dc61fa60a12a9613cc32fa43fc85bea343ec3a25f27d10ed81a7f0b9ec278'],
-    ['./test/fixtures/roms/rar/loremipsum.rar', '9d0dc61fa60a12a9613cc32fa43fc85bea343ec3a25f27d10ed81a7f0b9ec278'],
-    ['./test/fixtures/roms/tar/loremipsum.tar.gz', '9d0dc61fa60a12a9613cc32fa43fc85bea343ec3a25f27d10ed81a7f0b9ec278'],
-    ['./test/fixtures/roms/zip/loremipsum.zip', '9d0dc61fa60a12a9613cc32fa43fc85bea343ec3a25f27d10ed81a7f0b9ec278'],
+    [
+      './test/fixtures/roms/7z/loremipsum.7z',
+      '9d0dc61fa60a12a9613cc32fa43fc85bea343ec3a25f27d10ed81a7f0b9ec278',
+    ],
+    [
+      './test/fixtures/roms/gz/loremipsum.gz',
+      '9d0dc61fa60a12a9613cc32fa43fc85bea343ec3a25f27d10ed81a7f0b9ec278',
+    ],
+    [
+      './test/fixtures/roms/rar/loremipsum.rar',
+      '9d0dc61fa60a12a9613cc32fa43fc85bea343ec3a25f27d10ed81a7f0b9ec278',
+    ],
+    [
+      './test/fixtures/roms/tar/loremipsum.tar.gz',
+      '9d0dc61fa60a12a9613cc32fa43fc85bea343ec3a25f27d10ed81a7f0b9ec278',
+    ],
+    [
+      './test/fixtures/roms/zip/loremipsum.zip',
+      '9d0dc61fa60a12a9613cc32fa43fc85bea343ec3a25f27d10ed81a7f0b9ec278',
+    ],
     // headered
-    ['./test/fixtures/roms/headered/diagnostic_test_cartridge.a78.7z', '38c6f2411d1f968a96fb85aa5202283dd53ac1bdfe27b233af00b7e0303afabf'],
-    ['./test/fixtures/roms/headered/fds_joypad_test.fds.zip', 'be4bec168f7d9397454f3a0df761ed9359e82a1f98896756b6596023611fa6c1'],
-    ['./test/fixtures/roms/headered/LCDTestROM.lnx.rar', 'c83ea05dc94aa8e158ecdbf84af91d971574712d73e0ea82f25dee7eaf88a9d4'],
+    [
+      './test/fixtures/roms/headered/diagnostic_test_cartridge.a78.7z',
+      '38c6f2411d1f968a96fb85aa5202283dd53ac1bdfe27b233af00b7e0303afabf',
+    ],
+    [
+      './test/fixtures/roms/headered/fds_joypad_test.fds.zip',
+      'be4bec168f7d9397454f3a0df761ed9359e82a1f98896756b6596023611fa6c1',
+    ],
+    [
+      './test/fixtures/roms/headered/LCDTestROM.lnx.rar',
+      'c83ea05dc94aa8e158ecdbf84af91d971574712d73e0ea82f25dee7eaf88a9d4',
+    ],
     // other
     ['./test/fixtures/roms/nkit/5bc2ce5b.nkit.iso', undefined],
   ])('should hash the full archive entry: %s', async (filePath, expectedSha256) => {
-    const archiveEntries = await new FileFactory(new FileCache())
-      .filesFrom(filePath, ChecksumBitmask.SHA256);
+    const archiveEntries = await new FileFactory(new FileCache()).filesFrom(
+      filePath,
+      ChecksumBitmask.SHA256,
+    );
     expect(archiveEntries).toHaveLength(1);
     const archiveEntry = archiveEntries[0];
 
@@ -476,79 +598,156 @@ describe('getSha256', () => {
 describe('getSha256WithoutHeader', () => {
   test.each([
     // fizzbuzz
-    ['./test/fixtures/roms/7z/fizzbuzz.7z', '6e809804766eaa4dd42a2607b789f3e4e5d32fc321ba8dd3ef39ddc1ea2888e9'],
-    ['./test/fixtures/roms/gz/fizzbuzz.gz', '6e809804766eaa4dd42a2607b789f3e4e5d32fc321ba8dd3ef39ddc1ea2888e9'],
-    ['./test/fixtures/roms/rar/fizzbuzz.rar', '6e809804766eaa4dd42a2607b789f3e4e5d32fc321ba8dd3ef39ddc1ea2888e9'],
-    ['./test/fixtures/roms/tar/fizzbuzz.tar.gz', '6e809804766eaa4dd42a2607b789f3e4e5d32fc321ba8dd3ef39ddc1ea2888e9'],
-    ['./test/fixtures/roms/zip/fizzbuzz.zip', '6e809804766eaa4dd42a2607b789f3e4e5d32fc321ba8dd3ef39ddc1ea2888e9'],
+    [
+      './test/fixtures/roms/7z/fizzbuzz.7z',
+      '6e809804766eaa4dd42a2607b789f3e4e5d32fc321ba8dd3ef39ddc1ea2888e9',
+    ],
+    [
+      './test/fixtures/roms/gz/fizzbuzz.gz',
+      '6e809804766eaa4dd42a2607b789f3e4e5d32fc321ba8dd3ef39ddc1ea2888e9',
+    ],
+    [
+      './test/fixtures/roms/rar/fizzbuzz.rar',
+      '6e809804766eaa4dd42a2607b789f3e4e5d32fc321ba8dd3ef39ddc1ea2888e9',
+    ],
+    [
+      './test/fixtures/roms/tar/fizzbuzz.tar.gz',
+      '6e809804766eaa4dd42a2607b789f3e4e5d32fc321ba8dd3ef39ddc1ea2888e9',
+    ],
+    [
+      './test/fixtures/roms/zip/fizzbuzz.zip',
+      '6e809804766eaa4dd42a2607b789f3e4e5d32fc321ba8dd3ef39ddc1ea2888e9',
+    ],
     // foobar
-    ['./test/fixtures/roms/7z/foobar.7z', 'aec070645fe53ee3b3763059376134f058cc337247c978add178b6ccdfb0019f'],
-    ['./test/fixtures/roms/gz/foobar.gz', 'aec070645fe53ee3b3763059376134f058cc337247c978add178b6ccdfb0019f'],
-    ['./test/fixtures/roms/rar/foobar.rar', 'aec070645fe53ee3b3763059376134f058cc337247c978add178b6ccdfb0019f'],
-    ['./test/fixtures/roms/tar/foobar.tar.gz', 'aec070645fe53ee3b3763059376134f058cc337247c978add178b6ccdfb0019f'],
-    ['./test/fixtures/roms/zip/foobar.zip', 'aec070645fe53ee3b3763059376134f058cc337247c978add178b6ccdfb0019f'],
+    [
+      './test/fixtures/roms/7z/foobar.7z',
+      'aec070645fe53ee3b3763059376134f058cc337247c978add178b6ccdfb0019f',
+    ],
+    [
+      './test/fixtures/roms/gz/foobar.gz',
+      'aec070645fe53ee3b3763059376134f058cc337247c978add178b6ccdfb0019f',
+    ],
+    [
+      './test/fixtures/roms/rar/foobar.rar',
+      'aec070645fe53ee3b3763059376134f058cc337247c978add178b6ccdfb0019f',
+    ],
+    [
+      './test/fixtures/roms/tar/foobar.tar.gz',
+      'aec070645fe53ee3b3763059376134f058cc337247c978add178b6ccdfb0019f',
+    ],
+    [
+      './test/fixtures/roms/zip/foobar.zip',
+      'aec070645fe53ee3b3763059376134f058cc337247c978add178b6ccdfb0019f',
+    ],
     // loremipsum
-    ['./test/fixtures/roms/7z/loremipsum.7z', '9d0dc61fa60a12a9613cc32fa43fc85bea343ec3a25f27d10ed81a7f0b9ec278'],
-    ['./test/fixtures/roms/gz/loremipsum.gz', '9d0dc61fa60a12a9613cc32fa43fc85bea343ec3a25f27d10ed81a7f0b9ec278'],
-    ['./test/fixtures/roms/rar/loremipsum.rar', '9d0dc61fa60a12a9613cc32fa43fc85bea343ec3a25f27d10ed81a7f0b9ec278'],
-    ['./test/fixtures/roms/tar/loremipsum.tar.gz', '9d0dc61fa60a12a9613cc32fa43fc85bea343ec3a25f27d10ed81a7f0b9ec278'],
-    ['./test/fixtures/roms/zip/loremipsum.zip', '9d0dc61fa60a12a9613cc32fa43fc85bea343ec3a25f27d10ed81a7f0b9ec278'],
+    [
+      './test/fixtures/roms/7z/loremipsum.7z',
+      '9d0dc61fa60a12a9613cc32fa43fc85bea343ec3a25f27d10ed81a7f0b9ec278',
+    ],
+    [
+      './test/fixtures/roms/gz/loremipsum.gz',
+      '9d0dc61fa60a12a9613cc32fa43fc85bea343ec3a25f27d10ed81a7f0b9ec278',
+    ],
+    [
+      './test/fixtures/roms/rar/loremipsum.rar',
+      '9d0dc61fa60a12a9613cc32fa43fc85bea343ec3a25f27d10ed81a7f0b9ec278',
+    ],
+    [
+      './test/fixtures/roms/tar/loremipsum.tar.gz',
+      '9d0dc61fa60a12a9613cc32fa43fc85bea343ec3a25f27d10ed81a7f0b9ec278',
+    ],
+    [
+      './test/fixtures/roms/zip/loremipsum.zip',
+      '9d0dc61fa60a12a9613cc32fa43fc85bea343ec3a25f27d10ed81a7f0b9ec278',
+    ],
     // headered
-    ['./test/fixtures/roms/headered/diagnostic_test_cartridge.a78.7z', '38c6f2411d1f968a96fb85aa5202283dd53ac1bdfe27b233af00b7e0303afabf'],
-    ['./test/fixtures/roms/headered/fds_joypad_test.fds.zip', 'be4bec168f7d9397454f3a0df761ed9359e82a1f98896756b6596023611fa6c1'],
-    ['./test/fixtures/roms/headered/LCDTestROM.lnx.rar', 'c83ea05dc94aa8e158ecdbf84af91d971574712d73e0ea82f25dee7eaf88a9d4'],
+    [
+      './test/fixtures/roms/headered/diagnostic_test_cartridge.a78.7z',
+      '38c6f2411d1f968a96fb85aa5202283dd53ac1bdfe27b233af00b7e0303afabf',
+    ],
+    [
+      './test/fixtures/roms/headered/fds_joypad_test.fds.zip',
+      'be4bec168f7d9397454f3a0df761ed9359e82a1f98896756b6596023611fa6c1',
+    ],
+    [
+      './test/fixtures/roms/headered/LCDTestROM.lnx.rar',
+      'c83ea05dc94aa8e158ecdbf84af91d971574712d73e0ea82f25dee7eaf88a9d4',
+    ],
     // other
     ['./test/fixtures/roms/nkit/5bc2ce5b.nkit.iso', undefined],
-  ])('should hash the full archive entry when no header given: %s', async (filePath, expectedSha256) => {
-    const archiveEntries = await new FileFactory(new FileCache())
-      .filesFrom(filePath, ChecksumBitmask.SHA256);
-    expect(archiveEntries).toHaveLength(1);
-    const archiveEntry = archiveEntries[0];
+  ])(
+    'should hash the full archive entry when no header given: %s',
+    async (filePath, expectedSha256) => {
+      const archiveEntries = await new FileFactory(new FileCache()).filesFrom(
+        filePath,
+        ChecksumBitmask.SHA256,
+      );
+      expect(archiveEntries).toHaveLength(1);
+      const archiveEntry = archiveEntries[0];
 
-    // Some archives store CRC32, or otherwise it won't be defined
-    expect(archiveEntry.getMd5()).toBeUndefined();
-    expect(archiveEntry.getMd5WithoutHeader()).toBeUndefined();
-    expect(archiveEntry.getSha1()).toBeUndefined();
-    expect(archiveEntry.getSha1WithoutHeader()).toBeUndefined();
-    expect(archiveEntry.getSha256()).toEqual(expectedSha256);
-    expect(archiveEntry.getSha256WithoutHeader()).toEqual(expectedSha256);
-  });
+      // Some archives store CRC32, or otherwise it won't be defined
+      expect(archiveEntry.getMd5()).toBeUndefined();
+      expect(archiveEntry.getMd5WithoutHeader()).toBeUndefined();
+      expect(archiveEntry.getSha1()).toBeUndefined();
+      expect(archiveEntry.getSha1WithoutHeader()).toBeUndefined();
+      expect(archiveEntry.getSha256()).toEqual(expectedSha256);
+      expect(archiveEntry.getSha256WithoutHeader()).toEqual(expectedSha256);
+    },
+  );
 
   test.each([
-    ['./test/fixtures/roms/headered/diagnostic_test_cartridge.a78.7z', '248faac52d828b3542b74ff478e87afc6748949ad0f294fe75e6be94966a7558'],
-    ['./test/fixtures/roms/headered/fds_joypad_test.fds.zip', '29e56794d15ccaa79e48ec0c80004f8745cfb116cce43b99435ae8790e79c327'],
-    ['./test/fixtures/roms/headered/LCDTestROM.lnx.rar', '65da30d4d2b210d9ab0b634deb3f6f8ee38af9a338b2f9bedd4379bacfb2b07d'],
-  ])('should hash the archive entry without the header when header is given and present in file: %s', async (filePath, expectedSha256) => {
-    const archiveEntries = await new FileFactory(new FileCache())
-      .filesFrom(filePath, ChecksumBitmask.SHA256);
-    expect(archiveEntries).toHaveLength(1);
-    const archiveEntry = await archiveEntries[0].withFileHeader(
-      ROMHeader.headerFromFilename(archiveEntries[0].getExtractedFilePath()) as ROMHeader,
-    );
+    [
+      './test/fixtures/roms/headered/diagnostic_test_cartridge.a78.7z',
+      '248faac52d828b3542b74ff478e87afc6748949ad0f294fe75e6be94966a7558',
+    ],
+    [
+      './test/fixtures/roms/headered/fds_joypad_test.fds.zip',
+      '29e56794d15ccaa79e48ec0c80004f8745cfb116cce43b99435ae8790e79c327',
+    ],
+    [
+      './test/fixtures/roms/headered/LCDTestROM.lnx.rar',
+      '65da30d4d2b210d9ab0b634deb3f6f8ee38af9a338b2f9bedd4379bacfb2b07d',
+    ],
+  ])(
+    'should hash the archive entry without the header when header is given and present in file: %s',
+    async (filePath, expectedSha256) => {
+      const archiveEntries = await new FileFactory(new FileCache()).filesFrom(
+        filePath,
+        ChecksumBitmask.SHA256,
+      );
+      expect(archiveEntries).toHaveLength(1);
+      const archiveEntry = await archiveEntries[0].withFileHeader(
+        ROMHeader.headerFromFilename(archiveEntries[0].getExtractedFilePath()) as ROMHeader,
+      );
 
-    expect(archiveEntry.getCrc32()).toBeDefined();
-    expect(archiveEntry.getCrc32WithoutHeader()).toBeDefined();
-    expect(archiveEntry.getMd5()).toBeUndefined();
-    expect(archiveEntry.getMd5WithoutHeader()).toBeUndefined();
-    expect(archiveEntry.getSha1()).toBeUndefined();
-    expect(archiveEntry.getSha1WithoutHeader()).toBeUndefined();
-    expect(archiveEntry.getSha256()).not.toEqual(expectedSha256);
-    expect(archiveEntry.getSha256WithoutHeader()).toEqual(expectedSha256);
-  });
+      expect(archiveEntry.getCrc32()).toBeDefined();
+      expect(archiveEntry.getCrc32WithoutHeader()).toBeDefined();
+      expect(archiveEntry.getMd5()).toBeUndefined();
+      expect(archiveEntry.getMd5WithoutHeader()).toBeUndefined();
+      expect(archiveEntry.getSha1()).toBeUndefined();
+      expect(archiveEntry.getSha1WithoutHeader()).toBeUndefined();
+      expect(archiveEntry.getSha256()).not.toEqual(expectedSha256);
+      expect(archiveEntry.getSha256WithoutHeader()).toEqual(expectedSha256);
+    },
+  );
 });
 
 describe('extractEntryToFile', () => {
   it('should throw on invalid entry paths', async () => {
     // Note: this will only return valid archives with at least one file
-    const archiveEntries = await new ROMScanner(new Options({
-      input: [
-        './test/fixtures/roms/7z',
-        './test/fixtures/roms/gz',
-        './test/fixtures/roms/rar',
-        './test/fixtures/roms/tar',
-        './test/fixtures/roms/zip',
-      ],
-    }), new ProgressBarFake(), new FileFactory(new FileCache())).scan();
+    const archiveEntries = await new ROMScanner(
+      new Options({
+        input: [
+          './test/fixtures/roms/7z',
+          './test/fixtures/roms/gz',
+          './test/fixtures/roms/rar',
+          './test/fixtures/roms/tar',
+          './test/fixtures/roms/zip',
+        ],
+      }),
+      new ProgressBarFake(),
+      new FileFactory(new FileCache()),
+    ).scan();
     const archives = archiveEntries
       .filter((entry): entry is ArchiveEntry<Archive> => entry instanceof ArchiveEntry)
       .map((entry) => entry.getArchive())
@@ -564,15 +763,19 @@ describe('extractEntryToFile', () => {
 describe('copyToTempFile', () => {
   it('should extract archived files', async () => {
     // Note: this will only return valid archives with at least one file
-    const archiveEntries = await new ROMScanner(new Options({
-      input: [
-        './test/fixtures/roms/7z',
-        './test/fixtures/roms/gz',
-        './test/fixtures/roms/rar',
-        './test/fixtures/roms/tar',
-        './test/fixtures/roms/zip',
-      ],
-    }), new ProgressBarFake(), new FileFactory(new FileCache())).scan();
+    const archiveEntries = await new ROMScanner(
+      new Options({
+        input: [
+          './test/fixtures/roms/7z',
+          './test/fixtures/roms/gz',
+          './test/fixtures/roms/rar',
+          './test/fixtures/roms/tar',
+          './test/fixtures/roms/zip',
+        ],
+      }),
+      new ProgressBarFake(),
+      new FileFactory(new FileCache()),
+    ).scan();
     expect(archiveEntries).toHaveLength(37);
 
     const temp = await fsPoly.mkdtemp(Temp.getTempDir());
@@ -589,15 +792,19 @@ describe('copyToTempFile', () => {
 describe('createReadStream', () => {
   it('should extract archived files', async () => {
     // Note: this will only return valid archives with at least one file
-    const archiveEntries = await new ROMScanner(new Options({
-      input: [
-        './test/fixtures/roms/7z',
-        './test/fixtures/roms/gz',
-        './test/fixtures/roms/rar',
-        './test/fixtures/roms/tar',
-        './test/fixtures/roms/zip',
-      ],
-    }), new ProgressBarFake(), new FileFactory(new FileCache())).scan();
+    const archiveEntries = await new ROMScanner(
+      new Options({
+        input: [
+          './test/fixtures/roms/7z',
+          './test/fixtures/roms/gz',
+          './test/fixtures/roms/rar',
+          './test/fixtures/roms/tar',
+          './test/fixtures/roms/zip',
+        ],
+      }),
+      new ProgressBarFake(),
+      new FileFactory(new FileCache()),
+    ).scan();
     expect(archiveEntries).toHaveLength(37);
 
     const temp = await fsPoly.mkdtemp(Temp.getTempDir());
@@ -639,21 +846,39 @@ describe('withPatch', () => {
 
 describe('equals', () => {
   it('should equal itself', async () => {
-    const entry = await ArchiveEntry.entryOf({ archive: new Zip('file.zip'), entryPath: 'entry.rom' });
+    const entry = await ArchiveEntry.entryOf({
+      archive: new Zip('file.zip'),
+      entryPath: 'entry.rom',
+    });
     expect(entry.equals(entry)).toEqual(true);
   });
 
   it('should equal the same entry', async () => {
-    const first = await ArchiveEntry.entryOf({ archive: new Zip('file.zip'), entryPath: 'entry.rom' });
-    const second = await ArchiveEntry.entryOf({ archive: new Zip('file.zip'), entryPath: 'entry.rom' });
+    const first = await ArchiveEntry.entryOf({
+      archive: new Zip('file.zip'),
+      entryPath: 'entry.rom',
+    });
+    const second = await ArchiveEntry.entryOf({
+      archive: new Zip('file.zip'),
+      entryPath: 'entry.rom',
+    });
     expect(first.equals(second)).toEqual(true);
     expect(second.equals(first)).toEqual(true);
   });
 
   it('should not equal a different entry', async () => {
-    const first = await ArchiveEntry.entryOf({ archive: new Zip('file.zip'), entryPath: 'entry.rom' });
-    const second = await ArchiveEntry.entryOf({ archive: new SevenZip('file.7z'), entryPath: 'entry.rom' });
-    const third = await ArchiveEntry.entryOf({ archive: new Zip('file.zip'), entryPath: 'other.rom' });
+    const first = await ArchiveEntry.entryOf({
+      archive: new Zip('file.zip'),
+      entryPath: 'entry.rom',
+    });
+    const second = await ArchiveEntry.entryOf({
+      archive: new SevenZip('file.7z'),
+      entryPath: 'entry.rom',
+    });
+    const third = await ArchiveEntry.entryOf({
+      archive: new Zip('file.zip'),
+      entryPath: 'other.rom',
+    });
     const fourth = await ArchiveEntry.entryOf({
       archive: new Zip('file.zip'),
       entryPath: 'entry.rom',

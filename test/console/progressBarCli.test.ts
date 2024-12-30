@@ -9,14 +9,23 @@ import ProgressBarCLISpy from './progressBarCliSpy.js';
 describe('reset', () => {
   it('should change the value and total', () => {
     const spy = new ProgressBarCLISpy();
-    const progressBar = ProgressBarCLI.new(spy.getLogger(), 'name', stripAnsi(ProgressBarSymbol.DONE), 100);
+    const progressBar = ProgressBarCLI.new(
+      spy.getLogger(),
+      'name',
+      stripAnsi(ProgressBarSymbol.DONE),
+      100,
+    );
 
     progressBar.incrementDone();
     progressBar.render(true);
-    expect(spy.getLastLine()).toMatch(new RegExp(`${stripAnsi(ProgressBarSymbol.DONE)} +name .* 1/100`));
+    expect(spy.getLastLine()).toMatch(
+      new RegExp(`${stripAnsi(ProgressBarSymbol.DONE)} +name .* 1/100`),
+    );
 
     progressBar.reset(20);
-    expect(spy.getLastLine()).toMatch(new RegExp(`${stripAnsi(ProgressBarSymbol.DONE)} +name .* 0/20`));
+    expect(spy.getLastLine()).toMatch(
+      new RegExp(`${stripAnsi(ProgressBarSymbol.DONE)} +name .* 0/20`),
+    );
 
     ProgressBarCLI.stop();
   });
@@ -25,7 +34,11 @@ describe('reset', () => {
 describe('setSymbol', () => {
   it('should change the symbol to empty', () => {
     const spy = new ProgressBarCLISpy();
-    const progressBar = ProgressBarCLI.new(spy.getLogger(), 'name', stripAnsi(ProgressBarSymbol.DONE));
+    const progressBar = ProgressBarCLI.new(
+      spy.getLogger(),
+      'name',
+      stripAnsi(ProgressBarSymbol.DONE),
+    );
 
     progressBar.setSymbol('');
     expect(spy.getLastLine()).toMatch(/^name/);
@@ -33,52 +46,91 @@ describe('setSymbol', () => {
     ProgressBarCLI.stop();
   });
 
-  test.each(
-    Object.keys(ProgressBarSymbol),
-  )('should change the symbol to non-empty; %s', (symbol) => {
-    const spy = new ProgressBarCLISpy();
-    const progressBar = ProgressBarCLI.new(spy.getLogger(), 'name', 'DEFAULT');
+  test.each(Object.keys(ProgressBarSymbol))(
+    'should change the symbol to non-empty; %s',
+    (symbol) => {
+      const spy = new ProgressBarCLISpy();
+      const progressBar = ProgressBarCLI.new(spy.getLogger(), 'name', 'DEFAULT');
 
-    progressBar.setSymbol(symbol);
-    expect(spy.getLastLine()).toMatch(new RegExp(`^${symbol} +name`));
+      progressBar.setSymbol(symbol);
+      expect(spy.getLastLine()).toMatch(new RegExp(`^${symbol} +name`));
 
-    ProgressBarCLI.stop();
-  });
+      ProgressBarCLI.stop();
+    },
+  );
 });
 
 describe('incrementProgress', () => {
   it('should increment once each time', () => {
     const spy = new ProgressBarCLISpy();
-    const progressBar = ProgressBarCLI.new(spy.getLogger(), 'name', stripAnsi(ProgressBarSymbol.DONE), 100);
-    expect(spy.getLastLine()).toMatch(new RegExp(`${stripAnsi(ProgressBarSymbol.DONE)} +name .* \\| ${SingleBarFormatted.BAR_INCOMPLETE_CHAR}+ \\| 0/100`));
+    const progressBar = ProgressBarCLI.new(
+      spy.getLogger(),
+      'name',
+      stripAnsi(ProgressBarSymbol.DONE),
+      100,
+    );
+    expect(spy.getLastLine()).toMatch(
+      new RegExp(
+        `${stripAnsi(ProgressBarSymbol.DONE)} +name .* \\| ${SingleBarFormatted.BAR_INCOMPLETE_CHAR}+ \\| 0/100`,
+      ),
+    );
 
     progressBar.incrementProgress();
     progressBar.render(true);
-    expect(spy.getLastLine()).toMatch(new RegExp(`${stripAnsi(ProgressBarSymbol.DONE)} +name .* \\| ${SingleBarFormatted.BAR_IN_PROGRESS_CHAR}.* \\| 0/100`));
+    expect(spy.getLastLine()).toMatch(
+      new RegExp(
+        `${stripAnsi(ProgressBarSymbol.DONE)} +name .* \\| ${SingleBarFormatted.BAR_IN_PROGRESS_CHAR}.* \\| 0/100`,
+      ),
+    );
 
     progressBar.incrementProgress();
     progressBar.render(true);
-    expect(spy.getLastLine()).toMatch(new RegExp(`${stripAnsi(ProgressBarSymbol.DONE)} +name .* \\| ${SingleBarFormatted.BAR_IN_PROGRESS_CHAR}.* \\| 0/100`));
+    expect(spy.getLastLine()).toMatch(
+      new RegExp(
+        `${stripAnsi(ProgressBarSymbol.DONE)} +name .* \\| ${SingleBarFormatted.BAR_IN_PROGRESS_CHAR}.* \\| 0/100`,
+      ),
+    );
 
     ProgressBarCLI.stop();
   });
 
   it('should work with incrementDone', () => {
     const spy = new ProgressBarCLISpy();
-    const progressBar = ProgressBarCLI.new(spy.getLogger(), 'name', stripAnsi(ProgressBarSymbol.DONE), 100);
-    expect(spy.getLastLine()).toMatch(new RegExp(`${stripAnsi(ProgressBarSymbol.DONE)} +name .* \\| ${SingleBarFormatted.BAR_INCOMPLETE_CHAR}+ \\| 0/100`));
+    const progressBar = ProgressBarCLI.new(
+      spy.getLogger(),
+      'name',
+      stripAnsi(ProgressBarSymbol.DONE),
+      100,
+    );
+    expect(spy.getLastLine()).toMatch(
+      new RegExp(
+        `${stripAnsi(ProgressBarSymbol.DONE)} +name .* \\| ${SingleBarFormatted.BAR_INCOMPLETE_CHAR}+ \\| 0/100`,
+      ),
+    );
 
     progressBar.incrementProgress();
     progressBar.render(true);
-    expect(spy.getLastLine()).toMatch(new RegExp(`${stripAnsi(ProgressBarSymbol.DONE)} +name .* \\| ${SingleBarFormatted.BAR_IN_PROGRESS_CHAR}.* \\| 0/100`));
+    expect(spy.getLastLine()).toMatch(
+      new RegExp(
+        `${stripAnsi(ProgressBarSymbol.DONE)} +name .* \\| ${SingleBarFormatted.BAR_IN_PROGRESS_CHAR}.* \\| 0/100`,
+      ),
+    );
 
     progressBar.incrementDone();
     progressBar.render(true);
-    expect(spy.getLastLine()).toMatch(new RegExp(`${stripAnsi(ProgressBarSymbol.DONE)} +name .* \\| [^${SingleBarFormatted.BAR_IN_PROGRESS_CHAR}].* \\| 1/100`));
+    expect(spy.getLastLine()).toMatch(
+      new RegExp(
+        `${stripAnsi(ProgressBarSymbol.DONE)} +name .* \\| [^${SingleBarFormatted.BAR_IN_PROGRESS_CHAR}].* \\| 1/100`,
+      ),
+    );
 
     progressBar.incrementProgress();
     progressBar.render(true);
-    expect(spy.getLastLine()).toMatch(new RegExp(`${stripAnsi(ProgressBarSymbol.DONE)} +name .* \\| ${SingleBarFormatted.BAR_IN_PROGRESS_CHAR}.* \\| 1/100`));
+    expect(spy.getLastLine()).toMatch(
+      new RegExp(
+        `${stripAnsi(ProgressBarSymbol.DONE)} +name .* \\| ${SingleBarFormatted.BAR_IN_PROGRESS_CHAR}.* \\| 1/100`,
+      ),
+    );
 
     ProgressBarCLI.stop();
   });
@@ -87,15 +139,24 @@ describe('incrementProgress', () => {
 describe('incrementDone', () => {
   it('should increment once each time', () => {
     const spy = new ProgressBarCLISpy();
-    const progressBar = ProgressBarCLI.new(spy.getLogger(), 'name', stripAnsi(ProgressBarSymbol.DONE), 100);
+    const progressBar = ProgressBarCLI.new(
+      spy.getLogger(),
+      'name',
+      stripAnsi(ProgressBarSymbol.DONE),
+      100,
+    );
 
     progressBar.incrementDone();
     progressBar.render(true);
-    expect(spy.getLastLine()).toMatch(new RegExp(`${stripAnsi(ProgressBarSymbol.DONE)} +name .* 1/100`));
+    expect(spy.getLastLine()).toMatch(
+      new RegExp(`${stripAnsi(ProgressBarSymbol.DONE)} +name .* 1/100`),
+    );
 
     progressBar.incrementDone();
     progressBar.render(true);
-    expect(spy.getLastLine()).toMatch(new RegExp(`${stripAnsi(ProgressBarSymbol.DONE)} +name .* 2/100`));
+    expect(spy.getLastLine()).toMatch(
+      new RegExp(`${stripAnsi(ProgressBarSymbol.DONE)} +name .* 2/100`),
+    );
 
     ProgressBarCLI.stop();
   });
@@ -104,16 +165,25 @@ describe('incrementDone', () => {
 describe('update', () => {
   it('should update the value each time', () => {
     const spy = new ProgressBarCLISpy();
-    const progressBar = ProgressBarCLI.new(spy.getLogger(), 'name', stripAnsi(ProgressBarSymbol.DONE), 100);
+    const progressBar = ProgressBarCLI.new(
+      spy.getLogger(),
+      'name',
+      stripAnsi(ProgressBarSymbol.DONE),
+      100,
+    );
     expect(spy.getLineCount()).toEqual(1);
 
     progressBar.update(8);
     progressBar.render(true);
-    expect(spy.getLastLine()).toMatch(new RegExp(`${stripAnsi(ProgressBarSymbol.DONE)} +name .* 8/100`));
+    expect(spy.getLastLine()).toMatch(
+      new RegExp(`${stripAnsi(ProgressBarSymbol.DONE)} +name .* 8/100`),
+    );
 
     progressBar.update(32);
     progressBar.render(true);
-    expect(spy.getLastLine()).toMatch(new RegExp(`${stripAnsi(ProgressBarSymbol.DONE)} +name .* 32/100`));
+    expect(spy.getLastLine()).toMatch(
+      new RegExp(`${stripAnsi(ProgressBarSymbol.DONE)} +name .* 32/100`),
+    );
 
     ProgressBarCLI.stop();
   });
@@ -122,7 +192,11 @@ describe('update', () => {
 describe('done', () => {
   it('should update the symbol', () => {
     const spy = new ProgressBarCLISpy();
-    const progressBar = ProgressBarCLI.new(spy.getLogger(), 'name', stripAnsi(ProgressBarSymbol.WAITING));
+    const progressBar = ProgressBarCLI.new(
+      spy.getLogger(),
+      'name',
+      stripAnsi(ProgressBarSymbol.WAITING),
+    );
     expect(spy.getLineCount()).toEqual(1);
 
     progressBar.done();
@@ -134,12 +208,18 @@ describe('done', () => {
 
   it('should update the symbol and message', () => {
     const spy = new ProgressBarCLISpy();
-    const progressBar = ProgressBarCLI.new(spy.getLogger(), 'name', stripAnsi(ProgressBarSymbol.WAITING));
+    const progressBar = ProgressBarCLI.new(
+      spy.getLogger(),
+      'name',
+      stripAnsi(ProgressBarSymbol.WAITING),
+    );
     expect(spy.getLineCount()).toEqual(1);
 
     progressBar.done('done message');
     expect(spy.getLineCount()).toEqual(3);
-    expect(spy.getLastLine()).toMatch(new RegExp(`${stripAnsi(ProgressBarSymbol.DONE)} +name .* done message$`));
+    expect(spy.getLastLine()).toMatch(
+      new RegExp(`${stripAnsi(ProgressBarSymbol.DONE)} +name .* done message$`),
+    );
 
     ProgressBarCLI.stop();
   });
@@ -148,7 +228,11 @@ describe('done', () => {
 describe('logDebug', () => {
   it('should log at the matching log level', () => {
     const spy = new ProgressBarCLISpy(LogLevel.DEBUG);
-    const progressBar = ProgressBarCLI.new(spy.getLogger(), 'name', stripAnsi(ProgressBarSymbol.DONE));
+    const progressBar = ProgressBarCLI.new(
+      spy.getLogger(),
+      'name',
+      stripAnsi(ProgressBarSymbol.DONE),
+    );
     expect(spy.getLineCount()).toEqual(1);
 
     progressBar.logDebug('debug message');
@@ -161,7 +245,11 @@ describe('logDebug', () => {
 
   it('should not log at the matching log level', () => {
     const spy = new ProgressBarCLISpy(LogLevel.DEBUG + 1);
-    const progressBar = ProgressBarCLI.new(spy.getLogger(), 'name', stripAnsi(ProgressBarSymbol.DONE));
+    const progressBar = ProgressBarCLI.new(
+      spy.getLogger(),
+      'name',
+      stripAnsi(ProgressBarSymbol.DONE),
+    );
     expect(spy.getLineCount()).toEqual(1);
 
     progressBar.logDebug('debug message');
@@ -175,7 +263,11 @@ describe('logDebug', () => {
 describe('logInfo', () => {
   it('should log at the matching log level', () => {
     const spy = new ProgressBarCLISpy(LogLevel.INFO);
-    const progressBar = ProgressBarCLI.new(spy.getLogger(), 'name', stripAnsi(ProgressBarSymbol.DONE));
+    const progressBar = ProgressBarCLI.new(
+      spy.getLogger(),
+      'name',
+      stripAnsi(ProgressBarSymbol.DONE),
+    );
     expect(spy.getLineCount()).toEqual(1);
 
     progressBar.logInfo('info message');
@@ -188,7 +280,11 @@ describe('logInfo', () => {
 
   it('should not log at the matching log level', () => {
     const spy = new ProgressBarCLISpy(LogLevel.INFO + 1);
-    const progressBar = ProgressBarCLI.new(spy.getLogger(), 'name', stripAnsi(ProgressBarSymbol.DONE));
+    const progressBar = ProgressBarCLI.new(
+      spy.getLogger(),
+      'name',
+      stripAnsi(ProgressBarSymbol.DONE),
+    );
     expect(spy.getLineCount()).toEqual(1);
 
     progressBar.logInfo('info message');
@@ -202,7 +298,11 @@ describe('logInfo', () => {
 describe('logWarn', () => {
   it('should log at the matching log level', () => {
     const spy = new ProgressBarCLISpy(LogLevel.WARN);
-    const progressBar = ProgressBarCLI.new(spy.getLogger(), 'name', stripAnsi(ProgressBarSymbol.DONE));
+    const progressBar = ProgressBarCLI.new(
+      spy.getLogger(),
+      'name',
+      stripAnsi(ProgressBarSymbol.DONE),
+    );
     expect(spy.getLineCount()).toEqual(1);
 
     progressBar.logWarn('warn message');
@@ -215,7 +315,11 @@ describe('logWarn', () => {
 
   it('should not log at the matching log level', () => {
     const spy = new ProgressBarCLISpy(LogLevel.WARN + 1);
-    const progressBar = ProgressBarCLI.new(spy.getLogger(), 'name', stripAnsi(ProgressBarSymbol.DONE));
+    const progressBar = ProgressBarCLI.new(
+      spy.getLogger(),
+      'name',
+      stripAnsi(ProgressBarSymbol.DONE),
+    );
     expect(spy.getLineCount()).toEqual(1);
 
     progressBar.logWarn('warn message');
@@ -229,7 +333,11 @@ describe('logWarn', () => {
 describe('logError', () => {
   it('should log at the matching log level', () => {
     const spy = new ProgressBarCLISpy(LogLevel.ERROR);
-    const progressBar = ProgressBarCLI.new(spy.getLogger(), 'name', stripAnsi(ProgressBarSymbol.DONE));
+    const progressBar = ProgressBarCLI.new(
+      spy.getLogger(),
+      'name',
+      stripAnsi(ProgressBarSymbol.DONE),
+    );
     expect(spy.getLineCount()).toEqual(1);
 
     progressBar.logError('error message');
@@ -242,7 +350,11 @@ describe('logError', () => {
 
   it('should not log at the matching log level', () => {
     const spy = new ProgressBarCLISpy(LogLevel.ERROR + 1);
-    const progressBar = ProgressBarCLI.new(spy.getLogger(), 'name', stripAnsi(ProgressBarSymbol.DONE));
+    const progressBar = ProgressBarCLI.new(
+      spy.getLogger(),
+      'name',
+      stripAnsi(ProgressBarSymbol.DONE),
+    );
     expect(spy.getLineCount()).toEqual(1);
 
     progressBar.logError('error message');

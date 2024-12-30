@@ -7,7 +7,7 @@ export default {
       write(
         chunk: never,
         encoding: BufferEncoding,
-        callback: (error?: (Error | null)) => void,
+        callback: (error?: Error | null) => void,
       ): void {
         setImmediate(callback);
       },

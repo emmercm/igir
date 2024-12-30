@@ -34,7 +34,7 @@ Please note that while `FAT32` is not case sensitive in most cases, `ext4` and m
 
 JELOS has its BIOS folder at `roms/bios/`, and it uses the RetroArch filenames. Most of the BIOS files should be found using the following guides. Check the many sections under the `Systems` menu in the [JELOS Wiki](https://jelos.org/) for more precise instructions when you run into trouble.
 
-=== ":simple-windowsxp: Windows"
+=== ":fontawesome-brands-windows: Windows"
 
     Replace the `E:\` drive letter with wherever your SD card is:
 
@@ -45,7 +45,7 @@ JELOS has its BIOS folder at `roms/bios/`, and it uses the RetroArch filenames. 
       --output E:\roms\bios
     ```
 
-=== ":simple-apple: macOS"
+=== ":fontawesome-brands-apple: macOS"
 
     Replace the `/Volumes/JELOS` drive name with whatever your SD card is named:
 
@@ -71,7 +71,7 @@ JELOS has its BIOS folder at `roms/bios/`, and it uses the RetroArch filenames. 
 
 JELOS supports many many systems and ROM formats. Check sections under the `Systems` menu in the [JELOS Wiki](https://jelos.org/) for more precise instructions about the indivudual systems. Most supported systems and their ROMS can be automatically sorted by Igir using the `{jelos}` output token. See the [replaceable tokens page](../../output/tokens.md) for more information.
 
-=== ":simple-windowsxp: Windows"
+=== ":fontawesome-brands-windows: Windows"
 
     Replace the `E:\` drive letter with wherever your SD card is:
 
@@ -84,7 +84,7 @@ JELOS supports many many systems and ROM formats. Check sections under the `Syst
       --no-bios
     ```
 
-=== ":simple-apple: macOS"
+=== ":fontawesome-brands-apple: macOS"
 
     Replace the `/Volumes/JELOS` drive name with whatever your SD card is named:
 

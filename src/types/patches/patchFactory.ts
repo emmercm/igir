@@ -13,9 +13,9 @@ import UPSPatch from './upsPatch.js';
 import VcdiffPatch from './vcdiffPatch.js';
 
 interface PatchParser {
-  extensions: string[],
-  fileSignatures: Buffer[],
-  factory: (file: File) => Promise<Patch> | Patch
+  extensions: string[];
+  fileSignatures: Buffer[];
+  factory: (file: File) => Promise<Patch> | Patch;
 }
 
 /**
@@ -94,10 +94,7 @@ export default class PatchFactory {
 
       const chunks: Buffer[] = [];
       const resolveHeader: () => void = () => {
-        const header = Buffer.concat(chunks)
-          .subarray(0, length)
-          .toString('hex')
-          .toLowerCase();
+        const header = Buffer.concat(chunks).subarray(0, length).toString('hex').toLowerCase();
         resolve(header);
       };
 
@@ -117,13 +114,17 @@ export default class PatchFactory {
   }
 
   static async patchFromFileContents(file: File): Promise<Patch | undefined> {
-    const fileHeader = await file.createReadStream(
-      async (stream) => PatchFactory.readHeaderHex(stream, this.MAX_HEADER_LENGTH_BYTES),
+    const fileHeader = await file.createReadStream(async (stream) =>
+      PatchFactory.readHeaderHex(stream, this.MAX_HEADER_LENGTH_BYTES),
     );
 
     const parsers = Object.values(this.PATCH_PARSERS);
     for (const parser of parsers) {
-      if (parser.fileSignatures.some((fileSignature) => fileHeader.startsWith(fileSignature.toString('hex')))) {
+      if (
+        parser.fileSignatures.some((fileSignature) =>
+          fileHeader.startsWith(fileSignature.toString('hex')),
+        )
+      ) {
         return parser.factory(file);
       }
     }

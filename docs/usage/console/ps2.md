@@ -10,7 +10,7 @@
 
 Igir has a `--writer-threads <threads>` option to limit the number of files being written at once. You can use the option like this:
 
-=== ":simple-windowsxp: Windows"
+=== ":fontawesome-brands-windows: Windows"
 
     Replace the `E:\` drive letter with wherever your USB drive is:
 
@@ -24,7 +24,7 @@ Igir has a `--writer-threads <threads>` option to limit the number of files bein
       --writer-threads 1
     ```
 
-=== ":simple-apple: macOS"
+=== ":fontawesome-brands-apple: macOS"
 
     Replace the `/Volumes/PS2` drive name with whatever your USB drive is named:
 

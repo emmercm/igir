@@ -16,7 +16,7 @@ While [DATs](../dats/introduction.md) are optional, they allow you to organize y
 
 **Use consistent versions across all devices.**
 
-DATs work best if you store them alongside your primary ROM collection, and when you use the same DAT versions across all devices (i.e. your primary collection, handhelds, flash carts, etc.). Some DAT groups release new versions as often as daily, so keeping your collection in sync is easier with consistent DATs.
+DATs work best if you store them alongside your primary ROM collection and when you use the same DAT versions across all devices (i.e. your primary collection, handhelds, flash carts, etc.). Some DAT groups release new versions as often as daily, so keeping your collection in sync is easier with consistent DATs.
 
 **Process DATs from different groups separately.**
 
@@ -31,6 +31,13 @@ Also, keep ROM sets organized by DATs from different groups in separate director
 Provide your output directory as one of the input directories, and then any other input directories you wish to copy or move into your primary collection. Doing so will let you [clean the output directory](../output/cleaning.md) safely.
 
 Then, create sub-collections by copying files from your main collection to other devices, optionally applying [filtering and preference rules](../roms/filtering-preferences.md).
+
+**Provide the output directory as an input directory when moving or cleaning.**
+
+This is for a few reasons:
+
+- [1G1R rules](../roms/filtering-preferences.md#preferences-for-1g1r) are only applied to files found & matched in the input directories, so moving files out of the input directories may change your 1G1R results on subsequent runs. Providing the output directory as an input directory will make sure you keep your preferred files.
+- The [`igir clean` command](../output/cleaning.md) excludes files considered for writing (either written or _not_ [overwritten](../output/options.md#overwriting-files)). Providing the output directory as an input directory will ensure no DAT-matched files are deleted.
 
 **Prefer ROMs with headers.**
 
@@ -54,7 +61,7 @@ Zip files generally save file space and are faster to scan, at the expense of mo
 
 Ignoring [arcade ROM sets](../usage/arcade.md), one purpose of sorting your ROM collection using DATs is to organize them in some human-understandable manner. A common way to help with this is to group ROMs from the same console together using [`--dir-dat-name`](../output/path-options.md#append-dat-name) or [`--dir-dat-description`](../output/path-options.md#append-dat-description)`
 
-Alternatively, you can [filter to only the DATs](../dats/processing.md#dat-filtering) you want, and then [combine them together](../dats/processing.md#dat-combining) and write the resulting ROMs to one directory.
+Alternatively, you can [filter to only the DATs](../dats/processing.md#dat-filtering) you want and then [combine them](../dats/processing.md#dat-combining) and write the resulting ROMs to one directory.
 
 **Organize ROMs by letter for non-keyboard & mouse devices.**
 
@@ -76,7 +83,7 @@ You must choose the right DAT for your emulator (e.g. MAME) and emulator version
 
 **For MAME, use the official DATs or ones from progetto-SNAPS.**
 
-These DATs provide the most flexibility (i.e. can use any merge type) and the most amount of metadata (i.e. [parent/clone information](../dats/introduction.md#parentclone-pc-dats), ROMs and CHDs together in one DAT) for Igir to use for processing. Other DAT groups such as pleasuredome modify the official DATs quite heavily by pre-applying filters.
+These DATs provide the most flexibility (i.e. can use any merge type) and the most amount of metadata (i.e. [parent/clone information](../dats/introduction.md#parentclone-pc-dats), ROMs & CHDs together in one DAT) for Igir to use for processing. Other DAT groups such as pleasuredome modify the official DATs quite heavily by pre-applying filters.
 
 **Pick a ROM merge type intentionally.**
 

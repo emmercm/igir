@@ -41,12 +41,14 @@ gracefulFs.gracefulify(realFs);
     options = new ArgumentsParser(logger).parse(argv);
     logger.setLogLevel(options.getLogLevel());
 
-    const argvString = argv.map((arg) => {
-      if (!arg.includes(' ')) {
-        return arg;
-      }
-      return `"${arg.replace(/"/g, '\\"')}"`;
-    }).join(' ');
+    const argvString = argv
+      .map((arg) => {
+        if (!arg.includes(' ')) {
+          return arg;
+        }
+        return `"${arg.replace(/"/g, '\\"')}"`;
+      })
+      .join(' ');
     logger.trace(`Parsing CLI arguments: ${argvString}`);
     logger.trace(`Parsed CLI options: ${options.toString()}`);
 

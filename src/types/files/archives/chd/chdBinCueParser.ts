@@ -2,9 +2,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import util from 'node:util';
 
-import {
-  File as CueFile, parse, Track, TrackDataType,
-} from '@gplane/cue';
+import { File as CueFile, parse, Track, TrackDataType } from '@gplane/cue';
 import chdman from 'chdman';
 
 import Temp from '../../../../globals/temp.js';
@@ -22,13 +20,12 @@ export default class ChdBinCueParser {
     archive: T,
     checksumBitmask: number,
   ): Promise<ArchiveEntry<T>[]> {
-    const tempFile = await FsPoly.mktemp(path.join(
-      Temp.getTempDir(),
-      path.basename(archive.getFilePath()),
-    ));
+    const tempFile = await FsPoly.mktemp(
+      path.join(Temp.getTempDir(), path.basename(archive.getFilePath())),
+    );
 
     const tempDir = path.dirname(tempFile);
-    if (!await FsPoly.exists(tempDir)) {
+    if (!(await FsPoly.exists(tempDir))) {
       await FsPoly.mkdir(tempDir, { recursive: true });
     }
 
@@ -59,12 +56,13 @@ export default class ChdBinCueParser {
       fatal: true,
     }).sheet;
 
-    const binFiles = (await Promise.all(cueSheet.files.flatMap(async (file) => this.parseCueFile(
-      archive,
-      file,
-      binFilePath,
-      checksumBitmask,
-    )))).flat();
+    const binFiles = (
+      await Promise.all(
+        cueSheet.files.flatMap(async (file) =>
+          this.parseCueFile(archive, file, binFilePath, checksumBitmask),
+        ),
+      )
+    ).flat();
 
     const cueFile = await ArchiveEntry.entryOf({
       archive,
@@ -97,39 +95,43 @@ export default class ChdBinCueParser {
     let nextItemTimeOffset = Math.floor(fileSize / globalBlockSize);
 
     const { name: archiveName } = path.parse(archive.getFilePath());
-    return (await Promise.all(
-      file.tracks
-        .reverse()
-        .flatMap(async (track) => {
-          const firstIndex = track.indexes.at(0);
-          if (!firstIndex) {
-            return undefined;
-          }
+    return (
+      await Promise.all(
+        file.tracks
+          .reverse()
+          .flatMap(async (track) => {
+            const firstIndex = track.indexes.at(0);
+            if (!firstIndex) {
+              return undefined;
+            }
 
-          const [minutes, seconds, fields] = firstIndex.startingTime;
-          const startingTimeOffset = fields + (seconds * 75) + (minutes * 60 * 75);
-          const sectors = nextItemTimeOffset - startingTimeOffset;
-          nextItemTimeOffset = startingTimeOffset;
-          const trackOffset = startingTimeOffset * globalBlockSize;
-          const trackSize = sectors * globalBlockSize;
+            const [minutes, seconds, fields] = firstIndex.startingTime;
+            const startingTimeOffset = fields + seconds * 75 + minutes * 60 * 75;
+            const sectors = nextItemTimeOffset - startingTimeOffset;
+            nextItemTimeOffset = startingTimeOffset;
+            const trackOffset = startingTimeOffset * globalBlockSize;
+            const trackSize = sectors * globalBlockSize;
 
-          const checksums = await FileChecksums.hashFile(
-            binFilePath,
-            checksumBitmask,
-            trackOffset,
-            trackOffset + trackSize - 1,
-          );
+            const checksums = await FileChecksums.hashFile(
+              binFilePath,
+              checksumBitmask,
+              trackOffset,
+              trackOffset + trackSize - 1,
+            );
 
-          return ArchiveEntry.entryOf({
-            archive,
-            entryPath: `${archiveName} (Track ${track.trackNumber}).bin|${trackSize}@${trackOffset}`,
-            size: trackSize,
-            ...checksums,
-          }, checksumBitmask);
-        })
-        .reverse(),
-    ))
-      .filter((entry) => entry !== undefined);
+            return ArchiveEntry.entryOf(
+              {
+                archive,
+                entryPath: `${archiveName} (Track ${track.trackNumber}).bin|${trackSize}@${trackOffset}`,
+                size: trackSize,
+                ...checksums,
+              },
+              checksumBitmask,
+            );
+          })
+          .reverse(),
+      )
+    ).filter((entry) => entry !== undefined);
   }
 
   private static parseCueTrackBlockSize(firstTrack: Track): number {
