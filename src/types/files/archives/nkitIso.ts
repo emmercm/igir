@@ -7,7 +7,6 @@ import ArchiveEntry from './archiveEntry.js';
 
 // @see https://wiki.gbatemp.net/wiki/NKit/NKitFormat
 export default class NkitIso extends Archive {
-  // eslint-disable-next-line class-methods-use-this
   protected new(filePath: string): Archive {
     return new NkitIso(filePath);
   }
@@ -16,12 +15,11 @@ export default class NkitIso extends Archive {
     return ['.nkit.iso'];
   }
 
-  // eslint-disable-next-line class-methods-use-this
   getExtension(): string {
     return NkitIso.getExtensions()[0];
   }
 
-  // eslint-disable-next-line class-methods-use-this,@typescript-eslint/require-await
+  // eslint-disable-next-line @typescript-eslint/require-await
   async extractEntryToFile(): Promise<void> {
     throw new ExpectedError("extraction isn't supported for NKit ISO files");
   }
