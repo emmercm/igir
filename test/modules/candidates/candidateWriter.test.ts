@@ -62,6 +62,7 @@ async function walkAndStat(dirPath: string): Promise<[string, Stats][]> {
         stats.atime = new Date(0);
         stats.atimeMs = 0;
         // Hard-code properties that can change with hard-linking
+        stats.ctime = new Date(0);
         stats.ctimeMs = 0;
         stats.nlink = 0;
       } catch {
@@ -1960,8 +1961,8 @@ describe('raw', () => {
   );
 });
 
-describe.each([[true], [false]])('link with symlink: %s', (symlink) => {
-  it('should not write if the output is the input', async () => {
+describe('link', () => {
+  test.each([[true], [false]])('should not write if the output is the input', async (symlink) => {
     await copyFixturesToTemp(async (inputTemp) => {
       // Given
       const options = new Options({ commands: ['link', 'test'], symlink });
@@ -1977,10 +1978,41 @@ describe.each([[true], [false]])('link with symlink: %s', (symlink) => {
     });
   });
 
-  it('should not write anything if the output exists and not overwriting', async () => {
+  test.each([[true], [false]])(
+    'should not write anything if the output exists and not overwriting',
+    async (symlink) => {
+      await copyFixturesToTemp(async (inputTemp, outputTemp) => {
+        // Given
+        const options = new Options({ commands: ['link', 'test'], symlink });
+        const inputFilesBefore = await walkAndStat(inputTemp);
+        await expect(walkAndStat(outputTemp)).resolves.toHaveLength(0);
+
+        // And we've written once
+        await candidateWriter(options, inputTemp, '**/*', undefined, outputTemp);
+
+        // And files were written
+        const outputFilesBefore = await walkAndStat(outputTemp);
+        expect(outputFilesBefore).not.toHaveLength(0);
+        for (const [, stats] of outputFilesBefore) {
+          expect(stats.isSymbolicLink()).toEqual(symlink);
+        }
+
+        // When we write again
+        await candidateWriter(options, inputTemp, '**/*', undefined, outputTemp);
+
+        // Then the output wasn't touched
+        await expect(walkAndStat(outputTemp)).resolves.toEqual(outputFilesBefore);
+
+        // And the input files weren't touched
+        await expect(walkAndStat(inputTemp)).resolves.toMatchObject(inputFilesBefore);
+      });
+    },
+  );
+
+  it('should write if the output is expected and overwriting symlinks', async () => {
     await copyFixturesToTemp(async (inputTemp, outputTemp) => {
       // Given
-      const options = new Options({ commands: ['link', 'test'], symlink });
+      const options = new Options({ commands: ['link', 'test'], symlink: true });
       const inputFilesBefore = await walkAndStat(inputTemp);
       await expect(walkAndStat(outputTemp)).resolves.toHaveLength(0);
 
@@ -1991,35 +2023,7 @@ describe.each([[true], [false]])('link with symlink: %s', (symlink) => {
       const outputFilesBefore = await walkAndStat(outputTemp);
       expect(outputFilesBefore).not.toHaveLength(0);
       for (const [, stats] of outputFilesBefore) {
-        expect(stats.isSymbolicLink()).toEqual(symlink);
-      }
-
-      // When we write again
-      await candidateWriter(options, inputTemp, '**/*', undefined, outputTemp);
-
-      // Then the output wasn't touched
-      await expect(walkAndStat(outputTemp)).resolves.toEqual(outputFilesBefore);
-
-      // And the input files weren't touched
-      await expect(walkAndStat(inputTemp)).resolves.toMatchObject(inputFilesBefore);
-    });
-  });
-
-  it('should write if the output is expected and overwriting', async () => {
-    await copyFixturesToTemp(async (inputTemp, outputTemp) => {
-      // Given
-      const options = new Options({ commands: ['link', 'test'], symlink });
-      const inputFilesBefore = await walkAndStat(inputTemp);
-      await expect(walkAndStat(outputTemp)).resolves.toHaveLength(0);
-
-      // And we've written once
-      await candidateWriter(options, inputTemp, '**/*', undefined, outputTemp);
-
-      // And files were written
-      const outputFilesBefore = await walkAndStat(outputTemp);
-      expect(outputFilesBefore).not.toHaveLength(0);
-      for (const [, stats] of outputFilesBefore) {
-        expect(stats.isSymbolicLink()).toEqual(symlink);
+        expect(stats.isSymbolicLink()).toEqual(true);
       }
 
       // When we write again
@@ -2034,14 +2038,14 @@ describe.each([[true], [false]])('link with symlink: %s', (symlink) => {
         outputTemp,
       );
 
-      // Then the output was touched
+      // Then the output was touched because the symlinks were recreated
       const outputFilesAfter = await walkAndStat(outputTemp);
       expect(outputFilesAfter.map((pair) => pair[0])).toEqual(
         outputFilesBefore.map((pair) => pair[0]),
       );
       expect(outputFilesAfter).not.toEqual(outputFilesBefore);
       for (const [, stats] of outputFilesAfter) {
-        expect(stats.isSymbolicLink()).toEqual(symlink);
+        expect(stats.isSymbolicLink()).toEqual(true);
       }
 
       // And the input files weren't touched
@@ -2049,10 +2053,10 @@ describe.each([[true], [false]])('link with symlink: %s', (symlink) => {
     });
   });
 
-  it('should write if the output is not expected and overwriting invalid', async () => {
+  it('should write if the output is expected and overwriting hard links', async () => {
     await copyFixturesToTemp(async (inputTemp, outputTemp) => {
       // Given
-      const options = new Options({ commands: ['link', 'test'], symlink });
+      const options = new Options({ commands: ['link', 'test'], symlink: false });
       const inputFilesBefore = await walkAndStat(inputTemp);
       await expect(walkAndStat(outputTemp)).resolves.toHaveLength(0);
 
@@ -2063,7 +2067,51 @@ describe.each([[true], [false]])('link with symlink: %s', (symlink) => {
       const outputFilesBefore = await walkAndStat(outputTemp);
       expect(outputFilesBefore).not.toHaveLength(0);
       for (const [, stats] of outputFilesBefore) {
-        expect(stats.isSymbolicLink()).toEqual(symlink);
+        expect(stats.isSymbolicLink()).toEqual(false);
+      }
+
+      // When we write again
+      await candidateWriter(
+        {
+          ...options,
+          overwrite: true,
+        },
+        inputTemp,
+        '**/*',
+        undefined,
+        outputTemp,
+      );
+
+      // Then the output is the same as before because the same hard links were recreated
+      const outputFilesAfter = await walkAndStat(outputTemp);
+      expect(outputFilesAfter.map((pair) => pair[0])).toEqual(
+        outputFilesBefore.map((pair) => pair[0]),
+      );
+      expect(outputFilesAfter).toEqual(outputFilesBefore);
+      for (const [, stats] of outputFilesAfter) {
+        expect(stats.isSymbolicLink()).toEqual(false);
+      }
+
+      // And the input files weren't touched
+      await expect(walkAndStat(inputTemp)).resolves.toMatchObject(inputFilesBefore);
+    });
+  });
+
+  it('should write if the output is not expected and overwriting invalid symlinks', async () => {
+    await copyFixturesToTemp(async (inputTemp, outputTemp) => {
+      // Given
+      const options = new Options({ commands: ['link', 'test'], symlink: true });
+      const inputFilesBefore = await walkAndStat(inputTemp);
+      await expect(walkAndStat(outputTemp)).resolves.toHaveLength(0);
+
+      // And we've written once
+      await candidateWriter(options, inputTemp, '**/*', undefined, outputTemp);
+
+      // And files were written
+      const outputFilesBefore = await walkAndStat(outputTemp);
+      expect(outputFilesBefore).not.toHaveLength(0);
+      for (const [, stats] of outputFilesBefore) {
+        expect(stats.isSymbolicLink()).toEqual(true);
       }
 
       // And the files are made invalid
@@ -2087,47 +2135,100 @@ describe.each([[true], [false]])('link with symlink: %s', (symlink) => {
         outputTemp,
       );
 
-      // Then the output was touched
+      // Then the output was touched because the symlinks were recreated
       const outputFilesAfter = await walkAndStat(outputTemp);
       expect(outputFilesAfter.map((pair) => pair[0])).toEqual(
         outputFilesBefore.map((pair) => pair[0]),
       );
       expect(outputFilesAfter).not.toEqual(outputFilesBefore);
       for (const [, stats] of outputFilesAfter) {
-        expect(stats.isSymbolicLink()).toEqual(symlink);
+        expect(stats.isSymbolicLink()).toEqual(true);
       }
 
       // And the input files weren't touched
       await expect(walkAndStat(inputTemp)).resolves.toMatchObject(inputFilesBefore);
     });
   });
-});
 
-it('should write relative symlinks', async () => {
-  await copyFixturesToTemp(async (inputTemp, outputTemp) => {
-    // Given
-    const options = new Options({
-      commands: ['link', 'test'],
-      symlink: true,
-      symlinkRelative: true,
-    });
-    await expect(walkAndStat(outputTemp)).resolves.toHaveLength(0);
+  it('should write if the output is not expected and overwriting invalid hard links', async () => {
+    await copyFixturesToTemp(async (inputTemp, outputTemp) => {
+      // Given
+      const options = new Options({ commands: ['link', 'test'], symlink: false });
+      const inputFilesBefore = await walkAndStat(inputTemp);
+      await expect(walkAndStat(outputTemp)).resolves.toHaveLength(0);
 
-    // When we write
-    await candidateWriter(options, inputTemp, '**/*', undefined, outputTemp);
+      // And we've written once
+      await candidateWriter(options, inputTemp, '**/*', undefined, outputTemp);
 
-    // Then files were written
-    const outputFilesBefore = await walkAndStat(outputTemp);
-    expect(outputFilesBefore).not.toHaveLength(0);
-    for (const [outputPath, stats] of outputFilesBefore) {
-      expect(stats.isSymbolicLink()).toEqual(true);
-      const outputPathAbsolute = path.resolve(path.join(outputTemp, outputPath));
-      const outputPathResolved = path.resolve(
-        path.dirname(outputPathAbsolute),
-        await fsPoly.readlink(outputPathAbsolute),
+      // And files were written
+      const outputFilesBefore = await walkAndStat(outputTemp);
+      expect(outputFilesBefore).not.toHaveLength(0);
+      for (const [, stats] of outputFilesBefore) {
+        expect(stats.isSymbolicLink()).toEqual(false);
+      }
+
+      // And the files are made invalid
+      await Promise.all(
+        outputFilesBefore.map(async ([filePath]) => {
+          const resolvedPath = path.join(outputTemp, filePath);
+          await fsPoly.rm(resolvedPath);
+          await fsPoly.touch(resolvedPath);
+        }),
       );
-      await expect(fsPoly.exists(outputPathResolved)).resolves.toEqual(true);
-      expect(outputPathResolved.startsWith(inputTemp)).toEqual(true);
-    }
+
+      // When we write again
+      await candidateWriter(
+        {
+          ...options,
+          overwriteInvalid: true,
+        },
+        inputTemp,
+        '**/*',
+        undefined,
+        outputTemp,
+      );
+
+      // Then the output is the same as before because the same hard links were recreated
+      const outputFilesAfter = await walkAndStat(outputTemp);
+      expect(outputFilesAfter.map((pair) => pair[0])).toEqual(
+        outputFilesBefore.map((pair) => pair[0]),
+      );
+      expect(outputFilesAfter).toEqual(outputFilesBefore);
+      for (const [, stats] of outputFilesAfter) {
+        expect(stats.isSymbolicLink()).toEqual(false);
+      }
+
+      // And the input files weren't touched
+      await expect(walkAndStat(inputTemp)).resolves.toMatchObject(inputFilesBefore);
+    });
+  });
+
+  it('should write relative symlinks', async () => {
+    await copyFixturesToTemp(async (inputTemp, outputTemp) => {
+      // Given
+      const options = new Options({
+        commands: ['link', 'test'],
+        symlink: true,
+        symlinkRelative: true,
+      });
+      await expect(walkAndStat(outputTemp)).resolves.toHaveLength(0);
+
+      // When we write
+      await candidateWriter(options, inputTemp, '**/*', undefined, outputTemp);
+
+      // Then files were written
+      const outputFilesBefore = await walkAndStat(outputTemp);
+      expect(outputFilesBefore).not.toHaveLength(0);
+      for (const [outputPath, stats] of outputFilesBefore) {
+        expect(stats.isSymbolicLink()).toEqual(true);
+        const outputPathAbsolute = path.resolve(path.join(outputTemp, outputPath));
+        const outputPathResolved = path.resolve(
+          path.dirname(outputPathAbsolute),
+          await fsPoly.readlink(outputPathAbsolute),
+        );
+        await expect(fsPoly.exists(outputPathResolved)).resolves.toEqual(true);
+        expect(outputPathResolved.startsWith(inputTemp)).toEqual(true);
+      }
+    });
   });
 });
