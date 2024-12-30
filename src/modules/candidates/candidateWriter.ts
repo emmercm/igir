@@ -348,7 +348,6 @@ export default class CandidateWriter extends Module {
           this.progressBar.logWarn(
             `${dat.getNameShort()}: ${releaseCandidate.getName()}: ${expectedFile.toString()}: can't test, expected size is unknown`,
           );
-          // eslint-disable-next-line no-continue
           continue;
         }
         if (actualFile.getSize() !== expectedFile.getSize()) {

@@ -45,7 +45,9 @@ export default class CandidatePreferer extends Module {
       0,
     );
     if (!totalReleaseCandidates) {
-      this.progressBar.logTrace(`${dat.getNameShort()}: no parent has candidates`);
+      this.progressBar.logTrace(
+        `${dat.getNameShort()}: no parent has candidates, not preferring candidates`,
+      );
       return parentsToCandidates;
     }
 
