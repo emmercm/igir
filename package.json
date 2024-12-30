@@ -142,13 +142,14 @@
     "which": "5.0.0"
   },
   "//engines": [
-    "Requires >=14.17.0 for TypeScript v5.1.",
-    "Requires ^12.20.0 || ^14.13.1 || >=16.0.0 for ES6 modules, even though `tsc` can target ES5 or lower.",
-    "Requires ^14.18.0 || >=16.0.0 for `node:` prefixed built-in modules that many dependencies use.",
-    "Requires >=15.0.0 for npm v7 for package-lock.json v3 because Renovate stopped respecting the existing version in August 2023.",
-    "Requires ^14.18.0 || >=16.3.0 for `os.devNull`.",
-    "Requires >=16.6.0 for `Array.prototype.at()`.",
-    "Requires >=16.7.0 for `fs.cp()`."
+    "Requires >=14.17.0 for TypeScript v5.1",
+    "Requires ^12.20.0 || ^14.13.1 || >=16.0.0 for ES6 modules, even though `tsc` can target ES5 or lower",
+    "Requires ^14.18.0 || >=16.0.0 for `node:` prefixed built-in modules that many dependencies use",
+    "Requires >=15.0.0 for npm v7 for package-lock.json v3 because Renovate stopped respecting the existing version in August 2023",
+    "Requires ^14.18.0 || >=16.3.0 for `os.devNull`",
+    "Requires >=16.6.0 for `Array.prototype.at()`",
+    "Requires >=16.7.0 for `fs.cp()`",
+    "Requires >=16.3.0 for ES2020 & ES2021"
   ],
   "engines": {
     "node": ">=16.7.0"
