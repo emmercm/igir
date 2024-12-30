@@ -4,7 +4,6 @@ import Tar from '../tar.js';
 import SevenZip from './sevenZip.js';
 
 export default class Gzip extends SevenZip {
-  // eslint-disable-next-line class-methods-use-this
   protected new(filePath: string): SevenZip {
     return new Gzip(filePath);
   }
@@ -13,7 +12,6 @@ export default class Gzip extends SevenZip {
     return ['.gz', '.gzip'];
   }
 
-  // eslint-disable-next-line class-methods-use-this
   getExtension(): string {
     return Gzip.getExtensions()[0];
   }

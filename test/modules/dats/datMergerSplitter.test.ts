@@ -40,7 +40,7 @@ test.each(
 });
 
 describe('MAME v0.258', () => {
-  /* eslint-disable object-curly-newline, unicorn/numeric-separators-style */
+  /* eslint-disable unicorn/numeric-separators-style */
   const dat = new LogiqxDAT(new Header(), [
     // ***** Games *****
     new Machine({

@@ -1,7 +1,6 @@
 import SevenZip from './sevenZip.js';
 
 export default class ZipSpanned extends SevenZip {
-  // eslint-disable-next-line class-methods-use-this
   protected new(filePath: string): SevenZip {
     return new ZipSpanned(filePath);
   }
@@ -10,7 +9,6 @@ export default class ZipSpanned extends SevenZip {
     return ['.zip.001', '.z01'];
   }
 
-  // eslint-disable-next-line class-methods-use-this
   getExtension(): string {
     return ZipSpanned.getExtensions()[0];
   }

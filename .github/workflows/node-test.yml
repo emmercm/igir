@@ -36,7 +36,7 @@ jobs:
         with:
           ref: ${{ env.ref }}
       - id: filter
-        uses: dorny/paths-filter@v2
+        uses: dorny/paths-filter@v3
         with:
           filters: |
             changes:
