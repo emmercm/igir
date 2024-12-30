@@ -103,5 +103,9 @@
   "ts-node": {
     "esm": true,
     "experimentalSpecifierResolution": "node",
+    // Fix typescript@>=5.6.0 breaking ts-node@10.9.2
+    // WARN: this will skip type checking!
+    // https://github.com/nodejs/node/issues/48207#issuecomment-1880644283
+    "transpileOnly": true
   }
 }
