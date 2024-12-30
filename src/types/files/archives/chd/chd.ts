@@ -26,7 +26,6 @@ export default class Chd extends Archive {
 
   private tempSingletonFilePath?: string;
 
-  // eslint-disable-next-line class-methods-use-this
   protected new(filePath: string): Archive {
     return new Chd(filePath);
   }
@@ -35,7 +34,6 @@ export default class Chd extends Archive {
     return ['.chd'];
   }
 
-  // eslint-disable-next-line class-methods-use-this
   getExtension(): string {
     return Chd.getExtensions()[0];
   }

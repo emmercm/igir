@@ -1,4 +1,3 @@
-// eslint-disable-next-line max-classes-per-file
 import FilePoly from '../../polyfill/filePoly.js';
 import fsPoly from '../../polyfill/fsPoly.js';
 import ExpectedError from '../expectedError.js';

@@ -11,7 +11,6 @@ import Archive from './archive.js';
 import ArchiveEntry from './archiveEntry.js';
 
 export default class Tar extends Archive {
-  // eslint-disable-next-line class-methods-use-this
   protected new(filePath: string): Archive {
     return new Tar(filePath);
   }
@@ -86,7 +85,6 @@ export default class Tar extends Archive {
         strict: true,
         filter: (_, stat) => {
           // @ts-expect-error the type is wrong: https://github.com/isaacs/node-tar/issues/357#issuecomment-1416806436
-          // eslint-disable-next-line no-param-reassign
           stat.path = path.basename(extractedFilePath);
           return true;
         },

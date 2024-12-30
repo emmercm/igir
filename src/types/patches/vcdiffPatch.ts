@@ -1,4 +1,3 @@
-// eslint-disable-next-line max-classes-per-file
 import FilePoly from '../../polyfill/filePoly.js';
 import fsPoly from '../../polyfill/fsPoly.js';
 import ExpectedError from '../expectedError.js';
@@ -514,7 +513,6 @@ export default class VcdiffPatch extends Patch {
       for (let i = 0; i <= 1; i += 1) {
         const instruction = header.codeTable[instructionCodeIdx][i];
         if (instruction.type === VcdiffInstruction.NOOP) {
-          // eslint-disable-next-line no-continue
           continue;
         }
 

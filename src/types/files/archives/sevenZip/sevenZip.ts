@@ -14,7 +14,6 @@ import ArchiveEntry from '../archiveEntry.js';
 export default class SevenZip extends Archive {
   private static readonly LIST_MUTEX = new Mutex();
 
-  // eslint-disable-next-line class-methods-use-this
   protected new(filePath: string): Archive {
     return new SevenZip(filePath);
   }
@@ -23,7 +22,6 @@ export default class SevenZip extends Archive {
     return ['.7z'];
   }
 
-  // eslint-disable-next-line class-methods-use-this
   getExtension(): string {
     return SevenZip.getExtensions()[0];
   }

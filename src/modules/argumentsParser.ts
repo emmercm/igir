@@ -137,7 +137,6 @@ export default class ArgumentsParser {
       return yargsObj
         .middleware((middlewareArgv) => {
           // Ignore duplicate commands
-          // eslint-disable-next-line no-param-reassign
           middlewareArgv._ = middlewareArgv._.reduce(ArrayPoly.reduceUnique(), []);
         }, true)
         .check((checkArgv) => {
@@ -862,7 +861,6 @@ export default class ArgumentsParser {
       })
       .middleware((middlewareArgv) => {
         if (middlewareArgv.zipDatName) {
-          // eslint-disable-next-line no-param-reassign
           middlewareArgv.datThreads = 1;
         }
       }, true)

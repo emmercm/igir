@@ -12,7 +12,6 @@ import ArchiveEntry from './archiveEntry.js';
 export default class Rar extends Archive {
   private static readonly EXTRACT_MUTEX = new Mutex();
 
-  // eslint-disable-next-line class-methods-use-this
   protected new(filePath: string): Archive {
     return new Rar(filePath);
   }
@@ -21,7 +20,6 @@ export default class Rar extends Archive {
     return ['.rar'];
   }
 
-  // eslint-disable-next-line class-methods-use-this
   getExtension(): string {
     return Rar.getExtensions()[0];
   }
