@@ -2,7 +2,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import util from 'node:util';
 
-import async, { AsyncResultCallback } from 'async';
+import async from 'async';
 import chdman from 'chdman';
 import fg from 'fast-glob';
 
@@ -71,7 +71,7 @@ export default class ChdGdiParser {
     const binRawFiles = await async.mapLimit(
       binRawFilePaths,
       Defaults.ARCHIVE_ENTRY_SCANNER_THREADS_PER_ARCHIVE,
-      async (binRawFilePath, callback: AsyncResultCallback<ArchiveEntry<T>, Error>) => {
+      async (binRawFilePath: string): Promise<ArchiveEntry<T>> => {
         try {
           const binRawFile = await ArchiveEntry.entryOf({
             archive,
@@ -79,16 +79,14 @@ export default class ChdGdiParser {
             size: await FsPoly.size(binRawFilePath),
             ...(await FileChecksums.hashFile(binRawFilePath, checksumBitmask)),
           });
-          callback(undefined, binRawFile);
+          return binRawFile;
         } catch (error) {
           if (error instanceof Error) {
-            callback(error);
+            throw error;
           } else if (typeof error === 'string') {
-            callback(new Error(error));
+            throw new Error(error);
           } else {
-            callback(
-              new Error(`unknown error when parsing GD-ROM bin/raw file: ${binRawFilePath}`),
-            );
+            throw new Error(`unknown error when parsing GD-ROM bin/raw file: ${binRawFilePath}`);
           }
         }
       },
